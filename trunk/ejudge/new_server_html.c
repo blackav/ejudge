@@ -1593,6 +1593,249 @@ priv_add_priv_user_by_login(struct server_framework_state *state,
   xfree(log_txt);
 }
 
+static void
+do_schedule(FILE *log_f,
+            struct http_request_info *phr,
+            serve_state_t cs,
+            const struct contest_desc *cnts)
+{
+  const unsigned char *s = 0;
+  int hour = 0, min = 0, sec = 0, year = 0, mon = 0, day = 0, n;
+  struct tm loc2;
+  struct tm *ploc;
+  time_t sloc;
+
+  if (ns_cgi_param(phr, "sched_time", &s) <= 0) {
+    fprintf(log_f, _("Schedule time is not specified."));
+    return;
+  }
+  if (sscanf(s, "%d/%d/%d %d:%d:%d%n",
+             &year, &mon, &day, &hour, &min, &sec, &n) == 6 && !s[n]) {
+    memset(&loc2, 0, sizeof(loc2));
+    loc2.tm_isdst = -1;
+    loc2.tm_year = year - 1900;
+    loc2.tm_mon = mon - 1;
+    loc2.tm_mday = day;
+    loc2.tm_hour = hour;
+    loc2.tm_min = min;
+    loc2.tm_sec = sec;
+    ploc = &loc2;
+  } else if (sscanf(s, "%d:%d%n", &hour, &min, &n) == 2 && !s[n]) {
+    ploc = localtime(&cs->current_time);
+    ploc->tm_hour = hour;
+    ploc->tm_min = min;
+    ploc->tm_sec = 0;
+  } else if (sscanf(s, "%d%n", &hour, &n) == 1 && !s[n]) {
+    ploc = localtime(&cs->current_time);
+    ploc->tm_hour = hour;
+    ploc->tm_min = 0;
+    ploc->tm_sec = 0;
+  } else {
+    fprintf(log_f, _("Invalid time specification."));
+    return;
+  }
+
+  if ((sloc = mktime(ploc)) == (time_t) -1) {
+    fprintf(log_f, _("Invalid time specification."));
+    return;
+  }
+
+  if (cs->contest_stop_time > 0) {
+    fprintf(log_f, _("Contest already finished."));
+    return;
+  }
+  if (cs->contest_start_time > 0) {
+    fprintf(log_f, _("Contest already started."));
+    return;
+  }
+  run_sched_contest(cs->runlog_state, sloc);
+  cs->contest_sched_time = sloc;
+  serve_update_standings_file(cs, cnts, 0);
+  serve_update_status_file(cs, 1);
+}
+
+static void
+do_change_duration(FILE *log_f,
+                   struct http_request_info *phr,
+                   serve_state_t cs,
+                   const struct contest_desc *cnts)
+{
+  const unsigned char *s = 0;
+  int dh = 0, dm = 0, n, d;
+
+  if (ns_cgi_param(phr, "dur", &s) <= 0) {
+    fprintf(log_f, _("Duration is not specified."));
+    return;
+  }
+  if (sscanf(s, "%d:%d%n", &dh, &dm, &n) == 2 && !s[n]) {
+  } else if (sscanf(s, "%d%n", &dh, &n) == 1 && !s[n]) {
+    dm = 0;
+  } else {
+    fprintf(log_f, _("Invalid duration specification."));
+    return;
+  }
+  d = dh * 60 + dm;
+  if (d < 0 || d > 1000000) {
+    fprintf(log_f, _("Invalid duration."));
+    return;
+  }
+  d *= 60;
+
+  if (cs->contest_stop_time > 0 && !cs->global->enable_continue) {
+    fprintf(log_f, _("Contest already finished."));
+    return;
+  }
+  if (d > 0 && cs->contest_start_time
+      && cs->contest_start_time + d < cs->current_time) {
+    fprintf(log_f, _("New duration is too small."));
+    return;
+  }
+
+  cs->contest_duration = d;
+  run_set_duration(cs->runlog_state, d);
+  serve_update_standings_file(cs, cnts, 0);
+  serve_update_status_file(cs, 1);
+  return;
+}
+
+static void
+priv_contest_operation(struct server_framework_state *state,
+                       struct client_state *p,
+                       FILE *fout,
+                       struct http_request_info *phr,
+                       const struct contest_desc *cnts,
+                       struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  FILE *log_f = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  opcap_t caps;
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
+      || opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) {
+    fprintf(log_f, _("Permission denied."));
+    goto done;
+  }
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_START_CONTEST:
+    if (cs->contest_stop_time > 0) {
+      fprintf(log_f, _("Contest already finished."));
+      goto done;
+    }
+    if (cs->contest_start_time > 0) {
+      fprintf(log_f, _("Contest already started."));
+      goto done;
+    }
+    run_start_contest(cs->runlog_state, cs->current_time);
+    cs->contest_start_time = cs->current_time;
+    serve_update_status_file(cs, 1);
+    serve_invoke_start_script(cs);
+    break;
+
+  case NEW_SRV_ACTION_STOP_CONTEST:
+    if (cs->contest_stop_time > 0) {
+      fprintf(log_f, _("Contest already finished."));
+      goto done;
+    }
+    if (cs->contest_start_time <= 0) {
+      fprintf(log_f, _("Contest is not started."));
+      goto done;
+    }
+    run_stop_contest(cs->runlog_state, cs->current_time);
+    cs->contest_stop_time = cs->current_time;
+    serve_update_status_file(cs, 1);
+    break;
+
+  case NEW_SRV_ACTION_CONTINUE_CONTEST:
+    if (!global->enable_continue) {
+      fprintf(log_f, _("This contest cannot be continued."));
+      goto done;
+    }
+    if (cs->contest_start_time <= 0) {
+      fprintf(log_f, _("Contest is not started."));
+      goto done;
+    }
+    if (cs->contest_stop_time <= 0) {
+      fprintf(log_f, _("Contest is not finished."));
+      goto done;
+    }
+    if (cs->contest_duration
+        && cs->current_time >= cs->contest_start_time + cs->contest_duration) {
+      fprintf(log_f, _("Insufficient duration to continue the contest."));
+      goto done;
+    }
+    run_stop_contest(cs->runlog_state, 0);
+    cs->contest_stop_time = 0;
+    serve_update_status_file(cs, 1);
+    break;
+
+  case NEW_SRV_ACTION_SCHEDULE:
+    do_schedule(log_f, phr, cs, cnts);
+    break;
+
+  case NEW_SRV_ACTION_CHANGE_DURATION:
+    do_change_duration(log_f, phr, cs, cnts);
+    break;
+
+  case NEW_SRV_ACTION_SUSPEND:
+    cs->clients_suspended = 1;
+    serve_update_status_file(cs, 1);
+    break;
+
+  case NEW_SRV_ACTION_RESUME:
+    cs->clients_suspended = 0;
+    serve_update_status_file(cs, 1);
+    break;
+
+  case NEW_SRV_ACTION_TEST_SUSPEND:
+    cs->testing_suspended = 1;
+    serve_update_status_file(cs, 1);
+    break;
+
+  case NEW_SRV_ACTION_TEST_RESUME:
+    cs->testing_suspended = 0;
+    serve_update_status_file(cs, 1);
+    break;
+
+  case NEW_SRV_ACTION_PRINT_SUSPEND:
+    if (!global->enable_printing) break;
+    cs->printing_suspended = 1;
+    serve_update_status_file(cs, 1);
+    break;
+
+  case NEW_SRV_ACTION_PRINT_RESUME:
+    if (!global->enable_printing) break;
+    cs->printing_suspended = 1;
+    serve_update_status_file(cs, 1);
+    break;
+
+  case NEW_SRV_ACTION_SET_JUDGING_MODE:
+    if (global->score_system_val != SCORE_OLYMPIAD) break;
+    cs->accepting_mode = 0;
+    serve_update_status_file(cs, 1);
+    break;
+
+  case NEW_SRV_ACTION_SET_ACCEPTING_MODE:
+    if (global->score_system_val != SCORE_OLYMPIAD) break;
+    cs->accepting_mode = 1;
+    serve_update_status_file(cs, 1);
+    break;
+  }
+
+ done:
+  fclose(log_f); log_f = 0;
+  if (!log_txt || !*log_txt) {
+    html_refresh_page(state, fout, phr, 0);
+  } else {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt, 0);
+  }
+}
+
 static const unsigned char * const form_row_attrs[]=
 {
   " bgcolor=\"#d0d0d0\"",
@@ -2229,9 +2472,9 @@ priv_main_page(struct server_framework_state *state,
           new_serve_submit_button(bbuf, sizeof(bbuf), 0,
                                   NEW_SRV_ACTION_RELOAD_SERVER_1, 0));
 
-  new_serve_write_priv_all_runs(fout, phr, cnts, extra, -1, -1, 0);
+  new_serve_write_priv_all_runs(fout, phr, cnts, extra, 0, 0, 0);
 
-  new_serve_write_all_clars(fout, phr, cnts, extra, 0, -1, -1);
+  new_serve_write_all_clars(fout, phr, cnts, extra, 0, 0, 0);
 
   fprintf(fout, "<hr><h2>%s</h2>", _("Compose a message to all participants"));
   html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
@@ -2343,6 +2586,19 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR] = priv_priv_user_operation,
   [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN] = priv_add_priv_user_by_login,
   [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID] = priv_add_priv_user_by_user_id,
+  [NEW_SRV_ACTION_START_CONTEST] = priv_contest_operation,
+  [NEW_SRV_ACTION_STOP_CONTEST] = priv_contest_operation,
+  [NEW_SRV_ACTION_CONTINUE_CONTEST] = priv_contest_operation,
+  [NEW_SRV_ACTION_SCHEDULE] = priv_contest_operation,
+  [NEW_SRV_ACTION_CHANGE_DURATION] = priv_contest_operation,
+  [NEW_SRV_ACTION_SUSPEND] = priv_contest_operation,
+  [NEW_SRV_ACTION_RESUME] = priv_contest_operation,
+  [NEW_SRV_ACTION_TEST_SUSPEND] = priv_contest_operation,
+  [NEW_SRV_ACTION_TEST_RESUME] = priv_contest_operation,
+  [NEW_SRV_ACTION_PRINT_SUSPEND] = priv_contest_operation,
+  [NEW_SRV_ACTION_PRINT_RESUME] = priv_contest_operation,
+  [NEW_SRV_ACTION_SET_JUDGING_MODE] = priv_contest_operation,
+  [NEW_SRV_ACTION_SET_ACCEPTING_MODE] = priv_contest_operation,
 };
 
 

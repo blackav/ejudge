@@ -268,4 +268,6 @@ serve_read_run_packet(serve_state_t state,
                       const unsigned char *run_full_archive_dir,
                       const unsigned char *pname);
 
+void serve_invoke_start_script(serve_state_t state);
+
 #endif /* __SERVE_STATE_H__ */

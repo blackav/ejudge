@@ -2723,23 +2723,6 @@ cmd_rejudge_by_mask(struct client_state *p, int len,
 }
 
 static void
-do_start_cmd(void)
-{
-  tpTask tsk = 0;
-
-  if (!serve_state.global->contest_start_cmd[0]) return;
-  if (!(tsk = task_New())) return;
-  task_AddArg(tsk, serve_state.global->contest_start_cmd);
-  task_SetPathAsArg0(tsk);
-  if (task_Start(tsk) < 0) {
-    task_Delete(tsk);
-    return;
-  }
-  task_Wait(tsk);
-  task_Delete(tsk);
-}
-
-static void
 send_run_quit_command(void)
 {
   void *pkt_buf = 0;
@@ -2973,7 +2956,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
     run_start_contest(serve_state.runlog_state, serve_state.current_time);
-    do_start_cmd();
+    serve_invoke_start_script(&serve_state);
     serve_state.contest_start_time = serve_state.current_time;
     info("contest started: %lu", serve_state.current_time);
     serve_update_status_file(&serve_state, 1);
@@ -4740,7 +4723,7 @@ do_loop(void)
           /* it's time to start! */
           info("CONTEST STARTED");
           run_start_contest(serve_state.runlog_state, serve_state.contest_sched_time);
-          do_start_cmd();
+          serve_invoke_start_script(&serve_state);
           serve_state.contest_start_time = serve_state.contest_sched_time;
         }
       }

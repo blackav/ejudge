@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-21 22:50+0400\n"
-"PO-Revision-Date: 2006-09-22 00:20+0400\n"
+"POT-Creation-Date: 2006-09-22 20:35+0400\n"
+"PO-Revision-Date: 2006-09-22 20:53+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -609,11 +609,27 @@ msgstr "Турнир"
 msgid "Contest ID"
 msgstr "ID"
 
+#, c-format
+msgid "Contest already finished."
+msgstr "Турнир уже завершён."
+
+#, c-format
+msgid "Contest already started."
+msgstr "Турнир уже запущен."
+
 msgid "Contest is closed"
 msgstr "Турнир закрыт"
 
+#, c-format
+msgid "Contest is not finished."
+msgstr "Турнир ещё не закончился."
+
 msgid "Contest is not started"
 msgstr "Турнир не начался"
+
+#, c-format
+msgid "Contest is not started."
+msgstr "Турнир не начался."
 
 msgid "Contest name"
 msgstr "Название турнира"
@@ -709,6 +725,10 @@ msgstr "База пользователей"
 
 msgid "Duration"
 msgstr "Продолжительность"
+
+#, c-format
+msgid "Duration is not specified."
+msgstr "Продолжительность турнира не указана."
 
 msgid "E-mail"
 msgstr "Адрес электронной почты"
@@ -1071,6 +1091,10 @@ msgstr "Учебное заведение (сокр.)"
 msgid "Institution (short) (En)"
 msgstr "Учебное заведение (сокр.) (Англ.)"
 
+#, c-format
+msgid "Insufficient duration to continue the contest."
+msgstr "Недостаточная продолжительность турнира."
+
 msgid "Internal error"
 msgstr "Внутренняя ошибка"
 
@@ -1095,6 +1119,14 @@ msgstr "Задан неверный идентификатор турнира."
 
 msgid "Invalid contest identifier."
 msgstr "Неверный идентификатор турнира."
+
+#, c-format
+msgid "Invalid duration specification."
+msgstr "Неверная спецификация продолжительности турнира."
+
+#, c-format
+msgid "Invalid duration."
+msgstr "Неверная продолжительность турнира."
 
 msgid "Invalid language specification"
 msgstr "Неверная спецификация языка программирования"
@@ -1142,6 +1174,10 @@ msgid "Invalid session identifier. The possible reasons are as follows."
 msgstr ""
 "Неверный идентификатор сессии. Возможные причины этой ошибки перечислены "
 "ниже."
+
+#, c-format
+msgid "Invalid time specification."
+msgstr "Неверная спецификация времени."
 
 msgid "Invisible?"
 msgstr "Невидимый?"
@@ -1318,6 +1354,10 @@ msgstr "НЕТ."
 msgid "Name"
 msgstr "Имя"
 
+#, c-format
+msgid "New duration is too small."
+msgstr "Новый продолжительность турнира слишком мала."
+
 msgid "New password"
 msgstr "Новый пароль"
 
@@ -1489,6 +1529,10 @@ msgstr "Ожидает проверки"
 
 msgid "Permission denied"
 msgstr "В доступе отказано"
+
+#, c-format
+msgid "Permission denied."
+msgstr "В доступе отказано."
 
 msgid "Permission denied. The possible reasons are as follows."
 msgstr "В доступе отказано. Возможные причины этой ошибки перечислены ниже."
@@ -1776,6 +1820,10 @@ msgstr "Русский"
 
 msgid "Save"
 msgstr "Сохранить"
+
+#, c-format
+msgid "Schedule time is not specified."
+msgstr "Время старта турнира не задано."
 
 msgid "Scheduled end time"
 msgstr "Запланированное время окончания"
@@ -2148,6 +2196,10 @@ msgid ""
 msgstr ""
 "Сервер базы данных пользователей в настоящий момент недоступен. Попробуйте "
 "повторить запрос позднее."
+
+#, c-format
+msgid "This contest cannot be continued."
+msgstr "Этот турнир не может быть продолжен."
 
 #, c-format
 msgid "This language is disabled for use."
