@@ -3374,6 +3374,11 @@ unpriv_view_source(struct server_framework_state *state,
   xfree(run_text);
 }
 
+static const int report_view_actions[] =
+{
+  0,
+};
+
 static void
 unpriv_view_report(struct server_framework_state *state,
                    struct client_state *p,
@@ -3499,6 +3504,7 @@ unpriv_view_report(struct server_framework_state *state,
   case CONTENT_TYPE_XML:
     if (global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode) {
       write_xml_team_accepting_report(fout, rep_start, run_id, &re, prob,
+                                      report_view_actions,
                                       phr->session_id, phr->self_url, "");
     } else if (prob->team_show_judge_report) {
       write_xml_testing_report(fout, rep_start, phr->session_id,

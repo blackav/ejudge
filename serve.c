@@ -1246,7 +1246,7 @@ cmd_view(struct client_state *p, int len,
     }
     l10n_setlocale(pkt->item2);
     r = new_write_user_report_view(&serve_state, f, p->user_id, pkt->item,
-                                   serve_state.accepting_mode, p->cookie,
+                                   serve_state.accepting_mode, 0, p->cookie,
                                    self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     l10n_setlocale(0);
 
