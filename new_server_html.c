@@ -1074,6 +1074,9 @@ privileged_page_login(struct server_framework_state *state,
   if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts)
     return html_err_invalid_param(state, p, fout, phr, 1,
                                   "invalid contest_id");
+  if (!cnts->new_managed)
+    return html_err_invalid_param(state, p, fout, phr, 1,
+                                  "contest is not managed");
 
   phr->role = USER_ROLE_OBSERVER;
   if (ns_cgi_param(phr, "role", &s) > 0) {
@@ -2386,6 +2389,9 @@ privileged_page(struct server_framework_state *state,
   if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
     return html_err_permission_denied(state, p, fout, phr, 1,
                                       "invalid contest_id %d", phr->contest_id);
+  if (!cnts->new_managed)
+    return html_err_invalid_param(state, p, fout, phr, 1,
+                                  "contest is not managed");
   extra = get_contest_extra(phr->contest_id);
   ASSERT(extra);
 
@@ -2491,6 +2497,9 @@ unprivileged_page_login_page(struct server_framework_state *state,
   if (cnts->closed)
     return html_err_service_not_available(state, p, fout, phr,
                                           "contest %d is closed");
+  if (!cnts->new_managed)
+    return html_err_service_not_available(state, p, fout, phr,
+                                          "contest %d is not managed");
   if (cnts->client_disable_team)
     return html_err_service_not_available(state, p, fout, phr,
                                           "contest %d team is disabled");
@@ -2576,6 +2585,9 @@ unprivileged_page_login(struct server_framework_state *state,
   if (cnts->closed)
     return html_err_service_not_available(state, p, fout, phr,
                                           "contest %d is closed");
+  if (!cnts->new_managed)
+    return html_err_service_not_available(state, p, fout, phr,
+                                          "contest %d is not managed");
   if (cnts->client_disable_team)
     return html_err_service_not_available(state, p, fout, phr,
                                           "contest %d team is disabled");
@@ -4268,6 +4280,9 @@ unprivileged_page(struct server_framework_state *state,
   if (cnts->closed)
     return html_err_service_not_available(state, p, fout, phr,
                                           "contest %d is closed");
+  if (!cnts->new_managed)
+    return html_err_service_not_available(state, p, fout, phr,
+                                          "contest %d is not managed");
   if (cnts->client_disable_team)
     return html_err_service_not_available(state, p, fout, phr,
                                           "contest %d team is disabled");

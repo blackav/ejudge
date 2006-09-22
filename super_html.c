@@ -2223,6 +2223,14 @@ super_html_edit_contest_page(FILE *f,
   fprintf(f, "</td></tr></form>\n");
 
   html_start_form(f, 1, self_url, hidden_vars);
+  fprintf(f, "<tr%s><td>Use the new-server for this contest?</td><td>",
+          form_row_attrs[row ^= 1]);
+  html_boolean_select(f, cnts->new_managed, "param", 0, 0);
+  fprintf(f, "</td><td>");
+  html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_NEW_MANAGED, "Change");
+  fprintf(f, "</td></tr></form>\n");
+
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>Manage the testing server?</td><td>",
           form_row_attrs[row ^= 1]);
   html_boolean_select(f, cnts->run_managed, "param", 0, 0);

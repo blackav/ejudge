@@ -2543,6 +2543,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CHANGE_SIMPLE_REGISTRATION:
   case SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL:
   case SSERV_CMD_CNTS_CHANGE_MANAGED:
+  case SSERV_CMD_CNTS_CHANGE_NEW_MANAGED:
   case SSERV_CMD_CNTS_CHANGE_RUN_MANAGED:
   case SSERV_CMD_CNTS_CHANGE_CLEAN_USERS:
   case SSERV_CMD_CNTS_CHANGE_CLOSED:
@@ -3050,6 +3051,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_SIMPLE_REGISTRATION] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_MANAGED] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_NEW_MANAGED] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_RUN_MANAGED] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_CLEAN_USERS] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_CLOSED] = { cmd_set_value },
