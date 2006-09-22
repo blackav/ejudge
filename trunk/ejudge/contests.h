@@ -105,6 +105,7 @@ enum
     CONTEST_A_DISABLE_TEAM_PASSWORD,
     CONTEST_A_LOGIN,
     CONTEST_A_MANAGED,
+    CONTEST_A_NEW_MANAGED,
     CONTEST_A_CLEAN_USERS,
     CONTEST_A_RUN_MANAGED,
     CONTEST_A_CLOSED,
@@ -212,6 +213,7 @@ struct contest_desc
   unsigned char autoregister;
   unsigned char disable_team_password;
   unsigned char managed;
+  unsigned char new_managed;
   unsigned char run_managed;
   unsigned char clean_users;
   unsigned char closed;

@@ -124,6 +124,7 @@ static char const * const attr_map[] =
   "disable_team_password",
   "login",
   "managed",
+  "new_managed",
   "clean_users",
   "run_managed",
   "closed",
@@ -614,6 +615,7 @@ static const size_t contest_bool_attr_offsets[CONTEST_LAST_ATTR] =
   [CONTEST_A_AUTOREGISTER] = CONTEST_DESC_OFFSET(autoregister),
   [CONTEST_A_DISABLE_TEAM_PASSWORD] =CONTEST_DESC_OFFSET(disable_team_password),
   [CONTEST_A_MANAGED] = CONTEST_DESC_OFFSET(managed),
+  [CONTEST_A_NEW_MANAGED] = CONTEST_DESC_OFFSET(new_managed),
   [CONTEST_A_CLEAN_USERS] = CONTEST_DESC_OFFSET(clean_users),
   [CONTEST_A_RUN_MANAGED] = CONTEST_DESC_OFFSET(run_managed),
   [CONTEST_A_CLOSED] = CONTEST_DESC_OFFSET(closed),
@@ -1240,6 +1242,10 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
   if (cnts->managed) {
     fprintf(f, "\n         %s=\"%s\"",
             attr_map[CONTEST_A_MANAGED], "yes");
+  }
+  if (cnts->new_managed) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attr_map[CONTEST_A_NEW_MANAGED], "yes");
   }
   if (cnts->run_managed) {
     fprintf(f, "\n         %s=\"%s\"",
