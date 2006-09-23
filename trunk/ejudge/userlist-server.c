@@ -986,7 +986,7 @@ cmd_register_new_2(struct client_state *p,
   struct userlist_pk_xml_data *out = 0;
   size_t out_size = 0, passwd_len;
   time_t current_time = time(0);
-  int user_id, serial;
+  int user_id, serial, action = 3;
   const struct userlist_user *u;
   unsigned char login_buf[1024];
 
@@ -1144,8 +1144,9 @@ cmd_register_new_2(struct client_state *p,
     } else {
       url_str = "http://localhost/cgi-bin/register";
     }
+    if (cnts->force_registration) action = 4;
     snprintf(urlbuf, sizeof(urlbuf), "%s?action=%d&login=%s%s%s",
-             url_str, 3, login, contest_str, locale_str);
+             url_str, action, login, contest_str, locale_str);
 
     l10n_setlocale(data->locale_id);
 
@@ -1225,7 +1226,7 @@ cmd_register_new(struct client_state *p,
   unsigned char locale_str[256];
   unsigned char *url_str = 0;
   unsigned char contest_url[256];
-  int user_id, serial = 0;
+  int user_id, serial = 0, action = 3;
   unsigned char login_buf[1024];
 
   // validate packet
@@ -1286,8 +1287,9 @@ cmd_register_new(struct client_state *p,
   } else {
     url_str = "http://localhost/cgi-bin/register";
   }
+  if (cnts && cnts->force_registration) action = 4;
   snprintf(urlbuf, sizeof(urlbuf), "%s?action=%d&login=%s%s%s",
-           url_str, 3, login, contest_str, locale_str);
+           url_str, action, login, contest_str, locale_str);
 
   user_id = default_get_user_by_login(login);
   if (user_id >= 0) {

@@ -297,6 +297,9 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   case SSERV_CMD_CNTS_CHANGE_ASSIGN_LOGINS:
     p_bool = &cnts->assign_logins;
     break;
+  case SSERV_CMD_CNTS_CHANGE_FORCE_REGISTRATION:
+    p_bool = &cnts->force_registration;
+    break;
   case SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL:
     p_bool = &cnts->send_passwd_email;
     break;
