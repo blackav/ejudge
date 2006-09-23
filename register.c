@@ -1976,6 +1976,12 @@ display_login_page(void)
 static void
 display_register_new_user_page(void)
 {
+  const struct contest_desc *cnts = 0;
+
+  if (user_contest_id > 0) {
+    contests_get(user_contest_id, &cnts);
+  }
+
   if (client_locale_id == -1) client_locale_id = 0;
   //l10n_setlocale(client_locale_id);
 
@@ -2034,13 +2040,15 @@ display_register_new_user_page(void)
            "<b>Note</b>, that you must log in "
            "24 hours after the form is filled and submitted, or "
            "your registration will be void!"));
-  printf("<p%s>%s</p>", par_style,
-         _("Type in a desirable login identifier. <b>Note</b>, "
-           "that your login still <i>may be</i> (in some cases) assigned "
-           "automatically."));
-  printf("<p%s>%s (*): <input type=\"text\" name=\"login\" value=\"%s\""
+  if (!cnts || !cnts->assign_logins) {
+    printf("<p%s>%s</p>", par_style,
+           _("Type in a desirable login identifier. <b>Note</b>, "
+             "that your login still <i>may be</i> (in some cases) assigned "
+             "automatically."));
+    printf("<p%s>%s (*): <input type=\"text\" name=\"login\" value=\"%s\""
            " size=\"16\" maxlength=\"16\">\n",
-         par_style, _("Login"), user_login);
+           par_style, _("Login"), user_login);
+  }
   printf("<p%s>%s</p>", par_style, _("Type your valid e-mail address"));
   printf("<p%s>%s (*): <input type=\"text\" name=\"email\" value=\"%s\""
          " size=\"64\" maxlength=\"64\">\n",
