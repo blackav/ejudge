@@ -134,6 +134,7 @@ static char const * const attr_map[] =
   "simple_registration",
   "send_passwd_email",
   "assign_logins",
+  "force_registration",
 
   0
 };
@@ -627,6 +628,7 @@ static const size_t contest_bool_attr_offsets[CONTEST_LAST_ATTR] =
   [CONTEST_A_SIMPLE_REGISTRATION] = CONTEST_DESC_OFFSET(simple_registration),
   [CONTEST_A_SEND_PASSWD_EMAIL] = CONTEST_DESC_OFFSET(send_passwd_email),
   [CONTEST_A_ASSIGN_LOGINS] = CONTEST_DESC_OFFSET(assign_logins),
+  [CONTEST_A_FORCE_REGISTRATION] = CONTEST_DESC_OFFSET(force_registration),
 };
 
 static int
@@ -1238,6 +1240,10 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
   if (cnts->assign_logins) {
     fprintf(f, "\n         %s=\"%s\"",
             attr_map[CONTEST_A_ASSIGN_LOGINS], "yes");
+  }
+  if (cnts->force_registration) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attr_map[CONTEST_A_FORCE_REGISTRATION], "yes");
   }
 
   if (cnts->closed) {
