@@ -808,7 +808,7 @@ static int
 user_contest_iterator_has_next_func(ptr_iterator_t data)
 {
   struct user_contest_iterator *iter = (struct user_contest_iterator *) data;
-  return (iter->cur_ptr != NULL) && (iter->cur_ptr->right != NULL);
+  return (iter->cur_ptr != NULL);
 }
 static const void *
 user_contest_iterator_get_func(ptr_iterator_t data)
