@@ -102,6 +102,7 @@ super_html_clear_variable(struct sid_state *sstate, int cmd)
   case SSERV_CMD_CNTS_CLEAR_TEAM_PAR_STYLE: p_str = &cnts->team_par_style; break;
   case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL: p_str = &cnts->register_email; break;
   case SSERV_CMD_CNTS_CLEAR_REGISTER_URL: p_str = &cnts->register_url; break;
+  case SSERV_CMD_CNTS_CLEAR_LOGIN_TEMPLATE: p_str = &cnts->login_template; break;
   case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE: p_str = &cnts->register_email_file; break;
   case SSERV_CMD_CNTS_CLEAR_TEAM_URL: p_str = &cnts->team_url; break;
   case SSERV_CMD_CNTS_CLEAR_STANDINGS_URL: p_str = &cnts->standings_url; break;
@@ -412,6 +413,9 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     break;
   case SSERV_CMD_CNTS_CHANGE_REGISTER_URL:
     p_str = &cnts->register_url;
+    break;
+  case SSERV_CMD_CNTS_CHANGE_LOGIN_TEMPLATE:
+    p_str = &cnts->login_template;
     break;
   case SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL_FILE:
     p_str = &cnts->register_email_file;
