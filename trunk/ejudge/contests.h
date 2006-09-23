@@ -113,6 +113,7 @@ enum
     CONTEST_A_SSL,
     CONTEST_A_SIMPLE_REGISTRATION,
     CONTEST_A_SEND_PASSWD_EMAIL,
+    CONTEST_A_ASSIGN_LOGINS,
 
     CONTEST_LAST_ATTR
   };
@@ -220,6 +221,7 @@ struct contest_desc
   unsigned char invisible;
   unsigned char simple_registration;
   unsigned char send_passwd_email;
+  unsigned char assign_logins;
 
   time_t         reg_deadline;
   unsigned char *name;
