@@ -2658,10 +2658,15 @@ action_login(void)
       return;
     }
 
-    snprintf(url, sizeof(url),
-             "%s?action=%d&SID=%llx&locale_id=%d&contest_id=%d",
-             self_url, STATE_MAIN_PAGE, user_cookie, client_locale_id,
-             user_contest_id);
+    if (cnts->team_url)
+      snprintf(url, sizeof(url),
+               "%s?SID=%llx&locale_id=%d&contest_id=%d",
+               cnts->team_url, user_cookie, client_locale_id, user_contest_id);
+    else
+      snprintf(url, sizeof(url),
+               "%s?action=%d&SID=%llx&locale_id=%d&contest_id=%d",
+               self_url, STATE_MAIN_PAGE, user_cookie, client_locale_id,
+               user_contest_id);
 
     client_put_refresh_header(config->charset, url, 0,
                               "%s", _("Login successful"));
