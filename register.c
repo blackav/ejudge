@@ -2537,7 +2537,7 @@ action_register_new_user(void)
                                              user_login, user_email,
                                              &user_password);
       if (errcode == ULS_PASSWORD) errcode = 0;
-      if (errcode) {
+      if (errcode < 0) {
         error("%s", gettext(userlist_strerror(-errcode)));
       }
     } else {
@@ -2546,12 +2546,12 @@ action_register_new_user(void)
                                            user_contest_id,
                                            client_locale_id,
                                            user_login, user_email);
-      if (errcode == ULS_ERR_EMAIL_FAILED) {
+      if (errcode == -ULS_ERR_EMAIL_FAILED) {
         error("%s", _("The server was unable to send a registration e-mail\n"
                       "to the specified address. This is probably due\n"
                       "to heavy server load rather than to an invalid\n"
                       "e-mail address. You should try to register later.\n"));
-      } else if (errcode) {
+      } else if (errcode < 0) {
         error("%s", gettext(userlist_strerror(-errcode)));
       }
     }
@@ -2960,7 +2960,7 @@ action_register_for_contest(void)
   if (error_log) goto failed;
   errcode = userlist_clnt_set_info(server_conn, user_id,
                                    user_contest_id, user_xml_text);
-  if (errcode) {
+  if (errcode < 0) {
     error("%s", gettext(userlist_strerror(-errcode)));
     goto failed;
   }
@@ -2969,7 +2969,7 @@ action_register_for_contest(void)
                                              ULS_REGISTER_CONTEST,
                                              user_id,
                                              user_contest_id);
-    if (errcode) {
+    if (errcode < 0) {
       error("%s", gettext(userlist_strerror(-errcode)));
       goto failed;
     }
