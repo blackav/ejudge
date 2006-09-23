@@ -25,6 +25,7 @@ enum
   MIME_TYPE_TEXT = 0,
   MIME_TYPE_BINARY,             // application/octet-stream
   MIME_TYPE_APPL_MSWORD,        // application/msword
+  MIME_TYPE_APPL_RTF,           // application/rtf
   MIME_TYPE_APPL_PDF,           // application/pdf
   MIME_TYPE_APPL_MSEXCEL,       // application/vnd.ms-excel
   MIME_TYPE_APPL_MSPOWERPOINT,  // application/vnd.ms-powerpoint
