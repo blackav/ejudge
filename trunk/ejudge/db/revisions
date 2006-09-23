@@ -1038,3 +1038,12 @@ serve_2.c 3396 0 4599406
 new_server_html.c 3398 0 13508827
 new_server_html.c 3400 0 13508926
 super_html_3.c 3402 0 20577974
+contests.h 3404 0 776648
+super_actions.h 3404 0 1651728
+super_proto.h 3404 0 1620744
+register.c 3404 0 7951975
+serve-control.c 3404 0 10997791
+super-serve.c 3404 0 11211043
+contests.c 3404 0 3862385
+super_html.c 3404 0 10116676
+super_html_2.c 3404 0 4398986
