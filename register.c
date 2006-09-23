@@ -66,17 +66,20 @@ enum
     STATE_INITIAL = 1,
     STATE_REGISTER_NEW_USER,
     STATE_LOGIN,
+    STATE_LOGIN_FORCED_REG,
     STATE_USER_REGISTERED,
     STATE_MAIN_PAGE,
     STATE_EDIT_REGISTRATION_DATA,
 
     ACTION_CHANGE_LANG_AT_INITIAL,
     ACTION_CHANGE_LANG_AT_LOGIN,
+    ACTION_CHANGE_LANG_AT_LOGIN_FORCED_REG,
     ACTION_CHANGE_LANG_AT_REGISTER_NEW_USER,
     ACTION_CHANGE_LANG_AT_MAIN_PAGE,
     ACTION_NEW_LOGIN,
     ACTION_REGISTER_NEW_USER,
     ACTION_LOGIN,
+    ACTION_LOGIN_FORCED_REG,
     ACTION_LOGOUT,
     ACTION_CHANGE_PASSWORD,
     ACTION_SAVE_REGISTRATION_DATA,
@@ -1918,6 +1921,8 @@ display_initial_page(void)
 static void
 display_login_page(void)
 {
+  int next_action;
+
   if (client_locale_id == -1) client_locale_id = 0;
   //l10n_setlocale(client_locale_id);
 
@@ -1944,7 +1949,10 @@ display_login_page(void)
     printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n",
            user_login);
   }
-  print_choose_language_button(0, 0, ACTION_CHANGE_LANG_AT_LOGIN, 0);
+  next_action = ACTION_CHANGE_LANG_AT_LOGIN;
+  if (user_action == STATE_LOGIN_FORCED_REG)
+    next_action = ACTION_CHANGE_LANG_AT_LOGIN_FORCED_REG;
+  print_choose_language_button(0, 0, next_action, 0);
   printf("</form>\n");
 
   /* login */
@@ -1966,8 +1974,11 @@ display_login_page(void)
          " size=\"16\" maxlength=\"16\">\n",
          par_style, _("Password"), user_password);
 
+  next_action = ACTION_LOGIN;
+  if (user_action == STATE_LOGIN_FORCED_REG)
+    next_action = ACTION_LOGIN_FORCED_REG;
   printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
-         par_style, ACTION_LOGIN, _("Submit"));
+         par_style, next_action, _("Submit"));
   printf("</form>");
 }
 
@@ -2386,6 +2397,8 @@ action_change_lang_at_initial(void)
 
   if (user_action == ACTION_CHANGE_LANG_AT_LOGIN)
     newstate = STATE_LOGIN;
+  else if (user_action == ACTION_CHANGE_LANG_AT_LOGIN_FORCED_REG)
+    newstate = STATE_LOGIN_FORCED_REG;
 
   if (client_locale_id == -1) client_locale_id = 0;
   //l10n_setlocale(client_locale_id);
@@ -2587,6 +2600,7 @@ action_login(void)
   int new_user_id, new_locale_id;
   ej_cookie_t new_cookie;
   unsigned char *new_name;
+  const struct contest_desc *cnts = 0;
 
   if (client_locale_id == -1) client_locale_id = 0;
   //l10n_setlocale(client_locale_id);
@@ -2630,6 +2644,29 @@ action_login(void)
   if (client_locale_id == -1) client_locale_id = new_locale_id;
   if (client_locale_id == -1) client_locale_id = 0;
   user_cookie = new_cookie;
+
+  if (user_contest_id > 0) contests_get(user_contest_id, &cnts);
+  if (user_action==ACTION_LOGIN_FORCED_REG && cnts && cnts->force_registration){
+    errcode = userlist_clnt_register_contest(server_conn,
+                                             ULS_REGISTER_CONTEST,
+                                             user_id,
+                                             user_contest_id);
+    if (errcode < 0) {
+      client_put_header(stdout, header_txt, 0, config->charset, 1,
+                        client_locale_id, _("Registration failed"));
+      printf("<p%s>%s</p>\n", par_style, userlist_strerror(-errcode));
+      return;
+    }
+
+    snprintf(url, sizeof(url),
+             "%s?action=%d&SID=%llx&locale_id=%d&contest_id=%d",
+             self_url, STATE_MAIN_PAGE, user_cookie, client_locale_id,
+             user_contest_id);
+
+    client_put_refresh_header(config->charset, url, 0,
+                              "%s", _("Login successful"));
+    exit(0);
+  }
 
   *s1 = 0;
   if (user_contest_id > 0) {
@@ -3025,6 +3062,7 @@ main(int argc, char const *argv[])
     /* actions */
   case ACTION_CHANGE_LANG_AT_INITIAL:
   case ACTION_CHANGE_LANG_AT_LOGIN:
+  case ACTION_CHANGE_LANG_AT_LOGIN_FORCED_REG:
     action_change_lang_at_initial();
     break;
   case ACTION_CHANGE_LANG_AT_REGISTER_NEW_USER:
@@ -3034,6 +3072,7 @@ main(int argc, char const *argv[])
     action_register_new_user();
     break;
   case ACTION_LOGIN:
+  case ACTION_LOGIN_FORCED_REG:
     action_login();
     break;
   case ACTION_CHANGE_LANG_AT_MAIN_PAGE:
@@ -3055,6 +3094,7 @@ main(int argc, char const *argv[])
 
     /* pages */
   case STATE_LOGIN:
+  case STATE_LOGIN_FORCED_REG:
     display_login_page();
     break;
   case STATE_REGISTER_NEW_USER:
