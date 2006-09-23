@@ -174,7 +174,8 @@ mime_type_guess(const unsigned char *tmpdir,
   while (flen > 0 && isspace(fbuf[flen - 1])) fbuf[--flen] = 0;
   if (flen > 0) {
     for (i = 0; i < MIME_TYPE_LAST; i++)
-      if (!strstr(fbuf, mime_types[i].file_output))
+      if (mime_types[i].file_output[0]
+	  && strstr(fbuf, mime_types[i].file_output))
         return i;
   }
   for (i = 0; i < size; i++)
