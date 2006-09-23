@@ -2295,13 +2295,15 @@ super_html_edit_contest_page(FILE *f,
     fprintf(f, "</td></tr></form>\n");
   }
 
-  html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<tr%s><td>Auto-assign logins?</td><td>",
-          form_row_attrs[row ^= 1]);
-  html_boolean_select(f, cnts->assign_logins, "param", 0, 0);
-  fprintf(f, "</td><td>");
-  html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_ASSIGN_LOGINS, "Change");
-  fprintf(f, "</td></tr></form>\n");
+  if (sstate->advanced_view) {
+    html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Auto-assign logins?</td><td>",
+            form_row_attrs[row ^= 1]);
+    html_boolean_select(f, cnts->assign_logins, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_ASSIGN_LOGINS, "Change");
+    fprintf(f, "</td></tr></form>\n");
+  }
 
   html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>IP-address access rules for CGI programs</b>", head_row_attr);
@@ -2666,6 +2668,18 @@ super_html_edit_contest_page(FILE *f,
                              self_url,
                              extra_args,
                              hidden_vars);
+    if (cnts->assign_logins) {
+      print_string_editing_row(f, "Template for new logins:",
+                               cnts->login_template,
+                               SUPER_ACTION_CNTS_CHANGE_LOGIN_TEMPLATE,
+                               SUPER_ACTION_CNTS_CLEAR_LOGIN_TEMPLATE,
+                               0,
+                               session_id,
+                               form_row_attrs[row ^= 1],
+                               self_url,
+                               extra_args,
+                               hidden_vars);
+    }
   }
 
   html_start_form(f, 1, self_url, hidden_vars);

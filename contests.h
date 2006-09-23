@@ -49,6 +49,7 @@ enum
     CONTEST_USERS_FOOTER_FILE,
     CONTEST_REGISTER_EMAIL,
     CONTEST_REGISTER_URL,
+    CONTEST_LOGIN_TEMPLATE,
     CONTEST_TEAM_URL,
     CONTEST_REGISTRATION_DEADLINE,
     CONTEST_CAP,
@@ -238,6 +239,7 @@ struct contest_desc
   unsigned char *register_email;
   unsigned char *register_url;
   unsigned char *team_url;
+  unsigned char *login_template;
   unsigned char *root_dir;
   unsigned char *conf_dir;
   unsigned char *standings_url;

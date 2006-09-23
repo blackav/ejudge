@@ -67,6 +67,7 @@ static char const * const elem_map[] =
   "users_footer_file",
   "register_email",
   "register_url",
+  "login_template",
   "team_url",
   "registration_deadline",
   "cap",
@@ -177,6 +178,7 @@ node_free(struct xml_tree *t)
       xfree(cnts->team_footer_file);
       xfree(cnts->register_email);
       xfree(cnts->register_url);
+      xfree(cnts->login_template);
       xfree(cnts->team_url);
       xfree(cnts->root_dir);
       xfree(cnts->conf_dir);
@@ -565,6 +567,7 @@ static const size_t contest_final_offsets[CONTEST_LAST_TAG] =
   [CONTEST_USERS_FOOTER_FILE] = CONTEST_DESC_OFFSET(users_footer_file),
   [CONTEST_REGISTER_EMAIL] = CONTEST_DESC_OFFSET(register_email),
   [CONTEST_REGISTER_URL] = CONTEST_DESC_OFFSET(register_url),
+  [CONTEST_LOGIN_TEMPLATE] = CONTEST_DESC_OFFSET(login_template),
   [CONTEST_TEAM_URL] = CONTEST_DESC_OFFSET(team_url),
   [CONTEST_ROOT_DIR] = CONTEST_DESC_OFFSET(root_dir),
   [CONTEST_STANDINGS_URL] = CONTEST_DESC_OFFSET(standings_url),
@@ -1355,6 +1358,7 @@ contests_unparse(FILE *f,
   unparse_text(f, CONTEST_STANDINGS_URL, cnts->standings_url);
   unparse_text(f, CONTEST_PROBLEMS_URL, cnts->problems_url);
   unparse_text(f, CONTEST_REGISTER_EMAIL_FILE, cnts->register_email_file);
+  unparse_text(f, CONTEST_LOGIN_TEMPLATE, cnts->login_template);
 
   unparse_access(f, cnts->register_access, CONTEST_REGISTER_ACCESS);
   unparse_access(f, cnts->users_access, CONTEST_USERS_ACCESS);

@@ -986,8 +986,9 @@ cmd_register_new_2(struct client_state *p,
   struct userlist_pk_xml_data *out = 0;
   size_t out_size = 0, passwd_len;
   time_t current_time = time(0);
-  int user_id;
+  int user_id, serial;
   const struct userlist_user *u;
+  unsigned char login_buf[1024];
 
   // validate packet
   login = data->data;
@@ -1039,6 +1040,20 @@ cmd_register_new_2(struct client_state *p,
   if (!contests_check_register_ip_2(cnts, data->origin_ip, data->ssl)) {
     err("%s -> rejected IP", logbuf);
     send_reply(p, -ULS_ERR_IP_NOT_ALLOWED);
+    return;
+  }
+
+  if (cnts->assign_logins && cnts->login_template) {
+    serial = 0;
+    while (1) {
+      serial++;
+      snprintf(login_buf, sizeof(login_buf), cnts->login_template, serial);
+      if ((user_id = default_get_user_by_login(login_buf)) < 0) break;
+    }
+    login = login_buf;
+  } else if (!login || !*login) {
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    err("%s -> empty login", logbuf);
     return;
   }
 
@@ -1210,7 +1225,8 @@ cmd_register_new(struct client_state *p,
   unsigned char locale_str[256];
   unsigned char *url_str = 0;
   unsigned char contest_url[256];
-  int user_id;
+  int user_id, serial = 0;
+  unsigned char login_buf[1024];
 
   // validate packet
   login = data->data;
@@ -1243,6 +1259,16 @@ cmd_register_new(struct client_state *p,
   }
   originator_email = get_email_sender(cnts);
  
+  if (cnts && cnts->assign_logins && cnts->login_template) {
+    serial = 0;
+    while (1) {
+      serial++;
+      snprintf(login_buf, sizeof(login_buf), cnts->login_template, serial);
+      if ((user_id = default_get_user_by_login(login_buf)) < 0) break;
+    }
+    login = login_buf;
+  }
+
   contest_str[0] = 0;
   if (data->contest_id > 0) {
     snprintf(contest_str, sizeof(contest_str), "&contest_id=%d",

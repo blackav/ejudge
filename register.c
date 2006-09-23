@@ -2500,8 +2500,10 @@ action_register_new_user(void)
     error("%s: %s.", _("\"E-mail\" field contains invalid characters"),
           user_email);
   }
-  if (!user_login || !*user_login) {
-    error("%s", _("Mandatory \"Login\" field is empty."));
+  if (!cnts || !cnts->assign_logins) {
+    if (!user_login || !*user_login) {
+      error("%s", _("Mandatory \"Login\" field is empty."));
+    }
   }
   if (!user_email || !*user_email) {
     error("%s", _("Mandatory \"E-mail\" field is empty."));
