@@ -573,6 +573,32 @@ new_serve_url(unsigned char *buf, size_t size,
   return buf;
 }
 
+unsigned char *
+new_serve_aref(unsigned char *buf, size_t size,
+               const struct http_request_info *phr,
+               int action, const char *format, ...)
+{
+  unsigned char fbuf[1024];
+  unsigned char abuf[64];
+  const unsigned char *sep = "";
+  va_list args;
+
+  fbuf[0] = 0;
+  if (format && *format) {
+    va_start(args, format);
+    vsnprintf(fbuf, sizeof(fbuf), format, args);
+    va_end(args);
+  }
+  if (fbuf[0]) sep = "&";
+
+  abuf[0] = 0;
+  if (action > 0) snprintf(abuf, sizeof(abuf), "&action=%d", action);
+
+  snprintf(buf, size, "<a href=\"%s?SID=%016llx%s%s%s\">", phr->self_url,
+           phr->session_id, abuf, sep, fbuf);
+  return buf;
+}
+
 static const unsigned char * const submit_button_labels[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_UPDATE_STANDINGS_1] = __("Update public standings"),
@@ -601,20 +627,61 @@ static const unsigned char * const submit_button_labels[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1] = __("Full rejudge displayed runs"),
   [NEW_SRV_ACTION_SQUEEZE_RUNS] = __("Squeeze runs"),
   [NEW_SRV_ACTION_RESET_CLAR_FILTER] = __("Reset filter"),
+  [NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS] = __("Remove registrations"),
+  [NEW_SRV_ACTION_USERS_SET_PENDING] = __("Mark PENDING"),
+  [NEW_SRV_ACTION_USERS_SET_OK] = __("Mark OK"),
+  [NEW_SRV_ACTION_USERS_SET_REJECTED] = __("Mark REJECTED"),
+  [NEW_SRV_ACTION_USERS_SET_INVISIBLE] = __("Mark INVISIBLE"),
+  [NEW_SRV_ACTION_USERS_CLEAR_INVISIBLE] = __("Clear INVISIBLE"),
+  [NEW_SRV_ACTION_USERS_SET_BANNED] = __("Mark BANNED"),
+  [NEW_SRV_ACTION_USERS_CLEAR_BANNED] = __("Clear BANNED"),
+  [NEW_SRV_ACTION_USERS_SET_LOCKED] = __("Mark LOCKED"),
+  [NEW_SRV_ACTION_USERS_CLEAR_LOCKED] = __("Clear LOCKED"),
+  [NEW_SRV_ACTION_USERS_ADD_BY_LOGIN] = __("Add by login"),
+  [NEW_SRV_ACTION_USERS_ADD_BY_USER_ID] = __("Add by ID"),
+  [NEW_SRV_ACTION_PRIV_USERS_REMOVE] = __("Remove"),
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER] = __("Add OBSERVER"),
+  [NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER] = __("Del OBSERVER"),
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_EXAMINER] = __("Add EXAMINER"),
+  [NEW_SRV_ACTION_PRIV_USERS_DEL_EXAMINER] = __("Del EXAMINER"),
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_EXAMINER] = __("Add CHIEF EXAMINER"),
+  [NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_EXAMINER] = __("Del CHIEF EXAMINER"),
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR] = __("Add COORDINATOR"),
+  [NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR] = __("Del COORDINATOR"), 
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN] = __("Add by login"),
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID] = __("Add by ID"),
+  [NEW_SRV_ACTION_START_CONTEST] = __("Start"),
+  [NEW_SRV_ACTION_STOP_CONTEST] = __("Stop"),
+  [NEW_SRV_ACTION_CONTINUE_CONTEST] = __("Continue"),
+  [NEW_SRV_ACTION_SCHEDULE] = __("Reschedule"),
+  [NEW_SRV_ACTION_CHANGE_DURATION] = __("Change duration"),
+  [NEW_SRV_ACTION_SUBMIT_RUN] = __("Send!"),
+  [NEW_SRV_ACTION_SUBMIT_CLAR] = __("Send!"),
 };
+
+#define BUTTON(a) new_serve_submit_button(bb, sizeof(bb), 0, a, 0)
 
 unsigned char *
 new_serve_submit_button(unsigned char *buf, size_t size,
                         const unsigned char *var_name, int action,
                         const unsigned char *label)
 {
+  unsigned char name_buf[64];
+  const unsigned char *name_ptr;
+
   if (!var_name) var_name = "action";
   if (!label && action > 0 && action < NEW_SRV_ACTION_LAST)
     label = gettext(submit_button_labels[action]);
   if (!label) label = "Submit";
+  name_ptr = var_name;
+  if (action > 0) {
+    // IE bug mode :(
+    snprintf(name_buf, sizeof(name_buf), "%s_%d", var_name, action);
+    name_ptr = name_buf;
+  }
   snprintf(buf, size,
            "<button type=\"submit\" name=\"%s\" value=\"%d\">%s</button>",
-           var_name, action, label);
+           name_ptr, action, label);
   return buf;
 }
 
@@ -648,6 +715,7 @@ privileged_page_login_page(struct server_framework_state *state,
   const unsigned char *s;
   unsigned char *as;
   int r, n;
+  unsigned char bbuf[1024];
 
   l10n_setlocale(phr->locale_id);
   html_put_header(fout, 0, 0, 0, phr->locale_id, "Login page");
@@ -684,7 +752,9 @@ privileged_page_login_page(struct server_framework_state *state,
   fprintf(fout, "<tr><td>%s:</td><td>", _("Language"));
   l10n_html_locale_select(fout, phr->locale_id);
   fprintf(fout, "</td></tr>\n");
-  fprintf(fout, "<tr><td>&nbsp;</td><td><button type=\"submit\" value=\"1\">%s</button></td></tr>\n", _("Submit"));
+  fprintf(fout, "<tr><td>&nbsp;</td><td>%s</td></tr>\n",
+          new_serve_submit_button(bbuf, sizeof(bbuf), "login", 0,
+                                  _("Submit")));
   fprintf(fout, "</table></form>\n");
   html_put_footer(fout, 0, phr->locale_id);
   l10n_setlocale(0);
@@ -1045,8 +1115,9 @@ html_error_status_page(struct server_framework_state *state,
   fprintf(fout, "<font color=\"red\"><pre>%s</pre></font>\n",
           s);
   xfree(s);
-  fprintf(fout, "<hr><a href=\"%s\">Back</a>\n",
-          new_serve_url(url, sizeof(url), phr, back_action, 0));
+  fprintf(fout, "<hr>%s%s</a>\n",
+          new_serve_aref(url, sizeof(url), phr, back_action, 0),
+          _("Back"));
   html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
 }
@@ -1859,6 +1930,7 @@ priv_view_users_page(struct server_framework_state *state,
   int uid;
   int row = 1, serial = 1;
   char url[1024];
+  unsigned char bb[1024];
 
   if (open_ul_connection(state) < 0)
     return html_err_userlist_server_down(state, p, fout, phr, 1);
@@ -1930,23 +2002,49 @@ priv_view_users_page(struct server_framework_state *state,
   fprintf(fout, "<h2>Available actions</h2>\n");
 
   fprintf(fout, "<table>\n");
-  fprintf(fout, "<tr><td><a href=\"%s\">Back</a></td><td>Return to the main page</td></tr>\n", new_serve_url(url, sizeof(url), phr, 0, 0));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS, _("Remove registrations"), _("Remove the selected users from the list"));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_PENDING, _("Mark PENDING"), _("Set the registration status of the selected users to PENDING"));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_OK, _("Mark OK"), _("Set the registration status of the selected users to OK"));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_REJECTED, _("Mark REJECTED"), _("Set the registration status of the selected users to REJECTED"));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_INVISIBLE, _("Mark INVISIBLE"), _("Set the INVISIBLE flag for the selected users"));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_CLEAR_INVISIBLE, _("Clear INVISIBLE"), _("Clear the INVISIBLE flag for the selected users"));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_BANNED, _("Mark BANNED"), _("Set the BANNED flag for the selected users"));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_CLEAR_BANNED, _("Clear BANNED"), _("Clear the BANNED flag for the selected users"));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_LOCKED, _("Mark LOCKED"), _("Set the LOCKED flag for the selected users"));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_CLEAR_LOCKED, _("Clear LOCKED"), _("Clear the LOCKED flag for the selected users"));
+  fprintf(fout, "<tr><td>%s%s</a></td><td>%s</td></tr>\n",
+          new_serve_aref(url, sizeof(url), phr, 0, 0),
+          _("Back"), _("Return to the main page"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS),
+          _("Remove the selected users from the list"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_SET_PENDING),
+          _("Set the registration status of the selected users to PENDING"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_SET_OK),
+          _("Set the registration status of the selected users to OK"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_SET_REJECTED), 
+          _("Set the registration status of the selected users to REJECTED"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_SET_INVISIBLE),
+          _("Set the INVISIBLE flag for the selected users"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_CLEAR_INVISIBLE),
+          _("Clear the INVISIBLE flag for the selected users"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_SET_BANNED),
+          _("Set the BANNED flag for the selected users"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_CLEAR_BANNED),
+          _("Clear the BANNED flag for the selected users"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_SET_LOCKED),
+          _("Set the LOCKED flag for the selected users"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_CLEAR_LOCKED),
+          _("Clear the LOCKED flag for the selected users"));
   fprintf(fout, "</table>\n");
 
   fprintf(fout, "<h2>%s</h2>\n", _("Add new user"));
   fprintf(fout, "<table>\n");
-  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_login\"></td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_ADD_BY_LOGIN, _("Add by login"), _("Add a new user specifying his/her login"));
-  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_user_id\"></td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_ADD_BY_USER_ID, _("Add by ID"), _("Add a new user specifying his/her User Id"));
+  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_login\"></td><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_ADD_BY_LOGIN),
+          _("Add a new user specifying his/her login"));
+  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_user_id\"></td><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_ADD_BY_USER_ID),
+          _("Add a new user specifying his/her User Id"));
   fprintf(fout, "</table>\n");
 
   fprintf(fout, "</form>\n");
@@ -1999,6 +2097,7 @@ priv_view_priv_users_page(struct server_framework_state *state,
   unsigned int role_mask;
   int row = 1, cnt, r;
   unsigned char url[1024];
+  unsigned char bb[1024];
 
   XMEMZERO(&users, 1);
 
@@ -2102,26 +2201,50 @@ priv_view_priv_users_page(struct server_framework_state *state,
   fprintf(fout, "<h2>Available actions</h2>\n");
 
   fprintf(fout, "<table>\n");
-  fprintf(fout, "<tr><td><a href=\"%s\">Back</a></td><td>Return to the main page</td></tr>\n", new_serve_url(url, sizeof(url), phr, 0, 0));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_REMOVE, _("Remove"), _("Remove the selected users from the list (ADMINISTRATORs cannot be removed)"));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER, _("Add OBSERVER"), _("Add the OBSERVER role to the selected users"));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER, _("Del OBSERVER"), _("Remove the OBSERVER role from the selected users"));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_EXAMINER, _("Add EXAMINER"), _("Add the EXAMINER role to the selected users"));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_EXAMINER, _("Del EXAMINER"), _("Remove the EXAMINER role from the selected users"));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_EXAMINER, _("Add CHIEF EXAMINER"), _("Add the CHIEF EXAMINER role to the selected users"));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_EXAMINER, _("Del CHIEF EXAMINER"), _("Remove the CHIEF EXAMINER role from the selected users"));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR, _("Add COORDINATOR"), _("Add the COORDINATOR role to the selected users"));
-  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR, _("Del COORDINATOR"), _("Remove the COORDINATOR role from the selected users"));
+  fprintf(fout, "<tr><td>%s%s</a></td><td>%s</td></tr>\n",
+          new_serve_aref(url, sizeof(url), phr, 0, 0),
+          _("Back"), _("Return to the main page"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_PRIV_USERS_REMOVE),
+          _("Remove the selected users from the list (ADMINISTRATORs cannot be removed)"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER),
+          _("Add the OBSERVER role to the selected users"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER),
+          _("Remove the OBSERVER role from the selected users"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_PRIV_USERS_ADD_EXAMINER),
+          _("Add the EXAMINER role to the selected users"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_PRIV_USERS_DEL_EXAMINER),
+          _("Remove the EXAMINER role from the selected users"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_EXAMINER),
+          _("Add the CHIEF EXAMINER role to the selected users"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_EXAMINER),
+          _("Remove the CHIEF EXAMINER role from the selected users"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR),
+          _("Add the COORDINATOR role to the selected users"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR),
+          _("Remove the COORDINATOR role from the selected users"));
   fprintf(fout, "</table>\n");
 
   fprintf(fout, "<h2>%s</h2>\n", _("Add new user"));
   fprintf(fout, "<table>\n");
   fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_login\"></td><td>");
   html_role_select(fout, USER_ROLE_OBSERVER, 0, "add_role_1");
-  fprintf(fout, "</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN, _("Add by login"), _("Add a new user specifying his/her login"));
+  fprintf(fout, "</td><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN),
+          _("Add a new user specifying his/her login"));
   fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_user_id\"></td><td>");
   html_role_select(fout, USER_ROLE_OBSERVER, 0, "add_role_2");
-  fprintf(fout, "</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID, _("Add by ID"), _("Add a new user specifying his/her User Id"));
+  fprintf(fout, "</td><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID),
+          _("Add a new user specifying his/her User Id"));
   fprintf(fout, "</table>\n");
 
   html_put_footer(fout, extra->footer_txt, phr->locale_id);
@@ -2274,7 +2397,7 @@ priv_main_page(struct server_framework_state *state,
   unsigned char hbuf[1024];
   unsigned char duration_buf[128];
   const unsigned char *s;
-  unsigned char bbuf[1024];
+  unsigned char bb[1024];
   int action;
   long long tdiff;
 
@@ -2289,10 +2412,13 @@ priv_main_page(struct server_framework_state *state,
                   "%s [%s, %s]: %s", unparse_role(phr->role),
                   phr->name_arm, extra->contest_arm, _("Main page"));
   fprintf(fout, "<ul>\n");
-  fprintf(fout, "<li><a href=\"%s\">View regular users</a></li>\n",
-          new_serve_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USERS, 0));
-  fprintf(fout, "<li><a href=\"%s\">View privileged users</a></li>\n",
-          new_serve_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_PRIV_USERS_VIEW, 0));
+  fprintf(fout, "<li>%s%s</a></li>\n",
+          new_serve_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USERS, 0),
+          _("View regular users"));
+  fprintf(fout, "<li>%s%s</a></li>\n",
+          new_serve_aref(hbuf, sizeof(hbuf), phr,
+                         NEW_SRV_ACTION_PRIV_USERS_VIEW, 0),
+          _("View privileged users"));
   fprintf(fout, "</ul>\n");
 
   /* if role == ADMIN and capability CONTROL_CONTEST */
@@ -2349,28 +2475,28 @@ priv_main_page(struct server_framework_state *state,
           _("Server time"), ctime(&cs->current_time));
 
   if (start_time <= 0) {
-    fprintf(fout, "<tr><td colspan=\"2\"><b>%s</b></td><td>&nbsp;</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr>\n",
-            _("Contest is not started"), NEW_SRV_ACTION_START_CONTEST,
-            _("Start"));
+    fprintf(fout, "<tr><td colspan=\"2\"><b>%s</b></td><td>&nbsp;</td><td>%s</td></tr>\n",
+            _("Contest is not started"),
+            BUTTON(NEW_SRV_ACTION_START_CONTEST));
   } else {
     fprintf(fout, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
             _("Contest start time"), ctime(&start_time));
     if (stop_time <= 0) {
-      fprintf(fout, "<td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr>\n", NEW_SRV_ACTION_STOP_CONTEST, _("Stop"));
+      fprintf(fout, "<td>%s</td></tr>\n", BUTTON(NEW_SRV_ACTION_STOP_CONTEST));
     } else if (global->enable_continue
                && (!duration || stop_time < start_time + duration)) {
-      fprintf(fout, "<td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr>\n", NEW_SRV_ACTION_CONTINUE_CONTEST, _("Continue"));
+      fprintf(fout, "<td>%s</td></tr>\n",
+              BUTTON(NEW_SRV_ACTION_CONTINUE_CONTEST));
     }
   }
 
   if (!global->virtual && start_time <= 0) {
     fprintf(fout, "<tr><td>%s:</td><td>%s</td>"
             "<td><input type=\"text\" name=\"sched_time\" size=\"16\"></td>"
-            "<td><button type=\"submit\" name=\"action\" value=\"%d\">%s"
-            "</button></td></tr>\n",
+            "<td>%s</td></tr>\n",
             _("Planned start time"),
             sched_time <= 0?_("Not set"):ctime(&sched_time),
-            NEW_SRV_ACTION_SCHEDULE, _("Reschedule"));
+            BUTTON(NEW_SRV_ACTION_SCHEDULE));
   }
 
   if (global->contest_finish_time_d <= 0) {
@@ -2383,9 +2509,8 @@ priv_main_page(struct server_framework_state *state,
     fprintf(fout, "<tr><td>%s:</td><td>%s</td>",_("Duration"), duration_buf);
     if (stop_time <= 0 || global->enable_continue) {
       fprintf(fout, "<td><input type=\"text\" name=\"dur\" size=\"16\"></td>"
-              "<td><button type=\"submit\" name=\"action\" value=\"%d\">%s"
-              "</button></td></tr>\n",
-              NEW_SRV_ACTION_CHANGE_DURATION, _("Change duration"));
+              "<td>%s</td></tr>\n",
+              BUTTON(NEW_SRV_ACTION_CHANGE_DURATION));
     } else {
       fprintf(fout, "<td>nbsp;</td><td>&nbsp;</td></tr>\n");
     }
@@ -2431,46 +2556,30 @@ priv_main_page(struct server_framework_state *state,
 
   // role == ADMIN && CONTROL_CONTEST
   html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-  fprintf(fout, "%s\n", 
-          new_serve_submit_button(bbuf, sizeof(bbuf), 0,
-                                  NEW_SRV_ACTION_UPDATE_STANDINGS_1, 0));
-  fprintf(fout, "%s\n",
-          new_serve_submit_button(bbuf, sizeof(bbuf), 0,
-                                  NEW_SRV_ACTION_RESET_1, 0));
+  fprintf(fout, "%s\n",  BUTTON(NEW_SRV_ACTION_UPDATE_STANDINGS_1));
+  fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_RESET_1));
   action = NEW_SRV_ACTION_SUSPEND;
   if (cs->clients_suspended) action = NEW_SRV_ACTION_RESUME;
-  fprintf(fout, "%s\n",
-          new_serve_submit_button(bbuf, sizeof(bbuf), 0, action, 0));
+  fprintf(fout, "%s\n", BUTTON(action));
   action = NEW_SRV_ACTION_TEST_SUSPEND;
   if (cs->testing_suspended) action = NEW_SRV_ACTION_TEST_RESUME;
-  fprintf(fout, "%s\n",
-          new_serve_submit_button(bbuf, sizeof(bbuf), 0, action, 0));
+  fprintf(fout, "%s\n", BUTTON(action));
   if (global->enable_printing) {
     action = NEW_SRV_ACTION_PRINT_SUSPEND;
     if (cs->printing_suspended) action = NEW_SRV_ACTION_PRINT_RESUME;
-    fprintf(fout, "%s\n",
-            new_serve_submit_button(bbuf, sizeof(bbuf), 0, action, 0));
+    fprintf(fout, "%s\n", BUTTON(action));
   }
   if (global->score_system_val == SCORE_OLYMPIAD) {
     action = NEW_SRV_ACTION_SET_JUDGING_MODE;
     if (!cs->accepting_mode) action = NEW_SRV_ACTION_SET_ACCEPTING_MODE;
-    fprintf(fout, "%s\n",
-            new_serve_submit_button(bbuf, sizeof(bbuf), 0, action, 0));
+    fprintf(fout, "%s\n", BUTTON(action));
   }
   if (!cnts->disable_team_password) {
-    fprintf(fout, "%s\n",
-            new_serve_submit_button(bbuf, sizeof(bbuf), 0,
-                                    NEW_SRV_ACTION_GENERATE_PASSWORDS_1, 0));
-    fprintf(fout, "%s\n",
-            new_serve_submit_button(bbuf, sizeof(bbuf), 0,
-                                    NEW_SRV_ACTION_CLEAR_PASSWORDS_1, 0));
+    fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_GENERATE_PASSWORDS_1));
+    fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_CLEAR_PASSWORDS_1));
   }
-  fprintf(fout, "%s\n",
-          new_serve_submit_button(bbuf, sizeof(bbuf), 0,
-                                  NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1, 0));
-  fprintf(fout, "%s\n",
-          new_serve_submit_button(bbuf, sizeof(bbuf), 0,
-                                  NEW_SRV_ACTION_RELOAD_SERVER_1, 0));
+  fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1));
+  fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_RELOAD_SERVER_1));
 
   new_serve_write_priv_all_runs(fout, phr, cnts, extra, 0, 0, 0);
 
@@ -2502,8 +2611,7 @@ priv_main_page(struct server_framework_state *state,
           "<p><textarea name=\"msg_text\" rows=\"20\" cols=\"60\">"
           "</textarea></p>"
           "<p>%s\n</form>\n",
-          new_serve_submit_button(bbuf, sizeof(bbuf), 0,
-                                  NEW_SRV_ACTION_PRIV_SUBMIT_CLAR, 0));
+          BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_CLAR));
 
   /* change the password */
   fprintf(fout, "<hr><a name=\"chgpasswd\"></a>\n<%s>%s</%s>\n",
@@ -2520,8 +2628,7 @@ priv_main_page(struct server_framework_state *state,
           "</table></form>",
           _("Old password"),
           _("New password"), _("Retype new password"),
-          new_serve_submit_button(bbuf, sizeof(bbuf), 0, 
-                                  NEW_SRV_ACTION_CHANGE_PASSWORD, 0));
+          BUTTON(NEW_SRV_ACTION_CHANGE_PASSWORD));
 
 #if CONF_HAS_LIBINTL - 0 == 1
   if (cs->global->enable_l10n) {
@@ -2532,8 +2639,7 @@ priv_main_page(struct server_framework_state *state,
     fprintf(fout, "<table><tr><td>%s</td><td>", _("Change language"));
     l10n_html_locale_select(fout, phr->locale_id);
     fprintf(fout, "</td><td>%s</td></tr></table></form>\n",
-            new_serve_submit_button(bbuf, sizeof(bbuf), 0,
-                                    NEW_SRV_ACTION_CHANGE_LANGUAGE, 0));
+            BUTTON(NEW_SRV_ACTION_CHANGE_LANGUAGE));
   }
 #endif /* CONF_HAS_LIBINTL */
 
@@ -2743,6 +2849,7 @@ unprivileged_page_login_page(struct server_framework_state *state,
   time_t cur_time;
   const unsigned char *s;
   unsigned char *as;
+  unsigned char bb[1024];
 
   if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
     return html_err_service_not_available(state, p, fout, phr,
@@ -2805,7 +2912,8 @@ unprivileged_page_login_page(struct server_framework_state *state,
   fprintf(fout, "%s:&nbsp;", _("language"));
   l10n_html_locale_select(fout, phr->locale_id);
   fprintf(fout, "&nbsp;&nbsp;\n");
-  fprintf(fout, "<button type=\"submit\" value=\"1\">%s</button>\n", _("Submit"));
+  fprintf(fout, "%s\n",
+          new_serve_submit_button(bb, sizeof(bb), "submit", 0, _("Submit")));
   fprintf(fout, "</form></div>\n");
   fprintf(fout, "<div class=\"search_actions\"><a href=\"\">%s</a>&nbsp;&nbsp;<a href=\"\">%s</a></div>", _("Registration"), _("Forgot the password?"));
   html_put_footer(fout, extra->footer_txt, phr->locale_id);
@@ -4086,6 +4194,7 @@ user_main_page(struct server_framework_state *state,
   const unsigned char *pw_path;
   const struct section_problem_data *prob = 0;
   unsigned char urlbuf[1024];
+  unsigned char bb[1024];
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
@@ -4196,8 +4305,8 @@ user_main_page(struct server_framework_state *state,
               gettext(user_section_names[i]));
     }
   }
-  fprintf(fout, "<td><a href=\"%s\">%s</a></td>",
-          new_serve_url(urlbuf, sizeof(urlbuf), phr, NEW_SRV_ACTION_LOGOUT, 0),
+  fprintf(fout, "<td>%s%s</a></td>",
+          new_serve_aref(urlbuf, sizeof(urlbuf), phr, NEW_SRV_ACTION_LOGOUT, 0),
           _("Logout"));
           
   fprintf(fout, "</tr></table>\n");
@@ -4226,7 +4335,7 @@ user_main_page(struct server_framework_state *state,
                                      accepted_flag, 1);
   }
 
-  if (viewed_section == USER_SECTION_PROBLEM) {
+  if (viewed_section == USER_SECTION_PROBLEM && !cs->clients_suspended) {
     if (prob_id > cs->max_prob) prob_id = 0;
     if (prob_id > 0 && !(prob = cs->probs[prob_id])) prob_id = 0;
     if (prob_id > 0 && is_problem_deadlined(cs, prob_id, phr->login, 0))
@@ -4249,7 +4358,10 @@ user_main_page(struct server_framework_state *state,
       html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 0,
                              start_time);
 
-      fprintf(fout, "</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", NEW_SRV_ACTION_MAIN_PAGE, _("Select problem"));
+      fprintf(fout, "</td><td>%s</td></tr></table></form>\n",
+              new_serve_submit_button(bb, sizeof(bb), 0,
+                                      NEW_SRV_ACTION_MAIN_PAGE,
+                                      _("Select problem")));
     } else if (start_time > 0 && stop_time <= 0 && prob_id > 0) {
       prob = cs->probs[prob_id];
 
@@ -4331,8 +4443,8 @@ user_main_page(struct server_framework_state *state,
         }
         break;
       }
-      fprintf(fout, "<tr><td>%s</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", _("Send!"),
-              NEW_SRV_ACTION_SUBMIT_RUN, _("Send!"));
+      fprintf(fout, "<tr><td>%s</td><td>%s</td></tr></table></form>\n", _("Send!"),
+              BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
 
       fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
               cnts->team_head_style, _("Select another problem"),
@@ -4344,7 +4456,10 @@ user_main_page(struct server_framework_state *state,
       html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 0,
                              start_time);
 
-      fprintf(fout, "</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", NEW_SRV_ACTION_MAIN_PAGE, _("Select problem"));
+      fprintf(fout, "</td><td>%s</td></tr></table></form>\n",
+              new_serve_submit_button(bb, sizeof(bb), 0,
+                                      NEW_SRV_ACTION_MAIN_PAGE,
+                                      _("Select problem")));
     }
 
     if (start_time) {
@@ -4365,7 +4480,7 @@ user_main_page(struct server_framework_state *state,
     }
   }
 
-  if (viewed_section == USER_SECTION_CLAR) {
+  if (viewed_section == USER_SECTION_CLAR && !cs->clients_suspended) {
     if (!global->disable_clars && !global->disable_team_clars) {
       fprintf(fout, "<hr><a name=\"clar\"></a><%s>%s</%s>\n",
               cnts->team_head_style, _("Send a message to judges"),
@@ -4377,9 +4492,9 @@ user_main_page(struct server_framework_state *state,
       fprintf(fout, "</td></tr>\n<tr><td>%s:</td>"
               "<td><input type=\"text\" name=\"subject\"></td></tr>\n"
               "<tr><td colspan=\"2\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
-              "<tr><td colspan=\"2\"><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr>\n"
+              "<tr><td colspan=\"2\">%s</td></tr>\n"
               "</table></form>\n",
-              _("Subject"), NEW_SRV_ACTION_SUBMIT_CLAR, _("Send!"));
+              _("Subject"), BUTTON(NEW_SRV_ACTION_SUBMIT_CLAR));
     }
 
     if (!global->disable_clars) {
@@ -4419,7 +4534,7 @@ user_main_page(struct server_framework_state *state,
     }
 
 #if CONF_HAS_LIBINTL - 0 == 1
-    if (cs->global->enable_l10n) {
+    if (cs->global->enable_l10n && !cs->clients_suspended) {
       fprintf(fout, "<hr><a name=\"chglanguage\"></a><%s>%s</%s>\n",
               cnts->team_head_style, _("Change language"),
               cnts->team_head_style);
