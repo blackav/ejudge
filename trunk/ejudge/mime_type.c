@@ -40,9 +40,11 @@ static const struct mime_type_info mime_types[MIME_TYPE_LAST] =
   [MIME_TYPE_BINARY] =
   { "application/octet-stream", "", "" },
   [MIME_TYPE_APPL_MSWORD] =
-  { "application/msword", ".doc", "" },
+  { "application/msword", ".doc", "Microsoft Office Document" },
+  [MIME_TYPE_APPL_RTF] =
+  { "application/rtf", ".rtf", "Rich Text Format data" },
   [MIME_TYPE_APPL_PDF] =
-  { "application/pdf", ".pdf", "" },
+  { "application/pdf", ".pdf", "PDF document" },
   [MIME_TYPE_APPL_MSEXCEL] = 
   { "application/vnd.ms-excel", ".xls", "" },
   [MIME_TYPE_APPL_MSPOWERPOINT] = 
@@ -72,11 +74,11 @@ static const struct mime_type_info mime_types[MIME_TYPE_LAST] =
   [MIME_TYPE_IMAGE_GIF] =
   { "image/gif", ".gif", "" },
   [MIME_TYPE_IMAGE_JPEG] =
-  { "image/jpeg", ".jpg", "" },
+  { "image/jpeg", ".jpg", "JPEG image data" },
   [MIME_TYPE_IMAGE_PNG] =
-  { "image/png", ".png", "" },
+  { "image/png", ".png", "PNG image data" },
   [MIME_TYPE_IMAGE_TIFF] =
-  { "image/tiff", ".tif", "" },
+  { "image/tiff", ".tif", "TIFF image data" },
   [MIME_TYPE_IMAGE_DJVU] =
   { "image/vnd.djvu", ".djvu", "" },
   [MIME_TYPE_IMAGE_ICON] =
@@ -172,7 +174,7 @@ mime_type_guess(const unsigned char *tmpdir,
   while (flen > 0 && isspace(fbuf[flen - 1])) fbuf[--flen] = 0;
   if (flen > 0) {
     for (i = 0; i < MIME_TYPE_LAST; i++)
-      if (!strcmp(mime_types[i].file_output, fbuf))
+      if (!strstr(fbuf, mime_types[i].file_output))
         return i;
   }
   for (i = 0; i < size; i++)
