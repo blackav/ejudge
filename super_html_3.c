@@ -6777,8 +6777,6 @@ super_html_check_tests(FILE *f,
   mkpath(g_info_path, conf_path, global->info_dir, DFLT_G_INFO_DIR);
   mkpath(g_tgz_path, conf_path, global->tgz_dir, DFLT_G_TGZ_DIR);
   mkpath(g_checker_path, conf_path, global->checker_dir, DFLT_G_CHECKER_DIR);
-  mkpath(g_checker_path, conf_path, global->statement_dir,
-         DFLT_G_STATEMENT_DIR);
 
   for (i = 1; i < sstate->prob_a; i++) {
     if (!(prob = sstate->probs[i])) continue;
