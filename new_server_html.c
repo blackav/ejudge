@@ -753,7 +753,7 @@ privileged_page_login_page(struct server_framework_state *state,
   l10n_html_locale_select(fout, phr->locale_id);
   fprintf(fout, "</td></tr>\n");
   fprintf(fout, "<tr><td>&nbsp;</td><td>%s</td></tr>\n",
-          new_serve_submit_button(bbuf, sizeof(bbuf), "login", 0,
+          new_serve_submit_button(bbuf, sizeof(bbuf), "submit", 0,
                                   _("Submit")));
   fprintf(fout, "</table></form>\n");
   html_put_footer(fout, 0, phr->locale_id);
