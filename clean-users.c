@@ -187,7 +187,7 @@ main(int argc, char **argv)
     snprintf(clarlog_path, sizeof(clarlog_path),
              "%s/var/clar.log", cnts->root_dir);
 
-    if (run_open(runlog_state, runlog_path, RUN_LOG_READONLY, 0) < 0) {
+    if (run_open(runlog_state, runlog_path, RUN_LOG_READONLY, 0, 0) < 0) {
       err("contest %d cannot open runlog '%s'", i, runlog_path);
     } else if (!(total_runs = run_get_total(runlog_state))) {
       info("contest %d runlog is empty", i);

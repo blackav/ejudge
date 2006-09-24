@@ -54,6 +54,7 @@ static struct server_framework_params params =
   .startup_error = startup_error,
   .handle_packet = handle_packet_func,
   .loop_start = new_server_loop_callback,
+  .post_select = new_server_post_select_callback,
 };
 
 static struct server_framework_state *state = 0;
