@@ -1205,7 +1205,7 @@ privileged_page_login(struct server_framework_state *state,
         || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0)
       return html_err_permission_denied(state, p, fout, phr, 1,
                                         "user %s does not have MASTER_LOGIN bit for contest %d", phr->login, phr->contest_id);
-  } else if (phr->role == USER_ROLE_ADMIN) {
+  } else if (phr->role == USER_ROLE_JUDGE) {
     // as for the judge program
     if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
         || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0)
