@@ -2400,6 +2400,24 @@ priv_main_page(struct server_framework_state *state,
   unsigned char bb[1024];
   int action;
   long long tdiff;
+  int filter_first_run = 0, filter_last_run = 0, filter_first_clar = 0;
+  int filter_last_clar = 0;
+  const unsigned char *filter_expr = 0;
+  int x, n;
+
+  if (ns_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
+  if (ns_cgi_param(phr, "filter_first_run", &s) > 0
+      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n])
+    filter_first_run = x;
+  if (ns_cgi_param(phr, "filter_last_run", &s) > 0
+      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n])
+    filter_last_run = x;
+  if (ns_cgi_param(phr, "filter_first_clar", &s) > 0
+      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n])
+    filter_first_clar = x;
+  if (ns_cgi_param(phr, "filter_last_clar", &s) > 0
+      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n])
+    filter_last_clar = x;
 
   run_get_times(cs->runlog_state, &start_time, &sched_time, &duration,
                 &stop_time);
@@ -2581,7 +2599,9 @@ priv_main_page(struct server_framework_state *state,
   fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1));
   fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_RELOAD_SERVER_1));
 
-  new_serve_write_priv_all_runs(fout, phr, cnts, extra, 0, 0, 0);
+  new_serve_write_priv_all_runs(fout, phr, cnts, extra,
+                                filter_first_run, filter_last_run,
+                                filter_expr);
 
   new_serve_write_all_clars(fout, phr, cnts, extra, 0, 0, 0);
 
