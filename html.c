@@ -1241,14 +1241,14 @@ new_write_user_clar(const serve_state_t state, const struct contest_desc *cnts,
     if (!from) {
       fprintf(f, "From: judges\n");
     } else {
-      fprintf(f, "From: %s\n", teamdb_get_name(state->teamdb_state, from));
+      fprintf(f, "From: %s\n", teamdb_get_name_2(state->teamdb_state, from));
     }
     if (!to && !from) {
       fprintf(f, "To: all\n");
     } else if (!to) {
       fprintf(f, "To: judges\n");
     } else {
-      fprintf(f, "To: %s\n", teamdb_get_name(state->teamdb_state, to));
+      fprintf(f, "To: %s\n", teamdb_get_name_2(state->teamdb_state, to));
     }
     //fprintf(f, "Subject: %s\n", psubj);
     fprintf(f, "%s\n", csrc);
@@ -1263,7 +1263,7 @@ new_write_user_clar(const serve_state_t state, const struct contest_desc *cnts,
     if (!from) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name(state->teamdb_state, from));
+      fprintf(f, "<td>%s</td>", teamdb_get_name_2(state->teamdb_state, from));
     }
     fprintf(f, "</tr>\n<tr><td>%s:</td>", _("To"));
     if (!to && !from) {
@@ -1271,7 +1271,7 @@ new_write_user_clar(const serve_state_t state, const struct contest_desc *cnts,
     } else if (!to) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name(state->teamdb_state, to));
+      fprintf(f, "<td>%s</td>", teamdb_get_name_2(state->teamdb_state, to));
     }
     fprintf(f, "</tr>\n");
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"), asubj);
@@ -2074,8 +2074,8 @@ do_write_kirov_standings(const serve_state_t state,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", teamdb_get_name(state->teamdb_state,
-                                         runs[last_success_run].user_id));
+        fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state,
+                                           runs[last_success_run].user_id));
         if (state->global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -2106,8 +2106,8 @@ do_write_kirov_standings(const serve_state_t state,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", teamdb_get_name(state->teamdb_state,
-                                         runs[last_submit_run].user_id));
+        fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state,
+                                           runs[last_submit_run].user_id));
         if (state->global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -2217,7 +2217,7 @@ do_write_kirov_standings(const serve_state_t state,
                       NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
       fprintf(f, "<a href=\"%s\">", dur_str);
     }
-    fprintf(f, "%s", teamdb_get_name(state->teamdb_state, t_ind[t]));
+    fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state, t_ind[t]));
     if (state->global->team_info_url[0]) {
       fprintf(f, "</a>");
     }
@@ -2987,8 +2987,8 @@ do_write_moscow_standings(const serve_state_t state,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", teamdb_get_name(state->teamdb_state,
-                                         runs[last_success_run].user_id));
+        fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state,
+                                           runs[last_success_run].user_id));
         if (state->global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -3023,8 +3023,8 @@ do_write_moscow_standings(const serve_state_t state,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", teamdb_get_name(state->teamdb_state,
-                                         runs[last_submit_run].user_id));
+        fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state,
+                                           runs[last_submit_run].user_id));
         if (state->global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -3123,7 +3123,7 @@ do_write_moscow_standings(const serve_state_t state,
                       NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
       fprintf(f, "<a href=\"%s\">", strbuf);
     }
-    fprintf(f, "%s", teamdb_get_name(state->teamdb_state, u_ind[u]));
+    fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state, u_ind[u]));
     if (state->global->team_info_url[0]) {
       fprintf(f, "</a>");
     }
@@ -3646,8 +3646,8 @@ do_write_standings(const serve_state_t state,
                         NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_buf);      
       }
-      fprintf(f, "%s", teamdb_get_name(state->teamdb_state,
-                                       runs[last_success_run].user_id));
+      fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state,
+                                         runs[last_success_run].user_id));
       if (state->global->team_info_url[0]) {
         fprintf(f, "</a>");
       }
@@ -3756,7 +3756,7 @@ do_write_standings(const serve_state_t state,
                         NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", url_str);      
       }
-      fprintf(f, "%s", teamdb_get_name(state->teamdb_state, t_ind[t]));
+      fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state, t_ind[t]));
       if (state->global->team_info_url[0]) {
         fprintf(f, "</a>");
       }
@@ -4015,7 +4015,8 @@ do_write_public_log(const serve_state_t state,
     fputs("<tr>", f);
     fprintf(f, "<td>%d</td>", i);
     fprintf(f, "<td>%s</td>", durstr);
-    fprintf(f, "<td>%s</td>", teamdb_get_name(state->teamdb_state,pe->user_id));
+    fprintf(f, "<td>%s</td>", teamdb_get_name_2(state->teamdb_state,
+                                                pe->user_id));
     if (state->probs[pe->prob_id]) {
       if (state->probs[pe->prob_id]->variant_num > 0) {
         int variant = pe->variant;
@@ -5258,13 +5259,11 @@ write_virtual_standings(const serve_state_t state,
                         const struct contest_desc *cnts,
                         FILE *f, int user_id)
 {
-  unsigned char *user_name, *astr;
+  const unsigned char *user_name;
+  unsigned char *astr;
   size_t alen;
 
-  user_name = teamdb_get_name(state->teamdb_state, user_id);
-  if (!user_name || !*user_name)
-    user_name = teamdb_get_login(state->teamdb_state, user_id);
-  if (!user_name) user_name = "";
+  user_name = teamdb_get_name_2(state->teamdb_state, user_id);
   alen = html_armored_strlen(user_name);
   astr = alloca(alen + 16);
   html_armor_string(user_name, astr);

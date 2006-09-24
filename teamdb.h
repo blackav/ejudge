@@ -49,6 +49,7 @@ int teamdb_lookup_login(teamdb_state_t, char const *);
 
 char *teamdb_get_login(teamdb_state_t, int);
 char *teamdb_get_name(teamdb_state_t, int);
+const unsigned char *teamdb_get_name_2(teamdb_state_t, int);
 int   teamdb_get_max_team_id(teamdb_state_t);
 int   teamdb_get_flags(teamdb_state_t, int);
 int   teamdb_get_total_teams(teamdb_state_t);
