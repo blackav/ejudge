@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-23 07:44+0400\n"
-"PO-Revision-Date: 2006-09-22 20:53+0400\n"
+"POT-Creation-Date: 2006-09-24 12:17+0400\n"
+"PO-Revision-Date: 2006-09-24 12:19+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1795,7 +1795,7 @@ msgid "Resume testing"
 msgstr "Разрешить проверку решений"
 
 msgid "Return to the main page"
-msgstr ""
+msgstr "Вернуться к главной странице"
 
 msgid "Retype new password"
 msgstr "Пароль ещё раз"
@@ -2383,12 +2383,11 @@ msgstr "Посмотреть всё"
 msgid "View last 15"
 msgstr "Смотреть последние 15"
 
-#, fuzzy
 msgid "View privileged users"
-msgstr "Список привилегированных пользователей"
+msgstr "Посмотреть список привилегированных пользователей"
 
 msgid "View regular users"
-msgstr ""
+msgstr "Посмотреть список обычных пользователей"
 
 msgid "View report"
 msgstr "Просмотреть протокол"
@@ -2401,6 +2400,9 @@ msgstr "Просмотреть пользовательский протокол"
 
 msgid "View teams"
 msgstr "Посмотреть команды"
+
+msgid "View the problem statement and send a submission"
+msgstr "Посмотреть условие задачи и отослать решение"
 
 #, c-format
 msgid "Viewing report is disabled for this run."

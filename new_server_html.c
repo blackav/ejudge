@@ -4349,7 +4349,8 @@ user_main_page(struct server_framework_state *state,
 
     if (start_time > 0 && stop_time <= 0 && !prob_id) {
       fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
-              cnts->team_head_style, _("Send a submission"),
+              cnts->team_head_style,
+              _("View the problem statement and send a submission"),
               cnts->team_head_style);
       html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
       fprintf(fout, "<table>\n");
