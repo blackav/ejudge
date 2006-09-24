@@ -745,7 +745,8 @@ write_priv_all_runs(serve_state_t state, FILE *f,
         fprintf(f, "<td>&nbsp;</td>");
         fprintf(f, "<td>%s</td>", run_unparse_ip(pe->a.ip));
         fprintf(f, "<td>%d</td>", pe->user_id);
-        fprintf(f, "<td>%s</td>", teamdb_get_name(state->teamdb_state, pe->user_id));
+        fprintf(f, "<td>%s</td>", teamdb_get_name_2(state->teamdb_state,
+                                                    pe->user_id));
         fprintf(f, "<td>&nbsp;</td>");
         fprintf(f, "<td>&nbsp;</td>");
         fprintf(f, "<td><b>%s</b></td>", statstr);
@@ -823,7 +824,8 @@ write_priv_all_runs(serve_state_t state, FILE *f,
       fprintf(f, "<td>%u</td>", pe->size);
       fprintf(f, "<td>%s</td>", run_unparse_ip(pe->a.ip));
       fprintf(f, "<td>%d</td>", pe->user_id);
-      fprintf(f, "<td>%s</td>", teamdb_get_name(state->teamdb_state, pe->user_id));
+      fprintf(f, "<td>%s</td>", teamdb_get_name_2(state->teamdb_state,
+                                                  pe->user_id));
       if (pe->prob_id > 0 && pe->prob_id <= state->max_prob && state->probs[pe->prob_id]) {
         struct section_problem_data *cur_prob = state->probs[pe->prob_id];
         int variant = 0;
@@ -847,6 +849,8 @@ write_priv_all_runs(serve_state_t state, FILE *f,
       if (pe->lang_id > 0 && pe->lang_id <= state->max_lang
           && state->langs[pe->lang_id]) {
         fprintf(f, "<td>%s</td>", state->langs[pe->lang_id]->short_name);
+      } else if (!pe->lang_id) {
+        fprintf(f, "<td>N/A</td>");
       } else {
         fprintf(f, "<td>??? - %d</td>", pe->lang_id);
       }
@@ -1145,16 +1149,16 @@ write_all_clars(const serve_state_t state, FILE *f, struct user_filter_info *u,
         fprintf(f, "<td><b>%s</b></td>", _("judges"));
       else
         fprintf(f, "<td><b>%s</b> (%s)</td>", _("judges"),
-                teamdb_get_name(state->teamdb_state, j_from));
+                teamdb_get_name_2(state->teamdb_state, j_from));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name(state->teamdb_state, from));
+      fprintf(f, "<td>%s</td>", teamdb_get_name_2(state->teamdb_state, from));
     }
     if (!to && !from) {
       fprintf(f, "<td><b>%s</b></td>", _("all"));
     } else if (!to) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name(state->teamdb_state, to));
+      fprintf(f, "<td>%s</td>", teamdb_get_name_2(state->teamdb_state, to));
     }
     fprintf(f, "<td>%s</td>", asubj);
     fprintf(f, "<td>%s%s</a></td>",
@@ -2268,7 +2272,8 @@ write_priv_clar(const serve_state_t state, FILE *f, int user_id, int priv_level,
       fprintf(f, "<td><b>%s</b> (%s)</td>", _("judges"),
               teamdb_get_name(state->teamdb_state, j_from));
   } else {
-    fprintf(f, "<td>%s (%d)</td>", teamdb_get_name(state->teamdb_state, from), from);
+    fprintf(f, "<td>%s (%d)</td>", teamdb_get_name_2(state->teamdb_state,
+                                                     from), from);
   }
   fprintf(f, "</tr>\n<tr><td>%s:</td>", _("To"));
   if (!to && !from) {
@@ -2276,7 +2281,7 @@ write_priv_clar(const serve_state_t state, FILE *f, int user_id, int priv_level,
   } else if (!to) {
     fprintf(f, "<td><b>%s</b></td>", _("judges"));
   } else {
-    fprintf(f, "<td>%s (%d)</td>", teamdb_get_name(state->teamdb_state, to), to);
+    fprintf(f, "<td>%s (%d)</td>", teamdb_get_name_2(state->teamdb_state, to), to);
   }
   fprintf(f, "</tr>\n");
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"), html_subj);

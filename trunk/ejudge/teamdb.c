@@ -410,6 +410,21 @@ teamdb_get_name(teamdb_state_t state, int teamid)
   return name;
 }
 
+const unsigned char *
+teamdb_get_name_2(teamdb_state_t state, int teamid)
+{
+  unsigned char *name = 0;
+
+  if (teamdb_refresh(state) < 0) return 0;
+  if (!teamdb_lookup_client(state, teamid)) {
+    err("teamdb_get_login: bad id: %d", teamid);
+    return 0;
+  }
+  name = state->users->user_map[teamid]->i.name;
+  if (!name || !*name) name = state->users->user_map[teamid]->login;
+  return name;
+}
+
 int
 teamdb_get_flags(teamdb_state_t state, int id)
 {
