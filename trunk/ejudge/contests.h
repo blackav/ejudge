@@ -116,6 +116,7 @@ enum
     CONTEST_A_SEND_PASSWD_EMAIL,
     CONTEST_A_ASSIGN_LOGINS,
     CONTEST_A_FORCE_REGISTRATION,
+    CONTEST_A_DISABLE_NAME,
 
     CONTEST_LAST_ATTR
   };
@@ -225,6 +226,7 @@ struct contest_desc
   unsigned char send_passwd_email;
   unsigned char assign_logins;
   unsigned char force_registration;
+  unsigned char disable_name;
 
   time_t         reg_deadline;
   unsigned char *name;

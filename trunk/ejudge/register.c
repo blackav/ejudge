@@ -1036,9 +1036,9 @@ read_user_info_from_form(void)
   if (fix_string(user_name, name_accept_chars, '?')) {
     error("%s", _("Field \"User name\" contained invalid characters, which were replaced with '?'."));
   }
-  if (strlen(user_name) > 64) {
+  if (strlen(user_name) >= 128) {
     error("%s", _("Field \"User name\" was too long."));
-    user_name[64] = 0;
+    user_name[127] = 0;
   }
   user_email = xstrdup(cgi_param("user_email"));
   if (fix_string(user_email, email_accept_chars, '?')) {
@@ -1141,13 +1141,15 @@ read_user_info_from_form(void)
 }
 
 static void
-check_mandatory(void)
+check_mandatory(const struct contest_desc *cnts)
 {
   int i, role, pers;
   unsigned char const *val;
 
-  if (!user_name || !*user_name) {
-    error("%s", _("Mandatory \"User name\" field is empty."));
+  if (!cnts || !cnts->disable_name) {
+    if (!user_name || !*user_name) {
+      error("%s", _("Mandatory \"User name\" field is empty."));
+    }
   }
   for (i = 1; i < CONTEST_LAST_FIELD; i++) {
     if (!field_descs[i].orig_name) continue;
@@ -1678,11 +1680,13 @@ display_edit_registration_data_page(void)
   printf("<p%s>%s: <a href=\"mailto:%s\">%s</a>\n", par_style, _("E-mail"),
          user_email, user_email);
 
-  printf("<p%s>%s</p>\n", par_style, _("In the next field type the name, which will be used in standings, personal information display, etc."));
-  if (contest_user_name_comment) {
-    printf("<p%s>%s</p>\n", par_style, contest_user_name_comment);
+  if (!cnts || !cnts->disable_name) {
+    printf("<p%s>%s</p>\n", par_style, _("In the next field type the name, which will be used in standings, personal information display, etc."));
+    if (contest_user_name_comment) {
+      printf("<p%s>%s</p>\n", par_style, contest_user_name_comment);
+    }
+    printf("<p%s>%s%s: <input type=\"text\" name=\"name\" value=\"%s\" maxlength=\"64\" size=\"64\"%s>\n", par_style, _("User name"), user_contest_id>0?" (*)":"", user_name, user_read_only?dis_str:"");
   }
-  printf("<p%s>%s%s: <input type=\"text\" name=\"name\" value=\"%s\" maxlength=\"64\" size=\"64\"%s>\n", par_style, _("User name"), user_contest_id>0?" (*)":"", user_name, user_read_only?dis_str:"");
 
   /* display change forms */
   for (i = 1; i < CONTEST_LAST_FIELD; i++) {
@@ -2959,7 +2963,7 @@ action_register_for_contest(void)
     }
   }
 
-  check_mandatory();
+  check_mandatory(cnts);
   if (error_log) goto failed;
   user_xml_text = make_user_xml();
   if (error_log) goto failed;
