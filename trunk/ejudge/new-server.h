@@ -208,8 +208,8 @@ void new_server_remove_session(ej_cookie_t session_id);
 
 void new_server_unload_contests(void);
 
-void
-new_server_loop_callback(struct server_framework_state *state);
+void new_server_loop_callback(struct server_framework_state *state);
+void new_server_post_select_callback(struct server_framework_state *state);
 
 unsigned char *
 new_serve_submit_button(unsigned char *buf, size_t size,

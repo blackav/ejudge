@@ -118,10 +118,6 @@ struct serve_state
   int max_abstr_tester;
 
   time_t current_time;
-  time_t contest_start_time;
-  time_t contest_sched_time;
-  time_t contest_duration;
-  time_t contest_stop_time;
   int clients_suspended;
   int testing_suspended;
   int printing_suspended;

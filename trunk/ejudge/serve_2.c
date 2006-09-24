@@ -54,7 +54,7 @@ serve_update_standings_file(serve_state_t state,
   time_t start_time, stop_time, duration;
   int p = 0;
 
-  run_get_times(state->runlog_state, &start_time, 0, &duration, &stop_time);
+  run_get_times(state->runlog_state, &start_time, 0, &duration, &stop_time, 0);
 
   while (1) {
     if (state->global->virtual) break;
@@ -118,7 +118,7 @@ serve_update_public_log_file(serve_state_t state,
   if (!state->global->plog_update_time) return;
   if (state->current_time < state->last_update_public_log + state->global->plog_update_time) return;
 
-  run_get_times(state->runlog_state, &start_time, 0, &duration, &stop_time);
+  run_get_times(state->runlog_state, &start_time, 0, &duration, &stop_time, 0);
 
   while (1) {
     if (!duration) break;
@@ -210,7 +210,7 @@ int
 serve_update_status_file(serve_state_t state, int force_flag)
 {
   struct prot_serve_status_v2 status;
-  time_t t1, t2, t3, t4;
+  time_t t1, t2, t3, t4, t5;
   int p;
 
   if (!force_flag && state->current_time <= state->last_update_status_file) return 0;
@@ -219,7 +219,7 @@ serve_update_status_file(serve_state_t state, int force_flag)
   status.magic = PROT_SERVE_STATUS_MAGIC_V2;
 
   status.cur_time = state->current_time;
-  run_get_times(state->runlog_state, &t1, &t2, &t3, &t4);
+  run_get_times(state->runlog_state, &t1, &t2, &t3, &t4, &t5);
   status.start_time = t1;
   status.sched_time = t2;
   status.duration = t3;
@@ -245,8 +245,7 @@ serve_update_status_file(serve_state_t state, int force_flag)
       status.freeze_time = status.start_time;
     }
   }
-  if (!status.duration && state->global->contest_finish_time_d)
-    status.finish_time = state->global->contest_finish_time_d;
+  status.finish_time = t5;
   //if (status.duration) status.continuation_enabled = 0;
 
   if (!state->global->virtual) {

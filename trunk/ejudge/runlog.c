@@ -528,7 +528,7 @@ run_set_runlog(runlog_state_t state,
 static int run_flush_header(runlog_state_t state);
 
 static int
-read_runlog(runlog_state_t state, time_t init_duration)
+read_runlog(runlog_state_t state, time_t init_duration, time_t init_finish_time)
 {
   off_t filesize;
   int rem;
@@ -547,6 +547,7 @@ read_runlog(runlog_state_t state, time_t init_duration)
     XMEMZERO(&state->head, 1);
     state->head.version = 2;
     state->head.duration = init_duration;
+    state->head.finish_time = init_finish_time;
     state->run_u = 0;
     run_flush_header(state);
     return 0;
@@ -593,7 +594,7 @@ static void teamdb_update_callback(void *);
 
 int
 run_open(runlog_state_t state, const char *path, int flags,
-         time_t init_duration)
+         time_t init_duration, time_t init_finish_time)
 {
   int           oflags = 0;
   int           i;
@@ -635,7 +636,7 @@ run_open(runlog_state_t state, const char *path, int flags,
         return -1;
     }
   } else {
-    if (read_runlog(state, init_duration) < 0) return -1;
+    if (read_runlog(state, init_duration, init_finish_time) < 0) return -1;
   }
   return 0;
 }
@@ -756,9 +757,10 @@ append_record(runlog_state_t state, time_t t, int uid, int nsec)
   state->runs[i].status = RUN_EMPTY;
   state->runs[i].time = t;
   state->runs[i].nsec = nsec;
-  if (sf_lseek(state->run_fd, sizeof(state->head) + i * sizeof(state->runs[0]), SEEK_SET,
-               "run") == (off_t) -1) return -1;
-  if (do_write(state->run_fd, &state->runs[i], (state->run_u - i) * sizeof(state->runs[0])) < 0)
+  if (sf_lseek(state->run_fd, sizeof(state->head) + i * sizeof(state->runs[0]),
+               SEEK_SET, "run") == (off_t) -1) return -1;
+  if (do_write(state->run_fd, &state->runs[i],
+               (state->run_u - i) * sizeof(state->runs[0])) < 0)
     return -1;
   return i;
 }
@@ -985,6 +987,13 @@ run_sched_contest(runlog_state_t state, time_t sched)
   return run_flush_header(state);
 }
 
+int
+run_set_finish_time(runlog_state_t state, time_t finish_time)
+{
+  state->head.finish_time = finish_time;
+  return run_flush_header(state);  
+}
+
 time_t
 run_get_start_time(runlog_state_t state)
 {
@@ -1003,14 +1012,22 @@ run_get_duration(runlog_state_t state)
   return state->head.duration;
 }
 
+time_t
+run_get_finish_time(runlog_state_t state)
+{
+  return state->head.finish_time;
+}
+
 void
 run_get_times(runlog_state_t state, 
-              time_t *start, time_t *sched, time_t *dur, time_t *stop)
+              time_t *start, time_t *sched, time_t *dur, time_t *stop,
+              time_t *p_finish_time)
 {
   if (start) *start = state->head.start_time;
   if (sched) *sched = state->head.sched_time;
   if (dur)   *dur   = state->head.duration;
   if (stop)  *stop  = state->head.stop_time;
+  if (p_finish_time) *p_finish_time = state->head.finish_time;
 }
 
 int
@@ -1194,7 +1211,7 @@ run_get_fog_period(runlog_state_t state, time_t cur_time, int fog_time,
 }
 
 int
-run_reset(runlog_state_t state, time_t new_duration)
+run_reset(runlog_state_t state, time_t new_duration, time_t new_finish_time)
 {
   int i;
 
@@ -1210,6 +1227,7 @@ run_reset(runlog_state_t state, time_t new_duration)
   memset(&state->head, 0, sizeof(state->head));
   state->head.version = 2;
   state->head.duration = new_duration;
+  state->head.finish_time = new_finish_time;
 
   if (ftruncate(state->run_fd, 0) < 0) {
     err("ftruncate failed: %s", os_ErrorMsg());

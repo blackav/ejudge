@@ -434,6 +434,7 @@ cmd_team_page(struct client_state *p, int len,
   char *html_ptr = 0;
   size_t html_len = 0;
   int accepting_mode = 0;
+  time_t start_time, stop_time;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -469,6 +470,8 @@ cmd_team_page(struct client_state *p, int len,
     return;
   }
 
+  run_get_times(serve_state.runlog_state, &start_time, 0, 0, &stop_time, 0);
+
   if (!(f = open_memstream(&html_ptr, &html_len))) {
     err("%d: open_memstream failed", p->id);
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
@@ -478,8 +481,7 @@ cmd_team_page(struct client_state *p, int len,
   write_team_page(&serve_state, cur_contest, f, p->user_id,
                   p->cookie, (pkt->flags & 1), (pkt->flags & 2) >> 1,
                   self_url_ptr, hidden_vars_ptr, extra_args_ptr,
-                  serve_state.contest_start_time,
-                  serve_state.contest_stop_time, accepting_mode);
+                  start_time, stop_time, accepting_mode);
   l10n_setlocale(0);
   fclose(f);
 
@@ -1366,6 +1368,7 @@ cmd_message(struct client_state *p, int len,
   size_t msg_len, orig_txt_len, new_subj_len, quoted_len;
   int clar_id;
   unsigned char clar_name[64], orig_clar_name[64];
+  time_t start_time, stop_time;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -1396,7 +1399,8 @@ cmd_message(struct client_state *p, int len,
   info("%d: cmd_message: %d %d %d %s", p->id, pkt->b.id, pkt->dest_user_id,
        pkt->ref_clar_id, dest_login_ptr);
 
-  if (serve_state.contest_start_time <= 0 && pkt->hide_flag) hide_flag = 1;
+  run_get_times(serve_state.runlog_state, &start_time, 0, 0, &stop_time, 0);
+  if (start_time <= 0 && pkt->hide_flag) hide_flag = 1;
 
   switch (pkt->b.id) {
   case SRV_CMD_PRIV_MSG:
@@ -1721,10 +1725,10 @@ cmd_priv_submit_run(struct client_state *p, int len,
     }
   }
 
-  start_time = serve_state.contest_start_time;
-  stop_time = serve_state.contest_stop_time;
+  run_get_times(serve_state.runlog_state, &start_time, 0, 0, &stop_time, 0);
   if (serve_state.global->virtual) {
-    start_time = run_get_virtual_start_time(serve_state.runlog_state, p->user_id);
+    start_time = run_get_virtual_start_time(serve_state.runlog_state,
+                                            p->user_id);
     stop_time = run_get_virtual_stop_time(serve_state.runlog_state, p->user_id,
                                           serve_state.current_time);
   }
@@ -2054,11 +2058,11 @@ do_submit_run(struct client_state *p,
   }
 
   /* check for start/stop times and deadlines */
-  start_time = serve_state.contest_start_time;
-  stop_time = serve_state.contest_stop_time;
+  run_get_times(serve_state.runlog_state, &start_time, 0, 0, &stop_time, 0);
   if (serve_state.global->virtual) {
     start_time = run_get_virtual_start_time(serve_state.runlog_state, user_id);
-    stop_time = run_get_virtual_stop_time(serve_state.runlog_state, user_id, serve_state.current_time);
+    stop_time = run_get_virtual_stop_time(serve_state.runlog_state, user_id,
+                                          serve_state.current_time);
   }
   // personal deadline
   if (cur_prob->pd_total > 0) {
@@ -2376,10 +2380,10 @@ cmd_team_submit_clar(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SUBJECT_TOO_LONG);
     return;
   }
-  start_time = serve_state.contest_start_time;
-  stop_time = serve_state.contest_stop_time;
+  run_get_times(serve_state.runlog_state, &start_time, 0, 0, &stop_time, 0);
   if (serve_state.global->virtual) {
-    start_time = run_get_virtual_start_time(serve_state.runlog_state, p->user_id);
+    start_time = run_get_virtual_start_time(serve_state.runlog_state,
+                                            p->user_id);
     stop_time = run_get_virtual_stop_time(serve_state.runlog_state, p->user_id,
                                           serve_state.current_time);
   }
@@ -2498,7 +2502,8 @@ cmd_command_0(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_ONLY_VIRTUAL);
     return;
   }
-  if (!serve_state.contest_start_time) {
+  run_get_times(serve_state.runlog_state, &start_time, 0, 0, &stop_time, 0);
+  if (start_time < 0) {
     err("%d: contest is not started by administrator", p->id);
     new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
     return;
@@ -2738,6 +2743,7 @@ cmd_priv_command_0(struct client_state *p, int len,
                    struct prot_serve_pkt_simple *pkt)
 {
   int res;
+  time_t start_time, stop_time, duration;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -2753,6 +2759,10 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     return;
   }
+
+  run_get_times(serve_state.runlog_state, &start_time, 0, &duration,
+                &stop_time, 0);
+
   switch (pkt->b.id) {
   case SRV_CMD_SUSPEND:
     if (!serve_check_cnts_caps(&serve_state, cur_contest,
@@ -2913,9 +2923,10 @@ cmd_priv_command_0(struct client_state *p, int len,
 
     /* FIXME: we need to reset all the components (compile, serve) as well */
     /* reset run log */
-    run_reset(serve_state.runlog_state, serve_state.global->contest_time);
-    serve_state.contest_duration = serve_state.global->contest_time;
-    run_set_duration(serve_state.runlog_state, serve_state.contest_duration);
+    run_reset(serve_state.runlog_state, serve_state.global->contest_time,
+              serve_state.global->contest_finish_time_d);
+    run_set_duration(serve_state.runlog_state,
+                     serve_state.global->contest_time);
     clar_reset(serve_state.clarlog_state);
     /* clear all submissions and clarifications */
     if (serve_state.global->clar_archive_dir[0])
@@ -2945,19 +2956,18 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
 
-    if (serve_state.contest_stop_time) {
+    if (stop_time) {
       err("%d: contest already finished", p->id);
       new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
       return;
     }
-    if (serve_state.contest_start_time) {
+    if (start_time) {
       err("%d: contest already started", p->id);
       new_send_reply(p, -SRV_ERR_CONTEST_STARTED);
       return;
     }
     run_start_contest(serve_state.runlog_state, serve_state.current_time);
     serve_invoke_start_script(&serve_state);
-    serve_state.contest_start_time = serve_state.current_time;
     info("contest started: %lu", serve_state.current_time);
     serve_update_status_file(&serve_state, 1);
     new_send_reply(p, SRV_RPL_OK);
@@ -2971,18 +2981,17 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
 
-    if (serve_state.contest_stop_time) {
+    if (stop_time) {
       err("%d: contest already finished", p->id);
       new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
       return;
     }
-    if (!serve_state.contest_start_time) {
+    if (!start_time) {
       err("%d: contest is not started", p->id);
       new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
       return;
     }
     run_stop_contest(serve_state.runlog_state, serve_state.current_time);
-    serve_state.contest_stop_time = serve_state.current_time;
     info("contest stopped: %lu", serve_state.current_time);
     serve_update_status_file(&serve_state, 1);
     new_send_reply(p, SRV_RPL_OK);
@@ -3037,18 +3046,17 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
 
-    if (serve_state.contest_stop_time) {
+    if (stop_time) {
       err("%d: contest already finished", p->id);
       new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
       return;
     }
-    if (serve_state.contest_start_time) {
+    if (start_time) {
       err("%d: contest already started", p->id);
       new_send_reply(p, -SRV_ERR_CONTEST_STARTED);
       return;
     }
     run_sched_contest(serve_state.runlog_state, pkt->v.t);
-    serve_state.contest_sched_time = pkt->v.t;
     info("%d: contest scheduled: %lu", p->id, pkt->v.t);
     serve_update_standings_file(&serve_state, cur_contest, 0);
     serve_update_status_file(&serve_state, 1);
@@ -3063,7 +3071,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
 
-    if (serve_state.contest_stop_time && !serve_state.global->enable_continue) {
+    if (stop_time && !serve_state.global->enable_continue) {
       err("%d: contest already finished", p->id);
       new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
       return;
@@ -3074,8 +3082,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
     if (!pkt->v.t) {
-      serve_state.contest_duration = 0;
-      run_set_duration(serve_state.runlog_state, serve_state.contest_duration);
+      run_set_duration(serve_state.runlog_state, 0);
       info("contest duration set to infinite time");
       serve_update_standings_file(&serve_state, cur_contest, 0);
       serve_update_status_file(&serve_state, 1);
@@ -3096,13 +3103,12 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
     */
-    if (serve_state.contest_start_time && serve_state.contest_start_time+pkt->v.t*60 < serve_state.current_time) {
+    if (start_time && start_time+pkt->v.t*60 < serve_state.current_time) {
       err("%d: contest duration is too short", p->id);
       new_send_reply(p, -SRV_ERR_BAD_DURATION);
       return;
     }
-    serve_state.contest_duration = pkt->v.t * 60;
-    run_set_duration(serve_state.runlog_state, serve_state.contest_duration);
+    run_set_duration(serve_state.runlog_state, pkt->v.t * 60);
     info("contest duration reset to %ld", pkt->v.t);
     serve_update_standings_file(&serve_state, cur_contest, 0);
     serve_update_status_file(&serve_state, 1);
@@ -3186,22 +3192,21 @@ cmd_priv_command_0(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_NO_PERMS);
       return;
     }
-    if (!serve_state.contest_start_time) {
+    if (!start_time) {
       err("%d: contest is not started", p->id);
       new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
       return;
     }
-    if (!serve_state.contest_stop_time) {
+    if (!stop_time) {
       err("%d: contest is not finished", p->id);
       new_send_reply(p, -SRV_ERR_CONTEST_NOT_FINISHED);
       return;
     }
-    if (serve_state.contest_duration && serve_state.current_time >= serve_state.contest_start_time + serve_state.contest_duration) {
+    if (duration && serve_state.current_time >= start_time + duration) {
       err("%d: insufficient duration to continue the contest", p->id);
       new_send_reply(p, -SRV_ERR_BAD_DURATION);
       return;
     }
-    serve_state.contest_stop_time = 0;
     run_stop_contest(serve_state.runlog_state, 0);
     serve_update_status_file(&serve_state, 1);
     new_send_reply(p, SRV_RPL_OK);
@@ -4650,6 +4655,7 @@ do_loop(void)
   path_t packetname;
   int    r, p, i;
   int    may_wait_flag = 0;
+  time_t start_time, stop_time, duration, sched_time, finish_time;
 
   signal(SIGPIPE, SIG_IGN);
   signal(SIGINT, interrupt_signal);
@@ -4672,12 +4678,15 @@ do_loop(void)
   }
   serve_update_standings_file(&serve_state, cur_contest, 0);
 
-  run_get_times(serve_state.runlog_state, &serve_state.contest_start_time, &serve_state.contest_sched_time,
-                &serve_state.contest_duration, &serve_state.contest_stop_time);
+  run_get_times(serve_state.runlog_state, &start_time, &sched_time, &duration,
+                &stop_time, &finish_time);
+
+  /*
   if (!serve_state.contest_duration == -1) {
     serve_state.contest_duration = serve_state.global->contest_time;
     run_set_duration(serve_state.runlog_state, serve_state.contest_duration);
   }
+  */
 
   while (1) {
     /* update current time */
@@ -4704,27 +4713,23 @@ do_loop(void)
 
     /* check stop and start times */
     if (!serve_state.global->virtual) {
-      if (serve_state.contest_start_time && !serve_state.contest_stop_time && !serve_state.contest_duration
-          && serve_state.global->contest_finish_time_d > 0
-          && serve_state.current_time >= serve_state.global->contest_finish_time_d) {
+      if (start_time && !stop_time && !duration && finish_time > 0
+          && serve_state.current_time >= finish_time) {
         /* the contest is over! */
         info("CONTEST OVER");
-        run_stop_contest(serve_state.runlog_state, serve_state.global->contest_finish_time_d);
-        serve_state.contest_stop_time = serve_state.global->contest_finish_time_d;
-      } else if (serve_state.contest_start_time && !serve_state.contest_stop_time && serve_state.contest_duration) {
-        if (serve_state.current_time >= serve_state.contest_start_time + serve_state.contest_duration) {
+        run_stop_contest(serve_state.runlog_state, finish_time);
+      } else if (start_time && !stop_time && duration) {
+        if (serve_state.current_time >= start_time + duration) {
           /* the contest is over! */
           info("CONTEST OVER");
-          run_stop_contest(serve_state.runlog_state, serve_state.contest_start_time + serve_state.contest_duration);
-          serve_state.contest_stop_time = serve_state.contest_start_time + serve_state.contest_duration;
+          run_stop_contest(serve_state.runlog_state, start_time + duration);
         }
-      } else if (serve_state.contest_sched_time && !serve_state.contest_start_time) {
-        if (serve_state.current_time >= serve_state.contest_sched_time) {
+      } else if (sched_time && !start_time) {
+        if (serve_state.current_time >= sched_time) {
           /* it's time to start! */
           info("CONTEST STARTED");
-          run_start_contest(serve_state.runlog_state, serve_state.contest_sched_time);
+          run_start_contest(serve_state.runlog_state, sched_time);
           serve_invoke_start_script(&serve_state);
-          serve_state.contest_start_time = serve_state.contest_sched_time;
         }
       }
     }
@@ -4858,7 +4863,8 @@ main(int argc, char *argv[])
     return 1;
   serve_state.runlog_state = run_init(serve_state.teamdb_state);
   if (run_open(serve_state.runlog_state, serve_state.global->run_log_file, 0,
-               serve_state.global->contest_time) < 0) return 1;
+               serve_state.global->contest_time,
+               serve_state.global->contest_finish_time_d) < 0) return 1;
   if (serve_state.global->virtual
       && serve_state.global->score_system_val != SCORE_ACM) {
     err("invalid score system for virtual contest");

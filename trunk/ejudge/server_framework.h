@@ -80,6 +80,7 @@ struct server_framework_params
                          struct client_state *);
   void (*free_memory)(struct server_framework_state *, void *);
   void (*loop_start)(struct server_framework_state *);
+  void (*post_select)(struct server_framework_state *);
 };
 
 struct server_framework_state *nsf_init(struct server_framework_params *params, void *data);

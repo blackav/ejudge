@@ -183,6 +183,8 @@ new_server_unload_expired_contests(time_t cur_time)
       new_server_unload_contest(i);
 }
 
+static void check_contest_events(serve_state_t cs);
+
 void
 new_server_loop_callback(struct server_framework_state *state)
 {
@@ -197,6 +199,9 @@ new_server_loop_callback(struct server_framework_state *state)
     if (contests_get(contest_id, &cnts) < 0 || !cnts) continue;
     if (!(e = extras[contest_id])) continue;
     if (!(cs = e->serve_state)) continue;
+
+    e->serve_state->current_time = cur_time;
+    check_contest_events(e->serve_state);
 
     for (i = 0; i < cs->compile_dirs_u; i++) {
       if ((r = scan_dir(cs->compile_dirs[i].status_dir, packetname)) <= 0)
@@ -219,6 +224,25 @@ new_server_loop_callback(struct server_framework_state *state)
   }
 
   new_server_unload_expired_contests(cur_time);
+}
+
+void
+new_server_post_select_callback(struct server_framework_state *state)
+{
+  time_t cur_time = time(0);
+  struct contest_extra *e;
+  serve_state_t cs;
+  const struct contest_desc *cnts;
+  int contest_id;
+
+  for (contest_id = 1; contest_id < extra_a; contest_id++) {
+    if (contests_get(contest_id, &cnts) < 0 || !cnts) continue;
+    if (!(e = extras[contest_id])) continue;
+    if (!(cs = e->serve_state)) continue;
+
+    e->serve_state->current_time = cur_time;
+    check_contest_events(e->serve_state);
+  }
 }
 
 static const unsigned char*
@@ -704,6 +728,36 @@ html_refresh_page_2(struct server_framework_state *state,
                     const unsigned char *url)
 {
   fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>%s</title></head><body><h1>%s</h1><p>If autorefresh does not work, follow <a href=\"%s\">this</a> link.</p></body></html>\n", EJUDGE_CHARSET, EJUDGE_CHARSET, 1, url, "Operation successful", "Operation successful", url);
+}
+
+static void
+check_contest_events(serve_state_t cs)
+{
+  const struct section_global_data *global = cs->global;
+  time_t start_time, stop_time, sched_time, duration, finish_time;
+
+  run_get_times(cs->runlog_state, &start_time, &sched_time,
+                &duration, &stop_time, &finish_time);
+
+  if (!global->virtual) {
+    if (start_time > 0 && stop_time <= 0 && duration <= 0 && finish_time > 0
+        && cs->current_time >= finish_time) {
+      /* the contest is over: contest_finish_time is expired! */
+      info("CONTEST IS OVER");
+      run_stop_contest(cs->runlog_state, finish_time);
+    } else if (start_time > 0 && stop_time <= 0 && duration > 0
+               && cs->current_time >= start_time + duration){
+      /* the contest is over: duration is expired! */
+      info("CONTEST IS OVER");
+      run_stop_contest(cs->runlog_state, start_time + duration);
+    } else if (sched_time > 0 && start_time <= 0
+               && cs->current_time >= sched_time) {
+      /* it's time to start! */
+      info("CONTEST IS STARTED");
+      run_start_contest(cs->runlog_state, sched_time);
+      serve_invoke_start_script(cs);
+    }
+  }
 }
 
 static void
@@ -1674,7 +1728,7 @@ do_schedule(FILE *log_f,
   int hour = 0, min = 0, sec = 0, year = 0, mon = 0, day = 0, n;
   struct tm loc2;
   struct tm *ploc;
-  time_t sloc;
+  time_t sloc, start_time, stop_time;
 
   if (ns_cgi_param(phr, "sched_time", &s) <= 0) {
     fprintf(log_f, _("Schedule time is not specified."));
@@ -1711,16 +1765,17 @@ do_schedule(FILE *log_f,
     return;
   }
 
-  if (cs->contest_stop_time > 0) {
+  run_get_times(cs->runlog_state, &start_time, 0, 0, &stop_time, 0);
+
+  if (stop_time > 0) {
     fprintf(log_f, _("Contest already finished."));
     return;
   }
-  if (cs->contest_start_time > 0) {
+  if (start_time > 0) {
     fprintf(log_f, _("Contest already started."));
     return;
   }
   run_sched_contest(cs->runlog_state, sloc);
-  cs->contest_sched_time = sloc;
   serve_update_standings_file(cs, cnts, 0);
   serve_update_status_file(cs, 1);
 }
@@ -1733,6 +1788,7 @@ do_change_duration(FILE *log_f,
 {
   const unsigned char *s = 0;
   int dh = 0, dm = 0, n, d;
+  time_t start_time, stop_time;
 
   if (ns_cgi_param(phr, "dur", &s) <= 0) {
     fprintf(log_f, _("Duration is not specified."));
@@ -1752,17 +1808,17 @@ do_change_duration(FILE *log_f,
   }
   d *= 60;
 
-  if (cs->contest_stop_time > 0 && !cs->global->enable_continue) {
+  run_get_times(cs->runlog_state, &start_time, 0, 0, &stop_time, 0);
+
+  if (stop_time > 0 && !cs->global->enable_continue) {
     fprintf(log_f, _("Contest already finished."));
     return;
   }
-  if (d > 0 && cs->contest_start_time
-      && cs->contest_start_time + d < cs->current_time) {
+  if (d > 0 && start_time && start_time + d < cs->current_time) {
     fprintf(log_f, _("New duration is too small."));
     return;
   }
 
-  cs->contest_duration = d;
   run_set_duration(cs->runlog_state, d);
   serve_update_standings_file(cs, cnts, 0);
   serve_update_status_file(cs, 1);
@@ -1783,6 +1839,7 @@ priv_contest_operation(struct server_framework_state *state,
   char *log_txt = 0;
   size_t log_len = 0;
   opcap_t caps;
+  time_t start_time, stop_time, duration;
 
   log_f = open_memstream(&log_txt, &log_len);
 
@@ -1792,33 +1849,33 @@ priv_contest_operation(struct server_framework_state *state,
     goto done;
   }
 
+  run_get_times(cs->runlog_state, &start_time, 0, &duration, &stop_time, 0);
+
   switch (phr->action) {
   case NEW_SRV_ACTION_START_CONTEST:
-    if (cs->contest_stop_time > 0) {
+    if (stop_time > 0) {
       fprintf(log_f, _("Contest already finished."));
       goto done;
     }
-    if (cs->contest_start_time > 0) {
+    if (start_time > 0) {
       fprintf(log_f, _("Contest already started."));
       goto done;
     }
     run_start_contest(cs->runlog_state, cs->current_time);
-    cs->contest_start_time = cs->current_time;
     serve_update_status_file(cs, 1);
     serve_invoke_start_script(cs);
     break;
 
   case NEW_SRV_ACTION_STOP_CONTEST:
-    if (cs->contest_stop_time > 0) {
+    if (stop_time > 0) {
       fprintf(log_f, _("Contest already finished."));
       goto done;
     }
-    if (cs->contest_start_time <= 0) {
+    if (start_time <= 0) {
       fprintf(log_f, _("Contest is not started."));
       goto done;
     }
     run_stop_contest(cs->runlog_state, cs->current_time);
-    cs->contest_stop_time = cs->current_time;
     serve_update_status_file(cs, 1);
     break;
 
@@ -1827,21 +1884,19 @@ priv_contest_operation(struct server_framework_state *state,
       fprintf(log_f, _("This contest cannot be continued."));
       goto done;
     }
-    if (cs->contest_start_time <= 0) {
+    if (start_time <= 0) {
       fprintf(log_f, _("Contest is not started."));
       goto done;
     }
-    if (cs->contest_stop_time <= 0) {
+    if (stop_time <= 0) {
       fprintf(log_f, _("Contest is not finished."));
       goto done;
     }
-    if (cs->contest_duration
-        && cs->current_time >= cs->contest_start_time + cs->contest_duration) {
+    if (duration > 0 && cs->current_time >= start_time + duration) {
       fprintf(log_f, _("Insufficient duration to continue the contest."));
       goto done;
     }
     run_stop_contest(cs->runlog_state, 0);
-    cs->contest_stop_time = 0;
     serve_update_status_file(cs, 1);
     break;
 
@@ -1899,6 +1954,39 @@ priv_contest_operation(struct server_framework_state *state,
   }
 
  done:
+  fclose(log_f); log_f = 0;
+  if (!log_txt || !*log_txt) {
+    html_refresh_page(state, fout, phr, 0);
+  } else {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt, 0);
+  }
+}
+
+static void
+priv_reset_filter(struct server_framework_state *state,
+                  struct client_state *p,
+                  FILE *fout,
+                  struct http_request_info *phr,
+                  const struct contest_desc *cnts,
+                  struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  FILE *log_f = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_RESET_FILTER:
+    html_reset_filter(cs, phr->user_id, phr->session_id);
+    break;
+
+  case NEW_SRV_ACTION_RESET_CLAR_FILTER:
+    html_reset_clar_filter(cs, phr->user_id, phr->session_id);
+    break;
+  }
+
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
     html_refresh_page(state, fout, phr, 0);
@@ -2394,6 +2482,7 @@ priv_main_page(struct server_framework_state *state,
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
   time_t start_time, sched_time, duration, stop_time, fog_start_time = 0, tmpt;
+  time_t finish_time;
   unsigned char hbuf[1024];
   unsigned char duration_buf[128];
   const unsigned char *s;
@@ -2401,7 +2490,7 @@ priv_main_page(struct server_framework_state *state,
   int action;
   long long tdiff;
   int filter_first_run = 0, filter_last_run = 0, filter_first_clar = 0;
-  int filter_last_clar = 0;
+  int filter_last_clar = 0, filter_mode_clar = 0;
   const unsigned char *filter_expr = 0;
   int x, n;
 
@@ -2409,18 +2498,25 @@ priv_main_page(struct server_framework_state *state,
   if (ns_cgi_param(phr, "filter_first_run", &s) > 0
       && sscanf(s, "%d%n", &x, &n) == 1 && !s[n])
     filter_first_run = x;
+  if (filter_first_run > 0) filter_first_run++;
   if (ns_cgi_param(phr, "filter_last_run", &s) > 0
       && sscanf(s, "%d%n", &x, &n) == 1 && !s[n])
     filter_last_run = x;
+  if (filter_last_run > 0) filter_last_run++;
   if (ns_cgi_param(phr, "filter_first_clar", &s) > 0
       && sscanf(s, "%d%n", &x, &n) == 1 && !s[n])
     filter_first_clar = x;
+  if (filter_first_clar > 0) filter_first_clar++;
   if (ns_cgi_param(phr, "filter_last_clar", &s) > 0
       && sscanf(s, "%d%n", &x, &n) == 1 && !s[n])
     filter_last_clar = x;
+  if (filter_last_clar > 0) filter_last_clar--;
+  if (ns_cgi_param(phr, "filter_mode_clar", &s) > 0
+      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n] && x >= 1 && x <= 2)
+    filter_mode_clar = x;
 
   run_get_times(cs->runlog_state, &start_time, &sched_time, &duration,
-                &stop_time);
+                &stop_time, &finish_time);
   if (duration > 0 && start_time && !stop_time && global->board_fog_time > 0)
     fog_start_time = start_time + duration - global->board_fog_time;
   if (fog_start_time < 0) fog_start_time = 0;
@@ -2517,7 +2613,7 @@ priv_main_page(struct server_framework_state *state,
             BUTTON(NEW_SRV_ACTION_SCHEDULE));
   }
 
-  if (global->contest_finish_time_d <= 0) {
+  if (finish_time <= 0) {
     if (duration > 0) {
       duration_str(0, duration, 0, duration_buf, 0);
     } else {
@@ -2539,9 +2635,9 @@ priv_main_page(struct server_framework_state *state,
     fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
             _("Scheduled end time"), ctime(&tmpt));
   } else if (start_time > 0 && stop_time <= 0 && duration <= 0
-             && global->contest_finish_time_d > 0) {
+             && finish_time > 0) {
     fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("Scheduled end time"), ctime(&global->contest_finish_time_d));
+            _("Scheduled end time"), ctime(&finish_time));
   } else if (stop_time) {
     fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
             _("End time"), ctime(&stop_time));
@@ -2598,12 +2694,14 @@ priv_main_page(struct server_framework_state *state,
   }
   fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1));
   fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_RELOAD_SERVER_1));
+  fprintf(fout, "</form>\n");
 
   new_serve_write_priv_all_runs(fout, phr, cnts, extra,
                                 filter_first_run, filter_last_run,
                                 filter_expr);
 
-  new_serve_write_all_clars(fout, phr, cnts, extra, 0, 0, 0);
+  new_serve_write_all_clars(fout, phr, cnts, extra, filter_mode_clar,
+                            filter_first_clar, filter_last_clar);
 
   fprintf(fout, "<hr><h2>%s</h2>", _("Compose a message to all participants"));
   html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
@@ -2725,8 +2823,9 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRINT_RESUME] = priv_contest_operation,
   [NEW_SRV_ACTION_SET_JUDGING_MODE] = priv_contest_operation,
   [NEW_SRV_ACTION_SET_ACCEPTING_MODE] = priv_contest_operation,
+  [NEW_SRV_ACTION_RESET_FILTER] = priv_reset_filter,
+  [NEW_SRV_ACTION_RESET_CLAR_FILTER] = priv_reset_filter,
 };
-
 
 static void
 privileged_page(struct server_framework_state *state,
@@ -2849,6 +2948,7 @@ privileged_page(struct server_framework_state *state,
   }
 
   extra->serve_state->current_time = time(0);
+  check_contest_events(extra->serve_state);
   
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && actions_table[phr->action]) {
@@ -4248,7 +4348,7 @@ user_main_page(struct server_framework_state *state,
     start_time = run_get_start_time(cs->runlog_state);
     stop_time = run_get_stop_time(cs->runlog_state);
   }
-  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0);
+  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, 0);
   if (duration > 0 && start_time && !stop_time && global->board_fog_time > 0)
     fog_start_time = start_time + duration - global->board_fog_time;
   if (fog_start_time < 0) fog_start_time = 0;
@@ -4723,6 +4823,7 @@ unprivileged_page(struct server_framework_state *state,
   }
 
   extra->serve_state->current_time = time(0);
+  check_contest_events(extra->serve_state);
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && user_actions_table[phr->action]) {

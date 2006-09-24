@@ -615,8 +615,7 @@ nsf_main_loop(struct server_framework_state *state)
   int mode;
 
   while (1) {
-    if (state->params->loop_start)
-      state->params->loop_start(state);
+    if (state->params->loop_start) state->params->loop_start(state);
 
     fd_max = -1;
     FD_ZERO(&rset);
@@ -675,6 +674,9 @@ nsf_main_loop(struct server_framework_state *state)
     if (sigint_flag) break;
 
     if (n <= 0) continue;
+
+    // call post-select callback
+    if (state->params->post_select) state->params->post_select(state);
 
     // process watches
     for (pw = state->w_first; pw; pw = pw->next) {

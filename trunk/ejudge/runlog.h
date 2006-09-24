@@ -69,7 +69,7 @@ runlog_state_t run_init(struct teamdb_state *);
 runlog_state_t run_destroy(runlog_state_t);
 
 int run_open(runlog_state_t state, const char *path, int flags,
-             time_t init_duration);
+             time_t init_duration, time_t init_finish_time);
 int run_add_record(runlog_state_t state,
                    time_t         timestamp,
                    int            nsec,
@@ -89,13 +89,17 @@ time_t run_get_start_time(runlog_state_t);
 int run_change_status(runlog_state_t state, int runid, int newstatus,
                       int newtest, int newscore, int judge_id);
 int run_get_status(runlog_state_t state, int runid);
-void run_get_times(runlog_state_t, time_t *, time_t *, time_t *, time_t *);
+void run_get_times(runlog_state_t, time_t *, time_t *, time_t *, time_t *,
+                   time_t *);
 int  run_set_duration(runlog_state_t, time_t);
 
 time_t run_get_stop_time(runlog_state_t);
 int    run_stop_contest(runlog_state_t, time_t);
 int    run_sched_contest(runlog_state_t, time_t);
 int    run_get_total(runlog_state_t);
+
+int run_set_finish_time(runlog_state_t state, time_t finish_time);
+time_t run_get_finish_time(runlog_state_t state);
 
 time_t run_get_duration(runlog_state_t);
 
@@ -104,7 +108,7 @@ int  run_get_attempts(runlog_state_t, int, int *, int *, int);
 char *run_status_str(int, char *, int);
 
 int run_get_fog_period(runlog_state_t, time_t, int, int);
-int run_reset(runlog_state_t, time_t);
+int run_reset(runlog_state_t, time_t, time_t);
 int runlog_flush(runlog_state_t);
 
 unsigned char *run_unparse_ip(ej_ip_t ip);
@@ -132,7 +136,8 @@ struct run_header
   ej_time64_t sched_time;
   ej_time64_t duration;
   ej_time64_t stop_time;
-  unsigned char _pad3[64];
+  ej_time64_t finish_time;      /* when the contest expected to finish */
+  unsigned char _pad3[56];
 };
 
 enum
