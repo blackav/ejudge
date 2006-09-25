@@ -493,12 +493,12 @@ process_template(FILE *out,
   }
 }
 
-static void
-html_put_header(FILE *out, unsigned char const *template,
-                unsigned char const *content_type,
-                unsigned char const *charset,
-                int locale_id,
-                char const *format, ...)
+void
+new_serve_header(FILE *out, unsigned char const *template,
+                 unsigned char const *content_type,
+                 unsigned char const *charset,
+                 int locale_id,
+                 char const *format, ...)
 {
   va_list args;
   unsigned char title[1024];
@@ -539,8 +539,8 @@ static const unsigned char *role_strs[] =
     __("Administrator"),
     0,
   };
-static const unsigned char *
-unparse_role(int role)
+const unsigned char *
+new_serve_unparse_role(int role)
 {
   static unsigned char buf[32];
   if (role < 0 || role >= USER_ROLE_LAST) {
@@ -681,6 +681,18 @@ static const unsigned char * const submit_button_labels[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_DURATION] = __("Change duration"),
   [NEW_SRV_ACTION_SUBMIT_RUN] = __("Send!"),
   [NEW_SRV_ACTION_SUBMIT_CLAR] = __("Send!"),
+  [NEW_SRV_ACTION_CHANGE_RUN_USER_ID] = __("Change"),
+  [NEW_SRV_ACTION_CHANGE_RUN_USER_LOGIN] = __("Change"),
+  [NEW_SRV_ACTION_CHANGE_RUN_PROB_ID] = __("Change"),
+  [NEW_SRV_ACTION_CHANGE_RUN_VARIANT] = __("Change"),
+  [NEW_SRV_ACTION_CHANGE_RUN_IS_IMPORTED] = __("Change"),
+  [NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN] = __("Change"),
+  [NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY] = __("Change"),
+  [NEW_SRV_ACTION_CHANGE_RUN_STATUS] = __("Change"),
+  [NEW_SRV_ACTION_CHANGE_RUN_TEST] = __("Change"),
+  [NEW_SRV_ACTION_CHANGE_RUN_SCORE] = __("Change"),
+  [NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ] = __("Change"),
+  [NEW_SRV_ACTION_CHANGE_RUN_PAGES] = __("Change"),
 };
 
 #define BUTTON(a) new_serve_submit_button(bb, sizeof(bb), 0, a, 0)
@@ -772,7 +784,7 @@ privileged_page_login_page(struct server_framework_state *state,
   unsigned char bbuf[1024];
 
   l10n_setlocale(phr->locale_id);
-  html_put_header(fout, 0, 0, 0, phr->locale_id, "Login page");
+  new_serve_header(fout, 0, 0, 0, phr->locale_id, "Login page");
   html_start_form(fout, 1, phr->self_url, "");
   fprintf(fout, "<table>\n");
   fprintf(fout, "<tr><td>%s:</td><td><input type=\"text\" size=\"32\" name=\"login\"", _("Login"));
@@ -853,7 +865,7 @@ html_err_permission_denied(struct server_framework_state *state,
     if (!footer) footer = fancy_footer;
   }
   l10n_setlocale(phr->locale_id);
-  html_put_header(fout, header, 0, 0, phr->locale_id, _("Permission denied"));
+  new_serve_header(fout, header, 0, 0, phr->locale_id, _("Permission denied"));
   fprintf(fout, "<p>%s</p>\n",
           _("Permission denied. The possible reasons are as follows."));
   fprintf(fout, "<ul>\n");
@@ -924,7 +936,7 @@ html_err_invalid_param(struct server_framework_state *state,
     if (!footer) footer = fancy_footer;
   }
   l10n_setlocale(phr->locale_id);
-  html_put_header(fout, header, 0, 0, phr->locale_id, _("Invalid parameter"));
+  new_serve_header(fout, header, 0, 0, phr->locale_id, _("Invalid parameter"));
   fprintf(fout, "<p>%s</p>\n",
           _("A request parameter is invalid. Please, contact the site administrator."));
   html_put_footer(fout, footer, phr->locale_id);
@@ -964,8 +976,8 @@ html_err_service_not_available(struct server_framework_state *state,
   if (!footer) footer = fancy_footer;
 
   l10n_setlocale(phr->locale_id);
-  html_put_header(fout, header, 0, 0, phr->locale_id,
-                  _("Service not available"));
+  new_serve_header(fout, header, 0, 0, phr->locale_id,
+                   _("Service not available"));
   fprintf(fout, "<p>%s</p>\n",
           _("Service that you requested is not available."));
   html_put_footer(fout, footer, phr->locale_id);
@@ -1005,8 +1017,8 @@ html_err_contest_not_available(struct server_framework_state *state,
   if (!footer) footer = fancy_footer;
 
   l10n_setlocale(phr->locale_id);
-  html_put_header(fout, header, 0, 0, phr->locale_id,
-                  _("Contest not available"));
+  new_serve_header(fout, header, 0, 0, phr->locale_id,
+                   _("Contest not available"));
   fprintf(fout, "<p>%s</p>\n",
           _("The contest is temporarily not available. Please, retry the request a bit later."));
   html_put_footer(fout, footer, phr->locale_id);
@@ -1045,7 +1057,8 @@ html_err_userlist_server_down(struct server_framework_state *state,
     if (!footer) footer = fancy_footer;
   }
   l10n_setlocale(phr->locale_id);
-  html_put_header(fout, header, 0, 0, phr->locale_id, _("User database server is down"));
+  new_serve_header(fout, header, 0, 0, phr->locale_id,
+                   _("User database server is down"));
   fprintf(fout, "<p>%s</p>\n",
           _("The user database server is currently not available. Please, retry the request later."));
   html_put_footer(fout, footer, phr->locale_id);
@@ -1090,7 +1103,7 @@ new_server_html_err_internal_error(struct server_framework_state *state,
     if (!footer) footer = fancy_footer;
   }
   l10n_setlocale(phr->locale_id);
-  html_put_header(fout, header, 0, 0, phr->locale_id, _("Internal error"));
+  new_serve_header(fout, header, 0, 0, phr->locale_id, _("Internal error"));
   fprintf(fout, "<p>%s</p>\n",
           _("Your request has caused an internal server error. Please, report it as a bug."));
   html_put_footer(fout, footer, phr->locale_id);
@@ -1135,7 +1148,7 @@ html_err_invalid_session(struct server_framework_state *state,
     if (!footer) footer = fancy_footer;
   }
   l10n_setlocale(phr->locale_id);
-  html_put_header(fout, header, 0, 0, phr->locale_id, _("Invalid session"));
+  new_serve_header(fout, header, 0, 0, phr->locale_id, _("Invalid session"));
   fprintf(fout, "<p>%s</p>\n",
           _("Invalid session identifier. The possible reasons are as follows."));
   fprintf(fout, "<ul>\n");
@@ -1163,8 +1176,8 @@ html_error_status_page(struct server_framework_state *state,
   unsigned char url[1024];
 
   l10n_setlocale(phr->locale_id);
-  html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
-                  _("Operation competed with errors"));
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   _("Operation competed with errors"));
   s = html_armor_string_dup(log_txt);
   fprintf(fout, "<font color=\"red\"><pre>%s</pre></font>\n",
           s);
@@ -2034,9 +2047,9 @@ priv_view_users_page(struct server_framework_state *state,
                                               "XML parsing failed");
 
   l10n_setlocale(phr->locale_id);
-  html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
-                  "%s [%s, %s]: %s", unparse_role(phr->role),
-                  phr->name_arm, extra->contest_arm, _("Users page"));
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   "%s [%s, %s]: %s", new_serve_unparse_role(phr->role),
+                   phr->name_arm, extra->contest_arm, _("Users page"));
 
   fprintf(fout, "<h2>Registered users</h2>");
 
@@ -2254,9 +2267,10 @@ priv_view_priv_users_page(struct server_framework_state *state,
   qsort(users.v, users.u, sizeof(users.v[0]), priv_user_info_sort_func);
 
   l10n_setlocale(phr->locale_id);
-  html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
-                  "%s [%s, %s]: %s", unparse_role(phr->role),
-                  phr->name_arm, extra->contest_arm, _("Privileged users page"));
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   "%s [%s, %s]: %s", new_serve_unparse_role(phr->role),
+                   phr->name_arm, extra->contest_arm,
+                   _("Privileged users page"));
 
   fprintf(fout, "<h2>Privileged users</h2>");
 
@@ -2275,7 +2289,7 @@ priv_view_priv_users_page(struct server_framework_state *state,
       fprintf(fout, "<td>");
       for (cnt = 0, r = USER_ROLE_OBSERVER; r <= USER_ROLE_ADMIN; r++)
         if ((role_mask & (1 << r)))
-          fprintf(fout, "%s%s", cnt++?",":"", unparse_role(r));
+          fprintf(fout, "%s%s", cnt++?",":"", new_serve_unparse_role(r));
       fprintf(fout, "</td>");
     } else {
       fprintf(fout, "<td>&nbsp;</td>");
@@ -2348,6 +2362,47 @@ priv_view_priv_users_page(struct server_framework_state *state,
   }
   xfree(users.v);
   if (iter) iter->destroy(iter);
+}
+
+static void
+priv_view_source(struct server_framework_state *state,
+                 struct client_state *p,
+                 FILE *fout,
+                 struct http_request_info *phr,
+                 const struct contest_desc *cnts,
+                 struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  FILE *log_f = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  int run_id, n;
+  const unsigned char *s;
+
+  if (ns_cgi_param(phr, "run_id", &s) <= 0
+      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n])
+    return html_err_invalid_param(state, p, fout, phr, 1,
+                                  "cannot parse run_id");
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
+    fprintf(log_f, _("Permission denied"));
+    goto done;
+  }
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
+    fprintf(log_f, _("Invalid run_id %d"), run_id);
+    goto done;
+  }
+
+  new_serve_write_priv_source(cs, fout, log_f, phr, cnts, extra, run_id);
+
+ done:
+  fclose(log_f); log_f = 0;
+  if (log_txt && *log_txt) {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt, 0);
+  }
+  xfree(log_txt);
 }
 
 void
@@ -2522,9 +2577,9 @@ priv_main_page(struct server_framework_state *state,
   if (fog_start_time < 0) fog_start_time = 0;
 
   l10n_setlocale(phr->locale_id);
-  html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
-                  "%s [%s, %s]: %s", unparse_role(phr->role),
-                  phr->name_arm, extra->contest_arm, _("Main page"));
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   "%s [%s, %s]: %s", new_serve_unparse_role(phr->role),
+                   phr->name_arm, extra->contest_arm, _("Main page"));
   fprintf(fout, "<ul>\n");
   fprintf(fout, "<li>%s%s</a></li>\n",
           new_serve_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USERS, 0),
@@ -2825,6 +2880,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SET_ACCEPTING_MODE] = priv_contest_operation,
   [NEW_SRV_ACTION_RESET_FILTER] = priv_reset_filter,
   [NEW_SRV_ACTION_RESET_CLAR_FILTER] = priv_reset_filter,
+  [NEW_SRV_ACTION_VIEW_SOURCE] = priv_view_source,
 };
 
 static void
@@ -2934,6 +2990,10 @@ privileged_page(struct server_framework_state *state,
            phr->session_id);
   phr->hidden_vars = hid_buf;
   phr->session_extra = new_server_get_session(phr->session_id, cur_time);
+  phr->caps = 0;
+  if (opcaps_find(&cnts->capabilities, phr->login, &caps) >= 0) {
+    phr->caps = caps;
+  }
 
   memset(&callbacks, 0, sizeof(callbacks));
   callbacks.user_data = (void*) state;
@@ -3006,8 +3066,8 @@ unprivileged_page_login_page(struct server_framework_state *state,
   }
 
   l10n_setlocale(phr->locale_id);
-  html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
-                  _("User login [%s]"), extra->contest_arm);
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   _("User login [%s]"), extra->contest_arm);
 
 
   html_start_form(fout, 1, phr->self_url, "");
@@ -3969,10 +4029,10 @@ unpriv_view_report(struct server_framework_state *state,
   }
 
   l10n_setlocale(phr->locale_id);
-  html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
-                  "%s [%s]: %s %d",
-                  phr->name_arm, extra->contest_arm, _("Report for run"),
-                  run_id);
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   "%s [%s]: %s %d",
+                   phr->name_arm, extra->contest_arm, _("Report for run"),
+                   run_id);
 
   switch (content_type) {
   case CONTENT_TYPE_TEXT:
@@ -4099,10 +4159,10 @@ unpriv_view_clar(struct server_framework_state *state,
   duration_str(show_astr_time, clar_time, start_time, dur_str, 0);
 
   l10n_setlocale(phr->locale_id);
-  html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
-                  "%s [%s]: %s %d",
-                  phr->name_arm, extra->contest_arm, _("Clarification"),
-                  clar_id);
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   "%s [%s]: %s %d",
+                   phr->name_arm, extra->contest_arm, _("Clarification"),
+                   clar_id);
 
   fprintf(fout, "<%s>%s #%d</%s>\n", cnts->team_head_style,
           _("Message"), clar_id, cnts->team_head_style);
@@ -4354,9 +4414,9 @@ user_main_page(struct server_framework_state *state,
   if (fog_start_time < 0) fog_start_time = 0;
 
   l10n_setlocale(phr->locale_id);
-  html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
-                  "%s [%s]: %s",
-                  phr->name_arm, extra->contest_arm, _("Main page"));
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   "%s [%s]: %s",
+                   phr->name_arm, extra->contest_arm, _("Main page"));
 
 #if 0
   fprintf(fout, "<%s>%s</%s>\n", cnts->team_head_style,
@@ -4699,8 +4759,8 @@ unpriv_logout(struct server_framework_state *state,
                               phr->session_id);
   new_server_remove_session(phr->session_id);
   l10n_setlocale(phr->locale_id);
-  html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
-                  _("Good-bye!"));
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   _("Good-bye!"));
 
   locale_buf[0] = 0;
   if (phr->locale_id > 0) {

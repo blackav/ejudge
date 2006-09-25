@@ -474,19 +474,6 @@ is_non_empty_sha1(const ruint32_t *psha1)
   return 0;
 }
 
-static const unsigned char *
-unparse_sha1(const ruint32_t *psha1)
-{
-  static unsigned char buf[41];
-  const unsigned char *s = (const unsigned char *) psha1;
-  unsigned char *p = buf;
-  int i;
-
-  for (i = 0; i < 20; i++)
-    p += sprintf(p, "%02x", *s++);
-  return buf;
-}
-
 int
 unparse_runlog_xml(serve_state_t state,
                    const struct contest_desc *cnts,
@@ -633,7 +620,7 @@ unparse_runlog_xml(serve_state_t state,
       fprintf(f, " %s=\"%u\"", attr_map[RUNLOG_A_SIZE], pp->size);
     }
     if (!external_mode && pp->a.ip) {
-      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_IP], run_unparse_ip(pp->a.ip));
+      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_IP], xml_unparse_ip(pp->a.ip));
     }
     if (!external_mode && is_non_empty_sha1(pp->sha1)) {
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_SHA1],

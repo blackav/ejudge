@@ -111,9 +111,6 @@ int run_get_fog_period(runlog_state_t, time_t, int, int);
 int run_reset(runlog_state_t, time_t, time_t);
 int runlog_flush(runlog_state_t);
 
-unsigned char *run_unparse_ip(ej_ip_t ip);
-ej_ip_t run_parse_ip(unsigned char const *buf);
-
 int run_check_duplicate(runlog_state_t, int run_id);
 int run_find_duplicate(runlog_state_t state,
                        int user_id,

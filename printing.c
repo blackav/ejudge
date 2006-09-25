@@ -26,6 +26,7 @@
 #include "protocol.h"
 #include "userlist.h"
 #include "serve_state.h"
+#include "xml_utils.h"
 
 #include <reuse/exec.h>
 
@@ -64,7 +65,7 @@ print_banner_page(const serve_state_t state,
   fprintf(f, "Contest time:     %s\n",
           duration_str(0, info.time, start_time, 0, 0));
   if (is_privileged) {
-    fprintf(f, "Originator IP:    %s\n", run_unparse_ip(info.a.ip));
+    fprintf(f, "Originator IP:    %s\n", xml_unparse_ip(info.a.ip));
   }
   fprintf(f, "Size:             %u\n", info.size);
   if (is_privileged) {

@@ -38,4 +38,9 @@ void html_date_select(FILE *f, time_t t);
 void html_hidden(FILE *fout, const unsigned char *var_name,
                  const char *format, ...);
 
+unsigned char *html_input_text(unsigned char *buf, size_t size,
+                               const unsigned char *var_name,
+                               int text_size, const char *format,
+                               ...);
+
 #endif /* __MISCHTML_H__ */

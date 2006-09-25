@@ -423,7 +423,25 @@ get_content_type(const unsigned char *txt, const unsigned char **p_start_ptr)
   return CONTENT_TYPE_TEXT;
 }
 
-/**
+unsigned char *
+unparse_sha1(const void *shabuf)
+{
+  const unsigned char *s = (const unsigned char *) shabuf;
+  int i;
+  static unsigned char buf[64];
+  unsigned char *p;
+  static const unsigned char hexd[] = "0123456789abcdef";
+
+  for (i = 0, p = buf; i < 20; i++, s++) {
+    *p++ = hexd[(*s >> 4) & 0xf];
+    *p++ = hexd[*s & 0xf];
+  }
+  *p = 0;
+
+  return buf;
+}
+
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

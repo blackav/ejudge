@@ -23,6 +23,7 @@
 #include "pathutl.h"
 #include "errlog.h"
 #include "unix/unix_fileutl.h"
+#include "xml_utils.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -202,6 +203,7 @@ run_read_entry_v0(runlog_state_t state, int n)
   char buf[RUN_RECORD_SIZE + 16];
   char tip[RUN_RECORD_SIZE + 16];
   int  k, r;
+  ej_ip_t ip;
 
   memset(buf, 0, sizeof(buf));
   if (run_read_record_v0(state, buf, RUN_RECORD_SIZE) < 0) return -1;
@@ -214,8 +216,8 @@ run_read_entry_v0(runlog_state_t state, int n)
   if (r != 11) ERR_R("[%d]: sscanf returned %d", n, r);
   if (buf[k] != 0) ERR_R("[%d]: excess data", n);
   if (strlen(tip) > RUN_MAX_IP_LEN) ERR_R("[%d]: ip is to long", n);
-  state->runs[n].a.ip = run_parse_ip(tip);
-  if (state->runs[n].a.ip == (ej_ip_t) -1) ERR_R("[%d]: cannot parse IP");
+  if (xml_parse_ip(0, 0, 0, tip, &ip) < 0) ERR_R("[%d]: cannot parse IP");
+  state->runs[n].a.ip = ip;
   return 0;
 }
 
@@ -1235,31 +1237,6 @@ run_reset(runlog_state_t state, time_t new_duration, time_t new_finish_time)
   }
   run_flush_header(state);
   return 0;
-}
-
-unsigned char *
-run_unparse_ip(ej_ip_t ip)
-{
-  static unsigned char buf[64];
-
-  snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
-           ip >> 24, (ip >> 16) & 0xff,
-           (ip >> 8) & 0xff, ip & 0xff);
-  return buf;
-}
-
-ej_ip_t
-run_parse_ip(unsigned char const *buf)
-{
-  unsigned int b1, b2, b3, b4;
-  int n;
-
-  if (!buf) return (ej_ip_t) -1;
-  if (!buf || sscanf(buf, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
-      || buf[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255) {
-    return (ej_ip_t) -1;
-  }
-  return b1 << 24 | b2 << 16 | b3 << 8 | b4;
 }
 
 int

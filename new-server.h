@@ -69,6 +69,7 @@ struct http_request_info
   unsigned char *name_arm;
   const unsigned char *hidden_vars;
   struct session_info *session_extra;
+  opcap_t caps;
 
   struct timeval timestamp1;
   struct timeval timestamp2;
@@ -167,6 +168,19 @@ enum
   NEW_SRV_ACTION_SQUEEZE_RUNS,
   NEW_SRV_ACTION_RESET_CLAR_FILTER,
   NEW_SRV_ACTION_LOGOUT,
+  NEW_SRV_ACTION_CHANGE_RUN_USER_ID,
+  NEW_SRV_ACTION_CHANGE_RUN_USER_LOGIN,
+  NEW_SRV_ACTION_CHANGE_RUN_PROB_ID,
+  NEW_SRV_ACTION_CHANGE_RUN_VARIANT,
+  NEW_SRV_ACTION_CHANGE_RUN_IS_IMPORTED,
+  NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN,
+  NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY,
+  NEW_SRV_ACTION_CHANGE_RUN_STATUS,
+  NEW_SRV_ACTION_CHANGE_RUN_TEST,
+  NEW_SRV_ACTION_CHANGE_RUN_SCORE,
+  NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ,
+  NEW_SRV_ACTION_CHANGE_RUN_PAGES,
+  NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -221,6 +235,11 @@ new_serve_url(unsigned char *buf, size_t size,
               const struct http_request_info *phr,
               int action, const char *format, ...)
   __attribute__((format(printf, 5, 6)));
+unsigned char *
+new_serve_aref(unsigned char *buf, size_t size,
+               const struct http_request_info *phr,
+               int action, const char *format, ...)
+  __attribute__((format(printf, 5, 6)));
 
 void
 new_serve_write_priv_all_runs(FILE *f,
@@ -235,5 +254,21 @@ new_serve_write_all_clars(FILE *f,
                           const struct contest_desc *cnts,
                           struct contest_extra *extra,
                           int mode_clar, int first_clar, int last_clar);
+
+void new_serve_write_priv_source(const serve_state_t state,
+                                 FILE *f,
+                                 FILE *log_f,
+                                 struct http_request_info *phr,
+                                 const struct contest_desc *cnts,
+                                 struct contest_extra *extra,
+                                 int run_id);
+
+void new_serve_header(FILE *out, unsigned char const *template,
+                      unsigned char const *content_type,
+                      unsigned char const *charset,
+                      int locale_id,
+                      char const *format, ...);
+
+const unsigned char *new_serve_unparse_role(int role);
 
 #endif /* __NEW_SERVER_H__ */

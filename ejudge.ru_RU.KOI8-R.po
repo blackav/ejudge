@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-24 12:17+0400\n"
-"PO-Revision-Date: 2006-09-24 12:19+0400\n"
+"POT-Creation-Date: 2006-09-25 22:46+0400\n"
+"PO-Revision-Date: 2006-09-25 23:10+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -711,6 +711,9 @@ msgstr "Дисквалифицирован"
 msgid "Do not show before the contest starts?"
 msgstr "Не показывать до начала турнира?"
 
+msgid "Download run"
+msgstr "Загрузить посылку"
+
 msgid "Download your submits"
 msgstr "Загрузить свои посылки"
 
@@ -1079,6 +1082,10 @@ msgstr "Информация по Вашему запросу отсутствует"
 msgid "Information is not available"
 msgstr "Информация отсутствует"
 
+#, c-format
+msgid "Information is not available."
+msgstr "Информация недоступна"
+
 msgid "Institution"
 msgstr "Учебное заведение"
 
@@ -1159,6 +1166,10 @@ msgstr "Неверная роль."
 
 msgid "Invalid run_id"
 msgstr "Неверный номер посылки"
+
+#, c-format
+msgid "Invalid run_id %d"
+msgstr "Неверный номер посылки %d"
 
 #, c-format
 msgid "Invalid run_id."
@@ -1527,6 +1538,7 @@ msgstr "Штраф"
 msgid "Pending check"
 msgstr "Ожидает проверки"
 
+#, c-format
 msgid "Permission denied"
 msgstr "В доступе отказано"
 
@@ -2407,6 +2419,9 @@ msgstr "Посмотреть условие задачи и отослать решение"
 #, c-format
 msgid "Viewing report is disabled for this run."
 msgstr "Просмотр отчётов отключён."
+
+msgid "Viewing run"
+msgstr "Просмотр посылки"
 
 msgid "Virtual contest is finished"
 msgstr "Виртуальный турнир завершён"

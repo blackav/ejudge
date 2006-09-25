@@ -27,6 +27,9 @@
 #include "html.h"
 #include "clarlog.h"
 #include "base64.h"
+#include "xml_utils.h"
+#include "archive_paths.h"
+#include "fileutl.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -40,6 +43,7 @@
 #define __(x) x
 
 #define BITS_PER_LONG (8*sizeof(unsigned long)) 
+#define BUTTON(a) new_serve_submit_button(bb, sizeof(bb), 0, a, 0)
 
 static void
 parse_error_func(void *data, unsigned char const *format, ...)
@@ -357,7 +361,7 @@ new_serve_write_priv_all_runs(FILE *f,
         fprintf(f, "<td>%d</td>", rid);
         fprintf(f, "<td>%s</td>", durstr);
         fprintf(f, "<td>&nbsp;</td>");
-        fprintf(f, "<td>%s</td>", run_unparse_ip(pe->a.ip));
+        fprintf(f, "<td>%s</td>", xml_unparse_ip(pe->a.ip));
         fprintf(f, "<td>%d</td>", pe->user_id);
         fprintf(f, "<td>%s</td>", teamdb_get_name_2(cs->teamdb_state,
                                                     pe->user_id));
@@ -426,7 +430,7 @@ new_serve_write_priv_all_runs(FILE *f,
       fprintf(f, "<td>%d%s</td>", rid, imported_str);
       fprintf(f, "<td>%s</td>", durstr);
       fprintf(f, "<td>%u</td>", pe->size);
-      fprintf(f, "<td>%s</td>", run_unparse_ip(pe->a.ip));
+      fprintf(f, "<td>%s</td>", xml_unparse_ip(pe->a.ip));
       fprintf(f, "<td>%d</td>", pe->user_id);
       fprintf(f, "<td>%s</td>", teamdb_get_name_2(cs->teamdb_state,
                                                   pe->user_id));
@@ -800,6 +804,599 @@ new_serve_write_all_clars(FILE *f,
   print_nav_buttons(state, f, 0, sid, self_url, hidden_vars, extra_args,
                     0, 0, 0, 0, 0, 0, 0);
   */
+}
+
+static unsigned char *
+html_unparse_bool(unsigned char *buf, size_t size, int value)
+{
+  snprintf(buf, size, "%s", value?_("Yes"):_("No"));
+  return buf;
+}
+static unsigned char *
+html_select_yesno(unsigned char *buf, size_t size,
+                  const unsigned char *var_name, int value)
+{
+  unsigned char *s1 = "", *s2 = "";
+
+  if (!var_name) var_name = "param";
+  if (value) s2 = " selected=\"yes\"";
+  else s1 = " selected=\"yes\"";
+
+  snprintf(buf, size,
+           "<select name=\"%s\">"
+           "<option value=\"0\"%s>%s</option>"
+           "<option value=\"1\"%s>%s</option>"
+           "</select>",
+           var_name, s1, _("No"), s2, _("Yes"));
+
+  return buf;
+}
+
+void
+new_serve_write_priv_source(const serve_state_t state,
+                            FILE *f,
+                            FILE *log_f,
+                            struct http_request_info *phr,
+                            const struct contest_desc *cnts,
+                            struct contest_extra *extra,
+                            int run_id)
+{
+  unsigned char *s;
+  int i;
+  path_t src_path;
+  struct run_entry info;
+  char *src_text = 0, *html_text;
+  unsigned char *numb_txt;
+  size_t src_len, html_len, numb_len;
+  time_t start_time;
+  int variant, src_flags;
+  unsigned char const *nbsp = "<td>&nbsp;</td><td>&nbsp;</td>";
+  unsigned char filtbuf1[128];
+  unsigned char filtbuf2[256];
+  unsigned char filtbuf3[512];
+  unsigned char *ps1, *ps2;
+  time_t run_time;
+  int editable;
+  unsigned char bt[1024];
+  unsigned char bb[1024];
+  const struct section_problem_data *prob = 0;
+  const struct section_language_data *lang = 0;
+  const unsigned char *ss;
+
+  if (run_id < 0 || run_id >= run_get_total(state->runlog_state)) {
+    fprintf(log_f, _("Invalid run_id."));
+    return;
+  }
+  run_get_entry(state->runlog_state, run_id, &info);
+  if (info.status > RUN_LAST
+      || (info.status > RUN_MAX_STATUS && info.status < RUN_TRANSIENT_FIRST)) {
+    fprintf(log_f, _("Information is not available."));
+    return;
+  }
+
+  src_flags = archive_make_read_path(state, src_path, sizeof(src_path),
+                                     state->global->run_archive_dir, run_id,
+                                     0, 1);
+  if (src_flags < 0) {
+    fprintf(log_f, _("Invalid run_id."));
+    return;
+  }
+
+  if (info.prob_id > 0 && info.prob_id <= state->max_prob)
+    prob = state->probs[info.prob_id];
+  if (info.lang_id > 0 && info.lang_id <= state->max_lang)
+    lang = state->langs[info.lang_id];
+
+  new_serve_header(f, extra->header_txt, 0, 0, phr->locale_id,
+                   "%s [%s, %s]: %s %d", new_serve_unparse_role(phr->role),
+                   phr->name_arm, extra->contest_arm,
+                   _("Viewing run"), run_id);
+
+  run_time = info.time;
+  if (run_time < 0) run_time = 0;
+  start_time = run_get_start_time(state->runlog_state);
+  if (start_time < 0) start_time = 0;
+  if (run_time < start_time) run_time = start_time;
+
+  fprintf(f, "<h2>%s %d</h2>\n",
+          _("Information about run"), run_id);
+  fprintf(f, "<table>\n");
+  fprintf(f, "<tr><td>%s:</td><td>%d</td>%s</tr>\n",
+          _("Run ID"), info.run_id, nbsp);
+  fprintf(f, "<tr><td>%s:</td><td>%s:%d</td>%s</tr>\n",
+          _("Submission time"),
+          duration_str(1, info.time, 0, 0, 0), info.nsec, nbsp);
+  fprintf(f, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
+          _("Contest time"),
+          duration_str(0, run_time, start_time, 0, 0), nbsp);
+
+  // IP-address
+  fprintf(f, "<tr><td>%s:</td>", _("Originator IP"));
+  snprintf(filtbuf1, sizeof(filtbuf1), "ip == ip(%d)", run_id);
+  url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
+  fprintf(f, "<td>%s%s</a></td>",
+          new_serve_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
+                         "filter_expr=%s", filtbuf2),
+          xml_unparse_ip(info.a.ip));
+  fprintf(f, "%s</tr>\n", nbsp);
+
+  // size
+  snprintf(filtbuf1, sizeof(filtbuf1), "size == size(%d)", run_id);
+  url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
+  fprintf(f, "<tr><td>%s:</td><td>%s%u</a></td>%s</tr>\n",
+          _("Size"),
+          new_serve_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
+                         "filter_expr=%s", filtbuf2),
+          info.size, nbsp);
+
+  // hash code
+  snprintf(filtbuf1, sizeof(filtbuf1), "hash == hash(%d)", run_id);
+  url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
+  fprintf(f, "<tr><td>%s:</td><td>%s%s</a></td>%s</tr>\n",
+          _("Hash value"),
+          new_serve_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
+                         "filter_expr=%s", filtbuf2),
+          unparse_sha1(info.sha1), nbsp);
+
+  // this is common flag for many editing forms below
+  editable = 0;
+  if (phr->role == USER_ROLE_ADMIN
+      && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0
+      && !info.is_readonly)
+    editable = 1;
+
+  // user_id
+  snprintf(filtbuf1, sizeof(filtbuf1), "uid == %d", info.user_id);
+  url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
+  if (editable) {
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "run_id", "%d", run_id);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%s%d</a></td>",
+          _("User ID"),
+          new_serve_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
+                         "filter_expr=%s", filtbuf2),
+          info.user_id);
+  if (editable) {
+    fprintf(f, "<td>%s</td><td>%s</td></tr></form>",
+            html_input_text(bt, sizeof(bt), "param", 10,
+                            "%d", info.user_id),
+            BUTTON(NEW_SRV_ACTION_CHANGE_RUN_USER_ID));
+  } else {
+    fprintf(f, "%s</tr>", nbsp);
+  }
+
+  // user login
+  if (editable) {
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "run_id", "%d", run_id);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%s</td>",
+          _("User login"),
+          teamdb_get_login(state->teamdb_state, info.user_id));
+  if (editable) {
+    fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
+            html_input_text(bt, sizeof(bt), "param", 10,
+                            "%s",
+                            teamdb_get_login(state->teamdb_state,
+                                             info.user_id)),
+            BUTTON(NEW_SRV_ACTION_CHANGE_RUN_USER_LOGIN));
+  } else {
+    fprintf(f, "%s</tr>\n", nbsp);
+  }
+
+  // user name
+  s = html_armor_string_dup(teamdb_get_name(state->teamdb_state, info.user_id));
+  fprintf(f, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
+          _("User name"), s, nbsp);
+  xfree(s); s = 0;
+
+  // problem
+  if (prob) {
+    snprintf(filtbuf1, sizeof(filtbuf1), "prob == \"%s\"",  prob->short_name);
+    url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
+    ps1 = new_serve_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
+                         "filter_expr=%s", filtbuf2);
+    ps2 = "</a>";
+    ss = prob->short_name;
+  } else {
+    ps1 = ""; ps2 = "";
+    snprintf(bb, sizeof(bb), "??? - %d", info.prob_id);
+    ss = bb;
+  }
+  if (editable) {
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "run_id", "%d", run_id);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%s%s%s</td>", _("Problem"), ps1, s, ps2);
+  if (editable) {
+    fprintf(f, "<td><select name=\"param\">\n");
+    for (i = 1; i <= state->max_prob; i++) {
+      if (!state->probs[i]) continue;
+      ss = "";
+      if (i == info.prob_id) ss = " selected=\"yes\"";
+      s = html_armor_string_dup(state->probs[i]->long_name);
+      fprintf(f, "<option value=\"%d\"%s>%s - %s\n",
+              i, ss, state->probs[i]->short_name, s);
+      xfree(s);
+    }
+    fprintf(f, "</select></td><td>%s</td></tr></form>\n",
+            BUTTON(NEW_SRV_ACTION_CHANGE_RUN_PROB_ID));
+  } else {
+    fprintf(f, "%s</tr>\n", nbsp);
+  }
+
+  // variant
+  if (prob && prob->variant_num > 0) {
+    variant = info.variant;
+    if (!variant) variant = find_variant(state, info.user_id, info.prob_id);
+    if (variant > 0) {
+      snprintf(filtbuf1, sizeof(filtbuf1), "prob == \"%s\" && variant == %d", 
+               prob->short_name, variant);
+      url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
+      ps1 = new_serve_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
+                           "filter_expr=%s", filtbuf2);
+      ps2 = "</a>";
+      if (info.variant > 0) {
+        snprintf(bb, sizeof(bb), "%d", info.variant);
+      } else {
+        snprintf(bb, sizeof(bb), "%d (implicit)", variant);
+      }
+    } else {
+      ps1 = ""; ps2 = "";
+      snprintf(bb, sizeof(bb), "<i>unassigned</i>");
+    }
+    if (editable) {
+      html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+      html_hidden(f, "run_id", "%d", run_id);
+    }
+    fprintf(f, "<tr><td>%s:</td><td>%s%s%s</td>", _("Variant"), ps1, bb, ps2);
+    if (editable) {
+      fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
+              html_input_text(bt, sizeof(bt), "param", 10, "%d", info.variant),
+              BUTTON(NEW_SRV_ACTION_CHANGE_RUN_VARIANT));
+    } else {
+      fprintf(f, "%s</tr>\n", nbsp);
+    }
+  }
+
+  // lang_id
+  if (lang) {
+    snprintf(filtbuf1, sizeof(filtbuf1), "lang == \"%s\"", lang->short_name);
+    url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
+    ps1 = new_serve_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
+                         "filter_expr=%s", filtbuf2);
+    ps2 = "</a>";
+  } else if (!info.lang_id) {
+    ps1 = ps2 = "";
+    ss = "N/A";
+  } else {
+    snprintf(bb, sizeof(bb), "??? - %d", info.lang_id);
+    ps1 = ps2 = "";
+    ss = bb;
+  }
+  if (editable) {
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "run_id", "%d", run_id);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%s%s%s</td>", _("Language"), ps1, ss, ps2);
+  if (editable) {
+    fprintf(f, "<td><select name=\"param\">\n");
+    for (i = 1; i <= state->max_lang; i++) {
+      if (!state->langs[i]) continue;
+      ss = "";
+      if (i == info.lang_id) ss = " selected=\"yes\"";
+      s = html_armor_string_dup(state->langs[i]->long_name);
+      fprintf(f, "<option value=\"%d\"%s>%s - %s</option>\n",
+              i, ss, state->langs[i]->short_name, s);
+      xfree(s);
+    }
+    fprintf(f, "</select></td><td>%s</td></tr></form>\n",
+            BUTTON(NEW_SRV_ACTION_CHANGE_RUN_VARIANT));
+  } else {
+    fprintf(f, "%s</tr>\n", nbsp);
+  }
+
+  // is_imported
+  if (editable) {
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "run_id", "%d", run_id);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%s</td>",
+          _("Imported?"), html_unparse_bool(bb, sizeof(bb), info.is_imported));
+  if (editable) {
+    fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
+            html_select_yesno(bt, sizeof(bt), "param", info.is_imported),
+            BUTTON(NEW_SRV_ACTION_CHANGE_RUN_IS_IMPORTED));
+  } else {
+    fprintf(f, "%s</tr>\n", nbsp);
+  }
+
+  // is_hidden
+  if (editable) {
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "run_id", "%d", run_id);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%s</td>",
+          _("Hidden?"), html_unparse_bool(bb, sizeof(bb), info.is_hidden));
+  if (editable) {
+    fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
+            html_select_yesno(bt, sizeof(bt), "param", info.is_hidden),
+            BUTTON(NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN));
+  } else {
+    fprintf(f, "%s</tr>\n", nbsp);
+  }
+
+  // is_readonly
+  // special editable rules!
+  if (phr->role==USER_ROLE_ADMIN && opcaps_check(phr->caps,OPCAP_EDIT_RUN)>=0){
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "run_id", "%d", run_id);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%s</td>",
+          _("Read-only?"), html_unparse_bool(bb, sizeof(bb), info.is_readonly));
+  if (phr->role==USER_ROLE_ADMIN && opcaps_check(phr->caps,OPCAP_EDIT_RUN)>=0){
+    fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
+            html_select_yesno(bt, sizeof(bt), "param", info.is_readonly),
+            BUTTON(NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY));
+  } else {
+    fprintf(f, "%s</tr>\n", nbsp);
+  }
+
+  // locale_id
+  fprintf(f, "<tr><td>%s:</td><td>%d</td>%s</tr>\n",
+          _("Locale ID"), info.locale_id, nbsp);
+
+  // status
+  if (editable) {
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "run_id", "%d", run_id);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%s</td>",
+          _("Status"), run_status_str(info.status, 0, 0));
+  if (editable) {
+    write_change_status_dialog(state, f, 0, info.is_imported);
+    fprintf(f, "<td>%s</td></tr></form>\n",
+            BUTTON(NEW_SRV_ACTION_CHANGE_RUN_STATUS));
+  } else {
+    fprintf(f, "%s</tr>\n", nbsp);
+  }
+
+  if (state->global->score_system_val == SCORE_KIROV
+      || state->global->score_system_val == SCORE_OLYMPIAD) {
+    // test (number of tests passed)
+    if (info.test <= 0) {
+      snprintf(bb, sizeof(bb), "N/A");
+    } else {
+      snprintf(bb, sizeof(bb), "%d", info.test - 1);
+    }
+    if (editable) {
+      html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+      html_hidden(f, "run_id", "%d", run_id);
+    }
+    fprintf(f, "<tr><td>%s:</td><td>%s</td>", _("Tests passed"), bb);
+    if (editable) {
+      fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
+              html_input_text(bt, sizeof(bt), "param", 10, "%d", info.test - 1),
+              BUTTON(NEW_SRV_ACTION_CHANGE_RUN_TEST));
+    } else {
+      fprintf(f, "%s</tr>\n", nbsp);
+    }
+
+    // score
+    if (info.score < 0) {
+      snprintf(bb, sizeof(bb), "N/A");
+    } else {
+      snprintf(bb, sizeof(bb), "%d", info.score);
+    }
+    if (editable) {
+      html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+      html_hidden(f, "run_id", "%d", run_id);
+    }
+    fprintf(f, "<tr><td>%s:</td><td>%s</td>", _("Score gained"), bb);
+    if (editable) {
+      fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
+              html_input_text(bt, sizeof(bt), "param", 10, "%d", info.score),
+              BUTTON(NEW_SRV_ACTION_CHANGE_RUN_SCORE));
+    } else {
+      fprintf(f, "%s</tr>\n", nbsp);
+    }
+
+    // score_adj
+    if (editable) {
+      html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+      html_hidden(f, "run_id", "%d", run_id);
+    }
+    fprintf(f, "<tr><td>%s:</td><td>%d</td>", _("Score adjustment"),
+            info.score_adj);
+    if (editable) {
+      fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
+              html_input_text(bt, sizeof(bt), "param", 10, "%d",
+                              info.score_adj),
+              BUTTON(NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ));
+    } else {
+      fprintf(f, "%s</tr>\n", nbsp);
+    }
+  } else if (state->global->score_system_val == SCORE_MOSCOW) {
+    // the first failed test
+    if (info.test <= 0) {
+      snprintf(bb, sizeof(bb), "N/A");
+    } else {
+      snprintf(bb, sizeof(bb), "%d", info.test);
+    }
+    if (editable) {
+      html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+      html_hidden(f, "run_id", "%d", run_id);
+    }
+    fprintf(f, "<tr><td>%s:</td><td>%s</td>", _("Failed test"), bb);
+    if (editable) {
+      fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
+              html_input_text(bt, sizeof(bt), "param", 10, "%d",
+                              info.score_adj),
+              BUTTON(NEW_SRV_ACTION_CHANGE_RUN_TEST));
+    } else {
+      fprintf(f, "%s</tr>\n", nbsp);
+    }
+
+    // score
+    if (info.score < 0) {
+      snprintf(bb, sizeof(bb), "N/A");
+    } else {
+      snprintf(bb, sizeof(bb), "%d", info.score);
+    }
+    if (editable) {
+      html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+      html_hidden(f, "run_id", "%d", run_id);
+    }
+    fprintf(f, "<tr><td>%s:</td><td>%s</td>", _("Score gained"), bb);
+    if (editable) {
+      fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
+              html_input_text(bt, sizeof(bt), "param", 10, "%d",
+                              info.score_adj),
+              BUTTON(NEW_SRV_ACTION_CHANGE_RUN_SCORE));
+    } else {
+      fprintf(f, "%s</tr>\n", nbsp);
+    }
+
+    // score_adj
+    if (editable) {
+      html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+      html_hidden(f, "run_id", "%d", run_id);
+    }
+    fprintf(f, "<tr><td>%s:</td><td>%d</td>", _("Score adjustment"),
+            info.score_adj);
+    if (editable) {
+      fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
+              html_input_text(bt, sizeof(bt), "param", 10, "%d",
+                              info.score_adj),
+              BUTTON(NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ));
+    } else {
+      fprintf(f, "%s</tr>\n", nbsp);
+    }
+  } else {
+    // ACM scoring system
+    // first failed test
+    if (info.test <= 0) {
+      snprintf(bb, sizeof(bb), "N/A");
+    } else {
+      snprintf(bb, sizeof(bb), "%d", info.test);
+    }
+    if (editable) {
+      html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+      html_hidden(f, "run_id", "%d", run_id);
+    }
+    fprintf(f, "<tr><td>%s:</td><td>%s</td>", _("Failed test"), bb);
+    if (editable) {
+      fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
+              html_input_text(bt, sizeof(bt), "param", 10, "%d",
+                              info.score_adj),
+              BUTTON(NEW_SRV_ACTION_CHANGE_RUN_TEST));
+    } else {
+      fprintf(f, "%s</tr>\n", nbsp);
+    }
+  }
+
+  if (editable) {
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "run_id", "%d", run_id);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%d</td>", _("Pages printed"), info.pages);
+  if (editable) {
+    fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
+            html_input_text(bt, sizeof(bt), "param", 10, "%d",
+                            info.score_adj),
+            BUTTON(NEW_SRV_ACTION_CHANGE_RUN_PAGES));
+  } else {
+    fprintf(f, "%s</tr>\n", nbsp);
+  }
+  fprintf(f, "</table>\n");
+
+  fprintf(f, "<p>%s%s</a></p>\n",
+          new_serve_aref(filtbuf3, sizeof(filtbuf3), phr,
+                         NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN,
+                         "run_id=%d", run_id),
+          _("Download run"));
+
+  if (editable) {
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "run_id", "%d", run_id);
+    fprintf(f, "<p>%s</p>", BUTTON(NEW_SRV_ACTION_CLEAR_RUN));
+    fprintf(f, "</form>");
+  }
+
+  if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) >= 0) {
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "run_id", "%d", run_id);
+    fprintf(f, "<p>%s</p>", BUTTON(NEW_SRV_ACTION_PRINT_RUN));
+    fprintf(f, "</form>");
+  }
+
+  /*
+  filtbuf1[0] = 0;
+  if (run_id > 0) {
+    run_id2 = run_find(state->runlog_state, run_id - 1, 0, info.user_id, info.prob_id,
+                       info.lang_id);
+    if (run_id2 >= 0) {
+      snprintf(filtbuf1, sizeof(filtbuf1), "%d", run_id2);
+    }
+  }
+  html_start_form(f, 1, self_url, hidden_vars);
+  fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
+  fprintf(f, "<p>%s: <input type=\"text\" name=\"run_id2\" value=\"%s\" size=\"10\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>\n",
+          _("Compare this run with run"), filtbuf1,
+          ACTION_COMPARE_RUNS, _("Compare"));
+
+  if (state->global->enable_report_upload) {
+    html_start_form(f, 2, self_url, hidden_vars);
+    fprintf(f, "<p>%s: ", _("Upload judging protocol"));
+    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
+    fprintf(f, "<input type=\"file\" name=\"file\">");
+    if (state->global->team_enable_rep_view) {
+      fprintf(f, "<input type=\"checkbox\" %s%s>%s",
+              "name=\"judge_report\"", "checked=\"yes\"",
+              _("Judge's report"));
+      fprintf(f, "<input type=\"checkbox\" %s%s>%s",
+              "name=\"user_report\"", "checked=\"yes\"",
+              _("User's report"));
+    }
+    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+            ACTION_UPLOAD_REPORT, _("Upload!"));
+    fprintf(f, "</form>\n");
+  }
+
+  print_nav_buttons(state, f, run_id, sid, self_url, hidden_vars, extra_args,
+                    _("Main page"), 0, 0, 0, _("Refresh"), _("View report"),
+                    _("View team report"));
+  */
+
+  fprintf(f, "<hr>\n");
+  if (info.lang_id > 0 && info.lang_id <= state->max_lang
+      && state->langs[info.lang_id] && state->langs[info.lang_id]->binary) {
+    fprintf(f, "<p>The submission is binary and thus is not shown.</p>\n");
+  } else if (!info.is_imported) {
+    if (src_flags < 0 || generic_read_file(&src_text, 0, &src_len, src_flags, 0, src_path, "") < 0) {
+      fprintf(f, "<big><font color=\"red\">Cannot read source text!</font></big>\n");
+    } else {
+      numb_txt = "";
+      if ((numb_len = text_numbered_memlen(src_text, src_len))) {
+        numb_txt = alloca(numb_len + 1);
+        text_number_lines(src_text, src_len, numb_txt);
+      }
+
+      html_len = html_armored_memlen(numb_txt, numb_len);
+      html_text = alloca(html_len + 16);
+      html_armor_text(numb_txt, numb_len, html_text);
+      html_text[html_len] = 0;
+      fprintf(f, "<pre>%s</pre>", html_text);
+      xfree(src_text);
+    }
+    fprintf(f, "<hr>\n");
+    /*
+    print_nav_buttons(state, f, run_id, sid, self_url, hidden_vars, extra_args,
+                      _("Main page"), 0, 0, 0, _("Refresh"), _("View report"),
+                      _("View team report"));
+    */
+  }
 }
 
 /*

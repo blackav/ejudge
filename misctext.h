@@ -3,7 +3,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -56,5 +56,6 @@ enum
 int get_content_type(const unsigned char *txt, const unsigned char **p_start_ptr);
 
 unsigned char *dos2unix_str(const unsigned char *s);
+unsigned char *unparse_sha1(const void *shabuf);
 
 #endif /* __MISCTEXT_H__ */

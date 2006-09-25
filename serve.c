@@ -927,7 +927,7 @@ cmd_view(struct client_state *p, int len,
     }
 
     r = write_priv_source(&serve_state, f, p->user_id, p->priv_level, p->cookie,
-                          serve_state.accepting_mode, self_url_ptr,
+                          self_url_ptr,
                           hidden_vars_ptr, extra_args_ptr, pkt->item, &caps);
     break;
   case SRV_CMD_NEW_RUN_FORM:
@@ -1446,7 +1446,7 @@ cmd_message(struct client_state *p, int len,
     msg = alloca(pkt->subj_len + pkt->text_len + 32);
     msg_len = sprintf(msg, "Subject: %s\n\n%s", subj_ptr, text_ptr);
     clar_id = clar_add_record(serve_state.clarlog_state, serve_state.current_time, msg_len,
-                              run_unparse_ip(p->ip),
+                              xml_unparse_ip(p->ip),
                               0, dest_uid, 0, p->user_id,
                               hide_flag, b64_subj_short);
     if (clar_id < 0) {
@@ -1507,7 +1507,7 @@ cmd_message(struct client_state *p, int len,
     msg_len = sprintf(msg, "%s%s\n%s", new_subj, quoted_ptr, text_ptr);
     if (!pkt->dest_user_id) dest_uid = 0;
     clar_id = clar_add_record(serve_state.clarlog_state, serve_state.current_time, msg_len,
-                              run_unparse_ip(p->ip), 0, dest_uid, 0,
+                              xml_unparse_ip(p->ip), 0, dest_uid, 0,
                               p->user_id, hide_flag, b64_subj_short);
     if (clar_id < 0) {
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
@@ -2423,8 +2423,9 @@ cmd_team_submit_clar(struct client_state *p, int len,
     return;
   }
 
-  if ((clar_id = clar_add_record(serve_state.clarlog_state, serve_state.current_time, full_len,
-                                 run_unparse_ip(pkt->ip),
+  if ((clar_id = clar_add_record(serve_state.clarlog_state,
+                                 serve_state.current_time, full_len,
+                                 xml_unparse_ip(pkt->ip),
                                  pkt->user_id, 0, 0, 0, 0, bsubj)) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
