@@ -313,7 +313,7 @@ print_raw_record(const serve_state_t state, FILE *f, int run_id,
     snprintf((fields[RAW_RUN_TIMESTAMP] = alloca(BSIZE)), BSIZE,
              "%lld", pe->time);
     snprintf((fields[RAW_RUN_NSEC] = alloca(BSIZE)), BSIZE, "%d", pe->nsec);
-    fields[RAW_RUN_IP] = run_unparse_ip(pe->a.ip);
+    fields[RAW_RUN_IP] = (unsigned char *) xml_unparse_ip(pe->a.ip);
     snprintf((fields[RAW_RUN_USER_ID] = alloca(BSIZE)), BSIZE, "%d", pe->user_id);
     fields[RAW_RUN_USER_LOGIN] = teamdb_get_login(state->teamdb_state, pe->user_id);
     fields[RAW_RUN_USER_NAME] = teamdb_get_name(state->teamdb_state, pe->user_id);
@@ -743,7 +743,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
         fprintf(f, "<td>%d</td>", rid);
         fprintf(f, "<td>%s</td>", durstr);
         fprintf(f, "<td>&nbsp;</td>");
-        fprintf(f, "<td>%s</td>", run_unparse_ip(pe->a.ip));
+        fprintf(f, "<td>%s</td>", xml_unparse_ip(pe->a.ip));
         fprintf(f, "<td>%d</td>", pe->user_id);
         fprintf(f, "<td>%s</td>", teamdb_get_name_2(state->teamdb_state,
                                                     pe->user_id));
@@ -822,7 +822,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
       fprintf(f, "<td>%d%s</td>", rid, imported_str);
       fprintf(f, "<td>%s</td>", durstr);
       fprintf(f, "<td>%u</td>", pe->size);
-      fprintf(f, "<td>%s</td>", run_unparse_ip(pe->a.ip));
+      fprintf(f, "<td>%s</td>", xml_unparse_ip(pe->a.ip));
       fprintf(f, "<td>%d</td>", pe->user_id);
       fprintf(f, "<td>%s</td>", teamdb_get_name_2(state->teamdb_state,
                                                   pe->user_id));
@@ -1223,7 +1223,6 @@ int
 write_priv_source(const serve_state_t state, FILE *f,
                   int user_id, int priv_level,
                   ej_cookie_t sid,
-                  int accepting_mode,
                   unsigned char const *self_url,
                   unsigned char const *hidden_vars,
                   unsigned char const *extra_args,
@@ -1284,7 +1283,7 @@ write_priv_source(const serve_state_t state, FILE *f,
   html_hyperref(filtbuf3, sizeof(filtbuf3), sid, self_url,
                 extra_args, "filter_expr=%s&filter_view=View",
                 filtbuf2);
-  fprintf(f, "<td>%s%s</a></td>", filtbuf3, run_unparse_ip(info.a.ip));
+  fprintf(f, "<td>%s%s</a></td>", filtbuf3, xml_unparse_ip(info.a.ip));
   fprintf(f, "%s</tr>\n", nbsp);
 
   // size
@@ -2835,7 +2834,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
             dur, pts->tm_hour, pts->tm_min, pts->tm_sec);
 
     fprintf(f, "%u;", re.size);
-    fprintf(f, "%s;", run_unparse_ip(re.a.ip));
+    fprintf(f, "%s;", xml_unparse_ip(re.a.ip));
 
     s = (unsigned char*) re.sha1;
     for (j = 0; j < 20; j++) fprintf(f, "%02x", *s++);

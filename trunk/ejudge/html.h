@@ -145,7 +145,6 @@ void do_write_moscow_standings(const serve_state_t,
 
 int write_priv_source(const serve_state_t, FILE *f, int user_id, int priv_level,
                       ej_cookie_t sid,
-                      int accepting_mode,
                       unsigned char const *self_url,
                       unsigned char const *hidden_vars,
                       unsigned char const *extra_args,
