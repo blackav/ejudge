@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,10 +28,12 @@ xml_parse_ip(unsigned char const *path, int line, int column,
 
   if (!s || sscanf(s, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
       || s[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255) {
-    if (path) {
-      err("%s:%d:%d: invalid IP-address", path, line, column);
-    } else {
-      err("%d:%d: invalid IP-address", line, column);
+    if (line > 0) {
+      if (path) {
+        err("%s:%d:%d: invalid IP-address", path, line, column);
+      } else {
+        err("%d:%d: invalid IP-address", line, column);
+      }
     }
     return -1;
   }
@@ -40,7 +42,7 @@ xml_parse_ip(unsigned char const *path, int line, int column,
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
