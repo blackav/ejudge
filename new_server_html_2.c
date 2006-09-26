@@ -30,6 +30,7 @@
 #include "xml_utils.h"
 #include "archive_paths.h"
 #include "fileutl.h"
+#include "mime_type.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -856,12 +857,13 @@ new_serve_write_priv_source(const serve_state_t state,
   unsigned char filtbuf3[512];
   unsigned char *ps1, *ps2;
   time_t run_time;
-  int editable;
+  int editable, run_id2;
   unsigned char bt[1024];
   unsigned char bb[1024];
   const struct section_problem_data *prob = 0;
   const struct section_language_data *lang = 0;
   const unsigned char *ss;
+  const struct section_global_data *global = state->global;
 
   if (run_id < 0 || run_id >= run_get_total(state->runlog_state)) {
     fprintf(log_f, _("Invalid run_id."));
@@ -875,7 +877,7 @@ new_serve_write_priv_source(const serve_state_t state,
   }
 
   src_flags = archive_make_read_path(state, src_path, sizeof(src_path),
-                                     state->global->run_archive_dir, run_id,
+                                     global->run_archive_dir, run_id,
                                      0, 1);
   if (src_flags < 0) {
     fprintf(log_f, _("Invalid run_id."));
@@ -1097,6 +1099,12 @@ new_serve_write_priv_source(const serve_state_t state,
     fprintf(f, "%s</tr>\n", nbsp);
   }
 
+  // mime_type
+  if (!info.lang_id) {
+    fprintf(f, "<tr><td>%s</td><td>%s</td>%s</tr>\n",
+	    _("Content type"), mime_type_get_type(info.mime_type), nbsp);
+  }
+
   // is_imported
   if (editable) {
     html_start_form(f, 1, phr->self_url, phr->hidden_vars);
@@ -1162,8 +1170,8 @@ new_serve_write_priv_source(const serve_state_t state,
     fprintf(f, "%s</tr>\n", nbsp);
   }
 
-  if (state->global->score_system_val == SCORE_KIROV
-      || state->global->score_system_val == SCORE_OLYMPIAD) {
+  if (global->score_system_val == SCORE_KIROV
+      || global->score_system_val == SCORE_OLYMPIAD) {
     // test (number of tests passed)
     if (info.test <= 0) {
       snprintf(bb, sizeof(bb), "N/A");
@@ -1217,7 +1225,7 @@ new_serve_write_priv_source(const serve_state_t state,
     } else {
       fprintf(f, "%s</tr>\n", nbsp);
     }
-  } else if (state->global->score_system_val == SCORE_MOSCOW) {
+  } else if (global->score_system_val == SCORE_MOSCOW) {
     // the first failed test
     if (info.test <= 0) {
       snprintf(bb, sizeof(bb), "N/A");
@@ -1331,27 +1339,27 @@ new_serve_write_priv_source(const serve_state_t state,
     fprintf(f, "</form>");
   }
 
-  /*
   filtbuf1[0] = 0;
   if (run_id > 0) {
-    run_id2 = run_find(state->runlog_state, run_id - 1, 0, info.user_id, info.prob_id,
-                       info.lang_id);
+    run_id2 = run_find(state->runlog_state, run_id - 1, 0, info.user_id,
+		       info.prob_id, info.lang_id);
     if (run_id2 >= 0) {
       snprintf(filtbuf1, sizeof(filtbuf1), "%d", run_id2);
     }
   }
-  html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
-  fprintf(f, "<p>%s: <input type=\"text\" name=\"run_id2\" value=\"%s\" size=\"10\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>\n",
-          _("Compare this run with run"), filtbuf1,
-          ACTION_COMPARE_RUNS, _("Compare"));
+  html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+  html_hidden(f, "run_id", "%d", run_id);
+  fprintf(f, "<p>%s: %s %s</p>\n",
+	  _("Compare this run with run"),
+          html_input_text(bt, sizeof(bt), "run_id2", 10, "%s", filtbuf1),
+	  BUTTON(NEW_SRV_ACTION_COMPARE_RUNS));
 
-  if (state->global->enable_report_upload) {
-    html_start_form(f, 2, self_url, hidden_vars);
+  if (global->enable_report_upload) {
+    html_start_form(f, 2, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "run_id", "%d", run_id);
     fprintf(f, "<p>%s: ", _("Upload judging protocol"));
-    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
     fprintf(f, "<input type=\"file\" name=\"file\">");
-    if (state->global->team_enable_rep_view) {
+    if (global->team_enable_rep_view) {
       fprintf(f, "<input type=\"checkbox\" %s%s>%s",
               "name=\"judge_report\"", "checked=\"yes\"",
               _("Judge's report"));
@@ -1359,11 +1367,10 @@ new_serve_write_priv_source(const serve_state_t state,
               "name=\"user_report\"", "checked=\"yes\"",
               _("User's report"));
     }
-    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
-            ACTION_UPLOAD_REPORT, _("Upload!"));
-    fprintf(f, "</form>\n");
+    fprintf(f, "%s</form>\n", BUTTON(NEW_SRV_ACTION_UPLOAD_REPORT));
   }
 
+  /*
   print_nav_buttons(state, f, run_id, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), 0, 0, 0, _("Refresh"), _("View report"),
                     _("View team report"));
