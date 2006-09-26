@@ -693,6 +693,8 @@ static const unsigned char * const submit_button_labels[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_RUN_SCORE] = __("Change"),
   [NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ] = __("Change"),
   [NEW_SRV_ACTION_CHANGE_RUN_PAGES] = __("Change"),
+  [NEW_SRV_ACTION_COMPARE_RUNS] = __("Compare"),
+  [NEW_SRV_ACTION_UPLOAD_REPORT] = __("Upload!"),
 };
 
 #define BUTTON(a) new_serve_submit_button(bb, sizeof(bb), 0, a, 0)
