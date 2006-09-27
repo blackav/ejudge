@@ -2397,11 +2397,7 @@ priv_view_report(struct server_framework_state *state,
     goto done;
   }
 
-  /*
-    r = write_priv_report(&serve_state, f, p->user_id, p->priv_level, p->cookie, (int) pkt->flags,
-                          self_url_ptr, hidden_vars_ptr, extra_args_ptr,
-                          pkt->item, &caps);
-  */
+  new_serve_write_priv_report(cs, fout, log_f, phr, cnts, extra, 0, run_id);
 
  done:
   fclose(log_f); log_f = 0;

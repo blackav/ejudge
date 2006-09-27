@@ -1010,7 +1010,7 @@ new_serve_write_priv_source(const serve_state_t state,
     html_start_form(f, 1, phr->self_url, phr->hidden_vars);
     html_hidden(f, "run_id", "%d", run_id);
   }
-  fprintf(f, "<tr><td>%s:</td><td>%s%s%s</td>", _("Problem"), ps1, s, ps2);
+  fprintf(f, "<tr><td>%s:</td><td>%s%s%s</td>", _("Problem"), ps1, ss, ps2);
   if (editable) {
     fprintf(f, "<td><select name=\"param\">\n");
     for (i = 1; i <= state->max_prob; i++) {
@@ -1069,6 +1069,7 @@ new_serve_write_priv_source(const serve_state_t state,
     ps1 = new_serve_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
                          "filter_expr=%s", filtbuf2);
     ps2 = "</a>";
+    ss = lang->short_name;
   } else if (!info.lang_id) {
     ps1 = ps2 = "";
     ss = "N/A";
@@ -1486,6 +1487,11 @@ new_serve_write_priv_report(const serve_state_t cs,
     }
     content_type = get_content_type(rep_text, &start_ptr);
   }
+
+  new_serve_header(f, extra->header_txt, 0, 0, phr->locale_id,
+                   "%s [%s, %s]: %s %d", new_serve_unparse_role(phr->role),
+                   phr->name_arm, extra->contest_arm,
+                   _("Viewing report"), run_id);
 
   switch (content_type) {
   case CONTENT_TYPE_TEXT:
