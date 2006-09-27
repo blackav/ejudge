@@ -2367,6 +2367,51 @@ priv_view_priv_users_page(struct server_framework_state *state,
 }
 
 static void
+priv_view_report(struct server_framework_state *state,
+                 struct client_state *p,
+                 FILE *fout,
+                 struct http_request_info *phr,
+                 const struct contest_desc *cnts,
+                 struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  FILE *log_f = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  const unsigned char *s;
+  int run_id, n;
+
+  if (ns_cgi_param(phr, "run_id", &s) <= 0
+      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n])
+    return html_err_invalid_param(state, p, fout, phr, 1,
+                                  "cannot parse run_id");
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (opcaps_check(phr->caps, OPCAP_VIEW_REPORT) < 0) {
+    fprintf(log_f, _("Permission denied"));
+    goto done;
+  }
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
+    fprintf(log_f, _("Invalid run_id %d"), run_id);
+    goto done;
+  }
+
+  /*
+    r = write_priv_report(&serve_state, f, p->user_id, p->priv_level, p->cookie, (int) pkt->flags,
+                          self_url_ptr, hidden_vars_ptr, extra_args_ptr,
+                          pkt->item, &caps);
+  */
+
+ done:
+  fclose(log_f); log_f = 0;
+  if (log_txt && *log_txt) {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt, 0);
+  }
+  xfree(log_txt);
+}
+
+static void
 priv_view_source(struct server_framework_state *state,
                  struct client_state *p,
                  FILE *fout,
@@ -2883,6 +2928,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_RESET_FILTER] = priv_reset_filter,
   [NEW_SRV_ACTION_RESET_CLAR_FILTER] = priv_reset_filter,
   [NEW_SRV_ACTION_VIEW_SOURCE] = priv_view_source,
+  [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
 };
 
 static void

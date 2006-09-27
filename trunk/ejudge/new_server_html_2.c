@@ -1406,6 +1406,120 @@ new_serve_write_priv_source(const serve_state_t state,
   }
 }
 
+void
+new_serve_write_priv_report(const serve_state_t cs,
+                            FILE *f,
+                            FILE *log_f,
+                            struct http_request_info *phr,
+                            const struct contest_desc *cnts,
+                            struct contest_extra *extra,
+                            int team_report_flag,
+                            int run_id)
+{
+  path_t rep_path;
+  char *rep_text = 0, *html_text;
+  size_t rep_len = 0, html_len;
+  int rep_flag, content_type;
+  const unsigned char *t6 = _("Refresh");
+  const unsigned char *t7 = _("View team report");
+  const unsigned char *start_ptr = 0;
+  struct run_entry re;
+  const struct section_global_data *global = cs->global;
+  const unsigned char *report_dir = global->report_archive_dir;
+
+  if (team_report_flag && global->team_enable_rep_view) {
+    t7 = t6;
+    t6 = _("View report");
+    report_dir = global->team_report_archive_dir;
+    if (global->team_show_judge_report) {
+      report_dir = global->report_archive_dir;
+    }
+  }
+
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
+      || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+    fprintf(log_f, _("Invalid run_id."));
+    goto done;
+  }
+  if (re.status > RUN_MAX_STATUS) {
+    fprintf(log_f, _("Report is not available."));
+    goto done;
+  }
+  /*
+  // FIXME: switch is here for begin more explicit
+  if (!run_is_report_available(re.status))
+  return -SRV_ERR_REPORT_NOT_AVAILABLE;
+  */
+  switch (re.status) {
+  case RUN_IGNORED:
+  case RUN_DISQUALIFIED:
+  case RUN_PENDING:
+    fprintf(log_f, _("Report is not available."));
+    goto done;
+  }
+
+  /*
+  print_nav_buttons(state, f, run_id, sid, self_url, hidden_vars, extra_args,
+                    _("Main page"), 0, 0, 0, _("View source"), t6, t7);
+  fprintf(f, "<hr>\n");
+  */
+
+  rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
+                                    global->xml_report_archive_dir,
+                                    run_id, 0, 1);
+  if (rep_flag >= 0) {
+    if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
+      fprintf(log_f, _("Read error while reading %s."), rep_path);
+      goto done;
+    }
+    content_type = get_content_type(rep_text, &start_ptr);
+  } else {
+    rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
+                                      report_dir, run_id, 0, 1);
+    if (rep_flag < 0) {
+      fprintf(log_f, _("Report file does not exist."));
+      goto done;
+    }
+    if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
+      fprintf(log_f, _("Read error while reading %s."), rep_path);
+      goto done;
+    }
+    content_type = get_content_type(rep_text, &start_ptr);
+  }
+
+  switch (content_type) {
+  case CONTENT_TYPE_TEXT:
+    html_len = html_armored_memlen(start_ptr, rep_len);
+    html_text = alloca(html_len + 16);
+    html_armor_text(rep_text, rep_len, html_text);
+    html_text[html_len] = 0;
+    fprintf(f, "<pre>%s</pre>", html_text);
+    break;
+  case CONTENT_TYPE_HTML:
+    fprintf(f, "%s", start_ptr);
+    break;
+  case CONTENT_TYPE_XML:
+    if (team_report_flag) {
+      write_xml_team_testing_report(cs, f, start_ptr);
+    } else {
+      write_xml_testing_report(f, start_ptr, phr->session_id,phr->self_url, "");
+    }
+    break;
+  default:
+    abort();
+  }
+
+  /*
+  xfree(rep_text);
+  fprintf(f, "<hr>\n");
+  print_nav_buttons(state, f, run_id, sid, self_url, hidden_vars, extra_args,
+                    _("Main page"), 0, 0, 0, _("View source"), t6, t7);
+  */
+
+ done:;
+  xfree(rep_text);
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
