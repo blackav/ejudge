@@ -197,6 +197,7 @@ elem_free(struct xml_tree *t)
       xfree(p->i.spelling);
       xfree(p->i.printer_name);
       xfree(p->i.languages);
+      xfree(p->i.phone);
       xfree(p->extra1);
       xfree(p->cntsinfo);
     }
@@ -224,6 +225,7 @@ elem_free(struct xml_tree *t)
       xfree(p->fac_en);
       xfree(p->facshort);
       xfree(p->facshort_en);
+      xfree(p->phone);
     }
     break;
   case USERLIST_T_CONTESTANTS:
@@ -257,6 +259,7 @@ elem_free(struct xml_tree *t)
       xfree(p->i.spelling);
       xfree(p->i.printer_name);
       xfree(p->i.languages);
+      xfree(p->i.phone);
     }
     break;
   }
