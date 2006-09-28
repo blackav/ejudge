@@ -2133,6 +2133,7 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
   }
   fprintf(f, "</pre>");
 
+  testing_report_free(r);
   return 0;
 }
 

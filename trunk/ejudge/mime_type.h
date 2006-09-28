@@ -39,13 +39,15 @@ enum
   MIME_TYPE_APPL_FLASH,         // application/x-shockwave-flash
   MIME_TYPE_APPL_TAR,           // application/x-tar
   MIME_TYPE_APPL_ZIP,           // application/zip
-  MIME_TYPE_IMAGE_BMP,          // image/bmp
+  MIME_TYPE_IMAGE_FIRST,
+  MIME_TYPE_IMAGE_BMP = MIME_TYPE_IMAGE_FIRST, // image/bmp
   MIME_TYPE_IMAGE_GIF,          // image/gif
   MIME_TYPE_IMAGE_JPEG,         // image/jpeg
   MIME_TYPE_IMAGE_PNG,          // image/png
   MIME_TYPE_IMAGE_TIFF,         // image/tiff
   MIME_TYPE_IMAGE_DJVU,         // image/vnd.djvu
   MIME_TYPE_IMAGE_ICON,         // image/x-icon
+  MIME_TYPE_IMAGE_LAST = MIME_TYPE_IMAGE_ICON,
 
   MIME_TYPE_LAST,
 };

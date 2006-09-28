@@ -4339,6 +4339,7 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
     fprintf(f, "</tr>\n");
   }
   fprintf(f, "</table>\n");
+  testing_report_free(r);
   return 0;
 }
 
@@ -4453,6 +4454,7 @@ write_xml_team_output_only_acc_report(FILE *f, const unsigned char *txt,
   }
   fprintf(f, "</table>\n");
 
+  testing_report_free(r);
   return 0;
 }
 
@@ -4773,6 +4775,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
   }
   fprintf(f, "</pre>");
 
+  testing_report_free(r);
   return 0;
 }
 

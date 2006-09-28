@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-27 17:08+0400\n"
-"PO-Revision-Date: 2006-09-25 23:10+0400\n"
+"POT-Creation-Date: 2006-09-27 23:03+0400\n"
+"PO-Revision-Date: 2006-09-28 07:21+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -675,6 +675,9 @@ msgstr "Страна"
 
 msgid "Country (En)"
 msgstr "Страна (Англ.)"
+
+msgid "Current standings"
+msgstr "Текущее положение участников"
 
 msgid "Current virtual standings"
 msgstr "Виртуальное положение участников"
@@ -1672,7 +1675,7 @@ msgstr "Re: Ваш вопрос"
 
 #, c-format
 msgid "Read error while reading %s."
-msgstr ""
+msgstr "Ошибка при чтении %s с диска."
 
 msgid "Read the problem.\n"
 msgstr "Читайте условие задачи.\n"
@@ -2018,6 +2021,10 @@ msgstr "Решённые<br>задачи"
 #, c-format
 msgid "Source file does not exist."
 msgstr "Запрошенный файл не существует."
+
+#, c-format
+msgid "Source for this run is not available."
+msgstr "Текст для этой посылки недоступен."
 
 msgid "Source view"
 msgstr "Просмотр исходного текста"
@@ -2417,6 +2424,9 @@ msgstr "Просмотреть протокол"
 
 msgid "View source"
 msgstr "Посмотреть исходный текст"
+
+msgid "View standings"
+msgstr "Посмотреть положение участников"
 
 msgid "View team report"
 msgstr "Просмотреть пользовательский протокол"

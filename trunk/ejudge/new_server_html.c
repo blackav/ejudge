@@ -15,6 +15,90 @@
  * GNU General Public License for more details.
  */
 
+/*
+ * Command reimplementation status:
+    SRV_CMD_GET_ARCHIVE,
+    SRV_CMD_SHOW_CLAR,			OK
+    SRV_CMD_SHOW_SOURCE,		OK
+    SRV_CMD_SHOW_REPORT,		OK
+    SRV_CMD_SUBMIT_RUN,			OK
+    SRV_CMD_SUBMIT_CLAR,		OK
+    SRV_CMD_TEAM_PAGE,			OK
+    SRV_CMD_MASTER_PAGE,		OK
+    SRV_CMD_PRIV_STANDINGS,		OK
+    SRV_CMD_VIEW_CLAR,
+    SRV_CMD_VIEW_SOURCE,		OK
+    SRV_CMD_VIEW_REPORT,		OK
+    SRV_CMD_VIEW_USERS,			OK
+    SRV_CMD_PRIV_MSG,
+    SRV_CMD_PRIV_REPLY,
+    SRV_CMD_SUSPEND,			OK
+    SRV_CMD_RESUME,			OK
+    SRV_CMD_UPDATE_STAND,
+    SRV_CMD_RESET,
+    SRV_CMD_START,			OK
+    SRV_CMD_STOP,			OK
+    SRV_CMD_REJUDGE_ALL,
+    SRV_CMD_REJUDGE_PROBLEM,
+    SRV_CMD_SCHEDULE,			OK
+    SRV_CMD_DURATION,			OK
+    SRV_CMD_EDIT_RUN,
+    SRV_CMD_VIRTUAL_START,
+    SRV_CMD_VIRTUAL_STOP,
+    SRV_CMD_VIRTUAL_STANDINGS,
+    SRV_CMD_RESET_FILTER,		OK
+    SRV_CMD_CLEAR_RUN,
+    SRV_CMD_SQUEEZE_RUNS,
+    SRV_CMD_DUMP_RUNS,
+    SRV_CMD_DUMP_STANDINGS,
+    SRV_CMD_SET_JUDGING_MODE,		OK
+    SRV_CMD_CONTINUE,			OK
+    SRV_CMD_WRITE_XML_RUNS,
+    SRV_CMD_IMPORT_XML_RUNS,
+    SRV_CMD_QUIT,
+    SRV_CMD_EXPORT_XML_RUNS,
+    SRV_CMD_PRIV_SUBMIT_RUN,
+    SRV_CMD_TEST_SUSPEND,		OK
+    SRV_CMD_TEST_RESUME,		OK
+    SRV_CMD_JUDGE_SUSPENDED,
+    SRV_CMD_SET_ACCEPTING_MODE,		OK
+    SRV_CMD_PRIV_PRINT_RUN,
+    SRV_CMD_PRINT_RUN,
+    SRV_CMD_PRIV_DOWNLOAD_RUN,		OK
+    SRV_CMD_PRINT_SUSPEND,		OK
+    SRV_CMD_PRINT_RESUME,		OK
+    SRV_CMD_COMPARE_RUNS,
+    SRV_CMD_UPLOAD_REPORT,
+    SRV_CMD_REJUDGE_BY_MASK,
+    SRV_CMD_NEW_RUN_FORM,
+    SRV_CMD_NEW_RUN,
+    SRV_CMD_VIEW_TEAM,
+    SRV_CMD_SET_TEAM_STATUS,
+    SRV_CMD_ISSUE_WARNING,
+    SRV_CMD_SOFT_UPDATE_STAND,
+    SRV_CMD_PRIV_DOWNLOAD_REPORT,
+    SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT,
+    SRV_CMD_DUMP_MASTER_RUNS,
+    SRV_CMD_RESET_CLAR_FILTER,		OK
+    SRV_CMD_HAS_TRANSIENT_RUNS,
+    SRV_CMD_GET_TEST_SUSPEND,
+    SRV_CMD_VIEW_TEST_INPUT,
+    SRV_CMD_VIEW_TEST_OUTPUT,
+    SRV_CMD_VIEW_TEST_ANSWER,
+    SRV_CMD_VIEW_TEST_ERROR,
+    SRV_CMD_VIEW_TEST_CHECKER,
+    SRV_CMD_VIEW_TEST_INFO,
+    SRV_CMD_VIEW_AUDIT_LOG,
+    SRV_CMD_DUMP_PROBLEMS,
+    SRV_CMD_GET_CONTEST_TYPE,
+    SRV_CMD_SUBMIT_RUN_2,
+    SRV_CMD_FULL_REJUDGE_BY_MASK,
+    SRV_CMD_DUMP_SOURCE,
+    SRV_CMD_DUMP_CLAR,
+    SRV_CMD_RUN_STATUS,
+    SRV_CMD_DUMP_SOURCE_2,
+*/
+
 #include "config.h"
 #include "settings.h"
 #include "ej_types.h"
@@ -1978,6 +2062,56 @@ priv_contest_operation(struct server_framework_state *state,
 }
 
 static void
+priv_change_language(struct server_framework_state *state,
+                     struct client_state *p,
+                     FILE *fout,
+                     struct http_request_info *phr,
+                     const struct contest_desc *cnts,
+                     struct contest_extra *extra)
+{
+  const unsigned char *s;
+  int r, n;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  FILE *log_f = 0;
+  int new_locale_id;
+
+  if ((r = ns_cgi_param(phr, "locale_id", &s)) < 0)
+    return html_err_invalid_param(state, p, fout, phr, 0,
+                                  "cannot parse locale_id");
+  if (r > 0) {
+    if (sscanf(s, "%d%n", &new_locale_id, &n) != 1 || s[n] || new_locale_id < 0)
+      return html_err_invalid_param(state, p, fout, phr, 0,
+                                    "cannot parse locale_id");
+  }
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (open_ul_connection(state) < 0) {
+    html_err_userlist_server_down(state, p, fout, phr, 0);
+    goto cleanup;
+  }
+  if ((r = userlist_clnt_set_cookie(ul_conn, ULS_SET_COOKIE_LOCALE,
+                                    phr->session_id,
+                                    new_locale_id)) < 0) {
+    fprintf(log_f, "set_cookie failed: %s", userlist_strerror(-r));
+  }
+
+  //done:
+  fclose(log_f); log_f = 0;
+  if (!log_txt || !*log_txt) {
+    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
+  } else {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_MAIN_PAGE);
+  }
+
+ cleanup:
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+}
+
+static void
 priv_reset_filter(struct server_framework_state *state,
                   struct client_state *p,
                   FILE *fout,
@@ -2448,6 +2582,148 @@ priv_view_source(struct server_framework_state *state,
   xfree(log_txt);
 }
 
+static void
+priv_download_source(struct server_framework_state *state,
+                     struct client_state *p,
+                     FILE *fout,
+                     struct http_request_info *phr,
+                     const struct contest_desc *cnts,
+                     struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  FILE *log_f = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  int run_id, n, src_flags, no_disp = 0, x;
+  const unsigned char *s;
+  const struct section_problem_data *prob = 0;
+  const struct section_language_data *lang = 0;
+  struct run_entry re;
+  path_t src_path;
+  char *run_text = 0;
+  size_t run_size = 0;
+
+  if (ns_cgi_param(phr, "run_id", &s) <= 0
+      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n])
+    return html_err_invalid_param(state, p, fout, phr, 1,
+                                  "cannot parse run_id");
+  if (ns_cgi_param(phr, "no_disp", &s) > 0
+      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n]
+      && x >= 0 && x <= 1)
+    no_disp = x;
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
+    fprintf(log_f, _("Permission denied"));
+    goto done;
+  }
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
+      || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+    fprintf(log_f, _("Invalid run_id %d"), run_id);
+    goto done;
+  }
+  if (re.prob_id <= 0 || re.prob_id > cs->max_prob ||
+      !(prob = cs->probs[re.prob_id])) {
+    fprintf(log_f, _("Invalid problem."));
+    goto done;
+  }
+  if (re.status > RUN_LAST
+      || (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST)) {
+    fprintf(log_f, _("Source for this run is not available."));
+    goto done;
+  }
+
+  if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
+                                          global->run_archive_dir,
+                                          run_id, 0, 1)) < 0) {
+    fprintf(log_f, _("Source file does not exist."));
+    goto done;
+  }
+  if (generic_read_file(&run_text, 0, &run_size, src_flags, 0, src_path, 0)<0) {
+    fprintf(log_f, _("Cannot read the source."));
+    goto done;
+  }
+
+  if (prob->type_val > 0) {
+    fprintf(fout, "Content-type: %s\n", mime_type_get_type(re.mime_type));
+    if (!no_disp) {
+      fprintf(fout, "Content-Disposition: attachment; filename=\"%06d%s\"\n",
+              run_id, mime_type_get_suffix(re.mime_type));
+    }
+    putc_unlocked('\n', fout);
+  } else {
+    if(re.lang_id <= 0 || re.lang_id > cs->max_lang ||
+       !(lang = cs->langs[re.lang_id])) {
+      fprintf(log_f, _("Invalid language."));
+      goto done;
+    }
+
+    if (lang->content_type) {
+      fprintf(fout, "Content-type: %s\n", lang->content_type);
+    } else if (lang->binary) {
+      fprintf(fout, "Content-type: application/octet-stream\n\n");
+    } else {
+      fprintf(fout, "Content-type: text/plain\n");
+    }
+    if (!no_disp) {
+      fprintf(fout, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
+              run_id, lang->src_sfx);
+    }
+  }
+  fwrite(run_text, 1, run_size, fout);
+
+ done:
+  fclose(log_f); log_f = 0;
+  if (log_txt && *log_txt) {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt, 0);
+  }
+  xfree(log_txt);
+  xfree(run_text);
+}
+
+static void
+priv_standings(struct server_framework_state *state,
+               struct client_state *p,
+               FILE *fout,
+               struct http_request_info *phr,
+               const struct contest_desc *cnts,
+               struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  FILE *log_f = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (phr->role < USER_ROLE_JUDGE) {
+    fprintf(log_f, _("Permission denied."));
+    goto done;
+  }
+  if (opcaps_check(phr->caps, OPCAP_VIEW_STANDINGS) < 0) {
+    fprintf(log_f, _("Permission denied."));
+    goto done;
+  }
+
+  l10n_setlocale(phr->locale_id);
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   "%s [%s, %s]: %s", new_serve_unparse_role(phr->role),
+                   phr->name_arm, extra->contest_arm, _("Current standings"));
+  write_priv_standings(cs, cnts, fout, phr->session_id,
+                       phr->self_url, phr->hidden_vars, "", cs->accepting_mode);
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
+  l10n_setlocale(0);
+  
+ done:
+  fclose(log_f); log_f = 0;
+  if (log_txt && *log_txt) {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt, 0);
+  }
+  xfree(log_txt);
+}
+
 void
 unpriv_print_status(struct server_framework_state *state,
                     struct client_state *p,
@@ -2594,21 +2870,25 @@ priv_main_page(struct server_framework_state *state,
 
   if (ns_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
   if (ns_cgi_param(phr, "filter_first_run", &s) > 0
-      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n])
+      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n]) {
     filter_first_run = x;
-  if (filter_first_run > 0) filter_first_run++;
+    if (filter_first_run >= 0) filter_first_run++;
+  }
   if (ns_cgi_param(phr, "filter_last_run", &s) > 0
-      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n])
+      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n]) {
     filter_last_run = x;
-  if (filter_last_run > 0) filter_last_run++;
+    if (filter_last_run >= 0) filter_last_run++;
+  }
   if (ns_cgi_param(phr, "filter_first_clar", &s) > 0
-      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n])
+      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n]) {
     filter_first_clar = x;
-  if (filter_first_clar > 0) filter_first_clar++;
+    if (filter_first_clar >= 0) filter_first_clar++;
+  }
   if (ns_cgi_param(phr, "filter_last_clar", &s) > 0
-      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n])
+      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n]) {
     filter_last_clar = x;
-  if (filter_last_clar > 0) filter_last_clar--;
+    if (filter_last_clar >= 0) filter_last_clar--;
+  }
   if (ns_cgi_param(phr, "filter_mode_clar", &s) > 0
       && sscanf(s, "%d%n", &x, &n) == 1 && !s[n] && x >= 1 && x <= 2)
     filter_mode_clar = x;
@@ -2631,6 +2911,10 @@ priv_main_page(struct server_framework_state *state,
           new_serve_aref(hbuf, sizeof(hbuf), phr,
                          NEW_SRV_ACTION_PRIV_USERS_VIEW, 0),
           _("View privileged users"));
+  fprintf(fout, "<li>%s%s</a></li>\n",
+          new_serve_aref(hbuf, sizeof(hbuf), phr,
+                         NEW_SRV_ACTION_STANDINGS, 0),
+          _("View standings"));
   fprintf(fout, "</ul>\n");
 
   /* if role == ADMIN and capability CONTROL_CONTEST */
@@ -2925,6 +3209,9 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_RESET_CLAR_FILTER] = priv_reset_filter,
   [NEW_SRV_ACTION_VIEW_SOURCE] = priv_view_source,
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
+  [NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN] = priv_download_source,
+  [NEW_SRV_ACTION_STANDINGS] = priv_standings,
+  [NEW_SRV_ACTION_CHANGE_LANGUAGE] = priv_change_language,
 };
 
 static void

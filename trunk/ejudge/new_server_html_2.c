@@ -1378,8 +1378,17 @@ new_serve_write_priv_source(const serve_state_t state,
   */
 
   fprintf(f, "<hr>\n");
-  if (info.lang_id > 0 && info.lang_id <= state->max_lang
-      && state->langs[info.lang_id] && state->langs[info.lang_id]->binary) {
+  if (prob && prob->type_val > 0 && info.mime_type > 0) {
+    if(info.mime_type >= MIME_TYPE_IMAGE_FIRST
+       && info.mime_type <= MIME_TYPE_IMAGE_LAST) {
+      fprintf(f, "<p><img src=\"%s\"></p>",
+              new_serve_url(filtbuf3, sizeof(filtbuf3), phr,
+                            NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN,
+                            "run_id=%d&no_disp=1", run_id));
+    } else {
+      fprintf(f, "<p>The submission is binary and thus is not shown.</p>\n");
+    }
+  } else if (lang && lang->binary) {
     fprintf(f, "<p>The submission is binary and thus is not shown.</p>\n");
   } else if (!info.is_imported) {
     if (src_flags < 0 || generic_read_file(&src_text, 0, &src_len, src_flags, 0, src_path, "") < 0) {

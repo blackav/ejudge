@@ -1079,11 +1079,13 @@ serve_run_request(serve_state_t state,
 
   if (generic_write_file(run_pkt_out, run_pkt_out_size, SAFE,
                          state->global->run_queue_dir, pkt_base, "") < 0) {
+    xfree(run_pkt_out);
     fprintf(errf, "failed to write run packet\n");
     return -1;
   }
 
   /* update status */
+  xfree(run_pkt_out); run_pkt_out = 0;
   if (run_change_status(state->runlog_state, run_id, RUN_RUNNING, 0, -1,
                         judge_id) < 0) {
     return -1;
@@ -1544,19 +1546,19 @@ serve_read_run_packet(serve_state_t state,
     serve_send_check_failed_email(cnts, reply_pkt->run_id);
   if (run_change_status(state->runlog_state, reply_pkt->run_id,
                         reply_pkt->status, reply_pkt->failed_test,
-                        reply_pkt->score, 0) < 0) return -1;
+                        reply_pkt->score, 0) < 0) goto failed;
   serve_update_standings_file(state, cnts, 0);
   rep_size = generic_file_size(run_report_dir, pname, "");
-  if (rep_size < 0) return -1;
+  if (rep_size < 0) goto failed;
   rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
                                       state->global->xml_report_archive_dir,
                                       reply_pkt->run_id, rep_size, 0);
   if (archive_dir_prepare(state, state->global->xml_report_archive_dir,
                           reply_pkt->run_id, 0, 0) < 0)
-    return -1;
+    goto failed;
   if (generic_copy_file(REMOVE, run_report_dir, pname, "",
                         rep_flags, 0, rep_path, "") < 0)
-    return -1;
+    goto failed;
   /*
   if (serve_state.global->team_enable_rep_view) {
     team_size = generic_file_size(run_team_report_dir, pname, "");
@@ -1577,10 +1579,10 @@ serve_read_run_packet(serve_state_t state,
                                          reply_pkt->run_id, 0, 0);
     if (archive_dir_prepare(state, state->global->full_archive_dir,
                             reply_pkt->run_id, 0, 0) < 0)
-      return -1;
+      goto failed;
     if (generic_copy_file(REMOVE, run_full_archive_dir, pname, "",
                           0, 0, full_path, "") < 0)
-      return -1;
+      goto failed;
   }
 
   /* add auditing information */
@@ -1628,6 +1630,8 @@ serve_read_run_packet(serve_state_t state,
   fprintf(f, "\n");
   fclose(f);
   serve_audit_log(state, reply_pkt->run_id, 0, 0, 0, "%s", audit_text);
+  xfree(audit_text); audit_text = 0;
+  run_reply_packet_free(reply_pkt);
 
   return 1;
 
