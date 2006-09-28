@@ -50,12 +50,18 @@ serve_state_init(void)
 }
 
 serve_state_t
-serve_state_destroy(serve_state_t state)
+serve_state_destroy(serve_state_t state, struct userlist_clnt *ul_conn)
 {
   int i, j;
   struct user_filter_info *ufp, *ufp2;
 
   if (!state) return 0;
+
+  if (ul_conn && state->global->contest_id > 0) {
+    // ignore error code
+    userlist_clnt_notify(ul_conn, ULS_DEL_NOTIFY, state->global->contest_id);
+  }
+
   xfree(state->config_path);
   run_destroy(state->runlog_state);
   team_extra_destroy(state->team_extra_state);
@@ -205,7 +211,7 @@ serve_state_load_contest(int contest_id,
   return 1;
 
  failure:
-  serve_state_destroy(state);
+  serve_state_destroy(state, ul_conn);
   return -1;
 }
 
