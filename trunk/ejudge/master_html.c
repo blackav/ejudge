@@ -800,7 +800,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
         imported_str = "#";
       }
       start_time = env.rhead.start_time;
-      if (state->global->virtual) {
+      if (state->global->is_virtual) {
         start_time = run_get_virtual_start_time(state->runlog_state, pe->user_id);
       }
       if (!start_time) run_time = 0;
@@ -1052,7 +1052,7 @@ write_all_clars(const serve_state_t state, FILE *f, struct user_filter_info *u,
   u->prev_first_clar = first_clar;
   u->prev_last_clar = last_clar;
   show_astr_time = state->global->show_astr_time;
-  if (state->global->virtual) show_astr_time = 1;
+  if (state->global->is_virtual) show_astr_time = 1;
 
   if (!first_clar && !last_clar) {
     first_clar = -1;
@@ -2258,7 +2258,7 @@ write_priv_clar(const serve_state_t state, FILE *f, int user_id, int priv_level,
           clar_flags_html(state->clarlog_state, flags, from, to, 0, 0));
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
           _("Time"), duration_str(1, clar_time, 0, 0, 0));
-  if (!state->global->virtual) {
+  if (!state->global->is_virtual) {
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
             _("Duration"), duration_str(0, clar_time, start_time, 0, 0));
   }
@@ -2818,7 +2818,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
             pts->tm_hour,
             pts->tm_min,
             pts->tm_sec);
-    if (state->global->virtual) {
+    if (state->global->is_virtual) {
       start_time = run_get_virtual_start_time(state->runlog_state, re.user_id);
     }
 

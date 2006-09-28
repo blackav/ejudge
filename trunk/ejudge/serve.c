@@ -1608,7 +1608,7 @@ cmd_team_show_item(struct client_state *p, int len,
     r = new_write_user_source_view(&serve_state, f, pkt->user_id, pkt->item_id, 2);
     break;
   case SRV_CMD_VIRTUAL_STANDINGS:
-    if (!serve_state.global->virtual) r = -SRV_ERR_ONLY_VIRTUAL;
+    if (!serve_state.global->is_virtual) r = -SRV_ERR_ONLY_VIRTUAL;
     else r = write_virtual_standings(&serve_state, cur_contest,
                                      f, pkt->user_id);
     break;
@@ -1726,7 +1726,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
   }
 
   run_get_times(serve_state.runlog_state, &start_time, 0, 0, &stop_time, 0);
-  if (serve_state.global->virtual) {
+  if (serve_state.global->is_virtual) {
     start_time = run_get_virtual_start_time(serve_state.runlog_state,
                                             p->user_id);
     stop_time = run_get_virtual_stop_time(serve_state.runlog_state, p->user_id,
@@ -2059,7 +2059,7 @@ do_submit_run(struct client_state *p,
 
   /* check for start/stop times and deadlines */
   run_get_times(serve_state.runlog_state, &start_time, 0, 0, &stop_time, 0);
-  if (serve_state.global->virtual) {
+  if (serve_state.global->is_virtual) {
     start_time = run_get_virtual_start_time(serve_state.runlog_state, user_id);
     stop_time = run_get_virtual_stop_time(serve_state.runlog_state, user_id,
                                           serve_state.current_time);
@@ -2381,7 +2381,7 @@ cmd_team_submit_clar(struct client_state *p, int len,
     return;
   }
   run_get_times(serve_state.runlog_state, &start_time, 0, 0, &stop_time, 0);
-  if (serve_state.global->virtual) {
+  if (serve_state.global->is_virtual) {
     start_time = run_get_virtual_start_time(serve_state.runlog_state,
                                             p->user_id);
     stop_time = run_get_virtual_stop_time(serve_state.runlog_state, p->user_id,
@@ -2498,7 +2498,7 @@ cmd_command_0(struct client_state *p, int len,
   }
 
   info("%d: command_0: %d", p->id, pkt->b.id);
-  if (!serve_state.global->virtual) {
+  if (!serve_state.global->is_virtual) {
     err("%d: command allowed only in virtual contest mode", p->id);
     new_send_reply(p, -SRV_ERR_ONLY_VIRTUAL);
     return;
@@ -4670,7 +4670,7 @@ do_loop(void)
   serve_state.current_time = time(0);
   last_activity_time = serve_state.current_time;
 
-  if (!serve_state.global->virtual) {
+  if (!serve_state.global->is_virtual) {
     p = run_get_fog_period(serve_state.runlog_state, time(0), serve_state.global->board_fog_time,
                            serve_state.global->board_unfog_time);
     if (p == 1) {
@@ -4713,7 +4713,7 @@ do_loop(void)
     serve_check_stat_generation(&serve_state, cur_contest, 0);
 
     /* check stop and start times */
-    if (!serve_state.global->virtual) {
+    if (!serve_state.global->is_virtual) {
       if (start_time && !stop_time && !duration && finish_time > 0
           && serve_state.current_time >= finish_time) {
         /* the contest is over! */
@@ -4741,7 +4741,7 @@ do_loop(void)
     logger_set_level(-1, 0);
 
     /* automatically update standings in certain situations */
-    if (!serve_state.global->virtual) {
+    if (!serve_state.global->is_virtual) {
       p = run_get_fog_period(serve_state.runlog_state, time(0),
                              serve_state.global->board_fog_time, serve_state.global->board_unfog_time);
       if (p == 0 && !serve_state.global->start_standings_updated) {
@@ -4866,7 +4866,7 @@ main(int argc, char *argv[])
   if (run_open(serve_state.runlog_state, serve_state.global->run_log_file, 0,
                serve_state.global->contest_time,
                serve_state.global->contest_finish_time_d) < 0) return 1;
-  if (serve_state.global->virtual
+  if (serve_state.global->is_virtual
       && serve_state.global->score_system_val != SCORE_ACM) {
     err("invalid score system for virtual contest");
     return 1;

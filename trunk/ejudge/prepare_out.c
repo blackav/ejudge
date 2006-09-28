@@ -206,7 +206,7 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   }
   ASSERT(global->score_system_val >= 0 && global->score_system_val < SCORE_TOTAL);
   fprintf(f, "score_system = %s\n", contest_types[global->score_system_val]);
-  if (global->virtual)
+  if (global->is_virtual)
     fprintf(f, "virtual\n");
   if (global->board_fog_time != DFLT_G_BOARD_FOG_TIME)
     fprintf(f, "board_fog_time = %d\n", global->board_fog_time);
@@ -394,7 +394,7 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   if (global->stand_show_ok_time && global->stand_time_attr[0])
     fprintf(f, "stand_time_attr = \"%s\"\n",
             c_armor(&sbuf, global->stand_time_attr));
-  if (global->virtual) {
+  if (global->is_virtual) {
     if (global->stand_self_row_attr[0])
       fprintf(f, "stand_self_row_attr = \"%s\"\n",
               c_armor(&sbuf, global->stand_self_row_attr));
