@@ -3319,7 +3319,7 @@ super_html_print_problem(FILE *f,
   unsigned char name_buf[1024];
   int i, sel_num;
   struct section_problem_data *prob, *sup_prob = 0;
-  unsigned char *s, *checker_env;
+  unsigned char *s, *ss, *checker_env;
   unsigned char prob_hidden_vars[4096];
   unsigned char *extra_msg = 0;
   struct section_problem_data tmp_prob;
@@ -3467,24 +3467,76 @@ super_html_print_problem(FILE *f,
   html_submit_button(f, SUPER_ACTION_PROB_CHANGE_TYPE, "Change");
   fprintf(f, "</td></tr></form>\n");
 
-  /*
-  //PROBLEM_PARAM(output_only, "d"),
-  extra_msg = 0;
-  output_only_flag = prob->output_only;
-  if (!prob->abstract) {
-    prepare_set_prob_value(PREPARE_FIELD_PROB_OUTPUT_ONLY,
-                           &tmp_prob, sup_prob, sstate->global);
-    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob.output_only?"Yes":"No");
-    extra_msg = msg_buf;
-    output_only_flag = tmp_prob.output_only;
+  //PROBLEM_PARAM(manual_checking, "d")
+  if ((prob->abstract && prob->type_val)
+      || (!prob->abstract && tmp_prob.type_val > 0)) {
+    extra_msg = 0;
+    if (!prob->abstract) {
+      prepare_set_prob_value(PREPARE_FIELD_PROB_MANUAL_CHECKING,
+                             &tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+               tmp_prob.manual_checking?"Yes":"No");
+      extra_msg = msg_buf;
+    }
+    print_boolean_3_select_row(f, "Problem is checked manually",
+                               prob->manual_checking,
+                               SUPER_ACTION_PROB_CHANGE_MANUAL_CHECKING,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
   }
-  if (output_only_flag < 0) output_only_flag = 0;
-  print_boolean_3_select_row(f, "Output-only problem", prob->output_only,
-                             SUPER_ACTION_PROB_CHANGE_OUTPUT_ONLY,
-                             extra_msg,
-                             session_id, form_row_attrs[row ^= 1],
-                             self_url, extra_args, prob_hidden_vars);
-  */
+
+  //PROBLEM_PARAM(examinator_num, "d")
+  if ((prob->abstract && prob->type_val)
+      || (!prob->abstract && tmp_prob.type_val > 0)) {
+    extra_msg = "";
+
+    if (!prob->abstract) {
+      prepare_set_prob_value(PREPARE_FIELD_PROB_EXAMINATOR_NUM,
+                             &tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "Default (%d)",
+               tmp_prob.examinator_num);
+      extra_msg = msg_buf;
+    } else {
+      if (prob->examinator_num < 0) prob->examinator_num = 0;
+    }
+    html_start_form(f, 1, self_url, prob_hidden_vars);
+    fprintf(f, "<tr%s><td>%s</td><td>", form_row_attrs[row ^= 1],
+            "Number of examinators:");
+    fprintf(f, "<select name=\"param\">");
+    s = "";
+    if (prob->examinator_num == 0) s = " selected=\"1\"";
+    ss = "Default";
+    if (prob->abstract) ss = "0";
+    fprintf(f, "<option value=\"0\"%s>%s</option>", s, ss);
+    for (i = 1; i <= 3; i++) {
+      s = "";
+      if (i == prob->examinator_num) s = " selected=\"1\"";
+      fprintf(f, "<option value=\"%d\"%s>%d</option>", i, s, i);
+    }
+    fprintf(f, "</select>%s</td><td>", extra_msg);
+    html_submit_button(f, SUPER_ACTION_PROB_CHANGE_EXAMINATOR_NUM, "Change");
+    fprintf(f, "</td></tr></form>\n");
+  }
+
+  //PROBLEM_PARAM(check_presentation, "d")
+  if ((prob->abstract && prob->type_val > 0 && prob->manual_checking > 0)
+      || (!prob->abstract && tmp_prob.type_val > 0 && tmp_prob.manual_checking > 0)) {
+    extra_msg = 0;
+    if (!prob->abstract) {
+      prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_PRESENTATION,
+                             &tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+               tmp_prob.check_presentation?"Yes":"No");
+      extra_msg = msg_buf;
+    }
+    print_boolean_3_select_row(f, "Check output presentation anyway?",
+                               prob->check_presentation,
+                               SUPER_ACTION_PROB_CHANGE_CHECK_PRESENTATION,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+  }
 
   //PROBLEM_PARAM(use_stdin, "d"),
   extra_msg = 0;
@@ -4746,6 +4798,9 @@ super_html_prob_cmd(struct sid_state *sstate, int cmd,
     snprintf(prob->short_name, sizeof(prob->short_name), "%s", param2);
     prob->abstract = 1;
     prob->type_val = 0;
+    prob->manual_checking = 0;
+    prob->examinator_num = 0;
+    prob->check_presentation = 0;
     prob->scoring_checker = 0;
     prob->use_stdin = 1;
     prob->use_stdout = 1;
@@ -4918,6 +4973,21 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_SCORING_CHECKER:
     p_int = &prob->scoring_checker;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_MANUAL_CHECKING:
+    p_int = &prob->manual_checking;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_EXAMINATOR_NUM:
+    if (!param2 || sscanf(param2, "%d%n", &val, &n) != 1 || param2[n]
+        || val < 0 || val > 3)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    prob->examinator_num = val;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_CHECK_PRESENTATION:
+    p_int = &prob->check_presentation;
     goto handle_boolean_1;
     
   case SSERV_CMD_PROB_CHANGE_USE_STDIN:
@@ -6804,6 +6874,9 @@ super_html_check_tests(FILE *f,
     prepare_copy_problem(&tmp_prob, prob);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TYPE, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER, &tmp_prob, abstr, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_MANUAL_CHECKING, &tmp_prob, abstr, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_EXAMINATOR_NUM, &tmp_prob, abstr, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_PRESENTATION, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_DIR, &tmp_prob, abstr, 0);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_CORR, &tmp_prob, abstr, global);
