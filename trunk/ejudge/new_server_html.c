@@ -802,8 +802,8 @@ new_serve_submit_button(unsigned char *buf, size_t size,
     name_ptr = name_buf;
   }
   snprintf(buf, size,
-           "<button type=\"submit\" name=\"%s\" value=\"%d\">%s</button>",
-           name_ptr, action, label);
+           "<input type=\"submit\" name=\"%s\" value=\"%s\">",
+           name_ptr, label);
   return buf;
 }
 
