@@ -93,11 +93,13 @@ new_serve_write_priv_all_runs(FILE *f,
   unsigned long *displayed_mask = 0;
   int displayed_size = 0;
   unsigned char stat_select_name[32];
-  unsigned char bbuf[1024];
+  unsigned char bb[1024];
   unsigned char endrow[256];
+  unsigned char *s;
 
   const serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob = 0;
 
   if (!u) u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
 
@@ -258,12 +260,10 @@ new_serve_write_priv_all_runs(FILE *f,
   fprintf(f, "<p>%s: <input type=\"text\" name=\"filter_expr\" size=\"32\" maxlength=\"128\" value=\"%s\">", _("Filter expression"), fe_html);
   fprintf(f, "%s: <input type=\"text\" name=\"filter_first_run\" size=\"16\" value=\"%s\">", _("First run"), first_run_str);
   fprintf(f, "%s: <input type=\"text\" name=\"filter_last_run\" size=\"16\" value=\"%s\">", _("Last run"), last_run_str);
-  fprintf(f, "%s",
-          new_serve_submit_button(bbuf, sizeof(bbuf), "filter_view", 1,
-                                  _("View")));
-  fprintf(f, "%s",
-          new_serve_submit_button(bbuf, sizeof(bbuf), 0,
-                                  NEW_SRV_ACTION_RESET_FILTER, 0));
+  fprintf(f, "%s</form>",
+          new_serve_submit_button(bb, sizeof(bb), "filter_view", 1, _("View")));
+  html_start_form(f, 0, phr->self_url, phr->hidden_vars);
+  fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_RESET_FILTER));
   fprintf(f, "</form></p>\n");
 
   if (u->error_msgs) {
@@ -377,9 +377,7 @@ new_serve_write_priv_all_runs(FILE *f,
         }
         fprintf(f, "<td>&nbsp;</td>");
         if (phr->role == USER_ROLE_ADMIN) {
-          fprintf(f, "<td>%s</td>",
-                  new_serve_submit_button(bbuf, sizeof(bbuf), 0,
-                                          NEW_SRV_ACTION_CLEAR_RUN, 0));
+          fprintf(f, "<td>%s</td>", BUTTON(NEW_SRV_ACTION_CLEAR_RUN));
         } else {
           fprintf(f, "<td>&nbsp;</td>");
         }
@@ -469,9 +467,7 @@ new_serve_write_priv_all_runs(FILE *f,
       if (phr->role == USER_ROLE_ADMIN) {
         snprintf(stat_select_name, sizeof(stat_select_name), "stat_%d", rid);
         write_change_status_dialog(cs, f, stat_select_name, pe->is_imported);
-        fprintf(f, "<td>%s</td>",
-                new_serve_submit_button(bbuf, sizeof(bbuf), 0,
-                                        NEW_SRV_ACTION_CHANGE_STATUS, 0));
+        fprintf(f, "<td>%s</td>", BUTTON(NEW_SRV_ACTION_CHANGE_STATUS));
       }
 
       fprintf(f, "<td><a href=\"%s\">%s</a></td>",
@@ -504,15 +500,11 @@ new_serve_write_priv_all_runs(FILE *f,
   if (phr->role == USER_ROLE_ADMIN &&!u->error_msgs) {
     fprintf(f, "<table border=\"0\"><tr><td>");
     html_start_form(f, 1, phr->self_url, phr->hidden_vars);
-    fprintf(f, "%s",
-            new_serve_submit_button(bbuf, sizeof(bbuf), 0,
-                                    NEW_SRV_ACTION_REJUDGE_ALL_1, 0));
+    fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_REJUDGE_ALL_1));
     fprintf(f, "</form></td><td>\n");
 
     html_start_form(f, 1, phr->self_url, phr->hidden_vars);
-    fprintf(f, "%s",
-            new_serve_submit_button(bbuf, sizeof(bbuf), 0,
-                                    NEW_SRV_ACTION_REJUDGE_SUSPENDED_1, 0));
+    fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_REJUDGE_SUSPENDED_1));
     fprintf(f, "</form></td><td>\n");
 
     html_start_form(f, 1, phr->self_url, phr->hidden_vars);
@@ -523,9 +515,7 @@ new_serve_write_priv_all_runs(FILE *f,
       fprintf(f, "%lx", displayed_mask[i]);
     }
     fprintf(f, "\">\n");
-    fprintf(f, "%s",
-            new_serve_submit_button(bbuf, sizeof(bbuf), 0,
-                                    NEW_SRV_ACTION_REJUDGE_DISPLAYED_1, 0));
+    fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_REJUDGE_DISPLAYED_1));
     fprintf(f, "</form></td><td>\n");
 
     if (global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode) {
@@ -537,33 +527,37 @@ new_serve_write_priv_all_runs(FILE *f,
         fprintf(f, "%lx", displayed_mask[i]);
       }
       fprintf(f, "\">\n");
-      fprintf(f, "%s",
-              new_serve_submit_button(bbuf, sizeof(bbuf), 0,
-                                      NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1,
-                                      0));
+      fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1));
       fprintf(f, "</form></td><td>\n");
     }
 
     html_start_form(f, 1, phr->self_url, phr->hidden_vars);
-    fprintf(f, "%s",
-            new_serve_submit_button(bbuf, sizeof(bbuf), 0,
-                                    NEW_SRV_ACTION_SQUEEZE_RUNS, 0));
+    fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_SQUEEZE_RUNS));
     fprintf(f, "</form></td></tr></table>\n");
 
-    /*
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "%s: <select name=\"problem\"><option value=\"\">\n",
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    fprintf(f, "%s: <select name=\"prob_id\"><option value=\"\"></option>\n",
             _("Rejudge problem"));
-    for (i = 1; i <= state->max_prob; i++)
-      if (state->probs[i]) {
-        fprintf(f, "<option value=\"%d\">%s - %s\n",
-                state->probs[i]->id, state->probs[i]->short_name, state->probs[i]->long_name);
+    for (i = 1; i <= cs->max_prob; i++) {
+      if (!(prob = cs->probs[i])) continue;
+      // check the problems that we ever can rejudge
+      if (prob->type_val > 0) {
+        if (prob->manual_checking > 0 && prob->check_presentation <= 0)
+          continue;
+        if (prob->manual_checking <= 0 && prob->disable_testing > 0
+            && prob->enable_compilation <= 0)
+          continue;
+      } else {
+        // standard problems
+        if (prob->disable_testing > 0 && prob->enable_compilation <= 0)
+          continue;
       }
-    fprintf(f, "</select>\n");
-    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
-            ACTION_REJUDGE_PROBLEM, _("Rejudge!"));
-    fprintf(f, "</form></p>\n");
-    */
+      s = html_armor_string_dup(prob->long_name);
+      fprintf(f, "<option value=\"%d\">%s - %s\n", i, prob->short_name, s);
+      xfree(s); s = 0;
+    }
+    fprintf(f, "</select>%s\n", BUTTON(NEW_SRV_ACTION_REJUDGE_PROBLEM));
+    fprintf(f, "</form>\n");
   }
 
   if (phr->role == USER_ROLE_ADMIN && global->enable_runlog_merge) {

@@ -152,7 +152,8 @@ struct compile_run_extra
 };
 
 serve_state_t serve_state_init(void);
-serve_state_t serve_state_destroy(serve_state_t state);
+serve_state_t serve_state_destroy(serve_state_t state,
+                                  struct userlist_clnt *ul_conn);
 
 void serve_state_set_config_path(serve_state_t state, const unsigned char *);
 

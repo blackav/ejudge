@@ -228,7 +228,7 @@ new_server_unload_contest(int contest_id)
     //serve_check_stat_generation(&serve_state, cur_contest, 1);
     serve_update_status_file(extra->serve_state, 1);
     team_extra_flush(extra->serve_state->team_extra_state);
-    extra->serve_state = serve_state_destroy(extra->serve_state);
+    extra->serve_state = serve_state_destroy(extra->serve_state, ul_conn);
   }
 
   xfree(extra->contest_arm);
@@ -779,6 +779,7 @@ static const unsigned char * const submit_button_labels[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_RUN_PAGES] = __("Change"),
   [NEW_SRV_ACTION_COMPARE_RUNS] = __("Compare"),
   [NEW_SRV_ACTION_UPLOAD_REPORT] = __("Upload!"),
+  [NEW_SRV_ACTION_REJUDGE_PROBLEM] = __("Rejudge"),
 };
 
 #define BUTTON(a) new_serve_submit_button(bb, sizeof(bb), 0, a, 0)
@@ -2142,6 +2143,7 @@ priv_reset_filter(struct server_framework_state *state,
   } else {
     html_error_status_page(state, p, fout, phr, cnts, extra, log_txt, 0);
   }
+  xfree(log_txt);
 }
 
 static const unsigned char * const form_row_attrs[]=
@@ -2845,6 +2847,10 @@ unpriv_print_status(struct server_framework_state *state,
   fprintf(fout, "</table>\n");
 }
 
+static int
+insert_variant_num(unsigned char *buf, size_t size,
+                   const unsigned char *file, int variant);
+
 static void
 priv_main_page(struct server_framework_state *state,
                struct client_state *p,
@@ -2866,7 +2872,12 @@ priv_main_page(struct server_framework_state *state,
   int filter_first_run = 0, filter_last_run = 0, filter_first_clar = 0;
   int filter_last_clar = 0, filter_mode_clar = 0;
   const unsigned char *filter_expr = 0;
-  int x, n;
+  int i, x, y, n, variant = 0;
+  const struct section_problem_data *prob = 0;
+  unsigned char *ss = 0;
+  path_t variant_stmt_file;
+  struct watched_file *pw = 0;
+  const unsigned char *pw_path;
 
   if (ns_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
   if (ns_cgi_param(phr, "filter_first_run", &s) > 0
@@ -2892,6 +2903,19 @@ priv_main_page(struct server_framework_state *state,
   if (ns_cgi_param(phr, "filter_mode_clar", &s) > 0
       && sscanf(s, "%d%n", &x, &n) == 1 && !s[n] && x >= 1 && x <= 2)
     filter_mode_clar = x;
+  if (ns_cgi_param(phr, "problem", &s) > 0) {
+    if (sscanf(s, "%d_%d%n", &x, &y, &n) == 2 && !s[n]
+        && x > 0 && x <= cs->max_prob && cs->probs[x]
+        && cs->probs[x]->variant_num > 0 && y > 0
+        && y <= cs->probs[x]->variant_num) {
+      prob = cs->probs[x];
+      variant = y;
+    } else if (sscanf(s, "%d%n", &x, &n) == 1 && !s[n]
+               && x > 0 && x <= cs->max_prob && cs->probs[x]
+               && cs->probs[x]->variant_num <= 0) {
+      prob = cs->probs[x];
+    }
+  }
 
   run_get_times(cs->runlog_state, &start_time, &sched_time, &duration,
                 &stop_time, &finish_time);
@@ -3081,6 +3105,147 @@ priv_main_page(struct server_framework_state *state,
   new_serve_write_priv_all_runs(fout, phr, cnts, extra,
                                 filter_first_run, filter_last_run,
                                 filter_expr);
+
+  if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) >= 0) {
+    if (!prob) {
+      // no problem is selected yet
+      fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
+              /*cnts->priv_head_style*/ "h2",
+              _("View the problem statement and send a submission"),
+              /*cnts->priv_head_style*/ "h2");
+      html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
+      fprintf(fout, "<table>\n");
+      fprintf(fout, "<tr><td>%s:</td><td><select name=\"problem\">",
+              _("Problem"));
+      for (x = 1; x <= cs->max_prob; x++) {
+        if (!(prob = cs->probs[x])) continue;
+        ss = html_armor_string_dup(prob->long_name);
+        if (prob->variant_num <= 0) {
+          fprintf(fout, "<option value=\"%d\">%s - %s</option>",
+                  x, prob->short_name, ss);
+        } else {
+          for (y = 1; y <= prob->variant_num; y++) {
+            fprintf(fout, "<option value=\"%d_%d\">%s - %s, %s %d</option>",
+                    x, y, prob->short_name, ss, _("Variant"), y);
+          }
+        }
+        xfree(ss); ss = 0;
+      }
+      fprintf(fout, "</select></td><td>%s</td></tr></table></form>\n",
+              new_serve_submit_button(bb, sizeof(bb), 0,
+                                      NEW_SRV_ACTION_MAIN_PAGE,
+                                      _("Select problem")));
+      prob = 0;
+    } else {
+      // a problem is already selected
+      // prob and variant have correct values
+      ss = html_armor_string_dup(prob->long_name);
+      if (variant > 0) {
+        fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s %s-%s (%s %d)</%s>\n",
+                /*cnts->team_head_style*/ "h2", _("Submit a solution for"),
+                prob->short_name, ss, _("Variant"), variant,
+                /*cnts->team_head_style*/ "h2");
+      } else {
+        fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s %s-%s</%s>\n",
+                /*cnts->team_head_style*/ "h2", _("Submit a solution for"),
+                prob->short_name, ss, /*cnts->team_head_style*/ "h2");
+      }
+      xfree(ss); ss = 0;
+
+      /* put problem statement */
+      if (prob->statement_file[0]) {
+        if (variant > 0) {
+          insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
+                             prob->statement_file, variant);
+          pw = &cs->prob_extras[prob->id].v_stmts[variant];
+          pw_path = variant_stmt_file;
+        } else {
+          pw = &cs->prob_extras[prob->id].stmt;
+          pw_path = prob->statement_file;
+        }
+        watched_file_update(pw, pw_path, cs->current_time);
+        if (!pw->text) {
+          fprintf(fout, "<big><font color=\"red\"><p>%s</p></font></big>\n",
+                  _("The problem statement is not available"));
+        } else {
+          fprintf(fout, "%s", pw->text);
+        }
+      }
+
+      html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+      if (variant <= 0) {
+        html_hidden(fout, "problem", "%d", prob->id);
+      } else {
+        html_hidden(fout, "problem", "%d_%d", prob->id, variant);
+      }
+      fprintf(fout, "<table>\n");
+      if (!prob->type_val) {
+        fprintf(fout, "<tr><td>%s:</td><td>", _("Language"));
+        fprintf(fout, "<select name=\"lang_id\"><option value=\"\">\n");
+        for (i = 1; i <= cs->max_lang; i++) {
+          if (!cs->langs[i]) continue;
+          ss = html_armor_string_dup(cs->langs[i]->long_name);
+          fprintf(fout, "<option value=\"%d\">%s - %s</option>\n",
+                  i, cs->langs[i]->short_name, ss);
+          xfree(ss); ss = 0;
+        }
+        fprintf(fout, "</select></td></tr>\n");
+      }
+
+      switch (prob->type_val) {
+      case PROB_TYPE_STANDARD:
+      case PROB_TYPE_OUTPUT_ONLY:
+        fprintf(fout, "<tr><td>%s</td><td><input type=\"file\" name=\"file\"></td></tr>\n", _("File"));
+        break;
+      case PROB_TYPE_SHORT_ANSWER:
+        fprintf(fout, "<tr><td>%s</td><td><input type=\"text\" name=\"file\"></td></tr>\n", _("Answer"));
+        break;
+      case PROB_TYPE_TEXT_ANSWER:
+        fprintf(fout, "<tr><td colspan=\"2\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
+        break;
+      case PROB_TYPE_SELECT_ONE:
+        for (i = 0; prob->alternative[i]; i++) {
+          fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+        }
+        break;
+      case PROB_TYPE_SELECT_MANY:
+        for (i = 0; prob->alternative[i]; i++) {
+          fprintf(fout, "<tr><td>%d</td><td><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+        }
+        break;
+      }
+      fprintf(fout, "<tr><td>%s</td><td>%s</td></tr></table></form>\n",
+              _("Send!"), BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
+     
+      fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
+              /*cnts->team_head_style*/ "h2", _("Select another problem"),
+              /*cnts->team_head_style*/ "h2");
+
+      html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
+      fprintf(fout, "<table>\n");
+      fprintf(fout, "<tr><td>%s:</td><td><select name=\"problem\">",
+              _("Problem"));
+      for (x = 1; x <= cs->max_prob; x++) {
+        if (!(prob = cs->probs[x])) continue;
+        ss = html_armor_string_dup(prob->long_name);
+        if (prob->variant_num <= 0) {
+          fprintf(fout, "<option value=\"%d\">%s - %s</option>",
+                  x, prob->short_name, ss);
+        } else {
+          for (y = 1; y <= prob->variant_num; y++) {
+            fprintf(fout, "<option value=\"%d_%d\">%s - %s, %s %d</option>",
+                    x, y, prob->short_name, ss, _("Variant"), y);
+          }
+        }
+        xfree(ss); ss = 0;
+      }
+      fprintf(fout, "</select></td><td>%s</td></tr></table></form>\n",
+              new_serve_submit_button(bb, sizeof(bb), 0,
+                                      NEW_SRV_ACTION_MAIN_PAGE,
+                                      _("Select problem")));
+      prob = 0;
+    }
+  }
 
   new_serve_write_all_clars(fout, phr, cnts, extra, filter_mode_clar,
                             filter_first_clar, filter_last_clar);

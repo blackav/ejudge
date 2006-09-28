@@ -3494,7 +3494,7 @@ super_html_print_problem(FILE *f,
     if (!prob->abstract) {
       prepare_set_prob_value(PREPARE_FIELD_PROB_EXAMINATOR_NUM,
                              &tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%d)",
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
                tmp_prob.examinator_num);
       extra_msg = msg_buf;
     } else {
