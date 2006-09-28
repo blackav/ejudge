@@ -880,6 +880,15 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   if ((prob->abstract && prob->scoring_checker == 1)
       || (!prob->abstract && prob->scoring_checker >= 0))
     unparse_bool(f, "scoring_checker", prob->scoring_checker);
+  if ((prob->abstract && prob->manual_checking == 1)
+      || (!prob->abstract && prob->manual_checking >= 0))
+    unparse_bool(f, "manual_checking", prob->manual_checking);
+  if ((prob->abstract && prob->examinator_num > 0)
+      || (!prob->abstract && prob->examinator_num > 0))
+    fprintf(f, "examinator_num = %d", prob->examinator_num);
+  if ((prob->abstract && prob->check_presentation == 1)
+      || (!prob->abstract && prob->check_presentation >= 0))
+    unparse_bool(f, "check_presentation", prob->check_presentation);
   if ((prob->abstract && prob->use_stdin == 1)
       || (!prob->abstract && prob->use_stdin >= 0))
     unparse_bool(f, "use_stdin", prob->use_stdin);
@@ -1538,6 +1547,12 @@ prepare_unparse_testers(FILE *f,
     prepare_set_prob_value(PREPARE_FIELD_PROB_TYPE,
                            &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER,
+                           &tmp_prob, abstr, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_MANUAL_CHECKING,
+                           &tmp_prob, abstr, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_EXAMINATOR_NUM,
+                           &tmp_prob, abstr, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_PRESENTATION,
                            &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDIN,
                            &tmp_prob, abstr, global);

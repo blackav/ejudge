@@ -2656,6 +2656,9 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CHANGE_SUPER:
   case SSERV_CMD_PROB_CHANGE_TYPE:
   case SSERV_CMD_PROB_CHANGE_SCORING_CHECKER:
+  case SSERV_CMD_PROB_CHANGE_MANUAL_CHECKING:
+  case SSERV_CMD_PROB_CHANGE_EXAMINATOR_NUM:
+  case SSERV_CMD_PROB_CHANGE_CHECK_PRESENTATION:
   case SSERV_CMD_PROB_CHANGE_USE_STDIN:
   case SSERV_CMD_PROB_CHANGE_USE_STDOUT:
   case SSERV_CMD_PROB_CHANGE_BINARY_INPUT:
@@ -3187,6 +3190,9 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_SUPER] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TYPE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_SCORING_CHECKER] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_MANUAL_CHECKING] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_EXAMINATOR_NUM] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_CHECK_PRESENTATION] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_USE_STDIN] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_USE_STDOUT] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_BINARY_INPUT] = { cmd_set_value },

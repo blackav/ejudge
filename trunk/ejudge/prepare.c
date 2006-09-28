@@ -278,6 +278,9 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(tester_id, "d"),
   PROBLEM_PARAM(abstract, "d"),
   PROBLEM_PARAM(scoring_checker, "d"),  
+  PROBLEM_PARAM(manual_checking, "d"),  
+  PROBLEM_PARAM(examinator_num, "d"),  
+  PROBLEM_PARAM(check_presentation, "d"),  
   PROBLEM_PARAM(use_stdin, "d"),
   PROBLEM_PARAM(use_stdout, "d"),
   PROBLEM_PARAM(binary_input, "d"),
@@ -569,6 +572,8 @@ prepare_problem_init_func(struct generic_section_config *gp)
 
   p->type_val = -1;
   p->scoring_checker = -1;
+  p->manual_checking = -1;
+  p->check_presentation = -1;
   p->use_stdin = -1;
   p->use_stdout = -1;
   p->binary_input = -1;
@@ -2260,6 +2265,12 @@ set_defaults(serve_state_t state, int mode)
                            state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER,
                            state->probs[i], aprob, state->global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_MANUAL_CHECKING,
+                           state->probs[i], aprob, state->global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_EXAMINATOR_NUM,
+                           state->probs[i], aprob, state->global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_PRESENTATION,
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDIN,
                            state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDOUT,
@@ -3752,6 +3763,9 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
 
   if (prob->type_val < 0) prob->type_val = 0;
   if (prob->scoring_checker < 0) prob->scoring_checker = 0;
+  if (prob->scoring_checker < 0) prob->manual_checking = 0;
+  if (prob->examinator_num < 0) prob->examinator_num = 0;
+  if (prob->check_presentation < 0) prob->check_presentation = 0;
   if (prob->use_stdin < 0) prob->use_stdin = 0;
   if (prob->use_stdout < 0) prob->use_stdout = 0;
   if (prob->binary_input < 0) prob->binary_input = DFLT_P_BINARY_INPUT;
@@ -4155,8 +4169,27 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     break;
 
   case PREPARE_FIELD_PROB_SCORING_CHECKER:
-    if (out->scoring_checker == -1 && abstr) out->scoring_checker = abstr->scoring_checker;
+    if (out->scoring_checker == -1 && abstr)
+      out->scoring_checker = abstr->scoring_checker;
     if (out->scoring_checker == -1) out->scoring_checker = 0;
+    break;
+
+  case PREPARE_FIELD_PROB_MANUAL_CHECKING:
+    if (out->manual_checking == -1 && abstr)
+      out->manual_checking = abstr->manual_checking;
+    if (out->manual_checking == -1) out->manual_checking = 0;
+    break;
+
+  case PREPARE_FIELD_PROB_EXAMINATOR_NUM:
+    if (out->examinator_num <= 0 && abstr)
+      out->examinator_num = abstr->examinator_num;
+    if (out->manual_checking <= 0) out->manual_checking = 0;
+    break;
+
+  case PREPARE_FIELD_PROB_CHECK_PRESENTATION:
+    if (out->check_presentation == -1 && abstr)
+      out->check_presentation = abstr->check_presentation;
+    if (out->check_presentation == -1) out->check_presentation = 0;
     break;
 
   case PREPARE_FIELD_PROB_USE_STDIN:
