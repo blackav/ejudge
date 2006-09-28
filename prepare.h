@@ -239,7 +239,7 @@ struct section_global_data
   puc_t score_system[32];       /* scoring system */
   int    score_system_val;      /* internal int value */
   int    tests_to_accept;       /* how many tests to accept a submit */
-  int    virtual;               /* 1, if virtual contest */
+  int    is_virtual;            /* 1, if virtual contest */
   int    prune_empty_users;     /* 1, if do not show empty users in stands */
   puc_t  rounding_mode[32];     /* seconds rounding mode */
   int    rounding_mode_val;     /* internal int value */

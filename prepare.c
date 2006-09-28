@@ -154,7 +154,8 @@ static const struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(score_system, "s"),
   GLOBAL_PARAM(rounding_mode, "s"),
-  GLOBAL_PARAM(virtual, "d"),
+  GLOBAL_PARAM(is_virtual, "d"),
+  GLOBAL_ALIAS(virtual, is_virtual, "d"),
 
   GLOBAL_PARAM(htdocs_dir, "s"),
 
@@ -3847,7 +3848,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
 
   global->score_system_val = SCORE_ACM;
   global->rounding_mode_val = SEC_FLOOR;
-  global->virtual = 0;
+  global->is_virtual = 0;
 
   global->contest_id = contest_id;
   global->sleep_time = DFLT_G_SLEEP_TIME;

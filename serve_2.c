@@ -57,7 +57,7 @@ serve_update_standings_file(serve_state_t state,
   run_get_times(state->runlog_state, &start_time, 0, &duration, &stop_time, 0);
 
   while (1) {
-    if (state->global->virtual) break;
+    if (state->global->is_virtual) break;
     if (force_flag) break;
     if (!state->global->autoupdate_standings) return;
     if (!duration) break;
@@ -74,7 +74,7 @@ serve_update_standings_file(serve_state_t state,
     break;
   }
 
-  if (!state->global->virtual) {
+  if (!state->global->is_virtual) {
     p = run_get_fog_period(state->runlog_state, state->current_time,
                            state->global->board_fog_time,
                            state->global->board_unfog_time);
@@ -94,7 +94,7 @@ serve_update_standings_file(serve_state_t state,
                     state->accepting_mode);
   }
   l10n_setlocale(0);
-  if (state->global->virtual) return;
+  if (state->global->is_virtual) return;
   switch (p) {
   case 0:
     state->global->start_standings_updated = 1;
@@ -232,7 +232,7 @@ serve_update_status_file(serve_state_t state, int force_flag)
   status.clients_suspended = state->clients_suspended;
   status.testing_suspended = state->testing_suspended;
   status.download_interval = state->global->team_download_time / 60;
-  status.is_virtual = state->global->virtual;
+  status.is_virtual = state->global->is_virtual;
   status.continuation_enabled = state->global->enable_continue;
   status.printing_enabled = state->global->enable_printing;
   status.printing_suspended = state->printing_suspended;
@@ -248,7 +248,7 @@ serve_update_status_file(serve_state_t state, int force_flag)
   status.finish_time = t5;
   //if (status.duration) status.continuation_enabled = 0;
 
-  if (!state->global->virtual) {
+  if (!state->global->is_virtual) {
     p = run_get_fog_period(state->runlog_state, state->current_time,
                            state->global->board_fog_time, state->global->board_unfog_time);
     if (p == 1 && state->global->autoupdate_standings) {

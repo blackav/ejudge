@@ -544,13 +544,13 @@ super_html_edit_global_parameters(FILE *f,
   //GLOBAL_PARAM(score_system, "s"),
   //GLOBAL_PARAM(virtual, "d"),
   ASSERT(global->score_system_val >= SCORE_ACM && global->score_system_val < SCORE_TOTAL);
-  if (global->virtual) {
+  if (global->is_virtual) {
     ASSERT(global->score_system_val == SCORE_ACM);
   }
   html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>Scoring system:</td><td>", form_row_attrs[row ^= 1]);
   param = global->score_system_val;
-  if (global->virtual) param = 3;
+  if (global->is_virtual) param = 3;
   html_select(f, param, "param", contest_types);
   fprintf(f, "</td><td>");
   html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_TYPE, "Change");
@@ -1443,7 +1443,7 @@ super_html_edit_global_parameters(FILE *f,
                              extra_args,
                              hidden_vars);
 
-    if (global->virtual) {
+    if (global->is_virtual) {
       //GLOBAL_PARAM(stand_self_row_attr, "s"),
       print_string_editing_row(f, "HTML attributes for the participant's table row:",
                                global->stand_self_row_attr,
@@ -1901,10 +1901,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
       return -SSERV_ERR_INVALID_PARAMETER;
     if (val < SCORE_TOTAL) {
       global->score_system_val = val;
-      global->virtual = 0;
+      global->is_virtual = 0;
     } else {
       global->score_system_val = SCORE_ACM;
-      global->virtual = 1;
+      global->is_virtual = 1;
     }
     return 0;
 

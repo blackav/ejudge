@@ -379,7 +379,7 @@ html_write_user_problems_summary(const serve_state_t state,
   time_t current_time = time(0);
   int act_status;
 
-  if (state->global->virtual) {
+  if (state->global->is_virtual) {
     start_time = run_get_virtual_start_time(state->runlog_state, user_id);
   } else {
     start_time = run_get_start_time(state->runlog_state);
@@ -868,7 +868,7 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
   struct section_problem_data *cur_prob;
   struct section_language_data *lang = 0;
 
-  if (state->global->virtual) {
+  if (state->global->is_virtual) {
     start_time = run_get_virtual_start_time(state->runlog_state, uid);
   } else {
     start_time = run_get_start_time(state->runlog_state);
@@ -1100,12 +1100,12 @@ new_write_user_clars(const serve_state_t state, FILE *f, int uid,
   unsigned char href[128];
 
   start_time = run_get_start_time(state->runlog_state);
-  if (state->global->virtual)
+  if (state->global->is_virtual)
     start_time = run_get_virtual_start_time(state->runlog_state, uid);
   clars_to_show = 15;
   if (show_flags) clars_to_show = 100000;
   show_astr_time = state->global->show_astr_time;
-  if (state->global->virtual) show_astr_time = 1;
+  if (state->global->is_virtual) show_astr_time = 1;
 
   /* write clars statistics for the last 15 in the reverse order */
   fprintf(f,"<table border=\"1\"><tr><th>%s</th><th>%s</th><th>%s</th>"
@@ -1200,9 +1200,9 @@ new_write_user_clar(const serve_state_t state, const struct contest_desc *cnts,
   }
 
   show_astr_time = state->global->show_astr_time;
-  if (state->global->virtual) show_astr_time = 1;
+  if (state->global->is_virtual) show_astr_time = 1;
   start_time = run_get_start_time(state->runlog_state);
-  if (state->global->virtual)
+  if (state->global->is_virtual)
     start_time = run_get_virtual_start_time(state->runlog_state, uid);
   if (clar_get_record(state->clarlog_state, cid, &time, &size, NULL,
                       &from, &to, NULL, NULL, &hide_flag, subj) < 0) {
@@ -1336,7 +1336,7 @@ write_standings_header(const serve_state_t state,
 
   start_time = run_get_start_time(state->runlog_state);
   stop_time = run_get_stop_time(state->runlog_state);
-  if (state->global->virtual && user_id > 0) {
+  if (state->global->is_virtual && user_id > 0) {
     start_time = run_get_virtual_start_time(state->runlog_state, user_id);
     stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, 0);
   }
@@ -1377,7 +1377,7 @@ write_standings_header(const serve_state_t state,
   if (start_time > cur_time) cur_time = start_time;
   if (stop_time && cur_time > stop_time) cur_time = stop_time;
   show_astr_time = state->global->show_astr_time;
-  if (state->global->virtual && !user_id) {
+  if (state->global->is_virtual && !user_id) {
     show_astr_time = 1;
     cur_time = time(0);
   }
@@ -2599,7 +2599,7 @@ do_write_moscow_standings(const serve_state_t state,
   last_submit_start = last_success_start = start_time = run_get_start_time(state->runlog_state);
   stop_time = run_get_stop_time(state->runlog_state);
   contest_dur = run_get_duration(state->runlog_state);
-  if (start_time && state->global->virtual && user_id > 0) {
+  if (start_time && state->global->is_virtual && user_id > 0) {
     start_time = run_get_virtual_start_time(state->runlog_state, user_id);
     stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, 0);
   }
@@ -2733,7 +2733,7 @@ do_write_moscow_standings(const serve_state_t state,
       continue;
     }
     ustart = start_time;
-    if (state->global->virtual) {
+    if (state->global->is_virtual) {
       // filter "future" virtual runs
       ustart = run_get_virtual_start_time(state->runlog_state, pe->user_id);
       if (run_time < ustart) run_time = ustart;
@@ -2763,7 +2763,7 @@ do_write_moscow_standings(const serve_state_t state,
       if (prob->variable_full_score) up_score[up_ind] = pe->score;
       p_att[p]++;
       p_succ[p]++;
-      if (!state->global->virtual) {
+      if (!state->global->is_virtual) {
         last_success_run = i;
         last_success_time = pe->time;
         last_success_start = ustart;
@@ -2782,7 +2782,7 @@ do_write_moscow_standings(const serve_state_t state,
       }
       up_totatt[up_ind]++;
       p_att[p]++;
-      if (!state->global->virtual) {
+      if (!state->global->is_virtual) {
         last_submit_run = i;
         last_submit_time = pe->time;
         last_submit_start = ustart;
@@ -2791,7 +2791,7 @@ do_write_moscow_standings(const serve_state_t state,
     } else if (pe->status == RUN_COMPILE_ERR && !state->global->ignore_compile_errors) {
       up_totatt[up_ind]++;
       p_att[p]++;
-      if (!state->global->virtual) {
+      if (!state->global->is_virtual) {
         last_submit_run = i;
         last_submit_time = pe->time;
         last_submit_start = ustart;
@@ -2971,7 +2971,7 @@ do_write_moscow_standings(const serve_state_t state,
                                user_name);
       /* print "Last success" information */
       if (last_success_run >= 0) {
-        if (state->global->virtual && !user_id) {
+        if (state->global->is_virtual && !user_id) {
           duration_str(1, last_success_time, last_success_start,
                        strbuf, sizeof(strbuf));
         } else {
@@ -3008,7 +3008,7 @@ do_write_moscow_standings(const serve_state_t state,
       }
       /* print "Last submit" information */
       if (last_submit_run >= 0) {
-        if (state->global->virtual && !user_id) {
+        if (state->global->is_virtual && !user_id) {
           duration_str(1, last_submit_time, last_submit_start,
                        strbuf, sizeof(strbuf));
         } else {
@@ -3401,7 +3401,7 @@ do_write_standings(const serve_state_t state,
   start_time = run_get_start_time(state->runlog_state);
   stop_time = run_get_stop_time(state->runlog_state);
   contest_dur = run_get_duration(state->runlog_state);
-  if (start_time && state->global->virtual && user_id > 0) {
+  if (start_time && state->global->is_virtual && user_id > 0) {
     start_time = run_get_virtual_start_time(state->runlog_state, user_id);
     stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, 0);
   }
@@ -3498,7 +3498,7 @@ do_write_standings(const serve_state_t state,
       continue;
     if (!state->probs[pe->prob_id] || state->probs[pe->prob_id]->hidden) continue;
     if (pe->is_hidden) continue;
-    if (state->global->virtual) {
+    if (state->global->is_virtual) {
       // filter "future" virtual runs
       tstart = run_get_virtual_start_time(state->runlog_state, pe->user_id);
       ASSERT(run_time >= tstart);
@@ -3531,7 +3531,7 @@ do_write_standings(const serve_state_t state,
       t_prob[tt]++;
       succ_att[pp]++;
       tot_att[pp]++;
-      if (state->global->virtual) {
+      if (state->global->is_virtual) {
         ok_time[up_ind] = sec_to_min(state, tdur);
         if (!state->global->ignore_success_time) t_pen[tt] += ok_time[up_ind];
         last_success_time = run_time;
@@ -3631,7 +3631,7 @@ do_write_standings(const serve_state_t state,
     if (last_success_run >= 0) {
       unsigned char dur_buf[128];
 
-      if (state->global->virtual && !user_id) {
+      if (state->global->is_virtual && !user_id) {
         duration_str(1, last_success_time, last_success_start,
                      dur_buf, sizeof(dur_buf));
       } else {
@@ -3725,7 +3725,7 @@ do_write_standings(const serve_state_t state,
       if (user_id > 0 && user_id == t_ind[t] &&
           state->global->stand_self_row_attr[0]) {
         bgcolor_ptr = state->global->stand_self_row_attr;
-      } else if (state->global->virtual) {
+      } else if (state->global->is_virtual) {
         int vstat = run_get_virtual_status(state->runlog_state, t_ind[t]);
         if (vstat == 1 && state->global->stand_r_row_attr[0]) {
           bgcolor_ptr = state->global->stand_r_row_attr;
@@ -4158,7 +4158,7 @@ write_user_run_status(const serve_state_t state, FILE *f, int uid, int rid,
     return -SRV_ERR_ACCESS_DENIED;
   }
 
-  if (state->global->virtual) {
+  if (state->global->is_virtual) {
     start_time = run_get_virtual_start_time(state->runlog_state, rid);
   } else {
     start_time = run_get_start_time(state->runlog_state);
@@ -4901,7 +4901,7 @@ print_nav_buttons(const serve_state_t state,
   fprintf(f, "%s",
           html_hyperref(hbuf, sizeof(hbuf), sid, self_url, extra_args, 0));
   fprintf(f, "%s</a></td><td>", t1);
-  if (state->global->virtual) {
+  if (state->global->is_virtual) {
     fprintf(f, "%s",
             html_hyperref(hbuf, sizeof(hbuf), sid, self_url,
                           extra_args, "action=%d", ACTION_STANDINGS));
@@ -4952,7 +4952,7 @@ write_team_page(const serve_state_t state,
 
   XALLOCAZ(accepted_flag, state->max_prob + 1);
 
-  if (state->global->virtual) {
+  if (state->global->is_virtual) {
     time_t dur;
     unsigned char tbuf[64];
     unsigned char *ststr;

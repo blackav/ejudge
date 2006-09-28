@@ -837,7 +837,7 @@ check_contest_events(serve_state_t cs)
   run_get_times(cs->runlog_state, &start_time, &sched_time,
                 &duration, &stop_time, &finish_time);
 
-  if (!global->virtual) {
+  if (!global->is_virtual) {
     if (start_time > 0 && stop_time <= 0 && duration <= 0 && finish_time > 0
         && cs->current_time >= finish_time) {
       /* the contest is over: contest_finish_time is expired! */
@@ -2796,7 +2796,7 @@ unpriv_print_status(struct server_framework_state *state,
     fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
             _("Contest start time"), ctime(&start_time));
   }
-  if (!global->virtual && start_time <= 0 && sched_time > 0) {
+  if (!global->is_virtual && start_time <= 0 && sched_time > 0) {
     fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
             _("Planned start time"), ctime(&sched_time));
   }
@@ -2986,7 +2986,7 @@ priv_main_page(struct server_framework_state *state,
     }
   }
 
-  if (!global->virtual && start_time <= 0) {
+  if (!global->is_virtual && start_time <= 0) {
     fprintf(fout, "<tr><td>%s:</td><td>%s</td>"
             "<td><input type=\"text\" name=\"sched_time\" size=\"16\"></td>"
             "<td>%s</td></tr>\n",
@@ -3746,7 +3746,7 @@ unpriv_submit_run(struct server_framework_state *state,
     break;
   }
 
-  if (global->virtual) {
+  if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
                                           cs->current_time);
@@ -4035,7 +4035,7 @@ unpriv_submit_clar(struct server_framework_state *state,
     return html_err_invalid_param(state, p, fout, phr, 0,
                                   "text is not set or binary");
 
-  if (global->virtual) {
+  if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
                                           cs->current_time);
@@ -4453,9 +4453,9 @@ unpriv_view_clar(struct server_framework_state *state,
   }
 
   show_astr_time = global->show_astr_time;
-  if (global->virtual) show_astr_time = 1;
+  if (global->is_virtual) show_astr_time = 1;
   start_time = run_get_start_time(cs->runlog_state);
-  if (global->virtual)
+  if (global->is_virtual)
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
 
   if ((ce.from > 0 && ce.from != phr->user_id)
@@ -4500,7 +4500,7 @@ unpriv_view_clar(struct server_framework_state *state,
   fprintf(fout, "<table border=\"0\">\n");
   fprintf(fout, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Number"), clar_id);
   fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Time"), dur_str);
-  fprintf(fout, "<tr><td>%s:</td><td>%zu</td></tr>\n", _("Size"), ce.size);
+  fprintf(fout, "<tr><td>%s:</td><td>%u</td></tr>\n", _("Size"), ce.size);
   fprintf(fout, "<tr><td>%s:</td>", _("Sender"));
   if (!ce.from) {
     fprintf(fout, "<td><b>%s</b></td>", _("judges"));
@@ -4731,7 +4731,7 @@ user_main_page(struct server_framework_state *state,
   XALLOCAZ(solved_flag, cs->max_prob + 1);
   XALLOCAZ(accepted_flag, cs->max_prob + 1);
 
-  if (global->virtual) {
+  if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
                                           cs->current_time);

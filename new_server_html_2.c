@@ -416,7 +416,7 @@ new_serve_write_priv_all_runs(FILE *f,
         imported_str = "#";
       }
       start_time = env.rhead.start_time;
-      if (global->virtual) {
+      if (global->is_virtual) {
         start_time = run_get_virtual_start_time(cs->runlog_state, pe->user_id);
       }
       if (!start_time) run_time = 0;
@@ -681,7 +681,7 @@ new_serve_write_all_clars(FILE *f,
   u->prev_first_clar = first_clar;
   u->prev_last_clar = last_clar;
   show_astr_time = global->show_astr_time;
-  if (global->virtual) show_astr_time = 1;
+  if (global->is_virtual) show_astr_time = 1;
 
   if (!first_clar && !last_clar) {
     first_clar = -1;
