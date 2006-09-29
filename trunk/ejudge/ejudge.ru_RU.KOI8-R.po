@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-29 19:30+0400\n"
-"PO-Revision-Date: 2006-09-29 18:10+0400\n"
+"POT-Creation-Date: 2006-09-30 00:34+0400\n"
+"PO-Revision-Date: 2006-09-30 00:48+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -435,9 +435,12 @@ msgstr "Ошибка добавления посылки в очередь компиляции данных."
 msgid "Cannot put the run to the run queue."
 msgstr "Ошибка добавления посылки в очередь тестирования."
 
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot read message from disk.\n"
-msgstr "Ошибка записи сообщения на диск.\n"
+msgstr "Ошибка чтения сообщения с диска.\n"
+
+msgid "Cannot read message text!"
+msgstr "Ошибка чтения файла сообщения!"
 
 #, c-format
 msgid "Cannot read the clarification text."
@@ -1077,6 +1080,9 @@ msgstr "Импорт и слияние XML-посылок"
 msgid "Imported?"
 msgstr "Импортирована?"
 
+msgid "In reply to"
+msgstr "В ответ на"
+
 msgid ""
 "In the next field type the name, which will be used in standings, personal "
 "information display, etc."
@@ -1126,9 +1132,13 @@ msgstr "Внутренняя ошибка: недостаточно памяти."
 msgid "Invalid clar_id"
 msgstr "Неверный идентификатор сообщения"
 
-#, fuzzy, c-format
+#, c-format
+msgid "Invalid clar_id %d.\n"
+msgstr "Неверный идентификатор сообщения %d.\n"
+
+#, c-format
 msgid "Invalid clar_id.\n"
-msgstr "Неверный идентификатор сообщения"
+msgstr "Неверный идентификатор сообщения.\n"
 
 msgid "Invalid configuration"
 msgstr "Неверная конфигурация"
@@ -1216,7 +1226,7 @@ msgstr "Выдать предупреждение"
 
 #, c-format
 msgid "It's not allowed to answer to judge's messages.\n"
-msgstr ""
+msgstr "Нельзя отвечать на сообщения судей.\n"
 
 msgid "Judge"
 msgstr "Судья"
@@ -1252,6 +1262,9 @@ msgid "List of registered participants"
 msgstr "Список зарегистрировавшихся участников"
 
 msgid "Locale ID"
+msgstr "Идентификатор языка"
+
+msgid "Locale code"
 msgstr "Идентификатор языка"
 
 msgid "Lock"
@@ -1427,13 +1440,11 @@ msgstr "Нет"
 msgid "No assigned variant."
 msgstr "Нет назначенного варианта."
 
-#, fuzzy
 msgid "No comments"
-msgstr "Без комментариев.\n"
+msgstr "Без комментариев"
 
-#, fuzzy
 msgid "No comments."
-msgstr "Без комментариев.\n"
+msgstr "Без комментариев."
 
 msgid "No comments.\n"
 msgstr "Без комментариев.\n"
@@ -1447,9 +1458,8 @@ msgstr "Запрос на сервер не выполнялся"
 msgid "No users registered for this contest"
 msgstr "На этот турнир никто не зарегистрировался"
 
-#, fuzzy
 msgid "No."
-msgstr "Нет"
+msgstr "Нет."
 
 msgid "No. of clars"
 msgstr "Число вопросов"
@@ -1583,6 +1593,10 @@ msgstr "В доступе отказано"
 msgid "Permission denied."
 msgstr "В доступе отказано."
 
+#, c-format
+msgid "Permission denied.\n"
+msgstr "В доступе отказано.\n"
+
 msgid "Permission denied. The possible reasons are as follows."
 msgstr "В доступе отказано. Возможные причины этой ошибки перечислены ниже."
 
@@ -1708,13 +1722,11 @@ msgstr "Re: Ваш вопрос"
 msgid "Read error while reading %s."
 msgstr "Ошибка при чтении %s с диска."
 
-#, fuzzy
 msgid "Read the problem"
-msgstr "Читайте условие задачи.\n"
+msgstr "Читайте условие задачи"
 
-#, fuzzy
 msgid "Read the problem."
-msgstr "Читайте условие задачи.\n"
+msgstr "Читайте условие задачи."
 
 msgid "Read the problem.\n"
 msgstr "Читайте условие задачи.\n"
@@ -1821,11 +1833,9 @@ msgstr ""
 "Удалить отмеченных пользователей из списка (АДМИНИСТРАТОРЫ не могут быть "
 "удалены)"
 
-#, fuzzy
 msgid "Reply to all"
 msgstr "Отослать всем"
 
-#, fuzzy
 msgid "Reply to sender"
 msgstr "Отослать отправителю"
 
@@ -2502,6 +2512,9 @@ msgstr "Посмотреть команды"
 msgid "View the problem statement and send a submission"
 msgstr "Посмотреть условие задачи и отослать решение"
 
+msgid "Viewing clar"
+msgstr "Просмотр посылки"
+
 msgid "Viewing report"
 msgstr "Просмотр протокола"
 
@@ -2584,9 +2597,8 @@ msgstr "Да, сжать!"
 msgid "Yes, update standings!"
 msgstr "Да, обновить таблицу"
 
-#, fuzzy
 msgid "Yes."
-msgstr "Да"
+msgstr "Да."
 
 msgid "You are not registered for this contest."
 msgstr "Вы не зарегистрированы на этот турнир."
@@ -2619,9 +2631,9 @@ msgstr "У Вас нет прав использовать данный сервис"
 msgid "You do not have permissions to use this service."
 msgstr "У Вас нет прав использовать данный сервис."
 
-#, fuzzy, c-format
+#, c-format
 msgid "You don't have permissions to answer questions.\n"
-msgstr "У Вас нет прав использовать данный сервис."
+msgstr "У Вас нет прав отвечать на вопросы.\n"
 
 msgid "You have already registered for this contest."
 msgstr "Вы уже зарегистрировались на этот турнир."

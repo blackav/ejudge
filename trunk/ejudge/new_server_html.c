@@ -2453,7 +2453,8 @@ priv_submit_clar(FILE *fout,
                                      text3_len,
                                      phr->ip, phr->ssl_flag,
                                      0, user_id, 0, phr->user_id,
-                                     hide_flag, phr->locale_id, subj2)) < 0) {
+                                     hide_flag, phr->locale_id, 0,
+                                     subj2)) < 0) {
     fprintf(log_f, _("Cannot update the clarification database.\n"));
     goto done;
   }
@@ -2489,15 +2490,16 @@ priv_clar_reply(FILE *fout,
   const struct section_global_data *global = cs->global;
   const unsigned char *errmsg;
   const unsigned char *s, *reply_txt;
-  int in_reply_to, n;
+  int in_reply_to, n, clar_id;
   struct clar_entry_v1 clar;
   unsigned char *reply_txt_2;
   size_t reply_len;
-  path_t orig_clar_name;
+  path_t orig_clar_name, clar_name;
   char *orig_txt = 0;
   size_t orig_txt_len = 0;
-  unsigned char *new_subj;
-  size_t new_subj_len;
+  unsigned char *new_subj, *quoted, *msg;
+  size_t new_subj_len, quoted_len, msg_len;
+  struct timeval precise_time;
 
   // reply, in_reply_to
   if (ns_cgi_param(phr, "in_reply_to", &s) <= 0
@@ -2574,51 +2576,35 @@ priv_clar_reply(FILE *fout,
   new_subj_len = message_reply_subj(orig_txt, new_subj);
   l10n_setlocale(0);
 
-  /*
-  NEW_SRV_ACTION_CLAR_REPLY,
-  NEW_SRV_ACTION_CLAR_REPLY_ALL,
-  NEW_SRV_ACTION_CLAR_REPLY_READ_PROBLEM,
-  NEW_SRV_ACTION_CLAR_REPLY_NO_COMMENTS,
-  NEW_SRV_ACTION_CLAR_REPLY_YES,
-  NEW_SRV_ACTION_CLAR_REPLY_NO,
-  */
+  quoted_len = message_quoted_size(orig_txt);
+  quoted = alloca(quoted_len + 16);
+  message_quote(orig_txt, quoted);
 
+  msg = alloca(reply_len + quoted_len + new_subj_len + 64);
+  msg_len = sprintf(msg, "%s%s\n%s\n", new_subj, quoted, reply_txt_2);
 
+  gettimeofday(&precise_time, 0);
+  clar_id = clar_add_record_new(cs->clarlog_state,
+                                precise_time.tv_sec,
+                                precise_time.tv_usec * 1000,
+                                msg_len,
+                                phr->ip, phr->ssl_flag,
+                                0, clar.from, 0, phr->user_id, 0,
+                                clar.locale_id, in_reply_to + 1, new_subj);
 
+  if (clar_id < 0) {
+    fprintf(log_f, _("Cannot update the clarification database.\n"));
+    goto done;
+  }
 
+  snprintf(clar_name, sizeof(clar_name), "%06d", clar_id);
+  if (generic_write_file(msg, msg_len, 0, global->clar_archive_dir,
+                         clar_name, "") < 0) {
+    fprintf(log_f, _("Cannot write the message to the disk.\n"));
+    goto done;
+  }
 
-
-  /*
-    message_base64_subj(new_subj, b64_subj_short, CLAR_MAX_SUBJ_TXT_LEN);
-    quoted_len = message_quoted_size(orig_txt);
-    quoted_ptr = alloca(quoted_len + 16);
-    message_quote(orig_txt, quoted_ptr);
-    msg = alloca(pkt->text_len + quoted_len + new_subj_len + 64);
-    msg_len = sprintf(msg, "%s%s\n%s", new_subj, quoted_ptr, text_ptr);
-    if (!pkt->dest_user_id) dest_uid = 0;
-    clar_id = clar_add_record(serve_state.clarlog_state, serve_state.current_time, msg_len,
-                              xml_unparse_ip(p->ip), 0, dest_uid, 0,
-                              p->user_id, hide_flag, b64_subj_short);
-    if (clar_id < 0) {
-      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
-      return;
-    }
-    snprintf(clar_name, sizeof(clar_name), "%06d", clar_id);
-    if (generic_write_file(msg, msg_len, 0, serve_state.global->clar_archive_dir,
-                           clar_name, "") < 0) {
-      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
-      return;
-    }
-    clar_update_flags(serve_state.clarlog_state, pkt->ref_clar_id, 2);
-    xfree(orig_txt);
-    info("%d: cmd_message: ok %d %zu", p->id, clar_id, msg_len);
-    new_send_reply(p, SRV_RPL_OK);
-    return;
-  */
-
-
-
-
+  clar_update_flags(cs->clarlog_state, in_reply_to, 2);
 
  done:
   xfree(orig_txt);
@@ -2976,24 +2962,22 @@ priv_view_priv_users_page(FILE *fout,
   html_armor_free(&ab);
 }
 
-static void
+static int
 priv_view_report(FILE *fout,
+                 FILE *log_f,
                  struct http_request_info *phr,
                  const struct contest_desc *cnts,
                  struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
-  FILE *log_f = 0;
-  char *log_txt = 0;
-  size_t log_len = 0;
   const unsigned char *s;
   int run_id, n;
 
   if (ns_cgi_param(phr, "run_id", &s) <= 0
-      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n])
-    return html_err_invalid_param(fout, phr, 1, "cannot parse run_id");
-
-  log_f = open_memstream(&log_txt, &log_len);
+      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]) {
+    html_err_invalid_param(fout, phr, 1, "cannot parse run_id");
+    return -1;
+  }
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_REPORT) < 0) {
     fprintf(log_f, _("Permission denied"));
@@ -3007,31 +2991,25 @@ priv_view_report(FILE *fout,
   new_serve_write_priv_report(cs, fout, log_f, phr, cnts, extra, 0, run_id);
 
  done:
-  fclose(log_f); log_f = 0;
-  if (log_txt && *log_txt) {
-    html_error_status_page(fout, phr, cnts, extra, log_txt, 0);
-  }
-  xfree(log_txt);
+  return 0;
 }
 
-static void
+static int
 priv_view_source(FILE *fout,
+                 FILE *log_f,
                  struct http_request_info *phr,
                  const struct contest_desc *cnts,
                  struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
-  FILE *log_f = 0;
-  char *log_txt = 0;
-  size_t log_len = 0;
   int run_id, n;
   const unsigned char *s;
 
   if (ns_cgi_param(phr, "run_id", &s) <= 0
-      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n])
-    return html_err_invalid_param(fout, phr, 1, "cannot parse run_id");
-
-  log_f = open_memstream(&log_txt, &log_len);
+      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]) {
+    html_err_invalid_param(fout, phr, 1, "cannot parse run_id");
+    return -1;
+  }
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
     fprintf(log_f, _("Permission denied"));
@@ -3045,24 +3023,18 @@ priv_view_source(FILE *fout,
   new_serve_write_priv_source(cs, fout, log_f, phr, cnts, extra, run_id);
 
  done:
-  fclose(log_f); log_f = 0;
-  if (log_txt && *log_txt) {
-    html_error_status_page(fout, phr, cnts, extra, log_txt, 0);
-  }
-  xfree(log_txt);
+  return 0;
 }
 
-static void
+static int
 priv_download_source(FILE *fout,
+                     FILE *log_f,
                      struct http_request_info *phr,
                      const struct contest_desc *cnts,
                      struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
-  FILE *log_f = 0;
-  char *log_txt = 0;
-  size_t log_len = 0;
   int run_id, n, src_flags, no_disp = 0, x;
   const unsigned char *s;
   const struct section_problem_data *prob = 0;
@@ -3073,14 +3045,14 @@ priv_download_source(FILE *fout,
   size_t run_size = 0;
 
   if (ns_cgi_param(phr, "run_id", &s) <= 0
-      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n])
-    return html_err_invalid_param(fout, phr, 1, "cannot parse run_id");
+      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]) {
+    html_err_invalid_param(fout, phr, 1, "cannot parse run_id");
+    return -1;
+  }
   if (ns_cgi_param(phr, "no_disp", &s) > 0
       && sscanf(s, "%d%n", &x, &n) == 1 && !s[n]
       && x >= 0 && x <= 1)
     no_disp = x;
-
-  log_f = open_memstream(&log_txt, &log_len);
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
     fprintf(log_f, _("Permission denied"));
@@ -3142,26 +3114,56 @@ priv_download_source(FILE *fout,
   fwrite(run_text, 1, run_size, fout);
 
  done:
-  fclose(log_f); log_f = 0;
-  if (log_txt && *log_txt) {
-    html_error_status_page(fout, phr, cnts, extra, log_txt, 0);
-  }
-  xfree(log_txt);
   xfree(run_text);
+  return 0;
 }
 
-static void
-priv_standings(FILE *fout,
+static int
+priv_view_clar(FILE *fout,
+               FILE *log_f,
                struct http_request_info *phr,
                const struct contest_desc *cnts,
                struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
-  FILE *log_f = 0;
-  char *log_txt = 0;
-  size_t log_len = 0;
+  int clar_id, n;
+  const unsigned char *s;
 
-  log_f = open_memstream(&log_txt, &log_len);
+  if (ns_cgi_param(phr, "clar_id", &s) <= 0
+      || sscanf(s, "%d%n", &clar_id, &n) != 1 || s[n]
+      || clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)) {
+    html_err_invalid_param(fout, phr, 1, "cannot parse clar_id");
+    return -1;
+  }
+
+  if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) < 0) {
+    fprintf(log_f, _("Permission denied.\n"));
+    goto done;
+  }
+
+  l10n_setlocale(phr->locale_id);
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   "%s [%s, %s]: %s %d", new_serve_unparse_role(phr->role),
+                   phr->name_arm, extra->contest_arm, _("Viewing clar"),
+                   clar_id);
+
+  new_serve_write_priv_clar(cs, fout, log_f, phr, cnts, extra, clar_id);
+
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ done:
+  return 0;
+}
+
+static int
+priv_standings(FILE *fout,
+               FILE *log_f,
+               struct http_request_info *phr,
+               const struct contest_desc *cnts,
+               struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
 
   if (phr->role < USER_ROLE_JUDGE) {
     fprintf(log_f, _("Permission denied."));
@@ -3182,11 +3184,7 @@ priv_standings(FILE *fout,
   l10n_setlocale(0);
   
  done:
-  fclose(log_f); log_f = 0;
-  if (log_txt && *log_txt) {
-    html_error_status_page(fout, phr, cnts, extra, log_txt, 0);
-  }
-  xfree(log_txt);
+  return 0;
 }
 
 void
@@ -3319,11 +3317,8 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
 #if 0
   [NEW_SRV_ACTION_VIEW_USERS] = priv_view_users_page,
   [NEW_SRV_ACTION_PRIV_USERS_VIEW] = priv_view_priv_users_page,
-  [NEW_SRV_ACTION_VIEW_SOURCE] = priv_view_source,
-  [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
-  [NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN] = priv_download_source,
-  [NEW_SRV_ACTION_STANDINGS] = priv_standings,
 #endif
+  /* for priv_generic_operation */
   [NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS] = priv_registration_operation,
   [NEW_SRV_ACTION_USERS_SET_PENDING] = priv_registration_operation,
   [NEW_SRV_ACTION_USERS_SET_OK] = priv_registration_operation,
@@ -3371,6 +3366,13 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLAR_REPLY_NO_COMMENTS] = priv_clar_reply,
   [NEW_SRV_ACTION_CLAR_REPLY_YES] = priv_clar_reply,
   [NEW_SRV_ACTION_CLAR_REPLY_NO] = priv_clar_reply,
+
+  /* for priv_generic_page */
+  [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
+  [NEW_SRV_ACTION_VIEW_SOURCE] = priv_view_source,
+  [NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN] = priv_download_source,
+  [NEW_SRV_ACTION_STANDINGS] = priv_standings,
+  [NEW_SRV_ACTION_VIEW_CLAR] = priv_view_clar,
 };
 
 static int priv_next_state[NEW_SRV_ACTION_LAST] =
@@ -3449,11 +3451,39 @@ priv_generic_operation(FILE *fout,
   if (!r) r = priv_next_state[phr->action];
   if (!rr) rr = priv_prev_state[phr->action];
 
-  fclose(log_f); log_f = 0;
+  fclose(log_f);
   if (!log_txt || !*log_txt) {
     html_refresh_page(fout, phr, r);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt, rr);
+  }
+  xfree(log_txt);
+}
+
+static void
+priv_generic_page(FILE *fout,
+                  struct http_request_info *phr,
+                  const struct contest_desc *cnts,
+                  struct contest_extra *extra)
+{
+  FILE *log_f = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  int r;
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  r = priv_actions_table_2[phr->action](fout, log_f, phr, cnts, extra);
+  if (r < 0) {
+    fclose(log_f);
+    xfree(log_txt);
+    return;
+  }
+  if (!r) r = priv_prev_state[phr->action];
+
+  fclose(log_f);
+  if (log_txt && *log_txt) {
+    html_error_status_page(fout, phr, cnts, extra, log_txt, r);
   }
   xfree(log_txt);
 }
@@ -3975,10 +4005,10 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SET_ACCEPTING_MODE] = priv_generic_operation,
   [NEW_SRV_ACTION_RESET_FILTER] = priv_generic_operation,
   [NEW_SRV_ACTION_RESET_CLAR_FILTER] = priv_generic_operation,
-  [NEW_SRV_ACTION_VIEW_SOURCE] = priv_view_source,
-  [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
-  [NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN] = priv_download_source,
-  [NEW_SRV_ACTION_STANDINGS] = priv_standings,
+  [NEW_SRV_ACTION_VIEW_SOURCE] = priv_generic_page,
+  [NEW_SRV_ACTION_VIEW_REPORT] = priv_generic_page,
+  [NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN] = priv_generic_page,
+  [NEW_SRV_ACTION_STANDINGS] = priv_generic_page,
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = priv_generic_operation,
   [NEW_SRV_ACTION_SUBMIT_RUN] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_CLAR] = priv_generic_operation,
@@ -3988,6 +4018,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLAR_REPLY_NO_COMMENTS] = priv_generic_operation,
   [NEW_SRV_ACTION_CLAR_REPLY_YES] = priv_generic_operation,
   [NEW_SRV_ACTION_CLAR_REPLY_NO] = priv_generic_operation,
+  [NEW_SRV_ACTION_VIEW_CLAR] = priv_generic_page,
 };
 
 static void
@@ -4870,7 +4901,7 @@ unpriv_submit_clar(FILE *fout,
                                      text3_len,
                                      phr->ip, phr->ssl_flag,
                                      phr->user_id, 0, 0, 0, 0,
-                                     phr->locale_id, subj3)) < 0) {
+                                     phr->locale_id, 0, subj3)) < 0) {
     fprintf(log_f, _("Cannot update the clarification database.\n"));
     goto done;
   }

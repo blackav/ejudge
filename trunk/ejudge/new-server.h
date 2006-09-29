@@ -286,6 +286,15 @@ void new_serve_write_priv_report(const serve_state_t cs,
                                  int team_report_flag,
                                  int run_id);
 
+void
+new_serve_write_priv_clar(const serve_state_t cs,
+                          FILE *f,
+                          FILE *log_f,
+                          struct http_request_info *phr,
+                          const struct contest_desc *cnts,
+                          struct contest_extra *extra,
+                          int clar_id);
+
 void new_serve_header(FILE *out, unsigned char const *template,
                       unsigned char const *content_type,
                       unsigned char const *charset,
