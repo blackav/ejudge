@@ -1164,3 +1164,10 @@ new-server.h 3453 0 716255
 new-server.c 3453 0 1249671
 new_server_html.c 3453 0 16078990
 uldb_plugin_xml.c 3453 0 5589284
+clarlog.h 3455 0 258401
+misctext.h 3455 0 239647
+clarlog.c 3455 0 1282379
+contests.c 3455 0 4133784
+misctext.c 3455 0 745252
+new_server_html.c 3455 0 16475119
+new_server_html_2.c 3455 0 3956527
