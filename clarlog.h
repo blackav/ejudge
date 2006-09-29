@@ -54,7 +54,9 @@ struct clar_entry_v1
     unsigned char ip6[16];
   } a;                          /* 16 */
   unsigned short locale_id;     /* 2 */
-  unsigned char _pad2[38];
+  unsigned char _pad2[2];       /* 2 */
+  int in_reply_to;              /* 4 */ /* 1 means in clar_id 0! */
+  unsigned char _pad3[32];
   unsigned char subj[CLAR_ENTRY_SUBJ_SIZE];
 };                              /* 128 */
 
@@ -83,6 +85,7 @@ int clar_add_record_new(clarlog_state_t state,
                         int            j_from,
                         int            hide_flag,
                         int            locale_id,
+                        int            in_reply_to,
                         const unsigned char *subj);
 int clar_get_record(clarlog_state_t state,
                     int            id,

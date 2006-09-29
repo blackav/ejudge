@@ -31,6 +31,7 @@
 #include "archive_paths.h"
 #include "fileutl.h"
 #include "mime_type.h"
+#include "l10n.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -1482,6 +1483,114 @@ new_serve_write_priv_report(const serve_state_t cs,
 
  done:;
   xfree(rep_text);
+}
+
+void
+new_serve_write_priv_clar(const serve_state_t cs,
+                          FILE *f,
+                          FILE *log_f,
+                          struct http_request_info *phr,
+                          const struct contest_desc *cnts,
+                          struct contest_extra *extra,
+                          int clar_id)
+{
+  const struct section_global_data *global = cs->global;
+  struct clar_entry_v1 clar;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  time_t start_time;
+  path_t name_buf;
+  char *msg_txt = 0;
+  size_t msg_len = 0;
+  unsigned char bb[1024];
+
+  if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
+      || clar_get_record_new(cs->clarlog_state, clar_id, &clar) < 0) {
+    fprintf(log_f, _("Invalid clar_id %d.\n"), clar_id);
+    goto done;
+  }
+  start_time = run_get_start_time(cs->runlog_state);
+
+  fprintf(f, "<h2>%s %d</h2>\n", _("Message"), clar_id);
+  fprintf(f, "<table border=\"0\">\n");
+  fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Clar ID"), clar_id);
+  if (clar.hide_flag)
+    fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Available only after contest start"),
+            clar.hide_flag?_("YES"):_("NO"));
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Flags"),
+          clar_flags_html(cs->clarlog_state, clar.flags,
+                          clar.from, clar.to, 0, 0));
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+          _("Time"), duration_str(1, clar.time, 0, 0, 0));
+  if (!cs->global->is_virtual && start_time > 0) {
+    fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Duration"), duration_str(0, clar.time, start_time, 0, 0));
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("IP address"),
+          xml_unparse_ip(clar.a.ip));
+  fprintf(f, "<tr><td>%s:</td><td>%zu</td></tr>\n", _("Size"), clar.size);
+  fprintf(f, "<tr><td>%s:</td>", _("Sender"));
+  if (!clar.from) {
+    if (!clar.j_from)
+      fprintf(f, "<td><b>%s</b></td>", _("judges"));
+    else
+      fprintf(f, "<td><b>%s</b> (%s)</td>", _("judges"),
+              ARMOR(teamdb_get_name_2(cs->teamdb_state, clar.j_from)));
+  } else {
+    fprintf(f, "<td>%s (%d)</td>",
+            ARMOR(teamdb_get_name_2(cs->teamdb_state, clar.from)),
+            clar.from);
+  }
+  fprintf(f, "</tr>\n<tr><td>%s:</td>", _("To"));
+  if (!clar.to && !clar.from) {
+    fprintf(f, "<td><b>%s</b></td>", _("all"));
+  } else if (!clar.to) {
+    fprintf(f, "<td><b>%s</b></td>", _("judges"));
+  } else {
+    fprintf(f, "<td>%s (%d)</td>",
+            ARMOR(teamdb_get_name_2(cs->teamdb_state, clar.to)), clar.to);
+  }
+  fprintf(f, "</tr>\n");
+  if (clar.in_reply_to > 0) {
+    fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>", _("In reply to"),
+            clar.in_reply_to - 1);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>", _("Locale code"),
+          clar.locale_id);
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"),ARMOR(clar.subj));
+  fprintf(f, "</table>\n");
+  /*
+  print_nav_buttons(state, f, 0, sid, self_url, hidden_vars, extra_args,
+                    _("Main page"), 0, 0, 0, 0, 0, 0);
+  */
+  fprintf(f, "<hr>\n");
+
+  snprintf(name_buf, sizeof(name_buf), "%06d", clar_id);
+  if (generic_read_file(&msg_txt, 0, &msg_len, 0,
+                        global->clar_archive_dir, name_buf, "") < 0) {
+    fprintf(f, "<big><font color=\"red\">%s</font></big>\n",
+            _("Cannot read message text!"));
+  } else {
+    fprintf(f, "<pre>%s</pre><hr>", ARMOR(msg_txt));
+  }
+
+  if (phr->role >= USER_ROLE_JUDGE && clar.from
+      && opcaps_check(phr->caps, OPCAP_REPLY_MESSAGE) >= 0) {
+    html_start_form(f, 2, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "in_reply_to", "%d", clar_id);
+    fprintf(f, "<p>%s\n", BUTTON(NEW_SRV_ACTION_CLAR_REPLY_READ_PROBLEM));
+    fprintf(f, "%s\n", BUTTON(NEW_SRV_ACTION_CLAR_REPLY_NO_COMMENTS));
+    fprintf(f, "%s\n", BUTTON(NEW_SRV_ACTION_CLAR_REPLY_YES));
+    fprintf(f, "%s\n", BUTTON(NEW_SRV_ACTION_CLAR_REPLY_NO));
+    fprintf(f, "<p><textarea name=\"reply\" rows=\"20\" cols=\"60\"></textarea></p>\n");
+    fprintf(f, "<p>%s\n", BUTTON(NEW_SRV_ACTION_CLAR_REPLY));
+    fprintf(f, "%s\n", BUTTON(NEW_SRV_ACTION_CLAR_REPLY_ALL));
+    fprintf(f, "</form>\n");
+  }
+
+ done:;
+  html_armor_free(&ab);
+  xfree(msg_txt);
 }
 
 /*

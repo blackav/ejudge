@@ -616,7 +616,7 @@ static const size_t contest_access_offsets[CONTEST_LAST_TAG] =
   [CONTEST_SERVE_CONTROL_ACCESS] = CONTEST_DESC_OFFSET(serve_control_access),
 };
 
-static const size_t contest_bool_attr_offsets[CONTEST_LAST_ATTR] =
+static const size_t contest_bool_attr_offsets[CONTEST_LAST_TAG] =
 {
   [CONTEST_A_AUTOREGISTER] = CONTEST_DESC_OFFSET(autoregister),
   [CONTEST_A_DISABLE_TEAM_PASSWORD] =CONTEST_DESC_OFFSET(disable_team_password),
@@ -867,12 +867,11 @@ contests_merge(struct contest_desc *pold, struct contest_desc *pnew)
   unsigned char *p_b_old, *p_b_new;
 
   // unlink and free all the old root node childs
-  for (p = pold->b.first_down; p; ) {
+  for (p = pold->b.first_down; p; p = q) {
     q = p->right;
     xml_unlink_node(p);
     xml_tree_free(p, &contests_parse_spec);
   }
-  node_free(&pold->b);
 
   // copy offsetted fields
   for (i = 0; i < CONTEST_LAST_TAG; i++) {
@@ -885,7 +884,7 @@ contests_merge(struct contest_desc *pold, struct contest_desc *pnew)
     } else if (contest_access_offsets[i]) {
       p_acc_old = XPDEREF(struct contest_access*, pold, 
                           contest_access_offsets[i]);
-      p_acc_new = XPDEREF(struct contest_access*, pold, 
+      p_acc_new = XPDEREF(struct contest_access*, pnew, 
                           contest_access_offsets[i]);
       p = &(*p_acc_new)->b;
       if (p) {
