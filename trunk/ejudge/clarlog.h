@@ -47,13 +47,14 @@ struct clar_entry_v1
   unsigned char ip6_flag;       /* 1 */
   unsigned char hide_flag;      /* 1 */
   unsigned char ssl_flag;       /* 1 */
-  unsigned char _pad1[1];       /* 2 */
+  unsigned char _pad1[1];       /* 1 */
   union
   {
     ej_ip_t ip;
     unsigned char ip6[16];
   } a;                          /* 16 */
-  unsigned char _pad2[40];
+  unsigned short locale_id;     /* 2 */
+  unsigned char _pad2[38];
   unsigned char subj[CLAR_ENTRY_SUBJ_SIZE];
 };                              /* 128 */
 
@@ -81,6 +82,7 @@ int clar_add_record_new(clarlog_state_t state,
                         int            flags,
                         int            j_from,
                         int            hide_flag,
+                        int            locale_id,
                         const unsigned char *subj);
 int clar_get_record(clarlog_state_t state,
                     int            id,

@@ -21,12 +21,25 @@
 #include <string.h>
 #include <time.h>
 
+struct html_armor_buffer
+{
+  unsigned char *buf;
+  size_t size;
+};
+
 int html_armored_memlen(char const *text, int size);
 int html_armored_strlen(char const *str);
 int html_armor_text(char const *text, int size, char *out);
 int html_armor_string(char const *str, char *out);
 unsigned char *html_armor_string_dup(const unsigned char *str);
 int html_armor_needed(const unsigned char *str, size_t *psz);
+
+#define HTML_ARMOR_INITIALIZER { 0, 0 }
+void html_armor_init(struct html_armor_buffer *pb);
+const unsigned char *html_armor_buf(struct html_armor_buffer *pb,
+                                    const unsigned char *s);
+void html_armor_free(struct html_armor_buffer *pb);
+
 
 //unsigned char *html_armor_string_dupa(const unsigned char *str);
 #define html_armor_string_dupa(s) ({ unsigned char *_dupa_tmp_s = (s); size_t _dupa_tmp_len = strlen(_dupa_tmp_s), _dupa_tmp_len_2 = html_armored_memlen(_dupa_tmp_s, _dupa_tmp_len); unsigned char *_dupa_tmp_str = (unsigned char*) alloca(_dupa_tmp_len_2 + 1); html_armor_text(_dupa_tmp_s, _dupa_tmp_len, _dupa_tmp_str); _dupa_tmp_str; }) 

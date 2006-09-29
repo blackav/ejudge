@@ -45,6 +45,7 @@
 
 #define BITS_PER_LONG (8*sizeof(unsigned long)) 
 #define BUTTON(a) new_serve_submit_button(bb, sizeof(bb), 0, a, 0)
+#define ARMOR(s)  html_armor_buf(&ab, s)
 
 static void
 parse_error_func(void *data, unsigned char const *format, ...)
@@ -95,7 +96,7 @@ new_serve_write_priv_all_runs(FILE *f,
   unsigned char stat_select_name[32];
   unsigned char bb[1024];
   unsigned char endrow[256];
-  unsigned char *s;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   const serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
@@ -552,9 +553,8 @@ new_serve_write_priv_all_runs(FILE *f,
         if (prob->disable_testing > 0 && prob->enable_compilation <= 0)
           continue;
       }
-      s = html_armor_string_dup(prob->long_name);
-      fprintf(f, "<option value=\"%d\">%s - %s\n", i, prob->short_name, s);
-      xfree(s); s = 0;
+      fprintf(f, "<option value=\"%d\">%s - %s\n", i, prob->short_name,
+              ARMOR(prob->long_name));
     }
     fprintf(f, "</select>%s\n", BUTTON(NEW_SRV_ACTION_REJUDGE_PROBLEM));
     fprintf(f, "</form>\n");
@@ -572,41 +572,6 @@ new_serve_write_priv_all_runs(FILE *f,
   }
 
   /*
-  fprintf(f, "<hr><h2>%s</h2>\n", _("Send a submission"));
-  html_start_form(f, 2, self_url, hidden_vars);
-  fprintf(f, "<table>\n");
-  fprintf(f, "<tr><td>%s:</td><td>", _("Problem"));
-  fprintf(f, "<select name=\"problem\"><option value=\"\">\n");
-  for (i = 1; i <= state->max_prob; i++) {
-    if (!state->probs[i]) continue;
-    if (state->probs[i]->variant_num > 0) {
-      for (j = 1; j <= state->probs[i]->variant_num; j++) {
-        fprintf(f, "<option value=\"%d,%d\">%s-%d - %s\n",
-                i, j, state->probs[i]->short_name, j, state->probs[i]->long_name);
-      }
-    } else {
-      fprintf(f, "<option value=\"%d\">%s - %s\n",
-              i, state->probs[i]->short_name, state->probs[i]->long_name);
-    }
-  }
-  fprintf(f, "</select>\n");
-  fprintf(f, "</td></tr>\n");
-  fprintf(f, "<tr><td>%s:</td><td>", _("Language"));
-  fprintf(f, "<select name=\"language\"><option value=\"\">\n");
-  for (i = 1; i <= state->max_lang; i++) {
-    if (!state->langs[i]) continue;
-    fprintf(f, "<option value=\"%d\">%s - %s\n",
-            i, state->langs[i]->short_name, state->langs[i]->long_name);
-  }
-  fprintf(f, "</select>\n");
-  fprintf(f, "</td></tr>\n");
-  fprintf(f, "<tr><td>%s:</td>"
-          "<td><input type=\"file\" name=\"file\"></td></tr>\n"
-          "<tr><td>%s</td>"
-          "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>",
-          _("File"), _("Send!"), ACTION_SUBMIT_RUN, _("Send!"));
-  fprintf(f, "</table></form>\n");
-
   fprintf(f, "<table><tr><td>");
   fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), sid, self_url,
                                  extra_args, "action=%d",
@@ -616,17 +581,8 @@ new_serve_write_priv_all_runs(FILE *f,
   print_nav_buttons(state, f, 0, sid, self_url, hidden_vars, extra_args,
                     0, 0, 0, 0, 0, 0, 0);
   */
+  html_armor_free(&ab);
 }
-
-/*
-int
-new_serve_write_priv_all_runs(FILE *f,
-                              struct http_request_info *phr,
-                              const struct contest_desc *cnts,
-                              struct contest_extra *extra,
-                              int first_run, int last_run,
-                              unsigned char const *filter_expr)
-*/
 
 void
 new_serve_write_all_clars(FILE *f,
@@ -836,7 +792,6 @@ new_serve_write_priv_source(const serve_state_t state,
                             struct contest_extra *extra,
                             int run_id)
 {
-  unsigned char *s;
   int i;
   path_t src_path;
   struct run_entry info;
@@ -858,6 +813,7 @@ new_serve_write_priv_source(const serve_state_t state,
   const struct section_language_data *lang = 0;
   const unsigned char *ss;
   const struct section_global_data *global = state->global;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if (run_id < 0 || run_id >= run_get_total(state->runlog_state)) {
     fprintf(log_f, _("Invalid run_id."));
@@ -982,10 +938,10 @@ new_serve_write_priv_source(const serve_state_t state,
   }
 
   // user name
-  s = html_armor_string_dup(teamdb_get_name(state->teamdb_state, info.user_id));
   fprintf(f, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
-          _("User name"), s, nbsp);
-  xfree(s); s = 0;
+          _("User name"),
+          ARMOR(teamdb_get_name(state->teamdb_state, info.user_id)),
+          nbsp);
 
   // problem
   if (prob) {
@@ -1011,10 +967,9 @@ new_serve_write_priv_source(const serve_state_t state,
       if (!state->probs[i]) continue;
       ss = "";
       if (i == info.prob_id) ss = " selected=\"yes\"";
-      s = html_armor_string_dup(state->probs[i]->long_name);
       fprintf(f, "<option value=\"%d\"%s>%s - %s\n",
-              i, ss, state->probs[i]->short_name, s);
-      xfree(s);
+              i, ss, state->probs[i]->short_name,
+              ARMOR(state->probs[i]->long_name));
     }
     fprintf(f, "</select></td><td>%s</td></tr></form>\n",
             BUTTON(NEW_SRV_ACTION_CHANGE_RUN_PROB_ID));
@@ -1083,10 +1038,9 @@ new_serve_write_priv_source(const serve_state_t state,
       if (!state->langs[i]) continue;
       ss = "";
       if (i == info.lang_id) ss = " selected=\"yes\"";
-      s = html_armor_string_dup(state->langs[i]->long_name);
       fprintf(f, "<option value=\"%d\"%s>%s - %s</option>\n",
-              i, ss, state->langs[i]->short_name, s);
-      xfree(s);
+              i, ss, state->langs[i]->short_name,
+              ARMOR(state->langs[i]->long_name));
     }
     fprintf(f, "</select></td><td>%s</td></tr></form>\n",
             BUTTON(NEW_SRV_ACTION_CHANGE_RUN_VARIANT));
@@ -1408,6 +1362,7 @@ new_serve_write_priv_source(const serve_state_t state,
                       _("View team report"));
     */
   }
+  html_armor_free(&ab);
 }
 
 void
