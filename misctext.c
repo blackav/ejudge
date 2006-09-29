@@ -441,6 +441,36 @@ unparse_sha1(const void *shabuf)
   return buf;
 }
 
+void
+html_armor_init(struct html_armor_buffer *pb)
+{
+  if (!pb) return;
+  memset(pb, 0, sizeof(*pb));
+}
+
+const unsigned char *
+html_armor_buf(struct html_armor_buffer *pb, const unsigned char *s)
+{
+  size_t newsz = 0;
+
+  if (!html_armor_needed(s, &newsz)) return s;
+  if (newsz >= pb->size) {
+    xfree(pb->buf);
+    pb->buf = (unsigned char*) xmalloc(newsz + 1);
+    pb->size = newsz;
+  }
+  html_armor_string(s, pb->buf);
+  return pb->buf;
+}
+
+void
+html_armor_free(struct html_armor_buffer *pb)
+{
+  if (!pb) return;
+  xfree(pb->buf);
+  memset(pb, 0, sizeof(*pb));
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

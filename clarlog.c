@@ -428,6 +428,7 @@ clar_add_record_new(clarlog_state_t state,
                     int            flags,
                     int            j_from,
                     int            hide_flag,
+                    int            locale_id,
                     const unsigned char *subj)
 {
   int i;
@@ -455,6 +456,7 @@ clar_add_record_new(clarlog_state_t state,
   pc->hide_flag = hide_flag;
   pc->a.ip = ip;
   pc->ssl_flag = ssl_flag;
+  pc->locale_id = locale_id;
 
   if (!subj) subj = "";
   subj_len = strlen(subj);

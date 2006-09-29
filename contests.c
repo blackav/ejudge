@@ -857,6 +857,86 @@ parse_one_contest_xml(char const *path, int number, int no_subst_flag)
   return 0;
 }
 
+static void
+contests_merge(struct contest_desc *pold, struct contest_desc *pnew)
+{
+  struct xml_tree *p, *q;
+  int i;
+  unsigned char **p_str_old, **p_str_new;
+  struct contest_access **p_acc_old, **p_acc_new;
+  unsigned char *p_b_old, *p_b_new;
+
+  // unlink and free all the old root node childs
+  for (p = pold->b.first_down; p; ) {
+    q = p->right;
+    xml_unlink_node(p);
+    xml_tree_free(p, &contests_parse_spec);
+  }
+  node_free(&pold->b);
+
+  // copy offsetted fields
+  for (i = 0; i < CONTEST_LAST_TAG; i++) {
+    if (contest_final_offsets[i]) {
+      p_str_old = XPDEREF(unsigned char *, pold, contest_final_offsets[i]);
+      p_str_new = XPDEREF(unsigned char *, pnew, contest_final_offsets[i]);
+      xfree(*p_str_old);
+      *p_str_old = *p_str_new;
+      *p_str_new = 0;
+    } else if (contest_access_offsets[i]) {
+      p_acc_old = XPDEREF(struct contest_access*, pold, 
+                          contest_access_offsets[i]);
+      p_acc_new = XPDEREF(struct contest_access*, pold, 
+                          contest_access_offsets[i]);
+      p = &(*p_acc_new)->b;
+      if (p) {
+        xml_unlink_node(p);
+        xml_link_node_last(&pold->b, p);
+      }
+      *p_acc_old = (struct contest_access*) p;
+      *p_acc_new = 0;
+    } else if (contest_bool_attr_offsets[i]) {
+      p_b_old = XPDEREF(unsigned char, pold, contest_bool_attr_offsets[i]);
+      p_b_new = XPDEREF(unsigned char, pnew, contest_bool_attr_offsets[i]);
+      *p_b_old = *p_b_new;
+    }
+  }
+
+  for (i = CONTEST_FIRST_FIELD; i < CONTEST_LAST_FIELD; i++) {
+    p = (struct xml_tree*) pnew->fields[i];
+    if (p) {
+      xml_unlink_node(p);
+      xml_link_node_last(&pold->b, p);
+    }
+    pold->fields[i] = (struct contest_field*) p;
+    pnew->fields[i] = 0;
+  }
+  for (i = 0; i < CONTEST_LAST_MEMBER; i++) {
+    p = (struct xml_tree*) pnew->members[i];
+    if (p) {
+      xml_unlink_node(p);
+      xml_link_node_last(&pold->b, p);
+    }
+    pold->members[i] = (struct contest_member*) p;
+    pnew->members[i] = 0;
+  }
+  p = pnew->caps_node;
+  if (p) {
+    xml_unlink_node(p);
+    xml_link_node_last(&pold->b, p);
+  }
+  pold->caps_node = p;
+  pnew->caps_node = 0;
+  pold->capabilities.first = pnew->capabilities.first;
+  pnew->capabilities.first = 0;
+
+  pold->reg_deadline = pnew->reg_deadline;
+  pold->client_ignore_time_skew = pnew->client_ignore_time_skew;
+  pold->client_disable_team = pnew->client_disable_team;
+  pold->disable_member_delete = pnew->disable_member_delete;
+  pold->last_check_time = pnew->last_check_time;
+  pold->last_file_time = pnew->last_file_time;
+}
+
 int
 contests_load(int number, struct contest_desc **p_cnts)
 {
@@ -1176,7 +1256,6 @@ contests_get(int number, const struct contest_desc **p_desc)
   }
 
   // load the info and adjust time marks
-  // FIXME: try to merge data?
   cnts = parse_one_contest_xml(c_path, number, 0);
   if (!cnts) return -CONTEST_ERR_BAD_XML;
   if (cnts->id != number) {
@@ -1185,8 +1264,13 @@ contests_get(int number, const struct contest_desc **p_desc)
   }
   cnts->last_check_time = time(0);
   cnts->last_file_time = sb.st_mtime;
-  contests_desc[number] = cnts;
-  *p_desc = cnts;
+  /* FIXME: there may be pointers to the current cnts structure
+   * outta there, so we should not just free the old contest
+   * description
+   */
+  contests_merge(contests_desc[number], cnts);
+  contests_free(cnts);
+  *p_desc = contests_desc[number];
   return 0;
 }
 

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-29 09:06+0400\n"
-"PO-Revision-Date: 2006-09-29 09:07+0400\n"
+"POT-Creation-Date: 2006-09-29 12:25+0400\n"
+"PO-Revision-Date: 2006-09-29 18:10+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -454,12 +454,12 @@ msgid "Cannot remove team member"
 msgstr "Невозможно удалить участника"
 
 #, c-format
-msgid "Cannot update the clarification database."
-msgstr "Ошибка обновления базы сообщений."
+msgid "Cannot update the clarification database.\n"
+msgstr "Ошибка обновления базы сообщений.\n"
 
 #, c-format
-msgid "Cannot write the message to the disk."
-msgstr "Ошибка записи сообщения на диск."
+msgid "Cannot write the message to the disk.\n"
+msgstr "Ошибка записи сообщения на диск.\n"
 
 #, c-format
 msgid "Cannot write to the disk."
@@ -599,6 +599,10 @@ msgstr "Ошибка конфигурации"
 
 msgid "Confirm printing run"
 msgstr "Подтвердить распечатывание"
+
+#, c-format
+msgid "Conflicting user_id (%d) and user_login (%s).\n"
+msgstr "Конфликтуют user_id (%d) и user_login (%s).\n"
 
 msgid "Connection to the server is broken."
 msgstr "Нет связи с сервером."
@@ -1331,12 +1335,12 @@ msgid "Message"
 msgstr "Сообщение"
 
 #, c-format
-msgid "Message is empty"
-msgstr "Сообщение пусто"
+msgid "Message is empty.\n"
+msgstr "Сообщение пусто.\n"
 
 #, c-format
-msgid "Message length is too large"
-msgstr "Длина сообщения слишком велика"
+msgid "Message length is too big (%zu).\n"
+msgstr "Текст сообщения имеет слишком большую длину (%zu).\n"
 
 msgid "Message view"
 msgstr "Список сообщений"
@@ -2072,8 +2076,12 @@ msgid "Subject"
 msgstr "Тема"
 
 #, c-format
-msgid "Subject length is too large"
-msgstr "Поле \"Тема\" имеет слишком большую длину"
+msgid "Subject is empty.\n"
+msgstr "Тема сообщения не задана.\n"
+
+#, c-format
+msgid "Subject length is too big (%zu).\n"
+msgstr "Поле \"Тема\" имеет слишком большую длину (%zu).\n"
 
 msgid "Submission data is empty"
 msgstr "Посылка пуста"
@@ -2406,6 +2414,14 @@ msgstr "Регистрация пользователя завершена"
 
 msgid "User's report"
 msgstr "Пользовательский протокол"
+
+#, c-format
+msgid "User_id %d does not exist.\n"
+msgstr "Пользователь с номером %d не существует.\n"
+
+#, c-format
+msgid "User_login %s does not exist.\n"
+msgstr "Пользователь с регистрационным именем %s не существует.\n"
 
 msgid "Users page"
 msgstr "Список участников"
@@ -2903,4 +2919,3 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
-
