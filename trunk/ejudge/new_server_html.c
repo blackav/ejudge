@@ -178,9 +178,7 @@ static const unsigned char * const user_section_names[] =
   [USER_SECTION_SETTINGS] = __("Settings"),
 };
 
-static void unprivileged_page_login(struct server_framework_state *state,
-                                    struct client_state *p,
-                                    FILE *fout,
+static void unprivileged_page_login(FILE *fout,
                                     struct http_request_info *phr);
 
 static struct contest_extra *
@@ -809,10 +807,7 @@ new_serve_submit_button(unsigned char *buf, size_t size,
 }
 
 static void
-html_refresh_page(struct server_framework_state *state,
-                  FILE *fout,
-                  struct http_request_info *phr,
-                  int new_action)
+html_refresh_page(FILE *fout, struct http_request_info *phr, int new_action)
 {
   unsigned char url[1024];
 
@@ -822,9 +817,7 @@ html_refresh_page(struct server_framework_state *state,
 }
 
 static void
-html_refresh_page_2(struct server_framework_state *state,
-                    FILE *fout,
-                    const unsigned char *url)
+html_refresh_page_2(FILE *fout, const unsigned char *url)
 {
   fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>%s</title></head><body><h1>%s</h1><p>If autorefresh does not work, follow <a href=\"%s\">this</a> link.</p></body></html>\n", EJUDGE_CHARSET, EJUDGE_CHARSET, 1, url, "Operation successful", "Operation successful", url);
 }
@@ -860,10 +853,7 @@ check_contest_events(serve_state_t cs)
 }
 
 static void
-privileged_page_login_page(struct server_framework_state *state,
-                           struct client_state *p,
-                           FILE *fout,
-                           struct http_request_info *phr)
+privileged_page_login_page(FILE *fout, struct http_request_info *phr)
 {
   const unsigned char *s;
   unsigned char *as;
@@ -893,11 +883,13 @@ privileged_page_login_page(struct server_framework_state *state,
     fprintf(fout, " value=\"%d\"", phr->contest_id);
   }
   fprintf(fout, "></td></tr>\n");
-  phr->role = USER_ROLE_OBSERVER;
-  if (ns_cgi_param(phr, "role", &s) > 0) {
-    if (sscanf(s, "%d%n", &r, &n) == 1 && !s[n]
-        && r >= USER_ROLE_CONTESTANT && r < USER_ROLE_LAST)
-      phr->role = r;
+  if (!phr->role) {
+    phr->role = USER_ROLE_OBSERVER;
+    if (ns_cgi_param(phr, "role", &s) > 0) {
+      if (sscanf(s, "%d%n", &r, &n) == 1 && !s[n]
+          && r >= USER_ROLE_CONTESTANT && r < USER_ROLE_LAST)
+        phr->role = r;
+    }
   }
   fprintf(fout, "<tr><td>%s:</td><td>", _("Role"));
   html_role_select(fout, phr->role, 1, 0);
@@ -914,9 +906,13 @@ privileged_page_login_page(struct server_framework_state *state,
 }
 
 static void
-html_err_permission_denied(struct server_framework_state *state,
-                           struct client_state *p,
-                           FILE *fout,
+html_err_permission_denied(FILE *fout,
+                           struct http_request_info *phr,
+                           int priv_mode,
+                           const char *format, ...)
+  __attribute__((format(printf, 4, 5)));
+static void
+html_err_permission_denied(FILE *fout,
                            struct http_request_info *phr,
                            int priv_mode,
                            const char *format, ...)
@@ -932,7 +928,7 @@ html_err_permission_denied(struct server_framework_state *state,
   va_start(args, format);
   vsnprintf(buf, sizeof(buf), format, args);
   va_end(args);
-  err("%d: permission denied: %s", p->id, buf);
+  err("%d: permission denied: %s", phr->id, buf);
 
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = get_contest_extra(phr->contest_id);
@@ -986,9 +982,13 @@ html_err_permission_denied(struct server_framework_state *state,
 }
 
 static void
-html_err_invalid_param(struct server_framework_state *state,
-                       struct client_state *p,
-                       FILE *fout,
+html_err_invalid_param(FILE *fout,
+                       struct http_request_info *phr,
+                       int priv_mode,
+                       const char *format, ...)
+  __attribute__((format(printf, 4, 5)));
+static void
+html_err_invalid_param(FILE *fout,
                        struct http_request_info *phr,
                        int priv_mode,
                        const char *format, ...)
@@ -1003,7 +1003,7 @@ html_err_invalid_param(struct server_framework_state *state,
   va_start(args, format);
   vsnprintf(buf, sizeof(buf), format, args);
   va_end(args);
-  err("%d: invalid parameter: %s", p->id, buf);
+  err("%d: invalid parameter: %s", phr->id, buf);
 
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = get_contest_extra(phr->contest_id);
@@ -1031,9 +1031,12 @@ html_err_invalid_param(struct server_framework_state *state,
 }
 
 static void
-html_err_service_not_available(struct server_framework_state *state,
-                               struct client_state *p,
-                               FILE *fout,
+html_err_service_not_available(FILE *fout,
+                               struct http_request_info *phr,
+                               const char *format, ...)
+  __attribute__((format(printf, 3, 4)));
+static void
+html_err_service_not_available(FILE *fout,
                                struct http_request_info *phr,
                                const char *format, ...)
 {
@@ -1047,7 +1050,7 @@ html_err_service_not_available(struct server_framework_state *state,
   va_start(args, format);
   vsnprintf(buf, sizeof(buf), format, args);
   va_end(args);
-  err("%d: service not available: %s", p->id, buf);
+  err("%d: service not available: %s", phr->id, buf);
 
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = get_contest_extra(phr->contest_id);
@@ -1072,9 +1075,12 @@ html_err_service_not_available(struct server_framework_state *state,
 }
 
 static void
-html_err_contest_not_available(struct server_framework_state *state,
-                               struct client_state *p,
-                               FILE *fout,
+html_err_contest_not_available(FILE *fout,
+                               struct http_request_info *phr,
+                               const char *format, ...)
+  __attribute__((format(printf, 3, 4)));
+static void
+html_err_contest_not_available(FILE *fout,
                                struct http_request_info *phr,
                                const char *format, ...)
 {
@@ -1088,7 +1094,7 @@ html_err_contest_not_available(struct server_framework_state *state,
   va_start(args, format);
   vsnprintf(buf, sizeof(buf), format, args);
   va_end(args);
-  err("%d: contest not available: %s", p->id, buf);
+  err("%d: contest not available: %s", phr->id, buf);
 
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = get_contest_extra(phr->contest_id);
@@ -1113,9 +1119,7 @@ html_err_contest_not_available(struct server_framework_state *state,
 }
 
 static void
-html_err_userlist_server_down(struct server_framework_state *state,
-                              struct client_state *p,
-                              FILE *fout,
+html_err_userlist_server_down(FILE *fout,
                               struct http_request_info *phr,
                               int priv_mode)
 {
@@ -1124,7 +1128,7 @@ html_err_userlist_server_down(struct server_framework_state *state,
   const unsigned char *header = 0, *footer = 0;
   time_t cur_time = time(0);
 
-  err("%d: userlist server is down", p->id);
+  err("%d: userlist server is down", phr->id);
 
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = get_contest_extra(phr->contest_id);
@@ -1153,9 +1157,7 @@ html_err_userlist_server_down(struct server_framework_state *state,
 }
 
 void
-new_server_html_err_internal_error(struct server_framework_state *state,
-                                   struct client_state *p,
-                                   FILE *fout,
+new_server_html_err_internal_error(FILE *fout,
                                    struct http_request_info *phr,
                                    int priv_mode,
                                    const char *format, ...)
@@ -1170,7 +1172,7 @@ new_server_html_err_internal_error(struct server_framework_state *state,
   va_start(args, format);
   vsnprintf(buf, sizeof(buf), format, args);
   va_end(args);
-  err("%d: internal error: %s", p->id, buf);
+  err("%d: internal error: %s", phr->id, buf);
 
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = get_contest_extra(phr->contest_id);
@@ -1198,9 +1200,13 @@ new_server_html_err_internal_error(struct server_framework_state *state,
 }
 
 static void
-html_err_invalid_session(struct server_framework_state *state,
-                         struct client_state *p,
-                         FILE *fout,
+html_err_invalid_session(FILE *fout,
+                         struct http_request_info *phr,
+                         int priv_mode,
+                         const char *format, ...)
+  __attribute__((format(printf, 4, 5)));
+static void
+html_err_invalid_session(FILE *fout,
                          struct http_request_info *phr,
                          int priv_mode,
                          const char *format, ...)
@@ -1215,7 +1221,7 @@ html_err_invalid_session(struct server_framework_state *state,
   va_start(args, format);
   vsnprintf(buf, sizeof(buf), format, args);
   va_end(args);
-  err("%d: invalid session: %s", p->id, buf);
+  err("%d: invalid session: %s", phr->id, buf);
 
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = get_contest_extra(phr->contest_id);
@@ -1250,9 +1256,7 @@ html_err_invalid_session(struct server_framework_state *state,
 }
 
 static void
-html_error_status_page(struct server_framework_state *state,
-                       struct client_state *p,
-                       FILE *fout,
+html_error_status_page(FILE *fout,
                        struct http_request_info *phr,
                        const struct contest_desc *cnts,
                        struct contest_extra *extra,
@@ -1277,9 +1281,7 @@ html_error_status_page(struct server_framework_state *state,
 }
                        
 static void
-privileged_page_login(struct server_framework_state *state,
-                      struct client_state *p,
-                      FILE *fout,
+privileged_page_login(FILE *fout,
                       struct http_request_info *phr)
 {
   const unsigned char *login, *password, *s;
@@ -1288,45 +1290,42 @@ privileged_page_login(struct server_framework_state *state,
   opcap_t caps;
 
   if ((r = ns_cgi_param(phr, "login", &login)) < 0)
-    return html_err_invalid_param(state, p, fout, phr, 1, "cannot parse login");
+    return html_err_invalid_param(fout, phr, 1, "cannot parse login");
   if (!r || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
-    return privileged_page_login_page(state, p, fout, phr);
+    return privileged_page_login_page(fout, phr);
 
   phr->login = xstrdup(login);
   if ((r = ns_cgi_param(phr, "password", &password)) <= 0)
-    return html_err_invalid_param(state, p, fout, phr, 1,
-                                  "cannot parse password");
+    return html_err_invalid_param(fout, phr, 1, "cannot parse password");
   if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts)
-    return html_err_invalid_param(state, p, fout, phr, 1,
-                                  "invalid contest_id");
+    return html_err_invalid_param(fout, phr, 1, "invalid contest_id");
   if (!cnts->new_managed)
-    return html_err_invalid_param(state, p, fout, phr, 1,
-                                  "contest is not managed");
+    return html_err_invalid_param(fout, phr, 1, "contest is not managed");
 
-  phr->role = USER_ROLE_OBSERVER;
-  if (ns_cgi_param(phr, "role", &s) > 0) {
-    if (sscanf(s, "%d%n", &r, &n) == 1 && !s[n]
-        && r >= USER_ROLE_CONTESTANT && r < USER_ROLE_LAST)
-      phr->role = r;
+  if (!phr->role) {
+    phr->role = USER_ROLE_OBSERVER;
+    if (ns_cgi_param(phr, "role", &s) > 0) {
+      if (sscanf(s, "%d%n", &r, &n) == 1 && !s[n]
+          && r >= USER_ROLE_CONTESTANT && r < USER_ROLE_LAST)
+        phr->role = r;
+    }
   }
   if (phr->role == USER_ROLE_CONTESTANT)
-    return unprivileged_page_login(state, p, fout, phr);
+    return unprivileged_page_login(fout, phr);
 
   // analyze IP limitations
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
     if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag))
-      return html_err_permission_denied(state, p, fout, phr, 1,
-                                        "%s://%s is not allowed for MASTER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+      return html_err_permission_denied(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   } else {
     // as for judge program
     if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag))
-      return html_err_permission_denied(state, p, fout, phr, 1,
-                                        "%s://%s is not allowed for MASTER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+      return html_err_permission_denied(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   }
 
-  if (open_ul_connection(state) < 0)
-    return html_err_userlist_server_down(state, p, fout, phr, 1);
+  if (open_ul_connection(phr->fw_state) < 0)
+    return html_err_userlist_server_down(fout, phr, 1);
   if ((r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
                                     phr->ip, phr->ssl_flag, phr->contest_id,
                                     phr->locale_id, 0, phr->role, login,
@@ -1340,13 +1339,12 @@ privileged_page_login(struct server_framework_state *state,
     case ULS_ERR_NO_PERMS:
     case ULS_ERR_NOT_REGISTERED:
     case ULS_ERR_CANNOT_PARTICIPATE:
-      return html_err_permission_denied(state, p, fout, phr, 1,
-                                        "priv_login failed: %s",
+      return html_err_permission_denied(fout, phr, 1, "priv_login failed: %s",
                                         userlist_strerror(-r));
     case ULS_ERR_DISCONNECT:
-      return html_err_userlist_server_down(state, p, fout, phr, 1);
+      return html_err_userlist_server_down(fout, phr, 1);
     default:
-      return new_server_html_err_internal_error(state, p, fout, phr, 1,
+      return new_server_html_err_internal_error(fout, phr, 1,
                                                 "priv_login failed: %s",
                                                 userlist_strerror(-r));
     }
@@ -1357,29 +1355,24 @@ privileged_page_login(struct server_framework_state *state,
     // as for the master program
     if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
         || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0)
-      return html_err_permission_denied(state, p, fout, phr, 1,
-                                        "user %s does not have MASTER_LOGIN bit for contest %d", phr->login, phr->contest_id);
+      return html_err_permission_denied(fout, phr, 1, "user %s does not have MASTER_LOGIN bit for contest %d", phr->login, phr->contest_id);
   } else if (phr->role == USER_ROLE_JUDGE) {
     // as for the judge program
     if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
         || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0)
-      return html_err_permission_denied(state, p, fout, phr, 1,
-                                        "user %s does not have JUDGE_LOGIN bit for contest %d", phr->login, phr->contest_id);
+      return html_err_permission_denied(fout, phr, 1, "user %s does not have JUDGE_LOGIN bit for contest %d", phr->login, phr->contest_id);
   } else {
     // user privileges checked locally
     if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0)
-      return html_err_permission_denied(state, p, fout, phr, 1,
-                                        "user %s has no permission to login as role %d for contest %d", phr->login, phr->role, phr->contest_id);
+      return html_err_permission_denied(fout, phr, 1, "user %s has no permission to login as role %d for contest %d", phr->login, phr->role, phr->contest_id);
   }
 
   new_server_get_session(phr->session_id, 0);
-  html_refresh_page(state, fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
+  html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
 }
 
 static void
-priv_registration_operation(struct server_framework_state *state,
-                            struct client_state *p,
-                            FILE *fout,
+priv_registration_operation(FILE *fout,
                             struct http_request_info *phr,
                             const struct contest_desc *cnts,
                             struct contest_extra *extra)
@@ -1397,8 +1390,8 @@ priv_registration_operation(struct server_framework_state *state,
     if (strncmp(phr->param_names[i], "user_", 5) != 0) continue;
     if (sscanf((s = phr->param_names[i] + 5), "%d%n", &x, &n) != 1
         || s[n] || x <= 0) {
-      html_err_invalid_param(state, p, fout, phr, 1,
-                             "invalid parameter name %s", phr->param_names[i]);
+      html_err_invalid_param(fout, phr, 1, "invalid parameter name %s",
+                             phr->param_names[i]);
       goto cleanup;
     }
     XEXPAND2(uset);
@@ -1407,8 +1400,8 @@ priv_registration_operation(struct server_framework_state *state,
 
   // FIXME: probably we need to sort user_ids and remove duplicates
 
-  if (open_ul_connection(state) < 0) {
-    html_err_userlist_server_down(state, p, fout, phr, 1);
+  if (open_ul_connection(phr->fw_state) < 0) {
+    html_err_userlist_server_down(fout, phr, 1);
     goto cleanup;
   }
 
@@ -1492,8 +1485,7 @@ priv_registration_operation(struct server_framework_state *state,
       break;
 
     default:
-      html_err_invalid_param(state, p, fout, phr, 1,
-                             "invalid action %d", phr->action);
+      html_err_invalid_param(fout, phr, 1, "invalid action %d", phr->action);
       goto cleanup;
     }
   }
@@ -1501,9 +1493,9 @@ priv_registration_operation(struct server_framework_state *state,
   fclose(log_f); log_f = 0;
 
   if (!log_txt || !*log_txt) {
-    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_VIEW_USERS);
+    html_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_USERS);
   } else {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_VIEW_USERS);
   }
 
@@ -1514,9 +1506,7 @@ priv_registration_operation(struct server_framework_state *state,
 }
 
 static void
-priv_add_user_by_user_id(struct server_framework_state *state,
-                         struct client_state *p,
-                         FILE *fout,
+priv_add_user_by_user_id(FILE *fout,
                          struct http_request_info *phr,
                          const struct contest_desc *cnts,
                          struct contest_extra *extra)
@@ -1535,8 +1525,8 @@ priv_add_user_by_user_id(struct server_framework_state *state,
     goto done;
   }
 
-  if (open_ul_connection(state) < 0) {
-    html_err_userlist_server_down(state, p, fout, phr, 1);
+  if (open_ul_connection(phr->fw_state) < 0) {
+    html_err_userlist_server_down(fout, phr, 1);
     goto cleanup;
   }
   
@@ -1550,9 +1540,9 @@ priv_add_user_by_user_id(struct server_framework_state *state,
  done:
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
-    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_VIEW_USERS);
+    html_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_USERS);
   } else {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_VIEW_USERS);
   }
 
@@ -1562,9 +1552,7 @@ priv_add_user_by_user_id(struct server_framework_state *state,
 }
 
 static void
-priv_add_user_by_login(struct server_framework_state *state,
-                       struct client_state *p,
-                       FILE *fout,
+priv_add_user_by_login(FILE *fout,
                        struct http_request_info *phr,
                        const struct contest_desc *cnts,
                        struct contest_extra *extra)
@@ -1582,8 +1570,8 @@ priv_add_user_by_login(struct server_framework_state *state,
     fprintf(log_f, "Invalid User Login");
     goto done;
   }
-  if (open_ul_connection(state) < 0) {
-    html_err_userlist_server_down(state, p, fout, phr, 1);
+  if (open_ul_connection(phr->fw_state) < 0) {
+    html_err_userlist_server_down(fout, phr, 1);
     goto cleanup;
   }
   if ((r = userlist_clnt_lookup_user(ul_conn, s, &user_id, 0)) < 0) {
@@ -1601,9 +1589,9 @@ priv_add_user_by_login(struct server_framework_state *state,
  done:
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
-    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_VIEW_USERS);
+    html_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_USERS);
   } else {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_VIEW_USERS);
   }
 
@@ -1613,9 +1601,7 @@ priv_add_user_by_login(struct server_framework_state *state,
 }
 
 static void
-priv_priv_user_operation(struct server_framework_state *state,
-                         struct client_state *p,
-                         FILE *fout,
+priv_priv_user_operation(FILE *fout,
                          struct http_request_info *phr,
                          const struct contest_desc *cnts,
                          struct contest_extra *extra)
@@ -1633,8 +1619,8 @@ priv_priv_user_operation(struct server_framework_state *state,
     if (strncmp(phr->param_names[i], "user_", 5) != 0) continue;
     if (sscanf((s = phr->param_names[i] + 5), "%d%n", &x, &n) != 1
         || s[n] || x <= 0) {
-      html_err_invalid_param(state, p, fout, phr, 1,
-                             "invalid parameter name %s", phr->param_names[i]);
+      html_err_invalid_param(fout, phr, 1, "invalid parameter name %s",
+                             phr->param_names[i]);
       goto cleanup;
     }
     XEXPAND2(uset);
@@ -1693,8 +1679,7 @@ priv_priv_user_operation(struct server_framework_state *state,
       break;
 
     default:
-      html_err_invalid_param(state, p, fout, phr, 1,
-                             "invalid action %d", phr->action);
+      html_err_invalid_param(fout, phr, 1, "invalid action %d", phr->action);
       goto cleanup;
     }
   }
@@ -1702,9 +1687,9 @@ priv_priv_user_operation(struct server_framework_state *state,
   fclose(log_f); log_f = 0;
 
   if (!log_txt || !*log_txt) {
-    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_PRIV_USERS_VIEW);
+    html_refresh_page(fout, phr, NEW_SRV_ACTION_PRIV_USERS_VIEW);
   } else {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_PRIV_USERS_VIEW);
   }
 
@@ -1715,9 +1700,7 @@ priv_priv_user_operation(struct server_framework_state *state,
 }
 
 static void
-priv_add_priv_user_by_user_id(struct server_framework_state *state,
-                              struct client_state *p,
-                              FILE *fout,
+priv_add_priv_user_by_user_id(FILE *fout,
                               struct http_request_info *phr,
                               const struct contest_desc *cnts,
                               struct contest_extra *extra)
@@ -1751,9 +1734,9 @@ priv_add_priv_user_by_user_id(struct server_framework_state *state,
  done:
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
-    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_PRIV_USERS_VIEW);
+    html_refresh_page(fout, phr, NEW_SRV_ACTION_PRIV_USERS_VIEW);
   } else {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_PRIV_USERS_VIEW);
   }
 
@@ -1762,9 +1745,7 @@ priv_add_priv_user_by_user_id(struct server_framework_state *state,
 }
 
 static void
-priv_add_priv_user_by_login(struct server_framework_state *state,
-                            struct client_state *p,
-                            FILE *fout,
+priv_add_priv_user_by_login(FILE *fout,
                             struct http_request_info *phr,
                             const struct contest_desc *cnts,
                             struct contest_extra *extra)
@@ -1788,8 +1769,8 @@ priv_add_priv_user_by_login(struct server_framework_state *state,
     fprintf(log_f, "Invalid User Role");
     goto done;
   }
-  if (open_ul_connection(state) < 0) {
-    html_err_userlist_server_down(state, p, fout, phr, 1);
+  if (open_ul_connection(phr->fw_state) < 0) {
+    html_err_userlist_server_down(fout, phr, 1);
     goto cleanup;
   }
   if ((r = userlist_clnt_lookup_user(ul_conn, login, &user_id, 0)) < 0) {
@@ -1807,9 +1788,9 @@ priv_add_priv_user_by_login(struct server_framework_state *state,
  done:
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
-    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_PRIV_USERS_VIEW);
+    html_refresh_page(fout, phr, NEW_SRV_ACTION_PRIV_USERS_VIEW);
   } else {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_PRIV_USERS_VIEW);
   }
 
@@ -1926,9 +1907,7 @@ do_change_duration(FILE *log_f,
 }
 
 static void
-priv_contest_operation(struct server_framework_state *state,
-                       struct client_state *p,
-                       FILE *fout,
+priv_contest_operation(FILE *fout,
                        struct http_request_info *phr,
                        const struct contest_desc *cnts,
                        struct contest_extra *extra)
@@ -2056,66 +2035,47 @@ priv_contest_operation(struct server_framework_state *state,
  done:
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
-    html_refresh_page(state, fout, phr, 0);
+    html_refresh_page(fout, phr, 0);
   } else {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt, 0);
+    html_error_status_page(fout, phr, cnts, extra, log_txt, 0);
   }
 }
 
-static void
-priv_change_language(struct server_framework_state *state,
-                     struct client_state *p,
-                     FILE *fout,
+static int
+priv_change_language(FILE *fout,
+                     FILE *log_f,
                      struct http_request_info *phr,
                      const struct contest_desc *cnts,
                      struct contest_extra *extra)
 {
   const unsigned char *s;
   int r, n;
-  char *log_txt = 0;
-  size_t log_len = 0;
-  FILE *log_f = 0;
   int new_locale_id;
 
-  if ((r = ns_cgi_param(phr, "locale_id", &s)) < 0)
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "cannot parse locale_id");
+  if ((r = ns_cgi_param(phr, "locale_id", &s)) < 0) goto invalid_param;
   if (r > 0) {
     if (sscanf(s, "%d%n", &new_locale_id, &n) != 1 || s[n] || new_locale_id < 0)
-      return html_err_invalid_param(state, p, fout, phr, 0,
-                                    "cannot parse locale_id");
+      goto invalid_param;
   }
 
-  log_f = open_memstream(&log_txt, &log_len);
-
-  if (open_ul_connection(state) < 0) {
-    html_err_userlist_server_down(state, p, fout, phr, 0);
-    goto cleanup;
+  if (open_ul_connection(phr->fw_state) < 0) {
+    html_err_userlist_server_down(fout, phr, 0);
+    return -1;
   }
   if ((r = userlist_clnt_set_cookie(ul_conn, ULS_SET_COOKIE_LOCALE,
                                     phr->session_id,
                                     new_locale_id)) < 0) {
     fprintf(log_f, "set_cookie failed: %s", userlist_strerror(-r));
   }
+  return 0;
 
-  //done:
-  fclose(log_f); log_f = 0;
-  if (!log_txt || !*log_txt) {
-    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
-  } else {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_MAIN_PAGE);
-  }
-
- cleanup:
-  if (log_f) fclose(log_f);
-  xfree(log_txt);
+ invalid_param:
+  html_err_invalid_param(fout, phr, 0, "cannot parse locale_id");
+  return -1;
 }
 
 static void
-priv_reset_filter(struct server_framework_state *state,
-                  struct client_state *p,
-                  FILE *fout,
+priv_reset_filter(FILE *fout,
                   struct http_request_info *phr,
                   const struct contest_desc *cnts,
                   struct contest_extra *extra)
@@ -2139,11 +2099,332 @@ priv_reset_filter(struct server_framework_state *state,
 
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
-    html_refresh_page(state, fout, phr, 0);
+    html_refresh_page(fout, phr, 0);
   } else {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt, 0);
+    html_error_status_page(fout, phr, cnts, extra, log_txt, 0);
   }
   xfree(log_txt);
+}
+
+static int
+priv_submit_run(FILE *fout,
+                FILE *log_f,
+                struct http_request_info *phr,
+                const struct contest_desc *cnts,
+                struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob = 0;
+  const struct section_language_data *lang = 0;
+  const unsigned char *s;
+  int prob_id = 0, variant = 0, lang_id, n, max_ans, ans, i, mime_type = 0;
+  const unsigned char *errmsg = 0;
+  const unsigned char *run_text;
+  size_t run_size, ans_size;
+  unsigned char *ans_map = 0, *ans_buf = 0;
+  char **lang_list = 0;
+  const unsigned char *mime_type_str = 0;
+  int run_id, arch_flags;
+  ruint32_t shaval[5];
+  struct timeval precise_time;
+  path_t run_path;
+
+  if (ns_cgi_param(phr, "problem", &s) <= 0) {
+    errmsg = "problem is not set or binary";
+    goto invalid_param;
+  }
+  if (sscanf(s, "%d_%d%n", &prob_id, &variant, &n) == 2 && !s[n]) {
+    if (prob_id <= 0 || prob_id > cs->max_prob
+        || !(prob = cs->probs[prob_id])) {
+      errmsg = "invalid prob_id";
+      goto invalid_param;
+    }
+    if (prob->variant_num <= 0 || variant <= 0 || variant > prob->variant_num) {
+      errmsg = "invalid variant";
+      goto invalid_param;
+    }
+  } else if (sscanf(s, "%d%n", &prob_id, &n) == 1 && !s[n]) {
+    if (prob_id <= 0 || prob_id > cs->max_prob
+        || !(prob = cs->probs[prob_id])) {
+      errmsg = "invalid prob_id";
+      goto invalid_param;
+    }
+    if (prob->variant_num > 0) {
+      errmsg = "invalid variant";
+      goto invalid_param;
+    }
+  } else {
+    errmsg = "cannot parse problem";
+    goto invalid_param;
+  }
+
+  if (prob->type_val == PROB_TYPE_STANDARD) {
+    if (ns_cgi_param(phr, "lang_id", &s) <= 0) {
+      errmsg = "lang_id is not set or binary";
+      goto invalid_param;
+    }
+    if (sscanf(s, "%d%n", &lang_id, &n) != 1 || s[n]) {
+      errmsg = "cannot parse lang_id";
+      goto invalid_param;
+    }
+    if (lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id])){
+      errmsg = "lang_id is invalid";
+      goto invalid_param;
+    }
+  }
+
+  /* get the submission text */
+  switch (prob->type_val) {
+  case PROB_TYPE_STANDARD:      // "file"
+  case PROB_TYPE_OUTPUT_ONLY:
+  case PROB_TYPE_TEXT_ANSWER:
+  case PROB_TYPE_SHORT_ANSWER:
+  case PROB_TYPE_SELECT_ONE:
+    if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)) {
+      errmsg = "\"file\" parameter is not set";
+      goto invalid_param;
+    }
+    break;
+  case PROB_TYPE_SELECT_MANY:   // "ans_*"
+    for (i = 0, max_ans = -1, ans_size = 0; i < phr->param_num; i++)
+      if (!strncmp(phr->param_names[i], "ans_", 4)) {
+        if (sscanf(phr->param_names[i] + 4, "%d%n", &ans, &n) != 1
+            || phr->param_names[i][4 + n]) {
+          errmsg = "\"ans_*\" parameter is invalid";
+          goto invalid_param;
+        }
+        if (ans < 0 || ans > 65535) {
+          errmsg = "\"ans_*\" parameter is out of range";
+          goto invalid_param;
+        }
+        if (ans > max_ans) max_ans = ans;
+        ans_size += 7;
+      }
+    if (max_ans < 0) {
+      run_text = "";
+      run_size = 0;
+      break;
+    }
+    XALLOCAZ(ans_map, max_ans + 1);
+    for (i = 0; i < phr->param_num; i++)
+      if (!strncmp(phr->param_names[i], "ans_", 4)) {
+        sscanf(phr->param_names[i] + 4, "%d", &ans);
+        ans_map[ans] = 1;
+      }
+    XALLOCA(ans_buf, ans_size);
+    run_text = ans_buf;
+    for (i = 0, run_size = 0; i <= max_ans; i++)
+      if (ans_map[i]) {
+        if (run_size > 0) ans_buf[run_size++] = ' ';
+        run_size += sprintf(ans_buf + run_size, "%d", i);
+      }
+    ans_buf[run_size++] = '\n';
+    ans_buf[run_size] = 0;
+    break;
+  default:
+    abort();
+  }
+
+  switch (prob->type_val) {
+  case PROB_TYPE_STANDARD:
+    if (!lang->binary && strlen(run_text) != run_size) goto binary_submission;
+    break;
+
+  case PROB_TYPE_OUTPUT_ONLY:
+    if (!prob->binary_input && strlen(run_text) != run_size)
+      goto binary_submission;
+    break;
+
+  case PROB_TYPE_TEXT_ANSWER:
+  case PROB_TYPE_SHORT_ANSWER:
+  case PROB_TYPE_SELECT_ONE:
+  case PROB_TYPE_SELECT_MANY:
+    if (strlen(run_text) != run_size) goto binary_submission;
+    break;
+
+  binary_submission:
+    errmsg = "binary submission";
+    goto invalid_param;
+  }
+
+  /* check for disabled languages */
+  if (lang_id > 0) {
+    if (lang->disabled) {
+      fprintf(log_f, _("This language is disabled for use."));
+      goto done;
+    }
+
+    if (prob->enable_language) {
+      lang_list = prob->enable_language;
+      for (i = 0; lang_list[i]; i++)
+        if (!strcmp(lang_list[i], lang->short_name))
+          break;
+      if (!lang_list[i]) {
+        fprintf(log_f, _("The language %s is not available for this problem."),
+                lang->short_name);
+        goto done;
+      }
+    } else if (prob->disable_language) {
+      lang_list = prob->disable_language;
+      for (i = 0; lang_list[i]; i++)
+        if (!strcmp(lang_list[i], lang->short_name))
+          break;
+      if (lang_list[i]) {
+        fprintf(log_f, _("The language %s is disabled for this problem."),
+                lang->short_name);
+        goto done;
+      }
+    }
+  } else {
+    // guess the content-type and check it against the list
+    if ((mime_type = mime_type_guess(global->diff_work_dir,
+                                     run_text, run_size)) < 0) {
+      fprintf(log_f, _("Cannot guess the content type."));
+      goto done;
+    }
+    mime_type_str = mime_type_get_type(mime_type);
+    if (prob->enable_language) {
+      lang_list = prob->enable_language;
+      for (i = 0; lang_list[i]; i++)
+        if (!strcmp(lang_list[i], mime_type_str))
+          break;
+      if (!lang_list[i]) {
+        fprintf(log_f,
+                _("The content type %s is not available for this problem."),
+                mime_type_str);
+        goto done;
+      }
+    } else if (prob->disable_language) {
+      lang_list = prob->disable_language;
+      for (i = 0; lang_list[i]; i++)
+        if (!strcmp(lang_list[i], mime_type_str))
+          break;
+      if (lang_list[i]) {
+        fprintf(log_f, _("The content type %s is disabled for this problem."),
+                mime_type_str);
+        goto done;
+      }
+    }
+  }
+
+  // OK, so all checks are done, now we add this submit to the database
+  sha_buffer(run_text, run_size, shaval);
+  gettimeofday(&precise_time, 0);
+
+  run_id = run_add_record(cs->runlog_state, 
+                          precise_time.tv_sec, precise_time.tv_usec,
+                          run_size, shaval,
+                          phr->ip, phr->ssl_flag,
+                          phr->locale_id, phr->user_id,
+                          prob_id, lang_id, variant, 1, mime_type);
+  if (run_id < 0) {
+    fprintf(log_f, _("Cannot add the record to the database."));
+    goto done;
+  }
+  serve_move_files_to_insert_run(cs, run_id);
+                          
+  arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
+                                       global->run_archive_dir, run_id,
+                                       run_size, 0);
+  if (arch_flags < 0) {
+    run_undo_add_record(cs->runlog_state, run_id);
+    fprintf(log_f, _("Cannot allocate disk space."));
+    goto done;
+  }
+  if (archive_dir_prepare(cs, global->run_archive_dir, run_id, 0, 0) < 0) {
+    run_undo_add_record(cs->runlog_state, run_id);
+    fprintf(log_f, _("Cannot allocate disk space."));
+    goto done;
+  }
+  if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
+    run_undo_add_record(cs->runlog_state, run_id);
+    fprintf(log_f, _("Cannot write to the disk."));
+    goto done;
+  }
+
+  if (prob->type_val == PROB_TYPE_STANDARD) {
+    // automatically tested programs
+    if (prob->disable_auto_testing > 0
+        || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
+        || lang->disable_auto_testing || lang->disable_testing) {
+      run_change_status(cs->runlog_state, run_id, RUN_PENDING, 0, -1, 0);
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "Command: submit\n"
+                      "Status: pending\n"
+                      "Run-id: %d\n"
+                      "  Testing disabled for this problem or language\n",
+                      run_id);
+    } else {
+      if (serve_compile_request(cs, run_text, run_size, run_id,
+                                lang->compile_id, phr->locale_id, 0,
+                                lang->src_sfx,
+                                lang->compiler_env, -1, 0) < 0) {
+        fprintf(log_f, _("Cannot put the run to the compilation queue."));
+        goto done;
+      }
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "Command: submit\n"
+                      "Status: ok\n"
+                      "Run-id: %d\n", run_id);
+    }
+  } else if (prob->manual_checking > 0) {
+    // manually tested outputs
+    if (prob->check_presentation <= 0) {
+      run_change_status(cs->runlog_state, run_id, RUN_ACCEPTED, 0, -1, 0);
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "Command: submit\n"
+                      "Status: accepted for testing\n"
+                      "Run-id: %d\n"
+                      "  This problem is checked manually.\n",
+                      run_id);
+    } else {
+      if (serve_run_request(cs, log_f, run_text, run_size, run_id,
+                            phr->user_id, prob_id, 0, variant, 0, -1, -1,
+                            0, 0) < 0) {
+        fprintf(log_f, _("Cannot put the run to the run queue."));
+        goto done;
+      }
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "Command: submit\n"
+                      "Status: ok\n"
+                      "Run-id: %d\n", run_id);
+    }
+  } else {
+    // automatically tested outputs
+    if (prob->disable_auto_testing > 0
+        || (prob->disable_testing > 0 && prob->enable_compilation <= 0)) {
+      run_change_status(cs->runlog_state, run_id, RUN_PENDING, 0, -1, 0);
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "Command: submit\n"
+                      "Status: pending\n"
+                      "Run-id: %d\n"
+                      "  Testing disabled for this problem\n",
+                      run_id);
+    } else {
+      if (serve_run_request(cs, log_f, run_text, run_size, run_id,
+                            phr->user_id, prob_id, 0, variant, 0, -1, -1,
+                            0, 0) < 0) {
+        fprintf(log_f, _("Cannot put the run to the run queue."));
+        goto done;
+      }
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "Command: submit\n"
+                      "Status: ok\n"
+                      "Run-id: %d\n", run_id);
+    }
+  }
+
+
+
+
+
+ done:
+  return 0;
+
+ invalid_param:
+  html_err_invalid_param(fout, phr, 0, errmsg);
+  return -1;
 }
 
 static const unsigned char * const form_row_attrs[]=
@@ -2153,9 +2434,7 @@ static const unsigned char * const form_row_attrs[]=
 };
 
 static void
-priv_view_users_page(struct server_framework_state *state,
-                     struct client_state *p,
-                     FILE *fout,
+priv_view_users_page(FILE *fout,
                      struct http_request_info *phr,
                      const struct contest_desc *cnts,
                      struct contest_extra *extra)
@@ -2171,17 +2450,17 @@ priv_view_users_page(struct server_framework_state *state,
   char url[1024];
   unsigned char bb[1024];
 
-  if (open_ul_connection(state) < 0)
-    return html_err_userlist_server_down(state, p, fout, phr, 1);
+  if (open_ul_connection(phr->fw_state) < 0)
+    return html_err_userlist_server_down(fout, phr, 1);
   if ((r = userlist_clnt_list_all_users(ul_conn, ULS_LIST_ALL_USERS,
                                         phr->contest_id, &xml_text)) < 0)
-    return new_server_html_err_internal_error(state, p, fout, phr, 1,
+    return new_server_html_err_internal_error(fout, phr, 1,
                                               "list_all_users failed: %s",
                                               userlist_strerror(-r));
   users = userlist_parse_str(xml_text);
   xfree(xml_text); xml_text = 0;
   if (!users)
-    return new_server_html_err_internal_error(state, p, fout, phr, 1,
+    return new_server_html_err_internal_error(fout, phr, 1,
                                               "XML parsing failed");
 
   l10n_setlocale(phr->locale_id);
@@ -2315,9 +2594,7 @@ priv_user_info_sort_func(const void *v1, const void *v2)
 }
 
 static void
-priv_view_priv_users_page(struct server_framework_state *state,
-                          struct client_state *p,
-                          FILE *fout,
+priv_view_priv_users_page(FILE *fout,
                           struct http_request_info *phr,
                           const struct contest_desc *cnts,
                           struct contest_extra *extra)
@@ -2340,8 +2617,8 @@ priv_view_priv_users_page(struct server_framework_state *state,
 
   XMEMZERO(&users, 1);
 
-  if (open_ul_connection(state) < 0) {
-    html_err_userlist_server_down(state, p, fout, phr, 1);
+  if (open_ul_connection(phr->fw_state) < 0) {
+    html_err_userlist_server_down(fout, phr, 1);
     goto cleanup;
   }
 
@@ -2503,9 +2780,7 @@ priv_view_priv_users_page(struct server_framework_state *state,
 }
 
 static void
-priv_view_report(struct server_framework_state *state,
-                 struct client_state *p,
-                 FILE *fout,
+priv_view_report(FILE *fout,
                  struct http_request_info *phr,
                  const struct contest_desc *cnts,
                  struct contest_extra *extra)
@@ -2519,8 +2794,7 @@ priv_view_report(struct server_framework_state *state,
 
   if (ns_cgi_param(phr, "run_id", &s) <= 0
       || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n])
-    return html_err_invalid_param(state, p, fout, phr, 1,
-                                  "cannot parse run_id");
+    return html_err_invalid_param(fout, phr, 1, "cannot parse run_id");
 
   log_f = open_memstream(&log_txt, &log_len);
 
@@ -2538,15 +2812,13 @@ priv_view_report(struct server_framework_state *state,
  done:
   fclose(log_f); log_f = 0;
   if (log_txt && *log_txt) {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt, 0);
+    html_error_status_page(fout, phr, cnts, extra, log_txt, 0);
   }
   xfree(log_txt);
 }
 
 static void
-priv_view_source(struct server_framework_state *state,
-                 struct client_state *p,
-                 FILE *fout,
+priv_view_source(FILE *fout,
                  struct http_request_info *phr,
                  const struct contest_desc *cnts,
                  struct contest_extra *extra)
@@ -2560,8 +2832,7 @@ priv_view_source(struct server_framework_state *state,
 
   if (ns_cgi_param(phr, "run_id", &s) <= 0
       || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n])
-    return html_err_invalid_param(state, p, fout, phr, 1,
-                                  "cannot parse run_id");
+    return html_err_invalid_param(fout, phr, 1, "cannot parse run_id");
 
   log_f = open_memstream(&log_txt, &log_len);
 
@@ -2579,15 +2850,13 @@ priv_view_source(struct server_framework_state *state,
  done:
   fclose(log_f); log_f = 0;
   if (log_txt && *log_txt) {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt, 0);
+    html_error_status_page(fout, phr, cnts, extra, log_txt, 0);
   }
   xfree(log_txt);
 }
 
 static void
-priv_download_source(struct server_framework_state *state,
-                     struct client_state *p,
-                     FILE *fout,
+priv_download_source(FILE *fout,
                      struct http_request_info *phr,
                      const struct contest_desc *cnts,
                      struct contest_extra *extra)
@@ -2608,8 +2877,7 @@ priv_download_source(struct server_framework_state *state,
 
   if (ns_cgi_param(phr, "run_id", &s) <= 0
       || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n])
-    return html_err_invalid_param(state, p, fout, phr, 1,
-                                  "cannot parse run_id");
+    return html_err_invalid_param(fout, phr, 1, "cannot parse run_id");
   if (ns_cgi_param(phr, "no_disp", &s) > 0
       && sscanf(s, "%d%n", &x, &n) == 1 && !s[n]
       && x >= 0 && x <= 1)
@@ -2679,16 +2947,14 @@ priv_download_source(struct server_framework_state *state,
  done:
   fclose(log_f); log_f = 0;
   if (log_txt && *log_txt) {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt, 0);
+    html_error_status_page(fout, phr, cnts, extra, log_txt, 0);
   }
   xfree(log_txt);
   xfree(run_text);
 }
 
 static void
-priv_standings(struct server_framework_state *state,
-               struct client_state *p,
-               FILE *fout,
+priv_standings(FILE *fout,
                struct http_request_info *phr,
                const struct contest_desc *cnts,
                struct contest_extra *extra)
@@ -2721,15 +2987,13 @@ priv_standings(struct server_framework_state *state,
  done:
   fclose(log_f); log_f = 0;
   if (log_txt && *log_txt) {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt, 0);
+    html_error_status_page(fout, phr, cnts, extra, log_txt, 0);
   }
   xfree(log_txt);
 }
 
 void
-unpriv_print_status(struct server_framework_state *state,
-                    struct client_state *p,
-                    FILE *fout,
+unpriv_print_status(FILE *fout,
                     struct http_request_info *phr,
                     const struct contest_desc *cnts,
                     struct contest_extra *extra,
@@ -2777,13 +3041,13 @@ unpriv_print_status(struct server_framework_state *state,
 
   if (cs->clients_suspended) {
     fprintf(fout, "<p><big><b>%s</b></big></p>\n",
-            _("Team requests are suspended"));
+            _("Participants' requests are suspended"));
   }
 
   if (start_time > 0) {
     if (cs->testing_suspended) {
       fprintf(fout, "<p><big><b>%s</b></big></p>\n",
-             _("Testing of team's submits is suspended"));
+             _("Testing of participants' submits is suspended"));
     }
     if (cs->printing_suspended) {
       fprintf(fout, "<p><big><b>%s</b></big></p>\n",
@@ -2847,14 +3111,109 @@ unpriv_print_status(struct server_framework_state *state,
   fprintf(fout, "</table>\n");
 }
 
+typedef int (*action_handler2_t)(FILE *fout,
+                                 FILE *log_f,
+                                 struct http_request_info *phr,
+                                 const struct contest_desc *cnts,
+                                 struct contest_extra *extra);
+
+static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
+{
+#if 0
+  [NEW_SRV_ACTION_VIEW_USERS] = priv_view_users_page,
+  [NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_SET_PENDING] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_SET_OK] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_SET_REJECTED] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_SET_INVISIBLE] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_CLEAR_INVISIBLE] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_SET_BANNED] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_CLEAR_BANNED] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_SET_LOCKED] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_CLEAR_LOCKED] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_ADD_BY_LOGIN] = priv_add_user_by_login,
+  [NEW_SRV_ACTION_USERS_ADD_BY_USER_ID] = priv_add_user_by_user_id,
+  [NEW_SRV_ACTION_PRIV_USERS_VIEW] = priv_view_priv_users_page,
+  [NEW_SRV_ACTION_PRIV_USERS_REMOVE] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_EXAMINER] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_DEL_EXAMINER] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_EXAMINER] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_EXAMINER] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN] = priv_add_priv_user_by_login,
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID] = priv_add_priv_user_by_user_id,
+  [NEW_SRV_ACTION_START_CONTEST] = priv_contest_operation,
+  [NEW_SRV_ACTION_STOP_CONTEST] = priv_contest_operation,
+  [NEW_SRV_ACTION_CONTINUE_CONTEST] = priv_contest_operation,
+  [NEW_SRV_ACTION_SCHEDULE] = priv_contest_operation,
+  [NEW_SRV_ACTION_CHANGE_DURATION] = priv_contest_operation,
+  [NEW_SRV_ACTION_SUSPEND] = priv_contest_operation,
+  [NEW_SRV_ACTION_RESUME] = priv_contest_operation,
+  [NEW_SRV_ACTION_TEST_SUSPEND] = priv_contest_operation,
+  [NEW_SRV_ACTION_TEST_RESUME] = priv_contest_operation,
+  [NEW_SRV_ACTION_PRINT_SUSPEND] = priv_contest_operation,
+  [NEW_SRV_ACTION_PRINT_RESUME] = priv_contest_operation,
+  [NEW_SRV_ACTION_SET_JUDGING_MODE] = priv_contest_operation,
+  [NEW_SRV_ACTION_SET_ACCEPTING_MODE] = priv_contest_operation,
+  [NEW_SRV_ACTION_RESET_FILTER] = priv_reset_filter,
+  [NEW_SRV_ACTION_RESET_CLAR_FILTER] = priv_reset_filter,
+  [NEW_SRV_ACTION_VIEW_SOURCE] = priv_view_source,
+  [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
+  [NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN] = priv_download_source,
+  [NEW_SRV_ACTION_STANDINGS] = priv_standings,
+#endif
+  [NEW_SRV_ACTION_CHANGE_LANGUAGE] = priv_change_language,
+  [NEW_SRV_ACTION_SUBMIT_RUN] = priv_submit_run,
+};
+
+static int priv_next_state[NEW_SRV_ACTION_LAST] =
+{
+};
+static int priv_prev_state[NEW_SRV_ACTION_LAST] =
+{
+};
+
+static void
+priv_generic_operation(FILE *fout,
+                       struct http_request_info *phr,
+                       const struct contest_desc *cnts,
+                       struct contest_extra *extra)
+{
+  FILE *log_f = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  int r, rr;
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  r = priv_actions_table_2[phr->action](fout, log_f, phr, cnts, extra);
+  if (r < 0) {
+    fclose(log_f);
+    xfree(log_txt);
+    return;
+  }
+  rr = r;
+  if (!r) r = priv_next_state[phr->action];
+  if (!rr) rr = priv_prev_state[phr->action];
+
+  fclose(log_f); log_f = 0;
+  if (!log_txt || !*log_txt) {
+    html_refresh_page(fout, phr, r);
+  } else {
+    html_error_status_page(fout, phr, cnts, extra, log_txt, rr);
+  }
+  xfree(log_txt);
+}
+
 static int
 insert_variant_num(unsigned char *buf, size_t size,
                    const unsigned char *file, int variant);
 
 static void
-priv_main_page(struct server_framework_state *state,
-               struct client_state *p,
-               FILE *fout,
+priv_main_page(FILE *fout,
                struct http_request_info *phr,
                const struct contest_desc *cnts,
                struct contest_extra *extra)
@@ -2975,12 +3334,12 @@ priv_main_page(struct server_framework_state *state,
 
   if (cs->clients_suspended) {
     fprintf(fout, "<p><big><b>%s</b></big></p>\n",
-            _("Team requests are suspended"));
+            _("Participants' requests are suspended"));
   }
 
   if (cs->testing_suspended) {
     fprintf(fout, "<p><big><b>%s</b></big></p>\n",
-            _("Testing of team's submits is suspended"));
+            _("Testing of participants' submits is suspended"));
   }
   if (cs->printing_suspended) {
     fprintf(fout, "<p><big><b>%s</b></big></p>\n",
@@ -3323,9 +3682,7 @@ priv_main_page(struct server_framework_state *state,
   l10n_setlocale(0);
 }
 
-typedef void (*action_handler_t)(struct server_framework_state *state,
-                                 struct client_state *p,
-                                 FILE *fout,
+typedef void (*action_handler_t)(FILE *fout,
                                  struct http_request_info *phr,
                                  const struct contest_desc *cnts,
                                  struct contest_extra *extra);
@@ -3376,13 +3733,12 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
   [NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN] = priv_download_source,
   [NEW_SRV_ACTION_STANDINGS] = priv_standings,
-  [NEW_SRV_ACTION_CHANGE_LANGUAGE] = priv_change_language,
+  [NEW_SRV_ACTION_CHANGE_LANGUAGE] = priv_generic_operation,
+  [NEW_SRV_ACTION_SUBMIT_RUN] = priv_generic_operation,
 };
 
 static void
-privileged_page(struct server_framework_state *state,
-                struct client_state *p,
-                FILE *fout,
+privileged_page(FILE *fout,
                 struct http_request_info *phr)
 {
   int r;
@@ -3394,11 +3750,11 @@ privileged_page(struct server_framework_state *state,
   struct teamdb_db_callbacks callbacks;
 
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
-    return privileged_page_login(state, p, fout, phr);
+    return privileged_page_login(fout, phr);
 
   // validate cookie
-  if (open_ul_connection(state) < 0)
-    return html_err_userlist_server_down(state, p, fout, phr, 1);
+  if (open_ul_connection(phr->fw_state) < 0)
+    return html_err_userlist_server_down(fout, phr, 1);
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_PRIV_GET_COOKIE,
                                     phr->ip, phr->ssl_flag,
                                     phr->session_id,
@@ -3407,24 +3763,22 @@ privileged_page(struct server_framework_state *state,
                                     &phr->login, &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_NO_COOKIE:
-      return html_err_invalid_session(state, p, fout, phr, 1,
+      return html_err_invalid_session(fout, phr, 1,
                                      "priv_login failed: %s",
                                      userlist_strerror(-r));
     case ULS_ERR_DISCONNECT:
-      return html_err_userlist_server_down(state, p, fout, phr, 1);
+      return html_err_userlist_server_down(fout, phr, 1);
     default:
-      return new_server_html_err_internal_error(state, p, fout, phr, 1,
+      return new_server_html_err_internal_error(fout, phr, 1,
                                                 "priv_login failed: %s",
                                                 userlist_strerror(-r));
     }
   }
 
   if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
-    return html_err_permission_denied(state, p, fout, phr, 1,
-                                      "invalid contest_id %d", phr->contest_id);
+    return html_err_permission_denied(fout, phr, 1, "invalid contest_id %d", phr->contest_id);
   if (!cnts->new_managed)
-    return html_err_invalid_param(state, p, fout, phr, 1,
-                                  "contest is not managed");
+    return html_err_invalid_param(fout, phr, 1, "contest is not managed");
   extra = get_contest_extra(phr->contest_id);
   ASSERT(extra);
 
@@ -3432,36 +3786,31 @@ privileged_page(struct server_framework_state *state,
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
     if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag))
-      return html_err_permission_denied(state, p, fout, phr, 1,
-                                        "%s://%s is not allowed for MASTER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+      return html_err_permission_denied(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   } else {
     // as for judge program
     if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag))
-      return html_err_permission_denied(state, p, fout, phr, 1,
-                                        "%s://%s is not allowed for MASTER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+      return html_err_permission_denied(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   }
 
   // analyze permissions
   if (phr->role <= 0 || phr->role >= USER_ROLE_LAST)
-    return html_err_permission_denied(state, p, fout, phr, 1,
-                                      "invalid role %d", phr->role);
+    return html_err_permission_denied(fout, phr, 1, "invalid role %d",
+                                      phr->role);
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
     if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
         || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0)
-      return html_err_permission_denied(state, p, fout, phr, 1,
-                                        "user %s does not have MASTER_LOGIN bit for contest %d", phr->login, phr->contest_id);
+      return html_err_permission_denied(fout, phr, 1, "user %s does not have MASTER_LOGIN bit for contest %d", phr->login, phr->contest_id);
   } else if (phr->role == USER_ROLE_JUDGE) {
     // as for the judge program
     if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
         || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0)
-      return html_err_permission_denied(state, p, fout, phr, 1,
-                                        "user %s does not have JUDGE_LOGIN bit for contest %d", phr->login, phr->contest_id);
+      return html_err_permission_denied(fout, phr, 1, "user %s does not have JUDGE_LOGIN bit for contest %d", phr->login, phr->contest_id);
   } else {
     // user privileges checked locally
     if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0)
-      return html_err_permission_denied(state, p, fout, phr, 1,
-                                        "user %s has no permission to login as role %d for contest %d", phr->login, phr->role, phr->contest_id);
+      return html_err_permission_denied(fout, phr, 1, "user %s has no permission to login as role %d for contest %d", phr->login, phr->role, phr->contest_id);
   }
 
   watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
@@ -3492,7 +3841,7 @@ privileged_page(struct server_framework_state *state,
   }
 
   memset(&callbacks, 0, sizeof(callbacks));
-  callbacks.user_data = (void*) state;
+  callbacks.user_data = (void*) phr->fw_state;
   callbacks.list_all_users = list_all_users_callback;
 
   // invoke the contest
@@ -3500,7 +3849,7 @@ privileged_page(struct server_framework_state *state,
                                ul_conn,
                                &callbacks,
                                &extra->serve_state, 0) < 0) {
-    return html_err_contest_not_available(state, p, fout, phr, "");
+    return html_err_contest_not_available(fout, phr, " ");
   }
 
   extra->serve_state->current_time = time(0);
@@ -3508,17 +3857,14 @@ privileged_page(struct server_framework_state *state,
   
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && actions_table[phr->action]) {
-    actions_table[phr->action](state, p, fout, phr, cnts, extra);
+    actions_table[phr->action](fout, phr, cnts, extra);
   } else {
-    priv_main_page(state, p, fout, phr, cnts, extra);
+    priv_main_page(fout, phr, cnts, extra);
   }
 }
 
 void
-unprivileged_page_login_page(struct server_framework_state *state,
-                             struct client_state *p,
-                             FILE *fout,
-                             struct http_request_info *phr)
+unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
 {
   const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
@@ -3528,20 +3874,20 @@ unprivileged_page_login_page(struct server_framework_state *state,
   unsigned char bb[1024];
 
   if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
-    return html_err_service_not_available(state, p, fout, phr,
-                                          "contest_id is invalid");
+    return html_err_service_not_available(fout, phr, "contest_id is invalid");
   if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
-    return html_err_service_not_available(state, p, fout, phr,
-                                        "%s://%s is not allowed for TEAM for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+    return html_err_service_not_available(fout, phr, "%s://%s is not allowed for USER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   if (cnts->closed)
-    return html_err_service_not_available(state, p, fout, phr,
-                                          "contest %d is closed");
+    return html_err_service_not_available(fout, phr, "contest %d is closed",
+                                          cnts->id);
   if (!cnts->new_managed)
-    return html_err_service_not_available(state, p, fout, phr,
-                                          "contest %d is not managed");
+    return html_err_service_not_available(fout, phr,
+                                          "contest %d is not managed",
+                                          cnts->id);
   if (cnts->client_disable_team)
-    return html_err_service_not_available(state, p, fout, phr,
-                                          "contest %d team is disabled");
+    return html_err_service_not_available(fout, phr,
+                                          "contest %d user is disabled",
+                                          cnts->id);
 
   extra = get_contest_extra(phr->contest_id);
   ASSERT(extra);
@@ -3597,10 +3943,7 @@ unprivileged_page_login_page(struct server_framework_state *state,
 }
 
 static void
-unprivileged_page_login(struct server_framework_state *state,
-                        struct client_state *p,
-                        FILE *fout,
-                        struct http_request_info *phr)
+unprivileged_page_login(FILE *fout, struct http_request_info *phr)
 {
   const unsigned char *login = 0;
   const unsigned char *password = 0;
@@ -3608,32 +3951,31 @@ unprivileged_page_login(struct server_framework_state *state,
   const struct contest_desc *cnts = 0;
 
   if ((r = ns_cgi_param(phr, "login", &login)) < 0)
-    return html_err_invalid_param(state, p, fout, phr, 0, "cannot parse login");
+    return html_err_invalid_param(fout, phr, 0, "cannot parse login");
   if (!r || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
-    return unprivileged_page_login_page(state, p, fout, phr);
+    return unprivileged_page_login_page(fout, phr);
 
   phr->login = xstrdup(login);
   if ((r = ns_cgi_param(phr, "password", &password)) <= 0)
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "cannot parse password");
+    return html_err_invalid_param(fout, phr, 0, "cannot parse password");
   if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts)
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "invalid contest_id");
+    return html_err_invalid_param(fout, phr, 0, "invalid contest_id");
   if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
-    return html_err_permission_denied(state, p, fout, phr, 0,
-                                      "%s://%s is not allowed for TEAM for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+    return html_err_permission_denied(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   if (cnts->closed)
-    return html_err_service_not_available(state, p, fout, phr,
-                                          "contest %d is closed");
+    return html_err_service_not_available(fout, phr, "contest %d is closed",
+                                          cnts->id);
   if (!cnts->new_managed)
-    return html_err_service_not_available(state, p, fout, phr,
-                                          "contest %d is not managed");
+    return html_err_service_not_available(fout, phr,
+                                          "contest %d is not managed",
+                                          cnts->id);
   if (cnts->client_disable_team)
-    return html_err_service_not_available(state, p, fout, phr,
-                                          "contest %d team is disabled");
+    return html_err_service_not_available(fout, phr,
+                                          "contest %d user is disabled",
+                                          cnts->id);
 
-  if (open_ul_connection(state) < 0)
-    return html_err_userlist_server_down(state, p, fout, phr, 0);
+  if (open_ul_connection(phr->fw_state) < 0)
+    return html_err_userlist_server_down(fout, phr, 0);
 
   if ((r = userlist_clnt_team_login(ul_conn, ULS_CHECK_USER,
                                     phr->ip, phr->ssl_flag, phr->contest_id,
@@ -3648,26 +3990,23 @@ unprivileged_page_login(struct server_framework_state *state,
     case ULS_ERR_NO_PERMS:
     case ULS_ERR_NOT_REGISTERED:
     case ULS_ERR_CANNOT_PARTICIPATE:
-      return html_err_permission_denied(state, p, fout, phr, 0,
-                                        "team_login failed: %s",
+      return html_err_permission_denied(fout, phr, 0, "user_login failed: %s",
                                         userlist_strerror(-r));
     case ULS_ERR_DISCONNECT:
-      return html_err_userlist_server_down(state, p, fout, phr, 0);
+      return html_err_userlist_server_down(fout, phr, 0);
     default:
-      return new_server_html_err_internal_error(state, p, fout, phr, 0,
-                                                "team_login failed: %s",
+      return new_server_html_err_internal_error(fout, phr, 0,
+                                                "user_login failed: %s",
                                                 userlist_strerror(-r));
     }
   }
 
   new_server_get_session(phr->session_id, 0);
-  html_refresh_page(state, fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
+  html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
 }
 
 static void
-unpriv_change_language(struct server_framework_state *state,
-                       struct client_state *p,
-                       FILE *fout,
+unpriv_change_language(FILE *fout,
                        struct http_request_info *phr,
                        const struct contest_desc *cnts,
                        struct contest_extra *extra)
@@ -3680,18 +4019,16 @@ unpriv_change_language(struct server_framework_state *state,
   int new_locale_id;
 
   if ((r = ns_cgi_param(phr, "locale_id", &s)) < 0)
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "cannot parse locale_id");
+    return html_err_invalid_param(fout, phr, 0, "cannot parse locale_id");
   if (r > 0) {
     if (sscanf(s, "%d%n", &new_locale_id, &n) != 1 || s[n] || new_locale_id < 0)
-      return html_err_invalid_param(state, p, fout, phr, 0,
-                                    "cannot parse locale_id");
+      return html_err_invalid_param(fout, phr, 0, "cannot parse locale_id");
   }
 
   log_f = open_memstream(&log_txt, &log_len);
 
-  if (open_ul_connection(state) < 0) {
-    html_err_userlist_server_down(state, p, fout, phr, 0);
+  if (open_ul_connection(phr->fw_state) < 0) {
+    html_err_userlist_server_down(fout, phr, 0);
     goto cleanup;
   }
   if ((r = userlist_clnt_set_cookie(ul_conn, ULS_SET_COOKIE_LOCALE,
@@ -3703,9 +4040,9 @@ unpriv_change_language(struct server_framework_state *state,
   //done:
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
-    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
+    html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
   } else {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE);
   }
 
@@ -3715,9 +4052,7 @@ unpriv_change_language(struct server_framework_state *state,
 }
 
 static void
-unpriv_change_password(struct server_framework_state *state,
-                       struct client_state *p,
-                       FILE *fout,
+unpriv_change_password(FILE *fout,
                        struct http_request_info *phr,
                        const struct contest_desc *cnts,
                        struct contest_extra *extra)
@@ -3731,14 +4066,11 @@ unpriv_change_password(struct server_framework_state *state,
   unsigned char login_buf[256];
 
   if (ns_cgi_param(phr, "oldpasswd", &p0) <= 0)
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "cannot parse oldpasswd");
+    return html_err_invalid_param(fout, phr, 0, "cannot parse oldpasswd");
   if (ns_cgi_param(phr, "newpasswd1", &p1) <= 0)
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "cannot parse newpasswd1");
+    return html_err_invalid_param(fout, phr, 0, "cannot parse newpasswd1");
   if (ns_cgi_param(phr, "newpasswd2", &p2) <= 0)
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "cannot parse newpasswd2");
+    return html_err_invalid_param(fout, phr, 0, "cannot parse newpasswd2");
 
   log_f = open_memstream(&log_txt, &log_len);
 
@@ -3758,8 +4090,8 @@ unpriv_change_password(struct server_framework_state *state,
   cmd = ULS_PRIV_SET_TEAM_PASSWD;
   if (cnts->disable_team_password) cmd = ULS_PRIV_SET_REG_PASSWD;
 
-  if (open_ul_connection(state) < 0) {
-    html_err_userlist_server_down(state, p, fout, phr, 0);
+  if (open_ul_connection(phr->fw_state) < 0) {
+    html_err_userlist_server_down(fout, phr, 0);
     goto cleanup;
   }
   r = userlist_clnt_set_passwd(ul_conn, cmd, phr->user_id, phr->contest_id,
@@ -3777,9 +4109,9 @@ unpriv_change_password(struct server_framework_state *state,
              "%s?contest_id=%d&login=%s&locale_id=%d&action=%d",
              phr->self_url, phr->contest_id, login_buf, phr->locale_id,
              NEW_SRV_ACTION_LOGIN_PAGE);
-    html_refresh_page_2(state, fout, url);
+    html_refresh_page_2(fout, url);
   } else {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE);
   }
 
@@ -3789,9 +4121,7 @@ unpriv_change_password(struct server_framework_state *state,
 }
 
 static void
-unpriv_submit_run(struct server_framework_state *state,
-                  struct client_state *p,
-                  FILE *fout,
+unpriv_submit_run(FILE *fout,
                   struct http_request_info *phr,
                   const struct contest_desc *cnts,
                   struct contest_extra *extra)
@@ -3818,26 +4148,21 @@ unpriv_submit_run(struct server_framework_state *state,
   path_t run_path;
 
   if (ns_cgi_param(phr, "prob_id", &s) <= 0)
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "prob_id is not set or binary");
+    return html_err_invalid_param(fout, phr, 0, "prob_id is not set or binary");
   if (sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n])
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "cannot parse prob_id");
+    return html_err_invalid_param(fout, phr, 0, "cannot parse prob_id");
   if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id]))
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "prob_id is invalid");
+    return html_err_invalid_param(fout, phr, 0, "prob_id is invalid");
 
   // "STANDARD" problems need programming language identifier
   if (prob->type_val == PROB_TYPE_STANDARD) {
     if (ns_cgi_param(phr, "lang_id", &s) <= 0)
-      return html_err_invalid_param(state, p, fout, phr, 0,
+      return html_err_invalid_param(fout, phr, 0,
                                     "lang_id is not set or binary");
     if (sscanf(s, "%d%n", &lang_id, &n) != 1 || s[n])
-      return html_err_invalid_param(state, p, fout, phr, 0,
-                                    "cannot parse lang_id");
+      return html_err_invalid_param(fout, phr, 0, "cannot parse lang_id");
     if (lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id]))
-      return html_err_invalid_param(state, p, fout, phr, 0,
-                                    "lang_id is invalid");
+      return html_err_invalid_param(fout, phr, 0, "lang_id is invalid");
   }
 
   switch (prob->type_val) {
@@ -3847,7 +4172,7 @@ unpriv_submit_run(struct server_framework_state *state,
   case PROB_TYPE_SHORT_ANSWER:
   case PROB_TYPE_SELECT_ONE:
     if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size))
-      return html_err_invalid_param(state, p, fout, phr, 0,
+      return html_err_invalid_param(fout, phr, 0,
                                     "\"file\" parameter is not set");
     break;
   case PROB_TYPE_SELECT_MANY:   // "ans_*"
@@ -3855,10 +4180,10 @@ unpriv_submit_run(struct server_framework_state *state,
       if (!strncmp(phr->param_names[i], "ans_", 4)) {
         if (sscanf(phr->param_names[i] + 4, "%d%n", &ans, &n) != 1
             || phr->param_names[i][4 + n])
-          return html_err_invalid_param(state, p, fout, phr, 0,
+          return html_err_invalid_param(fout, phr, 0,
                                         "\"ans_*\" parameter is invalid");
         if (ans < 0 || ans > 65535)
-          return html_err_invalid_param(state, p, fout, phr, 0,
+          return html_err_invalid_param(fout, phr, 0,
                                         "\"ans_*\" parameter is out of range");
         if (ans > max_ans) max_ans = ans;
         ans_size += 7;
@@ -3891,14 +4216,12 @@ unpriv_submit_run(struct server_framework_state *state,
   switch (prob->type_val) {
   case PROB_TYPE_STANDARD:
     if (!lang->binary && strlen(run_text) != run_size) 
-      return html_err_invalid_param(state, p, fout, phr, 0,
-                                    "binary submission");
+      return html_err_invalid_param(fout, phr, 0, "binary submission");
     break;
 
   case PROB_TYPE_OUTPUT_ONLY:
     if (!prob->binary_input && strlen(run_text) != run_size) 
-      return html_err_invalid_param(state, p, fout, phr, 0,
-                                    "binary submission");
+      return html_err_invalid_param(fout, phr, 0, "binary submission");
     break;
 
   case PROB_TYPE_TEXT_ANSWER:
@@ -3906,8 +4229,7 @@ unpriv_submit_run(struct server_framework_state *state,
   case PROB_TYPE_SELECT_ONE:
   case PROB_TYPE_SELECT_MANY:
     if (strlen(run_text) != run_size) 
-      return html_err_invalid_param(state, p, fout, phr, 0,
-                                    "binary submission");
+      return html_err_invalid_param(fout, phr, 0, "binary submission");
     break;
   }
 
@@ -4120,6 +4442,29 @@ unpriv_submit_run(struct server_framework_state *state,
                       "Status: ok\n"
                       "Run-id: %d\n", run_id);
     }
+  } else if (prob->manual_checking > 0) {
+    // manually tested outputs
+    if (prob->check_presentation <= 0) {
+      run_change_status(cs->runlog_state, run_id, RUN_ACCEPTED, 0, -1, 0);
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "Command: submit\n"
+                      "Status: accepted for testing\n"
+                      "Run-id: %d\n"
+                      "  This problem is checked manually.\n",
+                      run_id);
+    } else {
+      if (serve_run_request(cs, log_f, run_text, run_size, run_id,
+                            phr->user_id, prob_id, 0, variant, 0, -1, -1,
+                            0, 0) < 0) {
+        fprintf(log_f, _("Cannot put the run to the run queue."));
+        goto done;
+      }
+
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "Command: submit\n"
+                      "Status: ok\n"
+                      "Run-id: %d\n", run_id);
+    }
   } else {
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)) {
@@ -4148,9 +4493,9 @@ unpriv_submit_run(struct server_framework_state *state,
  done:;
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
-    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
+    html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
   } else {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE);
   }
 
@@ -4160,9 +4505,7 @@ unpriv_submit_run(struct server_framework_state *state,
 }
 
 static void
-unpriv_submit_clar(struct server_framework_state *state,
-                   struct client_state *p,
-                   FILE *fout,
+unpriv_submit_clar(FILE *fout,
                    struct http_request_info *phr,
                    const struct contest_desc *cnts,
                    struct contest_extra *extra)
@@ -4185,19 +4528,17 @@ unpriv_submit_clar(struct server_framework_state *state,
   // parameters: prob_id, subject, text,  
 
   if ((n = ns_cgi_param(phr, "prob_id", &s)) < 0)
-    return html_err_invalid_param(state, p, fout, phr, 0, "prob_id is binary");
+    return html_err_invalid_param(fout, phr, 0, "prob_id is binary");
   if (n > 0 && *s) {
     if (sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n])
-      return html_err_invalid_param(state, p, fout, phr, 0,
-                                    "cannot parse prob_id");
+      return html_err_invalid_param(fout, phr, 0, "cannot parse prob_id");
     if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id]))
-      return html_err_invalid_param(state, p, fout, phr, 0,
-                                    "prob_id is invalid");
+      return html_err_invalid_param(fout, phr, 0, "prob_id is invalid");
   }
   if (ns_cgi_param(phr, "subject", &subject) < 0)
-    return html_err_invalid_param(state, p, fout, phr, 0, "subject is binary");
+    return html_err_invalid_param(fout, phr, 0, "subject is binary");
   if (ns_cgi_param(phr, "text", &text) <= 0)
-    return html_err_invalid_param(state, p, fout, phr, 0,
+    return html_err_invalid_param(fout, phr, 0,
                                   "text is not set or binary");
 
   if (global->is_virtual) {
@@ -4295,9 +4636,9 @@ unpriv_submit_clar(struct server_framework_state *state,
  done:;
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
-    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
+    html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
   } else {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE);
   }
 
@@ -4307,9 +4648,7 @@ unpriv_submit_clar(struct server_framework_state *state,
 }
 
 static void
-unpriv_view_source(struct server_framework_state *state,
-                   struct client_state *p,
-                   FILE *fout,
+unpriv_view_source(FILE *fout,
                    struct http_request_info *phr,
                    const struct contest_desc *cnts,
                    struct contest_extra *extra)
@@ -4329,11 +4668,9 @@ unpriv_view_source(struct server_framework_state *state,
   path_t src_path;
 
   if ((n = ns_cgi_param(phr, "run_id", &s)) <= 0)
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "run_id is binary or not set");
+    return html_err_invalid_param(fout, phr, 0, "run_id is binary or not set");
   if (sscanf(s, "%d%n", &run_id, &n) != 1 || s[n])
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "cannot parse run_id");
+    return html_err_invalid_param(fout, phr, 0, "cannot parse run_id");
 
   log_f = open_memstream(&log_txt, &log_len);
 
@@ -4405,7 +4742,7 @@ unpriv_view_source(struct server_framework_state *state,
  done:;
   fclose(log_f); log_f = 0;
   if (log_txt && *log_txt) {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE);
   }
 
@@ -4420,9 +4757,7 @@ static const int report_view_actions[] =
 };
 
 static void
-unpriv_view_report(struct server_framework_state *state,
-                   struct client_state *p,
-                   FILE *fout,
+unpriv_view_report(FILE *fout,
                    struct http_request_info *phr,
                    const struct contest_desc *cnts,
                    struct contest_extra *extra)
@@ -4440,11 +4775,9 @@ unpriv_view_report(struct server_framework_state *state,
   unsigned char *html_report;
 
   if ((n = ns_cgi_param(phr, "run_id", &s)) <= 0)
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "run_id is binary or not set");
+    return html_err_invalid_param(fout, phr, 0, "run_id is binary or not set");
   if (sscanf(s, "%d%n", &run_id, &n) != 1 || s[n])
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "cannot parse run_id");
+    return html_err_invalid_param(fout, phr, 0, "cannot parse run_id");
 
   log_f = open_memstream(&log_txt, &log_len);
 
@@ -4563,7 +4896,7 @@ unpriv_view_report(struct server_framework_state *state,
  done:;
   fclose(log_f); log_f = 0;
   if (log_txt && *log_txt) {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE);
   }
 
@@ -4573,9 +4906,7 @@ unpriv_view_report(struct server_framework_state *state,
 }
 
 static void
-unpriv_view_clar(struct server_framework_state *state,
-                 struct client_state *p,
-                 FILE *fout,
+unpriv_view_clar(FILE *fout,
                  struct http_request_info *phr,
                  const struct contest_desc *cnts,
                  struct contest_extra *extra)
@@ -4595,11 +4926,9 @@ unpriv_view_clar(struct server_framework_state *state,
   unsigned char dur_str[64];
 
   if ((n = ns_cgi_param(phr, "clar_id", &s)) <= 0)
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "clar_id is binary or not set");
+    return html_err_invalid_param(fout, phr, 0, "clar_id is binary or not set");
   if (sscanf(s, "%d%n", &clar_id, &n) != 1 || s[n])
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "cannot parse clar_id");
+    return html_err_invalid_param(fout, phr, 0, "cannot parse clar_id");
 
   log_f = open_memstream(&log_txt, &log_len);
 
@@ -4693,7 +5022,7 @@ unpriv_view_clar(struct server_framework_state *state,
  done:;
   fclose(log_f); log_f = 0;
   if (log_txt && *log_txt) {
-    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE);
   }
 
@@ -4848,9 +5177,7 @@ insert_variant_num(unsigned char *buf, size_t size,
 }
 
 static void
-user_main_page(struct server_framework_state *state,
-               struct client_state *p,
-               FILE *fout,
+user_main_page(FILE *fout,
                struct http_request_info *phr,
                const struct contest_desc *cnts,
                struct contest_extra *extra)
@@ -4958,7 +5285,7 @@ user_main_page(struct server_framework_state *state,
 #endif /* CONF_HAS_LIBINTL */
   if (cnts->standings_url && cs->contest_start_time) {
     fprintf(fout, "<li><a href=\"%s\" target=\"_blank\">%s</a>\n",
-            cnts->standings_url, _("Team standings"));
+            cnts->standings_url, _("Current standings"));
   }
   if (cnts->problems_url) {
     if (global->always_show_problems || start_time) {
@@ -4987,7 +5314,7 @@ user_main_page(struct server_framework_state *state,
           
   fprintf(fout, "</tr></table>\n");
 
-  unpriv_print_status(state, p, fout, phr, cnts, extra,
+  unpriv_print_status(fout, phr, cnts, extra,
                       start_time, stop_time, duration, sched_time,
                       fog_start_time);
 
@@ -5240,17 +5567,15 @@ user_main_page(struct server_framework_state *state,
 }
 
 static void
-unpriv_logout(struct server_framework_state *state,
-              struct client_state *p,
-              FILE *fout,
+unpriv_logout(FILE *fout,
               struct http_request_info *phr,
               const struct contest_desc *cnts,
               struct contest_extra *extra)
 {
   unsigned char locale_buf[64];
 
-  if (open_ul_connection(state) < 0)
-    return html_err_userlist_server_down(state, p, fout, phr, 0);
+  if (open_ul_connection(phr->fw_state) < 0)
+    return html_err_userlist_server_down(fout, phr, 0);
   userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
                               phr->session_id);
   new_server_remove_session(phr->session_id);
@@ -5284,10 +5609,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 };
 
 static void
-unprivileged_page(struct server_framework_state *state,
-                  struct client_state *p,
-                  FILE *fout,
-                  struct http_request_info *phr)
+unprivileged_page(FILE *fout, struct http_request_info *phr)
 {
   int r;
   const struct contest_desc *cnts = 0;
@@ -5297,11 +5619,11 @@ unprivileged_page(struct server_framework_state *state,
   struct teamdb_db_callbacks callbacks;
 
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
-    return unprivileged_page_login(state, p, fout, phr);
+    return unprivileged_page_login(fout, phr);
 
   // validate cookie
-  if (open_ul_connection(state) < 0)
-    return html_err_userlist_server_down(state, p, fout, phr, 0);
+  if (open_ul_connection(phr->fw_state) < 0)
+    return html_err_userlist_server_down(fout, phr, 0);
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_GET_COOKIE,
                                     phr->ip, phr->ssl_flag,
                                     phr->session_id,
@@ -5310,36 +5632,37 @@ unprivileged_page(struct server_framework_state *state,
                                     &phr->login, &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_NO_COOKIE:
-      return html_err_invalid_session(state, p, fout, phr, 0,
+      return html_err_invalid_session(fout, phr, 0,
                                      "get_cookie failed: %s",
                                      userlist_strerror(-r));
     case ULS_ERR_DISCONNECT:
-      return html_err_userlist_server_down(state, p, fout, phr, 0);
+      return html_err_userlist_server_down(fout, phr, 0);
     default:
-      return new_server_html_err_internal_error(state, p, fout, phr, 0,
+      return new_server_html_err_internal_error(fout, phr, 0,
                                                 "get_cookie failed: %s",
                                                 userlist_strerror(-r));
     }
   }
 
   if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
-    return html_err_permission_denied(state, p, fout, phr, 1,
+    return html_err_permission_denied(fout, phr, 1,
                                       "invalid contest_id %d", phr->contest_id);
   extra = get_contest_extra(phr->contest_id);
   ASSERT(extra);
 
   if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
-    return html_err_permission_denied(state, p, fout, phr, 0,
-                                      "%s://%s is not allowed for TEAM for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+    return html_err_permission_denied(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   if (cnts->closed)
-    return html_err_service_not_available(state, p, fout, phr,
-                                          "contest %d is closed");
+    return html_err_service_not_available(fout, phr, "contest %d is closed",
+                                          cnts->id);
   if (!cnts->new_managed)
-    return html_err_service_not_available(state, p, fout, phr,
-                                          "contest %d is not managed");
+    return html_err_service_not_available(fout, phr,
+                                          "contest %d is not managed",
+                                          cnts->id);
   if (cnts->client_disable_team)
-    return html_err_service_not_available(state, p, fout, phr,
-                                          "contest %d team is disabled");
+    return html_err_service_not_available(fout, phr,
+                                          "contest %d user is disabled",
+                                          cnts->id);
 
   watched_file_update(&extra->header, cnts->team_header_file, cur_time);
   watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
@@ -5367,7 +5690,7 @@ unprivileged_page(struct server_framework_state *state,
   phr->session_extra = new_server_get_session(phr->session_id, cur_time);
 
   memset(&callbacks, 0, sizeof(callbacks));
-  callbacks.user_data = (void*) state;
+  callbacks.user_data = (void*) phr->fw_state;
   callbacks.list_all_users = list_all_users_callback;
 
   // invoke the contest
@@ -5375,7 +5698,7 @@ unprivileged_page(struct server_framework_state *state,
                                ul_conn,
                                &callbacks,
                                &extra->serve_state, 0) < 0) {
-    return html_err_contest_not_available(state, p, fout, phr, "");
+    return html_err_contest_not_available(fout, phr, " ");
   }
 
   extra->serve_state->current_time = time(0);
@@ -5383,9 +5706,9 @@ unprivileged_page(struct server_framework_state *state,
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && user_actions_table[phr->action]) {
-    user_actions_table[phr->action](state, p, fout, phr, cnts, extra);
+    user_actions_table[phr->action](fout, phr, cnts, extra);
   } else {
-    user_main_page(state, p, fout, phr, cnts, extra);
+    user_main_page(fout, phr, cnts, extra);
   }
 }
 
@@ -5419,74 +5742,68 @@ new_server_handle_http_request(struct server_framework_state *state,
 
   // parse the client IP address
   if (!(remote_addr = ns_getenv(phr, "REMOTE_ADDR")))
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "REMOTE_ADDR does not exist");
+    return html_err_invalid_param(fout, phr, 0, "REMOTE_ADDR does not exist");
   if (!strcmp(remote_addr, "::1")) remote_addr = "127.0.0.1";
   if (xml_parse_ip(0, 0, 0, remote_addr, &phr->ip) < 0)
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "cannot parse REMOTE_ADDR");
+    return html_err_invalid_param(fout, phr, 0, "cannot parse REMOTE_ADDR");
 
   // parse the contest_id
   if ((r = ns_cgi_param(phr, "contest_id", &s)) < 0)
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "cannot parse contest_id");
+    return html_err_invalid_param(fout, phr, 0, "cannot parse contest_id");
   if (r > 0) {
     if (sscanf(s, "%d%n", &phr->contest_id, &n) != 1
         || s[n] || phr->contest_id <= 0)
-      return html_err_invalid_param(state, p, fout, phr, 0,
-                                    "cannot parse contest_id");
+      return html_err_invalid_param(fout, phr, 0, "cannot parse contest_id");
   }
 
   // parse the session_id
   if ((r = ns_cgi_param(phr, "SID", &s)) < 0)
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "cannot parse SID");
+    return html_err_invalid_param(fout, phr, 0, "cannot parse SID");
   if (r > 0) {
     if (sscanf(s, "%llx%n", &phr->session_id, &n) != 1
         || s[n] || !phr->session_id)
-      return html_err_invalid_param(state, p, fout, phr, 0,
-                                    "cannot parse SID");
+      return html_err_invalid_param(fout, phr, 0, "cannot parse SID");
   }
 
   // parse the locale_id
   if ((r = ns_cgi_param(phr, "locale_id", &s)) < 0)
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "cannot parse locale_id");
+    return html_err_invalid_param(fout, phr, 0, "cannot parse locale_id");
   if (r > 0) {
     if (sscanf(s, "%d%n", &phr->locale_id, &n) != 1 || s[n]
         || phr->locale_id < 0)
-      return html_err_invalid_param(state, p, fout, phr, 0,
-                                    "cannot parse locale_id");
+      return html_err_invalid_param(fout, phr, 0, "cannot parse locale_id");
   }
 
   // parse the action
   if ((s = ns_cgi_nname(phr, "action_", 7))) {
     if (sscanf(s, "action_%d%n", &phr->action, &n) != 1 || s[n]
         || phr->action <= 0)
-      return html_err_invalid_param(state, p, fout, phr, 0,
-                                    "cannot parse action");
+      return html_err_invalid_param(fout, phr, 0, "cannot parse action");
   } else if ((r = ns_cgi_param(phr, "action", &s)) < 0) {
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "cannot parse action");
+    return html_err_invalid_param(fout, phr, 0, "cannot parse action");
   } else if (r > 0) {
     if (sscanf(s, "%d%n", &phr->action, &n) != 1 || s[n]
         || phr->action <= 0)
-      return html_err_invalid_param(state, p, fout, phr, 0,
-                                    "cannot parse action");
+      return html_err_invalid_param(fout, phr, 0, "cannot parse action");
   }
 
   // check how we've been called
   script_filename = ns_getenv(phr, "SCRIPT_FILENAME");
   if (!script_filename && phr->arg_num > 0) script_filename = phr->args[0];
   if (!script_filename)
-    return html_err_invalid_param(state, p, fout, phr, 0,
-                                  "cannot get script filename");
+    return html_err_invalid_param(fout, phr, 0, "cannot get script filename");
 
   os_rGetLastname(script_filename, last_name, sizeof(last_name));
   if (!strcmp(last_name, "priv-client"))
-    privileged_page(state, p, fout, phr);
-  else
-    unprivileged_page(state, p, fout, phr);
+    privileged_page(fout, phr);
+  else if (!strcmp(last_name, "new-master")) {
+    phr->role = USER_ROLE_ADMIN;
+    privileged_page(fout, phr);
+  } else if (!strcmp(last_name, "new-judge")) {
+    phr->role = USER_ROLE_JUDGE;
+    privileged_page(fout, phr);
+  } else
+    unprivileged_page(fout, phr);
 }
 
 /*
