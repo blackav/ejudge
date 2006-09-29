@@ -780,6 +780,12 @@ static const unsigned char * const submit_button_labels[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_COMPARE_RUNS] = __("Compare"),
   [NEW_SRV_ACTION_UPLOAD_REPORT] = __("Upload!"),
   [NEW_SRV_ACTION_REJUDGE_PROBLEM] = __("Rejudge"),
+  [NEW_SRV_ACTION_CLAR_REPLY] = __("Reply to sender"),
+  [NEW_SRV_ACTION_CLAR_REPLY_ALL] = __("Reply to all"),
+  [NEW_SRV_ACTION_CLAR_REPLY_READ_PROBLEM] = __("Read the problem"),
+  [NEW_SRV_ACTION_CLAR_REPLY_NO_COMMENTS] = __("No comments"),
+  [NEW_SRV_ACTION_CLAR_REPLY_YES] = __("Yes"),
+  [NEW_SRV_ACTION_CLAR_REPLY_NO] = __("No"),
 };
 
 #define BUTTON(a) new_serve_submit_button(bb, sizeof(bb), 0, a, 0)
@@ -2472,6 +2478,157 @@ priv_submit_clar(FILE *fout,
   return -1;
 }
 
+static int
+priv_clar_reply(FILE *fout,
+                FILE *log_f,
+                struct http_request_info *phr,
+                const struct contest_desc *cnts,
+                struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const unsigned char *errmsg;
+  const unsigned char *s, *reply_txt;
+  int in_reply_to, n;
+  struct clar_entry_v1 clar;
+  unsigned char *reply_txt_2;
+  size_t reply_len;
+  path_t orig_clar_name;
+  char *orig_txt = 0;
+  size_t orig_txt_len = 0;
+  unsigned char *new_subj;
+  size_t new_subj_len;
+
+  // reply, in_reply_to
+  if (ns_cgi_param(phr, "in_reply_to", &s) <= 0
+      || sscanf(s, "%d%n", &in_reply_to, &n) != 1 || s[n]
+      || in_reply_to < 0 || in_reply_to >= clar_get_total(cs->clarlog_state)) {
+    errmsg = "in_reply_to parameter is invalid";
+    goto invalid_param;
+  }
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_CLAR_REPLY:
+  case NEW_SRV_ACTION_CLAR_REPLY_ALL:
+    if (ns_cgi_param(phr, "reply", &reply_txt) <= 0) {
+      errmsg = "reply parameter is invalid";
+      goto invalid_param;
+    }
+  }
+
+  if (opcaps_check(phr->caps, OPCAP_REPLY_MESSAGE) < 0) {
+    fprintf(log_f, _("You don't have permissions to answer questions.\n"));
+    goto done;
+  }
+
+  if (clar_get_record_new(cs->clarlog_state, in_reply_to, &clar) < 0) {
+    fprintf(log_f, _("Invalid clar_id.\n"));
+    goto done;
+  }
+
+  if (!clar.from) {
+    fprintf(log_f, _("It's not allowed to answer to judge's messages.\n"));
+    goto done;
+  }
+
+  l10n_setlocale(clar.locale_id);
+  switch (phr->action) {
+  case NEW_SRV_ACTION_CLAR_REPLY_READ_PROBLEM:
+    reply_txt = _("Read the problem.");
+    break;
+  case NEW_SRV_ACTION_CLAR_REPLY_NO_COMMENTS:
+    reply_txt = _("No comments.");
+    break;
+  case NEW_SRV_ACTION_CLAR_REPLY_YES:
+    reply_txt = _("Yes.");
+    break;
+  case NEW_SRV_ACTION_CLAR_REPLY_NO:
+    reply_txt = _("No.");
+    break;
+  }
+  l10n_setlocale(0);
+
+  reply_len = strlen(reply_txt);
+  if (reply_len > 128 * 1024 * 1024) {
+    fprintf(log_f, _("Message length is too big (%zu).\n"), reply_len);
+    goto done;
+  }
+  reply_txt_2 = (unsigned char*) alloca(reply_len + 1);
+  memcpy(reply_txt_2, reply_txt, reply_len + 1);
+  while (reply_len > 0 && isspace(reply_txt_2[reply_len - 1])) reply_len--;
+  reply_txt_2[reply_len] = 0;
+  if (!reply_len) {
+    fprintf(log_f, _("Message is empty.\n"));
+    goto done;
+  }
+
+  snprintf(orig_clar_name, sizeof(orig_clar_name), "%06d", in_reply_to);
+  if (generic_read_file(&orig_txt, 0, &orig_txt_len, 0,
+                        global->clar_archive_dir, orig_clar_name, "") < 0) {
+    fprintf(log_f, _("Cannot read message from disk.\n"));
+    goto done;
+  }
+
+  l10n_setlocale(clar.locale_id);
+  new_subj = alloca(orig_txt_len + 64);
+  new_subj_len = message_reply_subj(orig_txt, new_subj);
+  l10n_setlocale(0);
+
+  /*
+  NEW_SRV_ACTION_CLAR_REPLY,
+  NEW_SRV_ACTION_CLAR_REPLY_ALL,
+  NEW_SRV_ACTION_CLAR_REPLY_READ_PROBLEM,
+  NEW_SRV_ACTION_CLAR_REPLY_NO_COMMENTS,
+  NEW_SRV_ACTION_CLAR_REPLY_YES,
+  NEW_SRV_ACTION_CLAR_REPLY_NO,
+  */
+
+
+
+
+
+
+  /*
+    message_base64_subj(new_subj, b64_subj_short, CLAR_MAX_SUBJ_TXT_LEN);
+    quoted_len = message_quoted_size(orig_txt);
+    quoted_ptr = alloca(quoted_len + 16);
+    message_quote(orig_txt, quoted_ptr);
+    msg = alloca(pkt->text_len + quoted_len + new_subj_len + 64);
+    msg_len = sprintf(msg, "%s%s\n%s", new_subj, quoted_ptr, text_ptr);
+    if (!pkt->dest_user_id) dest_uid = 0;
+    clar_id = clar_add_record(serve_state.clarlog_state, serve_state.current_time, msg_len,
+                              xml_unparse_ip(p->ip), 0, dest_uid, 0,
+                              p->user_id, hide_flag, b64_subj_short);
+    if (clar_id < 0) {
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    }
+    snprintf(clar_name, sizeof(clar_name), "%06d", clar_id);
+    if (generic_write_file(msg, msg_len, 0, serve_state.global->clar_archive_dir,
+                           clar_name, "") < 0) {
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    }
+    clar_update_flags(serve_state.clarlog_state, pkt->ref_clar_id, 2);
+    xfree(orig_txt);
+    info("%d: cmd_message: ok %d %zu", p->id, clar_id, msg_len);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  */
+
+
+
+
+
+ done:
+  xfree(orig_txt);
+  return 0;
+
+ invalid_param:
+  html_err_invalid_param(fout, phr, 0, errmsg);
+  return -1;
+}
+
 static const unsigned char * const form_row_attrs[]=
 {
   " bgcolor=\"#d0d0d0\"",
@@ -3208,6 +3365,12 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = priv_change_language,
   [NEW_SRV_ACTION_SUBMIT_RUN] = priv_submit_run,
   [NEW_SRV_ACTION_PRIV_SUBMIT_CLAR] = priv_submit_clar,
+  [NEW_SRV_ACTION_CLAR_REPLY] = priv_clar_reply,
+  [NEW_SRV_ACTION_CLAR_REPLY_ALL] = priv_clar_reply,
+  [NEW_SRV_ACTION_CLAR_REPLY_READ_PROBLEM] = priv_clar_reply,
+  [NEW_SRV_ACTION_CLAR_REPLY_NO_COMMENTS] = priv_clar_reply,
+  [NEW_SRV_ACTION_CLAR_REPLY_YES] = priv_clar_reply,
+  [NEW_SRV_ACTION_CLAR_REPLY_NO] = priv_clar_reply,
 };
 
 static int priv_next_state[NEW_SRV_ACTION_LAST] =
@@ -3819,6 +3982,12 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = priv_generic_operation,
   [NEW_SRV_ACTION_SUBMIT_RUN] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_CLAR] = priv_generic_operation,
+  [NEW_SRV_ACTION_CLAR_REPLY] = priv_generic_operation,
+  [NEW_SRV_ACTION_CLAR_REPLY_ALL] = priv_generic_operation,
+  [NEW_SRV_ACTION_CLAR_REPLY_READ_PROBLEM] = priv_generic_operation,
+  [NEW_SRV_ACTION_CLAR_REPLY_NO_COMMENTS] = priv_generic_operation,
+  [NEW_SRV_ACTION_CLAR_REPLY_YES] = priv_generic_operation,
+  [NEW_SRV_ACTION_CLAR_REPLY_NO] = priv_generic_operation,
 };
 
 static void
