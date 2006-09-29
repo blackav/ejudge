@@ -41,8 +41,13 @@ struct session_info
   int user_viewed_section;
 };
 
+struct server_framework_state;
+
 struct http_request_info
 {
+  int id;
+  struct server_framework_state *fw_state;
+
   // program invocation arguments
   int arg_num;
   const unsigned char **args;
@@ -212,12 +217,11 @@ int nsdb_del_role(int user_id, int contest_id, int role);
 int nsdb_priv_remove_user(int user_id, int contest_id);
 
 void
-new_server_html_err_internal_error(struct server_framework_state *state,
-                                   struct client_state *p,
-                                   FILE *fout,
+new_server_html_err_internal_error(FILE *fout,
                                    struct http_request_info *phr,
                                    int priv_mode,
-                                   const char *format, ...);
+                                   const char *format, ...)
+  __attribute__((format(printf, 4, 5)));
 
 struct session_info *
 new_server_get_session(ej_cookie_t session_id, time_t cur_time);
@@ -280,7 +284,8 @@ void new_serve_header(FILE *out, unsigned char const *template,
                       unsigned char const *content_type,
                       unsigned char const *charset,
                       int locale_id,
-                      char const *format, ...);
+                      char const *format, ...)
+  __attribute__((format(printf, 6, 7)));
 
 const unsigned char *new_serve_unparse_role(int role);
 

@@ -1381,6 +1381,7 @@ remove_member_func(void *data, int user_id, int contest_id,
   }
 
   // clean copied_from
+  /*
   for (role = 0; role < USERLIST_MB_LAST; role++) {
     if (!(mm = ui->members[role])) continue;
     for (num = 0; num < mm->total; num++) {
@@ -1388,6 +1389,7 @@ remove_member_func(void *data, int user_id, int contest_id,
       m->copied_from = 0;
     }
   }
+  */
 
   ui->last_change_time = cur_time;
   state->dirty = 1;

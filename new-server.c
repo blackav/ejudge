@@ -231,6 +231,8 @@ cmd_http_request(struct server_framework_state *state,
   struct http_request_info hr;
 
   memset(&hr, 0, sizeof(hr));
+  hr.id = p->id;
+  hr.fw_state = state;
   gettimeofday(&hr.timestamp1, 0);
 
   if (pkt_size < sizeof(*pkt))
@@ -328,8 +330,7 @@ cmd_http_request(struct server_framework_state *state,
     out_f = open_memstream(&out_txt, &out_size);
 
 
-    new_server_html_err_internal_error(state, p, out_f, &hr, 0,
-                                       "empty output generated");
+    new_server_html_err_internal_error(out_f, &hr, 0, "empty output generated");
     fclose(out_f); out_f = 0;
   }
 
