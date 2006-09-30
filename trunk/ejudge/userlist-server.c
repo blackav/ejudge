@@ -986,7 +986,7 @@ cmd_register_new_2(struct client_state *p,
   struct userlist_pk_xml_data *out = 0;
   size_t out_size = 0, passwd_len;
   time_t current_time = time(0);
-  int user_id, serial, action = 3;
+  int user_id, serial = 0, action = 3, serial_step = 1, n;
   const struct userlist_user *u;
   unsigned char login_buf[1024];
 
@@ -1044,9 +1044,17 @@ cmd_register_new_2(struct client_state *p,
   }
 
   if (cnts->assign_logins && cnts->login_template) {
-    serial = 0;
+    if (cnts->login_template_options
+        && sscanf(cnts->login_template_options, "%d%d%n",
+                  &serial, &serial_step, &n) == 2
+        && !cnts->login_template_options[n] && serial_step != 0) {
+      serial -= serial_step;
+    } else {
+      serial = 0;
+      serial_step = 1;
+    }
     while (1) {
-      serial++;
+      serial += serial_step;
       snprintf(login_buf, sizeof(login_buf), cnts->login_template, serial);
       if ((user_id = default_get_user_by_login(login_buf)) < 0) break;
     }
@@ -1226,7 +1234,7 @@ cmd_register_new(struct client_state *p,
   unsigned char locale_str[256];
   unsigned char *url_str = 0;
   unsigned char contest_url[256];
-  int user_id, serial = 0, action = 3;
+  int user_id, serial = 0, action = 3, serial_step = 1, n;
   unsigned char login_buf[1024];
 
   // validate packet
@@ -1261,9 +1269,17 @@ cmd_register_new(struct client_state *p,
   originator_email = get_email_sender(cnts);
  
   if (cnts && cnts->assign_logins && cnts->login_template) {
-    serial = 0;
+    if (cnts->login_template_options
+        && sscanf(cnts->login_template_options, "%d%d%n",
+                  &serial, &serial_step, &n) == 2
+        && !cnts->login_template_options[n] && serial_step != 0) {
+      serial -= serial_step;
+    } else {
+      serial = 0;
+      serial_step = 1;
+    }
     while (1) {
-      serial++;
+      serial += serial_step;
       snprintf(login_buf, sizeof(login_buf), cnts->login_template, serial);
       if ((user_id = default_get_user_by_login(login_buf)) < 0) break;
     }
