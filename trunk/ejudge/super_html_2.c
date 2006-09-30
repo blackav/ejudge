@@ -95,6 +95,7 @@ super_html_clear_variable(struct sid_state *sstate, int cmd)
   case SSERV_CMD_CNTS_CLEAR_REGISTER_TABLE_STYLE: p_str = &cnts->register_table_style; break;
   case SSERV_CMD_CNTS_CLEAR_REGISTER_NAME_COMMENT: p_str = &cnts->user_name_comment; break;
   case SSERV_CMD_CNTS_CLEAR_ALLOWED_LANGUAGES: p_str = &cnts->allowed_languages; break;
+  case SSERV_CMD_CNTS_CLEAR_ALLOWED_REGIONS: p_str = &cnts->allowed_regions; break;
   case SSERV_CMD_CNTS_CLEAR_CF_NOTIFY_EMAIL: p_str = &cnts->cf_notify_email; break;
   case SSERV_CMD_CNTS_CLEAR_CLAR_NOTIFY_EMAIL: p_str = &cnts->clar_notify_email; break;
   case SSERV_CMD_CNTS_CLEAR_DAILY_STAT_EMAIL: p_str = &cnts->daily_stat_email; break;
@@ -103,6 +104,7 @@ super_html_clear_variable(struct sid_state *sstate, int cmd)
   case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL: p_str = &cnts->register_email; break;
   case SSERV_CMD_CNTS_CLEAR_REGISTER_URL: p_str = &cnts->register_url; break;
   case SSERV_CMD_CNTS_CLEAR_LOGIN_TEMPLATE: p_str = &cnts->login_template; break;
+  case SSERV_CMD_CNTS_CLEAR_LOGIN_TEMPLATE_OPTIONS: p_str = &cnts->login_template_options; break;
   case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE: p_str = &cnts->register_email_file; break;
   case SSERV_CMD_CNTS_CLEAR_TEAM_URL: p_str = &cnts->team_url; break;
   case SSERV_CMD_CNTS_CLEAR_STANDINGS_URL: p_str = &cnts->standings_url; break;
@@ -399,6 +401,9 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   case SSERV_CMD_CNTS_CHANGE_ALLOWED_LANGUAGES:
     p_str = &cnts->allowed_languages;
     break;
+  case SSERV_CMD_CNTS_CHANGE_ALLOWED_REGIONS:
+    p_str = &cnts->allowed_regions;
+    break;
   case SSERV_CMD_CNTS_CHANGE_CF_NOTIFY_EMAIL:
     p_str = &cnts->cf_notify_email;
     break;
@@ -422,6 +427,9 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     break;
   case SSERV_CMD_CNTS_CHANGE_LOGIN_TEMPLATE:
     p_str = &cnts->login_template;
+    break;
+  case SSERV_CMD_CNTS_CHANGE_LOGIN_TEMPLATE_OPTIONS:
+    p_str = &cnts->login_template_options;
     break;
   case SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL_FILE:
     p_str = &cnts->register_email_file;

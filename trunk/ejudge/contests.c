@@ -106,6 +106,8 @@ static char const * const elem_map[] =
   "daily_stat_email",
   "priv_header_file",
   "priv_footer_file",
+  "allowed_regions",
+  "login_template_options",
 
   0
 };
@@ -181,6 +183,7 @@ node_free(struct xml_tree *t)
       xfree(cnts->register_email);
       xfree(cnts->register_url);
       xfree(cnts->login_template);
+      xfree(cnts->login_template_options);
       xfree(cnts->team_url);
       xfree(cnts->root_dir);
       xfree(cnts->conf_dir);
@@ -206,6 +209,7 @@ node_free(struct xml_tree *t)
       xfree(cnts->team_par_style);
       xfree(cnts->user_name_comment);
       xfree(cnts->allowed_languages);
+      xfree(cnts->allowed_regions);
       xfree(cnts->cf_notify_email);
       xfree(cnts->clar_notify_email);
       xfree(cnts->daily_stat_email);
@@ -570,6 +574,7 @@ static const size_t contest_final_offsets[CONTEST_LAST_TAG] =
   [CONTEST_REGISTER_EMAIL] = CONTEST_DESC_OFFSET(register_email),
   [CONTEST_REGISTER_URL] = CONTEST_DESC_OFFSET(register_url),
   [CONTEST_LOGIN_TEMPLATE] = CONTEST_DESC_OFFSET(login_template),
+  [CONTEST_LOGIN_TEMPLATE_OPTIONS]=CONTEST_DESC_OFFSET(login_template_options),
   [CONTEST_TEAM_URL] = CONTEST_DESC_OFFSET(team_url),
   [CONTEST_ROOT_DIR] = CONTEST_DESC_OFFSET(root_dir),
   [CONTEST_STANDINGS_URL] = CONTEST_DESC_OFFSET(standings_url),
@@ -599,6 +604,7 @@ static const size_t contest_final_offsets[CONTEST_LAST_TAG] =
   [CONTEST_REGISTER_EMAIL_FILE] = CONTEST_DESC_OFFSET(register_email_file),
   [CONTEST_USER_NAME_COMMENT] = CONTEST_DESC_OFFSET(user_name_comment),
   [CONTEST_ALLOWED_LANGUAGES] = CONTEST_DESC_OFFSET(allowed_languages),
+  [CONTEST_ALLOWED_REGIONS] = CONTEST_DESC_OFFSET(allowed_regions),
   [CONTEST_CF_NOTIFY_EMAIL] = CONTEST_DESC_OFFSET(cf_notify_email),
   [CONTEST_CLAR_NOTIFY_EMAIL] = CONTEST_DESC_OFFSET(clar_notify_email),
   [CONTEST_DAILY_STAT_EMAIL] = CONTEST_DESC_OFFSET(daily_stat_email),
@@ -1454,6 +1460,7 @@ contests_unparse(FILE *f,
   unparse_text(f, CONTEST_PROBLEMS_URL, cnts->problems_url);
   unparse_text(f, CONTEST_REGISTER_EMAIL_FILE, cnts->register_email_file);
   unparse_text(f, CONTEST_LOGIN_TEMPLATE, cnts->login_template);
+  unparse_text(f, CONTEST_LOGIN_TEMPLATE_OPTIONS, cnts->login_template_options);
 
   unparse_access(f, cnts->register_access, CONTEST_REGISTER_ACCESS);
   unparse_access(f, cnts->users_access, CONTEST_USERS_ACCESS);
@@ -1520,6 +1527,7 @@ contests_unparse(FILE *f,
 
   unparse_text(f, CONTEST_USER_NAME_COMMENT, cnts->user_name_comment);
   unparse_text(f, CONTEST_ALLOWED_LANGUAGES, cnts->allowed_languages);
+  unparse_text(f, CONTEST_ALLOWED_REGIONS, cnts->allowed_regions);
   unparse_text(f, CONTEST_CF_NOTIFY_EMAIL, cnts->cf_notify_email);
   unparse_text(f, CONTEST_CLAR_NOTIFY_EMAIL, cnts->clar_notify_email);
   unparse_text(f, CONTEST_DAILY_STAT_EMAIL, cnts->daily_stat_email);

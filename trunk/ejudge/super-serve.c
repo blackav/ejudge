@@ -2472,6 +2472,7 @@ cmd_simple_top_command(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CLEAR_REGISTER_TABLE_STYLE:
   case SSERV_CMD_CNTS_CLEAR_REGISTER_NAME_COMMENT:
   case SSERV_CMD_CNTS_CLEAR_ALLOWED_LANGUAGES:
+  case SSERV_CMD_CNTS_CLEAR_ALLOWED_REGIONS:
   case SSERV_CMD_CNTS_CLEAR_CF_NOTIFY_EMAIL:
   case SSERV_CMD_CNTS_CLEAR_CLAR_NOTIFY_EMAIL:
   case SSERV_CMD_CNTS_CLEAR_DAILY_STAT_EMAIL:
@@ -2480,6 +2481,7 @@ cmd_simple_top_command(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL:
   case SSERV_CMD_CNTS_CLEAR_REGISTER_URL:
   case SSERV_CMD_CNTS_CLEAR_LOGIN_TEMPLATE:
+  case SSERV_CMD_CNTS_CLEAR_LOGIN_TEMPLATE_OPTIONS:
   case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE:
   case SSERV_CMD_CNTS_CLEAR_TEAM_URL:
   case SSERV_CMD_CNTS_CLEAR_STANDINGS_URL:
@@ -2577,6 +2579,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CHANGE_REGISTER_TABLE_STYLE:
   case SSERV_CMD_CNTS_CHANGE_REGISTER_NAME_COMMENT:
   case SSERV_CMD_CNTS_CHANGE_ALLOWED_LANGUAGES:
+  case SSERV_CMD_CNTS_CHANGE_ALLOWED_REGIONS:
   case SSERV_CMD_CNTS_CHANGE_CF_NOTIFY_EMAIL:
   case SSERV_CMD_CNTS_CHANGE_CLAR_NOTIFY_EMAIL:
   case SSERV_CMD_CNTS_CHANGE_DAILY_STAT_EMAIL:
@@ -2585,6 +2588,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL:
   case SSERV_CMD_CNTS_CHANGE_REGISTER_URL:
   case SSERV_CMD_CNTS_CHANGE_LOGIN_TEMPLATE:
+  case SSERV_CMD_CNTS_CHANGE_LOGIN_TEMPLATE_OPTIONS:
   case SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL_FILE:
   case SSERV_CMD_CNTS_CHANGE_TEAM_URL:
   case SSERV_CMD_CNTS_CHANGE_STANDINGS_URL:
@@ -3038,6 +3042,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CLEAR_REGISTER_TABLE_STYLE] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_REGISTER_NAME_COMMENT] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_ALLOWED_LANGUAGES] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_ALLOWED_REGIONS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_CF_NOTIFY_EMAIL] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_CLAR_NOTIFY_EMAIL] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_DAILY_STAT_EMAIL] = { cmd_simple_top_command },
@@ -3046,6 +3051,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_REGISTER_URL] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_LOGIN_TEMPLATE] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_LOGIN_TEMPLATE_OPTIONS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_TEAM_URL] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_STANDINGS_URL] = { cmd_simple_top_command },
@@ -3093,6 +3099,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_REGISTER_TABLE_STYLE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_REGISTER_NAME_COMMENT] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_ALLOWED_LANGUAGES] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_ALLOWED_REGIONS] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_CF_NOTIFY_EMAIL] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_CLAR_NOTIFY_EMAIL] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_DAILY_STAT_EMAIL] = { cmd_set_value },
@@ -3101,6 +3108,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_REGISTER_URL] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_LOGIN_TEMPLATE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_LOGIN_TEMPLATE_OPTIONS] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL_FILE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_TEAM_URL] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_STANDINGS_URL] = { cmd_set_value },
