@@ -3516,6 +3516,7 @@ priv_main_page(FILE *fout,
   path_t variant_stmt_file;
   struct watched_file *pw = 0;
   const unsigned char *pw_path;
+  const unsigned char *alternatives;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if (ns_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
@@ -3807,6 +3808,22 @@ priv_main_page(FILE *fout,
         } else {
           fprintf(fout, "%s", pw->text);
         }
+      }
+      alternatives = 0;
+      if ((prob->type_val == PROB_TYPE_SELECT_ONE
+           || prob->type_val == PROB_TYPE_SELECT_MANY)
+          && prob->alternatives_file[0]) {
+        if (variant > 0) {
+          insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
+                             prob->alternatives_file, variant);
+          pw = &cs->prob_extras[prob->id].v_alts[variant];
+          pw_path = variant_stmt_file;
+        } else {
+          pw = &cs->prob_extras[prob->id].alt;
+          pw_path = prob->alternatives_file;
+        }
+        watched_file_update(pw, pw_path, cs->current_time);
+        alternatives = pw->text;
       }
 
       html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
@@ -5480,6 +5497,7 @@ user_main_page(FILE *fout,
   const struct section_problem_data *prob = 0;
   unsigned char urlbuf[1024];
   unsigned char bb[1024];
+  const unsigned char *alternatives = 0;
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
@@ -5680,6 +5698,22 @@ user_main_page(FILE *fout,
         } else {
           fprintf(fout, "%s", pw->text);
         }
+      }
+      alternatives = 0;
+      if ((prob->type_val == PROB_TYPE_SELECT_ONE
+           || prob->type_val == PROB_TYPE_SELECT_MANY)
+          && prob->alternatives_file[0]) {
+        if (variant > 0) {
+          insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
+                             prob->alternatives_file, variant);
+          pw = &cs->prob_extras[prob->id].v_alts[variant];
+          pw_path = variant_stmt_file;
+        } else {
+          pw = &cs->prob_extras[prob->id].alt;
+          pw_path = prob->alternatives_file;
+        }
+        watched_file_update(pw, pw_path, cs->current_time);
+        alternatives = pw->text;
       }
 
       html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
