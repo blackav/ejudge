@@ -88,6 +88,8 @@ enum
     CONTEST_DAILY_STAT_EMAIL,
     CONTEST_PRIV_HEADER_FILE,
     CONTEST_PRIV_FOOTER_FILE,
+    CONTEST_ALLOWED_REGIONS,
+    CONTEST_LOGIN_TEMPLATE_OPTIONS,
 
     CONTEST_LAST_TAG
   };
@@ -244,6 +246,7 @@ struct contest_desc
   unsigned char *register_url;
   unsigned char *team_url;
   unsigned char *login_template;
+  unsigned char *login_template_options;
   unsigned char *root_dir;
   unsigned char *conf_dir;
   unsigned char *standings_url;
@@ -282,6 +285,7 @@ struct contest_desc
 
   unsigned char *user_name_comment;
   unsigned char *allowed_languages;
+  unsigned char *allowed_regions;
 
   unsigned char client_ignore_time_skew;
   unsigned char client_disable_team;

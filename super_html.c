@@ -2649,6 +2649,16 @@ super_html_edit_contest_page(FILE *f,
                              self_url,
                              extra_args,
                              hidden_vars);
+    print_string_editing_row(f, "Allowed regions:",
+                             cnts->allowed_regions,
+                             SUPER_ACTION_CNTS_CHANGE_ALLOWED_REGIONS,
+                             SUPER_ACTION_CNTS_CLEAR_ALLOWED_REGIONS,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
   }
 
   html_start_form(f, 1, self_url, hidden_vars);
@@ -2697,6 +2707,16 @@ super_html_edit_contest_page(FILE *f,
                                cnts->login_template,
                                SUPER_ACTION_CNTS_CHANGE_LOGIN_TEMPLATE,
                                SUPER_ACTION_CNTS_CLEAR_LOGIN_TEMPLATE,
+                               0,
+                               session_id,
+                               form_row_attrs[row ^= 1],
+                               self_url,
+                               extra_args,
+                               hidden_vars);
+      print_string_editing_row(f, "Template options:",
+                               cnts->login_template_options,
+                               SUPER_ACTION_CNTS_CHANGE_LOGIN_TEMPLATE_OPTIONS,
+                               SUPER_ACTION_CNTS_CLEAR_LOGIN_TEMPLATE_OPTIONS,
                                0,
                                session_id,
                                form_row_attrs[row ^= 1],
