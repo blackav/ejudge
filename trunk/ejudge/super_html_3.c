@@ -3657,6 +3657,33 @@ super_html_print_problem(FILE *f,
                              session_id, form_row_attrs[row ^= 1],
                              self_url, extra_args, prob_hidden_vars);
 
+  //PROBLEM_PARAM(alternatives_file, "s"),
+  if (prob->abstract) i = prob->type_val;
+  else i = tmp_prob.type_val;
+  if (i == PROB_TYPE_SELECT_MANY || i == PROB_TYPE_SELECT_ONE) {
+    extra_msg = 0;
+    if (prob->abstract && !prob->alternatives_file[0])
+      extra_msg="<i>(Undefined)</i>";
+    if (!prob->abstract) {
+      prepare_set_prob_value(PREPARE_FIELD_PROB_ALTERNATIVES_FILE,
+                             &tmp_prob, sup_prob, sstate->global);
+      s = html_armor_string_dup(tmp_prob.alternatives_file);
+      if (!prob->alternatives_file[0])
+        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
+      else
+        snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>", s);
+      xfree(s);
+      extra_msg = msg_buf;
+    }
+    print_string_editing_row_2(f, "File with answer alternatives:",
+                               prob->alternatives_file,
+                               SUPER_ACTION_PROB_CHANGE_ALTERNATIVES_FILE,
+                               SUPER_ACTION_PROB_CLEAR_ALTERNATIVES_FILE,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+  }
+
   //PROBLEM_PARAM(test_dir, "s"),
   extra_msg = 0;
   if (prob->abstract && !prob->test_dir[0]) extra_msg = "<i>(Undefined)</i>";
@@ -5379,6 +5406,14 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CLEAR_STATEMENT_FILE:
     PROB_CLEAR_STRING(statement_file);
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_ALTERNATIVES_FILE:
+    PROB_ASSIGN_STRING(alternatives_file);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_ALTERNATIVES_FILE:
+    PROB_CLEAR_STRING(alternatives_file);
     return 0;
 
   default:

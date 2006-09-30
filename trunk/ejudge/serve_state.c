@@ -71,10 +71,18 @@ serve_state_destroy(serve_state_t state, struct userlist_clnt *ul_conn)
   if (state->prob_extras) {
     for (i = 1; i <= state->max_prob; i++) {
       watched_file_clear(&state->prob_extras[i].stmt);
-      if (state->probs[i] && state->probs[i]->variant_num > 0) {
+      watched_file_clear(&state->prob_extras[i].alt);
+      if (state->probs[i] && state->probs[i]->variant_num > 0
+          && state->prob_extras[i].v_stmts) {
         for (j = 1; j <= state->probs[i]->variant_num; j++)
           watched_file_clear(&state->prob_extras[i].v_stmts[j]);
         xfree(state->prob_extras[i].v_stmts);
+      }
+      if (state->probs[i] && state->probs[i]->variant_num > 0
+          && state->prob_extras[i].v_alts) {
+        for (j = 1; j <= state->probs[i]->variant_num; j++)
+          watched_file_clear(&state->prob_extras[i].v_alts[j]);
+        xfree(state->prob_extras[i].v_alts);
       }
     }
   }
@@ -205,6 +213,7 @@ serve_state_load_contest(int contest_id,
   for (i = 1; i <= state->max_prob; i++) {
     if (!state->probs[i] || state->probs[i]->variant_num <= 0) continue;
     XCALLOC(state->prob_extras[i].v_stmts, state->probs[i]->variant_num + 1);
+    XCALLOC(state->prob_extras[i].v_alts, state->probs[i]->variant_num + 1);
   }
 
   *p_state = state;

@@ -904,6 +904,9 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     unparse_bool(f, "binary_input", prob->binary_input);
   if (prob->statement_file[0])
     fprintf(f, "statement_file = \"%s\"\n",c_armor(&sbuf,prob->statement_file));
+  if (prob->alternatives_file[0])
+    fprintf(f, "alternatives_file = \"%s\"\n",
+            c_armor(&sbuf, prob->alternatives_file));
   if (prob->test_dir[0])
     fprintf(f, "test_dir = \"%s\"\n", c_armor(&sbuf, prob->test_dir));
   if (prob->test_sfx[0] != 1) {
@@ -1716,6 +1719,11 @@ prob_instr(FILE *f, const unsigned char *root_dir,
   prepare_set_prob_value(PREPARE_FIELD_PROB_STATEMENT_FILE, &tmp_prob, abstr,0);
   if (prob->statement_file[0]) {
     fprintf(f, "Problem statement: %s\n", prob->statement_file);
+  }
+  prepare_set_prob_value(PREPARE_FIELD_PROB_ALTERNATIVES_FILE,
+                         &tmp_prob, abstr,0);
+  if (prob->alternatives_file[0]) {
+    fprintf(f, "Problem possible answers: %s\n", prob->alternatives_file);
   }
   if (!prob->standard_checker[0]) {
     mkpath(checker_path, conf_path, global->checker_dir, DFLT_G_CHECKER_DIR);

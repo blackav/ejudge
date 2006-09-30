@@ -76,6 +76,9 @@ struct problem_extra_info
 {
   struct watched_file stmt;
   struct watched_file *v_stmts;
+  // alternative selection
+  struct watched_file alt;
+  struct watched_file *v_alts;
 };
 
 struct serve_state
