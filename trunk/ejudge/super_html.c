@@ -1874,6 +1874,7 @@ static const unsigned char *const form_field_names[] =
   [CONTEST_F_CITY_EN] = "City (English)",
   [CONTEST_F_COUNTRY] = "Country",
   [CONTEST_F_COUNTRY_EN] = "Country (English)",
+  [CONTEST_F_REGION] = "Region",
   [CONTEST_F_LANGUAGES] = "Programming Languages",
 };
 

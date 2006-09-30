@@ -108,6 +108,7 @@ enum
     USERLIST_T_CITY_EN,
     USERLIST_T_COUNTRY,
     USERLIST_T_COUNTRY_EN,
+    USERLIST_T_REGION,
     USERLIST_T_LOCATION,
     USERLIST_T_SPELLING,
     USERLIST_T_PRINTER_NAME,
@@ -211,15 +212,17 @@ enum
     USERLIST_NC_COUNTRY,
     /* 115 */
     USERLIST_NC_COUNTRY_EN,
+    USERLIST_NC_REGION,
     USERLIST_NC_LOCATION,
     USERLIST_NC_SPELLING,
     USERLIST_NC_PRINTER_NAME,
-    USERLIST_NC_LANGUAGES,
     /* 120 */
+    USERLIST_NC_LANGUAGES,
     USERLIST_NC_PHONE,
     USERLIST_NC_CREATE_TIME,
     USERLIST_NC_LAST_LOGIN_TIME,
     USERLIST_NC_LAST_CHANGE_TIME,
+    /* 125 */
     USERLIST_NC_LAST_PWDCHANGE_TIME,
 
     USERLIST_NC_LAST,
@@ -357,6 +360,7 @@ struct userlist_user_info
   unsigned char *city_en;
   unsigned char *country;
   unsigned char *country_en;
+  unsigned char *region;
   unsigned char *location;
   unsigned char *spelling;
   unsigned char *printer_name;

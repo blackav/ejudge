@@ -60,6 +60,8 @@
 #define FIRST_CONTEST(u) ((struct userlist_contest*)(u)->contests->first_down)
 #define NEXT_CONTEST(c)  ((struct userlist_contest*)(c)->b.right)
 
+#define ARMOR(s)  html_armor_buf(&ab, s)
+
 /* ACTIONS, that may be performed by client*/
 enum
   {
@@ -170,6 +172,7 @@ static unsigned char *user_city;
 static unsigned char *user_city_en;
 static unsigned char *user_country;
 static unsigned char *user_country_en;
+static unsigned char *user_region;
 static unsigned char *user_languages;
 static int user_show_email;
 static int user_contest_id;
@@ -191,6 +194,9 @@ static size_t header_len, footer_len;
 
 static unsigned char **allowed_languages;
 static size_t allowed_languages_u;
+
+static unsigned char **allowed_regions;
+static size_t allowed_regions_u;
 
 static unsigned char *head_style = "h2";
 static unsigned char *par_style = "";
@@ -270,6 +276,8 @@ static struct field_desc field_descs[CONTEST_LAST_FIELD] =
     name_accept_chars, '?', 64, 64 },
   { "country_en", _("Country (En)"), "country_en", &user_country_en,
     name_en_accept_chars, '?', 64, 64 },
+  { "region", _("Region"), "region", &user_region,
+    name_accept_chars, '?', 64, 64 },
   { "languages", _("Programming languages"), "languages", &user_languages,
     name_accept_chars, '?', 64, 64 },
 };
@@ -601,7 +609,7 @@ check_config_exist(unsigned char const *path)
 }
 
 static void
-parse_allowed_languages(const unsigned char *str, unsigned char ***pv, size_t *pu)
+parse_allowed_list(const unsigned char *str, unsigned char ***pv, size_t *pu)
 {
   const unsigned char *s, *q;
   unsigned char *p;
@@ -790,8 +798,10 @@ initialize(int argc, char const *argv[])
     table_style = cnts->register_table_style;
     contest_user_name_comment = cnts->user_name_comment;
     disable_member_delete = cnts->disable_member_delete;
-    parse_allowed_languages(cnts->allowed_languages,
-                            &allowed_languages, &allowed_languages_u);
+    parse_allowed_list(cnts->allowed_languages,
+                       &allowed_languages, &allowed_languages_u);
+    parse_allowed_list(cnts->allowed_regions,
+                       &allowed_regions, &allowed_regions_u);
     logger_set_level(-1, LOG_WARNING);
     if (cnts->register_header_file) {
       generic_read_file(&header_txt, 0, &header_len, 0,
@@ -1505,7 +1515,7 @@ map_user_languages(const unsigned char *user_langs, int **pmap)
   XCALLOC(map, allowed_languages_u);
   *pmap = map;
 
-  parse_allowed_languages(user_langs, &langs, &langs_u);
+  parse_allowed_list(user_langs, &langs, &langs_u);
   if (!langs || !langs_u) return;
   for (i = 0; i < allowed_languages_u; i++) {
     for (j = 0; j < langs_u; j++)
@@ -1527,8 +1537,9 @@ display_edit_registration_data_page(void)
   unsigned char s1[128], url[512];
   int *user_lang_map = 0;
   unsigned char *s;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
-  if (!authentificate()) return;
+  if (!authentificate()) goto done;
 
   /* ??? */
   if (cgi_param("show_all")) {
@@ -1539,7 +1550,7 @@ display_edit_registration_data_page(void)
   if (user_contest_id <= 0) {
     client_put_header(stdout, header_txt, config->charset, 0, 1,
                       client_locale_id, "%s", _("Invalid contest identifier"));
-    return;
+    goto done;
   }
 
   if (user_contest_id > 0) {
@@ -1549,7 +1560,7 @@ display_edit_registration_data_page(void)
       client_put_header(stdout, header_txt, 0, config->charset, 1,
                         client_locale_id, "%s", _("Invalid contest"));
       printf("<p>%s</p>.", _("Invalid contest identifier specified"));
-      return;
+      goto done;
     }
   }
   ASSERT(cnts);
@@ -1558,7 +1569,7 @@ display_edit_registration_data_page(void)
     client_put_header(stdout, header_txt, 0, config->charset, 1,
                       client_locale_id, "%s", _("Permission denied"));
     printf("<p>%s</p>.", _("You cannot participate in this contest"));
-    return;
+    goto done;
   }
 
   prepare_var_table(cnts);
@@ -1576,7 +1587,7 @@ display_edit_registration_data_page(void)
   /* or read the information from form variables */
   switch (user_action) {
   case STATE_EDIT_REGISTRATION_DATA:
-    if (read_user_info_from_server() < 0) return;
+    if (read_user_info_from_server() < 0) goto done;
     break;
   default:
     read_user_info_from_form();
@@ -1593,7 +1604,7 @@ display_edit_registration_data_page(void)
              par_style, _("Cannot add a new"),
              gettext(member_string[role]),
              _("maximal number reached"));
-      return;
+      goto done;
     }
 
     member_cur[role]++;
@@ -1698,16 +1709,26 @@ display_edit_registration_data_page(void)
 
       printf("<table border=\"0\">\n");
       for (j = 0; j < allowed_languages_u; j++) {
-        s = html_armor_string_dup(allowed_languages[j]);
         printf("<tr><td><input type=\"checkbox\" name=\"proglang_%d\"%s%s></td>"
                "<td>%s</td></tr>\n",
                j, user_lang_map[j]?" checked=\"yes\"":"",
                user_read_only? dis_str : "",
-               s);
-        xfree(s);
+               ARMOR(allowed_languages[j]));
       }
       printf("</table>\n");
-
+      continue;
+    }
+    if (i == CONTEST_F_REGION && allowed_regions_u > 0) {
+      printf("<p%s>%s%s:\n", par_style, gettext(field_descs[i].orig_name),
+             field_descs[i].is_mandatory?" (*)":"");
+      printf("<select name=\"region\"><option></option>");
+      for (j = 0; j < allowed_regions_u; j++) {
+        s = "";
+        if (!strcmp(user_region, allowed_regions[j]))
+          s = " selected=\"yes\"";
+        printf("<option%s>%s</option>", s, ARMOR(allowed_regions[j]));
+      }
+      printf("</select>\n");
       continue;
     }
 
@@ -1840,6 +1861,9 @@ display_edit_registration_data_page(void)
   print_choose_language_button(0, 1, 0, 0);
   printf("</form>");
 #endif
+
+ done:
+  html_armor_free(&ab);
 }
 
 /* contains "change language", "login", "register new" buttons */
@@ -2384,12 +2408,14 @@ display_main_page(void)
   }
   print_choose_language_button(0, 0, ACTION_CHANGE_LANG_AT_MAIN_PAGE, 0);
   printf("</form>\n");
-  return;
+  goto done;
 
  failed:
   client_put_header(stdout, header_txt, 0, config->charset, 1,
                     client_locale_id, "%s", _("Fatal error"));
   printf("<pre>%s</pre>\n", error_log);
+
+ done:;
 }
 
 static void

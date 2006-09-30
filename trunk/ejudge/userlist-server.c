@@ -3325,6 +3325,12 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
     if (!daemon_mode) info("%d: country_en updated", p->id);
     updated = 1;
   }
+  if (needs_update(ui->region, new_u->i.region)) {
+    xfree(ui->region);
+    ui->region = xstrdup(new_u->i.region);
+    if (!daemon_mode) info("%d: region updated", p->id);
+    updated = 1;
+  }
   /*
   if (needs_update(old_u->location, new_u->location)) {
     xfree(old_u->location);
@@ -4275,6 +4281,11 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
             d->users_verb_style, _("Country (En)"),
             d->users_verb_style, ui->country_en?ui->country_en:notset);
   }
+  if (!d || d->fields[CONTEST_F_REGION]) {
+    fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+            d->users_verb_style, _("Region"),
+            d->users_verb_style, ui->region?ui->region:notset);
+  }
     /* Location is never shown
     if (!d || d->fields[CONTEST_F_LOCATION]) {
       fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
@@ -4639,7 +4650,7 @@ do_dump_database(FILE *f, int contest_id, const struct contest_desc *d,
         }
 
         pers_tot++;
-        fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%d;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
+        fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%d;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
                 u->id, u->login, ui->name, u->email,
                 ui->inst?ui->inst:notset,
                 ui->inst_en?ui->inst_en:notset,
@@ -4653,6 +4664,7 @@ do_dump_database(FILE *f, int contest_id, const struct contest_desc *d,
                 ui->city_en?ui->city_en:notset,
                 ui->country?ui->country:notset,
                 ui->country_en?ui->country_en:notset,
+                ui->region?ui->region:notset,
                 ui->location?ui->location:notset,
                 ui->printer_name?ui->printer_name:notset,
                 ui->languages?ui->languages:notset,
@@ -4670,7 +4682,7 @@ do_dump_database(FILE *f, int contest_id, const struct contest_desc *d,
       }
     }
     if (!pers_tot) {
-      fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
+      fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
               u->id, u->login, ui->name, u->email,
               ui->inst?ui->inst:notset,
               ui->inst_en?ui->inst_en:notset,
@@ -4684,6 +4696,7 @@ do_dump_database(FILE *f, int contest_id, const struct contest_desc *d,
               ui->city_en?ui->city_en:notset,
               ui->country?ui->country:notset,
               ui->country_en?ui->country_en:notset,
+              ui->region?ui->region:notset,
               ui->location?ui->location:notset,
               ui->printer_name?ui->printer_name:notset,
               ui->languages?ui->languages:notset,
@@ -4714,7 +4727,7 @@ do_dump_whole_database(FILE *f, int contest_id, struct contest_desc *d,
     u = (const struct userlist_user*) iter->get(iter);
     ui = userlist_get_user_info(u, contest_id);
 
-    fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
+    fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
             u->id, u->login, ui->name, u->email,
             ui->inst?ui->inst:notset,
             ui->inst_en?ui->inst_en:notset,
@@ -4728,6 +4741,7 @@ do_dump_whole_database(FILE *f, int contest_id, struct contest_desc *d,
             ui->city_en?ui->city_en:notset,
             ui->country?ui->country:notset,
             ui->country_en?ui->country_en:notset,
+            ui->region?ui->region:notset,
             ui->location?ui->location:notset,
             ui->printer_name?ui->printer_name:notset,
             ui->languages?ui->languages:notset);

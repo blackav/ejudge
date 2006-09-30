@@ -257,6 +257,7 @@ static char const * const field_map[] =
   "city_en",
   "country",
   "country_en",
+  "region",
   "languages",
 
   0
