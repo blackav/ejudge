@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2001-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -51,6 +51,7 @@
  *   MC - city_en
  *   Mo - country
  *   MO - country_en
+ *   Mr - region
  *   Mt - inst_short
  *   MT - inst_short_en
  *   Mu - inst
@@ -72,6 +73,7 @@
  *   UC - city_en
  *   Uo - country
  *   UO - country_en
+ *   Ur - region
  *   Ut - inst_short
  *   UT - inst_short_en
  *   Uu - inst
@@ -406,6 +408,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
          *   MC - city_en
          *   Mo - country
          *   MO - country_en
+         *   Mr - region
          *   Mt - inst_short
          *   MT - inst_short_en
          *   Mu - inst
@@ -425,7 +428,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
         case 'c': case 'C':
         case 't': case 'T':
         case 'u': case 'U':
-        case 'o': case 'O': case 'L': case 'p':
+        case 'o': case 'O': case 'L': case 'p': case 'r':
         case 'f': case 'F': case 'd': case 'D':
         case '1':
           break;
@@ -469,6 +472,11 @@ sformat_message(char *buf, size_t maxsize, char const *format,
             papp = "";
             if (team_data->user && team_data->user->i.country_en)
               papp = team_data->user->i.country_en;
+            break;
+          case 'r':
+            papp = "";
+            if (team_data->user && team_data->user->i.region)
+              papp = team_data->user->i.region;
             break;
           case 't':
             papp = "";
@@ -544,6 +552,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
          *   UC - city_en
          *   Uo - country
          *   UO - country_en
+         *   Ur - region
          *   Ut - inst_short
          *   UT - inst_short_en
          *   Uu - inst
@@ -683,7 +692,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
         case 'z': case 'Z':
         case 'c': case 'C': case 'o': case 'O': case 't': case 'T':
         case 'u': case 'U': case 'f': case 'F': case 'd': case 'D':
-        case 'L': case 'p': case 'h': case 'H': case 'P':
+        case 'L': case 'p': case 'h': case 'H': case 'P': case 'r':
           break;
         case 0:
           is_invalid = 1;
@@ -724,6 +733,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
         case 'C': papp = ui->city_en; break;
         case 'o': papp = ui->country; break;
         case 'O': papp = ui->country_en; break;
+        case 'r': papp = ui->region; break;
         case 't': papp = ui->instshort; break;
         case 'T': papp = ui->instshort_en; break;
         case 'u': papp = ui->inst; break;

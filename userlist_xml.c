@@ -87,6 +87,7 @@ static char const * const elem_map[] =
   "city_en",
   "country",
   "country_en",
+  "region",
   "location",
   "spelling",
   "printer_name",
@@ -193,6 +194,7 @@ elem_free(struct xml_tree *t)
       xfree(p->i.city_en);
       xfree(p->i.country);
       xfree(p->i.country_en);
+      xfree(p->i.region);
       xfree(p->i.location);
       xfree(p->i.spelling);
       xfree(p->i.printer_name);
@@ -255,6 +257,7 @@ elem_free(struct xml_tree *t)
       xfree(p->i.city_en);
       xfree(p->i.country);
       xfree(p->i.country_en);
+      xfree(p->i.region);
       xfree(p->i.location);
       xfree(p->i.spelling);
       xfree(p->i.printer_name);
@@ -710,6 +713,7 @@ static const size_t leaf_info_offsets[USERLIST_LAST_TAG] =
   [USERLIST_T_CITY_EN] = INFO_OFFSET(city_en),
   [USERLIST_T_COUNTRY] = INFO_OFFSET(country),
   [USERLIST_T_COUNTRY_EN] = INFO_OFFSET(country_en),
+  [USERLIST_T_REGION] = INFO_OFFSET(region),
   [USERLIST_T_LOCATION] = INFO_OFFSET(location),
   [USERLIST_T_SPELLING] = INFO_OFFSET(spelling),
   [USERLIST_T_PRINTER_NAME] = INFO_OFFSET(printer_name),
@@ -1589,20 +1593,21 @@ userlist_real_unparse_user(const struct userlist_user *p, FILE *f, int mode, int
   xml_unparse_text(f, elem_map[USERLIST_T_INST], ui->inst, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_INST_EN], ui->inst_en, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_INSTSHORT], ui->instshort, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_INSTSHORT_EN],ui->instshort_en,"    ");
+  xml_unparse_text(f,elem_map[USERLIST_T_INSTSHORT_EN],ui->instshort_en,"    ");
   xml_unparse_text(f, elem_map[USERLIST_T_FAC], ui->fac, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_FAC_EN], ui->fac_en, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_FACSHORT], ui->facshort, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_FACSHORT_EN], ui->facshort_en, "    ");
+  xml_unparse_text(f,elem_map[USERLIST_T_FACSHORT_EN], ui->facshort_en, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_HOMEPAGE], ui->homepage, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_PHONE], ui->phone, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_CITY], ui->city, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_CITY_EN], ui->city_en, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_COUNTRY], ui->country, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_COUNTRY_EN], ui->country_en, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_REGION], ui->region, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_LOCATION], ui->location, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_SPELLING], ui->spelling, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_PRINTER_NAME],ui->printer_name,"    ");
+  xml_unparse_text(f,elem_map[USERLIST_T_PRINTER_NAME],ui->printer_name,"    ");
   xml_unparse_text(f, elem_map[USERLIST_T_LANGUAGES], ui->languages, "    ");
 
   if (mode == USERLIST_MODE_STAND) {

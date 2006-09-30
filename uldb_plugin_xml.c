@@ -2211,6 +2211,10 @@ set_user_xml_func(void *data,
     xfree(ui->country_en);
     ui->country_en = xstrdup(new_u->i.country_en);
   }
+  if (needs_update(ui->region, new_u->i.region)) {
+    xfree(ui->region);
+    ui->region = xstrdup(new_u->i.region);
+  }
   if (needs_update(ui->languages, new_u->i.languages)) {
     xfree(ui->languages);
     ui->languages = xstrdup(new_u->i.languages);

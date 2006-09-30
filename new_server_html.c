@@ -5729,7 +5729,8 @@ user_main_page(FILE *fout,
         }
         break;
       }
-      fprintf(fout, "<tr><td>%s</td><td>%s</td></tr></table></form>\n", _("Send!"),
+      fprintf(fout, "<tr><td>%s</td><td>%s</td></tr></table></form>\n",
+              _("Send!"),
               BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
 
       fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
@@ -5767,7 +5768,8 @@ user_main_page(FILE *fout,
   }
 
   if (viewed_section == USER_SECTION_CLAR && !cs->clients_suspended) {
-    if (!global->disable_clars && !global->disable_team_clars) {
+    if (!global->disable_clars && !global->disable_team_clars
+        && start_time > 0 && stop_time <= 0) {
       fprintf(fout, "<hr><a name=\"clar\"></a><%s>%s</%s>\n",
               cnts->team_head_style, _("Send a message to judges"),
               cnts->team_head_style);
