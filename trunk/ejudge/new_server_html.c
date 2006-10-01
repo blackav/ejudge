@@ -2031,7 +2031,7 @@ priv_submit_run(FILE *fout,
   const struct section_problem_data *prob = 0;
   const struct section_language_data *lang = 0;
   const unsigned char *s;
-  int prob_id = 0, variant = 0, lang_id, n, max_ans, ans, i, mime_type = 0;
+  int prob_id = 0, variant = 0, lang_id = 0, n, max_ans, ans, i, mime_type = 0;
   const unsigned char *errmsg = 0;
   const unsigned char *run_text;
   size_t run_size, ans_size;
