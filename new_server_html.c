@@ -4234,7 +4234,23 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
   fprintf(fout, "%s\n",
           new_serve_submit_button(bb, sizeof(bb), "submit", 0, _("Submit")));
   fprintf(fout, "</form></div>\n");
+  fprintf(fout, "<div class=\"search_actions\">");
+  if (cnts && cnts->assign_logins && cnts->force_registration
+      && cnts->register_url) {
+    fprintf(fout,
+            "<a href=\"http://%s?contest_id=%d&locale_id=%d&action=2\">%s</a>",
+            cnts->register_url, phr->contest_id, phr->locale_id,
+            _("Registration"));
+  } else if (cnts && cnts->register_url) {
+    fprintf(fout,
+            "<a href=\"http://%s?contest_id=%d&locale_id=%d\">%s</a>",
+            cnts->register_url, phr->contest_id, phr->locale_id,
+            _("Registration"));
+  }
+  /*
   fprintf(fout, "<div class=\"search_actions\"><a href=\"\">%s</a>&nbsp;&nbsp;<a href=\"\">%s</a></div>", _("Registration"), _("Forgot the password?"));
+  */
+  fprintf(fout, "</div>\n");
   html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);

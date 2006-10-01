@@ -2096,6 +2096,12 @@ display_register_new_user_page(void)
          par_style, ACTION_REGISTER_NEW_USER, _("Register"));
 
   printf("</form>");
+
+  if (cnts && cnts->assign_logins && cnts->force_registration
+      && cnts->team_url) {
+    printf(_("<p%s>If you are already registered, you may proceed to <a href=\"%s?contest_id=%d&locale_id=%d\">personal page</a>.</p>"),
+           par_style, cnts->team_url, user_contest_id, client_locale_id);
+  }
 }
 
 static void
