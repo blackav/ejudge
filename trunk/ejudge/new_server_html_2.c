@@ -599,21 +599,16 @@ new_serve_write_all_clars(FILE *f,
 
   unsigned char first_clar_str[64] = { 0 }, last_clar_str[64] = { 0 };
 
-  size_t size;
-  time_t start, time;
-  int from, to, flags, j_from, hide_flag;
-  unsigned char subj[CLAR_MAX_SUBJ_LEN + 4];
-  unsigned char psubj[CLAR_MAX_SUBJ_TXT_LEN + 4];
+  time_t start, submit_time;
   unsigned char durstr[64];
-  unsigned char ip[CLAR_MAX_IP_LEN + 4];
-  unsigned char *asubj = 0;
-  int asubj_len = 0, new_len;
   int show_astr_time;
   unsigned char bbuf[1024];
+  struct clar_entry_v1 clar;
 
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
   struct user_filter_info *u = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
 
@@ -706,44 +701,43 @@ new_serve_write_all_clars(FILE *f,
   for (j = 0; j < list_tot; j++) {
     i = list_idx[j];
 
-    clar_get_record(cs->clarlog_state, i, &time, &size, ip, &from, &to, &flags,
-                    &j_from, &hide_flag, subj);
-    if (mode_clar != 1 && (from <= 0 || flags >= 2)) continue; 
+    if (clar_get_record_new(cs->clarlog_state, i, &clar) < 0) continue;
+    if (mode_clar != 1 && (clar.from <= 0 || clar.flags >= 2)) continue; 
 
-    base64_decode_str(subj, psubj, 0);
-    new_len = html_armored_strlen(psubj);
-    new_len = (new_len + 7) & ~3;
-    if (new_len > asubj_len) asubj = alloca(asubj_len = new_len);
-    html_armor_string(psubj, asubj);
-    if (!start) time = start;
-    if (start > time) time = start;
-    duration_str(show_astr_time, time, start, durstr, 0);
+    submit_time = clar.time;
+    if (submit_time < 0) submit_time = 0;
+    if (!start) {
+      duration_str(1, submit_time, start, durstr, 0);
+    } else {
+      if (!show_astr_time && submit_time < start) submit_time = start;
+      duration_str(show_astr_time, submit_time, start, durstr, 0);
+    }
 
     fprintf(f, "<tr>");
-    if (hide_flag) fprintf(f, "<td>%d#</td>", i);
+    if (clar.hide_flag) fprintf(f, "<td>%d#</td>", i);
     else fprintf(f, "<td>%d</td>", i);
-    fprintf(f, "<td>%s</td>", clar_flags_html(cs->clarlog_state, flags, from,
-                                              to, 0, 0));
+    fprintf(f, "<td>%s</td>", clar_flags_html(cs->clarlog_state, clar.flags,
+                                              clar.from, clar.to, 0, 0));
     fprintf(f, "<td>%s</td>", durstr);
-    fprintf(f, "<td>%s</td>", ip);
-    fprintf(f, "<td>%zu</td>", size);
-    if (!from) {
-      if (!j_from)
+    fprintf(f, "<td>%s</td>", xml_unparse_ip(clar.a.ip));
+    fprintf(f, "<td>%zu</td>", clar.size);
+    if (!clar.from) {
+      if (!clar.j_from)
         fprintf(f, "<td><b>%s</b></td>", _("judges"));
       else
         fprintf(f, "<td><b>%s</b> (%s)</td>", _("judges"),
-                teamdb_get_name_2(cs->teamdb_state, j_from));
+                teamdb_get_name_2(cs->teamdb_state, clar.j_from));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name_2(cs->teamdb_state, from));
+      fprintf(f, "<td>%s</td>", teamdb_get_name_2(cs->teamdb_state, clar.from));
     }
-    if (!to && !from) {
+    if (!clar.to && !clar.from) {
       fprintf(f, "<td><b>%s</b></td>", _("all"));
-    } else if (!to) {
+    } else if (!clar.to) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name_2(cs->teamdb_state, to));
+      fprintf(f, "<td>%s</td>", teamdb_get_name_2(cs->teamdb_state, clar.to));
     }
-    fprintf(f, "<td>%s</td>", asubj);
+    fprintf(f, "<td>%s</td>", ARMOR(clar.subj));
     fprintf(f, "<td><a href=\"%s\">%s</a></td>",
             new_serve_url(bbuf, sizeof(bbuf), phr,
                           NEW_SRV_ACTION_VIEW_CLAR,
@@ -756,6 +750,7 @@ new_serve_write_all_clars(FILE *f,
   print_nav_buttons(state, f, 0, sid, self_url, hidden_vars, extra_args,
                     0, 0, 0, 0, 0, 0, 0);
   */
+  html_armor_free(&ab);
 }
 
 static unsigned char *
@@ -1552,7 +1547,10 @@ new_serve_write_priv_clar(const serve_state_t cs,
   }
   fprintf(f, "</tr>\n");
   if (clar.in_reply_to > 0) {
-    fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>", _("In reply to"),
+    fprintf(f, "<tr><td>%s:</td><td>%s%d</td></a></tr>", _("In reply to"),
+            new_serve_aref(bb, sizeof(bb), phr,
+                           NEW_SRV_ACTION_VIEW_CLAR,
+                           "clar_id=%d", clar.in_reply_to - 1),
             clar.in_reply_to - 1);
   }
   fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>", _("Locale code"),
