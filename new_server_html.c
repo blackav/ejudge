@@ -2590,7 +2590,7 @@ priv_clar_reply(FILE *fout,
                                 msg_len,
                                 phr->ip, phr->ssl_flag,
                                 0, clar.from, 0, phr->user_id, 0,
-                                clar.locale_id, in_reply_to + 1, new_subj);
+                                clar.locale_id, in_reply_to + 1, clar.subj);
 
   if (clar_id < 0) {
     fprintf(log_f, _("Cannot update the clarification database.\n"));
@@ -3493,6 +3493,61 @@ insert_variant_num(unsigned char *buf, size_t size,
                    const unsigned char *file, int variant);
 
 static void
+write_alternatives_file(FILE *fout, int is_radio, const unsigned char *txt)
+{
+  const unsigned char *s, *p;
+  unsigned char *txt2;
+  size_t txt_len, t_len;
+  int line_max_count = 0, line_count = 0, i;
+  unsigned char **lines = 0;
+  unsigned char *t;
+
+  if (!txt) return;
+
+  // normalize the file
+  txt_len = strlen(txt);
+  txt2 = (unsigned char*) alloca(txt_len + 2);
+  memcpy(txt2, txt, txt_len + 1);
+  while (txt_len > 0 && isspace(txt2[txt_len - 1])) txt_len--;
+  if (!txt_len) return;
+  txt2[txt_len++] = '\n';
+  txt2[txt_len] = 0;
+
+  // count number of lines
+  for (s = txt2; *s; s++)
+    if (*s == '\n') line_max_count++;
+
+  lines = (unsigned char**) alloca((line_max_count + 1) * sizeof(lines[0]));
+  memset(lines, 0, (line_max_count + 1) * sizeof(lines[0]));
+
+  s = txt2;
+  while (*s) {
+    while (*s != '\n' && isspace(*s)) s++;
+    if (*s == '#') while (*s != '\n') s++;
+    if (*s == '\n') {
+      s++;
+      continue;
+    }
+    p = s;
+    while (*s != '\n') s++;
+    t_len = s - p;
+    t = (unsigned char*) alloca(t_len + 1);
+    memcpy(t, p, t_len);
+    while (t_len > 0 && isspace(t[t_len - 1])) t_len--;
+    t[t_len] = 0;
+    lines[line_count++] = t;
+  }
+
+  for (i = 0; i < line_count; i++) {
+    if (is_radio) {
+      fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, lines[i]);
+    } else {
+      fprintf(fout, "<tr><td>%d</td><td><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, lines[i]);
+    }
+  }
+}
+
+static void
 priv_main_page(FILE *fout,
                struct http_request_info *phr,
                const struct contest_desc *cnts,
@@ -3856,13 +3911,21 @@ priv_main_page(FILE *fout,
         fprintf(fout, "<tr><td colspan=\"2\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
         break;
       case PROB_TYPE_SELECT_ONE:
-        for (i = 0; prob->alternative[i]; i++) {
-          fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+        if (alternatives) {
+          write_alternatives_file(fout, 1, alternatives);
+        } else {
+          for (i = 0; prob->alternative[i]; i++) {
+            fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+          }
         }
         break;
       case PROB_TYPE_SELECT_MANY:
-        for (i = 0; prob->alternative[i]; i++) {
-          fprintf(fout, "<tr><td>%d</td><td><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+        if (alternatives) {
+          write_alternatives_file(fout, 0, alternatives);
+        } else {
+          for (i = 0; prob->alternative[i]; i++) {
+            fprintf(fout, "<tr><td>%d</td><td><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+          }
         }
         break;
       }
@@ -5769,13 +5832,21 @@ user_main_page(FILE *fout,
         fprintf(fout, "<tr><td colspan=\"2\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
         break;
       case PROB_TYPE_SELECT_ONE:
-        for (i = 0; prob->alternative[i]; i++) {
-          fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+        if (alternatives) {
+          write_alternatives_file(fout, 1, alternatives);
+        } else {
+          for (i = 0; prob->alternative[i]; i++) {
+            fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+          }
         }
         break;
       case PROB_TYPE_SELECT_MANY:
-        for (i = 0; prob->alternative[i]; i++) {
-          fprintf(fout, "<tr><td>%d</td><td><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+        if (alternatives) {
+          write_alternatives_file(fout, 0, alternatives);
+        } else {
+          for (i = 0; prob->alternative[i]; i++) {
+            fprintf(fout, "<tr><td>%d</td><td><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+          }
         }
         break;
       }

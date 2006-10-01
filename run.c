@@ -748,8 +748,12 @@ run_tests(struct section_tester_data *tst,
         } else {
           task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
         }
-        if (prb->use_stdout && !tst->no_redirect) {
+        if (prb->use_stdout && prb->use_info && tstinfo.check_stderr) {
+          task_SetRedir(tsk, 1, TSR_FILE, "/dev/null", TSK_WRITE, TSK_FULL_RW);
+          task_SetRedir(tsk, 2, TSR_FILE, output_path, TSK_REWRITE,TSK_FULL_RW);
+        } else if (prb->use_stdout && !tst->no_redirect) {
           task_SetRedir(tsk, 1, TSR_FILE, output_path, TSK_REWRITE,TSK_FULL_RW);
+          task_SetRedir(tsk, 2, TSR_FILE, error_path, TSK_REWRITE, TSK_FULL_RW);
         } else {
           task_SetRedir(tsk, 1, TSR_FILE, "/dev/null", TSK_WRITE, TSK_FULL_RW);
           // create empty output file
@@ -757,8 +761,8 @@ run_tests(struct section_tester_data *tst,
             tmpfd = open(output_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
             if (tmpfd >= 0) close(tmpfd);
           }
+          task_SetRedir(tsk, 2, TSR_FILE, error_path, TSK_REWRITE, TSK_FULL_RW);
         }
-        task_SetRedir(tsk, 2, TSR_FILE, error_path, TSK_REWRITE, TSK_FULL_RW);
       }  else {
         // create empty output file
         {
@@ -850,6 +854,8 @@ run_tests(struct section_tester_data *tst,
 
       /* task hopefully started */
       task_Wait(tsk);
+
+      if (tsk) task_Log(tsk, 0, LOG_INFO);
 
       if (error_code[0]) {
         ec = read_error_code(error_code);
@@ -957,8 +963,6 @@ run_tests(struct section_tester_data *tst,
       }
     }
 
-    if (tsk) task_Log(tsk, 0, LOG_INFO);
-
 #if defined HAVE_TASK_ISMEMORYLIMIT
     if (tsk && tst->enable_memory_limit_error && req_pkt->memory_limit
         && task_IsMemoryLimit(tsk)) {
@@ -978,8 +982,26 @@ run_tests(struct section_tester_data *tst,
       goto done_this_test;
     }
 
-    if (tsk && ((error_code[0] && ec != 0)
-                || (!error_code[0] && task_IsAbnormal(tsk)))) {
+    if (tsk && prb->use_info && tstinfo.exit_code > 0) {
+      if (task_Status(tsk) == TSK_SIGNALED) {
+        tests[cur_test].code = 256; /* FIXME: magic */
+        tests[cur_test].termsig = task_TermSignal(tsk);
+        failed_test = cur_test;
+        status = RUN_RUN_TIME_ERR;
+        total_failed_tests++;
+        task_Delete(tsk); tsk = 0;
+        goto done_this_test;
+      }
+      tests[cur_test].code = task_ExitCode(tsk);
+      if (tests[cur_test].code != tstinfo.exit_code) {
+        failed_test = cur_test;
+        status = RUN_WRONG_ANSWER_ERR;
+        total_failed_tests++;
+        task_Delete(tsk); tsk = 0;
+        goto done_this_test;
+      }
+    } else if (tsk && ((error_code[0] && ec != 0)
+                       || (!error_code[0] && task_IsAbnormal(tsk)))) {
       /* runtime error */
       if (error_code[0]) {
         tests[cur_test].code = ec;

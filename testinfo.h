@@ -3,7 +3,7 @@
 #ifndef __TESTINFO_H__
 #define __TESTINFO_H__
 
-/* Copyright (C) 2003,2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -41,12 +41,15 @@ enum
   TINF_E_VAR_REDEFINED,
   TINF_E_EMPTY_VALUE,
   TINF_E_MULTIPLE_VALUE,
+  TINF_E_INVALID_VALUE,
 
   TINF_E_LAST,
 };
 
 struct testinfo_struct
 {
+  int exit_code;
+  int check_stderr;
   int cmd_argc;
   TESTINFO_char_t **cmd_argv;
   TESTINFO_char_t *comment;
@@ -65,7 +68,7 @@ const TESTINFO_char_t *testinfo_strerror(int errcode);
 
 #endif /* __TESTINFO_H__ */
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -265,6 +265,8 @@ is_ident_char(int c)
   return isalnum(c) || c == '_';
 }
 
+#define FAIL(code) do { retval = -code; goto fail; } while (0)
+
 static int
 parse_line(const unsigned char *str, size_t len, testinfo_t *pt)
 {
@@ -274,16 +276,15 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt)
   unsigned char **ppval;
   size_t len2;
   struct cmdline_buf cmd;
-  int retval;
+  int retval = 0, x, n;
 
-  if (!(name_buf = (unsigned char *) alloca(len + 1)))
-    return -TINF_E_NO_MEMORY;
-  if (!(val_buf = (unsigned char *) alloca(len + 2)))
-    return -TINF_E_NO_MEMORY;
+  memset(&cmd, 0, sizeof(cmd));
+  if (!(name_buf = (unsigned char *) alloca(len + 1))) FAIL(TINF_E_NO_MEMORY);
+  if (!(val_buf = (unsigned char *) alloca(len + 2))) FAIL(TINF_E_NO_MEMORY);
 
   while (isspace(*s)) s++;
   p = name_buf;
-  if (!is_ident_char(*s)) return -TINF_E_IDENT_EXPECTED;
+  if (!is_ident_char(*s)) FAIL(TINF_E_IDENT_EXPECTED);
   while (is_ident_char(*s)) *p++ = *s++;
   *p = 0;
   while (isspace(*s)) s++;
@@ -291,7 +292,7 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt)
     /* implicit "1" */
     strcpy(val_buf, "1");
   } else if (*s != '=') {
-    return -TINF_E_EQUAL_EXPECTED;
+    FAIL(TINF_E_EQUAL_EXPECTED);
   } else {
     s++;
     while (isspace(*s)) s++;
@@ -305,12 +306,10 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt)
   }
 
   if (!strcmp(name_buf, "params")) {
-    if (pt->cmd_argc >= 0) {
-      free_cmdline(&cmd);
-      return -TINF_E_VAR_REDEFINED;
-    }
+    if (pt->cmd_argc >= 0) FAIL(TINF_E_VAR_REDEFINED);
     pt->cmd_argc = cmd.u;
     pt->cmd_argv = cmd.v;
+    memset(&cmd, 0, sizeof(cmd));
   } else if (!strcmp(name_buf, "comment")
              || !strcmp(name_buf, "team_comment")) {
     if (!strcmp(name_buf, "comment")) {
@@ -318,24 +317,37 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt)
     } else {
       ppval = &pt->team_comment;
     }
-    if (*ppval) {
-      free_cmdline(&cmd);
-      return -TINF_E_VAR_REDEFINED;
-    }
-    if (cmd.u < 1) {
-      free_cmdline(&cmd);
-      return -TINF_E_EMPTY_VALUE;
-    }
-    if (cmd.u > 1) {
-      free_cmdline(&cmd);
-      return -TINF_E_MULTIPLE_VALUE;
-    }
+    if (*ppval) FAIL(TINF_E_VAR_REDEFINED);
+    if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
+    if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
     *ppval = cmd.v[0];
+    cmd.v[0] = 0;
+  } else if (!strcmp(name_buf, "exit_code")) {
+    if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
+    if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
+    if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
+        || x < 0 || x > 127)
+      FAIL(TINF_E_INVALID_VALUE);
+    pt->exit_code = x;
+  } else if (!strcmp(name_buf, "check_stderr")) {
+    if (cmd.u < 1) {
+      x = 1;
+    } else {
+      if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
+      if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
+          || x < 0 || x > 1)
+        FAIL(TINF_E_INVALID_VALUE);
+    }
+    pt->check_stderr = x;
   } else {
-    free_cmdline(&cmd);
-    return -TINF_E_INVALID_VAR_NAME;
+    FAIL(TINF_E_INVALID_VAR_NAME);
   }
+  free_cmdline(&cmd);
   return 0;
+
+ fail:
+  free_cmdline(&cmd);
+  return retval;
 }
 
 static int
@@ -417,6 +429,7 @@ static const unsigned char * const error_codes[] =
   [TINF_E_VAR_REDEFINED] "variable is redefined",
   [TINF_E_EMPTY_VALUE] "variable value is empty",
   [TINF_E_MULTIPLE_VALUE] "variable value is multiple",
+  [TINF_E_INVALID_VALUE] = "variable value is invalid",
 };
 const unsigned char *
 testinfo_strerror(int err)
@@ -438,10 +451,9 @@ testinfo_strerror(int err)
   return error_codes[err];
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
-
