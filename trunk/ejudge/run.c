@@ -2134,7 +2134,7 @@ check_config(void)
         && check_executable(serve_state.testers[i]->start_cmd) < 0) return -1;
   }
 
-  info("checking default serve_state.testers...");
+  info("checking default testers...");
   if ((i = process_default_testers()) < 0) return -1;
   info("checking default testers done");
   total += i;

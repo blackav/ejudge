@@ -1727,6 +1727,18 @@ serve_invoke_start_script(serve_state_t state)
   task_Delete(tsk);
 }
 
+void
+serve_send_run_quit(const serve_state_t state)
+{
+  void *pkt_buf = 0;
+  size_t pkt_size = 0;
+
+  run_request_packet_quit(&pkt_size, &pkt_buf);
+  generic_write_file(pkt_buf, pkt_size, SAFE, state->global->run_queue_dir,
+                     "QUIT", "");
+  xfree(pkt_buf);
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

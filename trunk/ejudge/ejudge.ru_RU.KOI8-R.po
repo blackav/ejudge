@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-01 10:02+0400\n"
-"PO-Revision-Date: 2006-10-01 10:05+0400\n"
+"POT-Creation-Date: 2006-10-01 16:53+0400\n"
+"PO-Revision-Date: 2006-10-01 16:55+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -185,7 +185,9 @@ msgstr ""
 msgid ""
 "<p%s>If you are already registered, you may proceed to <a href=\"%s?"
 "contest_id=%d&locale_id=%d\">personal page</a>.</p>"
-msgstr "<p%s>Если Вы уже зарегистрированы, Вы можете перейти на <a href=\"%s?contest_id=%d&locale_id=%d\">личную страницу</a> для участия в турнире.</p>"
+msgstr ""
+"<p%s>Если Вы уже зарегистрированы, Вы можете перейти на <a href=\"%s?"
+"contest_id=%d&locale_id=%d\">личную страницу</a> для участия в турнире.</p>"
 
 #, c-format
 msgid ""
@@ -1218,6 +1220,10 @@ msgstr ""
 "ниже."
 
 #, c-format
+msgid "Invalid status.\n"
+msgstr "Недопустимый статус.\n"
+
+#, c-format
 msgid "Invalid time specification."
 msgstr "Неверная спецификация времени."
 
@@ -2115,6 +2121,10 @@ msgstr "Начать виртуальный турнир"
 
 msgid "Status"
 msgstr "Статус"
+
+#, c-format
+msgid "Status change failed.\n"
+msgstr "Операция смены статуса не удалась.\n"
 
 msgid "Step 1 of registration is complete"
 msgstr "Первый шаг регистрации завершен"

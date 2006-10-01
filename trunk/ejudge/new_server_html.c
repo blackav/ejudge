@@ -722,7 +722,7 @@ static const unsigned char * const submit_button_labels[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GENERATE_PASSWORDS_1] = __("Regenerate contest passwords!"),
   [NEW_SRV_ACTION_CLEAR_PASSWORDS_1] = __("Clear contest passwords!"),
   [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1] = __("Regenerate registration passwords!"),
-  [NEW_SRV_ACTION_RELOAD_SERVER_1] = __("Reload config files"),
+  [NEW_SRV_ACTION_RELOAD_SERVER] = __("Reload config files"),
   [NEW_SRV_ACTION_PRIV_SUBMIT_CLAR] = __("Send clarification"),
   [NEW_SRV_ACTION_CHANGE_PASSWORD] = __("Change password"),
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = __("Switch language"),
@@ -1959,6 +1959,11 @@ priv_contest_operation(FILE *fout,
     cs->accepting_mode = 1;
     serve_update_status_file(cs, 1);
     break;
+
+  case NEW_SRV_ACTION_RELOAD_SERVER:
+    extra->last_access_time = 0;
+    serve_send_run_quit(cs);
+    break;
   }
 
  done:
@@ -2608,6 +2613,62 @@ priv_clar_reply(FILE *fout,
 
  done:
   xfree(orig_txt);
+  return 0;
+
+ invalid_param:
+  html_err_invalid_param(fout, phr, 0, errmsg);
+  return -1;
+}
+
+static int
+priv_change_status(FILE *fout,
+                   FILE *log_f,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const unsigned char *errmsg = 0, *s;
+  int run_id, n, status, flags;
+  struct run_entry new_run;
+
+  // run_id, status
+  if (ns_cgi_param(phr, "run_id", &s) <= 0
+      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]
+      || run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
+    errmsg = "invalid run_id";
+    goto invalid_param;
+  }
+  if (ns_cgi_param(phr, "status", &s) <= 0
+      || sscanf(s, "%d%n", &status, &n) != 1 || s[n]
+      || status < 0 || status > RUN_LAST) {
+    errmsg = "invalid status";
+    goto invalid_param;
+  }
+  if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0
+      && ((status != RUN_REJUDGE && status != RUN_FULL_REJUDGE)
+          || opcaps_check(phr->caps, OPCAP_REJUDGE_RUN))) {
+    fprintf(log_f, _("Permission denied.\n"));
+    goto done;
+  }
+  if (status == RUN_REJUDGE || status == RUN_FULL_REJUDGE) {
+    serve_rejudge_run(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      (status == RUN_FULL_REJUDGE), 0);
+    goto done;
+  }
+  if (!serve_is_valid_status(cs, status, 1)) {
+    fprintf(log_f, _("Invalid status.\n"));
+    goto done;
+  }
+  memset(&new_run, 0, sizeof(new_run));
+  new_run.status = status;
+  flags = RUN_ENTRY_STATUS;
+  if (run_set_entry(cs->runlog_state, run_id, flags, &new_run) < 0) {
+    fprintf(log_f, _("Status change failed.\n"));
+    goto done;
+  }
+
+ done:
   return 0;
 
  invalid_param:
@@ -3366,6 +3427,8 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLAR_REPLY_NO_COMMENTS] = priv_clar_reply,
   [NEW_SRV_ACTION_CLAR_REPLY_YES] = priv_clar_reply,
   [NEW_SRV_ACTION_CLAR_REPLY_NO] = priv_clar_reply,
+  [NEW_SRV_ACTION_RELOAD_SERVER] = priv_contest_operation,
+  [NEW_SRV_ACTION_CHANGE_STATUS] = priv_change_status,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -3794,7 +3857,7 @@ priv_main_page(FILE *fout,
     fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_CLEAR_PASSWORDS_1));
   }
   fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1));
-  fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_RELOAD_SERVER_1));
+  fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_RELOAD_SERVER));
   fprintf(fout, "</form>\n");
 
   new_serve_write_priv_all_runs(fout, phr, cnts, extra,
@@ -4099,6 +4162,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLAR_REPLY_YES] = priv_generic_operation,
   [NEW_SRV_ACTION_CLAR_REPLY_NO] = priv_generic_operation,
   [NEW_SRV_ACTION_VIEW_CLAR] = priv_generic_page,
+  [NEW_SRV_ACTION_RELOAD_SERVER] = priv_generic_operation,
+  [NEW_SRV_ACTION_CHANGE_STATUS] = priv_generic_operation,
 };
 
 static void
@@ -5577,6 +5642,7 @@ user_main_page(FILE *fout,
   unsigned char urlbuf[1024];
   unsigned char bb[1024];
   const unsigned char *alternatives = 0;
+  int lang_count = 0, lang_id = 0;
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
@@ -5800,8 +5866,6 @@ user_main_page(FILE *fout,
               prob_id);
       fprintf(fout, "<table>\n");
       if (!prob->type_val) {
-        fprintf(fout, "<tr><td>%s:</td><td>", _("Language"));
-        fprintf(fout, "<select name=\"lang_id\"><option value=\"\">\n");
         for (i = 1; i <= cs->max_lang; i++) {
           if (!cs->langs[i] || cs->langs[i]->disabled) continue;
           if ((lang_list = prob->enable_language)) {
@@ -5815,10 +5879,37 @@ user_main_page(FILE *fout,
                 break;
             if (lang_list[j]) continue;
           }
-          fprintf(fout, "<option value=\"%d\">%s - %s</option>\n",
-                  i, cs->langs[i]->short_name, cs->langs[i]->long_name);
+          lang_count++;
+          lang_id = i;
         }
-        fprintf(fout, "</select></td></tr>\n");
+        
+        if (lang_count == 1) {
+          html_hidden(fout, "lang_id", "%d", lang_id);
+          fprintf(fout, "<tr><td>%s:</td><td>%s - %s</td></tr>\n",
+                  _("Language"),
+                  cs->langs[lang_id]->short_name,
+                  cs->langs[lang_id]->long_name);
+        } else {
+          fprintf(fout, "<tr><td>%s:</td><td>", _("Language"));
+          fprintf(fout, "<select name=\"lang_id\"><option value=\"\">\n");
+          for (i = 1; i <= cs->max_lang; i++) {
+            if (!cs->langs[i] || cs->langs[i]->disabled) continue;
+            if ((lang_list = prob->enable_language)) {
+              for (j = 0; lang_list[j]; j++)
+                if (!strcmp(lang_list[j], cs->langs[i]->short_name))
+                  break;
+              if (!lang_list[j]) continue;
+            } else if ((lang_list = prob->disable_language)) {
+              for (j = 0; lang_list[j]; j++)
+                if (!strcmp(lang_list[j], cs->langs[i]->short_name))
+                  break;
+              if (lang_list[j]) continue;
+            }
+            fprintf(fout, "<option value=\"%d\">%s - %s</option>\n",
+                    i, cs->langs[i]->short_name, cs->langs[i]->long_name);
+          }
+          fprintf(fout, "</select></td></tr>\n");
+        }
       }
       switch (prob->type_val) {
       case PROB_TYPE_STANDARD:
@@ -6037,6 +6128,8 @@ unprivileged_page(FILE *fout, struct http_request_info *phr)
                                     &phr->login, &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_NO_COOKIE:
+    case ULS_ERR_CANNOT_PARTICIPATE:
+    case ULS_ERR_NOT_REGISTERED:
       return html_err_invalid_session(fout, phr, 0,
                                      "get_cookie failed: %s",
                                      userlist_strerror(-r));

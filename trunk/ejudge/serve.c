@@ -2729,17 +2729,6 @@ cmd_rejudge_by_mask(struct client_state *p, int len,
 }
 
 static void
-send_run_quit_command(void)
-{
-  void *pkt_buf = 0;
-  size_t pkt_size = 0;
-
-  run_request_packet_quit(&pkt_size, &pkt_buf);
-  generic_write_file(pkt_buf, pkt_size, SAFE, serve_state.global->run_queue_dir, "QUIT", "");
-  xfree(pkt_buf);
-}
-
-static void
 cmd_priv_command_0(struct client_state *p, int len,
                    struct prot_serve_pkt_simple *pkt)
 {
@@ -3226,7 +3215,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_NOT_SUPPORTED);
       return;
     }
-    send_run_quit_command();
+    serve_send_run_quit(&serve_state);
     interrupt_signaled = 1;
     new_send_reply(p, SRV_RPL_OK);
     return;
