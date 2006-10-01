@@ -94,7 +94,6 @@ new_serve_write_priv_all_runs(FILE *f,
   const unsigned char *rejudge_dis_str;
   unsigned long *displayed_mask = 0;
   int displayed_size = 0;
-  unsigned char stat_select_name[32];
   unsigned char bb[1024];
   unsigned char endrow[256];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
@@ -467,8 +466,7 @@ new_serve_write_priv_all_runs(FILE *f,
       write_html_run_status(cs, f, pe, 1, attempts, disq_attempts,
                             prev_successes);
       if (phr->role == USER_ROLE_ADMIN) {
-        snprintf(stat_select_name, sizeof(stat_select_name), "stat_%d", rid);
-        write_change_status_dialog(cs, f, stat_select_name, pe->is_imported);
+        write_change_status_dialog(cs, f, "status", pe->is_imported);
         fprintf(f, "<td>%s</td>", BUTTON(NEW_SRV_ACTION_CHANGE_STATUS));
       }
 

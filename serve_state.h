@@ -270,4 +270,6 @@ serve_read_run_packet(serve_state_t state,
 
 void serve_invoke_start_script(serve_state_t state);
 
+void serve_send_run_quit(const serve_state_t state);
+
 #endif /* __SERVE_STATE_H__ */
