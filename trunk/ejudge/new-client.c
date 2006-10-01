@@ -30,7 +30,9 @@
 #include <reuse/xalloc.h>
 
 #include <stdio.h>
+#include <unistd.h>
 
+enum { MAX_ATTEMPT = 10 };
 static const unsigned char *socket_path = "/tmp/new-server-socket";
 
 static void
@@ -76,19 +78,25 @@ initialize(int argc, char *argv[])
   cgi_read(0);
 }
 
-extern unsigned char **environ;
+//extern unsigned char **environ;
 
 int
 main(int argc, char *argv[])
 {
   new_server_conn_t conn = 0;
-  int r, param_num, i;
+  int r, param_num, i, attempt;
   unsigned char **param_names, **params;
   size_t *param_sizes;
 
   initialize(argc, argv);
 
-  if ((r = new_server_clnt_open(socket_path, &conn)) < 0) {
+  for (attempt = 0; attempt < MAX_ATTEMPT; attempt++) {
+    r = new_server_clnt_open(socket_path, &conn);
+    if (r >= 0 && r != -NEW_SRV_ERR_CONNECT_FAILED) break;
+    sleep(1);
+  }
+
+  if (r < 0) {
     err("new-client: cannot connect to the server: %d", -r);
     client_not_configured(0, "cannot connect to the server", 0);
   }
@@ -101,7 +109,8 @@ main(int argc, char *argv[])
     cgi_get_nth_param_bin(i, &param_names[i], &param_sizes[i], &params[i]);
   }
 
-  r = new_server_clnt_http_request(conn, 1, (unsigned char**) argv, environ,
+  r = new_server_clnt_http_request(conn, 1, (unsigned char**) argv,
+                                   (unsigned char **) environ,
                                    param_num, param_names,
                                    param_sizes, params);
   if (r < 0) {

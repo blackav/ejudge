@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-30 18:16+0400\n"
-"PO-Revision-Date: 2006-09-30 21:00+0400\n"
+"POT-Creation-Date: 2006-10-01 10:02+0400\n"
+"PO-Revision-Date: 2006-10-01 10:05+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -180,6 +180,12 @@ msgid ""
 msgstr ""
 "<p%s>Если автоматическое обновление не работает, нажмите <a href=\"%s\">на "
 "эту</a> ссылку.</p>"
+
+#, c-format
+msgid ""
+"<p%s>If you are already registered, you may proceed to <a href=\"%s?"
+"contest_id=%d&locale_id=%d\">personal page</a>.</p>"
+msgstr "<p%s>Если Вы уже зарегистрированы, Вы можете перейти на <a href=\"%s?contest_id=%d&locale_id=%d\">личную страницу</a> для участия в турнире.</p>"
 
 #, c-format
 msgid ""
@@ -903,9 +909,6 @@ msgstr "Для зарегистрированных пользователей"
 msgid "For schools, liceums, etc, please, specify its number."
 msgstr ""
 "Для школ, лицеев и пр. укажите, пожалуйста, номер. Например, школа 1234."
-
-msgid "Forgot the password?"
-msgstr "Забыли пароль?"
 
 msgid "From"
 msgstr "От"
@@ -2982,3 +2985,6 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
+
+#~ msgid "Forgot the password?"
+#~ msgstr "Забыли пароль?"
