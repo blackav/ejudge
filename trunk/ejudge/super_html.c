@@ -118,6 +118,7 @@ enum
 {
   MNG_STAT_FIRST,
   MNG_STAT_NOT_MANAGED = MNG_STAT_FIRST,
+  MNG_STAT_NEW_MANAGED,
   MNG_STAT_TEMP_NOT_MANAGED,
   MNG_STAT_TEMP_FAILED,
   MNG_STAT_TEMP_RUNNING,
@@ -131,7 +132,9 @@ static int
 get_serve_management_status(const struct contest_desc *cnts,
                             struct contest_extra *extra)
 {
-  if (!cnts->managed && (!extra || !extra->serve_used)) {
+  if (cnts->new_managed) {
+    return MNG_STAT_NEW_MANAGED;
+  } else if (!cnts->managed && (!extra || !extra->serve_used)) {
     return MNG_STAT_NOT_MANAGED;
   } else if (!extra || !extra->serve_used) {
     return MNG_STAT_TEMP_NOT_MANAGED;
@@ -305,6 +308,8 @@ super_html_main_page(FILE *f,
   opcap_t caps;
   unsigned char judge_url[1024] = { 0 };
   unsigned char master_url[1024] = { 0 };
+  unsigned char new_judge_url[1024] = { 0 };
+  unsigned char new_master_url[1024] = { 0 };
   unsigned char prog_pat[128];
   int prog_pat_len, self_url_len;
 
@@ -321,7 +326,10 @@ super_html_main_page(FILE *f,
              "%.*sjudge", self_url_len - prog_pat_len, self_url);
     snprintf(master_url, sizeof(master_url),
              "%.*smaster", self_url_len - prog_pat_len, self_url);
-
+    snprintf(new_judge_url, sizeof(new_judge_url),
+             "%.*snew-judge", self_url_len - prog_pat_len, self_url);
+    snprintf(new_master_url, sizeof(new_master_url),
+             "%.*snew-master", self_url_len - prog_pat_len, self_url);
   }
 
   fprintf(f, "<h2>Controls</h2>\n");
@@ -504,7 +512,9 @@ super_html_main_page(FILE *f,
 
     // report serve mastering status
     if (priv_level >= PRIV_LEVEL_ADMIN) {
-      if (!cnts->managed && (!extra || !extra->serve_used)) {
+      if (cnts->new_managed) {
+        fprintf(f, "<td><font color=\"green\"><i>New server</i></font></td>\n");
+      } else if (!cnts->managed && (!extra || !extra->serve_used)) {
         fprintf(f, "<td><i>Not managed</i></td>\n");
       } else if (!extra || !extra->serve_used) {
         fprintf(f, "<td bgcolor=\"#ffff88\">Not yet managed</td>\n");
@@ -565,16 +575,26 @@ super_html_main_page(FILE *f,
     // report judge URL
     if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
         && contests_check_judge_ip_2(cnts, ip_address, ssl)) {
-      fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Judge</a></td>\n",
-              judge_url, session_id, contest_id);
+      if (cnts->new_managed) {
+        fprintf(f, "<td><a href=\"%s?contest_id=%d\" target=\"_blank\">Judge</a></td>\n",
+                new_judge_url, contest_id);
+      } else {
+        fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Judge</a></td>\n",
+                judge_url, session_id, contest_id);
+      }
     } else {
       fprintf(f, "<td>&nbsp;</td>\n");
     }
     // report master URL
     if (opcaps_check(caps, OPCAP_MASTER_LOGIN) >= 0 && master_url[0]
         && contests_check_master_ip_2(cnts, ip_address, ssl)) {
-      fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Master</a></td>\n",
-              master_url, session_id, contest_id);
+      if (cnts->new_managed) {
+        fprintf(f, "<td><a href=\"%s?contest_id=%d\" target=\"_blank\">Master</a></td>\n",
+                new_master_url, contest_id);
+      } else {
+        fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Master</a></td>\n",
+                master_url, session_id, contest_id);
+      }
     } else {
       fprintf(f, "<td>&nbsp;</td>\n");
     }
@@ -601,6 +621,7 @@ super_html_main_page(FILE *f,
 static const unsigned char * const mng_status_table[] =
 {
   [MNG_STAT_NOT_MANAGED] = "not managed",
+  [MNG_STAT_NEW_MANAGED] = "new server",
   [MNG_STAT_TEMP_NOT_MANAGED] = "temporarily not managed",
   [MNG_STAT_TEMP_FAILED] = "temporarily managed, failed to start",
   [MNG_STAT_TEMP_RUNNING] = "temporarily managed, running as pid %d",
@@ -626,6 +647,8 @@ super_html_contest_page(FILE *f,
 {
   unsigned char judge_url[1024] = { 0 };
   unsigned char master_url[1024] = { 0 };
+  unsigned char new_judge_url[1024] = { 0 };
+  unsigned char new_master_url[1024] = { 0 };
   unsigned char prog_pat[128];
   unsigned char hbuf[1024];
   unsigned char new_hidden_vars[1024];
@@ -654,7 +677,10 @@ super_html_contest_page(FILE *f,
              "%.*sjudge", self_url_len - prog_pat_len, self_url);
     snprintf(master_url, sizeof(master_url),
              "%.*smaster", self_url_len - prog_pat_len, self_url);
-
+    snprintf(new_judge_url, sizeof(new_judge_url),
+             "%.*snew-judge", self_url_len - prog_pat_len, self_url);
+    snprintf(new_master_url, sizeof(new_master_url),
+             "%.*snew-master", self_url_len - prog_pat_len, self_url);
   }
 
   snprintf(new_hidden_vars, sizeof(new_hidden_vars),
@@ -719,15 +745,25 @@ super_html_contest_page(FILE *f,
   // report judge URL
   if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
       && contests_check_judge_ip_2(cnts, ip_address, ssl)) {
-    fprintf(f, "<tr><td>Judge CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Judge</a></td></tr>\n",
-            judge_url, session_id, contest_id);
+    if (cnts->new_managed) {
+      fprintf(f, "<tr><td>Judge CGI program</td><td><a href=\"%s?contest_id=%d\" target=\"_blank\">Judge</a></td></tr>\n",
+              new_judge_url, contest_id);
+    } else {
+      fprintf(f, "<tr><td>Judge CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Judge</a></td></tr>\n",
+              judge_url, session_id, contest_id);
+    }
   }
 
   // report master URL
   if (opcaps_check(caps, OPCAP_MASTER_LOGIN) >= 0 && master_url[0]
       && contests_check_master_ip_2(cnts, ip_address, ssl)) {
-    fprintf(f, "<tr><td>Master CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Master</a></td></tr>\n",
-            master_url, session_id, contest_id);
+    if (cnts->new_managed) {
+      fprintf(f, "<tr><td>Master CGI program</td><td><a href=\"%s?contest_id=%d\" target=\"_blank\">Master</a></td></tr>\n",
+              new_master_url, contest_id);
+    } else {
+      fprintf(f, "<tr><td>Master CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Master</a></td></tr>\n",
+              master_url, session_id, contest_id);
+    }
   }
 
   // participant's status
@@ -773,6 +809,7 @@ super_html_contest_page(FILE *f,
     html_start_form(f, 1, self_url, new_hidden_vars);
     switch (mng_status) {
     case MNG_STAT_NOT_MANAGED:
+    case MNG_STAT_NEW_MANAGED:
       fprintf(f, "&nbsp;");
       /* FIXME: disabled for now
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_TEMP,
