@@ -718,7 +718,7 @@ new_serve_write_all_clars(FILE *f,
                                               clar.from, clar.to, 0, 0));
     fprintf(f, "<td>%s</td>", durstr);
     fprintf(f, "<td>%s</td>", xml_unparse_ip(clar.a.ip));
-    fprintf(f, "<td>%zu</td>", clar.size);
+    fprintf(f, "<td>%u</td>", clar.size);
     if (!clar.from) {
       if (!clar.j_from)
         fprintf(f, "<td><b>%s</b></td>", _("judges"));
@@ -1521,7 +1521,7 @@ new_serve_write_priv_clar(const serve_state_t cs,
   }
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("IP address"),
           xml_unparse_ip(clar.a.ip));
-  fprintf(f, "<tr><td>%s:</td><td>%zu</td></tr>\n", _("Size"), clar.size);
+  fprintf(f, "<tr><td>%s:</td><td>%u</td></tr>\n", _("Size"), clar.size);
   fprintf(f, "<tr><td>%s:</td>", _("Sender"));
   if (!clar.from) {
     if (!clar.j_from)
