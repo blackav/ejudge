@@ -372,7 +372,7 @@ redirect_to_new_client(void)
   // just replace `team' with `new-client' in self_url
   if (!(s = strstr(self_url, "team"))) return;
   snprintf(url_buf, sizeof(url_buf), "%.*snew-client%s?contest_id=%d%s",
-           s - self_url, self_url, s + 4, global->contest_id, lbuf);
+           (int) (s - self_url), self_url, s + 4, global->contest_id, lbuf);
   client_put_refresh_header(global->charset, url_buf, 0,
                             "redirecting to the new-client...");
   exit(0);
