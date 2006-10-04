@@ -555,7 +555,7 @@ new_serve_write_priv_all_runs(FILE *f,
       fprintf(f, "<option value=\"%d\">%s - %s\n", i, prob->short_name,
               ARMOR(prob->long_name));
     }
-    fprintf(f, "</select>%s\n", BUTTON(NEW_SRV_ACTION_REJUDGE_PROBLEM));
+    fprintf(f, "</select>%s\n", BUTTON(NEW_SRV_ACTION_REJUDGE_PROBLEM_1));
     fprintf(f, "</form>\n");
   }
 

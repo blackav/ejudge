@@ -1739,6 +1739,219 @@ serve_send_run_quit(const serve_state_t state)
   xfree(pkt_buf);
 }
 
+#define BITS_PER_LONG (8*sizeof(unsigned long)) 
+
+void
+serve_rejudge_by_mask(serve_state_t state,
+                      int user_id, ej_ip_t ip, int ssl_flag,
+                      int mask_size, unsigned long *mask,
+                      int force_flag, int priority_adjustment)
+{
+  int total_runs, r;
+  struct run_entry re;
+  int total_ids;
+  int total_probs;
+  int size, idx;
+  unsigned char *flag;
+
+  ASSERT(mask_size > 0);
+
+  total_runs = run_get_total(state->runlog_state);
+  if (total_runs > mask_size * BITS_PER_LONG) {
+    total_runs = mask_size * BITS_PER_LONG;
+  }
+
+  if (state->global->score_system_val == SCORE_OLYMPIAD
+      && !state->accepting_mode) {
+    // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
+    // considering only the last run for the given problem and
+    // the given participant
+    total_ids = teamdb_get_max_team_id(state->teamdb_state) + 1;
+    total_probs = state->max_prob + 1;
+    size = total_ids * total_probs;
+
+    if (total_ids <= 0 || total_probs <= 0) return;
+    flag = (unsigned char *) alloca(size);
+    memset(flag, 0, size);
+    for (r = total_runs - 1; r >= 0; r--) {
+      if (run_get_entry(state->runlog_state, r, &re) < 0) continue;
+      if (re.status != RUN_OK && re.status != RUN_PARTIAL
+          && re.status != RUN_ACCEPTED) continue;
+      if (re.is_imported) continue;
+      if (re.user_id <= 0 || re.user_id >= total_ids) continue;
+      if (re.prob_id <= 0 || re.prob_id >= total_probs) continue;
+      if (re.is_readonly) continue;
+      if (!state->probs[re.prob_id]
+          || state->probs[re.prob_id]->disable_testing) continue;
+      if (!state->langs[re.lang_id]
+          || state->langs[re.lang_id]->disable_testing) continue;
+      if (!(mask[r / BITS_PER_LONG] & (1 << (r % BITS_PER_LONG)))) continue;
+      idx = re.user_id * total_probs + re.prob_id;
+      if (flag[idx]) continue;
+      flag[idx] = 1;
+      serve_rejudge_run(state, r, user_id, ip, ssl_flag, 0, 0);
+    }
+    return;
+  }
+
+  for (r = 0; r < total_runs; r++) {
+    if (run_get_entry(state->runlog_state, r, &re) >= 0
+        && re.status <= RUN_MAX_STATUS
+        && re.status != RUN_IGNORED
+        && re.status != RUN_DISQUALIFIED
+        && re.prob_id >= 1 && re.prob_id <= state->max_prob
+        && state->probs[re.prob_id]
+        && !state->probs[re.prob_id]->disable_testing
+        && !state->langs[re.lang_id]->disable_testing
+        && !re.is_readonly
+        && !re.is_imported
+        && (mask[r / BITS_PER_LONG] & (1 << (r % BITS_PER_LONG)))) {
+      serve_rejudge_run(state, r, user_id, ip, ssl_flag,
+                        force_flag, priority_adjustment);
+    }
+  }
+}
+
+void
+serve_rejudge_problem(serve_state_t state,
+                      int user_id, ej_ip_t ip, int ssl_flag,
+                      int prob_id)
+{
+  int total_runs, r;
+  struct run_entry re;
+  int total_ids;
+  unsigned char *flag;
+
+  if (prob_id <= 0 || prob_id > state->max_prob || !state->probs[prob_id]
+      || state->probs[prob_id]->disable_testing) return;
+  total_runs = run_get_total(state->runlog_state);
+
+  if (state->global->score_system_val == SCORE_OLYMPIAD
+      && !state->accepting_mode) {
+    // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
+    // considering only the last run for the given participant
+    total_ids = teamdb_get_max_team_id(state->teamdb_state) + 1;
+
+    if (total_ids <= 0) return;
+    flag = (unsigned char *) alloca(total_ids);
+    memset(flag, 0, total_ids);
+    for (r = total_runs - 1; r >= 0; r--) {
+      if (run_get_entry(state->runlog_state, r, &re) < 0) continue;
+      if (re.status != RUN_OK && re.status != RUN_PARTIAL
+          && re.status != RUN_ACCEPTED) continue;
+      if (re.prob_id != prob_id) continue;
+      if (re.is_imported) continue;
+      if (re.is_readonly) continue;
+      if (re.user_id <= 0 || re.user_id >= total_ids) continue;
+      if (flag[re.user_id]) continue;
+      if (!state->langs[re.lang_id]
+          || state->langs[re.lang_id]->disable_testing) continue;
+      flag[re.user_id] = 1;
+      serve_rejudge_run(state, r, user_id, ip, ssl_flag, 0, 0);
+    }
+    return;
+  }
+
+  for (r = 0; r < total_runs; r++) {
+    if (run_get_entry(state->runlog_state, r, &re) >= 0
+        && re.prob_id == prob_id && re.status <= RUN_MAX_STATUS
+        && !re.is_readonly
+        && re.status != RUN_IGNORED
+        && re.status != RUN_DISQUALIFIED
+        && !re.is_imported) {
+      serve_rejudge_run(state, r, user_id, ip, ssl_flag, 0, 0);
+    }
+  }
+}
+
+void
+serve_judge_suspended(serve_state_t state,
+                      int user_id, ej_ip_t ip, int ssl_flag)
+{
+  int total_runs, r;
+  struct run_entry re;
+
+  total_runs = run_get_total(state->runlog_state);
+
+  if (state->global->score_system_val == SCORE_OLYMPIAD
+      && !state->accepting_mode)
+    return;
+
+  for (r = 0; r < total_runs; r++) {
+    if (run_get_entry(state->runlog_state, r, &re) >= 0
+        && re.status == RUN_PENDING
+        && !re.is_imported
+        && re.prob_id > 0
+        && re.prob_id <= state->max_prob
+        && state->probs[re.prob_id]
+        && !re.is_readonly
+        && !state->probs[re.prob_id]->disable_testing
+        && !state->probs[re.prob_id]->disable_auto_testing
+        && !state->langs[re.lang_id]->disable_testing
+        && !state->langs[re.lang_id]->disable_auto_testing) {
+      serve_rejudge_run(state, r, user_id, ip, ssl_flag, 0, 0);
+    }
+  }
+}
+
+void
+serve_rejudge_all(serve_state_t state,
+                  int user_id, ej_ip_t ip, int ssl_flag)
+{
+  int total_runs, r, size, idx, total_ids, total_probs;
+  struct run_entry re;
+  unsigned char *flag;
+
+  total_runs = run_get_total(state->runlog_state);
+
+  if (state->global->score_system_val == SCORE_OLYMPIAD
+      && !state->accepting_mode) {
+    // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
+    // considering only the last run for the given problem and
+    // the given participant
+    total_ids = teamdb_get_max_team_id(state->teamdb_state) + 1;
+    total_probs = state->max_prob + 1;
+    size = total_ids * total_probs;
+
+    if (total_ids <= 0 || total_probs <= 0) return;
+    flag = (unsigned char *) alloca(size);
+    memset(flag, 0, size);
+    for (r = total_runs - 1; r >= 0; r--) {
+      if (run_get_entry(state->runlog_state, r, &re) < 0) continue;
+      if (re.status != RUN_OK && re.status != RUN_PARTIAL
+          && re.status != RUN_ACCEPTED) continue;
+      if (re.is_imported) continue;
+      if (re.user_id <= 0 || re.user_id >= total_ids) continue;
+      if (re.prob_id <= 0 || re.prob_id >= total_probs) continue;
+      if (re.is_readonly) continue;
+      if (!state->probs[re.prob_id]
+          || state->probs[re.prob_id]->disable_testing) continue;
+      if (!state->langs[re.lang_id]
+          || state->langs[re.lang_id]->disable_testing) continue;
+      idx = re.user_id * total_probs + re.prob_id;
+      if (flag[idx]) continue;
+      flag[idx] = 1;
+      serve_rejudge_run(state, r, user_id, ip, ssl_flag, 0, 0);
+    }
+    return;
+  }
+
+  for (r = 0; r < total_runs; r++) {
+    if (run_get_entry(state->runlog_state, r, &re) >= 0
+        && re.status <= RUN_MAX_STATUS
+        && re.status != RUN_IGNORED
+        && re.status != RUN_DISQUALIFIED
+        && re.prob_id >= 1 && re.prob_id <= state->max_prob
+        && state->probs[re.prob_id]
+        && !state->probs[re.prob_id]->disable_testing
+        && !state->langs[re.lang_id]->disable_testing
+        && !re.is_readonly
+        && !re.is_imported) {
+      serve_rejudge_run(state, r, user_id, ip, ssl_flag, 0, 0);
+    }
+  }
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

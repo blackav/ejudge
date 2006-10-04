@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-04 13:05+0400\n"
-"PO-Revision-Date: 2006-10-01 16:55+0400\n"
+"POT-Creation-Date: 2006-10-04 23:22+0400\n"
+"PO-Revision-Date: 2006-10-04 23:46+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -612,9 +612,8 @@ msgstr "Написать сообщение всем командам"
 msgid "Configuration error"
 msgstr "Ошибка конфигурации"
 
-#, fuzzy
 msgid "Confirm action"
-msgstr "Ошибка конфигурации"
+msgstr "Подтвердить выполнение"
 
 msgid "Confirm printing run"
 msgstr "Подтвердить распечатывание"
@@ -921,6 +920,12 @@ msgstr "От"
 
 msgid "Full rejudge displayed runs"
 msgstr "Полностью перепроверить отображённые посылки"
+
+msgid "Fully rejudge displayed runs"
+msgstr "Полностью перепроверить отображённые посылки"
+
+msgid "Fully rejudge displayed runs!"
+msgstr "Полностью перепроверить отображённые посылки!"
 
 msgid "General information"
 msgstr "Общая информация"
@@ -1247,6 +1252,9 @@ msgstr "Судья"
 msgid "Judge suspended runs"
 msgstr "Проверить отложенные посылки"
 
+msgid "Judge suspended runs!"
+msgstr "Проверить отложенные посылки!"
+
 msgid "Judge's report"
 msgstr "Судейский протокол"
 
@@ -1464,6 +1472,10 @@ msgstr "Без комментариев.\n"
 
 msgid "No contests available."
 msgstr "Нет доступных турниров."
+
+#, c-format
+msgid "No runs to rejudge.\n"
+msgstr "Нет посылок для перепроверки.\n"
 
 msgid "No server request performed"
 msgstr "Запрос на сервер не выполнялся"
@@ -1792,23 +1804,27 @@ msgstr "Регистрация завершилась успешно"
 msgid "Registration rules"
 msgstr "Правила регистрации"
 
-msgid "Rejudge"
-msgstr "Пересудить"
-
 msgid "Rejudge all"
 msgstr "Пересудить всё"
+
+msgid "Rejudge all runs"
+msgstr "Пересудить все"
+
+msgid "Rejudge all!!!"
+msgstr "Пересудить всё!!!"
 
 msgid "Rejudge displayed runs"
 msgstr "Перепроверить отображённые посылки"
 
-#, fuzzy
 msgid "Rejudge displayed runs!"
-msgstr "Перепроверить отображённые посылки"
+msgstr "Перепроверить отображённые посылки!"
 
 msgid "Rejudge problem"
 msgstr "Пересудить задачу"
 
-#, fuzzy
+msgid "Rejudge problem!"
+msgstr "Пересудить задачу!"
+
 msgid "Rejudge runs"
 msgstr "Пересудить"
 
@@ -3007,6 +3023,9 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
+
+#~ msgid "Rejudge"
+#~ msgstr "Пересудить"
 
 #~ msgid "Forgot the password?"
 #~ msgstr "Забыли пароль?"

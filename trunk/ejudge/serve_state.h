@@ -253,6 +253,24 @@ serve_rejudge_run(serve_state_t state,
                   int user_id, ej_ip_t ip, int ssl_flag,
                   int force_full_rejudge,
                   int priority_adjustment);
+void
+serve_rejudge_by_mask(serve_state_t state,
+                      int user_id, ej_ip_t ip, int ssl_flag,
+                      int mask_size, unsigned long *mask,
+                      int force_flag, int priority_adjustment);
+
+void
+serve_rejudge_problem(serve_state_t state,
+                      int user_id, ej_ip_t ip, int ssl_flag,
+                      int prob_id);
+
+void
+serve_judge_suspended(serve_state_t state,
+                      int user_id, ej_ip_t ip, int ssl_flag);
+
+void
+serve_rejudge_all(serve_state_t state,
+                  int user_id, ej_ip_t ip, int ssl_flag);
 
 int
 serve_read_compile_packet(serve_state_t state,
