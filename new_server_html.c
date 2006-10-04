@@ -786,6 +786,7 @@ static const unsigned char * const submit_button_labels[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLAR_REPLY_NO_COMMENTS] = __("No comments"),
   [NEW_SRV_ACTION_CLAR_REPLY_YES] = __("Yes"),
   [NEW_SRV_ACTION_CLAR_REPLY_NO] = __("No"),
+  [NEW_SRV_ACTION_REJUDGE_DISPLAYED_2] = __("Rejudge displayed runs!"),
 };
 
 #define BUTTON(a) new_serve_submit_button(bb, sizeof(bb), 0, a, 0)
@@ -2676,11 +2677,125 @@ priv_change_status(FILE *fout,
   return -1;
 }
 
+static int
+priv_rejudge_displayed(FILE *fout,
+                       FILE *log_f,
+                       struct http_request_info *phr,
+                       const struct contest_desc *cnts,
+                       struct contest_extra *extra)
+{
+  return 0;
+}
+
 static const unsigned char * const form_row_attrs[]=
 {
   " bgcolor=\"#d0d0d0\"",
   " bgcolor=\"#e0e0e0\"",
 };
+
+static const unsigned char * const confirmation_headers[NEW_SRV_ACTION_LAST] =
+{
+  [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = __("Rejudge displayed runs"),
+};
+
+static const int confirm_next_action[NEW_SRV_ACTION_LAST] =
+{
+  [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = NEW_SRV_ACTION_REJUDGE_DISPLAYED_2,
+};
+
+static int
+priv_confirmation_page(FILE *fout,
+                       FILE *log_f,
+                       struct http_request_info *phr,
+                       const struct contest_desc *cnts,
+                       struct contest_extra *extra)
+{
+  unsigned char bb[1024];
+  const unsigned char *errmsg = 0;
+  const unsigned char *run_mask_size_str = 0;
+  const unsigned char *run_mask_str = 0;
+  int run_mask_size = 0, n, i;
+  unsigned long *run_mask = 0, m;
+  unsigned char *s;
+  size_t mask_len;
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_REJUDGE_DISPLAYED_1:
+    // run_mask_size, run_mask
+    errmsg = "cannot parse `run_mask_size'";
+    if (ns_cgi_param(phr, "run_mask_size", &run_mask_size_str) <= 0)
+      goto invalid_param;
+    if (sscanf(run_mask_size_str, "%d%n", &run_mask_size, &n) != 1
+        || run_mask_size_str[n] || run_mask_size < 0 || run_mask_size > 100000)
+      goto invalid_param;
+
+    if (run_mask_size > 0) {
+      errmsg = "cannot parse `run_mask'";
+      if (ns_cgi_param(phr, "run_mask", &run_mask_str) <= 0)
+        goto invalid_param;
+      run_mask = (unsigned long *) alloca(run_mask_size * sizeof(run_mask[0]));
+      mask_len = strlen(run_mask_str);
+      s = (unsigned char*) alloca(mask_len + 1);
+      memcpy(s, run_mask, mask_len + 1);
+      while (mask_len > 0 && isspace(s[mask_len - 1])) mask_len--;
+      s[mask_len] = 0;
+      for (i = 0; i < run_mask_size; i++) {
+        if (sscanf(s, "%lx%n", &run_mask[i], &n) != 1)
+          goto invalid_param;
+        s += n;
+      }
+      if (s[n]) goto invalid_param;
+    }
+  }
+
+  l10n_setlocale(phr->locale_id);
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   "%s [%s, %s]: %s &quot;%s&quot;",
+                   new_serve_unparse_role(phr->role),
+                   phr->name_arm, extra->contest_arm, _("Confirm action"),
+                   gettext(confirmation_headers[phr->action]));
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_REJUDGE_DISPLAYED_1:
+    fprintf(fout, "<p>%s ", _("Rejudge runs"));
+    s = "";
+    for (n = 0; n < 8 * sizeof(run_mask[0]) * run_mask_size; n++) {
+      i = n / (8 * sizeof(run_mask[0]));
+      m = 1 << (n % (8 * sizeof(run_mask[0])));
+      if ((run_mask[i] & m)) {
+        fprintf(fout, "%s%d", s, n);
+        s = ", ";
+      }
+    }
+    fprintf(fout, "?</p>\n");
+    break;
+  }
+
+  fprintf(fout, "<table border=\"0\"><tr><td>");
+  html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
+  fprintf(fout, "%s", new_serve_submit_button(bb, sizeof(bb), "nop", 0,
+                                              "Cancel"));
+  fprintf(fout, "</form></td><td>");
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_REJUDGE_DISPLAYED_1:
+    html_hidden(fout, "run_mask_size", "%s", run_mask_size_str);
+    html_hidden(fout, "run_mask", "%s", run_mask_str);
+    break;
+  }
+
+  fprintf(fout, "%s", BUTTON(confirm_next_action[phr->action]));
+  fprintf(fout, "</form></td></tr></table>\n");
+
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
+  l10n_setlocale(0);
+  return 0;
+
+ invalid_param:
+  html_err_invalid_param(fout, phr, 0, errmsg);
+  return -1;
+}
 
 static void
 priv_view_users_page(FILE *fout,
@@ -3429,6 +3544,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLAR_REPLY_NO] = priv_clar_reply,
   [NEW_SRV_ACTION_RELOAD_SERVER] = priv_contest_operation,
   [NEW_SRV_ACTION_CHANGE_STATUS] = priv_change_status,
+  [NEW_SRV_ACTION_REJUDGE_DISPLAYED_2] = priv_rejudge_displayed,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -3436,6 +3552,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN] = priv_download_source,
   [NEW_SRV_ACTION_STANDINGS] = priv_standings,
   [NEW_SRV_ACTION_VIEW_CLAR] = priv_view_clar,
+  [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = priv_confirmation_page,
 };
 
 static int priv_next_state[NEW_SRV_ACTION_LAST] =
@@ -4164,6 +4281,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_CLAR] = priv_generic_page,
   [NEW_SRV_ACTION_RELOAD_SERVER] = priv_generic_operation,
   [NEW_SRV_ACTION_CHANGE_STATUS] = priv_generic_operation,
+  [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = priv_generic_page,
+  [NEW_SRV_ACTION_REJUDGE_DISPLAYED_2] = priv_generic_operation,
 };
 
 static void
