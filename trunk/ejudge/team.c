@@ -353,6 +353,32 @@ check_config_exist(unsigned char const *path)
 }
 
 static void
+client_put_refresh_header(unsigned char const *coding,
+                          unsigned char const *url,
+                          int interval,
+                          unsigned char const *format, ...);
+
+static void
+redirect_to_new_client(void)
+{
+  const unsigned char *s;
+  unsigned char url_buf[1024];
+  unsigned char lbuf[1024] = { 0 };
+
+  if (client_locale_id > 0) {
+    snprintf(lbuf, sizeof(lbuf), "&locale_id=%d", client_locale_id);
+  }
+
+  // just replace `team' with `new-client' in self_url
+  if (!(s = strstr(self_url, "team"))) return;
+  snprintf(url_buf, sizeof(url_buf), "%.*snew-client%s?contest_id=%d%s",
+           s - self_url, self_url, s + 4, global->contest_id, lbuf);
+  client_put_refresh_header(global->charset, url_buf, 0,
+                            "redirecting to the new-client...");
+  exit(0);
+}
+
+static void
 initialize(int argc, char *argv[])
 {
   path_t  fullname;
@@ -561,6 +587,8 @@ initialize(int argc, char *argv[])
 
   make_self_url();
   client_make_form_headers(self_url);
+
+  if (cur_contest->new_managed) redirect_to_new_client();
 }
 
 static void
