@@ -26,20 +26,20 @@
     SRV_CMD_TEAM_PAGE,			OK
     SRV_CMD_MASTER_PAGE,		OK
     SRV_CMD_PRIV_STANDINGS,		OK
-    SRV_CMD_VIEW_CLAR,
+    SRV_CMD_VIEW_CLAR,			OK
     SRV_CMD_VIEW_SOURCE,		OK
     SRV_CMD_VIEW_REPORT,		OK
     SRV_CMD_VIEW_USERS,			OK
-    SRV_CMD_PRIV_MSG,
-    SRV_CMD_PRIV_REPLY,
+    SRV_CMD_PRIV_MSG,			OK
+    SRV_CMD_PRIV_REPLY,			OK
     SRV_CMD_SUSPEND,			OK
     SRV_CMD_RESUME,			OK
     SRV_CMD_UPDATE_STAND,
     SRV_CMD_RESET,
     SRV_CMD_START,			OK
     SRV_CMD_STOP,			OK
-    SRV_CMD_REJUDGE_ALL,
-    SRV_CMD_REJUDGE_PROBLEM,
+    SRV_CMD_REJUDGE_ALL,		OK
+    SRV_CMD_REJUDGE_PROBLEM,		OK
     SRV_CMD_SCHEDULE,			OK
     SRV_CMD_DURATION,			OK
     SRV_CMD_EDIT_RUN,
@@ -55,12 +55,12 @@
     SRV_CMD_CONTINUE,			OK
     SRV_CMD_WRITE_XML_RUNS,
     SRV_CMD_IMPORT_XML_RUNS,
-    SRV_CMD_QUIT,
+    SRV_CMD_QUIT,			OK
     SRV_CMD_EXPORT_XML_RUNS,
     SRV_CMD_PRIV_SUBMIT_RUN,		OK
     SRV_CMD_TEST_SUSPEND,		OK
     SRV_CMD_TEST_RESUME,		OK
-    SRV_CMD_JUDGE_SUSPENDED,
+    SRV_CMD_JUDGE_SUSPENDED,		OK
     SRV_CMD_SET_ACCEPTING_MODE,		OK
     SRV_CMD_PRIV_PRINT_RUN,
     SRV_CMD_PRINT_RUN,
@@ -69,7 +69,7 @@
     SRV_CMD_PRINT_RESUME,		OK
     SRV_CMD_COMPARE_RUNS,
     SRV_CMD_UPLOAD_REPORT,
-    SRV_CMD_REJUDGE_BY_MASK,
+    SRV_CMD_REJUDGE_BY_MASK,		OK
     SRV_CMD_NEW_RUN_FORM,
     SRV_CMD_NEW_RUN,
     SRV_CMD_VIEW_TEAM,
@@ -92,7 +92,7 @@
     SRV_CMD_DUMP_PROBLEMS,
     SRV_CMD_GET_CONTEST_TYPE,
     SRV_CMD_SUBMIT_RUN_2,
-    SRV_CMD_FULL_REJUDGE_BY_MASK,
+    SRV_CMD_FULL_REJUDGE_BY_MASK,	OK
     SRV_CMD_DUMP_SOURCE,
     SRV_CMD_DUMP_CLAR,
     SRV_CMD_RUN_STATUS,
@@ -779,7 +779,7 @@ static const unsigned char * const submit_button_labels[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_RUN_PAGES] = __("Change"),
   [NEW_SRV_ACTION_COMPARE_RUNS] = __("Compare"),
   [NEW_SRV_ACTION_UPLOAD_REPORT] = __("Upload!"),
-  [NEW_SRV_ACTION_REJUDGE_PROBLEM] = __("Rejudge"),
+  [NEW_SRV_ACTION_REJUDGE_PROBLEM_1] = __("Rejudge problem"),
   [NEW_SRV_ACTION_CLAR_REPLY] = __("Reply to sender"),
   [NEW_SRV_ACTION_CLAR_REPLY_ALL] = __("Reply to all"),
   [NEW_SRV_ACTION_CLAR_REPLY_READ_PROBLEM] = __("Read the problem"),
@@ -787,6 +787,10 @@ static const unsigned char * const submit_button_labels[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLAR_REPLY_YES] = __("Yes"),
   [NEW_SRV_ACTION_CLAR_REPLY_NO] = __("No"),
   [NEW_SRV_ACTION_REJUDGE_DISPLAYED_2] = __("Rejudge displayed runs!"),
+  [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_2] = __("Fully rejudge displayed runs!"),
+  [NEW_SRV_ACTION_REJUDGE_PROBLEM_2] = __("Rejudge problem!"),
+  [NEW_SRV_ACTION_REJUDGE_SUSPENDED_2] = __("Judge suspended runs!"),
+  [NEW_SRV_ACTION_REJUDGE_ALL_2] = __("Rejudge all!!!"),
 };
 
 #define BUTTON(a) new_serve_submit_button(bb, sizeof(bb), 0, a, 0)
@@ -2678,12 +2682,182 @@ priv_change_status(FILE *fout,
 }
 
 static int
+parse_run_mask(struct http_request_info *phr,
+               const unsigned char **p_size_str,
+               const unsigned char **p_mask_str,
+               size_t *p_size,
+               unsigned long **p_mask)
+{
+  const unsigned char *size_str = 0;
+  const unsigned char *mask_str = 0;
+  size_t size = 0, mask_len;
+  unsigned long *mask = 0;
+  int n, i;
+  unsigned char *s;
+
+  if (p_size_str) *p_size_str = 0;
+  if (p_mask_str) *p_mask_str = 0;
+  if (p_size) *p_size = 0;
+  if (p_mask) *p_mask = 0;
+
+  if (ns_cgi_param(phr, "run_mask_size", &size_str) <= 0) {
+    err("parse_run_mask: `run_mask_size' is not defined or binary");
+    goto invalid_param;
+  }
+  if (sscanf(size_str, "%zu%n", &size, &n) != 1
+      || size_str[n] || size > 100000) {
+    err("parse_run_mask: `run_mask_size' value is invalid");
+    goto invalid_param;
+  }
+  if (!size) {
+    if (p_size_str) *p_size_str = "0";
+    if (p_mask_str) *p_mask_str = "";
+    return 0;
+  }
+
+  if (ns_cgi_param(phr, "run_mask", &mask_str) <= 0) {
+    err("parse_run_mask: `run_mask' is not defined or binary");
+    goto invalid_param;
+  }
+
+  XCALLOC(mask, size);
+  mask_len = strlen(mask_str);
+  s = (unsigned char*) alloca(mask_len + 1);
+  memcpy(s, mask_str, mask_len + 1);
+  while (mask_len > 0 && isspace(s[mask_len - 1])) mask_len--;
+  s[mask_len] = 0;
+  for (i = 0; i < size; i++) {
+    if (sscanf(s, "%lx%n", &mask[i], &n) != 1) {
+      err("parse_run_mask: cannot parse mask[%d]", i);
+      goto invalid_param;
+    }
+    s += n;
+  }
+  if (s[n]) {
+    err("parse_run_mask: garbage at end");
+    goto invalid_param;
+  }
+
+  if (p_size_str) *p_size_str = size_str;
+  if (p_mask_str) *p_mask_str = mask_str;
+  if (p_size) *p_size = size;
+  if (p_mask) {
+    *p_mask = mask;
+    mask = 0;
+  }
+  xfree(mask);
+  return 1;
+
+ invalid_param:
+  xfree(mask);
+  return -1;
+}
+
+
+static int
 priv_rejudge_displayed(FILE *fout,
                        FILE *log_f,
                        struct http_request_info *phr,
                        const struct contest_desc *cnts,
                        struct contest_extra *extra)
 {
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  unsigned long *mask = 0;
+  size_t mask_size;
+  int force_full = 0;
+  int prio_adj = 0;
+
+  if (parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0) goto invalid_param;
+  if (!mask_size) {
+    fprintf(log_f, _("No runs to rejudge.\n"));
+    goto done;
+  }
+  if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0) {
+    fprintf(log_f, _("Permission denied.\n"));
+    goto done;
+  }
+
+  if (global->score_system_val == SCORE_OLYMPIAD
+      && cs->accepting_mode
+      && phr->action == NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_2) {
+    force_full = 1;
+    prio_adj = 10;
+  }
+
+  serve_rejudge_by_mask(cs, phr->user_id, phr->ip, phr->ssl_flag,
+                        mask_size, mask,
+                        force_full, prio_adj);
+
+ done:
+  xfree(mask);
+  return 0;
+
+ invalid_param:
+  html_err_invalid_param(fout, phr, 0, 0);
+  xfree(mask);
+  return -1;
+}
+
+static int
+priv_rejudge_problem(FILE *fout,
+                     FILE *log_f,
+                     struct http_request_info *phr,
+                     const struct contest_desc *cnts,
+                     struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_problem_data *prob = 0;
+  const unsigned char *s;
+  int prob_id, n;
+
+  if (ns_cgi_param(phr, "prob_id", &s) <= 0
+      || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
+      || prob_id <= 0 || prob_id > cs->max_prob
+      || !(prob = cs->probs[prob_id])
+      || prob->disable_testing)
+    goto invalid_param;
+  if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0) {
+    fprintf(log_f, _("Permission denied.\n"));
+    goto done;
+  }
+
+  serve_rejudge_problem(cs, phr->user_id, phr->ip, phr->ssl_flag, prob_id);
+
+ done:
+  return 0;
+
+ invalid_param:
+  html_err_invalid_param(fout, phr, 0, 0);
+  return -1;
+}
+
+static int
+priv_rejudge_all(FILE *fout,
+                 FILE *log_f,
+                 struct http_request_info *phr,
+                 const struct contest_desc *cnts,
+                 struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+
+  if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0) {
+    fprintf(log_f, _("Permission denied.\n"));
+    goto done;
+  }
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_REJUDGE_SUSPENDED_2:
+    serve_judge_suspended(cs, phr->user_id, phr->ip, phr->ssl_flag);
+    break;
+  case NEW_SRV_ACTION_REJUDGE_ALL_2:
+    serve_rejudge_all(cs, phr->user_id, phr->ip, phr->ssl_flag);
+    break;
+  default:
+    abort();
+  }
+
+ done:
   return 0;
 }
 
@@ -2696,11 +2870,19 @@ static const unsigned char * const form_row_attrs[]=
 static const unsigned char * const confirmation_headers[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = __("Rejudge displayed runs"),
+  [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1] = __("Fully rejudge displayed runs"),
+  [NEW_SRV_ACTION_REJUDGE_PROBLEM_1] = __("Rejudge problem"),
+  [NEW_SRV_ACTION_REJUDGE_SUSPENDED_1] = __("Judge suspended runs"),
+  [NEW_SRV_ACTION_REJUDGE_ALL_1] = __("Rejudge all runs"),
 };
 
 static const int confirm_next_action[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = NEW_SRV_ACTION_REJUDGE_DISPLAYED_2,
+  [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1] = NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_2,
+  [NEW_SRV_ACTION_REJUDGE_PROBLEM_1] = NEW_SRV_ACTION_REJUDGE_PROBLEM_2,
+  [NEW_SRV_ACTION_REJUDGE_SUSPENDED_1] = NEW_SRV_ACTION_REJUDGE_SUSPENDED_2,
+  [NEW_SRV_ACTION_REJUDGE_ALL_1] = NEW_SRV_ACTION_REJUDGE_ALL_2,
 };
 
 static int
@@ -2710,42 +2892,36 @@ priv_confirmation_page(FILE *fout,
                        const struct contest_desc *cnts,
                        struct contest_extra *extra)
 {
+  serve_state_t cs = extra->serve_state;
+  const struct section_problem_data *prob = 0;
   unsigned char bb[1024];
   const unsigned char *errmsg = 0;
   const unsigned char *run_mask_size_str = 0;
   const unsigned char *run_mask_str = 0;
-  int run_mask_size = 0, n, i;
+  int n, i, prob_id = 0;
+  size_t run_mask_size = 0;
   unsigned long *run_mask = 0, m;
-  unsigned char *s;
-  size_t mask_len;
+  const unsigned char *s;
+  int disable_ok = 0, runs_count = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   switch (phr->action) {
   case NEW_SRV_ACTION_REJUDGE_DISPLAYED_1:
+  case NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1:
     // run_mask_size, run_mask
-    errmsg = "cannot parse `run_mask_size'";
-    if (ns_cgi_param(phr, "run_mask_size", &run_mask_size_str) <= 0)
+    errmsg = "cannot parse run mask";
+    if (parse_run_mask(phr, &run_mask_size_str, &run_mask_str,
+                       &run_mask_size, &run_mask) < 0)
       goto invalid_param;
-    if (sscanf(run_mask_size_str, "%d%n", &run_mask_size, &n) != 1
-        || run_mask_size_str[n] || run_mask_size < 0 || run_mask_size > 100000)
+    break;
+  case NEW_SRV_ACTION_REJUDGE_PROBLEM_1:
+    if (ns_cgi_param(phr, "prob_id", &s) <= 0
+        || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
+        || prob_id <= 0 || prob_id > cs->max_prob
+        || !(prob = cs->probs[prob_id])
+        || prob->disable_testing)
       goto invalid_param;
-
-    if (run_mask_size > 0) {
-      errmsg = "cannot parse `run_mask'";
-      if (ns_cgi_param(phr, "run_mask", &run_mask_str) <= 0)
-        goto invalid_param;
-      run_mask = (unsigned long *) alloca(run_mask_size * sizeof(run_mask[0]));
-      mask_len = strlen(run_mask_str);
-      s = (unsigned char*) alloca(mask_len + 1);
-      memcpy(s, run_mask, mask_len + 1);
-      while (mask_len > 0 && isspace(s[mask_len - 1])) mask_len--;
-      s[mask_len] = 0;
-      for (i = 0; i < run_mask_size; i++) {
-        if (sscanf(s, "%lx%n", &run_mask[i], &n) != 1)
-          goto invalid_param;
-        s += n;
-      }
-      if (s[n]) goto invalid_param;
-    }
+    break;
   }
 
   l10n_setlocale(phr->locale_id);
@@ -2757,6 +2933,7 @@ priv_confirmation_page(FILE *fout,
 
   switch (phr->action) {
   case NEW_SRV_ACTION_REJUDGE_DISPLAYED_1:
+  case NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1:
     fprintf(fout, "<p>%s ", _("Rejudge runs"));
     s = "";
     for (n = 0; n < 8 * sizeof(run_mask[0]) * run_mask_size; n++) {
@@ -2765,9 +2942,19 @@ priv_confirmation_page(FILE *fout,
       if ((run_mask[i] & m)) {
         fprintf(fout, "%s%d", s, n);
         s = ", ";
+        runs_count++;
       }
     }
-    fprintf(fout, "?</p>\n");
+    if (!runs_count) {
+      fprintf(fout, "<i>no runs to rejudge!</i></p>\n");
+      disable_ok = 1;
+    } else {
+      fprintf(fout, " (<b>%d total</b>)?</p>\n", runs_count);
+    }
+    break;
+  case NEW_SRV_ACTION_REJUDGE_PROBLEM_1:
+    fprintf(fout, "<p>%s %s(%s)?</p>\n", _("Rejudge problem"),
+            prob->short_name, ARMOR(prob->long_name));
     break;
   }
 
@@ -2780,20 +2967,30 @@ priv_confirmation_page(FILE *fout,
 
   switch (phr->action) {
   case NEW_SRV_ACTION_REJUDGE_DISPLAYED_1:
+  case NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1:
     html_hidden(fout, "run_mask_size", "%s", run_mask_size_str);
     html_hidden(fout, "run_mask", "%s", run_mask_str);
     break;
+  case NEW_SRV_ACTION_REJUDGE_PROBLEM_1:
+    html_hidden(fout, "prob_id", "%d", prob_id);
+    break;
   }
 
-  fprintf(fout, "%s", BUTTON(confirm_next_action[phr->action]));
+  if (!disable_ok) {
+    fprintf(fout, "%s", BUTTON(confirm_next_action[phr->action]));
+  }
   fprintf(fout, "</form></td></tr></table>\n");
 
   html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
+  html_armor_free(&ab);
+  xfree(run_mask);
   return 0;
 
  invalid_param:
   html_err_invalid_param(fout, phr, 0, errmsg);
+  html_armor_free(&ab);
+  xfree(run_mask);
   return -1;
 }
 
@@ -3545,6 +3742,10 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_RELOAD_SERVER] = priv_contest_operation,
   [NEW_SRV_ACTION_CHANGE_STATUS] = priv_change_status,
   [NEW_SRV_ACTION_REJUDGE_DISPLAYED_2] = priv_rejudge_displayed,
+  [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_2] = priv_rejudge_displayed,
+  [NEW_SRV_ACTION_REJUDGE_PROBLEM_2] = priv_rejudge_problem,
+  [NEW_SRV_ACTION_REJUDGE_SUSPENDED_2] = priv_rejudge_all,
+  [NEW_SRV_ACTION_REJUDGE_ALL_2] = priv_rejudge_all,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -3553,6 +3754,10 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_STANDINGS] = priv_standings,
   [NEW_SRV_ACTION_VIEW_CLAR] = priv_view_clar,
   [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = priv_confirmation_page,
+  [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1] = priv_confirmation_page,
+  [NEW_SRV_ACTION_REJUDGE_PROBLEM_1] = priv_confirmation_page,
+  [NEW_SRV_ACTION_REJUDGE_SUSPENDED_1] = priv_confirmation_page,
+  [NEW_SRV_ACTION_REJUDGE_ALL_1] = priv_confirmation_page,
 };
 
 static int priv_next_state[NEW_SRV_ACTION_LAST] =
@@ -4283,6 +4488,14 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_STATUS] = priv_generic_operation,
   [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = priv_generic_page,
   [NEW_SRV_ACTION_REJUDGE_DISPLAYED_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1] = priv_generic_page,
+  [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_REJUDGE_PROBLEM_1] = priv_generic_page,
+  [NEW_SRV_ACTION_REJUDGE_PROBLEM_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_REJUDGE_SUSPENDED_1] = priv_generic_page,
+  [NEW_SRV_ACTION_REJUDGE_SUSPENDED_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_REJUDGE_ALL_1] = priv_generic_page,
+  [NEW_SRV_ACTION_REJUDGE_ALL_2] = priv_generic_operation,
 };
 
 static void
