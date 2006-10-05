@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 #include <signal.h>
 
 static volatile int was_interrupt = 0;
+static volatile int was_sighup = 0;
 static sigset_t orig_mask;
 static sigset_t work_mask;
 
@@ -29,10 +30,22 @@ interrupt_handler(int signo)
   was_interrupt = 1;
 }
 
+static void
+sighup_handler(int signo)
+{
+  was_sighup = 1;
+}
+
 int
 interrupt_get_status(void)
 {
   return was_interrupt;
+}
+
+int
+interrupt_restart_requested(void)
+{
+  return was_sighup;
 }
 
 void
@@ -49,7 +62,7 @@ interrupt_init(void)
   signal(SIGINT, interrupt_handler);
   signal(SIGTERM, interrupt_handler);
   signal(SIGTSTP, interrupt_handler);
-  signal(SIGHUP, interrupt_handler);
+  signal(SIGHUP, sighup_handler);
 }
 
 void
@@ -64,7 +77,7 @@ interrupt_disable(void)
   sigprocmask(SIG_BLOCK, &work_mask, 0);
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
