@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -76,6 +76,7 @@ enum
     TG_PLUGINS,
     TG_PLUGIN,
     TG_PATH,
+    TG_COMPILE_SERVERS,
 
     TG__BARRIER,
     TG__DEFAULT,
@@ -147,6 +148,7 @@ static char const * const elem_map[] =
   "plugins",
   "plugin",
   "path",
+  "compile_servers",
   0,
   "_default",
 
@@ -181,7 +183,7 @@ static size_t elem_sizes[TG_LAST_TAG] =
   [TG_PLUGIN] = sizeof(struct ejudge_plugin),
 };
 
-static const unsigned char verbatim_flags[] =
+static const unsigned char verbatim_flags[TG_LAST_TAG] =
 {
   [TG_PLUGIN] = 1,
 };
@@ -349,6 +351,25 @@ parse_plugins(struct ejudge_cfg *cfg, struct xml_tree *tree)
   return 0;
 }
 
+static int
+parse_compile_servers(struct ejudge_cfg *cfg, struct xml_tree *tree)
+{
+  struct xml_tree *p;
+
+  if (!tree) return 0;
+  if (tree->tag != TG_COMPILE_SERVERS) return xml_err_elem_not_allowed(tree);
+  if (xml_empty_text(tree) < 0) return -1;
+  if (tree->first) return xml_err_attrs(tree);
+
+  for (p = tree->first_down; p; p = p->right) {
+    if (p->tag != TG_PATH) return xml_err_elem_not_allowed(p);
+    if (p->first) return xml_err_attrs(tree);
+    if (p->first_down) return xml_err_nested_elems(p);
+  }
+
+  return 0;
+}
+
 #define CONFIG_OFFSET(f) XOFFSET(struct ejudge_cfg, f)
 
 static const size_t cfg_final_offsets[TG_LAST_TAG] =
@@ -456,6 +477,9 @@ ejudge_cfg_parse(char const *path)
       break;
     case TG_PLUGINS:
       if (parse_plugins(cfg, p) < 0) goto failed;
+      break;
+    case TG_COMPILE_SERVERS:
+      if (parse_compile_servers(cfg, p) < 0) goto failed;
       break;
     default:
       xml_err_elem_not_allowed(p);

@@ -4,7 +4,7 @@
 #ifndef __EJUDGE_CFG_H__
 #define __EJUDGE_CFG_H__ 1
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -86,6 +86,7 @@ struct ejudge_cfg
   unsigned char *job_server_spool;
   unsigned char *job_server_work;
   struct xml_tree *user_map;
+  struct xml_tree *compile_servers;
 
   opcaplist_t capabilities;
 

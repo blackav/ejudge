@@ -155,6 +155,8 @@ struct sid_state
 
   unsigned char *var_header_text;
   unsigned char *var_footer_text;
+
+  unsigned char *compile_home_dir;
 };
 
 void super_serve_clear_edited_contest(struct sid_state *sstate);

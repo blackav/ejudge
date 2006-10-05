@@ -2826,6 +2826,9 @@ generate_compile_cfg(FILE *f)
   cmt = "# "; version = "";
 #endif /* COMPILE_MONO_VERSION */
 
+  // disable it for now...
+  cmt = "#";
+
   fprintf(f,
           "%s[language]\n"
           "%sid = 19\n"
@@ -2842,7 +2845,10 @@ generate_compile_cfg(FILE *f)
   cmt = ""; version = COMPILE_MBAS_VERSION;
 #else
   cmt = "# "; version = "";
-#endif /* COMPILE_MONO_VERSION */
+#endif /* COMPILE_MBAS_VERSION */
+
+  // disable it for now...
+  cmt = "#";
 
   fprintf(f,
           "%s[language]\n"
@@ -3135,6 +3141,7 @@ generate_ejudge_xml(FILE *f)
           "      PRIV_DELETE_USER,\n"
           "      DUMP_USERS,\n"
           "      EDIT_CONTEST,\n"
+          "      CONTROL_CONTEST,\n"
           "    </cap>\n"
           "  </caps>\n", config_login);
 
@@ -3671,6 +3678,10 @@ generate_install_script(FILE *f)
   gen_cmd_run(f, "chown -R %s:%s \"%s\"",
               config_system_uid, config_system_gid, config_contest1_home_dir);
 
+  fprintf(f, "# Do probe run of the compile server to create dirs\n");
+  gen_cmd_run(f, "su - -c 'cd \"%s\"; %s/bin/compile -i conf/compile.cfg' %s",
+              config_compile_home_dir, EJUDGE_PREFIX_DIR,
+              config_system_uid);
   fprintf(f, "# Do probe run of the contest server to create dirs\n");
   gen_cmd_run(f, "su - -c 'cd \"%s\"; %s -i conf/serve.cfg' %s",
               config_contest1_home_dir, config_ejudge_serve_path,

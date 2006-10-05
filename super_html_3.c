@@ -2636,9 +2636,9 @@ load_cs_languages(const struct ejudge_cfg *config,
 
   sstate->cs_langs_loaded = 1;
 
-  if (!config->compile_home_dir) return -1;
+  if (!sstate->compile_home_dir) return -1;
   snprintf(cs_conf_dir, sizeof(cs_conf_dir), "%s/conf/compile.cfg",
-           config->compile_home_dir);
+           sstate->compile_home_dir);
   if (!(cfg = prepare_parse_config_file(cs_conf_dir, 0))) return -1;
   sstate->cs_cfg = cfg;
 
@@ -5457,7 +5457,7 @@ unparse_serve_cfg(FILE *f,
     if (sstate->probs[i] && sstate->probs[i]->variant_num > 0)
       need_variant_map = 1;
 
-  prepare_unparse_global(f, global, config->compile_home_dir, need_variant_map);
+  prepare_unparse_global(f, global, sstate->compile_home_dir, need_variant_map);
 
   if (sstate->lang_a > 0) {
     for (i = 1, active_langs = 0; i < sstate->lang_a; i++) {
@@ -5687,6 +5687,8 @@ do_load_file(const unsigned char *conf_path, const unsigned char *file)
   return buf;
 }
 
+static const unsigned char compile_dir_suffix[] = "/var/compile";
+
 int
 super_html_read_serve(FILE *flog,
                       const unsigned char *path,
@@ -5712,6 +5714,7 @@ super_html_read_serve(FILE *flog,
   path_t cs_spool_dir;
   path_t conf_dir;
   unsigned char *prob_no_any = 0;
+  size_t cs_spool_dir_len = 0;
 
   if (!cnts) {
     fprintf(flog, "No contest XML description\n");
@@ -5787,12 +5790,26 @@ super_html_read_serve(FILE *flog,
     fprintf(flog, "compile server home dir is not set\n");
     return -1;
   }
+  // cut off "/var/compile" suffix from the compile dir
+  snprintf(cs_spool_dir, sizeof(cs_spool_dir), "%s", global->compile_dir);
+  cs_spool_dir_len = strlen(cs_spool_dir);
+  if (cs_spool_dir_len < sizeof(compile_dir_suffix)
+      || strcmp(cs_spool_dir+cs_spool_dir_len-sizeof(compile_dir_suffix)+1,
+                compile_dir_suffix) != 0) {
+    fprintf(flog, "invalid `compile_dir' %s\n", cs_spool_dir);
+    return -1;
+  }
+  cs_spool_dir[cs_spool_dir_len-sizeof(compile_dir_suffix)+1] = 0;
+  sstate->compile_home_dir = xstrdup(cs_spool_dir);
+  //fprintf(stderr, "compile_home_dir>>%s<<\n", sstate->compile_home_dir);
+  /*
   snprintf(cs_spool_dir, sizeof(cs_spool_dir), "%s/var/compile",
            config->compile_home_dir);
   if (strcmp(cs_spool_dir, global->compile_dir)) {
     fprintf(flog, "non-default compilation server is used\n");
     return -1;
   }
+  */
 
   if (global->stand_ignore_after[0]
       && xml_parse_date("", 0, 0, global->stand_ignore_after,
