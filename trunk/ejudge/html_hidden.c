@@ -24,12 +24,14 @@ void
 html_hidden(FILE *fout, const unsigned char *var_name,
             const char *format, ...)
 {
-  unsigned char buf[1024];
+  unsigned char buf[1024] = { 0 };
   va_list args;
 
-  va_start(args, format);
-  vsnprintf(buf, sizeof(buf), format, args);
-  va_end(args);
+  if (format && *format) {
+    va_start(args, format);
+    vsnprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+  }
 
   fprintf(fout, "<input type=\"hidden\" name=\"%s\" value=\"%s\">",
           var_name, buf);

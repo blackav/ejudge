@@ -961,7 +961,7 @@ super_html_serve_probe_run(FILE *f,
   xfree(serve_buf);
   fprintf(f, "<table border=\"0\"><tr>");
   fprintf(f, "<td>%sTo the top</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,""));
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
   fprintf(f, "<td>%sBack</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "contest_id=%d&action=%d", contest_id,
@@ -1517,7 +1517,7 @@ super_html_commit_contest(FILE *f,
 
   fprintf(f, "<table border=\"0\"><tr>");
   fprintf(f, "<td>%sTo the top</a></td></tr></table>\n",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,""));
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
 
   super_serve_clear_edited_contest(sstate);
   return 0;
@@ -1554,7 +1554,7 @@ super_html_commit_contest(FILE *f,
   xfree(flog_txt);
   fprintf(f, "<table border=\"0\"><tr>");
   fprintf(f, "<td>%sTo the top</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,""));
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
   fprintf(f, "<td>%sBack</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "action=%d", SUPER_ACTION_EDIT_CURRENT_CONTEST));

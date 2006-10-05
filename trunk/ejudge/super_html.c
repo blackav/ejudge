@@ -378,7 +378,7 @@ super_html_main_page(FILE *f,
   }
   fprintf(f, "</tr></table>\n");
 
-  fprintf(f, "<table border=\"0\"><tr><td>%sRefresh</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, ""));
+  fprintf(f, "<table border=\"0\"><tr><td>%sRefresh</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, 0));
 
   // display information about known contests
   contest_max_id = contests_get_list(&contests_map);
@@ -1647,7 +1647,7 @@ super_html_report_error(FILE *f,
   fprintf(f, "<h2><font color=\"red\">Error: %s</font></h2>\n", arm_str);
   fprintf(f, "<table border=\"0\"><tr>");
   fprintf(f, "<td>%sTo the top</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,""));
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
   fprintf(f, "<td>%sBack</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "action=%d", SUPER_ACTION_EDIT_CURRENT_CONTEST));
@@ -1667,7 +1667,7 @@ super_html_contest_page_menu(FILE *f,
   unsigned char hbuf[1024];
 
   fprintf(f, "<table border=\"0\"><tr><td>%sTo the top (postpone editing)</a></td><td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, ""));
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
   if (cur_page != 1) {
     fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                                    "action=%d", SUPER_ACTION_EDIT_CURRENT_CONTEST));
@@ -1726,7 +1726,7 @@ super_html_contest_footer_menu(FILE *f,
   unsigned char hbuf[1024];
 
   html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<table border=\"0\"><tr><td>%sTo the top</a></td><td>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, ""));
+  fprintf(f, "<table border=\"0\"><tr><td>%sTo the top</a></td><td>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, 0));
   html_submit_button(f, SUPER_ACTION_CNTS_FORGET, "Forget it");
   fprintf(f, "</td><td>");
   html_submit_button(f, SUPER_ACTION_CNTS_COMMIT, "COMMIT changes!");
@@ -2089,7 +2089,7 @@ super_html_edit_contest_page(FILE *f,
   if (!cnts) {
     fprintf(f, "<h2>No current contest!</h2>\n"
             "<p>%sTo the top</a></p>\n",
-            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,""));
+            html_hyperref(hbuf, sizeof(hbuf),session_id,self_url,extra_args,0));
     return 0;
   }
 
@@ -2846,7 +2846,7 @@ super_html_edit_access_rules(FILE *f,
   if (!cnts) {
     fprintf(f, "<h2>No current contest!</h2>\n"
             "<p>%sTo the top</a></p>\n",
-            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,""));
+            html_hyperref(hbuf,sizeof(hbuf),session_id,self_url,extra_args,0));
     return 0;
   }
 
@@ -2962,7 +2962,7 @@ super_html_edit_access_rules(FILE *f,
   xfree(contests_map); contests_map = 0;
 
   fprintf(f, "<table border=\"0\"><tr><td>%sTo the top</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, ""));
+          html_hyperref(hbuf,sizeof(hbuf),session_id,self_url,extra_args, 0));
   fprintf(f, "<td>%sBack</a></td></tr></table>\n",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "action=%d", SUPER_ACTION_EDIT_CURRENT_CONTEST));
@@ -3026,7 +3026,7 @@ super_html_edit_permission(FILE *f,
   if (!cnts) {
     fprintf(f, "<h2>No current contest!</h2>\n"
             "<p>%sTo the top</a></p>\n",
-            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,""));
+            html_hyperref(hbuf,sizeof(hbuf),session_id,self_url,extra_args,0));
     return 0;
   }
 
@@ -3055,7 +3055,7 @@ super_html_edit_permission(FILE *f,
   fprintf(f, "</table>");
 
   fprintf(f, "<table border=\"0\"><tr><td>%sTo the top</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, ""));
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
   fprintf(f, "<td>%sForget changes</a></td><td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "action=%d", SUPER_ACTION_EDIT_CURRENT_CONTEST));
@@ -3124,7 +3124,7 @@ super_html_edit_form_fields(FILE *f,
   if (!cnts) {
     fprintf(f, "<h2>No current contest!</h2>\n"
             "<p>%sTo the top</a></p>\n",
-            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,""));
+            html_hyperref(hbuf, sizeof(hbuf),session_id,self_url,extra_args,0));
     return 0;
   }
 
@@ -3225,7 +3225,7 @@ super_html_edit_form_fields(FILE *f,
   fprintf(f, "</table>");
 
   fprintf(f, "<table border=\"0\"><tr><td>%sTo the top</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, ""));
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
   fprintf(f, "<td>%sBack</a></td><td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "action=%d", SUPER_ACTION_EDIT_CURRENT_CONTEST));
@@ -3577,7 +3577,7 @@ super_html_edit_template_file(FILE *f,
   xfree(s);
 
   fprintf(f, "<table border=\"0\"><tr><td>%sTo the top</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, ""));
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
   fprintf(f, "<td>%sBack</a></td><td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                    "action=%d", back_action));

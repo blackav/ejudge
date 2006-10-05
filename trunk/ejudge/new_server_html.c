@@ -727,7 +727,7 @@ static const unsigned char * const submit_button_labels[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_PASSWORD] = __("Change password"),
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = __("Switch language"),
   [NEW_SRV_ACTION_RESET_FILTER] = __("Reset filter"),
-  [NEW_SRV_ACTION_CLEAR_RUN] = __("Clear"),
+  [NEW_SRV_ACTION_CLEAR_RUN] = __("Clear this entry"),
   [NEW_SRV_ACTION_CHANGE_STATUS] = __("Change"),
   [NEW_SRV_ACTION_REJUDGE_ALL_1] = __("Rejudge all"),
   [NEW_SRV_ACTION_REJUDGE_SUSPENDED_1] = __("Judge suspended runs"),
@@ -2733,7 +2733,7 @@ parse_run_mask(struct http_request_info *phr,
     }
     s += n;
   }
-  if (s[n]) {
+  if (*s) {
     err("parse_run_mask: garbage at end");
     goto invalid_param;
   }

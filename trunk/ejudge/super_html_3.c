@@ -7130,7 +7130,7 @@ super_html_check_tests(FILE *f,
 
   fprintf(f, "<table border=\"0\"><tr>");
   fprintf(f, "<td>%sTo the top</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,""));
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
   fprintf(f, "<td>%sBack</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "contest_id=%d&action=%d", cnts->id,
