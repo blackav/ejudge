@@ -28,20 +28,22 @@ html_input_text(unsigned char *buf, size_t size,
                 ...)
 {
   va_list args;
-  unsigned char bformat[1024];
+  unsigned char bformat[1024] = { 0 };
   unsigned char bsize[128];
   unsigned char bname[128];
 
-  va_start(args, format);
-  vsnprintf(bformat, sizeof(bformat), format, args);
-  va_end(args);
+  if (format && *format) {
+    va_start(args, format);
+    vsnprintf(bformat, sizeof(bformat), format, args);
+    va_end(args);
+  }
 
   bsize[0] = 0;
   if (text_size > 0) snprintf(bsize, sizeof(bsize), " size=\"%d\"", text_size);
   bname[0] = 0;
   if (var_name) snprintf(bname, sizeof(bname), " name=\"%s\"", var_name);
 
-  snprintf(buf, sizeof(buf), "<input type=\"text\"%s%s value=\"%s\">",
+  snprintf(buf, size, "<input type=\"text\"%s%s value=\"%s\">",
            bsize, bname, bformat);
   return buf;
 }

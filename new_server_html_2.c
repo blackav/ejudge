@@ -1272,14 +1272,14 @@ new_serve_write_priv_source(const serve_state_t state,
     html_start_form(f, 1, phr->self_url, phr->hidden_vars);
     html_hidden(f, "run_id", "%d", run_id);
     fprintf(f, "<p>%s</p>", BUTTON(NEW_SRV_ACTION_CLEAR_RUN));
-    fprintf(f, "</form>");
+    fprintf(f, "</form>\n");
   }
 
   if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) >= 0) {
     html_start_form(f, 1, phr->self_url, phr->hidden_vars);
     html_hidden(f, "run_id", "%d", run_id);
     fprintf(f, "<p>%s</p>", BUTTON(NEW_SRV_ACTION_PRINT_RUN));
-    fprintf(f, "</form>");
+    fprintf(f, "</form>\n");
   }
 
   filtbuf1[0] = 0;
@@ -1292,7 +1292,7 @@ new_serve_write_priv_source(const serve_state_t state,
   }
   html_start_form(f, 1, phr->self_url, phr->hidden_vars);
   html_hidden(f, "run_id", "%d", run_id);
-  fprintf(f, "<p>%s: %s %s</p>\n",
+  fprintf(f, "<p>%s: %s %s</p></form>\n",
 	  _("Compare this run with run"),
           html_input_text(bt, sizeof(bt), "run_id2", 10, "%s", filtbuf1),
 	  BUTTON(NEW_SRV_ACTION_COMPARE_RUNS));

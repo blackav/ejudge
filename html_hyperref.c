@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2005-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,7 @@ html_hyperref(unsigned char *buf, size_t size,
               ej_cookie_t session_id,
               const unsigned char *self_url,
               const unsigned char *extra_args,
-              const unsigned char *format, ...)
+              const char *format, ...)
 {
   unsigned char b[1024] = { 0 };
   va_list args;
@@ -51,7 +51,7 @@ html_hyperref(unsigned char *buf, size_t size,
   return buf;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")

@@ -27,7 +27,8 @@ unsigned char *html_hyperref(unsigned char *buf, size_t size,
                              ej_cookie_t session_id,
                              const unsigned char *self_url,
                              const unsigned char *extra_args,
-                             const unsigned char *format, ...);
+                             const char *format, ...)
+  __attribute__((format(printf, 6, 7)));
 
 void html_start_form(FILE *f, int mode,
                      unsigned char const *self_url,
@@ -36,11 +37,13 @@ void html_start_form(FILE *f, int mode,
 void html_date_select(FILE *f, time_t t);
 
 void html_hidden(FILE *fout, const unsigned char *var_name,
-                 const char *format, ...);
+                 const char *format, ...)
+  __attribute__((format(printf, 3, 4)));
 
 unsigned char *html_input_text(unsigned char *buf, size_t size,
                                const unsigned char *var_name,
                                int text_size, const char *format,
-                               ...);
+                               ...)
+  __attribute__((format(printf, 5, 6)));
 
 #endif /* __MISCHTML_H__ */
