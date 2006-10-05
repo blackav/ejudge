@@ -4,7 +4,7 @@
 #ifndef __INTERRUPT_H__
 #define __INTERRUPT_H__
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,5 +24,6 @@ void interrupt_enable(void);
 void interrupt_disable(void);
 
 int interrupt_get_status(void);
+int interrupt_restart_requested(void);
 
 #endif /* __INTERRUPT_H__ */
