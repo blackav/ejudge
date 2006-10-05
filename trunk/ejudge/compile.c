@@ -48,6 +48,7 @@
 #include <unistd.h>
 
 struct serve_state serve_state;
+static int initialize_mode = 0;
 
 static int
 do_loop(void)
@@ -337,6 +338,9 @@ main(int argc, char *argv[])
     if (!strcmp(argv[i], "-T")) {
       T_flag = 1;
       i++;
+    } else if (!strcmp(argv[i], "-i")) {
+      initialize_mode = 1;
+      i++;
     } else if (!strcmp(argv[i], "-k")) {
       if (++i >= argc) goto print_usage;
       key = argv[i++];
@@ -364,6 +368,7 @@ main(int argc, char *argv[])
   if (key && filter_languages(key) < 0) return 1;
   if (create_dirs(&serve_state, PREPARE_COMPILE) < 0) return 1;
   if (check_config() < 0) return 1;
+  if (initialize_mode) return 0;
   if (do_loop() < 0) return 1;
 
   return 0;

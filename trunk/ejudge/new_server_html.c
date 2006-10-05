@@ -792,6 +792,7 @@ static const unsigned char * const submit_button_labels[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_REJUDGE_PROBLEM_2] = __("Rejudge problem!"),
   [NEW_SRV_ACTION_REJUDGE_SUSPENDED_2] = __("Judge suspended runs!"),
   [NEW_SRV_ACTION_REJUDGE_ALL_2] = __("Rejudge all!!!"),
+  [NEW_SRV_ACTION_PRINT_RUN] = __("Print"),
 };
 
 #define BUTTON(a) new_serve_submit_button(bb, sizeof(bb), 0, a, 0)

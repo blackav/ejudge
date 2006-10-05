@@ -1780,6 +1780,7 @@ super_serve_clear_edited_contest(struct sid_state *p)
   xfree(p->plog_footer_text); p->plog_footer_text = 0;
   xfree(p->var_header_text); p->var_header_text = 0;
   xfree(p->var_footer_text); p->var_footer_text = 0;
+  xfree(p->compile_home_dir); p->compile_home_dir = 0;
 }
 
 static void
