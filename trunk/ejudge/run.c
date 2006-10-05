@@ -76,6 +76,10 @@
 static int managed_mode_flag = 0;
 static time_t last_activity_time;
 struct serve_state serve_state;
+static int restart_flag = 0;
+
+static path_t self_exe;
+static char **self_argv;
 
 struct testinfo
 {
@@ -1465,6 +1469,10 @@ do_loop(void)
 
     // terminate, if signaled
     if (interrupt_get_status()) break;
+    if (interrupt_restart_requested()) {
+      restart_flag = 1;
+    }
+    if (restart_flag) break;
 
     r = scan_dir(serve_state.global->run_queue_dir, pkt_name);
     if (r < 0) return -1;
@@ -1504,6 +1512,11 @@ do_loop(void)
       continue;
     }
     if (req_pkt->contest_id == -1) {
+      restart_flag = 1;
+      continue;
+    }
+    /*
+    if (req_pkt->contest_id == -1) {
       r = generic_write_file(req_buf, req_buf_size, SAFE,
                              serve_state.global->run_queue_dir, pkt_name, "");
       if (r < 0) return -1;
@@ -1511,6 +1524,7 @@ do_loop(void)
       scan_dir_add_ignored(serve_state.global->run_queue_dir, pkt_name);
       continue;
     }
+    */
 
     if (req_pkt->problem_id > serve_state.max_prob || !serve_state.probs[req_pkt->problem_id]) {
       snprintf(errmsg, sizeof(errmsg),
@@ -2155,6 +2169,21 @@ check_config(void)
   return 0;
 }
 
+static void
+set_self_args(int argc, char *argv[])
+{
+  int n;
+
+  if ((n = readlink("/proc/self/exe", self_exe, sizeof(self_exe))) <= 0) {
+    fprintf(stderr, "%s: cannot access /proc/self/exe: %s\n",
+            argv[0], os_ErrorMsg());
+    snprintf(self_exe, sizeof(self_exe), "%s", argv[0]);
+  } else {
+    self_exe[n] = 0;
+  }
+  self_argv = argv;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -2162,6 +2191,8 @@ main(int argc, char *argv[])
   char *key = 0;
   int   p_flags = 0, code = 0, T_flag = 0;
   path_t cpp_opts = { 0 };
+
+  set_self_args(argc, argv);
 
   if (argc == 1) goto print_usage;
   code = 1;
@@ -2201,6 +2232,9 @@ main(int argc, char *argv[])
   if (create_dirs(&serve_state, PREPARE_RUN) < 0) return 1;
   if (check_config() < 0) return 1;
   if (do_loop() < 0) return 1;
+  if (restart_flag) {
+    execv(self_exe, self_argv);
+  }
   return 0;
 
  print_usage:

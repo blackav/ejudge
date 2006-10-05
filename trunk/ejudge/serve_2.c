@@ -1785,7 +1785,7 @@ serve_rejudge_by_mask(serve_state_t state,
           || state->probs[re.prob_id]->disable_testing) continue;
       if (!state->langs[re.lang_id]
           || state->langs[re.lang_id]->disable_testing) continue;
-      if (!(mask[r / BITS_PER_LONG] & (1 << (r % BITS_PER_LONG)))) continue;
+      if (!(mask[r / BITS_PER_LONG] & (1L << (r % BITS_PER_LONG)))) continue;
       idx = re.user_id * total_probs + re.prob_id;
       if (flag[idx]) continue;
       flag[idx] = 1;
@@ -1805,7 +1805,7 @@ serve_rejudge_by_mask(serve_state_t state,
         && !state->langs[re.lang_id]->disable_testing
         && !re.is_readonly
         && !re.is_imported
-        && (mask[r / BITS_PER_LONG] & (1 << (r % BITS_PER_LONG)))) {
+        && (mask[r / BITS_PER_LONG] & (1L << (r % BITS_PER_LONG)))) {
       serve_rejudge_run(state, r, user_id, ip, ssl_flag,
                         force_flag, priority_adjustment);
     }

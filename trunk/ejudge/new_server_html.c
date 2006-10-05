@@ -131,6 +131,7 @@
 #include "curtime.h"
 #include "clarlog.h"
 #include "team_extra.h"
+#include "diff.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -1008,10 +1009,14 @@ html_err_invalid_param(FILE *fout,
   unsigned char buf[1024];
   va_list args;
 
-  va_start(args, format);
-  vsnprintf(buf, sizeof(buf), format, args);
-  va_end(args);
-  err("%d: invalid parameter: %s", phr->id, buf);
+  if (format && *format) {
+    va_start(args, format);
+    vsnprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+    err("%d: invalid parameter: %s", phr->id, buf);
+  } else {
+    err("%d: invalid parameter", phr->id);
+  }
 
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = get_contest_extra(phr->contest_id);
@@ -2938,7 +2943,7 @@ priv_confirmation_page(FILE *fout,
     s = "";
     for (n = 0; n < 8 * sizeof(run_mask[0]) * run_mask_size; n++) {
       i = n / (8 * sizeof(run_mask[0]));
-      m = 1 << (n % (8 * sizeof(run_mask[0])));
+      m = 1L << (n % (8 * sizeof(run_mask[0])));
       if ((run_mask[i] & m)) {
         fprintf(fout, "%s%d", s, n);
         s = ", ";
@@ -2991,6 +2996,49 @@ priv_confirmation_page(FILE *fout,
   html_err_invalid_param(fout, phr, 0, errmsg);
   html_armor_free(&ab);
   xfree(run_mask);
+  return -1;
+}
+
+static int
+priv_diff_page(FILE *fout,
+               FILE *log_f,
+               struct http_request_info *phr,
+               const struct contest_desc *cnts,
+               struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  const unsigned char *s;
+  int run_id1, run_id2, n, total_runs;
+
+  total_runs = run_get_total(cs->runlog_state);
+  if (ns_cgi_param(phr, "run_id", &s) <= 0
+      || sscanf(s, "%d%n", &run_id1, &n) != 1 || s[n]
+      || run_id1 < 0 || run_id1 >= total_runs)
+    goto invalid_param;
+  if (!(n = ns_cgi_param(phr, "run_id2", &s)) || (n > 0 && !*s)) {
+    fprintf(log_f, _("Run to compare to is not specified.\n"));
+    goto done;
+  }
+  if (n < 0 || sscanf(s, "%d%n", &run_id2, &n) != 1 || s[n]
+      || run_id2 < 0 || run_id2 >= total_runs) {
+    fprintf(log_f, _("Invalid run to compare to.\n"));
+    goto done;
+  }
+  if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
+    fprintf(log_f, _("Permission denied.\n"));
+    goto done;
+  }
+
+  if (compare_runs(cs, fout, run_id1, run_id2) < 0) {
+    fprintf(log_f, _("Error during run comparison.\n"));
+    goto done;
+  }
+
+ done:
+  return 0;
+
+ invalid_param:
+  html_err_invalid_param(fout, phr, 0, 0);
   return -1;
 }
 
@@ -3758,6 +3806,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_REJUDGE_PROBLEM_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_REJUDGE_SUSPENDED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_REJUDGE_ALL_1] = priv_confirmation_page,
+  [NEW_SRV_ACTION_COMPARE_RUNS] = priv_diff_page,
 };
 
 static int priv_next_state[NEW_SRV_ACTION_LAST] =
@@ -4496,6 +4545,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_REJUDGE_SUSPENDED_2] = priv_generic_operation,
   [NEW_SRV_ACTION_REJUDGE_ALL_1] = priv_generic_page,
   [NEW_SRV_ACTION_REJUDGE_ALL_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_COMPARE_RUNS] = priv_generic_page,
 };
 
 static void

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-05 09:14+0400\n"
-"PO-Revision-Date: 2006-10-04 23:46+0400\n"
+"POT-Creation-Date: 2006-10-05 11:19+0400\n"
+"PO-Revision-Date: 2006-10-05 12:32+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -785,6 +785,10 @@ msgstr "Английский"
 msgid "Enter password"
 msgstr "Введите пароль"
 
+#, c-format
+msgid "Error during run comparison.\n"
+msgstr "Ошибка при сравнении программ.\n"
+
 msgid "Examiner"
 msgstr "Экзаменатор"
 
@@ -1202,6 +1206,10 @@ msgstr "Неверный задача."
 
 msgid "Invalid role parameter."
 msgstr "Неверная роль."
+
+#, c-format
+msgid "Invalid run to compare to.\n"
+msgstr "Неверный номер посылки для сравнения.\n"
 
 msgid "Invalid run_id"
 msgstr "Неверный номер посылки"
@@ -1931,6 +1939,10 @@ msgstr "Параметры роли/члена не определены."
 
 msgid "Run ID"
 msgstr "Номер решения"
+
+#, c-format
+msgid "Run to compare to is not specified.\n"
+msgstr "Посылка для сравнения не указана.\n"
 
 msgid "Run-time error"
 msgstr "Ошибка выполнения"

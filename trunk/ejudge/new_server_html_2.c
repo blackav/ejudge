@@ -319,7 +319,7 @@ new_serve_write_priv_all_runs(FILE *f,
       ASSERT(rid >= 0 && rid < env.rtotal);
       pe = &env.rentries[rid];
 
-      displayed_mask[rid / BITS_PER_LONG] |= (1 << (rid % BITS_PER_LONG));
+      displayed_mask[rid / BITS_PER_LONG] |= (1L << (rid % BITS_PER_LONG));
 
       if (phr->role == USER_ROLE_ADMIN) {
         html_start_form(f, 1, phr->self_url, phr->hidden_vars);
