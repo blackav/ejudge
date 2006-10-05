@@ -1255,3 +1255,11 @@ unix/interrupt.c 3489 0 145331
 new_server_html.c 3490 0 18462601
 new_server_html_2.c 3490 0 4269289
 serve_2.c 3490 0 5218472
+ejudge_cfg.h 3492 0 232214
+super-serve.h 3492 0 363676
+compile.c 3492 0 864798
+ejudge-setup.c 3492 0 9322582
+super-serve.c 3492 0 11330720
+ejudge_cfg.c 3492 0 1354817
+new_server_html.c 3492 0 18465854
+super_html_3.c 3492 0 20974059
