@@ -2357,15 +2357,15 @@ generate_serve_cfg(FILE *f)
 #if defined COMPILE_MONO_VERSION
   fprintf(f,
           "# Note, support for Mono C# is experimental!\n"
-          "[language]\n"
-          "id = 19\n"
-          "short_name = \"CS\"\n"
-          "long_name = \"Mono C# %s\"\n"
-          "disabled = 1 # Enable manually!\n"
-          "src_sfx = \".cs\"\n"
-          "exe_sfx = \".exe\"\n"
-          "arch = \"msil\"\n"
-          "\n",
+          "# [language]\n"
+          "# id = 19\n"
+          "# short_name = \"CS\"\n"
+          "# long_name = \"Mono C# %s\"\n"
+          "# disabled = 1 # Enable manually!\n"
+          "# src_sfx = \".cs\"\n"
+          "# exe_sfx = \".exe\"\n"
+          "# arch = \"msil\"\n"
+          "# \n",
           COMPILE_MONO_VERSION);
 #endif /* COMPILE_MONO_VERSION */
 
@@ -2462,6 +2462,7 @@ generate_serve_cfg(FILE *f)
         "no_core_dump\n"
         "kill_signal = TERM\n"
         "start_cmd = runjava\n"
+        "start_env = \"LANG=C\"\n"
         "start_env = \"EJUDGE_PREFIX_DIR\"\n"
         "start_env = \"EJUDGE_JAVA_FLAGS=-Xmx64M\"\n",
         f);
@@ -2476,6 +2477,7 @@ generate_serve_cfg(FILE *f)
   fputs("\n", f);
 #endif /* COMPILE_JAVA_VERSION */
 
+#if 0 // disable it for now...
 #if defined COMPILE_MONO_VERSION
   fputs("[tester]\n"
         "name = Linux-msil\n"
@@ -2497,6 +2499,7 @@ generate_serve_cfg(FILE *f)
   }
   fputs("\n", f);
 #endif /* COMPILE_MONO_VERSION */
+#endif
 
   fputs("[tester]\n"
         "any\n"
@@ -2517,6 +2520,8 @@ generate_serve_cfg(FILE *f)
         f);
 #endif /* COMPILE_JAVA_VERSION */
 
+  // disable it for now...
+#if 0
 #if defined COMPILE_MONO_VERSION
   fputs("\n"
         "[tester]\n"
@@ -2525,6 +2530,7 @@ generate_serve_cfg(FILE *f)
         "arch = msil\n",
         f);
 #endif /* COMPILE_MONO_VERSION */
+#endif
 }
 
 static void
