@@ -1263,3 +1263,5 @@ super-serve.c 3492 0 11330720
 ejudge_cfg.c 3492 0 1354817
 new_server_html.c 3492 0 18465854
 super_html_3.c 3492 0 20974059
+ejudge-setup.c 3494 0 9331316
+new_server_html.c 3495 0 18645277
