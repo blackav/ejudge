@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-05 11:19+0400\n"
-"PO-Revision-Date: 2006-10-05 12:32+0400\n"
+"POT-Creation-Date: 2006-10-07 00:18+0400\n"
+"PO-Revision-Date: 2006-10-07 00:27+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1700,6 +1700,18 @@ msgstr "Обработка запросов на печать приостановлена"
 msgid "Print sources"
 msgstr "Распечатать исходный текст"
 
+#, c-format
+msgid "Printing error: %d: %s.\n"
+msgstr "Ошибка печати: %d: %s.\n"
+
+#, c-format
+msgid "Printing is disabled.\n"
+msgstr "Печать отключена.\n"
+
+#, c-format
+msgid "Printing quota (%d pages) is exceeded.\n"
+msgstr "Превышена квота печати (%d страниц).\n"
+
 msgid "Privileged users page"
 msgstr "Список привилегированных пользователей"
 
@@ -1946,6 +1958,10 @@ msgstr "Посылка для сравнения не указана.\n"
 
 msgid "Run-time error"
 msgstr "Ошибка выполнения"
+
+#, c-format
+msgid "Run_id %d is invalid.\n"
+msgstr "Номер посылки %d недопустим.\n"
 
 msgid "Running..."
 msgstr "Выполняется..."
@@ -2374,6 +2390,10 @@ msgstr ""
 "обратитесь к администратору сайта или турнира."
 
 #, c-format
+msgid "This submit is already printed.\n"
+msgstr "Эта программа уже напечатана.\n"
+
+#, c-format
 msgid "This submit is duplicate of the run %d."
 msgstr "Эта посылка является копией посылки %d."
 
@@ -2687,6 +2707,10 @@ msgstr "У Вас нет прав использовать данный сервис."
 #, c-format
 msgid "You don't have permissions to answer questions.\n"
 msgstr "У Вас нет прав отвечать на вопросы.\n"
+
+#, c-format
+msgid "You don't have permissions to print this run.\n"
+msgstr "У Вас нет прав печатать эту посылку.\n"
 
 msgid "You have already registered for this contest."
 msgstr "Вы уже зарегистрировались на этот турнир."
