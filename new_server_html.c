@@ -63,11 +63,11 @@
     SRV_CMD_JUDGE_SUSPENDED,		OK
     SRV_CMD_SET_ACCEPTING_MODE,		OK
     SRV_CMD_PRIV_PRINT_RUN,
-    SRV_CMD_PRINT_RUN,
+    SRV_CMD_PRINT_RUN,			OK
     SRV_CMD_PRIV_DOWNLOAD_RUN,		OK
     SRV_CMD_PRINT_SUSPEND,		OK
     SRV_CMD_PRINT_RESUME,		OK
-    SRV_CMD_COMPARE_RUNS,
+    SRV_CMD_COMPARE_RUNS,		OK
     SRV_CMD_UPLOAD_REPORT,
     SRV_CMD_REJUDGE_BY_MASK,		OK
     SRV_CMD_NEW_RUN_FORM,
@@ -132,6 +132,8 @@
 #include "clarlog.h"
 #include "team_extra.h"
 #include "diff.h"
+#include "protocol.h"
+#include "printing.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -221,12 +223,15 @@ void
 new_server_unload_contest(int contest_id)
 {
   struct contest_extra *extra;
+  const struct contest_desc *cnts = 0;
 
   if (contest_id <= 0 || contest_id >= extra_a) return;
   if (!(extra = extras[contest_id])) return;
 
+  contests_get(contest_id, &cnts);
+
   if (extra->serve_state) {
-    //serve_check_stat_generation(&serve_state, cur_contest, 1);
+    serve_check_stat_generation(extra->serve_state, cnts, 1);
     serve_update_status_file(extra->serve_state, 1);
     team_extra_flush(extra->serve_state->team_extra_state);
     extra->serve_state = serve_state_destroy(extra->serve_state, ul_conn);
@@ -4946,6 +4951,83 @@ unpriv_change_password(FILE *fout,
 }
 
 static void
+unpriv_print_run(FILE *fout,
+                 struct http_request_info *phr,
+                 const struct contest_desc *cnts,
+                 struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  FILE *log_f = 0;
+  const unsigned char *s;
+  int run_id, n;
+  struct run_entry re;
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (ns_cgi_param(phr, "run_id", &s) <= 0
+      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]) {
+    html_err_invalid_param(fout, phr, 0, "cannot parse run_id");
+    goto cleanup;
+  }
+
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
+      || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+    fprintf(log_f, _("Run_id %d is invalid.\n"), run_id);
+    goto done;
+  }
+
+  if (!cs->global->enable_printing || cs->printing_suspended) {
+    fprintf(log_f, _("Printing is disabled.\n"));
+    goto done;
+  }
+
+  if (re.status > RUN_LAST
+      || (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST)
+      || re.user_id != phr->user_id) {
+    fprintf(log_f, _("You don't have permissions to print this run.\n"));
+    goto done;
+  }
+
+  if (re.pages > 0) {
+    fprintf(log_f, _("This submit is already printed.\n"));
+    goto done;
+  }
+
+  if ((n = team_print_run(cs, run_id, phr->user_id)) < 0) {
+    switch (-n) {
+    case SRV_ERR_PAGES_QUOTA:
+      fprintf(log_f, _("Printing quota (%d pages) is exceeded.\n"),
+              cs->global->team_page_quota);
+      goto done;
+    default:
+      fprintf(log_f, _("Printing error: %d: %s.\n"), -n,
+              protocol_strerror(-n));
+      goto done;
+    }
+  }
+
+  serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                  "Command: print\n"
+                  "Status: ok\n"
+                  "  %d pages printed\n", n);
+
+ done:
+  fclose(log_f); log_f = 0;
+  if (!log_txt || !*log_txt) {
+    html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
+  } else {
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_MAIN_PAGE);
+  }
+
+ cleanup:;
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+}
+
+static void
 unpriv_submit_run(FILE *fout,
                   struct http_request_info *phr,
                   const struct contest_desc *cnts,
@@ -6485,6 +6567,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_SOURCE] = unpriv_view_source,
   [NEW_SRV_ACTION_VIEW_REPORT] = unpriv_view_report,
   [NEW_SRV_ACTION_VIEW_CLAR] = unpriv_view_clar,
+  [NEW_SRV_ACTION_PRINT_RUN] = unpriv_print_run,
 };
 
 static void
