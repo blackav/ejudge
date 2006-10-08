@@ -1265,3 +1265,11 @@ new_server_html.c 3492 0 18465854
 super_html_3.c 3492 0 20974059
 ejudge-setup.c 3494 0 9331316
 new_server_html.c 3495 0 18645277
+new-server.h 3497 0 782993
+new_server_html_2.c 3497 0 4979680
+html.h 3498 0 832602
+new-server.h 3498 0 794093
+html.c 3498 0 14060735
+master_html.c 3498 0 10182297
+new_server_html.c 3498 0 18832339
+new_server_html_2.c 3498 0 4911524
