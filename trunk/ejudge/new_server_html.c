@@ -1761,7 +1761,7 @@ do_schedule(FILE *log_f,
   time_t sloc, start_time, stop_time;
 
   if (ns_cgi_param(phr, "sched_time", &s) <= 0) {
-    fprintf(log_f, _("Schedule time is not specified."));
+    fprintf(log_f, _("Schedule time is not specified.\n"));
     return;
   }
   if (sscanf(s, "%d/%d/%d %d:%d:%d%n",
@@ -1786,23 +1786,23 @@ do_schedule(FILE *log_f,
     ploc->tm_min = 0;
     ploc->tm_sec = 0;
   } else {
-    fprintf(log_f, _("Invalid time specification."));
+    fprintf(log_f, _("Invalid time specification.\n"));
     return;
   }
 
   if ((sloc = mktime(ploc)) == (time_t) -1) {
-    fprintf(log_f, _("Invalid time specification."));
+    fprintf(log_f, _("Invalid time specification.\n"));
     return;
   }
 
   run_get_times(cs->runlog_state, &start_time, 0, 0, &stop_time, 0);
 
   if (stop_time > 0) {
-    fprintf(log_f, _("Contest already finished."));
+    fprintf(log_f, _("Contest already finished.\n"));
     return;
   }
   if (start_time > 0) {
-    fprintf(log_f, _("Contest already started."));
+    fprintf(log_f, _("Contest already started.\n"));
     return;
   }
   run_sched_contest(cs->runlog_state, sloc);
@@ -1821,19 +1821,19 @@ do_change_duration(FILE *log_f,
   time_t start_time, stop_time;
 
   if (ns_cgi_param(phr, "dur", &s) <= 0) {
-    fprintf(log_f, _("Duration is not specified."));
+    fprintf(log_f, _("Duration is not specified.\n"));
     return;
   }
   if (sscanf(s, "%d:%d%n", &dh, &dm, &n) == 2 && !s[n]) {
   } else if (sscanf(s, "%d%n", &dh, &n) == 1 && !s[n]) {
     dm = 0;
   } else {
-    fprintf(log_f, _("Invalid duration specification."));
+    fprintf(log_f, _("Invalid duration specification.\n"));
     return;
   }
   d = dh * 60 + dm;
   if (d < 0 || d > 1000000) {
-    fprintf(log_f, _("Invalid duration."));
+    fprintf(log_f, _("Invalid duration.\n"));
     return;
   }
   d *= 60;
@@ -1841,11 +1841,11 @@ do_change_duration(FILE *log_f,
   run_get_times(cs->runlog_state, &start_time, 0, 0, &stop_time, 0);
 
   if (stop_time > 0 && !cs->global->enable_continue) {
-    fprintf(log_f, _("Contest already finished."));
+    fprintf(log_f, _("Contest already finished.\n"));
     return;
   }
   if (d > 0 && start_time && start_time + d < cs->current_time) {
-    fprintf(log_f, _("New duration is too small."));
+    fprintf(log_f, _("New duration is too small.\n"));
     return;
   }
 
@@ -1869,7 +1869,7 @@ priv_contest_operation(FILE *fout,
 
   if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
       || opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) {
-    fprintf(log_f, _("Permission denied."));
+    fprintf(log_f, _("Permission denied.\n"));
     goto done;
   }
 
@@ -1878,11 +1878,11 @@ priv_contest_operation(FILE *fout,
   switch (phr->action) {
   case NEW_SRV_ACTION_START_CONTEST:
     if (stop_time > 0) {
-      fprintf(log_f, _("Contest already finished."));
+      fprintf(log_f, _("Contest already finished.\n"));
       goto done;
     }
     if (start_time > 0) {
-      fprintf(log_f, _("Contest already started."));
+      fprintf(log_f, _("Contest already started.\n"));
       goto done;
     }
     run_start_contest(cs->runlog_state, cs->current_time);
@@ -1892,11 +1892,11 @@ priv_contest_operation(FILE *fout,
 
   case NEW_SRV_ACTION_STOP_CONTEST:
     if (stop_time > 0) {
-      fprintf(log_f, _("Contest already finished."));
+      fprintf(log_f, _("Contest already finished.\n"));
       goto done;
     }
     if (start_time <= 0) {
-      fprintf(log_f, _("Contest is not started."));
+      fprintf(log_f, _("Contest is not started.\n"));
       goto done;
     }
     run_stop_contest(cs->runlog_state, cs->current_time);
@@ -1905,19 +1905,19 @@ priv_contest_operation(FILE *fout,
 
   case NEW_SRV_ACTION_CONTINUE_CONTEST:
     if (!global->enable_continue) {
-      fprintf(log_f, _("This contest cannot be continued."));
+      fprintf(log_f, _("This contest cannot be continued.\n"));
       goto done;
     }
     if (start_time <= 0) {
-      fprintf(log_f, _("Contest is not started."));
+      fprintf(log_f, _("Contest is not started.\n"));
       goto done;
     }
     if (stop_time <= 0) {
-      fprintf(log_f, _("Contest is not finished."));
+      fprintf(log_f, _("Contest is not finished.\n"));
       goto done;
     }
     if (duration > 0 && cs->current_time >= start_time + duration) {
-      fprintf(log_f, _("Insufficient duration to continue the contest."));
+      fprintf(log_f, _("Insufficient duration to continue the contest.\n"));
       goto done;
     }
     run_stop_contest(cs->runlog_state, 0);
@@ -2185,7 +2185,7 @@ priv_submit_run(FILE *fout,
   /* check for disabled languages */
   if (lang_id > 0) {
     if (lang->disabled) {
-      fprintf(log_f, _("This language is disabled for use."));
+      fprintf(log_f, _("This language is disabled for use.\n"));
       goto done;
     }
 
@@ -2195,7 +2195,7 @@ priv_submit_run(FILE *fout,
         if (!strcmp(lang_list[i], lang->short_name))
           break;
       if (!lang_list[i]) {
-        fprintf(log_f, _("The language %s is not available for this problem."),
+        fprintf(log_f, _("The language %s is not available for this problem.\n"),
                 lang->short_name);
         goto done;
       }
@@ -2205,7 +2205,7 @@ priv_submit_run(FILE *fout,
         if (!strcmp(lang_list[i], lang->short_name))
           break;
       if (lang_list[i]) {
-        fprintf(log_f, _("The language %s is disabled for this problem."),
+        fprintf(log_f, _("The language %s is disabled for this problem.\n"),
                 lang->short_name);
         goto done;
       }
@@ -2214,7 +2214,7 @@ priv_submit_run(FILE *fout,
     // guess the content-type and check it against the list
     if ((mime_type = mime_type_guess(global->diff_work_dir,
                                      run_text, run_size)) < 0) {
-      fprintf(log_f, _("Cannot guess the content type."));
+      fprintf(log_f, _("Cannot guess the content type.\n"));
       goto done;
     }
     mime_type_str = mime_type_get_type(mime_type);
@@ -2225,7 +2225,7 @@ priv_submit_run(FILE *fout,
           break;
       if (!lang_list[i]) {
         fprintf(log_f,
-                _("The content type %s is not available for this problem."),
+                _("The content type %s is not available for this problem.\n"),
                 mime_type_str);
         goto done;
       }
@@ -2235,7 +2235,7 @@ priv_submit_run(FILE *fout,
         if (!strcmp(lang_list[i], mime_type_str))
           break;
       if (lang_list[i]) {
-        fprintf(log_f, _("The content type %s is disabled for this problem."),
+        fprintf(log_f, _("The content type %s is disabled for this problem.\n"),
                 mime_type_str);
         goto done;
       }
@@ -2253,7 +2253,7 @@ priv_submit_run(FILE *fout,
                           phr->locale_id, phr->user_id,
                           prob_id, lang_id, variant, 1, mime_type);
   if (run_id < 0) {
-    fprintf(log_f, _("Cannot add the record to the database."));
+    fprintf(log_f, _("Cannot add the record to the database.\n"));
     goto done;
   }
   serve_move_files_to_insert_run(cs, run_id);
@@ -2263,17 +2263,17 @@ priv_submit_run(FILE *fout,
                                        run_size, 0);
   if (arch_flags < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
-    fprintf(log_f, _("Cannot allocate disk space."));
+    fprintf(log_f, _("Cannot allocate disk space.\n"));
     goto done;
   }
   if (archive_dir_prepare(cs, global->run_archive_dir, run_id, 0, 0) < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
-    fprintf(log_f, _("Cannot allocate disk space."));
+    fprintf(log_f, _("Cannot allocate disk space.\n"));
     goto done;
   }
   if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
-    fprintf(log_f, _("Cannot write to the disk."));
+    fprintf(log_f, _("Cannot write to the disk.\n"));
     goto done;
   }
 
@@ -2294,7 +2294,7 @@ priv_submit_run(FILE *fout,
                                 lang->compile_id, phr->locale_id, 0,
                                 lang->src_sfx,
                                 lang->compiler_env, -1, 0) < 0) {
-        fprintf(log_f, _("Cannot put the run to the compilation queue."));
+        fprintf(log_f, _("Cannot put the run to the compilation queue.\n"));
         goto done;
       }
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
@@ -2316,7 +2316,7 @@ priv_submit_run(FILE *fout,
       if (serve_run_request(cs, log_f, run_text, run_size, run_id,
                             phr->user_id, prob_id, 0, variant, 0, -1, -1,
                             0, 0) < 0) {
-        fprintf(log_f, _("Cannot put the run to the run queue."));
+        fprintf(log_f, _("Cannot put the run to the run queue.\n"));
         goto done;
       }
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
@@ -2339,7 +2339,7 @@ priv_submit_run(FILE *fout,
       if (serve_run_request(cs, log_f, run_text, run_size, run_id,
                             phr->user_id, prob_id, 0, variant, 0, -1, -1,
                             0, 0) < 0) {
-        fprintf(log_f, _("Cannot put the run to the run queue."));
+        fprintf(log_f, _("Cannot put the run to the run queue.\n"));
         goto done;
       }
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
@@ -3407,11 +3407,11 @@ priv_view_report(FILE *fout,
   }
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_REPORT) < 0) {
-    fprintf(log_f, _("Permission denied"));
+    fprintf(log_f, _("Permission denied.\n"));
     goto done;
   }
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
-    fprintf(log_f, _("Invalid run_id %d"), run_id);
+    fprintf(log_f, _("Invalid run_id %d.\n"), run_id);
     goto done;
   }
 
@@ -3439,11 +3439,11 @@ priv_view_source(FILE *fout,
   }
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
-    fprintf(log_f, _("Permission denied"));
+    fprintf(log_f, _("Permission denied.\n"));
     goto done;
   }
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
-    fprintf(log_f, _("Invalid run_id %d"), run_id);
+    fprintf(log_f, _("Invalid run_id %d.\n"), run_id);
     goto done;
   }
 
@@ -3482,33 +3482,33 @@ priv_download_source(FILE *fout,
     no_disp = x;
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
-    fprintf(log_f, _("Permission denied"));
+    fprintf(log_f, _("Permission denied.\n"));
     goto done;
   }
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
       || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
-    fprintf(log_f, _("Invalid run_id %d"), run_id);
+    fprintf(log_f, _("Invalid run_id %d.\n"), run_id);
     goto done;
   }
   if (re.prob_id <= 0 || re.prob_id > cs->max_prob ||
       !(prob = cs->probs[re.prob_id])) {
-    fprintf(log_f, _("Invalid problem."));
+    fprintf(log_f, _("Invalid problem.\n"));
     goto done;
   }
   if (re.status > RUN_LAST
       || (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST)) {
-    fprintf(log_f, _("Source for this run is not available."));
+    fprintf(log_f, _("Source for this run is not available.\n"));
     goto done;
   }
 
   if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
                                           global->run_archive_dir,
                                           run_id, 0, 1)) < 0) {
-    fprintf(log_f, _("Source file does not exist."));
+    fprintf(log_f, _("Source file does not exist.\n"));
     goto done;
   }
   if (generic_read_file(&run_text, 0, &run_size, src_flags, 0, src_path, 0)<0) {
-    fprintf(log_f, _("Cannot read the source."));
+    fprintf(log_f, _("Cannot read the source.\n"));
     goto done;
   }
 
@@ -3522,7 +3522,7 @@ priv_download_source(FILE *fout,
   } else {
     if(re.lang_id <= 0 || re.lang_id > cs->max_lang ||
        !(lang = cs->langs[re.lang_id])) {
-      fprintf(log_f, _("Invalid language."));
+      fprintf(log_f, _("Invalid language.\n"));
       goto done;
     }
 
@@ -3593,11 +3593,11 @@ priv_standings(FILE *fout,
   serve_state_t cs = extra->serve_state;
 
   if (phr->role < USER_ROLE_JUDGE) {
-    fprintf(log_f, _("Permission denied."));
+    fprintf(log_f, _("Permission denied.\n"));
     goto done;
   }
   if (opcaps_check(phr->caps, OPCAP_VIEW_STANDINGS) < 0) {
-    fprintf(log_f, _("Permission denied."));
+    fprintf(log_f, _("Permission denied.\n"));
     goto done;
   }
 
@@ -3610,6 +3610,49 @@ priv_standings(FILE *fout,
   html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
   
+ done:
+  return 0;
+}
+
+static int
+priv_view_test(FILE *fout,
+               FILE *log_f,
+               struct http_request_info *phr,
+               const struct contest_desc *cnts,
+               struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  int run_id, test_num, n;
+  const unsigned char *s = 0;
+
+  // run_id, test_num
+  if (ns_cgi_param(phr, "run_id", &s) <= 0
+      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]) {
+    html_err_invalid_param(fout, phr, 1, "cannot parse run_id");
+    return -1;
+  }
+  if (ns_cgi_param(phr, "test_num", &s) <= 0
+      || sscanf(s, "%d%n", &test_num, &n) != 1 || s[n]) {
+    html_err_invalid_param(fout, phr, 1, "cannot parse test_num");
+    return -1;
+  }
+
+  if (opcaps_check(phr->caps, OPCAP_VIEW_REPORT) < 0) {
+    fprintf(log_f, _("Permission denied.\n"));
+    goto done;
+  }
+
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
+    fprintf(log_f, _("Invalid run_id %d.\n"), run_id);
+    goto done;
+  }
+  if (test_num <= 0) {
+    fprintf(log_f, _("Invalid test %d.\n"), test_num);
+    goto done;
+  }
+
+  new_serve_write_tests(cs, fout, log_f, phr->action, run_id, test_num);
+
  done:
   return 0;
 }
@@ -3813,6 +3856,12 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_REJUDGE_SUSPENDED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_REJUDGE_ALL_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_COMPARE_RUNS] = priv_diff_page,
+  [NEW_SRV_ACTION_VIEW_TEST_INPUT] = priv_view_test,
+  [NEW_SRV_ACTION_VIEW_TEST_ANSWER] = priv_view_test,
+  [NEW_SRV_ACTION_VIEW_TEST_INFO] = priv_view_test,
+  [NEW_SRV_ACTION_VIEW_TEST_OUTPUT] = priv_view_test,
+  [NEW_SRV_ACTION_VIEW_TEST_ERROR] = priv_view_test,
+  [NEW_SRV_ACTION_VIEW_TEST_CHECKER] = priv_view_test,
 };
 
 static int priv_next_state[NEW_SRV_ACTION_LAST] =
@@ -4552,6 +4601,12 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_REJUDGE_ALL_1] = priv_generic_page,
   [NEW_SRV_ACTION_REJUDGE_ALL_2] = priv_generic_operation,
   [NEW_SRV_ACTION_COMPARE_RUNS] = priv_generic_page,
+  [NEW_SRV_ACTION_VIEW_TEST_INPUT] = priv_generic_page,
+  [NEW_SRV_ACTION_VIEW_TEST_ANSWER] = priv_generic_page,
+  [NEW_SRV_ACTION_VIEW_TEST_INFO] = priv_generic_page,
+  [NEW_SRV_ACTION_VIEW_TEST_OUTPUT] = priv_generic_page,
+  [NEW_SRV_ACTION_VIEW_TEST_ERROR] = priv_generic_page,
+  [NEW_SRV_ACTION_VIEW_TEST_CHECKER] = priv_generic_page,
 };
 
 static void
@@ -4905,15 +4960,15 @@ unpriv_change_password(FILE *fout,
   log_f = open_memstream(&log_txt, &log_len);
 
   if (strlen(p0) >= 256) {
-    fprintf(log_f, _("Old password is too long"));
+    fprintf(log_f, _("Old password is too long.\n"));
     goto done;
   }
   if (strcmp(p1, p2)) {
-    fprintf(log_f, _("New passwords do not match"));
+    fprintf(log_f, _("New passwords do not match.\n"));
     goto done;
   }
   if (strlen(p1) >= 256) {
-    fprintf(log_f, _("New password is too long"));
+    fprintf(log_f, _("New password is too long.\n"));
     goto done;
   }
 
@@ -5156,11 +5211,11 @@ unpriv_submit_run(FILE *fout,
     goto done;
   }
   if (!start_time) {
-    fprintf(log_f, _("The contest is not started."));
+    fprintf(log_f, _("The contest is not started.\n"));
     goto done;
   }
   if (stop_time) {
-    fprintf(log_f, _("The contest is finished."));
+    fprintf(log_f, _("The contest is finished.\n"));
     goto done;
   }
   if (serve_check_user_quota(cs, phr->user_id, run_size) < 0) {
@@ -5169,7 +5224,7 @@ unpriv_submit_run(FILE *fout,
   }
   // problem submit start time
   if (prob->t_start_date >= 0 && cs->current_time < prob->t_start_date) {
-    fprintf(log_f, _("This problem is not yet available."));
+    fprintf(log_f, _("This problem is not yet available.\n"));
     goto done;
   }
   // personal deadline
@@ -5185,13 +5240,13 @@ unpriv_submit_run(FILE *fout,
   // common problem deadline
   if (user_deadline <= 0) user_deadline = prob->t_deadline;
   if (user_deadline > 0 && cs->current_time >= user_deadline) {
-    fprintf(log_f, _("Deadline for this problem is expired."));
+    fprintf(log_f, _("Deadline for this problem is expired.\n"));
     goto done;
   }
   /* check for disabled languages */
   if (lang_id > 0) {
     if (lang->disabled) {
-      fprintf(log_f, _("This language is disabled for use."));
+      fprintf(log_f, _("This language is disabled for use.\n"));
       goto done;
     }
 
@@ -5201,7 +5256,7 @@ unpriv_submit_run(FILE *fout,
         if (!strcmp(lang_list[i], lang->short_name))
           break;
       if (!lang_list[i]) {
-        fprintf(log_f, _("The language %s is not available for this problem."),
+        fprintf(log_f, _("The language %s is not available for this problem.\n"),
                 lang->short_name);
         goto done;
       }
@@ -5211,7 +5266,7 @@ unpriv_submit_run(FILE *fout,
         if (!strcmp(lang_list[i], lang->short_name))
           break;
       if (lang_list[i]) {
-        fprintf(log_f, _("The language %s is disabled for this problem."),
+        fprintf(log_f, _("The language %s is disabled for this problem.\n"),
                 lang->short_name);
         goto done;
       }
@@ -5220,7 +5275,7 @@ unpriv_submit_run(FILE *fout,
     // guess the content-type and check it against the list
     if ((mime_type = mime_type_guess(cs->global->diff_work_dir,
                                      run_text, run_size)) < 0) {
-      fprintf(log_f, _("Cannot guess the content type."));
+      fprintf(log_f, _("Cannot guess the content type.\n"));
       goto done;
     }
     mime_type_str = mime_type_get_type(mime_type);
@@ -5231,7 +5286,7 @@ unpriv_submit_run(FILE *fout,
           break;
       if (!lang_list[i]) {
         fprintf(log_f,
-                _("The content type %s is not available for this problem."),
+                _("The content type %s is not available for this problem.\n"),
                 mime_type_str);
         goto done;
       }
@@ -5241,7 +5296,7 @@ unpriv_submit_run(FILE *fout,
         if (!strcmp(lang_list[i], mime_type_str))
           break;
       if (lang_list[i]) {
-        fprintf(log_f, _("The content type %s is disabled for this problem."),
+        fprintf(log_f, _("The content type %s is disabled for this problem.\n"),
                 mime_type_str);
         goto done;
       }
@@ -5250,7 +5305,7 @@ unpriv_submit_run(FILE *fout,
 
   if (prob->variant_num > 0) {
     if ((variant = find_variant(cs, phr->user_id, prob_id)) <= 0) {
-      fprintf(log_f, _("No assigned variant."));
+      fprintf(log_f, _("No assigned variant.\n"));
       goto done;
     }
   }
@@ -5258,7 +5313,7 @@ unpriv_submit_run(FILE *fout,
   sha_buffer(run_text, run_size, shaval);
   if ((run_id = run_find_duplicate(cs->runlog_state, phr->user_id, prob_id,
                                    lang_id, variant, run_size, shaval)) >= 0) {
-    fprintf(log_f, _("This submit is duplicate of the run %d."), run_id);
+    fprintf(log_f, _("This submit is duplicate of the run %d.\n"), run_id);
     goto done;
   }
 
@@ -5268,7 +5323,7 @@ unpriv_submit_run(FILE *fout,
     run_get_accepted_set(cs->runlog_state, phr->user_id,
                          cs->accepting_mode, cs->max_prob, acc_probs);
     if (acc_probs[prob_id]) {
-      fprintf(log_f, _("This problem is already solved."));
+      fprintf(log_f, _("This problem is already solved.\n"));
       goto done;
     }
   }
@@ -5286,7 +5341,7 @@ unpriv_submit_run(FILE *fout,
       if (j > cs->max_prob || !acc_probs[j]) break;
     }
     if (prob->require[i]) {
-      fprintf(log_f, _("Not all pre-required problems are solved."));
+      fprintf(log_f, _("Not all pre-required problems are solved.\n"));
       goto done;
     }
   }
@@ -5301,7 +5356,7 @@ unpriv_submit_run(FILE *fout,
                           phr->locale_id, phr->user_id,
                           prob_id, lang_id, 0, 0, mime_type);
   if (run_id < 0) {
-    fprintf(log_f, _("Cannot add the record to the database."));
+    fprintf(log_f, _("Cannot add the record to the database.\n"));
     goto done;
   }
   serve_move_files_to_insert_run(cs, run_id);
@@ -5311,17 +5366,17 @@ unpriv_submit_run(FILE *fout,
                                        run_size, 0);
   if (arch_flags < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
-    fprintf(log_f, _("Cannot allocate disk space."));
+    fprintf(log_f, _("Cannot allocate disk space.\n"));
     goto done;
   }
   if (archive_dir_prepare(cs, global->run_archive_dir, run_id, 0, 0) < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
-    fprintf(log_f, _("Cannot allocate disk space."));
+    fprintf(log_f, _("Cannot allocate disk space.\n"));
     goto done;
   }
   if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
-    fprintf(log_f, _("Cannot write to the disk."));
+    fprintf(log_f, _("Cannot write to the disk.\n"));
     goto done;
   }
 
@@ -5341,7 +5396,7 @@ unpriv_submit_run(FILE *fout,
                                 lang->compile_id, phr->locale_id, 0,
                                 lang->src_sfx,
                                 lang->compiler_env, -1, 0) < 0) {
-        fprintf(log_f, _("Cannot put the run to the compilation queue."));
+        fprintf(log_f, _("Cannot put the run to the compilation queue.\n"));
         goto done;
       }
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
@@ -5363,7 +5418,7 @@ unpriv_submit_run(FILE *fout,
       if (serve_run_request(cs, log_f, run_text, run_size, run_id,
                             phr->user_id, prob_id, 0, variant, 0, -1, -1,
                             0, 0) < 0) {
-        fprintf(log_f, _("Cannot put the run to the run queue."));
+        fprintf(log_f, _("Cannot put the run to the run queue.\n"));
         goto done;
       }
 
@@ -5386,7 +5441,7 @@ unpriv_submit_run(FILE *fout,
       if (serve_run_request(cs, log_f, run_text, run_size, run_id,
                             phr->user_id, prob_id, 0, variant, 0, -1, -1,
                             0, 0) < 0) {
-        fprintf(log_f, _("Cannot put the run to the run queue."));
+        fprintf(log_f, _("Cannot put the run to the run queue.\n"));
         goto done;
       }
 
@@ -5468,11 +5523,11 @@ unpriv_submit_clar(FILE *fout,
     goto done;
   }
   if (!start_time) {
-    fprintf(log_f, _("The contest is not started."));
+    fprintf(log_f, _("The contest is not started.\n"));
     goto done;
   }
   if (stop_time) {
-    fprintf(log_f, _("The contest is finished."));
+    fprintf(log_f, _("The contest is finished.\n"));
     goto done;
   }
 
@@ -5587,37 +5642,37 @@ unpriv_view_source(FILE *fout,
     goto done;
   }
   if (!global->team_enable_src_view) {
-    fprintf(log_f, _("Submit source viewing is disabled."));
+    fprintf(log_f, _("Submit source viewing is disabled.\n"));
     goto done;
   }
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
-    fprintf(log_f, _("Invalid run_id."));
+    fprintf(log_f, _("Invalid run_id.\n"));
     goto done;
   }
   run_get_entry(cs->runlog_state, run_id, &re);
   if (re.user_id != phr->user_id) {
-    fprintf(log_f, _("You cannot view source for this run."));
+    fprintf(log_f, _("You cannot view source for this run.\n"));
     goto done;
   }
   if (re.prob_id <= 0 || re.prob_id > cs->max_prob ||
       !(prob = cs->probs[re.prob_id])) {
-    fprintf(log_f, _("Invalid problem."));
+    fprintf(log_f, _("Invalid problem.\n"));
     goto done;
   }
   if (re.status > RUN_LAST
       || (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST)) {
-    fprintf(log_f, _("You cannot view source for this run."));
+    fprintf(log_f, _("You cannot view source for this run.\n"));
     goto done;
   }
 
   if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
                                           global->run_archive_dir,
                                           run_id, 0, 1)) < 0) {
-    fprintf(log_f, _("Source file does not exist."));
+    fprintf(log_f, _("Source file does not exist.\n"));
     goto done;
   }
   if (generic_read_file(&run_text, 0, &run_size, src_flags, 0, src_path, 0)<0) {
-    fprintf(log_f, _("Cannot read the source."));
+    fprintf(log_f, _("Cannot read the source.\n"));
     goto done;
   }
 
@@ -5631,7 +5686,7 @@ unpriv_view_source(FILE *fout,
   } else {
     if(re.lang_id <= 0 || re.lang_id > cs->max_lang ||
        !(lang = cs->langs[re.lang_id])) {
-      fprintf(log_f, _("Invalid language."));
+      fprintf(log_f, _("Invalid language.\n"));
       goto done;
     }
 
@@ -5682,6 +5737,16 @@ unpriv_view_report(FILE *fout,
   path_t rep_path;
   unsigned char *html_report;
 
+  static const int new_actions_vector[] =
+  {
+    NEW_SRV_ACTION_VIEW_TEST_INPUT,
+    NEW_SRV_ACTION_VIEW_TEST_OUTPUT,
+    NEW_SRV_ACTION_VIEW_TEST_ANSWER,
+    NEW_SRV_ACTION_VIEW_TEST_ERROR,
+    NEW_SRV_ACTION_VIEW_TEST_CHECKER,
+    NEW_SRV_ACTION_VIEW_TEST_INFO,
+  };
+
   if ((n = ns_cgi_param(phr, "run_id", &s)) <= 0)
     return html_err_invalid_param(fout, phr, 0, "run_id is binary or not set");
   if (sscanf(s, "%d%n", &run_id, &n) != 1 || s[n])
@@ -5695,17 +5760,17 @@ unpriv_view_report(FILE *fout,
   }
 
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
-    fprintf(log_f, _("Invalid run_id."));
+    fprintf(log_f, _("Invalid run_id.\n"));
     goto done;
   }
   run_get_entry(cs->runlog_state, run_id, &re);
   if (re.user_id != phr->user_id) {
-    fprintf(log_f, _("You cannot view report for this run."));
+    fprintf(log_f, _("You cannot view report for this run.\n"));
     goto done;
   }
   if (re.prob_id <= 0 || re.prob_id > cs->max_prob ||
       !(prob = cs->probs[re.prob_id])) {
-    fprintf(log_f, _("Invalid problem."));
+    fprintf(log_f, _("Invalid problem.\n"));
     goto done;
   }
   // check viewable statuses
@@ -5723,13 +5788,13 @@ unpriv_view_report(FILE *fout,
     // these statuses have viewable reports
     break;
   default:
-    fprintf(log_f, _("You cannot view report for this run."));
+    fprintf(log_f, _("You cannot view report for this run.\n"));
     goto done;
   }
 
   if (!prob->team_enable_rep_view
       && (!prob->team_enable_ce_view || re.status != RUN_COMPILE_ERR)) {
-    fprintf(log_f, _("Viewing report is disabled for this run."));
+    fprintf(log_f, _("Viewing report is disabled for this run.\n"));
     goto done;
   }
 
@@ -5737,12 +5802,12 @@ unpriv_view_report(FILE *fout,
                                  global->xml_report_archive_dir, run_id, 0, 1);
   if (flags >= 0) {
     if (generic_read_file(&rep_text, 0, &rep_size, flags, 0, rep_path, 0) < 0) {
-      fprintf(log_f, _("Cannot read the report text."));
+      fprintf(log_f, _("Cannot read the report text.\n"));
       goto done;
     }
     content_type = get_content_type(rep_text, &rep_start);
     if (content_type != CONTENT_TYPE_XML && re.status != RUN_COMPILE_ERR) {
-      fprintf(log_f, _("You cannot view report for this run."));
+      fprintf(log_f, _("You cannot view report for this run.\n"));
       goto done;
     }
   } else {
@@ -5755,11 +5820,11 @@ unpriv_view_report(FILE *fout,
 
     if ((flags = archive_make_read_path(cs, rep_path, sizeof(rep_path),
                                         arch_dir, run_id, 0, 1)) < 0) {
-      fprintf(log_f, _("Report file does not exist."));
+      fprintf(log_f, _("Report file does not exist.\n"));
       goto done;
     }
     if (generic_read_file(&rep_text,0,&rep_size,flags,0,rep_path, 0) < 0) {
-      fprintf(log_f, _("Cannot read the report text."));
+      fprintf(log_f, _("Cannot read the report text.\n"));
       goto done;
     }
     content_type = get_content_type(rep_text, &rep_start);
@@ -5789,7 +5854,7 @@ unpriv_view_report(FILE *fout,
                                       phr->session_id, phr->self_url, "");
     } else if (prob->team_show_judge_report) {
       write_xml_testing_report(fout, rep_start, phr->session_id,
-                               phr->self_url, "");
+                               phr->self_url, "", new_actions_vector);
     } else {
       write_xml_team_testing_report(cs, fout, rep_start);
     }
@@ -5845,12 +5910,12 @@ unpriv_view_clar(FILE *fout,
     goto done;
   }
   if (global->disable_clars) {
-    fprintf(log_f, _("Clarifications are disabled."));
+    fprintf(log_f, _("Clarifications are disabled.\n"));
     goto done;
   }
   if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
       || clar_get_record_new(cs->clarlog_state, clar_id, &ce) < 0) {
-    fprintf(log_f, _("Invalid clar_id"));
+    fprintf(log_f, _("Invalid clar_id.\n"));
     goto done;
   }
 
@@ -5863,7 +5928,7 @@ unpriv_view_clar(FILE *fout,
   if ((ce.from > 0 && ce.from != phr->user_id)
       || (ce.to > 0 && ce.to != phr->user_id)
       || (start_time <= 0 && ce.hide_flag)) {
-    fprintf(log_f, _("You cannot view this clarification."));
+    fprintf(log_f, _("You cannot view this clarification.\n"));
     goto done;
   }
 
@@ -5874,7 +5939,7 @@ unpriv_view_clar(FILE *fout,
   sprintf(clar_file_name, "%06d", clar_id);
   if (generic_read_file(&clar_text, 0, &clar_size, 0,
                         global->clar_archive_dir, clar_file_name, "") < 0) {
-    fprintf(log_f, _("Cannot read the clarification text."));
+    fprintf(log_f, _("Cannot read the clarification text.\n"));
     goto done;
   }
 

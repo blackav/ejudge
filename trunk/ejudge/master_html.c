@@ -1807,7 +1807,8 @@ int
 write_xml_testing_report(FILE *f, unsigned char const *txt,
                          ej_cookie_t sid,
                          unsigned char const *self_url,
-                         unsigned char const *extra_args)
+                         unsigned char const *extra_args,
+                         const int *actions_vector)
 {
   testing_report_xml_t r = 0;
   unsigned char *s = 0;
@@ -1816,6 +1817,18 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
   struct testing_report_test *t;
   unsigned char opening_a[512];
   unsigned char *closing_a = "";
+
+  static const int default_actions_vector[] =
+  {
+    ACTION_VIEW_TEST_INPUT,
+    ACTION_VIEW_TEST_OUTPUT,
+    ACTION_VIEW_TEST_ANSWER,
+    ACTION_VIEW_TEST_ERROR,
+    ACTION_VIEW_TEST_CHECKER,
+    ACTION_VIEW_TEST_INFO,
+  };
+
+  if (!actions_vector) actions_vector = default_actions_vector;
 
   if (!(r = testing_report_parse_xml(txt))) {
     fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
@@ -1975,7 +1988,7 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
     if (r->archive_available) {
       html_hyperref(opening_a, sizeof(opening_a), sid, self_url, extra_args,
                     "action=%d&run_id=%d&test_num=%d",
-                    ACTION_VIEW_TEST_INPUT, r->run_id, t->num);
+                    actions_vector[0], r->run_id, t->num);
       closing_a = "</a>";
     } else if (t->input) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dI\">", t->num);
@@ -1989,7 +2002,7 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
     if (r->archive_available && t->output_available) {
       html_hyperref(opening_a, sizeof(opening_a), sid, self_url, extra_args,
                     "action=%d&run_id=%d&test_num=%d",
-                    ACTION_VIEW_TEST_OUTPUT, r->run_id, t->num);
+                    actions_vector[1], r->run_id, t->num);
       closing_a = "</a>";
     } else if (t->output) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dO\">", t->num);
@@ -2003,7 +2016,7 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
     if (r->archive_available && r->correct_available) {
       html_hyperref(opening_a, sizeof(opening_a), sid, self_url, extra_args,
                     "action=%d&run_id=%d&test_num=%d",
-                    ACTION_VIEW_TEST_ANSWER, r->run_id, t->num);
+                    actions_vector[2], r->run_id, t->num);
       closing_a = "</a>";
     } else if (t->correct) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dA\">", t->num);
@@ -2017,7 +2030,7 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
     if (r->archive_available && t->stderr_available) {
       html_hyperref(opening_a, sizeof(opening_a), sid, self_url, extra_args,
                     "action=%d&run_id=%d&test_num=%d",
-                    ACTION_VIEW_TEST_ERROR, r->run_id, t->num);
+                    actions_vector[3], r->run_id, t->num);
       closing_a = "</a>";
     } else if (t->error) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dE\">", t->num);
@@ -2031,7 +2044,7 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
     if (r->archive_available && t->checker_output_available) {
       html_hyperref(opening_a, sizeof(opening_a), sid, self_url, extra_args,
                     "action=%d&run_id=%d&test_num=%d",
-                    ACTION_VIEW_TEST_CHECKER, r->run_id, t->num);
+                    actions_vector[4], r->run_id, t->num);
       closing_a = "</a>";
     } else if (t->checker) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dC\">", t->num);
@@ -2045,7 +2058,7 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
     if (r->archive_available && r->info_available) {
       html_hyperref(opening_a, sizeof(opening_a), sid, self_url, extra_args,
                     "action=%d&run_id=%d&test_num=%d",
-                    ACTION_VIEW_TEST_INFO, r->run_id, t->num);
+                    actions_vector[5], r->run_id, t->num);
       closing_a = "</a>";
     } else {
       opening_a[0] = 0;
@@ -2206,7 +2219,7 @@ write_priv_report(const serve_state_t state, FILE *f,
     if (team_report_flag) {
       write_xml_team_testing_report(state, f, start_ptr);
     } else {
-      write_xml_testing_report(f, start_ptr, sid, self_url, extra_args);
+      write_xml_testing_report(f, start_ptr, sid, self_url, extra_args, 0);
     }
     break;
   default:

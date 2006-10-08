@@ -315,4 +315,8 @@ void new_serve_header(FILE *out, unsigned char const *template,
 
 const unsigned char *new_serve_unparse_role(int role);
 
+void
+new_serve_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
+                      int action, int run_id, int test_num);
+
 #endif /* __NEW_SERVER_H__ */
