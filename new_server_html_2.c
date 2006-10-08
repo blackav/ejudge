@@ -1589,6 +1589,276 @@ new_serve_write_priv_clar(const serve_state_t cs,
   xfree(msg_txt);
 }
 
+
+
+
+void
+new_serve_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
+                      int action, int run_id, int test_num)
+{
+  int rep_flag;
+  path_t rep_path;
+  char *rep_text = 0;
+  size_t rep_len = 0;
+  const unsigned char *start_ptr = 0;
+  testing_report_xml_t r = 0;
+  struct run_entry re;
+  const struct section_problem_data *prb = 0;
+
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
+      || run_get_entry(state->runlog_state, run_id, &re) < 0) {
+    fprintf(log_f, _("Invalid run_id %d.\n"), run_id);
+    goto done;
+  }
+
+  if ((rep_flag = archive_make_read_path(state, rep_path, sizeof(rep_path),
+                                         cs->global->xml_report_archive_dir,
+                                         run_id, 0, 1)) < 0
+      && (rep_flag = archive_make_read_path(state, rep_path, sizeof(rep_path),
+                                            cs->global->report_archive_dir,
+                                            run_id, 0, 1)) < 0) {
+    fprintf(log_f, _("Report file does not exist.\n"));
+    goto done;
+  }
+
+  if (generic_read_file(&rep_text, 0, &rep_len, rep_flag,0,rep_path, "") < 0) {
+    fprintf(log_f, _("Cannot read the report file from disk.\n"));
+    goto done;
+  }
+  if (get_content_type(rep_text, &start_ptr) != CONTENT_TYPE_XML) {
+    // we expect the master log in XML format
+    fprintf(log_f, _("Information is not available.\n"));
+    goto done;
+  }
+
+  if (!(r = testing_report_parse_xml(start_ptr))) {
+    fprintf(log_f, _("The report file parsing failed.\n"));
+    goto done;
+  }
+  xfree(rep_text); rep_text = 0;
+
+  if (test_num <= 0 || test_num > r->run_tests) {
+    fprintf(log_f, _("Invalid test number %d.\n"), test_num);
+    goto done;
+  }
+
+  if (re.prob_id <= 0 || re.prob_id > cs->max_prob
+      || !(prb = cs->probs[re.prob_id])) {
+    fprintf(log_f, _("Invalid problem.\n"));
+    goto done;
+  }
+
+  switch (action) {
+  case NEW_SRV_ACTION_VIEW_TEST_INPUT:
+  case NEW_SRV_ACTION_VIEW_TEST_ANSWER:
+  case NEW_SRV_ACTION_VIEW_TEST_INFO:
+    
+  }
+
+  /*
+  path_t rep_path;
+  path_t arch_path;
+  int rep_flag, errcode = 0;
+  char *rep_text = 0;
+  size_t rep_len = 0;
+  struct testing_report_test *t = 0;
+  unsigned char fnbuf[64];
+  full_archive_t far = 0;
+  long arch_size, arch_raw_size;
+  unsigned int arch_flags;
+  const unsigned char *arch_data;
+  unsigned char *text = 0;
+  struct run_entry re;
+  struct section_problem_data *prb;
+  path_t path1, path2;
+  unsigned char *indir;
+  char *text2 = 0;
+  size_t text2_len = 0;
+  const unsigned char *start_ptr = 0;
+  const unsigned char *digest_ptr = 0;
+  unsigned char cur_digest[32];
+  int good_digest_flag = 1;
+
+
+
+
+  t = r->tests[test_num - 1];
+
+  if (cmd == SRV_CMD_VIEW_TEST_ANSWER || cmd == SRV_CMD_VIEW_TEST_INPUT
+      || cmd == SRV_CMD_VIEW_TEST_INFO) {
+      errcode = SRV_ERR_SYSTEM_ERROR;
+
+    switch (cmd) {
+    case SRV_CMD_VIEW_TEST_INPUT:
+      indir = prb->test_dir;
+      if (prb->test_pat[0]) {
+        snprintf(path2, sizeof(path2), prb->test_pat, test_num);
+      } else {
+        snprintf(path2, sizeof(path2), "%03d%s", test_num, prb->test_sfx);
+      }
+      if (t->has_input_digest) digest_ptr = t->input_digest;
+      break;
+    case SRV_CMD_VIEW_TEST_ANSWER:
+      if (!prb->use_corr || !r->correct_available) {
+        errcode = SRV_ERR_NOT_SUPPORTED;
+        goto failure;
+      }
+      indir = prb->corr_dir;
+      if (prb->corr_pat[0]) {
+        snprintf(path2, sizeof(path2), prb->corr_pat, test_num);
+      } else {
+        snprintf(path2, sizeof(path2), "%03d%s", test_num, prb->corr_sfx);
+      }
+      if (t->has_correct_digest) digest_ptr = t->correct_digest;
+      break;
+    case SRV_CMD_VIEW_TEST_INFO:
+      if (!prb->use_info || !r->info_available) {
+        errcode = SRV_ERR_NOT_SUPPORTED;
+        goto failure;
+      }
+      indir = prb->info_dir;
+      if (prb->info_pat[0]) {
+        snprintf(path2, sizeof(path2), prb->info_pat, test_num);
+      } else {
+        snprintf(path2, sizeof(path2), "%03d%s", test_num, prb->info_sfx);
+      }
+      if (t->has_info_digest) digest_ptr = t->info_digest;
+      break;
+    default:
+      abort();
+    }
+
+    if ((prb->variant_num > 0 && r->variant <= 0)
+        || (prb->variant_num <= 0 && r->variant > 0)) { 
+      errcode = SRV_ERR_NOT_SUPPORTED;
+      goto failure;
+    }
+
+    if (r->variant > 0) {
+      snprintf(path1, sizeof(path1), "%s-%d/%s", indir, r->variant, path2);
+    } else {
+      snprintf(path1, sizeof(path1), "%s/%s", indir, path2);
+    }
+
+    if (digest_ptr) {
+      if (filehash_get(path1, cur_digest) < 0) {
+        errcode = SRV_ERR_SYSTEM_ERROR;
+        goto failure;
+      }
+      good_digest_flag = digest_is_equal(DIGEST_SHA1, digest_ptr, cur_digest);
+    }
+
+    if (generic_read_file(&text2, 0, &text2_len, 0, 0, path1, 0) < 0) {
+      errcode = SRV_ERR_SYSTEM_ERROR;
+      goto failure;
+    }
+
+    fprintf(f, "Content-type: text/plain\n\n");
+    if (!good_digest_flag) {
+      fprintf(f,
+              "*********\n"
+              "NOTE: The file checksum has been changed!\n"
+              "It is possible, that the file was edited!\n"
+              "*********\n\n");
+    }
+    if (text2_len > 0) {
+      if (fwrite(text2, 1, text2_len, f) != text2_len) {
+        err("write_tests: fwrite failed");
+        errcode = SRV_ERR_SYSTEM_ERROR;
+        goto failure;
+      }
+    }
+  } else {
+    switch (cmd) {
+    case SRV_CMD_VIEW_TEST_OUTPUT:
+      if (!t->output_available) {
+        errcode = SRV_ERR_NOT_SUPPORTED;
+        goto failure;
+      }
+      snprintf(fnbuf, sizeof(fnbuf), "%06d.o", test_num);
+      break;
+    case SRV_CMD_VIEW_TEST_ERROR:
+      if (!t->stderr_available) {
+        errcode = SRV_ERR_NOT_SUPPORTED;
+        goto failure;
+      }
+      snprintf(fnbuf, sizeof(fnbuf), "%06d.e", test_num);
+      break;
+    case SRV_CMD_VIEW_TEST_CHECKER:
+      if (!t->checker_output_available) {
+        errcode = SRV_ERR_NOT_SUPPORTED;
+        goto failure;
+      }
+      snprintf(fnbuf, sizeof(fnbuf), "%06d.c", test_num);
+      break;
+    default:
+      abort();
+    }
+
+    rep_flag = archive_make_read_path(state, arch_path, sizeof(arch_path),
+                                      state->global->full_archive_dir,
+                                      run_id, 0, 0);
+    if (rep_flag < 0) {
+      errcode = SRV_ERR_SYSTEM_ERROR;
+      goto failure;
+    }
+    if (!(far = full_archive_open_read(arch_path))) {
+      errcode = SRV_ERR_FILE_NOT_EXIST;
+      goto failure;
+    }
+    rep_flag = full_archive_find_file(far, fnbuf,
+                                      &arch_size,&arch_raw_size,&arch_flags,&arch_data);
+    if (rep_flag < 0) {
+      errcode = SRV_ERR_SYSTEM_ERROR;
+      goto failure;
+    }
+    if (!rep_flag) {
+      errcode = SRV_ERR_FILE_NOT_EXIST;
+      goto failure;
+    }
+
+    if (arch_raw_size > 0) {
+      text = (unsigned char*) xmalloc(arch_raw_size);
+      if (uncompress(text, &arch_raw_size, arch_data, arch_size) != Z_OK) {
+        err("write_tests: uncompress failed");
+        errcode = SRV_ERR_SYSTEM_ERROR;
+        goto failure;
+      }
+    }
+
+    fprintf(f, "Content-type: text/plain\n\n");
+    if (arch_raw_size > 0) {
+      if (fwrite(text, 1, arch_raw_size, f) != arch_raw_size) {
+        err("write_tests: fwrite failed");
+        errcode = SRV_ERR_SYSTEM_ERROR;
+        goto failure;
+      }
+    }
+  }
+
+  xfree(text2);
+  xfree(text);
+  full_archive_close(far);
+  xfree(rep_text);
+  testing_report_free(r);
+  return 0;
+
+ failure:
+  xfree(text2);
+  xfree(text);
+  full_archive_close(far);
+  xfree(rep_text);
+  return -errcode;
+  */
+
+ done:
+  xfree(rep_text);
+  testing_report_free(r);
+}
+
+
+
+
 /*
  * Local variables:
  *  compile-command: "make"
