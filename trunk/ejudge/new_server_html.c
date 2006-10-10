@@ -158,6 +158,7 @@
 #define __(x) x
 
 #define ARMOR(s)  html_armor_buf(&ab, s)
+#define FAIL(c) do { retval = (c); goto done; } while (0)
 
 enum
 {
@@ -1344,8 +1345,8 @@ priv_registration_operation(FILE *fout,
       n = userlist_clnt_change_registration(ul_conn, uset.v[i],
                                             phr->contest_id, -2, 0, 0);
       if (n < 0) {
-        fprintf(log_f, "Removal of user %d from contest %d failed: %s",
-                uset.v[i], phr->contest_id, userlist_strerror(-n));
+        new_serve_error(log_f, NEW_SRV_ERR_USER_REMOVAL_FAILED,
+                        uset.v[i], phr->contest_id, userlist_strerror(-n));
       }
       break;
     case NEW_SRV_ACTION_USERS_SET_PENDING:
@@ -1367,8 +1368,8 @@ priv_registration_operation(FILE *fout,
       n = userlist_clnt_change_registration(ul_conn, uset.v[i],
                                             phr->contest_id, new_status, 0, 0);
       if (n < 0) {
-        fprintf(log_f, "Changing status of user %d in contest %d failed: %s",
-                uset.v[i], phr->contest_id, userlist_strerror(-n));
+        new_serve_error(log_f, NEW_SRV_ERR_USER_STATUS_CHANGE_FAILED,
+                        uset.v[i], phr->contest_id, userlist_strerror(-n));
       }
       break;
 
@@ -1410,8 +1411,8 @@ priv_registration_operation(FILE *fout,
                                             phr->contest_id, -1, cmd,
                                             flag);
       if (n < 0) {
-        fprintf(log_f, "Changing flags of user %d in contest %d failed: %s",
-                uset.v[i], phr->contest_id, userlist_strerror(-n));
+        new_serve_error(log_f, NEW_SRV_ERR_USER_FLAGS_CHANGE_FAILED,
+                        uset.v[i], phr->contest_id, userlist_strerror(-n));
       }
       break;
 
@@ -1441,7 +1442,7 @@ priv_add_user_by_user_id(FILE *fout,
 
   if ((r = ns_cgi_param(phr, "add_user_id", &s)) < 0 || !s
       || sscanf(s, "%d%n", &x, &n) != 1 || s[n] || x <= 0) {
-    new_serve_error(log_f, NEW_SRV_ERR_INVALID_USER_ID);
+    new_serve_error(log_f, NEW_SRV_ERR_INV_USER_ID);
     goto done;
   }
 
@@ -1454,7 +1455,8 @@ priv_add_user_by_user_id(FILE *fout,
   r = userlist_clnt_register_contest(ul_conn, ULS_PRIV_REGISTER_CONTEST,
                                      x, phr->contest_id);
   if (r < 0) {
-    fprintf(log_f, "Registration failed: %s", userlist_strerror(-r));
+    new_serve_error(log_f, NEW_SRV_ERR_REGISTRATION_FAILED,
+                    userlist_strerror(-r));
     goto done;
   }
 
@@ -1475,7 +1477,7 @@ priv_add_user_by_login(FILE *fout,
   int retcode = 0;
 
   if ((r = ns_cgi_param(phr, "add_login", &s)) < 0 || !s) {
-    fprintf(log_f, "Invalid User Login.");
+    new_serve_error(log_f, NEW_SRV_ERR_INV_USER_LOGIN);
     goto done;
   }
   if (open_ul_connection(phr->fw_state) < 0) {
@@ -1484,12 +1486,13 @@ priv_add_user_by_login(FILE *fout,
     goto done;
   }
   if ((r = userlist_clnt_lookup_user(ul_conn, s, &user_id, 0)) < 0) {
-    fprintf(log_f, "User <tt>%s</tt> does not exist.", ARMOR(s));
+    new_serve_error(log_f, NEW_SRV_ERR_USER_LOGIN_NONEXISTANT, ARMOR(s));
     goto done;
   }
   if ((r = userlist_clnt_register_contest(ul_conn, ULS_PRIV_REGISTER_CONTEST,
                                           user_id, phr->contest_id)) < 0) {
-    fprintf(log_f, "Registration failed: %s.", userlist_strerror(-r));
+    new_serve_error(log_f, NEW_SRV_ERR_REGISTRATION_FAILED,
+                    userlist_strerror(-r));
     goto done;
   }
 
@@ -1551,7 +1554,8 @@ priv_priv_user_operation(FILE *fout,
     switch (phr->action) {
     case NEW_SRV_ACTION_PRIV_USERS_REMOVE:
       if (nsdb_priv_remove_user(uset.v[i], phr->contest_id) < 0) {
-        fprintf(log_f, "Remove (%d,%d) failed\n", uset.v[i], phr->contest_id);
+        new_serve_error(log_f, NEW_SRV_ERR_PRIV_USER_REMOVAL_FAILED,
+                        uset.v[i], phr->contest_id);
       }
       break;
 
@@ -1560,8 +1564,8 @@ priv_priv_user_operation(FILE *fout,
     case NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_EXAMINER:
     case NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR:
       if (nsdb_add_role(uset.v[i], phr->contest_id, role) < 0) {
-        fprintf(log_f, "add_role (%d,%d,%d) failed\n",
-                uset.v[i], phr->contest_id, role);
+        new_serve_error(log_f, NEW_SRV_ERR_PRIV_USER_ROLE_ADD_FAILED,
+                        role, uset.v[i], phr->contest_id);
       }
       break;
 
@@ -1570,8 +1574,8 @@ priv_priv_user_operation(FILE *fout,
     case NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_EXAMINER:
     case NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR:
       if (nsdb_del_role(uset.v[i], phr->contest_id, role) < 0) {
-        fprintf(log_f, "del_role (%d,%d,%d) failed\n",
-                uset.v[i], phr->contest_id, role);
+        new_serve_error(log_f, NEW_SRV_ERR_PRIV_USER_ROLE_DEL_FAILED,
+                        role, uset.v[i], phr->contest_id);
       }
       break;
 
@@ -1600,19 +1604,19 @@ priv_add_priv_user_by_user_id(FILE *fout,
 
   if ((r = ns_cgi_param(phr, "add_user_id", &s)) < 0 || !s
       || sscanf(s, "%d%n", &user_id, &n) != 1 || s[n] || user_id <= 0) {
-    fprintf(log_f, "Invalid user Id");
+    new_serve_error(log_f, NEW_SRV_ERR_INV_USER_ID);
     goto done;
   }
   if ((r = ns_cgi_param(phr, "add_role_2", &s)) < 0 || !s
       || sscanf(s, "%d%n", &add_role, &n) != 1 || s[n]
       || add_role < USER_ROLE_OBSERVER || add_role > USER_ROLE_COORDINATOR) {
-    fprintf(log_f, "Invalid User Role");
+    new_serve_error(log_f, NEW_SRV_ERR_INV_USER_ROLE);
     goto done;
   }
 
   if (nsdb_add_role(user_id, phr->contest_id, add_role) < 0) {
-    fprintf(log_f, "Adding role (%d,%d,%d) failed", user_id, phr->contest_id,
-            add_role);
+    new_serve_error(log_f, NEW_SRV_ERR_PRIV_USER_ROLE_ADD_FAILED,
+                    add_role, user_id, phr->contest_id);
     goto done;
   }
 
@@ -1633,13 +1637,13 @@ priv_add_priv_user_by_login(FILE *fout,
   int retcode = 0;
 
   if ((r = ns_cgi_param(phr, "add_login", &login)) < 0 || !s) {
-    fprintf(log_f, "Invalid User Login");
+    new_serve_error(log_f, NEW_SRV_ERR_INV_USER_LOGIN);
     goto done;
   }
   if ((r = ns_cgi_param(phr, "add_role_1", &s)) < 0 || !s
       || sscanf(s, "%d%n", &add_role, &n) != 1 || s[n]
       || add_role < USER_ROLE_OBSERVER || add_role > USER_ROLE_COORDINATOR) {
-    fprintf(log_f, "Invalid User Role");
+    new_serve_error(log_f, NEW_SRV_ERR_INV_USER_ROLE);
     goto done;
   }
   if (open_ul_connection(phr->fw_state) < 0) {
@@ -1648,12 +1652,12 @@ priv_add_priv_user_by_login(FILE *fout,
     goto done;
   }
   if ((r = userlist_clnt_lookup_user(ul_conn, login, &user_id, 0)) < 0) {
-    fprintf(log_f, "User <tt>%s</tt> does not exist", ARMOR(s));
+    new_serve_error(log_f, NEW_SRV_ERR_USER_LOGIN_NONEXISTANT, ARMOR(s));
     goto done;
   }
   if (nsdb_add_role(user_id, phr->contest_id, add_role) < 0) {
-    fprintf(log_f, "Adding role (%d,%d,%d) failed", user_id, phr->contest_id,
-            add_role);
+    new_serve_error(log_f, NEW_SRV_ERR_PRIV_USER_ROLE_ADD_FAILED,
+                    add_role, user_id, phr->contest_id);
     goto done;
   }
 
@@ -1675,7 +1679,7 @@ do_schedule(FILE *log_f,
   time_t sloc, start_time, stop_time;
 
   if (ns_cgi_param(phr, "sched_time", &s) <= 0) {
-    fprintf(log_f, _("Schedule time is not specified.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_INV_TIME_SPEC);
     return;
   }
   if (sscanf(s, "%d/%d/%d %d:%d:%d%n",
@@ -1700,23 +1704,23 @@ do_schedule(FILE *log_f,
     ploc->tm_min = 0;
     ploc->tm_sec = 0;
   } else {
-    fprintf(log_f, _("Invalid time specification.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_INV_TIME_SPEC);
     return;
   }
 
   if ((sloc = mktime(ploc)) == (time_t) -1) {
-    fprintf(log_f, _("Invalid time specification.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_INV_TIME_SPEC);
     return;
   }
 
   run_get_times(cs->runlog_state, &start_time, 0, 0, &stop_time, 0);
 
   if (stop_time > 0) {
-    fprintf(log_f, _("Contest already finished.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
     return;
   }
   if (start_time > 0) {
-    fprintf(log_f, _("Contest already started.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_STARTED);
     return;
   }
   run_sched_contest(cs->runlog_state, sloc);
@@ -1735,19 +1739,19 @@ do_change_duration(FILE *log_f,
   time_t start_time, stop_time;
 
   if (ns_cgi_param(phr, "dur", &s) <= 0) {
-    fprintf(log_f, _("Duration is not specified.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_INV_DUR_SPEC);
     return;
   }
   if (sscanf(s, "%d:%d%n", &dh, &dm, &n) == 2 && !s[n]) {
   } else if (sscanf(s, "%d%n", &dh, &n) == 1 && !s[n]) {
     dm = 0;
   } else {
-    fprintf(log_f, _("Invalid duration specification.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_INV_DUR_SPEC);
     return;
   }
   d = dh * 60 + dm;
   if (d < 0 || d > 1000000) {
-    fprintf(log_f, _("Invalid duration.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_INV_DUR_SPEC);
     return;
   }
   d *= 60;
@@ -1755,11 +1759,11 @@ do_change_duration(FILE *log_f,
   run_get_times(cs->runlog_state, &start_time, 0, 0, &stop_time, 0);
 
   if (stop_time > 0 && !cs->global->enable_continue) {
-    fprintf(log_f, _("Contest already finished.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
     return;
   }
   if (d > 0 && start_time && start_time + d < cs->current_time) {
-    fprintf(log_f, _("New duration is too small.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_DUR_TOO_SMALL);
     return;
   }
 
@@ -1783,7 +1787,7 @@ priv_contest_operation(FILE *fout,
 
   if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
       || opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) {
-    fprintf(log_f, _("Permission denied.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto done;
   }
 
@@ -1792,11 +1796,11 @@ priv_contest_operation(FILE *fout,
   switch (phr->action) {
   case NEW_SRV_ACTION_START_CONTEST:
     if (stop_time > 0) {
-      fprintf(log_f, _("Contest already finished.\n"));
+      new_serve_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
       goto done;
     }
     if (start_time > 0) {
-      fprintf(log_f, _("Contest already started.\n"));
+      new_serve_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_STARTED);
       goto done;
     }
     run_start_contest(cs->runlog_state, cs->current_time);
@@ -1806,11 +1810,11 @@ priv_contest_operation(FILE *fout,
 
   case NEW_SRV_ACTION_STOP_CONTEST:
     if (stop_time > 0) {
-      fprintf(log_f, _("Contest already finished.\n"));
+      new_serve_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
       goto done;
     }
     if (start_time <= 0) {
-      fprintf(log_f, _("Contest is not started.\n"));
+      new_serve_error(log_f, NEW_SRV_ERR_CONTEST_NOT_STARTED);
       goto done;
     }
     run_stop_contest(cs->runlog_state, cs->current_time);
@@ -1819,19 +1823,19 @@ priv_contest_operation(FILE *fout,
 
   case NEW_SRV_ACTION_CONTINUE_CONTEST:
     if (!global->enable_continue) {
-      fprintf(log_f, _("This contest cannot be continued.\n"));
+      new_serve_error(log_f, NEW_SRV_ERR_CANNOT_CONTINUE_CONTEST);
       goto done;
     }
     if (start_time <= 0) {
-      fprintf(log_f, _("Contest is not started.\n"));
+      new_serve_error(log_f, NEW_SRV_ERR_CONTEST_NOT_STARTED);
       goto done;
     }
     if (stop_time <= 0) {
-      fprintf(log_f, _("Contest is not finished.\n"));
+      new_serve_error(log_f, NEW_SRV_ERR_CONTEST_NOT_FINISHED);
       goto done;
     }
     if (duration > 0 && cs->current_time >= start_time + duration) {
-      fprintf(log_f, _("Insufficient duration to continue the contest.\n"));
+      new_serve_error(log_f, NEW_SRV_ERR_INSUFFICIENT_DURATION);
       goto done;
     }
     run_stop_contest(cs->runlog_state, 0);
@@ -1924,13 +1928,14 @@ priv_change_language(FILE *fout,
   if ((r = userlist_clnt_set_cookie(ul_conn, ULS_SET_COOKIE_LOCALE,
                                     phr->session_id,
                                     new_locale_id)) < 0) {
-    fprintf(log_f, "set_cookie failed: %s", userlist_strerror(-r));
+    new_serve_error(log_f, NEW_SRV_ERR_SESSION_UPDATE_FAILED,
+                    userlist_strerror(-r));
   }
   return 0;
 
  invalid_param:
-  html_err_invalid_param(fout, phr, 0, "cannot parse locale_id");
-  return -1;
+  new_serve_error(log_f, NEW_SRV_ERR_INV_LOCALE_ID);
+  return 0;
 }
 
 static int
@@ -2099,7 +2104,7 @@ priv_submit_run(FILE *fout,
   /* check for disabled languages */
   if (lang_id > 0) {
     if (lang->disabled) {
-      fprintf(log_f, _("This language is disabled for use.\n"));
+      new_serve_error(log_f, NEW_SRV_ERR_LANG_DISABLED);
       goto done;
     }
 
@@ -2109,8 +2114,7 @@ priv_submit_run(FILE *fout,
         if (!strcmp(lang_list[i], lang->short_name))
           break;
       if (!lang_list[i]) {
-        fprintf(log_f, _("The language %s is not available for this problem.\n"),
-                lang->short_name);
+        new_serve_error(log_f, NEW_SRV_ERR_LANG_NOT_AVAIL_FOR_PROBLEM);
         goto done;
       }
     } else if (prob->disable_language) {
@@ -2119,8 +2123,7 @@ priv_submit_run(FILE *fout,
         if (!strcmp(lang_list[i], lang->short_name))
           break;
       if (lang_list[i]) {
-        fprintf(log_f, _("The language %s is disabled for this problem.\n"),
-                lang->short_name);
+        new_serve_error(log_f, NEW_SRV_ERR_LANG_DISABLED_FOR_PROBLEM);
         goto done;
       }
     }
@@ -2128,7 +2131,7 @@ priv_submit_run(FILE *fout,
     // guess the content-type and check it against the list
     if ((mime_type = mime_type_guess(global->diff_work_dir,
                                      run_text, run_size)) < 0) {
-      fprintf(log_f, _("Cannot guess the content type.\n"));
+      new_serve_error(log_f, NEW_SRV_ERR_CANNOT_DETECT_CONTENT_TYPE);
       goto done;
     }
     mime_type_str = mime_type_get_type(mime_type);
@@ -2138,9 +2141,8 @@ priv_submit_run(FILE *fout,
         if (!strcmp(lang_list[i], mime_type_str))
           break;
       if (!lang_list[i]) {
-        fprintf(log_f,
-                _("The content type %s is not available for this problem.\n"),
-                mime_type_str);
+        new_serve_error(log_f, NEW_SRV_ERR_CONTENT_TYPE_NOT_AVAILABLE,
+                        mime_type_str);
         goto done;
       }
     } else if (prob->disable_language) {
@@ -2149,8 +2151,8 @@ priv_submit_run(FILE *fout,
         if (!strcmp(lang_list[i], mime_type_str))
           break;
       if (lang_list[i]) {
-        fprintf(log_f, _("The content type %s is disabled for this problem.\n"),
-                mime_type_str);
+        new_serve_error(log_f, NEW_SRV_ERR_CONTENT_TYPE_DISABLED,
+                        mime_type_str);
         goto done;
       }
     }
@@ -2167,7 +2169,7 @@ priv_submit_run(FILE *fout,
                           phr->locale_id, phr->user_id,
                           prob_id, lang_id, variant, 1, mime_type);
   if (run_id < 0) {
-    fprintf(log_f, _("Cannot add the record to the database.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto done;
   }
   serve_move_files_to_insert_run(cs, run_id);
@@ -2177,17 +2179,17 @@ priv_submit_run(FILE *fout,
                                        run_size, 0);
   if (arch_flags < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
-    fprintf(log_f, _("Cannot allocate disk space.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
     goto done;
   }
   if (archive_dir_prepare(cs, global->run_archive_dir, run_id, 0, 0) < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
-    fprintf(log_f, _("Cannot allocate disk space.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
     goto done;
   }
   if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
-    fprintf(log_f, _("Cannot write to the disk.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
     goto done;
   }
 
@@ -2208,7 +2210,7 @@ priv_submit_run(FILE *fout,
                                 lang->compile_id, phr->locale_id, 0,
                                 lang->src_sfx,
                                 lang->compiler_env, -1, 0) < 0) {
-        fprintf(log_f, _("Cannot put the run to the compilation queue.\n"));
+        new_serve_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
         goto done;
       }
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
@@ -2230,7 +2232,7 @@ priv_submit_run(FILE *fout,
       if (serve_run_request(cs, log_f, run_text, run_size, run_id,
                             phr->user_id, prob_id, 0, variant, 0, -1, -1,
                             0, 0) < 0) {
-        fprintf(log_f, _("Cannot put the run to the run queue.\n"));
+        new_serve_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
         goto done;
       }
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
@@ -2253,7 +2255,7 @@ priv_submit_run(FILE *fout,
       if (serve_run_request(cs, log_f, run_text, run_size, run_id,
                             phr->user_id, prob_id, 0, variant, 0, -1, -1,
                             0, 0) < 0) {
-        fprintf(log_f, _("Cannot put the run to the run queue.\n"));
+        new_serve_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
         goto done;
       }
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
@@ -2614,7 +2616,7 @@ priv_change_status(FILE *fout,
   if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0
       && ((status != RUN_REJUDGE && status != RUN_FULL_REJUDGE)
           || opcaps_check(phr->caps, OPCAP_REJUDGE_RUN))) {
-    fprintf(log_f, _("Permission denied.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto done;
   }
   if (status == RUN_REJUDGE || status == RUN_FULL_REJUDGE) {
@@ -2736,7 +2738,7 @@ priv_rejudge_displayed(FILE *fout,
     goto done;
   }
   if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0) {
-    fprintf(log_f, _("Permission denied.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto done;
   }
 
@@ -2780,7 +2782,7 @@ priv_rejudge_problem(FILE *fout,
       || prob->disable_testing)
     goto invalid_param;
   if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0) {
-    fprintf(log_f, _("Permission denied.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto done;
   }
 
@@ -2804,7 +2806,7 @@ priv_rejudge_all(FILE *fout,
   serve_state_t cs = extra->serve_state;
 
   if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0) {
-    fprintf(log_f, _("Permission denied.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto done;
   }
 
@@ -2996,7 +2998,7 @@ priv_diff_page(FILE *fout,
     goto done;
   }
   if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
-    fprintf(log_f, _("Permission denied.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto done;
   }
 
@@ -3366,7 +3368,7 @@ priv_view_report(FILE *fout,
   if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_REPORT) < 0) {
-    fprintf(log_f, _("Permission denied.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto done;
   }
 
@@ -3392,7 +3394,7 @@ priv_view_source(FILE *fout,
   if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
-    fprintf(log_f, _("Permission denied.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto done;
   }
 
@@ -3430,7 +3432,7 @@ priv_download_source(FILE *fout,
     no_disp = x;
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
-    fprintf(log_f, _("Permission denied.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto done;
   }
   if (re.prob_id <= 0 || re.prob_id > cs->max_prob ||
@@ -3511,7 +3513,7 @@ priv_view_clar(FILE *fout,
   }
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) < 0) {
-    fprintf(log_f, _("Permission denied.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto done;
   }
 
@@ -3540,11 +3542,11 @@ priv_standings(FILE *fout,
   serve_state_t cs = extra->serve_state;
 
   if (phr->role < USER_ROLE_JUDGE) {
-    fprintf(log_f, _("Permission denied.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto done;
   }
   if (opcaps_check(phr->caps, OPCAP_VIEW_STANDINGS) < 0) {
-    fprintf(log_f, _("Permission denied.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto done;
   }
 
@@ -3581,6 +3583,7 @@ priv_view_test(FILE *fout,
   }
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_REPORT) < 0) {
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     fprintf(log_f, _("Permission denied.\n"));
     goto done;
   }
@@ -3820,10 +3823,14 @@ priv_generic_operation(FILE *fout,
   log_f = open_memstream(&log_txt, &log_len);
 
   r = priv_actions_table_2[phr->action](fout, log_f, phr, cnts, extra);
-  if (r < 0) {
+  if (r == -1) {
     fclose(log_f);
     xfree(log_txt);
     return;
+  }
+  if (r < 0) {
+    new_serve_error(log_f, r);
+    r = 0;
   }
   rr = r;
   if (!r) r = new_serve_priv_next_state[phr->action];
@@ -3852,10 +3859,14 @@ priv_generic_page(FILE *fout,
   log_f = open_memstream(&log_txt, &log_len);
 
   r = priv_actions_table_2[phr->action](fout, log_f, phr, cnts, extra);
-  if (r < 0) {
+  if (r == -1) {
     fclose(log_f);
     xfree(log_txt);
     return;
+  }
+  if (r < 0) {
+    new_serve_error(log_f, r);
+    r = 0;
   }
   if (!r) r = new_serve_priv_prev_state[phr->action];
 
@@ -5100,7 +5111,7 @@ unpriv_submit_run(FILE *fout,
     goto done;
   }
   if (!start_time) {
-    fprintf(log_f, _("The contest is not started.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_CONTEST_NOT_STARTED);
     goto done;
   }
   if (stop_time) {
@@ -5135,7 +5146,7 @@ unpriv_submit_run(FILE *fout,
   /* check for disabled languages */
   if (lang_id > 0) {
     if (lang->disabled) {
-      fprintf(log_f, _("This language is disabled for use.\n"));
+      new_serve_error(log_f, NEW_SRV_ERR_LANG_DISABLED);
       goto done;
     }
 
@@ -5412,7 +5423,7 @@ unpriv_submit_clar(FILE *fout,
     goto done;
   }
   if (!start_time) {
-    fprintf(log_f, _("The contest is not started.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_CONTEST_NOT_STARTED);
     goto done;
   }
   if (stop_time) {
