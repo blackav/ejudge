@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-10 14:06+0400\n"
-"PO-Revision-Date: 2006-10-08 21:42+0400\n"
+"POT-Creation-Date: 2006-10-10 23:36+0400\n"
+"PO-Revision-Date: 2006-10-10 23:45+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -348,6 +348,10 @@ msgstr "Разрешить работу в роли ЭКЗАМЕНАТОРА отмеченным пользователям"
 msgid "Add the OBSERVER role to the selected users"
 msgstr "Разрешить работу в роли НАБЛЮДАТЕЛЯ отмеченным пользователям"
 
+#, c-format
+msgid "Adding role %d to user %d in contest %d failed"
+msgstr "Добавление роли %d пользователю %d в турнире %d не удалось"
+
 msgid "Additional test information"
 msgstr "Доп. инф. о тесте"
 
@@ -425,6 +429,9 @@ msgstr "Ошибка выделения места на диске.\n"
 #, c-format
 msgid "Cannot calculate the file checksum.\n"
 msgstr "Ошибка подсчёта контрольной суммы файла.\n"
+
+msgid "Cannot guess the content type"
+msgstr "Невозможно определить тип содержимого"
 
 #, c-format
 msgid "Cannot guess the content type.\n"
@@ -508,6 +515,14 @@ msgstr "Сменить пароль"
 
 msgid "Change!"
 msgstr "Изменить!"
+
+#, c-format
+msgid "Changing flags of user %d in contest %d failed: %s"
+msgstr "Изменение флагов пользователя %d в турнире %d не удалось: %s"
+
+#, c-format
+msgid "Changing status of user %d in contest %d failed: %s"
+msgstr "Изменение статуса пользователя %d в турнире %d не удалось: %s"
 
 msgid "Check failed"
 msgstr "Проверка завершилась неудачно"
@@ -633,33 +648,34 @@ msgstr "Нет связи с сервером."
 msgid "Content type"
 msgstr "Тип содержимого"
 
+#, c-format
+msgid "Content type <tt>%s</tt> is disabled for this problem"
+msgstr "Тип файла <tt>%s</tt> запрещен для этой задачи"
+
+#, c-format
+msgid "Content type <tt>%s</tt> is not available for this problem"
+msgstr "Тип файла <tt>%s</tt> недоступен для этой задачи"
+
 msgid "Contest"
 msgstr "Турнир"
 
 msgid "Contest ID"
 msgstr "ID"
 
-#, c-format
-msgid "Contest already finished.\n"
-msgstr "Турнир уже завершён.\n"
+msgid "Contest already finished"
+msgstr "Турнир уже завершён"
 
-#, c-format
-msgid "Contest already started.\n"
-msgstr "Турнир уже запущен.\n"
+msgid "Contest already started"
+msgstr "Турнир уже запущен"
 
 msgid "Contest is closed"
 msgstr "Турнир закрыт"
 
-#, c-format
-msgid "Contest is not finished.\n"
-msgstr "Турнир ещё не закончился.\n"
+msgid "Contest is not finished"
+msgstr "Турнир ещё не закончился"
 
 msgid "Contest is not started"
 msgstr "Турнир не начался"
-
-#, c-format
-msgid "Contest is not started.\n"
-msgstr "Турнир не начался.\n"
 
 msgid "Contest name"
 msgstr "Название турнира"
@@ -728,6 +744,10 @@ msgstr "Удалить роль ЭКЗАМЕНАТОРА"
 msgid "Del OBSERVER"
 msgstr "Удалить роль НАБЛЮДАТЕЛЯ"
 
+#, c-format
+msgid "Deleting role %d of user %d from contest %d failed"
+msgstr "Удаление роли %d у пользователя %d в турнире %d не удалось"
+
 msgid "Detailed information about participant"
 msgstr "Подробная информация об участнике"
 
@@ -737,6 +757,9 @@ msgstr "Подробная информация о пользователе (команде)"
 #, c-format
 msgid "Details about run %d, test %d"
 msgstr "Подробная информация о посылке %d, тесте %d"
+
+msgid "Disk write error (disk full?)"
+msgstr "Ошибка записи на диск (закончилось место?)"
 
 msgid "Disqualified"
 msgstr "Дисквалифицирован"
@@ -761,10 +784,6 @@ msgstr "База пользователей"
 
 msgid "Duration"
 msgstr "Продолжительность"
-
-#, c-format
-msgid "Duration is not specified.\n"
-msgstr "Продолжительность турнира не указана.\n"
 
 msgid "E-mail"
 msgstr "Адрес электронной почты"
@@ -830,9 +849,9 @@ msgstr "Ошибка на тесте"
 msgid "Failed to change password"
 msgstr "Невозможно сменить пароль"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to fetch run log entry %d.\n"
-msgstr "Ошибка чтения файла с диска.\n"
+msgstr "Ошибка чтения записи о посылке %d с диска.\n"
 
 #, c-format
 msgid "Failed to read file from the disk.\n"
@@ -1153,9 +1172,8 @@ msgstr "Учебное заведение (сокр.)"
 msgid "Institution (short) (En)"
 msgstr "Учебное заведение (сокр.) (Англ.)"
 
-#, c-format
-msgid "Insufficient duration to continue the contest.\n"
-msgstr "Недостаточная продолжительность турнира.\n"
+msgid "Insufficient duration to continue the contest"
+msgstr "Недостаточная продолжительность турнира"
 
 msgid "Internal error"
 msgstr "Внутренняя ошибка"
@@ -1186,13 +1204,8 @@ msgstr "Задан неверный идентификатор турнира."
 msgid "Invalid contest identifier."
 msgstr "Неверный идентификатор турнира."
 
-#, c-format
-msgid "Invalid duration specification.\n"
-msgstr "Неверная спецификация продолжительности турнира.\n"
-
-#, c-format
-msgid "Invalid duration.\n"
-msgstr "Неверная продолжительность турнира.\n"
+msgid "Invalid duration specification"
+msgstr "Неверная спецификация продолжительности турнира"
 
 msgid "Invalid language specification"
 msgstr "Неверная спецификация языка программирования"
@@ -1200,6 +1213,9 @@ msgstr "Неверная спецификация языка программирования"
 #, c-format
 msgid "Invalid language.\n"
 msgstr "Неверный идентификатор языка программирования.\n"
+
+msgid "Invalid locale_id"
+msgstr "Неверный идентификатор языка"
 
 msgid "Invalid login"
 msgstr "Неверное регистрационное имя"
@@ -1265,13 +1281,17 @@ msgstr "Неверный номер теста %d.\n"
 msgid "Invalid test number %d.\n"
 msgstr "Неверный номер теста %d.\n"
 
-#, c-format
-msgid "Invalid time specification.\n"
-msgstr "Неверная спецификация времени.\n"
+msgid "Invalid time specification"
+msgstr "Неверная спецификация времени"
 
-#, fuzzy
+msgid "Invalid user role"
+msgstr "Неверная роль пользователя"
+
 msgid "Invalid user_id"
-msgstr "неверный идентификатор пользователя"
+msgstr "Неверный идентификатор пользователя"
+
+msgid "Invalid user_login"
+msgstr "Неверное регистрационное имя пользователя"
 
 #, c-format
 msgid "Invalid variant.\n"
@@ -1462,9 +1482,8 @@ msgstr "НЕТ."
 msgid "Name"
 msgstr "Имя"
 
-#, c-format
-msgid "New duration is too small.\n"
-msgstr "Новый продолжительность турнира слишком мала.\n"
+msgid "New duration is too small"
+msgstr "Новый продолжительность турнира слишком мала"
 
 msgid "New password"
 msgstr "Новый пароль"
@@ -1859,6 +1878,10 @@ msgstr "Регистрация не удалась"
 msgid "Registration failed by the following reason:"
 msgstr "Регистрация не удалось по следующим причинам:"
 
+#, c-format
+msgid "Registration failed: %s"
+msgstr "Регистрация не удалась: %s"
+
 msgid "Registration is successful"
 msgstr "Регистрация завершилась успешно"
 
@@ -1900,6 +1923,14 @@ msgstr "Перезапустить сервер"
 
 msgid "Remaining time"
 msgstr "Остающееся время"
+
+#, c-format
+msgid "Removal of privileged user %d from contest %d failed"
+msgstr "Удаление привилегированного пользователя %d из турнира %d не удалось"
+
+#, c-format
+msgid "Removal of user %d from contest %d failed: %s"
+msgstr "Удаление пользователя %d из турнира %d не удалось: %s"
 
 msgid "Remove"
 msgstr "Удалить"
@@ -2000,6 +2031,9 @@ msgstr "Параметры роли/члена не определены."
 msgid "Run ID"
 msgstr "Номер решения"
 
+msgid "Run log update failed"
+msgstr "Обновление журнала посылок не удалось"
+
 #, c-format
 msgid "Run to compare to is not specified.\n"
 msgstr "Посылка для сравнения не указана.\n"
@@ -2022,10 +2056,6 @@ msgstr "Русский"
 
 msgid "Save"
 msgstr "Сохранить"
-
-#, c-format
-msgid "Schedule time is not specified.\n"
-msgstr "Время старта турнира не задано.\n"
 
 msgid "Scheduled end time"
 msgstr "Запланированное время окончания"
@@ -2123,6 +2153,10 @@ msgstr "Сервис недоступен"
 
 msgid "Service that you requested is not available."
 msgstr "Запрошенный Вами сервис недоступен."
+
+#, c-format
+msgid "Session update failed: %s"
+msgstr "Изменение параметров сессии не удалось: %s"
 
 msgid "Set accepting mode"
 msgstr "Включить режим приёма решений"
@@ -2341,10 +2375,6 @@ msgstr "Турнир идёт (текущее положение команд не отображается)"
 msgid "The contest is not started"
 msgstr "Турнир не начался"
 
-#, c-format
-msgid "The contest is not started.\n"
-msgstr "Турнир не начался.\n"
-
 msgid "The contest is over"
 msgstr "Турнир закончился"
 
@@ -2363,6 +2393,10 @@ msgstr "Следующие посылки будут пересужены"
 
 msgid "The form contains error(s)"
 msgstr "Анкета заполнена неправильно"
+
+#, c-format
+msgid "The language %s is disabled for this problem"
+msgstr "Язык %s запрещён для этой задачи"
 
 #, c-format
 msgid "The language %s is disabled for this problem.\n"
@@ -2418,13 +2452,14 @@ msgstr ""
 "Сервер базы данных пользователей в настоящий момент недоступен. Попробуйте "
 "повторить запрос позднее."
 
-#, c-format
-msgid "This contest cannot be continued.\n"
-msgstr "Этот турнир не может быть продолжен.\n"
+msgid "This contest cannot be continued"
+msgstr "Этот турнир не может быть продолжен"
 
-#, c-format
-msgid "This language is disabled for use.\n"
-msgstr "Этот язык не может быть использован для этой задачи.\n"
+msgid "This language is disabled for use"
+msgstr "Этот язык не может быть использован для этой задачи"
+
+msgid "This language is not available for this problem"
+msgstr "Язык не доступен для этой задачи"
 
 #, c-format
 msgid "This problem is already solved.\n"
@@ -2514,9 +2549,9 @@ msgstr ""
 "К сожалению, заполненная Вами анкета не может быть принята. Ниже приведён "
 "список замечаний к ней. Пожалуйста, исправьте анкету и пошлите её снова."
 
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown error %d.\n"
-msgstr "неизвестная ошибка"
+msgstr "Неизвестная ошибка %d.\n"
 
 #, c-format
 msgid "Unknown: %d"
@@ -2544,6 +2579,10 @@ msgstr "Участник"
 #, c-format
 msgid "User %s: registration for %s"
 msgstr "Пользователь %s: регистрация на %s"
+
+#, c-format
+msgid "User <tt>%s</tt> does not exist"
+msgstr "Пользователь <tt>%s</tt> не существует"
 
 msgid "User ID"
 msgstr "Id"
@@ -2799,15 +2838,13 @@ msgstr ""
 "Ваш запрос вызвал внутреннюю ошибку сервера. Пожалуйста, сообщите об этом "
 "как об ошибке."
 
-#, fuzzy
 msgid "`run_id' parameter is undefined.\n"
-msgstr "Параметры роли/члена не определены."
+msgstr "Параметры `run_id' не определён.\n"
 
 #, c-format
 msgid "`run_id' parameter value %d is out of range.\n"
-msgstr ""
+msgstr "Значение параметра `run_id' %d за пределами допустимых.\n"
 
-#, fuzzy
 msgid "`run_id' parameter value is invalid.\n"
 msgstr "Номер посылки %d недопустим.\n"
 
@@ -3129,8 +3166,21 @@ msgstr "ошибка записи"
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
 
-#~ msgid "Invalid clar_id"
-#~ msgstr "Неверный идентификатор сообщения"
+#~ msgid "Contest is not started.\n"
+#~ msgstr "Турнир не начался.\n"
+
+#~ msgid "Duration is not specified.\n"
+#~ msgstr "Продолжительность турнира не указана.\n"
+
+#~ msgid "Invalid duration.\n"
+#~ msgstr "Неверная продолжительность турнира.\n"
+
+#, fuzzy
+#~ msgid "Schedule time is not specified"
+#~ msgstr "Время старта турнира не задано.\n"
+
+#~ msgid "The contest is not started.\n"
+#~ msgstr "Турнир не начался.\n"
 
 #~ msgid "Invalid problem."
 #~ msgstr "Неверный задача."
