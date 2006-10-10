@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-08 21:37+0400\n"
+"POT-Creation-Date: 2006-10-10 14:06+0400\n"
 "PO-Revision-Date: 2006-10-08 21:42+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -830,6 +830,10 @@ msgstr "Ошибка на тесте"
 msgid "Failed to change password"
 msgstr "Невозможно сменить пароль"
 
+#, fuzzy, c-format
+msgid "Failed to fetch run log entry %d.\n"
+msgstr "Ошибка чтения файла с диска.\n"
+
 #, c-format
 msgid "Failed to read file from the disk.\n"
 msgstr "Ошибка чтения файла с диска.\n"
@@ -1264,6 +1268,10 @@ msgstr "Неверный номер теста %d.\n"
 #, c-format
 msgid "Invalid time specification.\n"
 msgstr "Неверная спецификация времени.\n"
+
+#, fuzzy
+msgid "Invalid user_id"
+msgstr "неверный идентификатор пользователя"
 
 #, c-format
 msgid "Invalid variant.\n"
@@ -2506,6 +2514,10 @@ msgstr ""
 "К сожалению, заполненная Вами анкета не может быть принята. Ниже приведён "
 "список замечаний к ней. Пожалуйста, исправьте анкету и пошлите её снова."
 
+#, fuzzy, c-format
+msgid "Unknown error %d.\n"
+msgstr "неизвестная ошибка"
+
 #, c-format
 msgid "Unknown: %d"
 msgstr "Unknown: %d"
@@ -2786,6 +2798,18 @@ msgid ""
 msgstr ""
 "Ваш запрос вызвал внутреннюю ошибку сервера. Пожалуйста, сообщите об этом "
 "как об ошибке."
+
+#, fuzzy
+msgid "`run_id' parameter is undefined.\n"
+msgstr "Параметры роли/члена не определены."
+
+#, c-format
+msgid "`run_id' parameter value %d is out of range.\n"
+msgstr ""
+
+#, fuzzy
+msgid "`run_id' parameter value is invalid.\n"
+msgstr "Номер посылки %d недопустим.\n"
 
 msgid "access denied"
 msgstr "в доступе отказано"

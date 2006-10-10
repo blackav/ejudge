@@ -207,6 +207,7 @@ enum
   NEW_SRV_ACTION_VIEW_TEST_OUTPUT,
   NEW_SRV_ACTION_VIEW_TEST_ERROR,
   NEW_SRV_ACTION_VIEW_TEST_CHECKER,
+  NEW_SRV_ACTION_VIEW_AUDIT_LOG,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -318,5 +319,9 @@ const unsigned char *new_serve_unparse_role(int role);
 void
 new_serve_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
                       int action, int run_id, int test_num);
+
+extern const unsigned char * const new_serve_submit_button_labels[];
+extern const int new_serve_priv_next_state[];
+extern const int new_serve_priv_prev_state[];
 
 #endif /* __NEW_SERVER_H__ */
