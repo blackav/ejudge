@@ -20,6 +20,7 @@
 
 #include "ej_types.h"
 
+#include <stdio.h>
 #include <time.h>
 
 #define NEW_SERVER_PROT_PACKET_MAGIC (0xe352)
@@ -63,6 +64,8 @@ enum
   NEW_SRV_ERR_PROTOCOL_ERROR,
   NEW_SRV_ERR_PARAM_OUT_OF_RANGE,
 
+  NEW_SRV_ERR_INVALID_USER_ID,
+
   NEW_SRV_ERR_LAST,
 };
 
@@ -75,5 +78,6 @@ struct new_server_prot_http_request
 };
 
 const unsigned char *new_server_proto_strerror(int n);
+void new_serve_error(FILE *log_f, int code, ...);
 
 #endif /* __NEW_SERVER_PROTO_H__ */

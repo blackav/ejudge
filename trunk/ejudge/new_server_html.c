@@ -105,6 +105,7 @@
 #include "ej_limits.h"
 
 #include "new-server.h"
+#include "new_server_proto.h"
 #include "pathutl.h"
 #include "xml_utils.h"
 #include "misctext.h"
@@ -713,93 +714,6 @@ new_serve_aref(unsigned char *buf, size_t size,
   return buf;
 }
 
-static const unsigned char * const submit_button_labels[NEW_SRV_ACTION_LAST] =
-{
-  [NEW_SRV_ACTION_UPDATE_STANDINGS_1] = __("Update public standings"),
-  [NEW_SRV_ACTION_RESET_1] = __("Reset the contest!"),
-  [NEW_SRV_ACTION_SUSPEND] = __("Suspend clients"),
-  [NEW_SRV_ACTION_RESUME] = __("Resume clients"),
-  [NEW_SRV_ACTION_TEST_SUSPEND] = __("Suspend testing"),
-  [NEW_SRV_ACTION_TEST_RESUME] = __("Resume testing"),
-  [NEW_SRV_ACTION_PRINT_SUSPEND] = __("Suspend printing"),
-  [NEW_SRV_ACTION_PRINT_RESUME] = __("Resume printing"),
-  [NEW_SRV_ACTION_SET_JUDGING_MODE] = __("Set judging mode"),
-  [NEW_SRV_ACTION_SET_ACCEPTING_MODE] = __("Set accepting mode"),
-  [NEW_SRV_ACTION_GENERATE_PASSWORDS_1] = __("Regenerate contest passwords!"),
-  [NEW_SRV_ACTION_CLEAR_PASSWORDS_1] = __("Clear contest passwords!"),
-  [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1] = __("Regenerate registration passwords!"),
-  [NEW_SRV_ACTION_RELOAD_SERVER] = __("Reload config files"),
-  [NEW_SRV_ACTION_PRIV_SUBMIT_CLAR] = __("Send clarification"),
-  [NEW_SRV_ACTION_CHANGE_PASSWORD] = __("Change password"),
-  [NEW_SRV_ACTION_CHANGE_LANGUAGE] = __("Switch language"),
-  [NEW_SRV_ACTION_RESET_FILTER] = __("Reset filter"),
-  [NEW_SRV_ACTION_CLEAR_RUN] = __("Clear this entry"),
-  [NEW_SRV_ACTION_CHANGE_STATUS] = __("Change"),
-  [NEW_SRV_ACTION_REJUDGE_ALL_1] = __("Rejudge all"),
-  [NEW_SRV_ACTION_REJUDGE_SUSPENDED_1] = __("Judge suspended runs"),
-  [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = __("Rejudge displayed runs"),
-  [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1] = __("Full rejudge displayed runs"),
-  [NEW_SRV_ACTION_SQUEEZE_RUNS] = __("Squeeze runs"),
-  [NEW_SRV_ACTION_RESET_CLAR_FILTER] = __("Reset filter"),
-  [NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS] = __("Remove registrations"),
-  [NEW_SRV_ACTION_USERS_SET_PENDING] = __("Mark PENDING"),
-  [NEW_SRV_ACTION_USERS_SET_OK] = __("Mark OK"),
-  [NEW_SRV_ACTION_USERS_SET_REJECTED] = __("Mark REJECTED"),
-  [NEW_SRV_ACTION_USERS_SET_INVISIBLE] = __("Mark INVISIBLE"),
-  [NEW_SRV_ACTION_USERS_CLEAR_INVISIBLE] = __("Clear INVISIBLE"),
-  [NEW_SRV_ACTION_USERS_SET_BANNED] = __("Mark BANNED"),
-  [NEW_SRV_ACTION_USERS_CLEAR_BANNED] = __("Clear BANNED"),
-  [NEW_SRV_ACTION_USERS_SET_LOCKED] = __("Mark LOCKED"),
-  [NEW_SRV_ACTION_USERS_CLEAR_LOCKED] = __("Clear LOCKED"),
-  [NEW_SRV_ACTION_USERS_ADD_BY_LOGIN] = __("Add by login"),
-  [NEW_SRV_ACTION_USERS_ADD_BY_USER_ID] = __("Add by ID"),
-  [NEW_SRV_ACTION_PRIV_USERS_REMOVE] = __("Remove"),
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER] = __("Add OBSERVER"),
-  [NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER] = __("Del OBSERVER"),
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_EXAMINER] = __("Add EXAMINER"),
-  [NEW_SRV_ACTION_PRIV_USERS_DEL_EXAMINER] = __("Del EXAMINER"),
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_EXAMINER] = __("Add CHIEF EXAMINER"),
-  [NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_EXAMINER] = __("Del CHIEF EXAMINER"),
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR] = __("Add COORDINATOR"),
-  [NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR] = __("Del COORDINATOR"), 
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN] = __("Add by login"),
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID] = __("Add by ID"),
-  [NEW_SRV_ACTION_START_CONTEST] = __("Start"),
-  [NEW_SRV_ACTION_STOP_CONTEST] = __("Stop"),
-  [NEW_SRV_ACTION_CONTINUE_CONTEST] = __("Continue"),
-  [NEW_SRV_ACTION_SCHEDULE] = __("Reschedule"),
-  [NEW_SRV_ACTION_CHANGE_DURATION] = __("Change duration"),
-  [NEW_SRV_ACTION_SUBMIT_RUN] = __("Send!"),
-  [NEW_SRV_ACTION_SUBMIT_CLAR] = __("Send!"),
-  [NEW_SRV_ACTION_CHANGE_RUN_USER_ID] = __("Change"),
-  [NEW_SRV_ACTION_CHANGE_RUN_USER_LOGIN] = __("Change"),
-  [NEW_SRV_ACTION_CHANGE_RUN_PROB_ID] = __("Change"),
-  [NEW_SRV_ACTION_CHANGE_RUN_VARIANT] = __("Change"),
-  [NEW_SRV_ACTION_CHANGE_RUN_IS_IMPORTED] = __("Change"),
-  [NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN] = __("Change"),
-  [NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY] = __("Change"),
-  [NEW_SRV_ACTION_CHANGE_RUN_STATUS] = __("Change"),
-  [NEW_SRV_ACTION_CHANGE_RUN_TEST] = __("Change"),
-  [NEW_SRV_ACTION_CHANGE_RUN_SCORE] = __("Change"),
-  [NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ] = __("Change"),
-  [NEW_SRV_ACTION_CHANGE_RUN_PAGES] = __("Change"),
-  [NEW_SRV_ACTION_COMPARE_RUNS] = __("Compare"),
-  [NEW_SRV_ACTION_UPLOAD_REPORT] = __("Upload!"),
-  [NEW_SRV_ACTION_REJUDGE_PROBLEM_1] = __("Rejudge problem"),
-  [NEW_SRV_ACTION_CLAR_REPLY] = __("Reply to sender"),
-  [NEW_SRV_ACTION_CLAR_REPLY_ALL] = __("Reply to all"),
-  [NEW_SRV_ACTION_CLAR_REPLY_READ_PROBLEM] = __("Read the problem"),
-  [NEW_SRV_ACTION_CLAR_REPLY_NO_COMMENTS] = __("No comments"),
-  [NEW_SRV_ACTION_CLAR_REPLY_YES] = __("Yes"),
-  [NEW_SRV_ACTION_CLAR_REPLY_NO] = __("No"),
-  [NEW_SRV_ACTION_REJUDGE_DISPLAYED_2] = __("Rejudge displayed runs!"),
-  [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_2] = __("Fully rejudge displayed runs!"),
-  [NEW_SRV_ACTION_REJUDGE_PROBLEM_2] = __("Rejudge problem!"),
-  [NEW_SRV_ACTION_REJUDGE_SUSPENDED_2] = __("Judge suspended runs!"),
-  [NEW_SRV_ACTION_REJUDGE_ALL_2] = __("Rejudge all!!!"),
-  [NEW_SRV_ACTION_PRINT_RUN] = __("Print"),
-};
-
 #define BUTTON(a) new_serve_submit_button(bb, sizeof(bb), 0, a, 0)
 
 unsigned char *
@@ -812,7 +726,7 @@ new_serve_submit_button(unsigned char *buf, size_t size,
 
   if (!var_name) var_name = "action";
   if (!label && action > 0 && action < NEW_SRV_ACTION_LAST)
-    label = gettext(submit_button_labels[action]);
+    label = gettext(new_serve_submit_button_labels[action]);
   if (!label) label = "Submit";
   name_ptr = var_name;
   if (action > 0) {
@@ -1527,7 +1441,7 @@ priv_add_user_by_user_id(FILE *fout,
 
   if ((r = ns_cgi_param(phr, "add_user_id", &s)) < 0 || !s
       || sscanf(s, "%d%n", &x, &n) != 1 || s[n] || x <= 0) {
-    fprintf(log_f, "Invalid user Id");
+    new_serve_error(log_f, NEW_SRV_ERR_INVALID_USER_ID);
     goto done;
   }
 
@@ -2637,6 +2551,47 @@ priv_clar_reply(FILE *fout,
 }
 
 static int
+parse_run_id(FILE *fout, struct http_request_info *phr,
+             const struct contest_desc *cnts,
+             struct contest_extra *extra, int *p_run_id, struct run_entry *pe)
+{
+  const serve_state_t cs = extra->serve_state;
+  int n, run_id;
+  const unsigned char *s = 0, *errmsg = 0;
+  unsigned char msgbuf[1024];
+  
+  if (!(n = ns_cgi_param(phr, "run_id", &s))) {
+    errmsg = _("`run_id' parameter is undefined.\n");
+    goto failure;
+  }
+  if (n < 0 || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]) {
+    errmsg = _("`run_id' parameter value is invalid.\n");
+    goto failure;
+  }
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
+    snprintf(msgbuf, sizeof(msgbuf),
+             _("`run_id' parameter value %d is out of range.\n"), run_id);
+    errmsg = msgbuf;
+    goto failure;
+  }
+
+  if (p_run_id) *p_run_id = run_id;
+  if (pe && run_get_entry(cs->runlog_state, run_id, pe) < 0) {
+    snprintf(msgbuf, sizeof(msgbuf),
+             _("Failed to fetch run log entry %d.\n"), run_id);
+    errmsg = msgbuf;
+    goto failure;
+  }
+
+  return 0;
+
+ failure:
+  html_error_status_page(fout, phr, cnts, extra, errmsg,
+                         new_serve_priv_prev_state[phr->action]);
+  return -1;
+}
+
+static int
 priv_change_status(FILE *fout,
                    FILE *log_f,
                    struct http_request_info *phr,
@@ -2649,12 +2604,7 @@ priv_change_status(FILE *fout,
   struct run_entry new_run;
 
   // run_id, status
-  if (ns_cgi_param(phr, "run_id", &s) <= 0
-      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]
-      || run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
-    errmsg = "invalid run_id";
-    goto invalid_param;
-  }
+  if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
   if (ns_cgi_param(phr, "status", &s) <= 0
       || sscanf(s, "%d%n", &status, &n) != 1 || s[n]
       || status < 0 || status > RUN_LAST) {
@@ -2689,6 +2639,7 @@ priv_change_status(FILE *fout,
 
  invalid_param:
   html_err_invalid_param(fout, phr, 0, errmsg);
+ failure:
   return -1;
 }
 
@@ -3005,6 +2956,23 @@ priv_confirmation_page(FILE *fout,
   return -1;
 }
 
+#if 0
+static int
+priv_view_audit_log(FILE *fout,
+                    FILE *log_f,
+                    struct http_request_info *phr,
+                    const struct contest_desc *cnts,
+                    struct contest_extra *extra)
+{
+  int run_id;
+
+  if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
+
+ failure:
+  return -1;
+}
+#endif
+
 static int
 priv_diff_page(FILE *fout,
                FILE *log_f,
@@ -3017,10 +2985,7 @@ priv_diff_page(FILE *fout,
   int run_id1, run_id2, n, total_runs;
 
   total_runs = run_get_total(cs->runlog_state);
-  if (ns_cgi_param(phr, "run_id", &s) <= 0
-      || sscanf(s, "%d%n", &run_id1, &n) != 1 || s[n]
-      || run_id1 < 0 || run_id1 >= total_runs)
-    goto invalid_param;
+  if (parse_run_id(fout, phr, cnts, extra, &run_id1, 0) < 0) goto failure;
   if (!(n = ns_cgi_param(phr, "run_id2", &s)) || (n > 0 && !*s)) {
     fprintf(log_f, _("Run to compare to is not specified.\n"));
     goto done;
@@ -3043,8 +3008,7 @@ priv_diff_page(FILE *fout,
  done:
   return 0;
 
- invalid_param:
-  html_err_invalid_param(fout, phr, 0, 0);
+ failure:
   return -1;
 }
 
@@ -3397,21 +3361,12 @@ priv_view_report(FILE *fout,
                  struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
-  const unsigned char *s;
-  int run_id, n;
+  int run_id;
 
-  if (ns_cgi_param(phr, "run_id", &s) <= 0
-      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]) {
-    html_err_invalid_param(fout, phr, 1, "cannot parse run_id");
-    return -1;
-  }
+  if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_REPORT) < 0) {
     fprintf(log_f, _("Permission denied.\n"));
-    goto done;
-  }
-  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
-    fprintf(log_f, _("Invalid run_id %d.\n"), run_id);
     goto done;
   }
 
@@ -3419,6 +3374,9 @@ priv_view_report(FILE *fout,
 
  done:
   return 0;
+
+ failure:
+  return -1;
 }
 
 static int
@@ -3429,21 +3387,12 @@ priv_view_source(FILE *fout,
                  struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
-  int run_id, n;
-  const unsigned char *s;
+  int run_id;
 
-  if (ns_cgi_param(phr, "run_id", &s) <= 0
-      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]) {
-    html_err_invalid_param(fout, phr, 1, "cannot parse run_id");
-    return -1;
-  }
+  if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
     fprintf(log_f, _("Permission denied.\n"));
-    goto done;
-  }
-  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
-    fprintf(log_f, _("Invalid run_id %d.\n"), run_id);
     goto done;
   }
 
@@ -3451,6 +3400,9 @@ priv_view_source(FILE *fout,
 
  done:
   return 0;
+
+ failure:
+  return -1;
 }
 
 static int
@@ -3471,11 +3423,7 @@ priv_download_source(FILE *fout,
   char *run_text = 0;
   size_t run_size = 0;
 
-  if (ns_cgi_param(phr, "run_id", &s) <= 0
-      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]) {
-    html_err_invalid_param(fout, phr, 1, "cannot parse run_id");
-    return -1;
-  }
+  if (parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0) goto failure;
   if (ns_cgi_param(phr, "no_disp", &s) > 0
       && sscanf(s, "%d%n", &x, &n) == 1 && !s[n]
       && x >= 0 && x <= 1)
@@ -3483,11 +3431,6 @@ priv_download_source(FILE *fout,
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
     fprintf(log_f, _("Permission denied.\n"));
-    goto done;
-  }
-  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
-      || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
-    fprintf(log_f, _("Invalid run_id %d.\n"), run_id);
     goto done;
   }
   if (re.prob_id <= 0 || re.prob_id > cs->max_prob ||
@@ -3543,6 +3486,10 @@ priv_download_source(FILE *fout,
  done:
   xfree(run_text);
   return 0;
+
+ failure:
+  xfree(run_text);
+  return -1;
 }
 
 static int
@@ -3626,11 +3573,7 @@ priv_view_test(FILE *fout,
   const unsigned char *s = 0;
 
   // run_id, test_num
-  if (ns_cgi_param(phr, "run_id", &s) <= 0
-      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]) {
-    html_err_invalid_param(fout, phr, 1, "cannot parse run_id");
-    return -1;
-  }
+  if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
   if (ns_cgi_param(phr, "test_num", &s) <= 0
       || sscanf(s, "%d%n", &test_num, &n) != 1 || s[n]) {
     html_err_invalid_param(fout, phr, 1, "cannot parse test_num");
@@ -3642,10 +3585,6 @@ priv_view_test(FILE *fout,
     goto done;
   }
 
-  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
-    fprintf(log_f, _("Invalid run_id %d.\n"), run_id);
-    goto done;
-  }
   if (test_num <= 0) {
     fprintf(log_f, _("Invalid test %d.\n"), test_num);
     goto done;
@@ -3655,6 +3594,9 @@ priv_view_test(FILE *fout,
 
  done:
   return 0;
+
+ failure:
+  return -1;
 }
 
 void
@@ -3864,59 +3806,6 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_TEST_CHECKER] = priv_view_test,
 };
 
-static int priv_next_state[NEW_SRV_ACTION_LAST] =
-{
-  [NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_SET_PENDING] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_SET_OK] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_SET_REJECTED] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_SET_INVISIBLE] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_CLEAR_INVISIBLE] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_SET_BANNED] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_CLEAR_BANNED] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_SET_LOCKED] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_CLEAR_LOCKED] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_ADD_BY_USER_ID] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_ADD_BY_LOGIN] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_PRIV_USERS_REMOVE] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_EXAMINER] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_DEL_EXAMINER] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_EXAMINER]=NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_EXAMINER]=NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-};
-static int priv_prev_state[NEW_SRV_ACTION_LAST] =
-{
-  [NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_SET_PENDING] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_SET_OK] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_SET_REJECTED] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_SET_INVISIBLE] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_CLEAR_INVISIBLE] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_SET_BANNED] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_CLEAR_BANNED] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_SET_LOCKED] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_CLEAR_LOCKED] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_ADD_BY_USER_ID] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_USERS_ADD_BY_LOGIN] = NEW_SRV_ACTION_VIEW_USERS,
-  [NEW_SRV_ACTION_PRIV_USERS_REMOVE] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_EXAMINER] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_DEL_EXAMINER] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_EXAMINER]=NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_EXAMINER]=NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
-};
-
 static void
 priv_generic_operation(FILE *fout,
                        struct http_request_info *phr,
@@ -3937,8 +3826,8 @@ priv_generic_operation(FILE *fout,
     return;
   }
   rr = r;
-  if (!r) r = priv_next_state[phr->action];
-  if (!rr) rr = priv_prev_state[phr->action];
+  if (!r) r = new_serve_priv_next_state[phr->action];
+  if (!rr) rr = new_serve_priv_prev_state[phr->action];
 
   fclose(log_f);
   if (!log_txt || !*log_txt) {
@@ -3968,7 +3857,7 @@ priv_generic_page(FILE *fout,
     xfree(log_txt);
     return;
   }
-  if (!r) r = priv_prev_state[phr->action];
+  if (!r) r = new_serve_priv_prev_state[phr->action];
 
   fclose(log_f);
   if (log_txt && *log_txt) {

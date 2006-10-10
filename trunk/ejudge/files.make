@@ -146,6 +146,8 @@ COMMON_CFILES=\
  misctext.c\
  new_server_html.c\
  new_server_html_2.c\
+ new_server_proto.c\
+ new_server_tables.c\
  ncurses_utils.c\
  nsdb_plugin_files.c\
  opcaps.c\
