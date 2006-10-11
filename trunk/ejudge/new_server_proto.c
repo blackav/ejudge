@@ -66,6 +66,7 @@ static const unsigned char * const new_serve_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_CONTENT_TYPE_DISABLED] = __("Content type <tt>%s</tt> is disabled for this problem"),
   [NEW_SRV_ERR_RUNLOG_UPDATE_FAILED] = __("Run log update failed"),
   [NEW_SRV_ERR_DISK_WRITE_ERROR] = __("Disk write error (disk full?)"),
+  [NEW_SRV_ERR_USER_ID_NONEXISTANT] = __("User Id %d does not exist"),
 };
 
 void
