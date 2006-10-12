@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-11 23:25+0400\n"
-"PO-Revision-Date: 2006-10-11 23:38+0400\n"
+"POT-Creation-Date: 2006-10-12 15:02+0400\n"
+"PO-Revision-Date: 2006-10-12 15:02+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -418,24 +418,11 @@ msgstr "Не могу добавить нового члена команды"
 msgid "Cannot add a new member"
 msgstr "Невозможно добавить нового члена команды"
 
-#, c-format
-msgid "Cannot add the record to the database.\n"
-msgstr "Ошибка добавления записи в базу данных.\n"
-
-#, c-format
-msgid "Cannot allocate disk space.\n"
-msgstr "Ошибка выделения места на диске.\n"
-
-#, c-format
-msgid "Cannot calculate the file checksum.\n"
-msgstr "Ошибка подсчёта контрольной суммы файла.\n"
+msgid "Cannot calculate the file checksum"
+msgstr "Ошибка подсчёта контрольной суммы файла"
 
 msgid "Cannot guess the content type"
 msgstr "Невозможно определить тип содержимого"
-
-#, c-format
-msgid "Cannot guess the content type.\n"
-msgstr "Невозможно определить тип содержимого.\n"
 
 msgid "Cannot parse role/person."
 msgstr "Не могу считать роль/члена команды."
@@ -446,50 +433,14 @@ msgstr "Невозможно считать уникальный номер."
 msgid "Cannot participate"
 msgstr "Участие в турнире невозможно"
 
-#, c-format
-msgid "Cannot put the run to the compilation queue.\n"
-msgstr "Ошибка добавления посылки в очередь компиляции данных.\n"
-
-#, c-format
-msgid "Cannot put the run to the run queue.\n"
-msgstr "Ошибка добавления посылки в очередь тестирования.\n"
-
 msgid "Cannot read message text!"
 msgstr "Ошибка чтения файла сообщения!"
-
-#, c-format
-msgid "Cannot read the clarification text.\n"
-msgstr "Ошибка чтения сообщения с диска.\n"
-
-#, c-format
-msgid "Cannot read the report file from disk.\n"
-msgstr "Ошибка чтения файла отчета.\n"
-
-#, c-format
-msgid "Cannot read the report text.\n"
-msgstr "Ошибка чтения файла отчета.\n"
-
-#, c-format
-msgid "Cannot read the source.\n"
-msgstr "Ошибка чтения файла.\n"
 
 msgid "Cannot remove a member due a reason given below"
 msgstr "Невозможно удалить члена команды по причинам, перечисленным ниже"
 
 msgid "Cannot remove team member"
 msgstr "Невозможно удалить участника"
-
-#, c-format
-msgid "Cannot update the clarification database.\n"
-msgstr "Ошибка обновления базы сообщений.\n"
-
-#, c-format
-msgid "Cannot write the message to the disk.\n"
-msgstr "Ошибка записи сообщения на диск.\n"
-
-#, c-format
-msgid "Cannot write to the disk.\n"
-msgstr "Ошибка записи на диск.\n"
 
 msgid "Change"
 msgstr "Изменить"
@@ -550,12 +501,11 @@ msgstr "Обновление журнала посылок не удалось"
 msgid "Clarification"
 msgstr "Сообщение"
 
+msgid "Clarification requests are disabled"
+msgstr "Сообщения отключены"
+
 msgid "Clarifications"
 msgstr "Сообщения жюри"
-
-#, c-format
-msgid "Clarifications are disabled.\n"
-msgstr "Сообщения отключены.\n"
 
 msgid "Clear BANNED"
 msgstr "Сбросить флаг BANNED"
@@ -587,13 +537,12 @@ msgstr "Очистить эту запись"
 msgid "Client time"
 msgstr "Время клиента"
 
-#, c-format
 msgid ""
-"Client's requests are suspended.\n"
-"Please wait until the contest administrator resumes the contest."
+"Client's requests are suspended. Please wait until the contest administrator "
+"resumes the contest"
 msgstr ""
-"Запросы участников временно не обрабатываются.\n"
-"Пожалуйста, подождите, пока турнир не будет продолжен."
+"Запросы участников временно не обрабатываются. Пожалуйста, подождите, пока "
+"турнир не будет продолжен"
 
 msgid "Coach"
 msgstr "Тренер"
@@ -724,9 +673,8 @@ msgstr "Текущее положение участников"
 msgid "Current virtual standings"
 msgstr "Виртуальное положение участников"
 
-#, c-format
-msgid "Deadline for this problem is expired.\n"
-msgstr "Срок сдачи данной задачи истёк.\n"
+msgid "Deadline for this problem is expired"
+msgstr "Срок сдачи данной задачи истёк"
 
 msgid "Default language"
 msgstr "Язык по умолчанию"
@@ -851,12 +799,8 @@ msgid "Failed to change password"
 msgstr "Невозможно сменить пароль"
 
 #, c-format
-msgid "Failed to fetch run log entry %d.\n"
-msgstr "Ошибка чтения записи о посылке %d с диска.\n"
-
-#, c-format
-msgid "Failed to read file from the disk.\n"
-msgstr "Ошибка чтения файла с диска.\n"
+msgid "Failed to fetch run log entry %d"
+msgstr "Ошибка чтения записи о посылке %d с диска"
 
 msgid "Failed to read information from the server"
 msgstr "Невозможно считать информацию с сервера"
@@ -1153,14 +1097,6 @@ msgstr "Информация по Вашему запросу отсутствует"
 msgid "Information is not available"
 msgstr "Информация отсутствует"
 
-#, c-format
-msgid "Information is not available."
-msgstr "Информация недоступна"
-
-#, c-format
-msgid "Information is not available.\n"
-msgstr "Информация недоступна.\n"
-
 msgid "Institution"
 msgstr "Учебное заведение"
 
@@ -1184,14 +1120,6 @@ msgstr "Внутренняя ошибка: недостаточно памяти."
 
 msgid "Invalid clar_id"
 msgstr "Неверный идентификатор сообщения"
-
-#, c-format
-msgid "Invalid clar_id %d.\n"
-msgstr "Неверный идентификатор сообщения %d.\n"
-
-#, c-format
-msgid "Invalid clar_id.\n"
-msgstr "Неверный идентификатор сообщения.\n"
 
 msgid "Invalid configuration"
 msgstr "Неверная конфигурация"
@@ -1217,10 +1145,6 @@ msgstr "Неверный идентификатор языка программирования"
 msgid "Invalid language specification"
 msgstr "Неверная спецификация языка программирования"
 
-#, c-format
-msgid "Invalid language.\n"
-msgstr "Неверный идентификатор языка программирования.\n"
-
 msgid "Invalid locale_id"
 msgstr "Неверный идентификатор языка"
 
@@ -1242,10 +1166,6 @@ msgstr "Неверная задача"
 msgid "Invalid problem specification"
 msgstr "Неверная спецификация задачи"
 
-#, c-format
-msgid "Invalid problem.\n"
-msgstr "Неверная задача.\n"
-
 msgid "Invalid role parameter."
 msgstr "Неверная роль."
 
@@ -1254,18 +1174,6 @@ msgstr "Неверный номер посылки для сравнения"
 
 msgid "Invalid run_id"
 msgstr "Неверный номер посылки"
-
-#, c-format
-msgid "Invalid run_id %d.\n"
-msgstr "Неверный номер посылки %d.\n"
-
-#, c-format
-msgid "Invalid run_id."
-msgstr "Неверный номер посылки"
-
-#, c-format
-msgid "Invalid run_id.\n"
-msgstr "Неверный номер посылки.\n"
 
 msgid "Invalid serial number."
 msgstr "Неверный уникальный номер."
@@ -1284,10 +1192,6 @@ msgstr "Недопустимый статус"
 msgid "Invalid test"
 msgstr "Неверный тест"
 
-#, c-format
-msgid "Invalid test number %d.\n"
-msgstr "Неверный номер теста %d.\n"
-
 msgid "Invalid time specification"
 msgstr "Неверная спецификация времени"
 
@@ -1300,9 +1204,8 @@ msgstr "Неверный идентификатор пользователя"
 msgid "Invalid user_login"
 msgstr "Неверное регистрационное имя пользователя"
 
-#, c-format
-msgid "Invalid variant.\n"
-msgstr "Неверный вариант.\n"
+msgid "Invalid variant"
+msgstr "Неверный вариант"
 
 msgid "Invisible?"
 msgstr "Невидимый?"
@@ -1451,16 +1354,8 @@ msgid "Message is empty"
 msgstr "Сообщение пусто"
 
 #, c-format
-msgid "Message is empty.\n"
-msgstr "Сообщение пусто.\n"
-
-#, c-format
 msgid "Message length is too big (%zu)"
 msgstr "Текст сообщения имеет слишком большую длину (%zu)"
-
-#, c-format
-msgid "Message length is too big (%zu).\n"
-msgstr "Текст сообщения имеет слишком большую длину (%zu).\n"
 
 msgid "Message view"
 msgstr "Список сообщений"
@@ -1513,16 +1408,8 @@ msgstr "Новый пароль содержит недопустимые символы"
 msgid "New password is too long"
 msgstr "Новый пароль имеет слишком большую длину"
 
-#, c-format
-msgid "New password is too long.\n"
-msgstr "Новый пароль имеет слишком большую длину.\n"
-
 msgid "New passwords do not match"
 msgstr "Новые пароли не совпадают друг с другом"
-
-#, c-format
-msgid "New passwords do not match.\n"
-msgstr "Новые пароли не совпадают друг с другом.\n"
 
 msgid "New result"
 msgstr "Новый вердикт"
@@ -1536,9 +1423,8 @@ msgstr "Дальше"
 msgid "No"
 msgstr "Нет"
 
-#, c-format
-msgid "No assigned variant.\n"
-msgstr "Нет назначенного варианта.\n"
+msgid "No assigned variant"
+msgstr "Нет назначенного варианта"
 
 msgid "No comments"
 msgstr "Без комментариев"
@@ -1573,9 +1459,8 @@ msgstr "Число попыток"
 msgid "No. of warns"
 msgstr "Число предупреждений"
 
-#, c-format
-msgid "Not all pre-required problems are solved.\n"
-msgstr "Решены не все требуемые задачи.\n"
+msgid "Not all pre-required problems are solved"
+msgstr "Решены не все требуемые задачи"
 
 msgid "Not registered"
 msgstr "Не зарегистрированы"
@@ -1624,10 +1509,6 @@ msgid "Old password is too long"
 msgstr "Старый пароль имеет слишком большую длину"
 
 #, c-format
-msgid "Old password is too long.\n"
-msgstr "Старый пароль имеет слишком большую длину.\n"
-
-#, c-format
 msgid "Only %d members \"%s\" are specified instead of minimum %d."
 msgstr "Только %d участников \"%s\" указаны вместо минимальных %d."
 
@@ -1649,9 +1530,8 @@ msgstr "IP-адрес отправителя"
 msgid "Other"
 msgstr "Прочее"
 
-#, c-format
-msgid "Output error.\n"
-msgstr "Ошибка вывода.\n"
+msgid "Output error"
+msgstr "Ошибка вывода"
 
 msgid "Page"
 msgstr "Страница"
@@ -1688,6 +1568,10 @@ msgstr "Пароль успешно изменён."
 
 msgid "Password changing failed due to the following reasons."
 msgstr "Изменение пароля не удалось по следующим причинам."
+
+#, c-format
+msgid "Password update failed: %s"
+msgstr "Изменение пароля не удалось: %s"
 
 msgid "Penalty"
 msgstr "Штраф"
@@ -1738,10 +1622,6 @@ msgstr ""
 "(*), обязательны к заполнению. Когда анкета готова, нажмите кнопку "
 "\"Зарегистрироваться\"."
 
-#, c-format
-msgid "Possibility to write clarification requests in disabled.\n"
-msgstr "Возможность посылать сообщения отключена.\n"
-
 msgid "Presentation error"
 msgstr "Неправильный формат вывода"
 
@@ -1772,16 +1652,15 @@ msgid "Print sources"
 msgstr "Распечатать исходный текст"
 
 #, c-format
-msgid "Printing error: %d: %s.\n"
-msgstr "Ошибка печати: %d: %s.\n"
+msgid "Printing error: %d: %s"
+msgstr "Ошибка печати: %d: %s"
+
+msgid "Printing is disabled"
+msgstr "Печать отключена"
 
 #, c-format
-msgid "Printing is disabled.\n"
-msgstr "Печать отключена.\n"
-
-#, c-format
-msgid "Printing quota (%d pages) is exceeded.\n"
-msgstr "Превышена квота печати (%d страниц).\n"
+msgid "Printing quota (%d pages) is exceeded"
+msgstr "Превышена квота печати (%d страниц)"
 
 msgid "Privileged users page"
 msgstr "Список привилегированных пользователей"
@@ -1830,10 +1709,6 @@ msgstr "Re"
 
 msgid "Re: Your question"
 msgstr "Re: Ваш вопрос"
-
-#, c-format
-msgid "Read error while reading %s."
-msgstr "Ошибка при чтении %s с диска."
 
 msgid "Read the problem"
 msgstr "Читайте условие задачи"
@@ -1979,23 +1854,20 @@ msgstr "Отослать всем"
 msgid "Reply to sender"
 msgstr "Отослать отправителю"
 
-#, c-format
-msgid "Report file does not exist."
-msgstr "Запрошенный файл не существует."
-
-#, c-format
-msgid "Report file does not exist.\n"
-msgstr "Файл отчета не существует.\n"
+msgid "Report file does not exist"
+msgstr "Запрошенный файл не существует"
 
 msgid "Report for run"
 msgstr "Отчет по посылке"
 
-#, c-format
-msgid "Report is not available."
-msgstr "Протокол недоступен."
+msgid "Report is not available"
+msgstr "Протокол недоступен"
 
 msgid "Report view"
 msgstr "Просмотр протокола"
+
+msgid "Report viewing is disabled"
+msgstr "Просмотр протоколов отключён"
 
 msgid "Reschedule"
 msgstr "Назначить время"
@@ -2047,10 +1919,6 @@ msgstr "Посылка для сравнения не указана"
 
 msgid "Run-time error"
 msgstr "Ошибка выполнения"
-
-#, c-format
-msgid "Run_id %d is invalid.\n"
-msgstr "Номер посылки %d недопустим.\n"
 
 msgid "Running..."
 msgstr "Выполняется..."
@@ -2235,10 +2103,6 @@ msgstr "Решённые<br>задачи"
 msgid "Source file does not exist"
 msgstr "Запрошенный файл не существует"
 
-#, c-format
-msgid "Source file does not exist.\n"
-msgstr "Запрошенный файл не существует.\n"
-
 msgid "Source for this run is not available"
 msgstr "Текст для этой посылки недоступен"
 
@@ -2288,10 +2152,6 @@ msgstr "Тема сообщения не задана"
 msgid "Subject length is too big (%zu)"
 msgstr "Поле \"Тема\" имеет слишком большую длину (%zu)"
 
-#, c-format
-msgid "Subject length is too big (%zu).\n"
-msgstr "Поле \"Тема\" имеет слишком большую длину (%zu).\n"
-
 msgid "Submission data is empty"
 msgstr "Посылка пуста"
 
@@ -2313,9 +2173,8 @@ msgstr "Сдать решение задачи"
 msgid "Submit solution"
 msgstr "Сдача решений"
 
-#, c-format
-msgid "Submit source viewing is disabled.\n"
-msgstr "Просмотр текстов программ отключён.\n"
+msgid "Submit source viewing is disabled"
+msgstr "Просмотр текстов программ отключён"
 
 msgid "Success"
 msgstr "Успешных"
@@ -2347,6 +2206,12 @@ msgstr "Обработка запросов участников приостановлена"
 msgid "Team standings"
 msgstr "Положение участников"
 
+msgid "Test file does not exist"
+msgstr "Запрошенный файл не существует"
+
+msgid "Test file is not available"
+msgstr "Тест недоступен"
+
 msgid "Test input"
 msgstr "Входные данные"
 
@@ -2359,20 +2224,8 @@ msgstr "Проверка решений участников приостановлена"
 msgid "Tests passed"
 msgstr "Пройдено тестов"
 
-#, c-format
-msgid "The content type %s is disabled for this problem.\n"
-msgstr "Тип посылки %s запрещен для этой задачи.\n"
-
-#, c-format
-msgid "The content type %s is not available for this problem.\n"
-msgstr "Тип посылки %s недоступен для этой задачи.\n"
-
 msgid "The contest is closed."
 msgstr "Турнир закрыт."
-
-#, c-format
-msgid "The contest is finished.\n"
-msgstr "Турнир завершен.\n"
 
 msgid "The contest is in progress"
 msgstr "Турнир идёт"
@@ -2406,14 +2259,6 @@ msgstr "Анкета заполнена неправильно"
 msgid "The language %s is disabled for this problem"
 msgstr "Язык %s запрещён для этой задачи"
 
-#, c-format
-msgid "The language %s is disabled for this problem.\n"
-msgstr "Язык %s запрещён для этой задачи.\n"
-
-#, c-format
-msgid "The language %s is not available for this problem.\n"
-msgstr "Язык %s не доступен для этой задачи.\n"
-
 msgid "The last command completion status"
 msgstr "Статус выполнения последнего запроса"
 
@@ -2428,10 +2273,6 @@ msgstr "Сообщение не может быть послано. Турнир закончился."
 
 msgid "The problem statement is not available"
 msgstr "Условие задачи недоступно"
-
-#, c-format
-msgid "The report file parsing failed.\n"
-msgstr "Ошибка разбора файла отчёта.\n"
 
 msgid "The server is down. Try again later."
 msgstr "Сервер не работает. Пожалуйста, повторите операцию позднее."
@@ -2469,13 +2310,11 @@ msgstr "Этот язык не может быть использован для этой задачи"
 msgid "This language is not available for this problem"
 msgstr "Язык не доступен для этой задачи"
 
-#, c-format
-msgid "This problem is already solved.\n"
-msgstr "Эта задача уже решена.\n"
+msgid "This problem is already solved"
+msgstr "Эта задача уже решена"
 
-#, c-format
-msgid "This problem is not yet available.\n"
-msgstr "Эта задача еще не доступна.\n"
+msgid "This problem is not yet available"
+msgstr "Эта задача еще не доступна"
 
 msgid ""
 "This program is configured incorrectly and cannot perform normal operation. "
@@ -2484,13 +2323,12 @@ msgstr ""
 "Эта программа сконфигурирована неверно и не может работать. Пожалуйста, "
 "обратитесь к администратору сайта или турнира."
 
-#, c-format
-msgid "This submit is already printed.\n"
-msgstr "Эта программа уже напечатана.\n"
+msgid "This submit is already printed"
+msgstr "Эта программа уже напечатана"
 
 #, c-format
-msgid "This submit is duplicate of the run %d.\n"
-msgstr "Эта посылка является копией посылки %d.\n"
+msgid "This submit is duplicate of the run %d"
+msgstr "Эта посылка является копией посылки %d"
 
 msgid "Time"
 msgstr "Время"
@@ -2545,10 +2383,6 @@ msgstr "Введите Ваш действующий адрес электронной почты"
 
 msgid "Unanswered clars"
 msgstr "Неотвеченные сообщения"
-
-#, c-format
-msgid "Uncompression failed.\n"
-msgstr "Ошибка разжатия данных.\n"
 
 msgid ""
 "Unfortunately, your form cannot be accepted, since it contains several "
@@ -2621,27 +2455,23 @@ msgstr "Вход пользователя [%s]"
 msgid "User name"
 msgstr "Имя участника"
 
-#, c-format
 msgid ""
-"User quota exceeded.\n"
-"This clarification request is too large, you already have too many "
-"clarification requests,\n"
-"or the total size of your clarification requests is too big."
+"User quota exceeded. This clarification request is too large, you already "
+"have too many clarification requests, or the total size of your "
+"clarification requests is too big"
 msgstr ""
-"Превышена квота пользователя на сообщения.\n"
-"Данное сообщение слишком велико, или Вы уже послали слишком много "
-"сообщений,\n"
-"или суммарный размер всех Ваших сообщений слишком велик."
+"Превышена квота пользователя на сообщения. Данное сообщение слишком велико, "
+"или Вы уже послали слишком много сообщений, или суммарный размер всех Ваших "
+"сообщений слишком велик"
 
-#, c-format
 msgid ""
-"User quota exceeded.\n"
-"This submit is too large, you already have too many submits,\n"
-"or the total size of your submits is too big."
+"User quota exceeded. This submit is too large, you already have too many "
+"submits,\n"
+"or the total size of your submits is too big"
 msgstr ""
-"Превышена квота пользователя.\n"
-"Данная посылка имеет слишком большой размер, Вами сделано\n"
-"слишком много посылок, или суммарный размер Ваших посылок слишком велик."
+"Превышена квота пользователя. Данная посылка имеет слишком большой размер, "
+"Вами сделано слишком много посылок, или суммарный размер Ваших посылок "
+"слишком велик"
 
 msgid "User registration is complete"
 msgstr "Регистрация пользователя завершена"
@@ -2693,10 +2523,6 @@ msgstr "Просмотр посылки"
 
 msgid "Viewing report"
 msgstr "Просмотр протокола"
-
-#, c-format
-msgid "Viewing report is disabled for this run.\n"
-msgstr "Просмотр отчётов отключён.\n"
 
 msgid "Viewing run"
 msgstr "Просмотр посылки"
@@ -2789,27 +2615,11 @@ msgstr ""
 "Вы не можете участвовать в данном турнире. Ваша регистрация не подтверждена, "
 "либо Ваше участие заблокировано администратором."
 
-#, c-format
-msgid "You cannot view report for this run.\n"
-msgstr "Вы не можете посмотреть отчет по данной посылке.\n"
-
-#, c-format
-msgid "You cannot view source for this run.\n"
-msgstr "Вы не можете посмотреть исходный текст данной посылки.\n"
-
-#, c-format
-msgid "You cannot view this clarification.\n"
-msgstr "Вы не можете посмотреть это сообщение.\n"
-
 msgid "You do not have permissions to use this service"
 msgstr "У Вас нет прав использовать данный сервис"
 
 msgid "You do not have permissions to use this service."
 msgstr "У Вас нет прав использовать данный сервис."
-
-#, c-format
-msgid "You don't have permissions to print this run.\n"
-msgstr "У Вас нет прав печатать эту посылку.\n"
 
 msgid "You have already registered for this contest."
 msgstr "Вы уже зарегистрировались на этот турнир."
@@ -2838,15 +2648,15 @@ msgstr ""
 "Ваш запрос вызвал внутреннюю ошибку сервера. Пожалуйста, сообщите об этом "
 "как об ошибке."
 
-msgid "`run_id' parameter is undefined.\n"
-msgstr "Параметры `run_id' не определён.\n"
+msgid "`run_id' parameter is undefined"
+msgstr "Параметр `run_id' не определён"
 
 #, c-format
-msgid "`run_id' parameter value %d is out of range.\n"
-msgstr "Значение параметра `run_id' %d за пределами допустимых.\n"
+msgid "`run_id' parameter value %d is out of range"
+msgstr "Значение параметра `run_id' %d за пределами допустимых"
 
-msgid "`run_id' parameter value is invalid.\n"
-msgstr "Номер посылки %d недопустим.\n"
+msgid "`run_id' parameter value is invalid."
+msgstr "Номер посылки %d недопустим"
 
 msgid "access denied"
 msgstr "в доступе отказано"
