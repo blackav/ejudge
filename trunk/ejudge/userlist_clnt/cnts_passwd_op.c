@@ -18,8 +18,9 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_clear_team_passwords(struct userlist_clnt *clnt,
-                                   int contest_id)
+userlist_clnt_cnts_passwd_op(struct userlist_clnt *clnt,
+                             int cmd,
+                             int contest_id)
 {
   struct userlist_pk_map_contest *out = 0;
   struct userlist_packet *in = 0;
@@ -29,7 +30,7 @@ userlist_clnt_clear_team_passwords(struct userlist_clnt *clnt,
   out_size = sizeof(*out);
   out = alloca(out_size);
   memset(out, 0, out_size);
-  out->request_id = ULS_CLEAR_TEAM_PASSWORDS;
+  out->request_id = cmd;
   out->contest_id = contest_id;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
   if ((r = userlist_clnt_read_and_notify(clnt, &in_size, (void*) &in)) < 0)
