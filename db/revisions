@@ -1286,3 +1286,9 @@ new_server_proto.c 3503 0 377720
 new_server_proto.h 3504 0 274108
 new_server_html.c 3504 0 18247130
 new_server_proto.c 3504 0 429165
+new-server.h 3506 0 817271
+new_server_proto.h 3506 0 363923
+new_server_html.c 3506 0 18206707
+new_server_html_2.c 3506 0 4919461
+new_server_proto.c 3506 0 720842
+new_server_tables.c 3506 0 749980
