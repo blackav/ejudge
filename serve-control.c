@@ -334,7 +334,7 @@ make_self_url(void)
   unsigned char fullname[1024];
   unsigned char *protocol = "http";
 
-  if (getenv("SSL_PROTOCOL")) {
+  if (getenv("SSL_PROTOCOL") || getenv("HTTPS")) {
     ssl_flag = 1;
     protocol = "https";
   }

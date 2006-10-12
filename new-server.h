@@ -319,6 +319,9 @@ const unsigned char *new_serve_unparse_role(int role);
 void
 new_serve_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
                       int action, int run_id, int test_num);
+int
+new_serve_write_audit_log(const serve_state_t state, FILE *f, int run_id);
+
 
 extern const unsigned char * const new_serve_submit_button_labels[];
 extern const int new_serve_priv_next_state[];
