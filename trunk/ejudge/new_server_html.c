@@ -158,7 +158,7 @@
 #define __(x) x
 
 #define ARMOR(s)  html_armor_buf(&ab, s)
-#define FAIL(c) do { retval = (c); goto done; } while (0)
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 
 enum
 {
@@ -1438,18 +1438,16 @@ priv_add_user_by_user_id(FILE *fout,
 {
   const unsigned char *s;
   int x, n, r;
-  int retcode = 0;
+  int retval = 0;
 
   if ((r = ns_cgi_param(phr, "add_user_id", &s)) < 0 || !s
-      || sscanf(s, "%d%n", &x, &n) != 1 || s[n] || x <= 0) {
-    new_serve_error(log_f, NEW_SRV_ERR_INV_USER_ID);
-    goto done;
-  }
+      || sscanf(s, "%d%n", &x, &n) != 1 || s[n] || x <= 0)
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
 
   if (open_ul_connection(phr->fw_state) < 0) {
     html_err_userlist_server_down(fout, phr, 1);
-    retcode = -1;
-    goto done;
+    retval = -1;
+    goto cleanup;
   }
   
   r = userlist_clnt_register_contest(ul_conn, ULS_PRIV_REGISTER_CONTEST,
@@ -1457,11 +1455,11 @@ priv_add_user_by_user_id(FILE *fout,
   if (r < 0) {
     new_serve_error(log_f, NEW_SRV_ERR_REGISTRATION_FAILED,
                     userlist_strerror(-r));
-    goto done;
+    goto cleanup;
   }
 
- done:
-  return retcode;
+ cleanup:
+  return retval;
 }
 
 static int
@@ -1474,31 +1472,31 @@ priv_add_user_by_login(FILE *fout,
   const unsigned char *s;
   int r, user_id;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  int retcode = 0;
+  int retval = 0;
 
   if ((r = ns_cgi_param(phr, "add_login", &s)) < 0 || !s) {
     new_serve_error(log_f, NEW_SRV_ERR_INV_USER_LOGIN);
-    goto done;
+    goto cleanup;
   }
   if (open_ul_connection(phr->fw_state) < 0) {
     html_err_userlist_server_down(fout, phr, 1);
-    retcode = -1;
-    goto done;
+    retval = -1;
+    goto cleanup;
   }
   if ((r = userlist_clnt_lookup_user(ul_conn, s, &user_id, 0)) < 0) {
     new_serve_error(log_f, NEW_SRV_ERR_USER_LOGIN_NONEXISTANT, ARMOR(s));
-    goto done;
+    goto cleanup;
   }
   if ((r = userlist_clnt_register_contest(ul_conn, ULS_PRIV_REGISTER_CONTEST,
                                           user_id, phr->contest_id)) < 0) {
     new_serve_error(log_f, NEW_SRV_ERR_REGISTRATION_FAILED,
                     userlist_strerror(-r));
-    goto done;
+    goto cleanup;
   }
 
- done:
+ cleanup:
   html_armor_free(&ab);
-  return retcode;
+  return retval;
 }
 
 static int
@@ -1512,7 +1510,7 @@ priv_priv_user_operation(FILE *fout,
   intarray_t uset;
   const unsigned char *s;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  int retcode = 0;
+  int retval = 0;
 
   // extract the selected set of users
   memset(&uset, 0, sizeof(uset));
@@ -1522,8 +1520,8 @@ priv_priv_user_operation(FILE *fout,
         || s[n] || x <= 0) {
       html_err_invalid_param(fout, phr, 1, "invalid parameter name %s",
                              ARMOR(phr->param_names[i]));
-      retcode = -1;
-      goto done;
+      retval = -1;
+      goto cleanup;
     }
     XEXPAND2(uset);
     uset.v[uset.u++] = x;
@@ -1581,15 +1579,15 @@ priv_priv_user_operation(FILE *fout,
 
     default:
       html_err_invalid_param(fout, phr, 1, "invalid action %d", phr->action);
-      retcode = -1;
-      goto done;
+      retval = -1;
+      goto cleanup;
     }
   }
 
- done:
+ cleanup:
   xfree(uset.v);
   html_armor_free(&ab);
-  return retcode;
+  return retval;
 }
 
 static int
@@ -1605,22 +1603,22 @@ priv_add_priv_user_by_user_id(FILE *fout,
   if ((r = ns_cgi_param(phr, "add_user_id", &s)) < 0 || !s
       || sscanf(s, "%d%n", &user_id, &n) != 1 || s[n] || user_id <= 0) {
     new_serve_error(log_f, NEW_SRV_ERR_INV_USER_ID);
-    goto done;
+    goto cleanup;
   }
   if ((r = ns_cgi_param(phr, "add_role_2", &s)) < 0 || !s
       || sscanf(s, "%d%n", &add_role, &n) != 1 || s[n]
       || add_role < USER_ROLE_OBSERVER || add_role > USER_ROLE_COORDINATOR) {
     new_serve_error(log_f, NEW_SRV_ERR_INV_USER_ROLE);
-    goto done;
+    goto cleanup;
   }
 
   if (nsdb_add_role(user_id, phr->contest_id, add_role) < 0) {
     new_serve_error(log_f, NEW_SRV_ERR_PRIV_USER_ROLE_ADD_FAILED,
                     add_role, user_id, phr->contest_id);
-    goto done;
+    goto cleanup;
   }
 
- done:
+ cleanup:
   return 0;
 }
 
@@ -1634,36 +1632,36 @@ priv_add_priv_user_by_login(FILE *fout,
   const unsigned char *s, *login;
   int r, user_id, add_role, n;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  int retcode = 0;
+  int retval = 0;
 
   if ((r = ns_cgi_param(phr, "add_login", &login)) < 0 || !s) {
     new_serve_error(log_f, NEW_SRV_ERR_INV_USER_LOGIN);
-    goto done;
+    goto cleanup;
   }
   if ((r = ns_cgi_param(phr, "add_role_1", &s)) < 0 || !s
       || sscanf(s, "%d%n", &add_role, &n) != 1 || s[n]
       || add_role < USER_ROLE_OBSERVER || add_role > USER_ROLE_COORDINATOR) {
     new_serve_error(log_f, NEW_SRV_ERR_INV_USER_ROLE);
-    goto done;
+    goto cleanup;
   }
   if (open_ul_connection(phr->fw_state) < 0) {
     html_err_userlist_server_down(fout, phr, 1);
-    retcode = -1;
-    goto done;
+    retval = -1;
+    goto cleanup;
   }
   if ((r = userlist_clnt_lookup_user(ul_conn, login, &user_id, 0)) < 0) {
     new_serve_error(log_f, NEW_SRV_ERR_USER_LOGIN_NONEXISTANT, ARMOR(s));
-    goto done;
+    goto cleanup;
   }
   if (nsdb_add_role(user_id, phr->contest_id, add_role) < 0) {
     new_serve_error(log_f, NEW_SRV_ERR_PRIV_USER_ROLE_ADD_FAILED,
                     add_role, user_id, phr->contest_id);
-    goto done;
+    goto cleanup;
   }
 
- done:
+ cleanup:
   html_armor_free(&ab);
-  return retcode;
+  return retval;
 }
 
 static void
@@ -1788,7 +1786,7 @@ priv_contest_operation(FILE *fout,
   if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
       || opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) {
     new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto done;
+    goto cleanup;
   }
 
   run_get_times(cs->runlog_state, &start_time, 0, &duration, &stop_time, 0);
@@ -1797,11 +1795,11 @@ priv_contest_operation(FILE *fout,
   case NEW_SRV_ACTION_START_CONTEST:
     if (stop_time > 0) {
       new_serve_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
-      goto done;
+      goto cleanup;
     }
     if (start_time > 0) {
       new_serve_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_STARTED);
-      goto done;
+      goto cleanup;
     }
     run_start_contest(cs->runlog_state, cs->current_time);
     serve_update_status_file(cs, 1);
@@ -1811,11 +1809,11 @@ priv_contest_operation(FILE *fout,
   case NEW_SRV_ACTION_STOP_CONTEST:
     if (stop_time > 0) {
       new_serve_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
-      goto done;
+      goto cleanup;
     }
     if (start_time <= 0) {
       new_serve_error(log_f, NEW_SRV_ERR_CONTEST_NOT_STARTED);
-      goto done;
+      goto cleanup;
     }
     run_stop_contest(cs->runlog_state, cs->current_time);
     serve_update_status_file(cs, 1);
@@ -1824,19 +1822,19 @@ priv_contest_operation(FILE *fout,
   case NEW_SRV_ACTION_CONTINUE_CONTEST:
     if (!global->enable_continue) {
       new_serve_error(log_f, NEW_SRV_ERR_CANNOT_CONTINUE_CONTEST);
-      goto done;
+      goto cleanup;
     }
     if (start_time <= 0) {
       new_serve_error(log_f, NEW_SRV_ERR_CONTEST_NOT_STARTED);
-      goto done;
+      goto cleanup;
     }
     if (stop_time <= 0) {
       new_serve_error(log_f, NEW_SRV_ERR_CONTEST_NOT_FINISHED);
-      goto done;
+      goto cleanup;
     }
     if (duration > 0 && cs->current_time >= start_time + duration) {
       new_serve_error(log_f, NEW_SRV_ERR_INSUFFICIENT_DURATION);
-      goto done;
+      goto cleanup;
     }
     run_stop_contest(cs->runlog_state, 0);
     serve_update_status_file(cs, 1);
@@ -1900,7 +1898,7 @@ priv_contest_operation(FILE *fout,
     break;
   }
 
- done:
+ cleanup:
   return 0;
 }
 
@@ -1978,7 +1976,7 @@ priv_submit_run(FILE *fout,
   unsigned char *ans_map = 0, *ans_buf = 0;
   char **lang_list = 0;
   const unsigned char *mime_type_str = 0;
-  int run_id, arch_flags;
+  int run_id, arch_flags, retval = 0;
   ruint32_t shaval[5];
   struct timeval precise_time;
   path_t run_path;
@@ -2105,7 +2103,7 @@ priv_submit_run(FILE *fout,
   if (lang_id > 0) {
     if (lang->disabled) {
       new_serve_error(log_f, NEW_SRV_ERR_LANG_DISABLED);
-      goto done;
+      goto cleanup;
     }
 
     if (prob->enable_language) {
@@ -2115,7 +2113,7 @@ priv_submit_run(FILE *fout,
           break;
       if (!lang_list[i]) {
         new_serve_error(log_f, NEW_SRV_ERR_LANG_NOT_AVAIL_FOR_PROBLEM);
-        goto done;
+        goto cleanup;
       }
     } else if (prob->disable_language) {
       lang_list = prob->disable_language;
@@ -2124,7 +2122,7 @@ priv_submit_run(FILE *fout,
           break;
       if (lang_list[i]) {
         new_serve_error(log_f, NEW_SRV_ERR_LANG_DISABLED_FOR_PROBLEM);
-        goto done;
+        goto cleanup;
       }
     }
   } else {
@@ -2132,7 +2130,7 @@ priv_submit_run(FILE *fout,
     if ((mime_type = mime_type_guess(global->diff_work_dir,
                                      run_text, run_size)) < 0) {
       new_serve_error(log_f, NEW_SRV_ERR_CANNOT_DETECT_CONTENT_TYPE);
-      goto done;
+      goto cleanup;
     }
     mime_type_str = mime_type_get_type(mime_type);
     if (prob->enable_language) {
@@ -2143,7 +2141,7 @@ priv_submit_run(FILE *fout,
       if (!lang_list[i]) {
         new_serve_error(log_f, NEW_SRV_ERR_CONTENT_TYPE_NOT_AVAILABLE,
                         mime_type_str);
-        goto done;
+        goto cleanup;
       }
     } else if (prob->disable_language) {
       lang_list = prob->disable_language;
@@ -2153,7 +2151,7 @@ priv_submit_run(FILE *fout,
       if (lang_list[i]) {
         new_serve_error(log_f, NEW_SRV_ERR_CONTENT_TYPE_DISABLED,
                         mime_type_str);
-        goto done;
+        goto cleanup;
       }
     }
   }
@@ -2170,7 +2168,7 @@ priv_submit_run(FILE *fout,
                           prob_id, lang_id, variant, 1, mime_type);
   if (run_id < 0) {
     new_serve_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
-    goto done;
+    goto cleanup;
   }
   serve_move_files_to_insert_run(cs, run_id);
                           
@@ -2180,17 +2178,17 @@ priv_submit_run(FILE *fout,
   if (arch_flags < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     new_serve_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-    goto done;
+    goto cleanup;
   }
   if (archive_dir_prepare(cs, global->run_archive_dir, run_id, 0, 0) < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     new_serve_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-    goto done;
+    goto cleanup;
   }
   if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     new_serve_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-    goto done;
+    goto cleanup;
   }
 
   if (prob->type_val == PROB_TYPE_STANDARD) {
@@ -2211,7 +2209,7 @@ priv_submit_run(FILE *fout,
                                 lang->src_sfx,
                                 lang->compiler_env, -1, 0) < 0) {
         new_serve_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-        goto done;
+        goto cleanup;
       }
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"
@@ -2233,7 +2231,7 @@ priv_submit_run(FILE *fout,
                             phr->user_id, prob_id, 0, variant, 0, -1, -1,
                             0, 0) < 0) {
         new_serve_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-        goto done;
+        goto cleanup;
       }
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"
@@ -2256,7 +2254,7 @@ priv_submit_run(FILE *fout,
                             phr->user_id, prob_id, 0, variant, 0, -1, -1,
                             0, 0) < 0) {
         new_serve_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-        goto done;
+        goto cleanup;
       }
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"
@@ -2265,8 +2263,8 @@ priv_submit_run(FILE *fout,
     }
   }
 
- done:
-  return 0;
+ cleanup:
+  return retval;
 
  invalid_param:
   html_err_invalid_param(fout, phr, 0, errmsg);
@@ -2305,8 +2303,8 @@ priv_submit_clar(FILE *fout,
       goto invalid_param;
     }
     if (user_id && !teamdb_lookup(cs->teamdb_state, user_id)) {
-      fprintf(log_f, _("User_id %d does not exist.\n"), user_id);
-      goto done;
+      new_serve_error(log_f, NEW_SRV_ERR_USER_ID_NONEXISTANT, user_id);
+      goto cleanup;
     }
   }
   if ((n = ns_cgi_param(phr, "msg_dest_login", &s)) < 0) {
@@ -2316,19 +2314,19 @@ priv_submit_clar(FILE *fout,
   if (n > 0 && *s) {
     if (!strcasecmp(s, "all")) {
       if (user_id > 0) {
-        fprintf(log_f, _("Conflicting user_id (%d) and user_login (%s).\n"),
-                user_id, ARMOR(s));
-        goto done;
+        new_serve_error(log_f, NEW_SRV_ERR_CONFLICTING_USER_ID_LOGIN,
+                        user_id, ARMOR(s));
+        goto cleanup;
       }
     } else {
       if ((n = teamdb_lookup_login(cs->teamdb_state, s)) <= 0) {
-        fprintf(log_f, _("User_login %s does not exist.\n"), ARMOR(s));
-        goto done;
+        new_serve_error(log_f, NEW_SRV_ERR_USER_LOGIN_NONEXISTANT, ARMOR(s));
+        goto cleanup;
       }
       if (user_id >= 0 && user_id != n) {
-        fprintf(log_f, _("Conflicting user_id (%d) and user_login (%s).\n"),
-                user_id, ARMOR(s));
-        goto done;
+        new_serve_error(log_f, NEW_SRV_ERR_CONFLICTING_USER_ID_LOGIN,
+                        user_id, ARMOR(s));
+        goto cleanup;
       }
     }
   }
@@ -2356,28 +2354,28 @@ priv_submit_clar(FILE *fout,
 
   subj_len = strlen(subject);
   if (subj_len > 1024) {
-    fprintf(log_f, _("Subject length is too big (%zu).\n"), subj_len);
-    goto done;
+    new_serve_error(log_f, NEW_SRV_ERR_SUBJECT_TOO_LONG, subj_len);
+    goto cleanup;
   }
   subj2 = alloca(subj_len + 1);
   memcpy(subj2, subject, subj_len + 1);
   while (subj_len > 0 && isspace(subj2[subj_len - 1])) subj2[--subj_len] = 0;
   if (!subj_len) {
-    fprintf(log_f, _("Subject is empty.\n"));
-    goto done;
+    new_serve_error(log_f, NEW_SRV_ERR_SUBJECT_EMPTY);
+    goto cleanup;
   }
 
   text_len = strlen(text);
   if (text_len > 128 * 1024 * 1024) {
-    fprintf(log_f, _("Message length is too big (%zu).\n"), text_len);
-    goto done;
+    new_serve_error(log_f, NEW_SRV_ERR_MESSAGE_TOO_LONG, subj_len);
+    goto cleanup;
   }
   text2 = alloca(text_len + 1);
   memcpy(text2, text, text_len + 1);
   while (text_len > 0 && isspace(text2[text_len - 1])) text2[--text_len] = 0;
   if (!text_len) {
-    fprintf(log_f, _("Message is empty.\n"));
-    goto done;
+    new_serve_error(log_f, NEW_SRV_ERR_MESSAGE_EMPTY);
+    goto cleanup;
   }
 
   text3 = alloca(subj_len + text_len + 32);
@@ -2392,22 +2390,22 @@ priv_submit_clar(FILE *fout,
                                      0, user_id, 0, phr->user_id,
                                      hide_flag, phr->locale_id, 0,
                                      subj2)) < 0) {
-    fprintf(log_f, _("Cannot update the clarification database.\n"));
-    goto done;
+    new_serve_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
+    goto cleanup;
   }
 
   sprintf(clar_file, "%06d", clar_id);
   if (generic_write_file(text3, text3_len, 0,
                          global->clar_archive_dir, clar_file, "") < 0) {
-    fprintf(log_f, _("Cannot write the message to the disk.\n"));
-    goto done;
+    new_serve_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
+    goto cleanup;
   }
 
   /*
   serve_send_clar_notify_email(cs, cnts, phr->user_id, phr->name, subj3, text2);
   */
 
- done:
+ cleanup:
   html_armor_free(&ab);
   return 0;
 
@@ -2456,18 +2454,18 @@ priv_clar_reply(FILE *fout,
   }
 
   if (opcaps_check(phr->caps, OPCAP_REPLY_MESSAGE) < 0) {
-    fprintf(log_f, _("You don't have permissions to answer questions.\n"));
-    goto done;
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
   }
 
   if (clar_get_record_new(cs->clarlog_state, in_reply_to, &clar) < 0) {
-    fprintf(log_f, _("Invalid clar_id.\n"));
-    goto done;
+    new_serve_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
+    goto cleanup;
   }
 
   if (!clar.from) {
-    fprintf(log_f, _("It's not allowed to answer to judge's messages.\n"));
-    goto done;
+    new_serve_error(log_f, NEW_SRV_ERR_CANNOT_REPLY_TO_JUDGE);
+    goto cleanup;
   }
 
   l10n_setlocale(clar.locale_id);
@@ -2489,23 +2487,23 @@ priv_clar_reply(FILE *fout,
 
   reply_len = strlen(reply_txt);
   if (reply_len > 128 * 1024 * 1024) {
-    fprintf(log_f, _("Message length is too big (%zu).\n"), reply_len);
-    goto done;
+    new_serve_error(log_f, NEW_SRV_ERR_MESSAGE_TOO_LONG, reply_len);
+    goto cleanup;
   }
   reply_txt_2 = (unsigned char*) alloca(reply_len + 1);
   memcpy(reply_txt_2, reply_txt, reply_len + 1);
   while (reply_len > 0 && isspace(reply_txt_2[reply_len - 1])) reply_len--;
   reply_txt_2[reply_len] = 0;
   if (!reply_len) {
-    fprintf(log_f, _("Message is empty.\n"));
-    goto done;
+    new_serve_error(log_f, NEW_SRV_ERR_MESSAGE_EMPTY);
+    goto cleanup;
   }
 
   snprintf(orig_clar_name, sizeof(orig_clar_name), "%06d", in_reply_to);
   if (generic_read_file(&orig_txt, 0, &orig_txt_len, 0,
                         global->clar_archive_dir, orig_clar_name, "") < 0) {
-    fprintf(log_f, _("Cannot read message from disk.\n"));
-    goto done;
+    new_serve_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
+    goto cleanup;
   }
 
   l10n_setlocale(clar.locale_id);
@@ -2530,20 +2528,20 @@ priv_clar_reply(FILE *fout,
                                 clar.locale_id, in_reply_to + 1, clar.subj);
 
   if (clar_id < 0) {
-    fprintf(log_f, _("Cannot update the clarification database.\n"));
-    goto done;
+    new_serve_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
+    goto cleanup;
   }
 
   snprintf(clar_name, sizeof(clar_name), "%06d", clar_id);
   if (generic_write_file(msg, msg_len, 0, global->clar_archive_dir,
                          clar_name, "") < 0) {
-    fprintf(log_f, _("Cannot write the message to the disk.\n"));
-    goto done;
+    new_serve_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
+    goto cleanup;
   }
 
   clar_update_flags(cs->clarlog_state, in_reply_to, 2);
 
- done:
+ cleanup:
   xfree(orig_txt);
   return 0;
 
@@ -2617,26 +2615,26 @@ priv_change_status(FILE *fout,
       && ((status != RUN_REJUDGE && status != RUN_FULL_REJUDGE)
           || opcaps_check(phr->caps, OPCAP_REJUDGE_RUN))) {
     new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto done;
+    goto cleanup;
   }
   if (status == RUN_REJUDGE || status == RUN_FULL_REJUDGE) {
     serve_rejudge_run(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       (status == RUN_FULL_REJUDGE), 0);
-    goto done;
+    goto cleanup;
   }
   if (!serve_is_valid_status(cs, status, 1)) {
-    fprintf(log_f, _("Invalid status.\n"));
-    goto done;
+    new_serve_error(log_f, NEW_SRV_ERR_INV_STATUS);
+    goto cleanup;
   }
   memset(&new_run, 0, sizeof(new_run));
   new_run.status = status;
   flags = RUN_ENTRY_STATUS;
   if (run_set_entry(cs->runlog_state, run_id, flags, &new_run) < 0) {
-    fprintf(log_f, _("Status change failed.\n"));
-    goto done;
+    new_serve_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
+    goto cleanup;
   }
 
- done:
+ cleanup:
   return 0;
 
  invalid_param:
@@ -2731,16 +2729,12 @@ priv_rejudge_displayed(FILE *fout,
   size_t mask_size;
   int force_full = 0;
   int prio_adj = 0;
+  int retval = 0;
 
   if (parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0) goto invalid_param;
-  if (!mask_size) {
-    fprintf(log_f, _("No runs to rejudge.\n"));
-    goto done;
-  }
-  if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0) {
-    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto done;
-  }
+  if (!mask_size) FAIL(NEW_SRV_ERR_NO_RUNS_TO_REJUDGE);
+  if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
   if (global->score_system_val == SCORE_OLYMPIAD
       && cs->accepting_mode
@@ -2753,9 +2747,9 @@ priv_rejudge_displayed(FILE *fout,
                         mask_size, mask,
                         force_full, prio_adj);
 
- done:
+ cleanup:
   xfree(mask);
-  return 0;
+  return retval;
 
  invalid_param:
   html_err_invalid_param(fout, phr, 0, 0);
@@ -2783,12 +2777,12 @@ priv_rejudge_problem(FILE *fout,
     goto invalid_param;
   if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0) {
     new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto done;
+    goto cleanup;
   }
 
   serve_rejudge_problem(cs, phr->user_id, phr->ip, phr->ssl_flag, prob_id);
 
- done:
+ cleanup:
   return 0;
 
  invalid_param:
@@ -2807,7 +2801,7 @@ priv_rejudge_all(FILE *fout,
 
   if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0) {
     new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto done;
+    goto cleanup;
   }
 
   switch (phr->action) {
@@ -2821,7 +2815,7 @@ priv_rejudge_all(FILE *fout,
     abort();
   }
 
- done:
+ cleanup:
   return 0;
 }
 
@@ -2985,30 +2979,23 @@ priv_diff_page(FILE *fout,
   const serve_state_t cs = extra->serve_state;
   const unsigned char *s;
   int run_id1, run_id2, n, total_runs;
+  int retval = 0;
 
   total_runs = run_get_total(cs->runlog_state);
   if (parse_run_id(fout, phr, cnts, extra, &run_id1, 0) < 0) goto failure;
-  if (!(n = ns_cgi_param(phr, "run_id2", &s)) || (n > 0 && !*s)) {
-    fprintf(log_f, _("Run to compare to is not specified.\n"));
-    goto done;
-  }
+  if (!(n = ns_cgi_param(phr, "run_id2", &s)) || (n > 0 && !*s))
+    FAIL(NEW_SRV_ERR_RUN_TO_COMPARE_UNSPECIFIED);
   if (n < 0 || sscanf(s, "%d%n", &run_id2, &n) != 1 || s[n]
-      || run_id2 < 0 || run_id2 >= total_runs) {
-    fprintf(log_f, _("Invalid run to compare to.\n"));
-    goto done;
-  }
-  if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
-    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto done;
-  }
+      || run_id2 < 0 || run_id2 >= total_runs)
+    FAIL(NEW_SRV_ERR_INV_RUN_TO_COMPARE);
+  if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-  if (compare_runs(cs, fout, run_id1, run_id2) < 0) {
-    fprintf(log_f, _("Error during run comparison.\n"));
-    goto done;
-  }
+  if (compare_runs(cs, fout, run_id1, run_id2) < 0)
+    FAIL(NEW_SRV_ERR_RUN_COMPARE_FAILED);
 
- done:
-  return 0;
+ cleanup:
+  return retval;
 
  failure:
   return -1;
@@ -3369,12 +3356,12 @@ priv_view_report(FILE *fout,
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_REPORT) < 0) {
     new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto done;
+    goto cleanup;
   }
 
   new_serve_write_priv_report(cs, fout, log_f, phr, cnts, extra, 0, run_id);
 
- done:
+ cleanup:
   return 0;
 
  failure:
@@ -3395,12 +3382,12 @@ priv_view_source(FILE *fout,
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
     new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto done;
+    goto cleanup;
   }
 
   new_serve_write_priv_source(cs, fout, log_f, phr, cnts, extra, run_id);
 
- done:
+ cleanup:
   return 0;
 
  failure:
@@ -3424,6 +3411,7 @@ priv_download_source(FILE *fout,
   path_t src_path;
   char *run_text = 0;
   size_t run_size = 0;
+  int retval = 0;
 
   if (parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0) goto failure;
   if (ns_cgi_param(phr, "no_disp", &s) > 0
@@ -3431,31 +3419,21 @@ priv_download_source(FILE *fout,
       && x >= 0 && x <= 1)
     no_disp = x;
 
-  if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
-    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto done;
-  }
+  if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   if (re.prob_id <= 0 || re.prob_id > cs->max_prob ||
-      !(prob = cs->probs[re.prob_id])) {
-    fprintf(log_f, _("Invalid problem.\n"));
-    goto done;
-  }
+      !(prob = cs->probs[re.prob_id]))
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
   if (re.status > RUN_LAST
-      || (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST)) {
-    fprintf(log_f, _("Source for this run is not available.\n"));
-    goto done;
-  }
+      || (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST))
+    FAIL(NEW_SRV_ERR_SOURCE_UNAVAILABLE);
 
   if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
                                           global->run_archive_dir,
-                                          run_id, 0, 1)) < 0) {
-    fprintf(log_f, _("Source file does not exist.\n"));
-    goto done;
-  }
-  if (generic_read_file(&run_text, 0, &run_size, src_flags, 0, src_path, 0)<0) {
-    fprintf(log_f, _("Cannot read the source.\n"));
-    goto done;
-  }
+                                          run_id, 0, 1)) < 0)
+    FAIL(NEW_SRV_ERR_SOURCE_NONEXITANT);
+  if (generic_read_file(&run_text, 0, &run_size, src_flags, 0, src_path, 0)<0)
+    FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
 
   if (prob->type_val > 0) {
     fprintf(fout, "Content-type: %s\n", mime_type_get_type(re.mime_type));
@@ -3466,10 +3444,8 @@ priv_download_source(FILE *fout,
     putc_unlocked('\n', fout);
   } else {
     if(re.lang_id <= 0 || re.lang_id > cs->max_lang ||
-       !(lang = cs->langs[re.lang_id])) {
-      fprintf(log_f, _("Invalid language.\n"));
-      goto done;
-    }
+       !(lang = cs->langs[re.lang_id]))
+      FAIL(NEW_SRV_ERR_INV_LANG_ID);
 
     if (lang->content_type) {
       fprintf(fout, "Content-type: %s\n", lang->content_type);
@@ -3485,9 +3461,9 @@ priv_download_source(FILE *fout,
   }
   fwrite(run_text, 1, run_size, fout);
 
- done:
+ cleanup:
   xfree(run_text);
-  return 0;
+  return retval;
 
  failure:
   xfree(run_text);
@@ -3514,7 +3490,7 @@ priv_view_clar(FILE *fout,
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) < 0) {
     new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto done;
+    goto cleanup;
   }
 
   l10n_setlocale(phr->locale_id);
@@ -3528,7 +3504,7 @@ priv_view_clar(FILE *fout,
   html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
 
- done:
+ cleanup:
   return 0;
 }
 
@@ -3543,11 +3519,11 @@ priv_standings(FILE *fout,
 
   if (phr->role < USER_ROLE_JUDGE) {
     new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto done;
+    goto cleanup;
   }
   if (opcaps_check(phr->caps, OPCAP_VIEW_STANDINGS) < 0) {
     new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto done;
+    goto cleanup;
   }
 
   l10n_setlocale(phr->locale_id);
@@ -3559,7 +3535,7 @@ priv_standings(FILE *fout,
   html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
   
- done:
+ cleanup:
   return 0;
 }
 
@@ -3571,7 +3547,7 @@ priv_view_test(FILE *fout,
                struct contest_extra *extra)
 {
   const serve_state_t cs = extra->serve_state;
-  int run_id, test_num, n;
+  int run_id, test_num, n, retval = 0;
   const unsigned char *s = 0;
 
   // run_id, test_num
@@ -3582,21 +3558,15 @@ priv_view_test(FILE *fout,
     return -1;
   }
 
-  if (opcaps_check(phr->caps, OPCAP_VIEW_REPORT) < 0) {
-    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    fprintf(log_f, _("Permission denied.\n"));
-    goto done;
-  }
+  if (opcaps_check(phr->caps, OPCAP_VIEW_REPORT) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-  if (test_num <= 0) {
-    fprintf(log_f, _("Invalid test %d.\n"), test_num);
-    goto done;
-  }
+  if (test_num <= 0) FAIL(NEW_SRV_ERR_INV_TEST);
 
   new_serve_write_tests(cs, fout, log_f, phr->action, run_id, test_num);
 
- done:
-  return 0;
+ cleanup:
+  return retval;
 
  failure:
   return -1;

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-10 23:36+0400\n"
-"PO-Revision-Date: 2006-10-10 23:45+0400\n"
+"POT-Creation-Date: 2006-10-11 23:25+0400\n"
+"PO-Revision-Date: 2006-10-11 23:38+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -454,10 +454,6 @@ msgstr "Ошибка добавления посылки в очередь компиляции данных.\n"
 msgid "Cannot put the run to the run queue.\n"
 msgstr "Ошибка добавления посылки в очередь тестирования.\n"
 
-#, c-format
-msgid "Cannot read message from disk.\n"
-msgstr "Ошибка чтения сообщения с диска.\n"
-
 msgid "Cannot read message text!"
 msgstr "Ошибка чтения файла сообщения!"
 
@@ -547,6 +543,9 @@ msgstr "Город (Англ.)"
 
 msgid "Clar ID"
 msgstr "Номер сообщения"
+
+msgid "Clar log update failed"
+msgstr "Обновление журнала посылок не удалось"
 
 msgid "Clarification"
 msgstr "Сообщение"
@@ -639,8 +638,8 @@ msgid "Confirm printing run"
 msgstr "Подтвердить распечатывание"
 
 #, c-format
-msgid "Conflicting user_id (%d) and user_login (%s).\n"
-msgstr "Конфликтуют user_id (%d) и user_login (%s).\n"
+msgid "Conflicting user_id (%d) and user_login (%s)"
+msgstr "Конфликтуют user_id (%d) и user_login (%s)"
 
 msgid "Connection to the server is broken."
 msgstr "Нет связи с сервером."
@@ -758,6 +757,9 @@ msgstr "Подробная информация о пользователе (команде)"
 msgid "Details about run %d, test %d"
 msgstr "Подробная информация о посылке %d, тесте %d"
 
+msgid "Disk read error (nonexistant file?)"
+msgstr "Ошибка чтения с диска (файл не существует?)"
+
 msgid "Disk write error (disk full?)"
 msgstr "Ошибка записи на диск (закончилось место?)"
 
@@ -812,9 +814,8 @@ msgstr "Английский"
 msgid "Enter password"
 msgstr "Введите пароль"
 
-#, c-format
-msgid "Error during run comparison.\n"
-msgstr "Ошибка при сравнении программ.\n"
+msgid "Error during run comparison"
+msgstr "Ошибка при сравнении программ"
 
 msgid "Examiner"
 msgstr "Экзаменатор"
@@ -1181,6 +1182,9 @@ msgstr "Внутренняя ошибка"
 msgid "Internal error: insufficient memory."
 msgstr "Внутренняя ошибка: недостаточно памяти."
 
+msgid "Invalid clar_id"
+msgstr "Неверный идентификатор сообщения"
+
 #, c-format
 msgid "Invalid clar_id %d.\n"
 msgstr "Неверный идентификатор сообщения %d.\n"
@@ -1207,6 +1211,9 @@ msgstr "Неверный идентификатор турнира."
 msgid "Invalid duration specification"
 msgstr "Неверная спецификация продолжительности турнира"
 
+msgid "Invalid language"
+msgstr "Неверный идентификатор языка программирования"
+
 msgid "Invalid language specification"
 msgstr "Неверная спецификация языка программирования"
 
@@ -1229,6 +1236,9 @@ msgstr "Неверные параметры"
 msgid "Invalid person."
 msgstr "Неверный участник."
 
+msgid "Invalid problem"
+msgstr "Неверная задача"
+
 msgid "Invalid problem specification"
 msgstr "Неверная спецификация задачи"
 
@@ -1239,9 +1249,8 @@ msgstr "Неверная задача.\n"
 msgid "Invalid role parameter."
 msgstr "Неверная роль."
 
-#, c-format
-msgid "Invalid run to compare to.\n"
-msgstr "Неверный номер посылки для сравнения.\n"
+msgid "Invalid run to compare to"
+msgstr "Неверный номер посылки для сравнения"
 
 msgid "Invalid run_id"
 msgstr "Неверный номер посылки"
@@ -1269,13 +1278,11 @@ msgstr ""
 "Неверный идентификатор сессии. Возможные причины этой ошибки перечислены "
 "ниже."
 
-#, c-format
-msgid "Invalid status.\n"
-msgstr "Недопустимый статус.\n"
+msgid "Invalid status"
+msgstr "Недопустимый статус"
 
-#, c-format
-msgid "Invalid test %d.\n"
-msgstr "Неверный номер теста %d.\n"
+msgid "Invalid test"
+msgstr "Неверный тест"
 
 #, c-format
 msgid "Invalid test number %d.\n"
@@ -1303,9 +1310,8 @@ msgstr "Невидимый?"
 msgid "Issue warning"
 msgstr "Выдать предупреждение"
 
-#, c-format
-msgid "It's not allowed to answer to judge's messages.\n"
-msgstr "Нельзя отвечать на сообщения судей.\n"
+msgid "It's not allowed to answer to judge's messages"
+msgstr "Нельзя отвечать на сообщения судей"
 
 msgid "Judge"
 msgstr "Судья"
@@ -1441,9 +1447,16 @@ msgstr "Превышен лимит по памяти"
 msgid "Message"
 msgstr "Сообщение"
 
+msgid "Message is empty"
+msgstr "Сообщение пусто"
+
 #, c-format
 msgid "Message is empty.\n"
 msgstr "Сообщение пусто.\n"
+
+#, c-format
+msgid "Message length is too big (%zu)"
+msgstr "Текст сообщения имеет слишком большую длину (%zu)"
 
 #, c-format
 msgid "Message length is too big (%zu).\n"
@@ -1539,9 +1552,8 @@ msgstr "Без комментариев.\n"
 msgid "No contests available."
 msgstr "Нет доступных турниров."
 
-#, c-format
-msgid "No runs to rejudge.\n"
-msgstr "Нет посылок для перепроверки.\n"
+msgid "No runs to rejudge"
+msgstr "Нет посылок для перепроверки"
 
 msgid "No server request performed"
 msgstr "Запрос на сервер не выполнялся"
@@ -1685,10 +1697,6 @@ msgstr "Ожидает проверки"
 
 msgid "Permission denied"
 msgstr "В доступе отказано"
-
-#, c-format
-msgid "Permission denied.\n"
-msgstr "В доступе отказано.\n"
 
 msgid "Permission denied. The possible reasons are as follows."
 msgstr "В доступе отказано. Возможные причины этой ошибки перечислены ниже."
@@ -2034,9 +2042,8 @@ msgstr "Номер решения"
 msgid "Run log update failed"
 msgstr "Обновление журнала посылок не удалось"
 
-#, c-format
-msgid "Run to compare to is not specified.\n"
-msgstr "Посылка для сравнения не указана.\n"
+msgid "Run to compare to is not specified"
+msgstr "Посылка для сравнения не указана"
 
 msgid "Run-time error"
 msgstr "Ошибка выполнения"
@@ -2225,13 +2232,15 @@ msgstr "Решено"
 msgid "Solved<br>problems"
 msgstr "Решённые<br>задачи"
 
+msgid "Source file does not exist"
+msgstr "Запрошенный файл не существует"
+
 #, c-format
 msgid "Source file does not exist.\n"
 msgstr "Запрошенный файл не существует.\n"
 
-#, c-format
-msgid "Source for this run is not available.\n"
-msgstr "Текст для этой посылки недоступен.\n"
+msgid "Source for this run is not available"
+msgstr "Текст для этой посылки недоступен"
 
 msgid "Source view"
 msgstr "Просмотр исходного текста"
@@ -2257,10 +2266,6 @@ msgstr "Начать виртуальный турнир"
 msgid "Status"
 msgstr "Статус"
 
-#, c-format
-msgid "Status change failed.\n"
-msgstr "Операция смены статуса не удалась.\n"
-
 msgid "Step 1 of registration is complete"
 msgstr "Первый шаг регистрации завершен"
 
@@ -2276,9 +2281,12 @@ msgstr "Студент"
 msgid "Subject"
 msgstr "Тема"
 
+msgid "Subject is empty"
+msgstr "Тема сообщения не задана"
+
 #, c-format
-msgid "Subject is empty.\n"
-msgstr "Тема сообщения не задана.\n"
+msgid "Subject length is too big (%zu)"
+msgstr "Поле \"Тема\" имеет слишком большую длину (%zu)"
 
 #, c-format
 msgid "Subject length is too big (%zu).\n"
@@ -2590,6 +2598,10 @@ msgstr "Id"
 msgid "User Id"
 msgstr "Id пользователя"
 
+#, c-format
+msgid "User Id %d does not exist"
+msgstr "Пользователь с номером %d не существует"
+
 msgid "User Login"
 msgstr "Рег. имя"
 
@@ -2636,14 +2648,6 @@ msgstr "Регистрация пользователя завершена"
 
 msgid "User's report"
 msgstr "Пользовательский протокол"
-
-#, c-format
-msgid "User_id %d does not exist.\n"
-msgstr "Пользователь с номером %d не существует.\n"
-
-#, c-format
-msgid "User_login %s does not exist.\n"
-msgstr "Пользователь с регистрационным именем %s не существует.\n"
 
 msgid "Users page"
 msgstr "Список участников"
@@ -2802,10 +2806,6 @@ msgstr "У Вас нет прав использовать данный сервис"
 
 msgid "You do not have permissions to use this service."
 msgstr "У Вас нет прав использовать данный сервис."
-
-#, c-format
-msgid "You don't have permissions to answer questions.\n"
-msgstr "У Вас нет прав отвечать на вопросы.\n"
 
 #, c-format
 msgid "You don't have permissions to print this run.\n"
@@ -3165,37 +3165,3 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
-
-#~ msgid "Contest is not started.\n"
-#~ msgstr "Турнир не начался.\n"
-
-#~ msgid "Duration is not specified.\n"
-#~ msgstr "Продолжительность турнира не указана.\n"
-
-#~ msgid "Invalid duration.\n"
-#~ msgstr "Неверная продолжительность турнира.\n"
-
-#, fuzzy
-#~ msgid "Schedule time is not specified"
-#~ msgstr "Время старта турнира не задано.\n"
-
-#~ msgid "The contest is not started.\n"
-#~ msgstr "Турнир не начался.\n"
-
-#~ msgid "Invalid problem."
-#~ msgstr "Неверный задача."
-
-#~ msgid "Invalid run_id %d"
-#~ msgstr "Неверный номер посылки %d"
-
-#~ msgid "Permission denied."
-#~ msgstr "В доступе отказано."
-
-#~ msgid "Clear"
-#~ msgstr "Очистить"
-
-#~ msgid "Rejudge"
-#~ msgstr "Пересудить"
-
-#~ msgid "Forgot the password?"
-#~ msgstr "Забыли пароль?"
