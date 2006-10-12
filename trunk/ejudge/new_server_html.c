@@ -2952,7 +2952,6 @@ priv_confirmation_page(FILE *fout,
   return -1;
 }
 
-#if 0
 static int
 priv_view_audit_log(FILE *fout,
                     FILE *log_f,
@@ -2961,13 +2960,16 @@ priv_view_audit_log(FILE *fout,
                     struct contest_extra *extra)
 {
   int run_id;
+  int retval = 0;
 
-  if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
+  if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) FAIL(1);
 
- failure:
-  return -1;
+  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+ cleanup:
+  return retval;
 }
-#endif
 
 static int
 priv_diff_page(FILE *fout,
@@ -3777,6 +3779,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_TEST_OUTPUT] = priv_view_test,
   [NEW_SRV_ACTION_VIEW_TEST_ERROR] = priv_view_test,
   [NEW_SRV_ACTION_VIEW_TEST_CHECKER] = priv_view_test,
+  [NEW_SRV_ACTION_VIEW_AUDIT_LOG] = priv_view_audit_log,
 };
 
 static void
@@ -4477,6 +4480,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_TEST_OUTPUT] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_TEST_ERROR] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_TEST_CHECKER] = priv_generic_page,
+  [NEW_SRV_ACTION_VIEW_AUDIT_LOG] = priv_generic_page,
 };
 
 static void
@@ -6646,7 +6650,7 @@ new_server_handle_http_request(struct server_framework_state *state,
   int r, n;
 
   // make a self-referencing URL
-  if (ns_getenv(phr, "SSL_PROTOCOL")) {
+  if (ns_getenv(phr, "SSL_PROTOCOL") || ns_getenv(phr, "HTTPS")) {
     phr->ssl_flag = 1;
     protocol = "https";
   }

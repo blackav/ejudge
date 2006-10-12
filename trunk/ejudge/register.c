@@ -825,7 +825,7 @@ initialize(int argc, char const *argv[])
     unsigned char *script_name = getenv("SCRIPT_NAME");
     unsigned char *protocol = "http";
 
-    if (getenv("SSL_PROTOCOL")) {
+    if (getenv("SSL_PROTOCOL") || getenv("HTTPS")) {
       ssl_flag = 1;
       protocol = "https";
     }

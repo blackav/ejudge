@@ -42,6 +42,8 @@
 #include <reuse/logger.h>
 
 #include <zlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -1869,8 +1871,42 @@ write_from_archive(const serve_state_t cs,
   testing_report_free(r);
 }
 
+int
+new_serve_write_audit_log(const serve_state_t state, FILE *f, int run_id)
+{
+  int retval = 0, rep_flag;
+  path_t audit_log_path;
+  struct stat stb;
+  char *audit_text = 0;
+  size_t audit_text_size = 0;
 
+  if ((rep_flag = archive_make_read_path(state, audit_log_path,
+                                         sizeof(audit_log_path),
+                                         state->global->audit_log_dir,
+                                         run_id, 0, 0)) < 0
+      || lstat(audit_log_path, &stb) < 0) {
+    fprintf(f, "Content-type: text/plain\n\n");
+    return 0;
+  }
 
+  if (generic_read_file(&audit_text, 0, &audit_text_size, 0, 0,
+                        audit_log_path, 0) < 0) {
+    retval = -NEW_SRV_ERR_DISK_READ_ERROR;
+    goto cleanup;
+  }
+
+  fprintf(f, "Content-type: text/plain\n\n");
+  if (audit_text_size > 0) {
+    if (fwrite(audit_text, 1, audit_text_size, f) != audit_text_size) {
+      retval = -NEW_SRV_ERR_OUTPUT_ERROR;
+      goto cleanup;
+    }
+  }
+
+ cleanup:
+  xfree(audit_text);
+  return retval;
+}
 
 /*
  * Local variables:
