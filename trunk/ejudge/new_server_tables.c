@@ -175,6 +175,11 @@ const int new_serve_priv_prev_state[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
 };
 
+/* previous state (return in case of error) for unprivileged users */
+const int new_serve_unpriv_prev_state[NEW_SRV_ACTION_LAST] =
+{
+};
+
 /*
  * Local variables:
  *  compile-command: "make"

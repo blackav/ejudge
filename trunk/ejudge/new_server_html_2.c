@@ -21,6 +21,7 @@
 #include "ej_limits.h"
 
 #include "new-server.h"
+#include "new_server_proto.h"
 #include "filter_eval.h"
 #include "misctext.h"
 #include "mischtml.h"
@@ -816,13 +817,13 @@ new_serve_write_priv_source(const serve_state_t state,
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if (run_id < 0 || run_id >= run_get_total(state->runlog_state)) {
-    fprintf(log_f, _("Invalid run_id."));
+    new_serve_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
     return;
   }
   run_get_entry(state->runlog_state, run_id, &info);
   if (info.status > RUN_LAST
       || (info.status > RUN_MAX_STATUS && info.status < RUN_TRANSIENT_FIRST)) {
-    fprintf(log_f, _("Information is not available."));
+    new_serve_error(log_f, NEW_SRV_ERR_SOURCE_UNAVAILABLE);
     return;
   }
 
@@ -830,7 +831,7 @@ new_serve_write_priv_source(const serve_state_t state,
                                      global->run_archive_dir, run_id,
                                      0, 1);
   if (src_flags < 0) {
-    fprintf(log_f, _("Invalid run_id."));
+    new_serve_error(log_f, NEW_SRV_ERR_SOURCE_NONEXISTANT);
     return;
   }
 
@@ -1407,11 +1408,11 @@ new_serve_write_priv_report(const serve_state_t cs,
 
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
       || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
-    fprintf(log_f, _("Invalid run_id."));
+    new_serve_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
     goto done;
   }
   if (re.status > RUN_MAX_STATUS) {
-    fprintf(log_f, _("Report is not available."));
+    new_serve_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
     goto done;
   }
   /*
@@ -1423,7 +1424,7 @@ new_serve_write_priv_report(const serve_state_t cs,
   case RUN_IGNORED:
   case RUN_DISQUALIFIED:
   case RUN_PENDING:
-    fprintf(log_f, _("Report is not available."));
+    new_serve_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
     goto done;
   }
 
@@ -1438,7 +1439,7 @@ new_serve_write_priv_report(const serve_state_t cs,
                                     run_id, 0, 1);
   if (rep_flag >= 0) {
     if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
-      fprintf(log_f, _("Read error while reading %s."), rep_path);
+      new_serve_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
       goto done;
     }
     content_type = get_content_type(rep_text, &start_ptr);
@@ -1446,11 +1447,11 @@ new_serve_write_priv_report(const serve_state_t cs,
     rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
                                       report_dir, run_id, 0, 1);
     if (rep_flag < 0) {
-      fprintf(log_f, _("Report file does not exist."));
+      new_serve_error(log_f, NEW_SRV_ERR_REPORT_NONEXISTANT);
       goto done;
     }
     if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
-      fprintf(log_f, _("Read error while reading %s."), rep_path);
+      new_serve_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
       goto done;
     }
     content_type = get_content_type(rep_text, &start_ptr);
@@ -1515,7 +1516,7 @@ new_serve_write_priv_clar(const serve_state_t cs,
 
   if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
       || clar_get_record_new(cs->clarlog_state, clar_id, &clar) < 0) {
-    fprintf(log_f, _("Invalid clar_id %d.\n"), clar_id);
+    new_serve_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
     goto done;
   }
   start_time = run_get_start_time(cs->runlog_state);
@@ -1627,7 +1628,7 @@ write_from_contest_dir(FILE *log_f, FILE *fout,
   size_t file_size = 0;
 
   if (!flag1 || !flag2) {
-    fprintf(log_f, _("Information is not available.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_TEST_NONEXISTANT);
     goto done;
   }
 
@@ -1645,14 +1646,14 @@ write_from_contest_dir(FILE *log_f, FILE *fout,
 
   if (has_digest && digest_ptr) {
     if (filehash_get(path1, cur_digest) < 0) {
-      fprintf(log_f, _("Cannot calculate the file checksum.\n"));
+      new_serve_error(log_f, NEW_SRV_ERR_CHECKSUMMING_FAILED);
       goto done;
     }
     good_digest_flag = digest_is_equal(DIGEST_SHA1, digest_ptr, cur_digest);
   }
 
   if (generic_read_file(&file_bytes, 0, &file_size, 0, 0, path1, 0) < 0) {
-    fprintf(log_f, _("Failed to read file from the disk.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
     goto done;
   }
 
@@ -1666,7 +1667,7 @@ write_from_contest_dir(FILE *log_f, FILE *fout,
   }
   if (file_size > 0) {
     if (fwrite(file_bytes, 1, file_size, fout) != file_size) {
-      fprintf(log_f, _("Output error.\n"));
+      new_serve_error(log_f, NEW_SRV_ERR_OUTPUT_ERROR);
       goto done;
     }
   }
@@ -1691,7 +1692,7 @@ write_from_archive(const serve_state_t cs,
   unsigned char *text = 0;
 
   if (!flag) {
-    fprintf(log_f, _("Information is not available.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_TEST_UNAVAILABLE);
     goto done;
   }
 
@@ -1700,21 +1701,21 @@ write_from_archive(const serve_state_t cs,
   rep_flag = archive_make_read_path(cs, arch_path, sizeof(arch_path),
                                     dir, run_id, 0, 0);
   if (rep_flag < 0 || !(far = full_archive_open_read(arch_path))) {
-    fprintf(log_f, _("Information is not available.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_TEST_NONEXISTANT);
     goto done;
   }
 
   rep_flag = full_archive_find_file(far, fnbuf, &arch_size, &arch_raw_size,
                                     &arch_flags, &arch_data);
   if (rep_flag <= 0) {
-    fprintf(log_f, _("Information is not available.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_TEST_NONEXISTANT);
     goto done;
   }
 
   if (arch_raw_size > 0) {
     text = (unsigned char*) xmalloc(arch_raw_size);
     if (uncompress(text, &arch_raw_size, arch_data, arch_size) != Z_OK) {
-      fprintf(log_f, _("Uncompression failed.\n"));
+      new_serve_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
       goto done;
     }
   }
@@ -1722,7 +1723,7 @@ write_from_archive(const serve_state_t cs,
   fprintf(fout, "Content-type: text/plain\n\n");
   if (arch_raw_size > 0) {
     if (fwrite(text, 1, arch_raw_size, fout) != arch_raw_size) {
-      fprintf(log_f, _("Output error.\n"));
+      new_serve_error(log_f, NEW_SRV_ERR_OUTPUT_ERROR);
       goto done;
     }
   }
@@ -1748,7 +1749,7 @@ new_serve_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
 
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
       || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
-    fprintf(log_f, _("Invalid run_id %d.\n"), run_id);
+    new_serve_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
     goto done;
   }
 
@@ -1758,28 +1759,28 @@ new_serve_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
       && (rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
                                             cs->global->report_archive_dir,
                                             run_id, 0, 1)) < 0) {
-    fprintf(log_f, _("Report file does not exist.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_REPORT_NONEXISTANT);
     goto done;
   }
 
   if (generic_read_file(&rep_text, 0, &rep_len, rep_flag,0,rep_path, "") < 0) {
-    fprintf(log_f, _("Cannot read the report file from disk.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
     goto done;
   }
   if (get_content_type(rep_text, &start_ptr) != CONTENT_TYPE_XML) {
     // we expect the master log in XML format
-    fprintf(log_f, _("Information is not available.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
     goto done;
   }
 
   if (!(r = testing_report_parse_xml(start_ptr))) {
-    fprintf(log_f, _("The report file parsing failed.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
     goto done;
   }
   xfree(rep_text); rep_text = 0;
 
-  if (test_num <= 0 || test_num > r->run_tests) {
-    fprintf(log_f, _("Invalid test number %d.\n"), test_num);
+  if (test_num <= 0 || test_num > r->run_tests) { 
+    new_serve_error(log_f, NEW_SRV_ERR_INV_TEST);
     goto done;
   }
 
@@ -1787,19 +1788,19 @@ new_serve_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
 
   if (re.prob_id <= 0 || re.prob_id > cs->max_prob
       || !(prb = cs->probs[re.prob_id])) {
-    fprintf(log_f, _("Invalid problem.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_INV_PROB_ID);
     goto done;
   }
 
   if (prb->type_val > 0) {
-    fprintf(log_f, _("Information is not available.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_TEST_UNAVAILABLE);
     goto done;
   }
 
   if ((prb->variant_num > 0
        && (r->variant <= 0 || r->variant > prb->variant_num))
       || (prb->variant_num <= 0 && r->variant > 0)) { 
-    fprintf(log_f, _("Invalid variant.\n"));
+    new_serve_error(log_f, NEW_SRV_ERR_INV_VARIANT);
     goto done;
   }
 

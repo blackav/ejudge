@@ -323,5 +323,6 @@ new_serve_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
 extern const unsigned char * const new_serve_submit_button_labels[];
 extern const int new_serve_priv_next_state[];
 extern const int new_serve_priv_prev_state[];
+extern const int new_serve_unpriv_prev_state[];
 
 #endif /* __NEW_SERVER_H__ */

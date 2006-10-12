@@ -83,10 +83,82 @@ static const unsigned char * const new_serve_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_RUN_COMPARE_FAILED] = __("Error during run comparison"),
   [NEW_SRV_ERR_INV_PROB_ID] = __("Invalid problem"),
   [NEW_SRV_ERR_SOURCE_UNAVAILABLE] = __("Source for this run is not available"),
-  [NEW_SRV_ERR_SOURCE_NONEXITANT] = __("Source file does not exist"),
+  [NEW_SRV_ERR_SOURCE_NONEXISTANT] = __("Source file does not exist"),
   [NEW_SRV_ERR_INV_LANG_ID] = __("Invalid language"),
   [NEW_SRV_ERR_INV_TEST] = __("Invalid test"),
+  [NEW_SRV_ERR_OLD_PWD_TOO_LONG] = __("Old password is too long"),
+  [NEW_SRV_ERR_NEW_PWD_MISMATCH] = __("New passwords do not match"),
+  [NEW_SRV_ERR_NEW_PWD_TOO_LONG] = __("New password is too long"),
+  [NEW_SRV_ERR_PWD_UPDATE_FAILED] = __("Password update failed: %s"),
+  [NEW_SRV_ERR_RUN_ID_UNDEFINED] = __("`run_id' parameter is undefined"),
+  [NEW_SRV_ERR_INV_RUN_ID] = __("`run_id' parameter value is invalid."),
+  [NEW_SRV_ERR_RUN_ID_OUT_OF_RANGE] = __("`run_id' parameter value %d is out of range"),
+  [NEW_SRV_ERR_RUNLOG_READ_FAILED] = __("Failed to fetch run log entry %d"),
+  [NEW_SRV_ERR_PRINTING_DISABLED] = __("Printing is disabled"),
+  [NEW_SRV_ERR_ALREADY_PRINTED] = __("This submit is already printed"),
+  [NEW_SRV_ERR_PRINT_QUOTA_EXCEEDED] = __("Printing quota (%d pages) is exceeded"),
+  [NEW_SRV_ERR_PRINTING_FAILED] = __("Printing error: %d: %s"),
+  [NEW_SRV_ERR_CLIENTS_SUSPENDED] = __("Client's requests are suspended. Please wait until the contest administrator resumes the contest"),
+  [NEW_SRV_ERR_RUN_QUOTA_EXCEEDED] = __("User quota exceeded. This submit is too large, you already have too many submits,\nor the total size of your submits is too big"),
+  [NEW_SRV_ERR_PROB_UNAVAILABLE] = __("This problem is not yet available"),
+  [NEW_SRV_ERR_PROB_DEADLINE_EXPIRED] = __("Deadline for this problem is expired"),
+  [NEW_SRV_ERR_VARIANT_UNASSIGNED] = __("No assigned variant"),
+  [NEW_SRV_ERR_DUPLICATE_SUBMIT] = __("This submit is duplicate of the run %d"),
+  [NEW_SRV_ERR_PROB_ALREADY_SOLVED] = __("This problem is already solved"),
+  [NEW_SRV_ERR_NOT_ALL_REQ_SOLVED] = __("Not all pre-required problems are solved"),
+  [NEW_SRV_ERR_CLARS_DISABLED] = __("Clarification requests are disabled"),
+  [NEW_SRV_ERR_CLAR_QUOTA_EXCEEDED] = __("User quota exceeded. This clarification request is too large, you already have too many clarification requests, or the total size of your clarification requests is too big"),
+  [NEW_SRV_ERR_SOURCE_VIEW_DISABLED] = __("Submit source viewing is disabled"),
+  [NEW_SRV_ERR_REPORT_UNAVAILABLE] = __("Report is not available"),
+  [NEW_SRV_ERR_REPORT_VIEW_DISABLED] = __("Report viewing is disabled"),
+  [NEW_SRV_ERR_REPORT_NONEXISTANT] = __("Report file does not exist"),
+  [NEW_SRV_ERR_TEST_NONEXISTANT] = __("Test file does not exist"),
+  [NEW_SRV_ERR_CHECKSUMMING_FAILED] = __("Cannot calculate the file checksum"),
+  [NEW_SRV_ERR_OUTPUT_ERROR] = __("Output error"),
+  [NEW_SRV_ERR_TEST_UNAVAILABLE] = __("Test file is not available"),
+  [NEW_SRV_ERR_INV_VARIANT] = __("Invalid variant"),
 };
+
+const unsigned char *
+new_serve_strerror(int code, ...)
+{
+  static unsigned char buf[1024];
+  unsigned char buf2[1024];
+  const unsigned char *s = 0;
+  va_list args;
+
+  if (code < 0) code = -code;
+  if (code >= NEW_SRV_ERR_LAST || !(s = new_serve_error_messages[code])) {
+    snprintf(buf, sizeof(buf), _("Unknown error %d.\n"), code);
+    return buf;
+  }
+
+  va_start(args, code);
+  snprintf(buf2, sizeof(buf2), gettext(s), args);
+  va_end(args);
+  snprintf(buf, sizeof(buf), "%s.\n", buf2);
+  return buf;
+}
+
+const unsigned char *
+new_serve_strerror_r(unsigned char *buf, size_t size, int code, ...)
+{
+  unsigned char buf2[1024];
+  const unsigned char *s = 0;
+  va_list args;
+
+  if (code < 0) code = -code;
+  if (code >= NEW_SRV_ERR_LAST || !(s = new_serve_error_messages[code])) {
+    snprintf(buf, sizeof(buf), _("Unknown error %d.\n"), code);
+    return buf;
+  }
+
+  va_start(args, code);
+  snprintf(buf2, sizeof(buf2), gettext(s), args);
+  va_end(args);
+  snprintf(buf, sizeof(buf), "%s.\n", buf2);
+  return buf;
+}
 
 void
 new_serve_error(FILE *log_f, int code, ...)
