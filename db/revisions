@@ -1292,3 +1292,11 @@ new_server_html.c 3506 0 18206707
 new_server_html_2.c 3506 0 4919461
 new_server_proto.c 3506 0 720842
 new_server_tables.c 3506 0 749980
+new-server.h 3508 0 824636
+master.c 3508 0 7169155
+register.c 3508 0 8200574
+serve-control.c 3508 0 11213795
+team.c 3508 0 3992943
+users.c 3508 0 1451919
+new_server_html.c 3508 0 18225817
+new_server_html_2.c 3508 0 5000954
