@@ -3070,6 +3070,39 @@ priv_diff_page(FILE *fout,
   return -1;
 }
 
+static int
+priv_user_detail_page(FILE *fout,
+                      FILE *log_f,
+                      struct http_request_info *phr,
+                      const struct contest_desc *cnts,
+                      struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int retval = 0;
+  int user_id, n;
+  const unsigned char *s = 0;
+
+  if (ns_cgi_param(phr, "user_id", &s) <= 0
+      || sscanf(s, "%d%n", &user_id, &n) != 1 || s[n]
+      || !teamdb_lookup(cs->teamdb_state, user_id))
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+
+  if (opcaps_check(phr->caps, OPCAP_GET_USER) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  l10n_setlocale(phr->locale_id);
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   "%s [%s, %s]: %s %d", new_serve_unparse_role(phr->role),
+                   phr->name_arm, extra->contest_arm, _("Details for user "),
+                   user_id);
+  new_serve_user_info_page(fout, log_f, phr, cnts, extra, user_id);
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  return retval;
+}
+
 static void
 priv_view_users_page(FILE *fout,
                      struct http_request_info *phr,
@@ -3086,6 +3119,7 @@ priv_view_users_page(FILE *fout,
   char url[1024];
   unsigned char bb[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int details_allowed = 0;
 
   if (open_ul_connection(phr->fw_state) < 0)
     return html_err_userlist_server_down(fout, phr, 1);
@@ -3099,6 +3133,8 @@ priv_view_users_page(FILE *fout,
   if (!users)
     return new_server_html_err_internal_error(fout, phr, 1,
                                               "XML parsing failed");
+
+  if (opcaps_check(phr->caps, OPCAP_GET_USER) >= 0) details_allowed = 1;
 
   l10n_setlocale(phr->locale_id);
   new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
@@ -3115,7 +3151,14 @@ priv_view_users_page(FILE *fout,
 
     fprintf(fout, "<tr%s>", form_row_attrs[row ^= 1]);
     fprintf(fout, "<td>%d</td><td>%d</td>", serial++, uid);
-    fprintf(fout, "<td>%s</td>", ARMOR(u->login));
+    if (details_allowed) {
+      fprintf(fout, "<td>%s%s</a></td>",
+              new_serve_aref(bb, sizeof(bb), phr,
+                             NEW_SRV_ACTION_VIEW_USER_INFO, "user_id=%d", uid),
+              ARMOR(u->login));
+    } else {
+      fprintf(fout, "<td>%s</td>", ARMOR(u->login));
+    }
     if (u->i.name && *u->i.name) {
       fprintf(fout, "<td>%s</td>", ARMOR(u->i.name));
     } else {
@@ -3894,6 +3937,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_PASSWORDS_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_VIEW_CNTS_PWDS] = priv_view_passwords,
   [NEW_SRV_ACTION_VIEW_REG_PWDS] = priv_view_passwords,
+  [NEW_SRV_ACTION_VIEW_USER_INFO] = priv_user_detail_page,
 };
 
 static void
@@ -4617,6 +4661,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_PASSWORDS_2] = priv_generic_operation,
   [NEW_SRV_ACTION_VIEW_CNTS_PWDS] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_REG_PWDS] = priv_generic_page,
+  [NEW_SRV_ACTION_VIEW_USER_INFO] = priv_generic_page,
 };
 
 static void

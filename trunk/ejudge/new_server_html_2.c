@@ -39,6 +39,7 @@
 #include "full_archive.h"
 #include "teamdb.h"
 #include "userlist.h"
+#include "team_extra.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -1960,6 +1961,283 @@ new_serve_write_passwords(FILE *fout, FILE *log_f,
     fprintf(fout, "</tr>");
   }
   fprintf(fout, "</table>\n");
+
+  html_armor_free(&ab);
+  return 0;
+}
+
+int
+new_serve_user_info_page(FILE *fout, FILE *log_f,
+                         struct http_request_info *phr,
+                         const struct contest_desc *cnts,
+                         struct contest_extra *extra,
+                         int view_user_id)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  struct teamdb_export u_info;
+  const struct team_extra *u_extra = 0;
+  const struct team_warning *cur_warn = 0;
+  int flags, pages_total;
+  int clars_num = 0, clars_total = 0;
+  int runs_num = 0, runs_total = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *nbsp2 = "<td>&nbsp;</td><td>&nbsp;</td>";
+  const unsigned char *s;
+  const struct userlist_user *u = 0;
+  const struct userlist_contest *uc = 0;
+  unsigned char bb[1024];
+  int allowed_edit = 0, needed_cap = 0, init_value, i;
+
+  teamdb_export_team(cs->teamdb_state, view_user_id, &u_info);
+  u_extra = team_extra_get_entry(cs->team_extra_state, view_user_id);
+  run_get_team_usage(cs->runlog_state, view_user_id, &runs_num, &runs_total);
+  clar_get_team_usage(cs->clarlog_state,view_user_id, &clars_num, &clars_total);
+  pages_total = run_get_total_pages(cs->runlog_state, view_user_id);
+  flags = teamdb_get_flags(cs->teamdb_state, view_user_id);
+  u = u_info.user;
+  if (u) uc = userlist_get_user_contest(u, phr->contest_id);
+
+  // table has 4 columns
+  fprintf(fout, "<table>\n");
+
+  // user id
+  fprintf(fout, "<tr><td>%s:</td><td>%d</td>%s</tr>\n",
+          _("User Id"), view_user_id, nbsp2);
+
+  // user login
+  fprintf(fout, "<tr><td>%s:</td><td><tt>%s</tt></td>%s</tr>\n",
+          _("User Login"), ARMOR(u_info.login), nbsp2);
+
+  // user name
+  if (u_info.name && *u_info.name) {
+    s = ARMOR(u_info.name);
+  } else {
+    s = _("<i>Not set</i>");
+  }
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
+          _("User Name"), s, nbsp2);
+
+  // contest registration time
+  if (uc && uc->date > 0) {
+    s = xml_unparse_date(uc->date);
+  } else {
+    s = "&nbsp;";
+  }
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
+          _("Registration time"), s, nbsp2);
+  // last login time
+  if (u && u->i.last_login_time > 0) {
+    s = xml_unparse_date(u->i.last_login_time);
+  } else {
+    s = "&nbsp;";
+  }
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
+          _("Last login time"), s, nbsp2);
+  if (opcaps_check(phr->caps, OPCAP_GENERATE_TEAM_PASSWORDS) >= 0) {
+  // registration password (if available)
+    bb[0] = 0;
+    if (u && !u->passwd) {
+      snprintf(bb, sizeof(bb), "<i>%s</i>", _("Not set"));
+    } else if (u && u->passwd_method != USERLIST_PWD_PLAIN) {
+      snprintf(bb, sizeof(bb), "<i>%s</i>", _("Changed by user"));
+    } else if (u) {
+      snprintf(bb, sizeof(bb), "<tt>%s</tt>", ARMOR(u->passwd));
+    }
+    if (bb[0]) {
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
+              _("Registration password"), bb, nbsp2);
+    }
+  // contest password (if enabled and available)
+    if (!cnts->disable_team_password) {
+      bb[0] = 0;
+      if (u && !u->i.team_passwd) {
+        snprintf(bb, sizeof(bb), "<i>%s</i>", _("Not set"));
+      } else if (u && u->i.team_passwd_method != USERLIST_PWD_PLAIN) {
+        snprintf(bb, sizeof(bb), "<i>%s</i>", _("Changed by user"));
+      } else if (u) {
+        snprintf(bb, sizeof(bb), "<tt>%s</tt>", ARMOR(u->i.team_passwd));
+      }
+      if (bb[0]) {
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
+                _("Contest password"), bb, nbsp2);
+      }
+    }
+  }
+
+  fprintf(fout,"<tr><td>%s:</td><td>%s</td>%s</tr>\n",
+          _("Privileged?"),
+          (u && u->is_privileged)? _("Yes") : _("No"),
+          nbsp2);
+
+  // invisible, locked, banned status and change buttons
+  // to make invisible EDIT_REG is enough for all users
+  // to ban or lock DELETE_PRIV_REG required for privileged users
+  allowed_edit = 0;
+  if (opcaps_check(phr->caps, OPCAP_EDIT_REG) >= 0) allowed_edit = 1;
+  if (allowed_edit) {
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(fout, "user_id", "%d", view_user_id);
+  }
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
+          _("Invisible?"), (flags & TEAM_INVISIBLE)?_("Yes"):_("No"));
+  if(allowed_edit) {
+    fprintf(fout, "<td>%s</td>",
+            new_serve_submit_button(bb, sizeof(bb), 0,
+                                    NEW_SRV_ACTION_TOGGLE_VISIBILITY,
+                                    (flags & TEAM_INVISIBLE)?_("Make visible"):_("Make invisible")));
+  } else {
+    fprintf(fout, "<td>&nbsp;</td>");
+  }
+  fprintf(fout, "</tr>\n");
+  if (allowed_edit) {
+    fprintf(fout, "</form>");
+  }
+
+  allowed_edit = 0;
+  if (u) {
+    if (u->is_privileged) {
+      if ((flags & TEAM_BANNED)) needed_cap = OPCAP_PRIV_CREATE_REG;
+      else needed_cap = OPCAP_PRIV_DELETE_REG;
+    } else {
+      if ((flags & TEAM_BANNED)) needed_cap = OPCAP_CREATE_REG;
+      else needed_cap = OPCAP_DELETE_REG;
+    }
+    if (opcaps_check(phr->caps, needed_cap) >= 0) allowed_edit = 1;
+  }
+  if (allowed_edit) {
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(fout, "user_id", "%d", view_user_id);
+  }
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
+          _("Banned?"), (flags & TEAM_BANNED)?_("Yes"):_("No"));
+  if(allowed_edit) {
+    fprintf(fout, "<td>%s</td>",
+            new_serve_submit_button(bb, sizeof(bb), 0,
+                                    NEW_SRV_ACTION_TOGGLE_BAN,
+                                    (flags & TEAM_BANNED)?_("Remove ban"):_("Ban")));
+  } else {
+    fprintf(fout, "<td>&nbsp;</td>");
+  }
+  fprintf(fout, "</tr>\n");
+  if (allowed_edit) {
+    fprintf(fout, "</form>");
+  }
+
+  allowed_edit = 0;
+  if (u) {
+    if (u->is_privileged) {
+      if ((flags & TEAM_LOCKED)) needed_cap = OPCAP_PRIV_CREATE_REG;
+      else needed_cap = OPCAP_PRIV_DELETE_REG;
+    } else {
+      if ((flags & TEAM_LOCKED)) needed_cap = OPCAP_CREATE_REG;
+      else needed_cap = OPCAP_DELETE_REG;
+    }
+    if (opcaps_check(phr->caps, needed_cap) >= 0) allowed_edit = 1;
+  }
+  if (allowed_edit) {
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(fout, "user_id", "%d", view_user_id);
+  }
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
+          _("Locked?"), (flags & TEAM_LOCKED)?_("Yes"):_("No"));
+  if(allowed_edit) {
+    fprintf(fout, "<td>%s</td>",
+            new_serve_submit_button(bb, sizeof(bb), 0,
+                                    NEW_SRV_ACTION_TOGGLE_LOCK,
+                                    (flags & TEAM_LOCKED)?_("Unlock"):_("Lock")));
+  } else {
+    fprintf(fout, "<td>&nbsp;</td>");
+  }
+  fprintf(fout, "</tr>\n");
+  if (allowed_edit) {
+    fprintf(fout, "</form>");
+  }
+
+  fprintf(fout,"<tr><td>%s:</td><td>%d</td>%s</tr>\n",
+          _("Number of Runs"), runs_num, nbsp2);
+  fprintf(fout,"<tr><td>%s:</td><td>%zu</td>%s</tr>\n",
+          _("Total size of Runs"), runs_total, nbsp2);
+  fprintf(fout,"<tr><td>%s:</td><td>%d</td>%s</tr>\n",
+          _("Number of Clars"), clars_num, nbsp2);
+  fprintf(fout,"<tr><td>%s:</td><td>%zu</td>%s</tr>\n",
+          _("Total size of Clars"), clars_total, nbsp2);
+  fprintf(fout,"<tr><td>%s:</td><td>%zu</td>%s</tr>\n",
+          _("Number of printed pages"), pages_total, nbsp2);
+
+  if (global->contestant_status_num > 0) {
+    // contestant status is editable when OPCAP_EDIT_REG is set
+    allowed_edit = 0;
+    if (opcaps_check(phr->caps, OPCAP_EDIT_REG) >= 0) allowed_edit = 1;
+    if (allowed_edit) {
+      html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+      html_hidden(fout, "user_id", "%d", view_user_id);
+    }
+    fprintf(fout, "<tr><td>%s:</td><td>", _("Status"));
+    init_value = 0;
+    if (!u_extra) {
+      fprintf(fout, "N/A");
+    } else if (u_extra->status < 0
+               || u_extra->status >= global->contestant_status_num) {
+      fprintf(fout, "%d - ???", u_extra->status);
+    } else {
+      fprintf(fout, "%d - %s", u_extra->status,
+              global->contestant_status_legend[u_extra->status]);
+      init_value = u_extra->status;
+    }
+    fprintf(fout, "</td>");
+    if (allowed_edit) {
+      fprintf(fout, "<td><select name=\"status\">\n");
+      for (i = 0; i < global->contestant_status_num; i++) {
+        s = "";
+        if (i == init_value) s = " selected=\"1\"";
+        fprintf(fout, "<option value=\"%d\"%s>%d - %s</option>\n",
+                i, s, i, global->contestant_status_legend[i]);
+      }
+      fprintf(fout, "</select></td>\n");
+      fprintf(fout, "<td>%s</td>\n", BUTTON(NEW_SRV_ACTION_USER_CHANGE_STATUS));
+    } else {
+      fprintf(fout, "%s", nbsp2);
+    }
+    fprintf(fout, "</tr>\n");
+    if (allowed_edit) {
+      fprintf(fout, "</form>");
+    }
+  }
+
+  i = 0;
+  if (u_extra) i = u_extra->warn_u;
+  fprintf(fout,"<tr><td>%s:</td><td>%d</td>%s</tr>\n",
+          _("Number of warnings"), i, nbsp2);
+
+  fprintf(fout, "</table>\n");
+
+  if (!u_extra || !u_extra->warn_u) {
+    fprintf(fout, "<h2>%s</h2>\n", _("No warnings"));
+  } else {
+    fprintf(fout, "<h2>%s</h2>\n", _("Warnings"));
+    for (i = 0; i < u_extra->warn_u; i++) {
+      if (!(cur_warn = u_extra->warns[i])) continue;
+      fprintf(fout, _("<h3>Warning %d: issued: %s, issued by: %s (%d), issued from: %s</h3>"), i + 1, xml_unparse_date(cur_warn->date), teamdb_get_login(cs->teamdb_state, cur_warn->issuer_id), cur_warn->issuer_id, xml_unparse_ip(cur_warn->issuer_ip));
+      fprintf(fout, "<p>%s:\n<pre>%s</pre>\n", _("Warning text for the user"),
+              ARMOR(cur_warn->text));
+      fprintf(fout, "<p>%s:\n<pre>%s</pre>\n", _("Judge's comment"),
+              ARMOR(cur_warn->comment));
+    }
+  }
+
+  if (opcaps_check(phr->caps, OPCAP_EDIT_REG) >= 0) {
+    fprintf(fout, "<h2>%s</h3>\n", _("Issue a warning"));
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(fout, "user_id", "%d", view_user_id);
+    fprintf(fout, "<p>%s:<br>\n",
+            _("Warning explanation for the user (mandatory)"));
+    fprintf(fout, "<p><textarea name=\"warn_text\" rows=\"5\" cols=\"60\"></textarea></p>\n");
+    fprintf(fout, "<p>%s:<br>\n", _("Comment for other judges (optional)"));
+    fprintf(fout, "<p><textarea name=\"warn_comment\" rows=\"5\" cols=\"60\"></textarea></p>\n");
+    fprintf(fout, "<p>%s</p>\n", BUTTON(NEW_SRV_ACTION_ISSUE_WARNING));
+    fprintf(fout, "</form>\n");
+  }
 
   html_armor_free(&ab);
   return 0;

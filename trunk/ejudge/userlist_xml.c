@@ -1538,8 +1538,8 @@ userlist_real_unparse_user(const struct userlist_user *p, FILE *f, int mode, int
     unparse_bool_attr(f, USERLIST_A_SIMPLE_REGISTRATION,p->simple_registration);
 
     /* cnts_read_only is contest-specific */
-    unparse_bool_attr(f, USERLIST_A_CNTS_READ_ONLY, ui->cnts_read_only);
   }
+  unparse_bool_attr(f, USERLIST_A_CNTS_READ_ONLY, ui->cnts_read_only);
   if (mode == USERLIST_MODE_ALL) {
     unparse_date_attr(f, USERLIST_A_REGISTERED, p->registration_time);
     unparse_date_attr(f, USERLIST_A_LAST_LOGIN, p->last_login_time);
@@ -1553,9 +1553,11 @@ userlist_real_unparse_user(const struct userlist_user *p, FILE *f, int mode, int
     /* last_change_time is contest-specific */
     unparse_date_attr(f, USERLIST_A_INFO_CREATE, ui->create_time);
     unparse_date_attr(f, USERLIST_A_LAST_INFO_CHANGE, ui->last_change_time);
-    unparse_date_attr(f, USERLIST_A_CNTS_LAST_LOGIN, ui->last_login_time);
     /* last_pwdchange_time is contest-specific */
     unparse_date_attr(f, USERLIST_A_LAST_INFO_PWDCHANGE, ui->last_pwdchange_time);
+  }
+  if (mode == USERLIST_MODE_ALL || mode == USERLIST_MODE_STAND) {
+    unparse_date_attr(f, USERLIST_A_CNTS_LAST_LOGIN, ui->last_login_time);
   }
   fputs(">\n", f);
 

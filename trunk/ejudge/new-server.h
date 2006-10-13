@@ -215,6 +215,12 @@ enum
   NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_2,
   NEW_SRV_ACTION_VIEW_CNTS_PWDS,
   NEW_SRV_ACTION_VIEW_REG_PWDS,
+  NEW_SRV_ACTION_TOGGLE_VISIBILITY,
+  NEW_SRV_ACTION_TOGGLE_BAN,
+  NEW_SRV_ACTION_TOGGLE_LOCK,
+  NEW_SRV_ACTION_USER_CHANGE_STATUS,
+  NEW_SRV_ACTION_VIEW_USER_INFO,
+  NEW_SRV_ACTION_ISSUE_WARNING,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -334,6 +340,13 @@ new_serve_write_passwords(FILE *fout, FILE *log_f,
                           struct http_request_info *phr,
                           const struct contest_desc *cnts,
                           struct contest_extra *extra);
+
+int
+new_serve_user_info_page(FILE *fout, FILE *log_f,
+                         struct http_request_info *phr,
+                         const struct contest_desc *cnts,
+                         struct contest_extra *extra,
+                         int view_user_id);
 
 extern const unsigned char * const new_serve_submit_button_labels[];
 extern const int new_serve_priv_next_state[];
