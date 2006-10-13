@@ -1922,12 +1922,13 @@ new_serve_write_passwords(FILE *fout, FILE *log_f,
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct teamdb_export td;
 
-  fprintf(fout, "<table>\n"
+  fprintf(fout, "<table border=\"1\">\n"
           "<tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th></tr>",
           "NN", _("User Id"), _("User login"), _("User name"), _("Flags"),
           _("Password"), _("Location"));
   max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
   for (i = 1; i <= max_user_id; i++) {
+    if (!teamdb_lookup(cs->teamdb_state, i)) continue;
     if (teamdb_export_team(cs->teamdb_state, i, &td) < 0) continue;
     if (td.flags) continue;
     if (!td.user) continue;
