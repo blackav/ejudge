@@ -1564,13 +1564,14 @@ userlist_real_unparse_user(const struct userlist_user *p, FILE *f, int mode, int
              attr_map[USERLIST_A_PUBLIC], xml_unparse_bool(p->show_login));
     unparse_attributed_elem(f, USERLIST_T_LOGIN, p->login, attr_str, "    ");
   }
-  if (p->passwd && mode == USERLIST_MODE_ALL) {
+  if (p->passwd && (mode == USERLIST_MODE_ALL || mode == USERLIST_MODE_STAND)) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
              attr_map[USERLIST_A_METHOD],
              unparse_passwd_method(p->passwd_method));
     unparse_attributed_elem(f, USERLIST_T_PASSWORD, p->passwd,attr_str, "    ");
   }
-  if (ui->team_passwd && mode == USERLIST_MODE_ALL) {
+  if (ui->team_passwd
+      && (mode == USERLIST_MODE_ALL || mode == USERLIST_MODE_STAND)) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
              attr_map[USERLIST_A_METHOD],
              unparse_passwd_method(ui->team_passwd_method));
