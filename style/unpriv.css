@@ -1,0 +1,211 @@
+/* $Id$ */
+
+body 
+{
+        font-family: "Arial","Lucida Grande","Verdana","Sans-Serif";
+        font-style: normal;
+        font-variant: normal;
+        font-weight: normal;
+        font-size: 12px;
+        color: rgb(0, 51, 102);
+        text-align: justify;
+}
+
+
+#container /*it's the big block which includes all others*/
+{
+        position:absolute; 
+        z-index:0;
+        width: 98%;
+        margin-left: 30px;        
+}
+
+#l11 /*it's block which contains a logo*/
+{
+        position: absolute;
+        left: 0px;
+        top: 30px;
+        width: 120px;
+        height: 120px;        
+        background-color: #FFFFFF;
+}
+#l12 /*it's the common block for the main slogan and menu lines*/
+{
+        position: absolute;
+        left: 0px;
+        top: 30px;
+        width: 100%;
+        height: 100px;
+        display: block;
+}
+
+#l13 /*it's the main block which will contain information about server, footer and between them the content of the page*/
+{
+        position:relative; 
+        z-index:0;
+        width: 100%;	
+        top: 200px;
+        left: 0px;
+}
+
+div.main_phrase /*the main phrase for the current page*/
+{
+        font-family: "Verdana", "Arial";
+        font-weight: 800;
+        font-size: 16px;
+        margin-top: 5px;
+        margin-bottom: 5px;
+        margin-left:130px;
+}
+
+div.user_actions /*top menu line*/
+{ 
+        background-color: rgb(102, 204, 255);
+        width: 100%;
+}
+	 
+div.white_empty_block /* white line*/
+{
+        width: 100%;
+}
+	 
+div.contest_actions /*bottom menu line*/
+{ 
+        background-color: rgb(102, 204, 255);
+        width: 100%;
+}
+
+
+div.user_action_item /*one item in the top menu line*/
+{
+        font-family: "Verdana","Arial";
+        font-size: 11px;
+        font-weight: 800;
+        text-align: center;
+        padding-left:10px;
+        padding-right:10px;
+}
+	 
+div.contest_actions_item /*one item in the bottom menu line*/
+{
+        font-family: "Verdana","Arial";
+        font-size: 11px;
+        font-weight: 800;
+        text-align: center;
+        padding-left:10px;
+        padding-right:10px;
+}
+	 
+select{ 
+        font-family: "Verdana","Arial";
+        font-weight: normal;
+        font-size: 9px;
+        padding: 0px 0px 0px 0px;
+}
+
+button
+{ 
+        font-family: "Verdana","Arial";
+        font-weight: normal;
+        font-size: 9px;    
+        padding: 0px 0px 0px 0px;
+}
+
+input
+{ 
+        font-family: "Verdana","Arial";
+        font-weight: normal;
+        font-size: 9px;    
+        padding: 0px 0px 0px 0px;
+}
+
+#footer /*copirights, etc...*/
+{
+        width: 750px;
+        padding: 10px 10px 10px 10px;
+}
+	 
+p.ejudge_copyright /* the just copyright */
+{
+        font-family: "Verdana","Arial";	 	
+        font-size: 10px;    
+}
+	 
+div.server_status_on /*server status block when the server is up*/
+{
+        background-color: Lime;
+        padding: 0px 10px 10px 10px;
+}
+
+div.server_status_off /*server status block when the server is down*/
+{
+        background-color: #696969;
+        padding: 0px 10px 10px 10px;
+}
+
+div.dotted
+{
+	border-style: dotted;
+	border-width: 1px;
+	padding: 0px 10px 10px 10px;
+	margin: 10px 10px 10px 10px;
+}
+
+div.big_string /*the header for some content section*/
+{
+        font-family: "Verdana","Arial";
+        font-weight: normal;
+        font-size: 14px;    
+        padding: 10px 2px 10px 2px;	
+}
+
+A.menu /*menu link should not be underlined*/
+{
+        color: #000000;
+        text-decoration: none;
+}
+
+A.menu:visited /*menu item should not change the color when visited*/
+{
+        color: #000000;
+}
+
+A.menu:hover /* menu link is highlighted when mouse is on*/
+{
+        background-color: #FFFFFF;
+}
+
+A /* common link should be underlined*/
+{
+        color: #000000;
+        text-decoration: underline;
+}
+
+A:visited /*common link should be marked if visited*/
+{
+        color: #696969;
+}
+
+table.menu /*menu table has no border*/
+{
+        border-style: none;
+        margin-left: 130px;
+}
+
+td.menu /*menu table item has no border*/
+{ 
+        border-style: none;
+}
+
+table /*common table has no border*/
+{
+        border-style: none;
+}
+
+td /* common table item has a thin solid border*/
+{
+        border: solid;
+        border-width: 1px;
+        border-color: #000000;
+        margin: 1px;
+}
