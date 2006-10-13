@@ -234,7 +234,6 @@ super_clnt/set_param.c 2773 0 171738
 super_clnt/simple_cmd.c 2773 0 134731
 userlist_clnt/admin_process.c 2188 0 186827
 userlist_clnt/change_registration.c 2584 0 141834
-userlist_clnt/clear_team_passwords.c 1030 0 120689
 userlist_clnt/close.c 1553 0 75893
 userlist_clnt/delete_field.c 2583 0 127091
 userlist_clnt/do_pass_fd.c 2770 0 164966
@@ -800,7 +799,6 @@ userlist_clnt/private.h 3345 0 91709
 userlist_clnt/admin_process.c 3345 0 187150
 userlist_clnt/bytes_available.c 3345 0 91857
 userlist_clnt/change_registration.c 3345 0 142189
-userlist_clnt/clear_team_passwords.c 3345 0 121294
 userlist_clnt/create_member.c 3345 0 135229
 userlist_clnt/create_user.c 3345 0 148104
 userlist_clnt/delete_cookie.c 3345 0 127381
@@ -1300,3 +1298,17 @@ team.c 3508 0 3992943
 users.c 3508 0 1451919
 new_server_html.c 3508 0 18225817
 new_server_html_2.c 3508 0 5000954
+userlist_clnt/cnts_passwd_op.c 3510 0 120662
+userlist_clnt/cnts_passwd_op.c 3511 0 119917
+new-server.h 3514 0 859171
+serve_state.h 3514 0 782547
+userlist_clnt.h 3514 0 833387
+new_server_proto.h 3514 0 369058
+master.c 3514 0 7172689
+serve.c 3514 0 11704583
+userlist-server.c 3514 0 18467351
+new_server_html.c 3514 0 18677794
+new_server_html_2.c 3514 0 5147860
+new_server_proto.c 3514 0 733077
+new_server_tables.c 3514 0 779504
+serve_2.c 3514 0 5319188
