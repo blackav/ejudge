@@ -1952,6 +1952,34 @@ serve_rejudge_all(serve_state_t state,
   }
 }
 
+void
+serve_reset_contest(serve_state_t state)
+{
+  run_reset(state->runlog_state, state->global->contest_time,
+            state->global->contest_finish_time_d);
+  run_set_duration(state->runlog_state,
+                   state->global->contest_time);
+  clar_reset(state->clarlog_state);
+
+  /* clear all submissions and clarifications */
+  if (state->global->clar_archive_dir[0])
+    clear_directory(state->global->clar_archive_dir);
+  if (state->global->xml_report_archive_dir[0])
+    clear_directory(state->global->xml_report_archive_dir);
+  if (state->global->report_archive_dir[0])
+    clear_directory(state->global->report_archive_dir);
+  if (state->global->run_archive_dir[0])
+    clear_directory(state->global->run_archive_dir);
+  if (state->global->team_report_archive_dir[0])
+    clear_directory(state->global->team_report_archive_dir);
+  if (state->global->full_archive_dir[0])
+    clear_directory(state->global->full_archive_dir);
+  if (state->global->audit_log_dir[0])
+    clear_directory(state->global->audit_log_dir);
+  if (state->global->team_extra_dir[0])
+    clear_directory(state->global->team_extra_dir);
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

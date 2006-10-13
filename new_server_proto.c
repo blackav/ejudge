@@ -117,6 +117,8 @@ static const unsigned char * const new_serve_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_OUTPUT_ERROR] = __("Output error"),
   [NEW_SRV_ERR_TEST_UNAVAILABLE] = __("Test file is not available"),
   [NEW_SRV_ERR_INV_VARIANT] = __("Invalid variant"),
+  [NEW_SRV_ERR_PWD_GENERATION_FAILED] = __("Password generation failed: %s"),
+  [NEW_SRV_ERR_TEAM_PWD_DISABLED] = __("Contest passwords are disabled"),
 };
 
 const unsigned char *

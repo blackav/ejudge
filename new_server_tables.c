@@ -118,6 +118,11 @@ const unsigned char * const new_serve_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_REJUDGE_SUSPENDED_2] = __("Judge suspended runs!"),
   [NEW_SRV_ACTION_REJUDGE_ALL_2] = __("Rejudge all!!!"),
   [NEW_SRV_ACTION_PRINT_RUN] = __("Print"),
+  [NEW_SRV_ACTION_UPDATE_STANDINGS_2] = __("Update standings!"),
+  [NEW_SRV_ACTION_RESET_2] = __("Reset the contest!!!"),
+  [NEW_SRV_ACTION_GENERATE_PASSWORDS_2] = __("Generate random registration passwords!"),
+  [NEW_SRV_ACTION_CLEAR_PASSWORDS_2] = __("Clear contest passwords!"),
+  [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_2] = __("Generate random contest passwords!"),
 };
 
 const int new_serve_priv_next_state[NEW_SRV_ACTION_LAST] =

@@ -5201,6 +5201,125 @@ cmd_generate_register_passwords(struct client_state *p, int pkt_len,
   send_reply(p, ULS_OK);
 }
 
+/* quiet password regeneration */
+static void
+cmd_generate_register_passwords_2(struct client_state *p, int pkt_len,
+                                  struct userlist_pk_map_contest *data)
+{
+  const struct userlist_user *u;
+  const struct userlist_contest *c;
+  unsigned char buf[16];
+  const struct userlist_user_info *ui;
+  ptr_iterator_t iter;
+  const struct contest_desc *cnts;
+  int errcode;
+  unsigned char logbuf[1024];
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "GENERATE_REGISTER_PASSWORDS_2: %d, %d",
+           p->user_id, data->contest_id);
+
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (p->user_id < 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+  if (is_db_capable(p, OPCAP_GENERATE_TEAM_PASSWORDS, logbuf) < 0)
+    return;
+
+  for (iter = default_get_standings_list_iterator(data->contest_id);
+       iter->has_next(iter);
+       iter->next(iter)) {
+    u = (const struct userlist_user*) iter->get(iter);
+    ui = userlist_get_user_info(u, data->contest_id);
+    if (!(c = userlist_get_user_contest(u, data->contest_id))) continue;
+
+    // do not change password for privileged users
+    if (is_privileged_user(u) >= 0) continue;
+
+    // also do not change password for invisible, banned or locked users
+    if ((c->flags & USERLIST_UC_ALL)) continue;
+
+    default_remove_user_cookies(u->id);
+    memset(buf, 0, sizeof(buf));
+    generate_random_password(8, buf);
+    default_set_reg_passwd(u->id, USERLIST_PWD_PLAIN, buf, cur_time);
+  }
+  update_userlist_table(data->contest_id);
+  info("%s -> OK", logbuf);
+  send_reply(p, ULS_OK);
+}
+
+/* quiet password regeneration */
+static void
+cmd_generate_team_passwords_2(struct client_state *p, int pkt_len,
+                              struct userlist_pk_map_contest *data)
+{
+  const struct userlist_user *u;
+  const struct userlist_contest *c;
+  unsigned char buf[16];
+  const struct userlist_user_info *ui;
+  ptr_iterator_t iter;
+  const struct contest_desc *cnts;
+  int errcode;
+  unsigned char logbuf[1024];
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "GENERATE_TEAM_PASSWORDS_2: %d, %d",
+           p->user_id, data->contest_id);
+
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (p->user_id < 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+  if (is_cnts_capable(p, cnts, OPCAP_GENERATE_TEAM_PASSWORDS, logbuf) < 0)
+    return;
+
+  for (iter = default_get_standings_list_iterator(data->contest_id);
+       iter->has_next(iter);
+       iter->next(iter)) {
+    u = (const struct userlist_user*) iter->get(iter);
+    ui = userlist_get_user_info(u, data->contest_id);
+    if (!(c = userlist_get_user_contest(u, data->contest_id))) continue;
+
+    // do not change password for privileged users
+    if (is_privileged_user(u) >= 0) continue;
+
+    // also do not change password for invisible, banned or locked users
+    if ((c->flags & USERLIST_UC_ALL)) continue;
+
+    default_remove_user_cookies(u->id);
+    memset(buf, 0, sizeof(buf));
+    generate_random_password(8, buf);
+    default_set_team_passwd(u->id, data->contest_id, USERLIST_PWD_PLAIN,
+                            buf, cur_time, NULL);
+  }
+  update_userlist_table(data->contest_id);
+  info("%s -> OK", logbuf);
+  send_reply(p, ULS_OK);
+}
+
 static void
 do_generate_team_passwd(int contest_id, FILE *log)
 {
@@ -6739,6 +6858,8 @@ static void (*cmd_table[])() =
   [ULS_SET_COOKIE_LOCALE]       cmd_set_cookie,
   [ULS_PRIV_SET_REG_PASSWD]     cmd_priv_set_passwd,
   [ULS_PRIV_SET_TEAM_PASSWD]    cmd_priv_set_passwd,
+  [ULS_GENERATE_TEAM_PASSWORDS_2] cmd_generate_team_passwords_2,
+  [ULS_GENERATE_PASSWORDS_2]    cmd_generate_register_passwords_2,
 
   [ULS_LAST_CMD] 0
 };

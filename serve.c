@@ -2908,29 +2908,7 @@ cmd_priv_command_0(struct client_state *p, int len,
     }
 
     /* FIXME: we need to reset all the components (compile, serve) as well */
-    /* reset run log */
-    run_reset(serve_state.runlog_state, serve_state.global->contest_time,
-              serve_state.global->contest_finish_time_d);
-    run_set_duration(serve_state.runlog_state,
-                     serve_state.global->contest_time);
-    clar_reset(serve_state.clarlog_state);
-    /* clear all submissions and clarifications */
-    if (serve_state.global->clar_archive_dir[0])
-      clear_directory(serve_state.global->clar_archive_dir);
-    if (serve_state.global->xml_report_archive_dir[0])
-      clear_directory(serve_state.global->xml_report_archive_dir);
-    if (serve_state.global->report_archive_dir[0])
-      clear_directory(serve_state.global->report_archive_dir);
-    if (serve_state.global->run_archive_dir[0])
-      clear_directory(serve_state.global->run_archive_dir);
-    if (serve_state.global->team_report_archive_dir[0])
-      clear_directory(serve_state.global->team_report_archive_dir);
-    if (serve_state.global->full_archive_dir[0])
-      clear_directory(serve_state.global->full_archive_dir);
-    if (serve_state.global->audit_log_dir[0])
-      clear_directory(serve_state.global->audit_log_dir);
-    if (serve_state.global->team_extra_dir[0])
-      clear_directory(serve_state.global->team_extra_dir);
+    serve_reset_contest(&serve_state);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_START:
