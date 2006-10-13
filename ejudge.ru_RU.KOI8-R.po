@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-13 11:51+0400\n"
-"PO-Revision-Date: 2006-10-13 11:52+0400\n"
+"POT-Creation-Date: 2006-10-14 01:47+0400\n"
+"PO-Revision-Date: 2006-10-14 01:50+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -47,6 +47,10 @@ msgstr "<font color=\"magenta\">Ожидает подтверждения</font>"
 
 msgid "<font color=\"red\">Rejected</font>"
 msgstr "<font color=\"red\">Отказано</font>"
+
+#, c-format
+msgid "<h3>Warning %d: issued: %s, issued by: %s (%d), issued from: %s</h3>"
+msgstr "<h3>Предупреждение %d: выдано: %s, пользователем: %s (%d), с: %s</h3>"
 
 #, c-format
 msgid "<hr><big><b>You have %d unread message(s)!</b></big>\n"
@@ -457,11 +461,17 @@ msgstr "Сменить пароль"
 msgid "Change result"
 msgstr "Изменить результат"
 
+msgid "Change status"
+msgstr "Изменить статус"
+
 msgid "Change the password"
 msgstr "Сменить пароль"
 
 msgid "Change!"
 msgstr "Изменить!"
+
+msgid "Changed by user"
+msgstr "Сменён пользователем"
 
 #, c-format
 msgid "Changing flags of user %d in contest %d failed: %s"
@@ -559,6 +569,9 @@ msgstr "Параметры командной строки"
 msgid "Comment"
 msgstr "Комментарий"
 
+msgid "Comment for other judges (optional)"
+msgstr "Комментарии для других судей (не обязательно)"
+
 msgid "Compare"
 msgstr "Сравнить"
 
@@ -633,6 +646,9 @@ msgstr "Название турнира"
 
 msgid "Contest not available"
 msgstr "Турнир недоступен"
+
+msgid "Contest password"
+msgstr "Турнирный пароль"
 
 msgid "Contest passwords"
 msgstr "Турнирные пароли"
@@ -713,6 +729,9 @@ msgstr "Подробная информация о пользователе (команде)"
 #, c-format
 msgid "Details about run %d, test %d"
 msgstr "Подробная информация о посылке %d, тесте %d"
+
+msgid "Details for user "
+msgstr "Подробная информация о пользователе "
 
 msgid "Disk read error (nonexistant file?)"
 msgstr "Ошибка чтения с диска (файл не существует?)"
@@ -1231,6 +1250,9 @@ msgstr "Неверный вариант"
 msgid "Invisible?"
 msgstr "Невидимый?"
 
+msgid "Issue a warning"
+msgstr "Выдать предупреждение"
+
 msgid "Issue warning"
 msgstr "Выдать предупреждение"
 
@@ -1246,6 +1268,9 @@ msgstr "Проверить отложенные посылки"
 msgid "Judge suspended runs!"
 msgstr "Проверить отложенные посылки!"
 
+msgid "Judge's comment"
+msgstr "Комментарий для судей"
+
 msgid "Judge's report"
 msgstr "Судейский протокол"
 
@@ -1257,6 +1282,9 @@ msgstr "Язык изменён"
 
 msgid "Last clar"
 msgstr "Последнее сообщение"
+
+msgid "Last login time"
+msgstr "Время последнего входа в турнир"
 
 msgid "Last run"
 msgstr "Последняя посылка"
@@ -1470,6 +1498,9 @@ msgstr "Запрос на сервер не выполнялся"
 
 msgid "No users registered for this contest"
 msgstr "На этот турнир никто не зарегистрировался"
+
+msgid "No warnings"
+msgstr "Предупреждений нет"
 
 msgid "No."
 msgstr "Нет."
@@ -1796,11 +1827,17 @@ msgstr "Регистрация не удалась: %s"
 msgid "Registration is successful"
 msgstr "Регистрация завершилась успешно"
 
+msgid "Registration password"
+msgstr "Регистрационный пароль"
+
 msgid "Registration passwords"
 msgstr "Регистрационные пароли"
 
 msgid "Registration rules"
 msgstr "Правила регистрации"
+
+msgid "Registration time"
+msgstr "Время регистрации на турнир"
 
 msgid "Rejudge all"
 msgstr "Пересудить всё"
@@ -2596,6 +2633,12 @@ msgstr "Окончание виртуального турнира"
 
 msgid "Warning"
 msgstr "Предупреждение"
+
+msgid "Warning explanation for the user (mandatory)"
+msgstr "Объяснение для участника (обязательно)"
+
+msgid "Warning text for the user"
+msgstr "Текст предупреждения для пользователя"
 
 msgid "Warnings"
 msgstr "Предупреждения"

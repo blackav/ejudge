@@ -123,6 +123,8 @@ const unsigned char * const new_serve_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_GENERATE_PASSWORDS_2] = __("Generate random registration passwords!"),
   [NEW_SRV_ACTION_CLEAR_PASSWORDS_2] = __("Clear contest passwords!"),
   [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_2] = __("Generate random contest passwords!"),
+  [NEW_SRV_ACTION_USER_CHANGE_STATUS] = __("Change status"),
+  [NEW_SRV_ACTION_ISSUE_WARNING] = __("Issue warning"),
 };
 
 const int new_serve_priv_next_state[NEW_SRV_ACTION_LAST] =
