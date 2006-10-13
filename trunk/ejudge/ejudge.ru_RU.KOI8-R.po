@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-12 15:02+0400\n"
-"PO-Revision-Date: 2006-10-12 15:02+0400\n"
+"POT-Creation-Date: 2006-10-13 11:51+0400\n"
+"PO-Revision-Date: 2006-10-13 11:52+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -516,6 +516,9 @@ msgstr "Сбросить флаг НЕВИДИМОСТИ"
 msgid "Clear LOCKED"
 msgstr "Сбросить флаг LOCKED"
 
+msgid "Clear contest passwords"
+msgstr "Сбросить турнирные пароли"
+
 msgid "Clear contest passwords!"
 msgstr "Сбросить турнирные пароли!"
 
@@ -630,6 +633,12 @@ msgstr "Название турнира"
 
 msgid "Contest not available"
 msgstr "Турнир недоступен"
+
+msgid "Contest passwords"
+msgstr "Турнирные пароли"
+
+msgid "Contest passwords are disabled"
+msgstr "Турнирные пароли отключены"
 
 msgid "Contest registrations"
 msgstr "Регистрация на турниры"
@@ -913,6 +922,18 @@ msgstr "Общая информация"
 
 msgid "General user information"
 msgstr "Общая информация об участнике"
+
+msgid "Generate random contest passwords"
+msgstr "Сгенерировать случайные турнирные пароли"
+
+msgid "Generate random contest passwords!"
+msgstr "Сгенерировать случайные турнирные пароли!"
+
+msgid "Generate random registration passwords"
+msgstr "Сгенерировать случайные регистрационные пароли"
+
+msgid "Generate random registration passwords!"
+msgstr "Сгенерировать случайные регистрационные пароли!"
 
 msgid "Good-bye"
 msgstr "До свидания"
@@ -1258,6 +1279,9 @@ msgstr "Идентификатор языка"
 msgid "Locale code"
 msgstr "Идентификатор языка"
 
+msgid "Location"
+msgstr "Размещение"
+
 msgid "Lock"
 msgstr "Закрыть"
 
@@ -1570,6 +1594,10 @@ msgid "Password changing failed due to the following reasons."
 msgstr "Изменение пароля не удалось по следующим причинам."
 
 #, c-format
+msgid "Password generation failed: %s"
+msgstr "Генерация паролей не удалась: %s"
+
+#, c-format
 msgid "Password update failed: %s"
 msgstr "Изменение пароля не удалось: %s"
 
@@ -1768,6 +1796,9 @@ msgstr "Регистрация не удалась: %s"
 msgid "Registration is successful"
 msgstr "Регистрация завершилась успешно"
 
+msgid "Registration passwords"
+msgstr "Регистрационные пароли"
+
 msgid "Registration rules"
 msgstr "Правила регистрации"
 
@@ -1881,8 +1912,14 @@ msgstr "Запасные участники"
 msgid "Reset filter"
 msgstr "Сбросить фильтр"
 
+msgid "Reset the contest"
+msgstr "Сбросить турнир"
+
 msgid "Reset the contest!"
 msgstr "Сбросить турнир!"
+
+msgid "Reset the contest!!!"
+msgstr "Сбросить турнир!!!"
 
 msgid "Result"
 msgstr "Результат"
@@ -2409,6 +2446,12 @@ msgstr "Открыть"
 msgid "Update public standings"
 msgstr "Обновить публичную таблицу положения команд"
 
+msgid "Update standings!"
+msgstr "Обновить таблицу!"
+
+msgid "Update the public standings"
+msgstr "Обновить публичную таблицу положения команд"
+
 msgid "Upload judging protocol"
 msgstr "Установить протокол тестирования"
 
@@ -2491,11 +2534,17 @@ msgstr "Просмотр"
 msgid "View all"
 msgstr "Посмотреть всё"
 
+msgid "View contest passwords"
+msgstr "Просмотреть турнирные пароли"
+
 msgid "View last 15"
 msgstr "Смотреть последние 15"
 
 msgid "View privileged users"
 msgstr "Посмотреть список привилегированных пользователей"
+
+msgid "View registration passwords"
+msgstr "Просмотреть регистрационные пароли"
 
 msgid "View regular users"
 msgstr "Посмотреть список обычных пользователей"

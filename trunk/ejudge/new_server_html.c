@@ -34,8 +34,8 @@
     SRV_CMD_PRIV_REPLY,			OK
     SRV_CMD_SUSPEND,			OK
     SRV_CMD_RESUME,			OK
-    SRV_CMD_UPDATE_STAND,
-    SRV_CMD_RESET,
+    SRV_CMD_UPDATE_STAND,		OK
+    SRV_CMD_RESET,			OK
     SRV_CMD_START,			OK
     SRV_CMD_STOP,			OK
     SRV_CMD_REJUDGE_ALL,		OK
@@ -88,7 +88,7 @@
     SRV_CMD_VIEW_TEST_ERROR,		OK
     SRV_CMD_VIEW_TEST_CHECKER,		OK
     SRV_CMD_VIEW_TEST_INFO,		OK
-    SRV_CMD_VIEW_AUDIT_LOG,
+    SRV_CMD_VIEW_AUDIT_LOG,		OK
     SRV_CMD_DUMP_PROBLEMS,
     SRV_CMD_GET_CONTEST_TYPE,
     SRV_CMD_SUBMIT_RUN_2,
@@ -530,17 +530,18 @@ static unsigned char default_footer_template[] =
 "<hr>%R</body></html>\n";
 
 static unsigned char fancy_header[] =
-"<html><head><meta charset=\"%C\">"
-"<link rel=\"stylesheet\" href=\"/ejudge/unpriv.css\" type=\"text/css\">"
-"<title>%H</title></head>"
-"<body topmargin=\"0\" leftmargin=\"0\" bottommargin=\"0\" scroll=\"auto\" valign=\"top\">"
-"<div id=\"container\"><div id=\"left-block\">"
-"<img src=\"/ejudge/logo.gif\" align=\"left\" height=\"100\"></div>"
-"<div id=\"center-block\">"
-"<div class=\"main\">%H</div><div class=\"search_actions\">&nbsp;</div>\n";
+"<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
+"<html><head>\n<meta http-equiv=\"Content-type\" content=\"text/html; charset=%C\">\n"
+"<link rel=\"stylesheet\" href=\"/ejudge/unpriv.css\" type=\"text/css\">\n"
+"<link rel=\"shortcut icon\" type=image/x-icon href=\"/favicon.ico\">\n"
+"<title>%H</title></head>\n"
+"<body>"
+"<div id=\"container\"><div id=\"l12\">\n"
+"<div class=\"main_phrase\">%H</div>\n";
 static unsigned char fancy_footer[] =
-"</div>"
-"<div id=\"footer\">%R</div>"
+"</div>\n"
+"<div id=\"l11\"><img src=\"/ejudge/logo.gif\"></div>\n"
+"<div id=\"l13\"><div id=\"footer\">%R</div>\n"
 "</div>"
 "</BODY>"
 "</HTML>";
@@ -1896,10 +1897,66 @@ priv_contest_operation(FILE *fout,
     extra->last_access_time = 0;
     serve_send_run_quit(cs);
     break;
+
+  case NEW_SRV_ACTION_UPDATE_STANDINGS_2:
+    serve_update_standings_file(cs, cnts, 1);
+    break;
+
+  case NEW_SRV_ACTION_RESET_2:
+    serve_reset_contest(cs);
+    extra->last_access_time = 0;
+    serve_send_run_quit(cs);
+    break;
   }
 
  cleanup:
   return 0;
+}
+
+static int
+priv_password_operation(FILE *fout,
+                        FILE *log_f,
+                        struct http_request_info *phr,
+                        const struct contest_desc *cnts,
+                        struct contest_extra *extra)
+{
+  int retval = 0, r;
+
+  if (opcaps_check(phr->caps, OPCAP_GENERATE_TEAM_PASSWORDS) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  if (open_ul_connection(phr->fw_state) < 0) {
+    html_err_userlist_server_down(fout, phr, 0);
+    FAIL(1);
+  }
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_GENERATE_PASSWORDS_2:
+    if (cnts->disable_team_password) FAIL(NEW_SRV_ERR_TEAM_PWD_DISABLED);
+    r = userlist_clnt_cnts_passwd_op(ul_conn,
+                                     ULS_GENERATE_TEAM_PASSWORDS_2,
+                                     cnts->id);
+    break;
+  case NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_2:
+    r = userlist_clnt_cnts_passwd_op(ul_conn,
+                                     ULS_GENERATE_PASSWORDS_2,
+                                     cnts->id);
+    break;
+  case NEW_SRV_ACTION_CLEAR_PASSWORDS_2:
+    if (cnts->disable_team_password) FAIL(NEW_SRV_ERR_TEAM_PWD_DISABLED);
+    r = userlist_clnt_cnts_passwd_op(ul_conn,
+                                     ULS_CLEAR_TEAM_PASSWORDS,
+                                     cnts->id);
+    break;
+  }
+  if (r < 0) {
+    new_serve_error(log_f, NEW_SRV_ERR_PWD_UPDATE_FAILED,
+                    userlist_strerror(-r));
+    goto cleanup;
+  }
+
+ cleanup:
+  return retval;
 }
 
 static int
@@ -2832,6 +2889,11 @@ static const unsigned char * const confirmation_headers[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_REJUDGE_PROBLEM_1] = __("Rejudge problem"),
   [NEW_SRV_ACTION_REJUDGE_SUSPENDED_1] = __("Judge suspended runs"),
   [NEW_SRV_ACTION_REJUDGE_ALL_1] = __("Rejudge all runs"),
+  [NEW_SRV_ACTION_UPDATE_STANDINGS_1] = __("Update the public standings"),
+  [NEW_SRV_ACTION_RESET_1] = __("Reset the contest"),
+  [NEW_SRV_ACTION_GENERATE_PASSWORDS_1] = __("Generate random contest passwords"),
+  [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1] = __("Generate random registration passwords"),
+  [NEW_SRV_ACTION_CLEAR_PASSWORDS_1] = __("Clear contest passwords"),
 };
 
 static const int confirm_next_action[NEW_SRV_ACTION_LAST] =
@@ -2841,6 +2903,11 @@ static const int confirm_next_action[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_REJUDGE_PROBLEM_1] = NEW_SRV_ACTION_REJUDGE_PROBLEM_2,
   [NEW_SRV_ACTION_REJUDGE_SUSPENDED_1] = NEW_SRV_ACTION_REJUDGE_SUSPENDED_2,
   [NEW_SRV_ACTION_REJUDGE_ALL_1] = NEW_SRV_ACTION_REJUDGE_ALL_2,
+  [NEW_SRV_ACTION_UPDATE_STANDINGS_1] = NEW_SRV_ACTION_UPDATE_STANDINGS_2,
+  [NEW_SRV_ACTION_RESET_1] = NEW_SRV_ACTION_RESET_2,
+  [NEW_SRV_ACTION_GENERATE_PASSWORDS_1] = NEW_SRV_ACTION_GENERATE_PASSWORDS_2,
+  [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1] = NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_2,
+  [NEW_SRV_ACTION_CLEAR_PASSWORDS_1] = NEW_SRV_ACTION_CLEAR_PASSWORDS_2,
 };
 
 static int
@@ -3574,6 +3641,41 @@ priv_view_test(FILE *fout,
   return -1;
 }
 
+static int
+priv_view_passwords(FILE *fout,
+                    FILE *log_f,
+                    struct http_request_info *phr,
+                    const struct contest_desc *cnts,
+                    struct contest_extra *extra)
+{
+  int retval = 0;
+  const unsigned char *s = 0;
+
+  if (opcaps_check(phr->caps, OPCAP_GENERATE_TEAM_PASSWORDS) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (phr->action == NEW_SRV_ACTION_VIEW_CNTS_PWDS
+      && cnts->disable_team_password)
+    FAIL(NEW_SRV_ERR_TEAM_PWD_DISABLED);
+
+  l10n_setlocale(phr->locale_id);
+  if (phr->action == NEW_SRV_ACTION_VIEW_CNTS_PWDS) {
+    s = _("Contest passwords");
+  } else {
+    s = _("Registration passwords");
+  }
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   "%s [%s, %s]: %s", new_serve_unparse_role(phr->role),
+                   phr->name_arm, extra->contest_arm, s);
+
+  new_serve_write_passwords(fout, log_f, phr, cnts, extra);
+
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  return retval;
+}
+
 void
 unpriv_print_status(FILE *fout,
                     struct http_request_info *phr,
@@ -3760,6 +3862,11 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_REJUDGE_PROBLEM_2] = priv_rejudge_problem,
   [NEW_SRV_ACTION_REJUDGE_SUSPENDED_2] = priv_rejudge_all,
   [NEW_SRV_ACTION_REJUDGE_ALL_2] = priv_rejudge_all,
+  [NEW_SRV_ACTION_UPDATE_STANDINGS_2] = priv_contest_operation,
+  [NEW_SRV_ACTION_RESET_2] = priv_contest_operation,
+  [NEW_SRV_ACTION_GENERATE_PASSWORDS_2] = priv_password_operation,
+  [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_2] = priv_password_operation,
+  [NEW_SRV_ACTION_CLEAR_PASSWORDS_2] = priv_password_operation,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -3780,6 +3887,13 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_TEST_ERROR] = priv_view_test,
   [NEW_SRV_ACTION_VIEW_TEST_CHECKER] = priv_view_test,
   [NEW_SRV_ACTION_VIEW_AUDIT_LOG] = priv_view_audit_log,
+  [NEW_SRV_ACTION_UPDATE_STANDINGS_1] = priv_confirmation_page,
+  [NEW_SRV_ACTION_RESET_1] = priv_confirmation_page,
+  [NEW_SRV_ACTION_GENERATE_PASSWORDS_1] = priv_confirmation_page,
+  [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1] = priv_confirmation_page,
+  [NEW_SRV_ACTION_CLEAR_PASSWORDS_1] = priv_confirmation_page,
+  [NEW_SRV_ACTION_VIEW_CNTS_PWDS] = priv_view_passwords,
+  [NEW_SRV_ACTION_VIEW_REG_PWDS] = priv_view_passwords,
 };
 
 static void
@@ -3996,6 +4110,16 @@ priv_main_page(FILE *fout,
           new_serve_aref(hbuf, sizeof(hbuf), phr,
                          NEW_SRV_ACTION_STANDINGS, 0),
           _("View standings"));
+  fprintf(fout, "<li>%s%s</a></li>\n",
+          new_serve_aref(hbuf, sizeof(hbuf), phr,
+                         NEW_SRV_ACTION_VIEW_REG_PWDS, 0),
+          _("View registration passwords"));
+  if (!cnts->disable_team_password) {
+    fprintf(fout, "<li>%s%s</a></li>\n",
+            new_serve_aref(hbuf, sizeof(hbuf), phr,
+                           NEW_SRV_ACTION_VIEW_CNTS_PWDS, 0),
+            _("View contest passwords"));
+  }
   fprintf(fout, "</ul>\n");
 
   /* if role == ADMIN and capability CONTROL_CONTEST */
@@ -4481,6 +4605,18 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_TEST_ERROR] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_TEST_CHECKER] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_AUDIT_LOG] = priv_generic_page,
+  [NEW_SRV_ACTION_UPDATE_STANDINGS_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_UPDATE_STANDINGS_1] = priv_generic_page,
+  [NEW_SRV_ACTION_RESET_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_RESET_1] = priv_generic_page,
+  [NEW_SRV_ACTION_GENERATE_PASSWORDS_1] = priv_generic_page,
+  [NEW_SRV_ACTION_GENERATE_PASSWORDS_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1] = priv_generic_page,
+  [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_CLEAR_PASSWORDS_1] = priv_generic_page,
+  [NEW_SRV_ACTION_CLEAR_PASSWORDS_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_VIEW_CNTS_PWDS] = priv_generic_page,
+  [NEW_SRV_ACTION_VIEW_REG_PWDS] = priv_generic_page,
 };
 
 static void
@@ -4658,7 +4794,7 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
   const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
   time_t cur_time;
-  const unsigned char *s;
+  const unsigned char *s, *ss;
   unsigned char bb[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
@@ -4701,28 +4837,33 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
                    _("User login [%s]"), extra->contest_arm);
 
 
+  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>\n");
   html_start_form(fout, 1, phr->self_url, "");
-  fprintf(fout, "<div class=\"login_actions\">\n");
-  fprintf(fout, "<input type=\"hidden\" name=\"contest_id\" value=\"%d\">",
-          phr->contest_id);
-  fprintf(fout, "<input type=\"hidden\" name=\"role\" value=\"0\">");
-  fprintf(fout, "%s:&nbsp;<input type=\"text\" size=\"8\" name=\"login\"", _("login"));
-  if (ns_cgi_param(phr, "login", &s) > 0) {
-    fprintf(fout, " value=\"%s\"", ARMOR(s));
-  }
-  fprintf(fout, ">&nbsp;&nbsp;\n");
-  fprintf(fout, "%s:&nbsp;<input type=\"password\" size=\"8\" name=\"password\"", _("password"));
-  if (ns_cgi_param(phr, "password", &s) > 0) {
-    fprintf(fout, " value=\"%s\"", ARMOR(s));
-  }
-  fprintf(fout, ">&nbsp;&nbsp;\n");
-  fprintf(fout, "%s:&nbsp;", _("language"));
+  html_hidden(fout, "contest_id", "%d", phr->contest_id);
+  html_hidden(fout, "role", "%s", "0");
+
+  ss = 0;
+  if (ns_cgi_param(phr, "login", &s) > 0) ss = ARMOR(s);
+  if (!ss) ss = "";
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>\n", _("login"), html_input_text(bb, sizeof(bb), "login", 8, "%s", ss));
+
+  ss = 0;
+  if (ns_cgi_param(phr, "password", &s) > 0) ss = ARMOR(s);
+  if (!ss) ss = "";
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: <input type=\"password\" size=\"8\" name=\"password\" value=\"%s\"></div></td>\n", _("password"), ss);
+
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
+          _("language"));
   l10n_html_locale_select(fout, phr->locale_id);
-  fprintf(fout, "&nbsp;&nbsp;\n");
-  fprintf(fout, "%s\n",
-          new_serve_submit_button(bb, sizeof(bb), "submit", 0, _("Submit")));
-  fprintf(fout, "</form></div>\n");
-  fprintf(fout, "<div class=\"search_actions\">");
+  fprintf(fout, "</div></td>\n");
+
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>\n", new_serve_submit_button(bb, sizeof(bb), "submit", 0, _("Submit")));
+
+  fprintf(fout, "</tr></table></div>\n"
+          "<div class=\"white_empty_block\">&nbsp;</div>\n"
+          "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
+
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
   if (cnts && cnts->assign_logins && cnts->force_registration
       && cnts->register_url) {
     fprintf(fout,
@@ -4735,10 +4876,13 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
             cnts->register_url, phr->contest_id, phr->locale_id,
             _("Registration"));
   }
+  fprintf(fout, "</div></td>\n");
+
   /*
   fprintf(fout, "<div class=\"search_actions\"><a href=\"\">%s</a>&nbsp;&nbsp;<a href=\"\">%s</a></div>", _("Registration"), _("Forgot the password?"));
   */
-  fprintf(fout, "</div>\n");
+
+  fprintf(fout, "</tr></table></div>\n");
   html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);

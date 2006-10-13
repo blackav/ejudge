@@ -2078,9 +2078,10 @@ do_clear_team_passwords(void)
 {
   int r;
 
-  r = userlist_clnt_clear_team_passwords(userlist_conn, global->contest_id);
+  r = userlist_clnt_cnts_passwd_op(userlist_conn,
+                                   ULS_CLEAR_TEAM_PASSWORDS,
+                                   global->contest_id);
   operation_status_page(r<0?-1:0, userlist_strerror(-r), -1);
-
 }
 
 static void

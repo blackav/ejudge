@@ -208,6 +208,13 @@ enum
   NEW_SRV_ACTION_VIEW_TEST_ERROR,
   NEW_SRV_ACTION_VIEW_TEST_CHECKER,
   NEW_SRV_ACTION_VIEW_AUDIT_LOG,
+  NEW_SRV_ACTION_UPDATE_STANDINGS_2,
+  NEW_SRV_ACTION_RESET_2,
+  NEW_SRV_ACTION_GENERATE_PASSWORDS_2,
+  NEW_SRV_ACTION_CLEAR_PASSWORDS_2,
+  NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_2,
+  NEW_SRV_ACTION_VIEW_CNTS_PWDS,
+  NEW_SRV_ACTION_VIEW_REG_PWDS,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -322,6 +329,11 @@ new_serve_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
 int
 new_serve_write_audit_log(const serve_state_t state, FILE *f, int run_id);
 
+int
+new_serve_write_passwords(FILE *fout, FILE *log_f,
+                          struct http_request_info *phr,
+                          const struct contest_desc *cnts,
+                          struct contest_extra *extra);
 
 extern const unsigned char * const new_serve_submit_button_labels[];
 extern const int new_serve_priv_next_state[];

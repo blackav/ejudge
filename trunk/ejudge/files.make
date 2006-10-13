@@ -17,8 +17,8 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/admin_process.c\
  userlist_clnt/bytes_available.c\
  userlist_clnt/change_registration.c\
- userlist_clnt/clear_team_passwords.c\
  userlist_clnt/close.c\
+ userlist_clnt/cnts_passwd_op.c\
  userlist_clnt/create_member.c\
  userlist_clnt/create_user.c\
  userlist_clnt/delete_cookie.c\

@@ -37,6 +37,8 @@
 #include "digest_io.h"
 #include "testing_report_xml.h"
 #include "full_archive.h"
+#include "teamdb.h"
+#include "userlist.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -1906,6 +1908,60 @@ new_serve_write_audit_log(const serve_state_t state, FILE *f, int run_id)
  cleanup:
   xfree(audit_text);
   return retval;
+}
+
+int
+new_serve_write_passwords(FILE *fout, FILE *log_f,
+                          struct http_request_info *phr,
+                          const struct contest_desc *cnts,
+                          struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  const unsigned char *s;
+  int i, max_user_id, serial = 1;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct teamdb_export td;
+
+  fprintf(fout, "<table>\n"
+          "<tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th></tr>",
+          "NN", _("User Id"), _("User login"), _("User name"), _("Flags"),
+          _("Password"), _("Location"));
+  max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
+  for (i = 1; i <= max_user_id; i++) {
+    if (teamdb_export_team(cs->teamdb_state, i, &td) < 0) continue;
+    if (td.flags) continue;
+    if (!td.user) continue;
+    if (phr->action == NEW_SRV_ACTION_VIEW_CNTS_PWDS) {
+      if (td.user->i.team_passwd_method != USERLIST_PWD_PLAIN) continue;
+      s = td.user->i.team_passwd;
+    } else {
+      if (td.user->passwd_method != USERLIST_PWD_PLAIN) continue;
+      s = td.user->passwd;
+    }
+    fprintf(fout, "<tr><td>%d</td><td>%d</td><td><tt>%s</tt></td>",
+            serial++, i, ARMOR(td.login));
+    if (td.name && *td.name) {
+      fprintf(fout, "<td><tt>%s</tt></td>", ARMOR(td.name));
+    } else {
+      fprintf(fout, "<td><i>%s</i></td>", _("Not set"));
+    }
+    fprintf(fout, "<td>%s</td>", "&nbsp;"); /* FIXME: print flags */
+    if (s && *s) {
+      fprintf(fout, "<td><tt>%s</tt></td>", ARMOR(s));
+    } else {
+      fprintf(fout, "<td><i>%s</i></td>", _("Not set"));
+    }
+    if (td.user->i.location) {
+      fprintf(fout, "<td>%s</td>", ARMOR(s));
+    } else {
+      fprintf(fout, "<td><i>%s</i></td>", _("Not set"));
+    }
+    fprintf(fout, "</tr>");
+  }
+  fprintf(fout, "</table>\n");
+
+  html_armor_free(&ab);
+  return 0;
 }
 
 /*
