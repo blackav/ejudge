@@ -1315,3 +1315,8 @@ serve_2.c 3514 0 5319188
 new_server_html.c 3516 0 18680754
 userlist_xml.c 3516 0 4199327
 new_server_html_2.c 3518 0 5153570
+new-server.h 3520 0 892299
+new_server_html.c 3520 0 18798730
+new_server_html_2.c 3520 0 5949075
+new_server_tables.c 3520 0 788493
+userlist_xml.c 3520 0 4204367
