@@ -4875,6 +4875,8 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
             "<a href=\"%s?contest_id=%d&locale_id=%d\">%s</a>",
             cnts->register_url, phr->contest_id, phr->locale_id,
             _("Registration"));
+  } else {
+    fprintf(fout, "&nbsp;");
   }
   fprintf(fout, "</div></td>\n");
 
