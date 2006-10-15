@@ -3211,6 +3211,8 @@ static struct std_checker_info std_checkers[] =
   { "cmp_double_seq", "compare two sequences of doubles (EPS is required)" },
   { "cmp_long_double", "compare two long doubles (EPS is required)" },
   { "cmp_long_double_seq", "compare two sequences of long doubles (EPS is required)" },
+  { "cmp_sexpr", "compare two S-expressions" },
+  { "cmp_yesno", "compare YES/NO answers" },
   { 0, 0 },
 };
 static void
