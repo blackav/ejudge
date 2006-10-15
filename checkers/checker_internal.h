@@ -3,7 +3,7 @@
 
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -59,6 +59,28 @@ enum
   RUN_PRESENTATION_ERR = 4,
   RUN_WRONG_ANSWER_ERR = 5,
   RUN_CHECK_FAILED     = 6
+};
+
+/* S-expression types */
+enum { CHECKER_SEXPR_ATOM, CHECKER_SEXPR_PAIR };
+union checker_sexpr_elem;
+typedef union checker_sexpr_elem *checker_sexpr_t;
+struct checker_sexpr_pair
+{
+  int kind;
+  checker_sexpr_t head;
+  checker_sexpr_t tail;
+};
+struct checker_sexpr_atom
+{
+  int kind;
+  unsigned char *value;
+};
+union checker_sexpr_elem
+{
+  int kind;
+  struct checker_sexpr_atom a;
+  struct checker_sexpr_pair p;
 };
 
 extern FILE *f_in;
@@ -164,6 +186,9 @@ int  checker_read_corr_long_double(const CHECKER_char_t *, int, long double *);
 int checker_eq_double(double v1, double v2, double eps);
 int checker_eq_long_double(long double v1, long double v2, long double eps);
 int checker_eq_float(float v1, float v2, float eps);
+
+checker_sexpr_t checker_read_sexpr(int ind);
+int checker_eq_sexpr(checker_sexpr_t l_corr, checker_sexpr_t l_team);
 
 #ifdef __cplusplus
 }

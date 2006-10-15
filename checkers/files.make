@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2006 Alexander Chernov <cher@ispras.ru>
+# Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru>
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,6 +20,7 @@ CFILES=\
  eq_double.c\
  eq_float.c\
  eq_long_double.c\
+ eq_sexpr.c\
  in_eof.c\
  team_eof.c\
  corr_eof.c\
@@ -59,6 +60,7 @@ CFILES=\
  read_corr_unsigned_long_long.c\
  read_corr_double.c\
  read_corr_long_double.c\
+ read_sexpr.c\
  ok.c\
  fatal.c\
  fatal_cf.c\
@@ -88,4 +90,6 @@ CHKCFILES =\
  cmp_unsigned_long_long_seq.c\
  cmp_huge_int.c\
  cmp_file.c\
- cmp_file_nospace.c
+ cmp_file_nospace.c\
+ cmp_sexpr.c\
+ cmp_yesno.c
