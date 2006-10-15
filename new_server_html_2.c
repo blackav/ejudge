@@ -582,13 +582,14 @@ new_serve_write_priv_all_runs(FILE *f,
     */
   }
 
-  /*
-  fprintf(f, "<table><tr><td>");
-  fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), sid, self_url,
-                                 extra_args, "action=%d",
-                                 ACTION_NEW_RUN_FORM));
-  fprintf(f, "%s</a><td></tr></table>", _("Add new run"));
+  if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) >= 0
+      && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) {
+    fprintf(f, "<table><tr><td>%s%s</a></td></td></table>\n",
+            new_serve_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_NEW_RUN_FORM, 0),
+            _("Add new run"));
+  }
 
+  /*
   print_nav_buttons(state, f, 0, sid, self_url, hidden_vars, extra_args,
                     0, 0, 0, 0, 0, 0, 0);
   */
@@ -2238,6 +2239,88 @@ new_serve_user_info_page(FILE *fout, FILE *log_f,
     fprintf(fout, "<p>%s</p>\n", BUTTON(NEW_SRV_ACTION_ISSUE_WARNING));
     fprintf(fout, "</form>\n");
   }
+
+  html_armor_free(&ab);
+  return 0;
+}
+
+int
+new_serve_new_run_form(FILE *fout, FILE *log_f,
+                       struct http_request_info *phr,
+                       const struct contest_desc *cnts,
+                       struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  int i;
+  unsigned char bb[1024];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+  fprintf(fout, "<table>\n");
+
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+          _("User ID"), html_input_text(bb, sizeof(bb), "run_user_id", 10, 0));
+
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+          _("User login"),
+          html_input_text(bb, sizeof(bb), "run_user_login", 10, 0));
+
+  fprintf(fout, "<tr><td>%s:</td>", _("Problem"));
+  fprintf(fout, "<td><select name=\"prob_id\"><option value=\"\"></option>\n");
+  for (i = 1; i <= cs->max_prob; i++)
+    if (cs->probs[i]) {
+      fprintf(fout, "<option value=\"%d\">%s - %s</option>\n",
+              i, cs->probs[i]->short_name, ARMOR(cs->probs[i]->long_name));
+    }
+  fprintf(fout, "</select></td></tr>\n");
+
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Variant"),
+          html_input_text(bb, sizeof(bb), "variant", 10, 0));
+
+  fprintf(fout, "<tr><td>%s:</td>", _("Language"));
+  fprintf(fout, "<td><select name=\"language\"><option value=\"\"></option>\n");
+  for (i = 1; i <= cs->max_lang; i++)
+    if (cs->langs[i]) {
+      fprintf(fout, "<option value=\"%d\">%s - %s</option>\n",
+              i, cs->langs[i]->short_name, ARMOR(cs->langs[i]->long_name));
+    }
+  fprintf(fout, "</select></td></tr>\n");
+
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Imported?"),
+          html_select_yesno(bb, sizeof(bb), "is_imported", 0));
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Hidden?"),
+          html_select_yesno(bb, sizeof(bb), "is_hidden", 0));
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Read-only?"),
+          html_select_yesno(bb, sizeof(bb), "is_readonly", 0));
+
+  fprintf(fout, "<tr><td>%s:</td>", _("Status"));
+  write_change_status_dialog(cs, fout, 0, 0);
+  fprintf(fout, "</tr>\n");
+
+  if (global->score_system_val == SCORE_KIROV
+      || global->score_system_val == SCORE_OLYMPIAD) {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Tests passed"),
+            html_input_text(bb, sizeof(bb), "tests", 10, 0));
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Score gained"),
+            html_input_text(bb, sizeof(bb), "score", 10, 0));
+  } else if (global->score_system_val == SCORE_MOSCOW) {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Failed test"),
+            html_input_text(bb, sizeof(bb), "tests", 10, 0));
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Score gained"),
+            html_input_text(bb, sizeof(bb), "score", 10, 0));
+  } else {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Failed test"),
+            html_input_text(bb, sizeof(bb), "tests", 10, 0));
+  }
+
+  fprintf(fout, "<tr><td>%s:</td>"
+          "<td><input type=\"file\" name=\"file\"></td></tr>\n",
+          _("File"));
+
+  fprintf(fout, "<tr><td>%s</td><td>&nbsp;</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_NEW_RUN));
+  fprintf(fout, "</table></form>\n");
 
   html_armor_free(&ab);
   return 0;

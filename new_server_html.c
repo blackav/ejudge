@@ -3103,6 +3103,31 @@ priv_user_detail_page(FILE *fout,
   return retval;
 }
 
+static int
+priv_new_run_form_page(FILE *fout,
+                       FILE *log_f,
+                       struct http_request_info *phr,
+                       const struct contest_desc *cnts,
+                       struct contest_extra *extra)
+{
+  int retval = 0;
+
+  if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0
+      || opcaps_check(phr->caps, OPCAP_EDIT_RUN))
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  l10n_setlocale(phr->locale_id);
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   "%s [%s, %s]: %s", new_serve_unparse_role(phr->role),
+                   phr->name_arm, extra->contest_arm, _("Add new run"));
+  new_serve_new_run_form(fout, log_f, phr, cnts, extra);
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  return retval;
+}
+
 static void
 priv_view_users_page(FILE *fout,
                      struct http_request_info *phr,
@@ -3938,6 +3963,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_CNTS_PWDS] = priv_view_passwords,
   [NEW_SRV_ACTION_VIEW_REG_PWDS] = priv_view_passwords,
   [NEW_SRV_ACTION_VIEW_USER_INFO] = priv_user_detail_page,
+  [NEW_SRV_ACTION_NEW_RUN_FORM] = priv_new_run_form_page,
 };
 
 static void
@@ -4662,6 +4688,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_CNTS_PWDS] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_REG_PWDS] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_USER_INFO] = priv_generic_page,
+  [NEW_SRV_ACTION_NEW_RUN_FORM] = priv_generic_page,
 };
 
 static void

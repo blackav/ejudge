@@ -221,6 +221,8 @@ enum
   NEW_SRV_ACTION_USER_CHANGE_STATUS,
   NEW_SRV_ACTION_VIEW_USER_INFO,
   NEW_SRV_ACTION_ISSUE_WARNING,
+  NEW_SRV_ACTION_NEW_RUN_FORM,
+  NEW_SRV_ACTION_NEW_RUN,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -347,6 +349,11 @@ new_serve_user_info_page(FILE *fout, FILE *log_f,
                          const struct contest_desc *cnts,
                          struct contest_extra *extra,
                          int view_user_id);
+int
+new_serve_new_run_form(FILE *fout, FILE *log_f,
+                       struct http_request_info *phr,
+                       const struct contest_desc *cnts,
+                       struct contest_extra *extra);
 
 extern const unsigned char * const new_serve_submit_button_labels[];
 extern const int new_serve_priv_next_state[];

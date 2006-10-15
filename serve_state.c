@@ -216,6 +216,9 @@ serve_state_load_contest(int contest_id,
     XCALLOC(state->prob_extras[i].v_alts, state->probs[i]->variant_num + 1);
   }
 
+  teamdb_refresh(state->teamdb_state);
+  serve_create_symlinks(state);
+
   *p_state = state;
   return 1;
 
