@@ -3020,6 +3020,53 @@ priv_confirmation_page(FILE *fout,
 }
 
 static int
+priv_view_user_dump(FILE *fout,
+                    FILE *log_f,
+                    struct http_request_info *phr,
+                    const struct contest_desc *cnts,
+                    struct contest_extra *extra)
+{
+  int retval = 0, r;
+  unsigned char *db_text = 0;
+
+  if (opcaps_check(phr->caps, OPCAP_DUMP_USERS) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  if (open_ul_connection(phr->fw_state) < 0) {
+    html_err_userlist_server_down(fout, phr, 1);
+    return -1;
+  }
+  if ((r = userlist_clnt_get_database(ul_conn, ULS_GET_DATABASE,
+                                      phr->contest_id, &db_text)) < 0) {
+    switch (-r) {
+    case ULS_ERR_INVALID_LOGIN:
+    case ULS_ERR_INVALID_PASSWORD:
+    case ULS_ERR_BAD_CONTEST_ID:
+    case ULS_ERR_IP_NOT_ALLOWED:
+    case ULS_ERR_NO_PERMS:
+    case ULS_ERR_NOT_REGISTERED:
+    case ULS_ERR_CANNOT_PARTICIPATE:
+      html_err_permission_denied(fout, phr, 1, "operation failed: %s",
+                                 userlist_strerror(-r));
+      return -1;
+    case ULS_ERR_DISCONNECT:
+      html_err_userlist_server_down(fout, phr, 1);
+      return -1;
+    default:
+      new_server_html_err_internal_error(fout, phr, 1, "operation failed: %s",
+                                         userlist_strerror(-r));
+      return -1;
+    }
+  }
+
+  fprintf(fout, "Content-type: text/plain\n\n%s\n", db_text);
+  xfree(db_text);
+
+ cleanup:
+  return retval;
+}
+
+static int
 priv_view_audit_log(FILE *fout,
                     FILE *log_f,
                     struct http_request_info *phr,
@@ -3964,6 +4011,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_REG_PWDS] = priv_view_passwords,
   [NEW_SRV_ACTION_VIEW_USER_INFO] = priv_user_detail_page,
   [NEW_SRV_ACTION_NEW_RUN_FORM] = priv_new_run_form_page,
+  [NEW_SRV_ACTION_VIEW_USER_DUMP] = priv_view_user_dump,
 };
 
 static void
@@ -4190,6 +4238,14 @@ priv_main_page(FILE *fout,
                            NEW_SRV_ACTION_VIEW_CNTS_PWDS, 0),
             _("View contest passwords"));
   }
+  if (phr->role >= USER_ROLE_JUDGE
+      && opcaps_check(phr->caps, OPCAP_DUMP_USERS) >= 0) {
+    fprintf(fout, "<li>%s%s</a></li>\n",
+            new_serve_aref(hbuf, sizeof(hbuf), phr,
+                           NEW_SRV_ACTION_VIEW_USER_DUMP, 0),
+            _("Dump users in CSV format"));
+  }
+
   fprintf(fout, "</ul>\n");
 
   /* if role == ADMIN and capability CONTROL_CONTEST */
@@ -4689,6 +4745,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_REG_PWDS] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_USER_INFO] = priv_generic_page,
   [NEW_SRV_ACTION_NEW_RUN_FORM] = priv_generic_page,
+  [NEW_SRV_ACTION_VIEW_USER_DUMP] = priv_generic_page,
 };
 
 static void

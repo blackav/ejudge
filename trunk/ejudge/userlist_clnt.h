@@ -146,6 +146,9 @@ int
 userlist_clnt_get_info(struct userlist_clnt *clnt, int cmd,
                        int uid, int contest_id, unsigned char **p_info);
 int
+userlist_clnt_get_database(struct userlist_clnt *clnt,
+                           int cmd, int contest_id, unsigned char **p_info);
+int
 userlist_clnt_get_param(struct userlist_clnt *clnt,
                         int cmd, int contest_id, unsigned char **p_info);
 int
