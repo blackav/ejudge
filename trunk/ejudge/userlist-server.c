@@ -6883,7 +6883,7 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
 
   // check, that we need iterate over members
   for (i = 0; i < CONTEST_LAST_MEMBER; i++)
-    if (cnts->members[i]->max_count > 0)
+    if (cnts->members[i] && cnts->members[i]->max_count > 0)
       need_members = 1;
 
   // print the header row
