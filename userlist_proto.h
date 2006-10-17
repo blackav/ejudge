@@ -85,6 +85,7 @@ enum
     ULS_PRIV_SET_TEAM_PASSWD,
     ULS_GENERATE_TEAM_PASSWORDS_2,
     ULS_GENERATE_PASSWORDS_2,
+    ULS_GET_DATABASE,
 
     ULS_LAST_CMD
   };
@@ -102,6 +103,7 @@ enum
     ULS_PASSWORD,
     ULS_CLONED,
     ULS_NOTIFICATION,
+    ULS_TEXT_DATA,
   };
 
 /* various error codes */

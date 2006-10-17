@@ -6797,6 +6797,236 @@ cmd_priv_set_passwd(struct client_state *p, int pkt_len,
   info("%s -> OK, %d", logbuf, cloned_flag);
 }
 
+
+static void
+do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
+{
+  const struct userlist_user *u;
+  const struct userlist_contest *c;
+  const struct userlist_member *m;
+  const struct contest_member *cm;
+  int role, pers, pers_tot, need_members = 0, i;
+  const struct userlist_user_info *ui;
+  ptr_iterator_t iter;
+  FILE *gen_f = 0;
+  char *gen_text = 0;
+  size_t gen_size = 0;
+  const unsigned char *s;
+  unsigned char vbuf[1024];
+
+  static const unsigned char * const cnts_field_names[CONTEST_LAST_FIELD] =
+  {
+    [CONTEST_F_HOMEPAGE] = "Homepage",
+    [CONTEST_F_PHONE] = "Phone",
+    [CONTEST_F_INST] = "Inst",
+    [CONTEST_F_INST_EN] = "Inst_en",
+    [CONTEST_F_INSTSHORT] = "Instshort",
+    [CONTEST_F_INSTSHORT_EN] = "Instshort_en",
+    [CONTEST_F_FAC] = "Fac",
+    [CONTEST_F_FAC_EN] = "Fac_en",
+    [CONTEST_F_FACSHORT] = "Facshort",
+    [CONTEST_F_FACSHORT_EN] = "Facshort_en",
+    [CONTEST_F_CITY] = "City",
+    [CONTEST_F_CITY_EN] = "City_en",
+    [CONTEST_F_COUNTRY] = "Country",
+    [CONTEST_F_COUNTRY_EN] = "Country_en",
+    [CONTEST_F_REGION] = "Region",
+    [CONTEST_F_LANGUAGES] = "Languages",
+  };
+
+  static const int cnts_field_ids[CONTEST_LAST_FIELD] =
+  {
+    [CONTEST_F_HOMEPAGE] = USERLIST_NC_HOMEPAGE,
+    [CONTEST_F_PHONE] = USERLIST_NC_PHONE,
+    [CONTEST_F_INST] = USERLIST_NC_INST,
+    [CONTEST_F_INST_EN] = USERLIST_NC_INST_EN,
+    [CONTEST_F_INSTSHORT] = USERLIST_NC_INSTSHORT,
+    [CONTEST_F_INSTSHORT_EN] = USERLIST_NC_INSTSHORT_EN,
+    [CONTEST_F_FAC] = USERLIST_NC_FAC,
+    [CONTEST_F_FAC_EN] = USERLIST_NC_FAC_EN,
+    [CONTEST_F_FACSHORT] = USERLIST_NC_FACSHORT,
+    [CONTEST_F_FACSHORT_EN] = USERLIST_NC_FACSHORT_EN,
+    [CONTEST_F_CITY] = USERLIST_NC_CITY,
+    [CONTEST_F_CITY_EN] = USERLIST_NC_CITY_EN,
+    [CONTEST_F_COUNTRY] = USERLIST_NC_COUNTRY,
+    [CONTEST_F_COUNTRY_EN] = USERLIST_NC_COUNTRY_EN,
+    [CONTEST_F_REGION] = USERLIST_NC_REGION,
+    [CONTEST_F_LANGUAGES] = USERLIST_NC_LANGUAGES,
+  };
+
+  static const int memb_field_ids[CONTEST_LAST_MEMBER_FIELD] =
+  {
+    [CONTEST_MF_FIRSTNAME] = USERLIST_NM_FIRSTNAME,
+    [CONTEST_MF_FIRSTNAME_EN] = USERLIST_NM_FIRSTNAME_EN,
+    [CONTEST_MF_MIDDLENAME] = USERLIST_NM_MIDDLENAME,
+    [CONTEST_MF_MIDDLENAME_EN] = USERLIST_NM_MIDDLENAME_EN,
+    [CONTEST_MF_SURNAME] = USERLIST_NM_SURNAME,
+    [CONTEST_MF_SURNAME_EN] = USERLIST_NM_SURNAME_EN,
+    [CONTEST_MF_STATUS] = USERLIST_NM_STATUS,
+    [CONTEST_MF_GRADE] = USERLIST_NM_GRADE,
+    [CONTEST_MF_GROUP] = USERLIST_NM_GROUP,
+    [CONTEST_MF_GROUP_EN] = USERLIST_NM_GROUP_EN,
+    [CONTEST_MF_EMAIL] = USERLIST_NM_EMAIL,
+    [CONTEST_MF_HOMEPAGE] = USERLIST_NM_HOMEPAGE,
+    [CONTEST_MF_PHONE] = USERLIST_NM_PHONE,
+    [CONTEST_MF_INST] = USERLIST_NM_INST,
+    [CONTEST_MF_INST_EN] = USERLIST_NM_INST_EN,
+    [CONTEST_MF_INSTSHORT] = USERLIST_NM_INSTSHORT,
+    [CONTEST_MF_INSTSHORT_EN] = USERLIST_NM_INSTSHORT_EN,
+    [CONTEST_MF_FAC] = USERLIST_NM_FAC,
+    [CONTEST_MF_FAC_EN] = USERLIST_NM_FAC_EN,
+    [CONTEST_MF_FACSHORT] = USERLIST_NM_FACSHORT,
+    [CONTEST_MF_FACSHORT_EN] = USERLIST_NM_FACSHORT_EN,
+    [CONTEST_MF_OCCUPATION] = USERLIST_NM_OCCUPATION,
+    [CONTEST_MF_OCCUPATION_EN] = USERLIST_NM_OCCUPATION_EN,
+  };
+
+  // check, that we need iterate over members
+  for (i = 0; i < CONTEST_LAST_MEMBER; i++)
+    if (cnts->members[i]->max_count > 0)
+      need_members = 1;
+
+  // print the header row
+  fprintf(f, "Id;Login;Name;Reg.St;Ban;Lock;Inv");
+  for (i = 0; i < CONTEST_LAST_FIELD; i++) {
+    if (cnts->fields[i] && cnts_field_names[i])
+      fprintf(f, ";%s", cnts_field_names[i]);
+  }
+  if (need_members) {
+    fprintf(f, ";Serial;Role");
+  }
+  fprintf(f, "\n");
+
+  for (iter = default_get_info_list_iterator(contest_id, USERLIST_UC_ALL);
+       iter->has_next(iter);
+       iter->next(iter)) {
+    u = (const struct userlist_user*) iter->get(iter);
+    ui = userlist_get_user_info(u, contest_id);
+    c = userlist_get_user_contest(u, contest_id);
+
+    gen_f = open_memstream(&gen_text, &gen_size);
+    fprintf(gen_f, "%d;%s;%s", u->id, u->login, ui->name);
+
+    switch (c->status) {
+    case USERLIST_REG_OK:       s = "OK";       break;
+    case USERLIST_REG_PENDING:  s = "PENDING";  break;
+    case USERLIST_REG_REJECTED: s = "REJECTED"; break;
+    default:
+      s = "UNKNOWN";
+    }
+    fprintf(gen_f, ";%s", s);
+
+    s = "";
+    if ((c->flags & USERLIST_UC_INVISIBLE)) s = "I";
+    fprintf(gen_f, ";%s", s);
+    s = "";
+    if ((c->flags & USERLIST_UC_BANNED)) s = "B";
+    fprintf(gen_f, ";%s", s);
+    s = "";
+    if ((c->flags & USERLIST_UC_LOCKED)) s = "L";
+    fprintf(gen_f, ";%s", s);
+
+    for (i = 0; i < CONTEST_LAST_FIELD; i++) {
+      if (!cnts->fields[i] || !cnts_field_ids[i]) continue;
+      userlist_get_user_info_field_str(vbuf, sizeof(vbuf),
+                                       ui, cnts_field_ids[i], 0);
+      fprintf(gen_f, ";%s", vbuf);
+    }
+    fclose(gen_f); gen_f = 0;
+
+    pers_tot = 0;
+    for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
+      if (!ui->members[role]) continue;
+      if (!(cm = cnts->members[role])) continue;
+      for (pers = 0; pers < ui->members[role]->total; pers++) {
+        if (!(m = ui->members[role]->members[pers])) continue;
+        if (pers >= cm->max_count) continue;
+        pers_tot++;
+        fwrite(gen_text, 1, gen_size, f);
+        fprintf(f, ";%d;%s", m->serial, member_string[role]);
+
+        for (i = 0; i < CONTEST_LAST_MEMBER_FIELD; i++) {
+          if (!cm->fields[i] || !memb_field_ids[i]) continue;
+          userlist_get_member_field_str(vbuf, sizeof(vbuf), m,
+                                        memb_field_ids[i], 0);
+          fprintf(f, ";%s", vbuf);
+        }
+        fprintf(f, "\n");
+      }
+    }
+    if (!pers_tot) {
+      fwrite(gen_text, 1, gen_size, f);
+      fprintf(f, "\n");
+    }
+    xfree(gen_text); gen_text = 0;
+    gen_size = 0;
+  }
+}
+
+static void
+cmd_get_database(struct client_state *p, int pkt_len,
+                 struct userlist_pk_dump_database *data)
+{
+  unsigned char logbuf[1024];
+  int errcode = 0;
+  const struct contest_desc *cnts = 0;
+  char *db_text = 0;
+  size_t db_size = 0, out_size = 0;
+  FILE *f = 0;
+  struct userlist_pk_xml_data *out = 0;
+  opcap_t caps = 0;
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "GET_DATABASE: %d, %d",
+           p->user_id, data->contest_id);
+
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (p->user_id < 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+  while (1) {
+    if (get_uid_caps(&config->capabilities, p->user_id, &caps) >= 0
+        && opcaps_check(caps, OPCAP_DUMP_USERS) >= 0)
+      break;
+
+    if (get_uid_caps(&cnts->capabilities, p->user_id, &caps) >= 0
+        && opcaps_check(caps, OPCAP_DUMP_USERS) >= 0)
+      break;
+
+    err("%s -> no capability %d", logbuf, OPCAP_DUMP_USERS);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (!(f = open_memstream(&db_text, &db_size))) {
+    err("%s -> open_memstream failed!", logbuf);
+    send_reply(p, -ULS_ERR_OUT_OF_MEM);
+    return;
+  }
+  do_get_database(f, data->contest_id, cnts);
+  fclose(f); f = 0;
+
+  out_size = sizeof(*out) + db_size;
+  out = (struct userlist_pk_xml_data*) alloca(out_size);
+  memset(out, 0, out_size);
+  out->reply_id = ULS_TEXT_DATA;
+  out->info_len = db_size;
+  memcpy(out->data, db_text, db_size + 1);
+  enqueue_reply_to_client(p, out_size, out);
+  info("%s -> ok, %d", logbuf, out_size);
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW]            cmd_register_new,
@@ -6860,6 +7090,7 @@ static void (*cmd_table[])() =
   [ULS_PRIV_SET_TEAM_PASSWD]    cmd_priv_set_passwd,
   [ULS_GENERATE_TEAM_PASSWORDS_2] cmd_generate_team_passwords_2,
   [ULS_GENERATE_PASSWORDS_2]    cmd_generate_register_passwords_2,
+  [ULS_GET_DATABASE] =          cmd_get_database,
 
   [ULS_LAST_CMD] 0
 };
