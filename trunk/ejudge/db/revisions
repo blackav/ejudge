@@ -1342,3 +1342,5 @@ edit-userlist.c 3537 0 9407575
 userlist-server.c 3537 0 19180054
 uldb_plugin_xml.c 3537 0 5688418
 userlist_clnt/copy_user_info.c 3536 0 130606
+new_server_html_2.c 3539 0 6211880
+new_server_tables.c 3539 0 791701
