@@ -1955,7 +1955,7 @@ new_serve_write_passwords(FILE *fout, FILE *log_f,
       fprintf(fout, "<td><i>%s</i></td>", _("Not set"));
     }
     if (td.user->i.location) {
-      fprintf(fout, "<td>%s</td>", ARMOR(s));
+      fprintf(fout, "<td>%s</td>", ARMOR(td.user->i.location));
     } else {
       fprintf(fout, "<td><i>%s</i></td>", _("Not set"));
     }
