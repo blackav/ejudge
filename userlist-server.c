@@ -7024,7 +7024,7 @@ cmd_get_database(struct client_state *p, int pkt_len,
   out->info_len = db_size;
   memcpy(out->data, db_text, db_size + 1);
   enqueue_reply_to_client(p, out_size, out);
-  info("%s -> ok, %d", logbuf, out_size);
+  info("%s -> ok, %zu", logbuf, out_size);
 }
 
 static void (*cmd_table[])() =
