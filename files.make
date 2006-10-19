@@ -19,6 +19,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/change_registration.c\
  userlist_clnt/close.c\
  userlist_clnt/cnts_passwd_op.c\
+ userlist_clnt/copy_user_info.c\
  userlist_clnt/create_member.c\
  userlist_clnt/create_user.c\
  userlist_clnt/delete_cookie.c\

@@ -104,6 +104,7 @@ static int maintenance_func(void *, time_t);
 static int change_member_role_func(void *, int, int, int, int, time_t, int *);
 static int set_user_xml_func(void *, int, int, struct userlist_user *,
                              time_t, int *);
+static int copy_user_info_func(void *, int, int, int, time_t);
 
 struct uldb_plugin_iface uldb_plugin_xml =
 {
@@ -171,6 +172,7 @@ struct uldb_plugin_iface uldb_plugin_xml =
   maintenance_func,
   change_member_role_func,
   set_user_xml_func,
+  copy_user_info_func,
 };
 
 struct uldb_xml_state
@@ -2395,6 +2397,40 @@ set_user_xml_func(void *data,
 
   // FIXME: properly set the change flag?
   return 1;
+}
+
+static int
+copy_user_info_func(void *data, int user_id,
+                    int from_cnts, int to_cnts,
+                    time_t cur_time)
+{
+  struct uldb_xml_state *state = (struct uldb_xml_state*) data;
+  struct userlist_list *ul = state->userlist;
+  struct userlist_user *u;
+  const struct userlist_user_info *ui_from = 0;
+  struct userlist_user_info *ui_to;
+
+  if (user_id <= 0 || user_id >= ul->user_map_size
+      || !(u = ul->user_map[user_id])) {
+    return -1;
+  }
+  if (cur_time <= 0) cur_time = time(0);
+  if (from_cnts == to_cnts) return 0;
+
+  // the source information
+  if (!(ui_from = userlist_get_user_info(u, from_cnts)))
+    return -1;
+
+  // the destination
+  if (!userlist_clone_user_info(u, to_cnts, &ul->member_serial, cur_time, 0))
+    return -1;
+  if (!(ui_to = userlist_get_user_info_nc(u, to_cnts))) return -1;
+
+  // FIXME: copy everything, only `name' is copied for now
+  xfree(ui_to->name);
+  ui_to->name = xstrdup(ui_from->name);
+
+  return 0;
 }
 
 /*

@@ -564,6 +564,7 @@ link_client_state(struct client_state *p)
 #define default_new_member(a, b, c, d, e) uldb_default->iface->new_member(uldb_default->data, a, b, c, d, e)
 #define default_change_member_rol(a, b, c, d, e, f) uldb_default->iface->change_member_role(uldb_default->data, a, b, c, d, e, f)
 #define default_set_user_xml(a, b, c, d, e) uldb_default->iface->set_user_xml(uldb_default->data, a, b, c, d, e)
+#define default_copy_user_info(a, b, c, d) uldb_default->iface->copy_user_info(uldb_default->data, a, b, c, d)
 
 static void
 update_all_user_contests(int user_id)
@@ -6350,6 +6351,58 @@ cmd_user_op(struct client_state *p,
 }
 
 static void
+cmd_copy_user_info(struct client_state *p, int pkt_len,
+                   struct userlist_pk_edit_field *data)
+{
+  unsigned char logbuf[1024];
+  const struct userlist_user *u = 0;
+  const struct contest_desc *cnts = 0;
+  int reply_code = ULS_OK;
+
+  // data->contest_id --- source contest
+  // data->serial     --- destination contest
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "USER_OP: %d, %d, %d, %d",
+           p->user_id, data->user_id, data->contest_id, data->serial);
+
+  if (p->user_id <= 0) {
+    CONN_ERR("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (contests_get(data->contest_id, &cnts) < 0) {
+    err("%s -> invalid dest contest %d", logbuf, data->contest_id);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (default_get_user_info_1(data->user_id, &u) < 0) goto invalid_user;
+  if (check_editing_caps(p->user_id, data->user_id, u, data->serial) < 0) {
+    err("%s -> no capability to edit user", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (is_cnts_capable(p, cnts, OPCAP_GET_USER, logbuf) < 0) return;
+
+  default_copy_user_info(data->user_id, data->contest_id, data->serial,
+                         cur_time);
+
+  info("%s -> OK", logbuf);
+  send_reply(p, reply_code);
+  return;
+
+ invalid_user:
+  err("%s -> invalid user", logbuf);
+  send_reply(p, -ULS_ERR_BAD_UID);
+  return;
+}
+
+static void
 cmd_lookup_user(struct client_state *p,
                 int pkt_len,
                 struct userlist_pk_do_login *data)
@@ -7091,6 +7144,7 @@ static void (*cmd_table[])() =
   [ULS_GENERATE_TEAM_PASSWORDS_2] cmd_generate_team_passwords_2,
   [ULS_GENERATE_PASSWORDS_2]    cmd_generate_register_passwords_2,
   [ULS_GET_DATABASE] =          cmd_get_database,
+  [ULS_COPY_USER_INFO] =        cmd_copy_user_info,
 
   [ULS_LAST_CMD] 0
 };
