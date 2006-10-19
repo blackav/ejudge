@@ -4996,12 +4996,12 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
   if (cnts && cnts->assign_logins && cnts->force_registration
       && cnts->register_url) {
     fprintf(fout,
-            "<a class="menu" href=\"%s?contest_id=%d&locale_id=%d&action=2\">%s</a>",
+            "<a class=\"menu\" href=\"%s?contest_id=%d&locale_id=%d&action=2\">%s</a>",
             cnts->register_url, phr->contest_id, phr->locale_id,
             _("Registration"));
   } else if (cnts && cnts->register_url) {
     fprintf(fout,
-            "<a class="menu" href=\"%s?contest_id=%d&locale_id=%d\">%s</a>",
+            "<a class=\"menu\" href=\"%s?contest_id=%d&locale_id=%d\">%s</a>",
             cnts->register_url, phr->contest_id, phr->locale_id,
             _("Registration"));
   } else {

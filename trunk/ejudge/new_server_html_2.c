@@ -1980,8 +1980,8 @@ new_serve_user_info_page(FILE *fout, FILE *log_f,
   const struct team_extra *u_extra = 0;
   const struct team_warning *cur_warn = 0;
   int flags, pages_total;
-  int clars_num = 0, clars_total = 0;
-  int runs_num = 0, runs_total = 0;
+  int runs_num = 0, clars_num = 0;
+  size_t clars_total = 0, runs_total = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *nbsp2 = "<td>&nbsp;</td><td>&nbsp;</td>";
   const unsigned char *s;
@@ -2163,7 +2163,7 @@ new_serve_user_info_page(FILE *fout, FILE *log_f,
           _("Number of Clars"), clars_num, nbsp2);
   fprintf(fout,"<tr><td>%s:</td><td>%zu</td>%s</tr>\n",
           _("Total size of Clars"), clars_total, nbsp2);
-  fprintf(fout,"<tr><td>%s:</td><td>%zu</td>%s</tr>\n",
+  fprintf(fout,"<tr><td>%s:</td><td>%d</td>%s</tr>\n",
           _("Number of printed pages"), pages_total, nbsp2);
 
   if (global->contestant_status_num > 0) {
