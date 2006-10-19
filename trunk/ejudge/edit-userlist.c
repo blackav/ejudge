@@ -2711,6 +2711,9 @@ display_registered_users(unsigned char const *upper,
       case 'f': case 'F': case 'Á' & 255: case 'á' & 255:
         c = 'f';
         goto menu_done;
+      case 'o': case 'O': case 'Ý' & 255: case 'ý' & 255:
+        c = 'o';
+        goto menu_done;
       }
       cmd = -1;
       switch (c) {
@@ -3082,6 +3085,76 @@ display_registered_users(unsigned char const *upper,
         retcode = i;
         c = 'q';
       }
+    } else if (c == 'o') {
+      // copy user_info
+      if ((k = display_contests_menu(current_level, 1)) <= 0) continue;
+
+      if (!sel_users.total_selected && !sel_cnts.total_selected) {
+        i = item_index(current_item(menu));
+        if (okcancel("Copy user %d info to contest %d?", uu[i]->id, k) != 1)
+          continue;
+        r = userlist_clnt_copy_user_info(server_conn, uu[i]->id, cnts->id, k);
+        if (r < 0) {
+          vis_err("Operation failed: %s", userlist_strerror(-r));
+          continue;
+        }
+      } else if (!sel_cnts.total_selected) {
+        // copy the selected users to the specified contest
+        if (okcancel("Copy selected users infos to contest %d?", k) != 1)
+          continue;
+        for (j = 0; j < nuser; j++) {
+          if (!sel_users.mask[j]) continue;
+          r = userlist_clnt_copy_user_info(server_conn, uu[j]->id, cnts->id, k);
+          if (r < 0) {
+            vis_err("Operation failed: %s", userlist_strerror(-r));
+            continue;
+          }
+          sel_users.mask[j] = 0;
+          generate_reg_user_item(descs[j], 128, j, uu, uc, sel_users.mask);
+        }
+        memset(sel_users.mask, 0, sel_users.allocated);
+        sel_users.total_selected = 0;
+      }
+      /*
+ else if (!sel_users.total_selected) {
+        // register the current user to the selected contests
+        i = item_index(current_item(menu));
+        if (okcancel("Register user %d for selected contests?", uu[i]->id) != 1)
+          continue;
+        for (k = 1; k < sel_cnts.allocated; k++) {
+          if (!sel_cnts.mask[k]) continue;
+          r = userlist_clnt_register_contest(server_conn,
+                                             ULS_PRIV_REGISTER_CONTEST,
+                                             uu[i]->id, k);
+          if (r < 0) {
+            vis_err("Registration for contest %d failed: %s", userlist_strerror(-r), k);
+            continue;
+          }
+        }
+      } else {
+        // register the selected users to the selected contests
+        if (okcancel("Register selected users for selected contests?", k) != 1)
+          continue;
+        for (j = 0; j < nuser; j++) {
+          if (!sel_users.mask[j]) continue;
+          for (k = 1; k < sel_cnts.allocated; k++) {
+            if (!sel_cnts.mask[k]) continue;
+            r = userlist_clnt_register_contest(server_conn,
+                                               ULS_PRIV_REGISTER_CONTEST,
+                                               uu[j]->id, k);
+            if (r < 0) {
+              vis_err("Registration of user %d to contest %d failed: %s",
+                      j, k, userlist_strerror(-r));
+              continue;
+            }
+          }
+          sel_users.mask[j] = 0;
+          generate_reg_user_item(descs[j], 128, j, uu, uc, sel_users.mask);
+        }
+        memset(sel_users.mask, 0, sel_users.allocated);
+        sel_users.total_selected = 0;
+      }
+      */
     } else if (c == 'f') {
       int field_op, field_code = 0;
       field_op = generic_menu(10, -1, -1, -1, 0, 4, -1, -1,

@@ -164,6 +164,8 @@ struct uldb_plugin_iface
   // set the user fields by its XML
   int (*set_user_xml)(void *, int, int, struct userlist_user *,
                       time_t, int *);
+  // copy contest-specific user info to another contest
+  int (*copy_user_info)(void *, int, int, int, time_t);
 };
 
 /* default plugin: compiled into userlist-server */

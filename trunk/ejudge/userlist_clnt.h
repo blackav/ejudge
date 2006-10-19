@@ -244,6 +244,8 @@ userlist_clnt_delete_cookie(struct userlist_clnt *clnt,
 int userlist_clnt_create_user(struct userlist_clnt *clnt, int *p_user_id);
 int userlist_clnt_create_member(struct userlist_clnt *clnt, int user_id,
                                 int contest_id, int role);
+int userlist_clnt_copy_user_info(struct userlist_clnt *clnt, int user_id,
+                                 int cnts_from, int cnts_to);
 
 int userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
                                  int system_uid,
