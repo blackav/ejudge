@@ -2367,6 +2367,16 @@ super_html_edit_contest_page(FILE *f,
     fprintf(f, "</td></tr></form>\n");
   }
 
+  if (sstate->advanced_view) {
+    html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Enable password restoration?</td><td>",
+            form_row_attrs[row ^= 1]);
+    html_boolean_select(f, cnts->enable_forgot_password, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_ENABLE_FORGOT_PASSWORD, "Change");
+    fprintf(f, "</td></tr></form>\n");
+  }
+
   html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>IP-address access rules for CGI programs</b>", head_row_attr);
   row = 1;
