@@ -1344,3 +1344,11 @@ uldb_plugin_xml.c 3537 0 5688418
 userlist_clnt/copy_user_info.c 3536 0 130606
 new_server_html_2.c 3539 0 6211880
 new_server_tables.c 3539 0 791701
+contests.h 3541 0 811337
+super_actions.h 3541 0 1698573
+super_proto.h 3541 0 1664305
+serve-control.c 3541 0 11232252
+super-serve.c 3541 0 11340250
+contests.c 3541 0 4188886
+super_html.c 3541 0 10456267
+super_html_2.c 3541 0 4466853
