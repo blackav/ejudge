@@ -305,6 +305,9 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   case SSERV_CMD_CNTS_CHANGE_DISABLE_NAME:
     p_bool = &cnts->disable_name;
     break;
+  case SSERV_CMD_CNTS_CHANGE_ENABLE_FORGOT_PASSWORD:
+    p_bool = &cnts->enable_forgot_password;
+    break;
   case SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL:
     p_bool = &cnts->send_passwd_email;
     break;

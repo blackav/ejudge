@@ -138,6 +138,7 @@ static char const * const attr_map[] =
   "assign_logins",
   "force_registration",
   "disable_name",
+  "enable_forgot_password",
 
   0
 };
@@ -638,6 +639,7 @@ static const size_t contest_bool_attr_offsets[CONTEST_LAST_TAG] =
   [CONTEST_A_ASSIGN_LOGINS] = CONTEST_DESC_OFFSET(assign_logins),
   [CONTEST_A_FORCE_REGISTRATION] = CONTEST_DESC_OFFSET(force_registration),
   [CONTEST_A_DISABLE_NAME] = CONTEST_DESC_OFFSET(disable_name),
+  [CONTEST_A_ENABLE_FORGOT_PASSWORD] = CONTEST_DESC_OFFSET(enable_forgot_password ),
 };
 
 static int
@@ -1340,6 +1342,10 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
   if (cnts->disable_name) {
     fprintf(f, "\n         %s=\"%s\"",
             attr_map[CONTEST_A_DISABLE_NAME], "yes");
+  }
+  if (cnts->enable_forgot_password) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attr_map[CONTEST_A_ENABLE_FORGOT_PASSWORD], "yes");
   }
 
   if (cnts->closed) {
