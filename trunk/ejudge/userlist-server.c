@@ -526,7 +526,7 @@ link_client_state(struct client_state *p)
 #define default_new_user(a,b,c,d) uldb_default->iface->new_user(uldb_default->data, a, b, c, d)
 #define default_remove_user(a) uldb_default->iface->remove_user(uldb_default->data, a)
 #define default_get_cookie(a, b) uldb_default->iface->get_cookie(uldb_default->data, a, b)
-#define default_new_cookie(a, b, c, d, e, f, g, h, i, j) uldb_default->iface->new_cookie(uldb_default->data, a, b, c, d, e, f, g, h, i, j)
+#define default_new_cookie(a, b, c, d, e, f, g, h, i, j, k) uldb_default->iface->new_cookie(uldb_default->data, a, b, c, d, e, f, g, h, i, j, k)
 #define default_remove_cookie(a) uldb_default->iface->remove_cookie(uldb_default->data, a)
 #define default_remove_user_cookies(a) uldb_default->iface->remove_user_cookies(uldb_default->data, a)
 #define default_remove_expired_cookies(a) uldb_default->iface->remove_expired_cookies(uldb_default->data, a)
@@ -1436,6 +1436,174 @@ cmd_register_new(struct client_state *p,
 }
 
 static void
+cmd_recover_password_1(struct client_state *p,
+                       int pkt_len,
+                       struct userlist_pk_register_new *data)
+{
+  unsigned char *login, *email, *originator_email, *self_url;
+  int login_len, email_len, exp_pkt_len, errcode, user_id, self_url_len;
+  unsigned char logbuf[1024];
+  const struct userlist_user *u = 0;
+  const struct userlist_user_info *ui = 0;
+  const struct userlist_contest *c = 0;
+  const struct contest_desc *cnts = 0;
+  const struct userlist_cookie *cookie = 0;
+  opcap_t caps;
+  FILE *msg_f = 0;
+  char *msg_text = 0;
+  size_t msg_size = 0;
+  unsigned char *mail_args[7];
+
+  login = data->data;
+  login_len = strlen(login);
+  if (login_len != data->login_length) {
+    CONN_BAD("login length mismatch: %d, %d", login_len, data->login_length);
+    return;
+  }
+  email = login + data->login_length + 1;
+  email_len = strlen(email);
+  if (email_len != data->email_length) {
+    CONN_BAD("email length mismatch: %d, %d", email_len, data->email_length);
+    return;
+  }
+  self_url = email + email_len;
+  self_url_len = strlen(self_url);
+  if (self_url_len != data->self_url_length) {
+    CONN_BAD("self_url length mismatch: %d, %d", self_url_len,
+             data->self_url_length);
+    return;
+  }
+  exp_pkt_len = sizeof(*data) + login_len + email_len + self_url_len;
+  if (pkt_len != exp_pkt_len) {
+    CONN_BAD("packet length mismatch: %d, %d", pkt_len, exp_pkt_len);
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "RECOVER_1: %s, %s, %s, %d",
+           xml_unparse_ip(data->origin_ip), login, email, data->contest_id);
+
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  originator_email = get_email_sender(cnts);
+
+  if (!cnts->enable_forgot_password) {
+    err("%s -> password recovery disabled", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if ((user_id = default_get_user_by_login(login)) <= 0) {
+    err("%s -> no such login", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  default_get_user_info_3(user_id, data->contest_id, &u, &ui, &c);
+
+  if (!c) {
+    err("%s -> not registered", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (c->status != USERLIST_REG_OK || c->flags != 0) {
+    err("%s -> not ordinary user", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (!u || !u->email || !strchr(u->email, '@')) {
+    err("%s -> invalid e-mail", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (strcasecmp(email, u->email) != 0) {
+    err("%s -> e-mails do not match", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (opcaps_find(&cnts->capabilities, login, &caps) >= 0
+      || opcaps_find(&config->capabilities, login, &caps) >= 0) {
+    err("%s -> privileged user", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  // generate new cookie for password recovery
+  if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
+                         data->contest_id, data->locale_id,
+                         PRIV_LEVEL_USER, 0, 1, &cookie) < 0) {
+    err("%s -> cookie creation failed", logbuf);
+    send_reply(p, -ULS_ERR_OUT_OF_MEM);
+    return;
+  }
+
+  msg_f = open_memstream(&msg_text, &msg_size);
+  fprintf(msg_f, 
+          _("Hello,\n"
+            "\n"
+            "Somebody (probably you) have requested registration password\n"
+            "regeneration for login `%s'.\n\n"),
+          login);
+  fprintf(msg_f,
+          _("To confirm password regeneration, you should visit the following URL:\n"
+            "%s?contest_id=%d&locale_id=%d&SID=%016llx&action=%d.\n"
+            "\n"),
+          self_url, data->contest_id, data->locale_id, cookie->cookie,
+          data->action);
+  fprintf(msg_f,
+          _("Note, that if you do not do this in 24 hours from the moment\n"
+            "of sending this letter, operation will be cancelled.\n"
+            "\n"
+            "If you don't want to regenerate the password, just ignore this\n"
+            "message\n\n"));
+  fprintf(msg_f,
+          _("Regards,\n"
+            "The ejudge contest administration system (www.ejudge.ru)\n"));
+  fclose(msg_f); msg_f = 0;
+
+  if (send_email_message(u->email,
+                         originator_email,
+                         NULL,
+                         _("Password regeneration requested"),
+                         msg_text) < 0) {
+    send_reply(p, ULS_ERR_EMAIL_FAILED);
+    info("%s -> failed (e-mail)", logbuf);
+    xfree(msg_text);
+    return;
+  }
+  xfree(msg_text); msg_text = 0; msg_size = 0;
+
+  if (cnts->daily_stat_email) {
+    msg_f = open_memstream(&msg_text, &msg_size);
+    fprintf(msg_f,
+            _("Hello,\n"
+              "\n"
+              "Use `%s' (email %s) has initiated password regeneration\n"
+              "in contest %d from IP %s\n\n"),
+            login, email, data->contest_id, xml_unparse_ip(data->origin_ip));
+    fprintf(msg_f,
+            _("Regards,\n"
+              "The ejudge contest administration system (www.ejudge.ru)\n"));
+    fclose(msg_f); msg_f = 0;
+
+    mail_args[0] = "mail";
+    mail_args[1] = "";
+    mail_args[2] = _("Password regeneration requested");
+    mail_args[3] = originator_email;
+    mail_args[4] = cnts->daily_stat_email;
+    mail_args[5] = msg_text;
+    mail_args[6] = 0;
+    send_job_packet(NULL, mail_args);
+    xfree(msg_text); msg_text = 0;
+  }
+
+  send_reply(p,ULS_OK);
+  info("%s -> ok", logbuf);
+}
+
+static void
 do_remove_user(const struct userlist_user *u)
 {
   ptr_iterator_t iter = 0;
@@ -1534,7 +1702,7 @@ cmd_do_login(struct client_state *p,
   answer = alloca(ans_len);
   memset(answer, 0, ans_len);
 
-  if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0, data->contest_id, data->locale_id, PRIV_LEVEL_USER, 0, &cookie) < 0) {
+  if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0, data->contest_id, data->locale_id, PRIV_LEVEL_USER, 0, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -1684,7 +1852,7 @@ cmd_team_login(struct client_state *p, int pkt_len,
   }
   if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
                          data->contest_id, data->locale_id,
-                         PRIV_LEVEL_USER, 0, &cookie) < 0) {
+                         PRIV_LEVEL_USER, 0, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -1847,7 +2015,7 @@ cmd_check_user(struct client_state *p, int pkt_len,
   }
   if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
                          data->contest_id, data->locale_id,
-                         PRIV_LEVEL_USER, 0, &cookie) < 0) {
+                         PRIV_LEVEL_USER, 0, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -2029,7 +2197,7 @@ cmd_priv_login(struct client_state *p, int pkt_len,
 
   if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
                          data->contest_id, data->locale_id,
-                         data->priv_level, data->role, &cookie) < 0) {
+                         data->priv_level, data->role, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -2160,7 +2328,7 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
 
   if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
                          data->contest_id, data->locale_id,
-                         data->priv_level, data->role, &cookie) < 0) {
+                         data->priv_level, data->role, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -7145,6 +7313,7 @@ static void (*cmd_table[])() =
   [ULS_GENERATE_PASSWORDS_2]    cmd_generate_register_passwords_2,
   [ULS_GET_DATABASE] =          cmd_get_database,
   [ULS_COPY_USER_INFO] =        cmd_copy_user_info,
+  [ULS_RECOVER_PASSWORD_1] =    cmd_recover_password_1,
 
   [ULS_LAST_CMD] 0
 };

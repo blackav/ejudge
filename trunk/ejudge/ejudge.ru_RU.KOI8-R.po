@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-17 22:29+0400\n"
-"PO-Revision-Date: 2006-10-17 22:56+0400\n"
+"POT-Creation-Date: 2006-10-23 00:44+0400\n"
+"PO-Revision-Date: 2006-10-23 00:44+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -255,10 +255,35 @@ msgstr "<p%s>Минимальное количество %s - %d.</p>\n"
 
 #, c-format
 msgid ""
+"<p>First stage of password recovery is successful. You should receive an e-"
+"mail message with further instructions. <b>Note,</b> that you should confirm "
+"password recovery in 24 hours, or operation will be cancelled.</p>"
+msgstr ""
+"<p>Первый этап восстановления пароля завершен. Теперь Вы должны получить e-"
+"mail сообщение с дальнейшими инструкциями. <b>Учтите,</b> что Вы должны "
+"завершить процедуру восстановления пароля в течение 24 часов от данного "
+"момента, а иначе операция будет отменена.</p>"
+
+#, c-format
+msgid ""
 "<p>Note, that the exact reason is not reported due to security reasons.</p>"
 msgstr ""
 "<p>Обратите внимание, что точная причина ошибки не сообщается по "
 "соображениям безопасности.</p>"
+
+#, c-format
+msgid ""
+"<p>Password recovery requires several steps. Now, please, specify the "
+"<b>login</b> and the <b>e-mail</b>, which was specified when the login was "
+"created.</p>\n"
+"<p>Note, that automatic password recovery is not possible for invisible, "
+"banned, locked, or privileged users!</p>\n"
+msgstr ""
+"<p>Восстановление пароля выполняется в несколько этапов. Сейчас, пожалуйста, "
+"укажите <b>регистрационное имя</b> и <b>адрес e-mail</b>, который был "
+"использован при создании этого регистрационного имени.</p>\n"
+"<p>Учтите, что автоматическое восстановление пароля невозможно для "
+"заблокированных, невидимых и привилегированных пользователей!</p>\n"
 
 #, c-format
 msgid ""
@@ -451,6 +476,9 @@ msgstr "Невозможно удалить участника"
 
 msgid "Change"
 msgstr "Изменить"
+
+msgid "Change Language"
+msgstr "Сменить язык"
 
 msgid "Change duration"
 msgstr "Изменить длительность"
@@ -695,6 +723,9 @@ msgstr "Страна"
 msgid "Country (En)"
 msgstr "Страна (Англ.)"
 
+msgid "Current Standings"
+msgstr "Текущие результаты"
+
 msgid "Current standings"
 msgstr "Текущее положение участников"
 
@@ -930,6 +961,9 @@ msgid "For schools, liceums, etc, please, specify its number."
 msgstr ""
 "Для школ, лицеев и пр. укажите, пожалуйста, номер. Например, школа 1234."
 
+msgid "Forgot password?"
+msgstr "Забыли пароль?"
+
 msgid "From"
 msgstr "От"
 
@@ -1016,6 +1050,20 @@ msgstr ""
 "С уважением,\n"
 "Система проведения турниров ejudge (www.ejudge.ru)\n"
 
+#, c-format
+msgid ""
+"Hello,\n"
+"\n"
+"Somebody (probably you) have requested registration password\n"
+"regeneration for login `%s'.\n"
+"\n"
+msgstr ""
+"Здравствуйте,\n"
+"\n"
+"Кто-то (возможно и Вы) запросил перегенерацию регистрационного пароля\n"
+"для регистрационного имени `%s'.\n"
+"\n"
+
 msgid ""
 "Hello,\n"
 "\n"
@@ -1089,6 +1137,20 @@ msgstr ""
 "\n"
 "С уважением,\n"
 "Система проведения турниров ejudge (www.ejudge.ru)\n"
+
+#, c-format
+msgid ""
+"Hello,\n"
+"\n"
+"Use `%s' (email %s) has initiated password regeneration\n"
+"in contest %d from IP %s\n"
+"\n"
+msgstr ""
+"Здравствуйте,\n"
+"\n"
+"Пользователь `%s' (email %s) начал процедуру перегенерации регистрационного\n"
+"пароля в турнире %d с IP-адреса %s\n"
+"\n"
 
 msgid "Hidden?"
 msgstr "Скрыт?"
@@ -1346,6 +1408,10 @@ msgstr "Выйти из системы"
 msgid "Long name"
 msgstr "Название задачи"
 
+#, c-format
+msgid "Lost password recovery [%s]"
+msgstr "Восстановление пароля [%s]"
+
 msgid "Magistrant"
 msgstr "Студент магистратуры"
 
@@ -1529,6 +1595,22 @@ msgstr "Не зарегистрированы"
 msgid "Not set"
 msgstr "Не установлено"
 
+#, c-format
+msgid ""
+"Note, that if you do not do this in 24 hours from the moment\n"
+"of sending this letter, operation will be cancelled.\n"
+"\n"
+"If you don't want to regenerate the password, just ignore this\n"
+"message\n"
+"\n"
+msgstr ""
+"Если Вы не выполните эту операцию в течение 24 часов от момента\n"
+"отсылки данного письма, перегенерация пароля будет отменена.\n"
+"\n"
+"Если же Вы не хотите перегенерировать свой пароль, просто проигнорируйте\n"
+"это письмо.\n"
+"\n"
+
 msgid ""
 "Now please press the \"Back\" button of your browser and fix the error(s)."
 msgstr "Теперь нажмите кнопку \"Назад\" Вашего браузера и исправьте ошибки."
@@ -1573,11 +1655,11 @@ msgstr "Старый пароль имеет слишком большую длину"
 msgid "Only %d members \"%s\" are specified instead of minimum %d."
 msgstr "Только %d участников \"%s\" указаны вместо минимальных %d."
 
-msgid "Operation competed with errors"
-msgstr "Операция завершилась с ошибками"
-
 msgid "Operation completed successfully"
 msgstr "Операция успешно выполнена"
+
+msgid "Operation completed with errors"
+msgstr "Операция завершилась с ошибками"
 
 msgid "Operation failed"
 msgstr "Операция не выполнена"
@@ -1633,6 +1715,16 @@ msgstr "Изменение пароля не удалось по следующим причинам."
 #, c-format
 msgid "Password generation failed: %s"
 msgstr "Генерация паролей не удалась: %s"
+
+msgid "Password recovery error"
+msgstr "Ошибка восстановления пароля"
+
+#, c-format
+msgid "Password recovery, stage 1 [%s, %s]"
+msgstr "Восстановление пароля, этап 1 [%s, %s]"
+
+msgid "Password regeneration requested"
+msgstr "Запрошена перегенерация пароля"
 
 #, c-format
 msgid "Password update failed: %s"
@@ -1795,6 +1887,14 @@ msgstr "Получено"
 
 msgid "Refresh"
 msgstr "Обновить"
+
+#, c-format
+msgid ""
+"Regards,\n"
+"The ejudge contest administration system (www.ejudge.ru)\n"
+msgstr ""
+"С уважением,\n"
+"Система ejudge (www.ejudge.ru)\n"
 
 msgid "Regenerate contest passwords!"
 msgstr "Перегенерировать турнирные пароли!"
@@ -2421,6 +2521,16 @@ msgstr "Превышено максимальное время работы"
 
 msgid "To"
 msgstr "Кому"
+
+#, c-format
+msgid ""
+"To confirm password regeneration, you should visit the following URL:\n"
+"%s?contest_id=%d&locale_id=%d&SID=%016llx&action=%d.\n"
+"\n"
+msgstr ""
+"Чтобы сгенерировать новый случайный пароль, вы должны открыть\n"
+"следующий URL: %s?contest_id=%d&locale_id=%d&SID=%016llx&action=%d.\n"
+"\n"
 
 msgid "To user id"
 msgstr "Кому (рег. номер)"
