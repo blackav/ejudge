@@ -88,6 +88,7 @@ enum
     ULS_GET_DATABASE,
     ULS_COPY_USER_INFO,
     ULS_RECOVER_PASSWORD_1,
+    ULS_RECOVER_PASSWORD_2,
 
     ULS_LAST_CMD
   };
@@ -106,6 +107,7 @@ enum
     ULS_CLONED,
     ULS_NOTIFICATION,
     ULS_TEXT_DATA,
+    ULS_NEW_PASSWORD,
   };
 
 /* various error codes */
@@ -362,6 +364,16 @@ struct userlist_pk_notification
 {
   short reply_id;
   int contest_id;
+};
+
+struct userlist_pk_new_password
+{
+  short       reply_id;
+  int         user_id;
+  int         login_len;
+  int         name_len;
+  int         passwd_len;
+  char        data[3];
 };
 
 #endif /* __USERLIST_PROTO_H__ */

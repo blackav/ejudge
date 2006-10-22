@@ -52,6 +52,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/priv_login.c\
  userlist_clnt/read_and_notify.c\
  userlist_clnt/read_notification.c\
+ userlist_clnt/recover_passwd_2.c\
  userlist_clnt/recv_packet.c\
  userlist_clnt/register_contest.c\
  userlist_clnt/register_new.c\

@@ -1489,7 +1489,8 @@ cmd_recover_password_1(struct client_state *p,
   }
   originator_email = get_email_sender(cnts);
 
-  if (!cnts->enable_forgot_password) {
+  if (!cnts->enable_forgot_password
+      || (cnts->simple_registration && !cnts->send_passwd_email)) {
     err("%s -> password recovery disabled", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -1580,7 +1581,7 @@ cmd_recover_password_1(struct client_state *p,
     fprintf(msg_f,
             _("Hello,\n"
               "\n"
-              "Use `%s' (email %s) has initiated password regeneration\n"
+              "User `%s' (email %s) has initiated password regeneration\n"
               "in contest %d from IP %s\n\n"),
             login, email, data->contest_id, xml_unparse_ip(data->origin_ip));
     fprintf(msg_f,
@@ -1601,6 +1602,170 @@ cmd_recover_password_1(struct client_state *p,
 
   send_reply(p,ULS_OK);
   info("%s -> ok", logbuf);
+}
+
+static void
+cmd_recover_password_2(struct client_state *p,
+                       int pkt_len,
+                       struct userlist_pk_check_cookie *data)
+{
+  unsigned char logbuf[1024], passwd_buf[64];
+  const struct userlist_cookie *cookie = 0;
+  struct userlist_pk_new_password *out = 0;
+  const struct contest_desc *cnts = 0;
+  const struct userlist_user *u = 0;
+  const struct userlist_user_info *ui = 0;
+  const struct userlist_contest *c = 0;
+  int errcode = 0;
+  unsigned char *originator_email = 0;
+  opcap_t caps;
+  FILE *msg_f = 0;
+  char *msg_text = 0;
+  size_t msg_size = 0;
+  unsigned char *mail_args[7];
+  int login_len, name_len, passwd_len, packet_len;
+  unsigned char *s;
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf),
+           "RECOVER_2: %d, %llx", data->contest_id, data->cookie);
+
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  originator_email = get_email_sender(cnts);
+  if (!cnts->enable_forgot_password
+      || (cnts->simple_registration && !cnts->send_passwd_email)) {
+    err("%s -> password recovery disabled", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie) {
+    err("%s -> no such cookie", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (!cookie->recovery) {
+    err("%s -> not a recovery cookie", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (cookie->contest_id != data->contest_id) {
+    err("%s -> contest_id mismatch", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  default_get_user_info_3(cookie->user_id, data->contest_id, &u, &ui, &c);
+
+  if (!c) {
+    err("%s -> not registered", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (c->status != USERLIST_REG_OK || c->flags != 0) {
+    err("%s -> not ordinary user", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (!u || !u->email || !strchr(u->email, '@')) {
+    err("%s -> invalid e-mail", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (opcaps_find(&cnts->capabilities, u->login, &caps) >= 0
+      || opcaps_find(&config->capabilities, u->login, &caps) >= 0) {
+    err("%s -> privileged user", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  // generate new password
+  generate_random_password(8, passwd_buf);
+  default_remove_user_cookies(u->id);
+  default_set_reg_passwd(u->id, USERLIST_PWD_PLAIN, passwd_buf, cur_time);
+
+  // generate a e-mail message
+  msg_f = open_memstream(&msg_text, &msg_size);
+  fprintf(msg_f, 
+          _("Hello,\n"
+            "\n"
+            "New random password was successfully generated!\n\n"));
+  fprintf(msg_f,
+          "User Id:  %d\n"
+          "Login:    %s\n"
+          "E-mail:   %s\n"
+          "Name:     %s\n"
+          "Password: %s\n\n",
+          u->id, u->login, u->email, ui->name, passwd_buf);
+  fprintf(msg_f,
+          _("Regards,\n"
+            "The ejudge contest administration system (www.ejudge.ru)\n"));
+  fclose(msg_f); msg_f = 0;
+
+  if (send_email_message(u->email,
+                         originator_email,
+                         NULL,
+                         _("Password regeneration successful"),
+                         msg_text) < 0) {
+    send_reply(p, ULS_ERR_EMAIL_FAILED);
+    info("%s -> failed (e-mail)", logbuf);
+    xfree(msg_text);
+    return;
+  }
+  xfree(msg_text); msg_text = 0; msg_size = 0;
+
+  if (cnts->daily_stat_email) {
+    msg_f = open_memstream(&msg_text, &msg_size);
+    fprintf(msg_f,
+            _("Hello,\n"
+              "\n"
+              "User `%s' (email %s) completed password regeneration\n"
+              "in contest %d from IP %s\n\n"),
+            u->login, u->email, data->contest_id,
+            xml_unparse_ip(data->origin_ip));
+    fprintf(msg_f,
+            _("Regards,\n"
+              "The ejudge contest administration system (www.ejudge.ru)\n"));
+    fclose(msg_f); msg_f = 0;
+
+    mail_args[0] = "mail";
+    mail_args[1] = "";
+    mail_args[2] = _("Password regeneration successful");
+    mail_args[3] = originator_email;
+    mail_args[4] = cnts->daily_stat_email;
+    mail_args[5] = msg_text;
+    mail_args[6] = 0;
+    send_job_packet(NULL, mail_args);
+    xfree(msg_text); msg_text = 0;
+  }
+
+  login_len = strlen(u->login);
+  name_len = strlen(ui->name);
+  passwd_len = strlen(passwd_buf);
+  packet_len = sizeof(*out);
+  packet_len += login_len + name_len + passwd_len;
+  out = (struct userlist_pk_new_password*) alloca(packet_len);
+  memset(out, 0, packet_len);
+  s = out->data;
+  out->reply_id = ULS_NEW_PASSWORD;
+  out->user_id = u->id;
+  out->login_len = login_len;
+  out->name_len = name_len;
+  out->passwd_len = passwd_len;
+  strcpy(s, u->login); s += login_len + 1;
+  strcpy(s, ui->name); s += name_len + 1;
+  strcpy(s, passwd_buf);
+  enqueue_reply_to_client(p, packet_len, out);
+  info("%s -> OK", logbuf);
 }
 
 static void
@@ -7314,6 +7479,7 @@ static void (*cmd_table[])() =
   [ULS_GET_DATABASE] =          cmd_get_database,
   [ULS_COPY_USER_INFO] =        cmd_copy_user_info,
   [ULS_RECOVER_PASSWORD_1] =    cmd_recover_password_1,
+  [ULS_RECOVER_PASSWORD_2] =    cmd_recover_password_2,
 
   [ULS_LAST_CMD] 0
 };

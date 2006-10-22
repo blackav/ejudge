@@ -5002,7 +5002,8 @@ unpriv_page_forgot_password_1(FILE *fout, struct http_request_info *phr)
     return html_err_service_not_available(fout, phr,
                                           "contest %d user is disabled",
                                           cnts->id);
-  if (!cnts->enable_forgot_password)
+  if (!cnts->enable_forgot_password
+      || (cnts->simple_registration && !cnts->send_passwd_email))
     return html_err_service_not_available(fout, phr,
                                           "contest %d password recovery disabled",
                                           cnts->id);
@@ -5080,7 +5081,8 @@ unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr)
     return html_err_service_not_available(fout, phr,
                                           "contest %d user is disabled",
                                           cnts->id);
-  if (!cnts->enable_forgot_password)
+  if (!cnts->enable_forgot_password
+      || (cnts->simple_registration && !cnts->send_passwd_email))
     return html_err_service_not_available(fout, phr,
                                           "contest %d password recovery disabled",
                                           cnts->id);
@@ -5124,6 +5126,7 @@ unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr)
     new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
                      _("Password recovery error"));
     unpriv_html_empty_status(fout, phr, cnts, extra);
+    fprintf(fout, "%s", extra->separator_txt);
     fprintf(fout, "<p>Password recovery is not possible because of the following error.</p>\n");
     fprintf(fout, "%s", extra->separator_txt);
     fprintf(fout, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(log_txt));
@@ -5145,6 +5148,119 @@ unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr)
   l10n_setlocale(0);
 
  cleanup:
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+  html_armor_free(&ab);
+}
+
+void
+unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr)
+{
+  const struct contest_desc *cnts = 0;
+  struct contest_extra *extra = 0;
+  time_t cur_time = 0;
+  int user_id = 0;
+  unsigned char *login = 0, *name = 0, *passwd = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int r;
+  FILE *log_f = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  unsigned char bb[1024];
+  const unsigned char *s = 0;
+
+  if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
+    return html_err_service_not_available(fout, phr, "contest_id is invalid");
+  if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    return html_err_service_not_available(fout, phr, "%s://%s is not allowed for USER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+  if (cnts->closed)
+    return html_err_service_not_available(fout, phr, "contest %d is closed",
+                                          cnts->id);
+  if (!cnts->new_managed)
+    return html_err_service_not_available(fout, phr,
+                                          "contest %d is not managed",
+                                          cnts->id);
+  if (cnts->client_disable_team)
+    return html_err_service_not_available(fout, phr,
+                                          "contest %d user is disabled",
+                                          cnts->id);
+  if (!cnts->enable_forgot_password
+      || (cnts->simple_registration && !cnts->send_passwd_email))
+    return html_err_service_not_available(fout, phr,
+                                          "contest %d password recovery disabled",
+                                          cnts->id);
+
+  unpriv_load_html_style(phr, cnts, &extra, &cur_time);
+
+  if (open_ul_connection(phr->fw_state) < 0) {
+    html_err_userlist_server_down(fout, phr, 0);
+    goto cleanup;
+  }
+  r = userlist_clnt_recover_passwd_2(ul_conn, ULS_RECOVER_PASSWORD_2,
+                                     phr->ip, phr->ssl_flag,
+                                     phr->contest_id, phr->session_id,
+                                     &user_id, &login, &name, &passwd);
+
+  if (r < 0) {
+    log_f = open_memstream(&log_txt, &log_len);
+
+    if (r == -ULS_ERR_EMAIL_FAILED) {
+      fprintf(log_f, "%s",
+              _("The server was unable to send a registration e-mail\n"
+                "to the specified address. This is probably due\n"
+                "to heavy server load rather than to an invalid\n"
+                "e-mail address. You should try to register later.\n"));
+    } else {
+      fprintf(log_f, gettext(userlist_strerror(-r)));
+    }
+
+    fclose(log_f); log_f = 0;
+
+    l10n_setlocale(phr->locale_id);
+    new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                     _("Password recovery error"));
+    unpriv_html_empty_status(fout, phr, cnts, extra);
+    fprintf(fout, "%s", extra->separator_txt);
+    fprintf(fout, "<p>Password recovery is not possible because of the following error.</p>\n");
+    fprintf(fout, "%s", extra->separator_txt);
+    fprintf(fout, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(log_txt));
+    html_put_footer(fout, extra->footer_txt, phr->locale_id);
+    l10n_setlocale(0);
+    goto cleanup;
+  }
+
+  s = name;
+  if (!s || !*s) s = login;
+
+  l10n_setlocale(phr->locale_id);
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   _("Password recovery completed [%s, %s]"),
+                   ARMOR(s), extra->contest_arm);
+  unpriv_html_empty_status(fout, phr, cnts, extra);
+  fprintf(fout, "%s", extra->separator_txt);
+
+  fprintf(fout, _("<p>New password is generated.</p>"));
+  fprintf(fout, "<table><tr><td class=\"menu\">%s</td><td class=\"menu\"><tt>%s</tt></td></tr>\n",
+          _("Login"), ARMOR(login));
+  fprintf(fout, "<tr><td class=\"menu\">%s</td><td class=\"menu\"><tt>%s</tt></td></tr></table>\n", _("Password"), ARMOR(passwd));
+
+  html_start_form(fout, 1, phr->self_url, "");
+  html_hidden(fout, "contest_id", "%d", phr->contest_id);
+  html_hidden(fout, "role", "%d", 0);
+  html_hidden(fout, "locale_id", "%d", phr->locale_id);
+  fprintf(fout, "<table><tr><td class=\"menu\">%s:</td><td class=\"menu\">%s</td></tr>\n",
+          _("Login"), html_input_text(bb, sizeof(bb), "login", 16, "%s", ARMOR(login)));
+  fprintf(fout, "<tr><td class=\"menu\">%s:</td><td class=\"menu\"><input type=\"password\" size=\"16\" name=\"password\" value=\"%s\"></td></tr>\n",
+          _("Password"), ARMOR(passwd));
+  fprintf(fout, "<tr><td class=\"menu\">&nbsp;</td><td class=\"menu\">%s</td></tr></table></form>\n",
+          new_serve_submit_button(bb, sizeof(bb), "submit", 0, _("Submit")));
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  xfree(login);
+  xfree(name);
+  xfree(passwd);
   if (log_f) fclose(log_f);
   xfree(log_txt);
   html_armor_free(&ab);
@@ -7073,6 +7189,8 @@ unprivileged_page(FILE *fout, struct http_request_info *phr)
     return unpriv_page_forgot_password_1(fout, phr);
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_2)
     return unpriv_page_forgot_password_2(fout, phr);
+  if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_3)
+    return unpriv_page_forgot_password_3(fout, phr);
 
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return unprivileged_page_login(fout, phr);
