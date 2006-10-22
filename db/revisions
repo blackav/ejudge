@@ -1370,3 +1370,5 @@ userlist_clnt.h 3551 0 892423
 userlist-server.c 3551 0 20025892
 new_server_html.c 3551 0 20319308
 userlist_clnt/recover_passwd_2.c 3550 0 241001
+new_server_html.c 3553 0 20495526
+new_server_html_2.c 3553 0 6164432
