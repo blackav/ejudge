@@ -1811,21 +1811,6 @@ new_serve_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
   }
 
   switch (action) {
-
-    /*
-static void
-write_from_contest_dir(FILE *log_f, FILE *fout,
-                       int flag1,
-                       int flag2,
-                       int test_num,
-                       int variant,
-                       const unsigned char *dir,
-                       const unsigned char *suffix,
-                       const unsigned char *pattern,
-                       int has_digest,
-                       const unsigned char *digest_ptr)
-    */
-
   case NEW_SRV_ACTION_VIEW_TEST_INPUT:
     write_from_contest_dir(log_f, fout, 1, 1, test_num, r->variant,
                            prb->test_dir, prb->test_sfx, prb->test_pat,
@@ -1843,15 +1828,6 @@ write_from_contest_dir(FILE *log_f, FILE *fout,
                            prb->info_dir, prb->info_sfx, prb->info_pat,
                            t->has_info_digest, t->info_digest);
     goto done;
-
-    /*
-static void
-write_from_archive(const serve_state_t cs,
-                   FILE *log_f, FILE *fout,
-                   int flag, int run_id, int test_num,
-                   const unsigned char *dir,
-                   const unsigned char *suffix);
-     */
 
   case NEW_SRV_ACTION_VIEW_TEST_OUTPUT:
     write_from_archive(cs, log_f, fout, t->output_available, run_id, test_num,
