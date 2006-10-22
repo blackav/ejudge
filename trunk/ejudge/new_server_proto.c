@@ -119,6 +119,8 @@ static const unsigned char * const new_serve_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_INV_VARIANT] = __("Invalid variant"),
   [NEW_SRV_ERR_PWD_GENERATION_FAILED] = __("Password generation failed: %s"),
   [NEW_SRV_ERR_TEAM_PWD_DISABLED] = __("Contest passwords are disabled"),
+  [NEW_SRV_ERR_APPEALS_DISABLED] = __("Appeals are disabled"),
+  [NEW_SRV_ERR_APPEALS_FINISHED] = __("Appeals deadline is exceeded"),
 };
 
 const unsigned char *

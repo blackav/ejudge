@@ -127,6 +127,7 @@ const unsigned char * const new_serve_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_ISSUE_WARNING] = __("Issue warning"),
   [NEW_SRV_ACTION_NEW_RUN] = __("Add run"),
   [NEW_SRV_ACTION_FORGOT_PASSWORD_2] = __("Submit"),
+  [NEW_SRV_ACTION_SUBMIT_APPEAL] = __("Submit appeal"),
 };
 
 const int new_serve_priv_next_state[NEW_SRV_ACTION_LAST] =

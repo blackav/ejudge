@@ -2456,7 +2456,7 @@ priv_submit_clar(FILE *fout,
                                      text3_len,
                                      phr->ip, phr->ssl_flag,
                                      0, user_id, 0, phr->user_id,
-                                     hide_flag, phr->locale_id, 0,
+                                     hide_flag, phr->locale_id, 0, 0,
                                      subj2)) < 0) {
     new_serve_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto cleanup;
@@ -2593,7 +2593,7 @@ priv_clar_reply(FILE *fout,
                                 msg_len,
                                 phr->ip, phr->ssl_flag,
                                 0, clar.from, 0, phr->user_id, 0,
-                                clar.locale_id, in_reply_to + 1, clar.subj);
+                                clar.locale_id, in_reply_to + 1, 0, clar.subj);
 
   if (clar_id < 0) {
     new_serve_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
@@ -6131,7 +6131,150 @@ unpriv_submit_clar(FILE *fout,
                                      text3_len,
                                      phr->ip, phr->ssl_flag,
                                      phr->user_id, 0, 0, 0, 0,
-                                     phr->locale_id, 0, subj3)) < 0) {
+                                     phr->locale_id, 0, 0, subj3)) < 0) {
+    new_serve_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
+    goto done;
+  }
+
+  sprintf(clar_file, "%06d", clar_id);
+  if (generic_write_file(text3, text3_len, 0,
+                         global->clar_archive_dir, clar_file, "") < 0) {
+    new_serve_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
+    goto done;
+  }
+
+  serve_send_clar_notify_email(cs, cnts, phr->user_id, phr->name, subj3, text2);
+
+ done:;
+  fclose(log_f); log_f = 0;
+  if (!log_txt || !*log_txt) {
+    html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
+  } else {
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_MAIN_PAGE);
+  }
+
+  //cleanup:;
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+}
+
+static void
+unpriv_submit_appeal(FILE *fout,
+                     struct http_request_info *phr,
+                     const struct contest_desc *cnts,
+                     struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob = 0;
+  const unsigned char *s, *text = 0;
+  int prob_id = 0, n;
+  time_t start_time, stop_time;
+  FILE *log_f = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  size_t text_len, subj3_len, text3_len;
+  unsigned char *text2, *subj3, *text3;
+  struct timeval precise_time;
+  int clar_id, test;
+  unsigned char clar_file[32];
+
+  // parameters: prob_id, subject, text,  
+
+  if ((n = ns_cgi_param(phr, "prob_id", &s)) < 0)
+    return html_err_invalid_param(fout, phr, 0, "prob_id is binary");
+  if (n > 0 && *s) {
+    if (sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n])
+      return html_err_invalid_param(fout, phr, 0, "cannot parse prob_id");
+    if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id]))
+      return html_err_invalid_param(fout, phr, 0, "prob_id is invalid");
+  }
+  if ((n = ns_cgi_param(phr, "test", &s)) < 0)
+    return html_err_invalid_param(fout, phr, 0, "test is binary");
+  if (ns_cgi_param(phr, "text", &text) <= 0)
+    return html_err_invalid_param(fout, phr, 0,
+                                  "text is not set or binary");
+
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                          cs->current_time);
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+  }
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (cs->clients_suspended) {
+    new_serve_error(log_f, NEW_SRV_ERR_CLIENTS_SUSPENDED);
+    goto done;
+  }
+  if (global->disable_team_clars) {
+    new_serve_error(log_f, NEW_SRV_ERR_CLARS_DISABLED);
+    goto done;
+  }
+  if (!start_time) {
+    new_serve_error(log_f, NEW_SRV_ERR_CONTEST_NOT_STARTED);
+    goto done;
+  }
+  if (!stop_time) {
+    new_serve_error(log_f, NEW_SRV_ERR_CONTEST_NOT_FINISHED);
+    goto done;
+  }
+  if (global->appeal_deadline_d <= 0) {
+    new_serve_error(log_f, NEW_SRV_ERR_APPEALS_DISABLED);
+    goto done;
+  }
+  if (cs->current_time >= global->appeal_deadline_d) {
+    new_serve_error(log_f, NEW_SRV_ERR_APPEALS_FINISHED);
+    goto done;
+  }
+  if (ns_cgi_param(phr, "test", &s) <= 0
+      || sscanf(s, "%d%n", &test, &n) != 1 || s[n]
+      || test <= 0 || test > 100000) {
+    new_serve_error(log_f, NEW_SRV_ERR_INV_TEST);
+    goto done;
+  }
+  if (!prob) {
+    new_serve_error(log_f, NEW_SRV_ERR_INV_PROB_ID);
+    goto done;
+  }
+
+  if (!text) text = "";
+  text_len = strlen(text);
+  if (text_len > 128 * 1024 * 1024) {
+    new_serve_error(log_f, NEW_SRV_ERR_MESSAGE_TOO_LONG, text_len);
+    goto done;
+  }
+  text2 = alloca(text_len + 1);
+  strcpy(text2, text);
+  while (text_len > 0 && isspace(text2[text_len - 1])) text2[--text_len] = 0;
+  if (!text_len) {
+    new_serve_error(log_f, NEW_SRV_ERR_MESSAGE_EMPTY);
+    goto done;
+  }
+
+  subj3 = alloca(strlen(prob->short_name) + 128);
+  subj3_len = sprintf(subj3, "Appeal: %s, %d", prob->short_name, test);
+
+  text3 = alloca(subj3_len + text_len + 32);
+  text3_len = sprintf(text3, "Subject: %s\n\n%s\n", subj3, text2);
+
+  if (serve_check_clar_quota(cs, phr->user_id, text3_len) < 0) {
+    new_serve_error(log_f, NEW_SRV_ERR_CLAR_QUOTA_EXCEEDED);
+    goto done;
+  }
+
+  gettimeofday(&precise_time, 0);
+  if ((clar_id = clar_add_record_new(cs->clarlog_state,
+                                     precise_time.tv_sec,
+                                     precise_time.tv_usec * 1000,
+                                     text3_len,
+                                     phr->ip, phr->ssl_flag,
+                                     phr->user_id, 0, 0, 0, 0,
+                                     phr->locale_id, 0, 1, subj3)) < 0) {
     new_serve_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto done;
   }
@@ -7151,7 +7294,7 @@ user_main_page(FILE *fout,
               "<tr><td colspan=\"2\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
               "<tr><td colspan=\"2\">%s</td></tr>\n"
               "</table></form>\n",
-              _("Test number"), BUTTON(NEW_SRV_ACTION_SUBMIT_CLAR));
+              _("Test number"), BUTTON(NEW_SRV_ACTION_SUBMIT_APPEAL));
     }
 
     if (!global->disable_clars) {
@@ -7266,6 +7409,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_TEST_OUTPUT] = unpriv_view_test,
   [NEW_SRV_ACTION_VIEW_TEST_ERROR] = unpriv_view_test,
   [NEW_SRV_ACTION_VIEW_TEST_CHECKER] = unpriv_view_test,
+  [NEW_SRV_ACTION_SUBMIT_APPEAL] = unpriv_submit_appeal,
 };
 
 static void

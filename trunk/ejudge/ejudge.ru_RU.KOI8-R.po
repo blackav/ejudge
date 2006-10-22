@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-23 03:32+0400\n"
-"PO-Revision-Date: 2006-10-23 03:33+0400\n"
+"POT-Creation-Date: 2006-10-23 03:56+0400\n"
+"PO-Revision-Date: 2006-10-23 03:57+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -420,6 +420,12 @@ msgstr "Ответ: См. условие задачи"
 
 msgid "Answer: YES"
 msgstr "Ответ: ДА"
+
+msgid "Appeals are disabled"
+msgstr "Апелляции отключены"
+
+msgid "Appeals deadline is exceeded"
+msgstr "Приём апелляций прекращён"
 
 msgid "Audit log"
 msgstr "Журнал аудита"
@@ -2390,6 +2396,9 @@ msgstr "Отослать"
 
 msgid "Submit a solution for"
 msgstr "Сдать решение задачи"
+
+msgid "Submit appeal"
+msgstr "Отослать апелляцию"
 
 msgid "Submit solution"
 msgstr "Сдача решений"
