@@ -1076,7 +1076,6 @@ super_html_edit_global_parameters(FILE *f,
     html_submit_button(f, SUPER_ACTION_GLOB_CLEAR_STAND_IGNORE_AFTER, "Clear");
     fprintf(f, "</td></tr></form>\n");
 
-
     // whether supplementary standings are enabled?
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Enable supplementary standings table:</td><td>",
@@ -1628,6 +1627,16 @@ super_html_edit_global_parameters(FILE *f,
   fprintf(f, "</td></tr></form>");
 
   if (sstate->show_global_6) {
+    //GLOBAL_PARAM(appeal_deadline, "s"),
+    html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Appeal deadline:</td><td>",
+            form_row_attrs[row ^= 1]);
+    html_date_select(f, global->appeal_deadline_d);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_APPEAL_DEADLINE, "Change");
+    html_submit_button(f, SUPER_ACTION_GLOB_CLEAR_APPEAL_DEADLINE, "Clear");
+    fprintf(f, "</td></tr></form>\n");
+
     //GLOBAL_PARAM(sleep_time, "d"),
     snprintf(hbuf, sizeof(hbuf), "%d", global->sleep_time);
     print_string_editing_row(f, "`compile', `run' sleep time (ms):",
@@ -2165,6 +2174,15 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CLEAR_STAND_IGNORE_AFTER:
     global->stand_ignore_after_d = 0;
+    return 0;
+
+  case SSERV_CMD_GLOB_CHANGE_APPEAL_DEADLINE:
+    if (xml_parse_date("", 0, 0, param2, &global->appeal_deadline_d) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    return 0;
+
+  case SSERV_CMD_GLOB_CLEAR_APPEAL_DEADLINE:
+    global->appeal_deadline_d = 0;
     return 0;
 
   case SSERV_CMD_GLOB_CHANGE_CONTEST_FINISH_TIME:

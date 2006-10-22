@@ -93,6 +93,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(always_show_problems, "d"),
 
   GLOBAL_PARAM(stand_ignore_after, "s"),
+  GLOBAL_PARAM(appeal_deadline, "s"),
   GLOBAL_PARAM(charset, "s"),
   GLOBAL_PARAM(contest_finish_time, "s"),
   //GLOBAL_PARAM(standings_charset, "s"),
@@ -1601,6 +1602,11 @@ set_defaults(serve_state_t state, int mode)
   if (state->global->stand_ignore_after[0] &&
       parse_date(state->global->stand_ignore_after, &state->global->stand_ignore_after_d) < 0) {
     err("cannot parse stand_ignore_after parameter");
+    return -1;
+  }
+  if (state->global->appeal_deadline[0] &&
+      parse_date(state->global->appeal_deadline, &state->global->appeal_deadline_d) < 0) {
+    err("cannot parse appeal_deadline parameter");
     return -1;
   }
   if (state->global->contest_finish_time[0] &&
