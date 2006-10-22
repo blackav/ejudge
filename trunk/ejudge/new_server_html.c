@@ -1193,6 +1193,11 @@ html_err_invalid_session(FILE *fout,
 }
 
 static void
+unpriv_html_empty_status(FILE *fout, struct http_request_info *phr,
+                         const struct contest_desc *cnts,
+                         struct contest_extra *extra);
+
+static void
 html_error_status_page(FILE *fout,
                        struct http_request_info *phr,
                        const struct contest_desc *cnts,
@@ -1206,7 +1211,10 @@ html_error_status_page(FILE *fout,
   l10n_setlocale(phr->locale_id);
   new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
                    _("Operation completed with errors"));
-  fprintf(fout, "%s", extra->separator_txt);
+  if (extra->separator_txt && *extra->separator_txt) {
+    unpriv_html_empty_status(fout, phr, cnts, extra);
+    fprintf(fout, "%s", extra->separator_txt);
+  }
   fprintf(fout, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(log_txt));
   fprintf(fout, "<hr>%s%s</a>\n",
           new_serve_aref(url, sizeof(url), phr, back_action, 0),

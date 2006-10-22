@@ -1466,7 +1466,7 @@ cmd_recover_password_1(struct client_state *p,
     CONN_BAD("email length mismatch: %d, %d", email_len, data->email_length);
     return;
   }
-  self_url = email + email_len;
+  self_url = email + email_len + 1;
   self_url_len = strlen(self_url);
   if (self_url_len != data->self_url_length) {
     CONN_BAD("self_url length mismatch: %d, %d", self_url_len,
