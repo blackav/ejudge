@@ -2429,6 +2429,11 @@ copy_user_info_func(void *data, int user_id,
   // FIXME: copy everything, only `name' is copied for now
   xfree(ui_to->name);
   ui_to->name = xstrdup(ui_from->name);
+  if (ui_from->team_passwd) {
+    xfree(ui_to->team_passwd);
+    ui_to->team_passwd = xstrdup(ui_from->team_passwd);
+    ui_to->team_passwd_method = ui_from->team_passwd_method;
+  }
 
   return 0;
 }
