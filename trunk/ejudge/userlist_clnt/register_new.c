@@ -19,32 +19,44 @@
 
 int
 userlist_clnt_register_new(struct userlist_clnt *clnt,
+                           int cmd,
                            ej_ip_t origin_ip,
                            int ssl,
                            int contest_id,
                            int locale_id,
+                           int action,
                            unsigned char const *login,
-                           unsigned char const *email)
+                           unsigned char const *email,
+                           unsigned char const *self_url)
 {
-  struct userlist_pk_register_new * data;
+  struct userlist_pk_register_new *data;
   int len;
   short * answer;
   size_t anslen;
   int res;
   int r;
+  unsigned char *p;
 
-  len = sizeof(struct userlist_pk_register_new)+strlen(login)+strlen(email);
+  if (!self_url) self_url = "";
+  len = sizeof(*data);
+  len += strlen(login);
+  len += strlen(email);
+  len += strlen(self_url);
   data = alloca(len);
   memset(data, 0, len);
-  data->request_id = ULS_REGISTER_NEW;
+  data->request_id = cmd;
   data->origin_ip = origin_ip;
   data->ssl = ssl;
   data->contest_id = contest_id;
   data->locale_id = locale_id;
+  data->action = action;
   data->login_length = strlen(login);
   data->email_length = strlen(email);
-  strcpy(data->data,login);
-  strcpy(data->data+data->login_length+1,email);
+  data->self_url_length = strlen(self_url);
+  p = data->data;
+  strcpy(p, login); p += data->login_length + 1;
+  strcpy(p, email); p += data->email_length + 1;
+  strcpy(p, self_url);
   if ((r = userlist_clnt_send_packet(clnt,len,data)) < 0) return r;
   if ((r = userlist_clnt_read_and_notify(clnt,&anslen,(void*) &answer)) < 0)
     return r;
