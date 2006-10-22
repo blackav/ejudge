@@ -1366,3 +1366,7 @@ userlist_xml.c 3546 0 4223075
 userlist_clnt/register_new.c 3545 0 171109
 userlist-server.c 3548 0 19616745
 new_server_html.c 3548 0 19911855
+userlist_clnt.h 3551 0 892423
+userlist-server.c 3551 0 20025892
+new_server_html.c 3551 0 20319308
+userlist_clnt/recover_passwd_2.c 3550 0 241001
