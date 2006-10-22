@@ -87,6 +87,7 @@ enum
     ULS_GENERATE_PASSWORDS_2,
     ULS_GET_DATABASE,
     ULS_COPY_USER_INFO,
+    ULS_RECOVER_PASSWORD_1,
 
     ULS_LAST_CMD
   };
@@ -166,9 +167,11 @@ struct userlist_pk_register_new
   int           ssl;
   int           contest_id;
   signed char   locale_id;
-  unsigned char login_length;
-  unsigned char email_length;
-  unsigned char data[2];
+  int           action;
+  int           login_length;
+  int           email_length;
+  int           self_url_length;
+  unsigned char data[3];
 };
 
 struct userlist_pk_do_login

@@ -138,6 +138,7 @@ static char const * const attr_map[] =
   "role",
   "cnts_last_login",
   "info_create",
+  "recovery",
 
   0
 };
@@ -457,6 +458,9 @@ parse_cookies(char const *path, struct xml_tree *cookies,
         break;
       case USERLIST_A_SSL:
         if (xml_attr_bool(a, &c->ssl) < 0) return -1;
+        break;
+      case USERLIST_A_RECOVERY:
+        if (xml_attr_bool(a, &c->recovery) < 0) return -1;
         break;
       case USERLIST_A_EXPIRE:
         if (xml_parse_date(path, a->line, a->column, a->text, &c->expire) < 0)
@@ -1343,6 +1347,10 @@ unparse_cookies(const struct xml_tree *p, FILE *f)
     if (c->ssl > 0) {
       fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_SSL],
               xml_unparse_bool(c->ssl));
+    }
+    if (c->recovery > 0) {
+      fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_RECOVERY],
+              xml_unparse_bool(c->recovery));
     }
     if (c->locale_id >= 0) {
       fprintf(f, " %s=\"%d\"", attr_map[USERLIST_A_LOCALE_ID], c->locale_id);

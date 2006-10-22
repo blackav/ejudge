@@ -80,7 +80,7 @@ struct uldb_plugin_iface
                     int contest_id,
                     int locale_id,
                     int priv_level,
-                    int role,
+                    int role, int recovery,
                     const struct userlist_cookie **);
   // remove a cookie
   int (*remove_cookie)(void *, const struct userlist_cookie *);

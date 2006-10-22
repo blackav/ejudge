@@ -224,6 +224,9 @@ enum
   NEW_SRV_ACTION_NEW_RUN_FORM,
   NEW_SRV_ACTION_NEW_RUN,
   NEW_SRV_ACTION_VIEW_USER_DUMP,
+  NEW_SRV_ACTION_FORGOT_PASSWORD_1,
+  NEW_SRV_ACTION_FORGOT_PASSWORD_2,
+  NEW_SRV_ACTION_FORGOT_PASSWORD_3,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -237,6 +240,7 @@ struct contest_extra
 
   const unsigned char *header_txt;
   const unsigned char *footer_txt;
+  const unsigned char *separator_txt;
   unsigned char *contest_arm;
 
   serve_state_t serve_state;

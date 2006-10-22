@@ -538,10 +538,12 @@ static unsigned char fancy_header[] =
 "<body>"
 "<div id=\"container\"><div id=\"l12\">\n"
 "<div class=\"main_phrase\">%H</div>\n";
-static unsigned char fancy_footer[] =
+static unsigned char fancy_separator[] =
 "</div>\n"
 "<div id=\"l11\"><img src=\"/ejudge/logo.gif\"></div>\n"
-"<div id=\"l13\"><div id=\"footer\">%R</div>\n"
+"<div id=\"l13\">\n";
+static unsigned char fancy_footer[] =
+"<div id=\"footer\">%R</div>\n"
 "</div>"
 "</BODY>"
 "</HTML>";
@@ -1203,7 +1205,8 @@ html_error_status_page(FILE *fout,
 
   l10n_setlocale(phr->locale_id);
   new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
-                   _("Operation competed with errors"));
+                   _("Operation completed with errors"));
+  fprintf(fout, "%s", extra->separator_txt);
   fprintf(fout, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(log_txt));
   fprintf(fout, "<hr>%s%s</a>\n",
           new_serve_aref(url, sizeof(url), phr, back_action, 0),
@@ -4874,6 +4877,56 @@ privileged_page(FILE *fout,
   }
 }
 
+static void
+unpriv_load_html_style(struct http_request_info *phr,
+                       const struct contest_desc *cnts,
+                       struct contest_extra **p_extra,
+                       time_t *p_cur_time)
+{
+  struct contest_extra *extra = 0;
+  time_t cur_time = 0;
+
+  extra = get_contest_extra(phr->contest_id);
+  ASSERT(extra);
+
+  cur_time = time(0);
+  watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+  watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
+  extra->header_txt = extra->header.text;
+  extra->footer_txt = extra->footer.text;
+  extra->separator_txt = "";
+  if (!extra->header_txt || !extra->footer_txt) {
+    extra->header_txt = fancy_header;
+    extra->separator_txt = fancy_separator;
+    extra->footer_txt = fancy_footer;
+  }
+
+  if (extra->contest_arm) xfree(extra->contest_arm);
+  if (phr->locale_id == 0 && cnts->name_en) {
+    extra->contest_arm = html_armor_string_dup(cnts->name_en);
+  } else {
+    extra->contest_arm = html_armor_string_dup(cnts->name);
+  }
+
+  *p_extra = extra;
+  *p_cur_time = cur_time;
+}
+
+static void
+unpriv_html_empty_status(FILE *fout, struct http_request_info *phr,
+                         const struct contest_desc *cnts,
+                         struct contest_extra *extra)
+{
+  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>\n");
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">&nbsp;</div></td></tr></table></div>\n");
+
+  fprintf(fout,
+          "<div class=\"white_empty_block\">&nbsp;</div>\n"
+          "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
+
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td></tr></table></div>\n");
+}
+
 static int
 unpriv_parse_run_id(FILE *fout, struct http_request_info *phr,
                     const struct contest_desc *cnts,
@@ -4918,6 +4971,178 @@ unpriv_parse_run_id(FILE *fout, struct http_request_info *phr,
 }
 
 void
+unpriv_page_forgot_password_1(FILE *fout, struct http_request_info *phr)
+{
+  const struct contest_desc *cnts = 0;
+  struct contest_extra *extra = 0;
+  time_t cur_time = 0;
+  unsigned char bb[1024];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
+    return html_err_service_not_available(fout, phr, "contest_id is invalid");
+  if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    return html_err_service_not_available(fout, phr, "%s://%s is not allowed for USER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+  if (cnts->closed)
+    return html_err_service_not_available(fout, phr, "contest %d is closed",
+                                          cnts->id);
+  if (!cnts->new_managed)
+    return html_err_service_not_available(fout, phr,
+                                          "contest %d is not managed",
+                                          cnts->id);
+  if (cnts->client_disable_team)
+    return html_err_service_not_available(fout, phr,
+                                          "contest %d user is disabled",
+                                          cnts->id);
+  if (!cnts->enable_forgot_password)
+    return html_err_service_not_available(fout, phr,
+                                          "contest %d password recovery disabled",
+                                          cnts->id);
+
+  unpriv_load_html_style(phr, cnts, &extra, &cur_time);
+
+  l10n_setlocale(phr->locale_id);
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   _("Lost password recovery [%s]"), extra->contest_arm);
+
+  // change language button
+  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>\n");
+  html_start_form(fout, 1, phr->self_url, "");
+  html_hidden(fout, "contest_id", "%d", phr->contest_id);
+  html_hidden(fout, "action", "%d", NEW_SRV_ACTION_FORGOT_PASSWORD_1);
+
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
+          _("language"));
+  l10n_html_locale_select(fout, phr->locale_id);
+  fprintf(fout, "</div></td>\n");
+
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>\n", new_serve_submit_button(bb, sizeof(bb), "submit", 0, _("Change Language")));
+
+  fprintf(fout, "</tr></table></div>\n"
+          "<div class=\"white_empty_block\">&nbsp;</div>\n"
+          "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
+
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td></tr></table></div>\n");
+
+  //fprintf(fout, "<div class=\"l13\">\n");
+  fprintf(fout, "%s", extra->separator_txt);
+
+  fprintf(fout, _("<p>Password recovery requires several steps. Now, please, specify the <b>login</b> and the <b>e-mail</b>, which was specified when the login was created.</p>\n<p>Note, that automatic password recovery is not possible for invisible, banned, locked, or privileged users!</p>\n"));
+
+  html_start_form(fout, 1, phr->self_url, "");
+  html_hidden(fout, "contest_id", "%d", phr->contest_id);
+  fprintf(fout, "<table><tr><td class=\"menu\">%s:</td><td class=\"menu\">%s</td></tr>\n",
+          _("Login"), html_input_text(bb, sizeof(bb), "login", 16, 0));
+  fprintf(fout, "<tr><td class=\"menu\">%s:</td><td class=\"menu\">%s</td></tr>\n",
+          _("E-mail"), html_input_text(bb, sizeof(bb), "email", 16, 0));
+  fprintf(fout, "<tr><td class=\"menu\">&nbsp;</td><td class=\"menu\">%s</td></tr></table></form>\n",
+          BUTTON(NEW_SRV_ACTION_FORGOT_PASSWORD_2));
+
+
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
+  l10n_setlocale(0);
+  html_armor_free(&ab);
+}
+
+void
+unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr)
+{
+  const struct contest_desc *cnts = 0;
+  struct contest_extra *extra = 0;
+  time_t cur_time;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *login = 0, *email = 0;
+  int r;
+  FILE *log_f = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+
+  if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
+    return html_err_service_not_available(fout, phr, "contest_id is invalid");
+  if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    return html_err_service_not_available(fout, phr, "%s://%s is not allowed for USER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+  if (cnts->closed)
+    return html_err_service_not_available(fout, phr, "contest %d is closed",
+                                          cnts->id);
+  if (!cnts->new_managed)
+    return html_err_service_not_available(fout, phr,
+                                          "contest %d is not managed",
+                                          cnts->id);
+  if (cnts->client_disable_team)
+    return html_err_service_not_available(fout, phr,
+                                          "contest %d user is disabled",
+                                          cnts->id);
+  if (!cnts->enable_forgot_password)
+    return html_err_service_not_available(fout, phr,
+                                          "contest %d password recovery disabled",
+                                          cnts->id);
+
+  if (ns_cgi_param(phr, "login", &login) <= 0) {
+    return html_err_invalid_param(fout, phr, 0, "login is not specified");
+  }
+  if (ns_cgi_param(phr, "email", &email) <= 0) {
+    return html_err_invalid_param(fout, phr, 0, "email is not specified");
+  }
+
+  unpriv_load_html_style(phr, cnts, &extra, &cur_time);
+
+  if (open_ul_connection(phr->fw_state) < 0) {
+    html_err_userlist_server_down(fout, phr, 0);
+    goto cleanup;
+  }
+  r = userlist_clnt_register_new(ul_conn, ULS_RECOVER_PASSWORD_1,
+                                 phr->ip, phr->ssl_flag,
+                                 phr->contest_id,
+                                 phr->locale_id,
+                                 NEW_SRV_ACTION_FORGOT_PASSWORD_3,
+                                 login, email, phr->self_url);
+
+  if (r < 0) {
+    log_f = open_memstream(&log_txt, &log_len);
+
+    if (r == -ULS_ERR_EMAIL_FAILED) {
+      fprintf(log_f, "%s",
+              _("The server was unable to send a registration e-mail\n"
+                "to the specified address. This is probably due\n"
+                "to heavy server load rather than to an invalid\n"
+                "e-mail address. You should try to register later.\n"));
+    } else {
+      fprintf(log_f, gettext(userlist_strerror(-r)));
+    }
+
+    fclose(log_f); log_f = 0;
+
+    l10n_setlocale(phr->locale_id);
+    new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                     _("Password recovery error"));
+    unpriv_html_empty_status(fout, phr, cnts, extra);
+    fprintf(fout, "<p>Password recovery is not possible because of the following error.</p>\n");
+    fprintf(fout, "%s", extra->separator_txt);
+    fprintf(fout, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(log_txt));
+    html_put_footer(fout, extra->footer_txt, phr->locale_id);
+    l10n_setlocale(0);
+    goto cleanup;
+  }
+
+  l10n_setlocale(phr->locale_id);
+  new_serve_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                   _("Password recovery, stage 1 [%s, %s]"),
+                   ARMOR(login), extra->contest_arm);
+  unpriv_html_empty_status(fout, phr, cnts, extra);
+  fprintf(fout, "%s", extra->separator_txt);
+
+  fprintf(fout, _("<p>First stage of password recovery is successful. You should receive an e-mail message with further instructions. <b>Note,</b> that you should confirm password recovery in 24 hours, or operation will be cancelled.</p>"));
+
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+  html_armor_free(&ab);
+}
+
+void
 unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
 {
   const struct contest_desc *cnts = 0;
@@ -4926,6 +5151,7 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
   const unsigned char *s, *ss;
   unsigned char bb[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int vis_flag = 0;
 
   if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
     return html_err_service_not_available(fout, phr, "contest_id is invalid");
@@ -4951,8 +5177,12 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
   watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
   extra->header_txt = extra->header.text;
   extra->footer_txt = extra->footer.text;
-  if (!extra->header_txt) extra->header_txt = fancy_header;
-  if (!extra->footer_txt) extra->footer_txt = fancy_footer;
+  extra->separator_txt = "";
+  if (!extra->header_txt || !extra->footer_txt) {
+    extra->header_txt = fancy_header;
+    extra->footer_txt = fancy_footer;
+    extra->separator_txt = fancy_separator;
+  }
 
   if (extra->contest_arm) xfree(extra->contest_arm);
   if (phr->locale_id == 0 && cnts->name_en) {
@@ -4992,28 +5222,43 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
           "<div class=\"white_empty_block\">&nbsp;</div>\n"
           "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
 
-  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
   if (cnts && cnts->assign_logins && cnts->force_registration
-      && cnts->register_url) {
+      && cnts->register_url
+      && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
     fprintf(fout,
             "<a class=\"menu\" href=\"%s?contest_id=%d&locale_id=%d&action=2\">%s</a>",
             cnts->register_url, phr->contest_id, phr->locale_id,
             _("Registration"));
-  } else if (cnts && cnts->register_url) {
+    fprintf(fout, "</div></td>\n");
+    vis_flag++;
+  } else if (cnts && cnts->register_url
+             && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
     fprintf(fout,
             "<a class=\"menu\" href=\"%s?contest_id=%d&locale_id=%d\">%s</a>",
             cnts->register_url, phr->contest_id, phr->locale_id,
             _("Registration"));
-  } else {
-    fprintf(fout, "&nbsp;");
+    fprintf(fout, "</div></td>\n");
+    vis_flag++;
   }
-  fprintf(fout, "</div></td>\n");
+
+  if (cnts && cnts->enable_forgot_password && cnts->disable_team_password) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&locale_id=%d&action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_FORGOT_PASSWORD_1, _("Forgot password?"));
+    vis_flag++;
+  }
+
+  if (!vis_flag) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
+  }
 
   /*
   fprintf(fout, "<div class=\"search_actions\"><a href=\"\">%s</a>&nbsp;&nbsp;<a href=\"\">%s</a></div>", _("Registration"), _("Forgot the password?"));
   */
 
   fprintf(fout, "</tr></table></div>\n");
+  fprintf(fout, "%s", extra->separator_txt);
+
   html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);
@@ -6450,6 +6695,10 @@ user_main_page(FILE *fout,
               gettext(user_section_names[i]));
     }
   }
+  if (cnts->standings_url && start_time > 0) {
+    fprintf(fout, "<td><a href=\"%s\" target=\"_blank\">%s</a></td>",
+            cnts->standings_url, _("Current Standings"));
+  }
   fprintf(fout, "<td>%s%s</a></td>",
           new_serve_aref(urlbuf, sizeof(urlbuf), phr, NEW_SRV_ACTION_LOGOUT, 0),
           _("Logout"));
@@ -6811,6 +7060,11 @@ unprivileged_page(FILE *fout, struct http_request_info *phr)
   time_t cur_time = time(0);
   unsigned char hid_buf[1024];
   struct teamdb_db_callbacks callbacks;
+
+  if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_1)
+    return unpriv_page_forgot_password_1(fout, phr);
+  if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_2)
+    return unpriv_page_forgot_password_2(fout, phr);
 
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return unprivileged_page_login(fout, phr);

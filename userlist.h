@@ -159,6 +159,7 @@ enum
     USERLIST_A_ROLE,
     USERLIST_A_CNTS_LAST_LOGIN,
     USERLIST_A_INFO_CREATE,
+    USERLIST_A_RECOVERY,
 
     USERLIST_LAST_ATTN,
   };
@@ -324,6 +325,7 @@ struct userlist_cookie
   int locale_id;
   int priv_level;
   int role;
+  int recovery;
 };
 
 struct userlist_contest

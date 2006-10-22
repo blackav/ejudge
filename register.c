@@ -2577,11 +2577,13 @@ action_register_new_user(void)
         error("%s", gettext(userlist_strerror(-errcode)));
       }
     } else {
-      errcode = userlist_clnt_register_new(server_conn, user_ip,
+      errcode = userlist_clnt_register_new(server_conn,
+                                           ULS_REGISTER_NEW,
+                                           user_ip,
                                            ssl_flag,
                                            user_contest_id,
-                                           client_locale_id,
-                                           user_login, user_email);
+                                           client_locale_id, 0,
+                                           user_login, user_email, 0);
       if (errcode == -ULS_ERR_EMAIL_FAILED) {
         error("%s", _("The server was unable to send a registration e-mail\n"
                       "to the specified address. This is probably due\n"

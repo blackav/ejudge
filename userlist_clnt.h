@@ -41,12 +41,15 @@ int userlist_clnt_read_and_notify(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_register_new(struct userlist_clnt *clnt,
+                           int cmd,
                            ej_ip_t origin_ip,
                            int ssl,
                            int contest_id,
                            int locale_id,
+                           int action,
                            unsigned char const *login,
-                           unsigned char const *email);
+                           unsigned char const *email,
+                           unsigned char const *self_url);
 
 int
 userlist_clnt_register_new_2(struct userlist_clnt *clnt,
