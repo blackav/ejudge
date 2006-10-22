@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-23 00:44+0400\n"
-"PO-Revision-Date: 2006-10-23 00:44+0400\n"
+"POT-Creation-Date: 2006-10-23 02:29+0400\n"
+"PO-Revision-Date: 2006-10-23 02:32+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -263,6 +263,10 @@ msgstr ""
 "mail сообщение с дальнейшими инструкциями. <b>Учтите,</b> что Вы должны "
 "завершить процедуру восстановления пароля в течение 24 часов от данного "
 "момента, а иначе операция будет отменена.</p>"
+
+#, c-format
+msgid "<p>New password is generated.</p>"
+msgstr "<p>Новый пароль сгенерирован.</p>"
 
 #, c-format
 msgid ""
@@ -1018,6 +1022,18 @@ msgstr "Гости"
 msgid "Hash value"
 msgstr "Хэш-код"
 
+#, c-format
+msgid ""
+"Hello,\n"
+"\n"
+"New random password was successfully generated!\n"
+"\n"
+msgstr ""
+"Здравствуйте,\n"
+"\n"
+"Новый случайный пароль успешно сгененирован!\n"
+"\n"
+
 msgid ""
 "Hello,\n"
 "\n"
@@ -1142,7 +1158,21 @@ msgstr ""
 msgid ""
 "Hello,\n"
 "\n"
-"Use `%s' (email %s) has initiated password regeneration\n"
+"User `%s' (email %s) completed password regeneration\n"
+"in contest %d from IP %s\n"
+"\n"
+msgstr ""
+"Здравствуйте,\n"
+"\n"
+"Пользователь `%s' (email %s) завершил процедуру перегенерации регистрационного\n"
+"пароля в турнире %d с IP-адреса %s\n"
+"\n"
+
+#, c-format
+msgid ""
+"Hello,\n"
+"\n"
+"User `%s' (email %s) has initiated password regeneration\n"
 "in contest %d from IP %s\n"
 "\n"
 msgstr ""
@@ -1716,6 +1746,10 @@ msgstr "Изменение пароля не удалось по следующим причинам."
 msgid "Password generation failed: %s"
 msgstr "Генерация паролей не удалась: %s"
 
+#, c-format
+msgid "Password recovery completed [%s, %s]"
+msgstr "Восстановление пароля завершено [%s, %s]"
+
 msgid "Password recovery error"
 msgstr "Ошибка восстановления пароля"
 
@@ -1725,6 +1759,9 @@ msgstr "Восстановление пароля, этап 1 [%s, %s]"
 
 msgid "Password regeneration requested"
 msgstr "Запрошена перегенерация пароля"
+
+msgid "Password regeneration successful"
+msgstr "Перегенерация пароля завершена"
 
 #, c-format
 msgid "Password update failed: %s"
