@@ -112,6 +112,9 @@ struct section_global_data
   puc_t  contest_finish_time[256];
   time_t contest_finish_time_d;
 
+  puc_t  appeal_deadline[256];
+  time_t appeal_deadline_d;
+
   int    fog_standings_updated; /* INTERNAL: updated at the moment of fog? */
   int    start_standings_updated; /* INTERNAL: updated at the start */
   int    unfog_standings_updated; /* INTERNAL: updated after the fog */

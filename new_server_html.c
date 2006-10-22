@@ -7135,6 +7135,24 @@ user_main_page(FILE *fout,
               "</table></form>\n",
               _("Subject"), BUTTON(NEW_SRV_ACTION_SUBMIT_CLAR));
     }
+    if (!global->disable_clars && !global->disable_team_clars
+        && start_time > 0 && stop_time > 0
+        && global->appeal_deadline_d > 0
+        && cs->current_time < global->appeal_deadline_d) {
+      fprintf(fout, "<hr><a name=\"clar\"></a><%s>%s</%s>\n",
+              cnts->team_head_style, _("Send an appeal"),
+              cnts->team_head_style);
+      html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+      fprintf(fout, "<table><tr><td>%s:</td><td>", _("Problem"));
+      html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 1,
+                             start_time);
+      fprintf(fout, "</td></tr>\n<tr><td>%s:</td>"
+              "<td><input type=\"text\" name=\"test\"></td></tr>\n"
+              "<tr><td colspan=\"2\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
+              "<tr><td colspan=\"2\">%s</td></tr>\n"
+              "</table></form>\n",
+              _("Test number"), BUTTON(NEW_SRV_ACTION_SUBMIT_CLAR));
+    }
 
     if (!global->disable_clars) {
       fprintf(fout, "<hr><a name=\"clarstat\"></a><%s>%s (%s)</%s>\n",
