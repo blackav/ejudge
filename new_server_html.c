@@ -6256,10 +6256,79 @@ unpriv_view_source(FILE *fout,
   xfree(run_text);
 }
 
-static const int report_view_actions[] =
+static void
+unpriv_view_test(FILE *fout,
+                 struct http_request_info *phr,
+                 const struct contest_desc *cnts,
+                 struct contest_extra *extra)
 {
-  0,
-};
+
+
+  const serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  int run_id, test_num, n;
+  const unsigned char *s = 0;
+  struct run_entry re;
+  FILE *log_f = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+
+  // run_id, test_num
+  if (unpriv_parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0)
+    goto cleanup;
+  if (ns_cgi_param(phr, "test_num", &s) <= 0
+      || sscanf(s, "%d%n", &test_num, &n) != 1 || s[n] || test_num <= 0) {
+    html_err_invalid_param(fout, phr, 0, "cannot parse test_num");
+    goto cleanup;
+  }
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (cs->clients_suspended) {
+    new_serve_error(log_f, NEW_SRV_ERR_CLIENTS_SUSPENDED);
+    goto done;
+  }
+  if (global->team_enable_rep_view <= 0) {
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto done;
+  }
+  if (global->team_show_judge_report <= 0) {
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto done;
+  }
+  if (re.user_id != phr->user_id) {
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto done;
+  }
+  switch (re.status) {
+  case RUN_OK:
+  case RUN_RUN_TIME_ERR:
+  case RUN_TIME_LIMIT_ERR:
+  case RUN_PRESENTATION_ERR:
+  case RUN_WRONG_ANSWER_ERR:
+  case RUN_PARTIAL:
+  case RUN_ACCEPTED:
+  case RUN_MEM_LIMIT_ERR:
+  case RUN_SECURITY_ERR:
+    break;
+  default:
+    new_serve_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto done;
+  }    
+
+  new_serve_write_tests(cs, fout, log_f, phr->action, run_id, test_num);
+
+ done:;
+  fclose(log_f); log_f = 0;
+  if (log_txt && *log_txt) {
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_MAIN_PAGE);
+  }
+
+ cleanup:
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+}
 
 static void
 unpriv_view_report(FILE *fout,
@@ -6385,7 +6454,7 @@ unpriv_view_report(FILE *fout,
   case CONTENT_TYPE_XML:
     if (global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode) {
       write_xml_team_accepting_report(fout, rep_start, run_id, &re, prob,
-                                      report_view_actions,
+                                      new_actions_vector,
                                       phr->session_id, phr->self_url, "");
     } else if (prob->team_show_judge_report) {
       write_xml_testing_report(fout, rep_start, phr->session_id,
@@ -7173,6 +7242,12 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_REPORT] = unpriv_view_report,
   [NEW_SRV_ACTION_VIEW_CLAR] = unpriv_view_clar,
   [NEW_SRV_ACTION_PRINT_RUN] = unpriv_print_run,
+  [NEW_SRV_ACTION_VIEW_TEST_INPUT] = unpriv_view_test,
+  [NEW_SRV_ACTION_VIEW_TEST_ANSWER] = unpriv_view_test,
+  [NEW_SRV_ACTION_VIEW_TEST_INFO] = unpriv_view_test,
+  [NEW_SRV_ACTION_VIEW_TEST_OUTPUT] = unpriv_view_test,
+  [NEW_SRV_ACTION_VIEW_TEST_ERROR] = unpriv_view_test,
+  [NEW_SRV_ACTION_VIEW_TEST_CHECKER] = unpriv_view_test,
 };
 
 static void
