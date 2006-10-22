@@ -1364,3 +1364,5 @@ new_server_tables.c 3546 0 795640
 uldb_plugin_xml.c 3546 0 5709836
 userlist_xml.c 3546 0 4223075
 userlist_clnt/register_new.c 3545 0 171109
+userlist-server.c 3548 0 19616745
+new_server_html.c 3548 0 19911855
