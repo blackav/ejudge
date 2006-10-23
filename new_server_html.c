@@ -2447,7 +2447,7 @@ priv_submit_clar(FILE *fout,
   }
 
   text3 = alloca(subj_len + text_len + 32);
-  text3_len = sprintf(text2, "Subject: %s\n\n%s\n", subj2, text2);
+  text3_len = sprintf(text3, "Subject: %s\n\n%s\n", subj2, text2);
 
   gettimeofday(&precise_time, 0);
   if ((clar_id = clar_add_record_new(cs->clarlog_state,
