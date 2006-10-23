@@ -5036,7 +5036,7 @@ unpriv_page_forgot_password_1(FILE *fout, struct http_request_info *phr)
   //fprintf(fout, "<div class=\"l13\">\n");
   fprintf(fout, "%s", extra->separator_txt);
 
-  fprintf(fout, _("<p>Password recovery requires several steps. Now, please, specify the <b>login</b> and the <b>e-mail</b>, which was specified when the login was created.</p>\n<p>Note, that automatic password recovery is not possible for invisible, banned, locked, or privileged users!</p>\n"));
+  fprintf(fout, _("<p class=\"fixed_width\">Password recovery requires several steps. Now, please, specify the <b>login</b> and the <b>e-mail</b>, which was specified when the login was created.</p>\n<p class=\"fixed_width\">Note, that automatic password recovery is not possible for invisible, banned, locked, or privileged users!</p>\n"));
 
   html_start_form(fout, 1, phr->self_url, "");
   html_hidden(fout, "contest_id", "%d", phr->contest_id);
@@ -5142,7 +5142,7 @@ unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr)
   unpriv_html_empty_status(fout, phr, cnts, extra);
   fprintf(fout, "%s", extra->separator_txt);
 
-  fprintf(fout, _("<p>First stage of password recovery is successful. You should receive an e-mail message with further instructions. <b>Note,</b> that you should confirm password recovery in 24 hours, or operation will be cancelled.</p>"));
+  fprintf(fout, _("<p class=\"fixed_width\">First stage of password recovery is successful. You should receive an e-mail message with further instructions. <b>Note,</b> that you should confirm password recovery in 24 hours, or operation will be cancelled.</p>"));
 
   html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);

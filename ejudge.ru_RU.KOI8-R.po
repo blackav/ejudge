@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-23 03:56+0400\n"
-"PO-Revision-Date: 2006-10-23 03:57+0400\n"
+"POT-Creation-Date: 2006-10-23 18:59+0400\n"
+"PO-Revision-Date: 2006-10-23 19:03+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -153,6 +153,25 @@ msgstr ""
 
 #, c-format
 msgid ""
+"<p class=\"fixed_width\">First stage of password recovery is successful. You "
+"should receive an e-mail message with further instructions. <b>Note,</b> "
+"that you should confirm password recovery in 24 hours, or operation will be "
+"cancelled.</p>"
+msgstr "<p class=\"fixed_width\">Первый этап восстановления пароля завершен. Теперь Вы должны получить e-mail сообщение с дальнейшими инструкциями. <b>Учтите,</b> что Вы должны завершить процедуру восстановления пароля в течение 24 часов от данного момента, а иначе операция будет отменена.</p>"
+
+#, c-format
+msgid ""
+"<p class=\"fixed_width\">Password recovery requires several steps. Now, "
+"please, specify the <b>login</b> and the <b>e-mail</b>, which was specified "
+"when the login was created.</p>\n"
+"<p class=\"fixed_width\">Note, that automatic password recovery is not "
+"possible for invisible, banned, locked, or privileged users!</p>\n"
+msgstr ""
+"<p class=\"fixed_width\">Восстановление пароля выполняется в несколько этапов. Сейчас, пожалуйста, укажите <b>регистрационное имя</b> и <b>адрес e-mail</b>, который был использован при создании этого регистрационного имени.</p>\n"
+"<p class=\"fixed_width\">Учтите, что автоматическое восстановление пароля невозможно для заблокированных, невидимых и привилегированных пользователей!</p>\n"
+
+#, c-format
+msgid ""
 "<p%s><b>Note,</b> if downloads are allowed, you may download your runs once "
 "per %d minutes. The archive is in <tt>.tar.gz</tt> (<tt>.tgz</tt>) format.</"
 "p>\n"
@@ -254,17 +273,6 @@ msgid "<p%s>The minimal number of %s is %d.</p>\n"
 msgstr "<p%s>Минимальное количество %s - %d.</p>\n"
 
 #, c-format
-msgid ""
-"<p>First stage of password recovery is successful. You should receive an e-"
-"mail message with further instructions. <b>Note,</b> that you should confirm "
-"password recovery in 24 hours, or operation will be cancelled.</p>"
-msgstr ""
-"<p>Первый этап восстановления пароля завершен. Теперь Вы должны получить e-"
-"mail сообщение с дальнейшими инструкциями. <b>Учтите,</b> что Вы должны "
-"завершить процедуру восстановления пароля в течение 24 часов от данного "
-"момента, а иначе операция будет отменена.</p>"
-
-#, c-format
 msgid "<p>New password is generated.</p>"
 msgstr "<p>Новый пароль сгенерирован.</p>"
 
@@ -274,20 +282,6 @@ msgid ""
 msgstr ""
 "<p>Обратите внимание, что точная причина ошибки не сообщается по "
 "соображениям безопасности.</p>"
-
-#, c-format
-msgid ""
-"<p>Password recovery requires several steps. Now, please, specify the "
-"<b>login</b> and the <b>e-mail</b>, which was specified when the login was "
-"created.</p>\n"
-"<p>Note, that automatic password recovery is not possible for invisible, "
-"banned, locked, or privileged users!</p>\n"
-msgstr ""
-"<p>Восстановление пароля выполняется в несколько этапов. Сейчас, пожалуйста, "
-"укажите <b>регистрационное имя</b> и <b>адрес e-mail</b>, который был "
-"использован при создании этого регистрационного имени.</p>\n"
-"<p>Учтите, что автоматическое восстановление пароля невозможно для "
-"заблокированных, невидимых и привилегированных пользователей!</p>\n"
 
 #, c-format
 msgid ""
@@ -1207,9 +1201,7 @@ msgstr "операция IPC завершилась с ошибкой"
 msgid ""
 "If you have registered before, please enter your login and password in the "
 "corresponding fields. Then press the \"Submit\" button."
-msgstr ""
-"Если Вы уже зарегистрировались, введите Ваше регистрационное имя и пароль в "
-"соответствующих полях. Затем нажмите кнопку \"Отослать\"."
+msgstr "Если Вы уже зарегистрировались, введите Ваше регистрационное имя и пароль в соответствующих полях. Затем нажмите кнопку \"Отправить\"."
 
 msgid "Ignored"
 msgstr "Проигнорирована"
@@ -2067,10 +2059,10 @@ msgstr ""
 "удалены)"
 
 msgid "Reply to all"
-msgstr "Отослать всем"
+msgstr "Разослать всем"
 
 msgid "Reply to sender"
-msgstr "Отослать отправителю"
+msgstr "Ответить только отправителю"
 
 msgid "Report file does not exist"
 msgstr "Запрошенный файл не существует"
@@ -2191,34 +2183,34 @@ msgid "Select problem"
 msgstr "Выбрать задачу"
 
 msgid "Send"
-msgstr "Отослать"
+msgstr "Отправить"
 
 msgid "Send a message to judges"
-msgstr "Отослать сообщение судьям"
+msgstr "Отправить сообщение судьям"
 
 msgid "Send a submission"
-msgstr "Отослать решение"
+msgstr "Отправить решение"
 
 msgid "Send an appeal"
-msgstr "Отослать аппеляцию"
+msgstr "Отправить аппеляцию"
 
 msgid "Send clarification"
-msgstr "Отослать сообщение"
+msgstr "Отправить сообщение"
 
 msgid "Send to all"
-msgstr "Отослать всем"
+msgstr "Разослать всем"
 
 msgid "Send to sender"
-msgstr "Отослать отправителю"
+msgstr "Ответить только отправителю"
 
 msgid "Send!"
-msgstr "Отослать!"
+msgstr "Отправить!"
 
 msgid "Sender"
 msgstr "Отправитель"
 
 msgid "Sent submissions"
-msgstr "Отосланные решения"
+msgstr "Отправленные решения"
 
 msgid "Serial No"
 msgstr "NN"
@@ -2392,13 +2384,13 @@ msgid "Submissions"
 msgstr "Посылки"
 
 msgid "Submit"
-msgstr "Отослать"
+msgstr "Отправить"
 
 msgid "Submit a solution for"
 msgstr "Сдать решение задачи"
 
 msgid "Submit appeal"
-msgstr "Отослать апелляцию"
+msgstr "Отправить апелляцию"
 
 msgid "Submit solution"
 msgstr "Сдача решений"
@@ -2516,7 +2508,7 @@ msgid ""
 "to heavy server load rather than to an invalid\n"
 "e-mail address. You should try to register later.\n"
 msgstr ""
-"Сервер оказался не в состоянии отослать регистрационное письмо\n"
+"Сервер оказался не в состоянии отправить регистрационное письмо\n"
 "по указанному адресу. Это, возможно, произошло из-за\n"
 "слишком высокой загрузки сервера, а не из-за неправильного\n"
 "адреса e-mail. Повторите попытку регистрации позже.\n"
@@ -2618,8 +2610,7 @@ msgstr ""
 "назначено автоматически."
 
 msgid "Type your login and password and then press \"Submit\" button"
-msgstr ""
-"Введите Ваше регистрационное имя и пароль, затем нажмите кнопку \"Отослать\""
+msgstr "Введите Ваше регистрационное имя и пароль, затем нажмите кнопку \"Отправить\""
 
 msgid "Type your valid e-mail address"
 msgstr "Введите Ваш действующий адрес электронной почты"
@@ -2771,7 +2762,7 @@ msgid "View teams"
 msgstr "Посмотреть команды"
 
 msgid "View the problem statement and send a submission"
-msgstr "Посмотреть условие задачи и отослать решение"
+msgstr "Посмотреть условие задачи и отправить решение"
 
 msgid "Viewing clar"
 msgstr "Просмотр посылки"
