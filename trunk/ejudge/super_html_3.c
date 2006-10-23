@@ -2179,10 +2179,13 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_GLOB_CHANGE_APPEAL_DEADLINE:
     if (xml_parse_date("", 0, 0, param2, &global->appeal_deadline_d) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
+    snprintf(global->appeal_deadline, sizeof(global->appeal_deadline),
+             "%s", xml_unparse_date(global->appeal_deadline_d));
     return 0;
 
   case SSERV_CMD_GLOB_CLEAR_APPEAL_DEADLINE:
     global->appeal_deadline_d = 0;
+    global->appeal_deadline[0] = 0;
     return 0;
 
   case SSERV_CMD_GLOB_CHANGE_CONTEST_FINISH_TIME:

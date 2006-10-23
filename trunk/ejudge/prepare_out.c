@@ -255,9 +255,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "enable_full_archive", global->enable_full_archive);
   if (global->always_show_problems != DFLT_G_ALWAYS_SHOW_PROBLEMS)
     unparse_bool(f, "always_show_problems", global->always_show_problems);
-  if (global->appeal_deadline > 0) {
-    fprintf(f, "appeal_deadline = \"%s\"\n",
-            xml_unparse_date(global->appeal_deadline_d));
+  if (global->appeal_deadline[0]) {
+    fprintf(f, "appeal_deadline = \"%s\"\n", global->appeal_deadline);
   }
   fprintf(f, "\n");
 
