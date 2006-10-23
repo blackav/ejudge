@@ -2386,6 +2386,7 @@ priv_submit_clar(FILE *fout,
                         user_id, ARMOR(s));
         goto cleanup;
       }
+      user_id = 0;
     } else {
       if ((n = teamdb_lookup_login(cs->teamdb_state, s)) <= 0) {
         new_serve_error(log_f, NEW_SRV_ERR_USER_LOGIN_NONEXISTANT, ARMOR(s));
