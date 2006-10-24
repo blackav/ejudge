@@ -81,7 +81,7 @@ struct http_request_info
 };
 
 void
-new_server_handle_http_request(struct server_framework_state *state,
+ns_handle_http_request(struct server_framework_state *state,
                                struct client_state *p,
                                FILE *out,
                                struct http_request_info *phr);
@@ -255,115 +255,164 @@ int nsdb_add_role(int user_id, int contest_id, int role);
 int nsdb_del_role(int user_id, int contest_id, int role);
 int nsdb_priv_remove_user(int user_id, int contest_id);
 
+struct contest_extra *ns_get_contest_extra(int contest_id);
+
 void
-new_server_html_err_internal_error(FILE *fout,
-                                   struct http_request_info *phr,
-                                   int priv_mode,
-                                   const char *format, ...)
+ns_html_err_internal_error(FILE *fout,
+                           struct http_request_info *phr,
+                           int priv_mode,
+                           const char *format, ...)
+  __attribute__((format(printf, 4, 5)));
+void
+ns_html_err_no_perm(FILE *fout,
+                    struct http_request_info *phr,
+                    int priv_mode,
+                    const char *format, ...)
+  __attribute__((format(printf, 4, 5)));
+void
+ns_html_err_inv_param(FILE *fout,
+                      struct http_request_info *phr,
+                      int priv_mode,
+                      const char *format, ...)
+  __attribute__((format(printf, 4, 5)));
+void
+ns_html_err_service_not_available(FILE *fout,
+                                  struct http_request_info *phr,
+                                  int priv_mode,
+                                  const char *format, ...)
+  __attribute__((format(printf, 4, 5)));
+void
+ns_html_err_cnts_unavailable(FILE *fout,
+                             struct http_request_info *phr,
+                             int priv_mode,
+                             const char *format, ...)
+  __attribute__((format(printf, 4, 5)));
+void
+ns_html_err_ul_server_down(FILE *fout,
+                           struct http_request_info *phr,
+                           int priv_mode,
+                           const char *format, ...)
+  __attribute__((format(printf, 4, 5)));
+void
+ns_html_err_inv_session(FILE *fout,
+                        struct http_request_info *phr,
+                        int priv_mode,
+                        const char *format, ...)
   __attribute__((format(printf, 4, 5)));
 
 struct session_info *
-new_server_get_session(ej_cookie_t session_id, time_t cur_time);
+ns_get_session(ej_cookie_t session_id, time_t cur_time);
 
-void new_server_remove_session(ej_cookie_t session_id);
+void ns_remove_session(ej_cookie_t session_id);
 
-void new_server_unload_contests(void);
+void ns_unload_contests(void);
 
-void new_server_loop_callback(struct server_framework_state *state);
-void new_server_post_select_callback(struct server_framework_state *state);
-
-unsigned char *
-new_serve_submit_button(unsigned char *buf, size_t size,
-                        const unsigned char *var_name, int action,
-                        const unsigned char *label);
+void ns_loop_callback(struct server_framework_state *state);
+void ns_post_select_callback(struct server_framework_state *state);
 
 unsigned char *
-new_serve_url(unsigned char *buf, size_t size,
-              const struct http_request_info *phr,
-              int action, const char *format, ...)
+ns_submit_button(unsigned char *buf, size_t size,
+                 const unsigned char *var_name, int action,
+                 const unsigned char *label);
+
+unsigned char *
+ns_url(unsigned char *buf, size_t size,
+       const struct http_request_info *phr,
+       int action, const char *format, ...)
   __attribute__((format(printf, 5, 6)));
 unsigned char *
-new_serve_aref(unsigned char *buf, size_t size,
-               const struct http_request_info *phr,
-               int action, const char *format, ...)
+ns_aref(unsigned char *buf, size_t size,
+        const struct http_request_info *phr,
+        int action, const char *format, ...)
   __attribute__((format(printf, 5, 6)));
 
 void
-new_serve_write_priv_all_runs(FILE *f,
-                              struct http_request_info *phr,
-                              const struct contest_desc *cnts,
-                              struct contest_extra *extra,
-                              int first_run, int last_run,
-                              unsigned char const *filter_expr);
+ns_write_priv_all_runs(FILE *f,
+                       struct http_request_info *phr,
+                       const struct contest_desc *cnts,
+                       struct contest_extra *extra,
+                       int first_run, int last_run,
+                       unsigned char const *filter_expr);
 void
-new_serve_write_all_clars(FILE *f,
-                          struct http_request_info *phr,
-                          const struct contest_desc *cnts,
-                          struct contest_extra *extra,
-                          int mode_clar, int first_clar, int last_clar);
+ns_write_all_clars(FILE *f,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra,
+                   int mode_clar, int first_clar, int last_clar);
 
-void new_serve_write_priv_source(const serve_state_t state,
-                                 FILE *f,
-                                 FILE *log_f,
-                                 struct http_request_info *phr,
-                                 const struct contest_desc *cnts,
-                                 struct contest_extra *extra,
-                                 int run_id);
-
-void new_serve_write_priv_report(const serve_state_t cs,
-                                 FILE *f,
-                                 FILE *log_f,
-                                 struct http_request_info *phr,
-                                 const struct contest_desc *cnts,
-                                 struct contest_extra *extra,
-                                 int team_report_flag,
-                                 int run_id);
-
-void
-new_serve_write_priv_clar(const serve_state_t cs,
+void ns_write_priv_source(const serve_state_t state,
                           FILE *f,
                           FILE *log_f,
                           struct http_request_info *phr,
                           const struct contest_desc *cnts,
                           struct contest_extra *extra,
-                          int clar_id);
+                          int run_id);
 
-void new_serve_header(FILE *out, unsigned char const *template,
-                      unsigned char const *content_type,
-                      unsigned char const *charset,
-                      int locale_id,
-                      char const *format, ...)
-  __attribute__((format(printf, 6, 7)));
-
-const unsigned char *new_serve_unparse_role(int role);
-
-void
-new_serve_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
-                      int action, int run_id, int test_num);
-int
-new_serve_write_audit_log(const serve_state_t state, FILE *f, int run_id);
-
-int
-new_serve_write_passwords(FILE *fout, FILE *log_f,
+void ns_write_priv_report(const serve_state_t cs,
+                          FILE *f,
+                          FILE *log_f,
                           struct http_request_info *phr,
                           const struct contest_desc *cnts,
-                          struct contest_extra *extra);
+                          struct contest_extra *extra,
+                          int team_report_flag,
+                          int run_id);
+
+void
+ns_write_priv_clar(const serve_state_t cs,
+                   FILE *f,
+                   FILE *log_f,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra,
+                   int clar_id);
+
+void ns_header(FILE *out, unsigned char const *template,
+               unsigned char const *content_type,
+               unsigned char const *charset,
+               int locale_id,
+               char const *format, ...)
+  __attribute__((format(printf, 6, 7)));
+void ns_footer(FILE *out, unsigned char const *templ, int locale_id);
+
+
+const unsigned char *ns_unparse_role(int role);
+
+void
+ns_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
+               int action, int run_id, int test_num);
+int
+ns_write_audit_log(const serve_state_t state, FILE *f, int run_id);
 
 int
-new_serve_user_info_page(FILE *fout, FILE *log_f,
-                         struct http_request_info *phr,
-                         const struct contest_desc *cnts,
-                         struct contest_extra *extra,
-                         int view_user_id);
-int
-new_serve_new_run_form(FILE *fout, FILE *log_f,
-                       struct http_request_info *phr,
-                       const struct contest_desc *cnts,
-                       struct contest_extra *extra);
+ns_write_passwords(FILE *fout, FILE *log_f,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra);
 
-extern const unsigned char * const new_serve_submit_button_labels[];
-extern const int new_serve_priv_next_state[];
-extern const int new_serve_priv_prev_state[];
-extern const int new_serve_unpriv_prev_state[];
+int
+ns_user_info_page(FILE *fout, FILE *log_f,
+                  struct http_request_info *phr,
+                  const struct contest_desc *cnts,
+                  struct contest_extra *extra,
+                  int view_user_id);
+int
+ns_new_run_form(FILE *fout, FILE *log_f,
+                struct http_request_info *phr,
+                const struct contest_desc *cnts,
+                struct contest_extra *extra);
+
+extern const unsigned char * const ns_submit_button_labels[];
+extern const int ns_priv_next_state[];
+extern const int ns_priv_prev_state[];
+extern const int ns_unpriv_prev_state[];
+
+extern const unsigned char ns_default_header[];
+extern const unsigned char ns_default_footer[];
+extern const unsigned char ns_default_separator[];
+extern const unsigned char ns_fancy_header[];
+extern const unsigned char ns_fancy_footer[];
+extern const unsigned char ns_fancy_separator[];
+extern const unsigned char ns_fancy_empty_status[];
+extern const unsigned char * const ns_ssl_flag_str[];
 
 #endif /* __NEW_SERVER_H__ */

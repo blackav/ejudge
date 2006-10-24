@@ -33,7 +33,7 @@
 #endif
 #define __(x) x
 
-const unsigned char * const new_serve_submit_button_labels[NEW_SRV_ACTION_LAST]=
+const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
 {
   [NEW_SRV_ACTION_UPDATE_STANDINGS_1] = __("Update public standings"),
   [NEW_SRV_ACTION_RESET_1] = __("Reset the contest!"),
@@ -130,7 +130,7 @@ const unsigned char * const new_serve_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_SUBMIT_APPEAL] = __("Submit appeal"),
 };
 
-const int new_serve_priv_next_state[NEW_SRV_ACTION_LAST] =
+const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS] = NEW_SRV_ACTION_VIEW_USERS,
   [NEW_SRV_ACTION_USERS_SET_PENDING] = NEW_SRV_ACTION_VIEW_USERS,
@@ -158,7 +158,7 @@ const int new_serve_priv_next_state[NEW_SRV_ACTION_LAST] =
 };
 
 /* previous state (return in case of error) */
-const int new_serve_priv_prev_state[NEW_SRV_ACTION_LAST] =
+const int ns_priv_prev_state[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS] = NEW_SRV_ACTION_VIEW_USERS,
   [NEW_SRV_ACTION_USERS_SET_PENDING] = NEW_SRV_ACTION_VIEW_USERS,
@@ -186,7 +186,7 @@ const int new_serve_priv_prev_state[NEW_SRV_ACTION_LAST] =
 };
 
 /* previous state (return in case of error) for unprivileged users */
-const int new_serve_unpriv_prev_state[NEW_SRV_ACTION_LAST] =
+const int ns_unpriv_prev_state[NEW_SRV_ACTION_LAST] =
 {
 };
 

@@ -53,8 +53,8 @@ static struct server_framework_params params =
   .user_data = 0,
   .startup_error = startup_error,
   .handle_packet = handle_packet_func,
-  .loop_start = new_server_loop_callback,
-  .post_select = new_server_post_select_callback,
+  .loop_start = ns_loop_callback,
+  .post_select = ns_post_select_callback,
 };
 
 static struct server_framework_state *state = 0;
@@ -111,7 +111,7 @@ nsdb_priv_remove_user(int user_id, int contest_id)
 }
 
 struct session_info *
-new_server_get_session(ej_cookie_t session_id, time_t cur_time)
+ns_get_session(ej_cookie_t session_id, time_t cur_time)
 {
   struct session_info *p;
 
@@ -166,7 +166,7 @@ do_remove_session(struct session_info *p)
 }
 
 void
-new_server_remove_session(ej_cookie_t session_id)
+ns_remove_session(ej_cookie_t session_id)
 {
   struct session_info *p;
 
@@ -322,7 +322,7 @@ cmd_http_request(struct server_framework_state *state,
 
   // ok, generate HTML
   out_f = open_memstream(&out_txt, &out_size);
-  new_server_handle_http_request(state, p, out_f, &hr);
+  ns_handle_http_request(state, p, out_f, &hr);
   fclose(out_f); out_f = 0;
 
   // stub, if empty output is generated
@@ -330,7 +330,7 @@ cmd_http_request(struct server_framework_state *state,
     out_f = open_memstream(&out_txt, &out_size);
 
 
-    new_server_html_err_internal_error(out_f, &hr, 0, "empty output generated");
+    ns_html_err_internal_error(out_f, &hr, 0, "empty output generated");
     fclose(out_f); out_f = 0;
   }
 
@@ -527,7 +527,7 @@ main(int argc, char *argv[])
   if (!(state = nsf_init(&params, 0))) return 1;
   if (nsf_prepare(state) < 0) return 1;
   nsf_main_loop(state);
-  new_server_unload_contests();
+  ns_unload_contests();
   nsf_cleanup(state);
   nsdb_default->iface->close(nsdb_default->data);
 
