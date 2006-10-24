@@ -57,7 +57,7 @@
 #define __(x) x
 
 #define BITS_PER_LONG (8*sizeof(unsigned long)) 
-#define BUTTON(a) new_serve_submit_button(bb, sizeof(bb), 0, a, 0)
+#define BUTTON(a) ns_submit_button(bb, sizeof(bb), 0, a, 0)
 #define ARMOR(s)  html_armor_buf(&ab, s)
 
 static void
@@ -77,12 +77,12 @@ parse_error_func(void *data, unsigned char const *format, ...)
 }
 
 void
-new_serve_write_priv_all_runs(FILE *f,
-                              struct http_request_info *phr,
-                              const struct contest_desc *cnts,
-                              struct contest_extra *extra,
-                              int first_run, int last_run,
-                              unsigned char const *filter_expr)
+ns_write_priv_all_runs(FILE *f,
+                       struct http_request_info *phr,
+                       const struct contest_desc *cnts,
+                       struct contest_extra *extra,
+                       int first_run, int last_run,
+                       unsigned char const *filter_expr)
 {
   struct user_filter_info *u = 0;
   struct filter_env env;
@@ -274,7 +274,7 @@ new_serve_write_priv_all_runs(FILE *f,
   fprintf(f, "%s: <input type=\"text\" name=\"filter_first_run\" size=\"16\" value=\"%s\">", _("First run"), first_run_str);
   fprintf(f, "%s: <input type=\"text\" name=\"filter_last_run\" size=\"16\" value=\"%s\">", _("Last run"), last_run_str);
   fprintf(f, "%s</form>",
-          new_serve_submit_button(bb, sizeof(bb), "filter_view", 1, _("View")));
+          ns_submit_button(bb, sizeof(bb), "filter_view", 1, _("View")));
   html_start_form(f, 0, phr->self_url, phr->hidden_vars);
   fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_RESET_FILTER));
   fprintf(f, "</form></p>\n");
@@ -483,15 +483,15 @@ new_serve_write_priv_all_runs(FILE *f,
       }
 
       fprintf(f, "<td><a href=\"%s\">%s</a></td>",
-              new_serve_url(hbuf, sizeof(hbuf), phr,
-                            NEW_SRV_ACTION_VIEW_SOURCE, "run_id=%d", rid),
+              ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_SOURCE,
+                     "run_id=%d", rid),
               _("View"));
       if (pe->is_imported) {
         fprintf(f, "<td>N/A</td>");
       } else {
         fprintf(f, "<td><a href=\"%s\">%s</a></td>",
-                new_serve_url(hbuf, sizeof(hbuf), phr,
-                              NEW_SRV_ACTION_VIEW_REPORT, "run_id=%d", rid),
+                ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_REPORT,
+                       "run_id=%d", rid),
                 _("View"));
       }
       fprintf(f, "</tr>\n");
@@ -585,7 +585,7 @@ new_serve_write_priv_all_runs(FILE *f,
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) >= 0
       && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) {
     fprintf(f, "<table><tr><td>%s%s</a></td></td></table>\n",
-            new_serve_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_NEW_RUN_FORM, 0),
+            ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_NEW_RUN_FORM, 0),
             _("Add new run"));
   }
 
@@ -597,11 +597,11 @@ new_serve_write_priv_all_runs(FILE *f,
 }
 
 void
-new_serve_write_all_clars(FILE *f,
-                          struct http_request_info *phr,
-                          const struct contest_desc *cnts,
-                          struct contest_extra *extra,
-                          int mode_clar, int first_clar, int last_clar)
+ns_write_all_clars(FILE *f,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra,
+                   int mode_clar, int first_clar, int last_clar)
 {
   int total, i, j;
 
@@ -695,11 +695,11 @@ new_serve_write_all_clars(FILE *f,
   fprintf(f, "%s: <input type=\"text\" name=\"filter_first_clar\" size=\"16\" value=\"%s\">", _("First clar"), first_clar_str);
   fprintf(f, "%s: <input type=\"text\" name=\"filter_last_clar\" size=\"16\" value=\"%s\">", _("Last clar"), last_clar_str);
   fprintf(f, "%s",
-          new_serve_submit_button(bbuf, sizeof(bbuf), "filter_view_clars",
-                                  1, _("View")));
+          ns_submit_button(bbuf, sizeof(bbuf), "filter_view_clars",
+                           1, _("View")));
   fprintf(f, "%s",
-          new_serve_submit_button(bbuf, sizeof(bbuf), 0,
-                                  NEW_SRV_ACTION_RESET_CLAR_FILTER, 0));
+          ns_submit_button(bbuf, sizeof(bbuf), 0,
+                           NEW_SRV_ACTION_RESET_CLAR_FILTER, 0));
   fprintf(f, "</p></form>\n");
 
   fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th><th>%s</th>"
@@ -750,9 +750,8 @@ new_serve_write_all_clars(FILE *f,
     }
     fprintf(f, "<td>%s</td>", ARMOR(clar.subj));
     fprintf(f, "<td><a href=\"%s\">%s</a></td>",
-            new_serve_url(bbuf, sizeof(bbuf), phr,
-                          NEW_SRV_ACTION_VIEW_CLAR,
-                          "clar_id=%d", i), _("View"));
+            ns_url(bbuf, sizeof(bbuf), phr, NEW_SRV_ACTION_VIEW_CLAR,
+                   "clar_id=%d", i), _("View"));
     fprintf(f, "</tr>\n");
   }
   fputs("</table>\n", f);
@@ -791,13 +790,13 @@ html_select_yesno(unsigned char *buf, size_t size,
 }
 
 void
-new_serve_write_priv_source(const serve_state_t state,
-                            FILE *f,
-                            FILE *log_f,
-                            struct http_request_info *phr,
-                            const struct contest_desc *cnts,
-                            struct contest_extra *extra,
-                            int run_id)
+ns_write_priv_source(const serve_state_t state,
+                     FILE *f,
+                     FILE *log_f,
+                     struct http_request_info *phr,
+                     const struct contest_desc *cnts,
+                     struct contest_extra *extra,
+                     int run_id)
 {
   int i;
   path_t src_path;
@@ -823,13 +822,13 @@ new_serve_write_priv_source(const serve_state_t state,
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if (run_id < 0 || run_id >= run_get_total(state->runlog_state)) {
-    new_serve_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
+    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
     return;
   }
   run_get_entry(state->runlog_state, run_id, &info);
   if (info.status > RUN_LAST
       || (info.status > RUN_MAX_STATUS && info.status < RUN_TRANSIENT_FIRST)) {
-    new_serve_error(log_f, NEW_SRV_ERR_SOURCE_UNAVAILABLE);
+    ns_error(log_f, NEW_SRV_ERR_SOURCE_UNAVAILABLE);
     return;
   }
 
@@ -837,7 +836,7 @@ new_serve_write_priv_source(const serve_state_t state,
                                      global->run_archive_dir, run_id,
                                      0, 1);
   if (src_flags < 0) {
-    new_serve_error(log_f, NEW_SRV_ERR_SOURCE_NONEXISTANT);
+    ns_error(log_f, NEW_SRV_ERR_SOURCE_NONEXISTANT);
     return;
   }
 
@@ -846,10 +845,10 @@ new_serve_write_priv_source(const serve_state_t state,
   if (info.lang_id > 0 && info.lang_id <= state->max_lang)
     lang = state->langs[info.lang_id];
 
-  new_serve_header(f, extra->header_txt, 0, 0, phr->locale_id,
-                   "%s [%s, %s]: %s %d", new_serve_unparse_role(phr->role),
-                   phr->name_arm, extra->contest_arm,
-                   _("Viewing run"), run_id);
+  ns_header(f, extra->header_txt, 0, 0, phr->locale_id,
+            "%s [%s, %s]: %s %d", ns_unparse_role(phr->role),
+            phr->name_arm, extra->contest_arm,
+            _("Viewing run"), run_id);
 
   run_time = info.time;
   if (run_time < 0) run_time = 0;
@@ -874,8 +873,8 @@ new_serve_write_priv_source(const serve_state_t state,
   snprintf(filtbuf1, sizeof(filtbuf1), "ip == ip(%d)", run_id);
   url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
   fprintf(f, "<td>%s%s</a></td>",
-          new_serve_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
-                         "filter_expr=%s", filtbuf2),
+          ns_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
+                  "filter_expr=%s", filtbuf2),
           xml_unparse_ip(info.a.ip));
   fprintf(f, "%s</tr>\n", nbsp);
 
@@ -884,8 +883,8 @@ new_serve_write_priv_source(const serve_state_t state,
   url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
   fprintf(f, "<tr><td>%s:</td><td>%s%u</a></td>%s</tr>\n",
           _("Size"),
-          new_serve_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
-                         "filter_expr=%s", filtbuf2),
+          ns_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
+                  "filter_expr=%s", filtbuf2),
           info.size, nbsp);
 
   // hash code
@@ -893,8 +892,8 @@ new_serve_write_priv_source(const serve_state_t state,
   url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
   fprintf(f, "<tr><td>%s:</td><td>%s%s</a></td>%s</tr>\n",
           _("Hash value"),
-          new_serve_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
-                         "filter_expr=%s", filtbuf2),
+          ns_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
+                  "filter_expr=%s", filtbuf2),
           unparse_sha1(info.sha1), nbsp);
 
   // this is common flag for many editing forms below
@@ -913,8 +912,8 @@ new_serve_write_priv_source(const serve_state_t state,
   }
   fprintf(f, "<tr><td>%s:</td><td>%s%d</a></td>",
           _("User ID"),
-          new_serve_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
-                         "filter_expr=%s", filtbuf2),
+          ns_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
+                  "filter_expr=%s", filtbuf2),
           info.user_id);
   if (editable) {
     fprintf(f, "<td>%s</td><td>%s</td></tr></form>",
@@ -954,8 +953,8 @@ new_serve_write_priv_source(const serve_state_t state,
   if (prob) {
     snprintf(filtbuf1, sizeof(filtbuf1), "prob == \"%s\"",  prob->short_name);
     url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
-    ps1 = new_serve_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
-                         "filter_expr=%s", filtbuf2);
+    ps1 = ns_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
+                  "filter_expr=%s", filtbuf2);
     ps2 = "</a>";
     ss = prob->short_name;
   } else {
@@ -992,8 +991,8 @@ new_serve_write_priv_source(const serve_state_t state,
       snprintf(filtbuf1, sizeof(filtbuf1), "prob == \"%s\" && variant == %d", 
                prob->short_name, variant);
       url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
-      ps1 = new_serve_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
-                           "filter_expr=%s", filtbuf2);
+      ps1 = ns_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
+                    "filter_expr=%s", filtbuf2);
       ps2 = "</a>";
       if (info.variant > 0) {
         snprintf(bb, sizeof(bb), "%d", info.variant);
@@ -1022,8 +1021,8 @@ new_serve_write_priv_source(const serve_state_t state,
   if (lang) {
     snprintf(filtbuf1, sizeof(filtbuf1), "lang == \"%s\"", lang->short_name);
     url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
-    ps1 = new_serve_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
-                         "filter_expr=%s", filtbuf2);
+    ps1 = ns_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
+                  "filter_expr=%s", filtbuf2);
     ps2 = "</a>";
     ss = lang->short_name;
   } else if (!info.lang_id) {
@@ -1276,9 +1275,8 @@ new_serve_write_priv_source(const serve_state_t state,
   fprintf(f, "</table>\n");
 
   fprintf(f, "<p>%s%s</a></p>\n",
-          new_serve_aref(filtbuf3, sizeof(filtbuf3), phr,
-                         NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN,
-                         "run_id=%d", run_id),
+          ns_aref(filtbuf3, sizeof(filtbuf3), phr,
+                  NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN, "run_id=%d", run_id),
           _("Download run"));
 
   if (editable) {
@@ -1337,9 +1335,9 @@ new_serve_write_priv_source(const serve_state_t state,
     if(info.mime_type >= MIME_TYPE_IMAGE_FIRST
        && info.mime_type <= MIME_TYPE_IMAGE_LAST) {
       fprintf(f, "<p><img src=\"%s\"></p>",
-              new_serve_url(filtbuf3, sizeof(filtbuf3), phr,
-                            NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN,
-                            "run_id=%d&no_disp=1", run_id));
+              ns_url(filtbuf3, sizeof(filtbuf3), phr,
+                     NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN,
+                     "run_id=%d&no_disp=1", run_id));
     } else {
       fprintf(f, "<p>The submission is binary and thus is not shown.</p>\n");
     }
@@ -1373,14 +1371,14 @@ new_serve_write_priv_source(const serve_state_t state,
 }
 
 void
-new_serve_write_priv_report(const serve_state_t cs,
-                            FILE *f,
-                            FILE *log_f,
-                            struct http_request_info *phr,
-                            const struct contest_desc *cnts,
-                            struct contest_extra *extra,
-                            int team_report_flag,
-                            int run_id)
+ns_write_priv_report(const serve_state_t cs,
+                     FILE *f,
+                     FILE *log_f,
+                     struct http_request_info *phr,
+                     const struct contest_desc *cnts,
+                     struct contest_extra *extra,
+                     int team_report_flag,
+                     int run_id)
 {
   path_t rep_path;
   char *rep_text = 0, *html_text;
@@ -1414,11 +1412,11 @@ new_serve_write_priv_report(const serve_state_t cs,
 
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
       || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
-    new_serve_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
+    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
     goto done;
   }
   if (re.status > RUN_MAX_STATUS) {
-    new_serve_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
+    ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
     goto done;
   }
   /*
@@ -1430,7 +1428,7 @@ new_serve_write_priv_report(const serve_state_t cs,
   case RUN_IGNORED:
   case RUN_DISQUALIFIED:
   case RUN_PENDING:
-    new_serve_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
+    ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
     goto done;
   }
 
@@ -1445,7 +1443,7 @@ new_serve_write_priv_report(const serve_state_t cs,
                                     run_id, 0, 1);
   if (rep_flag >= 0) {
     if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
-      new_serve_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
+      ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
       goto done;
     }
     content_type = get_content_type(rep_text, &start_ptr);
@@ -1453,20 +1451,20 @@ new_serve_write_priv_report(const serve_state_t cs,
     rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
                                       report_dir, run_id, 0, 1);
     if (rep_flag < 0) {
-      new_serve_error(log_f, NEW_SRV_ERR_REPORT_NONEXISTANT);
+      ns_error(log_f, NEW_SRV_ERR_REPORT_NONEXISTANT);
       goto done;
     }
     if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
-      new_serve_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
+      ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
       goto done;
     }
     content_type = get_content_type(rep_text, &start_ptr);
   }
 
-  new_serve_header(f, extra->header_txt, 0, 0, phr->locale_id,
-                   "%s [%s, %s]: %s %d", new_serve_unparse_role(phr->role),
-                   phr->name_arm, extra->contest_arm,
-                   _("Viewing report"), run_id);
+  ns_header(f, extra->header_txt, 0, 0, phr->locale_id,
+            "%s [%s, %s]: %s %d", ns_unparse_role(phr->role),
+            phr->name_arm, extra->contest_arm,
+            _("Viewing report"), run_id);
 
   switch (content_type) {
   case CONTENT_TYPE_TEXT:
@@ -1503,13 +1501,13 @@ new_serve_write_priv_report(const serve_state_t cs,
 }
 
 void
-new_serve_write_priv_clar(const serve_state_t cs,
-                          FILE *f,
-                          FILE *log_f,
-                          struct http_request_info *phr,
-                          const struct contest_desc *cnts,
-                          struct contest_extra *extra,
-                          int clar_id)
+ns_write_priv_clar(const serve_state_t cs,
+                   FILE *f,
+                   FILE *log_f,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra,
+                   int clar_id)
 {
   const struct section_global_data *global = cs->global;
   struct clar_entry_v1 clar;
@@ -1522,7 +1520,7 @@ new_serve_write_priv_clar(const serve_state_t cs,
 
   if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
       || clar_get_record_new(cs->clarlog_state, clar_id, &clar) < 0) {
-    new_serve_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
+    ns_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
     goto done;
   }
   start_time = run_get_start_time(cs->runlog_state);
@@ -1570,9 +1568,8 @@ new_serve_write_priv_clar(const serve_state_t cs,
   fprintf(f, "</tr>\n");
   if (clar.in_reply_to > 0) {
     fprintf(f, "<tr><td>%s:</td><td>%s%d</td></a></tr>", _("In reply to"),
-            new_serve_aref(bb, sizeof(bb), phr,
-                           NEW_SRV_ACTION_VIEW_CLAR,
-                           "clar_id=%d", clar.in_reply_to - 1),
+            ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_VIEW_CLAR,
+                    "clar_id=%d", clar.in_reply_to - 1),
             clar.in_reply_to - 1);
   }
   fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>", _("Locale code"),
@@ -1634,7 +1631,7 @@ write_from_contest_dir(FILE *log_f, FILE *fout,
   size_t file_size = 0;
 
   if (!flag1 || !flag2) {
-    new_serve_error(log_f, NEW_SRV_ERR_TEST_NONEXISTANT);
+    ns_error(log_f, NEW_SRV_ERR_TEST_NONEXISTANT);
     goto done;
   }
 
@@ -1652,14 +1649,14 @@ write_from_contest_dir(FILE *log_f, FILE *fout,
 
   if (has_digest && digest_ptr) {
     if (filehash_get(path1, cur_digest) < 0) {
-      new_serve_error(log_f, NEW_SRV_ERR_CHECKSUMMING_FAILED);
+      ns_error(log_f, NEW_SRV_ERR_CHECKSUMMING_FAILED);
       goto done;
     }
     good_digest_flag = digest_is_equal(DIGEST_SHA1, digest_ptr, cur_digest);
   }
 
   if (generic_read_file(&file_bytes, 0, &file_size, 0, 0, path1, 0) < 0) {
-    new_serve_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
+    ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
     goto done;
   }
 
@@ -1673,7 +1670,7 @@ write_from_contest_dir(FILE *log_f, FILE *fout,
   }
   if (file_size > 0) {
     if (fwrite(file_bytes, 1, file_size, fout) != file_size) {
-      new_serve_error(log_f, NEW_SRV_ERR_OUTPUT_ERROR);
+      ns_error(log_f, NEW_SRV_ERR_OUTPUT_ERROR);
       goto done;
     }
   }
@@ -1698,7 +1695,7 @@ write_from_archive(const serve_state_t cs,
   unsigned char *text = 0;
 
   if (!flag) {
-    new_serve_error(log_f, NEW_SRV_ERR_TEST_UNAVAILABLE);
+    ns_error(log_f, NEW_SRV_ERR_TEST_UNAVAILABLE);
     goto done;
   }
 
@@ -1707,21 +1704,21 @@ write_from_archive(const serve_state_t cs,
   rep_flag = archive_make_read_path(cs, arch_path, sizeof(arch_path),
                                     dir, run_id, 0, 0);
   if (rep_flag < 0 || !(far = full_archive_open_read(arch_path))) {
-    new_serve_error(log_f, NEW_SRV_ERR_TEST_NONEXISTANT);
+    ns_error(log_f, NEW_SRV_ERR_TEST_NONEXISTANT);
     goto done;
   }
 
   rep_flag = full_archive_find_file(far, fnbuf, &arch_size, &arch_raw_size,
                                     &arch_flags, &arch_data);
   if (rep_flag <= 0) {
-    new_serve_error(log_f, NEW_SRV_ERR_TEST_NONEXISTANT);
+    ns_error(log_f, NEW_SRV_ERR_TEST_NONEXISTANT);
     goto done;
   }
 
   if (arch_raw_size > 0) {
     text = (unsigned char*) xmalloc(arch_raw_size);
     if (uncompress(text, &arch_raw_size, arch_data, arch_size) != Z_OK) {
-      new_serve_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
+      ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
       goto done;
     }
   }
@@ -1729,7 +1726,7 @@ write_from_archive(const serve_state_t cs,
   fprintf(fout, "Content-type: text/plain\n\n");
   if (arch_raw_size > 0) {
     if (fwrite(text, 1, arch_raw_size, fout) != arch_raw_size) {
-      new_serve_error(log_f, NEW_SRV_ERR_OUTPUT_ERROR);
+      ns_error(log_f, NEW_SRV_ERR_OUTPUT_ERROR);
       goto done;
     }
   }
@@ -1740,8 +1737,8 @@ write_from_archive(const serve_state_t cs,
 }
 
 void
-new_serve_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
-                      int action, int run_id, int test_num)
+ns_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
+               int action, int run_id, int test_num)
 {
   int rep_flag;
   path_t rep_path;
@@ -1755,7 +1752,7 @@ new_serve_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
 
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
       || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
-    new_serve_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
+    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
     goto done;
   }
 
@@ -1765,28 +1762,28 @@ new_serve_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
       && (rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
                                             cs->global->report_archive_dir,
                                             run_id, 0, 1)) < 0) {
-    new_serve_error(log_f, NEW_SRV_ERR_REPORT_NONEXISTANT);
+    ns_error(log_f, NEW_SRV_ERR_REPORT_NONEXISTANT);
     goto done;
   }
 
   if (generic_read_file(&rep_text, 0, &rep_len, rep_flag,0,rep_path, "") < 0) {
-    new_serve_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
+    ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
     goto done;
   }
   if (get_content_type(rep_text, &start_ptr) != CONTENT_TYPE_XML) {
     // we expect the master log in XML format
-    new_serve_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
+    ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
     goto done;
   }
 
   if (!(r = testing_report_parse_xml(start_ptr))) {
-    new_serve_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
+    ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
     goto done;
   }
   xfree(rep_text); rep_text = 0;
 
   if (test_num <= 0 || test_num > r->run_tests) { 
-    new_serve_error(log_f, NEW_SRV_ERR_INV_TEST);
+    ns_error(log_f, NEW_SRV_ERR_INV_TEST);
     goto done;
   }
 
@@ -1794,19 +1791,19 @@ new_serve_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
 
   if (re.prob_id <= 0 || re.prob_id > cs->max_prob
       || !(prb = cs->probs[re.prob_id])) {
-    new_serve_error(log_f, NEW_SRV_ERR_INV_PROB_ID);
+    ns_error(log_f, NEW_SRV_ERR_INV_PROB_ID);
     goto done;
   }
 
   if (prb->type_val > 0) {
-    new_serve_error(log_f, NEW_SRV_ERR_TEST_UNAVAILABLE);
+    ns_error(log_f, NEW_SRV_ERR_TEST_UNAVAILABLE);
     goto done;
   }
 
   if ((prb->variant_num > 0
        && (r->variant <= 0 || r->variant > prb->variant_num))
       || (prb->variant_num <= 0 && r->variant > 0)) { 
-    new_serve_error(log_f, NEW_SRV_ERR_INV_VARIANT);
+    ns_error(log_f, NEW_SRV_ERR_INV_VARIANT);
     goto done;
   }
 
@@ -1852,7 +1849,7 @@ new_serve_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
 }
 
 int
-new_serve_write_audit_log(const serve_state_t state, FILE *f, int run_id)
+ns_write_audit_log(const serve_state_t state, FILE *f, int run_id)
 {
   int retval = 0, rep_flag;
   path_t audit_log_path;
@@ -1889,10 +1886,10 @@ new_serve_write_audit_log(const serve_state_t state, FILE *f, int run_id)
 }
 
 int
-new_serve_write_passwords(FILE *fout, FILE *log_f,
-                          struct http_request_info *phr,
-                          const struct contest_desc *cnts,
-                          struct contest_extra *extra)
+ns_write_passwords(FILE *fout, FILE *log_f,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra)
 {
   const serve_state_t cs = extra->serve_state;
   const unsigned char *s;
@@ -1944,11 +1941,11 @@ new_serve_write_passwords(FILE *fout, FILE *log_f,
 }
 
 int
-new_serve_user_info_page(FILE *fout, FILE *log_f,
-                         struct http_request_info *phr,
-                         const struct contest_desc *cnts,
-                         struct contest_extra *extra,
-                         int view_user_id)
+ns_user_info_page(FILE *fout, FILE *log_f,
+                  struct http_request_info *phr,
+                  const struct contest_desc *cnts,
+                  struct contest_extra *extra,
+                  int view_user_id)
 {
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
@@ -2060,9 +2057,9 @@ new_serve_user_info_page(FILE *fout, FILE *log_f,
           _("Invisible?"), (flags & TEAM_INVISIBLE)?_("Yes"):_("No"));
   if(allowed_edit) {
     fprintf(fout, "<td>%s</td>",
-            new_serve_submit_button(bb, sizeof(bb), 0,
-                                    NEW_SRV_ACTION_TOGGLE_VISIBILITY,
-                                    (flags & TEAM_INVISIBLE)?_("Make visible"):_("Make invisible")));
+            ns_submit_button(bb, sizeof(bb), 0,
+                             NEW_SRV_ACTION_TOGGLE_VISIBILITY,
+                             (flags & TEAM_INVISIBLE)?_("Make visible"):_("Make invisible")));
   } else {
     fprintf(fout, "<td>&nbsp;</td>");
   }
@@ -2090,9 +2087,9 @@ new_serve_user_info_page(FILE *fout, FILE *log_f,
           _("Banned?"), (flags & TEAM_BANNED)?_("Yes"):_("No"));
   if(allowed_edit) {
     fprintf(fout, "<td>%s</td>",
-            new_serve_submit_button(bb, sizeof(bb), 0,
-                                    NEW_SRV_ACTION_TOGGLE_BAN,
-                                    (flags & TEAM_BANNED)?_("Remove ban"):_("Ban")));
+            ns_submit_button(bb, sizeof(bb), 0,
+                             NEW_SRV_ACTION_TOGGLE_BAN,
+                             (flags & TEAM_BANNED)?_("Remove ban"):_("Ban")));
   } else {
     fprintf(fout, "<td>&nbsp;</td>");
   }
@@ -2120,9 +2117,8 @@ new_serve_user_info_page(FILE *fout, FILE *log_f,
           _("Locked?"), (flags & TEAM_LOCKED)?_("Yes"):_("No"));
   if(allowed_edit) {
     fprintf(fout, "<td>%s</td>",
-            new_serve_submit_button(bb, sizeof(bb), 0,
-                                    NEW_SRV_ACTION_TOGGLE_LOCK,
-                                    (flags & TEAM_LOCKED)?_("Unlock"):_("Lock")));
+            ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_TOGGLE_LOCK,
+                             (flags & TEAM_LOCKED)?_("Unlock"):_("Lock")));
   } else {
     fprintf(fout, "<td>&nbsp;</td>");
   }
@@ -2221,10 +2217,10 @@ new_serve_user_info_page(FILE *fout, FILE *log_f,
 }
 
 int
-new_serve_new_run_form(FILE *fout, FILE *log_f,
-                       struct http_request_info *phr,
-                       const struct contest_desc *cnts,
-                       struct contest_extra *extra)
+ns_new_run_form(FILE *fout, FILE *log_f,
+                struct http_request_info *phr,
+                const struct contest_desc *cnts,
+                struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;

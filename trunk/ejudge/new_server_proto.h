@@ -162,10 +162,10 @@ struct new_server_prot_http_request
   int param_num;
 };
 
-const unsigned char *new_server_proto_strerror(int n);
-void new_serve_error(FILE *log_f, int code, ...);
-const unsigned char *new_serve_strerror(int code, ...);
-const unsigned char *new_serve_strerror_r(unsigned char *buf, size_t size,
-                                          int code, ...);
+const unsigned char *ns_proto_strerror(int n);
+void ns_error(FILE *log_f, int code, ...);
+const unsigned char *ns_strerror(int code, ...);
+const unsigned char *ns_strerror_r(unsigned char *buf, size_t size,
+                                   int code, ...);
 
 #endif /* __NEW_SERVER_PROTO_H__ */

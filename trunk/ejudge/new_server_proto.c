@@ -33,7 +33,7 @@
 #endif
 #define __(x) x
 
-static const unsigned char * const new_serve_error_messages[NEW_SRV_ERR_LAST]=
+static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
 {
   [NEW_SRV_ERR_INV_USER_ID] = __("Invalid user_id"),
   [NEW_SRV_ERR_REGISTRATION_FAILED] = __("Registration failed: %s"),
@@ -124,7 +124,7 @@ static const unsigned char * const new_serve_error_messages[NEW_SRV_ERR_LAST]=
 };
 
 const unsigned char *
-new_serve_strerror(int code, ...)
+ns_strerror(int code, ...)
 {
   static unsigned char buf[1024];
   unsigned char buf2[1024];
@@ -132,7 +132,7 @@ new_serve_strerror(int code, ...)
   va_list args;
 
   if (code < 0) code = -code;
-  if (code >= NEW_SRV_ERR_LAST || !(s = new_serve_error_messages[code])) {
+  if (code >= NEW_SRV_ERR_LAST || !(s = ns_error_messages[code])) {
     snprintf(buf, sizeof(buf), _("Unknown error %d.\n"), code);
     return buf;
   }
@@ -145,14 +145,14 @@ new_serve_strerror(int code, ...)
 }
 
 const unsigned char *
-new_serve_strerror_r(unsigned char *buf, size_t size, int code, ...)
+ns_strerror_r(unsigned char *buf, size_t size, int code, ...)
 {
   unsigned char buf2[1024];
   const unsigned char *s = 0;
   va_list args;
 
   if (code < 0) code = -code;
-  if (code >= NEW_SRV_ERR_LAST || !(s = new_serve_error_messages[code])) {
+  if (code >= NEW_SRV_ERR_LAST || !(s = ns_error_messages[code])) {
     snprintf(buf, sizeof(buf), _("Unknown error %d.\n"), code);
     return buf;
   }
@@ -165,13 +165,13 @@ new_serve_strerror_r(unsigned char *buf, size_t size, int code, ...)
 }
 
 void
-new_serve_error(FILE *log_f, int code, ...)
+ns_error(FILE *log_f, int code, ...)
 {
   const unsigned char *s = 0;
   va_list args;
 
   if (code < 0) code = -code;
-  if (code >= NEW_SRV_ERR_LAST || !(s = new_serve_error_messages[code])) {
+  if (code >= NEW_SRV_ERR_LAST || !(s = ns_error_messages[code])) {
     fprintf(log_f, _("Unknown error %d.\n"), code);
     return;
   }
