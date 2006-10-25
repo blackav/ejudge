@@ -165,8 +165,12 @@ enum
   USER_SECTION_FIRST = 0,
   USER_SECTION_GENERAL = USER_SECTION_FIRST,
   USER_SECTION_PROBLEM_STATUS,
-  USER_SECTION_PROBLEM,
+  USER_SECTION_PROBLEMS,
+  USER_SECTION_SUBMIT,
+  USER_SECTION_SUBMISSION_LOG,
+  USER_SECTION_STANDINGS,
   USER_SECTION_CLAR,
+  USER_SECTION_CLAR_LOG,
   USER_SECTION_SETTINGS,
 
   USER_SECTION_LAST,
@@ -178,10 +182,14 @@ static size_t extra_a = 0;
 
 static const unsigned char * const user_section_names[] =
 {
-  [USER_SECTION_GENERAL] = __("General information"),
-  [USER_SECTION_PROBLEM_STATUS] = __("Problem statistics"),
-  [USER_SECTION_PROBLEM] = __("Problems"),
-  [USER_SECTION_CLAR] = __("Clarifications"),
+  [USER_SECTION_GENERAL] = __("Info"),
+  [USER_SECTION_PROBLEM_STATUS] = __("Summary"),
+  [USER_SECTION_PROBLEMS] = __("Statements"),
+  [USER_SECTION_SUBMIT] = __("Submit"),
+  [USER_SECTION_SUBMISSION_LOG] = __("Submissions"),
+  [USER_SECTION_STANDINGS] = __("Standings"),
+  [USER_SECTION_CLAR] = __("Submit clar"),
+  [USER_SECTION_CLAR_LOG] = __("Clars"),
   [USER_SECTION_SETTINGS] = __("Settings"),
 };
 
@@ -4433,8 +4441,8 @@ unpriv_load_html_style(struct http_request_info *phr,
     extra->contest_arm = html_armor_string_dup(cnts->name);
   }
 
-  *p_extra = extra;
-  *p_cur_time = cur_time;
+  if (p_extra) *p_extra = extra;
+  if (p_cur_time) *p_cur_time = cur_time;
 }
 
 static int
@@ -6389,6 +6397,46 @@ insert_variant_num(unsigned char *buf, size_t size,
 }
 
 static void
+unpriv_page_header(FILE *fout)
+{
+
+
+  // here must be contest status line
+  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr><td>");
+  fprintf(fout, "Contest status");
+  fprintf(fout, "</td></tr></table></div>\n");
+
+  fprintf(fout, "<div class=\"white_empty_block\">&nbsp;</div>\n");
+
+  // navigation bar
+  fprintf(fout, "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
+  for (i = USER_SECTION_FIRST; i < USER_SECTION_LAST; i++) {
+    if (i == viewed_section) {
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>",
+              gettext(user_section_names[i]));
+    } else {
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&section=%d\">%s</a></div></td>",
+              phr->self_url, phr->session_id, i,
+              gettext(user_section_names[i]));
+    }
+  }
+  /*
+  if (cnts->standings_url && start_time > 0) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s\" target=\"_blank\">%s</a></div></td>",
+            cnts->standings_url, _("Current Standings"));
+  }
+  */
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s\">%s</a></div></td>",
+          ns_url(urlbuf, sizeof(urlbuf), phr, NEW_SRV_ACTION_LOGOUT, 0),
+          _("Logout"));
+  fprintf(fout, "</tr></table></div>\n");
+
+  fprintf(fout, "%s", extra->separator_txt);
+
+
+}
+
+static void
 user_main_page(FILE *fout,
                struct http_request_info *phr,
                const struct contest_desc *cnts,
@@ -6433,7 +6481,6 @@ user_main_page(FILE *fout,
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v > 0)
     prob_id = v;
   
-
   XALLOCAZ(solved_flag, cs->max_prob + 1);
   XALLOCAZ(accepted_flag, cs->max_prob + 1);
 
@@ -6450,87 +6497,43 @@ user_main_page(FILE *fout,
     fog_start_time = start_time + duration - global->board_fog_time;
   if (fog_start_time < 0) fog_start_time = 0;
 
+  unpriv_load_html_style(phr, cnts, 0, 0);
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, phr->locale_id,
             "%s [%s]: %s",
             phr->name_arm, extra->contest_arm, _("Main page"));
 
-#if 0
-  fprintf(fout, "<%s>%s</%s>\n", cnts->team_head_style,
-          _("Quick navigation"), cnts->team_head_style);
-  fprintf(fout, "<ul>\n");
-  fprintf(fout, "<li><a href=\"#status\">%s</a></li>\n", _("Contest status"));
-  /*
-  if (error_log)
-    printf("<li><a href=\"#lastcmd\">%s</a>\n",
-           _("The last command completion status"));
-  */
-  if (cs->contest_start_time && cs->clients_suspended) {
-    fprintf(fout, "<li><a href=\"#probstat\">%s</a>\n",
-            _("Problem status summary"));
-  }
-  if (cs->contest_start_time && !cs->contest_stop_time
-      && !cs->clients_suspended) {
-    fprintf(fout, "<li><a href=\"#submit\">%s</a>\n",
-            _("Send a submission"));
-  }
-  if (cs->contest_start_time && !cs->contest_stop_time) {
-    fprintf(fout, "<li><a href=\"#runstat\">%s</a>\n",
-            _("Submission log"));
-  }
-  if (!global->disable_team_clars && !global->disable_clars
-      && !cs->clients_suspended) {
-    fprintf(fout, "<li><a href=\"#clar\">%s</a>\n",
-            _("Send a message to judges"));
-  }
-  if (!global->disable_clars) {
-    fprintf(fout, "<li><a href=\"#clarstat\">%s</a>\n",
-            _("Messages from judges"));
-  }
-  if (!cs->clients_suspended) {
-    fprintf(fout, "<li><a href=\"#chgpasswd\">%s</a>\n",
-            _("Change password"));
-  }
-#if CONF_HAS_LIBINTL - 0 == 1
-  if (global->enable_l10n) {
-    fprintf(fout, "<li><a href=\"#chglanguage\">%s</a>\n",
-            _("Change language"));
-  }
-#endif /* CONF_HAS_LIBINTL */
-  if (cnts->standings_url && cs->contest_start_time) {
-    fprintf(fout, "<li><a href=\"%s\" target=\"_blank\">%s</a>\n",
-            cnts->standings_url, _("Current standings"));
-  }
-  if (cnts->problems_url) {
-    if (global->always_show_problems || start_time) {
-      fprintf(fout, "<li><a href=\"%s\" target=\"_blank\">%s</a>\n",
-              cnts->problems_url, _("Problems"));
-    }
-  }
-  fprintf(fout, "</ul>\n");
-#endif
+  // here must be contest status line
+  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr><td>");
+  fprintf(fout, "Contest status");
+  fprintf(fout, "</td></tr></table></div>\n");
 
-  // new navigation
-  fprintf(fout, "<table border=\"0\" width=\"100%%\" bgcolor=\"#eeeeee\"><tr>");
+  fprintf(fout, "<div class=\"white_empty_block\">&nbsp;</div>\n");
+
+  // navigation bar
+  fprintf(fout, "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
   for (i = USER_SECTION_FIRST; i < USER_SECTION_LAST; i++) {
     if (i == viewed_section) {
-      fprintf(fout, "<td bgcolor=\"#ffffff\">%s</td>",
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>",
               gettext(user_section_names[i]));
     } else {
-      fprintf(fout, "<td><a href=\"%s?SID=%016llx&section=%d\">%s</a></td>",
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&section=%d\">%s</a></div></td>",
               phr->self_url, phr->session_id, i,
               gettext(user_section_names[i]));
     }
   }
+  /*
   if (cnts->standings_url && start_time > 0) {
-    fprintf(fout, "<td><a href=\"%s\" target=\"_blank\">%s</a></td>",
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s\" target=\"_blank\">%s</a></div></td>",
             cnts->standings_url, _("Current Standings"));
   }
-  fprintf(fout, "<td>%s%s</a></td>",
-          ns_aref(urlbuf, sizeof(urlbuf), phr, NEW_SRV_ACTION_LOGOUT, 0),
+  */
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s\">%s</a></div></td>",
+          ns_url(urlbuf, sizeof(urlbuf), phr, NEW_SRV_ACTION_LOGOUT, 0),
           _("Logout"));
-          
-  fprintf(fout, "</tr></table>\n");
+  fprintf(fout, "</tr></table></div>\n");
+
+  fprintf(fout, "%s", extra->separator_txt);
 
   unpriv_print_status(fout, phr, cnts, extra,
                       start_time, stop_time, duration, sched_time,
@@ -6551,12 +6554,12 @@ user_main_page(FILE *fout,
             cnts->team_head_style);
     html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
                                      accepted_flag, 0);
-  } else if (start_time && viewed_section == USER_SECTION_PROBLEM) {
+  } else if (start_time && viewed_section == USER_SECTION_PROBLEM_STATUS) {
     html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
                                      accepted_flag, 1);
   }
 
-  if (viewed_section == USER_SECTION_PROBLEM && !cs->clients_suspended) {
+  if (viewed_section == USER_SECTION_PROBLEM_STATUS && !cs->clients_suspended) {
     if (prob_id > cs->max_prob) prob_id = 0;
     if (prob_id > 0 && !(prob = cs->probs[prob_id])) prob_id = 0;
     if (prob_id > 0 && is_problem_deadlined(cs, prob_id, phr->login, 0))
@@ -7014,9 +7017,9 @@ unprivileged_page(FILE *fout, struct http_request_info *phr)
 
 void
 ns_handle_http_request(struct server_framework_state *state,
-                               struct client_state *p,
-                               FILE *fout,
-                               struct http_request_info *phr)
+                       struct client_state *p,
+                       FILE *fout,
+                       struct http_request_info *phr)
 {
   const unsigned char *script_filename = 0;
   path_t last_name;
