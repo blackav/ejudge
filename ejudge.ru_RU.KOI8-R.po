@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-23 18:59+0400\n"
-"PO-Revision-Date: 2006-10-23 19:03+0400\n"
+"POT-Creation-Date: 2006-10-25 22:12+0400\n"
+"PO-Revision-Date: 2006-10-26 00:53+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -157,7 +157,11 @@ msgid ""
 "should receive an e-mail message with further instructions. <b>Note,</b> "
 "that you should confirm password recovery in 24 hours, or operation will be "
 "cancelled.</p>"
-msgstr "<p class=\"fixed_width\">Первый этап восстановления пароля завершен. Теперь Вы должны получить e-mail сообщение с дальнейшими инструкциями. <b>Учтите,</b> что Вы должны завершить процедуру восстановления пароля в течение 24 часов от данного момента, а иначе операция будет отменена.</p>"
+msgstr ""
+"<p class=\"fixed_width\">Первый этап восстановления пароля завершен. Теперь "
+"Вы должны получить e-mail сообщение с дальнейшими инструкциями. <b>Учтите,</"
+"b> что Вы должны завершить процедуру восстановления пароля в течение 24 "
+"часов от данного момента, а иначе операция будет отменена.</p>"
 
 #, c-format
 msgid ""
@@ -167,8 +171,13 @@ msgid ""
 "<p class=\"fixed_width\">Note, that automatic password recovery is not "
 "possible for invisible, banned, locked, or privileged users!</p>\n"
 msgstr ""
-"<p class=\"fixed_width\">Восстановление пароля выполняется в несколько этапов. Сейчас, пожалуйста, укажите <b>регистрационное имя</b> и <b>адрес e-mail</b>, который был использован при создании этого регистрационного имени.</p>\n"
-"<p class=\"fixed_width\">Учтите, что автоматическое восстановление пароля невозможно для заблокированных, невидимых и привилегированных пользователей!</p>\n"
+"<p class=\"fixed_width\">Восстановление пароля выполняется в несколько "
+"этапов. Сейчас, пожалуйста, укажите <b>регистрационное имя</b> и <b>адрес e-"
+"mail</b>, который был использован при создании этого регистрационного имени."
+"</p>\n"
+"<p class=\"fixed_width\">Учтите, что автоматическое восстановление пароля "
+"невозможно для заблокированных, невидимых и привилегированных пользователей!"
+"</p>\n"
 
 #, c-format
 msgid ""
@@ -549,8 +558,8 @@ msgstr "Сообщение"
 msgid "Clarification requests are disabled"
 msgstr "Сообщения отключены"
 
-msgid "Clarifications"
-msgstr "Сообщения жюри"
+msgid "Clars"
+msgstr "Сообщения"
 
 msgid "Clear BANNED"
 msgstr "Сбросить флаг BANNED"
@@ -726,9 +735,6 @@ msgstr "Страна"
 
 msgid "Country (En)"
 msgstr "Страна (Англ.)"
-
-msgid "Current Standings"
-msgstr "Текущие результаты"
 
 msgid "Current standings"
 msgstr "Текущее положение участников"
@@ -1201,7 +1207,9 @@ msgstr "операция IPC завершилась с ошибкой"
 msgid ""
 "If you have registered before, please enter your login and password in the "
 "corresponding fields. Then press the \"Submit\" button."
-msgstr "Если Вы уже зарегистрировались, введите Ваше регистрационное имя и пароль в соответствующих полях. Затем нажмите кнопку \"Отправить\"."
+msgstr ""
+"Если Вы уже зарегистрировались, введите Ваше регистрационное имя и пароль в "
+"соответствующих полях. Затем нажмите кнопку \"Отправить\"."
 
 msgid "Ignored"
 msgstr "Проигнорирована"
@@ -1224,6 +1232,9 @@ msgstr ""
 
 msgid "Incompatible server"
 msgstr "Несовместимый сервер"
+
+msgid "Info"
+msgstr "Инфо"
 
 msgid "Information about run"
 msgstr "Информация о попытке"
@@ -1864,9 +1875,6 @@ msgstr "Привилегированный?"
 msgid "Problem"
 msgstr "Задача"
 
-msgid "Problem statistics"
-msgstr "Статистика сдач"
-
 msgid "Problem status summary"
 msgstr "Итог по задачам"
 
@@ -1887,9 +1895,6 @@ msgstr "Вывод программы на stderr"
 
 msgid "Programming languages"
 msgstr "Языки программирования"
-
-msgid "Quick navigation"
-msgstr "Быстрый переход"
 
 msgid "Quit the system"
 msgstr "Выйти из системы"
@@ -2346,6 +2351,9 @@ msgstr "Начать"
 msgid "Start virtual contest"
 msgstr "Начать виртуальный турнир"
 
+msgid "Statements"
+msgstr "Условия"
+
 msgid "Status"
 msgstr "Статус"
 
@@ -2392,6 +2400,9 @@ msgstr "Сдать решение задачи"
 msgid "Submit appeal"
 msgstr "Отправить апелляцию"
 
+msgid "Submit clar"
+msgstr "Отправить вопрос"
+
 msgid "Submit solution"
 msgstr "Сдача решений"
 
@@ -2400,6 +2411,9 @@ msgstr "Просмотр текстов программ отключён"
 
 msgid "Success"
 msgstr "Успешных"
+
+msgid "Summary"
+msgstr "Итог"
 
 msgid "Suspend clients"
 msgstr "Приостановить клиентов"
@@ -2610,7 +2624,8 @@ msgstr ""
 "назначено автоматически."
 
 msgid "Type your login and password and then press \"Submit\" button"
-msgstr "Введите Ваше регистрационное имя и пароль, затем нажмите кнопку \"Отправить\""
+msgstr ""
+"Введите Ваше регистрационное имя и пароль, затем нажмите кнопку \"Отправить\""
 
 msgid "Type your valid e-mail address"
 msgstr "Введите Ваш действующий адрес электронной почты"
@@ -3227,3 +3242,15 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
+
+#~ msgid "Clarifications"
+#~ msgstr "Сообщения жюри"
+
+#~ msgid "Current Standings"
+#~ msgstr "Текущие результаты"
+
+#~ msgid "Problem statistics"
+#~ msgstr "Статистика сдач"
+
+#~ msgid "Quick navigation"
+#~ msgstr "Быстрый переход"
