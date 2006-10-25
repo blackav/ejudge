@@ -199,7 +199,7 @@ ns_html_err_no_perm(FILE *fout,
   ns_header(fout, header, 0, 0, phr->locale_id, _("Permission denied"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
-    fprintf(fout, "%s", extra->separator_txt);
+    fprintf(fout, "%s", separator);
   }
   fprintf(fout, "<p>%s</p>\n",
           _("Permission denied. The possible reasons are as follows."));
@@ -277,7 +277,7 @@ ns_html_err_inv_param(FILE *fout,
   ns_header(fout, header, 0, 0, phr->locale_id, _("Invalid parameter"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
-    fprintf(fout, "%s", extra->separator_txt);
+    fprintf(fout, "%s", separator);
   }
   fprintf(fout, "<p>%s</p>\n",
           _("A request parameter is invalid. Please, contact the site administrator."));
@@ -327,7 +327,7 @@ ns_html_err_service_not_available(FILE *fout,
   ns_header(fout, header, 0, 0, phr->locale_id, _("Service not available"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
-    fprintf(fout, "%s", extra->separator_txt);
+    fprintf(fout, "%s", separator);
   }
   fprintf(fout, "<p>%s</p>\n",
           _("Service that you requested is not available."));
@@ -377,7 +377,7 @@ ns_html_err_cnts_unavailable(FILE *fout,
   ns_header(fout, header, 0, 0, phr->locale_id, _("Contest not available"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
-    fprintf(fout, "%s", extra->separator_txt);
+    fprintf(fout, "%s", separator);
   }
   fprintf(fout, "<p>%s</p>\n",
           _("The contest is temporarily not available. Please, retry the request a bit later."));
@@ -432,7 +432,7 @@ ns_html_err_ul_server_down(FILE *fout,
             _("User database server is down"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
-    fprintf(fout, "%s", extra->separator_txt);
+    fprintf(fout, "%s", separator);
   }
   fprintf(fout, "<p>%s</p>\n",
           _("The user database server is currently not available. Please, retry the request later."));
@@ -486,7 +486,7 @@ ns_html_err_internal_error(FILE *fout,
   ns_header(fout, header, 0, 0, phr->locale_id, _("Internal error"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
-    fprintf(fout, "%s", extra->separator_txt);
+    fprintf(fout, "%s", separator);
   }
   fprintf(fout, "<p>%s</p>\n",
           _("Your request has caused an internal server error. Please, report it as a bug."));
@@ -540,7 +540,7 @@ ns_html_err_inv_session(FILE *fout,
   ns_header(fout, header, 0, 0, phr->locale_id, _("Invalid session"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
-    fprintf(fout, "%s", extra->separator_txt);
+    fprintf(fout, "%s", separator);
   }
   fprintf(fout, "<p>%s</p>\n",
           _("Invalid session identifier. The possible reasons are as follows."));
