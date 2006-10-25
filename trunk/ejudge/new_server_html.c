@@ -160,38 +160,9 @@
 #define ARMOR(s)  html_armor_buf(&ab, s)
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 
-enum
-{
-  USER_SECTION_FIRST = 0,
-  USER_SECTION_GENERAL = USER_SECTION_FIRST,
-  USER_SECTION_PROBLEM_STATUS,
-  USER_SECTION_PROBLEMS,
-  USER_SECTION_SUBMIT,
-  USER_SECTION_SUBMISSION_LOG,
-  USER_SECTION_STANDINGS,
-  USER_SECTION_CLAR,
-  USER_SECTION_CLAR_LOG,
-  USER_SECTION_SETTINGS,
-
-  USER_SECTION_LAST,
-};
-
 enum { CONTEST_EXPIRE_TIME = 300 };
 static struct contest_extra **extras = 0;
 static size_t extra_a = 0;
-
-static const unsigned char * const user_section_names[] =
-{
-  [USER_SECTION_GENERAL] = __("Info"),
-  [USER_SECTION_PROBLEM_STATUS] = __("Summary"),
-  [USER_SECTION_PROBLEMS] = __("Statements"),
-  [USER_SECTION_SUBMIT] = __("Submit"),
-  [USER_SECTION_SUBMISSION_LOG] = __("Submissions"),
-  [USER_SECTION_STANDINGS] = __("Standings"),
-  [USER_SECTION_CLAR] = __("Submit clar"),
-  [USER_SECTION_CLAR_LOG] = __("Clars"),
-  [USER_SECTION_SETTINGS] = __("Settings"),
-};
 
 static void unprivileged_page_login(FILE *fout,
                                     struct http_request_info *phr);
@@ -3350,7 +3321,7 @@ unpriv_print_status(FILE *fout,
   unsigned char duration_buf[128];
   time_t tmpt;
 
-  fprintf(fout, "<hr><a name=\"status\"></a><%s>%s</%s>\n",
+  fprintf(fout, "<%s>%s</%s>\n",
           cnts->team_head_style, _("Server status"),
           cnts->team_head_style);
   if (stop_time > 0) {
@@ -3398,15 +3369,15 @@ unpriv_print_status(FILE *fout,
     }
   }
 
-  fprintf(fout, "<table border=\"0\">");
-  fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+  fprintf(fout, "<table class=\"borderless\">");
+  fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
           _("Server time"), ctime(&cs->current_time));
   if (start_time > 0) {
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
             _("Contest start time"), ctime(&start_time));
   }
   if (!global->is_virtual && start_time <= 0 && sched_time > 0) {
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
             _("Planned start time"), ctime(&sched_time));
   }
   if (stop_time <= 0 && (duration > 0 || global->contest_finish_time_d <= 0)) {
@@ -3415,40 +3386,40 @@ unpriv_print_status(FILE *fout,
     } else {
       snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
     }
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
             _("Duration"), duration_buf);
   }
   if (start_time > 0 && stop_time <= 0 && duration > 0) {
     tmpt = start_time + duration;
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
             _("Scheduled end time"), ctime(&tmpt));
   } else if (start_time > 0 && stop_time <= 0 && duration <= 0
              && global->contest_finish_time_d > 0) {
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
             _("Scheduled end time"), ctime(&global->contest_finish_time_d));
   } else if (stop_time) {
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
             _("End time"), ctime(&stop_time));
   }
 
   if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
             _("Standings freeze time"), ctime(&fog_start_time));
   } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
              && global->board_unfog_time > 0 && !cs->standings_updated
              && cs->current_time < stop_time + global->board_unfog_time) {
     tmpt = stop_time + global->board_unfog_time;
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
             _("Standings unfreeze time"), ctime(&tmpt));
   }
 
   if (start_time > 0 && stop_time <= 0 && duration > 0) {
     duration_str(0, cs->current_time, start_time, duration_buf, 0);
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
             _("Elapsed time"), duration_buf);
     duration_str(0, start_time + duration - cs->current_time, 0,
                  duration_buf, 0);
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
             _("Remaining time"), duration_buf);
   }
   fprintf(fout, "</table>\n");
@@ -6397,9 +6368,47 @@ insert_variant_num(unsigned char *buf, size_t size,
 }
 
 static void
-unpriv_page_header(FILE *fout)
+unpriv_page_header(FILE *fout,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra,
+                   time_t start_time, time_t stop_time)
 {
+  static int action_list[] =
+  {
+    NEW_SRV_ACTION_MAIN_PAGE,
+    NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY,
+    NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS,
+    NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
+    NEW_SRV_ACTION_VIEW_SUBMISSIONS,
+    NEW_SRV_ACTION_STANDINGS,
+    NEW_SRV_ACTION_VIEW_CLAR_SUBMIT,
+    NEW_SRV_ACTION_VIEW_CLARS,
+    NEW_SRV_ACTION_VIEW_SETTINGS,
+    NEW_SRV_ACTION_LOGOUT,
 
+    -1,
+  };
+
+  static const unsigned char *action_names[] =
+  {
+    __("Info"),
+    __("Summary"),
+    __("Statements"),
+    __("Submit"),
+    __("Submissions"),
+    __("Standings"),
+    __("Submit clar"),
+    __("Clars"),
+    __("Settings"),
+    __("Logout"),
+  };
+
+  int i;
+  //serve_state_t cs = extra->serve_state;
+  //const struct section_global_data *global = cs->global;
+
+  if (!phr->action) phr->action = NEW_SRV_ACTION_MAIN_PAGE;
 
   // here must be contest status line
   fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr><td>");
@@ -6408,32 +6417,46 @@ unpriv_page_header(FILE *fout)
 
   fprintf(fout, "<div class=\"white_empty_block\">&nbsp;</div>\n");
 
-  // navigation bar
   fprintf(fout, "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
-  for (i = USER_SECTION_FIRST; i < USER_SECTION_LAST; i++) {
-    if (i == viewed_section) {
-      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>",
-              gettext(user_section_names[i]));
+  for (i = 0; action_list[i] != -1; i++) {
+    // conditions when the corresponding menu item is shown
+    switch (action_list[i]) {
+    case NEW_SRV_ACTION_MAIN_PAGE:
+      break;
+    case NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY:
+    case NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS:
+      if (start_time <= 0) continue;
+      break;      
+    case NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT:
+      if (start_time <= 0 || stop_time > 0) continue;
+      break;
+    case NEW_SRV_ACTION_VIEW_SUBMISSIONS:
+      if (start_time <= 0) continue;
+      break;
+    case NEW_SRV_ACTION_STANDINGS:
+      if (start_time <= 0) continue;
+      break;
+    case NEW_SRV_ACTION_VIEW_CLAR_SUBMIT:
+      if (start_time <= 0) continue;
+      // what else? check for appelation condition?
+      break;
+    case NEW_SRV_ACTION_VIEW_CLARS:
+      break;
+    case NEW_SRV_ACTION_VIEW_SETTINGS:
+      break;
+    }
+    if (phr->action == action_list[i]) {
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>", gettext(action_names[i]));
     } else {
-      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&section=%d\">%s</a></div></td>",
-              phr->self_url, phr->session_id, i,
-              gettext(user_section_names[i]));
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&action=%d\">%s</a></div></td>",
+              phr->self_url, phr->session_id, action_list[i],
+              gettext(action_names[i]));
     }
   }
-  /*
-  if (cnts->standings_url && start_time > 0) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s\" target=\"_blank\">%s</a></div></td>",
-            cnts->standings_url, _("Current Standings"));
-  }
-  */
-  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s\">%s</a></div></td>",
-          ns_url(urlbuf, sizeof(urlbuf), phr, NEW_SRV_ACTION_LOGOUT, 0),
-          _("Logout"));
   fprintf(fout, "</tr></table></div>\n");
-
-  fprintf(fout, "%s", extra->separator_txt);
-
-
+  if (extra->separator_txt && *extra->separator_txt) {
+    fprintf(fout, "%s", extra->separator_txt);
+  }
 }
 
 static void
@@ -6447,7 +6470,7 @@ user_main_page(FILE *fout,
   long long tdiff;
   time_t start_time, stop_time, duration, sched_time, fog_start_time = 0;
   const unsigned char *s;
-  int unread_clars, all_runs = 0, all_clars = 0, viewed_section = 0;
+  int unread_clars, all_runs = 0, all_clars = 0;
   unsigned char *solved_flag = 0;
   unsigned char *accepted_flag = 0;
   int n, v, prob_id = 0, i, j, variant = 0;
@@ -6456,7 +6479,6 @@ user_main_page(FILE *fout,
   struct watched_file *pw = 0;
   const unsigned char *pw_path;
   const struct section_problem_data *prob = 0;
-  unsigned char urlbuf[1024];
   unsigned char bb[1024];
   const unsigned char *alternatives = 0;
   int lang_count = 0, lang_id = 0;
@@ -6471,12 +6493,6 @@ user_main_page(FILE *fout,
     phr->session_extra->user_view_all_clars = v;
   }
   all_clars = phr->session_extra->user_view_all_clars;
-  if (ns_cgi_param(phr, "section", &s) > 0
-      && sscanf(s, "%d%n", &v, &n) == 1 && !s[n]
-      && v >= USER_SECTION_FIRST && v < USER_SECTION_LAST) {
-    phr->session_extra->user_viewed_section = v;
-  }
-  viewed_section = phr->session_extra->user_viewed_section;
   if (ns_cgi_param(phr, "prob_id", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v > 0)
     prob_id = v;
@@ -6497,48 +6513,16 @@ user_main_page(FILE *fout,
     fog_start_time = start_time + duration - global->board_fog_time;
   if (fog_start_time < 0) fog_start_time = 0;
 
+  /* FIXME: page name must depend on action */
   unpriv_load_html_style(phr, cnts, 0, 0);
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, phr->locale_id,
             "%s [%s]: %s",
             phr->name_arm, extra->contest_arm, _("Main page"));
 
-  // here must be contest status line
-  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr><td>");
-  fprintf(fout, "Contest status");
-  fprintf(fout, "</td></tr></table></div>\n");
+  unpriv_page_header(fout, phr, cnts, extra, start_time, stop_time);
 
-  fprintf(fout, "<div class=\"white_empty_block\">&nbsp;</div>\n");
-
-  // navigation bar
-  fprintf(fout, "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
-  for (i = USER_SECTION_FIRST; i < USER_SECTION_LAST; i++) {
-    if (i == viewed_section) {
-      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>",
-              gettext(user_section_names[i]));
-    } else {
-      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&section=%d\">%s</a></div></td>",
-              phr->self_url, phr->session_id, i,
-              gettext(user_section_names[i]));
-    }
-  }
-  /*
-  if (cnts->standings_url && start_time > 0) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s\" target=\"_blank\">%s</a></div></td>",
-            cnts->standings_url, _("Current Standings"));
-  }
-  */
-  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s\">%s</a></div></td>",
-          ns_url(urlbuf, sizeof(urlbuf), phr, NEW_SRV_ACTION_LOGOUT, 0),
-          _("Logout"));
-  fprintf(fout, "</tr></table></div>\n");
-
-  fprintf(fout, "%s", extra->separator_txt);
-
-  unpriv_print_status(fout, phr, cnts, extra,
-                      start_time, stop_time, duration, sched_time,
-                      fog_start_time);
-
+  // TODO: move to status
   if (!cs->global->disable_clars || !cs->global->disable_team_clars){
     unread_clars = serve_count_unread_clars(cs, phr->user_id, start_time);
     if (unread_clars > 0) {
@@ -6547,19 +6531,26 @@ user_main_page(FILE *fout,
     }
   }
 
-  if (start_time && viewed_section == USER_SECTION_PROBLEM_STATUS) {
-    fprintf(fout, "<hr><a name=\"probstat\"></a><%s>%s</%s>\n",
+  if (phr->action == NEW_SRV_ACTION_MAIN_PAGE) {
+    unpriv_print_status(fout, phr, cnts, extra,
+                        start_time, stop_time, duration, sched_time,
+                        fog_start_time);
+  }
+
+  if (start_time && phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
+    fprintf(fout, "<%s>%s</%s>\n",
             cnts->team_head_style,
             _("Problem status summary"),
             cnts->team_head_style);
     html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
-                                     accepted_flag, 0);
-  } else if (start_time && viewed_section == USER_SECTION_PROBLEM_STATUS) {
-    html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
-                                     accepted_flag, 1);
+                                     accepted_flag, 0, "summary");
   }
 
-  if (viewed_section == USER_SECTION_PROBLEM_STATUS && !cs->clients_suspended) {
+  if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT
+      && !cs->clients_suspended) {
+    html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
+                                     accepted_flag, 1, 0);
+
     if (prob_id > cs->max_prob) prob_id = 0;
     if (prob_id > 0 && !(prob = cs->probs[prob_id])) prob_id = 0;
     if (prob_id > 0 && is_problem_deadlined(cs, prob_id, phr->login, 0))
@@ -6572,30 +6563,30 @@ user_main_page(FILE *fout,
       prob_id = 0;
 
     if (start_time > 0 && stop_time <= 0 && !prob_id) {
-      fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
+      fprintf(fout, "<%s>%s</%s>\n",
               cnts->team_head_style,
               _("View the problem statement and send a submission"),
               cnts->team_head_style);
       html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
-      fprintf(fout, "<table>\n");
-      fprintf(fout, "<tr><td>%s:</td><td>", _("Problem"));
+      fprintf(fout, "<table class=\"borderless\">\n");
+      fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Problem"));
 
       html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 0,
                              start_time);
 
-      fprintf(fout, "</td><td>%s</td></tr></table></form>\n",
+      fprintf(fout, "</td><td class=\"borderless\">%s</td></tr></table></form>\n",
               ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_MAIN_PAGE,
                                _("Select problem")));
     } else if (start_time > 0 && stop_time <= 0 && prob_id > 0) {
       prob = cs->probs[prob_id];
 
       if (variant > 0) {
-        fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s %s-%s (%s %d)</%s>\n",
+        fprintf(fout, "<%s>%s %s-%s (%s %d)</%s>\n",
                 cnts->team_head_style, _("Submit a solution for"),
                 prob->short_name, prob->long_name, _("Variant"), variant,
                 cnts->team_head_style);
       } else {
-        fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s %s-%s</%s>\n",
+        fprintf(fout, "<%s>%s %s-%s</%s>\n",
                 cnts->team_head_style, _("Submit a solution for"),
                 prob->short_name, prob->long_name, cnts->team_head_style);
       }
@@ -6639,7 +6630,7 @@ user_main_page(FILE *fout,
       html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
       fprintf(fout, "<input type=\"hidden\" name=\"prob_id\" value=\"%d\">\n",
               prob_id);
-      fprintf(fout, "<table>\n");
+      fprintf(fout, "<table class=\"borderless\">\n");
       if (!prob->type_val) {
         for (i = 1; i <= cs->max_lang; i++) {
           if (!cs->langs[i] || cs->langs[i]->disabled) continue;
@@ -6660,12 +6651,12 @@ user_main_page(FILE *fout,
         
         if (lang_count == 1) {
           html_hidden(fout, "lang_id", "%d", lang_id);
-          fprintf(fout, "<tr><td>%s:</td><td>%s - %s</td></tr>\n",
+          fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s - %s</td></tr>\n",
                   _("Language"),
                   cs->langs[lang_id]->short_name,
                   cs->langs[lang_id]->long_name);
         } else {
-          fprintf(fout, "<tr><td>%s:</td><td>", _("Language"));
+          fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Language"));
           fprintf(fout, "<select name=\"lang_id\"><option value=\"\">\n");
           for (i = 1; i <= cs->max_lang; i++) {
             if (!cs->langs[i] || cs->langs[i]->disabled) continue;
@@ -6689,20 +6680,20 @@ user_main_page(FILE *fout,
       switch (prob->type_val) {
       case PROB_TYPE_STANDARD:
       case PROB_TYPE_OUTPUT_ONLY:
-        fprintf(fout, "<tr><td>%s</td><td><input type=\"file\" name=\"file\"></td></tr>\n", _("File"));
+        fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\"><input type=\"file\" name=\"file\"></td></tr>\n", _("File"));
         break;
       case PROB_TYPE_SHORT_ANSWER:
-        fprintf(fout, "<tr><td>%s</td><td><input type=\"text\" name=\"file\"></td></tr>\n", _("Answer"));
+        fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\"><input type=\"text\" name=\"file\"></td></tr>\n", _("Answer"));
         break;
       case PROB_TYPE_TEXT_ANSWER:
-        fprintf(fout, "<tr><td colspan=\"2\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
+        fprintf(fout, "<tr><td colspan=\"2\" class=\"borderless\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
         break;
       case PROB_TYPE_SELECT_ONE:
         if (alternatives) {
           write_alternatives_file(fout, 1, alternatives);
         } else {
           for (i = 0; prob->alternative[i]; i++) {
-            fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+            fprintf(fout, "<tr><td class=\"borderless\">%d</td><td class=\"borderless\"><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
           }
         }
         break;
@@ -6711,62 +6702,64 @@ user_main_page(FILE *fout,
           write_alternatives_file(fout, 0, alternatives);
         } else {
           for (i = 0; prob->alternative[i]; i++) {
-            fprintf(fout, "<tr><td>%d</td><td><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+            fprintf(fout, "<tr><td class=\"borderless\">%d</td><td class=\"borderless\"><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
           }
         }
         break;
       }
-      fprintf(fout, "<tr><td>%s</td><td>%s</td></tr></table></form>\n",
+      fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\">%s</td></tr></table></form>\n",
               _("Send!"),
               BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
 
-      fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
+      fprintf(fout, "<%s>%s</%s>\n",
               cnts->team_head_style, _("Select another problem"),
               cnts->team_head_style);
       html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
-      fprintf(fout, "<table>\n");
-      fprintf(fout, "<tr><td>%s:</td><td>", _("Problem"));
+      fprintf(fout, "<table class=\"borderless\">\n");
+      fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Problem"));
 
       html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 0,
                              start_time);
 
-      fprintf(fout, "</td><td>%s</td></tr></table></form>\n",
-              ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_MAIN_PAGE,
+      fprintf(fout, "</td><td class=\"borderless\">%s</td></tr></table></form>\n",
+              ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
                                _("Select problem")));
-    }
-
-    if (start_time) {
-      fprintf(fout, "<hr><a name=\"runstat\"></a><%s>%s (%s)</%s>\n",
-              cnts->team_head_style,
-              _("Sent submissions"),
-              all_runs?_("all"):_("last 15"),
-              cnts->team_head_style);
-      new_write_user_runs(cs, fout, phr->user_id, all_runs,
-                          NEW_SRV_ACTION_VIEW_SOURCE,
-                          NEW_SRV_ACTION_VIEW_REPORT,
-                          NEW_SRV_ACTION_PRINT_RUN,
-                          phr->session_id, phr->self_url,
-                          phr->hidden_vars, "");
-      if (all_runs) s = _("View last 15");
-      else s = _("View all");
-      fprintf(fout, "<p><a href=\"%s?SID=%016llx&all_runs=%d&action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_runs, NEW_SRV_ACTION_MAIN_PAGE, s);
     }
   }
 
-  if (viewed_section == USER_SECTION_CLAR && !cs->clients_suspended) {
+  if (phr->action == NEW_SRV_ACTION_VIEW_SUBMISSIONS && start_time > 0) {
+    fprintf(fout, "<%s>%s (%s)</%s>\n",
+            cnts->team_head_style,
+            _("Sent submissions"),
+            all_runs?_("all"):_("last 15"),
+            cnts->team_head_style);
+    new_write_user_runs(cs, fout, phr->user_id, all_runs,
+                        NEW_SRV_ACTION_VIEW_SOURCE,
+                        NEW_SRV_ACTION_VIEW_REPORT,
+                        NEW_SRV_ACTION_PRINT_RUN,
+                        phr->session_id, phr->self_url,
+                        phr->hidden_vars, "", "summary");
+    if (all_runs) s = _("View last 15");
+    else s = _("View all");
+    fprintf(fout, "<p><a href=\"%s?SID=%016llx&all_runs=%d&action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_runs, NEW_SRV_ACTION_VIEW_SUBMISSIONS, s);
+  }
+
+
+  if (phr->action == NEW_SRV_ACTION_VIEW_CLAR_SUBMIT
+      && !cs->clients_suspended) {
     if (!global->disable_clars && !global->disable_team_clars
         && start_time > 0 && stop_time <= 0) {
-      fprintf(fout, "<hr><a name=\"clar\"></a><%s>%s</%s>\n",
+      fprintf(fout, "<%s>%s</%s>\n",
               cnts->team_head_style, _("Send a message to judges"),
               cnts->team_head_style);
       html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
-      fprintf(fout, "<table><tr><td>%s:</td><td>", _("Problem"));
+      fprintf(fout, "<table class=\"borderless\"><tr><td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Problem"));
       html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 1,
                              start_time);
-      fprintf(fout, "</td></tr>\n<tr><td>%s:</td>"
-              "<td><input type=\"text\" name=\"subject\"></td></tr>\n"
-              "<tr><td colspan=\"2\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
-              "<tr><td colspan=\"2\">%s</td></tr>\n"
+      fprintf(fout, "</td></tr>\n<tr><td class=\"borderless\">%s:</td>"
+              "<td class=\"borderless\"><input type=\"text\" name=\"subject\"></td></tr>\n"
+              "<tr><td colspan=\"2\" class=\"borderless\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
+              "<tr><td colspan=\"2\" class=\"borderless\">%s</td></tr>\n"
               "</table></form>\n",
               _("Subject"), BUTTON(NEW_SRV_ACTION_SUBMIT_CLAR));
     }
@@ -6774,51 +6767,51 @@ user_main_page(FILE *fout,
         && start_time > 0 && stop_time > 0
         && global->appeal_deadline_d > 0
         && cs->current_time < global->appeal_deadline_d) {
-      fprintf(fout, "<hr><a name=\"clar\"></a><%s>%s</%s>\n",
+      fprintf(fout, "<%s>%s</%s>\n",
               cnts->team_head_style, _("Send an appeal"),
               cnts->team_head_style);
       html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
-      fprintf(fout, "<table><tr><td>%s:</td><td>", _("Problem"));
+      fprintf(fout, "<table class=\"borderless\"><tr><td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Problem"));
       html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 1,
                              start_time);
-      fprintf(fout, "</td></tr>\n<tr><td>%s:</td>"
-              "<td><input type=\"text\" name=\"test\"></td></tr>\n"
-              "<tr><td colspan=\"2\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
-              "<tr><td colspan=\"2\">%s</td></tr>\n"
+      fprintf(fout, "</td></tr>\n<tr><td class=\"borderless\">%s:</td>"
+              "<td class=\"borderless\"><input type=\"text\" name=\"test\"></td></tr>\n"
+              "<tr><td colspan=\"2\" class=\"borderless\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
+              "<tr><td colspan=\"2\" class=\"borderless\">%s</td></tr>\n"
               "</table></form>\n",
               _("Test number"), BUTTON(NEW_SRV_ACTION_SUBMIT_APPEAL));
     }
-
-    if (!global->disable_clars) {
-      fprintf(fout, "<hr><a name=\"clarstat\"></a><%s>%s (%s)</%s>\n",
-              cnts->team_head_style, _("Messages"),
-              all_clars?_("all"):_("last 15"), cnts->team_head_style);
-
-      new_write_user_clars(cs, fout, phr->user_id, all_clars,
-                           NEW_SRV_ACTION_VIEW_CLAR,
-                           phr->session_id,
-                           phr->self_url, phr->hidden_vars, "");
-
-      if (all_clars) s = _("View last 15");
-      else s = _("View all");
-      fprintf(fout, "<p><a href=\"%s?SID=%016llx&all_clars=%d&action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_clars, NEW_SRV_ACTION_MAIN_PAGE, s);
-    }
   }
 
-  if (viewed_section == USER_SECTION_SETTINGS) {
+  if (phr->action == NEW_SRV_ACTION_VIEW_CLARS && !global->disable_clars) {
+    fprintf(fout, "<%s>%s (%s)</%s>\n",
+            cnts->team_head_style, _("Messages"),
+            all_clars?_("all"):_("last 15"), cnts->team_head_style);
+
+    new_write_user_clars(cs, fout, phr->user_id, all_clars,
+                         NEW_SRV_ACTION_VIEW_CLAR,
+                         phr->session_id,
+                         phr->self_url, phr->hidden_vars, "", "summary");
+
+    if (all_clars) s = _("View last 15");
+    else s = _("View all");
+    fprintf(fout, "<p><a href=\"%s?SID=%016llx&all_clars=%d&action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_clars, NEW_SRV_ACTION_VIEW_CLARS, s);
+  }
+
+  if (phr->action == NEW_SRV_ACTION_VIEW_SETTINGS) {
     /* change the password */
     if (!cs->clients_suspended) {
-      fprintf(fout, "<hr><a name=\"chgpasswd\"></a>\n<%s>%s</%s>\n",
+      fprintf(fout, "<%s>%s</%s>\n",
               cnts->team_head_style,
               _("Change password"),
               cnts->team_head_style);
       html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
 
-      fprintf(fout, "<table>\n"
-              "<tr><td>%s:</td><td><input type=\"password\" name=\"oldpasswd\" size=\"16\"></td></tr>\n"
-              "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd1\" size=\"16\"></td></tr>\n"
-              "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd2\" size=\"16\"></td></tr>\n"
-              "<tr><td colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n"
+      fprintf(fout, "<table class=\"borderless\">\n"
+              "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"oldpasswd\" size=\"16\"></td></tr>\n"
+              "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"newpasswd1\" size=\"16\"></td></tr>\n"
+              "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"newpasswd2\" size=\"16\"></td></tr>\n"
+              "<tr><td class=\"borderless\" colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n"
               "</table></form>",
               _("Old password"),
               _("New password"), _("Retype new password"),
@@ -6827,13 +6820,13 @@ user_main_page(FILE *fout,
 
 #if CONF_HAS_LIBINTL - 0 == 1
     if (cs->global->enable_l10n && !cs->clients_suspended) {
-      fprintf(fout, "<hr><a name=\"chglanguage\"></a><%s>%s</%s>\n",
+      fprintf(fout, "<%s>%s</%s>\n",
               cnts->team_head_style, _("Change language"),
               cnts->team_head_style);
       html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-      fprintf(fout, "<table><tr><td>%s</td><td>", _("Change language"));
+      fprintf(fout, "<table class=\"borderless\"><tr><td class=\"borderless\">%s</td><td class=\"borderless\">", _("Change language"));
       l10n_html_locale_select(fout, phr->locale_id);
-      fprintf(fout, "</td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr></table></form>\n",
+      fprintf(fout, "</td><td class=\"borderless\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr></table></form>\n",
               NEW_SRV_ACTION_CHANGE_LANGUAGE, _("Change"));
     }
 #endif /* CONF_HAS_LIBINTL */
