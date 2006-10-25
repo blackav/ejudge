@@ -41,14 +41,16 @@ void new_write_user_runs(const serve_state_t, FILE *f, int uid,
                          ej_cookie_t sid,
                          unsigned char const *self_url,
                          unsigned char const *hidden_vars,
-                         unsigned char const *extra_args);
+                         unsigned char const *extra_args,
+                         const unsigned char *table_class);
 
 void new_write_user_clars(const serve_state_t,
                           FILE *f, int uid, unsigned int show_flags,
                           int action, ej_cookie_t sid,
                           unsigned char const *self_url,
                           unsigned char const *hidden_vars,
-                          unsigned char const *extra_args);
+                          unsigned char const *extra_args,
+                          const unsigned char *table_class);
 
 int new_write_user_clar(const serve_state_t, const struct contest_desc *,
                         FILE *, int, int, int);
@@ -242,7 +244,8 @@ html_write_user_problems_summary(const serve_state_t state,
                                  FILE *f, int user_id,
                                  unsigned char *solved_flag,
                                  unsigned char *accepted_flag,
-                                 int no_output_flag);
+                                 int no_output_flag,
+                                 const unsigned char *table_class);
 void
 write_change_status_dialog(const serve_state_t state,
                            FILE *f, unsigned char const *var_name,
