@@ -215,3 +215,34 @@ p.fixed_width
 {
         width: 750px;
 }
+
+table.summary /* table for problem summary and logs */
+{
+        border-style: none;
+        border-collapse: collapse;
+}
+
+td.summary /* for summary tables */
+{
+        border: solid;
+        border-width: 1px;
+        border-color: #000000;
+        margin: 1px;
+}
+
+th.summary /* for summary tables */
+{
+        border: solid;
+        border-width: 1px;
+        border-color: #000000;
+        margin: 1px;
+}
+
+table.borderless
+{
+        border-style: none;
+}
+td.borderless
+{ 
+        border-style: none;
+}
