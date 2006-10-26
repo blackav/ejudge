@@ -6088,7 +6088,8 @@ unpriv_view_report(FILE *fout,
                                       phr->session_id, phr->self_url, "");
     } else if (prob->team_show_judge_report) {
       write_xml_testing_report(fout, rep_start, phr->session_id,
-                               phr->self_url, "", new_actions_vector);
+                               phr->self_url, "", new_actions_vector,
+                               "summary", "borderless");
     } else {
       write_xml_team_testing_report(cs, fout, rep_start);
     }

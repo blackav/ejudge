@@ -1808,7 +1808,9 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
                          ej_cookie_t sid,
                          unsigned char const *self_url,
                          unsigned char const *extra_args,
-                         const int *actions_vector)
+                         const int *actions_vector,
+                         const unsigned char *class1,
+                         const unsigned char *class2)
 {
   testing_report_xml_t r = 0;
   unsigned char *s = 0;
@@ -1817,6 +1819,8 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
   struct testing_report_test *t;
   unsigned char opening_a[512];
   unsigned char *closing_a = "";
+  unsigned char *cl1 = " border=\"1\"";
+  unsigned char *cl2 = "";
 
   static const int default_actions_vector[] =
   {
@@ -1827,6 +1831,15 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
     ACTION_VIEW_TEST_CHECKER,
     ACTION_VIEW_TEST_INFO,
   };
+
+  if (class1 && *class1) {
+    cl1 = (unsigned char *) alloca(strlen(class1) + 16);
+    sprintf(cl1, " class=\"%s\"", class1);
+  }
+  if (class2 && *class2) {
+    cl2 = (unsigned char*) alloca(strlen(class2) + 16);
+    sprintf(cl2, " class=\"%s\"", class2);
+  }
 
   if (!actions_vector) actions_vector = default_actions_vector;
 
@@ -1878,36 +1891,39 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
   }
 
   fprintf(f,
-          "<table border=\"1\">"
-          "<tr><th>N</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th>",
-          _("Result"), _("Time (sec)"), _("Real time (sec)"), _("Extra info"));
+          "<table%s>"
+          "<tr><th%s>N</th><th%s>%s</th><th%s>%s</th><th%s>%s</th>"
+          "<th%s>%s</th>", cl1, cl1, cl1,
+          _("Result"), cl1, _("Time (sec)"), cl1, _("Real time (sec)"),
+          cl1, _("Extra info"));
   if (is_kirov) {
-    fprintf(f, "<th>%s</th>", _("Score"));
+    fprintf(f, "<th%s>%s</th>", cl1, _("Score"));
   }
   if (need_comment) {
-    fprintf(f, "<th>%s</th>", _("Comment"));
+    fprintf(f, "<th%s>%s</th>", cl1, _("Comment"));
   }
-  fprintf(f, "<th>%s</th>", _("Link"));
+  fprintf(f, "<th%s>%s</th>", cl1, _("Link"));
   fprintf(f, "</tr>\n");
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
     fprintf(f, "<tr>");
-    fprintf(f, "<td>%d</td>", t->num);
+    fprintf(f, "<td%s>%d</td>", cl1, t->num);
     if (t->status == RUN_OK || t->status == RUN_ACCEPTED) {
       font_color = "green";
     } else {
       font_color = "red";
     }
-    fprintf(f, "<td><font color=\"%s\">%s</font></td>\n",
+    fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n", cl1,
             font_color, run_status_str(t->status, 0, 0));
-    fprintf(f, "<td>%d.%03d</td>", t->time / 1000, t->time % 1000);
+    fprintf(f, "<td%s>%d.%03d</td>", cl1, t->time / 1000, t->time % 1000);
     if (t->real_time > 0) {
-      fprintf(f, "<td>%d.%03d</td>", t->real_time / 1000, t->real_time % 1000);
+      fprintf(f, "<td%s>%d.%03d</td>", cl1,
+              t->real_time / 1000, t->real_time % 1000);
     } else {
-      fprintf(f, "<td>N/A</td>");
+      fprintf(f, "<td%s>N/A</td>", cl1);
     }
     // extra information
-    fprintf(f, "<td>");
+    fprintf(f, "<td%s>", cl1);
     switch (t->status) {
     case RUN_OK:
     case RUN_ACCEPTED:
@@ -1958,23 +1974,23 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
     }
     fprintf(f, "</td>");
     if (is_kirov) {
-      fprintf(f, "<td>%d (%d)</td>", t->score, t->nominal_score);
+      fprintf(f, "<td%s>%d (%d)</td>", cl1, t->score, t->nominal_score);
     }
     if (need_comment) {
       if (t->comment) {
         s = html_armor_string_dup(t->comment);
-        fprintf(f, "<td>%s</td>", s);
+        fprintf(f, "<td%s>%s</td>", cl1, s);
         xfree(s);
       } else if (t->team_comment) {
         s = html_armor_string_dup(t->team_comment);
-        fprintf(f, "<td>%s</td>", s);
+        fprintf(f, "<td%s>%s</td>", cl1, s);
         xfree(s);
       } else {
-        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td%s>&nbsp;</td>", cl1);
       }
     }
     // links to extra information
-    fprintf(f, "<td>");
+    fprintf(f, "<td%s>", cl1);
     // command line parameters (always inline)
     if (t->args || t->args_too_long) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dL\">", t->num);
@@ -2071,22 +2087,22 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
   fprintf(f, "</table>\n");
 
   fprintf(f,
-          "<br><table><font size=\"-2\">\n"
-          "<tr><td>L</td><td>%s</td></tr>\n"
-          "<tr><td>I</td><td>%s</td></tr>\n"
-          "<tr><td>O</td><td>%s</td></tr>\n"
-          "<tr><td>A</td><td>%s</td></tr>\n"
-          "<tr><td>E</td><td>%s</td></tr>\n"
-          "<tr><td>C</td><td>%s</td></tr>\n"
-          "<tr><td>F</td><td>%s</td></tr>\n"
-          "</font></table>\n",
-          _("Command-line parameters"),
-          _("Test input"),
-          _("Program output"),
-          _("Correct output"),
-          _("Program output to stderr"),
-          _("Checker output"),
-          _("Additional test information"));
+          "<br><table%s><font size=\"-2\">\n"
+          "<tr><td%s>L</td><td%s>%s</td></tr>\n"
+          "<tr><td%s>I</td><td%s>%s</td></tr>\n"
+          "<tr><td%s>O</td><td%s>%s</td></tr>\n"
+          "<tr><td%s>A</td><td%s>%s</td></tr>\n"
+          "<tr><td%s>E</td><td%s>%s</td></tr>\n"
+          "<tr><td%s>C</td><td%s>%s</td></tr>\n"
+          "<tr><td%s>F</td><td%s>%s</td></tr>\n"
+          "</font></table>\n", cl2,
+          cl2, cl2, _("Command-line parameters"),
+          cl2, cl2, _("Test input"),
+          cl2, cl2, _("Program output"),
+          cl2, cl2, _("Correct output"),
+          cl2, cl2, _("Program output to stderr"),
+          cl2, cl2, _("Checker output"),
+          cl2, cl2, _("Additional test information"));
 
 
   // print detailed test information
@@ -2219,7 +2235,8 @@ write_priv_report(const serve_state_t state, FILE *f,
     if (team_report_flag) {
       write_xml_team_testing_report(state, f, start_ptr);
     } else {
-      write_xml_testing_report(f, start_ptr, sid, self_url, extra_args, 0);
+      write_xml_testing_report(f, start_ptr, sid, self_url, extra_args, 0,
+                               0, 0);
     }
     break;
   default:
