@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-26 13:04+0400\n"
-"PO-Revision-Date: 2006-10-26 13:06+0400\n"
+"POT-Creation-Date: 2006-10-26 13:35+0400\n"
+"PO-Revision-Date: 2006-10-26 13:50+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -292,6 +292,10 @@ msgstr "<p%s>Максимальное количество %s - %d.</p>\n"
 #, c-format
 msgid "<p%s>The minimal number of %s is %d.</p>\n"
 msgstr "<p%s>Минимальное количество %s - %d.</p>\n"
+
+#, c-format
+msgid "<p>Information is not available.</p>"
+msgstr "<p>Информация отсутствует.</p>"
 
 #, c-format
 msgid "<p>New password is generated.</p>"

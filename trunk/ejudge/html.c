@@ -1507,15 +1507,15 @@ do_write_kirov_standings(const serve_state_t state,
                          const struct contest_desc *cnts,
                          FILE *f,
                          const unsigned char *stand_dir,
-                         int client_flag,
+                         int client_flag, int only_table_flag,
                          const unsigned char *header_str,
                          unsigned char const *footer_str,
                          int raw_flag,
-                         int accepting_mode)
+                         int accepting_mode,
+                         time_t cur_time)
 {
   time_t start_time;
   time_t stop_time;
-  time_t cur_time;
   time_t cur_duration;
   time_t run_time;
 
@@ -1594,15 +1594,16 @@ do_write_kirov_standings(const serve_state_t state,
   /* Check that the contest is started */
   start_time = run_get_start_time(state->runlog_state);
   stop_time = run_get_stop_time(state->runlog_state);
-  cur_time = time(0);
+  if (cur_time <= 0) cur_time = time(0);
 
   if (!start_time || cur_time < start_time) {
     if (raw_flag) goto cleanup;
-    if (!client_flag) 
+    if (!client_flag && !only_table_flag) 
       write_standings_header(state, cnts, f, client_flag, 0, header_str, 0);    
-    fprintf(f, "<%s>%s</%s>", head_style, _("The contest is not started"),
-            head_style);
-    if (!client_flag) {
+    if (!only_table_flag)
+      fprintf(f, "<%s>%s</%s>", head_style, _("The contest is not started"),
+              head_style);
+    if (!client_flag && !only_table_flag) {
       if (footer_str) {
         process_template(f, footer_str, 0, 0, 0, get_copyright(0));
       } else {
@@ -2032,7 +2033,7 @@ do_write_kirov_standings(const serve_state_t state,
 
   // no teams registered at all
   if (!t_tot) {
-    if (!client_flag)
+    if (!client_flag && !only_table_flag)
       write_standings_header(state, cnts, f, client_flag, 0, header_str, 0);
     /* print table header */
     fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",
@@ -2084,7 +2085,7 @@ do_write_kirov_standings(const serve_state_t state,
         snprintf(stand_path, sizeof(stand_path), "%s/dir/%s", stand_dir, stand_name);
         if (!(f = sf_fopen(stand_tmp, "w"))) goto cleanup;
       }
-      if (!client_flag)
+      if (!client_flag && !only_table_flag)
         write_standings_header(state, cnts, f, client_flag, 0, header_str, 0);
 
       /* print "Last success" information */
@@ -2407,7 +2408,7 @@ do_write_kirov_standings(const serve_state_t state,
 
   fputs("</table>\n", f);
 
-  if (!client_flag) {
+  if (!client_flag && !only_table_flag) {
     if (total_pages > 1)
       write_kirov_page_table(state, f, total_pages, current_page, pgrefs,
                              t_sort, tot_full, tot_score, pg_n1, pg_n2,
@@ -2503,15 +2504,15 @@ do_write_moscow_standings(const serve_state_t state,
                           const struct contest_desc *cnts,
                           FILE *f,
                           const unsigned char *stand_dir,
-                          int client_flag,
+                          int client_flag, int only_table_flag,
                           int user_id,
                           const unsigned char *header_str,
                           const unsigned char *footer_str,
                           int raw_flag,
-                          const unsigned char *user_name)
+                          const unsigned char *user_name,
+                          time_t cur_time)
 {
   const unsigned char *head_style;
-  time_t cur_time;
   time_t start_time;
   time_t stop_time;
   time_t contest_dur;
@@ -2623,7 +2624,7 @@ do_write_moscow_standings(const serve_state_t state,
   for (i = 0; i < 2 && i < attr_num; i++)
     pc_attrs[i] = state->global->stand_page_col_attr[i];
 
-  cur_time = time(0);
+  if (cur_time <= 0) cur_time = time(0);
   last_submit_start = last_success_start = start_time = run_get_start_time(state->runlog_state);
   stop_time = run_get_stop_time(state->runlog_state);
   contest_dur = run_get_duration(state->runlog_state);
@@ -2643,6 +2644,7 @@ do_write_moscow_standings(const serve_state_t state,
   current_dur = cur_time - start_time;
   if (!start_time) {
     if (raw_flag) return;
+    if (only_table_flag) return;
     write_standings_header(state, cnts, f, client_flag, user_id, header_str,
                            user_name);
     fprintf(f, "<%s>%s</%s>", head_style, _("The contest is not started"),
@@ -2946,8 +2948,9 @@ do_write_moscow_standings(const serve_state_t state,
   }
 
   if (!u_tot) {
-    write_standings_header(state, cnts, f, client_flag, user_id, header_str,
-                           user_name);
+    if (!only_table_flag)
+      write_standings_header(state, cnts, f, client_flag, user_id, header_str,
+                             user_name);
     /* print the table header */
     fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",
             table_attr, r0_attr,
@@ -2994,7 +2997,7 @@ do_write_moscow_standings(const serve_state_t state,
                  pgrefs[current_page - 1]);
         if (!(f = sf_fopen(stand_tmp, "w"))) return;
       }
-      if (!client_flag)
+      if (!client_flag && only_table_flag)
         write_standings_header(state, cnts, f, client_flag, user_id, header_str,
                                user_name);
       /* print "Last success" information */
@@ -3344,10 +3347,12 @@ void
 do_write_standings(const serve_state_t state,
                    const struct contest_desc *cnts,
                    FILE *f,
-                   int client_flag, int user_id,
+                   int client_flag, int only_table_flag,
+                   int user_id,
                    const unsigned char *header_str,
                    unsigned char const *footer_str, int raw_flag,
-                   const unsigned char *user_name)
+                   const unsigned char *user_name,
+                   time_t cur_time)
 {
   int      i, j, t;
 
@@ -3377,7 +3382,6 @@ do_write_standings(const serve_state_t state,
 
   time_t start_time;
   time_t stop_time;
-  time_t cur_time;
   time_t        contest_dur;
   time_t        current_dur, run_time;
   time_t        tdur = 0, tstart = 0;
@@ -3398,8 +3402,11 @@ do_write_standings(const serve_state_t state,
   int row_sh, row_sz, up_ind, attr_num;
   int prev_prob = -1, row_ind = 0, group_ind = 1;
 
-  write_standings_header(state, cnts, f, client_flag, user_id, header_str,
-                         user_name);
+  if (cur_time <= 0) cur_time = time(0);
+  if (!only_table_flag) {
+    write_standings_header(state, cnts, f, client_flag, user_id, header_str,
+                           user_name);
+  }
 
   if (client_flag) head_style = cnts->team_head_style;
   else head_style = "h2";
@@ -3425,7 +3432,6 @@ do_write_standings(const serve_state_t state,
     attr_num -= 1;
   }
 
-  cur_time = time(0);
   start_time = run_get_start_time(state->runlog_state);
   stop_time = run_get_stop_time(state->runlog_state);
   contest_dur = run_get_duration(state->runlog_state);
@@ -3446,13 +3452,15 @@ do_write_standings(const serve_state_t state,
   if (!start_time) {
     if (raw_flag) return;
 
-    fprintf(f, "<%s>%s</%s>", head_style, _("The contest is not started"),
-            head_style);
-    if (!client_flag) {
-      if (footer_str) {
-        process_template(f, footer_str, 0, 0, 0, get_copyright(0));
-      } else {
-        fprintf(f, "</body></html>");
+    if (!only_table_flag) {
+      fprintf(f, "<%s>%s</%s>", head_style, _("The contest is not started"),
+              head_style);
+      if (!client_flag) {
+        if (footer_str) {
+          process_template(f, footer_str, 0, 0, 0, get_copyright(0));
+        } else {
+          fprintf(f, "</body></html>");
+        }
       }
     }
     return;
@@ -3912,7 +3920,7 @@ do_write_standings(const serve_state_t state,
             state->global->stand_solved_attr, perc, state->global->stand_penalty_attr);
     
     fputs("</table>\n", f);
-    if (!client_flag) {
+    if (!client_flag && !only_table_flag) {
       if (footer_str) {
         process_template(f, footer_str, 0, 0, 0, get_copyright(0));
       } else {
@@ -3941,13 +3949,14 @@ write_standings(const serve_state_t state,
   if (!(f = sf_fopen(tpath, "w"))) return;
   if (state->global->score_system_val == SCORE_KIROV
       || state->global->score_system_val == SCORE_OLYMPIAD)
-    do_write_kirov_standings(state, cnts, f, stat_dir, 0, header_str,
-                             footer_str, 0, accepting_mode);
+    do_write_kirov_standings(state, cnts, f, stat_dir, 0, 0, header_str,
+                             footer_str, 0, accepting_mode, 0);
   else if (state->global->score_system_val == SCORE_MOSCOW)
-    do_write_moscow_standings(state, cnts, f, stat_dir, 0, 0, header_str,
-                              footer_str, 0, 0);
+    do_write_moscow_standings(state, cnts, f, stat_dir, 0, 0, 0, header_str,
+                              footer_str, 0, 0, 0);
   else
-    do_write_standings(state, cnts, f, 0, 0, header_str, footer_str, 0, 0);
+    do_write_standings(state, cnts, f, 0, 0, 0, header_str, footer_str, 0, 0,
+                       0);
   fclose(f);
   generic_copy_file(REMOVE, stat_dir, tbuf, "",
                     SAFE, stat_dir, name, "");
@@ -5298,7 +5307,7 @@ write_virtual_standings(const serve_state_t state,
   alen = html_armored_strlen(user_name);
   astr = alloca(alen + 16);
   html_armor_string(user_name, astr);
-  do_write_standings(state, cnts, f, 1, user_id, 0, 0, 0, astr);
+  do_write_standings(state, cnts, f, 1, 0, user_id, 0, 0, 0, astr, 0);
   return 0;
 }
 

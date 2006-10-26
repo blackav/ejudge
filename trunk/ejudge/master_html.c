@@ -1209,11 +1209,11 @@ write_priv_standings(const serve_state_t state,
 
   if (state->global->score_system_val == SCORE_KIROV
       || state->global->score_system_val == SCORE_OLYMPIAD)
-    do_write_kirov_standings(state, cnts, f, 0, 1, 0, 0, 0, 0 /*accepting_mode*/);
+    do_write_kirov_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0 /*accepting_mode*/, 0);
   else if (state->global->score_system_val == SCORE_MOSCOW)
-    do_write_moscow_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0);
+    do_write_moscow_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0, 0, 0);
   else
-    do_write_standings(state, cnts, f, 1, 0, 0, 0, 0, 0);
+    do_write_standings(state, cnts, f, 1, 0, 0, 0, 0, 0, 0, 0);
 
   print_nav_buttons(state, f, 0, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), _("Refresh"), 0, 0, 0, 0, 0);
@@ -2911,11 +2911,11 @@ write_raw_standings(const serve_state_t state,
 {
   if (state->global->score_system_val == SCORE_KIROV
       || state->global->score_system_val == SCORE_OLYMPIAD)
-    do_write_kirov_standings(state, cnts, f, 0, 1, 0, 0, 1, 0);
+    do_write_kirov_standings(state, cnts, f, 0, 1, 0, 0, 0, 1, 0, 0);
   else if (state->global->score_system_val == SCORE_MOSCOW)
-    do_write_moscow_standings(state, cnts, f, 0, 1, 0, 0, 0, 1, 0);
+    do_write_moscow_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 1, 0, 0);
   else
-    do_write_standings(state, cnts, f, 1, 0, 0, 0, 1, 0);
+    do_write_standings(state, cnts, f, 1, 0, 0, 0, 0, 1, 0, 0);
 }
 
 int
