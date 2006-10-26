@@ -6205,30 +6205,30 @@ unpriv_view_clar(FILE *fout,
 
   fprintf(fout, "<%s>%s #%d</%s>\n", cnts->team_head_style,
           _("Message"), clar_id, cnts->team_head_style);
-  fprintf(fout, "<table border=\"0\">\n");
-  fprintf(fout, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Number"), clar_id);
-  fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Time"), dur_str);
-  fprintf(fout, "<tr><td>%s:</td><td>%u</td></tr>\n", _("Size"), ce.size);
-  fprintf(fout, "<tr><td>%s:</td>", _("Sender"));
+  fprintf(fout, "<table class=\"borderless\">\n");
+  fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%d</td></tr>\n", _("Number"), clar_id);
+  fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n", _("Time"), dur_str);
+  fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%u</td></tr>\n", _("Size"), ce.size);
+  fprintf(fout, "<tr><td class=\"borderless\">%s:</td>", _("Sender"));
   if (!ce.from) {
-    fprintf(fout, "<td><b>%s</b></td>", _("judges"));
+    fprintf(fout, "<td class=\"borderless\"><b>%s</b></td>", _("judges"));
   } else {
-    fprintf(fout, "<td>%s</td>", teamdb_get_name(cs->teamdb_state, ce.from));
+    fprintf(fout, "<td class=\"borderless\">%s</td>", teamdb_get_name(cs->teamdb_state, ce.from));
   }
-  fprintf(fout, "</tr>\n<tr><td>%s:</td>", _("To"));
+  fprintf(fout, "</tr>\n<tr><td class=\"borderless\">%s:</td>", _("To"));
   if (!ce.to && !ce.from) {
-    fprintf(fout, "<td><b>%s</b></td>", _("all"));
+    fprintf(fout, "<td class=\"borderless\"><b>%s</b></td>", _("all"));
   } else if (!ce.to) {
-    fprintf(fout, "<td><b>%s</b></td>", _("judges"));
+    fprintf(fout, "<td class=\"borderless\"><b>%s</b></td>", _("judges"));
   } else {
-    fprintf(fout, "<td>%s</td>", teamdb_get_name(cs->teamdb_state, ce.to));
+    fprintf(fout, "<td class=\"borderless\">%s</td>", teamdb_get_name(cs->teamdb_state, ce.to));
   }
   fprintf(fout, "</tr>\n");
-  fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"), html_subj);
+  fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>", _("Subject"), html_subj);
   fprintf(fout, "</table>\n");
   fprintf(fout, "<hr><pre>");
   fprintf(fout, "%s", html_text);
-  fprintf(fout, "</pre>");
+  fprintf(fout, "</pre><hr>");
 
   ns_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
