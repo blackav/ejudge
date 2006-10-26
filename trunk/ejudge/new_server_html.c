@@ -166,6 +166,12 @@ static size_t extra_a = 0;
 
 static void unprivileged_page_login(FILE *fout,
                                     struct http_request_info *phr);
+static void
+unpriv_page_header(FILE *fout,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra,
+                   time_t start_time, time_t stop_time);
 
 struct contest_extra *
 ns_get_contest_extra(int contest_id)
@@ -6222,6 +6228,99 @@ unpriv_view_clar(FILE *fout,
   xfree(clar_text);
 }
 
+static void
+unpriv_view_standings(FILE *fout,
+                      struct http_request_info *phr,
+                      const struct contest_desc *cnts,
+                      struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  time_t start_time, stop_time, cur_time, fog_start_time = 0, fog_stop_time = 0;
+  time_t sched_time = 0, duration = 0;
+  long long tdiff;
+  unsigned char comment[1024] = { 0 };
+  unsigned char dur_buf[128];
+
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                          cs->current_time);
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+  }
+  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, 0);
+  if (duration > 0 && start_time > 0 && global->board_fog_time > 0)
+    fog_start_time = start_time + duration - global->board_fog_time;
+  if (fog_start_time < 0) fog_start_time = 0;
+  if (fog_start_time > 0 && stop_time > 0) {
+    if (global->board_unfog_time > 0)
+      fog_stop_time = stop_time + global->board_unfog_time;
+    else
+      fog_stop_time = stop_time;
+  }
+  /* FIXME: if a virtual contest is over, display the final
+   * standings at the current time! */
+
+  unpriv_load_html_style(phr, cnts, 0, 0);
+  l10n_setlocale(phr->locale_id);
+  if (start_time <= 0) {
+    ns_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+              "%s [%s]: %s",
+              phr->name_arm, extra->contest_arm, _("Standings [not started]"));
+    unpriv_page_header(fout, phr, cnts, extra, start_time, stop_time);
+    goto done;
+  }
+
+  cur_time = cs->current_time;
+  if (cur_time < start_time) cur_time = start_time;
+  if (duration <= 0) {
+    // no fog for unlimited contests
+    if (stop_time > 0 && cur_time >= stop_time)
+      snprintf(comment, sizeof(comment), _(" [over]"));
+    else
+      snprintf(comment, sizeof(comment), " [%s]", xml_unparse_date(cur_time));
+  } else {
+    if (stop_time > 0 && cur_time >= stop_time) {
+      if (fog_stop_time > 0 && cur_time < fog_stop_time)
+        snprintf(comment, sizeof(comment), _(" [over, frozen]"));
+      else
+        snprintf(comment, sizeof(comment), _(" [over]"));
+    } else {
+      if (fog_start_time > 0 && cur_time >= fog_start_time) {
+        cur_time = fog_start_time;
+        snprintf(comment, sizeof(comment), _(" [%s, frozen]"),
+                 duration_str(global->show_astr_time, cur_time, start_time,
+                              dur_buf, sizeof(dur_buf)));
+      } else
+        snprintf(comment, sizeof(comment), " [%s]",
+                 duration_str(global->show_astr_time, cur_time, start_time,
+                              dur_buf, sizeof(dur_buf)));
+    }
+  }
+
+  ns_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+            "%s [%s]: %s%s",
+            phr->name_arm, extra->contest_arm, _("Standings"), comment);
+
+  unpriv_page_header(fout, phr, cnts, extra, start_time, stop_time);
+
+ done:
+  if (1 /*cs->global->show_generation_time*/) {
+  gettimeofday(&phr->timestamp2, 0);
+  tdiff = ((long long) phr->timestamp2.tv_sec) * 1000000;
+  tdiff += phr->timestamp2.tv_usec;
+  tdiff -= ((long long) phr->timestamp1.tv_sec) * 1000000;
+  tdiff -= phr->timestamp1.tv_usec;
+  fprintf(fout, "<hr><p%s>%s: %lld %s\n", cnts->team_par_style,
+          _("Page generation time"), tdiff / 1000,
+          _("msec"));
+  }
+
+  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  l10n_setlocale(0);
+}
 
 static int
 is_problem_deadlined(serve_state_t cs,
@@ -6404,9 +6503,10 @@ unpriv_page_header(FILE *fout,
     __("Logout"),
   };
 
-  int i;
-  //serve_state_t cs = extra->serve_state;
-  //const struct section_global_data *global = cs->global;
+  int i, prob_id, has_prob_stmt = 0;
+  serve_state_t cs = extra->serve_state;
+  const unsigned char *forced_url = 0;
+  const struct section_global_data *global = cs->global;
 
   if (!phr->action) phr->action = NEW_SRV_ACTION_MAIN_PAGE;
 
@@ -6419,13 +6519,24 @@ unpriv_page_header(FILE *fout,
 
   fprintf(fout, "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
   for (i = 0; action_list[i] != -1; i++) {
+    forced_url = 0;
     // conditions when the corresponding menu item is shown
     switch (action_list[i]) {
     case NEW_SRV_ACTION_MAIN_PAGE:
       break;
     case NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY:
+      if (start_time <= 0) continue;
+      break;      
     case NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS:
       if (start_time <= 0) continue;
+      if (stop_time > 0 && !cnts->problems_url) continue;
+      for (prob_id = 1; prob_id <= cs->max_prob; prob_id++)
+        if (cs->probs[prob_id] && cs->probs[prob_id]->statement_file[0])
+          break;
+      if (prob_id <= cs->max_prob)
+        has_prob_stmt = 1;
+      if (cnts->problems_url && (stop_time > 0 || !has_prob_stmt))
+        forced_url = cnts->problems_url;
       break;      
     case NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT:
       if (start_time <= 0 || stop_time > 0) continue;
@@ -6437,16 +6548,24 @@ unpriv_page_header(FILE *fout,
       if (start_time <= 0) continue;
       break;
     case NEW_SRV_ACTION_VIEW_CLAR_SUBMIT:
+      if (global->disable_team_clars) continue;
       if (start_time <= 0) continue;
-      // what else? check for appelation condition?
+      if (stop_time > 0
+          && (global->appeal_deadline_d <= 0
+              || cs->current_time >= global->appeal_deadline_d))
+        continue;
       break;
     case NEW_SRV_ACTION_VIEW_CLARS:
+      if (global->disable_clars) continue;
       break;
     case NEW_SRV_ACTION_VIEW_SETTINGS:
       break;
     }
     if (phr->action == action_list[i]) {
       fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>", gettext(action_names[i]));
+    } else if (forced_url) {
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s\">%s</a></div></td>",
+              forced_url, gettext(action_names[i]));
     } else {
       fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&action=%d\">%s</a></div></td>",
               phr->self_url, phr->session_id, action_list[i],
@@ -6894,6 +7013,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_TEST_ERROR] = unpriv_view_test,
   [NEW_SRV_ACTION_VIEW_TEST_CHECKER] = unpriv_view_test,
   [NEW_SRV_ACTION_SUBMIT_APPEAL] = unpriv_submit_appeal,
+  [NEW_SRV_ACTION_STANDINGS] = unpriv_view_standings,
 };
 
 static void
