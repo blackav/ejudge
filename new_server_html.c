@@ -1191,6 +1191,43 @@ priv_add_priv_user_by_login(FILE *fout,
   return retval;
 }
 
+static int
+priv_user_operation(FILE *fout,
+                    FILE *log_f,
+                    struct http_request_info *phr,
+                    const struct contest_desc *cnts,
+                    struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const unsigned char *s;
+  int retval = 0, user_id, n, new_status;
+  const struct team_extra *t_extra = 0;
+
+  if (ns_cgi_param(phr, "user_id", &s) <= 0
+      || sscanf(s, "%d%n", &user_id, &n) != 1 || s[n]
+      || user_id <= 0 || !teamdb_lookup(cs->teamdb_state, user_id))
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_USER_CHANGE_STATUS:
+    if (ns_cgi_param(phr, "status", &s) <= 0
+        || sscanf(s, "%d%n", &new_status, &n) != 1 || s[n]
+        || new_status < 0 || new_status >= cs->global->contestant_status_num)
+      FAIL(NEW_SRV_ERR_INV_STATUS);
+    if (opcaps_check(phr->caps, OPCAP_EDIT_REG) < 0)
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    if (!(t_extra = team_extra_get_entry(cs->team_extra_state, user_id)))
+      FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
+    if (t_extra->status == new_status) goto cleanup;
+    team_extra_set_status(cs->team_extra_state, user_id, new_status);
+    team_extra_flush(cs->team_extra_state);
+    break;
+  }
+
+ cleanup:
+  return retval;
+}
+
 static void
 do_schedule(FILE *log_f,
             struct http_request_info *phr,
@@ -3503,6 +3540,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GENERATE_PASSWORDS_2] = priv_password_operation,
   [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_2] = priv_password_operation,
   [NEW_SRV_ACTION_CLEAR_PASSWORDS_2] = priv_password_operation,
+  [NEW_SRV_ACTION_USER_CHANGE_STATUS] = priv_user_operation,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -4260,6 +4298,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_USER_INFO] = priv_generic_page,
   [NEW_SRV_ACTION_NEW_RUN_FORM] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_USER_DUMP] = priv_generic_page,
+  [NEW_SRV_ACTION_USER_CHANGE_STATUS] = priv_generic_operation,
 };
 
 static void
