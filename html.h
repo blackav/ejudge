@@ -118,32 +118,36 @@ void do_write_kirov_standings(const serve_state_t,
                               const struct contest_desc *cnts,
                               FILE *f,
                               const unsigned char *stand_dir,
-                              int client_flag,
+                              int client_flag, int only_table_flag,
                               const unsigned char *header_str,
                               unsigned char const *footer_str,
                               int raw_flag,
-                              int accepting_mode);
+                              int accepting_mode,
+                              time_t cur_time);
 
 void do_write_standings(const serve_state_t,
                         const struct contest_desc *cnts,
                         FILE *f,
                         int client_flag,
+                        int only_table_flag,
                         int user_id,
                         const unsigned char *header_str,
                         unsigned char const *footer_str,
                         int raw_flag,
-                        const unsigned char *user_name);
+                        const unsigned char *user_name,
+                        time_t cur_time);
 
 void do_write_moscow_standings(const serve_state_t,
                                const struct contest_desc *cnts,
                                FILE *f,
                                const unsigned char *stand_dir,
-                               int client_flag,
+                               int client_flag, int only_table_flag,
                                int user_id,
                                const unsigned char *header_str,
                                const unsigned char *footer_str,
                                int raw_flag,
-                               const unsigned char *user_name);
+                               const unsigned char *user_name,
+                               time_t cur_time);
 
 int write_priv_source(const serve_state_t, FILE *f, int user_id, int priv_level,
                       ej_cookie_t sid,

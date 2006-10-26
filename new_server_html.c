@@ -5966,6 +5966,7 @@ unpriv_view_report(FILE *fout,
   struct run_entry re;
   path_t rep_path;
   unsigned char *html_report;
+  time_t start_time, stop_time;
 
   static const int new_actions_vector[] =
   {
@@ -5976,6 +5977,14 @@ unpriv_view_report(FILE *fout,
     NEW_SRV_ACTION_VIEW_TEST_CHECKER,
     NEW_SRV_ACTION_VIEW_TEST_INFO,
   };
+
+  start_time = run_get_start_time(cs->runlog_state);
+  stop_time = run_get_stop_time(cs->runlog_state);
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                          cs->current_time);
+  }
 
   if (unpriv_parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0)
     goto cleanup;
@@ -6053,11 +6062,13 @@ unpriv_view_report(FILE *fout,
     content_type = get_content_type(rep_text, &rep_start);
   }
 
+  unpriv_load_html_style(phr, cnts, 0, 0);
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, phr->locale_id,
             "%s [%s]: %s %d",
             phr->name_arm, extra->contest_arm, _("Report for run"),
             run_id);
+  unpriv_page_header(fout, phr, cnts, extra, start_time, stop_time);
 
   switch (content_type) {
   case CONTENT_TYPE_TEXT:
@@ -6116,7 +6127,7 @@ unpriv_view_clar(FILE *fout,
   char *log_txt = 0;
   size_t log_len = 0, clar_size = 0, html_subj_len, html_text_len;
   struct clar_entry_v1 ce;
-  time_t start_time, clar_time;
+  time_t start_time, clar_time, stop_time;
   unsigned char clar_file_name[128];
   char *clar_text = 0;
   unsigned char *html_subj, *html_text;
@@ -6146,8 +6157,12 @@ unpriv_view_clar(FILE *fout,
   show_astr_time = global->show_astr_time;
   if (global->is_virtual) show_astr_time = 1;
   start_time = run_get_start_time(cs->runlog_state);
-  if (global->is_virtual)
+  stop_time = run_get_stop_time(cs->runlog_state);
+  if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                          cs->current_time);
+  }
 
   if ((ce.from > 0 && ce.from != phr->user_id)
       || (ce.to > 0 && ce.to != phr->user_id)
@@ -6180,11 +6195,13 @@ unpriv_view_clar(FILE *fout,
   if (clar_time < start_time) clar_time = start_time;
   duration_str(show_astr_time, clar_time, start_time, dur_str, 0);
 
+  unpriv_load_html_style(phr, cnts, 0, 0);
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, phr->locale_id,
             "%s [%s]: %s %d",
             phr->name_arm, extra->contest_arm, _("Clarification"),
             clar_id);
+  unpriv_page_header(fout, phr, cnts, extra, start_time, stop_time);
 
   fprintf(fout, "<%s>%s #%d</%s>\n", cnts->team_head_style,
           _("Message"), clar_id, cnts->team_head_style);
@@ -6276,15 +6293,21 @@ unpriv_view_standings(FILE *fout,
   cur_time = cs->current_time;
   if (cur_time < start_time) cur_time = start_time;
   if (duration <= 0) {
-    // no fog for unlimited contests
     if (stop_time > 0 && cur_time >= stop_time)
       snprintf(comment, sizeof(comment), _(" [over]"));
-    else
+    else if (global->stand_ignore_after_d > 0
+             && cur_time >= global->stand_ignore_after_d) {
+      cur_time = global->stand_ignore_after_d;
+      snprintf(comment, sizeof(comment), " [%s, frozen]",
+               xml_unparse_date(cur_time));
+    } else
       snprintf(comment, sizeof(comment), " [%s]", xml_unparse_date(cur_time));
   } else {
     if (stop_time > 0 && cur_time >= stop_time) {
-      if (fog_stop_time > 0 && cur_time < fog_stop_time)
+      if (fog_stop_time > 0 && cur_time < fog_stop_time) {
+        cur_time = fog_start_time;
         snprintf(comment, sizeof(comment), _(" [over, frozen]"));
+      }
       else
         snprintf(comment, sizeof(comment), _(" [over]"));
     } else {
@@ -6305,6 +6328,26 @@ unpriv_view_standings(FILE *fout,
             phr->name_arm, extra->contest_arm, _("Standings"), comment);
 
   unpriv_page_header(fout, phr, cnts, extra, start_time, stop_time);
+  fprintf(fout, "<%s>%s%s</%s>\n",
+          cnts->team_head_style, _("Standings"), comment,
+          cnts->team_head_style);
+
+  if (global->is_virtual) {
+    do_write_standings(cs, cnts, fout, 1, 1, phr->user_id, 0, 0, 0, 0,
+                       cur_time);
+  } else if (global->score_system_val == SCORE_ACM) {
+    do_write_standings(cs, cnts, fout, 1, 1, phr->user_id, 0, 0, 0, 0,
+                       cur_time);
+  } else if (global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode) {
+    fprintf(fout, _("<p>Information is not available.</p>"));
+  } else if (global->score_system_val == SCORE_OLYMPIAD) {
+    fprintf(fout, _("<p>Information is not available.</p>"));
+  } else if (global->score_system_val == SCORE_KIROV) {
+    do_write_kirov_standings(cs, cnts, fout, 0, 1, 1, 0, 0, 0, 0, cur_time);
+  } else if (global->score_system_val == SCORE_MOSCOW) {
+    do_write_moscow_standings(cs, cnts, fout, 0, 1, 1, phr->user_id,
+                              0, 0, 0, 0, cur_time);
+  }
 
  done:
   if (1 /*cs->global->show_generation_time*/) {
@@ -6546,6 +6589,7 @@ unpriv_page_header(FILE *fout,
       break;
     case NEW_SRV_ACTION_STANDINGS:
       if (start_time <= 0) continue;
+      if (global->score_system_val == SCORE_OLYMPIAD) continue;
       break;
     case NEW_SRV_ACTION_VIEW_CLAR_SUBMIT:
       if (global->disable_team_clars) continue;
