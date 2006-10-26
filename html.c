@@ -3771,7 +3771,7 @@ do_write_standings(const serve_state_t state,
           bgcolor_ptr = state->global->stand_u_row_attr;
         }
       }
-      if (!bgcolor_ptr
+      if ((!bgcolor_ptr || !*bgcolor_ptr)
           && state->global->contestant_status_row_attr
           && t_extra && t_extra->status >= 0
           && t_extra->status < state->global->contestant_status_num) {
