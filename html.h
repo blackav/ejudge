@@ -234,7 +234,9 @@ int write_xml_testing_report(FILE *f, unsigned char const *txt,
                              ej_cookie_t sid,
                              unsigned char const *self_url,
                              unsigned char const *extra_args,
-                             const int *actions_vector);
+                             const int *actions_vector,
+                             const unsigned char *class1,
+                             const unsigned char *class2);
 int write_xml_team_testing_report(serve_state_t, FILE *f,
                                   const unsigned char *txt);
 

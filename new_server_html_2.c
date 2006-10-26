@@ -1482,7 +1482,7 @@ ns_write_priv_report(const serve_state_t cs,
       write_xml_team_testing_report(cs, f, start_ptr);
     } else {
       write_xml_testing_report(f, start_ptr, phr->session_id,phr->self_url, "",
-                               new_actions_vector);
+                               new_actions_vector, 0, 0);
     }
     break;
   default:

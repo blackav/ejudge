@@ -4903,7 +4903,8 @@ new_write_user_report_view(const serve_state_t state, FILE *f, int uid, int rid,
       write_xml_team_accepting_report(f, start_ptr, rid, &re, prb, action_vec,
                                       sid, self_url, extra_args);
     } else if (prb->team_show_judge_report) {
-      write_xml_testing_report(f, start_ptr, sid, self_url, extra_args, 0);
+      write_xml_testing_report(f, start_ptr, sid, self_url, extra_args, 0,
+                               0, 0);
     } else {
       write_xml_team_testing_report(state, f, start_ptr);
     }
