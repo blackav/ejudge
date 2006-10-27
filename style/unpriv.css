@@ -263,3 +263,15 @@ TD.st_pen{font-size: 12; border: solid; border-width: 1px; border-color: #000000
 
 TH.st_total{font-size: 10; border: solid; border-width: 1px; border-color: #000000; margin: 0px; }
 TD.st_total{font-size: 12; border: solid; border-width: 1px; border-color: #000000; margin: 0px; }
+
+TH.st_score {font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; font-weight: 600;}
+TD.st_score {font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; }
+
+TH.st_extra {font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; font-weight: 600;}
+TD.st_extra {font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; }
+
+TH.st_warns {font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; font-weight: 600;}
+TD.st_warns {font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; }
+
+TH.st_status {font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; font-weight: 600;}
+TD.st_status {font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; }
