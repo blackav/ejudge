@@ -22,6 +22,7 @@
 
 #include "new-server.h"
 #include "new_server_proto.h"
+#include "prepare.h"
 #include "misctext.h"
 #include "errlog.h"
 #include "contests.h"
@@ -553,6 +554,27 @@ ns_html_err_inv_session(FILE *fout,
   fprintf(fout, _("<p>Note, that the exact reason is not reported due to security reasons.</p>"));
   ns_footer(fout, footer, phr->locale_id);
   l10n_setlocale(0);
+}
+
+#define SET_FANCY_DECOR(f,s) do { if (!global->f[0]) snprintf(global->f, sizeof(global->f), "%s", s); } while (0)
+void
+ns_set_fancy_standings_style(struct section_global_data *global)
+{
+  /*
+  GLOBAL_PARAM(stand_success_attr, "s"),
+  GLOBAL_PARAM(stand_fail_attr, "s"),
+  GLOBAL_PARAM(stand_trans_attr, "s"),
+*/
+
+  SET_FANCY_DECOR(stand_table_attr, " width=\"100%\" class=\"standings\"");
+  SET_FANCY_DECOR(stand_extra_attr, " class=\"st_extra\"");
+  SET_FANCY_DECOR(stand_place_attr, " class=\"st_place\"");
+  SET_FANCY_DECOR(stand_team_attr, " class=\"st_team\"");
+  SET_FANCY_DECOR(stand_prob_attr, " class=\"st_prob\"");
+  SET_FANCY_DECOR(stand_solved_attr, " class=\"st_total\"");
+  SET_FANCY_DECOR(stand_time_attr, " class=\"st_time\"");
+  SET_FANCY_DECOR(stand_score_attr, " class=\"st_score\"");
+  SET_FANCY_DECOR(stand_penalty_attr, " class=\"st_pen\"");
 }
 
 /*
