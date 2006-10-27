@@ -2042,7 +2042,7 @@ priv_clar_reply(FILE *fout,
   const struct section_global_data *global = cs->global;
   const unsigned char *errmsg;
   const unsigned char *s, *reply_txt;
-  int in_reply_to, n, clar_id;
+  int in_reply_to, n, clar_id, from_id;
   struct clar_entry_v1 clar;
   unsigned char *reply_txt_2;
   size_t reply_len;
@@ -2135,13 +2135,16 @@ priv_clar_reply(FILE *fout,
   msg = alloca(reply_len + quoted_len + new_subj_len + 64);
   msg_len = sprintf(msg, "%s%s\n%s\n", new_subj, quoted, reply_txt_2);
 
+  from_id = clar.from;
+  if (phr->action == NEW_SRV_ACTION_CLAR_REPLY_ALL) from_id = 0;
+
   gettimeofday(&precise_time, 0);
   clar_id = clar_add_record_new(cs->clarlog_state,
                                 precise_time.tv_sec,
                                 precise_time.tv_usec * 1000,
                                 msg_len,
                                 phr->ip, phr->ssl_flag,
-                                0, clar.from, 0, phr->user_id, 0,
+                                0, from_id, 0, phr->user_id, 0,
                                 clar.locale_id, in_reply_to + 1, 0, clar.subj);
 
   if (clar_id < 0) {
@@ -4414,6 +4417,7 @@ privileged_page(FILE *fout,
                                &extra->serve_state, 0) < 0) {
     return ns_html_err_cnts_unavailable(fout, phr, 0, 0);
   }
+  ns_set_fancy_standings_style(extra->serve_state->global);
 
   extra->serve_state->current_time = time(0);
   check_contest_events(extra->serve_state);
@@ -7200,6 +7204,7 @@ unprivileged_page(FILE *fout, struct http_request_info *phr)
                                &extra->serve_state, 0) < 0) {
     return ns_html_err_cnts_unavailable(fout, phr, 0, 0);
   }
+  ns_set_fancy_standings_style(extra->serve_state->global);
 
   extra->serve_state->current_time = time(0);
   check_contest_events(extra->serve_state);

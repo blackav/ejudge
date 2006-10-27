@@ -380,6 +380,7 @@ void ns_header(FILE *out, unsigned char const *template,
                char const *format, ...)
   __attribute__((format(printf, 6, 7)));
 void ns_footer(FILE *out, unsigned char const *templ, int locale_id);
+void ns_set_fancy_standings_style(struct section_global_data *global);
 
 
 const unsigned char *ns_unparse_role(int role);
