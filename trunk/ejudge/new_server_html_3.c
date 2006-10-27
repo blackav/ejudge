@@ -575,6 +575,10 @@ ns_set_fancy_standings_style(struct section_global_data *global)
   SET_FANCY_DECOR(stand_time_attr, " class=\"st_time\"");
   SET_FANCY_DECOR(stand_score_attr, " class=\"st_score\"");
   SET_FANCY_DECOR(stand_penalty_attr, " class=\"st_pen\"");
+  SET_FANCY_DECOR(stand_warn_number_attr, " class=\"st_warns\"");
+  SET_FANCY_DECOR(stand_contestant_status_attr, " class=\"st_status\"");
+  SET_FANCY_DECOR(stand_fail_attr, " class=\"st_prob\" bgcolor=\"#ff8888\"");
+  SET_FANCY_DECOR(stand_trans_attr, " class=\"st_prob\" bgcolor=\"#ffff88\"");
 }
 
 /*
