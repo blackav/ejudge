@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-26 13:35+0400\n"
-"PO-Revision-Date: 2006-10-26 13:50+0400\n"
+"POT-Creation-Date: 2006-10-28 13:05+0400\n"
+"PO-Revision-Date: 2006-10-28 18:10+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1891,7 +1891,13 @@ msgstr "Привилегированный?"
 msgid "Problem"
 msgstr "Задача"
 
+msgid "Problem statements"
+msgstr "Условия задач"
+
 msgid "Problem status summary"
+msgstr "Итог по задачам"
+
+msgid "Problem summary"
 msgstr "Итог по задачам"
 
 msgid "Problems"
@@ -2206,6 +2212,9 @@ msgstr "Выбрать задачу"
 msgid "Send"
 msgstr "Отправить"
 
+msgid "Send a message"
+msgstr "Отправить сообщение судьям"
+
 msgid "Send a message to judges"
 msgstr "Отправить сообщение судьям"
 
@@ -2412,6 +2421,9 @@ msgstr "Посылки"
 
 msgid "Submit"
 msgstr "Отправить"
+
+msgid "Submit a solution"
+msgstr "Сдать решение"
 
 msgid "Submit a solution for"
 msgstr "Сдать решение задачи"
@@ -3267,9 +3279,6 @@ msgstr "ошибка записи данных на сервер"
 
 #~ msgid "Current Standings"
 #~ msgstr "Текущие результаты"
-
-#~ msgid "Problem statistics"
-#~ msgstr "Статистика сдач"
 
 #~ msgid "Quick navigation"
 #~ msgstr "Быстрый переход"
