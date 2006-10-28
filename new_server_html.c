@@ -6536,6 +6536,74 @@ html_problem_selection(serve_state_t cs,
   fprintf(fout, "</select>");
 }
 
+// for "Statements" section
+static void
+html_problem_selection_2(serve_state_t cs,
+                         FILE *fout,
+                         struct http_request_info *phr,
+                         const unsigned char *var_name,
+                         time_t start_time)
+{
+  int i, pdi, dpi;
+  time_t user_deadline = 0;
+  int variant = 0;
+  struct pers_dead_info *pdinfo;
+  unsigned char deadline_str[64];
+  unsigned char problem_str[128];
+  const unsigned char *problem_ptr = 0;
+  const struct section_problem_data *prob;
+
+  if (!var_name) var_name = "prob_id";
+
+  fprintf(fout, "<select name=\"%s\"><option value=\"\"></option>\n", var_name);
+  fprintf(fout, "<option value=\"-1\">%s</option>\n", _("View all"));
+
+  for (i = 1; i <= cs->max_prob; i++) {
+    if (!(prob = cs->probs[i])) continue;
+    if (prob->t_start_date > 0 && cs->current_time < prob->t_start_date)
+      continue;
+    if (start_time <= 0) continue;
+
+    deadline_str[0] = 0;
+    user_deadline = 0;
+    for (pdi = 0, pdinfo = prob->pd_infos;
+         pdi < prob->pd_total;
+         pdi++, pdinfo++) {
+      if (!strcmp(phr->login, pdinfo->login)) {
+        user_deadline = pdinfo->deadline;
+        break;
+      }
+    }
+    // if no user-specific deadline, try the problem deadline
+    if (!user_deadline) user_deadline = prob->t_deadline;
+    // if deadline is over, go to the next problem
+    if (user_deadline && cs->current_time >= user_deadline) continue;
+
+    // find date penalty
+    for (dpi = 0; dpi < prob->dp_total; dpi++)
+      if (cs->current_time < prob->dp_infos[dpi].deadline)
+        break;
+
+    if (user_deadline > 0 && cs->global->show_deadline)
+      snprintf(deadline_str, sizeof(deadline_str),
+               " (%s)", xml_unparse_date(user_deadline));
+
+    if (prob->variant_num > 0) {
+      if ((variant = find_variant(cs, phr->user_id, i)) <= 0) continue;
+      snprintf(problem_str, sizeof(problem_str),
+               "%s-%d", prob->short_name, variant);
+      problem_ptr = problem_str;
+    } else {
+      problem_ptr = prob->short_name;
+    }
+
+    fprintf(fout, "<option value=\"%d\">%s - %s%s</option>\n",
+            i, problem_ptr, prob->long_name, deadline_str);
+  }
+
+  fprintf(fout, "</select>");
+}
+
 static int
 insert_variant_num(unsigned char *buf, size_t size,
                    const unsigned char *file, int variant)
@@ -6666,6 +6734,18 @@ unpriv_page_header(FILE *fout,
   }
 }
 
+static const unsigned char *main_page_headers[NEW_SRV_ACTION_LAST] =
+{
+  [NEW_SRV_ACTION_MAIN_PAGE] = __("Contest status"),
+  [NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY] = __("Problem summary"),
+  [NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS] = __("Statements"),
+  [NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT] = __("Submit a solution"),
+  [NEW_SRV_ACTION_VIEW_SUBMISSIONS] = __("Submissions"),
+  [NEW_SRV_ACTION_VIEW_CLAR_SUBMIT] = __("Send a message"),
+  [NEW_SRV_ACTION_VIEW_CLARS] = __("Messages"),
+  [NEW_SRV_ACTION_VIEW_SETTINGS] = __("Settings"),
+};
+
 static void
 user_main_page(FILE *fout,
                struct http_request_info *phr,
@@ -6687,8 +6767,9 @@ user_main_page(FILE *fout,
   const unsigned char *pw_path;
   const struct section_problem_data *prob = 0;
   unsigned char bb[1024];
-  const unsigned char *alternatives = 0;
+  const unsigned char *alternatives = 0, *header = 0;
   int lang_count = 0, lang_id = 0;
+  int first_prob_id, last_prob_id;
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
@@ -6701,7 +6782,7 @@ user_main_page(FILE *fout,
   }
   all_clars = phr->session_extra->user_view_all_clars;
   if (ns_cgi_param(phr, "prob_id", &s) > 0
-      && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v > 0)
+      && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= -1)
     prob_id = v;
   
   XALLOCAZ(solved_flag, cs->max_prob + 1);
@@ -6720,12 +6801,13 @@ user_main_page(FILE *fout,
     fog_start_time = start_time + duration - global->board_fog_time;
   if (fog_start_time < 0) fog_start_time = 0;
 
-  /* FIXME: page name must depend on action */
+  header = gettext(main_page_headers[phr->action]);
+  if (!header) header = _("Main page");
   unpriv_load_html_style(phr, cnts, 0, 0);
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, phr->locale_id,
             "%s [%s]: %s",
-            phr->name_arm, extra->contest_arm, _("Main page"));
+            phr->name_arm, extra->contest_arm, header);
 
   unpriv_page_header(fout, phr, cnts, extra, start_time, stop_time);
 
@@ -6751,6 +6833,60 @@ user_main_page(FILE *fout,
             cnts->team_head_style);
     html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
                                      accepted_flag, 0, "summary");
+  }
+
+  if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS
+      && start_time > 0) {
+    if (cnts->problems_url) {
+      fprintf(fout, "<p><a href=\"%s\">%s</a></p>\n",
+              cnts->problems_url, _("Problem statements"));
+    }
+    // if prob_id == -1, show all available problem statements
+    if (prob_id == -1) {
+      first_prob_id = 1;
+      last_prob_id = cs->max_prob;
+    } else {
+      first_prob_id = prob_id;
+      last_prob_id = prob_id;
+    }
+    for (prob_id = first_prob_id; prob_id <= last_prob_id; prob_id++) {
+      if (prob_id <= 0 || prob_id > cs->max_prob) continue;
+      if (!(prob = cs->probs[prob_id])) continue;
+      if (is_problem_deadlined(cs, prob_id, phr->login, 0)) continue;
+      if (prob->t_start_date > 0 && cs->current_time < prob->t_start_date)
+        continue;
+      if (prob->variant_num > 0
+          && (variant = find_variant(cs, phr->user_id, prob_id)) <= 0)
+        continue;
+      if (!prob->statement_file[0]) continue;
+      if (variant > 0) {
+        insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
+                           prob->statement_file, variant);
+        pw = &cs->prob_extras[prob_id].v_stmts[variant];
+        pw_path = variant_stmt_file;
+      } else {
+        pw = &cs->prob_extras[prob_id].stmt;
+        pw_path = prob->statement_file;
+      }
+      watched_file_update(pw, pw_path, cs->current_time);
+      if (!pw->text) continue;
+
+      fprintf(fout, "%s", pw->text);
+    }
+
+    fprintf(fout, "<%s>%s</%s>\n",
+            cnts->team_head_style, _("Select another problem"),
+            cnts->team_head_style);
+    html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
+    fprintf(fout, "<table class=\"borderless\">\n");
+    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Problem"));
+
+    html_problem_selection_2(cs, fout, phr, 0, start_time);
+
+    fprintf(fout, "</td><td class=\"borderless\">%s</td></tr></table></form>\n",
+            ns_submit_button(bb, sizeof(bb), 0,
+                             NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS,
+                             _("Select problem")));
   }
 
   if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT
@@ -6782,7 +6918,7 @@ user_main_page(FILE *fout,
                              start_time);
 
       fprintf(fout, "</td><td class=\"borderless\">%s</td></tr></table></form>\n",
-              ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_MAIN_PAGE,
+              ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
                                _("Select problem")));
     } else if (start_time > 0 && stop_time <= 0 && prob_id > 0) {
       prob = cs->probs[prob_id];
