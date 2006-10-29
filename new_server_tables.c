@@ -128,6 +128,8 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_NEW_RUN] = __("Add run"),
   [NEW_SRV_ACTION_FORGOT_PASSWORD_2] = __("Submit"),
   [NEW_SRV_ACTION_SUBMIT_APPEAL] = __("Submit appeal"),
+  [NEW_SRV_ACTION_VIRTUAL_START] = __("Start virtual contest"),
+  [NEW_SRV_ACTION_VIRTUAL_STOP] = __("Stop virtual contest"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =

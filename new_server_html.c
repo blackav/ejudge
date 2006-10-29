@@ -3365,6 +3365,7 @@ unpriv_print_status(FILE *fout,
   const struct section_global_data *global = cs->global;
   const unsigned char *s = 0;
   unsigned char duration_buf[128];
+  unsigned char bb[1024];
   time_t tmpt;
 
   fprintf(fout, "<%s>%s</%s>\n",
@@ -3469,6 +3470,14 @@ unpriv_print_status(FILE *fout,
             _("Remaining time"), duration_buf);
   }
   fprintf(fout, "</table>\n");
+
+  if (global->is_virtual && start_time <= 0) {
+    fprintf(fout, "<p>%s</p>",
+            BUTTON(NEW_SRV_ACTION_VIRTUAL_START));
+  } else if (global->is_virtual && stop_time <= 0) {
+    fprintf(fout, "<p>%s</p>",
+            BUTTON(NEW_SRV_ACTION_VIRTUAL_STOP));
+  }
 }
 
 typedef int (*action_handler2_t)(FILE *fout,
@@ -5822,6 +5831,95 @@ unpriv_submit_appeal(FILE *fout,
 }
 
 static void
+unpriv_command(FILE *fout,
+               struct http_request_info *phr,
+               const struct contest_desc *cnts,
+               struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  char *log_txt = 0;
+  size_t log_size = 0;
+  FILE *log_f = 0;
+  time_t start_time, stop_time;
+  struct timeval precise_time;
+  int run_id;
+
+  log_f = open_memstream(&log_txt, &log_size);
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_VIRTUAL_START:
+  case NEW_SRV_ACTION_VIRTUAL_STOP:
+    if (global->is_virtual <= 0) {
+      ns_error(log_f, NEW_SRV_ERR_NOT_VIRTUAL);
+      goto done;
+    }
+    if (run_get_start_time(cs->runlog_state) <= 0) {
+      ns_error(log_f, NEW_SRV_ERR_VIRTUAL_NOT_STARTED);
+      goto done;
+    }
+    break;
+  default:
+    ns_error(log_f, NEW_SRV_ERR_UNHANDLED_ACTION, phr->action);
+    goto done;
+  }
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_VIRTUAL_START:
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    if (start_time > 0) {
+      ns_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_STARTED);
+      goto done;
+    }
+    gettimeofday(&precise_time, 0);
+    run_id = run_virtual_start(cs->runlog_state, phr->user_id,
+                               precise_time.tv_sec, phr->ip, phr->ssl_flag,
+                               precise_time.tv_usec * 1000);
+    if (run_id < 0) {
+      ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
+      goto done;
+    }
+    serve_move_files_to_insert_run(cs, run_id);
+    break;
+  case NEW_SRV_ACTION_VIRTUAL_STOP:
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    if (start_time <= 0) {
+      ns_error(log_f, NEW_SRV_ERR_CONTEST_NOT_STARTED);
+      goto done;
+    }
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                          cs->current_time);
+    if (stop_time > 0) {
+      ns_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
+      goto done;
+    }
+    gettimeofday(&precise_time, 0);
+    run_id = run_virtual_stop(cs->runlog_state, phr->user_id,
+                              precise_time.tv_sec, phr->ip, phr->ssl_flag,
+                              precise_time.tv_usec * 1000);
+    if (run_id < 0) {
+      ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
+      goto done;
+    }
+    serve_move_files_to_insert_run(cs, run_id);
+    break;
+  }
+
+ done:;
+  fclose(log_f); log_f = 0;
+  if (!log_txt || !*log_txt) {
+    html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
+  } else {
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_MAIN_PAGE);
+  }
+
+  //cleanup:;
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+}
+
+static void
 unpriv_view_source(FILE *fout,
                    struct http_request_info *phr,
                    const struct contest_desc *cnts,
@@ -6690,6 +6788,7 @@ unpriv_page_header(FILE *fout,
           break;
       if (prob_id <= cs->max_prob)
         has_prob_stmt = 1;
+      if (!has_prob_stmt && !cnts->problems_url) continue;
       if (cnts->problems_url && (stop_time > 0 || !has_prob_stmt))
         forced_url = cnts->problems_url;
       break;      
@@ -7196,27 +7295,18 @@ unpriv_logout(FILE *fout,
               const struct contest_desc *cnts,
               struct contest_extra *extra)
 {
-  unsigned char locale_buf[64];
+  //unsigned char locale_buf[64];
+  unsigned char urlbuf[1024];
 
   if (open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
   userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
                               phr->session_id);
   ns_remove_session(phr->session_id);
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, phr->locale_id, _("Good-bye!"));
-
-  locale_buf[0] = 0;
-  if (phr->locale_id > 0) {
-    snprintf(locale_buf, sizeof(locale_buf), "&locale_id=%d", phr->locale_id);
-  }
-
-  fprintf(fout, _("<p>Your session has been removed.\n"
-                  "<p>If you want to relogin, follow <a href=\"%s?contest_id=%d%s\">this link</a>.\n"),
-          phr->self_url, phr->contest_id, locale_buf);
-
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
-  l10n_setlocale(0);
+  snprintf(urlbuf, sizeof(urlbuf),
+           "%s?contest_id=%d&locale_id=%d",
+           phr->self_url, phr->contest_id, phr->locale_id);
+  html_refresh_page_2(fout, urlbuf);
 }
 
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
@@ -7238,6 +7328,8 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_TEST_CHECKER] = unpriv_view_test,
   [NEW_SRV_ACTION_SUBMIT_APPEAL] = unpriv_submit_appeal,
   [NEW_SRV_ACTION_STANDINGS] = unpriv_view_standings,
+  [NEW_SRV_ACTION_VIRTUAL_START] = unpriv_command,
+  [NEW_SRV_ACTION_VIRTUAL_STOP] = unpriv_command,
 };
 
 static void

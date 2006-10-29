@@ -310,10 +310,12 @@ clar_destroy(clarlog_state_t state)
   return 0;
 }
 
+static int clar_flush_entry(clarlog_state_t state, int num);
+
 int
 clar_open(clarlog_state_t state, char const *path, int flags)
 {
-  int version;
+  int version, r, i, f;
   struct stat stb;
 
   info("clar_open: opening database %s", path);
@@ -348,7 +350,24 @@ clar_open(clarlog_state_t state, char const *path, int flags)
     err("clar_log: cannot handle clar log file of version %d", version);
     return -1;
   }
-  return read_clar_file(state, stb.st_size);
+  r = read_clar_file(state, stb.st_size);
+  // fix a bug
+  for (i = 0; i < state->clars.u; i++) {
+    f = 0;
+    if (state->clars.v[i].from == -1) {
+      state->clars.v[i].from = 0;
+      f = 1;
+    }
+    if (state->clars.v[i].to == -1) {
+      state->clars.v[i].to = 0;
+      f = 1;
+    }
+    if (f) {
+      clar_flush_entry(state, i);
+      info("clar_log: entry %d fixed", i);
+    }
+  }
+  return r;
 }
 
 static int

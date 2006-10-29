@@ -121,6 +121,9 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_TEAM_PWD_DISABLED] = __("Contest passwords are disabled"),
   [NEW_SRV_ERR_APPEALS_DISABLED] = __("Appeals are disabled"),
   [NEW_SRV_ERR_APPEALS_FINISHED] = __("Appeals deadline is exceeded"),
+  [NEW_SRV_ERR_NOT_VIRTUAL] = __("Not a virtual contest"),
+  [NEW_SRV_ERR_VIRTUAL_NOT_STARTED] = __("Virtual contest is not started"),
+  [NEW_SRV_ERR_UNHANDLED_ACTION] = __("Unhandled action: %d"),
 };
 
 const unsigned char *
