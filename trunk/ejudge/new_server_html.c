@@ -1777,7 +1777,7 @@ priv_submit_run(FILE *fout,
   gettimeofday(&precise_time, 0);
 
   run_id = run_add_record(cs->runlog_state, 
-                          precise_time.tv_sec, precise_time.tv_usec,
+                          precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval,
                           phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
@@ -2436,6 +2436,233 @@ priv_rejudge_all(FILE *fout,
 
  cleanup:
   return 0;
+}
+
+static int
+priv_new_run(FILE *fout,
+             FILE *log_f,
+             struct http_request_info *phr,
+             const struct contest_desc *cnts,
+             struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob = 0;
+  const struct section_language_data *lang = 0;
+  int retval = 0;
+  const unsigned char *s = 0;
+  int user_id = 0, n, x, i;
+  int prob_id = 0, variant = 0, lang_id = 0;
+  int is_imported = 0, is_hidden = 0, is_readonly = 0, status = 0;
+  int tests = 0, score = 0, mime_type = 0;
+  const unsigned char *run_text = 0;
+  size_t run_size = 0;
+  char **lang_list = 0;
+  ruint32_t shaval[5];
+  const unsigned char *mime_type_str = 0;
+  struct timeval precise_time;
+  int arch_flags = 0, run_id;
+  path_t run_path;
+  struct run_entry re;
+  int re_flags = 0;
+
+  memset(&re, 0, sizeof(re));
+
+  // run_user_id, run_user_login, prob_id, variant, language,
+  // is_imported, is_hidden, is_readonly, status,
+  // tests, score, file
+  if (ns_cgi_param(phr, "run_user_id", &s) > 0
+      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n]
+      && teamdb_lookup(cs->teamdb_state, x))
+    user_id = x;
+  x = 0;
+  if (ns_cgi_param(phr, "run_user_login", &s) > 0 && *s)
+    x = teamdb_lookup_login(cs->teamdb_state, s);
+  if (user_id <= 0 && x <= 0)
+    FAIL(NEW_SRV_ERR_UNDEFINED_USER_ID_LOGIN);
+  if (user_id > 0 && x > 0 && user_id != x)
+    FAIL(NEW_SRV_ERR_CONFLICTING_USER_ID_LOGIN);
+  if (user_id <= 0) user_id = x;
+
+  if (ns_cgi_param(phr, "prob_id", &s) <= 0
+      || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
+      || prob_id <= 0 || prob_id > cs->max_prob
+      || !(prob = cs->probs[prob_id]))
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  if (ns_cgi_param(phr, "variant", &s) > 0 && *s) {
+    if (sscanf(s, "%d%n", &variant, &n) != 1 || s[n]
+        || prob->variant_num <= 0 || variant < 0
+        || variant > prob->variant_num)
+      FAIL(NEW_SRV_ERR_INV_VARIANT);
+  }
+
+  // check language, content-type, binariness and other stuff
+  if (prob->type_val == PROB_TYPE_STANDARD) {
+    if (ns_cgi_param(phr, "language", &s) <= 0
+        || sscanf(s, "%d%n", &lang_id, &n) != 1 || s[n]
+        || lang_id <= 0 || lang_id > cs->max_lang
+        || !(lang = cs->langs[lang_id]))
+      FAIL(NEW_SRV_ERR_INV_LANG_ID);
+  }
+  switch (prob->type_val) {
+  case PROB_TYPE_STANDARD:      // "file"
+  case PROB_TYPE_OUTPUT_ONLY:
+  case PROB_TYPE_TEXT_ANSWER:
+  case PROB_TYPE_SHORT_ANSWER:
+    if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)) {
+      run_text = "";
+      run_size = 0;
+    }
+    break;
+  default:
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  }
+
+  switch (prob->type_val) {
+  case PROB_TYPE_STANDARD:
+    if (!lang->binary && strlen(run_text) != run_size)
+      FAIL(NEW_SRV_ERR_BINARY_FILE);
+    break;
+
+  case PROB_TYPE_OUTPUT_ONLY:
+    if (!prob->binary_input && strlen(run_text) != run_size)
+      FAIL(NEW_SRV_ERR_BINARY_FILE);
+    break;
+
+  case PROB_TYPE_TEXT_ANSWER:
+  case PROB_TYPE_SHORT_ANSWER:
+  case PROB_TYPE_SELECT_ONE:
+  case PROB_TYPE_SELECT_MANY:
+    if (strlen(run_text) != run_size)
+      FAIL(NEW_SRV_ERR_BINARY_FILE);
+    break;
+  }
+
+  if (lang) {
+    if (lang->disabled) FAIL(NEW_SRV_ERR_LANG_DISABLED);
+
+    if (prob->enable_language) {
+      lang_list = prob->enable_language;
+      for (i = 0; lang_list[i]; i++)
+        if (!strcmp(lang_list[i], lang->short_name))
+          break;
+      if (!lang_list[i]) FAIL(NEW_SRV_ERR_LANG_NOT_AVAIL_FOR_PROBLEM);
+    } else if (prob->disable_language) {
+      lang_list = prob->disable_language;
+      for (i = 0; lang_list[i]; i++)
+        if (!strcmp(lang_list[i], lang->short_name))
+          break;
+      if (lang_list[i]) FAIL(NEW_SRV_ERR_LANG_DISABLED_FOR_PROBLEM);
+    }
+  } else {
+    // guess the content-type and check it against the list
+    if ((mime_type = mime_type_guess(global->diff_work_dir,
+                                     run_text, run_size)) < 0)
+      FAIL(NEW_SRV_ERR_CANNOT_DETECT_CONTENT_TYPE);
+    mime_type_str = mime_type_get_type(mime_type);
+    if (prob->enable_language) {
+      lang_list = prob->enable_language;
+      for (i = 0; lang_list[i]; i++)
+        if (!strcmp(lang_list[i], mime_type_str))
+          break;
+      if (!lang_list[i]) {
+        ns_error(log_f, NEW_SRV_ERR_CONTENT_TYPE_NOT_AVAILABLE, mime_type_str);
+        goto cleanup;
+      }
+    } else if (prob->disable_language) {
+      lang_list = prob->disable_language;
+      for (i = 0; lang_list[i]; i++)
+        if (!strcmp(lang_list[i], mime_type_str))
+          break;
+      if (lang_list[i]) {
+        ns_error(log_f, NEW_SRV_ERR_CONTENT_TYPE_DISABLED, mime_type_str);
+        goto cleanup;
+      }
+    }
+  }
+  sha_buffer(run_text, run_size, shaval);
+
+  if (ns_cgi_param(phr, "is_imported", &s) > 0 && *s) {
+    if (sscanf(s, "%d%n", &is_imported, &n) != 1 || s[n]
+        || is_imported < 0 || is_imported > 1)
+      FAIL(NEW_SRV_ERR_INV_PARAM);
+    re.is_imported = is_imported;
+    re_flags |= RUN_ENTRY_IMPORTED;
+  }
+  if (ns_cgi_param(phr, "is_hidden", &s) > 0 && *s) {
+    if (sscanf(s, "%d%n", &is_hidden, &n) != 1 || s[n]
+        || is_hidden < 0 || is_hidden > 1)
+      FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+  if (ns_cgi_param(phr, "is_readonly", &s) > 0 && *s) {
+    if (sscanf(s, "%d%n", &is_readonly, &n) != 1 || s[n]
+        || is_readonly < 0 || is_readonly > 1)
+      FAIL(NEW_SRV_ERR_INV_PARAM);
+    re.is_readonly = is_readonly;
+    re_flags |= RUN_ENTRY_READONLY;
+  }
+  if (ns_cgi_param(phr, "status", &s) > 0 && *s) {
+    if (sscanf(s, "%d%n", &status, &n) != 1 || s[n]
+        || status < 0 || status > RUN_MAX_STATUS
+        || !serve_is_valid_status(cs, status, 1))
+      FAIL(NEW_SRV_ERR_INV_STATUS);
+    re.status = status;
+    re_flags |= RUN_ENTRY_STATUS;
+  }
+  if (ns_cgi_param(phr, "tests", &s) > 0 && *s) {
+    if (sscanf(s, "%d%n", &tests, &n) != 1 || s[n]
+        || tests < -1 || tests > 100000)
+      FAIL(NEW_SRV_ERR_INV_TEST);
+    re.test = tests;
+    re_flags |= RUN_ENTRY_TEST;
+  }
+  if (ns_cgi_param(phr, "score", &s) > 0 && *s) {
+    if (sscanf(s, "%d%n", &score, &n) != 1 || s[n]
+        || score < 0 || score > 100000)
+      FAIL(NEW_SRV_ERR_INV_PARAM);
+    re.score = score;
+    re_flags |= RUN_ENTRY_SCORE;
+  }
+
+  if (!lang) lang_id = 0;
+  gettimeofday(&precise_time, 0);
+
+  run_id = run_add_record(cs->runlog_state, 
+                          precise_time.tv_sec, precise_time.tv_usec * 1000,
+                          run_size, shaval,
+                          phr->ip, phr->ssl_flag, phr->locale_id,
+                          user_id, prob_id, lang_id, variant,
+                          is_hidden, mime_type);
+  if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
+  serve_move_files_to_insert_run(cs, run_id);
+  arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
+                                       global->run_archive_dir, run_id,
+                                       run_size, 0);
+  if (arch_flags < 0) {
+    run_undo_add_record(cs->runlog_state, run_id);
+    ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
+    goto cleanup;
+  }
+  if (archive_dir_prepare(cs, global->run_archive_dir, run_id, 0, 0) < 0) {
+    run_undo_add_record(cs->runlog_state, run_id);
+    ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
+    goto cleanup;
+  }
+  if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
+    run_undo_add_record(cs->runlog_state, run_id);
+    ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
+    goto cleanup;
+  }
+  run_set_entry(cs->runlog_state, run_id, re_flags, &re);
+
+  serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                  "Command: new_run\n"
+                  "Status: pending\n"
+                  "Run-id: %d\n",
+                  run_id);
+
+ cleanup:
+  return retval;
 }
 
 static const unsigned char * const form_row_attrs[]=
@@ -3553,6 +3780,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_2] = priv_password_operation,
   [NEW_SRV_ACTION_CLEAR_PASSWORDS_2] = priv_password_operation,
   [NEW_SRV_ACTION_USER_CHANGE_STATUS] = priv_user_operation,
+  [NEW_SRV_ACTION_NEW_RUN] = priv_new_run,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -4311,6 +4539,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_NEW_RUN_FORM] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_USER_DUMP] = priv_generic_page,
   [NEW_SRV_ACTION_USER_CHANGE_STATUS] = priv_generic_operation,
+  [NEW_SRV_ACTION_NEW_RUN] = priv_generic_operation,
 };
 
 static void
@@ -5427,7 +5656,7 @@ unpriv_submit_run(FILE *fout,
   gettimeofday(&precise_time, 0);
 
   run_id = run_add_record(cs->runlog_state, 
-                          precise_time.tv_sec, precise_time.tv_usec,
+                          precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval,
                           phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
