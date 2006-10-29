@@ -30,7 +30,7 @@ userlist_clnt_create_member(struct userlist_clnt *clnt, int user_id,
   out_size = sizeof(*out);
   out = alloca(out_size);
   memset(out, 0, out_size);
-  out->request_id = ULS_ADD_FIELD;
+  out->request_id = ULS_CREATE_MEMBER;
   out->user_id = user_id;
   out->contest_id = contest_id;
   out->serial = role;
