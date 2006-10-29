@@ -6750,7 +6750,7 @@ recompile_checker(FILE *f, const unsigned char *checker_path)
       fprintf(f, "Error: GNU C support is not configured\n");
       return -1;
     }
-    snprintf(cmd, sizeof(cmd), "%s -I%s/include -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gcc_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
+    snprintf(cmd, sizeof(cmd), "%s -std=gnu99 -O2 -Wall -I%s/include -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gcc_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
     break;
   case CHECKER_LANG_CPP:
     gpp_path = get_compiler_path("g++", gpp_path);
@@ -6758,7 +6758,7 @@ recompile_checker(FILE *f, const unsigned char *checker_path)
       fprintf(f, "Error: GNU C++ support is not configured\n");
       return -1;
     }
-    snprintf(cmd, sizeof(cmd), "%s -I%s/include -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gpp_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
+    snprintf(cmd, sizeof(cmd), "%s -O2 -Wall -I%s/include -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gpp_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
     break;
 
   default:
