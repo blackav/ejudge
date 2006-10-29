@@ -36,6 +36,7 @@
 #include "userlist.h"
 #include "prepare_serve.h"
 #include "errlog.h"
+#include "random.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -7832,6 +7833,44 @@ super_html_variant_param(struct sid_state *sstate, int cmd,
     break;
   default:
     abort();
+  }
+
+  return 0;
+}
+
+int
+super_html_variant_prob_op(struct sid_state *sstate, int cmd, int prob_id)
+{
+  struct variant_map *vmap = 0;
+  struct section_problem_data *prob = 0;
+  int j, i;
+
+  if (!sstate || !sstate->global) return -SSERV_ERR_INVALID_PARAMETER;
+  if (!(vmap = sstate->global->variant_map)) return-SSERV_ERR_INVALID_PARAMETER;
+  if (!sstate->prob_a || !sstate->probs) return -SSERV_ERR_INVALID_PARAMETER;
+  if (prob_id <= 0 || prob_id >= sstate->prob_a)
+    return -SSERV_ERR_INVALID_PARAMETER;
+  if (!(prob = sstate->probs[prob_id])) return -SSERV_ERR_INVALID_PARAMETER;
+  if (prob->variant_num <= 0) return -SSERV_ERR_INVALID_PARAMETER;
+  j = vmap->prob_map[prob_id];
+  if (j < 0 || j >= vmap->prob_map_size) return -SSERV_ERR_INVALID_PARAMETER;
+
+  switch (cmd) {
+  case SSERV_CMD_PROB_CLEAR_VARIANTS:
+    for (i = 0; i < vmap->u; i++)
+      vmap->v[i].variants[j] = 0;
+    break;
+  case SSERV_CMD_PROB_RANDOM_VARIANTS:
+    for (i = 0; i < vmap->u; i++) {
+      if (prob->variant_num == 1) {
+        vmap->v[i].variants[j] = 1;
+        continue;
+      }
+      vmap->v[i].variants[j] = 1 + (int) ((random_u16() / 65536.0) * prob->variant_num);
+    }
+    break;
+  default:
+    return -SSERV_ERR_INVALID_PARAMETER;
   }
 
   return 0;

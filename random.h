@@ -20,6 +20,7 @@
 
 int random_init(void);
 
+int random_u16(void);
 unsigned random_u32(void);
 unsigned long long random_u64(void);
 void random_bytes(unsigned char *buf, int count);
