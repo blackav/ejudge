@@ -6716,7 +6716,7 @@ insert_variant_num(unsigned char *buf, size_t size,
   if (pos <= 0 || file[pos] == '/')
     return snprintf(buf, size, "%s-%d", file, variant);
   // pos > 0 && file[pos] == '.'
-  return snprintf(buf, size, "%.*s-%d.%s", pos - 1, file, variant, file + pos);
+  return snprintf(buf, size, "%.*s-%d%s", pos, file, variant, file + pos);
 }
 
 static void
