@@ -1436,9 +1436,12 @@ read_user_info_from_server(void)
         member_info[role][pers][CONTEST_MF_OCCUPATION_EN] = m->occupation_en;
       }
     }
+    if (!member_cur[role]) member_cur[role] = member_init[role];
+    /*
     if (member_cur[role] < member_init[role]) {
       member_cur[role] = member_init[role];
     }
+    */
   }
 
   user_already_registered = 0;
