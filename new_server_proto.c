@@ -124,6 +124,9 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_NOT_VIRTUAL] = __("Not a virtual contest"),
   [NEW_SRV_ERR_VIRTUAL_NOT_STARTED] = __("Virtual contest is not started"),
   [NEW_SRV_ERR_UNHANDLED_ACTION] = __("Unhandled action: %d"),
+  [NEW_SRV_ERR_UNDEFINED_USER_ID_LOGIN] = __("Undefined user_id and login"),
+  [NEW_SRV_ERR_INV_PARAM] = __("Invalid parameter"),
+  [NEW_SRV_ERR_BINARY_FILE] = __("Attempt to submit a binary file"),
 };
 
 const unsigned char *

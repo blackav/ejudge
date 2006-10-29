@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-28 22:47+0400\n"
-"PO-Revision-Date: 2006-10-28 22:22+0400\n"
+"POT-Creation-Date: 2006-10-29 23:42+0300\n"
+"PO-Revision-Date: 2006-10-29 23:43+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -435,6 +435,9 @@ msgstr "Апелляции отключены"
 
 msgid "Appeals deadline is exceeded"
 msgstr "Приём апелляций прекращён"
+
+msgid "Attempt to submit a binary file"
+msgstr "Попытка послать бинарный файл"
 
 msgid "Audit log"
 msgstr "Журнал аудита"
@@ -2615,6 +2618,9 @@ msgstr ""
 "следующий URL: %s?contest_id=%d&locale_id=%d&SID=%016llx&action=%d.\n"
 "\n"
 
+msgid "To main page"
+msgstr "На главную страницу"
+
 msgid "To user id"
 msgstr "Кому (рег. номер)"
 
@@ -2656,6 +2662,9 @@ msgstr "Введите Ваш действующий адрес электронной почты"
 
 msgid "Unanswered clars"
 msgstr "Неотвеченные сообщения"
+
+msgid "Undefined user_id and login"
+msgstr "Неопределен ни user_id, ни login"
 
 msgid ""
 "Unfortunately, your form cannot be accepted, since it contains several "

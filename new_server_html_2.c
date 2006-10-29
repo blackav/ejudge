@@ -2228,6 +2228,10 @@ ns_new_run_form(FILE *fout, FILE *log_f,
   unsigned char bb[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
+  fprintf(fout, "<p>%s%s</a></p>",
+          ns_aref(bb, sizeof(bb), phr, 0, 0),
+          _("To main page"));
+
   html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
   fprintf(fout, "<table>\n");
 
