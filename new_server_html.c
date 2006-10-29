@@ -7178,6 +7178,7 @@ user_main_page(FILE *fout,
       last_prob_id = prob_id;
     }
     for (prob_id = first_prob_id; prob_id <= last_prob_id; prob_id++) {
+      variant = 0;
       if (prob_id <= 0 || prob_id > cs->max_prob) continue;
       if (!(prob = cs->probs[prob_id])) continue;
       if (is_problem_deadlined(cs, prob_id, phr->login, 0)) continue;
