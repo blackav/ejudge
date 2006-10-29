@@ -42,6 +42,36 @@ random_init(void)
   return 0;
 }
 
+int
+random_u16(void)
+{
+  unsigned short val = 0;
+  int n, r;
+  char *p;
+
+  ASSERT(urandom_fd >= 0);
+
+  while (!val) {
+    p = (char*) &val;
+    r = sizeof(val);
+    while (r > 0) {
+      n = read(urandom_fd, p, r);
+      if (n < 0) {
+        err("read from /dev/urandom failed: %s", os_ErrorMsg());
+        return (unsigned) random();
+      }
+      if (!n) {
+        err("EOF on /dev/urandom???");
+        return (unsigned) random();
+      }
+      p += n;
+      r -= n;
+    }
+  }
+
+  return val;
+}
+
 unsigned
 random_u32(void)
 {

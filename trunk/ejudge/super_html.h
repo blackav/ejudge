@@ -370,6 +370,7 @@ int super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
 int super_html_variant_param(struct sid_state *sstate, int cmd,
                              int param1, const unsigned char *param2,
                              int param3, int param4);
+int super_html_variant_prob_op(struct sid_state *sstate, int cmd, int prob_id);
 
 struct section_problem_data;
 struct section_global_data;

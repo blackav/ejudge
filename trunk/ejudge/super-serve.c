@@ -31,6 +31,7 @@
 #include "super_html.h"
 #include "prepare.h"
 #include "serve_state.h"
+#include "random.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/osdeps.h>
@@ -2748,6 +2749,11 @@ cmd_set_value(struct client_state *p, int len,
                               pkt->param3, pkt->param4);
     break;
 
+  case SSERV_CMD_PROB_CLEAR_VARIANTS:
+  case SSERV_CMD_PROB_RANDOM_VARIANTS:
+    r = super_html_variant_prob_op(sstate, pkt->b.id, pkt->param1);
+    break;
+
   case SSERV_CMD_GLOB_CHANGE_DURATION:
   case SSERV_CMD_GLOB_UNLIMITED_DURATION:
   case SSERV_CMD_GLOB_CHANGE_TYPE:
@@ -3478,6 +3484,9 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CLEAR_PLOG_FOOTER_TEXT] = { cmd_set_value },
   [SSERV_CMD_VIEW_NEW_SERVE_CFG] = { cmd_main_page },
   [SSERV_CMD_LANG_UPDATE_VERSIONS] = { cmd_simple_top_command },
+
+  [SSERV_CMD_PROB_CLEAR_VARIANTS] = { cmd_set_value },
+  [SSERV_CMD_PROB_RANDOM_VARIANTS] = { cmd_set_value },
 };
 
 static void
@@ -4182,6 +4191,10 @@ main(int argc, char **argv)
   if (config->run_path && config->run_path[0]
       && access(config->run_path, X_OK) < 0) {
     err("run_path '%s' is not executable", config->run_path);
+    return 1;
+  }
+  if (random_init() < 0) {
+    err("cannot initialize random number source");
     return 1;
   }
 
