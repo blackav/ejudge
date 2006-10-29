@@ -1628,7 +1628,7 @@ run_get_virtual_status(runlog_state_t state, int user_id)
 
 int
 run_virtual_start(runlog_state_t state, int user_id, time_t t, ej_ip_t ip,
-                  int nsec)
+                  int ssl_flag, int nsec)
 {
   struct user_entry *pvt = get_user_entry(state, user_id);
   int i;
@@ -1657,6 +1657,7 @@ run_virtual_start(runlog_state_t state, int user_id, time_t t, ej_ip_t ip,
   if ((i = append_record(state, t, user_id, nsec)) < 0) return -1;
   state->runs[i].user_id = user_id;
   state->runs[i].a.ip = ip;
+  state->runs[i].ssl_flag = ssl_flag;
   state->runs[i].status = RUN_VIRTUAL_START;
   pvt->start_time = t;
   pvt->status = V_VIRTUAL_USER;
@@ -1666,7 +1667,7 @@ run_virtual_start(runlog_state_t state, int user_id, time_t t, ej_ip_t ip,
 
 int
 run_virtual_stop(runlog_state_t state, int user_id, time_t t, ej_ip_t ip,
-                 int nsec)
+                 int ssl_flag, int nsec)
 {
   struct user_entry *pvt = get_user_entry(state, user_id);
   int i;
@@ -1703,6 +1704,7 @@ run_virtual_stop(runlog_state_t state, int user_id, time_t t, ej_ip_t ip,
   if ((i = append_record(state, t, user_id, nsec)) < 0) return -1;
   state->runs[i].user_id = user_id;
   state->runs[i].a.ip = ip;
+  state->runs[i].ssl_flag = ssl_flag;
   state->runs[i].status = RUN_VIRTUAL_STOP;
   pvt->stop_time = t;
   if (run_flush_entry(state, i) < 0) return -1;

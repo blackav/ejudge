@@ -7604,6 +7604,7 @@ super_html_update_variant_map(FILE *flog, int contest_id,
   return -1;
 }
 
+#define ARMOR(s)  html_armor_buf(&ab, s)
 int
 super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
                          const unsigned char *login,
@@ -7617,7 +7618,7 @@ super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
                          const unsigned char *hidden_vars,
                          const unsigned char *extra_args)
 {
-  unsigned char *s = 0;
+  const unsigned char *s = 0;
   struct section_global_data *global = 0;
   struct contest_desc *cnts = 0;
   int var_prob_num = 0, i, j, k;
@@ -7628,22 +7629,22 @@ super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
   struct section_problem_data *prob = 0;
   unsigned char buf[32];
   int row = 1;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if (sstate->serve_parse_errors) {
-    s = html_armor_string_dup(sstate->serve_parse_errors);
-    super_html_contest_page_menu(f, session_id, sstate, -1, self_url, hidden_vars,
-                                 extra_args);
+    super_html_contest_page_menu(f, session_id, sstate, -1, self_url,
+                                 hidden_vars, extra_args);
     fprintf(f, "<h2><tt>serve.cfg</tt> cannot be edited</h2>\n");
-    fprintf(f, "<font color=\"red\"><pre>%s</pre></font>\n", s);
-    xfree(s);
-    return 0;
+    fprintf(f, "<font color=\"red\"><pre>%s</pre></font>\n",
+            ARMOR(sstate->serve_parse_errors));
+    goto cleanup;
   }
 
   if (!sstate->global || !sstate->edited_cnts) {
-    super_html_contest_page_menu(f, session_id, sstate, -1, self_url, hidden_vars,
-                                 extra_args);
+    super_html_contest_page_menu(f, session_id, sstate, -1, self_url,
+                                 hidden_vars, extra_args);
     fprintf(f, "<h3>No contest is edited</h2>\n");
-    return 0;
+    goto cleanup;
   }
 
   cnts = sstate->edited_cnts;
@@ -7656,12 +7657,12 @@ super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
   }
 
   if (!var_prob_num) {
-    super_html_contest_page_menu(f, session_id, sstate, -1, self_url, hidden_vars,
-                                 extra_args);
+    super_html_contest_page_menu(f, session_id, sstate, -1, self_url,
+                                 hidden_vars, extra_args);
     fprintf(f, "<h3>Contest does not have variant problems</h2>\n");
     prepare_free_variant_map(global->variant_map);
     global->variant_map = 0;
-    return 0;
+    goto cleanup;
   }
 
   log_file = open_memstream(&log_txt, &log_len);
@@ -7670,10 +7671,10 @@ super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
         || vmap->prob_rev_map_size <= 0) {
       fclose(log_file);
       xfree(log_txt);
-      super_html_contest_page_menu(f, session_id, sstate, -1, self_url, hidden_vars,
-                                   extra_args);
+      super_html_contest_page_menu(f, session_id, sstate, -1, self_url,
+                                   hidden_vars, extra_args);
       fprintf(f, "<h2>variant map is obsolete</h2>\n");
-      return 0;
+      goto cleanup;
     }
   } else {
     if (super_html_update_variant_map(log_file, cnts->id, userlist_conn,
@@ -7683,13 +7684,12 @@ super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
                                       &sstate->var_footer_text) < 0){
       fclose(log_file); log_file = 0;
 
-      s = html_armor_string_dup(log_txt);
-      super_html_contest_page_menu(f, session_id, sstate, -1, self_url, hidden_vars,
-                                   extra_args);
+      super_html_contest_page_menu(f, session_id, sstate, -1, self_url,
+                                   hidden_vars, extra_args);
       fprintf(f, "<h2>variant map cannot be edited</h2>\n");
-      fprintf(f, "<font color=\"red\"><pre>%s</pre></font>\n", s);
-      xfree(s); xfree(log_txt);
-      return 0;
+      fprintf(f, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(log_txt));
+      xfree(log_txt);
+      goto cleanup;
     }
   }
 
@@ -7702,9 +7702,8 @@ super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
 
   while (log_len > 0 && isspace(log_txt[log_len - 1])) log_txt[--log_len] = 0;
   if (log_txt && *log_txt) {
-    s = html_armor_string_dup(log_txt);
-    fprintf(f, "Variant map parsing messages:\n<pre>%s</pre>\n", s);
-    xfree(s);
+    fprintf(f, "Variant map parsing messages:\n<pre>%s</pre>\n",
+            ARMOR(log_txt));
   }
 
   xfree(log_txt); log_txt = 0;
@@ -7715,9 +7714,7 @@ super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
           head_row_attr);
   for (j = 0; j < vmap->prob_rev_map_size; j++) {
     prob = sstate->probs[vmap->prob_rev_map[j]];
-    s = html_armor_string_dup(prob->short_name);
-    fprintf(f, "<th>%s</th>", s);
-    xfree(s);
+    fprintf(f, "<th>%s</th>", ARMOR(prob->short_name));
   }
   fprintf(f, "<th>Action</th></tr>\n");
 
@@ -7730,18 +7727,16 @@ super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
     else
       snprintf(buf, sizeof(buf), "&nbsp;");
     if (vmap->v[i].login)
-      s = html_armor_string_dup(vmap->v[i].login);
+      s = ARMOR(vmap->v[i].login);
     else
-      s = xstrdup("&nbsp;");
+      s = "&nbsp;";
     fprintf(f, "<tr%s><td>%s</td><td>%s</td>", form_row_attrs[row ^= 1],
             buf, s);
-    xfree(s);
     if (vmap->v[i].name)
-      s = html_armor_string_dup(vmap->v[i].name);
+      s = ARMOR(vmap->v[i].name);
     else
-      s = xstrdup("&nbsp;");
+      s = "&nbsp;";
     fprintf(f, "<td>%s</td>", s);
-    xfree(s);
 
     for (j = 0; j < vmap->prob_rev_map_size; j++) {
       prob = sstate->probs[vmap->prob_rev_map[j]];
@@ -7760,9 +7755,27 @@ super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
   }
   fprintf(f, "</table>\n");
 
+  // clear variant, generate random variants
+  html_start_form(f, 1, self_url, hidden_vars);
+  fprintf(f, "<table border=\"0\">");
+  fprintf(f, "<tr><td>%s</td><td>", "Problem");
+  fprintf(f, "<select name=\"prob_id\">");
+  fprintf(f, "<option value=\"\"></option>");
+  for (j = 0; j < vmap->prob_rev_map_size; j++) {
+    prob = sstate->probs[vmap->prob_rev_map[j]];
+    fprintf(f, "<option value=\"%d\">%s - %s</option>",
+            prob->id, prob->short_name, ARMOR(prob->long_name));
+  }
+  fprintf(f, "</select></td><td>");
+  html_submit_button(f, SUPER_ACTION_PROB_CLEAR_VARIANTS, "Clear variants");
+  html_submit_button(f, SUPER_ACTION_PROB_RANDOM_VARIANTS, "Random variants");
+  fprintf(f, "</table></form>\n");
+
   super_html_contest_footer_menu(f, session_id, sstate,
                                  self_url, hidden_vars, extra_args);
 
+ cleanup:
+  html_armor_free(&ab);
   return 0;
 }
 

@@ -2519,8 +2519,9 @@ cmd_command_0(struct client_state *p, int len,
       return;
     }
     gettimeofday(&precise_time, 0);
-    run_id = run_virtual_start(serve_state.runlog_state, p->user_id, precise_time.tv_sec,
-                               p->ip, precise_time.tv_usec * 1000);
+    run_id = run_virtual_start(serve_state.runlog_state, p->user_id,
+                               precise_time.tv_sec,
+                               p->ip, p->ssl, precise_time.tv_usec * 1000);
     if (run_id < 0) return;
     serve_move_files_to_insert_run(&serve_state, run_id);
     info("%d: virtual contest started for %d", p->id, p->user_id);
@@ -2541,8 +2542,9 @@ cmd_command_0(struct client_state *p, int len,
       return;
     }
     gettimeofday(&precise_time, 0);
-    run_id = run_virtual_stop(serve_state.runlog_state, p->user_id, precise_time.tv_sec,
-                              p->ip, precise_time.tv_usec * 1000);
+    run_id = run_virtual_stop(serve_state.runlog_state, p->user_id,
+                              precise_time.tv_sec,
+                              p->ip, p->ssl, precise_time.tv_usec * 1000);
     if (run_id < 0) return;
     serve_move_files_to_insert_run(&serve_state, run_id);
     info("%d: virtual contest stopped for %d", p->id, p->user_id);

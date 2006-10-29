@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-28 13:05+0400\n"
-"PO-Revision-Date: 2006-10-28 18:10+0400\n"
+"POT-Creation-Date: 2006-10-28 22:47+0400\n"
+"PO-Revision-Date: 2006-10-28 22:22+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -307,16 +307,6 @@ msgid ""
 msgstr ""
 "<p>Обратите внимание, что точная причина ошибки не сообщается по "
 "соображениям безопасности.</p>"
-
-#, c-format
-msgid ""
-"<p>Your session has been removed.\n"
-"<p>If you want to relogin, follow <a href=\"%s?contest_id=%d%s\">this link</"
-"a>.\n"
-msgstr ""
-"<p>Ваша сессия завершена.\n"
-"<p>Если Вы хотите зайти в турнир повторно, проследуйте <a href=\"%s?"
-"contest_id=%d%s\">по этой ссылке</a>.\n"
 
 #, c-format
 msgid "<u>--- Checker output ---</u>\n"
@@ -1642,6 +1632,9 @@ msgstr "Число попыток"
 msgid "No. of warns"
 msgstr "Число предупреждений"
 
+msgid "Not a virtual contest"
+msgstr "Не виртуальный турнир"
+
 msgid "Not all pre-required problems are solved"
 msgstr "Решены не все требуемые задачи"
 
@@ -2672,6 +2665,10 @@ msgstr ""
 "список замечаний к ней. Пожалуйста, исправьте анкету и пошлите её снова."
 
 #, c-format
+msgid "Unhandled action: %d"
+msgstr "Необработанная операция: %d"
+
+#, c-format
 msgid "Unknown error %d.\n"
 msgstr "Неизвестная ошибка %d.\n"
 
@@ -3273,12 +3270,3 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
-
-#~ msgid "Clarifications"
-#~ msgstr "Сообщения жюри"
-
-#~ msgid "Current Standings"
-#~ msgstr "Текущие результаты"
-
-#~ msgid "Quick navigation"
-#~ msgstr "Быстрый переход"
