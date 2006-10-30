@@ -75,6 +75,12 @@ AC_ARG_WITH([javac],AC_HELP_STRING([--with-javac],[specify the Java2 SDK javac p
 AC_ARG_WITH([mcs],AC_HELP_STRING([--with-mcs],[specify the C-sharp Mono mcs path to use in contests]),[ac_cv_contest_mcs="$withval"])
 AC_ARG_WITH([mbas],AC_HELP_STRING([--with-mbas],[specify the Visual Basic Mono mbas path to use in contests]),[ac_cv_contest_mbas="$withval"])
 
+case "${host}" in
+  x86_64-*linux*)
+    libdir='${exec_prefix}/lib64'
+    ;;
+esac
+
 dnl choose an arch type
 AC_MSG_CHECKING([for arch type])
 case "${target}" in
