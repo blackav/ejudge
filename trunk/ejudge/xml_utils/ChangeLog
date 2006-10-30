@@ -1,3 +1,8 @@
+2006-09-25 (r3433) Alexander Chernov  <cher@ejudge.ru>
+
+	* parse_ip.c: copyright notice is updated;
+	(xml_parse_ip) no error is reported, if line <= 0.
+
 2006-08-07 (r3226) Alexander Chernov  <cher@ispras.ru>
 
 	* err_get_attr_name.c, err_get_elem_name.c, err_top_level_s.c, err_attr_undefined_s.c, err_elem_undefined_s.c:

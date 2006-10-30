@@ -1,3 +1,123 @@
+2006-10-29 (r3595) Alexander Chernov  <cher@ejudge.ru>
+
+	* create_member.c:
+	command `ULS_CREATE_MEMBER' is sent instead of `ULS_ADD_FIELD'.
+
+2006-10-22 (r3550) Alexander Chernov  <cher@ejudge.ru>
+
+	* recover_passwd_2.c:
+	initial revision
+
+2006-10-22 (r3545) Alexander Chernov  <cher@ejudge.ru>
+
+	* register_new.c:
+	(userlist_clnt_register_new) `cmd' parameter is added;
+	  `action' parameter is added;
+	  `self_url' parameter is added.
+
+2006-10-17 (r3527) Alexander Chernov  <cher@ejudge.ru>
+
+	* get_database.c:
+	initial revision
+
+2006-10-12 (r3511) Alexander Chernov  <cher@ejudge.ru>
+
+	* cnts_passwd_op.c:
+	(userlist_clnt_cnts_passwd_op) renamed from
+	  `userlist_clnt_clear_team_passwords';
+	  `cmd' parameter is added.
+
+2006-09-21 (r3382) Alexander Chernov  <cher@ejudge.ru>
+
+	* open.c: copyright notice is updated;
+	(userlist_clnt_open) `msgbuf' is zeroed.
+
+2006-09-14 (r3354) Alexander Chernov  <cher@ejudge.ru>
+
+	* set_passwd.c:
+	(userlist_clnt_set_passwd) new parameters `cmd', `contest_id'
+	  are added;
+
+	* team_set_passwd.c:
+	file is removed, since `userlist_clnt_set_passwd' function covers
+	all cases.
+
+2006-09-13 (r3350) Alexander Chernov  <cher@ejudge.ru>
+
+	* recv_packet.c: copyright notice is updated;
+	(userlist_clnt_recv_packet) connection fd is not closed upon error.
+
+	* set_cookie.c: initial revision.
+
+2006-09-11 (r3345) Alexander Chernov  <cher@ejudge.ru>
+
+	* private.h: copyright notice is updated;
+	(struct userlist_clnt) new fields added: `notification_callback',
+	  `notification_user_data'.
+
+	* get_param.c, clear_team_passwords.c, get_contests.c, get_uid_by_pid.c, lookup_user.c, priv_cookie.c, delete_info.c, generate_team_passwd.c, register_contest.c, edit_field.c, dump_database.c, get_info.c, delete_cookie.c, create_user.c, lookup_cookie.c, delete_field.c, set_info.c, logout.c, map_contest.c, set_passwd.c, register_new_2.c, change_registration.c, team_cookie.c, team_set_passwd.c, list_all_users.c, admin_process.c, get_uid_by_pid_2.c, create_member.c, list_users.c, register_new.c:
+	copyright notice is updated;
+	`userlist_clnt_read_and_notify' is used instead of
+	  `userlist_clnt_recv_packet', so the contest change callbacks
+	  are supported fully.
+
+	* priv_login.c, lookup_user_id.c, notify.c, login.c, get_cookie.c, team_login.c:
+	`userlist_clnt_read_and_notify' is used instead of
+	  `userlist_clnt_recv_packet', so the contest change callbacks
+	  are supported fully.
+
+2006-09-07 (r3319) Alexander Chernov  <cher@ejudge.ru>
+
+	* read_notification.c, notify.c:
+	initial revision
+
+2006-09-07 (r3314) Alexander Chernov  <cher@ejudge.ru>
+
+	* get_cookie.c:
+	(userlist_clnt_get_cookie) `cmd' parameter is added.
+
+2006-09-06 (r3306) Alexander Chernov  <cher@ejudge.ru>
+
+	* lookup_user_id.c:
+	initial revision
+
+2006-09-05 (r3302) Alexander Chernov  <cher@ejudge.ru>
+
+	* get_cookie.c:
+	(userlist_clnt_get_cookie) `origin_ip', `ssl' are correctly filled.
+
+2006-09-05 (r3299) Alexander Chernov  <cher@ejudge.ru>
+
+	* get_cookie.c:
+	(userlist_clnt_get_cookie) `contest_id' parameter is removed.
+
+2006-09-03 (r3287) Alexander Chernov  <cher@ejudge.ru>
+
+	* get_cookie.c:
+	initial revision
+
+2006-09-03 (r3285) Alexander Chernov  <cher@ejudge.ru>
+
+	* priv_login.c:
+	(userlist_clnt_priv_login) `role' parameter is added and passed to
+	  the server.
+
+2006-09-03 (r3282) Alexander Chernov  <cher@ejudge.ru>
+
+	* get_fd.c:
+	initial revision
+
+2006-09-02 (r3281) Alexander Chernov  <cher@ejudge.ru>
+
+	* priv_login.c: copyright notice is updated;
+	(userlist_clnt_priv_login) `cmd' parameter is added.
+
+	* login.c: copyright notice is updated;
+	(userlist_clnt_login) `cmd' parameter is added.
+
+	* team_login.c:
+	(userlist_clnt_team_login) `cmd' parameter is added.
+
 2006-08-30 (r3252) Alexander Chernov  <cher@ispras.ru>
 
 	* team_login.c: copyright notice is slightly updated;

@@ -1,3 +1,12 @@
+2006-09-06 (r3309) Alexander Chernov  <cher@ejudge.ru>
+
+	* recv_packet.c:
+	(new_server_clnt_recv_packet) packet size is read as 32-bit integer.
+
+2006-09-01 (r3278) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_clnt_http_request: bugs fixed.
+
 2006-08-30 (r3257) Alexander Chernov  <cher@ejudge.ru>
 
 	* http_request.c:

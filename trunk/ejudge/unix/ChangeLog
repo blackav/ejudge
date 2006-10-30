@@ -1,3 +1,27 @@
+2006-10-05 (r3489) Alexander Chernov  <cher@ejudge.ru>
+
+	* interrupt.c: copyright notice is updated;
+	SIGHUP signal is handled separately, and information about
+	  whether it was received is available to the application;
+	(sighup_handler) function to handle SIGHUP;
+	(interrupt_restart_requested) function which returns 1, if SIGHUP
+	  was received.
+
+2006-09-09 (r3337) Alexander Chernov  <cher@ejudge.ru>
+
+	* cr_serialize.c:
+	"serve_state.h" is included;
+	(cr_serialize_init) `state' parameter is added;
+	(cr_serialize_lock) `state' parameter is added;
+	(cr_serialize_unlock) `state' parameter is added.
+
+2006-09-08 (r3328) Alexander Chernov  <cher@ejudge.ru>
+
+	* cr_serialize.c: copyright notice is updated;
+	"prepare_vars.h" is no longer included;
+	"serve_state.h" is included;
+	`serve_state.global' is used instead of `global'.
+
 2006-06-10 (r3156) Alexander Chernov  <cher@ispras.ru>
 
 	* ChangeLog:
