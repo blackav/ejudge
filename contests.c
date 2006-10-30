@@ -624,7 +624,7 @@ static const size_t contest_access_offsets[CONTEST_LAST_TAG] =
   [CONTEST_SERVE_CONTROL_ACCESS] = CONTEST_DESC_OFFSET(serve_control_access),
 };
 
-static const size_t contest_bool_attr_offsets[CONTEST_LAST_TAG] =
+static const size_t contest_bool_attr_offsets[CONTEST_LAST_ATTR] =
 {
   [CONTEST_A_AUTOREGISTER] = CONTEST_DESC_OFFSET(autoregister),
   [CONTEST_A_DISABLE_TEAM_PASSWORD] =CONTEST_DESC_OFFSET(disable_team_password),
@@ -902,7 +902,10 @@ contests_merge(struct contest_desc *pold, struct contest_desc *pnew)
       }
       *p_acc_old = (struct contest_access*) p;
       *p_acc_new = 0;
-    } else if (contest_bool_attr_offsets[i]) {
+    }
+  }
+  for (i = 0; i < CONTEST_LAST_ATTR; i++) {
+    if (contest_bool_attr_offsets[i]) {
       p_b_old = XPDEREF(unsigned char, pold, contest_bool_attr_offsets[i]);
       p_b_new = XPDEREF(unsigned char, pnew, contest_bool_attr_offsets[i]);
       *p_b_old = *p_b_new;

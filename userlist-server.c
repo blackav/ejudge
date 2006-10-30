@@ -684,11 +684,21 @@ send_email_message(unsigned char const *to,
 {
   FILE *f = 0;
   int r;
+  unsigned char cmdline[1024];
 
   ASSERT(config->email_program);
   if (!charset) charset = EJUDGE_CHARSET;
 
-  if (!(f = popen(config->email_program, "w"))) {
+  // sendmail mode
+  if (strstr(config->email_program, "sendmail")) {
+    // should we add -ba?
+    snprintf(cmdline, sizeof(cmdline), "%s -B8BITMIME -t",
+             config->email_program);
+  } else {
+    snprintf(cmdline, sizeof(cmdline), "%s", config->email_program);
+  }
+
+  if (!(f = popen(cmdline, "w"))) {
     err("send_email_message: popen failed: %s", os_ErrorMsg());
     return -1;
   }
@@ -1423,7 +1433,7 @@ cmd_register_new(struct client_state *p,
     xfree(buf);
     xfree(email_tmpl);
     l10n_setlocale(0);
-    send_reply(p, ULS_ERR_EMAIL_FAILED);
+    send_reply(p, -ULS_ERR_EMAIL_FAILED);
     info("%s -> failed (e-mail)", logbuf);
     return;
   }
@@ -1569,7 +1579,7 @@ cmd_recover_password_1(struct client_state *p,
                          NULL,
                          _("Password regeneration requested"),
                          msg_text) < 0) {
-    send_reply(p, ULS_ERR_EMAIL_FAILED);
+    send_reply(p, -ULS_ERR_EMAIL_FAILED);
     info("%s -> failed (e-mail)", logbuf);
     xfree(msg_text);
     return;
@@ -1716,7 +1726,7 @@ cmd_recover_password_2(struct client_state *p,
                          NULL,
                          _("Password regeneration successful"),
                          msg_text) < 0) {
-    send_reply(p, ULS_ERR_EMAIL_FAILED);
+    send_reply(p, -ULS_ERR_EMAIL_FAILED);
     info("%s -> failed (e-mail)", logbuf);
     xfree(msg_text);
     return;
