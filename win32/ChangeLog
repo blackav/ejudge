@@ -1,3 +1,8 @@
+2006-09-08 (r3335) Alexander Chernov  <cher@ejudge.ru>
+
+	* cr_serialize.c: copyright notice is updated;
+	"prepare_vars.h" is no longer included.
+
 2006-06-10 (r3156) Alexander Chernov  <cher@ispras.ru>
 
 	* ChangeLog:

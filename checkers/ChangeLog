@@ -1,3 +1,22 @@
+2006-10-15 (r3524) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make: copyright notice is updated;
+	new files added: `eq_sexpr.c', `read_sexpr.c', `cmp_sexpr.c',
+	  `cmp_yesno.c'.
+
+	* checker_internal.h: copyright notice is updated;
+	types for S-expressions added;
+	(checker_read_sexpr) new function prototype;
+	(checker_eq_sexpr) new function prototype.
+
+	* cmp_sexpr.c, read_sexpr.c, eq_sexpr.c, cmp_yesno.c:
+	initial revision.
+
+2006-09-17 (r3372) Alexander Chernov  <cher@ejudge.ru>
+
+	* cmp_bytes.c:
+	(main) the user's and correct output was swapped.
+
 2006-08-03 (r3217) Alexander Chernov  <cher@ispras.ru>
 
 	* read_buf.c:

@@ -1,3 +1,9 @@
+2006-09-03 (r3283) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_mysql.c: copyright notice is updated;
+	(parse_func) `data' parameter is moved to the first place
+	  in the parameter list.
+
 2006-08-26 (r3237) Alexander Chernov  <cher@ispras.ru>
 
 	* main.make: plugin target is renamed.
