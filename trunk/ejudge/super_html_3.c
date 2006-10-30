@@ -775,6 +775,15 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td><td>");
     html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_ALWAYS_SHOW_PROBLEMS, "Change");
     fprintf(f, "</td></tr></form>\n");
+
+    //GLOBAL_PARAM(disable_user_standings, "d"),
+    html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Disable build-in standings in new-client:</td><td>",
+            form_row_attrs[row ^= 1]);
+    html_boolean_select(f, global->disable_user_standings, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_DISABLE_USER_STANDINGS, "Change");
+    fprintf(f, "</td></tr></form>\n");
   }
 
   html_start_form(f, 1, self_url, hidden_vars);
@@ -2030,6 +2039,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_ALWAYS_SHOW_PROBLEMS:
     p_int = &global->always_show_problems;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_DISABLE_USER_STANDINGS:
+    p_int = &global->disable_user_standings;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_TEST_DIR:

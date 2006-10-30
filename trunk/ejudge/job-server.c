@@ -425,7 +425,7 @@ handle_mail_packet(int argc, char **argv)
   char *full_txt = 0;
   size_t full_len = 0;
   char *charset = 0, r;
-  char *prc_args[2];
+  char *prc_args[10];
   unsigned char date_buf[128];
   time_t cur_time;
   struct tm *ptm;
@@ -454,8 +454,16 @@ handle_mail_packet(int argc, char **argv)
           "%s\n",
           date_buf, charset, argv[4], argv[3], argv[2], argv[5]);
   fclose(f); f = 0;
-  prc_args[0] = config->email_program;
-  prc_args[1] = 0;
+  if (strstr(config->email_program, "sendmail")) {
+    prc_args[0] = config->email_program;
+    prc_args[1] = "-B8BITMIME";
+    //    prc_args[2] = "-ba";
+    prc_args[2] = "-t";
+    prc_args[3] = 0;
+  } else {
+    prc_args[0] = config->email_program;
+    prc_args[1] = 0;
+  }
 
   while (1) {
     r = run_process(prc_args, full_txt);

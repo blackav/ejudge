@@ -2777,6 +2777,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_GLOB_CHANGE_PRUNE_EMPTY_USERS:
   case SSERV_CMD_GLOB_CHANGE_ENABLE_FULL_ARCHIVE:
   case SSERV_CMD_GLOB_CHANGE_ALWAYS_SHOW_PROBLEMS:
+  case SSERV_CMD_GLOB_CHANGE_DISABLE_USER_STANDINGS:
   case SSERV_CMD_GLOB_CHANGE_TEST_DIR:
   case SSERV_CMD_GLOB_CLEAR_TEST_DIR:
   case SSERV_CMD_GLOB_CHANGE_CORR_DIR:
@@ -3320,7 +3321,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_ENABLE_PRINTING] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_PRUNE_EMPTY_USERS] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_ENABLE_FULL_ARCHIVE] = { cmd_set_value },
-  [SSERV_CMD_GLOB_CHANGE_ALWAYS_SHOW_PROBLEMS] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_DISABLE_USER_STANDINGS] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_TEST_DIR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_TEST_DIR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_CORR_DIR] = { cmd_set_value },
