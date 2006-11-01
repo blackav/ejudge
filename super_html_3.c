@@ -5129,6 +5129,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
     p_int = &prob->team_show_judge_report;
     goto handle_boolean_2;
 
+  case SSERV_CMD_PROB_CHANGE_DISABLE_USER_SUBMIT:
+    p_int = &prob->disable_user_submit;
+    goto handle_boolean_2;
+
   case SSERV_CMD_PROB_CHANGE_DISABLE_TESTING:
     p_int = &prob->disable_testing;
     goto handle_boolean_2;
