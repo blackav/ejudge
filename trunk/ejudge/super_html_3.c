@@ -4202,6 +4202,23 @@ super_html_print_problem(FILE *f,
                                  self_url, extra_args, prob_hidden_vars);
     }
 
+    //PROBLEM_PARAM(disable_user_submit, "d"),
+    extra_msg = "Undefined";
+    tmp_prob.disable_user_submit = prob->disable_user_submit;
+    if (!prob->abstract) {
+      prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_USER_SUBMIT,
+                             &tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+               tmp_prob.disable_user_submit?"Yes":"No");
+      extra_msg = msg_buf;
+    }
+    print_boolean_3_select_row(f, "Disable user submissions:",
+                               prob->disable_user_submit,
+                               SUPER_ACTION_PROB_CHANGE_DISABLE_USER_SUBMIT,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+
     //PROBLEM_PARAM(disable_testing, "d"),
     extra_msg = "Undefined";
     tmp_prob.disable_testing = prob->disable_testing;
