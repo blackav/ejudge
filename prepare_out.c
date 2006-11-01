@@ -1082,6 +1082,8 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     unparse_bool(f, "team_show_judge_report", prob->team_show_judge_report);
   if (prob->disable_auto_testing >= 0)
     unparse_bool(f, "disable_auto_testing", prob->disable_auto_testing);
+  if (prob->disable_user_submit >= 0)
+    unparse_bool(f, "disable_user_submit", prob->disable_user_submit);
   if (prob->disable_testing >= 0)
     unparse_bool(f, "disable_testing", prob->disable_testing);
   if (prob->enable_compilation >= 0)

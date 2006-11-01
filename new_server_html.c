@@ -6796,6 +6796,7 @@ html_problem_selection(serve_state_t cs,
     if (prob->t_start_date > 0 && cs->current_time < prob->t_start_date)
       continue;
     if (start_time <= 0) continue;
+    if (prob->disable_user_submit) continue;
 
     penalty_str[0] = 0;
     deadline_str[0] = 0;
@@ -7230,6 +7231,7 @@ user_main_page(FILE *fout,
     if (prob_id > 0 && prob->t_start_date > 0
         && cs->current_time < prob->t_start_date)
       prob_id = 0;
+    if (prob_id > 0 && prob->disable_user_submit > 0) prob_id = 0;
     if (prob_id > 0 && prob->variant_num > 0
         && (variant = find_variant(cs, phr->user_id, prob_id)) <= 0)
       prob_id = 0;
