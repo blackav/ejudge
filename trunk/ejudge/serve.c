@@ -2643,45 +2643,6 @@ cmd_judge_command_0(struct client_state *p, int len,
 static int count_transient_runs(void);
 
 static void
-do_squeeze_runs(void)
-{
-  int i, j, tot;
-
-  tot = run_get_total(serve_state.runlog_state);
-  for (i = 0, j = 0; i < tot; i++) {
-    if (run_get_status(serve_state.runlog_state, i) == RUN_EMPTY) continue;
-    if (i != j) {
-      archive_rename(&serve_state, serve_state.global->run_archive_dir, 0, i, 0, j, 0, 0);
-      archive_rename(&serve_state, serve_state.global->xml_report_archive_dir, 0, i, 0, j, 0, 1);
-      archive_rename(&serve_state, serve_state.global->report_archive_dir, 0, i, 0, j, 0, 1);
-      if (serve_state.global->team_enable_rep_view) {
-        archive_rename(&serve_state, serve_state.global->team_report_archive_dir, 0, i, 0, j, 0, 0);
-      }
-      if (serve_state.global->enable_full_archive) {
-        archive_rename(&serve_state, serve_state.global->full_archive_dir, 0, i, 0, j, 0, 0);
-      }
-      archive_rename(&serve_state, serve_state.global->audit_log_dir, 0, i, 0, j, 0, 1);
-    }
-    j++;
-  }
-  for (; j < tot; j++) {
-    archive_remove(&serve_state, serve_state.global->run_archive_dir, j, 0);
-    archive_remove(&serve_state, serve_state.global->xml_report_archive_dir, j, 0);
-    archive_remove(&serve_state, serve_state.global->report_archive_dir, j, 0);
-    if (serve_state.global->team_enable_rep_view) {
-      archive_remove(&serve_state, serve_state.global->team_report_archive_dir, j, 0);
-    }
-    if (serve_state.global->enable_full_archive) {
-      archive_remove(&serve_state, serve_state.global->full_archive_dir, j, 0);
-    }
-    archive_remove(&serve_state, serve_state.global->audit_log_dir, j, 0);
-  }
-  run_squeeze_log(serve_state.runlog_state);
-
-  /* FIXME: add an audit record for each renumbered run */
-}
-
-static void
 cmd_rejudge_by_mask(struct client_state *p, int len,
                     struct prot_serve_pkt_rejudge_by_mask *pkt)
 {
@@ -3089,7 +3050,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
 
-    do_squeeze_runs();
+    serve_squeeze_runs(&serve_state);
     info("%d: run log is squeezed", p->id);
     new_send_reply(p, SRV_RPL_OK);
     return;

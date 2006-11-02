@@ -57,7 +57,7 @@ serve_state_destroy(serve_state_t state, struct userlist_clnt *ul_conn)
 
   if (!state) return 0;
 
-  if (ul_conn && state->global->contest_id > 0) {
+  if (ul_conn && state->global && state->global->contest_id > 0) {
     // ignore error code
     userlist_clnt_notify(ul_conn, ULS_DEL_NOTIFY, state->global->contest_id);
   }

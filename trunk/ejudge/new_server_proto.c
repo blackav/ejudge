@@ -127,6 +127,13 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_UNDEFINED_USER_ID_LOGIN] = __("Undefined user_id and login"),
   [NEW_SRV_ERR_INV_PARAM] = __("Invalid parameter"),
   [NEW_SRV_ERR_BINARY_FILE] = __("Attempt to submit a binary file"),
+  [NEW_SRV_ERR_INV_SCORE] = __("Invalid score"),
+  [NEW_SRV_ERR_INV_SCORE_ADJ] = __("Invalid score adjustment"),
+  [NEW_SRV_ERR_INV_PAGES] = __("Invalid pages count"),
+  [NEW_SRV_ERR_RUN_READ_ONLY] = __("Run is read-only"),
+  [NEW_SRV_ERR_INV_WARN_TEXT] = __("Invalid text of warning"),
+  [NEW_SRV_ERR_EMPTY_WARN_TEXT] = __("Empty text of warning"),
+  [NEW_SRV_ERR_INV_WARN_CMT] = __("Invalid text of warning comment"),
 };
 
 const unsigned char *

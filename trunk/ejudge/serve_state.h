@@ -290,5 +290,6 @@ void serve_invoke_start_script(serve_state_t state);
 
 void serve_send_run_quit(const serve_state_t state);
 void serve_reset_contest(serve_state_t state);
+void serve_squeeze_runs(serve_state_t state);
 
 #endif /* __SERVE_STATE_H__ */

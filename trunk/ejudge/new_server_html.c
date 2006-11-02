@@ -42,13 +42,13 @@
     SRV_CMD_REJUDGE_PROBLEM,		OK
     SRV_CMD_SCHEDULE,			OK
     SRV_CMD_DURATION,			OK
-    SRV_CMD_EDIT_RUN,
-    SRV_CMD_VIRTUAL_START,
-    SRV_CMD_VIRTUAL_STOP,
-    SRV_CMD_VIRTUAL_STANDINGS,
+    SRV_CMD_EDIT_RUN,			OK
+    SRV_CMD_VIRTUAL_START,		OK
+    SRV_CMD_VIRTUAL_STOP,		OK
+    SRV_CMD_VIRTUAL_STANDINGS,		OK
     SRV_CMD_RESET_FILTER,		OK
-    SRV_CMD_CLEAR_RUN,
-    SRV_CMD_SQUEEZE_RUNS,
+    SRV_CMD_CLEAR_RUN,			OK
+    SRV_CMD_SQUEEZE_RUNS,		OK
     SRV_CMD_DUMP_RUNS,
     SRV_CMD_DUMP_STANDINGS,
     SRV_CMD_SET_JUDGING_MODE,		OK
@@ -62,7 +62,7 @@
     SRV_CMD_TEST_RESUME,		OK
     SRV_CMD_JUDGE_SUSPENDED,		OK
     SRV_CMD_SET_ACCEPTING_MODE,		OK
-    SRV_CMD_PRIV_PRINT_RUN,
+    SRV_CMD_PRIV_PRINT_RUN,		OK
     SRV_CMD_PRINT_RUN,			OK
     SRV_CMD_PRIV_DOWNLOAD_RUN,		OK
     SRV_CMD_PRINT_SUSPEND,		OK
@@ -70,11 +70,11 @@
     SRV_CMD_COMPARE_RUNS,		OK
     SRV_CMD_UPLOAD_REPORT,
     SRV_CMD_REJUDGE_BY_MASK,		OK
-    SRV_CMD_NEW_RUN_FORM,
-    SRV_CMD_NEW_RUN,
-    SRV_CMD_VIEW_TEAM,
-    SRV_CMD_SET_TEAM_STATUS,
-    SRV_CMD_ISSUE_WARNING,
+    SRV_CMD_NEW_RUN_FORM,		OK
+    SRV_CMD_NEW_RUN,			OK
+    SRV_CMD_VIEW_TEAM,			OK
+    SRV_CMD_SET_TEAM_STATUS,		OK
+    SRV_CMD_ISSUE_WARNING,		OK
     SRV_CMD_SOFT_UPDATE_STAND,
     SRV_CMD_PRIV_DOWNLOAD_REPORT,
     SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT,
@@ -1228,6 +1228,55 @@ priv_user_operation(FILE *fout,
   return retval;
 }
 
+static int
+priv_user_issue_warning(FILE *fout,
+                        FILE *log_f,
+                        struct http_request_info *phr,
+                        const struct contest_desc *cnts,
+                        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int retval = 0;
+  const unsigned char *s;
+  int user_id, n;
+  unsigned char *warn_txt = 0, *cmt_txt = 0;
+  size_t warn_len = 0, cmt_len = 0;
+
+  if (opcaps_check(phr->caps, OPCAP_EDIT_REG) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  /* user_id, warn_text, warn_comment */
+  if (ns_cgi_param(phr, "user_id", &s) <= 0
+      || sscanf(s, "%d%n", &user_id, &n) != 1 || s[n]
+      || teamdb_lookup(cs->teamdb_state, user_id) <= 0)
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+  if ((n = ns_cgi_param(phr, "warn_text", &s)) < 0)
+    FAIL(NEW_SRV_ERR_INV_WARN_TEXT);
+  if (!n) FAIL(NEW_SRV_ERR_EMPTY_WARN_TEXT);
+  warn_len = strlen(warn_txt = dos2unix_str(s));
+  while (warn_len > 0 && isspace(warn_txt[warn_len - 1])) warn_len--;
+  warn_txt[warn_len] = 0;
+  if (!warn_len) FAIL(NEW_SRV_ERR_EMPTY_WARN_TEXT);
+  if ((n = ns_cgi_param(phr, "warn_comment", &s)) < 0)
+    FAIL(NEW_SRV_ERR_INV_WARN_CMT);
+  if (!n) {
+    cmt_len = strlen(cmt_txt = xstrdup(""));
+  } else {
+    cmt_len = strlen(cmt_txt = dos2unix_str(s));
+    while (cmt_len > 0 && isspace(cmt_txt[cmt_len - 1])) cmt_len--;
+    cmt_txt[cmt_len] = 0;
+  }
+
+  team_extra_append_warning(cs->team_extra_state, user_id, phr->user_id,
+                            phr->ip, cs->current_time, warn_txt, cmt_txt);
+  team_extra_flush(cs->team_extra_state);
+
+ cleanup:
+  xfree(warn_txt);
+  xfree(cmt_txt);
+  return retval;
+}
+
 static void
 do_schedule(FILE *log_f,
             struct http_request_info *phr,
@@ -1469,6 +1518,10 @@ priv_contest_operation(FILE *fout,
     serve_reset_contest(cs);
     extra->last_access_time = 0;
     serve_send_run_quit(cs);
+    break;
+
+  case NEW_SRV_ACTION_SQUEEZE_RUNS:
+    serve_squeeze_runs(cs);
     break;
   }
 
@@ -2210,6 +2263,214 @@ parse_run_id(FILE *fout, struct http_request_info *phr,
   return -1;
 }
 
+static int
+priv_print_run_cmd(FILE *fout, FILE *log_f,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int retval = 0, run_id = -1;
+
+  if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) {
+    retval = -1;
+    goto cleanup;
+  }
+  if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (priv_print_run(cs, run_id, phr->user_id) < 0)
+    FAIL(NEW_SRV_ERR_PRINTING_FAILED);
+
+ cleanup:
+  return retval;
+}
+
+static int
+priv_clear_run(FILE *fout, FILE *log_f,
+               struct http_request_info *phr,
+               const struct contest_desc *cnts,
+               struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int retval = 0, run_id = -1;
+
+  if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) {
+    retval = -1;
+    goto cleanup;
+  }
+  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (run_is_readonly(cs->runlog_state, run_id))
+    FAIL(NEW_SRV_ERR_RUN_READ_ONLY);
+  if (run_clear_entry(cs->runlog_state, run_id) < 0)
+    FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
+
+ cleanup:
+  return retval;
+}
+
+/*
+ * what we gonna handle here
+ * NEW_SRV_ACTION_CHANGE_RUN_USER_ID
+ * NEW_SRV_ACTION_CHANGE_RUN_USER_LOGIN
+ * NEW_SRV_ACTION_CHANGE_RUN_PROB_ID
+ * NEW_SRV_ACTION_CHANGE_RUN_VARIANT
+ * NEW_SRV_ACTION_CHANGE_RUN_IS_IMPORTED
+ * NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN
+ * NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY
+ * NEW_SRV_ACTION_CHANGE_RUN_TEST
+ * NEW_SRV_ACTION_CHANGE_RUN_SCORE
+ * NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ
+ * NEW_SRV_ACTION_CHANGE_RUN_PAGES
+ */
+static int
+priv_edit_run(FILE *fout, FILE *log_f,
+              struct http_request_info *phr,
+              const struct contest_desc *cnts,
+              struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob = 0;
+  int retval = 0, run_id = -1, n;
+  struct run_entry re, ne;
+  const unsigned char *s, *param_str = 0;
+  int param_int = 0, param_bool = 0;
+  int ne_mask = 0;
+
+  if (parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0) return -1;
+  if (ns_cgi_param(phr, "param", &s) <= 0) {
+    ns_html_err_inv_param(fout, phr, 1, "param is not set");
+    return -1;
+  }
+
+  if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_CHANGE_RUN_USER_LOGIN:
+    param_str = s;
+    break;
+  case NEW_SRV_ACTION_CHANGE_RUN_USER_ID:
+  case NEW_SRV_ACTION_CHANGE_RUN_PROB_ID:
+  case NEW_SRV_ACTION_CHANGE_RUN_VARIANT:
+  case NEW_SRV_ACTION_CHANGE_RUN_TEST:
+  case NEW_SRV_ACTION_CHANGE_RUN_SCORE:
+  case NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ:
+  case NEW_SRV_ACTION_CHANGE_RUN_PAGES:
+    if (sscanf(s, "%d%n", &param_int, &n) != 1 || s[n]) {
+      ns_html_err_inv_param(fout, phr, 1, "invalid integer param");
+      return -1;
+    }
+    break;
+  case NEW_SRV_ACTION_CHANGE_RUN_IS_IMPORTED:
+  case NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN:
+  case NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY:
+    if (sscanf(s, "%d%n", &param_bool, &n) != 1 || s[n]
+        || param_bool < 0 || param_bool > 1) {
+      ns_html_err_inv_param(fout, phr, 1, "invalid boolean param");
+      return -1;
+    }
+  default:
+    ns_error(log_f, NEW_SRV_ERR_UNHANDLED_ACTION, phr->action);
+    goto cleanup;
+  }
+
+  if (re.is_readonly && phr->action != NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY)
+    FAIL(NEW_SRV_ERR_RUN_READ_ONLY);
+
+  memset(&ne, 0, sizeof(ne));
+  switch (phr->action) {
+  case NEW_SRV_ACTION_CHANGE_RUN_USER_LOGIN:
+    if ((ne.user_id = teamdb_lookup_login(cs->teamdb_state, param_str)) <= 0)
+      FAIL(NEW_SRV_ERR_INV_USER_LOGIN);
+    ne_mask = RUN_ENTRY_USER;
+    break;
+  case NEW_SRV_ACTION_CHANGE_RUN_USER_ID:
+    if ((ne.user_id = teamdb_lookup(cs->teamdb_state, param_int)) <= 0)
+      FAIL(NEW_SRV_ERR_INV_USER_ID);
+    ne_mask = RUN_ENTRY_USER;
+    break;
+  case NEW_SRV_ACTION_CHANGE_RUN_PROB_ID:
+    if (param_int <= 0 || param_int > cs->max_prob || !cs->probs[param_int])
+      FAIL(NEW_SRV_ERR_INV_PROB_ID);
+    ne_mask = RUN_ENTRY_PROB;
+    break;
+  case NEW_SRV_ACTION_CHANGE_RUN_VARIANT:
+    if (re.prob_id <= 0 || re.prob_id > cs->max_prob
+        || !(prob = cs->probs[re.prob_id]))
+      FAIL(NEW_SRV_ERR_INV_PROB_ID);
+    if (prob->variant_num <= 0) {
+      if (param_int)
+        FAIL(NEW_SRV_ERR_INV_VARIANT);
+    } else {
+      if (param_int < 0 || param_int > prob->variant_num)
+        FAIL(NEW_SRV_ERR_INV_VARIANT);
+      if (!param_int && find_variant(cs, re.user_id, re.prob_id) <= 0)
+        FAIL(NEW_SRV_ERR_VARIANT_UNASSIGNED);
+    }
+    ne.variant = param_int;
+    ne_mask = RUN_ENTRY_VARIANT;
+    break;
+  case NEW_SRV_ACTION_CHANGE_RUN_TEST:
+    if (param_int < -1 || param_int >= 100000)
+      FAIL(NEW_SRV_ERR_INV_TEST);
+    ne.test = param_int;
+    ne_mask = RUN_ENTRY_TEST;
+    break;
+  case NEW_SRV_ACTION_CHANGE_RUN_SCORE:
+    if (global->score_system_val == SCORE_ACM
+        || (global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode))
+      FAIL(NEW_SRV_ERR_INV_PARAM);
+    if (re.prob_id <= 0 || re.prob_id > cs->max_prob
+        || !(prob = cs->probs[re.prob_id]))
+      FAIL(NEW_SRV_ERR_INV_PROB_ID);
+    if (param_int < 0 || param_int > prob->full_score)
+      FAIL(NEW_SRV_ERR_INV_SCORE);
+    ne.score = param_int;
+    ne_mask = RUN_ENTRY_SCORE;
+    break;
+  case NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ:
+    if (global->score_system_val != SCORE_KIROV
+        && (global->score_system_val != SCORE_OLYMPIAD || cs->accepting_mode))
+      FAIL(NEW_SRV_ERR_INV_PARAM);
+    if (param_int <= -100000 || param_int >= 100000)
+      FAIL(NEW_SRV_ERR_INV_SCORE_ADJ);
+    ne.score_adj = param_int;
+    ne_mask = RUN_ENTRY_SCORE_ADJ;
+    break;
+  case NEW_SRV_ACTION_CHANGE_RUN_PAGES:
+    if (param_int < 0 || param_int >= 100000)
+      FAIL(NEW_SRV_ERR_INV_PAGES);
+    ne.pages = param_int;
+    ne_mask = RUN_ENTRY_PAGES;
+    break;
+  case NEW_SRV_ACTION_CHANGE_RUN_IS_IMPORTED:
+    ne.is_imported = param_bool;
+    ne_mask = RUN_ENTRY_IMPORTED;
+    break;
+  case NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN:
+    ne.is_hidden = param_bool;
+    ne_mask = RUN_ENTRY_HIDDEN;
+    break;
+  case NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY:
+    ne.is_readonly = param_bool;
+    ne_mask = RUN_ENTRY_READONLY;
+    break;
+  }
+
+  if (!ne_mask) goto cleanup;
+
+  if (run_set_entry(cs->runlog_state, run_id, ne_mask, &ne) < 0)
+    FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
+
+ cleanup:
+  return retval;
+}
+
+/*
+ * NEW_SRV_ACTION_CHANGE_RUN_STATUS:
+ */
 static int
 priv_change_status(FILE *fout,
                    FILE *log_f,
@@ -3756,6 +4017,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRINT_RESUME] = priv_contest_operation,
   [NEW_SRV_ACTION_SET_JUDGING_MODE] = priv_contest_operation,
   [NEW_SRV_ACTION_SET_ACCEPTING_MODE] = priv_contest_operation,
+  [NEW_SRV_ACTION_SQUEEZE_RUNS] = priv_contest_operation,
   [NEW_SRV_ACTION_RESET_FILTER] = priv_reset_filter,
   [NEW_SRV_ACTION_RESET_CLAR_FILTER] = priv_reset_filter,
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = priv_change_language,
@@ -3769,6 +4031,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLAR_REPLY_NO] = priv_clar_reply,
   [NEW_SRV_ACTION_RELOAD_SERVER] = priv_contest_operation,
   [NEW_SRV_ACTION_CHANGE_STATUS] = priv_change_status,
+  [NEW_SRV_ACTION_CHANGE_RUN_STATUS] = priv_change_status,
   [NEW_SRV_ACTION_REJUDGE_DISPLAYED_2] = priv_rejudge_displayed,
   [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_2] = priv_rejudge_displayed,
   [NEW_SRV_ACTION_REJUDGE_PROBLEM_2] = priv_rejudge_problem,
@@ -3781,6 +4044,20 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_PASSWORDS_2] = priv_password_operation,
   [NEW_SRV_ACTION_USER_CHANGE_STATUS] = priv_user_operation,
   [NEW_SRV_ACTION_NEW_RUN] = priv_new_run,
+  [NEW_SRV_ACTION_CHANGE_RUN_USER_ID] = priv_edit_run,
+  [NEW_SRV_ACTION_CHANGE_RUN_USER_LOGIN] = priv_edit_run,
+  [NEW_SRV_ACTION_CHANGE_RUN_PROB_ID] = priv_edit_run,
+  [NEW_SRV_ACTION_CHANGE_RUN_VARIANT] = priv_edit_run,
+  [NEW_SRV_ACTION_CHANGE_RUN_IS_IMPORTED] = priv_edit_run,
+  [NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN] = priv_edit_run,
+  [NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY] = priv_edit_run,
+  [NEW_SRV_ACTION_CHANGE_RUN_TEST] = priv_edit_run,
+  [NEW_SRV_ACTION_CHANGE_RUN_SCORE] = priv_edit_run,
+  [NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ] = priv_edit_run,
+  [NEW_SRV_ACTION_CHANGE_RUN_PAGES] = priv_edit_run,
+  [NEW_SRV_ACTION_CLEAR_RUN] = priv_clear_run,
+  [NEW_SRV_ACTION_PRINT_RUN] = priv_print_run_cmd,
+  [NEW_SRV_ACTION_ISSUE_WARNING] = priv_user_issue_warning,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -3811,6 +4088,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_USER_INFO] = priv_user_detail_page,
   [NEW_SRV_ACTION_NEW_RUN_FORM] = priv_new_run_form_page,
   [NEW_SRV_ACTION_VIEW_USER_DUMP] = priv_view_user_dump,
+
 };
 
 static void
@@ -4487,6 +4765,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRINT_RESUME] = priv_generic_operation,
   [NEW_SRV_ACTION_SET_JUDGING_MODE] = priv_generic_operation,
   [NEW_SRV_ACTION_SET_ACCEPTING_MODE] = priv_generic_operation,
+  [NEW_SRV_ACTION_SQUEEZE_RUNS] = priv_generic_operation,
   [NEW_SRV_ACTION_RESET_FILTER] = priv_generic_operation,
   [NEW_SRV_ACTION_RESET_CLAR_FILTER] = priv_generic_operation,
   [NEW_SRV_ACTION_VIEW_SOURCE] = priv_generic_page,
@@ -4505,6 +4784,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_CLAR] = priv_generic_page,
   [NEW_SRV_ACTION_RELOAD_SERVER] = priv_generic_operation,
   [NEW_SRV_ACTION_CHANGE_STATUS] = priv_generic_operation,
+  [NEW_SRV_ACTION_CHANGE_RUN_STATUS] = priv_generic_operation,
   [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = priv_generic_page,
   [NEW_SRV_ACTION_REJUDGE_DISPLAYED_2] = priv_generic_operation,
   [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1] = priv_generic_page,
@@ -4540,6 +4820,20 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_USER_DUMP] = priv_generic_page,
   [NEW_SRV_ACTION_USER_CHANGE_STATUS] = priv_generic_operation,
   [NEW_SRV_ACTION_NEW_RUN] = priv_generic_operation,
+  [NEW_SRV_ACTION_CHANGE_RUN_USER_ID] = priv_generic_operation,
+  [NEW_SRV_ACTION_CHANGE_RUN_USER_LOGIN] = priv_generic_operation,
+  [NEW_SRV_ACTION_CHANGE_RUN_PROB_ID] = priv_generic_operation,
+  [NEW_SRV_ACTION_CHANGE_RUN_VARIANT] = priv_generic_operation,
+  [NEW_SRV_ACTION_CHANGE_RUN_IS_IMPORTED] = priv_generic_operation,
+  [NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN] = priv_generic_operation,
+  [NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY] = priv_generic_operation,
+  [NEW_SRV_ACTION_CHANGE_RUN_TEST] = priv_generic_operation,
+  [NEW_SRV_ACTION_CHANGE_RUN_SCORE] = priv_generic_operation,
+  [NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ] = priv_generic_operation,
+  [NEW_SRV_ACTION_CHANGE_RUN_PAGES] = priv_generic_operation,
+  [NEW_SRV_ACTION_CLEAR_RUN] = priv_generic_operation,
+  [NEW_SRV_ACTION_PRINT_RUN] = priv_generic_operation,
+  [NEW_SRV_ACTION_ISSUE_WARNING] = priv_generic_operation,
 };
 
 static void

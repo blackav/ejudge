@@ -1980,6 +1980,45 @@ serve_reset_contest(serve_state_t state)
     clear_directory(state->global->team_extra_dir);
 }
 
+void
+serve_squeeze_runs(serve_state_t state)
+{
+  int i, j, tot;
+
+  tot = run_get_total(state->runlog_state);
+  for (i = 0, j = 0; i < tot; i++) {
+    if (run_get_status(state->runlog_state, i) == RUN_EMPTY) continue;
+    if (i != j) {
+      archive_rename(state, state->global->run_archive_dir, 0, i, 0, j, 0, 0);
+      archive_rename(state, state->global->xml_report_archive_dir, 0, i, 0, j, 0, 1);
+      archive_rename(state, state->global->report_archive_dir, 0, i, 0, j, 0, 1);
+      if (state->global->team_enable_rep_view) {
+        archive_rename(state, state->global->team_report_archive_dir, 0, i, 0, j, 0, 0);
+      }
+      if (state->global->enable_full_archive) {
+        archive_rename(state, state->global->full_archive_dir, 0, i, 0, j, 0, 0);
+      }
+      archive_rename(state, state->global->audit_log_dir, 0, i, 0, j, 0, 1);
+    }
+    j++;
+  }
+  for (; j < tot; j++) {
+    archive_remove(state, state->global->run_archive_dir, j, 0);
+    archive_remove(state, state->global->xml_report_archive_dir, j, 0);
+    archive_remove(state, state->global->report_archive_dir, j, 0);
+    if (state->global->team_enable_rep_view) {
+      archive_remove(state, state->global->team_report_archive_dir, j, 0);
+    }
+    if (state->global->enable_full_archive) {
+      archive_remove(state, state->global->full_archive_dir, j, 0);
+    }
+    archive_remove(state, state->global->audit_log_dir, j, 0);
+  }
+  run_squeeze_log(state->runlog_state);
+
+  /* FIXME: add an audit record for each renumbered run */
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
