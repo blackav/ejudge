@@ -113,6 +113,7 @@ ns_write_priv_all_runs(FILE *f,
   const serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob = 0;
+  unsigned char cl[128];
 
   if (!u) u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
 
@@ -303,23 +304,26 @@ ns_write_priv_all_runs(FILE *f,
       abort();
     }
 
-    fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th>"
-            "<th>%s</th><th>%s</th>"
-            "<th>%s</th><th>%s</th>"
-            "<th>%s</th><th>%s</th>"
-            "<th>%s</th><th>%s</th>", 
-            _("Run ID"), _("Time"), _("Size"), _("IP"),
-            _("Team ID"), _("Team name"), _("Problem"),
-            _("Language"), _("Result"), str1);
+    // FIXME: class should be a parameter
+    snprintf(cl, sizeof(cl), " class=\"summary\"");
+
+    fprintf(f, "<table%s><tr><th%s>%s</th><th%s>%s</th>"
+            "<th%s>%s</th><th%s>%s</th>"
+            "<th%s>%s</th><th%s>%s</th>"
+            "<th%s>%s</th><th%s>%s</th>"
+            "<th%s>%s</th><th%s>%s</th>", 
+            cl, cl, _("Run ID"), cl, _("Time"), cl, _("Size"), cl, _("IP"),
+            cl, _("Team ID"), cl, _("Team name"), cl, _("Problem"),
+            cl, _("Language"), cl, _("Result"), cl, str1);
     if (str2) {
-      fprintf(f, "<th>%s</th>", str2);
+      fprintf(f, "<th%s>%s</th>", cl, str2);
     }
     if (phr->role == USER_ROLE_ADMIN) {
-      fprintf(f, "<th>%s</th>", _("New result"));
-      fprintf(f, "<th>%s</th>", _("Change result"));
+      fprintf(f, "<th%s>%s</th>", cl, _("New result"));
+      fprintf(f, "<th%s>%s</th>", cl, _("Change result"));
     }
-    fprintf(f, "<th>%s</th><th>%s</th></tr>\n",
-            _("View source"), _("View report"));
+    fprintf(f, "<th%s>%s</th><th%s>%s</th></tr>\n",
+            cl, _("View source"), cl, _("View report"));
     if (phr->role == USER_ROLE_ADMIN) {
       snprintf(endrow, sizeof(endrow), "</tr></form>\n");
     } else {
@@ -341,26 +345,26 @@ ns_write_priv_all_runs(FILE *f,
 
       if (pe->status == RUN_EMPTY) {
         run_status_str(pe->status, statstr, 0);
-        fprintf(f, "<td>%d</td>", rid);
-        fprintf(f, "<td>&nbsp;</td>");
-        fprintf(f, "<td>&nbsp;</td>");
-        fprintf(f, "<td>&nbsp;</td>");
-        fprintf(f, "<td>&nbsp;</td>");
-        fprintf(f, "<td>&nbsp;</td>");
-        fprintf(f, "<td>&nbsp;</td>");
-        fprintf(f, "<td>&nbsp;</td>");
-        fprintf(f, "<td><b>%s</b></td>", statstr);
-        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td%s>%d</td>", cl, rid);
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
+        fprintf(f, "<td%s><b>%s</b></td>", cl, statstr);
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
         if (global->score_system_val == SCORE_KIROV
             || global->score_system_val == SCORE_OLYMPIAD
             || global->score_system_val == SCORE_MOSCOW) {
-          fprintf(f, "<td>&nbsp;</td>");
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
-        fprintf(f, "<td>&nbsp;</td>");
-        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
         if (phr->role == USER_ROLE_ADMIN) {
-          fprintf(f, "<td>&nbsp;</td>");
-          fprintf(f, "<td>&nbsp;</td>");
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         fprintf(f, "%s", endrow);
         continue;
@@ -372,31 +376,31 @@ ns_write_priv_all_runs(FILE *f,
         duration_str(1, run_time, env.rhead.start_time, durstr, 0);
         run_status_str(pe->status, statstr, 0);
 
-        fprintf(f, "<td>%d</td>", rid);
-        fprintf(f, "<td>%s</td>", durstr);
-        fprintf(f, "<td>&nbsp;</td>");
-        fprintf(f, "<td>%s</td>", xml_unparse_ip(pe->a.ip));
-        fprintf(f, "<td>%d</td>", pe->user_id);
-        fprintf(f, "<td>%s</td>", teamdb_get_name_2(cs->teamdb_state,
-                                                    pe->user_id));
-        fprintf(f, "<td>&nbsp;</td>");
-        fprintf(f, "<td>&nbsp;</td>");
-        fprintf(f, "<td><b>%s</b></td>", statstr);
-        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td%s>%d</td>", cl, rid);
+        fprintf(f, "<td%s>%s</td>", cl, durstr);
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
+        fprintf(f, "<td%s>%s</td>", cl, xml_unparse_ip(pe->a.ip));
+        fprintf(f, "<td%s>%d</td>", cl, pe->user_id);
+        fprintf(f, "<td%s>%s</td>", cl, teamdb_get_name_2(cs->teamdb_state,
+                                                          pe->user_id));
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
+        fprintf(f, "<td%s><b>%s</b></td>", cl, statstr);
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
         if (global->score_system_val == SCORE_KIROV
             || global->score_system_val == SCORE_OLYMPIAD
             || global->score_system_val == SCORE_MOSCOW) {
-          fprintf(f, "<td>&nbsp;</td>");
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
-        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
         if (phr->role == USER_ROLE_ADMIN) {
-          fprintf(f, "<td>%s</td>", BUTTON(NEW_SRV_ACTION_CLEAR_RUN));
+          fprintf(f, "<td%s>%s</td>", cl, BUTTON(NEW_SRV_ACTION_CLEAR_RUN));
         } else {
-          fprintf(f, "<td>&nbsp;</td>");
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         if (phr->role == USER_ROLE_ADMIN) {
-          fprintf(f, "<td>&nbsp;</td>");
-          fprintf(f, "<td>&nbsp;</td>");
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         fprintf(f, "%s", endrow);
         continue;
@@ -439,13 +443,13 @@ ns_write_priv_all_runs(FILE *f,
       if (phr->role == USER_ROLE_ADMIN) {
         html_start_form(f, 1, phr->self_url, phr->hidden_vars);
       }
-      fprintf(f, "<td>%d%s</td>", rid, imported_str);
-      fprintf(f, "<td>%s</td>", durstr);
-      fprintf(f, "<td>%u</td>", pe->size);
-      fprintf(f, "<td>%s</td>", xml_unparse_ip(pe->a.ip));
-      fprintf(f, "<td>%d</td>", pe->user_id);
-      fprintf(f, "<td>%s</td>", teamdb_get_name_2(cs->teamdb_state,
-                                                  pe->user_id));
+      fprintf(f, "<td%s>%d%s</td>", cl, rid, imported_str);
+      fprintf(f, "<td%s>%s</td>", cl, durstr);
+      fprintf(f, "<td%s>%u</td>", cl, pe->size);
+      fprintf(f, "<td%s>%s</td>", cl, xml_unparse_ip(pe->a.ip));
+      fprintf(f, "<td%s>%d</td>", cl, pe->user_id);
+      fprintf(f, "<td%s>%s</td>", cl, teamdb_get_name_2(cs->teamdb_state,
+                                                        pe->user_id));
       if (pe->prob_id > 0 && pe->prob_id <= cs->max_prob
           && cs->probs[pe->prob_id]) {
         struct section_problem_data *cur_prob = cs->probs[pe->prob_id];
@@ -466,30 +470,30 @@ ns_write_priv_all_runs(FILE *f,
         prob_str = alloca(32);
         sprintf(prob_str, "??? - %d", pe->prob_id);
       }
-      fprintf(f, "<td>%s</td>", prob_str);
+      fprintf(f, "<td%s>%s</td>", cl, prob_str);
       if (pe->lang_id > 0 && pe->lang_id <= cs->max_lang
           && cs->langs[pe->lang_id]) {
-        fprintf(f, "<td>%s</td>", cs->langs[pe->lang_id]->short_name);
+        fprintf(f, "<td%s>%s</td>", cl, cs->langs[pe->lang_id]->short_name);
       } else if (!pe->lang_id) {
-        fprintf(f, "<td>N/A</td>");
+        fprintf(f, "<td%s>N/A</td>", cl);
       } else {
-        fprintf(f, "<td>??? - %d</td>", pe->lang_id);
+        fprintf(f, "<td%s>??? - %d</td>", cl, pe->lang_id);
       }
       write_html_run_status(cs, f, pe, 1, attempts, disq_attempts,
                             prev_successes);
       if (phr->role == USER_ROLE_ADMIN) {
         write_change_status_dialog(cs, f, "status", pe->is_imported);
-        fprintf(f, "<td>%s</td>", BUTTON(NEW_SRV_ACTION_CHANGE_STATUS));
+        fprintf(f, "<td%s>%s</td>", cl, BUTTON(NEW_SRV_ACTION_CHANGE_STATUS));
       }
 
-      fprintf(f, "<td><a href=\"%s\">%s</a></td>",
+      fprintf(f, "<td%s><a href=\"%s\">%s</a></td>", cl, 
               ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_SOURCE,
                      "run_id=%d", rid),
               _("View"));
       if (pe->is_imported) {
-        fprintf(f, "<td>N/A</td>");
+        fprintf(f, "<td%s>N/A</td>", cl);
       } else {
-        fprintf(f, "<td><a href=\"%s\">%s</a></td>",
+        fprintf(f, "<td%s><a href=\"%s\">%s</a></td>", cl,
                 ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_REPORT,
                        "run_id=%d", rid),
                 _("View"));
@@ -615,6 +619,7 @@ ns_write_all_clars(FILE *f,
   int show_astr_time;
   unsigned char bbuf[1024];
   struct clar_entry_v1 clar;
+  unsigned char cl[128];
 
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
@@ -702,13 +707,16 @@ ns_write_all_clars(FILE *f,
                            NEW_SRV_ACTION_RESET_CLAR_FILTER, 0));
   fprintf(f, "</p></form>\n");
 
-  fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th><th>%s</th>"
-          "<th>%s</th>"
-          "<th>%s</th>"
-          "<th>%s</th><th>%s</th>"
-          "<th>%s</th><th>%s</th></tr>\n",
-          _("Clar ID"), _("Flags"), _("Time"), _("IP"), _("Size"),
-          _("From"), _("To"), _("Subject"), _("View"));
+  snprintf(cl, sizeof(cl), " class=\"summary\"");
+
+  fprintf(f, "<table%s><tr><th%s>%s</th><th%s>%s</th><th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th><th%s>%s</th>"
+          "<th%s>%s</th><th%s>%s</th></tr>\n",
+          cl, cl, _("Clar ID"), cl, _("Flags"), cl, _("Time"),
+          cl, _("IP"), cl, _("Size"), cl, _("From"), cl, _("To"),
+          cl, _("Subject"), cl, _("View"));
   for (j = 0; j < list_tot; j++) {
     i = list_idx[j];
 
@@ -1896,11 +1904,15 @@ ns_write_passwords(FILE *fout, FILE *log_f,
   int i, max_user_id, serial = 1;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct teamdb_export td;
+  unsigned char cl[128];
 
-  fprintf(fout, "<table border=\"1\">\n"
-          "<tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th></tr>",
-          "NN", _("User Id"), _("User login"), _("User name"), _("Flags"),
-          _("Password"), _("Location"));
+  snprintf(cl, sizeof(cl), " class=\"summary\"");
+
+  fprintf(fout, "<table%s>\n"
+          "<tr><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th></tr>",
+          cl, cl, "NN", cl, _("User Id"), cl, _("User login"),
+          cl, _("User name"), cl, _("Flags"),
+          cl, _("Password"), cl, _("Location"));
   max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
   for (i = 1; i <= max_user_id; i++) {
     if (!teamdb_lookup(cs->teamdb_state, i)) continue;
@@ -1914,23 +1926,23 @@ ns_write_passwords(FILE *fout, FILE *log_f,
       if (td.user->passwd_method != USERLIST_PWD_PLAIN) continue;
       s = td.user->passwd;
     }
-    fprintf(fout, "<tr><td>%d</td><td>%d</td><td><tt>%s</tt></td>",
-            serial++, i, ARMOR(td.login));
+    fprintf(fout, "<tr><td%s>%d</td><td%s>%d</td><td%s><tt>%s</tt></td>",
+            cl, serial++, cl, i, cl, ARMOR(td.login));
     if (td.name && *td.name) {
-      fprintf(fout, "<td><tt>%s</tt></td>", ARMOR(td.name));
+      fprintf(fout, "<td%s><tt>%s</tt></td>", cl, ARMOR(td.name));
     } else {
-      fprintf(fout, "<td><i>%s</i></td>", _("Not set"));
+      fprintf(fout, "<td%s><i>%s</i></td>", cl, _("Not set"));
     }
-    fprintf(fout, "<td>%s</td>", "&nbsp;"); /* FIXME: print flags */
+    fprintf(fout, "<td%s>%s</td>", cl, "&nbsp;"); /* FIXME: print flags */
     if (s && *s) {
-      fprintf(fout, "<td><tt>%s</tt></td>", ARMOR(s));
+      fprintf(fout, "<td%s><tt>%s</tt></td>", cl, ARMOR(s));
     } else {
-      fprintf(fout, "<td><i>%s</i></td>", _("Not set"));
+      fprintf(fout, "<td%s><i>%s</i></td>", cl, _("Not set"));
     }
     if (td.user->i.location) {
-      fprintf(fout, "<td>%s</td>", ARMOR(td.user->i.location));
+      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(td.user->i.location));
     } else {
-      fprintf(fout, "<td><i>%s</i></td>", _("Not set"));
+      fprintf(fout, "<td%s><i>%s</i></td>", cl, _("Not set"));
     }
     fprintf(fout, "</tr>");
   }

@@ -209,11 +209,15 @@ table /* common table has no border */
         border-style: none;
 }
 
-td /* common table item has a thin solid border */
+td /* common table item has no border */
 {
-        border: solid;
-        border-width: 1px;
-        border-color: #000000;
+        border: none;
+        margin: 1px;
+}
+
+th /* common table item has no border */
+{
+        border: none;
         margin: 1px;
 }
 
