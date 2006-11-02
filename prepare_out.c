@@ -1099,6 +1099,8 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     fprintf(f, "start_date = \"%s\"\n", c_armor(&sbuf, prob->start_date));
   if (!prob->abstract && prob->deadline[0])
     fprintf(f, "deadline = \"%s\"\n", c_armor(&sbuf, prob->deadline));
+  if (prob->stand_attr[0])
+    fprintf(f, "stand_attr = \"%s\"\n", c_armor(&sbuf, prob->stand_attr));
 
   fprintf(f, "\n");
   if (prob->unhandled_vars) fprintf(f, "%s\n", prob->unhandled_vars);

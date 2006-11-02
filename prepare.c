@@ -353,6 +353,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(alternatives_file, "s"),
   PROBLEM_PARAM(type, "s"),
   PROBLEM_PARAM(alternative, "x"),
+  PROBLEM_PARAM(stand_attr, "s"),
 
   { 0, 0, 0, 0 }
 };
@@ -2417,6 +2418,9 @@ set_defaults(serve_state_t state, int mode)
         path_add_dir(state->probs[i]->alternatives_file,
                      state->global->statement_dir);
       }
+      prepare_set_prob_value(PREPARE_FIELD_PROB_STAND_ATTR,
+                             state->probs[i], state->abstr_probs[si],
+                             state->global);
     }
 
     if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
@@ -4635,6 +4639,13 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     if (global && out->alternatives_file[0]) {
       path_add_dir(out->alternatives_file, global->statement_dir);
+    }
+    break;
+
+  case PREPARE_FIELD_PROB_STAND_ATTR:
+    if (!out->stand_attr[0] && abstr && abstr->stand_attr[0]) {
+      snprintf(out->stand_attr, sizeof(out->stand_attr), "%s",
+               abstr->stand_attr);
     }
     break;
 
