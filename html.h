@@ -225,7 +225,8 @@ int calc_kirov_score(unsigned char *outbuf, size_t outsize,
 void write_html_run_status(const serve_state_t, FILE *f,
                            const struct run_entry *pe,
                            int priv_level, int attempts,
-                           int disq_attempts, int prev_successes);
+                           int disq_attempts, int prev_successes,
+                           const unsigned char *td_class);
 
 int write_tests(const serve_state_t, FILE *f, int cmd, int run_id,
                 int test_num);

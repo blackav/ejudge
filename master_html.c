@@ -855,7 +855,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
         fprintf(f, "<td>??? - %d</td>", pe->lang_id);
       }
       write_html_run_status(state, f, pe, priv_level, attempts, disq_attempts,
-                            prev_successes);
+                            prev_successes, 0);
       if (priv_level == PRIV_LEVEL_ADMIN) {
         snprintf(stat_select_name, sizeof(stat_select_name), "stat_%d", rid);
         write_change_status_dialog(state, f, stat_select_name, pe->is_imported);

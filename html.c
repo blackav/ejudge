@@ -194,16 +194,21 @@ void
 write_html_run_status(const serve_state_t state, FILE *f,
                       const struct run_entry *pe,
                       int priv_level, int attempts, int disq_attempts,
-                      int prev_successes)
+                      int prev_successes, const unsigned char *td_class)
 {
   unsigned char status_str[64], score_str[64];
   struct section_problem_data *pr = 0;
   int need_extra_col = 0;
+  unsigned char cl[128] = { 0 };
+
+  if (td_class && *td_class) {
+    snprintf(cl, sizeof(cl), " class=\"%s\"", td_class);
+  }
 
   if (pe->prob_id > 0 && pe->prob_id <= state->max_prob)
     pr = state->probs[pe->prob_id];
   run_status_str(pe->status, status_str, 0);
-  fprintf(f, "<td>%s</td>", status_str);
+  fprintf(f, "<td%s>%s</td>", cl, status_str);
 
   if (state->global->score_system_val == SCORE_KIROV
       || state->global->score_system_val == SCORE_OLYMPIAD
@@ -211,15 +216,15 @@ write_html_run_status(const serve_state_t state, FILE *f,
     need_extra_col = 1;
 
   if (pe->status >= RUN_PSEUDO_FIRST && pe->status <= RUN_PSEUDO_LAST) {
-    fprintf(f, "<td>&nbsp;</td>");
+    fprintf(f, "<td%s>&nbsp;</td>", cl);
     if (need_extra_col) {
-      fprintf(f, "<td>&nbsp;</td>");
+      fprintf(f, "<td%s>&nbsp;</td>", cl);
     }
     return;
   } else if (pe->status > RUN_MAX_STATUS) {
-    fprintf(f, "<td>%s</td>", _("N/A"));
+    fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
     if (need_extra_col) {
-      fprintf(f, "<td>%s</td>", _("N/A"));
+      fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
     }
     return;
   }
@@ -232,9 +237,9 @@ write_html_run_status(const serve_state_t state, FILE *f,
   case RUN_DISQUALIFIED:
   case RUN_PENDING:
   case RUN_COMPILE_ERR:
-    fprintf(f, "<td>%s</td>", _("N/A"));
+    fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
     if (need_extra_col) {
-      fprintf(f, "<td>%s</td>", _("N/A"));
+      fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
     }
     return;
   }
@@ -242,9 +247,9 @@ write_html_run_status(const serve_state_t state, FILE *f,
   if (state->global->score_system_val == SCORE_ACM) {
     if (pe->status == RUN_OK || pe->test <= 0
         || state->global->disable_failed_test_view > 0) {
-      fprintf(f, "<td>%s</td>", _("N/A"));
+      fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
     } else {
-      fprintf(f, "<td>%d</td>", pe->test);
+      fprintf(f, "<td%s>%d</td>", cl, pe->test);
     }
     return;
   }
@@ -252,30 +257,30 @@ write_html_run_status(const serve_state_t state, FILE *f,
   if (state->global->score_system_val == SCORE_MOSCOW) {
     if (pe->status == RUN_OK || pe->test <= 0
         || state->global->disable_failed_test_view > 0) {
-      fprintf(f, "<td>%s</td>", _("N/A"));
+      fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
     } else {
-      fprintf(f, "<td>%d</td>", pe->test);
+      fprintf(f, "<td%s>%d</td>", cl, pe->test);
     }
     if (pe->status == RUN_OK) {
-      fprintf(f, "<td><b>%d</b></td>", pe->score);
+      fprintf(f, "<td%s><b>%d</b></td>", cl, pe->score);
     } else {
-      fprintf(f, "<td>%d</td>", pe->score);
+      fprintf(f, "<td%s>%d</td>", cl, pe->score);
     }
     return;
   }
 
   if (pe->test <= 0) {
-    fprintf(f, "<td>%s</td>", _("N/A"));
+    fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
   } else {
-    fprintf(f, "<td>%d</td>", pe->test - 1);
+    fprintf(f, "<td%s>%d</td>", cl, pe->test - 1);
   }
 
   if (pe->score < 0 || !pr) {
-    fprintf(f, "<td>%s</td>", _("N/A"));
+    fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
   } else {
     calc_kirov_score(score_str, sizeof(score_str), pe, pr, attempts,
                      disq_attempts, prev_successes, 0, 0);
-    fprintf(f, "<td>%s</td>", score_str);
+    fprintf(f, "<td%s>%s</td>", cl, score_str);
   }
 }
 
@@ -993,7 +998,7 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
     fprintf(f, "<td%s>%s</td>", cl, lang_str);
 
     write_html_run_status(state, f, &re, 0, attempts, disq_attempts,
-                          prev_successes);
+                          prev_successes, table_class);
 
     if (state->global->team_enable_src_view) {
       fprintf(f, "<td%s>", cl);
@@ -4086,7 +4091,7 @@ do_write_public_log(const serve_state_t state,
     else fprintf(f, "<td>??? - %d</td>", pe->lang_id);
 
     write_html_run_status(state, f, pe, 0, attempts, disq_attempts,
-                          prev_successes);
+                          prev_successes, 0);
 
     fputs("</tr>\n", f);
   }
