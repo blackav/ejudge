@@ -4535,6 +4535,31 @@ super_html_print_problem(FILE *f,
 
   }
 
+  if (show_adv) {
+    //PROBLEM_PARAM(stand_attr, "s"),
+    extra_msg = 0;
+    if (prob->abstract && !prob->use_stdout) extra_msg = "";
+    if (!prob->abstract && !tmp_prob.use_stdout) {
+      extra_msg = "";
+      prepare_set_prob_value(PREPARE_FIELD_PROB_STAND_ATTR,
+                             &tmp_prob, sup_prob, sstate->global);
+      if (!prob->stand_attr[0]) {
+        s = html_armor_string_dup(tmp_prob.stand_attr);
+        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
+        xfree(s);
+        extra_msg = msg_buf;
+      }
+    }
+    if (!problem_type_flag && extra_msg) {
+      print_string_editing_row_2(f, "Standings attributes:", prob->stand_attr,
+                                 SUPER_ACTION_PROB_CHANGE_STAND_ATTR,
+                                 SUPER_ACTION_PROB_CLEAR_STAND_ATTR,
+                                 extra_msg,
+                                 session_id, form_row_attrs[row ^= 1],
+                                 self_url, extra_args, prob_hidden_vars);
+    }
+  }
+
   //PROBLEM_PARAM(standard_checker, "s"),
   print_std_checker_row(f, prob, sstate, session_id, form_row_attrs[row ^= 1],
                         self_url, extra_args, prob_hidden_vars);
@@ -5472,6 +5497,14 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CLEAR_ALTERNATIVES_FILE:
     PROB_CLEAR_STRING(alternatives_file);
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_STAND_ATTR:
+    PROB_ASSIGN_STRING(stand_attr);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_STAND_ATTR:
+    PROB_CLEAR_STRING(stand_attr);
     return 0;
 
   default:

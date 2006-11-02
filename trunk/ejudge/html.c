@@ -1544,6 +1544,7 @@ do_write_kirov_standings(const serve_state_t state,
   int ttot_att, ttot_succ, perc, t;
   const struct team_extra *t_extra;
   const unsigned char *row_attr = 0;
+  const unsigned char *col_attr = 0;
   int users_per_page, total_pages, current_page, user_on_page, dur_len;
   unsigned char **pgrefs = 0;
   int *pg_n1 = 0, *pg_n2 = 0;
@@ -2191,7 +2192,9 @@ do_write_kirov_standings(const serve_state_t state,
                 _("Warnings"));
       }
       for (j = 0; j < p_tot; j++) {
-        fprintf(f, "<th%s>", state->global->stand_prob_attr);
+        col_attr = state->probs[p_ind[j]]->stand_attr;
+        if (!*col_attr) col_attr = state->global->stand_prob_attr;
+        fprintf(f, "<th%s>", col_attr);
         if (state->global->prob_info_url[0]) {
           sformat_message(dur_str, sizeof(dur_str), state->global->prob_info_url,
                           NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
@@ -2276,7 +2279,8 @@ do_write_kirov_standings(const serve_state_t state,
     }
     for (j = 0; j < p_tot; j++) {
       up_ind = (t << row_sh) + j;
-      row_attr = state->global->stand_prob_attr;
+      row_attr = state->probs[p_ind[j]]->stand_attr;
+      if (!*row_attr) row_attr = state->global->stand_prob_attr;
       if (trans_num[up_ind] && state->global->stand_trans_attr[0])
         row_attr = state->global->stand_trans_attr;
       if (!att_num[up_ind]) {
@@ -2971,7 +2975,9 @@ do_write_moscow_standings(const serve_state_t state,
       fprintf(f, "<th%s>%s</th>", state->global->stand_warn_number_attr,
               _("Warnings"));
     for (j = 0; j < p_tot; j++) {
-      fprintf(f, "<th%s>", state->global->stand_prob_attr);
+      row_attr = state->probs[p_ind[j]]->stand_attr;
+      if (!*row_attr) row_attr = state->global->stand_prob_attr;
+      fprintf(f, "<th%s>", row_attr);
       if (state->global->prob_info_url[0]) {
         sformat_message(strbuf, sizeof(strbuf), state->global->prob_info_url,
                         NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
@@ -3103,7 +3109,9 @@ do_write_moscow_standings(const serve_state_t state,
         fprintf(f, "<th%s>%s</th>", state->global->stand_warn_number_attr,
                 _("Warnings"));
       for (j = 0; j < p_tot; j++) {
-        fprintf(f, "<th%s>", state->global->stand_prob_attr);
+        row_attr = state->probs[p_ind[j]]->stand_attr;
+        if (!*row_attr) row_attr = state->global->stand_prob_attr;
+        fprintf(f, "<th%s>", row_attr);
         if (state->global->prob_info_url[0]) {
           sformat_message(strbuf, sizeof(strbuf), state->global->prob_info_url,
                           NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
@@ -3401,6 +3409,7 @@ do_write_standings(const serve_state_t state,
   unsigned char *r_attrs[2][2] = {{"", ""}, {"", ""}};
   int row_sh, row_sz, up_ind, attr_num;
   int prev_prob = -1, row_ind = 0, group_ind = 1;
+  unsigned char *col_attr = 0;
 
   if (cur_time <= 0) cur_time = time(0);
   if (!only_table_flag) {
@@ -3723,7 +3732,9 @@ do_write_standings(const serve_state_t state,
               _("Warnings"));
     }
     for (j = 0; j < p_tot; j++) {
-      fprintf(f, "<th%s>", state->global->stand_prob_attr);
+      col_attr = state->probs[p_ind[j]]->stand_attr;
+      if (!*col_attr) col_attr = state->global->stand_prob_attr;
+      fprintf(f, "<th%s>", col_attr);
       if (state->global->prob_info_url[0]) {
         sformat_message(url_str, sizeof(url_str), state->global->prob_info_url,
                         NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
@@ -3822,7 +3833,9 @@ do_write_standings(const serve_state_t state,
       }
       for (j = 0; j < p_tot; j++) {
         up_ind = (t << row_sh) + j;
-        fprintf(f, "<td%s>", state->global->stand_prob_attr);
+        col_attr = state->probs[p_ind[j]]->stand_attr;
+        if (!*col_attr) col_attr = state->global->stand_prob_attr;
+        fprintf(f, "<td%s>", col_attr);
         if (calc[up_ind] < 0) {
           fprintf(f, "%d", calc[up_ind]);
         } else if (calc[up_ind] == 1) {
