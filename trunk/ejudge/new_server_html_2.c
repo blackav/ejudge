@@ -480,7 +480,7 @@ ns_write_priv_all_runs(FILE *f,
         fprintf(f, "<td%s>??? - %d</td>", cl, pe->lang_id);
       }
       write_html_run_status(cs, f, pe, 1, attempts, disq_attempts,
-                            prev_successes);
+                            prev_successes, "summary");
       if (phr->role == USER_ROLE_ADMIN) {
         write_change_status_dialog(cs, f, "status", pe->is_imported);
         fprintf(f, "<td%s>%s</td>", cl, BUTTON(NEW_SRV_ACTION_CHANGE_STATUS));
@@ -733,31 +733,34 @@ ns_write_all_clars(FILE *f,
     }
 
     fprintf(f, "<tr>");
-    if (clar.hide_flag) fprintf(f, "<td>%d#</td>", i);
-    else fprintf(f, "<td>%d</td>", i);
-    fprintf(f, "<td>%s</td>", clar_flags_html(cs->clarlog_state, clar.flags,
-                                              clar.from, clar.to, 0, 0));
-    fprintf(f, "<td>%s</td>", durstr);
-    fprintf(f, "<td>%s</td>", xml_unparse_ip(clar.a.ip));
-    fprintf(f, "<td>%u</td>", clar.size);
+    if (clar.hide_flag) fprintf(f, "<td%s>%d#</td>", cl, i);
+    else fprintf(f, "<td%s>%d</td>", cl, i);
+    fprintf(f, "<td%s>%s</td>", cl, 
+            clar_flags_html(cs->clarlog_state, clar.flags,
+                            clar.from, clar.to, 0, 0));
+    fprintf(f, "<td%s>%s</td>", cl, durstr);
+    fprintf(f, "<td%s>%s</td>", cl, xml_unparse_ip(clar.a.ip));
+    fprintf(f, "<td%s>%u</td>", cl, clar.size);
     if (!clar.from) {
       if (!clar.j_from)
-        fprintf(f, "<td><b>%s</b></td>", _("judges"));
+        fprintf(f, "<td%s><b>%s</b></td>", cl, _("judges"));
       else
-        fprintf(f, "<td><b>%s</b> (%s)</td>", _("judges"),
+        fprintf(f, "<td%s><b>%s</b> (%s)</td>", cl, _("judges"),
                 teamdb_get_name_2(cs->teamdb_state, clar.j_from));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name_2(cs->teamdb_state, clar.from));
+      fprintf(f, "<td%s>%s</td>", cl,
+              teamdb_get_name_2(cs->teamdb_state, clar.from));
     }
     if (!clar.to && !clar.from) {
-      fprintf(f, "<td><b>%s</b></td>", _("all"));
+      fprintf(f, "<td%s><b>%s</b></td>", cl, _("all"));
     } else if (!clar.to) {
-      fprintf(f, "<td><b>%s</b></td>", _("judges"));
+      fprintf(f, "<td%s><b>%s</b></td>", cl, _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name_2(cs->teamdb_state, clar.to));
+      fprintf(f, "<td%s>%s</td>", cl,
+              teamdb_get_name_2(cs->teamdb_state, clar.to));
     }
-    fprintf(f, "<td>%s</td>", ARMOR(clar.subj));
-    fprintf(f, "<td><a href=\"%s\">%s</a></td>",
+    fprintf(f, "<td%s>%s</td>", cl, ARMOR(clar.subj));
+    fprintf(f, "<td%s><a href=\"%s\">%s</a></td>", cl,
             ns_url(bbuf, sizeof(bbuf), phr, NEW_SRV_ACTION_VIEW_CLAR,
                    "clar_id=%d", i), _("View"));
     fprintf(f, "</tr>\n");
