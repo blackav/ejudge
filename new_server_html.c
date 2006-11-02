@@ -3242,6 +3242,7 @@ priv_view_users_page(FILE *fout,
   unsigned char bb[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int details_allowed = 0;
+  unsigned char cl[128];
 
   if (open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 1, 0);
@@ -3264,31 +3265,33 @@ priv_view_users_page(FILE *fout,
 
   fprintf(fout, "<h2>Registered users</h2>");
 
+  snprintf(cl, sizeof(cl), " class=\"summary\"");
+
   html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-  fprintf(fout, "<table><tr><th>NN</th><th>Id</th><th>Login</th><th>Name</th><th>Status</th><th>Flags</th><th>Reg. date</th><th>Login date</th><th>Select</th></tr>\n");
+  fprintf(fout, "<table%s><tr><th%s>NN</th><th%s>Id</th><th%s>Login</th><th%s>Name</th><th%s>Status</th><th%s>Flags</th><th%s>Reg. date</th><th%s>Login date</th><th%s>Select</th></tr>\n", cl, cl, cl, cl, cl, cl, cl, cl, cl, cl);
   for (uid = 1; uid < users->user_map_size; uid++) {
     if (!(u = users->user_map[uid])) continue;
     if (!(uc = userlist_get_user_contest(u, phr->contest_id))) continue;
 
     fprintf(fout, "<tr%s>", form_row_attrs[row ^= 1]);
-    fprintf(fout, "<td>%d</td><td>%d</td>", serial++, uid);
+    fprintf(fout, "<td%s>%d</td><td%s>%d</td>", cl, serial++, cl, uid);
     if (details_allowed) {
-      fprintf(fout, "<td>%s%s</a></td>",
+      fprintf(fout, "<td%s>%s%s</a></td>", cl,
               ns_aref(bb, sizeof(bb), phr,
                       NEW_SRV_ACTION_VIEW_USER_INFO, "user_id=%d", uid),
               ARMOR(u->login));
     } else {
-      fprintf(fout, "<td>%s</td>", ARMOR(u->login));
+      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(u->login));
     }
     if (u->i.name && *u->i.name) {
-      fprintf(fout, "<td>%s</td>", ARMOR(u->i.name));
+      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(u->i.name));
     } else {
-      fprintf(fout, "<td>&nbsp;</td>");
+      fprintf(fout, "<td%s>&nbsp;</td>", cl);
     }
-    fprintf(fout, "<td>%s</td>", userlist_unparse_reg_status(uc->status));
+    fprintf(fout, "<td%s>%s</td>", cl, userlist_unparse_reg_status(uc->status));
     if ((uc->flags & (USERLIST_UC_BANNED | USERLIST_UC_INVISIBLE | USERLIST_UC_LOCKED))) {
       r = 0;
-      fprintf(fout, "<td>");
+      fprintf(fout, "<td%s>", cl);
       if ((uc->flags & USERLIST_UC_BANNED))
         fprintf(fout, "%s%s", r++?",":"", "banned");
       if ((uc->flags & USERLIST_UC_INVISIBLE))
@@ -3297,19 +3300,21 @@ priv_view_users_page(FILE *fout,
         fprintf(fout, "%s%s", r++?",":"", "locked");
       fprintf(fout, "</td>");
     } else {
-      fprintf(fout, "<td>&nbsp;</td>");
+      fprintf(fout, "<td%s>&nbsp;</td>", cl);
     }
     if (uc->date > 0) {
-      fprintf(fout, "<td>%s</td>", xml_unparse_date(uc->date));
+      fprintf(fout, "<td%s>%s</td>", cl, xml_unparse_date(uc->date));
     } else {
-      fprintf(fout, "<td>&nbsp;</td>");
+      fprintf(fout, "<td%s>&nbsp;</td>", cl);
     }
     if (u->i.last_login_time > 0) {
-      fprintf(fout, "<td>%s</td>", xml_unparse_date(u->i.last_login_time));
+      fprintf(fout, "<td%s>%s</td>", cl,
+              xml_unparse_date(u->i.last_login_time));
     } else {
-      fprintf(fout, "<td>&nbsp;</td>");
+      fprintf(fout, "<td%s>&nbsp;</td>", cl);
     }
-    fprintf(fout, "<td><input type=\"checkbox\" name=\"user_%d\"></td>", uid);
+    fprintf(fout, "<td%s><input type=\"checkbox\" name=\"user_%d\"></td>",
+            cl, uid);
     fprintf(fout, "</tr>\n");
   }
   fprintf(fout, "</table>\n");
@@ -3413,6 +3418,7 @@ priv_view_priv_users_page(FILE *fout,
   unsigned char url[1024];
   unsigned char bb[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char cl[128];
 
   XMEMZERO(&users, 1);
 
@@ -3486,26 +3492,28 @@ priv_view_priv_users_page(FILE *fout,
             phr->name_arm, extra->contest_arm,
             _("Privileged users page"));
 
+  snprintf(cl, sizeof(cl), " class=\"summary\"");
+
   fprintf(fout, "<h2>Privileged users</h2>");
 
   html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-  fprintf(fout, "<table><tr><th>NN</th><th>Id</th><th>Login</th><th>Name</th><th>Roles</th><th>Select</th></tr>\n");
+  fprintf(fout, "<table%s><tr><th%s>NN</th><th%s>Id</th><th%s>Login</th><th%s>Name</th><th%s>Roles</th><th%s>Select</th></tr>\n", cl, cl, cl, cl, cl, cl, cl);
   for (i = 0; i < users.u; i++) {
-    fprintf(fout, "<tr%s><td>%d</td>", form_row_attrs[row ^= 1], i + 1);
-    fprintf(fout, "<td>%d</td>", users.v[i]->user_id);
-    fprintf(fout, "<td>%s</td>", ARMOR(users.v[i]->login));
-    fprintf(fout, "<td>%s</td>", ARMOR(users.v[i]->name));
+    fprintf(fout, "<tr%s><td%s>%d</td>", form_row_attrs[row ^= 1], cl, i + 1);
+    fprintf(fout, "<td%s>%d</td>", cl, users.v[i]->user_id);
+    fprintf(fout, "<td%s>%s</td>", cl, ARMOR(users.v[i]->login));
+    fprintf(fout, "<td%s>%s</td>", cl, ARMOR(users.v[i]->name));
     if ((role_mask = users.v[i]->role_mask)) {
-      fprintf(fout, "<td>");
+      fprintf(fout, "<td%s>", cl);
       for (cnt = 0, r = USER_ROLE_OBSERVER; r <= USER_ROLE_ADMIN; r++)
         if ((role_mask & (1 << r)))
           fprintf(fout, "%s%s", cnt++?",":"", ns_unparse_role(r));
       fprintf(fout, "</td>");
     } else {
-      fprintf(fout, "<td>&nbsp;</td>");
+      fprintf(fout, "<td%s>&nbsp;</td>", cl);
     }
-    fprintf(fout, "<td><input type=\"checkbox\" name=\"user_%d\"></td>",
-            users.v[i]->user_id);
+    fprintf(fout, "<td%s><input type=\"checkbox\" name=\"user_%d\"></td>",
+            cl, users.v[i]->user_id);
     fprintf(fout, "</tr>\n");
   }
   fprintf(fout, "</table>\n");
