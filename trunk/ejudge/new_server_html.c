@@ -7466,7 +7466,7 @@ unpriv_page_header(FILE *fout,
   } else {
     status_style = "server_status_on";
   }
-  fprintf(fout, "<div class=\"%s\">\n", status_style);
+  fprintf(fout, "<div class=\"%s\"><table class=\"menu\"><tr><td class=\"menu\"><div class=\"contest_actions_item\">\n", status_style);
   fprintf(fout, "%s", brief_time(time_buf, sizeof(time_buf), cs->current_time));
   if (unread_clars > 0) {
     fprintf(fout, _(" / <b>%d unread message(s)</b>"),
@@ -7528,7 +7528,7 @@ unpriv_page_header(FILE *fout,
     fprintf(fout, " / %s: %s", _("Remaining"), time_buf);
   }
 
-  fprintf(fout, "</div>\n");
+  fprintf(fout, "</div></td></tr></table></div>\n");
 }
 
 static const unsigned char *main_page_headers[NEW_SRV_ACTION_LAST] =
