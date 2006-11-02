@@ -219,12 +219,17 @@ static const int acm_status_list[] =
 void
 write_change_status_dialog(const serve_state_t state,
                            FILE *f, unsigned char const *var_name,
-                           int disable_rejudge_flag)
+                           int disable_rejudge_flag,
+                           const unsigned char *td_class)
 {
   const int * cur_status_list = 0;
   int i;
+  unsigned char cl[128] = { 0 };
 
   if (!var_name) var_name = "status";
+  if (td_class && *td_class) {
+    snprintf(cl, sizeof(cl), " class=\"%s\"", td_class);
+  }
 
   // various sets of valid run statuses
   if (state->global->score_system_val == SCORE_KIROV) {
@@ -244,7 +249,8 @@ write_change_status_dialog(const serve_state_t state,
     else cur_status_list = acm_status_list;
   }
 
-  fprintf(f, "<td><select name=\"%s\"><option value=\"\"></option>", var_name);
+  fprintf(f, "<td%s><select name=\"%s\"><option value=\"\"></option>",
+          cl, var_name);
   for (i = 0; cur_status_list[i] != -1; i++) {
     fprintf(f, "<option value=\"%d\">%s</option>",
             cur_status_list[i], change_status_strings[cur_status_list[i]]);
@@ -858,7 +864,8 @@ write_priv_all_runs(serve_state_t state, FILE *f,
                             prev_successes, 0);
       if (priv_level == PRIV_LEVEL_ADMIN) {
         snprintf(stat_select_name, sizeof(stat_select_name), "stat_%d", rid);
-        write_change_status_dialog(state, f, stat_select_name, pe->is_imported);
+        write_change_status_dialog(state, f, stat_select_name, pe->is_imported,
+                                   0);
         fprintf(f,
                 "<td><input type=\"submit\" name=\"change_%d\""
                 " value=\"%s\"></td>\n", rid, _("change"));
@@ -1482,7 +1489,7 @@ write_priv_source(const serve_state_t state, FILE *f,
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
-    write_change_status_dialog(state, f, 0, info.is_imported);
+    write_change_status_dialog(state, f, 0, info.is_imported, 0);
     fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_STATUS, _("Change"));
   } else {
     fprintf(f, "%s", nbsp);
@@ -1764,7 +1771,7 @@ write_new_run_form(const serve_state_t state, FILE *f,
   fprintf(f, "</tr>\n");
 
   fprintf(f, "<tr><td>%s:</td>", _("Status"));
-  write_change_status_dialog(state, f, 0, 0);
+  write_change_status_dialog(state, f, 0, 0, 0);
   fprintf(f, "</tr>\n");
 
   if (state->global->score_system_val == SCORE_KIROV
