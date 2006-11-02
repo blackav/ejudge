@@ -16,6 +16,7 @@
  */
 
 #include "checker_internal.h"
+#include <errno.h>
 
 void
 checker_read_file_f(FILE *f, unsigned char **out, size_t *out_len)
@@ -39,7 +40,7 @@ checker_read_file_f(FILE *f, unsigned char **out, size_t *out_len)
     }
   }
   if (ferror(f)) {
-    fatal_CF("Input error");
+    fatal_CF("Input error: %s", strerror(errno));
   }
   if (!buf_len) {
     buf = (unsigned char*) xmalloc(1);
