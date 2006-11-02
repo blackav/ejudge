@@ -482,7 +482,8 @@ ns_write_priv_all_runs(FILE *f,
       write_html_run_status(cs, f, pe, 1, attempts, disq_attempts,
                             prev_successes, "summary");
       if (phr->role == USER_ROLE_ADMIN) {
-        write_change_status_dialog(cs, f, "status", pe->is_imported);
+        write_change_status_dialog(cs, f, "status", pe->is_imported,
+                                   "summary");
         fprintf(f, "<td%s>%s</td>", cl, BUTTON(NEW_SRV_ACTION_CHANGE_STATUS));
       }
 
@@ -1129,7 +1130,7 @@ ns_write_priv_source(const serve_state_t state,
   fprintf(f, "<tr><td>%s:</td><td>%s</td>",
           _("Status"), run_status_str(info.status, 0, 0));
   if (editable) {
-    write_change_status_dialog(state, f, 0, info.is_imported);
+    write_change_status_dialog(state, f, 0, info.is_imported, 0);
     fprintf(f, "<td>%s</td></tr></form>\n",
             BUTTON(NEW_SRV_ACTION_CHANGE_RUN_STATUS));
   } else {
@@ -2286,7 +2287,7 @@ ns_new_run_form(FILE *fout, FILE *log_f,
           html_select_yesno(bb, sizeof(bb), "is_readonly", 0));
 
   fprintf(fout, "<tr><td>%s:</td>", _("Status"));
-  write_change_status_dialog(cs, fout, 0, 0);
+  write_change_status_dialog(cs, fout, 0, 0, 0);
   fprintf(fout, "</tr>\n");
 
   if (global->score_system_val == SCORE_KIROV
