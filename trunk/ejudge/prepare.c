@@ -306,6 +306,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(disable_auto_testing, "d"),
   PROBLEM_PARAM(disable_testing, "d"),
   PROBLEM_PARAM(disable_user_submit, "d"),
+  PROBLEM_PARAM(disable_submit_after_ok, "d"),
   PROBLEM_PARAM(enable_compilation, "d"),
   PROBLEM_PARAM(skip_testing, "d"),
   PROBLEM_PARAM(variable_full_score, "d"),
@@ -606,6 +607,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->disable_auto_testing = -1;
   p->disable_testing = -1;
   p->disable_user_submit = -1;
+  p->disable_submit_after_ok = -1;
   p->enable_compilation = -1;
   p->skip_testing = -1;
   p->test_score = -1;
@@ -2254,6 +2256,8 @@ set_defaults(serve_state_t state, int mode)
                            state->probs[i], aprob, state->global);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_USER_SUBMIT,
+                           state->probs[i], aprob, state->global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_SUBMIT_AFTER_OK,
                            state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_AUTO_TESTING,
                            state->probs[i], aprob, state->global);
@@ -4288,6 +4292,15 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->disable_user_submit = abstr->disable_user_submit;
     if (out->disable_user_submit == -1)
       out->disable_user_submit = 0;
+    break;
+
+  case PREPARE_FIELD_PROB_DISABLE_SUBMIT_AFTER_OK:
+    if (out->disable_submit_after_ok < 0 && abstr)
+      out->disable_submit_after_ok = abstr->disable_submit_after_ok;
+    if (out->disable_submit_after_ok < 0 && global)
+      out->disable_submit_after_ok = global->disable_submit_after_ok;
+    if (out->disable_submit_after_ok < 0)
+      out->disable_submit_after_ok = 0;
     break;
 
   case PREPARE_FIELD_PROB_DISABLE_TESTING:

@@ -404,6 +404,7 @@ struct section_problem_data
   int    accept_partial;        /* whether accept partial solutions */
   int    checker_real_time_limit;
   int    disable_user_submit;   /* user cannot submit this problem */
+  int    disable_submit_after_ok;
   int    disable_auto_testing;
   int    disable_testing;
   int    enable_compilation;
@@ -632,6 +633,7 @@ enum
   PREPARE_FIELD_PROB_TEAM_ENABLE_CE_VIEW,
   PREPARE_FIELD_PROB_TEAM_SHOW_JUDGE_REPORT,
   PREPARE_FIELD_PROB_DISABLE_USER_SUBMIT,
+  PREPARE_FIELD_PROB_DISABLE_SUBMIT_AFTER_OK,
   PREPARE_FIELD_PROB_DISABLE_TESTING,
   PREPARE_FIELD_PROB_DISABLE_AUTO_TESTING,
   PREPARE_FIELD_PROB_ENABLE_COMPILATION,
