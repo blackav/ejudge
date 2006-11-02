@@ -7,13 +7,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-02 13:56+0300\n"
-"PO-Revision-Date: 2006-11-02 14:12+0300\n"
+"POT-Creation-Date: 2006-11-02 20:40+0300\n"
+"PO-Revision-Date: 2006-11-02 20:42+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=koi8-r\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#, c-format
+msgid " / <b>%d unread message(s)</b>"
+msgstr " / <b>%d непрочитанных</b>"
 
 #, c-format
 msgid " [%s, frozen]"
@@ -1578,6 +1582,9 @@ msgstr "НЕТ"
 msgid "NO."
 msgstr "НЕТ."
 
+msgid "NOT STARTED"
+msgstr "НЕ НАЧАЛСЯ"
+
 msgid "Name"
 msgstr "Имя"
 
@@ -1702,6 +1709,12 @@ msgstr "Число предупреждений"
 
 msgid "OK"
 msgstr "OK"
+
+msgid "OVER"
+msgstr "ЗАКОНЧЕН"
+
+msgid "OVER (frozen)"
+msgstr "ЗАКОНЧЕН (заморозка)"
 
 msgid "Observer"
 msgstr "Наблюдатель"
@@ -1938,6 +1951,12 @@ msgstr "Выйти из системы"
 msgid "REGISTER!"
 msgstr "ЗАРЕГИСТРИРОВАТЬСЯ!"
 
+msgid "RUNNING"
+msgstr "ТУРНИР ИДЕТ"
+
+msgid "RUNNING (frozen)"
+msgstr "ТУРНИР ИДЕТ (заморозка)"
+
 msgid "Re"
 msgstr "Re"
 
@@ -2054,6 +2073,9 @@ msgstr "Перезагрузить конфигурационные файлы"
 
 msgid "Reload server"
 msgstr "Перезапустить сервер"
+
+msgid "Remaining"
+msgstr "Остаётся"
 
 msgid "Remaining time"
 msgstr "Остающееся время"
@@ -2392,6 +2414,9 @@ msgstr "Время разморозки таблицы результатов"
 
 msgid "Start"
 msgstr "Начать"
+
+msgid "Start at"
+msgstr "Начало в"
 
 msgid "Start virtual contest"
 msgstr "Начать виртуальный турнир"
@@ -2983,6 +3008,9 @@ msgstr "Значение параметра `run_id' %d за пределами допустимых"
 msgid "`run_id' parameter value is invalid."
 msgstr "Номер посылки %d недопустим"
 
+msgid "accepting"
+msgstr "приём решений"
+
 msgid "access denied"
 msgstr "в доступе отказано"
 
@@ -3015,6 +3043,9 @@ msgstr "сообщения отключены"
 
 msgid "clear"
 msgstr "очистить"
+
+msgid "clients suspended"
+msgstr "клиенты приостановлены"
 
 msgid "contest deadline exceeded"
 msgstr "регистрация на турнир завершена"
@@ -3112,6 +3143,9 @@ msgstr "неверный идентификатор пользователя"
 msgid "judges"
 msgstr "судьи"
 
+msgid "judging"
+msgstr "проверка решений"
+
 msgid "language"
 msgstr "язык"
 
@@ -3193,6 +3227,9 @@ msgstr "сервер оборвал соединение"
 msgid "permission denied"
 msgstr "в доступе отказано"
 
+msgid "printing suspended"
+msgstr "печать приостановлена"
+
 msgid "protocol error"
 msgstr "ошибка протокола"
 
@@ -3219,6 +3256,9 @@ msgstr "превышена квота страниц пользователя"
 
 msgid "team standings"
 msgstr "положение команд"
+
+msgid "testing suspended"
+msgstr "тестирование приостановлено"
 
 msgid "the contest is already finished"
 msgstr "турнир уже завершён"

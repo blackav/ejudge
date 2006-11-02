@@ -7270,6 +7270,15 @@ insert_variant_num(unsigned char *buf, size_t size,
   return snprintf(buf, size, "%.*s-%d%s", pos, file, variant, file + pos);
 }
 
+static unsigned char *
+brief_time(unsigned char *buf, size_t size, time_t time)
+{
+  struct tm *ptm = localtime(&time);
+  snprintf(buf, size, "%02d:%02d:%02d",
+           ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
+  return buf;
+}
+
 static void
 unpriv_page_header(FILE *fout,
                    struct http_request_info *phr,
@@ -7323,12 +7332,14 @@ unpriv_page_header(FILE *fout,
   serve_state_t cs = extra->serve_state;
   const unsigned char *forced_url = 0;
   const struct section_global_data *global = cs->global;
+  int unread_clars = 0;
+  const unsigned char *status_style = "", *s;
+  unsigned char time_buf[64];
+  time_t duration = 0, sched_time = 0, fog_start_time = 0;
 
   if (!phr->action) phr->action = NEW_SRV_ACTION_MAIN_PAGE;
 
-  // here must be contest status line
   fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>");
-  //fprintf(fout, "Contest status");
   for (i = 0; top_action_list[i] != -1; i++) {
     if (phr->action == top_action_list[i]) {
       fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>", gettext(top_action_names[i]));
@@ -7403,9 +7414,120 @@ unpriv_page_header(FILE *fout,
   if (extra->separator_txt && *extra->separator_txt) {
     fprintf(fout, "%s", extra->separator_txt);
   }
+
+  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, 0);
+  if (duration > 0 && start_time && !stop_time && global->board_fog_time > 0)
+    fog_start_time = start_time + duration - global->board_fog_time;
+  if (fog_start_time < 0) fog_start_time = 0;
+  ///////////////////
+  /*
+  if (stop_time <= 0 && (duration > 0 || global->contest_finish_time_d <= 0)) {
+    if (duration > 0) {
+      duration_str(0, duration, 0, duration_buf, 0);
+    } else {
+      snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
+    }
+    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
+            _("Duration"), duration_buf);
+  }
+  if (start_time > 0 && stop_time <= 0 && duration > 0) {
+    tmpt = start_time + duration;
+    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
+            _("Scheduled end time"), ctime(&tmpt));
+  } else if (start_time > 0 && stop_time <= 0 && duration <= 0
+             && global->contest_finish_time_d > 0) {
+    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
+            _("Scheduled end time"), ctime(&global->contest_finish_time_d));
+  } else if (stop_time) {
+    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
+            _("End time"), ctime(&stop_time));
+  }
+
+  if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
+    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
+            _("Standings freeze time"), ctime(&fog_start_time));
+  } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
+             && global->board_unfog_time > 0 && !cs->standings_updated
+             && cs->current_time < stop_time + global->board_unfog_time) {
+    tmpt = stop_time + global->board_unfog_time;
+    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
+            _("Standings unfreeze time"), ctime(&tmpt));
+  }
+
+  fprintf(fout, "</table>\n");
+  */
   // server status is here
-  fprintf(fout, "<div class=\"server_status_on\">\n");
-  fprintf(fout, "&nbsp;");
+  if (!cs->global->disable_clars || !cs->global->disable_team_clars)
+    unread_clars = serve_count_unread_clars(cs, phr->user_id, start_time);
+  if (cs->clients_suspended) {
+    status_style = "server_status_off";
+  } else if (unread_clars > 0) {
+    status_style = "server_status_alarm";
+  } else {
+    status_style = "server_status_on";
+  }
+  fprintf(fout, "<div class=\"%s\">\n", status_style);
+  fprintf(fout, "%s", brief_time(time_buf, sizeof(time_buf), cs->current_time));
+  if (unread_clars > 0) {
+    fprintf(fout, _(" / <b>%d unread message(s)</b>"),
+            unread_clars);
+  }
+
+  if (stop_time > 0) {
+    if (duration > 0 && global->board_fog_time > 0
+        && global->board_unfog_time > 0
+        && cs->current_time < stop_time + global->board_unfog_time
+        && !cs->standings_updated) {
+      s = _("OVER (frozen)");
+    } else {
+      s = _("OVER");
+    }
+  } else if (start_time > 0) {
+    if (fog_start_time > 0 && cs->current_time >= fog_start_time)
+      s = _("RUNNING (frozen)");
+    else
+      s = _("RUNNING");
+  } else {
+    s = _("NOT STARTED");
+  }
+  fprintf(fout, " / <b>%s</b>", s);
+
+  if (start_time > 0) {
+    if (global->score_system_val == SCORE_OLYMPIAD) {
+      if (cs->accepting_mode)
+        s = _("accepting");
+      else
+        s = _("judging");
+      fprintf(fout, " / <b>%s</b>", s);
+    }
+  }
+
+  if (cs->clients_suspended) {
+    fprintf(fout, " / <b><font color=\"red\">%s</font></b>",
+            _("clients suspended"));
+  }
+
+  if (start_time > 0) {
+    if (cs->testing_suspended) {
+      fprintf(fout, " / <b><font color=\"red\">%s</font></b>",
+            _("testing suspended"));
+    }
+    if (cs->printing_suspended) {
+      fprintf(fout, " / <b><font color=\"red\">%s</font></b>",
+              _("printing suspended"));
+    }
+  }
+
+  if (!global->is_virtual && start_time <= 0 && sched_time > 0) {
+    fprintf(fout, " / %s: %s",
+            _("Start at"), brief_time(time_buf, sizeof(time_buf), sched_time));
+  }
+
+  if (start_time > 0 && stop_time <= 0 && duration > 0) {
+    duration_str(0, start_time + duration - cs->current_time, 0, time_buf, 0);
+    fprintf(fout, " / %s: %s", _("Remaining"), time_buf);
+  }
+
   fprintf(fout, "</div>\n");
 }
 
@@ -7432,7 +7554,7 @@ user_main_page(FILE *fout,
   long long tdiff;
   time_t start_time, stop_time, duration, sched_time, fog_start_time = 0;
   const unsigned char *s;
-  int unread_clars, all_runs = 0, all_clars = 0;
+  int all_runs = 0, all_clars = 0;
   unsigned char *solved_flag = 0;
   unsigned char *accepted_flag = 0;
   int n, v, prob_id = 0, i, j, variant = 0;
@@ -7485,15 +7607,6 @@ user_main_page(FILE *fout,
             phr->name_arm, extra->contest_arm, header);
 
   unpriv_page_header(fout, phr, cnts, extra, start_time, stop_time);
-
-  // TODO: move to status
-  if (!cs->global->disable_clars || !cs->global->disable_team_clars){
-    unread_clars = serve_count_unread_clars(cs, phr->user_id, start_time);
-    if (unread_clars > 0) {
-      fprintf(fout, _("<hr><big><b>You have %d unread message(s)!</b></big>\n"),
-              unread_clars);
-    }
-  }
 
   if (phr->action == NEW_SRV_ACTION_MAIN_PAGE) {
     unpriv_print_status(fout, phr, cnts, extra,
