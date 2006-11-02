@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-29 23:42+0300\n"
-"PO-Revision-Date: 2006-10-29 23:43+0300\n"
+"POT-Creation-Date: 2006-11-02 13:56+0300\n"
+"PO-Revision-Date: 2006-11-02 14:12+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -837,6 +837,9 @@ msgstr "Прошедшее время"
 msgid "Empty"
 msgstr "не заполнено"
 
+msgid "Empty text of warning"
+msgstr "Текст предупреждения пуст"
+
 msgid "End time"
 msgstr "Время окончания турнира"
 
@@ -1308,6 +1311,9 @@ msgstr "Неверный идентификатор языка"
 msgid "Invalid login"
 msgstr "Неверное регистрационное имя"
 
+msgid "Invalid pages count"
+msgstr "Неверное количество страниц"
+
 msgid "Invalid parameter"
 msgstr "Неверные параметр"
 
@@ -1332,6 +1338,12 @@ msgstr "Неверный номер посылки для сравнения"
 msgid "Invalid run_id"
 msgstr "Неверный номер посылки"
 
+msgid "Invalid score"
+msgstr "Неверные баллы"
+
+msgid "Invalid score adjustment"
+msgstr "Неверная поправка баллов"
+
 msgid "Invalid serial number."
 msgstr "Неверный уникальный номер."
 
@@ -1348,6 +1360,12 @@ msgstr "Недопустимый статус"
 
 msgid "Invalid test"
 msgstr "Неверный тест"
+
+msgid "Invalid text of warning"
+msgstr "Текст предупреждения недопустим"
+
+msgid "Invalid text of warning comment"
+msgstr "Неверный текст комментария к предупреждению"
 
 msgid "Invalid time specification"
 msgstr "Неверная спецификация времени"
@@ -2149,6 +2167,9 @@ msgstr "Параметры роли/члена не определены."
 
 msgid "Run ID"
 msgstr "Номер решения"
+
+msgid "Run is read-only"
+msgstr "Эта посылка не может быть изменена"
 
 msgid "Run log update failed"
 msgstr "Обновление журнала посылок не удалось"
