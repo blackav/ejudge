@@ -4734,7 +4734,8 @@ priv_main_page(FILE *fout,
   tdiff += phr->timestamp2.tv_usec;
   tdiff -= ((long long) phr->timestamp1.tv_sec) * 1000000;
   tdiff -= phr->timestamp1.tv_usec;
-  fprintf(fout, "<hr><p%s>%s: %lld %s\n", cnts->team_par_style,
+  fprintf(fout, "<div class=\"dotted\"><p%s>%s: %lld %s</p></div>",
+          cnts->team_par_style,
           _("Page generation time"), tdiff / 1000,
           _("msec"));
   }
@@ -7046,7 +7047,8 @@ unpriv_view_standings(FILE *fout,
   tdiff += phr->timestamp2.tv_usec;
   tdiff -= ((long long) phr->timestamp1.tv_sec) * 1000000;
   tdiff -= phr->timestamp1.tv_usec;
-  fprintf(fout, "<hr><p%s>%s: %lld %s\n", cnts->team_par_style,
+  fprintf(fout, "<div class=\"dotted\"><p%s>%s: %lld %s</p></div>",
+          cnts->team_par_style,
           _("Page generation time"), tdiff / 1000,
           _("msec"));
   }
@@ -7325,7 +7327,7 @@ unpriv_page_header(FILE *fout,
   if (!phr->action) phr->action = NEW_SRV_ACTION_MAIN_PAGE;
 
   // here must be contest status line
-  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr><td>");
+  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>");
   //fprintf(fout, "Contest status");
   for (i = 0; top_action_list[i] != -1; i++) {
     if (phr->action == top_action_list[i]) {
@@ -7856,7 +7858,8 @@ user_main_page(FILE *fout,
   tdiff += phr->timestamp2.tv_usec;
   tdiff -= ((long long) phr->timestamp1.tv_sec) * 1000000;
   tdiff -= phr->timestamp1.tv_usec;
-  fprintf(fout, "<hr><p%s>%s: %lld %s\n", cnts->team_par_style,
+  fprintf(fout, "<div class=\"dotted\"><p%s>%s: %lld %s</p></div>",
+          cnts->team_par_style,
           _("Page generation time"), tdiff / 1000,
           _("msec"));
   }
