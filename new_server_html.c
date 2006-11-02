@@ -5917,7 +5917,7 @@ unpriv_submit_run(FILE *fout,
     goto done;
   }
 
-  if (global->disable_submit_after_ok
+  if (prob->disable_submit_after_ok
       && global->score_system_val != SCORE_OLYMPIAD && !cs->accepting_mode) {
     XALLOCAZ(acc_probs, cs->max_prob + 1);
     run_get_accepted_set(cs->runlog_state, phr->user_id,
@@ -7085,7 +7085,7 @@ html_problem_selection(serve_state_t cs,
 
   for (i = 1; i <= cs->max_prob; i++) {
     if (!(prob = cs->probs[i])) continue;
-    if (!light_mode && cs->global->disable_submit_after_ok>0 && solved_flag[i])
+    if (!light_mode && prob->disable_submit_after_ok>0 && solved_flag[i])
       continue;
     if (prob->t_start_date > 0 && cs->current_time < prob->t_start_date)
       continue;
