@@ -676,7 +676,7 @@ privileged_page_login_page(FILE *fout, struct http_request_info *phr)
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, 0, 0, 0, phr->locale_id, "Login page");
+  ns_header(fout, ns_fancy_priv_header, 0, 0, phr->locale_id, "Login page");
   html_start_form(fout, 1, phr->self_url, "");
   fprintf(fout, "<table>\n");
   fprintf(fout, "<tr><td>%s:</td><td><input type=\"text\" size=\"32\" name=\"login\"", _("Login"));
@@ -3763,8 +3763,7 @@ priv_standings(FILE *fout,
   ns_header(fout, extra->header_txt, 0, 0, phr->locale_id,
             "%s [%s, %s]: %s", ns_unparse_role(phr->role),
             phr->name_arm, extra->contest_arm, _("Current standings"));
-  write_priv_standings(cs, cnts, fout, phr->session_id,
-                       phr->self_url, phr->hidden_vars, "", cs->accepting_mode);
+  ns_write_priv_standings(cs, cnts, fout, cs->accepting_mode);
   ns_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
   
@@ -4941,6 +4940,11 @@ privileged_page(FILE *fout,
   watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
   extra->header_txt = extra->priv_header.text;
   extra->footer_txt = extra->priv_footer.text;
+  if (!extra->header_txt || !extra->footer_txt) {
+    extra->header_txt = ns_fancy_priv_header;
+    extra->footer_txt = ns_fancy_priv_footer;
+    extra->separator_txt = ns_fancy_priv_separator;
+  }
 
   if (phr->name && *phr->name) {
     phr->name_arm = html_armor_string_dup(phr->name);
@@ -7419,44 +7423,6 @@ unpriv_page_header(FILE *fout,
   if (duration > 0 && start_time && !stop_time && global->board_fog_time > 0)
     fog_start_time = start_time + duration - global->board_fog_time;
   if (fog_start_time < 0) fog_start_time = 0;
-  ///////////////////
-  /*
-  if (stop_time <= 0 && (duration > 0 || global->contest_finish_time_d <= 0)) {
-    if (duration > 0) {
-      duration_str(0, duration, 0, duration_buf, 0);
-    } else {
-      snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
-    }
-    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
-            _("Duration"), duration_buf);
-  }
-  if (start_time > 0 && stop_time <= 0 && duration > 0) {
-    tmpt = start_time + duration;
-    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
-            _("Scheduled end time"), ctime(&tmpt));
-  } else if (start_time > 0 && stop_time <= 0 && duration <= 0
-             && global->contest_finish_time_d > 0) {
-    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
-            _("Scheduled end time"), ctime(&global->contest_finish_time_d));
-  } else if (stop_time) {
-    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
-            _("End time"), ctime(&stop_time));
-  }
-
-  if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
-    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
-            _("Standings freeze time"), ctime(&fog_start_time));
-  } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
-             && global->board_unfog_time > 0 && !cs->standings_updated
-             && cs->current_time < stop_time + global->board_unfog_time) {
-    tmpt = stop_time + global->board_unfog_time;
-    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
-            _("Standings unfreeze time"), ctime(&tmpt));
-  }
-
-  fprintf(fout, "</table>\n");
-  */
-  // server status is here
   if (!cs->global->disable_clars || !cs->global->disable_team_clars)
     unread_clars = serve_count_unread_clars(cs, phr->user_id, start_time);
   if (cs->clients_suspended) {
@@ -7466,7 +7432,7 @@ unpriv_page_header(FILE *fout,
   } else {
     status_style = "server_status_on";
   }
-  fprintf(fout, "<div class=\"%s\"><table class=\"menu\"><tr><td class=\"menu\"><div class=\"contest_actions_item\">\n", status_style);
+  fprintf(fout, "<div class=\"%s\">\n", status_style);
   fprintf(fout, "%s", brief_time(time_buf, sizeof(time_buf), cs->current_time));
   if (unread_clars > 0) {
     fprintf(fout, _(" / <b>%d unread message(s)</b>"),
@@ -7528,7 +7494,7 @@ unpriv_page_header(FILE *fout,
     fprintf(fout, " / %s: %s", _("Remaining"), time_buf);
   }
 
-  fprintf(fout, "</div></td></tr></table></div>\n");
+  fprintf(fout, "</div>\n");
 }
 
 static const unsigned char *main_page_headers[NEW_SRV_ACTION_LAST] =

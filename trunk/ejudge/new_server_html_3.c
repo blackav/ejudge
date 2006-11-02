@@ -52,6 +52,18 @@ const unsigned char ns_default_separator[] = "";
 const unsigned char ns_default_footer[] =
 "<hr>%R</body></html>\n";
 
+const unsigned char ns_fancy_priv_header[] =
+"<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
+"<html><head>\n<meta http-equiv=\"Content-type\" content=\"text/html; charset=%C\">\n"
+"<link rel=\"stylesheet\" href=\"/ejudge/priv.css\" type=\"text/css\">\n"
+"<link rel=\"shortcut icon\" type=image/x-icon href=\"/favicon.ico\">\n"
+"<title>%H</title></head>\n"
+"<body>"
+"<h1>%H</h1>\n";
+const unsigned char ns_fancy_priv_separator[] = "";
+const unsigned char ns_fancy_priv_footer[] =
+"<hr>%R</body></html>\n";
+
 const unsigned char ns_fancy_header[] =
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
 "<html><head>\n<meta http-equiv=\"Content-type\" content=\"text/html; charset=%C\">\n"
@@ -195,6 +207,12 @@ ns_html_err_no_perm(FILE *fout,
       separator = ns_fancy_separator;
       footer = ns_fancy_footer;
     }
+  } else {
+    if (!header || !footer) {
+      header = ns_fancy_priv_header;
+      separator = ns_fancy_priv_separator;
+      footer = ns_fancy_priv_footer;
+    }    
   }
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, phr->locale_id, _("Permission denied"));
@@ -273,6 +291,12 @@ ns_html_err_inv_param(FILE *fout,
       separator = ns_fancy_separator;
       footer = ns_fancy_footer;
     }
+  } else {
+    if (!header || !footer) {
+      header = ns_fancy_priv_header;
+      separator = ns_fancy_priv_separator;
+      footer = ns_fancy_priv_footer;
+    }    
   }
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, phr->locale_id, _("Invalid parameter"));
@@ -322,8 +346,13 @@ ns_html_err_service_not_available(FILE *fout,
     header = ns_fancy_header;
     separator = ns_fancy_separator;
     footer = ns_fancy_footer;
+  } else {
+    if (!header || !footer) {
+      header = ns_fancy_priv_header;
+      separator = ns_fancy_priv_separator;
+      footer = ns_fancy_priv_footer;
+    }    
   }
-
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, phr->locale_id, _("Service not available"));
   if (separator && *separator) {
@@ -372,8 +401,13 @@ ns_html_err_cnts_unavailable(FILE *fout,
     header = ns_fancy_header;
     separator = ns_fancy_separator;
     footer = ns_fancy_footer;
+  } else {
+    if (!header || !footer) {
+      header = ns_fancy_priv_header;
+      separator = ns_fancy_priv_separator;
+      footer = ns_fancy_priv_footer;
+    }    
   }
-
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, phr->locale_id, _("Contest not available"));
   if (separator && *separator) {
@@ -427,6 +461,12 @@ ns_html_err_ul_server_down(FILE *fout,
       separator = ns_fancy_separator;
       footer = ns_fancy_footer;
     }
+  } else {
+    if (!header || !footer) {
+      header = ns_fancy_priv_header;
+      separator = ns_fancy_priv_separator;
+      footer = ns_fancy_priv_footer;
+    }    
   }
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, phr->locale_id,
@@ -482,6 +522,12 @@ ns_html_err_internal_error(FILE *fout,
       separator = ns_fancy_separator;
       footer = ns_fancy_footer;
     }
+  } else {
+    if (!header || !footer) {
+      header = ns_fancy_priv_header;
+      separator = ns_fancy_priv_separator;
+      footer = ns_fancy_priv_footer;
+    }    
   }
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, phr->locale_id, _("Internal error"));
@@ -536,6 +582,12 @@ ns_html_err_inv_session(FILE *fout,
       separator = ns_fancy_separator;
       footer = ns_fancy_footer;
     }
+  } else {
+    if (!header || !footer) {
+      header = ns_fancy_priv_header;
+      separator = ns_fancy_priv_separator;
+      footer = ns_fancy_priv_footer;
+    }    
   }
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, phr->locale_id, _("Invalid session"));

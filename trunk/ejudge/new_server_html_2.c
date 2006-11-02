@@ -2302,6 +2302,22 @@ ns_new_run_form(FILE *fout, FILE *log_f,
   return 0;
 }
 
+void
+ns_write_priv_standings(const serve_state_t state,
+                        const struct contest_desc *cnts,
+                        FILE *f, int accepting_mode)
+{
+  write_standings_header(state, cnts, f, 1, 0, 0, 0);
+
+  if (state->global->score_system_val == SCORE_KIROV
+      || state->global->score_system_val == SCORE_OLYMPIAD)
+    do_write_kirov_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0 /*accepting_mode*/, 0);
+  else if (state->global->score_system_val == SCORE_MOSCOW)
+    do_write_moscow_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0, 0, 0);
+  else
+    do_write_standings(state, cnts, f, 1, 0, 0, 0, 0, 0, 0, 0);
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

@@ -1,0 +1,283 @@
+/* $Id$ */
+
+body 
+{
+        font-family: "Arial","Lucida Grande","Verdana","Sans-Serif";
+        font-style: normal;
+        font-variant: normal;
+        font-weight: normal;
+        font-size: 12px;
+        color: rgb(0, 51, 102);
+        text-align: justify;
+}
+
+
+#container /* the big block, which includes all other blocks */
+{
+        position:absolute; 
+        z-index:0;
+        width: 96%;
+        margin-left: 30px;        
+}
+
+#l11 /* the block, which contains the logo */
+{
+        position: absolute;
+        left: 0px;
+        top: 30px;
+        width: 120px;
+        height: 120px;        
+        background-color: #FFFFFF;
+}
+#l12 /* the common block for the title and menu lines */
+{
+        position: absolute;
+        left: 0px;
+        top: 30px;
+        width: 100%;
+        height: 100px;
+        display: block;
+}
+
+#l13 /* the main block which contains information about server, footer and the content of the page between them */
+{
+        position:relative; 
+        z-index:0;
+        width: 100%;	
+        top: 150px;
+        left: 0px;
+}
+
+div.main_phrase /* the title of the current page */
+{
+        font-family: "Verdana", "Arial";
+        font-weight: 800;
+        font-size: 16px;
+        margin-top: 5px;
+        margin-bottom: 5px;
+        margin-left:130px;
+}
+
+div.user_actions /* top menu line */
+{ 
+        background-color: rgb(102, 204, 255);
+        width: 100%;
+}
+	 
+div.white_empty_block /* white line */
+{
+        width: 100%;
+}
+	 
+div.contest_actions /* bottom menu line */
+{ 
+        background-color: rgb(102, 204, 255);
+        width: 100%;
+}
+
+
+div.user_action_item /* one item in the top menu line */
+{
+        font-family: "Verdana","Arial";
+        font-size: 11px;
+        font-weight: 800;
+        text-align: center;
+        padding-left:10px;
+        padding-right:10px;
+}
+	 
+div.contest_actions_item /* one item in the bottom menu line */
+{
+        font-family: "Verdana","Arial";
+        font-size: 11px;
+        font-weight: 800;
+        text-align: center;
+        padding-left:10px;
+        padding-right:10px;
+}
+	 
+select
+{ 
+        font-family: "Verdana","Arial";
+        font-weight: normal;
+        font-size: 9px;
+        padding: 0px 0px 0px 0px;
+}
+
+button
+{ 
+        font-family: "Verdana","Arial";
+        font-weight: normal;
+        font-size: 9px;    
+        padding: 0px 0px 0px 0px;
+}
+
+input
+{ 
+        font-family: "Verdana","Arial";
+        font-weight: normal;
+        font-size: 9px;    
+        padding: 0px 0px 0px 0px;
+}
+
+#footer /* copyright, etc...*/
+{
+        width: 750px;
+        padding: 10px 10px 10px 10px;
+}
+	 
+p.ejudge_copyright /* just copyright */
+{
+        font-family: "Verdana","Arial";	 	
+        font-size: 10px;    
+}
+	 
+div.server_status_on /* server status block when the server is up */
+{
+        background-color: #66ff66;
+        padding: 0px 10px 10px 10px;
+}
+
+div.server_status_off /* server status block when the server is down */
+{
+        background-color: #696969;
+        padding: 0px 10px 10px 10px;
+}
+
+div.server_status_alarm /* server status block when the server is up */
+{
+        background-color: #ff6666;
+        padding: 0px 10px 10px 10px;
+}
+
+div.dotted
+{
+	border-style: dotted;
+	border-width: 1px;
+	padding: 0px 10px 10px 10px;
+	margin: 10px 10px 10px 10px;
+}
+
+div.big_string /* the header for some content section */
+{
+        font-family: "Verdana","Arial";
+        font-weight: normal;
+        font-size: 14px;    
+        padding: 10px 2px 10px 2px;	
+}
+
+A.menu /* menu link should not be underlined */
+{
+        color: #000000;
+        text-decoration: none;
+}
+
+A.menu:visited /* menu item should not change the color when visited */
+{
+        color: #000000;
+}
+
+A.menu:hover /* menu link is highlighted when mouse is on */
+{
+        background-color: #FFFFFF;
+}
+
+A /* common link should be underlined */
+{
+        color: #000000;
+        text-decoration: underline;
+}
+
+A:visited /* common link should be marked if visited */
+{
+        color: #696969;
+}
+
+table.menu /* menu table has no border */
+{
+        border-style: none;
+        margin-left: 130px;
+}
+
+td.menu /* menu table item has no border */
+{ 
+        border-style: none;
+}
+
+table /* common table has no border */
+{
+        border-style: none;
+}
+
+td /* common table item has a thin solid border */
+{
+        border: solid;
+        border-width: 1px;
+        border-color: #000000;
+        margin: 1px;
+}
+
+p.fixed_width
+{
+        width: 750px;
+}
+
+table.summary /* table for problem summary and logs */
+{
+        border-style: none;
+        border-collapse: collapse;
+}
+
+td.summary /* for summary tables */
+{
+        border: solid;
+        border-width: 1px;
+        border-color: #000000;
+        margin: 1px;
+}
+
+th.summary /* for summary tables */
+{
+        border: solid;
+        border-width: 1px;
+        border-color: #000000;
+        margin: 1px;
+}
+
+table.borderless
+{
+        border-style: none;
+}
+td.borderless
+{ 
+        border-style: none;
+}
+
+/* standings view */
+TABLE.standings { border-style: none; border-collapse: collapse; width: 95%; }
+TH.st_team{font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; font-weight: 600;}
+TD.st_team{font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; }
+
+TH.st_place{font-size: 10; border: solid; border-width: 1px; border-color: #000000; margin: 1px; }
+TD.st_place{font-size: 12; border: solid; border-width: 1px; border-color: #000000; margin: 1px; }
+
+TH.st_prob{font-size: 12; border: solid; border-width: 1px; border-color: #000000; margin: 0px; }
+TD.st_prob{font-size: 12; border: solid; border-width: 1px; border-color: #000000; margin: 0px; }
+
+TH.st_pen{font-size: 10; border: solid; border-width: 1px; border-color: #000000; margin: 0px; }
+TD.st_pen{font-size: 12; border: solid; border-width: 1px; border-color: #000000; margin: 0px; }
+
+TH.st_total{font-size: 10; border: solid; border-width: 1px; border-color: #000000; margin: 0px; }
+TD.st_total{font-size: 12; border: solid; border-width: 1px; border-color: #000000; margin: 0px; }
+
+TH.st_score {font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; font-weight: 600;}
+TD.st_score {font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; }
+
+TH.st_extra {font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; font-weight: 600;}
+TD.st_extra {font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; }
+
+TH.st_warns {font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; font-weight: 600;}
+TD.st_warns {font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; }
+
+TH.st_status {font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; font-weight: 600;}
+TD.st_status {font-size: 11; border: solid; border-width: 1px; border-color: #000000; margin: 1px; }

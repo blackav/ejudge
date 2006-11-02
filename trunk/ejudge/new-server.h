@@ -411,6 +411,11 @@ ns_new_run_form(FILE *fout, FILE *log_f,
                 const struct contest_desc *cnts,
                 struct contest_extra *extra);
 
+void
+ns_write_priv_standings(const serve_state_t state,
+                        const struct contest_desc *cnts,
+                        FILE *f, int accepting_mode);
+
 extern const unsigned char * const ns_submit_button_labels[];
 extern const int ns_priv_next_state[];
 extern const int ns_priv_prev_state[];
@@ -424,5 +429,8 @@ extern const unsigned char ns_fancy_footer[];
 extern const unsigned char ns_fancy_separator[];
 extern const unsigned char ns_fancy_empty_status[];
 extern const unsigned char * const ns_ssl_flag_str[];
+extern const unsigned char ns_fancy_priv_header[];
+extern const unsigned char ns_fancy_priv_footer[];
+extern const unsigned char ns_fancy_priv_separator[];
 
 #endif /* __NEW_SERVER_H__ */
