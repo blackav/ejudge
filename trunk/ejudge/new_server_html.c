@@ -4159,6 +4159,27 @@ priv_generic_page(FILE *fout,
   xfree(log_txt);
 }
 
+static void
+priv_logout(FILE *fout,
+            struct http_request_info *phr,
+            const struct contest_desc *cnts,
+            struct contest_extra *extra)
+{
+  //unsigned char locale_buf[64];
+  unsigned char urlbuf[1024];
+
+  if (open_ul_connection(phr->fw_state) < 0)
+    return ns_html_err_ul_server_down(fout, phr, 0, 0);
+  userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
+                              phr->session_id);
+  ns_remove_session(phr->session_id);
+  snprintf(urlbuf, sizeof(urlbuf),
+           "%s?contest_id=%d&locale_id=%d&role=%d",
+           phr->self_url, phr->contest_id, phr->locale_id, phr->role);
+  html_refresh_page_2(fout, urlbuf);
+}
+
+
 static int
 insert_variant_num(unsigned char *buf, size_t size,
                    const unsigned char *file, int variant);
@@ -4317,6 +4338,9 @@ priv_main_page(FILE *fout,
             ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USER_DUMP, 0),
             _("Dump users in CSV format"));
   }
+  fprintf(fout, "<li>%s%s</a></li>\n",
+          ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_LOGOUT, 0),
+          _("Logout"));
 
   fprintf(fout, "</ul>\n");
 
@@ -4834,6 +4858,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_RUN] = priv_generic_operation,
   [NEW_SRV_ACTION_PRINT_RUN] = priv_generic_operation,
   [NEW_SRV_ACTION_ISSUE_WARNING] = priv_generic_operation,
+  [NEW_SRV_ACTION_LOGOUT] = priv_logout,
 };
 
 static void
@@ -7250,6 +7275,20 @@ unpriv_page_header(FILE *fout,
                    struct contest_extra *extra,
                    time_t start_time, time_t stop_time)
 {
+  static int top_action_list[] =
+  {
+    NEW_SRV_ACTION_VIEW_SETTINGS,
+    NEW_SRV_ACTION_LOGOUT,
+
+    -1,
+  };
+
+  static const unsigned char *top_action_names[] =
+  {
+    __("Settings"),
+    __("Logout"),
+  };
+
   static int action_list[] =
   {
     NEW_SRV_ACTION_MAIN_PAGE,
@@ -7260,8 +7299,6 @@ unpriv_page_header(FILE *fout,
     NEW_SRV_ACTION_STANDINGS,
     NEW_SRV_ACTION_VIEW_CLAR_SUBMIT,
     NEW_SRV_ACTION_VIEW_CLARS,
-    NEW_SRV_ACTION_VIEW_SETTINGS,
-    NEW_SRV_ACTION_LOGOUT,
 
     -1,
   };
@@ -7289,7 +7326,16 @@ unpriv_page_header(FILE *fout,
 
   // here must be contest status line
   fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr><td>");
-  fprintf(fout, "Contest status");
+  //fprintf(fout, "Contest status");
+  for (i = 0; top_action_list[i] != -1; i++) {
+    if (phr->action == top_action_list[i]) {
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>", gettext(top_action_names[i]));
+    } else {
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&action=%d\">%s</a></div></td>",
+              phr->self_url, phr->session_id, top_action_list[i],
+              gettext(top_action_names[i]));
+    }
+  }
   fprintf(fout, "</td></tr></table></div>\n");
 
   fprintf(fout, "<div class=\"white_empty_block\">&nbsp;</div>\n");
@@ -7355,6 +7401,10 @@ unpriv_page_header(FILE *fout,
   if (extra->separator_txt && *extra->separator_txt) {
     fprintf(fout, "%s", extra->separator_txt);
   }
+  // server status is here
+  fprintf(fout, "<div class=\"server_status_on\">\n");
+  fprintf(fout, "&nbsp;");
+  fprintf(fout, "</div>\n");
 }
 
 static const unsigned char *main_page_headers[NEW_SRV_ACTION_LAST] =
