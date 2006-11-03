@@ -134,19 +134,19 @@ p.ejudge_copyright /* just copyright */
 	 
 div.server_status_on /* server status block when the server is up */
 {
-        background-color: #ccffcc;
+        background-color: #aaffaa;
         padding: 0px 10px 10px 10px;
 }
 
 div.server_status_off /* server status block when the server is down */
 {
-        background-color: #696969;
+        background-color: #aaaaaa;
         padding: 0px 10px 10px 10px;
 }
 
 div.server_status_alarm /* server status block when the server is up */
 {
-        background-color: #ffff66;
+        background-color: #ffffaa;
         padding: 0px 10px 10px 10px;
 }
 
