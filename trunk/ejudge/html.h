@@ -239,7 +239,8 @@ int write_xml_testing_report(FILE *f, unsigned char const *txt,
                              const unsigned char *class1,
                              const unsigned char *class2);
 int write_xml_team_testing_report(serve_state_t, FILE *f,
-                                  const unsigned char *txt);
+                                  const unsigned char *txt,
+                                  const unsigned char *table_class);
 
 int write_audit_log(const serve_state_t, FILE *f, int run_id);
 
@@ -266,6 +267,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
                                 const int *action_vec,
                                 ej_cookie_t sid,
                                 const unsigned char *self_url,
-                                const unsigned char *extra_args);
+                                const unsigned char *extra_args,
+                                const unsigned char *table_class);
 
 #endif /* __HTML_H__ */

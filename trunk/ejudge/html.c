@@ -4277,13 +4277,19 @@ write_user_run_status(const serve_state_t state, FILE *f, int uid, int rid,
 
 int
 write_xml_team_testing_report(const serve_state_t state, FILE *f,
-                              const unsigned char *txt)
+                              const unsigned char *txt,
+                              const unsigned char *table_class)
 {
   testing_report_xml_t r = 0;
   struct testing_report_test *t;
   unsigned char *font_color = 0, *s;
   int need_comment = 0, need_info = 0, is_kirov = 0, i;
   int disp_time;
+  unsigned char cl[128] = { 0 };
+
+  if (table_class && *table_class) {
+    snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
+  }
 
   if (!(r = testing_report_parse_xml(txt))) {
     fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
@@ -4331,42 +4337,42 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
   }
 
   fprintf(f,
-          "<table border=\"1\">"
-          "<tr><th>N</th><th>%s</th><th>%s</th><th>%s</th>",
-          _("Result"), _("Time (sec)"), _("Real time (sec)"));
+          "<table%s>"
+          "<tr><th%s>N</th><th%s>%s</th><th%s>%s</th><th%s>%s</th>",
+          cl, cl, cl, _("Result"), cl, _("Time (sec)"),
+          cl, _("Real time (sec)"));
   if (need_info) {
-    fprintf(f, "<th>%s</th>", _("Extra info"));
+    fprintf(f, "<th%s>%s</th>", cl, _("Extra info"));
   }
   if (is_kirov) {
-    fprintf(f, "<th>%s</th>", _("Score"));
+    fprintf(f, "<th%s>%s</th>", cl, _("Score"));
   }
   if (need_comment) {
-    fprintf(f, "<th>%s</th>", _("Comment"));
+    fprintf(f, "<th%s>%s</th>", cl, _("Comment"));
   }
 
-  fprintf(f, "</tr>\n");
   fprintf(f, "</tr>\n");
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
     fprintf(f, "<tr>");
-    fprintf(f, "<td>%d</td>", t->num);
+    fprintf(f, "<td%s>%d</td>", cl, t->num);
     if (t->status == RUN_OK || t->status == RUN_ACCEPTED) {
       font_color = "green";
     } else {
       font_color = "red";
     }
-    fprintf(f, "<td><font color=\"%s\">%s</font></td>\n",
-            font_color, run_status_str(t->status, 0, 0));
-    fprintf(f, "<td>%d.%03d</td>", t->time / 1000, t->time % 1000);
+    fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
+            cl, font_color, run_status_str(t->status, 0, 0));
+    fprintf(f, "<td%s>%d.%03d</td>", cl, t->time / 1000, t->time % 1000);
     if (t->real_time > 0) {
       disp_time = t->real_time;
       if (disp_time < t->time) disp_time = t->time;
-      fprintf(f, "<td>%d.%03d</td>", disp_time / 1000, disp_time % 1000);
+      fprintf(f, "<td%s>%d.%03d</td>", cl, disp_time / 1000, disp_time % 1000);
     } else {
-      fprintf(f, "<td>N/A</td>");
+      fprintf(f, "<td%s>N/A</td>", cl);
     }
     if (need_info) {
-      fprintf(f, "<td>");
+      fprintf(f, "<td%s>", cl);
       if (t->status == RUN_RUN_TIME_ERR && state->global->report_error_code) {
         if (t->term_signal >= 0) {
           fprintf(f, "%s %d (%s)", _("Signal"), t->term_signal,
@@ -4380,14 +4386,14 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
       fprintf(f, "</td>");
     }
     if (is_kirov) {
-      fprintf(f, "<td>%d (%d)</td>", t->score, t->nominal_score);
+      fprintf(f, "<td%s>%d (%d)</td>", cl, t->score, t->nominal_score);
     }
     if (need_comment) {
       if (!t->team_comment) {
-        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
       } else {
         s = html_armor_string_dup(t->team_comment);
-        fprintf(f, "<td>%s</td>", s);
+        fprintf(f, "<td%s>%s</td>", cl, s);
         xfree(s);
       }
     }
@@ -4406,16 +4412,23 @@ write_xml_team_output_only_acc_report(FILE *f, const unsigned char *txt,
                                       const int *action_vec,
                                       ej_cookie_t sid,
                                       const unsigned char *self_url,
-                                      const unsigned char *extra_args)
+                                      const unsigned char *extra_args,
+                                      const unsigned char *table_class)
 {
   testing_report_xml_t r = 0;
   struct testing_report_test *t;
   unsigned char *font_color = 0, *s;
   int i, act_status, tests_to_show;
+  unsigned char *cl = "";
 
   if (!(r = testing_report_parse_xml(txt))) {
     fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
     return 0;
+  }
+
+  if (table_class && *table_class) {
+    cl = (unsigned char *) alloca(strlen(table_class) + 16);
+    sprintf(cl, " class=\"%s\"", table_class);
   }
 
   act_status = r->status;
@@ -4441,15 +4454,15 @@ write_xml_team_output_only_acc_report(FILE *f, const unsigned char *txt,
   if (tests_to_show > 1) tests_to_show = 1;
 
   fprintf(f,
-          "<table border=\"1\">"
-          "<tr><th>N</th><th>%s</th><th>%s</th>",
-          _("Result"), _("Extra info"));
-  fprintf(f, "<th>%s</th>", _("Link"));
+          "<table%s>"
+          "<tr><th%s>N</th><th%s>%s</th><th%s>%s</th>",
+          cl, cl, cl, _("Result"), cl, _("Extra info"));
+  fprintf(f, "<th%s>%s</th>", cl, _("Link"));
   fprintf(f, "</tr>\n");
   for (i = 0; i < tests_to_show; i++) {
     if (!(t = r->tests[i])) continue;
     fprintf(f, "<tr>");
-    fprintf(f, "<td>%d</td>", t->num);
+    fprintf(f, "<td%s>%d</td>", cl, t->num);
     act_status = t->status;
     if (act_status == RUN_OK || act_status == RUN_ACCEPTED
         || act_status == RUN_WRONG_ANSWER_ERR) {
@@ -4458,10 +4471,10 @@ write_xml_team_output_only_acc_report(FILE *f, const unsigned char *txt,
     } else {
       font_color = "red";
     }
-    fprintf(f, "<td><font color=\"%s\">%s</font></td>\n",
-            font_color, run_status_str(act_status, 0, 0));
+    fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
+            cl, font_color, run_status_str(act_status, 0, 0));
     // extra information
-    fprintf(f, "<td>");
+    fprintf(f, "<td%s>", cl);
     switch (t->status) {
     case RUN_OK:
     case RUN_ACCEPTED:
@@ -4520,7 +4533,8 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
                                 const int *action_vec,
                                 ej_cookie_t sid,
                                 const unsigned char *self_url,
-                                const unsigned char *extra_args)
+                                const unsigned char *extra_args,
+                                const unsigned char *table_class)
 {
   testing_report_xml_t r = 0;
   struct testing_report_test *t;
@@ -4528,11 +4542,16 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
   int need_comment = 0, i, act_status, tests_to_show;
   unsigned char opening_a[512];
   unsigned char *closing_a = "";
+  unsigned char cl[128] = { 0 };
+
+  if (table_class && *table_class) {
+    snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
+  }
 
   if (prob->type_val > 0)
     return write_xml_team_output_only_acc_report(f, txt, rid, re, prob,
                                                  action_vec, sid, self_url,
-                                                 extra_args);
+                                                 extra_args, table_class);
 
   if (!(r = testing_report_parse_xml(txt))) {
     fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
@@ -4568,33 +4587,35 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
   }
 
   fprintf(f,
-          "<table border=\"1\">"
-          "<tr><th>N</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th>",
-          _("Result"), _("Time (sec)"), _("Real time (sec)"), _("Extra info"));
+          "<table%s>"
+          "<tr><th%s>N</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th>",
+          cl, cl, cl, _("Result"), cl, _("Time (sec)"),
+          cl, _("Real time (sec)"), cl, _("Extra info"));
   if (need_comment) {
-    fprintf(f, "<th>%s</th>", _("Comment"));
+    fprintf(f, "<th%s>%s</th>", cl, _("Comment"));
   }
-  fprintf(f, "<th>%s</th>", _("Link"));
+  fprintf(f, "<th%s>%s</th>", cl, _("Link"));
   fprintf(f, "</tr>\n");
   for (i = 0; i < tests_to_show; i++) {
     if (!(t = r->tests[i])) continue;
     fprintf(f, "<tr>");
-    fprintf(f, "<td>%d</td>", t->num);
+    fprintf(f, "<td%s>%d</td>", cl, t->num);
     if (t->status == RUN_OK || t->status == RUN_ACCEPTED) {
       font_color = "green";
     } else {
       font_color = "red";
     }
-    fprintf(f, "<td><font color=\"%s\">%s</font></td>\n",
-            font_color, run_status_str(t->status, 0, 0));
-    fprintf(f, "<td>%d.%03d</td>", t->time / 1000, t->time % 1000);
+    fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
+            cl, font_color, run_status_str(t->status, 0, 0));
+    fprintf(f, "<td%s>%d.%03d</td>", cl, t->time / 1000, t->time % 1000);
     if (t->real_time > 0) {
-      fprintf(f, "<td>%d.%03d</td>", t->real_time / 1000, t->real_time % 1000);
+      fprintf(f, "<td%s>%d.%03d</td>",
+              cl, t->real_time / 1000, t->real_time % 1000);
     } else {
-      fprintf(f, "<td>N/A</td>");
+      fprintf(f, "<td%s>N/A</td>", cl);
     }
     // extra information
-    fprintf(f, "<td>");
+    fprintf(f, "<td%s>", cl);
     switch (t->status) {
     case RUN_OK:
     case RUN_ACCEPTED:
@@ -4647,18 +4668,18 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
     if (need_comment) {
       if (t->comment) {
         s = html_armor_string_dup(t->comment);
-        fprintf(f, "<td>%s</td>", s);
+        fprintf(f, "<td%s>%s</td>", cl, s);
         xfree(s);
       } else if (t->team_comment) {
         s = html_armor_string_dup(t->team_comment);
-        fprintf(f, "<td>%s</td>", s);
+        fprintf(f, "<td%s>%s</td>", cl, s);
         xfree(s);
       } else {
-        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
       }
     }
     // links to extra information
-    fprintf(f, "<td>");
+    fprintf(f, "<td%s>", cl);
     // command line parameters (always inline)
     if (t->args || t->args_too_long) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dL\">", t->num);
@@ -4919,12 +4940,12 @@ new_write_user_report_view(const serve_state_t state, FILE *f, int uid, int rid,
   case CONTENT_TYPE_XML:
     if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       write_xml_team_accepting_report(f, start_ptr, rid, &re, prb, action_vec,
-                                      sid, self_url, extra_args);
+                                      sid, self_url, extra_args, 0);
     } else if (prb->team_show_judge_report) {
       write_xml_testing_report(f, start_ptr, sid, self_url, extra_args, 0,
                                0, 0);
     } else {
-      write_xml_team_testing_report(state, f, start_ptr);
+      write_xml_team_testing_report(state, f, start_ptr, 0);
     }
     break;
   default:

@@ -2240,7 +2240,7 @@ write_priv_report(const serve_state_t state, FILE *f,
     break;
   case CONTENT_TYPE_XML:
     if (team_report_flag) {
-      write_xml_team_testing_report(state, f, start_ptr);
+      write_xml_team_testing_report(state, f, start_ptr, 0);
     } else {
       write_xml_testing_report(f, start_ptr, sid, self_url, extra_args, 0,
                                0, 0);
