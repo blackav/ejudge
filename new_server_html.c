@@ -1998,6 +1998,7 @@ priv_submit_clar(FILE *fout,
                  user_id, ARMOR(s));
         goto cleanup;
       }
+      user_id = n;
     }
   }
   if ((n = ns_cgi_param(phr, "msg_subj", &subject)) < 0) {
