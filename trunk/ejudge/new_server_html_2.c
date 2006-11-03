@@ -1061,7 +1061,7 @@ ns_write_priv_source(const serve_state_t state,
               ARMOR(state->langs[i]->long_name));
     }
     fprintf(f, "</select></td><td>%s</td></tr></form>\n",
-            BUTTON(NEW_SRV_ACTION_CHANGE_RUN_VARIANT));
+            BUTTON(NEW_SRV_ACTION_CHANGE_RUN_LANG_ID));
   } else {
     fprintf(f, "%s</tr>\n", nbsp);
   }
