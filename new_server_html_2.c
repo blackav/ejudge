@@ -1491,10 +1491,10 @@ ns_write_priv_report(const serve_state_t cs,
     break;
   case CONTENT_TYPE_XML:
     if (team_report_flag) {
-      write_xml_team_testing_report(cs, f, start_ptr);
+      write_xml_team_testing_report(cs, f, start_ptr, "summary");
     } else {
       write_xml_testing_report(f, start_ptr, phr->session_id,phr->self_url, "",
-                               new_actions_vector, 0, 0);
+                               new_actions_vector, "summary", 0);
     }
     break;
   default:

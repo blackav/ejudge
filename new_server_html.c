@@ -6787,13 +6787,14 @@ unpriv_view_report(FILE *fout,
     if (global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode) {
       write_xml_team_accepting_report(fout, rep_start, run_id, &re, prob,
                                       new_actions_vector,
-                                      phr->session_id, phr->self_url, "");
+                                      phr->session_id, phr->self_url, "",
+                                      "summary");
     } else if (prob->team_show_judge_report) {
       write_xml_testing_report(fout, rep_start, phr->session_id,
                                phr->self_url, "", new_actions_vector,
                                "summary", "borderless");
     } else {
-      write_xml_team_testing_report(cs, fout, rep_start);
+      write_xml_team_testing_report(cs, fout, rep_start, "summary");
     }
     break;
   default:
