@@ -1532,10 +1532,12 @@ run_set_entry(runlog_state_t state, int run_id, unsigned int mask,
     err("run_set_entry: %d: locale_id %d is invalid", run_id, te.locale_id);
     return -1;
   }
+  /*
   if (te.lang_id <= 0 || te.lang_id >= 255) {
     err("run_set_entry: %d: language %d is invalid", run_id, te.lang_id);
     return -1;
   }
+  */
   if (te.test < -1) {
     err("run_set_entry: %d: test %d is invalid", run_id, te.test);
     return -1;
