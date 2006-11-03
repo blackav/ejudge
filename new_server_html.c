@@ -2321,6 +2321,7 @@ priv_clear_run(FILE *fout, FILE *log_f,
  * NEW_SRV_ACTION_CHANGE_RUN_USER_LOGIN
  * NEW_SRV_ACTION_CHANGE_RUN_PROB_ID
  * NEW_SRV_ACTION_CHANGE_RUN_VARIANT
+ * NEW_SRV_ACTION_CHANGE_RUN_LANG_ID
  * NEW_SRV_ACTION_CHANGE_RUN_IS_IMPORTED
  * NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN
  * NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY
@@ -2361,6 +2362,7 @@ priv_edit_run(FILE *fout, FILE *log_f,
   case NEW_SRV_ACTION_CHANGE_RUN_USER_ID:
   case NEW_SRV_ACTION_CHANGE_RUN_PROB_ID:
   case NEW_SRV_ACTION_CHANGE_RUN_VARIANT:
+  case NEW_SRV_ACTION_CHANGE_RUN_LANG_ID:
   case NEW_SRV_ACTION_CHANGE_RUN_TEST:
   case NEW_SRV_ACTION_CHANGE_RUN_SCORE:
   case NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ:
@@ -2402,6 +2404,7 @@ priv_edit_run(FILE *fout, FILE *log_f,
   case NEW_SRV_ACTION_CHANGE_RUN_PROB_ID:
     if (param_int <= 0 || param_int > cs->max_prob || !cs->probs[param_int])
       FAIL(NEW_SRV_ERR_INV_PROB_ID);
+    ne.prob_id = param_int;
     ne_mask = RUN_ENTRY_PROB;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_VARIANT:
@@ -2419,6 +2422,12 @@ priv_edit_run(FILE *fout, FILE *log_f,
     }
     ne.variant = param_int;
     ne_mask = RUN_ENTRY_VARIANT;
+    break;
+  case NEW_SRV_ACTION_CHANGE_RUN_LANG_ID:
+    if (param_int <= 0 || param_int > cs->max_lang || !cs->langs[param_int])
+      FAIL(NEW_SRV_ERR_INV_LANG_ID);
+    ne.lang_id = param_int;
+    ne_mask = RUN_ENTRY_LANG;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_TEST:
     if (param_int < -1 || param_int >= 100000)
@@ -4064,6 +4073,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_RUN_USER_LOGIN] = priv_edit_run,
   [NEW_SRV_ACTION_CHANGE_RUN_PROB_ID] = priv_edit_run,
   [NEW_SRV_ACTION_CHANGE_RUN_VARIANT] = priv_edit_run,
+  [NEW_SRV_ACTION_CHANGE_RUN_LANG_ID] = priv_edit_run,
   [NEW_SRV_ACTION_CHANGE_RUN_IS_IMPORTED] = priv_edit_run,
   [NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN] = priv_edit_run,
   [NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY] = priv_edit_run,
@@ -4871,6 +4881,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_RUN_USER_LOGIN] = priv_generic_operation,
   [NEW_SRV_ACTION_CHANGE_RUN_PROB_ID] = priv_generic_operation,
   [NEW_SRV_ACTION_CHANGE_RUN_VARIANT] = priv_generic_operation,
+  [NEW_SRV_ACTION_CHANGE_RUN_LANG_ID] = priv_generic_operation,
   [NEW_SRV_ACTION_CHANGE_RUN_IS_IMPORTED] = priv_generic_operation,
   [NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN] = priv_generic_operation,
   [NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY] = priv_generic_operation,
