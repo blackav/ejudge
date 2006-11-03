@@ -4997,6 +4997,8 @@ privileged_page(FILE *fout,
       && actions_table[phr->action]) {
     actions_table[phr->action](fout, phr, cnts, extra);
   } else {
+    if (phr->action < 0 || phr->action >= NEW_SRV_ACTION_LAST)
+      phr->action = 0;
     priv_main_page(fout, phr, cnts, extra);
   }
 }
@@ -8109,6 +8111,8 @@ unprivileged_page(FILE *fout, struct http_request_info *phr)
       && user_actions_table[phr->action]) {
     user_actions_table[phr->action](fout, phr, cnts, extra);
   } else {
+    if (phr->action < 0 || phr->action >= NEW_SRV_ACTION_LAST)
+      phr->action = 0;
     user_main_page(fout, phr, cnts, extra);
   }
 }
