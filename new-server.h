@@ -76,6 +76,9 @@ struct http_request_info
   struct session_info *session_extra;
   opcap_t caps;
 
+  // for the next state
+  int next_run_id;
+
   struct timeval timestamp1;
   struct timeval timestamp2;
 };
