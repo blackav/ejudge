@@ -308,8 +308,10 @@ super_html_main_page(FILE *f,
   opcap_t caps;
   unsigned char judge_url[1024] = { 0 };
   unsigned char master_url[1024] = { 0 };
+  unsigned char client_url[1024] = { 0 };
   unsigned char new_judge_url[1024] = { 0 };
   unsigned char new_master_url[1024] = { 0 };
+  unsigned char new_client_url[1024] = { 0 };
   unsigned char prog_pat[128];
   int prog_pat_len, self_url_len;
 
@@ -326,10 +328,14 @@ super_html_main_page(FILE *f,
              "%.*sjudge", self_url_len - prog_pat_len, self_url);
     snprintf(master_url, sizeof(master_url),
              "%.*smaster", self_url_len - prog_pat_len, self_url);
+    snprintf(client_url, sizeof(client_url),
+             "%.*steam", self_url_len - prog_pat_len, self_url);
     snprintf(new_judge_url, sizeof(new_judge_url),
              "%.*snew-judge", self_url_len - prog_pat_len, self_url);
     snprintf(new_master_url, sizeof(new_master_url),
              "%.*snew-master", self_url_len - prog_pat_len, self_url);
+    snprintf(new_client_url, sizeof(new_client_url),
+             "%.*snew-client", self_url_len - prog_pat_len, self_url);
   }
 
   fprintf(f, "<h2>Controls</h2>\n");
@@ -397,6 +403,7 @@ super_html_main_page(FILE *f,
           "<th>Run status</th>\n"
           "<th>Judge</th>\n"
           "<th>Master</th>\n"
+          "<th>User</th>\n"
           "<th>Details</th>\n"
           "</tr>\n");
   for (contest_id = 1; contest_id < contest_max_id; contest_id++) {
@@ -598,6 +605,18 @@ super_html_main_page(FILE *f,
     } else {
       fprintf(f, "<td>&nbsp;</td>\n");
     }
+    // report user URL
+    if (client_url[0] && contests_check_team_ip_2(cnts, ip_address, ssl)) {
+      if (cnts->new_managed) {
+        fprintf(f, "<td><a href=\"%s?contest_id=%d\" target=\"_blank\">User</a></td>\n",
+                new_client_url, contest_id);
+      } else {
+        fprintf(f, "<td><a href=\"%s?contest_id=%d\" target=\"_blank\">User</a></td>\n",
+                client_url, contest_id);
+      }
+    } else {
+      fprintf(f, "<td>&nbsp;</td>\n");
+    }
 
     if (priv_level >= PRIV_LEVEL_ADMIN
         && opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0
@@ -647,8 +666,10 @@ super_html_contest_page(FILE *f,
 {
   unsigned char judge_url[1024] = { 0 };
   unsigned char master_url[1024] = { 0 };
+  unsigned char client_url[1024] = { 0 };
   unsigned char new_judge_url[1024] = { 0 };
   unsigned char new_master_url[1024] = { 0 };
+  unsigned char new_client_url[1024] = { 0 };
   unsigned char prog_pat[128];
   unsigned char hbuf[1024];
   unsigned char new_hidden_vars[1024];
@@ -677,10 +698,14 @@ super_html_contest_page(FILE *f,
              "%.*sjudge", self_url_len - prog_pat_len, self_url);
     snprintf(master_url, sizeof(master_url),
              "%.*smaster", self_url_len - prog_pat_len, self_url);
+    snprintf(client_url, sizeof(client_url),
+             "%.*steam", self_url_len - prog_pat_len, self_url);
     snprintf(new_judge_url, sizeof(new_judge_url),
              "%.*snew-judge", self_url_len - prog_pat_len, self_url);
     snprintf(new_master_url, sizeof(new_master_url),
              "%.*snew-master", self_url_len - prog_pat_len, self_url);
+    snprintf(new_client_url, sizeof(new_client_url),
+             "%.*snew-client", self_url_len - prog_pat_len, self_url);
   }
 
   snprintf(new_hidden_vars, sizeof(new_hidden_vars),
@@ -763,6 +788,17 @@ super_html_contest_page(FILE *f,
     } else {
       fprintf(f, "<tr><td>Master CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Master</a></td></tr>\n",
               master_url, session_id, contest_id);
+    }
+  }
+
+  // report user URL
+  if (client_url[0] && contests_check_team_ip_2(cnts, ip_address, ssl)) {
+    if (cnts->new_managed) {
+      fprintf(f, "<tr><td>Client CGI program</td><td><a href=\"%s?contest_id=%d\" target=\"_blank\">Client</a></td></tr>\n",
+              new_client_url, contest_id);
+    } else {
+      fprintf(f, "<tr><td>Client CGI program</td><td><a href=\"%s?contest_id=%d\" target=\"_blank\">Client</a></td></tr>\n",
+              client_url, contest_id);
     }
   }
 

@@ -7373,6 +7373,10 @@ unpriv_page_header(FILE *fout,
   for (i = 0; top_action_list[i] != -1; i++) {
     if (phr->action == top_action_list[i]) {
       fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>", gettext(top_action_names[i]));
+    } else if (top_action_list[i] == NEW_SRV_ACTION_LOGOUT) {
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&action=%d\">%s [%s]</a></div></td>",
+              phr->self_url, phr->session_id, top_action_list[i],
+              gettext(top_action_names[i]), phr->login);
     } else {
       fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&action=%d\">%s</a></div></td>",
               phr->self_url, phr->session_id, top_action_list[i],
