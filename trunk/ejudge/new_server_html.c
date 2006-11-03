@@ -2378,6 +2378,7 @@ priv_edit_run(FILE *fout, FILE *log_f,
       ns_html_err_inv_param(fout, phr, 1, "invalid boolean param");
       return -1;
     }
+    break;
   default:
     ns_error(log_f, NEW_SRV_ERR_UNHANDLED_ACTION, phr->action);
     goto cleanup;
