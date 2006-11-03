@@ -134,7 +134,7 @@ p.ejudge_copyright /* just copyright */
 	 
 div.server_status_on /* server status block when the server is up */
 {
-        background-color: #66ff66;
+        background-color: #ccffcc;
         padding: 0px 10px 10px 10px;
 }
 
@@ -146,7 +146,7 @@ div.server_status_off /* server status block when the server is down */
 
 div.server_status_alarm /* server status block when the server is up */
 {
-        background-color: #ff6666;
+        background-color: #ffff66;
         padding: 0px 10px 10px 10px;
 }
 
