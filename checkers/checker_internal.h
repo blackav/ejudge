@@ -185,8 +185,11 @@ int  checker_read_corr_double(const CHECKER_char_t *, int, double *);
 int  checker_read_corr_long_double(const CHECKER_char_t *, int, long double *);
 
 int checker_eq_double(double v1, double v2, double eps);
+int checker_eq_double_abs(double v1, double v2, double eps);
 int checker_eq_long_double(long double v1, long double v2, long double eps);
+int checker_eq_long_double_abs(long double v1, long double v2, long double eps);
 int checker_eq_float(float v1, float v2, float eps);
+int checker_eq_float_abs(float v1, float v2, float eps);
 
 checker_sexpr_t checker_read_sexpr(int ind);
 int checker_eq_sexpr(checker_sexpr_t l_corr, checker_sexpr_t l_team);

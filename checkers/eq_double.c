@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005,2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005, 2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -40,7 +40,7 @@ checker_eq_double(double v1, double v2, double eps)
   }
   if (checker_is_inf(vv1) || checker_is_inf(vv2)) return 0;
   if (fabs(v1) <= 1.0 && fabs(v2) <= 1.0) {
-    if (fabs(v1 - v2) <= 2*eps) return 1;
+    if (fabs(v1 - v2) <= 1.125*eps) return 1;
     return 0;
   }
   if (!v1 || !v2) return 0;
@@ -55,7 +55,7 @@ checker_eq_double(double v1, double v2, double eps)
   vv2 -= (p - 0x3ff0000000000000LL);
   v1 = *(double*) &vv1;
   v2 = *(double*) &vv2;
-  if (fabs(v1 - v2) <= 2*eps) return 1;
+  if (fabs(v1 - v2) <= 1.125*eps) return 1;
   return 0;
 #else
   double m1, m2;
@@ -69,7 +69,7 @@ checker_eq_double(double v1, double v2, double eps)
   }
   if (fpclassify(v1) == FP_INFINITE || fpclassify(v2) == FP_INFINITE) return 0;
   if (fabs(v1) <= 1.0 && fabs(v2) <= 1.0) {
-    if (fabs(v1 - v2) <= 2*eps) return 1;
+    if (fabs(v1 - v2) <= 1.125*eps) return 1;
     return 0;
   }
   if (signbit(v1) != signbit(v2)) return 0;
@@ -82,7 +82,7 @@ checker_eq_double(double v1, double v2, double eps)
   e2 -= em;
   m1 = ldexp(m1, e1);
   m2 = ldexp(m2, e2);
-  if (fabs(m1 - m2) <= 2*eps) return 1;
+  if (fabs(m1 - m2) <= 1.125*eps) return 1;
   return 0;
 #endif
 }

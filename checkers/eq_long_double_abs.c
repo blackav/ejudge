@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005, 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
  * 0-62 - mantissa
  */
 int
-checker_eq_long_double(long double v1, long double v2, long double eps)
+checker_eq_long_double_abs(long double v1, long double v2, long double eps)
 {
 #if defined __MINGW32__
   unsigned int *r1, *r2;
@@ -54,29 +54,10 @@ checker_eq_long_double(long double v1, long double v2, long double eps)
     return 1;
   }
   if (e1 == 0xffff || e2 == 0xffff) return 0;
-  if (v1 <= 1.0L && v1 >= -1.0L && v2 <= 1.0L && v2 >= -1.0L) {
-    d = v1 - v2;
-    if (d <= 1.125*eps && d >= -1.125*eps) return 1;
-    return 0;
-  }
-  if (!v1 || !v2) return 0;
-  if ((s1 ^ s2) != 0) return 0;
-  e = e1;
-  if (e > e2) e = e2;
-  if (e1 - e > 1 || e2 - e > 1) return 0;
-  e1 -= (e - 0x3fff);
-  e2 -= (e - 0x3fff);
-  r1[2] = e1;
-  r1[2] &= 0x7fff;
-  r2[2] = e2;
-  r2[2] &= 0x7fff;
   d = v1 - v2;
   if (d <= 1.125*eps && d >= -1.125*eps) return 1;
   return 0;
 #else
-  long double m1, m2;
-  int e1, e2, em;
-
   if (fpclassify(v1) == FP_NAN && fpclassify(v2) == FP_NAN) return 1;
   if (fpclassify(v1) == FP_NAN || fpclassify(v2) == FP_NAN) return 0;
   if (fpclassify(v1) == FP_INFINITE && fpclassify(v2) == FP_INFINITE) {
@@ -84,21 +65,7 @@ checker_eq_long_double(long double v1, long double v2, long double eps)
     return 0;
   }
   if (fpclassify(v1) == FP_INFINITE || fpclassify(v2) == FP_INFINITE) return 0;
-  if (fabsl(v1) <= 1.0 && fabsl(v2) <= 1.0) {
-    if (fabsl(v1 - v2) <= 1.125*eps) return 1;
-    return 0;
-  }
-  if (signbit(v1) != signbit(v2)) return 0;
-  m1 = frexpl(v1, &e1);
-  m2 = frexpl(v2, &e2);
-  if (abs(e1 - e2) > 1) return 0;
-  em = e1;
-  if (e2 < em) em = e2;
-  e1 -= em;
-  e2 -= em;
-  m1 = ldexpl(m1, e1);
-  m2 = ldexpl(m2, e2);
-  if (fabsl(m1 - m2) <= 1.125*eps) return 1;
+  if (fabsl(v1 - v2) <= 1.125*eps) return 1;
   return 0;
 #endif
 }

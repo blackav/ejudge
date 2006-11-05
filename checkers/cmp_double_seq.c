@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005, 2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
 int checker_main(int argc, char **argv)
 {
   double team_ans, corr_ans, eps;
-  unsigned char *s;
+  unsigned char *s, *abs_flag = 0;
   int n, i = 0;
   unsigned char buf[32];
 
@@ -35,6 +35,7 @@ int checker_main(int argc, char **argv)
     fatal_CF("EPS <= 0");
   if (eps >= 1)
     fatal_CF("EPS >= 1");
+  abs_flag = getenv("ABSOLUTE");
 
   while (1) {
     i++;
@@ -43,8 +44,9 @@ int checker_main(int argc, char **argv)
     if (checker_read_team_double(buf, 0, &team_ans) < 0) {
       fatal_WA("Too few numbers in the team output");
     }
-    if (!checker_eq_double(corr_ans, team_ans, eps))
-      fatal_WA("Answers differ: %s: team: %.10g, corr: %.10g", buf, team_ans, corr_ans);
+    if (!(abs_flag?checker_eq_double_abs:checker_eq_double)(team_ans, corr_ans, eps))
+      fatal_WA("Answers differ: %s: team: %.10g, corr: %.10g",
+	       buf, team_ans, corr_ans);
   }
   if (checker_read_team_double("x", 0, &team_ans) >= 0) {
     fatal_WA("Too many numbers in the team output");
