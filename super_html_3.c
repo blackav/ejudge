@@ -339,6 +339,7 @@ Participant's capabilities
   GLOBAL_PARAM(disable_submit_after_ok, "d"),
   GLOBAL_PARAM(ignore_compile_errors, "d"),
   GLOBAL_PARAM(enable_printing, "d"),
+  GLOBAL_PARAM(disable_banner_page, "d"),
   GLOBAL_PARAM(ignore_duplicated_runs, "d"),
   GLOBAL_PARAM(report_error_code, "d"),
   GLOBAL_PARAM(show_deadline, "d"),
@@ -750,7 +751,18 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td><td>");
     html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_ENABLE_PRINTING, "Change");
     fprintf(f, "</td></tr></form>\n");
-    
+
+    if (global->enable_printing > 0) {
+      //GLOBAL_PARAM(disable_banner_page, "d"),
+      html_start_form(f, 1, self_url, hidden_vars);
+      fprintf(f, "<tr%s><td>Disable separate banner page:</td><td>",
+              form_row_attrs[row ^= 1]);
+      html_boolean_select(f, global->disable_banner_page, "param", 0, 0);
+      fprintf(f, "</td><td>");
+      html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_DISABLE_BANNER_PAGE, "Change");
+      fprintf(f, "</td></tr></form>\n");
+    }
+
     //GLOBAL_PARAM(prune_empty_users, "d"),
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Do not show contestants, which did not make any submit, in standings:</td><td>", form_row_attrs[row ^= 1]);
@@ -2027,6 +2039,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_ENABLE_PRINTING:
     p_int = &global->enable_printing;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_DISABLE_BANNER_PAGE:
+    p_int = &global->disable_banner_page;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_PRUNE_EMPTY_USERS:

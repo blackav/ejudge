@@ -254,6 +254,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(variant_map_file, "s"),
 
   GLOBAL_PARAM(enable_printing, "d"),
+  GLOBAL_PARAM(disable_banner_page, "d"),
   GLOBAL_PARAM(team_page_quota, "d"),
 
   GLOBAL_PARAM(priority_adjustment, "d"),
@@ -486,6 +487,7 @@ global_init_func(struct generic_section_config *gp)
   p->ignore_compile_errors = -1;
   p->disable_failed_test_view = -1;
   p->enable_printing = -1;
+  p->disable_banner_page = -1;
   p->prune_empty_users = -1;
   p->enable_full_archive = -1;
   p->always_show_problems = -1;
@@ -1570,6 +1572,8 @@ set_defaults(serve_state_t state, int mode)
     state->global->show_deadline = DFLT_G_SHOW_DEADLINE;
   if (state->global->enable_printing == -1)
     state->global->enable_printing = DFLT_G_ENABLE_PRINTING;
+  if (state->global->disable_banner_page == -1)
+    state->global->disable_banner_page = DFLT_G_DISABLE_BANNER_PAGE;
   if (state->global->prune_empty_users == -1)
     state->global->prune_empty_users = DFLT_G_PRUNE_EMPTY_USERS;
   if (state->global->enable_full_archive == -1)
@@ -3776,6 +3780,8 @@ prepare_set_global_defaults(struct section_global_data *g)
     g->enable_full_archive = DFLT_G_ENABLE_FULL_ARCHIVE;
   if (g->enable_printing < 0)
     g->enable_printing = DFLT_G_ENABLE_PRINTING;
+  if (g->disable_banner_page < 0)
+    g->disable_banner_page = DFLT_G_DISABLE_BANNER_PAGE;
   if (g->team_page_quota < 0)
     g->team_page_quota = DFLT_G_TEAM_PAGE_QUOTA;
   if (g->stand_show_warn_number < 0)
@@ -3953,6 +3959,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->use_dir_hierarchy = DFLT_G_USE_DIR_HIERARCHY;
   global->enable_full_archive = 1;
   global->enable_printing = DFLT_G_ENABLE_PRINTING;
+  global->disable_banner_page = DFLT_G_DISABLE_BANNER_PAGE;
   global->team_page_quota = DFLT_G_TEAM_PAGE_QUOTA;
   global->enable_l10n = 1;
   global->stand_show_ok_time = DFLT_G_STAND_SHOW_OK_TIME;

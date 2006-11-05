@@ -249,6 +249,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "show_deadline", global->show_deadline);
   if (global->enable_printing != DFLT_G_ENABLE_PRINTING)
     unparse_bool(f, "enable_printing", global->enable_printing);
+  if (global->disable_banner_page != DFLT_G_DISABLE_BANNER_PAGE)
+    unparse_bool(f, "disable_banner_page", global->disable_banner_page);
   if (global->prune_empty_users != DFLT_G_PRUNE_EMPTY_USERS)
     unparse_bool(f, "prune_empty_users", global->prune_empty_users);
   if (global->enable_full_archive != DFLT_G_ENABLE_FULL_ARCHIVE)

@@ -350,6 +350,7 @@ struct section_global_data
 
   // printing support
   int enable_printing;
+  int disable_banner_page;
   int team_page_quota;
 
   // user priority adjustments
