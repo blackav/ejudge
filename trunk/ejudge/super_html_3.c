@@ -2671,7 +2671,9 @@ load_cs_languages(const struct ejudge_cfg *config,
 
   sstate->cs_langs_loaded = 1;
 
-  if (!sstate->compile_home_dir) return -1;
+  if (!sstate->compile_home_dir) {
+    sstate->compile_home_dir = xstrdup(config->compile_home_dir);
+  }
   snprintf(cs_conf_dir, sizeof(cs_conf_dir), "%s/conf/compile.cfg",
            sstate->compile_home_dir);
   if (!(cfg = prepare_parse_config_file(cs_conf_dir, 0))) return -1;
