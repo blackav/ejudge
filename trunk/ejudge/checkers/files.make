@@ -18,8 +18,11 @@ CFILES=\
  team_close.c\
  corr_close.c\
  eq_double.c\
+ eq_double_abs.c\
  eq_float.c\
+ eq_float_abs.c\
  eq_long_double.c\
+ eq_long_double_abs.c\
  eq_sexpr.c\
  in_eof.c\
  team_eof.c\
