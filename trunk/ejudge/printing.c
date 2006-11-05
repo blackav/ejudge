@@ -106,6 +106,7 @@ static int
 do_print_run(const serve_state_t state, int run_id,
              int is_privileged, int user_id)
 {
+  const struct section_global_data *global = state->global;
   unsigned char *banner_path = 0;
   unsigned char *program_path = 0;
   unsigned char *ps_path = 0;
@@ -120,7 +121,7 @@ do_print_run(const serve_state_t state, int run_id,
   FILE *f = 0;
   int errcode = -SRV_ERR_SYSTEM_ERROR;
   struct teamdb_export teaminfo;
-  unsigned char *printer_name = 0;
+  const unsigned char *printer_name = 0, *user_name = 0, *location = 0;
 
   if (run_id < 0 || run_id >= run_get_total(state->runlog_state)) {
     errcode = -SRV_ERR_BAD_RUN_ID;
@@ -138,7 +139,7 @@ do_print_run(const serve_state_t state, int run_id,
       errcode = -SRV_ERR_NO_PERMS;
       goto cleanup;
     }
-    if (!state->global->enable_printing) {
+    if (!global->enable_printing) {
       errcode = -SRV_ERR_NO_PERMS;
       goto cleanup;
     }
@@ -155,19 +156,33 @@ do_print_run(const serve_state_t state, int run_id,
       printer_name = teaminfo.user->i.printer_name;
   }
 
-  banner_path = (unsigned char*) alloca(strlen(state->global->print_work_dir) + 64);
-  sprintf(banner_path, "%s/%06d.txt", state->global->print_work_dir, run_id);
-  if (print_banner_page(state, banner_path, run_id, user_id,
-                        is_privileged) < 0) {
-    goto cleanup;
+  if (global->disable_banner_page <= 0) {
+    banner_path = (unsigned char*) alloca(strlen(global->print_work_dir) + 64);
+    sprintf(banner_path, "%s/%06d.txt", global->print_work_dir, run_id);
+    if (print_banner_page(state, banner_path, run_id, user_id,
+                          is_privileged) < 0) {
+      goto cleanup;
+    }
   }
 
-  if (state->langs[info.lang_id]) sfx = state->langs[info.lang_id]->src_sfx;
-  program_path = (unsigned char*) alloca(strlen(state->global->print_work_dir) + 64);
-  sprintf(program_path, "%s/%06d%s", state->global->print_work_dir, run_id, sfx);
+  if (global->disable_banner_page > 0) {
+    if (state->langs[info.lang_id]) sfx = state->langs[info.lang_id]->src_sfx;
+    user_name = teamdb_get_name_2(state->teamdb_state, info.user_id);
+    if (!user_name) user_name = "";
+    location = "";
+    if (teaminfo.user && teaminfo.user->i.location)
+      location = teaminfo.user->i.location;
+    program_path = (unsigned char*) alloca(strlen(global->print_work_dir) + 64 + strlen(user_name) + strlen(location));
+    sprintf(program_path, "%s/%06d_%s_%s%s", global->print_work_dir, run_id,
+            user_name, location, sfx);
+  } else {
+    if (state->langs[info.lang_id]) sfx = state->langs[info.lang_id]->src_sfx;
+    program_path = (unsigned char*) alloca(strlen(global->print_work_dir) + 64);
+    sprintf(program_path, "%s/%06d%s", global->print_work_dir, run_id, sfx);
+  }
 
   arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
-                                      state->global->run_archive_dir,
+                                      global->run_archive_dir,
                                       run_id, 0,0);
   if (arch_flags < 0) {
     goto cleanup;
@@ -176,17 +191,17 @@ do_print_run(const serve_state_t state, int run_id,
     goto cleanup;
   }
 
-  ps_path = (unsigned char*) alloca(strlen(state->global->print_work_dir) + 64);
-  sprintf(ps_path, "%s/%06d.ps", state->global->print_work_dir, run_id);
+  ps_path = (unsigned char*) alloca(strlen(global->print_work_dir) + 64);
+  sprintf(ps_path, "%s/%06d.ps", global->print_work_dir, run_id);
 
-  log_path = (unsigned char*) alloca(strlen(state->global->print_work_dir) + 64);
-  sprintf(log_path, "%s/%06d.out", state->global->print_work_dir, run_id);
+  log_path = (unsigned char*) alloca(strlen(global->print_work_dir) + 64);
+  sprintf(log_path, "%s/%06d.out", global->print_work_dir, run_id);
 
   if (!(tsk = task_New())) goto cleanup;
-  task_AddArg(tsk, state->global->a2ps_path);
-  if (state->global->a2ps_args) {
-    for (i = 0; state->global->a2ps_args[i]; i++)
-      task_AddArg(tsk, state->global->a2ps_args[i]);
+  task_AddArg(tsk, global->a2ps_path);
+  if (global->a2ps_args) {
+    for (i = 0; global->a2ps_args[i]; i++)
+      task_AddArg(tsk, global->a2ps_args[i]);
   } else {
     task_AddArg(tsk, "-1");
     task_AddArg(tsk, "-E");
@@ -197,7 +212,9 @@ do_print_run(const serve_state_t state, int run_id,
   }
   task_AddArg(tsk, "-o");
   task_AddArg(tsk, ps_path);
-  task_AddArg(tsk, banner_path);
+  if (global->disable_banner_page <= 0) {
+    task_AddArg(tsk, banner_path);
+  }
   task_AddArg(tsk, program_path);
   task_SetPathAsArg0(tsk);
   task_SetRedir(tsk, 2, TSR_FILE, log_path, O_WRONLY|O_CREAT|O_TRUNC, 0777);
@@ -223,7 +240,7 @@ do_print_run(const serve_state_t state, int run_id,
   if (pages_num <= 0) goto cleanup;
 
   if (!is_privileged) {
-    if (pages_num + run_get_total_pages(state->runlog_state, info.user_id) > state->global->team_page_quota) {
+    if (pages_num + run_get_total_pages(state->runlog_state, info.user_id) > global->team_page_quota) {
       errcode = -SRV_ERR_PAGES_QUOTA;
       goto cleanup;
     }
@@ -231,10 +248,10 @@ do_print_run(const serve_state_t state, int run_id,
   }
 
   if (!(tsk = task_New())) goto cleanup;
-  task_AddArg(tsk, state->global->lpr_path);
-  if (state->global->lpr_args) {
-    for (i = 0; state->global->lpr_args[i]; i++)
-      task_AddArg(tsk, state->global->lpr_args[i]);
+  task_AddArg(tsk, global->lpr_path);
+  if (global->lpr_args) {
+    for (i = 0; global->lpr_args[i]; i++)
+      task_AddArg(tsk, global->lpr_args[i]);
   }
   if (printer_name) {
     task_AddArg(tsk, "-P");
