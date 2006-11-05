@@ -149,9 +149,9 @@ do_print_run(const serve_state_t state, int run_id,
     }
   }
 
+  if (teamdb_export_team(state->teamdb_state, info.user_id, &teaminfo) < 0)
+    return -1;
   if (!is_privileged) {
-    if (teamdb_export_team(state->teamdb_state, info.user_id, &teaminfo) < 0)
-      return -1;
     if (teaminfo.user && teaminfo.user->i.printer_name)
       printer_name = teaminfo.user->i.printer_name;
   }
