@@ -1612,6 +1612,75 @@ priv_change_language(FILE *fout,
   return 0;
 }
 
+static void
+priv_change_password(FILE *fout,
+                     struct http_request_info *phr,
+                     const struct contest_desc *cnts,
+                     struct contest_extra *extra)
+{
+  const unsigned char *p0 = 0, *p1 = 0, *p2 = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  FILE *log_f = 0;
+  int cmd, r;
+  unsigned char url[1024];
+  unsigned char login_buf[256];
+
+  if (ns_cgi_param(phr, "oldpasswd", &p0) <= 0)
+    return ns_html_err_inv_param(fout, phr, 1, "cannot parse oldpasswd");
+  if (ns_cgi_param(phr, "newpasswd1", &p1) <= 0)
+    return ns_html_err_inv_param(fout, phr, 1, "cannot parse newpasswd1");
+  if (ns_cgi_param(phr, "newpasswd2", &p2) <= 0)
+    return ns_html_err_inv_param(fout, phr, 1, "cannot parse newpasswd2");
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (strlen(p0) >= 256) {
+    ns_error(log_f, NEW_SRV_ERR_OLD_PWD_TOO_LONG);
+    goto done;
+  }
+  if (strcmp(p1, p2)) {
+    ns_error(log_f, NEW_SRV_ERR_NEW_PWD_MISMATCH);
+    goto done;
+  }
+  if (strlen(p1) >= 256) {
+    ns_error(log_f, NEW_SRV_ERR_NEW_PWD_TOO_LONG);
+    goto done;
+  }
+
+  cmd = ULS_PRIV_SET_REG_PASSWD;
+
+  if (open_ul_connection(phr->fw_state) < 0) {
+    ns_html_err_ul_server_down(fout, phr, 1, 0);
+    goto cleanup;
+  }
+  r = userlist_clnt_set_passwd(ul_conn, cmd, phr->user_id, phr->contest_id,
+                               p0, p1);
+  if (r < 0) {
+    ns_error(log_f, NEW_SRV_ERR_PWD_UPDATE_FAILED, userlist_strerror(-r));
+    goto done;
+  }
+
+ done:;
+  fclose(log_f); log_f = 0;
+  if (!log_txt || !*log_txt) {
+    url_armor_string(login_buf, sizeof(login_buf), phr->login);
+    snprintf(url, sizeof(url),
+             "%s?contest_id=%d&role=%d&login=%s&locale_id=%d&action=%d",
+             phr->self_url, phr->contest_id, phr->role,
+             login_buf, phr->locale_id,
+             NEW_SRV_ACTION_LOGIN_PAGE);
+    html_refresh_page_2(fout, url);
+  } else {
+    html_error_status_page(fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_MAIN_PAGE);
+  }
+
+ cleanup:;
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+}
+
 static int
 priv_reset_filter(FILE *fout,
                   FILE *log_f,
@@ -4893,6 +4962,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRINT_RUN] = priv_generic_operation,
   [NEW_SRV_ACTION_ISSUE_WARNING] = priv_generic_operation,
   [NEW_SRV_ACTION_LOGOUT] = priv_logout,
+  [NEW_SRV_ACTION_CHANGE_PASSWORD] = priv_change_password,
 };
 
 static void
