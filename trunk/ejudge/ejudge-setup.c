@@ -2896,7 +2896,7 @@ generate_contest_xml(FILE *f)
   fprintf(f, "<!-- Generation date: %s -->\n", date_buf);
 
   fprintf(f,
-          "<contest id=\"1\" disable_team_password=\"yes\" managed=\"yes\" run_managed=\"yes\">\n"
+          "<contest id=\"1\" disable_team_password=\"yes\" new_managed=\"yes\" run_managed=\"yes\">\n"
           "  <name>Test contest</name>\n"
           "  <name_en>Test contest</name_en>\n"
           "\n"
@@ -2994,6 +2994,7 @@ generate_ejudge_xml(FILE *f)
 {
   const struct path_edit_item *cur;
   unsigned char date_buf[64];
+  unsigned char tmppath[PATH_MAX];
 
   generate_current_date(date_buf, sizeof(date_buf));
 
@@ -3152,6 +3153,21 @@ generate_ejudge_xml(FILE *f)
           "  </caps>\n", config_login);
 
   fprintf(f, "\n");
+
+  // plugin configurations
+  snprintf(tmppath, sizeof(tmppath), "%s", config_ejudge_conf_dir);
+#if defined EJUDGE_CONF_DIR
+  snprintf(tmppath, sizeof(tmppath), "%s", EJUDGE_CONF_DIR);
+#endif
+  fprintf(f,
+          "  <plugins>\n"
+          "    <plugin type=\"nsdb\" name=\"files\">\n"
+          "       <config>\n"
+          "         <data_dir>%s/new-serve-db</data_dir>\n"
+          "       </config>\n"
+          "    </plugin>\n"
+          "  </plugins>\n\n",
+          tmppath);
 
   cur = &path_edit_items[PATH_LINE_SOCKET_PATH];
   if (cur->default_value && !strcmp(cur->default_value, cur->buf)) {
@@ -3543,6 +3559,15 @@ generate_install_script(FILE *f)
       gen_cmd_run(f, "ln -sf \"%s/serve-control%s\" \"%s/serve-control%s\"",
                   config_ejudge_cgi_bin_dir, CGI_PROG_SUFFIX,
                   config_cgi_bin_dir, CGI_PROG_SUFFIX);
+      gen_cmd_run(f, "ln -sf \"%s/new-client%s\" \"%s/new-client%s\"",
+                  config_ejudge_cgi_bin_dir, CGI_PROG_SUFFIX,
+                  config_cgi_bin_dir, CGI_PROG_SUFFIX);
+      gen_cmd_run(f, "ln -sf \"%s/new-master%s\" \"%s/new-master%s\"",
+                  config_ejudge_cgi_bin_dir, CGI_PROG_SUFFIX,
+                  config_cgi_bin_dir, CGI_PROG_SUFFIX);
+      gen_cmd_run(f, "ln -sf \"%s/new-judge%s\" \"%s/new-judge%s\"",
+                  config_ejudge_cgi_bin_dir, CGI_PROG_SUFFIX,
+                  config_cgi_bin_dir, CGI_PROG_SUFFIX);
     }
   }
 
@@ -3685,9 +3710,9 @@ generate_install_script(FILE *f)
               config_system_uid, config_system_gid, config_contest1_home_dir);
 
   fprintf(f, "# Do probe run of the compile server to create dirs\n");
-  gen_cmd_run(f, "su - -c 'cd \"%s\"; %s/bin/compile -i conf/compile.cfg' %s",
-              config_compile_home_dir, EJUDGE_PREFIX_DIR,
-              config_system_uid);
+  gen_cmd_run(f, "%s/bin/compile -u %s -g %s -C \"%s\" -i conf/compile.cfg",
+              EJUDGE_PREFIX_DIR, config_system_uid, config_system_gid,
+              config_compile_home_dir);
   fprintf(f, "# Do probe run of the contest server to create dirs\n");
   gen_cmd_run(f, "su - -c 'cd \"%s\"; %s -i conf/serve.cfg' %s",
               config_contest1_home_dir, config_ejudge_serve_path,

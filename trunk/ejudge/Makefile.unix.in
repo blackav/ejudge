@@ -170,13 +170,15 @@ local_install: ${TARGETS} ejudge-config po mo
 	install -d "${DESTDIR}${cgibindir}"
 	for i in ${CGITARGETS}; do install -m 0755 $$i "${DESTDIR}${cgibindir}"; done
 	cd "${DESTDIR}${cgibindir}"; rm -f judge${CGI_PROG_SUFFIX}; ln master${CGI_PROG_SUFFIX} judge${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f judge${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-master${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f judge${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-judge${CGI_PROG_SUFFIX}
 	if [ x"${ENABLE_NLS}" = x1 ]; then install -d "${DESTDIR}${datadir}/locale/ru_RU.KOI8-R/LC_MESSAGES"; fi
 	if [ x"${ENABLE_NLS}" = x1 ]; then install -m 0644 locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo "${DESTDIR}${datadir}/locale/ru_RU.KOI8-R/LC_MESSAGES"; fi
 
 install: local_install
-	$(MAKE) -C extra DESTDIR="${DESTDIR}" install
-	$(MAKE) -C checkers DESTDIR="${DESTDIR}" install
 	$(MAKE) -C scripts DESTDIR="${DESTDIR}" install
+	$(MAKE) -C checkers DESTDIR="${DESTDIR}" install
+	$(MAKE) -C extra DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" install
 
 compile$(EXESFX) : $(C_OBJECTS)
