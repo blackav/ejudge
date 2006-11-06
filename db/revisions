@@ -1549,3 +1549,5 @@ prepare_out.c 3657 0 5546857
 printing.c 3657 0 739712
 super_html_3.c 3657 0 21534328
 printing.c 3659 0 739583
+compile.c 3661 0 1005325
+ejudge-setup.c 3661 0 9412368
