@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-/**
+/*
  * This program compiles incoming source files and puts the resulting
  * executables into the spool directory.
  */
@@ -46,9 +46,15 @@
 #include <signal.h>
 #include <errno.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+#include <grp.h>
 
 struct serve_state serve_state;
 static int initialize_mode = 0;
+
+static path_t self_exe;
+static char **self_argv;
 
 static int
 do_loop(void)
@@ -82,7 +88,7 @@ do_loop(void)
 
   while (1) {
     // terminate if signaled
-    if (interrupt_get_status()) break;
+    if (interrupt_get_status() || interrupt_restart_requested()) break;
 
     r = scan_dir(serve_state.global->compile_queue_dir, pkt_name);
 
@@ -276,7 +282,7 @@ do_loop(void)
   return 0;
 }
 
-int
+static int
 filter_languages(char *key)
 {
   int i, total = 0;
@@ -298,7 +304,7 @@ filter_languages(char *key)
   return 0;
 }
 
-int
+static int
 check_config(void)
 {
   int i;
@@ -321,6 +327,51 @@ check_config(void)
   return 0;
 }
 
+static void
+set_self_args(int argc, char *argv[])
+{
+  int n;
+
+  if ((n = readlink("/proc/self/exe", self_exe, sizeof(self_exe))) <= 0) {
+    fprintf(stderr, "%s: cannot access /proc/self/exe: %s\n",
+            argv[0], os_ErrorMsg());
+    snprintf(self_exe, sizeof(self_exe), "%s", argv[0]);
+  } else {
+    self_exe[n] = 0;
+  }
+  self_argv = argv;
+}
+
+static int
+switch_user(const unsigned char *user, const unsigned char *group)
+{
+  struct passwd *pwinfo;
+  struct group *grinfo;
+
+  if (!user || !*user) {
+    err("user is not specified (use -u option)");
+    return -1;
+  }
+  if (!group || !*group) group = user;
+  if (!(pwinfo = getpwnam(user))) {
+    err("no such user: %s", user);
+    return -1;
+  }
+  if (!(grinfo = getgrnam(group))) {
+    err("no such group: %s", group);
+    return -1;
+  }
+  if (setuid(pwinfo->pw_uid) < 0) {
+    err("cannot change uid: %s", os_ErrorMsg());
+    return -1;
+  }
+  if (setgid(grinfo->gr_gid) < 0) {
+    err("cannot change gid: %s", os_ErrorMsg());
+    return -1;
+  }
+  return 0;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -330,6 +381,9 @@ main(int argc, char *argv[])
   int     code = 0;
   int     T_flag = 0;
   int     prepare_flags = 0;
+  unsigned char *user = 0, *group = 0, *workdir = 0;
+
+  set_self_args(argc, argv);
 
   if (argc == 1) goto print_usage;
   code = 1;
@@ -347,16 +401,31 @@ main(int argc, char *argv[])
     } else if (!strncmp(argv[i], "-D", 2)) {
       if (cpp_opts[0]) pathcat(cpp_opts, " ");
       pathcat(cpp_opts, argv[i++]);
+    } else if (!strcmp(argv[i], "-u")) {
+      if (++i >= argc) goto print_usage;
+      user = argv[i++];
+    } else if (!strcmp(argv[i], "-g")) {
+      if (++i >= argc) goto print_usage;
+      group = argv[i++];
+    } else if (!strcmp(argv[i], "-C")) {
+      if (++i >= argc) goto print_usage;
+      workdir = argv[i++];
     } else break;
   }
   if (i >= argc) goto print_usage;
 
 #if defined __unix__
   if (getuid() == 0) {
-    err("sorry, will not run as the root");
-    return 1;
+    if (switch_user(user, group) < 0) return 1;
   }
 #endif
+
+  if (workdir && *workdir) {
+    if (chdir(workdir) < 0) {
+      err("cannot change directory to %s", workdir);
+      return 1;
+    }
+  }
 
   if (prepare(&serve_state, argv[i], prepare_flags, PREPARE_COMPILE,
               cpp_opts, 0) < 0)
@@ -370,6 +439,10 @@ main(int argc, char *argv[])
   if (check_config() < 0) return 1;
   if (initialize_mode) return 0;
   if (do_loop() < 0) return 1;
+
+  if (interrupt_restart_requested()) {
+    execv(self_exe, self_argv);
+  }
 
   return 0;
 
