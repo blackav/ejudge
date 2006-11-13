@@ -76,7 +76,12 @@ SCRIPTS = \
  festival\
  javac\
  javac-version\
- runjava
+ mcs\
+ mcs-version\
+ mbas\
+ mbas-version\
+ runjava\
+ runmono
 
 POLICIES = \
  fileio.policy \
