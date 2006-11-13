@@ -96,7 +96,5 @@
 #undef COMPILE_MONO_VERSION
 #undef COMPILE_MBAS_VERSION
 
-#undef EJUDGE_PROGRAM_UUDECODE
-
 #endif /* __CONFIG_H__ */
 

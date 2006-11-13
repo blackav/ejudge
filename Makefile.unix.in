@@ -142,7 +142,7 @@ NC_OBJECTS=$(NC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a
 NS_CFILES=new-server.c version.c
 NS_OBJECTS=$(NS_CFILES:.c=.o) libcommon.a libuserlist_clnt.a
 
-BINTARGETS = compile serve run userlist-server job-server job-server-cmd edit-userlist super-serve clean-users ejudge-setup collect-emails serve-cmd slice-userlist execute new-server
+BINTARGETS = compile serve run userlist-server job-server job-server-cmd edit-userlist super-serve clean-users ejudge-setup collect-emails serve-cmd slice-userlist execute new-server uudecode
 CGITARGETS = master${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX} users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
 TARGETS = ${BINTARGETS} ${CGITARGETS}
 
@@ -170,8 +170,8 @@ local_install: ${TARGETS} ejudge-config po mo
 	install -d "${DESTDIR}${cgibindir}"
 	for i in ${CGITARGETS}; do install -m 0755 $$i "${DESTDIR}${cgibindir}"; done
 	cd "${DESTDIR}${cgibindir}"; rm -f judge${CGI_PROG_SUFFIX}; ln master${CGI_PROG_SUFFIX} judge${CGI_PROG_SUFFIX}
-	cd "${DESTDIR}${cgibindir}"; rm -f judge${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-master${CGI_PROG_SUFFIX}
-	cd "${DESTDIR}${cgibindir}"; rm -f judge${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-judge${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f new-master${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-master${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f new-judge${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-judge${CGI_PROG_SUFFIX}
 	if [ x"${ENABLE_NLS}" = x1 ]; then install -d "${DESTDIR}${datadir}/locale/ru_RU.KOI8-R/LC_MESSAGES"; fi
 	if [ x"${ENABLE_NLS}" = x1 ]; then install -m 0644 locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo "${DESTDIR}${datadir}/locale/ru_RU.KOI8-R/LC_MESSAGES"; fi
 
@@ -288,6 +288,10 @@ prjutils/expat_iface.o: prjutils/expat_iface.c
 prjutils/svn_xmllog.o: prjutils/svn_xmllog.c
 prjutils/usermap.o: prjutils/usermap.c
 prjutils/xalloc.o: prjutils/xalloc.c
+
+uudecode.o : uudecode.c
+uudecode : uudecode.o
+	${LD} ${LDFLAGS} $^ -o $@
 
 cdeps: prjutils/cdeps.o
 	${LD} ${LDFLAGS} $^ -o $@

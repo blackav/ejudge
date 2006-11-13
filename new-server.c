@@ -20,6 +20,7 @@
 #include "ej_types.h"
 #include "version.h"
 
+#include "startstop.h"
 #include "errlog.h"
 #include "server_framework.h"
 #include "new_server_proto.h"
@@ -29,8 +30,10 @@
 #include "ejudge_plugin.h"
 #include "nsdb_plugin.h"
 #include "l10n.h"
+#include "pathutl.h"
 
 #include <reuse/xalloc.h>
+#include <reuse/osdeps.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -465,6 +468,10 @@ main(int argc, char *argv[])
 {
   int i;
   int create_flag = 0;
+  const unsigned char *user = 0, *group = 0, *workdir = 0;
+  int restart_flag = 0;
+
+  start_set_self_args(argc, argv);
 
   params.program_name = argv[0];
   for (i = 1; i < argc; ) {
@@ -477,6 +484,15 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "--create")) {
       create_flag = 1;
       i++;
+    } else if (!strcmp(argv[i], "-u")) {
+      if (++i >= argc) startup_error("invalid usage");
+      user = argv[i++];
+    } else if (!strcmp(argv[i], "-g")) {
+      if (++i >= argc) startup_error("invalid usage");
+      group = argv[i++];
+    } else if (!strcmp(argv[i], "-C")) {
+      if (++i >= argc) startup_error("invalid usage");
+      workdir = argv[i++];
     } else if (!strcmp(argv[i], "--")) {
       i++;
       break;
@@ -487,6 +503,15 @@ main(int argc, char *argv[])
   }
   if (i < argc) ejudge_xml_path = argv[i++];
   if (i != argc) startup_error("invalid number of parameters");
+
+  start_prepare(user, group, workdir);
+
+  if (workdir && *workdir) {
+    if (chdir(workdir) < 0) {
+      err("cannot change directory to %s", workdir);
+      return 1;
+    }
+  }
 
 #if defined EJUDGE_XML_PATH
   if (!ejudge_xml_path) ejudge_xml_path = EJUDGE_XML_PATH;
@@ -528,9 +553,12 @@ main(int argc, char *argv[])
   if (!(state = nsf_init(&params, 0))) return 1;
   if (nsf_prepare(state) < 0) return 1;
   nsf_main_loop(state);
+  restart_flag = nsf_is_restart_requested(state);
   ns_unload_contests();
   nsf_cleanup(state);
   nsdb_default->iface->close(nsdb_default->data);
+
+  if (restart_flag) start_restart();
 
   return 0;
 }

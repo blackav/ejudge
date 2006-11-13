@@ -41,9 +41,7 @@
 #include <libintl.h>
 #include <locale.h>
 
-#ifndef EJUDGE_PROGRAM_UUDECODE
-#define EJUDGE_PROGRAM_UUDECODE "uudecode"
-#endif
+static unsigned char uudecode_path[PATH_MAX];
 
 #ifndef CGI_PROG_SUFFIX
 #define CGI_PROG_SUFFIX ""
@@ -3577,7 +3575,7 @@ generate_install_script(FILE *f)
   fclose(floc); floc = 0;
   snprintf(fpath, sizeof(fpath), "%s", config_ejudge_xml_path);
   fprintf(f, "# copy ejudge.xml to its location\n");
-  fprintf(f, "cat << _EOF | %s\n", EJUDGE_PROGRAM_UUDECODE);
+  fprintf(f, "cat << _EOF | %s\n", uudecode_path);
   base64_encode_file(f, fpath, 0664, txt_ptr);
   fprintf(f, "_EOF\n");
   gen_check_retcode(f, fpath);
@@ -3591,7 +3589,7 @@ generate_install_script(FILE *f)
   fclose(floc); floc = 0;
   snprintf(fpath, sizeof(fpath), "%s", config_userlist_xml_path);
   fprintf(f, "# copy userlist.xml to its location\n");
-  fprintf(f, "cat << _EOF | %s\n", EJUDGE_PROGRAM_UUDECODE);
+  fprintf(f, "cat << _EOF | %s\n", uudecode_path);
   base64_encode_file(f, fpath, 0664, txt_ptr);
   fprintf(f, "_EOF\n");
   gen_check_retcode(f, fpath);
@@ -3605,7 +3603,7 @@ generate_install_script(FILE *f)
   fclose(floc); floc = 0;
   snprintf(fpath, sizeof(fpath), "%s/000001.xml", config_ejudge_contests_dir);
   fprintf(f, "# copy 000001.xml to its location\n");
-  fprintf(f, "cat << _EOF | %s\n", EJUDGE_PROGRAM_UUDECODE);
+  fprintf(f, "cat << _EOF | %s\n", uudecode_path);
   base64_encode_file(f, fpath, 0664, txt_ptr);
   fprintf(f, "_EOF\n");
   gen_check_retcode(f, fpath);
@@ -3618,7 +3616,7 @@ generate_install_script(FILE *f)
   generate_compile_cfg(floc);
   fclose(floc); floc = 0;
   fprintf(f, "# copy compile.cfg to its location\n");
-  fprintf(f, "cat << _EOF | %s\n", EJUDGE_PROGRAM_UUDECODE);
+  fprintf(f, "cat << _EOF | %s\n", uudecode_path);
   base64_encode_file(f, compile_cfg_path, 0664, txt_ptr);
   fprintf(f, "_EOF\n");
   gen_check_retcode(f, compile_cfg_path);
@@ -3631,7 +3629,7 @@ generate_install_script(FILE *f)
   generate_serve_cfg(floc);
   fclose(floc); floc = 0;
   fprintf(f, "# copy serve.cfg to its location\n");
-  fprintf(f, "cat << _EOF | %s\n", EJUDGE_PROGRAM_UUDECODE);
+  fprintf(f, "cat << _EOF | %s\n", uudecode_path);
   base64_encode_file(f, serve_cfg_path, 0664, txt_ptr);
   fprintf(f, "_EOF\n");
   gen_check_retcode(f, serve_cfg_path);
@@ -3646,7 +3644,7 @@ generate_install_script(FILE *f)
     fclose(floc); floc = 0;
     snprintf(fpath, sizeof(fpath),"%s/master.cfg",config_full_cgi_data_dir);
     fprintf(f, "# copy master.cfg to its location\n");
-    fprintf(f, "cat << _EOF | %s\n", EJUDGE_PROGRAM_UUDECODE);
+    fprintf(f, "cat << _EOF | %s\n", uudecode_path);
     base64_encode_file(f, fpath, 0664, txt_ptr);
     fprintf(f, "_EOF\n");
     gen_check_retcode(f, fpath);
@@ -3654,7 +3652,7 @@ generate_install_script(FILE *f)
                 config_system_uid, config_system_gid, fpath);
     snprintf(fpath, sizeof(fpath),"%s/judge.cfg",config_full_cgi_data_dir);
     fprintf(f, "# copy judge.cfg to its location\n");
-    fprintf(f, "cat << _EOF | %s\n", EJUDGE_PROGRAM_UUDECODE);
+    fprintf(f, "cat << _EOF | %s\n", uudecode_path);
     base64_encode_file(f, fpath, 0664, txt_ptr);
     fprintf(f, "_EOF\n");
     gen_check_retcode(f, fpath);
@@ -3662,7 +3660,7 @@ generate_install_script(FILE *f)
                 config_system_uid, config_system_gid, fpath);
     snprintf(fpath, sizeof(fpath),"%s/team.cfg",config_full_cgi_data_dir);
     fprintf(f, "# copy team.cfg to its location\n");
-    fprintf(f, "cat << _EOF | %s\n", EJUDGE_PROGRAM_UUDECODE);
+    fprintf(f, "cat << _EOF | %s\n", uudecode_path);
     base64_encode_file(f, fpath, 0664, txt_ptr);
     fprintf(f, "_EOF\n");
     gen_check_retcode(f, fpath);
@@ -3676,7 +3674,7 @@ generate_install_script(FILE *f)
     fclose(floc); floc = 0;
     snprintf(fpath, sizeof(fpath),"%s/register.xml",config_full_cgi_data_dir);
     fprintf(f, "# copy register.xml to its location\n");
-    fprintf(f, "cat << _EOF | %s\n", EJUDGE_PROGRAM_UUDECODE);
+    fprintf(f, "cat << _EOF | %s\n", uudecode_path);
     base64_encode_file(f, fpath, 0664, txt_ptr);
     fprintf(f, "_EOF\n");
     gen_check_retcode(f, fpath);
@@ -3690,7 +3688,7 @@ generate_install_script(FILE *f)
     fclose(floc); floc = 0;
     snprintf(fpath, sizeof(fpath),"%s/users.xml",config_full_cgi_data_dir);
     fprintf(f, "# copy users.xml to its location\n");
-    fprintf(f, "cat << _EOF | %s\n", EJUDGE_PROGRAM_UUDECODE);
+    fprintf(f, "cat << _EOF | %s\n", uudecode_path);
     base64_encode_file(f, fpath, 0664, txt_ptr);
     fprintf(f, "_EOF\n");
     gen_check_retcode(f, fpath);
@@ -3703,7 +3701,7 @@ generate_install_script(FILE *f)
   
   fprintf(f, "# install tests and answer files\n");
   fprintf(f, "cat << _EOF | %s -o - | tar xvfz - -C \"%s\"\n",
-          EJUDGE_PROGRAM_UUDECODE, config_contest1_home_dir);
+          uudecode_path, config_contest1_home_dir);
   fprintf(f, "%s_EOF\n", b64_contest1_tgz);
   gen_check_retcode(f, config_contest1_home_dir);
   gen_cmd_run(f, "chown -R %s:%s \"%s\"",
@@ -3714,9 +3712,9 @@ generate_install_script(FILE *f)
               EJUDGE_PREFIX_DIR, config_system_uid, config_system_gid,
               config_compile_home_dir);
   fprintf(f, "# Do probe run of the contest server to create dirs\n");
-  gen_cmd_run(f, "su - -c 'cd \"%s\"; %s -i conf/serve.cfg' %s",
-              config_contest1_home_dir, config_ejudge_serve_path,
-              config_system_uid);
+  gen_cmd_run(f, "%s -u %s -g %s -C \"%s\" -i conf/serve.cfg",
+              config_ejudge_serve_path, config_system_uid,
+              config_system_gid, config_contest1_home_dir);
 }
 
 static void
@@ -3925,6 +3923,8 @@ main(int argc, char **argv)
 
   if (ncurses_init() < 0) return 1;
 
+  snprintf(uudecode_path, sizeof(uudecode_path), "%s/bin/uudecode",
+           EJUDGE_PREFIX_DIR);
   initialize_config_vars();
   initialize_setting_vars();
   //answer = ncurses_yesno(0, initial_warning);
