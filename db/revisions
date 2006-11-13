@@ -1551,3 +1551,16 @@ super_html_3.c 3657 0 21534328
 printing.c 3659 0 739583
 compile.c 3661 0 1005325
 ejudge-setup.c 3661 0 9412368
+server_framework.h 3664 0 315631
+startstop.h 3664 0 82853
+new_server_proto.h 3664 0 400649
+compile.c 3664 0 966550
+ejudge-setup.c 3664 0 9415637
+new-server.c 3664 0 1310459
+serve.c 3664 0 11607633
+super-serve.c 3664 0 11492148
+userlist-server.c 3664 0 20128260
+new_server_html.c 3664 0 22759758
+new_server_proto.c 3664 0 807317
+server_framework.c 3664 0 1756820
+startstop.c 3664 0 191824
