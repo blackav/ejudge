@@ -38,6 +38,7 @@
 #include "uldb_plugin.h"
 #include "xml_utils.h"
 #include "random.h"
+#include "startstop.h"
 
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
@@ -189,6 +190,7 @@ static time_t last_user_check;
 static time_t cookie_check_interval;
 static time_t user_check_interval;
 static int interrupt_signaled;
+static int restart_signaled;
 static int daemon_mode = 0;
 static int forced_mode = 0;
 
@@ -800,12 +802,20 @@ graceful_exit(void)
   uldb_default->iface->close(uldb_default->data);
   server_finish_time = time(0);
   report_uptime(server_start_time, server_finish_time);
+
+  if (restart_signaled) start_restart();
   exit(0);
 }
 static void
 interrupt_signal(int s)
 {
   interrupt_signaled = 1;
+}
+static void
+restart_signal(int s)
+{
+  interrupt_signaled = 1;
+  restart_signaled = 1;
 }
 
 static void
@@ -7554,8 +7564,9 @@ do_work(void)
   signal(SIGPIPE, SIG_IGN);
   signal(SIGINT, interrupt_signal);
   signal(SIGTERM, interrupt_signal);
-  signal(SIGHUP, force_check_dirty);
+  signal(SIGHUP, restart_signal);
   signal(SIGUSR1, force_flush);
+  signal(SIGUSR2, force_check_dirty);
 
   if ((listen_socket = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
     err("socket() failed: %s", os_ErrorMsg());
@@ -8180,6 +8191,13 @@ convert_database(const unsigned char *from_name, const unsigned char *to_name)
   return 0;
 }
 
+static void
+arg_expected(const unsigned char *progname)
+{
+  fprintf(stderr, "%s: invalid number of arguments\n", progname);
+  exit(1);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -8190,6 +8208,9 @@ main(int argc, char *argv[])
   unsigned char *from_plugin = 0, *to_plugin = 0;
   int convert_flag = 0;
   int create_flag = 0;
+  const unsigned char *user = 0, *group = 0, *workdir = 0;
+
+  start_set_self_args(argc, argv);
 
   while (cur_arg < argc) {
     if (!strcmp(argv[cur_arg], "-D")) {
@@ -8199,9 +8220,11 @@ main(int argc, char *argv[])
       forced_mode = 1;
       cur_arg++;
     } else if (!strcmp(argv[cur_arg], "--from-plugin")) {
+      if (cur_arg + 1 >= argc) arg_expected(argv[0]);
       from_plugin = argv[cur_arg + 1];
       cur_arg += 2;
     } else if (!strcmp(argv[cur_arg], "--to-plugin")) {
+      if (cur_arg + 1 >= argc) arg_expected(argv[0]);
       to_plugin = argv[cur_arg + 1];
       cur_arg += 2;
     } else if (!strcmp(argv[cur_arg], "--convert")) {
@@ -8210,6 +8233,18 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[cur_arg], "--create")) {
       create_flag = 1;
       cur_arg++;
+    } else if (!strcmp(argv[cur_arg], "-u")) {
+      if (cur_arg + 1 >= argc) arg_expected(argv[0]);
+      user = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-g")) {
+      if (cur_arg + 1 >= argc) arg_expected(argv[0]);
+      group = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-C")) {
+      if (cur_arg + 1 >= argc) arg_expected(argv[0]);
+      workdir = argv[cur_arg + 1];
+      cur_arg += 2;
     } else {
       break;
     }
@@ -8231,12 +8266,9 @@ main(int argc, char *argv[])
     return 1;
   }
 
-  info("userlist-server %s, compiled %s", compile_version, compile_date);
+  start_prepare(user, group, workdir);
 
-  if (getuid() == 0) {
-    err("sorry, will not run as the root");
-    return 1;
-  }
+  info("userlist-server %s, compiled %s", compile_version, compile_date);
 
   if (tsc_init() < 0) return 1;
   program_name = argv[0];

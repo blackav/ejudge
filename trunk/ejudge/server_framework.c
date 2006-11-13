@@ -75,6 +75,7 @@ struct server_framework_state
   int socket_fd;
   sigset_t orig_mask, work_mask, block_mask;
   int client_id;
+  int restart_requested;
 
   struct client_state *clients_first;
   struct client_state *clients_last;
@@ -672,6 +673,10 @@ nsf_main_loop(struct server_framework_state *state)
 
     // FIXME: check for signal events
     if (sigint_flag) break;
+    if (sighup_flag) {
+      state->restart_requested = 1;
+      break;
+    }
 
     if (n <= 0) continue;
 
@@ -819,6 +824,12 @@ nsf_cleanup(struct server_framework_state *state)
 {
   if (state->socket_fd >= 0) close(state->socket_fd);
   unlink(state->params->socket_path);
+}
+
+int
+nsf_is_restart_requested(struct server_framework_state *state)
+{
+  return state->restart_requested;
 }
 
 struct server_framework_state *

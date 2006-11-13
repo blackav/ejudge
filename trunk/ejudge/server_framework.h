@@ -114,6 +114,7 @@ struct server_framework_watch
 int nsf_add_watch(struct server_framework_state *,
                   struct server_framework_watch*);
 int nsf_remove_watch(struct server_framework_state *, int);
+int nsf_is_restart_requested(struct server_framework_state *);
 
 void nsf_err_bad_packet_length(struct server_framework_state *,
                                struct client_state *, size_t, size_t);

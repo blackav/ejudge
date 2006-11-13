@@ -32,6 +32,7 @@
 #include "prepare.h"
 #include "serve_state.h"
 #include "random.h"
+#include "startstop.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/osdeps.h>
@@ -4064,8 +4065,8 @@ do_loop(void)
     release_resources();
 
     // we are here if either HUP or, TERM, or INT
-    if (term_flag) break;
-    hup_flag = 0;
+    if (term_flag || hup_flag) break;
+    //hup_flag = 0;
   }
 
   return 0;
@@ -4136,12 +4137,22 @@ prepare_sockets(void)
   return 0;
 }
 
+static void
+arg_expected(const unsigned char *progname)
+{
+  fprintf(stderr, "%s: invalid number of arguments\n", progname);
+  exit(1);
+}
+
 int
 main(int argc, char **argv)
 {
   unsigned char *ejudge_xml_path = 0;
   int cur_arg = 1;
   int retcode = 0;
+  const unsigned char *user = 0, *group = 0, *workdir = 0;
+
+  start_set_self_args(argc, argv);
 
   while (cur_arg < argc) {
     if (!strcmp(argv[cur_arg], "-D")) {
@@ -4153,6 +4164,18 @@ main(int argc, char **argv)
     } else if (!strcmp(argv[cur_arg], "-f")) {
       forced_mode = 1;
       cur_arg++;
+    } else if (!strcmp(argv[cur_arg], "-u")) {
+      if (cur_arg + 1 >= argc) arg_expected(argv[0]);
+      user = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-g")) {
+      if (cur_arg + 1 >= argc) arg_expected(argv[0]);
+      group = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-C")) {
+      if (cur_arg + 1 >= argc) arg_expected(argv[0]);
+      workdir = argv[cur_arg + 1];
+      cur_arg += 2;
     } else {
       break;
     }
@@ -4175,11 +4198,9 @@ main(int argc, char **argv)
     return 1;
   }
 
+  start_prepare(user, group, workdir);
+
   info("super-serve %s, compiled %s", compile_version, compile_date);
-  if (getuid() == 0) {
-    err("sorry, will not run as the root");
-    return 1;
-  }
 
   config = ejudge_cfg_parse(ejudge_xml_path);
   if (!config) return 1;
@@ -4229,6 +4250,8 @@ main(int argc, char **argv)
 
   if (control_socket_fd >= 0) close(control_socket_fd);
   if (control_socket_path) unlink(control_socket_path);
+
+  if (hup_flag) start_restart();
   return retcode;
 }
 

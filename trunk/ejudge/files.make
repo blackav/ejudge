@@ -180,6 +180,7 @@ COMMON_CFILES=\
  serve_2.c\
  serve_state.c\
  sformat.c\
+ startstop.c\
  super_html.c\
  super_html_2.c\
  super_html_3.c\
@@ -339,6 +340,7 @@ HFILES=\
  serve_state.h\
  settings.h\
  sformat.h\
+ startstop.h\
  super_actions.h\
  super_clnt.h\
  super_html.h\

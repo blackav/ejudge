@@ -39,6 +39,7 @@
 #include "xml_utils.h"
 #include "job_packet.h"
 #include "serve_state.h"
+#include "startstop.h"
 
 #include "misctext.h"
 #include "base64.h"
@@ -67,6 +68,7 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <sys/types.h>
 #include <pwd.h>
 
 #ifndef EJUDGE_CHARSET
@@ -4384,7 +4386,9 @@ do_loop(void)
   if (create_socket() < 0) return -1;
 
   // we need the number of users to create correct the number of symlinks
-  teamdb_refresh(serve_state.teamdb_state);
+  if (!initialize_mode) {
+    teamdb_refresh(serve_state.teamdb_state);
+  }
   if (serve_create_symlinks(&serve_state) < 0) return -1;
 
   serve_state.current_time = time(0);
@@ -4424,7 +4428,9 @@ do_loop(void)
     }
 
     /* refresh user database */
-    teamdb_refresh(serve_state.teamdb_state);
+    if (!initialize_mode) {
+      teamdb_refresh(serve_state.teamdb_state);
+    }
 
     /* check items pending for removal */
     check_remove_queue();
@@ -4520,6 +4526,9 @@ main(int argc, char *argv[])
   int     code = 0;
   int     p_flags = 0, T_flag = 0;
   int     i = 1;
+  unsigned char *user = 0, *group = 0, *workdir = 0;
+
+  start_set_self_args(argc, argv);
 
   if (argc == 1) goto print_usage;
   code = 1;
@@ -4547,14 +4556,20 @@ main(int argc, char *argv[])
       }
       i++;
       cmdline_socket_fd = x;
+    } else if (!strcmp(argv[i], "-u")) {
+      if (++i >= argc) goto print_usage;
+      user = argv[i++];
+    } else if (!strcmp(argv[i], "-g")) {
+      if (++i >= argc) goto print_usage;
+      group = argv[i++];
+    } else if (!strcmp(argv[i], "-C")) {
+      if (++i >= argc) goto print_usage;
+      workdir = argv[i++];
     } else break;
   }
   if (i >= argc) goto print_usage;
 
-  if (getuid() == 0) {
-    err("sorry, will not run as the root");
-    return 1;
-  }
+  start_prepare(user, group, workdir);
 
   // initialize the current time to avoid some asserts
   serve_state.current_time = time(0);
@@ -4578,10 +4593,12 @@ main(int argc, char *argv[])
   serve_state.team_extra_state = team_extra_init();
   team_extra_set_dir(serve_state.team_extra_state,
                      serve_state.global->team_extra_dir);
-  if (teamdb_open_client(serve_state.teamdb_state,
-                         serve_state.global->socket_path,
-                         serve_state.global->contest_id) < 0)
-    return 1;
+  if (!initialize_mode) {
+    if (teamdb_open_client(serve_state.teamdb_state,
+                           serve_state.global->socket_path,
+                           serve_state.global->contest_id) < 0)
+      return 1;
+  }
   serve_state.runlog_state = run_init(serve_state.teamdb_state);
   if (run_open(serve_state.runlog_state, serve_state.global->run_log_file, 0,
                serve_state.global->contest_time,

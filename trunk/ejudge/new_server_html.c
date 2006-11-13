@@ -1257,11 +1257,11 @@ priv_user_issue_warning(FILE *fout,
     FAIL(NEW_SRV_ERR_INV_USER_ID);
   if ((n = ns_cgi_param(phr, "warn_text", &s)) < 0)
     FAIL(NEW_SRV_ERR_INV_WARN_TEXT);
-  if (!n) FAIL(NEW_SRV_ERR_EMPTY_WARN_TEXT);
+  if (!n) FAIL(NEW_SRV_ERR_WARN_TEXT_EMPTY);
   warn_len = strlen(warn_txt = dos2unix_str(s));
   while (warn_len > 0 && isspace(warn_txt[warn_len - 1])) warn_len--;
   warn_txt[warn_len] = 0;
-  if (!warn_len) FAIL(NEW_SRV_ERR_EMPTY_WARN_TEXT);
+  if (!warn_len) FAIL(NEW_SRV_ERR_WARN_TEXT_EMPTY);
   if ((n = ns_cgi_param(phr, "warn_comment", &s)) < 0)
     FAIL(NEW_SRV_ERR_INV_WARN_CMT);
   if (!n) {
@@ -5920,6 +5920,10 @@ unpriv_submit_run(FILE *fout,
   case PROB_TYPE_STANDARD:
     if (!lang->binary && strlen(run_text) != run_size) 
       return ns_html_err_inv_param(fout, phr, 0, "binary submission");
+    if (!run_size) {
+      ns_error(log_f, NEW_SRV_ERR_SUBMIT_EMPTY);
+      goto done;
+    }
     break;
 
   case PROB_TYPE_OUTPUT_ONLY:
