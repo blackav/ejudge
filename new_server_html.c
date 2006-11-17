@@ -4054,10 +4054,12 @@ unpriv_print_status(FILE *fout,
   fprintf(fout, "</table>\n");
 
   if (global->is_virtual && start_time <= 0) {
-    fprintf(fout, "<p>%s</p>",
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    fprintf(fout, "<p>%s</p></form>",
             BUTTON(NEW_SRV_ACTION_VIRTUAL_START));
   } else if (global->is_virtual && stop_time <= 0) {
-    fprintf(fout, "<p>%s</p>",
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    fprintf(fout, "<p>%s</p></form>",
             BUTTON(NEW_SRV_ACTION_VIRTUAL_STOP));
   }
 }
