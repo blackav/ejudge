@@ -17,7 +17,7 @@
 
 #include "userlist_clnt/private.h"
 
-int
+static int
 silent_recv_packet(struct userlist_clnt *clnt, size_t *p_size, void **p_data)
 {
   unsigned char len_buf[4], *b, *bb = 0;
