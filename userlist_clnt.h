@@ -337,4 +337,6 @@ userlist_clnt_recover_passwd_2(struct userlist_clnt *clnt,
                                unsigned char **p_name,
                                unsigned char **p_passwd);
 
+int userlist_clnt_control(struct userlist_clnt *clnt, int cmd);
+
 #endif /* __USERLIST_CLNT_H__ */
