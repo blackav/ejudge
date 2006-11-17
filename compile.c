@@ -134,6 +134,21 @@ do_loop(void)
       goto cleanup_and_continue;
     }
 
+    if (!req->contest_id) {
+      // special packets
+      r = req->lang_id;
+      req = compile_request_packet_free(req);
+      switch (r) {
+      case 1:
+        raise(SIGTERM);
+        break;
+      case 2:
+        raise(SIGHUP);
+        break;
+      }
+      continue;
+    }
+
     memset(&rpl, 0, sizeof(rpl));
     rpl.judge_id = req->judge_id;
     rpl.contest_id = req->contest_id;

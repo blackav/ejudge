@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005,2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005,2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,7 @@ compile_request_packet_write(const struct compile_request_packet *in_data,
     errcode = 1;
     goto failed;
   }
-  if (in_data->contest_id <= 0 || in_data->contest_id > MAX_CONTEST_ID) {
+  if (in_data->contest_id < 0 || in_data->contest_id > MAX_CONTEST_ID) {
     errcode = 2;
     goto failed;
   }
@@ -53,7 +53,7 @@ compile_request_packet_write(const struct compile_request_packet *in_data,
     errcode = 3;
     goto failed;
   }
-  if (in_data->lang_id <= 0 || in_data->lang_id > EJ_MAX_LANG_ID) {
+  if (in_data->lang_id < 0 || in_data->lang_id > EJ_MAX_LANG_ID) {
     errcode = 4;
     goto failed;
   }
@@ -148,7 +148,7 @@ compile_request_packet_write(const struct compile_request_packet *in_data,
   return -1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
