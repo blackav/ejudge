@@ -39,4 +39,6 @@ int new_server_clnt_http_request(new_server_conn_t, int out_fd,
                                  size_t param_sizes[],
                                  unsigned char *params[]);
 
+int new_server_clnt_control(new_server_conn_t conn, int cmd);
+
 #endif /* __NEW_SERVER_CLNT_H__ */

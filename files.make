@@ -105,6 +105,7 @@ SUPER_CLNT_CFILES=\
 
 NEW_SERVER_CLNT_CFILES=\
  new_server_clnt/close.c\
+ new_server_clnt/control.c\
  new_server_clnt/http_request.c\
  new_server_clnt/open.c\
  new_server_clnt/pass_fd.c\

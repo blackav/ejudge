@@ -38,6 +38,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <signal.h>
 
 static void startup_error(const char *, ...) __attribute__((noreturn,format(printf, 1, 2)));
 static void handle_packet_func(struct server_framework_state *,
@@ -346,6 +348,39 @@ cmd_http_request(struct server_framework_state *state,
   nsf_send_reply(state, p, NEW_SRV_RPL_OK);
 }
 
+static void
+cmd_control(struct server_framework_state *state,
+            struct client_state *p,
+            size_t pkt_size,
+            const struct new_server_prot_packet *pkt)
+{
+  int mon_fd = -1;
+  int sig = 0;
+
+  if (pkt_size != sizeof(*pkt))
+    return nsf_err_bad_packet_length(state, p, pkt_size, sizeof(*pkt));
+
+  if (p->peer_uid != 0 && p->peer_uid != getuid()) {
+    return nsf_send_reply(state, p, -NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+
+  switch (pkt->id) {
+  case NEW_SRV_CMD_STOP:
+    sig = SIGTERM;
+    break;
+  case NEW_SRV_CMD_RESTART:
+    sig = SIGHUP;
+    break;
+  default:
+    return nsf_err_invalid_command(state, p, pkt->id);
+  }
+
+  mon_fd = dup(p->fd);
+  fcntl(mon_fd, F_SETFD, FD_CLOEXEC);
+  p->state = STATE_DISCONNECT;
+  raise(sig);
+}
+
 typedef void handler_t(struct server_framework_state *state,
                        struct client_state *p,
                        size_t pkt_size,
@@ -353,7 +388,9 @@ typedef void handler_t(struct server_framework_state *state,
 
 static handler_t *handlers[NEW_SRV_CMD_LAST] =
 {
-  [NEW_SRV_CMD_HTTP_REQUEST] cmd_http_request,
+  [NEW_SRV_CMD_HTTP_REQUEST] = cmd_http_request,
+  [NEW_SRV_CMD_STOP] = cmd_control,
+  [NEW_SRV_CMD_RESTART] = cmd_control,
 };
 
 static void
