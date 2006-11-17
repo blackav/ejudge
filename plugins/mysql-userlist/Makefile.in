@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -53,4 +53,8 @@ EXTRALIBS=
 CCOMPFLAGS=-D_GNU_SOURCE
 LDCOMPFLAGS=
 
+ifeq ($(MYSQL_LIBS),)
+include empty.make
+else
 include main.make
+endif
