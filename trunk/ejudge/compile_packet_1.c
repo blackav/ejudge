@@ -74,7 +74,7 @@ compile_request_packet_read(const serve_state_t state,
     goto failed_badly;
   }
   pout->contest_id = cvt_bin_to_host(pin->contest_id);
-  if (pout->contest_id <= 0 || pout->contest_id > MAX_CONTEST_ID) {
+  if (pout->contest_id < 0 || pout->contest_id > MAX_CONTEST_ID) {
     errcode = 7;
     goto failed_badly;
   }
@@ -86,10 +86,12 @@ compile_request_packet_read(const serve_state_t state,
     goto failed_badly;
   }
   pout->lang_id = cvt_bin_to_host(pin->lang_id);
-  if (pout->lang_id < 0 || pout->lang_id > state->max_lang
-      || !state->langs[pout->lang_id]) {
-    errcode = 9;
-    goto failed_badly;
+  if (pout->contest_id > 0) {
+    if (pout->lang_id < 0 || pout->lang_id > state->max_lang
+        || !state->langs[pout->lang_id]) {
+      errcode = 9;
+      goto failed_badly;
+    }
   }
   pout->locale_id = cvt_bin_to_host(pin->locale_id);
   if (pout->locale_id < 0 || pout->locale_id > 127) {
