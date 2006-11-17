@@ -131,7 +131,7 @@ SS_CFILES = super-serve.c version.c
 SS_OBJECTS = ${SS_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 
 SSC_CFILES = super-serve-control.c version.c
-SSC_OBJECTS = ${SSC_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
+SSC_OBJECTS = ${SSC_CFILES:.c=.o} libcommon.a libsuper_clnt.a
 
 CU_CFILES = clean-users.c version.c
 CU_OBJECTS = ${CU_CFILES:.c=.o} libcommon.a libuserlist_clnt.a

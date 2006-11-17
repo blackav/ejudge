@@ -4,7 +4,7 @@
 #ifndef __SUPER_CLNT_H__
 #define __SUPER_CLNT_H__
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -64,5 +64,7 @@ int super_clnt_set_param(int sock_fd,
                          int param3,
                          int param4,
                          int param5);
+
+int super_clnt_control(int sock_fd, int cmd);
 
 #endif /* __SUPER_CLNT_H__ */

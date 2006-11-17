@@ -2955,6 +2955,46 @@ cmd_set_value(struct client_state *p, int len,
   send_reply(p, r);
 }
 
+static void
+cmd_control_server(struct client_state *p, int len,
+                   struct prot_super_packet *pkt)
+{
+  int mon_fd = -1;
+
+  if (sizeof(*pkt) != len)
+    return error_bad_packet_length(p, len, sizeof(*pkt));
+
+  if (p->peer_uid != 0 && p->peer_uid != getuid()) {
+    return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
+  }
+
+  switch (pkt->id) {
+  case SSERV_CMD_STOP:
+  case SSERV_CMD_RESTART:
+    break;
+  default:
+    abort();
+  }
+
+  // mon_fd is intentionally "leaked"
+  // it is closed implicitly when the program exits or execs itself
+  // client waits for EOF on connection to ensure command completion
+  mon_fd = dup(p->fd);
+  fcntl(mon_fd, F_SETFD, FD_CLOEXEC);
+  p->state = STATE_DISCONNECT;
+
+  switch (pkt->id) {
+  case SSERV_CMD_STOP:
+    info("STOP");
+    term_flag = 1;
+    break;
+  case SSERV_CMD_RESTART:
+    info("RESTART");
+    hup_flag = 1;
+    break;
+  }
+}
+
 struct packet_handler
 {
   void (*func)();
@@ -3499,6 +3539,9 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
 
   [SSERV_CMD_PROB_CLEAR_VARIANTS] = { cmd_set_value },
   [SSERV_CMD_PROB_RANDOM_VARIANTS] = { cmd_set_value },
+
+  [SSERV_CMD_STOP] = { cmd_control_server },
+  [SSERV_CMD_RESTART] = { cmd_control_server },
 };
 
 static void
