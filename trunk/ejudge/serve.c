@@ -2476,7 +2476,7 @@ cmd_team_submit_clar(struct client_state *p, int len,
     mail_args[4] = cnts->clar_notify_email;
     mail_args[5] = ftxt;
     mail_args[6] = 0;
-    send_job_packet(NULL, (unsigned char**) mail_args);
+    send_job_packet(NULL, (unsigned char**) mail_args, 0);
     xfree(ftxt); ftxt = 0;
   }
 
@@ -4569,7 +4569,7 @@ main(int argc, char *argv[])
   }
   if (i >= argc) goto print_usage;
 
-  start_prepare(user, group, workdir);
+  if (start_prepare(user, group, workdir) < 0) return 1;
 
   // initialize the current time to avoid some asserts
   serve_state.current_time = time(0);

@@ -375,7 +375,7 @@ main(int argc, char *argv[])
   }
   if (i >= argc) goto print_usage;
 
-  start_prepare(user, group, workdir);
+  if (start_prepare(user, group, workdir) < 0) return 1;
 
   if (prepare(&serve_state, argv[i], prepare_flags, PREPARE_COMPILE,
               cpp_opts, 0) < 0)

@@ -1222,7 +1222,7 @@ cmd_register_new_2(struct client_state *p,
     mail_args[4] = email;
     mail_args[5] = buf;
     mail_args[6] = 0;
-    send_job_packet(NULL, mail_args);
+    send_job_packet(NULL, mail_args, 0);
 
     xfree(buf);
     xfree(email_tmpl);
@@ -1616,7 +1616,7 @@ cmd_recover_password_1(struct client_state *p,
     mail_args[4] = cnts->daily_stat_email;
     mail_args[5] = msg_text;
     mail_args[6] = 0;
-    send_job_packet(NULL, mail_args);
+    send_job_packet(NULL, mail_args, 0);
     xfree(msg_text); msg_text = 0;
   }
 
@@ -1764,7 +1764,7 @@ cmd_recover_password_2(struct client_state *p,
     mail_args[4] = cnts->daily_stat_email;
     mail_args[5] = msg_text;
     mail_args[6] = 0;
-    send_job_packet(NULL, mail_args);
+    send_job_packet(NULL, mail_args, 0);
     xfree(msg_text); msg_text = 0;
   }
 
@@ -8313,7 +8313,7 @@ main(int argc, char *argv[])
     return 1;
   }
 
-  start_prepare(user, group, workdir);
+  if (start_prepare(user, group, workdir) < 0) return 1;
 
   info("userlist-server %s, compiled %s", compile_version, compile_date);
 

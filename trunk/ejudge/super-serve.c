@@ -4241,7 +4241,7 @@ main(int argc, char **argv)
     return 1;
   }
 
-  start_prepare(user, group, workdir);
+  if (start_prepare(user, group, workdir) < 0) return 1;
 
   info("super-serve %s, compiled %s", compile_version, compile_date);
 

@@ -604,7 +604,7 @@ generate_statistics_email(serve_state_t state, const struct contest_desc *cnts,
   mail_args[4] = cnts->daily_stat_email;
   mail_args[5] = ftxt;
   mail_args[6] = 0;
-  send_job_packet(NULL, (unsigned char **) mail_args);
+  send_job_packet(NULL, (unsigned char **) mail_args, 0);
   xfree(ftxt); ftxt = 0;
   xfree(etxt); etxt = 0;
 }
@@ -1129,7 +1129,7 @@ serve_send_clar_notify_email(serve_state_t state,
   mail_args[4] = cnts->clar_notify_email;
   mail_args[5] = ftxt;
   mail_args[6] = 0;
-  send_job_packet(NULL, (unsigned char**) mail_args);
+  send_job_packet(NULL, (unsigned char**) mail_args, 0);
   xfree(ftxt); ftxt = 0;
 }
 
@@ -1163,7 +1163,7 @@ serve_send_check_failed_email(const struct contest_desc *cnts, int run_id)
   mail_args[4] = cnts->cf_notify_email;
   mail_args[5] = ftxt;
   mail_args[6] = 0;
-  send_job_packet(NULL, (unsigned char **) mail_args);
+  send_job_packet(NULL, (unsigned char **) mail_args, 0);
   xfree(ftxt); ftxt = 0;
 }
 

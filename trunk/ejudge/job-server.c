@@ -24,6 +24,7 @@
 #include "ejudge_cfg.h"
 #include "pathutl.h"
 #include "fileutl.h"
+#include "startstop.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -44,6 +45,7 @@ static path_t job_server_spool_path;
 static path_t job_server_work_path;
 static path_t job_server_dir_path;
 static volatile int term_signal_flag;
+static volatile int hup_signal_flag;
 static volatile int notify_signal_flag;
 static volatile int child_signal_flag;
 static sigset_t blkmask, waitmask;
@@ -117,6 +119,12 @@ term_signal_handler(int sig)
   term_signal_flag = 1;
 }
 static void
+hup_signal_handler(int sig)
+{
+  term_signal_flag = 1;
+  hup_signal_flag = 1;
+}
+static void
 notify_signal_handler(int sig)
 {
   notify_signal_flag = 1;
@@ -141,7 +149,7 @@ prepare_sinals(void)
   sigprocmask(SIG_BLOCK, &blkmask, 0);
   signal(SIGINT, term_signal_handler);
   signal(SIGTERM, term_signal_handler);
-  signal(SIGHUP, term_signal_handler);
+  signal(SIGHUP, hup_signal_handler);
   signal(SIGRTMIN, notify_signal_handler);
   signal(SIGCHLD, child_signal_handler);
   signal(SIGPIPE, SIG_IGN);
@@ -419,7 +427,7 @@ run_process(char * const *args, const char *stdin_buf)
  * [5] - text
  */
 static void
-handle_mail_packet(int argc, char **argv)
+handle_mail_packet(int uid, int argc, char **argv)
 {
   FILE *f = 0;
   char *full_txt = 0;
@@ -476,14 +484,44 @@ handle_mail_packet(int argc, char **argv)
   xfree(full_txt);
 }
 
+static void
+handle_stop_packet(int uid, int argc, char **argv)
+{
+  if (uid != 0 && uid != getuid()) {
+    // no feedback :(
+    err("stop: permission denied for user %d", uid);
+    return;
+  }
+  raise(SIGTERM);
+}
+
+static void
+handle_restart_packet(int uid, int argc, char **argv)
+{
+  if (uid != 0 && uid != getuid()) {
+    // no feedback :(
+    err("stop: permission denied for user %d", uid);
+    return;
+  }
+  raise(SIGHUP);
+}
+
+static void
+handle_nop_packet(int uid, int argc, char **argv)
+{
+}
+
 struct cmd_handler_info
 {
   char *cmd;
-  void (*handler)(int, char**);
+  void (*handler)(int, int, char**);
 };
 static struct cmd_handler_info handlers[] =
 {
   { "mail", handle_mail_packet },
+  { "stop", handle_stop_packet },
+  { "restart", handle_restart_packet },
+  { "nop", handle_nop_packet },
 
   { NULL, NULL },
 };
@@ -493,9 +531,11 @@ do_work(void)
 {
   int r, argc = 0, i;
   path_t pkt_name;
+  path_t pkt_path;
   char *req_buf = 0;
   size_t req_buf_size = 0;
   char **argv = 0;
+  struct stat stbuf;
 
   while (!term_signal_flag) {
     if ((r = scan_dir(job_server_spool_path, pkt_name)) < 0) {
@@ -508,6 +548,10 @@ do_work(void)
         sigsuspend(&waitmask);
       continue;
     }
+
+    snprintf(pkt_path, sizeof(pkt_path), "%s/dir/%s", job_server_spool_path,
+             pkt_name);
+    if (stat(pkt_path, &stbuf) < 0) continue;
 
     xfree(req_buf); req_buf = 0; req_buf_size = 0;
     r = generic_read_file(&req_buf, 0, &req_buf_size, SAFE | REMOVE,
@@ -537,7 +581,7 @@ do_work(void)
       err("invalid command `%s'", argv[0]);
       continue;
     }
-    (*handlers[i].handler)(argc, argv);
+    (*handlers[i].handler)(stbuf.st_uid, argc, argv);
   }
 }
 
@@ -549,11 +593,35 @@ main(int argc, char *argv[])
   unsigned char *ejudge_xml_path = 0;
   int log_fd = -1;
   int pid;
+  const unsigned char *user = 0, *group = 0, *workdir = 0;
+
+  start_set_self_args(argc, argv);
 
   while (cur_arg < argc) {
     if (!strcmp(argv[cur_arg], "-D")) {
       daemon_mode = 1;
       cur_arg++;
+    } else if (!strcmp(argv[cur_arg], "-u")) {
+      if (cur_arg + 1 >= argc) { 
+        err("argument expected for `-u' option");
+        return 1;
+      }
+      user = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-g")) {
+      if (cur_arg + 1 >= argc) { 
+        err("argument expected for `-g' option");
+        return 1;
+      }
+      group = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-C")) {
+      if (cur_arg + 1 >= argc) { 
+        err("argument expected for `-C' option");
+        return 1;
+      }
+      workdir = argv[cur_arg + 1];
+      cur_arg += 2;
     } else
       break;
   }
@@ -574,12 +642,9 @@ main(int argc, char *argv[])
     return 1;
   }
 
-  info("job-server %s, compiled %s", compile_version, compile_date);
+  if (start_prepare(user, group, workdir) < 0) return 1;
 
-  if (getuid() == 0) {
-    err("sorry, will not run as the root");
-    return 1;
-  }
+  info("job-server %s, compiled %s", compile_version, compile_date);
 
   config = ejudge_cfg_parse(ejudge_xml_path);
   if (!config) return 1;
@@ -609,6 +674,8 @@ main(int argc, char *argv[])
 
   if (prepare_directory_notify() < 0) return 1;
   do_work();
+
+  if (hup_signal_flag) start_restart();
 
   return 0;
 }
