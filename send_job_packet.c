@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,13 +33,15 @@
 #include <unistd.h>
 
 int
-send_job_packet(const unsigned char *q_dir, unsigned char **args)
+send_job_packet(const unsigned char *q_dir, unsigned char **args,
+                unsigned char **p_path)
 {
   path_t q_path;
   int argc, pktlen, i, pid;
   int *argl;
   char *pkt, *p;
   unsigned char pkt_name[64];
+  path_t pkt_path;
   struct timeval t;
 
   if (!args || !args[0]) {
@@ -81,6 +83,11 @@ send_job_packet(const unsigned char *q_dir, unsigned char **args)
            "%08x%08x%04x", (unsigned )t.tv_sec, (unsigned) t.tv_usec, pid);
   if (generic_write_file(pkt, pktlen, SAFE, q_path, pkt_name, "") < 0) {
     return -1;
+  }
+
+  if (p_path) {
+    snprintf(pkt_path, sizeof(pkt_path), "%s/dir/%s", q_path, pkt_name);
+    *p_path = xstrdup(pkt_path);
   }
   return 0;
 }

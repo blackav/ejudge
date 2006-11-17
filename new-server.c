@@ -541,7 +541,7 @@ main(int argc, char *argv[])
   if (i < argc) ejudge_xml_path = argv[i++];
   if (i != argc) startup_error("invalid number of parameters");
 
-  start_prepare(user, group, workdir);
+  if (start_prepare(user, group, workdir) < 0) return 1;
 
   if (workdir && *workdir) {
     if (chdir(workdir) < 0) {
