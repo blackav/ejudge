@@ -92,6 +92,7 @@ SERVE_CLNT_CFILES=\
  serve_clnt/view.c
 
 SUPER_CLNT_CFILES=\
+ super_clnt/control.c\
  super_clnt/create_contest.c\
  super_clnt/do_pass_fd.c\
  super_clnt/main_page.c\
