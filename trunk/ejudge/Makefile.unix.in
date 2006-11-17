@@ -82,6 +82,9 @@ REUSE_LIB=-lreuse
 C_CFILES=compile.c version.c
 C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a
 
+CC_CFILES=compile-control.c version.c
+CC_OBJECTS=$(CC_CFILES:.c=.o) libcommon.a
+
 SERVE_CFILES=serve.c version.c
 SERVE_OBJECTS=$(SERVE_CFILES:.c=.o) libcommon.a libuserlist_clnt.a
 
@@ -106,8 +109,14 @@ REG_OBJECTS = ${REG_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 UL_CFILES = userlist-server.c version.c
 UL_OBJECTS = ${UL_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 
+ULC_CFILES = userlist-server-control.c version.c
+ULC_OBJECTS = ${ULC_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
+
 JS_CFILES = job-server.c version.c
 JS_OBJECTS = ${JS_CFILES:.c=.o} libcommon.a
+
+JSC_CFILES = job-server-control.c version.c
+JSC_OBJECTS = ${JSC_CFILES:.c=.o} libcommon.a
 
 JP_CFILES = job-server-cmd.c version.c
 JP_OBJECTS = ${JP_CFILES:.c=.o} libcommon.a
@@ -120,6 +129,9 @@ ED_OBJECTS = ${ED_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 
 SS_CFILES = super-serve.c version.c
 SS_OBJECTS = ${SS_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
+
+SSC_CFILES = super-serve-control.c version.c
+SSC_OBJECTS = ${SSC_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 
 CU_CFILES = clean-users.c version.c
 CU_OBJECTS = ${CU_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
@@ -142,7 +154,10 @@ NC_OBJECTS=$(NC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a
 NS_CFILES=new-server.c version.c
 NS_OBJECTS=$(NS_CFILES:.c=.o) libcommon.a libuserlist_clnt.a
 
-BINTARGETS = compile serve run userlist-server job-server job-server-cmd edit-userlist super-serve clean-users ejudge-setup collect-emails serve-cmd slice-userlist execute new-server uudecode
+NSC_CFILES=new-server-control.c version.c
+NSC_OBJECTS=$(NSC_CFILES:.c=.o) libcommon.a libuserlist_clnt.a
+
+BINTARGETS = compile compile-control serve run userlist-server userlist-server-control job-server job-server-control job-server-cmd edit-userlist super-serve super-serve-control clean-users ejudge-setup collect-emails serve-cmd slice-userlist execute new-server new-server-control uudecode
 CGITARGETS = master${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX} users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
 TARGETS = ${BINTARGETS} ${CGITARGETS}
 
@@ -184,6 +199,9 @@ install: local_install
 compile$(EXESFX) : $(C_OBJECTS)
 	$(LD) $(LDFLAGS) $(C_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
+compile-control : $(CC_OBJECTS)
+	$(LD) $(LDFLAGS) $(CC_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
+
 run${EXESFX} : $(RUN_OBJECTS)
 	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
@@ -208,13 +226,22 @@ register${CGI_PROG_SUFFIX}: ${REG_OBJECTS}
 userlist-server: ${UL_OBJECTS}
 	${LD} ${LDFLAGS} $^ -Wl,-E -o $@ ${LDLIBS} -ldl ${EXPAT_LIB}
 
+userlist-server-control: ${ULC_OBJECTS}
+	${LD} ${LDFLAGS} $^ -Wl,-E -o $@ ${LDLIBS} ${EXPAT_LIB}
+
 job-server: ${JS_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
+
+job-server-control: ${JSC_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 job-server-cmd: ${JP_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 super-serve: ${SS_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
+
+super-serve-control: ${SSC_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 clean-users: ${CU_OBJECTS}
@@ -243,6 +270,9 @@ new-client${CGI_PROG_SUFFIX} : $(NC_OBJECTS)
 
 new-server : $(NS_OBJECTS)
 	$(LD) $(LDFLAGS) $(NS_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB}
+
+new-server-control : $(NSC_OBJECTS)
+	$(LD) $(LDFLAGS) $(NSC_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 local_clean:
 	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 serve_clnt/*.o userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c master master${CGI_PROG_SUFFIX} team team${CGI_PROG_SUFFIX} register register${CGI_PROG_SUFFIX} users users${CGI_PROG_SUFFIX} ejudge-config serve-control serve-control${CGI_PROG_SUFFIX} serve-cmd prjutils/*.o

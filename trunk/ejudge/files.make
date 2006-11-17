@@ -19,6 +19,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/change_registration.c\
  userlist_clnt/close.c\
  userlist_clnt/cnts_passwd_op.c\
+ userlist_clnt/control.c\
  userlist_clnt/copy_user_info.c\
  userlist_clnt/create_member.c\
  userlist_clnt/create_user.c\
@@ -245,12 +246,16 @@ CFILES=\
  clean-users.c\
  collect-emails.c\
  compile.c\
+ compile-control.c\
  edit-userlist.c\
  ejudge-setup.c\
  execute.c\
+ job-server.c\
+ job-server-control.c\
  master.c\
  new-client.c\
  new-server.c\
+ new-server-control.c\
  register.c\
  run.c\
  serve.c\
@@ -258,9 +263,11 @@ CFILES=\
  serve-control.c\
  slice-userlist.c\
  super-serve.c\
+ super-serve-control.c\
  team.c\
  testinfo.c\
  userlist-server.c\
+ userlist-server-control.c\
  users.c\
  unix/cpu.c\
  win32/cpu.c\

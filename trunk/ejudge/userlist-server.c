@@ -7433,6 +7433,51 @@ cmd_get_database(struct client_state *p, int pkt_len,
   info("%s -> ok, %zu", logbuf, out_size);
 }
 
+static void
+cmd_control_server(struct client_state *p, int pkt_len,
+                   struct userlist_packet *data)
+{
+  int mon_fd = -1;
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+
+  // the user must either match or be the root
+  if (p->peer_uid != 0 && p->peer_uid != getuid()) {
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  switch (data->id) {
+  case ULS_STOP:
+    info("STOP");
+    // mon_fd is intentionally "leaked"
+    // it is closed implicitly when the program exits
+    // client waits for EOF on connection to ensure command completion
+    mon_fd = dup(p->fd);
+    disconnect_client(p);
+    fcntl(mon_fd, F_SETFD, FD_CLOEXEC);
+    interrupt_signaled = 1;
+    break;
+  case ULS_RESTART:
+    info("RESTART");
+    // mon_fd is intentionally "leaked"
+    // it is closed implicitly when the program execs itself
+    // client waits for EOF on connection to ensure command completion
+    mon_fd = dup(p->fd);
+    disconnect_client(p);
+    fcntl(mon_fd, F_SETFD, FD_CLOEXEC);
+    interrupt_signaled = 1;
+    restart_signaled = 1;
+    break;
+  default:
+    CONN_BAD("unhandled command: %d", data->id);
+    return;
+  }
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW]            cmd_register_new,
@@ -7500,6 +7545,8 @@ static void (*cmd_table[])() =
   [ULS_COPY_USER_INFO] =        cmd_copy_user_info,
   [ULS_RECOVER_PASSWORD_1] =    cmd_recover_password_1,
   [ULS_RECOVER_PASSWORD_2] =    cmd_recover_password_2,
+  [ULS_STOP] =                  cmd_control_server,
+  [ULS_RESTART] =               cmd_control_server,
 
   [ULS_LAST_CMD] 0
 };
@@ -8372,6 +8419,7 @@ main(int argc, char *argv[])
   server_finish_time = time(0);
   report_uptime(server_start_time, server_finish_time);
 
+  if (restart_signaled) start_restart();
   return code;
 }
 

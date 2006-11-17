@@ -240,7 +240,7 @@ parse_user_map(char const *path, struct xml_tree *p)
             return 0;
           }
           m->system_uid = pwd->pw_uid;
-          info("user %s uid is %d", a->text, pwd->pw_uid);
+          //info("user %s uid is %d", a->text, pwd->pw_uid);
         }
         m->system_user_str = a->text; a->text = 0;
         break;
