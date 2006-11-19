@@ -41,7 +41,7 @@ AC_ARG_WITH([reuse-conf-dir],AC_HELP_STRING([--with-reuse-conf-dir],[specify the
 AC_ARG_WITH([reuse-config],AC_HELP_STRING([--with-reuse-config],[specify the configuration name]),[ac_cv_reuse_config=$withval])
 
 AC_ARG_ENABLE([cgi-suffix], AC_HELP_STRING([--enable-cgi-suffix],[append the given suffix to the CGI programs]),[ac_cv_cgi_suffix=$enableval],[ac_cv_cgi_suffix=""])
-AC_ARG_ENABLE([cgi-bin-dir], AC_HELP_STRING([--enable-cgi-bin-dir],[specify the destination CGI script directory [[\${prefix}/cgi-bin]]]),[cgibindir=$enableval], [cgibindir='${prefix}/cgi-bin'])
+AC_ARG_ENABLE([cgi-bin-dir], AC_HELP_STRING([--enable-cgi-bin-dir],[specify the destination CGI script directory [[\${prefix}/libexec/ejudge/cgi-bin]]]),[cgibindir=$enableval], [cgibindir='${prefix}/libexec/ejudge/cgi-bin'])
 AC_ARG_ENABLE([static], AC_HELP_STRING([--enable-static],[link programs statically]),[ac_cv_static=1],[ac_cv_static=""])
 AC_ARG_ENABLE([rpath], AC_HELP_STRING([--disable-rpath],[do not use -rpath feature]),[ac_cv_rpath="$enableval"])
 AC_ARG_ENABLE([nls], AC_HELP_STRING([--disable-nls],[disable localization]),[ac_cv_nls=$enableval],[ac_cv_nls=""])
@@ -1354,9 +1354,9 @@ ac_cv_expanded_locale_dir="${actual_prefix}/share/locale"
 ac_cv_ejudge_serve_path="${actual_prefix}/bin/serve"
 ac_cv_ejudge_run_path="${actual_prefix}/bin/run"
 ac_cv_ejudge_script_dir="${actual_prefix}/libexec/ejudge"
-if [[ x"${cgibindir}" = x'${prefix}/cgi-bin' ]]
+if [[ x"${cgibindir}" = x'${prefix}/libexec/ejudge/cgi-bin' ]]
 then
-  ac_cv_ejudge_cgi_bin_dir="${actual_prefix}/cgi-bin"
+  ac_cv_ejudge_cgi_bin_dir="${actual_prefix}/libexec/ejudge/cgi-bin"
 else
   ac_cv_ejudge_cgi_bin_dir="${cgibindir}"
 fi
