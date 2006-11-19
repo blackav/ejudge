@@ -1600,3 +1600,9 @@ compile.c 3678 0 986503
 compile-control.c 3678 0 586591
 compile_packet_1.c 3678 0 511314
 compile_packet_2.c 3678 0 375661
+compile-control.c 3682 0 586349
+ejudge-control.c 3682 0 745581
+job-server-control.c 3682 0 352936
+new-server-control.c 3682 0 312111
+super-serve-control.c 3682 0 307778
+userlist-server-control.c 3682 0 311066

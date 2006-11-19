@@ -1,3 +1,433 @@
+2006-11-19 (r3682) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make: `ejudge-control.c' is added.
+
+	* Makefile.unix.in: rules for `ejudge-control' are added.
+
+	* ejudge-control.c: initial revision.
+
+2006-11-19 (r3681) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac: CGI programs installation directory is changed
+	to ${prefix}/libexec/ejudge/cgi-bin.
+
+2006-11-17 (r3678) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile.c:
+	(do_loop) special packets are handled (with contest_id == 0).
+	  currently, terminate and restart are handled using these
+	  packets.
+
+	* compile-control.c: basically implemented.
+
+	* compile_packet_1.c:
+	(compile_request_packet_read) contest_id is allowed to be 0 for
+	  special packets.
+
+	* compile_packet_2.c: copyright notice is updated;
+	(compile_request_packet_write) contest_id is allowed to be 0 for
+	  special packets.
+
+2006-11-17 (r3677) Alexander Chernov  <cher@ejudge.ru>
+
+	* job_packet.h: copyright notice is updated;
+	(send_job_packet) `p_path' parameter is added.
+
+	* compile.c:
+	(main) return value of `start_prepare' is checked.
+
+	* job-server.c:
+	SIGHUP causes the program restart;
+	new packets are handled: "stop", "restart", "nop";
+	new options handled: `-u', `-g', `-C'.
+
+	* job-server-control.c: implemeted.
+
+	* new-server.c:
+	(main) return value of `start_prepare' is checked.
+
+	* send_job_packet.c: copyright notice is updated;
+	(send_job_packet) `p_path' parameter is added.
+
+	* serve.c:
+	(cmd_team_submit_clar) use of `send_job_packet' is updated;
+	(main) return value of `start_prepare' is checked.
+
+	* serve_2.c:
+	use of `send_job_packet' is updated.
+
+	* super-serve.c:
+	(main) return value of `start_prepare' is checked.
+
+	* userlist-server.c:
+	use of `send_job_packet' is updated;
+	(main) return value of `start_prepare' is checked.
+
+2006-11-17 (r3676) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(unpriv_print_status) form is generated around virtual start/stop
+	  buttons.
+
+2006-11-17 (r3675) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`new_server_clnt/control.c' is added.
+
+	* Makefile.unix.in:
+	deps for new-server-control.c are fixed.
+
+	* new_server_proto.h:
+	`NEW_SRV_CMD_STOP', `NEW_SRV_CMD_RESTART' added.
+
+	* new_server_clnt.h:
+	(new_server_clnt_control) new function prototype.
+
+	* new-server.c:
+	(cmd_control) STOP and RESTART commands are handled.
+
+	* new-server-control.c: basically completed.
+
+2006-11-17 (r3673) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`super_clnt/control.c' is added.
+
+	* Makefile.unix.in:
+	super-serve-control dependencies are fixed.
+
+	* super_clnt.h: copyright notice is updated;
+	(super_clnt_control) new function prototype.
+
+	* super_proto.h:
+	`SSERV_CMD_STOP', `SSERV_CMD_RESTART' commands are added.
+
+	* super-serve.c:
+	(cmd_control_server) new function to handle STOP and RESTART commands.
+
+	* super-serve-control.c:
+	basically completed.
+
+2006-11-17 (r3670) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	new files added: userlist_clnt/control.c, compile-control.c,
+	  job-server.c, job-server-control.c, new-server-control.c,
+	  super-serve-control.c, userlist-server-control.c.
+
+	* Makefile.unix.in:
+	  rules for *-control programs are added.
+
+	* userlist_clnt.h:
+	(userlist_clnt_control) new function prototype is added.
+
+	* userlist_proto.h:
+	  ULS_STOP, ULS_RESTART commands are added.
+
+	* ejudge_cfg.c:
+	(parse_user_map) `info' output is commented out.
+
+	* new-server-control.c, userlist-server-control.c, job-server-control.c, super-serve-control.c, compile-control.c:
+	initial revision.
+
+	* userlist-server.c:
+	(cmd_control_server) new function to handle `ULS_STOP', `ULS_RESTART'
+	  requests.
+
+2006-11-13 (r3664) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	default values for --enable-socket-path, --enable-super-serve-socket,
+	--enable-contests-home-dir, --enable-conf-dir, --enable-cgi-conf-dir
+	are provided;
+	uudecode detection is removed.
+
+	* Makefile.unix.in:
+	rules for `uudecode' are added.
+
+	* config.h.in:
+	EJUDGE_PROGRAM_UUDECODE is removed.
+
+	* files.make:
+	startstop.[ch] are added.
+
+	* new_server_proto.h:
+	NEW_SRV_ERR_WARN_TEXT_EMPTY renamed;
+	NEW_SRV_ERR_SUBMIT_EMPTY added.
+
+	* server_framework.h:
+	(nsf_is_restart_requested) function prototype is added.
+
+	* startstop.h:
+	initial revision.
+
+	* compile.c:
+	"startstop.h" is included;
+	(set_self_args) moved to `startstop';
+	(switch_user) moved to `startstop';
+	(main) daemon mode is implemented.
+
+	* ejudge-setup.c:
+	ejudge's version of `uudecode' program is used;
+	new `serve' options `-u', `-g', `-C' are used in initializatin mode.
+
+	* new-server.c:
+	"startstop.h", "pathutl.h", <reuse/osdeps.h> are included;
+	(main) `-u', `-g', `-C' options are handled.
+
+	* new_server_html.c:
+	(priv_user_issue_warning) error code is slighly renamed;
+	(unpriv_submit_run) check for empty submit is added.
+
+	* new_server_proto.c:
+	NEW_SRV_ERR_WARN_TEXT_EMPTY renamed;
+	NEW_SRV_ERR_SUBMIT_EMPTY added.
+
+	* serve.c:
+	"startstop.h", <sys/types.h> are included;
+	(do_loop) teamdb is not accessed, if in initialization mode;
+	(main) `-u', `-g', `-C' options are handed.
+
+	* server_framework.c:
+	(nsf_main_loop) SIGHUP support is added;
+	(nsf_is_restart_requested) new function.
+
+	* startstop.c: initial revision.
+
+	* super-serve.c:
+	"startstop.h" is included;
+	(do_loop) SIGHUP is handled;
+	(arg_expected) new function;
+	(main) `-u', `-g', `-C' options are handled;
+
+	* userlist-server.c:
+	"startstop.h" is included;
+	SIGHUP is used for restarting;
+	SIGUSR2 is used for flushing database;
+	(arg_expected) new function prototype;
+	(main) `-u', `-g', `-C' options are added.
+
+	* uudecode.c:
+	initial revision.
+
+2006-11-06 (r3661) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	new-master, new-judge are symlinked to new-client;
+	extra and checkers subdirectory install rules are exchanged.
+
+	* ejudge-setup.c:
+	(generate_contest_xml) the contest 1 is new-managed;
+	(generate_ejudge_xml) plugin configuration is created;
+	(generate_install_script) new-client, new-master, new-judge symlinks
+	  are created;
+	  new options for `compile' setup run are used.
+	
+
+	* compile.c:
+	<sys/types.h>, <pwd.h>, <grp.h> are included;
+	(do_loop) SIGHUP is handled, and the program is restarted on it;
+	(filter_languages) declared static;
+	(set_self_args) new function;
+	(switch_user) new function;
+	(main) -u, -g, -C options are supported;
+	if the uid is root, the user is switched to the specified in
+	  the command line with -u, -g options;
+	restart on SIGHUP is requested.
+
+2006-11-05 (r3657) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) `disable_banner_page' field is added.
+
+	* prepare_dflt.h:
+	`disable_banner_page' is supported.
+
+	* super_actions.h:
+	action for editing the `disable_banner_page' global configuration
+	  variable is added.
+
+	* super_proto.h:
+	command for editing the `disable_banner_page' global configuration
+	  variable is added.
+
+	* prepare.c, prepare_out.c:
+	`disable_banner_page' global configuration variable is added.
+
+	* printing.c:
+	(do_print_run) `disable_banner_page' is supported.
+
+	* super-serve.c, super_html_3.c, serve-control.c:
+	support for editing `disable_banner_page' is implemented.
+
+2006-11-05 (r3655) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(priv_change_password) new function.
+
+	* super_html_3.c:
+	(load_cs_languages) `compile_home_dir' is initialized to the default
+	  value, if the current value is not set.
+
+2006-11-03 (r3652) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog.c:
+	(run_set_entry) langauge check is relaxed.
+
+2006-11-03 (r3648) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(unpriv_page_header) "Logout" link now displayed as "Logout [user]".
+
+	* super_html.c:
+	(super_html_main_page) links to the client programs are generated;
+	(super_html_contest_page) the same as above.
+
+2006-11-03 (r3638) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h:
+	(write_xml_team_testing_report) `table_class' parameter is added;
+	(write_xml_team_accepting_report) `table_class' parameter is added.
+
+	* master_html.c:
+	(write_priv_report) use of `write_xml_team_testing_report' is updated.
+
+	* html.c:
+	(write_xml_team_testing_report) `table_class' parameter is added;
+	(write_xml_team_output_only_acc_report) the same;
+	(write_xml_team_accepting_report) the same.
+
+	* new_server_html.c:
+	(unpriv_view_report) user of `write_xml_team_accepting_report'
+	  is updated;
+	  use of `write_xml_team_testing_report' is updated.
+
+	* new_server_html_2.c:
+	(ns_write_priv_report) user of `write_xml_team_accepting_report'
+	  is updated;
+	  use of `write_xml_team_testing_report' is updated.
+
+2006-11-02 (r3636) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h:
+	(write_change_status_dialog) `td_class' parameter is added.
+
+	* master_html.c:
+	(write_change_status_dialog) `td_class' parameter is added;
+	(write_priv_all_runs) call of `write_change_status_dialog' is updated;
+	(write_priv_source) the same as above;
+	(write_new_run_form) the same as above.
+
+2006-11-02 (r3634) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h:
+	(write_html_run_status) `td_class' parameter is added.
+
+	* html.c:
+	(write_html_run_status) `td_class' parameter is added;
+	(new_write_user_runs) call of `write_html_run_status' is updated;
+	(do_write_public_log) the same as above.
+
+	* master_html.c:
+	(write_priv_all_runs) call of `write_html_run_status' is updated.
+
+	* new_server_html_2.c: progress...
+
+2006-11-02 (r3620) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) `disable_submit_after_ok' field
+	  is added.
+
+	* super_actions.h:
+	action for editing `disable_submit_after_ok' problem configuration
+	  variable is added.
+
+	* super_proto.h:
+	command for editing `disable_submit_after_ok' problem configuration
+	  variable is added.
+
+	* prepare.c, prepare_out.c:
+	`disable_submit_after_ok' problem configuration variable is added.
+
+	* new_server_html.c:
+	problem variable `disable_submit_after_ok' is used instead of global
+	  variable.
+
+	* super-serve.c, super_html_3.c, serve-control.c:
+	editing of `disable_submit_after_ok' problem configuration variable
+	  is supported;
+
+2006-11-02 (r3619) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) field `stand_attr' is added.
+
+	* super_actions.h:
+	actions for editing `stand_attr' problem configuration variable
+	  are added.
+
+	* super_proto.h:
+	commands for editing `stand_attr' problem configuration variable
+	  are added.
+
+	* html.c:
+	(do_write_kirov_standings) `stand_attr' problem configuration
+	  variable is supported;
+	(do_write_moscow_standings) the same as above;
+	(do_write_standings) the same as above.
+
+	* prepare.c:
+	`stand_attr' problem configuration variable is added.
+
+	* super-serve.c, super_html_3.c, serve-control.c:
+	  editing of `stand_attr' problem configuration variable is supported.
+
+2006-11-02 (r3618) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_state.h:
+	(serve_squeeze_runs) prototype is added.
+
+	* new_server_proto.h: progress...
+
+	* new_server_html.c, new_server_proto.c, new_server_tables.c:
+	  progress...
+
+	* serve.c:
+	(do_squeeze_runs) function is moved to serve_2.c as
+	  `serve_squeeze_runs';
+	(cmd_priv_command_0) `serve_squeeze_runs' is used.
+
+	* serve_2.c:
+	(serve_squeeze_runs) function is moved here from serve.c, where
+	  is was `do_squeeze_runs'.
+
+	* serve_state.c:
+	(serve_state_destroy) bug is fixed.
+
+2006-11-01 (r3613) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) `disable_user_submit' field is added.
+
+	* super_actions.h:
+	action for editing `disable_user_submit' problem configuration
+	  variable is added.
+
+	* super_proto.h:
+	command for editing `disable_user_submit' problem configuration
+	  variable is added.
+
+	* new_server_html.c:
+	`disable_user_submit' variable is handled.
+
+	* prepare.c, prepare_out.c:
+	`disable_user_submit' problem configuration variable is added.
+
+	* super-serve.c, super_html_3.c, serve-control.c:
+	support for editing `disable_user_submit' problem configuration
+	  variable is added.
+
 2006-10-30 (r3610) Alexander Chernov  <cher@ejudge.ru>
 
 	* configure.ac: on x86_64 libdir is lib64.
@@ -2609,7 +3039,7 @@
 	(action_remove_member) the same as above;
 	(action_register_for_contest) the same as above.
 
-	*users.c: copyright notice is updated;
+	* users.c: copyright notice is updated;
 	(main) use of `contests_get' is updated.
 
 	* new_server_html.c:
