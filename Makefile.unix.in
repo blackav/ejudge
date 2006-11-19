@@ -145,6 +145,9 @@ CE_OBJECTS = ${CE_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 ST_CFILES = ejudge-setup.c version.c
 ST_OBJECTS = ${ST_CFILES:.c=.o} libcommon.a
 
+EC_CFILES = ejudge-control.c version.c
+EC_OBJECTS = ${EC_CFILES:.c=.o} libcommon.a
+
 EX_CFILES = execute.c version.c
 EX_OBJECTS = ${EX_CFILES:.c=.o}
 
@@ -157,7 +160,7 @@ NS_OBJECTS=$(NS_CFILES:.c=.o) libcommon.a libuserlist_clnt.a
 NSC_CFILES=new-server-control.c version.c
 NSC_OBJECTS=$(NSC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a
 
-BINTARGETS = compile compile-control serve run userlist-server userlist-server-control job-server job-server-control job-server-cmd edit-userlist super-serve super-serve-control clean-users ejudge-setup collect-emails serve-cmd slice-userlist execute new-server new-server-control uudecode
+BINTARGETS = compile compile-control serve run userlist-server userlist-server-control job-server job-server-control job-server-cmd edit-userlist super-serve super-serve-control clean-users ejudge-setup ejudge-control collect-emails serve-cmd slice-userlist execute new-server new-server-control uudecode
 CGITARGETS = master${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX} users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
 TARGETS = ${BINTARGETS} ${CGITARGETS}
 
@@ -261,6 +264,9 @@ edit-userlist: $(ED_OBJECTS)
 
 ejudge-setup: ${ST_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu -lpanel -lncurses
+
+ejudge-control: ${EC_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 execute : ${EX_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}

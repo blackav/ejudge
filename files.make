@@ -250,6 +250,7 @@ CFILES=\
  compile.c\
  compile-control.c\
  edit-userlist.c\
+ ejudge-control.c\
  ejudge-setup.c\
  execute.c\
  job-server.c\
