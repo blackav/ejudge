@@ -1,3 +1,12 @@
+2006-11-17 (r3668) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.in: copyright notice is updated;
+	`empty.make' is included, if no mysql library is available.
+
+	* main.make: copyright notice is updated.
+
+	* empty.make: initial revision.
+
 2006-09-03 (r3283) Alexander Chernov  <cher@ejudge.ru>
 
 	* uldb_mysql.c: copyright notice is updated;

@@ -1,3 +1,44 @@
+2006-11-05 (r3654) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in: copyright notice is updated;
+	rules for compilation of eq_*_abs.c files are added.
+
+	* files.make:
+	`eq_double_abs.c', `eq_float_abs.c', `eq_long_double_abs.c'
+	  are added.
+
+	* checker_internal.h:
+	(checker_eq_double_abs) new function prototype;
+	(checker_eq_float_abs) new function prototype;
+	(checker_eq_long_double_abs) new function prototype.
+
+	* cmp_double.c, cmp_double_seq.c, cmp_long_double.c, cmp_long_double_seq.c:
+	  copyright notice is updated;
+	(checker_main) "ABSOLUTE" environment variable is supported to
+	  check the absolute difference instead the relative difference.
+
+	* eq_double.c: copyright notice is updated;
+	(checker_eq_double) grace multiplier is now 1.125 instead of 2.
+
+	* eq_float.c: copyright notice is updated;
+	(checker_eq_float) grace multiplier is now 1.125 instead of 2.
+
+	* eq_long_double.c: copyright notice is updated;
+	(checker_eq_long_double) grace multiplier is now 1.125 instead of 2.
+
+	* eq_double_abs.c, eq_float_abs.c, eq_long_double_abs.c:
+	  initial revision.
+
+2006-11-01 (r3617) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make: `read_file_f.c' is added.
+
+	* checker_internal.h:
+	(checker_read_file_f) function prototype is added.
+
+	* read_file_f.c:
+	initial revision.
+
 2006-10-15 (r3524) Alexander Chernov  <cher@ejudge.ru>
 
 	* files.make: copyright notice is updated;

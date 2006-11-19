@@ -1,3 +1,8 @@
+2006-11-17 (r3669) Alexander Chernov  <cher@ejudge.ru>
+
+	* control.c:
+	initial revision
+
 2006-10-29 (r3595) Alexander Chernov  <cher@ejudge.ru>
 
 	* create_member.c:
