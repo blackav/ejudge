@@ -95,6 +95,9 @@ static char const * const elem_map[] =
   "extra1",
   "cntsinfos",
   "cntsinfo",
+  "birth_date",
+  "entry_date",
+  "graduation_date",
 
   0
 };
@@ -524,6 +527,13 @@ static const size_t leaf_member_offsets[USERLIST_LAST_TAG] =
   [USERLIST_T_FIRSTNAME_EN] = MEMBER_OFFSET(firstname_en),
 };
 
+static const size_t date_member_offsets[USERLIST_LAST_TAG] =
+{
+  [USERLIST_T_BIRTH_DATE] = MEMBER_OFFSET(birth_date),
+  [USERLIST_T_ENTRY_DATE] = MEMBER_OFFSET(entry_date),
+  [USERLIST_T_GRADUATION_DATE] = MEMBER_OFFSET(graduation_date),
+};
+
 static int
 parse_members(char const *path, struct xml_tree *q,
               struct userlist_members **pmemb)
@@ -534,6 +544,7 @@ parse_members(char const *path, struct xml_tree *q,
   struct xml_tree *p, *saved_next;
   struct xml_attr *a;
   unsigned char **p_str;
+  time_t *p_time;
   int role, i;
 
   if (q->tag < USERLIST_T_CONTESTANTS || q->tag > USERLIST_T_GUESTS)
@@ -589,6 +600,18 @@ parse_members(char const *path, struct xml_tree *q,
       if (leaf_member_offsets[p->tag] > 0) {
         p_str = XPDEREF(unsigned char *, mb, leaf_member_offsets[p->tag]);
         if (xml_leaf_elem(p, p_str, 1, 1) < 0) return -1;
+        xml_unlink_node(p);
+        userlist_free(p);
+        continue;
+      }
+
+      if (date_member_offsets[p->tag] > 0) {
+        p_time = XPDEREF(time_t, mb, date_member_offsets[p->tag]);
+        if (p->first) return xml_err_attrs(p);
+        if (p->first_down) return xml_err_nested_elems(p);
+        if (*p_time > 0) return xml_err_elem_redefined(p);
+        if (userlist_parse_date_2(p->text, p_time) < 0)
+          return xml_err_elem_invalid(p);
         xml_unlink_node(p);
         userlist_free(p);
         continue;
@@ -1273,6 +1296,8 @@ unparse_member(const struct userlist_member *p, FILE *f)
   unsigned char const *ind = "        ";
   int i;
   unsigned char **p_str;
+  time_t *p_time;
+  unsigned char dbuf[64];
 
   if (!p) return;
   ASSERT(p->b.tag == USERLIST_T_MEMBER);
@@ -1298,6 +1323,18 @@ unparse_member(const struct userlist_member *p, FILE *f)
     if (leaf_member_offsets[i] > 0) {
       p_str = XPDEREF(unsigned char *, p, leaf_member_offsets[i]);
       xml_unparse_text(f, elem_map[i], *p_str, ind);
+    }
+  }
+
+  for (i = 1; i < USERLIST_LAST_TAG; i++) {
+    if (date_member_offsets[i] > 0) {
+      p_time = XPDEREF(time_t, p, date_member_offsets[i]);
+      if (*p_time > 0) {
+        fprintf(f, "%s<%s>%s</%s>\n",
+                ind, elem_map[i],
+                userlist_unparse_date_2(dbuf, sizeof(dbuf), *p_time, 0),
+                elem_map[i]);
+      }
     }
   }
 
