@@ -1274,6 +1274,9 @@ static const struct user_field_desc member_descs[] =
   [USERLIST_NM_FAC_EN]     { "Faculty (En)", 1, 1 },
   [USERLIST_NM_FACSHORT]   { "Fac. (short)", 1, 1 },
   [USERLIST_NM_FACSHORT_EN] { "Fac. (short) (En)", 1, 1 },
+  [USERLIST_NM_BIRTH_DATE] { "Birth date", 1, 1 },
+  [USERLIST_NM_ENTRY_DATE] { "Inst. entry date", 1, 1 },
+  [USERLIST_NM_GRADUATION_DATE] { "Exp. grad. date", 1, 1 },
   [USERLIST_NM_CREATE_TIME] { "Create time", 1, 1 },
   [USERLIST_NM_LAST_CHANGE_TIME] { "Change time", 1, 1 },
 };

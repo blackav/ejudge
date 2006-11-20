@@ -118,7 +118,7 @@ enum
     USERLIST_T_CNTSINFO,
     USERLIST_T_BIRTH_DATE,
     USERLIST_T_ENTRY_DATE,
-    USERLIST_T_GRADUATE_DATE,
+    USERLIST_T_GRADUATION_DATE,
 
     USERLIST_LAST_TAG,
   };
@@ -266,7 +266,7 @@ enum
     USERLIST_NM_LAST_CHANGE_TIME,
     USERLIST_NM_BIRTH_DATE,
     USERLIST_NM_ENTRY_DATE,
-    USERLIST_NM_GRADUATE_DATE,
+    USERLIST_NM_GRADUATION_DATE,
 
     USERLIST_NM_LAST,
   };
@@ -305,7 +305,7 @@ struct userlist_member
 
   time_t birth_date;
   time_t entry_date;
-  time_t graduate_date;
+  time_t graduation_date;
 
   time_t create_time;
   time_t last_change_time;
@@ -493,6 +493,10 @@ void userlist_unparse_user_short(const struct userlist_user *p, FILE *f,
 
 unsigned char const *userlist_unparse_reg_status(int s);
 unsigned char const *userlist_member_status_str(int status);
+
+int userlist_parse_date_2(const unsigned char *str, time_t *pd);
+const unsigned char *userlist_unparse_date_2(unsigned char *buf, size_t size,
+                                             time_t d, int convert_null);
 
 void *userlist_free(struct xml_tree *p);
 void userlist_remove_user(struct userlist_list *p, struct userlist_user *u);
