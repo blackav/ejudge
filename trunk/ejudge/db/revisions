@@ -1606,3 +1606,4 @@ job-server-control.c 3682 0 352936
 new-server-control.c 3682 0 312111
 super-serve-control.c 3682 0 307778
 userlist-server-control.c 3682 0 311066
+job-server-cmd.c 3684 0 77397
