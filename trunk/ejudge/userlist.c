@@ -108,6 +108,47 @@ userlist_unparse_date(time_t d, int convert_null)
   return xml_unparse_date(d);
 }
 
+const unsigned char *
+userlist_unparse_date_2(unsigned char *buf, size_t size,
+                        time_t d, int convert_null)
+{
+  struct tm *ptm;
+
+  if (!d && convert_null) {
+    snprintf(buf, size, "<Not set>");
+    return buf;
+  }
+  ptm = localtime(&d);
+  snprintf(buf, size, "%04d/%02d/%02d", ptm->tm_year + 1900,
+           ptm->tm_mon + 1, ptm->tm_mday);
+  return buf;
+}
+
+int
+userlist_parse_date_2(const unsigned char *str, time_t *pd)
+{
+  int year, month, day, n;
+  struct tm tt;
+  time_t t;
+
+  memset(&tt, 0, sizeof(tt));
+  tt.tm_isdst = -1;
+  tt.tm_hour = 12;
+
+  if (!str) return -1;
+  if (sscanf(str, "%d/%d/%d%n", &year, &month, &day, &n) != 3 || str[n])
+    return -1;
+  if (year < 1970) return -1;
+  if (month < 1 || month > 12) return -1;
+  if (day < 1 || day > 31) return -1;
+  tt.tm_mday = day;
+  tt.tm_mon = month - 1;
+  tt.tm_year = year - 1900;
+  if ((t = mktime(&tt)) == (time_t) -1) return -1;
+  *pd = t;
+  return 0;
+}
+
 #define MEMBER_OFFSET(f) XOFFSET(struct userlist_member, f)
 static int member_field_offsets[] =
 {
@@ -137,6 +178,9 @@ static int member_field_offsets[] =
   [USERLIST_NM_PHONE] = MEMBER_OFFSET(phone),
   [USERLIST_NM_CREATE_TIME] = MEMBER_OFFSET(create_time),
   [USERLIST_NM_LAST_CHANGE_TIME] = MEMBER_OFFSET(last_change_time),
+  [USERLIST_NM_BIRTH_DATE] = MEMBER_OFFSET(birth_date),
+  [USERLIST_NM_ENTRY_DATE] = MEMBER_OFFSET(entry_date),
+  [USERLIST_NM_GRADUATE_DATE] = MEMBER_OFFSET(graduate_date),
 };
 
 void *
@@ -176,6 +220,9 @@ static int member_field_types[] =
   [USERLIST_NM_PHONE] = USERLIST_NM_FIRSTNAME,
   [USERLIST_NM_CREATE_TIME] = USERLIST_NM_CREATE_TIME,
   [USERLIST_NM_LAST_CHANGE_TIME] = USERLIST_NM_CREATE_TIME,
+  [USERLIST_NM_BIRTH_DATE] = USERLIST_NM_BIRTH_DATE,
+  [USERLIST_NM_ENTRY_DATE] = USERLIST_NM_BIRTH_DATE,
+  [USERLIST_NM_GRADUATE_DATE] = USERLIST_NM_BIRTH_DATE,
 };
 
 int
@@ -183,6 +230,7 @@ userlist_is_empty_member_field(const struct userlist_member *m, int field_id)
 {
   const int *p_int;
   const unsigned char **p_str;
+  const time_t *p_time;
 
   ASSERT(m);
   ASSERT(field_id >= USERLIST_NM_FIRST && field_id < USERLIST_NM_LAST);
@@ -199,6 +247,9 @@ userlist_is_empty_member_field(const struct userlist_member *m, int field_id)
     return (*p_str == 0);
   case USERLIST_NM_CREATE_TIME:
     return 0;
+  case USERLIST_NM_BIRTH_DATE:
+    p_time = (const time_t*) userlist_get_member_field_ptr(m, field_id);
+    return (*p_time <= 0);
   default:
     abort();
   }
@@ -234,6 +285,12 @@ userlist_is_equal_member_field(const struct userlist_member *m, int field_id,
     if ((!value || !*value) && *p_time == 0) return 1;
     if (!value || !*value) return 0;
     return (strcmp(xml_unparse_date(*p_time), value) == 0);
+  case USERLIST_NM_BIRTH_DATE:
+    p_time = (const time_t*) userlist_get_member_field_ptr(m, field_id);
+    if ((!value || !*value) && *p_time == 0) return 1;
+    if (!value || !*value) return 0;
+    return (strcmp(userlist_unparse_date_2(buf, sizeof(buf), *p_time, 0),
+                   value) == 0);
   default:
     abort();
   }
@@ -244,6 +301,7 @@ userlist_get_member_field_str(unsigned char *buf, size_t len,
                               const struct userlist_member *m, int field_id,
                               int convert_null)
 {
+  unsigned char dbuf[64];
   const int *p_int;
   const unsigned char **p_str;
   const time_t *p_time;
@@ -269,7 +327,12 @@ userlist_get_member_field_str(unsigned char *buf, size_t len,
     return snprintf(buf, len, "%s", s);
   case USERLIST_NM_CREATE_TIME:
     p_time = (const time_t*) userlist_get_member_field_ptr(m, field_id);
-    return snprintf(buf, len, "%s", userlist_unparse_date(*p_time, convert_null));    
+    return snprintf(buf, len, "%s", userlist_unparse_date(*p_time, convert_null));
+  case USERLIST_NM_BIRTH_DATE:
+    p_time = (const time_t*) userlist_get_member_field_ptr(m, field_id);
+    return snprintf(buf, len, "%s",
+                    userlist_unparse_date_2(dbuf, sizeof(dbuf),
+                                            *p_time, convert_null));
   default:
     abort();
   }
@@ -299,6 +362,7 @@ userlist_delete_member_field(struct userlist_member *m, int field_id)
     xfree(*p_str); *p_str = 0;
     return 1;
   case USERLIST_NM_CREATE_TIME:
+  case USERLIST_NM_BIRTH_DATE:
     p_time = (time_t*) userlist_get_member_field_ptr(m, field_id);
     if (!*p_time) return 0;
     *p_time = 0;
@@ -366,6 +430,17 @@ userlist_set_member_field_str(struct userlist_member *m, int field_id,
       return 1;
     }
     if (xml_parse_date(0, 0, 0, field_val, &newt) < 0) return -1;
+    if (*p_time == newt) return 0;
+    *p_time = newt;
+    return 1;
+  case USERLIST_NM_BIRTH_DATE:
+    p_time = (time_t*) userlist_get_member_field_ptr(m, field_id);
+    if (!*p_time && !field_val) return 0;
+    if (!field_val) {
+      *p_time = 0;
+      return 1;
+    }
+    if (userlist_parse_date_2(field_val, &newt) < 0) return -1;
     if (*p_time == newt) return 0;
     *p_time = newt;
     return 1;
