@@ -255,6 +255,7 @@ CFILES=\
  execute.c\
  job-server.c\
  job-server-control.c\
+ job-server-cmd.c\
  master.c\
  new-client.c\
  new-server.c\
