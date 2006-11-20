@@ -1976,6 +1976,9 @@ static const unsigned char *const member_field_names[] =
   [CONTEST_MF_FACSHORT_EN] = "Faculty, short (English)",
   [CONTEST_MF_OCCUPATION] = "Occupation",
   [CONTEST_MF_OCCUPATION_EN] = "Occupation (English)",
+  [CONTEST_MF_BIRTH_DATE] = "Birth date",
+  [CONTEST_MF_ENTRY_DATE] = "Entry date",
+  [CONTEST_MF_GRADUATION_DATE] = "Graduation date",
 };
 
 static void

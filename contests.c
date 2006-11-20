@@ -290,6 +290,9 @@ static char const * const member_field_map[] =
   "facshort_en",
   "occupation",
   "occupation_en",
+  "birth_date",
+  "entry_date",
+  "graduation_date",
 
   0,
 };
