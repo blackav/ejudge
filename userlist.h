@@ -116,6 +116,9 @@ enum
     USERLIST_T_EXTRA1,
     USERLIST_T_CNTSINFOS,
     USERLIST_T_CNTSINFO,
+    USERLIST_T_BIRTH_DATE,
+    USERLIST_T_ENTRY_DATE,
+    USERLIST_T_GRADUATE_DATE,
 
     USERLIST_LAST_TAG,
   };
@@ -261,6 +264,9 @@ enum
     USERLIST_NM_CREATE_TIME,
     /* 225 */
     USERLIST_NM_LAST_CHANGE_TIME,
+    USERLIST_NM_BIRTH_DATE,
+    USERLIST_NM_ENTRY_DATE,
+    USERLIST_NM_GRADUATE_DATE,
 
     USERLIST_NM_LAST,
   };
@@ -296,6 +302,10 @@ struct userlist_member
   unsigned char *facshort;
   unsigned char *facshort_en;
   unsigned char *phone;
+
+  time_t birth_date;
+  time_t entry_date;
+  time_t graduate_date;
 
   time_t create_time;
   time_t last_change_time;
