@@ -1616,3 +1616,8 @@ userlist.h 3691 0 1313467
 edit-userlist.c 3691 0 9419808
 userlist.c 3691 0 3945953
 userlist_xml.c 3691 0 4312843
+register.c 3693 0 8594926
+userlist-server.c 3693 0 20292111
+uldb_plugin_xml.c 3693 0 5737032
+master_html.c 3694 0 10257437
+new_server_html.c 3694 0 22780088
