@@ -260,7 +260,7 @@ ns_unload_expired_contests(time_t cur_time)
       ns_unload_contest(i);
 }
 
-static void check_contest_events(serve_state_t cs);
+static void check_contest_events(serve_state_t cs, const struct contest_desc*);
 
 void
 ns_loop_callback(struct server_framework_state *state)
@@ -278,7 +278,11 @@ ns_loop_callback(struct server_framework_state *state)
     if (!(cs = e->serve_state)) continue;
 
     e->serve_state->current_time = cur_time;
-    check_contest_events(e->serve_state);
+    check_contest_events(e->serve_state, cnts);
+
+    serve_update_public_log_file(e->serve_state, cnts);
+    serve_update_external_xml_log(e->serve_state, cnts);
+    serve_update_internal_xml_log(e->serve_state, cnts);
 
     for (i = 0; i < cs->compile_dirs_u; i++) {
       if ((r = scan_dir(cs->compile_dirs[i].status_dir, packetname)) <= 0)
@@ -318,7 +322,7 @@ ns_post_select_callback(struct server_framework_state *state)
     if (!(cs = e->serve_state)) continue;
 
     e->serve_state->current_time = cur_time;
-    check_contest_events(e->serve_state);
+    check_contest_events(e->serve_state, cnts);
   }
 }
 
@@ -643,7 +647,7 @@ html_refresh_page_2(FILE *fout, const unsigned char *url)
 }
 
 static void
-check_contest_events(serve_state_t cs)
+check_contest_events(serve_state_t cs, const struct contest_desc *cnts)
 {
   const struct section_global_data *global = cs->global;
   time_t start_time, stop_time, sched_time, duration, finish_time;
@@ -668,6 +672,7 @@ check_contest_events(serve_state_t cs)
       info("CONTEST IS STARTED");
       run_start_contest(cs->runlog_state, sched_time);
       serve_invoke_start_script(cs);
+      serve_update_standings_file(cs, cnts, 0);
     }
   }
 }
@@ -1422,6 +1427,7 @@ priv_contest_operation(FILE *fout,
     run_start_contest(cs->runlog_state, cs->current_time);
     serve_update_status_file(cs, 1);
     serve_invoke_start_script(cs);
+    serve_update_standings_file(cs, cnts, 0);
     break;
 
   case NEW_SRV_ACTION_STOP_CONTEST:
@@ -5088,7 +5094,7 @@ privileged_page(FILE *fout,
   ns_set_fancy_standings_style(extra->serve_state->global);
 
   extra->serve_state->current_time = time(0);
-  check_contest_events(extra->serve_state);
+  check_contest_events(extra->serve_state, cnts);
   
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && actions_table[phr->action]) {
@@ -8214,7 +8220,7 @@ unprivileged_page(FILE *fout, struct http_request_info *phr)
   ns_set_fancy_standings_style(extra->serve_state->global);
 
   extra->serve_state->current_time = time(0);
-  check_contest_events(extra->serve_state);
+  check_contest_events(extra->serve_state, cnts);
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && user_actions_table[phr->action]) {
