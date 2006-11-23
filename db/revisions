@@ -1621,3 +1621,4 @@ userlist-server.c 3693 0 20292111
 uldb_plugin_xml.c 3693 0 5737032
 master_html.c 3694 0 10257437
 new_server_html.c 3694 0 22780088
+register.c 3696 0 8595066
