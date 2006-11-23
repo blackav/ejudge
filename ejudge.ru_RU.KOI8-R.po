@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-13 05:48+0300\n"
-"PO-Revision-Date: 2006-11-14 01:04+0300\n"
+"POT-Creation-Date: 2006-11-23 12:02+0300\n"
+"PO-Revision-Date: 2006-11-23 12:06+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -440,11 +440,17 @@ msgstr "Апелляции отключены"
 msgid "Appeals deadline is exceeded"
 msgstr "Приём апелляций прекращён"
 
+msgid "Apr"
+msgstr "Апр"
+
 msgid "Attempt to submit a binary file"
 msgstr "Попытка послать бинарный файл"
 
 msgid "Audit log"
 msgstr "Журнал аудита"
+
+msgid "Aug"
+msgstr "Авг"
 
 msgid "Authentification failed"
 msgstr "Авторизация не выполнена"
@@ -469,6 +475,9 @@ msgstr "Заблокировать"
 
 msgid "Banned?"
 msgstr "Заблокированный?"
+
+msgid "Birth Date"
+msgstr "Дата рождения"
 
 msgid "Cannot add a new"
 msgstr "Не могу добавить нового члена команды"
@@ -758,6 +767,9 @@ msgstr "Виртуальное положение участников"
 msgid "Deadline for this problem is expired"
 msgstr "Срок сдачи данной задачи истёк"
 
+msgid "Dec"
+msgstr "Дек"
+
 msgid "Default language"
 msgstr "Язык по умолчанию"
 
@@ -907,6 +919,9 @@ msgstr "Фамилия (Англ.)"
 
 msgid "Fatal error"
 msgstr "Фатальная ошибка"
+
+msgid "Feb"
+msgstr "Фев"
 
 #, c-format
 msgid ""
@@ -1276,6 +1291,12 @@ msgstr "Учебное заведение (сокр.)"
 msgid "Institution (short) (En)"
 msgstr "Учебное заведение (сокр.) (Англ.)"
 
+msgid "Institution entry date"
+msgstr "Дата поступления в учебное заведение"
+
+msgid "Institution graduation date"
+msgstr "Дата окончания учебного заведения"
+
 msgid "Insufficient duration to continue the contest"
 msgstr "Недостаточная продолжительность турнира"
 
@@ -1401,6 +1422,9 @@ msgstr "Выдать предупреждение"
 msgid "It's not allowed to answer to judge's messages"
 msgstr "Нельзя отвечать на сообщения судей"
 
+msgid "Jan"
+msgstr "Янв"
+
 msgid "Judge"
 msgstr "Судья"
 
@@ -1415,6 +1439,12 @@ msgstr "Комментарий для судей"
 
 msgid "Judge's report"
 msgstr "Судейский протокол"
+
+msgid "Jul"
+msgstr "Июль"
+
+msgid "Jun"
+msgstr "Июнь"
 
 msgid "Language"
 msgstr "Язык"
@@ -1515,6 +1545,9 @@ msgstr "Обязательное поле \"%s\" не заполнено."
 msgid "Mandatory field \"%s.%d.%s\" is empty."
 msgstr "Обязательное поле \"%s.%d.%s\" не заполнено."
 
+msgid "Mar"
+msgstr "Мар"
+
 msgid "Mark BANNED"
 msgstr "Установить флаг ЗАБЛОКИРОВАННОСТИ"
 
@@ -1532,6 +1565,9 @@ msgstr "Поставить на ожидание"
 
 msgid "Mark REJECTED"
 msgstr "Отказать в участии"
+
+msgid "May"
+msgstr "Май"
 
 msgid "Member information"
 msgstr "Информация об участниках"
@@ -1691,6 +1727,9 @@ msgstr ""
 "это письмо.\n"
 "\n"
 
+msgid "Nov"
+msgstr "Ноя"
+
 msgid ""
 "Now please press the \"Back\" button of your browser and fix the error(s)."
 msgstr "Теперь нажмите кнопку \"Назад\" Вашего браузера и исправьте ошибки."
@@ -1727,6 +1766,9 @@ msgstr "Должность"
 
 msgid "Occupation (En)"
 msgstr "Должность (Англ.)"
+
+msgid "Oct"
+msgstr "Окт"
 
 msgid "Old password"
 msgstr "Старый пароль"
@@ -2283,6 +2325,9 @@ msgstr "Отправитель"
 
 msgid "Sent submissions"
 msgstr "Отправленные решения"
+
+msgid "Sep"
+msgstr "Сен"
 
 msgid "Serial No"
 msgstr "NN"
