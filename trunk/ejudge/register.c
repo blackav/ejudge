@@ -49,6 +49,8 @@
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
 #include <locale.h>
+
+#define __(x) x
 #endif
 
 #ifndef EJUDGE_CHARSET
@@ -308,6 +310,9 @@ static struct field_desc member_field_descs[CONTEST_LAST_MEMBER_FIELD] =
   { "facshort_en", _("Faculty (short) (En)"), 0, 0, name_en_accept_chars, '?', 32, 32 },
   { "occupation", _("Occupation"), 0, 0, name_accept_chars, '?', 128, 64 },
   { "occupation_en", _("Occupation (En)"), 0, 0, name_en_accept_chars, '?', 128, 64 },
+  { "birth_date", _("Birth Date"), 0, 0, name_accept_chars, '?', 128, 64 },
+  { "entry_date", _("Institution entry date"), 0, 0, name_accept_chars, '?', 128, 64 },
+  { "graduation_date", _("Institution graduation date"), 0, 0, name_accept_chars, '?', 128, 64 },
 };
 static char const * const member_string[] =
 {
@@ -1019,6 +1024,49 @@ prepare_var_table(const struct contest_desc *cnts)
   }
 }
 
+static unsigned char *
+parse_date_from_form(int role, int pers, int field)
+{
+  unsigned char varname[64];
+  unsigned char *val;
+  int day, month, year, n;
+  struct tm ttm;
+  // member_info_%d_%d_%d
+
+  snprintf(varname, sizeof(varname), "member_info_%d_%d_%d_d",
+           role, pers, field);
+  if (!(val = cgi_param(varname))) goto failed;
+  if (sscanf(val, "%d %n", &day, &n) != 1 || val[n] || day <= 0 || day > 31)
+    goto failed;
+
+  snprintf(varname, sizeof(varname), "member_info_%d_%d_%d_m",
+           role, pers, field);
+  if (!(val = cgi_param(varname))) goto failed;
+  if (sscanf(val, "%d %n", &month, &n) != 1 || val[n] || month<=0 || month>12)
+    goto failed;
+
+  snprintf(varname, sizeof(varname), "member_info_%d_%d_%d_y",
+           role, pers, field);
+  if (!(val = cgi_param(varname))) goto failed;
+  if (sscanf(val, "%d %n", &year, &n) != 1 || val[n] || year<=1900|| year>10000)
+    goto failed;
+
+  memset(&ttm, 0, sizeof(ttm));
+  ttm.tm_isdst = -1;
+  ttm.tm_hour = 12;
+  ttm.tm_mday = day;
+  ttm.tm_mon = month - 1;
+  ttm.tm_year = year - 1900;
+  if (mktime(&ttm) == (time_t) -1) goto failed;
+
+  snprintf(varname, sizeof(varname), "%04d/%02d/%02d",
+           year, month, day);
+  return xstrdup(varname);
+
+ failed:
+  return xstrdup("");
+}
+
 static void
 read_user_info_from_form(void)
 {
@@ -1118,6 +1166,13 @@ read_user_info_from_form(void)
       member_info[role][pers][0] = xstrdup(val);
       for (i = 1; i < CONTEST_LAST_MEMBER_FIELD; i++) {
         if (!member_edit_flags[role][i].is_editable) continue;
+        switch (i) {
+        case CONTEST_MF_BIRTH_DATE:
+        case CONTEST_MF_ENTRY_DATE:
+        case CONTEST_MF_GRADUATION_DATE:
+          member_info[role][pers][i] = parse_date_from_form(role, pers, i);
+          continue;
+        }
         snprintf(varbuf, sizeof(varbuf), "member_info_%d_%d_%d",
                  role, pers, i);
         val = cgi_param(varbuf);
@@ -1245,13 +1300,20 @@ do_make_user_xml(FILE *f)
         if (!member_edit_flags[role][i].is_editable) continue;
         val = member_info[role][pers][i];
         if (!val) val = "";
-        if (i == CONTEST_MF_STATUS) {
+        switch (i) {
+        case CONTEST_MF_BIRTH_DATE:
+        case CONTEST_MF_ENTRY_DATE:
+        case CONTEST_MF_GRADUATION_DATE:
+          if (!val || !*val) continue;
+          break;
+        case CONTEST_MF_STATUS:
           x = 0;
           if (sscanf(val, "%d %n", &x, &n) != 1 || val[n] ||
               x < 0 || x > USERLIST_ST_OTHER) {
             x = 0;
           }
           val = unparse_member_status(x);
+          break;
         }
         fprintf(f, "      <%s>%s</%s>\n",
                 member_field_descs[i].tag_name, val,
@@ -1294,6 +1356,7 @@ read_user_info_from_server(void)
   struct userlist_contest *reg;
   int role, pers, errcode;
   unsigned char buf[512];
+  unsigned char dbuf[64];
 
   error_log = 0;
   if ((errcode = userlist_clnt_get_info(server_conn, ULS_GET_USER_INFO,
@@ -1435,6 +1498,24 @@ read_user_info_from_server(void)
       if (member_edit_flags[role][CONTEST_MF_OCCUPATION_EN].is_editable) {
         member_info[role][pers][CONTEST_MF_OCCUPATION_EN] = m->occupation_en;
       }
+      if (member_edit_flags[role][CONTEST_MF_BIRTH_DATE].is_editable) {
+        if (!m->birth_date)
+          member_info[role][pers][CONTEST_MF_BIRTH_DATE] = xstrdup("");
+        else
+          member_info[role][pers][CONTEST_MF_BIRTH_DATE] = xstrdup(userlist_unparse_date_2(dbuf, sizeof(dbuf), m->birth_date, 0));
+      }
+      if (member_edit_flags[role][CONTEST_MF_ENTRY_DATE].is_editable) {
+        if (!m->entry_date)
+          member_info[role][pers][CONTEST_MF_ENTRY_DATE] = xstrdup("");
+        else
+          member_info[role][pers][CONTEST_MF_ENTRY_DATE] = xstrdup(userlist_unparse_date_2(dbuf, sizeof(dbuf), m->entry_date, 0));
+      }
+      if (member_edit_flags[role][CONTEST_MF_GRADUATION_DATE].is_editable) {
+        if (!m->graduation_date)
+          member_info[role][pers][CONTEST_MF_GRADUATION_DATE] = xstrdup("");
+        else
+          member_info[role][pers][CONTEST_MF_GRADUATION_DATE] = xstrdup(userlist_unparse_date_2(dbuf, sizeof(dbuf), m->graduation_date, 0));
+      }
     }
     if (!member_cur[role]) member_cur[role] = member_init[role];
     /*
@@ -1527,6 +1608,67 @@ map_user_languages(const unsigned char *user_langs, int **pmap)
     if (j < langs_u)
       map[i] = 1;
   }
+}
+
+static const unsigned char * const month_names[] =
+{
+  "",
+  __("Jan"), __("Feb"), __("Mar"), __("Apr"), __("May"), __("Jun"),
+  __("Jul"), __("Aug"), __("Sep"), __("Oct"), __("Nov"), __("Dec"),
+};
+
+static void
+display_date_change_dialog(int role, int pers, int field)
+{
+  unsigned char *val;
+  int day = 0, month = 0, year = 0, n;
+  unsigned char vbuf[128];
+  const unsigned char *sstr = " selected=\"1\"";
+  const unsigned char *s = "";
+
+  printf("<p%s>%s%s: ",
+         par_style, gettext(member_field_descs[field].orig_name),
+         member_edit_flags[role][field].is_mandatory?" (*)":"");
+  val = member_info[role][pers][field];
+  if (!val) val = "";
+  if (user_read_only) {
+    printf("<tt>%s</tt></p>", val);
+    return;
+  }
+  if (sscanf(val, "%d/%d/%d%n", &year, &month, &day, &n) != 3 || val[n]
+      || year <= 1900 || year >= 10000 || month < 0 || month > 12
+      || day < 0 || day > 31) {
+    day = month = year = 0;
+  }
+
+  // day selection
+  s = "";
+  if (!day) s = sstr;
+  printf("<select name=\"member_info_%d_%d_%d_d\"><option%s></option>",
+         role, pers, field, s);
+  for (n = 1; n <= 31; n++) {
+    s = "";
+    if (day == n) s = sstr;
+    printf("<option%s>%d</option>", s, n);
+  }
+  printf("</select>\n");
+
+  // month selection
+  s = "";
+  if (!month) s = sstr;
+  printf("<select name=\"member_info_%d_%d_%d_m\"><option value=\"0\"%s></option>",
+         role, pers, field, s);
+  for (n = 1; n <= 12; n++) {
+    s = "";
+    if (month == n) s = sstr;
+    printf("<option value=\"%d\"%s>%s</option>", n, s,
+           gettext(month_names[n]));
+  }
+  printf("</select>\n");
+
+  vbuf[0] = 0;
+  if (!year) snprintf(vbuf, sizeof(vbuf), "%d", year);
+  printf("<input type=\"text\" name=\"member_info_%d_%d_%d_y\" value=\"%s\" maxlength=\"4\" size=\"4\"/></p>", role, pers, field, vbuf);
 }
 
 static void
@@ -1807,6 +1949,13 @@ display_edit_registration_data_page(void)
                    gettext(member_status_string[n]));
           }
           printf("</select>");
+          continue;
+        }
+        switch (i) {
+        case CONTEST_MF_BIRTH_DATE:
+        case CONTEST_MF_ENTRY_DATE:
+        case CONTEST_MF_GRADUATION_DATE:
+          display_date_change_dialog(role, pers, i);
           continue;
         }
         printf("<p%s>%s%s: <input type=\"text\" name=\"member_info_%d_%d_%d\" value=\"%s\" maxlength=\"%d\" size=\"%d\"%s>\n",

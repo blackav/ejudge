@@ -4960,7 +4960,7 @@ do_dump_database(FILE *f, int contest_id, const struct contest_desc *d,
   int role, pers, pers_tot;
   const struct userlist_user_info *ui;
   ptr_iterator_t iter;
-
+  unsigned char dbuf[64];
 
   if (html_flag) {
     fprintf(f, "Content-type: text/plain\n\n");
@@ -5004,7 +5004,7 @@ do_dump_database(FILE *f, int contest_id, const struct contest_desc *d,
         }
 
         pers_tot++;
-        fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%d;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
+        fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%d;%s;%s;%s;%s;%s;%s;%s;%s;%s",
                 u->id, u->login, ui->name, u->email,
                 ui->inst?ui->inst:notset,
                 ui->inst_en?ui->inst_en:notset,
@@ -5033,6 +5033,21 @@ do_dump_database(FILE *f, int contest_id, const struct contest_desc *d,
                 m->middlename_en?m->middlename_en:notset,
                 gettext(member_status_string[m->status]),
                 lptr?lptr:notset);
+        if (role == CONTEST_M_CONTESTANT || role == CONTEST_M_RESERVE) {
+          dbuf[0] = 0;
+          if (m->birth_date)
+            userlist_unparse_date_2(dbuf, sizeof(dbuf), m->birth_date, 0);
+          fprintf(f, ";%s", dbuf);
+          dbuf[0] = 0;
+          if (m->entry_date)
+            userlist_unparse_date_2(dbuf, sizeof(dbuf), m->entry_date, 0);
+          fprintf(f, ";%s", dbuf);
+          dbuf[0] = 0;
+          if (m->graduation_date)
+            userlist_unparse_date_2(dbuf, sizeof(dbuf), m->graduation_date, 0);
+          fprintf(f, ";%s", dbuf);
+        }
+        fprintf(f, "\n");
       }
     }
     if (!pers_tot) {
@@ -7285,6 +7300,9 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
     [CONTEST_MF_FACSHORT_EN] = USERLIST_NM_FACSHORT_EN,
     [CONTEST_MF_OCCUPATION] = USERLIST_NM_OCCUPATION,
     [CONTEST_MF_OCCUPATION_EN] = USERLIST_NM_OCCUPATION_EN,
+    [CONTEST_MF_BIRTH_DATE] = USERLIST_NM_BIRTH_DATE,
+    [CONTEST_MF_ENTRY_DATE] = USERLIST_NM_ENTRY_DATE,
+    [CONTEST_MF_GRADUATION_DATE] = USERLIST_NM_GRADUATION_DATE,
   };
 
   // check, that we need iterate over members

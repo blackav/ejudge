@@ -2395,6 +2395,12 @@ set_user_xml_func(void *data,
         xfree(om->occupation_en);
         om->occupation_en = xstrdup(nm->occupation_en);
       }
+      if (nm->birth_date && nm->birth_date != om->birth_date)
+        om->birth_date = nm->birth_date;
+      if (nm->entry_date && nm->entry_date != om->entry_date)
+        om->entry_date = nm->entry_date;
+      if (nm->graduation_date && nm->graduation_date != om->graduation_date)
+        om->graduation_date = nm->graduation_date;
     }
   }
 
