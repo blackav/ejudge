@@ -1667,7 +1667,7 @@ display_date_change_dialog(int role, int pers, int field)
   printf("</select>\n");
 
   vbuf[0] = 0;
-  if (!year) snprintf(vbuf, sizeof(vbuf), "%d", year);
+  if (year > 0) snprintf(vbuf, sizeof(vbuf), "%d", year);
   printf("<input type=\"text\" name=\"member_info_%d_%d_%d_y\" value=\"%s\" maxlength=\"4\" size=\"4\"/></p>", role, pers, field, vbuf);
 }
 
