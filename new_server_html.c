@@ -7448,6 +7448,7 @@ unpriv_page_header(FILE *fout,
   int i, prob_id, has_prob_stmt = 0;
   serve_state_t cs = extra->serve_state;
   const unsigned char *forced_url = 0;
+  const unsigned char *target = 0;
   const struct section_global_data *global = cs->global;
   int unread_clars = 0;
   const unsigned char *status_style = "", *s;
@@ -7477,6 +7478,7 @@ unpriv_page_header(FILE *fout,
   fprintf(fout, "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
   for (i = 0; action_list[i] != -1; i++) {
     forced_url = 0;
+    target = "";
     // conditions when the corresponding menu item is shown
     switch (action_list[i]) {
     case NEW_SRV_ACTION_MAIN_PAGE:
@@ -7493,8 +7495,10 @@ unpriv_page_header(FILE *fout,
       if (prob_id <= cs->max_prob)
         has_prob_stmt = 1;
       if (!has_prob_stmt && !cnts->problems_url) continue;
-      if (cnts->problems_url && (stop_time > 0 || !has_prob_stmt))
+      if (cnts->problems_url && (stop_time > 0 || !has_prob_stmt)) {
         forced_url = cnts->problems_url;
+        target = " target=\"_blank\"";
+      }
       break;      
     case NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT:
       if (start_time <= 0 || stop_time > 0) continue;
@@ -7523,8 +7527,8 @@ unpriv_page_header(FILE *fout,
     if (phr->action == action_list[i]) {
       fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>", gettext(action_names[i]));
     } else if (forced_url) {
-      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s\">%s</a></div></td>",
-              forced_url, gettext(action_names[i]));
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s\"%s>%s</a></div></td>",
+              forced_url, target, gettext(action_names[i]));
     } else {
       fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&action=%d\">%s</a></div></td>",
               phr->self_url, phr->session_id, action_list[i],
