@@ -218,6 +218,7 @@ serve_state_load_contest(int contest_id,
 
   teamdb_refresh(state->teamdb_state);
   serve_create_symlinks(state);
+  serve_update_standings_file(state, cnts, 0);
 
   *p_state = state;
   return 1;
