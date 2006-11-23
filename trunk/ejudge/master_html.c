@@ -3502,14 +3502,16 @@ generate_daily_statistics(const serve_state_t state, FILE *f,
       total_afterok++;
       continue;
     }
-    if (rcur->lang_id <= 0 || rcur->lang_id > state->max_lang
-        || !state->langs[rcur->lang_id]) {
-      fprintf(f, "error: run %d has invalid lang_id %d\n",
-              i, rcur->lang_id);
-      total_errors++;
-      u_errors[u]++;
-      u_total[u]++;
-      continue;
+    if (rcur->lang_id) {
+      if (rcur->lang_id < 0 || rcur->lang_id > state->max_lang
+          || !state->langs[rcur->lang_id]) {
+        fprintf(f, "error: run %d has invalid lang_id %d\n",
+                i, rcur->lang_id);
+        total_errors++;
+        u_errors[u]++;
+        u_total[u]++;
+        continue;
+      }
     }
     if (rcur->status >= RUN_TRANSIENT_FIRST
         && rcur->status <= RUN_TRANSIENT_LAST) {
@@ -3675,6 +3677,8 @@ generate_daily_statistics(const serve_state_t state, FILE *f,
   if (total_runs > 0) {
     fprintf(f, "%-40.40s %-7.7s %-7.7s %-7.7s\n",
             "Problem", "Total", "CE", "Success");
+    fprintf(f, "%-40.40s %-7d %-7d %-7d\n",
+            "N/A (0)", l_total[0], l_ce[0], l_ok[0]);
     for (i = 1; i <= state->max_lang; i++) {
       if (!state->langs[i]) continue;
       snprintf(langname, sizeof(langname), "%s - %s",
