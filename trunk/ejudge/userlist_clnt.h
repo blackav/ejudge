@@ -339,4 +339,21 @@ userlist_clnt_recover_passwd_2(struct userlist_clnt *clnt,
 
 int userlist_clnt_control(struct userlist_clnt *clnt, int cmd);
 
+int userlist_clnt_priv_cookie_login(
+	struct userlist_clnt *clnt,
+        int cmd,
+        ej_ip_t origin_ip,
+        int ssl,
+        int contest_id,
+        ej_cookie_t cookie,
+        int locale_id,
+        int priv_level,
+        int role,
+        // output parameters
+        int *p_user_id,
+        ej_cookie_t *p_cookie,
+        unsigned char **p_login,
+        unsigned char **p_name
+                                    );
+
 #endif /* __USERLIST_CLNT_H__ */

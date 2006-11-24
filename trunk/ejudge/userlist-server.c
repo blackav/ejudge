@@ -2419,7 +2419,7 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
                     struct userlist_pk_do_login *data)
 {
   unsigned char *login_ptr, *passwd_ptr, *name_ptr;
-    struct passwd_internal pwdint;
+  struct passwd_internal pwdint;
   const struct userlist_user *u = 0;
   const struct userlist_contest *c = 0;
   struct userlist_pk_login_ok *out = 0;
@@ -2962,7 +2962,171 @@ cmd_priv_check_cookie(struct client_state *p,
     CONN_INFO("%s -> OK, %d, %s, %llu us", logbuf, u->id, u->login, tsc2);
   }
 }
-      
+
+static void
+cmd_priv_cookie_login(struct client_state *p,
+                      int pkt_len,
+                      struct userlist_pk_check_cookie *data)
+{
+  const struct contest_desc *cnts = 0;
+  const struct userlist_user *u = 0;
+  const struct userlist_cookie *cookie = 0;
+  struct userlist_pk_login_ok *out;
+  const struct userlist_contest *c = 0;
+  const struct userlist_user_info *ui = 0;
+  size_t login_len, name_len, out_size;
+  unsigned char *login_ptr, *name_ptr;
+  int priv_level, errcode;
+  opcap_t caps;
+  time_t current_time = time(0);
+  ej_tsc_t tsc1, tsc2;
+  unsigned char logbuf[1024];
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf),
+           "PRIV_COOKIE_LOGIN: %s, %d, %d, %llx",
+           xml_unparse_ip(data->origin_ip), data->ssl, data->contest_id,
+           data->cookie);
+
+  if (data->contest_id <= 0) {
+    err("%s -> invalid contest", logbuf);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (!data->cookie) {
+    err("%s -> cookie value is 0", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (!data->origin_ip) {
+    err("%s -> origin_ip is not set", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (data->priv_level <= 0 || data->priv_level > PRIV_LEVEL_ADMIN) {
+    err("%s -> invalid privilege level", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+
+  rdtscll(tsc1);
+  if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie) {
+    err("%s -> no such cookie", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  rdtscll(tsc2);
+  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+
+  default_get_user_info_3(cookie->user_id, data->contest_id, &u, &ui, &c);
+
+  if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
+    err("%s -> IP address or SSL flag mismatch", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (current_time > cookie->expire) {
+    err("%s -> cookie expired", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (cookie->priv_level < data->priv_level) {
+    err("%s -> privilege level mismatch", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  /* only top-level (super-serve) cookies are allowed */
+  if (cookie->contest_id > 0) {
+    err("%s -> contest_id mismatch", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+
+  if (!c) {
+    err("%s -> NOT REGISTERED", logbuf);
+    send_reply(p, -ULS_ERR_NOT_REGISTERED);
+    return;
+  }
+  if (c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
+      || (c->flags & USERLIST_UC_LOCKED)) {
+    err("%s -> NOT ALLOWED", logbuf);
+    send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
+    return;
+  }
+  if (get_uid_caps(&cnts->capabilities, u->id, &caps) < 0) {
+    err("%s -> NOT PRIVILEGED", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  // check user capabilities
+  priv_level = 0;
+  switch (data->priv_level) {
+  case PRIV_LEVEL_JUDGE:
+    priv_level = OPCAP_JUDGE_LOGIN;
+    break;
+  case PRIV_LEVEL_ADMIN:
+    priv_level = OPCAP_MASTER_LOGIN;
+    break;
+  default:
+    abort();
+  }
+  if (opcaps_check(caps, priv_level) < 0) {
+    err("%s -> NOT PRIVILEGED", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  /* everything is ok, create new cookie */
+  login_len = strlen(u->login);
+  name_len = strlen(u->i.name);
+  out_size = sizeof(*out) + login_len + name_len;
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  login_ptr = out->data;
+  name_ptr = login_ptr + login_len + 1;
+  if (data->locale_id == -1) {
+    data->locale_id = 0;
+  }
+
+  if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
+                         data->contest_id, data->locale_id,
+                         data->priv_level, data->role, 0, &cookie) < 0) {
+    err("%s -> cookie creation failed", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  out->cookie = cookie->cookie;
+  out->reply_id = ULS_LOGIN_COOKIE;
+  out->user_id = u->id;
+  out->contest_id = data->contest_id;
+  out->locale_id = data->locale_id;
+  out->priv_level = data->priv_level;
+  out->login_len = login_len;
+  out->name_len = name_len;
+  strcpy(login_ptr, u->login);
+  strcpy(name_ptr, u->i.name);
+  
+  enqueue_reply_to_client(p, out_size, out);
+  default_touch_login_time(u->id, 0, cur_time);
+  if (daemon_mode) {
+    info("%s -> OK, %d, %llx", logbuf, u->id, out->cookie);
+  } else {
+    info("%s -> %d,%s,%llx, time = %llu us", logbuf,
+         u->id, u->login, out->cookie, tsc2);
+  }
+}
+
 static void
 cmd_do_logout(struct client_state *p,
               int pkt_len,
@@ -7565,6 +7729,7 @@ static void (*cmd_table[])() =
   [ULS_RECOVER_PASSWORD_2] =    cmd_recover_password_2,
   [ULS_STOP] =                  cmd_control_server,
   [ULS_RESTART] =               cmd_control_server,
+  [ULS_PRIV_COOKIE_LOGIN] =     cmd_priv_cookie_login,
 
   [ULS_LAST_CMD] 0
 };

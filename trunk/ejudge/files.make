@@ -50,6 +50,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/open.c\
  userlist_clnt/pass_fd.c\
  userlist_clnt/priv_cookie.c\
+ userlist_clnt/priv_cookie_login.c\
  userlist_clnt/priv_login.c\
  userlist_clnt/read_and_notify.c\
  userlist_clnt/read_notification.c\

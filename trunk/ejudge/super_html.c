@@ -583,8 +583,8 @@ super_html_main_page(FILE *f,
     if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
         && contests_check_judge_ip_2(cnts, ip_address, ssl)) {
       if (cnts->new_managed) {
-        fprintf(f, "<td><a href=\"%s?contest_id=%d\" target=\"_blank\">Judge</a></td>\n",
-                new_judge_url, contest_id);
+        fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Judge</a></td>\n",
+                new_judge_url, session_id, contest_id);
       } else {
         fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Judge</a></td>\n",
                 judge_url, session_id, contest_id);
@@ -596,8 +596,8 @@ super_html_main_page(FILE *f,
     if (opcaps_check(caps, OPCAP_MASTER_LOGIN) >= 0 && master_url[0]
         && contests_check_master_ip_2(cnts, ip_address, ssl)) {
       if (cnts->new_managed) {
-        fprintf(f, "<td><a href=\"%s?contest_id=%d\" target=\"_blank\">Master</a></td>\n",
-                new_master_url, contest_id);
+        fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Master</a></td>\n",
+                new_master_url, session_id, contest_id);
       } else {
         fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Master</a></td>\n",
                 master_url, session_id, contest_id);
@@ -771,8 +771,8 @@ super_html_contest_page(FILE *f,
   if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
       && contests_check_judge_ip_2(cnts, ip_address, ssl)) {
     if (cnts->new_managed) {
-      fprintf(f, "<tr><td>Judge CGI program</td><td><a href=\"%s?contest_id=%d\" target=\"_blank\">Judge</a></td></tr>\n",
-              new_judge_url, contest_id);
+      fprintf(f, "<tr><td>Judge CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Judge</a></td></tr>\n",
+              new_judge_url, session_id, contest_id);
     } else {
       fprintf(f, "<tr><td>Judge CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Judge</a></td></tr>\n",
               judge_url, session_id, contest_id);
@@ -783,8 +783,8 @@ super_html_contest_page(FILE *f,
   if (opcaps_check(caps, OPCAP_MASTER_LOGIN) >= 0 && master_url[0]
       && contests_check_master_ip_2(cnts, ip_address, ssl)) {
     if (cnts->new_managed) {
-      fprintf(f, "<tr><td>Master CGI program</td><td><a href=\"%s?contest_id=%d\" target=\"_blank\">Master</a></td></tr>\n",
-              new_master_url, contest_id);
+      fprintf(f, "<tr><td>Master CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Master</a></td></tr>\n",
+              new_master_url, session_id, contest_id);
     } else {
       fprintf(f, "<tr><td>Master CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Master</a></td></tr>\n",
               master_url, session_id, contest_id);
