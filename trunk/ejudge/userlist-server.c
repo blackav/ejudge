@@ -3045,11 +3045,13 @@ cmd_priv_cookie_login(struct client_state *p,
     return;
   }
   /* only top-level (super-serve) cookies are allowed */
+  /* NEED to fix up master!
   if (cookie->contest_id > 0) {
     err("%s -> contest_id mismatch", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
+  */
 
   if (!c) {
     err("%s -> NOT REGISTERED", logbuf);
