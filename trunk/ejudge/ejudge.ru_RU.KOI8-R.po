@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-23 12:02+0300\n"
-"PO-Revision-Date: 2006-11-23 12:06+0300\n"
+"POT-Creation-Date: 2006-11-24 18:27+0300\n"
+"PO-Revision-Date: 2006-11-24 18:29+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -448,6 +448,12 @@ msgstr "Попытка послать бинарный файл"
 
 msgid "Audit log"
 msgstr "Журнал аудита"
+
+msgid "Audit log file does not exist"
+msgstr "Журнал аудита не существует"
+
+msgid "Audit log is empty"
+msgstr "Журнал аудита пуст"
 
 msgid "Aug"
 msgstr "Авг"
@@ -2172,6 +2178,9 @@ msgstr "Разослать всем"
 msgid "Reply to sender"
 msgstr "Ответить только отправителю"
 
+msgid "Report"
+msgstr "Протокол"
+
 msgid "Report file does not exist"
 msgstr "Запрошенный файл не существует"
 
@@ -2435,6 +2444,9 @@ msgstr "Решено"
 
 msgid "Solved<br>problems"
 msgstr "Решённые<br>задачи"
+
+msgid "Source"
+msgstr "Исходный код"
 
 msgid "Source file does not exist"
 msgstr "Запрошенный файл не существует"
@@ -2862,6 +2874,9 @@ msgstr ""
 msgid "User registration is complete"
 msgstr "Регистрация пользователя завершена"
 
+msgid "User report"
+msgstr "Пользовательский протокол"
+
 msgid "User's report"
 msgstr "Пользовательский протокол"
 
@@ -2910,6 +2925,9 @@ msgstr "Посмотреть команды"
 msgid "View the problem statement and send a submission"
 msgstr "Посмотреть условие задачи и отправить решение"
 
+msgid "Viewing audit log for"
+msgstr "Просмотр журнала аудита для"
+
 msgid "Viewing clar"
 msgstr "Просмотр посылки"
 
@@ -2918,6 +2936,9 @@ msgstr "Просмотр протокола"
 
 msgid "Viewing run"
 msgstr "Просмотр посылки"
+
+msgid "Viewing user report"
+msgstr "Просмотр пользовательского протокола"
 
 msgid "Virtual contest is finished"
 msgstr "Виртуальный турнир завершён"

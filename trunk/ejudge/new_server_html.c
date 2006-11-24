@@ -599,6 +599,39 @@ ns_aref(unsigned char *buf, size_t size,
   return buf;
 }
 
+unsigned char *
+ns_aref_2(unsigned char *buf, size_t size,
+          const struct http_request_info *phr,
+          const unsigned char *style,
+          int action, const char *format, ...)
+{
+  unsigned char fbuf[1024];
+  unsigned char abuf[64];
+  unsigned char stbuf[128];
+  const unsigned char *sep = "";
+  va_list args;
+
+  fbuf[0] = 0;
+  if (format && *format) {
+    va_start(args, format);
+    vsnprintf(fbuf, sizeof(fbuf), format, args);
+    va_end(args);
+  }
+  if (fbuf[0]) sep = "&";
+
+  abuf[0] = 0;
+  if (action > 0) snprintf(abuf, sizeof(abuf), "&action=%d", action);
+
+  stbuf[0] = 0;
+  if (style && *style) {
+    snprintf(stbuf, sizeof(stbuf), " class=\"%s\"", style);
+  }
+
+  snprintf(buf, size, "<a href=\"%s?SID=%016llx%s%s%s\"%s>", phr->self_url,
+           phr->session_id, abuf, sep, fbuf, stbuf);
+  return buf;
+}
+
 #define BUTTON(a) ns_submit_button(bb, sizeof(bb), 0, a, 0)
 
 unsigned char *
@@ -3313,6 +3346,9 @@ priv_view_audit_log(FILE *fout,
   if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
+  ns_write_audit_log(extra->serve_state, fout, log_f, phr, cnts, extra,
+                     run_id);
+
  cleanup:
   return retval;
 }
@@ -3774,6 +3810,7 @@ priv_view_report(FILE *fout,
 {
   serve_state_t cs = extra->serve_state;
   int run_id;
+  int user_mode = 0;
 
   if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
 
@@ -3781,8 +3818,9 @@ priv_view_report(FILE *fout,
     ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto cleanup;
   }
+  if (phr->action == NEW_SRV_ACTION_VIEW_USER_REPORT) user_mode = 1;
 
-  ns_write_priv_report(cs, fout, log_f, phr, cnts, extra, 0, run_id);
+  ns_write_priv_report(cs, fout, log_f, phr, cnts, extra, user_mode, run_id);
 
  cleanup:
   return 0;
@@ -4280,7 +4318,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_USER_INFO] = priv_user_detail_page,
   [NEW_SRV_ACTION_NEW_RUN_FORM] = priv_new_run_form_page,
   [NEW_SRV_ACTION_VIEW_USER_DUMP] = priv_view_user_dump,
-
+  [NEW_SRV_ACTION_VIEW_USER_REPORT] = priv_view_report,
 };
 
 static void
@@ -5060,6 +5098,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ISSUE_WARNING] = priv_generic_operation,
   [NEW_SRV_ACTION_LOGOUT] = priv_logout,
   [NEW_SRV_ACTION_CHANGE_PASSWORD] = priv_change_password,
+  [NEW_SRV_ACTION_VIEW_USER_REPORT] = priv_generic_page,
 };
 
 static void

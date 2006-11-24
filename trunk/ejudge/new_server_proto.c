@@ -135,6 +135,7 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_WARN_TEXT_EMPTY] = __("Empty text of warning"),
   [NEW_SRV_ERR_INV_WARN_CMT] = __("Invalid text of warning comment"),
   [NEW_SRV_ERR_SUBMIT_EMPTY] = __("Empty submit"),
+  [NEW_SRV_ERR_AUDIT_LOG_NONEXISTANT] = __("Audit log file does not exist"),
 };
 
 const unsigned char *
