@@ -4626,120 +4626,190 @@ priv_main_page(FILE *fout,
             _("Print requests are suspended"));
   }
 
-  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-  fprintf(fout, "<table border=\"0\">");
+  if (phr->role == USER_ROLE_ADMIN
+      && opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST)) {
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    fprintf(fout, "<table border=\"0\">");
 
-  fprintf(fout,
-          "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
-          _("Server time"), ctime(&cs->current_time));
+    fprintf(fout,
+            "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
+            _("Server time"), ctime(&cs->current_time));
 
-  if (start_time <= 0) {
-    fprintf(fout, "<tr><td colspan=\"2\"><b>%s</b></td><td>&nbsp;</td><td>%s</td></tr>\n",
-            _("Contest is not started"),
-            BUTTON(NEW_SRV_ACTION_START_CONTEST));
-  } else {
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
-            _("Contest start time"), ctime(&start_time));
-    if (stop_time <= 0) {
-      fprintf(fout, "<td>%s</td></tr>\n", BUTTON(NEW_SRV_ACTION_STOP_CONTEST));
-    } else if (global->enable_continue
-               && (!duration || stop_time < start_time + duration)) {
-      fprintf(fout, "<td>%s</td></tr>\n",
-              BUTTON(NEW_SRV_ACTION_CONTINUE_CONTEST));
-    }
-  }
-
-  if (!global->is_virtual && start_time <= 0) {
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td>"
-            "<td><input type=\"text\" name=\"sched_time\" size=\"16\"></td>"
-            "<td>%s</td></tr>\n",
-            _("Planned start time"),
-            sched_time <= 0?_("Not set"):ctime(&sched_time),
-            BUTTON(NEW_SRV_ACTION_SCHEDULE));
-  }
-
-  if (finish_time <= 0) {
-    if (duration > 0) {
-      duration_str(0, duration, 0, duration_buf, 0);
+    if (start_time <= 0) {
+      fprintf(fout, "<tr><td colspan=\"2\"><b>%s</b></td><td>&nbsp;</td><td>%s</td></tr>\n",
+              _("Contest is not started"),
+              BUTTON(NEW_SRV_ACTION_START_CONTEST));
     } else {
-      snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
+              _("Contest start time"), ctime(&start_time));
+      if (stop_time <= 0) {
+        fprintf(fout, "<td>%s</td></tr>\n",
+                BUTTON(NEW_SRV_ACTION_STOP_CONTEST));
+      } else if (global->enable_continue
+                 && (!duration || stop_time < start_time + duration)) {
+        fprintf(fout, "<td>%s</td></tr>\n",
+                BUTTON(NEW_SRV_ACTION_CONTINUE_CONTEST));
+      }
     }
 
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td>",_("Duration"), duration_buf);
-    if (stop_time <= 0 || global->enable_continue) {
-      fprintf(fout, "<td><input type=\"text\" name=\"dur\" size=\"16\"></td>"
+    if (!global->is_virtual && start_time <= 0) {
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td>"
+              "<td><input type=\"text\" name=\"sched_time\" size=\"16\"></td>"
               "<td>%s</td></tr>\n",
-              BUTTON(NEW_SRV_ACTION_CHANGE_DURATION));
-    } else {
-      fprintf(fout, "<td>nbsp;</td><td>&nbsp;</td></tr>\n");
+              _("Planned start time"),
+              sched_time <= 0?_("Not set"):ctime(&sched_time),
+              BUTTON(NEW_SRV_ACTION_SCHEDULE));
     }
-  }
 
-  if (start_time > 0 && stop_time <= 0 && duration > 0) {
-    tmpt = start_time + duration;
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+    if (finish_time <= 0) {
+      if (duration > 0) {
+        duration_str(0, duration, 0, duration_buf, 0);
+      } else {
+        snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
+      }
+
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td>",_("Duration"), duration_buf);
+      if (stop_time <= 0 || global->enable_continue) {
+        fprintf(fout, "<td><input type=\"text\" name=\"dur\" size=\"16\"></td>"
+                "<td>%s</td></tr>\n",
+                BUTTON(NEW_SRV_ACTION_CHANGE_DURATION));
+      } else {
+        fprintf(fout, "<td>nbsp;</td><td>&nbsp;</td></tr>\n");
+      }
+    }
+
+    if (start_time > 0 && stop_time <= 0 && duration > 0) {
+      tmpt = start_time + duration;
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
             _("Scheduled end time"), ctime(&tmpt));
-  } else if (start_time > 0 && stop_time <= 0 && duration <= 0
-             && finish_time > 0) {
+    } else if (start_time > 0 && stop_time <= 0 && duration <= 0
+               && finish_time > 0) {
     fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
             _("Scheduled end time"), ctime(&finish_time));
-  } else if (stop_time) {
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("End time"), ctime(&stop_time));
-  }
+    } else if (stop_time) {
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("End time"), ctime(&stop_time));
+    }
 
+    if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Standings freeze time"), ctime(&fog_start_time));
+    } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
+               && global->board_unfog_time > 0 && !cs->standings_updated
+               && cs->current_time < stop_time + global->board_unfog_time) {
+      tmpt = stop_time + global->board_unfog_time;
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Standings unfreeze time"), ctime(&tmpt));
+    }
 
-  if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("Standings freeze time"), ctime(&fog_start_time));
-  } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
-             && global->board_unfog_time > 0 && !cs->standings_updated
-             && cs->current_time < stop_time + global->board_unfog_time) {
-    tmpt = stop_time + global->board_unfog_time;
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("Standings unfreeze time"), ctime(&tmpt));
-  }
+    if (start_time > 0 && stop_time <= 0 && duration > 0) {
+      duration_str(0, cs->current_time, start_time, duration_buf, 0);
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Elapsed time"), duration_buf);
+      duration_str(0, start_time + duration - cs->current_time, 0,
+                   duration_buf, 0);
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Remaining time"), duration_buf);
+    }
+    fprintf(fout, "</table></form>\n");
 
-  if (start_time > 0 && stop_time <= 0 && duration > 0) {
-    duration_str(0, cs->current_time, start_time, duration_buf, 0);
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("Elapsed time"), duration_buf);
-    duration_str(0, start_time + duration - cs->current_time, 0,
-                 duration_buf, 0);
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("Remaining time"), duration_buf);
-  }
-  fprintf(fout, "</table></form>\n");
+    fprintf(fout, "<hr>\n");
 
-  fprintf(fout, "<hr>\n");
-
-  // role == ADMIN && CONTROL_CONTEST
-  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-  fprintf(fout, "%s\n",  BUTTON(NEW_SRV_ACTION_UPDATE_STANDINGS_1));
-  fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_RESET_1));
-  action = NEW_SRV_ACTION_SUSPEND;
-  if (cs->clients_suspended) action = NEW_SRV_ACTION_RESUME;
-  fprintf(fout, "%s\n", BUTTON(action));
-  action = NEW_SRV_ACTION_TEST_SUSPEND;
-  if (cs->testing_suspended) action = NEW_SRV_ACTION_TEST_RESUME;
-  fprintf(fout, "%s\n", BUTTON(action));
-  if (global->enable_printing) {
-    action = NEW_SRV_ACTION_PRINT_SUSPEND;
-    if (cs->printing_suspended) action = NEW_SRV_ACTION_PRINT_RESUME;
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    fprintf(fout, "%s\n",  BUTTON(NEW_SRV_ACTION_UPDATE_STANDINGS_1));
+    fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_RESET_1));
+    action = NEW_SRV_ACTION_SUSPEND;
+    if (cs->clients_suspended) action = NEW_SRV_ACTION_RESUME;
     fprintf(fout, "%s\n", BUTTON(action));
-  }
-  if (global->score_system_val == SCORE_OLYMPIAD) {
-    action = NEW_SRV_ACTION_SET_JUDGING_MODE;
-    if (!cs->accepting_mode) action = NEW_SRV_ACTION_SET_ACCEPTING_MODE;
+    action = NEW_SRV_ACTION_TEST_SUSPEND;
+    if (cs->testing_suspended) action = NEW_SRV_ACTION_TEST_RESUME;
     fprintf(fout, "%s\n", BUTTON(action));
+    if (global->enable_printing) {
+      action = NEW_SRV_ACTION_PRINT_SUSPEND;
+      if (cs->printing_suspended) action = NEW_SRV_ACTION_PRINT_RESUME;
+      fprintf(fout, "%s\n", BUTTON(action));
+    }
+    if (global->score_system_val == SCORE_OLYMPIAD) {
+      action = NEW_SRV_ACTION_SET_JUDGING_MODE;
+      if (!cs->accepting_mode) action = NEW_SRV_ACTION_SET_ACCEPTING_MODE;
+      fprintf(fout, "%s\n", BUTTON(action));
+    }
+    if (!cnts->disable_team_password) {
+      fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_GENERATE_PASSWORDS_1));
+      fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_CLEAR_PASSWORDS_1));
+    }
+    fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1));
+    fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_RELOAD_SERVER));
+    fprintf(fout, "</form>\n");
+  } else {
+    // judge mode
+    fprintf(fout, "<table border=\"0\">");
+
+    fprintf(fout,
+            "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
+            _("Server time"), ctime(&cs->current_time));
+
+    if (start_time <= 0) {
+      fprintf(fout, "<tr><td colspan=\"2\"><b>%s</b></td></tr>\n",
+              _("Contest is not started"));
+    } else {
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Contest start time"), ctime(&start_time));
+    }
+
+    if (!global->is_virtual && start_time <= 0) {
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Planned start time"),
+              sched_time <= 0?_("Not set"):ctime(&sched_time));
+    }
+
+    if (finish_time <= 0) {
+      if (duration > 0) {
+        duration_str(0, duration, 0, duration_buf, 0);
+      } else {
+        snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
+      }
+
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Duration"), duration_buf);
+    }
+
+    if (start_time > 0 && stop_time <= 0 && duration > 0) {
+      tmpt = start_time + duration;
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Scheduled end time"), ctime(&tmpt));
+    } else if (start_time > 0 && stop_time <= 0 && duration <= 0
+               && finish_time > 0) {
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Scheduled end time"), ctime(&finish_time));
+    } else if (stop_time) {
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("End time"), ctime(&stop_time));
+    }
+
+
+    if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Standings freeze time"), ctime(&fog_start_time));
+    } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
+               && global->board_unfog_time > 0 && !cs->standings_updated
+               && cs->current_time < stop_time + global->board_unfog_time) {
+      tmpt = stop_time + global->board_unfog_time;
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Standings unfreeze time"), ctime(&tmpt));
+    }
+
+    if (start_time > 0 && stop_time <= 0 && duration > 0) {
+      duration_str(0, cs->current_time, start_time, duration_buf, 0);
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Elapsed time"), duration_buf);
+      duration_str(0, start_time + duration - cs->current_time, 0,
+                   duration_buf, 0);
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Remaining time"), duration_buf);
+    }
+    fprintf(fout, "</table>\n");
   }
-  if (!cnts->disable_team_password) {
-    fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_GENERATE_PASSWORDS_1));
-    fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_CLEAR_PASSWORDS_1));
-  }
-  fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1));
-  fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_RELOAD_SERVER));
-  fprintf(fout, "</form>\n");
 
   ns_write_priv_all_runs(fout, phr, cnts, extra,
                          filter_first_run, filter_last_run,
