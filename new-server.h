@@ -242,6 +242,7 @@ enum
   NEW_SRV_ACTION_VIEW_SETTINGS,
   NEW_SRV_ACTION_VIRTUAL_START,
   NEW_SRV_ACTION_VIRTUAL_STOP,
+  NEW_SRV_ACTION_VIEW_USER_REPORT,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -339,6 +340,12 @@ ns_aref(unsigned char *buf, size_t size,
         const struct http_request_info *phr,
         int action, const char *format, ...)
   __attribute__((format(printf, 5, 6)));
+unsigned char *
+ns_aref_2(unsigned char *buf, size_t size,
+          const struct http_request_info *phr,
+          const unsigned char *style,
+          int action, const char *format, ...)
+  __attribute__((format(printf, 6, 7)));
 
 void
 ns_write_priv_all_runs(FILE *f,
@@ -371,6 +378,15 @@ void ns_write_priv_report(const serve_state_t cs,
                           int team_report_flag,
                           int run_id);
 
+void ns_write_audit_log(
+	const serve_state_t state,
+        FILE *f,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int run_id);
+
 void
 ns_write_priv_clar(const serve_state_t cs,
                    FILE *f,
@@ -395,8 +411,6 @@ const unsigned char *ns_unparse_role(int role);
 void
 ns_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
                int action, int run_id, int test_num);
-int
-ns_write_audit_log(const serve_state_t state, FILE *f, int run_id);
 
 int
 ns_write_passwords(FILE *fout, FILE *log_f,

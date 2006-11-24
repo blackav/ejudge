@@ -802,6 +802,56 @@ html_select_yesno(unsigned char *buf, size_t size,
 }
 
 void
+ns_write_run_view_menu(
+	FILE *f, struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int run_id)
+{
+  unsigned char hbuf[1024];
+  int i;
+  static int action_list[] =
+  {
+    NEW_SRV_ACTION_VIEW_SOURCE,
+    NEW_SRV_ACTION_VIEW_REPORT,
+    NEW_SRV_ACTION_VIEW_USER_REPORT,
+    NEW_SRV_ACTION_VIEW_AUDIT_LOG,
+    0,
+  };
+  static const unsigned char * const action_name[] =
+  {
+    __("Source"),
+    __("Report"),
+    __("User report"),
+    __("Audit log"),
+  };
+
+  fprintf(f, "<table class=\"borderless\"><tr>");
+  fprintf(f, "<td class=\"borderless\">%s%s</a></td>",
+          ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
+          _("Main page"));
+  for (i = 0; action_list[i] > 0; i++) {
+    fprintf(f, "<td class=\"borderless\">");
+    if (phr->action != action_list[i]) {
+      /*
+      fprintf(f, "%s",
+              ns_aref_2(hbuf, sizeof(hbuf), phr, "menu", action_list[i],
+                        "run_id=%d", run_id));
+      */
+      fprintf(f, "%s",
+              ns_aref(hbuf, sizeof(hbuf), phr, action_list[i],
+                      "run_id=%d", run_id));
+    }
+    fprintf(f, "%s", gettext(action_name[i]));
+    if (phr->action != action_list[i]) {
+      fprintf(f, "</a>");
+    }
+    fprintf(f, "</td>");
+  }
+  fprintf(f, "</tr></table>\n");
+}
+
+void
 ns_write_priv_source(const serve_state_t state,
                      FILE *f,
                      FILE *log_f,
@@ -867,6 +917,8 @@ ns_write_priv_source(const serve_state_t state,
   start_time = run_get_start_time(state->runlog_state);
   if (start_time < 0) start_time = 0;
   if (run_time < start_time) run_time = start_time;
+
+  ns_write_run_view_menu(f, phr, cnts, extra, run_id);
 
   fprintf(f, "<h2>%s %d</h2>\n",
           _("Information about run"), run_id);
@@ -1476,7 +1528,10 @@ ns_write_priv_report(const serve_state_t cs,
   ns_header(f, extra->header_txt, 0, 0, phr->locale_id,
             "%s [%s, %s]: %s %d", ns_unparse_role(phr->role),
             phr->name_arm, extra->contest_arm,
-            _("Viewing report"), run_id);
+            team_report_flag?_("Viewing user report"):_("Viewing report"),
+            run_id);
+
+  ns_write_run_view_menu(f, phr, cnts, extra, run_id);
 
   switch (content_type) {
   case CONTENT_TYPE_TEXT:
@@ -1510,6 +1565,67 @@ ns_write_priv_report(const serve_state_t cs,
 
  done:;
   xfree(rep_text);
+}
+
+void
+ns_write_audit_log(const serve_state_t cs,
+                   FILE *f,
+                   FILE *log_f,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra,
+                   int run_id)
+{
+  struct run_entry re;
+  int rep_flag;
+  path_t audit_log_path;
+  struct stat stb;
+  char *audit_text = 0;
+  size_t audit_text_size = 0;
+  char *audit_html = 0;
+
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
+      || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
+    goto done;
+  }
+
+  if ((rep_flag = archive_make_read_path(cs, audit_log_path,
+                                         sizeof(audit_log_path),
+                                         cs->global->audit_log_dir,
+                                         run_id, 0, 0)) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_AUDIT_LOG_NONEXISTANT);
+    goto done;
+  }
+  if (lstat(audit_log_path, &stb) < 0
+      || !S_ISREG(stb.st_mode)) {
+    ns_error(log_f, NEW_SRV_ERR_AUDIT_LOG_NONEXISTANT);
+    goto done;
+  }
+
+  if (generic_read_file(&audit_text, 0, &audit_text_size, 0, 0, audit_log_path,
+                        0) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
+    goto done;
+  }
+  audit_html = html_armor_string_dup(audit_text);
+
+  ns_header(f, extra->header_txt, 0, 0, phr->locale_id,
+            "%s [%s, %s]: %s %d", ns_unparse_role(phr->role),
+            phr->name_arm, extra->contest_arm,
+            _("Viewing audit log for"), run_id);
+  ns_write_run_view_menu(f, phr, cnts, extra, run_id);
+  fprintf(f, "<hr/>\n");
+  if (!audit_text || !*audit_text) {
+    fprintf(f, "<p><i>%s</i></p>", _("Audit log is empty"));
+  } else {
+    fprintf(f, "<pre>%s</pre>", audit_html);
+  }
+  ns_footer(f, extra->footer_txt, phr->locale_id);
+
+ done:;
+  xfree(audit_html);
+  xfree(audit_text);
 }
 
 void
@@ -1858,43 +1974,6 @@ ns_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
  done:
   xfree(rep_text);
   testing_report_free(r);
-}
-
-int
-ns_write_audit_log(const serve_state_t state, FILE *f, int run_id)
-{
-  int retval = 0, rep_flag;
-  path_t audit_log_path;
-  struct stat stb;
-  char *audit_text = 0;
-  size_t audit_text_size = 0;
-
-  if ((rep_flag = archive_make_read_path(state, audit_log_path,
-                                         sizeof(audit_log_path),
-                                         state->global->audit_log_dir,
-                                         run_id, 0, 0)) < 0
-      || lstat(audit_log_path, &stb) < 0) {
-    fprintf(f, "Content-type: text/plain\n\n");
-    return 0;
-  }
-
-  if (generic_read_file(&audit_text, 0, &audit_text_size, 0, 0,
-                        audit_log_path, 0) < 0) {
-    retval = -NEW_SRV_ERR_DISK_READ_ERROR;
-    goto cleanup;
-  }
-
-  fprintf(f, "Content-type: text/plain\n\n");
-  if (audit_text_size > 0) {
-    if (fwrite(audit_text, 1, audit_text_size, f) != audit_text_size) {
-      retval = -NEW_SRV_ERR_OUTPUT_ERROR;
-      goto cleanup;
-    }
-  }
-
- cleanup:
-  xfree(audit_text);
-  return retval;
 }
 
 int
