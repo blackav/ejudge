@@ -752,6 +752,95 @@ html_error_status_page(FILE *fout,
 }
                        
 static void
+privileged_page_cookie_login(FILE *fout,
+                             struct http_request_info *phr)
+{
+  const struct contest_desc *cnts = 0;
+  opcap_t caps;
+  int priv_level = 0, r, n;
+  const unsigned char *s = 0;
+
+  if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts)
+    return ns_html_err_inv_param(fout, phr, 1, "invalid contest_id");
+  if (!cnts->new_managed)
+    return ns_html_err_inv_param(fout, phr, 1, "contest is not managed");
+  if (!phr->role) {
+    phr->role = USER_ROLE_OBSERVER;
+    if (ns_cgi_param(phr, "role", &s) > 0) {
+      if (sscanf(s, "%d%n", &r, &n) == 1 && !s[n]
+          && r >= USER_ROLE_CONTESTANT && r < USER_ROLE_LAST)
+        phr->role = r;
+    }
+  }
+  if (phr->role <= USER_ROLE_CONTESTANT || phr->role >= USER_ROLE_LAST)
+      return ns_html_err_no_perm(fout, phr, 1, "invalid role");
+  if (phr->role == USER_ROLE_ADMIN) priv_level = PRIV_LEVEL_ADMIN;
+  else if (phr->role == USER_ROLE_JUDGE) priv_level = PRIV_LEVEL_JUDGE;
+  if (!phr->session_id)
+      return ns_html_err_no_perm(fout, phr, 1, "SID is undefined");    
+
+  // analyze IP limitations
+  if (phr->role == USER_ROLE_ADMIN) {
+    // as for the master program
+    if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+      return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+  } else {
+    // as for judge program
+    if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+      return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for JUDGE for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+  }
+
+  if (open_ul_connection(phr->fw_state) < 0)
+    return ns_html_err_ul_server_down(fout, phr, 1, 0);
+
+  xfree(phr->login); phr->login = 0;
+  xfree(phr->name); phr->name = 0;
+  if ((r = userlist_clnt_priv_cookie_login(ul_conn, ULS_PRIV_COOKIE_LOGIN,
+                                           phr->ip, phr->ssl_flag,
+                                           phr->contest_id, phr->session_id,
+                                           phr->locale_id, priv_level,
+                                           phr->role, &phr->user_id,
+                                           &phr->session_id, &phr->login,
+                                           &phr->name)) < 0) {
+    switch (-r) {
+    case ULS_ERR_BAD_CONTEST_ID:
+    case ULS_ERR_IP_NOT_ALLOWED:
+    case ULS_ERR_NO_PERMS:
+    case ULS_ERR_NOT_REGISTERED:
+    case ULS_ERR_CANNOT_PARTICIPATE:
+      return ns_html_err_no_perm(fout, phr, 1, "priv_login failed: %s",
+                                 userlist_strerror(-r));
+    case ULS_ERR_DISCONNECT:
+      return ns_html_err_ul_server_down(fout, phr, 1, 0);
+    default:
+      return ns_html_err_internal_error(fout, phr, 1,
+                                        "priv_login failed: %s",
+                                        userlist_strerror(-r));
+    }
+  }
+
+  // analyze permissions
+  if (phr->role == USER_ROLE_ADMIN) {
+    // as for the master program
+    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
+        || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0)
+      return ns_html_err_no_perm(fout, phr, 1, "user %s does not have MASTER_LOGIN bit for contest %d", phr->login, phr->contest_id);
+  } else if (phr->role == USER_ROLE_JUDGE) {
+    // as for the judge program
+    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
+        || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0)
+      return ns_html_err_no_perm(fout, phr, 1, "user %s does not have JUDGE_LOGIN bit for contest %d", phr->login, phr->contest_id);
+  } else {
+    // user privileges checked locally
+    if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0)
+      return ns_html_err_no_perm(fout, phr, 1, "user %s has no permission to login as role %d for contest %d", phr->login, phr->role, phr->contest_id);
+  }
+
+  ns_get_session(phr->session_id, 0);
+  html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+}
+
+static void
 privileged_page_login(FILE *fout,
                       struct http_request_info *phr)
 {
@@ -792,7 +881,7 @@ privileged_page_login(FILE *fout,
   } else {
     // as for judge program
     if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag))
-      return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+      return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for JUDGE for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   }
 
   if (open_ul_connection(phr->fw_state) < 0)
@@ -4984,6 +5073,9 @@ privileged_page(FILE *fout,
   time_t cur_time = time(0);
   unsigned char hid_buf[1024];
   struct teamdb_db_callbacks callbacks;
+
+  if (phr->action == NEW_SRV_ACTION_COOKIE_LOGIN)
+    return privileged_page_cookie_login(fout, phr);
 
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return privileged_page_login(fout, phr);

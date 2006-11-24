@@ -91,6 +91,7 @@ enum
     ULS_RECOVER_PASSWORD_2,
     ULS_STOP,
     ULS_RESTART,
+    ULS_PRIV_COOKIE_LOGIN,
 
     ULS_LAST_CMD
   };
@@ -201,6 +202,7 @@ struct userlist_pk_check_cookie
   ej_cookie_t        cookie;
   signed char        locale_id;
   unsigned char      priv_level;
+  int                role;
 };
 
 struct userlist_pk_do_logout
