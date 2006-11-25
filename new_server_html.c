@@ -4627,7 +4627,7 @@ priv_main_page(FILE *fout,
   }
 
   if (phr->role == USER_ROLE_ADMIN
-      && opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST)) {
+      && opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) >= 0) {
     html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
     fprintf(fout, "<table border=\"0\">");
 
