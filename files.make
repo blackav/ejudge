@@ -260,6 +260,7 @@ CFILES=\
  master.c\
  new-client.c\
  new-server.c\
+ new-server-cmd.c\
  new-server-control.c\
  register.c\
  run.c\
