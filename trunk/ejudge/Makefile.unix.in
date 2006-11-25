@@ -157,10 +157,13 @@ NC_OBJECTS=$(NC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a
 NS_CFILES=new-server.c version.c
 NS_OBJECTS=$(NS_CFILES:.c=.o) libcommon.a libuserlist_clnt.a
 
+NSM_CFILES = new-server-cmd.c version.c
+NSM_OBJECTS = $(NSM_CFILES:.c=.o) libcommon.a libnew_server_clnt.a libuserlist_clnt.a
+
 NSC_CFILES=new-server-control.c version.c
 NSC_OBJECTS=$(NSC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a
 
-BINTARGETS = compile compile-control serve run userlist-server userlist-server-control job-server job-server-control job-server-cmd edit-userlist super-serve super-serve-control clean-users ejudge-setup ejudge-control collect-emails serve-cmd slice-userlist execute new-server new-server-control uudecode
+BINTARGETS = compile compile-control serve run userlist-server userlist-server-control job-server job-server-control job-server-cmd edit-userlist super-serve super-serve-control clean-users ejudge-setup ejudge-control collect-emails serve-cmd slice-userlist execute new-server new-server-cmd new-server-control uudecode
 CGITARGETS = master${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX} users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
 TARGETS = ${BINTARGETS} ${CGITARGETS}
 
@@ -276,6 +279,9 @@ new-client${CGI_PROG_SUFFIX} : $(NC_OBJECTS)
 
 new-server : $(NS_OBJECTS)
 	$(LD) $(LDFLAGS) $(NS_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB}
+
+new-server-cmd : $(NSM_OBJECTS)
+	$(LD) $(LDFLAGS) $(NSM_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 new-server-control : $(NSC_OBJECTS)
 	$(LD) $(LDFLAGS) $(NSC_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
