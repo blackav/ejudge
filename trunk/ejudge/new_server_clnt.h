@@ -31,13 +31,16 @@ int new_server_clnt_recv_packet(new_server_conn_t, size_t *, void **);
 int new_server_clnt_pass_fd(new_server_conn_t, int, const int *);
 int new_server_clnt_close(new_server_conn_t);
 
-int new_server_clnt_http_request(new_server_conn_t, int out_fd,
-                                 unsigned char *args[],
-                                 unsigned char *envs[],
-                                 int param_num,
-                                 unsigned char *param_names[],
-                                 size_t param_sizes[],
-                                 unsigned char *params[]);
+int new_server_clnt_http_request(
+	new_server_conn_t, int out_fd,
+        unsigned char *args[],
+        unsigned char *envs[],
+        int param_num,
+        unsigned char *param_names[],
+        size_t param_sizes[],
+        unsigned char *params[],
+        unsigned char **reply_bytes,
+        size_t *reply_size);
 
 int new_server_clnt_control(new_server_conn_t conn, int cmd);
 

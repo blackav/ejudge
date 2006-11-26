@@ -865,6 +865,35 @@ static struct cmdinfo cmds[] =
   { 0, 0 },
 };
 
+static void invoke_new_server_cmd(int argc, char *argv[])
+  __attribute__((noreturn));
+static void
+invoke_new_server_cmd(int argc, char *argv[])
+{
+  char *dn;
+  path_t serve_cmd_path;
+  char **args;
+  int i;
+
+  // substitute argv[0]
+  if (!strchr(argv[0], '/')) {
+    snprintf(serve_cmd_path, sizeof(serve_cmd_path), "new-server-cmd");
+  } else {
+    dn = os_DirName(argv[0]);
+    snprintf(serve_cmd_path, sizeof(serve_cmd_path), "%s/new-server-cmd",
+             dn);
+  }
+
+  XCALLOC(args, argc + 1);
+  args[0] = serve_cmd_path;
+  for (i = 1; i < argc; i++)
+    args[i] = argv[i];
+  args[i] = 0;
+  execve(args[0], args, environ);
+  err("%s: cannot execute new-server-cmd: %s", argv[0], os_ErrorMsg());
+  exit(1);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -931,6 +960,8 @@ main(int argc, char *argv[])
     err("cannot load contest %d: %s", contest_id, contests_strerror(-n));
     return 1;
   }
+
+  if (cnts->new_managed) invoke_new_server_cmd(argc, argv);
 
   if (!contest_root_dir && cnts->root_dir) {
     contest_root_dir = xstrdup(cnts->root_dir);

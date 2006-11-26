@@ -8433,6 +8433,23 @@ unprivileged_page(FILE *fout, struct http_request_info *phr)
   }
 }
 
+static void
+testing_page(FILE *fout, struct http_request_info *phr)
+{
+  const unsigned char *s;
+  int value = 0, n, x;
+
+  if (ns_cgi_param(phr, "value", &s) > 0
+      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n]
+      && x >= 0 && x < 100000) {
+    value = x;
+  }
+
+  fprintf(fout, "Content-type: text/xml\n\n");
+  fprintf(fout, "<?xml version=\"1.0\" encoding=\"koi8-r\" ?>\n");
+  fprintf(fout, "<reply><value>%d</value></reply>\n", value + 1);
+}
+
 void
 ns_handle_http_request(struct server_framework_state *state,
                        struct client_state *p,
@@ -8523,6 +8540,9 @@ ns_handle_http_request(struct server_framework_state *state,
   } else if (!strcmp(last_name, "new-judge")) {
     phr->role = USER_ROLE_JUDGE;
     privileged_page(fout, phr);
+  } else if (!strcmp(last_name, "new-test")) {
+    // testing new features
+    testing_page(fout, phr);
   } else
     unprivileged_page(fout, phr);
 }
