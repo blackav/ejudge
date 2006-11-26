@@ -78,8 +78,6 @@ initialize(int argc, char *argv[])
   cgi_read(0);
 }
 
-//extern unsigned char **environ;
-
 int
 main(int argc, char *argv[])
 {
@@ -92,7 +90,7 @@ main(int argc, char *argv[])
 
   for (attempt = 0; attempt < MAX_ATTEMPT; attempt++) {
     r = new_server_clnt_open(socket_path, &conn);
-    if (r >= 0 && r != -NEW_SRV_ERR_CONNECT_FAILED) break;
+    if (r >= 0 || r != -NEW_SRV_ERR_CONNECT_FAILED) break;
     sleep(1);
   }
 
@@ -112,7 +110,7 @@ main(int argc, char *argv[])
   r = new_server_clnt_http_request(conn, 1, (unsigned char**) argv,
                                    (unsigned char **) environ,
                                    param_num, param_names,
-                                   param_sizes, params);
+                                   param_sizes, params, 0, 0);
   if (r < 0) {
     err("new-client: http_request failed: %d", -r);
     client_not_configured(0, "request failed", 0);
