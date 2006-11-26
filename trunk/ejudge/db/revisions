@@ -1639,3 +1639,9 @@ new_server_proto.c 3704 0 813457
 new_server_html.c 3706 0 23433393
 new-server-cmd.c 3708 0 74412
 new_server_html.c 3710 0 23433628
+new_server_clnt.h 3713 0 134197
+new-client.c 3713 0 264705
+new-server-cmd.c 3713 0 974773
+serve-cmd.c 3713 0 2012513
+new_server_html.c 3713 0 23476214
+new_server_clnt/http_request.c 3712 0 560109
