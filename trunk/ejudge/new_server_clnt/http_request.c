@@ -31,15 +31,53 @@ enum
   MAX_PARAM_SIZE = 128 * 1024 * 1024,
 };
 
+static int
+read_from_pipe(int fd, unsigned char **reply_bytes, size_t *reply_size)
+{
+  unsigned char *p = 0;
+  size_t s = 0, a = 0;
+  unsigned char b[4096];
+  int r;
+
+  a = 8192; s = 0;
+  p = xmalloc(a);
+  p[0] = 0;
+
+  while ((r = read(fd, b, sizeof(b))) > 0) {
+    if (r + s >= a) {
+      a *= 2;
+      p = xrealloc(p, a);
+    }
+    memcpy(p + s, b, r);
+    s += r;
+    p[s] = 0;
+  }
+  if (r < 0) {
+    err("read_from_pipe failed: %s", os_ErrorMsg());
+    goto failed;
+  }
+  if (reply_bytes) *reply_bytes = (unsigned char*) p;
+  else xfree(p);
+  if (reply_size) *reply_size = s;
+  return 0;
+
+ failed:
+  xfree(p);
+  return -1;
+}
+
 int
-new_server_clnt_http_request(new_server_conn_t conn,
-                             int out_fd,
-                             unsigned char *args[],
-                             unsigned char *envs[],
-                             int param_num,
-                             unsigned char *param_names[],
-                             size_t param_sizes_in[],
-                             unsigned char *params[])
+new_server_clnt_http_request(
+	new_server_conn_t conn,
+        int out_fd,
+        unsigned char *args[],
+        unsigned char *envs[],
+        int param_num,
+        unsigned char *param_names[],
+        size_t param_sizes_in[],
+        unsigned char *params[],
+        unsigned char **reply_bytes,
+        size_t *reply_size)
 {
   int arg_num = 0, env_num = 0, i;
   ej_size_t *arg_sizes = 0, *env_sizes = 0, *param_sizes = 0;
@@ -49,6 +87,7 @@ new_server_clnt_http_request(new_server_conn_t conn,
   size_t out_size;
   unsigned long bptr;// hope,that that's enough for pointer
   int pipe_fd[2] = { -1, -1 }, pass_fd[2];
+  int data_fd[2] = { -1, -1 };
   int errcode = -NEW_SRV_ERR_PARAM_OUT_OF_RANGE, r;
   void *void_in = 0;
   size_t in_size = 0;
@@ -147,10 +186,20 @@ new_server_clnt_http_request(new_server_conn_t conn,
     errcode = -NEW_SRV_ERR_SYSTEM_ERROR;
     goto failed;
   }
+  if (out_fd < 0) {
+    if (pipe(data_fd) < 0) {
+      err("new_server_clnt_http_request: pipe() failed: %s", os_ErrorMsg());
+      errcode = -NEW_SRV_ERR_SYSTEM_ERROR;
+      goto failed;
+    }
+    out_fd = data_fd[1];
+  }
   pass_fd[0] = out_fd;
   pass_fd[1] = pipe_fd[1];
   if ((errcode = new_server_clnt_pass_fd(conn, 2, pass_fd)) < 0) goto failed;
   close(pipe_fd[1]); pipe_fd[1] = -1;
+  if (data_fd[1] >= 0) close(data_fd[1]);
+  data_fd[1] = -1;
   if ((errcode = new_server_clnt_send_packet(conn, out_size, out)) < 0)
     goto failed;
   if ((errcode = new_server_clnt_recv_packet(conn, &in_size, &void_in)) < 0)
@@ -168,6 +217,11 @@ new_server_clnt_http_request(new_server_conn_t conn,
   errcode = in->id;
   if (errcode < 0) goto failed;
 
+  if (data_fd[0] >= 0) {
+    read_from_pipe(data_fd[0], reply_bytes, reply_size);
+    close(data_fd[0]); data_fd[0] = -1;
+  }
+
   // wait for the server to complete page generation
   r = read(pipe_fd[0], &c, 1);
   if (r < 0) {
@@ -178,7 +232,7 @@ new_server_clnt_http_request(new_server_conn_t conn,
   if (r > 0) {
     err("new_server_clnt_http_request: data in wait pipe");
     goto failed;
-  }
+    }
   errcode = NEW_SRV_RPL_OK;
 
  failed:
@@ -186,6 +240,8 @@ new_server_clnt_http_request(new_server_conn_t conn,
   xfree(void_in);
   if (pipe_fd[0] >= 0) close(pipe_fd[0]);
   if (pipe_fd[1] >= 0) close(pipe_fd[1]);
+  if (data_fd[0] >= 0) close(data_fd[0]);
+  if (data_fd[1] >= 0) close(data_fd[1]);
   return errcode;
 }
 
