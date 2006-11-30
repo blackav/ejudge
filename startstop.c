@@ -47,6 +47,7 @@ start_set_self_args(int argc, char *argv[])
     self_exe[n] = 0;
   }
   self_argv = argv;
+  self_argv[0] = self_exe;
 }
 
 int
@@ -106,4 +107,5 @@ void
 start_set_args(char *argv[])
 {
   self_argv = argv;
+  self_argv[0] = self_exe;
 }
