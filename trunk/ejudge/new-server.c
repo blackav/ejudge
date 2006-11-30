@@ -447,7 +447,7 @@ load_plugins(void)
     plg = (struct ejudge_plugin*) p;
 
     if (!plg->load_flag) continue;
-    if (strcmp(plg->type, "userdb") != 0) continue;
+    if (strcmp(plg->type, "nsdb") != 0) continue;
     // `files' plugin is already loaded
     if (!strcmp(plg->name, "files")) continue;
 
