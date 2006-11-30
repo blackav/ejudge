@@ -822,7 +822,9 @@ nsf_prepare(struct server_framework_state *state)
 void
 nsf_cleanup(struct server_framework_state *state)
 {
+  // FIXME: close all active connections
   if (state->socket_fd >= 0) close(state->socket_fd);
+  state->socket_fd = -1;
   unlink(state->params->socket_path);
 }
 

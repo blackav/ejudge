@@ -51,7 +51,7 @@ struct nsdb_plugin_iface nsdb_plugin_files =
   {
     sizeof (struct nsdb_plugin_iface),
     EJUDGE_PLUGIN_IFACE_VERSION,
-    "userdb",
+    "nsdb",
     "nsdb_xml",
   },
 
@@ -157,6 +157,8 @@ close_func(void *data)
   struct nsdb_files_state *state = (struct nsdb_files_state*) data;
 
   user_priv_flush(&state->user_priv);
+  if (state->user_priv.fd >= 0) close(state->user_priv.fd);
+  state->user_priv.fd = -1;
   return 0;
 }
 
