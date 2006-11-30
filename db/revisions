@@ -1649,3 +1649,6 @@ new-server.c 3715 0 1380720
 nsdb_plugin_files.c 3715 0 1172824
 server_framework.c 3715 0 1762206
 prepare.c 3717 0 12885420
+startstop.h 3719 0 86081
+new-server.c 3719 0 1406884
+startstop.c 3719 0 196892
