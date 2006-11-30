@@ -19,6 +19,7 @@
  */
 
 void start_set_self_args(int argc, char *argv[]);
+void start_set_args(char *argv[]);
 int start_switch_user(const unsigned char *user, const unsigned char *group);
 
 int start_prepare(const unsigned char *user, const unsigned char *group,

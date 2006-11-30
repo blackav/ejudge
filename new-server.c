@@ -503,12 +503,16 @@ load_plugins(void)
 int
 main(int argc, char *argv[])
 {
-  int i;
+  int i, j = 0;
   int create_flag = 0;
   const unsigned char *user = 0, *group = 0, *workdir = 0;
   int restart_flag = 0;
+  char **argv_restart = 0;
 
   start_set_self_args(argc, argv);
+  /* certain options should be removed for restart */
+  XCALLOC(argv_restart, argc + 1);
+  argv_restart[j++] = argv[0];
 
   params.program_name = argv[0];
   for (i = 1; i < argc; ) {
@@ -517,6 +521,7 @@ main(int argc, char *argv[])
       i++;
     } else if (!strcmp(argv[i], "-f")) {
       params.force_socket_flag = 1;
+      argv_restart[j++] = argv[i];
       i++;
     } else if (!strcmp(argv[i], "--create")) {
       create_flag = 1;
@@ -531,6 +536,7 @@ main(int argc, char *argv[])
       if (++i >= argc) startup_error("invalid usage");
       workdir = argv[i++];
     } else if (!strcmp(argv[i], "--")) {
+      argv_restart[j++] = argv[i];
       i++;
       break;
     } else if (argv[i][0] == '-') {
@@ -538,8 +544,13 @@ main(int argc, char *argv[])
     } else
       break;
   }
-  if (i < argc) ejudge_xml_path = argv[i++];
+  if (i < argc) {
+    argv_restart[j++] = argv[i];
+    ejudge_xml_path = argv[i++];
+  }
   if (i != argc) startup_error("invalid number of parameters");
+  argv_restart[j] = 0;
+  start_set_args(argv_restart);
 
   if (start_prepare(user, group, workdir) < 0) return 1;
 

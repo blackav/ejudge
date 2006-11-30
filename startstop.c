@@ -101,3 +101,9 @@ start_restart(void)
 {
   execv(self_exe, self_argv);
 }
+
+void
+start_set_args(char *argv[])
+{
+  self_argv = argv;
+}
