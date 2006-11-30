@@ -1645,3 +1645,6 @@ new-server-cmd.c 3713 0 974773
 serve-cmd.c 3713 0 2012513
 new_server_html.c 3713 0 23476214
 new_server_clnt/http_request.c 3712 0 560109
+new-server.c 3715 0 1380720
+nsdb_plugin_files.c 3715 0 1172824
+server_framework.c 3715 0 1762206
