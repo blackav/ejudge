@@ -343,7 +343,7 @@ check_config(void)
 int
 main(int argc, char *argv[])
 {
-  int     i = 1;
+  int     i = 1, j = 0;
   char   *key = 0;
   path_t  cpp_opts = {0};
   int     code = 0;
@@ -352,8 +352,11 @@ main(int argc, char *argv[])
   unsigned char *user = 0, *group = 0, *workdir = 0;
   path_t  log_path;
   int log_fd = -1, pid = -1;
+  char **argv_restart = 0;
 
   start_set_self_args(argc, argv);
+  XCALLOC(argv_restart, argc + 1);
+  argv_restart[j++] = argv[0];
 
   if (argc == 1) goto print_usage;
   code = 1;
@@ -367,12 +370,14 @@ main(int argc, char *argv[])
       i++;
     } else if (!strcmp(argv[i], "-k")) {
       if (++i >= argc) goto print_usage;
+      argv_restart[j++] = argv[i];
       key = argv[i++];
     } else if (!strcmp(argv[i], "-D")) {
       daemon_mode = 1;
       i++;
     } else if (!strncmp(argv[i], "-D", 2)) {
       if (cpp_opts[0]) pathcat(cpp_opts, " ");
+      argv_restart[j++] = argv[i];
       pathcat(cpp_opts, argv[i++]);
     } else if (!strcmp(argv[i], "-u")) {
       if (++i >= argc) goto print_usage;
@@ -389,6 +394,9 @@ main(int argc, char *argv[])
     } else break;
   }
   if (i >= argc) goto print_usage;
+  argv_restart[j++] = argv[i];
+  argv_restart[j] = 0;
+  start_set_args(argv_restart);
 
   if (start_prepare(user, group, workdir) < 0) return 1;
 
