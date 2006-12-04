@@ -588,14 +588,17 @@ do_work(void)
 int
 main(int argc, char *argv[])
 {
-  int cur_arg = 1;
+  int cur_arg = 1, j = 0;
   int daemon_mode = 0;
   unsigned char *ejudge_xml_path = 0;
   int log_fd = -1;
   int pid;
   const unsigned char *user = 0, *group = 0, *workdir = 0;
+  char **argv_restart = 0;
 
   start_set_self_args(argc, argv);
+  XCALLOC(argv_restart, argc + 1);
+  argv_restart[j++] = argv[0];
 
   while (cur_arg < argc) {
     if (!strcmp(argv[cur_arg], "-D")) {
@@ -626,12 +629,16 @@ main(int argc, char *argv[])
       break;
   }
   if (cur_arg < argc) {
+    argv_restart[j++] = argv[cur_arg];
     ejudge_xml_path = argv[cur_arg++];
   }
   if (cur_arg != argc) {
     err("invalid number of arguments");
     return 1;
   }
+  argv_restart[j] = 0;
+  start_set_args(argv_restart);
+
 #if defined EJUDGE_XML_PATH
   if (!ejudge_xml_path) {
     ejudge_xml_path = EJUDGE_XML_PATH;

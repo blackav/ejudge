@@ -4191,11 +4191,14 @@ int
 main(int argc, char **argv)
 {
   unsigned char *ejudge_xml_path = 0;
-  int cur_arg = 1;
+  int cur_arg = 1, j = 0;
   int retcode = 0;
   const unsigned char *user = 0, *group = 0, *workdir = 0;
+  char **argv_restart = 0;
 
   start_set_self_args(argc, argv);
+  XCALLOC(argv_restart, argc + 1);
+  argv_restart[j++] = argv[0];
 
   while (cur_arg < argc) {
     if (!strcmp(argv[cur_arg], "-D")) {
@@ -4203,9 +4206,11 @@ main(int argc, char **argv)
       cur_arg++;
     } else if (!strcmp(argv[cur_arg], "-a")) {
       autonomous_mode = 1;
+      argv_restart[j++] = argv[cur_arg];
       cur_arg++;
     } else if (!strcmp(argv[cur_arg], "-f")) {
       forced_mode = 1;
+      argv_restart[j++] = argv[cur_arg];
       cur_arg++;
     } else if (!strcmp(argv[cur_arg], "-u")) {
       if (cur_arg + 1 >= argc) arg_expected(argv[0]);
@@ -4224,12 +4229,17 @@ main(int argc, char **argv)
     }
   }
   if (cur_arg < argc) {
-    ejudge_xml_path = argv[cur_arg++];
+    ejudge_xml_path = argv[cur_arg];
+    argv_restart[j++] = argv[cur_arg];
+    cur_arg++;
   }
   if (cur_arg != argc) {
     fprintf(stderr, "%s: invalid number of arguments\n", argv[0]);
     return 1;
   }
+  argv_restart[j] = 0;
+  start_set_args(argv_restart);
+
 #if defined EJUDGE_XML_PATH
   if (!ejudge_xml_path) {
     info("using the default %s", EJUDGE_XML_PATH);
