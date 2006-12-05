@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,9 +18,9 @@
 #include "checker_internal.h"
 
 int
-checker_read_line(int ind, const unsigned char *name,
+checker_read_line(int ind, const char *name,
                   int eof_error_flag,
-                  unsigned char **out_str)
+                  char **out_str)
 {
   int c;
   unsigned char *buf = 0;

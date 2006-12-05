@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 int
 checker_read_unsigned_long_long(int ind,
-                                const unsigned char *name,
+                                const char *name,
                                 int eof_error_flag,
                                 unsigned long long *p_val)
 {

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,15 +18,15 @@
 #include "checker_internal.h"
 
 int
-checker_read_team_unsigned_long_long(const unsigned char *name,
-                                     int eof_error_flag,
-                                     unsigned long long *p_val)
+checker_read_out_unsigned_long_long(const char *name,
+                                    int eof_error_flag,
+                                    unsigned long long *p_val)
 {
   unsigned long long x = 0;
   int n = 0;
 
-  if ((n = fscanf(f_team, "%llu", &x)) != 1) {
-    if (ferror(f_team))
+  if ((n = fscanf(f_out, "%llu", &x)) != 1) {
+    if (ferror(f_out))
       fatal_CF("Input error from team output file");
     if (n == EOF) {
       if (!eof_error_flag) return -1;
@@ -36,6 +36,14 @@ checker_read_team_unsigned_long_long(const unsigned char *name,
   }
   *p_val = x;
   return 1;
+}
+
+int
+checker_read_team_unsigned_long_long(const char *name,
+                                     int eof_error_flag,
+                                     unsigned long long *p_val)
+{
+  return checker_read_out_unsigned_long_long(name, eof_error_flag, p_val);
 }
 
 /*

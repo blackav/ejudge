@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 #include "checker_internal.h"
 
 int
-checker_read_corr_unsigned_int(const unsigned char *name,
+checker_read_corr_unsigned_int(const char *name,
                                int eof_error_flag,
                                unsigned int *p_val)
 {

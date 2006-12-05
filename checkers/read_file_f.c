@@ -19,7 +19,7 @@
 #include <errno.h>
 
 void
-checker_read_file_f(FILE *f, unsigned char **out, size_t *out_len)
+checker_read_file_f(FILE *f, char **out, size_t *out_len)
 {
   unsigned char read_buf[512];
   unsigned char *buf = 0;

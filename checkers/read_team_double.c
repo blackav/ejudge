@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,16 +18,16 @@
 #include "checker_internal.h"
 
 int
-checker_read_team_double(const unsigned char *name,
-                         int eof_error_flag,
-                         double *p_val)
+checker_read_out_double(const char *name,
+                        int eof_error_flag,
+                        double *p_val)
 {
   double x = 0.0;
   int n;
 
   if (!name) name = "";
-  if ((n = fscanf(f_team, "%lf", &x)) != 1) {
-    if (ferror(f_team)) fatal_CF("Input error from input file");
+  if ((n = fscanf(f_out, "%lf", &x)) != 1) {
+    if (ferror(f_out)) fatal_CF("Input error from input file");
     if (n == EOF) {
       if (!eof_error_flag) return -1;
       fatal_PE("Unexpected EOF while reading `%s'", name);
@@ -36,6 +36,14 @@ checker_read_team_double(const unsigned char *name,
   }
   *p_val = x;
   return 1;
+}
+
+int
+checker_read_team_double(const char *name,
+                         int eof_error_flag,
+                         double *p_val)
+{
+  return checker_read_out_double(name, eof_error_flag, p_val);
 }
 
 /*
