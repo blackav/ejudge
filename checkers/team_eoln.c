@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,12 +18,12 @@
 #include "checker_internal.h"
 
 void
-checker_team_eoln(int lineno)
+checker_out_eoln(int lineno)
 {
   int c;
 
-  c = getc(f_team);
-  while (c != EOF && c != '\n' && isspace(c)) c = getc(f_team);
+  c = getc(f_out);
+  while (c != EOF && c != '\n' && isspace(c)) c = getc(f_out);
   if (c != EOF && c != '\n') {
     if (lineno > 0) {
       fatal_PE("output: end-of-line expected at line %d", lineno);
@@ -31,6 +31,12 @@ checker_team_eoln(int lineno)
       fatal_PE("output: end-of-line expected");
     }
   }
+}
+
+void
+checker_team_eoln(int lineno)
+{
+  return checker_out_eoln(lineno);
 }
 
 /*

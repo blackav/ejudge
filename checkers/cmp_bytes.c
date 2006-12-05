@@ -22,7 +22,7 @@
 
 int checker_main(int argc, char **argv)
 {
-  unsigned char *corr_data = 0, *team_data = 0;
+  char *corr_data = 0, *team_data = 0;
   size_t corr_size = 0, team_size = 0, i;
 
   checker_read_file(1, &team_data, &team_size);

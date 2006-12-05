@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -58,20 +58,20 @@ normalize_number(char *buf)
 int
 checker_main(int argc, char *argv[])
 {
-  char teambuf[BUFSIZE], corrbuf[BUFSIZE];
+  char outbuf[BUFSIZE], corrbuf[BUFSIZE];
 
-  checker_read_buf(1, "team", 1, teambuf, BUFSIZE);
-  checker_team_eof();
-  if (!is_number(teambuf)) fatal_PE("team: not a number");
-  normalize_number(teambuf);
+  checker_read_buf(1, "out", 1, outbuf, BUFSIZE);
+  checker_out_eof();
+  if (!is_number(outbuf)) fatal_PE("out: not a number");
+  normalize_number(outbuf);
 
   checker_read_buf(2, "corr", 1, corrbuf, BUFSIZE);
   checker_corr_eof();
   if (!is_number(corrbuf)) fatal_CF("corr: not a number");
   normalize_number(corrbuf);
 
-  if (strcmp(teambuf, corrbuf) != 0)
-    fatal_WA("wrong answer: team: %s, corr: %s", teambuf, corrbuf);
+  if (strcmp(outbuf, corrbuf) != 0)
+    fatal_WA("wrong answer: out: %s, corr: %s", outbuf, corrbuf);
 
   checker_OK();
 }

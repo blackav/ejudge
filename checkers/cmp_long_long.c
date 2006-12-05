@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,15 +22,15 @@
 
 int checker_main(int argc, char **argv)
 {
-  long long team_ans, corr_ans;
+  long long out_ans, corr_ans;
 
-  checker_read_team_long_long("team_ans", 1, &team_ans);
+  checker_read_out_long_long("out_ans", 1, &out_ans);
   checker_read_corr_long_long("corr_ans", 1, &corr_ans);
-  checker_team_eof();
+  checker_out_eof();
   checker_corr_eof();
-  if (team_ans != corr_ans)
-    fatal_WA("Answers do not match: team = %lld, corr = %lld",
-             team_ans, corr_ans);
+  if (out_ans != corr_ans)
+    fatal_WA("Answers do not match: out = %lld, corr = %lld",
+             out_ans, corr_ans);
   checker_OK();
 }
 

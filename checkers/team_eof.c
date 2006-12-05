@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,13 +18,19 @@
 #include "checker_internal.h"
 
 void
+checker_out_eof(void)
+{
+  fscanf(f_out, " ");
+  if (ferror(f_out))
+    fatal_CF("Input error from team output file");
+  if (getc(f_out) != EOF)
+    fatal_PE("Garbage in team output file");
+}
+
+void
 checker_team_eof(void)
 {
-  fscanf(f_team, " ");
-  if (ferror(f_team))
-    fatal_CF("Input error from team output file");
-  if (getc(f_team) != EOF)
-    fatal_PE("Garbage in team output file");
+  return checker_out_eof();
 }
 
 /*
