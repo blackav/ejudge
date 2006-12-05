@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,28 +22,31 @@
 #endif
 
 FILE *f_in;
-FILE *f_team;
+FILE *f_out;
 FILE *f_corr;
 FILE *f_arr[3];
+
+// backward compatibility
+FILE *f_team;
 
 #ifndef _MSC_VER
 DIR *dir_in;
 DIR *dir_out;
 
-unsigned char *dir_in_path;
-unsigned char *dir_out_path;
+char *dir_in_path;
+char *dir_out_path;
 #endif
 
-const unsigned char * const f_arr_names[3] =
+const char * const f_arr_names[3] =
 {
   "input",
-  "team output",
+  "output",
   "correct output"
 };
 
 struct testinfo_struct;
 int (*testinfo_parse_func)() = 0;
-const unsigned char *(*testinfo_strerror_func)() = 0;
+const char *(*testinfo_strerror_func)() = 0;
 
 /*
  * Local variables:

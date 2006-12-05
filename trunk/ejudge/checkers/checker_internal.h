@@ -18,10 +18,7 @@
  */
 
 #ifdef __cplusplus
-#define CHECKER_char_t char
 extern "C" {
-#else
-#define CHECKER_char_t unsigned char
 #endif /* __cplusplus */
 
 #if defined _MSC_VER || defined __MINGW32__
@@ -43,10 +40,17 @@ extern "C" {
 #include <dirent.h>
 #endif /* NEED_TGZ */
 
+#if defined __GNUC__
 #define XCALLOC(p,s)    ((p) = (typeof(p)) xcalloc((s), sizeof((p)[0])))
 #define XREALLOC(p,s)   ((p) = (typeof(p)) xrealloc((p), (s) * sizeof((p)[0])))
 #define XALLOCA(p,s)    ((p) = (typeof(p)) alloca((s) * sizeof((p)[0])))
 #define XALLOCAZ(p,s)   ((p) = (typeof(p)) alloca((s) * sizeof((p)[0])), memset((p), 0, (s)*sizeof(*(p))), (p))
+#else
+#define XCALLOC(p,s)    ((p) = xcalloc((s), sizeof((p)[0])))
+#define XREALLOC(p,s)   ((p) = xrealloc((p), (s) * sizeof((p)[0])))
+#define XALLOCA(p,s)    ((p) = alloca((s) * sizeof((p)[0])))
+#define XALLOCAZ(p,s)   ((p) = alloca((s) * sizeof((p)[0])), memset((p), 0, (s)*sizeof(*(p))), (p))
+#endif
 #define XMEMMOVE(d,s,c) (memmove((d),(s),(c)*sizeof(*(d))))
 #define XMEMZERO(d,c)   (memset((d),0,(c)*sizeof(*(d))))
 
@@ -84,16 +88,19 @@ union checker_sexpr_elem
 };
 
 extern FILE *f_in;
-extern FILE *f_team;
+extern FILE *f_out;
 extern FILE *f_corr;
 extern FILE *f_arr[3];
-extern const CHECKER_char_t * const f_arr_names[3];
+extern const char * const f_arr_names[3];
+
+// backward compatibility
+extern FILE *f_team;
 
 #if NEED_TGZ - 0 == 1
 extern DIR *dir_in;
 extern DIR *dir_out;
-extern CHECKER_char_t *dir_in_path;
-extern CHECKER_char_t *dir_out_path;
+extern char *dir_in_path;
+extern char *dir_out_path;
 #endif /* NEED_TGZ */
 
 void checker_do_init(int, char **, int, int, int);
@@ -127,62 +134,59 @@ void checker_OK(void) LIBCHECKER_ATTRIB((noreturn));
 void *xmalloc(size_t size);
 void *xcalloc(size_t nmemb, size_t size);
 void *xrealloc(void *ptr, size_t size);
-CHECKER_char_t *xstrdup(const CHECKER_char_t *str);
+char *xstrdup(const char *str);
 
 void checker_corr_close(void);
 void checker_corr_eof(void);
 void checker_in_close(void);
 void checker_in_eof(void);
-void checker_normalize_file(CHECKER_char_t **, size_t *);
-void checker_normalize_spaces_in_file(CHECKER_char_t **, size_t *);
-void checker_normalize_line(CHECKER_char_t *);
-int  checker_read_buf(int, const CHECKER_char_t *, int,
-                      CHECKER_char_t *,size_t);
-void checker_read_file(int, CHECKER_char_t **, size_t *);
-void checker_read_file_f(FILE *, CHECKER_char_t **, size_t *);
-void checker_read_file_by_line(int, CHECKER_char_t ***, size_t *);
-void checker_read_file_by_line_f(FILE *f, const unsigned char *,
-                                 CHECKER_char_t ***, size_t *);
-int  checker_read_line(int, const CHECKER_char_t *, int, CHECKER_char_t **);
+void checker_normalize_file(char **, size_t *);
+void checker_normalize_spaces_in_file(char **, size_t *);
+void checker_normalize_line(char *);
+int  checker_read_buf(int, const char *, int,
+                      char *,size_t);
+void checker_read_file(int, char **, size_t *);
+void checker_read_file_f(FILE *, char **, size_t *);
+void checker_read_file_by_line(int, char ***, size_t *);
+void checker_read_file_by_line_f(FILE *f, const char *,
+                                 char ***, size_t *);
+int  checker_read_line(int, const char *, int, char **);
 int  checker_skip_eoln(int ind, int eof_error_flag);
-void checker_team_close(void);
-void checker_team_eof(void);
+void checker_out_close(void);
+void checker_out_eof(void);
+void checker_out_eoln(int);
 
-int  checker_read_int(int, const CHECKER_char_t *, int, int *);
-int  checker_read_unsigned_int(int, const CHECKER_char_t *, int,
+int  checker_read_int(int, const char *, int, int *);
+int  checker_read_unsigned_int(int, const char *, int,
                                unsigned int *);
-int  checker_read_long_long(int, const CHECKER_char_t *, int, libchecker_i64_t *);
-int  checker_read_unsigned_long_long(int, const CHECKER_char_t *, int,
-                                     libchecker_u64_t *);
-int  checker_read_double(int, const CHECKER_char_t *, int, double *);
-int  checker_read_long_double(int, const CHECKER_char_t *, int, long double *);
+int  checker_read_long_long(int, const char *, int, libchecker_i64_t *);
+int  checker_read_unsigned_long_long(int, const char *, int, libchecker_u64_t*);
+int  checker_read_double(int, const char *, int, double *);
+int  checker_read_long_double(int, const char *, int, long double *);
 
-int  checker_read_in_int(const CHECKER_char_t *, int, int *);
-int  checker_read_in_unsigned_int(const CHECKER_char_t *, int,
+int  checker_read_in_int(const char *, int, int *);
+int  checker_read_in_unsigned_int(const char *, int,
                                   unsigned int *);
-int  checker_read_in_long_long(const CHECKER_char_t *, int, libchecker_i64_t *);
-int  checker_read_in_unsigned_long_long(const CHECKER_char_t *, int,
-										libchecker_u64_t *);
-int  checker_read_in_double(const CHECKER_char_t *, int, double *);
-int  checker_read_in_long_double(const CHECKER_char_t *, int, long double *);
+int  checker_read_in_long_long(const char *, int, libchecker_i64_t *);
+int  checker_read_in_unsigned_long_long(const char *, int, libchecker_u64_t *);
+int  checker_read_in_double(const char *, int, double *);
+int  checker_read_in_long_double(const char *, int, long double *);
 
-int  checker_read_team_int(const CHECKER_char_t *, int, int *);
-int  checker_read_team_unsigned_int(const CHECKER_char_t *, int,
+int  checker_read_out_int(const char *, int, int *);
+int  checker_read_out_unsigned_int(const char *, int,
                                     unsigned int *);
-int  checker_read_team_long_long(const CHECKER_char_t *, int, libchecker_i64_t *);
-int  checker_read_team_unsigned_long_long(const CHECKER_char_t *, int,
-										  libchecker_u64_t *);
-int  checker_read_team_double(const CHECKER_char_t *, int, double *);
-int  checker_read_team_long_double(const CHECKER_char_t *, int, long double *);
+int  checker_read_out_long_long(const char *, int, libchecker_i64_t *);
+int  checker_read_out_unsigned_long_long(const char *, int,libchecker_u64_t *);
+int  checker_read_out_double(const char *, int, double *);
+int  checker_read_out_long_double(const char *, int, long double *);
 
-int  checker_read_corr_int(const CHECKER_char_t *, int, int *);
-int  checker_read_corr_unsigned_int(const CHECKER_char_t *, int,
+int  checker_read_corr_int(const char *, int, int *);
+int  checker_read_corr_unsigned_int(const char *, int,
                                     unsigned int *);
-int  checker_read_corr_long_long(const CHECKER_char_t *, int, libchecker_i64_t *);
-int  checker_read_corr_unsigned_long_long(const CHECKER_char_t *, int,
-										  libchecker_u64_t *);
-int  checker_read_corr_double(const CHECKER_char_t *, int, double *);
-int  checker_read_corr_long_double(const CHECKER_char_t *, int, long double *);
+int  checker_read_corr_long_long(const char *, int, libchecker_i64_t *);
+int  checker_read_corr_unsigned_long_long(const char *, int,libchecker_u64_t *);
+int  checker_read_corr_double(const char *, int, double *);
+int  checker_read_corr_long_double(const char *, int, long double *);
 
 int checker_eq_double(double v1, double v2, double eps);
 int checker_eq_double_abs(double v1, double v2, double eps);
@@ -192,12 +196,33 @@ int checker_eq_float(float v1, float v2, float eps);
 int checker_eq_float_abs(float v1, float v2, float eps);
 
 checker_sexpr_t checker_read_sexpr(int ind);
-int checker_eq_sexpr(checker_sexpr_t l_corr, checker_sexpr_t l_team);
+int checker_eq_sexpr(checker_sexpr_t l_corr, checker_sexpr_t l_out);
+
+// backward compatibility
+#if defined __GNUC__
+void checker_team_close(void)
+  __attribute__((deprecated));
+void checker_team_eof(void)
+  __attribute__((deprecated));
+void checker_team_eoln(int lineno)
+  __attribute__((deprecated));
+int  checker_read_team_int(const char *, int, int *)
+  __attribute__((deprecated));
+int  checker_read_team_unsigned_int(const char *, int, unsigned int *)
+  __attribute__((deprecated));
+int  checker_read_team_long_long(const char *, int, libchecker_i64_t *)
+  __attribute__((deprecated));
+int  checker_read_team_unsigned_long_long(const char *, int,libchecker_u64_t *)
+  __attribute__((deprecated));
+int  checker_read_team_double(const char *, int, double *)
+  __attribute__((deprecated));
+int  checker_read_team_long_double(const char *, int, long double *)
+  __attribute__((deprecated));
+#endif
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
-#undef CHECKER_char_t
 
 #endif /* __CHECKER_INTERNAL_H__ */
 

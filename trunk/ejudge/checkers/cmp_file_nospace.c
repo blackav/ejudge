@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,25 +22,25 @@
 
 int checker_main(int argc, char **argv)
 {
-  unsigned char **team_lines, **corr_lines;
-  size_t team_lines_num, corr_lines_num, i;
+  char **out_lines, **corr_lines;
+  size_t out_lines_num, corr_lines_num, i;
 
   // считываем файл результата работы программы
-  checker_read_file_by_line(1, &team_lines, &team_lines_num);
+  checker_read_file_by_line(1, &out_lines, &out_lines_num);
   // считываем эталонный файл
   checker_read_file_by_line(2, &corr_lines, &corr_lines_num);
   // убираем "лишние" пробелы в результате работы программы
-  checker_normalize_spaces_in_file(team_lines, &team_lines_num);
+  checker_normalize_spaces_in_file(out_lines, &out_lines_num);
   // убираем "лишние" пробелы в эталонном файле
   checker_normalize_spaces_in_file(corr_lines, &corr_lines_num);
 
-  if (team_lines_num != corr_lines_num)
-    fatal_WA("Different number of lines: team = %zu, corr = %zu",
-             team_lines_num, corr_lines_num);
-  for (i = 0; i < team_lines_num; i++)
-    if (strcmp(team_lines[i], corr_lines[i]) != 0)
-      fatal_WA("Line %zu differs: team:\n>%s<\ncorr:\n>%s<",
-               i + 1, team_lines[i], corr_lines[i]);
+  if (out_lines_num != corr_lines_num)
+    fatal_WA("Different number of lines: out = %zu, corr = %zu",
+             out_lines_num, corr_lines_num);
+  for (i = 0; i < out_lines_num; i++)
+    if (strcmp(out_lines[i], corr_lines[i]) != 0)
+      fatal_WA("Line %zu differs: out:\n>%s<\ncorr:\n>%s<",
+               i + 1, out_lines[i], corr_lines[i]);
   
   checker_OK();
 }

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 #include "checker_internal.h"
 #include "testinfo.h"
 
-extern int (*testinfo_parse_func)(const unsigned char*,testinfo_t*);
-extern const unsigned char *(*testinfo_strerror_func)(int);
+extern int (*testinfo_parse_func)(const char*,testinfo_t*);
+extern const char *(*testinfo_strerror_func)(int);
 testinfo_t test_info;
 
 void
@@ -40,9 +40,11 @@ checker_do_init(int argc, char **argv, int corr_flag, int info_flag,
   if (!(f_in = fopen(argv[1], "r")))
     fatal_CF("Cannot open input file `%s'", argv[1]);
   f_arr[0] = f_in;
-  if (!(f_team = fopen(argv[2], "r")))
+  if (!(f_out = fopen(argv[2], "r")))
     fatal_PE("Cannot open team output file `%s'", argv[2]);
-  f_arr[1] = f_team;
+  f_arr[1] = f_out;
+  // backward compatibility
+  f_team = f_out;
 
   if (corr_flag) {
     if (!(f_corr = fopen(argv[arg_ind], "r")))

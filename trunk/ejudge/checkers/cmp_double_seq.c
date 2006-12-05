@@ -22,7 +22,7 @@
 
 int checker_main(int argc, char **argv)
 {
-  double team_ans, corr_ans, eps;
+  double out_ans, corr_ans, eps;
   unsigned char *s, *abs_flag = 0;
   int n, i = 0;
   unsigned char buf[32];
@@ -41,17 +41,17 @@ int checker_main(int argc, char **argv)
     i++;
     snprintf(buf, sizeof(buf), "[%d]", i);
     if (checker_read_corr_double(buf, 0, &corr_ans) < 0) break;
-    if (checker_read_team_double(buf, 0, &team_ans) < 0) {
-      fatal_WA("Too few numbers in the team output");
+    if (checker_read_out_double(buf, 0, &out_ans) < 0) {
+      fatal_WA("Too few numbers in the out output");
     }
-    if (!(abs_flag?checker_eq_double_abs:checker_eq_double)(team_ans, corr_ans, eps))
-      fatal_WA("Answers differ: %s: team: %.10g, corr: %.10g",
-	       buf, team_ans, corr_ans);
+    if (!(abs_flag?checker_eq_double_abs:checker_eq_double)(out_ans, corr_ans, eps))
+      fatal_WA("Answers differ: %s: out: %.10g, corr: %.10g",
+	       buf, out_ans, corr_ans);
   }
-  if (checker_read_team_double("x", 0, &team_ans) >= 0) {
-    fatal_WA("Too many numbers in the team output");
+  if (checker_read_out_double("x", 0, &out_ans) >= 0) {
+    fatal_WA("Too many numbers in the out output");
   }
-  checker_team_eof();
+  checker_out_eof();
 
   checker_OK();
 }

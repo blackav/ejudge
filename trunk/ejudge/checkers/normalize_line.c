@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 #include "checker_internal.h"
 
 void
-checker_normalize_line(unsigned char *str)
+checker_normalize_line(char *str)
 {
   size_t len;
 

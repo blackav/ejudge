@@ -24,7 +24,7 @@ int checker_main(int argc, char **argv)
 
   user_ans = checker_read_sexpr(1);
   corr_ans = checker_read_sexpr(2);
-  checker_team_eof();
+  checker_out_eof();
   checker_corr_eof();
   if (!checker_eq_sexpr(user_ans, corr_ans))
     fatal_WA("Answers do not match");

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,23 +25,17 @@
 #define NEED_TGZ 0
 #endif /* NEED_TGZ */
 
-#ifdef __cplusplus
-#define CHECK_char_t char
-#else
-#define CHECK_char_t unsigned char
-#endif
-
 #include "checker_internal.h"
 
 #if NEED_INFO == 1
 #include "testinfo.h"
-extern int (*testinfo_parse_func)(const CHECK_char_t*,testinfo_t*);
-extern const CHECK_char_t *(*testinfo_strerror_func)(int);
+extern int (*testinfo_parse_func)(const char*,testinfo_t*);
+extern const char *(*testinfo_strerror_func)(int);
 extern testinfo_t test_info;
 #else
 struct testinfo_struct;
-extern int (*testinfo_parse_func)(const CHECK_char_t*,struct testinfo_struct*);
-extern const CHECK_char_t *(*testinfo_strerror_func)(int);
+extern int (*testinfo_parse_func)(const char*,struct testinfo_struct*);
+extern const char *(*testinfo_strerror_func)(int);
 #endif /* NEED_INFO */
 
 #ifndef NEED_TGZ
