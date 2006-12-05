@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,10 +19,10 @@
 
 void
 checker_read_file_by_line(int ind,
-                          unsigned char ***out_lines,
+                          char ***out_lines,
                           size_t *out_lines_num)
 {
-  unsigned char **lb_v = 0;
+  char **lb_v = 0;
   size_t lb_a = 0, lb_u = 0;
   unsigned char *b_v = 0;
   size_t b_a = 0, b_u = 0;
@@ -30,7 +30,7 @@ checker_read_file_by_line(int ind,
   size_t tl;
 
   lb_a = 128;
-  lb_v = (unsigned char **) xcalloc(lb_a, sizeof(lb_v[0]));
+  lb_v = (char **) xcalloc(lb_a, sizeof(lb_v[0]));
   lb_v[0] = NULL;
 
   b_a = 1024;
@@ -49,7 +49,7 @@ checker_read_file_by_line(int ind,
     if (tl < sizeof(tv) - 1 || feof(f_arr[ind])) {
       if (lb_u >= lb_a - 1) {
         lb_a *= 2;
-        lb_v = (unsigned char **) xrealloc(lb_v, lb_a * sizeof(lb_v[0]));
+        lb_v = (char **) xrealloc(lb_v, lb_a * sizeof(lb_v[0]));
       }
       lb_v[lb_u] = xstrdup(b_v);
       lb_v[++lb_u] = 0;

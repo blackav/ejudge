@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 #include "checker_internal.h"
 
 void
-checker_read_file(int ind, unsigned char **out, size_t *out_len)
+checker_read_file(int ind, char **out, size_t *out_len)
 {
   unsigned char read_buf[512];
   unsigned char *buf = 0;
