@@ -16,24 +16,24 @@
  */
 
 #include "checker_internal.h"
+#include <errno.h>
 
 int
 checker_read_corr_long_long(const char *name,
                             int eof_error_flag,
                             long long *p_val)
 {
-  long long x = 0;
-  int n = 0;
+  long long x;
+  char sb[128], *db = 0, *vb = 0, *ep = 0;
+  size_t ds = 0;
 
-  if ((n = fscanf(f_corr, "%lld", &x)) != 1) {
-    if (ferror(f_corr))
-      fatal_CF("Input error from team output file");
-    if (n == EOF) {
-      if (!eof_error_flag) return -1;
-      fatal_CF("Unexpected EOF while reading %s in team output file", name);
-    }
-    fatal_CF("Cannot read long long value (%s) from team output", name);
-  }
+  if (!name) name = "";
+  vb = checker_read_buf_2(2, name, eof_error_flag, sb, sizeof(sb), &db, &ds);
+  if (!vb) return -1;
+  errno = 0;
+  x = strtoll(vb, &ep, 10);
+  if (*ep) fatal_CF("cannot parse int64 value for %s from correct", name);
+  if (errno) fatal_CF("int64 value %s from correct is out of range", name);
   *p_val = x;
   return 1;
 }

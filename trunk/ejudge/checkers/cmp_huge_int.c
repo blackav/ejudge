@@ -18,7 +18,7 @@
 #define NEED_CORR 1
 #include "checker.h"
 
-enum { BUFSIZE = 1048576 };
+enum { BUFSIZE = 1024 };
 
 static int
 is_number(const char *buf)
@@ -58,20 +58,23 @@ normalize_number(char *buf)
 int
 checker_main(int argc, char *argv[])
 {
-  char outbuf[BUFSIZE], corrbuf[BUFSIZE];
+  char outsbuf[BUFSIZE], corrsbuf[BUFSIZE];
+  char *outdbuf = 0, *corrdbuf = 0;
+  size_t outdsz = 0, corrdsz = 0;
+  char *outval, *corrval;
 
-  checker_read_buf(1, "out", 1, outbuf, BUFSIZE);
+  outval = checker_read_buf_2(1, "out", 1, outsbuf, BUFSIZE, &outdbuf, &outdsz);
   checker_out_eof();
-  if (!is_number(outbuf)) fatal_PE("out: not a number");
-  normalize_number(outbuf);
+  if (!is_number(outval)) fatal_PE("out: not a number");
+  normalize_number(outval);
 
-  checker_read_buf(2, "corr", 1, corrbuf, BUFSIZE);
+  corrval = checker_read_buf_2(2,"corr",1,corrsbuf,BUFSIZE,&corrdbuf,&corrdsz);
   checker_corr_eof();
-  if (!is_number(corrbuf)) fatal_CF("corr: not a number");
-  normalize_number(corrbuf);
+  if (!is_number(corrval)) fatal_CF("corr: not a number");
+  normalize_number(corrval);
 
-  if (strcmp(outbuf, corrbuf) != 0)
-    fatal_WA("wrong answer: out: %s, corr: %s", outbuf, corrbuf);
+  if (strcmp(outval, corrval) != 0)
+    fatal_WA("wrong answer: out: %s, corr: %s", outval, corrval);
 
   checker_OK();
 }
