@@ -16,23 +16,24 @@
  */
 
 #include "checker_internal.h"
+#include <errno.h>
 
 int
 checker_read_in_int(const char *name,
                     int eof_error_flag,
                     int *p_val)
 {
-  int x = 0, n = 0;
+  int x;
+  char sb[128], *db = 0, *vb = 0, *ep = 0;
+  size_t ds = 0;
 
-  if ((n = fscanf(f_in, "%d", &x)) != 1) {
-    if (ferror(f_in))
-      fatal_CF("Input error from input file");
-    if (n == EOF) {
-      if (!eof_error_flag) return -1;
-      fatal_CF("Unexpected EOF while reading %s in input file", name);
-    }
-    fatal_CF("Cannot read int value (%s) from input file", name);
-  }
+  if (!name) name = "";
+  vb = checker_read_buf_2(0, name, eof_error_flag, sb, sizeof(sb), &db, &ds);
+  if (!vb) return -1;
+  errno = 0;
+  x = strtol(vb, &ep, 10);
+  if (*ep) fatal_CF("cannot parse int32 value for %s from input", name);
+  if (errno) fatal_CF("int32 value %s from input is out of range", name);
   *p_val = x;
   return 1;
 }

@@ -16,6 +16,7 @@
  */
 
 #include "checker_internal.h"
+#include <errno.h>
 
 int
 checker_read_unsigned_long_long(int ind,
@@ -23,22 +24,18 @@ checker_read_unsigned_long_long(int ind,
                                 int eof_error_flag,
                                 unsigned long long *p_val)
 {
-  unsigned long long x = 0.0;
-  int n;
+  unsigned long long x;
+  char sb[128], *db = 0, *vb = 0, *ep = 0;
+  size_t ds = 0;
 
   if (!name) name = "";
-  if ((n = fscanf(f_arr[ind], "%llu", &x)) != 1) {
-    if (ferror(f_arr[ind])) fatal_CF("Input error from input file");
-    if (n == EOF) {
-      if (!eof_error_flag) return -1;
-      if (ind == 1)
-        fatal_PE("Unexpected EOF while reading `%s'", name);
-      fatal_CF("Unexpected EOF while reading `%s'", name);
-    }
-    if (ind == 1)
-      fatal_PE("Cannot parse long long value `%s'", name);
-    fatal_CF("Cannot parse long long value `%s'", name);
-  }
+  vb = checker_read_buf_2(ind, name, eof_error_flag, sb, sizeof(sb), &db, &ds);
+  if (!vb) return -1;
+  if (vb[0] == '-') fatal_read(ind, "minus sign before uint64 value");
+  errno = 0;
+  x = strtoull(vb, &ep, 10);
+  if (*ep) fatal_read(ind, "cannot parse uint64 value for %s", name);
+  if (errno) fatal_read(ind, "uint64 value %s is out of range", name);
   *p_val = x;
   return 1;
 }

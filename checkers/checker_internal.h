@@ -143,8 +143,13 @@ void checker_in_eof(void);
 void checker_normalize_file(char **, size_t *);
 void checker_normalize_spaces_in_file(char **, size_t *);
 void checker_normalize_line(char *);
+
 int  checker_read_buf(int, const char *, int,
-                      char *,size_t);
+                      char *,size_t)
+	LIBCHECKER_ATTRIB((deprecated));
+char *checker_read_buf_2(int ind, const char *name, int eof_error_flag,
+                         char *sbuf, size_t ssz, char **pdbuf, size_t *pdsz);
+
 void checker_read_file(int, char **, size_t *);
 void checker_read_file_f(FILE *, char **, size_t *);
 void checker_read_file_by_line(int, char ***, size_t *);

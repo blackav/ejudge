@@ -35,6 +35,7 @@ CFILES=\
  normalize_line.c\
  skip_eoln.c\
  read_buf.c\
+ read_buf_2.c\
  read_file_by_line.c\
  read_file_by_line_f.c\
  read_file.c\
