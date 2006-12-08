@@ -4926,7 +4926,7 @@ priv_main_page(FILE *fout,
       case PROB_TYPE_SELECT_ONE:
         if (alternatives) {
           write_alternatives_file(fout, 1, alternatives);
-        } else if (prob->alternative[i]) {
+        } else if (prob->alternative) {
           for (i = 0; prob->alternative[i]; i++) {
             fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
           }
