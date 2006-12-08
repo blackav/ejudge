@@ -4926,7 +4926,7 @@ priv_main_page(FILE *fout,
       case PROB_TYPE_SELECT_ONE:
         if (alternatives) {
           write_alternatives_file(fout, 1, alternatives);
-        } else {
+        } else if (prob->alternative[i]) {
           for (i = 0; prob->alternative[i]; i++) {
             fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
           }
@@ -4935,7 +4935,7 @@ priv_main_page(FILE *fout,
       case PROB_TYPE_SELECT_MANY:
         if (alternatives) {
           write_alternatives_file(fout, 0, alternatives);
-        } else {
+        } else if (prob->alternative) {
           for (i = 0; prob->alternative[i]; i++) {
             fprintf(fout, "<tr><td>%d</td><td><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
           }
@@ -8118,7 +8118,7 @@ user_main_page(FILE *fout,
       case PROB_TYPE_SELECT_ONE:
         if (alternatives) {
           write_alternatives_file(fout, 1, alternatives);
-        } else {
+        } else if (prob->alternative) {
           for (i = 0; prob->alternative[i]; i++) {
             fprintf(fout, "<tr><td class=\"borderless\">%d</td><td class=\"borderless\"><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
           }
@@ -8127,7 +8127,7 @@ user_main_page(FILE *fout,
       case PROB_TYPE_SELECT_MANY:
         if (alternatives) {
           write_alternatives_file(fout, 0, alternatives);
-        } else {
+        } else if (prob->alternative) {
           for (i = 0; prob->alternative[i]; i++) {
             fprintf(fout, "<tr><td class=\"borderless\">%d</td><td class=\"borderless\"><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
           }
