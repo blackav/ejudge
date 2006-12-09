@@ -22,9 +22,9 @@ checker_out_eof(void)
 {
   fscanf(f_out, " ");
   if (ferror(f_out))
-    fatal_CF("Input error from team output file");
+    fatal_CF("Input error from output file");
   if (getc(f_out) != EOF)
-    fatal_PE("Garbage in team output file");
+    fatal_PE("Garbage in output file");
 }
 
 void

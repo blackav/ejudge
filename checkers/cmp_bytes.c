@@ -22,20 +22,20 @@
 
 int checker_main(int argc, char **argv)
 {
-  char *corr_data = 0, *team_data = 0;
-  size_t corr_size = 0, team_size = 0, i;
+  char *corr_data = 0, *out_data = 0;
+  size_t corr_size = 0, out_size = 0, i;
 
-  checker_read_file(1, &team_data, &team_size);
+  checker_read_file(1, &out_data, &out_size);
   checker_read_file(2, &corr_data, &corr_size);
 
-  if (team_size != corr_size)
-    fatal_WA("Different size: team = %zu, corr = %zu", team_size, corr_size);
+  if (out_size != corr_size)
+    fatal_WA("Different size: out = %zu, corr = %zu", out_size, corr_size);
   for (i = 0; i < corr_size; i++)
-    if (corr_data[i] != team_data[i])
+    if (corr_data[i] != out_data[i])
       break;
   if (i < corr_size)
-    fatal_WA("Difference at byte %zu; team = %d, corr = %d", i,
-             team_data[i], corr_data[i]);
+    fatal_WA("Difference at byte %zu; out = %d, corr = %d", i,
+             out_data[i], corr_data[i]);
 
   checker_OK();
 }

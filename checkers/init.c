@@ -41,7 +41,7 @@ checker_do_init(int argc, char **argv, int corr_flag, int info_flag,
     fatal_CF("Cannot open input file `%s'", argv[1]);
   f_arr[0] = f_in;
   if (!(f_out = fopen(argv[2], "r")))
-    fatal_PE("Cannot open team output file `%s'", argv[2]);
+    fatal_PE("Cannot open output file `%s'", argv[2]);
   f_arr[1] = f_out;
   // backward compatibility
   f_team = f_out;

@@ -18,24 +18,24 @@
 #include "checker_internal.h"
 
 int
-checker_eq_sexpr(checker_sexpr_t l_corr, checker_sexpr_t l_team)
+checker_eq_sexpr(checker_sexpr_t l_out, checker_sexpr_t l_corr)
 {
-  if (!l_corr && !l_team) return 1;
-  if (!l_corr || !l_team) return 0;
-  if (l_corr->kind != l_team->kind) return 0;
+  if (!l_corr && !l_out) return 1;
+  if (!l_corr || !l_out) return 0;
+  if (l_corr->kind != l_out->kind) return 0;
   if (l_corr->kind == CHECKER_SEXPR_ATOM) {
-    if (strcmp(l_corr->a.value, l_team->a.value) != 0) return 0;
+    if (strcmp(l_corr->a.value, l_out->a.value) != 0) return 0;
     return 1;
   }
 
-  while (l_corr && l_team
+  while (l_corr && l_out
          && l_corr->kind==CHECKER_SEXPR_PAIR
-         && l_team->kind==CHECKER_SEXPR_PAIR) {
-    if (!checker_eq_sexpr(l_corr->p.head, l_team->p.head)) return 0;
+         && l_out->kind==CHECKER_SEXPR_PAIR) {
+    if (!checker_eq_sexpr(l_corr->p.head, l_out->p.head)) return 0;
     l_corr = l_corr->p.tail;
-    l_team = l_team->p.tail;
+    l_out = l_out->p.tail;
   }
-  if (!l_corr && !l_team) return 1;
-  if (!l_corr || !l_team) return 0;
-  return checker_eq_sexpr(l_corr, l_team);
+  if (!l_corr && !l_out) return 1;
+  if (!l_corr || !l_out) return 0;
+  return checker_eq_sexpr(l_corr, l_out);
 }
