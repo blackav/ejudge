@@ -4421,7 +4421,8 @@ insert_variant_num(unsigned char *buf, size_t size,
                    const unsigned char *file, int variant);
 
 static void
-write_alternatives_file(FILE *fout, int is_radio, const unsigned char *txt)
+write_alternatives_file(FILE *fout, int is_radio, const unsigned char *txt,
+                        const unsigned char *class_name)
 {
   const unsigned char *s, *p;
   unsigned char *txt2;
@@ -4429,8 +4430,14 @@ write_alternatives_file(FILE *fout, int is_radio, const unsigned char *txt)
   int line_max_count = 0, line_count = 0, i;
   unsigned char **lines = 0;
   unsigned char *t;
+  unsigned char *cl = "";
 
   if (!txt) return;
+
+  if (class_name && *class_name) {
+    cl = (unsigned char *) alloca(strlen(class_name) + 32);
+    sprintf(cl, " class=\"%s\"", class_name);
+  }
 
   // normalize the file
   txt_len = strlen(txt);
@@ -4468,9 +4475,9 @@ write_alternatives_file(FILE *fout, int is_radio, const unsigned char *txt)
 
   for (i = 0; i < line_count; i++) {
     if (is_radio) {
-      fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, lines[i]);
+      fprintf(fout, "<tr><td%s>%d</td><td%s><input type=\"radio\" name=\"file\" value=\"%d\"></td><td%s>%s</td></tr>\n", cl, i + 1, cl, i + 1, cl, lines[i]);
     } else {
-      fprintf(fout, "<tr><td>%d</td><td><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, lines[i]);
+      fprintf(fout, "<tr><td%s>%d</td><td%s><input type=\"checkbox\" name=\"ans_%d\"></td><td%s>%s</td></tr>\n", cl, i + 1, cl, i + 1, cl, lines[i]);
     }
   }
 }
@@ -4925,7 +4932,7 @@ priv_main_page(FILE *fout,
         break;
       case PROB_TYPE_SELECT_ONE:
         if (alternatives) {
-          write_alternatives_file(fout, 1, alternatives);
+          write_alternatives_file(fout, 1, alternatives, "borderless");
         } else if (prob->alternative) {
           for (i = 0; prob->alternative[i]; i++) {
             fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
@@ -4934,7 +4941,7 @@ priv_main_page(FILE *fout,
         break;
       case PROB_TYPE_SELECT_MANY:
         if (alternatives) {
-          write_alternatives_file(fout, 0, alternatives);
+          write_alternatives_file(fout, 0, alternatives, "borderless");
         } else if (prob->alternative) {
           for (i = 0; prob->alternative[i]; i++) {
             fprintf(fout, "<tr><td>%d</td><td><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
@@ -7715,10 +7722,12 @@ unpriv_page_header(FILE *fout,
       break;
     case NEW_SRV_ACTION_STANDINGS:
       if (start_time <= 0) continue;
+      if (global->disable_user_standings > 0) continue;
       if (global->score_system_val == SCORE_OLYMPIAD) continue;
       break;
     case NEW_SRV_ACTION_VIEW_CLAR_SUBMIT:
       if (global->disable_team_clars) continue;
+      if (global->disable_clars) continue;
       if (start_time <= 0) continue;
       if (stop_time > 0
           && (global->appeal_deadline_d <= 0
@@ -8117,7 +8126,7 @@ user_main_page(FILE *fout,
         break;
       case PROB_TYPE_SELECT_ONE:
         if (alternatives) {
-          write_alternatives_file(fout, 1, alternatives);
+          write_alternatives_file(fout, 1, alternatives, "borderless");
         } else if (prob->alternative) {
           for (i = 0; prob->alternative[i]; i++) {
             fprintf(fout, "<tr><td class=\"borderless\">%d</td><td class=\"borderless\"><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
@@ -8126,7 +8135,7 @@ user_main_page(FILE *fout,
         break;
       case PROB_TYPE_SELECT_MANY:
         if (alternatives) {
-          write_alternatives_file(fout, 0, alternatives);
+          write_alternatives_file(fout, 0, alternatives, "borderless");
         } else if (prob->alternative) {
           for (i = 0; prob->alternative[i]; i++) {
             fprintf(fout, "<tr><td class=\"borderless\">%d</td><td class=\"borderless\"><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);

@@ -308,14 +308,14 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt)
   if (!strcmp(name_buf, "params")) {
     if (pt->cmd_argc >= 0) FAIL(TINF_E_VAR_REDEFINED);
     pt->cmd_argc = cmd.u;
-    pt->cmd_argv = cmd.v;
+    pt->cmd_argv = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
   } else if (!strcmp(name_buf, "comment")
              || !strcmp(name_buf, "team_comment")) {
     if (!strcmp(name_buf, "comment")) {
-      ppval = &pt->comment;
+      ppval = (unsigned char**) &pt->comment;
     } else {
-      ppval = &pt->team_comment;
+      ppval = (unsigned char**) &pt->team_comment;
     }
     if (*ppval) FAIL(TINF_E_VAR_REDEFINED);
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
@@ -378,7 +378,7 @@ parse_file(FILE *fin, testinfo_t *pt)
 }
 
 int
-testinfo_parse(const unsigned char *path, testinfo_t *pt)
+testinfo_parse(const char *path, testinfo_t *pt)
 {
   FILE *fin = 0;
   int retval;
@@ -431,7 +431,7 @@ static const unsigned char * const error_codes[] =
   [TINF_E_MULTIPLE_VALUE] "variable value is multiple",
   [TINF_E_INVALID_VALUE] = "variable value is invalid",
 };
-const unsigned char *
+const char *
 testinfo_strerror(int err)
 {
   if (err < 0) err = -err;

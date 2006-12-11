@@ -18,10 +18,8 @@
  */
 
 #ifdef __cplusplus
-#define TESTINFO_char_t char
 extern "C" {
 #else
-#define TESTINFO_char_t unsigned char
 #endif /* __cplusplus */
 
 /* error codes, actual error values are negative */
@@ -51,20 +49,19 @@ struct testinfo_struct
   int exit_code;
   int check_stderr;
   int cmd_argc;
-  TESTINFO_char_t **cmd_argv;
-  TESTINFO_char_t *comment;
-  TESTINFO_char_t *team_comment;
+  char **cmd_argv;
+  char *comment;
+  char *team_comment;
 };
 typedef struct testinfo_struct testinfo_t;
 
-int testinfo_parse(const TESTINFO_char_t *path, testinfo_t *pt);
+int testinfo_parse(const char *path, testinfo_t *pt);
 void testinfo_free(testinfo_t *pt);
-const TESTINFO_char_t *testinfo_strerror(int errcode);
+const char *testinfo_strerror(int errcode);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
-#undef TESTINFO_char_t
 
 #endif /* __TESTINFO_H__ */
 
