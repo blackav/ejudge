@@ -1,6 +1,6 @@
 #!/bin/bash
 # $Id$
-# Copyright (c) 2004 Alexander Chernov
+# Copyright (c) 2004-2006 Alexander Chernov <cher@ejudge.ru>
 
 # assume that we have single argument
 # EJUDGE_JAVA_FLAGS may be used to pass additional flags
@@ -21,7 +21,7 @@ if [ x"${EJUDGE_JAVA_POLICY}" = xnone ]
 then
   # no securuty policy, use with caution!
   mv "$1" Main.jar || exit 128
-  exec "${JAVARUN}" ${EJUDGE_JAVA_FLAGS} -cp ./Main.jar Main
+  exec "${JAVARUN}" ${EJUDGE_JAVA_FLAGS} -jar ./Main.jar
 fi
 
 [ x"${EJUDGE_JAVA_POLICY}" = x ] && EJUDGE_JAVA_POLICY=default.policy
@@ -45,4 +45,4 @@ then
 fi
 
 mv "$1" Main.jar || exit 128
-exec "${JAVARUN}" ${EJUDGE_JAVA_FLAGS} -cp ./Main.jar -Djava.security.manager -Djava.security.policy="${policy_file}" Main
+exec "${JAVARUN}" ${EJUDGE_JAVA_FLAGS} -Djava.security.manager -Djava.security.policy="${policy_file}" -jar ./Main.jar
