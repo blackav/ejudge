@@ -601,4 +601,6 @@ void userlist_write_xml_footer(FILE *f);
 void userlist_write_contests_xml_header(FILE *f);
 void userlist_write_contests_xml_footer(FILE *f);
 
+int userlist_map_userlist_to_contest_field(int uf);
+
 #endif /* __USERLIST_H__ */

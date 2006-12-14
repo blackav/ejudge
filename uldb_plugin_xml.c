@@ -105,7 +105,8 @@ static int maintenance_func(void *, time_t);
 static int change_member_role_func(void *, int, int, int, int, time_t, int *);
 static int set_user_xml_func(void *, int, int, struct userlist_user *,
                              time_t, int *);
-static int copy_user_info_func(void *, int, int, int, time_t);
+static int copy_user_info_func(void *, int, int, int, time_t,
+                               const struct contest_desc *);
 
 struct uldb_plugin_iface uldb_plugin_xml =
 {
@@ -2405,19 +2406,46 @@ set_user_xml_func(void *data,
   }
 
   // FIXME: properly set the change flag?
+  state->dirty = 1;
+  state->flush_interval /= 2;
   return 1;
 }
+
+static const int copy_user_general_fields[] =
+{
+  USERLIST_NC_INST,
+  USERLIST_NC_INST_EN,
+  USERLIST_NC_INSTSHORT,
+  USERLIST_NC_INSTSHORT_EN,
+  USERLIST_NC_FAC,
+  USERLIST_NC_FAC_EN,
+  USERLIST_NC_FACSHORT,
+  USERLIST_NC_FACSHORT_EN,
+  USERLIST_NC_HOMEPAGE,
+  USERLIST_NC_CITY,
+  USERLIST_NC_CITY_EN,
+  USERLIST_NC_COUNTRY,
+  USERLIST_NC_COUNTRY_EN,
+  USERLIST_NC_REGION,
+  USERLIST_NC_SPELLING,
+  USERLIST_NC_LANGUAGES,
+  USERLIST_NC_PHONE,
+
+  0
+};
 
 static int
 copy_user_info_func(void *data, int user_id,
                     int from_cnts, int to_cnts,
-                    time_t cur_time)
+                    time_t cur_time, const struct contest_desc *cnts)
 {
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
   struct userlist_list *ul = state->userlist;
   struct userlist_user *u;
   const struct userlist_user_info *ui_from = 0;
   struct userlist_user_info *ui_to;
+  int i, j, k;
+  unsigned char **p_str_from, **p_str_to;
 
   if (user_id <= 0 || user_id >= ul->user_map_size
       || !(u = ul->user_map[user_id])) {
@@ -2435,7 +2463,6 @@ copy_user_info_func(void *data, int user_id,
     return -1;
   if (!(ui_to = userlist_get_user_info_nc(u, to_cnts))) return -1;
 
-  // FIXME: copy everything, only `name' is copied for now
   xfree(ui_to->name);
   ui_to->name = xstrdup(ui_from->name);
   if (ui_from->team_passwd) {
@@ -2444,6 +2471,31 @@ copy_user_info_func(void *data, int user_id,
     ui_to->team_passwd_method = ui_from->team_passwd_method;
   }
 
+  for (i = 0; copy_user_general_fields[i] > 0; i++) {
+    j = copy_user_general_fields[i];
+    k = userlist_map_userlist_to_contest_field(j);
+    p_str_to = (unsigned char**) userlist_get_user_info_field_ptr(ui_to, j);
+    xfree(*p_str_to); *p_str_to = 0;
+    if (!cnts->fields[k]) continue;
+    p_str_from = (unsigned char**) userlist_get_user_info_field_ptr(ui_to, j);
+    if (!*p_str_from) continue;
+    *p_str_to = xstrdup(*p_str_from);
+  }
+
+  /* clear `printer_name' and `location' */
+  xfree(ui_to->printer_name); ui_to->printer_name = 0;
+  xfree(ui_to->location); ui_to->location = 0;
+  /* copy spelling field */
+  xfree(ui_to->spelling); ui_to->spelling = 0;
+  if (ui_from->spelling) ui_to->spelling = xstrdup(ui_from->spelling);
+
+  /* copy members
+  struct userlist_members *members[USERLIST_MB_LAST];
+  */
+
+  ui_to->last_change_time = cur_time;
+  state->dirty = 1;
+  state->flush_interval /= 2;
   return 0;
 }
 
