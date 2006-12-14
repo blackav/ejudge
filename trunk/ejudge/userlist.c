@@ -1410,6 +1410,10 @@ userlist_clone_member(struct userlist_member *src, int *p_serial,
   dst->facshort = copy_field(src->facshort);
   dst->facshort_en = copy_field(src->facshort_en);
 
+  dst->birth_date = src->birth_date;
+  dst->entry_date = src->entry_date;
+  dst->graduation_date = src->graduation_date;
+
   dst->create_time = current_time;
   dst->last_change_time = current_time;
   dst->last_access_time = 0;

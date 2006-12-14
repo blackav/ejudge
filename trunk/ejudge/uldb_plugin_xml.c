@@ -2446,6 +2446,9 @@ copy_user_info_func(void *data, int user_id,
   struct userlist_user_info *ui_to;
   int i, j, k;
   unsigned char **p_str_from, **p_str_to;
+  struct userlist_members *mm;
+  struct userlist_member *m;
+  struct userlist_cntsinfo *ci;
 
   if (user_id <= 0 || user_id >= ul->user_map_size
       || !(u = ul->user_map[user_id])) {
@@ -2459,7 +2462,8 @@ copy_user_info_func(void *data, int user_id,
     return -1;
 
   // the destination
-  if (!userlist_clone_user_info(u, to_cnts, &ul->member_serial, cur_time, 0))
+  if (!(ci = userlist_clone_user_info(u, to_cnts, &ul->member_serial,
+                                      cur_time, 0)))
     return -1;
   if (!(ui_to = userlist_get_user_info_nc(u, to_cnts))) return -1;
 
@@ -2476,7 +2480,7 @@ copy_user_info_func(void *data, int user_id,
     k = userlist_map_userlist_to_contest_field(j);
     p_str_to = (unsigned char**) userlist_get_user_info_field_ptr(ui_to, j);
     xfree(*p_str_to); *p_str_to = 0;
-    if (!cnts->fields[k]) continue;
+    if (cnts && !cnts->fields[k]) continue;
     p_str_from = (unsigned char**) userlist_get_user_info_field_ptr(ui_to, j);
     if (!*p_str_from) continue;
     *p_str_to = xstrdup(*p_str_from);
@@ -2489,9 +2493,48 @@ copy_user_info_func(void *data, int user_id,
   xfree(ui_to->spelling); ui_to->spelling = 0;
   if (ui_from->spelling) ui_to->spelling = xstrdup(ui_from->spelling);
 
-  /* copy members
-  struct userlist_members *members[USERLIST_MB_LAST];
-  */
+  /*
+    free the existing member info
+   */
+  for (i = 0; i < USERLIST_MB_LAST; i++) {
+    if (!(mm = ui_to->members[i])) continue;
+    for (j = 0; j < mm->total; j++) {
+      if (!(m = mm->members[j])) continue;
+      xml_unlink_node(&m->b);
+      userlist_free(&m->b);
+      mm->members[j] = 0;
+    }
+    xml_unlink_node(&mm->b);
+    userlist_free(&mm->b);
+    ui_to->members[i] = 0;
+  }
+
+  /*
+    copy the member info
+   */
+  for (i = 0; i < USERLIST_MB_LAST; i++) {
+    if (cnts && (!cnts->members[i] || !cnts->members[i]->max_count)) continue;
+    if (!ui_from->members[i] || !ui_from->members[i]->total) continue;
+    k = ui_from->members[i]->total;
+    if (cnts && k > cnts->members[i]->max_count)
+      k = cnts->members[i]->max_count;
+    mm = (struct userlist_members*) userlist_node_alloc(USERLIST_T_CONTESTANTS + i);
+    ui_to->members[i] = mm;
+    xml_link_node_last(&ci->b, &mm->b);
+    mm->role = ui_from->members[i]->role;
+    mm->total = ui_from->members[i]->total;
+    j = 4;
+    while (j < mm->total) j *= 2;
+    mm->allocd = j;
+    XCALLOC(mm->members, j);
+
+    for (j = 0; j < k; j++) {
+      if (!ui_from->members[i]->members[j]) continue;
+      mm->members[j] = userlist_clone_member(ui_from->members[i]->members[j],
+                                             &ul->member_serial, cur_time);
+      xml_link_node_last(&mm->b, &mm->members[i]->b);
+    }
+  }
 
   ui_to->last_change_time = cur_time;
   state->dirty = 1;
