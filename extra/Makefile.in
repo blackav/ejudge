@@ -61,7 +61,7 @@ LD=gcc
 CFLAGS=${LIBCAP_INCL_OPT} ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CINTLFLAG} ${CEXTRAFLAGS} ${WPTRSIGN}
 LDFLAGS=${LIBCAP_LIB_OPT} ${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
 
-TARGETS=bpcemu2 dosrun3 bppemu bccemu qbemu
+TARGETS=bpcemu2 dosrun3 bppemu bccemu qbemu ej-javac
 TARGETALLWAYS=${TARGETS}
 ifndef NO_KERNEL
 TARGETS += capexec
@@ -109,3 +109,7 @@ libdropcaps.o : libdropcaps.c
 dosrun3: dosrun3.o
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
 dosrun3.o: dosrun3.c
+
+ej-javac : ej-javac.o
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
+ej-javac.o : ej-javac.c
