@@ -120,7 +120,7 @@ extract_class_name(const char *path)
     }
   }
   fclose(fin); fin = 0;
-  return 0;
+  goto invalid_class_name;
 
  good_class_name:
   if (fin) fclose(fin);
