@@ -29,6 +29,7 @@ struct userlist_user;
 struct userlist_cookie;
 struct userlist_user_info;
 struct userlist_contest;
+struct contest_desc;
 
 /* version of the plugin interface structure */
 #define ULDB_PLUGIN_IFACE_VERSION 1
@@ -165,7 +166,8 @@ struct uldb_plugin_iface
   int (*set_user_xml)(void *, int, int, struct userlist_user *,
                       time_t, int *);
   // copy contest-specific user info to another contest
-  int (*copy_user_info)(void *, int, int, int, time_t);
+  int (*copy_user_info)(void *, int, int, int, time_t,
+                        const struct contest_desc *);
 };
 
 /* default plugin: compiled into userlist-server */

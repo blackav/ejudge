@@ -1622,6 +1622,36 @@ userlist_clear_copied_from(struct userlist_user_info *ui)
   }
 }
 
+static const int user_to_contest_field_map[USERLIST_NC_LAST] =
+{
+  [USERLIST_NC_INST] = CONTEST_F_INST,
+  [USERLIST_NC_INST_EN] = CONTEST_F_INST_EN,
+  [USERLIST_NC_INSTSHORT] = CONTEST_F_INSTSHORT,
+  [USERLIST_NC_INSTSHORT_EN] = CONTEST_F_INSTSHORT_EN,
+  [USERLIST_NC_FAC] = CONTEST_F_FAC,
+  [USERLIST_NC_FAC_EN] = CONTEST_F_FAC_EN,
+  [USERLIST_NC_FACSHORT] = CONTEST_F_FACSHORT,
+  [USERLIST_NC_FACSHORT_EN] = CONTEST_F_FACSHORT_EN,
+  [USERLIST_NC_HOMEPAGE] = CONTEST_F_HOMEPAGE,
+  [USERLIST_NC_CITY] = CONTEST_F_CITY,
+  [USERLIST_NC_CITY_EN] = CONTEST_F_CITY_EN,
+  [USERLIST_NC_COUNTRY] = CONTEST_F_COUNTRY,
+  [USERLIST_NC_COUNTRY_EN] = CONTEST_F_COUNTRY_EN,
+  [USERLIST_NC_REGION] = CONTEST_F_REGION,
+  [USERLIST_NC_LANGUAGES] = CONTEST_F_LANGUAGES,
+  [USERLIST_NC_PHONE] = CONTEST_F_PHONE,
+};
+
+int
+userlist_map_userlist_to_contest_field(int uf)
+{
+  int n;
+  ASSERT(uf >= USERLIST_NC_FIRST && uf < USERLIST_NC_LAST);
+  n = user_to_contest_field_map[uf];
+  ASSERT(n);
+  return n;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

@@ -566,7 +566,7 @@ link_client_state(struct client_state *p)
 #define default_new_member(a, b, c, d, e) uldb_default->iface->new_member(uldb_default->data, a, b, c, d, e)
 #define default_change_member_rol(a, b, c, d, e, f) uldb_default->iface->change_member_role(uldb_default->data, a, b, c, d, e, f)
 #define default_set_user_xml(a, b, c, d, e) uldb_default->iface->set_user_xml(uldb_default->data, a, b, c, d, e)
-#define default_copy_user_info(a, b, c, d) uldb_default->iface->copy_user_info(uldb_default->data, a, b, c, d)
+#define default_copy_user_info(a, b, c, d, e) uldb_default->iface->copy_user_info(uldb_default->data, a, b, c, d, e)
 
 static void
 update_all_user_contests(int user_id)
@@ -6890,7 +6890,7 @@ cmd_copy_user_info(struct client_state *p, int pkt_len,
 {
   unsigned char logbuf[1024];
   const struct userlist_user *u = 0;
-  const struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0, *cnts2 = 0;
   int reply_code = ULS_OK;
 
   // data->contest_id --- source contest
@@ -6923,8 +6923,9 @@ cmd_copy_user_info(struct client_state *p, int pkt_len,
   }
   if (is_cnts_capable(p, cnts, OPCAP_GET_USER, logbuf) < 0) return;
 
+  contests_get(data->serial, &cnts2);
   default_copy_user_info(data->user_id, data->contest_id, data->serial,
-                         cur_time);
+                         cur_time, cnts2);
 
   info("%s -> OK", logbuf);
   send_reply(p, reply_code);
