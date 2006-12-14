@@ -1209,6 +1209,7 @@ then
   if [[ x"${ac_cv_contest_java}" != xno ]]
   then
     case x"${ac_cv_contest_java_version_string}" in
+      x1.6.*) ac_cv_contest_java_version=1.5;;
       x1.5.*) ac_cv_contest_java_version=1.5;;
       x1.4.*) ac_cv_contest_java_version=1.4;;
       x1.3.*) ac_cv_contest_java_version=1.3;;
