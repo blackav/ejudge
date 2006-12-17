@@ -28,7 +28,7 @@ checker_ucs2_tolower(int c)
   return c;
 }
 
-unsigned char *
+unsigned short *
 checker_ucs2_tolower_buf(unsigned short *buf, size_t size)
 {
   unsigned short *p = buf;
