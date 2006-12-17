@@ -36,6 +36,7 @@ checker_ucs2_tolower_buf(unsigned short *buf, size_t size)
   for (; size; size--) {
     if (*p >= 'A' && *p <= 'Z') *p += 0x20;
     else if (*p >= 0x410 && *p <= 0x42f) *p += 0x20;
-    else if (*p == 0x401) return *p += 0x50;
+    else if (*p == 0x401) *p += 0x50;
   }
+  return buf;
 }
