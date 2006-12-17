@@ -217,7 +217,7 @@ unsigned short *checker_mac_to_ucs2_buf(const char*, unsigned short*, size_t);
 int checker_utf8_to_ucs2_buf(const char *, unsigned short *, size_t);
 
 int checker_ucs2_tolower(int c);
-unsigned char *checker_ucs2_tolower_buf(unsigned short *buf, size_t size);
+unsigned short *checker_ucs2_tolower_buf(unsigned short *buf, size_t size);
 
 int checker_strcmp_ucs2(const unsigned short *s1, const unsigned short *s2);
 int checker_eq_str_rus_ucs2(const char *s1, const unsigned short *s2);
