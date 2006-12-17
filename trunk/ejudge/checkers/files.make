@@ -77,7 +77,15 @@ CFILES=\
  xcalloc.c\
  xmalloc.c\
  xrealloc.c\
- xstrdup.c
+ xstrdup.c\
+ koi8r.c\
+ cp866.c\
+ cp1251.c\
+ iso.c\
+ mac.c\
+ utf8.c\
+ ucs2.c\
+ ruscmp.c
 
 CHKCFILES =\
  cmp_bytes.c\

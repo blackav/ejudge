@@ -203,6 +203,26 @@ int checker_eq_float_abs(float v1, float v2, float eps);
 checker_sexpr_t checker_read_sexpr(int ind);
 int checker_eq_sexpr(checker_sexpr_t l_corr, checker_sexpr_t l_out);
 
+int checker_koi8r_to_ucs2(int c);
+unsigned short *checker_koi8r_to_ucs2_buf(const char*, unsigned short*, size_t);
+int checker_cp866_to_ucs2(int c);
+unsigned short *checker_cp866_to_ucs2_buf(const char*, unsigned short*, size_t);
+int checker_cp1251_to_ucs2(int c);
+unsigned short *checker_cp1251_to_ucs2_buf(const char*,unsigned short*, size_t);
+int checker_iso_to_ucs2(int c);
+unsigned short *checker_iso_to_ucs2_buf(const char*, unsigned short*, size_t);
+int checker_mac_to_ucs2(int c);
+unsigned short *checker_mac_to_ucs2_buf(const char*, unsigned short*, size_t);
+
+int checker_utf8_to_ucs2_buf(const char *, unsigned short *, size_t);
+
+int checker_ucs2_tolower(int c);
+unsigned char *checker_ucs2_tolower_buf(unsigned short *buf, size_t size);
+
+int checker_strcmp_ucs2(const unsigned short *s1, const unsigned short *s2);
+int checker_eq_str_rus_ucs2(const char *s1, const unsigned short *s2);
+int checker_eq_str_rus_ucs2_nocase(const char *s1, const unsigned short *s2);
+
 // backward compatibility
 #if defined __GNUC__
 void checker_team_close(void)
