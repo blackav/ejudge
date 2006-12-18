@@ -1670,3 +1670,9 @@ uldb_plugin_xml.c 3735 0 5857909
 userlist.c 3735 0 4020629
 uldb_plugin_xml.c 3737 0 5967501
 userlist.c 3737 0 4031437
+new-server.h 3749 0 1187522
+new_server_proto.h 3749 0 415108
+new_server_html.c 3749 0 24085553
+new_server_html_2.c 3749 0 7096496
+new_server_proto.c 3749 0 835168
+new_server_tables.c 3749 0 894009
