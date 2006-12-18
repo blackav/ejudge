@@ -909,6 +909,9 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   if ((prob->abstract && prob->binary_input == 1)
       || (!prob->abstract && prob->binary_input >= 0))
     unparse_bool(f, "binary_input", prob->binary_input);
+  if ((prob->abstract && prob->ignore_exit_code == 1)
+      || (!prob->abstract && prob->ignore_exit_code >= 0))
+    unparse_bool(f, "ignore_exit_code", prob->ignore_exit_code);
   if (prob->statement_file[0])
     fprintf(f, "statement_file = \"%s\"\n",c_armor(&sbuf,prob->statement_file));
   if (prob->alternatives_file[0])
@@ -1575,6 +1578,8 @@ prepare_unparse_testers(FILE *f,
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDOUT,
                            &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT,
+                           &tmp_prob, abstr, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_IGNORE_EXIT_CODE,
                            &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_VM_SIZE,
                            &tmp_prob, abstr, global);

@@ -287,6 +287,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(use_stdin, "d"),
   PROBLEM_PARAM(use_stdout, "d"),
   PROBLEM_PARAM(binary_input, "d"),
+  PROBLEM_PARAM(ignore_exit_code, "d"),
   PROBLEM_PARAM(time_limit, "d"),
   PROBLEM_PARAM(time_limit_millis, "d"),
   PROBLEM_PARAM(real_time_limit, "d"),
@@ -586,6 +587,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->use_stdin = -1;
   p->use_stdout = -1;
   p->binary_input = -1;
+  p->ignore_exit_code = -1;
   p->time_limit = -1;
   p->time_limit_millis = -1;
   p->real_time_limit = -1;
@@ -2317,6 +2319,8 @@ set_defaults(serve_state_t state, int mode)
                            state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT,
                            state->probs[i], aprob, state->global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_IGNORE_EXIT_CODE,
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT,
                            state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT_MILLIS,
@@ -3826,6 +3830,7 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
   if (prob->use_stdin < 0) prob->use_stdin = 0;
   if (prob->use_stdout < 0) prob->use_stdout = 0;
   if (prob->binary_input < 0) prob->binary_input = DFLT_P_BINARY_INPUT;
+  if (prob->ignore_exit_code < 0) prob->ignore_exit_code = 0;
   if (prob->time_limit < 0) prob->time_limit = 0;
   if (prob->time_limit_millis < 0) prob->time_limit_millis = 0;
   if (prob->real_time_limit < 0) prob->real_time_limit = 0;
@@ -4264,6 +4269,11 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
   case PREPARE_FIELD_PROB_BINARY_INPUT:
     if (out->binary_input == -1 && abstr) out->binary_input = abstr->binary_input;
     if (out->binary_input == -1) out->binary_input = DFLT_P_BINARY_INPUT;
+    break;
+
+  case PREPARE_FIELD_PROB_IGNORE_EXIT_CODE:
+    if (out->ignore_exit_code == -1 && abstr) out->ignore_exit_code = abstr->ignore_exit_code;
+    if (out->ignore_exit_code == -1) out->ignore_exit_code = 0;
     break;
 
   case PREPARE_FIELD_PROB_TIME_LIMIT:

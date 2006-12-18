@@ -1004,8 +1004,12 @@ run_tests(struct section_tester_data *tst,
         task_Delete(tsk); tsk = 0;
         goto done_this_test;
       }
-    } else if (tsk && ((error_code[0] && ec != 0)
-                       || (!error_code[0] && task_IsAbnormal(tsk)))) {
+    } else if (tsk && ((error_code[0] && !prb->ignore_exit_code && ec != 0)
+                       || (!error_code[0]
+                           && ((!prb->ignore_exit_code
+                                && task_IsAbnormal(tsk))
+                               || (prb->ignore_exit_code
+                                   && task_Status(tsk) == TSK_SIGNALED))))) {
       /* runtime error */
       if (error_code[0]) {
         tests[cur_test].code = ec;

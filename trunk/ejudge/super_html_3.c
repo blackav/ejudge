@@ -4310,6 +4310,23 @@ super_html_print_problem(FILE *f,
     }
   } /* show_adv */
 
+  if (show_adv) {
+    //PROBLEM_PARAM(ignore_exit_code, "d"),
+    extra_msg = 0;
+    if (!prob->abstract) {
+      prepare_set_prob_value(PREPARE_FIELD_PROB_IGNORE_EXIT_CODE,
+                             &tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+               tmp_prob.ignore_exit_code?"Yes":"No");
+      extra_msg = msg_buf;
+    }
+    print_boolean_3_select_row(f, "Ignore exit code?", prob->ignore_exit_code,
+                               SUPER_ACTION_PROB_CHANGE_IGNORE_EXIT_CODE,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+  }
+
   if (sstate->global && sstate->global->score_system_val != SCORE_ACM) {
     //PROBLEM_PARAM(full_score, "d"),
     extra_msg = "";
@@ -4946,6 +4963,7 @@ super_html_prob_cmd(struct sid_state *sstate, int cmd,
     prob->use_stdin = 1;
     prob->use_stdout = 1;
     prob->binary_input = DFLT_P_BINARY_INPUT;
+    prob->ignore_exit_code = 0;
     prob->time_limit = 5;
     prob->time_limit_millis = 0;
     prob->real_time_limit = 30;
@@ -5151,6 +5169,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_BINARY_INPUT:
     p_int = &prob->binary_input;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_IGNORE_EXIT_CODE:
+    p_int = &prob->ignore_exit_code;
     goto handle_boolean_1;
 
   case SSERV_CMD_PROB_CHANGE_TIME_LIMIT:
@@ -7060,6 +7082,7 @@ super_html_check_tests(FILE *f,
     prepare_set_prob_value(PREPARE_FIELD_PROB_EXAMINATOR_NUM, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_PRESENTATION, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT, &tmp_prob, abstr, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_IGNORE_EXIT_CODE, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_DIR, &tmp_prob, abstr, 0);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_CORR, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_SFX, &tmp_prob, abstr, global);
