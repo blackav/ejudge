@@ -148,6 +148,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -4033,6 +4034,167 @@ priv_view_test(FILE *fout,
 }
 
 static int
+priv_download_runs_confirmation(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  //const serve_state_t cs = extra->serve_state;
+  int retval = 0;
+  unsigned char bb[1024];
+  unsigned long *mask = 0, mval;
+  size_t mask_size = 0;
+  const unsigned char *mask_size_str = 0;
+  const unsigned char *mask_str = 0;
+  size_t mask_count = 0;
+  int i, j;
+
+  if (opcaps_check(phr->caps, OPCAP_DUMP_RUNS) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
+
+  if (parse_run_mask(phr, &mask_size_str, &mask_str, &mask_size, &mask) < 0)
+    goto invalid_param;
+
+  for (i = 0; i < mask_size; i++) {
+    mval = mask[i];
+    for (j = 0; j < 8 * sizeof(mask[0]); j++, mval >>= 1)
+      if ((mval & 1)) mask_count++;
+  }
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+            "%s [%s, %s]: %s", ns_unparse_role(phr->role),
+            phr->name_arm, extra->contest_arm, "Download runs configuration");
+
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+  html_hidden(fout, "run_mask_size", "%s", mask_size_str);
+  html_hidden(fout, "run_mask", "%s", mask_str);
+  fprintf(fout, "<h2>%s</h2>\n", _("Run selection"));
+  fprintf(fout, "<table>");
+  fprintf(fout, "<tr><td><input type=\"radio\" name=\"run_selection\" value=\"0\" checked=\"yes\"/></td><td>%s</td></tr>\n", _("Download all runs"));
+  fprintf(fout, "<tr><td><input type=\"radio\" name=\"run_selection\" value=\"1\"/></td><td>%s (%zu)</td></tr>\n", _("Download selected runs"), mask_count);
+  fprintf(fout, "<tr><td><input type=\"radio\" name=\"run_selection\" value=\"2\"/></td><td>%s</td></tr>\n", _("Download OK runs"));
+  fprintf(fout, "</table>\n");
+
+  fprintf(fout, "<h2>%s</h2>\n", _("File name pattern"));
+  fprintf(fout, "<table>");
+  fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_run\" checked=\"yes\"/></td><td>%s</td></tr>\n", _("Use run number"));
+  fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_uid\"/></td><td>%s</td></tr>\n", _("Use user Id"));
+  fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_login\"/></td><td>%s</td></tr>\n", _("Use user Login"));
+  fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_prob\"/></td><td>%s</td></tr>\n", _("Use problem short name"));
+  fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_lang\"/></td><td>%s</td></tr>\n", _("Use programming language short name"));
+  fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_suffix\" checked=\"yes\"/></td><td>%s</td></tr>\n", _("Use source language or content type suffix"));
+  fprintf(fout, "</table>\n");
+
+  fprintf(fout, "<h2>%s</h2>\n", _("Directory structure"));
+  fprintf(fout, "<table>");
+  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"0\" checked=\"yes\"/></td><td>%s</td></tr>\n", _("No directory structure"));
+  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"1\"/></td><td>%s</td></tr>\n", _("/&lt;Problem&gt;/&lt;File&gt;"));
+  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"2\"/></td><td>%s</td></tr>\n", _("/&lt;User_Id&gt;/&lt;File&gt;"));
+  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"3\"/></td><td>%s</td></tr>\n", _("/&lt;User_Login&gt;/&lt;File&gt;"));
+  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"4\"/></td><td>%s</td></tr>\n", _("/&lt;Problem&gt;/&lt;User_Id&gt;/&lt;File&gt;"));
+  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"5\"/></td><td>%s</td></tr>\n", _("/&lt;Problem&gt;/&lt;User_Login&gt;/&lt;File&gt;"));
+  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"6\"/></td><td>%s</td></tr>\n", _("/&lt;User_Id&gt;/&lt;Problem&gt;/&lt;File&gt;"));
+  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"7\"/></td><td>%s</td></tr>\n", _("/&lt;User_Login&gt;/&lt;Problem&gt;/&lt;File&gt;"));
+  fprintf(fout, "</table>\n");
+
+  fprintf(fout, "<h2>%s</h2>\n", _("Download runs"));
+  fprintf(fout, "<table>");
+  fprintf(fout, "<tr><td>%s</td></tr>",
+          BUTTON(NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2));
+  fprintf(fout, "<tr><td>%s%s</a></td></tr></table>",
+          ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
+          _("Main page"));
+  fprintf(fout, "</form>\n");
+
+  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  return retval;
+
+ invalid_param:
+  ns_html_err_inv_param(fout, phr, 0, 0);
+  xfree(mask);
+  return -1;
+}
+
+static int
+priv_download_runs(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  int retval = 0;
+  unsigned long *mask = 0;
+  size_t mask_size = 0;
+  int x;
+  int dir_struct = 0;
+  int run_selection = 0;
+  int file_name_mask = 0;
+  const unsigned char *s;
+  char *ss = 0;
+
+  if (opcaps_check(phr->caps, OPCAP_DUMP_RUNS) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  // run_selection
+  // dir_struct
+  // file_pattern_run
+  // file_pattern_uid
+  // file_pattern_login
+  // file_pattern_prob
+  // file_pattern_lang
+  // file_pattern_suffix
+  if (ns_cgi_param(phr, "run_selection", &s) <= 0)
+    FAIL(NEW_SRV_ERR_INV_RUN_SELECTION);
+  errno = 0;
+  x = strtol(s, &ss, 10);
+  if (errno || *ss || x < 0 || x > 2) FAIL(NEW_SRV_ERR_INV_RUN_SELECTION);
+  run_selection = x;
+
+  if (ns_cgi_param(phr, "dir_struct", &s) <= 0)
+    FAIL(NEW_SRV_ERR_INV_DIR_STRUCT);
+  errno = 0;
+  x = strtol(s, &ss, 10);
+  if (errno || *ss || x < 0 || x > 7) FAIL(NEW_SRV_ERR_INV_DIR_STRUCT);
+  dir_struct = x;
+
+  if (ns_cgi_param(phr, "file_pattern_run", &s) > 0)
+    file_name_mask |= NS_FILE_PATTERN_RUN;
+  if (ns_cgi_param(phr, "file_pattern_uid", &s) > 0)
+    file_name_mask |= NS_FILE_PATTERN_UID;
+  if (ns_cgi_param(phr, "file_pattern_login", &s) > 0)
+    file_name_mask |= NS_FILE_PATTERN_LOGIN;
+  if (ns_cgi_param(phr, "file_pattern_prob", &s) > 0)
+    file_name_mask |= NS_FILE_PATTERN_PROB;
+  if (ns_cgi_param(phr, "file_pattern_lang", &s) > 0)
+    file_name_mask |= NS_FILE_PATTERN_LANG;
+  if (ns_cgi_param(phr, "file_pattern_suffix", &s) > 0)
+    file_name_mask |= NS_FILE_PATTERN_SUFFIX;
+  if (!file_name_mask) file_name_mask = NS_FILE_PATTERN_RUN;
+
+  if (parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0)
+    goto invalid_param;
+
+  ns_download_runs(cs, fout, log_f, run_selection, dir_struct, file_name_mask,
+                   mask_size, mask);
+
+ cleanup:
+  return retval;
+
+ invalid_param:
+  ns_html_err_inv_param(fout, phr, 0, 0);
+  xfree(mask);
+  return -1;
+}
+
+static int
 priv_view_passwords(FILE *fout,
                     FILE *log_f,
                     struct http_request_info *phr,
@@ -4319,6 +4481,8 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_NEW_RUN_FORM] = priv_new_run_form_page,
   [NEW_SRV_ACTION_VIEW_USER_DUMP] = priv_view_user_dump,
   [NEW_SRV_ACTION_VIEW_USER_REPORT] = priv_view_report,
+  [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1] = priv_download_runs_confirmation,
+  [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2] = priv_download_runs,
 };
 
 static void
@@ -5176,6 +5340,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_LOGOUT] = priv_logout,
   [NEW_SRV_ACTION_CHANGE_PASSWORD] = priv_change_password,
   [NEW_SRV_ACTION_VIEW_USER_REPORT] = priv_generic_page,
+  [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1] = priv_generic_page,
+  [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2] = priv_generic_page,
 };
 
 static void
@@ -8328,7 +8494,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 };
 
 static void
-unprivileged_page(FILE *fout, struct http_request_info *phr)
+unpriv_main_page(FILE *fout, struct http_request_info *phr)
 {
   int r;
   const struct contest_desc *cnts = 0;
@@ -8553,7 +8719,7 @@ ns_handle_http_request(struct server_framework_state *state,
     // testing new features
     testing_page(fout, phr);
   } else
-    unprivileged_page(fout, phr);
+    unpriv_main_page(fout, phr);
 }
 
 /*

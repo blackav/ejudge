@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-24 18:27+0300\n"
-"PO-Revision-Date: 2006-12-11 08:31+0300\n"
+"POT-Creation-Date: 2006-12-18 03:43+0300\n"
+"PO-Revision-Date: 2006-12-18 03:49+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -39,6 +39,27 @@ msgstr "Поле \"Регистрационное имя\" содержит недопустимые символы"
 
 msgid "(no subject)"
 msgstr "(без темы)"
+
+msgid "/&lt;Problem&gt;/&lt;File&gt;"
+msgstr "/&lt;Задача&gt;/&lt;Файл&gt;"
+
+msgid "/&lt;Problem&gt;/&lt;User_Id&gt;/&lt;File&gt;"
+msgstr "/&lt;Задача&gt;/&lt;Id_Польз.&gt;/&lt;Файл&gt;"
+
+msgid "/&lt;Problem&gt;/&lt;User_Login&gt;/&lt;File&gt;"
+msgstr "/&lt;Задача&gt;/&lt;Логин_Польз.&gt;/&lt;Файл&gt;"
+
+msgid "/&lt;User_Id&gt;/&lt;File&gt;"
+msgstr "/&lt;Id_Польз.&gt;/&lt;Файл&gt;"
+
+msgid "/&lt;User_Id&gt;/&lt;Problem&gt;/&lt;File&gt;"
+msgstr "/&lt;Id_Польз.&gt;/&lt;Задача&gt;/&lt;Файл&gt;"
+
+msgid "/&lt;User_Login&gt;/&lt;File&gt;"
+msgstr "/&lt;Логин_Польз.&gt;/&lt;Файл&gt;"
+
+msgid "/&lt;User_Login&gt;/&lt;Problem&gt;/&lt;File&gt;"
+msgstr "/&lt;Логин_Польз.&gt;/&lt;Задача&gt;/&lt;Файл&gt;"
 
 #, c-format
 msgid "<b>====== Test #%d =======</b>\n"
@@ -443,6 +464,9 @@ msgstr "Приём апелляций прекращён"
 msgid "Apr"
 msgstr "Апр"
 
+msgid "Archive creation with tar failed"
+msgstr "При создании архива программой tar произошла ошибка"
+
 msgid "Attempt to submit a binary file"
 msgstr "Попытка послать бинарный файл"
 
@@ -808,6 +832,9 @@ msgstr "Подробная информация о посылке %d, тесте %d"
 msgid "Details for user "
 msgstr "Подробная информация о пользователе "
 
+msgid "Directory structure"
+msgstr "Структура каталогов"
+
 msgid "Disk read error (nonexistant file?)"
 msgstr "Ошибка чтения с диска (файл не существует?)"
 
@@ -820,8 +847,23 @@ msgstr "Дисквалифицирован"
 msgid "Do not show before the contest starts?"
 msgstr "Не показывать до начала турнира?"
 
+msgid "Download OK runs"
+msgstr "Загрузить только успешные посылки"
+
+msgid "Download all runs"
+msgstr "Загрузить все посылки"
+
+msgid "Download archive of runs"
+msgstr "Загрузить архив посылок"
+
 msgid "Download run"
 msgstr "Загрузить посылку"
+
+msgid "Download runs"
+msgstr "Загрузить посылки"
+
+msgid "Download selected runs"
+msgstr "Загрузить выбранные посылки"
 
 msgid "Download your submits"
 msgstr "Загрузить свои посылки"
@@ -969,6 +1011,9 @@ msgstr "Поле \"Имя пользователя\" имело слишком большую длину."
 
 msgid "File"
 msgstr "Файл"
+
+msgid "File name pattern"
+msgstr "Шаблон имени файла"
 
 msgid ""
 "File sending error. Maybe the file you've sent is not a text file (or is not "
@@ -1330,6 +1375,9 @@ msgstr "Задан неверный идентификатор турнира."
 msgid "Invalid contest identifier."
 msgstr "Неверный идентификатор турнира."
 
+msgid "Invalid directory structure type"
+msgstr "Неверный тип структуры каталогов"
+
 msgid "Invalid duration specification"
 msgstr "Неверная спецификация продолжительности турнира"
 
@@ -1365,6 +1413,9 @@ msgstr "Неверная спецификация задачи"
 
 msgid "Invalid role parameter."
 msgstr "Неверная роль."
+
+msgid "Invalid run selection type"
+msgstr "Неверный тип выбора посылок"
 
 msgid "Invalid run to compare to"
 msgstr "Неверный номер посылки для сравнения"
@@ -1615,6 +1666,10 @@ msgstr "Отчество"
 msgid "Middle name (En)"
 msgstr "Отчество (Англ.)"
 
+#, c-format
+msgid "Mkdir(%s) failed: %s"
+msgstr "Mkdir(%s) не сработал: %s"
+
 msgid "Monitor"
 msgstr "Монитор"
 
@@ -1680,6 +1735,9 @@ msgstr "Без комментариев.\n"
 
 msgid "No contests available."
 msgstr "Нет доступных турниров."
+
+msgid "No directory structure"
+msgstr "Нет структуры"
 
 msgid "No runs to rejudge"
 msgstr "Нет посылок для перепроверки"
@@ -2250,6 +2308,9 @@ msgstr "Эта посылка не может быть изменена"
 msgid "Run log update failed"
 msgstr "Обновление журнала посылок не удалось"
 
+msgid "Run selection"
+msgstr "Выбор посылок"
+
 msgid "Run to compare to is not specified"
 msgstr "Посылка для сравнения не указана"
 
@@ -2812,6 +2873,24 @@ msgstr "Установить протокол тестирования"
 
 msgid "Upload!"
 msgstr "Установить!"
+
+msgid "Use problem short name"
+msgstr "Использовать короткое имя задачи"
+
+msgid "Use programming language short name"
+msgstr "Использовать короткое имя языка программирования"
+
+msgid "Use run number"
+msgstr "Использовать номер посылки"
+
+msgid "Use source language or content type suffix"
+msgstr "Использовать суффикс языка или типа файла"
+
+msgid "Use user Id"
+msgstr "Использовать идентификатор пользователя"
+
+msgid "Use user Login"
+msgstr "Использовать регистрационное имя пользователя"
 
 msgid "User "
 msgstr "Участник"
