@@ -243,6 +243,8 @@ enum
   NEW_SRV_ACTION_VIRTUAL_START,
   NEW_SRV_ACTION_VIRTUAL_STOP,
   NEW_SRV_ACTION_VIEW_USER_REPORT,
+  NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1,
+  NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -451,5 +453,28 @@ extern const unsigned char * const ns_ssl_flag_str[];
 extern const unsigned char ns_fancy_priv_header[];
 extern const unsigned char ns_fancy_priv_footer[];
 extern const unsigned char ns_fancy_priv_separator[];
+
+enum
+{
+  NS_RUNSEL_ALL = 0,
+  NS_RUNSEL_DISPLAYED,
+  NS_RUNSEL_OK,
+
+  NS_FILE_PATTERN_RUN = 0x1,
+  NS_FILE_PATTERN_UID = 0x2,
+  NS_FILE_PATTERN_LOGIN = 0x4,
+  NS_FILE_PATTERN_PROB = 0x8,
+  NS_FILE_PATTERN_LANG = 0x10,
+  NS_FILE_PATTERN_SUFFIX = 0x20,
+};
+
+void
+ns_download_runs(
+	const serve_state_t cs, FILE *fout, FILE *log_f,
+        int run_selection,
+        int dir_struct,
+        int file_name_mask,
+        size_t run_mask_size,
+        unsigned long *run_mask);
 
 #endif /* __NEW_SERVER_H__ */

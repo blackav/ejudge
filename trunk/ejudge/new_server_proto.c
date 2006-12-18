@@ -136,6 +136,10 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_INV_WARN_CMT] = __("Invalid text of warning comment"),
   [NEW_SRV_ERR_SUBMIT_EMPTY] = __("Empty submit"),
   [NEW_SRV_ERR_AUDIT_LOG_NONEXISTANT] = __("Audit log file does not exist"),
+  [NEW_SRV_ERR_INV_RUN_SELECTION] = __("Invalid run selection type"),
+  [NEW_SRV_ERR_INV_DIR_STRUCT] = __("Invalid directory structure type"),
+  [NEW_SRV_ERR_MKDIR_FAILED] = __("Mkdir(%s) failed: %s"),
+  [NEW_SRV_ERR_TAR_FAILED] = __("Archive creation with tar failed"),
 };
 
 const unsigned char *

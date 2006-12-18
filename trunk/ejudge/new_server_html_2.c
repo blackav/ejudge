@@ -40,13 +40,17 @@
 #include "teamdb.h"
 #include "userlist.h"
 #include "team_extra.h"
+#include "errlog.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
+#include <reuse/osdeps.h>
 
 #include <zlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <errno.h>
+#include <sys/wait.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -585,6 +589,21 @@ ns_write_priv_all_runs(FILE *f,
     fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_MERGE_RUNS, _("Send!"));
     fprintf(f, "</tr></table></form>\n");
     */
+  }
+
+  if (opcaps_check(phr->caps, OPCAP_DUMP_RUNS) >= 0) {
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "run_mask_size", "%d", displayed_size);
+    fprintf(f, "<input type=\"hidden\" name=\"run_mask\" value=\"");
+    for (i = 0; i < displayed_size; i++) {
+      if (i > 0) fprintf(f, " ");
+      fprintf(f, "%lx", displayed_mask[i]);
+    }
+    fprintf(f, "\">\n");
+    fprintf(f, "<table><tr><td>");
+    fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1));
+    fprintf(f, "</td></tr></table>");
+    fprintf(f, "</form>\n");
   }
 
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) >= 0
@@ -2411,6 +2430,271 @@ ns_write_priv_standings(const serve_state_t state,
     do_write_moscow_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0, 0, 0);
   else
     do_write_standings(state, cnts, f, 1, 0, 0, 0, 0, 0, 0, 0);
+}
+
+void
+ns_download_runs(
+	const serve_state_t cs, FILE *fout, FILE *log_f,
+        int run_selection,
+        int dir_struct,
+        int file_name_mask,
+        size_t run_mask_size,
+        unsigned long *run_mask)
+{
+  path_t tmpdir = { 0 };
+  path_t dir1;
+  const unsigned char *s = 0;
+  time_t cur_time = time(0);
+  int serial = 0;
+  struct tm *ptm;
+  path_t dir2 = { 0 };
+  int need_remove = 0;
+  path_t name3, dir3;
+  int pid, p, status;
+  path_t tgzname, tgzpath;
+  char *file_bytes = 0;
+  size_t file_size = 0;
+  int total_runs, run_id;
+  struct run_entry info;
+  path_t dir4, dir4a, dir5;
+  unsigned char prob_buf[1024], *prob_ptr;
+  unsigned char login_buf[1024], *login_ptr;
+  unsigned char lang_buf[1024], *lang_ptr;
+  const unsigned char *suff_ptr;
+  unsigned char *file_name_str = 0;
+  size_t file_name_size = 0, file_name_exp_len;
+  unsigned char *sep, *ptr;
+  path_t dstpath, srcpath;
+  int srcflags;
+
+  file_name_size = 1024;
+  file_name_str = (unsigned char*) xmalloc(file_name_size);
+
+  if ((s = getenv("TMPDIR"))) {
+    snprintf(tmpdir, sizeof(tmpdir), "%s", s);
+  }
+#if defined P_tmpdir
+  if (!tmpdir[0]) {
+    snprintf(tmpdir, sizeof(tmpdir), "%s", P_tmpdir);
+  }
+#endif
+  if (!tmpdir[0]) {
+    snprintf(tmpdir, sizeof(tmpdir), "%s", "/tmp");
+  }
+
+  ptm = localtime(&cur_time);
+  snprintf(dir1, sizeof(dir1), "ejudge%04d%02d%02d%02d%02d%02d",
+           ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
+           ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
+  while (1) {
+    snprintf(dir2, sizeof(dir2), "%s/%s%d", tmpdir, dir1, serial);
+    errno = 0;
+    if (mkdir(dir2, 0700) >= 0) break;
+    if (errno != EEXIST) {
+      ns_error(log_f, NEW_SRV_ERR_MKDIR_FAILED, dir2, os_ErrorMsg());
+      goto cleanup;
+    }
+    serial++;
+  }
+  need_remove = 1;
+
+  snprintf(name3, sizeof(name3), "contest_%d_%04d%02d%02d%02d%02d%02d",
+           cs->global->contest_id, 
+           ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
+           ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
+  snprintf(dir3, sizeof(dir3), "%s/%s", dir2, name3);
+  if (mkdir(dir3, 0755) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_MKDIR_FAILED, dir2, os_ErrorMsg());
+    goto cleanup;
+  }
+  snprintf(tgzname, sizeof(tgzname), "%s.tgz", name3);
+  snprintf(tgzpath, sizeof(tgzpath), "%s/%s", dir2, tgzname);
+
+  total_runs = run_get_total(cs->runlog_state);
+  for (run_id = 0; run_id < total_runs; run_id++) {
+    if (run_selection == NS_RUNSEL_DISPLAYED) {
+      if (run_id >= 8 * sizeof(run_mask[0]) * run_mask_size) continue;
+      if (!(run_mask[run_id / (8 * sizeof(run_mask[0]))] & (1UL << (run_id % (8 * sizeof(run_mask[0])))))) continue;
+    }
+    if (run_get_entry(cs->runlog_state, run_id, &info) < 0) {
+      ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
+      goto cleanup;
+    }
+    if (run_selection == NS_RUNSEL_OK && info.status != RUN_OK) continue;
+    if (info.status > RUN_LAST) continue;
+    if (info.status > RUN_MAX_STATUS && info.status < RUN_TRANSIENT_FIRST)
+      continue;
+
+    if (!(login_ptr = teamdb_get_login(cs->teamdb_state, info.user_id))) {
+      snprintf(login_buf, sizeof(login_buf), "!user_%d", info.user_id);
+      login_ptr = login_buf;
+    }
+    if (info.prob_id > 0 && info.prob_id <= cs->max_prob
+        && cs->probs[info.prob_id]) {
+      prob_ptr = cs->probs[info.prob_id]->short_name;
+    } else {
+      snprintf(prob_buf, sizeof(prob_buf), "!prob_%d", info.prob_id);
+      prob_ptr = prob_buf;
+    }
+    if (info.lang_id > 0 && info.lang_id <= cs->max_lang
+        && cs->langs[info.lang_id]) {
+      lang_ptr = cs->langs[info.lang_id]->short_name;
+      suff_ptr = cs->langs[info.lang_id]->src_sfx;
+    } else if (info.lang_id) {
+      snprintf(lang_buf, sizeof(lang_buf), "!lang_%d", info.lang_id);
+      lang_ptr = lang_buf;
+      suff_ptr = "";
+    } else {
+      lang_buf[0] = 0;
+      lang_ptr = lang_buf;
+      suff_ptr = mime_type_get_suffix(info.mime_type);
+    }
+
+    // create necessary directories
+    dir4[0] = 0;
+    dir4a[0] = 0;
+    switch (dir_struct) {
+    case 0:// /<File> (no directory structure)
+      break;
+    case 1:// /<Problem>/<File>
+      snprintf(dir4, sizeof(dir4), "%s", prob_ptr);
+      break;
+    case 2:// /<User_Id>/<File>
+      snprintf(dir4, sizeof(dir4), "%d", info.user_id);
+      break;
+    case 3:// /<User_Login>/<File>
+      snprintf(dir4, sizeof(dir4), "%s", login_ptr);
+      break;
+    case 4:// /<Problem>/<User_Id>/<File>
+      snprintf(dir4, sizeof(dir4), "%s", prob_ptr);
+      snprintf(dir4a, sizeof(dir4a), "%d", info.user_id);
+      break;
+    case 5:// /<Problem>/<User_Login>/<File>
+      snprintf(dir4, sizeof(dir4), "%s", prob_ptr);
+      snprintf(dir4a, sizeof(dir4a), "%s", login_ptr);
+      break;
+    case 6:// /<User_Id>/<Problem>/<File>
+      snprintf(dir4, sizeof(dir4), "%d", info.user_id);
+      snprintf(dir4a, sizeof(dir4a), "%s", prob_ptr);
+      break;
+    case 7:// /<User_Login>/<Problem>/<File>
+      snprintf(dir4, sizeof(dir4), "%s", login_ptr);
+      snprintf(dir4a, sizeof(dir4a), "%s", prob_ptr);
+      break;
+    default:
+      abort();
+    }
+    if (dir4[0]) {
+      snprintf(dir5, sizeof(dir5), "%s/%s", dir3, dir4);
+      errno = 0;
+      if (mkdir(dir5, 0755) < 0 && errno != EEXIST) {
+        ns_error(log_f, NEW_SRV_ERR_MKDIR_FAILED, dir5, os_ErrorMsg());
+        goto cleanup;
+      }
+      if (dir4a[0]) {
+        snprintf(dir5, sizeof(dir5), "%s/%s/%s", dir3, dir4, dir4a);
+        errno = 0;
+        if (mkdir(dir5, 0755) < 0 && errno != EEXIST) {
+          ns_error(log_f, NEW_SRV_ERR_MKDIR_FAILED, dir5, os_ErrorMsg());
+          goto cleanup;
+        }
+      }
+    } else {
+      snprintf(dir5, sizeof(dir5), "%s", dir3);
+    }
+
+    file_name_exp_len = 64 + strlen(login_ptr) + strlen(prob_ptr)
+      + strlen(lang_ptr) + strlen(suff_ptr);
+    if (file_name_exp_len > file_name_size) {
+      while (file_name_exp_len > file_name_size) file_name_size *= 2;
+      xfree(file_name_str);
+      file_name_str = (unsigned char*) xmalloc(file_name_size);
+    }
+
+    sep = "";
+    ptr = file_name_str;
+    if ((file_name_mask & NS_FILE_PATTERN_RUN)) {
+      ptr += sprintf(ptr, "%s%06d", sep, run_id);
+      sep = "-";
+    }
+    if ((file_name_mask & NS_FILE_PATTERN_UID)) {
+      ptr += sprintf(ptr, "%s%d", sep, info.user_id);
+      sep = "-";
+    }
+    if ((file_name_mask & NS_FILE_PATTERN_LOGIN)) {
+      ptr += sprintf(ptr, "%s%s", sep, login_ptr);
+      sep = "-";
+    }
+    if ((file_name_mask & NS_FILE_PATTERN_PROB)) {
+      ptr += sprintf(ptr, "%s%s", sep, prob_ptr);
+      sep = "-";
+    }
+    if ((file_name_mask & NS_FILE_PATTERN_LANG)) {
+      ptr += sprintf(ptr, "%s%s", sep, lang_ptr);
+      sep = "-";
+    }
+    if ((file_name_mask & NS_FILE_PATTERN_SUFFIX)) {
+      ptr += sprintf(ptr, "%s", suff_ptr);
+    }
+    snprintf(dstpath, sizeof(dstpath), "%s/%s", dir5, file_name_str);
+
+    srcflags = archive_make_read_path(cs, srcpath, sizeof(srcpath),
+                                      cs->global->run_archive_dir, run_id,
+                                      0, 0);
+    if (srcflags < 0) {
+      ns_error(log_f, NEW_SRV_ERR_SOURCE_NONEXISTANT);
+      goto cleanup;
+    }
+
+    if (generic_copy_file(srcflags, 0, srcpath, "", 0, 0, dstpath, "") < 0) {
+      ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
+      goto cleanup;
+    }
+  }
+
+  if ((pid = fork()) < 0) {
+    err("fork failed: %s", os_ErrorMsg());
+    ns_error(log_f, NEW_SRV_ERR_TAR_FAILED);
+    goto cleanup;
+  } else if (!pid) {
+    if (chdir(dir2) < 0) {
+      err("chdir to %s failed: %s", dir2, os_ErrorMsg());
+      _exit(1);
+    }
+    execl("/bin/tar", "/bin/tar", "cfz", tgzname, name3, NULL);
+    err("execl failed: %s", os_ErrorMsg());
+    _exit(1);
+  }
+
+  while ((p = waitpid(pid, &status, 0)) != p);
+  if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+    ns_error(log_f, NEW_SRV_ERR_TAR_FAILED);
+    goto cleanup;
+  }
+
+  if (generic_read_file(&file_bytes, 0, &file_size, 0, 0, tgzpath, 0) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
+    goto cleanup;
+  }
+  
+  fprintf(fout,
+          "Content-type: application/x-tar\n"
+          "Content-Disposition: attachment; filename=\"%s\"\n"
+          "\n",
+          tgzname);
+  if (file_size > 0) {
+    if (fwrite(file_bytes, 1, file_size, fout) != file_size) {
+      ns_error(log_f, NEW_SRV_ERR_OUTPUT_ERROR);
+      goto cleanup;
+    }
+  }
+
+ cleanup:;
+  if (need_remove) {
+    remove_directory_recursively(dir2);
+  }
+  xfree(file_bytes);
+  xfree(file_name_str);
 }
 
 /*
