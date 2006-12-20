@@ -49,7 +49,7 @@ static volatile int hup_signal_flag;
 static volatile int notify_signal_flag;
 static volatile int child_signal_flag;
 static sigset_t blkmask, waitmask;
-static int job_server_dir_fd;
+static int job_server_dir_fd = -1;
 
 static int
 make_path_in_var_dir(unsigned char *buf, const unsigned char *file)
@@ -681,6 +681,7 @@ main(int argc, char *argv[])
 
   if (prepare_directory_notify() < 0) return 1;
   do_work();
+  if (job_server_dir_fd >= 0) close(job_server_dir_fd);
 
   if (hup_signal_flag) start_restart();
 

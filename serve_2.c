@@ -971,7 +971,14 @@ serve_run_request(serve_state_t state,
   prio += priority_adjustment;
   
   if (judge_id < 0) judge_id = state->compile_request_id++;
-  if (accepting_mode < 0) accepting_mode = state->accepting_mode;
+  if (accepting_mode < 0) {
+    if (state->global->score_system_val == SCORE_OLYMPIAD
+        && state->global->is_virtual > 0) {
+      accepting_mode = 1;
+    } else {
+      accepting_mode = state->accepting_mode;
+    }
+  }
 
   /* generate a packet name */
   serve_packet_name(run_id, prio, pkt_base);

@@ -128,6 +128,7 @@ COMMON_CFILES=\
  contests.c\
  contest_tmpl.c\
  copyright.c\
+ csv.c\
  diff.c\
  digest_1.c\
  digest_2.c\
@@ -310,6 +311,7 @@ HFILES=\
  copyright.h\
  cpu.h\
  cr_serialize.h\
+ csv.h\
  curtime.h\
  diff.h\
  digest_io.h\

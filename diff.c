@@ -23,6 +23,7 @@
 #include "archive_paths.h"
 #include "fileutl.h"
 #include "serve_state.h"
+#include "misctext.h"
 
 #include <reuse/exec.h>
 #include <reuse/xalloc.h>
@@ -42,6 +43,8 @@ compare_runs(const serve_state_t state, FILE *fout, int run_id1, int run_id2)
   tpTask tsk = 0;
   char *diff_txt = 0;
   size_t diff_len = 0;
+  char *file_txt = 0;
+  size_t file_len = 0;
 
   // refuse to do stupid things
   if (run_id1 == run_id2) {
@@ -104,17 +107,25 @@ compare_runs(const serve_state_t state, FILE *fout, int run_id1, int run_id2)
                                      0, 0))<0) {
     goto cleanup;
   }
-  if (generic_copy_file(flags1, 0, arch_path1, "", 0, 0, tmpfile1, 0) < 0) {
+
+  if (generic_read_file(&file_txt, 0, &file_len, flags1, 0, arch_path1, "") < 0)
     goto cleanup;
-  }
+  file_len = dos2unix_buf(file_txt, file_len);
+  if (generic_write_file(file_txt, file_len, 0, 0, tmpfile1, "") < 0)
+    goto cleanup;
+  xfree(file_txt); file_txt = 0; file_len = 0;
+
   if ((flags2=archive_make_read_path(state, arch_path2, sizeof(arch_path2),
                                      state->global->run_archive_dir,run_id2,
                                      0, 0))<0) {
     goto cleanup;
   }
-  if (generic_copy_file(flags2, 0, arch_path2, "", 0, 0, tmpfile2, 0) < 0) {
+  if (generic_read_file(&file_txt, 0, &file_len, flags2, 0, arch_path2, "") < 0)
     goto cleanup;
-  }
+  file_len = dos2unix_buf(file_txt, file_len);
+  if (generic_write_file(file_txt, file_len, 0, 0, tmpfile2, "") < 0)
+    goto cleanup;
+  xfree(file_txt); file_txt = 0; file_len = 0;
 
   fprintf(fout, "Content-type: text/plain\n\n");
   fflush(fout);
@@ -152,6 +163,7 @@ compare_runs(const serve_state_t state, FILE *fout, int run_id1, int run_id2)
   if (tmpfile2) unlink(tmpfile2);
   if (tmpfile3) unlink(tmpfile3);
   if (diff_txt) xfree(diff_txt);
+  xfree(file_txt);
   return errcode;
 }
 

@@ -69,6 +69,7 @@ enum
 int get_content_type(const unsigned char *txt, const unsigned char **p_start_ptr);
 
 unsigned char *dos2unix_str(const unsigned char *s);
+size_t dos2unix_buf(unsigned char *s, size_t size);
 unsigned char *unparse_sha1(const void *shabuf);
 
 #endif /* __MISCTEXT_H__ */

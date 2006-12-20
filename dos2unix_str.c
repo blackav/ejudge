@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$*/
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005,2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
 #include <reuse/xalloc.h>
 
 #include <string.h>
+#include <stdio.h>
 
 unsigned char *
 dos2unix_str(const unsigned char *s)
@@ -38,7 +39,19 @@ dos2unix_str(const unsigned char *s)
   return out;
 }
 
-/**
+size_t
+dos2unix_buf(unsigned char *s, size_t size)
+{
+  unsigned char *p = s, *q = s;
+
+  for (;size; size--, p++) {
+    if (*p != '\r') *q++ = *p;
+  }
+  *q = 0;
+  return (size_t) (q - s);
+}
+
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
