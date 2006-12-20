@@ -4,7 +4,7 @@
 #ifndef __RANDOM_H__
 #define __RANDOM_H__
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,7 @@
  */
 
 int random_init(void);
+void random_cleanup(void);
 
 int random_u16(void);
 unsigned random_u32(void);

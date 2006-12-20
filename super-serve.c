@@ -4303,6 +4303,7 @@ main(int argc, char **argv)
   retcode = prepare_sockets();
   if (!retcode) retcode = do_loop();
 
+  random_cleanup();
   if (control_socket_fd >= 0) close(control_socket_fd);
   if (control_socket_path) unlink(control_socket_path);
 
