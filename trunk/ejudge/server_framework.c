@@ -822,7 +822,25 @@ nsf_prepare(struct server_framework_state *state)
 void
 nsf_cleanup(struct server_framework_state *state)
 {
-  // FIXME: close all active connections
+  struct client_state *p;
+
+  for (p = state->clients_first; p; p = p->next) {
+    if (p->fd >= 0) close(p->fd);
+    p->fd = -1;
+
+    if (p->client_fds[0] >= 0) close(p->client_fds[0]);
+    if (p->client_fds[1] >= 0) close(p->client_fds[1]);
+    p->client_fds[0] = -1;
+    p->client_fds[1] = -1;
+
+    // do not flush pending write buffer, just close the connection
+    xfree(p->write_buf); p->write_buf = 0;
+    p->write_len = p->written = 0;
+
+    xfree(p->read_buf); p->read_buf = 0;
+    p->expected_len = p->read_len = 0;
+  }
+
   if (state->socket_fd >= 0) close(state->socket_fd);
   state->socket_fd = -1;
   unlink(state->params->socket_path);
