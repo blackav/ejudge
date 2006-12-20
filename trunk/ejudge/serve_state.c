@@ -199,9 +199,12 @@ serve_state_load_contest(int contest_id,
   if (run_open(state->runlog_state, state->global->run_log_file, 0,
                state->global->contest_time,
                state->global->contest_finish_time_d) < 0) goto failure;
-  if (state->global->is_virtual && state->global->score_system_val!=SCORE_ACM) {
-    err("invalid score system for virtual contest");
-    goto failure;
+  if (state->global->is_virtual) {
+    if (state->global->score_system_val != SCORE_ACM
+        && state->global->score_system_val != SCORE_OLYMPIAD) {
+      err("invalid score system for virtual contest");
+      goto failure;
+    }
   }
   if (clar_open(state->clarlog_state, state->global->clar_log_file, 0) < 0)
     goto failure;
