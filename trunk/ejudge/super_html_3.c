@@ -554,8 +554,8 @@ super_html_edit_global_parameters(FILE *f,
   fprintf(f, "<tr%s><td>Scoring system:</td><td>", form_row_attrs[row ^= 1]);
   param = global->score_system_val;
   if (global->is_virtual) {
-    if (global->score_system_val == SCORE_ACM) param = 3;
-    else param = 3;
+    if (global->score_system_val == SCORE_ACM) param = SCORE_TOTAL;
+    else param = SCORE_TOTAL + 1;
   }
   html_select(f, param, "param", contest_types);
   fprintf(f, "</td><td>");
