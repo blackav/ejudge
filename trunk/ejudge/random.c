@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -40,6 +40,14 @@ random_init(void)
     return -1;
   }
   return 0;
+}
+
+void
+random_cleanup(void)
+{
+  if (urandom_fd < 0) return;
+  close(urandom_fd);
+  urandom_fd = 0;
 }
 
 int
