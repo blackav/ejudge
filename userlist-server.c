@@ -790,6 +790,7 @@ graceful_exit(void)
   if (config && config->socket_path) {
     unlink(config->socket_path);
   }
+  if (listen_socket >= 0) close(listen_socket);
   cleanup_clients();
   random_cleanup();
   uldb_default->iface->close(uldb_default->data);
@@ -8263,11 +8264,13 @@ cleanup_clients(void)
 {
   int i;
 
-  while (first_client) disconnect_client(first_client);
+  while (first_client) {
+    disconnect_client(first_client);
+  }
 
   if (contest_extras) {
     for (i = 0; i < contest_extras_size; i++) {
-      contest_extras[i]->nref = 1;
+      if (contest_extras[i]) contest_extras[i]->nref = 1;
       contest_extras[i] = detach_contest_extra(contest_extras[i]);
     }
   }
