@@ -783,22 +783,15 @@ enqueue_reply_to_client(struct client_state *p,
 }
 
 static void report_uptime(time_t t1, time_t t2);
+static void cleanup_clients(void);
 static void
 graceful_exit(void)
 {
-  int i;
-
   if (config && config->socket_path) {
     unlink(config->socket_path);
   }
-  // we need to deallocate shared memory and semafores
-  if (contest_extras) {
-    for (i = 1; i < contest_extras_size; i++) {
-      if (!contest_extras[i]) continue;
-      contest_extras[i]->nref = 1;
-      detach_contest_extra(contest_extras[i]);
-    }
-  }
+  cleanup_clients();
+  random_cleanup();
   uldb_default->iface->close(uldb_default->data);
   server_finish_time = time(0);
   report_uptime(server_start_time, server_finish_time);
@@ -8272,8 +8265,12 @@ cleanup_clients(void)
 
   while (first_client) disconnect_client(first_client);
 
-  for (i = 0; i < contest_extras_size; i++)
-    contest_extras[i] = detach_contest_extra(contest_extras[i]);
+  if (contest_extras) {
+    for (i = 0; i < contest_extras_size; i++) {
+      contest_extras[i]->nref = 1;
+      contest_extras[i] = detach_contest_extra(contest_extras[i]);
+    }
+  }
 }
 
 static int
