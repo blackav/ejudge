@@ -8265,6 +8265,17 @@ static void *forced_link[] =
   &xml_err_elem_undefined_s,
 };
 
+static void
+cleanup_clients(void)
+{
+  int i;
+
+  while (first_client) disconnect_client(first_client);
+
+  for (i = 0; i < contest_extras_size; i++)
+    contest_extras[i] = detach_contest_extra(contest_extras[i]);
+}
+
 static int
 load_plugins(void)
 {
@@ -8610,6 +8621,8 @@ main(int argc, char *argv[])
 
   if (socket_name) unlink(socket_name);
   if (listen_socket >= 0) close(listen_socket);
+  cleanup_clients();
+  random_cleanup();
   ejudge_cfg_free(config);
   server_finish_time = time(0);
   report_uptime(server_start_time, server_finish_time);
