@@ -71,6 +71,15 @@ csv_parse(const char *str, FILE *log_f, int fs)
     }
     pp->v[pp->u++] = s4;
     if (!*s2 || *s2 == '\n') p->u++;
+    if (!*s2) break;
+  }
+
+  // strip off the last lines
+  while (p->u > 0 && p->v[p->u - 1].u == 1 && !*p->v[p->u - 1].v[0]) {
+    p->u--;
+    xfree(p->v[p->u].v[0]); p->v[p->u].v[0] = 0;
+    xfree(p->v[p->u].v); p->v[p->u].v = 0;
+    p->v[p->u].u = p->v[p->u].a = 0;
   }
 
   return p;

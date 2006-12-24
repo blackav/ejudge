@@ -245,6 +245,8 @@ enum
   NEW_SRV_ACTION_VIEW_USER_REPORT,
   NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1,
   NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2,
+  NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1,
+  NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -476,5 +478,11 @@ ns_download_runs(
         int file_name_mask,
         size_t run_mask_size,
         unsigned long *run_mask);
+
+int
+ns_upload_csv_runs(
+	struct http_request_info *phr,
+	const serve_state_t cs, FILE *log_f,
+        const unsigned char *csv_text);
 
 #endif /* __NEW_SERVER_H__ */

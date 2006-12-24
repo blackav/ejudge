@@ -140,6 +140,8 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_INV_DIR_STRUCT] = __("Invalid directory structure type"),
   [NEW_SRV_ERR_MKDIR_FAILED] = __("Mkdir(%s) failed: %s"),
   [NEW_SRV_ERR_TAR_FAILED] = __("Archive creation with tar failed"),
+  [NEW_SRV_ERR_FILE_UNSPECIFIED] = __("File is not specified"),
+  [NEW_SRV_ERR_FILE_EMPTY] = __("File is empty"),
 };
 
 const unsigned char *
