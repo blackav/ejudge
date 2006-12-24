@@ -85,6 +85,8 @@ struct ejudge_cfg
   unsigned char *userlist_group;
   unsigned char *job_server_spool;
   unsigned char *job_server_work;
+  unsigned char *new_server_socket;
+  unsigned char *new_server_log;
   struct xml_tree *user_map;
   struct xml_tree *compile_servers;
 

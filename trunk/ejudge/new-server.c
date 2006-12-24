@@ -53,7 +53,7 @@ static struct server_framework_params params =
   .force_socket_flag = 0,
   .program_name = 0,
   .socket_path = "/tmp/new-server-socket",
-  .log_path = "/tmp/new-server-log",
+  .log_path = "/tmp/new-server.log",
   .select_timeout = 1,
   .user_data = 0,
   .startup_error = startup_error,
@@ -500,6 +500,32 @@ load_plugins(void)
   return 0;
 }
 
+static void
+setup_log_file(void)
+{
+  path_t buf;
+  const unsigned char *s1, *s2;
+
+  if (config->new_server_log && os_IsAbsolutePath(config->new_server_log))
+    return;
+  if (config->var_dir && os_IsAbsolutePath(config->var_dir)) {
+    if (!(s1 = config->new_server_log)) s1 = "new-server.log";
+    snprintf(buf, sizeof(buf), "%s/%s", config->var_dir, s1);
+    xfree(config->new_server_log);
+    config->new_server_log = xstrdup(buf);
+    return;
+  }
+  if (config->contests_home_dir&&os_IsAbsolutePath(config->contests_home_dir)){
+    if (!(s1 = config->new_server_log)) s1 = "new-server.log";
+    if (!(s2 = config->var_dir)) s2 = "var";
+    snprintf(buf, sizeof(buf), "%s/%s/%s", config->contests_home_dir, s2, s1);
+    xfree(config->new_server_log);
+    config->new_server_log = xstrdup(buf);
+    return;
+  }
+  config->new_server_log = xstrdup("/tmp/new-server.log");
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -570,8 +596,23 @@ main(int argc, char *argv[])
   if (!config) return 1;
   if (contests_set_directory(config->contests_dir) < 0) return 1;
   l10n_prepare(config->l10n, config->l10n_dir);
+#if defined EJUDGE_NEW_SERVER_SOCKET
+  if (!config->new_server_socket)
+    config->new_server_socket = xstrdup(EJUDGE_NEW_SERVER_SOCKET);
+#endif
+  if (!config->new_server_socket)
+    config->new_server_socket = xstrdup("/tmp/new-server-socket");
+
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  if (!config->contests_home_dir)
+    config->contests_home_dir = xstrdup(EJUDGE_CONTESTS_HOME_DIR);
+#endif
+  setup_log_file();
 
   info("new-server %s, compiled %s", compile_version, compile_date);
+
+  params.socket_path = config->new_server_socket;
+  params.log_path = config->new_server_log;
 
   if (load_plugins() < 0) return 1;
 

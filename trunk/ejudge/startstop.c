@@ -30,9 +30,11 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>
+#include <signal.h>
 
 static path_t self_exe;
 static char **self_argv;
+static sigset_t init_sigmask;
 
 void
 start_set_self_args(int argc, char *argv[])
@@ -48,6 +50,7 @@ start_set_self_args(int argc, char *argv[])
   }
   self_argv = argv;
   self_argv[0] = self_exe;
+  sigprocmask(SIG_SETMASK, 0, &init_sigmask);
 }
 
 int
@@ -100,6 +103,7 @@ start_prepare(const unsigned char *user, const unsigned char *group,
 void
 start_restart(void)
 {
+  sigprocmask(SIG_SETMASK, &init_sigmask, 0);
   execv(self_exe, self_argv);
 }
 

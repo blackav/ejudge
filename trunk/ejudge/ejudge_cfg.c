@@ -77,6 +77,8 @@ enum
     TG_PLUGIN,
     TG_PATH,
     TG_COMPILE_SERVERS,
+    TG_NEW_SERVER_SOCKET,
+    TG_NEW_SERVER_LOG,
 
     TG__BARRIER,
     TG__DEFAULT,
@@ -149,6 +151,8 @@ static char const * const elem_map[] =
   "plugin",
   "path",
   "compile_servers",
+  "new_server_socket",
+  "new_server_log",
   0,
   "_default",
 
@@ -407,6 +411,8 @@ static const size_t cfg_final_offsets[TG_LAST_TAG] =
   [TG_JOB_SERVER_LOG] = CONFIG_OFFSET(job_server_log),
   [TG_JOB_SERVER_SPOOL] = CONFIG_OFFSET(job_server_spool),
   [TG_JOB_SERVER_WORK] = CONFIG_OFFSET(job_server_work),
+  [TG_NEW_SERVER_SOCKET] = CONFIG_OFFSET(new_server_socket),
+  [TG_NEW_SERVER_LOG] = CONFIG_OFFSET(new_server_log),
 };
 
 struct ejudge_cfg *
