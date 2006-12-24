@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-12-18 03:43+0300\n"
-"PO-Revision-Date: 2006-12-18 03:49+0300\n"
+"POT-Creation-Date: 2006-12-22 02:08+0300\n"
+"PO-Revision-Date: 2006-12-24 12:50+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -400,11 +400,20 @@ msgstr "Добавить новую посылку"
 msgid "Add new run form"
 msgstr "Форма добавления новой посылки"
 
+msgid "Add new runs in CSV format"
+msgstr "Добавить новые записи в CSV-формате"
+
 msgid "Add new user"
 msgstr "Добавить нового пользователя"
 
 msgid "Add run"
 msgstr "Добавить новую посылку"
+
+msgid "Add runs in CSV format"
+msgstr "Добавить записи в CSV-формате"
+
+msgid "Add runs in CSV format!"
+msgstr "Добавить записи в CSV-формате!"
 
 msgid "Add the CHIEF EXAMINER role to the selected users"
 msgstr "Разрешить работу в роли ГЛАВНОГО ЭКЗАМЕНАТОРА отмеченным пользователям"
@@ -515,6 +524,10 @@ msgstr "Не могу добавить нового члена команды"
 msgid "Cannot add a new member"
 msgstr "Невозможно добавить нового члена команды"
 
+#, c-format
+msgid "Cannot allocate space to store run row %d\n"
+msgstr "Ошибка выделения памяти для сохранения строки %d\n"
+
 msgid "Cannot calculate the file checksum"
 msgstr "Ошибка подсчёта контрольной суммы файла"
 
@@ -538,6 +551,10 @@ msgstr "Невозможно удалить члена команды по причинам, перечисленным ниже"
 
 msgid "Cannot remove team member"
 msgstr "Невозможно удалить участника"
+
+#, c-format
+msgid "Cannot write run row %d\n"
+msgstr "Ошибка записи строки %d\n"
 
 msgid "Change"
 msgstr "Изменить"
@@ -659,6 +676,10 @@ msgstr "Тренер"
 msgid "Coaches"
 msgstr "Тренеры"
 
+#, c-format
+msgid "Column name %s is already defined as column %d\n"
+msgstr "Столбец %s уже определен как столбец с номером %d\n"
+
 msgid "Command-line parameters"
 msgstr "Параметры командной строки"
 
@@ -707,6 +728,14 @@ msgstr "Нет связи с сервером."
 
 msgid "Content type"
 msgstr "Тип содержимого"
+
+#, c-format
+msgid "Content type %s is disabled for problem %s in row %d\n"
+msgstr "Тип файла %s запрещён для задачи %s в строке %d\n"
+
+#, c-format
+msgid "Content type %s is not enabled for problem %s in row %d\n"
+msgstr "Тип файла %s не разрешён для задачи %s в строке %d\n"
 
 #, c-format
 msgid "Content type <tt>%s</tt> is disabled for this problem"
@@ -949,6 +978,10 @@ msgstr "Факультет (сокр.) (Англ.)"
 msgid "Failed test"
 msgstr "Ошибка на тесте"
 
+#, c-format
+msgid "Failed to add row %d to runlog\n"
+msgstr "Ошибка добавления строки %d в базу\n"
+
 msgid "Failed to change password"
 msgstr "Невозможно сменить пароль"
 
@@ -1011,6 +1044,12 @@ msgstr "Поле \"Имя пользователя\" имело слишком большую длину."
 
 msgid "File"
 msgstr "Файл"
+
+msgid "File is empty"
+msgstr "Файл пуст"
+
+msgid "File is not specified"
+msgstr "Файл не задан"
 
 msgid "File name pattern"
 msgstr "Шаблон имени файла"
@@ -1112,6 +1151,10 @@ msgstr "Гости"
 
 msgid "Hash value"
 msgstr "Хэш-код"
+
+#, c-format
+msgid "Header row defines %d columns, but row %d has %zu columns\n"
+msgstr "Заголовок определяет %d столбцов, а строка %d содержит %zu столбцов\n"
 
 #, c-format
 msgid ""
@@ -1299,6 +1342,14 @@ msgstr ""
 msgid "Ignored"
 msgstr "Проигнорирована"
 
+#, c-format
+msgid "Ignoring empty column %d\n"
+msgstr "Пустой столбец %d игнорируется\n"
+
+#, c-format
+msgid "Ignoring unsupported column %d (%s)\n"
+msgstr "Неподдерживаемый столбец %d (%s) игнорируется\n"
+
 msgid "Import and merge XML runs log"
 msgstr "Импорт и слияние XML-посылок"
 
@@ -1384,6 +1435,10 @@ msgstr "Неверная спецификация продолжительности турнира"
 msgid "Invalid language"
 msgstr "Неверный идентификатор языка программирования"
 
+#, c-format
+msgid "Invalid language `%s' in row %d\n"
+msgstr "Недопустимый язык `%s' в строке %d\n"
+
 msgid "Invalid language specification"
 msgstr "Неверная спецификация языка программирования"
 
@@ -1392,6 +1447,10 @@ msgstr "Неверный идентификатор языка"
 
 msgid "Invalid login"
 msgstr "Неверное регистрационное имя"
+
+#, c-format
+msgid "Invalid login `%s' in row %d\n"
+msgstr "Недопустимое регистрационное имя `%s' в строке %d\n"
 
 msgid "Invalid pages count"
 msgstr "Неверное количество страниц"
@@ -1407,6 +1466,10 @@ msgstr "Неверный участник."
 
 msgid "Invalid problem"
 msgstr "Неверная задача"
+
+#, c-format
+msgid "Invalid problem `%s' in row %d\n"
+msgstr "Недопустимая задача `%s' в строке %d\n"
 
 msgid "Invalid problem specification"
 msgstr "Неверная спецификация задачи"
@@ -1442,6 +1505,14 @@ msgstr ""
 
 msgid "Invalid status"
 msgstr "Недопустимый статус"
+
+#, c-format
+msgid "Invalid status `%s' (%d) in row %d\n"
+msgstr "Недопустимый статус `%s' (%d) в строке %d\n"
+
+#, c-format
+msgid "Invalid status `%s' in row %d\n"
+msgstr "Недопустимый статус `%s' в строке %d\n"
 
 msgid "Invalid test"
 msgstr "Неверный тест"
@@ -1506,8 +1577,24 @@ msgstr "Июнь"
 msgid "Language"
 msgstr "Язык"
 
+#, c-format
+msgid "Language %s is disabled for problem %s in row %d\n"
+msgstr "Язык программирования %s запрещён для задачи %s в строке %d\n"
+
+#, c-format
+msgid "Language %s is disabled in row %d\n"
+msgstr "Язык программирования %s запрещён в строке %d\n"
+
+#, c-format
+msgid "Language %s is not enabled for problem %s in row %d\n"
+msgstr "Язык программирования %s не разрешён для задачи %s в строке %d\n"
+
 msgid "Language is changed"
 msgstr "Язык изменён"
+
+#, c-format
+msgid "Language is empty in row %d\n"
+msgstr "В строке %d не определён язык\n"
 
 msgid "Last clar"
 msgstr "Последнее сообщение"
@@ -1557,6 +1644,10 @@ msgstr "Регистрационное имя (login)"
 msgid "Login failed"
 msgstr "Вход в систему невозможен"
 
+#, c-format
+msgid "Login is empty in row %d\n"
+msgstr "В строке %d не определено регистрационное имя\n"
+
 msgid "Login successful"
 msgstr "Вход успешен"
 
@@ -1593,6 +1684,10 @@ msgstr "Обязательное поле \"Имя пользователя\" не заполнено."
 
 msgid "Mandatory \"User name\" field is empty."
 msgstr "Обязательное поле \"Имя пользователя\" не заполнено."
+
+#, c-format
+msgid "Mandatory column %s is not specified"
+msgstr "Обязательный столбец %s не задан"
 
 #, c-format
 msgid "Mandatory field \"%s\" is empty."
@@ -1856,6 +1951,9 @@ msgstr "Операция завершилась с ошибками"
 msgid "Operation failed"
 msgstr "Операция не выполнена"
 
+msgid "Operation succeeded"
+msgstr "Операция успешно выполнена"
+
 msgid "Operation successfull"
 msgstr "Операция успешно выполнена"
 
@@ -2026,6 +2124,10 @@ msgstr "Привилегированный?"
 
 msgid "Problem"
 msgstr "Задача"
+
+#, c-format
+msgid "Problem is empty in row %d\n"
+msgstr "В строке %d не определено имя задачи\n"
 
 msgid "Problem statements"
 msgstr "Условия задач"
@@ -2354,6 +2456,14 @@ msgstr "Получено баллов"
 msgid "Score gained: %d (out of %d).<br><br></big>\n"
 msgstr "Получено баллов: %d (из %d).<br><br></big>\n"
 
+#, c-format
+msgid "Score is empty in row %d\n"
+msgstr "Баллы не заданы в строке %d\n"
+
+#, c-format
+msgid "Score value `%s' is invalid in row %d\n"
+msgstr "Значение баллов `%s' недопустимо в строке %d\n"
+
 msgid "Security violation"
 msgstr "Нарушение правил безопасности"
 
@@ -2548,6 +2658,10 @@ msgstr "Условия"
 msgid "Status"
 msgstr "Статус"
 
+#, c-format
+msgid "Status is empty in row %d\n"
+msgstr "Статус не задан в строке %d\n"
+
 msgid "Step 1 of registration is complete"
 msgstr "Первый шаг регистрации завершен"
 
@@ -2654,8 +2768,16 @@ msgstr "Проверка решений участников приостановлена"
 msgid "Testing of team's submits is suspended"
 msgstr "Проверка решений участников приостановлена"
 
+#, c-format
+msgid "Tests is empty in row %d\n"
+msgstr "Тесты не заданы в строке %d\n"
+
 msgid "Tests passed"
 msgstr "Пройдено тестов"
+
+#, c-format
+msgid "Tests value `%s' is invalid in row %d\n"
+msgstr "Значение тестов `%s' недопустимо в строке %d\n"
 
 msgid "The contest is closed."
 msgstr "Турнир закрыт."
@@ -2793,6 +2915,9 @@ msgstr "Кому (рег. номер)"
 
 msgid "To user login"
 msgstr "Кому (рег. имя)"
+
+msgid "Too few lines in CSV file"
+msgstr "В CSV-файле слишком мало строк"
 
 msgid "Total"
 msgstr "Всего"
