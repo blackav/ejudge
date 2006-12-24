@@ -1713,3 +1713,8 @@ new_server_html_2.c 3767 0 7860262
 new_server_proto.c 3767 0 843896
 new_server_tables.c 3767 0 904898
 new_server_html_2.c 3769 0 7855199
+ejudge_cfg.h 3771 0 238563
+new-client.c 3771 0 551199
+new-server.c 3771 0 1523694
+ejudge_cfg.c 3771 0 1371243
+startstop.c 3771 0 213678
