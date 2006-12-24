@@ -24,7 +24,7 @@ void
 html_hidden(FILE *fout, const unsigned char *var_name,
             const char *format, ...)
 {
-  unsigned char buf[1024] = { 0 };
+  unsigned char buf[16384] = { 0 };
   va_list args;
 
   if (format && *format) {

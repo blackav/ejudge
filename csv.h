@@ -31,4 +31,7 @@ struct csv_file
   struct csv_line *v;
 };
 
+struct csv_file *csv_parse(const char *str, FILE *log_f, int fs);
+struct csv_file *csv_free(struct csv_file *p);
+
 #endif /* __CSV_H__ */

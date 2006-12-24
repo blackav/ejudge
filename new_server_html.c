@@ -4034,6 +4034,102 @@ priv_view_test(FILE *fout,
 }
 
 static int
+priv_upload_runlog_csv_1(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+  unsigned char bb[1024];
+
+  if (opcaps_check(phr->caps, OPCAP_IMPORT_XML_RUNS) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+            "%s [%s, %s]: %s", ns_unparse_role(phr->role),
+            phr->name_arm, extra->contest_arm, "Add new runs in CSV format");
+  html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+
+  fprintf(fout, "<table><tr><td>%s</td><td><input type=\"file\" name=\"file\"></td></tr>\n", _("File"));
+  fprintf(fout, "<tr><td>&nbsp;</td><td>%s</td></tr></table>\n",
+          BUTTON(NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2));
+
+  fprintf(fout, "</form>\n");
+  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  return retval;
+}
+
+static int
+priv_upload_runlog_csv_2(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  int retval = 0, r;
+  unsigned char bb[1024];
+  const unsigned char *s = 0, *p;
+  char *log_text = 0;
+  size_t log_size = 0;
+  FILE *ff = 0;
+  unsigned char *ss = 0;
+
+  if (opcaps_check(phr->caps, OPCAP_IMPORT_XML_RUNS) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
+
+  if (!(r = ns_cgi_param(phr, "file", &s)))
+    FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
+  else if (r < 0)
+    FAIL(NEW_SRV_ERR_BINARY_FILE);
+
+  for (p = s; *p && isspace(*p); p++);
+  if (!*p) FAIL(NEW_SRV_ERR_FILE_EMPTY);
+
+  ff = open_memstream(&log_text, &log_size);
+  r = ns_upload_csv_runs(phr, cs, ff, s);
+  fclose(ff); ff = 0;
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+            "%s [%s, %s]: %s", ns_unparse_role(phr->role),
+            phr->name_arm, extra->contest_arm, "Adding new runs");
+
+  fprintf(fout, "<h2>%s</h2>\n",
+          (r >= 0)?_("Operation succeeded"):_("Operation failed"));
+
+  fprintf(fout, "<table>");
+  fprintf(fout, "<tr><td>%s%s</a></td></tr></table>",
+          ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
+          _("Main page"));
+
+  ss = html_armor_string_dup(log_text);
+  fprintf(fout, "<hr/><pre>");
+  if (r < 0) fprintf(fout, "<font color=\"red\">");
+  fprintf(fout, "%s", ss);
+  if (r < 0) fprintf(fout, "</font>");
+  fprintf(fout, "</pre>\n");
+  xfree(ss); ss = 0;
+  xfree(log_text); log_text = 0;
+
+  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  if (ff) fclose(ff);
+  xfree(log_text);
+  xfree(ss);
+  return retval;
+}
+
+static int
 priv_download_runs_confirmation(
 	FILE *fout,
         FILE *log_f,
@@ -4483,6 +4579,8 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_USER_REPORT] = priv_view_report,
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1] = priv_download_runs_confirmation,
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2] = priv_download_runs,
+  [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1] = priv_upload_runlog_csv_1,
+  [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2] = priv_upload_runlog_csv_2,
 };
 
 static void
@@ -5342,6 +5440,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_USER_REPORT] = priv_generic_page,
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1] = priv_generic_page,
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2] = priv_generic_page,
+  [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1] = priv_generic_page,
+  [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2] = priv_generic_page,
 };
 
 static void

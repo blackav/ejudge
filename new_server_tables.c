@@ -133,6 +133,8 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_VIRTUAL_STOP] = __("Stop virtual contest"),
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1] = __("Download archive of runs"),
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2] = __("Download archive of runs"),
+  [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1] = __("Add runs in CSV format"),
+  [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1] = __("Add runs in CSV format!"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =

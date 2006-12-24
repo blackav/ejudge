@@ -41,6 +41,8 @@
 #include "userlist.h"
 #include "team_extra.h"
 #include "errlog.h"
+#include "csv.h"
+#include "sha.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -611,6 +613,12 @@ ns_write_priv_all_runs(FILE *f,
     fprintf(f, "<table><tr><td>%s%s</a></td></td></table>\n",
             ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_NEW_RUN_FORM, 0),
             _("Add new run"));
+  }
+
+  if (opcaps_check(phr->caps, OPCAP_IMPORT_XML_RUNS) >= 0) {
+    fprintf(f, "<table><tr><td>%s%s</a></td></td></table>\n",
+            ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1, 0),
+            _("Add new runs in CSV format"));
   }
 
   /*
@@ -2520,7 +2528,7 @@ ns_download_runs(
       ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
       goto cleanup;
     }
-    if (run_selection == NS_RUNSEL_OK && info.status != RUN_OK) continue;
+    if (run_selection == NS_RUNSEL_OK && (info.status != RUN_OK && info.status != RUN_IGNORED && info.status != RUN_DISQUALIFIED)) continue;
     if (info.status > RUN_LAST) continue;
     if (info.status > RUN_MAX_STATUS && info.status < RUN_TRANSIENT_FIRST)
       continue;
@@ -2695,6 +2703,323 @@ ns_download_runs(
   }
   xfree(file_bytes);
   xfree(file_name_str);
+}
+
+enum
+{
+  CSV_LOGIN,
+  CSV_PROB,
+  CSV_LANG,
+  CSV_STATUS,
+  CSV_TESTS,
+  CSV_SCORE,
+
+  CSV_LAST,
+};
+
+static const unsigned char * const supported_columns[] =
+{
+  "Login",
+  "Problem",
+  "Language",
+  "Status",
+  "Tests",
+  "Score",
+
+  0,
+};
+
+static const int mandatory_columns[] =
+{
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+
+  0,
+};
+
+int
+ns_upload_csv_runs(
+	struct http_request_info *phr,
+	const serve_state_t cs, FILE *log_f,
+        const unsigned char *csv_text)
+{
+  int retval = -1;
+  struct csv_file *csv = 0;
+  int ncol, row, col, i, x;
+  int col_ind[CSV_LAST];
+  struct run_entry *runs = 0;
+  struct csv_line *rr;
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob;
+  const struct section_language_data *lang;
+  const unsigned char *run_text = "";
+  size_t run_size = 0;
+  int mime_type = 0;
+  const unsigned char *mime_type_str = 0;
+  char **lang_list = 0;
+  char *eptr;
+  int run_id;
+  struct timeval precise_time;
+  int arch_flags;
+  path_t run_path;
+
+  memset(col_ind, -1, sizeof(col_ind));
+  if (!(csv = csv_parse(csv_text, log_f, ';'))) goto cleanup;
+  if (csv->u <= 1) {
+    fprintf(log_f, "%s\n", _("Too few lines in CSV file"));
+    goto cleanup;
+  }
+  ncol = csv->v[0].u;
+  for (row = 1; row < csv->u; row++)
+    if (csv->v[row].u != ncol) {
+      fprintf(log_f,
+              _("Header row defines %d columns, but row %d has %zu columns\n"), 
+              ncol, row, csv->v[row].u);
+      goto cleanup;
+    }
+
+  // enumerate header columns
+  for (col = 0; col < ncol; col++) {
+    if (!csv->v[0].v[col] || !*csv->v[0].v[col]) {
+      fprintf(log_f, _("Ignoring empty column %d\n"), col + 1);
+      continue;
+    }
+    for (i = 0; supported_columns[i]; i++)
+      if (!strcasecmp(supported_columns[i], csv->v[0].v[col]))
+        break;
+    if (!supported_columns[i]) {
+      fprintf(log_f, _("Ignoring unsupported column %d (%s)\n"), col + 1,
+              csv->v[0].v[col]);
+      continue;
+    }
+    if (col_ind[i] >= 0) {
+      fprintf(log_f, _("Column name %s is already defined as column %d\n"),
+              supported_columns[i], col_ind[i] + 1);
+      goto cleanup;
+    }
+    col_ind[i] = col;
+  }
+  // check mandatory columns
+  for (i = 0; i < CSV_LAST; i++)
+    if (mandatory_columns[i] && col_ind[i] < 0) {
+      fprintf(log_f, _("Mandatory column %s is not specified"),
+              supported_columns[i]);
+      goto cleanup;
+    }
+
+  // check every row
+  XCALLOC(runs, csv->u);
+  for (row = 1; row < csv->u; row++) {
+    rr = &csv->v[row];
+
+    if (!rr->v[col_ind[CSV_LOGIN]] || !*rr->v[col_ind[CSV_LOGIN]]) {
+      fprintf(log_f, _("Login is empty in row %d\n"), row);
+      goto cleanup;
+    }
+    if ((x = teamdb_lookup_login(cs->teamdb_state, rr->v[col_ind[CSV_LOGIN]])) <= 0){
+      fprintf(log_f, _("Invalid login `%s' in row %d\n"),
+              rr->v[col_ind[CSV_LOGIN]], row);
+      goto cleanup;
+    }
+    runs[row].user_id = x;
+
+    if (!rr->v[col_ind[CSV_PROB]] || !*rr->v[col_ind[CSV_PROB]]) {
+      fprintf(log_f, _("Problem is empty in row %d\n"), row);
+      goto cleanup;
+    }
+    prob = 0;
+    for (x = 1; x <= cs->max_prob; x++)
+      if (cs->probs[x] &&
+          !strcmp(rr->v[col_ind[CSV_PROB]], cs->probs[x]->short_name)) {
+        prob = cs->probs[x];
+        break;
+      }
+    if (!prob) {
+      fprintf(log_f, _("Invalid problem `%s' in row %d\n"),
+              rr->v[col_ind[CSV_PROB]], row);
+      goto cleanup;
+    }
+    runs[row].prob_id = prob->id;
+
+    lang = 0;
+    if (prob->type_val == PROB_TYPE_STANDARD) {
+      if (!rr->v[col_ind[CSV_LANG]] || !*rr->v[col_ind[CSV_LANG]]) {
+        fprintf(log_f, _("Language is empty in row %d\n"), row);
+        goto cleanup;
+      }
+      for (x = 1; x <= cs->max_lang; x++)
+        if (cs->langs[x] &&
+            !strcmp(rr->v[col_ind[CSV_LANG]], cs->langs[x]->short_name)) {
+          lang = cs->langs[x];
+          break;
+        }
+      if (!lang) {
+        fprintf(log_f, _("Invalid language `%s' in row %d\n"),
+                rr->v[col_ind[CSV_LANG]], row);
+        goto cleanup;
+      }
+      runs[row].lang_id = lang->id;
+
+      if (lang->disabled) {
+        fprintf(log_f, _("Language %s is disabled in row %d\n"),
+                lang->short_name, row);
+        goto cleanup;
+      }
+
+      if (prob->enable_language) {
+        lang_list = prob->enable_language;
+        for (i = 0; lang_list[i]; i++)
+          if (!strcmp(lang_list[i], lang->short_name))
+            break;
+        if (!lang_list[i]) {
+          fprintf(log_f, _("Language %s is not enabled for problem %s in row %d\n"),
+                  lang->short_name, prob->short_name, row);
+          goto cleanup;
+        }
+      } else if (prob->disable_language) {
+        lang_list = prob->disable_language;
+        for (i = 0; lang_list[i]; i++)
+          if (!strcmp(lang_list[i], lang->short_name))
+            break;
+        if (lang_list[i]) {
+          fprintf(log_f, _("Language %s is disabled for problem %s in row %d\n"),
+                  lang->short_name, prob->short_name, row);
+          goto cleanup;
+        }
+      }
+    } else {
+      mime_type = MIME_TYPE_TEXT;
+      mime_type_str = mime_type_get_type(mime_type);
+      runs[row].mime_type = mime_type;
+
+      if (prob->enable_language) {
+        lang_list = prob->enable_language;
+        for (i = 0; lang_list[i]; i++)
+          if (!strcmp(lang_list[i], mime_type_str))
+            break;
+        if (!lang_list[i]) {
+          fprintf(log_f, _("Content type %s is not enabled for problem %s in row %d\n"),
+                  mime_type_str, prob->short_name, row);
+          goto cleanup;
+        }
+      } else if (prob->disable_language) {
+        lang_list = prob->disable_language;
+        for (i = 0; lang_list[i]; i++)
+          if (!strcmp(lang_list[i], mime_type_str))
+            break;
+        if (lang_list[i]) {
+          fprintf(log_f, _("Content type %s is disabled for problem %s in row %d\n"),
+                  mime_type_str, prob->short_name, row);
+          goto cleanup;
+        }
+      }
+    }
+    sha_buffer(run_text, run_size, runs[row].sha1);
+
+    if (!rr->v[col_ind[CSV_STATUS]] || !*rr->v[col_ind[CSV_STATUS]]) {
+      fprintf(log_f, _("Status is empty in row %d\n"), row);
+      goto cleanup;
+    }
+    if (run_str_short_to_status(rr->v[col_ind[CSV_STATUS]], &x) < 0) {
+      fprintf(log_f, _("Invalid status `%s' in row %d\n"),
+              rr->v[col_ind[CSV_STATUS]], row);
+      goto cleanup;
+    }
+    if (x < 0 || x > RUN_MAX_STATUS) {
+      fprintf(log_f, _("Invalid status `%s' (%d) in row %d\n"),
+              rr->v[col_ind[CSV_STATUS]], x, row);
+      goto cleanup;
+    }
+    runs[row].status = x;
+
+    if (!rr->v[col_ind[CSV_TESTS]] || !*rr->v[col_ind[CSV_TESTS]]) {
+      fprintf(log_f, _("Tests is empty in row %d\n"), row);
+      goto cleanup;
+    }
+    errno = 0;
+    x = strtol(rr->v[col_ind[CSV_TESTS]], &eptr, 10);
+    if (errno || *eptr || x < -1 || x > 100000) {
+      fprintf(log_f, _("Tests value `%s' is invalid in row %d\n"),
+              rr->v[col_ind[CSV_TESTS]], row);
+      goto cleanup;
+    }
+    runs[row].test = x;
+
+    if (!rr->v[col_ind[CSV_SCORE]] || !*rr->v[col_ind[CSV_SCORE]]) {
+      fprintf(log_f, _("Score is empty in row %d\n"), row);
+      goto cleanup;
+    }
+    errno = 0;
+    x = strtol(rr->v[col_ind[CSV_SCORE]], &eptr, 10);
+    if (errno || *eptr || x < -1 || x > 100000) {
+      fprintf(log_f, _("Score value `%s' is invalid in row %d\n"),
+              rr->v[col_ind[CSV_SCORE]], row);
+      goto cleanup;
+    }
+    runs[row].score = x;
+    
+    fprintf(log_f, "%d: user %d, problem %d, language %d, status %d, tests %d, score %d\n",
+            row, runs[row].user_id, runs[row].prob_id, runs[row].lang_id,
+            runs[row].status, runs[row].test, runs[row].score);
+  }
+
+  for (row = 1; row < csv->u; row++) {
+    gettimeofday(&precise_time, 0);
+    run_id = run_add_record(cs->runlog_state, 
+                            precise_time.tv_sec, precise_time.tv_usec * 1000,
+                            run_size, runs[row].sha1,
+                            phr->ip, phr->ssl_flag, phr->locale_id,
+                            runs[row].user_id,
+                            runs[row].prob_id,
+                            runs[row].lang_id,
+                            runs[row].variant,
+                            runs[row].is_hidden,
+                            runs[row].mime_type);
+    if (run_id < 0) {
+      fprintf(log_f, _("Failed to add row %d to runlog\n"), row);
+      goto cleanup;
+    }
+    serve_move_files_to_insert_run(cs, run_id);
+    arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
+                                         global->run_archive_dir, run_id,
+                                         run_size, 0);
+    if (arch_flags < 0) {
+      run_undo_add_record(cs->runlog_state, run_id);
+      fprintf(log_f, _("Cannot allocate space to store run row %d\n"), row);
+      goto cleanup;
+    }
+    if (archive_dir_prepare(cs, global->run_archive_dir, run_id, 0, 0) < 0) {
+      run_undo_add_record(cs->runlog_state, run_id);
+      fprintf(log_f, _("Cannot allocate space to store run row %d\n"), row);
+      goto cleanup;
+    }
+    if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
+      run_undo_add_record(cs->runlog_state, run_id);
+      fprintf(log_f, _("Cannot write run row %d\n"), row);
+      goto cleanup;
+    }
+    run_set_entry(cs->runlog_state, run_id,
+                  RUN_ENTRY_STATUS | RUN_ENTRY_TEST | RUN_ENTRY_SCORE,
+                  &runs[row]);
+
+    serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                    "Command: new_run\n"
+                    "Status: %s\n"
+                    "Run-id: %d\n",
+                    run_status_str(runs[row].status, 0, 0),
+                    run_id);
+  }
+
+  retval = 0;
+
+ cleanup:
+  xfree(runs);
+  csv_free(csv);
+  return retval;
 }
 
 /*
