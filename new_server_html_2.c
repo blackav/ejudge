@@ -2528,7 +2528,7 @@ ns_download_runs(
       ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
       goto cleanup;
     }
-    if (run_selection == NS_RUNSEL_OK && (info.status != RUN_OK && info.status != RUN_IGNORED && info.status != RUN_DISQUALIFIED)) continue;
+    if (run_selection == NS_RUNSEL_OK && info.status != RUN_OK) continue;
     if (info.status > RUN_LAST) continue;
     if (info.status > RUN_MAX_STATUS && info.status < RUN_TRANSIENT_FIRST)
       continue;
