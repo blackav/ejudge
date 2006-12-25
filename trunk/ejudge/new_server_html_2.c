@@ -1672,6 +1672,7 @@ ns_write_priv_clar(const serve_state_t cs,
   char *msg_txt = 0;
   size_t msg_len = 0;
   unsigned char bb[1024];
+  unsigned char b1[1024], b2[1024];
 
   if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
       || clar_get_record_new(cs->clarlog_state, clar_id, &clar) < 0) {
@@ -1707,7 +1708,11 @@ ns_write_priv_clar(const serve_state_t cs,
       fprintf(f, "<td><b>%s</b> (%s)</td>", _("judges"),
               ARMOR(teamdb_get_name_2(cs->teamdb_state, clar.j_from)));
   } else {
-    fprintf(f, "<td>%s (%d)</td>",
+    snprintf(b1, sizeof(b1), "uid == %d", clar.to);
+    url_armor_string(b2, sizeof(b2), b1);
+    fprintf(f, "<td>%s%s (%d)</a></td>",
+            ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_MAIN_PAGE,
+                    "filter_expr=%s", b2),
             ARMOR(teamdb_get_name_2(cs->teamdb_state, clar.from)),
             clar.from);
   }
@@ -1717,7 +1722,11 @@ ns_write_priv_clar(const serve_state_t cs,
   } else if (!clar.to) {
     fprintf(f, "<td><b>%s</b></td>", _("judges"));
   } else {
-    fprintf(f, "<td>%s (%d)</td>",
+    snprintf(b1, sizeof(b1), "uid == %d", clar.to);
+    url_armor_string(b2, sizeof(b2), b1);
+    fprintf(f, "<td>%s%s (%d)</a></td>",
+            ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_MAIN_PAGE,
+                    "filter_expr=%s", b2),
             ARMOR(teamdb_get_name_2(cs->teamdb_state, clar.to)), clar.to);
   }
   fprintf(f, "</tr>\n");
