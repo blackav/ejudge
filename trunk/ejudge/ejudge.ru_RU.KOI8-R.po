@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-12-25 14:13+0300\n"
-"PO-Revision-Date: 2006-12-25 15:58+0300\n"
+"POT-Creation-Date: 2006-12-25 20:05+0300\n"
+"PO-Revision-Date: 2006-12-25 20:06+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -426,6 +426,9 @@ msgstr "Разрешить работу в роли ЭКЗАМЕНАТОРА отмеченным пользователям"
 
 msgid "Add the OBSERVER role to the selected users"
 msgstr "Разрешить работу в роли НАБЛЮДАТЕЛЯ отмеченным пользователям"
+
+msgid "Adding new runs"
+msgstr "Добавление новых посылок"
 
 #, c-format
 msgid "Adding role %d to user %d in contest %d failed"
@@ -1739,6 +1742,9 @@ msgstr "Участники команды с такой ролью не допускаются."
 msgid "Memory limit exceeded"
 msgstr "Превышен лимит по памяти"
 
+msgid "Merging runs"
+msgstr "Слияние записей о посылках"
+
 msgid "Message"
 msgstr "Сообщение"
 
@@ -1948,6 +1954,9 @@ msgstr "Старый пароль имеет слишком большую длину"
 msgid "Only %d members \"%s\" are specified instead of minimum %d."
 msgstr "Только %d участников \"%s\" указаны вместо минимальных %d."
 
+msgid "Operation completed"
+msgstr "Операция завершена"
+
 msgid "Operation completed successfully"
 msgstr "Операция успешно выполнена"
 
@@ -1956,6 +1965,9 @@ msgstr "Операция завершилась с ошибками"
 
 msgid "Operation failed"
 msgstr "Операция не выполнена"
+
+msgid "Operation is not supported"
+msgstr "Операция не поддерживается"
 
 msgid "Operation succeeded"
 msgstr "Операция успешно выполнена"
