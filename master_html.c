@@ -41,6 +41,7 @@
 #include "digest_io.h"
 #include "errlog.h"
 #include "serve_state.h"
+#include "mime_type.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -2810,6 +2811,7 @@ html_reset_clar_filter(serve_state_t state, int user_id, ej_cookie_t session_id)
   u->prev_last_clar = 0;
 }
 
+
 void
 write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
                 unsigned char const *charset)
@@ -2826,6 +2828,21 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
     fprintf(f, "Content-type: text/plain; charset=%s\n\n", charset);
   }
 
+  fprintf(f,
+          "Run_Id"
+          ";Time;Nsec;Time2;Date;Year;Mon;Day;Hour;Min;Sec"
+          ";Dur;Dur_Hour;Dur_Min;Dur_Sec"
+          ";Size"
+          ";IPV6_Flag;IP;SSL_Flag"
+          ";Sha1"
+          ";User_Id;User_Login;User_Name"
+          ";User_Inv;User_Ban;User_Lock"
+          ";Prob;Variant"
+          ";Lang;Content_Type"
+          ";Status;Score;Score_Adj;Test"
+          ";Import_Flag;Hidden_Flag;RO_Flag;Locale_Id;Pages;Judge_Id"
+          "\n");
+
   total_runs = run_get_total(state->runlog_state);
   start_time = run_get_start_time(state->runlog_state);
   for (i = 0; i < total_runs; i++) {
@@ -2834,7 +2851,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
       continue;
     }
     fprintf(f, "%d;", i);
-    fprintf(f, "%lld;", re.time);
+    fprintf(f, "%lld;%09d;", re.time, re.nsec);
     tmp_time = re.time;
     pts = localtime(&tmp_time);
     fprintf(f, "%04d%02d%02d%02d%02d%02d;",
@@ -2872,7 +2889,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
             dur, pts->tm_hour, pts->tm_min, pts->tm_sec);
 
     fprintf(f, "%u;", re.size);
-    fprintf(f, "%s;", xml_unparse_ip(re.a.ip));
+    fprintf(f, "%d;%s;%d;", re.ipv6_flag, xml_unparse_ip(re.a.ip), re.ssl_flag);
 
     s = (unsigned char*) re.sha1;
     for (j = 0; j < 20; j++) fprintf(f, "%02x", *s++);
@@ -2906,22 +2923,25 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
     } else {
       fprintf(f, "!INVALID PROBLEM %d!;", re.prob_id);
     }
+    fprintf(f, "%d;", re.variant);
 
-    if (re.lang_id > 0 && re.lang_id <= state->max_lang
+    if (!re.lang_id) {
+      fprintf(f, ";%s;", mime_type_get_type(re.mime_type));
+    } else if (re.lang_id > 0 && re.lang_id <= state->max_lang
         && state->langs[re.lang_id] && state->langs[re.lang_id]->short_name) {
-      fprintf(f, "%s;", state->langs[re.lang_id]->short_name);
+      fprintf(f, "%s;;", state->langs[re.lang_id]->short_name);
     } else {
       fprintf(f, "!INVALID LANGUAGE %d!;", re.lang_id);
     }
 
     run_status_str(re.status, statstr, 0);
     fprintf(f, "%s;", statstr);
-    fprintf(f, "%d;", re.score);
+    fprintf(f, "%d;%d;", re.score, re.score_adj);
     fprintf(f, "%d;", re.test);
     fprintf(f, "%d;", re.is_imported);
-    fprintf(f, "%d;", re.variant);
     fprintf(f, "%d;", re.is_hidden);
     fprintf(f, "%d;", re.is_readonly);
+    fprintf(f, "%d;%d;%d", re.locale_id, re.pages, re.judge_id);
 
     fprintf(f, "\n");
   }
