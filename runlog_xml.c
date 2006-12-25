@@ -688,12 +688,14 @@ unparse_runlog_xml(serve_state_t state,
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_AUTHORITATIVE],
               (!pp->is_imported)?"yes":"no");
     }
-    if (!external_mode) {
+    if (!external_mode && pp->is_hidden) {
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_HIDDEN],
               (pp->is_hidden)?"yes":"no");
     }
-    fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_READONLY],
-            (pp->is_readonly)?"yes":"no");
+    if (pp->is_readonly) {
+      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_READONLY],
+              (pp->is_readonly)?"yes":"no");
+    }
     fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_NSEC], pp->nsec);
     if (!external_mode && pp->pages > 0) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_PAGES], pp->pages);
