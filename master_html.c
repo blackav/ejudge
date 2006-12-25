@@ -2831,7 +2831,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
   fprintf(f,
           "Run_Id"
           ";Time;Nsec;Time2;Date;Year;Mon;Day;Hour;Min;Sec"
-          ";Dur;Dur_Hour;Dur_Min;Dur_Sec"
+          ";Dur;Dur_Day;Dur_Hour;Dur_Min;Dur_Sec"
           ";Size"
           ";IPV6_Flag;IP;SSL_Flag"
           ";Sha1"
