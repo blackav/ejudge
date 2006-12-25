@@ -3339,14 +3339,36 @@ priv_view_runs_dump(FILE *fout,
                     const struct contest_desc *cnts,
                     struct contest_extra *extra)
 {
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
   int retval = 0;
 
   if (phr->role < USER_ROLE_JUDGE
       || opcaps_check(phr->caps, OPCAP_DUMP_RUNS) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-  write_runs_dump(extra->serve_state, fout, phr->self_url,
-                  extra->serve_state->global->charset);
+  switch (phr->action) {
+  case NEW_SRV_ACTION_VIEW_RUNS_DUMP:
+    write_runs_dump(cs, fout, phr->self_url, global->charset);
+    break;
+
+  case NEW_SRV_ACTION_EXPORT_XML_RUNS:
+    fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
+    if (run_write_xml(cs->runlog_state, cs, cnts, fout, 1,
+                      cs->current_time) < 0)
+      FAIL(NEW_SRV_ERR_TRY_AGAIN);
+    break;
+
+  case NEW_SRV_ACTION_WRITE_XML_RUNS:
+    fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
+    if (run_write_xml(cs->runlog_state, cs, cnts, fout, 0,
+                      cs->current_time) < 0)
+      FAIL(NEW_SRV_ERR_TRY_AGAIN);
+    break;
+
+  default:
+    abort();
+  }
 
  cleanup:
   return retval;
@@ -4602,6 +4624,8 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1] = priv_upload_runlog_csv_1,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2] = priv_upload_runlog_csv_2,
   [NEW_SRV_ACTION_VIEW_RUNS_DUMP] = priv_view_runs_dump,
+  [NEW_SRV_ACTION_EXPORT_XML_RUNS] = priv_view_runs_dump,
+  [NEW_SRV_ACTION_WRITE_XML_RUNS] = priv_view_runs_dump,
 };
 
 static void
@@ -4869,6 +4893,12 @@ priv_main_page(FILE *fout,
     fprintf(fout, "<li>%s%s</a></li>\n",
             ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_RUNS_DUMP, 0),
             _("Dump runs in CSV format"));
+    fprintf(fout, "<li>%s%s</a></li>\n",
+            ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_EXPORT_XML_RUNS, 0),
+            _("Export runs in XML external format"));
+    fprintf(fout, "<li>%s%s</a></li>\n",
+            ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_WRITE_XML_RUNS, 0),
+            _("Write runs in XML internal format"));
   }
   fprintf(fout, "<li>%s%s</a></li>\n",
           ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_LOGOUT, 0),
@@ -5470,6 +5500,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1] = priv_generic_page,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_RUNS_DUMP] = priv_generic_page,
+  [NEW_SRV_ACTION_EXPORT_XML_RUNS] = priv_generic_page,
+  [NEW_SRV_ACTION_WRITE_XML_RUNS] = priv_generic_page,
 };
 
 static void

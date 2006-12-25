@@ -28,6 +28,7 @@
 #include "contests.h"
 #include "xml_utils.h"
 #include "serve_state.h"
+#include "mime_type.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -87,6 +88,11 @@ enum
   RUNLOG_A_START_TIME,
   RUNLOG_A_STOP_TIME,
   RUNLOG_A_CURRENT_TIME,
+  RUNLOG_A_IPV6,
+  RUNLOG_A_SSL,
+  RUNLOG_A_MIME_TYPE,
+  RUNLOG_A_PAGES,
+  RUNLOG_A_HIDDEN,
 
   RUNLOG_LAST_ATTR,
 };
@@ -134,6 +140,11 @@ static const char * const attr_map[] =
   [RUNLOG_A_START_TIME] "start_time",
   [RUNLOG_A_STOP_TIME] "stop_time",
   [RUNLOG_A_CURRENT_TIME] "current_time",
+  [RUNLOG_A_IPV6] "ipv6",
+  [RUNLOG_A_SSL] "ssl",
+  [RUNLOG_A_MIME_TYPE] "mime_type",
+  [RUNLOG_A_PAGES] "pages",
+  [RUNLOG_A_HIDDEN] "hidden",
 
   [RUNLOG_LAST_ATTR] 0,
 };
@@ -325,6 +336,9 @@ process_run_elements(struct xml_tree *xt)
       case RUNLOG_A_READONLY:
         if (xml_attr_bool_byte(xa, &xr->r.is_readonly) < 0) return -1;
         break;
+      case RUNLOG_A_HIDDEN:
+        if (xml_attr_bool_byte(xa, &xr->r.is_hidden) < 0) return -1;
+        break;
       case RUNLOG_A_NSEC:
         if (!xa->text) goto empty_attr_value;
         n = 0;
@@ -332,6 +346,23 @@ process_run_elements(struct xml_tree *xt)
           goto invalid_attr_value;
         if (lv < 0 || lv >= 1000000000) goto invalid_attr_value;
         xr->r.nsec = lv;
+        break;
+      case RUNLOG_A_SSL:
+        if (xml_attr_bool_byte(xa, &xr->r.ssl_flag) < 0) return -1;
+        break;
+      case RUNLOG_A_MIME_TYPE:
+        if (!xa->text) goto empty_attr_value;
+        iv = mime_type_parse(xa->text);
+        if (iv < 0) goto invalid_attr_value;
+        xr->r.mime_type = iv;
+        break;
+      case RUNLOG_A_PAGES:
+        if (!xa->text) goto empty_attr_value;
+        n = 0;
+        if (sscanf(xa->text, "%d %n", &iv, &n) != 1 || xa->text[n])
+          goto invalid_attr_value;
+        if (iv < 0 || iv > 255) goto invalid_attr_value;
+        xr->r.pages = iv;
         break;
       default:
         return xml_err_attr_not_allowed(xt, xa);
@@ -346,8 +377,6 @@ process_run_elements(struct xml_tree *xt)
       return xml_err_attr_undefined(xt, RUNLOG_A_USER_ID);
     if (!xr->r.prob_id)
       return xml_err_attr_undefined(xt, RUNLOG_A_PROB_ID);
-    if (!xr->r.lang_id)
-      return xml_err_attr_undefined(xt, RUNLOG_A_LANG_ID);
     if (xr->r.status == 255)
       return xml_err_attr_undefined(xt, RUNLOG_A_STATUS);
 
@@ -598,7 +627,7 @@ unparse_runlog_xml(serve_state_t state,
   fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_RUNS]);
   for (i = 0; i < nelems; i++) {
     pp = &entries[i];
-    if (pp->is_hidden) continue;
+    if (external_mode && pp->is_hidden) continue;
     switch (pp->status) {
     case RUN_EMPTY:
     case RUN_RUNNING:
@@ -619,8 +648,14 @@ unparse_runlog_xml(serve_state_t state,
     if (!external_mode && pp->size > 0) {
       fprintf(f, " %s=\"%u\"", attr_map[RUNLOG_A_SIZE], pp->size);
     }
-    if (!external_mode && pp->a.ip) {
-      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_IP], xml_unparse_ip(pp->a.ip));
+    if (!external_mode) {
+      if (pp->ipv6_flag > 0)
+        fprintf(f, " %s=\"yes\"", attr_map[RUNLOG_A_IPV6]);
+      if (pp->a.ip) 
+        fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_IP],
+                xml_unparse_ip(pp->a.ip));
+      if (pp->ssl_flag)
+        fprintf(f, " %s=\"yes\"", attr_map[RUNLOG_A_SSL]);
     }
     if (!external_mode && is_non_empty_sha1(pp->sha1)) {
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_SHA1],
@@ -634,8 +669,11 @@ unparse_runlog_xml(serve_state_t state,
     if (pp->prob_id) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_PROB_ID], pp->prob_id);
     }
-    if (pp->lang_id) {
+    if (pp->lang_id > 0) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_LANG_ID], pp->lang_id);
+    } else {
+      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_MIME_TYPE],
+              mime_type_get_type(pp->mime_type));
     }
     if (pp->variant) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_VARIANT], pp->variant);
@@ -650,9 +688,16 @@ unparse_runlog_xml(serve_state_t state,
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_AUTHORITATIVE],
               (!pp->is_imported)?"yes":"no");
     }
+    if (!external_mode) {
+      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_HIDDEN],
+              (pp->is_hidden)?"yes":"no");
+    }
     fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_READONLY],
             (pp->is_readonly)?"yes":"no");
     fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_NSEC], pp->nsec);
+    if (!external_mode && pp->pages > 0) {
+      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_PAGES], pp->pages);
+    }
     fprintf(f, "/>\n");
   }
   fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_RUNS]);
