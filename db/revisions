@@ -1718,3 +1718,6 @@ new-client.c 3771 0 551199
 new-server.c 3771 0 1523694
 ejudge_cfg.c 3771 0 1371243
 startstop.c 3771 0 213678
+new-server.h 3773 0 1207466
+master_html.c 3773 0 10312398
+new_server_html.c 3773 0 24389405
