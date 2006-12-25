@@ -143,6 +143,7 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_FILE_UNSPECIFIED] = __("File is not specified"),
   [NEW_SRV_ERR_FILE_EMPTY] = __("File is empty"),
   [NEW_SRV_ERR_TRY_AGAIN] = __("Try again this operation later"),
+  [NEW_SRV_ERR_NOT_SUPPORTED] = __("Operation is not supported"),
 };
 
 const unsigned char *
