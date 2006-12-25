@@ -142,6 +142,7 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_TAR_FAILED] = __("Archive creation with tar failed"),
   [NEW_SRV_ERR_FILE_UNSPECIFIED] = __("File is not specified"),
   [NEW_SRV_ERR_FILE_EMPTY] = __("File is empty"),
+  [NEW_SRV_ERR_TRY_AGAIN] = __("Try again this operation later"),
 };
 
 const unsigned char *

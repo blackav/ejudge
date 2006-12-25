@@ -2839,7 +2839,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
           ";User_Inv;User_Ban;User_Lock"
           ";Prob;Variant"
           ";Lang;Content_Type"
-          ";Status;Score;Score_Adj;Test"
+          ";Stat_Short;Status;Score;Score_Adj;Test"
           ";Import_Flag;Hidden_Flag;RO_Flag;Locale_Id;Pages;Judge_Id"
           "\n");
 
@@ -2934,6 +2934,8 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
       fprintf(f, "!INVALID LANGUAGE %d!;", re.lang_id);
     }
 
+    run_status_to_str_short(statstr, sizeof(statstr), re.status);
+    fprintf(f, "%s;", statstr);
     run_status_str(re.status, statstr, 0);
     fprintf(f, "%s;", statstr);
     fprintf(f, "%d;%d;", re.score, re.score_adj);

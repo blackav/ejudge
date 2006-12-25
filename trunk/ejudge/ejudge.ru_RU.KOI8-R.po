@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-12-25 13:05+0300\n"
-"PO-Revision-Date: 2006-12-25 13:06+0300\n"
+"POT-Creation-Date: 2006-12-25 14:13+0300\n"
+"PO-Revision-Date: 2006-12-25 15:58+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -961,6 +961,9 @@ msgid "Expected stop time"
 msgstr "Ожидаемое время окончания турнира"
 
 msgid "Export XML runs (external format)"
+msgstr "Сохранить журнал посылок во внешнем XML-формате"
+
+msgid "Export runs in XML external format"
 msgstr "Сохранить журнал посылок во внешнем XML-формате"
 
 msgid "Extra info"
@@ -2940,6 +2943,9 @@ msgstr "Суммарный размер попыток"
 msgid "Total submissions"
 msgstr "Всего посылок"
 
+msgid "Try again this operation later"
+msgstr "Повторите операцию позже"
+
 msgid ""
 "Type in a desirable login identifier. <b>Note</b>, that your login still "
 "<i>may be</i> (in some cases) assigned automatically."
@@ -3178,6 +3184,9 @@ msgid "Warnings"
 msgstr "Предупреждения"
 
 msgid "Write XML runs (internal format)"
+msgstr "Сохранить журнал посылок во внутреннем XML-формате"
+
+msgid "Write runs in XML internal format"
 msgstr "Сохранить журнал посылок во внутреннем XML-формате"
 
 msgid "Wrong answer"
