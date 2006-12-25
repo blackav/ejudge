@@ -3333,6 +3333,26 @@ priv_view_user_dump(FILE *fout,
 }
 
 static int
+priv_view_runs_dump(FILE *fout,
+                    FILE *log_f,
+                    struct http_request_info *phr,
+                    const struct contest_desc *cnts,
+                    struct contest_extra *extra)
+{
+  int retval = 0;
+
+  if (phr->role < USER_ROLE_JUDGE
+      || opcaps_check(phr->caps, OPCAP_DUMP_RUNS) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  write_runs_dump(extra->serve_state, fout, phr->self_url,
+                  extra->serve_state->global->charset);
+
+ cleanup:
+  return retval;
+}
+
+static int
 priv_view_audit_log(FILE *fout,
                     FILE *log_f,
                     struct http_request_info *phr,
@@ -4581,6 +4601,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2] = priv_download_runs,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1] = priv_upload_runlog_csv_1,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2] = priv_upload_runlog_csv_2,
+  [NEW_SRV_ACTION_VIEW_RUNS_DUMP] = priv_view_runs_dump,
 };
 
 static void
@@ -4842,6 +4863,12 @@ priv_main_page(FILE *fout,
     fprintf(fout, "<li>%s%s</a></li>\n",
             ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USER_DUMP, 0),
             _("Dump users in CSV format"));
+  }
+  if (phr->role >= USER_ROLE_JUDGE
+      && opcaps_check(phr->caps, OPCAP_DUMP_RUNS) >= 0) {
+    fprintf(fout, "<li>%s%s</a></li>\n",
+            ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_RUNS_DUMP, 0),
+            _("Dump runs in CSV format"));
   }
   fprintf(fout, "<li>%s%s</a></li>\n",
           ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_LOGOUT, 0),
@@ -5442,6 +5469,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2] = priv_generic_page,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1] = priv_generic_page,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2] = priv_generic_page,
+  [NEW_SRV_ACTION_VIEW_RUNS_DUMP] = priv_generic_page,
 };
 
 static void
