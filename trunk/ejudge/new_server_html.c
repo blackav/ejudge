@@ -3504,6 +3504,7 @@ priv_view_users_page(FILE *fout,
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int details_allowed = 0;
   unsigned char cl[128];
+  unsigned char b1[1024], b2[1024];
 
   if (open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 1, 0);
@@ -3535,7 +3536,15 @@ priv_view_users_page(FILE *fout,
     if (!(uc = userlist_get_user_contest(u, phr->contest_id))) continue;
 
     fprintf(fout, "<tr%s>", form_row_attrs[row ^= 1]);
-    fprintf(fout, "<td%s>%d</td><td%s>%d</td>", cl, serial++, cl, uid);
+    fprintf(fout, "<td%s>%d</td>", cl, serial++);
+
+    snprintf(b1, sizeof(b1), "uid == %d", uid);
+    url_armor_string(b2, sizeof(b2), b1);
+    fprintf(fout, "<td%s>%s%d</a></td>", cl,
+            ns_aref(bb, sizeof(bb), phr,
+                    NEW_SRV_ACTION_MAIN_PAGE, "filter_expr=%s", b2),
+            uid);
+
     if (details_allowed) {
       fprintf(fout, "<td%s>%s%s</a></td>", cl,
               ns_aref(bb, sizeof(bb), phr,
