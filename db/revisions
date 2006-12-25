@@ -1735,3 +1735,6 @@ new-server.h 3783 0 1218214
 new_server_proto.h 3783 0 423326
 new_server_html.c 3783 0 24742123
 new_server_proto.c 3783 0 854690
+copyright.c 3785 0 198622
+new_server_html.c 3785 0 24742811
+new_server_html_2.c 3785 0 7901751
