@@ -257,7 +257,8 @@ ns_write_priv_all_runs(FILE *f,
             _("Total submissions"), env.rtotal,
             _("Filtered"), match_tot,
             _("Shown"), list_tot);
-    fprintf(f, "<p><big>Compiling and running: %d</big></p>\n", transient_tot);
+    fprintf(f, "<p><big>%s: %d</big></p>\n",
+            _("Compiling and running"), transient_tot);
   }
 
   if (u->prev_filter_expr) {
@@ -619,6 +620,10 @@ ns_write_priv_all_runs(FILE *f,
     fprintf(f, "<table><tr><td>%s%s</a></td></td></table>\n",
             ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1, 0),
             _("Add new runs in CSV format"));
+
+    fprintf(f, "<table><tr><td>%s%s</a></td></td></table>\n",
+            ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_1, 0),
+            _("Merge runs in XML format"));
   }
 
   /*

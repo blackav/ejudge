@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-12-25 20:05+0300\n"
-"PO-Revision-Date: 2006-12-25 20:06+0300\n"
+"POT-Creation-Date: 2006-12-25 20:18+0300\n"
+"PO-Revision-Date: 2006-12-25 20:20+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -703,6 +703,9 @@ msgstr "Ошибка компиляции"
 
 msgid "Compiled"
 msgstr "Скомпилировано"
+
+msgid "Compiling and running"
+msgstr "Компилируется и тестируется"
 
 msgid "Compiling..."
 msgstr "Компилируется..."
@@ -1741,6 +1744,9 @@ msgstr "Участники команды с такой ролью не допускаются."
 
 msgid "Memory limit exceeded"
 msgstr "Превышен лимит по памяти"
+
+msgid "Merge runs in XML format"
+msgstr "Слить журнал посылок в XML-формате"
 
 msgid "Merging runs"
 msgstr "Слияние записей о посылках"

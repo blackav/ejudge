@@ -49,6 +49,7 @@ static int copyright_locale = 0;
 unsigned char *
 get_copyright(int locale_id)
 {
+  fprintf(stderr, "get_copyright: %d\n", locale_id);
   if (!copyright_str || locale_id != copyright_locale) {
     unsigned char buf[1024];
 
