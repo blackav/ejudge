@@ -1738,3 +1738,9 @@ new_server_proto.c 3783 0 854690
 copyright.c 3785 0 198622
 new_server_html.c 3785 0 24742811
 new_server_html_2.c 3785 0 7901751
+new-server.h 3787 0 1222198
+new_server_proto.h 3787 0 428783
+new-client.c 3787 0 565146
+new-server.c 3787 0 1523964
+new-server-cmd.c 3787 0 1348662
+new-server-control.c 3787 0 338949
