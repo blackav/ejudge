@@ -43,11 +43,14 @@ void
 l10n_prepare(int _l10n_flag, unsigned char const *l10n_dir)
 {
 #if CONF_HAS_LIBINTL - 0 == 1
+  static unsigned char env_buf[64] = "LANG";
+
   if (!l10n_dir) _l10n_flag = 0;
   if (_l10n_flag != 1) return;
   l10n_flag = 1;
   bindtextdomain("ejudge", l10n_dir);
   textdomain("ejudge");
+  putenv(env_buf);
 #endif /* CONF_HAS_LIBINTL */
 }
 
