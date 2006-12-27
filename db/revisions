@@ -1749,3 +1749,9 @@ new-server-cmd.c 3791 0 1382831
 copyright.c 3793 0 200944
 copyright.c 3795 0 202589
 l10n.c 3795 0 200097
+new-server.h 3796 0 1224242
+new_server_proto.h 3796 0 443610
+new-server.c 3796 0 1543397
+new-server-cmd.c 3796 0 1473684
+new_server_html.c 3796 0 25075255
+new_server_proto.c 3796 0 961514
