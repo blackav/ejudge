@@ -8995,29 +8995,149 @@ cmd_login(
   return retval;
 }
 
-typedef int (*cmd_handler_t)(void);
+static int
+cmd_logout(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  if (open_ul_connection(phr->fw_state) < 0)
+    return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
+  userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
+                              phr->session_id);
+  ns_remove_session(phr->session_id);
+  return 0;
+}
+           
+typedef int (*cmd_handler_t)(FILE *, struct http_request_info *,
+                             const struct contest_desc *,
+                             struct contest_extra *);
 
 static cmd_handler_t cmd_actions_table[NEW_SRV_ACTION_LAST] =
 {
+  [NEW_SRV_ACTION_LOGOUT] = cmd_logout,
 };
 
-static void
+static int
 new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
 {
   int r = 0;
+  const struct contest_desc *cnts = 0;
+  opcap_t caps = 0;
+  struct teamdb_db_callbacks callbacks;
+  struct contest_extra *extra = 0;
 
-  if (phr->action == NEW_SRV_ACTION_LOGIN) {
-    phr->protocol_reply = cmd_login(fout, phr);
-    return;
+  if (phr->action == NEW_SRV_ACTION_LOGIN)
+    return cmd_login(fout, phr);
+
+  if (open_ul_connection(phr->fw_state) < 0)
+    return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
+
+  if ((r = userlist_clnt_get_cookie(ul_conn, ULS_PRIV_GET_COOKIE,
+                                    phr->ip, phr->ssl_flag,
+                                    phr->session_id,
+                                    &phr->user_id, &phr->contest_id,
+                                    &phr->locale_id, 0, &phr->role,
+                                    &phr->login, &phr->name)) < 0) {
+    switch (-r) {
+    case ULS_ERR_NO_COOKIE:
+      return -NEW_SRV_ERR_PERMISSION_DENIED;
+    case ULS_ERR_DISCONNECT:
+      return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
+    default:
+      return -NEW_SRV_ERR_INTERNAL;
+    }
   }
+
+  if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
+    return -NEW_SRV_ERR_INV_CONTEST_ID;
+  if (!cnts->new_managed)
+    return -NEW_SRV_ERR_INV_CONTEST_ID;
+  extra = ns_get_contest_extra(phr->contest_id);
+  ASSERT(extra);
+
+  if (phr->role < 0 || phr->role >= USER_ROLE_LAST)
+    return -NEW_SRV_ERR_INV_ROLE;
+
+  // analyze IP limitations
+  if (phr->role == USER_ROLE_ADMIN) {
+    if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+      return -NEW_SRV_ERR_PERMISSION_DENIED;
+  } else if (phr->role == USER_ROLE_CONTESTANT) {
+    if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+      return -NEW_SRV_ERR_PERMISSION_DENIED;
+  } else {
+    if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+      return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+
+  if (phr->role == USER_ROLE_ADMIN) {
+    // as for the master program
+    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
+        || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0)
+      return -NEW_SRV_ERR_PERMISSION_DENIED;
+  } else if (phr->role == USER_ROLE_JUDGE) {
+    // as for the judge program
+    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
+        || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0)
+      return -NEW_SRV_ERR_PERMISSION_DENIED;
+  } else if (phr->role == USER_ROLE_CONTESTANT) {
+    if (cnts->closed || cnts->client_disable_team)
+      return -NEW_SRV_ERR_PERMISSION_DENIED;
+  } else {
+    // user privileges checked locally
+    if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0)
+      return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+
+  if (phr->name && *phr->name) {
+    phr->name_arm = html_armor_string_dup(phr->name);
+  } else {
+    phr->name_arm = html_armor_string_dup(phr->login);
+  }
+  if (extra->contest_arm) xfree(extra->contest_arm);
+  if (phr->locale_id == 0 && cnts->name_en) {
+    extra->contest_arm = html_armor_string_dup(cnts->name_en);
+  } else {
+    extra->contest_arm = html_armor_string_dup(cnts->name);
+  }
+
+  phr->caps = 0;
+  if ((phr->role == USER_ROLE_ADMIN || phr->role == USER_ROLE_JUDGE)
+      && opcaps_find(&cnts->capabilities, phr->login, &caps) >= 0) {
+    phr->caps = caps;
+  }
+
+  memset(&callbacks, 0, sizeof(callbacks));
+  callbacks.user_data = (void*) phr->fw_state;
+  callbacks.list_all_users = list_all_users_callback;
+
+  // invoke the contest
+  if (serve_state_load_contest(phr->contest_id,
+                               ul_conn,
+                               &callbacks,
+                               &extra->serve_state, 0) < 0) {
+    return -NEW_SRV_ERR_INV_CONTEST_ID;
+  }
+
+  if (phr->role == USER_ROLE_CONTESTANT) {
+    if (!teamdb_lookup(extra->serve_state->teamdb_state, phr->user_id))
+      return -NEW_SRV_ERR_PERMISSION_DENIED;
+    r = teamdb_get_flags(extra->serve_state->teamdb_state, phr->user_id);
+    if (r & (TEAM_BANNED | TEAM_LOCKED))
+      return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+
+  extra->serve_state->current_time = time(0);
+  check_contest_events(extra->serve_state, cnts);
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && cmd_actions_table[phr->action]) {
-    r = (*cmd_actions_table[phr->action])();
+    return (*cmd_actions_table[phr->action])(fout, phr, cnts, extra);
   } else {
-    r = -NEW_SRV_ERR_INV_ACTION;
+    return -NEW_SRV_ERR_INV_ACTION;
   }
-  phr->protocol_reply = r;
 }
 
 static void
@@ -9128,7 +9248,7 @@ ns_handle_http_request(struct server_framework_state *state,
     phr->role = USER_ROLE_JUDGE;
     privileged_page(fout, phr);
   } else if (!strcmp(last_name, "new-server-cmd")) {
-    new_server_cmd_handler(fout, phr);
+    phr->protocol_reply = new_server_cmd_handler(fout, phr);
   } else if (!strcmp(last_name, "new-test")) {
     // testing new features
     testing_page(fout, phr);
