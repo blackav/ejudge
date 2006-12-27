@@ -331,6 +331,16 @@ cmd_http_request(struct server_framework_state *state,
   ns_handle_http_request(state, p, out_f, &hr);
   fclose(out_f); out_f = 0;
 
+  if (hr.protocol_reply) {
+    xfree(out_txt); out_txt = 0;
+    xfree(hr.login);
+    xfree(hr.name);
+    xfree(hr.name_arm);
+    info("HTTP_REQUEST -> %d", hr.protocol_reply);
+    nsf_send_reply(state, p, hr.protocol_reply);
+    return;
+  }
+
   // stub, if empty output is generated
   if (!out_txt || !*out_txt) {
     out_f = open_memstream(&out_txt, &out_size);

@@ -78,6 +78,7 @@ struct http_request_info
 
   // for the next state
   int next_run_id;
+  int protocol_reply;
 
   struct timeval timestamp1;
   struct timeval timestamp2;

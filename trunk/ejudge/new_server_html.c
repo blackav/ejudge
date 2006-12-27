@@ -8877,6 +8877,149 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr)
   }
 }
 
+static int
+parse_int(const char *str, int *p_val)
+{
+  int v;
+  char *eptr = 0;
+
+  errno = 0;
+  v = strtol(str, &eptr, 10);
+  if (errno || *eptr) return -1;
+  return 0;
+}
+
+static int
+cmd_login(
+	FILE *fout,
+        struct http_request_info *phr)
+{
+  int retval = 0, r;
+  const struct contest_desc *cnts = 0;
+  const unsigned char *login = 0, *password = 0, *role_str = 0;
+  opcap_t caps;
+
+  // login, password, role, contest_id
+  if (ns_cgi_param(phr, "login", &login) <= 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (ns_cgi_param(phr, "password", &password) <= 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) || !cnts)
+    FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
+  if (!cnts->new_managed)
+    FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
+  if (ns_cgi_param(phr, "role", &role_str) <= 0)
+    FAIL(NEW_SRV_ERR_INV_ROLE);
+  if (parse_int(role_str, &phr->role) < 0
+      || phr->role < 0 || phr->role >= USER_ROLE_LAST)
+    FAIL(NEW_SRV_ERR_INV_ROLE);
+
+  switch (phr->role) {
+  case USER_ROLE_CONTESTANT:
+    if (cnts->closed || cnts->client_disable_team) 
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    break;
+  case USER_ROLE_OBSERVER:
+  case USER_ROLE_EXAMINER:
+  case USER_ROLE_CHIEF_EXAMINER:
+  case USER_ROLE_COORDINATOR:
+  case USER_ROLE_JUDGE:
+    if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    break;
+  case USER_ROLE_ADMIN:
+    if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    break;
+  default:
+    abort();
+  }
+
+  if (open_ul_connection(phr->fw_state) < 0)
+    FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+
+  if (phr->role == USER_ROLE_CONTESTANT) {
+    r = userlist_clnt_team_login(ul_conn, ULS_CHECK_USER,
+                                 phr->ip, phr->ssl_flag, phr->contest_id,
+                                 phr->locale_id, login, password,
+                                 &phr->user_id, &phr->session_id,
+                                 0, &phr->name);
+  } else {
+    r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
+                                 phr->ip, phr->ssl_flag, phr->contest_id,
+                                 phr->locale_id, 0, phr->role, login,
+                                 password, &phr->user_id, &phr->session_id,
+                                 0, 0, &phr->name);
+  }
+
+  if (r < 0) {
+    switch (-r) {
+    case ULS_ERR_INVALID_LOGIN:
+    case ULS_ERR_INVALID_PASSWORD:
+    case ULS_ERR_BAD_CONTEST_ID:
+    case ULS_ERR_IP_NOT_ALLOWED:
+    case ULS_ERR_NO_PERMS:
+    case ULS_ERR_NOT_REGISTERED:
+    case ULS_ERR_CANNOT_PARTICIPATE:
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    case ULS_ERR_DISCONNECT:
+      FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+    default:
+      FAIL(NEW_SRV_ERR_INTERNAL);
+    }
+  }
+
+  // analyze permissions
+  if (phr->role == USER_ROLE_ADMIN) {
+    // as for the master program
+    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
+        || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0)
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  } else if (phr->role == USER_ROLE_JUDGE) {
+    // as for the judge program
+    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
+        || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0)
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  } else if (phr->role != USER_ROLE_CONTESTANT) {
+    // user privileges checked locally
+    if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0)
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+
+  ns_get_session(phr->session_id, 0);
+  fprintf(fout, "%016llx\n", phr->session_id);
+
+ cleanup:
+  return retval;
+}
+
+typedef int (*cmd_handler_t)(void);
+
+static cmd_handler_t cmd_actions_table[NEW_SRV_ACTION_LAST] =
+{
+};
+
+static void
+new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
+{
+  int r = 0;
+
+  if (phr->action == NEW_SRV_ACTION_LOGIN) {
+    phr->protocol_reply = cmd_login(fout, phr);
+    return;
+  }
+
+  if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
+      && cmd_actions_table[phr->action]) {
+    r = (*cmd_actions_table[phr->action])();
+  } else {
+    r = -NEW_SRV_ERR_INV_ACTION;
+  }
+  phr->protocol_reply = r;
+}
+
 static void
 testing_page(FILE *fout, struct http_request_info *phr)
 {
@@ -8984,6 +9127,8 @@ ns_handle_http_request(struct server_framework_state *state,
   } else if (!strcmp(last_name, "new-judge")) {
     phr->role = USER_ROLE_JUDGE;
     privileged_page(fout, phr);
+  } else if (!strcmp(last_name, "new-server-cmd")) {
+    new_server_cmd_handler(fout, phr);
   } else if (!strcmp(last_name, "new-test")) {
     // testing new features
     testing_page(fout, phr);

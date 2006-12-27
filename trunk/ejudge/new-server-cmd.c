@@ -140,6 +140,7 @@ static int use_reply_buf = 0;
 static unsigned char *reply_buf;
 static size_t reply_size;
 static const unsigned char *session_id_file;
+static ej_cookie_t session_id;
 
 static unsigned char **cgi_environ = 0;
 static int cgi_environ_a = 0;
@@ -435,24 +436,54 @@ prepare_login(const unsigned char *cmd, int argc, char *argv[], int role)
   put_cgi_param_f("action", "%d", NEW_SRV_ACTION_LOGIN);
 }
 
-struct prepare_func
+static int
+post_login(void)
+{
+  char *eptr = 0;
+  FILE *fout = 0;
+
+  while (reply_size > 0 && isspace(reply_buf[reply_size - 1])) reply_size--;
+  reply_buf[reply_size] = 0;
+  if (!reply_size) op_error("reply is empty");
+
+  errno = 0;
+  session_id = strtoull(reply_buf, &eptr, 16);
+  if (errno || *eptr || reply_buf + reply_size != (unsigned char*) eptr
+      || !session_id)
+    op_error("invalid session_id");
+
+  if (!strcmp(session_id_file, "-") || !strcmp(session_id_file, "STDOUT")) {
+    printf("%016llx\n", session_id);
+  } else {
+    if (!(fout = fopen(session_id_file, "w")))
+      op_error("cannot open output file `%s'", session_id_file);
+    fprintf(fout, "%016llx\n", session_id);
+    if (ferror(fout) || fclose(fout) < 0)
+      op_error("write error");
+  }
+  
+  return 0;
+}
+
+struct command_handler
 {
   const char *cmd;
-  void (*func)(const unsigned char *, int, char **, int);
+  void (*pre_func)(const unsigned char *, int, char **, int);
+  int (*post_func)(void);
   int role;
 };
-static const struct prepare_func prepare_func_table[] =
+static const struct command_handler handler_table[] =
 {
-  { "login", prepare_login, USER_ROLE_ADMIN },
-  { "team-login", prepare_login, USER_ROLE_CONTESTANT },
-  { "user-login", prepare_login, USER_ROLE_CONTESTANT },
-  { "observer-login", prepare_login, USER_ROLE_OBSERVER },
-  { "examiner-login", prepare_login, USER_ROLE_EXAMINER },
-  { "chief-examiner-login", prepare_login, USER_ROLE_CHIEF_EXAMINER },
-  { "coordinator-login", prepare_login, USER_ROLE_COORDINATOR },
-  { "judge-login", prepare_login, USER_ROLE_JUDGE },
-  { "admin-login", prepare_login, USER_ROLE_ADMIN },
-  { "master-login", prepare_login, USER_ROLE_ADMIN },
+  { "login", prepare_login, post_login, USER_ROLE_ADMIN },
+  { "team-login", prepare_login, post_login, USER_ROLE_CONTESTANT },
+  { "user-login", prepare_login, post_login, USER_ROLE_CONTESTANT },
+  { "observer-login", prepare_login, post_login, USER_ROLE_OBSERVER },
+  { "examiner-login", prepare_login, post_login, USER_ROLE_EXAMINER },
+  { "chief-examiner-login", prepare_login,post_login,USER_ROLE_CHIEF_EXAMINER },
+  { "coordinator-login", prepare_login, post_login, USER_ROLE_COORDINATOR },
+  { "judge-login", prepare_login, post_login, USER_ROLE_JUDGE },
+  { "admin-login", prepare_login, post_login, USER_ROLE_ADMIN },
+  { "master-login", prepare_login, post_login, USER_ROLE_ADMIN },
 
   { 0, 0 },
 };
@@ -583,13 +614,14 @@ main(int argc, char *argv[])
   }
 
   /* call request preparer */
-  for (j = 0; prepare_func_table[j].cmd; j++)
-    if (!strcasecmp(prepare_func_table[j].cmd, command)) {
-      (*prepare_func_table[j].func)(command, argc - arg_start, argv + arg_start,
-                                    prepare_func_table[j].role);
+  for (j = 0; handler_table[j].cmd; j++)
+    if (!strcasecmp(handler_table[j].cmd, command)) {
+      (*handler_table[j].pre_func)(command, argc - arg_start,
+                                   argv + arg_start,
+                                   handler_table[j].role);
       break;
     }
-  if (!prepare_func_table[j].cmd)
+  if (!handler_table[j].cmd)
     startup_error("invalid command `%s'", command);
 
   /* invoke request */
@@ -607,9 +639,15 @@ main(int argc, char *argv[])
                                    cgi_param_sizes, cgi_param_values,
                                    p1, p2);
   if (r < 0)
-    op_error("request failed: %d", -r);
+    op_error("request failed: %d, %s", -r, ns_strerror_2(r));
 
   /* call request post-processor */
+  r = 0;
+  if (handler_table[j].post_func) {
+    r = (*handler_table[j].post_func)();
+  }
+  if (r < 0) r = 1;
+  else r = 0;
 
-  return 0;
+  return r;
 }
