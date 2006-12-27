@@ -1747,3 +1747,5 @@ new-server-control.c 3787 0 338949
 new-server-cmd.c 3789 0 1347989
 new-server-cmd.c 3791 0 1382831
 copyright.c 3793 0 200944
+copyright.c 3795 0 202589
+l10n.c 3795 0 200097

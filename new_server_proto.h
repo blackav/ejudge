@@ -175,6 +175,11 @@ enum
   NEW_SRV_ERR_FILE_EMPTY,
   NEW_SRV_ERR_TRY_AGAIN,
   NEW_SRV_ERR_NOT_SUPPORTED,
+  NEW_SRV_ERR_INV_ACTION,
+  NEW_SRV_ERR_INV_CONTEST_ID,
+  NEW_SRV_ERR_INV_ROLE,
+  NEW_SRV_ERR_USERLIST_SERVER_DOWN,
+  NEW_SRV_ERR_INTERNAL,
 
   NEW_SRV_ERR_LAST,
 };
@@ -192,6 +197,7 @@ struct new_server_prot_http_request
 const unsigned char *ns_proto_strerror(int n);
 void ns_error(FILE *log_f, int code, ...);
 const unsigned char *ns_strerror(int code, ...);
+const unsigned char *ns_strerror_2(int code, ...);
 const unsigned char *ns_strerror_r(unsigned char *buf, size_t size,
                                    int code, ...);
 

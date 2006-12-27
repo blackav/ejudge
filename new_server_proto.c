@@ -35,6 +35,19 @@
 
 static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
 {
+  [NEW_SRV_ERR_UNKNOWN_ERROR] = __("Unknown error"),
+  [NEW_SRV_ERR_BAD_SOCKET_NAME] = __("Bad socket name"),
+  [NEW_SRV_ERR_SYSTEM_ERROR] = __("System error"),
+  [NEW_SRV_ERR_CONNECT_FAILED] = __("Connection failed"),
+  [NEW_SRV_ERR_WRITE_ERROR] = __("Write error"),
+  [NEW_SRV_ERR_NOT_CONNECTED] = __("Not connected"),
+  [NEW_SRV_ERR_READ_ERROR] = __("Read error"),
+  [NEW_SRV_ERR_UNEXPECTED_EOF] = __("Unexpected EOF"),
+  [NEW_SRV_ERR_PACKET_TOO_BIG] = __("Packet is too big"),
+  [NEW_SRV_ERR_PACKET_TOO_SMALL] = __("Packet is too small"),
+  [NEW_SRV_ERR_PROTOCOL_ERROR] = __("Protocol error"),
+  [NEW_SRV_ERR_PARAM_OUT_OF_RANGE] = __("Parameter is out of range"),
+
   [NEW_SRV_ERR_INV_USER_ID] = __("Invalid user_id"),
   [NEW_SRV_ERR_REGISTRATION_FAILED] = __("Registration failed: %s"),
   [NEW_SRV_ERR_USER_REMOVAL_FAILED] = __("Removal of user %d from contest %d failed: %s"),
@@ -144,6 +157,11 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_FILE_EMPTY] = __("File is empty"),
   [NEW_SRV_ERR_TRY_AGAIN] = __("Try again this operation later"),
   [NEW_SRV_ERR_NOT_SUPPORTED] = __("Operation is not supported"),
+  [NEW_SRV_ERR_INV_ACTION] = __("Invalid action"),
+  [NEW_SRV_ERR_INV_CONTEST_ID] = __("Invalid contest"),
+  [NEW_SRV_ERR_INV_ROLE] = __("Invalid role"),
+  [NEW_SRV_ERR_USERLIST_SERVER_DOWN] = __("Userlist server is down"),
+  [NEW_SRV_ERR_INTERNAL] = __("Internal error"),
 };
 
 const unsigned char *
@@ -164,6 +182,25 @@ ns_strerror(int code, ...)
   snprintf(buf2, sizeof(buf2), gettext(s), args);
   va_end(args);
   snprintf(buf, sizeof(buf), "%s.\n", buf2);
+  return buf;
+}
+
+const unsigned char *
+ns_strerror_2(int code, ...)
+{
+  static unsigned char buf[1024];
+  const unsigned char *s = 0;
+  va_list args;
+
+  if (code < 0) code = -code;
+  if (code >= NEW_SRV_ERR_LAST || !(s = ns_error_messages[code])) {
+    snprintf(buf, sizeof(buf), _("Unknown error %d.\n"), code);
+    return buf;
+  }
+
+  va_start(args, code);
+  snprintf(buf, sizeof(buf), gettext(s), args);
+  va_end(args);
   return buf;
 }
 
