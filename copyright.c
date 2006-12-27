@@ -36,12 +36,13 @@ make_copyright(unsigned char *buf, size_t size)
 {
   snprintf(buf, size,
            _("<p class=\"ejudge_copyright\">This is <a href=\"%s\"><b>ejudge</b></a> contest administration system, version %s, compiled %s.</p>\n"
-             "<p class=\"ejudge_copyright\">This program is copyright &copy; 2000-2006 Alexander Chernov.</p>\n"
+             "<p class=\"ejudge_copyright\">This program is copyright &copy; %s Alexander Chernov.</p>\n"
              "<p class=\"ejudge_copyright\">"
              "This program is free software; you can redistribute it and/or modify it under the terms of the <a href=\"http://www.fsf.org/licenses/licenses.html#GPL\">GNU General Public License</a> as published by the <a href=\"http://www.fsf.org\">Free Software Foundation</a>; either version 2 of the License, or (at your option) any later version.</p>\n"
-             "<p class=\"ejudge_copyright\">Visual design and web-interface &copy; 2006 <a href=\"%s\">Toto Lasvik</a>."),
+             "<p class=\"ejudge_copyright\">Visual design and web-interface &copy; %s <a href=\"%s\">Toto Lasvik</a>."),
            "http://www.ejudge.ru",
-           compile_version, compile_date, "http://www.lasvik.ru");
+           compile_version, compile_date, "2000-2006",
+           "2006", "http://www.lasvik.ru");
 }
 
 static unsigned char *copyright_str = 0;
@@ -49,7 +50,7 @@ static int copyright_locale = 0;
 unsigned char *
 get_copyright(int locale_id)
 {
-  fprintf(stderr, "get_copyright: %d\n", locale_id);
+  fprintf(stderr, "get_copyright: %d, %s\n", locale_id, getenv("LANG"));
   if (!copyright_str || locale_id != copyright_locale) {
     unsigned char buf[1024];
 
