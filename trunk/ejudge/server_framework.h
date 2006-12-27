@@ -96,6 +96,7 @@ void nsf_send_reply(struct server_framework_state *state,
 void nsf_new_autoclose(struct server_framework_state *state,
                        struct client_state *p, void *write_buf,
                        size_t write_len);
+void nsf_close_client_fds(struct client_state *p);
 
 enum
 {

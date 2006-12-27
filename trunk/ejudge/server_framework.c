@@ -131,6 +131,17 @@ nsf_new_autoclose(struct server_framework_state *state,
   p->client_fds[1] = -1;
 }
 
+void
+nsf_close_client_fds(struct client_state *p)
+{
+  if (!p) return;
+
+  if (p->client_fds[0] >= 0) close(p->client_fds[0]);
+  if (p->client_fds[1] >= 0) close(p->client_fds[1]);
+  p->client_fds[0] = -1;
+  p->client_fds[1] = -1;
+}
+
 static void
 client_state_delete(struct server_framework_state *state,
                     struct client_state *p)

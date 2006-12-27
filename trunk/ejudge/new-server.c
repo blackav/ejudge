@@ -332,21 +332,25 @@ cmd_http_request(struct server_framework_state *state,
   fclose(out_f); out_f = 0;
 
   if (hr.protocol_reply) {
+    xfree(out_txt); out_txt = 0;
     info("HTTP_REQUEST -> %d", hr.protocol_reply);
+    nsf_close_client_fds(p);
     nsf_send_reply(state, p, hr.protocol_reply);
     goto cleanup;
   }
 
   if (!out_txt || !*out_txt) {
+    xfree(out_txt); out_txt = 0;
     if (hr.allow_empty_output) {
       info("HTTP_REQUEST -> OK");
+      nsf_close_client_fds(p);
       nsf_send_reply(state, p, NEW_SRV_RPL_OK);
       goto cleanup;
     }
-    xfree(out_txt); out_txt = 0;
     out_f = open_memstream(&out_txt, &out_size);
     ns_html_err_internal_error(out_f, &hr, 0, "empty output generated");
     fclose(out_f); out_f = 0;
+    xfree(out_txt); out_txt = 0;
   }
 
   nsf_new_autoclose(state, p, out_txt, out_size);
@@ -354,7 +358,6 @@ cmd_http_request(struct server_framework_state *state,
   nsf_send_reply(state, p, NEW_SRV_RPL_OK);
 
  cleanup:
-  xfree(out_txt); out_txt = 0;
   xfree(hr.login);
   xfree(hr.name);
   xfree(hr.name_arm);
