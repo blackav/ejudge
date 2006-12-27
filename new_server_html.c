@@ -9131,6 +9131,7 @@ new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
 
   extra->serve_state->current_time = time(0);
   check_contest_events(extra->serve_state, cnts);
+  phr->allow_empty_output = 1;
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && cmd_actions_table[phr->action]) {
