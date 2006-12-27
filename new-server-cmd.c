@@ -360,7 +360,7 @@ parse_role(const unsigned char *str)
 static void
 prepare_login(const unsigned char *cmd, int argc, char *argv[], int role)
 {
-  int i;
+  int i = 0;
   int passwd_flag = 0, passwd_file = 0;
   const unsigned char *login = 0;
   const unsigned char *password = 0;
@@ -457,10 +457,21 @@ static const struct prepare_func prepare_func_table[] =
   { 0, 0 },
 };
 
+static void
+shift_args(int *p_argc, char **argv, int i, int n)
+{
+  int j;
+  
+  if (i >= *p_argc || i + n > *p_argc) return;
+  for (j = i + n; j < *p_argc; j++)
+    argv[j - n] = argv[j];
+  *p_argc -= n;
+}
+
 int
 main(int argc, char *argv[])
 {
-  int i, n, r;
+  int i, n, r, j, arg_start;
   const unsigned char *ejudge_xml_path = 0;
   const unsigned char *command = 0;
   new_server_conn_t conn = 0;
@@ -515,6 +526,9 @@ main(int argc, char *argv[])
     startup_error("cannot load contest %d: %s",
                   contest_id, contests_strerror(-n));
   i++;
+  
+  if (i >= argc) startup_error("command expected");
+  command = argv[i++];
 
   // if the contest is not new-managed, invoke serve-cmd
   if (!cnts->new_managed) invoke_serve_cmd(argc, argv);
@@ -525,60 +539,57 @@ main(int argc, char *argv[])
   if (!socket_path) socket_path = EJUDGE_NEW_SERVER_SOCKET_DEFAULT;
 
   /* parse generic options */
+  arg_start = i;
   while (i < argc) {
     if (!strcmp(argv[i], "--ip")) {
       if (i + 1 >= argc) startup_error("argument expected for --ip");
       if (xml_parse_ip(NULL, 0, 0, argv[i + 1], &ip_address) < 0)
         return 1;
-      i += 2;
+      shift_args(&argc, argv, i, 2);
     } else if (!strncmp(argv[i], "--ip=", 5)) {
       if (xml_parse_ip(NULL, 0, 0, argv[i] + 5, &ip_address) < 0)
         return 1;
-      i++;      
+      shift_args(&argc, argv, i, 1);
     } else if (!strcmp(argv[i], "--ssl")) {
       ssl_flag = 1;
-      i++;
+      shift_args(&argc, argv, i, 1);
     } else if (!strcmp(argv[i], "--no-ssl")) {
       ssl_flag = 0;
-      i++;
+      shift_args(&argc, argv, i, 1);
     } else if (!strcmp(argv[i], "--session")) {
       session_mode = 1;
-      i++;
+      shift_args(&argc, argv, i, 1);
     } else if (!strcmp(argv[i], "--script-name")) {
       if (i + 1>= argc) startup_error("argument expected for --script-name");
       script_name = argv[i + 1];
-      i += 2;
+      shift_args(&argc, argv, i, 2);
     } else if (!strncmp(argv[i], "--script-name=", 14)) {
       script_name = argv[i] + 14;
-      i++;
+      shift_args(&argc, argv, i, 1);
     } else if (!strcmp(argv[i], "--http-host")) {
       if (i + 1>= argc) startup_error("argument expected for --http-host");
       http_host = argv[i + 1];
-      i += 2;
+      shift_args(&argc, argv, i, 2);
     } else if (!strncmp(argv[i], "--http-host=", 12)) {
       http_host = argv[i] + 12;
-      i++;
+      shift_args(&argc, argv, i, 1);
     } else if (!strcmp(argv[i], "--")) {
-      i++;
       break;
     } else if (argv[i][0] == '-') {
-      startup_error("invalid option `%s'", argv[i]);
+      i++;
     } else {
       break;
     }
   }
 
-  if (i >= argc) startup_error("command expected");
-  command = argv[i++];
-
   /* call request preparer */
-  for (i = 0; prepare_func_table[i].cmd; i++)
-    if (!strcasecmp(prepare_func_table[i].cmd, command)) {
-      (*prepare_func_table[i].func)(command, argc - i, argv + i,
-                                    prepare_func_table[i].role);
+  for (j = 0; prepare_func_table[j].cmd; j++)
+    if (!strcasecmp(prepare_func_table[j].cmd, command)) {
+      (*prepare_func_table[j].func)(command, argc - arg_start, argv + arg_start,
+                                    prepare_func_table[j].role);
       break;
     }
-  if (!prepare_func_table[i].cmd)
+  if (!prepare_func_table[j].cmd)
     startup_error("invalid command `%s'", command);
 
   /* invoke request */
