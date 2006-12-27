@@ -1744,3 +1744,4 @@ new-client.c 3787 0 565146
 new-server.c 3787 0 1523964
 new-server-cmd.c 3787 0 1348662
 new-server-control.c 3787 0 338949
+new-server-cmd.c 3789 0 1347989
