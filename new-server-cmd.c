@@ -348,6 +348,62 @@ parse_role(const unsigned char *str)
   return i;
 }
 
+static void
+shift_args(int *p_argc, char **argv, int i, int n)
+{
+  int j;
+  
+  if (i >= *p_argc || i + n > *p_argc) return;
+  for (j = i + n; j < *p_argc; j++)
+    argv[j - n] = argv[j];
+  *p_argc -= n;
+}
+
+static void
+parse_session_id(int *p_argc, char **argv)
+{
+  char *endp = 0;
+  unsigned char buf[1024];
+  int c, blen;
+  FILE *f = 0;
+
+  if (!*p_argc) startup_error("session_id is not specified");
+  if (session_mode) {
+    errno = 0;
+    session_id = strtoull(argv[0], &endp, 16);
+    if (errno || *endp || !session_id) startup_error("invalid session_id");
+  } else if (!strcmp(argv[0], "-") || !strcmp(argv[0], "STDIN")) {
+    if (!fgets(buf, sizeof(buf), stdin))
+      startup_error("session_id is not specified on STDIN");
+    if ((blen = strlen(buf)) > sizeof(buf) - 2)
+      startup_error("line is too long on STDIN");
+    while (blen > 0 && isspace(buf[blen - 1])) blen--;
+    buf[blen] = 0;
+    errno = 0;
+    session_id = strtoull(buf, &endp, 16);
+    if (errno || *endp || !session_id)
+      startup_error("invalid session_id on STDIN");
+  } else {
+    if (!(f = fopen(argv[0], "r")))
+      startup_error("cannot open session file `%s'", argv[0]);
+    if (!fgets(buf, sizeof(buf), f))
+      startup_error("session file `%s' is empty", argv[0]);
+    while ((c = getc_unlocked(f)) != EOF && isspace(c));
+    if (c != EOF) startup_error("garbage in session file `%s'", argv[0]);
+    fclose(f); f = 0;
+    if ((blen = strlen(buf)) > sizeof(buf) - 2)
+      startup_error("line is too long in session file `%s'", argv[0]);
+    while (blen > 0 && isspace(buf[blen - 1])) blen--;
+    buf[blen] = 0;
+    errno = 0;
+    session_id = strtoull(buf, &endp, 16);
+    if (errno || *endp || !session_id)
+      startup_error("invalid session_id int file `%s'", argv[0]);
+  }
+  shift_args(p_argc, argv, 0, 1);
+  put_cgi_param_f("SID", "%016llx", session_id);
+}
+
 /*
  * OPTIONS:
  *  -p      - read password from terminal (no echo)
@@ -465,6 +521,14 @@ post_login(void)
   return 0;
 }
 
+static void
+prepare_logout(const unsigned char *cmd, int argc, char *argv[], int role)
+{
+  parse_session_id(&argc, argv);
+  if (argc != 0) startup_error("invalid number of arguments for logout");
+  put_cgi_param_f("action", "%d", NEW_SRV_ACTION_LOGOUT);
+}
+
 struct command_handler
 {
   const char *cmd;
@@ -484,20 +548,10 @@ static const struct command_handler handler_table[] =
   { "judge-login", prepare_login, post_login, USER_ROLE_JUDGE },
   { "admin-login", prepare_login, post_login, USER_ROLE_ADMIN },
   { "master-login", prepare_login, post_login, USER_ROLE_ADMIN },
+  { "logout", prepare_logout, 0, 0 },
 
   { 0, 0 },
 };
-
-static void
-shift_args(int *p_argc, char **argv, int i, int n)
-{
-  int j;
-  
-  if (i >= *p_argc || i + n > *p_argc) return;
-  for (j = i + n; j < *p_argc; j++)
-    argv[j - n] = argv[j];
-  *p_argc -= n;
-}
 
 int
 main(int argc, char *argv[])
