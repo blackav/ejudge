@@ -25,6 +25,8 @@
 #include "pathutl.h"
 #include "xml_utils.h"
 #include "new_server_clnt.h"
+#include "new-server.h"
+#include "new_server_proto.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -35,6 +37,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
+#include <ctype.h>
 
 static const unsigned char *program_name = "";
 static const unsigned char *program_path = "";
@@ -135,6 +139,7 @@ static const unsigned char *socket_path = 0;
 static int use_reply_buf = 0;
 static unsigned char *reply_buf;
 static size_t reply_size;
+static const unsigned char *session_id_file;
 
 static unsigned char **cgi_environ = 0;
 static int cgi_environ_a = 0;
@@ -297,6 +302,161 @@ put_cgi_param_f(const unsigned char *name, const char *format, ...)
   put_cgi_param(name, buf);
 }
 
+static int
+parse_int(const char *str, int *p_val)
+{
+  int v;
+  char *eptr = 0;
+
+  errno = 0;
+  v = strtol(str, &eptr, 10);
+  if (errno || *eptr) return -1;
+  return 0;
+}
+
+struct role_str_map
+{
+  const char *str;
+  int val;
+};
+static const struct role_str_map role_str_tab[] =
+{
+  { "CONTESTANT", USER_ROLE_CONTESTANT },
+  { "USER", USER_ROLE_CONTESTANT },
+  { "OBSERVER", USER_ROLE_OBSERVER },
+  { "EXAMINER", USER_ROLE_EXAMINER },
+  { "CHIEF_EXAMINER", USER_ROLE_CHIEF_EXAMINER },
+  { "COORDINATOR", USER_ROLE_COORDINATOR },
+  { "JUDGE", USER_ROLE_JUDGE },
+  { "ADMIN", USER_ROLE_ADMIN },
+  { "MASTER", USER_ROLE_ADMIN },
+
+  { 0, 0 },
+};
+static int
+parse_role(const unsigned char *str)
+{
+  int i;
+
+  for (i = 0; role_str_tab[i].str; i++)
+    if (!strcasecmp(role_str_tab[i].str, str))
+      return role_str_tab[i].val;
+
+  if (parse_int(str, &i) < 0 || i < 0 || i >= USER_ROLE_LAST)
+    startup_error("invalid role `%s'", str);
+  return i;
+}
+
+/*
+ * OPTIONS:
+ *  -p      - read password from terminal (no echo)
+ *  -f      - read password from file
+ *  -r ROLE - specify role
+ * argv[0] - session_id_file
+ * argv[1] - login
+ * argv[2] - password or password file
+ */
+
+static void
+prepare_login(const unsigned char *cmd, int argc, char *argv[], int role)
+{
+  int i;
+  int passwd_flag = 0, passwd_file = 0;
+  const unsigned char *login = 0;
+  const unsigned char *password = 0;
+  unsigned char buf[1024];
+  FILE *fpwd = 0;
+  int blen;
+
+  if (session_mode)
+    op_error("--session is not supported for this command");
+
+  while (i < argc) {
+    if (!strcmp(argv[i], "-f")) {
+      if (passwd_flag)
+        startup_error("-f and -p options cannot be used together in `%s'",
+                      cmd);
+      passwd_file = 1;
+      i++;
+    } else if (!strcmp(argv[i], "-p")) {
+      if (passwd_file)
+        startup_error("-f and -p options cannot be used together in `%s'",
+                      cmd);
+      passwd_flag = 1;
+      i++;
+    } else if (!strcmp(argv[i], "-r")) {
+      if (i + 1 >= argc)
+        startup_error("parameter expected for -r option");
+      role = parse_role(argv[i + 1]);
+      i += 2;
+    } else if (!strcmp(argv[i], "--")) {
+      i++;
+      break;
+    } else if (argv[i][0] == '-') {
+      startup_error("invalid option `%s' for command `%s'",
+                    argv[i], cmd);
+    } else
+      break;
+  }
+  if (passwd_file) {
+    if (i + 3 != argc) startup_error("invalid number of arguments for `%s'",
+                                     cmd);
+    session_id_file = argv[i++];
+    login = argv[i++];
+    if (!(fpwd = fopen(argv[i], "r")))
+      startup_error("cannot open password file `%s'", argv[i]);
+    if (!fgets(buf, sizeof(buf), fpwd))
+      startup_error("password file is empty");
+    fclose(fpwd); fpwd = 0;
+    blen = strlen(buf);
+    while (blen > 0 && isspace(buf[blen - 1])) blen--;
+    buf[blen] = 0;
+    if (!blen) startup_error("password is empty");
+    password = buf;
+  } else if (passwd_flag) {
+    if (i + 2 != argc) startup_error("invalid number of arguments for `%s'",
+                                     cmd);
+    session_id_file = argv[i++];
+    login = argv[i++];
+    password = getpass("Password:");
+  } else {
+    if (i + 3 != argc) startup_error("invalid number of arguments for `%s'",
+                                     cmd);
+    session_id_file = argv[i++];
+    login = argv[i++];
+    password = argv[i++];
+  }
+
+  put_cgi_param_f("contest_id", "%d", contest_id);
+  put_cgi_param("login", login);
+  put_cgi_param("password", password);
+  put_cgi_param_f("role", "%d", role);
+  use_reply_buf = 1;
+  put_cgi_param_f("action", "%d", NEW_SRV_ACTION_LOGIN);
+}
+
+struct prepare_func
+{
+  const char *cmd;
+  void (*func)(const unsigned char *, int, char **, int);
+  int role;
+};
+static const struct prepare_func prepare_func_table[] =
+{
+  { "login", prepare_login, USER_ROLE_ADMIN },
+  { "team-login", prepare_login, USER_ROLE_CONTESTANT },
+  { "user-login", prepare_login, USER_ROLE_CONTESTANT },
+  { "observer-login", prepare_login, USER_ROLE_OBSERVER },
+  { "examiner-login", prepare_login, USER_ROLE_EXAMINER },
+  { "chief-examiner-login", prepare_login, USER_ROLE_CHIEF_EXAMINER },
+  { "coordinator-login", prepare_login, USER_ROLE_COORDINATOR },
+  { "judge-login", prepare_login, USER_ROLE_JUDGE },
+  { "admin-login", prepare_login, USER_ROLE_ADMIN },
+  { "master-login", prepare_login, USER_ROLE_ADMIN },
+
+  { 0, 0 },
+};
+
 int
 main(int argc, char *argv[])
 {
@@ -362,10 +522,7 @@ main(int argc, char *argv[])
 #if defined EJUDGE_NEW_SERVER_SOCKET
   if (!socket_path) socket_path = EJUDGE_NEW_SERVER_SOCKET;
 #endif
-  if (!socket_path) startup_error("socket path is undefined");
-
-  if (i >= argc) startup_error("command expected");
-  command = argv[i++];
+  if (!socket_path) socket_path = EJUDGE_NEW_SERVER_SOCKET_DEFAULT;
 
   /* parse generic options */
   while (i < argc) {
@@ -411,7 +568,18 @@ main(int argc, char *argv[])
     }
   }
 
+  if (i >= argc) startup_error("command expected");
+  command = argv[i++];
+
   /* call request preparer */
+  for (i = 0; prepare_func_table[i].cmd; i++)
+    if (!strcasecmp(prepare_func_table[i].cmd, command)) {
+      (*prepare_func_table[i].func)(command, argc - i, argv + i,
+                                    prepare_func_table[i].role);
+      break;
+    }
+  if (!prepare_func_table[i].cmd)
+    startup_error("invalid command `%s'", command);
 
   /* invoke request */
   create_cgi_environ();

@@ -601,7 +601,7 @@ main(int argc, char *argv[])
     config->new_server_socket = xstrdup(EJUDGE_NEW_SERVER_SOCKET);
 #endif
   if (!config->new_server_socket)
-    config->new_server_socket = xstrdup("/tmp/new-server-socket");
+    config->new_server_socket = xstrdup(EJUDGE_NEW_SERVER_SOCKET_DEFAULT);
 
 #if defined EJUDGE_CONTESTS_HOME_DIR
   if (!config->contests_home_dir)

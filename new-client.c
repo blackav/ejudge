@@ -195,6 +195,10 @@ initialize(int argc, char *argv[])
              "%s", EJUDGE_NEW_SERVER_SOCKET);
   }
 #endif
+  if (!global->new_server_socket[0]) {
+    snprintf(global->new_server_socket, sizeof(global->new_server_socket),
+             "%s", EJUDGE_NEW_SERVER_SOCKET_DEFAULT);
+  }
 #if defined EJUDGE_CHARSET
   if (!global->charset[0]) {
     snprintf(global->charset, sizeof(global->charset),

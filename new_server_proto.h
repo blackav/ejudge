@@ -179,6 +179,8 @@ enum
   NEW_SRV_ERR_LAST,
 };
 
+#define EJUDGE_NEW_SERVER_SOCKET_DEFAULT "/tmp/new-server-socket"
+
 struct new_server_prot_http_request
 {
   struct new_server_prot_packet b;

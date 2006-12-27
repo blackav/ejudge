@@ -23,8 +23,10 @@
 #include "ejudge_cfg.h"
 #include "new_server_proto.h"
 #include "new_server_clnt.h"
+#include "new_server_proto.h"
 
 #include <reuse/osdeps.h>
+#include <reuse/xalloc.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -133,6 +135,13 @@ main(int argc, char *argv[])
 
   if (!(config = ejudge_cfg_parse(ejudge_xml_path))) return 1;
 
+#if defined EJUDGE_NEW_SERVER_SOCKET
+  if (!config->new_server_socket)
+    config->new_server_socket = xstrdup(EJUDGE_NEW_SERVER_SOCKET);
+#endif
+  if (!config->new_server_socket)
+    config->new_server_socket = xstrdup(EJUDGE_NEW_SERVER_SOCKET_DEFAULT);
+
   if (!strcmp(command, "stop")) {
     cmd = NEW_SRV_CMD_STOP;
   } else if (!strcmp(command, "restart")) {
@@ -141,7 +150,7 @@ main(int argc, char *argv[])
     startup_error("invalid command");
   }
 
-  r = new_server_clnt_open("/tmp/new-server-socket", &conn);
+  r = new_server_clnt_open(config->new_server_socket, &conn);
   if (r == -NEW_SRV_ERR_CONNECT_FAILED) op_error("new-server is not running");
   if (r < 0) op_error("%s", ns_strerror(-r));
 
