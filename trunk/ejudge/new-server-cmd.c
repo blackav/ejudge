@@ -127,7 +127,7 @@ invoke_serve_cmd(int argc, char *argv[])
   startup_error("cannot execute serve-cmd: %s", os_ErrorMsg());
 }
 
-static struct ejudge_cfg *config;
+struct ejudge_cfg *config;
 static int contest_id;
 static const struct contest_desc *cnts;
 static ej_ip_t ip_address;
