@@ -2642,8 +2642,6 @@ cmd_judge_command_0(struct client_state *p, int len,
 }
 #endif /* cmd_judge_command_0 is not compiled */
 
-static int count_transient_runs(void);
-
 static void
 cmd_rejudge_by_mask(struct client_state *p, int len,
                     struct prot_serve_pkt_rejudge_by_mask *pkt)
@@ -3166,7 +3164,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_NO_PERMS);
       return;
     }
-    if ((res = count_transient_runs()) > 0) {
+    if ((res = serve_count_transient_runs(&serve_state)) > 0) {
       err("%d: there are %d transient runs", p->id, res);
       new_send_reply(p, -SRV_ERR_TRANSIENT_RUNS);
       return;
@@ -3809,21 +3807,6 @@ cmd_edit_user(struct client_state *p, int len,
  protocol_error:
   new_send_reply(p, -SRV_ERR_PROTOCOL);
   return;
-}
-
-static int
-count_transient_runs(void)
-{
-  int total_runs, r, counter = 0;
-  struct run_entry re;
-
-  total_runs = run_get_total(serve_state.runlog_state);
-  for (r = 0; r < total_runs; r++) {
-    if (run_get_entry(serve_state.runlog_state, r, &re) < 0) continue;
-    if (re.status >= RUN_TRANSIENT_FIRST && re.status <= RUN_TRANSIENT_LAST)
-      counter++;
-  }
-  return counter;
 }
 
 static void

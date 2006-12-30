@@ -3036,6 +3036,93 @@ ns_upload_csv_runs(
   return retval;
 }
 
+int
+ns_write_user_run_status(
+	const serve_state_t cs,
+        FILE *fout,
+        int run_id)
+{
+  struct run_entry re;
+  int attempts = 0, disq_attempts = 0;
+  int prev_successes = RUN_TOO_MANY;
+  struct section_problem_data *cur_prob = 0;
+  unsigned char *run_kind_str = "", *prob_str = "???", *lang_str = "???";
+  time_t run_time, start_time;
+  unsigned char dur_str[64];
+
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state))
+    return -NEW_SRV_ERR_INV_RUN_ID;
+  run_get_entry(cs->runlog_state, run_id, &re);
+
+  if (cs->global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, run_id);
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+  }
+
+  if (cs->global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode) {
+    if (re.status == RUN_OK || re.status == RUN_PARTIAL)
+      re.status = RUN_ACCEPTED;
+  }
+
+  attempts = 0; disq_attempts = 0;
+  if (cs->global->score_system_val == SCORE_KIROV && !re.is_hidden)
+    run_get_attempts(cs->runlog_state, run_id, &attempts, &disq_attempts,
+                     cs->global->ignore_compile_errors);
+
+  if (re.prob_id > 0 && re.prob_id <= cs->max_prob)
+    cur_prob = cs->probs[re.prob_id];
+
+  prev_successes = RUN_TOO_MANY;
+  if (cs->global->score_system_val == SCORE_KIROV
+      && re.status == RUN_OK
+      && !re.is_hidden
+      && cur_prob && cur_prob->score_bonus_total > 0) {
+    if ((prev_successes = run_get_prev_successes(cs->runlog_state, run_id)) < 0)
+      prev_successes = RUN_TOO_MANY;
+  }
+
+  if (re.is_imported) run_kind_str = "I";
+  if (re.is_hidden) run_kind_str = "H";
+
+  run_time = re.time;
+  if (!start_time) run_time = start_time;
+  if (start_time > run_time) run_time = start_time;
+  duration_str(cs->global->show_astr_time, run_time, start_time, dur_str, 0);
+
+  prob_str = "???";
+  if (cs->probs[re.prob_id]) {
+    if (cs->probs[re.prob_id]->variant_num > 0) {
+      int variant = re.variant;
+      if (!variant) variant = find_variant(cs, re.user_id, re.prob_id);
+      prob_str = alloca(strlen(cs->probs[re.prob_id]->short_name) + 10);
+      if (variant > 0) {
+        sprintf(prob_str, "%s-%d", cs->probs[re.prob_id]->short_name, variant);
+      } else {
+        sprintf(prob_str, "%s-?", cs->probs[re.prob_id]->short_name);
+      }
+    } else {
+      prob_str = cs->probs[re.prob_id]->short_name;
+    }
+  }
+
+  lang_str = "???";
+  if (!re.lang_id) {
+    lang_str = "N/A";
+  } else if (re.lang_id >= 0 && re.lang_id <= cs->max_lang
+             && cs->langs[re.lang_id]) {
+    lang_str = cs->langs[re.lang_id]->short_name;
+  }
+
+  fprintf(fout, "%d;%s;%s;%u;%s;%s;", run_id, run_kind_str, dur_str, re.size,
+          prob_str, lang_str);
+  write_text_run_status(cs, fout, &re, 0, attempts, disq_attempts,
+                        prev_successes);
+  fprintf(fout, "\n");
+
+  return 0;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

@@ -255,6 +255,10 @@ enum
   NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_1,
   NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_2,
   NEW_SRV_ACTION_LOGIN,         /* for new-server-cmd */
+  NEW_SRV_ACTION_DUMP_PROBLEMS,
+  NEW_SRV_ACTION_SOFT_UPDATE_STANDINGS,
+  NEW_SRV_ACTION_HAS_TRANSIENT_RUNS,
+  NEW_SRV_ACTION_DUMP_RUN_STATUS,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -492,5 +496,11 @@ ns_upload_csv_runs(
 	struct http_request_info *phr,
 	const serve_state_t cs, FILE *log_f,
         const unsigned char *csv_text);
+
+int
+ns_write_user_run_status(
+	const serve_state_t cs,
+        FILE *fout,
+        int run_id);
 
 #endif /* __NEW_SERVER_H__ */

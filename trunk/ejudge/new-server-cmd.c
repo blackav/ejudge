@@ -415,7 +415,8 @@ parse_session_id(int *p_argc, char **argv)
  */
 
 static void
-prepare_login(const unsigned char *cmd, int argc, char *argv[], int role)
+prepare_login(const unsigned char *cmd, int argc, char *argv[], int role,
+              int action)
 {
   int i = 0;
   int passwd_flag = 0, passwd_file = 0;
@@ -522,36 +523,78 @@ post_login(void)
 }
 
 static void
-prepare_logout(const unsigned char *cmd, int argc, char *argv[], int role)
+prepare_logout(const unsigned char *cmd, int argc, char *argv[], int role,
+               int action)
 {
   parse_session_id(&argc, argv);
   if (argc != 0) startup_error("invalid number of arguments for logout");
   put_cgi_param_f("action", "%d", NEW_SRV_ACTION_LOGOUT);
 }
 
+static void
+prepare_simple(const unsigned char *cmd, int argc, char *argv[], int role,
+               int action)
+{
+  parse_session_id(&argc, argv);
+  if (argc != 0) startup_error("invalid number of arguments for `%s'", cmd);
+  put_cgi_param_f("action", "%d", action);
+}
+
 struct command_handler
 {
   const char *cmd;
-  void (*pre_func)(const unsigned char *, int, char **, int);
+  void (*pre_func)(const unsigned char *, int, char **, int, int);
   int (*post_func)(void);
   int role;
+  int action;
 };
 static const struct command_handler handler_table[] =
 {
-  { "login", prepare_login, post_login, USER_ROLE_ADMIN },
-  { "team-login", prepare_login, post_login, USER_ROLE_CONTESTANT },
-  { "user-login", prepare_login, post_login, USER_ROLE_CONTESTANT },
-  { "observer-login", prepare_login, post_login, USER_ROLE_OBSERVER },
-  { "examiner-login", prepare_login, post_login, USER_ROLE_EXAMINER },
-  { "chief-examiner-login", prepare_login,post_login,USER_ROLE_CHIEF_EXAMINER },
-  { "coordinator-login", prepare_login, post_login, USER_ROLE_COORDINATOR },
-  { "judge-login", prepare_login, post_login, USER_ROLE_JUDGE },
-  { "admin-login", prepare_login, post_login, USER_ROLE_ADMIN },
-  { "master-login", prepare_login, post_login, USER_ROLE_ADMIN },
-  { "logout", prepare_logout, 0, 0 },
+  { "login", prepare_login, post_login, USER_ROLE_ADMIN, 0 },
+  { "team-login", prepare_login, post_login, USER_ROLE_CONTESTANT, 0 },
+  { "user-login", prepare_login, post_login, USER_ROLE_CONTESTANT, 0 },
+  { "observer-login", prepare_login, post_login, USER_ROLE_OBSERVER, 0 },
+  { "examiner-login", prepare_login, post_login, USER_ROLE_EXAMINER, 0 },
+  { "chief-examiner-login",prepare_login,post_login,USER_ROLE_CHIEF_EXAMINER,0},
+  { "coordinator-login", prepare_login, post_login, USER_ROLE_COORDINATOR, 0 },
+  { "judge-login", prepare_login, post_login, USER_ROLE_JUDGE, 0 },
+  { "admin-login", prepare_login, post_login, USER_ROLE_ADMIN, 0 },
+  { "master-login", prepare_login, post_login, USER_ROLE_ADMIN, 0 },
+  { "logout", prepare_logout, 0, 0, 0 },
+  { "write-xml-runs", prepare_simple, 0, 0, NEW_SRV_ACTION_WRITE_XML_RUNS },
+  { "export-xml-runs", prepare_simple, 0, 0, NEW_SRV_ACTION_EXPORT_XML_RUNS},
+  { "dump-runs", prepare_simple, 0, 0, NEW_SRV_ACTION_VIEW_RUNS_DUMP },
+  { "dump-problems", prepare_simple, 0, 0, NEW_SRV_ACTION_DUMP_PROBLEMS },
+  { "soft-update-stand", prepare_simple, 0, 0, NEW_SRV_ACTION_SOFT_UPDATE_STANDINGS },
+  { "suspend-testing", prepare_simple, 0, 0, NEW_SRV_ACTION_TEST_SUSPEND },
+  { "resume-testing", prepare_simple, 0, 0, NEW_SRV_ACTION_TEST_RESUME },
+  { "judge-suspended-runs", prepare_simple, 0, 0, NEW_SRV_ACTION_REJUDGE_SUSPENDED_2 },
+  { "has-transient-runs", prepare_simple, 0, 0, NEW_SRV_ACTION_HAS_TRANSIENT_RUNS },
 
   { 0, 0 },
 };
+
+/*
+static struct cmdinfo cmds[] =
+{
+  { "import-xml-runs", handle_import_xml, 0 },
+  { "dump-source", handle_dump_source, SRV_CMD_PRIV_DOWNLOAD_RUN },
+  { "dump-report", handle_dump_source, SRV_CMD_PRIV_DOWNLOAD_REPORT },
+  { "dump-team-report", handle_dump_source, SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT },
+  { "dump-standings", handle_dump_runs, SRV_CMD_DUMP_STANDINGS },
+  { "dump-master-runs", handle_dump_master_runs, 0 },
+  { "full-import-xml-runs", handle_full_import_xml, 0 },
+  { "dump-all-users", handle_dump_all_users, 0 },
+  { "get-contest-name", handle_userlist_server_param, ULS_GET_CONTEST_NAME },
+  { "get-contest-type", handle_serve_get_param, SRV_CMD_GET_CONTEST_TYPE },
+  { "team-submit-run", handle_submit_run, 0 },
+  { "team-dump-source", handle_team_dump, SRV_CMD_DUMP_SOURCE },
+  { "team-dump-clar", handle_team_dump, SRV_CMD_DUMP_CLAR },
+  { "team-run-status", handle_team_dump, SRV_CMD_RUN_STATUS },
+
+  { 0, 0 },
+};
+*/
 
 int
 main(int argc, char *argv[])
@@ -672,7 +715,8 @@ main(int argc, char *argv[])
     if (!strcasecmp(handler_table[j].cmd, command)) {
       (*handler_table[j].pre_func)(command, argc - arg_start,
                                    argv + arg_start,
-                                   handler_table[j].role);
+                                   handler_table[j].role,
+                                   handler_table[j].action);
       break;
     }
   if (!handler_table[j].cmd)
@@ -701,6 +745,7 @@ main(int argc, char *argv[])
     r = (*handler_table[j].post_func)();
   }
   if (r < 0) r = 1;
+  else if (r == -NEW_SRV_ERR_TRANSIENT_RUNS || r == -NEW_SRV_ERR_TRY_AGAIN)r=2;
   else r = 0;
 
   return r;

@@ -2026,6 +2026,21 @@ serve_squeeze_runs(serve_state_t state)
   /* FIXME: add an audit record for each renumbered run */
 }
 
+int
+serve_count_transient_runs(serve_state_t state)
+{
+  int total_runs, r, counter = 0;
+  struct run_entry re;
+
+  total_runs = run_get_total(state->runlog_state);
+  for (r = 0; r < total_runs; r++) {
+    if (run_get_entry(state->runlog_state, r, &re) < 0) continue;
+    if (re.status >= RUN_TRANSIENT_FIRST && re.status <= RUN_TRANSIENT_LAST)
+      counter++;
+  }
+  return counter;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

@@ -9009,14 +9009,178 @@ cmd_logout(
   ns_remove_session(phr->session_id);
   return 0;
 }
+
+static int
+cmd_dump_runs(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+
+  if (phr->role < USER_ROLE_JUDGE
+      || opcaps_check(phr->caps, OPCAP_DUMP_RUNS) < 0)
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_EXPORT_XML_RUNS:
+    if (run_write_xml(cs->runlog_state, cs, cnts, fout, 1,
+                      cs->current_time) < 0)
+      return -NEW_SRV_ERR_TRY_AGAIN;
+    break;
+
+  case NEW_SRV_ACTION_WRITE_XML_RUNS:
+    if (run_write_xml(cs->runlog_state, cs, cnts, fout, 0,
+                      cs->current_time) < 0)
+      return -NEW_SRV_ERR_TRY_AGAIN;
+    break;
+
+  case NEW_SRV_ACTION_VIEW_RUNS_DUMP:
+    write_runs_dump(cs, fout, 0, 0);
+    break;
+  default:
+    abort();
+  }
+
+  return 0;
+}
            
+static int
+cmd_dump_problems(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  int i;
+  const struct section_problem_data *prob;
+
+  for (i = 0; i <= cs->max_prob; i++) {
+    if (!(prob = cs->probs[i])) continue;
+    fprintf(fout, "%d;%s;%s\n", prob->id, prob->short_name, prob->long_name);
+  }
+  return 0;
+}
+
+static int
+cmd_operation(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+
+  if (phr->role != USER_ROLE_ADMIN
+      || opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST))
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_SOFT_UPDATE_STANDINGS:
+    serve_update_standings_file(cs, cnts, 0);
+    break;
+
+  case NEW_SRV_ACTION_TEST_SUSPEND:
+    cs->testing_suspended = 1;
+    serve_update_status_file(cs, 1);
+    break;
+  case NEW_SRV_ACTION_TEST_RESUME:
+    cs->testing_suspended = 0;
+    serve_update_status_file(cs, 1);
+    break;
+  case NEW_SRV_ACTION_REJUDGE_SUSPENDED_2:
+    serve_judge_suspended(cs, phr->user_id, phr->ip, phr->ssl_flag);
+    break;
+  case NEW_SRV_ACTION_HAS_TRANSIENT_RUNS:
+    if (serve_count_transient_runs(cs) > 0)
+      return -NEW_SRV_ERR_TRANSIENT_RUNS;
+    break;
+  default:
+    abort();
+  }
+
+  return 0;
+}
+
+static int
+cmd_run_operation(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  int run_id = -1;
+  const unsigned char *s = 0;
+  struct run_entry re;
+
+  if (ns_cgi_param(phr, "run_id", &s) <= 0)
+    return -NEW_SRV_ERR_INV_RUN_ID;
+  if (parse_int(s, &run_id) < 0 || run_id < 0)
+    return -NEW_SRV_ERR_INV_RUN_ID;
+  if (run_get_entry(cs->runlog_state, run_id, &re) < 0)
+    return -NEW_SRV_ERR_INV_RUN_ID;
+
+  switch (phr->role) {
+  case USER_ROLE_CONTESTANT:
+    if (!run_is_valid_user_status(re.status))
+      return -NEW_SRV_ERR_INV_RUN_ID;
+    if (phr->user_id != re.user_id)
+      return -NEW_SRV_ERR_PERMISSION_DENIED;
+    // FIXME: additional checks
+    break;
+
+    // not implemented yet
+  case USER_ROLE_OBSERVER:
+  case USER_ROLE_EXAMINER:
+  case USER_ROLE_CHIEF_EXAMINER:
+  case USER_ROLE_COORDINATOR:
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+
+  case USER_ROLE_JUDGE:
+  case USER_ROLE_ADMIN:
+    if (!run_is_valid_status(re.status))
+      return -NEW_SRV_ERR_INV_RUN_ID;
+    // FIXME: additional checks
+    break;
+  default:
+    abort();
+  }
+
+  if (re.status > RUN_LAST)
+    return -NEW_SRV_ERR_INV_RUN_ID;
+  if (re.status > RUN_PSEUDO_LAST && re.status < RUN_TRANSIENT_FIRST)
+    return -NEW_SRV_ERR_INV_RUN_ID;
+  if (re.status > RUN_MAX_STATUS && re.status < RUN_PSEUDO_FIRST)
+    return -NEW_SRV_ERR_INV_RUN_ID;
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_DUMP_RUN_STATUS:
+  return ns_write_user_run_status(cs, fout, run_id);
+  default:
+    abort();
+  }
+}
+
 typedef int (*cmd_handler_t)(FILE *, struct http_request_info *,
                              const struct contest_desc *,
                              struct contest_extra *);
 
 static cmd_handler_t cmd_actions_table[NEW_SRV_ACTION_LAST] =
 {
+  [NEW_SRV_ACTION_WRITE_XML_RUNS] = cmd_dump_runs,
+  [NEW_SRV_ACTION_EXPORT_XML_RUNS] = cmd_dump_runs,
+  [NEW_SRV_ACTION_VIEW_RUNS_DUMP] = cmd_dump_runs,
   [NEW_SRV_ACTION_LOGOUT] = cmd_logout,
+  [NEW_SRV_ACTION_DUMP_PROBLEMS] = cmd_dump_problems,
+  [NEW_SRV_ACTION_SOFT_UPDATE_STANDINGS] = cmd_operation,
+  [NEW_SRV_ACTION_TEST_SUSPEND] = cmd_operation,
+  [NEW_SRV_ACTION_TEST_RESUME] = cmd_operation,
+  [NEW_SRV_ACTION_REJUDGE_SUSPENDED_2] = cmd_operation,
+  [NEW_SRV_ACTION_HAS_TRANSIENT_RUNS] = cmd_operation,
+  [NEW_SRV_ACTION_DUMP_RUN_STATUS] = cmd_run_operation,
 };
 
 static int

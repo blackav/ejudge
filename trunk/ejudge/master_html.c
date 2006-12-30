@@ -2275,6 +2275,9 @@ write_priv_clar(const serve_state_t state, FILE *f, int user_id, int priv_level,
   unsigned char *html_subj, *txt_msg = 0, *html_msg;
   unsigned char name_buf[64];
   char *tmp_txt_msg = 0;
+  unsigned char filtbuf1[1024];
+  unsigned char filtbuf2[1024];
+  unsigned char filtbuf3[1024];
 
   if (clar_id < 0 || clar_id >= clar_get_total(state->clarlog_state))
     return -SRV_ERR_BAD_CLAR_ID;
@@ -2302,6 +2305,7 @@ write_priv_clar(const serve_state_t state, FILE *f, int user_id, int priv_level,
   }
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("IP address"), ip);
   fprintf(f, "<tr><td>%s:</td><td>%zu</td></tr>\n", _("Size"), size);
+
   fprintf(f, "<tr><td>%s:</td>", _("Sender"));
   if (!from) {
     if (!j_from)
@@ -2310,8 +2314,13 @@ write_priv_clar(const serve_state_t state, FILE *f, int user_id, int priv_level,
       fprintf(f, "<td><b>%s</b> (%s)</td>", _("judges"),
               teamdb_get_name(state->teamdb_state, j_from));
   } else {
-    fprintf(f, "<td>%s (%d)</td>", teamdb_get_name_2(state->teamdb_state,
-                                                     from), from);
+    snprintf(filtbuf1, sizeof(filtbuf1), "uid == %d", from);
+    url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
+    html_hyperref(filtbuf3, sizeof(filtbuf3), sid, self_url,
+                  extra_args, "filter_expr=%s&filter_view=View",
+                  filtbuf2);
+    fprintf(f, "<td>%s%s (%d)</a></td>", filtbuf3,
+            teamdb_get_name_2(state->teamdb_state, from), from);
   }
   fprintf(f, "</tr>\n<tr><td>%s:</td>", _("To"));
   if (!to && !from) {
@@ -2319,7 +2328,13 @@ write_priv_clar(const serve_state_t state, FILE *f, int user_id, int priv_level,
   } else if (!to) {
     fprintf(f, "<td><b>%s</b></td>", _("judges"));
   } else {
-    fprintf(f, "<td>%s (%d)</td>", teamdb_get_name_2(state->teamdb_state, to), to);
+    snprintf(filtbuf1, sizeof(filtbuf1), "uid == %d", to);
+    url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
+    html_hyperref(filtbuf3, sizeof(filtbuf3), sid, self_url,
+                  extra_args, "filter_expr=%s&filter_view=View",
+                  filtbuf2);
+    fprintf(f, "<td>%s%s (%d)</a></td>", filtbuf3,
+            teamdb_get_name_2(state->teamdb_state, to), to);
   }
   fprintf(f, "</tr>\n");
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"), html_subj);
