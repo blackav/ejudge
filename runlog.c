@@ -2529,6 +2529,65 @@ update_user_flags(runlog_state_t state)
   return 1;
 }
 
+static const unsigned char run_valid_statuses[RUN_LAST + 1] = 
+{
+  [RUN_OK]               = 1,
+  [RUN_COMPILE_ERR]      = 1,
+  [RUN_RUN_TIME_ERR]     = 1,
+  [RUN_TIME_LIMIT_ERR]   = 1,
+  [RUN_PRESENTATION_ERR] = 1,
+  [RUN_WRONG_ANSWER_ERR] = 1,
+  [RUN_CHECK_FAILED]     = 1,
+  [RUN_PARTIAL]          = 1,
+  [RUN_ACCEPTED]         = 1,
+  [RUN_IGNORED]          = 1,
+  [RUN_DISQUALIFIED]     = 1,
+  [RUN_PENDING]          = 1,
+  [RUN_MEM_LIMIT_ERR]    = 1,
+  [RUN_SECURITY_ERR]     = 1,
+  [RUN_VIRTUAL_START]    = 1,
+  [RUN_VIRTUAL_STOP]     = 1,
+  [RUN_EMPTY]            = 1,
+  [RUN_RUNNING]          = 1,
+  [RUN_COMPILED]         = 1,
+  [RUN_COMPILING]        = 1,
+  [RUN_AVAILABLE]        = 1,
+};
+int
+run_is_valid_status(int status)
+{
+  if (status < 0 || status > RUN_LAST) return 0;
+  return run_valid_statuses[status];
+}
+
+static const unsigned char run_valid_user_statuses[RUN_LAST + 1] = 
+{
+  [RUN_OK]               = 1,
+  [RUN_COMPILE_ERR]      = 1,
+  [RUN_RUN_TIME_ERR]     = 1,
+  [RUN_TIME_LIMIT_ERR]   = 1,
+  [RUN_PRESENTATION_ERR] = 1,
+  [RUN_WRONG_ANSWER_ERR] = 1,
+  [RUN_CHECK_FAILED]     = 1,
+  [RUN_PARTIAL]          = 1,
+  [RUN_ACCEPTED]         = 1,
+  [RUN_IGNORED]          = 1,
+  [RUN_DISQUALIFIED]     = 1,
+  [RUN_PENDING]          = 1,
+  [RUN_MEM_LIMIT_ERR]    = 1,
+  [RUN_SECURITY_ERR]     = 1,
+  [RUN_RUNNING]          = 1,
+  [RUN_COMPILED]         = 1,
+  [RUN_COMPILING]        = 1,
+  [RUN_AVAILABLE]        = 1,
+};
+int
+run_is_valid_user_status(int status)
+{
+  if (status < 0 || status > RUN_LAST) return 0;
+  return run_valid_user_statuses[status];
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

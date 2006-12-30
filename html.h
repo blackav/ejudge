@@ -270,4 +270,9 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
                                 const unsigned char *extra_args,
                                 const unsigned char *table_class);
 
+void
+write_text_run_status(const serve_state_t state, FILE *f, struct run_entry *pe,
+                      int priv_level, int attempts, int disq_attempts,
+                      int prev_successes);
+
 #endif /* __HTML_H__ */

@@ -239,6 +239,8 @@ int run_find(runlog_state_t, int first_run, int last_run,
 int run_undo_add_record(runlog_state_t, int run_id);
 int run_is_failed_attempt(int status);
 int run_is_valid_test_status(int status);
+int run_is_valid_status(int status);
+int run_is_valid_user_status(int status);
 int run_is_team_report_available(int status);
 int run_is_report_available(int status);
 
