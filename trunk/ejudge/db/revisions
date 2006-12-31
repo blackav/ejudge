@@ -1775,3 +1775,8 @@ new_server_html.c 3804 0 25776227
 new_server_html_2.c 3804 0 8130626
 runlog.c 3804 0 5747944
 serve_2.c 3804 0 5486732
+new-server.h 3806 0 1312393
+new_server_proto.h 3806 0 447745
+new-server-cmd.c 3806 0 2038582
+new_server_html.c 3806 0 24752334
+new_server_html_4.c 3806 0 2501138
