@@ -259,6 +259,10 @@ enum
   NEW_SRV_ACTION_SOFT_UPDATE_STANDINGS,
   NEW_SRV_ACTION_HAS_TRANSIENT_RUNS,
   NEW_SRV_ACTION_DUMP_RUN_STATUS,
+  NEW_SRV_ACTION_DUMP_SOURCE,
+  NEW_SRV_ACTION_DUMP_CLAR,
+  NEW_SRV_ACTION_GET_CONTEST_NAME,
+  NEW_SRV_ACTION_GET_CONTEST_TYPE,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -502,5 +506,26 @@ ns_write_user_run_status(
 	const serve_state_t cs,
         FILE *fout,
         int run_id);
+
+int
+new_server_cmd_handler(FILE *fout, struct http_request_info *phr);
+
+int
+ns_cgi_param(const struct http_request_info *phr, const unsigned char *param,
+             const unsigned char **p_value);
+int ns_cgi_param_bin(const struct http_request_info *phr,
+                     const unsigned char *param,
+                     const unsigned char **p_value, size_t *p_size);
+
+struct server_framework_state;
+int ns_open_ul_connection(struct server_framework_state *state);
+
+int
+ns_list_all_users_callback(
+	void *user_data,
+        int contest_id,
+        unsigned char **p_xml);
+void
+ns_check_contest_events(serve_state_t cs, const struct contest_desc *cnts);
 
 #endif /* __NEW_SERVER_H__ */

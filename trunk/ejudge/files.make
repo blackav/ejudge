@@ -155,6 +155,7 @@ COMMON_CFILES=\
  new_server_html.c\
  new_server_html_2.c\
  new_server_html_3.c\
+ new_server_html_4.c\
  new_server_proto.c\
  new_server_tables.c\
  ncurses_utils.c\

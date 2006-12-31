@@ -540,6 +540,106 @@ prepare_simple(const unsigned char *cmd, int argc, char *argv[], int role,
   put_cgi_param_f("action", "%d", action);
 }
 
+static void
+prepare_run_id(const unsigned char *cmd, int argc, char *argv[], int role,
+               int action)
+{
+  int run_id = -1;
+
+  parse_session_id(&argc, argv);
+  if (argc != 1) startup_error("invalid number of arguments for `%s'", cmd);
+  if (parse_int(argv[0], &run_id) < 0) startup_error("invalid parameter");
+  put_cgi_param_f("run_id", "%d", run_id);
+  put_cgi_param_f("action", "%d", action);
+}
+
+static void
+prepare_clar_id(const unsigned char *cmd, int argc, char *argv[], int role,
+                int action)
+{
+  int clar_id = -1;
+
+  parse_session_id(&argc, argv);
+  if (argc != 1) startup_error("invalid number of arguments for `%s'", cmd);
+  if (parse_int(argv[0], &clar_id) < 0) startup_error("invalid parameter");
+  put_cgi_param_f("clar_id", "%d", clar_id);
+  put_cgi_param_f("action", "%d", action);
+}
+
+static void
+read_file(FILE *f, char **out, size_t *out_len)
+{
+  unsigned char read_buf[4096];
+  unsigned char *buf = 0;
+  size_t buf_len = 0, read_len = 0;
+
+  while (1) {
+    read_len = fread(read_buf, 1, sizeof(read_buf), f);
+    if (!read_len) break;
+    if (!buf_len) {
+      buf = (unsigned char*) xcalloc(read_len + 1, 1);
+      memcpy(buf, read_buf, read_len);
+      buf_len = read_len;
+    } else {
+      buf = (unsigned char*) xrealloc(buf, buf_len + read_len);
+      memcpy(buf + buf_len, read_buf, read_len);
+      buf_len += read_len;
+      buf[buf_len] = 0;
+    }
+  }
+  if (ferror(f))
+    startup_error("input error");
+  if (!buf_len) {
+    buf = (unsigned char*) xmalloc(1);
+    buf[0] = 0;
+    buf_len = 0;
+  }
+  if (out) *out = buf;
+  if (out_len) *out_len = buf_len;
+}
+
+/*
+ * argv[0] - problem short name
+ * argv[1] - language short name
+ * argv[2] - source file name (or stdin)
+ * argv[3] - variant (optionally, for privileged submits)
+ */
+static void
+prepare_submit_run(const unsigned char *cmd, int argc, char *argv[], int role,
+                   int action)
+{
+  FILE *fin = 0;
+  char *run_txt = 0;
+  size_t run_len = 0;
+  int variant = -1;
+
+  parse_session_id(&argc, argv);
+
+  if (argc < 2 || argc > 4)
+    startup_error("invalid number of arguments for `%s'", cmd);
+
+  if (argc == 2 || !strcmp(argv[2], "-") || !strcmp(argv[2], "STDIN")) {
+    fin = stdin;
+  } else {
+    if (!(fin = fopen(argv[2], "r")))
+      startup_error("cannot open file `%s'", argv[2]);
+  }
+  read_file(fin, &run_txt, &run_len);
+  if (fin != stdin) fclose(fin);
+  if (argc == 4) {
+    if (parse_int(argv[3], &variant) < 0 || variant < 0)
+      startup_error("invalid variant");
+  }
+
+  put_cgi_param("prob", argv[0]);
+  put_cgi_param("lang", argv[1]);
+  put_cgi_param_bin("file", run_len, run_txt);
+  if (variant >= 0) {
+    put_cgi_param_f("variant", "%d", variant);
+  }
+  put_cgi_param_f("action", "%d", NEW_SRV_ACTION_SUBMIT_RUN);
+}
+
 struct command_handler
 {
   const char *cmd;
@@ -570,6 +670,16 @@ static const struct command_handler handler_table[] =
   { "resume-testing", prepare_simple, 0, 0, NEW_SRV_ACTION_TEST_RESUME },
   { "judge-suspended-runs", prepare_simple, 0, 0, NEW_SRV_ACTION_REJUDGE_SUSPENDED_2 },
   { "has-transient-runs", prepare_simple, 0, 0, NEW_SRV_ACTION_HAS_TRANSIENT_RUNS },
+  { "team-run-status", prepare_run_id, 0, 0, NEW_SRV_ACTION_DUMP_RUN_STATUS },
+  { "run-status", prepare_run_id, 0, 0, NEW_SRV_ACTION_DUMP_RUN_STATUS },
+  { "dump-source", prepare_run_id, 0, 0, NEW_SRV_ACTION_DUMP_SOURCE },
+  { "team-dump-source", prepare_run_id, 0, 0, NEW_SRV_ACTION_DUMP_SOURCE },
+  { "dump-clar", prepare_clar_id, 0, 0, NEW_SRV_ACTION_DUMP_CLAR },
+  { "team-dump-clar", prepare_clar_id, 0, 0, NEW_SRV_ACTION_DUMP_CLAR },
+  { "get-contest-name", prepare_simple, 0, 0, NEW_SRV_ACTION_GET_CONTEST_NAME },
+  { "get-contest-type", prepare_simple, 0, 0, NEW_SRV_ACTION_GET_CONTEST_TYPE },
+  { "submit-run", prepare_submit_run, 0, 0, 0 },
+  { "team-submit-run", prepare_submit_run, 0, 0, 0 },
 
   { 0, 0 },
 };
@@ -578,19 +688,12 @@ static const struct command_handler handler_table[] =
 static struct cmdinfo cmds[] =
 {
   { "import-xml-runs", handle_import_xml, 0 },
-  { "dump-source", handle_dump_source, SRV_CMD_PRIV_DOWNLOAD_RUN },
   { "dump-report", handle_dump_source, SRV_CMD_PRIV_DOWNLOAD_REPORT },
   { "dump-team-report", handle_dump_source, SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT },
   { "dump-standings", handle_dump_runs, SRV_CMD_DUMP_STANDINGS },
   { "dump-master-runs", handle_dump_master_runs, 0 },
   { "full-import-xml-runs", handle_full_import_xml, 0 },
   { "dump-all-users", handle_dump_all_users, 0 },
-  { "get-contest-name", handle_userlist_server_param, ULS_GET_CONTEST_NAME },
-  { "get-contest-type", handle_serve_get_param, SRV_CMD_GET_CONTEST_TYPE },
-  { "team-submit-run", handle_submit_run, 0 },
-  { "team-dump-source", handle_team_dump, SRV_CMD_DUMP_SOURCE },
-  { "team-dump-clar", handle_team_dump, SRV_CMD_DUMP_CLAR },
-  { "team-run-status", handle_team_dump, SRV_CMD_RUN_STATUS },
 
   { 0, 0 },
 };
