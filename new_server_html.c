@@ -261,8 +261,6 @@ ns_unload_expired_contests(time_t cur_time)
       ns_unload_contest(i);
 }
 
-static void check_contest_events(serve_state_t cs, const struct contest_desc*);
-
 void
 ns_loop_callback(struct server_framework_state *state)
 {
@@ -279,7 +277,7 @@ ns_loop_callback(struct server_framework_state *state)
     if (!(cs = e->serve_state)) continue;
 
     e->serve_state->current_time = cur_time;
-    check_contest_events(e->serve_state, cnts);
+    ns_check_contest_events(e->serve_state, cnts);
 
     serve_update_public_log_file(e->serve_state, cnts);
     serve_update_external_xml_log(e->serve_state, cnts);
@@ -323,7 +321,7 @@ ns_post_select_callback(struct server_framework_state *state)
     if (!(cs = e->serve_state)) continue;
 
     e->serve_state->current_time = cur_time;
-    check_contest_events(e->serve_state, cnts);
+    ns_check_contest_events(e->serve_state, cnts);
   }
 }
 
@@ -343,7 +341,7 @@ ns_getenv(const struct http_request_info *phr, const unsigned char *var)
   return 0;
 }
 
-static int
+int
 ns_cgi_param(const struct http_request_info *phr, const unsigned char *param,
              const unsigned char **p_value)
 {
@@ -359,7 +357,7 @@ ns_cgi_param(const struct http_request_info *phr, const unsigned char *param,
   return 1;
 }
 
-static int
+int
 ns_cgi_param_bin(const struct http_request_info *phr,
                  const unsigned char *param,
                  const unsigned char **p_value,
@@ -449,8 +447,8 @@ ul_notification_callback(void *user_data, int contest_id)
   }
 }
 
-static int
-open_ul_connection(struct server_framework_state *state)
+int
+ns_open_ul_connection(struct server_framework_state *state)
 {
   struct server_framework_watch w;
   int r, contest_id;
@@ -459,7 +457,7 @@ open_ul_connection(struct server_framework_state *state)
   if (ul_conn) return 0;
 
   if (!(ul_conn = userlist_clnt_open(config->socket_path))) {
-    err("open_ul_connection: connect to server failed");
+    err("ns_open_ul_connection: connect to server failed");
     return -1;
   }
 
@@ -494,11 +492,14 @@ open_ul_connection(struct server_framework_state *state)
   return 0;
 }
 
-static int
-list_all_users_callback(void *user_data, int contest_id, unsigned char **p_xml)
+int
+ns_list_all_users_callback(
+	void *user_data,
+        int contest_id,
+        unsigned char **p_xml)
 {
   struct server_framework_state *state = (struct server_framework_state *) user_data;
-  if (open_ul_connection(state) < 0) return -1;
+  if (ns_open_ul_connection(state) < 0) return -1;
 
   if (userlist_clnt_list_all_users(ul_conn, ULS_LIST_STANDINGS_USERS,
                                    contest_id, p_xml) < 0) return -1;
@@ -680,8 +681,8 @@ html_refresh_page_2(FILE *fout, const unsigned char *url)
   fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>%s</title></head><body><h1>%s</h1><p>If autorefresh does not work, follow <a href=\"%s\">this</a> link.</p></body></html>\n", EJUDGE_CHARSET, EJUDGE_CHARSET, 1, url, "Operation successful", "Operation successful", url);
 }
 
-static void
-check_contest_events(serve_state_t cs, const struct contest_desc *cnts)
+void
+ns_check_contest_events(serve_state_t cs, const struct contest_desc *cnts)
 {
   const struct section_global_data *global = cs->global;
   time_t start_time, stop_time, sched_time, duration, finish_time;
@@ -824,7 +825,7 @@ privileged_page_cookie_login(FILE *fout,
       return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for JUDGE for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   }
 
-  if (open_ul_connection(phr->fw_state) < 0)
+  if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 1, 0);
 
   xfree(phr->login); phr->login = 0;
@@ -918,7 +919,7 @@ privileged_page_login(FILE *fout,
       return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for JUDGE for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   }
 
-  if (open_ul_connection(phr->fw_state) < 0)
+  if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 1, 0);
   if ((r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
                                     phr->ip, phr->ssl_flag, phr->contest_id,
@@ -995,7 +996,7 @@ priv_registration_operation(FILE *fout,
 
   // FIXME: probably we need to sort user_ids and remove duplicates
 
-  if (open_ul_connection(phr->fw_state) < 0) {
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
     ns_html_err_ul_server_down(fout, phr, 1, 0);
     retcode = -1;
     goto cleanup;
@@ -1106,7 +1107,7 @@ priv_add_user_by_user_id(FILE *fout,
       || sscanf(s, "%d%n", &x, &n) != 1 || s[n] || x <= 0)
     FAIL(NEW_SRV_ERR_INV_USER_ID);
 
-  if (open_ul_connection(phr->fw_state) < 0) {
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
     ns_html_err_ul_server_down(fout, phr, 1, 0);
     retval = -1;
     goto cleanup;
@@ -1139,7 +1140,7 @@ priv_add_user_by_login(FILE *fout,
     ns_error(log_f, NEW_SRV_ERR_INV_USER_LOGIN);
     goto cleanup;
   }
-  if (open_ul_connection(phr->fw_state) < 0) {
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
     ns_html_err_ul_server_down(fout, phr, 1, 0);
     retval = -1;
     goto cleanup;
@@ -1304,7 +1305,7 @@ priv_add_priv_user_by_login(FILE *fout,
     ns_error(log_f, NEW_SRV_ERR_INV_USER_ROLE);
     goto cleanup;
   }
-  if (open_ul_connection(phr->fw_state) < 0) {
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
     ns_html_err_ul_server_down(fout, phr, 1, 0);
     retval = -1;
     goto cleanup;
@@ -1675,7 +1676,7 @@ priv_password_operation(FILE *fout,
   if (opcaps_check(phr->caps, OPCAP_GENERATE_TEAM_PASSWORDS) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-  if (open_ul_connection(phr->fw_state) < 0) {
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
     ns_html_err_ul_server_down(fout, phr, 0, 0);
     FAIL(1);
   }
@@ -1725,7 +1726,7 @@ priv_change_language(FILE *fout,
       goto invalid_param;
   }
 
-  if (open_ul_connection(phr->fw_state) < 0) {
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
     ns_html_err_ul_server_down(fout, phr, 0, 0);
     return -1;
   }
@@ -1779,7 +1780,7 @@ priv_change_password(FILE *fout,
 
   cmd = ULS_PRIV_SET_REG_PASSWD;
 
-  if (open_ul_connection(phr->fw_state) < 0) {
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
     ns_html_err_ul_server_down(fout, phr, 1, 0);
     goto cleanup;
   }
@@ -3298,7 +3299,7 @@ priv_view_user_dump(FILE *fout,
   if (opcaps_check(phr->caps, OPCAP_DUMP_USERS) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-  if (open_ul_connection(phr->fw_state) < 0) {
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
     ns_html_err_ul_server_down(fout, phr, 1, 0);
     return -1;
   }
@@ -3506,7 +3507,7 @@ priv_view_users_page(FILE *fout,
   unsigned char cl[128];
   unsigned char b1[1024], b2[1024];
 
-  if (open_ul_connection(phr->fw_state) < 0)
+  if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 1, 0);
   if ((r = userlist_clnt_list_all_users(ul_conn, ULS_LIST_ALL_USERS,
                                         phr->contest_id, &xml_text)) < 0)
@@ -3692,7 +3693,7 @@ priv_view_priv_users_page(FILE *fout,
 
   XMEMZERO(&users, 1);
 
-  if (open_ul_connection(phr->fw_state) < 0) {
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
     ns_html_err_ul_server_down(fout, phr, 1, 0);
     goto cleanup;
   }
@@ -4818,7 +4819,7 @@ priv_logout(FILE *fout,
   //unsigned char locale_buf[64];
   unsigned char urlbuf[1024];
 
-  if (open_ul_connection(phr->fw_state) < 0)
+  if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
   userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
                               phr->session_id);
@@ -5632,7 +5633,7 @@ privileged_page(FILE *fout,
     return privileged_page_login(fout, phr);
 
   // validate cookie
-  if (open_ul_connection(phr->fw_state) < 0)
+  if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 1, 0);
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_PRIV_GET_COOKIE,
                                     phr->ip, phr->ssl_flag,
@@ -5725,7 +5726,7 @@ privileged_page(FILE *fout,
 
   memset(&callbacks, 0, sizeof(callbacks));
   callbacks.user_data = (void*) phr->fw_state;
-  callbacks.list_all_users = list_all_users_callback;
+  callbacks.list_all_users = ns_list_all_users_callback;
 
   // invoke the contest
   if (serve_state_load_contest(phr->contest_id,
@@ -5737,7 +5738,7 @@ privileged_page(FILE *fout,
   ns_set_fancy_standings_style(extra->serve_state->global);
 
   extra->serve_state->current_time = time(0);
-  check_contest_events(extra->serve_state, cnts);
+  ns_check_contest_events(extra->serve_state, cnts);
   
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && actions_table[phr->action]) {
@@ -5944,7 +5945,7 @@ unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr)
 
   unpriv_load_html_style(phr, cnts, &extra, &cur_time);
 
-  if (open_ul_connection(phr->fw_state) < 0) {
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
     ns_html_err_ul_server_down(fout, phr, 0, 0);
     goto cleanup;
   }
@@ -6038,7 +6039,7 @@ unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr)
 
   unpriv_load_html_style(phr, cnts, &extra, &cur_time);
 
-  if (open_ul_connection(phr->fw_state) < 0) {
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
     ns_html_err_ul_server_down(fout, phr, 0, 0);
     goto cleanup;
   }
@@ -6264,7 +6265,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
                                              "contest %d user is disabled",
                                              cnts->id);
 
-  if (open_ul_connection(phr->fw_state) < 0)
+  if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
 
   if ((r = userlist_clnt_team_login(ul_conn, ULS_CHECK_USER,
@@ -6316,7 +6317,7 @@ unpriv_change_language(FILE *fout,
 
   log_f = open_memstream(&log_txt, &log_len);
 
-  if (open_ul_connection(phr->fw_state) < 0) {
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
     ns_html_err_ul_server_down(fout, phr, 0, 0);
     goto cleanup;
   }
@@ -6379,7 +6380,7 @@ unpriv_change_password(FILE *fout,
   cmd = ULS_PRIV_SET_TEAM_PASSWD;
   if (cnts->disable_team_password) cmd = ULS_PRIV_SET_REG_PASSWD;
 
-  if (open_ul_connection(phr->fw_state) < 0) {
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
     ns_html_err_ul_server_down(fout, phr, 0, 0);
     goto cleanup;
   }
@@ -8728,7 +8729,7 @@ unpriv_logout(FILE *fout,
   //unsigned char locale_buf[64];
   unsigned char urlbuf[1024];
 
-  if (open_ul_connection(phr->fw_state) < 0)
+  if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
   userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
                               phr->session_id);
@@ -8783,7 +8784,7 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr)
     return unprivileged_page_login(fout, phr);
 
   // validate cookie
-  if (open_ul_connection(phr->fw_state) < 0)
+  if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_GET_COOKIE,
                                     phr->ip, phr->ssl_flag,
@@ -8853,7 +8854,7 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr)
 
   memset(&callbacks, 0, sizeof(callbacks));
   callbacks.user_data = (void*) phr->fw_state;
-  callbacks.list_all_users = list_all_users_callback;
+  callbacks.list_all_users = ns_list_all_users_callback;
 
   // invoke the contest
   if (serve_state_load_contest(phr->contest_id,
@@ -8865,7 +8866,7 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr)
   ns_set_fancy_standings_style(extra->serve_state->global);
 
   extra->serve_state->current_time = time(0);
-  check_contest_events(extra->serve_state, cnts);
+  ns_check_contest_events(extra->serve_state, cnts);
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && user_actions_table[phr->action]) {
@@ -8874,434 +8875,6 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr)
     if (phr->action < 0 || phr->action >= NEW_SRV_ACTION_LAST)
       phr->action = 0;
     user_main_page(fout, phr, cnts, extra);
-  }
-}
-
-static int
-parse_int(const char *str, int *p_val)
-{
-  int v;
-  char *eptr = 0;
-
-  errno = 0;
-  v = strtol(str, &eptr, 10);
-  if (errno || *eptr) return -1;
-  return 0;
-}
-
-static int
-cmd_login(
-	FILE *fout,
-        struct http_request_info *phr)
-{
-  int retval = 0, r;
-  const struct contest_desc *cnts = 0;
-  const unsigned char *login = 0, *password = 0, *role_str = 0;
-  opcap_t caps;
-
-  // login, password, role, contest_id
-  if (ns_cgi_param(phr, "login", &login) <= 0)
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-  if (ns_cgi_param(phr, "password", &password) <= 0)
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-  if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) || !cnts)
-    FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
-  if (!cnts->new_managed)
-    FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
-  if (ns_cgi_param(phr, "role", &role_str) <= 0)
-    FAIL(NEW_SRV_ERR_INV_ROLE);
-  if (parse_int(role_str, &phr->role) < 0
-      || phr->role < 0 || phr->role >= USER_ROLE_LAST)
-    FAIL(NEW_SRV_ERR_INV_ROLE);
-
-  switch (phr->role) {
-  case USER_ROLE_CONTESTANT:
-    if (cnts->closed || cnts->client_disable_team) 
-      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-    if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
-      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-    break;
-  case USER_ROLE_OBSERVER:
-  case USER_ROLE_EXAMINER:
-  case USER_ROLE_CHIEF_EXAMINER:
-  case USER_ROLE_COORDINATOR:
-  case USER_ROLE_JUDGE:
-    if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag))
-      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-    break;
-  case USER_ROLE_ADMIN:
-    if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag))
-      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-    break;
-  default:
-    abort();
-  }
-
-  if (open_ul_connection(phr->fw_state) < 0)
-    FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
-
-  if (phr->role == USER_ROLE_CONTESTANT) {
-    r = userlist_clnt_team_login(ul_conn, ULS_CHECK_USER,
-                                 phr->ip, phr->ssl_flag, phr->contest_id,
-                                 phr->locale_id, login, password,
-                                 &phr->user_id, &phr->session_id,
-                                 0, &phr->name);
-  } else {
-    r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
-                                 phr->ip, phr->ssl_flag, phr->contest_id,
-                                 phr->locale_id, 0, phr->role, login,
-                                 password, &phr->user_id, &phr->session_id,
-                                 0, 0, &phr->name);
-  }
-
-  if (r < 0) {
-    switch (-r) {
-    case ULS_ERR_INVALID_LOGIN:
-    case ULS_ERR_INVALID_PASSWORD:
-    case ULS_ERR_BAD_CONTEST_ID:
-    case ULS_ERR_IP_NOT_ALLOWED:
-    case ULS_ERR_NO_PERMS:
-    case ULS_ERR_NOT_REGISTERED:
-    case ULS_ERR_CANNOT_PARTICIPATE:
-      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-    case ULS_ERR_DISCONNECT:
-      FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
-    default:
-      FAIL(NEW_SRV_ERR_INTERNAL);
-    }
-  }
-
-  // analyze permissions
-  if (phr->role == USER_ROLE_ADMIN) {
-    // as for the master program
-    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
-        || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0)
-      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-  } else if (phr->role == USER_ROLE_JUDGE) {
-    // as for the judge program
-    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
-        || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0)
-      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-  } else if (phr->role != USER_ROLE_CONTESTANT) {
-    // user privileges checked locally
-    if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0)
-      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-  }
-
-  ns_get_session(phr->session_id, 0);
-  fprintf(fout, "%016llx\n", phr->session_id);
-
- cleanup:
-  return retval;
-}
-
-static int
-cmd_logout(
-	FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra)
-{
-  if (open_ul_connection(phr->fw_state) < 0)
-    return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
-  userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
-                              phr->session_id);
-  ns_remove_session(phr->session_id);
-  return 0;
-}
-
-static int
-cmd_dump_runs(
-	FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra)
-{
-  const serve_state_t cs = extra->serve_state;
-
-  if (phr->role < USER_ROLE_JUDGE
-      || opcaps_check(phr->caps, OPCAP_DUMP_RUNS) < 0)
-    return -NEW_SRV_ERR_PERMISSION_DENIED;
-
-  switch (phr->action) {
-  case NEW_SRV_ACTION_EXPORT_XML_RUNS:
-    if (run_write_xml(cs->runlog_state, cs, cnts, fout, 1,
-                      cs->current_time) < 0)
-      return -NEW_SRV_ERR_TRY_AGAIN;
-    break;
-
-  case NEW_SRV_ACTION_WRITE_XML_RUNS:
-    if (run_write_xml(cs->runlog_state, cs, cnts, fout, 0,
-                      cs->current_time) < 0)
-      return -NEW_SRV_ERR_TRY_AGAIN;
-    break;
-
-  case NEW_SRV_ACTION_VIEW_RUNS_DUMP:
-    write_runs_dump(cs, fout, 0, 0);
-    break;
-  default:
-    abort();
-  }
-
-  return 0;
-}
-           
-static int
-cmd_dump_problems(
-	FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra)
-{
-  const serve_state_t cs = extra->serve_state;
-  int i;
-  const struct section_problem_data *prob;
-
-  for (i = 0; i <= cs->max_prob; i++) {
-    if (!(prob = cs->probs[i])) continue;
-    fprintf(fout, "%d;%s;%s\n", prob->id, prob->short_name, prob->long_name);
-  }
-  return 0;
-}
-
-static int
-cmd_operation(
-	FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra)
-{
-  const serve_state_t cs = extra->serve_state;
-
-  if (phr->role != USER_ROLE_ADMIN
-      || opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST))
-    return -NEW_SRV_ERR_PERMISSION_DENIED;
-
-  switch (phr->action) {
-  case NEW_SRV_ACTION_SOFT_UPDATE_STANDINGS:
-    serve_update_standings_file(cs, cnts, 0);
-    break;
-
-  case NEW_SRV_ACTION_TEST_SUSPEND:
-    cs->testing_suspended = 1;
-    serve_update_status_file(cs, 1);
-    break;
-  case NEW_SRV_ACTION_TEST_RESUME:
-    cs->testing_suspended = 0;
-    serve_update_status_file(cs, 1);
-    break;
-  case NEW_SRV_ACTION_REJUDGE_SUSPENDED_2:
-    serve_judge_suspended(cs, phr->user_id, phr->ip, phr->ssl_flag);
-    break;
-  case NEW_SRV_ACTION_HAS_TRANSIENT_RUNS:
-    if (serve_count_transient_runs(cs) > 0)
-      return -NEW_SRV_ERR_TRANSIENT_RUNS;
-    break;
-  default:
-    abort();
-  }
-
-  return 0;
-}
-
-static int
-cmd_run_operation(
-	FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra)
-{
-  const serve_state_t cs = extra->serve_state;
-  int run_id = -1;
-  const unsigned char *s = 0;
-  struct run_entry re;
-
-  if (ns_cgi_param(phr, "run_id", &s) <= 0)
-    return -NEW_SRV_ERR_INV_RUN_ID;
-  if (parse_int(s, &run_id) < 0 || run_id < 0)
-    return -NEW_SRV_ERR_INV_RUN_ID;
-  if (run_get_entry(cs->runlog_state, run_id, &re) < 0)
-    return -NEW_SRV_ERR_INV_RUN_ID;
-
-  switch (phr->role) {
-  case USER_ROLE_CONTESTANT:
-    if (!run_is_valid_user_status(re.status))
-      return -NEW_SRV_ERR_INV_RUN_ID;
-    if (phr->user_id != re.user_id)
-      return -NEW_SRV_ERR_PERMISSION_DENIED;
-    // FIXME: additional checks
-    break;
-
-    // not implemented yet
-  case USER_ROLE_OBSERVER:
-  case USER_ROLE_EXAMINER:
-  case USER_ROLE_CHIEF_EXAMINER:
-  case USER_ROLE_COORDINATOR:
-    return -NEW_SRV_ERR_PERMISSION_DENIED;
-
-  case USER_ROLE_JUDGE:
-  case USER_ROLE_ADMIN:
-    if (!run_is_valid_status(re.status))
-      return -NEW_SRV_ERR_INV_RUN_ID;
-    // FIXME: additional checks
-    break;
-  default:
-    abort();
-  }
-
-  if (re.status > RUN_LAST)
-    return -NEW_SRV_ERR_INV_RUN_ID;
-  if (re.status > RUN_PSEUDO_LAST && re.status < RUN_TRANSIENT_FIRST)
-    return -NEW_SRV_ERR_INV_RUN_ID;
-  if (re.status > RUN_MAX_STATUS && re.status < RUN_PSEUDO_FIRST)
-    return -NEW_SRV_ERR_INV_RUN_ID;
-
-  switch (phr->action) {
-  case NEW_SRV_ACTION_DUMP_RUN_STATUS:
-  return ns_write_user_run_status(cs, fout, run_id);
-  default:
-    abort();
-  }
-}
-
-typedef int (*cmd_handler_t)(FILE *, struct http_request_info *,
-                             const struct contest_desc *,
-                             struct contest_extra *);
-
-static cmd_handler_t cmd_actions_table[NEW_SRV_ACTION_LAST] =
-{
-  [NEW_SRV_ACTION_WRITE_XML_RUNS] = cmd_dump_runs,
-  [NEW_SRV_ACTION_EXPORT_XML_RUNS] = cmd_dump_runs,
-  [NEW_SRV_ACTION_VIEW_RUNS_DUMP] = cmd_dump_runs,
-  [NEW_SRV_ACTION_LOGOUT] = cmd_logout,
-  [NEW_SRV_ACTION_DUMP_PROBLEMS] = cmd_dump_problems,
-  [NEW_SRV_ACTION_SOFT_UPDATE_STANDINGS] = cmd_operation,
-  [NEW_SRV_ACTION_TEST_SUSPEND] = cmd_operation,
-  [NEW_SRV_ACTION_TEST_RESUME] = cmd_operation,
-  [NEW_SRV_ACTION_REJUDGE_SUSPENDED_2] = cmd_operation,
-  [NEW_SRV_ACTION_HAS_TRANSIENT_RUNS] = cmd_operation,
-  [NEW_SRV_ACTION_DUMP_RUN_STATUS] = cmd_run_operation,
-};
-
-static int
-new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
-{
-  int r = 0;
-  const struct contest_desc *cnts = 0;
-  opcap_t caps = 0;
-  struct teamdb_db_callbacks callbacks;
-  struct contest_extra *extra = 0;
-
-  if (phr->action == NEW_SRV_ACTION_LOGIN)
-    return cmd_login(fout, phr);
-
-  if (open_ul_connection(phr->fw_state) < 0)
-    return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
-
-  if ((r = userlist_clnt_get_cookie(ul_conn, ULS_PRIV_GET_COOKIE,
-                                    phr->ip, phr->ssl_flag,
-                                    phr->session_id,
-                                    &phr->user_id, &phr->contest_id,
-                                    &phr->locale_id, 0, &phr->role,
-                                    &phr->login, &phr->name)) < 0) {
-    switch (-r) {
-    case ULS_ERR_NO_COOKIE:
-      return -NEW_SRV_ERR_PERMISSION_DENIED;
-    case ULS_ERR_DISCONNECT:
-      return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
-    default:
-      return -NEW_SRV_ERR_INTERNAL;
-    }
-  }
-
-  if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
-    return -NEW_SRV_ERR_INV_CONTEST_ID;
-  if (!cnts->new_managed)
-    return -NEW_SRV_ERR_INV_CONTEST_ID;
-  extra = ns_get_contest_extra(phr->contest_id);
-  ASSERT(extra);
-
-  if (phr->role < 0 || phr->role >= USER_ROLE_LAST)
-    return -NEW_SRV_ERR_INV_ROLE;
-
-  // analyze IP limitations
-  if (phr->role == USER_ROLE_ADMIN) {
-    if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag))
-      return -NEW_SRV_ERR_PERMISSION_DENIED;
-  } else if (phr->role == USER_ROLE_CONTESTANT) {
-    if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
-      return -NEW_SRV_ERR_PERMISSION_DENIED;
-  } else {
-    if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag))
-      return -NEW_SRV_ERR_PERMISSION_DENIED;
-  }
-
-  if (phr->role == USER_ROLE_ADMIN) {
-    // as for the master program
-    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
-        || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0)
-      return -NEW_SRV_ERR_PERMISSION_DENIED;
-  } else if (phr->role == USER_ROLE_JUDGE) {
-    // as for the judge program
-    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
-        || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0)
-      return -NEW_SRV_ERR_PERMISSION_DENIED;
-  } else if (phr->role == USER_ROLE_CONTESTANT) {
-    if (cnts->closed || cnts->client_disable_team)
-      return -NEW_SRV_ERR_PERMISSION_DENIED;
-  } else {
-    // user privileges checked locally
-    if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0)
-      return -NEW_SRV_ERR_PERMISSION_DENIED;
-  }
-
-  if (phr->name && *phr->name) {
-    phr->name_arm = html_armor_string_dup(phr->name);
-  } else {
-    phr->name_arm = html_armor_string_dup(phr->login);
-  }
-  if (extra->contest_arm) xfree(extra->contest_arm);
-  if (phr->locale_id == 0 && cnts->name_en) {
-    extra->contest_arm = html_armor_string_dup(cnts->name_en);
-  } else {
-    extra->contest_arm = html_armor_string_dup(cnts->name);
-  }
-
-  phr->caps = 0;
-  if ((phr->role == USER_ROLE_ADMIN || phr->role == USER_ROLE_JUDGE)
-      && opcaps_find(&cnts->capabilities, phr->login, &caps) >= 0) {
-    phr->caps = caps;
-  }
-
-  memset(&callbacks, 0, sizeof(callbacks));
-  callbacks.user_data = (void*) phr->fw_state;
-  callbacks.list_all_users = list_all_users_callback;
-
-  // invoke the contest
-  if (serve_state_load_contest(phr->contest_id,
-                               ul_conn,
-                               &callbacks,
-                               &extra->serve_state, 0) < 0) {
-    return -NEW_SRV_ERR_INV_CONTEST_ID;
-  }
-
-  if (phr->role == USER_ROLE_CONTESTANT) {
-    if (!teamdb_lookup(extra->serve_state->teamdb_state, phr->user_id))
-      return -NEW_SRV_ERR_PERMISSION_DENIED;
-    r = teamdb_get_flags(extra->serve_state->teamdb_state, phr->user_id);
-    if (r & (TEAM_BANNED | TEAM_LOCKED))
-      return -NEW_SRV_ERR_PERMISSION_DENIED;
-  }
-
-  extra->serve_state->current_time = time(0);
-  check_contest_events(extra->serve_state, cnts);
-  phr->allow_empty_output = 1;
-
-  if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
-      && cmd_actions_table[phr->action]) {
-    return (*cmd_actions_table[phr->action])(fout, phr, cnts, extra);
-  } else {
-    return -NEW_SRV_ERR_INV_ACTION;
   }
 }
 
