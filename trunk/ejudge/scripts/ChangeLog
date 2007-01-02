@@ -1,3 +1,10 @@
+2006-12-14 (r3741) Alexander Chernov  <cher@ejudge.ru>
+
+	* javac.in: copyright notice is updated;
+	  `ej-javac' is used as compile helper.
+	* runjava.in: copyright notice is updated;
+	  `-jar' option is used to invoke compiled jars.
+
 2006-11-13 (r3663) Alexander Chernov  <cher@ejudge.ru>
 
 	* Makefile.in:

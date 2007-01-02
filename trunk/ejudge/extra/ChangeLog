@@ -1,3 +1,18 @@
+2006-12-14 (r3744) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej-javac.c:
+	`invalid class name' error is reported, if no class name is detected.
+
+2006-12-14 (r3740) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej-javac.c: working version is completed.
+
+2006-12-14 (r3739) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.in: rules for ej-javac are added.
+
+	* ej-javac.c: initial revision.
+
 2006-06-19 (r3158) Alexander Chernov  <cher@ispras.ru>
 
 	* Makefile.in:

@@ -1,3 +1,48 @@
+2006-12-17 (r3745) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make: russan charsets handling modules are added.
+
+	* checker_internal.h: lot of functions to handle russian charsets
+	  are added.
+
+2006-12-06 (r3726) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`read_buf_2.c' is added.
+
+	* checker_internal.h:
+	(checker_read_buf) marked as deprecated;
+	(checker_read_buf_2) new function prototype.
+
+	* read_int.c, read_in_int.c, read_team_int.c, read_corr_int.c, read_unsigned_int.c, read_in_unsigned_int.c, read_team_unsigned_int.c, read_corr_unsigned_int.c, read_long_long.c, read_in_long_long.c, read_team_long_long.c, read_corr_long_long.c, read_unsigned_long_long.c, read_in_unsigned_long_long.c, read_team_unsigned_long_long.c, read_corr_unsigned_long_long.c:
+	error handling is improved: overflow is detected properly,
+	`checker_read_buf_2' function is used to read the value;
+	strtoTYPE function is used to parse value.
+
+	* read_buf_2.c: initial revision.
+
+	* cmp_huge_int.c, cmp_yesno.c:
+	(checker_main) `checker_read_buf_2' is used instead of
+	  `checker_read_buf'.
+
+2006-12-05 (r3725) Alexander Chernov  <cher@ejudge.ru>
+
+	* normalize_spaces_in_file.c, cmp_bytes.c, cmp_long_long_seq.c, cmp_unsigned_int.c, cmp_file_nospace.c, cmp_long_double.c, cmp_int.c, cmp_unsigned_int_seq.c, normalize_file.c, cmp_sexpr.c, cmp_long_double_seq.c, cmp_int_seq.c, cmp_huge_int.c, init.c, team_eoln.c, checker_internal.h, normalize_line.c, xstrdup.c, cmp_unsigned_long_long.c, checker.h, cmp_double.c, vars.c, team_close.c, cmp_long_long.c, cmp_file.c, team_eof.c, cmp_double_seq.c, cmp_unsigned_long_long_seq.c:
+	copyright notice is updated for many files;
+	plain `char *' is used instead of `unsigned char *';
+	*_team_* functions are renamed to *_out_* functions;
+	*_team_* stubs are provided for compatibility and marked deprecated;
+	f_team is renamed to `f_out', but provided for compatibility;
+
+2006-12-05 (r3724) Alexander Chernov  <cher@ejudge.ru>
+
+	* read_line.c, read_long_double.c, read_int.c, read_team_unsigned_int.c, read_team_long_double.c, read_corr_double.c, read_corr_unsigned_long_long.c, read_team_int.c, read_in_unsigned_long_long.c, read_in_double.c, read_corr_long_long.c, read_in_long_long.c, read_double.c, read_unsigned_long_long.c, read_corr_unsigned_int.c, read_in_unsigned_int.c, read_buf.c, read_long_long.c, read_corr_long_double.c, read_corr_int.c, read_file.c, read_in_long_double.c, read_team_unsigned_long_long.c, read_team_double.c, read_file_by_line.c, read_in_int.c, read_file_f.c, read_team_long_long.c, read_file_by_line_f.c, read_unsigned_int.c:
+	copyright notice is updated for many files;
+	plain `char *' is used instead of `unsigned char *';
+	*_team_* functions are renamed to *_out_* functions;
+	*_team_* stubs are provided for compatibility and marked deprecated;
+	f_team is renamed to `f_out', but provided for compatibility;
+
 2006-11-05 (r3654) Alexander Chernov  <cher@ejudge.ru>
 
 	* Makefile.unix.in: copyright notice is updated;

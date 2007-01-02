@@ -1,3 +1,735 @@
+2007-01-02 (r3808) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h: copyright year is updated;
+	(struct http_request_info) new fields `client_state' and `no_reply'
+	  are added;
+	new action codes are added;
+	(ns_contest_unload_callback) new function prototype;
+	(ns_client_destroy_callback) new function prototype;
+	(ns_get_client_by_id) new function prototype;
+	(ns_send_reply) new function prototype;
+	(ns_new_autoclose) new function prototype.
+
+	* new_server_proto.h: copyright year is updated;
+	new error codes are added.
+
+	* server_framework.h: copyright year is updated;
+	(struct client_state) new fields `contest_id' and `destroy_callback'
+	  are added;
+	(nsf_get_client_by_id) new function prototype.
+
+	* serve_state.h: copyright year is updated;
+	(struct serve_state) new fields `saved_testing_suspended',
+	  `client_id', `pending_xml_import', `destroy_callback'
+	  are added.
+
+	* copyright.c: copyright year is updated.
+
+	* new-server.c: copyright year is updated;
+	(ns_get_client_by_id) new function;
+	(ns_send_reply) new function;
+	(ns_new_autoclose) new function;
+	(cmd_http_request) `client_state' field is filled;
+	  `no_reply' flag is handled.
+
+	* new-server-cmd.c: copyright year is updated;
+	basically all stuff is implemented.
+
+	* new_server_html.c: copyright year is updated;
+	(ns_contest_unload_callback) new function;
+	(ns_client_destroy_callback) new function;
+	(ns_unload_contest) contests with pending XML imports are not
+	  unloaded;
+	(handle_pending_xml_import) new function;
+	(ns_loop_callback) if there are no transient runs and there is
+	  pending XML import, the corresponding function is called.
+
+	* new_server_html_2.c: copyright year is updated;
+	(ns_write_priv_report) `run_is_report_available' function is used.
+
+	* new_server_html_4.c: copyright year is updated;
+	all command line handling stuff is implemeted.
+
+	* new_server_proto.c: copyright year is updated;
+	new error descriptions.
+
+	* runlog.c: copyright year is updated;
+	(run_is_report_available) ignored, disqualified and pending runs
+	  are marked as having no report available.
+
+	* server_framework.c: copyright year is updated;
+	(nsf_get_client_by_id) new function is added;
+	(client_state_delete) destroy callback is called.
+
+	* serve_state.c: copyright year is updated;
+	(serve_state_destroy) destroy callback is called.
+
+2006-12-31 (r3806) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`new_server_html_4.c' is added.
+
+	* new-server.h:
+	new actions for command line client are added;
+	(new_server_cmd_handler) function prototype is added;
+	(ns_cgi_param) function prototype is added;
+	(ns_cgi_param_bin) function prototype is added;
+	(ns_open_ul_connection) function prototype is added;
+	(ns_list_all_users_callback) function prototype is added;
+	(ns_check_contest_events) function prototype is added.
+
+	* new_server_proto.h:
+	error `NEW_SRV_ERR_INV_ANSWER' is added.
+
+	* new-server-cmd.c: progress...
+
+	* new_server_html.c:
+	(ns_cgi_param) no longer `static';
+	(ns_cgi_param_bin) no longer `static';
+	(ns_open_ul_connection) renamed from `open_ul_connection' and no
+	  longer `static';
+	(ns_list_all_users_callback) renamed from `list_all_users_callback'
+	  and no longer `static';
+	(ns_check_contest_events) renamed from `check_contest_events'
+	  and no longer `static';
+	(parse_int) moved to `new_server_html_4.c';
+	(cmd_login) the same as above;
+	(cmd_logout) the same as above;
+	(cmd_dump_runs) the same as above;
+	(cmd_dump_problems) the same as above;
+	(cmd_operation) the same as above;
+	(cmd_run_operation) the same as above;
+	(new_server_cmd_handler) the same as above.
+
+	* new_server_html_4.c: initial revision.
+
+2006-12-30 (r3804) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h:
+	(write_text_run_status) function prototype is added.
+
+	* master_html.c:
+	(write_priv_clar) filter expressions for `user_id' fields are added.
+
+	* new_server.h:
+	new commands are added;
+	(ns_write_user_run_status) new function prototype.
+
+	* new_server_proto.h:
+	`NEW_SRV_ERR_TRANSIENT_RUNS' error code is added.
+
+	* runlog.h:
+	(run_is_valid_status) new function prototype;
+	(run_is_valid_user_status) new function prototype.
+
+	* serve_state.h:
+	(serve_count_transient_runs) new function prototype.
+
+	* new-server-cmd.c: progress...
+
+	* new_server_html.c:
+	(cmd_dump_runs) new function;
+	(cmd_dump_problems) new function;
+	(cmd_operation) new function;
+	(cmd_run_operation) new function;
+	(cmd_actions_table) many new command-line client operations are added.
+
+	* new_server_html_2.c:
+	(ns_write_user_run_status) new functon.
+
+	* runlog.c:
+	(run_is_valid_status) new function;
+	(run_is_valid_user_status) new function.
+
+	* serve.c:
+	(count_transient_runs) function moved to `serve_2.c' as
+	  `serve_count_transient_runs'.
+
+	* serve_2.c:
+	(serve_count_transient_runs) function moved here from `serve.c'.
+
+2006-12-27 (r3802) Alexander Chernov  <cher@ejudge.ru>
+
+	* server_framework.h:
+	(nsf_close_client_fds) new function prototype is added.
+
+	* new-server.c:
+	(cmd_http_request) bug in freeing output buffer is fixed;
+	  the pipe fds are closed if no output is produced.
+
+	* server_framework.c:
+	(nsf_close_client_fds) new function implemented.
+
+2006-12-27 (r3800) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(struct http_request_info) `allow_empty_output' field is added.
+
+	* new-server.c:
+	(cmd_http_request) `allow_empty_output' flag is supported.
+
+	* new_server_html.c:
+	(new_server_cmd_handler) `allow_empty_output' flag is set to 1.
+
+2006-12-27 (r3798) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server-cmd.c:
+	(parse_session_id) new function;
+	(prepare_logout) new function.
+
+	* new_server_html.c:
+	(cmd_logout) implemented;
+	(new_server_cmd_handler) implemented.
+
+2006-12-27 (r3796) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(struct http_request_info) `protocol_reply' field is added.
+
+	* new_server_proto.h:
+	new error codes are added;
+	(ns_strerror_2) new function prototype is added.
+
+	* new-server.c:
+	(cmd_http_request) `protocol_reply' field is handled.
+
+	* new-server-cmd.c: in progress...
+
+	* new_server_html.c:
+	(parse_int) new function;
+	(cmd_login) new function to handle the `LOGIN' action for the
+	  new-server-cmd;
+	(new_server_cmd_handler) new function to handle the `new-server-cmd'
+	  commands;
+	(ns_handle_http_request) "new-server-cmd" commands are handled.
+
+	* new_server_proto.c:
+	new error descriptions are added;
+	(ns_strerror_2) new function is added.
+
+2006-12-27 (r3795) Alexander Chernov  <cher@ejudge.ru>
+
+	* l10n.c:
+	(l10n_prepare) "LANG" variable is removed from the environment.
+
+2006-12-27 (r3787) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	`NEW_SRV_ACTION_LOGIN' is added.
+
+	* new_server_proto.h:
+	EJUDGE_NEW_SERVER_SOCKET_DEFAULT is added.
+
+	* new-client.c:
+	(initialize) `EJUDGE_NEW_SERVER_SOCKET_DEFAULT' is used for the
+	  default path to the new_server_socket.
+
+	* new-server.c:
+	(main) `EJUDGE_NEW_SERVER_SOCKET_DEFAULT' is used for the
+	  default path to the new_server_socket.
+
+	* new-server-cmd.c: progress...
+	variants of `login' command are basically implemented.
+
+	* new-server-control.c:
+	"new_server_proto.h", <reuse/xalloc.h> are included;
+	(main) new_server_socket path is setup correctly.
+
+2006-12-25 (r3785) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_2.c:
+	(ns_write_priv_all_runs) "Merge runs in XML format link is added".
+
+2006-12-25 (r3783) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server.h:
+	actions for uploading XML runlogs are added.
+
+	* new_server_proto.h: new error is added.
+
+	* new_server_html.c:
+	XML runlog uploading is supported;
+	(priv_upload_runlog_xml_1) new function;
+	(priv_upload_runlog_xml_2) new function.
+
+	* new_server_proto.c: new error is added.
+
+2006-12-25 (r3781) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_2.c:
+	(ns_write_priv_clar) construction of user-specific filter
+	  expression is added.
+
+2006-12-25 (r3779) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(priv_view_users_page) view the specified user filter expression is
+	  generated.
+
+	* runlog_xml.c:
+	(unparse_runlog_xml) boolean attributes are unparsed only if TRUE.
+
+2006-12-25 (r3777) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h: new commands are added.
+
+	* new_server_proto.h: new error is added.
+
+	* master_html.c:
+	(write_runs_dump) printing of "short" status is added.
+
+	* new_server_html.c:
+	(priv_view_runs_dump) "export_xml_runs" and "write_xml_runs"
+	  commands are supported;
+	(priv_main_page) "Export runs in XML external format" and
+	  "Write runs in XML internal format" links are added.
+
+	* new_server_proto.c: new error is added.
+
+	* runlog_xml.c:
+	"mime_type.h" is included;
+	(process_run_elements) `hidden', `ssl', `mime_type', `pages'
+	  attribute are parsed;
+	(unparse_runlog_xml) the new attributes are unparsed.
+
+2006-12-25 (r3773) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	new action `NEW_SRV_ACTION_VIEW_RUNS_DUMP' is added.
+
+	* master_html.c:
+	"mime_type.h" is included;
+	(write_runs_dump) header row is printed;
+	  all new fields are printed.
+
+	* new_server_html.c:
+	(priv_view_runs_dump) new function to dump runs in CSV format;
+	(priv_main_page) "Dump runs in CSV format" link is added.
+
+2006-12-24 (r3771) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge_cfg.h:
+	(struct ejudge_cfg) new fields `new_server_socket', `new_server_log'
+	  are added.
+
+	* ejudge_cfg.c:
+	new elements <new_server_socket>, <new_server_log> are supported.
+
+	* new-client.c:
+	Support for config file is added. The config file is in conf format
+	similar to the format of the `master' CGI-program.
+
+	* new-server.c:
+	Support for new elements <new_server_socket> and <new_server_log>
+	is implemented.
+
+	* startstop.c:
+	<signal.h> is included;
+	(start_set_self_args) the initial signal blocking mask is saved;
+	(start_restart) the initial signal blocking mask is restored.
+
+2006-12-24 (r3767) Alexander Chernov  <cher@ejudge.ru>
+
+	* csv.h:
+	(csv_parse) function prototype is added;
+	(csv_free) function prototype is added.
+
+	* new-server.h:
+	new actions are added;
+	(ns_upload_csv_runs) new function prototype.
+
+	* new_server_proto.h:
+	new errors are added.
+
+	* csv.c:
+	(csv_parse) fixes.
+
+	* html_hidden.c:
+	(html_hidden) buffer size is increased to 16K.
+
+	* new_server_html.c:
+	(priv_upload_runlog_csv_1) new function for importing runs in CSV
+	  format;
+	(priv_upload_runlog_csv_2) new function for importing runs in CSV
+	  format;
+	actions NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1,
+	  NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2 are handled.
+
+	* new_server_html_2.c:
+	"csv.h", "sha.h" are included;
+	(ns_write_priv_all_runs) "Add new runs in CSV format" button is added;
+	(ns_download_runs) IGNORED and DISQUALIFIED runs are downloaded in
+	  OK-only mode;
+	(ns_upload_csv_runs) new function.
+
+	* new_server_proto.c:
+	new errors are added.
+
+	* new_server_tables.c:
+	texts for new actions are added.
+
+2006-12-21 (r3765) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist-server.c:
+	(graceful_exit) the main control socket is closed;
+	(cleanup_clients) fixes.
+
+2006-12-21 (r3763) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist-server.c:
+	(graceful_exit) cleanup code is improved.
+
+2006-12-21 (r3761) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist-server.c:
+	(cleanup_clients) new function;
+	(main) resources are better released upon exit or restart.
+
+2006-12-20 (r3759) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	csv.h, csv.c are added.
+
+	* csv.h: initial revision.
+
+	* misctext.h:
+	(dos2unix_buf) new function prototype.
+
+	* csv.c: initial revision.
+
+	* diff.c:
+	"misctext.h" is included;
+	(compare_runs) files are converted to Unix format before comparing.
+
+	* dos2unix_str.c: copyright notice is updated;
+	<stdio.h> is included;
+	(dos2unix_buf) new function.
+
+	* job-server.c:
+	(main) resource leak on restart is fixed.
+
+	* serve_2.c:
+	(serve_run_request) accepting_mode is by default ON for virtual
+	  olympiad contests.
+
+	* serve_state.c:
+	(serve_state_load_contest) virtual olympiad contests are supported.
+
+2006-12-20 (r3757) Alexander Chernov  <cher@ejudge.ru>
+
+	* random.h: copyright notice is updated;
+	(random_cleanup) prototype is added.
+
+	* super-serve.c:
+	(main) `random_cleanup' is called.
+
+	* random.c: copyright notice is updated;
+	(random_cleanup) new function.
+
+2006-12-20 (r3755) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_3.c:
+	virtual contest support fix.
+
+2006-12-20 (r3753) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(unpriv_submit_run) crash when empty run is submitted is fixed.
+
+	* server_framework.c:
+	(nsf_cleanup) sockets are properly closed.
+
+	* super_html_3.c:
+	virtual "olympiad" contests are supported.
+
+2006-12-18 (r3751) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) `ignore_exit_code' field is added.
+
+	* super_actions.h, super_proto.h:
+	support for editing `ignore_exit_code' problem configuration
+	  variable is added.
+
+	* prepare.c, prepare_out.c:
+	`ignore_exit_code' problem configuration variable is added.
+
+	* run.c:
+	(run_tests) `ignore_exit_code' problem configuration variable
+	  is handled.
+
+	* super-serve.c, super_html_3.c, serve-control.c:
+	editing of `ignore_exit_code' problem configuration variable
+	  is supported.
+
+2006-12-18 (r3749) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server.h:
+	runs download actions are added;
+	runs download option constants are added;
+	(ns_download_runs) new function prototype.
+
+	* new_server_proto.h:
+	new error types are added.
+
+	* new_server_html.c:
+	<errno.h> is included;
+	(priv_download_runs_confirmation) new function implemented;
+	(priv_download_runs) new function implemented;
+	(unpriv_main_page) new name for `unprivileged_page'.
+
+	* new_server_html_2.c:
+	"errlog.h", <reuse/osdeps.h>, <errno.h>, <sys/wait.h> are included;
+	(ns_write_priv_all_runs) "Download runs" button is added;
+	(ns_download_runs) new function is implemented.
+
+	* new_server_proto.c:
+	new error messages are added.
+
+	* new_server_tables.c:
+	button labels for run download buttons are added.
+
+2006-12-14 (r3742) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac: support for java 1.6.
+
+2006-12-14 (r3740) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej-javac.c: working version is completed.
+
+2006-12-14 (r3737) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_plugin_xml.c:
+	(copy_user_info_func) members are copied as well.
+
+	* userlist.c:
+	(userlist_clone_member) `birth_date', `entry_date', `graduation_date'
+	  fields are copied.
+
+2006-12-14 (r3735) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_plugin.h:
+	(struct uldb_plugin_iface) `copy_user_info' a parameter is added.
+
+	* userlist.h:
+	(userlist_map_userlist_to_contest_field) new function prototype.
+
+	* uldb_plugin_xml.c:
+	(set_user_xml_func) `dirty' flag is set;
+	(copy_user_info_func) `cnts' parameter is added;
+	  copying of contest-specific generic fields is added.
+
+	* userlist.c:
+	(userlist_map_userlist_to_contest_field) new function.
+
+	* userlist-server.c:
+	(cmd_copy_user_info) use of `default_copy_user_info' updated.
+
+2006-12-11 (r3733) Alexander Chernov  <cher@ejudge.ru>
+
+	* testinfo.h:
+	removed TESTINFO_char_t hackery, `char *' is used instead of
+	  `unsigned char *' for strings.
+
+	* new_server_html.c:
+	(write_alternatives_file) `class_name' parameter is added;
+	(priv_main_page) "borderless" class is passed to
+	  `write_alternatives_file';
+	(user_main_page) the same as above;
+	(unpriv_page_header) `disable_user_standings' and `disable_clars'
+	  are handled.
+
+	* testinfo.c:
+	(testinfo_parse) `path' parameter type is changed to `const char *';
+	(testinfo_strerror) return type is changed to `const char *'.
+
+2006-12-04 (r3723) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile.c, job-server.c, super-serve.c, userlist-server.c:
+	(main) restart handling is improved: -C, -u, -g, -D options are
+	  removed from restart arguments.
+
+	* master_html.c:
+	(generate_daily_statistics) language statistics generation is
+	  fixed.
+
+2006-11-30 (r3719) Alexander Chernov  <cher@ejudge.ru>
+
+	* startstop.h:
+	(start_set_args) new function prototype.
+
+	* new-server.c:
+	(main) certain options like `-D', `-u', `-g', `-c' are filtered out
+	  for restart.
+
+	* startstop.c:
+	(start_set_args) new function.
+
+2006-11-30 (r3717) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	(parse_variant_map) resources are properly released.
+
+2006-11-26 (r3713) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_clnt.h:
+	(new_server_clnt_http_request) `reply_bytes', `reply_size' parameters
+	  are added.
+
+	* new-client.c:
+	(main) incorrect exit condition for connect loop is fixed;
+	  use of `new_server_clnt_http_request' is fixed.
+
+	* new_server_html.c:
+	(testing_page) new function: used to test various new features.
+
+	* new-server-cmd.c: progress...
+
+	* serve-cmd.c:
+	(invoke_new_server_cmd) new function;
+	(main) `new-server-cmd' is invoked for new-managed contests.
+
+2006-11-25 (r3708) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make: `new-server-cmd.c' is added.
+
+	* Makefile.unix.in: rules for `new-server-cmd' are added.
+
+	* new-server-cmd.c: initial revision.
+
+2006-11-24 (r3706) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(priv_main_page) no control buttons are generated in judge mode.
+
+2006-11-24 (r3704) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	`NEW_SRV_ACTION_VIEW_USER_REPORT' is added;
+	(ns_aref_2) new prototype is added;
+	(ns_write_audit_log) prototype is changed.
+
+	* new_server_proto.h:
+	`NEW_SRV_ERR_AUDIT_LOG_NONEXISTANT' is added.
+
+	* new_server_html.c:
+	(ns_aref_2) new function;
+	(priv_view_audit_log) implemented;
+	(priv_view_report) user report viewing is supported.
+
+	* new_server_html_2.c:
+	(ns_write_run_view_menu) new function;
+	(ns_write_priv_source) `ns_write_run_view_menu' is used;
+	(ns_write_priv_report) `ns_write_run_view_menu' is used;
+	  viewing user report is supported;
+	(ns_write_audit_log) implemented properly.
+
+	* new_server_proto.c:
+	`NEW_SRV_ERR_AUDIT_LOG_NONEXISTANT' is added.
+
+2006-11-24 (r3700) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`userlist_clnt/priv_cookie_login.c' is added.
+
+	* new-server.h:
+	`NEW_SRV_ACTION_COOKIE_LOGIN' action is added.
+
+	* userlist_clnt.h:
+	(userlist_clnt_priv_cookie_login) new function prototype.
+
+	* userlist_proto.h:
+	`ULS_PRIV_COOKIE_LOGIN' command is added;
+	(struct userlist_pk_check_cookie) `role' field is added.
+
+	* new_server_html.c:
+	(privileged_page_cookie_login) new function to seamlessly login
+	  from the `super-serve' control page;
+	(privileged_page) new action `NEW_SRV_ACTION_COOKIE_LOGIN' handled.
+
+	* super_html.c:
+	(super_html_main_page) URL for new-judge and new-master are changed;
+	(super_html_contest_page) the same as above.
+
+	* userlist-server.c:
+	(cmd_priv_cookie_login) new function to handle
+	  `ULS_PRIV_COOKIE_LOGIN' request.
+
+2006-11-23 (r3698) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(ns_loop_callback) use of `check_contest_events' is updated;
+	  auto update of public submission log and xml logs is added;
+	(ns_post_select_callback) use of `check_contest_events' is updated;
+	(check_contest_events) `cnts' parameter is added;
+	(priv_contest_operation) use of `check_contest_events' is updated;
+	(privileged_page) the same as above;
+	(unprivileged_page) the same as above.
+
+	* serve_state.c:
+	(serve_state_load_contest) standings are auto-updated.
+
+2006-11-23 (r3696) Alexander Chernov  <cher@ejudge.ru>
+
+	* register.c:
+	(display_date_change_dialog) year display is fixed.
+
+2006-11-23 (r3694) Alexander Chernov  <cher@ejudge.ru>
+
+	* master_html.c:
+	(generate_daily_statistics) lang_id == 0 is handled properly.
+
+	* new_server_html.c:
+	(unpriv_page_header) external "Problems" link is marked to be
+	  opened in a new browser window.
+
+2006-11-23 (r3693) Alexander Chernov  <cher@ejudge.ru>
+
+	* register.c:
+	new fields `birth_date', `entry_date', `graduation_date' are
+	  supported;
+	(parse_date_from_form) new function;
+	(display_date_change_dialog) new function.
+
+	* uldb_plugin_xml.c:
+	(set_user_xml_func) new fields `birth_date', `entry_date',
+	  `graduation_date' are supported.
+
+	* userlist-server.c:
+	(do_dump_database) new fields `birth_date', `entry_date',
+	  `graduation_date' are supported.
+
+2006-11-20 (r3691) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist.h:
+	support for new elements <birth_date>, <entry_date>, <graduation_date>
+	  is added;
+	(struct userlist_member) new fields `birth_date', `entry_date',
+	  `graduation_date' are added.
+
+	* userlist.c, userlist_xml.c, edit-userlist.c:
+	support for new fields `birth_date', `entry_date', `graduation_date'
+	  is implemented.
+
+2006-11-20 (r3687) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	support for future `birth_date', `entry_date', `graduation_date'
+	  userlist fields is added.
+
+	* contests.c, super_html.c:
+	support for future `birth_date', `entry_date', `graduation_date'
+	  userlist fields is added.
+
+2006-11-20 (r3685) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make: `job-server-cmd.c' is added.
+
+2006-11-20 (r3684) Alexander Chernov  <cher@ejudge.ru>
+
+	* job-server-cmd.c:
+	(main) use of `send_job_packet' is updated.
+
 2006-11-19 (r3682) Alexander Chernov  <cher@ejudge.ru>
 
 	* files.make: `ejudge-control.c' is added.
