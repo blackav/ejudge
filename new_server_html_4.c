@@ -956,7 +956,6 @@ cmd_import_xml_runs(
   return retval;
 }
 
-static int filter_expr_nerrs;
 static void
 parse_error_func(void *data, unsigned char const *format, ...)
 {
