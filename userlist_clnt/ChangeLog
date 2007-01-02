@@ -1,3 +1,8 @@
+2006-11-24 (r3699) Alexander Chernov  <cher@ejudge.ru>
+
+	* priv_cookie_login.c:
+	initial revision
+
 2006-11-17 (r3669) Alexander Chernov  <cher@ejudge.ru>
 
 	* control.c:

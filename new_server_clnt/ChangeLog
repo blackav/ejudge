@@ -1,3 +1,11 @@
+2006-11-26 (r3712) Alexander Chernov  <cher@ejudge.ru>
+
+	* http_request.c:
+	(read_from_pipe) new function;
+	(new_server_clnt_http_request) `reply_bytes', `reply_size'
+	  parameters are added;
+	  reading to the memory buffer is supported.
+
 2006-11-17 (r3674) Alexander Chernov  <cher@ejudge.ru>
 
 	* control.c:

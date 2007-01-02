@@ -1780,3 +1780,17 @@ new_server_proto.h 3806 0 447745
 new-server-cmd.c 3806 0 2038582
 new_server_html.c 3806 0 24752334
 new_server_html_4.c 3806 0 2501138
+new-server.h 3808 0 1354597
+server_framework.h 3808 0 336344
+serve_state.h 3808 0 806881
+new_server_proto.h 3808 0 455440
+new-server.c 3808 0 1596769
+new-server-cmd.c 3808 0 2140774
+copyright.c 3808 0 202827
+new_server_html.c 3808 0 24967877
+new_server_html_2.c 3808 0 8116696
+new_server_html_4.c 3808 0 4339343
+new_server_proto.c 3808 0 978675
+runlog.c 3808 0 5742879
+server_framework.c 3808 0 1847815
+serve_state.c 3808 0 730192
