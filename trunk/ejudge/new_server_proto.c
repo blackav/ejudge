@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -162,6 +162,9 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_INV_ROLE] = __("Invalid role"),
   [NEW_SRV_ERR_USERLIST_SERVER_DOWN] = __("Userlist server is down"),
   [NEW_SRV_ERR_INTERNAL] = __("Internal error"),
+  [NEW_SRV_ERR_INV_FILTER_EXPR] = __("Invalid filter expression"),
+  [NEW_SRV_ERR_CONTEST_UNLOADED] = __("Contest is unloaded"),
+  [NEW_SRV_ERR_PENDING_IMPORT_EXISTS] = __("Pending XML import already exists"),
 };
 
 const unsigned char *

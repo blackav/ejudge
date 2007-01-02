@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -208,6 +208,24 @@ startup_error(const char *format, ...)
   exit(1);
 }
 
+struct client_state *
+ns_get_client_by_id(int client_id)
+{
+  return nsf_get_client_by_id(state, client_id);
+}
+
+void
+ns_send_reply(struct client_state *p, int answer)
+{
+  return nsf_send_reply(state, p, answer);
+}
+
+void
+ns_new_autoclose(struct client_state *p, void *write_buf, size_t write_len)
+{
+  return nsf_new_autoclose(state, p, write_buf, write_len);
+}
+
 static void
 cmd_http_request(struct server_framework_state *state,
                  struct client_state *p,
@@ -237,6 +255,7 @@ cmd_http_request(struct server_framework_state *state,
 
   memset(&hr, 0, sizeof(hr));
   hr.id = p->id;
+  hr.client_state = p;
   hr.fw_state = state;
   gettimeofday(&hr.timestamp1, 0);
   hr.next_run_id = -1;
@@ -330,6 +349,9 @@ cmd_http_request(struct server_framework_state *state,
   out_f = open_memstream(&out_txt, &out_size);
   ns_handle_http_request(state, p, out_f, &hr);
   fclose(out_f); out_f = 0;
+
+  // no reply now
+  if (hr.no_reply) goto cleanup;
 
   if (hr.protocol_reply) {
     xfree(out_txt); out_txt = 0;

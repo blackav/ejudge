@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1515,15 +1515,7 @@ ns_write_priv_report(const serve_state_t cs,
     ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
     goto done;
   }
-  /*
-  // FIXME: switch is here for begin more explicit
-  if (!run_is_report_available(re.status))
-  return -SRV_ERR_REPORT_NOT_AVAILABLE;
-  */
-  switch (re.status) {
-  case RUN_IGNORED:
-  case RUN_DISQUALIFIED:
-  case RUN_PENDING:
+  if (!run_is_report_available(re.status)) {
     ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
     goto done;
   }

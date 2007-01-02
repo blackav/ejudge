@@ -1,14 +1,14 @@
 # -*- mode: po; coding: koi8-r -*-
 # ejudge messages catalog
 # $Id$
-# Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-12-27 19:56+0300\n"
-"PO-Revision-Date: 2006-12-27 20:33+0300\n"
+"POT-Creation-Date: 2007-01-02 14:12+0300\n"
+"PO-Revision-Date: 2007-01-02 14:31+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -778,6 +778,9 @@ msgstr "Турнир ещё не закончился"
 msgid "Contest is not started"
 msgstr "Турнир не начался"
 
+msgid "Contest is unloaded"
+msgstr "Обслуживание турнира прервано"
+
 msgid "Contest name"
 msgstr "Название турнира"
 
@@ -1453,6 +1456,9 @@ msgstr "Неверный тип структуры каталогов"
 msgid "Invalid duration specification"
 msgstr "Неверная спецификация продолжительности турнира"
 
+msgid "Invalid filter expression"
+msgstr "Неверное условие отбора"
+
 msgid "Invalid language"
 msgstr "Неверный идентификатор языка программирования"
 
@@ -2077,6 +2083,9 @@ msgstr "Изменение пароля не удалось: %s"
 
 msgid "Penalty"
 msgstr "Штраф"
+
+msgid "Pending XML import already exists"
+msgstr "Уже есть ждущий импорт XML"
 
 msgid "Pending check"
 msgstr "Ожидает проверки"

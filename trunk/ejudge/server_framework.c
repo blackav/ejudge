@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -142,11 +142,28 @@ nsf_close_client_fds(struct client_state *p)
   p->client_fds[1] = -1;
 }
 
+struct client_state *
+nsf_get_client_by_id(struct server_framework_state *state, int id)
+{
+  struct client_state *p;
+
+  for (p = state->clients_first; p; p = p->next)
+    if (p->id == id)
+      return p;
+  return 0;
+}
+
 static void
 client_state_delete(struct server_framework_state *state,
                     struct client_state *p)
 {
   if (!p) return;
+
+  if (p->contest_id > 0) {
+    if (p->destroy_callback) (*p->destroy_callback)(p);
+    p->contest_id = 0;
+    p->destroy_callback = 0;
+  }
 
   if (p->next && p->prev) {
     // middle element

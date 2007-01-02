@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -640,6 +640,52 @@ prepare_submit_run(const unsigned char *cmd, int argc, char *argv[], int role,
   put_cgi_param_f("action", "%d", NEW_SRV_ACTION_SUBMIT_RUN);
 }
 
+/*
+ * argv[0] - XML runlog
+ */
+static void
+prepare_import_xml(const unsigned char *cmd, int argc, char *argv[], int role,
+                   int action)
+{
+  FILE *fin = 0;
+  char *run_txt = 0;
+  size_t run_len = 0;
+
+  parse_session_id(&argc, argv);
+  if (argc > 1)
+    startup_error("invalid number of arguments for `%s'", cmd);
+
+  if (argc == 0 || !strcmp(argv[0], "-") || !strcmp(argv[0], "STDIN")) {
+    fin = stdin;
+  } else {
+    if (!(fin = fopen(argv[0], "r")))
+      startup_error("cannot open file `%s'", argv[0]);
+  }
+  read_file(fin, &run_txt, &run_len);
+  if (fin != stdin) fclose(fin);
+
+  put_cgi_param_bin("file", run_len, run_txt);
+  put_cgi_param_f("action", "%d", action);
+}
+
+static void
+prepare_dump_master_runs(const unsigned char *cmd, int argc, char *argv[],
+                         int role, int action)
+{
+  parse_session_id(&argc, argv);
+  if (argc != 3)
+    startup_error("invalid number of arguments for `%s'", cmd);
+
+  if (argv[1][0]) {
+    put_cgi_param("first_run", argv[1]);
+  }
+  if (argv[2][0]) {
+    put_cgi_param("last_run", argv[2]);
+  }
+  put_cgi_param("filter_expr", argv[0]);
+  put_cgi_param_f("action", "%d", NEW_SRV_ACTION_DUMP_MASTER_RUNS);
+}
+
 struct command_handler
 {
   const char *cmd;
@@ -680,23 +726,19 @@ static const struct command_handler handler_table[] =
   { "get-contest-type", prepare_simple, 0, 0, NEW_SRV_ACTION_GET_CONTEST_TYPE },
   { "submit-run", prepare_submit_run, 0, 0, 0 },
   { "team-submit-run", prepare_submit_run, 0, 0, 0 },
+  { "import-xml-runs", prepare_import_xml, 0, 0, NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_2 },
+  { "dump-runs", prepare_dump_master_runs, 0, 0, 0 },
+  { "dump-master-runs", prepare_dump_master_runs, 0, 0, 0 },
+  { "dump-report", prepare_run_id, 0, 0, NEW_SRV_ACTION_DUMP_REPORT },
+  { "full-import-xml-runs", prepare_import_xml, 0, 0, NEW_SRV_ACTION_FULL_UPLOAD_RUNLOG_XML },
 
   { 0, 0 },
 };
 
-/*
-static struct cmdinfo cmds[] =
-{
-  { "import-xml-runs", handle_import_xml, 0 },
-  { "dump-report", handle_dump_source, SRV_CMD_PRIV_DOWNLOAD_REPORT },
+/* NOT IMPLEMENTED ACTIONS:
   { "dump-team-report", handle_dump_source, SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT },
   { "dump-standings", handle_dump_runs, SRV_CMD_DUMP_STANDINGS },
-  { "dump-master-runs", handle_dump_master_runs, 0 },
-  { "full-import-xml-runs", handle_full_import_xml, 0 },
   { "dump-all-users", handle_dump_all_users, 0 },
-
-  { 0, 0 },
-};
 */
 
 int

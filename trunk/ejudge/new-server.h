@@ -4,7 +4,7 @@
 #ifndef __NEW_SERVER_H__
 #define __NEW_SERVER_H__
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -42,11 +42,13 @@ struct session_info
 };
 
 struct server_framework_state;
+struct client_state;
 
 struct http_request_info
 {
   int id;
   struct server_framework_state *fw_state;
+  struct client_state *client_state;
 
   // program invocation arguments
   int arg_num;
@@ -80,6 +82,7 @@ struct http_request_info
   int next_run_id;
   int protocol_reply;
   int allow_empty_output;
+  int no_reply;
 
   struct timeval timestamp1;
   struct timeval timestamp2;
@@ -263,6 +266,9 @@ enum
   NEW_SRV_ACTION_DUMP_CLAR,
   NEW_SRV_ACTION_GET_CONTEST_NAME,
   NEW_SRV_ACTION_GET_CONTEST_TYPE,
+  NEW_SRV_ACTION_DUMP_MASTER_RUNS,
+  NEW_SRV_ACTION_DUMP_REPORT,
+  NEW_SRV_ACTION_FULL_UPLOAD_RUNLOG_XML,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -527,5 +533,10 @@ ns_list_all_users_callback(
         unsigned char **p_xml);
 void
 ns_check_contest_events(serve_state_t cs, const struct contest_desc *cnts);
+void ns_contest_unload_callback(serve_state_t cs);
+void ns_client_destroy_callback(struct client_state *p);
+struct client_state *ns_get_client_by_id(int client_id);
+void ns_send_reply(struct client_state *p, int answer);
+void ns_new_autoclose(struct client_state *p, void *, size_t);
 
 #endif /* __NEW_SERVER_H__ */

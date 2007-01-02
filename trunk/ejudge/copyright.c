@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -41,8 +41,8 @@ make_copyright(unsigned char *buf, size_t size)
              "This program is free software; you can redistribute it and/or modify it under the terms of the <a href=\"http://www.fsf.org/licenses/licenses.html#GPL\">GNU General Public License</a> as published by the <a href=\"http://www.fsf.org\">Free Software Foundation</a>; either version 2 of the License, or (at your option) any later version.</p>\n"
              "<p class=\"ejudge_copyright\">Visual design and web-interface &copy; %s <a href=\"%s\">Toto Lasvik</a>."),
            "http://www.ejudge.ru",
-           compile_version, compile_date, "2000-2006",
-           "2006", "http://www.lasvik.ru");
+           compile_version, compile_date, "2000-2007",
+           "2006-2007", "http://www.lasvik.ru");
 }
 
 static unsigned char *copyright_str = 0;

@@ -4,7 +4,7 @@
 #ifndef __SERVER_FRAMEWORK_H__
 #define __SERVER_FRAMEWORK_H__
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -54,6 +54,9 @@ struct client_state
   int write_len;
   int written;
   unsigned char *write_buf;
+
+  int contest_id;
+  void (*destroy_callback)(struct client_state*);
 };
 
 struct server_framework_state;
@@ -97,6 +100,8 @@ void nsf_new_autoclose(struct server_framework_state *state,
                        struct client_state *p, void *write_buf,
                        size_t write_len);
 void nsf_close_client_fds(struct client_state *p);
+struct client_state * nsf_get_client_by_id(struct server_framework_state *,
+                                           int id);
 
 enum
 {
