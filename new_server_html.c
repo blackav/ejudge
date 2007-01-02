@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 
 /*
  * Command reimplementation status:
-    SRV_CMD_GET_ARCHIVE,
+    SRV_CMD_GET_ARCHIVE,		OK
     SRV_CMD_SHOW_CLAR,			OK
     SRV_CMD_SHOW_SOURCE,		OK
     SRV_CMD_SHOW_REPORT,		OK
@@ -75,12 +75,12 @@
     SRV_CMD_VIEW_TEAM,			OK
     SRV_CMD_SET_TEAM_STATUS,		OK
     SRV_CMD_ISSUE_WARNING,		OK
-    SRV_CMD_SOFT_UPDATE_STAND,
-    SRV_CMD_PRIV_DOWNLOAD_REPORT,
+    SRV_CMD_SOFT_UPDATE_STAND,		OK
+    SRV_CMD_PRIV_DOWNLOAD_REPORT,	OK
     SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT,
-    SRV_CMD_DUMP_MASTER_RUNS,
+    SRV_CMD_DUMP_MASTER_RUNS,		OK
     SRV_CMD_RESET_CLAR_FILTER,		OK
-    SRV_CMD_HAS_TRANSIENT_RUNS,
+    SRV_CMD_HAS_TRANSIENT_RUNS,		OK
     SRV_CMD_GET_TEST_SUSPEND,
     SRV_CMD_VIEW_TEST_INPUT,		OK
     SRV_CMD_VIEW_TEST_OUTPUT,		OK
@@ -89,14 +89,14 @@
     SRV_CMD_VIEW_TEST_CHECKER,		OK
     SRV_CMD_VIEW_TEST_INFO,		OK
     SRV_CMD_VIEW_AUDIT_LOG,		OK
-    SRV_CMD_DUMP_PROBLEMS,
-    SRV_CMD_GET_CONTEST_TYPE,
-    SRV_CMD_SUBMIT_RUN_2,
+    SRV_CMD_DUMP_PROBLEMS,		OK
+    SRV_CMD_GET_CONTEST_TYPE,		OK
+    SRV_CMD_SUBMIT_RUN_2,		OK
     SRV_CMD_FULL_REJUDGE_BY_MASK,	OK
-    SRV_CMD_DUMP_SOURCE,
-    SRV_CMD_DUMP_CLAR,
-    SRV_CMD_RUN_STATUS,
-    SRV_CMD_DUMP_SOURCE_2,
+    SRV_CMD_DUMP_SOURCE,		OK
+    SRV_CMD_DUMP_CLAR,			OK
+    SRV_CMD_RUN_STATUS,			OK
+    SRV_CMD_DUMP_SOURCE_2,		OK
 */
 
 #include "config.h"
@@ -208,6 +208,42 @@ try_contest_extra(int contest_id)
 }
 
 void
+ns_contest_unload_callback(serve_state_t cs)
+{
+  struct client_state *p;
+
+  if (cs->client_id < 0 || !cs->pending_xml_import
+      || !(p = ns_get_client_by_id(cs->client_id)))
+    return;
+
+  p->contest_id = 0;
+  p->destroy_callback = 0;
+  nsf_close_client_fds(p);
+  ns_send_reply(p, -NEW_SRV_ERR_CONTEST_UNLOADED);
+}
+
+void
+ns_client_destroy_callback(struct client_state *p)
+{
+  struct contest_extra *extra;
+  serve_state_t cs;
+
+  if (p->contest_id <= 0) return;
+  if (!(extra = try_contest_extra(p->contest_id))) return;
+  if (!(cs = extra->serve_state)) return;
+  if (!cs->pending_xml_import || cs->client_id < 0) return;
+  if (cs->saved_testing_suspended != cs->testing_suspended) {
+    cs->testing_suspended = cs->saved_testing_suspended;
+    serve_update_status_file(cs, 1);
+    if (!cs->testing_suspended)
+      serve_judge_suspended(cs, 0, 0, 0);
+  }
+  xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
+  cs->client_id = -1;
+  cs->destroy_callback = 0;
+}
+
+void
 ns_unload_contest(int contest_id)
 {
   struct contest_extra *extra;
@@ -257,8 +293,54 @@ ns_unload_expired_contests(time_t cur_time)
 
   for (i = 1; i < extra_a; i++)
     if (extras[i]
-        && extras[i]->last_access_time + CONTEST_EXPIRE_TIME < cur_time)
+        && extras[i]->last_access_time + CONTEST_EXPIRE_TIME < cur_time
+        && (!extras[i]->serve_state
+            || !extras[i]->serve_state->pending_xml_import))
       ns_unload_contest(i);
+}
+
+static void
+handle_pending_xml_import(serve_state_t cs)
+{
+  struct client_state *p;
+  FILE *fout = 0;
+  char *out_text = 0;
+  size_t out_size = 0;
+
+  if (cs->client_id < 0 || !(p = ns_get_client_by_id(cs->client_id))) {
+    if (cs->saved_testing_suspended != cs->testing_suspended) {
+      cs->testing_suspended = cs->saved_testing_suspended;
+      serve_update_status_file(cs, 1);
+      if (!cs->testing_suspended)
+        serve_judge_suspended(cs, 0, 0, 0);
+    }
+    xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
+    cs->client_id = -1; cs->destroy_callback = 0;
+    return;
+  }
+
+  fout = open_memstream(&out_text, &out_size);
+  runlog_import_xml(cs, cs->runlog_state, fout, 1, cs->pending_xml_import);
+  fclose(fout); fout = 0;
+  if (out_size > 0) {
+    ns_new_autoclose(p, out_text, out_size);
+    out_text = 0;
+  } else {
+    nsf_close_client_fds(p);
+    xfree(out_text); out_text = 0;
+  }
+  ns_send_reply(p, NEW_SRV_RPL_OK);
+
+  if (cs->saved_testing_suspended != cs->testing_suspended) {
+    cs->testing_suspended = cs->saved_testing_suspended;
+    serve_update_status_file(cs, 1);
+    if (!cs->testing_suspended)
+      serve_judge_suspended(cs, 0, 0, 0);
+  }
+  xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
+  cs->client_id = -1; cs->destroy_callback = 0;
+  p->contest_id = 0;
+  p->destroy_callback = 0;
 }
 
 void
@@ -301,6 +383,9 @@ ns_loop_callback(struct server_framework_state *state)
                             cs->run_dirs[i].full_report_dir,
                             packetname);
     }
+
+    if (cs->pending_xml_import && !serve_count_transient_runs(cs))
+      handle_pending_xml_import(cs);
   }
 
   ns_unload_expired_contests(cur_time);

@@ -4,7 +4,7 @@
 #ifndef __NEW_SERVER_PROTO_H__
 #define __NEW_SERVER_PROTO_H__
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -182,6 +182,9 @@ enum
   NEW_SRV_ERR_INTERNAL,
   NEW_SRV_ERR_TRANSIENT_RUNS,
   NEW_SRV_ERR_INV_ANSWER,
+  NEW_SRV_ERR_INV_FILTER_EXPR,
+  NEW_SRV_ERR_CONTEST_UNLOADED,
+  NEW_SRV_ERR_PENDING_IMPORT_EXISTS,
 
   NEW_SRV_ERR_LAST,
 };

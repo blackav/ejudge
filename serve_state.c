@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -56,6 +56,17 @@ serve_state_destroy(serve_state_t state, struct userlist_clnt *ul_conn)
   struct user_filter_info *ufp, *ufp2;
 
   if (!state) return 0;
+
+  if (state->pending_xml_import) {
+    if (state->saved_testing_suspended != state->testing_suspended) {
+      state->testing_suspended = state->saved_testing_suspended;
+      serve_update_status_file(state, 1);
+      if (!state->testing_suspended)
+        serve_judge_suspended(state, 0, 0, 0);
+    }
+    if (state->destroy_callback) (*state->destroy_callback)(state);
+    xfree(state->pending_xml_import);
+  }
 
   if (ul_conn && state->global && state->global->contest_id > 0) {
     // ignore error code

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2441,9 +2441,6 @@ static const unsigned char is_report_available_table[RUN_LAST + 1] =
   [RUN_CHECK_FAILED]     = 1,
   [RUN_PARTIAL]          = 1,
   [RUN_ACCEPTED]         = 1,
-  [RUN_IGNORED]          = 1,
-  [RUN_DISQUALIFIED]     = 1,
-  [RUN_PENDING]          = 1,
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
 

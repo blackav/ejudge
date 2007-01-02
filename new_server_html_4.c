@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,6 +36,9 @@
 #include "clarlog.h"
 #include "mime_type.h"
 #include "sha.h"
+#include "filter_tree.h"
+#include "filter_eval.h"
+#include "xml_utils.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -360,6 +363,8 @@ cmd_run_operation(
       if (global->team_enable_src_view <= 0)
         FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
       break;
+    case NEW_SRV_ACTION_DUMP_REPORT:
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     }
     break;
 
@@ -379,6 +384,10 @@ cmd_run_operation(
       break;
     case NEW_SRV_ACTION_DUMP_SOURCE:
       if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0)
+        FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+      break;
+    case NEW_SRV_ACTION_DUMP_REPORT:
+      if (opcaps_check(phr->caps, OPCAP_VIEW_REPORT) < 0)
         FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
       break;
     }
@@ -403,12 +412,29 @@ cmd_run_operation(
                                        global->run_archive_dir, run_id,
                                        0, 1);
     if (src_flags < 0) FAIL(NEW_SRV_ERR_SOURCE_NONEXISTANT);
-  if (generic_read_file(&src_text, 0, &src_len, src_flags, 0, src_path, "") < 0)
-    FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
-  if (fwrite(src_text, 1, src_len, fout) != src_len)
-    FAIL(NEW_SRV_ERR_WRITE_ERROR);
-  break;
-
+    if (generic_read_file(&src_text, 0, &src_len, src_flags,0,src_path, "") < 0)
+      FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
+    if (fwrite(src_text, 1, src_len, fout) != src_len)
+      FAIL(NEW_SRV_ERR_WRITE_ERROR);
+    break;
+  case NEW_SRV_ACTION_DUMP_REPORT:
+    if (!run_is_report_available(re.status))
+      FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
+    src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
+                                       global->xml_report_archive_dir,
+                                       run_id, 0, 1);
+    if (src_flags < 0) {
+      src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
+                                         global->report_archive_dir,
+                                         run_id, 0, 1);
+    }
+    if (src_flags < 0)
+      FAIL(NEW_SRV_ERR_REPORT_NONEXISTANT);
+    if (generic_read_file(&src_text, 0, &src_len, src_flags,0,src_path, "") < 0)
+      FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
+    if (fwrite(src_text, 1, src_len, fout) != src_len)
+      FAIL(NEW_SRV_ERR_WRITE_ERROR);
+    break;
   default:
     abort();
   }
@@ -881,6 +907,684 @@ cmd_submit_run(
   return retval;
 }
 
+static int
+cmd_import_xml_runs(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0, r;
+  const serve_state_t cs = extra->serve_state;
+  const unsigned char *s = 0, *p;
+
+  if (phr->role != USER_ROLE_ADMIN
+      || opcaps_check(phr->caps, OPCAP_IMPORT_XML_RUNS) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (phr->action == NEW_SRV_ACTION_FULL_UPLOAD_RUNLOG_XML
+      && opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  if (cs->global->enable_runlog_merge <= 0)
+    FAIL(NEW_SRV_ERR_NOT_SUPPORTED);
+
+  if (!(r = ns_cgi_param(phr, "file", &s)))
+    FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
+  else if (r < 0)
+    FAIL(NEW_SRV_ERR_BINARY_FILE);
+  for (p = s; *p && isspace(*p); p++);
+  if (!*p) FAIL(NEW_SRV_ERR_FILE_EMPTY);
+  if (serve_count_transient_runs(cs) > 0) {
+    if (phr->action == NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_2)
+      return -NEW_SRV_ERR_TRANSIENT_RUNS;
+    if (cs->pending_xml_import)
+      return -NEW_SRV_ERR_PENDING_IMPORT_EXISTS;
+    cs->saved_testing_suspended = cs->testing_suspended;
+    cs->testing_suspended = 1;
+    serve_update_status_file(cs, 1);
+    phr->client_state->contest_id = cnts->id;
+    phr->client_state->destroy_callback = ns_client_destroy_callback;
+    cs->client_id = phr->id;
+    cs->pending_xml_import = xstrdup(s);
+    cs->destroy_callback = ns_contest_unload_callback;
+    phr->no_reply = 1;
+  } else {
+    runlog_import_xml(cs, cs->runlog_state, fout, 1, s);
+  }
+
+ cleanup:
+  return retval;
+}
+
+static int filter_expr_nerrs;
+static void
+parse_error_func(void *data, unsigned char const *format, ...)
+{
+  va_list args;
+  unsigned char buf[1024];
+  int l;
+  struct serve_state *state = (struct serve_state*) data;
+
+  va_start(args, format);
+  l = vsnprintf(buf, sizeof(buf) - 24, format, args);
+  va_end(args);
+  strcpy(buf + l, "\n");
+  state->cur_user->error_msgs = xstrmerge1(state->cur_user->error_msgs, buf);
+  filter_expr_nerrs++;
+}
+
+static const unsigned char has_failed_test_num[RUN_LAST + 1] =
+{
+  [RUN_RUN_TIME_ERR]     = 1,
+  [RUN_TIME_LIMIT_ERR]   = 1,
+  [RUN_PRESENTATION_ERR] = 1,
+  [RUN_WRONG_ANSWER_ERR] = 1,
+  [RUN_CHECK_FAILED]     = 1,
+  [RUN_MEM_LIMIT_ERR]    = 1,
+  [RUN_SECURITY_ERR]     = 1,
+};
+static const unsigned char has_passed_tests[RUN_LAST + 1] =
+{
+  [RUN_OK]               = 1,
+  [RUN_PARTIAL]          = 1,
+  [RUN_ACCEPTED]         = 1,
+};
+static const unsigned char has_olympiad_score[RUN_LAST + 1] =
+{
+  [RUN_OK]               = 1,
+  [RUN_PARTIAL]          = 1,
+};
+static const unsigned char has_kirov_score[RUN_LAST + 1] =
+{
+  [RUN_OK]               = 1,
+  [RUN_COMPILE_ERR]      = 1,
+  [RUN_PARTIAL]          = 1,
+};
+
+/* Run information structure:
+ * [0]  run_id
+ * [1]  "H", if hidden
+ * [2]  "I", if imported
+ * [3]  time
+ * [4]  nsec
+ * [5]  duration
+ * [6]  size
+ * [7]  1, if IPv6, 0, if IPv4
+ * [8]  IP
+ * [9]  ssl_flag
+ * [10] user_id
+ * [11] user_login
+ * [12] "I", if user invisible
+ * [13] "B", if user banned
+ * [14] "L", if user locked
+ * [15] prob_id
+ * [16] prob_short_name
+ * [17] variant_actual
+ * [18] variant_db
+ * [19] lang_id
+ * [20] lang_short_name
+ * [21] mime_type
+ * [22] source_suffix
+ * [23] status_short
+ * [24] failed test
+ * [25] passed tests
+ * [26] total_score
+ * [27] orig_score
+ * [28] prev_attempts
+ * [29] attempt_penalty
+ * [30] prev_disqualified
+ * [31] disq_penalty
+ * [32] time_penalty
+ * [33] prev_successes
+ * [34] prev_success_bonus
+ * [35] score_adjustment
+ * [36] is_after_ok
+ * [37] is_latest
+ * [38] sha1
+ * [39] locale_id
+ * [40] is_readonly
+ * [41] pages
+ * [42] judge_id
+ */
+
+static int
+do_dump_master_runs(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int first_run, int last_run,
+        unsigned char const *filter_expr)
+{
+  struct user_filter_info *u = 0;
+  struct filter_env env;
+  int i, r;
+  int *match_idx = 0;
+  int match_tot = 0;
+  int transient_tot = 0;
+  int *list_idx = 0;
+  int list_tot = 0;
+  unsigned char statstr[64];
+  int rid, attempts, disq_attempts, prev_successes;
+  time_t run_time, start_time;
+  const struct run_entry *pe;
+  const unsigned char *run_date = 0;
+  unsigned char dur_str[128];
+  int duration, dur_sec, dur_min, dur_hour, user_flags, variant;
+  int score, score_bonus, orig_score, date_penalty;
+  const unsigned char *user_login, *user_invisible_flag;
+  const unsigned char *user_banned_flag, *user_locked_flag;
+  const unsigned char *run_hidden_flag, *run_imported_flag;
+  const unsigned char *prob_short_name;
+  const unsigned char *lang_short_name, *source_suffix, *mime_type_str;
+  unsigned char variant_buf[128], db_variant_buf[128];
+  unsigned char failed_test_buf[128], passed_tests_buf[128], score_buf[128];
+  unsigned char prev_successes_buf[128], score_bonus_buf[128];
+  unsigned char attempts_buf[128], attempts_penalty_buf[128];
+  unsigned char disq_attempts_buf[128], disq_attempts_penalty_buf[128];
+  unsigned char date_penalty_buf[128], score_adj_buf[128];
+
+  const serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob = 0;
+  const struct section_language_data *lang = 0;
+
+  filter_expr_nerrs = 0;
+  u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
+  if (u->prev_filter_expr) xfree(u->prev_filter_expr);
+  if (u->tree_mem) filter_tree_delete(u->tree_mem);
+  if (u->error_msgs) xfree(u->error_msgs);
+  u->error_msgs = 0;
+  u->prev_filter_expr = 0;
+  u->prev_tree = 0;
+  u->tree_mem = 0;
+  u->prev_filter_expr = xstrdup(filter_expr);
+  u->tree_mem = filter_tree_new();
+  filter_expr_set_string(filter_expr, u->tree_mem, parse_error_func, cs);
+  filter_expr_init_parser(u->tree_mem, parse_error_func, cs);
+  i = filter_expr_parse();
+  if (i + filter_expr_nerrs == 0 && filter_expr_lval &&
+      filter_expr_lval->type == FILTER_TYPE_BOOL) {
+    // parsing successful
+    u->prev_tree = filter_expr_lval;
+    xfree(u->error_msgs); u->error_msgs = 0;
+  } else {
+    // parsing failed
+    u->tree_mem = filter_tree_delete(u->tree_mem);
+    u->prev_tree = 0;
+    u->tree_mem = 0;
+    return -NEW_SRV_ERR_INV_FILTER_EXPR;
+  }
+
+  memset(&env, 0, sizeof(env));
+  env.teamdb_state = cs->teamdb_state;
+  env.serve_state = cs;
+  env.mem = filter_tree_new();
+  env.maxlang = cs->max_lang;
+  env.langs = (const struct section_language_data * const *) cs->langs;
+  env.maxprob = cs->max_prob;
+  env.probs = (const struct section_problem_data * const *) cs->probs;
+  env.rtotal = run_get_total(cs->runlog_state);
+  run_get_header(cs->runlog_state, &env.rhead);
+  env.cur_time = time(0);
+  env.rentries = run_get_entries_ptr(cs->runlog_state);
+
+  match_idx = alloca((env.rtotal + 1) * sizeof(match_idx[0]));
+  memset(match_idx, 0, (env.rtotal + 1) * sizeof(match_idx[0]));
+  match_tot = 0;
+  transient_tot = 0;
+
+  for (i = 0; i < env.rtotal; i++) {
+    if (env.rentries[i].status >= RUN_TRANSIENT_FIRST
+        && env.rentries[i].status <= RUN_TRANSIENT_LAST)
+      transient_tot++;
+    env.rid = i;
+    if (u->prev_tree) {
+      r = filter_tree_bool_eval(&env, u->prev_tree);
+      if (r < 0) {
+        parse_error_func(cs, "run %d: %s", i, filter_strerror(-r));
+        continue;
+      }
+      if (!r) continue;
+    }
+    match_idx[match_tot++] = i;
+  }
+  env.mem = filter_tree_delete(env.mem);
+  if (u->error_msgs) {
+    return -NEW_SRV_ERR_INV_FILTER_EXPR;
+  }
+
+  list_idx = alloca((env.rtotal + 1) * sizeof(list_idx[0]));
+  memset(list_idx, 0, (env.rtotal + 1) * sizeof(list_idx[0]));
+  list_tot = 0;
+
+  if (!first_run) first_run = u->prev_first_run;
+  if (!last_run) last_run = u->prev_last_run;
+  u->prev_first_run = first_run;
+  u->prev_last_run = last_run;
+
+  if (!first_run && !last_run) {
+    // last 20 in the reverse order
+    first_run = -1;
+    last_run = -20;
+  } else if (!first_run) {
+    // from the last in the reverse order
+    first_run = -1;
+  } else if (!last_run) {
+    // 20 in the reverse order
+    last_run = first_run - 20 + 1;
+    if (first_run > 0 && last_run <= 0) {
+      last_run = 1;
+    }
+  }
+  if (first_run > 0) first_run--;
+  if (last_run > 0) last_run--;
+  if (first_run >= match_tot) first_run = match_tot;
+  if (first_run < 0) {
+    first_run = match_tot + first_run;
+    if (first_run < 0) first_run = 0;
+  }
+  if (last_run >= match_tot) last_run = match_tot;
+  if (last_run < 0) {
+    last_run = match_tot + last_run;
+    if (last_run < 0) last_run = 0;
+  }
+  if (first_run <= last_run) {
+    for (i = first_run; i <= last_run && i < match_tot; i++)
+      list_idx[list_tot++] = match_idx[i];
+  } else {
+    for (i = first_run; i >= last_run; i--)
+      list_idx[list_tot++] = match_idx[i];
+  }
+
+  // table header
+  fputs("run_id"
+        ";is_hidden"
+        ";is_imported"
+        ";time"
+        ";nsec"
+        ";duration"
+        ";size"
+        ";is_ipv6"
+        ";IP"
+        ";ssl_flag"
+        ";user_id"
+        ";user_login"
+        ";is_user_invisible"
+        ";is_user_banned"
+        ";is_user_locked"
+        ";prob_id"
+        ";prob_short_name"
+        ";variant_actual"
+        ";variant_db"
+        ";lang_id"
+        ";lang_short_name"
+        ";mime_type"
+        ";source_suffix"
+        ";status_short"
+        ";failed_test"
+        ";passed_tests"
+        ";total_score"
+        ";orig_score"
+        ";prev_attempts"
+        ";attempt_penalty"
+        ";prev_disqualified"
+        ";disq_penalty"
+        ";time_penalty"
+        ";prev_successes"
+        ";success_bonus"
+        ";score_adjustment"
+        ";is_after_ok"
+        ";is_latest"
+        ";sha1"
+        ";locale_id"
+        ";is_readonly"
+        ";pages"
+        ";judge_id"
+        "\n", fout);
+
+  for (i = 0; i < list_tot; i++) {
+    rid = list_idx[i];
+    ASSERT(rid >= 0 && rid < env.rtotal);
+    pe = &env.rentries[rid];
+
+    run_status_to_str_short(statstr, sizeof(statstr), pe->status);
+
+    if (!run_is_valid_status(pe->status)) {
+      fprintf(fout, "%d;;;;;;;;;;;;;;;;;;;;;;;%d;;;;;;;;;;;;;;;;;;;\n",
+              rid, pe->status);
+      continue;
+    }
+    if (pe->status == RUN_EMPTY) {
+      fprintf(fout, "%d;;;;;;;;;;;;;;;;;;;;;;;%s;;;;;;;;;;;;;;;;;;;\n",
+              rid, statstr);
+      continue;
+    }
+
+    run_date = xml_unparse_date(pe->time);
+    run_time = pe->time;
+    if (global->is_virtual) {
+      start_time = run_get_virtual_start_time(cs->runlog_state, pe->user_id);
+    } else {
+      start_time = env.rhead.start_time;
+    }
+    if (run_time < start_time) {
+      dur_str[0] = 0;
+    } else {
+      duration = run_time - start_time;
+      dur_sec = duration % 60; duration /= 60;
+      dur_min = duration % 60; duration /= 60;
+      dur_hour = duration % 24; duration /= 24;
+      if (duration > 0) {
+        snprintf(dur_str, sizeof(dur_str), "%d %02d:%02d:%02d",
+                 duration, dur_hour, dur_min, dur_sec);
+      } else {
+        snprintf(dur_str, sizeof(dur_str), "%02d:%02d:%02d",
+                 dur_hour, dur_min, dur_sec);
+      }
+    }
+
+    if ((user_login = teamdb_get_login(cs->teamdb_state, pe->user_id))) {
+      user_flags = teamdb_get_flags(cs->teamdb_state, pe->user_id);
+      user_invisible_flag = "";
+      user_banned_flag = "";
+      user_locked_flag = "";
+      if ((user_flags & TEAM_INVISIBLE)) user_invisible_flag = "I";
+      if ((user_flags & TEAM_BANNED)) user_banned_flag = "B";
+      if ((user_flags & TEAM_LOCKED)) user_banned_flag = "L";
+    } else {
+      user_login = "";
+      user_invisible_flag = "";
+      user_banned_flag = "";
+      user_locked_flag = "";
+    }
+
+    if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP) {
+      fprintf(fout, "%d;;"
+              ";%s;%09d;%s;"
+              ";%d;%s;%d"
+              ";%d;%s;%s;%s;%s;;;;;;;;"
+              ";%s;;;;;;;;;;;;;;;;;;;\n",
+              rid, run_date, pe->nsec, dur_str,
+              pe->ipv6_flag, xml_unparse_ip(pe->a.ip), pe->ssl_flag,
+              pe->user_id, user_login, user_invisible_flag, user_banned_flag,
+              user_locked_flag, statstr);
+      continue;
+    }
+
+    run_hidden_flag = "";
+    if (pe->is_hidden) run_hidden_flag = "H";
+    run_imported_flag = "";
+    if (pe->is_imported) run_imported_flag = "I";
+
+    if (pe->prob_id > 0 && pe->prob_id <= cs->max_prob
+        && (prob = cs->probs[pe->prob_id])) {
+      if (prob->variant_num > 0) {
+        snprintf(db_variant_buf, sizeof(db_variant_buf), "%d", pe->variant);
+        variant = find_variant(cs, pe->user_id, pe->prob_id);
+        if (variant < 0) variant = 0;
+        snprintf(variant_buf, sizeof(variant_buf), "%d", variant);
+      } else {
+        variant_buf[0] = 0;
+        db_variant_buf[0] = 0;
+      }
+    } else {
+      prob_short_name = "";
+      variant_buf[0] = 0;
+      db_variant_buf[0] = 0;
+    }
+
+    if (pe->lang_id > 0 && pe->lang_id <= cs->max_lang
+        && (lang = cs->langs[pe->lang_id])) {
+      lang_short_name = lang->short_name;
+      source_suffix = lang->src_sfx;
+      mime_type_str = "";
+    } else if (!pe->lang_id) {
+      lang_short_name = "";
+      mime_type_str = mime_type_get_type(pe->mime_type);
+      source_suffix = mime_type_get_suffix(pe->mime_type);
+    } else {
+      lang_short_name = "";
+      mime_type_str = "";
+      source_suffix = "";
+    }
+
+    if (global->score_system_val == SCORE_ACM) {
+      failed_test_buf[0] = 0;
+      if (has_failed_test_num[pe->status])
+        snprintf(failed_test_buf, sizeof(failed_test_buf), "%d", pe->test);
+      fprintf(fout,
+              "%d;%s;%s"
+              ";%s;%09d;%s;%zu"
+              ";%d;%s;%d"
+              ";%d;%s;%s;%s;%s"
+              ";%d;%s;%s;%s"
+              ";%d;%s;%s;%s"
+              ";%s;%s;;;;;;;;;;;"
+              ";"               /* is_after_ok */
+              ";"               /* is_latest */
+              ";%s;%d;%d;%d;%d\n",
+              rid, run_hidden_flag, run_imported_flag,
+              run_date, pe->nsec, dur_str, pe->size,
+              pe->ipv6_flag, xml_unparse_ip(pe->a.ip), pe->ssl_flag,
+              pe->user_id, user_login,
+              user_invisible_flag, user_banned_flag, user_locked_flag,
+              pe->prob_id, prob_short_name, variant_buf, db_variant_buf,
+              pe->lang_id, lang_short_name, mime_type_str, source_suffix,
+              statstr, failed_test_buf,
+              unparse_sha1(pe->sha1), pe->locale_id, pe->is_readonly,
+              pe->pages, pe->judge_id);
+    } else if (global->score_system_val == SCORE_MOSCOW) {
+      failed_test_buf[0] = 0;
+      if (has_failed_test_num[pe->status])
+        snprintf(failed_test_buf, sizeof(failed_test_buf), "%d", pe->test);
+      fprintf(fout,
+              "%d;%s;%s"
+              ";%s;%09d;%s;%zu"
+              ";%d;%s;%d"
+              ";%d;%s;%s;%s;%s"
+              ";%d;%s;%s;%s"
+              ";%d;%s;%s;%s"
+              ";%s;%s;;%d;%d;;;;;;;;"
+              ";"               /* is_after_ok */
+              ";"               /* is_latest */
+              ";%s;%d;%d;%d;%d\n",
+              rid, run_hidden_flag, run_imported_flag,
+              run_date, pe->nsec, dur_str, pe->size,
+              pe->ipv6_flag, xml_unparse_ip(pe->a.ip), pe->ssl_flag,
+              pe->user_id, user_login,
+              user_invisible_flag, user_banned_flag, user_locked_flag,
+              pe->prob_id, prob_short_name, variant_buf, db_variant_buf,
+              pe->lang_id, lang_short_name, mime_type_str, source_suffix,
+              statstr, failed_test_buf, pe->score, pe->score,
+              unparse_sha1(pe->sha1), pe->locale_id, pe->is_readonly,
+              pe->pages, pe->judge_id);
+    } else if (global->score_system_val == SCORE_OLYMPIAD) {
+      failed_test_buf[0] = 0;
+      if (has_failed_test_num[pe->status])
+        snprintf(failed_test_buf, sizeof(failed_test_buf), "%d", pe->test);
+      passed_tests_buf[0] = 0;
+      if (has_passed_tests[pe->status]) {
+        snprintf(passed_tests_buf, sizeof(passed_tests_buf), "%d", pe->test);
+      }
+      score_buf[0] = 0;
+      if (has_olympiad_score[pe->status]) {
+        snprintf(score_buf, sizeof(score_buf), "%d", pe->score);
+      }
+      fprintf(fout,
+              "%d;%s;%s"
+              ";%s;%09d;%s;%zu"
+              ";%d;%s;%d"
+              ";%d;%s;%s;%s;%s"
+              ";%d;%s;%s;%s"
+              ";%d;%s;%s;%s"
+              ";%s;%s;%s"
+              ";%s;%s;;;;;;;;"
+              ";"               /* is_after_ok */
+              ";"               /* is_latest */
+              ";%s;%d;%d;%d;%d\n",
+              rid, run_hidden_flag, run_imported_flag,
+              run_date, pe->nsec, dur_str, pe->size,
+              pe->ipv6_flag, xml_unparse_ip(pe->a.ip), pe->ssl_flag,
+              pe->user_id, user_login,
+              user_invisible_flag, user_banned_flag, user_locked_flag,
+              pe->prob_id, prob_short_name, variant_buf, db_variant_buf,
+              pe->lang_id, lang_short_name, mime_type_str, source_suffix,
+              statstr, failed_test_buf, passed_tests_buf, score_buf, score_buf,
+              unparse_sha1(pe->sha1), pe->locale_id, pe->is_readonly,
+              pe->pages, pe->judge_id);
+    } else if (global->score_system_val == SCORE_KIROV) {
+      if (!has_kirov_score[pe->status]) {
+        fprintf(fout,
+                "%d;%s;%s"
+                ";%s;%09d;%s;%zu"
+                ";%d;%s;%d"
+                ";%d;%s;%s;%s;%s"
+                ";%d;%s;%s;%s"
+                ";%d;%s;%s;%s"
+                ";%s;;;;;;;;;;;;"
+                ";"               /* is_after_ok */
+                ";"               /* is_latest */
+                ";%s;%d;%d;%d;%d\n",
+                rid, run_hidden_flag, run_imported_flag,
+                run_date, pe->nsec, dur_str, pe->size,
+                pe->ipv6_flag, xml_unparse_ip(pe->a.ip), pe->ssl_flag,
+                pe->user_id, user_login,
+                user_invisible_flag, user_banned_flag, user_locked_flag,
+                pe->prob_id, prob_short_name, variant_buf, db_variant_buf,
+                pe->lang_id, lang_short_name, mime_type_str, source_suffix,
+                statstr,
+                unparse_sha1(pe->sha1), pe->locale_id, pe->is_readonly,
+                pe->pages, pe->judge_id);
+        continue;
+      }
+
+      prev_successes = RUN_TOO_MANY;
+      score_bonus = 0;
+      prev_successes_buf[0] = 0;
+      score_bonus_buf[0] = 0;
+      if (pe->status == RUN_OK && !pe->is_hidden
+          && prob && prob->score_bonus_total > 0) {
+        if ((prev_successes = run_get_prev_successes(cs->runlog_state, rid))<0)
+          prev_successes = RUN_TOO_MANY;
+        if (prev_successes != RUN_TOO_MANY) {
+          snprintf(prev_successes_buf, sizeof(prev_successes_buf),
+                   "%d", prev_successes);
+        }
+        if (prev_successes >= 0 && prev_successes < prob->score_bonus_total)
+          score_bonus = prob->score_bonus_val[prev_successes];
+        snprintf(score_bonus_buf, sizeof(score_bonus_buf), "%d", score_bonus);
+      }
+
+      attempts = 0; disq_attempts = 0;
+      if (global->score_system_val == SCORE_KIROV && !pe->is_hidden) {
+        run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts,
+                         global->ignore_compile_errors);
+      }
+
+      orig_score = pe->score;
+      if (pe->status == RUN_OK && !prob->variable_full_score)
+        orig_score = prob->full_score;
+      score = calc_kirov_score(0, 0, pe, prob, attempts, disq_attempts,
+                               prev_successes, &date_penalty, 0);
+      attempts_buf[0] = 0;
+      if (attempts > 0)
+        snprintf(attempts_buf, sizeof(attempts_buf), "%d", attempts);
+      attempts_penalty_buf[0] = 0;
+      if (attempts * prob->run_penalty != 0)
+        snprintf(attempts_penalty_buf, sizeof(attempts_penalty_buf),
+                 "%d", attempts * prob->run_penalty);
+      disq_attempts_buf[0] = 0;
+      if (disq_attempts > 0)
+        snprintf(disq_attempts_buf, sizeof(disq_attempts_buf),
+                 "%d", disq_attempts);
+      disq_attempts_penalty_buf[0] = 0;
+      if (disq_attempts * prob->disqualified_penalty != 0)
+        snprintf(disq_attempts_penalty_buf, sizeof(disq_attempts_penalty_buf),
+                 "%d", disq_attempts * prob->disqualified_penalty);
+      date_penalty_buf[0] = 0;
+      if (date_penalty != 0)
+        snprintf(date_penalty_buf, sizeof(date_penalty_buf),
+                 "%d", date_penalty);
+      score_adj_buf[0] = 0;
+      if (pe->score_adj != 0)
+        snprintf(score_adj_buf, sizeof(score_adj_buf), "%d", pe->score_adj);
+      fprintf(fout,
+              "%d;%s;%s"
+              ";%s;%09d;%s;%zu"
+              ";%d;%s;%d"
+              ";%d;%s;%s;%s;%s"
+              ";%d;%s;%s;%s"
+              ";%d;%s;%s;%s"
+              ";%s;;%d;%d;%d"
+              ";%s;%s"
+              ";%s;%s"
+              ";%s"
+              ";%s;%s"
+              ";%s"
+              ";"               /* is_after_ok */
+              ";"               /* is_latest */
+              ";%s;%d;%d;%d;%d\n",
+              rid, run_hidden_flag, run_imported_flag,
+              run_date, pe->nsec, dur_str, pe->size,
+              pe->ipv6_flag, xml_unparse_ip(pe->a.ip), pe->ssl_flag,
+              pe->user_id, user_login,
+              user_invisible_flag, user_banned_flag, user_locked_flag,
+              pe->prob_id, prob_short_name, variant_buf, db_variant_buf,
+              pe->lang_id, lang_short_name, mime_type_str, source_suffix,
+              statstr, pe->test, score, orig_score,
+              attempts_buf, attempts_penalty_buf,
+              disq_attempts_buf, disq_attempts_penalty_buf,
+              date_penalty_buf,
+              prev_successes_buf, score_bonus_buf,
+              score_adj_buf,
+              unparse_sha1(pe->sha1), pe->locale_id, pe->is_readonly,
+              pe->pages, pe->judge_id);
+    } else {
+      abort();
+    }
+  }
+  return 0;
+}
+
+static int
+cmd_dump_master_runs(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0, first_run = 0, last_run = 0, r;
+  const unsigned char *filter_expr = 0, *s = 0;
+
+  if (phr->role != USER_ROLE_ADMIN && phr->role != USER_ROLE_JUDGE)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  if (ns_cgi_param(phr, "filter_expr", &filter_expr) < 0)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  if (!filter_expr) filter_expr = "";
+  if ((r = ns_cgi_param(phr, "first_run", &s)) < 0)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  if (r > 0 && *s) {
+    if (parse_int(s, &first_run) < 0)
+      FAIL(NEW_SRV_ERR_INV_PARAM);
+    if (first_run >= 0) first_run++;
+  }
+  if ((r = ns_cgi_param(phr, "last_run", &s)) < 0)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  if (r > 0 && *s) {
+    if (parse_int(s, &last_run) < 0)
+      FAIL(NEW_SRV_ERR_INV_PARAM);
+    if (last_run >= 0) last_run++;
+  }
+
+  retval = do_dump_master_runs(fout, phr, cnts, extra,
+                               first_run, last_run, filter_expr);
+
+ cleanup:
+  return retval;
+}
+
 typedef int (*cmd_handler_t)(FILE *, struct http_request_info *,
                              const struct contest_desc *,
                              struct contest_extra *);
@@ -903,6 +1607,10 @@ static cmd_handler_t cmd_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GET_CONTEST_NAME] = cmd_operation_2,
   [NEW_SRV_ACTION_GET_CONTEST_TYPE] = cmd_operation_2,
   [NEW_SRV_ACTION_SUBMIT_RUN] = cmd_submit_run,
+  [NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_2] = cmd_import_xml_runs,
+  [NEW_SRV_ACTION_DUMP_MASTER_RUNS] = cmd_dump_master_runs,
+  [NEW_SRV_ACTION_DUMP_REPORT] = cmd_run_operation,
+  [NEW_SRV_ACTION_FULL_UPLOAD_RUNLOG_XML] = cmd_import_xml_runs,
 };
 
 int

@@ -3,7 +3,7 @@
 #ifndef __SERVE_STATE_H__
 #define __SERVE_STATE_H__
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -144,6 +144,12 @@ struct serve_state
 
   struct problem_extra_info *prob_extras;
   unsigned short compile_request_id;
+
+  // for full import
+  int saved_testing_suspended;
+  int client_id;
+  unsigned char *pending_xml_import;
+  void (*destroy_callback)(struct serve_state *cs);
 };
 typedef struct serve_state *serve_state_t;
 
