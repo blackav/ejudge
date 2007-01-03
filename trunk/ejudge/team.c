@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -364,7 +364,12 @@ redirect_to_new_client(void)
   const unsigned char *s;
   unsigned char url_buf[1024];
   unsigned char lbuf[1024] = { 0 };
+  int x, n;
 
+  client_locale_id = 0;
+  if ((s = cgi_param("locale_id")) && sscanf(s, "%d%n", &x, &n) == 1
+      && !s[n] && x >= 0 && x < 100000)
+    client_locale_id = x;
   if (client_locale_id > 0) {
     snprintf(lbuf, sizeof(lbuf), "&locale_id=%d", client_locale_id);
   }
