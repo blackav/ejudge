@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005,2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -4081,15 +4081,17 @@ super_html_print_problem(FILE *f,
   //PROBLEM_PARAM(max_vm_size, "d"),
   extra_msg = "";
   if (prob->abstract) {
+    /*
     if (prob->max_vm_size == -1L) extra_msg = "<i>(Undefined)</i>";
     else if (!prob->max_vm_size) extra_msg = "<i>(OS Limit)</i>";
+    */
+    if (prob->max_vm_size == -1L || !prob->max_vm_size)
+      extra_msg = "<i>(OS Limit)</i>";
   } else {
     if (prob->max_vm_size == -1L) {
       prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_VM_SIZE,
                              &tmp_prob, sup_prob, sstate->global);
-      if (tmp_prob.max_vm_size == -1L)
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
-      else if (!tmp_prob.max_vm_size)
+      if (tmp_prob.max_vm_size == -1L || !tmp_prob.max_vm_size)
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
       else
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %s)</i>",
@@ -4116,15 +4118,17 @@ super_html_print_problem(FILE *f,
     //PROBLEM_PARAM(max_stack_size, "d"),
     extra_msg = "";
     if (prob->abstract) {
+      /*
       if (prob->max_stack_size == -1L) extra_msg = "<i>(Undefined)</i>";
       else if (!prob->max_stack_size) extra_msg = "<i>(OS Limit)</i>";
+      */
+      if (prob->max_stack_size == -1L || !prob->max_stack_size)
+        extra_msg = "<i>(OS Limit)</i>";
     } else {
       if (prob->max_stack_size == -1L) {
         prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_STACK_SIZE,
                                &tmp_prob, sup_prob, sstate->global);
-        if (tmp_prob.max_stack_size == -1L)
-          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
-        else if (!tmp_prob.max_stack_size)
+        if (tmp_prob.max_stack_size == -1L || !tmp_prob.max_stack_size)
           snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
         else
           snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %s)</i>",
@@ -5863,7 +5867,7 @@ super_html_read_serve(FILE *flog,
   size_t vm_size, st_size;
   size_t *mem_lims, *st_lims;
   int *mem_cnt, *st_cnt;
-  int mem_u, st_u, max_i;
+  //int mem_u, st_u, max_i;
   path_t check_cmd = { 0 };
   FILE *fuh;
   char *fuh_text = 0;
@@ -6381,6 +6385,7 @@ super_html_read_serve(FILE *flog,
   XALLOCA(st_cnt, sstate->prob_a);
 
   // propagate most used memory limit to superproblem
+  /*
   for (i = 0; i < sstate->aprob_u; i++) {
     aprob = sstate->aprobs[i];
     mem_u = 0;
@@ -6440,6 +6445,7 @@ super_html_read_serve(FILE *flog,
       }
     }
   }
+  */
 
   // very simple rule for check_cmd extraction:
   // check_cmd for all abstract checkers must be the same
