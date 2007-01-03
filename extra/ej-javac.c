@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -150,8 +150,10 @@ main(int argc, char *argv[])
   unsigned char jar_path[PATH_MAX] = "jar";
   unsigned char src_file[PATH_MAX] = { 0 };
   unsigned char out_file[PATH_MAX] = { 0 };
+  unsigned char mf_file[PATH_MAX] = { 0 };
   unsigned char cmd[PATH_MAX];
   int i = 1;
+  FILE *mf = 0;
 
   if (argc < 3) fatal("too few parameters");
   in_path = argv[i++];
@@ -173,10 +175,25 @@ main(int argc, char *argv[])
   if (!ejudge_flags) ejudge_flags = "";
   snprintf(src_file, sizeof(src_file), "%s.java", class_name);
   snprintf(out_file, sizeof(out_file), "%s.class", class_name);
+  snprintf(mf_file, sizeof(mf_file), "%s.mf", class_name);
+
+  if (!(mf = fopen(mf_file, "w"))) {
+    fprintf(stderr, "cannot open file `%s'\n", mf_file);
+    return 1;
+  }
+  fprintf(mf, "Main-Class: %s\n", class_name);
+  fflush(mf);
+  if (ferror(mf) || fclose(mf) < 0) {
+    fprintf(stderr, "write error to `%s'\n", mf_file);
+    unlink(mf_file);
+    return 1;
+  }
+  mf = 0;
 
   if (rename(in_path, src_file) < 0) {
     fprintf(stderr, "rename `%s' -> `%s' failed: %s\n",
             in_path, src_file, strerror(errno));
+    unlink(mf_file);
     return 1;
   }
 
@@ -186,14 +203,19 @@ main(int argc, char *argv[])
   if (system(cmd) != 0) return 1;
   if (access(out_file, F_OK) < 0) {
     fprintf(stderr, "file `%s' is not created\n", out_file);
+    unlink(mf_file);
     return 1;
   }
 
   //"${JAVA_HOME}/bin/jar" cvf Main.jar *.class || exit 1
-  snprintf(cmd, sizeof(cmd), "\"%s\" cvfe \"%s\" %s *.class",
-           jar_path, out_path, class_name);
+  snprintf(cmd, sizeof(cmd), "\"%s\" cvfm \"%s\" %s *.class",
+           jar_path, out_path, mf_file);
   fprintf(stderr, "%s\n", cmd);
-  if (system(cmd) != 0) return 1;
+  if (system(cmd) != 0) {
+    unlink(mf_file);
+    return 1;
+  }
 
+  unlink(mf_file);
   return 0;
 }
