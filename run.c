@@ -837,9 +837,9 @@ run_tests(struct section_tester_data *tst,
                 "max_vm_size:       %zu\n"
                 "max_stack_size:    %zu\n"
                 "max_data_size:     %zu\n",
-                prb->max_vm_size,
-                prb->max_stack_size,
-                prb->max_data_size);
+                tst->max_vm_size,
+                tst->max_stack_size,
+                tst->max_data_size);
         if (tst->max_stack_size && tst->max_stack_size != -1L)
           task_SetStackSize(tsk, tst->max_stack_size);
         if (tst->max_data_size && tst->max_data_size != -1L)
