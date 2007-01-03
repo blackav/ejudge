@@ -832,6 +832,7 @@ run_tests(struct section_tester_data *tst,
       if (tst->memory_limit_type_val < 0) {
         // compatibility stuff
         // debug
+#if 0
         fprintf(stderr,
                 "memory limit type: legacy\n"
                 "max_vm_size:       %zu\n"
@@ -840,6 +841,7 @@ run_tests(struct section_tester_data *tst,
                 tst->max_vm_size,
                 tst->max_stack_size,
                 tst->max_data_size);
+#endif
         if (tst->max_stack_size && tst->max_stack_size != -1L)
           task_SetStackSize(tsk, tst->max_stack_size);
         if (tst->max_data_size && tst->max_data_size != -1L)
@@ -855,6 +857,7 @@ run_tests(struct section_tester_data *tst,
         switch (tst->memory_limit_type_val) {
         case MEMLIMIT_TYPE_DEFAULT:
           // debug
+#if 0
           fprintf(stderr,
                   "memory limit type: default\n"
                   "max_vm_size:       %zu\n"
@@ -863,6 +866,7 @@ run_tests(struct section_tester_data *tst,
                   prb->max_vm_size,
                   prb->max_stack_size,
                   prb->max_data_size);
+#endif
           if (prb->max_stack_size && prb->max_stack_size != -1L)
             task_SetStackSize(tsk, prb->max_stack_size);
           if (prb->max_data_size && prb->max_data_size != -1L)
@@ -895,6 +899,7 @@ run_tests(struct section_tester_data *tst,
             task_PutEnv(tsk, java_flags_buf);
           }
           // debug
+#if 0
           fprintf(stderr,
                   "memory limit type: java\n"
                   "max_vm_size:       %zu\n"
@@ -905,12 +910,15 @@ run_tests(struct section_tester_data *tst,
                   prb->max_stack_size,
                   prb->max_data_size,
                   java_flags_buf);
+#endif
           break;
 
         case MEMLIMIT_TYPE_DOS:
           // debug
+#if 0
           fprintf(stderr,
                   "memory limit type: dos\n");
+#endif
           // dosbox has natural memory limit :)
           break;
         default:
