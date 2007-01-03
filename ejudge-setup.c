@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2398,6 +2398,7 @@ generate_serve_cfg(FILE *f)
         "long_name = \"Sum 1\"\n"
         "time_limit = 1\n"
         "standard_checker = cmp_int\n"
+        "max_vm_size = 64M\n"
         "\n"
         "[problem]\n"
         "short_name = \"B\"\n"
@@ -2405,6 +2406,7 @@ generate_serve_cfg(FILE *f)
         "long_name = \"Sum 2\"\n"
         "time_limit = 1\n"
         "standard_checker = cmp_int\n"
+        "max_vm_size = 64M\n"
         "\n",
         f);
 
@@ -2413,7 +2415,7 @@ generate_serve_cfg(FILE *f)
         "abstract\n"
         "no_core_dump\n"
         "kill_signal = KILL\n"
-        "max_vm_size = 64M\n"
+        "memory_limit_type = \"default\"\n"
         "clear_env\n",
         f);
 #if CONF_HAS_LIBCAP - 0 == 1
@@ -2434,7 +2436,7 @@ generate_serve_cfg(FILE *f)
         "abstract\n"
         "no_core_dump\n"
         "kill_signal = KILL\n"
-        "max_vm_size = 64M\n"
+        "memory_limit_type = \"default\"\n"
         "clear_env\n",
         f);
 
@@ -2459,10 +2461,10 @@ generate_serve_cfg(FILE *f)
         "abstract\n"
         "no_core_dump\n"
         "kill_signal = TERM\n"
+        "memory_limit_type = \"java\"\n"
         "start_cmd = runjava\n"
         "start_env = \"LANG=C\"\n"
-        "start_env = \"EJUDGE_PREFIX_DIR\"\n"
-        "start_env = \"EJUDGE_JAVA_FLAGS=-Xmx64M\"\n",
+        "start_env = \"EJUDGE_PREFIX_DIR\"\n",
         f);
 
   if (!strcmp(config_workdisk_flag, "yes")) {
@@ -2483,6 +2485,7 @@ generate_serve_cfg(FILE *f)
         "abstract\n"
         "no_core_dump\n"
         "kill_signal = TERM\n"
+        "memory_limit_type = \"default\"\n"
         "start_cmd = runmono\n"
         "start_env = \"EJUDGE_PREFIX_DIR\"\n"
         "# start_env = \"EJUDGE_MONO_FLAGS=\"\n",

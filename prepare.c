@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -318,6 +318,9 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(stand_hide_time, "d"),
   PROBLEM_PARAM(score_multiplier, "d"),
   PROBLEM_ALIAS(output_only, type_val, "d"),
+  PROBLEM_PARAM(max_vm_size, "z"),
+  PROBLEM_PARAM(max_stack_size, "z"),
+  PROBLEM_PARAM(max_data_size, "z"),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
@@ -406,6 +409,7 @@ static const struct config_parse_info section_tester_params[] =
   TESTER_PARAM(key, "s"),
   TESTER_PARAM(any, "d"),
   TESTER_PARAM(priority_adjustment, "d"),
+  TESTER_PARAM(memory_limit_type, "s"),
 
   TESTER_PARAM(abstract, "d"),
   TESTER_PARAM(super, "x"),
@@ -625,6 +629,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->tgz_pat[0] = 1;
   p->max_vm_size = -1L;
   p->max_stack_size = -1L;
+  p->max_data_size = -1L;
 }
 
 static void free_testsets(int t, struct testset_info *p);
@@ -673,6 +678,8 @@ tester_init_func(struct generic_section_config *gp)
   p->max_vm_size = -1L;
   p->max_stack_size = -1L;
   p->max_data_size = -1L;
+  p->memory_limit_type[0] = 1;
+  p->memory_limit_type_val = -1;
 }
 
 void
@@ -773,7 +780,6 @@ static int inh_isdef_path2(void *vppath)
 {
   char *pc = (char *) vppath;
 
-  (void) &(inh_isdef_path2);
   if (*pc == 1) return 0;
   return 1;
 }
@@ -806,6 +812,7 @@ static const struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(check_cmd, path, path),
   TESTER_INH(start_cmd, path, path),
   TESTER_INH(prepare_cmd, path, path),
+  TESTER_INH(memory_limit_type, path2, path),
 
   { 0, 0, 0, 0 }
 };
@@ -883,6 +890,14 @@ process_abstract_tester(serve_state_t state, int i)
   nenv = sarray_merge_arr(stot + 1, envs);
   sarray_free(atp->start_env);
   atp->start_env = nenv;
+
+  if (atp->memory_limit_type[0] != 1) {
+    atp->memory_limit_type_val = prepare_parse_memory_limit_type(atp->memory_limit_type);
+    if (atp->memory_limit_type_val < 0) {
+      err("invalid memory_limit_type `%s'", atp->memory_limit_type);
+      return -1;
+    }
+  }
 
   atp->is_processed = 1;
   return 0;
@@ -1476,6 +1491,26 @@ prepare_unparse_problem_type(int val)
   return problem_type_str[val];
 }
 
+const unsigned char * const memory_limit_type_str[] =
+{
+  [MEMLIMIT_TYPE_DEFAULT] = "default",
+  [MEMLIMIT_TYPE_DOS] = "dos",
+  [MEMLIMIT_TYPE_JAVA] = "java",
+
+  [MEMLIMIT_TYPE_LAST] = 0,
+};
+int
+prepare_parse_memory_limit_type(const unsigned char *str)
+{
+  int i;
+
+  if (!str || !*str) return 0;
+  for (i = 0; i < MEMLIMIT_TYPE_LAST; i++)
+    if (memory_limit_type_str[i] && !strcasecmp(str, memory_limit_type_str[i]))
+      return i;
+  return -1;
+}
+
 static void
 make_stand_file_name_2(serve_state_t state)
 {
@@ -1490,15 +1525,16 @@ make_stand_file_name_2(serve_state_t state)
   snprintf(b1, sizeof(b1), s, 1);
   snprintf(b2, sizeof(b2), s, 2);
   if (strcmp(b1, b2) != 0) {
-    snprintf(state->global->stand_file_name_2, sizeof(state->global->stand_file_name_2),
-             "%s", s);
+    snprintf(state->global->stand_file_name_2,
+             sizeof(state->global->stand_file_name_2), "%s", s);
     return;
   }
 
   i--;
   while (i >= 0 && s[i] != '.' && s[i] != '/') i--;
   if (i < 0 || s[i] == '/') i++;
-  snprintf(state->global->stand_file_name_2, sizeof(state->global->stand_file_name_2),
+  snprintf(state->global->stand_file_name_2,
+           sizeof(state->global->stand_file_name_2),
            "%.*s%s%s", i, s, "%d", s + i);
 }
 
@@ -2349,6 +2385,16 @@ set_defaults(serve_state_t state, int mode)
     prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_CMD,
                            state->probs[i], aprob, state->global);
 
+    prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_VM_SIZE,
+                           state->probs[i], aprob, state->global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_STACK_SIZE,
+                           state->probs[i], aprob, state->global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_DATA_SIZE,
+                           state->probs[i], aprob, state->global);
+
+    prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_CMD,
+                           state->probs[i], aprob, state->global);
+
     if (state->probs[i]->priority_adjustment == -1000 && si != -1 &&
         state->abstr_probs[si]->priority_adjustment != -1000) {
       state->probs[i]->priority_adjustment = state->abstr_probs[si]->priority_adjustment;
@@ -2782,6 +2828,16 @@ set_defaults(serve_state_t state, int mode)
         tp->max_vm_size = atp->max_vm_size;
         info("tester.%d.max_vm_size inherited from tester.%s (%zu)",
              i, sish, tp->max_vm_size);        
+      }
+      if (tp->memory_limit_type[0] != 1) {
+        tp->memory_limit_type_val = prepare_parse_memory_limit_type(tp->memory_limit_type);
+        if (tp->memory_limit_type_val < 0) {
+          err("invalid memory limit type `%s'", tp->memory_limit_type);
+          return -1;
+        }
+      }
+      if (tp->memory_limit_type_val<0 && atp && atp->memory_limit_type_val>=0) {
+        tp->memory_limit_type_val = atp->memory_limit_type_val;
       }
 
       if (tp->skip_testing == -1 && atp && atp->skip_testing != -1)
@@ -3374,6 +3430,17 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   out->max_vm_size = tp->max_vm_size;
   if (out->max_vm_size == -1L && atp) {
     out->max_vm_size = atp->max_vm_size;
+  }
+
+  if (tp->memory_limit_type[0] != 1) {
+    out->memory_limit_type_val = prepare_parse_memory_limit_type(tp->memory_limit_type);
+    if (out->memory_limit_type_val < 0) {
+      err("invalid memory limit type `%s'", tp->memory_limit_type);
+      return -1;
+    }
+  }
+  if (out->memory_limit_type_val < 0 && atp) {
+    out->memory_limit_type_val = atp->memory_limit_type_val;
   }
 
   out->skip_testing = tp->skip_testing;
@@ -4442,19 +4509,22 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
   case PREPARE_FIELD_PROB_MAX_VM_SIZE:
     if (out->max_vm_size == -1L && abstr)
       out->max_vm_size = abstr->max_vm_size;
-    /*
     if (out->max_vm_size == -1L)
       out->max_vm_size = 0;
-    */
     break;
 
   case PREPARE_FIELD_PROB_MAX_STACK_SIZE:
     if (out->max_stack_size == -1L && abstr)
       out->max_stack_size = abstr->max_stack_size;
-    /*
     if (out->max_stack_size == -1L)
       out->max_stack_size = 0;
-    */
+    break;
+
+  case PREPARE_FIELD_PROB_MAX_DATA_SIZE:
+    if (out->max_data_size == -1L && abstr)
+      out->max_data_size = abstr->max_data_size;
+    if (out->max_data_size == -1L)
+      out->max_data_size = 0;
     break;
 
   case PREPARE_FIELD_PROB_INPUT_FILE:
