@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -115,6 +115,21 @@ struct testinfo
 int total_tests;
 static int tests_a = 0;
 static struct testinfo *tests = 0; //[MAX_TEST + 1];
+
+#define SIZE_G (1024 * 1024 * 1024)
+#define SIZE_M (1024 * 1024)
+#define SIZE_K (1024)
+
+static unsigned char*
+size_t_to_size(unsigned char *buf, size_t buf_size, size_t num)
+{
+  if (!num) snprintf(buf, buf_size, "0");
+  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%zuG", num / SIZE_G);
+  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%zuM", num / SIZE_M);
+  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%zuK", num / SIZE_K);
+  else snprintf(buf, buf_size, "%zu", num);
+  return buf;
+}
 
 static int
 filter_testers(char *key)
@@ -540,6 +555,8 @@ run_tests(struct section_tester_data *tst,
   full_archive_t far = 0;
   unsigned char *additional_comment = 0;
   int jj, tmpfd, test_max_score, force_check_failed;
+  unsigned char java_flags_buf[128], bb[128];
+  unsigned char *java_flags_ptr = java_flags_buf;
 
 #ifdef HAVE_TERMIOS_H
   struct termios term_attrs;
@@ -812,28 +829,94 @@ run_tests(struct section_tester_data *tst,
       if (prb->real_time_limit>0) task_SetMaxRealTime(tsk,prb->real_time_limit);
       if (tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
       if (tst->no_core_dump) task_DisableCoreDump(tsk);
-      // debugging
-#if 0
-      if (tst->max_vm_size == -1L)
-        fprintf(stderr,">>max_vm_size == -1\n");
-      else
-        fprintf(stderr, ">>max_vm_size == %zu\n", tst->max_vm_size);
-      if (tst->max_stack_size == -1L)
-        fprintf(stderr, ">>max_stack_size == -1\n");
-      else
-        fprintf(stderr, ">>max_stack_size == %zu\n", tst->max_stack_size);
-#endif
-      if (tst->max_stack_size && tst->max_stack_size != -1L)
-        task_SetStackSize(tsk, tst->max_stack_size);
-      if (tst->max_data_size && tst->max_data_size != -1L)
-        task_SetDataSize(tsk, tst->max_data_size);
-      if (tst->max_vm_size && tst->max_vm_size != -1L)
-        task_SetVMSize(tsk, tst->max_vm_size);
+      if (tst->memory_limit_type_val < 0) {
+        // compatibility stuff
+        // debug
+        fprintf(stderr,
+                "memory limit type: legacy\n"
+                "max_vm_size:       %zu\n"
+                "max_stack_size:    %zu\n"
+                "max_data_size:     %zu\n",
+                prb->max_vm_size,
+                prb->max_stack_size,
+                prb->max_data_size);
+        if (tst->max_stack_size && tst->max_stack_size != -1L)
+          task_SetStackSize(tsk, tst->max_stack_size);
+        if (tst->max_data_size && tst->max_data_size != -1L)
+          task_SetDataSize(tsk, tst->max_data_size);
+        if (tst->max_vm_size && tst->max_vm_size != -1L)
+          task_SetVMSize(tsk, tst->max_vm_size);
 #if defined HAVE_TASK_ENABLEMEMORYLIMITERROR
-      if (tst->enable_memory_limit_error && req_pkt->memory_limit) {
-        task_EnableMemoryLimitError(tsk);
-      }
+        if (tst->enable_memory_limit_error && req_pkt->memory_limit) {
+          task_EnableMemoryLimitError(tsk);
+        }
 #endif
+      } else {
+        switch (tst->memory_limit_type_val) {
+        case MEMLIMIT_TYPE_DEFAULT:
+          // debug
+          fprintf(stderr,
+                  "memory limit type: default\n"
+                  "max_vm_size:       %zu\n"
+                  "max_stack_size:    %zu\n"
+                  "max_data_size:     %zu\n",
+                  prb->max_vm_size,
+                  prb->max_stack_size,
+                  prb->max_data_size);
+          if (prb->max_stack_size && prb->max_stack_size != -1L)
+            task_SetStackSize(tsk, prb->max_stack_size);
+          if (prb->max_data_size && prb->max_data_size != -1L)
+            task_SetDataSize(tsk, prb->max_data_size);
+          if (prb->max_vm_size && prb->max_vm_size != -1L)
+            task_SetVMSize(tsk, prb->max_vm_size);
+#if defined HAVE_TASK_ENABLEMEMORYLIMITERROR
+          if (tst->enable_memory_limit_error && req_pkt->memory_limit) {
+            task_EnableMemoryLimitError(tsk);
+          }
+#endif
+          break;
+        case MEMLIMIT_TYPE_JAVA:
+          java_flags_ptr = java_flags_buf;
+          java_flags_ptr += sprintf(java_flags_ptr, "EJUDGE_JAVA_FLAGS=");
+          if (prb->max_vm_size && prb->max_vm_size != -1L) {
+            java_flags_ptr += sprintf(java_flags_ptr, "-Xmx%s",
+                                      size_t_to_size(bb, sizeof(bb),
+                                                     prb->max_vm_size));
+          }
+          if (prb->max_stack_size && prb->max_stack_size != -1L) {
+            if (java_flags_ptr[-1] != '=') *java_flags_ptr++ = ' ';
+            *java_flags_ptr = 0;
+            java_flags_ptr += sprintf(java_flags_ptr, "-Xss%s",
+                                      size_t_to_size(bb, sizeof(bb),
+                                                     prb->max_stack_size));
+                                                     
+          }
+          if (java_flags_ptr[-1] != '=') {
+            task_PutEnv(tsk, java_flags_buf);
+          }
+          // debug
+          fprintf(stderr,
+                  "memory limit type: java\n"
+                  "max_vm_size:       %zu\n"
+                  "max_stack_size:    %zu\n"
+                  "max_data_size:     %zu\n"
+                  "environment:       %s\n",
+                  prb->max_vm_size,
+                  prb->max_stack_size,
+                  prb->max_data_size,
+                  java_flags_buf);
+          break;
+
+        case MEMLIMIT_TYPE_DOS:
+          // debug
+          fprintf(stderr,
+                  "memory limit type: dos\n");
+          // dosbox has natural memory limit :)
+          break;
+        default:
+          abort();
+        }
+      }
 
 #ifdef HAVE_TERMIOS_H
       memset(&term_attrs, 0, sizeof(term_attrs));

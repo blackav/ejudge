@@ -3,7 +3,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,16 @@ enum
   PROB_TYPE_SELECT_MANY,        /* select many answers from the list */
 
   PROB_TYPE_LAST,
+};
+
+/* memory limit types */
+enum
+{
+  MEMLIMIT_TYPE_DEFAULT = 0,
+  MEMLIMIT_TYPE_DOS,
+  MEMLIMIT_TYPE_JAVA,
+
+  MEMLIMIT_TYPE_LAST,
 };
 
 struct testset_info
@@ -476,9 +486,12 @@ struct section_problem_data
   int   score_bonus_total;      /* parsed: number of entries in score_bonus */
   int   *score_bonus_val;       /* parsed: score_bonus values */
 
-  /* these fields are for CGI editing of contest configuration files */
+  /* memory limits */
   size_t max_vm_size;
+  size_t max_data_size;         /* max size of the data (NOT USED) */
   size_t max_stack_size;
+
+  /* these fields are for CGI editing of contest configuration files */
   unsigned char *unhandled_vars;
 };
 
@@ -532,6 +545,7 @@ struct section_tester_data
 
   puc_t arch[32];               /* checker architecture */
   puc_t key[32];                /* configuration key */
+  puc_t memory_limit_type[32];  /* type of memory limit handling */
 
   int    abstract;              /* is this tester abstract */
   char **super;                 /* names of the supertesters */
@@ -568,6 +582,7 @@ struct section_tester_data
   char **checker_env;           /* environment variables for checker */
 
   int standard_checker_used;    /* internal: the standard checker is used */
+  int memory_limit_type_val;    /* internal: parsed memory_limit_type */
 };
 
 #undef puc_t
@@ -653,6 +668,7 @@ enum
   PREPARE_FIELD_PROB_STAND_HIDE_TIME,
   PREPARE_FIELD_PROB_CHECKER_REAL_TIME_LIMIT,
   PREPARE_FIELD_PROB_MAX_VM_SIZE,
+  PREPARE_FIELD_PROB_MAX_DATA_SIZE,
   PREPARE_FIELD_PROB_MAX_STACK_SIZE,
   PREPARE_FIELD_PROB_INPUT_FILE,
   PREPARE_FIELD_PROB_OUTPUT_FILE,
@@ -742,5 +758,6 @@ void prepare_unparse_variants(FILE *f, const struct variant_map *vmap,
 
 int *prepare_parse_score_tests(const unsigned char *str, int score);
 const unsigned char *prepare_unparse_problem_type(int val);
+int prepare_parse_memory_limit_type(const unsigned char *str);
 
 #endif /* __PREPARE_H__ */
