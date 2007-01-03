@@ -3342,6 +3342,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   }
 
   memset(out, 0, sizeof(*out));
+  tester_init_func((struct generic_section_config*) out);
   out->id = tp->id;
   out->problem = prob_id;
 
@@ -3419,18 +3420,21 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   if (out->max_stack_size == -1L && atp) {
     out->max_stack_size = atp->max_stack_size;
   }
+  if (out->max_stack_size == -1L) out->max_stack_size = 0;
 
   /* copy max_data_size */
   out->max_data_size = tp->max_data_size;
   if (out->max_data_size == -1L && atp) {
     out->max_data_size = atp->max_data_size;
   }
+  if (out->max_data_size == -1L) out->max_data_size = 0;
 
   /* copy max_vm_size */
   out->max_vm_size = tp->max_vm_size;
   if (out->max_vm_size == -1L && atp) {
     out->max_vm_size = atp->max_vm_size;
   }
+  if (out->max_vm_size == -1L) out->max_vm_size = 0;
 
   if (tp->memory_limit_type[0] != 1) {
     out->memory_limit_type_val = prepare_parse_memory_limit_type(tp->memory_limit_type);
