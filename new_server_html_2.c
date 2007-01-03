@@ -1705,7 +1705,7 @@ ns_write_priv_clar(const serve_state_t cs,
       fprintf(f, "<td><b>%s</b> (%s)</td>", _("judges"),
               ARMOR(teamdb_get_name_2(cs->teamdb_state, clar.j_from)));
   } else {
-    snprintf(b1, sizeof(b1), "uid == %d", clar.to);
+    snprintf(b1, sizeof(b1), "uid == %d", clar.from);
     url_armor_string(b2, sizeof(b2), b1);
     fprintf(f, "<td>%s%s (%d)</a></td>",
             ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_MAIN_PAGE,

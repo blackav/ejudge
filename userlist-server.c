@@ -7076,6 +7076,7 @@ cmd_get_cookie(struct client_state *p,
   time_t current_time = time(0);
   ej_tsc_t tsc1, tsc2;
   unsigned char logbuf[1024];
+  unsigned char *user_name = 0;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -7132,10 +7133,14 @@ cmd_get_cookie(struct client_state *p,
       send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
       return;
     }
+    user_name = ui->name;
+  } else {
+    user_name = u->i.name;
   }
+  if (!user_name) user_name = "";
 
   login_len = strlen(u->login);
-  name_len = strlen(u->i.name);
+  name_len = strlen(user_name);
   out_size = sizeof(*out) + login_len + name_len;
   out = alloca(out_size);
   memset(out, 0, out_size);
@@ -7151,7 +7156,7 @@ cmd_get_cookie(struct client_state *p,
   out->priv_level = cookie->priv_level;
   out->role = cookie->role;
   strcpy(login_ptr, u->login);
-  strcpy(name_ptr, u->i.name);
+  strcpy(name_ptr, user_name);
   
   enqueue_reply_to_client(p, out_size, out);
 
