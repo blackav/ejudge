@@ -3444,6 +3444,13 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
     }
   }
   if (out->memory_limit_type_val < 0 && atp) {
+    if (atp->memory_limit_type_val < 0 && atp->memory_limit_type[0] != 1) {
+      atp->memory_limit_type_val = prepare_parse_memory_limit_type(atp->memory_limit_type);
+      if (atp->memory_limit_type_val < 0) {
+        err("invalid memory limit type `%s'", atp->memory_limit_type);
+        return -1;
+      }
+    }
     out->memory_limit_type_val = atp->memory_limit_type_val;
   }
 
