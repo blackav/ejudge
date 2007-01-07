@@ -512,6 +512,13 @@ ns_write_user_run_status(
 	const serve_state_t cs,
         FILE *fout,
         int run_id);
+void
+ns_write_olympiads_user_runs(
+	struct http_request_info *phr,
+        FILE *fout,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        const unsigned char *table_class);
 
 int
 new_server_cmd_handler(FILE *fout, struct http_request_info *phr);

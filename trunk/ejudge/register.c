@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2001-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1399,6 +1399,7 @@ read_user_info_from_server(void)
   user_country = u->i.country;
   user_country_en = u->i.country_en;
   user_languages = u->i.languages;
+  user_region = u->i.region;
 
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
     if (member_max[role] <= 0) continue;
