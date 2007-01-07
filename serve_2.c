@@ -2283,6 +2283,7 @@ serve_judge_virtual_olympiad(serve_state_t cs, int user_id, int run_id)
     if (latest_runs[i] >= 0)
       serve_rejudge_run(cs, latest_runs[i], user_id, 0, 0, 1, 10);
   }
+  run_forced_set_judge_id(cs->runlog_state, run_id, 1);
 }
 
 /*

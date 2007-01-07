@@ -7330,6 +7330,11 @@ unpriv_command(FILE *fout,
       goto done;
     }
     serve_move_files_to_insert_run(cs, run_id);
+    if (global->score_system_val == SCORE_OLYMPIAD && global->is_virtual > 0) {
+      serve_event_remove_matching(cs, 0, 0, phr->user_id);
+      serve_event_add(cs, precise_time.tv_sec + 1,
+                      SERVE_EVENT_JUDGE_OLYMPIAD, phr->user_id);
+    }
     break;
   }
 

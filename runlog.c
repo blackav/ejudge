@@ -1884,6 +1884,16 @@ run_forced_set_hidden(runlog_state_t state, int run_id)
 }
 
 int
+run_forced_set_judge_id(runlog_state_t state, int run_id, int judge_id)
+{
+  if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
+  if (judge_id < 0 || judge_id > 65535) ERR_R("bad judge_id: %d", judge_id);
+
+  state->runs[run_id].judge_id = judge_id;
+  return run_flush_entry(state, run_id);
+}
+
+int
 run_squeeze_log(runlog_state_t state)
 {
   int i, j, retval, first_moved = -1, w;
