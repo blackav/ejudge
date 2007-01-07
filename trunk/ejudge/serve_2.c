@@ -2122,7 +2122,7 @@ serve_collect_virtual_stop_events(serve_state_t cs)
           run_forced_set_hidden(cs->runlog_state, i);
           need_reload = 1;
         }
-      } else if (!pt) {
+      } else if (!*pt) {
         // first run
         *pt = -2;
       } else if (pe->time > *pt + head.duration) {
@@ -2138,14 +2138,18 @@ serve_collect_virtual_stop_events(serve_state_t cs)
     }
   }
 
-  xfree(user_time); user_time = 0;
-  if (need_reload) return 1;
+  if (need_reload) {
+    xfree(user_time); user_time = 0;
+    return 1;
+  }
 
   for (i = 1; i < user_time_size; i++)
     if (user_time[i] > 0) {
       serve_event_add(cs, user_time[i] + head.duration,
                       SERVE_EVENT_VIRTUAL_STOP, i);
     }
+
+  xfree(user_time); user_time = 0;
   return 0;
 }
 
