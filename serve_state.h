@@ -81,6 +81,22 @@ struct problem_extra_info
   struct watched_file *v_alts;
 };
 
+enum
+{
+  SERVE_EVENT_VIRTUAL_STOP = 1,
+  SERVE_EVENT_JUDGE_OLYMPIAD,
+
+  SERVE_EVENT_LAST,
+};
+
+struct serve_event_queue
+{
+  struct serve_event_queue *next, *prev;
+  time_t time;
+  int type;
+  int user_id;
+};
+
 struct serve_state
 {
   unsigned char *config_path;
@@ -144,6 +160,8 @@ struct serve_state
 
   struct problem_extra_info *prob_extras;
   unsigned short compile_request_id;
+
+  struct serve_event_queue *event_first, *event_last;
 
   // for full import
   int saved_testing_suspended;
@@ -298,5 +316,15 @@ void serve_send_run_quit(const serve_state_t state);
 void serve_reset_contest(serve_state_t state);
 void serve_squeeze_runs(serve_state_t state);
 int serve_count_transient_runs(serve_state_t state);
+
+void serve_event_add(serve_state_t state, time_t time, int type, int user_id);
+void serve_event_remove(serve_state_t state, struct serve_event_queue *event);
+void serve_event_destroy_queue(serve_state_t state);
+int serve_event_remove_matching(serve_state_t state, time_t time, int type,
+                                int user_id);
+
+int serve_collect_virtual_stop_events(serve_state_t cs);
+void serve_handle_events(serve_state_t cs);
+void serve_judge_virtual_olympiad(serve_state_t cs, int user_id, int run_id);
 
 #endif /* __SERVE_STATE_H__ */

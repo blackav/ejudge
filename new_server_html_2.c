@@ -3115,6 +3115,276 @@ ns_write_user_run_status(
   return 0;
 }
 
+void
+ns_write_olympiads_user_runs(
+	struct http_request_info *phr,
+        FILE *fout,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        const unsigned char *table_class)
+{
+  const serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob;
+  const struct section_language_data *lang;
+  int accepting_mode = 0;
+  struct run_entry re;
+  time_t start_time, run_time;
+  unsigned char *cl = 0;
+  int i, shown, runs_to_show = 10, variant, run_latest, report_allowed, score;
+  unsigned char *latest_flag = 0;
+  unsigned char lang_name_buf[64];
+  unsigned char prob_name_buf[128];
+  const unsigned char *lang_name_ptr, *prob_name_ptr;
+  unsigned char run_kind_buf[32], *run_kind_ptr;
+  unsigned char dur_str[64];
+  unsigned char stat_str[128];
+  const unsigned char *row_attr;
+  unsigned char tests_buf[64], score_buf[64];
+  unsigned char ab[1024];
+
+  if (table_class && *table_class) {
+    cl = alloca(strlen(table_class) + 16);
+    sprintf(cl, " class=\"%s\"", table_class);
+  }
+
+  ASSERT(global->score_system_val == SCORE_OLYMPIAD);
+  if (global->is_virtual) {
+    if (run_get_virtual_start_entry(cs->runlog_state, phr->user_id, &re) < 0) {
+      accepting_mode = 0;
+      start_time = run_get_start_time(cs->runlog_state);
+    } else {
+      if (!re.judge_id) accepting_mode = 1;
+      start_time = re.time;
+    }
+  } else {
+    accepting_mode = cs->accepting_mode;
+    start_time = run_get_start_time(cs->runlog_state);
+  }
+
+  XALLOCAZ(latest_flag, cs->max_prob + 1);
+
+  fprintf(fout,"<table border=\"1\"%s><tr><th%s>%s</th><th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th><th%s>%s</th><th%s>%s</th>"
+          "<th%s>%s</th><th%s>%s</th>",
+          cl, cl, _("Run ID"), cl, _("Time"), cl, _("Size"), cl, _("Problem"),
+          cl, _("Language"), cl, _("Result"),
+          cl, _("Tests passed"), cl, _("Score"));
+  if (global->team_enable_src_view)
+    fprintf(fout, "<th%s>%s</th>", cl, _("View source"));
+  if (global->team_enable_rep_view || global->team_enable_ce_view)
+    fprintf(fout, "<th%s>%s</th>", cl, _("View report"));
+  if (global->enable_printing && !cs->printing_suspended)
+    fprintf(fout, "<th%s>%s</th>", cl, _("Print sources"));
+  fprintf(fout, "</tr>\n");
+
+  for (shown = 0, i = run_get_total(cs->runlog_state) - 1;
+       i >= 0 && shown < runs_to_show;
+       i--) {
+    if (run_get_entry(cs->runlog_state, i, &re) < 0) continue;
+    if (re.status > RUN_LAST) continue;
+    if (re.status > RUN_MAX_STATUS && re.status <= RUN_TRANSIENT_FIRST)
+      continue;
+    if (re.user_id != phr->user_id) continue;
+
+    prob = 0;
+    if (re.prob_id > 0 && re.prob_id <= cs->max_prob)
+      prob = cs->probs[re.prob_id];
+    if (prob) {
+      if (prob->variant_num <= 0) {
+        prob_name_ptr = prob->short_name;
+      } else {
+        variant = re.variant;
+        if (!variant) variant = find_variant(cs, re.user_id, re.prob_id);
+        if (variant > 0) {
+          snprintf(prob_name_buf, sizeof(prob_name_buf), "%s-%d",
+                   prob->short_name, variant);
+        } else {
+          snprintf(prob_name_buf, sizeof(prob_name_buf), "%s-?",
+                   prob->short_name);
+        }
+        prob_name_ptr = prob_name_buf;
+      }
+    } else {
+      snprintf(prob_name_buf, sizeof(prob_name_buf), "??? (%d)", re.prob_id);
+      prob_name_ptr = prob_name_buf;
+    }
+
+    lang = 0;
+    if (!re.lang_id) {
+      lang_name_ptr = "&nbsp;";
+    } else if (re.lang_id > 0 && re.lang_id <= cs->max_lang
+               && (lang = cs->langs[re.lang_id])) {
+      lang_name_ptr = lang->short_name;
+    } else {
+      snprintf(lang_name_buf, sizeof(lang_name_buf), "??? (%d)", re.lang_id);
+      lang_name_ptr = lang_name_buf;
+    }
+
+    run_kind_ptr = run_kind_buf;
+    if (re.is_imported) *run_kind_ptr++ = '*';
+    if (re.is_hidden) *run_kind_ptr++ = '#';
+    *run_kind_ptr = 0;
+
+    run_time = re.time;
+    if (!start_time) run_time = start_time;
+    if (start_time > run_time) run_time = start_time;
+    duration_str(global->show_astr_time, run_time, start_time, dur_str, 0);
+
+    if (prob && prob->type_val != PROB_TYPE_STANDARD) {
+      // there are check statuses that can never appear in output-only probs
+      switch (re.status) {
+      case RUN_COMPILE_ERR:
+      case RUN_RUN_TIME_ERR:
+      case RUN_TIME_LIMIT_ERR:
+      case RUN_MEM_LIMIT_ERR:
+      case RUN_SECURITY_ERR:
+        re.status = RUN_CHECK_FAILED;
+        break;
+      case RUN_WRONG_ANSWER_ERR:
+        if (accepting_mode) re.status = RUN_ACCEPTED;
+        break;
+      }
+    }
+
+    run_latest = 0;
+    report_allowed = 0;
+    if (accepting_mode) {
+      switch (re.status) {
+      case RUN_OK:
+      case RUN_PARTIAL:
+      case RUN_ACCEPTED:
+        re.status = RUN_ACCEPTED;
+        if (prob && prob->type_val != PROB_TYPE_STANDARD) {
+          snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
+        } else {
+          snprintf(tests_buf, sizeof(tests_buf), "%d", prob->tests_to_accept);
+          report_allowed = 1;
+        }
+        if (prob && !latest_flag[prob->id]) run_latest = 1;
+        break;
+
+      case RUN_COMPILE_ERR:
+        report_allowed = 1;
+        snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
+        break;
+
+      case RUN_PRESENTATION_ERR:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_RUN_TIME_ERR:
+      case RUN_TIME_LIMIT_ERR:
+      case RUN_MEM_LIMIT_ERR:
+      case RUN_SECURITY_ERR:
+        if (prob && prob->type_val != PROB_TYPE_STANDARD) {
+          snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
+        } else {
+          if (re.test > 0) re.test--;
+          if (prob && re.test > prob->tests_to_accept)
+            re.test = prob->tests_to_accept;
+          snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
+          report_allowed = 1;
+        }
+        break;
+
+      default:
+        snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
+      }
+      snprintf(score_buf, sizeof(score_buf), "&nbsp;");
+    } else {
+      switch (re.status) {
+      case RUN_OK:
+        if (prob && prob->type_val != PROB_TYPE_STANDARD) {
+          snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
+        } else {
+          snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
+        }
+        report_allowed = 1;
+        if (prob && !latest_flag[prob->id]) run_latest = 1;
+        score = re.score;
+        if (prob && !prob->variable_full_score) score = prob->full_score;
+        if (re.score_adj) score += re.score_adj;
+        if (score < 0) score = 0;
+        snprintf(score_buf, sizeof(score_buf), "%d", score);
+        break;
+      case RUN_PARTIAL:
+        if (prob && prob->type_val != PROB_TYPE_STANDARD) {
+          snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
+        } else {
+          snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
+        }
+        report_allowed = 1;
+        if (prob && !latest_flag[prob->id]) run_latest = 1;
+        score = re.score;
+        if (re.score_adj) score += re.score_adj;
+        if (score < 0) score = 0;
+        snprintf(score_buf, sizeof(score_buf), "%d", score);
+        break;
+      case RUN_COMPILE_ERR:
+        snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
+        snprintf(score_buf, sizeof(score_buf), "&nbsp;");
+        report_allowed = 1;
+        break;
+
+      case RUN_ACCEPTED:
+        if (prob && !latest_flag[prob->id]) run_latest = 1;
+        // FALLTHROUGH
+
+      case RUN_RUN_TIME_ERR:
+      case RUN_TIME_LIMIT_ERR:
+      case RUN_PRESENTATION_ERR:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_CHECK_FAILED:
+      case RUN_MEM_LIMIT_ERR:
+      case RUN_SECURITY_ERR:
+        if (prob && prob->type_val != PROB_TYPE_STANDARD) {
+          snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
+        } else {
+          snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
+        }
+        report_allowed = 1;
+        snprintf(score_buf, sizeof(score_buf), "&nbsp;");
+        break;
+
+      default:
+        snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
+        snprintf(score_buf, sizeof(score_buf), "&nbsp;");
+      }
+    }
+
+    run_status_str(re.status, stat_str, 0);
+
+    row_attr = "";
+    if (run_latest) {
+      row_attr = " color=\"#dddddd\"";
+      latest_flag[prob->id] = 1;
+    }
+
+    fprintf(fout,
+            "<tr%s><td%s>%d%s</td><td%s>%s</td><td%s>%u</td>"
+            "<td%s>%s</td><td%s>%s</td><td%s>%s</td>"
+            "<td%s>%s</td><td%s>%s</td>",
+            row_attr, cl, i, run_kind_ptr,
+            cl, dur_str, cl, re.size,
+            cl, prob_name_ptr,
+            cl, lang_name_ptr, cl, stat_str,
+            cl, tests_buf, cl, score_buf);
+
+    if (global->team_enable_src_view) {
+      fprintf(fout, "<td%s>%s%s</a></td>", cl,
+              ns_aref(ab, sizeof(ab), phr, NEW_SRV_ACTION_VIEW_SOURCE,
+                      "run_id=%d", i), _("View"));
+    }
+    if (global->team_enable_rep_view && global->team_enable_ce_view) {
+      fprintf(fout, "<td%s>&nbsp;</td>", cl);
+    }
+
+    fprintf(fout, "</tr>\n");
+    shown++;
+  }
+  fprintf(fout, "</table>\n");
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

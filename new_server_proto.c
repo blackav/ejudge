@@ -165,6 +165,7 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_INV_FILTER_EXPR] = __("Invalid filter expression"),
   [NEW_SRV_ERR_CONTEST_UNLOADED] = __("Contest is unloaded"),
   [NEW_SRV_ERR_PENDING_IMPORT_EXISTS] = __("Pending XML import already exists"),
+  [NEW_SRV_ERR_ANSWER_UNSPECIFIED] = __("Answer is unspecified"),
 };
 
 const unsigned char *

@@ -24,6 +24,7 @@
 #include "errlog.h"
 #include "unix/unix_fileutl.h"
 #include "xml_utils.h"
+#include "random.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -134,6 +135,7 @@ run_init(teamdb_state_t ts)
 {
   runlog_state_t p;
 
+  random_init();
   XCALLOC(p, 1);
   p->teamdb_state = ts;
   p->run_fd = -1;
@@ -682,9 +684,24 @@ runlog_flush(runlog_state_t state)
 }
 
 static int
+append_to_end(runlog_state_t state, time_t t, int nsec)
+{
+  struct run_entry *runs = runs = state->runs;
+
+  if (nsec < 0) nsec = 0;
+  memset(&runs[state->run_u], 0, sizeof(runs[0]));
+  runs[state->run_u].run_id = state->run_u;
+  runs[state->run_u].status = RUN_EMPTY;
+  runs[state->run_u].time = t;
+  runs[state->run_u].nsec = nsec;
+  return state->run_u++;
+}
+
+static int
 append_record(runlog_state_t state, time_t t, int uid, int nsec)
 {
   int i, j, k;
+  struct run_entry *runs = 0;
 
   ASSERT(state->run_u <= state->run_a);
   if (state->run_u == state->run_a) {
@@ -693,19 +710,75 @@ append_record(runlog_state_t state, time_t t, int uid, int nsec)
     memset(&state->runs[state->run_u], 0, (state->run_a - state->run_u) * sizeof(state->runs[0]));
     info("append_record: array extended: %d", state->run_a);
   }
+  runs = state->runs;
 
+  /*
+   * RUN_EMPTY compilicates things! :(
+   */
+  if (!state->run_u) return append_to_end(state, t, nsec);
+
+  j = state->run_u - 1;
+  while (j >= 0 && runs[j].status == RUN_EMPTY) j--;
+  if (j < 0) return append_to_end(state, t, nsec);
+  if (t > runs[j].time) return append_to_end(state, t, nsec);
+  if (t == runs[j].time) {
+    if (nsec < 0 && runs[j].nsec < 999999999) {
+      nsec = runs[j].nsec + 1;
+      return append_to_end(state, t, nsec);
+    }
+    if (nsec > runs[j].nsec) return append_to_end(state, t, nsec);
+    if (nsec == runs[j].nsec && uid >= runs[j].user_id)
+      return append_to_end(state, t, nsec);
+  }
+
+  if (nsec < 0) {
+    for (i = 0; i < state->run_u; i++) {
+      if (runs[i].status == RUN_EMPTY) continue;
+      if (runs[i].time > t) break;
+      if (runs[i].time < t) continue;
+      // runs[i].time == t
+      k = i;
+      while (runs[i].status == RUN_EMPTY || runs[i].time == t) i++;
+      j = i - 1;
+      while (runs[j].status == RUN_EMPTY) j--;
+      if (runs[j].nsec < 999999999) {
+        nsec = runs[j].nsec + 1;
+        break;
+      }
+      // DUMB :(
+      nsec = random_u32() % 1000000000;
+      goto try_with_nsec;
+    }
+    ASSERT(i < state->run_u);
+  } else {
+  try_with_nsec:
+    for (i = 0; i < state->run_u; i++) {
+      if (runs[i].status == RUN_EMPTY) continue;
+      if (runs[i].time > t) break;
+      if (runs[i].time < t) continue;
+      if (runs[i].nsec > nsec) break;
+      if (runs[i].nsec < nsec) continue;
+      if (runs[i].user_id > uid) break;
+    }
+  }
+
+  /*
   while (1) {
     if (state->run_u > 0) {
       if (state->runs[state->run_u - 1].time > t) break;
       if (state->runs[state->run_u - 1].time == t) {
-        if (state->runs[state->run_u - 1].nsec > nsec) break;
-        if (state->runs[state->run_u - 1].nsec == nsec) {
-          if (state->runs[state->run_u - 1].user_id > uid) break;
+        if (nsec == -1) {
+          nsec = state->runs[state->run_u - 1].nsec + 1;
+        } else {
+          if (state->runs[state->run_u - 1].nsec > nsec) break;
+          if (state->runs[state->run_u - 1].nsec == nsec) {
+            if (state->runs[state->run_u - 1].user_id > uid) break;
+          }
         }
       }
     }
 
-    /* it is safe to insert a record at the end */
+    if (nsec < 0) nsec = 0;
     memset(&state->runs[state->run_u], 0, sizeof(state->runs[0]));
     state->runs[state->run_u].run_id = state->run_u;
     state->runs[state->run_u].status = RUN_EMPTY;
@@ -729,6 +802,7 @@ append_record(runlog_state_t state, time_t t, int uid, int nsec)
   ASSERT(i == j);
   ASSERT(i < state->run_u);
   ASSERT(i >= 0);
+  */
 
   /* So we going to insert a run at position i.
    * Check, that there is no "transient"-statused runs after this position.
@@ -740,8 +814,8 @@ append_record(runlog_state_t state, time_t t, int uid, int nsec)
    * packets.
    */
   for (j = i; j < state->run_u; j++)
-    if (state->runs[j].status >= RUN_TRANSIENT_FIRST
-        && state->runs[j].status <= RUN_TRANSIENT_LAST)
+    if (runs[j].status >= RUN_TRANSIENT_FIRST
+        && runs[j].status <= RUN_TRANSIENT_LAST)
       break;
   if (j < state->run_u) {
     err("append_record: cannot safely insert a run at position %d", i);
@@ -749,20 +823,21 @@ append_record(runlog_state_t state, time_t t, int uid, int nsec)
     return -1;
   }
 
-  memmove(&state->runs[i + 1], &state->runs[i], (state->run_u - i) * sizeof(state->runs[0]));
+  memmove(&runs[i + 1], &runs[i], (state->run_u - i) * sizeof(runs[0]));
   state->run_u++;
   for (j = i + 1; j < state->run_u; j++)
-    state->runs[j].run_id = j;
+    runs[j].run_id = j;
 
-  memset(&state->runs[i], 0, sizeof(state->runs[0]));
-  state->runs[i].run_id = i;
-  state->runs[i].status = RUN_EMPTY;
-  state->runs[i].time = t;
-  state->runs[i].nsec = nsec;
-  if (sf_lseek(state->run_fd, sizeof(state->head) + i * sizeof(state->runs[0]),
+  if (nsec < 0) nsec = 0;
+  memset(&runs[i], 0, sizeof(runs[0]));
+  runs[i].run_id = i;
+  runs[i].status = RUN_EMPTY;
+  runs[i].time = t;
+  runs[i].nsec = nsec;
+  if (sf_lseek(state->run_fd, sizeof(state->head) + i * sizeof(runs[0]),
                SEEK_SET, "run") == (off_t) -1) return -1;
-  if (do_write(state->run_fd, &state->runs[i],
-               (state->run_u - i) * sizeof(state->runs[0])) < 0)
+  if (do_write(state->run_fd, &runs[i],
+               (state->run_u - i) * sizeof(runs[0])) < 0)
     return -1;
   return i;
 }
@@ -1358,6 +1433,23 @@ run_get_entry(runlog_state_t state, int run_id, struct run_entry *out)
 }
 
 int
+run_get_virtual_start_entry(
+	runlog_state_t state,
+        int user_id,
+        struct run_entry *out)
+{
+  int i;
+
+  for (i = 0; i < state->run_u; i++)
+    if (state->runs[i].status == RUN_VIRTUAL_START
+        && state->runs[i].user_id == user_id)
+      break;
+  if (i >= state->run_u) return -1;
+  if (out) memcpy(out, &state->runs[i], sizeof(*out));
+  return i;
+}
+
+int
 run_set_entry(runlog_state_t state, int run_id, unsigned int mask,
               const struct run_entry *in)
 {
@@ -1614,7 +1706,7 @@ run_get_virtual_stop_time(runlog_state_t state, int user_id, time_t cur_time)
   if (!cur_time) return pvt->stop_time;
   if (pvt->status == V_REAL_USER) return state->head.stop_time;
   if (pvt->status != V_VIRTUAL_USER) return 0;
-  if (state->head.duration || pvt->stop_time) return pvt->stop_time;
+  if (!state->head.duration || pvt->stop_time) return pvt->stop_time;
   if (pvt->start_time + state->head.duration < cur_time) {
     pvt->stop_time = pvt->start_time + state->head.duration;
   }
@@ -1698,10 +1790,6 @@ run_virtual_stop(runlog_state_t state, int user_id, time_t t, ej_ip_t ip,
     err("run_virtual_stop: the virtual time ended");
     return -1;
   }
-  if (nsec < 0 || nsec >= 1000000000) {
-    err("run_virtual_stop: nsec field value is invalid");
-    return -1;
-  }
 
   if ((i = append_record(state, t, user_id, nsec)) < 0) return -1;
   state->runs[i].user_id = user_id;
@@ -1772,6 +1860,26 @@ run_clear_entry(runlog_state_t state, int run_id)
     state->runs[run_id].run_id = run_id;
     break;
   }
+  return run_flush_entry(state, run_id);
+}
+
+int
+run_forced_clear_entry(runlog_state_t state, int run_id)
+{
+  if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
+
+  memset(&state->runs[run_id], 0, sizeof(state->runs[run_id]));
+  state->runs[run_id].status = RUN_EMPTY;
+  state->runs[run_id].run_id = run_id;
+  return run_flush_entry(state, run_id);
+}
+
+int
+run_forced_set_hidden(runlog_state_t state, int run_id)
+{
+  if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
+
+  state->runs[run_id].is_hidden = 1;
   return run_flush_entry(state, run_id);
 }
 
@@ -2583,6 +2691,32 @@ run_is_valid_user_status(int status)
 {
   if (status < 0 || status > RUN_LAST) return 0;
   return run_valid_user_statuses[status];
+}
+
+int
+run_get_virtual_info(runlog_state_t state, int user_id,
+                     struct run_entry *vs, struct run_entry *ve)
+{
+  int count = 0, i, run_start = -1, run_end = -1, s;
+
+  for (i = state->run_u; i >= 0; i--) {
+    if ((s = state->runs[i].status) == RUN_EMPTY) continue;
+    if (state->runs[i].user_id != user_id) continue;
+    if (s >= RUN_TRANSIENT_FIRST && s <= RUN_TRANSIENT_LAST) {
+      count++;
+    } else if (s == RUN_VIRTUAL_START) {
+      if (run_start >= 0) return -1;
+      run_start = i;
+    } else if (s == RUN_VIRTUAL_STOP) {
+      if (run_end >= 0) return -1;
+      run_end = i;
+    }
+  }
+
+  if (run_start < 0 || run_end < 0) return -1;
+  if (vs) memcpy(vs, &state->runs[run_start], sizeof(*vs));
+  if (ve) memcpy(ve, &state->runs[run_end], sizeof(*ve));  
+  return count;
 }
 
 /*

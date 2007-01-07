@@ -795,6 +795,8 @@ ns_check_contest_events(serve_state_t cs, const struct contest_desc *cnts)
       serve_update_standings_file(cs, cnts, 0);
     }
   }
+
+  if (cs->event_first) serve_handle_events(cs);
 }
 
 static void
@@ -6587,44 +6589,53 @@ unpriv_submit_run(FILE *fout,
   struct timeval precise_time;
   path_t run_path;
 
-  if (ns_cgi_param(phr, "prob_id", &s) <= 0)
-    return ns_html_err_inv_param(fout, phr, 0, "prob_id is not set or binary");
-  if (sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n])
-    return ns_html_err_inv_param(fout, phr, 0, "cannot parse prob_id");
-  if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id]))
-    return ns_html_err_inv_param(fout, phr, 0, "prob_id is invalid");
+  l10n_setlocale(phr->locale_id);
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (ns_cgi_param(phr, "prob_id", &s) <= 0
+      || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
+      || prob_id <= 0 || prob_id > cs->max_prob
+      || !(prob = cs->probs[prob_id])) {
+    ns_error(log_f, NEW_SRV_ERR_INV_PROB_ID);
+    goto done;
+  }
 
   // "STANDARD" problems need programming language identifier
   if (prob->type_val == PROB_TYPE_STANDARD) {
-    if (ns_cgi_param(phr, "lang_id", &s) <= 0)
-      return ns_html_err_inv_param(fout, phr, 0,
-                                   "lang_id is not set or binary");
-    if (sscanf(s, "%d%n", &lang_id, &n) != 1 || s[n])
-      return ns_html_err_inv_param(fout, phr, 0, "cannot parse lang_id");
-    if (lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id]))
-      return ns_html_err_inv_param(fout, phr, 0, "lang_id is invalid");
+    if (ns_cgi_param(phr, "lang_id", &s) <= 0
+        || sscanf(s, "%d%n", &lang_id, &n) != 1 || s[n]
+        || lang_id <= 0 || lang_id > cs->max_lang
+        || !(lang = cs->langs[lang_id])) {
+      ns_error(log_f, NEW_SRV_ERR_INV_LANG_ID);
+      goto done;
+    }
   }
 
   switch (prob->type_val) {
   case PROB_TYPE_STANDARD:      // "file"
   case PROB_TYPE_OUTPUT_ONLY:
+    if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)) {
+      ns_error(log_f, NEW_SRV_ERR_FILE_UNSPECIFIED);
+      goto done;
+    }
+    break;
   case PROB_TYPE_TEXT_ANSWER:
   case PROB_TYPE_SHORT_ANSWER:
   case PROB_TYPE_SELECT_ONE:
-    if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size))
-      return ns_html_err_inv_param(fout, phr, 0,
-                                   "\"file\" parameter is not set");
+    if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)) {
+      ns_error(log_f, NEW_SRV_ERR_ANSWER_UNSPECIFIED);
+      goto done;
+    }
     break;
   case PROB_TYPE_SELECT_MANY:   // "ans_*"
     for (i = 0, max_ans = -1, ans_size = 0; i < phr->param_num; i++)
       if (!strncmp(phr->param_names[i], "ans_", 4)) {
         if (sscanf(phr->param_names[i] + 4, "%d%n", &ans, &n) != 1
-            || phr->param_names[i][4 + n])
-          return ns_html_err_inv_param(fout, phr, 0,
-                                        "\"ans_*\" parameter is invalid");
-        if (ans < 0 || ans > 65535)
-          return ns_html_err_inv_param(fout, phr, 0,
-                                        "\"ans_*\" parameter is out of range");
+            || phr->param_names[i][4 + n]
+            || ans < 0 || ans > 65535) {
+          ns_error(log_f, NEW_SRV_ERR_INV_ANSWER);
+          goto done;
+        }
         if (ans > max_ans) max_ans = ans;
         ans_size += 7;
       }
@@ -6653,12 +6664,12 @@ unpriv_submit_run(FILE *fout,
     abort();
   }
 
-  log_f = open_memstream(&log_txt, &log_len);
-
   switch (prob->type_val) {
   case PROB_TYPE_STANDARD:
-    if (!lang->binary && strlen(run_text) != run_size) 
-      return ns_html_err_inv_param(fout, phr, 0, "binary submission");
+    if (!lang->binary && strlen(run_text) != run_size) {
+      ns_error(log_f, NEW_SRV_ERR_BINARY_FILE);
+      goto done;
+    }
     if (!run_size) {
       ns_error(log_f, NEW_SRV_ERR_SUBMIT_EMPTY);
       goto done;
@@ -6666,16 +6677,30 @@ unpriv_submit_run(FILE *fout,
     break;
 
   case PROB_TYPE_OUTPUT_ONLY:
-    if (!prob->binary_input && strlen(run_text) != run_size) 
-      return ns_html_err_inv_param(fout, phr, 0, "binary submission");
+    if (!prob->binary_input && strlen(run_text) != run_size) {
+      ns_error(log_f, NEW_SRV_ERR_BINARY_FILE);
+      goto done;
+    }
     break;
 
   case PROB_TYPE_TEXT_ANSWER:
   case PROB_TYPE_SHORT_ANSWER:
   case PROB_TYPE_SELECT_ONE:
+    if (strlen(run_text) != run_size) {
+      ns_error(log_f, NEW_SRV_ERR_BINARY_FILE);
+      goto done;
+    }
+    if (!run_size) {
+      ns_error(log_f, NEW_SRV_ERR_SUBMIT_EMPTY);
+      goto done;
+    }
+    break;
+
   case PROB_TYPE_SELECT_MANY:
-    if (strlen(run_text) != run_size) 
-      return ns_html_err_inv_param(fout, phr, 0, "binary submission");
+    if (strlen(run_text) != run_size) {
+      ns_error(log_f, NEW_SRV_ERR_BINARY_FILE);
+      goto done;
+    }
     break;
   }
 
@@ -6930,10 +6955,12 @@ unpriv_submit_run(FILE *fout,
   }
 
  done:;
+  l10n_setlocale(0);
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
     html_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_SUBMISSIONS, 0);
   } else {
+    unpriv_load_html_style(phr, cnts, 0, 0);
     html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT);
   }
@@ -7245,6 +7272,7 @@ unpriv_command(FILE *fout,
   struct timeval precise_time;
   int run_id;
 
+  l10n_setlocale(phr->locale_id);
   log_f = open_memstream(&log_txt, &log_size);
 
   switch (phr->action) {
@@ -7306,10 +7334,12 @@ unpriv_command(FILE *fout,
   }
 
  done:;
+  l10n_setlocale(0);
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
     html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
   } else {
+    unpriv_load_html_style(phr, cnts, 0, 0);
     html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE);
   }
@@ -8422,10 +8452,10 @@ user_main_page(FILE *fout,
     fog_start_time = start_time + duration - global->board_fog_time;
   if (fog_start_time < 0) fog_start_time = 0;
 
+  l10n_setlocale(phr->locale_id);
   header = gettext(main_page_headers[phr->action]);
   if (!header) header = _("Main page");
   unpriv_load_html_style(phr, cnts, 0, 0);
-  l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, phr->locale_id,
             "%s [%s]: %s",
             phr->name_arm, extra->contest_arm, header);
@@ -8690,12 +8720,16 @@ user_main_page(FILE *fout,
             _("Sent submissions"),
             all_runs?_("all"):_("last 15"),
             cnts->team_head_style);
-    new_write_user_runs(cs, fout, phr->user_id, all_runs,
-                        NEW_SRV_ACTION_VIEW_SOURCE,
-                        NEW_SRV_ACTION_VIEW_REPORT,
-                        NEW_SRV_ACTION_PRINT_RUN,
-                        phr->session_id, phr->self_url,
-                        phr->hidden_vars, "", "summary");
+    if (global->score_system_val == SCORE_OLYMPIAD) {
+      ns_write_olympiads_user_runs(phr, fout, cnts, extra, "summary");
+    } else {
+      new_write_user_runs(cs, fout, phr->user_id, all_runs,
+                          NEW_SRV_ACTION_VIEW_SOURCE,
+                          NEW_SRV_ACTION_VIEW_REPORT,
+                          NEW_SRV_ACTION_PRINT_RUN,
+                          phr->session_id, phr->self_url,
+                          phr->hidden_vars, "", "summary");
+    }
     if (all_runs) s = _("View last 15");
     else s = _("View all");
     fprintf(fout, "<p><a href=\"%s?SID=%016llx&all_runs=%d&action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_runs, NEW_SRV_ACTION_VIEW_SUBMISSIONS, s);

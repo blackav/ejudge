@@ -3,7 +3,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -197,6 +197,7 @@ struct run_entry
 void run_get_header(runlog_state_t, struct run_header *out);
 void run_get_all_entries(runlog_state_t, struct run_entry *out);
 int run_get_entry(runlog_state_t, int run_id, struct run_entry *out);
+int run_get_virtual_start_entry(runlog_state_t, int user, struct run_entry *);
 int run_set_entry(runlog_state_t, int run_id, unsigned int mask,
                   struct run_entry const *in);
 int run_is_readonly(runlog_state_t, int run_id);
@@ -207,10 +208,15 @@ time_t run_get_virtual_stop_time(runlog_state_t, int user_id, time_t cur_time);
 int run_get_virtual_status(runlog_state_t, int user_id);
 int run_virtual_start(runlog_state_t, int user_id, time_t, ej_ip_t, int, int);
 int run_virtual_stop(runlog_state_t, int user_id, time_t, ej_ip_t, int, int);
+int run_get_virtual_info(runlog_state_t state, int user_id,
+                         struct run_entry *vs, struct run_entry *ve);
 
 int run_clear_entry(runlog_state_t, int run_id);
 int run_squeeze_log(runlog_state_t);
 void run_clear_variables(runlog_state_t);
+
+int run_forced_clear_entry(runlog_state_t, int run_id);
+int run_forced_set_hidden(runlog_state_t state, int run_id);
 
 int run_write_xml(runlog_state_t, void *, const struct contest_desc *cnts,
                   FILE *f, int, time_t);

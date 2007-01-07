@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2039,6 +2039,250 @@ serve_count_transient_runs(serve_state_t state)
       counter++;
   }
   return counter;
+}
+
+int
+serve_collect_virtual_stop_events(serve_state_t cs)
+{
+  struct run_header head;
+  const struct run_entry *runs, *pe;
+  int total_runs, i;
+  time_t *user_time = 0, *new_time, *pt;
+  int user_time_size = 0, new_size;
+  int need_reload = 0;
+
+  if (!cs->global->is_virtual) return 0;
+
+  run_get_header(cs->runlog_state, &head);
+  if (!head.duration) return 0;
+  total_runs = run_get_total(cs->runlog_state);
+  runs = run_get_entries_ptr(cs->runlog_state);
+
+  user_time_size = 128;
+  XCALLOC(user_time, user_time_size);
+
+  for (i = 0; i < total_runs; i++) {
+    pe = &runs[i];
+    if (!run_is_valid_status(pe->status)) continue;
+    if (pe->status == RUN_EMPTY) continue;
+    if (pe->user_id <= 0 || pe->user_id >= 100000) continue;
+    if (pe->user_id >= user_time_size) {
+      new_size = user_time_size;
+      while (pe->user_id >= new_size) new_size *= 2;
+      XCALLOC(new_time, new_size);
+      memcpy(new_time, user_time, user_time_size * sizeof(user_time[0]));
+      xfree(user_time);
+      user_time = new_time;
+      user_time_size = new_size;
+    }
+    pt = &user_time[pe->user_id];
+    if (pe->status == RUN_VIRTUAL_START) {
+      if (*pt == -2) {
+        err("run %d: virtual start after non-virtual runs, cleared!", i);
+        run_forced_clear_entry(cs->runlog_state, i);
+        need_reload = 1;
+      } else if (*pt == -1) {
+        err("run %d: virtual start after virtual stop, cleared!", i);
+        run_forced_clear_entry(cs->runlog_state, i);
+        need_reload = 1;
+      } else if (*pt > 0) {
+        err("run %d: virtual start after virtual start, cleared!", i);
+        run_forced_clear_entry(cs->runlog_state, i);
+        need_reload = 1;
+      } else {
+        *pt = pe->time;
+      }
+    } else if (pe->status == RUN_VIRTUAL_STOP) {
+      if (*pt == -2) {
+        err("run %d: virtual stop after non-virtual runs, cleared!", i);
+        run_forced_clear_entry(cs->runlog_state, i);
+        need_reload = 1;
+      } else if (*pt == -1) {
+        err("run %d: virtual stop after virtual stop, cleared!", i);
+        run_forced_clear_entry(cs->runlog_state, i);
+        need_reload = 1;
+      } else if (!*pt) {
+        err("run %d: virtual stop without virtual start, cleared!", i);
+        run_forced_clear_entry(cs->runlog_state, i);
+        need_reload = 1;
+      } else if (pe->time > *pt + head.duration) {
+        err("run %d: virtual stop time overrun, cleared!", i);
+        run_forced_clear_entry(cs->runlog_state, i);
+        need_reload = 1;
+      } else {
+        *pt = -1;
+      }
+    } else {
+      if (*pt == -2) {
+        // another non-virtual run
+      } else if (*pt == -1) {
+        // run after virtual stop
+        if (!pe->is_hidden) {
+          err("run %d: run after virtual stop, made hidden!", i);
+          run_forced_set_hidden(cs->runlog_state, i);
+          need_reload = 1;
+        }
+      } else if (!pt) {
+        // first run
+        *pt = -2;
+      } else if (pe->time > *pt + head.duration) {
+        // virtual run overrun
+        if (!pe->is_hidden) {
+          err("run %d: virtual time run overrun, made hidden!", i);
+          run_forced_set_hidden(cs->runlog_state, i);
+          need_reload = 1;
+        }
+      } else {
+        // regular virtual run
+      }
+    }
+  }
+
+  xfree(user_time); user_time = 0;
+  if (need_reload) return 1;
+
+  for (i = 1; i < user_time_size; i++)
+    if (user_time[i] > 0) {
+      serve_event_add(cs, user_time[i] + head.duration,
+                      SERVE_EVENT_VIRTUAL_STOP, i);
+    }
+  return 0;
+}
+
+static void
+handle_virtual_stop_event(serve_state_t cs, struct serve_event_queue *p)
+{
+  int trans_runs = -1, nsec = -1, run_id;
+  struct timeval precise_time;
+
+  if (p->time < cs->current_time) {
+    if (trans_runs < 0) trans_runs = serve_count_transient_runs(cs);
+    if (trans_runs > 0) return;
+    info("inserting backlogged virtual stop event at time %ld", p->time);
+    nsec = -1;
+  } else {
+    // p->time == cs->current_time
+    gettimeofday(&precise_time, 0);
+    if (precise_time.tv_sec != cs->current_time) {
+      // oops...
+      info("inserting virtual stop event 1 second past");
+      nsec = -1;
+    } else {
+      info("inserting virtual stop event");
+      nsec = precise_time.tv_usec * 1000;
+    }
+  }
+
+  run_id = run_virtual_stop(cs->runlog_state, p->user_id, p->time,
+                            0 /* IP */, 0, nsec);
+  if (run_id < 0) {
+    err("insert failed, removing event!");
+    serve_event_remove(cs, p);
+    return;
+  }
+  info("inserted virtual stop as run %d", run_id);
+  serve_move_files_to_insert_run(cs, run_id);
+  if (cs->global->score_system_val == SCORE_OLYMPIAD
+      && cs->global->is_virtual) {
+    serve_event_add(cs, p->time + 1, SERVE_EVENT_JUDGE_OLYMPIAD, p->user_id);
+  }
+  serve_event_remove(cs, p);
+}
+
+static void
+handle_judge_olympiad_event(serve_state_t cs, struct serve_event_queue *p)
+{
+  int count;
+  struct run_entry rs, re;
+
+  if (cs->global->score_system_val != SCORE_OLYMPIAD
+      || !cs->global->is_virtual) goto done;
+  count = run_get_virtual_info(cs->runlog_state, p->user_id, &rs, &re);
+  if (count < 0) {
+    err("virtual user %d cannot be judged", p->user_id);
+    goto done;
+  }
+  // cannot do judging before all transint runs are done
+  if (count > 0) return;
+  if (rs.status != RUN_VIRTUAL_START || rs.user_id != p->user_id)
+    goto done;
+  if (re.status != RUN_VIRTUAL_STOP || re.user_id != p->user_id)
+    goto done;
+  // already judged somehow
+  if (rs.judge_id > 0) goto done;
+  serve_judge_virtual_olympiad(cs, p->user_id, re.run_id);
+
+ done:
+  serve_event_remove(cs, p);
+  return;
+}
+
+void
+serve_handle_events(serve_state_t cs)
+{
+  struct serve_event_queue *p, *q;
+
+  if (!cs->event_first) return;
+
+  for (p = cs->event_first; p; p = q) {
+    q = p->next;
+    if (p->time > cs->current_time) break;
+    switch (p->type) {
+    case SERVE_EVENT_VIRTUAL_STOP:
+      handle_virtual_stop_event(cs, p);
+      break;
+    case SERVE_EVENT_JUDGE_OLYMPIAD:
+      handle_judge_olympiad_event(cs, p);
+      break;
+    default:
+      abort();
+    }
+  }
+}
+
+void
+serve_judge_virtual_olympiad(serve_state_t cs, int user_id, int run_id)
+{
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob;
+  struct run_entry re;
+  int *latest_runs, s, i;
+
+  if (global->score_system_val != SCORE_OLYMPIAD
+      || !global->is_virtual) return;
+  if (user_id <= 0) return;
+  if (run_get_virtual_start_entry(cs->runlog_state, user_id, &re) < 0) return;
+  if (re.judge_id > 0) return;
+  if (run_id < 0) return;
+
+  // Fully rejudge latest submits
+  if (run_get_entry(cs->runlog_state, run_id, &re) < 0) return;
+  if (re.status != RUN_VIRTUAL_STOP) return;
+  if (cs->max_prob <= 0) return;
+
+  XALLOCA(latest_runs, cs->max_prob + 1);
+  memset(latest_runs, -1, (cs->max_prob + 1) * sizeof(latest_runs[0]));
+  run_id--;
+  for (;run_id >= 0; run_id--) {
+    if (run_get_entry(cs->runlog_state, run_id, &re) < 0) return;
+    if (!run_is_valid_status((s = re.status))) continue;
+    if (s == RUN_EMPTY) continue;
+    if (re.user_id != user_id) continue;
+    if (s == RUN_VIRTUAL_START) break;
+    if (s != RUN_OK && s != RUN_PARTIAL && s != RUN_ACCEPTED) continue;
+    prob = 0;
+    if (re.prob_id > 0 && re.prob_id <= cs->max_prob)
+      prob = cs->probs[re.prob_id];
+    if (!prob) continue;
+    if (prob->disable_testing || prob->disable_auto_testing) continue;
+    if (latest_runs[re.prob_id] < 0) latest_runs[re.prob_id] = run_id;
+  }
+  if (run_id < 0) return;
+
+  for (i = 1; i <= cs->max_prob; i++) {
+    if (latest_runs[i] >= 0)
+      serve_rejudge_run(cs, latest_runs[i], user_id, 0, 0, 1, 10);
+  }
 }
 
 /*

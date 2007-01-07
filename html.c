@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1021,6 +1021,7 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
       fprintf(f, "%s</a>", _("View"));
       fprintf(f, "</td>");
     }
+      /* FIXME: RUN_PRESENTATION_ERR and != standard problem type */
     if (state->global->team_enable_rep_view) {
       fprintf(f, "<td%s>", cl);
       if (re.status == RUN_CHECK_FAILED || re.status == RUN_IGNORED

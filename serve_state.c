@@ -29,6 +29,7 @@
 
 #include <reuse/xalloc.h>
 #include <reuse/osdeps.h>
+#include <reuse/logger.h>
 
 #include <string.h>
 #include <sys/types.h>
@@ -57,6 +58,7 @@ serve_state_destroy(serve_state_t state, struct userlist_clnt *ul_conn)
 
   if (!state) return 0;
 
+  serve_event_destroy_queue(state);
   if (state->pending_xml_import) {
     if (state->saved_testing_suspended != state->testing_suspended) {
       state->testing_suspended = state->saved_testing_suspended;
@@ -207,9 +209,6 @@ serve_state_load_contest(int contest_id,
     userlist_clnt_notify(ul_conn, ULS_ADD_NOTIFY, contest_id);
   }
 
-  if (run_open(state->runlog_state, state->global->run_log_file, 0,
-               state->global->contest_time,
-               state->global->contest_finish_time_d) < 0) goto failure;
   if (state->global->is_virtual) {
     if (state->global->score_system_val != SCORE_ACM
         && state->global->score_system_val != SCORE_OLYMPIAD) {
@@ -217,6 +216,16 @@ serve_state_load_contest(int contest_id,
       goto failure;
     }
   }
+
+  while (1) {
+    if (run_open(state->runlog_state, state->global->run_log_file, 0,
+                 state->global->contest_time,
+                 state->global->contest_finish_time_d) < 0) goto failure;
+    if (!serve_collect_virtual_stop_events(state)) break;
+    state->runlog_state = run_destroy(state->runlog_state);
+    state->runlog_state = run_init(state->teamdb_state);
+  }
+
   if (clar_open(state->clarlog_state, state->global->clar_log_file, 0) < 0)
     goto failure;
   serve_load_status_file(state);
@@ -280,6 +289,87 @@ user_filter_info_allocate(serve_state_t state, int user_id,
 
   state->cur_user = p;
   return p;
+}
+
+void
+serve_event_add(serve_state_t state, time_t time, int type, int user_id)
+{
+  struct serve_event_queue *e, *p;
+
+  ASSERT(time > 0);
+  ASSERT(type > 0);
+  ASSERT(user_id > 0);
+
+  XCALLOC(e, 1);
+  e->time = time;
+  e->type = type;
+  e->user_id = user_id;
+
+  for (p = state->event_first; p && p->time < time; p = p->next);
+  if (!p) {
+    if (!state->event_first) {
+      state->event_first = state->event_last = e;
+    } else {
+      e->prev = state->event_last;
+      state->event_last->next = e;
+      state->event_last = e;
+    }
+  } else {
+    if (!p->prev) {
+      state->event_first = e;
+    } else {
+      e->prev = p->prev;
+      p->prev->next = e;
+    }
+    p->prev = e;
+    e->next = p;
+  }
+}
+
+void
+serve_event_remove(serve_state_t state, struct serve_event_queue *event)
+{
+  if (!event->prev) {
+    state->event_first = event->next;
+  } else {
+    event->prev->next = event->next;
+  }
+  if (!event->next) {
+    state->event_last = event->prev;
+  } else {
+    event->next->prev = event->prev;
+  }
+  xfree(event);
+}
+
+void
+serve_event_destroy_queue(serve_state_t state)
+{
+  struct serve_event_queue *p, *q;
+
+  for (p = state->event_first; p; p = q) {
+    q = p->next;
+    xfree(p);
+  }
+  state->event_first = state->event_last = 0;
+}
+
+int
+serve_event_remove_matching(serve_state_t state, time_t time,
+                            int type, int user_id)
+{
+  struct serve_event_queue *p, *q;
+  int count = 0;
+
+  for (p = state->event_first; p; p = q) {
+    q = p->next;
+    if (time > 0 && time != p->time) continue;
+    if (type > 0 && type != p->type) continue;
+    if (user_id > 0 && user_id != p->user_id) continue;
+    serve_event_remove(state, p);
+    count++;
+  }
+  return count;
 }
 
 /*
