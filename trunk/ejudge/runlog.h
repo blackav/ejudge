@@ -217,6 +217,7 @@ void run_clear_variables(runlog_state_t);
 
 int run_forced_clear_entry(runlog_state_t, int run_id);
 int run_forced_set_hidden(runlog_state_t state, int run_id);
+int run_forced_set_judge_id(runlog_state_t state, int run_id, int judge_id);
 
 int run_write_xml(runlog_state_t, void *, const struct contest_desc *cnts,
                   FILE *f, int, time_t);
