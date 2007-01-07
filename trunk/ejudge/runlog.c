@@ -1035,6 +1035,13 @@ run_get_status(runlog_state_t state, int runid)
 }
 
 int
+run_is_imported(runlog_state_t state, int runid)
+{
+  if (runid < 0 || runid >= state->run_u) ERR_R("bad runid: %d", runid);
+  return state->runs[runid].is_imported;
+}
+
+int
 run_start_contest(runlog_state_t state, time_t start_time)
 {
   if (state->head.start_time) ERR_R("Contest already started");

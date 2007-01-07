@@ -89,6 +89,7 @@ time_t run_get_start_time(runlog_state_t);
 int run_change_status(runlog_state_t state, int runid, int newstatus,
                       int newtest, int newscore, int judge_id);
 int run_get_status(runlog_state_t state, int runid);
+int run_is_imported(runlog_state_t state, int runid);
 void run_get_times(runlog_state_t, time_t *, time_t *, time_t *, time_t *,
                    time_t *);
 int  run_set_duration(runlog_state_t, time_t);
