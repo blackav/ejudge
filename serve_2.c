@@ -696,7 +696,7 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
   const struct section_global_data *global = state->global;
 
   if (run_id >= total - 1) return;
-  for (i = total - 1; i >= run_id; i--) {
+  for (i = total - 2; i >= run_id; i--) {
     archive_remove(state, global->run_archive_dir, i + 1, 0);
     archive_remove(state, global->xml_report_archive_dir, i + 1, 0);
     archive_remove(state, global->report_archive_dir, i + 1, 0);
@@ -707,8 +707,10 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
       archive_remove(state, global->full_archive_dir, i + 1, 0);
     }
     archive_remove(state, global->audit_log_dir, i + 1, 0);
-    s = run_get_status(state->runlog_state, i);
+    s = run_get_status(state->runlog_state, i + 1);
     if (s >= RUN_PSEUDO_FIRST && s <= RUN_PSEUDO_LAST) continue;
+    if (s == RUN_IGNORED || s == RUN_DISQUALIFIED || s ==RUN_PENDING) continue;
+    if (run_is_imported(state->runlog_state, i + 1)) continue;
     archive_rename(state, global->run_archive_dir, 0, i, 0, i + 1, 0, 0);
     archive_rename(state, global->xml_report_archive_dir, 0, i, 0, i + 1, 0, 0);
     archive_rename(state, global->report_archive_dir, 0, i, 0, i + 1, 0, 0);
@@ -2041,23 +2043,20 @@ serve_count_transient_runs(serve_state_t state)
   return counter;
 }
 
+#if 0
 static int
 check_file(const serve_state_t cs, const unsigned char *base_dir, int serial)
 {
   path_t pp;
-  int f;
 
-  f = archive_make_read_path(cs, pp, sizeof(pp), base_dir, serial, 0, 1);
-  if (f < 0) {
-    info("file %06d at %s does not exist", serial, base_dir);
-  }
-  return f;
+  return archive_make_read_path(cs, pp, sizeof(pp), base_dir, serial, 0, 1);
 }
+#endif
 
 int
 serve_collect_virtual_stop_events(serve_state_t cs)
 {
-  const struct section_global_data *global = cs->global;
+  //const struct section_global_data *global = cs->global;
   struct run_header head;
   const struct run_entry *runs, *pe;
   int total_runs, i;
@@ -2075,12 +2074,16 @@ serve_collect_virtual_stop_events(serve_state_t cs)
   user_time_size = 128;
   XCALLOC(user_time, user_time_size);
 
+#if 0
   for (i = 0; i < total_runs; i++) {
     if (!run_is_valid_status(runs[i].status)) continue;
     if (runs[i].status >= RUN_PSEUDO_FIRST
         && runs[i].status <= RUN_PSEUDO_LAST) continue;
+    if (runs[i].is_imported) continue;
 
     check_file(cs, global->run_archive_dir, i);
+    if (runs[i].status >= RUN_TRANSIENT_FIRST) continue;
+    if (runs[i].status == RUN_IGNORED || runs[i].status == RUN_DISQUALIFIED || runs[i].status ==RUN_PENDING) continue;
     if (check_file(cs, global->xml_report_archive_dir, i) < 0) {
       check_file(cs, global->report_archive_dir, i);
       if (global->team_enable_rep_view)
@@ -2088,11 +2091,9 @@ serve_collect_virtual_stop_events(serve_state_t cs)
     }
     if (global->enable_full_archive)
       check_file(cs, global->full_archive_dir, i);
-    check_file(cs, global->audit_log_dir, i);
+    //check_file(cs, global->audit_log_dir, i);
   }
-
-  xfree(user_time);
-  return 0;
+#endif
 
   for (i = 0; i < total_runs; i++) {
     pe = &runs[i];
