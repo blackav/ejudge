@@ -1354,7 +1354,7 @@ do_dump_master_runs(
         snprintf(failed_test_buf, sizeof(failed_test_buf), "%d", pe->test);
       fprintf(fout,
               "%d;%s;%s"
-              ";%s;%09d;%s;%zu"
+              ";%s;%09d;%s;%u"
               ";%d;%s;%d"
               ";%d;%s;%s;%s;%s"
               ";%d;%s;%s;%s"
@@ -1379,7 +1379,7 @@ do_dump_master_runs(
         snprintf(failed_test_buf, sizeof(failed_test_buf), "%d", pe->test);
       fprintf(fout,
               "%d;%s;%s"
-              ";%s;%09d;%s;%zu"
+              ";%s;%09d;%s;%u"
               ";%d;%s;%d"
               ";%d;%s;%s;%s;%s"
               ";%d;%s;%s;%s"
@@ -1412,7 +1412,7 @@ do_dump_master_runs(
       }
       fprintf(fout,
               "%d;%s;%s"
-              ";%s;%09d;%s;%zu"
+              ";%s;%09d;%s;%u"
               ";%d;%s;%d"
               ";%d;%s;%s;%s;%s"
               ";%d;%s;%s;%s"
@@ -1436,7 +1436,7 @@ do_dump_master_runs(
       if (!has_kirov_score[pe->status]) {
         fprintf(fout,
                 "%d;%s;%s"
-                ";%s;%09d;%s;%zu"
+                ";%s;%09d;%s;%u"
                 ";%d;%s;%d"
                 ";%d;%s;%s;%s;%s"
                 ";%d;%s;%s;%s"
@@ -1510,7 +1510,7 @@ do_dump_master_runs(
         snprintf(score_adj_buf, sizeof(score_adj_buf), "%d", pe->score_adj);
       fprintf(fout,
               "%d;%s;%s"
-              ";%s;%09d;%s;%zu"
+              ";%s;%09d;%s;%u"
               ";%d;%s;%d"
               ";%d;%s;%s;%s;%s"
               ";%d;%s;%s;%s"
