@@ -279,6 +279,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   if (global->contest_start_cmd[0])
     fprintf(f, "contest_start_cmd = \"%s\"\n",
             c_armor(&sbuf, global->contest_start_cmd));
+  if (global->description_file[0])
+    fprintf(f, "description_file = \"%s\"\n", c_armor(&sbuf, global->description_file));
   fprintf(f, "\n");
 
   if (global->max_run_size != DFLT_G_MAX_RUN_SIZE)

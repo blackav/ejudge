@@ -354,6 +354,7 @@ Contest files and directories:
   GLOBAL_PARAM(tgz_dir, "s"),
   GLOBAL_PARAM(checker_dir, "s"),
   GLOBAL_PARAM(statement_dir, "s"),
+  GLOBAL_PARAM(description_file, "s"),
   GLOBAL_PARAM(contest_start_cmd, "s"),
 
 Participant's quotas:
@@ -884,6 +885,18 @@ super_html_edit_global_parameters(FILE *f,
                              SUPER_ACTION_GLOB_CHANGE_CONTEST_START_CMD,
                              SUPER_ACTION_GLOB_CLEAR_CONTEST_START_CMD,
                              SUPER_ACTION_GLOB_EDIT_CONTEST_START_CMD,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+
+    //GLOBAL_PARAM(description_file, "s"),
+    print_string_editing_row(f, "Contest description file:",
+                             global->description_file,
+                             SUPER_ACTION_GLOB_CHANGE_DESCRIPTION_FILE,
+                             SUPER_ACTION_GLOB_CLEAR_DESCRIPTION_FILE,
+                             0,
                              session_id,
                              form_row_attrs[row ^= 1],
                              self_url,
@@ -2105,6 +2118,12 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CLEAR_STATEMENT_DIR:
     GLOB_CLEAR_STRING(statement_dir);
+
+  case SSERV_CMD_GLOB_CHANGE_DESCRIPTION_FILE:
+    GLOB_SET_STRING(description_file);
+
+  case SSERV_CMD_GLOB_CLEAR_DESCRIPTION_FILE:
+    GLOB_CLEAR_STRING(description_file);
 
   case SSERV_CMD_GLOB_CHANGE_CONTEST_START_CMD:
     GLOB_SET_STRING(contest_start_cmd);

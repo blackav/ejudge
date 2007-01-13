@@ -182,6 +182,7 @@ struct section_global_data
   puc_t tgz_sfx[32];            /* default tar files suffix */
   path_t ejudge_checkers_dir;   /* path to the built-in checkers */
   path_t contest_start_cmd;     /* command to run when contest starts */
+  path_t description_file;      /* contest description */
 
   puc_t test_pat[32];
   puc_t corr_pat[32];
