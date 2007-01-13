@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -139,6 +139,7 @@ static char const * const attr_map[] =
   "force_registration",
   "disable_name",
   "enable_forgot_password",
+  "exam_mode",
 
   0
 };
@@ -643,6 +644,7 @@ static const size_t contest_bool_attr_offsets[CONTEST_LAST_ATTR] =
   [CONTEST_A_FORCE_REGISTRATION] = CONTEST_DESC_OFFSET(force_registration),
   [CONTEST_A_DISABLE_NAME] = CONTEST_DESC_OFFSET(disable_name),
   [CONTEST_A_ENABLE_FORGOT_PASSWORD] = CONTEST_DESC_OFFSET(enable_forgot_password ),
+  [CONTEST_A_EXAM_MODE] = CONTEST_DESC_OFFSET(exam_mode ),
 };
 
 static int
@@ -1352,6 +1354,10 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
   if (cnts->enable_forgot_password) {
     fprintf(f, "\n         %s=\"%s\"",
             attr_map[CONTEST_A_ENABLE_FORGOT_PASSWORD], "yes");
+  }
+  if (cnts->exam_mode) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attr_map[CONTEST_A_EXAM_MODE], "yes");
   }
 
   if (cnts->closed) {
