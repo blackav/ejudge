@@ -161,6 +161,8 @@ struct serve_state
   struct problem_extra_info *prob_extras;
   unsigned short compile_request_id;
 
+  struct watched_file description;
+
   struct serve_event_queue *event_first, *event_last;
 
   // for full import

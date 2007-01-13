@@ -2175,6 +2175,7 @@ runlog_check(FILE *ferr,
       te.time = 0;
       te.nsec = 0;
       te.a.ip = 0;
+      te.judge_id = 0;
       pp = (unsigned char *) &te;
       for (j = 0; j < sizeof(te) && !pp[j]; j++);
       if (j < sizeof(te)) {

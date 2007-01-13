@@ -4681,12 +4681,32 @@ unpriv_print_status(FILE *fout,
 
   if (global->is_virtual && start_time <= 0) {
     html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-    fprintf(fout, "<p>%s</p></form>",
-            BUTTON(NEW_SRV_ACTION_VIRTUAL_START));
+    if (cnts->exam_mode) {
+      fprintf(fout, "<p>%s</p></form>",
+              ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_VIRTUAL_START,
+                               _("Start exam")));
+    } else {
+      fprintf(fout, "<p>%s</p></form>",
+              BUTTON(NEW_SRV_ACTION_VIRTUAL_START));
+    }
   } else if (global->is_virtual && stop_time <= 0) {
     html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-    fprintf(fout, "<p>%s</p></form>",
-            BUTTON(NEW_SRV_ACTION_VIRTUAL_STOP));
+    if (cnts->exam_mode) {
+      fprintf(fout, "<p>%s</p></form>",
+              ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_VIRTUAL_STOP,
+                               _("Stop exam")));
+    } else {
+      fprintf(fout, "<p>%s</p></form>",
+              BUTTON(NEW_SRV_ACTION_VIRTUAL_STOP));
+    }
+  }
+
+  if (global->description_file[0]) {
+    watched_file_update(&cs->description, global->description_file,
+                        cs->current_time);
+    if (cs->description.text) {
+      fprintf(fout, "%s", cs->description.text);
+    }
   }
 }
 

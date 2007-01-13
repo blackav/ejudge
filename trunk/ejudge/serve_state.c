@@ -81,6 +81,8 @@ serve_state_destroy(serve_state_t state, struct userlist_clnt *ul_conn)
   teamdb_destroy(state->teamdb_state);
   clar_destroy(state->clarlog_state);
 
+  watched_file_clear(&state->description);
+
   if (state->prob_extras) {
     for (i = 1; i <= state->max_prob; i++) {
       watched_file_clear(&state->prob_extras[i].stmt);
