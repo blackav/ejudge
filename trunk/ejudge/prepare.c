@@ -118,6 +118,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(info_pat, "s"),
   GLOBAL_PARAM(tgz_pat, "s"),
   GLOBAL_PARAM(contest_start_cmd, "s"),
+  GLOBAL_PARAM(description_file, "s"),
 
   GLOBAL_PARAM(var_dir, "s"),
 
@@ -1782,6 +1783,9 @@ set_defaults(serve_state_t state, int mode)
   }
   if (mode == PREPARE_SERVE) {
     GLOBAL_INIT_FIELD(statement_dir, DFLT_G_STATEMENT_DIR, conf_dir);
+  }
+  if (mode == PREPARE_SERVE && state->global->description_file[0]) {
+    GLOBAL_INIT_FIELD(description_file, "", statement_dir);
   }
 
   if (mode != PREPARE_COMPILE) {
