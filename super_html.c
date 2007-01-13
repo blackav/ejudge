@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2413,6 +2413,16 @@ super_html_edit_contest_page(FILE *f,
     html_boolean_select(f, cnts->enable_forgot_password, "param", 0, 0);
     fprintf(f, "</td><td>");
     html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_ENABLE_FORGOT_PASSWORD, "Change");
+    fprintf(f, "</td></tr></form>\n");
+  }
+
+  if (sstate->advanced_view) {
+    html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Examination mode?</td><td>",
+            form_row_attrs[row ^= 1]);
+    html_boolean_select(f, cnts->exam_mode, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_EXAM_MODE, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 

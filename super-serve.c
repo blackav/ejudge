@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2551,6 +2551,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CHANGE_FORCE_REGISTRATION:
   case SSERV_CMD_CNTS_CHANGE_DISABLE_NAME:
   case SSERV_CMD_CNTS_CHANGE_ENABLE_FORGOT_PASSWORD:
+  case SSERV_CMD_CNTS_CHANGE_EXAM_MODE:
   case SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL:
   case SSERV_CMD_CNTS_CHANGE_MANAGED:
   case SSERV_CMD_CNTS_CHANGE_NEW_MANAGED:
@@ -3128,6 +3129,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_FORCE_REGISTRATION] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_DISABLE_NAME] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_ENABLE_FORGOT_PASSWORD] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_EXAM_MODE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_MANAGED] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_NEW_MANAGED] = { cmd_set_value },

@@ -4,7 +4,7 @@
 #ifndef __SUPER_PROTO_H__
 #define __SUPER_PROTO_H__
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -158,6 +158,7 @@ enum
   SSERV_CMD_CNTS_CHANGE_FORCE_REGISTRATION,
   SSERV_CMD_CNTS_CHANGE_DISABLE_NAME,
   SSERV_CMD_CNTS_CHANGE_ENABLE_FORGOT_PASSWORD,
+  SSERV_CMD_CNTS_CHANGE_EXAM_MODE,
   SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL,
   SSERV_CMD_CNTS_CHANGE_MANAGED,
   SSERV_CMD_CNTS_CHANGE_NEW_MANAGED,

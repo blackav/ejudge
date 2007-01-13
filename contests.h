@@ -4,7 +4,7 @@
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -120,6 +120,7 @@ enum
     CONTEST_A_FORCE_REGISTRATION,
     CONTEST_A_DISABLE_NAME,
     CONTEST_A_ENABLE_FORGOT_PASSWORD,
+    CONTEST_A_EXAM_MODE,
 
     CONTEST_LAST_ATTR
   };
@@ -235,6 +236,7 @@ struct contest_desc
   unsigned char force_registration;
   unsigned char disable_name;
   unsigned char enable_forgot_password;
+  unsigned char exam_mode;
 
   time_t         reg_deadline;
   unsigned char *name;

@@ -3,7 +3,7 @@
 #ifndef __SUPER_ACTIONS_H__
 #define __SUPER_ACTIONS_H__
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -76,6 +76,7 @@ enum
   SUPER_ACTION_CNTS_CHANGE_FORCE_REGISTRATION,
   SUPER_ACTION_CNTS_CHANGE_DISABLE_NAME,
   SUPER_ACTION_CNTS_CHANGE_ENABLE_FORGOT_PASSWORD,
+  SUPER_ACTION_CNTS_CHANGE_EXAM_MODE,
   SUPER_ACTION_CNTS_CHANGE_MANAGED,
   SUPER_ACTION_CNTS_CHANGE_NEW_MANAGED,
   SUPER_ACTION_CNTS_CHANGE_RUN_MANAGED,
