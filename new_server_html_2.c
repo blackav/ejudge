@@ -3142,6 +3142,14 @@ ns_write_olympiads_user_runs(
   const unsigned char *row_attr;
   unsigned char tests_buf[64], score_buf[64];
   unsigned char ab[1024];
+  char *rep_txt = 0;
+  size_t rep_len = 0;
+  int rep_flag, content_type;
+  path_t rep_path;
+  const unsigned char *start_ptr = 0;
+  testing_report_xml_t rep_xml = 0;
+  unsigned char *report_comment = 0;
+  struct testing_report_test *rep_tst;
 
   if (table_class && *table_class) {
     cl = alloca(strlen(table_class) + 16);
@@ -3277,7 +3285,24 @@ ns_write_olympiads_user_runs(
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
         if (prob && prob->type_val != PROB_TYPE_STANDARD) {
+          // This is presentation error
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
+          // FIXME: extract checker comment
+          rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
+                                            global->xml_report_archive_dir,
+                                            i, 0, 1);
+          if (rep_flag < 0) break;
+          if (generic_read_file(&rep_txt, 0, &rep_len, rep_flag, 0, rep_path,
+                                0) < 0) break;
+          content_type = get_content_type(rep_txt, &start_ptr);
+          if (content_type != CONTENT_TYPE_XML) break;
+          if (!(rep_xml = testing_report_parse_xml(start_ptr))) break;
+          if (rep_xml->status != RUN_PRESENTATION_ERR) break;
+          if (rep_xml->scoring_system != SCORE_OLYMPIAD) break;
+          if (rep_xml->run_tests != 1) break;
+          if (!(rep_tst = rep_xml->tests[0])) break;
+          if (rep_tst->comment)
+            report_comment = html_armor_string_dup(rep_tst->comment);
         } else {
           if (re.test > 0) re.test--;
           if (prob && re.test > prob->tests_to_accept)
@@ -3356,7 +3381,7 @@ ns_write_olympiads_user_runs(
 
     row_attr = "";
     if (run_latest) {
-      row_attr = " color=\"#dddddd\"";
+      row_attr = " bgcolor=\"#dddddd\"";
       latest_flag[prob->id] = 1;
     }
 
@@ -3375,12 +3400,20 @@ ns_write_olympiads_user_runs(
               ns_aref(ab, sizeof(ab), phr, NEW_SRV_ACTION_VIEW_SOURCE,
                       "run_id=%d", i), _("View"));
     }
-    if (global->team_enable_rep_view && global->team_enable_ce_view) {
+    if (report_comment && *report_comment) {
+      fprintf(fout, "<td%s>%s</td>", cl, report_comment);
+    } else if (global->team_enable_rep_view && global->team_enable_ce_view) {
       fprintf(fout, "<td%s>&nbsp;</td>", cl);
     }
 
     fprintf(fout, "</tr>\n");
     shown++;
+
+    xfree(rep_txt); rep_txt = 0;
+    rep_len = 0;
+    start_ptr = 0;
+    testing_report_free(rep_xml); rep_xml = 0;
+    xfree(report_comment); report_comment = 0;
   }
   fprintf(fout, "</table>\n");
 }
