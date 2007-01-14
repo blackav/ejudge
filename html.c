@@ -410,6 +410,7 @@ html_write_user_problems_summary(const serve_state_t state,
   for (run_id = 0; run_id < total_runs; run_id++) {
     if (run_get_entry(state->runlog_state, run_id, &re) < 0) continue;
     if (!run_is_valid_status(re.status)) continue;
+    if (re.status > RUN_MAX_STATUS) continue;
 
     cur_prob = 0;
     if (re.prob_id > 0 && re.prob_id <= state->max_prob)
