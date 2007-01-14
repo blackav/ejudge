@@ -3407,7 +3407,15 @@ ns_write_olympiads_user_runs(
 
     row_attr = "";
     if (run_latest) {
-      row_attr = " bgcolor=\"#dddddd\"";
+      if (accepting_mode) {
+        row_attr = " bgcolor=\"#ddffdd\""; /* green */
+      } else {
+        if (re.status == RUN_OK) {
+          row_attr = " bgcolor=\"#ddffdd\""; /* green */
+        } else {
+          row_attr = " bgcolor=\"#ffdddd\""; /* green */
+        }
+      }
       latest_flag[prob->id] = 1;
     }
 

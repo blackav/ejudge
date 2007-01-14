@@ -2313,7 +2313,7 @@ serve_judge_virtual_olympiad(serve_state_t cs, int user_id, int run_id)
     if (!prob) continue;
     if (prob->disable_testing || prob->disable_auto_testing) continue;
     if (s != RUN_OK && s != RUN_PARTIAL && s != RUN_ACCEPTED
-        && (s != RUN_WRONG_ANSWER_ERR || prob->type == PROB_TYPE_STANDARD))
+        && (s != RUN_WRONG_ANSWER_ERR || prob->type_val == PROB_TYPE_STANDARD))
         continue;
     if (latest_runs[re.prob_id] < 0) latest_runs[re.prob_id] = run_id;
   }
