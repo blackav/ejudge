@@ -1570,7 +1570,7 @@ ns_write_priv_report(const serve_state_t cs,
     break;
   case CONTENT_TYPE_XML:
     if (team_report_flag) {
-      write_xml_team_testing_report(cs, f, start_ptr, "summary");
+      write_xml_team_testing_report(cs, f, 0, start_ptr, "summary");
     } else {
       write_xml_testing_report(f, start_ptr, phr->session_id,phr->self_url, "",
                                new_actions_vector, "summary", 0);
@@ -3115,6 +3115,49 @@ ns_write_user_run_status(
   return 0;
 }
 
+static unsigned char *get_checker_comment(
+	const serve_state_t cs,
+        int run_id)
+{
+  const struct section_global_data *global = cs->global;
+  int rep_flag;
+  path_t rep_path;
+  unsigned char *str = 0;
+  char *rep_txt = 0;
+  size_t rep_len = 0;
+  testing_report_xml_t rep_xml = 0;
+  struct testing_report_test *rep_tst;
+  const unsigned char *start_ptr = 0;
+
+  if ((rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
+                                         global->xml_report_archive_dir,
+                                         run_id, 0, 1)) < 0)
+    goto cleanup;
+  if (generic_read_file(&rep_txt, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0)
+    goto cleanup;
+  if (get_content_type(rep_txt, &start_ptr) != CONTENT_TYPE_XML)
+    goto cleanup;
+  if (!(rep_xml = testing_report_parse_xml(start_ptr)))
+    goto cleanup;
+  /*
+  if (rep_xml->status != RUN_PRESENTATION_ERR)
+    goto cleanup;
+  if (rep_xml->scoring_system != SCORE_OLYMPIAD)
+    goto cleanup;
+  */
+  if (rep_xml->run_tests != 1)
+    goto cleanup;
+  if (!(rep_tst = rep_xml->tests[0]))
+    goto cleanup;
+  if (rep_tst->checker_comment)
+    str = html_armor_string_dup(rep_tst->checker_comment);
+
+ cleanup:
+  testing_report_free(rep_xml);
+  xfree(rep_txt);
+  return str;
+}
+
 void
 ns_write_olympiads_user_runs(
 	struct http_request_info *phr,
@@ -3142,14 +3185,7 @@ ns_write_olympiads_user_runs(
   const unsigned char *row_attr;
   unsigned char tests_buf[64], score_buf[64];
   unsigned char ab[1024];
-  char *rep_txt = 0;
-  size_t rep_len = 0;
-  int rep_flag, content_type;
-  path_t rep_path;
-  const unsigned char *start_ptr = 0;
-  testing_report_xml_t rep_xml = 0;
   unsigned char *report_comment = 0;
-  struct testing_report_test *rep_tst;
 
   if (table_class && *table_class) {
     cl = alloca(strlen(table_class) + 16);
@@ -3181,8 +3217,8 @@ ns_write_olympiads_user_runs(
           cl, _("Tests passed"), cl, _("Score"));
   if (global->team_enable_src_view)
     fprintf(fout, "<th%s>%s</th>", cl, _("View source"));
-  if (global->team_enable_rep_view || global->team_enable_ce_view)
-    fprintf(fout, "<th%s>%s</th>", cl, _("View report"));
+  /*if (global->team_enable_rep_view || global->team_enable_ce_view)*/
+  fprintf(fout, "<th%s>%s</th>", cl, _("View report"));
   if (global->enable_printing && !cs->printing_suspended)
     fprintf(fout, "<th%s>%s</th>", cl, _("Print sources"));
   fprintf(fout, "</tr>\n");
@@ -3286,23 +3322,7 @@ ns_write_olympiads_user_runs(
       case RUN_SECURITY_ERR:
         if (prob && prob->type_val != PROB_TYPE_STANDARD) {
           // This is presentation error
-          snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
-          // FIXME: extract checker comment
-          rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
-                                            global->xml_report_archive_dir,
-                                            i, 0, 1);
-          if (rep_flag < 0) break;
-          if (generic_read_file(&rep_txt, 0, &rep_len, rep_flag, 0, rep_path,
-                                0) < 0) break;
-          content_type = get_content_type(rep_txt, &start_ptr);
-          if (content_type != CONTENT_TYPE_XML) break;
-          if (!(rep_xml = testing_report_parse_xml(start_ptr))) break;
-          if (rep_xml->status != RUN_PRESENTATION_ERR) break;
-          if (rep_xml->scoring_system != SCORE_OLYMPIAD) break;
-          if (rep_xml->run_tests != 1) break;
-          if (!(rep_tst = rep_xml->tests[0])) break;
-          if (rep_tst->comment)
-            report_comment = html_armor_string_dup(rep_tst->comment);
+          report_comment = get_checker_comment(cs, i);
         } else {
           if (re.test > 0) re.test--;
           if (prob && re.test > prob->tests_to_accept)
@@ -3323,8 +3343,8 @@ ns_write_olympiads_user_runs(
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         } else {
           snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
+          report_allowed = 1;
         }
-        report_allowed = 1;
         if (prob && !latest_flag[prob->id]) run_latest = 1;
         score = re.score;
         if (prob && !prob->variable_full_score) score = prob->full_score;
@@ -3402,17 +3422,25 @@ ns_write_olympiads_user_runs(
     }
     if (report_comment && *report_comment) {
       fprintf(fout, "<td%s>%s</td>", cl, report_comment);
+    } else if (re.status == RUN_COMPILE_ERR
+          && (global->team_enable_rep_view || global->team_enable_ce_view)
+          && report_allowed) {
+      fprintf(fout, "<td%s>%s%s</a></td>", cl,
+              ns_aref(ab, sizeof(ab), phr, NEW_SRV_ACTION_VIEW_REPORT,
+                      "run_id=%d", i), _("View"));
+    } else if (global->team_enable_rep_view && report_allowed) {
+      fprintf(fout, "<td%s>%s%s</a></td>", cl,
+              ns_aref(ab, sizeof(ab), phr, NEW_SRV_ACTION_VIEW_REPORT,
+                      "run_id=%d", i), _("View"));
     } else if (global->team_enable_rep_view && global->team_enable_ce_view) {
       fprintf(fout, "<td%s>&nbsp;</td>", cl);
     }
 
+    /* FIXME: add "print sources" reference */
+
     fprintf(fout, "</tr>\n");
     shown++;
 
-    xfree(rep_txt); rep_txt = 0;
-    rep_len = 0;
-    start_ptr = 0;
-    testing_report_free(rep_xml); rep_xml = 0;
     xfree(report_comment); report_comment = 0;
   }
   fprintf(fout, "</table>\n");
