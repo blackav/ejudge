@@ -1869,3 +1869,13 @@ super_html_3.c 3843 0 21720215
 html.c 3845 0 14431301
 super-serve.c 3847 0 11641530
 team_extra_xml.c 3847 0 746789
+new-server.h 3849 0 1373731
+runlog.h 3849 0 743534
+html.c 3849 0 14529332
+master_html.c 3849 0 10377233
+new_server_html.c 3849 0 25167108
+new_server_html_2.c 3849 0 8987381
+printing.c 3849 0 739704
+runlog.c 3849 0 6075823
+runlog_import.c 3849 0 1795240
+serve_2.c 3849 0 6205400
