@@ -314,7 +314,7 @@ print_raw_record(const serve_state_t state, FILE *f, int run_id,
 
   snprintf((fields[RAW_RUN_ID] = alloca(BSIZE)), BSIZE, "%d", run_id);
   snprintf((fields[RAW_RUN_STATUS] = alloca(BSIZE)), BSIZE, "%d", pe->status);
-  fields[RAW_RUN_STATUS_STR] = run_status_str(pe->status, 0, 0);
+  fields[RAW_RUN_STATUS_STR] = run_status_str(pe->status, 0, 0, 0);
 
   if (pe->status != RUN_EMPTY) {
     snprintf((fields[RAW_RUN_TIMESTAMP] = alloca(BSIZE)), BSIZE,
@@ -702,7 +702,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
       displayed_mask[rid / BITS_PER_LONG] |= (1 << (rid % BITS_PER_LONG));
 
       if (pe->status == RUN_EMPTY) {
-        run_status_str(pe->status, statstr, 0);
+        run_status_str(pe->status, statstr, 0, 0);
 
         if (raw_format) {
           print_raw_record(state, f, rid, pe, 0, 0, 0, 0);
@@ -739,7 +739,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
         if (!env.rhead.start_time) run_time = 0;
         if (env.rhead.start_time > run_time) run_time = env.rhead.start_time;
         duration_str(1, run_time, env.rhead.start_time, durstr, 0);
-        run_status_str(pe->status, statstr, 0);
+        run_status_str(pe->status, statstr, 0, 0);
 
         if (raw_format) {
           print_raw_record(state, f, rid, pe, 0, 0, 0, 0);
@@ -814,7 +814,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
       if (start_time > run_time) run_time = start_time;
       duration_str(state->global->show_astr_time, run_time, start_time,
                    durstr, 0);
-      run_status_str(pe->status, statstr, 0);
+      run_status_str(pe->status, statstr, 0, 0);
 
       if (raw_format) {
         print_raw_record(state, f, rid, pe, start_time, attempts, disq_attempts,
@@ -1486,7 +1486,7 @@ write_priv_source(const serve_state_t state, FILE *f,
   fprintf(f, "<tr><td>%s:</td><td>%d</td>%s</tr>\n",
           _("Locale ID"), info.locale_id, nbsp);
   fprintf(f, "<tr><td>%s:</td><td>%s</td>",
-          _("Status"), run_status_str(info.status, 0, 0));
+          _("Status"), run_status_str(info.status, 0, 0, 0));
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
@@ -1866,7 +1866,7 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
     font_color = "red";
   }
   fprintf(f, "<h2><font color=\"%s\">%s</font></h2>\n",
-          font_color, run_status_str(r->status, 0, 0));
+          font_color, run_status_str(r->status, 0, 0, 0));
 
   if (r->scoring_system == SCORE_KIROV ||
       (r->scoring_system == SCORE_OLYMPIAD && !r->accepting_mode)) {
@@ -1922,7 +1922,7 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
       font_color = "red";
     }
     fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n", cl1,
-            font_color, run_status_str(t->status, 0, 0));
+            font_color, run_status_str(t->status, 0, 0, 0));
     fprintf(f, "<td%s>%d.%03d</td>", cl1, t->time / 1000, t->time % 1000);
     if (t->real_time > 0) {
       fprintf(f, "<td%s>%d.%03d</td>", cl1,
@@ -2951,7 +2951,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
 
     run_status_to_str_short(statstr, sizeof(statstr), re.status);
     fprintf(f, "%s;", statstr);
-    run_status_str(re.status, statstr, 0);
+    run_status_str(re.status, statstr, 0, 0);
     fprintf(f, "%s;", statstr);
     fprintf(f, "%d;%d;", re.score, re.score_adj);
     fprintf(f, "%d;", re.test);

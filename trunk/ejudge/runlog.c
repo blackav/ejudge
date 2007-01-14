@@ -1225,7 +1225,7 @@ run_get_prev_successes(runlog_state_t state, int run_id)
 }
 
 char *
-run_status_str(int status, char *out, int len)
+run_status_str(int status, char *out, int len, int prob_type)
 {
   static char  buf[128];
   char const  *s;
@@ -1235,10 +1235,16 @@ run_status_str(int status, char *out, int len)
   case RUN_COMPILE_ERR:      s = _("Compilation error");   break;
   case RUN_RUN_TIME_ERR:     s = _("Run-time error");      break;
   case RUN_TIME_LIMIT_ERR:   s = _("Time-limit exceeded"); break;
-  case RUN_PRESENTATION_ERR: s = _("Presentation error");  break;
+  case RUN_PRESENTATION_ERR:
+    if (prob_type) s = _("Wrong output format");
+    else s = _("Presentation error");
+    break;
   case RUN_WRONG_ANSWER_ERR: s = _("Wrong answer");        break;
   case RUN_CHECK_FAILED:     s = _("Check failed");        break;
-  case RUN_PARTIAL:          s = _("Partial solution");    break;
+  case RUN_PARTIAL:
+    if (prob_type) s = _("Wrong answer");
+    else s = _("Partial solution");
+    break;
   case RUN_ACCEPTED:         s = _("Accepted for testing"); break;
   case RUN_IGNORED:          s = _("Ignored");             break;
   case RUN_DISQUALIFIED:     s = _("Disqualified");        break;

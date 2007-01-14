@@ -120,6 +120,7 @@ ns_write_priv_all_runs(FILE *f,
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob = 0;
   unsigned char cl[128];
+  int prob_type = 0;
 
   if (!u) u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
 
@@ -351,7 +352,7 @@ ns_write_priv_all_runs(FILE *f,
       fprintf(f, "<tr>");
 
       if (pe->status == RUN_EMPTY) {
-        run_status_str(pe->status, statstr, 0);
+        run_status_str(pe->status, statstr, 0, 0);
         fprintf(f, "<td%s>%d</td>", cl, rid);
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         fprintf(f, "<td%s>&nbsp;</td>", cl);
@@ -381,7 +382,7 @@ ns_write_priv_all_runs(FILE *f,
         if (!env.rhead.start_time) run_time = 0;
         if (env.rhead.start_time > run_time) run_time = env.rhead.start_time;
         duration_str(1, run_time, env.rhead.start_time, durstr, 0);
-        run_status_str(pe->status, statstr, 0);
+        run_status_str(pe->status, statstr, 0, 0);
 
         fprintf(f, "<td%s>%d</td>", cl, rid);
         fprintf(f, "<td%s>%s</td>", cl, durstr);
@@ -445,7 +446,6 @@ ns_write_priv_all_runs(FILE *f,
       if (start_time > run_time) run_time = start_time;
       duration_str(global->show_astr_time, run_time, start_time,
                    durstr, 0);
-      run_status_str(pe->status, statstr, 0);
 
       if (phr->role == USER_ROLE_ADMIN) {
         html_start_form(f, 1, phr->self_url, phr->hidden_vars);
@@ -457,10 +457,12 @@ ns_write_priv_all_runs(FILE *f,
       fprintf(f, "<td%s>%d</td>", cl, pe->user_id);
       fprintf(f, "<td%s>%s</td>", cl, teamdb_get_name_2(cs->teamdb_state,
                                                         pe->user_id));
+      prob_type = 0;
       if (pe->prob_id > 0 && pe->prob_id <= cs->max_prob
           && cs->probs[pe->prob_id]) {
         struct section_problem_data *cur_prob = cs->probs[pe->prob_id];
         int variant = 0;
+        prob_type = cur_prob->type_val;
         if (cur_prob->variant_num > 0) {
           variant = pe->variant;
           if (!variant) variant = find_variant(cs, pe->user_id, pe->prob_id);
@@ -486,6 +488,7 @@ ns_write_priv_all_runs(FILE *f,
       } else {
         fprintf(f, "<td%s>??? - %d</td>", cl, pe->lang_id);
       }
+      run_status_str(pe->status, statstr, 0, prob_type);
       write_html_run_status(cs, f, pe, 1, attempts, disq_attempts,
                             prev_successes, "summary");
       if (phr->role == USER_ROLE_ADMIN) {
@@ -1212,7 +1215,7 @@ ns_write_priv_source(const serve_state_t state,
     html_hidden(f, "run_id", "%d", run_id);
   }
   fprintf(f, "<tr><td>%s:</td><td>%s</td>",
-          _("Status"), run_status_str(info.status, 0, 0));
+          _("Status"), run_status_str(info.status, 0, 0, 0));
   if (editable) {
     write_change_status_dialog(state, f, 0, info.is_imported, 0);
     fprintf(f, "<td>%s</td></tr></form>\n",
@@ -3016,7 +3019,7 @@ ns_upload_csv_runs(
                     "Command: new_run\n"
                     "Status: %s\n"
                     "Run-id: %d\n",
-                    run_status_str(runs[row].status, 0, 0),
+                    run_status_str(runs[row].status, 0, 0, 0),
                     run_id);
   }
 
@@ -3164,6 +3167,7 @@ ns_write_olympiads_user_runs(
         FILE *fout,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
+        int all_runs,
         const unsigned char *table_class)
 {
   const serve_state_t cs = extra->serve_state;
@@ -3174,7 +3178,8 @@ ns_write_olympiads_user_runs(
   struct run_entry re;
   time_t start_time, run_time;
   unsigned char *cl = 0;
-  int i, shown, runs_to_show = 10, variant, run_latest, report_allowed, score;
+  int runs_to_show = all_runs?INT_MAX:15;
+  int i, shown, variant, run_latest, report_allowed, score;
   unsigned char *latest_flag = 0;
   unsigned char lang_name_buf[64];
   unsigned char prob_name_buf[128];
@@ -3323,6 +3328,7 @@ ns_write_olympiads_user_runs(
         if (prob && prob->type_val != PROB_TYPE_STANDARD) {
           // This is presentation error
           report_comment = get_checker_comment(cs, i);
+          snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         } else {
           if (re.test > 0) re.test--;
           if (prob && re.test > prob->tests_to_accept)
@@ -3397,7 +3403,7 @@ ns_write_olympiads_user_runs(
       }
     }
 
-    run_status_str(re.status, stat_str, 0);
+    run_status_str(re.status, stat_str, 0, prob?prob->type_val:0);
 
     row_attr = "";
     if (run_latest) {

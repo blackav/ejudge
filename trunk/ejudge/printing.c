@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -92,7 +92,7 @@ print_banner_page(const serve_state_t state,
   if (teaminfo.user && teaminfo.user->i.location) {
     fprintf(f, "Location:         %s\n", teaminfo.user->i.location);
   }
-  fprintf(f, "Status:           %s\n", run_status_str(info.status, 0, 0));
+  fprintf(f, "Status:           %s\n", run_status_str(info.status, 0, 0, 0));
   fclose(f);
 
   return 0;

@@ -8794,7 +8794,7 @@ user_main_page(FILE *fout,
             all_runs?_("all"):_("last 15"),
             cnts->team_head_style);
     if (global->score_system_val == SCORE_OLYMPIAD) {
-      ns_write_olympiads_user_runs(phr, fout, cnts, extra, "summary");
+      ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs, "summary");
     } else {
       new_write_user_runs(cs, fout, phr->user_id, all_runs,
                           NEW_SRV_ACTION_VIEW_SOURCE,
