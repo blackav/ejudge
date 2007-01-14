@@ -3,7 +3,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -239,6 +239,7 @@ int write_xml_testing_report(FILE *f, unsigned char const *txt,
                              const unsigned char *class1,
                              const unsigned char *class2);
 int write_xml_team_testing_report(serve_state_t, FILE *f,
+                                  int output_only,
                                   const unsigned char *txt,
                                   const unsigned char *table_class);
 
@@ -253,6 +254,7 @@ html_write_user_problems_summary(const serve_state_t state,
                                  unsigned char *solved_flag,
                                  unsigned char *accepted_flag,
                                  int no_output_flag,
+                                 int accepting_mode,
                                  const unsigned char *table_class);
 void
 write_change_status_dialog(const serve_state_t state,

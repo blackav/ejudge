@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-01-13 20:40+0300\n"
-"PO-Revision-Date: 2007-01-13 20:42+0300\n"
+"POT-Creation-Date: 2007-01-14 15:28+0300\n"
+"PO-Revision-Date: 2007-01-14 15:29+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -968,6 +968,9 @@ msgstr "Введите пароль"
 
 msgid "Error during run comparison"
 msgstr "Ошибка при сравнении программ"
+
+msgid "Exam start time"
+msgstr "Время начала экзамена"
 
 msgid "Examiner"
 msgstr "Экзаменатор"
@@ -2878,6 +2881,21 @@ msgid ""
 msgstr ""
 "В данный момент турнир временно недоступен. Попробуйте повторить запрос чуть "
 "позже."
+
+msgid "The exam is in progress"
+msgstr "Экзамен идёт"
+
+msgid "The exam is in progress (standings are frozen)"
+msgstr "Экзамен идёт (текущее положение участников не отображается)"
+
+msgid "The exam is not started"
+msgstr "Экзамен не начался"
+
+msgid "The exam is over"
+msgstr "Экзамен закончился"
+
+msgid "The exam is over (standings are frozen)"
+msgstr "Экзамен закончился (текущее положение участников не отображается)"
 
 msgid "The following runs will be rejudged"
 msgstr "Следующие посылки будут пересужены"

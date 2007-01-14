@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2241,7 +2241,7 @@ write_priv_report(const serve_state_t state, FILE *f,
     break;
   case CONTENT_TYPE_XML:
     if (team_report_flag) {
-      write_xml_team_testing_report(state, f, start_ptr, 0);
+      write_xml_team_testing_report(state, f, 0, start_ptr, 0);
     } else {
       write_xml_testing_report(f, start_ptr, sid, self_url, extra_args, 0,
                                0, 0);

@@ -366,6 +366,7 @@ html_write_user_problems_summary(const serve_state_t state,
                                  unsigned char *solved_flag,
                                  unsigned char *accepted_flag,
                                  int no_output_flag,
+                                 int accepting_mode,
                                  const unsigned char *table_class)
 {
   time_t start_time;
@@ -408,7 +409,7 @@ html_write_user_problems_summary(const serve_state_t state,
 
   for (run_id = 0; run_id < total_runs; run_id++) {
     if (run_get_entry(state->runlog_state, run_id, &re) < 0) continue;
-    if (re.status > RUN_MAX_STATUS) continue;
+    if (!run_is_valid_status(re.status)) continue;
 
     cur_prob = 0;
     if (re.prob_id > 0 && re.prob_id <= state->max_prob)
@@ -430,8 +431,7 @@ html_write_user_problems_summary(const serve_state_t state,
       continue;
     }
 
-    if (state->global->score_system_val == SCORE_OLYMPIAD && 
-        state->accepting_mode) {
+    if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       // OLYMPIAD contest in accepting mode
       switch (re.status) {
       case RUN_OK:
@@ -701,11 +701,10 @@ html_write_user_problems_summary(const serve_state_t state,
           cl, cl, _("Short name"),
           cl, _("Long name"),
           cl, _("Status"));
-  if (state->global->score_system_val == SCORE_OLYMPIAD
-      && state->accepting_mode) {
+  if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
     fprintf(f, "<th%s>%s</th>", cl, _("Tests passed"));
   } else if ((state->global->score_system_val == SCORE_OLYMPIAD
-              && !state->accepting_mode)
+              && !accepting_mode)
       || state->global->score_system_val == SCORE_KIROV) {
     fprintf(f, "<th%s>%s</th>", cl, _("Tests passed"));
     fprintf(f, "<th%s>%s</th>", cl, _("Score"));
@@ -742,8 +741,8 @@ html_write_user_problems_summary(const serve_state_t state,
     xfree(s);
     if (best_run[prob_id] < 0) {
       if (state->global->score_system_val == SCORE_KIROV
-          || (state->global->score_system_val == SCORE_OLYMPIAD 
-              && !state->accepting_mode)
+          || (state->global->score_system_val == SCORE_OLYMPIAD
+              && !accepting_mode)
           || state->global->score_system_val == SCORE_MOSCOW) {
         fprintf(f, "<td%s>&nbsp;</td><td%s>&nbsp;</td><td%s>&nbsp;</td><td%s>&nbsp;</td></tr>\n", cl, cl, cl, cl);
       } else {
@@ -754,16 +753,14 @@ html_write_user_problems_summary(const serve_state_t state,
 
     run_get_entry(state->runlog_state, best_run[prob_id], &re);
     act_status = re.status;
-    if (state->global->score_system_val == SCORE_OLYMPIAD &&
-        state->accepting_mode) {
+    if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       if (act_status == RUN_OK || act_status == RUN_PARTIAL)
         act_status = RUN_ACCEPTED;
     }
     run_status_str(act_status, status_str, 0);
     fprintf(f, "<td%s>%s</td>", cl, status_str);
 
-    if (state->global->score_system_val == SCORE_OLYMPIAD &&
-        state->accepting_mode) {
+    if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       switch (act_status) {
       case RUN_RUN_TIME_ERR:
       case RUN_TIME_LIMIT_ERR:
@@ -851,8 +848,7 @@ html_write_user_problems_summary(const serve_state_t state,
 
   fprintf(f, "</table>\n");
 
-  if ((state->global->score_system_val == SCORE_OLYMPIAD
-       && !state->accepting_mode)
+  if ((state->global->score_system_val == SCORE_OLYMPIAD && !accepting_mode)
       || state->global->score_system_val == SCORE_KIROV
       || state->global->score_system_val == SCORE_MOSCOW) {
     fprintf(f, "<p><big>%s: %d</big></p>\n", _("Total score"), total_score);
@@ -4278,6 +4274,7 @@ write_user_run_status(const serve_state_t state, FILE *f, int uid, int rid,
 
 int
 write_xml_team_testing_report(const serve_state_t state, FILE *f,
+                              int output_only,
                               const unsigned char *txt,
                               const unsigned char *table_class)
 {
@@ -4304,6 +4301,43 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
   }
   fprintf(f, "<h2><font color=\"%s\">%s</font></h2>\n",
           font_color, run_status_str(r->status, 0, 0));
+
+  if (output_only) {
+    if (r->run_tests != 1 || !(t = r->tests[0])) {
+      testing_report_free(r);
+      return 0;
+    }
+    fprintf(f,
+            "<table%s>"
+            "<tr><th%s>N</th><th%s>%s</th>",
+            cl, cl, cl, _("Result"));
+    if (t->score >= 0 && t->nominal_score >= 0)
+      fprintf(f, "<th%s>%s</th>", cl, _("Score"));
+    if (t->status == RUN_PRESENTATION_ERR) {
+      fprintf(f, "<th%s>%s</th>", cl, _("Extra info"));
+    }
+    fprintf(f, "</tr>\n");
+
+    fprintf(f, "<tr>");
+    fprintf(f, "<td%s>%d</td>", cl, t->num);
+    if (t->status == RUN_OK || t->status == RUN_ACCEPTED) {
+      font_color = "green";
+    } else {
+      font_color = "red";
+    }
+    fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
+            cl, font_color, run_status_str(t->status, 0, 0));
+    if (t->score >= 0 && t->nominal_score >= 0)
+      fprintf(f, "<td%s>%d (%d)</td>", cl, t->score, t->nominal_score);
+    if (t->status == RUN_PRESENTATION_ERR) {
+      s = html_armor_string_dup(t->checker_comment);
+      fprintf(f, "<td%s>%s</td>", cl, s);
+      xfree(s); s = 0;
+    }
+    fprintf(f, "</table>\n");
+    testing_report_free(r);
+    return 0;
+  }
 
   if (r->scoring_system == SCORE_KIROV ||
       (r->scoring_system == SCORE_OLYMPIAD && !r->accepting_mode)) {
@@ -4946,7 +4980,9 @@ new_write_user_report_view(const serve_state_t state, FILE *f, int uid, int rid,
       write_xml_testing_report(f, start_ptr, sid, self_url, extra_args, 0,
                                0, 0);
     } else {
-      write_xml_team_testing_report(state, f, start_ptr, 0);
+      write_xml_team_testing_report(state, f,
+                                    prb->type_val != PROB_TYPE_STANDARD,
+                                    start_ptr, 0);
     }
     break;
   default:
@@ -5133,7 +5169,8 @@ write_team_page(const serve_state_t state,
       fprintf(f, "<p><a href=\"%s\" target=\"_blank\">%s</a></p>\n",
               cnts->problems_url, _("All problems"));
     }
-    html_write_user_problems_summary(state, f, user_id, accepted_flag, 0, 0, 0);
+    html_write_user_problems_summary(state, f, user_id, accepted_flag, 0, 0,
+                                     state->accepting_mode, 0);
   }
 
   if (server_start && !server_end) {

@@ -4584,22 +4584,41 @@ unpriv_print_status(FILE *fout,
         && global->board_unfog_time > 0
         && cs->current_time < stop_time + global->board_unfog_time
         && !cs->standings_updated) {
-      s = _("The contest is over (standings are frozen)");
+      if (cnts->exam_mode) {
+        s = _("The exam is over (standings are frozen)");
+      } else {
+        s = _("The contest is over (standings are frozen)");
+      }
+    } else if (cnts->exam_mode) {
+      s = _("The exam is over");
     } else {
       s = _("The contest is over");
     }
   } else if (start_time > 0) {
-    if (fog_start_time > 0 && cs->current_time >= fog_start_time)
-      s = _("The contest is in progress (standings are frozen)");
-    else
-      s = _("The contest is in progress");
+    if (fog_start_time > 0 && cs->current_time >= fog_start_time) {
+      if (cnts->exam_mode) {
+        s = _("The exam is in progress (standings are frozen)");
+      } else {
+        s = _("The contest is in progress (standings are frozen)");
+      }
+    } else {
+      if (cnts->exam_mode) {
+        s = _("The exam is in progress");
+      } else {
+        s = _("The contest is in progress");
+      }
+    }
   } else {
-    s = _("The contest is not started");
+    if (cnts->exam_mode) {
+      s = _("The exam is not started");
+    } else {
+      s = _("The contest is not started");
+    }
   }
   fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
 
   if (start_time > 0) {
-    if (global->score_system_val == SCORE_OLYMPIAD) {
+    if (global->score_system_val == SCORE_OLYMPIAD && !global->is_virtual) {
       if (cs->accepting_mode)
         s = _("Participants' solutions are being accepted");
       else
@@ -4628,8 +4647,13 @@ unpriv_print_status(FILE *fout,
   fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
           _("Server time"), ctime(&cs->current_time));
   if (start_time > 0) {
+    if (cnts->exam_mode) {
+      s = _("Exam start time");
+    } else {
+      s = _("Contest start time");
+    }
     fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
-            _("Contest start time"), ctime(&start_time));
+            s, ctime(&start_time));
   }
   if (!global->is_virtual && start_time <= 0 && sched_time > 0) {
     fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
@@ -5126,7 +5150,7 @@ priv_main_page(FILE *fout,
   fprintf(fout, "<hr><a name=\"status\"></a><%s>%s</%s>\n",
           /*cnts->priv_head_style*/ "h2", _("Server status"),
           /*cnts->priv_head_style*/ "h2");
-  if (stop_time > 0) {
+  if (stop_time > 0 && !global->is_virtual) {
     if (duration > 0 && global->board_fog_time > 0
         && global->board_unfog_time > 0
         && cs->current_time < stop_time + global->board_unfog_time
@@ -5145,7 +5169,7 @@ priv_main_page(FILE *fout,
   }
   fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
 
-  if (global->score_system_val == SCORE_OLYMPIAD) {
+  if (global->score_system_val == SCORE_OLYMPIAD && !global->is_virtual) {
     if (cs->accepting_mode)
       s = _("Participants' solutions are being accepted");
     else
@@ -5210,47 +5234,49 @@ priv_main_page(FILE *fout,
       }
 
       fprintf(fout, "<tr><td>%s:</td><td>%s</td>",_("Duration"), duration_buf);
-      if (stop_time <= 0 || global->enable_continue) {
+      if ((stop_time <= 0 || global->enable_continue) && !global->is_virtual) {
         fprintf(fout, "<td><input type=\"text\" name=\"dur\" size=\"16\"></td>"
                 "<td>%s</td></tr>\n",
                 BUTTON(NEW_SRV_ACTION_CHANGE_DURATION));
       } else {
-        fprintf(fout, "<td>nbsp;</td><td>&nbsp;</td></tr>\n");
+        fprintf(fout, "<td>&nbsp;</td><td>&nbsp;</td></tr>\n");
       }
     }
 
-    if (start_time > 0 && stop_time <= 0 && duration > 0) {
-      tmpt = start_time + duration;
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("Scheduled end time"), ctime(&tmpt));
-    } else if (start_time > 0 && stop_time <= 0 && duration <= 0
-               && finish_time > 0) {
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("Scheduled end time"), ctime(&finish_time));
-    } else if (stop_time) {
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("End time"), ctime(&stop_time));
-    }
+    if (!global->is_virtual) {
+      if (start_time > 0 && stop_time <= 0 && duration > 0) {
+        tmpt = start_time + duration;
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Scheduled end time"), ctime(&tmpt));
+      } else if (start_time > 0 && stop_time <= 0 && duration <= 0
+                 && finish_time > 0) {
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Scheduled end time"), ctime(&finish_time));
+      } else if (stop_time) {
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("End time"), ctime(&stop_time));
+      }
 
-    if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Standings freeze time"), ctime(&fog_start_time));
-    } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
-               && global->board_unfog_time > 0 && !cs->standings_updated
-               && cs->current_time < stop_time + global->board_unfog_time) {
-      tmpt = stop_time + global->board_unfog_time;
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Standings unfreeze time"), ctime(&tmpt));
-    }
+      if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Standings freeze time"), ctime(&fog_start_time));
+      } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
+                 && global->board_unfog_time > 0 && !cs->standings_updated
+                 && cs->current_time < stop_time + global->board_unfog_time) {
+        tmpt = stop_time + global->board_unfog_time;
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Standings unfreeze time"), ctime(&tmpt));
+      }
 
-    if (start_time > 0 && stop_time <= 0 && duration > 0) {
-      duration_str(0, cs->current_time, start_time, duration_buf, 0);
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Elapsed time"), duration_buf);
-      duration_str(0, start_time + duration - cs->current_time, 0,
-                   duration_buf, 0);
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Remaining time"), duration_buf);
+      if (start_time > 0 && stop_time <= 0 && duration > 0) {
+        duration_str(0, cs->current_time, start_time, duration_buf, 0);
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Elapsed time"), duration_buf);
+        duration_str(0, start_time + duration - cs->current_time, 0,
+                     duration_buf, 0);
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Remaining time"), duration_buf);
+      }
     }
     fprintf(fout, "</table></form>\n");
 
@@ -5270,7 +5296,7 @@ priv_main_page(FILE *fout,
       if (cs->printing_suspended) action = NEW_SRV_ACTION_PRINT_RESUME;
       fprintf(fout, "%s\n", BUTTON(action));
     }
-    if (global->score_system_val == SCORE_OLYMPIAD) {
+    if (global->score_system_val == SCORE_OLYMPIAD && !global->is_virtual) {
       action = NEW_SRV_ACTION_SET_JUDGING_MODE;
       if (!cs->accepting_mode) action = NEW_SRV_ACTION_SET_ACCEPTING_MODE;
       fprintf(fout, "%s\n", BUTTON(action));
@@ -5315,39 +5341,40 @@ priv_main_page(FILE *fout,
               _("Duration"), duration_buf);
     }
 
-    if (start_time > 0 && stop_time <= 0 && duration > 0) {
-      tmpt = start_time + duration;
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Scheduled end time"), ctime(&tmpt));
-    } else if (start_time > 0 && stop_time <= 0 && duration <= 0
-               && finish_time > 0) {
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Scheduled end time"), ctime(&finish_time));
-    } else if (stop_time) {
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("End time"), ctime(&stop_time));
-    }
+    if (!global->is_virtual) {
+      if (start_time > 0 && stop_time <= 0 && duration > 0) {
+        tmpt = start_time + duration;
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Scheduled end time"), ctime(&tmpt));
+      } else if (start_time > 0 && stop_time <= 0 && duration <= 0
+                 && finish_time > 0) {
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Scheduled end time"), ctime(&finish_time));
+      } else if (stop_time) {
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("End time"), ctime(&stop_time));
+      }
 
+      if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Standings freeze time"), ctime(&fog_start_time));
+      } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
+                 && global->board_unfog_time > 0 && !cs->standings_updated
+                 && cs->current_time < stop_time + global->board_unfog_time) {
+        tmpt = stop_time + global->board_unfog_time;
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Standings unfreeze time"), ctime(&tmpt));
+      }
 
-    if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Standings freeze time"), ctime(&fog_start_time));
-    } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
-               && global->board_unfog_time > 0 && !cs->standings_updated
-               && cs->current_time < stop_time + global->board_unfog_time) {
-      tmpt = stop_time + global->board_unfog_time;
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Standings unfreeze time"), ctime(&tmpt));
-    }
-
-    if (start_time > 0 && stop_time <= 0 && duration > 0) {
-      duration_str(0, cs->current_time, start_time, duration_buf, 0);
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Elapsed time"), duration_buf);
-      duration_str(0, start_time + duration - cs->current_time, 0,
-                   duration_buf, 0);
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Remaining time"), duration_buf);
+      if (start_time > 0 && stop_time <= 0 && duration > 0) {
+        duration_str(0, cs->current_time, start_time, duration_buf, 0);
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Elapsed time"), duration_buf);
+        duration_str(0, start_time + duration - cs->current_time, 0,
+                     duration_buf, 0);
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Remaining time"), duration_buf);
+      }
     }
     fprintf(fout, "</table>\n");
   }
@@ -7563,6 +7590,7 @@ unpriv_view_report(FILE *fout,
   path_t rep_path;
   unsigned char *html_report;
   time_t start_time, stop_time;
+  int accepting_mode = 0;
 
   static const int new_actions_vector[] =
   {
@@ -7580,6 +7608,10 @@ unpriv_view_report(FILE *fout,
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
                                           cs->current_time);
+    if (global->score_system_val == SCORE_OLYMPIAD && stop_time <= 0)
+      accepting_mode = 1;
+  } else {
+    accepting_mode = cs->accepting_mode;
   }
 
   if (unpriv_parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0)
@@ -7617,6 +7649,11 @@ unpriv_view_report(FILE *fout,
     break;
   default:
     ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
+    goto done;
+  }
+
+  if (accepting_mode && prob->type_val != PROB_TYPE_STANDARD) {
+    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto done;
   }
 
@@ -7678,7 +7715,7 @@ unpriv_view_report(FILE *fout,
     fprintf(fout, "%s", rep_start);
     break;
   case CONTENT_TYPE_XML:
-    if (global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode) {
+    if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       write_xml_team_accepting_report(fout, rep_start, run_id, &re, prob,
                                       new_actions_vector,
                                       phr->session_id, phr->self_url, "",
@@ -7688,7 +7725,9 @@ unpriv_view_report(FILE *fout,
                                phr->self_url, "", new_actions_vector,
                                "summary", "borderless");
     } else {
-      write_xml_team_testing_report(cs, fout, rep_start, "summary");
+      write_xml_team_testing_report(cs, fout,
+                                    prob->type_val != PROB_TYPE_STANDARD,
+                                    rep_start, "summary");
     }
     break;
   default:
@@ -8372,7 +8411,7 @@ unpriv_page_header(FILE *fout,
   fprintf(fout, " / <b>%s</b>", s);
 
   if (start_time > 0) {
-    if (global->score_system_val == SCORE_OLYMPIAD) {
+    if (global->score_system_val == SCORE_OLYMPIAD && !global->is_virtual) {
       if (cs->accepting_mode)
         s = _("accepting");
       else
@@ -8446,6 +8485,7 @@ user_main_page(FILE *fout,
   const unsigned char *alternatives = 0, *header = 0;
   int lang_count = 0, lang_id = 0;
   int first_prob_id, last_prob_id;
+  int accepting_mode = 0;
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
@@ -8468,9 +8508,11 @@ user_main_page(FILE *fout,
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
                                           cs->current_time);
+    if (stop_time <= 0) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
     stop_time = run_get_stop_time(cs->runlog_state);
+    accepting_mode = cs->accepting_mode;
   }
   run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, 0);
   if (duration > 0 && start_time && !stop_time && global->board_fog_time > 0)
@@ -8499,7 +8541,8 @@ user_main_page(FILE *fout,
             _("Problem status summary"),
             cnts->team_head_style);
     html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
-                                     accepted_flag, 0, "summary");
+                                     accepted_flag, 0,
+                                     accepting_mode, "summary");
   }
 
   if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS
@@ -8560,7 +8603,7 @@ user_main_page(FILE *fout,
   if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT
       && !cs->clients_suspended) {
     html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
-                                     accepted_flag, 1, 0);
+                                     accepted_flag, 1, accepting_mode, 0);
 
     if (prob_id > cs->max_prob) prob_id = 0;
     if (prob_id > 0 && !(prob = cs->probs[prob_id])) prob_id = 0;
