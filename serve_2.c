@@ -2307,12 +2307,14 @@ serve_judge_virtual_olympiad(serve_state_t cs, int user_id, int run_id)
     if (s == RUN_EMPTY) continue;
     if (re.user_id != user_id) continue;
     if (s == RUN_VIRTUAL_START) break;
-    if (s != RUN_OK && s != RUN_PARTIAL && s != RUN_ACCEPTED) continue;
     prob = 0;
     if (re.prob_id > 0 && re.prob_id <= cs->max_prob)
       prob = cs->probs[re.prob_id];
     if (!prob) continue;
     if (prob->disable_testing || prob->disable_auto_testing) continue;
+    if (s != RUN_OK && s != RUN_PARTIAL && s != RUN_ACCEPTED
+        && (s != RUN_WRONG_ANSWER_ERR || prob->type == PROB_TYPE_STANDARD))
+        continue;
     if (latest_runs[re.prob_id] < 0) latest_runs[re.prob_id] = run_id;
   }
   if (run_id < 0) return;

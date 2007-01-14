@@ -207,7 +207,7 @@ write_html_run_status(const serve_state_t state, FILE *f,
 
   if (pe->prob_id > 0 && pe->prob_id <= state->max_prob)
     pr = state->probs[pe->prob_id];
-  run_status_str(pe->status, status_str, 0);
+  run_status_str(pe->status, status_str, 0, pr?pr->type_val:0);
   fprintf(f, "<td%s>%s</td>", cl, status_str);
 
   if (state->global->score_system_val == SCORE_KIROV
@@ -434,39 +434,86 @@ html_write_user_problems_summary(const serve_state_t state,
 
     if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       // OLYMPIAD contest in accepting mode
-      switch (re.status) {
-      case RUN_OK:
-      case RUN_PARTIAL:
-      case RUN_ACCEPTED:
-        accepted_flag[re.prob_id] = 1;
-        best_run[re.prob_id] = run_id;
-        break;
+      if (cur_prob->type_val != PROB_TYPE_STANDARD) {
+        switch (re.status) {
+        case RUN_OK:
+        case RUN_PARTIAL:
+        case RUN_ACCEPTED:
+        case RUN_WRONG_ANSWER_ERR:
+          re.status = RUN_ACCEPTED;
+          break;
 
-      case RUN_COMPILE_ERR:
-      case RUN_RUN_TIME_ERR:
-      case RUN_TIME_LIMIT_ERR:
-      case RUN_PRESENTATION_ERR:
-      case RUN_WRONG_ANSWER_ERR:
-      case RUN_CHECK_FAILED:
-      case RUN_MEM_LIMIT_ERR:
-      case RUN_SECURITY_ERR:
-        if (!accepted_flag[re.prob_id]) {
-          best_run[re.prob_id] = run_id;
+        case RUN_COMPILE_ERR:
+        case RUN_RUN_TIME_ERR:
+        case RUN_TIME_LIMIT_ERR:
+        case RUN_CHECK_FAILED:
+        case RUN_MEM_LIMIT_ERR:
+        case RUN_SECURITY_ERR:
+          re.status = RUN_CHECK_FAILED;
+          break;
         }
-        break;
+        switch (re.status) {
+        case RUN_ACCEPTED:
+          accepted_flag[re.prob_id] = 1;
+          best_run[re.prob_id] = run_id;
+          break;
 
-      case RUN_IGNORED:
-      case RUN_DISQUALIFIED:
-        break;
+        case RUN_PRESENTATION_ERR:
+          if (!accepted_flag[re.prob_id]) {
+            best_run[re.prob_id] = run_id;
+          }
+          break;
 
-      case RUN_PENDING:
-        pending_flag[re.prob_id] = 1;
-        attempts[re.prob_id]++;
-        if (best_run[re.prob_id] < 0) best_run[re.prob_id] = run_id;
-        break;
+        case RUN_CHECK_FAILED:
+        case RUN_IGNORED:
+        case RUN_DISQUALIFIED:
+          break;
 
-      default:
-        abort();
+        case RUN_PENDING:
+          pending_flag[re.prob_id] = 1;
+          attempts[re.prob_id]++;
+          if (best_run[re.prob_id] < 0) best_run[re.prob_id] = run_id;
+          break;
+
+        default:
+          abort();
+        }
+      } else {
+        // regular problems
+        switch (re.status) {
+        case RUN_OK:
+        case RUN_PARTIAL:
+        case RUN_ACCEPTED:
+          accepted_flag[re.prob_id] = 1;
+          best_run[re.prob_id] = run_id;
+          break;
+
+        case RUN_COMPILE_ERR:
+        case RUN_RUN_TIME_ERR:
+        case RUN_TIME_LIMIT_ERR:
+        case RUN_PRESENTATION_ERR:
+        case RUN_WRONG_ANSWER_ERR:
+        case RUN_CHECK_FAILED:
+        case RUN_MEM_LIMIT_ERR:
+        case RUN_SECURITY_ERR:
+          if (!accepted_flag[re.prob_id]) {
+            best_run[re.prob_id] = run_id;
+          }
+          break;
+
+        case RUN_IGNORED:
+        case RUN_DISQUALIFIED:
+          break;
+
+        case RUN_PENDING:
+          pending_flag[re.prob_id] = 1;
+          attempts[re.prob_id]++;
+          if (best_run[re.prob_id] < 0) best_run[re.prob_id] = run_id;
+          break;
+
+        default:
+          abort();
+        }
       }
     } else if (state->global->score_system_val == SCORE_OLYMPIAD) {
       // OLYMPIAD contest in judging mode
@@ -755,10 +802,12 @@ html_write_user_problems_summary(const serve_state_t state,
     run_get_entry(state->runlog_state, best_run[prob_id], &re);
     act_status = re.status;
     if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
-      if (act_status == RUN_OK || act_status == RUN_PARTIAL)
+      if (act_status == RUN_OK || act_status == RUN_PARTIAL
+          || (act_status == RUN_WRONG_ANSWER_ERR
+              && cur_prob->type_val != PROB_TYPE_STANDARD))
         act_status = RUN_ACCEPTED;
     }
-    run_status_str(act_status, status_str, 0);
+    run_status_str(act_status, status_str, 0, cur_prob->type_val);
     fprintf(f, "<td%s>%s</td>", cl, status_str);
 
     if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
@@ -967,7 +1016,7 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
     if (!start_time) time = start_time;
     if (start_time > time) time = start_time;
     duration_str(state->global->show_astr_time, time, start_time, dur_str, 0);
-    run_status_str(re.status, stat_str, 0);
+    run_status_str(re.status, stat_str, 0, 0);
     prob_str = "???";
     if (state->probs[re.prob_id]) {
       if (state->probs[re.prob_id]->variant_num > 0) {
@@ -4063,7 +4112,7 @@ do_write_public_log(const serve_state_t state,
     if (!start) time = start;
     if (start > time) time = start;
     duration_str(state->global->show_astr_time, time, start, durstr, 0);
-    run_status_str(pe->status, statstr, 0);
+    run_status_str(pe->status, statstr, 0, 0);
 
     fputs("<tr>", f);
     fprintf(f, "<td>%d</td>", i);
@@ -4301,7 +4350,7 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
     font_color = "red";
   }
   fprintf(f, "<h2><font color=\"%s\">%s</font></h2>\n",
-          font_color, run_status_str(r->status, 0, 0));
+          font_color, run_status_str(r->status, 0, 0, output_only));
 
   if (output_only) {
     if (r->run_tests != 1 || !(t = r->tests[0])) {
@@ -4327,7 +4376,7 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
       font_color = "red";
     }
     fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
-            cl, font_color, run_status_str(t->status, 0, 0));
+            cl, font_color, run_status_str(t->status, 0, 0, output_only));
     if (t->score >= 0 && t->nominal_score >= 0)
       fprintf(f, "<td%s>%d (%d)</td>", cl, t->score, t->nominal_score);
     if (t->status == RUN_PRESENTATION_ERR) {
@@ -4398,7 +4447,7 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
       font_color = "red";
     }
     fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
-            cl, font_color, run_status_str(t->status, 0, 0));
+            cl, font_color, run_status_str(t->status, 0, 0, output_only));
     fprintf(f, "<td%s>%d.%03d</td>", cl, t->time / 1000, t->time % 1000);
     if (t->real_time > 0) {
       disp_time = t->real_time;
@@ -4478,7 +4527,7 @@ write_xml_team_output_only_acc_report(FILE *f, const unsigned char *txt,
     font_color = "red";
   }
   fprintf(f, "<h2><font color=\"%s\">%s</font></h2>\n",
-          font_color, run_status_str(act_status, 0, 0));
+          font_color, run_status_str(act_status, 0, 0, 1));
 
   /*
   if (act_status != RUN_ACCEPTED) {
@@ -4508,7 +4557,7 @@ write_xml_team_output_only_acc_report(FILE *f, const unsigned char *txt,
       font_color = "red";
     }
     fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
-            cl, font_color, run_status_str(act_status, 0, 0));
+            cl, font_color, run_status_str(act_status, 0, 0, 1));
     // extra information
     fprintf(f, "<td%s>", cl);
     switch (t->status) {
@@ -4604,7 +4653,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
     font_color = "red";
   }
   fprintf(f, "<h2><font color=\"%s\">%s</font></h2>\n",
-          font_color, run_status_str(act_status, 0, 0));
+          font_color, run_status_str(act_status, 0, 0, 0));
 
   if (act_status != RUN_ACCEPTED) {
     fprintf(f, _("<big>Failed test: %d.<br><br></big>\n"), r->failed_test);
@@ -4642,7 +4691,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
       font_color = "red";
     }
     fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
-            cl, font_color, run_status_str(t->status, 0, 0));
+            cl, font_color, run_status_str(t->status, 0, 0, 0));
     fprintf(f, "<td%s>%d.%03d</td>", cl, t->time / 1000, t->time % 1000);
     if (t->real_time > 0) {
       fprintf(f, "<td%s>%d.%03d</td>",
