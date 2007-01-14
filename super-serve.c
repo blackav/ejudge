@@ -705,6 +705,7 @@ start_serve(struct contest_extra *cur,
       close(extras[j]->run_dir_fd);
     }
     close_all_client_sockets();
+    random_cleanup();
 
     // in test mode immediately redirect stdout and stderr to the pipe
     if (test_mode) {
@@ -3964,6 +3965,7 @@ do_loop(void)
             close(extras[j]->run_dir_fd);
           }
           close_all_client_sockets();
+          random_cleanup();
 
           // 2. switch uid and gid
           if (cur->run_uid >= 0 &&
