@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -120,8 +120,9 @@ parse_viewed_clars(struct xml_tree *t, struct team_extra *te, int *pv_flag)
   }
   if (max_x == -1) return 0;
 
-  te->clar_map_alloc = 16;
-  te->clar_map_size = 8 * sizeof(te->clar_map[0]) * te->clar_map_alloc;
+  te->clar_map_size = 128;
+  while (te->clar_map_size <= max_x) te->clar_map_size *= 2;
+  te->clar_map_alloc = te->clar_map_size / BPE;
   XCALLOC(te->clar_map, te->clar_map_alloc);
 
   s = t->text;
