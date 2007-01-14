@@ -8486,6 +8486,7 @@ user_main_page(FILE *fout,
   int lang_count = 0, lang_id = 0;
   int first_prob_id, last_prob_id;
   int accepting_mode = 0;
+  const unsigned char *hh = 0;
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
@@ -8519,8 +8520,12 @@ user_main_page(FILE *fout,
     fog_start_time = start_time + duration - global->board_fog_time;
   if (fog_start_time < 0) fog_start_time = 0;
 
+  hh = main_page_headers[phr->action];
+  if (phr->action == NEW_SRV_ACTION_MAIN_PAGE && cnts->exam_mode) {
+    hh = __("Exam status");
+  }
   l10n_setlocale(phr->locale_id);
-  header = gettext(main_page_headers[phr->action]);
+  header = gettext(hh);
   if (!header) header = _("Main page");
   unpriv_load_html_style(phr, cnts, 0, 0);
   ns_header(fout, extra->header_txt, 0, 0, phr->locale_id,

@@ -259,6 +259,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "always_show_problems", global->always_show_problems);
   if (global->disable_user_standings != DFLT_G_DISABLE_USER_STANDINGS)
     unparse_bool(f, "disable_user_standings", global->disable_user_standings);
+  if (global->problem_navigation != DFLT_G_PROBLEM_NAVIGATION)
+    unparse_bool(f, "problem_navigation", global->problem_navigation);
   if (global->appeal_deadline[0]) {
     fprintf(f, "appeal_deadline = \"%s\"\n", global->appeal_deadline);
   }
