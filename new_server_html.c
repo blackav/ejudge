@@ -6635,6 +6635,7 @@ unpriv_submit_run(FILE *fout,
   unsigned char *acc_probs = 0;
   struct timeval precise_time;
   path_t run_path;
+  unsigned char bb[1024];
 
   l10n_setlocale(phr->locale_id);
   log_f = open_memstream(&log_txt, &log_len);
@@ -7005,7 +7006,21 @@ unpriv_submit_run(FILE *fout,
   l10n_setlocale(0);
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
-    html_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_SUBMISSIONS, 0);
+    i = 0;
+    if (global->problem_navigation) {
+      for (i = prob->id + 1; i <= cs->max_prob; i++) {
+        if (!cs->probs[i]) continue;
+        // FIXME: standard applicability checks
+        break;
+      }
+      if (i > cs->max_prob) i = 0;
+    }
+    if (i > 0) {
+      snprintf(bb, sizeof(bb), "prob_id=%d", i);
+      html_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT, bb);
+    }  else {
+      html_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_SUBMISSIONS, 0);
+    }
   } else {
     unpriv_load_html_style(phr, cnts, 0, 0);
     html_error_status_page(fout, phr, cnts, extra, log_txt,
@@ -8063,7 +8078,7 @@ html_problem_selection(serve_state_t cs,
     if (prob->t_start_date > 0 && cs->current_time < prob->t_start_date)
       continue;
     if (start_time <= 0) continue;
-    if (prob->disable_user_submit) continue;
+    //if (prob->disable_user_submit) continue;
 
     penalty_str[0] = 0;
     deadline_str[0] = 0;
@@ -8617,7 +8632,7 @@ user_main_page(FILE *fout,
     if (prob_id > 0 && prob->t_start_date > 0
         && cs->current_time < prob->t_start_date)
       prob_id = 0;
-    if (prob_id > 0 && prob->disable_user_submit > 0) prob_id = 0;
+    //if (prob_id > 0 && prob->disable_user_submit > 0) prob_id = 0;
     if (prob_id > 0 && prob->variant_num > 0
         && (variant = find_variant(cs, phr->user_id, prob_id)) <= 0)
       prob_id = 0;
@@ -8670,54 +8685,30 @@ user_main_page(FILE *fout,
           fprintf(fout, "%s", pw->text);
         }
       }
-      alternatives = 0;
-      if ((prob->type_val == PROB_TYPE_SELECT_ONE
-           || prob->type_val == PROB_TYPE_SELECT_MANY)
-          && prob->alternatives_file[0]) {
-        if (variant > 0) {
-          insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
-                             prob->alternatives_file, variant);
-          pw = &cs->prob_extras[prob->id].v_alts[variant];
-          pw_path = variant_stmt_file;
-        } else {
-          pw = &cs->prob_extras[prob->id].alt;
-          pw_path = prob->alternatives_file;
-        }
-        watched_file_update(pw, pw_path, cs->current_time);
-        alternatives = pw->text;
-      }
 
-      html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
-      fprintf(fout, "<input type=\"hidden\" name=\"prob_id\" value=\"%d\">\n",
-              prob_id);
-      fprintf(fout, "<table class=\"borderless\">\n");
-      if (!prob->type_val) {
-        for (i = 1; i <= cs->max_lang; i++) {
-          if (!cs->langs[i] || cs->langs[i]->disabled) continue;
-          if ((lang_list = prob->enable_language)) {
-            for (j = 0; lang_list[j]; j++)
-              if (!strcmp(lang_list[j], cs->langs[i]->short_name))
-                break;
-            if (!lang_list[j]) continue;
-          } else if ((lang_list = prob->disable_language)) {
-            for (j = 0; lang_list[j]; j++)
-              if (!strcmp(lang_list[j], cs->langs[i]->short_name))
-                break;
-            if (lang_list[j]) continue;
+      if (prob->disable_user_submit <= 0) {
+        alternatives = 0;
+        if ((prob->type_val == PROB_TYPE_SELECT_ONE
+             || prob->type_val == PROB_TYPE_SELECT_MANY)
+            && prob->alternatives_file[0]) {
+          if (variant > 0) {
+            insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
+                               prob->alternatives_file, variant);
+            pw = &cs->prob_extras[prob->id].v_alts[variant];
+            pw_path = variant_stmt_file;
+          } else {
+            pw = &cs->prob_extras[prob->id].alt;
+            pw_path = prob->alternatives_file;
           }
-          lang_count++;
-          lang_id = i;
+          watched_file_update(pw, pw_path, cs->current_time);
+          alternatives = pw->text;
         }
-        
-        if (lang_count == 1) {
-          html_hidden(fout, "lang_id", "%d", lang_id);
-          fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s - %s</td></tr>\n",
-                  _("Language"),
-                  cs->langs[lang_id]->short_name,
-                  cs->langs[lang_id]->long_name);
-        } else {
-          fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Language"));
-          fprintf(fout, "<select name=\"lang_id\"><option value=\"\">\n");
+
+        html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+        fprintf(fout, "<input type=\"hidden\" name=\"prob_id\" value=\"%d\">\n",
+                prob_id);
+        fprintf(fout, "<table class=\"borderless\">\n");
+        if (!prob->type_val) {
           for (i = 1; i <= cs->max_lang; i++) {
             if (!cs->langs[i] || cs->langs[i]->disabled) continue;
             if ((lang_list = prob->enable_language)) {
@@ -8731,59 +8722,117 @@ user_main_page(FILE *fout,
                   break;
               if (lang_list[j]) continue;
             }
-            fprintf(fout, "<option value=\"%d\">%s - %s</option>\n",
-                    i, cs->langs[i]->short_name, cs->langs[i]->long_name);
+            lang_count++;
+            lang_id = i;
           }
-          fprintf(fout, "</select></td></tr>\n");
-        }
-      }
-      switch (prob->type_val) {
-      case PROB_TYPE_STANDARD:
-      case PROB_TYPE_OUTPUT_ONLY:
-        fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\"><input type=\"file\" name=\"file\"></td></tr>\n", _("File"));
-        break;
-      case PROB_TYPE_SHORT_ANSWER:
-        fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\"><input type=\"text\" name=\"file\"></td></tr>\n", _("Answer"));
-        break;
-      case PROB_TYPE_TEXT_ANSWER:
-        fprintf(fout, "<tr><td colspan=\"2\" class=\"borderless\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
-        break;
-      case PROB_TYPE_SELECT_ONE:
-        if (alternatives) {
-          write_alternatives_file(fout, 1, alternatives, "borderless");
-        } else if (prob->alternative) {
-          for (i = 0; prob->alternative[i]; i++) {
-            fprintf(fout, "<tr><td class=\"borderless\">%d</td><td class=\"borderless\"><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
-          }
-        }
-        break;
-      case PROB_TYPE_SELECT_MANY:
-        if (alternatives) {
-          write_alternatives_file(fout, 0, alternatives, "borderless");
-        } else if (prob->alternative) {
-          for (i = 0; prob->alternative[i]; i++) {
-            fprintf(fout, "<tr><td class=\"borderless\">%d</td><td class=\"borderless\"><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+
+          if (lang_count == 1) {
+            html_hidden(fout, "lang_id", "%d", lang_id);
+            fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s - %s</td></tr>\n",
+                    _("Language"),
+                    cs->langs[lang_id]->short_name,
+                    cs->langs[lang_id]->long_name);
+          } else {
+            fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Language"));
+            fprintf(fout, "<select name=\"lang_id\"><option value=\"\">\n");
+            for (i = 1; i <= cs->max_lang; i++) {
+              if (!cs->langs[i] || cs->langs[i]->disabled) continue;
+              if ((lang_list = prob->enable_language)) {
+                for (j = 0; lang_list[j]; j++)
+                  if (!strcmp(lang_list[j], cs->langs[i]->short_name))
+                    break;
+                if (!lang_list[j]) continue;
+              } else if ((lang_list = prob->disable_language)) {
+                for (j = 0; lang_list[j]; j++)
+                  if (!strcmp(lang_list[j], cs->langs[i]->short_name))
+                    break;
+                if (lang_list[j]) continue;
+              }
+              fprintf(fout, "<option value=\"%d\">%s - %s</option>\n",
+                      i, cs->langs[i]->short_name, cs->langs[i]->long_name);
+            }
+            fprintf(fout, "</select></td></tr>\n");
           }
         }
-        break;
-      }
-      fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\">%s</td></tr></table></form>\n",
-              _("Send!"),
-              BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
+        switch (prob->type_val) {
+        case PROB_TYPE_STANDARD:
+        case PROB_TYPE_OUTPUT_ONLY:
+          fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\"><input type=\"file\" name=\"file\"></td></tr>\n", _("File"));
+          break;
+        case PROB_TYPE_SHORT_ANSWER:
+          fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\"><input type=\"text\" name=\"file\"></td></tr>\n", _("Answer"));
+          break;
+        case PROB_TYPE_TEXT_ANSWER:
+          fprintf(fout, "<tr><td colspan=\"2\" class=\"borderless\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
+          break;
+        case PROB_TYPE_SELECT_ONE:
+          if (alternatives) {
+            write_alternatives_file(fout, 1, alternatives, "borderless");
+          } else if (prob->alternative) {
+            for (i = 0; prob->alternative[i]; i++) {
+              fprintf(fout, "<tr><td class=\"borderless\">%d</td><td class=\"borderless\"><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+            }
+          }
+          break;
+        case PROB_TYPE_SELECT_MANY:
+          if (alternatives) {
+            write_alternatives_file(fout, 0, alternatives, "borderless");
+          } else if (prob->alternative) {
+            for (i = 0; prob->alternative[i]; i++) {
+              fprintf(fout, "<tr><td class=\"borderless\">%d</td><td class=\"borderless\"><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+            }
+          }
+          break;
+        }
+        fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\">%s</td></tr></table></form>\n",
+                _("Send!"),
+                BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
+      } /* prob->disable_user_submit <= 0 */
 
       fprintf(fout, "<%s>%s</%s>\n",
               cnts->team_head_style, _("Select another problem"),
               cnts->team_head_style);
       html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
       fprintf(fout, "<table class=\"borderless\">\n");
-      fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Problem"));
+      fprintf(fout, "<tr>");
 
+      if (global->problem_navigation) {
+        for (i = prob_id - 1; i > 0; i--) {
+          if (!cs->probs[i]) continue;
+          // FIXME: standard applicability checks
+          break;
+        }
+        if (i > 0) {
+          fprintf(fout, "<td class=\"borderless\">%s%s</a></td>",
+                  ns_aref(bb, sizeof(bb), phr,
+                          NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
+                          "prob_id=%d", i), _("Previous"));
+        }
+      }
+
+      fprintf(fout, "<td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Problem"));
       html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 0,
                              start_time);
-
-      fprintf(fout, "</td><td class=\"borderless\">%s</td></tr></table></form>\n",
-              ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
+      fprintf(fout, "</td><td class=\"borderless\">%s</td>",
+              ns_submit_button(bb, sizeof(bb), 0,
+                               NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
                                _("Select problem")));
+
+      if (global->problem_navigation) {
+        for (i = prob_id + 1; i <= cs->max_prob; i++) {
+          if (!cs->probs[i]) continue;
+          // FIXME: standard applicability checks
+          break;
+        }
+        if (i <= cs->max_prob) {
+          fprintf(fout, "<td class=\"borderless\">%s%s</a></td>",
+                  ns_aref(bb, sizeof(bb), phr,
+                          NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
+                          "prob_id=%d", i), _("Next"));
+        }
+      }
+
+      fprintf(fout, "</tr></table></form>\n");
     }
   }
 
@@ -8883,7 +8932,7 @@ user_main_page(FILE *fout,
     }
 
 #if CONF_HAS_LIBINTL - 0 == 1
-    if (cs->global->enable_l10n && !cs->clients_suspended) {
+    if (global->enable_l10n && !cs->clients_suspended) {
       fprintf(fout, "<%s>%s</%s>\n",
               cnts->team_head_style, _("Change language"),
               cnts->team_head_style);
@@ -8896,7 +8945,21 @@ user_main_page(FILE *fout,
 #endif /* CONF_HAS_LIBINTL */
   }
 
-  if (1 /*cs->global->show_generation_time*/) {
+  /* new problem navigation */
+  if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
+    fprintf(fout, "<div class=\"server_status_on\"><table class=\"borderless\"><tr>");
+    fprintf(fout, "<td class=\"borderless\">%s</td>", _("Problems:"));
+    for (i = 1; i <= cs->max_prob; i++) {
+      if (!(prob = cs->probs[i])) continue;
+      /* standard checks for submit possibility */
+      fprintf(fout, "<td class=\"borderless\">%s%s</a></td>",
+              ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
+                      "prob_id=%d", i), prob->short_name);
+    }
+    fprintf(fout, "</tr></table></div>\n");
+  }
+
+  if (1 /*global->show_generation_time*/) {
   gettimeofday(&phr->timestamp2, 0);
   tdiff = ((long long) phr->timestamp2.tv_sec) * 1000000;
   tdiff += phr->timestamp2.tv_usec;
