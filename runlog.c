@@ -580,6 +580,14 @@ read_runlog(runlog_state_t state, time_t init_duration, time_t init_finish_time)
   if ((r = runlog_check(0, &state->head, state->run_u, state->runs)) < 0) return -1;
   if (r > 0) runlog_flush(state);
   build_indices(state);
+
+  if (init_finish_time > 0 && state->head.finish_time != init_finish_time) {
+    state->head.finish_time = init_finish_time;
+    run_flush_header(state);
+  } else if (init_finish_time == -1 && state->head.finish_time > 0) {
+    state->head.finish_time = 0;
+    run_flush_header(state);
+  }
   return 0;
 
  _cleanup:
