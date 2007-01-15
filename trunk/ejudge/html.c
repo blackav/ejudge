@@ -768,6 +768,7 @@ html_write_user_problems_summary(const serve_state_t state,
     if (!(cur_prob = state->probs[prob_id])) continue;
     if (cur_prob->t_start_date && current_time < cur_prob->t_start_date)
       continue;
+    if (cur_prob->hidden > 0) continue;
     s = "";
     if (accepted_flag[prob_id] || solved_flag[prob_id])
       s = " bgcolor=\"#ddffdd\"";
