@@ -3168,6 +3168,7 @@ ns_write_olympiads_user_runs(
         const struct contest_desc *cnts,
         struct contest_extra *extra,
         int all_runs,
+        int prob_id,
         const unsigned char *table_class)
 {
   const serve_state_t cs = extra->serve_state;
@@ -3236,6 +3237,7 @@ ns_write_olympiads_user_runs(
     if (re.status > RUN_MAX_STATUS && re.status <= RUN_TRANSIENT_FIRST)
       continue;
     if (re.user_id != phr->user_id) continue;
+    if (prob_id > 0 && re.prob_id != prob_id) continue;
 
     prob = 0;
     if (re.prob_id > 0 && re.prob_id <= cs->max_prob)
