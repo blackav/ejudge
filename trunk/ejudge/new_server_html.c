@@ -7332,7 +7332,8 @@ unpriv_command(FILE *fout,
   FILE *log_f = 0;
   time_t start_time, stop_time;
   struct timeval precise_time;
-  int run_id;
+  int run_id, i;
+  unsigned char bb[1024];
 
   l10n_setlocale(phr->locale_id);
   log_f = open_memstream(&log_txt, &log_size);
@@ -7404,7 +7405,22 @@ unpriv_command(FILE *fout,
   l10n_setlocale(0);
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
-    html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+    i = 0;
+    if (phr->action == NEW_SRV_ACTION_VIRTUAL_START
+        && global->problem_navigation) {
+      for (i = 1; i <= cs->max_prob; i++) {
+        if (!cs->probs[i]) continue;
+        // FIXME: standard applicability checks
+        break;
+      }
+      if (i > cs->max_prob) i = 0;
+    }
+    if (i > 0) {
+      snprintf(bb, sizeof(bb), "prob_id=%d", i);
+      html_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT, bb);
+    } else {
+      html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+    }
   } else {
     unpriv_load_html_style(phr, cnts, 0, 0);
     html_error_status_page(fout, phr, cnts, extra, log_txt,
@@ -8550,6 +8566,11 @@ user_main_page(FILE *fout,
   unpriv_page_header(fout, phr, cnts, extra, start_time, stop_time);
 
   if (phr->action == NEW_SRV_ACTION_MAIN_PAGE) {
+    if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
+      html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
+                                       accepted_flag, 1, accepting_mode, 0);
+    }
+
     unpriv_print_status(fout, phr, cnts, extra,
                         start_time, stop_time, duration, sched_time,
                         fog_start_time);
@@ -8567,6 +8588,11 @@ user_main_page(FILE *fout,
 
   if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS
       && start_time > 0) {
+    if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
+      html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
+                                       accepted_flag, 1, accepting_mode, 0);
+    }
+
     if (cnts->problems_url) {
       fprintf(fout, "<p><a href=\"%s\">%s</a></p>\n",
               cnts->problems_url, _("Problem statements"));
@@ -8789,6 +8815,18 @@ user_main_page(FILE *fout,
                 BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
       } /* prob->disable_user_submit <= 0 */
 
+      if (global->problem_navigation
+          && global->score_system_val == SCORE_OLYMPIAD
+          && !prob->disable_user_submit) {
+        fprintf(fout, "<%s>%s (%s)</%s>\n",
+                cnts->team_head_style,
+                _("Previous submissions"),
+                all_runs?_("all"):_("last 15"),
+                cnts->team_head_style);
+        ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
+                                     prob_id, "summary");
+      }
+
       fprintf(fout, "<%s>%s</%s>\n",
               cnts->team_head_style, _("Select another problem"),
               cnts->team_head_style);
@@ -8837,13 +8875,19 @@ user_main_page(FILE *fout,
   }
 
   if (phr->action == NEW_SRV_ACTION_VIEW_SUBMISSIONS && start_time > 0) {
+    if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
+      html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
+                                       accepted_flag, 1, accepting_mode, 0);
+    }
+
     fprintf(fout, "<%s>%s (%s)</%s>\n",
             cnts->team_head_style,
             _("Sent submissions"),
             all_runs?_("all"):_("last 15"),
             cnts->team_head_style);
     if (global->score_system_val == SCORE_OLYMPIAD) {
-      ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs, "summary");
+      ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
+                                   0, "summary");
     } else {
       new_write_user_runs(cs, fout, phr->user_id, all_runs,
                           NEW_SRV_ACTION_VIEW_SOURCE,
@@ -8860,6 +8904,11 @@ user_main_page(FILE *fout,
 
   if (phr->action == NEW_SRV_ACTION_VIEW_CLAR_SUBMIT
       && !cs->clients_suspended) {
+    if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
+      html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
+                                       accepted_flag, 1, accepting_mode, 0);
+    }
+
     if (!global->disable_clars && !global->disable_team_clars
         && start_time > 0 && stop_time <= 0) {
       fprintf(fout, "<%s>%s</%s>\n",
@@ -8897,6 +8946,11 @@ user_main_page(FILE *fout,
   }
 
   if (phr->action == NEW_SRV_ACTION_VIEW_CLARS && !global->disable_clars) {
+    if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
+      html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
+                                       accepted_flag, 1, accepting_mode, 0);
+    }
+
     fprintf(fout, "<%s>%s (%s)</%s>\n",
             cnts->team_head_style, _("Messages"),
             all_clars?_("all"):_("last 15"), cnts->team_head_style);
@@ -8912,6 +8966,11 @@ user_main_page(FILE *fout,
   }
 
   if (phr->action == NEW_SRV_ACTION_VIEW_SETTINGS) {
+    if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
+      html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
+                                       accepted_flag, 1, accepting_mode, 0);
+    }
+
     /* change the password */
     if (!cs->clients_suspended) {
       fprintf(fout, "<%s>%s</%s>\n",
@@ -8952,9 +9011,17 @@ user_main_page(FILE *fout,
     for (i = 1; i <= cs->max_prob; i++) {
       if (!(prob = cs->probs[i])) continue;
       /* standard checks for submit possibility */
-      fprintf(fout, "<td class=\"borderless\">%s%s</a></td>",
+      fprintf(fout, "<td class=\"borderless\">");
+      if (accepting_mode && accepted_flag[i]) {
+        fprintf(fout, "<s>");
+      }
+      fprintf(fout, "%s%s</a>",
               ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
                       "prob_id=%d", i), prob->short_name);
+      if (accepting_mode && accepted_flag[i]) {
+        fprintf(fout, "</s>");
+      }
+      fprintf(fout, "</td>\n");
     }
     fprintf(fout, "</tr></table></div>\n");
   }

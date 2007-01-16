@@ -519,6 +519,7 @@ ns_write_olympiads_user_runs(
         const struct contest_desc *cnts,
         struct contest_extra *extra,
         int all_runs,
+        int prob_id,
         const unsigned char *table_class);
 
 int
