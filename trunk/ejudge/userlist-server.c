@@ -7477,7 +7477,7 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
       need_members = 1;
 
   // print the header row
-  fprintf(f, "Id;Login;Name;Reg.St;Ban;Lock;Inv");
+  fprintf(f, "Id;Login;Name;Email;Reg.St;Ban;Lock;Inv");
   for (i = 0; i < CONTEST_LAST_FIELD; i++) {
     if (cnts->fields[i] && cnts_field_names[i])
       fprintf(f, ";%s", cnts_field_names[i]);
@@ -7495,7 +7495,7 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
     c = userlist_get_user_contest(u, contest_id);
 
     gen_f = open_memstream(&gen_text, &gen_size);
-    fprintf(gen_f, "%d;%s;%s", u->id, u->login, ui->name);
+    fprintf(gen_f, "%d;%s;%s;%s", u->id, u->login, ui->name, u->email);
 
     switch (c->status) {
     case USERLIST_REG_OK:       s = "OK";       break;
