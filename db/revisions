@@ -1890,3 +1890,8 @@ new_server_html.c 3858 0 25523380
 new_server_html_2.c 3858 0 9009172
 userlist-server.c 3860 0 20727601
 html.c 3862 0 14294564
+new-server.h 3865 0 1384173
+new-server.c 3865 0 1598995
+new_server_html.c 3865 0 25647201
+new_server_html_2.c 3865 0 9009546
+new_server_html_3.c 3865 0 1791851
