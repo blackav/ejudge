@@ -1580,7 +1580,7 @@ do_write_kirov_standings(const serve_state_t state,
                          int accepting_mode,
                          time_t cur_time)
 {
-  const struct section_global_data *global = state->global;
+  struct section_global_data *global = state->global;
   time_t start_time;
   time_t stop_time;
   time_t cur_duration;
@@ -2584,7 +2584,7 @@ do_write_moscow_standings(const serve_state_t state,
                           const unsigned char *user_name,
                           time_t cur_time)
 {
-  const struct section_global_data *global = state->global;
+  struct section_global_data *global = state->global;
   const unsigned char *head_style;
   time_t start_time;
   time_t stop_time;
@@ -3431,7 +3431,7 @@ do_write_standings(const serve_state_t state,
                    const unsigned char *user_name,
                    time_t cur_time)
 {
-  const struct section_global_data *global = state->global;
+  struct section_global_data *global = state->global;
   int      i, j, t;
 
   int     *t_ind;
