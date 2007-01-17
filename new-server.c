@@ -383,6 +383,7 @@ cmd_http_request(struct server_framework_state *state,
   xfree(hr.login);
   xfree(hr.name);
   xfree(hr.name_arm);
+  xfree(hr.script_part);
 }
 
 static void

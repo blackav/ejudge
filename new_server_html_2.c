@@ -942,7 +942,7 @@ ns_write_priv_source(const serve_state_t state,
   if (info.lang_id > 0 && info.lang_id <= state->max_lang)
     lang = state->langs[info.lang_id];
 
-  ns_header(f, extra->header_txt, 0, 0, phr->locale_id,
+  ns_header(f, extra->header_txt, 0, 0, 0, phr->locale_id,
             "%s [%s, %s]: %s %d", ns_unparse_role(phr->role),
             phr->name_arm, extra->contest_arm,
             _("Viewing run"), run_id);
@@ -1552,7 +1552,7 @@ ns_write_priv_report(const serve_state_t cs,
     content_type = get_content_type(rep_text, &start_ptr);
   }
 
-  ns_header(f, extra->header_txt, 0, 0, phr->locale_id,
+  ns_header(f, extra->header_txt, 0, 0, 0, phr->locale_id,
             "%s [%s, %s]: %s %d", ns_unparse_role(phr->role),
             phr->name_arm, extra->contest_arm,
             team_report_flag?_("Viewing user report"):_("Viewing report"),
@@ -1637,7 +1637,7 @@ ns_write_audit_log(const serve_state_t cs,
   }
   audit_html = html_armor_string_dup(audit_text);
 
-  ns_header(f, extra->header_txt, 0, 0, phr->locale_id,
+  ns_header(f, extra->header_txt, 0, 0, 0, phr->locale_id,
             "%s [%s, %s]: %s %d", ns_unparse_role(phr->role),
             phr->name_arm, extra->contest_arm,
             _("Viewing audit log for"), run_id);
