@@ -281,3 +281,5 @@ TD.st_warns {font-size: 11px; border: solid; border-width: 1px; border-color: #0
 
 TH.st_status {font-size: 11px; border: solid; border-width: 1px; border-color: #000000; margin: 1px; font-weight: 600;}
 TD.st_status {font-size: 11px; border: solid; border-width: 1px; border-color: #000000; margin: 1px; }
+
+div#currentTime { display : inline; }
