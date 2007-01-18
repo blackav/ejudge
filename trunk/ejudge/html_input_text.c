@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ html_input_text(unsigned char *buf, size_t size,
   bname[0] = 0;
   if (var_name) snprintf(bname, sizeof(bname), " name=\"%s\"", var_name);
 
-  snprintf(buf, size, "<input type=\"text\"%s%s value=\"%s\">",
+  snprintf(buf, size, "<input type=\"text\"%s%s value=\"%s\"/>",
            bsize, bname, bformat);
   return buf;
 }

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -208,20 +208,20 @@ read_state_params(void)
   form_contest_id[0] = 0;
   if (cgi_contest_id > 0) {
     snprintf(form_contest_id, sizeof(form_contest_id),
-             "<input type=\"hidden\" name=\"contest_id\" value=\"%d\">",
+             "<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>",
              global->contest_id);
   }
 
   snprintf(form_start_simple, sizeof(form_start_simple),
            "%s"
-           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\"/>%s",
            form_header_simple, client_sid, form_contest_id);
   snprintf(form_start_multipart, sizeof(form_start_multipart),
            "%s"
-           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\"/>%s",
            form_header_multipart, client_sid, form_contest_id);
   snprintf(hidden_vars, sizeof(hidden_vars),
-           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\"/>%s",
            client_sid, form_contest_id);
 }
 
@@ -276,25 +276,25 @@ display_enter_password_2(void)
   client_put_header(stdout, 0, 0, DEFAULT_CHARSET, 1, 0,
                     "Enter password - %s",
                     protocol_priv_level_str(priv_level));
-  printf("<form method=\"POST\" action=\"%s\" "
-         "ENCTYPE=\"application/x-www-form-urlencoded\">",
+  printf("<form method=\"post\" action=\"%s\" "
+         "enctype=\"application/x-www-form-urlencoded\">",
          self_url);
   printf("<table>"
          "<tr>"
          "<td>%s:</td>"
-         "<td><input type=\"text\" size=16 name=\"login\"></td>"
+         "<td><input type=\"text\" size=16 name=\"login\"/></td>"
          "</tr>"
          "<tr>"
          "<td>%s:</td>"
-         "<td><input type=\"password\" size=16 name=\"password\"></td>"
+         "<td><input type=\"password\" size=16 name=\"password\"/></td>"
          "</tr>"
          "<tr>"
          "<td>%s:</td>"
-         "<td><input type=\"text\" size=\"16\" name=\"contest_id\"></td>"
+         "<td><input type=\"text\" size=\"16\" name=\"contest_id\"/></td>"
          "</tr>"
          "<tr>"
          "<td>&nbsp;</td>"
-         "<td><input type=\"submit\" value=\"%s\"></td>"
+         "<td><input type=\"submit\" value=\"%s\"/></td>"
          "</tr>"
          "</table>"
          "</form>",
@@ -326,21 +326,21 @@ display_enter_password(void)
 
   puts(form_header_simple);
   if (cgi_contest_id > 0) {
-    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n", 
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>\n", 
            cgi_contest_id);
   }
   printf("<table>"
          "<tr>"
          "<td>%s:</td>"
-         "<td><input type=\"text\" size=16 name=\"login\"></td>"
+         "<td><input type=\"text\" size=16 name=\"login\"/></td>"
          "</tr>"
          "<tr>"
          "<td>%s:</td>"
-         "<td><input type=\"password\" size=16 name=\"password\"></td>"
+         "<td><input type=\"password\" size=16 name=\"password\"/></td>"
          "</tr>"
          "<tr>"
          "<td>&nbsp;</td>"
-         "<td><input type=\"submit\" value=\"%s\"></td>"
+         "<td><input type=\"submit\" value=\"%s\"/></td>"
          "</tr>"
          "</table>"
          "</form>",
@@ -560,7 +560,7 @@ print_update_button(char const *str)
 {
   if (!str) str = _("Update public standings");
   puts(form_start_simple);
-  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
          ACTION_UPDATE_STANDINGS_1, str);
   puts("</form>");
 }
@@ -633,7 +633,7 @@ print_reset_button(char const *str)
 {
   if (!str) str = _("Reset the contest!");
   puts(form_start_simple);
-  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"/></form>",
          ACTION_RESET_1, str);
 }
 
@@ -642,7 +642,7 @@ print_regenerate_button(unsigned char const *str)
 {
   if (!str) str = _("Regenerate user passwords!");
   puts(form_start_simple);
-  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"/></form>",
          ACTION_GENERATE_PASSWORDS_1, str);
 }
 
@@ -651,7 +651,7 @@ print_regenerate_reg_button(unsigned char const *str)
 {
   if (!str) str = _("Regenerate register user passwords!");
   puts(form_start_simple);
-  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"/></form>",
          ACTION_GENERATE_REG_PASSWORDS_1, str);
 }
 
@@ -660,7 +660,7 @@ print_clear_team_passwords_button(unsigned char const *str)
 {
   if (!str) str = _("Clear team passwords!");
   puts(form_start_simple);
-  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"/></form>",
          ACTION_CLEAR_TEAM_PASSWORDS_1, str);
 }
 
@@ -669,7 +669,7 @@ print_suspend_button(char const *str)
 {
   if (!str) str = _("Suspend clients");
   puts(form_start_simple);
-  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"/></form>",
          ACTION_SUSPEND, str);
 }
 
@@ -678,7 +678,7 @@ print_resume_button(char const *str)
 {
   if (!str) str = _("Resume clients");
   puts(form_start_simple);
-  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"/></form>",
          ACTION_RESUME, str);
 }
 
@@ -694,7 +694,7 @@ print_testing_suspend_button(void)
     str = _("Resume testing");
     action = ACTION_TEST_RESUME;
   }
-  printf("%s<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+  printf("%s<input type=\"submit\" name=\"action_%d\" value=\"%s\"/></form>",
          form_start_simple, action, str);
 }
 
@@ -710,7 +710,7 @@ print_printing_suspend_button(void)
     str = _("Resume printing");
     action = ACTION_PRINT_RESUME;
   }
-  printf("%s<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+  printf("%s<input type=\"submit\" name=\"action_%d\" value=\"%s\"/></form>",
          form_start_simple, action, str);
 }
 
@@ -728,7 +728,7 @@ print_judging_mode_button(int accepting_mode)
     a = ACTION_SET_ACCEPTING_MODE;
   }
   puts(form_start_simple);
-  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"/></form>",
          a, str);
 }
 
@@ -737,7 +737,7 @@ print_reload_server_button(const unsigned char *str)
 {
   if (!str) str = _("Reload server");
   puts(form_start_simple);
-  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"/></form>",
          ACTION_RELOAD_SERVER, str);
 }
 
@@ -1851,7 +1851,7 @@ confirm_reset_if_asked(void)
 {
   client_put_header(stdout, 0, 0, global->charset, 1, 0, "Confirm contest reset");
   print_refresh_button(_("No"));
-  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>"
          "</form>", form_start_simple,
          ACTION_RESET_2, _("Yes, reset the contest!"));
   client_put_footer(stdout, 0);
@@ -1865,7 +1865,7 @@ confirm_update_standings(void)
                     "Confirm update public standings");
   printf("<p>");
   print_refresh_button(_("No"));
-  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>"
          "</form></p>", form_start_simple, ACTION_UPDATE_STANDINGS_2,
          _("Yes, update standings!"));
   client_put_footer(stdout, 0);
@@ -1879,7 +1879,7 @@ confirm_clear_team_passwords(void)
                     "Confirm clear team passwords");
   printf("<p>");
   print_refresh_button(_("No"));
-  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>"
          "</form></p>", form_start_simple, ACTION_CLEAR_TEAM_PASSWORDS_2,
          _("Yes, clear passwords!"));
   client_put_footer(stdout, 0);
@@ -1893,7 +1893,7 @@ confirm_regenerate_register_if_asked(void)
                     "Confirm register user password generation");
   printf("<p>");
   print_refresh_button(_("No"));
-  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>"
          "</form></p>", form_start_simple, ACTION_GENERATE_REG_PASSWORDS_2,
          _("Yes, generate passwords!"));
   client_put_footer(stdout, 0);
@@ -1907,7 +1907,7 @@ confirm_regenerate_if_asked(void)
                     "Confirm user password generation");
   printf("<p>");
   print_refresh_button(_("No"));
-  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>"
          "</form></p>", form_start_simple, ACTION_GENERATE_PASSWORDS_2,
          _("Yes, generate passwords!"));
   client_put_footer(stdout, 0);
@@ -1921,7 +1921,7 @@ confirm_rejudge_all(void)
                     "Confirm rejudge all runs");
   printf("<p>");
   print_refresh_button(_("No"));
-  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>"
          "</form></p>", form_start_simple, ACTION_REJUDGE_ALL_2,
          _("Yes, rejudge!"));
   client_put_footer(stdout, 0);
@@ -1935,7 +1935,7 @@ confirm_judge_suspended(void)
                     "Confirm judge suspended runs");
   printf("<p>");
   print_refresh_button(_("No"));
-  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>"
          "</form></p>", form_start_simple, ACTION_JUDGE_SUSPENDED_2,
          _("Yes, judge!"));
   client_put_footer(stdout, 0);
@@ -1989,16 +1989,16 @@ confirm_rejudge_displayed(int cur_action, int next_action)
   print_refresh_button(_("No"));
   printf("<p>%s\n", form_start_simple);
 
-  printf("<input type=\"hidden\" name=\"run_mask_size\" value=\"%d\">\n",
+  printf("<input type=\"hidden\" name=\"run_mask_size\" value=\"%d\"/>\n",
          run_mask_size);
   printf("<input type=\"hidden\" name=\"run_mask\" value=\"");
   for (i = 0; i < run_mask_size; i++) {
     if (i > 0) printf(" ");
     printf("%lx", run_mask[i]);
   }
-  printf("\">\n");
+  printf("\"/>\n");
 
-  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>"
          "</form></p>", next_action, _("Yes, rejudge!"));
   client_put_footer(stdout, 0);
   exit(0);
@@ -2014,7 +2014,7 @@ confirm_squeeze(void)
                     "Confirm squeeze run log");
   printf("<p>");
   print_refresh_button(_("No"));
-  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>"
          "</form></p>", form_start_simple, ACTION_SQUEEZE_RUNS_2,
          _("Yes, squeeze!"));
   client_put_footer(stdout, 0);
@@ -2028,7 +2028,7 @@ confirm_continue(void)
                     "Confirm continue contest");
   printf("<p>");
   print_refresh_button(_("No"));
-  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>"
          "</form></p>", form_start_simple, ACTION_CONTINUE_2,
          _("Yes, continue!"));
   client_put_footer(stdout, 0);
@@ -2055,8 +2055,8 @@ confirm_clear_run(void)
   printf("<p>");
   print_refresh_button(_("No"));
   printf("<p>%s"
-         "<input type=\"hidden\" name=\"run_id\" value=\"%d\">"
-         "<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+         "<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>"
+         "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>"
          "</form></p>", form_start_simple, r, ACTION_CLEAR_RUN_2,
          _("Yes, clear!"));
   client_put_footer(stdout, 0);
@@ -3381,15 +3381,15 @@ main(int argc, char *argv[])
     printf("<table>\n");
     printf("<tr>"
            "<td>%s:</td>"
-           "<td><input type=\"text\" size=\"16\" name=\"msg_dest_id\"></td>"
+           "<td><input type=\"text\" size=\"16\" name=\"msg_dest_id\"/></td>"
            "</tr>\n", _("To user id"));
     printf("<tr>"
            "<td>%s:</td>"
-           "<td><input type=\"text\" size=\"32\" name=\"msg_dest_login\"></td>"
+           "<td><input type=\"text\" size=\"32\" name=\"msg_dest_login\"/></td>"
            "</tr>\n", _("To user login"));
     printf("<tr>"
            "<td>%s:</td>"
-           "<td><input type=\"text\" size=\"64\" name=\"msg_subj\"></td>"
+           "<td><input type=\"text\" size=\"64\" name=\"msg_subj\"/></td>"
            "</tr>\n",
            _("Subject"));
     if (server_start_time <= 0) {
@@ -3398,7 +3398,7 @@ main(int argc, char *argv[])
     printf("</table>\n");
     printf("<p><textarea name=\"msg_text\" rows=\"20\" cols=\"60\">"
            "</textarea></p>");
-    printf("<p><input type=\"submit\" name=\"msg_send\" value=\"%s\">",
+    printf("<p><input type=\"submit\" name=\"msg_send\" value=\"%s\"/>",
            _("Send"));
     printf("</form>\n");
   }

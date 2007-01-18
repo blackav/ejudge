@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -92,17 +92,17 @@ l10n_html_locale_select(FILE *fout, int locale_id)
     fprintf(fout, "<select name=\"locale_id\">");
     for (i = 0; locales[i]; i++) {
       ss = "";
-      if (i == locale_id) ss = " selected=\"1\"";
+      if (i == locale_id) ss = " selected=\"selected\"";
       fprintf(fout, "<option value=\"%d\"%s>%s</option>",
               i, ss, gettext(locales[i]));
     }
     fprintf(fout, "</select>\n");
   } else {
-    fprintf(fout, "<input type=\"hidden\" name=\"locale_id\" value=\"0\">%s\n",
+    fprintf(fout, "<input type=\"hidden\" name=\"locale_id\" value=\"0\"/>%s\n",
             locales[0]);
   }
 #else
-  fprintf(fout, "<input type=\"hidden\" name=\"locale_id\" value=\"0\">%s\n",
+  fprintf(fout, "<input type=\"hidden\" name=\"locale_id\" value=\"0\"/>%s\n",
           locales[0]);
 #endif
 }

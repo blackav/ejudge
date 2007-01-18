@@ -638,13 +638,13 @@ write_priv_all_runs(serve_state_t state, FILE *f,
                (u->prev_last_run > 0)?u->prev_last_run - 1:u->prev_last_run);
     }
     html_start_form(f, 0, self_url, hidden_vars);
-    fprintf(f, "<p>%s: <input type=\"text\" name=\"filter_expr\" size=\"32\" maxlength=\"128\" value=\"%s\">", _("Filter expression"), fe_html);
-    fprintf(f, "%s: <input type=\"text\" name=\"filter_first_run\" size=\"16\" value=\"%s\">", _("First run"), first_run_str);
-    fprintf(f, "%s: <input type=\"text\" name=\"filter_last_run\" size=\"16\" value=\"%s\">", _("Last run"), last_run_str);
-    fprintf(f, "<input type=\"submit\" name=\"filter_view\" value=\"%s\">", _("View"));
+    fprintf(f, "<p>%s: <input type=\"text\" name=\"filter_expr\" size=\"32\" maxlength=\"128\" value=\"%s\"/>", _("Filter expression"), fe_html);
+    fprintf(f, "%s: <input type=\"text\" name=\"filter_first_run\" size=\"16\" value=\"%s\"/>", _("First run"), first_run_str);
+    fprintf(f, "%s: <input type=\"text\" name=\"filter_last_run\" size=\"16\" value=\"%s\"/>", _("Last run"), last_run_str);
+    fprintf(f, "<input type=\"submit\" name=\"filter_view\" value=\"%s\"/>", _("View"));
     //fprintf(f, "</form>\n");
     //html_start_form(f, 0, sid, self_url, hidden_vars);
-    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
             ACTION_RESET_FILTER, _("Reset filter"));
     fprintf(f, "</form></p>\n");
   }
@@ -767,9 +767,9 @@ write_priv_all_runs(serve_state_t state, FILE *f,
         if (priv_level == PRIV_LEVEL_ADMIN) {
           fprintf(f, "<td>");
           html_start_form(f, 1, self_url, hidden_vars);
-          fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">",
+          fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>",
                   rid);
-          fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+          fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
                   ACTION_CLEAR_RUN, _("clear"));
           fprintf(f, "</form></td>");
         } else {
@@ -869,7 +869,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
                                    0);
         fprintf(f,
                 "<td><input type=\"submit\" name=\"change_%d\""
-                " value=\"%s\"></td>\n", rid, _("change"));
+                " value=\"%s\"/></td>\n", rid, _("change"));
       }
 
       fprintf(f, "<td>");
@@ -904,47 +904,47 @@ write_priv_all_runs(serve_state_t state, FILE *f,
   if (priv_level == PRIV_LEVEL_ADMIN &&!u->error_msgs) {
     fprintf(f, "<table border=\"0\"><tr><td>");
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
             ACTION_REJUDGE_ALL_1, _("Rejudge all"));
     fprintf(f, "</form></td><td>\n");
 
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
             ACTION_JUDGE_SUSPENDED_1, _("Judge suspended runs"));
     fprintf(f, "</form></td><td>\n");
 
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"hidden\" name=\"run_mask_size\" value=\"%d\">\n",
+    fprintf(f, "<input type=\"hidden\" name=\"run_mask_size\" value=\"%d\"/>\n",
             displayed_size);
     fprintf(f, "<input type=\"hidden\" name=\"run_mask\" value=\"");
     for (i = 0; i < displayed_size; i++) {
       if (i > 0) fprintf(f, " ");
       fprintf(f, "%lx", displayed_mask[i]);
     }
-    fprintf(f, "\">\n");
-    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+    fprintf(f, "\"/>\n");
+    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
             ACTION_REJUDGE_DISPLAYED_1, _("Rejudge displayed runs"));
     fprintf(f, "</form></td><td>\n");
 
     if (state->global->score_system_val == SCORE_OLYMPIAD
         && state->accepting_mode) {
       html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f,"<input type=\"hidden\" name=\"run_mask_size\" value=\"%d\">\n",
+      fprintf(f,"<input type=\"hidden\" name=\"run_mask_size\" value=\"%d\"/>\n",
               displayed_size);
       fprintf(f, "<input type=\"hidden\" name=\"run_mask\" value=\"");
       for (i = 0; i < displayed_size; i++) {
         if (i > 0) fprintf(f, " ");
         fprintf(f, "%lx", displayed_mask[i]);
       }
-      fprintf(f, "\">\n");
-      fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+      fprintf(f, "\"/>\n");
+      fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
               ACTION_FULL_REJUDGE_DISPLAYED_1,
               _("Full rejudge displayed runs"));
       fprintf(f, "</form></td><td>\n");
     }
 
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
             ACTION_SQUEEZE_RUNS, _("Squeeze runs"));
     fprintf(f, "</form></td></tr></table>\n");
 
@@ -957,7 +957,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
                 state->probs[i]->id, state->probs[i]->short_name, state->probs[i]->long_name);
       }
     fprintf(f, "</select>\n");
-    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
             ACTION_REJUDGE_PROBLEM, _("Rejudge!"));
     fprintf(f, "</form></p>\n");
   }
@@ -966,8 +966,8 @@ write_priv_all_runs(serve_state_t state, FILE *f,
     html_start_form(f, 2, self_url, hidden_vars);
     fprintf(f, "<table border=\"0\"><tr><td>%s: </td>\n",
             _("Import and merge XML runs log"));
-    fprintf(f, "<td><input type=\"file\" name=\"file\"></td>\n");
-    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_MERGE_RUNS, _("Send!"));
+    fprintf(f, "<td><input type=\"file\" name=\"file\"/></td>\n");
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td>", ACTION_MERGE_RUNS, _("Send!"));
     fprintf(f, "</tr></table></form>\n");
   }
 
@@ -1001,9 +1001,9 @@ write_priv_all_runs(serve_state_t state, FILE *f,
   fprintf(f, "</select>\n");
   fprintf(f, "</td></tr>\n");
   fprintf(f, "<tr><td>%s:</td>"
-          "<td><input type=\"file\" name=\"file\"></td></tr>\n"
+          "<td><input type=\"file\" name=\"file\"/></td></tr>\n"
           "<tr><td>%s</td>"
-          "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>",
+          "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr>",
           _("File"), _("Send!"), ACTION_SUBMIT_RUN, _("Send!"));
   fprintf(f, "</table></form>\n");
 
@@ -1114,10 +1114,10 @@ write_all_clars(const serve_state_t state, FILE *f, struct user_filter_info *u,
           _("All clars"),
           (mode_clar == 2) ? " selected=\"1\"" : "",
           _("Unanswered clars"));
-  fprintf(f, "%s: <input type=\"text\" name=\"filter_first_clar\" size=\"16\" value=\"%s\">", _("First clar"), first_clar_str);
-  fprintf(f, "%s: <input type=\"text\" name=\"filter_last_clar\" size=\"16\" value=\"%s\">", _("Last clar"), last_clar_str);
-  fprintf(f, "<input type=\"submit\" name=\"filter_view_clars\" value=\"%s\">", _("View"));
-  fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+  fprintf(f, "%s: <input type=\"text\" name=\"filter_first_clar\" size=\"16\" value=\"%s\"/>", _("First clar"), first_clar_str);
+  fprintf(f, "%s: <input type=\"text\" name=\"filter_last_clar\" size=\"16\" value=\"%s\"/>", _("Last clar"), last_clar_str);
+  fprintf(f, "<input type=\"submit\" name=\"filter_view_clars\" value=\"%s\"/>", _("View"));
+  fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
           ACTION_RESET_CLAR_FILTER, _("Reset filter"));
   fprintf(f, "</p></form>\n");
 
@@ -1329,8 +1329,8 @@ write_priv_source(const serve_state_t state, FILE *f,
           _("User ID"), ps1, info.user_id, ps2);
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
-    fprintf(f, "<td><input type=\"text\" name=\"run_user_id\" value=\"%d\" size=\"10\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", info.user_id, ACTION_RUN_CHANGE_USER_ID, _("Change"));
+    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>", run_id);
+    fprintf(f, "<td><input type=\"text\" name=\"run_user_id\" value=\"%d\" size=\"10\"/></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>", info.user_id, ACTION_RUN_CHANGE_USER_ID, _("Change"));
   } else {
     fprintf(f, "%s", nbsp);
   }
@@ -1339,8 +1339,8 @@ write_priv_source(const serve_state_t state, FILE *f,
           _("User login"), teamdb_get_login(state->teamdb_state, info.user_id));
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
-    fprintf(f, "<td><input type=\"text\" name=\"run_user_login\" value=\"%s\" size=\"20\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", teamdb_get_login(state->teamdb_state, info.user_id), ACTION_RUN_CHANGE_USER_LOGIN, _("Change"));
+    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>", run_id);
+    fprintf(f, "<td><input type=\"text\" name=\"run_user_login\" value=\"%s\" size=\"20\"/></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>", teamdb_get_login(state->teamdb_state, info.user_id), ACTION_RUN_CHANGE_USER_LOGIN, _("Change"));
   } else {
     fprintf(f, "%s", nbsp);
   }
@@ -1360,7 +1360,7 @@ write_priv_source(const serve_state_t state, FILE *f,
           _("Problem"), ps1, state->probs[info.prob_id]->short_name, ps2);
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
+    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>", run_id);
     fprintf(f, "<td><select name=\"problem\"><option value=\"\">\n");
     for (i = 1; i <= state->max_prob; i++)
       if (state->probs[i]) {
@@ -1368,7 +1368,7 @@ write_priv_source(const serve_state_t state, FILE *f,
                 state->probs[i]->id, state->probs[i]->short_name, state->probs[i]->long_name);
       }
     fprintf(f, "</select></td>\n");
-    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_PROB, _("Change"));
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>\n", ACTION_RUN_CHANGE_PROB, _("Change"));
   } else {
     fprintf(f, "%s", nbsp);
   }
@@ -1394,8 +1394,8 @@ write_priv_source(const serve_state_t state, FILE *f,
     }
     if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
       html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\">",run_id);
-      fprintf(f, "<td><input type=\"text\" name=\"variant\" value=\"%d\" size=\"10\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", info.variant, ACTION_RUN_CHANGE_VARIANT, _("Change"));
+      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>",run_id);
+      fprintf(f, "<td><input type=\"text\" name=\"variant\" value=\"%d\" size=\"10\"/></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>", info.variant, ACTION_RUN_CHANGE_VARIANT, _("Change"));
     } else {
       fprintf(f, "%s", nbsp);
     }
@@ -1418,7 +1418,7 @@ write_priv_source(const serve_state_t state, FILE *f,
           ps2);
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
+    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>", run_id);
     fprintf(f, "<td><select name=\"language\"><option value=\"\">\n");
     for (i = 1; i <= state->max_lang; i++)
       if (state->langs[i]) {
@@ -1426,7 +1426,7 @@ write_priv_source(const serve_state_t state, FILE *f,
                 state->langs[i]->id, state->langs[i]->short_name, state->langs[i]->long_name);
       }
     fprintf(f, "</select></td>\n");
-    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_LANG, _("Change"));
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>\n", ACTION_RUN_CHANGE_LANG, _("Change"));
   } else {
     fprintf(f, "%s", nbsp);
   }
@@ -1436,14 +1436,14 @@ write_priv_source(const serve_state_t state, FILE *f,
           _("Imported?"), info.is_imported?_("Yes"):_("No"));
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
+    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>", run_id);
     fprintf(f, "<td><select name=\"is_imported\">\n");
     fprintf(f, "<option value=\"0\"%s>%s\n",
             info.is_imported?"":" selected=\"1\"", _("No"));
     fprintf(f, "<option value=\"1\"%s>%s\n",
             info.is_imported?" selected=\"1\"":"", _("Yes"));
     fprintf(f, "</select></td>\n");
-    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_IMPORTED, _("Change"));
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>\n", ACTION_RUN_CHANGE_IMPORTED, _("Change"));
   } else {
     fprintf(f, "%s", nbsp);
   }
@@ -1453,14 +1453,14 @@ write_priv_source(const serve_state_t state, FILE *f,
           _("Hidden?"), info.is_hidden?_("Yes"):_("No"));
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
+    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>", run_id);
     fprintf(f, "<td><select name=\"is_hidden\">\n");
     fprintf(f, "<option value=\"0\"%s>%s\n",
             info.is_hidden?"":" selected=\"1\"", _("No"));
     fprintf(f, "<option value=\"1\"%s>%s\n",
             info.is_hidden?" selected=\"1\"":"", _("Yes"));
     fprintf(f, "</select></td>\n");
-    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_HIDDEN, _("Change"));
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>\n", ACTION_RUN_CHANGE_HIDDEN, _("Change"));
   } else {
     fprintf(f, "%s", nbsp);
   }
@@ -1470,14 +1470,14 @@ write_priv_source(const serve_state_t state, FILE *f,
           _("Read-only?"), info.is_readonly?_("Yes"):_("No"));
   if (priv_level == PRIV_LEVEL_ADMIN) {
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
+    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>", run_id);
     fprintf(f, "<td><select name=\"is_readonly\">\n");
     fprintf(f, "<option value=\"0\"%s>%s\n",
             info.is_readonly?"":" selected=\"1\"", _("No"));
     fprintf(f, "<option value=\"1\"%s>%s\n",
             info.is_readonly?" selected=\"1\"":"", _("Yes"));
     fprintf(f, "</select></td>\n");
-    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_READONLY, _("Change"));
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>\n", ACTION_RUN_CHANGE_READONLY, _("Change"));
   } else {
     fprintf(f, "%s", nbsp);
   }
@@ -1489,9 +1489,9 @@ write_priv_source(const serve_state_t state, FILE *f,
           _("Status"), run_status_str(info.status, 0, 0, 0));
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
+    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>", run_id);
     write_change_status_dialog(state, f, 0, info.is_imported, 0);
-    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_STATUS, _("Change"));
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>\n", ACTION_RUN_CHANGE_STATUS, _("Change"));
   } else {
     fprintf(f, "%s", nbsp);
   }
@@ -1507,8 +1507,8 @@ write_priv_source(const serve_state_t state, FILE *f,
     fprintf(f, "<tr><td>%s:</td><td>%s</td>", _("Tests passed"), numbuf);
     if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
       html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\">",run_id);
-      fprintf(f, "<td><input type=\"text\" name=\"tests\" value=\"%d\" size=\"10\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", info.test - 1, ACTION_RUN_CHANGE_TESTS, _("Change"));
+      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>",run_id);
+      fprintf(f, "<td><input type=\"text\" name=\"tests\" value=\"%d\" size=\"10\"/></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>", info.test - 1, ACTION_RUN_CHANGE_TESTS, _("Change"));
     } else {
       fprintf(f, "%s", nbsp);
     }
@@ -1523,8 +1523,8 @@ write_priv_source(const serve_state_t state, FILE *f,
     fprintf(f, "<tr><td>%s:</td><td>%s</td>", _("Score gained"), numbuf);
     if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
       html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\">",run_id);
-      fprintf(f, "<td><input type=\"text\" name=\"score\" value=\"%d\" size=\"10\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", info.score, ACTION_RUN_CHANGE_SCORE, _("Change"));
+      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>",run_id);
+      fprintf(f, "<td><input type=\"text\" name=\"score\" value=\"%d\" size=\"10\"/></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>", info.score, ACTION_RUN_CHANGE_SCORE, _("Change"));
     } else {
       fprintf(f, "%s", nbsp);
     }
@@ -1534,8 +1534,8 @@ write_priv_source(const serve_state_t state, FILE *f,
     fprintf(f, "<tr><td>%s:</td><td>%s</td>", _("Score adjustment"), numbuf);
     if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
       html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\">",run_id);
-      fprintf(f, "<td><input type=\"text\" name=\"score_adj\" value=\"%d\" size=\"10\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", info.score_adj, ACTION_RUN_CHANGE_SCORE_ADJ, _("Change"));
+      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>",run_id);
+      fprintf(f, "<td><input type=\"text\" name=\"score_adj\" value=\"%d\" size=\"10\"/></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>", info.score_adj, ACTION_RUN_CHANGE_SCORE_ADJ, _("Change"));
     } else {
       fprintf(f, "%s", nbsp);
     }
@@ -1550,8 +1550,8 @@ write_priv_source(const serve_state_t state, FILE *f,
     fprintf(f, "<tr><td>%s:</td><td>%s</td>", _("Failed test"), numbuf);
     if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
       html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\">",run_id);
-      fprintf(f, "<td><input type=\"text\" name=\"tests\" value=\"%d\" size=\"10\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", info.test - 1, ACTION_RUN_CHANGE_TESTS, _("Change"));
+      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>",run_id);
+      fprintf(f, "<td><input type=\"text\" name=\"tests\" value=\"%d\" size=\"10\"/></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>", info.test - 1, ACTION_RUN_CHANGE_TESTS, _("Change"));
     } else {
       fprintf(f, "%s", nbsp);
     }
@@ -1566,8 +1566,8 @@ write_priv_source(const serve_state_t state, FILE *f,
     fprintf(f, "<tr><td>%s:</td><td>%s</td>", _("Score gained"), numbuf);
     if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
       html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\">",run_id);
-      fprintf(f, "<td><input type=\"text\" name=\"score\" value=\"%d\" size=\"10\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", info.score, ACTION_RUN_CHANGE_SCORE, _("Change"));
+      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>",run_id);
+      fprintf(f, "<td><input type=\"text\" name=\"score\" value=\"%d\" size=\"10\"/></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>", info.score, ACTION_RUN_CHANGE_SCORE, _("Change"));
     } else {
       fprintf(f, "%s", nbsp);
     }
@@ -1577,8 +1577,8 @@ write_priv_source(const serve_state_t state, FILE *f,
     fprintf(f, "<tr><td>%s:</td><td>%s</td>", _("Score adjustment"), numbuf);
     if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
       html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\">",run_id);
-      fprintf(f, "<td><input type=\"text\" name=\"score_adj\" value=\"%d\" size=\"10\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", info.score_adj, ACTION_RUN_CHANGE_SCORE_ADJ, _("Change"));
+      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>",run_id);
+      fprintf(f, "<td><input type=\"text\" name=\"score_adj\" value=\"%d\" size=\"10\"/></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>", info.score_adj, ACTION_RUN_CHANGE_SCORE_ADJ, _("Change"));
     } else {
       fprintf(f, "%s", nbsp);
     }
@@ -1598,8 +1598,8 @@ write_priv_source(const serve_state_t state, FILE *f,
     fprintf(f, "<tr><td>%s:</td><td>%s</td>", _("Failed test"), numbuf);
     if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
       html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\">",run_id);
-      fprintf(f, "<td><input type=\"text\" name=\"tests\" value=\"%d\" size=\"10\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", info.test, ACTION_RUN_CHANGE_TESTS, _("Change"));
+      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>",run_id);
+      fprintf(f, "<td><input type=\"text\" name=\"tests\" value=\"%d\" size=\"10\"/></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>", info.test, ACTION_RUN_CHANGE_TESTS, _("Change"));
     } else {
       fprintf(f, "%s", nbsp);
     }
@@ -1610,9 +1610,9 @@ write_priv_source(const serve_state_t state, FILE *f,
           _("Pages printed"), info.pages);
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
-    fprintf(f, "<td><input type=\"text\" name=\"pages\" value=\"%d\" size=\"10\"></td>", info.pages);
-    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_PAGES, _("Change"));
+    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>", run_id);
+    fprintf(f, "<td><input type=\"text\" name=\"pages\" value=\"%d\" size=\"10\"/></td>", info.pages);
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>\n", ACTION_RUN_CHANGE_PAGES, _("Change"));
   } else {
     fprintf(f, "%s", nbsp);
   }
@@ -1626,13 +1626,13 @@ write_priv_source(const serve_state_t state, FILE *f,
 
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
-    fprintf(f, "<p><input type=\"submit\" name=\"action_%d\" value=\"%s\"></p></form>\n", ACTION_CLEAR_RUN, _("Clear this entry"));
+    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>", run_id);
+    fprintf(f, "<p><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></p></form>\n", ACTION_CLEAR_RUN, _("Clear this entry"));
   }
 
   html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
-  fprintf(f, "<p><input type=\"submit\" name=\"action_%d\" value=\"%s\"></p></form>\n", ACTION_PRINT_PRIV_RUN, _("Print"));
+  fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>", run_id);
+  fprintf(f, "<p><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></p></form>\n", ACTION_PRINT_PRIV_RUN, _("Print"));
 
   filtbuf1[0] = 0;
   if (run_id > 0) {
@@ -1643,25 +1643,25 @@ write_priv_source(const serve_state_t state, FILE *f,
     }
   }
   html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
-  fprintf(f, "<p>%s: <input type=\"text\" name=\"run_id2\" value=\"%s\" size=\"10\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>\n",
+  fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>", run_id);
+  fprintf(f, "<p>%s: <input type=\"text\" name=\"run_id2\" value=\"%s\" size=\"10\"/><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></form>\n",
           _("Compare this run with run"), filtbuf1,
           ACTION_COMPARE_RUNS, _("Compare"));
 
   if (state->global->enable_report_upload) {
     html_start_form(f, 2, self_url, hidden_vars);
     fprintf(f, "<p>%s: ", _("Upload judging protocol"));
-    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
-    fprintf(f, "<input type=\"file\" name=\"file\">");
+    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>", run_id);
+    fprintf(f, "<input type=\"file\" name=\"file\"/>");
     if (state->global->team_enable_rep_view) {
-      fprintf(f, "<input type=\"checkbox\" %s%s>%s",
+      fprintf(f, "<input type=\"checkbox\" %s%s/>%s",
               "name=\"judge_report\"", "checked=\"yes\"",
               _("Judge's report"));
-      fprintf(f, "<input type=\"checkbox\" %s%s>%s",
+      fprintf(f, "<input type=\"checkbox\" %s%s/>%s",
               "name=\"user_report\"", "checked=\"yes\"",
               _("User's report"));
     }
-    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
             ACTION_UPLOAD_REPORT, _("Upload!"));
     fprintf(f, "</form>\n");
   }
@@ -1719,11 +1719,11 @@ write_new_run_form(const serve_state_t state, FILE *f,
   fprintf(f, "<table>\n");
 
   fprintf(f, "<tr><td>%s:</td>", _("User ID"));
-  fprintf(f, "<td><input type=\"text\" name=\"run_user_id\" size=\"10\"></td>");
+  fprintf(f, "<td><input type=\"text\" name=\"run_user_id\" size=\"10\"/></td>");
   fprintf(f, "</tr>\n");
 
   fprintf(f, "<tr><td>%s:</td>", _("User login"));
-  fprintf(f, "<td><input type=\"text\" name=\"run_user_login\" size=\"20\"></td>");
+  fprintf(f, "<td><input type=\"text\" name=\"run_user_login\" size=\"20\"/></td>");
   fprintf(f, "</tr>\n");
 
   fprintf(f, "<tr><td>%s:</td>", _("Problem"));
@@ -1737,7 +1737,7 @@ write_new_run_form(const serve_state_t state, FILE *f,
   fprintf(f, "</tr>\n");
 
   fprintf(f, "<tr><td>%s:</td>", _("Variant"));
-  fprintf(f, "<td><input type=\"text\" name=\"variant\" size=\"10\"></td>");
+  fprintf(f, "<td><input type=\"text\" name=\"variant\" size=\"10\"/></td>");
   fprintf(f, "</tr>\n");
 
   fprintf(f, "<tr><td>%s:</td>", _("Language"));
@@ -1778,31 +1778,31 @@ write_new_run_form(const serve_state_t state, FILE *f,
   if (state->global->score_system_val == SCORE_KIROV
       || state->global->score_system_val == SCORE_OLYMPIAD) {
     fprintf(f, "<tr><td>%s:</td>", _("Tests passed"));
-    fprintf(f, "<td><input type=\"text\" name=\"tests\" size=\"10\"></td>");
+    fprintf(f, "<td><input type=\"text\" name=\"tests\" size=\"10\"/></td>");
     fprintf(f, "</tr>\n");
 
     fprintf(f, "<tr><td>%s:</td>", _("Score gained"));
-    fprintf(f, "<td><input type=\"text\" name=\"score\" size=\"10\"></td>");
+    fprintf(f, "<td><input type=\"text\" name=\"score\" size=\"10\"/></td>");
     fprintf(f, "</tr>\n");
   } else if (state->global->score_system_val == SCORE_MOSCOW) {
     fprintf(f, "<tr><td>%s:</td>", _("Failed test"));
-    fprintf(f, "<td><input type=\"text\" name=\"tests\" size=\"10\"></td>");
+    fprintf(f, "<td><input type=\"text\" name=\"tests\" size=\"10\"/></td>");
     fprintf(f, "</tr>\n");
 
     fprintf(f, "<tr><td>%s:</td>", _("Score gained"));
-    fprintf(f, "<td><input type=\"text\" name=\"score\" size=\"10\"></td>");
+    fprintf(f, "<td><input type=\"text\" name=\"score\" size=\"10\"/></td>");
     fprintf(f, "</tr>\n");
   } else {
     fprintf(f, "<tr><td>%s:</td>", _("Failed test"));
-    fprintf(f, "<td><input type=\"text\" name=\"tests\" size=\"10\"></td>");
+    fprintf(f, "<td><input type=\"text\" name=\"tests\" size=\"10\"/></td>");
     fprintf(f, "</tr>\n");
   }
 
   fprintf(f, "<tr><td>%s:</td>"
-          "<td><input type=\"file\" name=\"file\"></td></tr>\n",
+          "<td><input type=\"file\" name=\"file\"/></td></tr>\n",
           _("File"));
 
-  fprintf(f, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n", ACTION_NEW_RUN, _("Submit"));
+  fprintf(f, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr>\n", ACTION_NEW_RUN, _("Submit"));
   fprintf(f, "</table></form>\n");
 
   print_nav_buttons(state, f, run_id, sid, self_url, hidden_vars, extra_args,
@@ -2358,15 +2358,15 @@ write_priv_clar(const serve_state_t state, FILE *f, int user_id, int priv_level,
 
   if (priv_level >= PRIV_LEVEL_JUDGE && from) {
     html_start_form(f, 2, self_url, hidden_vars);
-    fprintf(f, "<input type=\"hidden\" name=\"in_reply_to\" value=\"%d\">\n",
+    fprintf(f, "<input type=\"hidden\" name=\"in_reply_to\" value=\"%d\"/>\n",
             clar_id);
-    fprintf(f, "<p><input type=\"submit\" name=\"answ_read\" value=\"%s\">\n",
+    fprintf(f, "<p><input type=\"submit\" name=\"answ_read\" value=\"%s\"/>\n",
             _("Answer: Read the problem"));
-    fprintf(f, "<input type=\"submit\" name=\"answ_no_comments\" value=\"%s\"><input type=\"submit\" name=\"answ_yes\" value=\"%s\"><input type=\"submit\" name=\"answ_no\" value=\"%s\"></p>\n",
+    fprintf(f, "<input type=\"submit\" name=\"answ_no_comments\" value=\"%s\"/><input type=\"submit\" name=\"answ_yes\" value=\"%s\"/><input type=\"submit\" name=\"answ_no\" value=\"%s\"/></p>\n",
            _("Answer: No comments"), _("Answer: YES"), _("Answer: NO"));
     fprintf(f, "<p><textarea name=\"reply\" rows=\"20\" cols=\"60\"></textarea></p>\n");
-    fprintf(f, "<p><input type=\"submit\" name=\"answ_text\" value=\"%s\">"
-           "<input type=\"submit\" name=\"answ_all\" value=\"%s\"></p>\n",
+    fprintf(f, "<p><input type=\"submit\" name=\"answ_text\" value=\"%s\"/>"
+           "<input type=\"submit\" name=\"answ_all\" value=\"%s\"/></p>\n",
            _("Send to sender"), _("Send to all"));
     fprintf(f, "</form>\n");
   }
@@ -2636,13 +2636,13 @@ write_priv_user(const serve_state_t state, FILE *f, int user_id, int priv_level,
   }
   if (allowed_edit) {
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\">",
+    fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\"/>",
             view_user_id);
   }
   fprintf(f, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
           _("Invisible?"), (flags & TEAM_INVISIBLE)?_("Yes"):_("No"));
   if(allowed_edit) {
-    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_USER_TOGGLE_VISIBILITY, (flags & TEAM_INVISIBLE)?_("Make visible"):_("Make invisible"));
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td>", ACTION_USER_TOGGLE_VISIBILITY, (flags & TEAM_INVISIBLE)?_("Make visible"):_("Make invisible"));
   } else {
     fprintf(f, "<td>&nbsp;</td>");
   }
@@ -2664,13 +2664,13 @@ write_priv_user(const serve_state_t state, FILE *f, int user_id, int priv_level,
   }
   if (allowed_edit) {
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\">",
+    fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\"/>",
             view_user_id);
   }
   fprintf(f, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
           _("Banned?"), (flags & TEAM_BANNED)?_("Yes"):_("No"));
   if(allowed_edit) {
-    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_USER_TOGGLE_BAN, (flags & TEAM_BANNED)?_("Remove ban"):_("Ban"));
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td>", ACTION_USER_TOGGLE_BAN, (flags & TEAM_BANNED)?_("Remove ban"):_("Ban"));
   } else {
     fprintf(f, "<td>&nbsp;</td>");
   }
@@ -2692,13 +2692,13 @@ write_priv_user(const serve_state_t state, FILE *f, int user_id, int priv_level,
   }
   if (allowed_edit) {
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\">",
+    fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\"/>",
             view_user_id);
   }
   fprintf(f, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
           _("Locked?"), (flags & TEAM_LOCKED)?_("Yes"):_("No"));
   if(allowed_edit) {
-    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_USER_TOGGLE_LOCK, (flags & TEAM_LOCKED)?_("Unlock"):_("Lock"));
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td>", ACTION_USER_TOGGLE_LOCK, (flags & TEAM_LOCKED)?_("Unlock"):_("Lock"));
   } else {
     fprintf(f, "<td>&nbsp;</td>");
   }
@@ -2724,7 +2724,7 @@ write_priv_user(const serve_state_t state, FILE *f, int user_id, int priv_level,
     if (opcaps_check(*pcaps, OPCAP_EDIT_REG) >= 0) allowed_edit = 1;
     if (allowed_edit) {
       html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\">",
+      fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\"/>",
               view_user_id);
     }
     fprintf(f, "<tr><td>%s:</td><td>", _("Status"));
@@ -2746,7 +2746,7 @@ write_priv_user(const serve_state_t state, FILE *f, int user_id, int priv_level,
         fprintf(f, ">%d - %s\n", i, state->global->contestant_status_legend[i]);
       }
       fprintf(f, "</select></td>\n");
-      fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>\n", ACTION_CHANGE_CONTESTANT_STATUS, _("Set status"));
+      fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td>\n", ACTION_CHANGE_CONTESTANT_STATUS, _("Set status"));
     } else {
       fprintf(f, "<td>&nbsp;</td><td>&nbsp;</td>");
     }
@@ -2783,13 +2783,13 @@ write_priv_user(const serve_state_t state, FILE *f, int user_id, int priv_level,
   if (opcaps_check(*pcaps, OPCAP_EDIT_REG) >= 0) {
     fprintf(f, "<h2>Issue a warning</h3>\n");
     html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\">",
+    fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\"/>",
             view_user_id);
     fprintf(f, "<p>Warning explanation for the user (mandatory):<br>\n");
     fprintf(f, "<p><textarea name=\"warn_text\" rows=\"5\" cols=\"60\"></textarea></p>\n");
     fprintf(f, "<p>Comment for other judges (optional):<br>\n");
     fprintf(f, "<p><textarea name=\"warn_comment\" rows=\"5\" cols=\"60\"></textarea></p>\n");
-    fprintf(f, "<p><input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
+    fprintf(f, "<p><input type=\"submit\" name=\"action_%d\" value=\"%s\"/>\n",
             ACTION_ISSUE_WARNING, _("Issue warning"));
     fprintf(f, "</form>\n");
     

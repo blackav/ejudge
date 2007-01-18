@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,9 +23,9 @@
 
 static const unsigned char * const form_methods[] =
 {
-  "form method=\"GET\" action=",
-  "form method=\"POST\" ENCTYPE=\"application/x-www-form-urlencoded\" action=",
-  "form method=\"POST\" ENCTYPE=\"multipart/form-data\" action=",
+  "form method=\"get\" action=",
+  "form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=",
+  "form method=\"post\" enctype=\"multipart/form-data\" action=",
 };
 
 void

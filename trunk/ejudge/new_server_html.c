@@ -650,10 +650,10 @@ ns_url(unsigned char *buf, size_t size,
     vsnprintf(fbuf, sizeof(fbuf), format, args);
     va_end(args);
   }
-  if (fbuf[0]) sep = "&";
+  if (fbuf[0]) sep = "&amp;";
 
   abuf[0] = 0;
-  if (action > 0) snprintf(abuf, sizeof(abuf), "&action=%d", action);
+  if (action > 0) snprintf(abuf, sizeof(abuf), "&amp;action=%d", action);
 
   snprintf(buf, size, "%s?SID=%016llx%s%s%s", phr->self_url,
            phr->session_id, abuf, sep, fbuf);
@@ -676,10 +676,10 @@ ns_aref(unsigned char *buf, size_t size,
     vsnprintf(fbuf, sizeof(fbuf), format, args);
     va_end(args);
   }
-  if (fbuf[0]) sep = "&";
+  if (fbuf[0]) sep = "&amp;";
 
   abuf[0] = 0;
-  if (action > 0) snprintf(abuf, sizeof(abuf), "&action=%d", action);
+  if (action > 0) snprintf(abuf, sizeof(abuf), "&amp;action=%d", action);
 
   snprintf(buf, size, "<a href=\"%s?SID=%016llx%s%s%s\">", phr->self_url,
            phr->session_id, abuf, sep, fbuf);
@@ -704,10 +704,10 @@ ns_aref_2(unsigned char *buf, size_t size,
     vsnprintf(fbuf, sizeof(fbuf), format, args);
     va_end(args);
   }
-  if (fbuf[0]) sep = "&";
+  if (fbuf[0]) sep = "&amp;";
 
   abuf[0] = 0;
-  if (action > 0) snprintf(abuf, sizeof(abuf), "&action=%d", action);
+  if (action > 0) snprintf(abuf, sizeof(abuf), "&amp;action=%d", action);
 
   stbuf[0] = 0;
   if (style && *style) {
@@ -740,7 +740,7 @@ ns_submit_button(unsigned char *buf, size_t size,
     name_ptr = name_buf;
   }
   snprintf(buf, size,
-           "<input type=\"submit\" name=\"%s\" value=\"%s\">",
+           "<input type=\"submit\" name=\"%s\" value=\"%s\"/>",
            name_ptr, label);
   return buf;
 }
@@ -815,17 +815,17 @@ privileged_page_login_page(FILE *fout, struct http_request_info *phr)
   if (ns_cgi_param(phr, "login", &s) > 0) {
     fprintf(fout, " value=\"%s\"", ARMOR(s));
   }
-  fprintf(fout, "></td></tr>\n");
+  fprintf(fout, "/></td></tr>\n");
   fprintf(fout, "<tr><td>%s:</td><td><input type=\"password\" size=\"32\" name=\"password\"", _("Password"));
   if (ns_cgi_param(phr, "password", &s) > 0) {
     fprintf(fout, " value=\"%s\"", ARMOR(s));
   }
-  fprintf(fout, "></td></tr>\n");
+  fprintf(fout, "/></td></tr>\n");
   fprintf(fout, "<tr><td>%s:</td><td><input type=\"text\" size=\"32\" name=\"contest_id\"", _("Contest"));
   if (phr->contest_id > 0) {
     fprintf(fout, " value=\"%d\"", phr->contest_id);
   }
-  fprintf(fout, "></td></tr>\n");
+  fprintf(fout, "/></td></tr>\n");
   if (!phr->role) {
     phr->role = USER_ROLE_OBSERVER;
     if (ns_cgi_param(phr, "role", &s) > 0) {
@@ -1883,7 +1883,7 @@ priv_change_password(FILE *fout,
   if (!log_txt || !*log_txt) {
     url_armor_string(login_buf, sizeof(login_buf), phr->login);
     snprintf(url, sizeof(url),
-             "%s?contest_id=%d&role=%d&login=%s&locale_id=%d&action=%d",
+             "%s?contest_id=%d&amp;role=%d&amp;login=%s&amp;locale_id=%d&amp;action=%d",
              phr->self_url, phr->contest_id, phr->role,
              login_buf, phr->locale_id,
              NEW_SRV_ACTION_LOGIN_PAGE);
@@ -3671,7 +3671,7 @@ priv_view_users_page(FILE *fout,
     } else {
       fprintf(fout, "<td%s>&nbsp;</td>", cl);
     }
-    fprintf(fout, "<td%s><input type=\"checkbox\" name=\"user_%d\"></td>",
+    fprintf(fout, "<td%s><input type=\"checkbox\" name=\"user_%d\"/></td>",
             cl, uid);
     fprintf(fout, "</tr>\n");
   }
@@ -3717,10 +3717,10 @@ priv_view_users_page(FILE *fout,
 
   fprintf(fout, "<h2>%s</h2>\n", _("Add new user"));
   fprintf(fout, "<table>\n");
-  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_login\"></td><td>%s</td><td>%s</td></tr>\n",
+  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_login\"/></td><td>%s</td><td>%s</td></tr>\n",
           BUTTON(NEW_SRV_ACTION_USERS_ADD_BY_LOGIN),
           _("Add a new user specifying his/her login"));
-  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_user_id\"></td><td>%s</td><td>%s</td></tr>\n",
+  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_user_id\"/></td><td>%s</td><td>%s</td></tr>\n",
           BUTTON(NEW_SRV_ACTION_USERS_ADD_BY_USER_ID),
           _("Add a new user specifying his/her User Id"));
   fprintf(fout, "</table>\n");
@@ -3870,7 +3870,7 @@ priv_view_priv_users_page(FILE *fout,
     } else {
       fprintf(fout, "<td%s>&nbsp;</td>", cl);
     }
-    fprintf(fout, "<td%s><input type=\"checkbox\" name=\"user_%d\"></td>",
+    fprintf(fout, "<td%s><input type=\"checkbox\" name=\"user_%d\"/></td>",
             cl, users.v[i]->user_id);
     fprintf(fout, "</tr>\n");
   }
@@ -3913,12 +3913,12 @@ priv_view_priv_users_page(FILE *fout,
 
   fprintf(fout, "<h2>%s</h2>\n", _("Add new user"));
   fprintf(fout, "<table>\n");
-  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_login\"></td><td>");
+  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_login\"/></td><td>");
   html_role_select(fout, USER_ROLE_OBSERVER, 0, "add_role_1");
   fprintf(fout, "</td><td>%s</td><td>%s</td></tr>\n",
           BUTTON(NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN),
           _("Add a new user specifying his/her login"));
-  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_user_id\"></td><td>");
+  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_user_id\"/></td><td>");
   html_role_select(fout, USER_ROLE_OBSERVER, 0, "add_role_2");
   fprintf(fout, "</td><td>%s</td><td>%s</td></tr>\n",
           BUTTON(NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID),
@@ -4192,7 +4192,7 @@ priv_upload_runlog_csv_1(
             phr->name_arm, extra->contest_arm, "Add new runs in CSV format");
   html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
 
-  fprintf(fout, "<table><tr><td>%s</td><td><input type=\"file\" name=\"file\"></td></tr>\n", _("File"));
+  fprintf(fout, "<table><tr><td>%s</td><td><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
   fprintf(fout, "<tr><td>&nbsp;</td><td>%s</td></tr></table>\n",
           BUTTON(NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2));
 
@@ -4288,7 +4288,7 @@ priv_upload_runlog_xml_1(
             phr->name_arm, extra->contest_arm, "Merge XML runlog");
   html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
 
-  fprintf(fout, "<table><tr><td>%s</td><td><input type=\"file\" name=\"file\"></td></tr>\n", _("File"));
+  fprintf(fout, "<table><tr><td>%s</td><td><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
   fprintf(fout, "<tr><td>&nbsp;</td><td>%s</td></tr></table>\n",
           BUTTON(NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_2));
 
@@ -4899,7 +4899,7 @@ priv_generic_operation(FILE *fout,
   if (!log_txt || !*log_txt) {
     if (r == NEW_SRV_ACTION_VIEW_SOURCE) {
       if (phr->next_run_id < 0) r = 0;
-      else snprintf(next_extra, sizeof(next_extra), "&run_id=%d",
+      else snprintf(next_extra, sizeof(next_extra), "&amp;run_id=%d",
                     phr->next_run_id);
     }
     html_refresh_page(fout, phr, r, next_extra);
@@ -4956,7 +4956,7 @@ priv_logout(FILE *fout,
                               phr->session_id);
   ns_remove_session(phr->session_id);
   snprintf(urlbuf, sizeof(urlbuf),
-           "%s?contest_id=%d&locale_id=%d&role=%d",
+           "%s?contest_id=%d&amp;locale_id=%d&amp;role=%d",
            phr->self_url, phr->contest_id, phr->locale_id, phr->role);
   html_refresh_page_2(fout, urlbuf);
 }
@@ -5021,9 +5021,9 @@ write_alternatives_file(FILE *fout, int is_radio, const unsigned char *txt,
 
   for (i = 0; i < line_count; i++) {
     if (is_radio) {
-      fprintf(fout, "<tr><td%s>%d</td><td%s><input type=\"radio\" name=\"file\" value=\"%d\"></td><td%s>%s</td></tr>\n", cl, i + 1, cl, i + 1, cl, lines[i]);
+      fprintf(fout, "<tr><td%s>%d</td><td%s><input type=\"radio\" name=\"file\" value=\"%d\"/></td><td%s>%s</td></tr>\n", cl, i + 1, cl, i + 1, cl, lines[i]);
     } else {
-      fprintf(fout, "<tr><td%s>%d</td><td%s><input type=\"checkbox\" name=\"ans_%d\"></td><td%s>%s</td></tr>\n", cl, i + 1, cl, i + 1, cl, lines[i]);
+      fprintf(fout, "<tr><td%s>%d</td><td%s><input type=\"checkbox\" name=\"ans_%d\"/></td><td%s>%s</td></tr>\n", cl, i + 1, cl, i + 1, cl, lines[i]);
     }
   }
 }
@@ -5219,7 +5219,7 @@ priv_main_page(FILE *fout,
 
     if (!global->is_virtual && start_time <= 0) {
       fprintf(fout, "<tr><td>%s:</td><td>%s</td>"
-              "<td><input type=\"text\" name=\"sched_time\" size=\"16\"></td>"
+              "<td><input type=\"text\" name=\"sched_time\" size=\"16\"/></td>"
               "<td>%s</td></tr>\n",
               _("Planned start time"),
               sched_time <= 0?_("Not set"):ctime(&sched_time),
@@ -5235,7 +5235,7 @@ priv_main_page(FILE *fout,
 
       fprintf(fout, "<tr><td>%s:</td><td>%s</td>",_("Duration"), duration_buf);
       if ((stop_time <= 0 || global->enable_continue) && !global->is_virtual) {
-        fprintf(fout, "<td><input type=\"text\" name=\"dur\" size=\"16\"></td>"
+        fprintf(fout, "<td><input type=\"text\" name=\"dur\" size=\"16\"/></td>"
                 "<td>%s</td></tr>\n",
                 BUTTON(NEW_SRV_ACTION_CHANGE_DURATION));
       } else {
@@ -5483,10 +5483,10 @@ priv_main_page(FILE *fout,
       switch (prob->type_val) {
       case PROB_TYPE_STANDARD:
       case PROB_TYPE_OUTPUT_ONLY:
-        fprintf(fout, "<tr><td>%s</td><td><input type=\"file\" name=\"file\"></td></tr>\n", _("File"));
+        fprintf(fout, "<tr><td>%s</td><td><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
         break;
       case PROB_TYPE_SHORT_ANSWER:
-        fprintf(fout, "<tr><td>%s</td><td><input type=\"text\" name=\"file\"></td></tr>\n", _("Answer"));
+        fprintf(fout, "<tr><td>%s</td><td><input type=\"text\" name=\"file\"/></td></tr>\n", _("Answer"));
         break;
       case PROB_TYPE_TEXT_ANSWER:
         fprintf(fout, "<tr><td colspan=\"2\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
@@ -5496,7 +5496,7 @@ priv_main_page(FILE *fout,
           write_alternatives_file(fout, 1, alternatives, "borderless");
         } else if (prob->alternative) {
           for (i = 0; prob->alternative[i]; i++) {
-            fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+            fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
           }
         }
         break;
@@ -5505,7 +5505,7 @@ priv_main_page(FILE *fout,
           write_alternatives_file(fout, 0, alternatives, "borderless");
         } else if (prob->alternative) {
           for (i = 0; prob->alternative[i]; i++) {
-            fprintf(fout, "<tr><td>%d</td><td><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+            fprintf(fout, "<tr><td>%d</td><td><input type=\"checkbox\" name=\"ans_%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
           }
         }
         break;
@@ -5549,15 +5549,15 @@ priv_main_page(FILE *fout,
   fprintf(fout, "<table>\n"
           "<tr>"
           "<td>%s:</td>"
-          "<td><input type=\"text\" size=\"16\" name=\"msg_dest_id\"></td>"
+          "<td><input type=\"text\" size=\"16\" name=\"msg_dest_id\"/></td>"
           "</tr>\n"
           "<tr>"
           "<td>%s:</td>"
-          "<td><input type=\"text\" size=\"32\" name=\"msg_dest_login\"></td>"
+          "<td><input type=\"text\" size=\"32\" name=\"msg_dest_login\"/></td>"
           "</tr>\n"
           "<tr>"
           "<td>%s:</td>"
-          "<td><input type=\"text\" size=\"64\" name=\"msg_subj\"></td>"
+          "<td><input type=\"text\" size=\"64\" name=\"msg_subj\"/></td>"
           "</tr>\n",
           _("To user id"),
           _("To user login"),
@@ -5580,9 +5580,9 @@ priv_main_page(FILE *fout,
   html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
 
   fprintf(fout, "<table>\n"
-          "<tr><td>%s:</td><td><input type=\"password\" name=\"oldpasswd\" size=\"16\"></td></tr>\n"
-          "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd1\" size=\"16\"></td></tr>\n"
-          "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd2\" size=\"16\"></td></tr>\n"
+          "<tr><td>%s:</td><td><input type=\"password\" name=\"oldpasswd\" size=\"16\"/></td></tr>\n"
+          "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd1\" size=\"16\"/></td></tr>\n"
+          "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd2\" size=\"16\"/></td></tr>\n"
           "<tr><td colspan=\"2\">%s</td></tr>\n"
           "</table></form>",
           _("Old password"),
@@ -5849,7 +5849,7 @@ privileged_page(FILE *fout,
   }
 
   snprintf(hid_buf, sizeof(hid_buf),
-           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\"/>",
            phr->session_id);
   phr->hidden_vars = hid_buf;
   phr->session_extra = ns_get_session(phr->session_id, cur_time);
@@ -6243,7 +6243,7 @@ unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr)
   html_hidden(fout, "locale_id", "%d", phr->locale_id);
   fprintf(fout, "<table><tr><td class=\"menu\">%s:</td><td class=\"menu\">%s</td></tr>\n",
           _("Login"), html_input_text(bb, sizeof(bb), "login", 16, "%s", ARMOR(login)));
-  fprintf(fout, "<tr><td class=\"menu\">%s:</td><td class=\"menu\"><input type=\"password\" size=\"16\" name=\"password\" value=\"%s\"></td></tr>\n",
+  fprintf(fout, "<tr><td class=\"menu\">%s:</td><td class=\"menu\"><input type=\"password\" size=\"16\" name=\"password\" value=\"%s\"/></td></tr>\n",
           _("Password"), ARMOR(passwd));
   fprintf(fout, "<tr><td class=\"menu\">&nbsp;</td><td class=\"menu\">%s</td></tr></table></form>\n",
           ns_submit_button(bb, sizeof(bb), "submit", 0, _("Submit")));
@@ -6313,10 +6313,11 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
             _("User login [%s]"), extra->contest_arm);
 
 
-  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>\n");
   html_start_form(fout, 1, phr->self_url, "");
+  fprintf(fout, "<div class=\"user_actions\">");
   html_hidden(fout, "contest_id", "%d", phr->contest_id);
   html_hidden(fout, "role", "%s", "0");
+  fprintf(fout, "<table class=\"menu\"><tr>\n");
 
   ss = 0;
   if (ns_cgi_param(phr, "login", &s) > 0) ss = ARMOR(s);
@@ -6326,7 +6327,7 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
   ss = 0;
   if (ns_cgi_param(phr, "password", &s) > 0) ss = ARMOR(s);
   if (!ss) ss = "";
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: <input type=\"password\" size=\"8\" name=\"password\" value=\"%s\"></div></td>\n", _("password"), ss);
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: <input type=\"password\" size=\"8\" name=\"password\" value=\"%s\"/></div></td>\n", _("password"), ss);
 
   fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
           _("language"));
@@ -6335,7 +6336,8 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
 
   fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>\n", ns_submit_button(bb, sizeof(bb), "submit", 0, _("Submit")));
 
-  fprintf(fout, "</tr></table></div>\n"
+  fprintf(fout, "</tr></table>");
+  fprintf(fout, "</div></form>\n"
           "<div class=\"white_empty_block\">&nbsp;</div>\n"
           "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
 
@@ -6344,7 +6346,7 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
       && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
     fprintf(fout,
-            "<a class=\"menu\" href=\"%s?contest_id=%d&locale_id=%d&action=2\">%s</a>",
+            "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=2\">%s</a>",
             cnts->register_url, phr->contest_id, phr->locale_id,
             _("Registration"));
     fprintf(fout, "</div></td>\n");
@@ -6353,7 +6355,7 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
              && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
     fprintf(fout,
-            "<a class=\"menu\" href=\"%s?contest_id=%d&locale_id=%d\">%s</a>",
+            "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d\">%s</a>",
             cnts->register_url, phr->contest_id, phr->locale_id,
             _("Registration"));
     fprintf(fout, "</div></td>\n");
@@ -6361,7 +6363,7 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
   }
 
   if (cnts && cnts->enable_forgot_password && cnts->disable_team_password) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&locale_id=%d&action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_FORGOT_PASSWORD_1, _("Forgot password?"));
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_FORGOT_PASSWORD_1, _("Forgot password?"));
     vis_flag++;
   }
 
@@ -6544,7 +6546,7 @@ unpriv_change_password(FILE *fout,
   if (!log_txt || !*log_txt) {
     url_armor_string(login_buf, sizeof(login_buf), phr->login);
     snprintf(url, sizeof(url),
-             "%s?contest_id=%d&login=%s&locale_id=%d&action=%d",
+             "%s?contest_id=%d&amp;login=%s&amp;locale_id=%d&amp;action=%d",
              phr->self_url, phr->contest_id, login_buf, phr->locale_id,
              NEW_SRV_ACTION_LOGIN_PAGE);
     html_refresh_page_2(fout, url);
@@ -8336,11 +8338,11 @@ unpriv_page_header(FILE *fout,
     if (phr->action == top_action_list[i]) {
       fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>", gettext(top_action_names[i]));
     } else if (top_action_list[i] == NEW_SRV_ACTION_LOGOUT) {
-      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&action=%d\">%s [%s]</a></div></td>",
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s [%s]</a></div></td>",
               phr->self_url, phr->session_id, top_action_list[i],
               gettext(top_action_names[i]), phr->login);
     } else {
-      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&action=%d\">%s</a></div></td>",
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s</a></div></td>",
               phr->self_url, phr->session_id, top_action_list[i],
               gettext(top_action_names[i]));
     }
@@ -8406,7 +8408,7 @@ unpriv_page_header(FILE *fout,
       fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s\"%s>%s</a></div></td>",
               forced_url, target, gettext(action_names[i]));
     } else {
-      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&action=%d\">%s</a></div></td>",
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s</a></div></td>",
               phr->self_url, phr->session_id, action_list[i],
               gettext(action_names[i]));
     }
@@ -8746,7 +8748,7 @@ user_main_page(FILE *fout,
         }
 
         html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
-        fprintf(fout, "<input type=\"hidden\" name=\"prob_id\" value=\"%d\">\n",
+        fprintf(fout, "<input type=\"hidden\" name=\"prob_id\" value=\"%d\"/>\n",
                 prob_id);
         fprintf(fout, "<table class=\"borderless\">\n");
         if (!prob->type_val) {
@@ -8798,10 +8800,10 @@ user_main_page(FILE *fout,
         switch (prob->type_val) {
         case PROB_TYPE_STANDARD:
         case PROB_TYPE_OUTPUT_ONLY:
-          fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\"><input type=\"file\" name=\"file\"></td></tr>\n", _("File"));
+          fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\"><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
           break;
         case PROB_TYPE_SHORT_ANSWER:
-          fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\"><input type=\"text\" name=\"file\"></td></tr>\n", _("Answer"));
+          fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\"><input type=\"text\" name=\"file\"/></td></tr>\n", _("Answer"));
           break;
         case PROB_TYPE_TEXT_ANSWER:
           fprintf(fout, "<tr><td colspan=\"2\" class=\"borderless\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
@@ -8811,7 +8813,7 @@ user_main_page(FILE *fout,
             write_alternatives_file(fout, 1, alternatives, "borderless");
           } else if (prob->alternative) {
             for (i = 0; prob->alternative[i]; i++) {
-              fprintf(fout, "<tr><td class=\"borderless\">%d</td><td class=\"borderless\"><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+              fprintf(fout, "<tr><td class=\"borderless\">%d</td><td class=\"borderless\"><input type=\"radio\" name=\"file\" value=\"%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
             }
           }
           break;
@@ -8820,7 +8822,7 @@ user_main_page(FILE *fout,
             write_alternatives_file(fout, 0, alternatives, "borderless");
           } else if (prob->alternative) {
             for (i = 0; prob->alternative[i]; i++) {
-              fprintf(fout, "<tr><td class=\"borderless\">%d</td><td class=\"borderless\"><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+              fprintf(fout, "<tr><td class=\"borderless\">%d</td><td class=\"borderless\"><input type=\"checkbox\" name=\"ans_%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
             }
           }
           break;
@@ -8913,7 +8915,7 @@ user_main_page(FILE *fout,
     }
     if (all_runs) s = _("View last 15");
     else s = _("View all");
-    fprintf(fout, "<p><a href=\"%s?SID=%016llx&all_runs=%d&action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_runs, NEW_SRV_ACTION_VIEW_SUBMISSIONS, s);
+    fprintf(fout, "<p><a href=\"%s?SID=%016llx&amp;all_runs=%d&amp;action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_runs, NEW_SRV_ACTION_VIEW_SUBMISSIONS, s);
   }
 
 
@@ -8934,7 +8936,7 @@ user_main_page(FILE *fout,
       html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 1,
                              start_time);
       fprintf(fout, "</td></tr>\n<tr><td class=\"borderless\">%s:</td>"
-              "<td class=\"borderless\"><input type=\"text\" name=\"subject\"></td></tr>\n"
+              "<td class=\"borderless\"><input type=\"text\" name=\"subject\"/></td></tr>\n"
               "<tr><td colspan=\"2\" class=\"borderless\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
               "<tr><td colspan=\"2\" class=\"borderless\">%s</td></tr>\n"
               "</table></form>\n",
@@ -8952,7 +8954,7 @@ user_main_page(FILE *fout,
       html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 1,
                              start_time);
       fprintf(fout, "</td></tr>\n<tr><td class=\"borderless\">%s:</td>"
-              "<td class=\"borderless\"><input type=\"text\" name=\"test\"></td></tr>\n"
+              "<td class=\"borderless\"><input type=\"text\" name=\"test\"/></td></tr>\n"
               "<tr><td colspan=\"2\" class=\"borderless\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
               "<tr><td colspan=\"2\" class=\"borderless\">%s</td></tr>\n"
               "</table></form>\n",
@@ -8977,7 +8979,7 @@ user_main_page(FILE *fout,
 
     if (all_clars) s = _("View last 15");
     else s = _("View all");
-    fprintf(fout, "<p><a href=\"%s?SID=%016llx&all_clars=%d&action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_clars, NEW_SRV_ACTION_VIEW_CLARS, s);
+    fprintf(fout, "<p><a href=\"%s?SID=%016llx&amp;all_clars=%d&amp;action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_clars, NEW_SRV_ACTION_VIEW_CLARS, s);
   }
 
   if (phr->action == NEW_SRV_ACTION_VIEW_SETTINGS) {
@@ -8995,10 +8997,10 @@ user_main_page(FILE *fout,
       html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
 
       fprintf(fout, "<table class=\"borderless\">\n"
-              "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"oldpasswd\" size=\"16\"></td></tr>\n"
-              "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"newpasswd1\" size=\"16\"></td></tr>\n"
-              "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"newpasswd2\" size=\"16\"></td></tr>\n"
-              "<tr><td class=\"borderless\" colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n"
+              "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"oldpasswd\" size=\"16\"/></td></tr>\n"
+              "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"newpasswd1\" size=\"16\"/></td></tr>\n"
+              "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"newpasswd2\" size=\"16\"/></td></tr>\n"
+              "<tr><td class=\"borderless\" colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr>\n"
               "</table></form>",
               _("Old password"),
               _("New password"), _("Retype new password"),
@@ -9013,7 +9015,7 @@ user_main_page(FILE *fout,
       html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
       fprintf(fout, "<table class=\"borderless\"><tr><td class=\"borderless\">%s</td><td class=\"borderless\">", _("Change language"));
       l10n_html_locale_select(fout, phr->locale_id);
-      fprintf(fout, "</td><td class=\"borderless\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr></table></form>\n",
+      fprintf(fout, "</td><td class=\"borderless\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr></table></form>\n",
               NEW_SRV_ACTION_CHANGE_LANGUAGE, _("Change"));
     }
 #endif /* CONF_HAS_LIBINTL */
@@ -9041,16 +9043,16 @@ user_main_page(FILE *fout,
     fprintf(fout, "</tr></table></div>\n");
   }
 
-  if (1 /*global->show_generation_time*/) {
-  gettimeofday(&phr->timestamp2, 0);
-  tdiff = ((long long) phr->timestamp2.tv_sec) * 1000000;
-  tdiff += phr->timestamp2.tv_usec;
-  tdiff -= ((long long) phr->timestamp1.tv_sec) * 1000000;
-  tdiff -= phr->timestamp1.tv_usec;
-  fprintf(fout, "<div class=\"dotted\"><p%s>%s: %lld %s</p></div>",
-          cnts->team_par_style,
-          _("Page generation time"), tdiff / 1000,
-          _("msec"));
+  if (!cnts->exam_mode /*&& global->show_generation_time*/) {
+    gettimeofday(&phr->timestamp2, 0);
+    tdiff = ((long long) phr->timestamp2.tv_sec) * 1000000;
+    tdiff += phr->timestamp2.tv_usec;
+    tdiff -= ((long long) phr->timestamp1.tv_sec) * 1000000;
+    tdiff -= phr->timestamp1.tv_usec;
+    fprintf(fout, "<div class=\"dotted\"><p%s>%s: %lld %s</p></div>",
+            cnts->team_par_style,
+            _("Page generation time"), tdiff / 1000,
+            _("msec"));
   }
 
   ns_footer(fout, extra->footer_txt, phr->locale_id);
@@ -9072,7 +9074,7 @@ unpriv_logout(FILE *fout,
                               phr->session_id);
   ns_remove_session(phr->session_id);
   snprintf(urlbuf, sizeof(urlbuf),
-           "%s?contest_id=%d&locale_id=%d",
+           "%s?contest_id=%d&amp;locale_id=%d",
            phr->self_url, phr->contest_id, phr->locale_id);
   html_refresh_page_2(fout, urlbuf);
 }
@@ -9088,7 +9090,7 @@ unpriv_xml_user_state(
   struct tm *ptm;
 
   ptm = localtime(&cs->current_time);
-  fprintf(fout, "Content-type: text/html\n\n");
+  fprintf(fout, "Content-type: text/xml\n\n");
   fprintf(fout, "<?xml version=\"1.0\" encoding=\"%s\"?>", EJUDGE_CHARSET);
   fprintf(fout, "<t>"
           "<h>%02d</h>"
@@ -9210,7 +9212,7 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr)
   }
 
   snprintf(hid_buf, sizeof(hid_buf),
-           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\"/>",
            phr->session_id);
   phr->hidden_vars = hid_buf;
   phr->session_extra = ns_get_session(phr->session_id, cur_time);

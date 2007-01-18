@@ -620,20 +620,20 @@ read_state_params(void)
   form_contest_id[0] = 0;
   if (cgi_contest_id > 0) {
     snprintf(form_contest_id, sizeof(form_contest_id),
-             "<input type=\"hidden\" name=\"contest_id\" value=\"%d\">",
+             "<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>",
              global->contest_id);
   }
 
   snprintf(form_start_simple, sizeof(form_start_simple),
            "%s"
-           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\"/>%s",
            form_header_simple, client_sid, form_contest_id);
   snprintf(form_start_multipart, sizeof(form_start_multipart),
            "%s"
-           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\"/>%s",
            form_header_multipart, client_sid, form_contest_id);
   snprintf(hidden_vars, sizeof(hidden_vars),
-           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\"/>%s",
            client_sid, form_contest_id);
 
   client_view_all_runs = 0;
@@ -665,17 +665,17 @@ display_enter_password(void)
 
   puts(form_header_simple);
   if (cgi_contest_id > 0) {
-    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n", 
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>\n", 
            cgi_contest_id);
   }
   printf("<table>"
          "<tr>"
          "<td>%s:</td>"
-         "<td><input type=\"text\" size=16 name=\"login\"></td>"
+         "<td><input type=\"text\" size=16 name=\"login\"/></td>"
          "</tr>"
          "<tr>"
          "<td>%s:</td>"
-         "<td><input type=\"password\" size=16 name=\"password\"></td>"
+         "<td><input type=\"password\" size=16 name=\"password\"/></td>"
          "</tr>",
          _("Login"), _("Password"));
 
@@ -695,7 +695,7 @@ display_enter_password(void)
 
   printf("<tr>"
          "<td>&nbsp;</td>"
-         "<td><input type=\"submit\" value=\"%s\"></td>"
+         "<td><input type=\"submit\" value=\"%s\"/></td>"
          "</tr>"
          "</table></form>",
          _("Submit"));
@@ -1242,8 +1242,8 @@ request_printing_if_asked(void)
   printf("<p>");
   print_refresh_button(_("No"));
   printf("<p>%s"
-         "<input type=\"hidden\" name=\"run_id\" value=\"%d\">"
-         "<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+         "<input type=\"hidden\" name=\"run_id\" value=\"%d\"/>"
+         "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>"
          "</form></p>", form_start_simple, run_id, ACTION_PRINT_RUN,
          _("Yes, print!"));
   client_put_footer(stdout, 0);
@@ -1677,10 +1677,10 @@ main(int argc, char *argv[])
   if (!server_clients_suspended /*&& !cur_contest->disable_team_password*/) {
     printf("<hr><a name=\"chgpasswd\"></a><%s>%s</%s>\n"
            "%s<table>\n"
-           "<tr><td>%s:</td><td><input type=\"password\" name=\"oldpasswd\" size=\"16\"></td></tr>\n"
-           "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd1\" size=\"16\"></td></tr>\n"
-           "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd2\" size=\"16\"></td></tr>\n"
-           "<tr><td colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n"
+           "<tr><td>%s:</td><td><input type=\"password\" name=\"oldpasswd\" size=\"16\"/></td></tr>\n"
+           "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd1\" size=\"16\"/></td></tr>\n"
+           "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd2\" size=\"16\"/></td></tr>\n"
+           "<tr><td colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr>\n"
            "</table></form>",
            head_style, _("Change password"), head_style, form_start_simple,
            _("Old password"),
@@ -1695,7 +1695,7 @@ main(int argc, char *argv[])
            head_style, _("Change language"), head_style);
     printf("%s", form_start_simple);
     if (cgi_contest_id > 0) {
-      printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">",
+      printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>",
              global->contest_id);
     }
 
@@ -1703,7 +1703,7 @@ main(int argc, char *argv[])
            "<option value=\"0\"%s>%s</option>"
            "<option value=\"1\"%s>%s</option>"
            "</select>"
-           "<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>\n",
+           "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/></form>\n",
            _("Change language"),
            client_locale_id==0?" selected=\"1\"":"", _("English"),
            client_locale_id==1?" selected=\"1\"":"", _("Russian"),

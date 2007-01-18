@@ -56,14 +56,14 @@ html_submit_button(FILE *f,
                    int action,
                    const unsigned char *label)
 {
-  fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+  fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
           action, label);
 }
 
 static void
 html_hidden_var(FILE *f, const unsigned char *name, const unsigned char *value)
 {
-  fprintf(f, "<input type=\"hidden\" name=\"%s\" value=\"%s\">", name, value);
+  fprintf(f, "<input type=\"hidden\" name=\"%s\" value=\"%s\"/>", name, value);
 }
 
 static void
@@ -96,7 +96,7 @@ html_edit_text_form(FILE *f,
   if (!value) p = "<i>(Not set)</i>";
   s = html_armor_string_dup(value);
 
-  fprintf(f, "<input type=\"text\" name=\"%s\" value=\"%s\" size=\"%d\" maxlength=\"%d\">%s", param_name, s, size, maxlength, p);
+  fprintf(f, "<input type=\"text\" name=\"%s\" value=\"%s\" size=\"%d\" maxlength=\"%d\"/>%s", param_name, s, size, maxlength, p);
   xfree(s);
 }
 
@@ -709,7 +709,7 @@ super_html_contest_page(FILE *f,
   }
 
   snprintf(new_hidden_vars, sizeof(new_hidden_vars),
-           "%s<input type=\"hidden\" name=\"contest_id\" value=\"%d\">",
+           "%s<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>",
            hidden_vars, contest_id);
 
   if ((errcode = contests_get(contest_id, &cnts)) < 0) {
@@ -1797,14 +1797,14 @@ super_html_create_contest(FILE *f,
   html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<h2>Contest number</h2>\n");
   fprintf(f, "<table border=\"0\">"
-          "<tr><td><input type=\"radio\" name=\"num_mode\" value=\"0\" checked=\"yes\"></td><td>Assign automatically</td><td>&nbsp;</td></tr>\n"
-          "<tr><td><input type=\"radio\" name=\"num_mode\" value=\"1\"></td><td>Assign manually:</td><td><input type=\"text\" name=\"contest_id\" value=\"%d\" size=\"6\"></td></tr>\n"
+          "<tr><td><input type=\"radio\" name=\"num_mode\" value=\"0\" checked=\"yes\"/></td><td>Assign automatically</td><td>&nbsp;</td></tr>\n"
+          "<tr><td><input type=\"radio\" name=\"num_mode\" value=\"1\"/></td><td>Assign manually:</td><td><input type=\"text\" name=\"contest_id\" value=\"%d\" size=\"6\"/></td></tr>\n"
           "</table>", recomm_id);
 
   fprintf(f, "<h2>Contest template</h2>\n");
   fprintf(f, "<table border=\"0\">"
-          "<tr><td><input type=\"radio\" name=\"templ_mode\" value=\"0\" checked=\"yes\"></td><td>From scratch</td><td>&nbsp;</td></tr>\n"
-          "<tr><td><input type=\"radio\" name=\"templ_mode\" value=\"1\"></td><td>Use existing contest:</td><td><select name=\"templ_id\">\n");
+          "<tr><td><input type=\"radio\" name=\"templ_mode\" value=\"0\" checked=\"yes\"/></td><td>From scratch</td><td>&nbsp;</td></tr>\n"
+          "<tr><td><input type=\"radio\" name=\"templ_mode\" value=\"1\"/></td><td>Use existing contest:</td><td><select name=\"templ_id\">\n");
 
   for (cnts_id = 1; cnts_id < contest_max_id; cnts_id++) {
     if (!contests_map[cnts_id]) continue;
@@ -3108,7 +3108,7 @@ super_html_edit_permission(FILE *f,
     fprintf(f, "<tr%s><td>%d</td><td><input type=\"checkbox\" name=\"cap_%d\"",
             form_row_attrs[row ^= 1], i, i);
     if (opcaps_check(p->caps, i) >= 0) fprintf(f, " checked=\"yes\"");
-    fprintf(f, "></td><td><tt>%s</tt></td><td>%s</td></tr>\n",
+    fprintf(f, "/></td><td><tt>%s</tt></td><td>%s</td></tr>\n",
             opcaps_get_name(i), contest_cap_descs[i]);
   }
   fprintf(f, "</table>");

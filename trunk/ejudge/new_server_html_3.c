@@ -56,7 +56,7 @@ const unsigned char ns_fancy_priv_header[] =
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
 "<html><head>\n<meta http-equiv=\"Content-type\" content=\"text/html; charset=%C\">\n"
 "<link rel=\"stylesheet\" href=\"/ejudge/priv.css\" type=\"text/css\">\n"
-"<link rel=\"shortcut icon\" type=image/x-icon href=\"/favicon.ico\">\n"
+"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\">\n"
 "<title>%H</title></head>\n"
 "<body>"
 "<h1>%H</h1>\n";
@@ -69,9 +69,9 @@ const unsigned char ns_fancy_header[] =
 "<html><head>\n<meta http-equiv=\"Content-type\" content=\"text/html; charset=%C\"/>\n"
 "%S"
 "<link rel=\"stylesheet\" href=\"/ejudge/unpriv.css\" type=\"text/css\"/>\n"
-"<link rel=\"shortcut icon\" type=image/x-icon href=\"/favicon.ico\"/>\n"
+"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\"/>\n"
 "<title>%H</title></head>\n"
-"<body onLoad=\"startClock()\">"
+"<body onload=\"startClock()\">"
   //"<body>"
 "<div id=\"container\"><div id=\"l12\">\n"
 "<div class=\"main_phrase\">%H</div>\n";
@@ -83,13 +83,14 @@ const unsigned char ns_fancy_empty_status[] =
 "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td></tr></table></div>\n";
 const unsigned char ns_fancy_separator[] =
 "</div>\n"
-"<div id=\"l11\"><img src=\"/ejudge/logo.gif\"></div>\n"
+"<div id=\"l11\"><img src=\"/ejudge/logo.gif\" alt=\"ejudge logo\"/></div>\n"
 "<div id=\"l13\">\n";
 const unsigned char ns_fancy_footer[] =
 "<div id=\"footer\">%R</div>\n"
 "</div>"
-"</BODY>"
-"</HTML>";
+"</div>"
+"</body>"
+"</html>";
 
 const unsigned char * const ns_ssl_flag_str[] =
 {

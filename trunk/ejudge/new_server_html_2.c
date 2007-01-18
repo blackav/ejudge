@@ -279,9 +279,9 @@ ns_write_priv_all_runs(FILE *f,
              (u->prev_last_run > 0)?u->prev_last_run - 1:u->prev_last_run);
   }
   html_start_form(f, 0, phr->self_url, phr->hidden_vars);
-  fprintf(f, "<p>%s: <input type=\"text\" name=\"filter_expr\" size=\"32\" maxlength=\"128\" value=\"%s\">", _("Filter expression"), fe_html);
-  fprintf(f, "%s: <input type=\"text\" name=\"filter_first_run\" size=\"16\" value=\"%s\">", _("First run"), first_run_str);
-  fprintf(f, "%s: <input type=\"text\" name=\"filter_last_run\" size=\"16\" value=\"%s\">", _("Last run"), last_run_str);
+  fprintf(f, "<p>%s: <input type=\"text\" name=\"filter_expr\" size=\"32\" maxlength=\"128\" value=\"%s\"/>", _("Filter expression"), fe_html);
+  fprintf(f, "%s: <input type=\"text\" name=\"filter_first_run\" size=\"16\" value=\"%s\"/>", _("First run"), first_run_str);
+  fprintf(f, "%s: <input type=\"text\" name=\"filter_last_run\" size=\"16\" value=\"%s\"/>", _("Last run"), last_run_str);
   fprintf(f, "%s</form>",
           ns_submit_button(bb, sizeof(bb), "filter_view", 1, _("View")));
   html_start_form(f, 0, phr->self_url, phr->hidden_vars);
@@ -541,7 +541,7 @@ ns_write_priv_all_runs(FILE *f,
       if (i > 0) fprintf(f, " ");
       fprintf(f, "%lx", displayed_mask[i]);
     }
-    fprintf(f, "\">\n");
+    fprintf(f, "\"/>\n");
     fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_REJUDGE_DISPLAYED_1));
     fprintf(f, "</form></td><td>\n");
 
@@ -553,7 +553,7 @@ ns_write_priv_all_runs(FILE *f,
         if (i > 0) fprintf(f, " ");
         fprintf(f, "%lx", displayed_mask[i]);
       }
-      fprintf(f, "\">\n");
+      fprintf(f, "\"/>\n");
       fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1));
       fprintf(f, "</form></td><td>\n");
     }
@@ -591,8 +591,8 @@ ns_write_priv_all_runs(FILE *f,
     html_start_form(f, 2, self_url, hidden_vars);
     fprintf(f, "<table border=\"0\"><tr><td>%s: </td>\n",
             _("Import and merge XML runs log"));
-    fprintf(f, "<td><input type=\"file\" name=\"file\"></td>\n");
-    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_MERGE_RUNS, _("Send!"));
+    fprintf(f, "<td><input type=\"file\" name=\"file\"/></td>\n");
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td>", ACTION_MERGE_RUNS, _("Send!"));
     fprintf(f, "</tr></table></form>\n");
     */
   }
@@ -605,7 +605,7 @@ ns_write_priv_all_runs(FILE *f,
       if (i > 0) fprintf(f, " ");
       fprintf(f, "%lx", displayed_mask[i]);
     }
-    fprintf(f, "\">\n");
+    fprintf(f, "\"/>\n");
     fprintf(f, "<table><tr><td>");
     fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1));
     fprintf(f, "</td></tr></table>");
@@ -733,8 +733,8 @@ ns_write_all_clars(FILE *f,
           _("All clars"),
           (mode_clar == 2) ? " selected=\"1\"" : "",
           _("Unanswered clars"));
-  fprintf(f, "%s: <input type=\"text\" name=\"filter_first_clar\" size=\"16\" value=\"%s\">", _("First clar"), first_clar_str);
-  fprintf(f, "%s: <input type=\"text\" name=\"filter_last_clar\" size=\"16\" value=\"%s\">", _("Last clar"), last_clar_str);
+  fprintf(f, "%s: <input type=\"text\" name=\"filter_first_clar\" size=\"16\" value=\"%s\"/>", _("First clar"), first_clar_str);
+  fprintf(f, "%s: <input type=\"text\" name=\"filter_last_clar\" size=\"16\" value=\"%s\"/>", _("Last clar"), last_clar_str);
   fprintf(f, "%s",
           ns_submit_button(bbuf, sizeof(bbuf), "filter_view_clars",
                            1, _("View")));
@@ -1411,12 +1411,12 @@ ns_write_priv_source(const serve_state_t state,
     html_start_form(f, 2, phr->self_url, phr->hidden_vars);
     html_hidden(f, "run_id", "%d", run_id);
     fprintf(f, "<p>%s: ", _("Upload judging protocol"));
-    fprintf(f, "<input type=\"file\" name=\"file\">");
+    fprintf(f, "<input type=\"file\" name=\"file\"/>");
     if (global->team_enable_rep_view) {
-      fprintf(f, "<input type=\"checkbox\" %s%s>%s",
+      fprintf(f, "<input type=\"checkbox\" %s%s/>%s",
               "name=\"judge_report\"", "checked=\"yes\"",
               _("Judge's report"));
-      fprintf(f, "<input type=\"checkbox\" %s%s>%s",
+      fprintf(f, "<input type=\"checkbox\" %s%s/>%s",
               "name=\"user_report\"", "checked=\"yes\"",
               _("User's report"));
     }
@@ -1433,7 +1433,7 @@ ns_write_priv_source(const serve_state_t state,
   if (prob && prob->type_val > 0 && info.mime_type > 0) {
     if(info.mime_type >= MIME_TYPE_IMAGE_FIRST
        && info.mime_type <= MIME_TYPE_IMAGE_LAST) {
-      fprintf(f, "<p><img src=\"%s\"></p>",
+      fprintf(f, "<p><img src=\"%s\" alt=\"submit image\"/></p>",
               ns_url(filtbuf3, sizeof(filtbuf3), phr,
                      NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN,
                      "run_id=%d&no_disp=1", run_id));
@@ -2422,7 +2422,7 @@ ns_new_run_form(FILE *fout, FILE *log_f,
   }
 
   fprintf(fout, "<tr><td>%s:</td>"
-          "<td><input type=\"file\" name=\"file\"></td></tr>\n",
+          "<td><input type=\"file\" name=\"file\"/></td></tr>\n",
           _("File"));
 
   fprintf(fout, "<tr><td>%s</td><td>&nbsp;</td></tr>\n",
