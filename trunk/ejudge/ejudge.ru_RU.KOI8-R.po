@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-18 18:04+0300\n"
-"PO-Revision-Date: 2007-01-18 18:05+0300\n"
+"PO-Revision-Date: 2007-01-18 18:32+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -160,7 +160,7 @@ msgstr ""
 msgid "<li>Your registration was not confirmed.</li>\n"
 msgstr "<li>Ваша регистрация на турнир не подтверждена.</li>\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "<p class=\"ejudge_copyright\">This is <a href=\"%s\"><b>ejudge</b></a> "
 "contest administration system, version %s, compiled %s.</p>\n"
