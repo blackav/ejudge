@@ -56,7 +56,7 @@ const unsigned char ns_fancy_priv_header[] =
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
 "<html><head>\n<meta http-equiv=\"Content-type\" content=\"text/html; charset=%C\">\n"
 "<link rel=\"stylesheet\" href=\"/ejudge/priv.css\" type=\"text/css\">\n"
-"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\">\n"
+  //"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\">\n"
 "<title>%H</title></head>\n"
 "<body>"
 "<h1>%H</h1>\n";
@@ -69,7 +69,7 @@ const unsigned char ns_fancy_header[] =
 "<html><head>\n<meta http-equiv=\"Content-type\" content=\"text/html; charset=%C\"/>\n"
 "%S"
 "<link rel=\"stylesheet\" href=\"/ejudge/unpriv.css\" type=\"text/css\"/>\n"
-"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\"/>\n"
+  //"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\"/>\n"
 "<title>%H</title></head>\n"
 "<body onload=\"startClock()\">"
   //"<body>"
