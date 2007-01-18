@@ -384,6 +384,7 @@ cmd_http_request(struct server_framework_state *state,
   xfree(hr.name);
   xfree(hr.name_arm);
   xfree(hr.script_part);
+  xfree(hr.body_attr);
 }
 
 static void

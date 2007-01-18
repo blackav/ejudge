@@ -78,6 +78,7 @@ struct http_request_info
   struct session_info *session_extra;
   opcap_t caps;
   unsigned char *script_part;
+  unsigned char *body_attr;
 
   // for the next state
   int next_run_id;
@@ -428,9 +429,10 @@ void ns_header(FILE *out, unsigned char const *template,
                unsigned char const *content_type,
                unsigned char const *charset,
                const unsigned char *script_part,
+               const unsigned char *body_attr,
                int locale_id,
                char const *format, ...)
-  __attribute__((format(printf, 7, 8)));
+  __attribute__((format(printf, 8, 9)));
 void ns_footer(FILE *out, unsigned char const *templ, int locale_id);
 void ns_set_fancy_standings_style(struct section_global_data *global);
 

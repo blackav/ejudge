@@ -71,8 +71,9 @@ const unsigned char ns_fancy_header[] =
 "<link rel=\"stylesheet\" href=\"/ejudge/unpriv.css\" type=\"text/css\"/>\n"
   //"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\"/>\n"
 "<title>%H</title></head>\n"
-"<body onload=\"startClock()\">"
+  //"<body onload=\"startClock()\">"
   //"<body>"
+"<body%B>"
 "<div id=\"container\"><div id=\"l12\">\n"
 "<div class=\"main_phrase\">%H</div>\n";
 const unsigned char ns_fancy_empty_status[] =
@@ -105,6 +106,7 @@ process_template(FILE *out,
                  unsigned char const *title,
                  unsigned char const *copyright,
                  const unsigned char *script_part,
+                 const unsigned char *body_attr,
                  int locale_id)
 {
   unsigned char const *s = templ;
@@ -133,6 +135,9 @@ process_template(FILE *out,
     case 'S':
       fputs(script_part, out);
       break;
+    case 'B':
+      fputs(body_attr, out);
+      break;
     default:
       putc('%', out);
       continue;
@@ -146,6 +151,7 @@ ns_header(FILE *out, unsigned char const *templ,
           unsigned char const *content_type,
           unsigned char const *charset,
           const unsigned char *script_part,
+          const unsigned char *body_attr,
           int locale_id,
           char const *format, ...)
 {
@@ -163,20 +169,21 @@ ns_header(FILE *out, unsigned char const *templ,
   if (!content_type) content_type = "text/html";
   if (!templ) templ = ns_default_header;
   if (!script_part) script_part = "";
+  if (!body_attr) body_attr = "";
 
   fprintf(out, "Content-Type: %s; charset=%s\n"
           "Cache-Control: no-cache\n"
           "Pragma: no-cache\n\n", content_type, charset);
 
   process_template(out, templ, content_type, charset, title, 0,
-                   script_part, locale_id);
+                   script_part, body_attr, locale_id);
 }
 
 void
 ns_footer(FILE *out, unsigned char const *templ, int locale_id)
 {
   if (!templ) templ = ns_default_footer;
-  process_template(out, templ, 0, 0, 0, get_copyright(locale_id), 0, 0);
+  process_template(out, templ, 0, 0, 0, get_copyright(locale_id), 0, 0, 0);
 }
 
 void
@@ -225,7 +232,7 @@ ns_html_err_no_perm(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, phr->locale_id, _("Permission denied"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, _("Permission denied"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
     fprintf(fout, "%s", separator);
@@ -309,7 +316,7 @@ ns_html_err_inv_param(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, phr->locale_id, _("Invalid parameter"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, _("Invalid parameter"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
     fprintf(fout, "%s", separator);
@@ -364,7 +371,7 @@ ns_html_err_service_not_available(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, phr->locale_id, _("Service not available"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, _("Service not available"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
     fprintf(fout, "%s", separator);
@@ -419,7 +426,7 @@ ns_html_err_cnts_unavailable(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, phr->locale_id, _("Contest not available"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, _("Contest not available"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
     fprintf(fout, "%s", separator);
@@ -479,7 +486,7 @@ ns_html_err_ul_server_down(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, phr->locale_id,
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id,
             _("User database server is down"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
@@ -540,7 +547,7 @@ ns_html_err_internal_error(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, phr->locale_id, _("Internal error"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, _("Internal error"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
     fprintf(fout, "%s", separator);
@@ -600,7 +607,7 @@ ns_html_err_inv_session(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, phr->locale_id, _("Invalid session"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, _("Invalid session"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
     fprintf(fout, "%s", separator);
