@@ -259,6 +259,7 @@ CFILES=\
  job-server.c\
  job-server-control.c\
  job-server-cmd.c\
+ make-js-actions.c\
  master.c\
  new-client.c\
  new-server.c\
