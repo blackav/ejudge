@@ -1895,3 +1895,6 @@ new-server.c 3865 0 1598995
 new_server_html.c 3865 0 25647201
 new_server_html_2.c 3865 0 9009546
 new_server_html_3.c 3865 0 1791851
+new-server.h 3868 0 1384033
+make-js-actions.c 3868 0 29731
+new_server_html.c 3868 0 25642038
