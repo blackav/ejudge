@@ -38,7 +38,7 @@ make_copyright(unsigned char *buf, size_t size)
            _("<p class=\"ejudge_copyright\">This is <a href=\"%s\"><b>ejudge</b></a> contest administration system, version %s, compiled %s.</p>\n"
              "<p class=\"ejudge_copyright\">This program is copyright &copy; %s Alexander Chernov.</p>\n"
              "<p class=\"ejudge_copyright\">"
-             "This program is free software; you can redistribute it and/or modify it under the terms of the <a href=\"http://www.fsf.org/licenses/licenses.html#GPL\">GNU General Public License</a> as published by the <a href=\"http://www.fsf.org\">Free Software Foundation</a>; either version 2 of the License, or (at your option) any later version.</p>\n"
+             "This program is free software; you can redistribute it and/or modify it under the terms of the <a href=\"http://www.gnu.org/licenses/gpl.html\">GNU General Public License</a> as published by the <a href=\"http://www.fsf.org\">Free Software Foundation</a>; either version 2 of the License, or (at your option) any later version.</p>\n"
              "<p class=\"ejudge_copyright\">Visual design and web-interface &copy; %s <a href=\"%s\">Toto Lasvik</a>.</p>"),
            "http://www.ejudge.ru",
            compile_version, compile_date, "2000-2007",
