@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,7 @@ html_date_select(FILE *f, time_t t)
   struct tm *tt = localtime(&t);
   int i;
 
-  fprintf(f, "Time: <input type=\"text\" name=\"d_hour\" value=\"%02d\" size=\"2\" maxlength=\"2\">:<input type=\"text\" name=\"d_min\" value=\"%02d\" size=\"2\" maxlength=\"2\">:<input type=\"text\" name=\"d_sec\" value=\"%02d\" size=\"2\" maxlength=\"2\">",
+  fprintf(f, "Time: <input type=\"text\" name=\"d_hour\" value=\"%02d\" size=\"2\" maxlength=\"2\"/>:<input type=\"text\" name=\"d_min\" value=\"%02d\" size=\"2\" maxlength=\"2\"/>:<input type=\"text\" name=\"d_sec\" value=\"%02d\" size=\"2\" maxlength=\"2\"/>",
           tt->tm_hour, tt->tm_min, tt->tm_sec);
   fprintf(f, "Date: <select name=\"d_mday\">");
   for (i = 1; i <= 31; i++) {
@@ -43,11 +43,11 @@ html_date_select(FILE *f, time_t t)
             i + 1, (i == tt->tm_mon)?" selected=\"1\"":"", months_names[i]);
   }
   fprintf(f, "</select>");
-  fprintf(f, "/<input type=\"text\" name=\"d_year\" value=\"%d\" size=\"4\" maxlength=\"4\">", tt->tm_year + 1900);
+  fprintf(f, "/<input type=\"text\" name=\"d_year\" value=\"%d\" size=\"4\" maxlength=\"4\"/>", tt->tm_year + 1900);
   if (!t) fprintf(f, "<i>(Not set)</i>");
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")

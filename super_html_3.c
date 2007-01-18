@@ -68,7 +68,7 @@ html_submit_button(FILE *f,
                    int action,
                    const unsigned char *label)
 {
-  fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+  fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
           action, label);
 }
 
@@ -137,7 +137,7 @@ html_edit_text_form(FILE *f,
   if (!value || !value[0]) p = "<i>(Not set)</i>";
   s = html_armor_string_dup(value);
 
-  fprintf(f, "<input type=\"text\" name=\"%s\" value=\"%s\" size=\"%d\" maxlength=\"%d\">%s", param_name, s, size, maxlength, p);
+  fprintf(f, "<input type=\"text\" name=\"%s\" value=\"%s\" size=\"%d\" maxlength=\"%d\"/>%s", param_name, s, size, maxlength, p);
   xfree(s);
 }
 
@@ -160,14 +160,14 @@ html_edit_text_form_1(FILE *f,
     s = html_armor_string_dup(value);
   }
 
-  fprintf(f, "<input type=\"text\" name=\"%s\" value=\"%s\" size=\"%d\" maxlength=\"%d\">%s", param_name, s, size, maxlength, p);
+  fprintf(f, "<input type=\"text\" name=\"%s\" value=\"%s\" size=\"%d\" maxlength=\"%d\"/>%s", param_name, s, size, maxlength, p);
   xfree(s);
 }
 
 static void
 html_hidden_var(FILE *f, const unsigned char *name, const unsigned char *value)
 {
-  fprintf(f, "<input type=\"hidden\" name=\"%s\" value=\"%s\">", name, value);
+  fprintf(f, "<input type=\"hidden\" name=\"%s\" value=\"%s\"/>", name, value);
 }
 
 static void
@@ -524,10 +524,10 @@ super_html_edit_global_parameters(FILE *f,
   html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>Contest time (HH:MM):</td>", form_row_attrs[row ^= 1]);
   if (!global->contest_time) {
-    fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"0\" size=\"8\"><i>(Unlimited)</i></td><td>");
+    fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"0\" size=\"8\"/><i>(Unlimited)</i></td><td>");
     html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_DURATION, "Change");
   } else {
-    fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"%d:%02d\" size=\"8\"></td><td>", global->contest_time / 60, global->contest_time % 60);
+    fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"%d:%02d\" size=\"8\"/></td><td>", global->contest_time / 60, global->contest_time % 60);
     html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_DURATION, "Change");
     html_submit_button(f, SUPER_ACTION_GLOB_UNLIMITED_DURATION, "Set unlimited");
   }
@@ -569,10 +569,10 @@ super_html_edit_global_parameters(FILE *f,
   fprintf(f, "<tr%s><td>Standings freeze time (HH:MM) before finish:</td>"
           , form_row_attrs[row ^= 1]);
   if (!global->board_fog_time) {
-    fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"0\" size=\"8\"><i>(No freeze)</i></td><td>");
+    fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"0\" size=\"8\"/><i>(No freeze)</i></td><td>");
     html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_FOG_TIME, "Change");
   } else {
-    fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"%d:%02d\" size=\"8\"></td><td>", global->board_fog_time / 60, global->board_fog_time % 60);
+    fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"%d:%02d\" size=\"8\"/></td><td>", global->board_fog_time / 60, global->board_fog_time % 60);
     html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_FOG_TIME, "Change");
     html_submit_button(f, SUPER_ACTION_GLOB_DISABLE_FOG, "Disable");
   }
@@ -581,7 +581,7 @@ super_html_edit_global_parameters(FILE *f,
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Standings unfreeze time (HH:MM) after finish:</td>",
             form_row_attrs[row ^= 1]);
-    fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"%d:%02d\" size=\"8\"></td><td>", global->board_unfog_time / 60, global->board_unfog_time % 60);
+    fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"%d:%02d\" size=\"8\"/></td><td>", global->board_unfog_time / 60, global->board_unfog_time % 60);
     html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_UNFOG_TIME, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
@@ -1858,10 +1858,10 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "<tr%s><td>Team archive download interval (HH:MM:SS):</td>",
             form_row_attrs[row ^= 1]);
     if (!global->team_download_time) {
-      fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"0\" size=\"8\"><i>(Disabled)</i></td><td>");
+      fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"0\" size=\"8\"/><i>(Disabled)</i></td><td>");
       html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_TEAM_DOWNLOAD_TIME, "Change");
     } else {
-      fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"%d:%02d:%02d\" size=\"8\"></td><td>",
+      fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"%d:%02d:%02d\" size=\"8\"/></td><td>",
               global->team_download_time / 3600,
               (global->team_download_time / 60) % 60,
               global->team_download_time % 60);
@@ -1875,9 +1875,9 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "<tr%s><td>CPU speed (BogoMIPS):</td>",
             form_row_attrs[row ^= 1]);
     if (global->cpu_bogomips <= 0) {
-      fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"0\" size=\"8\"><i>(Unknown)</i></td><td>");
+      fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"0\" size=\"8\"/><i>(Unknown)</i></td><td>");
     } else {
-      fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"%d\" size=\"8\"></td><td>", global->cpu_bogomips);
+      fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"%d\" size=\"8\"/></td><td>", global->cpu_bogomips);
     }
     html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_CPU_BOGOMIPS, "Change");
     html_submit_button(f, SUPER_ACTION_GLOB_DETECT_CPU_BOGOMIPS, "Detect");
@@ -2940,7 +2940,7 @@ super_html_edit_languages(FILE *f,
     xfree(s);
 
     snprintf(lang_hidden_vars, sizeof(lang_hidden_vars),
-             "%s<input type=\"hidden\" name=\"lang_id\" value=\"%d\">",
+             "%s<input type=\"hidden\" name=\"lang_id\" value=\"%d\"/>",
              hidden_vars, lang->compile_id);
 
     //LANGUAGE_PARAM(long_name, "s"),
@@ -3435,7 +3435,7 @@ super_html_print_problem(FILE *f,
   if ((flags & SID_STATE_SHOW_CLOSED)) show_adv = 1;
 
   snprintf(prob_hidden_vars, sizeof(prob_hidden_vars),
-           "%s<input type=\"hidden\" name=\"prob_id\" value=\"%d\">",
+           "%s<input type=\"hidden\" name=\"prob_id\" value=\"%d\"/>",
            hidden_vars, is_abstract?-num:num);
   prepare_copy_problem(&tmp_prob, prob);
 

@@ -5199,12 +5199,12 @@ write_team_page(const serve_state_t state,
     fprintf(f, "</table>\n");
     if (!server_start && global_server_start) {
       html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+      fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
               ACTION_START_VIRTUAL, _("Start virtual contest"));
       fprintf(f, "</form>\n");
     } else if (server_start && !server_end) {
       html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+      fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
               ACTION_STOP_VIRTUAL, _("Stop virtual contest"));
       fprintf(f, "</form>\n");
     }
@@ -5323,9 +5323,9 @@ write_team_page(const serve_state_t state,
     fprintf(f, "</select>\n");
     fprintf(f, "</td></tr>\n");
     fprintf(f, "<tr><td>%s:</td>"
-            "<td><input type=\"file\" name=\"file\"></td></tr>\n"
+            "<td><input type=\"file\" name=\"file\"/></td></tr>\n"
             "<tr><td>%s</td>"
-            "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>",
+            "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr>",
             _("File"), _("Send!"), ACTION_SUBMIT_RUN, _("Send!"));
     fprintf(f, "</table></form>\n");
     print_nav_buttons(state, f, sid, self_url, hidden_vars, extra_args,
@@ -5352,7 +5352,7 @@ write_team_page(const serve_state_t state,
       fprintf(f, "<p%s>", cnts->team_par_style);
       html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f,
-              "<input type=\"submit\" name=\"archive\" value=\"%s\"></form>\n",
+              "<input type=\"submit\" name=\"archive\" value=\"%s\"/></form>\n",
               _("Download your submits"));
       fprintf(f, _("<p%s><b>Note,</b> if downloads are allowed, you may download your runs once per %d minutes. The archive is in <tt>.tar.gz</tt> (<tt>.tgz</tt>) format.</p>\n"), cnts->team_par_style, global->team_download_time / 60);
     }
@@ -5420,9 +5420,9 @@ write_team_page(const serve_state_t state,
       }
     fprintf(f, "</select>\n");
     fprintf(f, "<tr><td>%s:</td>"
-            "<td><input type=\"text\" name=\"subject\"></td></tr>\n"
+            "<td><input type=\"text\" name=\"subject\"/></td></tr>\n"
             "<tr><td colspan=\"2\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
-            "<tr><td colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n"
+            "<tr><td colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr>\n"
             "</table></form>\n",
             _("Subject"), ACTION_SUBMIT_CLAR, _("Send!"));
     print_nav_buttons(state, f, sid, self_url, hidden_vars, extra_args,

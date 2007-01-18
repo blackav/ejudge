@@ -932,7 +932,7 @@ print_choose_language_button(int hr_flag, int no_submit_flag,
            client_locale_id==0?" selected=\"1\"":"", _("English"),
            client_locale_id==1?" selected=\"1\"":"", _("Russian"));
     if (!no_submit_flag) {
-      printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
+      printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>\n",
              action, label);
 
     }
@@ -1820,19 +1820,19 @@ display_edit_registration_data_page(void)
     printf("<h3>%s</h3>\n<h3>%s</h3>\n<p%s>%s</p>\n", s1, s2, par_style, s3);
   }
 
-  printf("<form method=\"POST\" action=\"%s\" "
-         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+  printf("<form method=\"post\" action=\"%s\" "
+         "enctype=\"application/x-www-form-urlencoded\">\n",
          self_url);
-  printf("<input type=\"hidden\" name=\"SID\" value=\"%llx\">\n"
-         "<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n"
-         "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
+  printf("<input type=\"hidden\" name=\"SID\" value=\"%llx\"/>\n"
+         "<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>\n"
+         "<input type=\"hidden\" name=\"locale_id\" value=\"%d\"/>\n",
          user_cookie, user_contest_id, client_locale_id);
 
   printf("<hr><%s>%s</%s>", head_style, _("General user information"),
          head_style);
-  printf("<p%s>%s: <input type=\"text\" disabled=\"1\" name=\"user_login\" value=\"%s\" size=\"16\">\n", par_style, _("Login"), user_login);
+  printf("<p%s>%s: <input type=\"text\" disabled=\"1\" name=\"user_login\" value=\"%s\" size=\"16\"/>\n", par_style, _("Login"), user_login);
 
-  printf("<input type=\"hidden\" name=\"user_email\" value=\"%s\">\n",
+  printf("<input type=\"hidden\" name=\"user_email\" value=\"%s\"/>\n",
          user_email);
   printf("<p%s>%s: <a href=\"mailto:%s\">%s</a>\n", par_style, _("E-mail"),
          user_email, user_email);
@@ -1842,7 +1842,7 @@ display_edit_registration_data_page(void)
     if (contest_user_name_comment) {
       printf("<p%s>%s</p>\n", par_style, contest_user_name_comment);
     }
-    printf("<p%s>%s%s: <input type=\"text\" name=\"name\" value=\"%s\" maxlength=\"64\" size=\"64\"%s>\n", par_style, _("User name"), user_contest_id>0?" (*)":"", user_name, user_read_only?dis_str:"");
+    printf("<p%s>%s%s: <input type=\"text\" name=\"name\" value=\"%s\" maxlength=\"64\" size=\"64\"%s/>\n", par_style, _("User name"), user_contest_id>0?" (*)":"", user_name, user_read_only?dis_str:"");
   }
 
   /* display change forms */
@@ -1855,7 +1855,7 @@ display_edit_registration_data_page(void)
 
       printf("<table border=\"0\">\n");
       for (j = 0; j < allowed_languages_u; j++) {
-        printf("<tr><td><input type=\"checkbox\" name=\"proglang_%d\"%s%s></td>"
+        printf("<tr><td><input type=\"checkbox\" name=\"proglang_%d\"%s%s/></td>"
                "<td>%s</td></tr>\n",
                j, user_lang_map[j]?" checked=\"yes\"":"",
                user_read_only? dis_str : "",
@@ -1878,7 +1878,7 @@ display_edit_registration_data_page(void)
       continue;
     }
 
-    printf("<p%s>%s%s: <input type=\"text\" name=\"%s\" value=\"%s\" maxlength=\"%d\" size=\"%d\"%s>\n",
+    printf("<p%s>%s%s: <input type=\"text\" name=\"%s\" value=\"%s\" maxlength=\"%d\" size=\"%d\"%s/>\n",
            par_style,
            gettext(field_descs[i].orig_name),
            field_descs[i].is_mandatory?" (*)":"",
@@ -1908,13 +1908,13 @@ display_edit_registration_data_page(void)
       printf(_("<p%s>The maximal number of %s is %d.</p>\n"), par_style,
              gettext(member_string_pl[role]), member_max[role]);
     }
-    printf("<input type=\"hidden\" name=\"member_cur_%d\" value=\"%d\">\n",
+    printf("<input type=\"hidden\" name=\"member_cur_%d\" value=\"%d\"/>\n",
            role, member_cur[role]);
 
     for (pers = 0; pers < member_cur[role]; pers++) {
       printf("<h3>%s %d</h3>\n", gettext(member_string[role]), pers + 1);
       if (!user_read_only && !disable_member_delete) {
-        printf("<p%s><input type=\"submit\" name=\"remove_%d_%d\" value=\"%s\">%s</p>\n",
+        printf("<p%s><input type=\"submit\" name=\"remove_%d_%d\" value=\"%s\"/>%s</p>\n",
                par_style,
                role, pers,
                _("Remove member"),
@@ -1923,7 +1923,7 @@ display_edit_registration_data_page(void)
       if (*member_info[role][pers][0]) {
         printf("<p%s>%s %s.</p>", par_style,
                _("Member serial number is"), member_info[role][pers][0]);
-        printf("<input type=\"hidden\" name=\"member_info_%d_%d_0\" value=\"%s\">\n", role, pers, member_info[role][pers][0]);
+        printf("<input type=\"hidden\" name=\"member_info_%d_%d_0\" value=\"%s\"/>\n", role, pers, member_info[role][pers][0]);
       }
 
       for (i = 1; i < CONTEST_LAST_MEMBER_FIELD; i++) {
@@ -1959,7 +1959,7 @@ display_edit_registration_data_page(void)
           display_date_change_dialog(role, pers, i);
           continue;
         }
-        printf("<p%s>%s%s: <input type=\"text\" name=\"member_info_%d_%d_%d\" value=\"%s\" maxlength=\"%d\" size=\"%d\"%s>\n",
+        printf("<p%s>%s%s: <input type=\"text\" name=\"member_info_%d_%d_%d\" value=\"%s\" maxlength=\"%d\" size=\"%d\"%s/>\n",
                par_style, gettext(member_field_descs[i].orig_name),
                member_edit_flags[role][i].is_mandatory?" (*)":"",
                role, pers, i,
@@ -1971,27 +1971,27 @@ display_edit_registration_data_page(void)
     }
 
     if (member_cur[role] < member_max[role]) {
-      printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\"></p>\n",
+      printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></p>\n",
              par_style, ACTION_ADD_NEW_CONTESTANT + role, _("Add new member"));
     }
   }
 
   printf("<%s>%s</%s>\n", head_style, _("Finalize registration"), head_style);
 
-  printf("<input type=\"hidden\" name=\"user_already_registered\" value=\"%d\">\n", user_already_registered);
+  printf("<input type=\"hidden\" name=\"user_already_registered\" value=\"%d\"/>\n", user_already_registered);
   if (user_show_all) {
-    printf("<input type=\"hidden\" name=\"show_all\" value=\"1\">\n");
+    printf("<input type=\"hidden\" name=\"show_all\" value=\"1\"/>\n");
   }
 
   if (!user_already_registered) {
     printf("<p%s>%s</p>\n", par_style,
            _("Press on the \"Register\" button to commit the entered values to server and register for participation for the chosen contest."));
-    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
+    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>\n",
            ACTION_REGISTER_FOR_CONTEST, _("REGISTER!"));
   }
   if (!user_read_only && user_already_registered) {
     printf("<p%s>%s</p>\n", par_style, _("Press on the \"Save\" button to save the entered values on the server."));
-    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
+    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>\n",
            ACTION_SAVE_REGISTRATION_DATA, _("Save"));
   }
   printf("</form>\n");
@@ -2040,46 +2040,46 @@ display_initial_page(void)
   user_password = xstrdup("");
 
   /* change language */
-  printf("<form method=\"POST\" action=\"%s\" "
-         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+  printf("<form method=\"post\" action=\"%s\" "
+         "enctype=\"application/x-www-form-urlencoded\">\n",
          self_url);
   if (user_contest_id > 0) {
-    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>\n",
            user_contest_id);
   }
   if (user_login && *user_login) {
-    printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n",
+    printf("<input type=\"hidden\" name=\"login\" value=\"%s\"/>\n",
            user_login);
   }
   print_choose_language_button(0, 0, ACTION_CHANGE_LANG_AT_INITIAL, 0);
   printf("</form>\n");
 
   /* login */
-  printf("<form method=\"POST\" action=\"%s\" "
-         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+  printf("<form method=\"post\" action=\"%s\" "
+         "enctype=\"application/x-www-form-urlencoded\">\n",
          self_url);
   if (user_contest_id > 0) {
-    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>\n",
            user_contest_id);
   }
   if (client_locale_id >= 0) {
-    printf("<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
+    printf("<input type=\"hidden\" name=\"locale_id\" value=\"%d\"/>\n",
            client_locale_id);
   }
-  printf("<input type=\"hidden\" name=\"usecookies\" value=\"1\">\n");
+  printf("<input type=\"hidden\" name=\"usecookies\" value=\"1\"/>\n");
   printf("<%s>%s</%s><p%s>%s</p>\n",
          head_style, _("For registered users"), head_style, par_style,
          _("If you have registered before, please enter your "
            "login and password in the corresponding fields. "
            "Then press the \"Submit\" button."));
   printf("<p%s>%s: <input type=\"text\" name=\"login\" value=\"%s\""
-         " size=\"16\" maxlength=\"16\">\n",
+         " size=\"16\" maxlength=\"16\"/>\n",
          par_style, _("Login"), user_login);
   printf("<p%s>%s: <input type=\"password\" name=\"password\" value=\"%s\""
-         " size=\"16\" maxlength=\"16\">\n",
+         " size=\"16\" maxlength=\"16\"/>\n",
          par_style, _("Password"), user_password);
 
-  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
          par_style, ACTION_LOGIN, _("Submit"));
   printf("</form>");
 
@@ -2119,15 +2119,15 @@ display_login_page(void)
   user_password = xstrdup("");
 
   /* change language */
-  printf("<form method=\"POST\" action=\"%s\" "
-         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+  printf("<form method=\"post\" action=\"%s\" "
+         "enctype=\"application/x-www-form-urlencoded\">\n",
          self_url);
   if (user_contest_id > 0) {
-    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>\n",
            user_contest_id);
   }
   if (user_login && *user_login) {
-    printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n",
+    printf("<input type=\"hidden\" name=\"login\" value=\"%s\"/>\n",
            user_login);
   }
   next_action = ACTION_CHANGE_LANG_AT_LOGIN;
@@ -2137,28 +2137,28 @@ display_login_page(void)
   printf("</form>\n");
 
   /* login */
-  printf("<form method=\"POST\" action=\"%s\" "
-         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+  printf("<form method=\"post\" action=\"%s\" "
+         "enctype=\"application/x-www-form-urlencoded\">\n",
          self_url);
   if (user_contest_id > 0) {
-    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>\n",
            user_contest_id);
   }
-  printf("<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
+  printf("<input type=\"hidden\" name=\"locale_id\" value=\"%d\"/>\n",
          client_locale_id);
   printf("<p%s>%s</p>\n", par_style,
          _("Type your login and password and then press \"Submit\" button"));
   printf("<p%s>%s: <input type=\"text\" name=\"login\" value=\"%s\""
-           " size=\"16\" maxlength=\"16\">\n",
+           " size=\"16\" maxlength=\"16\"/>\n",
          par_style, _("Login"), user_login);
   printf("<p%s>%s: <input type=\"password\" name=\"password\" value=\"%s\""
-         " size=\"16\" maxlength=\"16\">\n",
+         " size=\"16\" maxlength=\"16\"/>\n",
          par_style, _("Password"), user_password);
 
   next_action = ACTION_LOGIN;
   if (user_action == STATE_LOGIN_FORCED_REG)
     next_action = ACTION_LOGIN_FORCED_REG;
-  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
          par_style, next_action, _("Submit"));
   printf("</form>");
 }
@@ -2191,33 +2191,33 @@ display_register_new_user_page(void)
                     client_locale_id, "%s", _("Register a new user"));
 
   /* change language */
-  printf("<form method=\"POST\" action=\"%s\" "
-         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+  printf("<form method=\"post\" action=\"%s\" "
+         "enctype=\"application/x-www-form-urlencoded\">\n",
          self_url);
   if (user_contest_id > 0) {
-    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>\n",
            user_contest_id);
   }
   if (user_login && *user_login) {
-    printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n",
+    printf("<input type=\"hidden\" name=\"login\" value=\"%s\"/>\n",
            user_login);
   }
   if (user_email && *user_email) {
-    printf("<input type=\"hidden\" name=\"email\" value=\"%s\">\n",
+    printf("<input type=\"hidden\" name=\"email\" value=\"%s\"/>\n",
            user_email);
   }
   print_choose_language_button(0,0,ACTION_CHANGE_LANG_AT_REGISTER_NEW_USER,0);
   printf("</form>\n");
 
   /* register new user */
-  printf("<form method=\"POST\" action=\"%s\" "
-         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+  printf("<form method=\"post\" action=\"%s\" "
+         "enctype=\"application/x-www-form-urlencoded\">\n",
          self_url);
   if (user_contest_id > 0) {
-    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>\n",
            user_contest_id);
   }
-  printf("<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
+  printf("<input type=\"hidden\" name=\"locale_id\" value=\"%d\"/>\n",
          client_locale_id);
 
   printf("<%s>%s</%s><p%s>%s</p><p%s>%s</p>\n",
@@ -2238,14 +2238,14 @@ display_register_new_user_page(void)
              "that your login still <i>may be</i> (in some cases) assigned "
              "automatically."));
     printf("<p%s>%s (*): <input type=\"text\" name=\"login\" value=\"%s\""
-           " size=\"16\" maxlength=\"16\">\n",
+           " size=\"16\" maxlength=\"16\"/>\n",
            par_style, _("Login"), user_login);
   }
   printf("<p%s>%s</p>", par_style, _("Type your valid e-mail address"));
   printf("<p%s>%s (*): <input type=\"text\" name=\"email\" value=\"%s\""
-         " size=\"64\" maxlength=\"64\">\n",
+         " size=\"64\" maxlength=\"64\"/>\n",
          par_style, _("E-mail"), user_email);
-  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
          par_style, ACTION_REGISTER_NEW_USER, _("Register"));
 
   printf("</form>");
@@ -2348,18 +2348,18 @@ display_user_registered_page_2(void)
   printf(_("<p%s>Press the &quot;Next&quot; button to continue registration."),
          par_style);
 
-  printf("<form method=\"POST\" action=\"%s\" "
-         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+  printf("<form method=\"post\" action=\"%s\" "
+         "enctype=\"application/x-www-form-urlencoded\">\n",
          self_url);
-  printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+  printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>\n",
          user_contest_id);
-  printf("<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
+  printf("<input type=\"hidden\" name=\"locale_id\" value=\"%d\"/>\n",
          client_locale_id);
-  printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n",
+  printf("<input type=\"hidden\" name=\"login\" value=\"%s\"/>\n",
          user_login);
-  printf("<input type=\"hidden\" name=\"password\" value=\"%s\">\n",
+  printf("<input type=\"hidden\" name=\"password\" value=\"%s\"/>\n",
          user_password);
-  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
          par_style, ACTION_LOGIN, _("Next"));
   printf("</form>");
 }
@@ -2412,21 +2412,21 @@ display_main_page(void)
 
   printf(_("<p%s>Hello, %s!</p>\n"), par_style, armored_str);
 
-  printf("<form method=\"POST\" action=\"%s\" "
-         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+  printf("<form method=\"post\" action=\"%s\" "
+         "enctype=\"application/x-www-form-urlencoded\">\n",
          self_url);
-  printf("<input type=\"hidden\" name=\"SID\" value=\"%llx\">\n"
-         "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
+  printf("<input type=\"hidden\" name=\"SID\" value=\"%llx\"/>\n"
+         "<input type=\"hidden\" name=\"locale_id\" value=\"%d\"/>\n",
          user_cookie, client_locale_id);
   if (user_contest_id > 0) {
-    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>\n",
            user_contest_id);
   }
   printf("<%s>%s</%s>\n", head_style, _("Change the password"), head_style);
-  printf("<p%s>%s: <input type=\"password\" name=\"chg_old_passwd\" maxlength=\"16\" size=\"16\"></p>\n", par_style, _("Old password"));
-  printf("<p%s>%s: <input type=\"password\" name=\"chg_new_passwd_1\" maxlength=\"16\" size=\"16\"></p>\n", par_style, _("New password (1)"));
-  printf("<p%s>%s: <input type=\"password\" name=\"chg_new_passwd_2\" maxlength=\"16\" size=\"16\"></p>\n", par_style, _("New password (2)"));
-  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\"></p>\n",
+  printf("<p%s>%s: <input type=\"password\" name=\"chg_old_passwd\" maxlength=\"16\" size=\"16\"/></p>\n", par_style, _("Old password"));
+  printf("<p%s>%s: <input type=\"password\" name=\"chg_new_passwd_1\" maxlength=\"16\" size=\"16\"/></p>\n", par_style, _("New password (1)"));
+  printf("<p%s>%s: <input type=\"password\" name=\"chg_new_passwd_2\" maxlength=\"16\" size=\"16\"/></p>\n", par_style, _("New password (2)"));
+  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></p>\n",
          par_style, ACTION_CHANGE_PASSWORD, _("Change!"));
   printf("</form>\n");
 
@@ -2557,12 +2557,12 @@ display_main_page(void)
            self_url, ACTION_LOGOUT, user_cookie, client_locale_id, s1);
   printf("<p%s><a href=\"%s\">%s</a></p>\n", par_style, url, _("Logout"));
 
-  printf("<form method=\"POST\" action=\"%s\" "
-         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+  printf("<form method=\"post\" action=\"%s\" "
+         "enctype=\"application/x-www-form-urlencoded\">\n",
          self_url);
-  printf("<input type=\"hidden\" name=\"SID\" value=\"%llx\">\n", user_cookie);
+  printf("<input type=\"hidden\" name=\"SID\" value=\"%llx\"/>\n", user_cookie);
   if (user_contest_id > 0) {
-    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>\n",
            user_contest_id);
   }
   print_choose_language_button(0, 0, ACTION_CHANGE_LANG_AT_MAIN_PAGE, 0);
@@ -3189,8 +3189,8 @@ action_register_for_contest(void)
          _("Registration failed by the following reason:"), error_log);
 
   /* display "Back" button */
-  printf("<form method=\"POST\" action=\"%s\" "
-         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+  printf("<form method=\"post\" action=\"%s\" "
+         "enctype=\"application/x-www-form-urlencoded\">\n",
          self_url);
   n = cgi_get_param_num();
   for (i = 0; i < n; i++) {
@@ -3200,11 +3200,11 @@ action_register_for_contest(void)
     arm_len = html_armored_strlen(par_value);
     arm_value = (unsigned char*) xmalloc(arm_len + 1);
     html_armor_string(par_value, arm_value);
-    printf("<input type=\"hidden\" name=\"%s\" value=\"%s\">\n",
+    printf("<input type=\"hidden\" name=\"%s\" value=\"%s\"/>\n",
            par_name, arm_value);
     xfree(arm_value);
   }
-  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
          par_style,
          ACTION_REDISPLAY_EDIT_REGISTRATION_DATA,
          _("Back"));

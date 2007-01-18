@@ -507,15 +507,15 @@ display_login_page(void)
   printf("<table>"
          "<tr>"
          "<td>%s:</td>"
-         "<td><input type=\"text\" size=16 name=\"login\"></td>"
+         "<td><input type=\"text\" size=16 name=\"login\"/></td>"
          "</tr>"
          "<tr>"
          "<td>%s:</td>"
-         "<td><input type=\"password\" size=16 name=\"password\"></td>"
+         "<td><input type=\"password\" size=16 name=\"password\"/></td>"
          "</tr>"
          "<tr>"
          "<td>&nbsp;</td>"
-         "<td><input type=\"submit\" value=\"%s\"></td>"
+         "<td><input type=\"submit\" value=\"%s\"/></td>"
          "</tr>"
          "</table>"
          "</form>",
@@ -591,7 +591,7 @@ read_state_params(void)
   }
 
   snprintf(hidden_vars, sizeof(hidden_vars),
-           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\"/>",
            session_id);
 }
 

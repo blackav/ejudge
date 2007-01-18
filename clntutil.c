@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -448,7 +448,7 @@ client_print_server_status(int priv_level,
   if (!server_start_time) {
     printf("<tr><td colspan=\"2\"><b><big>%s</big></b></td>\n",
          _("Contest is not started"));
-    if (priv_level == PRIV_LEVEL_ADMIN) printf("<td>&nbsp;</td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_START, _("Start"));
+    if (priv_level == PRIV_LEVEL_ADMIN) printf("<td>&nbsp;</td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td>", ACTION_START, _("Start"));
     puts("</tr>");
   } else {
     client_time_to_str(str_strt_time, server_start_time);
@@ -457,10 +457,10 @@ client_print_server_status(int priv_level,
     if (priv_level == PRIV_LEVEL_ADMIN) {
       puts("<td>&nbsp;</td>");
       if (!server_stop_time)
-        printf("<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_STOP, _("Stop"));
+        printf("<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td>", ACTION_STOP, _("Stop"));
       else if (server_continuation_enabled
                && (!server_duration || server_stop_time < server_start_time + server_duration))
-        printf("<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_CONTINUE, _("Continue"));
+        printf("<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td>", ACTION_CONTINUE, _("Continue"));
       else
         puts("<td>&nbsp;</td>");
 
@@ -477,8 +477,8 @@ client_print_server_status(int priv_level,
            _("Planned start time"),
            str_schd_time);
     if (priv_level == PRIV_LEVEL_ADMIN)
-      printf("<td><input type=\"text\" name=\"sched_time\" size=\"16\"></td>"
-             "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>",
+      printf("<td><input type=\"text\" name=\"sched_time\" size=\"16\"/></td>"
+             "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td>",
              ACTION_SCHEDULE, _("Reschedule"));
     puts("</tr>");
   }
@@ -492,7 +492,7 @@ client_print_server_status(int priv_level,
     printf("<tr><td>%s:</td><td>%s</td>", _("Duration"), str_duration);
     if (priv_level == PRIV_LEVEL_ADMIN) {
       if (!server_stop_time || server_continuation_enabled)
-        printf("<td><input type=\"text\" name=\"dur\" size=\"16\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>",
+        printf("<td><input type=\"text\" name=\"dur\" size=\"16\"/></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td>",
                ACTION_DURATION, _("Change duration"));
       else
         puts("<td>&nbsp;</td><td>&nbsp;</td>");
@@ -550,12 +550,12 @@ client_make_form_headers(unsigned char const *self_url)
 {
 
   sprintf(form_header_simple,
-          "<form method=\"POST\" action=\"%s\" "
-          "ENCTYPE=\"application/x-www-form-urlencoded\">",
+          "<form method=\"post\" action=\"%s\" "
+          "enctype=\"application/x-www-form-urlencoded\">",
           self_url);
   sprintf(form_header_multipart,
-          "<form method=\"POST\" action=\"%s\" "
-          "ENCTYPE=\"multipart/form-data\">",
+          "<form method=\"post\" action=\"%s\" "
+          "enctype=\"multipart/form-data\">",
           self_url);  
 }
 
