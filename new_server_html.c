@@ -5922,15 +5922,14 @@ unpriv_load_html_style(struct http_request_info *phr,
   // js part
   snprintf(bb, sizeof(bb),
            "<script type=\"text/javascript\" src=\"/ejudge/dojo.js\"></script>\n"
+           "<script type=\"text/javascript\" src=\"/ejudge/actions.js\"></script>\n"
            "<script type=\"text/javascript\" src=\"/ejudge/unpriv.js\"></script>\n"
            "<script type=\"text/javascript\">\n"
            "  var SID=\"%016llx\";\n"
-           "  var currentTimeAction=\"%d\";\n"
            "  dojo.require(\"dojo.event.*\");\n"
            "  dojo.require(\"dojo.io.*\");\n"
            "  dojo.require(\"dojo.xml.Parse\");\n"
-           "</script>\n", phr->session_id,
-           NEW_SRV_ACTION_XML_CURRENT_TIME);
+           "</script>\n", phr->session_id);
   phr->script_part = xstrdup(bb);
 }
 
@@ -9079,7 +9078,7 @@ unpriv_logout(FILE *fout,
 }
 
 static void
-unpriv_xml_current_time(
+unpriv_xml_user_state(
 	FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -9091,14 +9090,14 @@ unpriv_xml_current_time(
   ptm = localtime(&cs->current_time);
   fprintf(fout, "Content-type: text/html\n\n");
   fprintf(fout, "<?xml version=\"1.0\" encoding=\"%s\"?>", EJUDGE_CHARSET);
-  fprintf(fout, "<time>"
-          "<hour>%02d</hour>"
-          "<minute>%02d</minute>"
-          "<second>%02d</second>"
-          "<day>%02d</day>"
-          "<month>%02d</month>"
-          "<year>%d</year>"
-          "</time>",
+  fprintf(fout, "<t>"
+          "<h>%02d</h>"
+          "<m>%02d</m>"
+          "<s>%02d</s>"
+          "<d>%02d</d>"
+          "<o>%02d</o>"
+          "<y>%d</y>"
+          "</t>",
           ptm->tm_hour, ptm->tm_min, ptm->tm_sec,
           ptm->tm_mday, ptm->tm_mon + 1, ptm->tm_year + 1900);
 }
@@ -9124,7 +9123,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_STANDINGS] = unpriv_view_standings,
   [NEW_SRV_ACTION_VIRTUAL_START] = unpriv_command,
   [NEW_SRV_ACTION_VIRTUAL_STOP] = unpriv_command,
-  [NEW_SRV_ACTION_XML_CURRENT_TIME] = unpriv_xml_current_time,
+  [NEW_SRV_ACTION_XML_USER_STATE] = unpriv_xml_user_state,
 };
 
 static void
