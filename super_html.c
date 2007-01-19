@@ -20,7 +20,6 @@
 
 #include "super_html.h"
 #include "super-serve.h"
-#include "super_actions.h"
 #include "super_proto.h"
 #include "contests.h"
 #include "misctext.h"
@@ -344,25 +343,25 @@ super_html_main_page(FILE *f,
   fprintf(f, "<td>");
   html_start_form(f, 1, self_url, hidden_vars);
   if ((sstate->flags & SID_STATE_SHOW_HIDDEN)) {
-    html_submit_button(f, SUPER_ACTION_HIDE_HIDDEN, "Hide hidden contests");
+    html_submit_button(f, SSERV_CMD_HIDE_HIDDEN, "Hide hidden contests");
   } else {
-    html_submit_button(f, SUPER_ACTION_SHOW_HIDDEN, "Show hidden contests");
+    html_submit_button(f, SSERV_CMD_SHOW_HIDDEN, "Show hidden contests");
   }
   fprintf(f, "</form></td>");
   fprintf(f, "<td>");
   html_start_form(f, 1, self_url, hidden_vars);
   if ((sstate->flags & SID_STATE_SHOW_CLOSED)) {
-    html_submit_button(f, SUPER_ACTION_HIDE_CLOSED, "Hide closed contests");
+    html_submit_button(f, SSERV_CMD_HIDE_CLOSED, "Hide closed contests");
   } else {
-    html_submit_button(f, SUPER_ACTION_SHOW_CLOSED, "Show closed contests");
+    html_submit_button(f, SSERV_CMD_SHOW_CLOSED, "Show closed contests");
   }
   fprintf(f, "</form></td>");
   fprintf(f, "<td>");
   html_start_form(f, 1, self_url, hidden_vars);
   if ((sstate->flags & SID_STATE_SHOW_UNMNG)) {
-    html_submit_button(f, SUPER_ACTION_HIDE_UNMNG, "Hide unmanageable contests");
+    html_submit_button(f, SSERV_CMD_HIDE_UNMNG, "Hide unmanageable contests");
   } else {
-    html_submit_button(f, SUPER_ACTION_SHOW_UNMNG, "Show unmanageable contests");
+    html_submit_button(f, SSERV_CMD_SHOW_UNMNG, "Show unmanageable contests");
   }
   fprintf(f, "</form></td>");
   fprintf(f, "</tr></table>");
@@ -371,16 +370,16 @@ super_html_main_page(FILE *f,
   fprintf(f, "<table border=\"0\"><tr>\n");
   fprintf(f, "<td>");
   html_start_form(f, 1, session_id, self_url, hidden_vars);
-  html_submit_button(f, SUPER_ACTION_RESTART, "Restart the daemon");
+  html_submit_button(f, SSERV_CMD_RESTART, "Restart the daemon");
   fprintf(f, "</form></td>");
   fprintf(f, "</tr></table>");
   */
 
-  fprintf(f, "<table border=\"0\"><tr><td>%sCreate new contest</a></td>", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d", SUPER_ACTION_CREATE_CONTEST));
+  fprintf(f, "<table border=\"0\"><tr><td>%sCreate new contest</a></td>", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d", SSERV_CMD_CREATE_CONTEST));
   if (sstate->edited_cnts) {
     fprintf(f, "<td>%sEdit current contest</a></td>",
             html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                          "action=%d", SUPER_ACTION_EDIT_CURRENT_CONTEST));
+                          "action=%d", SSERV_CMD_EDIT_CURRENT_CONTEST));
   }
   fprintf(f, "</tr></table>\n");
 
@@ -449,7 +448,7 @@ super_html_main_page(FILE *f,
       fprintf(f, "<td>%sDetails</a></td>\n",
               html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                             "contest_id=%d&action=%d", contest_id,
-                            SUPER_ACTION_VIEW_CONTEST));
+                            SSERV_CMD_CONTEST_PAGE));
       continue;
     }
     if ((errcode = contests_get(contest_id, &cnts)) < 0) {
@@ -490,7 +489,7 @@ super_html_main_page(FILE *f,
       fprintf(f, "<td>%sDetails</a></td>\n",
               html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                             "contest_id=%d&action=%d", contest_id,
-                            SUPER_ACTION_VIEW_CONTEST));
+                            SSERV_CMD_CONTEST_PAGE));
       continue;
     }
     if (priv_level < PRIV_LEVEL_ADMIN && !(sstate->flags & SID_STATE_SHOW_UNMNG)) {
@@ -624,7 +623,7 @@ super_html_main_page(FILE *f,
       fprintf(f, "<td>%sDetails</a></td>\n",
               html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                             "contest_id=%d&action=%d", contest_id,
-                            SUPER_ACTION_VIEW_CONTEST));
+                            SSERV_CMD_CONTEST_PAGE));
     } else {
       fprintf(f, "<td>&nbsp;</td>\n");
     }
@@ -809,9 +808,9 @@ super_html_contest_page(FILE *f,
     fprintf(f, "<td>");
     html_start_form(f, 1, self_url, new_hidden_vars);
     if (cnts->closed) {
-      html_submit_button(f, SUPER_ACTION_OPEN_CONTEST, "Open");
+      html_submit_button(f, SSERV_CMD_OPEN_CONTEST, "Open");
     } else {
-      html_submit_button(f, SUPER_ACTION_CLOSE_CONTEST, "Close");
+      html_submit_button(f, SSERV_CMD_CLOSE_CONTEST, "Close");
     }
     fprintf(f, "</form>");
     fprintf(f, "</td>");
@@ -825,9 +824,9 @@ super_html_contest_page(FILE *f,
     fprintf(f, "<td>");
     html_start_form(f, 1, self_url, new_hidden_vars);
     if (cnts->invisible) {
-      html_submit_button(f, SUPER_ACTION_CONTEST_VISIBLE, "Make visible");
+      html_submit_button(f, SSERV_CMD_VISIBLE_CONTEST, "Make visible");
     } else {
-      html_submit_button(f, SUPER_ACTION_CONTEST_INVISIBLE, "Make invisible");
+      html_submit_button(f, SSERV_CMD_INVISIBLE_CONTEST, "Make invisible");
     }
     fprintf(f, "</form>");
     fprintf(f, "</td>");
@@ -848,72 +847,72 @@ super_html_contest_page(FILE *f,
     case MNG_STAT_NEW_MANAGED:
       fprintf(f, "&nbsp;");
       /* FIXME: disabled for now
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_TEMP,
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_TEMP,
                          "Manage temporarily");
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG, "Manage permanently");
+      html_submit_button(f, SSERV_CMD_SERVE_MNG, "Manage permanently");
       */
       break;
     case MNG_STAT_TEMP_NOT_MANAGED:
       fprintf(f, "&nbsp;");
       /*
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_RESUME,
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_RESUME,
                          "Resume management");
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_STOP, "Stop management");
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_STOP, "Stop management");
       */
       break;
     case MNG_STAT_TEMP_FAILED:
       /*
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG, "Manage permanently");
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_STOP, "Stop management");
+      html_submit_button(f, SSERV_CMD_SERVE_MNG, "Manage permanently");
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_STOP, "Stop management");
       */
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_RESET_ERROR,
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_RESET_ERROR,
                          "Reset error flag");
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_PROBE_RUN,
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_PROBE_RUN,
                          "Do probe run");
       break;
     case MNG_STAT_TEMP_RUNNING:
       /*
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG, "Manage permanently");
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_STOP, "Stop management");
+      html_submit_button(f, SSERV_CMD_SERVE_MNG, "Manage permanently");
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_STOP, "Stop management");
       */
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_TERM, "Terminate serve");
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_TERM, "Terminate serve");
       break;
     case MNG_STAT_TEMP_WAITING:
       /*
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG, "Manage permanently");
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_STOP, "Stop management");
+      html_submit_button(f, SSERV_CMD_SERVE_MNG, "Manage permanently");
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_STOP, "Stop management");
       */
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_PROBE_RUN,
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_PROBE_RUN,
                          "Do probe run");
       break;
     case MNG_STAT_FAILED:
       /*
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_SUSPEND,
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_SUSPEND,
                          "Suspend management");
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_STOP, "Stop management");
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_STOP, "Stop management");
       */
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_RESET_ERROR,
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_RESET_ERROR,
                          "Reset error flag");
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_PROBE_RUN,
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_PROBE_RUN,
                          "Do probe run");
       break;
     case MNG_STAT_RUNNING:
       /*
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_SUSPEND,
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_SUSPEND,
                          "Suspend management");
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_STOP, "Stop management");
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_STOP, "Stop management");
       */
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_TERM, "Terminate serve");
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_TERM, "Terminate serve");
       break;
     case MNG_STAT_WAITING:
       fprintf(f, "&nbsp;");
       /*
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_SUSPEND,
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_SUSPEND,
                          "Suspend management");
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_STOP,
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_STOP,
                          "Stop management");
       */
-      html_submit_button(f, SUPER_ACTION_SERVE_MNG_PROBE_RUN,
+      html_submit_button(f, SSERV_CMD_SERVE_MNG_PROBE_RUN,
                          "Do probe run");
       break;
     default:
@@ -957,20 +956,20 @@ super_html_contest_page(FILE *f,
     fprintf(f, "<td>");
     html_start_form(f, 1, self_url, new_hidden_vars);
     if (logfilemode == 0) {
-      html_submit_button(f, SUPER_ACTION_SERVE_LOG_DEV_NULL,
+      html_submit_button(f, SSERV_CMD_SERVE_LOG_DEV_NULL,
                          "Redirect to /dev/null");
     } else if (logfilemode == 2) {
-      html_submit_button(f, SUPER_ACTION_SERVE_LOG_TRUNC, "Truncate log");
-      html_submit_button(f, SUPER_ACTION_SERVE_LOG_DEV_NULL,
+      html_submit_button(f, SSERV_CMD_SERVE_LOG_TRUNC, "Truncate log");
+      html_submit_button(f, SSERV_CMD_SERVE_LOG_DEV_NULL,
                          "Redirect to /dev/null");
       if (logfilestat.st_size <= MAX_LOG_VIEW_SIZE) {
         fprintf(f, "%sView</a>",
                 html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                               "contest_id=%d&action=%d", contest_id,
-                              SUPER_ACTION_SERVE_LOG_VIEW));
+                              SSERV_CMD_VIEW_SERVE_LOG));
       }
     } else if (logfilemode == 1) {
-      html_submit_button(f, SUPER_ACTION_SERVE_LOG_FILE, "Redirect to file");
+      html_submit_button(f, SSERV_CMD_SERVE_LOG_FILE, "Redirect to file");
     }
     fprintf(f, "</form>");
     fprintf(f, "</td>");
@@ -990,76 +989,76 @@ super_html_contest_page(FILE *f,
     case MNG_STAT_NOT_MANAGED:
       fprintf(f, "&nbsp;");
       /*
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_TEMP,
+      html_submit_button(f, SSERV_CMD_RUN_MNG_TEMP,
                          "Manage temporarily");
-      html_submit_button(f, SUPER_ACTION_RUN_MNG, "Manage permanently");
+      html_submit_button(f, SSERV_CMD_RUN_MNG, "Manage permanently");
       */
       break;
     case MNG_STAT_TEMP_NOT_MANAGED:
       fprintf(f, "&nbsp;");
       /*
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_RESUME,
+      html_submit_button(f, SSERV_CMD_RUN_MNG_RESUME,
                          "Resume management");
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_STOP, "Stop management");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_STOP, "Stop management");
       */
       break;
     case MNG_STAT_TEMP_FAILED:
       /*
-      html_submit_button(f, SUPER_ACTION_RUN_MNG, "Manage permanently");
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_STOP, "Stop management");
+      html_submit_button(f, SSERV_CMD_RUN_MNG, "Manage permanently");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_STOP, "Stop management");
       */
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_RESET_ERROR,
+      html_submit_button(f, SSERV_CMD_RUN_MNG_RESET_ERROR,
                          "Reset error flag");
       /*
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_PROBE_RUN,
+      html_submit_button(f, SSERV_CMD_RUN_MNG_PROBE_RUN,
                          "Do probe run");
       */
       break;
     case MNG_STAT_TEMP_RUNNING:
       /*
-      html_submit_button(f, SUPER_ACTION_RUN_MNG, "Manage permanently");
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_STOP, "Stop management");
+      html_submit_button(f, SSERV_CMD_RUN_MNG, "Manage permanently");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_STOP, "Stop management");
       */
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_TERM, "Terminate run");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_TERM, "Terminate run");
       break;
     case MNG_STAT_TEMP_WAITING:
       fprintf(f, "&nbsp;");
       /*
-      html_submit_button(f, SUPER_ACTION_RUN_MNG, "Manage permanently");
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_STOP, "Stop management");
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_PROBE_RUN,
+      html_submit_button(f, SSERV_CMD_RUN_MNG, "Manage permanently");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_STOP, "Stop management");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_PROBE_RUN,
                          "Do probe run");
       */
       break;
     case MNG_STAT_FAILED:
       /*
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_SUSPEND,
+      html_submit_button(f, SSERV_CMD_RUN_MNG_SUSPEND,
                          "Suspend management");
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_STOP, "Stop management");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_STOP, "Stop management");
       */
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_RESET_ERROR,
+      html_submit_button(f, SSERV_CMD_RUN_MNG_RESET_ERROR,
                          "Reset error flag");
       /*
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_PROBE_RUN,
+      html_submit_button(f, SSERV_CMD_RUN_MNG_PROBE_RUN,
                          "Do probe run");
       */
       break;
     case MNG_STAT_RUNNING:
       /*
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_SUSPEND,
+      html_submit_button(f, SSERV_CMD_RUN_MNG_SUSPEND,
                          "Suspend management");
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_STOP, "Stop management");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_STOP, "Stop management");
       */
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_TERM, "Terminate run");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_TERM, "Terminate run");
       break;
     case MNG_STAT_WAITING:
       fprintf(f, "&nbsp;");
       /*
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_SUSPEND,
+      html_submit_button(f, SSERV_CMD_RUN_MNG_SUSPEND,
                          "Suspend management");
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_STOP,
+      html_submit_button(f, SSERV_CMD_RUN_MNG_STOP,
                          "Stop management");
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_PROBE_RUN,
+      html_submit_button(f, SSERV_CMD_RUN_MNG_PROBE_RUN,
                          "Do probe run");
       */
       break;
@@ -1098,20 +1097,20 @@ super_html_contest_page(FILE *f,
     fprintf(f, "<td>");
     html_start_form(f, 1, self_url, new_hidden_vars);
     if (logfilemode == 0) {
-      html_submit_button(f, SUPER_ACTION_RUN_LOG_DEV_NULL,
+      html_submit_button(f, SSERV_CMD_RUN_LOG_DEV_NULL,
                          "Redirect to /dev/null");
     } else if (logfilemode == 2) {
-      html_submit_button(f, SUPER_ACTION_RUN_LOG_TRUNC, "Truncate log");
-      html_submit_button(f, SUPER_ACTION_RUN_LOG_DEV_NULL,
+      html_submit_button(f, SSERV_CMD_RUN_LOG_TRUNC, "Truncate log");
+      html_submit_button(f, SSERV_CMD_RUN_LOG_DEV_NULL,
                          "Redirect to /dev/null");
       if (logfilestat.st_size <= MAX_LOG_VIEW_SIZE) {
         fprintf(f, "%sView</a>",
                 html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                               "contest_id=%d&action=%d", contest_id,
-                              SUPER_ACTION_RUN_LOG_VIEW));
+                              SSERV_CMD_VIEW_RUN_LOG));
       }
     } else {
-      html_submit_button(f, SUPER_ACTION_RUN_LOG_FILE, "Redirect to file");
+      html_submit_button(f, SSERV_CMD_RUN_LOG_FILE, "Redirect to file");
     }
     fprintf(f, "</form>");
     fprintf(f, "</td>");
@@ -1125,7 +1124,7 @@ super_html_contest_page(FILE *f,
     fprintf(f, "%sView</a>",
             html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                           "contest_id=%d&action=%d", contest_id,
-                          SUPER_ACTION_VIEW_CONTEST_XML));
+                          SSERV_CMD_VIEW_CONTEST_XML));
     refcount++;
   }
   // FIXME: check editing permissions
@@ -1135,7 +1134,7 @@ super_html_contest_page(FILE *f,
     fprintf(f, "%sEdit</a>",
             html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                           "contest_id=%d&action=%d", contest_id,
-                          SUPER_ACTION_EDIT_CONTEST_XML));
+                          SSERV_CMD_EDIT_CONTEST_XML));
     refcount++;
   }
   if (!refcount) fprintf(f, "&nbsp;");
@@ -1149,7 +1148,7 @@ super_html_contest_page(FILE *f,
     fprintf(f, "%sView</a>",
             html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                           "contest_id=%d&action=%d", contest_id,
-                          SUPER_ACTION_VIEW_SERVE_CFG));
+                          SSERV_CMD_VIEW_SERVE_CFG));
     refcount++;
   }
   // FIXME: check editing permissions
@@ -1159,7 +1158,7 @@ super_html_contest_page(FILE *f,
     fprintf(f, "%sEdit</a>",
             html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                           "contest_id=%d&action=%d", contest_id,
-                          SUPER_ACTION_EDIT_CONTEST_XML));
+                          SSERV_CMD_EDIT_CONTEST_XML));
     refcount++;
   }
   if (!refcount) fprintf(f, "&nbsp;");
@@ -1171,12 +1170,12 @@ super_html_contest_page(FILE *f,
   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
     fprintf(f, "<p>");
     html_start_form(f, 1, self_url, new_hidden_vars);
-    html_submit_button(f, SUPER_ACTION_CONTEST_RESTART, "Restart management");
+    html_submit_button(f, SSERV_CMD_CONTEST_RESTART, "Restart management");
     fprintf(f, "</form>\n");
 
     fprintf(f, "<p>");
     html_start_form(f, 1, self_url, new_hidden_vars);
-    html_submit_button(f, SUPER_ACTION_CHECK_TESTS, "Check contest settings");
+    html_submit_button(f, SSERV_CMD_CHECK_TESTS, "Check contest settings");
     fprintf(f, "</form>\n");
   }
 
@@ -1186,17 +1185,17 @@ super_html_contest_page(FILE *f,
   fprintf(f, "<td>%sRefresh</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "contest_id=%d&action=%d", contest_id,
-                        SUPER_ACTION_VIEW_CONTEST));
+                        SSERV_CMD_CONTEST_PAGE));
   fprintf(f, "<td>%sLogout</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "action=%d", SUPER_ACTION_LOGOUT));
+                        "action=%d", SSERV_CMD_LOGOUT));
   fprintf(f, "</tr></table>");
 
   if (extra && extra->messages) {
     fprintf(f, "<hr><h3>Start-up messages</h3>\n");
     if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
       fprintf(f, "<p>");
-      html_submit_button(f, SUPER_ACTION_CLEAR_MESSAGES, "Clear");
+      html_submit_button(f, SSERV_CMD_CLEAR_MESSAGES, "Clear");
     }
     html_log = html_armor_string_dupa(extra->messages);
     fprintf(f, "<p><pre>%s</pre>\n", html_log);
@@ -1260,24 +1259,24 @@ super_html_log_page(FILE *f,
     snprintf(log_file_path, sizeof(log_file_path),
              "%s/var/messages", cnts->root_dir);
     progname = "serve";
-    refresh_action = SUPER_ACTION_SERVE_LOG_VIEW;
+    refresh_action = SSERV_CMD_VIEW_SERVE_LOG;
     break;
   case SSERV_CMD_VIEW_RUN_LOG:
     snprintf(log_file_path, sizeof(log_file_path),
              "%s/var/run_messages", cnts->root_dir);
     progname = "run";
-    refresh_action = SUPER_ACTION_RUN_LOG_VIEW;
+    refresh_action = SSERV_CMD_VIEW_RUN_LOG;
     break;
   case SSERV_CMD_VIEW_CONTEST_XML:
     contests_make_path(log_file_path, sizeof(log_file_path), cnts->id);
     progname = "contest.xml";
-    refresh_action = SUPER_ACTION_VIEW_CONTEST_XML;
+    refresh_action = SSERV_CMD_VIEW_CONTEST_XML;
     break;
   case SSERV_CMD_VIEW_SERVE_CFG:
     snprintf(log_file_path, sizeof(log_file_path),
              "%s/conf/serve.cfg", cnts->root_dir);
     progname = "serve.cfg";
-    refresh_action = SUPER_ACTION_VIEW_SERVE_CFG;
+    refresh_action = SSERV_CMD_VIEW_SERVE_CFG;
     break;
   default:
     abort();
@@ -1310,14 +1309,14 @@ super_html_log_page(FILE *f,
   fprintf(f, "<td>%sTo contest details</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "contest_id=%d&action=%d", contest_id,
-                        SUPER_ACTION_VIEW_CONTEST));
+                        SSERV_CMD_CONTEST_PAGE));
   fprintf(f, "<td>%sRefresh</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "contest_id=%d&action=%d", contest_id,
                         refresh_action));
   fprintf(f, "<td>%sLogout</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "action=%d", SUPER_ACTION_LOGOUT));
+                        "action=%d", SSERV_CMD_LOGOUT));
   fprintf(f, "</tr></table>");
 
   if (generic_read_file(&raw_log, 0, &raw_log_size, 0,
@@ -1686,7 +1685,7 @@ super_html_report_error(FILE *f,
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
   fprintf(f, "<td>%sBack</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "action=%d", SUPER_ACTION_EDIT_CURRENT_CONTEST));
+                        "action=%d", SSERV_CMD_EDIT_CURRENT_CONTEST));
   fprintf(f, "</tr></table>\n");
   return 0;
 }
@@ -1706,7 +1705,7 @@ super_html_contest_page_menu(FILE *f,
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
   if (cur_page != 1) {
     fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                                   "action=%d", SUPER_ACTION_EDIT_CURRENT_CONTEST));
+                                   "action=%d", SSERV_CMD_EDIT_CURRENT_CONTEST));
   }
   fprintf(f, "General settings (contest.xml)");
   if (cur_page != 1) {
@@ -1715,7 +1714,7 @@ super_html_contest_page_menu(FILE *f,
   fprintf(f, "</td><td>");
   if (cur_page != 2) {
     fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                                   "action=%d", SUPER_ACTION_EDIT_CURRENT_GLOBAL));
+                                   "action=%d", SSERV_CMD_EDIT_CURRENT_GLOBAL));
   }
   fprintf(f, "Global settings (serve.cfg)");
   if (cur_page != 2) {
@@ -1724,7 +1723,7 @@ super_html_contest_page_menu(FILE *f,
   fprintf(f, "</td><td>");
   if (cur_page != 3) {
     fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                                   "action=%d", SUPER_ACTION_EDIT_CURRENT_LANG));
+                                   "action=%d", SSERV_CMD_EDIT_CURRENT_LANG));
   }
   fprintf(f, "Language settings (serve.cfg)");
   if (cur_page != 3) {
@@ -1733,7 +1732,7 @@ super_html_contest_page_menu(FILE *f,
   fprintf(f, "</td><td>");
   if (cur_page != 4) {
     fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                                   "action=%d", SUPER_ACTION_EDIT_CURRENT_PROB));
+                                   "action=%d", SSERV_CMD_EDIT_CURRENT_PROB));
   }
   fprintf(f, "Problems (serve.cfg)");
   if (cur_page != 4) {
@@ -1742,7 +1741,7 @@ super_html_contest_page_menu(FILE *f,
   fprintf(f, "</td><td>");
   if (cur_page != 5) {
     fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                                   "action=%d", SUPER_ACTION_PROB_EDIT_VARIANTS));
+                                   "action=%d", SSERV_CMD_PROB_EDIT_VARIANTS));
   }
   fprintf(f, "Variants (variant.map)");
   if (cur_page != 5) {
@@ -1763,12 +1762,12 @@ super_html_contest_footer_menu(FILE *f,
 
   html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<table border=\"0\"><tr><td>%sTo the top</a></td><td>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, 0));
-  html_submit_button(f, SUPER_ACTION_CNTS_FORGET, "Forget it");
+  html_submit_button(f, SSERV_CMD_CNTS_FORGET, "Forget it");
   fprintf(f, "</td><td>");
-  html_submit_button(f, SUPER_ACTION_CNTS_COMMIT, "COMMIT changes!");
+  html_submit_button(f, SSERV_CMD_CNTS_COMMIT, "COMMIT changes!");
   fprintf(f, "</td><td>%sView serve.cfg</a>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "action=%d", SUPER_ACTION_VIEW_NEW_SERVE_CFG));
+                        "action=%d", SSERV_CMD_VIEW_NEW_SERVE_CFG));
   fprintf(f, "</td></tr></table></form>\n");
 }
 
@@ -1817,7 +1816,7 @@ super_html_create_contest(FILE *f,
   fprintf(f, "</select></td></tr></table>\n");
 
   fprintf(f, "<h2>Actions</h2>\n");
-  html_submit_button(f, SUPER_ACTION_CREATE_CONTEST_2, "Create contest!");
+  html_submit_button(f, SSERV_CMD_CREATE_CONTEST_2, "Create contest!");
   fprintf(f, "</form>\n");
 
   xfree(contests_map);
@@ -1916,9 +1915,9 @@ print_permissions(FILE *f, struct contest_desc *cnts,
     s = opcaps_unparse(0, 32, p->caps);
     fprintf(f, "%s</pre></font></td><td>%sEdit</a>", s,
             html_hyperref(href, sizeof(href), session_id, self_url, extra_args,
-                          "action=%d&num=%d", SUPER_ACTION_CNTS_EDIT_PERMISSION, i));
+                          "action=%d&num=%d", SSERV_CMD_CNTS_EDIT_PERMISSION, i));
     xfree(s);
-    html_submit_button(f, SUPER_ACTION_CNTS_DELETE_PERMISSION, "Delete");
+    html_submit_button(f, SSERV_CMD_CNTS_DELETE_PERMISSION, "Delete");
     fprintf(f, "</td></tr></form>");
   }
 
@@ -1927,7 +1926,7 @@ print_permissions(FILE *f, struct contest_desc *cnts,
           row_attrs[r]);
   html_edit_text_form(f, 32, 32, "param", "");
   fprintf(f, "</td><td>");
-  html_submit_button(f, SUPER_ACTION_CNTS_ADD_PERMISSION, "Add");
+  html_submit_button(f, SSERV_CMD_CNTS_ADD_PERMISSION, "Add");
   fprintf(f, "</td></tr></form>");
 }
 
@@ -2065,37 +2064,37 @@ print_form_fields(FILE *f, struct contest_desc *cnts,
   struct contest_member *memb;
 
   print_form_fields_3(f, cnts->fields, "Primary registration fields",
-                      SUPER_ACTION_CNTS_EDIT_FORM_FIELDS,
+                      SSERV_CMD_CNTS_EDIT_FORM_FIELDS,
                       session_id, row_attrs[0],
                       self_url, hidden_vars, extra_args);
   memb = 0;
   if (cnts->members) memb = cnts->members[CONTEST_M_CONTESTANT];
   print_form_fields_2(f, memb, "\"Contestant\" member parameters",
-                      SUPER_ACTION_CNTS_EDIT_CONTESTANT_FIELDS,
+                      SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS,
                       session_id, row_attrs[1],
                       self_url, hidden_vars, extra_args);
   memb = 0;
   if (cnts->members) memb = cnts->members[CONTEST_M_RESERVE];
   print_form_fields_2(f, memb, "\"Reserve\" member parameters",
-                      SUPER_ACTION_CNTS_EDIT_RESERVE_FIELDS,
+                      SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS,
                       session_id, row_attrs[0],
                       self_url, hidden_vars, extra_args);
   memb = 0;
   if (cnts->members) memb = cnts->members[CONTEST_M_COACH];
   print_form_fields_2(f, memb, "\"Coach\" member parameters",
-                      SUPER_ACTION_CNTS_EDIT_COACH_FIELDS,
+                      SSERV_CMD_CNTS_EDIT_COACH_FIELDS,
                       session_id, row_attrs[1],
                       self_url, hidden_vars, extra_args);
   memb = 0;
   if (cnts->members) memb = cnts->members[CONTEST_M_ADVISOR];
   print_form_fields_2(f, memb, "\"Advisor\" member parameters",
-                      SUPER_ACTION_CNTS_EDIT_ADVISOR_FIELDS,
+                      SSERV_CMD_CNTS_EDIT_ADVISOR_FIELDS,
                       session_id, row_attrs[0],
                       self_url, hidden_vars, extra_args);
   memb = 0;
   if (cnts->members) memb = cnts->members[CONTEST_M_GUEST];
   print_form_fields_2(f, memb, "\"Guest\" member parameters",
-                      SUPER_ACTION_CNTS_EDIT_GUEST_FIELDS,
+                      SSERV_CMD_CNTS_EDIT_GUEST_FIELDS,
                       session_id, row_attrs[1],
                       self_url, hidden_vars, extra_args);
 }
@@ -2143,8 +2142,8 @@ super_html_edit_contest_page(FILE *f,
   fprintf(f, "<tr%s><td>Contest ID:</td><td>%d</td><td>&nbsp;</td></tr>\n",
           form_row_attrs[row ^= 1], cnts->id);
   print_string_editing_row(f, "Name:", cnts->name,
-                           SUPER_ACTION_CNTS_CHANGE_NAME,
-                           SUPER_ACTION_CNTS_CLEAR_NAME,
+                           SSERV_CMD_CNTS_CHANGE_NAME,
+                           SSERV_CMD_CNTS_CLEAR_NAME,
                            0,
                            session_id,
                            form_row_attrs[row ^= 1],
@@ -2152,8 +2151,8 @@ super_html_edit_contest_page(FILE *f,
                            extra_args,
                            hidden_vars);
   print_string_editing_row(f, "Name (English):", cnts->name_en,
-                           SUPER_ACTION_CNTS_CHANGE_NAME_EN,
-                           SUPER_ACTION_CNTS_CLEAR_NAME_EN,
+                           SSERV_CMD_CNTS_CHANGE_NAME_EN,
+                           SSERV_CMD_CNTS_CLEAR_NAME_EN,
                            0,
                            session_id,
                            form_row_attrs[row ^= 1],
@@ -2161,8 +2160,8 @@ super_html_edit_contest_page(FILE *f,
                            extra_args,
                            hidden_vars);
   print_string_editing_row(f, "Main URL:", cnts->main_url,
-                           SUPER_ACTION_CNTS_CHANGE_MAIN_URL,
-                           SUPER_ACTION_CNTS_CLEAR_MAIN_URL,
+                           SSERV_CMD_CNTS_CHANGE_MAIN_URL,
+                           SSERV_CMD_CNTS_CLEAR_MAIN_URL,
                            0,
                            session_id,
                            form_row_attrs[row ^= 1],
@@ -2178,7 +2177,7 @@ super_html_edit_contest_page(FILE *f,
   html_boolean_select(f, cnts->autoregister, "param", "Moderated registration",
                       "Free registration");
   fprintf(f, "</td><td>");
-  html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_AUTOREGISTER, "Change");
+  html_submit_button(f, SSERV_CMD_CNTS_CHANGE_AUTOREGISTER, "Change");
   fprintf(f, "</td></tr></form>\n");
 
   html_start_form(f, 1, self_url, hidden_vars);
@@ -2186,14 +2185,14 @@ super_html_edit_contest_page(FILE *f,
           form_row_attrs[row ^= 1]);
   html_date_select(f, cnts->reg_deadline);
   fprintf(f, "</td><td>");
-  html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_DEADLINE, "Change");
-  html_submit_button(f, SUPER_ACTION_CNTS_CLEAR_DEADLINE, "Clear");
+  html_submit_button(f, SSERV_CMD_CNTS_CHANGE_DEADLINE, "Change");
+  html_submit_button(f, SSERV_CMD_CNTS_CLEAR_DEADLINE, "Clear");
   fprintf(f, "</td></tr></form>\n");
 
   print_string_editing_row(f, "Registration email sender (From: field):",
                            cnts->register_email,
-                           SUPER_ACTION_CNTS_CHANGE_REGISTER_EMAIL,
-                           SUPER_ACTION_CNTS_CLEAR_REGISTER_EMAIL,
+                           SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL,
+                           SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL,
                            0,
                            session_id,
                            form_row_attrs[row ^= 1],
@@ -2202,8 +2201,8 @@ super_html_edit_contest_page(FILE *f,
                            hidden_vars);
   print_string_editing_row(f, "URL to complete registration:",
                            cnts->register_url,
-                           SUPER_ACTION_CNTS_CHANGE_REGISTER_URL,
-                           SUPER_ACTION_CNTS_CLEAR_REGISTER_URL,
+                           SSERV_CMD_CNTS_CHANGE_REGISTER_URL,
+                           SSERV_CMD_CNTS_CLEAR_REGISTER_URL,
                            0,
                            session_id,
                            form_row_attrs[row ^= 1],
@@ -2212,9 +2211,9 @@ super_html_edit_contest_page(FILE *f,
                            hidden_vars);
   print_string_editing_row(f, "Registration letter template file:",
                            cnts->register_email_file,
-                           SUPER_ACTION_CNTS_CHANGE_REGISTER_EMAIL_FILE,
-                           SUPER_ACTION_CNTS_CLEAR_REGISTER_EMAIL_FILE,
-                           SUPER_ACTION_CNTS_EDIT_REGISTER_EMAIL_FILE,
+                           SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL_FILE,
+                           SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE,
+                           SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE,
                            session_id,
                            form_row_attrs[row ^= 1],
                            self_url,
@@ -2226,8 +2225,8 @@ super_html_edit_contest_page(FILE *f,
 
   print_string_editing_row(f, "URL for the `team' CGI program:",
                            cnts->team_url,
-                           SUPER_ACTION_CNTS_CHANGE_TEAM_URL,
-                           SUPER_ACTION_CNTS_CLEAR_TEAM_URL,
+                           SSERV_CMD_CNTS_CHANGE_TEAM_URL,
+                           SSERV_CMD_CNTS_CLEAR_TEAM_URL,
                            0,
                            session_id,
                            form_row_attrs[row ^= 1],
@@ -2236,8 +2235,8 @@ super_html_edit_contest_page(FILE *f,
                            hidden_vars);
   print_string_editing_row(f, "URL for the current standings:",
                            cnts->standings_url,
-                           SUPER_ACTION_CNTS_CHANGE_STANDINGS_URL,
-                           SUPER_ACTION_CNTS_CLEAR_STANDINGS_URL,
+                           SSERV_CMD_CNTS_CHANGE_STANDINGS_URL,
+                           SSERV_CMD_CNTS_CLEAR_STANDINGS_URL,
                            0,
                            session_id,
                            form_row_attrs[row ^= 1],
@@ -2246,8 +2245,8 @@ super_html_edit_contest_page(FILE *f,
                            hidden_vars);
   print_string_editing_row(f, "URL for the problemset:",
                            cnts->problems_url,
-                           SUPER_ACTION_CNTS_CHANGE_PROBLEMS_URL,
-                           SUPER_ACTION_CNTS_CLEAR_PROBLEMS_URL,
+                           SSERV_CMD_CNTS_CHANGE_PROBLEMS_URL,
+                           SSERV_CMD_CNTS_CLEAR_PROBLEMS_URL,
                            0,
                            session_id,
                            form_row_attrs[row ^= 1],
@@ -2259,9 +2258,9 @@ super_html_edit_contest_page(FILE *f,
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Various contest's flags</b>", head_row_attr);
   row = 1;
   if (sstate->advanced_view) {
-    html_submit_button(f, SUPER_ACTION_CNTS_BASIC_VIEW, "Basic view");
+    html_submit_button(f, SSERV_CMD_CNTS_BASIC_VIEW, "Basic view");
   } else {
-    html_submit_button(f, SUPER_ACTION_CNTS_ADVANCED_VIEW, "Advanced view");
+    html_submit_button(f, SSERV_CMD_CNTS_ADVANCED_VIEW, "Advanced view");
   }
   fprintf(f, "</td></tr></form>");
 
@@ -2270,7 +2269,7 @@ super_html_edit_contest_page(FILE *f,
           form_row_attrs[row ^= 1]);
   html_boolean_select(f, cnts->disable_team_password, "param", 0, 0);
   fprintf(f, "</td><td>");
-  html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_TEAM_PASSWD, "Change");
+  html_submit_button(f, SSERV_CMD_CNTS_CHANGE_TEAM_PASSWD, "Change");
   fprintf(f, "</td></tr></form>\n");
 
   html_start_form(f, 1, self_url, hidden_vars);
@@ -2278,7 +2277,7 @@ super_html_edit_contest_page(FILE *f,
           form_row_attrs[row ^= 1]);
   html_boolean_select(f, cnts->simple_registration, "param", 0, 0);
   fprintf(f, "</td><td>");
-  html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_SIMPLE_REGISTRATION, "Change");
+  html_submit_button(f, SSERV_CMD_CNTS_CHANGE_SIMPLE_REGISTRATION, "Change");
   fprintf(f, "</td></tr></form>\n");
 
   if (cnts->simple_registration) {
@@ -2287,7 +2286,7 @@ super_html_edit_contest_page(FILE *f,
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, cnts->send_passwd_email, "param", 0, 0);
     fprintf(f, "</td><td>");
-    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_SEND_PASSWD_EMAIL, "Change");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 
@@ -2297,7 +2296,7 @@ super_html_edit_contest_page(FILE *f,
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, cnts->managed, "param", 0, 0);
     fprintf(f, "</td><td>");
-    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_MANAGED, "Change");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_MANAGED, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 
@@ -2307,7 +2306,7 @@ super_html_edit_contest_page(FILE *f,
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, cnts->new_managed, "param", 0, 0);
     fprintf(f, "</td><td>");
-    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_NEW_MANAGED, "Change");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_NEW_MANAGED, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 
@@ -2316,7 +2315,7 @@ super_html_edit_contest_page(FILE *f,
           form_row_attrs[row ^= 1]);
   html_boolean_select(f, cnts->run_managed, "param", 0, 0);
   fprintf(f, "</td><td>");
-  html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_RUN_MANAGED, "Change");
+  html_submit_button(f, SSERV_CMD_CNTS_CHANGE_RUN_MANAGED, "Change");
   fprintf(f, "</td></tr></form>\n");
 
   if (sstate->advanced_view) {
@@ -2325,7 +2324,7 @@ super_html_edit_contest_page(FILE *f,
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, cnts->clean_users, "param", 0, 0);
     fprintf(f, "</td><td>");
-    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_CLEAN_USERS, "Change");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_CLEAN_USERS, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 
@@ -2334,7 +2333,7 @@ super_html_edit_contest_page(FILE *f,
           form_row_attrs[row ^= 1]);
   html_boolean_select(f, cnts->closed, "param", 0, 0);
   fprintf(f, "</td><td>");
-  html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_CLOSED, "Change");
+  html_submit_button(f, SSERV_CMD_CNTS_CHANGE_CLOSED, "Change");
   fprintf(f, "</td></tr></form>\n");
 
   if (sstate->advanced_view) {
@@ -2343,7 +2342,7 @@ super_html_edit_contest_page(FILE *f,
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, cnts->invisible, "param", 0, 0);
     fprintf(f, "</td><td>");
-    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_INVISIBLE, "Change");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_INVISIBLE, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 
@@ -2352,7 +2351,7 @@ super_html_edit_contest_page(FILE *f,
     fprintf(f, "<tr%s><td>Allow time desync between `team' and `serve'?</td><td>", form_row_attrs[row ^= 1]);
     html_boolean_select(f, cnts->client_ignore_time_skew, "param", 0, 0);
     fprintf(f, "</td><td>");
-    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_TIME_SKEW, "Change");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_TIME_SKEW, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 
@@ -2362,7 +2361,7 @@ super_html_edit_contest_page(FILE *f,
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, cnts->client_disable_team, "param", 0, 0);
     fprintf(f, "</td><td>");
-    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_TEAM_LOGIN, "Change");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_TEAM_LOGIN, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 
@@ -2372,7 +2371,7 @@ super_html_edit_contest_page(FILE *f,
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, cnts->disable_member_delete, "param", 0, 0);
     fprintf(f, "</td><td>");
-    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_MEMBER_DELETE, "Change");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_MEMBER_DELETE, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 
@@ -2382,7 +2381,7 @@ super_html_edit_contest_page(FILE *f,
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, cnts->assign_logins, "param", 0, 0);
     fprintf(f, "</td><td>");
-    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_ASSIGN_LOGINS, "Change");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_ASSIGN_LOGINS, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 
@@ -2392,7 +2391,7 @@ super_html_edit_contest_page(FILE *f,
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, cnts->force_registration, "param", 0, 0);
     fprintf(f, "</td><td>");
-    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_FORCE_REGISTRATION, "Change");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_FORCE_REGISTRATION, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 
@@ -2402,7 +2401,7 @@ super_html_edit_contest_page(FILE *f,
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, cnts->disable_name, "param", 0, 0);
     fprintf(f, "</td><td>");
-    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_DISABLE_NAME, "Change");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_DISABLE_NAME, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 
@@ -2412,7 +2411,7 @@ super_html_edit_contest_page(FILE *f,
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, cnts->enable_forgot_password, "param", 0, 0);
     fprintf(f, "</td><td>");
-    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_ENABLE_FORGOT_PASSWORD, "Change");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_ENABLE_FORGOT_PASSWORD, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 
@@ -2422,7 +2421,7 @@ super_html_edit_contest_page(FILE *f,
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, cnts->exam_mode, "param", 0, 0);
     fprintf(f, "</td><td>");
-    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_EXAM_MODE, "Change");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_EXAM_MODE, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 
@@ -2432,7 +2431,7 @@ super_html_edit_contest_page(FILE *f,
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, cnts->disable_locale_change, "param", 0, 0);
     fprintf(f, "</td><td>");
-    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_DISABLE_LOCALE_CHANGE, "Change");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_DISABLE_LOCALE_CHANGE, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 
@@ -2440,36 +2439,36 @@ super_html_edit_contest_page(FILE *f,
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>IP-address access rules for CGI programs</b>", head_row_attr);
   row = 1;
   if (sstate->show_access_rules) {
-    html_submit_button(f, SUPER_ACTION_CNTS_HIDE_ACCESS_RULES, "Hide");
+    html_submit_button(f, SSERV_CMD_CNTS_HIDE_ACCESS_RULES, "Hide");
   } else {
-    html_submit_button(f, SUPER_ACTION_CNTS_SHOW_ACCESS_RULES, "Show");
+    html_submit_button(f, SSERV_CMD_CNTS_SHOW_ACCESS_RULES, "Show");
   }
   fprintf(f, "</td></tr></form>");
 
   if (sstate->show_access_rules) {
     print_access_summary(f, cnts->register_access, "Access to `register' program",
-                         SUPER_ACTION_CNTS_EDIT_REGISTER_ACCESS,
+                         SSERV_CMD_EDIT_REGISTER_ACCESS,
                          session_id, form_row_attrs[row ^= 1],
                          self_url, extra_args);
     print_access_summary(f, cnts->users_access, "Access to `users' program",
-                         SUPER_ACTION_CNTS_EDIT_USERS_ACCESS,
+                         SSERV_CMD_EDIT_USERS_ACCESS,
                          session_id, form_row_attrs[row ^= 1],
                          self_url, extra_args);
     print_access_summary(f, cnts->master_access, "Access to `master' program",
-                         SUPER_ACTION_CNTS_EDIT_MASTER_ACCESS,
+                         SSERV_CMD_EDIT_MASTER_ACCESS,
                          session_id, form_row_attrs[row ^= 1],
                          self_url, extra_args);
     print_access_summary(f, cnts->judge_access, "Access to `judge' program",
-                         SUPER_ACTION_CNTS_EDIT_JUDGE_ACCESS,
+                         SSERV_CMD_EDIT_JUDGE_ACCESS,
                          session_id, form_row_attrs[row ^= 1],
                          self_url, extra_args);
     print_access_summary(f, cnts->team_access, "Access to `team' program",
-                         SUPER_ACTION_CNTS_EDIT_TEAM_ACCESS,
+                         SSERV_CMD_EDIT_TEAM_ACCESS,
                          session_id, form_row_attrs[row ^= 1],
                          self_url, extra_args);
     print_access_summary(f, cnts->serve_control_access,
                          "Access to `serve-control' program",
-                         SUPER_ACTION_CNTS_EDIT_SERVE_CONTROL_ACCESS,
+                         SSERV_CMD_EDIT_SERVE_CONTROL_ACCESS,
                          session_id, form_row_attrs[row ^= 1],
                          self_url, extra_args);
   }
@@ -2477,9 +2476,9 @@ super_html_edit_contest_page(FILE *f,
   html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Users permissions</b>", head_row_attr);
   if (sstate->show_permissions) {
-    html_submit_button(f, SUPER_ACTION_CNTS_HIDE_PERMISSIONS, "Hide");
+    html_submit_button(f, SSERV_CMD_CNTS_HIDE_PERMISSIONS, "Hide");
   } else {
-    html_submit_button(f, SUPER_ACTION_CNTS_SHOW_PERMISSIONS, "Show");
+    html_submit_button(f, SSERV_CMD_CNTS_SHOW_PERMISSIONS, "Show");
   }
   fprintf(f, "</td></tr></form>");
 
@@ -2491,9 +2490,9 @@ super_html_edit_contest_page(FILE *f,
   html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Registration form fields</b>", head_row_attr);
   if (sstate->show_form_fields) {
-    html_submit_button(f, SUPER_ACTION_CNTS_HIDE_FORM_FIELDS, "Hide");
+    html_submit_button(f, SSERV_CMD_CNTS_HIDE_FORM_FIELDS, "Hide");
   } else {
-    html_submit_button(f, SUPER_ACTION_CNTS_SHOW_FORM_FIELDS, "Show");
+    html_submit_button(f, SSERV_CMD_CNTS_SHOW_FORM_FIELDS, "Show");
   }
   fprintf(f, "</td></tr></form>");
 
@@ -2506,18 +2505,18 @@ super_html_edit_contest_page(FILE *f,
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>HTML headers and footers for CGI-programs</b>", head_row_attr);
   row = 1;
   if (sstate->show_html_headers) {
-    html_submit_button(f, SUPER_ACTION_CNTS_HIDE_HTML_HEADERS, "Hide");
+    html_submit_button(f, SSERV_CMD_CNTS_HIDE_HTML_HEADERS, "Hide");
   } else {
-    html_submit_button(f, SUPER_ACTION_CNTS_SHOW_HTML_HEADERS, "Show");
+    html_submit_button(f, SSERV_CMD_CNTS_SHOW_HTML_HEADERS, "Show");
   }
   fprintf(f, "</td></tr></form>");
 
   if (sstate->show_html_headers) {
     print_string_editing_row(f, "HTML header file for `users' CGI-program:",
                              cnts->users_header_file,
-                             SUPER_ACTION_CNTS_CHANGE_USERS_HEADER,
-                             SUPER_ACTION_CNTS_CLEAR_USERS_HEADER,
-                             SUPER_ACTION_CNTS_EDIT_USERS_HEADER,
+                             SSERV_CMD_CNTS_CHANGE_USERS_HEADER,
+                             SSERV_CMD_CNTS_CLEAR_USERS_HEADER,
+                             SSERV_CMD_CNTS_EDIT_USERS_HEADER,
                              session_id,
                              form_row_attrs[row ^= 1],
                              self_url,
@@ -2525,9 +2524,9 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "HTML footer file for `users' CGI-program:",
                              cnts->users_footer_file,
-                             SUPER_ACTION_CNTS_CHANGE_USERS_FOOTER,
-                             SUPER_ACTION_CNTS_CLEAR_USERS_FOOTER,
-                             SUPER_ACTION_CNTS_EDIT_USERS_FOOTER,
+                             SSERV_CMD_CNTS_CHANGE_USERS_FOOTER,
+                             SSERV_CMD_CNTS_CLEAR_USERS_FOOTER,
+                             SSERV_CMD_CNTS_EDIT_USERS_FOOTER,
                              session_id,
                              form_row_attrs[row ^= 1],
                              self_url,
@@ -2535,9 +2534,9 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "HTML header file for `register' CGI-program:",
                              cnts->register_header_file,
-                             SUPER_ACTION_CNTS_CHANGE_REGISTER_HEADER,
-                             SUPER_ACTION_CNTS_CLEAR_REGISTER_HEADER,
-                             SUPER_ACTION_CNTS_EDIT_REGISTER_HEADER,
+                             SSERV_CMD_CNTS_CHANGE_REGISTER_HEADER,
+                             SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER,
+                             SSERV_CMD_CNTS_EDIT_REGISTER_HEADER,
                              session_id,
                              form_row_attrs[row ^= 1],
                              self_url,
@@ -2545,9 +2544,9 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "HTML footer file for `register' CGI-program:",
                              cnts->register_footer_file,
-                             SUPER_ACTION_CNTS_CHANGE_REGISTER_FOOTER,
-                             SUPER_ACTION_CNTS_CLEAR_REGISTER_FOOTER,
-                             SUPER_ACTION_CNTS_EDIT_REGISTER_FOOTER,
+                             SSERV_CMD_CNTS_CHANGE_REGISTER_FOOTER,
+                             SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER,
+                             SSERV_CMD_CNTS_EDIT_REGISTER_FOOTER,
                              session_id,
                              form_row_attrs[row ^= 1],
                              self_url,
@@ -2555,9 +2554,9 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "HTML header file for `team' CGI-program:",
                              cnts->team_header_file,
-                             SUPER_ACTION_CNTS_CHANGE_TEAM_HEADER,
-                             SUPER_ACTION_CNTS_CLEAR_TEAM_HEADER,
-                             SUPER_ACTION_CNTS_EDIT_TEAM_HEADER,
+                             SSERV_CMD_CNTS_CHANGE_TEAM_HEADER,
+                             SSERV_CMD_CNTS_CLEAR_TEAM_HEADER,
+                             SSERV_CMD_CNTS_EDIT_TEAM_HEADER,
                              session_id,
                              form_row_attrs[row ^= 1],
                              self_url,
@@ -2565,9 +2564,9 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "HTML footer file for `team' CGI-program:",
                              cnts->team_footer_file,
-                             SUPER_ACTION_CNTS_CHANGE_TEAM_FOOTER,
-                             SUPER_ACTION_CNTS_CLEAR_TEAM_FOOTER,
-                             SUPER_ACTION_CNTS_EDIT_TEAM_FOOTER,
+                             SSERV_CMD_CNTS_CHANGE_TEAM_FOOTER,
+                             SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER,
+                             SSERV_CMD_CNTS_EDIT_TEAM_FOOTER,
                              session_id,
                              form_row_attrs[row ^= 1],
                              self_url,
@@ -2575,9 +2574,9 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "HTML header file for privileged CGI-programs:",
                              cnts->priv_header_file,
-                             SUPER_ACTION_CNTS_CHANGE_PRIV_HEADER,
-                             SUPER_ACTION_CNTS_CLEAR_PRIV_HEADER,
-                             SUPER_ACTION_CNTS_EDIT_PRIV_HEADER,
+                             SSERV_CMD_CNTS_CHANGE_PRIV_HEADER,
+                             SSERV_CMD_CNTS_CLEAR_PRIV_HEADER,
+                             SSERV_CMD_CNTS_EDIT_PRIV_HEADER,
                              session_id,
                              form_row_attrs[row ^= 1],
                              self_url,
@@ -2585,9 +2584,9 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "HTML footer file for privileged CGI-programs:",
                              cnts->priv_footer_file,
-                             SUPER_ACTION_CNTS_CHANGE_PRIV_FOOTER,
-                             SUPER_ACTION_CNTS_CLEAR_PRIV_FOOTER,
-                             SUPER_ACTION_CNTS_EDIT_PRIV_FOOTER,
+                             SSERV_CMD_CNTS_CHANGE_PRIV_FOOTER,
+                             SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER,
+                             SSERV_CMD_CNTS_EDIT_PRIV_FOOTER,
                              session_id,
                              form_row_attrs[row ^= 1],
                              self_url,
@@ -2599,17 +2598,17 @@ super_html_edit_contest_page(FILE *f,
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>extra HTML attributes for CGI-programs</b>",head_row_attr);
   row = 1;
   if (sstate->show_html_attrs) {
-    html_submit_button(f, SUPER_ACTION_CNTS_HIDE_HTML_ATTRS, "Hide");
+    html_submit_button(f, SSERV_CMD_CNTS_HIDE_HTML_ATTRS, "Hide");
   } else {
-    html_submit_button(f, SUPER_ACTION_CNTS_SHOW_HTML_ATTRS, "Show");
+    html_submit_button(f, SSERV_CMD_CNTS_SHOW_HTML_ATTRS, "Show");
   }
   fprintf(f, "</td></tr></form>");
 
   if (sstate->show_html_attrs) {
     print_string_editing_row(f, "HTML attributes for `users' headers:",
                              cnts->users_head_style,
-                             SUPER_ACTION_CNTS_CHANGE_USERS_HEAD_STYLE,
-                             SUPER_ACTION_CNTS_CLEAR_USERS_HEAD_STYLE,
+                             SSERV_CMD_CNTS_CHANGE_USERS_HEAD_STYLE,
+                             SSERV_CMD_CNTS_CLEAR_USERS_HEAD_STYLE,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2618,8 +2617,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "HTML attributes for `users' paragraphs:",
                              cnts->users_par_style,
-                             SUPER_ACTION_CNTS_CHANGE_USERS_PAR_STYLE,
-                             SUPER_ACTION_CNTS_CLEAR_USERS_PAR_STYLE,
+                             SSERV_CMD_CNTS_CHANGE_USERS_PAR_STYLE,
+                             SSERV_CMD_CNTS_CLEAR_USERS_PAR_STYLE,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2628,8 +2627,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "HTML attributes for `users' tables:",
                              cnts->users_table_style,
-                             SUPER_ACTION_CNTS_CHANGE_USERS_TABLE_STYLE,
-                             SUPER_ACTION_CNTS_CLEAR_USERS_TABLE_STYLE,
+                             SSERV_CMD_CNTS_CHANGE_USERS_TABLE_STYLE,
+                             SSERV_CMD_CNTS_CLEAR_USERS_TABLE_STYLE,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2638,8 +2637,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "HTML attributes for `users' verbatim texts:",
                              cnts->users_verb_style,
-                             SUPER_ACTION_CNTS_CHANGE_USERS_VERB_STYLE,
-                             SUPER_ACTION_CNTS_CLEAR_USERS_VERB_STYLE,
+                             SSERV_CMD_CNTS_CHANGE_USERS_VERB_STYLE,
+                             SSERV_CMD_CNTS_CLEAR_USERS_VERB_STYLE,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2648,8 +2647,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "Format specification for users table:",
                              cnts->users_table_format,
-                             SUPER_ACTION_CNTS_CHANGE_USERS_TABLE_FORMAT,
-                             SUPER_ACTION_CNTS_CLEAR_USERS_TABLE_FORMAT,
+                             SSERV_CMD_CNTS_CHANGE_USERS_TABLE_FORMAT,
+                             SSERV_CMD_CNTS_CLEAR_USERS_TABLE_FORMAT,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2658,8 +2657,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "Format specification for users table (En):",
                              cnts->users_table_format_en,
-                             SUPER_ACTION_CNTS_CHANGE_USERS_TABLE_FORMAT_EN,
-                             SUPER_ACTION_CNTS_CLEAR_USERS_TABLE_FORMAT_EN,
+                             SSERV_CMD_CNTS_CHANGE_USERS_TABLE_FORMAT_EN,
+                             SSERV_CMD_CNTS_CLEAR_USERS_TABLE_FORMAT_EN,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2668,8 +2667,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "Legend specification for users table:",
                              cnts->users_table_legend,
-                             SUPER_ACTION_CNTS_CHANGE_USERS_TABLE_LEGEND,
-                             SUPER_ACTION_CNTS_CLEAR_USERS_TABLE_LEGEND,
+                             SSERV_CMD_CNTS_CHANGE_USERS_TABLE_LEGEND,
+                             SSERV_CMD_CNTS_CLEAR_USERS_TABLE_LEGEND,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2678,8 +2677,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "Legend specification for users table (En):",
                              cnts->users_table_legend_en,
-                             SUPER_ACTION_CNTS_CHANGE_USERS_TABLE_LEGEND_EN,
-                             SUPER_ACTION_CNTS_CLEAR_USERS_TABLE_LEGEND_EN,
+                             SSERV_CMD_CNTS_CHANGE_USERS_TABLE_LEGEND_EN,
+                             SSERV_CMD_CNTS_CLEAR_USERS_TABLE_LEGEND_EN,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2688,8 +2687,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "HTML attributes for `register' headers:",
                              cnts->register_head_style,
-                             SUPER_ACTION_CNTS_CHANGE_REGISTER_HEAD_STYLE,
-                             SUPER_ACTION_CNTS_CLEAR_REGISTER_HEAD_STYLE,
+                             SSERV_CMD_CNTS_CHANGE_REGISTER_HEAD_STYLE,
+                             SSERV_CMD_CNTS_CLEAR_REGISTER_HEAD_STYLE,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2698,8 +2697,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "HTML attributes for `register' paragraphs:",
                              cnts->register_par_style,
-                             SUPER_ACTION_CNTS_CHANGE_REGISTER_PAR_STYLE,
-                             SUPER_ACTION_CNTS_CLEAR_REGISTER_PAR_STYLE,
+                             SSERV_CMD_CNTS_CHANGE_REGISTER_PAR_STYLE,
+                             SSERV_CMD_CNTS_CLEAR_REGISTER_PAR_STYLE,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2708,8 +2707,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "HTML attributes for `register' tables:",
                              cnts->register_table_style,
-                             SUPER_ACTION_CNTS_CHANGE_REGISTER_TABLE_STYLE,
-                             SUPER_ACTION_CNTS_CLEAR_REGISTER_TABLE_STYLE,
+                             SSERV_CMD_CNTS_CHANGE_REGISTER_TABLE_STYLE,
+                             SSERV_CMD_CNTS_CLEAR_REGISTER_TABLE_STYLE,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2718,8 +2717,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "Additional comment for user name field:",
                              cnts->user_name_comment,
-                             SUPER_ACTION_CNTS_CHANGE_REGISTER_NAME_COMMENT,
-                             SUPER_ACTION_CNTS_CLEAR_REGISTER_NAME_COMMENT,
+                             SSERV_CMD_CNTS_CHANGE_REGISTER_NAME_COMMENT,
+                             SSERV_CMD_CNTS_CLEAR_REGISTER_NAME_COMMENT,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2728,8 +2727,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "HTML attributes for `team' headers:",
                              cnts->team_head_style,
-                             SUPER_ACTION_CNTS_CHANGE_TEAM_HEAD_STYLE,
-                             SUPER_ACTION_CNTS_CLEAR_TEAM_HEAD_STYLE,
+                             SSERV_CMD_CNTS_CHANGE_TEAM_HEAD_STYLE,
+                             SSERV_CMD_CNTS_CLEAR_TEAM_HEAD_STYLE,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2738,8 +2737,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "HTML attributes for `team' paragraphs:",
                              cnts->team_par_style,
-                             SUPER_ACTION_CNTS_CHANGE_TEAM_PAR_STYLE,
-                             SUPER_ACTION_CNTS_CLEAR_TEAM_PAR_STYLE,
+                             SSERV_CMD_CNTS_CHANGE_TEAM_PAR_STYLE,
+                             SSERV_CMD_CNTS_CLEAR_TEAM_PAR_STYLE,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2748,8 +2747,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "Allowed programming languages:",
                              cnts->allowed_languages,
-                             SUPER_ACTION_CNTS_CHANGE_ALLOWED_LANGUAGES,
-                             SUPER_ACTION_CNTS_CLEAR_ALLOWED_LANGUAGES,
+                             SSERV_CMD_CNTS_CHANGE_ALLOWED_LANGUAGES,
+                             SSERV_CMD_CNTS_CLEAR_ALLOWED_LANGUAGES,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2758,8 +2757,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "Allowed regions:",
                              cnts->allowed_regions,
-                             SUPER_ACTION_CNTS_CHANGE_ALLOWED_REGIONS,
-                             SUPER_ACTION_CNTS_CLEAR_ALLOWED_REGIONS,
+                             SSERV_CMD_CNTS_CHANGE_ALLOWED_REGIONS,
+                             SSERV_CMD_CNTS_CLEAR_ALLOWED_REGIONS,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2772,17 +2771,17 @@ super_html_edit_contest_page(FILE *f,
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>E-mail notifications</b>", head_row_attr);
   row = 1;
   if (sstate->show_notifications) {
-    html_submit_button(f, SUPER_ACTION_CNTS_HIDE_NOTIFICATIONS, "Hide");
+    html_submit_button(f, SSERV_CMD_CNTS_HIDE_NOTIFICATIONS, "Hide");
   } else {
-    html_submit_button(f, SUPER_ACTION_CNTS_SHOW_NOTIFICATIONS, "Show");
+    html_submit_button(f, SSERV_CMD_CNTS_SHOW_NOTIFICATIONS, "Show");
   }
   fprintf(f, "</td></tr></form>");
 
   if (sstate->show_notifications) {
     print_string_editing_row(f, "Check failed e-mail notification address:",
                              cnts->cf_notify_email,
-                             SUPER_ACTION_CNTS_CHANGE_CF_NOTIFY_EMAIL,
-                             SUPER_ACTION_CNTS_CLEAR_CF_NOTIFY_EMAIL,
+                             SSERV_CMD_CNTS_CHANGE_CF_NOTIFY_EMAIL,
+                             SSERV_CMD_CNTS_CLEAR_CF_NOTIFY_EMAIL,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2791,8 +2790,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "Clar request e-mail notification address:",
                              cnts->clar_notify_email,
-                             SUPER_ACTION_CNTS_CHANGE_CLAR_NOTIFY_EMAIL,
-                             SUPER_ACTION_CNTS_CLEAR_CLAR_NOTIFY_EMAIL,
+                             SSERV_CMD_CNTS_CHANGE_CLAR_NOTIFY_EMAIL,
+                             SSERV_CMD_CNTS_CLEAR_CLAR_NOTIFY_EMAIL,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2801,8 +2800,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "Daily statistics email:",
                              cnts->daily_stat_email,
-                             SUPER_ACTION_CNTS_CHANGE_DAILY_STAT_EMAIL,
-                             SUPER_ACTION_CNTS_CLEAR_DAILY_STAT_EMAIL,
+                             SSERV_CMD_CNTS_CHANGE_DAILY_STAT_EMAIL,
+                             SSERV_CMD_CNTS_CLEAR_DAILY_STAT_EMAIL,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2812,8 +2811,8 @@ super_html_edit_contest_page(FILE *f,
     if (cnts->assign_logins) {
       print_string_editing_row(f, "Template for new logins:",
                                cnts->login_template,
-                               SUPER_ACTION_CNTS_CHANGE_LOGIN_TEMPLATE,
-                               SUPER_ACTION_CNTS_CLEAR_LOGIN_TEMPLATE,
+                               SSERV_CMD_CNTS_CHANGE_LOGIN_TEMPLATE,
+                               SSERV_CMD_CNTS_CLEAR_LOGIN_TEMPLATE,
                                0,
                                session_id,
                                form_row_attrs[row ^= 1],
@@ -2822,8 +2821,8 @@ super_html_edit_contest_page(FILE *f,
                                hidden_vars);
       print_string_editing_row(f, "Template options:",
                                cnts->login_template_options,
-                               SUPER_ACTION_CNTS_CHANGE_LOGIN_TEMPLATE_OPTIONS,
-                               SUPER_ACTION_CNTS_CLEAR_LOGIN_TEMPLATE_OPTIONS,
+                               SSERV_CMD_CNTS_CHANGE_LOGIN_TEMPLATE_OPTIONS,
+                               SSERV_CMD_CNTS_CLEAR_LOGIN_TEMPLATE_OPTIONS,
                                0,
                                session_id,
                                form_row_attrs[row ^= 1],
@@ -2837,17 +2836,17 @@ super_html_edit_contest_page(FILE *f,
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Advanced path settings</b>", head_row_attr);
   row = 1;
   if (sstate->show_paths) {
-    html_submit_button(f, SUPER_ACTION_CNTS_HIDE_PATHS, "Hide");
+    html_submit_button(f, SSERV_CMD_CNTS_HIDE_PATHS, "Hide");
   } else {
-    html_submit_button(f, SUPER_ACTION_CNTS_SHOW_PATHS, "Show");
+    html_submit_button(f, SSERV_CMD_CNTS_SHOW_PATHS, "Show");
   }
   fprintf(f, "</td></tr></form>");
 
   if (sstate->show_paths) {
     print_string_editing_row(f, "The contest root directory:",
                              cnts->root_dir,
-                             SUPER_ACTION_CNTS_CHANGE_ROOT_DIR,
-                             SUPER_ACTION_CNTS_CLEAR_ROOT_DIR,
+                             SSERV_CMD_CNTS_CHANGE_ROOT_DIR,
+                             SSERV_CMD_CNTS_CLEAR_ROOT_DIR,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2856,8 +2855,8 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
     print_string_editing_row(f, "The contest configuration directory:",
                              cnts->conf_dir,
-                             SUPER_ACTION_CNTS_CHANGE_CONF_DIR,
-                             SUPER_ACTION_CNTS_CLEAR_CONF_DIR,
+                             SSERV_CMD_CNTS_CHANGE_CONF_DIR,
+                             SSERV_CMD_CNTS_CLEAR_CONF_DIR,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2973,10 +2972,10 @@ super_html_edit_access_rules(FILE *f,
       fprintf(f, "</td><td>");
       html_ssl_select(f, p->ssl);
       fprintf(f, "</td><td>");
-      html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_RULE, "Change");
-      html_submit_button(f, SUPER_ACTION_CNTS_DELETE_RULE, "Delete");
-      if (i > 0) html_submit_button(f, SUPER_ACTION_CNTS_UP_RULE, "Move up");
-      if (p->b.right) html_submit_button(f, SUPER_ACTION_CNTS_DOWN_RULE, "Move down");
+      html_submit_button(f, SSERV_CMD_CNTS_CHANGE_RULE, "Change");
+      html_submit_button(f, SSERV_CMD_CNTS_DELETE_RULE, "Delete");
+      if (i > 0) html_submit_button(f, SSERV_CMD_CNTS_UP_RULE, "Move up");
+      if (p->b.right) html_submit_button(f, SSERV_CMD_CNTS_DOWN_RULE, "Move down");
       fprintf(f, "</td></tr></form>\n");
     }
   }
@@ -2990,7 +2989,7 @@ super_html_edit_access_rules(FILE *f,
   fprintf(f, "</td><td>");
   html_ssl_select(f, -1);
   fprintf(f, "</td><td>");
-  html_submit_button(f, SUPER_ACTION_CNTS_ADD_RULE, "Add");
+  html_submit_button(f, SSERV_CMD_CNTS_ADD_RULE, "Add");
   fprintf(f, "</td></tr></form>\n");
 
   html_start_form(f, 1, self_url, hidden_vars);
@@ -2998,7 +2997,7 @@ super_html_edit_access_rules(FILE *f,
   fprintf(f, "<tr%s><td>Default access:</td><td>", form_row_attrs[row ^= 1]);
   html_boolean_select(f, default_is_allow, "access", "deny", "allow");
   fprintf(f, "</td><td>");
-  html_submit_button(f, SUPER_ACTION_CNTS_DEFAULT_ACCESS, "Change");
+  html_submit_button(f, SSERV_CMD_CNTS_DEFAULT_ACCESS, "Change");
   fprintf(f, "</td></tr></form>\n");
   fprintf(f, "</table>\n");
 
@@ -3025,7 +3024,7 @@ super_html_edit_access_rules(FILE *f,
           "<option value=\"4\">&lt;team_access&gt;</option>\n"
           "<option value=\"5\">&lt;serve_control_access&gt;</option>\n"
           "</select></td><td>");
-  html_submit_button(f, SUPER_ACTION_CNTS_COPY_ACCESS, "Copy");
+  html_submit_button(f, SSERV_CMD_CNTS_COPY_ACCESS, "Copy");
   fprintf(f, "</td></tr></form>");
   fprintf(f, "</table>\n");
   xfree(contests_map); contests_map = 0;
@@ -3034,7 +3033,7 @@ super_html_edit_access_rules(FILE *f,
           html_hyperref(hbuf,sizeof(hbuf),session_id,self_url,extra_args, 0));
   fprintf(f, "<td>%sBack</a></td></tr></table>\n",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "action=%d", SUPER_ACTION_EDIT_CURRENT_CONTEST));
+                        "action=%d", SSERV_CMD_EDIT_CURRENT_CONTEST));
 
   return 0;
 }
@@ -3127,8 +3126,8 @@ super_html_edit_permission(FILE *f,
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
   fprintf(f, "<td>%sForget changes</a></td><td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "action=%d", SUPER_ACTION_EDIT_CURRENT_CONTEST));
-  html_submit_button(f, SUPER_ACTION_CNTS_SAVE_PERMISSIONS, "Save");
+                        "action=%d", SSERV_CMD_EDIT_CURRENT_CONTEST));
+  html_submit_button(f, SSERV_CMD_CNTS_SAVE_PERMISSIONS, "Save");
   fprintf(f, "</td></tr></table>\n");
   fprintf(f, "</form>\n");
 
@@ -3146,7 +3145,7 @@ super_html_edit_permission(FILE *f,
           "</select></td><td>");
   fprintf(f, "</select>");
 
-  html_submit_button(f, SUPER_ACTION_CNTS_SET_PREDEF_PERMISSIONS, "Set permissions");
+  html_submit_button(f, SSERV_CMD_CNTS_SET_PREDEF_PERMISSIONS, "Set permissions");
   fprintf(f, "</td></tr></table>");
   fprintf(f, "</form>\n");
 
@@ -3205,7 +3204,7 @@ super_html_edit_form_fields(FILE *f,
     allow_setting_minmax = 0;
     fields = cnts->fields;
     desc_txt = "Basic fields";
-    commit_action = SUPER_ACTION_CNTS_SAVE_FORM_FIELDS;
+    commit_action = SSERV_CMD_CNTS_SAVE_FORM_FIELDS;
     break;
   case SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS:
     first_index = 1;
@@ -3215,7 +3214,7 @@ super_html_edit_form_fields(FILE *f,
     memb = cnts->members[CONTEST_M_CONTESTANT];
     if (memb) fields = memb->fields;
     desc_txt = "Fields for \"Contestant\" participants";
-    commit_action = SUPER_ACTION_CNTS_SAVE_CONTESTANT_FIELDS;
+    commit_action = SSERV_CMD_CNTS_SAVE_CONTESTANT_FIELDS;
     break;
   case SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS:
     first_index = 1;
@@ -3225,7 +3224,7 @@ super_html_edit_form_fields(FILE *f,
     memb = cnts->members[CONTEST_M_RESERVE];
     if (memb) fields = memb->fields;
     desc_txt = "Fields for \"Reserve\" participants";
-    commit_action = SUPER_ACTION_CNTS_SAVE_RESERVE_FIELDS;
+    commit_action = SSERV_CMD_CNTS_SAVE_RESERVE_FIELDS;
     break;
   case SSERV_CMD_CNTS_EDIT_COACH_FIELDS:
     first_index = 1;
@@ -3235,7 +3234,7 @@ super_html_edit_form_fields(FILE *f,
     memb = cnts->members[CONTEST_M_COACH];
     if (memb) fields = memb->fields;
     desc_txt = "Fields for \"Coach\" participants";
-    commit_action = SUPER_ACTION_CNTS_SAVE_COACH_FIELDS;
+    commit_action = SSERV_CMD_CNTS_SAVE_COACH_FIELDS;
     break;
   case SSERV_CMD_CNTS_EDIT_ADVISOR_FIELDS:
     first_index = 1;
@@ -3245,7 +3244,7 @@ super_html_edit_form_fields(FILE *f,
     memb = cnts->members[CONTEST_M_ADVISOR];
     if (memb) fields = memb->fields;
     desc_txt = "Fields for \"Advisor\" participants";
-    commit_action = SUPER_ACTION_CNTS_SAVE_ADVISOR_FIELDS;
+    commit_action = SSERV_CMD_CNTS_SAVE_ADVISOR_FIELDS;
     break;
   case SSERV_CMD_CNTS_EDIT_GUEST_FIELDS:
     first_index = 1;
@@ -3255,7 +3254,7 @@ super_html_edit_form_fields(FILE *f,
     memb = cnts->members[CONTEST_M_GUEST];
     if (memb) fields = memb->fields;
     desc_txt = "Fields for \"Guest\" participants";
-    commit_action = SUPER_ACTION_CNTS_SAVE_GUEST_FIELDS;
+    commit_action = SSERV_CMD_CNTS_SAVE_GUEST_FIELDS;
     break;
   default:
     abort();
@@ -3297,7 +3296,7 @@ super_html_edit_form_fields(FILE *f,
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
   fprintf(f, "<td>%sBack</a></td><td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "action=%d", SUPER_ACTION_EDIT_CURRENT_CONTEST));
+                        "action=%d", SSERV_CMD_EDIT_CURRENT_CONTEST));
   html_submit_button(f, commit_action, "Save");
   fprintf(f, "</td></tr></table></form>\n");
   return 0;
@@ -3363,10 +3362,10 @@ super_html_edit_template_file(FILE *f,
     file_path1 = global->contest_start_cmd;
     param_expl = "Contest start script";
     p_str = &sstate->contest_start_cmd_text;
-    commit_action = SUPER_ACTION_GLOB_SAVE_CONTEST_START_CMD;
-    reread_action = SUPER_ACTION_GLOB_READ_CONTEST_START_CMD;
-    clear_action = SUPER_ACTION_GLOB_CLEAR_CONTEST_START_CMD_TEXT;
-    back_action = SUPER_ACTION_EDIT_CURRENT_GLOBAL;
+    commit_action = SSERV_CMD_GLOB_SAVE_CONTEST_START_CMD;
+    reread_action = SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD_TEXT;
+    clear_action = SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
     help_txt = template_help_3;
     break;
 
@@ -3378,10 +3377,10 @@ super_html_edit_template_file(FILE *f,
     file_path1 = global->stand_header_file;
     param_expl = "Standings HTML header file";
     p_str = &sstate->stand_header_text;
-    commit_action = SUPER_ACTION_GLOB_SAVE_STAND_HEADER;
-    reread_action = SUPER_ACTION_GLOB_READ_STAND_HEADER;
-    clear_action = SUPER_ACTION_GLOB_CLEAR_STAND_HEADER_TEXT;
-    back_action = SUPER_ACTION_EDIT_CURRENT_GLOBAL;
+    commit_action = SSERV_CMD_GLOB_SAVE_STAND_HEADER;
+    reread_action = SSERV_CMD_GLOB_CLEAR_STAND_HEADER_TEXT;
+    clear_action = SSERV_CMD_GLOB_CLEAR_STAND_HEADER_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_GLOB_EDIT_STAND_FOOTER_FILE:
@@ -3392,10 +3391,10 @@ super_html_edit_template_file(FILE *f,
     file_path1 = global->stand_footer_file;
     param_expl = "Standings HTML footer file";
     p_str = &sstate->stand_footer_text;
-    commit_action = SUPER_ACTION_GLOB_SAVE_STAND_FOOTER;
-    reread_action = SUPER_ACTION_GLOB_READ_STAND_FOOTER;
-    clear_action = SUPER_ACTION_GLOB_CLEAR_STAND_FOOTER_TEXT;
-    back_action = SUPER_ACTION_EDIT_CURRENT_GLOBAL;
+    commit_action = SSERV_CMD_GLOB_SAVE_STAND_FOOTER;
+    reread_action = SSERV_CMD_GLOB_CLEAR_STAND_FOOTER_TEXT;
+    clear_action = SSERV_CMD_GLOB_CLEAR_STAND_FOOTER_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_GLOB_EDIT_STAND2_HEADER_FILE:
@@ -3406,10 +3405,10 @@ super_html_edit_template_file(FILE *f,
     file_path1 = global->stand2_header_file;
     param_expl = "Supplementary standings HTML header file";
     p_str = &sstate->stand2_header_text;
-    commit_action = SUPER_ACTION_GLOB_SAVE_STAND2_HEADER;
-    reread_action = SUPER_ACTION_GLOB_READ_STAND2_HEADER;
-    clear_action = SUPER_ACTION_GLOB_CLEAR_STAND2_HEADER_TEXT;
-    back_action = SUPER_ACTION_EDIT_CURRENT_GLOBAL;
+    commit_action = SSERV_CMD_GLOB_SAVE_STAND2_HEADER;
+    reread_action = SSERV_CMD_GLOB_CLEAR_STAND2_HEADER_TEXT;
+    clear_action = SSERV_CMD_GLOB_CLEAR_STAND2_HEADER_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_GLOB_EDIT_STAND2_FOOTER_FILE:
@@ -3420,10 +3419,10 @@ super_html_edit_template_file(FILE *f,
     file_path1 = global->stand2_footer_file;
     param_expl = "Supplementary standings HTML footer file";
     p_str = &sstate->stand2_footer_text;
-    commit_action = SUPER_ACTION_GLOB_SAVE_STAND2_FOOTER;
-    reread_action = SUPER_ACTION_GLOB_READ_STAND2_FOOTER;
-    clear_action = SUPER_ACTION_GLOB_CLEAR_STAND2_FOOTER_TEXT;
-    back_action = SUPER_ACTION_EDIT_CURRENT_GLOBAL;
+    commit_action = SSERV_CMD_GLOB_SAVE_STAND2_FOOTER;
+    reread_action = SSERV_CMD_GLOB_CLEAR_STAND2_FOOTER_TEXT;
+    clear_action = SSERV_CMD_GLOB_CLEAR_STAND2_FOOTER_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_GLOB_EDIT_PLOG_HEADER_FILE:
@@ -3434,10 +3433,10 @@ super_html_edit_template_file(FILE *f,
     file_path1 = global->plog_header_file;
     param_expl = "Public submission log HTML header file";
     p_str = &sstate->plog_header_text;
-    commit_action = SUPER_ACTION_GLOB_SAVE_PLOG_HEADER;
-    reread_action = SUPER_ACTION_GLOB_READ_PLOG_HEADER;
-    clear_action = SUPER_ACTION_GLOB_CLEAR_PLOG_HEADER_TEXT;
-    back_action = SUPER_ACTION_EDIT_CURRENT_GLOBAL;
+    commit_action = SSERV_CMD_GLOB_SAVE_PLOG_HEADER;
+    reread_action = SSERV_CMD_GLOB_CLEAR_PLOG_HEADER_TEXT;
+    clear_action = SSERV_CMD_GLOB_CLEAR_PLOG_HEADER_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_GLOB_EDIT_PLOG_FOOTER_FILE:
@@ -3448,10 +3447,10 @@ super_html_edit_template_file(FILE *f,
     file_path1 = global->plog_footer_file;
     param_expl = "Public submission log HTML footer file";
     p_str = &sstate->plog_footer_text;
-    commit_action = SUPER_ACTION_GLOB_SAVE_PLOG_FOOTER;
-    reread_action = SUPER_ACTION_GLOB_READ_PLOG_FOOTER;
-    clear_action = SUPER_ACTION_GLOB_CLEAR_PLOG_FOOTER_TEXT;
-    back_action = SUPER_ACTION_EDIT_CURRENT_GLOBAL;
+    commit_action = SSERV_CMD_GLOB_SAVE_PLOG_FOOTER;
+    reread_action = SSERV_CMD_GLOB_CLEAR_PLOG_FOOTER_TEXT;
+    clear_action = SSERV_CMD_GLOB_CLEAR_PLOG_FOOTER_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
     help_txt = template_help_1;
     break;
 
@@ -3463,10 +3462,10 @@ super_html_edit_template_file(FILE *f,
     file_path1 = cnts->users_header_file;
     param_expl = "`users' HTML header file";
     p_str = &sstate->users_header_text;
-    commit_action = SUPER_ACTION_CNTS_SAVE_USERS_HEADER;
-    reread_action = SUPER_ACTION_CNTS_READ_USERS_HEADER;
-    clear_action = SUPER_ACTION_CNTS_CLEAR_USERS_HEADER_TEXT;
-    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
+    commit_action = SSERV_CMD_CNTS_SAVE_USERS_HEADER;
+    reread_action = SSERV_CMD_CNTS_CLEAR_USERS_HEADER_TEXT;
+    clear_action = SSERV_CMD_CNTS_CLEAR_USERS_HEADER_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_USERS_FOOTER:
@@ -3477,10 +3476,10 @@ super_html_edit_template_file(FILE *f,
     file_path1 = cnts->users_footer_file;
     param_expl = "`users' HTML footer file";
     p_str = &sstate->users_footer_text;
-    commit_action = SUPER_ACTION_CNTS_SAVE_USERS_FOOTER;
-    reread_action = SUPER_ACTION_CNTS_READ_USERS_FOOTER;
-    clear_action = SUPER_ACTION_CNTS_CLEAR_USERS_FOOTER_TEXT;
-    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
+    commit_action = SSERV_CMD_CNTS_SAVE_USERS_FOOTER;
+    reread_action = SSERV_CMD_CNTS_CLEAR_USERS_FOOTER_TEXT;
+    clear_action = SSERV_CMD_CNTS_CLEAR_USERS_FOOTER_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_REGISTER_HEADER:
@@ -3491,10 +3490,10 @@ super_html_edit_template_file(FILE *f,
     file_path1 = cnts->register_header_file;
     param_expl = "`register' HTML header file";
     p_str = &sstate->register_header_text;
-    commit_action = SUPER_ACTION_CNTS_SAVE_REGISTER_HEADER;
-    reread_action = SUPER_ACTION_CNTS_READ_REGISTER_HEADER;
-    clear_action = SUPER_ACTION_CNTS_CLEAR_REGISTER_HEADER_TEXT;
-    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
+    commit_action = SSERV_CMD_CNTS_SAVE_REGISTER_HEADER;
+    reread_action = SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER_TEXT;
+    clear_action = SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_REGISTER_FOOTER:
@@ -3505,10 +3504,10 @@ super_html_edit_template_file(FILE *f,
     file_path1 = cnts->register_footer_file;
     param_expl = "`register' HTML footer file";
     p_str = &sstate->register_footer_text;
-    commit_action = SUPER_ACTION_CNTS_SAVE_REGISTER_FOOTER;
-    reread_action = SUPER_ACTION_CNTS_READ_REGISTER_FOOTER;
-    clear_action = SUPER_ACTION_CNTS_CLEAR_REGISTER_FOOTER_TEXT;
-    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
+    commit_action = SSERV_CMD_CNTS_SAVE_REGISTER_FOOTER;
+    reread_action = SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER_TEXT;
+    clear_action = SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_TEAM_HEADER:
@@ -3519,10 +3518,10 @@ super_html_edit_template_file(FILE *f,
     file_path1 = cnts->team_header_file;
     param_expl = "`team' HTML header file";
     p_str = &sstate->team_header_text;
-    commit_action = SUPER_ACTION_CNTS_SAVE_TEAM_HEADER;
-    reread_action = SUPER_ACTION_CNTS_READ_TEAM_HEADER;
-    clear_action = SUPER_ACTION_CNTS_CLEAR_TEAM_HEADER_TEXT;
-    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
+    commit_action = SSERV_CMD_CNTS_SAVE_TEAM_HEADER;
+    reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_HEADER_TEXT;
+    clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_HEADER_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_TEAM_FOOTER:
@@ -3533,10 +3532,10 @@ super_html_edit_template_file(FILE *f,
     file_path1 = cnts->team_footer_file;
     param_expl = "`team' HTML footer file";
     p_str = &sstate->team_footer_text;
-    commit_action = SUPER_ACTION_CNTS_SAVE_TEAM_FOOTER;
-    reread_action = SUPER_ACTION_CNTS_READ_TEAM_FOOTER;
-    clear_action = SUPER_ACTION_CNTS_CLEAR_TEAM_FOOTER_TEXT;
-    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
+    commit_action = SSERV_CMD_CNTS_SAVE_TEAM_FOOTER;
+    reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER_TEXT;
+    clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_PRIV_HEADER:
@@ -3547,10 +3546,10 @@ super_html_edit_template_file(FILE *f,
     file_path1 = cnts->priv_header_file;
     param_expl = "privileged HTML header file";
     p_str = &sstate->priv_header_text;
-    commit_action = SUPER_ACTION_CNTS_SAVE_PRIV_HEADER;
-    reread_action = SUPER_ACTION_CNTS_READ_PRIV_HEADER;
-    clear_action = SUPER_ACTION_CNTS_CLEAR_PRIV_HEADER_TEXT;
-    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
+    commit_action = SSERV_CMD_CNTS_SAVE_PRIV_HEADER;
+    reread_action = SSERV_CMD_CNTS_CLEAR_PRIV_HEADER_TEXT;
+    clear_action = SSERV_CMD_CNTS_CLEAR_PRIV_HEADER_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_PRIV_FOOTER:
@@ -3561,10 +3560,10 @@ super_html_edit_template_file(FILE *f,
     file_path1 = cnts->priv_footer_file;
     param_expl = "privileged HTML footer file";
     p_str = &sstate->priv_footer_text;
-    commit_action = SUPER_ACTION_CNTS_SAVE_PRIV_FOOTER;
-    reread_action = SUPER_ACTION_CNTS_READ_PRIV_FOOTER;
-    clear_action = SUPER_ACTION_CNTS_CLEAR_PRIV_FOOTER_TEXT;
-    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
+    commit_action = SSERV_CMD_CNTS_SAVE_PRIV_FOOTER;
+    reread_action = SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER_TEXT;
+    clear_action = SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE:
@@ -3575,10 +3574,10 @@ super_html_edit_template_file(FILE *f,
     file_path1 = cnts->register_email_file;
     param_expl = "registration letter template";
     p_str = &sstate->register_email_text;
-    commit_action = SUPER_ACTION_CNTS_SAVE_REGISTER_EMAIL_FILE;
-    reread_action = SUPER_ACTION_CNTS_READ_REGISTER_EMAIL_FILE;
-    clear_action = SUPER_ACTION_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT;
-    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
+    commit_action = SSERV_CMD_CNTS_SAVE_REGISTER_EMAIL_FILE;
+    reread_action = SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT;
+    clear_action = SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
     help_txt = template_help_2;
     break;
   default:
