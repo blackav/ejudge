@@ -266,6 +266,7 @@ ns_unload_contest(int contest_id)
   watched_file_clear(&extra->footer);
   watched_file_clear(&extra->priv_header);
   watched_file_clear(&extra->priv_footer);
+  watched_file_clear(&extra->copyright);
 
   memset(extra, 0, sizeof(*extra));
   xfree(extra);
@@ -843,7 +844,7 @@ privileged_page_login_page(FILE *fout, struct http_request_info *phr)
   fprintf(fout, "<tr><td>&nbsp;</td><td>%s</td></tr>\n",
           ns_submit_button(bbuf, sizeof(bbuf), "submit", 0, _("Submit")));
   fprintf(fout, "</table></form>\n");
-  ns_footer(fout, 0, phr->locale_id);
+  ns_footer(fout, 0, 0, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);
 }
@@ -868,7 +869,7 @@ html_error_status_page(FILE *fout,
   fprintf(fout, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(log_txt));
   fprintf(fout, "<hr>%s%s</a>\n",
           ns_aref(url, sizeof(url), phr, back_action, 0), _("Back"));
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);
 }
@@ -3360,7 +3361,7 @@ priv_confirmation_page(FILE *fout,
   }
   fprintf(fout, "</form></td></tr></table>\n");
 
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);
   xfree(run_mask);
@@ -3542,7 +3543,7 @@ priv_user_detail_page(FILE *fout,
             phr->name_arm, extra->contest_arm, _("Details for user "),
             user_id);
   ns_user_info_page(fout, log_f, phr, cnts, extra, user_id);
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
  cleanup:
@@ -3567,7 +3568,7 @@ priv_new_run_form_page(FILE *fout,
             "%s [%s, %s]: %s", ns_unparse_role(phr->role),
             phr->name_arm, extra->contest_arm, _("Add new run"));
   ns_new_run_form(fout, log_f, phr, cnts, extra);
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
  cleanup:
@@ -3727,7 +3728,7 @@ priv_view_users_page(FILE *fout,
 
   fprintf(fout, "</form>\n");
 
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
   if (users) userlist_free(&users->b);
@@ -3925,7 +3926,7 @@ priv_view_priv_users_page(FILE *fout,
           _("Add a new user specifying his/her User Id"));
   fprintf(fout, "</table>\n");
 
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
  cleanup:
@@ -4102,7 +4103,7 @@ priv_view_clar(FILE *fout,
 
   ns_write_priv_clar(cs, fout, log_f, phr, cnts, extra, clar_id);
 
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
  cleanup:
@@ -4132,7 +4133,7 @@ priv_standings(FILE *fout,
             "%s [%s, %s]: %s", ns_unparse_role(phr->role),
             phr->name_arm, extra->contest_arm, _("Current standings"));
   ns_write_priv_standings(cs, cnts, fout, cs->accepting_mode);
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
   
  cleanup:
@@ -4197,7 +4198,7 @@ priv_upload_runlog_csv_1(
           BUTTON(NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2));
 
   fprintf(fout, "</form>\n");
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
  cleanup:
@@ -4258,7 +4259,7 @@ priv_upload_runlog_csv_2(
   xfree(ss); ss = 0;
   xfree(log_text); log_text = 0;
 
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
  cleanup:
@@ -4293,7 +4294,7 @@ priv_upload_runlog_xml_1(
           BUTTON(NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_2));
 
   fprintf(fout, "</form>\n");
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
  cleanup:
@@ -4354,7 +4355,7 @@ priv_upload_runlog_xml_2(
   xfree(ss); ss = 0;
   xfree(log_text); log_text = 0;
 
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
  cleanup:
@@ -4440,7 +4441,7 @@ priv_download_runs_confirmation(
           _("Main page"));
   fprintf(fout, "</form>\n");
 
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
  cleanup:
@@ -4553,7 +4554,7 @@ priv_view_passwords(FILE *fout,
 
   ns_write_passwords(fout, log_f, phr, cnts, extra);
 
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
  cleanup:
@@ -5614,7 +5615,7 @@ priv_main_page(FILE *fout,
           _("msec"));
   }
 
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);
 }
@@ -5900,9 +5901,11 @@ unpriv_load_html_style(struct http_request_info *phr,
   cur_time = time(0);
   watched_file_update(&extra->header, cnts->team_header_file, cur_time);
   watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
+  watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
   extra->header_txt = extra->header.text;
   extra->footer_txt = extra->footer.text;
   extra->separator_txt = "";
+  extra->copyright_txt = extra->copyright.text;
   if (!extra->header_txt || !extra->footer_txt) {
     extra->header_txt = ns_fancy_header;
     extra->separator_txt = ns_fancy_separator;
@@ -6049,7 +6052,7 @@ unpriv_page_forgot_password_1(FILE *fout, struct http_request_info *phr)
           BUTTON(NEW_SRV_ACTION_FORGOT_PASSWORD_2));
 
 
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);
 }
@@ -6130,7 +6133,7 @@ unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr)
     fprintf(fout, "<p>Password recovery is not possible because of the following error.</p>\n");
     fprintf(fout, "%s", extra->separator_txt);
     fprintf(fout, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(log_txt));
-    ns_footer(fout, extra->footer_txt, phr->locale_id);
+    ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
     l10n_setlocale(0);
     goto cleanup;
   }
@@ -6143,7 +6146,7 @@ unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr)
 
   fprintf(fout, _("<p class=\"fixed_width\">First stage of password recovery is successful. You should receive an e-mail message with further instructions. <b>Note,</b> that you should confirm password recovery in 24 hours, or operation will be cancelled.</p>"));
 
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
  cleanup:
@@ -6222,7 +6225,7 @@ unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr)
     fprintf(fout, "<p>Password recovery is not possible because of the following error.</p>\n");
     fprintf(fout, "%s", extra->separator_txt);
     fprintf(fout, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(log_txt));
-    ns_footer(fout, extra->footer_txt, phr->locale_id);
+    ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
     l10n_setlocale(0);
     goto cleanup;
   }
@@ -6251,7 +6254,7 @@ unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr)
           _("Password"), ARMOR(passwd));
   fprintf(fout, "<tr><td class=\"menu\">&nbsp;</td><td class=\"menu\">%s</td></tr></table></form>\n",
           ns_submit_button(bb, sizeof(bb), "submit", 0, _("Submit")));
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
  cleanup:
@@ -6296,9 +6299,11 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
   cur_time = time(0);
   watched_file_update(&extra->header, cnts->team_header_file, cur_time);
   watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
+  watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
   extra->header_txt = extra->header.text;
   extra->footer_txt = extra->footer.text;
   extra->separator_txt = "";
+  extra->copyright_txt = extra->copyright.text;
   if (!extra->header_txt || !extra->footer_txt) {
     extra->header_txt = ns_fancy_header;
     extra->footer_txt = ns_fancy_footer;
@@ -6384,7 +6389,7 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
   fprintf(fout, "</tr></table></div>\n");
   fprintf(fout, "%s", extra->separator_txt);
 
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);
 }
@@ -7788,7 +7793,7 @@ unpriv_view_report(FILE *fout,
     abort();
   }
 
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
  done:;
@@ -7922,7 +7927,7 @@ unpriv_view_clar(FILE *fout,
   fprintf(fout, "%s", html_text);
   fprintf(fout, "</pre><hr>");
 
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
  done:;
@@ -8056,7 +8061,7 @@ unpriv_view_standings(FILE *fout,
           _("msec"));
   }
 
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 }
 
@@ -9067,7 +9072,7 @@ user_main_page(FILE *fout,
             _("msec"));
   }
 
-  ns_footer(fout, extra->footer_txt, phr->locale_id);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 }
 
@@ -9206,8 +9211,10 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr)
 
   watched_file_update(&extra->header, cnts->team_header_file, cur_time);
   watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
+  watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
   extra->header_txt = extra->header.text;
   extra->footer_txt = extra->footer.text;
+  extra->copyright_txt = extra->copyright.text;
   //if (!extra->header_txt) extra->header_txt = ns_fancy_header;
   //if (!extra->footer_txt) extra->footer_txt = ns_fancy_footer;
 

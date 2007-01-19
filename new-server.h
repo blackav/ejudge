@@ -282,10 +282,12 @@ struct contest_extra
   struct watched_file footer;
   struct watched_file priv_header;
   struct watched_file priv_footer;
+  struct watched_file copyright;
 
   const unsigned char *header_txt;
   const unsigned char *footer_txt;
   const unsigned char *separator_txt;
+  const unsigned char *copyright_txt;
   unsigned char *contest_arm;
 
   serve_state_t serve_state;
@@ -433,7 +435,8 @@ void ns_header(FILE *out, unsigned char const *template,
                int locale_id,
                char const *format, ...)
   __attribute__((format(printf, 8, 9)));
-void ns_footer(FILE *out, unsigned char const *templ, int locale_id);
+void ns_footer(FILE *out, unsigned char const *templ,
+               const unsigned char *copyright, int locale_id);
 void ns_set_fancy_standings_style(struct section_global_data *global);
 
 

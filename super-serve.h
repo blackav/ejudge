@@ -3,7 +3,7 @@
 #ifndef __SUPER_SERVE_H__
 #define __SUPER_SERVE_H__
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -98,6 +98,7 @@ struct sid_state
   unsigned char *priv_header_text;
   unsigned char *priv_footer_text;
   unsigned char *register_email_text;
+  unsigned char *copyright_text;
 
   unsigned char *serve_parse_errors;
 

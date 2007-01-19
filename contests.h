@@ -64,6 +64,7 @@ enum
     CONTEST_REGISTER_FOOTER_FILE,
     CONTEST_TEAM_HEADER_FILE,
     CONTEST_TEAM_FOOTER_FILE,
+    CONTEST_COPYRIGHT_FILE,
     CONTEST_USERS_HEAD_STYLE,
     CONTEST_USERS_PAR_STYLE,
     CONTEST_USERS_TABLE_STYLE,
@@ -252,6 +253,7 @@ struct contest_desc
   unsigned char *team_footer_file;
   unsigned char *priv_header_file;
   unsigned char *priv_footer_file;
+  unsigned char *copyright_file;
   unsigned char *register_email;
   unsigned char *register_url;
   unsigned char *team_url;
