@@ -79,6 +79,9 @@
 /* path to the web server html documents dir */
 #undef EJUDGE_HTTPD_HTDOCS_DIR
 
+/* whether AJAX is enabled */
+#undef CONF_ENABLE_AJAX
+
 /* compiler versions */
 #undef COMPILE_GCC_VERSION
 #undef COMPILE_GPP_VERSION
