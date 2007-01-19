@@ -1724,6 +1724,7 @@ super_serve_clear_edited_contest(struct sid_state *p)
   xfree(p->team_footer_text); p->team_footer_text = 0;
   xfree(p->priv_header_text); p->priv_header_text = 0;
   xfree(p->priv_footer_text); p->priv_footer_text = 0;
+  xfree(p->copyright_text); p->copyright_text = 0;
   xfree(p->register_email_text); p->register_email_text = 0;
 
   p->advanced_view = 0;
@@ -1969,6 +1970,7 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_CNTS_EDIT_TEAM_FOOTER:
   case SSERV_CMD_CNTS_EDIT_PRIV_HEADER:
   case SSERV_CMD_CNTS_EDIT_PRIV_FOOTER:
+  case SSERV_CMD_CNTS_EDIT_COPYRIGHT:
   case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE:
   case SSERV_CMD_CNTS_COMMIT:
   case SSERV_CMD_EDIT_CURRENT_GLOBAL:
@@ -2090,6 +2092,7 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_CNTS_EDIT_TEAM_FOOTER:
   case SSERV_CMD_CNTS_EDIT_PRIV_HEADER:
   case SSERV_CMD_CNTS_EDIT_PRIV_FOOTER:
+  case SSERV_CMD_CNTS_EDIT_COPYRIGHT:
   case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE:
   case SSERV_CMD_GLOB_EDIT_CONTEST_START_CMD:
   case SSERV_CMD_GLOB_EDIT_STAND_HEADER_FILE:
@@ -2463,6 +2466,7 @@ cmd_simple_top_command(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER:
   case SSERV_CMD_CNTS_CLEAR_PRIV_HEADER:
   case SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER:
+  case SSERV_CMD_CNTS_CLEAR_COPYRIGHT:
   case SSERV_CMD_CNTS_CLEAR_USERS_HEAD_STYLE:
   case SSERV_CMD_CNTS_CLEAR_USERS_PAR_STYLE:
   case SSERV_CMD_CNTS_CLEAR_USERS_TABLE_STYLE:
@@ -2500,6 +2504,7 @@ cmd_simple_top_command(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER_TEXT:
   case SSERV_CMD_CNTS_CLEAR_PRIV_HEADER_TEXT:
   case SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER_TEXT:
+  case SSERV_CMD_CNTS_CLEAR_COPYRIGHT_TEXT:
   case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT:
     r = super_html_clear_variable(sstate, pkt->b.id);
     break;
@@ -2573,6 +2578,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CHANGE_TEAM_FOOTER:
   case SSERV_CMD_CNTS_CHANGE_PRIV_HEADER:
   case SSERV_CMD_CNTS_CHANGE_PRIV_FOOTER:
+  case SSERV_CMD_CNTS_CHANGE_COPYRIGHT:
   case SSERV_CMD_CNTS_CHANGE_USERS_HEAD_STYLE:
   case SSERV_CMD_CNTS_CHANGE_USERS_PAR_STYLE:
   case SSERV_CMD_CNTS_CHANGE_USERS_TABLE_STYLE:
@@ -2626,6 +2632,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_SAVE_TEAM_FOOTER:
   case SSERV_CMD_CNTS_SAVE_PRIV_HEADER:
   case SSERV_CMD_CNTS_SAVE_PRIV_FOOTER:
+  case SSERV_CMD_CNTS_SAVE_COPYRIGHT:
   case SSERV_CMD_CNTS_SAVE_REGISTER_EMAIL_FILE:
     r = super_html_set_contest_var(sstate, pkt->b.id, pkt->param1, param2_ptr,
                                    pkt->param3, pkt->param4, pkt->param5);
@@ -3082,6 +3089,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_EDIT_TEAM_FOOTER] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_PRIV_HEADER] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_PRIV_FOOTER] = { cmd_main_page },
+  [SSERV_CMD_CNTS_EDIT_COPYRIGHT] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE] = { cmd_main_page },
   [SSERV_CMD_CNTS_CLEAR_NAME] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_NAME_EN] = { cmd_simple_top_command },
@@ -3095,6 +3103,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_PRIV_HEADER] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_COPYRIGHT] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_USERS_HEAD_STYLE] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_USERS_PAR_STYLE] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_USERS_TABLE_STYLE] = { cmd_simple_top_command },
@@ -3155,6 +3164,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_TEAM_FOOTER] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_PRIV_HEADER] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_PRIV_FOOTER] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_COPYRIGHT] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_USERS_HEAD_STYLE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_USERS_PAR_STYLE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_USERS_TABLE_STYLE] = { cmd_set_value },
@@ -3208,6 +3218,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SAVE_TEAM_FOOTER] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_PRIV_HEADER] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_PRIV_FOOTER] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_COPYRIGHT] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_REGISTER_EMAIL_FILE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CLEAR_USERS_HEADER_TEXT] = { cmd_set_value },
   [SSERV_CMD_CNTS_CLEAR_USERS_FOOTER_TEXT] = { cmd_set_value },
@@ -3217,6 +3228,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER_TEXT] = { cmd_set_value },
   [SSERV_CMD_CNTS_CLEAR_PRIV_HEADER_TEXT] = { cmd_set_value },
   [SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER_TEXT] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CLEAR_COPYRIGHT_TEXT] = { cmd_set_value },
   [SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT] = { cmd_set_value },
   [SSERV_CMD_CNTS_COMMIT] = { cmd_main_page },
   [SSERV_CMD_EDIT_CURRENT_GLOBAL] = { cmd_main_page },

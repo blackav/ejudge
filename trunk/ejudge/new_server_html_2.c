@@ -1648,7 +1648,7 @@ ns_write_audit_log(const serve_state_t cs,
   } else {
     fprintf(f, "<pre>%s</pre>", audit_html);
   }
-  ns_footer(f, extra->footer_txt, phr->locale_id);
+  ns_footer(f, extra->footer_txt, extra->copyright_txt, phr->locale_id);
 
  done:;
   xfree(audit_html);

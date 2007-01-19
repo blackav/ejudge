@@ -2592,6 +2592,16 @@ super_html_edit_contest_page(FILE *f,
                              self_url,
                              extra_args,
                              hidden_vars);
+    print_string_editing_row(f, "Copyright notice for CGI-program:",
+                             cnts->copyright_file,
+                             SSERV_CMD_CNTS_CHANGE_COPYRIGHT,
+                             SSERV_CMD_CNTS_CLEAR_COPYRIGHT,
+                             SSERV_CMD_CNTS_EDIT_COPYRIGHT,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
   }
 
   html_start_form(f, 1, self_url, hidden_vars);
@@ -3563,6 +3573,20 @@ super_html_edit_template_file(FILE *f,
     commit_action = SSERV_CMD_CNTS_SAVE_PRIV_FOOTER;
     reread_action = SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
+    help_txt = template_help_1;
+    break;
+  case SSERV_CMD_CNTS_EDIT_COPYRIGHT:
+    if (!cnts) {
+      failure_text = "no current contest";
+      goto failure;
+    }
+    file_path1 = cnts->copyright_file;
+    param_expl = "copyright notice file";
+    p_str = &sstate->copyright_text;
+    commit_action = SSERV_CMD_CNTS_SAVE_COPYRIGHT;
+    reread_action = SSERV_CMD_CNTS_CLEAR_COPYRIGHT_TEXT;
+    clear_action = SSERV_CMD_CNTS_CLEAR_COPYRIGHT_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
     help_txt = template_help_1;
     break;

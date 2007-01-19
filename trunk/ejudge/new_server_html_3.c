@@ -180,10 +180,12 @@ ns_header(FILE *out, unsigned char const *templ,
 }
 
 void
-ns_footer(FILE *out, unsigned char const *templ, int locale_id)
+ns_footer(FILE *out, unsigned char const *templ,
+          const unsigned char *copyright, int locale_id)
 {
+  if (!copyright) copyright = get_copyright(locale_id);
   if (!templ) templ = ns_default_footer;
-  process_template(out, templ, 0, 0, 0, get_copyright(locale_id), 0, 0, 0);
+  process_template(out, templ, 0, 0, 0, copyright, 0, 0, 0);
 }
 
 void
@@ -195,6 +197,7 @@ ns_html_err_no_perm(FILE *fout,
   const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
   const unsigned char *header = 0, *footer = 0, *separator = 0;
+  const unsigned char *copyright = 0;
   time_t cur_time = time(0);
   unsigned char buf[1024];
   va_list args;
@@ -210,8 +213,10 @@ ns_html_err_no_perm(FILE *fout,
   if (extra && !priv_mode) {
     watched_file_update(&extra->header, cnts->team_header_file, cur_time);
     watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
+    watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
     header = extra->header.text;
     footer = extra->footer.text;
+    copyright = extra->copyright.text;
   } else if (extra && priv_mode) {
     watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
     watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
@@ -262,7 +267,7 @@ ns_html_err_no_perm(FILE *fout,
   }
   fprintf(fout, "</ul>\n");
   fprintf(fout, _("<p>Note, that the exact reason is not reported due to security reasons.</p>"));
-  ns_footer(fout, footer, phr->locale_id);
+  ns_footer(fout, footer, copyright, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);
 }
@@ -276,6 +281,7 @@ ns_html_err_inv_param(FILE *fout,
   const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
   const unsigned char *header = 0, *footer = 0, *separator = 0;
+  const unsigned char *copyright = 0;
   time_t cur_time = time(0);
   unsigned char buf[1024];
   va_list args;
@@ -294,8 +300,10 @@ ns_html_err_inv_param(FILE *fout,
   if (extra && !priv_mode) {
     watched_file_update(&extra->header, cnts->team_header_file, cur_time);
     watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
+    watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
     header = extra->header.text;
     footer = extra->footer.text;
+    copyright = extra->copyright.text;
   } else if (extra && priv_mode) {
     watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
     watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
@@ -323,7 +331,7 @@ ns_html_err_inv_param(FILE *fout,
   }
   fprintf(fout, "<p>%s</p>\n",
           _("A request parameter is invalid. Please, contact the site administrator."));
-  ns_footer(fout, footer, phr->locale_id);
+  ns_footer(fout, footer, copyright, phr->locale_id);
   l10n_setlocale(0);
 }
 
@@ -336,6 +344,7 @@ ns_html_err_service_not_available(FILE *fout,
   const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
   const unsigned char *header = 0, *footer = 0, *separator = 0;
+  const unsigned char *copyright = 0;
   time_t cur_time = time(0);
   unsigned char buf[1024];
   va_list args;
@@ -354,8 +363,10 @@ ns_html_err_service_not_available(FILE *fout,
   if (extra) {
     watched_file_update(&extra->header, cnts->team_header_file, cur_time);
     watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
+    watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
     header = extra->header.text;
     footer = extra->footer.text;
+    copyright = extra->copyright.text;
   }
 
   // try fancy headers
@@ -378,7 +389,7 @@ ns_html_err_service_not_available(FILE *fout,
   }
   fprintf(fout, "<p>%s</p>\n",
           _("Service that you requested is not available."));
-  ns_footer(fout, footer, phr->locale_id);
+  ns_footer(fout, footer, copyright, phr->locale_id);
   l10n_setlocale(0);
 }
 
@@ -391,6 +402,7 @@ ns_html_err_cnts_unavailable(FILE *fout,
   const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
   const unsigned char *header = 0, *footer = 0, *separator = 0;
+  const unsigned char *copyright = 0;
   time_t cur_time = time(0);
   unsigned char buf[1024];
   va_list args;
@@ -409,8 +421,10 @@ ns_html_err_cnts_unavailable(FILE *fout,
   if (extra) {
     watched_file_update(&extra->header, cnts->team_header_file, cur_time);
     watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
+    watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
     header = extra->header.text;
     footer = extra->footer.text;
+    copyright = extra->copyright.text;
   }
 
   // try fancy headers
@@ -433,7 +447,7 @@ ns_html_err_cnts_unavailable(FILE *fout,
   }
   fprintf(fout, "<p>%s</p>\n",
           _("The contest is temporarily not available. Please, retry the request a bit later."));
-  ns_footer(fout, footer, phr->locale_id);
+  ns_footer(fout, footer, copyright, phr->locale_id);
   l10n_setlocale(0);
 }
 
@@ -446,6 +460,7 @@ ns_html_err_ul_server_down(FILE *fout,
   const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
   const unsigned char *header = 0, *footer = 0, *separator = 0;
+  const unsigned char *copyright = 0;
   time_t cur_time = time(0);
   unsigned char buf[1024];
   va_list args;
@@ -464,8 +479,10 @@ ns_html_err_ul_server_down(FILE *fout,
   if (extra && !priv_mode) {
     watched_file_update(&extra->header, cnts->team_header_file, cur_time);
     watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
+    watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
     header = extra->header.text;
     footer = extra->footer.text;
+    copyright = extra->copyright.text;
   } else if (extra && priv_mode) {
     watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
     watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
@@ -494,7 +511,7 @@ ns_html_err_ul_server_down(FILE *fout,
   }
   fprintf(fout, "<p>%s</p>\n",
           _("The user database server is currently not available. Please, retry the request later."));
-  ns_footer(fout, footer, phr->locale_id);
+  ns_footer(fout, footer, copyright, phr->locale_id);
   l10n_setlocale(0);
 }
 
@@ -507,6 +524,7 @@ ns_html_err_internal_error(FILE *fout,
   const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
   const unsigned char *header = 0, *footer = 0, *separator = 0;
+  const unsigned char *copyright = 0;
   time_t cur_time = time(0);
   unsigned char buf[1024];
   va_list args;
@@ -525,8 +543,10 @@ ns_html_err_internal_error(FILE *fout,
   if (extra && !priv_mode) {
     watched_file_update(&extra->header, cnts->team_header_file, cur_time);
     watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
+    watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
     header = extra->header.text;
     footer = extra->footer.text;
+    copyright = extra->copyright.text;
   } else if (extra && priv_mode) {
     watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
     watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
@@ -554,7 +574,7 @@ ns_html_err_internal_error(FILE *fout,
   }
   fprintf(fout, "<p>%s</p>\n",
           _("Your request has caused an internal server error. Please, report it as a bug."));
-  ns_footer(fout, footer, phr->locale_id);
+  ns_footer(fout, footer, copyright, phr->locale_id);
   l10n_setlocale(0);
 }
 
@@ -567,6 +587,7 @@ ns_html_err_inv_session(FILE *fout,
   const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
   const unsigned char *header = 0, *footer = 0, *separator = 0;
+  const unsigned char *copyright = 0;
   time_t cur_time = time(0);
   unsigned char buf[1024];
   va_list args;
@@ -585,8 +606,10 @@ ns_html_err_inv_session(FILE *fout,
   if (extra && !priv_mode) {
     watched_file_update(&extra->header, cnts->team_header_file, cur_time);
     watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
+    watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
     header = extra->header.text;
     footer = extra->footer.text;
+    copyright = extra->copyright.text;
   } else if (extra && priv_mode) {
     watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
     watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
@@ -621,7 +644,7 @@ ns_html_err_inv_session(FILE *fout,
   fprintf(fout, _("<li>The session was removed by an administrator.</li>"));
   fprintf(fout, "</ul>\n");
   fprintf(fout, _("<p>Note, that the exact reason is not reported due to security reasons.</p>"));
-  ns_footer(fout, footer, phr->locale_id);
+  ns_footer(fout, footer, copyright, phr->locale_id);
   l10n_setlocale(0);
 }
 

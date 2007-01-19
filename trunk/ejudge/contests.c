@@ -82,6 +82,7 @@ static char const * const elem_map[] =
   "register_footer_file",
   "team_header_file",
   "team_footer_file",
+  "copyright_file",
   "users_head_style",
   "users_par_style",
   "users_table_style",
@@ -140,6 +141,7 @@ static char const * const attr_map[] =
   "disable_name",
   "enable_forgot_password",
   "exam_mode",
+  "disable_locale_change",
 
   0
 };
@@ -182,6 +184,7 @@ node_free(struct xml_tree *t)
       xfree(cnts->register_footer_file);
       xfree(cnts->team_header_file);
       xfree(cnts->team_footer_file);
+      xfree(cnts->copyright_file);
       xfree(cnts->register_email);
       xfree(cnts->register_url);
       xfree(cnts->login_template);
@@ -591,6 +594,7 @@ static const size_t contest_final_offsets[CONTEST_LAST_TAG] =
   [CONTEST_REGISTER_FOOTER_FILE] = CONTEST_DESC_OFFSET(register_footer_file),
   [CONTEST_TEAM_HEADER_FILE] = CONTEST_DESC_OFFSET(team_header_file),
   [CONTEST_TEAM_FOOTER_FILE] = CONTEST_DESC_OFFSET(team_footer_file),
+  [CONTEST_COPYRIGHT_FILE] = CONTEST_DESC_OFFSET(copyright_file),
   [CONTEST_USERS_HEAD_STYLE] = CONTEST_DESC_OFFSET(users_head_style),
   [CONTEST_USERS_PAR_STYLE] = CONTEST_DESC_OFFSET(users_par_style),
   [CONTEST_USERS_TABLE_STYLE] = CONTEST_DESC_OFFSET(users_table_style),
@@ -643,8 +647,9 @@ static const size_t contest_bool_attr_offsets[CONTEST_LAST_ATTR] =
   [CONTEST_A_ASSIGN_LOGINS] = CONTEST_DESC_OFFSET(assign_logins),
   [CONTEST_A_FORCE_REGISTRATION] = CONTEST_DESC_OFFSET(force_registration),
   [CONTEST_A_DISABLE_NAME] = CONTEST_DESC_OFFSET(disable_name),
-  [CONTEST_A_ENABLE_FORGOT_PASSWORD] = CONTEST_DESC_OFFSET(enable_forgot_password ),
-  [CONTEST_A_EXAM_MODE] = CONTEST_DESC_OFFSET(exam_mode ),
+  [CONTEST_A_ENABLE_FORGOT_PASSWORD] = CONTEST_DESC_OFFSET(enable_forgot_password),
+  [CONTEST_A_EXAM_MODE] = CONTEST_DESC_OFFSET(exam_mode),
+  [CONTEST_A_DISABLE_LOCALE_CHANGE] = CONTEST_DESC_OFFSET(disable_locale_change),
 };
 
 static int
@@ -817,6 +822,7 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
     process_conf_file_path(cnts, &cnts->users_footer_file);
     process_conf_file_path(cnts, &cnts->team_header_file);
     process_conf_file_path(cnts, &cnts->team_footer_file);
+    process_conf_file_path(cnts, &cnts->copyright_file);
     process_conf_file_path(cnts, &cnts->register_email_file);
     process_conf_file_path(cnts, &cnts->priv_header_file);
     process_conf_file_path(cnts, &cnts->priv_footer_file);
@@ -1359,6 +1365,10 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
     fprintf(f, "\n         %s=\"%s\"",
             attr_map[CONTEST_A_EXAM_MODE], "yes");
   }
+  if (cnts->disable_locale_change) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attr_map[CONTEST_A_DISABLE_LOCALE_CHANGE], "yes");
+  }
 
   if (cnts->closed) {
     fprintf(f, "\n         %s=\"%s\"",
@@ -1522,6 +1532,7 @@ contests_unparse(FILE *f,
   unparse_text(f, CONTEST_REGISTER_FOOTER_FILE, cnts->register_footer_file);
   unparse_text(f, CONTEST_TEAM_HEADER_FILE, cnts->team_header_file);
   unparse_text(f, CONTEST_TEAM_FOOTER_FILE, cnts->team_footer_file);
+  unparse_text(f, CONTEST_COPYRIGHT_FILE, cnts->copyright_file);
   unparse_text(f, CONTEST_PRIV_HEADER_FILE, cnts->priv_header_file);
   unparse_text(f, CONTEST_PRIV_FOOTER_FILE, cnts->priv_footer_file);
 
