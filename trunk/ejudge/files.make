@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -358,7 +358,6 @@ HFILES=\
  settings.h\
  sformat.h\
  startstop.h\
- super_actions.h\
  super_clnt.h\
  super_html.h\
  super_proto.h\

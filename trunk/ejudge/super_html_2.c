@@ -20,7 +20,6 @@
 
 #include "super_html.h"
 #include "super-serve.h"
-#include "super_actions.h"
 #include "super_proto.h"
 #include "contests.h"
 #include "misctext.h"
@@ -974,7 +973,7 @@ super_html_serve_probe_run(FILE *f,
   fprintf(f, "<td>%sBack</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "contest_id=%d&action=%d", contest_id,
-                        SUPER_ACTION_VIEW_CONTEST));
+                        SSERV_CMD_CONTEST_PAGE));
   fprintf(f, "</tr></table>\n");
   return 0;
 }
@@ -1566,7 +1565,7 @@ super_html_commit_contest(FILE *f,
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
   fprintf(f, "<td>%sBack</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "action=%d", SUPER_ACTION_EDIT_CURRENT_CONTEST));
+                        "action=%d", SSERV_CMD_EDIT_CURRENT_CONTEST));
   fprintf(f, "</tr></table>\n");
   return 0;
 }
