@@ -6019,10 +6019,12 @@ unpriv_page_forgot_password_1(FILE *fout, struct http_request_info *phr)
   html_hidden(fout, "contest_id", "%d", phr->contest_id);
   html_hidden(fout, "action", "%d", NEW_SRV_ACTION_FORGOT_PASSWORD_1);
 
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
-          _("language"));
-  l10n_html_locale_select(fout, phr->locale_id);
-  fprintf(fout, "</div></td>\n");
+  if (!cnts->disable_locale_change) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
+            _("language"));
+    l10n_html_locale_select(fout, phr->locale_id);
+    fprintf(fout, "</div></td>\n");
+  }
 
   fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>\n", ns_submit_button(bb, sizeof(bb), "submit", 0, _("Change Language")));
 
@@ -6331,10 +6333,12 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
   if (!ss) ss = "";
   fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: <input type=\"password\" size=\"8\" name=\"password\" value=\"%s\"/></div></td>\n", _("password"), ss);
 
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
-          _("language"));
-  l10n_html_locale_select(fout, phr->locale_id);
-  fprintf(fout, "</div></td>\n");
+  if (!cnts->disable_locale_change) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
+            _("language"));
+    l10n_html_locale_select(fout, phr->locale_id);
+    fprintf(fout, "</div></td>\n");
+  }
 
   fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>\n", ns_submit_button(bb, sizeof(bb), "submit", 0, _("Submit")));
 
@@ -9015,7 +9019,8 @@ user_main_page(FILE *fout,
     }
 
 #if CONF_HAS_LIBINTL - 0 == 1
-    if (global->enable_l10n && !cs->clients_suspended) {
+    if (global->enable_l10n && !cs->clients_suspended
+        && !cnts->disable_locale_change) {
       fprintf(fout, "<%s>%s</%s>\n",
               cnts->team_head_style, _("Change language"),
               cnts->team_head_style);
