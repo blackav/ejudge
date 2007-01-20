@@ -283,6 +283,7 @@ TH.st_status {font-size: 11px; border: solid; border-width: 1px; border-color: #
 TD.st_status {font-size: 11px; border: solid; border-width: 1px; border-color: #000000; margin: 1px; }
 
 div#currentTime { display : inline; }
+div#remainingTime { display : inline; }
 
 /* problem navigation stuff */
 td.probNavSpaceTop

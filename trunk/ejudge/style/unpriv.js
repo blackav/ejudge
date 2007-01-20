@@ -9,6 +9,8 @@ var lInterval = "";
 //Date object storing current time
 var RightNow = "";
 
+var countDownTimer = null;
+
 //handling errors within AJAX communications
 function handleError(type, errObj)
 { 
@@ -31,41 +33,68 @@ function printTime()
                                             + (RightNow.getMinutes() < 10 ? "0" : "") + RightNow.getMinutes() + ":" 
                                             + (RightNow.getSeconds() < 10 ? "0" : "") + RightNow.getSeconds());
   placeToAdd.appendChild(localTime);
+
+  if (countDownTimer != null) {
+    placeToAdd = document.getElementById("remainingTime");
+    if (placeToAdd.childNodes.length == 1)
+      placeToAdd.removeChild(placeToAdd.childNodes[0]);
+
+    var hh = countDownTimer;
+    var ss = hh % 60;
+    if (ss < 10) ss = "0" + ss;
+    hh = (hh - ss) / 60;
+    var mm = hh % 60;
+    if (mm < 10) mm = "0" + mm;
+    hh = (hh - mm) / 60;
+    localTime = document.createTextNode(hh + ":" + mm + ":" + ss);
+    placeToAdd.appendChild(localTime);
+  }
 }
 
 //updates local time for 1 second
 function updateLocalTime()
 {
   RightNow.setSeconds(RightNow.getSeconds() + 1);
+  if (countDownTimer != null) {
+    countDownTimer = countDownTimer - 1;
+    if (countDownTimer < 0) countDownTimer = null;
+  }
   printTime();
 }
 
 //parses Time format
 function parseAndSetTime(type, data, evt)
 {
+  var str;
+
+  countDownTimer = null;
   if(data != null) {
-    if(dojo.dom.getTagName(dojo.dom.firstElement(data)) == "t") {
+    if(dojo.dom.firstElement(data).tagName == "t") {
       RightNow = new Date();
       var elem = dojo.dom.firstElement(dojo.dom.firstElement(data));
       while(elem != null) {
-        switch(dojo.dom.getTagName(elem)) {
+        str = dojo.dom.textContent(elem);
+        switch(elem.tagName) {
         case "h":
-          RightNow.setHours(dojo.dom.textContent(elem));
+          RightNow.setHours(str);
           break;
         case "m":
-          RightNow.setMinutes(dojo.dom.textContent(elem));
+          RightNow.setMinutes(str);
           break;
         case "s":
-          RightNow.setSeconds(dojo.dom.textContent(elem));
+          RightNow.setSeconds(str);
           break;
         case "d":
-          RightNow.setDate(dojo.dom.textContent(elem));
+          RightNow.setDate(str);
           break;
         case "o":
-          RightNow.setMonth(dojo.dom.textContent(elem));
+          RightNow.setMonth(str);
           break;
         case "y":
-          RightNow.setYear(dojo.dom.textContent(elem));
+          RightNow.setYear(str);
+          break;
+        case "r":
+          countDownTimer = str;
           break;
         }
         elem = dojo.dom.nextElement(elem);
