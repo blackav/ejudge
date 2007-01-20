@@ -8396,6 +8396,8 @@ unpriv_page_header(FILE *fout,
       } else if (stop_time <= 0) {
         if (cnts->exam_mode) forced_text = _("Stop exam");
         else forced_text = _("Stop virtual contest");
+      } else {
+        continue;
       }
       break;
     case NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY:
@@ -8632,6 +8634,36 @@ user_main_page(FILE *fout,
     unpriv_print_status(fout, phr, cnts, extra,
                         start_time, stop_time, duration, sched_time,
                         fog_start_time);
+  }
+
+  if (phr->action == NEW_SRV_ACTION_VIEW_STARTSTOP) {
+    if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
+      html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
+                                       accepted_flag, 1, accepting_mode, 0);
+    }
+
+    if (global->is_virtual && start_time <= 0) {
+      html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+      if (cnts->exam_mode) {
+        fprintf(fout, "<p>%s</p></form>",
+                ns_submit_button(bb, sizeof(bb), 0,
+                                 NEW_SRV_ACTION_VIRTUAL_START,
+                                 _("Start exam")));
+      } else {
+        fprintf(fout, "<p>%s</p></form>",
+                BUTTON(NEW_SRV_ACTION_VIRTUAL_START));
+      }
+    } else if (global->is_virtual && stop_time <= 0) {
+      html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+      if (cnts->exam_mode) {
+        fprintf(fout, "<p>%s</p></form>",
+                ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_VIRTUAL_STOP,
+                                 _("Stop exam")));
+      } else {
+        fprintf(fout, "<p>%s</p></form>",
+                BUTTON(NEW_SRV_ACTION_VIRTUAL_STOP));
+      }
+    }
   }
 
   if (start_time && phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
@@ -8885,14 +8917,16 @@ user_main_page(FILE *fout,
                                      prob_id, "summary");
       }
 
-      fprintf(fout, "<%s>%s</%s>\n",
-              cnts->team_head_style, _("Select another problem"),
-              cnts->team_head_style);
+      if (global->problem_navigation <= 0) {
+        fprintf(fout, "<%s>%s</%s>\n",
+                cnts->team_head_style, _("Select another problem"),
+                cnts->team_head_style);
+      }
       html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
       fprintf(fout, "<table class=\"borderless\">\n");
       fprintf(fout, "<tr>");
 
-      if (global->problem_navigation) {
+      if (global->problem_navigation > 0) {
         for (i = prob_id - 1; i > 0; i--) {
           if (!cs->probs[i]) continue;
           // FIXME: standard applicability checks
@@ -8902,19 +8936,21 @@ user_main_page(FILE *fout,
           fprintf(fout, "<td class=\"borderless\">%s%s</a></td>",
                   ns_aref(bb, sizeof(bb), phr,
                           NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
-                          "prob_id=%d", i), _("Previous"));
+                          "prob_id=%d", i), _("Previous problem"));
         }
       }
 
-      fprintf(fout, "<td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Problem"));
-      html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 0,
-                             start_time);
-      fprintf(fout, "</td><td class=\"borderless\">%s</td>",
-              ns_submit_button(bb, sizeof(bb), 0,
-                               NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
-                               _("Select problem")));
+      if (global->problem_navigation <= 0) {
+        fprintf(fout, "<td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Problem"));
+        html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 0,
+                               start_time);
+        fprintf(fout, "</td><td class=\"borderless\">%s</td>",
+                ns_submit_button(bb, sizeof(bb), 0,
+                                 NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
+                                 _("Select problem")));
+      }
 
-      if (global->problem_navigation) {
+      if (global->problem_navigation > 0) {
         for (i = prob_id + 1; i <= cs->max_prob; i++) {
           if (!cs->probs[i]) continue;
           // FIXME: standard applicability checks
@@ -8924,7 +8960,7 @@ user_main_page(FILE *fout,
           fprintf(fout, "<td class=\"borderless\">%s%s</a></td>",
                   ns_aref(bb, sizeof(bb), phr,
                           NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
-                          "prob_id=%d", i), _("Next"));
+                          "prob_id=%d", i), _("Next problem"));
         }
       }
 
