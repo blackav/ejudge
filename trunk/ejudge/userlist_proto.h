@@ -23,7 +23,8 @@
 /* server requests codes */
 enum
   {
-    ULS_STOP = 1,
+    ULS_PASS_FD = 1,
+    ULS_STOP,
     ULS_RESTART,
     ULS_REGISTER_NEW,
     ULS_DO_LOGIN,
@@ -35,7 +36,6 @@ enum
     ULS_GET_USER_CONTESTS,
     ULS_REGISTER_CONTEST,
     ULS_DELETE_MEMBER,
-    ULS_PASS_FD,
     ULS_LIST_USERS,
     ULS_MAP_CONTEST,
     ULS_ADMIN_PROCESS,
