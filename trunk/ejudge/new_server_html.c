@@ -8363,7 +8363,7 @@ unpriv_page_header(FILE *fout,
       fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>", gettext(top_action_names[i]));
     } else if (top_action_list[i] == NEW_SRV_ACTION_LOGOUT) {
       forced_text = 0;
-      if (cnts->exam_mode) forced_text = _("Lock session");
+      if (cnts->exam_mode) forced_text = _("Finish session");
       if (!forced_text) forced_text = gettext(top_action_names[i]);
       fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s [%s]</a></div></td>",
               phr->self_url, phr->session_id, top_action_list[i],
