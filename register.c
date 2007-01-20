@@ -2262,11 +2262,11 @@ display_user_registered_page(void)
 {
   unsigned char s1[128], url[512];
   const struct contest_desc *cnts = 0;
-  int action = ACTION_LOGIN;
+  int action = STATE_LOGIN;
 
   if (user_contest_id > 0 && contests_get(user_contest_id, &cnts) >= 0
       && cnts && cnts->force_registration)
-    action = ACTION_LOGIN_FORCED_REG;
+    action = STATE_LOGIN_FORCED_REG;
 
   if (client_locale_id == -1) client_locale_id = 0;
   //l10n_setlocale(client_locale_id);
