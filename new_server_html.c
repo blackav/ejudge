@@ -8420,6 +8420,7 @@ unpriv_page_header(FILE *fout,
       break;      
     case NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT:
       if (start_time <= 0 || stop_time > 0) continue;
+      if (global->problem_navigation > 0) continue;
       break;
     case NEW_SRV_ACTION_VIEW_SUBMISSIONS:
       if (start_time <= 0) continue;
@@ -8540,7 +8541,8 @@ unpriv_page_header(FILE *fout,
 
   if (start_time > 0 && stop_time <= 0 && duration > 0) {
     duration_str(0, start_time + duration - cs->current_time, 0, time_buf, 0);
-    fprintf(fout, " / %s: %s", _("Remaining"), time_buf);
+    fprintf(fout, " / %s: <div id=\"remainingTime\">%s</div>",
+            _("Remaining"), time_buf);
   }
 
   fprintf(fout, "</div>\n");
@@ -9000,7 +9002,8 @@ user_main_page(FILE *fout,
 
       if (global->problem_navigation
           && global->score_system_val == SCORE_OLYMPIAD
-          && !prob->disable_user_submit) {
+          && !prob->disable_user_submit
+          && attempts_flag[prob->id]) {
         fprintf(fout, "<%s>%s (%s)</%s>\n",
                 cnts->team_head_style,
                 _("Previous submissions of this problem"),
@@ -9271,7 +9274,19 @@ unpriv_xml_user_state(
         struct contest_extra *extra)
 {
   const serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
   struct tm *ptm;
+  time_t start_time = 0, stop_time = 0, duration = 0, remaining;
+
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                          cs->current_time);
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+  }
+  duration = run_get_duration(cs->runlog_state);
 
   ptm = localtime(&cs->current_time);
   fprintf(fout, "Content-type: text/xml\n\n");
@@ -9282,10 +9297,15 @@ unpriv_xml_user_state(
           "<s>%02d</s>"
           "<d>%02d</d>"
           "<o>%02d</o>"
-          "<y>%d</y>"
-          "</t>",
+          "<y>%d</y>",
           ptm->tm_hour, ptm->tm_min, ptm->tm_sec,
           ptm->tm_mday, ptm->tm_mon + 1, ptm->tm_year + 1900);
+  if (start_time > 0 && stop_time <= 0 && duration > 0) {
+    remaining = start_time + duration - cs->current_time;
+    if (remaining < 0) remaining = 0;
+    fprintf(fout, "<r>%ld</r>", remaining);
+  }
+  fprintf(fout, "</t>");
 }
 
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
