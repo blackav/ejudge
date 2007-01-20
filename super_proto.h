@@ -28,9 +28,9 @@ struct prot_super_packet
 /* client-server requests */
 enum
 {
-  SSERV_CMD_STOP = 1,
+  SSERV_CMD_PASS_FD = 1,
+  SSERV_CMD_STOP,
   SSERV_CMD_RESTART,
-  SSERV_CMD_PASS_FD,
   SSERV_CMD_MAIN_PAGE,
   SSERV_CMD_CONTEST_PAGE,
   SSERV_CMD_VIEW_SERVE_LOG,

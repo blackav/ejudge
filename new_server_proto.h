@@ -33,9 +33,9 @@ struct new_server_prot_packet
 // client->serve requests
 enum
 {
-  NEW_SRV_CMD_STOP = 1,
+  NEW_SRV_CMD_PASS_FD = 1,
+  NEW_SRV_CMD_STOP,
   NEW_SRV_CMD_RESTART,
-  NEW_SRV_CMD_PASS_FD,
   NEW_SRV_CMD_HTTP_REQUEST,
 
   NEW_SRV_CMD_LAST,
