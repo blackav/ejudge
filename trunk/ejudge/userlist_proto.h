@@ -4,7 +4,7 @@
 #ifndef __USERLIST_PROTO_H__
 #define __USERLIST_PROTO_H__
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,9 @@
 /* server requests codes */
 enum
   {
-    ULS_REGISTER_NEW = 1,
+    ULS_STOP = 1,
+    ULS_RESTART,
+    ULS_REGISTER_NEW,
     ULS_DO_LOGIN,
     ULS_CHECK_COOKIE,
     ULS_DO_LOGOUT,
@@ -89,8 +91,6 @@ enum
     ULS_COPY_USER_INFO,
     ULS_RECOVER_PASSWORD_1,
     ULS_RECOVER_PASSWORD_2,
-    ULS_STOP,
-    ULS_RESTART,
     ULS_PRIV_COOKIE_LOGIN,
 
     ULS_LAST_CMD

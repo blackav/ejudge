@@ -6021,6 +6021,8 @@ unpriv_page_forgot_password_1(FILE *fout, struct http_request_info *phr)
   html_start_form(fout, 1, phr->self_url, "");
   html_hidden(fout, "contest_id", "%d", phr->contest_id);
   html_hidden(fout, "action", "%d", NEW_SRV_ACTION_FORGOT_PASSWORD_1);
+  if (cnts->disable_locale_change) 
+    html_hidden(fout, "locale_id", "%d", phr->locale_id);
 
   if (!cnts->disable_locale_change) {
     fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
@@ -6326,6 +6328,8 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
   fprintf(fout, "<div class=\"user_actions\">");
   html_hidden(fout, "contest_id", "%d", phr->contest_id);
   html_hidden(fout, "role", "%s", "0");
+  if (cnts->disable_locale_change)
+    html_hidden(fout, "locale_id", "%d", phr->locale_id);
   fprintf(fout, "<table class=\"menu\"><tr>\n");
 
   ss = 0;
