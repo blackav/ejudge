@@ -2261,6 +2261,12 @@ static void
 display_user_registered_page(void)
 {
   unsigned char s1[128], url[512];
+  const struct contest_desc *cnts = 0;
+  int action = ACTION_LOGIN;
+
+  if (user_contest_id > 0 && contests_get(user_contest_id, &cnts) >= 0
+      && cnts && cnts->force_registration)
+    action = ACTION_LOGIN_FORCED_REG;
 
   if (client_locale_id == -1) client_locale_id = 0;
   //l10n_setlocale(client_locale_id);
@@ -2279,7 +2285,7 @@ display_user_registered_page(void)
     snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
   }
   snprintf(url, sizeof(url), "%s?login=%s&action=%d%s&locale_id=%d",
-           self_url, user_login, STATE_LOGIN, s1, client_locale_id);
+           self_url, user_login, action, s1, client_locale_id);
 
   client_put_header(stdout, header_txt, 0, config->charset, 1,
                     client_locale_id,"%s", _("User registration is complete"));
