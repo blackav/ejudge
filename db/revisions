@@ -44,7 +44,6 @@ run_packet_priv.h 2716 0 265252
 serve_clnt.h 3079 0 516904
 settings.h 3035 0 135779
 sformat.h 3041 0 134096
-super_actions.h 3132 0 1587558
 super_clnt.h 2590 0 174958
 super_html.h 2667 0 1223112
 super_proto.h 3130 0 1566765
@@ -607,7 +606,6 @@ prepare.c 3293 0 11610974
 prepare_serve.c 3293 0 336215
 super_html.c 3293 0 9963100
 super_html_2.c 3293 0 4245155
-super_actions.h 3294 0 1622595
 super_proto.h 3294 0 1593911
 super-serve.h 3294 0 360461
 serve-control.c 3294 0 10849508
@@ -875,7 +873,6 @@ serve_2.c 3355 0 1838905
 teamdb.c 3355 0 1343436
 new_server_html.c 3356 0 8475793
 prepare.h 3358 0 2450853
-super_actions.h 3358 0 1628885
 super_proto.h 3358 0 1599741
 serve.c 3358 0 15046793
 serve-control.c 3358 0 10880831
@@ -885,7 +882,6 @@ prepare_out.c 3358 0 5320837
 super_html_3.c 3358 0 20240575
 html.h 3359 0 737444
 prepare.h 3359 0 2452276
-super_actions.h 3359 0 1634043
 super_proto.h 3359 0 1604439
 serve-control.c 3359 0 10907680
 super-serve.c 3359 0 11163720
@@ -895,7 +891,6 @@ prepare_out.c 3359 0 5324757
 super_html_3.c 3359 0 20314228
 prepare.h 3360 0 2458582
 prepare_dflt.h 3360 0 414406
-super_actions.h 3360 0 1640111
 super_proto.h 3360 0 1610047
 ejudge-setup.c 3360 0 9296214
 serve-control.c 3360 0 10938421
@@ -905,7 +900,6 @@ prepare.c 3360 0 12247870
 prepare_out.c 3360 0 5339144
 super_html_3.c 3360 0 20372368
 prepare.h 3361 0 2467414
-super_actions.h 3361 0 1646351
 super_proto.h 3361 0 1615827
 serve-control.c 3361 0 10969562
 super-serve.c 3361 0 11196294
@@ -921,7 +915,6 @@ new_server_html.c 3362 0 8722343
 serve_state.c 3362 0 473659
 watched_file.c 3362 0 174778
 prepare.h 3364 0 2502555
-super_actions.h 3364 0 1648741
 super_proto.h 3364 0 1617987
 serve-control.c 3364 0 10982235
 super-serve.c 3364 0 11203068
@@ -929,7 +922,6 @@ prepare.c 3364 0 12439475
 prepare_out.c 3364 0 5386403
 super_html_3.c 3364 0 20597173
 prepare.h 3365 0 2494575
-super_actions.h 3365 0 1645746
 super_proto.h 3365 0 1615222
 run.c 3365 0 5552776
 serve.c 3365 0 15046444
@@ -1015,7 +1007,6 @@ prepare.c 3385 0 12474172
 teamdb.c 3385 0 1353930
 new_server_html.c 3387 0 12863229
 contests.h 3389 0 771804
-super_actions.h 3389 0 1648652
 super_proto.h 3389 0 1617898
 serve-control.c 3389 0 10982122
 super-serve.c 3389 0 11202892
@@ -1037,7 +1028,6 @@ new_server_html.c 3398 0 13508827
 new_server_html.c 3400 0 13508926
 super_html_3.c 3402 0 20577974
 contests.h 3404 0 776648
-super_actions.h 3404 0 1651728
 super_proto.h 3404 0 1620744
 register.c 3404 0 7951975
 serve-control.c 3404 0 10997791
@@ -1046,7 +1036,6 @@ contests.c 3404 0 3862385
 super_html.c 3404 0 10116676
 super_html_2.c 3404 0 4398986
 contests.h 3406 0 781560
-super_actions.h 3406 0 1657980
 super_proto.h 3406 0 1626536
 register.c 3406 0 7955681
 serve-control.c 3406 0 11029448
@@ -1056,7 +1045,6 @@ contests.c 3406 0 3877718
 super_html.c 3406 0 10152286
 super_html_2.c 3406 0 4412812
 contests.h 3408 0 787318
-super_actions.h 3408 0 1661433
 super_proto.h 3408 0 1629695
 serve-control.c 3408 0 11046625
 super-serve.c 3408 0 11237369
@@ -1073,7 +1061,6 @@ mime_type.c 3417 0 408225
 mime_type.c 3419 0 411236
 new_server_html.c 3421 0 13508942
 contests.h 3423 0 791898
-super_actions.h 3423 0 1664401
 super_proto.h 3423 0 1632433
 register.c 3423 0 8100708
 serve-control.c 3423 0 11061814
@@ -1143,7 +1130,6 @@ serve_2.c 3444 0 4606280
 serve_state.c 3444 0 622136
 super_html_3.c 3444 0 20579556
 prepare.h 3445 0 2558188
-super_actions.h 3445 0 1674206
 super_proto.h 3445 0 1641548
 serve-control.c 3445 0 11110301
 super-serve.c 3445 0 11270856
@@ -1178,7 +1164,6 @@ contests.c 3459 0 4132227
 new_server_html.c 3459 0 16971751
 new_server_html_2.c 3459 0 4276107
 contests.h 3461 0 803399
-super_actions.h 3461 0 1688119
 super_proto.h 3461 0 1654541
 serve-control.c 3461 0 11179374
 super-serve.c 3461 0 11308557
@@ -1200,7 +1185,6 @@ userlist.c 3465 0 3762242
 userlist_xml.c 3465 0 4194182
 prepare.h 3467 0 2567882
 serve_state.h 3467 0 726660
-super_actions.h 3467 0 1694808
 super_proto.h 3467 0 1660770
 serve-control.c 3467 0 11212290
 super-serve.c 3467 0 11325901
@@ -1345,7 +1329,6 @@ userlist_clnt/copy_user_info.c 3536 0 130606
 new_server_html_2.c 3539 0 6211880
 new_server_tables.c 3539 0 791701
 contests.h 3541 0 811337
-super_actions.h 3541 0 1698573
 super_proto.h 3541 0 1664305
 serve-control.c 3541 0 11232252
 super-serve.c 3541 0 11340250
@@ -1373,7 +1356,6 @@ userlist_clnt/recover_passwd_2.c 3550 0 241001
 new_server_html.c 3553 0 20495526
 new_server_html_2.c 3553 0 6164432
 prepare.h 3555 0 2573051
-super_actions.h 3555 0 1704825
 super_proto.h 3555 0 1670097
 serve-control.c 3555 0 11263687
 super-serve.c 3555 0 11356725
@@ -1427,7 +1409,6 @@ new_server_html_3.c 3586 0 1626630
 new_server_html.c 3587 0 20478397
 new-server.h 3589 0 1074487
 runlog.h 3589 0 692895
-super_actions.h 3589 0 1710184
 new_server_proto.h 3589 0 377324
 serve.c 3589 0 11707768
 clarlog.c 3589 0 1324091
@@ -1455,7 +1436,6 @@ new_server_tables.c 3600 0 811459
 new_server_html.c 3602 0 21297572
 prepare.h 3604 0 2578800
 prepare_dflt.h 3604 0 417415
-super_actions.h 3604 0 1713912
 super_proto.h 3604 0 1678494
 serve-control.c 3604 0 11309888
 super-serve.c 3604 0 11391385
@@ -1465,7 +1445,6 @@ prepare.c 3604 0 12714121
 prepare_out.c 3604 0 5506183
 super_html_3.c 3604 0 21249987
 prepare.h 3613 0 2587898
-super_actions.h 3613 0 1717467
 super_proto.h 3613 0 1681819
 serve-control.c 3613 0 11327191
 super-serve.c 3613 0 11400479
@@ -1483,7 +1462,6 @@ new_server_tables.c 3618 0 816533
 serve_2.c 3618 0 5442628
 serve_state.c 3618 0 684513
 prepare.h 3619 0 2596041
-super_actions.h 3619 0 1723126
 super_proto.h 3619 0 1687018
 serve-control.c 3619 0 11356023
 super-serve.c 3619 0 11415775
@@ -1492,7 +1470,6 @@ prepare.c 3619 0 12781083
 prepare_out.c 3619 0 5524252
 super_html_3.c 3619 0 21405659
 prepare.h 3620 0 2602410
-super_actions.h 3620 0 1726965
 super_proto.h 3620 0 1690627
 serve-control.c 3620 0 11374510
 super-serve.c 3620 0 11425453
@@ -1540,7 +1517,6 @@ new_server_html.c 3655 0 22753037
 super_html_3.c 3655 0 21484305
 prepare.h 3657 0 2604877
 prepare_dflt.h 3657 0 420175
-super_actions.h 3657 0 1730449
 super_proto.h 3657 0 1693881
 serve-control.c 3657 0 11391631
 super-serve.c 3657 0 11434397
@@ -1677,7 +1653,6 @@ new_server_html_2.c 3749 0 7096496
 new_server_proto.c 3749 0 835168
 new_server_tables.c 3749 0 894009
 prepare.h 3751 0 2613759
-super_actions.h 3751 0 1733757
 super_proto.h 3751 0 1699690
 run.c 3751 0 5698072
 serve-control.c 3751 0 11407973
@@ -1831,7 +1806,6 @@ runlog.c 3831 0 6064784
 serve_2.c 3831 0 6199904
 new_server_html_4.c 3833 0 4335791
 contests.h 3835 0 821285
-super_actions.h 3835 0 1736519
 super_proto.h 3835 0 1702222
 serve-control.c 3835 0 11422365
 super-serve.c 3835 0 11611993
@@ -1839,7 +1813,6 @@ contests.c 3835 0 4209642
 super_html.c 3835 0 10637055
 super_html_2.c 3835 0 4473049
 prepare.h 3836 0 2656310
-super_actions.h 3836 0 1743018
 super_proto.h 3836 0 1708261
 serve-control.c 3836 0 11454785
 super-serve.c 3836 0 11628961
@@ -1858,7 +1831,6 @@ new_server_html.c 3842 0 25155521
 new_server_html_2.c 3842 0 8969116
 prepare.h 3843 0 2661954
 prepare_dflt.h 3843 0 422884
-super_actions.h 3843 0 1746443
 super_proto.h 3843 0 1711456
 serve-control.c 3843 0 11471736
 super-serve.c 3843 0 11637809
@@ -1923,3 +1895,31 @@ new-server.c 3874 0 1600975
 new_server_html.c 3874 0 25680029
 new_server_html_2.c 3874 0 9012492
 new_server_html_3.c 3874 0 1811595
+contests.h 3878 0 827456
+super_proto.h 3878 0 1714867
+serve-control.c 3878 0 11489766
+super-serve.c 3878 0 11650769
+new_server_html.c 3878 0 25690617
+super_html.c 3878 0 10670001
+super_html_2.c 3878 0 4481328
+super_proto.h 3880 0 1716257
+serve-control.c 3880 0 7799963
+super_html.c 3880 0 10598810
+super_html_2.c 3880 0 4478379
+super_html_3.c 3880 0 21646461
+contests.h 3881 0 832354
+new-server.h 3881 0 1400088
+super_proto.h 3881 0 1729028
+super-serve.h 3881 0 366712
+serve-control.c 3881 0 7847229
+super-serve.c 3881 0 11696841
+contests.c 3881 0 4249087
+contest_tmpl.c 3881 0 865376
+new_server_html.c 3881 0 25782792
+new_server_html_2.c 3881 0 9014652
+new_server_html_3.c 3881 0 1921791
+super_html.c 3881 0 10668974
+super_html_2.c 3881 0 4546187
+super_proto.h 3882 0 1729015
+new_server_proto.h 3882 0 457940
+new_server_html.c 3882 0 25798331
