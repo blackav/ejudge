@@ -8673,6 +8673,7 @@ user_main_page(FILE *fout,
     fprintf(fout, "<tr id=\"probNavTopList\">\n");
     for (i = 1, j = 0; i <= cs->max_prob; i++) {
       if (!(prob = cs->probs[i])) continue;
+      if (prob->disable_user_submit > 0) continue;
       /* standard checks for submit possibility */
 
       if (j > 0) {
@@ -8681,6 +8682,8 @@ user_main_page(FILE *fout,
       }
       hh = "probNavHidden";
       if (prob->disable_user_submit > 0) {
+        cc = "white";
+      } else if (i == prob_id) {
         cc = "white";
       } else if (!attempts_flag[i]) {
         cc = "#dcdcdc";
@@ -8692,7 +8695,7 @@ user_main_page(FILE *fout,
         cc = "#ffdddd";
       }
       if (i == prob_id) hh = "probNavActiveTop";
-      fprintf(fout, "<td class=\"%s\" bgcolor=\"%s\">", hh, cc);
+      fprintf(fout, "<td class=\"%s\" style=\"background-color: %s\">", hh, cc);
       /*
       if (accepting_mode && accepted_flag[i]) {
         fprintf(fout, "<s>");
@@ -9181,6 +9184,7 @@ user_main_page(FILE *fout,
     fprintf(fout, "<tr id=\"probNavBottomList\">\n");
     for (i = 1, j = 0; i <= cs->max_prob; i++) {
       if (!(prob = cs->probs[i])) continue;
+      if (prob->disable_user_submit > 0) continue;
       /* standard checks for submit possibility */
 
       if (j > 0) {
@@ -9191,6 +9195,8 @@ user_main_page(FILE *fout,
       if (prob_id == i) hh = "probNavActiveBottom";
       if (prob->disable_user_submit > 0) {
         cc = "white";
+      } else if (i == prob_id) {
+        cc = "white";
       } else if (!attempts_flag[i]) {
         cc = "#dcdcdc";
       } else if (pending_flag[i] || trans_flag[i]) {
@@ -9200,7 +9206,7 @@ user_main_page(FILE *fout,
       } else {
         cc = "#ffdddd";
       }
-      fprintf(fout, "<td class=\"%s\" bgcolor=\"%s\">", hh, cc);
+      fprintf(fout, "<td class=\"%s\" style=\"background-color: %s\">", hh, cc);
       /*
       if (accepting_mode && accepted_flag[i]) {
         fprintf(fout, "<s>");
