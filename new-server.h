@@ -557,4 +557,34 @@ struct client_state *ns_get_client_by_id(int client_id);
 void ns_send_reply(struct client_state *p, int answer);
 void ns_new_autoclose(struct client_state *p, void *, size_t);
 
+void
+ns_get_user_problems_summary(
+	const serve_state_t cs, int user_id, int accepting_mode,
+        unsigned char *solved_flag,   /* whether the problem was OK */
+        unsigned char *accepted_flag, /* whether the problem was accepted */
+        unsigned char *pending_flag,  /* whether there are pending runs */
+        unsigned char *trans_flag,    /* whether there are transient runs */
+        unsigned char *attempts_flag, /* whether there are attempts */
+        int *best_run,                /* the number of the best run */
+        int *attempts,                /* the number of previous attempts */
+        int *disqualified,            /* the number of prev. disq. attempts */
+        int *best_score,              /* the best score for the problem */
+        int *prev_successes);         /* the number of prev. successes */
+void
+ns_write_user_problems_summary(
+	const serve_state_t cs,
+        FILE *fout,
+        int user_id,
+        int accepting_mode,
+        const unsigned char *table_class,
+        unsigned char *solved_flag,   /* whether the problem was OK */
+        unsigned char *accepted_flag, /* whether the problem was accepted */
+        unsigned char *pending_flag,  /* whether there are pending runs */
+        unsigned char *trans_flag,    /* whether there are transient runs */
+        int *best_run,                /* the number of the best run */
+        int *attempts,                /* the number of previous attempts */
+        int *disqualified,            /* the number of prev. disq. attempts */
+        int *best_score,              /* the best score for the problem */
+        int *prev_successes);         /* the number of prev. successes */
+
 #endif /* __NEW_SERVER_H__ */

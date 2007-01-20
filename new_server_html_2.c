@@ -43,6 +43,7 @@
 #include "errlog.h"
 #include "csv.h"
 #include "sha.h"
+#include "sformat.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -3472,6 +3473,588 @@ ns_write_olympiads_user_runs(
     xfree(report_comment); report_comment = 0;
   }
   fprintf(fout, "</table>\n");
+}
+
+void
+ns_get_user_problems_summary(
+	const serve_state_t cs, int user_id, int accepting_mode,
+        unsigned char *solved_flag,   /* whether the problem was OK */
+        unsigned char *accepted_flag, /* whether the problem was accepted */
+        unsigned char *pending_flag,  /* whether there are pending runs */
+        unsigned char *trans_flag,    /* whether there are transient runs */
+        unsigned char *attempts_flag, /* whether there are attemps */
+        int *best_run,                /* the number of the best run */
+        int *attempts,                /* the number of previous attempts */
+        int *disqualified,            /* the number of prev. disq. attempts */
+        int *best_score,              /* the best score for the problem */
+        int *prev_successes)          /* the number of prev. successes */
+{
+  const struct section_global_data *global = cs->global;
+  time_t start_time;
+  int total_runs, run_id, cur_score, total_teams;
+  struct run_entry re;
+  struct section_problem_data *cur_prob = 0;
+  unsigned char *user_flag = 0;
+
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, user_id);
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+  }
+  total_runs = run_get_total(cs->runlog_state);
+  total_teams = teamdb_get_max_team_id(cs->teamdb_state) + 1;
+
+  memset(best_run, -1, sizeof(best_run[0]) * (cs->max_prob + 1));
+  XCALLOC(user_flag, (cs->max_prob + 1) * total_teams);
+
+  for (run_id = 0; run_id < total_runs; run_id++) {
+    if (run_get_entry(cs->runlog_state, run_id, &re) < 0) continue;
+    if (!run_is_valid_status(re.status)) continue;
+    if (re.status >= RUN_TRANSIENT_FIRST && re.status <= RUN_TRANSIENT_LAST
+        && re.user_id == user_id
+        && re.prob_id > 0 && re.prob_id <= cs->max_prob
+        && cs->probs[re.prob_id]) {
+      trans_flag[re.prob_id] = 1;
+      attempts_flag[re.prob_id] = 1;
+    }
+    if (re.status > RUN_MAX_STATUS) continue;
+
+    cur_prob = 0;
+    if (re.prob_id > 0 && re.prob_id <= cs->max_prob)
+      cur_prob = cs->probs[re.prob_id];
+    if (!cur_prob) continue;
+
+    if (re.user_id <= 0 || re.user_id >= total_teams) continue;
+    if (re.user_id != user_id) {
+      if (re.is_hidden) continue;
+      if (teamdb_get_flags(cs->teamdb_state,
+                           re.user_id) & (TEAM_INVISIBLE | TEAM_BANNED))
+        continue;
+      if (re.status == RUN_OK) {
+        if (!user_flag[re.user_id * (cs->max_prob + 1) + re.prob_id]) {
+          prev_successes[re.prob_id]++;
+        }
+        user_flag[re.user_id * (cs->max_prob + 1) + re.prob_id] = 1;
+      }
+      continue;
+    }
+
+    attempts_flag[re.prob_id] = 1;
+    if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+      // OLYMPIAD contest in accepting mode
+      if (cur_prob->type_val != PROB_TYPE_STANDARD) {
+        switch (re.status) {
+        case RUN_OK:
+        case RUN_PARTIAL:
+        case RUN_ACCEPTED:
+        case RUN_WRONG_ANSWER_ERR:
+          re.status = RUN_ACCEPTED;
+          break;
+
+        case RUN_COMPILE_ERR:
+        case RUN_RUN_TIME_ERR:
+        case RUN_TIME_LIMIT_ERR:
+        case RUN_CHECK_FAILED:
+        case RUN_MEM_LIMIT_ERR:
+        case RUN_SECURITY_ERR:
+          re.status = RUN_CHECK_FAILED;
+          break;
+        }
+        switch (re.status) {
+        case RUN_ACCEPTED:
+          accepted_flag[re.prob_id] = 1;
+          best_run[re.prob_id] = run_id;
+          break;
+
+        case RUN_PRESENTATION_ERR:
+          if (!accepted_flag[re.prob_id]) {
+            best_run[re.prob_id] = run_id;
+          }
+          break;
+
+        case RUN_CHECK_FAILED:
+        case RUN_IGNORED:
+        case RUN_DISQUALIFIED:
+          break;
+
+        case RUN_PENDING:
+          pending_flag[re.prob_id] = 1;
+          attempts[re.prob_id]++;
+          if (best_run[re.prob_id] < 0) best_run[re.prob_id] = run_id;
+          break;
+
+        default:
+          abort();
+        }
+      } else {
+        // regular problems
+        switch (re.status) {
+        case RUN_OK:
+        case RUN_PARTIAL:
+        case RUN_ACCEPTED:
+          accepted_flag[re.prob_id] = 1;
+          best_run[re.prob_id] = run_id;
+          break;
+
+        case RUN_COMPILE_ERR:
+        case RUN_RUN_TIME_ERR:
+        case RUN_TIME_LIMIT_ERR:
+        case RUN_PRESENTATION_ERR:
+        case RUN_WRONG_ANSWER_ERR:
+        case RUN_CHECK_FAILED:
+        case RUN_MEM_LIMIT_ERR:
+        case RUN_SECURITY_ERR:
+          if (!accepted_flag[re.prob_id]) {
+            best_run[re.prob_id] = run_id;
+          }
+          break;
+
+        case RUN_IGNORED:
+        case RUN_DISQUALIFIED:
+          break;
+
+        case RUN_PENDING:
+          pending_flag[re.prob_id] = 1;
+          attempts[re.prob_id]++;
+          if (best_run[re.prob_id] < 0) best_run[re.prob_id] = run_id;
+          break;
+
+        default:
+          abort();
+        }
+      }
+    } else if (global->score_system_val == SCORE_OLYMPIAD) {
+      // OLYMPIAD contest in judging mode
+      //if (solved_flag[re.prob_id]) continue;
+
+      switch (re.status) {
+      case RUN_OK:
+        solved_flag[re.prob_id] = 1;
+        best_run[re.prob_id] = run_id;
+        cur_score = calc_kirov_score(0, 0, &re, cur_prob, 0, 0, 0, 0, 0);
+        //if (cur_score > best_score[re.prob_id])
+        best_score[re.prob_id] = cur_score;
+        break;
+
+      case RUN_COMPILE_ERR:
+      case RUN_RUN_TIME_ERR:
+      case RUN_TIME_LIMIT_ERR:
+      case RUN_PRESENTATION_ERR:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_CHECK_FAILED:
+      case RUN_MEM_LIMIT_ERR:
+      case RUN_SECURITY_ERR:
+        break;
+
+      case RUN_PARTIAL:
+        solved_flag[re.prob_id] = 0;
+        best_run[re.prob_id] = run_id;
+        attempts[re.prob_id]++;
+        cur_score = calc_kirov_score(0, 0, &re, cur_prob, 0, 0, 0, 0, 0);
+        //if (cur_score > best_score[re.prob_id])
+        best_score[re.prob_id] = cur_score;
+        break;
+
+      case RUN_ACCEPTED:
+        break;
+
+      case RUN_IGNORED:
+        break;
+
+      case RUN_DISQUALIFIED:
+        break;
+
+      case RUN_PENDING:
+        pending_flag[re.prob_id] = 1;
+        if (best_run[re.prob_id] < 0) best_run[re.prob_id] = run_id;
+        break;
+
+      default:
+        abort();
+      }
+    } else if (global->score_system_val == SCORE_KIROV) {
+      // KIROV contest
+      if (solved_flag[re.prob_id]) continue;
+
+      switch (re.status) {
+      case RUN_OK:
+        solved_flag[re.prob_id] = 1;
+        cur_score = calc_kirov_score(0, 0, &re, cur_prob,
+                                     attempts[re.prob_id],
+                                     disqualified[re.prob_id],
+                                     prev_successes[re.prob_id], 0, 0);
+
+        if (cur_score >= best_score[re.prob_id]) {
+          best_score[re.prob_id] = cur_score;
+          best_run[re.prob_id] = run_id;
+        }
+        break;
+
+      case RUN_COMPILE_ERR:
+        if (!global->ignore_compile_errors) {
+          attempts[re.prob_id]++;
+          cur_score = 0;
+          if (cur_score >= best_score[re.prob_id]) {
+            best_score[re.prob_id] = cur_score;
+            best_run[re.prob_id] = run_id;
+          }
+        }
+        break;
+
+      case RUN_RUN_TIME_ERR:
+      case RUN_TIME_LIMIT_ERR:
+      case RUN_PRESENTATION_ERR:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_CHECK_FAILED:
+      case RUN_MEM_LIMIT_ERR:
+      case RUN_SECURITY_ERR:
+        break;
+
+      case RUN_PARTIAL:
+        cur_score = calc_kirov_score(0, 0, &re, cur_prob,
+                                     attempts[re.prob_id],
+                                     disqualified[re.prob_id],
+                                     prev_successes[re.prob_id], 0, 0);
+
+        attempts[re.prob_id]++;
+        if (cur_score >= best_score[re.prob_id]) {
+          best_score[re.prob_id] = cur_score;
+          best_run[re.prob_id] = run_id;
+        }
+        break;
+
+      case RUN_ACCEPTED:
+        break;
+
+      case RUN_IGNORED:
+        break;
+
+      case RUN_DISQUALIFIED:
+        disqualified[re.prob_id]++;
+        break;
+
+      case RUN_PENDING:
+        pending_flag[re.prob_id] = 1;
+        attempts[re.prob_id]++;
+        if (best_run[re.prob_id] < 0) best_run[re.prob_id] = run_id;
+        break;
+
+      default:
+        abort();
+      }
+    } else if (global->score_system_val == SCORE_MOSCOW) {
+      if (solved_flag[re.prob_id]) continue;
+
+      switch (re.status) {
+      case RUN_OK:
+        solved_flag[re.prob_id] = 1;
+        best_run[re.prob_id] = run_id;
+        cur_score = cur_prob->full_score;
+        if (cur_score >= best_score[re.prob_id]) {
+          best_score[re.prob_id] = cur_score;
+          best_run[re.prob_id] = run_id;
+        }
+        break;
+
+      case RUN_COMPILE_ERR:
+        if (!global->ignore_compile_errors) {
+          attempts[re.prob_id]++;
+          cur_score = 0;
+          if (cur_score >= best_score[re.prob_id]
+              || best_run[re.prob_id] < 0) {
+            best_score[re.prob_id] = cur_score;
+            best_run[re.prob_id] = run_id;
+          }
+        }
+        break;
+      case RUN_RUN_TIME_ERR:
+      case RUN_TIME_LIMIT_ERR:
+      case RUN_PRESENTATION_ERR:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_CHECK_FAILED:
+      case RUN_MEM_LIMIT_ERR:
+      case RUN_SECURITY_ERR:
+        attempts[re.prob_id]++;
+        cur_score = re.score;
+        if (cur_score >= best_score[re.prob_id]
+            || best_run[re.prob_id] < 0) {
+          best_score[re.prob_id] = cur_score;
+          best_run[re.prob_id] = run_id;
+        }
+        break;
+
+      case RUN_PARTIAL:
+      case RUN_ACCEPTED:
+      case RUN_IGNORED:
+      case RUN_DISQUALIFIED:
+        break;
+
+      case RUN_PENDING:
+        pending_flag[re.prob_id] = 1;
+        attempts[re.prob_id]++;
+        if (best_run[re.prob_id] < 0) best_run[re.prob_id] = run_id;
+        break;
+
+      default:
+        abort();
+      }
+    } else {
+      // ACM contest
+      if (solved_flag[re.prob_id]) continue;
+
+      switch (re.status) {
+      case RUN_OK:
+        solved_flag[re.prob_id] = 1;
+        best_run[re.prob_id] = run_id;
+        break;
+
+      case RUN_COMPILE_ERR:
+        if (!global->ignore_compile_errors) {
+          attempts[re.prob_id]++;
+          best_run[re.prob_id] = run_id;
+        }
+        break;
+      case RUN_RUN_TIME_ERR:
+      case RUN_TIME_LIMIT_ERR:
+      case RUN_PRESENTATION_ERR:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_CHECK_FAILED:
+      case RUN_MEM_LIMIT_ERR:
+      case RUN_SECURITY_ERR:
+        attempts[re.prob_id]++;
+        best_run[re.prob_id] = run_id;
+        break;
+
+      case RUN_PARTIAL:
+      case RUN_ACCEPTED:
+      case RUN_IGNORED:
+      case RUN_DISQUALIFIED:
+        break;
+
+      case RUN_PENDING:
+        pending_flag[re.prob_id] = 1;
+        attempts[re.prob_id]++;
+        if (best_run[re.prob_id] < 0) best_run[re.prob_id] = run_id;
+        break;
+
+      default:
+        abort();
+      }
+    }
+  }
+
+  xfree(user_flag);
+}
+
+void
+ns_write_user_problems_summary(
+	const serve_state_t cs,
+        FILE *fout,
+        int user_id,
+        int accepting_mode,
+        const unsigned char *table_class,
+        unsigned char *solved_flag,   /* whether the problem was OK */
+        unsigned char *accepted_flag, /* whether the problem was accepted */
+        unsigned char *pending_flag,  /* whether there are pending runs */
+        unsigned char *trans_flag,    /* whether there are transient runs */
+        int *best_run,                /* the number of the best run */
+        int *attempts,                /* the number of previous attempts */
+        int *disqualified,            /* the number of prev. disq. attempts */
+        int *best_score,              /* the best score for the problem */
+        int *prev_successes)          /* the number of prev. successes */
+{
+  const struct section_global_data *global = cs->global;
+  time_t start_time;
+  int total_runs, total_teams, prob_id, total_score = 0;
+  struct run_entry re;
+  struct section_problem_data *cur_prob = 0;
+  unsigned char *s;
+  unsigned char url_buf[1024];
+  unsigned char status_str[64];
+  time_t current_time = time(0);
+  int act_status;
+  unsigned char *cl = "";
+
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, user_id);
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+  }
+  total_runs = run_get_total(cs->runlog_state);
+  total_teams = teamdb_get_max_team_id(cs->teamdb_state) + 1;
+
+  if (table_class && *table_class) {
+    cl = alloca(strlen(table_class) + 16);
+    sprintf(cl, " class=\"%s\"", table_class);
+  }
+
+  fprintf(fout, "<table border=\"1\"%s><tr>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>",
+          cl, cl, _("Short name"),
+          cl, _("Long name"),
+          cl, _("Status"));
+  if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    fprintf(fout, "<th%s>%s</th>", cl, _("Tests passed"));
+  } else if ((global->score_system_val == SCORE_OLYMPIAD
+              && !accepting_mode)
+      || global->score_system_val == SCORE_KIROV) {
+    fprintf(fout, "<th%s>%s</th>", cl, _("Tests passed"));
+    fprintf(fout, "<th%s>%s</th>", cl, _("Score"));
+  } else if (global->score_system_val == SCORE_MOSCOW) {
+    fprintf(fout, "<th%s>%s</th>", cl, _("Failed test"));
+    fprintf(fout, "<th%s>%s</th>", cl, _("Score"));
+  } else {
+    fprintf(fout, "<th%s>%s</th>", cl, _("Failed test"));
+  }
+  fprintf(fout, "<th%s>%s</th></tr>\n", cl, _("Run ID"));
+
+  for (prob_id = 1; prob_id <= cs->max_prob; prob_id++) {
+    if (!(cur_prob = cs->probs[prob_id])) continue;
+    if (cur_prob->t_start_date && current_time < cur_prob->t_start_date)
+      continue;
+    if (cur_prob->hidden > 0) continue;
+    s = "";
+    if (accepted_flag[prob_id] || solved_flag[prob_id])
+      s = " bgcolor=\"#ddffdd\"";
+    else if (!pending_flag[prob_id] && attempts[prob_id])
+      s = " bgcolor=\"#ffdddd\"";
+    fprintf(fout, "<tr%s>", s);
+    fprintf(fout, "<td%s>", cl);
+    if (global->prob_info_url[0]) {
+      sformat_message(url_buf, sizeof(url_buf), global->prob_info_url,
+                      NULL, cur_prob, NULL, NULL, NULL, 0, 0, 0);
+      fprintf(fout, "<a href=\"%s\" target=\"_blank\">", url_buf);
+    }
+    s = html_armor_string_dup(cur_prob->short_name);
+    fprintf(fout, "%s", s);
+    xfree(s);
+    fprintf(fout, "</td>");
+    s = html_armor_string_dup(cur_prob->long_name);
+    fprintf(fout, "<td%s>%s</td>", cl, s);
+    xfree(s);
+    if (best_run[prob_id] < 0) {
+      if (global->score_system_val == SCORE_KIROV
+          || (global->score_system_val == SCORE_OLYMPIAD
+              && !accepting_mode)
+          || global->score_system_val == SCORE_MOSCOW) {
+        fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td><td%s>&nbsp;</td><td%s>&nbsp;</td></tr>\n", cl, cl, cl, cl);
+      } else {
+        fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td><td%s>&nbsp;</td></tr>\n", cl, cl, cl);
+      }
+      continue;
+    }
+
+    run_get_entry(cs->runlog_state, best_run[prob_id], &re);
+    act_status = re.status;
+    if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+      if (act_status == RUN_OK || act_status == RUN_PARTIAL
+          || (act_status == RUN_WRONG_ANSWER_ERR
+              && cur_prob->type_val != PROB_TYPE_STANDARD))
+        act_status = RUN_ACCEPTED;
+    }
+    run_status_str(act_status, status_str, 0, cur_prob->type_val);
+    fprintf(fout, "<td%s>%s</td>", cl, status_str);
+
+    if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+      switch (act_status) {
+      case RUN_RUN_TIME_ERR:
+      case RUN_TIME_LIMIT_ERR:
+      case RUN_PRESENTATION_ERR:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_MEM_LIMIT_ERR:
+      case RUN_SECURITY_ERR:
+        fprintf(fout, "<td%s>%d</td>", cl, re.test);
+        break;
+      default:
+        fprintf(fout, "<td%s>&nbsp;</td>", cl);
+        break;
+      }
+    } else if (global->score_system_val == SCORE_OLYMPIAD) {
+      total_score += best_score[prob_id];
+      switch (re.status) {
+      case RUN_OK:
+      case RUN_PARTIAL:
+        if (cur_prob->type_val != PROB_TYPE_STANDARD) {
+          fprintf(fout, "<td%s>&nbsp;</td><td%s>%d</td>",
+                  cl, cl, best_score[prob_id]);
+        } else {
+          fprintf(fout, "<td%s>%d</td><td%s>%d</td>",
+                  cl, re.test - 1, cl, best_score[prob_id]);
+        }
+        break;
+      default:
+        fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td>", cl, cl);
+        break;
+      }
+    } else if (global->score_system_val == SCORE_KIROV) {
+      total_score += best_score[prob_id];
+      switch (re.status) {
+      case RUN_OK:
+      case RUN_PARTIAL:
+        fprintf(fout, "<td%s>%d</td><td%s>%d</td>",
+                cl, re.test - 1, cl, best_score[prob_id]);
+        break;
+      default:
+        fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td>", cl, cl);
+        break;
+      }
+    } else if (global->score_system_val == SCORE_MOSCOW) {
+      total_score += best_score[prob_id];
+      switch (re.status) {
+      case RUN_OK:
+        fprintf(fout, "<td%s>&nbsp;</td><td%s>%d</td>",
+                cl, cl, best_score[prob_id]);
+        break;
+      case RUN_RUN_TIME_ERR:
+      case RUN_TIME_LIMIT_ERR:
+      case RUN_PRESENTATION_ERR:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_MEM_LIMIT_ERR:
+      case RUN_SECURITY_ERR:
+        if (global->disable_failed_test_view > 0) {
+          fprintf(fout, "<td%s>&nbsp;</td>", cl);
+        } else {
+          fprintf(fout, "<td%s>%d</td>", cl, re.test);
+        }
+        fprintf(fout, "<td%s>%d</td>", cl, best_score[prob_id]);
+        break;
+      default:
+        fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td>", cl, cl);
+        break;
+      }
+    } else {
+      // ACM contest
+      switch (re.status) {
+      case RUN_RUN_TIME_ERR:
+      case RUN_TIME_LIMIT_ERR:
+      case RUN_PRESENTATION_ERR:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_MEM_LIMIT_ERR:
+      case RUN_SECURITY_ERR:
+        if (global->disable_failed_test_view > 0) {
+          fprintf(fout, "<td%s>&nbsp;</td>", cl);
+        } else {
+          fprintf(fout, "<td%s>%d</td>", cl, re.test);
+        }
+        break;
+      default:
+        fprintf(fout, "<td%s>&nbsp;</td>", cl);
+        break;
+      }
+    }
+    fprintf(fout, "<td%s>%d</td>", cl, best_run[prob_id]);
+    fprintf(fout, "</tr>\n");
+  }
+
+  fprintf(fout, "</table>\n");
+
+  if ((global->score_system_val == SCORE_OLYMPIAD && !accepting_mode)
+      || global->score_system_val == SCORE_KIROV
+      || global->score_system_val == SCORE_MOSCOW) {
+    fprintf(fout, "<p><big>%s: %d</big></p>\n", _("Total score"), total_score);
+  }
 }
 
 /*

@@ -8491,10 +8491,17 @@ unpriv_page_header(FILE *fout,
       s = _("OVER");
     }
   } else if (start_time > 0) {
-    if (fog_start_time > 0 && cs->current_time >= fog_start_time)
-      s = _("RUNNING (frozen)");
-    else
-      s = _("RUNNING");
+    if (fog_start_time > 0 && cs->current_time >= fog_start_time) {
+      if (cnts->exam_mode)
+        s = _("EXAM IS RUNNING (frozen)");
+      else
+        s = _("RUNNING (frozen)");
+    } else {
+      if (cnts->exam_mode)
+        s = _("EXAM IS RUNNING");
+      else
+        s = _("RUNNING");
+    }
   } else {
     s = _("NOT STARTED");
   }
@@ -8565,6 +8572,14 @@ user_main_page(FILE *fout,
   int all_runs = 0, all_clars = 0;
   unsigned char *solved_flag = 0;
   unsigned char *accepted_flag = 0;
+  unsigned char *pending_flag = 0;
+  unsigned char *trans_flag = 0;
+  unsigned char *attempts_flag = 0;
+  int *best_run = 0;
+  int *attempts = 0;
+  int *disqualified = 0;
+  int *best_score = 0;
+  int *prev_successes = 0;
   int n, v, prob_id = 0, i, j, variant = 0;
   char **lang_list;
   path_t variant_stmt_file;
@@ -8577,6 +8592,7 @@ user_main_page(FILE *fout,
   int first_prob_id, last_prob_id;
   int accepting_mode = 0;
   const unsigned char *hh = 0;
+  const unsigned char *cc = 0;
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
@@ -8594,6 +8610,15 @@ user_main_page(FILE *fout,
   
   XALLOCAZ(solved_flag, cs->max_prob + 1);
   XALLOCAZ(accepted_flag, cs->max_prob + 1);
+  XALLOCAZ(pending_flag, cs->max_prob + 1);
+  XALLOCAZ(trans_flag, cs->max_prob + 1);
+  XALLOCAZ(attempts_flag, cs->max_prob + 1);
+  XALLOCA(best_run, cs->max_prob + 1);
+  memset(best_run, -1, (cs->max_prob + 1) * sizeof(best_run[0]));
+  XALLOCAZ(attempts, cs->max_prob + 1);
+  XALLOCAZ(disqualified, cs->max_prob + 1);
+  XALLOCAZ(best_score, cs->max_prob + 1);
+  XALLOCAZ(prev_successes, cs->max_prob + 1);
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
@@ -8625,23 +8650,76 @@ user_main_page(FILE *fout,
 
   unpriv_page_header(fout, phr, cnts, extra, start_time, stop_time);
 
-  if (phr->action == NEW_SRV_ACTION_MAIN_PAGE) {
-    if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
-      html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
-                                       accepted_flag, 1, accepting_mode, 0);
-    }
+  ns_get_user_problems_summary(cs, phr->user_id, accepting_mode,
+                               solved_flag, accepted_flag, pending_flag,
+                               trans_flag, attempts_flag,
+                               best_run, attempts, disqualified,
+                               best_score, prev_successes);
 
+  if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
+    // need correct problem selection...
+    if (prob_id > cs->max_prob) prob_id = 0;
+    if (prob_id > 0 && !(prob = cs->probs[prob_id])) prob_id = 0;
+    if (prob_id > 0 && is_problem_deadlined(cs, prob_id, phr->login, 0))
+      prob_id = 0;
+    if (prob_id > 0 && prob->t_start_date > 0
+        && cs->current_time < prob->t_start_date)
+      prob_id = 0;
+    if (prob_id > 0 && prob->variant_num > 0
+        && (variant = find_variant(cs, phr->user_id, prob_id)) <= 0)
+      prob_id = 0;
+
+    fprintf(fout, "<table cellpadding=\"0\" cellspacing=\"0\">\n");
+    fprintf(fout, "<tr id=\"probNavTopList\">\n");
+    for (i = 1, j = 0; i <= cs->max_prob; i++) {
+      if (!(prob = cs->probs[i])) continue;
+      /* standard checks for submit possibility */
+
+      if (j > 0) {
+        fprintf(fout, "<td class=\"probNavSpaceTop\">&nbsp;</td>");
+        j++;
+      }
+      hh = "probNavHidden";
+      if (prob->disable_user_submit > 0) {
+        cc = "white";
+      } else if (!attempts_flag[i]) {
+        cc = "#dcdcdc";
+      } else if (pending_flag[i] || trans_flag[i]) {
+        cc = "#ffff88";
+      } else if (accepted_flag[i] || solved_flag[i]) {
+        cc = "#ddffdd";
+      } else {
+        cc = "#ffdddd";
+      }
+      if (i == prob_id) hh = "probNavActiveTop";
+      fprintf(fout, "<td class=\"%s\" bgcolor=\"%s\">", hh, cc);
+      /*
+      if (accepting_mode && accepted_flag[i]) {
+        fprintf(fout, "<s>");
+      }
+      */
+      fprintf(fout, "%s%s</a>",
+              ns_aref_2(bb, sizeof(bb), phr, "menu",
+                        NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
+                        "prob_id=%d", i), prob->short_name);
+      /*
+      if (accepting_mode && accepted_flag[i]) {
+        fprintf(fout, "</s>");
+      }
+      */
+      fprintf(fout, "</td>\n");
+      j++;
+    }
+    fprintf(fout, "</tr><tr><td colspan=\"%d\" id=\"probNavTaskArea\">\n", j);
+  }
+
+  if (phr->action == NEW_SRV_ACTION_MAIN_PAGE) {
     unpriv_print_status(fout, phr, cnts, extra,
                         start_time, stop_time, duration, sched_time,
                         fog_start_time);
   }
 
   if (phr->action == NEW_SRV_ACTION_VIEW_STARTSTOP) {
-    if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
-      html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
-                                       accepted_flag, 1, accepting_mode, 0);
-    }
-
     if (global->is_virtual && start_time <= 0) {
       html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
       if (cnts->exam_mode) {
@@ -8671,18 +8749,15 @@ user_main_page(FILE *fout,
             cnts->team_head_style,
             _("Problem status summary"),
             cnts->team_head_style);
-    html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
-                                     accepted_flag, 0,
-                                     accepting_mode, "summary");
+    ns_write_user_problems_summary(cs, fout, phr->user_id, accepting_mode,
+                                   "summary",
+                                   solved_flag, accepted_flag, pending_flag,
+                                   trans_flag, best_run, attempts,
+                                   disqualified, best_score, prev_successes);
   }
 
   if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS
       && start_time > 0) {
-    if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
-      html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
-                                       accepted_flag, 1, accepting_mode, 0);
-    }
-
     if (cnts->problems_url) {
       fprintf(fout, "<p><a href=\"%s\">%s</a></p>\n",
               cnts->problems_url, _("Problem statements"));
@@ -8738,9 +8813,6 @@ user_main_page(FILE *fout,
 
   if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT
       && !cs->clients_suspended) {
-    html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
-                                     accepted_flag, 1, accepting_mode, 0);
-
     if (prob_id > cs->max_prob) prob_id = 0;
     if (prob_id > 0 && !(prob = cs->probs[prob_id])) prob_id = 0;
     if (prob_id > 0 && is_problem_deadlined(cs, prob_id, phr->login, 0))
@@ -8778,13 +8850,25 @@ user_main_page(FILE *fout,
                 cnts->team_head_style);
       } else {
         if (cnts->exam_mode) {
-          fprintf(fout, "<%s>%s %s</%s>\n",
-                  cnts->team_head_style, _("Submit a solution for"),
-                  prob->long_name, cnts->team_head_style);
+          if (prob->disable_user_submit > 0) {
+            fprintf(fout, "<%s>%s</%s>\n",
+                    cnts->team_head_style,
+                    prob->long_name, cnts->team_head_style);
+          } else {
+            fprintf(fout, "<%s>%s %s</%s>\n",
+                    cnts->team_head_style, _("Submit a solution for"),
+                    prob->long_name, cnts->team_head_style);
+          }
         } else {
-          fprintf(fout, "<%s>%s %s-%s</%s>\n",
-                  cnts->team_head_style, _("Submit a solution for"),
-                  prob->short_name, prob->long_name, cnts->team_head_style);
+          if (prob->disable_user_submit > 0) {
+            fprintf(fout, "<%s>%s-%s</%s>\n",
+                    cnts->team_head_style,
+                    prob->short_name, prob->long_name, cnts->team_head_style);
+          } else {
+            fprintf(fout, "<%s>%s %s-%s</%s>\n",
+                    cnts->team_head_style, _("Submit a solution for"),
+                    prob->short_name, prob->long_name, cnts->team_head_style);
+          }
         }
       }
 
@@ -8979,11 +9063,6 @@ user_main_page(FILE *fout,
   }
 
   if (phr->action == NEW_SRV_ACTION_VIEW_SUBMISSIONS && start_time > 0) {
-    if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
-      html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
-                                       accepted_flag, 1, accepting_mode, 0);
-    }
-
     fprintf(fout, "<%s>%s (%s)</%s>\n",
             cnts->team_head_style,
             _("Sent submissions"),
@@ -9008,11 +9087,6 @@ user_main_page(FILE *fout,
 
   if (phr->action == NEW_SRV_ACTION_VIEW_CLAR_SUBMIT
       && !cs->clients_suspended) {
-    if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
-      html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
-                                       accepted_flag, 1, accepting_mode, 0);
-    }
-
     if (!global->disable_clars && !global->disable_team_clars
         && start_time > 0 && stop_time <= 0) {
       fprintf(fout, "<%s>%s</%s>\n",
@@ -9050,11 +9124,6 @@ user_main_page(FILE *fout,
   }
 
   if (phr->action == NEW_SRV_ACTION_VIEW_CLARS && !global->disable_clars) {
-    if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
-      html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
-                                       accepted_flag, 1, accepting_mode, 0);
-    }
-
     fprintf(fout, "<%s>%s (%s)</%s>\n",
             cnts->team_head_style, _("Messages"),
             all_clars?_("all"):_("last 15"), cnts->team_head_style);
@@ -9070,11 +9139,6 @@ user_main_page(FILE *fout,
   }
 
   if (phr->action == NEW_SRV_ACTION_VIEW_SETTINGS) {
-    if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
-      html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
-                                       accepted_flag, 1, accepting_mode, 0);
-    }
-
     /* change the password */
     if (!cs->clients_suspended) {
       fprintf(fout, "<%s>%s</%s>\n",
@@ -9111,24 +9175,50 @@ user_main_page(FILE *fout,
 
   /* new problem navigation */
   if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
-    fprintf(fout, "<div class=\"server_status_on\"><table class=\"borderless\"><tr>");
-    fprintf(fout, "<td class=\"borderless\">%s</td>", _("Problems:"));
-    for (i = 1; i <= cs->max_prob; i++) {
+    // consider prob_id OK...
+
+    fprintf(fout, "</tr></td>\n");
+    fprintf(fout, "<tr id=\"probNavBottomList\">\n");
+    for (i = 1, j = 0; i <= cs->max_prob; i++) {
       if (!(prob = cs->probs[i])) continue;
       /* standard checks for submit possibility */
-      fprintf(fout, "<td class=\"borderless\">");
+
+      if (j > 0) {
+        fprintf(fout, "<td class=\"probNavSpaceBottom\">&nbsp;</td>");
+        j++;
+      }
+      hh = "probNavHidden";
+      if (prob_id == i) hh = "probNavActiveBottom";
+      if (prob->disable_user_submit > 0) {
+        cc = "white";
+      } else if (!attempts_flag[i]) {
+        cc = "#dcdcdc";
+      } else if (pending_flag[i] || trans_flag[i]) {
+        cc = "#ffff88";
+      } else if (accepted_flag[i] || solved_flag[i]) {
+        cc = "#ddffdd";
+      } else {
+        cc = "#ffdddd";
+      }
+      fprintf(fout, "<td class=\"%s\" bgcolor=\"%s\">", hh, cc);
+      /*
       if (accepting_mode && accepted_flag[i]) {
         fprintf(fout, "<s>");
       }
+      */
       fprintf(fout, "%s%s</a>",
-              ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
-                      "prob_id=%d", i), prob->short_name);
+              ns_aref_2(bb, sizeof(bb), phr, "menu",
+                        NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
+                        "prob_id=%d", i), prob->short_name);
+      /*
       if (accepting_mode && accepted_flag[i]) {
         fprintf(fout, "</s>");
       }
+      */
       fprintf(fout, "</td>\n");
+      j++;
     }
-    fprintf(fout, "</tr></table></div>\n");
+    fprintf(fout, "</tr></table>\n");
   }
 
   if (!cnts->exam_mode /*&& global->show_generation_time*/) {
