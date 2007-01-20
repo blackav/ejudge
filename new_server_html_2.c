@@ -3214,17 +3214,23 @@ ns_write_olympiads_user_runs(
 
   XALLOCAZ(latest_flag, cs->max_prob + 1);
 
-  fprintf(fout,"<table border=\"1\"%s><tr><th%s>%s</th><th%s>%s</th>"
-          "<th%s>%s</th>"
-          "<th%s>%s</th><th%s>%s</th><th%s>%s</th>"
+  fprintf(fout,"<table border=\"1\"%s><tr><th%s>%s</th><th%s>%s</th>",
+          cl, cl, _("Run ID"), cl, _("Time"));
+
+  if (!cnts->exam_mode) {
+    fprintf(fout,"<th%s>%s</th>", cl, _("Size"));
+  }
+
+  fprintf(fout,"<th%s>%s</th><th%s>%s</th><th%s>%s</th>"
           "<th%s>%s</th><th%s>%s</th>",
-          cl, cl, _("Run ID"), cl, _("Time"), cl, _("Size"), cl, _("Problem"),
-          cl, _("Language"), cl, _("Result"),
+          cl, _("Problem"),
+          cl, _("Programming language"), cl, _("Result"),
           cl, _("Tests passed"), cl, _("Score"));
+
   if (global->team_enable_src_view)
-    fprintf(fout, "<th%s>%s</th>", cl, _("View source"));
+    fprintf(fout, "<th%s>%s</th>", cl, _("View submitted answer"));
   /*if (global->team_enable_rep_view || global->team_enable_ce_view)*/
-  fprintf(fout, "<th%s>%s</th>", cl, _("View report"));
+  fprintf(fout, "<th%s>%s</th>", cl, _("View check details"));
   if (global->enable_printing && !cs->printing_suspended)
     fprintf(fout, "<th%s>%s</th>", cl, _("Print sources"));
   fprintf(fout, "</tr>\n");

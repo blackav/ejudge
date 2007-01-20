@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-01-18 18:04+0300\n"
-"PO-Revision-Date: 2007-01-18 18:32+0300\n"
+"POT-Creation-Date: 2007-01-20 13:08+0300\n"
+"PO-Revision-Date: 2007-01-20 13:09+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -174,10 +174,18 @@ msgid ""
 "<p class=\"ejudge_copyright\">Visual design and web-interface &copy; %s <a "
 "href=\"%s\">Toto Lasvik</a>.</p>"
 msgstr ""
-"<p class=\"ejudge_copyright\">Это - система администрирования турниров <a href=\"%s\"><b>ejudge</b></a>, версия %s, дата компиляции %s.</p>\n"
-"<p class=\"ejudge_copyright\">Авторские права на программу: &copy; %s Александр Чернов.</p>\n"
-"<p class=\"ejudge_copyright\">Данная программа является свободным ПО. Вы можете распространять и/или модифицировать её в соответствии с <a href=\"http://www.gnu.org/licenses/gpl.html\">Общей Лицензией GNU</a> (GNU General Public License), опубликованной <a href=\"http://www.fsf.org\">Фондом свободного ПО</a> (Free Software Foundation), либо версии 2 Лицензии, либо (по Вашему желанию) любой последующей версии.</p>\n"
-"<p class=\"ejudge_copyright\">Веб-дизайн и AJAX-интерфейс &copy; %s <a href=\"%s\">Toto Lasvik</a>.</p>"
+"<p class=\"ejudge_copyright\">Это - система администрирования турниров <a "
+"href=\"%s\"><b>ejudge</b></a>, версия %s, дата компиляции %s.</p>\n"
+"<p class=\"ejudge_copyright\">Авторские права на программу: &copy; %s "
+"Александр Чернов.</p>\n"
+"<p class=\"ejudge_copyright\">Данная программа является свободным ПО. Вы "
+"можете распространять и/или модифицировать её в соответствии с <a href="
+"\"http://www.gnu.org/licenses/gpl.html\">Общей Лицензией GNU</a> (GNU "
+"General Public License), опубликованной <a href=\"http://www.fsf.org"
+"\">Фондом свободного ПО</a> (Free Software Foundation), либо версии 2 "
+"Лицензии, либо (по Вашему желанию) любой последующей версии.</p>\n"
+"<p class=\"ejudge_copyright\">Веб-дизайн и AJAX-интерфейс &copy; %s <a href="
+"\"%s\">Toto Lasvik</a>.</p>"
 
 #, c-format
 msgid ""
@@ -856,6 +864,9 @@ msgstr "Удалить роль НАБЛЮДАТЕЛЯ"
 #, c-format
 msgid "Deleting role %d of user %d from contest %d failed"
 msgstr "Удаление роли %d у пользователя %d в турнире %d не удалось"
+
+msgid "Description"
+msgstr "Описание"
 
 msgid "Detailed information about participant"
 msgstr "Подробная информация об участнике"
@@ -1659,6 +1670,9 @@ msgstr "Размещение"
 msgid "Lock"
 msgstr "Закрыть"
 
+msgid "Lock session"
+msgstr "Заблокировать сеанс работы"
+
 msgid "Locked?"
 msgstr "Запертый?"
 
@@ -2218,6 +2232,9 @@ msgstr "Вывод программы"
 
 msgid "Program output to stderr"
 msgstr "Вывод программы на stderr"
+
+msgid "Programming language"
+msgstr "Язык программирования"
 
 msgid "Programming languages"
 msgstr "Языки программирования"
@@ -3204,6 +3221,9 @@ msgstr "Просмотр"
 msgid "View all"
 msgstr "Посмотреть всё"
 
+msgid "View check details"
+msgstr "Отчёт о проверке"
+
 msgid "View contest passwords"
 msgstr "Просмотреть турнирные пароли"
 
@@ -3227,6 +3247,9 @@ msgstr "Посмотреть исходный текст"
 
 msgid "View standings"
 msgstr "Посмотреть положение участников"
+
+msgid "View submitted answer"
+msgstr "Сданный ответ"
 
 msgid "View team report"
 msgstr "Просмотреть пользовательский протокол"
