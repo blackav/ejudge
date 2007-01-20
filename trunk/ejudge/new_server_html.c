@@ -8777,9 +8777,15 @@ user_main_page(FILE *fout,
                 prob->short_name, prob->long_name, _("Variant"), variant,
                 cnts->team_head_style);
       } else {
-        fprintf(fout, "<%s>%s %s-%s</%s>\n",
-                cnts->team_head_style, _("Submit a solution for"),
-                prob->short_name, prob->long_name, cnts->team_head_style);
+        if (cnts->exam_mode) {
+          fprintf(fout, "<%s>%s %s</%s>\n",
+                  cnts->team_head_style, _("Submit a solution for"),
+                  prob->long_name, cnts->team_head_style);
+        } else {
+          fprintf(fout, "<%s>%s %s-%s</%s>\n",
+                  cnts->team_head_style, _("Submit a solution for"),
+                  prob->short_name, prob->long_name, cnts->team_head_style);
+        }
       }
 
       /* put problem statement */
@@ -8910,7 +8916,7 @@ user_main_page(FILE *fout,
           && !prob->disable_user_submit) {
         fprintf(fout, "<%s>%s (%s)</%s>\n",
                 cnts->team_head_style,
-                _("Previous submissions"),
+                _("Previous submissions of this problem"),
                 all_runs?_("all"):_("last 15"),
                 cnts->team_head_style);
         ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
@@ -8920,6 +8926,10 @@ user_main_page(FILE *fout,
       if (global->problem_navigation <= 0) {
         fprintf(fout, "<%s>%s</%s>\n",
                 cnts->team_head_style, _("Select another problem"),
+                cnts->team_head_style);
+      } else {
+        fprintf(fout, "<%s>%s</%s>\n",
+                cnts->team_head_style, _("Problem navigation"),
                 cnts->team_head_style);
       }
       html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
