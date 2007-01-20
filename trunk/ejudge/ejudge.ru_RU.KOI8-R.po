@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-01-20 15:57+0300\n"
-"PO-Revision-Date: 2007-01-20 15:58+0300\n"
+"POT-Creation-Date: 2007-01-21 01:19+0300\n"
+"PO-Revision-Date: 2007-01-21 01:19+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1108,6 +1108,9 @@ msgstr "Отобрано"
 msgid "Finalize registration"
 msgstr "Завершить регистрацию"
 
+msgid "Finish session"
+msgstr "Завершить сеанс работы"
+
 msgid "First clar"
 msgstr "Первое сообщение"
 
@@ -1675,9 +1678,6 @@ msgstr "Размещение"
 
 msgid "Lock"
 msgstr "Закрыть"
-
-msgid "Lock session"
-msgstr "Заблокировать сеанс работы"
 
 msgid "Locked?"
 msgstr "Запертый?"
