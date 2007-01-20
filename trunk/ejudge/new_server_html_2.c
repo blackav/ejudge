@@ -3428,11 +3428,17 @@ ns_write_olympiads_user_runs(
     }
 
     fprintf(fout,
-            "<tr%s><td%s>%d%s</td><td%s>%s</td><td%s>%u</td>"
+            "<tr%s><td%s>%d%s</td><td%s>%s</td>",
+            row_attr, cl, i, run_kind_ptr,
+            cl, dur_str);
+
+    if (!cnts->exam_mode) {
+      fprintf(fout, "<td%s>%u</td>", cl, re.size);
+    }
+
+    fprintf(fout,
             "<td%s>%s</td><td%s>%s</td><td%s>%s</td>"
             "<td%s>%s</td><td%s>%s</td>",
-            row_attr, cl, i, run_kind_ptr,
-            cl, dur_str, cl, re.size,
             cl, prob_name_ptr,
             cl, lang_name_ptr, cl, stat_str,
             cl, tests_buf, cl, score_buf);
