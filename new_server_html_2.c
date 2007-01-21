@@ -3498,12 +3498,12 @@ ns_get_user_problems_summary(
         unsigned char *accepted_flag, /* whether the problem was accepted */
         unsigned char *pending_flag,  /* whether there are pending runs */
         unsigned char *trans_flag,    /* whether there are transient runs */
-        unsigned char *attempts_flag, /* whether there are attemps */
         int *best_run,                /* the number of the best run */
         int *attempts,                /* the number of previous attempts */
         int *disqualified,            /* the number of prev. disq. attempts */
         int *best_score,              /* the best score for the problem */
-        int *prev_successes)          /* the number of prev. successes */
+        int *prev_successes,          /* the number of prev. successes */
+        int *all_attempts)            /* all attempts count */
 {
   const struct section_global_data *global = cs->global;
   time_t start_time;
@@ -3531,7 +3531,7 @@ ns_get_user_problems_summary(
         && re.prob_id > 0 && re.prob_id <= cs->max_prob
         && cs->probs[re.prob_id]) {
       trans_flag[re.prob_id] = 1;
-      attempts_flag[re.prob_id] = 1;
+      all_attempts[re.prob_id]++;
     }
     if (re.status > RUN_MAX_STATUS) continue;
 
@@ -3555,7 +3555,7 @@ ns_get_user_problems_summary(
       continue;
     }
 
-    attempts_flag[re.prob_id] = 1;
+    all_attempts[re.prob_id]++;
     if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       // OLYMPIAD contest in accepting mode
       if (cur_prob->type_val != PROB_TYPE_STANDARD) {
@@ -3864,6 +3864,7 @@ ns_get_user_problems_summary(
 
 void
 ns_write_user_problems_summary(
+	const struct contest_desc *cnts,
 	const serve_state_t cs,
         FILE *fout,
         int user_id,
@@ -3890,6 +3891,7 @@ ns_write_user_problems_summary(
   time_t current_time = time(0);
   int act_status;
   unsigned char *cl = "";
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, user_id);
@@ -3904,13 +3906,15 @@ ns_write_user_problems_summary(
     sprintf(cl, " class=\"%s\"", table_class);
   }
 
-  fprintf(fout, "<table border=\"1\"%s><tr>"
-          "<th%s>%s</th>"
-          "<th%s>%s</th>"
-          "<th%s>%s</th>",
-          cl, cl, _("Short name"),
-          cl, _("Long name"),
-          cl, _("Status"));
+  fprintf(fout, "<table border=\"1\"%s><tr>", cl);
+  if (cnts->exam_mode) {
+    fprintf(fout, "<th%s>%s</th>", cl, _("Problem"));
+
+  } else {
+    fprintf(fout, "<th%s>%s</th><th%s>%s</th>",
+            cl, _("Short name"), cl, _("Long name"));
+  }
+  fprintf(fout, "<th%s>%s</th>", cl, _("Status"));
   if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
     fprintf(fout, "<th%s>%s</th>", cl, _("Tests passed"));
   } else if ((global->score_system_val == SCORE_OLYMPIAD
@@ -3924,7 +3928,10 @@ ns_write_user_problems_summary(
   } else {
     fprintf(fout, "<th%s>%s</th>", cl, _("Failed test"));
   }
-  fprintf(fout, "<th%s>%s</th></tr>\n", cl, _("Run ID"));
+  if (!cnts->exam_mode) {
+    fprintf(fout, "<th%s>%s</th>", cl, _("Run ID"));
+  }
+  fprintf(fout, "</tr>\n");
 
   for (prob_id = 1; prob_id <= cs->max_prob; prob_id++) {
     if (!(cur_prob = cs->probs[prob_id])) continue;
@@ -3937,27 +3944,36 @@ ns_write_user_problems_summary(
     else if (!pending_flag[prob_id] && attempts[prob_id])
       s = " bgcolor=\"#ffdddd\"";
     fprintf(fout, "<tr%s>", s);
-    fprintf(fout, "<td%s>", cl);
-    if (global->prob_info_url[0]) {
-      sformat_message(url_buf, sizeof(url_buf), global->prob_info_url,
-                      NULL, cur_prob, NULL, NULL, NULL, 0, 0, 0);
-      fprintf(fout, "<a href=\"%s\" target=\"_blank\">", url_buf);
+    if (cnts->exam_mode) {
+      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(cur_prob->long_name));
+    } else {
+      fprintf(fout, "<td%s>", cl);
+      if (global->prob_info_url[0]) {
+        sformat_message(url_buf, sizeof(url_buf), global->prob_info_url,
+                        NULL, cur_prob, NULL, NULL, NULL, 0, 0, 0);
+        fprintf(fout, "<a href=\"%s\" target=\"_blank\">", url_buf);
+      }
+      fprintf(fout, "%s", ARMOR(cur_prob->short_name));
+      if (global->prob_info_url[0]) fprintf(fout, "</a>");
+      fprintf(fout, "</td>");
+      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(cur_prob->long_name));
     }
-    s = html_armor_string_dup(cur_prob->short_name);
-    fprintf(fout, "%s", s);
-    xfree(s);
-    fprintf(fout, "</td>");
-    s = html_armor_string_dup(cur_prob->long_name);
-    fprintf(fout, "<td%s>%s</td>", cl, s);
-    xfree(s);
     if (best_run[prob_id] < 0) {
       if (global->score_system_val == SCORE_KIROV
           || (global->score_system_val == SCORE_OLYMPIAD
               && !accepting_mode)
           || global->score_system_val == SCORE_MOSCOW) {
-        fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td><td%s>&nbsp;</td><td%s>&nbsp;</td></tr>\n", cl, cl, cl, cl);
+        fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td><td%s>&nbsp;</td>", cl, cl, cl);
+        if (!cnts->exam_mode) {
+          fprintf(fout, "<td%s>&nbsp;</td>", cl);
+        }
+        fprintf(fout, "</tr>\n");
       } else {
-        fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td><td%s>&nbsp;</td></tr>\n", cl, cl, cl);
+        fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td>", cl, cl);
+        if (!cnts->exam_mode) {
+          fprintf(fout, "<td%s>&nbsp;</td>", cl);
+        }
+        fprintf(fout, "</tr>\n");
       }
       continue;
     }
@@ -4060,7 +4076,9 @@ ns_write_user_problems_summary(
         break;
       }
     }
-    fprintf(fout, "<td%s>%d</td>", cl, best_run[prob_id]);
+    if (!cnts->exam_mode) {
+      fprintf(fout, "<td%s>%d</td>", cl, best_run[prob_id]);
+    }
     fprintf(fout, "</tr>\n");
   }
 
@@ -4071,6 +4089,8 @@ ns_write_user_problems_summary(
       || global->score_system_val == SCORE_MOSCOW) {
     fprintf(fout, "<p><big>%s: %d</big></p>\n", _("Total score"), total_score);
   }
+
+  html_armor_free(&ab);
 }
 
 /*

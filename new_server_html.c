@@ -8667,12 +8667,12 @@ user_main_page(FILE *fout,
   unsigned char *accepted_flag = 0;
   unsigned char *pending_flag = 0;
   unsigned char *trans_flag = 0;
-  unsigned char *attempts_flag = 0;
   int *best_run = 0;
   int *attempts = 0;
   int *disqualified = 0;
   int *best_score = 0;
   int *prev_successes = 0;
+  int *all_attempts = 0;
   int n, v, prob_id = 0, i, j, variant = 0;
   char **lang_list;
   path_t variant_stmt_file;
@@ -8705,13 +8705,13 @@ user_main_page(FILE *fout,
   XALLOCAZ(accepted_flag, cs->max_prob + 1);
   XALLOCAZ(pending_flag, cs->max_prob + 1);
   XALLOCAZ(trans_flag, cs->max_prob + 1);
-  XALLOCAZ(attempts_flag, cs->max_prob + 1);
   XALLOCA(best_run, cs->max_prob + 1);
   memset(best_run, -1, (cs->max_prob + 1) * sizeof(best_run[0]));
   XALLOCAZ(attempts, cs->max_prob + 1);
   XALLOCAZ(disqualified, cs->max_prob + 1);
   XALLOCAZ(best_score, cs->max_prob + 1);
   XALLOCAZ(prev_successes, cs->max_prob + 1);
+  XALLOCAZ(all_attempts, cs->max_prob + 1);
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
@@ -8745,9 +8745,9 @@ user_main_page(FILE *fout,
 
   ns_get_user_problems_summary(cs, phr->user_id, accepting_mode,
                                solved_flag, accepted_flag, pending_flag,
-                               trans_flag, attempts_flag,
+                               trans_flag,
                                best_run, attempts, disqualified,
-                               best_score, prev_successes);
+                               best_score, prev_successes, all_attempts);
 
   if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
     // need correct problem selection...
@@ -8779,7 +8779,7 @@ user_main_page(FILE *fout,
         cc = "white";
       } else if (i == prob_id) {
         cc = "white";
-      } else if (!attempts_flag[i]) {
+      } else if (!all_attempts[i]) {
         cc = "#dcdcdc";
       } else if (pending_flag[i] || trans_flag[i]) {
         cc = "#ffff88";
@@ -8846,7 +8846,7 @@ user_main_page(FILE *fout,
             cnts->team_head_style,
             _("Problem status summary"),
             cnts->team_head_style);
-    ns_write_user_problems_summary(cs, fout, phr->user_id, accepting_mode,
+    ns_write_user_problems_summary(cnts, cs, fout, phr->user_id, accepting_mode,
                                    "summary",
                                    solved_flag, accepted_flag, pending_flag,
                                    trans_flag, best_run, attempts,
@@ -9095,12 +9095,19 @@ user_main_page(FILE *fout,
       if (global->problem_navigation
           && global->score_system_val == SCORE_OLYMPIAD
           && !prob->disable_user_submit
-          && attempts_flag[prob->id]) {
-        fprintf(fout, "<%s>%s (%s)</%s>\n",
-                cnts->team_head_style,
-                _("Previous submissions of this problem"),
-                all_runs?_("all"):_("last 15"),
-                cnts->team_head_style);
+          && all_attempts[prob->id]) {
+        if (all_attempts[prob->id] <= 15) {
+          fprintf(fout, "<%s>%s</%s>\n",
+                  cnts->team_head_style,
+                  _("Previous submissions of this problem"),
+                  cnts->team_head_style);
+        } else {
+          fprintf(fout, "<%s>%s (%s)</%s>\n",
+                  cnts->team_head_style,
+                  _("Previous submissions of this problem"),
+                  /*all_runs?_("all"):*/_("last 15"),
+                  cnts->team_head_style);
+        }
         ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
                                      prob_id, "summary");
       }
@@ -9292,7 +9299,7 @@ user_main_page(FILE *fout,
         cc = "white";
       } else if (i == prob_id) {
         cc = "white";
-      } else if (!attempts_flag[i]) {
+      } else if (!all_attempts[i]) {
         cc = "#dcdcdc";
       } else if (pending_flag[i] || trans_flag[i]) {
         cc = "#ffff88";
