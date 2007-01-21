@@ -329,6 +329,10 @@ td#probNavTaskArea
         background-color: white;
         padding: 20px 20px 20px 20px;
 }
+div#probNavTaskArea
+{
+        width: 600px;
+}
 
 td.probNavActiveTop
 {
@@ -350,4 +354,14 @@ td.probNavActiveBottom
         //background-color: white;
         font-weight: 800;
         padding: 2px 2px 2px 2px;
+}
+
+A.tab
+{
+        color: #000000;
+        text-decoration: none;
+}
+A.tab:visited
+{
+        color: #000000;
 }
