@@ -1939,3 +1939,9 @@ register.c 3897 0 8621500
 new_server_html.c 3899 0 26182774
 new_server_html.c 3901 0 26255626
 new_server_html.c 3903 0 26255840
+new-server.h 3906 0 1551030
+serve_state.h 3906 0 908184
+new_server_html.c 3906 0 26561594
+new_server_html_2.c 3906 0 10455853
+new_server_tables.c 3906 0 938912
+serve_2.c 3906 0 6434024
