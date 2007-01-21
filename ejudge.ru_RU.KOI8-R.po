@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-01-21 01:19+0300\n"
-"PO-Revision-Date: 2007-01-21 01:19+0300\n"
+"POT-Creation-Date: 2007-01-21 15:53+0300\n"
+"PO-Revision-Date: 2007-01-21 15:55+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -653,6 +653,15 @@ msgstr "Сбросить турнирные пароли"
 msgid "Clear contest passwords!"
 msgstr "Сбросить турнирные пароли!"
 
+msgid "Clear displayed runs"
+msgstr "Очистить отображённые посылки"
+
+msgid "Clear displayed runs!"
+msgstr "Очистить отображённые посылки!"
+
+msgid "Clear runs"
+msgstr "Очистить посылки"
+
 msgid "Clear team passwords!"
 msgstr "Сбросить пароли участников!"
 
@@ -892,6 +901,15 @@ msgstr "Ошибка записи на диск (закончилось место?)"
 
 msgid "Disqualified"
 msgstr "Дисквалифицирован"
+
+msgid "Disqualify displayed runs"
+msgstr "Дисквалифицировать отображённые посылки"
+
+msgid "Disqualify displayed runs!"
+msgstr "Дисквалифицировать отображённые посылки!"
+
+msgid "Disqualify runs"
+msgstr "Дисквалифицировать посылки"
 
 msgid "Do not show before the contest starts?"
 msgstr "Не показывать до начала турнира?"
@@ -1151,6 +1169,9 @@ msgstr "Полностью перепроверить отображённые посылки"
 msgid "Fully rejudge displayed runs!"
 msgstr "Полностью перепроверить отображённые посылки!"
 
+msgid "Fully rejudge runs"
+msgstr "Полностью перепроверить посылки"
+
 msgid "General information"
 msgstr "Общая информация"
 
@@ -1379,6 +1400,15 @@ msgid ""
 msgstr ""
 "Если Вы уже зарегистрировались, введите Ваше регистрационное имя и пароль в "
 "соответствующих полях. Затем нажмите кнопку \"Отправить\"."
+
+msgid "Ignore displayed runs"
+msgstr "Игнорировать отображённые посылки"
+
+msgid "Ignore displayed runs!"
+msgstr "Игнорировать отображённые посылки!"
+
+msgid "Ignore runs"
+msgstr "Игнорировать посылки"
 
 msgid "Ignored"
 msgstr "Проигнорирована"
