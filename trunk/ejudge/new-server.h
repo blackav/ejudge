@@ -570,14 +570,16 @@ ns_get_user_problems_summary(
         unsigned char *accepted_flag, /* whether the problem was accepted */
         unsigned char *pending_flag,  /* whether there are pending runs */
         unsigned char *trans_flag,    /* whether there are transient runs */
-        unsigned char *attempts_flag, /* whether there are attempts */
         int *best_run,                /* the number of the best run */
         int *attempts,                /* the number of previous attempts */
         int *disqualified,            /* the number of prev. disq. attempts */
         int *best_score,              /* the best score for the problem */
-        int *prev_successes);         /* the number of prev. successes */
+        int *prev_successes,          /* the number of prev. successes */
+        int *all_attempts);           /* all attempts count */
+
 void
 ns_write_user_problems_summary(
+	const struct contest_desc *cnts,
 	const serve_state_t cs,
         FILE *fout,
         int user_id,
