@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -4384,7 +4384,9 @@ do_loop(void)
       serve_state.global->fog_standings_updated = 1;
     }
   }
-  serve_update_standings_file(&serve_state, cur_contest, 0);
+  if (!initialize_mode) {
+    serve_update_standings_file(&serve_state, cur_contest, 0);
+  }
 
   run_get_times(serve_state.runlog_state, &start_time, &sched_time, &duration,
                 &stop_time, &finish_time);
@@ -4450,24 +4452,27 @@ do_loop(void)
     logger_set_level(-1, 0);
 
     /* automatically update standings in certain situations */
-    if (!serve_state.global->is_virtual) {
-      p = run_get_fog_period(serve_state.runlog_state, time(0),
-                             serve_state.global->board_fog_time, serve_state.global->board_unfog_time);
-      if (p == 0 && !serve_state.global->start_standings_updated) {
-        serve_update_standings_file(&serve_state, cur_contest, 0);
-      } else if (serve_state.global->autoupdate_standings
-                 && p == 1 && !serve_state.global->fog_standings_updated) {
-        serve_update_standings_file(&serve_state, cur_contest, 1);
-      } else if (serve_state.global->autoupdate_standings
-                 && p == 2 && !serve_state.global->unfog_standings_updated) {
-        serve_update_standings_file(&serve_state, cur_contest, 0);
+    if (!initialize_mode) {
+      if (!serve_state.global->is_virtual) {
+        p = run_get_fog_period(serve_state.runlog_state, time(0),
+                               serve_state.global->board_fog_time,
+                               serve_state.global->board_unfog_time);
+        if (p == 0 && !serve_state.global->start_standings_updated) {
+          serve_update_standings_file(&serve_state, cur_contest, 0);
+        } else if (serve_state.global->autoupdate_standings
+                   && p == 1 && !serve_state.global->fog_standings_updated) {
+          serve_update_standings_file(&serve_state, cur_contest, 1);
+        } else if (serve_state.global->autoupdate_standings
+                   && p == 2 && !serve_state.global->unfog_standings_updated) {
+          serve_update_standings_file(&serve_state, cur_contest, 0);
+        }
       }
-    }
 
-    /* update public log */
-    serve_update_public_log_file(&serve_state, cur_contest);
-    serve_update_external_xml_log(&serve_state, cur_contest);
-    serve_update_internal_xml_log(&serve_state, cur_contest);
+      /* update public log */
+      serve_update_public_log_file(&serve_state, cur_contest);
+      serve_update_external_xml_log(&serve_state, cur_contest);
+      serve_update_internal_xml_log(&serve_state, cur_contest);
+    }
 
     if (initialize_mode) {
       interrupt_signaled = 1;
