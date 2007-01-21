@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -165,7 +165,8 @@ NSC_OBJECTS=$(NSC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a
 
 BINTARGETS = compile compile-control serve run userlist-server userlist-server-control job-server job-server-control job-server-cmd edit-userlist super-serve super-serve-control clean-users ejudge-setup ejudge-control collect-emails serve-cmd slice-userlist execute new-server new-server-cmd new-server-control uudecode
 CGITARGETS = master${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX} users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
-TARGETS = ${BINTARGETS} ${CGITARGETS}
+TARGETS = ${BINTARGETS} ${CGITARGETS} style/actions.js
+STYLEFILES = style/actions.js style/logo.gif style/priv.css style/unpriv.css style/unpriv.js
 
 all: local_all subdirs_all mo
 local_all: $(TARGETS) ejudge-config style/actions.js
@@ -195,6 +196,9 @@ local_install: ${TARGETS} ejudge-config po mo
 	cd "${DESTDIR}${cgibindir}"; rm -f new-judge${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-judge${CGI_PROG_SUFFIX}
 	if [ x"${ENABLE_NLS}" = x1 ]; then install -d "${DESTDIR}${datadir}/locale/ru_RU.KOI8-R/LC_MESSAGES"; fi
 	if [ x"${ENABLE_NLS}" = x1 ]; then install -m 0644 locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo "${DESTDIR}${datadir}/locale/ru_RU.KOI8-R/LC_MESSAGES"; fi
+	install -d "${DESTDIR}${datadir}/ejudge"
+	install -d "${DESTDIR}${datadir}/ejudge/style"
+	for i in ${STYLEFILES}; do install -m 0644 $$i "${DESTDIR}${datadir}/ejudge/style"; done
 
 install: local_install
 	$(MAKE) -C scripts DESTDIR="${DESTDIR}" install

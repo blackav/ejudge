@@ -2370,15 +2370,15 @@ generate_serve_cfg(FILE *f)
 #if defined COMPILE_MBAS_VERSION
   fprintf(f,
           "# Note, support for Mono Visual Basic is experimental!\n"
-          "[language]\n"
-          "id = 20\n"
-          "short_name = \"VB\"\n"
-          "long_name = \"Mono Visual Basic %s\"\n"
-          "disabled = 1 # Enable manually!\n"
-          "src_sfx = \".vb\"\n"
-          "exe_sfx = \".exe\"\n"
-          "arch = \"msil\"\n"
-          "\n",
+          "# [language]\n"
+          "# id = 20\n"
+          "# short_name = \"VB\"\n"
+          "# long_name = \"Mono Visual Basic %s\"\n"
+          "# disabled = 1 # Enable manually!\n"
+          "# src_sfx = \".vb\"\n"
+          "# exe_sfx = \".exe\"\n"
+          "# arch = \"msil\"\n"
+          "# \n",
           COMPILE_MBAS_VERSION);
 #endif /* COMPILE_MBAS_VERSION */
 
@@ -2391,6 +2391,7 @@ generate_serve_cfg(FILE *f)
         "corr_dir = \"%Ps\"\n"
         "real_time_limit = 30\n"
         "check_cmd = \"check_%lPs\"\n"
+        "statement_file = \"%Ps.html\"\n"
         "\n"
         "[problem]\n"
         "short_name = \"A\"\n"
@@ -3436,41 +3437,53 @@ gen_check_retcode(FILE *f, const unsigned char *path)
 // solutions and tests for the sample contest 1
 const unsigned char b64_contest1_tgz[] =
 "begin-base64 664 contest-1.tar.gz\n"
-"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\n"
-"0/4vPfwT9yQSiUQikUgk0s7oX8e/RCkAeAAA\n"
+"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\n"
+"QRAEQRDkbvF/4zD45gCgAAA=\n"
 "====\n";
 
 static void
@@ -3486,6 +3499,8 @@ generate_install_script(FILE *f)
   unsigned char serve_cfg_path[PATH_MAX];
   unsigned char compile_cfg_path[PATH_MAX];
   unsigned char workdir_path[PATH_MAX];
+  unsigned char style_dir[PATH_MAX];
+  unsigned char style_src_dir[PATH_MAX];
   struct stat sb1, sb2;
 
   XMEMZERO(&created_dirs, 1);
@@ -3525,12 +3540,17 @@ generate_install_script(FILE *f)
   fprintf(f, "\n");
 
   if (!strcmp(config_workdisk_flag, "yes")) {
+    fprintf(f, "if [ -f \"%s\" ]\n"
+            "then\n"
+            "echo \"%s already exists, not overwriting\" 1>&2\n"
+            "else\n", config_workdisk_image_path, config_workdisk_image_path);
     fprintf(f, "# create the working disk\n");
     gen_cmd_run(f, "dd if=/dev/zero of=\"%s\" bs=1M count=%s",
                 config_workdisk_image_path, config_workdisk_size);
     gen_cmd_run(f, "mke2fs -F -q \"%s\"", config_workdisk_image_path);
     gen_cmd_run(f, "mount \"%s\" \"%s\" -o loop",
                 config_workdisk_image_path, config_workdisk_mount_dir);
+    fprintf(f, "fi\n");
     snprintf(workdir_path, sizeof(workdir_path),
              "%s/work", config_workdisk_mount_dir);
     generate_dir_creation(f, &created_dirs, 0, workdir_path);
@@ -3572,7 +3592,28 @@ generate_install_script(FILE *f)
     }
   }
 
+  if (!strcmp(config_install_flag, "yes") && config_htdocs_dir[0]) {
+    snprintf(style_dir, sizeof(style_dir), "%s/ejudge", config_htdocs_dir);
+    snprintf(style_src_dir, sizeof(style_src_dir),
+             "%s/share/ejudge/style", EJUDGE_PREFIX_DIR);
+    generate_dir_creation(f, &created_dirs, 0, style_dir);
+    gen_cmd_run(f, "ln -sf \"%s/actions.js\" \"%s/actions.js\"",
+                style_src_dir, style_dir);
+    gen_cmd_run(f, "ln -sf \"%s/logo.gif\" \"%s/logo.gif\"",
+                style_src_dir, style_dir);
+    gen_cmd_run(f, "ln -sf \"%s/priv.css\" \"%s/priv.css\"",
+                style_src_dir, style_dir);
+    gen_cmd_run(f, "ln -sf \"%s/unpriv.css\" \"%s/unpriv.css\"",
+                style_src_dir, style_dir);
+    gen_cmd_run(f, "ln -sf \"%s/unpriv.js\" \"%s/unpriv.js\"",
+                style_src_dir, style_dir);
+  }
+
   // ejudge.xml
+  fprintf(f, "if [ -f \"%s\" ]\n"
+          "then\n"
+          "echo \"%s already exists, not overwriting\" 1>&2\n"
+          "else\n", config_ejudge_xml_path, config_ejudge_xml_path);
   floc = open_memstream(&txt_ptr, &txt_len);
   generate_ejudge_xml(floc);
   fclose(floc); floc = 0;
@@ -3584,9 +3625,14 @@ generate_install_script(FILE *f)
   gen_check_retcode(f, fpath);
   gen_cmd_run(f, "chown %s:%s \"%s\"", config_system_uid, config_system_gid,
               fpath);
+  fprintf(f, "fi\n");
   free(txt_ptr); txt_ptr = 0; txt_len = 0;
 
   // userlist.xml
+  fprintf(f, "if [ -f \"%s\" ]\n"
+          "then\n"
+          "echo \"%s already exists, not overwriting\" 1>&2\n"
+          "else\n", config_userlist_xml_path, config_userlist_xml_path);
   floc = open_memstream(&txt_ptr, &txt_len);
   generate_userlist_xml(floc);
   fclose(floc); floc = 0;
@@ -3598,9 +3644,14 @@ generate_install_script(FILE *f)
   gen_check_retcode(f, fpath);
   gen_cmd_run(f, "chown %s:%s \"%s\"", config_system_uid, config_system_gid,
               fpath);
+  fprintf(f, "fi\n");
   free(txt_ptr); txt_ptr = 0; txt_len = 0;
 
   // 000001.xml
+  fprintf(f, "if [ -f \"%s/000001.xml\" ]\n"
+          "then\n"
+          "echo \"%s/000001.xml already exists, not overwriting\" 1>&2\n"
+          "else\n", config_ejudge_contests_dir, config_ejudge_contests_dir);
   floc = open_memstream(&txt_ptr, &txt_len);
   generate_contest_xml(floc);
   fclose(floc); floc = 0;
@@ -3612,9 +3663,14 @@ generate_install_script(FILE *f)
   gen_check_retcode(f, fpath);
   gen_cmd_run(f, "chown %s:%s \"%s\"", config_system_uid, config_system_gid,
               fpath);
+  fprintf(f, "fi\n");
   free(txt_ptr); txt_ptr = 0; txt_len = 0;
 
   // compile.cfg
+  fprintf(f, "if [ -f \"%s\" ]\n"
+          "then\n"
+          "echo \"%s already exists, not overwriting\" 1>&2\n"
+          "else\n", compile_cfg_path, compile_cfg_path);
   floc = open_memstream(&txt_ptr, &txt_len);
   generate_compile_cfg(floc);
   fclose(floc); floc = 0;
@@ -3625,9 +3681,14 @@ generate_install_script(FILE *f)
   gen_check_retcode(f, compile_cfg_path);
   gen_cmd_run(f, "chown %s:%s \"%s\"", config_system_uid, config_system_gid,
               compile_cfg_path);
+  fprintf(f, "fi\n");
   free(txt_ptr); txt_ptr = 0; txt_len = 0;
 
   // serve.cfg
+  fprintf(f, "if [ -f \"%s\" ]\n"
+          "then\n"
+          "echo \"%s already exists, not overwriting\" 1>&2\n"
+          "else\n", serve_cfg_path, serve_cfg_path);
   floc = open_memstream(&txt_ptr, &txt_len);
   generate_serve_cfg(floc);
   fclose(floc); floc = 0;
@@ -3638,6 +3699,7 @@ generate_install_script(FILE *f)
   gen_check_retcode(f, serve_cfg_path);
   gen_cmd_run(f, "chown %s:%s \"%s\"", config_system_uid, config_system_gid,
               serve_cfg_path);
+  fprintf(f, "fi\n");
   free(txt_ptr); txt_ptr = 0; txt_len = 0;
 
   if (cgi_config_needed) {
@@ -3646,6 +3708,10 @@ generate_install_script(FILE *f)
     generate_master_cfg(floc);
     fclose(floc); floc = 0;
     snprintf(fpath, sizeof(fpath),"%s/master.cfg",config_full_cgi_data_dir);
+    fprintf(f, "if [ -f \"%s\" ]\n"
+            "then\n"
+            "echo \"%s already exists, not overwriting\" 1>&2\n"
+            "else\n", fpath, fpath);
     fprintf(f, "# copy master.cfg to its location\n");
     fprintf(f, "cat << _EOF | %s\n", uudecode_path);
     base64_encode_file(f, fpath, 0664, txt_ptr);
@@ -3653,7 +3719,12 @@ generate_install_script(FILE *f)
     gen_check_retcode(f, fpath);
     gen_cmd_run(f, "chown %s:%s \"%s\"",
                 config_system_uid, config_system_gid, fpath);
+    fprintf(f, "fi\n");
     snprintf(fpath, sizeof(fpath),"%s/judge.cfg",config_full_cgi_data_dir);
+    fprintf(f, "if [ -f \"%s\" ]\n"
+            "then\n"
+            "echo \"%s already exists, not overwriting\" 1>&2\n"
+            "else\n", fpath, fpath);
     fprintf(f, "# copy judge.cfg to its location\n");
     fprintf(f, "cat << _EOF | %s\n", uudecode_path);
     base64_encode_file(f, fpath, 0664, txt_ptr);
@@ -3661,7 +3732,12 @@ generate_install_script(FILE *f)
     gen_check_retcode(f, fpath);
     gen_cmd_run(f, "chown %s:%s \"%s\"",
                 config_system_uid, config_system_gid, fpath);
+    fprintf(f, "fi\n");
     snprintf(fpath, sizeof(fpath),"%s/team.cfg",config_full_cgi_data_dir);
+    fprintf(f, "if [ -f \"%s\" ]\n"
+            "then\n"
+            "echo \"%s already exists, not overwriting\" 1>&2\n"
+            "else\n", fpath, fpath);
     fprintf(f, "# copy team.cfg to its location\n");
     fprintf(f, "cat << _EOF | %s\n", uudecode_path);
     base64_encode_file(f, fpath, 0664, txt_ptr);
@@ -3669,6 +3745,7 @@ generate_install_script(FILE *f)
     gen_check_retcode(f, fpath);
     gen_cmd_run(f, "chown %s:%s \"%s\"",
                 config_system_uid, config_system_gid, fpath);
+    fprintf(f, "fi\n");
     free(txt_ptr); txt_ptr = 0; txt_len = 0;
 
     // register.xml
@@ -3676,6 +3753,10 @@ generate_install_script(FILE *f)
     generate_users_xml(floc, "register");
     fclose(floc); floc = 0;
     snprintf(fpath, sizeof(fpath),"%s/register.xml",config_full_cgi_data_dir);
+    fprintf(f, "if [ -f \"%s\" ]\n"
+            "then\n"
+            "echo \"%s already exists, not overwriting\" 1>&2\n"
+            "else\n", fpath, fpath);
     fprintf(f, "# copy register.xml to its location\n");
     fprintf(f, "cat << _EOF | %s\n", uudecode_path);
     base64_encode_file(f, fpath, 0664, txt_ptr);
@@ -3683,6 +3764,7 @@ generate_install_script(FILE *f)
     gen_check_retcode(f, fpath);
     gen_cmd_run(f, "chown %s:%s \"%s\"",
                 config_system_uid, config_system_gid, fpath);
+    fprintf(f, "fi\n");
     free(txt_ptr); txt_ptr = 0; txt_len = 0;
 
     // users.xml
@@ -3690,6 +3772,10 @@ generate_install_script(FILE *f)
     generate_users_xml(floc, "users");
     fclose(floc); floc = 0;
     snprintf(fpath, sizeof(fpath),"%s/users.xml",config_full_cgi_data_dir);
+    fprintf(f, "if [ -f \"%s\" ]\n"
+            "then\n"
+            "echo \"%s already exists, not overwriting\" 1>&2\n"
+            "else\n", fpath, fpath);
     fprintf(f, "# copy users.xml to its location\n");
     fprintf(f, "cat << _EOF | %s\n", uudecode_path);
     base64_encode_file(f, fpath, 0664, txt_ptr);
@@ -3697,6 +3783,7 @@ generate_install_script(FILE *f)
     gen_check_retcode(f, fpath);
     gen_cmd_run(f, "chown %s:%s \"%s\"",
                 config_system_uid, config_system_gid, fpath);
+    fprintf(f, "fi\n");
     free(txt_ptr); txt_ptr = 0; txt_len = 0;
   } else {
     fprintf(f, "# configuration files for CGI programs are not needed\n\n");
