@@ -329,4 +329,12 @@ int serve_collect_virtual_stop_events(serve_state_t cs);
 void serve_handle_events(serve_state_t cs);
 void serve_judge_virtual_olympiad(serve_state_t cs, int user_id, int run_id);
 
+void serve_clear_by_mask(serve_state_t state,
+                         int user_id, ej_ip_t ip, int ssl_flag,
+                         int mask_size, unsigned long *mask);
+void serve_ignore_by_mask(serve_state_t state,
+                          int user_id, ej_ip_t ip, int ssl_flag,
+                          int mask_size, unsigned long *mask,
+                          int new_status);
+
 #endif /* __SERVE_STATE_H__ */

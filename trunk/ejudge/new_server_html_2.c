@@ -620,6 +620,22 @@ ns_write_priv_all_runs(FILE *f,
             _("Add new run"));
   }
 
+  if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) {
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "run_mask_size", "%d", displayed_size);
+    fprintf(f, "<input type=\"hidden\" name=\"run_mask\" value=\"");
+    for (i = 0; i < displayed_size; i++) {
+      if (i > 0) fprintf(f, " ");
+      fprintf(f, "%lx", displayed_mask[i]);
+    }
+    fprintf(f, "\"/>\n");
+    fprintf(f, "<table><tr>");
+    fprintf(f, "<td>%s</td>", BUTTON(NEW_SRV_ACTION_CLEAR_DISPLAYED_1));
+    fprintf(f, "<td>%s</td>", BUTTON(NEW_SRV_ACTION_IGNORE_DISPLAYED_1));
+    fprintf(f, "<td>%s</td>", BUTTON(NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1));
+    fprintf(f, "</tr></table></form>\n");
+  }
+
   if (opcaps_check(phr->caps, OPCAP_IMPORT_XML_RUNS) >= 0) {
     fprintf(f, "<table><tr><td>%s%s</a></td></td></table>\n",
             ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1, 0),

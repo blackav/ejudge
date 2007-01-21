@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -134,7 +134,13 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1] = __("Download archive of runs"),
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2] = __("Download archive of runs"),
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1] = __("Add runs in CSV format"),
-  [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1] = __("Add runs in CSV format!"),
+  [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2] = __("Add runs in CSV format!"),
+  [NEW_SRV_ACTION_CLEAR_DISPLAYED_1] = __("Clear displayed runs"),
+  [NEW_SRV_ACTION_CLEAR_DISPLAYED_2] = __("Clear displayed runs!"),
+  [NEW_SRV_ACTION_IGNORE_DISPLAYED_1] = __("Ignore displayed runs"),
+  [NEW_SRV_ACTION_IGNORE_DISPLAYED_2] = __("Ignore displayed runs!"),
+  [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1] = __("Disqualify displayed runs"),
+  [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2] = __("Disqualify displayed runs!"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =

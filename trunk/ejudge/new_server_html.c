@@ -2585,6 +2585,7 @@ priv_clear_run(FILE *fout, FILE *log_f,
                struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
   int retval = 0, run_id = -1;
 
   if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) {
@@ -2597,6 +2598,17 @@ priv_clear_run(FILE *fout, FILE *log_f,
     FAIL(NEW_SRV_ERR_RUN_READ_ONLY);
   if (run_clear_entry(cs->runlog_state, run_id) < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
+
+  archive_remove(cs, global->run_archive_dir, run_id, 0);
+  archive_remove(cs, global->xml_report_archive_dir, run_id, 0);
+  archive_remove(cs, global->report_archive_dir, run_id, 0);
+  if (global->team_enable_rep_view) {
+    archive_remove(cs, global->team_report_archive_dir, run_id, 0);
+  }
+  if (global->enable_full_archive) {
+    archive_remove(cs, global->full_archive_dir, run_id, 0);
+  }
+  archive_remove(cs, global->audit_log_dir, run_id, 0);
 
  cleanup:
   return retval;
@@ -2900,6 +2912,49 @@ parse_run_mask(struct http_request_info *phr,
   return -1;
 }
 
+static int
+priv_clear_displayed(FILE *fout,
+                     FILE *log_f,
+                     struct http_request_info *phr,
+                     const struct contest_desc *cnts,
+                     struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  unsigned long *mask = 0;
+  size_t mask_size;
+  int retval = 0;
+
+  if (parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0) goto invalid_param;
+  if (!mask_size) FAIL(NEW_SRV_ERR_NO_RUNS_TO_REJUDGE);
+  if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_CLEAR_DISPLAYED_2:
+    serve_clear_by_mask(cs, phr->user_id, phr->ip, phr->ssl_flag,
+                        mask_size, mask);
+    break;
+  case NEW_SRV_ACTION_IGNORE_DISPLAYED_2:
+    serve_ignore_by_mask(cs, phr->user_id, phr->ip, phr->ssl_flag,
+                         mask_size, mask, RUN_IGNORED);
+    break;
+  case NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2:
+    serve_ignore_by_mask(cs, phr->user_id, phr->ip, phr->ssl_flag,
+                         mask_size, mask, RUN_DISQUALIFIED);
+    break;
+  default:
+    abort();
+  }
+
+ cleanup:
+  xfree(mask);
+  return retval;
+
+ invalid_param:
+  ns_html_err_inv_param(fout, phr, 0, 0);
+  xfree(mask);
+  return -1;
+}
 
 static int
 priv_rejudge_displayed(FILE *fout,
@@ -3249,6 +3304,9 @@ static const unsigned char * const confirmation_headers[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GENERATE_PASSWORDS_1] = __("Generate random contest passwords"),
   [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1] = __("Generate random registration passwords"),
   [NEW_SRV_ACTION_CLEAR_PASSWORDS_1] = __("Clear contest passwords"),
+  [NEW_SRV_ACTION_CLEAR_DISPLAYED_1] = __("Clear displayed runs"),
+  [NEW_SRV_ACTION_IGNORE_DISPLAYED_1] = __("Ignore displayed runs"),
+  [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1] = __("Disqualify displayed runs"),
 };
 
 static const int confirm_next_action[NEW_SRV_ACTION_LAST] =
@@ -3263,6 +3321,18 @@ static const int confirm_next_action[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GENERATE_PASSWORDS_1] = NEW_SRV_ACTION_GENERATE_PASSWORDS_2,
   [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1] = NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_2,
   [NEW_SRV_ACTION_CLEAR_PASSWORDS_1] = NEW_SRV_ACTION_CLEAR_PASSWORDS_2,
+  [NEW_SRV_ACTION_CLEAR_DISPLAYED_1] = NEW_SRV_ACTION_CLEAR_DISPLAYED_2,
+  [NEW_SRV_ACTION_IGNORE_DISPLAYED_1] = NEW_SRV_ACTION_IGNORE_DISPLAYED_2,
+  [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1]=NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2,
+};
+
+static const unsigned char * const confirmation_message[NEW_SRV_ACTION_LAST] =
+{
+  [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = __("Rejudge runs"),
+  [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1] = __("Fully rejudge runs"),
+  [NEW_SRV_ACTION_CLEAR_DISPLAYED_1] = __("Clear runs"),
+  [NEW_SRV_ACTION_IGNORE_DISPLAYED_1] = __("Ignore runs"),
+  [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1] = __("Disqualify runs"),
 };
 
 static int
@@ -3288,6 +3358,9 @@ priv_confirmation_page(FILE *fout,
   switch (phr->action) {
   case NEW_SRV_ACTION_REJUDGE_DISPLAYED_1:
   case NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1:
+  case NEW_SRV_ACTION_CLEAR_DISPLAYED_1:
+  case NEW_SRV_ACTION_IGNORE_DISPLAYED_1:
+  case NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1:
     // run_mask_size, run_mask
     errmsg = "cannot parse run mask";
     if (parse_run_mask(phr, &run_mask_size_str, &run_mask_str,
@@ -3314,7 +3387,10 @@ priv_confirmation_page(FILE *fout,
   switch (phr->action) {
   case NEW_SRV_ACTION_REJUDGE_DISPLAYED_1:
   case NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1:
-    fprintf(fout, "<p>%s ", _("Rejudge runs"));
+  case NEW_SRV_ACTION_CLEAR_DISPLAYED_1:
+  case NEW_SRV_ACTION_IGNORE_DISPLAYED_1:
+  case NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1:
+    fprintf(fout, "<p>%s ", gettext(confirmation_message[phr->action]));
     s = "";
     for (n = 0; n < 8 * sizeof(run_mask[0]) * run_mask_size; n++) {
       i = n / (8 * sizeof(run_mask[0]));
@@ -3326,7 +3402,7 @@ priv_confirmation_page(FILE *fout,
       }
     }
     if (!runs_count) {
-      fprintf(fout, "<i>no runs to rejudge!</i></p>\n");
+      fprintf(fout, "<i>no runs!</i></p>\n");
       disable_ok = 1;
     } else {
       fprintf(fout, " (<b>%d total</b>)?</p>\n", runs_count);
@@ -3348,6 +3424,9 @@ priv_confirmation_page(FILE *fout,
   switch (phr->action) {
   case NEW_SRV_ACTION_REJUDGE_DISPLAYED_1:
   case NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1:
+  case NEW_SRV_ACTION_CLEAR_DISPLAYED_1:
+  case NEW_SRV_ACTION_IGNORE_DISPLAYED_1:
+  case NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1:
     html_hidden(fout, "run_mask_size", "%s", run_mask_size_str);
     html_hidden(fout, "run_mask", "%s", run_mask_str);
     break;
@@ -4828,6 +4907,9 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_RUN] = priv_clear_run,
   [NEW_SRV_ACTION_PRINT_RUN] = priv_print_run_cmd,
   [NEW_SRV_ACTION_ISSUE_WARNING] = priv_user_issue_warning,
+  [NEW_SRV_ACTION_CLEAR_DISPLAYED_2] = priv_clear_displayed,
+  [NEW_SRV_ACTION_IGNORE_DISPLAYED_2] = priv_clear_displayed,
+  [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2] = priv_clear_displayed,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -4868,6 +4950,9 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_WRITE_XML_RUNS] = priv_view_runs_dump,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_1] = priv_upload_runlog_xml_1,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_2] = priv_upload_runlog_xml_2,
+  [NEW_SRV_ACTION_CLEAR_DISPLAYED_1] = priv_confirmation_page,
+  [NEW_SRV_ACTION_IGNORE_DISPLAYED_1] = priv_confirmation_page,
+  [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1] = priv_confirmation_page,
 };
 
 static void
@@ -5749,6 +5834,12 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_WRITE_XML_RUNS] = priv_generic_page,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_1] = priv_generic_page,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_2] = priv_generic_page,
+  [NEW_SRV_ACTION_CLEAR_DISPLAYED_1] = priv_generic_page,
+  [NEW_SRV_ACTION_CLEAR_DISPLAYED_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_IGNORE_DISPLAYED_1] = priv_generic_page,
+  [NEW_SRV_ACTION_IGNORE_DISPLAYED_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1] = priv_generic_page,
+  [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2] = priv_generic_operation,
 };
 
 static void
@@ -8671,6 +8762,7 @@ user_main_page(FILE *fout,
         && (variant = find_variant(cs, phr->user_id, prob_id)) <= 0)
       prob_id = 0;
 
+    fprintf(fout, "<br/>\n");
     fprintf(fout, "<table cellpadding=\"0\" cellspacing=\"0\">\n");
     fprintf(fout, "<tr id=\"probNavTopList\">\n");
     for (i = 1, j = 0; i <= cs->max_prob; i++) {
@@ -8704,7 +8796,7 @@ user_main_page(FILE *fout,
       }
       */
       fprintf(fout, "%s%s</a>",
-              ns_aref_2(bb, sizeof(bb), phr, "menu",
+              ns_aref_2(bb, sizeof(bb), phr, "tab",
                         NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
                         "prob_id=%d", i), prob->short_name);
       /*
@@ -8715,7 +8807,7 @@ user_main_page(FILE *fout,
       fprintf(fout, "</td>\n");
       j++;
     }
-    fprintf(fout, "</tr><tr><td colspan=\"%d\" id=\"probNavTaskArea\">\n", j);
+    fprintf(fout, "</tr><tr><td colspan=\"%d\" id=\"probNavTaskArea\"><div id=\"probNavTaskArea\">\n", j);
   }
 
   if (phr->action == NEW_SRV_ACTION_MAIN_PAGE) {
@@ -9183,7 +9275,7 @@ user_main_page(FILE *fout,
   if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
     // consider prob_id OK...
 
-    fprintf(fout, "</tr></td>\n");
+    fprintf(fout, "</div></td></tr>\n");
     fprintf(fout, "<tr id=\"probNavBottomList\">\n");
     for (i = 1, j = 0; i <= cs->max_prob; i++) {
       if (!(prob = cs->probs[i])) continue;
@@ -9216,7 +9308,7 @@ user_main_page(FILE *fout,
       }
       */
       fprintf(fout, "%s%s</a>",
-              ns_aref_2(bb, sizeof(bb), phr, "menu",
+              ns_aref_2(bb, sizeof(bb), phr, "tab",
                         NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
                         "prob_id=%d", i), prob->short_name);
       /*

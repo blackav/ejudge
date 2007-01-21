@@ -2326,6 +2326,95 @@ serve_judge_virtual_olympiad(serve_state_t cs, int user_id, int run_id)
   run_forced_set_judge_id(cs->runlog_state, run_id, 1);
 }
 
+void
+serve_clear_by_mask(serve_state_t state,
+                    int user_id, ej_ip_t ip, int ssl_flag,
+                    int mask_size, unsigned long *mask)
+{
+  int total_runs, r;
+  const struct section_global_data *global = state->global;
+
+  ASSERT(mask_size > 0);
+
+  total_runs = run_get_total(state->runlog_state);
+  if (total_runs > mask_size * BITS_PER_LONG) {
+    total_runs = mask_size * BITS_PER_LONG;
+  }
+
+  for (r = total_runs - 1; r >= 0; r--) {
+    if ((mask[r / BITS_PER_LONG] & (1L << (r % BITS_PER_LONG)))
+        && !run_is_readonly(state->runlog_state, r)) {
+      if (run_clear_entry(state->runlog_state, r) >= 0) {
+        archive_remove(state, global->run_archive_dir, r, 0);
+        archive_remove(state, global->xml_report_archive_dir, r, 0);
+        archive_remove(state, global->report_archive_dir, r, 0);
+        if (global->team_enable_rep_view) {
+          archive_remove(state, global->team_report_archive_dir, r, 0);
+        }
+        if (global->enable_full_archive) {
+          archive_remove(state, global->full_archive_dir, r, 0);
+        }
+        archive_remove(state, global->audit_log_dir, r, 0);
+      }
+    }
+  }
+}
+
+void
+serve_ignore_by_mask(serve_state_t state,
+                     int user_id, ej_ip_t ip, int ssl_flag,
+                     int mask_size, unsigned long *mask,
+                     int new_status)
+{
+  int total_runs, r;
+  struct run_entry re;
+  const unsigned char *cmd = 0;
+  const struct section_global_data *global = state->global;
+
+  ASSERT(mask_size > 0);
+
+  switch (new_status) {
+  case RUN_IGNORED:
+    cmd = "Ignore";
+    break;
+  case RUN_DISQUALIFIED:
+    cmd = "Disqualify";
+    break;
+  default:
+    abort();
+  }
+
+  total_runs = run_get_total(state->runlog_state);
+  if (total_runs > mask_size * BITS_PER_LONG) {
+    total_runs = mask_size * BITS_PER_LONG;
+  }
+
+  for (r = total_runs - 1; r >= 0; r--) {
+    if (!(mask[r / BITS_PER_LONG] & (1L << (r % BITS_PER_LONG)))
+        || run_is_readonly(state->runlog_state, r))
+      continue;
+    if (run_get_entry(state->runlog_state, r, &re) < 0) continue;
+    if (!run_is_valid_status(re.status)) continue;
+    // do not change EMPTY, VIRTUAL_START, VIRTUAL_STOP runs
+    if (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST)
+      continue;
+    if (re.status == new_status) continue;
+
+    re.status = new_status;
+    if (run_set_entry(state->runlog_state, r, RUN_ENTRY_STATUS, &re) >= 0) {
+      archive_remove(state, global->xml_report_archive_dir, r, 0);
+      archive_remove(state, global->report_archive_dir, r, 0);
+      if (global->team_enable_rep_view) {
+        archive_remove(state, global->team_report_archive_dir, r, 0);
+      }
+      if (global->enable_full_archive) {
+        archive_remove(state, global->full_archive_dir, r, 0);
+      }
+      serve_audit_log(state, r, user_id, ip, ssl_flag, "Command: %s\n", cmd);
+    }
+  }
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
