@@ -92,6 +92,12 @@ const unsigned char ns_fancy_footer[] =
 "</div>"
 "</body>"
 "</html>";
+const unsigned char ns_fancy_footer_2[] =
+"%R"
+"</div>"
+"</div>"
+"</body>"
+"</html>";
 
 const unsigned char * const ns_ssl_flag_str[] =
 {
@@ -227,7 +233,8 @@ ns_html_err_no_perm(FILE *fout,
     if (!header || !footer) {
       header = ns_fancy_header;
       separator = ns_fancy_separator;
-      footer = ns_fancy_footer;
+      if (copyright) footer = ns_fancy_footer_2;
+      else footer = ns_fancy_footer;
     }
   } else {
     if (!header || !footer) {
@@ -314,7 +321,8 @@ ns_html_err_inv_param(FILE *fout,
     if (!header || !footer) {
       header = ns_fancy_header;
       separator = ns_fancy_separator;
-      footer = ns_fancy_footer;
+      if (copyright) footer = ns_fancy_footer_2;
+      else footer = ns_fancy_footer;
     }
   } else {
     if (!header || !footer) {
@@ -373,7 +381,8 @@ ns_html_err_service_not_available(FILE *fout,
   if (!header || !footer) {
     header = ns_fancy_header;
     separator = ns_fancy_separator;
-    footer = ns_fancy_footer;
+    if (copyright) footer = ns_fancy_footer_2;
+    else footer = ns_fancy_footer;
   } else {
     if (!header || !footer) {
       header = ns_fancy_priv_header;
@@ -431,7 +440,8 @@ ns_html_err_cnts_unavailable(FILE *fout,
   if (!header || !footer) {
     header = ns_fancy_header;
     separator = ns_fancy_separator;
-    footer = ns_fancy_footer;
+    if (copyright) footer = ns_fancy_footer_2;
+    else footer = ns_fancy_footer;
   } else {
     if (!header || !footer) {
       header = ns_fancy_priv_header;
@@ -493,7 +503,8 @@ ns_html_err_ul_server_down(FILE *fout,
     if (!header || !footer) {
       header = ns_fancy_header;
       separator = ns_fancy_separator;
-      footer = ns_fancy_footer;
+      if (copyright) footer = ns_fancy_footer_2;
+      else footer = ns_fancy_footer;
     }
   } else {
     if (!header || !footer) {
@@ -557,7 +568,8 @@ ns_html_err_internal_error(FILE *fout,
     if (!header || !footer) {
       header = ns_fancy_header;
       separator = ns_fancy_separator;
-      footer = ns_fancy_footer;
+      if (copyright) footer = ns_fancy_footer_2;
+      else footer = ns_fancy_footer;
     }
   } else {
     if (!header || !footer) {
@@ -620,7 +632,8 @@ ns_html_err_inv_session(FILE *fout,
     if (!header || !footer) {
       header = ns_fancy_header;
       separator = ns_fancy_separator;
-      footer = ns_fancy_footer;
+      if (copyright) footer = ns_fancy_footer_2;
+      else footer = ns_fancy_footer;
     }
   } else {
     if (!header || !footer) {
