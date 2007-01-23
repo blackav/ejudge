@@ -4793,7 +4793,7 @@ unpriv_print_status(FILE *fout,
     }
   }
 
-  if (global->is_virtual && start_time <= 0) {
+  if (!cnts->exam_mode && global->is_virtual && start_time <= 0) {
     html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
     if (cnts->exam_mode) {
       fprintf(fout, "<p>%s</p></form>",
@@ -4803,7 +4803,7 @@ unpriv_print_status(FILE *fout,
       fprintf(fout, "<p>%s</p></form>",
               BUTTON(NEW_SRV_ACTION_VIRTUAL_START));
     }
-  } else if (global->is_virtual && stop_time <= 0) {
+  } else if (!cnts->exam_mode && global->is_virtual && stop_time <= 0) {
     html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
     if (cnts->exam_mode) {
       fprintf(fout, "<p>%s</p></form>",
