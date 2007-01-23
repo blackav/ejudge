@@ -486,6 +486,7 @@ extern const unsigned char ns_default_footer[];
 extern const unsigned char ns_default_separator[];
 extern const unsigned char ns_fancy_header[];
 extern const unsigned char ns_fancy_footer[];
+extern const unsigned char ns_fancy_footer_2[];
 extern const unsigned char ns_fancy_separator[];
 extern const unsigned char ns_fancy_empty_status[];
 extern const unsigned char * const ns_ssl_flag_str[];
@@ -594,5 +595,8 @@ ns_write_user_problems_summary(
         int *disqualified,            /* the number of prev. disq. attempts */
         int *best_score,              /* the best score for the problem */
         int *prev_successes);         /* the number of prev. successes */
+
+int ns_insert_variant_num(unsigned char *buf, size_t size,
+                          const unsigned char *file, int variant);
 
 #endif /* __NEW_SERVER_H__ */

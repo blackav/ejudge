@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-01-21 15:53+0300\n"
-"PO-Revision-Date: 2007-01-21 15:55+0300\n"
+"POT-Creation-Date: 2007-01-24 02:10+0300\n"
+"PO-Revision-Date: 2007-01-24 02:13+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -96,6 +96,10 @@ msgstr "<hr><big><b>Непрочитанных сообщений: %d!</b></big>\n"
 #, c-format
 msgid "<i>Command line is too long</i>\n"
 msgstr "<i>Командная строка слишком длинна</i>\n"
+
+#, c-format
+msgid "<i>Invalid answer: %d</i>"
+msgstr "<i>Недопустимый ответ: %d</i>"
 
 msgid "<i>Not set</i>"
 msgstr "<i>Не установлено</i>"
@@ -1711,6 +1715,9 @@ msgstr "Закрыть"
 
 msgid "Locked?"
 msgstr "Запертый?"
+
+msgid "Log in"
+msgstr "Войти"
 
 msgid "Log into the system"
 msgstr "Войти в систему"

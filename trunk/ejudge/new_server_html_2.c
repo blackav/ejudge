@@ -54,6 +54,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include <ctype.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -3135,6 +3136,131 @@ ns_write_user_run_status(
   return 0;
 }
 
+static unsigned char *
+get_nth_alternative(const unsigned char *txt, int n)
+{
+  const unsigned char *s, *p;
+  unsigned char *txt2;
+  size_t txt_len, t_len;
+  int line_max_count = 0, line_count = 0, i;
+  unsigned char **lines = 0;
+  unsigned char *t;
+
+  if (!txt) return 0;
+
+  // normalize the file
+  txt_len = strlen(txt);
+  txt2 = (unsigned char*) alloca(txt_len + 2);
+  memcpy(txt2, txt, txt_len + 1);
+  while (txt_len > 0 && isspace(txt2[txt_len - 1])) txt_len--;
+  if (!txt_len) return 0;
+  txt2[txt_len++] = '\n';
+  txt2[txt_len] = 0;
+
+  // count number of lines
+  for (s = txt2; *s; s++)
+    if (*s == '\n') line_max_count++;
+
+  lines = (unsigned char**) alloca((line_max_count + 1) * sizeof(lines[0]));
+  memset(lines, 0, (line_max_count + 1) * sizeof(lines[0]));
+
+  s = txt2;
+  while (*s) {
+    while (*s != '\n' && isspace(*s)) s++;
+    if (*s == '#') while (*s != '\n') s++;
+    if (*s == '\n') {
+      s++;
+      continue;
+    }
+    p = s;
+    while (*s != '\n') s++;
+    t_len = s - p;
+    t = (unsigned char*) alloca(t_len + 1);
+    memcpy(t, p, t_len);
+    while (t_len > 0 && isspace(t[t_len - 1])) t_len--;
+    t[t_len] = 0;
+    lines[line_count++] = t;
+  }
+
+  for (i = 0; i + 1 != n && i < line_count; i++);
+  if (i + 1 == n && i < line_count) return xstrdup(lines[i]);
+  return 0;
+}
+
+static unsigned char *get_source(const serve_state_t cs, int run_id,
+                                 const struct section_problem_data *prob,
+                                 int variant)
+{
+  const struct section_global_data *global = cs->global;
+  int src_flag = 0, i, n;
+  char *eptr = 0;
+  path_t src_path = { 0 };
+  char *src_txt = 0;
+  size_t src_len = 0;
+  unsigned char *s = 0, *val = 0;
+  struct watched_file *pw = 0;
+  const unsigned char *pw_path;
+  const unsigned char *alternatives = 0;
+  path_t variant_stmt_file;
+  unsigned char buf[512];
+
+  if (!prob) goto cleanup;
+  switch (prob->type_val) {
+  case PROB_TYPE_STANDARD:
+  case PROB_TYPE_OUTPUT_ONLY:
+  case PROB_TYPE_TEXT_ANSWER:
+    goto cleanup;
+  case PROB_TYPE_SHORT_ANSWER:
+  case PROB_TYPE_SELECT_ONE:
+  case PROB_TYPE_SELECT_MANY:
+    break;
+  }
+
+  if ((src_flag = archive_make_read_path(cs, src_path, sizeof(src_path),
+                                         global->run_archive_dir,
+                                         run_id, 0, 1)) < 0)
+    goto cleanup;
+  if (generic_read_file(&src_txt, 0, &src_len, src_flag, 0, src_path, 0) < 0)
+    goto cleanup;
+  s = src_txt;
+  while (src_len > 0 && isspace(s[src_len])) src_len--;
+  s[src_len] = 0;
+  if (prob->type_val == PROB_TYPE_SELECT_ONE) {
+    errno = 0;
+    n = strtol(s, &eptr, 10);
+    if (*eptr || errno) goto inv_answer_n;
+    if (prob->alternative) {
+      for (i = 0; i + 1 != n && prob->alternative[i]; i++);
+      if (i + 1 != n || !prob->alternative[i]) goto inv_answer_n;
+      val = html_armor_string_dup(prob->alternative[i]);
+    } else {
+      if (variant > 0 && prob->variant_num > 0) {
+        ns_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
+                              prob->alternatives_file, variant);
+        pw = &cs->prob_extras[prob->id].v_alts[variant];
+        pw_path = variant_stmt_file;
+      } else {
+        pw = &cs->prob_extras[prob->id].alt;
+        pw_path = prob->alternatives_file;
+      }
+      watched_file_update(pw, pw_path, cs->current_time);
+      alternatives = pw->text;
+      if (!(val = get_nth_alternative(alternatives, n))) goto inv_answer_n;
+    }
+    goto cleanup;
+  }
+  val = html_armor_string_dup(s);
+
+ cleanup:
+  xfree(src_txt);
+  return val;
+
+ inv_answer_n:
+  xfree(src_txt);
+  snprintf(buf, sizeof(buf), _("<i>Invalid answer: %d</i>"), n);
+  return xstrdup(buf);
+}
+
 static unsigned char *get_checker_comment(
 	const serve_state_t cs,
         int run_id)
@@ -3208,7 +3334,7 @@ ns_write_olympiads_user_runs(
   const unsigned char *row_attr;
   unsigned char tests_buf[64], score_buf[64];
   unsigned char ab[1024];
-  unsigned char *report_comment = 0;
+  unsigned char *report_comment = 0, *src_txt = 0;
 
   if (table_class && *table_class) {
     cl = alloca(strlen(table_class) + 16);
@@ -3461,9 +3587,14 @@ ns_write_olympiads_user_runs(
             cl, tests_buf, cl, score_buf);
 
     if (global->team_enable_src_view) {
-      fprintf(fout, "<td%s>%s%s</a></td>", cl,
-              ns_aref(ab, sizeof(ab), phr, NEW_SRV_ACTION_VIEW_SOURCE,
-                      "run_id=%d", i), _("View"));
+      if (cnts->exam_mode && (src_txt = get_source(cs, i, prob, variant))) {
+        fprintf(fout, "<td%s>%s</td>", cl, src_txt);
+        xfree(src_txt); src_txt = 0;
+      } else {
+        fprintf(fout, "<td%s>%s%s</a></td>", cl,
+                ns_aref(ab, sizeof(ab), phr, NEW_SRV_ACTION_VIEW_SOURCE,
+                        "run_id=%d", i), _("View"));
+      }
     }
     if (report_comment && *report_comment) {
       fprintf(fout, "<td%s>%s</td>", cl, report_comment);

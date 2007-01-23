@@ -5050,9 +5050,9 @@ priv_logout(FILE *fout,
 }
 
 
-static int
-insert_variant_num(unsigned char *buf, size_t size,
-                   const unsigned char *file, int variant);
+int
+ns_insert_variant_num(unsigned char *buf, size_t size,
+                      const unsigned char *file, int variant);
 
 static void
 write_alternatives_file(FILE *fout, int is_radio, const unsigned char *txt,
@@ -5517,8 +5517,8 @@ priv_main_page(FILE *fout,
       /* put problem statement */
       if (prob->statement_file[0]) {
         if (variant > 0) {
-          insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
-                             prob->statement_file, variant);
+          ns_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
+                                prob->statement_file, variant);
           pw = &cs->prob_extras[prob->id].v_stmts[variant];
           pw_path = variant_stmt_file;
         } else {
@@ -5538,8 +5538,8 @@ priv_main_page(FILE *fout,
            || prob->type_val == PROB_TYPE_SELECT_MANY)
           && prob->alternatives_file[0]) {
         if (variant > 0) {
-          insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
-                             prob->alternatives_file, variant);
+          ns_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
+                                prob->alternatives_file, variant);
           pw = &cs->prob_extras[prob->id].v_alts[variant];
           pw_path = variant_stmt_file;
         } else {
@@ -6002,7 +6002,8 @@ unpriv_load_html_style(struct http_request_info *phr,
   if (!extra->header_txt || !extra->footer_txt) {
     extra->header_txt = ns_fancy_header;
     extra->separator_txt = ns_fancy_separator;
-    extra->footer_txt = ns_fancy_footer;
+    if (extra->copyright_txt) extra->footer_txt = ns_fancy_footer_2;
+    else extra->footer_txt = ns_fancy_footer;
   }
 
   if (extra->contest_arm) xfree(extra->contest_arm);
@@ -6401,7 +6402,8 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
   extra->copyright_txt = extra->copyright.text;
   if (!extra->header_txt || !extra->footer_txt) {
     extra->header_txt = ns_fancy_header;
-    extra->footer_txt = ns_fancy_footer;
+    if (extra->copyright_txt) extra->footer_txt = ns_fancy_footer_2;
+    else extra->footer_txt = ns_fancy_footer;
     extra->separator_txt = ns_fancy_separator;
   }
 
@@ -6442,7 +6444,7 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
     fprintf(fout, "</div></td>\n");
   }
 
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>\n", ns_submit_button(bb, sizeof(bb), "submit", 0, _("Submit")));
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>\n", ns_submit_button(bb, sizeof(bb), "submit", 0, _("Log in")));
 
   fprintf(fout, "</tr></table>");
   fprintf(fout, "</div></form>\n"
@@ -8358,9 +8360,9 @@ html_problem_selection_2(serve_state_t cs,
   fprintf(fout, "</select>");
 }
 
-static int
-insert_variant_num(unsigned char *buf, size_t size,
-                   const unsigned char *file, int variant)
+int
+ns_insert_variant_num(unsigned char *buf, size_t size,
+                      const unsigned char *file, int variant)
 {
   int flen, pos;
 
@@ -8879,8 +8881,8 @@ user_main_page(FILE *fout,
         continue;
       if (!prob->statement_file[0]) continue;
       if (variant > 0) {
-        insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
-                           prob->statement_file, variant);
+        ns_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
+                              prob->statement_file, variant);
         pw = &cs->prob_extras[prob_id].v_stmts[variant];
         pw_path = variant_stmt_file;
       } else {
@@ -8972,8 +8974,8 @@ user_main_page(FILE *fout,
       /* put problem statement */
       if (prob->statement_file[0]) {
         if (variant > 0) {
-          insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
-                             prob->statement_file, variant);
+          ns_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
+                                prob->statement_file, variant);
           pw = &cs->prob_extras[prob_id].v_stmts[variant];
           pw_path = variant_stmt_file;
         } else {
@@ -8995,8 +8997,8 @@ user_main_page(FILE *fout,
              || prob->type_val == PROB_TYPE_SELECT_MANY)
             && prob->alternatives_file[0]) {
           if (variant > 0) {
-            insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
-                               prob->alternatives_file, variant);
+            ns_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
+                                  prob->alternatives_file, variant);
             pw = &cs->prob_extras[prob->id].v_alts[variant];
             pw_path = variant_stmt_file;
           } else {
