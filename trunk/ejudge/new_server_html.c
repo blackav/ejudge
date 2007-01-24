@@ -8949,6 +8949,7 @@ user_main_page(FILE *fout,
                 cnts->team_head_style);
       } else {
         if (cnts->exam_mode) {
+          /*
           if (prob->disable_user_submit > 0) {
             fprintf(fout, "<%s>%s</%s>\n",
                     cnts->team_head_style,
@@ -8958,6 +8959,9 @@ user_main_page(FILE *fout,
                     cnts->team_head_style, _("Submit a solution for"),
                     prob->long_name, cnts->team_head_style);
           }
+          */
+          fprintf(fout, "<%s>%s</%s>\n",  cnts->team_head_style,
+                  prob->long_name, cnts->team_head_style);
         } else {
           if (prob->disable_user_submit > 0) {
             fprintf(fout, "<%s>%s-%s</%s>\n",
@@ -9089,9 +9093,18 @@ user_main_page(FILE *fout,
           }
           break;
         }
-        fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\">%s</td></tr></table></form>\n",
-                _("Send!"),
-                BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
+        if (cnts->exam_mode) {
+          cc = "";
+          if (prob && (prob->type_val == PROB_TYPE_SELECT_MANY || prob->type_val == PROB_TYPE_SELECT_ONE)) cc = "<td class=\"borderless\">&nbsp;</td>";
+          fprintf(fout, "<tr>%s<td class=\"borderless\">&nbsp;</td><td class=\"borderless\">%s</td></tr></table></form>\n", cc,
+                  ns_submit_button(bb, sizeof(bb),
+                                   _("Submit solution!"),
+                                   NEW_SRV_ACTION_SUBMIT_RUN, 0));
+        } else {
+          fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\">%s</td></tr></table></form>\n",
+                  _("Send!"),
+                  BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
+        }
       } /* prob->disable_user_submit <= 0 */
 
       if (global->problem_navigation
