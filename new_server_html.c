@@ -9097,9 +9097,9 @@ user_main_page(FILE *fout,
           cc = "";
           if (prob && (prob->type_val == PROB_TYPE_SELECT_MANY || prob->type_val == PROB_TYPE_SELECT_ONE)) cc = "<td class=\"borderless\">&nbsp;</td>";
           fprintf(fout, "<tr>%s<td class=\"borderless\">&nbsp;</td><td class=\"borderless\">%s</td></tr></table></form>\n", cc,
-                  ns_submit_button(bb, sizeof(bb),
-                                   _("Submit solution!"),
-                                   NEW_SRV_ACTION_SUBMIT_RUN, 0));
+                  ns_submit_button(bb, sizeof(bb), 0,
+			           NEW_SRV_ACTION_SUBMIT_RUN,
+				   _("Submit solution!")));
         } else {
           fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\">%s</td></tr></table></form>\n",
                   _("Send!"),
