@@ -8942,35 +8942,37 @@ user_main_page(FILE *fout,
     } else if (start_time > 0 && stop_time <= 0 && prob_id > 0) {
       prob = cs->probs[prob_id];
 
+      bb[0] = 0;
       if (variant > 0) {
-        fprintf(fout, "<%s>%s %s-%s (%s %d)</%s>\n",
-                cnts->team_head_style, _("Submit a solution for"),
-                prob->short_name, prob->long_name, _("Variant"), variant,
-                cnts->team_head_style);
+        snprintf(bb, sizeof(bb), "<%s>%s %s-%s (%s %d)</%s>\n",
+                 cnts->team_head_style, _("Submit a solution for"),
+                 prob->short_name, prob->long_name, _("Variant"), variant,
+                 cnts->team_head_style);
       } else {
         if (cnts->exam_mode) {
           /*
           if (prob->disable_user_submit > 0) {
-            fprintf(fout, "<%s>%s</%s>\n",
-                    cnts->team_head_style,
-                    prob->long_name, cnts->team_head_style);
+            snprintf(bb, sizeof(bb), "<%s>%s</%s>\n",
+                     cnts->team_head_style,
+                     prob->long_name, cnts->team_head_style);
           } else {
-            fprintf(fout, "<%s>%s %s</%s>\n",
-                    cnts->team_head_style, _("Submit a solution for"),
-                    prob->long_name, cnts->team_head_style);
+            snprintf(bb, sizeof(bb), "<%s>%s %s</%s>\n",
+                     cnts->team_head_style, _("Submit a solution for"),
+                     prob->long_name, cnts->team_head_style);
           }
           */
-          fprintf(fout, "<%s>%s</%s>\n",  cnts->team_head_style,
-                  prob->long_name, cnts->team_head_style);
+          snprintf(bb, sizeof(bb), "<%s>%s %s</%s>\n",
+                   cnts->team_head_style, _("Problem"),
+                   prob->long_name, cnts->team_head_style);
         } else {
           if (prob->disable_user_submit > 0) {
-            fprintf(fout, "<%s>%s-%s</%s>\n",
-                    cnts->team_head_style,
-                    prob->short_name, prob->long_name, cnts->team_head_style);
+            snprintf(bb, sizeof(bb), "<%s>%s %s-%s</%s>\n",
+                     cnts->team_head_style, _("Problem"),
+                     prob->short_name, prob->long_name, cnts->team_head_style);
           } else {
-            fprintf(fout, "<%s>%s %s-%s</%s>\n",
-                    cnts->team_head_style, _("Submit a solution for"),
-                    prob->short_name, prob->long_name, cnts->team_head_style);
+            snprintf(bb, sizeof(bb), "<%s>%s %s-%s</%s>\n",
+                     cnts->team_head_style, _("Submit a solution for"),
+                     prob->short_name, prob->long_name, cnts->team_head_style);
           }
         }
       }
@@ -8988,11 +8990,14 @@ user_main_page(FILE *fout,
         }
         watched_file_update(pw, pw_path, cs->current_time);
         if (!pw->text) {
-          fprintf(fout, "<big><font color=\"red\"><p>%s</p></font></big>\n",
-                  _("The problem statement is not available"));
+          fprintf(fout, "%s<big><font color=\"red\"><p>%s</p></font></big>\n",
+                  bb, _("The problem statement is not available"));
         } else {
-          fprintf(fout, "%s", pw->text);
+          if (cnts->exam_mode) bb[0] = 0;
+          fprintf(fout, "%s%s", bb, pw->text);
         }
+      } else {
+        fprintf(fout, "%s", bb);
       }
 
       if (prob->disable_user_submit <= 0) {
