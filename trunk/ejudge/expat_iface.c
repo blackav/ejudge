@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -309,8 +309,8 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     itag = pd->spec->default_elem;
     generic_flag = 1;
     if (itag <= 0) {
-      err("unknown tag <%s> at line %d, skipping",
-          cur_tag, XML_GetCurrentLineNumber(p));
+      err("unknown tag <%s> at line %ld, skipping",
+          cur_tag, (long) XML_GetCurrentLineNumber(p));
       pd->err_cntr++;
       goto start_skipping;
     }
@@ -322,8 +322,8 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
       itag = pd->spec->default_elem;
       generic_flag = 1;
       if (itag <= 0) {
-        err("unknown tag <%s> at line %d, skipping",
-            cur_tag, XML_GetCurrentLineNumber(p));
+        err("unknown tag <%s> at line %ld, skipping",
+            cur_tag, (long) XML_GetCurrentLineNumber(p));
         pd->err_cntr++;
         goto start_skipping;
       }
@@ -370,8 +370,8 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
       iattr = pd->spec->default_attr;
       generic_flag = 1;
       if (iattr <= 0) {
-        err("unknown attribute <%s> at line %d",
-            cur_attr, XML_GetCurrentLineNumber(p));
+        err("unknown attribute <%s> at line %ld",
+            cur_attr, (long) XML_GetCurrentLineNumber(p));
         pd->err_cntr++;
         atts += 2;
         xfree(cur_val); cur_val = 0;
@@ -385,8 +385,8 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
         iattr = pd->spec->default_attr;
         generic_flag = 1;
         if (iattr <= 0) {
-          err("unknown attribute <%s> at line %d",
-              cur_attr, XML_GetCurrentLineNumber(p));
+          err("unknown attribute <%s> at line %ld",
+              cur_attr, (long) XML_GetCurrentLineNumber(p));
           pd->err_cntr++;
           atts += 2;
           xfree(cur_val); cur_val = 0;
@@ -551,8 +551,8 @@ xml_build_tree(char const *path, const struct xml_parse_spec *spec)
   while (fgets(buf, sizeof(buf), f)) {
     len = strlen(buf);
     if (XML_Parse(p, buf, len, 0) == XML_STATUS_ERROR) {
-      err("%s: %d: parse error: %s",
-          path, XML_GetCurrentLineNumber(p),
+      err("%s: %ld: parse error: %s",
+          path, (long) XML_GetCurrentLineNumber(p),
           XML_ErrorString(XML_GetErrorCode(p)));
       goto cleanup_and_exit;
     }
@@ -611,8 +611,8 @@ xml_build_tree_str(char const *str, const struct xml_parse_spec *spec)
   data.conv_hnd = conv_hnd;
 
   if (XML_Parse(p, str, len, 0) == XML_STATUS_ERROR) {
-    err("%d: parse error: %s",
-        XML_GetCurrentLineNumber(p),
+    err("%ld: parse error: %s",
+        (long) XML_GetCurrentLineNumber(p),
         XML_ErrorString(XML_GetErrorCode(p)));
     goto cleanup_and_exit;
   }
@@ -664,8 +664,8 @@ xml_build_tree_file(FILE *f, const struct xml_parse_spec *spec)
   while (fgets(buf, sizeof(buf), f)) {
     len = strlen(buf);
     if (XML_Parse(p, buf, len, 0) == XML_STATUS_ERROR) {
-      err("%d: parse error: %s",
-          XML_GetCurrentLineNumber(p),
+      err("%ld: parse error: %s",
+          (long) XML_GetCurrentLineNumber(p),
           XML_ErrorString(XML_GetErrorCode(p)));
       goto cleanup_and_exit;
     }
