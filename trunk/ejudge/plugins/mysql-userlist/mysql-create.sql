@@ -26,8 +26,10 @@ CREATE TABLE %scookies
        (val BIGINT UNSIGNED NOT NULL PRIMARY KEY,
        user_id INT NOT NULL,
        priv_level TINYINT NOT NULL DEFAULT 0,
+       role TINYINT NOT NULL DEFAULT 0,
        ipversion TINYINT NOT NULL DEFAULT 4,
        locale_id TINYINT NOT NULL DEFAULT 0,
+       recovery TINYINT NOT NULL DEFAULT 0,
        contest_id INT UNSIGNED NOT NULL,
        ip VARCHAR(64) NOT NULL,
        ssl TINYINT NOT NULL DEFAULT 0,
@@ -70,6 +72,7 @@ CREATE TABLE %susers
        phone VARCHAR (256),
        city VARCHAR (256),
        city_en VARCHAR (256),
+       region VARCHAR (256),
        country VARCHAR (256),
        country_en VARCHAR (256),
        location VARCHAR (256),
@@ -111,6 +114,9 @@ CREATE TABLE %sparticipants
        fac_en VARCHAR(256),
        facshort VARCHAR(256),
        facshort_en VARCHAR(256),
+       birth_date TIMESTAMP,
+       entry_date TIMESTAMP,
+       graduation_date TIMESTAMP,
        FOREIGN KEY (user_id) REFERENCES logins (id)
        );
 
