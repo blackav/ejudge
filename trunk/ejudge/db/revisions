@@ -1959,3 +1959,6 @@ new_server_html.c 3917 0 26643707
 new_server_html.c 3919 0 26641982
 new_server_html.c 3921 0 26658309
 expat_iface.c 3923 0 1725749
+ejudge-setup.c 3927 0 9792788
+new_server_html.c 3927 0 26670581
+new_server_html_3.c 3927 0 1968546

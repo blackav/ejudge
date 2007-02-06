@@ -1,3 +1,19 @@
+2007-02-06 (r3927) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	--enable-style-prefix option is added.
+
+	* config.h.in:
+	CONF_STYLE_PREFIX definition is added.
+
+	* new_server_html.c, new_server_html_3.c:
+	CONF_STYLE_PREFIX is used instead of hard-coded "/ejudge/".
+
+	* ejudge-setup.c:
+	(generate_install_script) CONF_STYLE_PREFIX is used instead of
+	  hard-coded "/ejudge/";
+	  `new-server' is started in database initialization mode.
+
 2007-01-26 (r3923) Alexander Chernov  <cher@ejudge.ru>
 
 	* expat_iface.c: copyright year is updated;
