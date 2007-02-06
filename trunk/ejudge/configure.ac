@@ -55,6 +55,7 @@ AC_ARG_ENABLE([ejudge-xml],AC_HELP_STRING([--enable-ejudge-xml],[specify the def
 AC_ARG_ENABLE([contests-dir],AC_HELP_STRING([--enable-contests-dir],[specify the default path to the contest configuration directory]),[ac_cv_contests_dir="$enableval"],[ac_cv_contests_dir=""])
 AC_ARG_ENABLE([contests-home-dir],AC_HELP_STRING([--enable-contests-home-dir],[specify the default path to the contests home directory]),[ac_cv_contests_home_dir="$enableval"],[ac_cv_contests_home_dir=""])
 AC_ARG_ENABLE([ajax],AC_HELP_STRING([--enable-ajax],[enable use of the ajax technology for the client web interface]),[ac_cv_ajax="$enableval"],[ac_cv_ajax=""])
+AC_ARG_ENABLE([style-prefix],AC_HELP_STRING([--enable-style-prefix],[specify the prefix for HTML style files]),[ac_cv_style_prefix="$enableval"],[ac_cv_style_prefix=""])
 
 AC_ARG_WITH([httpd-cgi-bin-dir],AC_HELP_STRING([--with-httpd-cgi-bin-dir],[specify the path to the web serve CGI directory]),[ac_cv_httpd_cgi_bin_dir="${withval}"])
 AC_ARG_WITH([httpd-htdocs-dir],AC_HELP_STRING([--with-httpd-htdocs-dir],[specify the path to the web server HTML directory]),[ac_cv_httpd_htdocs_dir="${withval}"])
@@ -83,6 +84,7 @@ dnl setup default values
 [[ x"${ac_cv_contests_home_dir}" = x -o x"${ac_cv_contests_home_dir}" = xyes ]] && ac_cv_contests_home_dir="/home/judges"
 [[ x"${ac_cv_conf_dir}" = x -o x"${ac_cv_conf_dir}" = xyes ]] && ac_cv_conf_dir="/home/judges/data"
 [[ x"${ac_cv_cgi_conf_dir}" = x -o x"${ac_cv_cgi_conf_dir}" = xyes ]] && ac_cv_cgi_conf_dir="../cgi-data"
+[[ x"${ac_cv_style_prefix}" = x -o x"${ac_cv_style_prefix}" = xyes ]] && ac_cv_style_prefix="/ejudge/"
 
 case "${host}" in
   x86_64-*linux*)
@@ -1446,6 +1448,7 @@ AC_SUBST(cgibindir)
 AC_SUBST(XGETTEXT)
 AC_SUBST(MSGMERGE)
 AC_SUBST(MSGFMT)
+AC_SUBST(ac_cv_style_prefix)
 
 AC_SUBST(ac_cv_contest_gcc)
 AC_SUBST(ac_cv_contest_gcc_dir)
@@ -1496,6 +1499,8 @@ if [[ x"${ac_cv_ajax}" != xno -a x"${ac_cv_ajax}" != x ]]
 then
   AC_DEFINE(CONF_ENABLE_AJAX,1)
 fi
+
+AC_DEFINE_UNQUOTED(CONF_STYLE_PREFIX, "${ac_cv_style_prefix}")
 
 AC_DEFINE_UNQUOTED(CGI_PROG_SUFFIX,"$ac_cv_cgi_suffix")
 if [[ x"${ac_cv_conf_dir}" != x ]]

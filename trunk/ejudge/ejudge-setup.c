@@ -47,6 +47,10 @@ static unsigned char uudecode_path[PATH_MAX];
 #define CGI_PROG_SUFFIX ""
 #endif /* CGI_PROG_SUFFIX */
 
+#if !defined CONF_STYLE_PREFIX
+#define CONF_STYLE_PREFIX "/ejudge/"
+#endif
+
 #define DEFAULT_SERIALIZATION_KEY 22723
 
 static unsigned char config_socket_path[PATH_MAX];
@@ -3499,6 +3503,7 @@ generate_install_script(FILE *f)
   unsigned char serve_cfg_path[PATH_MAX];
   unsigned char compile_cfg_path[PATH_MAX];
   unsigned char workdir_path[PATH_MAX];
+  unsigned char style_prefix[PATH_MAX];
   unsigned char style_dir[PATH_MAX];
   unsigned char style_src_dir[PATH_MAX];
   struct stat sb1, sb2;
@@ -3593,20 +3598,29 @@ generate_install_script(FILE *f)
   }
 
   if (!strcmp(config_install_flag, "yes") && config_htdocs_dir[0]) {
-    snprintf(style_dir, sizeof(style_dir), "%s/ejudge", config_htdocs_dir);
-    snprintf(style_src_dir, sizeof(style_src_dir),
-             "%s/share/ejudge/style", EJUDGE_PREFIX_DIR);
-    generate_dir_creation(f, &created_dirs, 0, style_dir);
-    gen_cmd_run(f, "ln -sf \"%s/actions.js\" \"%s/actions.js\"",
-                style_src_dir, style_dir);
-    gen_cmd_run(f, "ln -sf \"%s/logo.gif\" \"%s/logo.gif\"",
-                style_src_dir, style_dir);
-    gen_cmd_run(f, "ln -sf \"%s/priv.css\" \"%s/priv.css\"",
-                style_src_dir, style_dir);
-    gen_cmd_run(f, "ln -sf \"%s/unpriv.css\" \"%s/unpriv.css\"",
-                style_src_dir, style_dir);
-    gen_cmd_run(f, "ln -sf \"%s/unpriv.js\" \"%s/unpriv.js\"",
-                style_src_dir, style_dir);
+    if (CONF_STYLE_PREFIX[0] != '/') {
+      gen_cmd_run(f, "echo 'NOTE: HTML style files are not linked to the HTTP server'");
+      gen_cmd_run(f, "echo 'directories because --enable-style-prefix specifies'");
+      gen_cmd_run(f, "echo 'prefix not starting with /'. You should symlink or copy'");
+      gen_cmd_run(f, "echo 'the style files manually'");
+    } else {
+      snprintf(style_prefix, sizeof(style_prefix), "%s%s", config_htdocs_dir,
+               CONF_STYLE_PREFIX);
+      os_rDirName(style_prefix, style_dir, sizeof(style_dir));
+      snprintf(style_src_dir, sizeof(style_src_dir),
+               "%s/share/ejudge/style", EJUDGE_PREFIX_DIR);
+      generate_dir_creation(f, &created_dirs, 0, style_dir);
+      gen_cmd_run(f, "ln -sf \"%s/actions.js\" \"%sactions.js\"",
+                  style_src_dir, style_prefix);
+      gen_cmd_run(f, "ln -sf \"%s/logo.gif\" \"%slogo.gif\"",
+                  style_src_dir, style_prefix);
+      gen_cmd_run(f, "ln -sf \"%s/priv.css\" \"%spriv.css\"",
+                  style_src_dir, style_prefix);
+      gen_cmd_run(f, "ln -sf \"%s/unpriv.css\" \"%sunpriv.css\"",
+                  style_src_dir, style_prefix);
+      gen_cmd_run(f, "ln -sf \"%s/unpriv.js\" \"%sunpriv.js\"",
+                  style_src_dir, style_prefix);
+    }
   }
 
   // ejudge.xml
@@ -3805,6 +3819,10 @@ generate_install_script(FILE *f)
   gen_cmd_run(f, "%s -u %s -g %s -C \"%s\" -i conf/serve.cfg",
               config_ejudge_serve_path, config_system_uid,
               config_system_gid, config_contest1_home_dir);
+  fprintf(f, "# Create necessary files for `new-server'\n");
+  gen_cmd_run(f, "%s/bin/new-server -u %s -g %s -C \"%s\" --create",
+              EJUDGE_PREFIX_DIR, config_system_uid,
+              config_system_gid, config_ejudge_contests_home_dir);
 }
 
 static void

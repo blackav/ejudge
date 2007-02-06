@@ -158,6 +158,10 @@
 #endif
 #define __(x) x
 
+#if !defined CONF_STYLE_PREFIX
+#define CONF_STYLE_PREFIX "/ejudge/"
+#endif
+
 #define ARMOR(s)  html_armor_buf(&ab, s)
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 
@@ -6017,10 +6021,11 @@ unpriv_load_html_style(struct http_request_info *phr,
   if (p_cur_time) *p_cur_time = cur_time;
 
   // js part
+#if defined CONF_ENABLE_AJAX && CONF_ENABLE_AJAX
   snprintf(bb, sizeof(bb),
-           "<script type=\"text/javascript\" src=\"/ejudge/dojo.js\"></script>\n"
-           "<script type=\"text/javascript\" src=\"/ejudge/actions.js\"></script>\n"
-           "<script type=\"text/javascript\" src=\"/ejudge/unpriv.js\"></script>\n"
+           "<script type=\"text/javascript\" src=\"" CONF_STYLE_PREFIX "dojo.js\"></script>\n"
+           "<script type=\"text/javascript\" src=\"" CONF_STYLE_PREFIX "actions.js\"></script>\n"
+           "<script type=\"text/javascript\" src=\"" CONF_STYLE_PREFIX "unpriv.js\"></script>\n"
            "<script type=\"text/javascript\">\n"
            "  var SID=\"%016llx\";\n"
            "  dojo.require(\"dojo.event.*\");\n"
@@ -6030,6 +6035,7 @@ unpriv_load_html_style(struct http_request_info *phr,
   phr->script_part = xstrdup(bb);
   snprintf(bb, sizeof(bb), " onload=\"startClock()\"");
   phr->body_attr = xstrdup(bb);
+#endif
 }
 
 static int
