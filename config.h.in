@@ -82,6 +82,9 @@
 /* whether AJAX is enabled */
 #undef CONF_ENABLE_AJAX
 
+/* prefix for HTML style files */
+#undef CONF_STYLE_PREFIX
+
 /* compiler versions */
 #undef COMPILE_GCC_VERSION
 #undef COMPILE_GPP_VERSION
