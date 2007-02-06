@@ -1,0 +1,88 @@
+-*- mode: text; mode: auto-fill -*-
+$Id$
+
+ejudge upgrade notes
+====================
+
+The following abbreviations are used:
+CONF_DIR	the directory specified with the `--enable-conf-dir'
+		configure's option during initial configuration step
+		(the default value is /home/judges/data).
+PREFIX		the installation prefix directory, as specified by
+		the --prefix configure's option.
+BIN_DIR		the directory with the ejudge executable files
+		(the default value is PREFIX/bin).
+CGI_BIN_DIR	the directory with CGI programs of the http-server
+		(for example, /var/www/cgi-bin, but depends on the
+		linux distribution used and apache settings).
+HTDOCS_DIR	the root directory of the HTML documents of the
+		web-server (for example, /var/www/htdocs, but depends
+		on the linux distribution used and apache settings).
+
+Migration to version 2.3.2
+--------------------------
+To upgrade to the ejudge 2.3.2 from the earlier versions preserving
+all the settings and contest data, the following steps should be
+performed:
+
+1. Add the following text to the CONF_DIR/ejudge.xml
+configuration file:
+---
+  <plugins>
+    <plugin type="nsdb" name="files">
+       <config>
+         <data_dir>CONF_DIR/new-serve-db</data_dir>
+       </config>
+    </plugin>
+  </plugins>
+---
+The text may be inserted after the closing </caps> tag but
+before the closing </config> tag.
+
+2. Create the files for the `new-server' program:
+BIN_DIR/new-server --create
+The `new-server' program should be started under the same user,
+as the user used to run the ejudge system.
+
+3. CGI programs are now installed to the
+PREFIX/libexec/ejudge/cgi-bin directory rather than to
+PREFIX/cgi-bin. Thus, the PREFIX/cgi-bin directory may be removed:
+rm -rf PREFIX/cgi-bin
+The symbolic links from the CGI_BIN_DIR directory should be
+redirected to the new location:
+cd CGI_BIN_DIR; ln -sf PREFIX/libexec/ejudge/cgi-bin/* .
+`root' permissions may be required to do that
+
+4. Directory `ejudge' should be created in the HTDOCS_DIR
+directory. In the `ejudge' directory symlinks should be created
+to the HTML style files located in the PREFIX/share/ejudge/style
+directory.
+cd HTDOCS_DIR; mkdir ejudge; cd ejudge; ln -sf PREFIX/share/ejudge/style/* . 
+`root' permissions may be required to do that
+
+The new version is fully backward compatible with the previous
+versions, but the `serve' contest server and the `team',
+`master' and `judge' CGI programs are rendered obsolete.
+`new-server' is recommented for use instead of `serve' and
+`new-client', `new-judge', `new-master' CGI programs are
+recommented for use intead of the old CGI programs.
+To migrate to the new contest server `new-server' from the old
+`serve', the XML contest configuration file CONTEST.xml (for
+example, 000001.xml, which are normally located in
+CONF_DIR/contests) should be changed: the attribute
+`managed="yes"' of the <contest> element should be replaced with
+the attribute `new_managed="yes"'.
+
+The `team' CGI program automatically redirects users to the
+`new-client' CGI program, if the contest is managed by the
+`new-server'. Note, however, that the privileged programs
+`master' and `judge' does not redirect users. Anyway, after
+upgrading, you might want to update hyperlinks in your web
+pages, that refer to the ejudge's CGI programs.
+
+To support AJAX on the client side the DoJo Toolkit
+(http://dojotoolkit.org) should be installed to the
+HTDOCS_DIR/ejudge directory (i.e. the same directory where the
+ejudge HTML style files are located). `dojo.js',
+`iframe_history.html' files and the `src' directory should be
+copied there from the dojo distribution.
