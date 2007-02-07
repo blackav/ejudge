@@ -544,6 +544,7 @@ struct section_tester_data
   int    is_dos;                /* do unix->dos conversion of tests? */
   int    no_redirect;           /* do not redirect standard streams */
   int    priority_adjustment;   /* priority adjustment for this tester */
+  int    ignore_stderr;         /* ignore the stderr stream */
 
   puc_t arch[32];               /* checker architecture */
   puc_t key[32];                /* configuration key */

@@ -1380,6 +1380,7 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
             "abstract\n"
             "no_core_dump\n"
             "no_redirect\n"
+            "ignore_stderr\n"
             "time_limit_adjustment\n"
             "is_dos\n"
             "kill_signal = KILL\n"
