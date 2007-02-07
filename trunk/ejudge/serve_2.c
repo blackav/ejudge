@@ -1789,6 +1789,7 @@ serve_rejudge_by_mask(serve_state_t state,
       if (re.is_imported) continue;
       if (re.user_id <= 0 || re.user_id >= total_ids) continue;
       if (re.prob_id <= 0 || re.prob_id >= total_probs) continue;
+      if (re.lang_id <= 0 || re.lang_id > state->max_lang) continue;
       if (re.is_readonly) continue;
       if (!state->probs[re.prob_id]
           || state->probs[re.prob_id]->disable_testing) continue;
@@ -1809,6 +1810,7 @@ serve_rejudge_by_mask(serve_state_t state,
         && re.status != RUN_IGNORED
         && re.status != RUN_DISQUALIFIED
         && re.prob_id >= 1 && re.prob_id <= state->max_prob
+        && re.lang_id >= 1 && re.lang_id <= state->max_lang
         && state->probs[re.prob_id]
         && !state->probs[re.prob_id]->disable_testing
         && !state->langs[re.lang_id]->disable_testing
@@ -1852,6 +1854,7 @@ serve_rejudge_problem(serve_state_t state,
       if (re.is_imported) continue;
       if (re.is_readonly) continue;
       if (re.user_id <= 0 || re.user_id >= total_ids) continue;
+      if (re.lang_id <= 0 || re.lang_id > state->max_lang) continue;
       if (flag[re.user_id]) continue;
       if (!state->langs[re.lang_id]
           || state->langs[re.lang_id]->disable_testing) continue;
@@ -1892,6 +1895,7 @@ serve_judge_suspended(serve_state_t state,
         && !re.is_imported
         && re.prob_id > 0
         && re.prob_id <= state->max_prob
+        && re.lang_id > 0 && re.lang_id <= state->max_lang
         && state->probs[re.prob_id]
         && !re.is_readonly
         && !state->probs[re.prob_id]->disable_testing
@@ -1932,6 +1936,7 @@ serve_rejudge_all(serve_state_t state,
       if (re.is_imported) continue;
       if (re.user_id <= 0 || re.user_id >= total_ids) continue;
       if (re.prob_id <= 0 || re.prob_id >= total_probs) continue;
+      if (re.lang_id <= 0 || re.lang_id > state->max_lang) continue;
       if (re.is_readonly) continue;
       if (!state->probs[re.prob_id]
           || state->probs[re.prob_id]->disable_testing) continue;
@@ -1951,6 +1956,7 @@ serve_rejudge_all(serve_state_t state,
         && re.status != RUN_IGNORED
         && re.status != RUN_DISQUALIFIED
         && re.prob_id >= 1 && re.prob_id <= state->max_prob
+        && re.lang_id >= 1 && re.lang_id <= state->max_lang
         && state->probs[re.prob_id]
         && !state->probs[re.prob_id]->disable_testing
         && !state->langs[re.lang_id]->disable_testing
