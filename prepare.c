@@ -405,6 +405,7 @@ static const struct config_parse_info section_tester_params[] =
   TESTER_PARAM(problem, "d"),
   TESTER_PARAM(problem_name, "s"),
   TESTER_PARAM(no_redirect, "d"),
+  TESTER_PARAM(ignore_stderr, "d"),
   TESTER_PARAM(is_dos, "d"),
   TESTER_PARAM(skip_testing, "d"),
   TESTER_PARAM(arch, "s"),
@@ -673,6 +674,7 @@ tester_init_func(struct generic_section_config *gp)
   p->is_dos = -1;
   p->skip_testing = -1;
   p->no_redirect = -1;
+  p->ignore_stderr = -1;
   p->no_core_dump = -1;
   p->enable_memory_limit_error = -1;
   p->clear_env = -1;
@@ -808,6 +810,7 @@ static const struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(is_dos, int, int),
   TESTER_INH(skip_testing, int, int),
   TESTER_INH(no_redirect, int, int),
+  TESTER_INH(ignore_stderr, int, int),
   TESTER_INH(priority_adjustment, int3, int),
   TESTER_INH(check_dir, path, path),
   TESTER_INH(errorcode_file, path, path),
@@ -2868,6 +2871,14 @@ set_defaults(serve_state_t state, int mode)
       if (tp->no_redirect == -1) {
         tp->no_redirect = 0;
       }
+      if (tp->ignore_stderr == -1 && atp && atp->ignore_stderr != -1) {
+        tp->ignore_stderr = atp->ignore_stderr;
+        info("tester.%d.ignore_stderr inherited from tester.%s (%d)",
+             i, sish, tp->ignore_stderr);        
+      }
+      if (tp->ignore_stderr == -1) {
+        tp->ignore_stderr = 0;
+      }
       if (!tp->errorcode_file[0] && atp && atp->errorcode_file) {
         sformat_message(tp->errorcode_file, PATH_MAX, atp->errorcode_file,
                         state->global, state->probs[tp->problem], NULL,
@@ -3495,6 +3506,15 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
     out->no_redirect = 0;
   }
 
+  /* copy ignore_stderr */
+  out->ignore_stderr = tp->ignore_stderr;
+  if (out->ignore_stderr == -1 && atp) {
+    out->ignore_stderr = atp->ignore_stderr;
+  }
+  if (out->ignore_stderr == -1) {
+    out->ignore_stderr = 0;
+  }
+
   /* copy kill_signal */
   strcpy(out->kill_signal, tp->kill_signal);
   if (!out->kill_signal[0] && atp) {
@@ -3713,6 +3733,7 @@ void print_tester(FILE *o, struct section_tester_data *t)
   fprintf(o, "is_dos = %d\n", t->is_dos);
   fprintf(o, "skip_testing = %d\n", t->skip_testing);
   fprintf(o, "no_redirect = %d\n", t->no_redirect);
+  fprintf(o, "ignore_stderr = %d\n", t->ignore_stderr);
   fprintf(o, "arch = \"%s\"\n", t->arch);
   fprintf(o, "key = \"%s\"\n", t->key);
   fprintf(o, "check_dir = \"%s\"\n", t->check_dir);
