@@ -306,6 +306,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(use_tgz, "d"),
   PROBLEM_PARAM(tests_to_accept, "d"),
   PROBLEM_PARAM(accept_partial, "d"),
+  PROBLEM_PARAM(min_tests_to_accept, "d"),
   PROBLEM_PARAM(checker_real_time_limit, "d"),
   PROBLEM_PARAM(disable_auto_testing, "d"),
   PROBLEM_PARAM(disable_testing, "d"),
@@ -607,6 +608,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->use_tgz = -1;
   p->tests_to_accept = -1;
   p->accept_partial = -1;
+  p->min_tests_to_accept = -1;
   p->test_sfx[0] = 1;
   p->corr_sfx[0] = 1;
   p->info_sfx[0] = 1;
@@ -2322,6 +2324,8 @@ set_defaults(serve_state_t state, int mode)
     prepare_set_prob_value(PREPARE_FIELD_PROB_TESTS_TO_ACCEPT,
                            state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_ACCEPT_PARTIAL,
+                           state->probs[i], aprob, state->global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_MIN_TESTS_TO_ACCEPT,
                            state->probs[i], aprob, state->global);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_USER_SUBMIT,
@@ -4530,6 +4534,11 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->accept_partial = abstr->accept_partial;
     if (out->accept_partial == -1)
       out->accept_partial = 0;
+    break;
+
+  case PREPARE_FIELD_PROB_MIN_TESTS_TO_ACCEPT:
+    if (out->min_tests_to_accept < 0 && abstr)
+      out->min_tests_to_accept = abstr->min_tests_to_accept;
     break;
 
   case PREPARE_FIELD_PROB_HIDDEN:

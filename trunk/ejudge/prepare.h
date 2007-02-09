@@ -416,6 +416,7 @@ struct section_problem_data
   int    use_tgz;               /* whether use tar test files */
   int    tests_to_accept;       /* how many tests to accept a submit */
   int    accept_partial;        /* whether accept partial solutions */
+  int    min_tests_to_accept;   /* minimal number of tests to accept problem */
   int    checker_real_time_limit;
   int    disable_user_submit;   /* user cannot submit this problem */
   int    disable_submit_after_ok;
@@ -667,6 +668,7 @@ enum
   PREPARE_FIELD_PROB_VARIABLE_FULL_SCORE,
   PREPARE_FIELD_PROB_TESTS_TO_ACCEPT,
   PREPARE_FIELD_PROB_ACCEPT_PARTIAL,
+  PREPARE_FIELD_PROB_MIN_TESTS_TO_ACCEPT,
   PREPARE_FIELD_PROB_HIDDEN,
   PREPARE_FIELD_PROB_STAND_HIDE_TIME,
   PREPARE_FIELD_PROB_CHECKER_REAL_TIME_LIMIT,

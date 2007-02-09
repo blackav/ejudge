@@ -4595,6 +4595,29 @@ super_html_print_problem(FILE *f,
                                    session_id, form_row_attrs[row ^= 1],
                                    self_url, extra_args, prob_hidden_vars);
       }
+
+      //PROBLEM_PARAM(min_tests_to_accept, "d"),
+      extra_msg = "";
+      if (prob->min_tests_to_accept < 0) {
+        if (prob->abstract) {
+          extra_msg = "<i>(Undefined)</i>";
+        } else {
+          prepare_set_prob_value(PREPARE_FIELD_PROB_MIN_TESTS_TO_ACCEPT,
+                                 &tmp_prob, sup_prob, sstate->global);
+          if (tmp_prob.min_tests_to_accept < 0)
+            tmp_prob.min_tests_to_accept = tmp_prob.tests_to_accept;
+          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
+                   tmp_prob.min_tests_to_accept);
+          extra_msg = msg_buf;
+        }
+      }
+      if (!problem_type_flag) {
+        print_int_editing_row(f, "Min. Number of accept tests:",
+                              prob->min_tests_to_accept, extra_msg,
+                              SSERV_CMD_PROB_CHANGE_MIN_TESTS_TO_ACCEPT,
+                              session_id, form_row_attrs[row ^= 1],
+                              self_url, extra_args, prob_hidden_vars);
+      }
     }
   }
 
@@ -5320,6 +5343,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CHANGE_ACCEPT_PARTIAL:
     p_int = &prob->accept_partial;
     goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_MIN_TESTS_TO_ACCEPT:
+    p_int = &prob->min_tests_to_accept;
+    goto handle_int_1;
 
   case SSERV_CMD_PROB_CHANGE_HIDDEN:
     p_int = &prob->hidden;
