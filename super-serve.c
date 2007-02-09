@@ -2704,6 +2704,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CLEAR_SCORE_TESTS:
   case SSERV_CMD_PROB_CHANGE_TESTS_TO_ACCEPT:
   case SSERV_CMD_PROB_CHANGE_ACCEPT_PARTIAL:
+  case SSERV_CMD_PROB_CHANGE_MIN_TESTS_TO_ACCEPT:
   case SSERV_CMD_PROB_CHANGE_HIDDEN:
   case SSERV_CMD_PROB_CHANGE_STAND_HIDE_TIME:
   case SSERV_CMD_PROB_CHANGE_CHECKER_REAL_TIME_LIMIT:
@@ -3309,6 +3310,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CLEAR_SCORE_TESTS] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TESTS_TO_ACCEPT] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_ACCEPT_PARTIAL] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_MIN_TESTS_TO_ACCEPT] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_HIDDEN] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_STAND_HIDE_TIME] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_CHECKER_REAL_TIME_LIMIT] = { cmd_set_value },

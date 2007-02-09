@@ -1078,6 +1078,9 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
           || !prob->abstract)
         unparse_bool(f, "accept_partial", prob->accept_partial);
     }
+    if (prob->min_tests_to_accept >= 0) {
+      fprintf(f, "min_tests_to_accept = %d\n", prob->min_tests_to_accept);
+    }
   }
   if (prob->standard_checker[0])
     fprintf(f, "standard_checker = \"%s\"\n", c_armor(&sbuf, prob->standard_checker));
