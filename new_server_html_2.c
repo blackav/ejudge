@@ -3323,8 +3323,9 @@ static int get_accepting_passed_tests(
   case RUN_OK:
   case RUN_ACCEPTED:
   case RUN_PARTIAL:
-    if (prob->accept_partial <= 0 || prob->min_tests_to_accept < 0)
+    if (prob->accept_partial <= 0 && prob->min_tests_to_accept < 0)
       return prob->tests_to_accept;
+    break;
 
   case RUN_RUN_TIME_ERR:
   case RUN_TIME_LIMIT_ERR:
