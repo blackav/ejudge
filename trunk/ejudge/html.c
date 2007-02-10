@@ -4884,22 +4884,22 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
   fprintf(f, "</table>\n");
 
   fprintf(f,
-          "<br><table><font size=\"-2\">\n"
-          "<tr><td>L</td><td>%s</td></tr>\n"
-          "<tr><td>I</td><td>%s</td></tr>\n"
-          "<tr><td>O</td><td>%s</td></tr>\n"
-          "<tr><td>A</td><td>%s</td></tr>\n"
-          "<tr><td>E</td><td>%s</td></tr>\n"
-          "<tr><td>C</td><td>%s</td></tr>\n"
-          "<tr><td>F</td><td>%s</td></tr>\n"
-          "</font></table>\n",
-          _("Command-line parameters"),
-          _("Test input"),
-          _("Program output"),
-          _("Correct output"),
-          _("Program output to stderr"),
-          _("Checker output"),
-          _("Additional test information"));
+          "<br><table%s><font size=\"-2\">\n"
+          "<tr><td%s>L</td><td%s>%s</td></tr>\n"
+          "<tr><td%s>I</td><td%s>%s</td></tr>\n"
+          "<tr><td%s>O</td><td%s>%s</td></tr>\n"
+          "<tr><td%s>A</td><td%s>%s</td></tr>\n"
+          "<tr><td%s>E</td><td%s>%s</td></tr>\n"
+          "<tr><td%s>C</td><td%s>%s</td></tr>\n"
+          "<tr><td%s>F</td><td%s>%s</td></tr>\n"
+          "</font></table>\n", cl,
+          cl, cl, _("Command-line parameters"),
+          cl, cl, _("Test input"),
+          cl, cl, _("Program output"),
+          cl, cl, _("Correct output"),
+          cl, cl, _("Program output to stderr"),
+          cl, cl, _("Checker output"),
+          cl, cl, _("Additional test information"));
 
 
   // print detailed test information
