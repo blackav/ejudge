@@ -3304,6 +3304,73 @@ static unsigned char *get_checker_comment(
   return str;
 }
 
+static int get_accepting_passed_tests(
+	const serve_state_t cs,
+        const struct section_problem_data *prob,
+        int run_id,
+	const struct run_entry *re)
+{
+  const struct section_global_data *global = cs->global;
+  int rep_flag;
+  path_t rep_path;
+  char *rep_txt = 0;
+  size_t rep_len = 0;
+  testing_report_xml_t rep_xml = 0;
+  const unsigned char *start_ptr = 0;
+  int r, i, t;
+
+  switch (re->status) {
+  case RUN_OK:
+  case RUN_ACCEPTED:
+  case RUN_PARTIAL:
+    if (prob->accept_partial <= 0 || prob->min_tests_to_accept < 0)
+      return prob->tests_to_accept;
+
+  case RUN_RUN_TIME_ERR:
+  case RUN_TIME_LIMIT_ERR:
+  case RUN_PRESENTATION_ERR:
+  case RUN_WRONG_ANSWER_ERR:
+  case RUN_MEM_LIMIT_ERR:
+  case RUN_SECURITY_ERR:
+    r = re->test;
+    if (r > 0) r--;
+    // whether this ever possible?
+    if (r > prob->tests_to_accept) r = prob->tests_to_accept;
+    return r;
+
+  default:
+    return 0;
+  }
+
+  r = 0;
+  if ((rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
+                                         global->xml_report_archive_dir,
+                                         run_id, 0, 1)) < 0)
+    goto cleanup;
+  if (generic_read_file(&rep_txt, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0)
+    goto cleanup;
+  if (get_content_type(rep_txt, &start_ptr) != CONTENT_TYPE_XML)
+    goto cleanup;
+  if (!(rep_xml = testing_report_parse_xml(start_ptr)))
+    goto cleanup;
+  /*
+  if (rep_xml->status != RUN_PRESENTATION_ERR)
+    goto cleanup;
+  if (rep_xml->scoring_system != SCORE_OLYMPIAD)
+    goto cleanup;
+  */
+  t = prob->tests_to_accept;
+  if (t > rep_xml->run_tests) t = rep_xml->run_tests;
+  for (i = 0; i < t; i++)
+    if (rep_xml->tests[i]->status == RUN_OK)
+      r++;
+
+ cleanup:
+  testing_report_free(rep_xml);
+  xfree(rep_txt);
+  return r;
+}
+
 void
 ns_write_olympiads_user_runs(
 	struct http_request_info *phr,
@@ -3459,7 +3526,9 @@ ns_write_olympiads_user_runs(
         if (prob && prob->type_val != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         } else {
-          snprintf(tests_buf, sizeof(tests_buf), "%d", prob->tests_to_accept);
+          //snprintf(tests_buf, sizeof(tests_buf), "%d", prob->tests_to_accept);
+          snprintf(tests_buf, sizeof(tests_buf), "%d",
+                   get_accepting_passed_tests(cs, prob, i, &re));
           report_allowed = 1;
         }
         if (prob && !latest_flag[prob->id]) run_latest = 1;
@@ -3481,10 +3550,14 @@ ns_write_olympiads_user_runs(
           report_comment = get_checker_comment(cs, i);
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         } else {
+          /*
           if (re.test > 0) re.test--;
           if (prob && re.test > prob->tests_to_accept)
             re.test = prob->tests_to_accept;
           snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
+          */
+          snprintf(tests_buf, sizeof(tests_buf), "%d",
+                   get_accepting_passed_tests(cs, prob, i, &re));
           report_allowed = 1;
         }
         break;
