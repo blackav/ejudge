@@ -319,6 +319,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(priority_adjustment, "d"),
   PROBLEM_PARAM(spelling, "s"),
   PROBLEM_PARAM(stand_hide_time, "d"),
+  PROBLEM_PARAM(advance_to_next, "d"),
   PROBLEM_PARAM(score_multiplier, "d"),
   PROBLEM_ALIAS(output_only, type_val, "d"),
   PROBLEM_PARAM(max_vm_size, "z"),
@@ -628,6 +629,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->full_score = -1;
   p->variable_full_score = -1;
   p->hidden = -1;
+  p->advance_to_next = -1;
   p->priority_adjustment = -1000;
   p->test_pat[0] = 1;
   p->corr_pat[0] = 1;
@@ -2356,6 +2358,8 @@ set_defaults(serve_state_t state, int mode)
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_HIDDEN,
                            state->probs[i], aprob, state->global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_ADVANCE_TO_NEXT,
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER,
                            state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_MANUAL_CHECKING,
@@ -3959,6 +3963,7 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
   if (prob->tests_to_accept < 0) prob->tests_to_accept = DFLT_G_TESTS_TO_ACCEPT;
   if (prob->accept_partial < 0) prob->accept_partial = 0;
   if (prob->hidden < 0) prob->hidden = 0;
+  if (prob->advance_to_next < 0) prob->advance_to_next = 0;
   if (prob->priority_adjustment == -1000) prob->priority_adjustment = 0;
   if (prob->variant_num < 0) prob->variant_num = 0;
   if (prob->test_sfx[0] == 1) {
@@ -4546,6 +4551,13 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->hidden = abstr->hidden;
     if (out->hidden == -1)
       out->hidden = 0;
+    break;
+
+  case PREPARE_FIELD_PROB_ADVANCE_TO_NEXT:
+    if (out->advance_to_next == -1 && abstr)
+      out->advance_to_next = abstr->advance_to_next;
+    if (out->advance_to_next == -1)
+      out->advance_to_next = 0;
     break;
 
   case PREPARE_FIELD_PROB_CHECKER_REAL_TIME_LIMIT:

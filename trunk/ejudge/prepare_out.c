@@ -1120,6 +1120,10 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   }
   if (prob->stand_hide_time)
     unparse_bool(f, "stand_hide_time", prob->stand_hide_time);
+  if (prob->advance_to_next >= 0
+      && ((prob->abstract && prob->advance_to_next) || !prob->abstract))
+      unparse_bool(f, "advance_to_next", prob->advance_to_next);
+
   if (!prob->abstract && prob->start_date[0])
     fprintf(f, "start_date = \"%s\"\n", c_armor(&sbuf, prob->start_date));
   if (!prob->abstract && prob->deadline[0])

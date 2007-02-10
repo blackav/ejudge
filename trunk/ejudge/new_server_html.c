@@ -7140,12 +7140,15 @@ unpriv_submit_run(FILE *fout,
   if (!log_txt || !*log_txt) {
     i = 0;
     if (global->problem_navigation) {
-      for (i = prob->id + 1; i <= cs->max_prob; i++) {
-        if (!cs->probs[i]) continue;
-        // FIXME: standard applicability checks
-        break;
+      i = prob->id;
+      if (prob->advance_to_next > 0) {
+        for (i++; i <= cs->max_prob; i++) {
+          if (!cs->probs[i]) continue;
+          // FIXME: standard applicability checks
+          break;
+        }
+        if (i > cs->max_prob) i = 0;
       }
-      if (i > cs->max_prob) i = 0;
     }
     if (i > 0) {
       snprintf(bb, sizeof(bb), "prob_id=%d", i);
