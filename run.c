@@ -1320,12 +1320,21 @@ run_tests(struct section_tester_data *tst,
     if (accept_partial) {
       status = RUN_ACCEPTED;
       failed_test = 1;
+      // FIXME: this seems broken?
       for (jj = 1; jj <= prb->tests_to_accept; jj++) {
         if (tests[jj].status == RUN_OK)
           failed_test++;
         else if (tests[jj].status == RUN_CHECK_FAILED)
           status = RUN_CHECK_FAILED;
       }
+    } else if (prb->min_tests_to_accept >= 0) {
+      if (!failed_test) {
+        status = RUN_ACCEPTED;
+        failed_test = cur_test;
+      } else if (tests[failed_test].status == RUN_CHECK_FAILED) {
+        status = RUN_CHECK_FAILED;
+      } else if (failed_test > prb->min_tests_to_accept)
+        status = RUN_ACCEPTED;
     } else {
       if (!failed_test) { 
         status = RUN_ACCEPTED;
