@@ -8148,7 +8148,8 @@ unpriv_view_standings(FILE *fout,
   } else if (global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode) {
     fprintf(fout, _("<p>Information is not available.</p>"));
   } else if (global->score_system_val == SCORE_OLYMPIAD) {
-    fprintf(fout, _("<p>Information is not available.</p>"));
+    //fprintf(fout, _("<p>Information is not available.</p>"));
+    do_write_kirov_standings(cs, cnts, fout, 0, 1, 1, 0, 0, 0, 0, cur_time);
   } else if (global->score_system_val == SCORE_KIROV) {
     do_write_kirov_standings(cs, cnts, fout, 0, 1, 1, 0, 0, 0, 0, cur_time);
   } else if (global->score_system_val == SCORE_MOSCOW) {
@@ -8530,7 +8531,7 @@ unpriv_page_header(FILE *fout,
     case NEW_SRV_ACTION_STANDINGS:
       if (start_time <= 0) continue;
       if (global->disable_user_standings > 0) continue;
-      if (global->score_system_val == SCORE_OLYMPIAD) continue;
+      //if (global->score_system_val == SCORE_OLYMPIAD) continue;
       break;
     case NEW_SRV_ACTION_VIEW_CLAR_SUBMIT:
       if (global->disable_team_clars) continue;
@@ -8800,7 +8801,8 @@ user_main_page(FILE *fout,
         cc = "#ffdddd";
       }
       if (i == prob_id) hh = "probNavActiveTop";
-      fprintf(fout, "<td class=\"%s\" style=\"background-color: %s\">", hh, cc);
+      fprintf(fout, "<td class=\"%s\" style=\"background-color: %s\" onclick=\"displayProblemSubmitForm(%d)\">", hh, cc, i);
+      //fprintf(fout, "<td class=\"%s\" style=\"background-color: %s\">", hh, cc);
       /*
       if (accepting_mode && accepted_flag[i]) {
         fprintf(fout, "<s>");
@@ -9417,7 +9419,8 @@ unpriv_xml_user_state(
   duration = run_get_duration(cs->runlog_state);
 
   ptm = localtime(&cs->current_time);
-  fprintf(fout, "Content-type: text/xml\n\n");
+  fprintf(fout, "Content-type: text/xml\n"
+          "Cache-Control: no-cache\n\n");
   fprintf(fout, "<?xml version=\"1.0\" encoding=\"%s\"?>", EJUDGE_CHARSET);
   fprintf(fout, "<t>"
           "<h>%02d</h>"
