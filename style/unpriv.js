@@ -134,3 +134,8 @@ function startClock()
         });
   oInterval = window.setInterval("updateTime()",60000);
 }
+
+function displayProblemSubmitForm(probId)
+{
+  //document.location.href = url;
+}
