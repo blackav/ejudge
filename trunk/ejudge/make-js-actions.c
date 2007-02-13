@@ -6,6 +6,7 @@
 #define A(n) [n] = #n
 const unsigned char * const action_table[NEW_SRV_ACTION_LAST] =
 {
+  A(NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT),
   A(NEW_SRV_ACTION_XML_USER_STATE),
 };
 
