@@ -14,7 +14,9 @@ var countDownTimer = null;
 //handling errors within AJAX communications
 function handleError(type, errObj)
 { 
+  /* FIXME: should not report error
   alert("ERROR: " + errObj.message);
+  */
 }
 
 //pretty printer
@@ -137,5 +139,5 @@ function startClock()
 
 function displayProblemSubmitForm(probId)
 {
-  //document.location.href = url;
+  document.location.href = self_url + "?SID=" + SID + "&action=" + NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT + "&prob_id=" + probId;
 }
