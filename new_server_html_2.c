@@ -3247,6 +3247,9 @@ static unsigned char *get_source(const serve_state_t cs, int run_id,
       alternatives = pw->text;
       if (!(val = get_nth_alternative(alternatives, n))) goto inv_answer_n;
     }
+    snprintf(buf, sizeof(buf), "&lt;<i>%d</i>&gt;: %s", n, val);
+    xfree(val);
+    val = xstrdup(buf);
     goto cleanup;
   }
   val = html_armor_string_dup(s);
