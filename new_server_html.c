@@ -762,13 +762,25 @@ html_refresh_page(FILE *fout, struct http_request_info *phr, int new_action,
     ns_url(url, sizeof(url), phr, new_action, 0);
   }
 
+  /*
   fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>%s</title></head><body><h1>%s</h1><p>If autorefresh does not work, follow <a href=\"%s\">this</a> link.</p></body></html>\n", EJUDGE_CHARSET, EJUDGE_CHARSET, 1, url, "Operation successful", "Operation successful", url);
+  */
+  /*
+  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"></head><body><p><a href=\"%s\">.</a></p></body></html>\n", EJUDGE_CHARSET, EJUDGE_CHARSET, 0, url, url);
+  */
+  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
 }
 
 static void
 html_refresh_page_2(FILE *fout, const unsigned char *url)
 {
+  /*
   fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>%s</title></head><body><h1>%s</h1><p>If autorefresh does not work, follow <a href=\"%s\">this</a> link.</p></body></html>\n", EJUDGE_CHARSET, EJUDGE_CHARSET, 1, url, "Operation successful", "Operation successful", url);
+  */
+  /*
+  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"></head><body><p><a href=\"%s\">.</a></p></body></html>\n", EJUDGE_CHARSET, EJUDGE_CHARSET, 0, url, url);
+  */
+  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
 }
 
 void
@@ -6028,10 +6040,11 @@ unpriv_load_html_style(struct http_request_info *phr,
            "<script type=\"text/javascript\" src=\"" CONF_STYLE_PREFIX "unpriv.js\"></script>\n"
            "<script type=\"text/javascript\">\n"
            "  var SID=\"%016llx\";\n"
+           "  var self_url=\"%s\";\n"
            "  dojo.require(\"dojo.event.*\");\n"
            "  dojo.require(\"dojo.io.*\");\n"
            "  dojo.require(\"dojo.xml.Parse\");\n"
-           "</script>\n", phr->session_id);
+           "</script>\n", phr->session_id, phr->self_url);
   phr->script_part = xstrdup(bb);
   snprintf(bb, sizeof(bb), " onload=\"startClock()\"");
   phr->body_attr = xstrdup(bb);
@@ -9339,7 +9352,7 @@ user_main_page(FILE *fout,
       } else {
         cc = "#ffdddd";
       }
-      fprintf(fout, "<td class=\"%s\" style=\"background-color: %s\">", hh, cc);
+      fprintf(fout, "<td class=\"%s\" style=\"background-color: %s\" onclick=\"displayProblemSubmitForm(%d)\">", hh, cc, i);
       /*
       if (accepting_mode && accepted_flag[i]) {
         fprintf(fout, "<s>");
