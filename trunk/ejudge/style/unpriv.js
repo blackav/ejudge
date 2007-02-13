@@ -59,7 +59,10 @@ function updateLocalTime()
   RightNow.setSeconds(RightNow.getSeconds() + 1);
   if (countDownTimer != null) {
     countDownTimer = countDownTimer - 1;
-    if (countDownTimer < 0) countDownTimer = null;
+    if (countDownTimer < 0) {
+      countDownTimer = null;
+      document.location.href = self_url + "?SID=" + SID + "&action=" + NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY;
+    }
   }
   printTime();
 }
