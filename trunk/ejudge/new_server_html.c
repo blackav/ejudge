@@ -666,6 +666,36 @@ ns_url(unsigned char *buf, size_t size,
 }
 
 unsigned char *
+ns_url_unescaped(
+	unsigned char *buf,
+	size_t size,
+        const struct http_request_info *phr,
+        int action,
+	const char *format,
+        ...)
+{
+  unsigned char fbuf[1024];
+  unsigned char abuf[64];
+  const unsigned char *sep = "";
+  va_list args;
+
+  fbuf[0] = 0;
+  if (format && *format) {
+    va_start(args, format);
+    vsnprintf(fbuf, sizeof(fbuf), format, args);
+    va_end(args);
+  }
+  if (fbuf[0]) sep = "&";
+
+  abuf[0] = 0;
+  if (action > 0) snprintf(abuf, sizeof(abuf), "&action=%d", action);
+
+  snprintf(buf, size, "%s?SID=%016llx%s%s%s", phr->self_url,
+           phr->session_id, abuf, sep, fbuf);
+  return buf;
+}
+
+unsigned char *
 ns_aref(unsigned char *buf, size_t size,
         const struct http_request_info *phr,
         int action, const char *format, ...)
@@ -757,9 +787,9 @@ html_refresh_page(FILE *fout, struct http_request_info *phr, int new_action,
   unsigned char url[1024];
 
   if (extra && *extra) {
-    ns_url(url, sizeof(url), phr, new_action, "%s", extra);
+    ns_url_unescaped(url, sizeof(url), phr, new_action, "%s", extra);
   } else {
-    ns_url(url, sizeof(url), phr, new_action, 0);
+    ns_url_unescaped(url, sizeof(url), phr, new_action, 0);
   }
 
   /*
@@ -7519,6 +7549,9 @@ unpriv_command(FILE *fout,
       goto done;
     }
     serve_move_files_to_insert_run(cs, run_id);
+    serve_event_add(cs,
+                    precise_time.tv_sec + run_get_duration(cs->runlog_state),
+                    SERVE_EVENT_VIRTUAL_STOP, phr->user_id);
     break;
   case NEW_SRV_ACTION_VIRTUAL_STOP:
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
