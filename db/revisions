@@ -1992,3 +1992,10 @@ new_server_html.c 3947 0 26784551
 new_server_html.c 3949 0 26849657
 new_server_html_2.c 3949 0 10966501
 make-js-actions.c 3951 0 35773
+contests.h 3953 0 836285
+super_proto.h 3953 0 1737840
+serve-control.c 3953 0 7873842
+super-serve.c 3953 0 11721837
+contests.c 3953 0 4262327
+super_html.c 3953 0 10695894
+super_html_2.c 3953 0 4552226
