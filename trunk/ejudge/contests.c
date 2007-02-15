@@ -142,6 +142,7 @@ static char const * const attr_map[] =
   "enable_forgot_password",
   "exam_mode",
   "disable_locale_change",
+  "personal",
 
   0
 };
@@ -650,6 +651,7 @@ static const size_t contest_bool_attr_offsets[CONTEST_LAST_ATTR] =
   [CONTEST_A_ENABLE_FORGOT_PASSWORD] = CONTEST_DESC_OFFSET(enable_forgot_password),
   [CONTEST_A_EXAM_MODE] = CONTEST_DESC_OFFSET(exam_mode),
   [CONTEST_A_DISABLE_LOCALE_CHANGE] = CONTEST_DESC_OFFSET(disable_locale_change),
+  [CONTEST_A_PERSONAL] = CONTEST_DESC_OFFSET(personal),
 };
 
 static int
@@ -1368,6 +1370,10 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
   if (cnts->disable_locale_change) {
     fprintf(f, "\n         %s=\"%s\"",
             attr_map[CONTEST_A_DISABLE_LOCALE_CHANGE], "yes");
+  }
+  if (cnts->personal) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attr_map[CONTEST_A_PERSONAL], "yes");
   }
 
   if (cnts->closed) {

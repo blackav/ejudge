@@ -317,6 +317,9 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   case SSERV_CMD_CNTS_CHANGE_DISABLE_LOCALE_CHANGE:
     p_bool = &cnts->disable_locale_change;
     break;
+  case SSERV_CMD_CNTS_CHANGE_PERSONAL:
+    p_bool = &cnts->personal;
+    break;
   case SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL:
     p_bool = &cnts->send_passwd_email;
     break;
