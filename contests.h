@@ -123,6 +123,7 @@ enum
     CONTEST_A_ENABLE_FORGOT_PASSWORD,
     CONTEST_A_EXAM_MODE,
     CONTEST_A_DISABLE_LOCALE_CHANGE,
+    CONTEST_A_PERSONAL,
 
     CONTEST_LAST_ATTR
   };
@@ -240,6 +241,7 @@ struct contest_desc
   unsigned char enable_forgot_password;
   unsigned char exam_mode;
   unsigned char disable_locale_change;
+  unsigned char personal;
 
   time_t         reg_deadline;
   unsigned char *name;

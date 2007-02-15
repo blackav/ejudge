@@ -2168,6 +2168,13 @@ super_html_edit_contest_page(FILE *f,
                            self_url,
                            extra_args,
                            hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
+  fprintf(f, "<tr%s><td>The contest is personal?</td><td>",
+          form_row_attrs[row ^= 1]);
+  html_boolean_select(f, cnts->personal, "param", 0, 0);
+  fprintf(f, "</td><td>");
+  html_submit_button(f, SSERV_CMD_CNTS_CHANGE_PERSONAL, "Change");
+  fprintf(f, "</td></tr></form>\n");
 
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Registration settings</b></td></tr>", head_row_attr);
   row = 1;
