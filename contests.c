@@ -109,6 +109,10 @@ static char const * const elem_map[] =
   "priv_footer_file",
   "allowed_regions",
   "login_template_options",
+  "dir_mode",
+  "dir_group",
+  "file_mode",
+  "file_group",
 
   0
 };
@@ -221,6 +225,10 @@ node_free(struct xml_tree *t)
       xfree(cnts->daily_stat_email);
       xfree(cnts->priv_header_file);
       xfree(cnts->priv_footer_file);
+      xfree(cnts->dir_mode);
+      xfree(cnts->dir_group);
+      xfree(cnts->file_mode);
+      xfree(cnts->file_group);
     }
     break;
   case CONTEST_CAP:
@@ -621,6 +629,10 @@ static const size_t contest_final_offsets[CONTEST_LAST_TAG] =
   [CONTEST_DAILY_STAT_EMAIL] = CONTEST_DESC_OFFSET(daily_stat_email),
   [CONTEST_PRIV_HEADER_FILE] = CONTEST_DESC_OFFSET(priv_header_file),
   [CONTEST_PRIV_FOOTER_FILE] = CONTEST_DESC_OFFSET(priv_footer_file),
+  [CONTEST_DIR_MODE] = CONTEST_DESC_OFFSET(dir_mode),
+  [CONTEST_DIR_GROUP] = CONTEST_DESC_OFFSET(dir_group),
+  [CONTEST_FILE_MODE] = CONTEST_DESC_OFFSET(file_mode),
+  [CONTEST_FILE_GROUP] = CONTEST_DESC_OFFSET(file_group),
 };
 
 static const size_t contest_access_offsets[CONTEST_LAST_TAG] =
@@ -1560,6 +1572,11 @@ contests_unparse(FILE *f,
   unparse_text(f, CONTEST_SERVE_GROUP, cnts->serve_group);
   unparse_text(f, CONTEST_RUN_USER, cnts->run_user);
   unparse_text(f, CONTEST_RUN_GROUP, cnts->run_group);
+
+  unparse_text(f, CONTEST_DIR_MODE, cnts->dir_mode);
+  unparse_text(f, CONTEST_DIR_GROUP, cnts->dir_group);
+  unparse_text(f, CONTEST_FILE_MODE, cnts->file_mode);
+  unparse_text(f, CONTEST_FILE_GROUP, cnts->file_group);
 
   unparse_text(f, CONTEST_USER_NAME_COMMENT, cnts->user_name_comment);
   unparse_text(f, CONTEST_ALLOWED_LANGUAGES, cnts->allowed_languages);
