@@ -91,6 +91,10 @@ enum
     CONTEST_PRIV_FOOTER_FILE,
     CONTEST_ALLOWED_REGIONS,
     CONTEST_LOGIN_TEMPLATE_OPTIONS,
+    CONTEST_DIR_MODE,
+    CONTEST_DIR_GROUP,
+    CONTEST_FILE_MODE,
+    CONTEST_FILE_GROUP,
 
     CONTEST_LAST_TAG
   };
@@ -300,6 +304,11 @@ struct contest_desc
   unsigned char *user_name_comment;
   unsigned char *allowed_languages;
   unsigned char *allowed_regions;
+
+  unsigned char *dir_mode;
+  unsigned char *dir_group;
+  unsigned char *file_mode;
+  unsigned char *file_group;
 
   unsigned char client_ignore_time_skew;
   unsigned char client_disable_team;

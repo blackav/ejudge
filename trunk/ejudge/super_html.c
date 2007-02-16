@@ -2880,6 +2880,47 @@ super_html_edit_contest_page(FILE *f,
                              self_url,
                              extra_args,
                              hidden_vars);
+
+    print_string_editing_row(f, "The directory permissions (octal):",
+                             cnts->dir_mode,
+                             SSERV_CMD_CNTS_CHANGE_DIR_MODE,
+                             SSERV_CMD_CNTS_CLEAR_DIR_MODE,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+    print_string_editing_row(f, "The directory group:",
+                             cnts->dir_group,
+                             SSERV_CMD_CNTS_CHANGE_DIR_GROUP,
+                             SSERV_CMD_CNTS_CLEAR_DIR_GROUP,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+    print_string_editing_row(f, "The file permissions (octal):",
+                             cnts->file_mode,
+                             SSERV_CMD_CNTS_CHANGE_FILE_MODE,
+                             SSERV_CMD_CNTS_CLEAR_FILE_MODE,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+    print_string_editing_row(f, "The file group:",
+                             cnts->file_group,
+                             SSERV_CMD_CNTS_CHANGE_FILE_GROUP,
+                             SSERV_CMD_CNTS_CLEAR_FILE_GROUP,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
   }
 
   fprintf(f, "</table>\n");
