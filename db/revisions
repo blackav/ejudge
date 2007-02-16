@@ -2001,3 +2001,10 @@ super_html.c 3953 0 10695894
 super_html_2.c 3953 0 4552226
 new_server_html.c 3955 0 26853942
 new_server_html_5.c 3957 0 69950
+contests.h 3959 0 852234
+super_proto.h 3959 0 1757939
+serve-control.c 3959 0 7939205
+super-serve.c 3959 0 11785408
+contests.c 3959 0 4311952
+super_html.c 3959 0 10804261
+super_html_2.c 3959 0 4600147
