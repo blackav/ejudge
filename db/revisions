@@ -2008,3 +2008,8 @@ super-serve.c 3959 0 11785408
 contests.c 3959 0 4311952
 super_html.c 3959 0 10804261
 super_html_2.c 3959 0 4600147
+misctext.h 3961 0 253977
+new-server.h 3961 0 1592474
+misctext.c 3961 0 824722
+new_server_html.c 3961 0 26856884
+new_server_html_5.c 3961 0 1215642
