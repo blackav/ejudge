@@ -9734,6 +9734,7 @@ ns_handle_http_request(struct server_framework_state *state,
     phr->role = USER_ROLE_JUDGE;
     privileged_page(fout, phr);
   } else if (!strcmp(last_name, "new-register")) {
+    ns_register_pages(fout, phr);
   } else if (!strcmp(last_name, "new-server-cmd")) {
     phr->protocol_reply = new_server_cmd_handler(fout, phr);
   } else if (!strcmp(last_name, "new-test")) {

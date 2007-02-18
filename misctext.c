@@ -371,6 +371,41 @@ url_armor_string(unsigned char *buf, size_t size, const unsigned char *str)
   return outsz;
 }
 
+static void
+url_armor_string_unchecked(const unsigned char *s, unsigned char *buf)
+{
+  unsigned char *b = buf;
+  const unsigned char *p = s;
+
+  *b = 0;
+  if (!s) return;
+
+  for (; *p; p++) {
+    if (isalnum(*p)) *b++ = *p;
+    else b += sprintf(b, "%%%02x", *p);
+  }
+  *b = 0;
+}
+
+int
+url_armor_needed(const unsigned char *s, size_t *psize)
+{
+  size_t sz = 0;
+  int needed = 0;
+  const unsigned char *p = s;
+
+  if (!s) return 0;
+  for (; *p; p++) {
+    if (isalnum(*p)) sz++;
+    else {
+      needed = 1;
+      sz += 3;
+    }
+  }
+  if (psize) *psize = sz;
+  return needed;
+}
+
 size_t
 text_numbered_memlen(const unsigned char *intxt, size_t insize)
 {
@@ -456,10 +491,27 @@ html_armor_buf(struct html_armor_buffer *pb, const unsigned char *s)
   if (!html_armor_needed(s, &newsz)) return s;
   if (newsz >= pb->size) {
     xfree(pb->buf);
-    pb->buf = (unsigned char*) xmalloc(newsz + 1);
-    pb->size = newsz;
+    if (!pb->size) pb->size = 64;
+    while (newsz >= pb->size) pb->size *= 2;
+    pb->buf = (unsigned char*) xmalloc(pb->size);
   }
   html_armor_string(s, pb->buf);
+  return pb->buf;
+}
+
+const unsigned char *
+url_armor_buf(struct html_armor_buffer *pb, const unsigned char *s)
+{
+  size_t newsz = 0;
+
+  if (!url_armor_needed(s, &newsz)) return s;
+  if (newsz >= pb->size) {
+    xfree(pb->buf);
+    if (!pb->size) pb->size = 64;
+    while (newsz >= pb->size) pb->size *= 2;
+    pb->buf = (unsigned char*) xmalloc(pb->size);
+  }
+  url_armor_string_unchecked(s, pb->buf);
   return pb->buf;
 }
 
