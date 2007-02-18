@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-01-24 11:59+0300\n"
-"PO-Revision-Date: 2007-01-24 12:01+0300\n"
+"POT-Creation-Date: 2007-02-18 09:43+0300\n"
+"PO-Revision-Date: 2007-02-18 09:44+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -30,6 +30,10 @@ msgstr " [окончен, заморожены]"
 #, c-format
 msgid " [over]"
 msgstr " [окончен]"
+
+#, c-format
+msgid " or"
+msgstr " или"
 
 msgid "\"E-mail\" field contains invalid characters"
 msgstr "Поле \"Электронный адрес\" содержит недопустимые символы"
@@ -67,6 +71,14 @@ msgstr "<b>====== Тест #%d =======</b>\n"
 
 msgid "<b>Note!</b> All uncommited changes will be lost!"
 msgstr "<b>Внимание!</b> Все несохранённые изменения будут потеряны!"
+
+msgid ""
+"<b>Note</b>, that you must log in 24 hours after the form is filled and "
+"submitted, or your registration will be cancelled!"
+msgstr ""
+"<b>Обратите внимание</b>, что Вы должны зайти в систему в течении 24 часов "
+"после заполнения и посылки анкеты, или в противном случае Ваша регистрация "
+"будет отменена!"
 
 #, c-format
 msgid "<big>%d total tests runs, %d passed, %d failed.<br>\n"
@@ -527,6 +539,15 @@ msgstr "Заблокировать"
 msgid "Banned?"
 msgstr "Заблокированный?"
 
+msgid ""
+"Be careful and type the e-mail address correctly. If you make a mistake, you "
+"will not receive a registration e-mail and be unable to complete the "
+"registration process."
+msgstr ""
+"Будьте внимательны и вводите адрес e-mail правильно. Если Вы ошибётесь, Вы "
+"не получите почтовое сообщение с регистрационной информацией и не сможете "
+"завершить регистрацию."
+
 msgid "Birth Date"
 msgstr "Дата рождения"
 
@@ -814,6 +835,9 @@ msgstr "Турнирные пароли отключены"
 msgid "Contest registrations"
 msgstr "Регистрация на турниры"
 
+msgid "Contest selection"
+msgstr "Выбор турнира"
+
 msgid "Contest start time"
 msgstr "Время начала турнира"
 
@@ -974,6 +998,12 @@ msgstr "Редактировать"
 
 msgid "Edit personal data"
 msgstr "Редактировать<br>личные данные"
+
+msgid "Edit personal info"
+msgstr "Редактировать личные данные"
+
+msgid "Edit team info"
+msgstr "Редактировать информацию о команде"
 
 msgid "Elapsed time"
 msgstr "Прошедшее время"
@@ -1397,6 +1427,9 @@ msgstr "IP-адрес"
 
 msgid "IPC operation failed"
 msgstr "операция IPC завершилась с ошибкой"
+
+msgid "If you are already registered, you may"
+msgstr "Если Вы уже зарегистрированы, вы можете"
 
 msgid ""
 "If you have registered before, please enter your login and password in the "
@@ -2104,6 +2137,9 @@ msgstr "Решения участников принимаются на проверку"
 msgid "Participants' solutions are being judged"
 msgstr "Решения участников проверяются"
 
+msgid "Participate in the contest"
+msgstr "Принять участи в турнире"
+
 msgid "Password"
 msgstr "Пароль"
 
@@ -2184,6 +2220,12 @@ msgid ""
 "(*)."
 msgstr ""
 "Пожалуйста, заполните анкету. Поля, обязательные к заполнению, помечены (*)."
+
+msgid ""
+"Please, enter your valid e-mail address and press the \"Register\" button."
+msgstr ""
+"Пожалуйста, введите Ваш работающий адрес e-mail и нажмите кнопку "
+"\"Зарегистрироваться\"."
 
 msgid ""
 "Please, fill up all the fields in the form below. Fields, marked with (*), "
@@ -2362,6 +2404,9 @@ msgstr "Зарегистрировать нового пользователя"
 msgid "Registration"
 msgstr "Регистрация"
 
+msgid "Registration deadline"
+msgstr "Срок регистрации"
+
 msgid "Registration failed"
 msgstr "Регистрация не удалась"
 
@@ -2374,6 +2419,9 @@ msgstr "Регистрация не удалась: %s"
 
 msgid "Registration is successful"
 msgstr "Регистрация завершилась успешно"
+
+msgid "Registration mode"
+msgstr "Режим регистрации"
 
 msgid "Registration password"
 msgstr "Регистрационный пароль"
@@ -2605,6 +2653,9 @@ msgstr "Нарушение правил безопасности"
 msgid "Select another problem"
 msgstr "Выбрать другую задачу"
 
+msgid "Select one of available contests"
+msgstr "Выберите один из доступных турниров"
+
 msgid "Select problem"
 msgstr "Выбрать задачу"
 
@@ -2729,6 +2780,12 @@ msgstr ""
 "<b>Обратите внимание</b>, что Вы должны зайти в систему в течении 24 часов "
 "после заполнения и посылки анкеты, или в противном случае Ваша регистрация "
 "будет отменена!"
+
+msgid ""
+"Shortly after that you should receive an e-mail message with a password to "
+"the system. Use this password for the first login. After the first login you "
+"will be able to change the password."
+msgstr "После этого на Ваш электронный адрес будет направлено письмо, которое будет содержать пароль для входа в систему. Этот пароль необходимо использовать для первого входа в систему, после чего его можно будет поменять."
 
 msgid "Shown"
 msgstr "Показано"
@@ -2881,6 +2938,9 @@ msgstr "Переключить язык"
 
 msgid "System error"
 msgstr "Системная ошибка"
+
+msgid "Take the exam"
+msgstr "Принять участие в экзамене"
 
 msgid "Team ID"
 msgstr "ID Команды"
@@ -3545,6 +3605,12 @@ msgstr "Повторная посылка"
 msgid "e-mail sending failed"
 msgstr "отсылка электронной почты завершилась неудачно"
 
+msgid "edit your personal information"
+msgstr "редактировать Ваши личные данные"
+
+msgid "edit your team information"
+msgstr "редактировать информацию о команде"
+
 msgid "error code 1"
 msgstr "ошибка с кодом 1"
 
@@ -3626,6 +3692,9 @@ msgstr "достигнуто максимальное количество"
 msgid "message subject is too long"
 msgstr "слишком длинная тема сообщения"
 
+msgid "moderated"
+msgstr "модерируемая"
+
 msgid "msec"
 msgstr "мс"
 
@@ -3668,6 +3737,9 @@ msgstr "старый пароль имеет слишком большую длину"
 msgid "old password not specified"
 msgstr "старый пароль не задан"
 
+msgid "open"
+msgstr "открытая"
+
 msgid "operation is not supported"
 msgstr "операция не поддерживается"
 
@@ -3679,6 +3751,9 @@ msgstr "получение пакета завершилось неудачно"
 
 msgid "packet sending failed"
 msgstr "посылка пакета завершилась неудачно"
+
+msgid "participate in the contest"
+msgstr "участвовать в турнире"
 
 msgid "password"
 msgstr "пароль"
@@ -3712,6 +3787,9 @@ msgstr "некоторые компоненты запроса имеют слишком большой размер"
 
 msgid "system call failed"
 msgstr "системный вызов завершился неудачно"
+
+msgid "take the exam"
+msgstr "принять участие в экзамене"
 
 msgid "team pages quota is exceeded"
 msgstr "превышена квота страниц пользователя"
