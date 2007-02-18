@@ -280,6 +280,13 @@ enum
   NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1,
   NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2,
 
+  NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER_PAGE,
+  NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER,
+  NEW_SRV_ACTION_REGISTER_NEW_USER_PAGE,
+  NEW_SRV_ACTION_REGISTER_NEW_USER,
+  NEW_SRV_ACTION_REGISTER_LOGIN_PAGE,
+  NEW_SRV_ACTION_REGISTER_LOGIN,
+
   NEW_SRV_ACTION_LAST,
 };
 
@@ -598,5 +605,6 @@ ns_write_user_problems_summary(
 
 int ns_insert_variant_num(unsigned char *buf, size_t size,
                           const unsigned char *file, int variant);
+void ns_register_pages(FILE *fout, struct http_request_info *phr);
 
 #endif /* __NEW_SERVER_H__ */
