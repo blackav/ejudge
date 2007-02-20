@@ -1829,6 +1829,7 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
   unsigned char *closing_a = "";
   unsigned char *cl1 = " border=\"1\"";
   unsigned char *cl2 = "";
+  int max_cpu_time = -1, max_cpu_time_tl = -1;
 
   static const int default_actions_vector[] =
   {
@@ -1882,6 +1883,39 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
     if (r->status != RUN_OK && r->status != RUN_ACCEPTED) {
       fprintf(f, _("<big>Failed test: %d.<br><br></big>\n"), r->failed_test);
     }
+  }
+
+  // calculate max CPU time
+  for (i = 0; i < r->run_tests; i++) {
+    if (!(t = r->tests[i])) continue;
+    switch (t->status) {
+    case RUN_OK:
+    case RUN_RUN_TIME_ERR:
+    case RUN_PRESENTATION_ERR:
+    case RUN_WRONG_ANSWER_ERR:
+    case RUN_MEM_LIMIT_ERR:
+    case RUN_SECURITY_ERR:
+      if (max_cpu_time_tl > 0) break;
+      max_cpu_time_tl = 0;
+      if (max_cpu_time < 0 || max_cpu_time < r->tests[i]->time) {
+        max_cpu_time = r->tests[i]->time;
+      }
+      break;
+    case RUN_TIME_LIMIT_ERR:
+      if (max_cpu_time_tl <= 0 || max_cpu_time < 0
+          || max_cpu_time < r->tests[i]->time) {
+        max_cpu_time = r->tests[i]->time;
+      }
+      max_cpu_time_tl = 1;
+      break;
+    }
+  }
+
+  if (max_cpu_time_tl > 0) {
+    fprintf(f, "<big>Max. CPU time: %d.%03d (time-limit exceeded)<br><br></big>\n", max_cpu_time / 1000, max_cpu_time % 1000);
+  } else if (!max_cpu_time_tl) {
+    fprintf(f, "<big>Max. CPU time: %d.%03d<br><br></big>\n",
+            max_cpu_time / 1000, max_cpu_time % 1000);
   }
 
   if (r->comment) {

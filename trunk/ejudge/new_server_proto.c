@@ -166,6 +166,13 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_CONTEST_UNLOADED] = __("Contest is unloaded"),
   [NEW_SRV_ERR_PENDING_IMPORT_EXISTS] = __("Pending XML import already exists"),
   [NEW_SRV_ERR_ANSWER_UNSPECIFIED] = __("Answer is unspecified"),
+  [NEW_SRV_ERR_LOGIN_BINARY] = __("Login contains invalid characters"),
+  [NEW_SRV_ERR_LOGIN_UNSPECIFIED] = __("Login is not specified"),
+  [NEW_SRV_ERR_LOGIN_INV_CHARS] = __("Login contains invalid characters"),
+  [NEW_SRV_ERR_EMAIL_BINARY] = __("E-mail contains invalid characters"),
+  [NEW_SRV_ERR_EMAIL_UNSPECIFIED] = __("E-mail is not specified"),
+  [NEW_SRV_ERR_EMAIL_INV_CHARS] = __("E-mail contains invalid characters"),
+  [NEW_SRV_ERR_UL_CONNECT_FAILED] = __("No connection to the server"),
 };
 
 const unsigned char *
@@ -198,7 +205,7 @@ ns_strerror_2(int code, ...)
 
   if (code < 0) code = -code;
   if (code >= NEW_SRV_ERR_LAST || !(s = ns_error_messages[code])) {
-    snprintf(buf, sizeof(buf), _("Unknown error %d.\n"), code);
+    snprintf(buf, sizeof(buf), _("Unknown error %d"), code);
     return buf;
   }
 
