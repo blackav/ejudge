@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-02-18 09:43+0300\n"
-"PO-Revision-Date: 2007-02-18 09:44+0300\n"
+"POT-Creation-Date: 2007-02-20 22:25+0300\n"
+"PO-Revision-Date: 2007-02-20 22:31+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -984,6 +984,12 @@ msgstr "Продолжительность"
 msgid "E-mail"
 msgstr "Адрес электронной почты"
 
+msgid "E-mail contains invalid characters"
+msgstr "Поле \"E-mail\" содержит недопустимые символы"
+
+msgid "E-mail is not specified"
+msgstr "Поле \"E-mail\" не заполнено"
+
 msgid "EMPTY"
 msgstr "ПУСТО"
 
@@ -1761,12 +1767,18 @@ msgstr "Выйти из системы"
 msgid "Login"
 msgstr "Регистрационное имя (login)"
 
+msgid "Login contains invalid characters"
+msgstr "Поле \"Регистрационное имя\" содержит недопустимые символы"
+
 msgid "Login failed"
 msgstr "Вход в систему невозможен"
 
 #, c-format
 msgid "Login is empty in row %d\n"
 msgstr "В строке %d не определено регистрационное имя\n"
+
+msgid "Login is not specified"
+msgstr "Поле \"Регистрационное имя\" не заполнено"
 
 msgid "Login successful"
 msgstr "Вход успешен"
@@ -1956,6 +1968,9 @@ msgstr "Без комментариев."
 
 msgid "No comments.\n"
 msgstr "Без комментариев.\n"
+
+msgid "No connection to the server"
+msgstr "Нет связи с сервером"
 
 msgid "No contests available."
 msgstr "Нет доступных турниров."
@@ -2407,6 +2422,9 @@ msgstr "Регистрация"
 msgid "Registration deadline"
 msgstr "Срок регистрации"
 
+msgid "Registration errors"
+msgstr "Ошибки при регистрации"
+
 msgid "Registration failed"
 msgstr "Регистрация не удалась"
 
@@ -2785,7 +2803,10 @@ msgid ""
 "Shortly after that you should receive an e-mail message with a password to "
 "the system. Use this password for the first login. After the first login you "
 "will be able to change the password."
-msgstr "После этого на Ваш электронный адрес будет направлено письмо, которое будет содержать пароль для входа в систему. Этот пароль необходимо использовать для первого входа в систему, после чего его можно будет поменять."
+msgstr ""
+"После этого на Ваш электронный адрес будет направлено письмо, которое будет "
+"содержать пароль для входа в систему. Этот пароль необходимо использовать "
+"для первого входа в систему, после чего его можно будет поменять."
 
 msgid "Shown"
 msgstr "Показано"
@@ -3201,6 +3222,10 @@ msgid "Unknown error"
 msgstr "Неизвестная ошибка"
 
 #, c-format
+msgid "Unknown error %d"
+msgstr "Неизвестная ошибка %d"
+
+#, c-format
 msgid "Unknown error %d.\n"
 msgstr "Неизвестная ошибка %d.\n"
 
@@ -3422,6 +3447,9 @@ msgstr "Ошибка записи"
 
 msgid "Write runs in XML internal format"
 msgstr "Сохранить журнал посылок во внутреннем XML-формате"
+
+msgid "Write runs in XML internal format with source"
+msgstr "Сохранить журнал посылок во внутреннем XML-формате с исходными кодами"
 
 msgid "Wrong answer"
 msgstr "Неправильный ответ"
