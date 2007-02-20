@@ -3574,6 +3574,7 @@ priv_view_runs_dump(FILE *fout,
     break;
 
   case NEW_SRV_ACTION_WRITE_XML_RUNS:
+  case NEW_SRV_ACTION_WRITE_XML_RUNS_WITH_SRC:
     fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
     if (run_write_xml(cs->runlog_state, cs, cnts, fout, 0,
                       cs->current_time) < 0)
@@ -4994,6 +4995,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_RUNS_DUMP] = priv_view_runs_dump,
   [NEW_SRV_ACTION_EXPORT_XML_RUNS] = priv_view_runs_dump,
   [NEW_SRV_ACTION_WRITE_XML_RUNS] = priv_view_runs_dump,
+  [NEW_SRV_ACTION_WRITE_XML_RUNS_WITH_SRC] = priv_view_runs_dump,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_1] = priv_upload_runlog_xml_1,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_2] = priv_upload_runlog_xml_2,
   [NEW_SRV_ACTION_CLEAR_DISPLAYED_1] = priv_confirmation_page,
@@ -5272,6 +5274,9 @@ priv_main_page(FILE *fout,
     fprintf(fout, "<li>%s%s</a></li>\n",
             ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_WRITE_XML_RUNS, 0),
             _("Write runs in XML internal format"));
+    fprintf(fout, "<li>%s%s</a></li>\n",
+            ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_WRITE_XML_RUNS_WITH_SRC, 0),
+            _("Write runs in XML internal format with source"));
   }
   fprintf(fout, "<li>%s%s</a></li>\n",
           ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_LOGOUT, 0),
@@ -5878,6 +5883,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_RUNS_DUMP] = priv_generic_page,
   [NEW_SRV_ACTION_EXPORT_XML_RUNS] = priv_generic_page,
   [NEW_SRV_ACTION_WRITE_XML_RUNS] = priv_generic_page,
+  [NEW_SRV_ACTION_WRITE_XML_RUNS_WITH_SRC] = priv_generic_page,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_1] = priv_generic_page,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_2] = priv_generic_page,
   [NEW_SRV_ACTION_CLEAR_DISPLAYED_1] = priv_generic_page,
@@ -6504,10 +6510,18 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
       && cnts->register_url
       && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
-    fprintf(fout,
-            "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=2\">%s</a>",
-            cnts->register_url, phr->contest_id, phr->locale_id,
-            _("Registration"));
+    if (cnts->assign_logins) {
+      fprintf(fout,
+              "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a>",
+              cnts->register_url, phr->contest_id, phr->locale_id,
+              NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER_PAGE,
+              _("Registration"));
+    } else {
+      fprintf(fout,
+              "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=2\">%s</a>",
+              cnts->register_url, phr->contest_id, phr->locale_id,
+              _("Registration"));
+    }
     fprintf(fout, "</div></td>\n");
     vis_flag++;
   } else if (cnts && cnts->register_url
