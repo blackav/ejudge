@@ -1088,6 +1088,7 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     fprintf(f, "check_cmd = \"%s\"\n", c_armor(&sbuf, prob->check_cmd));
   do_xstr(f, &sbuf, "checker_env", prob->checker_env);
   do_xstr(f, &sbuf, "lang_time_adj", prob->lang_time_adj);
+  do_xstr(f, &sbuf, "lang_time_adj_millis", prob->lang_time_adj_millis);
   do_xstr(f, &sbuf, "test_sets", prob->test_sets);
   do_xstr(f, &sbuf, "disable_language", prob->disable_language);
   do_xstr(f, &sbuf, "enable_language", prob->enable_language);

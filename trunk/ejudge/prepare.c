@@ -352,6 +352,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(standard_checker, "s"),
   PROBLEM_PARAM(checker_env, "x"),
   PROBLEM_PARAM(lang_time_adj, "x"),
+  PROBLEM_PARAM(lang_time_adj_millis, "x"),
   PROBLEM_PARAM(check_cmd, "s"),
   PROBLEM_PARAM(test_pat, "s"),
   PROBLEM_PARAM(corr_pat, "s"),
@@ -427,6 +428,7 @@ static const struct config_parse_info section_tester_params[] =
   TESTER_PARAM(max_vm_size, "z"),
   TESTER_PARAM(clear_env, "d"),
   TESTER_PARAM(time_limit_adjustment, "d"),
+  TESTER_PARAM(time_limit_adj_millis, "d"),
 
   TESTER_PARAM(run_dir, "s"),
   TESTER_PARAM(check_dir, "s"),
@@ -658,6 +660,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->require);
   sarray_free(p->checker_env);
   sarray_free(p->lang_time_adj);
+  sarray_free(p->lang_time_adj_millis);
   sarray_free(p->personal_deadline);
   sarray_free(p->alternative);
   xfree(p->score_bonus_val);
@@ -683,6 +686,7 @@ tester_init_func(struct generic_section_config *gp)
   p->enable_memory_limit_error = -1;
   p->clear_env = -1;
   p->time_limit_adjustment = -1;
+  p->time_limit_adj_millis = -1;
   p->priority_adjustment = -1000;
   p->max_vm_size = -1L;
   p->max_stack_size = -1L;
@@ -807,6 +811,7 @@ static const struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(enable_memory_limit_error, int, int),
   TESTER_INH(clear_env, int, int),
   TESTER_INH(time_limit_adjustment, int, int),
+  TESTER_INH(time_limit_adj_millis, int, int),
   TESTER_INH(kill_signal, path, path),
   TESTER_INH(max_stack_size, size, size),
   TESTER_INH(max_data_size, size, size),
@@ -2828,6 +2833,13 @@ set_defaults(serve_state_t state, int mode)
       if (tp->time_limit_adjustment == -1) {
         tp->time_limit_adjustment = 0;
       }
+      if (tp->time_limit_adj_millis == -1
+          && atp && atp->time_limit_adj_millis != -1) {
+        tp->time_limit_adj_millis = atp->time_limit_adj_millis;
+      }
+      if (tp->time_limit_adj_millis == -1) {
+        tp->time_limit_adj_millis = 0;
+      }
       if (!tp->kill_signal[0] && atp && atp->kill_signal[0]) {
         strcpy(tp->kill_signal, atp->kill_signal);
         info("tester.%d.kill_signal inherited from tester.%s ('%s')",
@@ -3440,6 +3452,14 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   }
   if (out->time_limit_adjustment == -1) {
     out->time_limit_adjustment = 0;
+  }
+
+  out->time_limit_adj_millis = tp->time_limit_adj_millis;
+  if (out->time_limit_adj_millis == -1 && atp) {
+    out->time_limit_adj_millis = atp->time_limit_adj_millis;
+  }
+  if (out->time_limit_adj_millis == -1) {
+    out->time_limit_adj_millis = 0;
   }
 
   /* copy max_stack_size */
@@ -4332,6 +4352,7 @@ prepare_copy_problem(struct section_problem_data *out,
   out->require = 0;
   out->checker_env = 0;
   out->lang_time_adj = 0;
+  out->lang_time_adj_millis = 0;
   out->personal_deadline = 0;
   out->pd_total = 0;
   out->pd_infos = 0;

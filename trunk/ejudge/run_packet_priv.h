@@ -3,7 +3,7 @@
 #ifndef __RUN_PACKET_PRIV_H__
 #define __RUN_PACKET_PRIV_H__
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -47,6 +47,7 @@ struct run_request_bin_packet
   rint32_t  problem_id;
   rint32_t  user_id;
   rint32_t  time_limit_adj;
+  rint32_t  time_limit_adj_millis;
   ruint32_t flags;              /* incl. scoring system */
   rint32_t  ts1;
   rint32_t  ts1_us;
@@ -119,5 +120,6 @@ struct run_reply_bin_packet
 #define MAX_FAILED_TEST       127
 #define MAX_SCORE             999999
 #define MAX_TIME_LIMIT_ADJ    100
+#define MAX_TIME_LIMIT_ADJ_MILLIS    1000000
 
 #endif /* __RUN_PACKET_PRIV_H__ */
