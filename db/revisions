@@ -2034,3 +2034,12 @@ run_packet_1.c 3969 0 451215
 run_packet_2.c 3969 0 486581
 serve_2.c 3969 0 6505207
 super_html_3.c 3969 0 21892791
+misctext.h 3971 0 266657
+runlog.h 3971 0 744354
+serve.c 3971 0 11582505
+misctext.c 3971 0 889221
+new_server_html.c 3971 0 26928650
+new_server_html_4.c 3971 0 4350872
+runlog.c 3971 0 6103263
+runlog_xml.c 3971 0 1723534
+serve_2.c 3971 0 6505318
