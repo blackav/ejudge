@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -85,6 +85,11 @@ run_request_packet_write(const struct run_request_packet *in_data,
     goto failed;
   }
   out_data->time_limit_adj = cvt_host_to_bin_32(in_data->time_limit_adj);
+  if (in_data->time_limit_adj_millis < 0 || in_data->time_limit_adj_millis > MAX_TIME_LIMIT_ADJ_MILLIS) {
+    errcode = 6;
+    goto failed;
+  }
+  out_data->time_limit_adj_millis = cvt_host_to_bin_32(in_data->time_limit_adj_millis);
 
   if (in_data->scoring_system < 0 || in_data->scoring_system >= SCORE_TOTAL) {
     errcode = 7;

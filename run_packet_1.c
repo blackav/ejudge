@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -69,6 +69,8 @@ run_request_packet_read(size_t in_size, const void *in_data,
   if (pout->user_id <= 0 || pout->user_id > EJ_MAX_USER_ID) ERR(8);
   pout->time_limit_adj = cvt_bin_to_host_32(pin->time_limit_adj);
   if (pout->time_limit_adj < 0 || pout->time_limit_adj > MAX_TIME_LIMIT_ADJ) ERR(9);
+  pout->time_limit_adj_millis = cvt_bin_to_host_32(pin->time_limit_adj_millis);
+  if (pout->time_limit_adj_millis < 0 || pout->time_limit_adj_millis > MAX_TIME_LIMIT_ADJ_MILLIS) ERR(9);
 
   flags = cvt_bin_to_host_32(pin->flags);
   if (flags != (flags & FLAGS_ALL_MASK)) ERR(10);

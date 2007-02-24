@@ -3,7 +3,7 @@
 #ifndef __RUN_PACKET_H__
 #define __RUN_PACKET_H__
 
-/* Copyright (C) 2005,2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,7 @@ struct run_request_packet
   int disable_sound;            /* disable sound notifications */
   int full_archive;             /* enable full archive */
   int time_limit_adj;           /* time-limit adjustment (seconds) */
+  int time_limit_adj_millis;    /* time-limit adjustment (milliseconds) */
   int memory_limit;             /* enable memory limit (if supported by reuse&kernel) */
   /* time when the compile request was queued by serve */
   int ts1;

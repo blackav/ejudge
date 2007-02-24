@@ -480,6 +480,7 @@ struct section_problem_data
   char **checker_env;           /* environment variables for checker */
   path_t check_cmd;
   char **lang_time_adj;         /* time limit adjustments depending on language */
+  char **lang_time_adj_millis;  /* time limit milliseconds adjustments depending on language (priority over lang_time_adj) */
 
   char **alternative;           /* alternatives for test-like problems */
   char **personal_deadline;     /* personal deadline extensions */
@@ -565,6 +566,7 @@ struct section_tester_data
   size_t max_vm_size;           /* max size of the virtual memory */
   int clear_env;                /* whether the environment is cleared */
   int time_limit_adjustment;
+  int time_limit_adj_millis;    /* have priority over `time_limit_adjustment' */
 
   path_t run_dir;
   path_t run_queue_dir;

@@ -1035,6 +1035,26 @@ serve_run_request(serve_state_t state,
   run_pkt->exe_sfx = exe_sfx;
   run_pkt->arch = arch;
 
+  // process language-specific milliseconds time adjustments
+  if (prob->lang_time_adj_millis) {
+    size_t lsn = strlen(lang->short_name);
+    size_t vl;
+    int adj, n;
+    unsigned char *sn;
+    for (i = 0; (sn = prob->lang_time_adj_millis[i]); i++) {
+      vl = strlen(sn);
+      if (vl > lsn + 1
+          && !strncmp(sn, lang->short_name, lsn)
+          && sn[lsn] == '='
+          && sscanf(sn + lsn + 1, "%d%n", &adj, &n) == 1
+          && !sn[lsn + 1 + n]
+          && adj >= 0
+          && adj <= 1000000) {
+        run_pkt->time_limit_adj_millis = adj;
+      }
+    }
+  }
+
   // process language-specific time adjustments
   if (prob->lang_time_adj) {
     size_t lsn = strlen(lang->short_name);

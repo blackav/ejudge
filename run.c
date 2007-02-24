@@ -813,30 +813,36 @@ run_tests(struct section_tester_data *tst,
           }
         }
       }
-      if (prb->time_limit_millis > 0) {
-#if defined HAVE_TASK_SETMAXTIMEMILLIS
-        time_limit_value = prb->time_limit_millis;
-        if (tst->time_limit_adjustment > 0)
+
+      time_limit_value = 0;
+      if (prb->time_limit_millis > 0)
+        time_limit_value += prb->time_limit_millis;
+      else if (prb->time_limit > 0)
+        time_limit_value += prb->time_limit * 1000;
+      if (time_limit_value > 0) {
+        // adjustment works only for limited time
+        if (tst->time_limit_adj_millis > 0)
+          time_limit_value += tst->time_limit_adj_millis;
+        else if (tst->time_limit_adjustment > 0)
           time_limit_value += tst->time_limit_adjustment * 1000;
-        if (req_pkt->time_limit_adj > 0)
-          time_limit_value += req_pkt->time_limit_adj * 1000;
-        task_SetMaxTimeMillis(tsk, time_limit_value);
+        if (req_pkt->time_limit_adj_millis > 0)
+          time_limit_value += req_pkt->time_limit_adj_millis;
+        else if (req_pkt->time_limit_adj > 0)
+          time_limit_value += req_pkt->time_limit_adj;
+      }
+
+      if (time_limit_value > 0) {
+        if ((time_limit_value % 1000)) {
+#if defined HAVE_TASK_SETMAXTIMEMILLIS
+          task_SetMaxTimeMillis(tsk, time_limit_value);
 #else
-        time_limit_value = (prb->time_limit_millis + 999) / 1000;;
-        if (tst->time_limit_adjustment > 0)
-          time_limit_value += tst->time_limit_adjustment;
-        if (req_pkt->time_limit_adj > 0)
-          time_limit_value += req_pkt->time_limit_adj;
-        task_SetMaxTime(tsk, time_limit_value);
+          task_SetMaxTime(tsk, (time_limit_value + 999) / 1000);
 #endif
-      } else if (prb->time_limit > 0) {
-        time_limit_value = prb->time_limit;
-        if (tst->time_limit_adjustment > 0)
-          time_limit_value += tst->time_limit_adjustment;
-        if (req_pkt->time_limit_adj > 0)
-          time_limit_value += req_pkt->time_limit_adj;
-        task_SetMaxTime(tsk, time_limit_value);
-    }
+        } else {
+          task_SetMaxTime(tsk, time_limit_value / 1000);
+        }
+      }
+
       if (prb->real_time_limit>0) task_SetMaxRealTime(tsk,prb->real_time_limit);
       if (tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
       if (tst->no_core_dump) task_DisableCoreDump(tsk);

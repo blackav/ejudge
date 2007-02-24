@@ -3383,6 +3383,7 @@ print_std_checker_row(FILE *f,
   TESTER_PARAM(max_data_size, "d"),
   TESTER_PARAM(clear_env, "d"),
   TESTER_PARAM(time_limit_adjustment, "d"),
+  TESTER_PARAM(time_limit_adj_millis, "d"),
 
   TESTER_PARAM(run_dir, "s"),
   TESTER_PARAM(check_dir, "s"),
@@ -4772,6 +4773,25 @@ super_html_print_problem(FILE *f,
     xfree(checker_env);
   }
 
+  //PROBLEM_PARAM(lang_time_adj_millis, "x"),
+  if (!prob->abstract && !problem_type_flag && show_adv) {
+    if (!prob->lang_time_adj_millis || !prob->lang_time_adj_millis[0]) {
+      extra_msg = "(not set)";
+      checker_env = xstrdup("");
+    } else {
+      extra_msg = "";
+      checker_env = sarray_unparse(prob->lang_time_adj_millis);
+    }
+    print_string_editing_row_3(f, "Language-based time-limit adjustment (ms):",
+                               checker_env,
+                               SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ_MILLIS,
+                               SSERV_CMD_PROB_CLEAR_LANG_TIME_ADJ_MILLIS,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+    xfree(checker_env);
+  }
+
   //PROBLEM_PARAM(disable_language, "x"),
   if (!prob->abstract && show_adv) {
     if (!prob->disable_language || !prob->disable_language[0]) {
@@ -5559,6 +5579,18 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CLEAR_LANG_TIME_ADJ:
     sarray_free(prob->lang_time_adj);
     prob->lang_time_adj = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ_MILLIS:
+    if (sarray_parse(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(prob->lang_time_adj_millis);
+    prob->lang_time_adj_millis = tmp_env;
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_LANG_TIME_ADJ_MILLIS:
+    sarray_free(prob->lang_time_adj_millis);
+    prob->lang_time_adj_millis = 0;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_DISABLE_LANGUAGE:
