@@ -62,6 +62,7 @@ enum
   RUNLOG_T_SOURCE,
   RUNLOG_T_AUDIT,
   RUNLOG_T_XML_REPORT,
+  RUNLOG_T_FULL_ARCHIVE,
 
   RUNLOG_LAST_TAG,
 };
@@ -117,6 +118,7 @@ static const char * const elem_map[] =
   [RUNLOG_T_SOURCE] "source",
   [RUNLOG_T_AUDIT] "audit",
   [RUNLOG_T_XML_REPORT] "xml_report",
+  [RUNLOG_T_FULL_ARCHIVE] "full_archive",
 
   [RUNLOG_LAST_TAG] 0,
 };
@@ -718,6 +720,7 @@ unparse_runlog_xml(serve_state_t state,
       fprintf(f, "/>\n");
       continue;
     }
+    fprintf(f, ">\n");
 
     // read source
     if ((flags = archive_make_read_path(state, fpath, sizeof(fpath),
@@ -742,6 +745,21 @@ unparse_runlog_xml(serve_state_t state,
                 html_armor_buf_bin(&ab, ftext, fsize),
                 elem_map[RUNLOG_T_XML_REPORT]);
         xfree(ftext); ftext = 0; fsize = 0;
+      }
+    }
+
+    if (global->enable_full_archive) {
+      // read full archive
+      if ((flags = archive_make_read_path(state, fpath, sizeof(fpath),
+                                          global->full_archive_dir,
+                                          i, 0, 1)) >= 0) {
+        if (generic_read_file(&ftext, 0, &fsize, flags, 0, fpath, 0) >= 0) {
+          fprintf(f, "      <%s>%s</%s>\n",
+                  elem_map[RUNLOG_T_FULL_ARCHIVE],
+                  html_armor_buf_bin(&ab, ftext, fsize),
+                  elem_map[RUNLOG_T_FULL_ARCHIVE]);
+          xfree(ftext); ftext = 0; fsize = 0;
+        }
       }
     }
 

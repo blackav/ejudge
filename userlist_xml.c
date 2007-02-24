@@ -1660,7 +1660,7 @@ userlist_real_unparse_user(const struct userlist_user *p, FILE *f, int mode, int
 
   if (mode == USERLIST_MODE_STAND) {
     // generate some information about the first participant
-    struct userlist_members **pmemb = ui->members;
+    const struct userlist_members **pmemb = (const struct userlist_members **) ui->members;
 
     if (pmemb && pmemb[USERLIST_MB_CONTESTANT]
         && pmemb[USERLIST_MB_CONTESTANT]->total > 0
