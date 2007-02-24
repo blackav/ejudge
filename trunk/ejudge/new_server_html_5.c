@@ -154,13 +154,153 @@ anon_select_contest_page(FILE *fout, struct http_request_info *phr)
 }
 
 static void
-new_user_registered_page(
+user_login_page(
 	FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
         time_t cur_time)
 {
+#if 0
+
+  if (cnts->register_head_style && *cnts->register_head_style)
+    head_style = cnts->register_head_style;
+  if (!head_style) head_style = "h2";
+  if (cnts->register_par_style && *cnts->register_par_style)
+    par_style = cnts->register_par_style;
+  if (!par_style) par_style = "";
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_NEW_USER_REGISTERED_PAGE:
+  case NEW_SRV_ACTION_NEW_AUTOASSIGNED_USER_REGISTERED_PAGE:
+    s = _("Register a new user, step 2");
+  }
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s]", s, extra->contest_arm);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  html_start_form(fout, 1, phr->self_url, "");
+  html_hidden(fout, "contest_id", "%d", phr->contest_id);
+  html_hidden(fout, "next_action", "%d",
+              NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER_PAGE);
+  if (cnts->disable_locale_change)
+    html_hidden(fout, "locale_id", "%d", phr->locale_id);
+  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>\n");
+
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">e-mail: %s</div></td>", html_input_text(bb, sizeof(bb), "email", 20, "%s", ARMOR(email)));
+
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER, _("Register")));
+
+  if (!cnts->disable_locale_change) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
+            _("language"));
+    l10n_html_locale_select(fout, phr->locale_id);
+    fprintf(fout, "</div></td>\n");
+    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>\n", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_CHANGE_LANGUAGE, _("Change Language")));
+  }
+
+  fprintf(fout, "</tr></table></div></form>\n");
+
+  fprintf(fout,
+          "<div class=\"white_empty_block\">&nbsp;</div>\n"
+          "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
+
+  // "Forgot password?" "Edit personal info" "Participate in contest/exam"
+  if (cnts && cnts->enable_forgot_password && cnts->disable_team_password
+      && !cnts->simple_registration) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_FORGOT_PASSWORD_1, _("Forgot password?"));
+    item_cnt++;
+  }
+  if (allowed_info_edit) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REGISTER_LOGIN_PAGE, cnts->personal?_("Edit personal info"):_("Edit team info"));
+    item_cnt++;
+  }
+  if (client_url[0]) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d\">%s</a></div></td>", client_url, phr->contest_id, phr->locale_id, cnts->exam_mode?_("Take the exam"):_("Participate in the contest"));
+    item_cnt++;
+  }
+  if (!item_cnt)
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
+  fprintf(fout, "</tr></table></div>\n");
+
+  fprintf(fout, "%s", extra->separator_txt);
+
+  if (reg_error || reg_ul_error) {
+    if (reg_error < 0) reg_error = -reg_error;
+    if (reg_ul_error < 0) reg_ul_error = -reg_ul_error;
+
+    fprintf(fout, "<%s><font color=\"red\">%s</font></%s>\n", head_style, _("Registration errors"),
+            head_style);
+
+    fprintf(fout, "<p%s><font color=\"red\">", par_style);
+    if (reg_ul_error == ULS_ERR_EMAIL_FAILED) {
+      fprintf(fout, "%s",
+              _("The server was unable to send a registration e-mail\n"
+                "to the specified address. This is probably due\n"
+                "to heavy server load rather than to an invalid\n"
+                "e-mail address. You should try to register later.\n"));
+    } else if (reg_ul_error) {
+      fprintf(fout, "%s.", gettext(userlist_strerror(-reg_ul_error)));
+    } else if (reg_error) {
+      fprintf(fout, "%s.", ns_strerror_2(reg_error));
+    }
+    fprintf(fout, "</font></p>\n");
+  }
+
+  fprintf(fout, "<%s>%s</%s>\n", head_style, _("Registration rules"),
+          head_style);
+  fprintf(fout, "<p%s>%s</p>\n", par_style,
+          _("Please, enter your valid e-mail address and press the \"Register\" button."));
+
+  fprintf(fout, "<p%s>%s</p>", par_style,
+          _("Shortly after that you should receive an e-mail message "
+            "with a password to the system. Use this password for the first"
+            " login. After the first login you will be able to change the password."));
+
+  fprintf(fout, "<p%s>%s</p>", par_style,
+          _("Be careful and type the e-mail address correctly. If you make a mistake, you will not receive a registration e-mail and be unable to complete the registration process."));
+
+  fprintf(fout, "<p%s>%s</p>",
+          par_style,
+          _("<b>Note</b>, that you must log in "
+            "24 hours after the form is filled and submitted, or "
+            "your registration will be cancelled!"));
+
+  if (allowed_info_edit || client_url[0]) {
+    fprintf(fout, "<p%s>%s", par_style, _("If you are already registered, you may"));
+    if (allowed_info_edit)
+      fprintf(fout, " <a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REGISTER_LOGIN_PAGE, cnts->personal?_("edit your personal information"):_("edit your team information"));
+    if (allowed_info_edit && client_url[0]) fprintf(fout, _(" or"));
+    if (client_url[0])
+      fprintf(fout, " <a href=\"%s?contest_id=%d&amp;locale_id=%d\">%s</a>", client_url, phr->contest_id, phr->locale_id, cnts->exam_mode?_("take the exam"):_("participate in the contest"));
+    fprintf(fout, ".</p>\n");
+  }
+
+  fprintf(fout, "<p%s>&nbsp;</p>\n", par_style);
+
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+  html_armor_free(&ab);
+
+#endif
 }
 
 static void
@@ -215,7 +355,7 @@ register_new_assigned_logins_page(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s]", _("Register a new user"), extra->contest_arm);
+            "%s [%s]", _("Register a new user, step 1"), extra->contest_arm);
 
   html_start_form(fout, 1, phr->self_url, "");
   html_hidden(fout, "contest_id", "%d", phr->contest_id);
@@ -402,8 +542,8 @@ static reg_action_handler_func_t action_handlers[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER_PAGE] = register_new_assigned_logins_page,
   [NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER] = register_new_user,
-  [NEW_SRV_ACTION_NEW_AUTOASSIGNED_USER_REGISTERED_PAGE] = new_user_registered_page,
-  [NEW_SRV_ACTION_NEW_USER_REGISTERED_PAGE] = new_user_registered_page,
+  [NEW_SRV_ACTION_NEW_AUTOASSIGNED_USER_REGISTERED_PAGE] = user_login_page,
+  [NEW_SRV_ACTION_NEW_USER_REGISTERED_PAGE] = user_login_page,
 };
 
 static void
