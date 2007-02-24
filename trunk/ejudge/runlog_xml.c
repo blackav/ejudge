@@ -735,6 +735,7 @@ unparse_runlog_xml(serve_state_t state,
       }
     }
 
+#if 0
     // read XML report
     if ((flags = archive_make_read_path(state, fpath, sizeof(fpath),
                                         global->xml_report_archive_dir,
@@ -762,6 +763,7 @@ unparse_runlog_xml(serve_state_t state,
         }
       }
     }
+#endif
 
     // read audit
     if ((flags = archive_make_read_path(state, fpath, sizeof(fpath),
