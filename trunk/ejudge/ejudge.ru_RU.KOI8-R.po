@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-02-20 22:25+0300\n"
+"POT-Creation-Date: 2007-02-23 00:42+0300\n"
 "PO-Revision-Date: 2007-02-20 22:31+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -2415,6 +2415,12 @@ msgstr "Зарегистрироваться"
 
 msgid "Register a new user"
 msgstr "Зарегистрировать нового пользователя"
+
+msgid "Register a new user, step 1"
+msgstr "Зарегистрировать нового пользователя, шаг 1"
+
+msgid "Register a new user, step 2"
+msgstr "Зарегистрировать нового пользователя, шаг 2"
 
 msgid "Registration"
 msgstr "Регистрация"
