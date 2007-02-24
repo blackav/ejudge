@@ -3568,15 +3568,21 @@ priv_view_runs_dump(FILE *fout,
 
   case NEW_SRV_ACTION_EXPORT_XML_RUNS:
     fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
-    if (run_write_xml(cs->runlog_state, cs, cnts, fout, 1,
+    if (run_write_xml(cs->runlog_state, cs, cnts, fout, 1, 0,
                       cs->current_time) < 0)
       FAIL(NEW_SRV_ERR_TRY_AGAIN);
     break;
 
   case NEW_SRV_ACTION_WRITE_XML_RUNS:
+    fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
+    if (run_write_xml(cs->runlog_state, cs, cnts, fout, 0, 0,
+                      cs->current_time) < 0)
+      FAIL(NEW_SRV_ERR_TRY_AGAIN);
+    break;
+
   case NEW_SRV_ACTION_WRITE_XML_RUNS_WITH_SRC:
     fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
-    if (run_write_xml(cs->runlog_state, cs, cnts, fout, 0,
+    if (run_write_xml(cs->runlog_state, cs, cnts, fout, 0, 1,
                       cs->current_time) < 0)
       FAIL(NEW_SRV_ERR_TRY_AGAIN);
     break;

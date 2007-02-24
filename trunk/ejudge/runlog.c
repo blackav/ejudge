@@ -1994,7 +1994,7 @@ int
 run_write_xml(runlog_state_t state,
               void *serve_state,
               const struct contest_desc *cnts,
-              FILE *f, int export_mode,
+              FILE *f, int export_mode, int source_mode,
               time_t current_time)
 {
   //int i;
@@ -2031,7 +2031,7 @@ run_write_xml(runlog_state_t state,
   */
 
   unparse_runlog_xml(serve_state, cnts, f, &state->head, state->run_u,
-                     state->runs, export_mode, current_time);
+                     state->runs, export_mode, source_mode, current_time);
   return 0;
 }
 

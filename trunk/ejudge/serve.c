@@ -1112,7 +1112,7 @@ cmd_view(struct client_state *p, int len,
       fprintf(f, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
     }
     if (run_write_xml(serve_state.runlog_state, &serve_state, cur_contest,
-                      f, 0, serve_state.current_time) < 0)
+                      f, 0, 0, serve_state.current_time) < 0)
       r = -SRV_ERR_TRY_AGAIN;
     break;
 
@@ -1156,7 +1156,7 @@ cmd_view(struct client_state *p, int len,
       fprintf(f, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
     }
     if (run_write_xml(serve_state.runlog_state, &serve_state, cur_contest,
-                      f, 1, serve_state.current_time) < 0)
+                      f, 1, 0, serve_state.current_time) < 0)
       r = -SRV_ERR_TRY_AGAIN;
     break;
 

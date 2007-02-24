@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,8 @@
 #include "xml_utils.h"
 #include "serve_state.h"
 #include "mime_type.h"
+#include "archive_paths.h"
+#include "fileutl.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -57,6 +59,9 @@ enum
   RUNLOG_T_LANGUAGES,
   RUNLOG_T_LANGUAGE,
   RUNLOG_T_NAME,
+  RUNLOG_T_SOURCE,
+  RUNLOG_T_AUDIT,
+  RUNLOG_T_XML_REPORT,
 
   RUNLOG_LAST_TAG,
 };
@@ -109,6 +114,9 @@ static const char * const elem_map[] =
   [RUNLOG_T_LANGUAGES] "languages",
   [RUNLOG_T_LANGUAGE] "language",
   [RUNLOG_T_NAME]   "name",
+  [RUNLOG_T_SOURCE] "source",
+  [RUNLOG_T_AUDIT] "audit",
+  [RUNLOG_T_XML_REPORT] "xml_report",
 
   [RUNLOG_LAST_TAG] 0,
 };
@@ -511,6 +519,7 @@ unparse_runlog_xml(serve_state_t state,
                    size_t nelems,
                    const struct run_entry *entries,
                    int external_mode,
+                   int source_mode,
                    time_t current_time)
 {
   int i, flags;
@@ -520,6 +529,11 @@ unparse_runlog_xml(serve_state_t state,
   unsigned char *astr1, *astr2, *val1, *val2;
   size_t alen1, alen2, asize1, asize2;
   unsigned char status_buf[32];
+  const struct section_global_data *global = state->global;
+  path_t fpath;
+  char *ftext = 0;
+  size_t fsize = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   asize2 = asize1 = 64;
   astr1 = alloca(asize1);
@@ -700,10 +714,56 @@ unparse_runlog_xml(serve_state_t state,
     if (!external_mode && pp->pages > 0) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_PAGES], pp->pages);
     }
-    fprintf(f, "/>\n");
+    if (!source_mode) {
+      fprintf(f, "/>\n");
+      continue;
+    }
+
+    // read source
+    if ((flags = archive_make_read_path(state, fpath, sizeof(fpath),
+                                        global->run_archive_dir,
+                                        i, 0, 1)) >= 0) {
+      if (generic_read_file(&ftext, 0, &fsize, flags, 0, fpath, 0) >= 0) {
+        fprintf(f, "      <%s>%s</%s>\n",
+                elem_map[RUNLOG_T_SOURCE],
+                html_armor_buf_bin(&ab, ftext, fsize),
+                elem_map[RUNLOG_T_SOURCE]);
+        xfree(ftext); ftext = 0; fsize = 0;
+      }
+    }
+
+    // read XML report
+    if ((flags = archive_make_read_path(state, fpath, sizeof(fpath),
+                                        global->xml_report_archive_dir,
+                                        i, 0, 1)) >= 0) {
+      if (generic_read_file(&ftext, 0, &fsize, flags, 0, fpath, 0) >= 0) {
+        fprintf(f, "      <%s>%s</%s>\n",
+                elem_map[RUNLOG_T_XML_REPORT],
+                html_armor_buf_bin(&ab, ftext, fsize),
+                elem_map[RUNLOG_T_XML_REPORT]);
+        xfree(ftext); ftext = 0; fsize = 0;
+      }
+    }
+
+    // read audit
+    if ((flags = archive_make_read_path(state, fpath, sizeof(fpath),
+                                        global->audit_log_dir,
+                                        i, 0, 1)) >= 0) {
+      if (generic_read_file(&ftext, 0, &fsize, flags, 0, fpath, 0) >= 0) {
+        fprintf(f, "      <%s>%s</%s>\n",
+                elem_map[RUNLOG_T_AUDIT],
+                html_armor_buf_bin(&ab, ftext, fsize),
+                elem_map[RUNLOG_T_AUDIT]);
+        xfree(ftext); ftext = 0; fsize = 0;
+      }
+    }
+
+    fprintf(f, "    </%s>\n", elem_map[RUNLOG_T_RUN]);
   }
   fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_RUNS]);
   fprintf(f, "</%s>\n", elem_map[RUNLOG_T_RUNLOG]);
+
+  html_armor_free(&ab);
   return 0;
 }
 

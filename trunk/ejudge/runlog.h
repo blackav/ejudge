@@ -221,11 +221,11 @@ int run_forced_set_hidden(runlog_state_t state, int run_id);
 int run_forced_set_judge_id(runlog_state_t state, int run_id, int judge_id);
 
 int run_write_xml(runlog_state_t, void *, const struct contest_desc *cnts,
-                  FILE *f, int, time_t);
+                  FILE *f, int, int, time_t);
 int unparse_runlog_xml(serve_state_t,
                        const struct contest_desc *cnts,
                        FILE *, const struct run_header*,
-                       size_t, const struct run_entry*, int, time_t);
+                       size_t, const struct run_entry*, int, int, time_t);
 int parse_runlog_xml(const unsigned char *, struct run_header *,
                      size_t *, struct run_entry **);
 void runlog_import_xml(serve_state_t, struct runlog_state *,

@@ -42,8 +42,8 @@
 
 static const signed char armored_html_len_table[256] =
 {
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+  4, 4, 4, 4, 4, 4, 4, 4, 4, 1, 1, 5, 5, 1, 5, 5, 
+  5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 
   1, 1, 6, 1, 5, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 4, 1, 
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
@@ -62,8 +62,8 @@ static const signed char armored_html_len_table[256] =
 
 static unsigned char const * const armored_html_translate_table[256] =
 {
-  "?","?","?","?","?","?","?","?","?",0,0,"?","?",0,"?","?",
-  "?","?","?","?","?","?","?","?","?","?","?","?","?","?","?","?",
+  "&#0;","&#1;","&#2;","&#3;","&#4;","&#5;","&#6;","&#7;","&#8;",0,0,"&#11;","&#12;",0,"&#14;","&#15;",
+  "&#16;","&#17;","&#18;","&#19;","&#20;","&#21;","&#22;","&#23;","&#24;","&#25;","&#26;","&#27;","&#28;","&#29;","&#30;","&#31;",
   0,0,"&quot;",0,"&#36;",0,"&amp;",0,0,0,0,0,0,0,0,0,
   0,0,0,0,0,0,0,0,0,0,0,0,"&lt;",0,"&gt;",0,
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -119,6 +119,23 @@ html_armor_needed(const unsigned char *str, size_t *psz)
     p++;
   }
   if (s_sz == d_sz) return 0;
+  *psz = d_sz;
+  return 1;
+}
+
+int
+html_armor_needed_bin(const unsigned char *str, size_t sz, size_t *psz)
+{
+  const unsigned char *p = str;
+  size_t s_sz = sz, d_sz = 0;
+
+  if (!str || !sz) return 0;
+
+  while (s_sz) {
+    d_sz += armored_html_len_table[*p];
+    p++; s_sz--;
+  }
+  if (d_sz == sz && !*p) return 0;
   *psz = d_sz;
   return 1;
 }
@@ -496,6 +513,23 @@ html_armor_buf(struct html_armor_buffer *pb, const unsigned char *s)
     pb->buf = (unsigned char*) xmalloc(pb->size);
   }
   html_armor_string(s, pb->buf);
+  return pb->buf;
+}
+
+const unsigned char *
+html_armor_buf_bin(struct html_armor_buffer *pb,
+                   const unsigned char *s, size_t sz)
+{
+  size_t newsz = 0;
+
+  if (!html_armor_needed_bin(s, sz, &newsz)) return s;
+  if (newsz >= pb->size) {
+    xfree(pb->buf);
+    if (!pb->size) pb->size = 64;
+    while (newsz >= pb->size) pb->size *= 2;
+    pb->buf = (unsigned char*) xmalloc(pb->size);
+  }
+  html_armor_text(s, sz, pb->buf);
   return pb->buf;
 }
 

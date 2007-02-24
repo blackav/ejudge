@@ -197,13 +197,19 @@ cmd_dump_runs(
 
   switch (phr->action) {
   case NEW_SRV_ACTION_EXPORT_XML_RUNS:
-    if (run_write_xml(cs->runlog_state, cs, cnts, fout, 1,
+    if (run_write_xml(cs->runlog_state, cs, cnts, fout, 1, 0,
                       cs->current_time) < 0)
       return -NEW_SRV_ERR_TRY_AGAIN;
     break;
 
   case NEW_SRV_ACTION_WRITE_XML_RUNS:
-    if (run_write_xml(cs->runlog_state, cs, cnts, fout, 0,
+    if (run_write_xml(cs->runlog_state, cs, cnts, fout, 0, 0,
+                      cs->current_time) < 0)
+      return -NEW_SRV_ERR_TRY_AGAIN;
+    break;
+
+  case NEW_SRV_ACTION_WRITE_XML_RUNS_WITH_SRC:
+    if (run_write_xml(cs->runlog_state, cs, cnts, fout, 0, 1,
                       cs->current_time) < 0)
       return -NEW_SRV_ERR_TRY_AGAIN;
     break;
