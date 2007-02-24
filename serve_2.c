@@ -167,7 +167,7 @@ do_update_xml_log(serve_state_t state, const struct contest_desc *cnts,
     return;
   }
   unparse_runlog_xml(state, cnts, fout, &rhead, rtotal, rentries,
-                     external_mode, state->current_time);
+                     external_mode, 0, state->current_time);
   if (ferror(fout)) {
     err("update_xml_log: write error");
     fclose(fout);

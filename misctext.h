@@ -38,6 +38,9 @@ int html_armor_needed(const unsigned char *str, size_t *psz);
 void html_armor_init(struct html_armor_buffer *pb);
 const unsigned char *html_armor_buf(struct html_armor_buffer *pb,
                                     const unsigned char *s);
+const unsigned char *html_armor_buf_bin(struct html_armor_buffer *pb,
+                                        const unsigned char *s,
+                                        size_t size);
 const unsigned char *url_armor_buf(struct html_armor_buffer *pb,
                                    const unsigned char *s);
 void html_armor_free(struct html_armor_buffer *pb);
