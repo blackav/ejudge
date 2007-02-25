@@ -2053,3 +2053,7 @@ runlog.h 3979 0 757745
 new_server_html.c 3979 0 26932800
 runlog_import.c 3979 0 1961322
 runlog_xml.c 3979 0 2093418
+ejudge-control.c 3981 0 746313
+run.c 3981 0 5978949
+runlog_import.c 3981 0 1982897
+runlog_xml.c 3981 0 2089544
