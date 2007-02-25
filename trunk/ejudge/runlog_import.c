@@ -21,6 +21,7 @@
 #include "teamdb.h"
 #include "archive_paths.h"
 #include "serve_state.h"
+#include "fileutl.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -80,6 +81,8 @@ void
 runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
                   FILE *hlog, int flags, const unsigned char *in_xml)
 {
+  const struct section_global_data *global = state->global;
+
   size_t armor_len, flog_len = 0;
   unsigned char *armor_str;
   char *flog_text = 0;
@@ -90,6 +93,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
   struct run_entry *in_entries = 0;
   struct run_entry *cur_entries = 0;
   struct run_entry *out_entries = 0;
+  struct run_data *in_data = 0;
   struct run_entry *pa, *pb;
   size_t in_entries_num = 0;
   size_t cur_entries_num = 0;
@@ -103,6 +107,8 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
   int min_team_id;
   unsigned char *cur_used_flag, *in_used_flag;
   int both_auth_warn_printed = 0;
+  int arch_flags = 0;
+  path_t run_path;
 
   flog = open_memstream(&flog_text, &flog_len);
   memset(&in_header, 0, sizeof(in_header));
@@ -178,7 +184,8 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
   }
   fprintf(flog, "Scanning the existing entries done successfully\n");
 
-  r = parse_runlog_xml(in_xml, &in_header, &in_entries_num, &in_entries);
+  r = parse_runlog_xml(in_xml, &in_header, &in_entries_num, &in_entries,
+                       &in_data);
   if (r < 0) {
     fprintf(flog, "XML parsing failed\n");
     goto done;
@@ -355,7 +362,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
         fprintf(flog, "This message is printed only once for all runs\n");
         both_auth_warn_printed = 1;
       }
-      pb->is_imported = 1;
+      if (!in_data[j].source.data) pb->is_imported = 1;
     }
     if (pa->is_imported && pb->is_imported) {
       /* just warn, if values differ */
@@ -642,6 +649,52 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
     if (cur_entries[i].is_imported)
       cur_merged_map[i] = -1;
   rename_archive_files(state, flog, cur_entries_num, cur_merged_map);
+  fprintf(flog, "Saving imported source and audit files\n");
+  for (i = 0; i < in_entries_num; i++) {
+    if (!in_data[i].source.data) continue;
+    if ((j = new_merged_map[i]) < 0) continue;
+
+    arch_flags = archive_make_write_path(state, run_path, sizeof(run_path),
+                                         global->run_archive_dir, j,
+                                         in_data[i].source.size, 0);
+    if (arch_flags < 0) {
+      fprintf(flog, "ERROR: failed to create source write path for run %d", j);
+      continue;
+    }
+    if (archive_dir_prepare(state, global->run_archive_dir, j, 0, 0) < 0) {
+      fprintf(flog, "ERROR: failed to create directories for run %d", j);
+      continue;
+    }
+    if (generic_write_file(in_data[i].source.data, in_data[i].source.size,
+                           arch_flags, 0, run_path, "") < 0) {
+      fprintf(flog, "ERROR: failed to write source for run %d", j);
+      continue;
+    }
+
+    if (in_data[i].audit.data) {
+      arch_flags = archive_make_write_path(state, run_path, sizeof(run_path),
+                                           global->run_archive_dir, j, 0, 0);
+      if (arch_flags < 0) {
+        fprintf(flog, "ERROR: failed to create audit write path for run %d", j);
+        continue;
+      }
+      if (archive_dir_prepare(state, global->audit_log_dir, j, 0, 0) < 0) {
+        fprintf(flog, "ERROR: failed to create directories for audit %d", j);
+        continue;
+      }
+      if (generic_write_file(in_data[i].audit.data, in_data[i].audit.size,
+                             arch_flags, 0, run_path, "") < 0) {
+        fprintf(flog, "ERROR: failed to write audit for run %d", j);
+        continue;
+      }
+    }
+
+    serve_audit_log(state, j, 0, 0, 0,
+                    "Command: import\n"
+                    "Status: success\n"
+                    "Run-id: %d\n",
+                    j);
+  }
   fprintf(flog, "Merge complete\n");
 
  done:
@@ -659,6 +712,13 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
   xfree(flog_text);
   xfree(in_entries);
   xfree(cur_entries);
+  if (in_data) {
+    for (i = 0; i < in_entries_num; i++) {
+      xfree(in_data[i].source.data);
+      xfree(in_data[i].audit.data);
+    }
+  }
+  xfree(in_data);
 }
 
 /*

@@ -195,6 +195,17 @@ struct run_entry
   unsigned char  _pad2[34];
 };
 
+struct run_file
+{
+  unsigned char *data;
+  size_t size;
+};
+struct run_data
+{
+  struct run_file source;
+  struct run_file audit;
+};
+
 void run_get_header(runlog_state_t, struct run_header *out);
 void run_get_all_entries(runlog_state_t, struct run_entry *out);
 int run_get_entry(runlog_state_t, int run_id, struct run_entry *out);
@@ -227,7 +238,7 @@ int unparse_runlog_xml(serve_state_t,
                        FILE *, const struct run_header*,
                        size_t, const struct run_entry*, int, int, time_t);
 int parse_runlog_xml(const unsigned char *, struct run_header *,
-                     size_t *, struct run_entry **);
+                     size_t *, struct run_entry **, struct run_data **);
 void runlog_import_xml(serve_state_t, struct runlog_state *,
                        FILE *flog, int flags,
                        const unsigned char *in_xml);

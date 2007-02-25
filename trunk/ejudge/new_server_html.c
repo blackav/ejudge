@@ -6044,7 +6044,9 @@ unpriv_load_html_style(struct http_request_info *phr,
 {
   struct contest_extra *extra = 0;
   time_t cur_time = 0;
+#if defined CONF_ENABLE_AJAX && CONF_ENABLE_AJAX
   unsigned char bb[1024];
+#endif
 
   extra = ns_get_contest_extra(phr->contest_id);
   ASSERT(extra);

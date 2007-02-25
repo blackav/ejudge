@@ -36,6 +36,7 @@
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
 
+#include <errno.h>
 #include <ctype.h>
 #include <zlib.h>
 
@@ -226,44 +227,74 @@ parse_status(const unsigned char *str)
   return x;
 }
 
-#if 0
-static void
+static int
 decode_file(
 	const unsigned char *enc_txt,
-        size_t exp_size,
-        unsigned char **p_buf,
-        size_t *p_size)
+        size_t *p_size,
+        unsigned char **p_buf)
 {
-  unsigned char *buf = 0, *buf2;
+  unsigned char *buf = 0, *buf2 = 0;
   size_t bufsize, enclen;
   int flag = 0;
+  unsigned long dlen = 0;
 
   if (!enc_txt) {
     *p_buf = 0;
     *p_size = 0;
-    return;
+    return 0;
   }
   if (!*enc_txt) {
     buf = (unsigned char*) xmalloc(1);
     buf[0] = 0;
     *p_buf = buf;
     *p_size = 0;
-    return;
+    return 0;
   }
 
   enclen = strlen(enc_txt);
   bufsize = enclen + 32;
   buf2 = (unsigned char*) xmalloc(bufsize);
   bufsize = base64_decode(enc_txt, enclen, buf2, &flag);
-  if (flag) {
-    // base64 error
-    xfree(buf2);
-    *p_buf = 0;
-    *p_size = 0;
-    return;
-  }
+  if (flag) goto failed;
+
+  dlen = *p_size;
+  buf = (unsigned char*) xmalloc(*p_size + 1);
+  if (uncompress(buf, &dlen, buf2, bufsize) != Z_OK) goto failed;
+  if (dlen != *p_size) goto failed;
+  *p_buf = buf; buf = 0;
+  xfree(buf2); buf2 = 0;
+  return 0;
+
+ failed:
+  xfree(buf);
+  xfree(buf2);
+  *p_buf = 0;
+  *p_size = 0;
+  return -1;
 }
-#endif
+
+static int
+parse_encoded_file(struct xml_tree *p, unsigned char **p_text, size_t *p_size)
+{
+  struct xml_attr *a;
+  unsigned long v;
+  char *eptr = 0;
+
+  if (p->first_down) return xml_err_nested_elems(p);
+  if (!(a = p->first)) return xml_err_attr_undefined(p, RUNLOG_A_SIZE);
+  if (a->tag != RUNLOG_A_SIZE) return xml_err_attr_not_allowed(p, a);
+  if (a->next) return xml_err_attr_not_allowed(p, a->next);
+
+  errno = 0;
+  v = strtoul(a->text, &eptr, 10);
+  if (errno || *eptr) return xml_err_attr_invalid(a);
+  if (v >= 128 * 1024 * 1024) return xml_err_attr_invalid(a);
+
+  *p_size = v;
+  *p_text = p->text;
+  p->text = 0;
+  return 0;
+}
 
 static int
 process_run_elements(struct xml_tree *xt)
@@ -285,20 +316,17 @@ process_run_elements(struct xml_tree *xt)
     for (p = xt->first_down; p; p = p->right) {
       switch (p->tag) {
       case RUNLOG_T_SOURCE:
-        if (xml_leaf_elem(p, &xr->source_enc, 1, 1) < 0) return -1;
+        if (parse_encoded_file(p, &xr->source_enc, &xr->source_size) < 0)
+          return -1;
         break;
       case RUNLOG_T_AUDIT:
-        if (xml_leaf_elem(p, &xr->audit_enc, 1, 1) < 0) return -1;
+        if (parse_encoded_file(p, &xr->audit_enc, &xr->audit_size) < 0)
+          return -1;
         break;
       default:
         return xml_err_elem_not_allowed(p);
       }
     }
-
-    //decode_file(xr->source_enc, &xr->source_text, &xr->source_size);
-    //decode_file(xr->audit_enc, &xr->audit_text, &xr->audit_size);
-    xfree(xr->source_enc); xr->source_enc = 0;
-    xfree(xr->audit_enc); xr->audit_enc = 0;
 
     /* set default values */
     xr->r.run_id = -1;
@@ -456,6 +484,17 @@ process_run_elements(struct xml_tree *xt)
     if (xr->r.status == 255)
       return xml_err_attr_undefined(xt, RUNLOG_A_STATUS);
 
+    if (decode_file(xr->source_enc, &xr->source_size, &xr->source_text) < 0) {
+      err("process_run_elements: %d: source decoding error", xr->r.run_id);
+      return -1;
+    }
+    if (decode_file(xr->audit_enc, &xr->audit_size, &xr->audit_text) < 0) {
+      err("process_run_elements: %d: audit decoding error", xr->r.run_id);
+      return -1;
+    }
+    xfree(xr->source_enc); xr->source_enc = 0;
+    xfree(xr->audit_enc); xr->audit_enc = 0;
+
     xt = xt->right;
   }
   return 0;
@@ -500,12 +539,13 @@ process_runlog_element(struct xml_tree *xt, struct xml_tree **ptruns)
 
 static int
 collect_runlog(struct xml_tree *xt, size_t *psize,
-               struct run_entry **pentries)
+               struct run_entry **pentries, struct run_data **pdata)
 {
   struct run_element *xr;
   struct xml_tree *xx;
   int max_run_id = -1, i, j;
   struct run_entry *ee;
+  struct run_data *pd = 0;
   
   for (xx = xt; xx; xx = xx->right) {
     ASSERT(xx->tag == RUNLOG_T_RUN);
@@ -518,6 +558,7 @@ collect_runlog(struct xml_tree *xt, size_t *psize,
     return 0;
   }
   ee = (struct run_entry*) xcalloc(max_run_id + 1, sizeof(*ee));
+  pd = (struct run_data*) xcalloc(max_run_id + 1, sizeof(*pd));
   for (i = 0; i <= max_run_id; i++) {
     ee[i].run_id = i;
     ee[i].status = RUN_EMPTY;
@@ -535,9 +576,19 @@ collect_runlog(struct xml_tree *xt, size_t *psize,
       memset(&ee[j], 0, sizeof(ee[0]));
       ee[j].status = RUN_EMPTY;
     }
+    if (ee[j].status < RUN_MAX_STATUS && pd) {
+      pd[j].source.data = xr->source_text;
+      pd[j].source.size = xr->source_size;
+      pd[j].audit.data = xr->audit_text;
+      pd[j].audit.size = xr->audit_size;
+    } else {
+      xfree(xr->source_text); xr->source_text = 0;
+      xfree(xr->audit_text); xr->audit_text = 0;
+    }
   }
   *psize = max_run_id + 1;
   *pentries = ee;
+  if (*pdata) *pdata = pd;
   return max_run_id + 1;
 }
 
@@ -546,7 +597,8 @@ int
 parse_runlog_xml(const unsigned char *str, 
                  struct run_header *phead,
                  size_t *psize,
-                 struct run_entry **pentries)
+                 struct run_entry **pentries,
+                 struct run_data **pdata)
 {
   struct xml_tree *xt = 0;
   struct xml_tree *truns = 0;
@@ -561,7 +613,7 @@ parse_runlog_xml(const unsigned char *str,
     xml_tree_free(xt, &runlog_parse_spec);
     return -1;
   }
-  if (collect_runlog(truns, psize, pentries) < 0) {
+  if (collect_runlog(truns, psize, pentries, pdata) < 0) {
     xml_tree_free(xt, &runlog_parse_spec);
     return -1;
   }
