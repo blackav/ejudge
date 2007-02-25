@@ -5041,7 +5041,7 @@ priv_generic_operation(FILE *fout,
   if (!log_txt || !*log_txt) {
     if (r == NEW_SRV_ACTION_VIEW_SOURCE) {
       if (phr->next_run_id < 0) r = 0;
-      else snprintf(next_extra, sizeof(next_extra), "&amp;run_id=%d",
+      else snprintf(next_extra, sizeof(next_extra), "run_id=%d",
                     phr->next_run_id);
     }
     html_refresh_page(fout, phr, r, next_extra);
