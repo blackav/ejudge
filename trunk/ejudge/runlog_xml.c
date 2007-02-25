@@ -588,7 +588,7 @@ collect_runlog(struct xml_tree *xt, size_t *psize,
   }
   *psize = max_run_id + 1;
   *pentries = ee;
-  if (*pdata) *pdata = pd;
+  if (pdata) *pdata = pd;
   return max_run_id + 1;
 }
 
@@ -635,7 +635,6 @@ static const unsigned char *
 encode_file(
 	struct html_armor_buffer *b1,
         struct html_armor_buffer *b2,
-        size_t *p_csize,
         const unsigned char *txt,
         size_t len)
 {
@@ -645,7 +644,6 @@ encode_file(
   if (!txt || !len) {
     html_armor_extend(b2, 0);
     b2->buf[0] = 0;
-    *p_csize = 0;
     return b2->buf;
   }
 
@@ -656,7 +654,6 @@ encode_file(
   html_armor_extend(b2, b64_len);
   b64_len = base64_encode(b1->buf, comp_exp_len, b2->buf);
   b2->buf[b64_len] = 0;
-  *p_csize = b64_len;
   return b2->buf;
 }
 
@@ -791,7 +788,8 @@ unparse_runlog_xml(serve_state_t state,
   fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_RUNS]);
   for (i = 0; i < nelems; i++) {
     pp = &entries[i];
-    if (external_mode && pp->is_hidden) continue;
+    //if (external_mode && pp->is_hidden) continue;
+    if (pp->is_hidden) continue;
     switch (pp->status) {
     case RUN_EMPTY:
     case RUN_RUNNING:
@@ -876,10 +874,10 @@ unparse_runlog_xml(serve_state_t state,
                                         i, 0, 1)) >= 0) {
       if (generic_read_file(&ftext, 0, &fsize, flags, 0, fpath, 0) >= 0) {
         csize = 0;
-        encode_file(&b1, &b2, &csize, ftext, fsize),
         fprintf(f, "      <%s %s=\"%zu\">%s</%s>\n",
-                elem_map[RUNLOG_T_SOURCE], attr_map[RUNLOG_A_SIZE], csize,
-                b2.buf, elem_map[RUNLOG_T_SOURCE]);
+                elem_map[RUNLOG_T_SOURCE], attr_map[RUNLOG_A_SIZE], fsize,
+                encode_file(&b1, &b2, ftext, fsize),
+                elem_map[RUNLOG_T_SOURCE]);
         xfree(ftext); ftext = 0; fsize = 0;
       }
     }
@@ -920,10 +918,10 @@ unparse_runlog_xml(serve_state_t state,
                                         i, 0, 1)) >= 0) {
       if (generic_read_file(&ftext, 0, &fsize, flags, 0, fpath, 0) >= 0) {
         csize = 0;
-        encode_file(&b1, &b2, &csize, ftext, fsize);
         fprintf(f, "      <%s %s=\"%zu\">%s</%s>\n",
-                elem_map[RUNLOG_T_AUDIT], attr_map[RUNLOG_A_SIZE], csize,
-                b2.buf, elem_map[RUNLOG_T_AUDIT]);
+                elem_map[RUNLOG_T_AUDIT], attr_map[RUNLOG_A_SIZE], fsize,
+                encode_file(&b1, &b2, ftext, fsize),
+                elem_map[RUNLOG_T_AUDIT]);
         xfree(ftext); ftext = 0; fsize = 0;
       }
     }

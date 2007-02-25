@@ -531,7 +531,8 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
       ASSERT(new_cur_map[j] == -1);
       memcpy(&out_entries[cur_out], &in_entries[j], sizeof(out_entries[0]));
       out_entries[cur_out].run_id = cur_out;
-      out_entries[cur_out].is_imported = 1;
+      if (!in_data[j].source.data) out_entries[cur_out].is_imported = 1;
+      else out_entries[cur_out].status = RUN_PENDING;
       new_merged_map[j] = cur_out;
       j++;
       cur_out++;
@@ -606,7 +607,8 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
         memcpy(&out_entries[cur_out], &in_entries[min_j],
                sizeof(out_entries[0]));
         out_entries[cur_out].run_id = cur_out;
-        out_entries[cur_out].is_imported = 1;
+        if (!in_data[min_j].source.data) out_entries[cur_out].is_imported = 1;
+        else out_entries[cur_out].status = RUN_PENDING;
         new_merged_map[min_j] = cur_out;
         in_used_flag[min_j] = 1;
         cur_out++;
@@ -629,7 +631,8 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
     ASSERT(new_cur_map[j] == -1);
     memcpy(&out_entries[cur_out], &in_entries[j], sizeof(out_entries[0]));
     out_entries[cur_out].run_id = cur_out;
-    out_entries[cur_out].is_imported = 1;
+    if (!in_data[j].source.data) out_entries[cur_out].is_imported = 1;
+    else out_entries[cur_out].status = RUN_PENDING;
     new_merged_map[j] = cur_out;
     cur_out++;
   }
@@ -673,7 +676,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
 
     if (in_data[i].audit.data) {
       arch_flags = archive_make_write_path(state, run_path, sizeof(run_path),
-                                           global->run_archive_dir, j, 0, 0);
+                                           global->audit_log_dir, j, 0, 0);
       if (arch_flags < 0) {
         fprintf(flog, "ERROR: failed to create audit write path for run %d", j);
         continue;
