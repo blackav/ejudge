@@ -2057,3 +2057,4 @@ ejudge-control.c 3981 0 746313
 run.c 3981 0 5978949
 runlog_import.c 3981 0 1982897
 runlog_xml.c 3981 0 2089544
+new_server_html.c 3983 0 26932365
