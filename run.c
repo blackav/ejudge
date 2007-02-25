@@ -828,7 +828,7 @@ run_tests(struct section_tester_data *tst,
         if (req_pkt->time_limit_adj_millis > 0)
           time_limit_value += req_pkt->time_limit_adj_millis;
         else if (req_pkt->time_limit_adj > 0)
-          time_limit_value += req_pkt->time_limit_adj;
+          time_limit_value += req_pkt->time_limit_adj * 1000;
       }
 
       if (time_limit_value > 0) {

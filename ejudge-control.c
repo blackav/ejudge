@@ -53,7 +53,7 @@ startup_error(const char *format, ...)
 }
 
 static void op_error(const char *format, ...)
-  __attribute__((format(printf, 1, 2), noreturn));
+  __attribute__((format(printf, 1, 2), noreturn, unused));
 static void
 op_error(const char *format, ...)
 {
