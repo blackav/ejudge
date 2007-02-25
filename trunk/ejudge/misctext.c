@@ -500,6 +500,16 @@ html_armor_init(struct html_armor_buffer *pb)
   memset(pb, 0, sizeof(*pb));
 }
 
+void
+html_armor_extend(struct html_armor_buffer *pb, size_t newsz)
+{
+  if (newsz < pb->size) return;
+  xfree(pb->buf);
+  if (!pb->size) pb->size = 64;
+  while (newsz >= pb->size) pb->size *= 2;
+  pb->buf = (unsigned char*) xmalloc(pb->size);
+}
+
 const unsigned char *
 html_armor_buf(struct html_armor_buffer *pb, const unsigned char *s)
 {

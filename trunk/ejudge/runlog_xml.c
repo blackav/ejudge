@@ -31,11 +31,13 @@
 #include "mime_type.h"
 #include "archive_paths.h"
 #include "fileutl.h"
+#include "base64.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
 
 #include <ctype.h>
+#include <zlib.h>
 
 #ifndef EJUDGE_CHARSET
 #define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
@@ -45,6 +47,12 @@ struct run_element
 {
   struct xml_tree b;
   struct run_entry r;
+
+  unsigned char *source_enc;
+  unsigned char *audit_enc;
+
+  unsigned char *source_text, *audit_text;
+  size_t source_size, audit_size;
 };
 
 enum
@@ -218,11 +226,51 @@ parse_status(const unsigned char *str)
   return x;
 }
 
+#if 0
+static void
+decode_file(
+	const unsigned char *enc_txt,
+        size_t exp_size,
+        unsigned char **p_buf,
+        size_t *p_size)
+{
+  unsigned char *buf = 0, *buf2;
+  size_t bufsize, enclen;
+  int flag = 0;
+
+  if (!enc_txt) {
+    *p_buf = 0;
+    *p_size = 0;
+    return;
+  }
+  if (!*enc_txt) {
+    buf = (unsigned char*) xmalloc(1);
+    buf[0] = 0;
+    *p_buf = buf;
+    *p_size = 0;
+    return;
+  }
+
+  enclen = strlen(enc_txt);
+  bufsize = enclen + 32;
+  buf2 = (unsigned char*) xmalloc(bufsize);
+  bufsize = base64_decode(enc_txt, enclen, buf2, &flag);
+  if (flag) {
+    // base64 error
+    xfree(buf2);
+    *p_buf = 0;
+    *p_size = 0;
+    return;
+  }
+}
+#endif
+
 static int
 process_run_elements(struct xml_tree *xt)
 {
   struct run_element *xr;
   struct xml_attr *xa;
+  struct xml_tree *p;
   int iv, n;
   time_t tv;
   int lv;
@@ -231,8 +279,26 @@ process_run_elements(struct xml_tree *xt)
   while (xt) {
     if (xt->tag != RUNLOG_T_RUN) return xml_err_top_level(xt, RUNLOG_T_RUN);
     if (xml_empty_text(xt) < 0) return -1;
-    if (xt->first_down) return xml_err_nested_elems(xt);
+    //if (xt->first_down) return xml_err_nested_elems(xt);
     xr = (struct run_element*) xt;
+
+    for (p = xt->first_down; p; p = p->right) {
+      switch (p->tag) {
+      case RUNLOG_T_SOURCE:
+        if (xml_leaf_elem(p, &xr->source_enc, 1, 1) < 0) return -1;
+        break;
+      case RUNLOG_T_AUDIT:
+        if (xml_leaf_elem(p, &xr->audit_enc, 1, 1) < 0) return -1;
+        break;
+      default:
+        return xml_err_elem_not_allowed(p);
+      }
+    }
+
+    //decode_file(xr->source_enc, &xr->source_text, &xr->source_size);
+    //decode_file(xr->audit_enc, &xr->audit_text, &xr->audit_size);
+    xfree(xr->source_enc); xr->source_enc = 0;
+    xfree(xr->audit_enc); xr->audit_enc = 0;
 
     /* set default values */
     xr->r.run_id = -1;
@@ -513,6 +579,35 @@ is_non_empty_sha1(const ruint32_t *psha1)
   return 0;
 }
 
+static const unsigned char *
+encode_file(
+	struct html_armor_buffer *b1,
+        struct html_armor_buffer *b2,
+        size_t *p_csize,
+        const unsigned char *txt,
+        size_t len)
+{
+  unsigned long comp_exp_len;
+  unsigned long b64_len;
+
+  if (!txt || !len) {
+    html_armor_extend(b2, 0);
+    b2->buf[0] = 0;
+    *p_csize = 0;
+    return b2->buf;
+  }
+
+  comp_exp_len = compressBound(len);
+  html_armor_extend(b1, comp_exp_len);
+  compress2(b1->buf, &comp_exp_len, txt, len, 9);
+  b64_len = (comp_exp_len * 4) / 3 + 32;
+  html_armor_extend(b2, b64_len);
+  b64_len = base64_encode(b1->buf, comp_exp_len, b2->buf);
+  b2->buf[b64_len] = 0;
+  *p_csize = b64_len;
+  return b2->buf;
+}
+
 int
 unparse_runlog_xml(serve_state_t state,
                    const struct contest_desc *cnts,
@@ -529,13 +624,14 @@ unparse_runlog_xml(serve_state_t state,
   time_t ts;
   int max_user_id;
   unsigned char *astr1, *astr2, *val1, *val2;
-  size_t alen1, alen2, asize1, asize2;
+  size_t alen1, alen2, asize1, asize2, csize;
   unsigned char status_buf[32];
   const struct section_global_data *global = state->global;
   path_t fpath;
   char *ftext = 0;
   size_t fsize = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct html_armor_buffer b1 = HTML_ARMOR_INITIALIZER;
+  struct html_armor_buffer b2 = HTML_ARMOR_INITIALIZER;
 
   asize2 = asize1 = 64;
   astr1 = alloca(asize1);
@@ -716,7 +812,7 @@ unparse_runlog_xml(serve_state_t state,
     if (!external_mode && pp->pages > 0) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_PAGES], pp->pages);
     }
-    if (!source_mode) {
+    if (!source_mode || pp->status >= RUN_MAX_STATUS) {
       fprintf(f, "/>\n");
       continue;
     }
@@ -727,10 +823,11 @@ unparse_runlog_xml(serve_state_t state,
                                         global->run_archive_dir,
                                         i, 0, 1)) >= 0) {
       if (generic_read_file(&ftext, 0, &fsize, flags, 0, fpath, 0) >= 0) {
-        fprintf(f, "      <%s>%s</%s>\n",
-                elem_map[RUNLOG_T_SOURCE],
-                html_armor_buf_bin(&ab, ftext, fsize),
-                elem_map[RUNLOG_T_SOURCE]);
+        csize = 0;
+        encode_file(&b1, &b2, &csize, ftext, fsize),
+        fprintf(f, "      <%s %s=\"%zu\">%s</%s>\n",
+                elem_map[RUNLOG_T_SOURCE], attr_map[RUNLOG_A_SIZE], csize,
+                b2.buf, elem_map[RUNLOG_T_SOURCE]);
         xfree(ftext); ftext = 0; fsize = 0;
       }
     }
@@ -743,7 +840,7 @@ unparse_runlog_xml(serve_state_t state,
       if (generic_read_file(&ftext, 0, &fsize, flags, 0, fpath, 0) >= 0) {
         fprintf(f, "      <%s>%s</%s>\n",
                 elem_map[RUNLOG_T_XML_REPORT],
-                html_armor_buf_bin(&ab, ftext, fsize),
+                encode_file(&b1, &b2, ftext, fsize),
                 elem_map[RUNLOG_T_XML_REPORT]);
         xfree(ftext); ftext = 0; fsize = 0;
       }
@@ -757,7 +854,7 @@ unparse_runlog_xml(serve_state_t state,
         if (generic_read_file(&ftext, 0, &fsize, flags, 0, fpath, 0) >= 0) {
           fprintf(f, "      <%s>%s</%s>\n",
                   elem_map[RUNLOG_T_FULL_ARCHIVE],
-                  html_armor_buf_bin(&ab, ftext, fsize),
+                  encode_file(&b1, &b2, ftext, fsize),
                   elem_map[RUNLOG_T_FULL_ARCHIVE]);
           xfree(ftext); ftext = 0; fsize = 0;
         }
@@ -770,10 +867,11 @@ unparse_runlog_xml(serve_state_t state,
                                         global->audit_log_dir,
                                         i, 0, 1)) >= 0) {
       if (generic_read_file(&ftext, 0, &fsize, flags, 0, fpath, 0) >= 0) {
-        fprintf(f, "      <%s>%s</%s>\n",
-                elem_map[RUNLOG_T_AUDIT],
-                html_armor_buf_bin(&ab, ftext, fsize),
-                elem_map[RUNLOG_T_AUDIT]);
+        csize = 0;
+        encode_file(&b1, &b2, &csize, ftext, fsize);
+        fprintf(f, "      <%s %s=\"%zu\">%s</%s>\n",
+                elem_map[RUNLOG_T_AUDIT], attr_map[RUNLOG_A_SIZE], csize,
+                b2.buf, elem_map[RUNLOG_T_AUDIT]);
         xfree(ftext); ftext = 0; fsize = 0;
       }
     }
@@ -783,7 +881,8 @@ unparse_runlog_xml(serve_state_t state,
   fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_RUNS]);
   fprintf(f, "</%s>\n", elem_map[RUNLOG_T_RUNLOG]);
 
-  html_armor_free(&ab);
+  html_armor_free(&b1);
+  html_armor_free(&b2);
   return 0;
 }
 
