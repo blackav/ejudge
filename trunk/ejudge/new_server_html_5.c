@@ -161,7 +161,11 @@ user_login_page(
         struct contest_extra *extra,
         time_t cur_time)
 {
-#if 0
+  const unsigned char *head_style = 0, *par_style = 0, *s;
+  const unsigned char *login = 0, *password = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char bb[1024];
+  int item_cnt = 0;
 
   if (cnts->register_head_style && *cnts->register_head_style)
     head_style = cnts->register_head_style;
@@ -170,44 +174,35 @@ user_login_page(
     par_style = cnts->register_par_style;
   if (!par_style) par_style = "";
 
+  ns_cgi_param(phr, "login", &login);
+  if (!login) login = "";
+  ns_cgi_param(phr, "password", &password);
+  if (!password) password = "";
+
   switch (phr->action) {
   case NEW_SRV_ACTION_NEW_USER_REGISTERED_PAGE:
   case NEW_SRV_ACTION_NEW_AUTOASSIGNED_USER_REGISTERED_PAGE:
     s = _("Register a new user, step 2");
+    break;
+  default:
+    s = "";
+    break;
   }
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
             "%s [%s]", s, extra->contest_arm);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   html_start_form(fout, 1, phr->self_url, "");
   html_hidden(fout, "contest_id", "%d", phr->contest_id);
-  html_hidden(fout, "next_action", "%d",
-              NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER_PAGE);
+  html_hidden(fout, "next_action", "%d", phr->action);
   if (cnts->disable_locale_change)
     html_hidden(fout, "locale_id", "%d", phr->locale_id);
   fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>\n");
 
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">e-mail: %s</div></td>", html_input_text(bb, sizeof(bb), "email", 20, "%s", ARMOR(email)));
-
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER, _("Register")));
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("login"), html_input_text(bb, sizeof(bb), "login", 20, "%s", ARMOR(login)));
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("password"), html_input_text(bb, sizeof(bb), "password", 20, "%s", ARMOR(password)));
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REGISTER_LOGIN, _("Log in")));
 
   if (!cnts->disable_locale_change) {
     fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
@@ -223,6 +218,7 @@ user_login_page(
           "<div class=\"white_empty_block\">&nbsp;</div>\n"
           "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
 
+#if 0
   // "Forgot password?" "Edit personal info" "Participate in contest/exam"
   if (cnts && cnts->enable_forgot_password && cnts->disable_team_password
       && !cnts->simple_registration) {
@@ -237,12 +233,15 @@ user_login_page(
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d\">%s</a></div></td>", client_url, phr->contest_id, phr->locale_id, cnts->exam_mode?_("Take the exam"):_("Participate in the contest"));
     item_cnt++;
   }
+#endif
+
   if (!item_cnt)
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
   fprintf(fout, "</tr></table></div>\n");
 
   fprintf(fout, "%s", extra->separator_txt);
 
+#if 0
   if (reg_error || reg_ul_error) {
     if (reg_error < 0) reg_error = -reg_error;
     if (reg_ul_error < 0) reg_ul_error = -reg_ul_error;
@@ -296,11 +295,11 @@ user_login_page(
 
   fprintf(fout, "<p%s>&nbsp;</p>\n", par_style);
 
+#endif
+
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);
-
-#endif
 }
 
 static void
