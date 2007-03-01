@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1251,6 +1251,8 @@ cmd_register_new(struct client_state *p,
   unsigned char contest_url[256];
   int user_id, serial = 0, action = 3, serial_step = 1, n;
   unsigned char login_buf[1024];
+  unsigned char *self_url = 0;
+  int self_url_len;
 
   // validate packet
   login = data->data;
@@ -1265,7 +1267,14 @@ cmd_register_new(struct client_state *p,
     CONN_BAD("email length mismatch: %d, %d", email_len, data->email_length);
     return;
   }
-  exp_pkt_len = sizeof(*data) + login_len + email_len;
+  self_url = email + data->email_length + 1;
+  self_url_len = strlen(self_url);
+  if (self_url_len != data->self_url_length) {
+    CONN_BAD("self_url length mismatch: %d, %d", self_url_len,
+             data->self_url_length);
+    return;
+  }
+  exp_pkt_len = sizeof(*data) + login_len + email_len + self_url_len;
   if (pkt_len != exp_pkt_len) {
     CONN_BAD("packet length mismatch: %d, %d", pkt_len, exp_pkt_len);
     return;
@@ -1311,7 +1320,9 @@ cmd_register_new(struct client_state *p,
     snprintf(locale_str, sizeof(locale_str), "&locale_id=%d",
              data->locale_id);
   }
-  if (cnts && cnts->register_url) {
+  if (self_url[0]) {
+    url_str = self_url;
+  } else if (cnts && cnts->register_url) {
     url_str = cnts->register_url;
   } else if (config->register_url) {
     url_str = config->register_url;
@@ -1319,6 +1330,7 @@ cmd_register_new(struct client_state *p,
     url_str = "http://localhost/cgi-bin/register";
   }
   if (cnts && cnts->force_registration) action = 4;
+  if (data->action > 0) action = data->action;
   snprintf(urlbuf, sizeof(urlbuf), "%s?action=%d&login=%s%s%s",
            url_str, action, login, contest_str, locale_str);
 
@@ -1907,6 +1919,110 @@ cmd_do_login(struct client_state *p,
 }
 
 static void
+cmd_check_user(
+	struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_do_login *data)
+{
+  const struct userlist_user *u = 0;
+  struct userlist_pk_login_ok * answer;
+  int ans_len, act_pkt_len;
+  char * login;
+  char * password;
+  char * name;
+  const struct userlist_cookie * cookie;
+  struct passwd_internal pwdint;
+  ej_tsc_t tsc1, tsc2;
+  unsigned char logbuf[1024];
+  const struct userlist_user_info *ui;
+  int user_id;
+
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet is too small: %d", pkt_len);
+    return;
+  }
+  login = data->data;
+  if (strlen(login) != data->login_length) {
+    CONN_BAD("login length mismatch");
+    return;
+  }
+  password = data->data + data->login_length + 1;
+  if (strlen(password) != data->password_length) {
+    CONN_BAD("password length mismatch");
+    return;
+  }
+  act_pkt_len = sizeof(*data) + data->login_length + data->password_length;
+  if (act_pkt_len != pkt_len) {
+    CONN_BAD("packet length mismatch");
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "CHECK_USER: %s, %d, %s",
+           xml_unparse_ip(data->origin_ip), data->ssl, login);
+
+  if (p->user_id < 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+  if (is_db_capable(p, OPCAP_LIST_ALL_USERS, logbuf)) return;
+
+  if (passwd_convert_to_internal(password, &pwdint) < 0) {
+    err("%s -> invalid password", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+
+  rdtscll(tsc1);
+  if ((user_id = default_get_user_by_login(login)) <= 0) {
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    err("%s -> WRONG USER", logbuf);
+    return;
+  }
+  default_get_user_info_2(user_id, data->contest_id, &u, &ui);
+  rdtscll(tsc2);
+  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+
+  if (!u->passwd) {
+    err("%s -> EMPTY PASSWORD", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if (passwd_check(&pwdint, u->passwd, u->passwd_method) < 0) {
+    err("%s -> WRONG PASSWORD", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+
+  //Login and password correct
+  ans_len = sizeof(struct userlist_pk_login_ok)
+    + strlen(ui->name) + strlen(u->login);
+  answer = alloca(ans_len);
+  memset(answer, 0, ans_len);
+
+  if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0, data->contest_id, data->locale_id, PRIV_LEVEL_USER, 0, 0, &cookie) < 0) {
+    err("%s -> cookie creation failed", logbuf);
+    send_reply(p, -ULS_ERR_OUT_OF_MEM);
+    return;
+  }
+
+  answer->reply_id = ULS_LOGIN_COOKIE;
+  answer->cookie = cookie->cookie;
+  answer->user_id = u->id;
+  answer->contest_id = data->contest_id;
+  answer->login_len = strlen(u->login);
+  name = answer->data + answer->login_len + 1;
+  answer->name_len = strlen(ui->name);
+  strcpy(answer->data, u->login);
+  strcpy(name, ui->name);
+  enqueue_reply_to_client(p,ans_len,answer);
+
+  default_touch_login_time(user_id, 0, cur_time);
+  info("%s -> OK, %d, %llx", logbuf, u->id, answer->cookie);
+}
+
+static void
 cmd_team_login(struct client_state *p, int pkt_len,
                struct userlist_pk_do_login * data)
 {
@@ -2062,8 +2178,8 @@ cmd_team_login(struct client_state *p, int pkt_len,
 }
 
 static void
-cmd_check_user(struct client_state *p, int pkt_len,
-               struct userlist_pk_do_login *data)
+cmd_team_check_user(struct client_state *p, int pkt_len,
+                    struct userlist_pk_do_login *data)
 {
   unsigned char *login_ptr, *passwd_ptr, *name_ptr;
   const struct userlist_user *u = 0;
@@ -7716,7 +7832,7 @@ static void (*cmd_table[])() =
   [ULS_PRIV_CHECK_USER]         cmd_priv_check_user,
   [ULS_PRIV_GET_COOKIE]         cmd_get_cookie,
   [ULS_LOOKUP_USER_ID]          cmd_lookup_user_id,
-  [ULS_CHECK_USER]              cmd_check_user,
+  [ULS_TEAM_CHECK_USER] =       cmd_team_check_user,
   [ULS_GET_COOKIE]              cmd_get_cookie,
   [ULS_ADD_NOTIFY]              cmd_observer_cmd,
   [ULS_DEL_NOTIFY]              cmd_observer_cmd,
@@ -7732,6 +7848,7 @@ static void (*cmd_table[])() =
   [ULS_STOP] =                  cmd_control_server,
   [ULS_RESTART] =               cmd_control_server,
   [ULS_PRIV_COOKIE_LOGIN] =     cmd_priv_cookie_login,
+  [ULS_CHECK_USER] =            cmd_check_user,
 
   [ULS_LAST_CMD] 0
 };

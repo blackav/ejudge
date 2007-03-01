@@ -6599,7 +6599,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
 
-  if ((r = userlist_clnt_team_login(ul_conn, ULS_CHECK_USER,
+  if ((r = userlist_clnt_team_login(ul_conn, ULS_TEAM_CHECK_USER,
                                     phr->ip, phr->ssl_flag, phr->contest_id,
                                     phr->locale_id, login, password,
                                     &phr->user_id, &phr->session_id,

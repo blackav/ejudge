@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -268,7 +268,7 @@ handle_team_login(const unsigned char *cmd,
   r = userlist_clnt_login(userlist_conn, ULS_DO_LOGIN,
                           local_ip, ssl_flag, contest_id,
                           0, argv[1], argv[2],
-                          &user_id, &session_id, &user_name, &locale_id);
+                          &user_id, &session_id, &locale_id, &user_name);
   if (r < 0) {
     err("server error: %s", userlist_strerror(-r));
     return 1;
