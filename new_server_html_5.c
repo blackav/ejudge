@@ -162,7 +162,7 @@ user_login_page(
         time_t cur_time)
 {
   const unsigned char *head_style = 0, *par_style = 0, *s;
-  const unsigned char *login = 0, *password = 0;
+  const unsigned char *login = 0, *password = 0, *email = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char bb[1024];
   int item_cnt = 0;
@@ -178,6 +178,8 @@ user_login_page(
   if (!login) login = "";
   ns_cgi_param(phr, "password", &password);
   if (!password) password = "";
+  ns_cgi_param(phr, "email", &email);
+  if (!email) email = "";
 
   switch (phr->action) {
   case NEW_SRV_ACTION_NEW_USER_REGISTERED_PAGE:
@@ -240,6 +242,35 @@ user_login_page(
   fprintf(fout, "</tr></table></div>\n");
 
   fprintf(fout, "%s", extra->separator_txt);
+
+  if (phr->action == NEW_SRV_ACTION_NEW_USER_REGISTERED_PAGE) {
+
+  /*
+  printf(_("<p%s>Registration of a new user is completed successfully. "
+           "An e-mail messages is sent to the address <tt>%s</tt>. "
+           "This message contains the login name, assigned to you, "
+           "as well as your password for initial login. "
+           "To proceed with registration, clink <a href=\"%s\">on this link</a>.</p>"
+           "<p%s><b>Note</b>, that you should login to the system for "
+           "the first time no later, than in 24 hours after the initial "
+           "user registration, or the registration is void."),
+         par_style, user_email, url, par_style);
+  */
+  } else if (phr->action == NEW_SRV_ACTION_NEW_AUTOASSIGNED_USER_REGISTERED_PAGE) {
+    fprintf(fout, "<%s>%s</%s>\n", head_style,
+            _("New user login is created"), head_style);
+
+    fprintf(fout,
+            _("<p%s>Registration of a new user is completed successfully. "
+              "An e-mail messages is sent to the address <tt>%s</tt>. "
+              "This message contains the login name, assigned to you, "
+              "as well as your password for initial login. You will be able to change the password later.</p>\n"
+              "<p%s><b>Note</b>, that you should login to the system for "
+              "the first time no later, than in 24 hours after the initial "
+              "user registration, or the registration is void."),
+            par_style, email, par_style);
+  }
+
 
 #if 0
   if (reg_error || reg_ul_error) {
@@ -484,7 +515,7 @@ register_new_user(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *login = 0;
   const unsigned char *email = 0;
-  int retval = 0, r, ul_error = 0;
+  int retval = 0, r, ul_error = 0, next_action;
 
   if (!cnts->assign_logins) {
     r = ns_cgi_param(phr, "login", &login);
@@ -492,6 +523,8 @@ register_new_user(
     if (!r || !login || !*login) FAIL2(NEW_SRV_ERR_LOGIN_UNSPECIFIED);
     if (check_str(login, login_accept_chars) < 0)
       FAIL2(NEW_SRV_ERR_LOGIN_INV_CHARS);
+  } else {
+    login = "";
   }
 
   r = ns_cgi_param(phr, "email", &email);
@@ -503,14 +536,18 @@ register_new_user(
   if (ns_open_ul_connection(phr->fw_state) < 0)
     FAIL2(NEW_SRV_ERR_UL_CONNECT_FAILED);
 
+  next_action = NEW_SRV_ACTION_NEW_USER_REGISTERED_PAGE;
+  if (phr->action == NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER)
+    next_action = NEW_SRV_ACTION_NEW_AUTOASSIGNED_USER_REGISTERED_PAGE;
+
   ul_error = userlist_clnt_register_new(ul_conn, ULS_REGISTER_NEW,
                                         phr->ip, phr->ssl_flag,
-                                        phr->contest_id, phr->contest_id, 0,
-                                        login, email, 0);
+                                        phr->contest_id, phr->locale_id,
+                                        next_action,
+                                        login, email, phr->self_url);
   if (ul_error < 0) goto failed;
   fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s?contest_id=%d&action=%d",
-          EJUDGE_CHARSET, phr->self_url, phr->contest_id,
-          (phr->action == NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER)?NEW_SRV_ACTION_NEW_AUTOASSIGNED_USER_REGISTERED_PAGE:NEW_SRV_ACTION_NEW_USER_REGISTERED_PAGE);
+          EJUDGE_CHARSET, phr->self_url, phr->contest_id, next_action);
   if (phr->locale_id > 0) fprintf(fout, "&locale_id=%d", phr->locale_id);
   if (login && *login) fprintf(fout, "&login=%s", URLARMOR(login));
   if (email && *email) fprintf(fout, "&email=%s", URLARMOR(email));
@@ -532,6 +569,56 @@ register_new_user(
   html_armor_free(&ab);
 }
 
+static void
+register_login(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+  const unsigned char *login = 0;
+  const unsigned char *password = 0;
+  int r;
+
+  if (ns_cgi_param(phr, "login", &login) <= 0)
+    return ns_html_err_inv_param(fout, phr, 0, "login is invalid");
+  if (ns_cgi_param(phr, "password", &password) <= 0)
+    return ns_html_err_inv_param(fout, phr, 0, "password is invalid");
+
+  /* check password action is here */
+  if (ns_open_ul_connection(phr->fw_state) < 0)
+    return ns_html_err_ul_server_down(fout, phr, 0, 0);
+
+  if ((r = userlist_clnt_login(ul_conn, ULS_CHECK_USER,
+                               phr->ip, phr->ssl_flag, phr->contest_id,
+                               phr->locale_id, login, password,
+                               &phr->user_id, &phr->session_id,
+                               0, &phr->name)) < 0) {
+    switch (-r) {
+    case ULS_ERR_INVALID_LOGIN:
+    case ULS_ERR_INVALID_PASSWORD:
+    case ULS_ERR_BAD_CONTEST_ID:
+    case ULS_ERR_IP_NOT_ALLOWED:
+    case ULS_ERR_NO_PERMS:
+    case ULS_ERR_NOT_REGISTERED:
+    case ULS_ERR_CANNOT_PARTICIPATE:
+      return ns_html_err_no_perm(fout, phr, 0, "user_login failed: %s",
+                                 userlist_strerror(-r));
+    case ULS_ERR_DISCONNECT:
+      return ns_html_err_ul_server_down(fout, phr, 0, 0);
+    default:
+      return ns_html_err_internal_error(fout, phr, 0, "user_login failed: %s",
+                                        userlist_strerror(-r));
+    }
+  }
+
+  /*
+  ns_get_session(phr->session_id, 0);
+  html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+  */
+}
+
 typedef void (*reg_action_handler_func_t)(FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -543,6 +630,7 @@ static reg_action_handler_func_t action_handlers[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER] = register_new_user,
   [NEW_SRV_ACTION_NEW_AUTOASSIGNED_USER_REGISTERED_PAGE] = user_login_page,
   [NEW_SRV_ACTION_NEW_USER_REGISTERED_PAGE] = user_login_page,
+  [NEW_SRV_ACTION_REGISTER_LOGIN] = register_login,
 };
 
 static void

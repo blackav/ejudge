@@ -2826,8 +2826,8 @@ action_login(void)
                                 user_ip, ssl_flag, user_contest_id,
                                 client_locale_id,
                                 user_login, user_password,
-                                &new_user_id, &new_cookie, &new_name,
-                                &new_locale_id);
+                                &new_user_id, &new_cookie, &new_locale_id,
+                                &new_name);
   if (errcode != ULS_LOGIN_COOKIE) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
                       client_locale_id, _("Login failed"));
