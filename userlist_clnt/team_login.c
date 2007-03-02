@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,6 @@ userlist_clnt_team_login(struct userlist_clnt *clnt,
                          unsigned char const *passwd,
                          int *p_user_id,
                          ej_cookie_t *p_cookie,
-                         int *p_locale_id,
                          unsigned char **p_name)
 {
   struct userlist_pk_do_login *out = 0;
@@ -84,7 +83,6 @@ userlist_clnt_team_login(struct userlist_clnt *clnt,
   }
   if (p_user_id) *p_user_id = in->user_id;
   if (p_cookie) *p_cookie = in->cookie;
-  if (p_locale_id) *p_locale_id = in->locale_id;
   if (p_name) *p_name = xstrdup(name_ptr);
 
   r = in->reply_id;

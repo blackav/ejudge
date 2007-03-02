@@ -28,7 +28,6 @@ userlist_clnt_login(struct userlist_clnt *clnt,
                     unsigned char const *passwd,
                     int *p_user_id,
                     ej_cookie_t *p_cookie,
-                    int *p_locale_id,
                     unsigned char **p_name)
 {
   struct userlist_pk_do_login * data;
@@ -59,7 +58,6 @@ userlist_clnt_login(struct userlist_clnt *clnt,
       (answer->reply_id == ULS_LOGIN_COOKIE)) {
     *p_user_id = answer->user_id;
     *p_cookie = answer->cookie;
-    *p_locale_id = answer->locale_id;
     *p_name = xcalloc(1,answer->name_len + 1);
     strcpy(*p_name,answer->data + answer->login_len);
   }
