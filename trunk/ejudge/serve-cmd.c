@@ -225,7 +225,7 @@ handle_login(const unsigned char *cmd,
                                local_ip, ssl_flag, contest_id,
                                0, PRIV_LEVEL_ADMIN, 0,
                                argv[1], argv[2],
-                               &user_id, &session_id, 0, 0, &user_name);
+                               &user_id, &session_id, 0, &user_name);
   if (r < 0) {
     err("server error: %s", userlist_strerror(-r));
     return 1;
@@ -256,7 +256,7 @@ static int
 handle_team_login(const unsigned char *cmd,
                   int srv_cmd, int argc, char *argv[])
 {
-  int r, user_id, locale_id;
+  int r, user_id;
   unsigned char *user_name;
   FILE *f;
 
@@ -268,7 +268,7 @@ handle_team_login(const unsigned char *cmd,
   r = userlist_clnt_login(userlist_conn, ULS_DO_LOGIN,
                           local_ip, ssl_flag, contest_id,
                           0, argv[1], argv[2],
-                          &user_id, &session_id, &locale_id, &user_name);
+                          &user_id, &session_id, &user_name);
   if (r < 0) {
     err("server error: %s", userlist_strerror(-r));
     return 1;

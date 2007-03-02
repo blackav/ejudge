@@ -117,13 +117,13 @@ cmd_login(
                                  phr->ip, phr->ssl_flag, phr->contest_id,
                                  phr->locale_id, login, password,
                                  &phr->user_id, &phr->session_id,
-                                 0, &phr->name);
+                                 &phr->name);
   } else {
     r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
                                  phr->ip, phr->ssl_flag, phr->contest_id,
                                  phr->locale_id, 0, phr->role, login,
                                  password, &phr->user_id, &phr->session_id,
-                                 0, 0, &phr->name);
+                                 0, &phr->name);
   }
 
   if (r < 0) {

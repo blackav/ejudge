@@ -509,7 +509,6 @@ authentificate(void)
                                priv_level, 0, client_login, client_password,
                                &client_user_id,
                                &client_sid,
-                               0, /* p_locale_id */
                                &priv_level,
                                &client_name);
   if (r < 0) {

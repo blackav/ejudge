@@ -852,7 +852,6 @@ authentificate(void)
                                client_login, client_password,
                                &client_team_id,
                                &client_sid,
-                               &new_locale_id,
                                &client_team_name);
   if (r < 0) {
     switch (-r) {
@@ -869,10 +868,6 @@ authentificate(void)
     default:
       fatal_server_error(r);
     }
-  }
-  if (new_locale_id != client_locale_id) {
-    l10n_setlocale(new_locale_id);
-    client_locale_id = new_locale_id;
   }
 
   hyperref(hbuf, sizeof(hbuf), client_sid, self_url, contest_id_str, 0);

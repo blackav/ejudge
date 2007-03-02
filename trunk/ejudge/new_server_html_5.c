@@ -80,12 +80,16 @@ anon_select_contest_page(FILE *fout, struct http_request_info *phr)
   const unsigned char *cl;
   const struct contest_desc *cnts;
   time_t curtime = time(0);
-  int row = 0, i;
+  int row = 0, i, orig_locale_id;
   const unsigned char *s;
   const unsigned char *login = 0;
   unsigned char bb[1024];
 
   ns_cgi_param(phr, "login", &login);
+
+  // defaulting to the English as we have no contest choosen
+  orig_locale_id = phr->locale_id;
+  if (phr->locale_id < 0) phr->locale_id = 0;
 
   // even don't know about the contest specific settings
   l10n_setlocale(phr->locale_id);
@@ -127,7 +131,12 @@ anon_select_contest_page(FILE *fout, struct http_request_info *phr)
 
     fprintf(fout, "<tr%s><td%s>%d</td>", form_row_attrs[(row++) & 1], cl, i);
     fprintf(fout, "<td%s><a href=\"%s?contest_id=%d", cl, phr->self_url, i);
-    if (phr->locale_id > 0) fprintf(fout, "&amp;locale_id=%d", phr->locale_id);
+
+    if (orig_locale_id >= 0 && cnts->default_locale_val >= 0
+        && orig_locale_id != cnts->default_locale_val) {
+      fprintf(fout, "&amp;locale_id=%d", phr->locale_id);
+    }
+
     if (login && *login) fprintf(fout, "&amp;login=%s", URLARMOR(login));
     s = 0;
     if (phr->locale_id == 0 && cnts->name_en) s = cnts->name_en;
@@ -594,7 +603,7 @@ register_login(
                                phr->ip, phr->ssl_flag, phr->contest_id,
                                phr->locale_id, login, password,
                                &phr->user_id, &phr->session_id,
-                               0, &phr->name)) < 0) {
+                               &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_INVALID_LOGIN:
     case ULS_ERR_INVALID_PASSWORD:
@@ -644,6 +653,9 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
   if (phr->contest_id <= 0 || contests_get(phr->contest_id,&cnts) < 0 || !cnts){
     return anon_select_contest_page(fout, phr);
   }
+
+  if (phr->locale_id < 0) phr->locale_id = cnts->default_locale_val;
+  if (phr->locale_id < 0) phr->locale_id = 0;
 
   // check permissions
   if (cnts->closed ||

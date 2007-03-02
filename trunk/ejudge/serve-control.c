@@ -722,7 +722,6 @@ authentificate(void)
                                user_password,
                                &user_id,
                                &session_id,
-                               0, /* p_locale_id */
                                &priv_level,
                                &user_name);
   if (r < 0) {
