@@ -1059,7 +1059,7 @@ privileged_page_login(FILE *fout,
                                     phr->ip, phr->ssl_flag, phr->contest_id,
                                     phr->locale_id, 0, phr->role, login,
                                     password, &phr->user_id, &phr->session_id,
-                                    0, 0, &phr->name)) < 0) {
+                                    0, &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_INVALID_LOGIN:
     case ULS_ERR_INVALID_PASSWORD:
@@ -6603,7 +6603,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
                                     phr->ip, phr->ssl_flag, phr->contest_id,
                                     phr->locale_id, login, password,
                                     &phr->user_id, &phr->session_id,
-                                    0, &phr->name)) < 0) {
+                                    &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_INVALID_LOGIN:
     case ULS_ERR_INVALID_PASSWORD:
@@ -9679,7 +9679,7 @@ ns_handle_http_request(struct server_framework_state *state,
   const unsigned char *remote_addr;
   const unsigned char *s;
   path_t self_url;
-  int r, n;
+  int r, n, orig_locale_id = -1;
 
   // make a self-referencing URL
   if (ns_getenv(phr, "SSL_PROTOCOL") || ns_getenv(phr, "HTTPS")) {
@@ -9725,6 +9725,7 @@ ns_handle_http_request(struct server_framework_state *state,
     if (sscanf(s, "%d%n", &phr->locale_id, &n) != 1 || s[n]
         || phr->locale_id < 0)
       return ns_html_err_inv_param(fout, phr, 0, "cannot parse locale_id");
+    orig_locale_id = phr->locale_id;
   }
 
   // parse the action
@@ -9756,6 +9757,8 @@ ns_handle_http_request(struct server_framework_state *state,
     phr->role = USER_ROLE_JUDGE;
     privileged_page(fout, phr);
   } else if (!strcmp(last_name, "new-register")) {
+    // FIXME: temporary hack
+    phr->locale_id = orig_locale_id;
     ns_register_pages(fout, phr);
   } else if (!strcmp(last_name, "new-server-cmd")) {
     phr->protocol_reply = new_server_cmd_handler(fout, phr);

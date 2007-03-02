@@ -72,7 +72,6 @@ userlist_clnt_login(struct userlist_clnt *clnt,
                     unsigned char const *passwd,
                     int *p_user_id,
                     ej_cookie_t *p_cookie,
-                    int *p_locale_id,
                     unsigned char **p_name);
 
 int
@@ -86,7 +85,6 @@ userlist_clnt_team_login(struct userlist_clnt *clnt,
                          unsigned char const *passwd,
                          int *p_user_id,
                          ej_cookie_t *p_cookie,
-                         int *p_locale_id,
                          unsigned char **p_name);
 
 int
@@ -286,7 +284,6 @@ int userlist_clnt_priv_login(struct userlist_clnt *clnt,
                              unsigned char const *passwd,
                              int *p_user_id,
                              ej_cookie_t *p_cookie,
-                             int *p_locale_id,
                              int *p_priv_level,
                              unsigned char **p_name);
 

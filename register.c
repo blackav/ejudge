@@ -2794,7 +2794,7 @@ action_login(void)
 {
   int errcode;
   unsigned char s1[128], url[512];
-  int new_user_id, new_locale_id;
+  int new_user_id;
   ej_cookie_t new_cookie;
   unsigned char *new_name;
   const struct contest_desc *cnts = 0;
@@ -2826,8 +2826,7 @@ action_login(void)
                                 user_ip, ssl_flag, user_contest_id,
                                 client_locale_id,
                                 user_login, user_password,
-                                &new_user_id, &new_cookie, &new_locale_id,
-                                &new_name);
+                                &new_user_id, &new_cookie, &new_name);
   if (errcode != ULS_LOGIN_COOKIE) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
                       client_locale_id, _("Login failed"));
@@ -2838,7 +2837,6 @@ action_login(void)
 
   user_id = new_user_id;
   user_name = new_name;
-  if (client_locale_id == -1) client_locale_id = new_locale_id;
   if (client_locale_id == -1) client_locale_id = 0;
   user_cookie = new_cookie;
 
