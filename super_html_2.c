@@ -73,6 +73,7 @@ super_html_clear_variable(struct sid_state *sstate, int cmd)
   case SSERV_CMD_CNTS_CLEAR_NAME: p_str = &cnts->name; break;
   case SSERV_CMD_CNTS_CLEAR_NAME_EN: p_str = &cnts->name_en; break;
   case SSERV_CMD_CNTS_CLEAR_MAIN_URL: p_str = &cnts->main_url; break;
+  case SSERV_CMD_CNTS_CLEAR_DEFAULT_LOCALE: p_str = &cnts->default_locale; break;
   case SSERV_CMD_CNTS_CLEAR_USERS_HEADER: p_str = &cnts->users_header_file; break;
   case SSERV_CMD_CNTS_CLEAR_USERS_FOOTER: p_str = &cnts->users_footer_file; break;
   case SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER: p_str = &cnts->register_header_file; break;
@@ -293,6 +294,9 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     break;
   case SSERV_CMD_CNTS_CHANGE_MAIN_URL:
     p_str = &cnts->main_url;
+    break;
+  case SSERV_CMD_CNTS_CHANGE_DEFAULT_LOCALE:
+    p_str = &cnts->default_locale;
     break;
   case SSERV_CMD_CNTS_CHANGE_AUTOREGISTER:
     p_bool = &cnts->autoregister;

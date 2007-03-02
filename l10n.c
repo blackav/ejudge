@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -105,6 +106,18 @@ l10n_html_locale_select(FILE *fout, int locale_id)
   fprintf(fout, "<input type=\"hidden\" name=\"locale_id\" value=\"0\"/>%s\n",
           locales[0]);
 #endif
+}
+
+int
+l10n_parse_locale(const unsigned char *locale_str)
+{
+  int i;
+
+  if (!locale_str || !*locale_str) return -1;
+  for (i = 0; locales[i]; i++)
+    if (!strcasecmp(locale_str, locales[i]))
+      return i;
+  return -1;
 }
 
 /*

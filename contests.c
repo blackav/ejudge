@@ -23,6 +23,7 @@
 #include "misctext.h"
 #include "fileutl.h"
 #include "xml_utils.h"
+#include "l10n.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -113,6 +114,7 @@ static char const * const elem_map[] =
   "dir_group",
   "file_mode",
   "file_group",
+  "default_locale",
 
   0
 };
@@ -229,6 +231,7 @@ node_free(struct xml_tree *t)
       xfree(cnts->dir_group);
       xfree(cnts->file_mode);
       xfree(cnts->file_group);
+      xfree(cnts->default_locale);
     }
     break;
   case CONTEST_CAP:
@@ -633,6 +636,7 @@ static const size_t contest_final_offsets[CONTEST_LAST_TAG] =
   [CONTEST_DIR_GROUP] = CONTEST_DESC_OFFSET(dir_group),
   [CONTEST_FILE_MODE] = CONTEST_DESC_OFFSET(file_mode),
   [CONTEST_FILE_GROUP] = CONTEST_DESC_OFFSET(file_group),
+  [CONTEST_DEFAULT_LOCALE] = CONTEST_DESC_OFFSET(default_locale),
 };
 
 static const size_t contest_access_offsets[CONTEST_LAST_TAG] =
@@ -864,6 +868,8 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
       cnts->users_verb_style = xstrdup("");
   }
 
+  cnts->default_locale_val = l10n_parse_locale(cnts->default_locale);
+
   return 0;
 }
 
@@ -971,6 +977,8 @@ contests_merge(struct contest_desc *pold, struct contest_desc *pnew)
   pold->disable_member_delete = pnew->disable_member_delete;
   pold->last_check_time = pnew->last_check_time;
   pold->last_file_time = pnew->last_file_time;
+
+  pold->default_locale_val = l10n_parse_locale(pold->default_locale);
 }
 
 int
@@ -1492,6 +1500,7 @@ contests_unparse(FILE *f,
 
   unparse_text(f, CONTEST_NAME, cnts->name);
   unparse_text(f, CONTEST_NAME_EN, cnts->name_en);
+  unparse_text(f, CONTEST_DEFAULT_LOCALE, cnts->default_locale);
   unparse_text(f, CONTEST_MAIN_URL, cnts->main_url);
   unparse_text(f, CONTEST_ROOT_DIR, cnts->root_dir);
   unparse_text(f, CONTEST_CONF_DIR, cnts->conf_dir);
