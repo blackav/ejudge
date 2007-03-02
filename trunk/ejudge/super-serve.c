@@ -2457,6 +2457,7 @@ cmd_simple_top_command(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CLEAR_NAME:
   case SSERV_CMD_CNTS_CLEAR_NAME_EN:
   case SSERV_CMD_CNTS_CLEAR_MAIN_URL:
+  case SSERV_CMD_CNTS_CLEAR_DEFAULT_LOCALE:
   case SSERV_CMD_CNTS_CLEAR_DEADLINE:
   case SSERV_CMD_CNTS_CLEAR_USERS_HEADER:
   case SSERV_CMD_CNTS_CLEAR_USERS_FOOTER:
@@ -2554,6 +2555,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CHANGE_NAME:
   case SSERV_CMD_CNTS_CHANGE_NAME_EN:
   case SSERV_CMD_CNTS_CHANGE_MAIN_URL:
+  case SSERV_CMD_CNTS_CHANGE_DEFAULT_LOCALE:
   case SSERV_CMD_CNTS_CHANGE_AUTOREGISTER:
   case SSERV_CMD_CNTS_CHANGE_TEAM_PASSWD:
   case SSERV_CMD_CNTS_CHANGE_SIMPLE_REGISTRATION:
@@ -3107,6 +3109,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CLEAR_NAME] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_NAME_EN] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_MAIN_URL] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_DEFAULT_LOCALE] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_DEADLINE] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_USERS_HEADER] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_USERS_FOOTER] = { cmd_simple_top_command },
@@ -3153,6 +3156,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_NAME] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_NAME_EN] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_MAIN_URL] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_DEFAULT_LOCALE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_AUTOREGISTER] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_TEAM_PASSWD] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_SIMPLE_REGISTRATION] = { cmd_set_value },

@@ -2168,6 +2168,16 @@ super_html_edit_contest_page(FILE *f,
                            self_url,
                            extra_args,
                            hidden_vars);
+  // FIXME: use the locale selection dialog
+  print_string_editing_row(f, "Default locale:", cnts->default_locale,
+                           SSERV_CMD_CNTS_CHANGE_DEFAULT_LOCALE,
+                           SSERV_CMD_CNTS_CLEAR_DEFAULT_LOCALE,
+                           0,
+                           session_id,
+                           form_row_attrs[row ^= 1],
+                           self_url,
+                           extra_args,
+                           hidden_vars);
   html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>The contest is personal?</td><td>",
           form_row_attrs[row ^= 1]);

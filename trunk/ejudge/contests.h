@@ -95,6 +95,7 @@ enum
     CONTEST_DIR_GROUP,
     CONTEST_FILE_MODE,
     CONTEST_FILE_GROUP,
+    CONTEST_DEFAULT_LOCALE,
 
     CONTEST_LAST_TAG
   };
@@ -309,10 +310,13 @@ struct contest_desc
   unsigned char *dir_group;
   unsigned char *file_mode;
   unsigned char *file_group;
+  unsigned char *default_locale;
 
   unsigned char client_ignore_time_skew;
   unsigned char client_disable_team;
   unsigned char disable_member_delete;
+
+  int default_locale_val;
 
   time_t last_check_time;
   time_t last_file_time;
