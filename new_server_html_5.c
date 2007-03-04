@@ -49,6 +49,23 @@
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 #define FAIL2(c) do { retval = -(c); goto failed; } while (0)
 
+static unsigned char *
+get_client_url(unsigned char *buf, size_t size, const unsigned char *str)
+{
+  int i, len;
+
+  if (!str) return "/new-client";
+  len = strlen(str);
+  for (i = len - 1; i >= 0 && str[i] != '/'; i--);
+  if (i < 0) return "/new-client";
+#if defined CGI_PROG_SUFFIX
+  snprintf(buf, size, "%.*s/new-client%s", i, str, CGI_PROG_SUFFIX);
+#else
+  snprintf(buf, size, "%.*s/new-client", i, str);
+#endif
+  return buf;
+}
+
 static int
 cgi_param_int(struct http_request_info *phr, const unsigned char *name,
               int *p_val)
@@ -63,6 +80,12 @@ cgi_param_int(struct http_request_info *phr, const unsigned char *name,
   if (errno || *eptr) return -1;
   if (p_val) *p_val = x;
   return 0;
+}
+
+static void
+html_refresh_page_2(FILE *fout, const unsigned char *url)
+{
+  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
 }
 
 static const unsigned char * const form_row_attrs[]=
@@ -190,6 +213,7 @@ user_login_page(
   ns_cgi_param(phr, "email", &email);
   if (!email) email = "";
 
+  l10n_setlocale(phr->locale_id);
   switch (phr->action) {
   case NEW_SRV_ACTION_NEW_USER_REGISTERED_PAGE:
   case NEW_SRV_ACTION_NEW_AUTOASSIGNED_USER_REGISTERED_PAGE:
@@ -199,8 +223,6 @@ user_login_page(
     s = "";
     break;
   }
-
-  l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
             "%s [%s]", s, extra->contest_arm);
 
@@ -212,7 +234,7 @@ user_login_page(
   fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>\n");
 
   fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("login"), html_input_text(bb, sizeof(bb), "login", 20, "%s", ARMOR(login)));
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("password"), html_input_text(bb, sizeof(bb), "password", 20, "%s", ARMOR(password)));
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("password"), html_input_password(bb, sizeof(bb), "password", 20, "%s", ARMOR(password)));
   fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REGISTER_LOGIN, _("Log in")));
 
   if (!cnts->disable_locale_change) {
@@ -589,9 +611,11 @@ register_login(
   const unsigned char *login = 0;
   const unsigned char *password = 0;
   int r;
+  unsigned char urlbuf[1024], bb[1024];
 
   if (ns_cgi_param(phr, "login", &login) <= 0)
     return ns_html_err_inv_param(fout, phr, 0, "login is invalid");
+  phr->login = xstrdup(login);
   if (ns_cgi_param(phr, "password", &password) <= 0)
     return ns_html_err_inv_param(fout, phr, 0, "password is invalid");
 
@@ -601,7 +625,7 @@ register_login(
 
   if ((r = userlist_clnt_login(ul_conn, ULS_CHECK_USER,
                                phr->ip, phr->ssl_flag, phr->contest_id,
-                               phr->locale_id, login, password,
+                               phr->locale_id, phr->login, password,
                                &phr->user_id, &phr->session_id,
                                &phr->name)) < 0) {
     switch (-r) {
@@ -620,6 +644,30 @@ register_login(
       return ns_html_err_internal_error(fout, phr, 0, "user_login failed: %s",
                                         userlist_strerror(-r));
     }
+  }
+
+  // if there is no editable fields and autoregister flag is set,
+  // then register immediately for the contest and redirect there
+  if (cnts->force_registration && cnts->disable_name
+      && cnts->autoregister && cnts->disable_team_password) {
+    // FIXME: probably need new registration command
+    r = userlist_clnt_register_contest(ul_conn, ULS_PRIV_REGISTER_CONTEST,
+                                       phr->user_id, phr->contest_id);
+    if (r < 0)
+      return ns_html_err_no_perm(fout, phr, 0, "user_login failed: %s",
+                                 userlist_strerror(-r));
+
+    if (cnts->team_url) {
+      snprintf(urlbuf, sizeof(urlbuf), "%s?SID=%llx", cnts->team_url,
+               phr->session_id);
+    } else {
+      snprintf(urlbuf, sizeof(urlbuf), "%s?SID=%llx",
+               get_client_url(bb, sizeof(bb), phr->self_url),
+               phr->session_id);
+    }
+
+    ns_get_session(phr->session_id, 0);
+    html_refresh_page_2(fout, urlbuf);
   }
 
   /*

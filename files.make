@@ -144,6 +144,7 @@ COMMON_CFILES=\
  filter_tree.c\
  html.c\
  html_date_select.c\
+ html_input_password.c\
  html_input_text.c\
  html_hidden.c\
  html_hyperref.c\
