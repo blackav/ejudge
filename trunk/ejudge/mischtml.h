@@ -3,7 +3,7 @@
 #ifndef __MISCHTML_H__
 #define __MISCHTML_H__
 
-/* Copyright (C) 2005-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -44,6 +44,11 @@ unsigned char *html_input_text(unsigned char *buf, size_t size,
                                const unsigned char *var_name,
                                int text_size, const char *format,
                                ...)
+  __attribute__((format(printf, 5, 6)));
+unsigned char *html_input_password(unsigned char *buf, size_t size,
+                                   const unsigned char *var_name,
+                                   int text_size, const char *format,
+                                   ...)
   __attribute__((format(printf, 5, 6)));
 
 #endif /* __MISCHTML_H__ */

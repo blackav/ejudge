@@ -1930,7 +1930,7 @@ priv_change_password(FILE *fout,
   if (!log_txt || !*log_txt) {
     url_armor_string(login_buf, sizeof(login_buf), phr->login);
     snprintf(url, sizeof(url),
-             "%s?contest_id=%d&amp;role=%d&amp;login=%s&amp;locale_id=%d&amp;action=%d",
+             "%s?contest_id=%d&role=%d&login=%s&locale_id=%d&action=%d",
              phr->self_url, phr->contest_id, phr->role,
              login_buf, phr->locale_id,
              NEW_SRV_ACTION_LOGIN_PAGE);
@@ -5098,7 +5098,7 @@ priv_logout(FILE *fout,
                               phr->session_id);
   ns_remove_session(phr->session_id);
   snprintf(urlbuf, sizeof(urlbuf),
-           "%s?contest_id=%d&amp;locale_id=%d&amp;role=%d",
+           "%s?contest_id=%d&locale_id=%d&role=%d",
            phr->self_url, phr->contest_id, phr->locale_id, phr->role);
   html_refresh_page_2(fout, urlbuf);
 }
@@ -6727,7 +6727,7 @@ unpriv_change_password(FILE *fout,
   if (!log_txt || !*log_txt) {
     url_armor_string(login_buf, sizeof(login_buf), phr->login);
     snprintf(url, sizeof(url),
-             "%s?contest_id=%d&amp;login=%s&amp;locale_id=%d&amp;action=%d",
+             "%s?contest_id=%d&login=%s&locale_id=%d&action=%d",
              phr->self_url, phr->contest_id, login_buf, phr->locale_id,
              NEW_SRV_ACTION_LOGIN_PAGE);
     html_refresh_page_2(fout, url);
@@ -9459,7 +9459,7 @@ unpriv_logout(FILE *fout,
                               phr->session_id);
   ns_remove_session(phr->session_id);
   snprintf(urlbuf, sizeof(urlbuf),
-           "%s?contest_id=%d&amp;locale_id=%d",
+           "%s?contest_id=%d&locale_id=%d",
            phr->self_url, phr->contest_id, phr->locale_id);
   html_refresh_page_2(fout, urlbuf);
 }
