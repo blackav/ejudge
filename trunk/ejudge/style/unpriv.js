@@ -163,6 +163,26 @@ function startClock()
   oInterval = window.setInterval("updateTime()",60000);
 }
 
+function submitStatus(type, data, evt)
+{
+}
+
+function submitAnswer(probId, answer)
+{
+  //alert("CLICK: " + probId + "," + answer);
+
+  request = { SID : SID, action : NEW_SRV_ACTION_UPDATE_ANSWER, prob_id : probId, file : answer };
+  dojo.io.bind({
+      url: self_url,
+      load: parseAndSetTime,
+      error: handleError,
+      mimetype: "text/xml",
+      method: "GET",
+      content: request
+        });
+  document.location.href = self_url + "?SID=" + SID + "&action=" + NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT + "&prob_id=" + (probId + 1);
+}
+
 function displayProblemSubmitForm(probId)
 {
   document.location.href = self_url + "?SID=" + SID + "&action=" + NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT + "&prob_id=" + probId;
