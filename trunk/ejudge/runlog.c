@@ -1180,6 +1180,20 @@ run_get_attempts(runlog_state_t state, int runid, int *pattempts,
   return 0;
 }
 
+int
+run_count_all_attempts(runlog_state_t state, int user_id, int prob_id)
+{
+  int i, count = 0;
+
+  for (i = 0; i < state->run_u; i++) {
+    if (state->runs[i].status == RUN_EMPTY) continue;
+    if (state->runs[i].user_id != user_id
+        || state->runs[i].prob_id != prob_id) continue;
+    count++;
+  }
+  return count;
+}
+
 /* FIXME: EVER DUMBER */
 /*
  * if the specified run_id is OK run, how many successes were on the
@@ -1912,6 +1926,22 @@ run_forced_set_judge_id(runlog_state_t state, int run_id, int judge_id)
 
   state->runs[run_id].judge_id = judge_id;
   return run_flush_entry(state, run_id);
+}
+
+int
+run_has_transient_user_runs(runlog_state_t state, int user_id)
+{
+  int i;
+
+  for (i = state->run_u; i >= 0; i--) {
+    if (state->runs[i].status == RUN_EMPTY) continue;
+    if (state->runs[i].user_id != user_id) continue;
+    if (state->runs[i].status == RUN_VIRTUAL_START) return 0;
+    if (state->runs[i].status >= RUN_TRANSIENT_FIRST
+        && state->runs[i].status <= RUN_TRANSIENT_LAST)
+      return 1;
+  }
+  return 0;
 }
 
 int
@@ -2723,6 +2753,34 @@ run_is_valid_user_status(int status)
 {
   if (status < 0 || status > RUN_LAST) return 0;
   return run_valid_user_statuses[status];
+}
+
+static const unsigned char run_source_available_statuses[RUN_LAST + 1] = 
+{
+  [RUN_OK]               = 1,
+  [RUN_COMPILE_ERR]      = 1,
+  [RUN_RUN_TIME_ERR]     = 1,
+  [RUN_TIME_LIMIT_ERR]   = 1,
+  [RUN_PRESENTATION_ERR] = 1,
+  [RUN_WRONG_ANSWER_ERR] = 1,
+  [RUN_CHECK_FAILED]     = 1,
+  [RUN_PARTIAL]          = 1,
+  [RUN_ACCEPTED]         = 1,
+  [RUN_IGNORED]          = 1,
+  [RUN_DISQUALIFIED]     = 1,
+  [RUN_PENDING]          = 1,
+  [RUN_MEM_LIMIT_ERR]    = 1,
+  [RUN_SECURITY_ERR]     = 1,
+  [RUN_RUNNING]          = 1,
+  [RUN_COMPILED]         = 1,
+  [RUN_COMPILING]        = 1,
+  [RUN_AVAILABLE]        = 1,
+};
+int
+run_is_source_available(int status)
+{
+  if (status < 0 || status > RUN_LAST) return 0;
+  return run_source_available_statuses[status];
 }
 
 int

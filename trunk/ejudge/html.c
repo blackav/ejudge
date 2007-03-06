@@ -4640,6 +4640,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
                                 const struct section_problem_data *prob,
                                 const int *action_vec,
                                 ej_cookie_t sid,
+                                int exam_mode,
                                 const unsigned char *self_url,
                                 const unsigned char *extra_args,
                                 const unsigned char *table_class)
@@ -4694,15 +4695,16 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
     }
   }
 
-  fprintf(f,
-          "<table%s>"
-          "<tr><th%s>N</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th>",
-          cl, cl, cl, _("Result"), cl, _("Time (sec)"),
-          cl, _("Real time (sec)"), cl, _("Extra info"));
+  fprintf(f, "<table%s><tr><th%s>N</th>", cl, cl);
+  fprintf(f, "<th%s>%s</th>", cl, _("Result"));
+  if (!exam_mode)
+    fprintf(f, "<th%s>%s</th><th%s>%s</th>", cl, _("Time (sec)"),
+            cl, _("Real time (sec)"));
+  fprintf(f, "<th%s>%s</th>", cl, _("Extra info"));
   if (need_comment) {
     fprintf(f, "<th%s>%s</th>", cl, _("Comment"));
   }
-  fprintf(f, "<th%s>%s</th>", cl, _("Link"));
+  if (!exam_mode) fprintf(f, "<th%s>%s</th>", cl, _("Link"));
   fprintf(f, "</tr>\n");
   for (i = 0; i < tests_to_show; i++) {
     if (!(t = r->tests[i])) continue;
@@ -4715,12 +4717,14 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
     }
     fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
             cl, font_color, run_status_str(t->status, 0, 0, 0));
-    fprintf(f, "<td%s>%d.%03d</td>", cl, t->time / 1000, t->time % 1000);
-    if (t->real_time > 0) {
-      fprintf(f, "<td%s>%d.%03d</td>",
-              cl, t->real_time / 1000, t->real_time % 1000);
-    } else {
-      fprintf(f, "<td%s>N/A</td>", cl);
+    if (!exam_mode) {
+      fprintf(f, "<td%s>%d.%03d</td>", cl, t->time / 1000, t->time % 1000);
+      if (t->real_time > 0) {
+        fprintf(f, "<td%s>%d.%03d</td>",
+                cl, t->real_time / 1000, t->real_time % 1000);
+      } else {
+        fprintf(f, "<td%s>N/A</td>", cl);
+      }
     }
     // extra information
     fprintf(f, "<td%s>", cl);
@@ -4787,6 +4791,10 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
       }
     }
     // links to extra information
+    if (exam_mode) {
+      fprintf(f, "</tr>\n");
+      continue;
+    }
     fprintf(f, "<td%s>", cl);
     // command line parameters (always inline)
     if (t->args || t->args_too_long) {
@@ -4883,24 +4891,25 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
   }
   fprintf(f, "</table>\n");
 
-  fprintf(f,
-          "<br><table%s><font size=\"-2\">\n"
-          "<tr><td%s>L</td><td%s>%s</td></tr>\n"
-          "<tr><td%s>I</td><td%s>%s</td></tr>\n"
-          "<tr><td%s>O</td><td%s>%s</td></tr>\n"
-          "<tr><td%s>A</td><td%s>%s</td></tr>\n"
-          "<tr><td%s>E</td><td%s>%s</td></tr>\n"
-          "<tr><td%s>C</td><td%s>%s</td></tr>\n"
-          "<tr><td%s>F</td><td%s>%s</td></tr>\n"
-          "</font></table>\n", cl,
-          cl, cl, _("Command-line parameters"),
-          cl, cl, _("Test input"),
-          cl, cl, _("Program output"),
-          cl, cl, _("Correct output"),
-          cl, cl, _("Program output to stderr"),
-          cl, cl, _("Checker output"),
-          cl, cl, _("Additional test information"));
-
+  if (!exam_mode) {
+    fprintf(f,
+            "<br><table%s><font size=\"-2\">\n"
+            "<tr><td%s>L</td><td%s>%s</td></tr>\n"
+            "<tr><td%s>I</td><td%s>%s</td></tr>\n"
+            "<tr><td%s>O</td><td%s>%s</td></tr>\n"
+            "<tr><td%s>A</td><td%s>%s</td></tr>\n"
+            "<tr><td%s>E</td><td%s>%s</td></tr>\n"
+            "<tr><td%s>C</td><td%s>%s</td></tr>\n"
+            "<tr><td%s>F</td><td%s>%s</td></tr>\n"
+            "</font></table>\n", cl,
+            cl, cl, _("Command-line parameters"),
+            cl, cl, _("Test input"),
+            cl, cl, _("Program output"),
+            cl, cl, _("Correct output"),
+            cl, cl, _("Program output to stderr"),
+            cl, cl, _("Checker output"),
+            cl, cl, _("Additional test information"));
+  }
 
   // print detailed test information
   fprintf(f, "<pre>");
@@ -5049,7 +5058,7 @@ new_write_user_report_view(const serve_state_t state, FILE *f, int uid, int rid,
   case CONTENT_TYPE_XML:
     if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       write_xml_team_accepting_report(f, start_ptr, rid, &re, prb, action_vec,
-                                      sid, self_url, extra_args, 0);
+                                      sid, 0, self_url, extra_args, 0);
     } else if (prb->team_show_judge_report) {
       write_xml_testing_report(f, start_ptr, sid, self_url, extra_args, 0,
                                0, 0);

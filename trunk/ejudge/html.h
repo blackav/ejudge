@@ -268,6 +268,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
                                 const struct section_problem_data *prob,
                                 const int *action_vec,
                                 ej_cookie_t sid,
+                                int exam_mode,
                                 const unsigned char *self_url,
                                 const unsigned char *extra_args,
                                 const unsigned char *table_class);
