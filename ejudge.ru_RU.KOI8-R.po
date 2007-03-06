@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-02-23 00:42+0300\n"
-"PO-Revision-Date: 2007-02-20 22:31+0300\n"
+"POT-Creation-Date: 2007-03-05 10:02+0300\n"
+"PO-Revision-Date: 2007-03-05 10:03+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -316,6 +316,25 @@ msgstr ""
 "s><b>Обратите внимание</b>, что Вы должны первый раз войти в систему в "
 "течении 24 часов после первоначальной регистрации, а в противном случае "
 "регистрация будет отменена."
+
+#, c-format
+msgid ""
+"<p%s>Registration of a new user is completed successfully. An e-mail "
+"messages is sent to the address <tt>%s</tt>. This message contains the login "
+"name, assigned to you, as well as your password for initial login. You will "
+"be able to change the password later.</p>\n"
+"<p%s><b>Note</b>, that you should login to the system for the first time no "
+"later, than in 24 hours after the initial user registration, or the "
+"registration is void."
+msgstr ""
+"<p%s>В базе данных создано новое регистрационное имя, которое теперь нужно "
+"активировать. Для этого на указанный Вами адрес электронной почты <tt>%s</"
+"tt> послано письмо, которое содержит назначенное Вам регистрационное имя и "
+"пароль для первого входа в систему. Этот пароль в дальнейшем можно будет "
+"изменить.</p>\n"
+"<p%s><b>Внимание</b>, Вы должны активировать новое регистрационное имя в "
+"течение 24 часов от момента регистрации. В противном случае регистрация "
+"будет отменена."
 
 #, c-format
 msgid "<p%s>Remember or write down the password!."
@@ -1169,6 +1188,9 @@ msgstr "Завершить регистрацию"
 msgid "Finish session"
 msgstr "Завершить сеанс работы"
 
+msgid "Finish the exam"
+msgstr "Завершить экзамен"
+
 msgid "First clar"
 msgstr "Первое сообщение"
 
@@ -1948,6 +1970,9 @@ msgstr "Новый вердикт"
 msgid "New user is registered"
 msgstr "Новый пользователь зарегистрирован"
 
+msgid "New user login is created"
+msgstr "Новое регистрационное имя создано"
+
 msgid "Next"
 msgstr "Дальше"
 
@@ -2252,6 +2277,13 @@ msgstr ""
 
 msgid "Presentation error"
 msgstr "Неправильный формат вывода"
+
+msgid ""
+"Press \"Stop exam\" button to finish the exam. Your answers will be checked "
+"shortly after that."
+msgstr ""
+"Нажмите на кнопку \"Завершить экзамен\" чтобы завершить экзамен. После этого "
+"Ваши ответы будут проверены."
 
 msgid ""
 "Press on the \"Back\" button to return to the previous page without saving "
@@ -2995,6 +3027,9 @@ msgstr "Входные данные"
 
 msgid "Test number"
 msgstr "Номер теста"
+
+msgid "Testing is in progress..."
+msgstr "Идёт проверка ответов..."
 
 msgid "Testing of participants' submits is suspended"
 msgstr "Проверка решений участников приостановлена"
