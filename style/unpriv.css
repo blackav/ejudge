@@ -7,10 +7,15 @@ body
         font-variant: normal;
         font-weight: normal;
         font-size: 12px;
-        color: rgb(0, 51, 102);
+        //color: rgb(0, 51, 102);
+        color: black;
         text-align: justify;
 }
 
+p
+{
+        font-size: 16px;
+}
 
 #container /* the big block, which includes all other blocks */
 {
@@ -134,6 +139,8 @@ input
 	font-family: "Verdana", "Arial";
 	font-size: 11px;
 	font-weight: 800;
+        margin-top: 20px;
+        margin-bottom: 20px;
 }
 
 p.ejudge_copyright /* just copyright */
@@ -145,19 +152,19 @@ p.ejudge_copyright /* just copyright */
 div.server_status_on /* server status block when the server is up */
 {
         background-color: #aaffaa;
-        padding: 0px 10px 10px 10px;
+        padding: 5px 5px 10px 10px;
 }
 
 div.server_status_off /* server status block when the server is down */
 {
         background-color: #aaaaaa;
-        padding: 0px 10px 10px 10px;
+        padding: 5px 5px 10px 10px;
 }
 
 div.server_status_alarm /* server status block when the server is up */
 {
         background-color: #ffffaa;
-        padding: 0px 10px 10px 10px;
+        padding: 5px 5px 10px 10px;
 }
 
 div.dotted
@@ -229,7 +236,7 @@ td /* common table item has a thin solid border */
 
 p.fixed_width
 {
-        width: 750px;
+        width: 850px;
 }
 
 table.summary /* table for problem summary and logs */
@@ -341,7 +348,7 @@ td#probNavTaskArea
 }
 div#probNavTaskArea
 {
-        width: 600px;
+        width: 800px;
 }
 
 td.probNavActiveTop
