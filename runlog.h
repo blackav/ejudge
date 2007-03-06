@@ -106,6 +106,7 @@ time_t run_get_duration(runlog_state_t);
 
 void run_get_team_usage(runlog_state_t, int, int *, size_t*);
 int  run_get_attempts(runlog_state_t, int, int *, int *, int);
+int run_count_all_attempts(runlog_state_t state, int user_id, int prob_id);
 char *run_status_str(int, char *, int, int);
 
 int run_get_fog_period(runlog_state_t, time_t, int, int);
@@ -226,6 +227,7 @@ int run_get_virtual_info(runlog_state_t state, int user_id,
 int run_clear_entry(runlog_state_t, int run_id);
 int run_squeeze_log(runlog_state_t);
 void run_clear_variables(runlog_state_t);
+int run_has_transient_user_runs(runlog_state_t state, int user_id);
 
 int run_forced_clear_entry(runlog_state_t, int run_id);
 int run_forced_set_hidden(runlog_state_t state, int run_id);
@@ -262,6 +264,7 @@ int run_is_valid_status(int status);
 int run_is_valid_user_status(int status);
 int run_is_team_report_available(int status);
 int run_is_report_available(int status);
+int run_is_source_available(int status);
 
 int run_status_to_str_short(unsigned char *buf, size_t size, int val);
 int run_str_short_to_status(const unsigned char *str, int *pr);

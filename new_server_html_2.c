@@ -3387,7 +3387,7 @@ ns_write_olympiads_user_runs(
 {
   const serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
-  const struct section_problem_data *prob;
+  const struct section_problem_data *prob, *filt_prob = 0;
   const struct section_language_data *lang;
   int accepting_mode = 0;
   struct run_entry re;
@@ -3406,11 +3406,15 @@ ns_write_olympiads_user_runs(
   unsigned char tests_buf[64], score_buf[64];
   unsigned char ab[1024];
   unsigned char *report_comment = 0, *src_txt = 0;
+  int run_count = 0;
 
   if (table_class && *table_class) {
     cl = alloca(strlen(table_class) + 16);
     sprintf(cl, " class=\"%s\"", table_class);
   }
+
+  if (prob_id > 0 && prob_id <= cs->max_prob)
+    filt_prob = cs->probs[prob_id];
 
   ASSERT(global->score_system_val == SCORE_OLYMPIAD);
   if (global->is_virtual) {
@@ -3426,20 +3430,24 @@ ns_write_olympiads_user_runs(
     start_time = run_get_start_time(cs->runlog_state);
   }
 
+  if (cnts->exam_mode)
+    run_count = run_count_all_attempts(cs->runlog_state, phr->user_id, prob_id);
+
   XALLOCAZ(latest_flag, cs->max_prob + 1);
 
-  fprintf(fout,"<table border=\"1\"%s><tr><th%s>%s</th><th%s>%s</th>",
-          cl, cl, _("Run ID"), cl, _("Time"));
-
-  if (!cnts->exam_mode) {
-    fprintf(fout,"<th%s>%s</th>", cl, _("Size"));
-  }
-
-  fprintf(fout,"<th%s>%s</th><th%s>%s</th><th%s>%s</th>"
-          "<th%s>%s</th><th%s>%s</th>",
-          cl, _("Problem"),
-          cl, _("Programming language"), cl, _("Result"),
-          cl, _("Tests passed"), cl, _("Score"));
+  fprintf(fout, "<table border=\"1\"%s><tr>", cl);
+  if (!cnts->exam_mode) fprintf(fout, "<th%s>%s</th>", cl, _("Run ID"));
+  if (cnts->exam_mode) fprintf(fout,"<th%s>%s</th>", cl, "NN");
+  if (!cnts->exam_mode) fprintf(fout,"<th%s>%s</th>", cl, _("Time"));
+  if (!cnts->exam_mode) fprintf(fout,"<th%s>%s</th>", cl, _("Size"));
+  if (!filt_prob) fprintf(fout, "<th%s>%s</th>", cl, _("Problem"));
+  if (!filt_prob || filt_prob->type_val == PROB_TYPE_STANDARD)
+    fprintf(fout, "<th%s>%s</th>", cl, _("Programming language"));
+  fprintf(fout, "<th%s>%s</th>", cl, _("Result"));
+  if (!filt_prob || filt_prob->type_val == PROB_TYPE_STANDARD)
+    fprintf(fout, "<th%s>%s</th>", cl, _("Tests passed"));
+  if (!accepting_mode)
+    fprintf(fout, "<th%s>%s</th>", cl, _("Score"));
 
   if (global->team_enable_src_view)
     fprintf(fout, "<th%s>%s</th>", cl, _("View submitted answer"));
@@ -3647,21 +3655,21 @@ ns_write_olympiads_user_runs(
       latest_flag[prob->id] = 1;
     }
 
-    fprintf(fout,
-            "<tr%s><td%s>%d%s</td><td%s>%s</td>",
-            row_attr, cl, i, run_kind_ptr,
-            cl, dur_str);
-
-    if (!cnts->exam_mode) {
+    fprintf(fout, "<tr%s>", row_attr);
+    if (!cnts->exam_mode)
+      fprintf(fout, "<td%s>%d%s</td>", cl, i, run_kind_ptr);
+    if (cnts->exam_mode) fprintf(fout, "<td%s>%d</td>", cl, run_count--);
+    if (!cnts->exam_mode) fprintf(fout, "<td%s>%s</td>", cl, dur_str);
+    if (!cnts->exam_mode)
       fprintf(fout, "<td%s>%u</td>", cl, re.size);
-    }
-
-    fprintf(fout,
-            "<td%s>%s</td><td%s>%s</td><td%s>%s</td>"
-            "<td%s>%s</td><td%s>%s</td>",
-            cl, prob_name_ptr,
-            cl, lang_name_ptr, cl, stat_str,
-            cl, tests_buf, cl, score_buf);
+    if (!filt_prob) fprintf(fout, "<td%s>%s</td>", cl, prob_name_ptr);
+    if (!filt_prob || filt_prob->type_val == PROB_TYPE_STANDARD)
+      fprintf(fout, "<td%s>%s</td>", cl, lang_name_ptr);
+    fprintf(fout, "<td%s>%s</td>", cl, stat_str);
+    if (!filt_prob || filt_prob->type_val == PROB_TYPE_STANDARD)
+      fprintf(fout, "<td%s>%s</td>", cl, tests_buf);
+    if (!accepting_mode)
+      fprintf(fout, "<td%s>%s</td>", cl, score_buf);
 
     if (global->team_enable_src_view) {
       if (cnts->exam_mode && (src_txt = get_source(cs, i, prob, variant))) {
