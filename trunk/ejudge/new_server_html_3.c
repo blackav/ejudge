@@ -655,8 +655,8 @@ ns_html_err_inv_session(FILE *fout,
   fprintf(fout, "<p>%s</p>\n",
           _("Invalid session identifier. The possible reasons are as follows."));
   fprintf(fout, "<ul>\n");
-  fprintf(fout, _("<li>The specified session does not exist.</li>"));
-  fprintf(fout, _("<li>The specified has expired.</li>\n"));
+  fprintf(fout, _("<li>The specified session does not exist.</li>\n"));
+  fprintf(fout, _("<li>The specified session has expired.</li>\n"));
   fprintf(fout, _("<li>The session was created from a different IP-address or protocol, that yours (%s,%s).</li>\n"), xml_unparse_ip(phr->ip), ns_ssl_flag_str[phr->ssl_flag]);
   fprintf(fout, _("<li>The session was removed by an administrator.</li>"));
   fprintf(fout, "</ul>\n");
