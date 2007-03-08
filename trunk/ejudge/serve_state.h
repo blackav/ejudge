@@ -244,7 +244,9 @@ int serve_compile_request(serve_state_t state,
                           unsigned char const *sfx,
                           char **compiler_env,
                           int accepting_mode,
-                          int priority_adjustment);
+                          int priority_adjustment,
+                          const struct section_problem_data *prob,
+                          const struct section_language_data *lang);
 
 struct compile_reply_packet;
 int

@@ -365,6 +365,8 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(type, "s"),
   PROBLEM_PARAM(alternative, "x"),
   PROBLEM_PARAM(stand_attr, "s"),
+  PROBLEM_PARAM(source_header, "s"),
+  PROBLEM_PARAM(source_footer, "s"),
 
   { 0, 0, 0, 0 }
 };
@@ -2417,6 +2419,11 @@ set_defaults(serve_state_t state, int mode)
                            state->probs[i], aprob, state->global);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_CMD,
+                           state->probs[i], aprob, state->global);
+
+    prepare_set_prob_value(PREPARE_FIELD_PROB_SOURCE_HEADER,
+                           state->probs[i], aprob, state->global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_SOURCE_FOOTER,
                            state->probs[i], aprob, state->global);
 
     if (state->probs[i]->priority_adjustment == -1000 && si != -1 &&
@@ -4846,6 +4853,18 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     if (!out->stand_attr[0] && abstr && abstr->stand_attr[0]) {
       snprintf(out->stand_attr, sizeof(out->stand_attr), "%s",
                abstr->stand_attr);
+    }
+    break;
+
+  case PREPARE_FIELD_PROB_SOURCE_HEADER:
+    if (!out->source_header[0] && abstr && abstr->source_header[0]) {
+      strcpy(out->source_header, abstr->source_header);
+    }
+    break;
+
+  case PREPARE_FIELD_PROB_SOURCE_FOOTER:
+    if (!out->source_footer[0] && abstr && abstr->source_footer[0]) {
+      strcpy(out->source_footer, abstr->source_footer);
     }
     break;
 

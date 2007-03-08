@@ -1131,6 +1131,10 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     fprintf(f, "deadline = \"%s\"\n", c_armor(&sbuf, prob->deadline));
   if (prob->stand_attr[0])
     fprintf(f, "stand_attr = \"%s\"\n", c_armor(&sbuf, prob->stand_attr));
+  if (prob->source_header[0])
+    fprintf(f, "source_header = \"%s\"\n", c_armor(&sbuf, prob->source_header));
+  if (prob->source_footer[0])
+    fprintf(f, "source_footer = \"%s\"\n", c_armor(&sbuf, prob->source_footer));
 
   fprintf(f, "\n");
   if (prob->unhandled_vars) fprintf(f, "%s\n", prob->unhandled_vars);
