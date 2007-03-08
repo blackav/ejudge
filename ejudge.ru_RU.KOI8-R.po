@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-03-05 10:02+0300\n"
-"PO-Revision-Date: 2007-03-05 10:03+0300\n"
+"POT-Creation-Date: 2007-03-08 15:40+0300\n"
+"PO-Revision-Date: 2007-03-08 15:40+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -133,12 +133,12 @@ msgid "<li>The session was removed by an administrator.</li>"
 msgstr "<li>Сессия была удалена администратором системы.</li>"
 
 #, c-format
-msgid "<li>The specified has expired.</li>\n"
-msgstr "<li>Время действия сессии истекло.<li>\n"
+msgid "<li>The specified session does not exist.</li>\n"
+msgstr "<li>Указанная сессия не существует.</li>\n"
 
 #, c-format
-msgid "<li>The specified session does not exist.</li>"
-msgstr "<li>Указанная сессия не существует.</li>"
+msgid "<li>The specified session has expired.</li>\n"
+msgstr "<li>Время действия сессии истекло.</li>\n"
 
 #, c-format
 msgid "<li>You are not registered for contest %d.</li>\n"
