@@ -917,7 +917,7 @@ serve_compile_request(serve_state_t state,
     if (generic_write_file(src_out_text, src_out_size, 0,
                            global->compile_src_dir, pkt_name, sfx) < 0)
       goto failed;
-  } if (len < 0) {
+  } else if (len < 0) {
     // copy from archive
     arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
                                         global->run_archive_dir, run_id, 0,0);
