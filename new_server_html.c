@@ -6095,9 +6095,13 @@ unpriv_load_html_style(struct http_request_info *phr,
 
   // js part
 #if defined CONF_ENABLE_AJAX && CONF_ENABLE_AJAX
-  state_xml_f = open_memstream(&state_xml_txt, &state_xml_len);
-  do_xml_user_state(state_xml_f, extra->serve_state, phr->user_id);
-  fclose(state_xml_f); state_xml_f = 0;
+  if (extra->serve_state && phr->user_id > 0) {
+    state_xml_f = open_memstream(&state_xml_txt, &state_xml_len);
+    do_xml_user_state(state_xml_f, extra->serve_state, phr->user_id);
+    fclose(state_xml_f); state_xml_f = 0;
+  } else {
+    state_xml_txt = xstrdup("");
+  }
 
   snprintf(bb, sizeof(bb),
            "<script type=\"text/javascript\" src=\"" CONF_STYLE_PREFIX "dojo.js\"></script>\n"
