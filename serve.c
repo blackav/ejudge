@@ -1817,7 +1817,9 @@ cmd_priv_submit_run(struct client_state *p, int len,
                             (serve_state.probs[pkt->prob_id]->type_val > 0),
                             serve_state.langs[pkt->lang_id]->src_sfx,
                             serve_state.langs[pkt->lang_id]->compiler_env,
-                            -1, 0) < 0) {
+                            -1, 0,
+                            serve_state.probs[pkt->prob_id],
+                            serve_state.langs[pkt->lang_id]) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -2183,7 +2185,8 @@ do_submit_run(struct client_state *p,
                             cur_lang->compile_id, locale_id,
                             (cur_prob->type_val > 0),
                             cur_lang->src_sfx,
-                            cur_lang->compiler_env, -1, 0) < 0) {
+                            cur_lang->compiler_env, -1, 0, cur_prob,
+                            cur_lang) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }

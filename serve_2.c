@@ -33,6 +33,7 @@
 #include "run_packet.h"
 #include "curtime.h"
 #include "userlist.h"
+#include "sformat.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -823,7 +824,9 @@ serve_compile_request(serve_state_t state,
                       unsigned char const *sfx,
                       char **compiler_env,
                       int accepting_mode,
-                      int priority_adjustment)
+                      int priority_adjustment,
+                      const struct section_problem_data *prob,
+                      const struct section_language_data *lang)
 {
   struct compile_run_extra rx;
   struct compile_request_packet cp;
@@ -833,6 +836,36 @@ serve_compile_request(serve_state_t state,
   int arch_flags;
   path_t run_arch;
   const struct section_global_data *global = state->global;
+  path_t tmp_path, tmp_path_2;
+  char *src_header_text = 0, *src_footer_text = 0, *src_text = 0;
+  size_t src_header_size = 0, src_footer_size = 0, src_size = 0;
+  unsigned char *src_out_text = 0;
+  size_t src_out_size = 0;
+
+  if (prob->source_header[0]) {
+    sformat_message(tmp_path, sizeof(tmp_path), prob->source_header,
+                    global, prob, lang, 0, 0, 0, 0, 0);
+    if (os_IsAbsolutePath(tmp_path))
+      snprintf(tmp_path_2, sizeof(tmp_path_2), "%s", tmp_path);
+    else
+      snprintf(tmp_path_2, sizeof(tmp_path_2), "%s/%s",
+               global->statement_dir, tmp_path);
+    if (generic_read_file(&src_header_text, 0, &src_header_size, 0, 0,
+                          tmp_path_2, "") < 0)
+      goto failed;
+  }
+  if (prob->source_footer[0]) {
+    sformat_message(tmp_path, sizeof(tmp_path), prob->source_footer,
+                    global, prob, lang, 0, 0, 0, 0, 0);
+    if (os_IsAbsolutePath(tmp_path))
+      snprintf(tmp_path_2, sizeof(tmp_path_2), "%s", tmp_path);
+    else
+      snprintf(tmp_path_2, sizeof(tmp_path_2), "%s/%s",
+               global->statement_dir, tmp_path);
+    if (generic_read_file(&src_footer_text, 0, &src_footer_size, 0, 0,
+                          tmp_path_2, "") < 0)
+      goto failed;
+  }
 
   if (accepting_mode == -1) accepting_mode = state->accepting_mode;
 
@@ -861,11 +894,34 @@ serve_compile_request(serve_state_t state,
   if (!sfx) sfx = "";
   serve_packet_name(run_id, 0, pkt_name);
 
-  if (len == -1) {
+  if (src_header_size > 0 || src_footer_size > 0) {
+    if (len < 0) {
+      arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
+                                          global->run_archive_dir, run_id, 0,0);
+      if (arch_flags < 0) goto failed;
+      if (generic_read_file(&src_text, 0, &src_size, arch_flags, 0,
+                            run_arch, "") < 0)
+        goto failed;
+      str = src_text;
+      len = src_size;
+    }
+    src_out_size = src_header_size + len + src_footer_size;
+    src_out_text = (unsigned char*) xmalloc(src_out_size + 1);
+    if (src_header_size > 0)
+      memcpy(src_out_text, src_header_text, src_header_size);
+    if (len > 0)
+      memcpy(src_out_text + src_header_size, str, len);
+    if (src_footer_size > 0)
+      memcpy(src_out_text + src_header_size + len, src_footer_text,
+             src_footer_size);
+    if (generic_write_file(src_out_text, src_out_size, 0,
+                           global->compile_src_dir, pkt_name, sfx) < 0)
+      goto failed;
+  } if (len < 0) {
     // copy from archive
     arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
                                         global->run_archive_dir, run_id, 0,0);
-    if (arch_flags < 0) return -1;
+    if (arch_flags < 0) goto failed;
     if (generic_copy_file(arch_flags, 0, run_arch, "",
                           0, global->compile_src_dir, pkt_name, sfx) < 0)
       goto failed;
@@ -887,10 +943,18 @@ serve_compile_request(serve_state_t state,
   }
 
   xfree(pkt_buf);
+  xfree(src_header_text);
+  xfree(src_footer_text);
+  xfree(src_text);
+  xfree(src_out_text);
   return 0;
 
  failed:
   xfree(pkt_buf);
+  xfree(src_header_text);
+  xfree(src_footer_text);
+  xfree(src_text);
+  xfree(src_out_text);
   return -1;
 }
 
@@ -1685,13 +1749,15 @@ serve_rejudge_run(serve_state_t state,
   path_t run_arch_path;
   char *run_text = 0;
   size_t run_size = 0;
+  const struct section_problem_data *prob = 0;
+  const struct section_language_data *lang = 0;
 
   if (run_get_entry(state->runlog_state, run_id, &re) < 0) return;
   if (re.is_imported) return;
   if (re.is_readonly) return;
  
   if (re.prob_id <= 0 || re.prob_id > state->max_prob
-      || !state->probs[re.prob_id]) {
+      || !(prob = state->probs[re.prob_id])) {
     err("rejudge_run: bad problem: %d", re.prob_id);
     return;
   }
@@ -1720,7 +1786,7 @@ serve_rejudge_run(serve_state_t state,
   }
 
   if (re.lang_id <= 0 || re.lang_id > state->max_lang
-      || !state->langs[re.lang_id]) {
+      || !(lang = state->langs[re.lang_id])) {
     err("rejudge_run: bad language: %d", re.lang_id);
     return;
   }
@@ -1734,7 +1800,7 @@ serve_rejudge_run(serve_state_t state,
                         (state->probs[re.prob_id]->type_val > 0),
                         state->langs[re.lang_id]->src_sfx,
                         state->langs[re.lang_id]->compiler_env,
-                        accepting_mode, priority_adjustment);
+                        accepting_mode, priority_adjustment, prob, lang);
 
   serve_audit_log(state, run_id, user_id, ip, ssl_flag, "Command: Rejudge\n");
 }

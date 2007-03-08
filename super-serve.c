@@ -2776,6 +2776,10 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CLEAR_ALTERNATIVES_FILE:
   case SSERV_CMD_PROB_CHANGE_STAND_ATTR:
   case SSERV_CMD_PROB_CLEAR_STAND_ATTR:
+  case SSERV_CMD_PROB_CHANGE_SOURCE_HEADER:
+  case SSERV_CMD_PROB_CLEAR_SOURCE_HEADER:
+  case SSERV_CMD_PROB_CHANGE_SOURCE_FOOTER:
+  case SSERV_CMD_PROB_CLEAR_SOURCE_FOOTER:
     r = super_html_prob_param(sstate, pkt->b.id, pkt->param1, param2_ptr,
                               pkt->param3, pkt->param4);
     break;
@@ -3400,6 +3404,10 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CLEAR_ALTERNATIVES_FILE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_STAND_ATTR] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_STAND_ATTR] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_SOURCE_HEADER] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_SOURCE_HEADER] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_SOURCE_FOOTER] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_SOURCE_FOOTER] = { cmd_set_value },
 
   [SSERV_CMD_GLOB_CHANGE_DURATION] = { cmd_set_value },
   [SSERV_CMD_GLOB_UNLIMITED_DURATION] = { cmd_set_value },
