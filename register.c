@@ -2479,9 +2479,14 @@ display_main_page(void)
              url, _("Edit"));
       if (cnts->team_url && regx->status == USERLIST_REG_OK && !cnts->closed) {
         /* FIXME: need to set client mode correctly */
+        /*
         snprintf(url, sizeof(url),
                  "%s?locale_id=%d&contest_id=%d&SID=%llx",
                  cnts->team_url, client_locale_id, regx->id, user_cookie);
+        */
+        snprintf(url, sizeof(url),
+                 "%s?locale_id=%d&contest_id=%d",
+                 cnts->team_url, client_locale_id, regx->id);
         printf("<td%s><a href=\"%s\">%s</a></td>\n", table_style,
                url, _("Submit solution"));
       } else {
