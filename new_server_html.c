@@ -8587,7 +8587,7 @@ unpriv_page_header(FILE *fout,
     __("Statements"),
     __("Submit"),
     __("Submissions"),
-    __("Standings"),
+    __("Team standings"),
     __("Submit clar"),
     __("Clars"),
     __("Settings"),
@@ -8689,6 +8689,7 @@ unpriv_page_header(FILE *fout,
       if (start_time <= 0) continue;
       if (global->disable_user_standings > 0) continue;
       //if (global->score_system_val == SCORE_OLYMPIAD) continue;
+      if (cnts->personal) forced_text = _("User standings");
       break;
     case NEW_SRV_ACTION_VIEW_CLAR_SUBMIT:
       if (global->disable_team_clars) continue;
@@ -8859,7 +8860,7 @@ get_last_source(serve_state_t cs, int user_id, int prob_id)
   return s;
 }
 
-int
+static int
 get_last_answer_select_one(serve_state_t cs, int user_id, int prob_id)
 {
   unsigned char *s = get_last_source(cs, user_id, prob_id);
@@ -8874,13 +8875,107 @@ get_last_answer_select_one(serve_state_t cs, int user_id, int prob_id)
   return val;
 }
 
-int
+static int
 is_judged_virtual_olympiad(serve_state_t cs, int user_id)
 {
   struct run_entry vs, ve;
 
   if (run_get_virtual_info(cs->runlog_state, user_id, &vs, &ve) < 0) return 0;
   return (vs.judge_id > 0);
+}
+
+// problem status flags
+enum
+{
+  PROB_STATUS_VIEWABLE = 1,
+  PROB_STATUS_SUBMITTABLE = 2,
+  PROB_STATUS_TABABLE = 4,
+
+  PROB_STATUS_GOOD = PROB_STATUS_VIEWABLE | PROB_STATUS_SUBMITTABLE,
+};
+
+/*
+  *PROBLEM_PARAM(disable_user_submit, "d"),
+  *PROBLEM_PARAM(disable_tab, "d"),
+  *PROBLEM_PARAM(restricted_statement, "d"),
+  *PROBLEM_PARAM(disable_submit_after_ok, "d"),
+  *PROBLEM_PARAM(deadline, "s"),
+  *PROBLEM_PARAM(start_date, "s"),
+  *PROBLEM_PARAM(require, "x"),
+  *PROBLEM_PARAM(personal_deadline, "x"),
+*/
+
+static void
+get_problem_status(serve_state_t cs, int user_id,
+                   const unsigned char *user_login,
+                   int accepting_mode,
+                   time_t start_time,
+                   time_t stop_time,
+                   const unsigned char *solved_flag,
+                   const unsigned char *accepted_flag,
+                   unsigned char *pstat)
+{
+  const struct section_problem_data *prob;
+  int prob_id, pdi, is_deadlined, k, j;
+  time_t user_deadline;
+  const struct pers_dead_info *pdinfo;
+
+  // nothing before contest start
+  if (start_time <= 0) return;
+
+  for (prob_id = 1; prob_id <= cs->max_prob; prob_id++) {
+    if (!(prob = cs->probs[prob_id])) continue;
+
+    // the problem is completely disabled before its start_date
+    if (prob->t_start_date > 0 && prob->t_start_date > cs->current_time)
+      continue;
+
+    // the problem is completely disabled before requirements are met
+    // check requirements
+    if (prob->require) {
+      for (j = 0; prob->require[j]; j++) {
+        for (k = 1; k <= cs->max_prob; k++) {
+          if (cs->probs[k]
+              && !strcmp(cs->probs[k]->short_name, prob->require[j]))
+            break;
+        }
+        // no such problem :(
+        if (k > cs->max_prob) break;
+        // this problem is not yet accepted or solved
+        if (!solved_flag[k] && !accepted_flag[k]) break;
+      }
+      // if the requirements are not met, skip this problem
+      if (prob->require[j]) continue;
+    }
+
+    // check problem deadline
+    is_deadlined = 0;
+    if (stop_time > 0 && cs->current_time >= stop_time) {
+      is_deadlined = 1;
+    } else {
+      user_deadline = 0;
+      for (pdi = 0, pdinfo = prob->pd_infos; pdi < prob->pd_total;
+           pdi++, pdinfo++) {
+        if (!strcmp(user_login, pdinfo->login)) {
+          user_deadline = pdinfo->deadline;
+          break;
+        }
+      }
+      if (user_deadline <= 0) user_deadline = prob->t_deadline;
+      if (user_deadline > 0 && cs->current_time >= user_deadline)
+        is_deadlined = 1;
+    }
+
+    if (prob->restricted_statement <= 0 || !is_deadlined)
+      pstat[prob_id] |= PROB_STATUS_VIEWABLE;
+
+    if (!is_deadlined && prob->disable_user_submit <= 0
+        && (prob->disable_submit_after_ok <= 0 || !solved_flag[prob_id]))
+      pstat[prob_id] |= PROB_STATUS_SUBMITTABLE;
+
+    if (prob->disable_tab <= 0)
+      pstat[prob_id] |= PROB_STATUS_TABABLE;
+  }
 }
 
 static const unsigned char *main_page_headers[NEW_SRV_ACTION_LAST] =
@@ -8911,6 +9006,7 @@ user_main_page(FILE *fout,
   unsigned char *accepted_flag = 0;
   unsigned char *pending_flag = 0;
   unsigned char *trans_flag = 0;
+  unsigned char *prob_status = 0;
   int *best_run = 0;
   int *attempts = 0;
   int *disqualified = 0;
@@ -8959,6 +9055,7 @@ user_main_page(FILE *fout,
   XALLOCAZ(best_score, cs->max_prob + 1);
   XALLOCAZ(prev_successes, cs->max_prob + 1);
   XALLOCAZ(all_attempts, cs->max_prob + 1);
+  XALLOCAZ(prob_status, cs->max_prob + 1);
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
@@ -8995,15 +9092,14 @@ user_main_page(FILE *fout,
                                trans_flag,
                                best_run, attempts, disqualified,
                                best_score, prev_successes, all_attempts);
+  get_problem_status(cs, phr->user_id, phr->login, accepting_mode,
+                     start_time, stop_time,
+                     solved_flag, accepted_flag, prob_status);
 
   if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
-    // need correct problem selection...
     if (prob_id > cs->max_prob) prob_id = 0;
     if (prob_id > 0 && !(prob = cs->probs[prob_id])) prob_id = 0;
-    if (prob_id > 0 && is_problem_deadlined(cs, prob_id, phr->login, 0))
-      prob_id = 0;
-    if (prob_id > 0 && prob->t_start_date > 0
-        && cs->current_time < prob->t_start_date)
+    if (prob_id > 0 && !(prob_status[prob_id] & PROB_STATUS_GOOD))
       prob_id = 0;
     if (prob_id > 0 && prob->variant_num > 0
         && (variant = find_variant(cs, phr->user_id, prob_id)) <= 0)
@@ -9014,8 +9110,7 @@ user_main_page(FILE *fout,
     fprintf(fout, "<tr id=\"probNavTopList\">\n");
     for (i = 1, j = 0; i <= cs->max_prob; i++) {
       if (!(prob = cs->probs[i])) continue;
-      if (prob->disable_user_submit > 0) continue;
-      /* standard checks for submit possibility */
+      if (!(prob_status[i] & PROB_STATUS_TABABLE)) continue;
 
       if (j > 0) {
         fprintf(fout, "<td class=\"probNavSpaceTop\">&nbsp;</td>");
@@ -9240,7 +9335,8 @@ user_main_page(FILE *fout,
       }
 
       /* put problem statement */
-      if (prob->statement_file[0]) {
+      if (prob->statement_file[0]
+          && (prob_status[prob_id] & PROB_STATUS_VIEWABLE)) {
         if (variant > 0) {
           ns_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
                                 prob->statement_file, variant);
@@ -9262,7 +9358,7 @@ user_main_page(FILE *fout,
         fprintf(fout, "%s", bb);
       }
 
-      if (prob->disable_user_submit <= 0) {
+      if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)) {
         alternatives = 0;
         if ((prob->type_val == PROB_TYPE_SELECT_ONE
              || prob->type_val == PROB_TYPE_SELECT_MANY)
@@ -9405,7 +9501,6 @@ user_main_page(FILE *fout,
       } /* prob->disable_user_submit <= 0 */
 
       if (global->problem_navigation
-          && global->score_system_val == SCORE_OLYMPIAD
           && !prob->disable_user_submit
           && prob->type_val != PROB_TYPE_SELECT_ONE
           && all_attempts[prob->id]) {
@@ -9421,8 +9516,17 @@ user_main_page(FILE *fout,
                   /*all_runs?_("all"):*/_("last 15"),
                   cnts->team_head_style);
         }
-        ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
-                                     prob_id, "summary");
+        if (global->score_system_val == SCORE_OLYMPIAD) {
+          ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
+                                       prob_id, "summary");
+        } else {
+          new_write_user_runs(cs, fout, phr->user_id, all_runs, prob->id,
+                              NEW_SRV_ACTION_VIEW_SOURCE,
+                              NEW_SRV_ACTION_VIEW_REPORT,
+                              NEW_SRV_ACTION_PRINT_RUN,
+                              phr->session_id, phr->self_url,
+                              phr->hidden_vars, "", "summary");
+        }
       }
 
       if (!cnts->exam_mode) {
@@ -9441,8 +9545,7 @@ user_main_page(FILE *fout,
 
         if (global->problem_navigation > 0) {
           for (i = prob_id - 1; i > 0; i--) {
-            if (!cs->probs[i]) continue;
-            // FIXME: standard applicability checks
+            if (!(prob_status[i] & PROB_STATUS_GOOD)) continue;
             break;
           }
           if (i > 0) {
@@ -9465,8 +9568,7 @@ user_main_page(FILE *fout,
 
         if (global->problem_navigation > 0) {
           for (i = prob_id + 1; i <= cs->max_prob; i++) {
-            if (!cs->probs[i]) continue;
-            // FIXME: standard applicability checks
+            if (!(prob_status[i] & PROB_STATUS_GOOD)) continue;
             break;
           }
           if (i <= cs->max_prob) {
@@ -9492,7 +9594,7 @@ user_main_page(FILE *fout,
       ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
                                    0, "summary");
     } else {
-      new_write_user_runs(cs, fout, phr->user_id, all_runs,
+      new_write_user_runs(cs, fout, phr->user_id, all_runs, 0,
                           NEW_SRV_ACTION_VIEW_SOURCE,
                           NEW_SRV_ACTION_VIEW_REPORT,
                           NEW_SRV_ACTION_PRINT_RUN,
@@ -9595,14 +9697,11 @@ user_main_page(FILE *fout,
 
   /* new problem navigation */
   if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
-    // consider prob_id OK...
-
     fprintf(fout, "</div></td></tr>\n");
     fprintf(fout, "<tr id=\"probNavBottomList\">\n");
     for (i = 1, j = 0; i <= cs->max_prob; i++) {
       if (!(prob = cs->probs[i])) continue;
-      if (prob->disable_user_submit > 0) continue;
-      /* standard checks for submit possibility */
+      if (!(prob_status[i] & PROB_STATUS_TABABLE)) continue;
 
       if (j > 0) {
         fprintf(fout, "<td class=\"probNavSpaceBottom\">&nbsp;</td>");
@@ -9650,8 +9749,7 @@ user_main_page(FILE *fout,
     tdiff += phr->timestamp2.tv_usec;
     tdiff -= ((long long) phr->timestamp1.tv_sec) * 1000000;
     tdiff -= phr->timestamp1.tv_usec;
-    fprintf(fout, "<div class=\"dotted\"><p%s>%s: %lld %s</p></div>",
-            cnts->team_par_style,
+    fprintf(fout, "<div class=\"dotted\"><p class=\"dotted\">%s: %lld %s</p></div>",
             _("Page generation time"), tdiff / 1000,
             _("msec"));
   }

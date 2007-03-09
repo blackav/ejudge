@@ -917,6 +917,7 @@ html_write_user_problems_summary(const serve_state_t state,
 void
 new_write_user_runs(const serve_state_t state, FILE *f, int uid,
                     unsigned int show_flags,
+                    int prob_id,
                     int action_view_source,
                     int action_view_report,
                     int action_print_run,
@@ -945,6 +946,9 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
     cl = alloca(strlen(table_class) + 16);
     sprintf(cl, " class=\"%s\"", table_class);
   }
+
+  if (prob_id < 0 || prob_id > state->max_prob || !state->probs[prob_id])
+    prob_id = 0;
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(state->runlog_state, uid);
@@ -989,6 +993,7 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
         || re.status == RUN_EMPTY)
       continue;
     if (re.user_id != uid) continue;
+    if (prob_id > 0 && re.prob_id != prob_id) continue;
     showed++;
 
     lang = 0;
@@ -5347,7 +5352,7 @@ write_team_page(const serve_state_t state,
             _("Sent submissions"),
             all_runs?_("all"):_("last 15"),
             cnts->team_head_style);
-    new_write_user_runs(state, f, user_id, all_runs, 0, 0, 0,
+    new_write_user_runs(state, f, user_id, all_runs, 0, 0, 0, 0,
                         sid, self_url, hidden_vars, extra_args, 0);
 
     fprintf(f, "<p%s>%s%s</a></p>",

@@ -4278,6 +4278,42 @@ super_html_print_problem(FILE *f,
                                session_id, form_row_attrs[row ^= 1],
                                self_url, extra_args, prob_hidden_vars);
 
+    if (global && global->problem_navigation > 0) {
+      //PROBLEM_PARAM(disable_tab, "d"),
+      extra_msg = "Undefined";
+      tmp_prob.disable_tab = prob->disable_tab;
+      if (!prob->abstract) {
+        prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_TAB,
+                               &tmp_prob, sup_prob, sstate->global);
+        snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+                 tmp_prob.disable_tab?"Yes":"No");
+        extra_msg = msg_buf;
+      }
+      print_boolean_3_select_row(f, "Disable problem tab:",
+                                 prob->disable_tab,
+                                 SSERV_CMD_PROB_CHANGE_DISABLE_TAB,
+                                 extra_msg,
+                                 session_id, form_row_attrs[row ^= 1],
+                                 self_url, extra_args, prob_hidden_vars);
+    }
+
+    //PROBLEM_PARAM(restricted_statement, "d"),
+    extra_msg = "Undefined";
+    tmp_prob.restricted_statement = prob->restricted_statement;
+    if (!prob->abstract) {
+      prepare_set_prob_value(PREPARE_FIELD_PROB_RESTRICTED_STATEMENT,
+                             &tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+               tmp_prob.restricted_statement?"Yes":"No");
+      extra_msg = msg_buf;
+    }
+    print_boolean_3_select_row(f, "Restricted problem statement:",
+                               prob->restricted_statement,
+                               SSERV_CMD_PROB_CHANGE_RESTRICTED_STATEMENT,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+
     //PROBLEM_PARAM(disable_submit_after_ok, "d"),
     extra_msg = "Undefined";
     tmp_prob.disable_submit_after_ok = prob->disable_submit_after_ok;
@@ -5350,6 +5386,14 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_DISABLE_USER_SUBMIT:
     p_int = &prob->disable_user_submit;
+    goto handle_boolean_2;
+
+  case SSERV_CMD_PROB_CHANGE_DISABLE_TAB:
+    p_int = &prob->disable_tab;
+    goto handle_boolean_2;
+
+  case SSERV_CMD_PROB_CHANGE_RESTRICTED_STATEMENT:
+    p_int = &prob->restricted_statement;
     goto handle_boolean_2;
 
   case SSERV_CMD_PROB_CHANGE_DISABLE_SUBMIT_AFTER_OK:
