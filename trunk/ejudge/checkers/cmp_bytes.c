@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005,2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,7 +35,8 @@ int checker_main(int argc, char **argv)
       break;
   if (i < corr_size)
     fatal_WA("Difference at byte %zu; out = %d, corr = %d", i,
-             out_data[i], corr_data[i]);
+             ((unsigned char*)out_data)[i],
+             ((unsigned char*)corr_data)[i]);
 
   checker_OK();
 }
