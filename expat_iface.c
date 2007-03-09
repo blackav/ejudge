@@ -67,12 +67,15 @@ struct parser_data
  *  -7      - truncated sequence
  */
 static int
-is_correct_utf8(const unsigned char *buf, size_t size)
+is_correct_utf8(const unsigned char *buf, size_t size, unsigned int *p_ucs32)
 {
   unsigned int w32 = 0;
 
   if (!size) return 0;
-  if (buf[0] <= 0x7F) return 1;
+  if (buf[0] <= 0x7F) {
+    *p_ucs32 = w32;
+    return 1;
+  }
   if ((buf[0] & 0xE0) == 0xC0) {
     // two-byte sequence
     if (size < 2) return -7;
@@ -81,6 +84,7 @@ is_correct_utf8(const unsigned char *buf, size_t size)
     w32 |= buf[1] & 0x3F;
     w32 |= (buf[0] & 0x1F) << 6;
     if (w32 <= 0x7F) return -2;
+    *p_ucs32 = w32;
     return 2;
   }
   if ((buf[0] & 0xF0) == 0xE0) {
@@ -93,6 +97,7 @@ is_correct_utf8(const unsigned char *buf, size_t size)
     w32 |= (buf[1] & 0x3F) << 6;
     w32 |= (buf[0] & 0x0F) << 12;
     if (w32 <= 0x7FF) return -3;
+    *p_ucs32 = w32;
     return 3;
   }
   if ((buf[0] & 0xF8) == 0xF0) {
@@ -107,6 +112,7 @@ is_correct_utf8(const unsigned char *buf, size_t size)
     w32 |= (buf[1] & 0x3F) << 12;
     w32 |= (buf[0] & 0x07) << 18;
     if (w32 <= 0xFFFF) return -4;
+    *p_ucs32 = w32;
     return 4;
   }
   if ((buf[0] & 0xFC) == 0xF8) {
@@ -123,6 +129,7 @@ is_correct_utf8(const unsigned char *buf, size_t size)
     w32 |= (buf[1] & 0x3F) << 18;
     w32 |= (buf[0] & 0x03) << 24;
     if (w32 <= 0x1FFFFF) return -5;
+    *p_ucs32 = w32;
     return 5;
   }
   if ((buf[0] & 0xFE) == 0xFC) {
@@ -141,6 +148,7 @@ is_correct_utf8(const unsigned char *buf, size_t size)
     w32 |= (buf[1] & 0x3F) << 24;
     w32 |= (buf[0] & 0x01) << 30;
     if (w32 <= 0x3FFFFFF) return -6;
+    *p_ucs32 = w32;
     return 6;
   }
   // 0xFE, 0xFF are invalid
@@ -164,6 +172,7 @@ convert_utf8_to_local(iconv_t hnd,
   char *p_outbuf = outbuf;
   size_t loc_inlen = inlen, loc_outlen = outlen, convlen;
   int stat;
+  unsigned int w32 = 0;
 
   if (!loc_inlen) return 0;
   while (1) {
@@ -181,7 +190,7 @@ convert_utf8_to_local(iconv_t hnd,
     // we need to know the exact failure reason in order to recover
     // check, that the input utf-8 sequence is correct
     ASSERT(loc_inlen > 0);
-    stat = is_correct_utf8(p_inbuf, loc_inlen);
+    stat = is_correct_utf8(p_inbuf, loc_inlen, &w32);
     if (stat == -7) {
       // truncated UTF-8 sequence
       // append `?' and quit
@@ -200,6 +209,20 @@ convert_utf8_to_local(iconv_t hnd,
       continue;
     }
     if (stat >= 1 && stat <= 6) {
+      // handle U+2400 - U+2421 special characters
+      if (w32 >= 0x2400 && w32 <= 0x2420) {
+        p_inbuf += stat;
+        loc_inlen -= stat;
+        *p_outbuf++ = w32 - 0x2400;
+        loc_outlen--;
+        continue;
+      } else if (w32 == 0x2421) {
+        p_inbuf += stat;
+        loc_inlen -= stat;
+        *p_outbuf++ = 0x7f;
+        loc_outlen--;
+        continue;
+      }
       // a good UTF-8 sequence with no mapping to the target charset
       convlen = convert_utf8_to_local(hnd, "?", 1, p_outbuf, loc_outlen);
       if (convlen == (size_t) -1) return convlen;
