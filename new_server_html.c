@@ -9118,20 +9118,20 @@ user_main_page(FILE *fout,
       }
       hh = "probNavHidden";
       if (prob->disable_user_submit > 0) {
-        cc = "white";
+        cc = "probDisabled";
       } else if (i == prob_id) {
-        cc = "white";
+        cc = "probCurrent";
       } else if (!all_attempts[i]) {
-        cc = "#dcdcdc";
+        cc = "probEmpty";
       } else if (pending_flag[i] || trans_flag[i]) {
-        cc = "#ffff44";
+        cc = "probTrans";
       } else if (accepted_flag[i] || solved_flag[i]) {
-        cc = "#44ff44";
+        cc = "probOk";
       } else {
-        cc = "#ff4444";
+        cc = "probBad";
       }
       if (i == prob_id) hh = "probNavActiveTop";
-      fprintf(fout, "<td class=\"%s\" style=\"background-color: %s\" onclick=\"displayProblemSubmitForm(%d)\">", hh, cc, i);
+      fprintf(fout, "<td class=\"%s\" onclick=\"displayProblemSubmitForm(%d)\"><div class=\"%s\">", hh, i, cc);
       //fprintf(fout, "<td class=\"%s\" style=\"background-color: %s\">", hh, cc);
       /*
       if (accepting_mode && accepted_flag[i]) {
@@ -9147,7 +9147,7 @@ user_main_page(FILE *fout,
         fprintf(fout, "</s>");
       }
       */
-      fprintf(fout, "</td>\n");
+      fprintf(fout, "</div></td>\n");
       j++;
     }
     fprintf(fout, "</tr><tr><td colspan=\"%d\" id=\"probNavTaskArea\"><div id=\"probNavTaskArea\">\n", j);
@@ -9710,19 +9710,19 @@ user_main_page(FILE *fout,
       hh = "probNavHidden";
       if (prob_id == i) hh = "probNavActiveBottom";
       if (prob->disable_user_submit > 0) {
-        cc = "white";
+        cc = "probDisabled";
       } else if (i == prob_id) {
-        cc = "white";
+        cc = "probCurrent";
       } else if (!all_attempts[i]) {
-        cc = "#dcdcdc";
+        cc = "probEmpty";
       } else if (pending_flag[i] || trans_flag[i]) {
-        cc = "#ffff44";
+        cc = "probTrans";
       } else if (accepted_flag[i] || solved_flag[i]) {
-        cc = "#44ff44";
+        cc = "probOk";
       } else {
-        cc = "#ff4444";
+        cc = "probBad";
       }
-      fprintf(fout, "<td class=\"%s\" style=\"background-color: %s\" onclick=\"displayProblemSubmitForm(%d)\">", hh, cc, i);
+      fprintf(fout, "<td class=\"%s\" onclick=\"displayProblemSubmitForm(%d)\"><div class=\"%s\">", hh, i, cc);
       /*
       if (accepting_mode && accepted_flag[i]) {
         fprintf(fout, "<s>");
@@ -9737,7 +9737,7 @@ user_main_page(FILE *fout,
         fprintf(fout, "</s>");
       }
       */
-      fprintf(fout, "</td>\n");
+      fprintf(fout, "</div></td>\n");
       j++;
     }
     fprintf(fout, "</tr></table>\n");
