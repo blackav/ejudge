@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-03-08 15:40+0300\n"
-"PO-Revision-Date: 2007-03-08 15:40+0300\n"
+"POT-Creation-Date: 2007-03-09 09:02+0300\n"
+"PO-Revision-Date: 2007-03-09 09:08+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -3014,7 +3014,7 @@ msgid "Team requests are suspended"
 msgstr "Обработка запросов участников приостановлена"
 
 msgid "Team standings"
-msgstr "Положение участников"
+msgstr "Положение команд"
 
 msgid "Test file does not exist"
 msgstr "Запрошенный файл не существует"
@@ -3055,7 +3055,7 @@ msgid "The contest is in progress"
 msgstr "Турнир идёт"
 
 msgid "The contest is in progress (standings are frozen)"
-msgstr "Турнир идёт (текущее положение команд не отображается)"
+msgstr "Турнир идёт (текущее положение участников не отображается)"
 
 msgid "The contest is not started"
 msgstr "Турнир не начался"
@@ -3064,7 +3064,7 @@ msgid "The contest is over"
 msgstr "Турнир закончился"
 
 msgid "The contest is over (standings are frozen)"
-msgstr "Турнир закончился (текущее положение команд не отображается)"
+msgstr "Турнир закончился (текущее положение участников не отображается)"
 
 msgid ""
 "The contest is temporarily not available. Please, retry the request a bit "
@@ -3282,13 +3282,13 @@ msgid "Unlock"
 msgstr "Открыть"
 
 msgid "Update public standings"
-msgstr "Обновить публичную таблицу положения команд"
+msgstr "Обновить публичную таблицу положения участников"
 
 msgid "Update standings!"
 msgstr "Обновить таблицу!"
 
 msgid "Update the public standings"
-msgstr "Обновить публичную таблицу положения команд"
+msgstr "Обновить публичную таблицу положения участников"
 
 msgid "Upload judging protocol"
 msgstr "Установить протокол тестирования"
@@ -3378,6 +3378,9 @@ msgstr "Регистрация пользователя завершена"
 msgid "User report"
 msgstr "Пользовательский протокол"
 
+msgid "User standings"
+msgstr "Положение участников"
+
 msgid "User's report"
 msgstr "Пользовательский протокол"
 
@@ -3460,7 +3463,7 @@ msgid "Virtual contest is not started"
 msgstr "Виртуальный турнир не начат"
 
 msgid "Virtual standings"
-msgstr "Виртуальное положение команд"
+msgstr "Виртуальное положение участников"
 
 msgid "Virtual start"
 msgstr "Начало виртуального турнира"
