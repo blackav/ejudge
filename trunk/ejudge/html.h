@@ -35,6 +35,7 @@ void write_public_log(const serve_state_t,
 
 void new_write_user_runs(const serve_state_t, FILE *f, int uid,
                          unsigned int show_flags,
+                         int prob_id,
                          int action_view_source,
                          int action_view_report,
                          int action_print_run,

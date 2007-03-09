@@ -419,6 +419,8 @@ struct section_problem_data
   int    min_tests_to_accept;   /* minimal number of tests to accept problem */
   int    checker_real_time_limit;
   int    disable_user_submit;   /* user cannot submit this problem */
+  int    disable_tab;           /* no problem tab for `problem_navigation' */
+  int    restricted_statement;  /* close the statement after the end */
   int    disable_submit_after_ok;
   int    disable_auto_testing;
   int    disable_testing;
@@ -660,6 +662,8 @@ enum
   PREPARE_FIELD_PROB_TEAM_ENABLE_CE_VIEW,
   PREPARE_FIELD_PROB_TEAM_SHOW_JUDGE_REPORT,
   PREPARE_FIELD_PROB_DISABLE_USER_SUBMIT,
+  PREPARE_FIELD_PROB_DISABLE_TAB,
+  PREPARE_FIELD_PROB_RESTRICTED_STATEMENT,
   PREPARE_FIELD_PROB_DISABLE_SUBMIT_AFTER_OK,
   PREPARE_FIELD_PROB_DISABLE_TESTING,
   PREPARE_FIELD_PROB_DISABLE_AUTO_TESTING,
