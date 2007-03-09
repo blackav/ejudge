@@ -174,6 +174,10 @@ div.dotted
 	padding: 0px 10px 10px 10px;
 	margin: 10px 10px 10px 10px;
 }
+p.dotted
+{
+        font-size: 12px
+}
 
 div.big_string /* the header for some content section */
 {
@@ -332,7 +336,8 @@ td.probNavHidden
         border-right-style: solid;
         border-bottom-style: solid;
         //background-color: #DCDCDC;
-        padding: 1px 1px 1px 1px;
+        //padding: 1px 1px 1px 1px;
+        padding: 0px 0px 0px 0px;
 }
 
 td#probNavTaskArea
@@ -381,4 +386,42 @@ A.tab
 A.tab:visited
 {
         color: #000000;
+}
+
+div.probDisabled
+{
+        background-color: white;
+        padding: 2px 2px 2px 2px;
+        margin: 0px 0px 0px 0px;
+}
+div.probCurrent
+{
+        background-color: white;
+        padding: 2px 2px 2px 2px;
+        padding: 0px 0px 0px 0px;
+        margin: 0px 0px 0px 0px;
+}
+div.probEmpty
+{
+        background-color: #dcdcdc;
+        padding: 2px 2px 2px 2px;
+        margin: 0px 0px 0px 0px;
+}
+div.probTrans
+{
+        background-color: #ffff88;
+        padding: 2px 2px 2px 2px;
+        margin: 0px 0px 0px 0px;
+}
+div.probOk
+{
+        background-color: #88ff88;
+        padding: 2px 2px 2px 2px;
+        margin: 0px 0px 0px 0px;
+}
+div.probBad
+{
+        background-color: #ff8888;
+        padding: 2px 2px 2px 2px;
+        margin: 0px 0px 0px 0px;
 }

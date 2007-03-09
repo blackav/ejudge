@@ -2117,3 +2117,14 @@ prepare_out.c 4002 0 5707228
 serve_2.c 4002 0 6724095
 super_html_3.c 4002 0 22036598
 serve_2.c 4004 0 6724560
+html.h 4006 0 908093
+prepare.h 4006 0 2739800
+super_proto.h 4006 0 1787653
+serve-control.c 4006 0 8025721
+super-serve.c 4006 0 11870295
+html.c 4006 0 14333246
+new_server_html.c 4006 0 28353343
+prepare.c 4006 0 13515674
+prepare_out.c 4006 0 5724302
+super_html_3.c 4006 0 22174302
+new_server_html.c 4007 0 28356640
