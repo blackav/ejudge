@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,8 @@ run_request_packet_quit(size_t *p_out_size, void **p_out_data)
   size_t out_size = sizeof(struct run_request_bin_packet);
   struct run_request_bin_packet *out_data = 0;
 
-  XCALLOC(out_data, 1);
+  out_size = pkt_bin_align(out_size);
+  out_data = (struct run_request_bin_packet*) xcalloc(1, out_size);
 
   out_data->packet_len = cvt_host_to_bin_32(out_size);
   out_data->version = cvt_host_to_bin_32(1);
@@ -39,7 +40,7 @@ run_request_packet_quit(size_t *p_out_size, void **p_out_data)
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

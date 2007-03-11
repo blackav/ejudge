@@ -9302,7 +9302,8 @@ user_main_page(FILE *fout,
       bb[0] = 0;
       if (variant > 0) {
         snprintf(bb, sizeof(bb), "<%s>%s %s-%s (%s %d)</%s>\n",
-                 cnts->team_head_style, _("Submit a solution for"),
+                 cnts->team_head_style,
+                 (prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)?_("Submit a solution for"):_("Problem"),
                  prob->short_name, prob->long_name, _("Variant"), variant,
                  cnts->team_head_style);
       } else {
@@ -9322,7 +9323,7 @@ user_main_page(FILE *fout,
                    cnts->team_head_style, _("Problem"),
                    prob->long_name, cnts->team_head_style);
         } else {
-          if (prob->disable_user_submit > 0) {
+          if (!(prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)) {
             snprintf(bb, sizeof(bb), "<%s>%s %s-%s</%s>\n",
                      cnts->team_head_style, _("Problem"),
                      prob->short_name, prob->long_name, cnts->team_head_style);
@@ -9843,31 +9844,6 @@ unpriv_xml_update_answer(
         const struct contest_desc *cnts,
         struct contest_extra *extra)
 {
-  /*
-  serve_state_t cs = extra->serve_state;
-  const struct section_global_data *global = cs->global;
-  const struct section_problem_data *prob;
-  const struct section_language_data *lang = 0;
-  char *log_txt = 0;
-  size_t log_len = 0;
-  FILE *log_f = 0;
-  int prob_id, n, lang_id = 0, i, ans, max_ans, j;
-  const unsigned char *s, *run_text = 0;
-  size_t run_size = 0, ans_size;
-  unsigned char *ans_buf, *ans_map;
-  time_t start_time, stop_time, user_deadline = 0;
-  const unsigned char *login, *mime_type_str = 0;
-  char **lang_list;
-  int mime_type = 0;
-  int variant = 0, run_id, arch_flags = 0;
-  unsigned char *acc_probs = 0;
-  path_t run_path;
-  unsigned char bb[1024];
-  unsigned char *tmp_run = 0;
-  char *tmp_ptr = 0;
-  int ans_val = 0, accept_immediately = 0;
-  */
-
   const serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob = 0;

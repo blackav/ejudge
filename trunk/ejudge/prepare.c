@@ -1391,7 +1391,7 @@ parse_variant_map(serve_state_t state, const unsigned char *path)
     xfree(pmap->prob_rev_map);
     xfree(pmap);
   }
-  fclose(f);
+  if (f) fclose(f);
   return 0;
 }
 
