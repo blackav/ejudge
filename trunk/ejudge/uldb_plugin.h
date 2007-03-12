@@ -4,7 +4,7 @@
 #ifndef __ULDB_PLUGIN_H__
 #define __ULDB_PLUGIN_H__
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -81,7 +81,7 @@ struct uldb_plugin_iface
                     int contest_id,
                     int locale_id,
                     int priv_level,
-                    int role, int recovery,
+                    int role, int recovery, int team_login,
                     const struct userlist_cookie **);
   // remove a cookie
   int (*remove_cookie)(void *, const struct userlist_cookie *);

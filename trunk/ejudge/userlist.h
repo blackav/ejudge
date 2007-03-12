@@ -4,7 +4,7 @@
 #ifndef __USERLIST_H__
 #define __USERLIST_H__
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -163,6 +163,7 @@ enum
     USERLIST_A_CNTS_LAST_LOGIN,
     USERLIST_A_INFO_CREATE,
     USERLIST_A_RECOVERY,
+    USERLIST_A_TEAM_LOGIN,
 
     USERLIST_LAST_ATTN,
   };
@@ -336,6 +337,7 @@ struct userlist_cookie
   int priv_level;
   int role;
   int recovery;
+  int team_login;               /* used in case when team_passwd != reg_passwd*/
 };
 
 struct userlist_contest
