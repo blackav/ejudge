@@ -323,6 +323,7 @@ struct userlist_pk_login_ok
   signed char        locale_id;
   unsigned char      priv_level;
   int                role;
+  int                team_login;
   unsigned char      login_len;
   unsigned char      name_len;
   char               data[2];

@@ -528,7 +528,7 @@ link_client_state(struct client_state *p)
 #define default_new_user(a,b,c,d) uldb_default->iface->new_user(uldb_default->data, a, b, c, d)
 #define default_remove_user(a) uldb_default->iface->remove_user(uldb_default->data, a)
 #define default_get_cookie(a, b) uldb_default->iface->get_cookie(uldb_default->data, a, b)
-#define default_new_cookie(a, b, c, d, e, f, g, h, i, j, k) uldb_default->iface->new_cookie(uldb_default->data, a, b, c, d, e, f, g, h, i, j, k)
+#define default_new_cookie(a, b, c, d, e, f, g, h, i, j, k, l) uldb_default->iface->new_cookie(uldb_default->data, a, b, c, d, e, f, g, h, i, j, k, l)
 #define default_remove_cookie(a) uldb_default->iface->remove_cookie(uldb_default->data, a)
 #define default_remove_user_cookies(a) uldb_default->iface->remove_user_cookies(uldb_default->data, a)
 #define default_remove_expired_cookies(a) uldb_default->iface->remove_expired_cookies(uldb_default->data, a)
@@ -1560,7 +1560,7 @@ cmd_recover_password_1(struct client_state *p,
   // generate new cookie for password recovery
   if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
                          data->contest_id, data->locale_id,
-                         PRIV_LEVEL_USER, 0, 1, &cookie) < 0) {
+                         PRIV_LEVEL_USER, 0, 1, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -1893,7 +1893,7 @@ cmd_do_login(struct client_state *p,
   answer = alloca(ans_len);
   memset(answer, 0, ans_len);
 
-  if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0, data->contest_id, data->locale_id, PRIV_LEVEL_USER, 0, 0, &cookie) < 0) {
+  if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0, data->contest_id, data->locale_id, PRIV_LEVEL_USER, 0, 0, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -2001,7 +2001,7 @@ cmd_check_user(
   answer = alloca(ans_len);
   memset(answer, 0, ans_len);
 
-  if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0, data->contest_id, data->locale_id, PRIV_LEVEL_USER, 0, 0, &cookie) < 0) {
+  if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0, data->contest_id, data->locale_id, PRIV_LEVEL_USER, 0, 0, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -2147,7 +2147,7 @@ cmd_team_login(struct client_state *p, int pkt_len,
   }
   if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
                          data->contest_id, data->locale_id,
-                         PRIV_LEVEL_USER, 0, 0, &cookie) < 0) {
+                         PRIV_LEVEL_USER, 0, 0, 1, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -2310,7 +2310,7 @@ cmd_team_check_user(struct client_state *p, int pkt_len,
   }
   if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
                          data->contest_id, data->locale_id,
-                         PRIV_LEVEL_USER, 0, 0, &cookie) < 0) {
+                         PRIV_LEVEL_USER, 0, 0, 1, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -2492,7 +2492,7 @@ cmd_priv_login(struct client_state *p, int pkt_len,
 
   if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
                          data->contest_id, data->locale_id,
-                         data->priv_level, data->role, 0, &cookie) < 0) {
+                         data->priv_level, data->role, 0, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -2623,7 +2623,7 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
 
   if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
                          data->contest_id, data->locale_id,
-                         data->priv_level, data->role, 0, &cookie) < 0) {
+                         data->priv_level, data->role, 0, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -2664,6 +2664,7 @@ cmd_check_cookie(struct client_state *p,
   time_t current_time = time(0);
   unsigned char logbuf[1024];
   const struct userlist_user_info *ui;
+  const struct contest_desc *cnts = 0;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -2701,6 +2702,21 @@ cmd_check_cookie(struct client_state *p,
     err("%s -> cookie expired", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
+  }
+
+  /* deny cookie, if it's marked as team_cookie, and disable_team_password
+   * is not set */
+  if (cookie->contest_id > 0) {
+    if (contests_get(cookie->contest_id, &cnts) < 0 || !cnts) {
+      err("%s -> cannot load contest", logbuf);
+      send_reply(p, -ULS_ERR_NO_COOKIE);
+      return;
+    }
+    if (!cnts->disable_team_password && cookie->team_login) {
+      err("%s -> this is a team cookie", logbuf);
+      send_reply(p, -ULS_ERR_NO_COOKIE);
+      return;
+    }
   }
 
   anslen = sizeof(struct userlist_pk_login_ok)
@@ -2809,6 +2825,7 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
     return;
   }
   if (data->contest_id && !cookie->contest_id) {
+    // assigning contest_id to unassigned cookie
     if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
       err("%s -> invalid contest: %s", logbuf, contests_strerror(-errno));
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
@@ -2839,6 +2856,11 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
     err("%s -> invalid contest: %s", logbuf, contests_strerror(-errno));
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (!cnts->disable_team_password && !cookie->team_login) {
+    err("%s -> not a team cookie", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
   if (data->locale_id == -1) {
@@ -3212,7 +3234,7 @@ cmd_priv_cookie_login(struct client_state *p,
 
   if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
                          data->contest_id, data->locale_id,
-                         data->priv_level, data->role, 0, &cookie) < 0) {
+                         data->priv_level, data->role, 0, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -7242,6 +7264,7 @@ cmd_get_cookie(struct client_state *p,
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
+  /* FIXME: check team_login flag! */
   if (data->request_id == ULS_GET_COOKIE) {
     if (!c || c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
         || (c->flags & USERLIST_UC_LOCKED)) {
@@ -7271,6 +7294,7 @@ cmd_get_cookie(struct client_state *p,
   out->name_len = name_len;
   out->priv_level = cookie->priv_level;
   out->role = cookie->role;
+  out->team_login = cookie->team_login;
   strcpy(login_ptr, u->login);
   strcpy(name_ptr, user_name);
   
