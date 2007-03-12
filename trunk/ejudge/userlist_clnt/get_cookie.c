@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@ userlist_clnt_get_cookie(struct userlist_clnt *clnt,
                          int *p_locale_id,
                          int *p_priv_level,
                          int *p_role,
+                         int *p_team_login,
                          unsigned char **p_login,
                          unsigned char **p_name)
 {
@@ -82,6 +83,7 @@ userlist_clnt_get_cookie(struct userlist_clnt *clnt,
   if (p_contest_id) *p_contest_id = in->contest_id;
   if (p_priv_level) *p_priv_level = in->priv_level;
   if (p_role) *p_role = in->role;
+  if (p_team_login) *p_team_login = in->team_login;
   if (p_login) *p_login = xstrdup(login_ptr);
   if (p_name) *p_name = xstrdup(name_ptr);
 
