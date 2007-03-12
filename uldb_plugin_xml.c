@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -57,7 +57,7 @@ static int remove_user_func(void *, int);
 static int get_cookie_func(void *, ej_cookie_t,
                            const struct userlist_cookie **);
 static int new_cookie_func(void *, int, ej_ip_t, int, ej_cookie_t, time_t,
-                           int, int, int, int, int,
+                           int, int, int, int, int, int,
                            const struct userlist_cookie **);
 static int remove_cookie_func(void *data, const struct userlist_cookie *c);
 static int remove_user_cookies_func(void *, int);
@@ -675,6 +675,7 @@ new_cookie_func(void *data,
                 int priv_level,
                 int role,
                 int recovery,
+                int team_login,
                 const struct userlist_cookie **p_cookie)
 {
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
@@ -716,6 +717,7 @@ new_cookie_func(void *data,
   c->priv_level = priv_level;
   c->role = role;
   c->recovery = recovery;
+  c->team_login = team_login;
   xml_link_node_last(cs, &c->b);
   userlist_cookie_hash_add(ul, c);
 

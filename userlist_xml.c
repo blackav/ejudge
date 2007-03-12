@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -142,6 +142,7 @@ static char const * const attr_map[] =
   "cnts_last_login",
   "info_create",
   "recovery",
+  "team_login",
 
   0
 };
@@ -464,6 +465,9 @@ parse_cookies(char const *path, struct xml_tree *cookies,
         break;
       case USERLIST_A_RECOVERY:
         if (xml_attr_bool(a, &c->recovery) < 0) return -1;
+        break;
+      case USERLIST_A_TEAM_LOGIN:
+        if (xml_attr_bool(a, &c->team_login) < 0) return -1;
         break;
       case USERLIST_A_EXPIRE:
         if (xml_parse_date(path, a->line, a->column, a->text, &c->expire) < 0)
@@ -1388,6 +1392,10 @@ unparse_cookies(const struct xml_tree *p, FILE *f)
     if (c->recovery > 0) {
       fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_RECOVERY],
               xml_unparse_bool(c->recovery));
+    }
+    if (c->team_login > 0) {
+      fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_TEAM_LOGIN],
+              xml_unparse_bool(c->team_login));
     }
     if (c->locale_id >= 0) {
       fprintf(f, " %s=\"%d\"", attr_map[USERLIST_A_LOCALE_ID], c->locale_id);
