@@ -30,6 +30,7 @@ CREATE TABLE %scookies
        ipversion TINYINT NOT NULL DEFAULT 4,
        locale_id TINYINT NOT NULL DEFAULT 0,
        recovery TINYINT NOT NULL DEFAULT 0,
+       team_login TINYINT NOT NULL DEFAULT 0,
        contest_id INT UNSIGNED NOT NULL,
        ip VARCHAR(64) NOT NULL,
        ssl TINYINT NOT NULL DEFAULT 0,
