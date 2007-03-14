@@ -7,7 +7,7 @@ body
         font-variant: normal;
         font-weight: normal;
         font-size: 12px;
-        //color: rgb(0, 51, 102);
+        /* color: rgb(0, 51, 102); */
         color: black;
         text-align: justify;
 }
@@ -335,8 +335,8 @@ td.probNavHidden
         border-left-style: solid;
         border-right-style: solid;
         border-bottom-style: solid;
-        //background-color: #DCDCDC;
-        //padding: 1px 1px 1px 1px;
+        /* background-color: #DCDCDC; */
+        /* padding: 1px 1px 1px 1px; */
         padding: 0px 0px 0px 0px;
 }
 
@@ -362,7 +362,7 @@ td.probNavActiveTop
 	border-left-style: solid;
 	border-right-style: solid;
 	border-bottom-style: none;
-	//background-color: white;
+	/* background-color: white; */
 	font-weight: 800;
 	padding: 2px 2px 2px 2px;
 }
@@ -373,7 +373,7 @@ td.probNavActiveBottom
 	border-left-style: solid;
 	border-right-style: solid;
         border-bottom-style: solid;
-        //background-color: white;
+        /* background-color: white; */
         font-weight: 800;
         padding: 2px 2px 2px 2px;
 }
@@ -398,7 +398,6 @@ div.probCurrent
 {
         background-color: white;
         padding: 2px 2px 2px 2px;
-        padding: 0px 0px 0px 0px;
         margin: 0px 0px 0px 0px;
 }
 div.probEmpty
