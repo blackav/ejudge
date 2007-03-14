@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-03-09 09:02+0300\n"
-"PO-Revision-Date: 2007-03-09 09:08+0300\n"
+"POT-Creation-Date: 2007-03-14 16:04+0300\n"
+"PO-Revision-Date: 2007-03-14 16:05+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -30,10 +30,6 @@ msgstr " [окончен, заморожены]"
 #, c-format
 msgid " [over]"
 msgstr " [окончен]"
-
-#, c-format
-msgid " or"
-msgstr " или"
 
 msgid "\"E-mail\" field contains invalid characters"
 msgstr "Поле \"Электронный адрес\" содержит недопустимые символы"
@@ -233,6 +229,18 @@ msgstr ""
 
 #, c-format
 msgid ""
+"<p%s><a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">Simplified "
+"registration</a> is available for this contest. Note, however, that "
+"simplified registration imposes certain restrictions on further use of the "
+"account!</p>\n"
+msgstr ""
+"<p%s>Для данного турнира доступна <a href=\"%s?contest_id=%d&amp;locale_id=%"
+"d&amp;action=%d\">упрощённая процедура регистрации</a>. Учтите, однако, что "
+"на использование учётных записей, созданных по упрощённой процедуре, "
+"наложены некоторые ограничения.</p>\n"
+
+#, c-format
+msgid ""
 "<p%s><b>Note,</b> if downloads are allowed, you may download your runs once "
 "per %d minutes. The archive is in <tt>.tar.gz</tt> (<tt>.tgz</tt>) format.</"
 "p>\n"
@@ -240,6 +248,21 @@ msgstr ""
 "<p%s><b>Обратите внимание,</b> что если загрузка пользовательских посылок "
 "разрешена, вы можете делать это не чаще, чем один раз в %d минут. Архив "
 "посылок имеет формат <tt>.tar.gz</tt> (<tt>.tgz</tt>).</p>\n"
+
+#, c-format
+msgid ""
+"<p%s>Accounts created using simplified registration procedure cannot be used "
+"for participation in contests, which do not allow simplified registration. "
+"If you want a regular account, you may create an account using the <a href="
+"\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d&amp;regular=1\">regular "
+"registration</a>.</p>\n"
+msgstr ""
+"<p%s>Учётные записи, созданные по упрощённой процедуре, не могут быть "
+"использованы для участия в турнирах, в которых не поддерживается упрощённая "
+"регистрация. Если же Вы хотите создать учётную запись без ограничений на "
+"последующее использование, воспользуйтесь <a href=\"%s?contest_id=%d&amp;"
+"locale_id=%d&amp;action=%d&amp;regular=1\">стандартной процедурой "
+"регистрации</a>.</p>\n"
 
 #, c-format
 msgid "<p%s>Click <a href=\"%s\">on this link</a> to login again.</p>\n"
@@ -267,6 +290,17 @@ msgstr ""
 
 #, c-format
 msgid ""
+"<p%s>If you already have an ejudge account on this server, you may use it. "
+"If so, follow the <a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d"
+"\">\"Use an existing account\"</a> link.</p>"
+msgstr ""
+"<p%s>Если у Вас уже есть учётная запись в ejudge на этом сервере, Вы можете "
+"использовать её. Для этого проследуйте по ссылке <a href=\"%s?contest_id=%"
+"d&amp;locale_id=%d&amp;action=%d\">\"Использовать существующую учётную запись"
+"\"</a>.</p>"
+
+#, c-format
+msgid ""
 "<p%s>If you are already registered, you may proceed to <a href=\"%s?"
 "contest_id=%d&locale_id=%d\">personal page</a>.</p>"
 msgstr ""
@@ -280,6 +314,47 @@ msgid ""
 msgstr ""
 "<p%s>Если Вы ещё не зарегистрировались, пожалуйста, <a href=\"%s"
 "\">зарегистрируйтесь</a>.</p>\n"
+
+#, c-format
+msgid ""
+"<p%s>New account <tt>%s</tt> is successfully created. An e-mail messages is "
+"sent to the address <tt>%s</tt>. This message contains the password for the "
+"initial log in. You will be able to change the password later.</p>\n"
+"<p%s>Type the login and the password in to the form above and press the "
+"\"Log in\" button to activate the account.</p>\n"
+"<p%s><b>Note</b>, that you should log in to the system for the first time no "
+"later, than in 24 hours after this moment, or the new account is removed.</p>"
+msgstr ""
+"<p%s>Новая учётная запись <tt>%s</tt> успешно создана. Теперь её нужно "
+"активировать. Для этого на указанный Вами адрес электронной почты <tt>%s</"
+"tt> послано письмо, которое содержит пароль для первого входа в систему. "
+"Этот пароль в дальнейшем можно будет изменить.</p>\n"
+"<p%s>Чтобы активировать учётную запись введите регистрационное имя и пароль "
+"в форму вверху, затем нажмите кнопку \"Войти\".</p>\n"
+"<p%s><b>Внимание</b>, Вы должны активировать новое регистрационное имя в "
+"течение 24 часов с этого момента. В противном случае эта учётная запись "
+"будет удалена.</p>"
+
+#, c-format
+msgid ""
+"<p%s>New account is successfully created. An e-mail messages is sent to the "
+"address <tt>%s</tt>. This message contains the login name, assigned to you, "
+"as well as your password for initial log in. You will be able to change the "
+"password later.</p>\n"
+"<p%s>Type the login and the password in to the form above and press the "
+"\"Log in\" button to activate the account.</p>\n"
+"<p%s><b>Note</b>, that you should log in to the system for the first time no "
+"later, than in 24 hours after this moment, or the new account is removed.</p>"
+msgstr ""
+"<p%s>Новая учётная запись успешно создана. Теперь её нужно активировать. Для "
+"этого на указанный Вами адрес электронной почты <tt>%s</tt> послано письмо, "
+"которое содержит назначенное Вам регистрационное имя (login) и пароль для "
+"первого входа в систему. Этот пароль в дальнейшем можно будет изменить.</p>\n"
+"<p%s>Чтобы активировать учётную запись введите регистрационное имя и пароль "
+"в форму вверху, затем нажмите кнопку \"Войти\".</p>\n"
+"<p%s><b>Внимание</b>, Вы должны активировать новое регистрационное имя в "
+"течение 24 часов от этого момента. В противном случае эта учётная запись "
+"будет удалена.</p>"
 
 #, c-format
 msgid ""
@@ -318,25 +393,6 @@ msgstr ""
 "регистрация будет отменена."
 
 #, c-format
-msgid ""
-"<p%s>Registration of a new user is completed successfully. An e-mail "
-"messages is sent to the address <tt>%s</tt>. This message contains the login "
-"name, assigned to you, as well as your password for initial login. You will "
-"be able to change the password later.</p>\n"
-"<p%s><b>Note</b>, that you should login to the system for the first time no "
-"later, than in 24 hours after the initial user registration, or the "
-"registration is void."
-msgstr ""
-"<p%s>В базе данных создано новое регистрационное имя, которое теперь нужно "
-"активировать. Для этого на указанный Вами адрес электронной почты <tt>%s</"
-"tt> послано письмо, которое содержит назначенное Вам регистрационное имя и "
-"пароль для первого входа в систему. Этот пароль в дальнейшем можно будет "
-"изменить.</p>\n"
-"<p%s><b>Внимание</b>, Вы должны активировать новое регистрационное имя в "
-"течение 24 часов от момента регистрации. В противном случае регистрация "
-"будет отменена."
-
-#, c-format
 msgid "<p%s>Remember or write down the password!."
 msgstr "<p%s>Запомните или запишите пароль!"
 
@@ -351,6 +407,15 @@ msgstr "<p%s>Максимальное количество %s - %d.</p>\n"
 #, c-format
 msgid "<p%s>The minimal number of %s is %d.</p>\n"
 msgstr "<p%s>Минимальное количество %s - %d.</p>\n"
+
+#, c-format
+msgid ""
+"<p%s>This contest operates in \"simplified registration\" mode. You will get "
+"your login and password immediately after account is created. %s</p>"
+msgstr ""
+"<p%s>В этом турнире включена упрощённая процедура регистрации. Вы получите "
+"пароль от своей учётной записи немедленно после её создания (без "
+"использования электронной почты). %s</p>"
 
 #, c-format
 msgid "<p>Information is not available.</p>"
@@ -400,6 +465,9 @@ msgstr "Принято на проверку"
 
 msgid "Access denied"
 msgstr "В доступе отказано"
+
+msgid "Activate new user account"
+msgstr "Активировать новую учётную запись"
 
 msgid "Add CHIEF EXAMINER"
 msgstr "Добавить роль ГЛАВНОГО ЭКЗАМЕНАТОРА"
@@ -485,6 +553,10 @@ msgstr "Все сообщения"
 
 msgid "All problems"
 msgstr "Все задачи"
+
+msgid "An email message will be sent to you just for your convenience."
+msgstr ""
+"Для Вашего удобства Вам будет выслано письмо с регистрационными данными."
 
 msgid "Answer"
 msgstr "Ответ"
@@ -890,6 +962,15 @@ msgstr "Страна"
 msgid "Country (En)"
 msgstr "Страна (Англ.)"
 
+msgid "Create account"
+msgstr "Создать учётную запись"
+
+msgid "Create another account"
+msgstr "Создать ещё одну учётную запись"
+
+msgid "Create user account"
+msgstr "Создать новую учётную запись"
+
 msgid "Current standings"
 msgstr "Текущее положение участников"
 
@@ -1023,12 +1104,6 @@ msgstr "Редактировать"
 
 msgid "Edit personal data"
 msgstr "Редактировать<br>личные данные"
-
-msgid "Edit personal info"
-msgstr "Редактировать личные данные"
-
-msgid "Edit team info"
-msgstr "Редактировать информацию о команде"
 
 msgid "Elapsed time"
 msgstr "Прошедшее время"
@@ -1456,9 +1531,6 @@ msgstr "IP-адрес"
 msgid "IPC operation failed"
 msgstr "операция IPC завершилась с ошибкой"
 
-msgid "If you are already registered, you may"
-msgstr "Если Вы уже зарегистрированы, вы можете"
-
 msgid ""
 "If you have registered before, please enter your login and password in the "
 "corresponding fields. Then press the \"Submit\" button."
@@ -1780,6 +1852,9 @@ msgstr "Запертый?"
 msgid "Log in"
 msgstr "Войти"
 
+msgid "Log in to edit registration data"
+msgstr "Войти и редактировать регистрационные данные"
+
 msgid "Log into the system"
 msgstr "Войти в систему"
 
@@ -1787,7 +1862,7 @@ msgid "Log out"
 msgstr "Выйти из системы"
 
 msgid "Login"
-msgstr "Регистрационное имя (login)"
+msgstr "Login"
 
 msgid "Login contains invalid characters"
 msgstr "Поле \"Регистрационное имя\" содержит недопустимые символы"
@@ -1801,6 +1876,13 @@ msgstr "В строке %d не определено регистрационное имя\n"
 
 msgid "Login is not specified"
 msgstr "Поле \"Регистрационное имя\" не заполнено"
+
+msgid ""
+"Login may contain only latin letters, digits, <tt>.</tt> (dot), <tt>-</tt> "
+"(minus sign), <tt>_</tt> (undescore)."
+msgstr ""
+"Имя учётной записи (login) может содержать только латинские буквы, цифры, "
+"знаки <tt>.</tt> (точка), <tt>-</tt> (минус), <tt>_</tt> (подчёркивание)."
 
 msgid "Login successful"
 msgstr "Вход успешен"
@@ -1967,11 +2049,11 @@ msgstr "Новые пароли не совпадают друг с другом"
 msgid "New result"
 msgstr "Новый вердикт"
 
+msgid "New user account is created"
+msgstr "Новая учётная запись создана"
+
 msgid "New user is registered"
 msgstr "Новый пользователь зарегистрирован"
-
-msgid "New user login is created"
-msgstr "Новое регистрационное имя создано"
 
 msgid "Next"
 msgstr "Дальше"
@@ -2177,9 +2259,6 @@ msgstr "Решения участников принимаются на проверку"
 msgid "Participants' solutions are being judged"
 msgstr "Решения участников проверяются"
 
-msgid "Participate in the contest"
-msgstr "Принять участи в турнире"
-
 msgid "Password"
 msgstr "Пароль"
 
@@ -2262,10 +2341,11 @@ msgstr ""
 "Пожалуйста, заполните анкету. Поля, обязательные к заполнению, помечены (*)."
 
 msgid ""
-"Please, enter your valid e-mail address and press the \"Register\" button."
+"Please, enter your valid e-mail address and press the \"Create account\" "
+"button."
 msgstr ""
-"Пожалуйста, введите Ваш работающий адрес e-mail и нажмите кнопку "
-"\"Зарегистрироваться\"."
+"Пожалуйста, введите Ваш работающий адрес e-mail и нажмите кнопку \"Создать "
+"учётную запись\"."
 
 msgid ""
 "Please, fill up all the fields in the form below. Fields, marked with (*), "
@@ -2416,6 +2496,9 @@ msgstr "Астр. время (с)"
 msgid "Received"
 msgstr "Получено"
 
+msgid "Recover forgot password"
+msgstr "Восстановить забытый пароль"
+
 msgid "Refresh"
 msgstr "Обновить"
 
@@ -2447,12 +2530,6 @@ msgstr "Зарегистрироваться"
 
 msgid "Register a new user"
 msgstr "Зарегистрировать нового пользователя"
-
-msgid "Register a new user, step 1"
-msgstr "Зарегистрировать нового пользователя, шаг 1"
-
-msgid "Register a new user, step 2"
-msgstr "Зарегистрировать нового пользователя, шаг 2"
 
 msgid "Registration"
 msgstr "Регистрация"
@@ -2839,8 +2916,8 @@ msgstr ""
 
 msgid ""
 "Shortly after that you should receive an e-mail message with a password to "
-"the system. Use this password for the first login. After the first login you "
-"will be able to change the password."
+"the system. Use this password for the first log in. After the first login "
+"you will be able to change the password."
 msgstr ""
 "После этого на Ваш электронный адрес будет направлено письмо, которое будет "
 "содержать пароль для входа в систему. Этот пароль необходимо использовать "
@@ -2997,9 +3074,6 @@ msgstr "Переключить язык"
 
 msgid "System error"
 msgstr "Системная ошибка"
-
-msgid "Take the exam"
-msgstr "Принять участие в экзамене"
 
 msgid "Team ID"
 msgstr "ID Команды"
@@ -3191,6 +3265,14 @@ msgstr ""
 "следующий URL: %s?contest_id=%d&locale_id=%d&SID=%016llx&action=%d.\n"
 "\n"
 
+msgid ""
+"To create an account, please think out, a login and provide your valid e-"
+"mail address in the form above. Then press the \"Create account\" button."
+msgstr ""
+"Чтобы создать учётную запись придумайте себе имя учётной записи (login), "
+"введите его и Ваш работающий адрес e-mail в форме вверху и нажмите кнопку "
+"\"Создать учётную запись\"."
+
 msgid "To main page"
 msgstr "На главную страницу"
 
@@ -3295,6 +3377,9 @@ msgstr "Установить протокол тестирования"
 
 msgid "Upload!"
 msgstr "Установить!"
+
+msgid "Use an existing account"
+msgstr "Использовать существующую учетную запись"
 
 msgid "Use problem short name"
 msgstr "Использовать короткое имя задачи"
@@ -3677,12 +3762,6 @@ msgstr "Повторная посылка"
 msgid "e-mail sending failed"
 msgstr "отсылка электронной почты завершилась неудачно"
 
-msgid "edit your personal information"
-msgstr "редактировать Ваши личные данные"
-
-msgid "edit your team information"
-msgstr "редактировать информацию о команде"
-
 msgid "error code 1"
 msgstr "ошибка с кодом 1"
 
@@ -3753,7 +3832,7 @@ msgid "last 15"
 msgstr "последние 15"
 
 msgid "login"
-msgstr "регистрационное имя (login)"
+msgstr "login"
 
 msgid "login already used"
 msgstr "регистрационное имя занято"
@@ -3824,9 +3903,6 @@ msgstr "получение пакета завершилось неудачно"
 msgid "packet sending failed"
 msgstr "посылка пакета завершилась неудачно"
 
-msgid "participate in the contest"
-msgstr "участвовать в турнире"
-
 msgid "password"
 msgstr "пароль"
 
@@ -3859,9 +3935,6 @@ msgstr "некоторые компоненты запроса имеют слишком большой размер"
 
 msgid "system call failed"
 msgstr "системный вызов завершился неудачно"
-
-msgid "take the exam"
-msgstr "принять участие в экзамене"
 
 msgid "team pages quota is exceeded"
 msgstr "превышена квота страниц пользователя"
