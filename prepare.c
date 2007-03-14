@@ -899,9 +899,6 @@ process_abstract_tester(serve_state_t state, int i)
     envs[j] = katp->start_env;
   }
 
-  for (j = 0; j < stot; j++)
-    fprintf(stderr, ">>%s\n", sups[j]->name);
-
   if (inherit_fields(tester_inheritance_info,
                      atp, ish, stot, (void**) sups,
                      tester_get_name) < 0)
@@ -1048,12 +1045,6 @@ parse_testsets(char **set_in, int *p_total, struct testset_info **p_info)
       s += n;
       info[i].nums[x - 1] = 1;
     }
-    /*
-    fprintf(stderr, ">>%d\n", t);
-    for (n = 0; n < t; n++)
-      fprintf(stderr, " %d", info[i].nums[n]);
-    fprintf(stderr, "\n");
-    */
   }
 
   *p_info = info;

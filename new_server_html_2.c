@@ -3394,7 +3394,7 @@ ns_write_olympiads_user_runs(
   time_t start_time, run_time;
   unsigned char *cl = 0;
   int runs_to_show = all_runs?INT_MAX:15;
-  int i, shown, variant, run_latest, report_allowed, score;
+  int i, shown, variant = 0, run_latest, report_allowed, score;
   unsigned char *latest_flag = 0;
   unsigned char lang_name_buf[64];
   unsigned char prob_name_buf[128];

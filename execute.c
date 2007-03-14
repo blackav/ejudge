@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -134,7 +134,7 @@ static const unsigned char help_str[] =
 #if defined HAVE_TASK_ENABLEMEMORYLIMITERROR
 "--memory-limit           enable memory limit error detection\n"
 #endif
-#if !defined HAVE_TASK_ENABLESECUREEXEC
+#if defined HAVE_TASK_ENABLESECUREEXEC
 "--secure-exec            enable secure execution\n"
 #endif
 "--max-vm-size=SIZE       specify the virtual memory size limit\n"
