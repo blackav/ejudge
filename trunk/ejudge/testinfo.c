@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -313,9 +313,9 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt)
   } else if (!strcmp(name_buf, "comment")
              || !strcmp(name_buf, "team_comment")) {
     if (!strcmp(name_buf, "comment")) {
-      ppval = (unsigned char**) &pt->comment;
+      ppval = (unsigned char**) ((void*) &pt->comment);
     } else {
-      ppval = (unsigned char**) &pt->team_comment;
+      ppval = (unsigned char**) ((void*)&pt->team_comment);
     }
     if (*ppval) FAIL(TINF_E_VAR_REDEFINED);
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);

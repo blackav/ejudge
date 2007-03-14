@@ -1080,7 +1080,7 @@ do_dump_master_runs(
   const unsigned char *user_login, *user_invisible_flag;
   const unsigned char *user_banned_flag, *user_locked_flag;
   const unsigned char *run_hidden_flag, *run_imported_flag;
-  const unsigned char *prob_short_name;
+  const unsigned char *prob_short_name = 0;
   const unsigned char *lang_short_name, *source_suffix, *mime_type_str;
   unsigned char variant_buf[128], db_variant_buf[128];
   unsigned char failed_test_buf[128], passed_tests_buf[128], score_buf[128];

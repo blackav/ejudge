@@ -1304,7 +1304,7 @@ priv_priv_user_operation(FILE *fout,
                          const struct contest_desc *cnts,
                          struct contest_extra *extra)
 {
-  int i, x, n, role;
+  int i, x, n, role = 0;
   intarray_t uset;
   const unsigned char *s;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
@@ -1808,7 +1808,7 @@ priv_password_operation(FILE *fout,
                         const struct contest_desc *cnts,
                         struct contest_extra *extra)
 {
-  int retval = 0, r;
+  int retval = 0, r = 0;
 
   if (opcaps_check(phr->caps, OPCAP_GENERATE_TEAM_PASSWORDS) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -6858,7 +6858,7 @@ unpriv_submit_run(FILE *fout,
 {
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
-  const struct section_problem_data *prob;
+  const struct section_problem_data *prob = 0;
   const struct section_language_data *lang = 0;
   char *log_txt = 0;
   size_t log_len = 0;

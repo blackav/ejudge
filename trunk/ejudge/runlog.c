@@ -399,7 +399,7 @@ read_runlog_version_1(runlog_state_t state)
   struct stat stbuf;
   struct run_header_v1 header_v1;
   int run_v1_u, i;
-  struct run_entry_v1 *runs_v1;
+  struct run_entry_v1 *runs_v1 = 0;
   struct run_entry_v1 *po;
   struct run_entry    *pn;
 
@@ -425,7 +425,7 @@ read_runlog_version_1(runlog_state_t state)
   }
 
   stbuf.st_size -= sizeof(header_v1);
-  if (stbuf.st_size % sizeof(struct run_entry_v1) != 0) {
+  if ((rem = stbuf.st_size % sizeof(struct run_entry_v1)) != 0) {
     err("bad runs file size: remainder %d", rem);
     return -1;
   }

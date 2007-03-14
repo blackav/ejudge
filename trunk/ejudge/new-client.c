@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -221,7 +221,7 @@ int
 main(int argc, char *argv[])
 {
   new_server_conn_t conn = 0;
-  int r, param_num, i, attempt;
+  int r = 0, param_num, i, attempt;
   unsigned char **param_names, **params;
   size_t *param_sizes;
 
