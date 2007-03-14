@@ -6562,7 +6562,7 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
       fprintf(fout,
               "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a>",
               cnts->register_url, phr->contest_id, phr->locale_id,
-              NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER_PAGE,
+              NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT_PAGE,
               _("Registration"));
     } else {
       fprintf(fout,

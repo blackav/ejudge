@@ -998,7 +998,7 @@ cmd_register_new_2(struct client_state *p,
   unsigned char passwd_buf[64];
   const struct contest_desc *cnts = 0;
   unsigned char logbuf[1024];
-  struct userlist_pk_xml_data *out = 0;
+  struct userlist_pk_new_password *out = 0;
   size_t out_size = 0, passwd_len;
   time_t current_time = time(0);
   int user_id, serial = 0, action = 3, serial_step = 1, n;
@@ -1091,12 +1091,16 @@ cmd_register_new_2(struct client_state *p,
   passwd_len = strlen(passwd_buf);
   user_id = default_new_user(login, email, passwd_buf, 1);
 
-  out_size = sizeof(*out) + passwd_len;
-  out = (struct userlist_pk_xml_data*) alloca(out_size);
+  login_len = strlen(login);
+  out_size = sizeof(*out) + login_len + passwd_len;
+  out = (struct userlist_pk_new_password*) alloca(out_size);
   memset(out, 0, out_size);
   out->reply_id = ULS_PASSWORD;
-  out->info_len = passwd_len;
-  memcpy(out->data, passwd_buf, passwd_len + 1);
+  out->user_id = user_id;
+  out->login_len = login_len;
+  out->passwd_len = passwd_len;
+  memcpy(out->data, login, login_len + 1);
+  memcpy(out->data + login_len + 2, passwd_buf, passwd_len + 1);
   enqueue_reply_to_client(p, out_size, out);
   info("%s -> ok, %d", logbuf, user_id);
 
@@ -1814,9 +1818,9 @@ do_remove_user(const struct userlist_user *u)
 }
 
 static void
-cmd_do_login(struct client_state *p,
-             int pkt_len,
-             struct userlist_pk_do_login * data)
+cmd_login(struct client_state *p,
+          int pkt_len,
+          struct userlist_pk_do_login * data)
 {
   const struct userlist_user *u = 0;
   struct userlist_pk_login_ok * answer;
@@ -7805,7 +7809,7 @@ cmd_control_server(struct client_state *p, int pkt_len,
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW]            cmd_register_new,
-  [ULS_DO_LOGIN]                cmd_do_login,
+  [ULS_DO_LOGIN]                cmd_login,
   [ULS_CHECK_COOKIE]            cmd_check_cookie,
   [ULS_DO_LOGOUT]               cmd_do_logout,
   [ULS_GET_USER_INFO]           cmd_get_user_info,

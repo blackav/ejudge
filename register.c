@@ -2735,7 +2735,7 @@ action_register_new_user(void)
                                              user_contest_id,
                                              client_locale_id,
                                              user_login, user_email,
-                                             &user_password);
+                                             0, &user_password);
       if (errcode == ULS_PASSWORD) errcode = 0;
       if (errcode < 0) {
         error("%s", gettext(userlist_strerror(-errcode)));

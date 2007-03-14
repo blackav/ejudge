@@ -50,9 +50,18 @@
 #define FAIL2(c) do { retval = -(c); goto failed; } while (0)
 
 static unsigned char *
-get_client_url(unsigned char *buf, size_t size, const unsigned char *str)
+get_client_url(
+	unsigned char *buf,
+        size_t size,
+        const struct contest_desc *cnts,
+        const unsigned char *str)
 {
   int i, len;
+
+  if (cnts->team_url) {
+    snprintf(buf, size, "%s", cnts->team_url);
+    return buf;
+  }
 
   if (!str) return "/new-client";
   len = strlen(str);
@@ -79,6 +88,16 @@ cgi_param_int(struct http_request_info *phr, const unsigned char *name,
   x = strtol(s, &eptr, 10);
   if (errno || *eptr) return -1;
   if (p_val) *p_val = x;
+  return 0;
+}
+
+static int
+check_str(const unsigned char *str, const unsigned char *map)
+{
+  if (!str) return 0;
+  for (; *str; str++)
+    if (!map[*str])
+      return -1;
   return 0;
 }
 
@@ -110,7 +129,7 @@ anon_select_contest_page(FILE *fout, struct http_request_info *phr)
 
   ns_cgi_param(phr, "login", &login);
 
-  // defaulting to the English as we have no contest choosen
+  // defaulting to English as we have no contest chosen
   orig_locale_id = phr->locale_id;
   if (phr->locale_id < 0) phr->locale_id = 0;
 
@@ -186,7 +205,7 @@ anon_select_contest_page(FILE *fout, struct http_request_info *phr)
 }
 
 static void
-user_login_page(
+login_page(
 	FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -197,7 +216,8 @@ user_login_page(
   const unsigned char *login = 0, *password = 0, *email = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char bb[1024];
-  int item_cnt = 0;
+  int item_cnt = 0, created_mode = 0;
+  unsigned char client_url[1024];
 
   if (cnts->register_head_style && *cnts->register_head_style)
     head_style = cnts->register_head_style;
@@ -205,6 +225,7 @@ user_login_page(
   if (cnts->register_par_style && *cnts->register_par_style)
     par_style = cnts->register_par_style;
   if (!par_style) par_style = "";
+  get_client_url(client_url, sizeof(client_url), cnts, phr->self_url);
 
   ns_cgi_param(phr, "login", &login);
   if (!login) login = "";
@@ -215,12 +236,14 @@ user_login_page(
 
   l10n_setlocale(phr->locale_id);
   switch (phr->action) {
-  case NEW_SRV_ACTION_NEW_USER_REGISTERED_PAGE:
-  case NEW_SRV_ACTION_NEW_AUTOASSIGNED_USER_REGISTERED_PAGE:
-    s = _("Register a new user, step 2");
+  case NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE:
+  case NEW_SRV_ACTION_REG_AUTOASSIGNED_ACCOUNT_CREATED_PAGE:
+    s = _("Activate new user account");
+    created_mode = 1;
     break;
   default:
-    s = "";
+  case NEW_SRV_ACTION_REG_LOGIN_PAGE:
+    s = _("Log in to edit registration data");
     break;
   }
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
@@ -235,15 +258,16 @@ user_login_page(
 
   fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("login"), html_input_text(bb, sizeof(bb), "login", 20, "%s", ARMOR(login)));
   fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("password"), html_input_password(bb, sizeof(bb), "password", 20, "%s", ARMOR(password)));
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REGISTER_LOGIN, _("Log in")));
-
   if (!cnts->disable_locale_change) {
     fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
             _("language"));
     l10n_html_locale_select(fout, phr->locale_id);
     fprintf(fout, "</div></td>\n");
+    /*
     fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>\n", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_CHANGE_LANGUAGE, _("Change Language")));
+    */
   }
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REG_LOGIN, _("Log in")));
 
   fprintf(fout, "</tr></table></div></form>\n");
 
@@ -251,22 +275,26 @@ user_login_page(
           "<div class=\"white_empty_block\">&nbsp;</div>\n"
           "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
 
-#if 0
-  // "Forgot password?" "Edit personal info" "Participate in contest/exam"
-  if (cnts && cnts->enable_forgot_password && cnts->disable_team_password
-      && !cnts->simple_registration) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_FORGOT_PASSWORD_1, _("Forgot password?"));
+  // "New account" "Forgot password?" "Enter contest"
+  if (created_mode)
+    s = _("Create another account");
+  else
+    s = _("Create account");
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, cnts->assign_logins?NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT_PAGE:NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, s);
+  item_cnt++;
+
+  if (cnts->enable_forgot_password && cnts->disable_team_password
+      && !cnts->simple_registration && !created_mode) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", client_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_FORGOT_PASSWORD_1, _("Recover forgot password"));
     item_cnt++;
   }
-  if (allowed_info_edit) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REGISTER_LOGIN_PAGE, cnts->personal?_("Edit personal info"):_("Edit team info"));
-    item_cnt++;
-  }
-  if (client_url[0]) {
+
+  /*
+  if (client_url[0] && !created_mode) {
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d\">%s</a></div></td>", client_url, phr->contest_id, phr->locale_id, cnts->exam_mode?_("Take the exam"):_("Participate in the contest"));
     item_cnt++;
   }
-#endif
+  */
 
   if (!item_cnt)
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
@@ -274,90 +302,33 @@ user_login_page(
 
   fprintf(fout, "%s", extra->separator_txt);
 
-  if (phr->action == NEW_SRV_ACTION_NEW_USER_REGISTERED_PAGE) {
-
-  /*
-  printf(_("<p%s>Registration of a new user is completed successfully. "
-           "An e-mail messages is sent to the address <tt>%s</tt>. "
-           "This message contains the login name, assigned to you, "
-           "as well as your password for initial login. "
-           "To proceed with registration, clink <a href=\"%s\">on this link</a>.</p>"
-           "<p%s><b>Note</b>, that you should login to the system for "
-           "the first time no later, than in 24 hours after the initial "
-           "user registration, or the registration is void."),
-         par_style, user_email, url, par_style);
-  */
-  } else if (phr->action == NEW_SRV_ACTION_NEW_AUTOASSIGNED_USER_REGISTERED_PAGE) {
+  if (phr->action == NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE) {
     fprintf(fout, "<%s>%s</%s>\n", head_style,
-            _("New user login is created"), head_style);
+            _("New user account is created"), head_style);
+    fprintf(fout,
+            _("<p%s>New account <tt>%s</tt> is successfully created. "
+              "An e-mail messages is sent to the address <tt>%s</tt>. "
+              "This message contains the password for the initial log in. You will be able to change the password later.</p>\n"
+              "<p%s>Type the login and the password in to the form above and press the \"Log in\" button to activate the account.</p>\n"
+              "<p%s><b>Note</b>, that you should log in to the system for "
+              "the first time no later, than in 24 hours after this moment, "
+              "or the new account is removed.</p>"),
+            par_style, login, email, par_style, par_style);
+  } else if (phr->action==NEW_SRV_ACTION_REG_AUTOASSIGNED_ACCOUNT_CREATED_PAGE){
+    fprintf(fout, "<%s>%s</%s>\n", head_style,
+            _("New user account is created"), head_style);
 
     fprintf(fout,
-            _("<p%s>Registration of a new user is completed successfully. "
+            _("<p%s>New account is successfully created. "
               "An e-mail messages is sent to the address <tt>%s</tt>. "
               "This message contains the login name, assigned to you, "
-              "as well as your password for initial login. You will be able to change the password later.</p>\n"
-              "<p%s><b>Note</b>, that you should login to the system for "
-              "the first time no later, than in 24 hours after the initial "
-              "user registration, or the registration is void."),
-            par_style, email, par_style);
+              "as well as your password for initial log in. You will be able to change the password later.</p>\n"
+              "<p%s>Type the login and the password in to the form above and press the \"Log in\" button to activate the account.</p>\n"
+              "<p%s><b>Note</b>, that you should log in to the system for "
+              "the first time no later, than in 24 hours after this moment, "
+              "or the new account is removed.</p>"),
+            par_style, email, par_style, par_style);
   }
-
-
-#if 0
-  if (reg_error || reg_ul_error) {
-    if (reg_error < 0) reg_error = -reg_error;
-    if (reg_ul_error < 0) reg_ul_error = -reg_ul_error;
-
-    fprintf(fout, "<%s><font color=\"red\">%s</font></%s>\n", head_style, _("Registration errors"),
-            head_style);
-
-    fprintf(fout, "<p%s><font color=\"red\">", par_style);
-    if (reg_ul_error == ULS_ERR_EMAIL_FAILED) {
-      fprintf(fout, "%s",
-              _("The server was unable to send a registration e-mail\n"
-                "to the specified address. This is probably due\n"
-                "to heavy server load rather than to an invalid\n"
-                "e-mail address. You should try to register later.\n"));
-    } else if (reg_ul_error) {
-      fprintf(fout, "%s.", gettext(userlist_strerror(-reg_ul_error)));
-    } else if (reg_error) {
-      fprintf(fout, "%s.", ns_strerror_2(reg_error));
-    }
-    fprintf(fout, "</font></p>\n");
-  }
-
-  fprintf(fout, "<%s>%s</%s>\n", head_style, _("Registration rules"),
-          head_style);
-  fprintf(fout, "<p%s>%s</p>\n", par_style,
-          _("Please, enter your valid e-mail address and press the \"Register\" button."));
-
-  fprintf(fout, "<p%s>%s</p>", par_style,
-          _("Shortly after that you should receive an e-mail message "
-            "with a password to the system. Use this password for the first"
-            " login. After the first login you will be able to change the password."));
-
-  fprintf(fout, "<p%s>%s</p>", par_style,
-          _("Be careful and type the e-mail address correctly. If you make a mistake, you will not receive a registration e-mail and be unable to complete the registration process."));
-
-  fprintf(fout, "<p%s>%s</p>",
-          par_style,
-          _("<b>Note</b>, that you must log in "
-            "24 hours after the form is filled and submitted, or "
-            "your registration will be cancelled!"));
-
-  if (allowed_info_edit || client_url[0]) {
-    fprintf(fout, "<p%s>%s", par_style, _("If you are already registered, you may"));
-    if (allowed_info_edit)
-      fprintf(fout, " <a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REGISTER_LOGIN_PAGE, cnts->personal?_("edit your personal information"):_("edit your team information"));
-    if (allowed_info_edit && client_url[0]) fprintf(fout, _(" or"));
-    if (client_url[0])
-      fprintf(fout, " <a href=\"%s?contest_id=%d&amp;locale_id=%d\">%s</a>", client_url, phr->contest_id, phr->locale_id, cnts->exam_mode?_("take the exam"):_("participate in the contest"));
-    fprintf(fout, ".</p>\n");
-  }
-
-  fprintf(fout, "<p%s>&nbsp;</p>\n", par_style);
-
-#endif
 
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
@@ -365,7 +336,7 @@ user_login_page(
 }
 
 static void
-register_new_assigned_logins_page(
+create_autoassigned_account_page(
 	FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -378,12 +349,12 @@ register_new_assigned_logins_page(
   const unsigned char *head_style = 0, *par_style = 0;
   int item_cnt = 0, allowed_info_edit = 0;
   unsigned char client_url[1024] = { 0 };
-  size_t l1, l2;
   int i, j;
-  int reg_error = 0, reg_ul_error = 0;
+  int reg_error = 0, reg_ul_error = 0, regular_flag = 0;
 
   cgi_param_int(phr, "retval", &reg_error);
   cgi_param_int(phr, "ul_error", &reg_ul_error);
+  cgi_param_int(phr, "regular", &regular_flag);
 
   if (cnts->register_head_style && *cnts->register_head_style)
     head_style = cnts->register_head_style;
@@ -402,40 +373,34 @@ register_new_assigned_logins_page(
     if (cnts->members[i] && cnts->members[i]->max_count > 0)
       allowed_info_edit = 1;
 
-  if (cnts->team_url)
-    snprintf(client_url, sizeof(client_url), "%s", cnts->team_url);
-  snprintf(bb, sizeof(bb), "new-register%s", CGI_PROG_SUFFIX);
-  l1 = strlen(bb);
-  l2 = strlen(phr->self_url);
-  if (l1 < l2 && !strcmp(phr->self_url + l2 - l1, bb))
-    snprintf(client_url, sizeof(client_url), "%.*snew-client%s",
-             (int) (l2 - l1), phr->self_url, CGI_PROG_SUFFIX);
+  get_client_url(client_url, sizeof(client_url), cnts, phr->self_url);
 
   if (ns_cgi_param(phr, "email", &email) <= 0) email = 0;
   if (!email) email = "";
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s]", _("Register a new user, step 1"), extra->contest_arm);
+            "%s [%s]", _("Create user account"),
+            extra->contest_arm);
 
   html_start_form(fout, 1, phr->self_url, "");
   html_hidden(fout, "contest_id", "%d", phr->contest_id);
   html_hidden(fout, "next_action", "%d",
-              NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER_PAGE);
+              NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT_PAGE);
   if (cnts->disable_locale_change)
     html_hidden(fout, "locale_id", "%d", phr->locale_id);
   fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>\n");
 
   fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">e-mail: %s</div></td>", html_input_text(bb, sizeof(bb), "email", 20, "%s", ARMOR(email)));
 
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER, _("Register")));
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT, _("Create account")));
 
   if (!cnts->disable_locale_change) {
     fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
             _("language"));
     l10n_html_locale_select(fout, phr->locale_id);
     fprintf(fout, "</div></td>\n");
-    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>\n", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_CHANGE_LANGUAGE, _("Change Language")));
+    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>\n", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_CHANGE_LANGUAGE, _("Change language")));
   }
 
   fprintf(fout, "</tr></table></div></form>\n");
@@ -444,20 +409,8 @@ register_new_assigned_logins_page(
           "<div class=\"white_empty_block\">&nbsp;</div>\n"
           "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
 
-  // "Forgot password?" "Edit personal info" "Participate in contest/exam"
-  if (cnts && cnts->enable_forgot_password && cnts->disable_team_password
-      && !cnts->simple_registration) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_FORGOT_PASSWORD_1, _("Forgot password?"));
-    item_cnt++;
-  }
-  if (allowed_info_edit) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REGISTER_LOGIN_PAGE, cnts->personal?_("Edit personal info"):_("Edit team info"));
-    item_cnt++;
-  }
-  if (client_url[0]) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d\">%s</a></div></td>", client_url, phr->contest_id, phr->locale_id, cnts->exam_mode?_("Take the exam"):_("Participate in the contest"));
-    item_cnt++;
-  }
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REG_LOGIN_PAGE, _("Use an existing account"));
+  item_cnt++;
   if (!item_cnt)
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
   fprintf(fout, "</tr></table></div>\n");
@@ -489,15 +442,32 @@ register_new_assigned_logins_page(
   fprintf(fout, "<%s>%s</%s>\n", head_style, _("Registration rules"),
           head_style);
   fprintf(fout, "<p%s>%s</p>\n", par_style,
-          _("Please, enter your valid e-mail address and press the \"Register\" button."));
+          _("Please, enter your valid e-mail address and press the \"Create account\" button."));
 
-  fprintf(fout, "<p%s>%s</p>", par_style,
-          _("Shortly after that you should receive an e-mail message "
-            "with a password to the system. Use this password for the first"
-            " login. After the first login you will be able to change the password."));
+  if (cnts->simple_registration && !regular_flag) {
+    fprintf(fout, _("<p%s>This contest operates in \"simplified registration\" mode. You will get your login and password immediately after account is created. %s</p>"),
+            par_style, cnts->send_passwd_email?_("An email message will be sent to you just for your convenience."):("No email message at all will be sent to you."));
+    fprintf(fout, _("<p%s>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the <a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d&amp;regular=1\">regular registration</a>.</p>\n"),
+            par_style,
+            phr->self_url, phr->contest_id, phr->locale_id,
+            NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT_PAGE);
+  } else {
+    if (cnts->simple_registration) {
+      fprintf(fout, _("<p%s><a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">Simplified registration</a> is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</p>\n"), par_style, phr->self_url, phr->contest_id,
+              phr->locale_id,
+              NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT_PAGE);
+    }
 
-  fprintf(fout, "<p%s>%s</p>", par_style,
-          _("Be careful and type the e-mail address correctly. If you make a mistake, you will not receive a registration e-mail and be unable to complete the registration process."));
+    if (!cnts->simple_registration || cnts->send_passwd_email) {
+      fprintf(fout, "<p%s>%s</p>", par_style,
+              _("Shortly after that you should receive an e-mail message "
+                "with a password to the system. Use this password for the first"
+                " log in. After the first login you will be able to change the password."));
+
+      fprintf(fout, "<p%s>%s</p>", par_style,
+              _("Be careful and type the e-mail address correctly. If you make a mistake, you will not receive a registration e-mail and be unable to complete the registration process."));
+    }
+  }
 
   fprintf(fout, "<p%s>%s</p>",
           par_style,
@@ -505,15 +475,165 @@ register_new_assigned_logins_page(
             "24 hours after the form is filled and submitted, or "
             "your registration will be cancelled!"));
 
+  fprintf(fout, _("<p%s>If you already have an ejudge account on this server, you may use it. If so, follow the <a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">\"Use an existing account\"</a> link.</p>"),
+          par_style, phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REG_LOGIN_PAGE);
+
+  /*
   if (allowed_info_edit || client_url[0]) {
-    fprintf(fout, "<p%s>%s", par_style, _("If you are already registered, you may"));
+    fprintf(fout, "<p%s>%s", par_style, _("If you already have an ejudge account on this server, you may"));
     if (allowed_info_edit)
-      fprintf(fout, " <a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REGISTER_LOGIN_PAGE, cnts->personal?_("edit your personal information"):_("edit your team information"));
+      fprintf(fout, " <a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REG_LOGIN_PAGE, cnts->personal?_("edit your personal information"):_("edit your team information"));
     if (allowed_info_edit && client_url[0]) fprintf(fout, _(" or"));
     if (client_url[0])
       fprintf(fout, " <a href=\"%s?contest_id=%d&amp;locale_id=%d\">%s</a>", client_url, phr->contest_id, phr->locale_id, cnts->exam_mode?_("take the exam"):_("participate in the contest"));
     fprintf(fout, ".</p>\n");
   }
+  */
+
+  fprintf(fout, "<p%s>&nbsp;</p>\n", par_style);
+
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+  html_armor_free(&ab);
+}
+
+static void
+create_account_page(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+  const unsigned char *login = 0, *email = 0;
+  int reg_error = 0, reg_ul_error = 0;
+  const unsigned char *head_style = 0, *par_style = 0;
+  unsigned char client_url[1024] = { 0 };
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char bb[1024];
+  int item_cnt = 0, regular_flag = 0;
+
+  cgi_param_int(phr, "retval", &reg_error);
+  cgi_param_int(phr, "ul_error", &reg_ul_error);
+  cgi_param_int(phr, "regular", &regular_flag);
+
+  if (cnts->register_head_style && *cnts->register_head_style)
+    head_style = cnts->register_head_style;
+  if (!head_style) head_style = "h2";
+  if (cnts->register_par_style && *cnts->register_par_style)
+    par_style = cnts->register_par_style;
+  if (!par_style) par_style = "";
+  get_client_url(client_url, sizeof(client_url), cnts, phr->self_url);
+
+  if (ns_cgi_param(phr, "login", &login) <= 0) login = 0;
+  if (!login) login = "";
+  if (ns_cgi_param(phr, "email", &email) <= 0) email = 0;
+  if (!email) email = "";
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s]", _("Create user account"),
+            extra->contest_arm);
+
+  html_start_form(fout, 1, phr->self_url, "");
+  html_hidden(fout, "contest_id", "%d", phr->contest_id);
+  html_hidden(fout, "next_action", "%d",
+              NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
+  if (cnts->disable_locale_change)
+    html_hidden(fout, "locale_id", "%d", phr->locale_id);
+  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>\n");
+
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("login"), html_input_text(bb, sizeof(bb), "login", 20, "%s", ARMOR(login)));
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">e-mail: %s</div></td>", html_input_text(bb, sizeof(bb), "email", 20, "%s", ARMOR(email)));
+
+  if (!cnts->disable_locale_change) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
+            _("language"));
+    l10n_html_locale_select(fout, phr->locale_id);
+    fprintf(fout, "</div></td>\n");
+    /*
+    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>\n", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_CHANGE_LANGUAGE, _("Change language")));
+    */
+  }
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REG_CREATE_ACCOUNT, _("Create account")));
+
+  fprintf(fout, "</tr></table></div></form>\n");
+
+  fprintf(fout,
+          "<div class=\"white_empty_block\">&nbsp;</div>\n"
+          "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
+
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REG_LOGIN_PAGE, _("Use an existing account"));
+    item_cnt++;
+
+  if (!item_cnt)
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
+  fprintf(fout, "</tr></table></div>\n");
+
+  fprintf(fout, "%s", extra->separator_txt);
+
+  if (reg_error || reg_ul_error) {
+    if (reg_error < 0) reg_error = -reg_error;
+    if (reg_ul_error < 0) reg_ul_error = -reg_ul_error;
+
+    fprintf(fout, "<%s><font color=\"red\">%s</font></%s>\n", head_style, _("Registration errors"),
+            head_style);
+
+    fprintf(fout, "<p%s><font color=\"red\">", par_style);
+    if (reg_ul_error == ULS_ERR_EMAIL_FAILED) {
+      fprintf(fout, "%s",
+              _("The server was unable to send a registration e-mail\n"
+                "to the specified address. This is probably due\n"
+                "to heavy server load rather than to an invalid\n"
+                "e-mail address. You should try to register later.\n"));
+    } else if (reg_ul_error) {
+      fprintf(fout, "%s.", gettext(userlist_strerror(-reg_ul_error)));
+    } else if (reg_error) {
+      fprintf(fout, "%s.", ns_strerror_2(reg_error));
+    }
+    fprintf(fout, "</font></p>\n");
+  }
+
+  fprintf(fout, "<%s>%s</%s>\n", head_style, _("Registration rules"),
+          head_style);
+
+  fprintf(fout, _("<p%s>If you already have an ejudge account on this server, you may use it. If so, follow the <a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">\"Use an existing account\"</a> link.</p>"),
+          par_style, phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REG_LOGIN_PAGE);
+
+  fprintf(fout, "<p%s>%s</p>\n", par_style,
+          _("To create an account, please think out, a login and provide your valid e-mail address in the form above. Then press the \"Create account\" button."));
+  fprintf(fout, "<p%s>%s</p>\n", par_style,
+          _("Login may contain only latin letters, digits, <tt>.</tt> (dot), <tt>-</tt> (minus sign), <tt>_</tt> (undescore)."));
+
+  if (cnts->simple_registration && !regular_flag) {
+    fprintf(fout, _("<p%s>This contest operates in \"simplified registration\" mode. You will get your login and password immediately after account is created. %s</p>"),
+            par_style, cnts->send_passwd_email?_("An email message will be sent to you just for your convenience."):("No email message at all will be sent to you."));
+    fprintf(fout, _("<p%s>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the <a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d&amp;regular=1\">regular registration</a>.</p>\n"),
+            par_style,
+            phr->self_url, phr->contest_id, phr->locale_id,
+            NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
+  } else {
+    if (cnts->simple_registration) {
+      fprintf(fout, _("<p%s><a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">Simplified registration</a> is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</p>\n"), par_style, phr->self_url, phr->contest_id,
+              phr->locale_id, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
+    }
+
+    if (!cnts->simple_registration || cnts->send_passwd_email) {
+      fprintf(fout, "<p%s>%s</p>", par_style,
+              _("Shortly after that you should receive an e-mail message "
+                "with a password to the system. Use this password for the first"
+                " log in. After the first login you will be able to change the password."));
+
+      fprintf(fout, "<p%s>%s</p>", par_style,
+              _("Be careful and type the e-mail address correctly. If you make a mistake, you will not receive a registration e-mail and be unable to complete the registration process."));
+    }
+  }
+
+  fprintf(fout, "<p%s>%s</p>",
+          par_style,
+          _("<b>Note</b>, that you must log in "
+            "24 hours after the form is filled and submitted, or "
+            "your registration will be cancelled!"));
 
   fprintf(fout, "<p%s>&nbsp;</p>\n", par_style);
 
@@ -525,18 +645,8 @@ register_new_assigned_logins_page(
 static unsigned char login_accept_chars[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\1\0\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 static unsigned char email_accept_chars[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\1\0\0\0\0\0\1\0\1\1\0\1\1\1\1\1\1\1\1\1\1\0\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 
-static int
-check_str(const unsigned char *str, const unsigned char *map)
-{
-  if (!str) return 0;
-  for (; *str; str++)
-    if (!map[*str])
-      return -1;
-  return 0;
-}
-
 static void
-register_new_user(
+create_account(
 	FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -547,11 +657,12 @@ register_new_user(
   const unsigned char *login = 0;
   const unsigned char *email = 0;
   int retval = 0, r, ul_error = 0, next_action;
+  unsigned char urlbuf[1024];
 
   if (!cnts->assign_logins) {
     r = ns_cgi_param(phr, "login", &login);
     if (r < 0) FAIL2(NEW_SRV_ERR_LOGIN_BINARY);
-    if (!r || !login || !*login) FAIL2(NEW_SRV_ERR_LOGIN_UNSPECIFIED);
+    if (!r || !login) FAIL2(NEW_SRV_ERR_LOGIN_UNSPECIFIED);
     if (check_str(login, login_accept_chars) < 0)
       FAIL2(NEW_SRV_ERR_LOGIN_INV_CHARS);
   } else {
@@ -560,16 +671,30 @@ register_new_user(
 
   r = ns_cgi_param(phr, "email", &email);
   if (r < 0) FAIL2(NEW_SRV_ERR_EMAIL_BINARY);
-  if (!r || !email || !*email) FAIL2(NEW_SRV_ERR_EMAIL_UNSPECIFIED);
+  if (!r || !email) FAIL2(NEW_SRV_ERR_EMAIL_UNSPECIFIED);
   if (check_str(email, email_accept_chars) < 0)
     FAIL2(NEW_SRV_ERR_EMAIL_INV_CHARS);
+
+  // if neither login nor email are specified, just change the locale
+  if (!*login && !*email) {
+    snprintf(urlbuf, sizeof(urlbuf), "%s?contest_id=%d&locale_id=%d&action=%d",
+             phr->self_url, phr->contest_id, phr->locale_id,
+             cnts->assign_logins?NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT_PAGE:NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
+    html_refresh_page_2(fout, urlbuf);
+    return;
+  }
+
+  if (!cnts->assign_logins) {
+    if (!*login) FAIL2(NEW_SRV_ERR_LOGIN_UNSPECIFIED);
+  }
+  if (!*email) FAIL2(NEW_SRV_ERR_EMAIL_UNSPECIFIED);
 
   if (ns_open_ul_connection(phr->fw_state) < 0)
     FAIL2(NEW_SRV_ERR_UL_CONNECT_FAILED);
 
-  next_action = NEW_SRV_ACTION_NEW_USER_REGISTERED_PAGE;
-  if (phr->action == NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER)
-    next_action = NEW_SRV_ACTION_NEW_AUTOASSIGNED_USER_REGISTERED_PAGE;
+  next_action = NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE;
+  if (phr->action == NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT)
+    next_action = NEW_SRV_ACTION_REG_AUTOASSIGNED_ACCOUNT_CREATED_PAGE;
 
   ul_error = userlist_clnt_register_new(ul_conn, ULS_REGISTER_NEW,
                                         phr->ip, phr->ssl_flag,
@@ -588,7 +713,7 @@ register_new_user(
  failed:
   fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s?contest_id=%d&action=%d",
           EJUDGE_CHARSET, phr->self_url, phr->contest_id,
-          (phr->action == NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER)?NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER_PAGE:NEW_SRV_ACTION_REGISTER_NEW_USER_PAGE);
+          (phr->action == NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT)?NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT_PAGE:NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
   if (phr->locale_id > 0) fprintf(fout, "&locale_id=%d", phr->locale_id);
   if (login && *login) fprintf(fout, "&login=%s", URLARMOR(login));
   if (email && *email) fprintf(fout, "&email=%s", URLARMOR(email));
@@ -601,7 +726,7 @@ register_new_user(
 }
 
 static void
-register_login(
+cmd_login(
 	FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -618,6 +743,15 @@ register_login(
   phr->login = xstrdup(login);
   if (ns_cgi_param(phr, "password", &password) <= 0)
     return ns_html_err_inv_param(fout, phr, 0, "password is invalid");
+
+  // if neither login, nor password is not specified, just change the locale
+  if ((!login || !*login) && (!password || !*password)) {
+    snprintf(urlbuf, sizeof(urlbuf), "%s?contest_id=%d&locale_id=%d&action=%d",
+             phr->self_url, phr->contest_id, phr->locale_id,
+             NEW_SRV_ACTION_REG_LOGIN_PAGE);
+    html_refresh_page_2(fout, urlbuf);
+    return;
+  }
 
   /* check password action is here */
   if (ns_open_ul_connection(phr->fw_state) < 0)
@@ -657,14 +791,9 @@ register_login(
       return ns_html_err_no_perm(fout, phr, 0, "user_login failed: %s",
                                  userlist_strerror(-r));
 
-    if (cnts->team_url) {
-      snprintf(urlbuf, sizeof(urlbuf), "%s?SID=%llx", cnts->team_url,
-               phr->session_id);
-    } else {
-      snprintf(urlbuf, sizeof(urlbuf), "%s?SID=%llx",
-               get_client_url(bb, sizeof(bb), phr->self_url),
-               phr->session_id);
-    }
+    snprintf(urlbuf, sizeof(urlbuf), "%s?SID=%llx",
+             get_client_url(bb, sizeof(bb), cnts, phr->self_url),
+             phr->session_id);
 
     ns_get_session(phr->session_id, 0);
     html_refresh_page_2(fout, urlbuf);
@@ -683,11 +812,14 @@ typedef void (*reg_action_handler_func_t)(FILE *fout,
 	time_t cur_time);
 static reg_action_handler_func_t action_handlers[NEW_SRV_ACTION_LAST] =
 {
-  [NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER_PAGE] = register_new_assigned_logins_page,
-  [NEW_SRV_ACTION_REGISTER_NEW_AUTOASSIGNED_USER] = register_new_user,
-  [NEW_SRV_ACTION_NEW_AUTOASSIGNED_USER_REGISTERED_PAGE] = user_login_page,
-  [NEW_SRV_ACTION_NEW_USER_REGISTERED_PAGE] = user_login_page,
-  [NEW_SRV_ACTION_REGISTER_LOGIN] = register_login,
+  [NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT_PAGE] = create_autoassigned_account_page,
+  [NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT] = create_account,
+  [NEW_SRV_ACTION_REG_AUTOASSIGNED_ACCOUNT_CREATED_PAGE] = login_page,
+  [NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE] = create_account_page,
+  [NEW_SRV_ACTION_REG_CREATE_ACCOUNT] = create_account,
+  [NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE] = login_page,
+  [NEW_SRV_ACTION_REG_LOGIN_PAGE] = login_page,
+  [NEW_SRV_ACTION_REG_LOGIN] = cmd_login,
 };
 
 static void
@@ -735,12 +867,27 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
     extra->contest_arm = html_armor_string_dup(cnts->name);
   }
 
+  // fool-proof...
+  if (cnts->assign_logins) {
+    if (phr->action == NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE)
+      phr->action = NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT_PAGE;
+    if (phr->action == NEW_SRV_ACTION_REG_CREATE_ACCOUNT)
+      phr->action = NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT;
+  } else {
+    if (phr->action == NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT_PAGE)
+      phr->action = NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE;
+    if (phr->action == NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT)
+      phr->action = NEW_SRV_ACTION_REG_CREATE_ACCOUNT;
+  }
+
   if (phr->action < 0 || phr->action >= NEW_SRV_ACTION_LAST) phr->action = 0;
   if (action_handlers[phr->action])
     return (*action_handlers[phr->action])(fout, phr, cnts, extra, cur_time);
 
   if (cnts->assign_logins)
-    return register_new_assigned_logins_page(fout, phr, cnts, extra, cur_time);
+    return create_autoassigned_account_page(fout, phr, cnts, extra, cur_time);
+  else
+    return login_page(fout, phr, cnts, extra, cur_time);
 }
 
 static void
