@@ -6562,7 +6562,7 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
       fprintf(fout,
               "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a>",
               cnts->register_url, phr->contest_id, phr->locale_id,
-              NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT_PAGE,
+              NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE,
               _("Registration"));
     } else {
       fprintf(fout,
@@ -10057,7 +10057,7 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr,
   // validate cookie
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
-  if ((r = userlist_clnt_get_cookie(ul_conn, ULS_GET_COOKIE,
+  if ((r = userlist_clnt_get_cookie(ul_conn, ULS_TEAM_GET_COOKIE,
                                     phr->ip, phr->ssl_flag,
                                     phr->session_id,
                                     &phr->user_id, &phr->contest_id,
