@@ -114,6 +114,8 @@ userlist_clnt_get_cookie(struct userlist_clnt *clnt,
                          int *p_priv_level,
                          int *p_role,
                          int *p_team_login,
+                         int *p_reg_status,
+                         int *p_reg_flags,
                          unsigned char **p_login,
                          unsigned char **p_name);
 
