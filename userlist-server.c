@@ -1953,7 +1953,8 @@ cmd_check_user(
   ej_tsc_t tsc1, tsc2;
   unsigned char logbuf[1024];
   const struct userlist_user_info *ui;
-  int user_id;
+  int user_id, errcode;
+  const struct contest_desc *cnts = 0;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet is too small: %d", pkt_len);
@@ -2002,6 +2003,12 @@ cmd_check_user(
   rdtscll(tsc2);
   tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
 
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+
   if (!u->passwd) {
     err("%s -> EMPTY PASSWORD", logbuf);
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
@@ -2010,6 +2017,11 @@ cmd_check_user(
   if (passwd_check(&pwdint, u->passwd, u->passwd_method) < 0) {
     err("%s -> WRONG PASSWORD", logbuf);
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if (u->simple_registration && !cnts->simple_registration) {
+    err("%s -> user is simple_registered, but the contest is not", logbuf);
+    send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
     return;
   }
 
@@ -4645,6 +4657,87 @@ cmd_register_contest(struct client_state *p, int pkt_len,
   return;
 }
 
+/* unprivileged version for use by `new-register' */
+static void
+cmd_register_contest_2(struct client_state *p, int pkt_len,
+                       struct userlist_pk_register_contest *data)
+{
+  const struct contest_desc *c = 0;
+  const struct userlist_contest *r;
+  int errcode, status = USERLIST_REG_PENDING;
+  unsigned char logbuf[1024];
+  const struct userlist_user *u = 0;
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "REGISTER_CONTEST_2: %d, %d",
+           data->user_id, data->contest_id);
+
+  if (p->user_id < 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+
+  if ((errcode = contests_get(data->contest_id, &c)) < 0) {
+    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (is_cnts_capable(p, c, OPCAP_CREATE_REG, logbuf) < 0) {
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (c->reg_deadline && cur_time > c->reg_deadline) {
+    err("%s -> registration deadline exceeded", logbuf);
+    send_reply(p, -ULS_ERR_DEADLINE);
+    return;
+  }
+  if (c->closed) {
+    err("%s -> the contest is closed", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (default_get_user_info_1(data->user_id, &u) < 0) {
+    err("%s -> invalid user_id", logbuf);
+    send_reply(p, -ULS_ERR_BAD_UID);
+    return;
+  }
+  if (u->simple_registration && !c->simple_registration) {
+    err("%s -> user is simple_registered, but the contest is not", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  /* FIXME: add IP information to request packet and check it here */
+
+  if (c->autoregister) status = USERLIST_REG_OK;
+  errcode = default_register_contest(data->user_id, data->contest_id,
+                                     status, cur_time, &r);
+  if (errcode < 0) {
+    err("%s -> registration failed", logbuf);
+    send_reply(p, -ULS_ERR_UNSPECIFIED_ERROR);
+    return;
+  } else if (!errcode) {
+    info("%s -> already registered", logbuf);
+    send_reply(p, ULS_OK);
+    return;
+  }
+
+  if (r->status == USERLIST_REG_OK) {
+    update_userlist_table(data->contest_id);
+  }
+  info("%s -> OK", logbuf);
+  send_reply(p, ULS_OK);
+  return;
+}
+
 /* privileged version */
 static void
 cmd_priv_register_contest(struct client_state *p, int pkt_len,
@@ -7227,6 +7320,7 @@ cmd_get_cookie(struct client_state *p,
   struct userlist_pk_login_ok *out;
   const struct userlist_contest *c = 0;
   const struct userlist_user_info *ui = 0;
+  const struct contest_desc *cnts = 0;
   size_t login_len, name_len, out_size;
   unsigned char *login_ptr, *name_ptr;
   time_t current_time = time(0);
@@ -7282,8 +7376,25 @@ cmd_get_cookie(struct client_state *p,
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
-  /* FIXME: check team_login flag! */
-  if (data->request_id == ULS_GET_COOKIE) {
+  if (cookie->contest_id > 0 && contests_get(cookie->contest_id, &cnts) < 0) {
+    err("%s -> invalid contest", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  switch (data->request_id) {
+  case ULS_GET_COOKIE:
+    if (cnts && !cnts->disable_team_password && cookie->team_login) {
+      err("%s -> participation cookie", logbuf);
+      send_reply(p, -ULS_ERR_NO_COOKIE);
+      return;
+    }
+    break;
+  case ULS_TEAM_GET_COOKIE:
+    if (cnts && !cnts->disable_team_password && !cookie->team_login) {
+      err("%s -> registration cookie", logbuf);
+      send_reply(p, -ULS_ERR_NO_COOKIE);
+      return;
+    }
     if (!c || c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
         || (c->flags & USERLIST_UC_LOCKED)) {
       err("%s -> NOT ALLOWED", logbuf);
@@ -7291,8 +7402,10 @@ cmd_get_cookie(struct client_state *p,
       return;
     }
     user_name = ui->name;
-  } else {
+    break;
+  case ULS_PRIV_GET_COOKIE:
     user_name = u->i.name;
+    break;
   }
   if (!user_name) user_name = "";
 
@@ -7875,7 +7988,7 @@ static void (*cmd_table[])() =
   [ULS_PRIV_GET_COOKIE]         cmd_get_cookie,
   [ULS_LOOKUP_USER_ID]          cmd_lookup_user_id,
   [ULS_TEAM_CHECK_USER] =       cmd_team_check_user,
-  [ULS_GET_COOKIE]              cmd_get_cookie,
+  [ULS_TEAM_GET_COOKIE] =       cmd_get_cookie,
   [ULS_ADD_NOTIFY]              cmd_observer_cmd,
   [ULS_DEL_NOTIFY]              cmd_observer_cmd,
   [ULS_SET_COOKIE_LOCALE]       cmd_set_cookie,
@@ -7891,6 +8004,8 @@ static void (*cmd_table[])() =
   [ULS_RESTART] =               cmd_control_server,
   [ULS_PRIV_COOKIE_LOGIN] =     cmd_priv_cookie_login,
   [ULS_CHECK_USER] =            cmd_check_user,
+  [ULS_REGISTER_CONTEST_2] =    cmd_register_contest_2,
+  [ULS_GET_COOKIE] =            cmd_get_cookie,
 
   [ULS_LAST_CMD] 0
 };
