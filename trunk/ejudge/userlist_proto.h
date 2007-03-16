@@ -326,6 +326,8 @@ struct userlist_pk_login_ok
   unsigned char      priv_level;
   int                role;
   int                team_login;
+  int                reg_status;
+  int                reg_flags;
   unsigned char      login_len;
   unsigned char      name_len;
   char               data[2];

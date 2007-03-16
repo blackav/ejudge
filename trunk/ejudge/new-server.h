@@ -71,6 +71,8 @@ struct http_request_info
   int role;
   int action;
   int user_id;
+  int reg_status;
+  int reg_flags;
   unsigned char *login;
   unsigned char *name;
   unsigned char *name_arm;

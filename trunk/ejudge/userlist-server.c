@@ -7426,6 +7426,11 @@ cmd_get_cookie(struct client_state *p,
   out->priv_level = cookie->priv_level;
   out->role = cookie->role;
   out->team_login = cookie->team_login;
+  out->reg_status = -1;
+  if (c) {
+    out->reg_status = c->status;
+    out->reg_flags = c->flags;
+  }
   strcpy(login_ptr, u->login);
   strcpy(name_ptr, user_name);
   
