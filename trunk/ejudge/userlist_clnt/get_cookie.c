@@ -29,6 +29,8 @@ userlist_clnt_get_cookie(struct userlist_clnt *clnt,
                          int *p_priv_level,
                          int *p_role,
                          int *p_team_login,
+                         int *p_reg_status,
+                         int *p_reg_flags,
                          unsigned char **p_login,
                          unsigned char **p_name)
 {
@@ -84,6 +86,8 @@ userlist_clnt_get_cookie(struct userlist_clnt *clnt,
   if (p_priv_level) *p_priv_level = in->priv_level;
   if (p_role) *p_role = in->role;
   if (p_team_login) *p_team_login = in->team_login;
+  if (p_reg_status) *p_reg_status = in->reg_status;
+  if (p_reg_flags) *p_reg_flags = in->reg_flags;
   if (p_login) *p_login = xstrdup(login_ptr);
   if (p_name) *p_name = xstrdup(name_ptr);
 
