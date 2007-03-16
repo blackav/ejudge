@@ -2733,8 +2733,8 @@ action_register_new_user(void)
       errcode = userlist_clnt_register_new_2(server_conn, user_ip,
                                              ssl_flag,
                                              user_contest_id,
-                                             client_locale_id,
-                                             user_login, user_email,
+                                             client_locale_id, 0,
+                                             user_login, user_email, 0,
                                              0, &user_password);
       if (errcode == ULS_PASSWORD) errcode = 0;
       if (errcode < 0) {
