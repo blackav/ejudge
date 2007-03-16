@@ -23,21 +23,32 @@ userlist_clnt_register_new_2(struct userlist_clnt *clnt,
                              int ssl,
                              int contest_id,
                              int locale_id,
+                             int action,
                              unsigned char const *login,
                              unsigned char const *email,
+                             const unsigned char *self_url,
                              unsigned char **p_login,
                              unsigned char **p_passwd)
 {
   struct userlist_pk_register_new *data;
   struct userlist_pk_new_password *answer;
+  unsigned char *p;
   void *v_ans;
   short *s_ans;
-  int len;
+  int len, login_len, email_len, self_url_len;
   size_t anslen;
   int res;
   int r;
 
-  len = sizeof(struct userlist_pk_register_new)+strlen(login)+strlen(email);
+  if (!login) login = "";
+  if (!email) email = "";
+  if (!self_url) self_url = "";
+  login_len = strlen(login);
+  email_len = strlen(email);
+  self_url_len = strlen(self_url);
+
+  len = sizeof(struct userlist_pk_register_new)
+    + login_len + email_len + self_url_len;
   data = alloca(len);
   memset(data, 0, len);
   data->request_id = ULS_REGISTER_NEW_2;
@@ -45,10 +56,13 @@ userlist_clnt_register_new_2(struct userlist_clnt *clnt,
   data->ssl = ssl;
   data->contest_id = contest_id;
   data->locale_id = locale_id;
-  data->login_length = strlen(login);
-  data->email_length = strlen(email);
-  strcpy(data->data,login);
-  strcpy(data->data+data->login_length+1,email);
+  data->action = action;
+  data->login_length = login_len;
+  data->email_length = email_len;
+  data->self_url_length = self_url_len;
+  p = data->data; strcpy(p, login);
+  p += login_len + 1; strcpy(p, email);
+  p += email_len + 1; strcpy(p, self_url);
   if ((r = userlist_clnt_send_packet(clnt,len,data)) < 0) return r;
   if ((r = userlist_clnt_read_and_notify(clnt,&anslen,(void*) &v_ans)) < 0)
     return r;
