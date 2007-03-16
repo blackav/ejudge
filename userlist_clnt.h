@@ -57,8 +57,10 @@ userlist_clnt_register_new_2(struct userlist_clnt *clnt,
                              int ssl,
                              int contest_id,
                              int locale_id,
+                             int action,
                              unsigned char const *login,
                              unsigned char const *email,
+                             const unsigned char *self_url,
                              unsigned char **p_login,
                              unsigned char **p_passwd);
 

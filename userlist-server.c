@@ -994,7 +994,8 @@ cmd_register_new_2(struct client_state *p,
 {
   unsigned char * login;
   unsigned char * email;
-  int login_len, email_len, errcode, exp_pkt_len;
+  unsigned char * self_url;
+  int login_len, email_len, self_url_len, errcode, exp_pkt_len;
   unsigned char passwd_buf[64];
   const struct contest_desc *cnts = 0;
   unsigned char logbuf[1024];
@@ -1018,7 +1019,14 @@ cmd_register_new_2(struct client_state *p,
     CONN_BAD("email length mismatch: %d, %d", email_len, data->email_length);
     return;
   }
-  exp_pkt_len = sizeof(*data) + login_len + email_len;
+  self_url = email + email_len + 1;
+  self_url_len = strlen(self_url);
+  if (self_url_len != data->self_url_length) {
+    CONN_BAD("email length mismatch: %d, %d",
+             self_url_len, data->self_url_length);
+    return;
+  }
+  exp_pkt_len = sizeof(*data) + login_len + email_len + self_url_len;
   if (pkt_len != exp_pkt_len) {
     CONN_BAD("packet length mismatch: %d, %d", pkt_len, exp_pkt_len);
     return;
@@ -1164,14 +1172,20 @@ cmd_register_new_2(struct client_state *p,
       snprintf(locale_str, sizeof(locale_str), "&locale_id=%d",
                data->locale_id);
     }
-    if (cnts && cnts->register_url) {
+    if (self_url && *self_url) {
+      url_str = self_url;
+    } else if (cnts && cnts->register_url) {
       url_str = cnts->register_url;
     } else if (config->register_url) {
       url_str = config->register_url;
     } else {
       url_str = "http://localhost/cgi-bin/register";
     }
-    if (cnts->force_registration) action = 4;
+    if (data->action > 0) {
+      action = data->action;
+    } else if (cnts->force_registration) {
+      action = 4;
+    }
     snprintf(urlbuf, sizeof(urlbuf), "%s?action=%d&login=%s%s%s",
              url_str, action, login, contest_str, locale_str);
 
