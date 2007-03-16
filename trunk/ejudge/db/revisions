@@ -2149,3 +2149,15 @@ register.c 4018 0 8623530
 userlist-server.c 4018 0 21088123
 new_server_html.c 4018 0 28299206
 new_server_html_5.c 4018 0 3282437
+userlist_clnt.h 4022 0 933995
+execute.c 4020 0 791236
+new-client.c 4020 0 565558
+register.c 4022 0 8623772
+testinfo.c 4020 0 811281
+userlist-server.c 4022 0 21122262
+new_server_html.c 4020 0 28299731
+new_server_html_2.c 4020 0 11045810
+new_server_html_4.c 4020 0 4352313
+prepare.c 4020 0 13500346
+runlog.c 4020 0 6217495
+userlist_clnt/register_new_2.c 4021 0 259775
