@@ -658,6 +658,8 @@ create_account(
   const unsigned char *email = 0;
   int retval = 0, r, ul_error = 0, next_action;
   unsigned char urlbuf[1024];
+  unsigned char *new_login = 0;
+  unsigned char *new_password = 0;
 
   if (!cnts->assign_logins) {
     r = ns_cgi_param(phr, "login", &login);
@@ -696,11 +698,22 @@ create_account(
   if (phr->action == NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT)
     next_action = NEW_SRV_ACTION_REG_AUTOASSIGNED_ACCOUNT_CREATED_PAGE;
 
-  ul_error = userlist_clnt_register_new(ul_conn, ULS_REGISTER_NEW,
-                                        phr->ip, phr->ssl_flag,
-                                        phr->contest_id, phr->locale_id,
-                                        next_action,
-                                        login, email, phr->self_url);
+  if (cnts->simple_registration) {
+    ul_error = userlist_clnt_register_new_2(ul_conn, phr->ip, phr->ssl_flag,
+                                            phr->contest_id, phr->locale_id,
+                                            next_action,
+                                            login, email, phr->self_url,
+                                            &new_login, &new_password);
+
+
+  } else {
+    ul_error = userlist_clnt_register_new(ul_conn, ULS_REGISTER_NEW,
+                                          phr->ip, phr->ssl_flag,
+                                          phr->contest_id, phr->locale_id,
+                                          next_action,
+                                          login, email, phr->self_url);
+  }
+
   if (ul_error < 0) goto failed;
   fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s?contest_id=%d&action=%d",
           EJUDGE_CHARSET, phr->self_url, phr->contest_id, next_action);
@@ -716,6 +729,10 @@ create_account(
           (phr->action == NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT)?NEW_SRV_ACTION_REG_CREATE_AUTOASSIGNED_ACCOUNT_PAGE:NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
   if (phr->locale_id > 0) fprintf(fout, "&locale_id=%d", phr->locale_id);
   if (login && *login) fprintf(fout, "&login=%s", URLARMOR(login));
+  if (cnts->simple_registration) {
+    if (new_password && *new_password)
+      fprintf(fout, "&password=%s", URLARMOR(new_password));
+  }
   if (email && *email) fprintf(fout, "&email=%s", URLARMOR(email));
   if (retval) fprintf(fout, "&retval=%d", retval);
   if (ul_error) fprintf(fout, "&ul_error=%d", ul_error);
@@ -723,6 +740,8 @@ create_account(
 
  cleanup:
   html_armor_free(&ab);
+  xfree(new_login);
+  xfree(new_password);
 }
 
 static void
