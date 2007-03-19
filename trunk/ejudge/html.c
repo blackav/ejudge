@@ -1386,34 +1386,34 @@ new_write_user_clar(const serve_state_t state, const struct contest_desc *cnts,
 struct standings_style
 {
   // "last success", "last submit"
-  unsigned char *success_attr;
+  const unsigned char *success_attr;
 
   // for tables
-  unsigned char *table_attr;
-  unsigned char *place_attr;
-  unsigned char *team_attr;
-  unsigned char *extra_attr;
-  unsigned char *prob_attr;
-  unsigned char *solved_attr;
-  unsigned char *score_attr;
-  unsigned char *penalty_attr;
-  unsigned char *time_attr;
-  unsigned char *contestant_status_attr;
-  unsigned char *warn_number_attr;
+  const unsigned char *table_attr;
+  const unsigned char *place_attr;
+  const unsigned char *team_attr;
+  const unsigned char *extra_attr;
+  const unsigned char *prob_attr;
+  const unsigned char *solved_attr;
+  const unsigned char *score_attr;
+  const unsigned char *penalty_attr;
+  const unsigned char *time_attr;
+  const unsigned char *contestant_status_attr;
+  const unsigned char *warn_number_attr;
 
   // for virtual contests
-  unsigned char *self_row_attr;
-  unsigned char *v_row_attr;
-  unsigned char *r_row_attr;
-  unsigned char *u_row_attr;
+  const unsigned char *self_row_attr;
+  const unsigned char *v_row_attr;
+  const unsigned char *r_row_attr;
+  const unsigned char *u_row_attr;
 
   // for table cells
-  unsigned char *fail_attr;
-  unsigned char *trans_attr;
+  const unsigned char *fail_attr;
+  const unsigned char *trans_attr;
 
   // for page table
-  unsigned char *page_table_attr;
-  unsigned char *page_cur_attr;
+  const unsigned char *page_table_attr;
+  const unsigned char *page_cur_attr;
   /*
   GLOBAL_PARAM(page_row_attr, "x"),
   GLOBAL_PARAM(page_col_attr, "x"),
@@ -2758,7 +2758,7 @@ do_write_moscow_standings(const serve_state_t state,
   const struct team_extra *u_extra;
   path_t stand_tmp;             /* temporary file path */
   path_t stand_path;            /* final path for a standings page */
-  unsigned char *row_attr;
+  const unsigned char *row_attr;
   unsigned char *r_attrs[2][2] = { { "", ""}, { "", "" }};
   unsigned char *pr_attrs[4] = { "", "", "", "" };
   unsigned char *pc_attrs[2] = { "", "" };
@@ -3573,7 +3573,7 @@ do_write_standings(const serve_state_t state,
   time_t        tdur = 0, tstart = 0;
 
   char          url_str[1024];
-  unsigned char *bgcolor_ptr;
+  const unsigned char *bgcolor_ptr;
   unsigned char *head_style;
   struct teamdb_export ttt;      
   const struct run_entry *runs, *pe;
@@ -3587,7 +3587,7 @@ do_write_standings(const serve_state_t state,
   unsigned char *r_attrs[2][2] = {{"", ""}, {"", ""}};
   int row_sh, row_sz, up_ind, attr_num;
   int prev_prob = -1, row_ind = 0, group_ind = 1;
-  unsigned char *col_attr = 0;
+  const unsigned char *col_attr = 0;
   struct standings_style ss;
 
   if (cur_time <= 0) cur_time = time(0);
