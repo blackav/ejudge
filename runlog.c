@@ -1394,6 +1394,8 @@ run_find_duplicate(runlog_state_t state,
   int i;
   const struct run_entry *q;
 
+  if (!state->run_u) return -1;
+
   for (i = state->run_u - 1; i >= 0; i--) {
     q = &state->runs[i];
     if (q->status == RUN_EMPTY || q->status == RUN_VIRTUAL_START
