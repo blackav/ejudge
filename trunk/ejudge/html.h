@@ -27,7 +27,7 @@
 void write_standings(const serve_state_t,
                      const struct contest_desc *,
                      char const *, char const *,
-                     int, char const *, char const *, int);
+                     int, char const *, char const *, int, int);
 void write_public_log(const serve_state_t,
                       const struct contest_desc *,
                       char const *, char const *,
@@ -124,6 +124,7 @@ void do_write_kirov_standings(const serve_state_t,
                               unsigned char const *footer_str,
                               int raw_flag,
                               int accepting_mode,
+                              int force_fancy_style,
                               time_t cur_time);
 
 void do_write_standings(const serve_state_t,
@@ -136,6 +137,7 @@ void do_write_standings(const serve_state_t,
                         unsigned char const *footer_str,
                         int raw_flag,
                         const unsigned char *user_name,
+                        int force_fancy_style,
                         time_t cur_time);
 
 void do_write_moscow_standings(const serve_state_t,
@@ -148,6 +150,7 @@ void do_write_moscow_standings(const serve_state_t,
                                const unsigned char *footer_str,
                                int raw_flag,
                                const unsigned char *user_name,
+                               int force_fancy_style,
                                time_t cur_time);
 
 int write_priv_source(const serve_state_t, FILE *f, int user_id, int priv_level,
@@ -195,7 +198,7 @@ int write_priv_user(const serve_state_t, FILE *f, int user_id, int priv_level,
 
 int write_virtual_standings(const serve_state_t,
                             const struct contest_desc *cnts,
-                            FILE *f, int user_id);
+                            FILE *f, int user_id, int force_fancy_style);
 
 void html_reset_filter(serve_state_t, int user_id, ej_cookie_t session_id);
 void html_reset_clar_filter(serve_state_t, int user_id, ej_cookie_t session_id);

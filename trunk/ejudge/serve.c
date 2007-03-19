@@ -1612,7 +1612,7 @@ cmd_team_show_item(struct client_state *p, int len,
   case SRV_CMD_VIRTUAL_STANDINGS:
     if (!serve_state.global->is_virtual) r = -SRV_ERR_ONLY_VIRTUAL;
     else r = write_virtual_standings(&serve_state, cur_contest,
-                                     f, pkt->user_id);
+                                     f, pkt->user_id, 0);
     break;
   case SRV_CMD_RUN_STATUS:
     r = write_user_run_status(&serve_state, f, pkt->user_id, pkt->item_id,
