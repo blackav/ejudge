@@ -273,6 +273,7 @@ struct section_global_data
   int    users_on_page;         /* number of users on page */
   puc_t stand_file_name_2[64];
 
+  int stand_fancy_style;        /* fancy standings style */
   puc_t stand_extra_format[128];/* extra standings info */
   puc_t stand_extra_legend[64]; /* extra standings info legend */
   puc_t stand_extra_attr[128];  /* extra standings info attributes */
