@@ -366,6 +366,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     fprintf(f, "internal_xml_update_time = %d\n", global->internal_xml_update_time);
   fprintf(f, "\n");
 
+  if (global->stand_fancy_style > 0)
+    unparse_bool(f, "stand_fancy_style", global->stand_fancy_style);
   if (global->stand_success_attr[0])
     fprintf(f, "stand_success_attr = \"%s\"\n",
             c_armor(&sbuf, global->stand_success_attr));

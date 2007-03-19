@@ -184,6 +184,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(internal_xml_update_time, "d"),
 
   // standings table attributes
+  GLOBAL_PARAM(stand_fancy_style, "d"),
   GLOBAL_PARAM(stand_extra_format, "s"),
   GLOBAL_PARAM(stand_extra_legend, "s"),
   GLOBAL_PARAM(stand_extra_attr, "s"),
@@ -509,6 +510,7 @@ global_init_func(struct generic_section_config *gp)
   p->always_show_problems = -1;
   p->disable_user_standings = -1;
   p->problem_navigation = -1;
+  p->stand_fancy_style = -1;
   p->stand_show_ok_time = -1;
   p->stand_show_warn_number = -1;
   p->disable_auto_testing = -1;
@@ -1650,6 +1652,8 @@ set_defaults(serve_state_t state, int mode)
     state->global->disable_user_standings = DFLT_G_DISABLE_USER_STANDINGS;
   if (state->global->problem_navigation == -1)
     state->global->problem_navigation = DFLT_G_PROBLEM_NAVIGATION;
+  if (state->global->stand_fancy_style == -1)
+    state->global->stand_fancy_style = 0;
   if (state->global->stand_show_ok_time == -1)
     state->global->stand_show_ok_time = DFLT_G_STAND_SHOW_OK_TIME;
   if (state->global->stand_show_warn_number == -1)
@@ -3948,6 +3952,8 @@ prepare_set_global_defaults(struct section_global_data *g)
     g->team_page_quota = DFLT_G_TEAM_PAGE_QUOTA;
   if (g->stand_show_warn_number < 0)
     g->stand_show_warn_number = DFLT_G_STAND_SHOW_WARN_NUMBER;
+  if (g->stand_fancy_style < 0)
+    g->stand_fancy_style = 0;
   if (g->stand_show_ok_time < 0)
     g->stand_show_ok_time = DFLT_G_STAND_SHOW_OK_TIME;
 }
@@ -4127,6 +4133,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->disable_banner_page = DFLT_G_DISABLE_BANNER_PAGE;
   global->team_page_quota = DFLT_G_TEAM_PAGE_QUOTA;
   global->enable_l10n = 1;
+  global->stand_fancy_style = 0;
   global->stand_show_ok_time = DFLT_G_STAND_SHOW_OK_TIME;
   global->stand_show_warn_number = DFLT_G_STAND_SHOW_WARN_NUMBER;
 
