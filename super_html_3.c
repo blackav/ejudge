@@ -2350,6 +2350,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     p_int = &global->internal_xml_update_time;
     goto handle_int;
 
+  case SSERV_CMD_GLOB_CHANGE_STAND_FANCY_STYLE:
+    p_int = &global->stand_fancy_style;
+    goto handle_boolean;
+
   case SSERV_CMD_GLOB_CHANGE_STAND_TABLE_ATTR:
     GLOB_SET_STRING(stand_table_attr);
 

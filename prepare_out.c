@@ -1166,11 +1166,13 @@ prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
 {
   struct str_buf sbuf = { 0, 0};
 
+  /*
   //PROBLEM_PARAM(use_tgz, "d"),
   if (prob->use_tgz >= 0) {
     if (prob->use_tgz || !prob->abstract)
       unparse_bool(f, "use_tgz", prob->use_tgz);
   }
+  */
   /*
   //PROBLEM_PARAM(tgz_dir, "s"),
   do_str(f, &sbuf, "tgz_dir", prob->tgz_dir);

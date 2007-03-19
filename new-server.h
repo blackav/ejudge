@@ -455,8 +455,6 @@ void ns_header(FILE *out, unsigned char const *template,
   __attribute__((format(printf, 8, 9)));
 void ns_footer(FILE *out, unsigned char const *templ,
                const unsigned char *copyright, int locale_id);
-void ns_set_fancy_standings_style(struct section_global_data *global);
-
 
 const unsigned char *ns_unparse_role(int role);
 

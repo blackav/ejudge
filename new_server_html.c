@@ -6035,7 +6035,6 @@ privileged_page(FILE *fout,
                                &extra->serve_state, 0) < 0) {
     return ns_html_err_cnts_unavailable(fout, phr, 0, 0);
   }
-  ns_set_fancy_standings_style(extra->serve_state->global);
 
   extra->serve_state->current_time = time(0);
   ns_check_contest_events(extra->serve_state, cnts);
@@ -8287,21 +8286,21 @@ unpriv_view_standings(FILE *fout,
           cnts->team_head_style);
 
   if (global->is_virtual) {
-    do_write_standings(cs, cnts, fout, 1, 1, phr->user_id, 0, 0, 0, 0,
+    do_write_standings(cs, cnts, fout, 1, 1, phr->user_id, 0, 0, 0, 0, 1,
                        cur_time);
   } else if (global->score_system_val == SCORE_ACM) {
-    do_write_standings(cs, cnts, fout, 1, 1, phr->user_id, 0, 0, 0, 0,
+    do_write_standings(cs, cnts, fout, 1, 1, phr->user_id, 0, 0, 0, 0, 1,
                        cur_time);
   } else if (global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode) {
     fprintf(fout, _("<p>Information is not available.</p>"));
   } else if (global->score_system_val == SCORE_OLYMPIAD) {
     //fprintf(fout, _("<p>Information is not available.</p>"));
-    do_write_kirov_standings(cs, cnts, fout, 0, 1, 1, 0, 0, 0, 0, cur_time);
+    do_write_kirov_standings(cs, cnts, fout, 0, 1, 1, 0, 0, 0, 0, 1, cur_time);
   } else if (global->score_system_val == SCORE_KIROV) {
-    do_write_kirov_standings(cs, cnts, fout, 0, 1, 1, 0, 0, 0, 0, cur_time);
+    do_write_kirov_standings(cs, cnts, fout, 0, 1, 1, 0, 0, 0, 0, 1, cur_time);
   } else if (global->score_system_val == SCORE_MOSCOW) {
     do_write_moscow_standings(cs, cnts, fout, 0, 1, 1, phr->user_id,
-                              0, 0, 0, 0, cur_time);
+                              0, 0, 0, 0, 1, cur_time);
   }
 
  done:
@@ -10136,7 +10135,6 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr,
                                &extra->serve_state, 0) < 0) {
     return ns_html_err_cnts_unavailable(fout, phr, 0, 0);
   }
-  ns_set_fancy_standings_style(extra->serve_state->global);
 
   extra->serve_state->current_time = time(0);
   ns_check_contest_events(extra->serve_state, cnts);

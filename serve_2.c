@@ -86,13 +86,13 @@ serve_update_standings_file(serve_state_t state,
                   state->global->users_on_page,
                   state->global->stand_header_txt,
                   state->global->stand_footer_txt,
-                  state->accepting_mode);
+                  state->accepting_mode, 0);
   if (state->global->stand2_file_name[0]) {
     write_standings(state, cnts, state->global->status_dir,
                     state->global->stand2_file_name, 0,
                     state->global->stand2_header_txt,
                     state->global->stand2_footer_txt,
-                    state->accepting_mode);
+                    state->accepting_mode, 0);
   }
   l10n_setlocale(0);
   if (state->global->is_virtual) return;
