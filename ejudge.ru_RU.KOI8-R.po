@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-03-14 16:04+0300\n"
-"PO-Revision-Date: 2007-03-14 16:05+0300\n"
+"POT-Creation-Date: 2007-03-19 16:16+0300\n"
+"PO-Revision-Date: 2007-03-19 17:04+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 
 #, c-format
 msgid " / <b>%d unread message(s)</b>"
-msgstr " / <b>%d непрочитанных</b>"
+msgstr " / <b>%d непрочитанных сообщений</b>"
 
 #, c-format
 msgid " [%s, frozen]"
@@ -250,6 +250,10 @@ msgstr ""
 "посылок имеет формат <tt>.tar.gz</tt> (<tt>.tgz</tt>).</p>\n"
 
 #, c-format
+msgid "<p%s><b>Remember or write down the password!</b></p>"
+msgstr "<p%s><b>Запомните или запишите пароль!</b></p>"
+
+#, c-format
 msgid ""
 "<p%s>Accounts created using simplified registration procedure cannot be used "
 "for participation in contests, which do not allow simplified registration. "
@@ -294,10 +298,10 @@ msgid ""
 "If so, follow the <a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d"
 "\">\"Use an existing account\"</a> link.</p>"
 msgstr ""
-"<p%s>Если у Вас уже есть учётная запись в ejudge на этом сервере, Вы можете "
-"использовать её. Для этого проследуйте по ссылке <a href=\"%s?contest_id=%"
-"d&amp;locale_id=%d&amp;action=%d\">\"Использовать существующую учётную запись"
-"\"</a>.</p>"
+"<p%s>Если у Вас уже есть учётная запись в системе ejudge на этом сервере, Вы "
+"можете использовать её. Для этого проследуйте по ссылке <a href=\"%s?"
+"contest_id=%d&amp;locale_id=%d&amp;action=%d\">\"Использовать существующую "
+"учётную запись\"</a>.</p>"
 
 #, c-format
 msgid ""
@@ -334,6 +338,15 @@ msgstr ""
 "<p%s><b>Внимание</b>, Вы должны активировать новое регистрационное имя в "
 "течение 24 часов с этого момента. В противном случае эта учётная запись "
 "будет удалена.</p>"
+
+#, c-format
+msgid ""
+"<p%s>New account <tt>%s</tt> is successfully created. Initial password is "
+"generated automatically. You will be able to change your password later. "
+msgstr ""
+"<p%s>Новая учётная запись <tt>%s</tt> успешно создана. Начальный пароль для "
+"входа сгенерирован автоматически. Вы сможете его поменять после входа в "
+"систему. "
 
 #, c-format
 msgid ""
@@ -395,6 +408,10 @@ msgstr ""
 #, c-format
 msgid "<p%s>Remember or write down the password!."
 msgstr "<p%s>Запомните или запишите пароль!"
+
+#, c-format
+msgid "<p%s>The account parameters are as follows:</p>\n"
+msgstr "<p%s>Ваша регистрационная запись имеет следующие параметры:</p>\n"
 
 #, c-format
 msgid "<p%s>The current number of %s is %d.</p>\n"
@@ -553,6 +570,11 @@ msgstr "Все сообщения"
 
 msgid "All problems"
 msgstr "Все задачи"
+
+#, c-format
+msgid "An e-mail with your account parameters is sent to address <tt>%s</tt>. "
+msgstr ""
+"Письмо с параметрами Вашей учётной записи выслано на адрес <tt>%s</tt>. "
 
 msgid "An email message will be sent to you just for your convenience."
 msgstr ""
@@ -1326,6 +1348,9 @@ msgstr "Сгенерировать случайные регистрационные пароли"
 
 msgid "Generate random registration passwords!"
 msgstr "Сгенерировать случайные регистрационные пароли!"
+
+msgid "Good!"
+msgstr "Отлично!"
 
 msgid "Good-bye"
 msgstr "До свидания"
@@ -2914,15 +2939,6 @@ msgstr ""
 "после заполнения и посылки анкеты, или в противном случае Ваша регистрация "
 "будет отменена!"
 
-msgid ""
-"Shortly after that you should receive an e-mail message with a password to "
-"the system. Use this password for the first log in. After the first login "
-"you will be able to change the password."
-msgstr ""
-"После этого на Ваш электронный адрес будет направлено письмо, которое будет "
-"содержать пароль для входа в систему. Этот пароль необходимо использовать "
-"для первого входа в систему, после чего его можно будет поменять."
-
 msgid "Shown"
 msgstr "Показано"
 
@@ -2960,7 +2976,7 @@ msgid "Squeeze runs"
 msgstr "Сжать журнал"
 
 msgid "Standings"
-msgstr "Положение команд"
+msgstr "Положение участников"
 
 msgid "Standings [not started]"
 msgstr "Положение [не начат]"
@@ -3672,6 +3688,15 @@ msgid "You may register for this contest."
 msgstr "Вы можете зарегистрироваться на этот турнир."
 
 msgid ""
+"You should receive an e-mail message with a password to the system. Use this "
+"password for the first log in. After the first login you will be able to "
+"change the password."
+msgstr ""
+"На Ваш электронный адрес будет направлено письмо, которое будет содержать "
+"пароль для входа в систему. Этот пароль необходимо использовать для первого "
+"входа в систему, после чего его можно будет поменять."
+
+msgid ""
 "Your request has caused an internal server error. Please, report it as a bug."
 msgstr ""
 "Ваш запрос вызвал внутреннюю ошибку сервера. Пожалуйста, сообщите об этом "
@@ -3933,14 +3958,14 @@ msgstr "протокол недоступен"
 msgid "some component of request is too large"
 msgstr "некоторые компоненты запроса имеют слишком большой размер"
 
+msgid "standings"
+msgstr "положение участников"
+
 msgid "system call failed"
 msgstr "системный вызов завершился неудачно"
 
 msgid "team pages quota is exceeded"
 msgstr "превышена квота страниц пользователя"
-
-msgid "team standings"
-msgstr "положение команд"
 
 msgid "testing suspended"
 msgstr "тестирование приостановлено"
