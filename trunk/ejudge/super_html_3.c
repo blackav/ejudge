@@ -384,6 +384,7 @@ Standings files and URLs:
   GLOBAL_PARAM(plog_symlink_dir, "s"),
 
 Standings table attributes:
+  GLOBAL_PARAM(stand_fancy_style, "d"),
   GLOBAL_PARAM(stand_extra_format, "s"),
   GLOBAL_PARAM(stand_extra_legend, "s"),
   GLOBAL_PARAM(stand_extra_attr, "s"),
@@ -1292,6 +1293,15 @@ super_html_edit_global_parameters(FILE *f,
   fprintf(f, "</td></tr></form>");
 
   if (sstate->show_global_5) {
+    //GLOBAL_PARAM(stand_fancy_style, "d"),
+    html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Use fancy decorations:</td><td>",
+            form_row_attrs[row ^= 1]);
+    html_boolean_select(f, global->stand_fancy_style, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_STAND_FANCY_STYLE, "Change");
+    fprintf(f, "</td></tr></form>\n");
+
     //GLOBAL_PARAM(stand_success_attr, "s"),
     print_string_editing_row(f, "HTML attributes for \"Last success\" note:",
                              global->stand_success_attr,
