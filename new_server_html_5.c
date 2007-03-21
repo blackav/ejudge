@@ -24,6 +24,7 @@
 #include "new_server_proto.h"
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
+#include "userlist.h"
 #include "contests.h"
 #include "misctext.h"
 #include "mischtml.h"
@@ -35,6 +36,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -48,6 +50,20 @@
 #define URLARMOR(s)  url_armor_buf(&ab, s)
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 #define FAIL2(c) do { retval = -(c); goto failed; } while (0)
+
+static unsigned char *
+ns_snprintf(unsigned char *buf, size_t size, const char *format, ...)
+  __attribute__((format(printf, 3, 4)));
+static unsigned char *
+ns_snprintf(unsigned char *buf, size_t size, const char *format, ...)
+{
+  va_list args;
+
+  va_start(args, format);
+  vsnprintf(buf, size, format, args);
+  va_end(args);
+  return buf;
+}
 
 static unsigned char *
 get_client_url(
@@ -966,6 +982,131 @@ change_locale(FILE *fout, struct http_request_info *phr)
   html_armor_free(&ab);
 }
 
+static void
+menu_item(FILE *fout, struct http_request_info *phr,
+          int action,
+          const unsigned char *text,
+          const unsigned char *url)
+{
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
+  if (action != phr->action && url) {
+    fprintf(fout, "<a class=\"menu\" href=\"%s\">", url);
+  }
+  fprintf(fout, "%s", text);
+  if (action != phr->action && url) {
+    fprintf(fout, "</a>");
+  }
+  fprintf(fout, "</div></td>");
+}
+
+/*
+unsigned char *
+ns_url(unsigned char *buf, size_t size,
+       const struct http_request_info *phr,
+       int action, const char *format, ...);
+*/
+
+static void
+main_page(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+  unsigned char ub[1024];
+  unsigned char bb[1024];
+  int shown_items = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *status_style;
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s]", _("Good!"),
+            extra->contest_arm);
+
+  shown_items = 0;
+  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>");
+  menu_item(fout, phr, NEW_SRV_ACTION_VIEW_SETTINGS, _("Settings"),
+            ns_url(ub, sizeof(ub), phr, NEW_SRV_ACTION_VIEW_SETTINGS, 0));
+  shown_items++;
+  menu_item(fout, phr, NEW_SRV_ACTION_LOGOUT,
+            ns_snprintf(bb, sizeof(bb), "%s [%s]", _("Logout"),
+                        ARMOR(phr->login)),
+            ns_url(ub, sizeof(ub), phr, NEW_SRV_ACTION_LOGOUT, 0));
+  shown_items++;
+  if (!shown_items)
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
+  fprintf(fout, "</tr></table></div>\n");
+
+  fprintf(fout, "<div class=\"white_empty_block\">&nbsp;</div>\n");
+
+  shown_items = 0;
+  fprintf(fout, "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
+
+  // lower row
+  if (phr->reg_status == USERLIST_REG_OK
+      && !(phr->reg_flags &~USERLIST_UC_INVISIBLE)
+      && contests_check_team_ip_2(cnts, phr->ip, phr->ssl_flag)
+      && !cnts->closed && !cnts->client_disable_team) {
+    // "participate" link
+    get_client_url(bb, sizeof(bb), cnts, phr->self_url);
+    if (cnts->disable_team_password) {
+      snprintf(ub, sizeof(ub), "%s?SID=%llx", bb, phr->session_id);
+    } else {
+      snprintf(ub, sizeof(ub),"%s?contest_id=%d&amp;login=%s&amp;locale_id=%d",
+               bb, phr->contest_id, URLARMOR(phr->login), phr->locale_id);
+    }
+    menu_item(fout, phr, -1, _("Participate"), ub);
+    shown_items++;
+  }
+  if (!shown_items)
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
+  fprintf(fout, "</tr></table></div>\n");
+  if (extra->separator_txt && *extra->separator_txt) {
+    fprintf(fout, "%s", extra->separator_txt);
+  }
+
+  // status row
+  if (phr->reg_status < 0) {
+    status_style = "server_status_off";
+  } else if (phr->reg_status == USERLIST_REG_PENDING) {
+    status_style = "server_status_alarm";
+  } else if (phr->reg_status == USERLIST_REG_REJECTED) {
+    status_style = "server_status_error";
+  } else if ((phr->reg_flags & (USERLIST_UC_BANNED | USERLIST_UC_LOCKED))) {
+    status_style = "server_status_error";
+  } else {
+    status_style = "server_status_on";
+  }
+  fprintf(fout, "<div class=\"%s\">\n", status_style);
+  if (phr->reg_status < 0) {
+    fprintf(fout, "%s", _("NOT REGISTERED"));
+  } else if (phr->reg_status == USERLIST_REG_PENDING) {
+    fprintf(fout, "%s", _("REGISTERED, PENDING APPROVAL"));
+  } else if (phr->reg_status == USERLIST_REG_REJECTED) {
+    fprintf(fout, "%s", _("REGISTRATION REJECTED"));
+  } else if ((phr->reg_flags & USERLIST_UC_BANNED)) {
+    fprintf(fout, "%s", _("REGISTERED, BANNED"));
+  } else if ((phr->reg_flags & USERLIST_UC_LOCKED)) {
+    fprintf(fout, "%s", _("REGISTERED, LOCKED"));
+  } else if ((phr->reg_flags & USERLIST_UC_INVISIBLE)) {
+    fprintf(fout, "%s", _("REGISTERED (INVISIBLE)"));
+  } else {
+    fprintf(fout, "%s", _("REGISTERED"));
+  }
+  fprintf(fout, "</div>\n");
+
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+  html_armor_free(&ab);
+}
+
+static reg_action_handler_func_t reg_handlers[NEW_SRV_ACTION_LAST] =
+{
+};
+
 void
 ns_register_pages(FILE *fout, struct http_request_info *phr)
 {
@@ -1043,12 +1184,10 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
     extra->contest_arm = html_armor_string_dup(cnts->name);
   }
 
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s]", _("Good!"),
-            extra->contest_arm);
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
+  if (phr->action < 0 || phr->action >= NEW_SRV_ACTION_LAST) phr->action = 0;
+  if (reg_handlers[phr->action])
+    return (*reg_handlers[phr->action])(fout, phr, cnts, extra, cur_time);
+  return main_page(fout, phr, cnts, extra, cur_time);
 }
 
 /*
