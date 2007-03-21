@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-03-19 16:16+0300\n"
-"PO-Revision-Date: 2007-03-19 17:04+0300\n"
+"POT-Creation-Date: 2007-03-21 09:02+0300\n"
+"PO-Revision-Date: 2007-03-21 09:05+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -2044,6 +2044,9 @@ msgstr "מופ"
 msgid "NO."
 msgstr "מופ."
 
+msgid "NOT REGISTERED"
+msgstr "מו תבעוחיףפעיעןקבמ"
+
 msgid "NOT STARTED"
 msgstr "מו מב‏בלףס"
 
@@ -2284,6 +2287,9 @@ msgstr "עÅÛÅÎÉÑ ÕÞÁÓÔÎÉËÏ× ÐÒÉÎÉÍÁÀÔÓÑ ÎÁ ÐÒÏ×ÅÒËÕ"
 msgid "Participants' solutions are being judged"
 msgstr "עÅÛÅÎÉÑ ÕÞÁÓÔÎÉËÏ× ÐÒÏ×ÅÒÑÀÔÓÑ"
 
+msgid "Participate"
+msgstr "ץÞÁÓÔ×Ï×ÁÔØ"
+
 msgid "Password"
 msgstr "נÁÒÏÌØ"
 
@@ -2487,6 +2493,24 @@ msgstr "קÙÊÔÉ ÉÚ ÓÉÓÔÅÍÙ"
 
 msgid "REGISTER!"
 msgstr "תבעוחיףפעיעןקבפרףס!"
+
+msgid "REGISTERED"
+msgstr "תבעוחיףפעיעןקבמ"
+
+msgid "REGISTERED (INVISIBLE)"
+msgstr "תבעוחיףפעיעןקבמ (מוקיהיםשך)"
+
+msgid "REGISTERED, BANNED"
+msgstr "תבעוחיףפיעןקבמ, היףכקבליזידיעןקבמ"
+
+msgid "REGISTERED, LOCKED"
+msgstr "תבעוחיףפעיעןקבמ, תבגלןכיעןקבמ"
+
+msgid "REGISTERED, PENDING APPROVAL"
+msgstr "תבעוחיףפעיעןקבמ, ןציהבופ נןהפקועצהומיס"
+
+msgid "REGISTRATION REJECTED"
+msgstr "עוחיףפעבדיס ןפכלןמומב"
 
 msgid "RUNNING"
 msgstr "פץעמיע יהופ"

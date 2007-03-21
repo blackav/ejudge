@@ -167,6 +167,12 @@ div.server_status_alarm /* server status block when the server is up */
         padding: 5px 5px 10px 10px;
 }
 
+div.server_status_error /* server status block in case of error */
+{
+        background-color: #ffaaaa;
+        padding: 5px 5px 10px 10px;
+}
+
 div.dotted
 {
 	border-style: dotted;
