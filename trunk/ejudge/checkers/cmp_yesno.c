@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -31,8 +31,9 @@ int checker_main(int argc, char **argv)
     fatal_PE("user answer is neither `yes' nor `no' (case insensitive)");
   if (strcasecmp(user_buf, corr_buf))
     fatal_WA("answers do not match");
-  if (strcmp(user_buf, corr_buf))
-    fatal_PE("letter case mismatch");
+  if (!getenv("CASE_INSENSITIVE"))
+    if (strcmp(user_buf, corr_buf))
+      fatal_PE("letter case mismatch");
 
   checker_OK();
 }
