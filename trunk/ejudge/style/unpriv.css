@@ -357,6 +357,17 @@ td#probNavTaskArea
         background-color: white;
         padding: 20px 20px 20px 20px;
 }
+td#memberNavArea
+{
+	border-color: black;
+	border-style: solid;
+        border-top-style: none;
+        border-left-style: solid;
+        border-right-style: solid;
+        border-bottom-style: solid;
+        background-color: white;
+        padding: 20px 20px 20px 20px;
+}
 div#probNavTaskArea
 {
         width: 800px;
