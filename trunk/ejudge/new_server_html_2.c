@@ -2276,6 +2276,35 @@ ns_user_info_page(FILE *fout, FILE *log_f,
     fprintf(fout, "</form>");
   }
 
+  allowed_edit = 0;
+  if (u) {
+    if (u->is_privileged) {
+      if ((flags & TEAM_INCOMPLETE)) needed_cap = OPCAP_PRIV_CREATE_REG;
+      else needed_cap = OPCAP_PRIV_DELETE_REG;
+    } else {
+      if ((flags & TEAM_INCOMPLETE)) needed_cap = OPCAP_CREATE_REG;
+      else needed_cap = OPCAP_DELETE_REG;
+    }
+    if (opcaps_check(phr->caps, needed_cap) >= 0) allowed_edit = 1;
+  }
+  if (allowed_edit) {
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(fout, "user_id", "%d", view_user_id);
+  }
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
+          _("Incomplete?"), (flags & TEAM_INCOMPLETE)?_("Yes"):_("No"));
+  if(allowed_edit) {
+    fprintf(fout, "<td>%s</td>",
+            ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_TOGGLE_LOCK,
+                             (flags & TEAM_INCOMPLETE)?_("Clear"):_("Set")));
+  } else {
+    fprintf(fout, "<td>&nbsp;</td>");
+  }
+  fprintf(fout, "</tr>\n");
+  if (allowed_edit) {
+    fprintf(fout, "</form>");
+  }
+
   fprintf(fout,"<tr><td>%s:</td><td>%d</td>%s</tr>\n",
           _("Number of Runs"), runs_num, nbsp2);
   fprintf(fout,"<tr><td>%s:</td><td>%zu</td>%s</tr>\n",

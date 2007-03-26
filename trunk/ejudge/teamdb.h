@@ -3,7 +3,7 @@
 #ifndef __TEAMDB_H__
 #define __TEAMDB_H__
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 #include <time.h>
 
 /* various team flags */
-enum { TEAM_BANNED = 1, TEAM_INVISIBLE = 2, TEAM_LOCKED = 4 };
+enum { TEAM_BANNED=1, TEAM_INVISIBLE=2, TEAM_LOCKED=4, TEAM_INCOMPLETE=8 };
 
 struct teamdb_state;
 typedef struct teamdb_state *teamdb_state_t;

@@ -3,7 +3,7 @@
 #ifndef __EJ_TYPES_H__
 #define __EJ_TYPES_H__
 
-/* Copyright (C) 2005,2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -51,8 +51,9 @@ enum user_flags
   USERLIST_UC_INVISIBLE = 0x00000001,
   USERLIST_UC_BANNED    = 0x00000002,
   USERLIST_UC_LOCKED    = 0x00000004,
+  USERLIST_UC_INCOMPLETE= 0x00000008,
 
-  USERLIST_UC_ALL       = 0x00000007
+  USERLIST_UC_ALL       = 0x0000000f,
 };
 
 #endif /* __EJ_TYPES_H__ */

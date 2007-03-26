@@ -2164,6 +2164,11 @@ cmd_team_login(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
     return;
   }
+  if ((c->flags & USERLIST_UC_INCOMPLETE)) {
+    err("%s -> INCOMPLETE REGISTRATION", logbuf);
+    send_reply(p, -ULS_ERR_INCOMPLETE_REG);
+    return;
+  }
 
   login_len = strlen(u->login);
   name_len = strlen(ui->name);
@@ -2325,6 +2330,11 @@ cmd_team_check_user(struct client_state *p, int pkt_len,
       || (c->flags & USERLIST_UC_LOCKED)) {
     err("%s -> NOT ALLOWED", logbuf);
     send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
+    return;
+  }
+  if ((c->flags & USERLIST_UC_INCOMPLETE)) {
+    err("%s -> INCOMPLETE REGISTRATION", logbuf);
+    send_reply(p, -ULS_ERR_INCOMPLETE_REG);
     return;
   }
 
@@ -2910,6 +2920,11 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
       || (c->flags & USERLIST_UC_LOCKED)) {
     err("%s -> NOT ALLOWED", logbuf);
     send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
+    return;
+  }
+  if ((c->flags & USERLIST_UC_INCOMPLETE)) {
+    err("%s -> INCOMPLETE REGISTRATION", logbuf);
+    send_reply(p, -ULS_ERR_INCOMPLETE_REG);
     return;
   }
 
@@ -7399,6 +7414,11 @@ cmd_get_cookie(struct client_state *p,
         || (c->flags & USERLIST_UC_LOCKED)) {
       err("%s -> NOT ALLOWED", logbuf);
       send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
+      return;
+    }
+    if ((c->flags & USERLIST_UC_INCOMPLETE)) {
+      err("%s -> INCOMPLETE REGISTRATION", logbuf);
+      send_reply(p, -ULS_ERR_INCOMPLETE_REG);
       return;
     }
     user_name = ui->name;

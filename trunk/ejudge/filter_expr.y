@@ -1,7 +1,7 @@
 /* -*- mode: fundamental; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -136,6 +136,8 @@ static void *filter_expr_user_data;
 %token TOK_CURUSERBANNED "curuserbanned"
 %token TOK_USERLOCKED "userlocked"
 %token TOK_CURUSERLOCKED "curuserlocked"
+%token TOK_USERINCOMPLETE "userincomplete"
+%token TOK_CURUSERINCOMPLETE "curuserincomplete"
 %token TOK_LATEST    "latest"
 %token TOK_CURLATEST "curlatest"
 %token TOK_AFTEROK   "afterok"
@@ -299,6 +301,9 @@ exprA :
 | "userlocked" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "userlocked" { $1->kind = TOK_CURUSERLOCKED; $$ = $1; }
 | "curuserlocked" { $$ = $1; }
+| "userincomplete" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "userincomplete" { $1->kind = TOK_CURUSERINCOMPLETE; $$ = $1; }
+| "curuserincomplete" { $$ = $1; }
 | "latest" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "latest" { $1->kind = TOK_CURLATEST; $$ = $1; }
 | "curlatest" { $$ = $1; }

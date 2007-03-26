@@ -744,6 +744,17 @@ error_not_registered(void)
 }
 
 static void
+error_registration_incomplete(void)
+{
+  client_put_header(stdout, header_txt, 0, global->charset, 1,
+                    client_locale_id, _("Registration incomplete"));
+  printf("<p%s>%s</p>", par_style,
+         _("Your contest registration is incomplete."));
+  client_put_footer(stdout, footer_txt);
+  exit(0);
+}
+
+static void
 error_cannot_participate(void)
 {
   client_put_header(stdout, header_txt, 0, global->charset, 1,
@@ -832,6 +843,8 @@ authentificate(void)
         error_cannot_participate();
       case ULS_ERR_CANNOT_PARTICIPATE:
         error_not_registered();
+      case ULS_ERR_INCOMPLETE_REG:
+        error_registration_incomplete();
       default:
         fatal_server_error(r);
       }
@@ -863,6 +876,8 @@ authentificate(void)
       permission_denied();
     case ULS_ERR_NOT_REGISTERED:
       error_not_registered();
+    case ULS_ERR_INCOMPLETE_REG:
+      error_registration_incomplete();
     case ULS_ERR_CANNOT_PARTICIPATE:
       error_cannot_participate();
     default:

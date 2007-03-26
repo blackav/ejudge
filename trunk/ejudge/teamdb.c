@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -446,6 +446,9 @@ teamdb_get_flags(teamdb_state_t state, int id)
   if ((old_flags & USERLIST_UC_LOCKED)) {
     new_flags |= TEAM_LOCKED;
   }
+  if ((old_flags & USERLIST_UC_INCOMPLETE)) {
+    new_flags |= TEAM_INCOMPLETE;
+  }
   return new_flags;
 }
 
@@ -491,6 +494,8 @@ teamdb_export_team(teamdb_state_t state, int tid, struct teamdb_export *pdata)
     pdata->flags |= TEAM_BANNED;
   if ((u_flags & USERLIST_UC_LOCKED))
     pdata->flags |= TEAM_LOCKED;
+  if ((u_flags & USERLIST_UC_INCOMPLETE))
+    pdata->flags |= TEAM_INCOMPLETE;
   strncpy(pdata->login, u_login, TEAMDB_LOGIN_LEN - 1);
   strncpy(pdata->name, u_name, TEAMDB_NAME_LEN - 1);
   pdata->user = uu;
@@ -606,6 +611,9 @@ teamdb_get_user_status_map(teamdb_state_t state, int *p_size, int **p_map)
     }
     if ((old_flags & USERLIST_UC_LOCKED)) {
       new_flags |= TEAM_LOCKED;
+    }
+    if ((old_flags & USERLIST_UC_INCOMPLETE)) {
+      new_flags |= TEAM_INCOMPLETE;
     }
     map[i] = new_flags;
   }

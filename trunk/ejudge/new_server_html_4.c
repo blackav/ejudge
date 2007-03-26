@@ -1297,6 +1297,7 @@ do_dump_master_runs(
       if ((user_flags & TEAM_INVISIBLE)) user_invisible_flag = "I";
       if ((user_flags & TEAM_BANNED)) user_banned_flag = "B";
       if ((user_flags & TEAM_LOCKED)) user_banned_flag = "L";
+      if ((user_flags & TEAM_INCOMPLETE)) user_banned_flag = "N";
     } else {
       user_login = "";
       user_invisible_flag = "";

@@ -119,6 +119,7 @@ static char const * const attr_map[] =
   "invisible",
   "banned",
   "locked",
+  "incomplete",
   "status",
   "last_pwdchange",
   "public",
@@ -706,6 +707,10 @@ parse_contest(char const *path, struct xml_tree *t,
       case USERLIST_A_LOCKED:
         if (xml_attr_bool(a, &tmp) < 0) return -1;
         if (tmp) reg->flags |= USERLIST_UC_LOCKED;
+        break;
+      case USERLIST_A_INCOMPLETE:
+        if (xml_attr_bool(a, &tmp) < 0) return -1;
+        if (tmp) reg->flags |= USERLIST_UC_INCOMPLETE;
         break;
       case USERLIST_A_DATE:
         if (xml_parse_date(path, a->line, a->column, a->text, &reg->date) < 0)
@@ -1427,6 +1432,9 @@ userlist_unparse_contest(const struct userlist_contest *cc, FILE *f,
   }
   if ((cc->flags & USERLIST_UC_LOCKED)) {
     fprintf(f, " %s=\"yes\"", attr_map[USERLIST_A_LOCKED]);
+  }
+  if ((cc->flags & USERLIST_UC_INCOMPLETE)) {
+    fprintf(f, " %s=\"yes\"", attr_map[USERLIST_A_INCOMPLETE]);
   }
   if (cc->date) {
     fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_DATE],

@@ -1179,6 +1179,8 @@ priv_registration_operation(FILE *fout,
     case NEW_SRV_ACTION_USERS_CLEAR_BANNED:
     case NEW_SRV_ACTION_USERS_SET_LOCKED:
     case NEW_SRV_ACTION_USERS_CLEAR_LOCKED:
+    case NEW_SRV_ACTION_USERS_SET_INCOMPLETE:
+    case NEW_SRV_ACTION_USERS_CLEAR_INCOMPLETE:
       switch (phr->action) {
       case NEW_SRV_ACTION_USERS_SET_INVISIBLE:
         cmd = 1;
@@ -1203,6 +1205,14 @@ priv_registration_operation(FILE *fout,
       case NEW_SRV_ACTION_USERS_CLEAR_LOCKED:
         cmd = 2;
         flag = USERLIST_UC_LOCKED;
+        break;
+      case NEW_SRV_ACTION_USERS_SET_INCOMPLETE:
+        cmd = 1;
+        flag = USERLIST_UC_INCOMPLETE;
+        break;
+      case NEW_SRV_ACTION_USERS_CLEAR_INCOMPLETE:
+        cmd = 2;
+        flag = USERLIST_UC_INCOMPLETE;
         break;
       default:
         abort();
@@ -3783,7 +3793,7 @@ priv_view_users_page(FILE *fout,
       fprintf(fout, "<td%s>&nbsp;</td>", cl);
     }
     fprintf(fout, "<td%s>%s</td>", cl, userlist_unparse_reg_status(uc->status));
-    if ((uc->flags & (USERLIST_UC_BANNED | USERLIST_UC_INVISIBLE | USERLIST_UC_LOCKED))) {
+    if ((uc->flags & USERLIST_UC_ALL)) {
       r = 0;
       fprintf(fout, "<td%s>", cl);
       if ((uc->flags & USERLIST_UC_BANNED))
@@ -3792,6 +3802,8 @@ priv_view_users_page(FILE *fout,
         fprintf(fout, "%s%s", r++?",":"", "invisible");
       if ((uc->flags & USERLIST_UC_LOCKED))
         fprintf(fout, "%s%s", r++?",":"", "locked");
+      if ((uc->flags & USERLIST_UC_INCOMPLETE))
+        fprintf(fout, "%s%s", r++?",":"", "incomplete");
       fprintf(fout, "</td>");
     } else {
       fprintf(fout, "<td%s>&nbsp;</td>", cl);
@@ -3849,6 +3861,12 @@ priv_view_users_page(FILE *fout,
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
           BUTTON(NEW_SRV_ACTION_USERS_CLEAR_LOCKED),
           _("Clear the LOCKED flag for the selected users"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_SET_INCOMPLETE),
+          _("Set the INCOMPLETE flag for the selected users"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_CLEAR_INCOMPLETE),
+          _("Clear the INCOMPLETE flag for the selected users"));
   fprintf(fout, "</table>\n");
 
   fprintf(fout, "<h2>%s</h2>\n", _("Add new user"));
@@ -4895,6 +4913,8 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_USERS_CLEAR_BANNED] = priv_registration_operation,
   [NEW_SRV_ACTION_USERS_SET_LOCKED] = priv_registration_operation,
   [NEW_SRV_ACTION_USERS_CLEAR_LOCKED] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_SET_INCOMPLETE] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_CLEAR_INCOMPLETE] = priv_registration_operation,
   [NEW_SRV_ACTION_USERS_ADD_BY_LOGIN] = priv_add_user_by_login,
   [NEW_SRV_ACTION_USERS_ADD_BY_USER_ID] = priv_add_user_by_user_id,
   [NEW_SRV_ACTION_PRIV_USERS_REMOVE] = priv_priv_user_operation,
@@ -5796,6 +5816,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_USERS_CLEAR_BANNED] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_SET_LOCKED] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_CLEAR_LOCKED] = priv_generic_operation,
+  [NEW_SRV_ACTION_USERS_SET_INCOMPLETE] = priv_generic_operation,
+  [NEW_SRV_ACTION_USERS_CLEAR_INCOMPLETE] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_ADD_BY_LOGIN] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_ADD_BY_USER_ID] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_USERS_VIEW] = priv_view_priv_users_page,
