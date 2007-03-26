@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1316,11 +1316,12 @@ get_contest_str(unsigned char *buf, size_t len,
 
   if (!s) s = "???";
   return snprintf(buf, len,
-                  "%6d %c%c%c %-10.10s  %s",
+                  "%6d %c%c%c%c %-9.9s  %s",
                   reg->id, 
                   (reg->flags & USERLIST_UC_BANNED)?'B':' ',
                   (reg->flags & USERLIST_UC_INVISIBLE)?'I':' ',
                   (reg->flags & USERLIST_UC_LOCKED)?'L':' ',
+                  (reg->flags & USERLIST_UC_INCOMPLETE)?'N':' ',
                   userlist_unparse_reg_status(reg->status),
                   s);
 }
@@ -1749,6 +1750,9 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
       case 'y': case 'Y': case 'Î' & 255: case 'î' & 255:
         c = 'y';
         goto menu_done;
+      case 'n': case 'N': case 'Ô' & 255: case 'ô' & 255:
+        c = 'n';
+        goto menu_done;
       }
       cmd = -1;
       switch (c) {
@@ -1822,6 +1826,13 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
                                               reg->id, -1, 3,
                                               USERLIST_UC_LOCKED);
         if (r >= 0) reg->flags ^= USERLIST_UC_LOCKED;
+        break;
+      case 'n':
+        if (okcancel("Toggle INCOMPLETE status?") != 1) goto menu_continue;
+        r = userlist_clnt_change_registration(server_conn, u->id,
+                                              reg->id, -1, 3,
+                                              USERLIST_UC_INCOMPLETE);
+        if (r >= 0) reg->flags ^= USERLIST_UC_INCOMPLETE;
         break;
       }
       if (r < 0) {
@@ -2493,12 +2504,13 @@ generate_reg_user_item(unsigned char *buf, size_t size, int i,
   int buflen;
 
   // 77 - 6 - 16 - 10 - 6 = 77 - 38 = 39
-  buflen = snprintf(buf, size, "%c%6d  %-16.16s  %-36.36s %c%c%c %-9.9s",
+  buflen = snprintf(buf, size, "%c%6d  %-16.16s  %-36.36s %c%c%c%c %-8.8s",
                     mask[i]?'!':' ',
                     uu[i]->id, uu[i]->login, uu[i]->i.name,
                     (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
                     (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
                     (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
+                    (uc[i]->flags & USERLIST_UC_INCOMPLETE)?'N':' ',
                     userlist_unparse_reg_status(uc[i]->status));
   return buflen;
 }
@@ -2716,6 +2728,9 @@ display_registered_users(unsigned char const *upper,
         goto menu_done;
       case 'o': case 'O': case 'Ý' & 255: case 'ý' & 255:
         c = 'o';
+        goto menu_done;
+      case 'n': case 'N': case 'Ô' & 255: case 'ô' & 255:
+        c = 'n';
         goto menu_done;
       }
       cmd = -1;
@@ -3018,6 +3033,42 @@ display_registered_users(unsigned char const *upper,
             continue;
           }
           uc[j]->flags ^= USERLIST_UC_LOCKED;
+          sel_users.mask[j] = 0;
+          generate_reg_user_item(descs[j], 128, j, uu, uc, sel_users.mask);
+        }
+        memset(sel_users.mask, 0, sel_users.allocated);
+        sel_users.total_selected = 0;
+      }
+    } else if (c == 'n') {
+      if (!sel_users.total_selected) {
+        // operation on a single user
+        i = item_index(current_item(menu));
+        if (okcancel("Toggle INCOMPLETE status for %s?", uu[i]->login) != 1)
+          continue;
+        r = userlist_clnt_change_registration(server_conn, uu[i]->id,
+                                              cnts->id, -1, 3,
+                                              USERLIST_UC_INCOMPLETE);
+        if (r < 0) {
+          vis_err("Toggle flags failed: %s", userlist_strerror(-r));
+          continue;
+        }
+        uc[i]->flags ^= USERLIST_UC_INCOMPLETE;
+        generate_reg_user_item(descs[i], 128, i, uu, uc, sel_users.mask);
+      } else {
+        // operation on the selected users
+        if (okcancel("Toggle INCOMPLETE status for selected users?") != 1)
+          continue;
+        for (j = 0; j < nuser; j++) {
+          if (!sel_users.mask[j]) continue;
+          r = userlist_clnt_change_registration(server_conn, uu[j]->id,
+                                                cnts->id, -1, 3,
+                                                USERLIST_UC_INCOMPLETE);
+          if (r < 0) {
+            vis_err("Toggle flags failed for %d: %s",
+                    uu[j]->id, userlist_strerror(-r));
+            continue;
+          }
+          uc[j]->flags ^= USERLIST_UC_INCOMPLETE;
           sel_users.mask[j] = 0;
           generate_reg_user_item(descs[j], 128, j, uu, uc, sel_users.mask);
         }

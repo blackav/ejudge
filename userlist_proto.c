@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -53,6 +53,7 @@ static unsigned char const * const error_map[] =
   _("contest deadline exceeded"),
   _("peer closed connection"),
   _("e-mail sending failed"),
+  _("incomplete registration"),
   _("unspecified error"),
 
   0
