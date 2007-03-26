@@ -107,16 +107,6 @@ cgi_param_int(struct http_request_info *phr, const unsigned char *name,
   return 0;
 }
 
-static int
-check_str(const unsigned char *str, const unsigned char *map)
-{
-  if (!str) return 0;
-  for (; *str; str++)
-    if (!map[*str])
-      return -1;
-  return 0;
-}
-
 static void
 html_refresh_page_2(FILE *fout, const unsigned char *url)
 {
@@ -675,11 +665,6 @@ create_account_page(
   html_armor_free(&ab);
 }
 
-static unsigned char login_accept_chars[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\1\0\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-static unsigned char email_accept_chars[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\1\0\0\0\0\0\1\0\1\1\0\1\1\1\1\1\1\1\1\1\1\0\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-static unsigned char name_accept_chars[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\1\0\1\1\1\0\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\1\1\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1";
-static unsigned char name_en_accept_chars[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\1\0\1\1\1\0\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\1\1\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-
 static void
 create_account(
 	FILE *fout,
@@ -1090,9 +1075,7 @@ member_fields_order[] =
 
 struct field_desc_s
 {
-  int code;
   char *description;
-  const unsigned char *accept_chars;
   int repl_char;
   int maxlength;
   int size;
@@ -1100,52 +1083,52 @@ struct field_desc_s
 
 static struct field_desc_s contest_field_desc[CONTEST_LAST_FIELD] =
 {
-  [CONTEST_F_HOMEPAGE] = { USERLIST_NC_HOMEPAGE, __("Homepage"), name_accept_chars, '?', 128, 64 },
-  [CONTEST_F_PHONE] = { USERLIST_NC_PHONE, __("Phone"), name_accept_chars, '?', 128, 64 },
-  [CONTEST_F_INST] = { USERLIST_NC_INST, __("Institution"), name_accept_chars, '?', 128, 64 },
-  [CONTEST_F_INST_EN] = { USERLIST_NC_INST_EN, __("Institution (En)"), name_en_accept_chars, '?', 128, 64 },
-  [CONTEST_F_INSTSHORT] = { USERLIST_NC_INSTSHORT, __("Institution (abbreviated)"), name_accept_chars, '?', 32, 32 },
-  [CONTEST_F_INSTSHORT_EN] = { USERLIST_NC_INSTSHORT_EN, __("Institution (abbreviated) (En)"), name_en_accept_chars, '?', 32, 32 },
-  [CONTEST_F_FAC] = { USERLIST_NC_FAC, __("Faculty"), name_accept_chars, '?', 128, 64 },
-  [CONTEST_F_FAC_EN] = { USERLIST_NC_FAC_EN, __("Faculty (En)"), name_en_accept_chars, '?', 128, 64 },
-  [CONTEST_F_FACSHORT] = { USERLIST_NC_FACSHORT, __("Faculty (abbreviated)"), name_accept_chars, '?', 32, 32 },
-  [CONTEST_F_FACSHORT_EN] = { USERLIST_NC_FACSHORT_EN, __("Faculty (abbreviated) (En)"), name_en_accept_chars, '?', 32, 32 },
-  [CONTEST_F_CITY] = { USERLIST_NC_CITY, __("City"), name_accept_chars, '?', 128, 64 },
-  [CONTEST_F_CITY_EN] = { USERLIST_NC_CITY_EN, __("City (En)"), name_en_accept_chars, '?', 128, 64 },
-  [CONTEST_F_COUNTRY] = { USERLIST_NC_COUNTRY, __("Country"), name_accept_chars, '?', 128, 64 },
-  [CONTEST_F_COUNTRY_EN] = { USERLIST_NC_COUNTRY_EN, __("Country (En)"),  name_en_accept_chars, '?', 128, 64 },
-  [CONTEST_F_REGION] = { USERLIST_NC_REGION, __("Region"), name_accept_chars, '?', 128, 64 },
-  [CONTEST_F_LANGUAGES] = { USERLIST_NC_LANGUAGES, __("Programming languages"), name_accept_chars, '?', 128, 64 },
+  [CONTEST_F_HOMEPAGE] = { __("Homepage"), '?', 128, 64 },
+  [CONTEST_F_PHONE] = { __("Phone"), '?', 128, 64 },
+  [CONTEST_F_INST] = { __("Institution"), '?', 128, 64 },
+  [CONTEST_F_INST_EN] = { __("Institution (En)"), '?', 128, 64 },
+  [CONTEST_F_INSTSHORT] = { __("Institution (abbreviated)"), '?', 32, 32 },
+  [CONTEST_F_INSTSHORT_EN] = { __("Institution (abbreviated) (En)"), '?', 32, 32 },
+  [CONTEST_F_FAC] = { __("Faculty"), '?', 128, 64 },
+  [CONTEST_F_FAC_EN] = { __("Faculty (En)"), '?', 128, 64 },
+  [CONTEST_F_FACSHORT] = { __("Faculty (abbreviated)"), '?', 32, 32 },
+  [CONTEST_F_FACSHORT_EN] = { __("Faculty (abbreviated) (En)"), '?', 32, 32 },
+  [CONTEST_F_CITY] = { __("City"), '?', 128, 64 },
+  [CONTEST_F_CITY_EN] = { __("City (En)"), '?', 128, 64 },
+  [CONTEST_F_COUNTRY] = { __("Country"), '?', 128, 64 },
+  [CONTEST_F_COUNTRY_EN] = { __("Country (En)"),  '?', 128, 64 },
+  [CONTEST_F_REGION] = { __("Region"), '?', 128, 64 },
+  [CONTEST_F_LANGUAGES] = { __("Programming languages"), '?', 128, 64 },
 };
 
 static struct field_desc_s member_field_desc[CONTEST_LAST_MEMBER_FIELD] =
 {
-  [CONTEST_MF_FIRSTNAME] = { USERLIST_NM_FIRSTNAME, __("First name"), name_accept_chars, '?', 64, 64 },
-  [CONTEST_MF_FIRSTNAME_EN] = { USERLIST_NM_FIRSTNAME_EN, __("First name (En)"), name_en_accept_chars, '?', 64, 64 },
-  [CONTEST_MF_MIDDLENAME] = { USERLIST_NM_MIDDLENAME, __("Middle name"), name_accept_chars, '?', 64, 64},
-  [CONTEST_MF_MIDDLENAME_EN] = { USERLIST_NM_MIDDLENAME_EN, __("Middle name (En)"), name_en_accept_chars, '?', 64, 64 },
-  [CONTEST_MF_SURNAME] = { USERLIST_NM_SURNAME, __("Family name"), name_accept_chars, '?', 64, 64 },
-  [CONTEST_MF_SURNAME_EN] = { USERLIST_NM_SURNAME_EN, __("Family name (En)"), name_en_accept_chars, '?', 64, 64 },
-  [CONTEST_MF_STATUS] = { USERLIST_NM_STATUS, __("Status"), name_accept_chars, '?', 64, 64 },
-  [CONTEST_MF_GRADE] = { USERLIST_NM_GRADE, __("Grade"), name_accept_chars, '?', 16, 16 },
-  [CONTEST_MF_GROUP] = { USERLIST_NM_GROUP, __("Group"), name_accept_chars, '?', 16, 16 },
-  [CONTEST_MF_GROUP_EN] = { USERLIST_NM_GROUP_EN, __("Group (En)"), name_en_accept_chars, '?', 16, 16 },
-  [CONTEST_MF_EMAIL] = { USERLIST_NM_EMAIL, __("E-mail"), name_accept_chars, '?', 64, 64 },
-  [CONTEST_MF_HOMEPAGE] = { USERLIST_NM_HOMEPAGE, __("Homepage"), name_accept_chars, '?', 128, 64 },
-  [CONTEST_MF_PHONE] = { USERLIST_NM_PHONE, __("Phone"), name_accept_chars, '?', 128, 64 },
-  [CONTEST_MF_INST] = { USERLIST_NM_INST, __("Institution"), name_accept_chars, '?', 128, 64 },
-  [CONTEST_MF_INST_EN] = { USERLIST_NM_INST_EN, __("Institution (En)"), name_en_accept_chars, '?', 128, 64 },
-  [CONTEST_MF_INSTSHORT] = { USERLIST_NM_INSTSHORT, __("Institution (abbreviated)"), name_accept_chars, '?', 32, 32 },
-  [CONTEST_MF_INSTSHORT_EN] = { USERLIST_NM_INSTSHORT_EN, __("Institution (abbreviated) (En)"), name_en_accept_chars, '?', 32, 32 },
-  [CONTEST_MF_FAC] = { USERLIST_NM_FAC, __("Faculty"), name_accept_chars, '?', 128, 64 },
-  [CONTEST_MF_FAC_EN] = { USERLIST_NM_FAC_EN, __("Faculty (En)"), name_en_accept_chars, '?', 128, 64 },
-  [CONTEST_MF_FACSHORT] = { USERLIST_NM_FACSHORT, __("Faculty (abbreviated)"), name_accept_chars, '?', 32, 32 },
-  [CONTEST_MF_FACSHORT_EN] = { USERLIST_NM_FACSHORT_EN, __("Faculty (abbreviated) (En)"), name_en_accept_chars, '?', 32, 32 },
-  [CONTEST_MF_OCCUPATION] = { USERLIST_NM_OCCUPATION, __("Occupation"), name_accept_chars, '?', 128, 64 },
-  [CONTEST_MF_OCCUPATION_EN] = { USERLIST_NM_OCCUPATION_EN, __("Occupation (En)"), name_en_accept_chars, '?', 128, 64 },
-  [CONTEST_MF_BIRTH_DATE] = { USERLIST_NM_BIRTH_DATE, __("Birth Date"), name_accept_chars, '?', 128, 64 },
-  [CONTEST_MF_ENTRY_DATE] = { USERLIST_NM_ENTRY_DATE, __("Institution entry date"), name_accept_chars, '?', 128, 64 },
-  [CONTEST_MF_GRADUATION_DATE] = { USERLIST_NM_GRADUATION_DATE, __("Institution graduation date"), name_accept_chars, '?', 128, 64 },
+  [CONTEST_MF_FIRSTNAME] = { __("First name"), '?', 64, 64 },
+  [CONTEST_MF_FIRSTNAME_EN] = { __("First name (En)"), '?', 64, 64 },
+  [CONTEST_MF_MIDDLENAME] = { __("Middle name"), '?', 64, 64},
+  [CONTEST_MF_MIDDLENAME_EN] = { __("Middle name (En)"), '?', 64, 64 },
+  [CONTEST_MF_SURNAME] = { __("Family name"), '?', 64, 64 },
+  [CONTEST_MF_SURNAME_EN] = { __("Family name (En)"), '?', 64, 64 },
+  [CONTEST_MF_STATUS] = { __("Status"), '?', 64, 64 },
+  [CONTEST_MF_GRADE] = { __("Grade"), '?', 16, 16 },
+  [CONTEST_MF_GROUP] = { __("Group"), '?', 16, 16 },
+  [CONTEST_MF_GROUP_EN] = { __("Group (En)"), '?', 16, 16 },
+  [CONTEST_MF_EMAIL] = { __("E-mail"), '?', 64, 64 },
+  [CONTEST_MF_HOMEPAGE] = { __("Homepage"), '?', 128, 64 },
+  [CONTEST_MF_PHONE] = { __("Phone"), '?', 128, 64 },
+  [CONTEST_MF_INST] = { __("Institution"), '?', 128, 64 },
+  [CONTEST_MF_INST_EN] = { __("Institution (En)"), '?', 128, 64 },
+  [CONTEST_MF_INSTSHORT] = { __("Institution (abbreviated)"), '?', 32, 32 },
+  [CONTEST_MF_INSTSHORT_EN] = { __("Institution (abbreviated) (En)"), '?', 32, 32 },
+  [CONTEST_MF_FAC] = { __("Faculty"), '?', 128, 64 },
+  [CONTEST_MF_FAC_EN] = { __("Faculty (En)"), '?', 128, 64 },
+  [CONTEST_MF_FACSHORT] = { __("Faculty (abbreviated)"), '?', 32, 32 },
+  [CONTEST_MF_FACSHORT_EN] = { __("Faculty (abbreviated) (En)"), '?', 32, 32 },
+  [CONTEST_MF_OCCUPATION] = { __("Occupation"), '?', 128, 64 },
+  [CONTEST_MF_OCCUPATION_EN] = { __("Occupation (En)"), '?', 128, 64 },
+  [CONTEST_MF_BIRTH_DATE] = { __("Birth Date"), '?', 128, 64 },
+  [CONTEST_MF_ENTRY_DATE] = { __("Institution entry date"), '?', 128, 64 },
+  [CONTEST_MF_GRADUATION_DATE] = { __("Institution graduation date"), '?', 128, 64 },
 };
 
 static int
@@ -1196,67 +1179,6 @@ static const unsigned char *role_move_direction[] =
   0
 };
 
-static int
-count_info_errors(
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        int role_err_count[])
-{
-  int err_count = 0, ff;
-  struct userlist_user *u = phr->session_extra->user_info;
-  unsigned char fbuf[1024];
-  int rr, mm, mmbound;
-  const struct userlist_member *m;
-
-  memset(role_err_count, 0, sizeof(role_err_count[0]) * (CONTEST_LAST_MEMBER + 1));
-  for (ff = CONTEST_FIRST_FIELD; ff < CONTEST_LAST_FIELD; ff++) {
-    if (!cnts->fields[ff]) continue;
-    if (userlist_is_empty_user_info_field(&u->i, contest_field_desc[ff].code)
-        && cnts->fields[ff]->mandatory) {
-      role_err_count[0]++;
-      err_count++;
-    } else if (contest_field_desc[ff].accept_chars) {
-      userlist_get_user_info_field_str(fbuf, sizeof(fbuf), &u->i,
-                                       contest_field_desc[ff].code, 0);
-      if (check_str(fbuf, contest_field_desc[ff].accept_chars) < 0) {
-        role_err_count[0]++;
-        err_count++;
-      }
-    }
-  }
-  for (rr = CONTEST_M_CONTESTANT; rr < CONTEST_LAST_MEMBER; rr++) {
-    if (!cnts->members[rr] || cnts->members[rr]->max_count <= 0) continue;
-    mmbound = 0;
-    if (u->i.members[rr]) mmbound = u->i.members[rr]->total;
-    if (cnts->members[rr]->max_count < mmbound)
-      mmbound = cnts->members[rr]->max_count;
-    for (mm = 0; mm < mmbound; mm++) {
-      if (!(m = u->i.members[rr]->members[mm])) {
-        role_err_count[rr + 1]++;
-        err_count++;
-        continue;
-      }
-      for (ff = CONTEST_MF_FIRSTNAME; ff < CONTEST_LAST_MEMBER_FIELD; ff++) {
-        if (!cnts->members[rr]->fields[ff]) continue;
-        if (userlist_is_empty_member_field(m, member_field_desc[ff].code)
-            && cnts->members[rr]->fields[ff]->mandatory) {
-          role_err_count[rr + 1]++;
-          err_count++;
-        } else if (member_field_desc[ff].accept_chars) {
-          userlist_get_member_field_str(fbuf, sizeof(fbuf), m,
-                                        member_field_desc[ff].code, 0);
-          if (check_str(fbuf, member_field_desc[ff].accept_chars) < 0) {
-            role_err_count[rr + 1]++;
-            err_count++;
-          }
-        }
-      }
-    }
-  }
-
-  return err_count;
-}
-
 static void
 main_page_view_info(
 	FILE *fout,
@@ -1292,7 +1214,7 @@ main_page_view_info(
       phr->action = NEW_SRV_ACTION_REG_VIEW_GENERAL;
   }
 
-  err_count = count_info_errors(phr, cnts, role_err_count);
+  err_count = userlist_count_info_errors(cnts, u, role_err_count);
 
   // generate upper tabs
   fprintf(fout, "<br/>\n");
@@ -1358,12 +1280,12 @@ main_page_view_info(
     for (i = 0; (ff = contest_fields_order[i]); i++) {
       if (!cnts->fields[ff]) continue;
       userlist_get_user_info_field_str(fbuf, sizeof(fbuf), &u->i,
-                                       contest_field_desc[ff].code, 0);
+                                       userlist_contest_field_ids[ff], 0);
       info_table_row(fout, gettext(contest_field_desc[ff].description),
                      fbuf,
-                     userlist_is_empty_user_info_field(&u->i, contest_field_desc[ff].code),
+                     userlist_is_empty_user_info_field(&u->i, userlist_contest_field_ids[ff]),
                      cnts->fields[ff]->mandatory,
-                     contest_field_desc[ff].accept_chars,
+                     userlist_get_contest_accepting_chars(ff),
                      &ab);
     }
     fprintf(fout, "</table>\n");
@@ -1418,12 +1340,12 @@ main_page_view_info(
         for (i = 0; (ff = member_fields_order[i]); i++) {
           if (!cnts->members[rr]->fields[ff]) continue;
           userlist_get_member_field_str(fbuf, sizeof(fbuf), m,
-                                        member_field_desc[ff].code, 0);
+                                        userlist_member_field_ids[ff], 0);
           info_table_row(fout, gettext(member_field_desc[ff].description),
                          fbuf,
-                         userlist_is_empty_member_field(m, member_field_desc[ff].code),
+                         userlist_is_empty_member_field(m, userlist_member_field_ids[ff]),
                          cnts->members[rr]->fields[ff]->mandatory,
-                         member_field_desc[ff].accept_chars,
+                         userlist_get_member_accepting_chars(ff),
                          &ab);
         }
 
@@ -1467,6 +1389,7 @@ main_page(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *status_style;
   const unsigned char *status_info;
+  const unsigned char *status_info_2;
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
@@ -1522,12 +1445,17 @@ main_page(
   }
 
   // status row
+  status_info_2 = "";
   if (phr->reg_status < 0) {
     status_style = "server_status_off";
     status_info = __("NOT REGISTERED");
   } else if (phr->reg_status == USERLIST_REG_PENDING) {
     status_style = "server_status_alarm";
     status_info= __("REGISTERED, PENDING APPROVAL");
+    if ((phr->reg_flags & USERLIST_UC_INCOMPLETE)) {
+      status_info_2 = __(", REGISTRATION DATA INCOMPLETE");
+      status_style = "server_status_error";
+    }
   } else if (phr->reg_status == USERLIST_REG_REJECTED) {
     status_style = "server_status_error";
     status_info = __("REGISTRATION REJECTED");
@@ -1540,12 +1468,20 @@ main_page(
   } else if ((phr->reg_flags & USERLIST_UC_INVISIBLE)) {
     status_style = "server_status_on";
     status_info = __("REGISTERED (INVISIBLE)");
+    if ((phr->reg_flags & USERLIST_UC_INCOMPLETE)) {
+      status_info_2 = __(", REGISTRATION DATA INCOMPLETE");
+      status_style = "server_status_error";
+    }
   } else {
     status_style = "server_status_on";
     status_info = __("REGISTERED");
+    if ((phr->reg_flags & USERLIST_UC_INCOMPLETE)) {
+      status_info_2 = __(", REGISTRATION DATA INCOMPLETE");
+      status_style = "server_status_error";
+    }
   }
   fprintf(fout, "<div class=\"%s\">\n", status_style);
-  fprintf(fout, "<b>%s</b>", gettext(status_info));
+  fprintf(fout, "<b>%s%s</b>", gettext(status_info), gettext(status_info_2));
   fprintf(fout, "</div>\n");
 
   if (main_page_action_handlers[phr->action])
@@ -1570,7 +1506,7 @@ edit_general_form(
   unsigned char varname[1024];
   int i, ff, j;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  const unsigned char *comment = 0, *s = 0;
+  const unsigned char *comment = 0, *s = 0, *ac;
   size_t allowed_languages_u = 0, allowed_regions_u = 0;
   unsigned char **allowed_languages = 0, **allowed_regions = 0;
   int *user_lang_map = 0;
@@ -1615,15 +1551,15 @@ edit_general_form(
     if (cnts->fields[ff]->mandatory) fprintf(fout, "</b>");
     fprintf(fout, "</td>");
     userlist_get_user_info_field_str(bb, sizeof(bb), &u->i,
-                                     contest_field_desc[ff].code, 0);
+                                     userlist_contest_field_ids[ff], 0);
     comment = 0;
     if (cnts->fields[ff]->mandatory
         && (userlist_is_empty_user_info_field(&u->i,
-                                              contest_field_desc[ff].code)
+                                              userlist_contest_field_ids[ff])
             || !bb[0])) {
       comment = __("must be specified");
-    } else if (contest_field_desc[ff].accept_chars
-               && check_str(bb, contest_field_desc[ff].accept_chars) < 0) {
+    } else if ((ac = userlist_get_contest_accepting_chars(ff))
+               && check_str(bb, ac) < 0) {
       comment = __("contains invalid characters");
     }
 
@@ -1748,7 +1684,7 @@ edit_member_form(
   unsigned char varname[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int i, ff;
-  const unsigned char *comment = 0;
+  const unsigned char *comment = 0, *ac;
 
   html_start_form(fout, 1, phr->self_url, "");
   html_hidden(fout, "SID", "%llx", phr->session_id);
@@ -1765,14 +1701,14 @@ edit_member_form(
     if (cm->fields[ff]->mandatory) fprintf(fout, "</b>");
     fprintf(fout, "</td>");
     userlist_get_member_field_str(bb, sizeof(bb), m,
-                                  member_field_desc[ff].code, 0);
+                                  userlist_member_field_ids[ff], 0);
     comment = 0;
     if (cm->fields[ff]->mandatory
-        && (userlist_is_empty_member_field(m, member_field_desc[ff].code)
+        && (userlist_is_empty_member_field(m, userlist_member_field_ids[ff])
             || !bb[0])) {
       comment = __("must be specified");
-    } else if (member_field_desc[ff].accept_chars
-               && check_str(bb, member_field_desc[ff].accept_chars) < 0) {
+    } else if ((ac = userlist_get_member_accepting_chars(ff))
+               && check_str(bb, ac) < 0) {
       comment = __("contains invalid characters");
     }
 

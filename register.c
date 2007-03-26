@@ -212,33 +212,12 @@ static unsigned char *error_log;
 
 #define ARMOR_STR(out,in) do { int __tmplen = html_armored_strlen((in)); (out) = (unsigned char*) alloca(__tmplen + 16); html_armor_string((in), (out)); } while (0)
 
-static char const login_accept_chars[] =
-"._-0123456789?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-static char const email_accept_chars[] =
-"@.%!+=_-0123456789?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-static char const name_accept_chars[] =
-" :!#$%()*+,-./0123456789=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_"
-"abcdefghijklmnopqrstuvwxyz{|}~"
-" ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞß"
-"àáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
-static char const name_en_accept_chars[] =
-" :!#$%()*+,-./0123456789=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_"
-"abcdefghijklmnopqrstuvwxyz{|}~";
-static char const homepage_accept_chars[] =
-" :!#$%*+,-./0123456789=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_"
-"abcdefghijklmnopqrstuvwxyz{|}~";
-static char const password_accept_chars[] =
-" !#$%\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_"
-"`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿"
-"ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
-
 struct field_desc
 {
   char *tag_name;
   char *orig_name;
   char *var_name;
   unsigned char **var;
-  const unsigned char *accept_chars;
   int repl_char;
   int maxlength;
   int size;
@@ -252,67 +231,53 @@ static struct field_desc field_descs[CONTEST_LAST_FIELD] =
 {
   { 0 },                        /* entry 0 is empty */
 
-  { "homepage", _("Homepage"), "homepage", &user_homepage,
-    homepage_accept_chars, '?', 128, 64 },
-  { "phone", _("Phone"), "phone", &user_phone,
-    homepage_accept_chars, '?', 128, 64 },
-  { "inst", _("Institution"), "inst", &user_inst,
-    name_accept_chars, '?', 128, 64 },
-  { "inst_en", _("Institution (En)"), "inst_en", &user_inst_en,
-    name_en_accept_chars, '?', 128, 64 },
-  { "instshort", _("Institution (short)"), "instshort", &user_instshort,
-    name_accept_chars, '?', 32, 32 },
-  { "instshort_en", _("Institution (short) (En)"), "instshort_en", &user_instshort_en,
-    name_en_accept_chars, '?', 32, 32 },
-  { "fac", _("Faculty"), "fac", &user_fac,
-    name_accept_chars, '?', 128, 64 },
-  { "fac_en", _("Faculty (En)"), "fac_en", &user_fac_en,
-    name_en_accept_chars, '?', 128, 64 },
-  { "facshort", _("Faculty (short)"), "facshort", &user_facshort,
-    name_accept_chars, '?', 32, 32 },
-  { "facshort_en", _("Faculty (short) (En)"), "facshort_en", &user_facshort_en,
-    name_en_accept_chars, '?', 32, 32 },
-  { "city", _("City"), "city", &user_city, name_accept_chars, '?', 64, 64 },
-  { "city_en", _("City (En)"), "city_en", &user_city_en, name_en_accept_chars, '?', 64, 64 },
-  { "country", _("Country"), "country", &user_country,
-    name_accept_chars, '?', 64, 64 },
-  { "country_en", _("Country (En)"), "country_en", &user_country_en,
-    name_en_accept_chars, '?', 64, 64 },
-  { "region", _("Region"), "region", &user_region,
-    name_accept_chars, '?', 64, 64 },
-  { "languages", _("Programming languages"), "languages", &user_languages,
-    name_accept_chars, '?', 64, 64 },
+  { "homepage", _("Homepage"), "homepage", &user_homepage, '?', 128, 64 },
+  { "phone", _("Phone"), "phone", &user_phone, '?', 128, 64 },
+  { "inst", _("Institution"), "inst", &user_inst, '?', 128, 64 },
+  { "inst_en", _("Institution (En)"), "inst_en", &user_inst_en, '?', 128, 64 },
+  { "instshort", _("Institution (short)"), "instshort", &user_instshort, '?', 32, 32 },
+  { "instshort_en", _("Institution (short) (En)"), "instshort_en", &user_instshort_en, '?', 32, 32 },
+  { "fac", _("Faculty"), "fac", &user_fac, '?', 128, 64 },
+  { "fac_en", _("Faculty (En)"), "fac_en", &user_fac_en, '?', 128, 64 },
+  { "facshort", _("Faculty (short)"), "facshort", &user_facshort, '?', 32, 32 },
+  { "facshort_en", _("Faculty (short) (En)"), "facshort_en", &user_facshort_en, '?', 32, 32 },
+  { "city", _("City"), "city", &user_city, '?', 64, 64 },
+  { "city_en", _("City (En)"), "city_en", &user_city_en, '?', 64, 64 },
+  { "country", _("Country"), "country", &user_country, '?', 64, 64 },
+  { "country_en", _("Country (En)"), "country_en", &user_country_en, '?', 64, 64 },
+  { "region", _("Region"), "region", &user_region, '?', 64, 64 },
+  { "languages", _("Programming languages"), "languages", &user_languages, '?', 64, 64 },
 };
 static struct field_desc member_field_descs[CONTEST_LAST_MEMBER_FIELD] =
 {
   { 0 },
 
-  { "firstname",_("First name"),0,0, name_accept_chars, '?', 64, 64 },
-  { "firstname_en",_("First name (En)"),0,0, name_en_accept_chars, '?', 64, 64 },
-  { "middlename",_("Middle name"), 0, 0, name_accept_chars, '?', 64, 64 },
-  { "middlename_en",_("Middle name (En)"), 0, 0, name_accept_chars, '?', 64, 64 },
-  { "surname",_("Family name"), 0, 0, name_accept_chars, '?', 64, 64 },
-  { "surname_en",_("Family name (En)"), 0, 0, name_en_accept_chars, '?', 64, 64 },
-  { "status", _("Status"), 0, 0, name_accept_chars, '?', 64, 64 },
-  { "grade", _("Grade"), 0, 0, name_accept_chars, '?', 16, 16 },
-  { "group", _("Group"), 0, 0, name_accept_chars, '?', 16, 16 },
-  { "group_en", _("Group (En)"), 0, 0, name_en_accept_chars, '?', 16, 16 },
-  { "email",_("E-mail"), 0, 0, name_accept_chars, '?', 64, 64 },
-  { "homepage",_("Homepage"), 0, 0, homepage_accept_chars, '?', 128, 64 },
-  { "phone",_("Phone"), 0, 0, homepage_accept_chars, '?', 128, 64 },
-  { "inst", _("Institution"), 0, 0, name_accept_chars, '?', 128, 64 },
-  { "inst_en", _("Institution (En)"), 0, 0, name_en_accept_chars, '?', 128, 64 },
-  { "instshort", _("Institution (short)"),0,0,name_accept_chars, '?', 32, 32 },
-  { "instshort_en", _("Institution (short) (En)"),0,0,name_en_accept_chars, '?', 32, 32 },
-  { "fac", _("Faculty"), 0, 0, name_accept_chars, '?', 128, 64 },
-  { "fac_en", _("Faculty (En)"), 0, 0, name_en_accept_chars, '?', 128, 64 },
-  { "facshort", _("Faculty (short)"), 0, 0, name_accept_chars, '?', 32, 32 },
-  { "facshort_en", _("Faculty (short) (En)"), 0, 0, name_en_accept_chars, '?', 32, 32 },
-  { "occupation", _("Occupation"), 0, 0, name_accept_chars, '?', 128, 64 },
-  { "occupation_en", _("Occupation (En)"), 0, 0, name_en_accept_chars, '?', 128, 64 },
-  { "birth_date", _("Birth Date"), 0, 0, name_accept_chars, '?', 128, 64 },
-  { "entry_date", _("Institution entry date"), 0, 0, name_accept_chars, '?', 128, 64 },
-  { "graduation_date", _("Institution graduation date"), 0, 0, name_accept_chars, '?', 128, 64 },
+  { "firstname",_("First name"),0,0, '?', 64, 64 },
+  { "firstname_en",_("First name (En)"),0,0, '?', 64, 64 },
+  { "middlename",_("Middle name"), 0, 0, '?', 64, 64 },
+  { "middlename_en",_("Middle name (En)"), 0, 0, '?', 64, 64 },
+  { "surname",_("Family name"), 0, 0, '?', 64, 64 },
+  { "surname_en",_("Family name (En)"), 0, 0, '?', 64, 64 },
+  { "status", _("Status"), 0, 0, '?', 64, 64 },
+  { "grade", _("Grade"), 0, 0, '?', 16, 16 },
+  { "group", _("Group"), 0, 0, '?', 16, 16 },
+  { "group_en", _("Group (En)"), 0, 0, '?', 16, 16 },
+  { "email",_("E-mail"), 0, 0, '?', 64, 64 },
+  { "homepage",_("Homepage"), 0, 0, '?', 128, 64 },
+  { "phone",_("Phone"), 0, 0, '?', 128, 64 },
+  { "inst", _("Institution"), 0, 0, '?', 128, 64 },
+  { "inst_en", _("Institution (En)"), 0, 0, '?', 128, 64 },
+  { "instshort", _("Institution (short)"),0,0,'?', 32, 32 },
+  { "instshort_en", _("Institution (short) (En)"),0,0,'?', 32, 32 },
+  { "fac", _("Faculty"), 0, 0, '?', 128, 64 },
+  { "fac_en", _("Faculty (En)"), 0, 0, '?', 128, 64 },
+  { "facshort", _("Faculty (short)"), 0, 0, '?', 32, 32 },
+  { "facshort_en", _("Faculty (short) (En)"), 0, 0, '?', 32, 32 },
+  { "occupation", _("Occupation"), 0, 0, '?', 128, 64 },
+  { "occupation_en", _("Occupation (En)"), 0, 0, '?', 128, 64 },
+  { "birth_date", _("Birth Date"), 0, 0, '?', 128, 64 },
+  { "entry_date", _("Institution entry date"), 0, 0, '?', 128, 64 },
+  { "graduation_date", _("Institution graduation date"), 0, 0, '?', 128, 64 },
 };
 static char const * const member_string[] =
 {
@@ -811,16 +776,10 @@ check_source_ip(void)
 }
 
 static int
-fix_string(unsigned char *buf, unsigned char const *accept_str, int c)
+fix_string(unsigned char *buf, unsigned char const *flags, int c)
 {
   unsigned char *s;
-  unsigned char const *q;
-  unsigned char flags[256];
   int cnt = 0;
-
-  memset(flags, 0, sizeof(flags));
-  for (q = accept_str; *q; q++)
-    flags[*q] = 1;
 
   for (s = buf; *s; s++)
     if (!flags[*s]) {
@@ -1063,7 +1022,7 @@ read_user_info_from_form(void)
     ASSERT(field_descs[i].var);
     ASSERT(field_descs[i].var_name);
     *field_descs[i].var = val = xstrdup(cgi_param(field_descs[i].var_name));
-    if (fix_string(val, field_descs[i].accept_chars,
+    if (fix_string(val, userlist_get_contest_accepting_chars(i),
                    field_descs[i].repl_char)) {
       error(_("Field \"%s\" contained invalid characters, which were replaced with '%c'."), gettext(field_descs[i].orig_name), field_descs[i].repl_char);
     }
@@ -1139,7 +1098,7 @@ read_user_info_from_form(void)
           }
         }
         member_info[role][pers][i] = val = xstrdup(val);
-        if (fix_string(val, member_field_descs[i].accept_chars,
+        if (fix_string(val, userlist_get_member_accepting_chars(i),
                        member_field_descs[i].repl_char)) {
           error(_("Field \"%s.%d.%s\" contained invalid characters, which were replaced with '%c'."),
                     gettext(member_string[role]), pers + 1,

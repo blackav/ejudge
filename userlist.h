@@ -606,4 +606,23 @@ void userlist_write_contests_xml_footer(FILE *f);
 
 int userlist_map_userlist_to_contest_field(int uf);
 
+/* valid character sets */
+extern const unsigned char login_accept_chars[257];
+extern const unsigned char email_accept_chars[257];
+extern const unsigned char name_accept_chars[257];
+extern const unsigned char name_en_accept_chars[257];
+extern const unsigned char url_accept_chars[257];
+extern const unsigned char password_accept_chars[257];
+
+extern const int userlist_contest_field_ids[];
+extern const int userlist_member_field_ids[];
+
+const unsigned char *userlist_get_contest_accepting_chars(int f);
+const unsigned char *userlist_get_member_accepting_chars(int f);
+int
+userlist_count_info_errors(
+        const struct contest_desc *cnts,
+        const struct userlist_user *u,
+        int role_err_count[]);
+
 #endif /* __USERLIST_H__ */

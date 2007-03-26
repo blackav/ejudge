@@ -6681,6 +6681,8 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr,
                                  userlist_strerror(-r));
     case ULS_ERR_DISCONNECT:
       return ns_html_err_ul_server_down(fout, phr, 0, 0);
+    case ULS_ERR_INCOMPLETE_REG:
+      return ns_html_err_registration_incomplete(fout, phr);
     default:
       return ns_html_err_internal_error(fout, phr, 0, "user_login failed: %s",
                                         userlist_strerror(-r));
@@ -10091,6 +10093,8 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr,
       return ns_html_err_inv_session(fout, phr, 0,
                                      "get_cookie failed: %s",
                                      userlist_strerror(-r));
+    case ULS_ERR_INCOMPLETE_REG:
+      return ns_html_err_registration_incomplete(fout, phr);
     case ULS_ERR_DISCONNECT:
       return ns_html_err_ul_server_down(fout, phr, 0, 0);
     default:

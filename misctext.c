@@ -589,6 +589,16 @@ html_armor_free(struct html_armor_buffer *pb)
   memset(pb, 0, sizeof(*pb));
 }
 
+int
+check_str(const unsigned char *str, const unsigned char *map)
+{
+  if (!str) return 0;
+  for (; *str; str++)
+    if (!map[*str])
+      return -1;
+  return 0;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

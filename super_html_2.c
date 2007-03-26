@@ -260,9 +260,6 @@ copy_contest_access(struct contest_access *p)
   return q;
 }
 
-static unsigned char const login_accept_chars[] =
-"._-0123456789?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
 int
 super_html_set_contest_var(struct sid_state *sstate, int cmd,
                            int param1, const unsigned char *param2,
@@ -639,7 +636,7 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_CNTS_ADD_PERMISSION:
     if (!param2 || !*param2) return -SSERV_ERR_INVALID_PARAMETER;
-    if (strspn(param2, login_accept_chars) != strlen(param2))
+    if (check_str(param2, login_accept_chars) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
     for (cap_node = cnts->capabilities.first; cap_node;
          cap_node = (typeof(cap_node)) cap_node->b.right)

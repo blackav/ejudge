@@ -91,4 +91,6 @@ void allowed_list_map(
         size_t pu,
         int **pmap);
 
+int check_str(const unsigned char *str, const unsigned char *map);
+
 #endif /* __MISCTEXT_H__ */
