@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-03-21 09:02+0300\n"
-"PO-Revision-Date: 2007-03-21 09:05+0300\n"
+"POT-Creation-Date: 2007-03-25 11:28+0400\n"
+"PO-Revision-Date: 2007-03-25 11:28+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -435,6 +435,14 @@ msgstr ""
 "использования электронной почты). %s</p>"
 
 #, c-format
+msgid ""
+"<p><font color=\"red\">Minimal number for this contest is %d, but only %d "
+"are defined.</font></p>\n"
+msgstr ""
+"<p><font color=\"red\">Минимальное число членов команды в этом турнире %d, "
+"но определено только but %d.</font></p>\n"
+
+#, c-format
 msgid "<p>Information is not available.</p>"
 msgstr "<p>Информация отсутствует.</p>"
 
@@ -448,6 +456,10 @@ msgid ""
 msgstr ""
 "<p>Обратите внимание, что точная причина ошибки не сообщается по "
 "соображениям безопасности.</p>"
+
+#, c-format
+msgid "<p>You may define up to %d members.</p>"
+msgstr "<p>Вы можете добавить до %d членов команды.</p>"
 
 #, c-format
 msgid "<u>--- Checker output ---</u>\n"
@@ -509,6 +521,9 @@ msgstr "Добавить по ID"
 
 msgid "Add by login"
 msgstr "Добавить по LOGIN"
+
+msgid "Add new"
+msgstr "Добавить"
 
 msgid "Add new member"
 msgstr "Добавить нового члена команды"
@@ -663,6 +678,9 @@ msgstr ""
 
 msgid "Birth Date"
 msgstr "Дата рождения"
+
+msgid "Cancel"
+msgstr "Отменить"
 
 msgid "Cannot add a new"
 msgstr "Не могу добавить нового члена команды"
@@ -1127,6 +1145,10 @@ msgstr "Редактировать"
 msgid "Edit personal data"
 msgstr "Редактировать<br>личные данные"
 
+#, fuzzy
+msgid "Editing general info"
+msgstr "Общая информация"
+
 msgid "Elapsed time"
 msgstr "Прошедшее время"
 
@@ -1180,6 +1202,12 @@ msgstr "Факультет"
 
 msgid "Faculty (En)"
 msgstr "Факультет (Англ.)"
+
+msgid "Faculty (abbreviated)"
+msgstr "Факультет (аббревиатура)"
+
+msgid "Faculty (abbreviated) (En)"
+msgstr "Факультет (аббревиатура) (Англ.)"
 
 msgid "Faculty (short)"
 msgstr "Факультет (сокр.)"
@@ -1330,6 +1358,9 @@ msgstr "Полностью перепроверить отображённые посылки!"
 
 msgid "Fully rejudge runs"
 msgstr "Полностью перепроверить посылки"
+
+msgid "General info"
+msgstr "Общая информация"
 
 msgid "General information"
 msgstr "Общая информация"
@@ -1620,6 +1651,12 @@ msgstr "Учебное заведение"
 msgid "Institution (En)"
 msgstr "Учебное заведение (Англ.)"
 
+msgid "Institution (abbreviated)"
+msgstr "Учебное заведение (аббревиатура)"
+
+msgid "Institution (abbreviated) (En)"
+msgstr "Учебное заведение (аббревиатура) (Англ.)"
+
 msgid "Institution (short)"
 msgstr "Учебное заведение (сокр.)"
 
@@ -1643,6 +1680,9 @@ msgstr "Внутренняя ошибка: недостаточно памяти."
 
 msgid "Invalid action"
 msgstr "Неверная команда"
+
+msgid "Invalid characters"
+msgstr "Недопустимые символы"
 
 msgid "Invalid clar_id"
 msgstr "Неверный идентификатор сообщения"
@@ -2035,6 +2075,18 @@ msgstr "Mkdir(%s) не сработал: %s"
 msgid "Monitor"
 msgstr "Монитор"
 
+msgid "Move to advisors"
+msgstr "Перевести в руководители"
+
+msgid "Move to coaches"
+msgstr "Перевести в тренеры"
+
+msgid "Move to contestants"
+msgstr "Перевести в участников"
+
+msgid "Move to reserves"
+msgstr "Перевести в запасные"
+
 msgid "N/A"
 msgstr "Неизв."
 
@@ -2092,8 +2144,14 @@ msgstr "Следующая задача"
 msgid "No"
 msgstr "Нет"
 
+msgid "No advisors are allowed in this contest"
+msgstr "Категория \"руководители\" не поддерживается для этого турнира"
+
 msgid "No assigned variant"
 msgstr "Нет назначенного варианта"
+
+msgid "No coaches are allowed in this contest"
+msgstr "Категория \"тренера\" не поддерживается для этого турнира"
 
 msgid "No comments"
 msgstr "Без комментариев"
@@ -2107,11 +2165,20 @@ msgstr "Без комментариев.\n"
 msgid "No connection to the server"
 msgstr "Нет связи с сервером"
 
+msgid "No contestants are allowed in this contest"
+msgstr "Категория \"участники\" не поддерживается для этого турнира"
+
 msgid "No contests available."
 msgstr "Нет доступных турниров."
 
 msgid "No directory structure"
 msgstr "Нет структуры"
+
+msgid "No guests are allowed in this contest"
+msgstr "Категория \"гости\" не поддерживается для этого турнира"
+
+msgid "No reserves are allowed in this contest"
+msgstr "Категория \"запасные\" не поддерживается для этого турнира"
 
 msgid "No runs to rejudge"
 msgstr "Нет посылок для перепроверки"
@@ -3469,6 +3536,9 @@ msgstr "Имя участника"
 msgid "User database server is down"
 msgstr "Сервер базы пользователей недоступен"
 
+msgid "User info"
+msgstr "Информация о пользователе"
+
 msgid "User login"
 msgstr "Рег. имя команды"
 
@@ -3478,6 +3548,9 @@ msgstr "Вход пользователя [%s]"
 
 msgid "User name"
 msgstr "Имя участника"
+
+msgid "User name (for standings)"
+msgstr "Имя участника (для таблицы результатов)"
 
 msgid ""
 "User quota exceeded. This clarification request is too large, you already "
@@ -3775,6 +3848,9 @@ msgstr "очистить"
 msgid "clients suspended"
 msgstr "клиенты приостановлены"
 
+msgid "contains invalid characters"
+msgstr "содержит недопустимые символы"
+
 msgid "contest deadline exceeded"
 msgstr "регистрация на турнир завершена"
 
@@ -3897,6 +3973,9 @@ msgstr "модерируемая"
 
 msgid "msec"
 msgstr "мс"
+
+msgid "must be specified"
+msgstr "должно быть заполнено"
 
 msgid "new password (1) not specified"
 msgstr "новый пароль (1) не задан"
