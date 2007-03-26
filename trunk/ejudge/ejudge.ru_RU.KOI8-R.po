@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-03-25 11:28+0400\n"
-"PO-Revision-Date: 2007-03-25 11:28+0400\n"
+"POT-Creation-Date: 2007-03-26 11:40+0400\n"
+"PO-Revision-Date: 2007-03-26 11:42+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -794,8 +794,14 @@ msgstr "Сообщения отключены"
 msgid "Clars"
 msgstr "Сообщения"
 
+msgid "Clear"
+msgstr "Очистить"
+
 msgid "Clear BANNED"
 msgstr "Сбросить флаг BANNED"
+
+msgid "Clear INCOMPLETE"
+msgstr "Сбросить флаг НЕПОЛНОТЫ"
 
 msgid "Clear INVISIBLE"
 msgstr "Сбросить флаг НЕВИДИМОСТИ"
@@ -823,6 +829,9 @@ msgstr "Сбросить пароли участников!"
 
 msgid "Clear the BANNED flag for the selected users"
 msgstr "Сбросить флаг БЛОКИРОВКИ у отмеченных пользователей"
+
+msgid "Clear the INCOMPLETE flag for the selected users"
+msgstr "Сбросить флаг НЕПОЛНОТЫ у отмеченных пользователей"
 
 msgid "Clear the INVISIBLE flag for the selected users"
 msgstr "Сбросить флаг НЕВИДИМОСТИ у отмеченных пользователей"
@@ -1145,9 +1154,8 @@ msgstr "Редактировать"
 msgid "Edit personal data"
 msgstr "Редактировать<br>личные данные"
 
-#, fuzzy
 msgid "Editing general info"
-msgstr "Общая информация"
+msgstr "Редактирование общей информации"
 
 msgid "Elapsed time"
 msgstr "Прошедшее время"
@@ -1633,6 +1641,9 @@ msgstr ""
 msgid "Incompatible server"
 msgstr "Несовместимый сервер"
 
+msgid "Incomplete?"
+msgstr "Неполная регистрация?"
+
 msgid "Info"
 msgstr "Инфо"
 
@@ -2003,6 +2014,9 @@ msgstr "Мар"
 
 msgid "Mark BANNED"
 msgstr "Установить флаг ЗАБЛОКИРОВАННОСТИ"
+
+msgid "Mark INCOMPLETE"
+msgstr "Установить флаг НЕПОЛНОТЫ"
 
 msgid "Mark INVISIBLE"
 msgstr "Установить флаг НЕВИДИМОСТИ"
@@ -2666,6 +2680,9 @@ msgstr "Регистрация не удалось по следующим причинам:"
 msgid "Registration failed: %s"
 msgstr "Регистрация не удалась: %s"
 
+msgid "Registration incomplete"
+msgstr "Регистрационные данные неполны"
+
 msgid "Registration is successful"
 msgstr "Регистрация завершилась успешно"
 
@@ -2984,6 +3001,9 @@ msgstr "Запрошенный Вами сервис недоступен."
 msgid "Session update failed: %s"
 msgstr "Изменение параметров сессии не удалось: %s"
 
+msgid "Set"
+msgstr "Установить"
+
 msgid "Set accepting mode"
 msgstr "Включить режим приёма решений"
 
@@ -2995,6 +3015,9 @@ msgstr "Установить статус"
 
 msgid "Set the BANNED flag for the selected users"
 msgstr "Установить флаг ЗАБЛОКИРОВАННОСТИ для отмеченных пользователей"
+
+msgid "Set the INCOMPLETE flag for the selected users"
+msgstr "Установить флаг НЕПОЛНОТЫ для отмеченных пользователей"
 
 msgid "Set the INVISIBLE flag for the selected users"
 msgstr "Установить флаг НЕВИДИМОСТИ для отмеченных пользователей"
@@ -3793,6 +3816,9 @@ msgstr ""
 "пароль для входа в систему. Этот пароль необходимо использовать для первого "
 "входа в систему, после чего его можно будет поменять."
 
+msgid "Your contest registration is incomplete."
+msgstr "Ваши регистрационные данные неполны."
+
 msgid ""
 "Your request has caused an internal server error. Please, report it as a bug."
 msgstr ""
@@ -3892,6 +3918,9 @@ msgstr "ошибка с кодом 1"
 
 msgid "generic server error"
 msgstr "неопределённая ошибка сервера"
+
+msgid "incomplete registration"
+msgstr "неполная регистрация"
 
 msgid "integer overflow"
 msgstr "целочисленное переполнение"
