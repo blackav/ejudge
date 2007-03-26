@@ -613,55 +613,6 @@ check_config_exist(unsigned char const *path)
   return 0;
 }
 
-static void
-parse_allowed_list(const unsigned char *str, unsigned char ***pv, size_t *pu)
-{
-  const unsigned char *s, *q;
-  unsigned char *p;
-  int i;
-  size_t sz;
-  unsigned char **v = 0;
-  size_t u = 0;
-
-  *pv = 0;
-  *pu = 0;
-  if (!str) return;
-
-  for (s = str; *s; s++)
-    if (*s == ',')
-      u++;
-  u++;
-
-  XCALLOC(v, u);
-  s = str;
-  for (i = 0; i < u && *s;) {
-    while (*s && isspace(*s)) s++;
-    if (*s == ',') {
-      s++;
-      continue;
-    }
-    if (!*s) break;
-    q = strchr(s, ',');
-    if (!q) q = s + strlen(s);
-    v[i] = p = xmemdup(s, q - s);
-    sz = strlen(p);
-    while (sz > 0 && isspace(p[sz - 1])) p[--sz] = 0;
-    if (!sz) {
-      xfree(p);
-      v[i] = 0;
-    } else {
-      i++;
-    }
-    if (*s) s = q + 1;
-  }
-  u = i;
-  if (!u) {
-    xfree(v); v = 0;
-  }
-  *pv = v;
-  *pu = u;
-}
-
 static const unsigned char default_config[] =
 "<?xml version=\"1.0\" ?>\n"
 "<register_config><access default=\"allow\"/></register_config>\n";
@@ -803,9 +754,9 @@ initialize(int argc, char const *argv[])
     table_style = cnts->register_table_style;
     contest_user_name_comment = cnts->user_name_comment;
     disable_member_delete = cnts->disable_member_delete;
-    parse_allowed_list(cnts->allowed_languages,
+    allowed_list_parse(cnts->allowed_languages,
                        &allowed_languages, &allowed_languages_u);
-    parse_allowed_list(cnts->allowed_regions,
+    allowed_list_parse(cnts->allowed_regions,
                        &allowed_regions, &allowed_regions_u);
     logger_set_level(-1, LOG_WARNING);
     if (cnts->register_header_file) {
@@ -1587,30 +1538,6 @@ authentificate(void)
   return 0;
 }
 
-static void
-map_user_languages(const unsigned char *user_langs, int **pmap)
-{
-  int *map = 0;
-  unsigned char **langs = 0;
-  size_t langs_u = 0;
-  int i, j;
-
-  *pmap = 0;
-  if (!allowed_languages || !allowed_languages_u) return;
-  XCALLOC(map, allowed_languages_u);
-  *pmap = map;
-
-  parse_allowed_list(user_langs, &langs, &langs_u);
-  if (!langs || !langs_u) return;
-  for (i = 0; i < allowed_languages_u; i++) {
-    for (j = 0; j < langs_u; j++)
-      if (!strcmp(allowed_languages[i], langs[j]))
-        break;
-    if (j < langs_u)
-      map[i] = 1;
-  }
-}
-
 static const unsigned char * const month_names[] =
 {
   "",
@@ -1849,7 +1776,9 @@ display_edit_registration_data_page(void)
   for (i = 1; i < CONTEST_LAST_FIELD; i++) {
     if (!field_descs[i].is_editable) continue;
     if (i == CONTEST_F_LANGUAGES && allowed_languages_u > 0) {
-      map_user_languages(user_languages, &user_lang_map);
+      allowed_list_map(user_languages,
+                       allowed_languages, allowed_languages_u,
+                       &user_lang_map);
       printf("<p%s>%s%s:\n", par_style, gettext(field_descs[i].orig_name),
              field_descs[i].is_mandatory?" (*)":"");
 

@@ -51,10 +51,10 @@
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 #define FAIL2(c) do { retval = -(c); goto failed; } while (0)
 
-static unsigned char *
+static char *
 ns_snprintf(unsigned char *buf, size_t size, const char *format, ...)
   __attribute__((format(printf, 3, 4)));
-static unsigned char *
+static char *
 ns_snprintf(unsigned char *buf, size_t size, const char *format, ...)
 {
   va_list args;
@@ -677,6 +677,8 @@ create_account_page(
 
 static unsigned char login_accept_chars[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\1\0\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 static unsigned char email_accept_chars[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\1\0\0\0\0\0\1\0\1\1\0\1\1\1\1\1\1\1\1\1\1\0\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+static unsigned char name_accept_chars[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\1\0\1\1\1\0\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\1\1\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1";
+static unsigned char name_en_accept_chars[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\1\0\1\1\1\0\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\1\1\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 
 static void
 create_account(
@@ -999,12 +1001,457 @@ menu_item(FILE *fout, struct http_request_info *phr,
   fprintf(fout, "</div></td>");
 }
 
-/*
-unsigned char *
-ns_url(unsigned char *buf, size_t size,
-       const struct http_request_info *phr,
-       int action, const char *format, ...);
-*/
+static void
+info_table_row(FILE *fout, const unsigned char *s1, const unsigned char *s2,
+               int is_empty, int is_mandatory, const unsigned char *valid_chars,
+               struct html_armor_buffer *pb)
+{
+  const unsigned char *red_beg = "", *red_end = "";
+  int strres = 0;
+
+  if (is_empty && is_mandatory) {
+    red_beg = "<font color=\"red\">";
+    red_end = "</font>";
+  } else if (s1 && valid_chars && (strres = check_str(s1, valid_chars)) < 0) {
+    red_beg = "<font color=\"red\">";
+    red_end = "</font>";
+  }
+
+  fprintf(fout, "<tr><td class=\"borderless\">%s%s%s:</td><td class=\"borderless\">", red_beg, s1, red_end);
+  if (is_empty || !s1 || !*s1) {
+    fprintf(fout, "&nbsp;");
+  } else {
+    fprintf(fout, "<tt>%s</tt>", html_armor_buf(pb, s2));
+  }
+  fprintf(fout, "</td><td class=\"borderless\">");
+  if (is_empty && is_mandatory) {
+    fprintf(fout, "%s<i>%s</i>%s", red_beg, _("Not set"), red_end);
+  } else if (s1 && valid_chars && strres) {
+    fprintf(fout, "%s<i>%s</i>%s", red_end, _("Invalid characters"), red_end);
+  } else {
+    fprintf(fout, "&nbsp;");
+  }
+  fprintf(fout, "</td></tr>\n");
+}
+
+static int
+contest_fields_order[] =
+{
+  CONTEST_F_INST,
+  CONTEST_F_INST_EN,
+  CONTEST_F_INSTSHORT,
+  CONTEST_F_INSTSHORT_EN,
+  CONTEST_F_FAC,
+  CONTEST_F_FAC_EN,
+  CONTEST_F_FACSHORT,
+  CONTEST_F_FACSHORT_EN,
+  CONTEST_F_CITY,
+  CONTEST_F_CITY_EN,
+  CONTEST_F_REGION,
+  CONTEST_F_COUNTRY,
+  CONTEST_F_COUNTRY_EN,
+  CONTEST_F_LANGUAGES,
+  CONTEST_F_HOMEPAGE,
+  CONTEST_F_PHONE,
+  0,
+};
+
+static int
+member_fields_order[] =
+{
+  CONTEST_MF_FIRSTNAME,
+  CONTEST_MF_FIRSTNAME_EN,
+  CONTEST_MF_MIDDLENAME,
+  CONTEST_MF_MIDDLENAME_EN,
+  CONTEST_MF_SURNAME,
+  CONTEST_MF_SURNAME_EN,
+  CONTEST_MF_STATUS,
+  CONTEST_MF_GRADE,
+  CONTEST_MF_GROUP,
+  CONTEST_MF_GROUP_EN,
+  CONTEST_MF_EMAIL,
+  CONTEST_MF_HOMEPAGE,
+  CONTEST_MF_PHONE,
+  CONTEST_MF_INST,
+  CONTEST_MF_INST_EN,
+  CONTEST_MF_INSTSHORT,
+  CONTEST_MF_INSTSHORT_EN,
+  CONTEST_MF_FAC,
+  CONTEST_MF_FAC_EN,
+  CONTEST_MF_FACSHORT,
+  CONTEST_MF_FACSHORT_EN,
+  CONTEST_MF_OCCUPATION,
+  CONTEST_MF_OCCUPATION_EN,
+  CONTEST_MF_BIRTH_DATE,
+  CONTEST_MF_ENTRY_DATE,
+  CONTEST_MF_GRADUATION_DATE,
+  0,
+};
+
+struct field_desc_s
+{
+  int code;
+  char *description;
+  const unsigned char *accept_chars;
+  int repl_char;
+  int maxlength;
+  int size;
+};
+
+static struct field_desc_s contest_field_desc[CONTEST_LAST_FIELD] =
+{
+  [CONTEST_F_HOMEPAGE] = { USERLIST_NC_HOMEPAGE, __("Homepage"), name_accept_chars, '?', 128, 64 },
+  [CONTEST_F_PHONE] = { USERLIST_NC_PHONE, __("Phone"), name_accept_chars, '?', 128, 64 },
+  [CONTEST_F_INST] = { USERLIST_NC_INST, __("Institution"), name_accept_chars, '?', 128, 64 },
+  [CONTEST_F_INST_EN] = { USERLIST_NC_INST_EN, __("Institution (En)"), name_en_accept_chars, '?', 128, 64 },
+  [CONTEST_F_INSTSHORT] = { USERLIST_NC_INSTSHORT, __("Institution (abbreviated)"), name_accept_chars, '?', 32, 32 },
+  [CONTEST_F_INSTSHORT_EN] = { USERLIST_NC_INSTSHORT_EN, __("Institution (abbreviated) (En)"), name_en_accept_chars, '?', 32, 32 },
+  [CONTEST_F_FAC] = { USERLIST_NC_FAC, __("Faculty"), name_accept_chars, '?', 128, 64 },
+  [CONTEST_F_FAC_EN] = { USERLIST_NC_FAC_EN, __("Faculty (En)"), name_en_accept_chars, '?', 128, 64 },
+  [CONTEST_F_FACSHORT] = { USERLIST_NC_FACSHORT, __("Faculty (abbreviated)"), name_accept_chars, '?', 32, 32 },
+  [CONTEST_F_FACSHORT_EN] = { USERLIST_NC_FACSHORT_EN, __("Faculty (abbreviated) (En)"), name_en_accept_chars, '?', 32, 32 },
+  [CONTEST_F_CITY] = { USERLIST_NC_CITY, __("City"), name_accept_chars, '?', 128, 64 },
+  [CONTEST_F_CITY_EN] = { USERLIST_NC_CITY_EN, __("City (En)"), name_en_accept_chars, '?', 128, 64 },
+  [CONTEST_F_COUNTRY] = { USERLIST_NC_COUNTRY, __("Country"), name_accept_chars, '?', 128, 64 },
+  [CONTEST_F_COUNTRY_EN] = { USERLIST_NC_COUNTRY_EN, __("Country (En)"),  name_en_accept_chars, '?', 128, 64 },
+  [CONTEST_F_REGION] = { USERLIST_NC_REGION, __("Region"), name_accept_chars, '?', 128, 64 },
+  [CONTEST_F_LANGUAGES] = { USERLIST_NC_LANGUAGES, __("Programming languages"), name_accept_chars, '?', 128, 64 },
+};
+
+static struct field_desc_s member_field_desc[CONTEST_LAST_MEMBER_FIELD] =
+{
+  [CONTEST_MF_FIRSTNAME] = { USERLIST_NM_FIRSTNAME, __("First name"), name_accept_chars, '?', 64, 64 },
+  [CONTEST_MF_FIRSTNAME_EN] = { USERLIST_NM_FIRSTNAME_EN, __("First name (En)"), name_en_accept_chars, '?', 64, 64 },
+  [CONTEST_MF_MIDDLENAME] = { USERLIST_NM_MIDDLENAME, __("Middle name"), name_accept_chars, '?', 64, 64},
+  [CONTEST_MF_MIDDLENAME_EN] = { USERLIST_NM_MIDDLENAME_EN, __("Middle name (En)"), name_en_accept_chars, '?', 64, 64 },
+  [CONTEST_MF_SURNAME] = { USERLIST_NM_SURNAME, __("Family name"), name_accept_chars, '?', 64, 64 },
+  [CONTEST_MF_SURNAME_EN] = { USERLIST_NM_SURNAME_EN, __("Family name (En)"), name_en_accept_chars, '?', 64, 64 },
+  [CONTEST_MF_STATUS] = { USERLIST_NM_STATUS, __("Status"), name_accept_chars, '?', 64, 64 },
+  [CONTEST_MF_GRADE] = { USERLIST_NM_GRADE, __("Grade"), name_accept_chars, '?', 16, 16 },
+  [CONTEST_MF_GROUP] = { USERLIST_NM_GROUP, __("Group"), name_accept_chars, '?', 16, 16 },
+  [CONTEST_MF_GROUP_EN] = { USERLIST_NM_GROUP_EN, __("Group (En)"), name_en_accept_chars, '?', 16, 16 },
+  [CONTEST_MF_EMAIL] = { USERLIST_NM_EMAIL, __("E-mail"), name_accept_chars, '?', 64, 64 },
+  [CONTEST_MF_HOMEPAGE] = { USERLIST_NM_HOMEPAGE, __("Homepage"), name_accept_chars, '?', 128, 64 },
+  [CONTEST_MF_PHONE] = { USERLIST_NM_PHONE, __("Phone"), name_accept_chars, '?', 128, 64 },
+  [CONTEST_MF_INST] = { USERLIST_NM_INST, __("Institution"), name_accept_chars, '?', 128, 64 },
+  [CONTEST_MF_INST_EN] = { USERLIST_NM_INST_EN, __("Institution (En)"), name_en_accept_chars, '?', 128, 64 },
+  [CONTEST_MF_INSTSHORT] = { USERLIST_NM_INSTSHORT, __("Institution (abbreviated)"), name_accept_chars, '?', 32, 32 },
+  [CONTEST_MF_INSTSHORT_EN] = { USERLIST_NM_INSTSHORT_EN, __("Institution (abbreviated) (En)"), name_en_accept_chars, '?', 32, 32 },
+  [CONTEST_MF_FAC] = { USERLIST_NM_FAC, __("Faculty"), name_accept_chars, '?', 128, 64 },
+  [CONTEST_MF_FAC_EN] = { USERLIST_NM_FAC_EN, __("Faculty (En)"), name_en_accept_chars, '?', 128, 64 },
+  [CONTEST_MF_FACSHORT] = { USERLIST_NM_FACSHORT, __("Faculty (abbreviated)"), name_accept_chars, '?', 32, 32 },
+  [CONTEST_MF_FACSHORT_EN] = { USERLIST_NM_FACSHORT_EN, __("Faculty (abbreviated) (En)"), name_en_accept_chars, '?', 32, 32 },
+  [CONTEST_MF_OCCUPATION] = { USERLIST_NM_OCCUPATION, __("Occupation"), name_accept_chars, '?', 128, 64 },
+  [CONTEST_MF_OCCUPATION_EN] = { USERLIST_NM_OCCUPATION_EN, __("Occupation (En)"), name_en_accept_chars, '?', 128, 64 },
+  [CONTEST_MF_BIRTH_DATE] = { USERLIST_NM_BIRTH_DATE, __("Birth Date"), name_accept_chars, '?', 128, 64 },
+  [CONTEST_MF_ENTRY_DATE] = { USERLIST_NM_ENTRY_DATE, __("Institution entry date"), name_accept_chars, '?', 128, 64 },
+  [CONTEST_MF_GRADUATION_DATE] = { USERLIST_NM_GRADUATION_DATE, __("Institution graduation date"), name_accept_chars, '?', 128, 64 },
+};
+
+static int
+tab_actions[] =
+{
+  NEW_SRV_ACTION_REG_VIEW_GENERAL,
+  NEW_SRV_ACTION_REG_VIEW_CONTESTANTS,
+  NEW_SRV_ACTION_REG_VIEW_RESERVES,
+  NEW_SRV_ACTION_REG_VIEW_COACHES,
+  NEW_SRV_ACTION_REG_VIEW_ADVISORS,
+  NEW_SRV_ACTION_REG_VIEW_GUESTS,
+  0,
+};
+static const unsigned char *tab_labels[] =
+{
+  __("General info"),
+  __("Contestants"),
+  __("Reserves"),
+  __("Coaches"),
+  __("Advisors"),
+  __("Guests"),
+};
+
+static const unsigned char *no_role_allowed_str[] =
+{
+  __("No contestants are allowed in this contest"),
+  __("No reserves are allowed in this contest"),
+  __("No coaches are allowed in this contest"),
+  __("No advisors are allowed in this contest"),
+  __("No guests are allowed in this contest"),
+};
+
+static const unsigned char *role_labels[] =
+{
+  __("Contestant"),
+  __("Reserve"),
+  __("Coach"),
+  __("Advisor"),
+  __("Guest"),
+};
+
+static const unsigned char *role_move_direction[] =
+{
+  __("Move to reserves"),
+  __("Move to contestants"),
+  __("Move to advisors"),
+  __("Move to coaches"),
+  0
+};
+
+static int
+count_info_errors(
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        int role_err_count[])
+{
+  int err_count = 0, ff;
+  struct userlist_user *u = phr->session_extra->user_info;
+  unsigned char fbuf[1024];
+  int rr, mm, mmbound;
+  const struct userlist_member *m;
+
+  memset(role_err_count, 0, sizeof(role_err_count[0]) * (CONTEST_LAST_MEMBER + 1));
+  for (ff = CONTEST_FIRST_FIELD; ff < CONTEST_LAST_FIELD; ff++) {
+    if (!cnts->fields[ff]) continue;
+    if (userlist_is_empty_user_info_field(&u->i, contest_field_desc[ff].code)
+        && cnts->fields[ff]->mandatory) {
+      role_err_count[0]++;
+      err_count++;
+    } else if (contest_field_desc[ff].accept_chars) {
+      userlist_get_user_info_field_str(fbuf, sizeof(fbuf), &u->i,
+                                       contest_field_desc[ff].code, 0);
+      if (check_str(fbuf, contest_field_desc[ff].accept_chars) < 0) {
+        role_err_count[0]++;
+        err_count++;
+      }
+    }
+  }
+  for (rr = CONTEST_M_CONTESTANT; rr < CONTEST_LAST_MEMBER; rr++) {
+    if (!cnts->members[rr] || cnts->members[rr]->max_count <= 0) continue;
+    mmbound = 0;
+    if (u->i.members[rr]) mmbound = u->i.members[rr]->total;
+    if (cnts->members[rr]->max_count < mmbound)
+      mmbound = cnts->members[rr]->max_count;
+    for (mm = 0; mm < mmbound; mm++) {
+      if (!(m = u->i.members[rr]->members[mm])) {
+        role_err_count[rr + 1]++;
+        err_count++;
+        continue;
+      }
+      for (ff = CONTEST_MF_FIRSTNAME; ff < CONTEST_LAST_MEMBER_FIELD; ff++) {
+        if (!cnts->members[rr]->fields[ff]) continue;
+        if (userlist_is_empty_member_field(m, member_field_desc[ff].code)
+            && cnts->members[rr]->fields[ff]->mandatory) {
+          role_err_count[rr + 1]++;
+          err_count++;
+        } else if (member_field_desc[ff].accept_chars) {
+          userlist_get_member_field_str(fbuf, sizeof(fbuf), m,
+                                        member_field_desc[ff].code, 0);
+          if (check_str(fbuf, member_field_desc[ff].accept_chars) < 0) {
+            role_err_count[rr + 1]++;
+            err_count++;
+          }
+        }
+      }
+    }
+  }
+
+  return err_count;
+}
+
+static void
+main_page_view_info(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+  unsigned char ub[1024];
+  unsigned char bb[1024];
+  int i, ff;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct userlist_user *u = 0;
+  const unsigned char *s, *hh = 0, *cc = 0;
+  unsigned char fbuf[1024];
+  int tab_count, err_count, role_err_count[CONTEST_LAST_MEMBER + 1];
+  int rr, mm, mmbound, main_area_span;
+  const struct userlist_member *m;
+
+  u = phr->session_extra->user_info;
+
+  if (phr->action < NEW_SRV_ACTION_REG_VIEW_GENERAL
+      || phr->action > NEW_SRV_ACTION_REG_VIEW_GUESTS) {
+    phr->action = NEW_SRV_ACTION_REG_VIEW_GENERAL;
+  }
+
+  // check that we need tabs and how many
+  tab_count = 1;
+  for (i = 0; i < CONTEST_LAST_MEMBER; i++) {
+    if (cnts->members[i] && cnts->members[i]->max_count > 0)
+      tab_count++;
+    else if (phr->action == NEW_SRV_ACTION_REG_VIEW_CONTESTANTS + i)
+      phr->action = NEW_SRV_ACTION_REG_VIEW_GENERAL;
+  }
+
+  err_count = count_info_errors(phr, cnts, role_err_count);
+
+  // generate upper tabs
+  fprintf(fout, "<br/>\n");
+  fprintf(fout, "<table cellpadding=\"0\" cellspacing=\"0\">\n");
+  main_area_span = 1;
+  if (tab_count > 1) {
+    main_area_span = 0;
+    fprintf(fout, "<tr id=\"probNavTopList\">\n");
+    for (i = 0; tab_actions[i]; i++) {
+      if (i > 0 && (!cnts->members[i - 1]
+                    || cnts->members[i - 1]->max_count <= 0))
+        continue;
+
+      if (main_area_span > 0) {
+        fprintf(fout, "<td class=\"probNavSpaceTop\">&nbsp;</td>");
+        main_area_span++;
+      }
+
+      hh = "probNavHidden";
+      if (phr->action == tab_actions[i]) hh = "probNavActiveTop";
+      cc = "probOk";
+      if (phr->action == tab_actions[i]) {
+        cc = "probCurrent";
+      } else if (role_err_count[i] > 0) {
+        cc = "probBad";
+      }
+      fprintf(fout, "<td class=\"%s\" onclick=\"displayRoleInfo(%d)\"><div class=\"%s\">", hh, tab_actions[i], cc);
+      fprintf(fout, "%s%s</a>",
+              ns_aref_2(bb, sizeof(bb), phr, "tab", tab_actions[i], 0),
+              gettext(tab_labels[i]));
+      fprintf(fout, "</div></td>\n");
+      main_area_span++;
+    }
+    fprintf(fout, "</tr>\n");
+  }
+  fprintf(fout, "<tr><td colspan=\"%d\" id=\"memberNavArea\"><div id=\"probNavTaskArea\">\n", main_area_span);
+
+  if (phr->action == NEW_SRV_ACTION_REG_VIEW_GENERAL) {
+    fprintf(fout, "<h2>%s", _("General information"));
+    if (!u->read_only && !u->i.cnts_read_only) {
+      fprintf(fout, " [%s%s</a>]",
+              ns_aref(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE, 0), _("Edit"));
+    }
+    fprintf(fout, "</h2>\n");
+    fprintf(fout, "<table class=\"borderless\">\n");
+    s = 0;
+    if (u && u->login && *u->login) {
+      s = u->login;
+    }
+    info_table_row(fout,  _("Login"), s, 0, 0, 0, &ab);
+    s = 0;
+    if (u && u->email && *u->email) {
+      s = u->email;
+    }
+    info_table_row(fout,  _("E-mail"), s, 0, 0, 0, &ab);
+    if (!cnts->disable_name) {
+      s = 0;
+      if (u && u->i.name && *u->i.name) {
+        s = u->i.name;
+      }
+      info_table_row(fout, cnts->personal?_("User name (for standings)"):_("Team name"), s, 0, 0, name_accept_chars, &ab);
+    }
+    for (i = 0; (ff = contest_fields_order[i]); i++) {
+      if (!cnts->fields[ff]) continue;
+      userlist_get_user_info_field_str(fbuf, sizeof(fbuf), &u->i,
+                                       contest_field_desc[ff].code, 0);
+      info_table_row(fout, gettext(contest_field_desc[ff].description),
+                     fbuf,
+                     userlist_is_empty_user_info_field(&u->i, contest_field_desc[ff].code),
+                     cnts->fields[ff]->mandatory,
+                     contest_field_desc[ff].accept_chars,
+                     &ab);
+    }
+    fprintf(fout, "</table>\n");
+  } else if (phr->action >= NEW_SRV_ACTION_REG_VIEW_CONTESTANTS
+             && phr->action <= NEW_SRV_ACTION_REG_VIEW_GUESTS) {
+    rr = phr->action - NEW_SRV_ACTION_REG_VIEW_CONTESTANTS;
+    if (!cnts->members[rr] || cnts->members[rr]->max_count <= 0) {
+      fprintf(fout, "<h2><font color=\"red\">%s</font></h2>\n", gettext(no_role_allowed_str[rr]));
+    } else {
+      mmbound = 0;
+      if (u->i.members[rr]) mmbound = u->i.members[rr]->total;
+
+      fprintf(fout, "<h2>%s", gettext(tab_labels[rr + 1]));
+      if (!u->read_only && !u->i.cnts_read_only
+          && mmbound < cnts->members[rr]->max_count) {
+        fprintf(fout, " [%s%s</a>]",
+                ns_aref(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_ADD_MEMBER_PAGE, "role=%d", rr), _("Add new"));
+      }
+      fprintf(fout, "</h2>\n");
+
+      if (mmbound < cnts->members[rr]->min_count) {
+        fprintf(fout, _("<p><font color=\"red\">Minimal number for this contest is %d, but only %d are defined.</font></p>\n"),
+                cnts->members[rr]->min_count,
+                mmbound);
+      }
+
+      fprintf(fout, _("<p>You may define up to %d members.</p>"),
+              cnts->members[rr]->max_count);
+
+      if (cnts->members[rr]->max_count < mmbound)
+        mmbound = cnts->members[rr]->max_count;
+      for (mm = 0; mm < mmbound; mm++) {
+        fprintf(fout, "<h3>%s %d", role_labels[rr], mm + 1);
+        if (!u->read_only && !u->i.cnts_read_only) {
+          fprintf(fout, " [%s%s</a>]",
+                  ns_aref(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE, "role=%d&amp;member=%d", rr, mm), _("Edit"));
+        }
+        if (!u->read_only && !u->i.cnts_read_only
+            && !cnts->disable_member_delete) {
+          fprintf(fout, " [%s%s</a>]",
+                  ns_aref(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_REMOVE_MEMBER, "role=%d&amp;member=%d", rr, mm), _("Remove"));
+        }
+        if (!u->read_only && !u->i.cnts_read_only
+            && role_move_direction[rr]) {
+          fprintf(fout, " [%s%s</a>]",
+                  ns_aref(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_MOVE_MEMBER, "role=%d&amp;member=%d", rr, mm), gettext(role_move_direction[rr]));
+        }
+        fprintf(fout, "</h3>\n");
+        if (!(m = u->i.members[rr]->members[mm])) continue;
+        fprintf(fout, "<table class=\"borderless\">\n");
+
+        for (i = 0; (ff = member_fields_order[i]); i++) {
+          if (!cnts->members[rr]->fields[ff]) continue;
+          userlist_get_member_field_str(fbuf, sizeof(fbuf), m,
+                                        member_field_desc[ff].code, 0);
+          info_table_row(fout, gettext(member_field_desc[ff].description),
+                         fbuf,
+                         userlist_is_empty_member_field(m, member_field_desc[ff].code),
+                         cnts->members[rr]->fields[ff]->mandatory,
+                         member_field_desc[ff].accept_chars,
+                         &ab);
+        }
+
+        fprintf(fout, "</table>\n");
+      }
+    }
+  }
+
+  // generate tabs bottom
+  fprintf(fout, "</div></td></tr></table>\n");
+
+  html_armor_free(&ab);
+}
+
+static void
+main_page_view_settings(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+}
+
+static reg_action_handler_func_t main_page_action_handlers[NEW_SRV_ACTION_LAST]=
+{
+  [NEW_SRV_ACTION_VIEW_SETTINGS] = main_page_view_settings,
+};
 
 static void
 main_page(
@@ -1016,9 +1463,10 @@ main_page(
 {
   unsigned char ub[1024];
   unsigned char bb[1024];
-  int shown_items = 0;
+  int shown_items = 0, i;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *status_style;
+  const unsigned char *status_info;
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
@@ -1045,6 +1493,12 @@ main_page(
   fprintf(fout, "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
 
   // lower row
+  if (phr->action >= NEW_SRV_ACTION_REG_VIEW_GENERAL
+      && phr->action <= NEW_SRV_ACTION_REG_VIEW_GUESTS)
+    i = phr->action;
+  menu_item(fout, phr, i, _("User info"),
+            ns_url(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0));
+  shown_items++;
   if (phr->reg_status == USERLIST_REG_OK
       && !(phr->reg_flags &~USERLIST_UC_INVISIBLE)
       && contests_check_team_ip_2(cnts, phr->ip, phr->ssl_flag)
@@ -1070,41 +1524,404 @@ main_page(
   // status row
   if (phr->reg_status < 0) {
     status_style = "server_status_off";
+    status_info = __("NOT REGISTERED");
   } else if (phr->reg_status == USERLIST_REG_PENDING) {
     status_style = "server_status_alarm";
+    status_info= __("REGISTERED, PENDING APPROVAL");
   } else if (phr->reg_status == USERLIST_REG_REJECTED) {
     status_style = "server_status_error";
-  } else if ((phr->reg_flags & (USERLIST_UC_BANNED | USERLIST_UC_LOCKED))) {
+    status_info = __("REGISTRATION REJECTED");
+  } else if ((phr->reg_flags & USERLIST_UC_BANNED)) {
     status_style = "server_status_error";
+    status_info = __("REGISTERED, BANNED");
+  } else if ((phr->reg_flags & USERLIST_UC_LOCKED)) {
+    status_style = "server_status_error";
+    status_info = __("REGISTERED, LOCKED");
+  } else if ((phr->reg_flags & USERLIST_UC_INVISIBLE)) {
+    status_style = "server_status_on";
+    status_info = __("REGISTERED (INVISIBLE)");
   } else {
     status_style = "server_status_on";
+    status_info = __("REGISTERED");
   }
   fprintf(fout, "<div class=\"%s\">\n", status_style);
-  if (phr->reg_status < 0) {
-    fprintf(fout, "%s", _("NOT REGISTERED"));
-  } else if (phr->reg_status == USERLIST_REG_PENDING) {
-    fprintf(fout, "%s", _("REGISTERED, PENDING APPROVAL"));
-  } else if (phr->reg_status == USERLIST_REG_REJECTED) {
-    fprintf(fout, "%s", _("REGISTRATION REJECTED"));
-  } else if ((phr->reg_flags & USERLIST_UC_BANNED)) {
-    fprintf(fout, "%s", _("REGISTERED, BANNED"));
-  } else if ((phr->reg_flags & USERLIST_UC_LOCKED)) {
-    fprintf(fout, "%s", _("REGISTERED, LOCKED"));
-  } else if ((phr->reg_flags & USERLIST_UC_INVISIBLE)) {
-    fprintf(fout, "%s", _("REGISTERED (INVISIBLE)"));
-  } else {
-    fprintf(fout, "%s", _("REGISTERED"));
-  }
+  fprintf(fout, "<b>%s</b>", gettext(status_info));
   fprintf(fout, "</div>\n");
+
+  if (main_page_action_handlers[phr->action])
+    (*main_page_action_handlers[phr->action])(fout, phr, cnts, extra, cur_time);
+  else {
+    main_page_view_info(fout, phr, cnts, extra, cur_time);
+  }
 
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
+  html_armor_free(&ab);
+}
+
+static void
+edit_general_form(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        const struct userlist_user *u)
+{
+  unsigned char bb[1024];
+  unsigned char varname[1024];
+  int i, ff, j;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *comment = 0, *s = 0;
+  size_t allowed_languages_u = 0, allowed_regions_u = 0;
+  unsigned char **allowed_languages = 0, **allowed_regions = 0;
+  int *user_lang_map = 0;
+
+  if (cnts->fields[CONTEST_F_LANGUAGES]) {
+    allowed_list_parse(cnts->allowed_languages,
+                       &allowed_languages, &allowed_languages_u);
+  }
+  if (cnts->fields[CONTEST_F_REGION]) {
+    allowed_list_parse(cnts->allowed_regions,
+                       &allowed_regions, &allowed_regions_u);
+  }
+
+  html_start_form(fout, 1, phr->self_url, "");
+  html_hidden(fout, "SID", "%llx", phr->session_id);
+  fprintf(fout, "<table class=\"borderless\">");
+
+  bb[0] = 0;
+  if (cnts->user_name_comment)
+    snprintf(bb, sizeof(bb), "%s", cnts->user_name_comment);
+  fprintf(fout, "<tr><td class=\"borderless\"><b>%s</b>%s:</td>",
+          cnts->personal?_("User name (for standings)"):_("Team name"), bb);
+  bb[0] = 0;
+  if (u->i.name) snprintf(bb, sizeof(bb), "%s", u->i.name);
+  comment = 0;
+  if (check_str(bb, name_accept_chars) < 0) {
+    comment = __("contains invalid characters");
+  }
+  fprintf(fout, "<td class=\"borderless\">%s</td>",
+          html_input_text(bb, sizeof(bb), "name", 64, ARMOR(bb)));
+  
+  if (!comment) comment = "&nbsp;";
+  fprintf(fout, "<td class=\"borderless\"><font color=\"red\"><i>%s</i></font></td>", comment);
+  fprintf(fout, "</tr>\n");
+
+  for (i = 0; (ff = contest_fields_order[i]); i++) {
+    if (!cnts->fields[ff]) continue;
+    fprintf(fout, "<tr>");
+    fprintf(fout, "<td class=\"borderless\" valign=\"top\">");
+    if (cnts->fields[ff]->mandatory) fprintf(fout, "<b>");
+    fprintf(fout, "%s:", gettext(contest_field_desc[ff].description));
+    if (cnts->fields[ff]->mandatory) fprintf(fout, "</b>");
+    fprintf(fout, "</td>");
+    userlist_get_user_info_field_str(bb, sizeof(bb), &u->i,
+                                     contest_field_desc[ff].code, 0);
+    comment = 0;
+    if (cnts->fields[ff]->mandatory
+        && (userlist_is_empty_user_info_field(&u->i,
+                                              contest_field_desc[ff].code)
+            || !bb[0])) {
+      comment = __("must be specified");
+    } else if (contest_field_desc[ff].accept_chars
+               && check_str(bb, contest_field_desc[ff].accept_chars) < 0) {
+      comment = __("contains invalid characters");
+    }
+
+    if (ff == CONTEST_F_LANGUAGES && allowed_languages_u > 0) {
+      allowed_list_map(bb, allowed_languages, allowed_languages_u,
+                       &user_lang_map);
+
+      fprintf(fout, "<td class=\"borderless\"><table class=\"borderless\">\n");
+      for (j = 0; j < allowed_languages_u; j++) {
+        fprintf(fout, "<tr><td class=\"borderless\"><input type=\"checkbox\" name=\"proglang_%d\"%s/></td>"
+               "<td class=\"borderless\">%s</td></tr>\n",
+               j, user_lang_map[j]?" checked=\"yes\"":"",
+               ARMOR(allowed_languages[j]));
+      }
+      fprintf(fout, "</table></td>\n");
+    } else if (ff == CONTEST_F_REGION && allowed_regions_u > 0) {
+      fprintf(fout, "<td class=\"borderless\"><select name=\"region\"><option></option>");
+      for (j = 0; j < allowed_regions_u; j++) {
+        s = "";
+        if (!strcmp(bb, allowed_regions[j]))
+          s = " selected=\"yes\"";
+        fprintf(fout, "<option%s>%s</option>", s, ARMOR(allowed_regions[j]));
+      }
+      fprintf(fout, "</select></td>\n");
+    } else {
+      snprintf(varname, sizeof(varname), "param_%d", ff);
+      fprintf(fout, "<td class=\"borderless\">%s</td>",
+              html_input_text(bb, sizeof(bb), varname,
+                              contest_field_desc[ff].size,
+                              ARMOR(bb)));
+    }
+  
+    if (!comment) comment = "&nbsp;";
+    fprintf(fout, "<td class=\"borderless\" valign=\"top\"><font color=\"red\"><i>%s</i></font></td>", comment);
+    fprintf(fout, "</tr>\n");
+  }
+  fprintf(fout, "</table>\n");
+  fprintf(fout, "<table class=\"borderless\"><tr>");
+  fprintf(fout, "<td class=\"borderless\">%s</td>",
+          ns_submit_button(bb, sizeof(bb), 0,
+                           NEW_SRV_ACTION_REG_CANCEL_GENERAL_EDITING, 0));
+  fprintf(fout, "<td class=\"borderless\">%s</td>",
+          ns_submit_button(bb, sizeof(bb), 0,
+                           NEW_SRV_ACTION_REG_SUBMIT_GENERAL_EDITING, 0));
+  fprintf(fout, "</tr></table>");
+  fprintf(fout, "</form>\n");
+
+  html_armor_free(&ab);
+  allowed_list_free(allowed_languages, allowed_languages_u);
+  allowed_list_free(allowed_regions, allowed_regions_u);
+  xfree(user_lang_map);
+}
+
+static const unsigned char * const month_names[] =
+{
+  "",
+  __("Jan"), __("Feb"), __("Mar"), __("Apr"), __("May"), __("Jun"),
+  __("Jul"), __("Aug"), __("Sep"), __("Oct"), __("Nov"), __("Dec"),
+};
+
+static void
+display_date_change_dialog(FILE *fout, int field, const unsigned char *val,
+                           const unsigned char *beg_str,
+                           const unsigned char *end_str)
+{
+  int day = 0, month = 0, year = 0, n;
+  unsigned char vbuf[128];
+  const unsigned char *sstr = " selected=\"selected\"";
+  const unsigned char *s = "";
+
+  fprintf(fout, "%s", beg_str);
+  if (sscanf(val, "%d/%d/%d%n", &year, &month, &day, &n) != 3 || val[n]
+      || year <= 1900 || year >= 10000 || month < 0 || month > 12
+      || day < 0 || day > 31) {
+    day = month = year = 0;
+  }
+  if (day == 1 && month == 1 && year == 1970) {
+    day = month = year = 0;
+  }
+
+  // day selection
+  s = "";
+  if (!day) s = sstr;
+  fprintf(fout, "<select name=\"day_%d\"><option%s></option>", field, s);
+  for (n = 1; n <= 31; n++) {
+    s = "";
+    if (day == n) s = sstr;
+    fprintf(fout, "<option%s>%d</option>", s, n);
+  }
+  fprintf(fout, "</select>\n");
+
+  // month selection
+  s = "";
+  if (!month) s = sstr;
+  fprintf(fout, "<select name=\"month_%d\"><option value=\"0\"%s></option>",
+          field, s);
+  for (n = 1; n <= 12; n++) {
+    s = "";
+    if (month == n) s = sstr;
+    fprintf(fout, "<option value=\"%d\"%s>%s</option>", n, s,
+            gettext(month_names[n]));
+  }
+  fprintf(fout, "</select>\n");
+
+  vbuf[0] = 0;
+  if (year > 0) snprintf(vbuf, sizeof(vbuf), "%d", year);
+  fprintf(fout, "<input type=\"text\" name=\"year_%d\" value=\"%s\" maxlength=\"4\" size=\"4\"/></p>", field, vbuf);
+  fprintf(fout, "%s", end_str);
+}
+
+static void
+edit_member_form(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        const struct userlist_member *m,
+        int role,
+        int member)
+{
+  const struct contest_member *cm = cnts->members[role];
+  unsigned char bb[1024];
+  unsigned char varname[1024];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int i, ff;
+  const unsigned char *comment = 0;
+
+  html_start_form(fout, 1, phr->self_url, "");
+  html_hidden(fout, "SID", "%llx", phr->session_id);
+  html_hidden(fout, "role", "%d", role);
+  html_hidden(fout, "member", "%d", member);
+
+  fprintf(fout, "<table class=\"borderless\">");
+  for (i = 0; (ff = member_fields_order[i]); i++) {
+    if (!cm->fields[ff]) continue;
+    fprintf(fout, "<tr>");
+    fprintf(fout, "<td class=\"borderless\" valign=\"top\">");
+    if (cm->fields[ff]->mandatory) fprintf(fout, "<b>");
+    fprintf(fout, "%s:", gettext(member_field_desc[ff].description));
+    if (cm->fields[ff]->mandatory) fprintf(fout, "</b>");
+    fprintf(fout, "</td>");
+    userlist_get_member_field_str(bb, sizeof(bb), m,
+                                  member_field_desc[ff].code, 0);
+    comment = 0;
+    if (cm->fields[ff]->mandatory
+        && (userlist_is_empty_member_field(m, member_field_desc[ff].code)
+            || !bb[0])) {
+      comment = __("must be specified");
+    } else if (member_field_desc[ff].accept_chars
+               && check_str(bb, member_field_desc[ff].accept_chars) < 0) {
+      comment = __("contains invalid characters");
+    }
+
+    switch (ff) {
+    case CONTEST_MF_BIRTH_DATE:
+    case CONTEST_MF_ENTRY_DATE:
+    case CONTEST_MF_GRADUATION_DATE:
+      display_date_change_dialog(fout, ff, bb, "<td class=\"borderless\">",
+                                 "</td>");
+      break;
+
+    default:
+      snprintf(varname, sizeof(varname), "param_%d", ff);
+      fprintf(fout, "<td class=\"borderless\">%s</td>",
+              html_input_text(bb, sizeof(bb), varname,
+                              member_field_desc[ff].size,
+                              ARMOR(bb)));
+      break;
+    }
+
+    if (!comment) comment = "&nbsp;";
+    fprintf(fout, "<td class=\"borderless\" valign=\"top\"><font color=\"red\"><i>%s</i></font></td>", comment);
+    fprintf(fout, "</tr>\n");
+  }
+  fprintf(fout, "</table>\n");
+
+  fprintf(fout, "<table class=\"borderless\"><tr>");
+  fprintf(fout, "<td class=\"borderless\">%s</td>",
+          ns_submit_button(bb, sizeof(bb), 0,
+                           NEW_SRV_ACTION_REG_CANCEL_MEMBER_EDITING, 0));
+  fprintf(fout, "<td class=\"borderless\">%s</td>",
+          ns_submit_button(bb, sizeof(bb), 0,
+                           NEW_SRV_ACTION_REG_SUBMIT_MEMBER_EDITING, 0));
+  fprintf(fout, "</table>");
+  fprintf(fout, "</form>\n");
 
   html_armor_free(&ab);
 }
 
+static void
+edit_page(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+  unsigned char bb[1024];
+  const unsigned char *status_style;
+  const unsigned char *status_info;
+  const struct userlist_user *u = phr->session_extra->user_info;
+  int role = 0, member = 0;
+  const struct userlist_member *m = 0;
+  const unsigned char *s = 0, *n = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  // check that we are allowed to edit something
+  if (!u || u->read_only || u->i.cnts_read_only) {
+    goto redirect_back;
+  }
+  if (phr->action == NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE) {
+    if (cgi_param_int(phr, "role", &role) < 0) goto redirect_back;
+    if (cgi_param_int(phr, "member", &member) < 0) goto redirect_back;
+    if (role < 0 || role >= CONTEST_M_GUEST) goto redirect_back;
+    if (!cnts->members[role]) goto redirect_back;
+    if (!u->i.members[role]) goto redirect_back;
+    if (member < 0 || member >= u->i.members[role]->total) goto redirect_back;
+    if (!(m = u->i.members[role]->members[member])) goto redirect_back;
+  } else if (phr->action == NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE) {
+  } else {
+    goto redirect_back;
+  }
+
+  if (phr->action == NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE)
+    s = _("Editing general info");
+  else 
+    s = _("Good!");
+
+  n = phr->name;
+  if (!n || !*n) n = phr->login;
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s, %s]", s, ARMOR(n), extra->contest_arm);
+
+  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>");
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
+  fprintf(fout, "</tr></table></div>\n");
+
+  fprintf(fout, "<div class=\"white_empty_block\">&nbsp;</div>\n");
+
+  fprintf(fout, "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
+  fprintf(fout, "</tr></table></div>\n");
+  if (extra->separator_txt && *extra->separator_txt) {
+    fprintf(fout, "%s", extra->separator_txt);
+  }
+
+  // status row
+  if (phr->reg_status < 0) {
+    status_style = "server_status_off";
+    status_info = __("NOT REGISTERED");
+  } else if (phr->reg_status == USERLIST_REG_PENDING) {
+    status_style = "server_status_alarm";
+    status_info= __("REGISTERED, PENDING APPROVAL");
+  } else if (phr->reg_status == USERLIST_REG_REJECTED) {
+    status_style = "server_status_error";
+    status_info = __("REGISTRATION REJECTED");
+  } else if ((phr->reg_flags & USERLIST_UC_BANNED)) {
+    status_style = "server_status_error";
+    status_info = __("REGISTERED, BANNED");
+  } else if ((phr->reg_flags & USERLIST_UC_LOCKED)) {
+    status_style = "server_status_error";
+    status_info = __("REGISTERED, LOCKED");
+  } else if ((phr->reg_flags & USERLIST_UC_INVISIBLE)) {
+    status_style = "server_status_on";
+    status_info = __("REGISTERED (INVISIBLE)");
+  } else {
+    status_style = "server_status_on";
+    status_info = __("REGISTERED");
+  }
+  fprintf(fout, "<div class=\"%s\">\n", status_style);
+  fprintf(fout, "<b>%s</b>", gettext(status_info));
+  fprintf(fout, "</div>\n");
+
+  // main page goes here
+  if (phr->action == NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE) {
+    edit_member_form(fout, phr, cnts, m, role, member);
+  } else {
+    edit_general_form(fout, phr, cnts, u);
+  }
+
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+  html_armor_free(&ab);
+  return;
+
+ redirect_back:
+  snprintf(bb, sizeof(bb), "%s?SID=%llx&action=%d",
+           phr->self_url, phr->session_id,
+           NEW_SRV_ACTION_REG_VIEW_GENERAL);
+  html_armor_free(&ab);
+  html_refresh_page_2(fout, bb);
+}
+
 static reg_action_handler_func_t reg_handlers[NEW_SRV_ACTION_LAST] =
 {
+  [NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE] = edit_page,
+  [NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE] = edit_page,
 };
 
 void
@@ -1114,6 +1931,7 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
   time_t cur_time = 0;
+  unsigned char *user_info_xml = 0;
 
   if (phr->action == NEW_SRV_ACTION_CHANGE_LANGUAGE)
     return change_locale(fout, phr);
@@ -1159,6 +1977,25 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   if (cnts->closed ||
       !contests_check_register_ip_2(cnts, phr->ip, phr->ssl_flag)) {
     return ns_html_err_no_perm(fout, phr, 0, "registration is not available");
+  }
+
+  // check for local userlist_user structure and fetch it from the
+  // server
+  phr->session_extra = ns_get_session(phr->session_id, cur_time);
+
+  if (!phr->session_extra->user_info) {
+    if (userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO,
+                               phr->user_id, phr->contest_id,
+                               &user_info_xml) < 0) {
+      // FIXME: need better error reporting
+      return ns_html_err_ul_server_down(fout, phr, 0, 0);
+    }
+    phr->session_extra->user_info = userlist_parse_user_str(user_info_xml);
+    if (!phr->session_extra->user_info) {
+      // FIXME: need better error reporting
+      return ns_html_err_ul_server_down(fout, phr, 0, 0);
+    }
+    xfree(user_info_xml); user_info_xml = 0;
   }
 
   extra = ns_get_contest_extra(phr->contest_id);
