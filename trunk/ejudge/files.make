@@ -207,6 +207,7 @@ COMMON_CFILES=\
  tsc.c\
  uldb_plugin_xml.c\
  userlist.c\
+ userlist_check.c\
  userlist_proto.c\
  userlist_xml.c\
  varsubst.c\

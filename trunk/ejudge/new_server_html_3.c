@@ -665,6 +665,49 @@ ns_html_err_inv_session(FILE *fout,
   l10n_setlocale(0);
 }
 
+void
+ns_html_err_registration_incomplete(
+	FILE *fout,
+        struct http_request_info *phr)
+{
+  const struct contest_desc *cnts = 0;
+  struct contest_extra *extra = 0;
+  const unsigned char *header = 0, *footer = 0, *separator = 0;
+  const unsigned char *copyright = 0;
+  time_t cur_time = time(0);
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  err("%d: registration incomplete", phr->id);
+
+  if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
+  if (cnts) extra = ns_get_contest_extra(phr->contest_id);
+  if (extra) {
+    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
+    watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
+    header = extra->header.text;
+    footer = extra->footer.text;
+    copyright = extra->copyright.text;
+  }
+  if (!header || !footer) {
+    header = ns_fancy_header;
+    separator = ns_fancy_separator;
+    if (copyright) footer = ns_fancy_footer_2;
+    else footer = ns_fancy_footer;
+  }
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, _("Registration incomplete"));
+  if (separator && *separator) {
+    fprintf(fout, "%s", ns_fancy_empty_status);
+    fprintf(fout, "%s", separator);
+  }
+  fprintf(fout, "<p>%s</p>\n",
+          _("You cannot participate in the contest because your registration is incomplete. Please, go back to the registration forms and fill up them correctly."));
+  ns_footer(fout, footer, copyright, phr->locale_id);
+  l10n_setlocale(0);
+  html_armor_free(&ab);
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

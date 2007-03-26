@@ -384,6 +384,10 @@ ns_html_err_inv_session(FILE *fout,
                         int priv_mode,
                         const char *format, ...)
   __attribute__((format(printf, 4, 5)));
+void
+ns_html_err_registration_incomplete(
+	FILE *fout,
+        struct http_request_info *phr);
 
 struct session_info *
 ns_get_session(ej_cookie_t session_id, time_t cur_time);

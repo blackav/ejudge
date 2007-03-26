@@ -5061,9 +5061,6 @@ super_html_edit_problems(FILE *f,
   return 0;
 }
 
-static unsigned char const login_accept_chars[] =
-"._-0123456789?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
 int
 super_html_prob_cmd(struct sid_state *sstate, int cmd,
                     int prob_id, const unsigned char *param2,
@@ -5121,7 +5118,7 @@ super_html_prob_cmd(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_ADD_ABSTRACT:
     if (!param2 || !*param2) return -SSERV_ERR_INVALID_PARAMETER;
-    if (strspn(param2, login_accept_chars) != strlen(param2))
+    if (check_str(param2, login_accept_chars) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
     for (i = 0; i < sstate->aprob_u; i++)
       if (!strcmp(sstate->aprobs[i]->short_name, param2))
