@@ -3,7 +3,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -77,5 +77,18 @@ int get_content_type(const unsigned char *txt, const unsigned char **p_start_ptr
 unsigned char *dos2unix_str(const unsigned char *s);
 size_t dos2unix_buf(unsigned char *s, size_t size);
 unsigned char *unparse_sha1(const void *shabuf);
+
+void allowed_list_parse(
+	const unsigned char *str,
+        unsigned char ***pv,
+        size_t *pu);
+unsigned char ** allowed_list_free(
+	unsigned char **pv,
+        size_t u);
+void allowed_list_map(
+	const unsigned char *user_langs,
+        unsigned char **pv,
+        size_t pu,
+        int **pmap);
 
 #endif /* __MISCTEXT_H__ */

@@ -31,6 +31,7 @@
 #include "nsdb_plugin.h"
 #include "l10n.h"
 #include "pathutl.h"
+#include "userlist.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/osdeps.h>
@@ -167,6 +168,7 @@ do_remove_session(struct session_info *p)
     p->next->prev = p->prev;
   }
   // cleanup p
+  userlist_free(&p->user_info->b);
   xfree(p);
 }
 

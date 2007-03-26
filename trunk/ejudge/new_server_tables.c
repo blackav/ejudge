@@ -141,6 +141,10 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_IGNORE_DISPLAYED_2] = __("Ignore displayed runs!"),
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1] = __("Disqualify displayed runs"),
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2] = __("Disqualify displayed runs!"),
+  [NEW_SRV_ACTION_REG_SUBMIT_GENERAL_EDITING] = __("Save"),
+  [NEW_SRV_ACTION_REG_CANCEL_GENERAL_EDITING] = __("Cancel"),
+  [NEW_SRV_ACTION_REG_SUBMIT_MEMBER_EDITING] = __("Save"),
+  [NEW_SRV_ACTION_REG_CANCEL_MEMBER_EDITING] = __("Cancel"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =

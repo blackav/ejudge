@@ -114,6 +114,7 @@ NEW_SERVER_CLNT_CFILES=\
  new_server_clnt/send_packet.c
 
 COMMON_CFILES=\
+ allowed_list.c\
  archive_paths.c\
  base64.c\
  cgi.c\

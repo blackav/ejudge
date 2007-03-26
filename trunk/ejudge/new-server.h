@@ -29,6 +29,8 @@
 #include <sys/time.h>
 
 // a structure to store some persistent information
+struct userlist_user;
+
 struct session_info
 {
   struct session_info *next;
@@ -39,6 +41,8 @@ struct session_info
   int user_view_all_runs;
   int user_view_all_clars;
   int user_viewed_section;
+
+  struct userlist_user *user_info;
 };
 
 struct server_framework_state;
@@ -290,6 +294,21 @@ enum
   NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE,
   NEW_SRV_ACTION_REG_LOGIN_PAGE,
   NEW_SRV_ACTION_REG_LOGIN,
+  NEW_SRV_ACTION_REG_VIEW_GENERAL,
+  NEW_SRV_ACTION_REG_VIEW_CONTESTANTS,
+  NEW_SRV_ACTION_REG_VIEW_RESERVES,
+  NEW_SRV_ACTION_REG_VIEW_COACHES,
+  NEW_SRV_ACTION_REG_VIEW_ADVISORS,
+  NEW_SRV_ACTION_REG_VIEW_GUESTS,
+  NEW_SRV_ACTION_REG_ADD_MEMBER_PAGE,
+  NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE,
+  NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE,
+  NEW_SRV_ACTION_REG_MOVE_MEMBER,
+  NEW_SRV_ACTION_REG_REMOVE_MEMBER,
+  NEW_SRV_ACTION_REG_SUBMIT_GENERAL_EDITING,
+  NEW_SRV_ACTION_REG_CANCEL_GENERAL_EDITING,
+  NEW_SRV_ACTION_REG_SUBMIT_MEMBER_EDITING,
+  NEW_SRV_ACTION_REG_CANCEL_MEMBER_EDITING,
 
   NEW_SRV_ACTION_LAST,
 };

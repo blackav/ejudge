@@ -1921,6 +1921,7 @@ process_default_testers(void)
       ts = serve_state.probs[k];
       if (!ts || prob_flags[k]) continue;
       if (ts->disable_testing) continue;
+      if (ts->manual_checking) continue;
 
       // so at this point: tp - pointer to the default tester,
       // k is the problem number
@@ -1977,6 +1978,7 @@ check_config(void)
     prb = serve_state.probs[i];
     if (!prb) continue;
     if (prb->disable_testing) continue;
+    if (prb->manual_checking) continue;
 
     // check if there exists a tester for this problem
     for (j = 1; j <= serve_state.max_tester; j++) {
