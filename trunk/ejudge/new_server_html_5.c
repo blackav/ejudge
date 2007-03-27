@@ -1214,7 +1214,7 @@ main_page_view_info(
       phr->action = NEW_SRV_ACTION_REG_VIEW_GENERAL;
   }
 
-  err_count = userlist_count_info_errors(cnts, u, role_err_count);
+  err_count = userlist_count_info_errors(cnts, u, &u->i, role_err_count);
 
   // generate upper tabs
   fprintf(fout, "<br/>\n");
