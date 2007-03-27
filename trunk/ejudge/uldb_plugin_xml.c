@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
 #include "ejudge_cfg.h"
 #include "userlist.h"
 #include "random.h"
+#include "misctext.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/osdeps.h>
@@ -107,6 +108,7 @@ static int set_user_xml_func(void *, int, int, struct userlist_user *,
                              time_t, int *);
 static int copy_user_info_func(void *, int, int, int, time_t,
                                const struct contest_desc *);
+static int check_user_reg_data_func(void *, int, int);
 
 struct uldb_plugin_iface uldb_plugin_xml =
 {
@@ -175,6 +177,7 @@ struct uldb_plugin_iface uldb_plugin_xml =
   change_member_role_func,
   set_user_xml_func,
   copy_user_info_func,
+  check_user_reg_data_func,
 };
 
 struct uldb_xml_state
@@ -2540,6 +2543,48 @@ copy_user_info_func(void *data, int user_id,
   ui_to->last_change_time = cur_time;
   state->dirty = 1;
   state->flush_interval /= 2;
+  return 0;
+}
+
+static int
+check_user_reg_data_func(void *data, int user_id, int contest_id)
+{
+  struct uldb_xml_state *state = (struct uldb_xml_state*) data;
+  const struct userlist_user *u = 0;
+  const struct userlist_user_info *ui = 0;
+  const struct userlist_contest *c = 0;
+  struct userlist_contest *cm = 0;
+  const struct contest_desc *cnts = 0;
+  int memb_errs[CONTEST_LAST_MEMBER + 1];
+  int nerr;
+
+  if (contests_get(contest_id, &cnts) < 0 || !cnts)
+    return -1;
+
+  if (get_user_info_3_func(data, user_id, contest_id, &u, &ui, &c) < 0)
+    return -1;
+
+  if (!c || (c->status != USERLIST_REG_OK && c->status != USERLIST_REG_PENDING))
+    return -1;
+
+  nerr = userlist_count_info_errors(cnts, u, ui, memb_errs);
+  if (ui->name && *ui->name && check_str(ui->name, name_accept_chars))
+    nerr++;
+
+  if (!nerr && (c->flags & USERLIST_UC_INCOMPLETE)) {
+    cm = (struct userlist_contest*) c;
+    cm->flags &= ~USERLIST_UC_INCOMPLETE;
+    state->dirty = 1;
+    state->flush_interval /= 2;
+    return 1;
+  } else if (nerr > 0 && !(c->flags & USERLIST_UC_INCOMPLETE)
+             && !ui->cnts_read_only) {
+    cm = (struct userlist_contest*) c;
+    cm->flags |= USERLIST_UC_INCOMPLETE;
+    state->dirty = 1;
+    state->flush_interval /= 2;
+    return 1;
+  }
   return 0;
 }
 

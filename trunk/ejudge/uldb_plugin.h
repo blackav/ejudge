@@ -4,7 +4,7 @@
 #ifndef __ULDB_PLUGIN_H__
 #define __ULDB_PLUGIN_H__
 
-/* Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -168,6 +168,7 @@ struct uldb_plugin_iface
   // copy contest-specific user info to another contest
   int (*copy_user_info)(void *, int, int, int, time_t,
                         const struct contest_desc *);
+  int (*check_user_reg_data)(void *, int, int);
 };
 
 /* default plugin: compiled into userlist-server */
