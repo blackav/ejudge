@@ -623,6 +623,7 @@ int
 userlist_count_info_errors(
         const struct contest_desc *cnts,
         const struct userlist_user *u,
+        const struct userlist_user_info *ui,
         int role_err_count[]);
 
 #endif /* __USERLIST_H__ */

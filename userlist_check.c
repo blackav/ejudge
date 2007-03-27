@@ -147,6 +147,7 @@ int
 userlist_count_info_errors(
         const struct contest_desc *cnts,
         const struct userlist_user *u,
+        const struct userlist_user_info *ui,
         int role_err_count[])
 {
   int err_count = 0, ff;
@@ -157,12 +158,12 @@ userlist_count_info_errors(
   memset(role_err_count, 0, sizeof(role_err_count[0]) * (CONTEST_LAST_MEMBER + 1));
   for (ff = CONTEST_FIRST_FIELD; ff < CONTEST_LAST_FIELD; ff++) {
     if (!cnts->fields[ff]) continue;
-    if (userlist_is_empty_user_info_field(&u->i, userlist_contest_field_ids[ff])
+    if (userlist_is_empty_user_info_field(ui, userlist_contest_field_ids[ff])
         && cnts->fields[ff]->mandatory) {
       role_err_count[0]++;
       err_count++;
     } else if (contest_accept_chars[ff]) {
-      userlist_get_user_info_field_str(fbuf, sizeof(fbuf), &u->i,
+      userlist_get_user_info_field_str(fbuf, sizeof(fbuf), ui,
                                        userlist_contest_field_ids[ff], 0);
       if (check_str(fbuf, contest_accept_chars[ff]) < 0) {
         role_err_count[0]++;
@@ -173,11 +174,15 @@ userlist_count_info_errors(
   for (rr = CONTEST_M_CONTESTANT; rr < CONTEST_LAST_MEMBER; rr++) {
     if (!cnts->members[rr] || cnts->members[rr]->max_count <= 0) continue;
     mmbound = 0;
-    if (u->i.members[rr]) mmbound = u->i.members[rr]->total;
+    if (ui->members[rr]) mmbound = ui->members[rr]->total;
+    if (mmbound < cnts->members[rr]->min_count) {
+      role_err_count[rr + 1]++;
+      err_count++;
+    }
     if (cnts->members[rr]->max_count < mmbound)
       mmbound = cnts->members[rr]->max_count;
     for (mm = 0; mm < mmbound; mm++) {
-      if (!(m = u->i.members[rr]->members[mm])) {
+      if (!(m = ui->members[rr]->members[mm])) {
         role_err_count[rr + 1]++;
         err_count++;
         continue;

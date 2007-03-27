@@ -567,6 +567,7 @@ link_client_state(struct client_state *p)
 #define default_change_member_rol(a, b, c, d, e, f) uldb_default->iface->change_member_role(uldb_default->data, a, b, c, d, e, f)
 #define default_set_user_xml(a, b, c, d, e) uldb_default->iface->set_user_xml(uldb_default->data, a, b, c, d, e)
 #define default_copy_user_info(a, b, c, d, e) uldb_default->iface->copy_user_info(uldb_default->data, a, b, c, d, e)
+#define default_check_user_reg_data(a, b) uldb_default->iface->check_user_reg_data(uldb_default->data, a, b)
 
 static void
 update_all_user_contests(int user_id)
@@ -2091,8 +2092,8 @@ cmd_team_login(struct client_state *p, int pkt_len,
 
   snprintf(logbuf, sizeof(logbuf),
            "TEAM_LOGIN: %s, %d, %s, %d, %d",
-           xml_unparse_ip(data->origin_ip), data->ssl, login_ptr, data->contest_id,
-           data->locale_id);
+           xml_unparse_ip(data->origin_ip), data->ssl, login_ptr,
+           data->contest_id, data->locale_id);
 
   if (p->user_id >= 0) {
     err("%s -> already authentificated", logbuf);
@@ -2416,8 +2417,8 @@ cmd_priv_login(struct client_state *p, int pkt_len,
 
   snprintf(logbuf, sizeof(logbuf),
            "PRIV_LOGIN: %s, %d, %s, %d, %d",
-           xml_unparse_ip(data->origin_ip), data->ssl, login_ptr, data->contest_id,
-           data->locale_id);
+           xml_unparse_ip(data->origin_ip), data->ssl, login_ptr,
+           data->contest_id, data->locale_id);
 
   if (p->user_id >= 0) {
     err("%s -> already authentificated", logbuf);
@@ -3739,588 +3740,6 @@ cmd_get_user_contests(struct client_state *p,
   }
 }
 
-/////////////////////////////////////////
-#if 0
-static struct userlist_member *
-find_member_by_serial(struct userlist_user_info *ui, int serial,
-                      int copied_from,
-                      int *p_role, int *p_i)
-{
-  int role, i;
-  struct userlist_members *ms;
-  struct userlist_member *m;
-
-  for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
-    if (!ui->members[role]) continue;
-    ms = ui->members[role];
-    for (i = 0; i < ms->total; i++) {
-      if (!ms->members[i]) continue;
-      m = ms->members[i];
-      if (serial == m->serial
-          || (m->copied_from > 0 && serial == m->copied_from)
-          || (m->copied_from > 0 && copied_from > 0 && copied_from == m->copied_from)
-          || (copied_from > 0 && copied_from == m->serial)) {
-        if (p_role) *p_role = role;
-        if (p_i) *p_i = i;
-        return m;
-      }
-    }
-  }
-  return 0;
-}
-
-static struct userlist_member *
-unlink_member(struct userlist_user_info *ui, int role, int pers)
-{
-  struct userlist_members *ms;
-  struct userlist_member *m;
-  int i;
-
-  ASSERT(ui);
-  ASSERT(role >= 0 && role < CONTEST_LAST_MEMBER);
-  ms = ui->members[role];
-  ASSERT(ms);
-  ASSERT(pers >= 0 && pers < ms->total);
-  m = ms->members[pers];
-  ASSERT(m);
-
-  // shift members of reference array
-  for (i = pers + 1; i < ms->total; i++) {
-    ms->members[i - 1] = ms->members[i];
-  }
-  ms->total--;
-  ms->members[ms->total] = 0;
-
-  // destroy the references in member
-  xml_unlink_node(&m->b);
-  if (ms->total) return m;
-
-  // we now remove list structure
-  ui->members[role] = 0;
-  xml_unlink_node(&ms->b);
-  userlist_free(&ms->b);
-  return m;
-}
-
-static void
-link_member(struct userlist_user_info *ui,
-            struct xml_tree *link_node,
-            int role, struct userlist_member *m)
-{
-  struct userlist_members *ms;
-
-  ASSERT(ui);
-  ASSERT(role >= 0 && role < CONTEST_LAST_MEMBER);
-  ms = ui->members[role];
-  if (!ms) {
-    ms = (struct userlist_members *) userlist_node_alloc(role + USERLIST_T_CONTESTANTS);
-    ui->members[role] = ms;
-    xml_link_node_last(link_node, &ms->b);
-  }
-  if (ms->total == ms->allocd) {
-    if (!ms->allocd) ms->allocd = 4;
-    else ms->allocd *= 2;
-    ms->members = xrealloc(ms->members, ms->allocd * sizeof(ms->members[0]));
-  }
-  ms->members[ms->total++] = m;
-  xml_link_node_last(&ms->b, &m->b);
-}
-
-static int
-needs_update(unsigned char const *old, unsigned char const *new)
-{
-  if (!new) return 0;
-  if (!old) return 1;
-  if (strcmp(old, new) == 0) return 0;
-  return 1;
-}
-static int
-needs_name_update(unsigned char const *old, unsigned char const *new)
-{
-  if (!new || !*new) return 0;
-  if (!old || !*old) return 1;
-  if (strcmp(old, new) == 0) return 0;
-  return 1;
-}
-
-static void
-do_set_user_info(struct client_state *p, struct contest_desc *cnts,
-                 struct userlist_pk_set_user_info *data,
-                 const unsigned char *msg)
-{
-  struct userlist_user *new_u = 0, *old_u = 0;
-  int old_role, old_pers, new_role, new_pers;
-  struct userlist_members *old_ms = 0, *new_ms;
-  struct userlist_member *new_m, *old_m;
-  unsigned char const *role_str = 0;
-  int updated = 0;
-  int max_count = 0;
-  struct userlist_user_info *ui;
-  struct xml_tree *link_node;
-
-  if (!(new_u = userlist_parse_user_str(data->data))) {
-    err("%s -> XML parse error", msg);
-    send_reply(p, -ULS_ERR_XML_PARSE);
-    return;
-  }
-
-  if (data->user_id != new_u->id) {
-    err("%s -> XML user_id %d does not correspond to packet user_id %d",
-        msg, new_u->id, data->user_id);
-    send_reply(p, -ULS_ERR_PROTOCOL);
-    userlist_free(&new_u->b);
-    return;
-  }
-  if (new_u->id <= 0 || new_u->id >= userlist->user_map_size
-      || !userlist->user_map[new_u->id]) {
-    err("%s -> invalid user_id %d", msg, new_u->id);
-    send_reply(p, -ULS_ERR_BAD_UID);
-    userlist_free(&new_u->b);
-    return;
-  }
-  old_u = userlist->user_map[new_u->id];
-  if (old_u->read_only) {
-    err("%s -> user cannot be modified", msg);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    userlist_free(&new_u->b);
-    return;
-  }
-  if (strcmp(old_u->email, new_u->email) != 0) {
-    err("%s -> new email <%s> does not match old <%s>",
-        msg, new_u->email, old_u->email);
-    send_reply(p, -ULS_ERR_BAD_UID);
-    userlist_free(&new_u->b);
-    return;
-  }
-  if (strcmp(old_u->login, new_u->login) != 0) {
-    err("%s -> new login <%s> does not match old <%s>",
-        msg, new_u->login, old_u->email);
-    send_reply(p, -ULS_ERR_BAD_UID);
-    userlist_free(&new_u->b);
-    return;
-  }
-
-  // clone the user information structure, if necessary
-  if (data->contest_id > 0) {
-    userlist_clone_user_info(old_u, data->contest_id,
-                             &userlist->member_serial, time(0));
-    ui = &old_u->cntsinfo[data->contest_id]->i;
-    link_node = &old_u->b;
-  } else {
-    ui = &old_u->i;
-    link_node = &old_u->cntsinfo[data->contest_id]->b;
-  }
-
-  if (ui->cnts_read_only) {
-    err("%s -> user cannot be modified", msg);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    userlist_free(&new_u->b);
-    return;
-  }
-
-  // update the user's fields
-  if (needs_name_update(ui->name, new_u->i.name)) {
-    xfree(ui->name);
-    ui->name = xstrdup(new_u->i.name);
-    if (!daemon_mode) info("%d: name updated", p->id);
-    updated = 1;
-
-    // we have to notify all the contests, where the user participates
-    if (old_u->contests) {
-      struct userlist_contest *cc;
-
-      for (cc = (struct userlist_contest*) old_u->contests->first_down;
-           cc; cc = (struct userlist_contest*) cc->b.right) {
-        if (cc->status == USERLIST_REG_OK) {
-          //&& !(cc->flags & USERLIST_UC_BANNED)) { why???
-          update_userlist_table(cc->id);
-        }
-      }
-    }
-  }
-  if (needs_update(ui->homepage, new_u->i.homepage)) {
-    xfree(ui->homepage);
-    ui->homepage = xstrdup(new_u->i.homepage);
-    if (!daemon_mode) info("%d: homepage updated", p->id);
-    updated = 1;
-  }
-  if (needs_update(ui->phone, new_u->i.phone)) {
-    xfree(ui->phone);
-    ui->phone = xstrdup(new_u->i.phone);
-    if (!daemon_mode) info("%d: phone updated", p->id);
-    updated = 1;
-  }
-  if (needs_update(ui->inst, new_u->i.inst)) {
-    xfree(ui->inst);
-    ui->inst = xstrdup(new_u->i.inst);
-    if (!daemon_mode) info("%d: inst updated", p->id);
-    updated = 1;
-  }
-  if (needs_update(ui->inst_en, new_u->i.inst_en)) {
-    xfree(ui->inst_en);
-    ui->inst_en = xstrdup(new_u->i.inst_en);
-    if (!daemon_mode) info("%d: inst_en updated", p->id);
-    updated = 1;
-  }
-  if (needs_update(ui->instshort, new_u->i.instshort)) {
-    xfree(ui->instshort);
-    ui->instshort = xstrdup(new_u->i.instshort);
-    if (!daemon_mode) info("%d: instshort updated", p->id);
-    updated = 1;
-  }
-  if (needs_update(ui->instshort_en, new_u->i.instshort_en)) {
-    xfree(ui->instshort_en);
-    ui->instshort_en = xstrdup(new_u->i.instshort_en);
-    if (!daemon_mode) info("%d: instshort_en updated", p->id);
-    updated = 1;
-  }
-  if (needs_update(ui->fac, new_u->i.fac)) {
-    xfree(ui->fac);
-    ui->fac = xstrdup(new_u->i.fac);
-    if (!daemon_mode) info("%d: fac updated", p->id);
-    updated = 1;
-  }
-  if (needs_update(ui->fac_en, new_u->i.fac_en)) {
-    xfree(ui->fac_en);
-    ui->fac_en = xstrdup(new_u->i.fac_en);
-    if (!daemon_mode) info("%d: fac_en updated", p->id);
-    updated = 1;
-  }
-  if (needs_update(ui->facshort, new_u->i.facshort)) {
-    xfree(ui->facshort);
-    ui->facshort = xstrdup(new_u->i.facshort);
-    if (!daemon_mode) info("%d: facshort updated", p->id);
-    updated = 1;
-  }
-  if (needs_update(ui->facshort_en, new_u->i.facshort_en)) {
-    xfree(ui->facshort_en);
-    ui->facshort_en = xstrdup(new_u->i.facshort_en);
-    if (!daemon_mode) info("%d: facshort_en updated", p->id);
-    updated = 1;
-  }
-  if (needs_update(ui->city, new_u->i.city)) {
-    xfree(ui->city);
-    ui->city = xstrdup(new_u->i.city);
-    if (!daemon_mode) info("%d: city updated", p->id);
-    updated = 1;
-  }
-  if (needs_update(ui->city_en, new_u->i.city_en)) {
-    xfree(ui->city_en);
-    ui->city_en = xstrdup(new_u->i.city_en);
-    if (!daemon_mode) info("%d: city_en updated", p->id);
-    updated = 1;
-  }
-  if (needs_update(ui->country, new_u->i.country)) {
-    xfree(ui->country);
-    ui->country = xstrdup(new_u->i.country);
-    if (!daemon_mode) info("%d: country updated", p->id);
-    updated = 1;
-  }
-  if (needs_update(ui->country_en, new_u->i.country_en)) {
-    xfree(ui->country_en);
-    ui->country_en = xstrdup(new_u->i.country_en);
-    if (!daemon_mode) info("%d: country_en updated", p->id);
-    updated = 1;
-  }
-  if (needs_update(ui->region, new_u->i.region)) {
-    xfree(ui->region);
-    ui->region = xstrdup(new_u->i.region);
-    if (!daemon_mode) info("%d: region updated", p->id);
-    updated = 1;
-  }
-  /*
-  if (needs_update(old_u->location, new_u->location)) {
-    xfree(old_u->location);
-    old_u->location = xstrdup(new_u->location);
-    if (!daemon_mode) info("%d: location updated", p->id);
-    updated = 1;
-  }
-  if (needs_update(old_u->spelling, new_u->spelling)) {
-    xfree(old_u->spelling);
-    old_u->spelling = xstrdup(new_u->spelling);
-    if (!daemon_mode) info("%d: spelling updated", p->id);
-    updated = 1;
-  }
-  */
-  if (needs_update(ui->languages, new_u->i.languages)) {
-    xfree(ui->languages);
-    ui->languages = xstrdup(new_u->i.languages);
-    if (!daemon_mode) info("%d: languages updated", p->id);
-    updated = 1;
-  }
-
-  // move members
- restart_movement:
-  for (old_role = 0; old_role < CONTEST_LAST_MEMBER; old_role++) {
-    old_ms = ui->members[old_role];
-    role_str = userlist_tag_to_str(old_role + USERLIST_T_CONTESTANTS);
-    if (!old_ms) continue;
-    for (old_pers = 0; old_pers < old_ms->total; old_pers++) {
-      old_m = old_ms->members[old_pers];
-      if (!old_m) continue;
-      ASSERT(old_m->serial > 0);
-      new_m = find_member_by_serial(&new_u->i, old_m->serial, old_m->copied_from,
-                                    &new_role, &new_pers);
-      if (new_m && old_role != new_role) {
-        // move to another role
-        if (!daemon_mode) {
-          info("%d: %s.%d moved to %s",
-               p->id, role_str, old_pers,
-               userlist_tag_to_str(new_role + USERLIST_T_CONTESTANTS));
-        }
-        updated = 1;
-        new_m = unlink_member(ui, old_role, old_pers);
-        ASSERT(new_m == old_m);
-        link_member(ui, link_node, new_role, new_m);
-        goto restart_movement;
-      }
-    }
-  }
-
-  // update members
-  for (old_role = 0; old_role < CONTEST_LAST_MEMBER; old_role++) {
-    role_str = userlist_tag_to_str(old_role + USERLIST_T_CONTESTANTS);
-    old_ms = ui->members[old_role];
-    if (!old_ms) continue;
-    for (old_pers = 0; old_pers < old_ms->total; old_pers++) {
-      old_m = old_ms->members[old_pers];
-      if (!old_m) continue;
-      ASSERT(old_m->serial > 0);
-      new_m = find_member_by_serial(&new_u->i, old_m->serial, old_m->copied_from,
-                                    &new_role, &new_pers);
-      if (!new_m) continue;
-      ASSERT(new_role == old_role);
-      //ASSERT(new_m->serial == old_m->serial);
-
-      if (new_m->status && old_m->status != new_m->status) {
-        old_m->status = new_m->status;
-        if (!daemon_mode)
-          info("%d: updated %s.%d.status", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (new_m->grade && old_m->grade != new_m->grade) {
-        old_m->grade = new_m->grade;
-        if (!daemon_mode)
-          info("%d: updated %s.%d.grade", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->firstname, new_m->firstname)) {
-        xfree(old_m->firstname);
-        old_m->firstname = xstrdup(new_m->firstname);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.firstname", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->firstname_en, new_m->firstname_en)) {
-        xfree(old_m->firstname_en);
-        old_m->firstname_en = xstrdup(new_m->firstname_en);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.firstname_en", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->middlename, new_m->middlename)) {
-        xfree(old_m->middlename);
-        old_m->middlename = xstrdup(new_m->middlename);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.middlename", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->middlename_en, new_m->middlename_en)) {
-        xfree(old_m->middlename_en);
-        old_m->middlename_en = xstrdup(new_m->middlename_en);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.middlename_en", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->surname, new_m->surname)) {
-        xfree(old_m->surname);
-        old_m->surname = xstrdup(new_m->surname);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.surname", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->surname_en, new_m->surname_en)) {
-        xfree(old_m->surname_en);
-        old_m->surname_en = xstrdup(new_m->surname_en);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.surname_en", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->group, new_m->group)) {
-        xfree(old_m->group);
-        old_m->group = xstrdup(new_m->group);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.group", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->group_en, new_m->group_en)) {
-        xfree(old_m->group_en);
-        old_m->group_en = xstrdup(new_m->group_en);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.group_en", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->email, new_m->email)) {
-        xfree(old_m->email);
-        old_m->email = xstrdup(new_m->email);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.email", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->homepage, new_m->homepage)) {
-        xfree(old_m->homepage);
-        old_m->homepage = xstrdup(new_m->homepage);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.homepage", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->phone, new_m->phone)) {
-        xfree(old_m->phone);
-        old_m->phone = xstrdup(new_m->phone);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.phone", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->inst, new_m->inst)) {
-        xfree(old_m->inst);
-        old_m->inst = xstrdup(new_m->inst);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.inst", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->inst_en, new_m->inst_en)) {
-        xfree(old_m->inst_en);
-        old_m->inst_en = xstrdup(new_m->inst_en);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.inst_en", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->instshort, new_m->instshort)) {
-        xfree(old_m->instshort);
-        old_m->instshort = xstrdup(new_m->instshort);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.instshort", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->instshort_en, new_m->instshort_en)) {
-        xfree(old_m->instshort_en);
-        old_m->instshort_en = xstrdup(new_m->instshort_en);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.instshort_en", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->fac, new_m->fac)) {
-        xfree(old_m->fac);
-        old_m->fac = xstrdup(new_m->fac);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.fac", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->fac_en, new_m->fac_en)) {
-        xfree(old_m->fac_en);
-        old_m->fac_en = xstrdup(new_m->fac_en);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.fac_en", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->facshort, new_m->facshort)) {
-        xfree(old_m->facshort);
-        old_m->facshort = xstrdup(new_m->facshort);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.facshort", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->facshort_en, new_m->facshort_en)) {
-        xfree(old_m->facshort_en);
-        old_m->facshort_en = xstrdup(new_m->facshort_en);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.facshort_en", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->occupation, new_m->occupation)) {
-        xfree(old_m->occupation);
-        old_m->occupation = xstrdup(new_m->occupation);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.occupation", p->id, role_str, old_pers);
-        updated = 1;
-      }
-      if (needs_update(old_m->occupation_en, new_m->occupation_en)) {
-        xfree(old_m->occupation_en);
-        old_m->occupation_en = xstrdup(new_m->occupation_en);
-        if (!daemon_mode)
-          info("%d: updated %s.%d.occupation_en", p->id, role_str, old_pers);
-        updated = 1;
-      }
-
-      // unlink the new member out of the way
-      new_m = unlink_member(&new_u->i, new_role, new_pers);
-      userlist_free(&new_m->b);
-    }
-  }
-
-  // copy new members
- restart_inserting:
-  for (new_role = 0; new_role < CONTEST_LAST_MEMBER; new_role++) {
-    role_str = userlist_tag_to_str(new_role + USERLIST_T_CONTESTANTS);
-    new_ms = new_u->i.members[new_role];
-    if (!new_ms) continue;
-    for (new_pers = 0; new_pers < new_ms->total; new_pers++) {
-      new_m = new_ms->members[new_pers];
-      if (!new_m) continue;
-      if (new_m->serial > 0) {
-        err("%s -> new member in %s has serial number %d",
-            msg, role_str, new_m->serial);
-        old_m = unlink_member(ui, new_role, new_pers);
-        //ASSERT(old_m == new_m);
-        userlist_free(&new_m->b);
-        goto restart_inserting;
-      }
-      if (!cnts) {
-        max_count = 10;
-      } if (!cnts->members[new_role]) {
-        max_count = 0;
-      } else {
-        max_count = cnts->members[new_role]->max_count;
-      }
-      if (!max_count) {
-        err("%s -> members of role %s are not allowed in current contest",
-            msg, role_str);
-        old_m = unlink_member(ui, new_role, new_pers);
-        ASSERT(old_m == new_m);
-        userlist_free(&new_m->b);
-        goto restart_inserting;
-      }
-      if (ui->members[new_role]
-          && ui->members[new_role]->total >= max_count) {
-        err("%s -> too many members for role %s", msg, role_str);
-        old_m = unlink_member(ui, new_role, new_pers);
-        ASSERT(old_m == new_m);
-        userlist_free(&new_m->b);
-        goto restart_inserting;
-      }
-      if (!daemon_mode)
-        info("%s -> new member to role %s inserted", msg, role_str);
-      updated = 1;
-      old_m = unlink_member(&new_u->i, new_role, new_pers);
-      //ASSERT(old_m == new_m);
-      old_m->serial = userlist->member_serial++;
-      link_member(ui, link_node, new_role, new_m);
-      goto restart_inserting;
-    }
-  }
-
-  userlist_free(&new_u->b);
-  old_u->last_access_time = cur_time;
-  if (updated) {
-    old_u->last_change_time = cur_time;
-    dirty = 1;
-    flush_interval /= 2;
-  }
-  info("%s -> OK", msg);
-  send_reply(p, ULS_OK);
-}
-#endif
-
 static void
 cmd_set_user_info(struct client_state *p,
                   int pkt_len,
@@ -4401,6 +3820,7 @@ cmd_set_user_info(struct client_state *p,
     return;
   }
 
+  default_check_user_reg_data(data->user_id, data->contest_id);
   update_all_user_contests(data->user_id);
   if (cloned_flag) reply_code = ULS_CLONED;
   info("%s -> OK", logbuf);
@@ -4664,6 +4084,7 @@ cmd_register_contest(struct client_state *p, int pkt_len,
     return;
   }
 
+  default_check_user_reg_data(data->user_id, data->contest_id);
   if (r->status == USERLIST_REG_OK) {
     update_userlist_table(data->contest_id);
   }
@@ -4745,6 +4166,7 @@ cmd_register_contest_2(struct client_state *p, int pkt_len,
     return;
   }
 
+  default_check_user_reg_data(data->user_id, data->contest_id);
   if (r->status == USERLIST_REG_OK) {
     update_userlist_table(data->contest_id);
   }
@@ -6027,7 +5449,7 @@ cmd_generate_register_passwords_2(struct client_state *p, int pkt_len,
     return;
   }
   ASSERT(p->user_id > 0);
-  if (is_db_capable(p, OPCAP_GENERATE_TEAM_PASSWORDS, logbuf) < 0)
+  if (is_cnts_capable(p, cnts, OPCAP_GENERATE_TEAM_PASSWORDS, logbuf) < 0)
     return;
 
   for (iter = default_get_standings_list_iterator(data->contest_id);
@@ -6386,6 +5808,8 @@ cmd_edit_registration(struct client_state *p, int pkt_len,
     }
     default_set_reg_flags(data->user_id, data->contest_id,
                           data->flags_cmd, data->new_flags);
+    if (!(data->new_flags & USERLIST_UC_INCOMPLETE))
+      default_check_user_reg_data(data->user_id, data->contest_id);
   }
   update_userlist_table(data->contest_id);
   info("%s -> OK", logbuf);
@@ -6507,6 +5931,7 @@ cmd_priv_delete_member(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_CANNOT_DELETE);
     return;
   }
+  default_check_user_reg_data(data->user_id, data->contest_id);
   if (r == 1) {
     update_userlist_table(data->contest_id);
   }
@@ -6602,6 +6027,7 @@ cmd_delete_user_info(struct client_state *p, int pkt_len,
 
   if ((r=default_remove_user_contest_info(data->user_id, data->contest_id))== 1)
     update_userlist_table(data->contest_id);
+  default_check_user_reg_data(data->user_id, data->contest_id);
   send_reply(p, ULS_OK);
   info("%s -> OK, %d", logbuf, r);
 }
@@ -6696,6 +6122,7 @@ cmd_delete_field(struct client_state *p, int pkt_len,
   }
 
  done:
+  default_check_user_reg_data(data->user_id, data->contest_id);
   if (cloned_flag) reply_code = ULS_CLONED;
   send_reply(p, reply_code);
   info("%s -> OK, %d", logbuf, r);
@@ -6776,6 +6203,7 @@ cmd_edit_field(struct client_state *p, int pkt_len,
   }
 
  done:
+  default_check_user_reg_data(data->user_id, data->contest_id);
   if (cloned_flag) reply_code = ULS_CLONED;
   send_reply(p, reply_code);
   info("%s -> OK, %d", logbuf, r);
@@ -6895,6 +6323,7 @@ cmd_create_member(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_UNSPECIFIED_ERROR);
     return;
   }
+  default_check_user_reg_data(data->user_id, data->contest_id);
   if (cloned_flag) reply_code = ULS_CLONED;
   send_reply(p, reply_code);
   info("%s -> OK", logbuf);
@@ -7185,6 +6614,7 @@ cmd_copy_user_info(struct client_state *p, int pkt_len,
   default_copy_user_info(data->user_id, data->contest_id, data->serial,
                          cur_time, cnts2);
 
+  default_check_user_reg_data(data->user_id, data->contest_id);
   info("%s -> OK", logbuf);
   send_reply(p, reply_code);
   return;
@@ -7717,56 +7147,6 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
     [CONTEST_F_LANGUAGES] = "Languages",
   };
 
-  static const int cnts_field_ids[CONTEST_LAST_FIELD] =
-  {
-    [CONTEST_F_HOMEPAGE] = USERLIST_NC_HOMEPAGE,
-    [CONTEST_F_PHONE] = USERLIST_NC_PHONE,
-    [CONTEST_F_INST] = USERLIST_NC_INST,
-    [CONTEST_F_INST_EN] = USERLIST_NC_INST_EN,
-    [CONTEST_F_INSTSHORT] = USERLIST_NC_INSTSHORT,
-    [CONTEST_F_INSTSHORT_EN] = USERLIST_NC_INSTSHORT_EN,
-    [CONTEST_F_FAC] = USERLIST_NC_FAC,
-    [CONTEST_F_FAC_EN] = USERLIST_NC_FAC_EN,
-    [CONTEST_F_FACSHORT] = USERLIST_NC_FACSHORT,
-    [CONTEST_F_FACSHORT_EN] = USERLIST_NC_FACSHORT_EN,
-    [CONTEST_F_CITY] = USERLIST_NC_CITY,
-    [CONTEST_F_CITY_EN] = USERLIST_NC_CITY_EN,
-    [CONTEST_F_COUNTRY] = USERLIST_NC_COUNTRY,
-    [CONTEST_F_COUNTRY_EN] = USERLIST_NC_COUNTRY_EN,
-    [CONTEST_F_REGION] = USERLIST_NC_REGION,
-    [CONTEST_F_LANGUAGES] = USERLIST_NC_LANGUAGES,
-  };
-
-  static const int memb_field_ids[CONTEST_LAST_MEMBER_FIELD] =
-  {
-    [CONTEST_MF_FIRSTNAME] = USERLIST_NM_FIRSTNAME,
-    [CONTEST_MF_FIRSTNAME_EN] = USERLIST_NM_FIRSTNAME_EN,
-    [CONTEST_MF_MIDDLENAME] = USERLIST_NM_MIDDLENAME,
-    [CONTEST_MF_MIDDLENAME_EN] = USERLIST_NM_MIDDLENAME_EN,
-    [CONTEST_MF_SURNAME] = USERLIST_NM_SURNAME,
-    [CONTEST_MF_SURNAME_EN] = USERLIST_NM_SURNAME_EN,
-    [CONTEST_MF_STATUS] = USERLIST_NM_STATUS,
-    [CONTEST_MF_GRADE] = USERLIST_NM_GRADE,
-    [CONTEST_MF_GROUP] = USERLIST_NM_GROUP,
-    [CONTEST_MF_GROUP_EN] = USERLIST_NM_GROUP_EN,
-    [CONTEST_MF_EMAIL] = USERLIST_NM_EMAIL,
-    [CONTEST_MF_HOMEPAGE] = USERLIST_NM_HOMEPAGE,
-    [CONTEST_MF_PHONE] = USERLIST_NM_PHONE,
-    [CONTEST_MF_INST] = USERLIST_NM_INST,
-    [CONTEST_MF_INST_EN] = USERLIST_NM_INST_EN,
-    [CONTEST_MF_INSTSHORT] = USERLIST_NM_INSTSHORT,
-    [CONTEST_MF_INSTSHORT_EN] = USERLIST_NM_INSTSHORT_EN,
-    [CONTEST_MF_FAC] = USERLIST_NM_FAC,
-    [CONTEST_MF_FAC_EN] = USERLIST_NM_FAC_EN,
-    [CONTEST_MF_FACSHORT] = USERLIST_NM_FACSHORT,
-    [CONTEST_MF_FACSHORT_EN] = USERLIST_NM_FACSHORT_EN,
-    [CONTEST_MF_OCCUPATION] = USERLIST_NM_OCCUPATION,
-    [CONTEST_MF_OCCUPATION_EN] = USERLIST_NM_OCCUPATION_EN,
-    [CONTEST_MF_BIRTH_DATE] = USERLIST_NM_BIRTH_DATE,
-    [CONTEST_MF_ENTRY_DATE] = USERLIST_NM_ENTRY_DATE,
-    [CONTEST_MF_GRADUATION_DATE] = USERLIST_NM_GRADUATION_DATE,
-  };
-
   // check, that we need iterate over members
   for (i = 0; i < CONTEST_LAST_MEMBER; i++)
     if (cnts->members[i] && cnts->members[i]->max_count > 0)
@@ -7813,9 +7193,9 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
     fprintf(gen_f, ";%s", s);
 
     for (i = 0; i < CONTEST_LAST_FIELD; i++) {
-      if (!cnts->fields[i] || !cnts_field_ids[i]) continue;
+      if (!cnts->fields[i] || !userlist_contest_field_ids[i]) continue;
       userlist_get_user_info_field_str(vbuf, sizeof(vbuf),
-                                       ui, cnts_field_ids[i], 0);
+                                       ui, userlist_contest_field_ids[i], 0);
       fprintf(gen_f, ";%s", vbuf);
     }
     fclose(gen_f); gen_f = 0;
@@ -7832,9 +7212,9 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
         fprintf(f, ";%d;%s", m->serial, member_string[role]);
 
         for (i = 0; i < CONTEST_LAST_MEMBER_FIELD; i++) {
-          if (!cm->fields[i] || !memb_field_ids[i]) continue;
+          if (!cm->fields[i] || !userlist_member_field_ids[i]) continue;
           userlist_get_member_field_str(vbuf, sizeof(vbuf), m,
-                                        memb_field_ids[i], 0);
+                                        userlist_member_field_ids[i], 0);
           fprintf(f, ";%s", vbuf);
         }
         fprintf(f, "\n");
