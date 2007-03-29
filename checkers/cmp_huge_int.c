@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -53,6 +53,7 @@ normalize_number(char *buf)
     return;
   }
   while (*pin) *pout++ = *pin++;
+  *pout = 0;
 }
 
 int
