@@ -64,15 +64,15 @@ checker_main(int argc, char *argv[])
   size_t outdsz = 0, corrdsz = 0;
   char *outval, *corrval;
 
-  outval = checker_read_buf_2(1, "out", 1, outsbuf, BUFSIZE, &outdbuf, &outdsz);
-  checker_out_eof();
-  if (!is_number(outval)) fatal_PE("out: not a number");
-  normalize_number(outval);
-
   corrval = checker_read_buf_2(2,"corr",1,corrsbuf,BUFSIZE,&corrdbuf,&corrdsz);
   checker_corr_eof();
   if (!is_number(corrval)) fatal_CF("corr: not a number");
   normalize_number(corrval);
+
+  outval = checker_read_buf_2(1, "out", 1, outsbuf, BUFSIZE, &outdbuf, &outdsz);
+  checker_out_eof();
+  if (!is_number(outval)) fatal_PE("out: not a number");
+  normalize_number(outval);
 
   if (strcmp(outval, corrval) != 0)
     fatal_WA("wrong answer: out: %s, corr: %s", outval, corrval);
