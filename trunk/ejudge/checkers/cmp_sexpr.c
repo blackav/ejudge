@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,10 +22,10 @@ int checker_main(int argc, char **argv)
 {
   checker_sexpr_t user_ans = 0, corr_ans = 0;
 
-  user_ans = checker_read_sexpr(1);
   corr_ans = checker_read_sexpr(2);
-  checker_out_eof();
   checker_corr_eof();
+  user_ans = checker_read_sexpr(1);
+  checker_out_eof();
   if (!checker_eq_sexpr(user_ans, corr_ans))
     fatal_WA("Answers do not match");
   checker_OK();

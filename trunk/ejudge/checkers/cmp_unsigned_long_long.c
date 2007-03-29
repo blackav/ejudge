@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,10 +24,10 @@ int checker_main(int argc, char **argv)
 {
   unsigned long long out_ans, corr_ans;
 
-  checker_read_out_unsigned_long_long("out_ans", 1, &out_ans);
   checker_read_corr_unsigned_long_long("corr_ans", 1, &corr_ans);
-  checker_out_eof();
   checker_corr_eof();
+  checker_read_out_unsigned_long_long("out_ans", 1, &out_ans);
+  checker_out_eof();
   if (out_ans != corr_ans)
     fatal_WA("Answers do not match: out = %llu, corr = %llu",
              out_ans, corr_ans);

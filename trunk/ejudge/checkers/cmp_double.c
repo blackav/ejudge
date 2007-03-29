@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005, 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,10 +36,12 @@ int checker_main(int argc, char **argv)
     fatal_CF("EPS >= 1");
   abs_flag = getenv("ABSOLUTE");
 
-  checker_read_out_double("out_ans", 1, &out_ans);
   checker_read_corr_double("corr_ans", 1, &corr_ans);
-  checker_out_eof();
   checker_corr_eof();
+
+  checker_read_out_double("out_ans", 1, &out_ans);
+  checker_out_eof();
+
   if (!(abs_flag?checker_eq_double_abs:checker_eq_double)(out_ans,corr_ans,eps))
     fatal_WA("Answers do not match: out = %.10g, corr = %.10g",
              out_ans, corr_ans);
