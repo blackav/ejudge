@@ -1106,6 +1106,8 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     unparse_bool(f, "team_enable_ce_view", prob->team_enable_ce_view);
   if (prob->team_show_judge_report >= 0)
     unparse_bool(f, "team_show_judge_report", prob->team_show_judge_report);
+  if (prob->ignore_compile_errors >= 0)
+    unparse_bool(f, "ignore_compile_errors", prob->ignore_compile_errors);
   if (prob->disable_auto_testing >= 0)
     unparse_bool(f, "disable_auto_testing", prob->disable_auto_testing);
   if (prob->disable_user_submit >= 0)

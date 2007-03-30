@@ -410,6 +410,12 @@ ns_url(unsigned char *buf, size_t size,
        int action, const char *format, ...)
   __attribute__((format(printf, 5, 6)));
 unsigned char *
+ns_url_unescaped(unsigned char *buf, size_t size,
+                 const struct http_request_info *phr,
+                 int action, const char *format,
+                 ...)
+  __attribute__((format(printf, 5, 6)));
+unsigned char *
 ns_aref(unsigned char *buf, size_t size,
         const struct http_request_info *phr,
         int action, const char *format, ...)
@@ -420,6 +426,12 @@ ns_aref_2(unsigned char *buf, size_t size,
           const unsigned char *style,
           int action, const char *format, ...)
   __attribute__((format(printf, 6, 7)));
+
+void
+ns_refresh_page(FILE *fout, struct http_request_info *phr, int new_action,
+                const unsigned char *extra);
+void
+ns_refresh_page_2(FILE *fout, const unsigned char *url);
 
 void
 ns_write_priv_all_runs(FILE *f,

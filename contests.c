@@ -670,6 +670,32 @@ static const size_t contest_bool_attr_offsets[CONTEST_LAST_ATTR] =
   [CONTEST_A_PERSONAL] = CONTEST_DESC_OFFSET(personal),
 };
 
+static void
+fix_personal_contest(struct contest_desc *cnts)
+{
+  struct xml_tree *p;
+  struct contest_member *m;
+
+  if (!cnts->personal) return;
+
+  if (!cnts->members[CONTEST_M_CONTESTANT]) {
+    p = contests_new_node(CONTEST_CONTESTANTS);
+    xml_link_node_last(&cnts->b, p);
+    cnts->members[CONTEST_M_CONTESTANT] = (struct contest_member*) p;
+  }
+  m = cnts->members[CONTEST_M_CONTESTANT];
+  m->min_count = 1;
+  m->max_count = 1;
+  m->init_count = 1;
+
+  if (cnts->members[CONTEST_M_RESERVE]) {
+    p = (struct xml_tree*) cnts->members[CONTEST_M_RESERVE];
+    xml_unlink_node(p);
+    xml_tree_free(p, &contests_parse_spec);
+    cnts->members[CONTEST_M_RESERVE] = 0;
+  }
+}
+
 static int
 parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
 {
@@ -867,6 +893,9 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
     if (!cnts->users_verb_style)
       cnts->users_verb_style = xstrdup("");
   }
+
+  /* personal contests do not have "reserve" and have only one participant */
+  fix_personal_contest(cnts);
 
   cnts->default_locale_val = l10n_parse_locale(cnts->default_locale);
 

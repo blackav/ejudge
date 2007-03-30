@@ -297,6 +297,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(team_enable_rep_view, "d"),
   PROBLEM_PARAM(team_enable_ce_view, "d"),
   PROBLEM_PARAM(team_show_judge_report, "d"),
+  PROBLEM_PARAM(ignore_compile_errors, "d"),
   PROBLEM_PARAM(full_score, "d"),
   PROBLEM_PARAM(test_score, "d"),
   PROBLEM_PARAM(run_penalty, "d"),
@@ -612,6 +613,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->team_enable_rep_view = -1;
   p->team_enable_ce_view = -1;
   p->team_show_judge_report = -1;
+  p->ignore_compile_errors = -1;
   p->use_corr = -1;
   p->use_info = -1;
   p->use_tgz = -1;
@@ -2327,6 +2329,8 @@ set_defaults(serve_state_t state, int mode)
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEAM_ENABLE_CE_VIEW,
                            state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEAM_SHOW_JUDGE_REPORT,
+                           state->probs[i], aprob, state->global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_IGNORE_COMPILE_ERRORS,
                            state->probs[i], aprob, state->global);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_TESTS_TO_ACCEPT,
@@ -4470,6 +4474,15 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->team_show_judge_report = global->team_show_judge_report;
     if (out->team_show_judge_report == -1)
       out->team_show_judge_report = 0;
+    break;
+
+  case PREPARE_FIELD_PROB_IGNORE_COMPILE_ERRORS:
+    if (out->ignore_compile_errors == -1 && abstr)
+      out->ignore_compile_errors = abstr->ignore_compile_errors;
+    if (out->ignore_compile_errors == -1 && global)
+      out->ignore_compile_errors = global->ignore_compile_errors;
+    if (out->ignore_compile_errors == -1)
+      out->ignore_compile_errors = 0;
     break;
 
   case PREPARE_FIELD_PROB_DISABLE_USER_SUBMIT:

@@ -794,7 +794,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
       attempts = 0; disq_attempts = 0;
       if (state->global->score_system_val == SCORE_KIROV && !pe->is_hidden) {
         run_get_attempts(state->runlog_state, rid, &attempts, &disq_attempts,
-                         state->global->ignore_compile_errors);
+                         state->probs[pe->prob_id]->ignore_compile_errors);
       }
       run_time = pe->time;
       imported_str = "";

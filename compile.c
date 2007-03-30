@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,8 @@
  * This program compiles incoming source files and puts the resulting
  * executables into the spool directory.
  */
+
+#include "config.h"
 
 #include "prepare.h"
 #include "pathutl.h"
@@ -48,6 +50,10 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+enum { MAX_LOG_SIZE = 1024 * 1024 };
 
 struct serve_state serve_state;
 static int initialize_mode = 0;
@@ -79,6 +85,9 @@ do_loop(void)
   struct compile_reply_packet rpl;
   void *rpl_pkt = 0;
   size_t rpl_size = 0;
+  const unsigned char *tail_message = 0;
+  struct stat stb;
+  FILE *log_f = 0;
 
   if (cr_serialize_init(&serve_state) < 0) return -1;
   interrupt_init();
@@ -202,6 +211,8 @@ do_loop(void)
       goto report_internal_error;
     }
 
+    tail_message = 0;
+
     if (req->output_only) {
       // copy src_path -> exe_path
       generic_copy_file(0, NULL, src_path, NULL, 0, NULL, exe_path, NULL);
@@ -223,8 +234,12 @@ do_loop(void)
       task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
       task_SetRedir(tsk, 2, TSR_DUP, 1);
       if (serve_state.langs[req->lang_id]->compile_real_time_limit > 0) {
-        task_SetMaxRealTime(tsk, serve_state.langs[req->lang_id]->compile_real_time_limit);
+        //task_SetMaxRealTime(tsk, serve_state.langs[req->lang_id]->compile_real_time_limit);
+        task_SetMaxTime(tsk, serve_state.langs[req->lang_id]->compile_real_time_limit);
       }
+#if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
+      task_EnableAllSignals(tsk);
+#endif
       if (cr_serialize_lock(&serve_state) < 0) {
         // FIXME: propose reasonable recovery?
         return -1;
@@ -236,13 +251,23 @@ do_loop(void)
         return -1;
       }
 
+      /*
       if (task_IsTimeout(tsk)) {
         err("Compilation process timed out");
         snprintf(msgbuf, sizeof(msgbuf), "compilation process timed out\n");
         goto report_internal_error;
       }
+      */
 
-      if (task_IsAbnormal(tsk)) {
+      if (task_IsTimeout(tsk)) {
+        /* FIXME: this does not work in case of gcc/g++, since the
+         * time is consumed by the children of gcc/g++ compiler driver...
+         */
+        err("Compilation process timed out");
+        tail_message = "\n\nCompilation process timed out";
+        ce_flag = 1;
+        rpl.status = RUN_COMPILE_ERR;
+      } else if (task_IsAbnormal(tsk)) {
         info("Compilation failed");
         ce_flag = 1;
         rpl.status = RUN_COMPILE_ERR;
@@ -259,6 +284,19 @@ do_loop(void)
 
     while (1) {
       if (ce_flag) {
+        // truncate log file at size 1MB
+        if (stat(log_path, &stb) >= 0 && stb.st_size > MAX_LOG_SIZE) {
+          truncate(log_path, MAX_LOG_SIZE);
+          if ((log_f = fopen(log_path, "a"))) {
+            fprintf(log_f, "\n\nCompilation log is truncated by ejudge!\n");
+            fclose(log_f); log_f = 0;
+          }
+        }
+        // append tail_message
+        if (tail_message && (log_f = fopen(log_path, "a"))) {
+          fprintf(log_f, "%s\n", tail_message);
+          fclose(log_f); log_f = 0;
+        }
         r = generic_copy_file(0, 0, log_path, "", 0, 0, log_out, "");
       } else {
         r = generic_copy_file(0, 0, exe_path, "", 0, 0, exe_out, "");

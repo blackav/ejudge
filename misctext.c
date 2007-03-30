@@ -599,6 +599,34 @@ check_str(const unsigned char *str, const unsigned char *map)
   return 0;
 }
 
+int
+check_str_2(const unsigned char *str, const unsigned char *map,
+            unsigned char *invchars)
+{
+  unsigned char invset[256];
+  unsigned char *p = invchars;
+  int retval = 0, i;
+
+  if (p) *p = 0;
+  if (!str) return 0;
+  memset(invset, 0, sizeof(invset));
+
+  for (; *str; str++)
+    if (!map[*str]) {
+      invset[*str] = 1;
+      retval = -1;
+    }
+
+  if (retval >= 0 || !p) return retval;
+
+  for (i = 0; i < 256; i++)
+    if (invset[i])
+      *p++ = i;
+  *p = 0;
+
+  return retval;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
