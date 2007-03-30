@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-03-26 12:38+0400\n"
-"PO-Revision-Date: 2007-03-26 12:39+0400\n"
+"POT-Creation-Date: 2007-03-28 15:38+0400\n"
+"PO-Revision-Date: 2007-03-28 18:52+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1261,6 +1261,10 @@ msgid ""
 msgstr "Поле \"%s\" содержало недопустимые символы, заменённые на '%c'."
 
 #, c-format
+msgid "Field \"%s\" contains non-printable characters.\n"
+msgstr "Поле \"%s\" содержит неотображаемые символы.\n"
+
+#, c-format
 msgid "Field \"%s\" was too long."
 msgstr "Поле \"%s\" имело слишком большую длину."
 
@@ -1273,6 +1277,9 @@ msgstr "Поле \"%s.%d.%s\" содержало недопустимые символы, заменённые на '%c'."
 #, c-format
 msgid "Field \"%s.%d.%s\" was too long."
 msgstr "Поле \"%s.%d.%s\" имело слишком большую длину."
+
+msgid "Field \"Name\" contains non-printable characters"
+msgstr "Поле \"Имя\" содержит неотображаемые символы"
 
 msgid ""
 "Field \"User email\" contained invalid characters, which were replaced with "
@@ -2316,6 +2323,9 @@ msgstr "Операция успешно выполнена"
 
 msgid "Operation completed with errors"
 msgstr "Операция завершилась с ошибками"
+
+msgid "Operation errors"
+msgstr "Ошибки при выполнении операции"
 
 msgid "Operation failed"
 msgstr "Операция не выполнена"
