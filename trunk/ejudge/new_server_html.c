@@ -783,9 +783,9 @@ ns_submit_button(unsigned char *buf, size_t size,
   return buf;
 }
 
-static void
-html_refresh_page(FILE *fout, struct http_request_info *phr, int new_action,
-                  const unsigned char *extra)
+void
+ns_refresh_page(FILE *fout, struct http_request_info *phr, int new_action,
+                const unsigned char *extra)
 {
   unsigned char url[1024];
 
@@ -804,8 +804,8 @@ html_refresh_page(FILE *fout, struct http_request_info *phr, int new_action,
   fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
 }
 
-static void
-html_refresh_page_2(FILE *fout, const unsigned char *url)
+void
+ns_refresh_page_2(FILE *fout, const unsigned char *url)
 {
   /*
   fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>%s</title></head><body><h1>%s</h1><p>If autorefresh does not work, follow <a href=\"%s\">this</a> link.</p></body></html>\n", EJUDGE_CHARSET, EJUDGE_CHARSET, 1, url, "Operation successful", "Operation successful", url);
@@ -1009,7 +1009,7 @@ privileged_page_cookie_login(FILE *fout,
   }
 
   ns_get_session(phr->session_id, 0);
-  html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+  ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
 }
 
 static void
@@ -1100,7 +1100,7 @@ privileged_page_login(FILE *fout,
   }
 
   ns_get_session(phr->session_id, 0);
-  html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+  ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
 }
 
 static int
@@ -1947,7 +1947,7 @@ priv_change_password(FILE *fout,
              phr->self_url, phr->contest_id, phr->role,
              login_buf, phr->locale_id,
              NEW_SRV_ACTION_LOGIN_PAGE);
-    html_refresh_page_2(fout, url);
+    ns_refresh_page_2(fout, url);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE);
@@ -5067,7 +5067,7 @@ priv_generic_operation(FILE *fout,
       else snprintf(next_extra, sizeof(next_extra), "run_id=%d",
                     phr->next_run_id);
     }
-    html_refresh_page(fout, phr, r, next_extra);
+    ns_refresh_page(fout, phr, r, next_extra);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt, rr);
   }
@@ -5123,7 +5123,7 @@ priv_logout(FILE *fout,
   snprintf(urlbuf, sizeof(urlbuf),
            "%s?contest_id=%d&locale_id=%d&role=%d",
            phr->self_url, phr->contest_id, phr->locale_id, phr->role);
-  html_refresh_page_2(fout, urlbuf);
+  ns_refresh_page_2(fout, urlbuf);
 }
 
 
@@ -6690,7 +6690,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr,
   }
 
   ns_get_session(phr->session_id, 0);
-  html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+  ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
 }
 
 static void
@@ -6728,7 +6728,7 @@ unpriv_change_language(FILE *fout,
   //done:
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
-    html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE);
@@ -6797,7 +6797,7 @@ unpriv_change_password(FILE *fout,
              "%s?contest_id=%d&login=%s&locale_id=%d&action=%d",
              phr->self_url, phr->contest_id, login_buf, phr->locale_id,
              NEW_SRV_ACTION_LOGIN_PAGE);
-    html_refresh_page_2(fout, url);
+    ns_refresh_page_2(fout, url);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE);
@@ -6862,7 +6862,7 @@ unpriv_print_run(FILE *fout,
  done:
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
-    html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE);
@@ -7314,9 +7314,9 @@ unpriv_submit_run(FILE *fout,
     }
     if (i > 0) {
       snprintf(bb, sizeof(bb), "prob_id=%d", i);
-      html_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT, bb);
+      ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT, bb);
     }  else {
-      html_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_SUBMISSIONS, 0);
+      ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_SUBMISSIONS, 0);
     }
   } else {
     unpriv_load_html_style(phr, cnts, 0, 0);
@@ -7462,7 +7462,7 @@ unpriv_submit_clar(FILE *fout,
  done:;
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
-    html_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_CLARS, 0);
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_CLARS, 0);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_VIEW_CLAR_SUBMIT);
@@ -7605,7 +7605,7 @@ unpriv_submit_appeal(FILE *fout,
  done:;
   fclose(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
-    html_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_CLARS, 0);
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_CLARS, 0);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_VIEW_CLAR_SUBMIT);
@@ -7717,11 +7717,11 @@ unpriv_command(FILE *fout,
     }
     if (i > 0) {
       snprintf(bb, sizeof(bb), "prob_id=%d", i);
-      html_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT, bb);
+      ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT, bb);
     } else if (phr->action == NEW_SRV_ACTION_VIRTUAL_STOP) {
-      html_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY, 0);
+      ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY, 0);
     } else {
-      html_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+      ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
     }
   } else {
     unpriv_load_html_style(phr, cnts, 0, 0);
@@ -8042,10 +8042,18 @@ unpriv_view_report(FILE *fout,
   switch (content_type) {
   case CONTENT_TYPE_TEXT:
     html_len = html_armored_memlen(rep_text, rep_size);
-    html_report = alloca(html_len + 16);
-    html_armor_text(rep_text, rep_size, html_report);
-    html_report[html_len] = 0;
-    fprintf(fout, "<pre>%s</pre>", html_report);
+    if (html_len > 2 * 1024 * 1024) {
+      html_report = xmalloc(html_len + 16);
+      html_armor_text(rep_text, rep_size, html_report);
+      html_report[html_len] = 0;
+      fprintf(fout, "<pre>%s</pre>", html_report);
+      xfree(html_report);
+    } else {
+      html_report = alloca(html_len + 16);
+      html_armor_text(rep_text, rep_size, html_report);
+      html_report[html_len] = 0;
+      fprintf(fout, "<pre>%s</pre>", html_report);
+    }
     break;
   case CONTENT_TYPE_HTML:
     fprintf(fout, "%s", rep_start);
@@ -9800,7 +9808,7 @@ unpriv_logout(FILE *fout,
   snprintf(urlbuf, sizeof(urlbuf),
            "%s?contest_id=%d&locale_id=%d",
            phr->self_url, phr->contest_id, phr->locale_id);
-  html_refresh_page_2(fout, urlbuf);
+  ns_refresh_page_2(fout, urlbuf);
 }
 
 static void

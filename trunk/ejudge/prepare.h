@@ -406,6 +406,7 @@ struct section_problem_data
   int    team_enable_rep_view;  /* are teams allowed to view reports? */
   int    team_enable_ce_view;
   int    team_show_judge_report;
+  int    ignore_compile_errors;
   int    full_score;            /* score for complete solution */
   int    variable_full_score;   /* is the full score is variable */
   int    test_score;            /* score for one test */
@@ -662,6 +663,7 @@ enum
   PREPARE_FIELD_PROB_TEAM_ENABLE_REP_VIEW,
   PREPARE_FIELD_PROB_TEAM_ENABLE_CE_VIEW,
   PREPARE_FIELD_PROB_TEAM_SHOW_JUDGE_REPORT,
+  PREPARE_FIELD_PROB_IGNORE_COMPILE_ERRORS,
   PREPARE_FIELD_PROB_DISABLE_USER_SUBMIT,
   PREPARE_FIELD_PROB_DISABLE_TAB,
   PREPARE_FIELD_PROB_RESTRICTED_STATEMENT,

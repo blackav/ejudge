@@ -428,7 +428,7 @@ ns_write_priv_all_runs(FILE *f,
       attempts = 0; disq_attempts = 0;
       if (global->score_system_val == SCORE_KIROV && !pe->is_hidden) {
         run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts,
-                         global->ignore_compile_errors);
+                         cs->probs[pe->prob_id]->ignore_compile_errors);
       }
       run_time = pe->time;
       imported_str = "";
@@ -1581,10 +1581,18 @@ ns_write_priv_report(const serve_state_t cs,
   switch (content_type) {
   case CONTENT_TYPE_TEXT:
     html_len = html_armored_memlen(start_ptr, rep_len);
-    html_text = alloca(html_len + 16);
-    html_armor_text(rep_text, rep_len, html_text);
-    html_text[html_len] = 0;
-    fprintf(f, "<pre>%s</pre>", html_text);
+    if (html_len > 2 * 1024 * 1024) {
+      html_text = xmalloc(html_len + 16);
+      html_armor_text(rep_text, rep_len, html_text);
+      html_text[html_len] = 0;
+      fprintf(f, "<pre>%s</pre>", html_text);
+      xfree(html_text);
+    } else {
+      html_text = alloca(html_len + 16);
+      html_armor_text(rep_text, rep_len, html_text);
+      html_text[html_len] = 0;
+      fprintf(f, "<pre>%s</pre>", html_text);
+    }
     break;
   case CONTENT_TYPE_HTML:
     fprintf(f, "%s", start_ptr);
@@ -3107,13 +3115,13 @@ ns_write_user_run_status(
       re.status = RUN_ACCEPTED;
   }
 
+  if (re.prob_id > 0 && re.prob_id <= cs->max_prob)
+    cur_prob = cs->probs[re.prob_id];
+
   attempts = 0; disq_attempts = 0;
   if (cs->global->score_system_val == SCORE_KIROV && !re.is_hidden)
     run_get_attempts(cs->runlog_state, run_id, &attempts, &disq_attempts,
-                     cs->global->ignore_compile_errors);
-
-  if (re.prob_id > 0 && re.prob_id <= cs->max_prob)
-    cur_prob = cs->probs[re.prob_id];
+                     cur_prob->ignore_compile_errors);
 
   prev_successes = RUN_TOO_MANY;
   if (cs->global->score_system_val == SCORE_KIROV
@@ -3952,7 +3960,7 @@ ns_get_user_problems_summary(
         break;
 
       case RUN_COMPILE_ERR:
-        if (!global->ignore_compile_errors) {
+        if (!cur_prob->ignore_compile_errors) {
           attempts[re.prob_id]++;
           cur_score = 0;
           if (cur_score >= best_score[re.prob_id]) {
@@ -4018,7 +4026,7 @@ ns_get_user_problems_summary(
         break;
 
       case RUN_COMPILE_ERR:
-        if (!global->ignore_compile_errors) {
+        if (!cur_prob->ignore_compile_errors) {
           attempts[re.prob_id]++;
           cur_score = 0;
           if (cur_score >= best_score[re.prob_id]
@@ -4070,7 +4078,7 @@ ns_get_user_problems_summary(
         break;
 
       case RUN_COMPILE_ERR:
-        if (!global->ignore_compile_errors) {
+        if (!cur_prob->ignore_compile_errors) {
           attempts[re.prob_id]++;
           best_run[re.prob_id] = run_id;
         }

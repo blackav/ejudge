@@ -32,6 +32,7 @@
 #include "l10n.h"
 
 #include <reuse/xalloc.h>
+#include <reuse/logger.h>
 
 #include <stdio.h>
 #include <errno.h>
@@ -105,12 +106,6 @@ cgi_param_int(struct http_request_info *phr, const unsigned char *name,
   if (errno || *eptr) return -1;
   if (p_val) *p_val = x;
   return 0;
-}
-
-static void
-html_refresh_page_2(FILE *fout, const unsigned char *url)
-{
-  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
 }
 
 static const unsigned char * const form_row_attrs[]=
@@ -702,7 +697,7 @@ create_account(
     snprintf(urlbuf, sizeof(urlbuf), "%s?contest_id=%d&locale_id=%d&action=%d",
              phr->self_url, phr->contest_id, phr->locale_id,
              NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
-    html_refresh_page_2(fout, urlbuf);
+    ns_refresh_page_2(fout, urlbuf);
     return;
   }
 
@@ -788,7 +783,7 @@ cmd_login(
     snprintf(urlbuf, sizeof(urlbuf), "%s?contest_id=%d&locale_id=%d&action=%d",
              phr->self_url, phr->contest_id, phr->locale_id,
              NEW_SRV_ACTION_REG_LOGIN_PAGE);
-    html_refresh_page_2(fout, urlbuf);
+    ns_refresh_page_2(fout, urlbuf);
     return;
   }
 
@@ -834,12 +829,12 @@ cmd_login(
              phr->session_id);
 
     ns_get_session(phr->session_id, 0);
-    html_refresh_page_2(fout, urlbuf);
+    ns_refresh_page_2(fout, urlbuf);
   }
 
   snprintf(urlbuf, sizeof(urlbuf), "%s?SID=%llx", phr->self_url,
            phr->session_id);
-  html_refresh_page_2(fout, urlbuf);
+  ns_refresh_page_2(fout, urlbuf);
 }
 
 typedef void (*reg_action_handler_func_t)(FILE *fout,
@@ -989,34 +984,43 @@ menu_item(FILE *fout, struct http_request_info *phr,
 static void
 info_table_row(FILE *fout, const unsigned char *s1, const unsigned char *s2,
                int is_empty, int is_mandatory, const unsigned char *valid_chars,
-               struct html_armor_buffer *pb)
+               struct html_armor_buffer *pb, int is_href)
 {
-  const unsigned char *red_beg = "", *red_end = "";
+  const unsigned char *red_beg = "", *red_end = "", *s;
+  unsigned char invstr[512];
   int strres = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
-  if (is_empty && is_mandatory) {
+  if ((is_empty || !s2 || !*s2) && is_mandatory) {
     red_beg = "<font color=\"red\">";
     red_end = "</font>";
-  } else if (s1 && valid_chars && (strres = check_str(s1, valid_chars)) < 0) {
+  } else if (s2 && valid_chars
+             && (strres = check_str_2(s2, valid_chars, invstr)) < 0) {
     red_beg = "<font color=\"red\">";
     red_end = "</font>";
   }
 
   fprintf(fout, "<tr><td class=\"borderless\">%s%s%s:</td><td class=\"borderless\">", red_beg, s1, red_end);
-  if (is_empty || !s1 || !*s1) {
+  if (is_empty || !s2 || !*s2) {
     fprintf(fout, "&nbsp;");
+  } else if (is_href) {
+    s = html_armor_buf(pb, s2);
+    fprintf(fout, "<a href=\"%s\" target=\"_blank\"><tt>%s</tt></a>", s, s);
   } else {
     fprintf(fout, "<tt>%s</tt>", html_armor_buf(pb, s2));
   }
   fprintf(fout, "</td><td class=\"borderless\">");
-  if (is_empty && is_mandatory) {
+  if ((is_empty || !s2 || !*s2) && is_mandatory) {
     fprintf(fout, "%s<i>%s</i>%s", red_beg, _("Not set"), red_end);
-  } else if (s1 && valid_chars && strres) {
-    fprintf(fout, "%s<i>%s</i>%s", red_end, _("Invalid characters"), red_end);
+  } else if (s2 && valid_chars && strres) {
+    fprintf(fout, "%s<i>%s:</i> <tt>%s</tt>%s",
+            red_beg, _("Invalid characters"), ARMOR(invstr), red_end);
   } else {
     fprintf(fout, "&nbsp;");
   }
   fprintf(fout, "</td></tr>\n");
+
+  html_armor_free(&ab);
 }
 
 static int
@@ -1079,56 +1083,57 @@ struct field_desc_s
   int repl_char;
   int maxlength;
   int size;
+  int is_href;
 };
 
 static struct field_desc_s contest_field_desc[CONTEST_LAST_FIELD] =
 {
-  [CONTEST_F_HOMEPAGE] = { __("Homepage"), '?', 128, 64 },
-  [CONTEST_F_PHONE] = { __("Phone"), '?', 128, 64 },
-  [CONTEST_F_INST] = { __("Institution"), '?', 128, 64 },
-  [CONTEST_F_INST_EN] = { __("Institution (En)"), '?', 128, 64 },
-  [CONTEST_F_INSTSHORT] = { __("Institution (abbreviated)"), '?', 32, 32 },
-  [CONTEST_F_INSTSHORT_EN] = { __("Institution (abbreviated) (En)"), '?', 32, 32 },
-  [CONTEST_F_FAC] = { __("Faculty"), '?', 128, 64 },
-  [CONTEST_F_FAC_EN] = { __("Faculty (En)"), '?', 128, 64 },
-  [CONTEST_F_FACSHORT] = { __("Faculty (abbreviated)"), '?', 32, 32 },
-  [CONTEST_F_FACSHORT_EN] = { __("Faculty (abbreviated) (En)"), '?', 32, 32 },
-  [CONTEST_F_CITY] = { __("City"), '?', 128, 64 },
-  [CONTEST_F_CITY_EN] = { __("City (En)"), '?', 128, 64 },
-  [CONTEST_F_COUNTRY] = { __("Country"), '?', 128, 64 },
-  [CONTEST_F_COUNTRY_EN] = { __("Country (En)"),  '?', 128, 64 },
-  [CONTEST_F_REGION] = { __("Region"), '?', 128, 64 },
-  [CONTEST_F_LANGUAGES] = { __("Programming languages"), '?', 128, 64 },
+  [CONTEST_F_HOMEPAGE] = { __("Homepage"), '?', 128, 64, 1 },
+  [CONTEST_F_PHONE] = { __("Phone"), '?', 128, 64, 0 },
+  [CONTEST_F_INST] = { __("Institution"), '?', 128, 64, 0 },
+  [CONTEST_F_INST_EN] = { __("Institution (En)"), '?', 128, 64, 0 },
+  [CONTEST_F_INSTSHORT] = { __("Institution (abbreviated)"), '?', 32, 32, 0 },
+  [CONTEST_F_INSTSHORT_EN] = { __("Institution (abbreviated) (En)"), '?', 32, 32, 0 },
+  [CONTEST_F_FAC] = { __("Faculty"), '?', 128, 64, 0 },
+  [CONTEST_F_FAC_EN] = { __("Faculty (En)"), '?', 128, 64, 0 },
+  [CONTEST_F_FACSHORT] = { __("Faculty (abbreviated)"), '?', 32, 32, 0 },
+  [CONTEST_F_FACSHORT_EN] = { __("Faculty (abbreviated) (En)"), '?', 32, 32, 0 },
+  [CONTEST_F_CITY] = { __("City"), '?', 128, 64, 0 },
+  [CONTEST_F_CITY_EN] = { __("City (En)"), '?', 128, 64, 0 },
+  [CONTEST_F_COUNTRY] = { __("Country"), '?', 128, 64, 0 },
+  [CONTEST_F_COUNTRY_EN] = { __("Country (En)"),  '?', 128, 64, 0 },
+  [CONTEST_F_REGION] = { __("Region"), '?', 128, 64, 0 },
+  [CONTEST_F_LANGUAGES] = { __("Programming languages"), '?', 128, 64, 0 },
 };
 
 static struct field_desc_s member_field_desc[CONTEST_LAST_MEMBER_FIELD] =
 {
-  [CONTEST_MF_FIRSTNAME] = { __("First name"), '?', 64, 64 },
-  [CONTEST_MF_FIRSTNAME_EN] = { __("First name (En)"), '?', 64, 64 },
-  [CONTEST_MF_MIDDLENAME] = { __("Middle name"), '?', 64, 64},
-  [CONTEST_MF_MIDDLENAME_EN] = { __("Middle name (En)"), '?', 64, 64 },
-  [CONTEST_MF_SURNAME] = { __("Family name"), '?', 64, 64 },
-  [CONTEST_MF_SURNAME_EN] = { __("Family name (En)"), '?', 64, 64 },
-  [CONTEST_MF_STATUS] = { __("Status"), '?', 64, 64 },
-  [CONTEST_MF_GRADE] = { __("Grade"), '?', 16, 16 },
-  [CONTEST_MF_GROUP] = { __("Group"), '?', 16, 16 },
-  [CONTEST_MF_GROUP_EN] = { __("Group (En)"), '?', 16, 16 },
-  [CONTEST_MF_EMAIL] = { __("E-mail"), '?', 64, 64 },
-  [CONTEST_MF_HOMEPAGE] = { __("Homepage"), '?', 128, 64 },
-  [CONTEST_MF_PHONE] = { __("Phone"), '?', 128, 64 },
-  [CONTEST_MF_INST] = { __("Institution"), '?', 128, 64 },
-  [CONTEST_MF_INST_EN] = { __("Institution (En)"), '?', 128, 64 },
-  [CONTEST_MF_INSTSHORT] = { __("Institution (abbreviated)"), '?', 32, 32 },
-  [CONTEST_MF_INSTSHORT_EN] = { __("Institution (abbreviated) (En)"), '?', 32, 32 },
-  [CONTEST_MF_FAC] = { __("Faculty"), '?', 128, 64 },
-  [CONTEST_MF_FAC_EN] = { __("Faculty (En)"), '?', 128, 64 },
-  [CONTEST_MF_FACSHORT] = { __("Faculty (abbreviated)"), '?', 32, 32 },
-  [CONTEST_MF_FACSHORT_EN] = { __("Faculty (abbreviated) (En)"), '?', 32, 32 },
-  [CONTEST_MF_OCCUPATION] = { __("Occupation"), '?', 128, 64 },
-  [CONTEST_MF_OCCUPATION_EN] = { __("Occupation (En)"), '?', 128, 64 },
-  [CONTEST_MF_BIRTH_DATE] = { __("Birth Date"), '?', 128, 64 },
-  [CONTEST_MF_ENTRY_DATE] = { __("Institution entry date"), '?', 128, 64 },
-  [CONTEST_MF_GRADUATION_DATE] = { __("Institution graduation date"), '?', 128, 64 },
+  [CONTEST_MF_FIRSTNAME] = { __("First name"), '?', 64, 64, 0 },
+  [CONTEST_MF_FIRSTNAME_EN] = { __("First name (En)"), '?', 64, 64, 0 },
+  [CONTEST_MF_MIDDLENAME] = { __("Middle name"), '?', 64, 64, 0 },
+  [CONTEST_MF_MIDDLENAME_EN] = { __("Middle name (En)"), '?', 64, 64, 0 },
+  [CONTEST_MF_SURNAME] = { __("Family name"), '?', 64, 64, 0 },
+  [CONTEST_MF_SURNAME_EN] = { __("Family name (En)"), '?', 64, 64, 0 },
+  [CONTEST_MF_STATUS] = { __("Status"), '?', 64, 64, 0 },
+  [CONTEST_MF_GRADE] = { __("Grade"), '?', 16, 16, 0 },
+  [CONTEST_MF_GROUP] = { __("Group"), '?', 16, 16, 0 },
+  [CONTEST_MF_GROUP_EN] = { __("Group (En)"), '?', 16, 16, 0 },
+  [CONTEST_MF_EMAIL] = { __("E-mail"), '?', 64, 64, 0 },
+  [CONTEST_MF_HOMEPAGE] = { __("Homepage"), '?', 128, 64, 1 },
+  [CONTEST_MF_PHONE] = { __("Phone"), '?', 128, 64, 0 },
+  [CONTEST_MF_INST] = { __("Institution"), '?', 128, 64, 0 },
+  [CONTEST_MF_INST_EN] = { __("Institution (En)"), '?', 128, 64, 0 },
+  [CONTEST_MF_INSTSHORT] = { __("Institution (abbreviated)"), '?', 32, 32, 0 },
+  [CONTEST_MF_INSTSHORT_EN] = { __("Institution (abbreviated) (En)"), '?', 32, 32, 0 },
+  [CONTEST_MF_FAC] = { __("Faculty"), '?', 128, 64, 0 },
+  [CONTEST_MF_FAC_EN] = { __("Faculty (En)"), '?', 128, 64, 0 },
+  [CONTEST_MF_FACSHORT] = { __("Faculty (abbreviated)"), '?', 32, 32, 0 },
+  [CONTEST_MF_FACSHORT_EN] = { __("Faculty (abbreviated) (En)"), '?', 32, 32, 0 },
+  [CONTEST_MF_OCCUPATION] = { __("Occupation"), '?', 128, 64, 0 },
+  [CONTEST_MF_OCCUPATION_EN] = { __("Occupation (En)"), '?', 128, 64, 0 },
+  [CONTEST_MF_BIRTH_DATE] = { __("Birth Date"), '?', 128, 64, 0 },
+  [CONTEST_MF_ENTRY_DATE] = { __("Institution entry date"), '?', 128, 64, 0 },
+  [CONTEST_MF_GRADUATION_DATE] = { __("Institution graduation date"), '?', 128, 64, 0 },
 };
 
 static int
@@ -1208,7 +1213,10 @@ main_page_view_info(
   // check that we need tabs and how many
   tab_count = 1;
   for (i = 0; i < CONTEST_LAST_MEMBER; i++) {
-    if (cnts->members[i] && cnts->members[i]->max_count > 0)
+    if (cnts->members[i] && cnts->members[i]->max_count > 0
+        && (!cnts->personal ||
+            (cnts->personal && i != CONTEST_M_CONTESTANT
+             && i != CONTEST_M_RESERVE)))
       tab_count++;
     else if (phr->action == NEW_SRV_ACTION_REG_VIEW_CONTESTANTS + i)
       phr->action = NEW_SRV_ACTION_REG_VIEW_GENERAL;
@@ -1218,14 +1226,17 @@ main_page_view_info(
 
   // generate upper tabs
   fprintf(fout, "<br/>\n");
-  fprintf(fout, "<table cellpadding=\"0\" cellspacing=\"0\">\n");
   main_area_span = 1;
   if (tab_count > 1) {
+    fprintf(fout, "<table cellpadding=\"0\" cellspacing=\"0\">\n");
     main_area_span = 0;
     fprintf(fout, "<tr id=\"probNavTopList\">\n");
     for (i = 0; tab_actions[i]; i++) {
       if (i > 0 && (!cnts->members[i - 1]
                     || cnts->members[i - 1]->max_count <= 0))
+        continue;
+      if (cnts->personal &&
+          (i == CONTEST_M_CONTESTANT || i == CONTEST_M_RESERVE))
         continue;
 
       if (main_area_span > 0) {
@@ -1249,8 +1260,8 @@ main_page_view_info(
       main_area_span++;
     }
     fprintf(fout, "</tr>\n");
+    fprintf(fout, "<tr><td colspan=\"%d\" id=\"memberNavArea\"><div id=\"probNavTaskArea\">\n", main_area_span);
   }
-  fprintf(fout, "<tr><td colspan=\"%d\" id=\"memberNavArea\"><div id=\"probNavTaskArea\">\n", main_area_span);
 
   if (phr->action == NEW_SRV_ACTION_REG_VIEW_GENERAL) {
     fprintf(fout, "<h2>%s", _("General information"));
@@ -1264,18 +1275,18 @@ main_page_view_info(
     if (u && u->login && *u->login) {
       s = u->login;
     }
-    info_table_row(fout,  _("Login"), s, 0, 0, 0, &ab);
+    info_table_row(fout,  _("Login"), s, 0, 0, 0, &ab, 0);
     s = 0;
     if (u && u->email && *u->email) {
       s = u->email;
     }
-    info_table_row(fout,  _("E-mail"), s, 0, 0, 0, &ab);
+    info_table_row(fout,  _("E-mail"), s, 0, 0, 0, &ab, 0);
     if (!cnts->disable_name) {
       s = 0;
       if (u && u->i.name && *u->i.name) {
         s = u->i.name;
       }
-      info_table_row(fout, cnts->personal?_("User name (for standings)"):_("Team name"), s, 0, 0, name_accept_chars, &ab);
+      info_table_row(fout, cnts->personal?_("User name (for standings)"):_("Team name"), s, 0, 0, name_accept_chars, &ab, 0);
     }
     for (i = 0; (ff = contest_fields_order[i]); i++) {
       if (!cnts->fields[ff]) continue;
@@ -1286,7 +1297,25 @@ main_page_view_info(
                      userlist_is_empty_user_info_field(&u->i, userlist_contest_field_ids[ff]),
                      cnts->fields[ff]->mandatory,
                      userlist_get_contest_accepting_chars(ff),
-                     &ab);
+                     &ab, contest_field_desc[ff].is_href);
+    }
+    if (cnts->personal && cnts->members[(rr = CONTEST_M_CONTESTANT)]
+        && cnts->members[rr]->max_count > 0
+        && u->i.members[rr]
+        && u->i.members[rr]->total > 0
+        && (m = u->i.members[rr]->members[0])) {
+
+      for (i = 0; (ff = member_fields_order[i]); i++) {
+        if (!cnts->members[rr]->fields[ff]) continue;
+        userlist_get_member_field_str(fbuf, sizeof(fbuf), m,
+                                      userlist_member_field_ids[ff], 0);
+        info_table_row(fout, gettext(member_field_desc[ff].description),
+                       fbuf,
+                       userlist_is_empty_member_field(m, userlist_member_field_ids[ff]),
+                       cnts->members[rr]->fields[ff]->mandatory,
+                       userlist_get_member_accepting_chars(ff),
+                       &ab, member_field_desc[ff].is_href);
+      }
     }
     fprintf(fout, "</table>\n");
   } else if (phr->action >= NEW_SRV_ACTION_REG_VIEW_CONTESTANTS
@@ -1346,7 +1375,7 @@ main_page_view_info(
                          userlist_is_empty_member_field(m, userlist_member_field_ids[ff]),
                          cnts->members[rr]->fields[ff]->mandatory,
                          userlist_get_member_accepting_chars(ff),
-                         &ab);
+                         &ab, member_field_desc[ff].is_href);
         }
 
         fprintf(fout, "</table>\n");
@@ -1355,7 +1384,9 @@ main_page_view_info(
   }
 
   // generate tabs bottom
-  fprintf(fout, "</div></td></tr></table>\n");
+  if (tab_count > 1) {
+    fprintf(fout, "</div></td></tr></table>\n");
+  }
 
   html_armor_free(&ab);
 }
@@ -1496,6 +1527,17 @@ main_page(
 }
 
 static void
+edit_member_form(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        const struct userlist_member *m,
+        int role,
+        int member,
+        int skip_header,
+        const unsigned char *var_prefix);
+
+static void
 edit_general_form(
 	FILE *fout,
         struct http_request_info *phr,
@@ -1504,12 +1546,13 @@ edit_general_form(
 {
   unsigned char bb[1024];
   unsigned char varname[1024];
-  int i, ff, j;
+  int i, ff, j, rr;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *comment = 0, *s = 0, *ac;
   size_t allowed_languages_u = 0, allowed_regions_u = 0;
   unsigned char **allowed_languages = 0, **allowed_regions = 0;
   int *user_lang_map = 0;
+  const struct userlist_member *m = 0;
 
   if (cnts->fields[CONTEST_F_LANGUAGES]) {
     allowed_list_parse(cnts->allowed_languages,
@@ -1557,10 +1600,10 @@ edit_general_form(
         && (userlist_is_empty_user_info_field(&u->i,
                                               userlist_contest_field_ids[ff])
             || !bb[0])) {
-      comment = __("must be specified");
+      comment = _("must be specified");
     } else if ((ac = userlist_get_contest_accepting_chars(ff))
                && check_str(bb, ac) < 0) {
-      comment = __("contains invalid characters");
+      comment = _("contains invalid characters");
     }
 
     if (ff == CONTEST_F_LANGUAGES && allowed_languages_u > 0) {
@@ -1596,6 +1639,16 @@ edit_general_form(
     fprintf(fout, "<td class=\"borderless\" valign=\"top\"><font color=\"red\"><i>%s</i></font></td>", comment);
     fprintf(fout, "</tr>\n");
   }
+
+  // for personal contest put the member form here
+  if (cnts->personal && cnts->members[(rr = CONTEST_M_CONTESTANT)]
+      && cnts->members[rr]->max_count > 0) {
+    m = 0;
+    if (u->i.members[rr] && u->i.members[rr]->total > 0)
+      m = u->i.members[rr]->members[0];
+    edit_member_form(fout, phr, cnts, m, rr, 0, 1, "m");
+  }
+
   fprintf(fout, "</table>\n");
   fprintf(fout, "<table class=\"borderless\"><tr>");
   fprintf(fout, "<td class=\"borderless\">%s</td>",
@@ -1623,12 +1676,15 @@ static const unsigned char * const month_names[] =
 static void
 display_date_change_dialog(FILE *fout, int field, const unsigned char *val,
                            const unsigned char *beg_str,
-                           const unsigned char *end_str)
+                           const unsigned char *end_str,
+                           const unsigned char *var_prefix)
 {
   int day = 0, month = 0, year = 0, n;
   unsigned char vbuf[128];
   const unsigned char *sstr = " selected=\"selected\"";
   const unsigned char *s = "";
+
+  if (!var_prefix) var_prefix = "";
 
   fprintf(fout, "%s", beg_str);
   if (sscanf(val, "%d/%d/%d%n", &year, &month, &day, &n) != 3 || val[n]
@@ -1643,7 +1699,8 @@ display_date_change_dialog(FILE *fout, int field, const unsigned char *val,
   // day selection
   s = "";
   if (!day) s = sstr;
-  fprintf(fout, "<select name=\"day_%d\"><option%s></option>", field, s);
+  fprintf(fout, "<select name=\"%sday_%d\"><option%s></option>",
+          var_prefix, field, s);
   for (n = 1; n <= 31; n++) {
     s = "";
     if (day == n) s = sstr;
@@ -1654,8 +1711,8 @@ display_date_change_dialog(FILE *fout, int field, const unsigned char *val,
   // month selection
   s = "";
   if (!month) s = sstr;
-  fprintf(fout, "<select name=\"month_%d\"><option value=\"0\"%s></option>",
-          field, s);
+  fprintf(fout, "<select name=\"%smonth_%d\"><option value=\"0\"%s></option>",
+          var_prefix, field, s);
   for (n = 1; n <= 12; n++) {
     s = "";
     if (month == n) s = sstr;
@@ -1666,8 +1723,49 @@ display_date_change_dialog(FILE *fout, int field, const unsigned char *val,
 
   vbuf[0] = 0;
   if (year > 0) snprintf(vbuf, sizeof(vbuf), "%d", year);
-  fprintf(fout, "<input type=\"text\" name=\"year_%d\" value=\"%s\" maxlength=\"4\" size=\"4\"/></p>", field, vbuf);
+  fprintf(fout, "<input type=\"text\" name=\"%syear_%d\" value=\"%s\" maxlength=\"4\" size=\"4\"/></p>", var_prefix, field, vbuf);
   fprintf(fout, "%s", end_str);
+}
+
+static unsigned char const * const member_status_string[] =
+{
+  0,
+  __("School student"),
+  __("Student"),
+  __("Magistrant"),
+  __("PhD student"),
+  __("School teacher"),
+  __("Professor"),
+  __("Scientist"),
+  __("Other")
+};
+
+static void
+display_status_changing_dialog(
+	FILE *fout,
+        int field,
+        int val,
+        const unsigned char *beg_str,
+        const unsigned char *end_str,
+        const unsigned char *var_prefix)
+{
+  int n = 0;
+
+  if (!beg_str) beg_str = "";
+  if (!end_str) end_str = "";
+  if (!var_prefix) var_prefix = "";
+
+  fprintf(fout, "%s<select name=\"%sparam_%d\"><option value=\"\"></option>",
+          beg_str, var_prefix, field);
+
+  if (val < 0 || val >= USERLIST_ST_LAST) val = 0;
+
+  for (n = 1; n < USERLIST_ST_LAST; n++) {
+    fprintf(fout, "<option value=\"%d\"%s>%s</option>",
+           n, n == val?" selected=\"selected\"":"",
+           gettext(member_status_string[n]));
+  }
+  fprintf(fout, "</select>%s", end_str);
 }
 
 static void
@@ -1677,21 +1775,27 @@ edit_member_form(
         const struct contest_desc *cnts,
         const struct userlist_member *m,
         int role,
-        int member)
+        int member,
+        int skip_header,
+        const unsigned char *var_prefix)
 {
   const struct contest_member *cm = cnts->members[role];
   unsigned char bb[1024];
   unsigned char varname[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  int i, ff;
+  int i, ff, val;
   const unsigned char *comment = 0, *ac;
 
-  html_start_form(fout, 1, phr->self_url, "");
-  html_hidden(fout, "SID", "%llx", phr->session_id);
-  html_hidden(fout, "role", "%d", role);
-  html_hidden(fout, "member", "%d", member);
+  if (!var_prefix) var_prefix = "";
 
-  fprintf(fout, "<table class=\"borderless\">");
+  if (!skip_header) {
+    html_start_form(fout, 1, phr->self_url, "");
+    html_hidden(fout, "SID", "%llx", phr->session_id);
+    html_hidden(fout, "role", "%d", role);
+    html_hidden(fout, "member", "%d", member);
+
+    fprintf(fout, "<table class=\"borderless\">");
+  }
   for (i = 0; (ff = member_fields_order[i]); i++) {
     if (!cm->fields[ff]) continue;
     fprintf(fout, "<tr>");
@@ -1700,11 +1804,13 @@ edit_member_form(
     fprintf(fout, "%s:", gettext(member_field_desc[ff].description));
     if (cm->fields[ff]->mandatory) fprintf(fout, "</b>");
     fprintf(fout, "</td>");
-    userlist_get_member_field_str(bb, sizeof(bb), m,
-                                  userlist_member_field_ids[ff], 0);
+    bb[0] = 0;
+    if (m) 
+      userlist_get_member_field_str(bb, sizeof(bb), m,
+                                    userlist_member_field_ids[ff], 0);
     comment = 0;
     if (cm->fields[ff]->mandatory
-        && (userlist_is_empty_member_field(m, userlist_member_field_ids[ff])
+        && ((m && userlist_is_empty_member_field(m, userlist_member_field_ids[ff]))
             || !bb[0])) {
       comment = __("must be specified");
     } else if ((ac = userlist_get_member_accepting_chars(ff))
@@ -1713,15 +1819,22 @@ edit_member_form(
     }
 
     switch (ff) {
+    case CONTEST_MF_STATUS:
+      val = 0;
+      if (m) val = m->status;
+      display_status_changing_dialog(fout, ff, val, "<td class=\"borderless\">",
+                                     "</td>", var_prefix);
+      break;
+
     case CONTEST_MF_BIRTH_DATE:
     case CONTEST_MF_ENTRY_DATE:
     case CONTEST_MF_GRADUATION_DATE:
       display_date_change_dialog(fout, ff, bb, "<td class=\"borderless\">",
-                                 "</td>");
+                                 "</td>", var_prefix);
       break;
 
     default:
-      snprintf(varname, sizeof(varname), "param_%d", ff);
+      snprintf(varname, sizeof(varname), "%sparam_%d", var_prefix, ff);
       fprintf(fout, "<td class=\"borderless\">%s</td>",
               html_input_text(bb, sizeof(bb), varname,
                               member_field_desc[ff].size,
@@ -1733,17 +1846,20 @@ edit_member_form(
     fprintf(fout, "<td class=\"borderless\" valign=\"top\"><font color=\"red\"><i>%s</i></font></td>", comment);
     fprintf(fout, "</tr>\n");
   }
-  fprintf(fout, "</table>\n");
 
-  fprintf(fout, "<table class=\"borderless\"><tr>");
-  fprintf(fout, "<td class=\"borderless\">%s</td>",
-          ns_submit_button(bb, sizeof(bb), 0,
-                           NEW_SRV_ACTION_REG_CANCEL_MEMBER_EDITING, 0));
-  fprintf(fout, "<td class=\"borderless\">%s</td>",
-          ns_submit_button(bb, sizeof(bb), 0,
-                           NEW_SRV_ACTION_REG_SUBMIT_MEMBER_EDITING, 0));
-  fprintf(fout, "</table>");
-  fprintf(fout, "</form>\n");
+  if (!skip_header) {
+    fprintf(fout, "</table>\n");
+
+    fprintf(fout, "<table class=\"borderless\"><tr>");
+    fprintf(fout, "<td class=\"borderless\">%s</td>",
+            ns_submit_button(bb, sizeof(bb), 0,
+                             NEW_SRV_ACTION_REG_CANCEL_MEMBER_EDITING, 0));
+    fprintf(fout, "<td class=\"borderless\">%s</td>",
+            ns_submit_button(bb, sizeof(bb), 0,
+                             NEW_SRV_ACTION_REG_SUBMIT_MEMBER_EDITING, 0));
+    fprintf(fout, "</table>");
+    fprintf(fout, "</form>\n");
+  }
 
   html_armor_free(&ab);
 }
@@ -1756,7 +1872,6 @@ edit_page(
         struct contest_extra *extra,
         time_t cur_time)
 {
-  unsigned char bb[1024];
   const unsigned char *status_style;
   const unsigned char *status_info;
   const struct userlist_user *u = phr->session_extra->user_info;
@@ -1836,7 +1951,7 @@ edit_page(
 
   // main page goes here
   if (phr->action == NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE) {
-    edit_member_form(fout, phr, cnts, m, role, member);
+    edit_member_form(fout, phr, cnts, m, role, member, 0, 0);
   } else {
     edit_general_form(fout, phr, cnts, u);
   }
@@ -1847,17 +1962,229 @@ edit_page(
   return;
 
  redirect_back:
-  snprintf(bb, sizeof(bb), "%s?SID=%llx&action=%d",
-           phr->self_url, phr->session_id,
-           NEW_SRV_ACTION_REG_VIEW_GENERAL);
+  ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
   html_armor_free(&ab);
-  html_refresh_page_2(fout, bb);
+}
+
+static void
+cancel_editing(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+  int next_action = NEW_SRV_ACTION_REG_VIEW_GENERAL;
+  int role;
+
+  if (phr->action == NEW_SRV_ACTION_REG_CANCEL_MEMBER_EDITING
+      && cgi_param_int(phr, "role", &role) >= 0
+      && role >= CONTEST_M_CONTESTANT && role < CONTEST_LAST_MEMBER)
+    next_action = NEW_SRV_ACTION_REG_VIEW_CONTESTANTS + role;
+
+  ns_refresh_page(fout, phr, next_action, 0);
+}
+
+static void
+action_error_page(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        const unsigned char *text)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *n, *s;
+
+  s = _("Operation errors");
+  n = phr->name;
+  if (!n || !*n) n = phr->login;
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s, %s]", s, ARMOR(n), extra->contest_arm);
+
+  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>");
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
+  fprintf(fout, "</tr></table></div>\n");
+
+  fprintf(fout, "<div class=\"white_empty_block\">&nbsp;</div>\n");
+
+  fprintf(fout, "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
+  fprintf(fout, "</tr></table></div>\n");
+  if (extra->separator_txt && *extra->separator_txt) {
+    fprintf(fout, "%s", extra->separator_txt);
+  }
+
+  fprintf(fout, "<br><font color=\"red\"><pre>%s</pre></font><br>\n",
+          ARMOR(text));
+
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+  html_armor_free(&ab);
+}
+
+static unsigned char *
+preprocess_string(unsigned char *buf, size_t size, const unsigned char *str)
+{
+  const unsigned char *s = str;
+  size_t len, i;
+
+  ASSERT(size > 0);
+
+  for (;*s > 0 && *s <= ' '; s++);
+  snprintf(buf, size, "%s", s);
+  len = strlen(buf);
+
+  for (i = 0; i < len; i++)
+    if (buf[i] < ' ') buf[i] = ' ';
+  while (len > 0 && buf[len - 1] == ' ') len--;
+  buf[len] = 0;
+  return buf;
+}
+
+static unsigned char *
+assemble_programming_languages(
+	unsigned char *buf,
+        size_t size,
+        struct http_request_info *phr,
+        const unsigned char *cnts_allowed_languages)
+{
+  unsigned char **allowed_languages;
+  size_t allowed_languages_u, i;
+  int is_first = 1;
+  unsigned char varname[64];
+  FILE *f;
+  char *t = 0;
+  size_t z = 0;
+  const unsigned char *s = 0;
+
+  allowed_list_parse(cnts_allowed_languages,
+                     &allowed_languages, &allowed_languages_u);
+  f = open_memstream(&t, &z);
+
+  for (i = 0; i < allowed_languages_u; i++) {
+    snprintf(varname, sizeof(varname), "proglang_%zu", i);
+    if (ns_cgi_param(phr, varname, &s) > 0) {
+      if (!is_first) fputs(", ", f);
+      is_first = 0;
+      fputs(allowed_languages[i], f);
+    }
+  }
+  fclose(f); f = 0;
+
+  snprintf(buf, size, "%s", t);
+  allowed_list_free(allowed_languages, allowed_languages_u);
+  xfree(t);
+  return buf;
+}
+
+static void
+submit_general_editing(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+  FILE *log_f;
+  char *log_t = 0;
+  size_t log_z = 0;
+  int r, ff;
+  const unsigned char *v = 0;
+  unsigned char varname[128];
+  unsigned char vbuf[1024];
+
+  log_f = open_memstream(&log_t, &log_z);
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    fprintf(log_f, "%s.\n", _("User database server is down"));
+    goto done;
+  }
+
+  /* FIXME: pack all updates into a single packet... */
+
+  // name, param_%d
+  // for personal contests, also set the first member
+
+  if (!cnts->disable_name) {
+    if ((r = ns_cgi_param(phr, "name", &v)) < 0) {
+      fprintf(log_f, "%s.\n",
+              _("Field \"Name\" contains non-printable characters"));
+      goto done;
+    } else if (!r || !v) {
+      v = "";
+    }
+    preprocess_string(vbuf, sizeof(vbuf), v);
+    if (vbuf[0])
+      r = userlist_clnt_edit_field(ul_conn, phr->user_id,
+                                   phr->contest_id, 0,
+                                   USERLIST_NC_NAME, vbuf);
+    else
+      r = userlist_clnt_delete_field(ul_conn, phr->user_id, phr->contest_id, 0,
+                                     USERLIST_NC_NAME);
+    if (r < 0) {
+      fprintf(log_f, "%s.\n", userlist_strerror(-r));
+      goto done;
+    }
+  }
+
+  for (ff = CONTEST_FIRST_FIELD; ff < CONTEST_LAST_FIELD; ff++) {
+    if (!cnts->fields[ff]) continue;
+
+    if (ff == CONTEST_F_LANGUAGES && cnts->allowed_languages) {
+      assemble_programming_languages(vbuf, sizeof(vbuf), phr,
+                                     cnts->allowed_languages);
+    } else {
+      snprintf(varname, sizeof(varname), "param_%d", ff);
+      if ((r = ns_cgi_param(phr, varname, &v)) < 0) {
+        fprintf(log_f, _("Field \"%s\" contains non-printable characters.\n"),
+                contest_field_desc[ff].description);
+        goto done;
+      } else if (!r || !v) {
+        v = "";
+      }
+      preprocess_string(vbuf, sizeof(vbuf), v);
+    }
+
+    if (vbuf[0])
+      r = userlist_clnt_edit_field(ul_conn, phr->user_id,
+                                   phr->contest_id, 0,
+                                   userlist_contest_field_ids[ff], vbuf);
+    else
+      r = userlist_clnt_delete_field(ul_conn, phr->user_id, phr->contest_id, 0,
+                                     userlist_contest_field_ids[ff]);
+    if (r < 0) {
+      fprintf(log_f, "%s.\n", userlist_strerror(-r));
+      goto done;
+    }
+  }
+
+  // force reloading the user info
+  userlist_free(&phr->session_extra->user_info->b);
+  phr->session_extra->user_info = 0;
+
+ done:;
+  fclose(log_f); log_f = 0;
+
+  if (log_t && *log_t) {
+    action_error_page(fout, phr, cnts, extra, log_t);
+  } else {
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
+  }
+
+  xfree(log_t);
 }
 
 static reg_action_handler_func_t reg_handlers[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE] = edit_page,
   [NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE] = edit_page,
+  [NEW_SRV_ACTION_REG_SUBMIT_GENERAL_EDITING] = submit_general_editing,
+  [NEW_SRV_ACTION_REG_CANCEL_GENERAL_EDITING] = cancel_editing,
+  [NEW_SRV_ACTION_REG_CANCEL_MEMBER_EDITING] = cancel_editing,
 };
 
 void

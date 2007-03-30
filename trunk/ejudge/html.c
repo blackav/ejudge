@@ -586,7 +586,7 @@ html_write_user_problems_summary(const serve_state_t state,
         break;
 
       case RUN_COMPILE_ERR:
-        if (!global->ignore_compile_errors) {
+        if (!cur_prob->ignore_compile_errors) {
           attempts[re.prob_id]++;
           cur_score = 0;
           if (cur_score >= best_score[re.prob_id]) {
@@ -652,7 +652,7 @@ html_write_user_problems_summary(const serve_state_t state,
         break;
 
       case RUN_COMPILE_ERR:
-        if (!global->ignore_compile_errors) {
+        if (!cur_prob->ignore_compile_errors) {
           attempts[re.prob_id]++;
           cur_score = 0;
           if (cur_score >= best_score[re.prob_id]
@@ -704,7 +704,7 @@ html_write_user_problems_summary(const serve_state_t state,
         break;
 
       case RUN_COMPILE_ERR:
-        if (!global->ignore_compile_errors) {
+        if (!cur_prob->ignore_compile_errors) {
           attempts[re.prob_id]++;
           best_run[re.prob_id] = run_id;
         }
@@ -1006,13 +1006,14 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
         re.status = RUN_ACCEPTED;
     }
 
+    cur_prob = 0;
+    if (re.prob_id > 0 && re.prob_id <= state->max_prob)
+      cur_prob = state->probs[re.prob_id];
+
     attempts = 0; disq_attempts = 0;
     if (global->score_system_val == SCORE_KIROV && !re.is_hidden)
       run_get_attempts(state->runlog_state, i, &attempts, &disq_attempts,
-                       global->ignore_compile_errors);
-
-    cur_prob = 0;
-    if (re.prob_id > 0 && re.prob_id <= state->max_prob) cur_prob = state->probs[re.prob_id];
+                       cur_prob->ignore_compile_errors);
 
     prev_successes = RUN_TOO_MANY;
     if (global->score_system_val == SCORE_KIROV
@@ -2052,7 +2053,7 @@ do_write_kirov_standings(const serve_state_t state,
         att_num[up_ind]++;
         if (!full_sol[up_ind]) tot_att[pind]++;
         last_submit_run = k;
-      } else if (pe->status==RUN_COMPILE_ERR&&!global->ignore_compile_errors) {
+      } else if (pe->status==RUN_COMPILE_ERR && !p->ignore_compile_errors) {
         if (!full_sol[up_ind]) sol_att[up_ind]++;
         att_num[up_ind]++;
         if (!full_sol[up_ind]) tot_att[pind]++;
@@ -2998,7 +2999,7 @@ do_write_moscow_standings(const serve_state_t state,
         last_submit_start = ustart;
         last_submit_dur = udur;
       }
-    } else if (pe->status == RUN_COMPILE_ERR && !global->ignore_compile_errors) {
+    } else if (pe->status == RUN_COMPILE_ERR && !prob->ignore_compile_errors) {
       up_totatt[up_ind]++;
       p_att[p]++;
       if (!global->is_virtual) {
@@ -3589,6 +3590,7 @@ do_write_standings(const serve_state_t state,
   int prev_prob = -1, row_ind = 0, group_ind = 1;
   const unsigned char *col_attr = 0;
   struct standings_style ss;
+  const struct section_problem_data *prob = 0;
 
   if (cur_time <= 0) cur_time = time(0);
   if (!only_table_flag) {
@@ -3718,6 +3720,8 @@ do_write_standings(const serve_state_t state,
       continue;
     if (!state->probs[pe->prob_id] || state->probs[pe->prob_id]->hidden) continue;
     if (pe->is_hidden) continue;
+    prob = state->probs[pe->prob_id];
+
     if (global->is_virtual) {
       // filter "future" virtual runs
       tstart = run_get_virtual_start_time(state->runlog_state, pe->user_id);
@@ -3763,7 +3767,7 @@ do_write_standings(const serve_state_t state,
         last_success_time = run_time;
         last_success_start = start_time;
       }
-    } else if (pe->status==RUN_COMPILE_ERR && !global->ignore_compile_errors) {
+    } else if (pe->status==RUN_COMPILE_ERR && !prob->ignore_compile_errors) {
       if (calc[up_ind] <= 0) {
         calc[up_ind]--;
         tot_att[pp]++;
@@ -4228,7 +4232,7 @@ do_write_public_log(const serve_state_t state,
     time = pe->time;
     if (global->score_system_val == SCORE_KIROV) {
       run_get_attempts(state->runlog_state, i, &attempts, &disq_attempts,
-                       global->ignore_compile_errors);
+                       cur_prob->ignore_compile_errors);
       if (pe->status == RUN_OK && cur_prob && cur_prob->score_bonus_total > 0){
         prev_successes = run_get_prev_successes(state->runlog_state, i);
         if (prev_successes < 0) prev_successes = RUN_TOO_MANY;
@@ -4399,12 +4403,13 @@ write_user_run_status(const serve_state_t state, FILE *f, int uid, int rid,
       re.status = RUN_ACCEPTED;
   }
 
+  if (re.prob_id > 0 && re.prob_id <= state->max_prob)
+    cur_prob = state->probs[re.prob_id];
+
   attempts = 0; disq_attempts = 0;
   if (global->score_system_val == SCORE_KIROV && !re.is_hidden)
     run_get_attempts(state->runlog_state, rid, &attempts, &disq_attempts,
-                     global->ignore_compile_errors);
-
-  if (re.prob_id > 0 && re.prob_id <= state->max_prob) cur_prob = state->probs[re.prob_id];
+                     cur_prob->ignore_compile_errors);
 
   prev_successes = RUN_TOO_MANY;
   if (global->score_system_val == SCORE_KIROV

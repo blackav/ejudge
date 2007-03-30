@@ -333,6 +333,7 @@ Participant's capabilities
   GLOBAL_PARAM(team_enable_rep_view, "d"),
   GLOBAL_PARAM(team_enable_ce_view, "d"),
   GLOBAL_PARAM(team_show_judge_report, "d"),
+  GLOBAL_PARAM(ignore_compile_errors, "d"),
   GLOBAL_PARAM(disable_clars, "d"),
   GLOBAL_PARAM(disable_team_clars, "d"),
   GLOBAL_PARAM(disable_submit_after_ok, "d"),
@@ -4275,6 +4276,23 @@ super_html_print_problem(FILE *f,
                                  self_url, extra_args, prob_hidden_vars);
     }
 
+    //PROBLEM_PARAM(ignore_compile_errors, "d"),
+    extra_msg = "Undefined";
+    tmp_prob.ignore_compile_errors = prob->ignore_compile_errors;
+    if (!prob->abstract) {
+      prepare_set_prob_value(PREPARE_FIELD_PROB_IGNORE_COMPILE_ERRORS,
+                             &tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+               tmp_prob.ignore_compile_errors?"Yes":"No");
+      extra_msg = msg_buf;
+    }
+    print_boolean_3_select_row(f, "Ignore compilation errors:",
+                               prob->ignore_compile_errors,
+                               SSERV_CMD_PROB_CHANGE_IGNORE_COMPILE_ERRORS,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+
     //PROBLEM_PARAM(disable_user_submit, "d"),
     extra_msg = "Undefined";
     tmp_prob.disable_user_submit = prob->disable_user_submit;
@@ -5393,6 +5411,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_TEAM_SHOW_JUDGE_REPORT:
     p_int = &prob->team_show_judge_report;
+    goto handle_boolean_2;
+
+  case SSERV_CMD_PROB_CHANGE_IGNORE_COMPILE_ERRORS:
+    p_int = &prob->ignore_compile_errors;
     goto handle_boolean_2;
 
   case SSERV_CMD_PROB_CHANGE_DISABLE_USER_SUBMIT:

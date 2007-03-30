@@ -92,5 +92,7 @@ void allowed_list_map(
         int **pmap);
 
 int check_str(const unsigned char *str, const unsigned char *map);
+int check_str_2(const unsigned char *str, const unsigned char *map,
+                unsigned char *invchars);
 
 #endif /* __MISCTEXT_H__ */
