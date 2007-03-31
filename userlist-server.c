@@ -7338,6 +7338,177 @@ cmd_control_server(struct client_state *p, int pkt_len,
   }
 }
 
+static void
+cmd_edit_field_seq(
+	struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_edit_field_seq *data)
+{
+  size_t cur_size, sz;
+  const unsigned char *pktptr;
+  int *deleted_ids = 0, *edited_ids = 0, *edited_lens = 0;
+  const unsigned char **edited_strs = 0;
+  int i, cloned_flag = 0, f = 0, r;
+  unsigned char logbuf[1024];
+  const struct userlist_user *u = 0;
+  const struct contest_desc *cnts = 0;
+
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet is too small: %d < %zu", pkt_len, sizeof(*data));
+    return;
+  }
+  if (data->deleted_num < 0 || data->deleted_num > 1000) {
+    CONN_BAD("deleted_num is invalid");
+    return;
+  }
+  if (data->edited_num < 0 || data->edited_num > 1000) {
+    CONN_BAD("edited_num is invalid");
+    return;
+  }
+  cur_size = sizeof(*data);
+  pktptr = (const unsigned char*) data->data;
+  if (data->deleted_num > 0) {
+    sz = data->deleted_num * sizeof(deleted_ids[0]);
+    if (cur_size +  sz > pkt_len) {
+      CONN_BAD("packet overrun");
+      return;
+    }
+    deleted_ids = (int*) alloca(sz);
+    memcpy(deleted_ids, pktptr, sz);
+    pktptr += sz; cur_size += sz;
+  }
+  if (data->edited_num > 0) {
+    sz = data->edited_num * sizeof(edited_ids[0]);
+    if (cur_size + sz > pkt_len) {
+      CONN_BAD("packet overrun");
+      return;
+    }
+    edited_ids = (int*) alloca(sz);
+    memcpy(edited_ids, pktptr, sz);
+    pktptr += sz; cur_size += sz;
+
+    sz = data->edited_num * sizeof(edited_lens[0]);
+    if (cur_size + sz > pkt_len) {
+      CONN_BAD("packet overrun");
+      return;
+    }
+    edited_lens = (int*) alloca(sz);
+    memcpy(edited_lens, pktptr, sz);
+    pktptr += sz; cur_size += sz;
+
+    sz = data->edited_num * sizeof(edited_strs[0]);
+    edited_strs = (const unsigned char**) alloca(sz);
+    memset(edited_strs, 0, sz);
+  }
+
+  for (i = 0; i < data->edited_num; i++) {
+    if (edited_lens[i] < 0 || edited_lens[i] > 1024 * 1024) {
+      CONN_BAD("invalid field length");
+      return;
+    }
+    if (cur_size + edited_lens[i] > pkt_len) {
+      CONN_BAD("packet overrun");
+      return;
+    }
+    edited_strs[i] = (const unsigned char*) pktptr;
+    if (strlen(edited_strs[i]) != edited_lens[i]) {
+      CONN_BAD("invalid string length");
+      return;
+    }
+    pktptr += edited_lens[i]; cur_size += edited_lens[i] + 1;
+  }
+
+  if (cur_size != pkt_len) {
+    CONN_BAD("packet size mismatch");
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "EDIT_FIELD: %d, %d, %d, %d",
+           p->user_id, data->user_id, data->contest_id, data->serial);
+
+  if (contests_get(data->contest_id, &cnts) < 0 || !cnts) {
+    err("%s -> invalid contest", logbuf);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (p->user_id <= 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (default_get_user_info_1(data->user_id, &u) < 0) {
+    err("%s -> invalid user", logbuf);
+    send_reply(p, -ULS_ERR_BAD_UID);
+    return;
+  }
+
+  if (check_editing_caps(p->user_id, data->user_id, u, data->contest_id) < 0) {
+    err("%s -> no capability to edit user", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (data->serial > 0) {
+    for (i = 0; i < data->deleted_num; i++) {
+      if (deleted_ids[i] < USERLIST_NM_FIRST
+          || deleted_ids[i] >= USERLIST_NM_LAST) {
+        err("%s -> invalid field", logbuf);
+        send_reply(p, -ULS_ERR_BAD_FIELD);
+        return;
+      }
+      if ((r = default_clear_member_field(data->user_id, data->contest_id,
+                                          data->serial, deleted_ids[i],
+                                          cur_time, &f)) < 0)
+        goto cannot_change;
+      cloned_flag |= f;
+    }
+  }
+
+  // packet unpacked, handle it
+  /*
+
+  if (data->field >= USERLIST_NN_FIRST && data->field < USERLIST_NN_LAST) {
+    if ((r = default_set_user_field(data->user_id, data->field, data->data,
+                                    cur_time)) < 0) goto cannot_change;
+    if (r > 0) update_all_user_contests(data->user_id);
+    goto done;
+  }
+
+  if (data->field >= USERLIST_NC_FIRST && data->field < USERLIST_NC_LAST) {
+    if ((r = default_set_user_info_field(data->user_id, data->contest_id,
+                                         data->field, data->data, cur_time,
+                                         &cloned_flag))<0)
+      goto cannot_change;
+    if (r > 0 && data->contest_id > 0)
+      update_userlist_table(data->contest_id);
+    goto done;
+  }
+
+  if (data->field >= USERLIST_NM_FIRST && data->field < USERLIST_NM_LAST) {
+    if ((r = default_set_user_member_field(data->user_id, data->contest_id,
+                                           data->serial, data->field,
+                                           data->data, cur_time,
+                                           &cloned_flag)) < 0)
+      goto cannot_change;
+    if (r > 0 && data->contest_id > 0)
+      update_userlist_table(data->contest_id);
+    goto done;
+  }
+
+ done:
+  default_check_user_reg_data(data->user_id, data->contest_id);
+  if (cloned_flag) reply_code = ULS_CLONED;
+  send_reply(p, reply_code);
+  info("%s -> OK, %d", logbuf, r);
+  return;
+  */
+
+ cannot_change:
+  err("%s -> the fields cannot be changed", logbuf);
+  send_reply(p, -ULS_ERR_CANNOT_CHANGE);
+  return;
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW]            cmd_register_new,
@@ -7411,6 +7582,7 @@ static void (*cmd_table[])() =
   [ULS_CHECK_USER] =            cmd_check_user,
   [ULS_REGISTER_CONTEST_2] =    cmd_register_contest_2,
   [ULS_GET_COOKIE] =            cmd_get_cookie,
+  [ULS_EDIT_FIELD_SEQ] =        cmd_edit_field_seq,
 
   [ULS_LAST_CMD] 0
 };

@@ -54,6 +54,7 @@ static unsigned char const * const error_map[] =
   _("peer closed connection"),
   _("e-mail sending failed"),
   _("incomplete registration"),
+  _("invalid field"),
   _("unspecified error"),
 
   0
