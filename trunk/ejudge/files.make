@@ -29,6 +29,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/do_pass_fd.c\
  userlist_clnt/dump_database.c\
  userlist_clnt/edit_field.c\
+ userlist_clnt/edit_field_seq.c\
  userlist_clnt/generate_team_passwd.c\
  userlist_clnt/get_contests.c\
  userlist_clnt/get_cookie.c\

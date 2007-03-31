@@ -237,6 +237,19 @@ userlist_clnt_edit_field(struct userlist_clnt *clnt,
                          unsigned char const *value);
 
 int
+userlist_clnt_edit_field_seq(
+	struct userlist_clnt *clnt,
+        int cmd,
+        int user_id,
+        int contest_id,
+        int serial,
+        int deleted_num,
+        int edited_num,
+        int deleted_ids[],
+        int edited_ids[],
+        const unsigned char **edited_strs);
+
+int
 userlist_clnt_delete_field(struct userlist_clnt *clnt,
                            int user_id,
                            int contest_id,

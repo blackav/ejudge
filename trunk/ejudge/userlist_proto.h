@@ -95,6 +95,7 @@ enum
     ULS_CHECK_USER,
     ULS_REGISTER_CONTEST_2,
     ULS_GET_COOKIE,
+    ULS_EDIT_FIELD_SEQ,
 
     ULS_LAST_CMD
   };
@@ -149,6 +150,7 @@ enum
     ULS_ERR_DISCONNECT,
     ULS_ERR_EMAIL_FAILED,
     ULS_ERR_INCOMPLETE_REG,
+    ULS_ERR_BAD_FIELD,
     ULS_ERR_UNSPECIFIED_ERROR,
 
     ULS_ERR_LAST
@@ -298,6 +300,21 @@ struct userlist_pk_edit_field
   ej_cookie_t cookie;
   int   value_len;
   unsigned char data[1];
+};
+
+struct userlist_pk_edit_field_seq
+{
+  short request_id;
+  int   user_id;
+  int   contest_id;
+  int   serial;
+  int   deleted_num;
+  int   edited_num;
+  int   data[0];
+  // int deleted_field_ids[deleted_num];
+  // int edited_field_ids[edited_num];
+  // int edited_field_lens[edited_num];
+  // char stringdata[...];
 };
 
 struct userlist_pk_get_uid_by_pid
