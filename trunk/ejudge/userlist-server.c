@@ -7348,10 +7348,12 @@ cmd_edit_field_seq(
   const unsigned char *pktptr;
   int *deleted_ids = 0, *edited_ids = 0, *edited_lens = 0;
   const unsigned char **edited_strs = 0;
-  int i, cloned_flag = 0, f = 0, r;
+  int i, cloned_flag = 0, f = 0, r, reply_code = 0;
   unsigned char logbuf[1024];
   const struct userlist_user *u = 0;
   const struct contest_desc *cnts = 0;
+  const struct userlist_user_info *ui = 0;
+  const struct userlist_member *m = 0;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet is too small: %d < %zu", pkt_len, sizeof(*data));
@@ -7436,9 +7438,14 @@ cmd_edit_field_seq(
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  if (default_get_user_info_1(data->user_id, &u) < 0) {
+  if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0) {
     err("%s -> invalid user", logbuf);
     send_reply(p, -ULS_ERR_BAD_UID);
+    return;
+  }
+  if (u->read_only || ui->cnts_read_only) {
+    err("%s -> read-only user", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
 
@@ -7452,7 +7459,7 @@ cmd_edit_field_seq(
     for (i = 0; i < data->deleted_num; i++) {
       if (deleted_ids[i] < USERLIST_NM_FIRST
           || deleted_ids[i] >= USERLIST_NM_LAST) {
-        err("%s -> invalid field", logbuf);
+        err("%s -> invalid field %d", logbuf, deleted_ids[i]);
         send_reply(p, -ULS_ERR_BAD_FIELD);
         return;
       }
@@ -7462,48 +7469,96 @@ cmd_edit_field_seq(
         goto cannot_change;
       cloned_flag |= f;
     }
-  }
 
-  // packet unpacked, handle it
-  /*
-
-  if (data->field >= USERLIST_NN_FIRST && data->field < USERLIST_NN_LAST) {
-    if ((r = default_set_user_field(data->user_id, data->field, data->data,
-                                    cur_time)) < 0) goto cannot_change;
-    if (r > 0) update_all_user_contests(data->user_id);
+    for (i = 0; i < data->edited_num; i++) {
+      if (edited_ids[i] < USERLIST_NM_FIRST
+          || edited_ids[i] <= USERLIST_NM_LAST) {
+        err("%s -> invalid field %d", logbuf, edited_ids[i]);
+        send_reply(p, -ULS_ERR_BAD_FIELD);
+        return;
+      }
+      if ((r = default_set_user_member_field(data->user_id, data->contest_id,
+                                             data->serial, edited_ids[i],
+                                             edited_strs[i], cur_time, &f)) < 0)
+        goto cannot_change;
+      cloned_flag |= f;
+    }
     goto done;
   }
 
-  if (data->field >= USERLIST_NC_FIRST && data->field < USERLIST_NC_LAST) {
-    if ((r = default_set_user_info_field(data->user_id, data->contest_id,
-                                         data->field, data->data, cur_time,
-                                         &cloned_flag))<0)
-      goto cannot_change;
-    if (r > 0 && data->contest_id > 0)
-      update_userlist_table(data->contest_id);
-    goto done;
+  /* edit general info and default member info in case of personal contest */
+  for (i = 0; i < data->deleted_num; i++) {
+    if (deleted_ids[i] >= USERLIST_NM_FIRST
+        && deleted_ids[i] < USERLIST_NM_LAST
+        && cnts->personal) {
+      if (ui->members[CONTEST_M_CONTESTANT]
+          && ui->members[CONTEST_M_CONTESTANT]->total > 0
+          && (m = ui->members[CONTEST_M_CONTESTANT]->members[0])) {
+        if ((r = default_clear_member_field(data->user_id, data->contest_id,
+                                            m->serial, deleted_ids[i],
+                                            cur_time, &f)) < 0)
+          goto cannot_change;
+        cloned_flag |= f;
+        default_get_user_info_2(data->user_id, data->contest_id, &u, &ui);
+      }
+    } else if (deleted_ids[i] >= USERLIST_NC_FIRST
+               && deleted_ids[i] < USERLIST_NC_LAST) {
+      if ((r = default_clear_user_info_field(data->user_id, data->contest_id,
+                                             deleted_ids[i], cur_time, &f)) < 0)
+        goto cannot_change;
+      cloned_flag |= f;
+    } else {
+      err("%s -> invalid field %d", logbuf, deleted_ids[i]);
+      send_reply(p, -ULS_ERR_BAD_FIELD);
+      return;
+    }
   }
 
-  if (data->field >= USERLIST_NM_FIRST && data->field < USERLIST_NM_LAST) {
-    if ((r = default_set_user_member_field(data->user_id, data->contest_id,
-                                           data->serial, data->field,
-                                           data->data, cur_time,
-                                           &cloned_flag)) < 0)
-      goto cannot_change;
-    if (r > 0 && data->contest_id > 0)
-      update_userlist_table(data->contest_id);
-    goto done;
+  for (i = 0; i < data->edited_num; i++) {
+    if (edited_ids[i] >= USERLIST_NM_FIRST
+        && edited_ids[i] < USERLIST_NM_LAST
+        && cnts->personal) {
+      if (!ui->members[CONTEST_M_CONTESTANT]
+          || !ui->members[CONTEST_M_CONTESTANT]->total) {
+        if ((r = default_new_member(data->user_id, data->contest_id,
+                                    CONTEST_M_CONTESTANT, cur_time, &f)) < 0)
+          goto cannot_change;
+        cloned_flag |= f;
+        default_get_user_info_2(data->user_id, data->contest_id, &u, &ui);
+      }
+      ASSERT(ui->members[CONTEST_M_CONTESTANT]);
+      ASSERT(ui->members[CONTEST_M_CONTESTANT]->total > 0);
+      m = ui->members[CONTEST_M_CONTESTANT]->members[0];
+      ASSERT(m);
+      if ((r = default_set_user_member_field(data->user_id, data->contest_id,
+                                             m->serial, edited_ids[i],
+                                             edited_strs[i], cur_time, &f)) < 0)
+        goto cannot_change;
+      cloned_flag |= f;
+      default_get_user_info_2(data->user_id, data->contest_id, &u, &ui);
+    } else if (edited_ids[i] >= USERLIST_NC_FIRST
+               && edited_ids[i] < USERLIST_NC_LAST) {
+      if ((r = default_set_user_info_field(data->user_id, data->contest_id,
+                                           edited_ids[i],
+                                           edited_strs[i], cur_time, &f)) < 0)
+        goto cannot_change;
+      cloned_flag |= f;
+    } else {
+      err("%s -> invalid field %d", logbuf, deleted_ids[i]);
+      send_reply(p, -ULS_ERR_BAD_FIELD);
+      return;
+    }
   }
 
  done:
   default_check_user_reg_data(data->user_id, data->contest_id);
   if (cloned_flag) reply_code = ULS_CLONED;
   send_reply(p, reply_code);
-  info("%s -> OK, %d", logbuf, r);
+  info("%s -> OK", logbuf);
   return;
-  */
 
  cannot_change:
+  default_check_user_reg_data(data->user_id, data->contest_id);
   err("%s -> the fields cannot be changed", logbuf);
   send_reply(p, -ULS_ERR_CANNOT_CHANGE);
   return;
