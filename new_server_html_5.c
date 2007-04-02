@@ -1192,6 +1192,15 @@ static const unsigned char *role_move_direction[] =
   0
 };
 
+static const int role_move_dir_code[] =
+{
+  CONTEST_M_RESERVE,
+  CONTEST_M_CONTESTANT,
+  CONTEST_M_ADVISOR,
+  CONTEST_M_COACH,
+  -1,
+};
+
 static void
 main_page_view_info(
 	FILE *fout,
@@ -1202,7 +1211,7 @@ main_page_view_info(
 {
   unsigned char ub[1024];
   unsigned char bb[1024];
-  int i, ff;
+  int i, ff, nr;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct userlist_user *u = 0;
   const unsigned char *s, *hh = 0, *cc = 0;
@@ -1374,7 +1383,7 @@ main_page_view_info(
         mmbound = cnts->members[rr]->max_count;
       */
       for (mm = 0; mm < mmbound; mm++) {
-        fprintf(fout, "<h3>%s %d", role_labels[rr], mm + 1);
+        fprintf(fout, "<h3>%s %d", gettext(role_labels[rr]), mm + 1);
         if (!u->read_only && !u->i.cnts_read_only) {
           fprintf(fout, " [%s%s</a>]",
                   ns_aref(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE, "role=%d&amp;member=%d", rr, mm), _("Edit"));
@@ -1385,7 +1394,11 @@ main_page_view_info(
                   ns_aref(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_REMOVE_MEMBER, "role=%d&amp;member=%d", rr, mm), _("Remove"));
         }
         if (!u->read_only && !u->i.cnts_read_only
-            && role_move_direction[rr]) {
+            && role_move_direction[rr]
+            && (nr = role_move_dir_code[rr]) >= 0
+            && cnts->members[nr] && cnts->members[nr]->max_count
+            && (!u->i.members[nr]
+                || u->i.members[nr]->total <= cnts->members[nr]->max_count)) {
           fprintf(fout, " [%s%s</a>]",
                   ns_aref(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_MOVE_MEMBER, "role=%d&amp;member=%d", rr, mm), gettext(role_move_direction[rr]));
         }
@@ -1478,6 +1491,7 @@ main_page(
   const unsigned char *status_info;
   const unsigned char *status_info_2;
   const unsigned char *title = "", *n = 0;
+  const struct userlist_user *u = 0;
 
   l10n_setlocale(phr->locale_id);
 
@@ -1611,6 +1625,12 @@ main_page(
             ns_url(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_REGISTER, 0),
             _("Register"));
   }
+
+  u = phr->session_extra->user_info;
+  if (u->read_only || u->i.cnts_read_only) {
+    fprintf(fout, "/ <b>%s</b>", _("READ-ONLY"));
+  }
+
   fprintf(fout, "</div>\n");
 
   if (main_page_action_handlers[phr->action])
@@ -1995,16 +2015,19 @@ edit_page(
   } else {
     goto redirect_back;
   }
+ 
+  l10n_setlocale(phr->locale_id);
 
   if (phr->action == NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE)
     s = _("Editing general info");
+  else if (phr->action == NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE)
+    s = _("Editing member info");
   else 
     s = _("Good!");
 
   n = phr->name;
   if (!n || !*n) n = phr->login;
 
-  l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
             "%s [%s, %s]", s, ARMOR(n), extra->contest_arm);
 
@@ -2048,10 +2071,14 @@ edit_page(
   fprintf(fout, "<b>%s</b>", gettext(status_info));
   fprintf(fout, "</div>\n");
 
+
   // main page goes here
   if (phr->action == NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE) {
+    fprintf(fout, "<br/><h2>%s %d</h2>\n",
+            gettext(role_labels[role]), member + 1);
     edit_member_form(fout, phr, cnts, m, role, member, 0, 0);
   } else {
+    fprintf(fout, "<br/><h2>%s</h2>\n", _("General information"));
     edit_general_form(fout, phr, cnts, u);
   }
 
@@ -2693,8 +2720,7 @@ move_member(
   }
 
   // member
-  if (cnts->disable_member_delete
-      || cgi_param_int(phr, "member", &member) < 0 || member < 0
+  if (cgi_param_int(phr, "member", &member) < 0 || member < 0
       || !u || !u->i.members[role] || member >= u->i.members[role]->total
       || !u->i.members[role]->members[member]
       || u->read_only || u->i.cnts_read_only) {
