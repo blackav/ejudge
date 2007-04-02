@@ -179,8 +179,14 @@ userlist_count_info_errors(
       role_err_count[rr + 1]++;
       err_count++;
     }
+    if (mmbound > cnts->members[rr]->max_count) {
+      role_err_count[rr + 1]++;
+      err_count++;
+    }
+    /*
     if (cnts->members[rr]->max_count < mmbound)
       mmbound = cnts->members[rr]->max_count;
+    */
     for (mm = 0; mm < mmbound; mm++) {
       if (!(m = ui->members[rr]->members[mm])) {
         role_err_count[rr + 1]++;
