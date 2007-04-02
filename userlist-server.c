@@ -568,6 +568,7 @@ link_client_state(struct client_state *p)
 #define default_set_user_xml(a, b, c, d, e) uldb_default->iface->set_user_xml(uldb_default->data, a, b, c, d, e)
 #define default_copy_user_info(a, b, c, d, e) uldb_default->iface->copy_user_info(uldb_default->data, a, b, c, d, e)
 #define default_check_user_reg_data(a, b) uldb_default->iface->check_user_reg_data(uldb_default->data, a, b)
+#define default_move_member(a, b, c, d, e, f) uldb_default->iface->move_member(uldb_default->data, a, b, c, d, e, f)
 
 static void
 update_all_user_contests(int user_id)
@@ -7417,7 +7418,7 @@ cmd_edit_field_seq(
       CONN_BAD("invalid string length");
       return;
     }
-    pktptr += edited_lens[i]; cur_size += edited_lens[i] + 1;
+    pktptr += edited_lens[i] + 1; cur_size += edited_lens[i] + 1;
   }
 
   if (cur_size != pkt_len) {
@@ -7425,7 +7426,7 @@ cmd_edit_field_seq(
     return;
   }
 
-  snprintf(logbuf, sizeof(logbuf), "EDIT_FIELD: %d, %d, %d, %d",
+  snprintf(logbuf, sizeof(logbuf), "EDIT_FIELD_SEQ: %d, %d, %d, %d",
            p->user_id, data->user_id, data->contest_id, data->serial);
 
   if (contests_get(data->contest_id, &cnts) < 0 || !cnts) {
@@ -7472,7 +7473,7 @@ cmd_edit_field_seq(
 
     for (i = 0; i < data->edited_num; i++) {
       if (edited_ids[i] < USERLIST_NM_FIRST
-          || edited_ids[i] <= USERLIST_NM_LAST) {
+          || edited_ids[i] >= USERLIST_NM_LAST) {
         err("%s -> invalid field %d", logbuf, edited_ids[i]);
         send_reply(p, -ULS_ERR_BAD_FIELD);
         return;
@@ -7564,6 +7565,59 @@ cmd_edit_field_seq(
   return;
 }
 
+static void
+cmd_move_member(struct client_state *p, int pkt_len,
+                struct userlist_pk_move_info *data)
+{
+  unsigned char logbuf[1024];
+  const struct userlist_user *u;
+  const struct contest_desc *cnts = 0;
+  int r, reply_code = ULS_OK, cloned_flag = 0;
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+
+  if (contests_get(data->contest_id, &cnts) < 0 || !cnts) {
+    err("%s -> invalid contest_id: %d", logbuf, data->contest_id);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "MOVE_MEMBER: %d, %d, %d, %d %d",
+           p->user_id, data->user_id, data->contest_id, data->serial,
+           data->new_role);
+
+  if (default_check_user(data->user_id) < 0) {
+    err("%s -> invalid user", logbuf);
+    send_reply(p, -ULS_ERR_BAD_UID);
+    return;
+  }
+  default_get_user_info_1(data->user_id, &u);
+
+  if (check_editing_caps(p->user_id, data->user_id, u, data->contest_id) < 0) {
+    err("%s -> no capability to edit user", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  r = default_move_member(data->user_id, data->contest_id, data->serial,
+                          data->new_role, cur_time, &cloned_flag);
+  if (r < 0) {
+    err("%s -> member removal failed", logbuf);
+    send_reply(p, -ULS_ERR_CANNOT_DELETE);
+    return;
+  }
+  default_check_user_reg_data(data->user_id, data->contest_id);
+  if (r == 1) {
+    update_userlist_table(data->contest_id);
+  }
+  if (cloned_flag) reply_code = ULS_CLONED;
+  send_reply(p, reply_code);
+  info("%s -> OK, %d", logbuf, reply_code);
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW]            cmd_register_new,
@@ -7638,6 +7692,7 @@ static void (*cmd_table[])() =
   [ULS_REGISTER_CONTEST_2] =    cmd_register_contest_2,
   [ULS_GET_COOKIE] =            cmd_get_cookie,
   [ULS_EDIT_FIELD_SEQ] =        cmd_edit_field_seq,
+  [ULS_MOVE_MEMBER] =           cmd_move_member,
 
   [ULS_LAST_CMD] 0
 };
