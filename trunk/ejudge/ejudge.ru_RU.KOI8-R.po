@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-02 00:15+0400\n"
-"PO-Revision-Date: 2007-04-02 15:27+0400\n"
+"POT-Creation-Date: 2007-04-02 16:35+0400\n"
+"PO-Revision-Date: 2007-04-02 16:36+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -441,13 +441,17 @@ msgstr ""
 msgid ""
 "<p><font color=\"red\">Maximal number for this contest is %d, but already %d "
 "are defined.</font></p>\n"
-msgstr "<p><font color=\"red\">Максимальное число участнико для этого турнира равно %d, но уже определено %d.</font></p>\n"
+msgstr ""
+"<p><font color=\"red\">Максимальное число участников для этого турнира равно "
+"%d, но уже определено %d.</font></p>\n"
 
 #, c-format
 msgid ""
 "<p><font color=\"red\">Minimal number for this contest is %d, but only %d "
 "are defined.</font></p>\n"
-msgstr "<p><font color=\"red\">Минимальное число членов команды в этом турнире %d, но определено только %d.</font></p>\n"
+msgstr ""
+"<p><font color=\"red\">Минимальное число членов команды в этом турнире %d, "
+"но определено только %d.</font></p>\n"
 
 #, c-format
 msgid "<p>Information is not available.</p>"
@@ -1166,6 +1170,9 @@ msgstr "Редактировать<br>личные данные"
 
 msgid "Editing general info"
 msgstr "Редактирование общей информации"
+
+msgid "Editing member info"
+msgstr "Редактирование участников"
 
 msgid "Elapsed time"
 msgstr "Прошедшее время"
@@ -2600,6 +2607,9 @@ msgstr "Ошибка протокола"
 
 msgid "Quit the system"
 msgstr "Выйти из системы"
+
+msgid "READ-ONLY"
+msgstr "ТОЛЬКО ПРОСМОТР"
 
 msgid "REGISTER!"
 msgstr "ЗАРЕГИСТРИРОВАТЬСЯ!"
