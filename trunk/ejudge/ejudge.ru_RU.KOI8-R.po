@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-03-31 09:00+0400\n"
-"PO-Revision-Date: 2007-03-31 09:01+0400\n"
+"POT-Creation-Date: 2007-04-02 00:15+0400\n"
+"PO-Revision-Date: 2007-04-02 15:27+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -439,11 +439,15 @@ msgstr ""
 
 #, c-format
 msgid ""
+"<p><font color=\"red\">Maximal number for this contest is %d, but already %d "
+"are defined.</font></p>\n"
+msgstr "<p><font color=\"red\">Максимальное число участнико для этого турнира равно %d, но уже определено %d.</font></p>\n"
+
+#, c-format
+msgid ""
 "<p><font color=\"red\">Minimal number for this contest is %d, but only %d "
 "are defined.</font></p>\n"
-msgstr ""
-"<p><font color=\"red\">Минимальное число членов команды в этом турнире %d, "
-"но определено только but %d.</font></p>\n"
+msgstr "<p><font color=\"red\">Минимальное число членов команды в этом турнире %d, но определено только %d.</font></p>\n"
 
 #, c-format
 msgid "<p>Information is not available.</p>"
@@ -1037,6 +1041,9 @@ msgstr "Дек"
 
 msgid "Default language"
 msgstr "Язык по умолчанию"
+
+msgid "Default value"
+msgstr "Значение по умолчанию"
 
 msgid "Del CHIEF EXAMINER"
 msgstr "Удалить роль ГЛАВНОГО ЭКЗАМЕНАТОРА"
@@ -2138,8 +2145,14 @@ msgstr "Новый пароль"
 msgid "New password (1)"
 msgstr "Новый пароль (1)"
 
+msgid "New password (1) is invalid"
+msgstr "Новый пароль (1) некорректен"
+
 msgid "New password (2)"
 msgstr "Новый пароль (2)"
+
+msgid "New password (2) is invalid"
+msgstr "Новый пароль (2) некорректен"
 
 msgid "New password contain invalid characters."
 msgstr "Новый пароль содержит недопустимые символы"
@@ -2307,6 +2320,9 @@ msgstr "Старый пароль"
 
 msgid "Old password contain invalid characters"
 msgstr "Старый пароль содержит недопустимые символы"
+
+msgid "Old password is invalid"
+msgstr "Старый пароль некорректен"
 
 msgid "Old password is too long"
 msgstr "Старый пароль имеет слишком большую длину"
@@ -2692,6 +2708,9 @@ msgstr "Регистрация не удалось по следующим причинам:"
 #, c-format
 msgid "Registration failed: %s"
 msgstr "Регистрация не удалась: %s"
+
+msgid "Registration for contest failed"
+msgstr "Регистрация на турнир завершилась с ошибкой"
 
 msgid "Registration incomplete"
 msgstr "Регистрационные данные неполны"
@@ -3624,6 +3643,10 @@ msgstr "Сервер базы пользователей недоступен"
 msgid "Users page"
 msgstr "Список участников"
 
+#, c-format
+msgid "Value of field \"%s\" is invalid.\n"
+msgstr "Значение поля \"%s\" некорректно.\n"
+
 msgid "Variant"
 msgstr "Вариант"
 
@@ -3672,17 +3695,38 @@ msgstr "Посмотреть команды"
 msgid "View the problem statement and send a submission"
 msgstr "Посмотреть условие задачи и отправить решение"
 
+msgid "Viewing advisors"
+msgstr "Просмотр руководителей"
+
 msgid "Viewing audit log for"
 msgstr "Просмотр журнала аудита для"
 
 msgid "Viewing clar"
 msgstr "Просмотр посылки"
 
+msgid "Viewing coaches"
+msgstr "Просмотр тренеров"
+
+msgid "Viewing contestants"
+msgstr "Просмотр участников"
+
+msgid "Viewing general info"
+msgstr "Просмотр общей информации"
+
+msgid "Viewing guests"
+msgstr "Просмотр гостей"
+
 msgid "Viewing report"
 msgstr "Просмотр протокола"
 
+msgid "Viewing reserves"
+msgstr "Просмотр запасных"
+
 msgid "Viewing run"
 msgstr "Просмотр посылки"
+
+msgid "Viewing settings"
+msgstr "Просмотр настроек"
 
 msgid "Viewing user report"
 msgstr "Просмотр пользовательского протокола"

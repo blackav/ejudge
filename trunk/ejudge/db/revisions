@@ -2257,3 +2257,10 @@ userlist-server.c 4055 0 20257541
 userlist_proto.c 4055 0 174880
 userlist_clnt/edit_field_seq.c 4054 0 234042
 userlist-server.c 4058 0 20438977
+new-server.h 4061 0 1689556
+uldb_plugin.h 4061 0 647013
+userlist_clnt.h 4061 0 974305
+userlist-server.c 4061 0 20581100
+new_server_html_5.c 4061 0 8390601
+uldb_plugin_xml.c 4061 0 6302804
+userlist_clnt/move_member.c 4060 0 128157
