@@ -96,6 +96,7 @@ enum
     ULS_REGISTER_CONTEST_2,
     ULS_GET_COOKIE,
     ULS_EDIT_FIELD_SEQ,
+    ULS_MOVE_MEMBER,
 
     ULS_LAST_CMD
   };
@@ -258,6 +259,15 @@ struct userlist_pk_delete_info
   int   user_id;
   int   contest_id;
   int   serial;
+};
+
+struct userlist_pk_move_info
+{
+  short request_id;
+  int   user_id;
+  int   contest_id;
+  int   serial;
+  int   new_role;
 };
 
 struct userlist_pk_list_users

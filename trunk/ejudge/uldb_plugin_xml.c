@@ -109,6 +109,7 @@ static int set_user_xml_func(void *, int, int, struct userlist_user *,
 static int copy_user_info_func(void *, int, int, int, time_t,
                                const struct contest_desc *);
 static int check_user_reg_data_func(void *, int, int);
+static int move_member_func(void *, int, int, int, int, time_t, int *);
 
 struct uldb_plugin_iface uldb_plugin_xml =
 {
@@ -178,6 +179,7 @@ struct uldb_plugin_iface uldb_plugin_xml =
   set_user_xml_func,
   copy_user_info_func,
   check_user_reg_data_func,
+  move_member_func,
 };
 
 struct uldb_xml_state
@@ -2585,6 +2587,109 @@ check_user_reg_data_func(void *data, int user_id, int contest_id)
     state->flush_interval /= 2;
     return 1;
   }
+  return 0;
+}
+
+static int
+move_member_func(
+	void *data,
+        int user_id,
+        int contest_id,
+        int serial,
+        int new_role,
+        time_t cur_time,
+        int *p_cloned_flag)
+{
+  struct uldb_xml_state *state = (struct uldb_xml_state*) data;
+  struct userlist_list *ul = state->userlist;
+  struct userlist_user *u;
+  struct userlist_user_info *ui;
+  struct userlist_cntsinfo *ci;
+  struct userlist_members *mm;
+  struct userlist_member *m;
+  int i, role, num = -1;
+  struct xml_tree *link_node = 0;
+
+  if (user_id <= 0 || user_id >= ul->user_map_size
+      || !(u = ul->user_map[user_id])) {
+    return -1;
+  }
+  if (cur_time <= 0) cur_time = time(0);
+
+  if (contest_id > 0) {
+    ci = userlist_clone_user_info(u, contest_id, &ul->member_serial, cur_time,
+                                  p_cloned_flag);
+    ui = &ci->i;
+    link_node = &ci->b;
+  } else {
+    ui = &u->i;
+    link_node = &u->b;
+  }
+
+  /*
+    as a result of cloning a new member may be created.
+    its serial is storied in copied_from field.
+   */
+
+  // find a member by serial
+  for (role = 0; role < USERLIST_MB_LAST; role++) {
+    if (!(mm = ui->members[role])) continue;
+    for (num = 0; num < mm->total; num++) {
+      m = mm->members[num];
+      if (m->serial == serial || m->copied_from == serial) break;
+    }
+    if (num < mm->total) break;
+  }
+  if (role == USERLIST_MB_LAST) return -1;
+
+  if (role < 0 || role >= USERLIST_MB_LAST) return -1;
+  if (!(mm = ui->members[role])) return -1;
+  if (num < 0 || num >= mm->total) return -1;
+  m = mm->members[num];
+  if (m->serial != serial && m->copied_from != serial) return -1;
+  if (role == new_role) return 0;
+  if (new_role < 0 || new_role >= CONTEST_LAST_MEMBER) return -1;
+
+  xml_unlink_node(&m->b);
+  for (i = num + 1; i < mm->total; i++)
+    mm->members[i - 1] = mm->members[i];
+  mm->total--;
+  if (!mm->total) {
+    xml_unlink_node(&mm->b);
+    ui->members[role] = 0;
+    userlist_free(&mm->b);
+  }
+
+  if (!ui->members[new_role]) {
+    mm = (struct userlist_members*) userlist_node_alloc(USERLIST_T_CONTESTANTS + new_role);
+    mm->role = new_role;
+    xml_link_node_last(link_node, &mm->b);
+    ui->members[new_role] = mm;
+  }
+  mm = ui->members[new_role];
+  xml_link_node_last(&mm->b, &m->b);
+
+  if (mm->total >= mm->allocd) {
+    if (!mm->allocd) mm->allocd = 2;
+    mm->allocd *= 2;
+    XREALLOC(mm->members, mm->allocd);
+  }
+  mm->members[mm->total++] = m;
+
+  // clean copied_from
+  /*
+  for (role = 0; role < USERLIST_MB_LAST; role++) {
+    if (!(mm = ui->members[role])) continue;
+    for (num = 0; num < mm->total; num++) {
+      m = mm->members[num];
+      m->copied_from = 0;
+    }
+  }
+  */
+
+  ui->last_change_time = cur_time;
+  state->dirty = 1;
+  state->flush_interval /= 2;
   return 0;
 }
 

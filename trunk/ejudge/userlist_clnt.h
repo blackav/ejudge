@@ -181,6 +181,15 @@ userlist_clnt_delete_info(struct userlist_clnt *clnt, int cmd,
                           int user_id, int contest_id, int serial);
 
 int
+userlist_clnt_move_member(
+	struct userlist_clnt *clnt,
+        int cmd,
+        int user_id,
+        int contest_id,
+        int serial,
+        int new_role);
+
+int
 userlist_clnt_pass_fd(struct userlist_clnt *clnt,
                       int fds_num,
                       int *fds);

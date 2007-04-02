@@ -38,6 +38,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <time.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -462,7 +463,7 @@ create_autoassigned_account_page(
                 "to heavy server load rather than to an invalid\n"
                 "e-mail address. You should try to register later.\n"));
     } else if (reg_ul_error) {
-      fprintf(fout, "%s.", gettext(userlist_strerror(-reg_ul_error)));
+      fprintf(fout, "%s.", gettext(userlist_strerror(reg_ul_error)));
     } else if (reg_error) {
       fprintf(fout, "%s.", ns_strerror_2(reg_error));
     }
@@ -605,7 +606,7 @@ create_account_page(
                 "to heavy server load rather than to an invalid\n"
                 "e-mail address. You should try to register later.\n"));
     } else if (reg_ul_error) {
-      fprintf(fout, "%s.", gettext(userlist_strerror(-reg_ul_error)));
+      fprintf(fout, "%s.", gettext(userlist_strerror(reg_ul_error)));
     } else if (reg_error) {
       fprintf(fout, "%s.", ns_strerror_2(reg_error));
     }
@@ -927,7 +928,11 @@ change_locale(FILE *fout, struct http_request_info *phr)
   // SID, contest_id, login are passed "as is"
   // next_action is passed as action
   if (phr->session_id) {
-    // FIXME: update the session
+    // FIXME: report errors?
+    if (ns_open_ul_connection(phr->fw_state) >= 0) {
+      userlist_clnt_set_cookie(ul_conn, ULS_SET_COOKIE_LOCALE,
+                               phr->session_id, phr->locale_id);
+    }
 
     fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s?SID=%016llx", EJUDGE_CHARSET, phr->self_url,
             phr->session_id);
@@ -984,7 +989,8 @@ menu_item(FILE *fout, struct http_request_info *phr,
 static void
 info_table_row(FILE *fout, const unsigned char *s1, const unsigned char *s2,
                int is_empty, int is_mandatory, const unsigned char *valid_chars,
-               struct html_armor_buffer *pb, int is_href)
+               struct html_armor_buffer *pb, int is_href,
+               const unsigned char *login)
 {
   const unsigned char *red_beg = "", *red_end = "", *s;
   unsigned char invstr[512];
@@ -1010,7 +1016,9 @@ info_table_row(FILE *fout, const unsigned char *s1, const unsigned char *s2,
     fprintf(fout, "<tt>%s</tt>", html_armor_buf(pb, s2));
   }
   fprintf(fout, "</td><td class=\"borderless\">");
-  if ((is_empty || !s2 || !*s2) && is_mandatory) {
+  if ((is_empty || !s2 || !*s2) && login && *login) {
+    fprintf(fout, "<i>%s:</i> <tt>%s</tt>", _("Default value"), ARMOR(login));
+  } else if ((is_empty || !s2 || !*s2) && is_mandatory) {
     fprintf(fout, "%s<i>%s</i>%s", red_beg, _("Not set"), red_end);
   } else if (s2 && valid_chars && strres) {
     fprintf(fout, "%s<i>%s:</i> <tt>%s</tt>%s",
@@ -1275,18 +1283,18 @@ main_page_view_info(
     if (u && u->login && *u->login) {
       s = u->login;
     }
-    info_table_row(fout,  _("Login"), s, 0, 0, 0, &ab, 0);
+    info_table_row(fout,  _("Login"), s, 0, 0, 0, &ab, 0, 0);
     s = 0;
     if (u && u->email && *u->email) {
       s = u->email;
     }
-    info_table_row(fout,  _("E-mail"), s, 0, 0, 0, &ab, 0);
+    info_table_row(fout,  _("E-mail"), s, 0, 0, 0, &ab, 0, 0);
     if (!cnts->disable_name) {
       s = 0;
       if (u && u->i.name && *u->i.name) {
         s = u->i.name;
       }
-      info_table_row(fout, cnts->personal?_("User name (for standings)"):_("Team name"), s, 0, 0, name_accept_chars, &ab, 0);
+      info_table_row(fout, cnts->personal?_("User name (for standings)"):_("Team name"), s, 0, 0, name_accept_chars, &ab, 0, u->login);
     }
     for (i = 0; (ff = contest_fields_order[i]); i++) {
       if (!cnts->fields[ff]) continue;
@@ -1297,24 +1305,34 @@ main_page_view_info(
                      userlist_is_empty_user_info_field(&u->i, userlist_contest_field_ids[ff]),
                      cnts->fields[ff]->mandatory,
                      userlist_get_contest_accepting_chars(ff),
-                     &ab, contest_field_desc[ff].is_href);
+                     &ab, contest_field_desc[ff].is_href, 0);
     }
     if (cnts->personal && cnts->members[(rr = CONTEST_M_CONTESTANT)]
-        && cnts->members[rr]->max_count > 0
-        && u->i.members[rr]
-        && u->i.members[rr]->total > 0
-        && (m = u->i.members[rr]->members[0])) {
+        && cnts->members[rr]->max_count > 0) {
 
-      for (i = 0; (ff = member_fields_order[i]); i++) {
-        if (!cnts->members[rr]->fields[ff]) continue;
-        userlist_get_member_field_str(fbuf, sizeof(fbuf), m,
-                                      userlist_member_field_ids[ff], 0);
-        info_table_row(fout, gettext(member_field_desc[ff].description),
-                       fbuf,
-                       userlist_is_empty_member_field(m, userlist_member_field_ids[ff]),
-                       cnts->members[rr]->fields[ff]->mandatory,
-                       userlist_get_member_accepting_chars(ff),
-                       &ab, member_field_desc[ff].is_href);
+      if (u->i.members[rr] && u->i.members[rr]->total > 0
+          && (m = u->i.members[rr]->members[0])) {
+        for (i = 0; (ff = member_fields_order[i]); i++) {
+          if (!cnts->members[rr]->fields[ff]) continue;
+          userlist_get_member_field_str(fbuf, sizeof(fbuf), m,
+                                        userlist_member_field_ids[ff], 0);
+          info_table_row(fout, gettext(member_field_desc[ff].description),
+                         fbuf,
+                         userlist_is_empty_member_field(m, userlist_member_field_ids[ff]),
+                         cnts->members[rr]->fields[ff]->mandatory,
+                         userlist_get_member_accepting_chars(ff),
+                         &ab, member_field_desc[ff].is_href, 0);
+        }
+      } else {
+        fbuf[0] = 0;
+        for (i = 0; (ff = member_fields_order[i]); i++) {
+          if (!cnts->members[rr]->fields[ff]) continue;
+          info_table_row(fout, gettext(member_field_desc[ff].description),
+                         fbuf, 1,
+                         cnts->members[rr]->fields[ff]->mandatory,
+                         userlist_get_member_accepting_chars(ff),
+                         &ab, member_field_desc[ff].is_href, 0);
+        }
       }
     }
     fprintf(fout, "</table>\n");
@@ -1340,12 +1358,21 @@ main_page_view_info(
                 cnts->members[rr]->min_count,
                 mmbound);
       }
+      if (mmbound > cnts->members[rr]->max_count) {
+        fprintf(fout, _("<p><font color=\"red\">Maximal number for this contest is %d, but already %d are defined.</font></p>\n"),
+                cnts->members[rr]->max_count,
+                mmbound);
+      }
 
-      fprintf(fout, _("<p>You may define up to %d members.</p>"),
-              cnts->members[rr]->max_count);
+      if (mmbound < cnts->members[rr]->max_count) {
+        fprintf(fout, _("<p>You may define up to %d members.</p>"),
+                cnts->members[rr]->max_count);
+      }
 
+      /*
       if (cnts->members[rr]->max_count < mmbound)
         mmbound = cnts->members[rr]->max_count;
+      */
       for (mm = 0; mm < mmbound; mm++) {
         fprintf(fout, "<h3>%s %d", role_labels[rr], mm + 1);
         if (!u->read_only && !u->i.cnts_read_only) {
@@ -1375,7 +1402,7 @@ main_page_view_info(
                          userlist_is_empty_member_field(m, userlist_member_field_ids[ff]),
                          cnts->members[rr]->fields[ff]->mandatory,
                          userlist_get_member_accepting_chars(ff),
-                         &ab, member_field_desc[ff].is_href);
+                         &ab, member_field_desc[ff].is_href, 0);
         }
 
         fprintf(fout, "</table>\n");
@@ -1399,6 +1426,35 @@ main_page_view_settings(
         struct contest_extra *extra,
         time_t cur_time)
 {
+  /* change the password */
+  fprintf(fout, "<%s>%s</%s>\n", cnts->register_head_style,
+          _("Change password"), cnts->register_head_style);
+  html_start_form(fout, 1, phr->self_url, "");
+  html_hidden(fout, "SID", "%016llx", phr->session_id);
+
+  fprintf(fout, "<table class=\"borderless\">\n"
+          "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"oldpasswd\" size=\"16\"/></td></tr>\n"
+          "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"newpasswd1\" size=\"16\"/></td></tr>\n"
+          "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"newpasswd2\" size=\"16\"/></td></tr>\n"
+          "<tr><td class=\"borderless\" colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr>\n"
+          "</table></form>",
+          _("Old password"),
+          _("New password"), _("Retype new password"),
+          NEW_SRV_ACTION_CHANGE_PASSWORD, _("Change!"));
+
+#if CONF_HAS_LIBINTL - 0 == 1
+  if (!cnts->disable_locale_change) {
+    fprintf(fout, "<%s>%s</%s>\n", cnts->register_head_style,
+            _("Change language"), cnts->register_head_style);
+    html_start_form(fout, 1, phr->self_url, "");
+    html_hidden(fout, "SID", "%016llx", phr->session_id);
+    html_hidden(fout, "next_action", "%d", NEW_SRV_ACTION_VIEW_SETTINGS);
+    fprintf(fout, "<table class=\"borderless\"><tr><td class=\"borderless\">%s</td><td class=\"borderless\">", _("Change language"));
+    l10n_html_locale_select(fout, phr->locale_id);
+    fprintf(fout, "</td><td class=\"borderless\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr></table></form>\n",
+            NEW_SRV_ACTION_CHANGE_LANGUAGE, _("Change"));
+    }
+#endif /* CONF_HAS_LIBINTL */
 }
 
 static reg_action_handler_func_t main_page_action_handlers[NEW_SRV_ACTION_LAST]=
@@ -1421,11 +1477,46 @@ main_page(
   const unsigned char *status_style;
   const unsigned char *status_info;
   const unsigned char *status_info_2;
+  const unsigned char *title = "", *n = 0;
 
   l10n_setlocale(phr->locale_id);
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_REG_VIEW_CONTESTANTS:
+    title = _("Viewing contestants");
+    break;
+
+  case NEW_SRV_ACTION_REG_VIEW_RESERVES:
+    title = _("Viewing reserves");
+    break;
+
+  case NEW_SRV_ACTION_REG_VIEW_COACHES:
+    title = _("Viewing coaches");
+    break;
+
+  case NEW_SRV_ACTION_REG_VIEW_ADVISORS:
+    title = _("Viewing advisors");
+    break;
+
+  case NEW_SRV_ACTION_REG_VIEW_GUESTS:
+    title = _("Viewing guests");
+    break;
+
+  case NEW_SRV_ACTION_VIEW_SETTINGS:
+    title = _("Viewing settings");
+    break;
+
+  case NEW_SRV_ACTION_REG_VIEW_GENERAL:
+  default:
+    title = _("Viewing general info");
+    break;
+  }
+
+  n = phr->name;
+  if (!n || !*n) n = phr->login;
+
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s]", _("Good!"),
-            extra->contest_arm);
+            "%s [%s, %s]", title, ARMOR(n), extra->contest_arm);
 
   shown_items = 0;
   fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>");
@@ -1512,7 +1603,14 @@ main_page(
     }
   }
   fprintf(fout, "<div class=\"%s\">\n", status_style);
-  fprintf(fout, "<b>%s%s</b>", gettext(status_info), gettext(status_info_2));
+  if (status_info && *status_info) status_info = gettext(status_info);
+  if (status_info_2 && *status_info_2) status_info_2 = gettext(status_info_2);
+  fprintf(fout, "<b>%s%s</b>", status_info, status_info_2);
+  if (phr->reg_status < 0) {
+    fprintf(fout, " <b><a href=\"%s\" class=\"menu\">[%s]</a></b>",
+            ns_url(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_REGISTER, 0),
+            _("Register"));
+  }
   fprintf(fout, "</div>\n");
 
   if (main_page_action_handlers[phr->action])
@@ -1842,7 +1940,8 @@ edit_member_form(
       break;
     }
 
-    if (!comment) comment = "&nbsp;";
+    if (!comment || !*comment) comment = "&nbsp;";
+    else comment = gettext(comment);
     fprintf(fout, "<td class=\"borderless\" valign=\"top\"><font color=\"red\"><i>%s</i></font></td>", comment);
     fprintf(fout, "</tr>\n");
   }
@@ -2081,6 +2180,234 @@ assemble_programming_languages(
   return buf;
 }
 
+static unsigned char *
+get_member_field(
+	unsigned char *buf,
+        size_t size,
+	struct http_request_info *phr,
+        int field,
+        const unsigned char *var_prefix,
+        FILE *log_f)
+{
+  unsigned char varname[128];
+  int r, n, dd, mm, yy;
+  const unsigned char *v;
+  struct tm stm, *ptm;
+  time_t ttm;
+
+  if (!var_prefix) var_prefix = "";
+
+  switch (field) {
+  case CONTEST_MF_STATUS:
+    snprintf(varname, sizeof(varname), "%sparam_%d", var_prefix, field);
+    if ((r = ns_cgi_param(phr, varname, &v)) < 0)
+      goto non_printable;
+    else if (!r || !v)
+      v = "";
+
+    r = 0;
+    if (*v) {
+      if (sscanf(v, "%d%n", &r, &n) != 1 || v[n] || r < 0
+          || r >= USERLIST_ST_LAST)
+        goto invalid_field;
+    }
+    buf[0] = 0;
+    if (r > 0) snprintf(buf, size, "%d", r);
+    break;
+
+  case CONTEST_MF_GRADE:
+    snprintf(varname, sizeof(varname), "%sparam_%d", var_prefix, field);
+    if ((r = ns_cgi_param(phr, varname, &v)) < 0)
+      goto non_printable;
+    else if (!r || !v)
+      v = "";
+
+    r = 0;
+    if (*v) {
+      if (sscanf(v, "%d%n", &r, &n) != 1 || v[n] || r < 0 || r >= 100000)
+        goto invalid_field;
+    }
+    buf[0] = 0;
+    if (r > 0) snprintf(buf, size, "%d", r);
+    break;
+
+  case CONTEST_MF_BIRTH_DATE:
+  case CONTEST_MF_ENTRY_DATE:
+  case CONTEST_MF_GRADUATION_DATE:
+    // <prefix>day_<field>, <prefix>month_<field>, <prefix>year_<field>
+
+    snprintf(varname, sizeof(varname), "%sday_%d", var_prefix, field);
+    if ((r = ns_cgi_param(phr, varname, &v)) < 0)
+      goto non_printable;
+    else if (!r || !v)
+      v = "";
+    dd = 0;
+    if (*v) {
+      if (sscanf(v, "%d%n", &dd, &n) != 1 || v[n] || dd < 0 || dd >= 32)
+        goto invalid_field;
+    }
+
+    snprintf(varname, sizeof(varname), "%smonth_%d", var_prefix, field);
+    if ((r = ns_cgi_param(phr, varname, &v)) < 0)
+      goto non_printable;
+    else if (!r || !v)
+      v = "";
+    mm = 0;
+    if (*v) {
+      if (sscanf(v, "%d%n", &mm, &n) != 1 || v[n] || mm < 0 || mm > 12)
+        goto invalid_field;
+    }
+
+    snprintf(varname, sizeof(varname), "%syear_%d", var_prefix, field);
+    if ((r = ns_cgi_param(phr, varname, &v)) < 0)
+      goto non_printable;
+    else if (!r || !v)
+      v = "";
+    yy = 0;
+    if (*v) {
+      if (sscanf(v, "%d%n", &yy, &n) != 1 || v[n] || yy < 0 || yy >= 10000)
+        goto invalid_field;
+    }
+
+    if ((!dd && !mm && !yy) || (dd == 1 && mm == 1 && yy == 1970)) {
+      buf[0] = 0;
+      return buf;
+    }
+    if (!dd || !mm || yy < 1970) goto invalid_field;
+
+    memset(&stm, 0, sizeof(stm));
+    stm.tm_mday = dd;
+    stm.tm_mon = mm - 1;
+    stm.tm_year = yy - 1900;
+    stm.tm_isdst = -1;
+    if ((ttm = mktime(&stm)) == (time_t) -1) goto invalid_field;
+    if (!ttm) {
+      buf[0] = 0;
+      return buf;
+    }
+    ptm = localtime(&ttm);
+    snprintf(buf, size, "%04d/%02d/%02d", ptm->tm_year + 1900,
+             ptm->tm_mon + 1, ptm->tm_mday);
+    fprintf(stderr, ">>%s<<\n", buf);
+    break;
+
+  default:
+    snprintf(varname, sizeof(varname), "%sparam_%d", var_prefix, field);
+  if ((r = ns_cgi_param(phr, varname, &v)) < 0) {
+      goto non_printable;
+    } else if (!r || !v) {
+      v = "";
+    }
+    preprocess_string(buf, size, v);
+    break;
+  }
+
+  return buf;
+
+ non_printable:
+  fprintf(log_f, _("Field \"%s\" contains non-printable characters.\n"),
+          member_field_desc[field].description);
+  return 0;
+
+ invalid_field:
+  fprintf(log_f, _("Value of field \"%s\" is invalid.\n"),
+          member_field_desc[field].description);
+  return 0;
+}
+
+static void
+submit_member_editing(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+  FILE *log_f = 0;
+  char *log_t = 0;
+  size_t log_z = 0;
+  int r, ff;
+  int role = 0, member = 0;
+  const struct userlist_user *u = phr->session_extra->user_info;
+  const struct userlist_member *m = 0;
+  unsigned char vbuf[1024];
+  int deleted_ids[USERLIST_NM_LAST], edited_ids[USERLIST_NM_LAST];
+  unsigned char *edited_strs[USERLIST_NM_LAST];
+  int deleted_num = 0, edited_num = 0;
+
+  if (cnts->personal) {
+    // they kidding us...
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
+    return;
+  }
+
+  // role, member, param_%d
+  if (cgi_param_int(phr, "role", &role) < 0
+      || role < CONTEST_M_CONTESTANT || role >= CONTEST_LAST_MEMBER
+      || !cnts->members[role] || cnts->members[role]->max_count <= 0) {
+    // invalid role, or such role is not enabled on this contest...
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
+    return;
+  }
+
+  if (cgi_param_int(phr, "member", &member) < 0
+      || member < 0 || !u || !u->i.members[role]
+      || member >= u->i.members[role]->total
+      || !u->i.members[role]->members[member]
+      || u->read_only || u->i.cnts_read_only)
+    goto done;
+
+  m = u->i.members[role]->members[member];
+  log_f = open_memstream(&log_t, &log_z);
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    fprintf(log_f, "%s.\n", _("User database server is down"));
+    goto done;
+  }
+
+  for (ff = CONTEST_MF_FIRSTNAME; ff < CONTEST_LAST_MEMBER_FIELD; ff++) {
+    if (!cnts->members[CONTEST_M_CONTESTANT]->fields[ff]) continue;
+
+    if (!get_member_field(vbuf, sizeof(vbuf), phr, ff, "", log_f))
+      goto done;
+
+    if (vbuf[0]) {
+      edited_ids[edited_num] = userlist_member_field_ids[ff];
+      edited_strs[edited_num] = alloca(strlen(vbuf) + 1);
+      strcpy(edited_strs[edited_num], vbuf);
+      edited_num++;
+    } else {
+      deleted_ids[deleted_num++] = userlist_member_field_ids[ff];
+    }
+  }
+
+  r = userlist_clnt_edit_field_seq(ul_conn, ULS_EDIT_FIELD_SEQ,
+                                   phr->user_id, phr->contest_id, m->serial,
+                                   deleted_num, edited_num, deleted_ids,
+                                   edited_ids,
+                                   (const unsigned char**) edited_strs);
+  if (r < 0) {
+    fprintf(log_f, "%s.\n", userlist_strerror(-r));
+    goto done;
+  }
+
+  // force reloading the user info
+  userlist_free(&phr->session_extra->user_info->b);
+  phr->session_extra->user_info = 0;
+
+ done:;
+  if (log_f) fclose(log_f);
+  log_f = 0;
+
+  if (log_t && *log_t) {
+    action_error_page(fout, phr, cnts, extra, log_t);
+  } else {
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_CONTESTANTS + role - CONTEST_M_CONTESTANT, 0);
+  }
+
+  xfree(log_t);
+}
+
 static void
 submit_general_editing(
 	FILE *fout,
@@ -2089,13 +2416,16 @@ submit_general_editing(
         struct contest_extra *extra,
         time_t cur_time)
 {
-  FILE *log_f;
+  FILE *log_f = 0;
   char *log_t = 0;
   size_t log_z = 0;
   int r, ff;
   const unsigned char *v = 0;
   unsigned char varname[128];
   unsigned char vbuf[1024];
+  int deleted_ids[USERLIST_NM_LAST], edited_ids[USERLIST_NM_LAST];
+  unsigned char *edited_strs[USERLIST_NM_LAST];
+  int deleted_num = 0, edited_num = 0;
 
   log_f = open_memstream(&log_t, &log_z);
 
@@ -2103,8 +2433,6 @@ submit_general_editing(
     fprintf(log_f, "%s.\n", _("User database server is down"));
     goto done;
   }
-
-  /* FIXME: pack all updates into a single packet... */
 
   // name, param_%d
   // for personal contests, also set the first member
@@ -2118,16 +2446,13 @@ submit_general_editing(
       v = "";
     }
     preprocess_string(vbuf, sizeof(vbuf), v);
-    if (vbuf[0])
-      r = userlist_clnt_edit_field(ul_conn, phr->user_id,
-                                   phr->contest_id, 0,
-                                   USERLIST_NC_NAME, vbuf);
-    else
-      r = userlist_clnt_delete_field(ul_conn, phr->user_id, phr->contest_id, 0,
-                                     USERLIST_NC_NAME);
-    if (r < 0) {
-      fprintf(log_f, "%s.\n", userlist_strerror(-r));
-      goto done;
+    if (vbuf[0]) {
+      edited_ids[edited_num] = USERLIST_NC_NAME;
+      edited_strs[edited_num] = alloca(strlen(vbuf) + 1);
+      strcpy(edited_strs[edited_num], vbuf);
+      edited_num++;
+    } else {
+      deleted_ids[deleted_num++] = USERLIST_NC_NAME;
     }
   }
 
@@ -2149,17 +2474,42 @@ submit_general_editing(
       preprocess_string(vbuf, sizeof(vbuf), v);
     }
 
-    if (vbuf[0])
-      r = userlist_clnt_edit_field(ul_conn, phr->user_id,
-                                   phr->contest_id, 0,
-                                   userlist_contest_field_ids[ff], vbuf);
-    else
-      r = userlist_clnt_delete_field(ul_conn, phr->user_id, phr->contest_id, 0,
-                                     userlist_contest_field_ids[ff]);
-    if (r < 0) {
-      fprintf(log_f, "%s.\n", userlist_strerror(-r));
-      goto done;
+    if (vbuf[0]) {
+      edited_ids[edited_num] = userlist_contest_field_ids[ff];
+      edited_strs[edited_num] = alloca(strlen(vbuf) + 1);
+      strcpy(edited_strs[edited_num], vbuf);
+      edited_num++;
+    } else {
+      deleted_ids[deleted_num++] = userlist_contest_field_ids[ff];
     }
+  }
+
+  if (cnts->personal && cnts->members[CONTEST_M_CONTESTANT]) {
+    for (ff = CONTEST_MF_FIRSTNAME; ff < CONTEST_LAST_MEMBER_FIELD; ff++) {
+      if (!cnts->members[CONTEST_M_CONTESTANT]->fields[ff]) continue;
+
+      if (!get_member_field(vbuf, sizeof(vbuf), phr, ff, "m", log_f))
+        goto done;
+
+      if (vbuf[0]) {
+        edited_ids[edited_num] = userlist_member_field_ids[ff];
+        edited_strs[edited_num] = alloca(strlen(vbuf) + 1);
+        strcpy(edited_strs[edited_num], vbuf);
+        edited_num++;
+      } else {
+        deleted_ids[deleted_num++] = userlist_member_field_ids[ff];
+      }
+    }
+  }
+
+  r = userlist_clnt_edit_field_seq(ul_conn, ULS_EDIT_FIELD_SEQ,
+                                   phr->user_id, phr->contest_id, 0,
+                                   deleted_num, edited_num, deleted_ids,
+                                   edited_ids,
+                                   (const unsigned char**) edited_strs);
+  if (r < 0) {
+    fprintf(log_f, "%s.\n", userlist_strerror(-r));
+    goto done;
   }
 
   // force reloading the user info
@@ -2167,7 +2517,368 @@ submit_general_editing(
   phr->session_extra->user_info = 0;
 
  done:;
-  fclose(log_f); log_f = 0;
+  if (log_f) fclose(log_f);
+  log_f = 0;
+
+  if (log_t && *log_t) {
+    action_error_page(fout, phr, cnts, extra, log_t);
+  } else {
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
+  }
+
+  xfree(log_t);
+}
+
+static void
+add_member(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+  FILE *log_f = 0;
+  char *log_t = 0;
+  size_t log_z = 0;
+  int r, role = 0;
+  const struct userlist_user *u = phr->session_extra->user_info;
+
+  if (cnts->personal) {
+    // they kidding us...
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
+    return;
+  }
+
+  // role
+  if (cgi_param_int(phr, "role", &role) < 0
+      || role < CONTEST_M_CONTESTANT || role >= CONTEST_LAST_MEMBER
+      || !cnts->members[role] || cnts->members[role]->max_count <= 0) {
+    // invalid role, or such role is not enabled on this contest...
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
+    return;
+  }
+
+  if (u && u->i.members[role]
+      && u->i.members[role]->total >= cnts->members[role]->max_count
+      && (u->read_only || u->i.cnts_read_only))
+    goto done;
+
+  log_f = open_memstream(&log_t, &log_z);
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    fprintf(log_f, "%s.\n", _("User database server is down"));
+    goto done;
+  }
+
+  r = userlist_clnt_create_member(ul_conn, phr->user_id, phr->contest_id, role);
+  if (r < 0) {
+    fprintf(log_f, "%s.\n", userlist_strerror(-r));
+    goto done;
+  }
+
+  // force reloading the user info
+  userlist_free(&phr->session_extra->user_info->b);
+  phr->session_extra->user_info = 0;
+
+ done:;
+  if (log_f) fclose(log_f);
+  log_f = 0;
+
+  if (log_t && *log_t) {
+    action_error_page(fout, phr, cnts, extra, log_t);
+  } else {
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_CONTESTANTS + role - CONTEST_M_CONTESTANT, 0);
+  }
+
+  xfree(log_t);
+}
+
+static void
+remove_member(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+  FILE *log_f = 0;
+  char *log_t = 0;
+  size_t log_z = 0;
+  int r, role = 0, member = 0;
+  const struct userlist_user *u = phr->session_extra->user_info;
+  const struct userlist_member *m = 0;
+
+  if (cnts->personal) {
+    // they kidding us...
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
+    return;
+  }
+
+  // role
+  if (cgi_param_int(phr, "role", &role) < 0
+      || role < CONTEST_M_CONTESTANT || role >= CONTEST_LAST_MEMBER
+      || !cnts->members[role] || cnts->members[role]->max_count <= 0) {
+    // invalid role, or such role is not enabled on this contest...
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
+    return;
+  }
+
+  // member
+  if (cnts->disable_member_delete
+      || cgi_param_int(phr, "member", &member) < 0 || member < 0
+      || !u || !u->i.members[role] || member >= u->i.members[role]->total
+      || !u->i.members[role]->members[member]
+      || u->read_only || u->i.cnts_read_only)
+    goto done;
+
+  m = u->i.members[role]->members[member];
+  log_f = open_memstream(&log_t, &log_z);
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    fprintf(log_f, "%s.\n", _("User database server is down"));
+    goto done;
+  }
+  r = userlist_clnt_delete_info(ul_conn, ULS_PRIV_DELETE_MEMBER,
+                                phr->user_id, phr->contest_id, m->serial);
+  if (r < 0) {
+    fprintf(log_f, "%s.\n", userlist_strerror(-r));
+    goto done;
+  }
+
+  // force reloading the user info
+  userlist_free(&phr->session_extra->user_info->b);
+  phr->session_extra->user_info = 0;
+
+ done:;
+  if (log_f) fclose(log_f);
+  log_f = 0;
+
+  if (log_t && *log_t) {
+    action_error_page(fout, phr, cnts, extra, log_t);
+  } else {
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_CONTESTANTS + role - CONTEST_M_CONTESTANT, 0);
+  }
+
+  xfree(log_t);
+}
+
+static void
+move_member(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+  FILE *log_f = 0;
+  char *log_t = 0;
+  size_t log_z = 0;
+  int r, role = 0, member = 0, new_role = 0;;
+  const struct userlist_user *u = phr->session_extra->user_info;
+  const struct userlist_member *m = 0;
+
+  if (cnts->personal) {
+    // they kidding us...
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
+    return;
+  }
+
+  // role
+  if (cgi_param_int(phr, "role", &role) < 0
+      || role < CONTEST_M_CONTESTANT || role >= CONTEST_LAST_MEMBER
+      || !cnts->members[role] || cnts->members[role]->max_count <= 0) {
+    // invalid role, or such role is not enabled on this contest...
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
+    return;
+  }
+
+  // member
+  if (cnts->disable_member_delete
+      || cgi_param_int(phr, "member", &member) < 0 || member < 0
+      || !u || !u->i.members[role] || member >= u->i.members[role]->total
+      || !u->i.members[role]->members[member]
+      || u->read_only || u->i.cnts_read_only) {
+    goto done;
+  }
+
+  switch (role) {
+  case CONTEST_M_CONTESTANT:
+    new_role = CONTEST_M_RESERVE;
+    break;
+  case CONTEST_M_RESERVE:
+    new_role = CONTEST_M_CONTESTANT;
+    break;
+  case CONTEST_M_COACH:
+    new_role = CONTEST_M_ADVISOR;
+    break;
+  case CONTEST_M_ADVISOR:
+    new_role = CONTEST_M_COACH;
+    break;
+  default:
+    goto done;
+  }
+
+  if (!cnts->members[new_role] || cnts->members[new_role]->max_count <= 0)
+    goto done;
+  if (u && u->i.members[new_role]
+      && u->i.members[new_role]->total > cnts->members[new_role]->max_count)
+    goto done;
+
+  m = u->i.members[role]->members[member];
+  log_f = open_memstream(&log_t, &log_z);
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    fprintf(log_f, "%s.\n", _("User database server is down"));
+    goto done;
+  }
+  r = userlist_clnt_move_member(ul_conn, ULS_MOVE_MEMBER,
+                                phr->user_id, phr->contest_id, m->serial,
+                                new_role);
+  if (r < 0) {
+    fprintf(log_f, "%s.\n", userlist_strerror(-r));
+    goto done;
+  }
+
+  // force reloading the user info
+  userlist_free(&phr->session_extra->user_info->b);
+  phr->session_extra->user_info = 0;
+
+ done:;
+  if (log_f) fclose(log_f);
+  log_f = 0;
+
+  if (log_t && *log_t) {
+    action_error_page(fout, phr, cnts, extra, log_t);
+  } else {
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_CONTESTANTS + role - CONTEST_M_CONTESTANT, 0);
+  }
+
+  xfree(log_t);
+}
+
+static void
+logout(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+  unsigned char urlbuf[1024];
+
+  if (ns_open_ul_connection(phr->fw_state) < 0)
+    return ns_html_err_ul_server_down(fout, phr, 0, 0);
+  userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
+                              phr->session_id);
+  ns_remove_session(phr->session_id);
+  snprintf(urlbuf, sizeof(urlbuf),
+           "%s?contest_id=%d&locale_id=%d",
+           phr->self_url, phr->contest_id, phr->locale_id);
+  ns_refresh_page_2(fout, urlbuf);
+}
+
+static void
+change_password(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+  FILE *log_f = 0;
+  char *log_t = 0;
+  size_t log_z = 0;
+  const unsigned char *p0 = 0, *p1 = 0, *p2 = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char url[1024];
+  int r;
+
+  log_f = open_memstream(&log_t, &log_z);
+
+  if (ns_cgi_param(phr, "oldpasswd", &p0) <= 0) {
+    fprintf(log_f, "%s.\n", _("Old password is invalid"));
+    goto done;
+  }
+  if (ns_cgi_param(phr, "newpasswd1", &p1) <= 0) {
+    fprintf(log_f, "%s.\n", _("New password (1) is invalid"));
+    goto done;
+  }
+  if (ns_cgi_param(phr, "newpasswd2", &p2) <= 0) {
+    fprintf(log_f, "%s.\n", _("New password (2) is invalid"));
+    goto done;
+  }
+  if (strlen(p0) >= 256) {
+    ns_error(log_f, NEW_SRV_ERR_OLD_PWD_TOO_LONG);
+    goto done;
+  }
+  if (strcmp(p1, p2)) {
+    ns_error(log_f, NEW_SRV_ERR_NEW_PWD_MISMATCH);
+    goto done;
+  }
+  if (strlen(p1) >= 256) {
+    ns_error(log_f, NEW_SRV_ERR_NEW_PWD_TOO_LONG);
+    goto done;
+  }
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    fprintf(log_f, "%s.\n", _("User database server is down"));
+    goto done;
+  }
+  r = userlist_clnt_set_passwd(ul_conn, ULS_PRIV_SET_REG_PASSWD,
+                               phr->user_id, phr->contest_id, p0, p1);
+  if (r < 0) {
+    ns_error(log_f, NEW_SRV_ERR_PWD_UPDATE_FAILED, userlist_strerror(-r));
+    goto done;
+  }
+
+ done:;
+  if (log_f) fclose(log_f);
+  log_f = 0;
+
+  if (log_t && *log_t) {
+    action_error_page(fout, phr, cnts, extra, log_t);
+  } else {
+    snprintf(url, sizeof(url),
+             "%s?contest_id=%d&login=%s&locale_id=%d&action=%d",
+             phr->self_url, phr->contest_id, URLARMOR(phr->login),
+             phr->locale_id, NEW_SRV_ACTION_REG_LOGIN_PAGE);
+    ns_refresh_page_2(fout, url);
+  }
+
+  xfree(log_t);
+  html_armor_free(&ab);
+}
+
+static void
+register_for_contest(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+  FILE *log_f = 0;
+  char *log_t = 0;
+  size_t log_z = 0;
+  int r;
+
+  log_f = open_memstream(&log_t, &log_z);
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    fprintf(log_f, "%s.\n", _("User database server is down"));
+    goto done;
+  }
+  r = userlist_clnt_register_contest(ul_conn, ULS_REGISTER_CONTEST_2,
+                                     phr->user_id, phr->contest_id);
+  if (r < 0) {
+    fprintf(log_f, "%s: %s.\n", _("Registration for contest failed"),
+            userlist_strerror(-r));
+    goto done;
+  }
+
+ done:;
+  if (log_f) fclose(log_f);
+  log_f = 0;
 
   if (log_t && *log_t) {
     action_error_page(fout, phr, cnts, extra, log_t);
@@ -2180,11 +2891,18 @@ submit_general_editing(
 
 static reg_action_handler_func_t reg_handlers[NEW_SRV_ACTION_LAST] =
 {
+  [NEW_SRV_ACTION_LOGOUT] = logout,
+  [NEW_SRV_ACTION_CHANGE_PASSWORD] = change_password,
   [NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE] = edit_page,
   [NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE] = edit_page,
   [NEW_SRV_ACTION_REG_SUBMIT_GENERAL_EDITING] = submit_general_editing,
   [NEW_SRV_ACTION_REG_CANCEL_GENERAL_EDITING] = cancel_editing,
+  [NEW_SRV_ACTION_REG_SUBMIT_MEMBER_EDITING] = submit_member_editing,
   [NEW_SRV_ACTION_REG_CANCEL_MEMBER_EDITING] = cancel_editing,
+  [NEW_SRV_ACTION_REG_REGISTER] = register_for_contest,
+  [NEW_SRV_ACTION_REG_ADD_MEMBER_PAGE] = add_member,
+  [NEW_SRV_ACTION_REG_REMOVE_MEMBER] = remove_member,
+  [NEW_SRV_ACTION_REG_MOVE_MEMBER] = move_member,
 };
 
 void

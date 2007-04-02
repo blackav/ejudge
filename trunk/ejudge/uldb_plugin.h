@@ -169,6 +169,8 @@ struct uldb_plugin_iface
   int (*copy_user_info)(void *, int, int, int, time_t,
                         const struct contest_desc *);
   int (*check_user_reg_data)(void *, int, int);
+  // move a particular member to a different role
+  int (*move_member)(void *, int, int, int, int, time_t, int *);
 };
 
 /* default plugin: compiled into userlist-server */
