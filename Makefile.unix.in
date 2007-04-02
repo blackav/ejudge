@@ -185,6 +185,11 @@ extra_progs:
 checker_lib:
 	$(MAKE) -C checkers DESTDIR="${DESTDIR}" all
 
+install_userlist_server: userlist-server
+	install -m 0755 userlist-server "${DESTDIR}${bindir}"
+install_new_server: new-server
+	install -m 0755 new-server "${DESTDIR}${bindir}"
+
 local_install: ${TARGETS} ejudge-config po mo
 	install -d "${DESTDIR}${bindir}"
 	for i in ${BINTARGETS}; do install -m 0755 $$i "${DESTDIR}${bindir}"; done
