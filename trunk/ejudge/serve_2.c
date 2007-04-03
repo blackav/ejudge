@@ -239,6 +239,14 @@ serve_update_status_file(serve_state_t state, int force_flag)
   status.printing_suspended = state->printing_suspended;
   status.always_show_problems = state->global->always_show_problems;
   status.accepting_mode = state->accepting_mode;
+
+  status.upsolving_mode = state->upsolving_mode;
+  status.freeze_standings = state->freeze_standings;
+  status.view_source = state->view_source;
+  status.view_protocol = state->view_protocol;
+  status.full_protocol = state->full_protocol;
+  status.disable_clars = state->disable_clars;
+
   if (status.start_time && status.duration && state->global->board_fog_time > 0
       && !status.is_virtual) {
     status.freeze_time = status.start_time + status.duration - state->global->board_fog_time;
@@ -306,6 +314,14 @@ serve_load_status_file(serve_state_t state)
   info("load_status_file: printing_suspended = %d", state->printing_suspended);
   state->stat_reported_before = status.stat_reported_before;
   state->stat_report_time = status.stat_report_time;
+
+  state->upsolving_mode = status.upsolving_mode;
+  info("load_status_file: upsolving_mode = %d", state->upsolving_mode);
+  state->freeze_standings = status.freeze_standings;
+  state->view_source = status.view_source;
+  state->view_protocol = status.view_protocol;
+  state->full_protocol = status.full_protocol;
+  state->disable_clars = status.disable_clars;
 }
 
 int
