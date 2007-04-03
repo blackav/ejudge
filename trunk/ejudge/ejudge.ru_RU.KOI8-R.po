@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-02 16:35+0400\n"
-"PO-Revision-Date: 2007-04-02 16:36+0400\n"
+"POT-Creation-Date: 2007-04-03 15:09+0400\n"
+"PO-Revision-Date: 2007-04-03 15:22+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -597,6 +597,15 @@ msgstr "Все сообщения"
 msgid "All problems"
 msgstr "Все задачи"
 
+msgid "Allow viewing full protocol"
+msgstr "Разрешить просмотр полного протокола"
+
+msgid "Allow viewing run report"
+msgstr "Разрешить просмотр краткого протокола"
+
+msgid "Allow viewing source code"
+msgstr "Разрешить просмотр исходного текста"
+
 #, c-format
 msgid "An e-mail with your account parameters is sent to address <tt>%s</tt>. "
 msgstr ""
@@ -1084,6 +1093,9 @@ msgstr "Подробная информация о пользователе "
 msgid "Directory structure"
 msgstr "Структура каталогов"
 
+msgid "Disable clarifications"
+msgstr "Запретить отправку участниками сообщений"
+
 msgid "Disk read error (nonexistant file?)"
 msgstr "Ошибка чтения с диска (файл не существует?)"
 
@@ -1375,6 +1387,9 @@ msgstr ""
 
 msgid "Forgot password?"
 msgstr "Забыли пароль?"
+
+msgid "Freeze contest standings"
+msgstr "Не обновлять таблицу результатов"
 
 msgid "From"
 msgstr "От"
@@ -2565,6 +2580,9 @@ msgstr "Привилегированный?"
 msgid "Problem"
 msgstr "Задача"
 
+msgid "Problem deadline"
+msgstr "Срок окончания сдачи"
+
 #, c-format
 msgid "Problem is empty in row %d\n"
 msgstr "В строке %d не определено имя задачи\n"
@@ -3152,6 +3170,9 @@ msgstr "Начало в"
 msgid "Start exam"
 msgstr "Начать экзамен"
 
+msgid "Start upsolving"
+msgstr "Открыть дорешивание"
+
 msgid "Start virtual contest"
 msgstr "Начать виртуальный турнир"
 
@@ -3173,6 +3194,9 @@ msgstr "Остановить"
 
 msgid "Stop exam"
 msgstr "Завершить экзамен"
+
+msgid "Stop upsolving"
+msgstr "Закрыть дорешивание"
 
 msgid "Stop virtual contest"
 msgstr "Закончить виртуальный турнир"
@@ -3493,6 +3517,9 @@ msgstr ""
 msgid "Type your valid e-mail address"
 msgstr "Введите Ваш действующий адрес электронной почты"
 
+msgid "UPSOLVING"
+msgstr "ДОРЕШИВАНИЕ"
+
 msgid "Unanswered clars"
 msgstr "Неотвеченные сообщения"
 
@@ -3549,6 +3576,12 @@ msgstr "Установить протокол тестирования"
 
 msgid "Upload!"
 msgstr "Установить!"
+
+msgid "Upsolving"
+msgstr "Дорешивание"
+
+msgid "Upsolving mode"
+msgstr "Режим дорешивания"
 
 msgid "Use an existing account"
 msgstr "Использовать существующую учетную запись"
