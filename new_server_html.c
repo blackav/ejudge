@@ -3438,9 +3438,9 @@ priv_confirmation_page(FILE *fout,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s, %s]: %s &quot;%s&quot;",
-            ns_unparse_role(phr->role),
-            phr->name_arm, extra->contest_arm, _("Confirm action"),
+            "%s [%s, %d, %s]: %s &quot;%s&quot;",
+            ns_unparse_role(phr->role), phr->name_arm, phr->contest_id,
+            extra->contest_arm, _("Confirm action"),
             gettext(confirmation_headers[phr->action]));
 
   switch (phr->action) {
@@ -3684,9 +3684,9 @@ priv_user_detail_page(FILE *fout,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s, %s]: %s %d", ns_unparse_role(phr->role),
-            phr->name_arm, extra->contest_arm, _("Details for user "),
-            user_id);
+            "%s [%s, %d, %s]: %s %d", ns_unparse_role(phr->role),
+            phr->name_arm, phr->contest_id, extra->contest_arm,
+            _("Details for user "), user_id);
   ns_user_info_page(fout, log_f, phr, cnts, extra, user_id);
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
@@ -3710,8 +3710,8 @@ priv_new_run_form_page(FILE *fout,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s, %s]: %s", ns_unparse_role(phr->role),
-            phr->name_arm, extra->contest_arm, _("Add new run"));
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
+            phr->contest_id, extra->contest_arm, _("Add new run"));
   ns_new_run_form(fout, log_f, phr, cnts, extra);
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
@@ -3756,8 +3756,8 @@ priv_view_users_page(FILE *fout,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s, %s]: %s", ns_unparse_role(phr->role),
-            phr->name_arm, extra->contest_arm, _("Users page"));
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
+            phr->contest_id, extra->contest_arm, _("Users page"));
 
   fprintf(fout, "<h2>Registered users</h2>");
 
@@ -4000,9 +4000,8 @@ priv_view_priv_users_page(FILE *fout,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s, %s]: %s", ns_unparse_role(phr->role),
-            phr->name_arm, extra->contest_arm,
-            _("Privileged users page"));
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
+            phr->contest_id, extra->contest_arm, _("Privileged users page"));
 
   snprintf(cl, sizeof(cl), " class=\"summary\"");
 
@@ -4250,9 +4249,9 @@ priv_view_clar(FILE *fout,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s, %s]: %s %d", ns_unparse_role(phr->role),
-            phr->name_arm, extra->contest_arm, _("Viewing clar"),
-            clar_id);
+            "%s [%s, %d, %s]: %s %d", ns_unparse_role(phr->role),
+            phr->name_arm, phr->contest_id, extra->contest_arm,
+            _("Viewing clar"), clar_id);
 
   ns_write_priv_clar(cs, fout, log_f, phr, cnts, extra, clar_id);
 
@@ -4283,8 +4282,8 @@ priv_standings(FILE *fout,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s, %s]: %s", ns_unparse_role(phr->role),
-            phr->name_arm, extra->contest_arm, _("Current standings"));
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
+            phr->contest_id, extra->contest_arm, _("Current standings"));
   ns_write_priv_standings(cs, cnts, fout, cs->accepting_mode);
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
@@ -4342,8 +4341,8 @@ priv_upload_runlog_csv_1(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s, %s]: %s", ns_unparse_role(phr->role),
-            phr->name_arm, extra->contest_arm, "Add new runs in CSV format");
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
+            phr->contest_id, extra->contest_arm, "Add new runs in CSV format");
   html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
 
   fprintf(fout, "<table><tr><td>%s</td><td><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
@@ -4392,8 +4391,8 @@ priv_upload_runlog_csv_2(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s, %s]: %s", ns_unparse_role(phr->role),
-            phr->name_arm, extra->contest_arm, _("Adding new runs"));
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
+            phr->contest_id, extra->contest_arm, _("Adding new runs"));
 
   fprintf(fout, "<h2>%s</h2>\n",
           (r >= 0)?_("Operation succeeded"):_("Operation failed"));
@@ -4438,8 +4437,8 @@ priv_upload_runlog_xml_1(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s, %s]: %s", ns_unparse_role(phr->role),
-            phr->name_arm, extra->contest_arm, "Merge XML runlog");
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
+            phr->contest_id, extra->contest_arm, "Merge XML runlog");
   html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
 
   fprintf(fout, "<table><tr><td>%s</td><td><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
@@ -4491,8 +4490,8 @@ priv_upload_runlog_xml_2(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s, %s]: %s", ns_unparse_role(phr->role),
-            phr->name_arm, extra->contest_arm, _("Merging runs"));
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
+            phr->contest_id, extra->contest_arm, _("Merging runs"));
 
   fprintf(fout, "<h2>%s</h2>\n", _("Operation completed"));
 
@@ -4550,8 +4549,8 @@ priv_download_runs_confirmation(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s, %s]: %s", ns_unparse_role(phr->role),
-            phr->name_arm, extra->contest_arm, "Download runs configuration");
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
+            phr->contest_id, extra->contest_arm, "Download runs configuration");
 
   html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
   html_hidden(fout, "run_mask_size", "%s", mask_size_str);
@@ -4680,6 +4679,159 @@ priv_download_runs(
 }
 
 static int
+priv_upsolving_configuration_1(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  int retval = 0;
+  unsigned char bb[1024];
+  const unsigned char *freeze_standings = 0;
+  const unsigned char *view_source = 0;
+  const unsigned char *view_protocol = 0;
+  const unsigned char *full_proto = 0;
+  const unsigned char *disable_clars = 0;
+
+  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
+
+  if (cs->upsolving_mode) {
+    ns_cgi_param(phr, "freeze_standings", &freeze_standings);
+    ns_cgi_param(phr, "view_source", &view_source);
+    ns_cgi_param(phr, "view_protocol", &view_protocol);
+    ns_cgi_param(phr, "full_protocol", &full_proto);
+    ns_cgi_param(phr, "disable_clars", &disable_clars);
+  } else {
+    freeze_standings = "1";
+    view_source = "1";
+    view_protocol = "1";
+    full_proto = 0;
+    disable_clars = "1";
+  }
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
+            phr->contest_id, extra->contest_arm, "Upsolving configuration");
+
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+  fprintf(fout, "<table>");
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          html_checkbox(bb, sizeof(bb), "freeze_standings",
+                        freeze_standings?1:0),
+          _("Freeze contest standings"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          html_checkbox(bb, sizeof(bb), "view_source",
+                        view_source?1:0),
+          _("Allow viewing source code"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          html_checkbox(bb, sizeof(bb), "view_protocol",
+                        view_protocol?1:0),
+          _("Allow viewing run report"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          html_checkbox(bb, sizeof(bb), "full_protocol",
+                        full_proto?1:0),
+          _("Allow viewing full protocol"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          html_checkbox(bb, sizeof(bb), "disable_clars",
+                        disable_clars?1:0),
+          _("Disable clarifications"));
+  fprintf(fout, "</table>\n");
+
+  fprintf(fout, "<table><tr>");
+  fprintf(fout, "<td>%s</td>",
+          BUTTON(NEW_SRV_ACTION_UPSOLVING_CONFIG_2));
+  fprintf(fout, "<td>%s</td>",
+          BUTTON(NEW_SRV_ACTION_UPSOLVING_CONFIG_3));
+  fprintf(fout, "<td>%s</td>",
+          BUTTON(NEW_SRV_ACTION_UPSOLVING_CONFIG_4));
+  fprintf(fout, "</tr></table>\n");
+
+  fprintf(fout, "</form>\n");
+
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  return retval;
+}
+
+static int
+priv_upsolving_operation(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  int retval = 0;
+  const unsigned char *freeze_standings = 0;
+  const unsigned char *view_source = 0;
+  const unsigned char *view_protocol = 0;
+  const unsigned char *full_proto = 0;
+  const unsigned char *disable_clars = 0;
+  time_t duration = 0, saved_stop_time = 0, stop_time = 0;
+
+  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  /* check that the contest is stopped */
+  run_get_saved_times(cs->runlog_state, &duration, &saved_stop_time);
+  stop_time = run_get_stop_time(cs->runlog_state);
+  if (stop_time <= 0 && saved_stop_time <= 0) return 0;
+
+  ns_cgi_param(phr, "freeze_standings", &freeze_standings);
+  ns_cgi_param(phr, "view_source", &view_source);
+  ns_cgi_param(phr, "view_protocol", &view_protocol);
+  ns_cgi_param(phr, "full_protocol", &full_proto);
+  ns_cgi_param(phr, "disable_clars", &disable_clars);
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_UPSOLVING_CONFIG_2: // back to main page
+    break;
+  case NEW_SRV_ACTION_UPSOLVING_CONFIG_3: // stop upsolving
+    if (!cs->upsolving_mode) break;
+    run_stop_contest(cs->runlog_state, cs->current_time);
+    cs->upsolving_mode = 0;
+    cs->freeze_standings = 0;
+    cs->view_source = 0;
+    cs->view_protocol = 0;
+    cs->full_protocol = 0;
+    cs->disable_clars = 0;
+    serve_update_status_file(cs, 1);
+    extra->last_access_time = 0;          // force reload
+    break;
+  case NEW_SRV_ACTION_UPSOLVING_CONFIG_4: // start upsolving
+    run_save_times(cs->runlog_state);
+    run_set_duration(cs->runlog_state, 0);
+    run_stop_contest(cs->runlog_state, 0);
+    cs->upsolving_mode = 1;
+    cs->freeze_standings = 0;
+    cs->view_source = 0;
+    cs->view_protocol = 0;
+    cs->full_protocol = 0;
+    cs->disable_clars = 0;
+    if (freeze_standings && *freeze_standings) cs->freeze_standings = 1;
+    if (view_source && *view_source) cs->view_source = 1;
+    if (view_protocol && *view_protocol) cs->view_protocol = 1;
+    if (full_proto && *full_proto) cs->full_protocol = 1;
+    if (disable_clars && *disable_clars) cs->disable_clars = 1;
+    serve_update_status_file(cs, 1);
+    extra->last_access_time = 0;          // force reload
+    break;
+  default:
+    abort();
+  }
+
+ cleanup:
+  return retval;
+}
+
+static int
 priv_view_passwords(FILE *fout,
                     FILE *log_f,
                     struct http_request_info *phr,
@@ -4702,8 +4854,8 @@ priv_view_passwords(FILE *fout,
     s = _("Registration passwords");
   }
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s, %s]: %s", ns_unparse_role(phr->role),
-            phr->name_arm, extra->contest_arm, s);
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
+            phr->name_arm, phr->contest_id, extra->contest_arm, s);
 
   ns_write_passwords(fout, log_f, phr, cnts, extra);
 
@@ -4771,6 +4923,10 @@ unpriv_print_status(FILE *fout,
       }
     }
     fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
+
+    if (cs->upsolving_mode) {
+      fprintf(fout, "<p><big><b>%s</b></big></p>\n", _("Upsolving mode"));
+    }
 
     if (start_time > 0) {
       if (global->score_system_val == SCORE_OLYMPIAD && !global->is_virtual) {
@@ -4986,6 +5142,9 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_IGNORE_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2] = priv_clear_displayed,
+  [NEW_SRV_ACTION_UPSOLVING_CONFIG_2] = priv_upsolving_operation,
+  [NEW_SRV_ACTION_UPSOLVING_CONFIG_3] = priv_upsolving_operation,
+  [NEW_SRV_ACTION_UPSOLVING_CONFIG_4] = priv_upsolving_operation,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -5030,6 +5189,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_DISPLAYED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_IGNORE_DISPLAYED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1] = priv_confirmation_page,
+  [NEW_SRV_ACTION_UPSOLVING_CONFIG_1] = priv_upsolving_configuration_1,
 };
 
 static void
@@ -5275,8 +5435,8 @@ priv_main_page(FILE *fout,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
-            "%s [%s, %s]: %s", ns_unparse_role(phr->role),
-            phr->name_arm, extra->contest_arm, _("Main page"));
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
+            phr->name_arm, phr->contest_id, extra->contest_arm, _("Main page"));
   fprintf(fout, "<ul>\n");
   fprintf(fout, "<li>%s%s</a></li>\n",
           ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USERS, 0),
@@ -5352,6 +5512,10 @@ priv_main_page(FILE *fout,
     else
       s = _("Participants' solutions are being judged");
     fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
+  }
+
+  if (cs->upsolving_mode) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n", _("Upsolving mode"));
   }
 
   if (cs->clients_suspended) {
@@ -5483,6 +5647,7 @@ priv_main_page(FILE *fout,
       fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_CLEAR_PASSWORDS_1));
     }
     fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1));
+    fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_UPSOLVING_CONFIG_1));
     fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_RELOAD_SERVER));
     fprintf(fout, "</form>\n");
   } else {
@@ -5934,6 +6099,10 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_IGNORE_DISPLAYED_2] = priv_generic_operation,
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1] = priv_generic_page,
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_UPSOLVING_CONFIG_1] = priv_generic_page,
+  [NEW_SRV_ACTION_UPSOLVING_CONFIG_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_UPSOLVING_CONFIG_3] = priv_generic_operation,
+  [NEW_SRV_ACTION_UPSOLVING_CONFIG_4] = priv_generic_operation,
 };
 
 static void
@@ -8810,6 +8979,10 @@ unpriv_page_header(FILE *fout,
     }
   }
 
+  if (cs->upsolving_mode) {
+    fprintf(fout, " / <b>%s</b>", _("UPSOLVING"));
+  }
+
   if (cs->clients_suspended) {
     fprintf(fout, " / <b><font color=\"red\">%s</font></b>",
             _("clients suspended"));
@@ -9060,6 +9233,7 @@ user_main_page(FILE *fout,
   int last_answer = -1, last_lang_id;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char *last_source = 0;
+  unsigned char dbuf[1024];
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
@@ -9330,13 +9504,20 @@ user_main_page(FILE *fout,
     } else if (start_time > 0 && stop_time <= 0 && prob_id > 0) {
       prob = cs->probs[prob_id];
 
+      dbuf[0] = 0;
+      if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)
+          && prob->t_deadline > 0) {
+        snprintf(dbuf, sizeof(dbuf), "<h3>%s: %s</h3>",
+                 _("Problem deadline"), xml_unparse_date(prob->t_deadline));
+      }
+
       bb[0] = 0;
       if (variant > 0) {
-        snprintf(bb, sizeof(bb), "<%s>%s %s-%s (%s %d)</%s>\n",
+        snprintf(bb, sizeof(bb), "<%s>%s %s-%s (%s %d)</%s>%s\n",
                  cnts->team_head_style,
                  (prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)?_("Submit a solution for"):_("Problem"),
                  prob->short_name, prob->long_name, _("Variant"), variant,
-                 cnts->team_head_style);
+                 cnts->team_head_style, dbuf);
       } else {
         if (cnts->exam_mode) {
           /*
@@ -9350,18 +9531,20 @@ user_main_page(FILE *fout,
                      prob->long_name, cnts->team_head_style);
           }
           */
-          snprintf(bb, sizeof(bb), "<%s>%s %s</%s>\n",
+          snprintf(bb, sizeof(bb), "<%s>%s %s</%s>%s\n",
                    cnts->team_head_style, _("Problem"),
-                   prob->long_name, cnts->team_head_style);
+                   prob->long_name, cnts->team_head_style, dbuf);
         } else {
           if (!(prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)) {
-            snprintf(bb, sizeof(bb), "<%s>%s %s-%s</%s>\n",
+            snprintf(bb, sizeof(bb), "<%s>%s %s-%s</%s>%s\n",
                      cnts->team_head_style, _("Problem"),
-                     prob->short_name, prob->long_name, cnts->team_head_style);
+                     prob->short_name, prob->long_name, cnts->team_head_style,
+                     dbuf);
           } else {
-            snprintf(bb, sizeof(bb), "<%s>%s %s-%s</%s>\n",
+            snprintf(bb, sizeof(bb), "<%s>%s %s-%s</%s>%s\n",
                      cnts->team_head_style, _("Submit a solution for"),
-                     prob->short_name, prob->long_name, cnts->team_head_style);
+                     prob->short_name, prob->long_name, cnts->team_head_style,
+                     dbuf);
           }
         }
       }

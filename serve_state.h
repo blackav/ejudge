@@ -143,6 +143,14 @@ struct serve_state
   int accepting_mode;
   int standings_updated;
 
+  // upsolving mode
+  int upsolving_mode;
+  int freeze_standings;
+  int view_source;
+  int view_protocol;
+  int full_protocol;
+  int disable_clars;
+
   time_t stat_last_check_time;
   time_t stat_reported_before;
   time_t stat_report_time;

@@ -4,7 +4,7 @@
 #ifndef __PROTOCOL_H__
 #define __PROTOCOL_H__
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -75,7 +75,16 @@ struct prot_serve_status_v2
   ej_time_t stat_reported_before;
   ej_time_t stat_report_time;
   unsigned char accepting_mode;
-  unsigned char _pad[63];
+
+  // upsolving mode
+  unsigned char upsolving_mode;
+  unsigned char freeze_standings;
+  unsigned char view_source;
+  unsigned char view_protocol;
+  unsigned char full_protocol;
+  unsigned char disable_clars;
+
+  unsigned char _pad[58];
 };
 
 #define PROT_SERVE_PACKET_MAGIC (0xe342)

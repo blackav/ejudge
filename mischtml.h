@@ -51,4 +51,11 @@ unsigned char *html_input_password(unsigned char *buf, size_t size,
                                    ...)
   __attribute__((format(printf, 5, 6)));
 
+unsigned char *
+html_checkbox(
+	unsigned char *buf,
+        size_t size,
+        const unsigned char *var_name,
+        int is_checked);
+
 #endif /* __MISCHTML_H__ */

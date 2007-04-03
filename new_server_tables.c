@@ -147,6 +147,10 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_REG_CANCEL_GENERAL_EDITING] = __("Cancel"),
   [NEW_SRV_ACTION_REG_SUBMIT_MEMBER_EDITING] = __("Save"),
   [NEW_SRV_ACTION_REG_CANCEL_MEMBER_EDITING] = __("Cancel"),
+  [NEW_SRV_ACTION_UPSOLVING_CONFIG_1] = __("Upsolving"),
+  [NEW_SRV_ACTION_UPSOLVING_CONFIG_2] = __("Main page"),
+  [NEW_SRV_ACTION_UPSOLVING_CONFIG_3] = __("Stop upsolving"),
+  [NEW_SRV_ACTION_UPSOLVING_CONFIG_4] = __("Start upsolving"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =

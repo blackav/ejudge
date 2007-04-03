@@ -142,6 +142,34 @@ serve_state_set_config_path(serve_state_t state, const unsigned char *path)
   xstrdup(state->config_path);
 }
 
+void
+serve_set_upsolving_mode(serve_state_t state)
+{
+  time_t saved_duration = 0, saved_stop_time = 0;
+  int prob_id;
+  struct section_problem_data *prob;
+
+  if (!state->upsolving_mode) return;
+
+  run_get_saved_times(state->runlog_state, &saved_duration, &saved_stop_time);
+  if (saved_stop_time <= 0) return;
+
+  if (state->freeze_standings)
+    state->global->stand_ignore_after_d = saved_stop_time;
+  if (state->disable_clars)
+    state->global->disable_team_clars = 1;
+  if (state->view_source)
+    state->global->team_enable_src_view = 1;
+
+  for (prob_id = 1; prob_id <= state->max_prob; prob_id++) {
+    if (!(prob = state->probs[prob_id])) continue;
+    if (state->view_protocol)
+      prob->team_enable_rep_view = 1;
+    if (state->full_protocol)
+      prob->team_show_judge_report = 1;
+  }
+}
+
 int
 serve_state_load_contest(int contest_id,
                          struct userlist_clnt *ul_conn,
@@ -231,6 +259,7 @@ serve_state_load_contest(int contest_id,
   if (clar_open(state->clarlog_state, state->global->clar_log_file, 0) < 0)
     goto failure;
   serve_load_status_file(state);
+  serve_set_upsolving_mode(state);
   serve_build_compile_dirs(state);
   serve_build_run_dirs(state);
 
