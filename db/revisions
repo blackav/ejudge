@@ -2266,3 +2266,14 @@ uldb_plugin_xml.c 4061 0 6302804
 userlist_clnt/move_member.c 4060 0 128157
 new_server_html_5.c 4063 0 8449173
 userlist_check.c 4063 0 852126
+mischtml.h 4065 0 162368
+new-server.h 4065 0 1700462
+protocol.h 4065 0 837705
+runlog.h 4065 0 791548
+serve_state.h 4065 0 931080
+html_checkbox.c 4065 0 90137
+new_server_html.c 4065 0 28946710
+new_server_tables.c 4065 0 1005815
+runlog.c 4065 0 6268429
+serve_2.c 4065 0 6785346
+serve_state.c 4065 0 963965
