@@ -278,6 +278,7 @@ CFILES=\
  serve-cmd.c\
  serve-control.c\
  slice-userlist.c\
+ struct-sizes.c\
  super-serve.c\
  super-serve-control.c\
  team.c\
