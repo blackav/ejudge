@@ -299,6 +299,9 @@ new-server-control : $(NSC_OBJECTS)
 make-js-actions : make-js-actions.o
 	$(LD) $(LDFLAGS) make-js-actions.o -o $@ $(LDLIBS)
 
+struct-sizes : struct-sizes.o
+	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
+
 local_clean:
 	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 serve_clnt/*.o userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c master master${CGI_PROG_SUFFIX} team team${CGI_PROG_SUFFIX} register register${CGI_PROG_SUFFIX} users users${CGI_PROG_SUFFIX} ejudge-config serve-control serve-control${CGI_PROG_SUFFIX} serve-cmd prjutils/*.o make-js-actions
 	-rm -rf locale

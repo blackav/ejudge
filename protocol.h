@@ -84,7 +84,7 @@ struct prot_serve_status_v2
   unsigned char full_protocol;
   unsigned char disable_clars;
 
-  unsigned char _pad[58];
+  unsigned char _pad[57];
 };
 
 #define PROT_SERVE_PACKET_MAGIC (0xe342)
