@@ -600,6 +600,7 @@ client_put_refresh_header(unsigned char const *coding,
                           int interval,
                           unsigned char const *format, ...)
 {
+  /*
   va_list args;
 
   if (!coding) coding = DEFAULT_CHARSET;
@@ -610,6 +611,8 @@ client_put_refresh_header(unsigned char const *coding,
   fputs("\n</title></head><body><h1>\n", stdout);
   vfprintf(stdout, format, args);
   fputs("\n</h1>\n", stdout);
+  */
+  printf("Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
 }
 
 static int
