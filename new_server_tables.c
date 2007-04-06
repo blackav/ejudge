@@ -151,6 +151,9 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_2] = __("Main page"),
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_3] = __("Stop upsolving"),
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_4] = __("Start upsolving"),
+  [NEW_SRV_ACTION_ASSIGN_CHIEF_EXAMINER] = __("Assign chief examiner"),
+  [NEW_SRV_ACTION_ASSIGN_EXAMINER] = __("Assign examiner"),
+  [NEW_SRV_ACTION_UNASSIGN_EXAMINER] = __("Remove examiner"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =

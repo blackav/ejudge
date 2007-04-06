@@ -4,7 +4,7 @@
 #ifndef __NSDB_PLUGIN_H__
 #define __NSDB_PLUGIN_H__
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -58,6 +58,21 @@ struct nsdb_plugin_iface
   int (*del_role)(void *, int, int, int);
   // remove the user completely
   int (*priv_remove_user)(void *, int, int);
+
+  // assign an examiner for a problem
+  int (*assign_examiner)(void *, int, int, int);
+  // assign the chief examiner for a problem
+  int (*assign_chief_examiner)(void *, int, int, int, int);
+  // remove an examiner or the chief examiner from a problem
+  int (*remove_examiner)(void *, int, int, int);
+  // get an examiner's role for the contest/problem pair
+  int (*get_examiner_role)(void *, int, int, int);
+  // find the chief examiner
+  int (*find_chief_examiner)(void *, int, int);
+  // get the examiners iterator
+  int_iterator_t (*get_examiner_user_id_iterator)(void *, int, int);
+  // count the examiners
+  int (*get_examiner_count)(void *, int, int);
 };
 
 /* default plugin: compiled into new-server */

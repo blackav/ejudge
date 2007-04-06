@@ -93,22 +93,6 @@ get_client_url(
   return buf;
 }
 
-static int
-cgi_param_int(struct http_request_info *phr, const unsigned char *name,
-              int *p_val)
-{
-  const unsigned char *s = 0;
-  char *eptr = 0;
-  int x;
-
-  if (ns_cgi_param(phr, name, &s) <= 0) return -1;
-  errno = 0;
-  x = strtol(s, &eptr, 10);
-  if (errno || *eptr) return -1;
-  if (p_val) *p_val = x;
-  return 0;
-}
-
 static const unsigned char * const form_row_attrs[]=
 {
   " bgcolor=\"#d0d0d0\"",
@@ -383,9 +367,9 @@ create_autoassigned_account_page(
   if (!cnts->assign_logins)
     return create_account_page(fout, phr, cnts, extra, cur_time);
 
-  cgi_param_int(phr, "retval", &reg_error);
-  cgi_param_int(phr, "ul_error", &reg_ul_error);
-  cgi_param_int(phr, "regular", &regular_flag);
+  ns_cgi_param_int(phr, "retval", &reg_error);
+  ns_cgi_param_int(phr, "ul_error", &reg_ul_error);
+  ns_cgi_param_int(phr, "regular", &regular_flag);
 
   if (cnts->register_head_style && *cnts->register_head_style)
     head_style = cnts->register_head_style;
@@ -535,9 +519,9 @@ create_account_page(
   if (cnts->assign_logins)
     return create_autoassigned_account_page(fout, phr, cnts, extra, cur_time);
 
-  cgi_param_int(phr, "retval", &reg_error);
-  cgi_param_int(phr, "ul_error", &reg_ul_error);
-  cgi_param_int(phr, "regular", &regular_flag);
+  ns_cgi_param_int(phr, "retval", &reg_error);
+  ns_cgi_param_int(phr, "ul_error", &reg_ul_error);
+  ns_cgi_param_int(phr, "regular", &regular_flag);
 
   if (cnts->register_head_style && *cnts->register_head_style)
     head_style = cnts->register_head_style;
@@ -860,7 +844,7 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
   time_t cur_time = 0;
   int create_flag = 0;
 
-  cgi_param_int(phr, "create_account", &create_flag);
+  ns_cgi_param_int(phr, "create_account", &create_flag);
 
   // contest_id is reqired
   if (phr->contest_id <= 0 || contests_get(phr->contest_id,&cnts) < 0 || !cnts){
@@ -922,7 +906,7 @@ change_locale(FILE *fout, struct http_request_info *phr)
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *s = 0;
 
-  cgi_param_int(phr, "next_action", &next_action);
+  ns_cgi_param_int(phr, "next_action", &next_action);
   if (next_action < 0 || next_action >= NEW_SRV_ACTION_LAST) next_action = 0;
 
   // SID, contest_id, login are passed "as is"
@@ -2004,8 +1988,8 @@ edit_page(
     goto redirect_back;
   }
   if (phr->action == NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE) {
-    if (cgi_param_int(phr, "role", &role) < 0) goto redirect_back;
-    if (cgi_param_int(phr, "member", &member) < 0) goto redirect_back;
+    if (ns_cgi_param_int(phr, "role", &role) < 0) goto redirect_back;
+    if (ns_cgi_param_int(phr, "member", &member) < 0) goto redirect_back;
     if (role < 0 || role >= CONTEST_M_GUEST) goto redirect_back;
     if (!cnts->members[role]) goto redirect_back;
     if (!u->i.members[role]) goto redirect_back;
@@ -2104,7 +2088,7 @@ cancel_editing(
   int role;
 
   if (phr->action == NEW_SRV_ACTION_REG_CANCEL_MEMBER_EDITING
-      && cgi_param_int(phr, "role", &role) >= 0
+      && ns_cgi_param_int(phr, "role", &role) >= 0
       && role >= CONTEST_M_CONTESTANT && role < CONTEST_LAST_MEMBER)
     next_action = NEW_SRV_ACTION_REG_VIEW_CONTESTANTS + role;
 
@@ -2369,7 +2353,7 @@ submit_member_editing(
   }
 
   // role, member, param_%d
-  if (cgi_param_int(phr, "role", &role) < 0
+  if (ns_cgi_param_int(phr, "role", &role) < 0
       || role < CONTEST_M_CONTESTANT || role >= CONTEST_LAST_MEMBER
       || !cnts->members[role] || cnts->members[role]->max_count <= 0) {
     // invalid role, or such role is not enabled on this contest...
@@ -2377,7 +2361,7 @@ submit_member_editing(
     return;
   }
 
-  if (cgi_param_int(phr, "member", &member) < 0
+  if (ns_cgi_param_int(phr, "member", &member) < 0
       || member < 0 || !u || !u->i.members[role]
       || member >= u->i.members[role]->total
       || !u->i.members[role]->members[member]
@@ -2577,7 +2561,7 @@ add_member(
   }
 
   // role
-  if (cgi_param_int(phr, "role", &role) < 0
+  if (ns_cgi_param_int(phr, "role", &role) < 0
       || role < CONTEST_M_CONTESTANT || role >= CONTEST_LAST_MEMBER
       || !cnts->members[role] || cnts->members[role]->max_count <= 0) {
     // invalid role, or such role is not enabled on this contest...
@@ -2642,7 +2626,7 @@ remove_member(
   }
 
   // role
-  if (cgi_param_int(phr, "role", &role) < 0
+  if (ns_cgi_param_int(phr, "role", &role) < 0
       || role < CONTEST_M_CONTESTANT || role >= CONTEST_LAST_MEMBER
       || !cnts->members[role] || cnts->members[role]->max_count <= 0) {
     // invalid role, or such role is not enabled on this contest...
@@ -2652,7 +2636,7 @@ remove_member(
 
   // member
   if (cnts->disable_member_delete
-      || cgi_param_int(phr, "member", &member) < 0 || member < 0
+      || ns_cgi_param_int(phr, "member", &member) < 0 || member < 0
       || !u || !u->i.members[role] || member >= u->i.members[role]->total
       || !u->i.members[role]->members[member]
       || u->read_only || u->i.cnts_read_only)
@@ -2711,7 +2695,7 @@ move_member(
   }
 
   // role
-  if (cgi_param_int(phr, "role", &role) < 0
+  if (ns_cgi_param_int(phr, "role", &role) < 0
       || role < CONTEST_M_CONTESTANT || role >= CONTEST_LAST_MEMBER
       || !cnts->members[role] || cnts->members[role]->max_count <= 0) {
     // invalid role, or such role is not enabled on this contest...
@@ -2720,7 +2704,7 @@ move_member(
   }
 
   // member
-  if (cgi_param_int(phr, "member", &member) < 0 || member < 0
+  if (ns_cgi_param_int(phr, "member", &member) < 0 || member < 0
       || !u || !u->i.members[role] || member >= u->i.members[role]->total
       || !u->i.members[role]->members[member]
       || u->read_only || u->i.cnts_read_only) {

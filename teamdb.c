@@ -259,8 +259,6 @@ teamdb_refresh(teamdb_state_t state)
     }
   }
 
-  //fprintf(stderr, ">>%s\n", xml_text);
-
   userlist_free((struct xml_tree*) state->users);
   state->users = new_users;
   xfree(state->participants);

@@ -44,6 +44,7 @@
 #include "csv.h"
 #include "sha.h"
 #include "sformat.h"
+#include "userlist_clnt.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -4344,6 +4345,255 @@ ns_write_user_problems_summary(
   }
 
   html_armor_free(&ab);
+}
+
+int
+ns_examiners_page(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  const struct section_problem_data *prob = 0;
+  int prob_id, user_id, max_user_id = -1, i, role_mask, ex_cnt;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int_iterator_t iter = 0;
+  unsigned char **logins = 0, **names = 0, *roles = 0;
+  unsigned char *login = 0, *name = 0;
+  unsigned char bb[1024];
+  const unsigned char *s = 0, *s_beg = 0, *s_end = 0;
+  unsigned char nbuf[1024];
+  int exam_role_count = 0, chief_role_count = 0, add_count;
+  unsigned char *exam_flag = 0;
+
+  fprintf(fout, "<p>%s%s</a></p>",
+          ns_aref(nbuf, sizeof(nbuf), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
+          _("Main page"));
+
+  // find all users that have EXAMINER or CHIEF_EXAMINER role
+  for (iter = nsdb_get_contest_user_id_iterator(phr->contest_id);
+       iter->has_next(iter);
+       iter->next(iter)) {
+    user_id = iter->get(iter);
+    role_mask = 0;
+    if (nsdb_get_priv_role_mask_by_iter(iter, &role_mask) < 0) continue;
+    if (!(role_mask & ((1 << USER_ROLE_EXAMINER) | (1 << USER_ROLE_CHIEF_EXAMINER))))
+      continue;
+    if (user_id > max_user_id) max_user_id = user_id;
+  }
+  iter->destroy(iter); iter = 0;
+
+  if (max_user_id > 0) {
+    XCALLOC(logins, max_user_id + 1);
+    XCALLOC(names, max_user_id + 1);
+    XCALLOC(roles, max_user_id + 1);
+    XCALLOC(exam_flag, max_user_id + 1);
+  }
+
+  for (iter = nsdb_get_contest_user_id_iterator(phr->contest_id);
+       iter->has_next(iter);
+       iter->next(iter)) {
+    user_id = iter->get(iter);
+    if (nsdb_get_priv_role_mask_by_iter(iter, &role_mask) < 0) continue;
+    if (!(role_mask & ((1 << USER_ROLE_EXAMINER) | (1 << USER_ROLE_CHIEF_EXAMINER))))
+      continue;
+    if (userlist_clnt_lookup_user_id(ul_conn, user_id, phr->contest_id,
+                                     &login, &name) < 0)
+      continue;
+    if (!login || !*login) {
+      xfree(login); xfree(name);
+      continue;
+    }
+    logins[user_id] = login;
+    if (!*name) {
+      xfree(name); name = 0;
+    }
+    if (name && !strcmp(name, login)) {
+      xfree(name); name = 0;
+    }
+    names[user_id] = name;
+    roles[user_id] = role_mask;
+    login = name = 0;
+  }
+  iter->destroy(iter); iter = 0;
+
+  for (i = 1; i <= max_user_id; i++) {
+    if ((roles[i] & (1 << USER_ROLE_CHIEF_EXAMINER))) chief_role_count++;
+    if ((roles[i] & (1 << USER_ROLE_EXAMINER))) exam_role_count++;
+  }
+
+  for (prob_id = 1; prob_id <= cs->max_prob; prob_id++) {
+    if (!(prob = cs->probs[prob_id]) || prob->manual_checking <= 0) continue;
+
+    fprintf(fout, "<h3>%s %s: %s</h3>\n", _("Problem"),
+            prob->short_name, ARMOR(prob->long_name));
+
+    // chief examiner + drop-down box for its changing
+    // examiners + drop-down box to add an examiner + button to delete
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(fout, "prob_id", "%d", prob_id);
+    fprintf(fout, "<table class=\"summary\">");
+    fprintf(fout, "<tr><td class=\"summary\" valign=\"top\">%s</td>",
+            _("Chief examiner"));
+
+    user_id = nsdb_find_chief_examiner(phr->contest_id, prob_id);
+    s_beg = ""; s_end = "";
+    if (user_id < 0) {
+      snprintf(nbuf, sizeof(nbuf), "<i><font color=\"red\">Error!</font></i>");
+    } else if (!user_id) {
+      snprintf(nbuf, sizeof(nbuf), "<i>Not set</i>");
+    } else {
+      if (user_id > max_user_id || !logins[user_id]) {
+        s_beg = "<s>"; s_end = "</s>";
+        snprintf(nbuf, sizeof(nbuf), "User %d", user_id);
+      } else {
+        if (!(roles[user_id] & (1 << USER_ROLE_CHIEF_EXAMINER))) {
+          s_beg = "<s>"; s_end = "</s>";
+        }
+        if (!names[user_id]) {
+          snprintf(nbuf, sizeof(nbuf), "%s", logins[user_id]);
+        } else {
+          snprintf(nbuf, sizeof(nbuf), "%s (%s)",
+                   logins[user_id], ARMOR(names[user_id]));
+        }
+      }
+    }
+    fprintf(fout, "<td class=\"summary\" valign=\"top\">%s%s%s</td>", s_beg, nbuf, s_end);
+
+    fprintf(fout, "<td class=\"summary\" valign=\"top\">");
+    fprintf(fout, "<select name=\"chief_user_id\"><option value=\"0\"></option>");
+    for (i = 1; i <= max_user_id; i++) {
+      if (!(roles[i] & (1 << USER_ROLE_CHIEF_EXAMINER)))
+        continue;
+      s = "";
+      if (i == user_id) s = " selected=\"selected\"";
+      fprintf(fout, "<option value=\"%d\">", i);
+      if (!names[i])
+        fprintf(fout, "%s", logins[i]);
+      else
+        fprintf(fout, "%s (%s)", logins[i], ARMOR(names[i]));
+      fprintf(fout, "</option>");
+    }
+    fprintf(fout, "</select>");
+    fprintf(fout, "%s", BUTTON(NEW_SRV_ACTION_ASSIGN_CHIEF_EXAMINER));
+    fprintf(fout, "</td>");
+    fprintf(fout, "</tr>");
+
+    // examiners
+    fprintf(fout, "<tr><td class=\"summary\" valign=\"top\">%s</td>",
+            _("Examiners"));
+
+    // list of examiners
+    fprintf(fout, "<td class=\"summary\" valign=\"top\">");
+    ex_cnt = nsdb_get_examiner_count(phr->contest_id, prob_id);
+    if (max_user_id > 0) memset(exam_flag, 0, max_user_id + 1);
+    if (ex_cnt < 0) {
+      fprintf(fout, "<i><font color=\"red\">Error!</font></i>");
+    } else if (!ex_cnt) {
+      fprintf(fout, "<i>%s</i>", "Nobody");
+    } else {
+      fprintf(fout, "<table class=\"borderless\">");
+      for (iter = nsdb_get_examiner_user_id_iterator(phr->contest_id, prob_id);
+           iter->has_next(iter);
+           iter->next(iter)) {
+        user_id = iter->get(iter);
+        if (user_id <= 0 || user_id > max_user_id || !logins[user_id]) {
+          s_beg = "<s>"; s_end = "</s>";
+          snprintf(nbuf, sizeof(nbuf), "User %d", user_id);
+        } else {
+          exam_flag[user_id] = 1;
+          s_beg = ""; s_end = "";
+          if (!(roles[user_id] & (1 << USER_ROLE_EXAMINER))) {
+            s_beg = "<s>"; s_end = "</s>";
+          }
+          if (!names[user_id]) {
+            snprintf(nbuf, sizeof(nbuf), "%s", logins[user_id]);
+          } else {
+            snprintf(nbuf, sizeof(nbuf), "%s (%s)",
+                     logins[user_id], ARMOR(names[user_id]));
+          }
+        }
+        fprintf(fout, "<tr><td class=\"borderless\">%s%s%s</td></tr>",
+                s_beg, nbuf, s_end);
+      }
+      iter->destroy(iter); iter = 0;
+      fprintf(fout, "</table>");
+    }
+    fprintf(fout, "</td>");
+
+    // control elements
+    fprintf(fout, "<td class=\"summary\" valign=\"top\">");
+    if (!ex_cnt && !exam_role_count) {
+      fprintf(fout, "&nbsp;");
+    } else {
+      fprintf(fout, "<table class=\"borderless\">");
+      if (ex_cnt > 0) {
+        // remove examiner
+        fprintf(fout, "<tr><td class=\"borderless\"><select name=\"exam_del_user_id\"><option value=\"0\"></option>");
+        for (iter=nsdb_get_examiner_user_id_iterator(phr->contest_id, prob_id);
+             iter->has_next(iter);
+             iter->next(iter)) {
+          user_id = iter->get(iter);
+          if (user_id <= 0 || user_id > max_user_id || !logins[user_id]) {
+            snprintf(nbuf, sizeof(nbuf), "User %d", user_id);
+          } else {
+            if (!names[user_id]) {
+              snprintf(nbuf, sizeof(nbuf), "%s", logins[user_id]);
+            } else {
+              snprintf(nbuf, sizeof(nbuf), "%s (%s)",
+                       logins[user_id], ARMOR(names[user_id]));
+            }
+          }
+          fprintf(fout, "<option value=\"%d\">%s</option>", user_id, nbuf);
+        }
+        iter->destroy(iter); iter = 0;
+        fprintf(fout, "</select></td><td class=\"borderless\">%s</td></tr>",
+                BUTTON(NEW_SRV_ACTION_UNASSIGN_EXAMINER));
+      }
+      // add examiner
+      add_count = 0;
+      for (i = 1; i <= max_user_id; i++)
+        if ((roles[i] & (1 << USER_ROLE_EXAMINER)) && !exam_flag[i])
+          add_count++;
+      if (add_count > 0) {
+        fprintf(fout, "<tr><td class=\"borderless\"><select name=\"exam_add_user_id\"><option value=\"0\"></option>");
+        for (i = 1; i <= max_user_id; i++) {
+          if (!(roles[i] & (1 << USER_ROLE_EXAMINER)) || exam_flag[i])
+            continue;
+          if (!names[i])
+            snprintf(nbuf, sizeof(nbuf), "%s", logins[i]);
+          else
+            snprintf(nbuf, sizeof(nbuf), "%s (%s)", logins[i], ARMOR(names[i]));
+          fprintf(fout, "<option value=\"%d\">%s</option>", i, nbuf);
+        }
+        fprintf(fout, "</select></td><td class=\"borderless\">%s</td></tr>",
+                BUTTON(NEW_SRV_ACTION_ASSIGN_EXAMINER));
+      }
+      fprintf(fout, "</table>");
+    }
+    fprintf(fout, "</td>");
+    fprintf(fout, "</tr>");
+
+    fprintf(fout, "</table></form>\n");
+  }
+
+  if (logins) {
+    for (i = 0; i <= max_user_id; i++)
+      xfree(logins[i]);
+    xfree(logins);
+  }
+  if (names) {
+    for (i = 0; i <= max_user_id; i++)
+      xfree(names[i]);
+    xfree(names);
+  }
+
+  xfree(roles);
+  xfree(exam_flag);
+  html_armor_free(&ab);
+  return 0;
 }
 
 /*

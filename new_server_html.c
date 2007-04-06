@@ -481,6 +481,24 @@ ns_cgi_nname(const struct http_request_info *phr,
   return 0;
 }
 
+int
+ns_cgi_param_int(
+	struct http_request_info *phr,
+        const unsigned char *name,
+        int *p_val)
+{
+  const unsigned char *s = 0;
+  char *eptr = 0;
+  int x;
+
+  if (ns_cgi_param(phr, name, &s) <= 0) return -1;
+  errno = 0;
+  x = strtol(s, &eptr, 10);
+  if (errno || *eptr) return -1;
+  if (p_val) *p_val = x;
+  return 0;
+}
+
 static void
 close_ul_connection(struct server_framework_state *state)
 {
@@ -3720,6 +3738,148 @@ priv_new_run_form_page(FILE *fout,
   return retval;
 }
 
+static int
+priv_examiners_page(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+
+  /*
+  if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0
+      || opcaps_check(phr->caps, OPCAP_EDIT_RUN))
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  */
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
+            phr->contest_id, extra->contest_arm, _("Add new run"));
+  ns_examiners_page(fout, log_f, phr, cnts, extra);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+  //cleanup:
+  return retval;
+}
+
+static int
+priv_assign_chief_examiner(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  int retval = 0;
+  int prob_id = 0;
+  int user_id = 0;
+
+  if (phr->role != USER_ROLE_ADMIN && phr->role != USER_ROLE_COORDINATOR)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  if (ns_cgi_param_int(phr, "prob_id", &prob_id) < 0
+      || prob_id <= 0 || prob_id > cs->max_prob || !cs->probs[prob_id]
+      || cs->probs[prob_id]->manual_checking <= 0)
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+
+  if (ns_cgi_param_int(phr, "chief_user_id", &user_id) < 0 || user_id < 0)
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+  if (!user_id) {
+    user_id = nsdb_find_chief_examiner(phr->contest_id, prob_id);
+    if (user_id > 0) {
+      nsdb_remove_examiner(user_id, phr->contest_id, prob_id);
+    }
+    retval = NEW_SRV_ACTION_EXAMINERS_PAGE;
+    goto cleanup;
+  }
+  if (nsdb_check_role(user_id, phr->contest_id, USER_ROLE_CHIEF_EXAMINER) < 0)
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+  nsdb_assign_chief_examiner(user_id, phr->contest_id, prob_id);
+  retval = NEW_SRV_ACTION_EXAMINERS_PAGE;
+
+ cleanup:
+  return retval;
+}
+
+static int
+priv_assign_examiner(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  int retval = 0;
+  int prob_id = 0;
+  int user_id = 0;
+
+  if (phr->role != USER_ROLE_ADMIN && phr->role != USER_ROLE_COORDINATOR)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  if (ns_cgi_param_int(phr, "prob_id", &prob_id) < 0
+      || prob_id <= 0 || prob_id > cs->max_prob || !cs->probs[prob_id]
+      || cs->probs[prob_id]->manual_checking <= 0)
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+
+  if (ns_cgi_param_int(phr, "exam_add_user_id", &user_id) < 0 || user_id < 0)
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+  if (!user_id) {
+    retval = NEW_SRV_ACTION_EXAMINERS_PAGE;
+    goto cleanup;
+  }
+  if (nsdb_check_role(user_id, phr->contest_id, USER_ROLE_EXAMINER) < 0)
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+  nsdb_assign_examiner(user_id, phr->contest_id, prob_id);
+  retval = NEW_SRV_ACTION_EXAMINERS_PAGE;
+
+ cleanup:
+  return retval;
+}
+
+static int
+priv_unassign_examiner(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  int retval = 0;
+  int prob_id = 0;
+  int user_id = 0;
+
+  if (phr->role != USER_ROLE_ADMIN && phr->role != USER_ROLE_COORDINATOR)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  if (ns_cgi_param_int(phr, "prob_id", &prob_id) < 0
+      || prob_id <= 0 || prob_id > cs->max_prob || !cs->probs[prob_id]
+      || cs->probs[prob_id]->manual_checking <= 0)
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+
+  if (ns_cgi_param_int(phr, "exam_del_user_id", &user_id) < 0 || user_id < 0)
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+  if (!user_id) {
+    retval = NEW_SRV_ACTION_EXAMINERS_PAGE;
+    goto cleanup;
+  }
+  /*
+  if (nsdb_check_role(user_id, phr->contest_id, USER_ROLE_EXAMINER) < 0)
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+  */
+  nsdb_remove_examiner(user_id, phr->contest_id, prob_id);
+  retval = NEW_SRV_ACTION_EXAMINERS_PAGE;
+
+ cleanup:
+  return retval;
+}
+
 static void
 priv_view_users_page(FILE *fout,
                      struct http_request_info *phr,
@@ -5145,6 +5305,9 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_2] = priv_upsolving_operation,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_3] = priv_upsolving_operation,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_4] = priv_upsolving_operation,
+  [NEW_SRV_ACTION_ASSIGN_CHIEF_EXAMINER] = priv_assign_chief_examiner,
+  [NEW_SRV_ACTION_ASSIGN_EXAMINER] = priv_assign_examiner,
+  [NEW_SRV_ACTION_UNASSIGN_EXAMINER] = priv_unassign_examiner,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -5190,6 +5353,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_IGNORE_DISPLAYED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_1] = priv_upsolving_configuration_1,
+  [NEW_SRV_ACTION_EXAMINERS_PAGE] = priv_examiners_page,
 };
 
 static void
@@ -5381,7 +5545,7 @@ priv_main_page(FILE *fout,
   int filter_first_run = 0, filter_last_run = 0, filter_first_clar = 0;
   int filter_last_clar = 0, filter_mode_clar = 0;
   const unsigned char *filter_expr = 0;
-  int i, x, y, n, variant = 0;
+  int i, x, y, n, variant = 0, need_examiners = 0;
   const struct section_problem_data *prob = 0;
   path_t variant_stmt_file;
   struct watched_file *pw = 0;
@@ -5433,6 +5597,10 @@ priv_main_page(FILE *fout,
     fog_start_time = start_time + duration - global->board_fog_time;
   if (fog_start_time < 0) fog_start_time = 0;
 
+  for (i = 1; i <= cs->max_prob; i++)
+    if (cs->probs[i] && cs->probs[i]->manual_checking)
+      need_examiners = 1;
+
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
@@ -5444,6 +5612,10 @@ priv_main_page(FILE *fout,
   fprintf(fout, "<li>%s%s</a></li>\n",
           ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_PRIV_USERS_VIEW, 0),
           _("View privileged users"));
+  if (need_examiners)
+    fprintf(fout, "<li>%s%s</a></li>\n",
+            ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_EXAMINERS_PAGE, 0),
+            _("Examiners assignments"));
   fprintf(fout, "<li>%s%s</a></li>\n",
           ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_STANDINGS, 0),
           _("View standings"));
@@ -6103,6 +6275,10 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_2] = priv_generic_operation,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_3] = priv_generic_operation,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_4] = priv_generic_operation,
+  [NEW_SRV_ACTION_EXAMINERS_PAGE] = priv_generic_page,
+  [NEW_SRV_ACTION_ASSIGN_CHIEF_EXAMINER] = priv_generic_operation,
+  [NEW_SRV_ACTION_ASSIGN_EXAMINER] = priv_generic_operation,
+  [NEW_SRV_ACTION_UNASSIGN_EXAMINER] = priv_generic_operation,
 };
 
 static void
