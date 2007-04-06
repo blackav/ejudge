@@ -1,4 +1,3 @@
-# $Id$
 archive_paths.h 2040 0 122514
 base64.h 2693 0 75408
 cgi.h 1332 0 97934
@@ -2281,3 +2280,17 @@ serve_state.c 4065 0 963965
 protocol.h 4067 0 837709
 struct-sizes.c 4067 0 89066
 serve-control.c 4070 0 8056680
+new-server.h 4073 0 1773912
+nsdb_plugin.h 4073 0 232220
+new-server.c 4073 0 1700744
+contests.c 4073 0 4408745
+contest_tmpl.c 4073 0 868867
+new_server_html.c 4073 0 29367140
+new_server_html_2.c 4073 0 11814055
+new_server_html_5.c 4073 0 8429006
+new_server_tables.c 4073 0 1020870
+nsdb_plugin_files.c 4073 0 2213498
+prepare.c 4073 0 13617735
+serve_state.c 4073 0 969397
+teamdb.c 4073 0 1411196
+userlist_xml.c 4073 0 4363409
