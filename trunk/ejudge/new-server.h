@@ -293,6 +293,10 @@ enum
   NEW_SRV_ACTION_UPSOLVING_CONFIG_2,
   NEW_SRV_ACTION_UPSOLVING_CONFIG_3,
   NEW_SRV_ACTION_UPSOLVING_CONFIG_4,
+  NEW_SRV_ACTION_EXAMINERS_PAGE,
+  NEW_SRV_ACTION_ASSIGN_CHIEF_EXAMINER,
+  NEW_SRV_ACTION_ASSIGN_EXAMINER,
+  NEW_SRV_ACTION_UNASSIGN_EXAMINER,
 
   /* new-register stuff */
   NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE,
@@ -344,6 +348,13 @@ int nsdb_get_priv_role_mask_by_iter(int_iterator_t iter, unsigned int *p_mask);
 int nsdb_add_role(int user_id, int contest_id, int role);
 int nsdb_del_role(int user_id, int contest_id, int role);
 int nsdb_priv_remove_user(int user_id, int contest_id);
+int nsdb_find_chief_examiner(int contest_id, int prob_id);
+int nsdb_assign_chief_examiner(int user_id, int contest_id, int prob_id);
+int nsdb_assign_examiner(int user_id, int contest_id, int prob_id);
+int nsdb_remove_examiner(int user_id, int contest_id, int prob_id);
+int_iterator_t nsdb_get_examiner_user_id_iterator(int contest_id, int prob_id);
+int nsdb_get_examiner_count(int contest_id, int prob_id);
+
 
 struct contest_extra *ns_get_contest_extra(int contest_id);
 
@@ -598,6 +609,10 @@ ns_cgi_param(const struct http_request_info *phr, const unsigned char *param,
 int ns_cgi_param_bin(const struct http_request_info *phr,
                      const unsigned char *param,
                      const unsigned char **p_value, size_t *p_size);
+int ns_cgi_param_int( struct http_request_info *phr,
+                      const unsigned char *name,
+                      int *p_val);
+
 
 struct server_framework_state;
 int ns_open_ul_connection(struct server_framework_state *state);
@@ -650,5 +665,13 @@ ns_write_user_problems_summary(
 int ns_insert_variant_num(unsigned char *buf, size_t size,
                           const unsigned char *file, int variant);
 void ns_register_pages(FILE *fout, struct http_request_info *phr);
+
+int
+ns_examiners_page(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra);
 
 #endif /* __NEW_SERVER_H__ */

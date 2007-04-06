@@ -116,6 +116,37 @@ nsdb_priv_remove_user(int user_id, int contest_id)
   return nsdb_default->iface->priv_remove_user(nsdb_default->data, user_id, contest_id);
 }
 
+int
+nsdb_find_chief_examiner(int contest_id, int prob_id)
+{
+  return nsdb_default->iface->find_chief_examiner(nsdb_default->data, contest_id, prob_id);
+}
+int
+nsdb_assign_chief_examiner(int user_id, int contest_id, int prob_id)
+{
+  return nsdb_default->iface->assign_chief_examiner(nsdb_default->data, user_id, contest_id, prob_id, 1);
+}
+int
+nsdb_assign_examiner(int user_id, int contest_id, int prob_id)
+{
+  return nsdb_default->iface->assign_examiner(nsdb_default->data, user_id, contest_id, prob_id);
+}
+int
+nsdb_remove_examiner(int user_id, int contest_id, int prob_id)
+{
+  return nsdb_default->iface->remove_examiner(nsdb_default->data, user_id, contest_id, prob_id);
+}
+int_iterator_t
+nsdb_get_examiner_user_id_iterator(int contest_id, int prob_id)
+{
+  return nsdb_default->iface->get_examiner_user_id_iterator(nsdb_default->data, contest_id, prob_id);
+}
+int
+nsdb_get_examiner_count(int contest_id, int prob_id)
+{
+  return nsdb_default->iface->get_examiner_count(nsdb_default->data, contest_id, prob_id);
+}
+
 struct session_info *
 ns_get_session(ej_cookie_t session_id, time_t cur_time)
 {

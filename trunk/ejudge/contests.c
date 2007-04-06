@@ -1297,6 +1297,7 @@ contests_get(int number, const struct contest_desc **p_desc)
         memcpy(new_contests, contests_desc,
                contests_allocd * sizeof(new_contests[0]));
       }
+      xfree(contests_desc);
       contests_allocd = new_allocd;
       contests_desc = new_contests;
     }

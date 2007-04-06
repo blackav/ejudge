@@ -224,6 +224,7 @@ serve_state_load_contest(int contest_id,
   state->config_path = xstrdup(config_path);
   state->current_time = time(0);
 
+  info("loading contest %d configuration file", contest_id);
   if (prepare(state, state->config_path, 0, PREPARE_SERVE, "", 1) < 0)
     goto failure;
   if (prepare_serve_defaults(state, p_cnts) < 0) goto failure;

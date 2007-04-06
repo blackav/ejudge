@@ -185,8 +185,10 @@ elem_free(struct xml_tree *t)
     {
       struct userlist_user *p = (struct userlist_user*) t;
       xfree(p->login);
-      xfree(p->i.name);
       xfree(p->email);
+      xfree(p->passwd);
+      xfree(p->i.name);
+      xfree(p->i.team_passwd);
       xfree(p->i.inst);
       xfree(p->i.inst_en);
       xfree(p->i.instshort);
@@ -250,6 +252,7 @@ elem_free(struct xml_tree *t)
     {
       struct userlist_cntsinfo *p = (struct userlist_cntsinfo*) t;
       xfree(p->i.name);
+      xfree(p->i.team_passwd);
       xfree(p->i.inst);
       xfree(p->i.inst_en);
       xfree(p->i.instshort);

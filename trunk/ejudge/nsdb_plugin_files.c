@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,13 @@ static int get_priv_role_mask_by_iter(void *, int_iterator_t, unsigned int*);
 static int add_role_func(void *, int, int, int);
 static int del_role_func(void *, int, int, int);
 static int priv_remove_user_func(void *, int, int);
+static int assign_examiner_func(void *, int, int, int);
+static int assign_chief_examiner_func(void *, int, int, int, int);
+static int remove_examiner_func(void *, int, int, int);
+static int get_examiner_role_func(void *, int, int, int);
+static int find_chief_examiner_func(void *, int, int);
+static int_iterator_t get_examiner_user_id_iterator_func(void *, int, int);
+static int get_examiner_count_func(void *, int, int);
 
 struct nsdb_plugin_iface nsdb_plugin_files =
 {
@@ -70,6 +77,14 @@ struct nsdb_plugin_iface nsdb_plugin_files =
   add_role_func,
   del_role_func,
   priv_remove_user_func,
+
+  assign_examiner_func,
+  assign_chief_examiner_func,
+  remove_examiner_func,
+  get_examiner_role_func,
+  find_chief_examiner_func,
+  get_examiner_user_id_iterator_func,
+  get_examiner_count_func,
 };
 
 struct user_priv_header
@@ -95,6 +110,29 @@ struct user_priv_table
   int fd;
 };
 
+struct prob_assignment_header
+{
+  unsigned char signature[12];
+  unsigned char byte_order;
+  unsigned char version;
+  char pad[2];
+};
+struct prob_assignment_entry
+{
+  int user_id;
+  int contest_id;
+  int prob_id;
+  int role;                     /*USER_ROLE_EXAMINER, USER_ROLE_CHIEF_EXAMINER*/
+};
+struct prob_assignment_table
+{
+  struct prob_assignment_header header;
+  size_t a, u;
+  struct prob_assignment_entry *v;
+  int header_dirty, data_dirty, error_flag;
+  int fd;
+};
+
 static int user_priv_create(struct user_priv_table *pt, const unsigned char *);
 static int user_priv_load(struct user_priv_table *pt, const unsigned char *dir);
 static int user_priv_flush(struct user_priv_table *pt);
@@ -104,6 +142,7 @@ struct nsdb_files_state
   unsigned char *data_dir;
 
   struct user_priv_table user_priv;
+  struct prob_assignment_table prob_asgn;
 };
 
 static void *
@@ -112,6 +151,9 @@ init_func(const struct ejudge_cfg *config)
   struct nsdb_files_state *state;
 
   XCALLOC(state, 1);
+
+  state->prob_asgn.fd = -1;
+
   return (void*) state;
 }
 
@@ -151,12 +193,15 @@ open_func(void *data)
   return 0;
 }
 
+static void prob_asgn_close(struct prob_assignment_table *pt);
+
 static int
 close_func(void *data)
 {
   struct nsdb_files_state *state = (struct nsdb_files_state*) data;
 
   user_priv_flush(&state->user_priv);
+  prob_asgn_close(&state->prob_asgn);
   if (state->user_priv.fd >= 0) close(state->user_priv.fd);
   state->user_priv.fd = -1;
   return 0;
@@ -517,6 +562,438 @@ priv_remove_user_func(void *data, int user_id, int contest_id)
   ppriv->u--;
   ppriv->data_dirty = 1;
   return 1;
+}
+
+static void
+prob_asgn_flush(struct prob_assignment_table *pt)
+{
+  if (!pt || pt->fd < 0 || (!pt->header_dirty && !pt->data_dirty)
+      || pt->error_flag)
+    return;
+
+  if (pt->header_dirty) {
+    if (lseek(pt->fd, 0, SEEK_SET) < 0) {
+      err("prob_asgn: lseek failed: %s", os_ErrorMsg());
+      pt->error_flag = 1;
+      return;
+    }
+
+    if (full_write(pt->fd, &pt->header, sizeof(pt->header)) < 0) {
+      err("prob_asgn: write failed: %s", os_ErrorMsg());
+      pt->error_flag = 1;
+      return;
+    }
+
+    pt->header_dirty = 0;
+  }
+
+  if (pt->data_dirty) {
+    if (ftruncate(pt->fd, sizeof(struct prob_assignment_header) + pt->u * sizeof(struct prob_assignment_entry)) < 0) {
+      err("prob_asgn: ftruncate failed: %s", os_ErrorMsg());
+      pt->error_flag = 1;
+      return;
+    }
+
+    if (pt->u > 0) {
+      if (lseek(pt->fd, sizeof(struct prob_assignment_header), SEEK_SET) < 0) {
+        err("prob_asgn: lseek failed: %s", os_ErrorMsg());
+        pt->error_flag = 1;
+        return;
+      }
+
+      if (full_write(pt->fd, pt->v, sizeof(pt->v[0]) * pt->u) < 0) {
+        err("prob_asgn: write failed: %s", os_ErrorMsg());
+        pt->error_flag = 1;
+        return;
+      }
+    }
+    pt->data_dirty = 0;
+  }
+}
+
+static void
+prob_asgn_close(struct prob_assignment_table *pt)
+{
+  if (!pt || pt->fd < 0) return;
+  prob_asgn_flush(pt);
+  xfree(pt->v);
+  memset(pt, 0, sizeof(*pt));
+}
+
+static const unsigned char prob_asgn_signature[12] = "Ej.probasgn";
+
+static void
+prob_asgn_do_create(struct nsdb_files_state *state)
+{
+  path_t fpath;
+  struct prob_assignment_table *pt = &state->prob_asgn;
+
+  memset(pt, 0, sizeof(*pt));
+
+  if (mkdir(state->data_dir, 0700) < 0 && errno != EEXIST) {
+    err("prob_asgn: mkdir failed on %s: %s", state->data_dir, os_ErrorMsg());
+    pt->error_flag = 1;
+    return;
+  }
+
+  snprintf(fpath, sizeof(fpath), "%s/prob_asgn.dat", state->data_dir);
+  if ((pt->fd = open(fpath, O_RDWR | O_CREAT | O_TRUNC, 0600)) < 0) {
+    err("prob_asgn: open failed for %s : %s", fpath, os_ErrorMsg());
+    pt->error_flag = 1;
+    return;
+  }
+
+  memcpy(&pt->header.signature, prob_asgn_signature,
+         sizeof (pt->header.signature));
+  pt->header.byte_order = 0;
+  pt->header.version = 1;
+  pt->header_dirty = 1;
+  pt->data_dirty = 1;
+  prob_asgn_flush(pt);
+}
+
+static void
+prob_asgn_do_open(struct nsdb_files_state *state)
+{
+  path_t fpath;
+  struct stat stb;
+  struct prob_assignment_table *pt = &state->prob_asgn;
+  unsigned char signbuf[sizeof(struct prob_assignment_header) * 2];
+
+  ASSERT(state);
+
+  if (pt->fd >= 0) return;
+  if (pt->error_flag) return;
+
+  snprintf(fpath, sizeof(fpath), "%s/prob_asgn.dat", state->data_dir);
+  if (stat(fpath, &stb) < 0 || !stb.st_size)
+    return prob_asgn_do_create(state);
+
+  memset(pt, 0, sizeof(*pt));
+
+  if (stb.st_size < sizeof(struct prob_assignment_header)) {
+    err("prob_asgn: invalid file size %d\n", (int) stb.st_size);
+    pt->error_flag = 1;
+    return;
+  }
+  if ((pt->fd = open(fpath, O_RDWR, 0)) < 0) {
+    err("prob_asgn: open failed for %s: %s", fpath, os_ErrorMsg());
+    pt->error_flag = 1;
+    return;
+  }
+  if (full_read(pt->fd, &pt->header, sizeof(pt->header)) < 0) {
+    err("prob_asgn: read failed: %s", os_ErrorMsg());
+    pt->error_flag = 1;
+    return;
+  }
+  memset(signbuf, 0, sizeof(signbuf));
+  memcpy(signbuf, pt->header.signature, sizeof(pt->header.signature));
+  if (memcmp(signbuf, prob_asgn_signature, sizeof(prob_asgn_signature)) != 0) {
+    err("prob_asgn: file signature mismatch");
+    pt->error_flag = 1;
+    return;
+  }
+  if (pt->header.version != 1) {
+    err("prob_asgn: unsupported version");
+    pt->error_flag = 1;
+    return;
+  }
+  if (pt->header.byte_order != 0) {
+    err("prob_asgn: unsupported byte order");
+    pt->error_flag = 1;
+    return;
+  }
+
+  if ((stb.st_size - sizeof(struct prob_assignment_header)) % sizeof(struct prob_assignment_entry) != 0) {
+    err("prob_asgn: invalid file size %d\n", (int) stb.st_size);
+    pt->error_flag = 1;
+    return;
+  }
+  pt->u = (stb.st_size - sizeof(struct prob_assignment_header)) / sizeof(struct prob_assignment_entry);
+  if (pt->u > 0) {
+    pt->a = 16;
+    while (pt->a < pt->u) pt->a *= 2;
+    XCALLOC(pt->v, pt->a);
+  }
+  if (pt->u > 0) {
+    if (full_read(pt->fd, pt->v, pt->u * sizeof(pt->v[0])) < 0) {
+      err("prob_asgn: read failed: %s", os_ErrorMsg());
+      pt->error_flag = 1;
+      return;
+    }
+  }
+}
+
+static void
+prob_asgn_append(
+	struct prob_assignment_table *pt,
+        int user_id,
+        int contest_id,
+        int prob_id,
+        int role)
+{
+  if (pt->u == pt->a) {
+    if (!pt->a) pt->a = 16;
+    pt->a *= 2;
+    XREALLOC(pt->v, pt->a);
+  }
+  pt->v[pt->u].user_id = user_id;
+  pt->v[pt->u].contest_id = contest_id;
+  pt->v[pt->u].prob_id = prob_id;
+  pt->v[pt->u].role = role;
+  pt->u++;
+  pt->data_dirty = 1;
+}
+
+static void
+prob_asgn_remove(struct prob_assignment_table *pt, int i)
+{
+  int j;
+
+  if (i < 0 || i >= pt->u) return;
+  for (j = i + 1; j < pt->u; j++)
+    pt->v[j - 1] = pt->v[j];
+  memset(&pt->v[pt->u - 1], 0, sizeof(pt->v[0]));
+  pt->u--;
+  pt->data_dirty = 1;
+}
+
+static int
+assign_examiner_func(
+	void *data,
+        int user_id,
+        int contest_id,
+        int prob_id)
+{
+  struct nsdb_files_state *state = (struct nsdb_files_state*) data;
+  struct prob_assignment_table *pt = &state->prob_asgn;
+  int i;
+
+  prob_asgn_do_open(state);
+  if (pt->error_flag) return -1;
+
+  for (i = 0; i < pt->u; i++) {
+    if (pt->v[i].user_id == user_id && pt->v[i].contest_id == contest_id
+        && pt->v[i].prob_id == prob_id) {
+      if (pt->v[i].role == USER_ROLE_EXAMINER)
+        return 0;
+      pt->v[i].role = USER_ROLE_CHIEF_EXAMINER;
+      pt->data_dirty = 1;
+      return 1;
+    }
+  }
+  prob_asgn_append(pt, user_id, contest_id, prob_id, USER_ROLE_EXAMINER);
+
+  return 0;
+}
+
+static int
+assign_chief_examiner_func(
+	void *data,
+        int user_id,
+        int contest_id,
+        int prob_id,
+        int force_flag)
+{
+  struct nsdb_files_state *state = (struct nsdb_files_state*) data;
+  struct prob_assignment_table *pt = &state->prob_asgn;
+  int i;
+
+  prob_asgn_do_open(state);
+  if (pt->error_flag) return -1;
+
+  for (i = 0; i < pt->u; i++) {
+    if (pt->v[i].contest_id == contest_id && pt->v[i].prob_id == prob_id
+        && pt->v[i].role == USER_ROLE_CHIEF_EXAMINER) {
+      if (pt->v[i].user_id == user_id) return 0;
+      if (!force_flag) return -1;
+      prob_asgn_remove(pt, i);
+      i--;
+      /*
+      pt->v[i].role = USER_ROLE_EXAMINER;
+      pt->data_dirty = 1;
+      */
+    }
+  }
+
+  for (i = 0; i < pt->u; i++) {
+    if (pt->v[i].user_id == user_id && pt->v[i].contest_id == contest_id
+        && pt->v[i].prob_id == prob_id) {
+      if (pt->v[i].role == USER_ROLE_CHIEF_EXAMINER) return 0;
+      pt->v[i].role = USER_ROLE_CHIEF_EXAMINER;
+      pt->data_dirty = 1;
+      return 1;
+    }
+  }
+
+  prob_asgn_append(pt, user_id, contest_id, prob_id, USER_ROLE_CHIEF_EXAMINER);
+  return 0;
+}
+
+static int
+remove_examiner_func(
+	void *data,
+        int user_id,
+        int contest_id,
+        int prob_id)
+{
+  struct nsdb_files_state *state = (struct nsdb_files_state*) data;
+  struct prob_assignment_table *pt = &state->prob_asgn;
+  int i;
+
+  prob_asgn_do_open(state);
+  if (pt->error_flag) return -1;
+
+  for (i = 0; i < pt->u; i++) {
+    if (pt->v[i].user_id == user_id && pt->v[i].contest_id == contest_id
+        && pt->v[i].prob_id == prob_id)
+      break;
+  }
+  if (i >= pt->u) return 0;
+  prob_asgn_remove(pt, i);
+  return 1;
+}
+
+static int
+get_examiner_role_func(
+	void *data,
+        int user_id,
+        int contest_id,
+        int prob_id)
+{
+  struct nsdb_files_state *state = (struct nsdb_files_state*) data;
+  struct prob_assignment_table *pt = &state->prob_asgn;
+  int i;
+
+  prob_asgn_do_open(state);
+  if (pt->error_flag) return -1;
+  for (i = 0; i < pt->u; i++)
+    if (pt->v[i].user_id == user_id && pt->v[i].contest_id == contest_id
+        && pt->v[i].prob_id == prob_id)
+      return pt->v[i].role;
+  return 0;
+}
+
+static int
+find_chief_examiner_func(
+	void *data,
+        int contest_id,
+        int prob_id)
+{
+  struct nsdb_files_state *state = (struct nsdb_files_state*) data;
+  struct prob_assignment_table *pt = &state->prob_asgn;
+  int i;
+
+  prob_asgn_do_open(state);
+  if (pt->error_flag) return -1;
+
+  for (i = 0; i < pt->u; i++)
+    if (pt->v[i].contest_id == contest_id && pt->v[i].prob_id == prob_id
+        && pt->v[i].role == USER_ROLE_CHIEF_EXAMINER)
+      return pt->v[i].user_id;
+  return 0;
+}
+
+struct examiner_user_id_iterator
+{
+  struct int_iterator b;
+
+  struct nsdb_files_state *state;
+  int contest_id;
+  int prob_id;
+  int cur_idx;
+};
+
+static int
+examiner_user_id_iterator_has_next(int_iterator_t data)
+{
+  struct examiner_user_id_iterator *iter = (struct examiner_user_id_iterator*) data;
+  struct prob_assignment_table *pt = &iter->state->prob_asgn;
+
+  while (iter->cur_idx < pt->u
+         && (iter->contest_id != pt->v[iter->cur_idx].contest_id
+             || iter->prob_id != pt->v[iter->cur_idx].prob_id
+             || pt->v[iter->cur_idx].role != USER_ROLE_EXAMINER))
+    iter->cur_idx++;
+  return iter->cur_idx < pt->u;
+}
+
+static int
+examiner_user_id_iterator_get(int_iterator_t data)
+{
+  struct examiner_user_id_iterator *iter = (struct examiner_user_id_iterator*) data;
+  struct prob_assignment_table *pt = &iter->state->prob_asgn;
+
+  while (iter->cur_idx < pt->u
+         && (iter->contest_id != pt->v[iter->cur_idx].contest_id
+             || iter->prob_id != pt->v[iter->cur_idx].prob_id
+             || pt->v[iter->cur_idx].role != USER_ROLE_EXAMINER))
+    iter->cur_idx++;
+  ASSERT(iter->cur_idx < pt->u);
+  return pt->v[iter->cur_idx].user_id;
+}
+
+static void
+examiner_user_id_iterator_next(int_iterator_t data)
+{
+  struct examiner_user_id_iterator *iter = (struct examiner_user_id_iterator*) data;
+  struct prob_assignment_table *pt = &iter->state->prob_asgn;
+
+  if (iter->cur_idx < pt->u) iter->cur_idx++;
+  while (iter->cur_idx < pt->u
+         && (iter->contest_id != pt->v[iter->cur_idx].contest_id
+             || iter->prob_id != pt->v[iter->cur_idx].prob_id
+             || pt->v[iter->cur_idx].role != USER_ROLE_EXAMINER))
+    iter->cur_idx++;
+}
+
+static void
+examiner_user_id_iterator_destroy(int_iterator_t data)
+{
+  struct examiner_user_id_iterator *iter = (struct examiner_user_id_iterator*) data;
+  xfree(iter);
+}
+
+static struct int_iterator examiner_user_id_iterator_funcs =
+{
+  examiner_user_id_iterator_has_next,
+  examiner_user_id_iterator_get,
+  examiner_user_id_iterator_next,
+  examiner_user_id_iterator_destroy,
+};
+static int_iterator_t
+get_examiner_user_id_iterator_func(void *data, int contest_id, int prob_id)
+{
+  struct nsdb_files_state *state = (struct nsdb_files_state*) data;
+  struct examiner_user_id_iterator *iter;
+
+  XCALLOC(iter, 1);
+  iter->b = examiner_user_id_iterator_funcs;
+  iter->state = state;
+  iter->contest_id = contest_id;
+  iter->prob_id = prob_id;
+  iter->cur_idx = 0;
+  return (int_iterator_t) iter;
+}
+
+static int
+get_examiner_count_func(
+	void *data,
+        int contest_id,
+        int prob_id)
+{
+  struct nsdb_files_state *state = (struct nsdb_files_state*) data;
+  struct prob_assignment_table *pt = &state->prob_asgn;
+  int i, count;
+
+  prob_asgn_do_open(state);
+  if (pt->error_flag) return -1;
+
+  for (i = 0, count = 0; i < pt->u; i++)
+    if (pt->v[i].contest_id == contest_id && pt->v[i].prob_id == prob_id
+        && pt->v[i].role == USER_ROLE_EXAMINER)
+      count++;
+  return count;
 }
 
 /*
