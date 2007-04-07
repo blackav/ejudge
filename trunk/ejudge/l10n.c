@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -61,12 +62,26 @@ l10n_setlocale(int locale_id)
 #if CONF_HAS_LIBINTL - 0 == 1
   unsigned char *e = 0;
   static unsigned char env_buf[512];
+  static unsigned char russian_locale_name[512];
 
   if (locale_id < 0 || !l10n_flag) return;
 
   switch (locale_id) {
   case 1:
-    e = "ru_RU.KOI8-R";
+    if (!russian_locale_name[0]) {
+      unsigned char cbuf[512];
+      int i;
+#if !defined EJUDGE_CHARSET
+      snprintf(cbuf, sizeof(cbuf), "%s", "koi8-r");
+#else
+      snprintf(cbuf, sizeof(cbuf), "%s", EJUDGE_CHARSET);
+#endif
+      for (i = 0; cbuf[i]; i++)
+        cbuf[i] = toupper(cbuf[i]);
+      snprintf(russian_locale_name, sizeof(russian_locale_name),
+               "ru_RU.%s", cbuf);
+    }
+    e = russian_locale_name;
     break;
   case 0:
   default:

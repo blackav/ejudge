@@ -34,6 +34,7 @@ EXESFX=@ac_cv_exe_suffix@
 XGETTEXT=@XGETTEXT@
 MSGMERGE=@MSGMERGE@
 MSGFMT=@MSGFMT@
+CHARSET=@CHARSET_UPPERCASE@
 
 REUSE_DIR=@ac_cv_reuse_root@
 REUSE_CONF=@ac_cv_reuse_config@
@@ -200,8 +201,8 @@ local_install: ${TARGETS} ejudge-config po mo
 	cd "${DESTDIR}${cgibindir}"; rm -f new-master${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-master${CGI_PROG_SUFFIX}
 	cd "${DESTDIR}${cgibindir}"; rm -f new-judge${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-judge${CGI_PROG_SUFFIX}
 	cd "${DESTDIR}${cgibindir}"; rm -f new-register${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-register${CGI_PROG_SUFFIX}
-	if [ x"${ENABLE_NLS}" = x1 ]; then install -d "${DESTDIR}${datadir}/locale/ru_RU.KOI8-R/LC_MESSAGES"; fi
-	if [ x"${ENABLE_NLS}" = x1 ]; then install -m 0644 locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo "${DESTDIR}${datadir}/locale/ru_RU.KOI8-R/LC_MESSAGES"; fi
+	if [ x"${ENABLE_NLS}" = x1 ]; then install -d "${DESTDIR}${datadir}/locale/ru_RU.${CHARSET}/LC_MESSAGES"; fi
+	if [ x"${ENABLE_NLS}" = x1 ]; then install -m 0644 locale/ru_RU.${CHARSET}/LC_MESSAGES/ejudge.mo "${DESTDIR}${datadir}/locale/ru_RU.${CHARSET}/LC_MESSAGES"; fi
 	install -d "${DESTDIR}${datadir}/ejudge"
 	install -d "${DESTDIR}${datadir}/ejudge/style"
 	for i in ${STYLEFILES}; do install -m 0644 $$i "${DESTDIR}${datadir}/ejudge/style"; done
@@ -362,9 +363,14 @@ log: mkChangeLog2
 
 # localization stuff
 ifdef ENABLE_NLS
-po : ejudge.ru_RU.KOI8-R.po
+po : ejudge.ru_RU.KOI8-R.po ejudge.ru_RU.${CHARSET}.po
 else
 po :
+endif
+
+ifneq (${CHARSET}, KOI8-R)
+ejudge.ru_RU.${CHARSET}.po : ejudge.ru_RU.KOI8-R.po
+	sed "s/KOI8-R/${CHARSET}/g" < ejudge.ru_RU.KOI8-R.po | iconf -f KOI8-R -t ${CHARSET} > ejudge.ru_RU.${CHARSET}.po
 endif
 
 ejudge.ru_RU.KOI8-R.po: $(CFILES) ejudge.po
@@ -374,18 +380,18 @@ ejudge.po: $(CFILES)
 	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c
 
 ru_all:
-	-mkdir -p locale/ru_RU.KOI8-R/LC_MESSAGES
+	-mkdir -p locale/ru_RU.${CHARSET}/LC_MESSAGES
 
 ejudge-config : ejudge-config.v version.c
 	vvv=`grep compile_version version.c | sed 's/^[^"]*["]\([^"]*\)["].*$$/\1/'` && sed "s/@BUILD_VERSION@/$$vvv/" < ejudge-config.v > ejudge-config && chmod +x ejudge-config
 
 ifdef ENABLE_NLS
-mo : locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo
+mo : locale/ru_RU.${CHARSET}/LC_MESSAGES/ejudge.mo
 else
 mo :
 endif
 
-locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.KOI8-R.po ru_all
+locale/ru_RU.${CHARSET}/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.${CHARSET}.po ru_all
 	${MSGFMT} -o $@ -c $<
 
 libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o $(ARCH)/fileutl.o $(ARCH)/cr_serialize.o $(ARCH)/interrupt.o $(ARCH)/curtime.o $(ARCH)/timestamp.o $(ARCH)/ej_process.o $(ARCH)/cpu.o $(ARCH)/full_archive.o

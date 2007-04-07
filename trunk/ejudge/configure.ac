@@ -1421,6 +1421,8 @@ else
   cp -p checkers/Makefile.unix.in checkers/Makefile.in
 fi
 
+CHARSET_UPPERCASE=`echo ${ac_cv_charset} | tr '[[:lower:]]' '[[:upper:]]'`
+
 AC_SUBST(ac_cv_ejudge_arch)
 AC_SUBST(ac_cv_exe_suffix)
 AC_SUBST(ac_cv_expat_root)
@@ -1449,6 +1451,7 @@ AC_SUBST(XGETTEXT)
 AC_SUBST(MSGMERGE)
 AC_SUBST(MSGFMT)
 AC_SUBST(ac_cv_style_prefix)
+AC_SUBST(CHARSET_UPPERCASE)
 
 AC_SUBST(ac_cv_contest_gcc)
 AC_SUBST(ac_cv_contest_gcc_dir)
