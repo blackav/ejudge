@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2003-2007 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -115,7 +115,7 @@ install : all
 libchecker.a : ${OFILES}
 	${AR} rcv $@ $^
 libchecker.so : ${PICOFILES}
-	${CC} -shared $^ -o $@
+	${CC} -shared $^ -o $@ -lm
 
 corr_close.o: corr_close.c checker_internal.h
 pic/corr_close.o: corr_close.c checker_internal.h
