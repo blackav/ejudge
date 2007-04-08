@@ -370,7 +370,7 @@ endif
 
 ifneq (${CHARSET}, KOI8-R)
 ejudge.ru_RU.${CHARSET}.po : ejudge.ru_RU.KOI8-R.po
-	sed "s/KOI8-R/${CHARSET}/g" < ejudge.ru_RU.KOI8-R.po | iconv -f KOI8-R -t ${CHARSET} > ejudge.ru_RU.${CHARSET}.po
+	sed "s/koi8-r/${CHARSET}/g" < ejudge.ru_RU.KOI8-R.po | iconv -f KOI8-R -t ${CHARSET} > ejudge.ru_RU.${CHARSET}.po
 endif
 
 ejudge.ru_RU.KOI8-R.po: $(CFILES) ejudge.po
