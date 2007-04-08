@@ -52,7 +52,7 @@ get_copyright(int locale_id)
 {
   //fprintf(stderr, "get_copyright: %d, %s, %s\n", locale_id, getenv("LANG"), getenv("LC_ALL"));
   if (!copyright_str || locale_id != copyright_locale) {
-    unsigned char buf[1024];
+    unsigned char buf[8192];
 
     buf[0] = 0;
     make_copyright(buf, sizeof(buf));
