@@ -41,7 +41,7 @@ AC_ARG_WITH([reuse-conf-dir],AC_HELP_STRING([--with-reuse-conf-dir],[specify the
 AC_ARG_WITH([reuse-config],AC_HELP_STRING([--with-reuse-config],[specify the configuration name]),[ac_cv_reuse_config=$withval])
 
 AC_ARG_ENABLE([cgi-suffix], AC_HELP_STRING([--enable-cgi-suffix],[append the given suffix to the CGI programs]),[ac_cv_cgi_suffix=$enableval],[ac_cv_cgi_suffix=""])
-AC_ARG_ENABLE([cgi-bin-dir], AC_HELP_STRING([--enable-cgi-bin-dir],[specify the destination CGI script directory [[\${prefix}/libexec/ejudge/cgi-bin]]]),[cgibindir=$enableval], [cgibindir='${prefix}/libexec/ejudge/cgi-bin'])
+AC_ARG_ENABLE([cgi-bin-dir], AC_HELP_STRING([--enable-cgi-bin-dir],[specify the destination CGI script directory [[\${prefix}/libexec/ejudge/cgi-bin]]]),[cgibindir=$enableval], [cgibindir='${libexecdir}/ejudge/cgi-bin'])
 AC_ARG_ENABLE([static], AC_HELP_STRING([--enable-static],[link programs statically]),[ac_cv_static=1],[ac_cv_static=""])
 AC_ARG_ENABLE([rpath], AC_HELP_STRING([--disable-rpath],[do not use -rpath feature]),[ac_cv_rpath="$enableval"])
 AC_ARG_ENABLE([nls], AC_HELP_STRING([--disable-nls],[disable localization]),[ac_cv_nls=$enableval],[ac_cv_nls=""])
@@ -1353,14 +1353,29 @@ else
   actual_prefix="${prefix}"
 fi
 
+if [[ x"${exec_prefix}" = xNONE ]]
+then
+  actual_exec_prefix="${ac_default_prefix}"
+else
+  actual_exec_prefix="${exec_prefix}"
+fi
+
+if [[ x"${libexecdir}" = x'${exec_prefix}/libexec' ]]
+then
+  actual_libexecdir="${actual_exec_prefix}/libexec"
+else
+  actual_libexecdir="${libexecdir}"
+fi
+
 ac_cv_expanded_prefix="${actual_prefix}"
 ac_cv_expanded_locale_dir="${actual_prefix}/share/locale"
 ac_cv_ejudge_serve_path="${actual_prefix}/bin/serve"
 ac_cv_ejudge_run_path="${actual_prefix}/bin/run"
-ac_cv_ejudge_script_dir="${actual_prefix}/libexec/ejudge"
-if [[ x"${cgibindir}" = x'${prefix}/libexec/ejudge/cgi-bin' ]]
+ac_cv_ejudge_script_dir="${libexecdir}/ejudge"
+ac_cv_ejudge_script_dir_expanded="${actual_libexecdir}/ejudge"
+if [[ x"${cgibindir}" = x'${libexecdir}/ejudge/cgi-bin' ]]
 then
-  ac_cv_ejudge_cgi_bin_dir="${actual_prefix}/libexec/ejudge/cgi-bin"
+  ac_cv_ejudge_cgi_bin_dir="${actual_libexecdir}/ejudge/cgi-bin"
 else
   ac_cv_ejudge_cgi_bin_dir="${cgibindir}"
 fi
@@ -1530,7 +1545,7 @@ AC_DEFINE_UNQUOTED(EJUDGE_PREFIX_DIR,"${ac_cv_expanded_prefix}")
 AC_DEFINE_UNQUOTED(EJUDGE_LOCALE_DIR,"$ac_cv_expanded_locale_dir")
 AC_DEFINE_UNQUOTED(EJUDGE_SERVE_PATH,"${ac_cv_ejudge_serve_path}")
 AC_DEFINE_UNQUOTED(EJUDGE_RUN_PATH,"${ac_cv_ejudge_run_path}")
-AC_DEFINE_UNQUOTED(EJUDGE_SCRIPT_DIR,"${ac_cv_ejudge_script_dir}")
+AC_DEFINE_UNQUOTED(EJUDGE_SCRIPT_DIR,"${ac_cv_ejudge_script_dir_expanded}")
 AC_DEFINE_UNQUOTED(EJUDGE_CGI_BIN_DIR,"${ac_cv_ejudge_cgi_bin_dir}")
 if [[ x"${ac_cv_charset}" != x ]]
 then
