@@ -2298,3 +2298,12 @@ l10n.c 4076 0 257792
 copyright.c 4082 0 202348
 ejudge-setup.c 4085 0 9864930
 startstop.c 4085 0 247376
+new-server.h 4089 0 1777096
+runlog.h 4089 0 815059
+filter_eval.c 4089 0 1261928
+new_server_html.c 4089 0 29394604
+new_server_html_2.c 4089 0 11927055
+runlog.c 4089 0 6331303
+runlog_xml.c 4089 0 2110485
+filter_expr.y 4089 0 2308119
+filter_scan.lex 4089 0 666716
