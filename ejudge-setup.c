@@ -21,6 +21,7 @@
 #include "ncurses_utils.h"
 #include "sha.h"
 #include "base64.h"
+#include "startstop.h"
 #include "cpu.h"
 
 #include <reuse/xalloc.h>
@@ -3959,10 +3960,12 @@ get_system_identity(void)
     fprintf(stderr, "Your uid %d is negative!\n", system_uid);
     exit(1);
   }
+  /*
   if (!system_uid) {
     // root must fill the system_login and system_group
     return;
   }
+  */
 
   pp = getpwuid(system_uid);
   if (!pp) {
@@ -4016,15 +4019,48 @@ static const unsigned char initial_warning[] =
 "Are you sure you want to continue?\n"
 "\\end{center}\n";
 
+static void
+arg_expected(const unsigned char *progname)
+{
+  fprintf(stderr, "%s: invalid number of arguments\n", progname);
+  exit(1);
+}
+
 int
 main(int argc, char **argv)
 {
   int answer = 1;
+  int cur_arg = 1;
+  const unsigned char *user = 0, *group = 0, *workdir = 0;
+
+  while (cur_arg < argc) {
+    if (!strcmp(argv[cur_arg], "-u")) {
+      if (cur_arg + 1 >= argc) arg_expected(argv[0]);
+      user = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-g")) {
+      if (cur_arg + 1 >= argc) arg_expected(argv[0]);
+      group = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-C")) {
+      if (cur_arg + 1 >= argc) arg_expected(argv[0]);
+      workdir = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else {
+      break;
+    }
+  }
+  if (cur_arg != argc) {
+    fprintf(stderr, "%s: invalid number of arguments\n", argv[0]);
+    return 1;
+  }
 
 #if CONF_HAS_LIBINTL - 0 == 1 && defined EJUDGE_LOCALE_DIR
   bindtextdomain("ejudge", EJUDGE_LOCALE_DIR);
   textdomain("ejudge");
 #endif /* CONF_HAS_LIBINTL */
+
+  if (start_prepare(user, group, workdir) < 0) return 1;
 
   setlocale(LC_ALL, "");
   get_system_identity();

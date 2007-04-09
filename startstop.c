@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -59,25 +59,32 @@ start_switch_user(const unsigned char *user, const unsigned char *group)
   struct passwd *pwinfo;
   struct group *grinfo;
 
-  if (!user || !*user) {
-    err("user is not specified (use -u option)");
+  if (user && !*user) user = 0;
+  if (group && !*group) group = 0;
+
+  if (!user && !getuid()) {
+    fprintf(stderr, 
+            "Error: user is not specified\n"
+            "Note: since you've invoked program as the root user, you must\n"
+            "  specify an unprivileged user login and group to run as.\n"
+            "  The program will not run with the root privileges!\n");
     return -1;
   }
-  if (!group || !*group) group = user;
-  if (!(pwinfo = getpwnam(user))) {
-    err("no such user: %s", user);
+  if (!group) group = user;
+  if (user && !(pwinfo = getpwnam(user))) {
+    fprintf(stderr, "Error: no such user: %s\n", user);
     return -1;
   }
-  if (!(grinfo = getgrnam(group))) {
-    err("no such group: %s", group);
+  if (group && !(grinfo = getgrnam(group))) {
+    fprintf(stderr, "Error: no such group: %s\n", group);
     return -1;
   }
-  if (setgid(grinfo->gr_gid) < 0) {
-    err("cannot change gid: %s", os_ErrorMsg());
+  if (group && setgid(grinfo->gr_gid) < 0) {
+    fprintf(stderr, "Error: cannot change gid: %s\n", os_ErrorMsg());
     return -1;
   }
-  if (setuid(pwinfo->pw_uid) < 0) {
-    err("cannot change uid: %s", os_ErrorMsg());
+  if (user && setuid(pwinfo->pw_uid) < 0) {
+    fprintf(stderr, "Error: cannot change uid: %s\n", os_ErrorMsg());
     return -1;
   }
   return 0;
@@ -87,13 +94,11 @@ int
 start_prepare(const unsigned char *user, const unsigned char *group,
               const unsigned char *workdir)
 {
-  if (getuid() == 0) {
-    if (start_switch_user(user, group) < 0) return -1;
-  }
+  if (start_switch_user(user, group) < 0) return -1;
 
   if (workdir && *workdir) {
     if (chdir(workdir) < 0) {
-      err("cannot change directory to %s", workdir);
+      fprintf(stderr, "Error: cannot change directory to %s\n", workdir);
       return -1;
     }
   }
