@@ -112,6 +112,7 @@ ns_write_priv_all_runs(FILE *f,
   unsigned char hbuf[128];
   unsigned char *prob_str;
   const unsigned char *imported_str;
+  const unsigned char *examinable_str;
   const unsigned char *rejudge_dis_str;
   unsigned long *displayed_mask = 0;
   int displayed_size = 0;
@@ -441,6 +442,10 @@ ns_write_priv_all_runs(FILE *f,
       if (pe->is_hidden) {
         imported_str = "#";
       }
+      examinable_str = "";
+      if (pe->is_examinable) {
+        examinable_str = "!";
+      }
       start_time = env.rhead.start_time;
       if (global->is_virtual) {
         start_time = run_get_virtual_start_time(cs->runlog_state, pe->user_id);
@@ -453,7 +458,7 @@ ns_write_priv_all_runs(FILE *f,
       if (phr->role == USER_ROLE_ADMIN) {
         html_start_form(f, 1, phr->self_url, phr->hidden_vars);
       }
-      fprintf(f, "<td%s>%d%s</td>", cl, rid, imported_str);
+      fprintf(f, "<td%s>%d%s%s</td>", cl, rid, imported_str, examinable_str);
       fprintf(f, "<td%s>%s</td>", cl, durstr);
       fprintf(f, "<td%s>%u</td>", cl, pe->size);
       fprintf(f, "<td%s>%s</td>", cl, xml_unparse_ip(pe->a.ip));
@@ -1204,6 +1209,22 @@ ns_write_priv_source(const serve_state_t state,
     fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
             html_select_yesno(bt, sizeof(bt), "param", info.is_hidden),
             BUTTON(NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN));
+  } else {
+    fprintf(f, "%s</tr>\n", nbsp);
+  }
+
+  // is_examinable
+  if (editable) {
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "run_id", "%d", run_id);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%s</td>",
+          _("Examinable?"),
+          html_unparse_bool(bb, sizeof(bb), info.is_examinable));
+  if (editable) {
+    fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
+            html_select_yesno(bt, sizeof(bt), "param", info.is_examinable),
+            BUTTON(NEW_SRV_ACTION_CHANGE_RUN_IS_EXAMINABLE));
   } else {
     fprintf(f, "%s</tr>\n", nbsp);
   }
@@ -4357,7 +4378,7 @@ ns_examiners_page(
 {
   const serve_state_t cs = extra->serve_state;
   const struct section_problem_data *prob = 0;
-  int prob_id, user_id, max_user_id = -1, i, role_mask, ex_cnt;
+  int prob_id, user_id, max_user_id = -1, i, role_mask, ex_cnt, chief_user_id;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int_iterator_t iter = 0;
   unsigned char **logins = 0, **names = 0, *roles = 0;
@@ -4365,7 +4386,8 @@ ns_examiners_page(
   unsigned char bb[1024];
   const unsigned char *s = 0, *s_beg = 0, *s_end = 0;
   unsigned char nbuf[1024];
-  int exam_role_count = 0, chief_role_count = 0, add_count;
+  int exam_role_count = 0, chief_role_count = 0, add_count, ex_num;
+  int assignable_runs, assigned_runs;
   unsigned char *exam_flag = 0;
 
   fprintf(fout, "<p>%s%s</a></p>",
@@ -4439,6 +4461,7 @@ ns_examiners_page(
             _("Chief examiner"));
 
     user_id = nsdb_find_chief_examiner(phr->contest_id, prob_id);
+    chief_user_id = user_id;
     s_beg = ""; s_end = "";
     if (user_id < 0) {
       snprintf(nbuf, sizeof(nbuf), "<i><font color=\"red\">Error!</font></i>");
@@ -4577,6 +4600,25 @@ ns_examiners_page(
     fprintf(fout, "</tr>");
 
     fprintf(fout, "</table></form>\n");
+
+    if (chief_user_id <= 0) {
+      fprintf(fout, "<p><font color=\"red\">%s</font></p>",
+              _("Chief examiner must be assigned."));
+    }
+    ex_num = 1;
+    if (prob->examinator_num > 1 && prob->examinator_num <= 3)
+      ex_num = prob->examinator_num;
+    if (ex_cnt < ex_num) {
+      fprintf(fout, _("<p><font color=\"red\">At least %d examiners must be assigned.</font></p>"), ex_num);
+
+    }
+
+    assigned_runs = 0;
+    assignable_runs = run_count_examinable_runs(cs->runlog_state, prob_id,
+                                                ex_num, &assigned_runs);
+    if (!assignable_runs) {
+      fprintf(fout, "<p>%s</p>\n", _("No assignable runs."));
+    }
   }
 
   if (logins) {

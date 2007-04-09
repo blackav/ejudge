@@ -1616,6 +1616,10 @@ run_set_entry(runlog_state_t state, int run_id, unsigned int mask,
     te.score_adj = in->score_adj;
     f = 1;
   }
+  if ((mask & RUN_ENTRY_EXAMINABLE) && te.is_examinable != in->is_examinable) {
+    te.is_examinable = in->is_examinable;
+    f = 1;
+  }
 
   /* check consistency of a new record */
   if (te.status == RUN_VIRTUAL_START || te.status == RUN_VIRTUAL_STOP
@@ -2827,6 +2831,31 @@ run_get_virtual_info(runlog_state_t state, int user_id,
   if (run_start < 0 || run_end < 0) return -1;
   if (vs) memcpy(vs, &state->runs[run_start], sizeof(*vs));
   if (ve) memcpy(ve, &state->runs[run_end], sizeof(*ve));  
+  return count;
+}
+
+int
+run_count_examinable_runs(runlog_state_t state, int prob_id,
+                          int exam_num, int *p_assigned)
+{
+  int count = 0, i, assigned_count = 0, j;
+  struct run_entry *p;
+
+  ASSERT(exam_num >= 1 && exam_num <= 3);
+
+  for (i = state->run_u; i >= 0; i--) {
+    p = &state->runs[i];
+    if (p->status > RUN_LAST) continue;
+    if (!run_source_available_statuses[p->status]) continue;
+    if (p->prob_id == prob_id && p->is_examinable) {
+      count++;
+      for (j = 0; j < exam_num; j++)
+        if (p->examiners[j] <= 0)
+          break;
+      if (j == exam_num) assigned_count++;
+    }
+  }
+  if (p_assigned) *p_assigned = assigned_count;
   return count;
 }
 

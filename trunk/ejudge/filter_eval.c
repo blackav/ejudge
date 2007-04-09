@@ -178,6 +178,7 @@ do_eval(struct filter_env *env,
   case TOK_USERINCOMPLETE:
   case TOK_LATEST:
   case TOK_AFTEROK:
+  case TOK_EXAMINABLE:
     if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
     ASSERT(r1.kind == TOK_INT_L);
     if (r1.v.i < 0) r1.v.i = env->rtotal + r1.v.i;
@@ -355,6 +356,11 @@ do_eval(struct filter_env *env,
       res->kind = TOK_BOOL_L;
       res->type = FILTER_TYPE_BOOL;
       res->v.b = is_afterok(env, r1.v.i);
+      break;
+    case TOK_EXAMINABLE:
+      res->kind = TOK_BOOL_L;
+      res->type = FILTER_TYPE_BOOL;
+      res->v.b = env->rentries[r1.v.i].is_examinable;
       break;
     default:
       abort();
@@ -546,6 +552,11 @@ do_eval(struct filter_env *env,
     res->type = FILTER_TYPE_BOOL;
     res->v.b = is_afterok(env, env->cur->run_id);
     break;
+  case TOK_CUREXAMINABLE:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    res->v.b = env->cur->is_examinable;
+    break;
 
   case TOK_NOW:
     res->kind = TOK_TIME_L;
@@ -579,6 +590,39 @@ do_eval(struct filter_env *env,
   case TOK_IP_L:
     *res = *t;
     return 0;
+
+  case TOK_EXAMINATOR:
+    if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
+    ASSERT(r1.kind == TOK_INT_L);
+    if (r1.v.i < 0) r1.v.i = env->rtotal + r1.v.i;
+    if (r1.v.i >= env->rtotal) return -FILTER_ERR_RANGE;
+    if (r1.v.i < 0) return -FILTER_ERR_RANGE;
+    if ((c = do_eval(env, t->v.t[1], &r2)) < 0) return c;
+    ASSERT(r2.kind == TOK_INT_L);
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    res->v.b = 0;
+    for (c = 0; c < 3; c++) {
+      if (env->rentries[r1.v.i].examiners[c] == r2.v.i) {
+        res->v.b = 1;
+        break;
+      }
+    }
+    break;
+
+  case TOK_CUREXAMINATOR:
+    if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
+    ASSERT(r1.kind == TOK_INT_L);
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    res->v.b = 0;
+    for (c = 0; c < 3; c++) {
+      if (env->cur->examiners[c] == r1.v.i) {
+        res->v.b = 1;
+        break;
+      }
+    }
+    break;
 
   default:
     SWERR(("unhandled kind: %d", t->kind));

@@ -164,7 +164,8 @@ enum
     RUN_ENTRY_PAGES = 0x00008000,
     RUN_ENTRY_NSEC = 0x00010000,
     RUN_ENTRY_SCORE_ADJ = 0x00020000,
-    RUN_ENTRY_ALL = 0x0003FFFF,
+    RUN_ENTRY_EXAMINABLE = 0x00040000,
+    RUN_ENTRY_ALL = 0x0007FFFF,
   };
 
 /* structure size is 128 bytes */
@@ -197,8 +198,12 @@ struct run_entry
   unsigned char  ipv6_flag;     /* 1 */
   unsigned char  ssl_flag;      /* 1 */
   rint16_t       mime_type;     /* 2 */
-  /* total is 94 bytes */
-  unsigned char  _pad2[34];
+  unsigned char  is_examinable; /* 1 */
+  unsigned char  _pad3[1];      /* 1 */
+  int            examiners[3];  /* 12 */
+  int            exam_score[3]; /* 12 */
+  /* total is 120 bytes */
+  unsigned char  _pad2[8];
 };
 
 struct run_file
@@ -276,5 +281,8 @@ int run_str_short_to_status(const unsigned char *str, int *pr);
 
 #define RUN_TOO_MANY 100000
 int run_get_prev_successes(runlog_state_t, int run_id);
+
+int run_count_examinable_runs(runlog_state_t state, int prob_id,
+                              int exam_num, int *p_assigned);
 
 #endif /* __RUNLOG_H__ */

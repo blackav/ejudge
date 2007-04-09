@@ -108,6 +108,7 @@ enum
   RUNLOG_A_MIME_TYPE,
   RUNLOG_A_PAGES,
   RUNLOG_A_HIDDEN,
+  RUNLOG_A_EXAMINABLE,
 
   RUNLOG_LAST_ATTR,
 };
@@ -164,6 +165,7 @@ static const char * const attr_map[] =
   [RUNLOG_A_MIME_TYPE] "mime_type",
   [RUNLOG_A_PAGES] "pages",
   [RUNLOG_A_HIDDEN] "hidden",
+  [RUNLOG_A_EXAMINABLE] "examinable",
 
   [RUNLOG_LAST_ATTR] 0,
 };
@@ -442,6 +444,9 @@ process_run_elements(struct xml_tree *xt)
         break;
       case RUNLOG_A_HIDDEN:
         if (xml_attr_bool_byte(xa, &xr->r.is_hidden) < 0) return -1;
+        break;
+      case RUNLOG_A_EXAMINABLE:
+        if (xml_attr_bool_byte(xa, &xr->r.is_examinable) < 0) return -1;
         break;
       case RUNLOG_A_NSEC:
         if (!xa->text) goto empty_attr_value;
@@ -861,6 +866,9 @@ unparse_runlog_xml(serve_state_t state,
     fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_NSEC], pp->nsec);
     if (!external_mode && pp->pages > 0) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_PAGES], pp->pages);
+    }
+    if (pp->is_examinable) {
+      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_EXAMINABLE], "yes");
     }
     if (!source_mode || pp->status >= RUN_MAX_STATUS) {
       fprintf(f, "/>\n");

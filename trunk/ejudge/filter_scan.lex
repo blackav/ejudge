@@ -135,6 +135,10 @@ lett    [A-Za-z_]
 "curlatest" { TT(TOK_CURLATEST, FILTER_TYPE_BOOL); }
 "afterok" { TT(TOK_AFTEROK, FILTER_TYPE_BOOL); }
 "curafterok" { TT(TOK_CURAFTEROK, FILTER_TYPE_BOOL); }
+"examinable" { TT(TOK_EXAMINABLE, FILTER_TYPE_BOOL); }
+"curexaminable" { TT(TOK_CUREXAMINABLE, FILTER_TYPE_BOOL); }
+"examinator" { TT(TOK_EXAMINATOR, FILTER_TYPE_BOOL); }
+"curexaminator" { TT(TOK_CUREXAMINATOR, FILTER_TYPE_BOOL); }
 
 "int" { TT(TOK_INT, FILTER_TYPE_INT); }
 "string" { TT(TOK_STRING, FILTER_TYPE_STRING); }
