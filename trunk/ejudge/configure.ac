@@ -1355,7 +1355,7 @@ fi
 
 if [[ x"${exec_prefix}" = xNONE ]]
 then
-  actual_exec_prefix="${ac_default_prefix}"
+  actual_exec_prefix="${actual_prefix}"
 else
   actual_exec_prefix="${exec_prefix}"
 fi
