@@ -142,6 +142,10 @@ static void *filter_expr_user_data;
 %token TOK_CURLATEST "curlatest"
 %token TOK_AFTEROK   "afterok"
 %token TOK_CURAFTEROK "curafterok"
+%token TOK_EXAMINABLE "examinable"
+%token TOK_CUREXAMINABLE "curexaminable"
+%token TOK_EXAMINATOR "examinator"
+%token TOK_CUREXAMINATOR "curexaminator"
 %token TOK_INT       "int"
 %token TOK_STRING    "string"
 %token TOK_BOOL      "bool"
@@ -310,6 +314,12 @@ exprA :
 | "afterok" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "afterok" { $1->kind = TOK_CURAFTEROK; $$ = $1; }
 | "curafterok" { $$ = $1; }
+| "examinable" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "examinable" { $1->kind = TOK_CUREXAMINABLE; $$ = $1; }
+| "curexaminable" { $$ = $1; }
+| "examinator" '(' expr0 ',' expr0 ')' { $1->v.t[0] = check_int($3); $1->v.t[1] = check_int($5); $$ = $1; }
+| "examinator" '(' expr0 ')' { $1->kind = TOK_CUREXAMINATOR; $1->v.t[0] = check_int($3); $$ = $1; }
+| "curexaminator" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "int" '(' expr0 ')' { $$ = do_int_cast($1, $3); }
 | "string" '(' expr0 ')' { $$ = do_string_cast($1, $3); }
 | "bool" '(' expr0 ')' { $$ = do_bool_cast($1, $3); }
