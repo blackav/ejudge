@@ -2296,3 +2296,5 @@ teamdb.c 4073 0 1411196
 userlist_xml.c 4073 0 4363409
 l10n.c 4076 0 257792
 copyright.c 4082 0 202348
+ejudge-setup.c 4085 0 9864930
+startstop.c 4085 0 247376
