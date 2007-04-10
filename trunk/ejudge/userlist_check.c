@@ -172,7 +172,19 @@ userlist_count_info_errors(
     }
   }
   for (rr = CONTEST_M_CONTESTANT; rr < CONTEST_LAST_MEMBER; rr++) {
+    if (cnts->personal && rr == CONTEST_M_RESERVE) continue;
     if (!cnts->members[rr] || cnts->members[rr]->max_count <= 0) continue;
+    if (cnts->personal && rr == CONTEST_M_CONTESTANT
+        && cnts->members[rr]->max_count == 1) {
+      // if there are no mandatory fields, contestant is allowed to
+      // have no member info
+      for (ff = CONTEST_MF_FIRSTNAME; ff < CONTEST_LAST_MEMBER_FIELD; ff++) {
+        if (!cnts->members[rr]->fields[ff]) continue;
+        if (cnts->members[rr]->fields[ff]->mandatory) break;
+      }
+      if (ff == CONTEST_LAST_MEMBER_FIELD &&
+          (!ui->members[rr] || !ui->members[rr]->total)) continue;
+    }
     mmbound = 0;
     if (ui->members[rr]) mmbound = ui->members[rr]->total;
     if (mmbound < cnts->members[rr]->min_count) {
