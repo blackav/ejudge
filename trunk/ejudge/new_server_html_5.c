@@ -864,9 +864,11 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
   extra = ns_get_contest_extra(phr->contest_id);
   cur_time = time(0);
   watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+  watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
   watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
   watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
   extra->header_txt = extra->header.text;
+  extra->separator_txt = extra->separator.text;
   extra->footer_txt = extra->footer.text;
   extra->separator_txt = "";
   extra->copyright_txt = extra->copyright.text;
@@ -2992,9 +2994,11 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   extra = ns_get_contest_extra(phr->contest_id);
   cur_time = time(0);
   watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+  watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
   watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
   watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
   extra->header_txt = extra->header.text;
+  extra->separator_txt = extra->separator.text;
   extra->footer_txt = extra->footer.text;
   extra->separator_txt = "";
   extra->copyright_txt = extra->copyright.text;

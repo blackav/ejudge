@@ -63,6 +63,7 @@ enum
     CONTEST_REGISTER_HEADER_FILE,
     CONTEST_REGISTER_FOOTER_FILE,
     CONTEST_TEAM_HEADER_FILE,
+    CONTEST_TEAM_SEPARATOR_FILE,
     CONTEST_TEAM_FOOTER_FILE,
     CONTEST_COPYRIGHT_FILE,
     CONTEST_USERS_HEAD_STYLE,
@@ -257,6 +258,7 @@ struct contest_desc
   unsigned char *register_header_file;
   unsigned char *register_footer_file;
   unsigned char *team_header_file;
+  unsigned char *team_separator_file;
   unsigned char *team_footer_file;
   unsigned char *priv_header_file;
   unsigned char *priv_footer_file;

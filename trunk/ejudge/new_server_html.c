@@ -270,6 +270,7 @@ ns_unload_contest(int contest_id)
 
   xfree(extra->contest_arm);
   watched_file_clear(&extra->header);
+  watched_file_clear(&extra->separator);
   watched_file_clear(&extra->footer);
   watched_file_clear(&extra->priv_header);
   watched_file_clear(&extra->priv_footer);
@@ -6444,11 +6445,12 @@ unpriv_load_html_style(struct http_request_info *phr,
 
   cur_time = time(0);
   watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+  watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
   watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
   watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
   extra->header_txt = extra->header.text;
   extra->footer_txt = extra->footer.text;
-  extra->separator_txt = "";
+  extra->separator_txt = extra->separator.text;
   extra->copyright_txt = extra->copyright.text;
   if (!extra->header_txt || !extra->footer_txt) {
     extra->header_txt = ns_fancy_header;
@@ -6871,11 +6873,12 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
 
   cur_time = time(0);
   watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+  watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
   watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
   watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
   extra->header_txt = extra->header.text;
   extra->footer_txt = extra->footer.text;
-  extra->separator_txt = "";
+  extra->separator_txt = extra->separator.text;
   extra->copyright_txt = extra->copyright.text;
   if (!extra->header_txt || !extra->footer_txt) {
     extra->header_txt = ns_fancy_header;
@@ -10499,9 +10502,11 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr,
                                              cnts->id);
 
   watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+  watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
   watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
   watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
   extra->header_txt = extra->header.text;
+  extra->separator_txt = extra->separator.text;
   extra->footer_txt = extra->footer.text;
   extra->copyright_txt = extra->copyright.text;
   //if (!extra->header_txt) extra->header_txt = ns_fancy_header;
