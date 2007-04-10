@@ -2114,6 +2114,8 @@ priv_submit_run(FILE *fout,
     ans_buf[run_size++] = '\n';
     ans_buf[run_size] = 0;
     break;
+  case PROB_TYPE_CUSTOM:   // use problem plugin
+    break;
   default:
     abort();
   }
@@ -2131,8 +2133,11 @@ priv_submit_run(FILE *fout,
   case PROB_TYPE_TEXT_ANSWER:
   case PROB_TYPE_SHORT_ANSWER:
   case PROB_TYPE_SELECT_ONE:
-  case PROB_TYPE_SELECT_MANY:
     if (strlen(run_text) != run_size) goto binary_submission;
+    break;
+
+  case PROB_TYPE_SELECT_MANY:
+  case PROB_TYPE_CUSTOM:
     break;
 
   binary_submission:
@@ -3237,9 +3242,12 @@ priv_new_run(FILE *fout,
   case PROB_TYPE_TEXT_ANSWER:
   case PROB_TYPE_SHORT_ANSWER:
   case PROB_TYPE_SELECT_ONE:
-  case PROB_TYPE_SELECT_MANY:
     if (strlen(run_text) != run_size)
       FAIL(NEW_SRV_ERR_BINARY_FILE);
+    break;
+
+  case PROB_TYPE_SELECT_MANY:
+  case PROB_TYPE_CUSTOM:
     break;
   }
 
@@ -6033,6 +6041,8 @@ priv_main_page(FILE *fout,
           }
         }
         break;
+      case PROB_TYPE_CUSTOM:    /* form is a part of problem statement */
+        break;
       }
       fprintf(fout, "<tr><td>%s</td><td>%s</td></tr></table></form>\n",
               _("Send!"), BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
@@ -7331,6 +7341,9 @@ unpriv_submit_run(FILE *fout,
     ans_buf[run_size++] = '\n';
     ans_buf[run_size] = 0;
     break;
+  case PROB_TYPE_CUSTOM:
+    // invoke problem plugin
+    break;
   default:
     abort();
   }
@@ -7372,6 +7385,9 @@ unpriv_submit_run(FILE *fout,
       ns_error(log_f, NEW_SRV_ERR_BINARY_FILE);
       goto done;
     }
+    break;
+
+  case PROB_TYPE_CUSTOM:
     break;
   }
 
@@ -9882,6 +9898,8 @@ user_main_page(FILE *fout,
               fprintf(fout, "<tr><td class=\"borderless\">%d</td><td class=\"borderless\"><input type=\"checkbox\" name=\"ans_%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
             }
           }
+          break;
+        case PROB_TYPE_CUSTOM:
           break;
         }
         if (cnts->exam_mode) {

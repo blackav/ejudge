@@ -41,6 +41,7 @@ enum
   PROB_TYPE_TEXT_ANSWER,        /* output-only with textarea input */
   PROB_TYPE_SELECT_ONE,         /* select one answer from the list */
   PROB_TYPE_SELECT_MANY,        /* select many answers from the list */
+  PROB_TYPE_CUSTOM,             /* custom form (part of prob. stmt) */
 
   PROB_TYPE_LAST,
 };

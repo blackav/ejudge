@@ -3268,6 +3268,7 @@ static unsigned char *get_source(const serve_state_t cs, int run_id,
   case PROB_TYPE_STANDARD:
   case PROB_TYPE_OUTPUT_ONLY:
   case PROB_TYPE_TEXT_ANSWER:
+  case PROB_TYPE_CUSTOM:
     goto cleanup;
   case PROB_TYPE_SHORT_ANSWER:
   case PROB_TYPE_SELECT_ONE:
