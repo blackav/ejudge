@@ -657,6 +657,8 @@ cmd_submit_run(
     if (strlen(run_text) != run_size) 
       FAIL(NEW_SRV_ERR_BINARY_FILE);
     break;
+  case PROB_TYPE_CUSTOM:
+    break;
   }
 
   /* process special kind of answers */

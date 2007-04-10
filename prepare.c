@@ -1505,6 +1505,7 @@ const unsigned char * const problem_type_str[] =
   [PROB_TYPE_TEXT_ANSWER] = "text-answer",
   [PROB_TYPE_SELECT_ONE] = "select-one",
   [PROB_TYPE_SELECT_MANY] = "select-many",
+  [PROB_TYPE_CUSTOM] = "custom",
 
   [PROB_TYPE_LAST] = 0,
 };
