@@ -328,6 +328,7 @@ enum
 struct contest_extra
 {
   struct watched_file header;
+  struct watched_file separator;
   struct watched_file footer;
   struct watched_file priv_header;
   struct watched_file priv_footer;

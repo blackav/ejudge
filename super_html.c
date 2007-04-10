@@ -2579,6 +2579,16 @@ super_html_edit_contest_page(FILE *f,
                              self_url,
                              extra_args,
                              hidden_vars);
+    print_string_editing_row(f, "HTML separator file for `team' CGI-program:",
+                             cnts->team_separator_file,
+                             SSERV_CMD_CNTS_CHANGE_TEAM_SEPARATOR,
+                             SSERV_CMD_CNTS_CLEAR_TEAM_SEPARATOR,
+                             SSERV_CMD_CNTS_EDIT_TEAM_SEPARATOR,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
     print_string_editing_row(f, "HTML footer file for `team' CGI-program:",
                              cnts->team_footer_file,
                              SSERV_CMD_CNTS_CHANGE_TEAM_FOOTER,
@@ -3589,6 +3599,20 @@ super_html_edit_template_file(FILE *f,
     commit_action = SSERV_CMD_CNTS_SAVE_TEAM_HEADER;
     reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_HEADER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_HEADER_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
+    help_txt = template_help_1;
+    break;
+  case SSERV_CMD_CNTS_EDIT_TEAM_SEPARATOR:
+    if (!cnts) {
+      failure_text = "no current contest";
+      goto failure;
+    }
+    file_path1 = cnts->team_separator_file;
+    param_expl = "`team' HTML separator file";
+    p_str = &sstate->team_separator_text;
+    commit_action = SSERV_CMD_CNTS_SAVE_TEAM_SEPARATOR;
+    reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_SEPARATOR_TEXT;
+    clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_SEPARATOR_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
     help_txt = template_help_1;
     break;
