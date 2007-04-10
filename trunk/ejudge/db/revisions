@@ -2308,3 +2308,16 @@ runlog_xml.c 4089 0 2110485
 filter_expr.y 4089 0 2308119
 filter_scan.lex 4089 0 666716
 userlist_check.c 4091 0 896242
+contests.h 4093 0 865251
+new-server.h 4093 0 1780186
+super_proto.h 4093 0 1808981
+super-serve.h 4093 0 370269
+serve-control.c 4093 0 8108584
+super-serve.c 4093 0 11939800
+contests.c 4093 0 4432609
+contest_tmpl.c 4093 0 883309
+new_server_html.c 4093 0 29429225
+new_server_html_3.c 4093 0 2097468
+new_server_html_5.c 4093 0 8452810
+super_html.c 4093 0 10909174
+super_html_2.c 4093 0 4677080
