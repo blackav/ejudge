@@ -2784,6 +2784,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CLEAR_STATEMENT_FILE:
   case SSERV_CMD_PROB_CHANGE_ALTERNATIVES_FILE:
   case SSERV_CMD_PROB_CLEAR_ALTERNATIVES_FILE:
+  case SSERV_CMD_PROB_CHANGE_PLUGIN_FILE:
+  case SSERV_CMD_PROB_CLEAR_PLUGIN_FILE:
   case SSERV_CMD_PROB_CHANGE_STAND_ATTR:
   case SSERV_CMD_PROB_CLEAR_STAND_ATTR:
   case SSERV_CMD_PROB_CHANGE_SOURCE_HEADER:
@@ -3423,6 +3425,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CLEAR_STATEMENT_FILE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_ALTERNATIVES_FILE] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_ALTERNATIVES_FILE] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_PLUGIN_FILE] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_PLUGIN_FILE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_STAND_ATTR] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_STAND_ATTR] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_SOURCE_HEADER] = { cmd_set_value },

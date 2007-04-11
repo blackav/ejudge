@@ -926,6 +926,8 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   if (prob->alternatives_file[0])
     fprintf(f, "alternatives_file = \"%s\"\n",
             c_armor(&sbuf, prob->alternatives_file));
+  if (prob->plugin_file[0])
+    fprintf(f, "plugin_file = \"%s\"\n",c_armor(&sbuf,prob->plugin_file));
   if (prob->test_dir[0])
     fprintf(f, "test_dir = \"%s\"\n", c_armor(&sbuf, prob->test_dir));
   if (prob->test_sfx[0] != 1) {
@@ -1804,6 +1806,10 @@ prob_instr(FILE *f, const unsigned char *root_dir,
                          &tmp_prob, abstr,0);
   if (prob->alternatives_file[0]) {
     fprintf(f, "Problem possible answers: %s\n", prob->alternatives_file);
+  }
+  prepare_set_prob_value(PREPARE_FIELD_PROB_PLUGIN_FILE, &tmp_prob, abstr,0);
+  if (prob->plugin_file[0]) {
+    fprintf(f, "Problem plugin: %s\n", prob->plugin_file);
   }
   if (!prob->standard_checker[0]) {
     mkpath(checker_path, conf_path, global->checker_dir, DFLT_G_CHECKER_DIR);
