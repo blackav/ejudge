@@ -354,6 +354,7 @@ Contest files and directories:
   GLOBAL_PARAM(tgz_dir, "s"),
   GLOBAL_PARAM(checker_dir, "s"),
   GLOBAL_PARAM(statement_dir, "s"),
+  GLOBAL_PARAM(plugin_dir, "s"),
   GLOBAL_PARAM(description_file, "s"),
   GLOBAL_PARAM(contest_start_cmd, "s"),
 
@@ -883,6 +884,17 @@ super_html_edit_global_parameters(FILE *f,
     print_string_editing_row(f, "Directory for problem statements (relative to contest configuration dir):", global->statement_dir,
                              SSERV_CMD_GLOB_CHANGE_STATEMENT_DIR,
                              SSERV_CMD_GLOB_CLEAR_STATEMENT_DIR,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+
+    //GLOBAL_PARAM(plugin_dir, "s"),
+    print_string_editing_row(f, "Directory for problem plugins (relative to contest configuration dir):", global->plugin_dir,
+                             SSERV_CMD_GLOB_CHANGE_PLUGIN_DIR,
+                             SSERV_CMD_GLOB_CLEAR_PLUGIN_DIR,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2141,6 +2153,12 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CLEAR_STATEMENT_DIR:
     GLOB_CLEAR_STRING(statement_dir);
+
+  case SSERV_CMD_GLOB_CHANGE_PLUGIN_DIR:
+    GLOB_SET_STRING(plugin_dir);
+
+  case SSERV_CMD_GLOB_CLEAR_PLUGIN_DIR:
+    GLOB_CLEAR_STRING(plugin_dir);
 
   case SSERV_CMD_GLOB_CHANGE_DESCRIPTION_FILE:
     GLOB_SET_STRING(description_file);

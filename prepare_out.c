@@ -278,6 +278,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     fprintf(f, "checker_dir = \"%s\"\n", c_armor(&sbuf, global->checker_dir));
   if (global->statement_dir[0] && strcmp(global->statement_dir, DFLT_G_STATEMENT_DIR))
     fprintf(f, "statement_dir = \"%s\"\n", c_armor(&sbuf, global->statement_dir));
+  if (global->plugin_dir[0] && strcmp(global->plugin_dir, DFLT_G_PLUGIN_DIR))
+    fprintf(f, "plugin_dir = \"%s\"\n", c_armor(&sbuf, global->plugin_dir));
   if (global->contest_start_cmd[0])
     fprintf(f, "contest_start_cmd = \"%s\"\n",
             c_armor(&sbuf, global->contest_start_cmd));
