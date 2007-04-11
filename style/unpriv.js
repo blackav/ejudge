@@ -167,20 +167,26 @@ function submitStatus(type, data, evt)
 {
 }
 
+var next_problem_id;
+function gotoNextProblem(type, data, evt)
+{
+  document.location.href = self_url + "?SID=" + SID + "&action=" + NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT + "&prob_id=" + next_problem_id;
+}
+
 function submitAnswer(probId, answer)
 {
   //alert("CLICK: " + probId + "," + answer);
 
+  next_problem_id = probId + 1;
   request = { SID : SID, action : NEW_SRV_ACTION_UPDATE_ANSWER, prob_id : probId, file : answer };
   dojo.io.bind({
       url: self_url,
-      load: parseAndSetTime,
+      load: gotoNextProblem,
       error: handleError,
       mimetype: "text/xml",
       method: "GET",
       content: request
         });
-  document.location.href = self_url + "?SID=" + SID + "&action=" + NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT + "&prob_id=" + (probId + 1);
 }
 
 function displayProblemSubmitForm(probId)
