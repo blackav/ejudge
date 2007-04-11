@@ -3809,6 +3809,28 @@ super_html_print_problem(FILE *f,
                                self_url, extra_args, prob_hidden_vars);
   }
 
+  //PROBLEM_PARAM(plugin_file, "s"),
+  extra_msg = 0;
+  if (prob->abstract && !prob->plugin_file[0])extra_msg="<i>(Undefined)</i>";
+  if (!prob->abstract) {
+    prepare_set_prob_value(PREPARE_FIELD_PROB_PLUGIN_FILE,
+                           &tmp_prob, sup_prob, sstate->global);
+    s = html_armor_string_dup(tmp_prob.plugin_file);
+    if (!prob->plugin_file[0])
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
+    else
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>", s);
+    xfree(s);
+    extra_msg = msg_buf;
+  }
+  print_string_editing_row_2(f, "Problem handling plugin file:",
+                             prob->plugin_file,
+                             SSERV_CMD_PROB_CHANGE_PLUGIN_FILE,
+                             SSERV_CMD_PROB_CLEAR_PLUGIN_FILE,
+                             extra_msg,
+                             session_id, form_row_attrs[row ^= 1],
+                             self_url, extra_args, prob_hidden_vars);
+
   //PROBLEM_PARAM(test_dir, "s"),
   extra_msg = 0;
   if (prob->abstract && !prob->test_dir[0]) extra_msg = "<i>(Undefined)</i>";
@@ -5810,6 +5832,14 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CLEAR_ALTERNATIVES_FILE:
     PROB_CLEAR_STRING(alternatives_file);
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_PLUGIN_FILE:
+    PROB_ASSIGN_STRING(plugin_file);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_PLUGIN_FILE:
+    PROB_CLEAR_STRING(plugin_file);
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_STAND_ATTR:

@@ -454,6 +454,7 @@ struct section_problem_data
   puc_t spelling[128];          /* spelling for speach generator */
   path_t statement_file;        /* file with inline problem statement */
   path_t alternatives_file;     /* file with alternatives for output-only */
+  path_t plugin_file;           /* file with the custom problem handler */
   puc_t stand_attr[128];        /* attributes for standings column */
   path_t source_header;         /* file to insert into the beginning of src */
   path_t source_footer;         /* file to insert at the end of src */
@@ -712,6 +713,7 @@ enum
   PREPARE_FIELD_PROB_SECURE_RUN,
   PREPARE_FIELD_PROB_STATEMENT_FILE,
   PREPARE_FIELD_PROB_ALTERNATIVES_FILE,
+  PREPARE_FIELD_PROB_PLUGIN_FILE,
   PREPARE_FIELD_PROB_STAND_ATTR,
   PREPARE_FIELD_PROB_SOURCE_HEADER,
   PREPARE_FIELD_PROB_SOURCE_FOOTER,

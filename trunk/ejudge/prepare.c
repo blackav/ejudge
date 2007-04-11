@@ -367,6 +367,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(score_bonus, "s"),
   PROBLEM_PARAM(statement_file, "s"),
   PROBLEM_PARAM(alternatives_file, "s"),
+  PROBLEM_PARAM(plugin_file, "s"),
   PROBLEM_PARAM(type, "s"),
   PROBLEM_PARAM(alternative, "x"),
   PROBLEM_PARAM(stand_attr, "s"),
@@ -2557,6 +2558,18 @@ set_defaults(serve_state_t state, int mode)
         path_add_dir(state->probs[i]->alternatives_file,
                      state->global->statement_dir);
       }
+
+      if (!state->probs[i]->plugin_file[0] && si != -1
+          && state->abstr_probs[si]->plugin_file[0]) {
+        sformat_message(state->probs[i]->plugin_file, PATH_MAX,
+                        state->abstr_probs[si]->plugin_file,
+                        NULL, state->probs[i], NULL, NULL, NULL, 0, 0, 0);
+      }
+      if (state->probs[i]->plugin_file[0]) {
+        path_add_dir(state->probs[i]->plugin_file,
+                     state->global->plugin_dir);
+      }
+
       prepare_set_prob_value(PREPARE_FIELD_PROB_STAND_ATTR,
                              state->probs[i], state->abstr_probs[si],
                              state->global);
@@ -4911,6 +4924,16 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     if (global && out->alternatives_file[0]) {
       path_add_dir(out->alternatives_file, global->statement_dir);
+    }
+    break;
+
+  case PREPARE_FIELD_PROB_PLUGIN_FILE:
+    if (!out->plugin_file[0] && abstr && abstr->plugin_file[0]) {
+      sformat_message(out->plugin_file, PATH_MAX, abstr->plugin_file,
+                      NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    }
+    if (global && out->plugin_file[0]) {
+      path_add_dir(out->plugin_file, global->statement_dir);
     }
     break;
 
