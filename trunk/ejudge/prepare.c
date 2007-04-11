@@ -109,6 +109,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(tgz_dir, "s"),
   GLOBAL_PARAM(checker_dir, "s"),
   GLOBAL_PARAM(statement_dir, "s"),
+  GLOBAL_PARAM(plugin_dir, "s"),
   GLOBAL_PARAM(test_sfx, "s"),
   GLOBAL_PARAM(corr_sfx, "s"),
   GLOBAL_PARAM(info_sfx, "s"),
@@ -1824,6 +1825,7 @@ set_defaults(serve_state_t state, int mode)
   }
   if (mode == PREPARE_SERVE) {
     GLOBAL_INIT_FIELD(statement_dir, DFLT_G_STATEMENT_DIR, conf_dir);
+    GLOBAL_INIT_FIELD(plugin_dir, DFLT_G_PLUGIN_DIR, conf_dir);
   }
   if (mode == PREPARE_SERVE && state->global->description_file[0]) {
     GLOBAL_INIT_FIELD(description_file, "", statement_dir);
@@ -3913,6 +3915,8 @@ prepare_set_global_defaults(struct section_global_data *g)
     snprintf(g->checker_dir, sizeof(g->checker_dir), "%s", DFLT_G_CHECKER_DIR);
   if (!g->statement_dir[0])
     snprintf(g->statement_dir, sizeof(g->statement_dir), "%s", DFLT_G_STATEMENT_DIR);
+  if (!g->plugin_dir[0])
+    snprintf(g->plugin_dir, sizeof(g->plugin_dir), "%s", DFLT_G_PLUGIN_DIR);
 
   if (!g->score_system[0]) {
     g->score_system_val = SCORE_ACM;
@@ -4179,6 +4183,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   strcpy(global->tgz_dir, "../tests");
   strcpy(global->checker_dir, "../checkers");
   strcpy(global->statement_dir, "../statements");
+  strcpy(global->plugin_dir, "../plugins");
 
   strcpy(global->standings_file_name, DFLT_G_STANDINGS_FILE_NAME);
   global->plog_update_time = DFLT_G_PLOG_UPDATE_TIME;

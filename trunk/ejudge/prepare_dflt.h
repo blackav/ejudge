@@ -41,6 +41,7 @@
 #define DFLT_G_TGZ_SFX            ".tgz"
 #define DFLT_G_CHECKER_DIR        "../checkers"
 #define DFLT_G_STATEMENT_DIR      "../statements"
+#define DFLT_G_PLUGIN_DIR         "../plugins"
 #define DFLT_G_RUN_LOG_FILE       "run.log"
 #define DFLT_G_CLAR_LOG_FILE      "clar.log"
 #define DFLT_G_ARCHIVE_DIR        "archive"
