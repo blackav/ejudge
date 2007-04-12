@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-08 18:56+0400\n"
-"PO-Revision-Date: 2007-04-09 08:56+0400\n"
+"POT-Creation-Date: 2007-04-12 23:17+0400\n"
+"PO-Revision-Date: 2007-04-12 23:19+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -440,7 +440,9 @@ msgstr ""
 #, c-format
 msgid ""
 "<p><font color=\"red\">At least %d examiners must be assigned.</font></p>"
-msgstr "<p><font color=\"red\">Должно быть назначено по крайней мере %d экзаменаторов.</font></p>"
+msgstr ""
+"<p><font color=\"red\">Должно быть назначено по крайней мере %d "
+"экзаменаторов.</font></p>"
 
 #, c-format
 msgid ""
@@ -2261,6 +2263,9 @@ msgstr "Нет структуры"
 
 msgid "No guests are allowed in this contest"
 msgstr "Категория \"гости\" не поддерживается для этого турнира"
+
+msgid "No plugin is available for problem"
+msgstr "Для задачи нет модуля сдачи решений"
 
 msgid "No reserves are allowed in this contest"
 msgstr "Категория \"запасные\" не поддерживается для этого турнира"
