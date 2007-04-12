@@ -2341,3 +2341,10 @@ super-serve.c 4100 0 11970513
 prepare.c 4100 0 13703920
 prepare_out.c 4100 0 5779971
 super_html_3.c 4100 0 22413545
+ejudge_plugin.h 4102 0 111191
+serve_state.h 4102 0 942655
+new_server_proto.h 4102 0 476178
+new_server_html.c 4102 0 29605368
+new_server_proto.c 4102 0 1030237
+plugin.c 4102 0 332895
+serve_state.c 4102 0 998117
