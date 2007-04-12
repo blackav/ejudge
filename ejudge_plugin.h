@@ -4,7 +4,7 @@
 #ifndef __EJUDGE_PLUGIN_H__
 #define __EJUDGE_PLUGIN_H__
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,5 +35,6 @@ int plugin_set_directory(const unsigned char *dir);
 struct ejudge_plugin_iface *
 plugin_load(const unsigned char *path,
             const unsigned char *type, const unsigned char *name);
+void plugin_unload(struct ejudge_plugin_iface *);
 
 #endif /* __EJUDGE_PLUGIN_H__ */

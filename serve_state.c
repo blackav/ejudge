@@ -26,6 +26,7 @@
 #include "errlog.h"
 #include "userlist_proto.h"
 #include "userlist_clnt.h"
+#include "ejudge_plugin.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/osdeps.h>
@@ -98,6 +99,13 @@ serve_state_destroy(serve_state_t state, struct userlist_clnt *ul_conn)
         for (j = 1; j <= state->probs[i]->variant_num; j++)
           watched_file_clear(&state->prob_extras[i].v_alts[j]);
         xfree(state->prob_extras[i].v_alts);
+      }
+
+      if (state->prob_extras[i].plugin && state->prob_extras[i].plugin_data) {
+        (*state->prob_extras[i].plugin->finalize)(state->prob_extras[i].plugin_data);
+      }
+      if (state->prob_extras[i].plugin) {
+        plugin_unload((struct ejudge_plugin_iface*) state->prob_extras[i].plugin);
       }
     }
   }
