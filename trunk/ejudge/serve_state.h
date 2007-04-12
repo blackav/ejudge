@@ -21,6 +21,7 @@
 #include "ej_types.h"
 #include "opcaps.h"
 #include "watched_file.h"
+#include "problem_plugin.h"
 
 #include <time.h>
 
@@ -79,6 +80,11 @@ struct problem_extra_info
   // alternative selection
   struct watched_file alt;
   struct watched_file *v_alts;
+
+  // problem plugins
+  int plugin_error;
+  struct problem_plugin_iface *plugin;
+  void *plugin_data;
 };
 
 enum

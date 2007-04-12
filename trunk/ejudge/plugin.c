@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -150,6 +150,26 @@ plugin_load(const unsigned char *path,
   pinfo->handle = hnd;
   pinfo->iface = plg;
   return plg;
+}
+
+void
+plugin_unload(struct ejudge_plugin_iface *plugin)
+{
+  int i;
+
+  for (i = 0; i < plugins.u; i++)
+    if (plugins.v[i]->iface == plugin)
+      break;
+  if (i == plugins.u) return;
+
+  xfree(plugins.v[i]->type);
+  xfree(plugins.v[i]->name);
+  dlclose(plugins.v[i]->handle);
+  xfree(plugins.v[i]);
+  for (i++; i < plugins.u; i++)
+    plugins.v[i - 1] = plugins.v[i];
+  plugins.v[i - 1] = 0;
+  plugins.u--;
 }
 
 /*

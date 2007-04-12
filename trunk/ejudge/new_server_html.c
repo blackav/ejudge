@@ -604,6 +604,32 @@ ns_open_ul_connection(struct server_framework_state *state)
   return 0;
 }
 
+static void
+load_problem_plugin(serve_state_t cs, int prob_id)
+{
+  struct section_problem_data *prob = 0;
+  struct problem_extra_info *extra;
+  struct problem_plugin_iface *iface;
+
+  if (prob_id <= 0 || prob_id > cs->max_prob) return;
+  if (!(prob = cs->probs[prob_id])) return;
+  extra = &cs->prob_extras[prob_id];
+
+  if (!prob->plugin_file[0]) return;
+  if (extra->plugin || extra->plugin_error) return;
+
+  iface = (struct problem_plugin_iface*) plugin_load(prob->plugin_file,
+                                                     "problem",
+                                                     prob->short_name);
+  if (!iface) {
+    extra->plugin_error = 1;
+    return;
+  }
+
+  extra->plugin = iface;
+  extra->plugin_data = (*extra->plugin->init)();
+}
+
 int
 ns_list_all_users_callback(
 	void *user_data,
@@ -2014,13 +2040,14 @@ priv_submit_run(FILE *fout,
   const unsigned char *errmsg = 0;
   const unsigned char *run_text;
   size_t run_size, ans_size;
-  unsigned char *ans_map = 0, *ans_buf = 0;
+  unsigned char *ans_map = 0, *ans_buf = 0, *ans_tmp = 0;
   char **lang_list = 0;
   const unsigned char *mime_type_str = 0;
   int run_id, arch_flags, retval = 0;
   ruint32_t shaval[5];
   struct timeval precise_time;
   path_t run_path;
+  struct problem_plugin_iface *plg = 0;
 
   if (ns_cgi_param(phr, "problem", &s) <= 0) {
     errmsg = "problem is not set or binary";
@@ -2115,6 +2142,19 @@ priv_submit_run(FILE *fout,
     ans_buf[run_size] = 0;
     break;
   case PROB_TYPE_CUSTOM:   // use problem plugin
+    load_problem_plugin(cs, prob_id);
+    if (!(plg = cs->prob_extras[prob_id].plugin) || !plg->parse_form) {
+      errmsg = "problem plugin is not available";
+      goto invalid_param;
+    }
+    ans_tmp = (*plg->parse_form)(cs->prob_extras[prob_id].plugin_data,
+                                 log_f, phr, cnts, extra);
+    if (!ans_tmp) goto cleanup;
+    run_size = strlen(ans_tmp);
+    ans_buf = (unsigned char*) alloca(run_size + 1);
+    strcpy(ans_buf, ans_tmp);
+    run_text = ans_buf;
+    xfree(ans_tmp);
     break;
   default:
     abort();
@@ -7255,7 +7295,7 @@ unpriv_submit_run(FILE *fout,
   int prob_id, n, lang_id = 0, i, ans, max_ans, j;
   const unsigned char *s, *run_text = 0;
   size_t run_size = 0, ans_size;
-  unsigned char *ans_buf, *ans_map;
+  unsigned char *ans_buf, *ans_map, *ans_tmp;
   time_t start_time, stop_time, user_deadline = 0;
   const unsigned char *login, *mime_type_str = 0;
   char **lang_list;
@@ -7269,6 +7309,7 @@ unpriv_submit_run(FILE *fout,
   unsigned char *tmp_run = 0;
   char *tmp_ptr = 0;
   int ans_val = 0, accept_immediately = 0;
+  struct problem_plugin_iface *plg = 0;
 
   l10n_setlocale(phr->locale_id);
   log_f = open_memstream(&log_txt, &log_len);
@@ -7343,6 +7384,19 @@ unpriv_submit_run(FILE *fout,
     break;
   case PROB_TYPE_CUSTOM:
     // invoke problem plugin
+    load_problem_plugin(cs, prob_id);
+    if (!(plg = cs->prob_extras[prob_id].plugin) || !plg->parse_form) {
+      ns_error(log_f, NEW_SRV_ERR_PLUGIN_NOT_AVAIL);
+      goto done;
+    }
+    ans_tmp = (*plg->parse_form)(cs->prob_extras[prob_id].plugin_data,
+                                 log_f, phr, cnts, extra);
+    if (!ans_tmp) goto done;
+    run_size = strlen(ans_tmp);
+    ans_buf = (unsigned char*) alloca(run_size + 1);
+    strcpy(ans_buf, ans_tmp);
+    run_text = ans_buf;
+    xfree(ans_tmp);
     break;
   default:
     abort();

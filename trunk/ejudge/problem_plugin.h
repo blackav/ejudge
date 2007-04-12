@@ -22,11 +22,17 @@
 #include "ej_types.h"
 #include "iterators.h"
 
+#include <stdio.h>
+
 struct ejudge_cfg;
 struct xml_tree;
 
 /* version of the plugin interface structure */
 #define PROBLEM_PLUGIN_IFACE_VERSION 1
+
+struct http_request_info;
+struct contest_desc;
+struct contest_extra;
 
 struct problem_plugin_iface
 {
@@ -35,6 +41,16 @@ struct problem_plugin_iface
 
   void *(*init)(void);
   void (*finalize)(void *);
+  unsigned char * (*parse_form)(void *, 
+                                FILE *flog,
+                                struct http_request_info *phr,
+                                const struct contest_desc *cnts,
+                                struct contest_extra *extra);
+  unsigned char * (*unparse_form)(void *, 
+                                  struct http_request_info *phr,
+                                  const struct contest_desc *cnts,
+                                  struct contest_extra *extra,
+                                  const unsigned char *text);
 };
 
 #endif /* __PROBLEM_PLUGIN_H__ */
