@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-12 23:17+0400\n"
-"PO-Revision-Date: 2007-04-12 23:19+0400\n"
+"POT-Creation-Date: 2007-04-15 11:55+0400\n"
+"PO-Revision-Date: 2007-04-15 11:55+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -118,6 +118,10 @@ msgstr "<i>Не установлено</i>"
 #, c-format
 msgid "<li>The contest is closed for participation.</li>\n"
 msgstr "<li>Турнир закрыт для участия.</li>\n"
+
+#, c-format
+msgid "<li>The server might be overloaded.</li>\n"
+msgstr "<li>Сервер, возможно, перегружен.</li>\n"
 
 #, c-format
 msgid ""
@@ -2618,9 +2622,6 @@ msgstr "Срок окончания сдачи"
 msgid "Problem is empty in row %d\n"
 msgstr "В строке %d не определено имя задачи\n"
 
-msgid "Problem navigation"
-msgstr "Переход к другой задаче"
-
 msgid "Problem statements"
 msgstr "Условия задач"
 
@@ -3533,6 +3534,9 @@ msgstr "Суммарный размер попыток"
 msgid "Total submissions"
 msgstr "Всего посылок"
 
+msgid "Try again"
+msgstr "Попробовать еще раз"
+
 msgid "Try again this operation later"
 msgstr "Повторите операцию позже"
 
@@ -4328,3 +4332,6 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
+
+#~ msgid "Problem navigation"
+#~ msgstr "Переход к другой задаче"

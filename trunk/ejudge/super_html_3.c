@@ -409,6 +409,8 @@ Standings table attributes:
   GLOBAL_PARAM(stand_show_att_num, "d"),
   GLOBAL_PARAM(stand_sort_by_solved, "d"),
   GLOBAL_PARAM(ignore_success_time, "d"),
+  GLOBAL_PARAM(stand_collate_name, "d"),
+  GLOBAL_PARAM(stand_enable_penalty, "d"),
 
 Advanced settings:
   GLOBAL_PARAM(sleep_time, "d"),
@@ -812,6 +814,17 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td><td>");
     html_submit_button(f, SSERV_CMD_GLOB_CHANGE_PROBLEM_NAVIGATION, "Change");
     fprintf(f, "</td></tr></form>\n");
+
+    if (global->problem_navigation) {
+      //GLOBAL_PARAM(vertical_navigation, "d"),
+      html_start_form(f, 1, self_url, hidden_vars);
+      fprintf(f, "<tr%s><td>Place problem navigation vertically:</td><td>",
+              form_row_attrs[row ^= 1]);
+      html_boolean_select(f, global->vertical_navigation, "param", 0, 0);
+      fprintf(f, "</td><td>");
+      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_VERTICAL_NAVIGATION,"Change");
+      fprintf(f, "</td></tr></form>\n");
+    }
   }
 
   html_start_form(f, 1, self_url, hidden_vars);
@@ -1460,6 +1473,30 @@ super_html_edit_global_parameters(FILE *f,
       html_boolean_select(f, global->stand_sort_by_solved, "param", 0, 0);
       fprintf(f, "</td><td>");
       html_submit_button(f, SSERV_CMD_GLOB_CHANGE_STAND_SORT_BY_SOLVED, "Change");
+      fprintf(f, "</td></tr></form>\n");
+    }
+
+    //GLOBAL_PARAM(stand_collate_name, "d"),
+    if (global->score_system_val == SCORE_KIROV
+        || global->score_system_val == SCORE_OLYMPIAD) {
+      html_start_form(f, 1, self_url, hidden_vars);
+      fprintf(f, "<tr%s><td>Collate standings on user name:</td><td>",
+              form_row_attrs[row ^= 1]);
+      html_boolean_select(f, global->stand_collate_name, "param", 0, 0);
+      fprintf(f, "</td><td>");
+      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME, "Change");
+      fprintf(f, "</td></tr></form>\n");
+    }
+
+    //GLOBAL_PARAM(stand_enable_penalty, "d"),
+    if (global->score_system_val == SCORE_KIROV
+        || global->score_system_val == SCORE_OLYMPIAD) {
+      html_start_form(f, 1, self_url, hidden_vars);
+      fprintf(f, "<tr%s><td>Enable time penalties:</td><td>",
+              form_row_attrs[row ^= 1]);
+      html_boolean_select(f, global->stand_enable_penalty, "param", 0, 0);
+      fprintf(f, "</td><td>");
+      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_STAND_ENABLE_PENALTY, "Change");
       fprintf(f, "</td></tr></form>\n");
     }
 
@@ -2114,6 +2151,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     p_int = &global->problem_navigation;
     goto handle_boolean;
 
+  case SSERV_CMD_GLOB_CHANGE_VERTICAL_NAVIGATION:
+    p_int = &global->vertical_navigation;
+    goto handle_boolean;
+
   case SSERV_CMD_GLOB_CHANGE_TEST_DIR:
     GLOB_SET_STRING(test_dir);
 
@@ -2430,6 +2471,14 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_GLOB_CHANGE_IGNORE_SUCCESS_TIME:
     p_int = &global->ignore_success_time;
     goto handle_boolean;    
+
+  case SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME:
+    p_int = &global->stand_collate_name;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_STAND_ENABLE_PENALTY:
+    p_int = &global->stand_enable_penalty;
+    goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_STAND_TIME_ATTR:
     GLOB_SET_STRING(stand_time_attr);
@@ -5321,8 +5370,7 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
     }
     return 0;
   case SSERV_CMD_PROB_CHANGE_SHORT_NAME:
-    if (!param2 || !*param2
-        || strspn(param2, login_accept_chars) != strlen(param2))
+    if (!param2 || !*param2 || check_str(param2, login_accept_chars) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
     if (prob->abstract) {
       for (i = 0; i < sstate->aprob_u; i++)
@@ -5686,7 +5734,7 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CHANGE_STANDARD_CHECKER:
     if (!param2 || !*param2) {
       PROB_CLEAR_STRING(standard_checker);
-    } else if (strspn(param2, login_accept_chars) != strlen(param2)) {
+    } else if (check_str(param2, login_accept_chars) < 0) {
       return -SSERV_ERR_INVALID_PARAMETER;
     } else {
       PROB_ASSIGN_STRING(standard_checker);

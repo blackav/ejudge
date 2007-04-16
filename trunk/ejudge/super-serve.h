@@ -100,6 +100,7 @@ struct sid_state
   unsigned char *priv_footer_text;
   unsigned char *register_email_text;
   unsigned char *copyright_text;
+  unsigned char *welcome_text;
 
   unsigned char *serve_parse_errors;
 

@@ -261,6 +261,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "disable_user_standings", global->disable_user_standings);
   if (global->problem_navigation != DFLT_G_PROBLEM_NAVIGATION)
     unparse_bool(f, "problem_navigation", global->problem_navigation);
+  if (global->vertical_navigation != DFLT_G_VERTICAL_NAVIGATION)
+    unparse_bool(f, "vertical_navigation", global->vertical_navigation);
   if (global->appeal_deadline[0]) {
     fprintf(f, "appeal_deadline = \"%s\"\n", global->appeal_deadline);
   }
@@ -406,6 +408,10 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "stand_show_att_num", global->stand_show_att_num);
   if (global->stand_sort_by_solved)
     unparse_bool(f, "stand_sort_by_solved", global->stand_sort_by_solved);
+  if (global->stand_collate_name)
+    unparse_bool(f, "stand_collate_name", global->stand_collate_name);
+  if (global->stand_enable_penalty)
+    unparse_bool(f, "stand_enable_penalty", global->stand_enable_penalty);
   if (global->stand_show_ok_time && global->stand_time_attr[0])
     fprintf(f, "stand_time_attr = \"%s\"\n",
             c_armor(&sbuf, global->stand_time_attr));

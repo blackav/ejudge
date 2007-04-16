@@ -95,4 +95,9 @@ int check_str(const unsigned char *str, const unsigned char *map);
 int check_str_2(const unsigned char *str, const unsigned char *map,
                 unsigned char *invchars);
 
+unsigned char *text_input_process_string(const unsigned char *s,
+                                         int sep, int sep_repl);
+unsigned char *text_area_process_string(const unsigned char *s,
+                                        int sep, int sep_repl);
+
 #endif /* __MISCTEXT_H__ */

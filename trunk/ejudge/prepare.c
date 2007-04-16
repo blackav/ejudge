@@ -93,6 +93,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(always_show_problems, "d"),
   GLOBAL_PARAM(disable_user_standings, "d"),
   GLOBAL_PARAM(problem_navigation, "d"),
+  GLOBAL_PARAM(vertical_navigation, "d"),
 
   GLOBAL_PARAM(stand_ignore_after, "s"),
   GLOBAL_PARAM(appeal_deadline, "s"),
@@ -207,6 +208,8 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(stand_show_ok_time, "d"),
   GLOBAL_PARAM(stand_show_att_num, "d"),
   GLOBAL_PARAM(stand_sort_by_solved, "d"),
+  GLOBAL_PARAM(stand_collate_name, "d"),
+  GLOBAL_PARAM(stand_enable_penalty, "d"),
   GLOBAL_PARAM(stand_row_attr, "x"),
   GLOBAL_PARAM(stand_page_table_attr, "s"),
   GLOBAL_PARAM(stand_page_row_attr, "x"),
@@ -534,6 +537,7 @@ global_init_func(struct generic_section_config *gp)
   p->always_show_problems = -1;
   p->disable_user_standings = -1;
   p->problem_navigation = -1;
+  p->vertical_navigation = -1;
   p->stand_fancy_style = -1;
   p->stand_show_ok_time = -1;
   p->stand_show_warn_number = -1;
@@ -1678,6 +1682,8 @@ set_defaults(serve_state_t state, int mode)
     state->global->disable_user_standings = DFLT_G_DISABLE_USER_STANDINGS;
   if (state->global->problem_navigation == -1)
     state->global->problem_navigation = DFLT_G_PROBLEM_NAVIGATION;
+  if (state->global->vertical_navigation == -1)
+    state->global->vertical_navigation = DFLT_G_VERTICAL_NAVIGATION;
   if (state->global->stand_fancy_style == -1)
     state->global->stand_fancy_style = 0;
   if (state->global->stand_show_ok_time == -1)
@@ -2337,10 +2343,12 @@ set_defaults(serve_state_t state, int mode)
       return -1;
     }
     ish = state->probs[i]->short_name;
+    /*
     if (!state->probs[i]->long_name[0]) {
       vinfo("problem.%s.long_name set to \"Problem %s\"", ish, ish);
       sprintf(state->probs[i]->long_name, "Problem %s", ish);
     }
+    */
 
     if (state->probs[i]->type[0]) {
       state->probs[i]->type_val = parse_problem_type(state->probs[i]->type);
@@ -3898,6 +3906,7 @@ prepare_set_global_defaults(struct section_global_data *g)
   if (g->always_show_problems < 0) g->always_show_problems=DFLT_G_ALWAYS_SHOW_PROBLEMS;
   if (g->disable_user_standings < 0) g->disable_user_standings=DFLT_G_DISABLE_USER_STANDINGS;
   if (g->problem_navigation < 0) g->problem_navigation = DFLT_G_PROBLEM_NAVIGATION;
+  if (g->vertical_navigation < 0) g->vertical_navigation = DFLT_G_VERTICAL_NAVIGATION;
   if (g->team_show_judge_report < 0)
     g->team_show_judge_report = DFLT_G_TEAM_SHOW_JUDGE_REPORT;
   if (g->disable_clars < 0) g->disable_clars = DFLT_G_DISABLE_CLARS;
@@ -4154,6 +4163,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->always_show_problems = DFLT_G_ALWAYS_SHOW_PROBLEMS;
   global->disable_user_standings = DFLT_G_DISABLE_USER_STANDINGS;
   global->problem_navigation = DFLT_G_PROBLEM_NAVIGATION;
+  global->vertical_navigation = DFLT_G_VERTICAL_NAVIGATION;
 
   global->cr_serialization_key = config->serialization_key;
   global->show_astr_time = DFLT_G_SHOW_ASTR_TIME;

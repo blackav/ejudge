@@ -274,12 +274,17 @@ ns_html_err_no_perm(FILE *fout,
     fprintf(fout, _("<li>Your IP-address (<tt>%s</tt>) or protocol (<tt>%s</tt>) is banned for participation.</li>"), xml_unparse_ip(phr->ip),
             ns_ssl_flag_str[phr->ssl_flag]);
     fprintf(fout, _("<li>The contest is closed for participation.</li>\n"));
+    fprintf(fout, _("<li>The server might be overloaded.</li>\n"));
   } else {
     fprintf(fout, _("<li>Your IP-address (<tt>%s</tt>) or protocol (<tt>%s</tt>) is banned for participation.</li>"), xml_unparse_ip(phr->ip), ns_ssl_flag_str[phr->ssl_flag]);
     fprintf(fout, _("<li>You do not have permissions to login using the specified role.</li>"));
   }
   fprintf(fout, "</ul>\n");
   fprintf(fout, _("<p>Note, that the exact reason is not reported due to security reasons.</p>"));
+
+  fprintf(fout, "<p><big><a href=\"%s?contest_id=%d&amp;locale_id=%d\">%s</a></big></p>", phr->self_url, phr->contest_id, phr->locale_id,
+          _("Try again"));
+
   ns_footer(fout, footer, copyright, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);

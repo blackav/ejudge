@@ -275,6 +275,7 @@ ns_unload_contest(int contest_id)
   watched_file_clear(&extra->priv_header);
   watched_file_clear(&extra->priv_footer);
   watched_file_clear(&extra->copyright);
+  watched_file_clear(&extra->welcome);
 
   memset(extra, 0, sizeof(*extra));
   xfree(extra);
@@ -610,6 +611,8 @@ load_problem_plugin(serve_state_t cs, int prob_id)
   struct section_problem_data *prob = 0;
   struct problem_extra_info *extra;
   struct problem_plugin_iface *iface;
+  unsigned char plugin_name[1024];
+  int len, i;
 
   if (prob_id <= 0 || prob_id > cs->max_prob) return;
   if (!(prob = cs->probs[prob_id])) return;
@@ -618,9 +621,15 @@ load_problem_plugin(serve_state_t cs, int prob_id)
   if (!prob->plugin_file[0]) return;
   if (extra->plugin || extra->plugin_error) return;
 
+  snprintf(plugin_name, sizeof(plugin_name), "problem_%s", prob->short_name);
+  len = strlen(plugin_name);
+  for (i = 0; i < len; i++)
+    if (plugin_name[i] == '-')
+      plugin_name[i] = '_';
+
   iface = (struct problem_plugin_iface*) plugin_load(prob->plugin_file,
                                                      "problem",
-                                                     prob->short_name);
+                                                     plugin_name);
   if (!iface) {
     extra->plugin_error = 1;
     return;
@@ -628,6 +637,7 @@ load_problem_plugin(serve_state_t cs, int prob_id)
 
   extra->plugin = iface;
   extra->plugin_data = (*extra->plugin->init)();
+  info("loaded plugin %s", plugin_name);
 }
 
 int
@@ -5608,6 +5618,7 @@ priv_main_page(FILE *fout,
   const unsigned char *pw_path;
   const unsigned char *alternatives;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int skip_start_form = 0;
 
   if (ns_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
   if (ns_cgi_param(phr, "filter_first_run", &s) > 0
@@ -6012,6 +6023,10 @@ priv_main_page(FILE *fout,
           fprintf(fout, "<big><font color=\"red\"><p>%s</p></font></big>\n",
                   _("The problem statement is not available"));
         } else {
+          if (prob->type_val == PROB_TYPE_CUSTOM) {
+            html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+            skip_start_form = 1;
+          }
           fprintf(fout, "%s", pw->text);
         }
       }
@@ -6032,7 +6047,9 @@ priv_main_page(FILE *fout,
         alternatives = pw->text;
       }
 
-      html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+      if (!skip_start_form) {
+        html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+      }
       if (variant <= 0) {
         html_hidden(fout, "problem", "%d", prob->id);
       } else {
@@ -7025,6 +7042,10 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
 
   fprintf(fout, "</tr></table></div>\n");
   fprintf(fout, "%s", extra->separator_txt);
+
+  watched_file_update(&extra->welcome, cnts->welcome_file, cur_time);
+  if (extra->welcome.text && extra->welcome.text[0])
+    fprintf(fout, "%s", extra->welcome.text);
 
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
@@ -9459,7 +9480,7 @@ user_main_page(FILE *fout,
 {
   serve_state_t cs = extra->serve_state;
   struct section_global_data *global = cs->global;
-  long long tdiff;
+  //long long tdiff;
   time_t start_time, stop_time, duration, sched_time, fog_start_time = 0;
   const unsigned char *s;
   int all_runs = 0, all_clars = 0;
@@ -9487,7 +9508,7 @@ user_main_page(FILE *fout,
   int accepting_mode = 0;
   const unsigned char *hh = 0;
   const unsigned char *cc = 0;
-  int last_answer = -1, last_lang_id;
+  int last_answer = -1, last_lang_id, skip_start_form = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char *last_source = 0;
   unsigned char dbuf[1024];
@@ -9568,51 +9589,56 @@ user_main_page(FILE *fout,
       prob_id = 0;
 
     fprintf(fout, "<br/>\n");
-    fprintf(fout, "<table cellpadding=\"0\" cellspacing=\"0\">\n");
-    fprintf(fout, "<tr id=\"probNavTopList\">\n");
-    for (i = 1, j = 0; i <= cs->max_prob; i++) {
-      if (!(prob = cs->probs[i])) continue;
-      if (!(prob_status[i] & PROB_STATUS_TABABLE)) continue;
+    fprintf(fout, "<table class=\"borderless\">\n");
+    if (global->vertical_navigation <= 0) {
+      fprintf(fout, "<tr id=\"probNavTopList\">\n");
+      for (i = 1, j = 0; i <= cs->max_prob; i++) {
+        if (!(prob = cs->probs[i])) continue;
+        if (!(prob_status[i] & PROB_STATUS_TABABLE)) continue;
 
-      if (j > 0) {
-        fprintf(fout, "<td class=\"probNavSpaceTop\">&nbsp;</td>");
-        j++;
-      }
-      hh = "probNavHidden";
-      if (prob->disable_user_submit > 0) {
-        cc = "probDisabled";
-      } else if (i == prob_id) {
-        cc = "probCurrent";
-      } else if (!all_attempts[i]) {
-        cc = "probEmpty";
-      } else if (pending_flag[i] || trans_flag[i]) {
-        cc = "probTrans";
-      } else if (accepted_flag[i] || solved_flag[i]) {
-        cc = "probOk";
-      } else {
-        cc = "probBad";
-      }
-      if (i == prob_id) hh = "probNavActiveTop";
-      fprintf(fout, "<td class=\"%s\" onclick=\"displayProblemSubmitForm(%d)\"><div class=\"%s\">", hh, i, cc);
+        if (j > 0) {
+          fprintf(fout, "<td class=\"probNavSpaceTop\">&nbsp;</td>");
+          j++;
+        }
+        hh = "probNavHidden";
+        if (prob->disable_user_submit > 0) {
+          cc = "probDisabled";
+        } else if (i == prob_id) {
+          cc = "probCurrent";
+        } else if (!all_attempts[i]) {
+          cc = "probEmpty";
+        } else if (pending_flag[i] || trans_flag[i]) {
+          cc = "probTrans";
+        } else if (accepted_flag[i] || solved_flag[i]) {
+          cc = "probOk";
+        } else {
+          cc = "probBad";
+        }
+        if (i == prob_id) hh = "probNavActiveTop";
+        fprintf(fout, "<td class=\"%s\" onclick=\"displayProblemSubmitForm(%d)\"><div class=\"%s\">", hh, i, cc);
       //fprintf(fout, "<td class=\"%s\" style=\"background-color: %s\">", hh, cc);
       /*
       if (accepting_mode && accepted_flag[i]) {
         fprintf(fout, "<s>");
       }
       */
-      fprintf(fout, "%s%s</a>",
-              ns_aref_2(bb, sizeof(bb), phr, "tab",
-                        NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
-                        "prob_id=%d", i), prob->short_name);
+        fprintf(fout, "%s%s</a>",
+                ns_aref_2(bb, sizeof(bb), phr, "tab",
+                          NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
+                          "prob_id=%d", i), prob->short_name);
       /*
       if (accepting_mode && accepted_flag[i]) {
         fprintf(fout, "</s>");
       }
       */
-      fprintf(fout, "</div></td>\n");
-      j++;
+        fprintf(fout, "</div></td>\n");
+        j++;
+      }
+      fprintf(fout, "</tr>");
+      fprintf(fout, "<tr><td colspan=\"%d\" id=\"probNavTaskArea\"><div id=\"probNavTaskArea\">\n", j);
+    } else {
+      fprintf(fout, "<tr><td class=\"borderless\" id=\"probNavTaskArea\"><div id=\"probNavTaskArea\">\n");
     }
-    fprintf(fout, "</tr><tr><td colspan=\"%d\" id=\"probNavTaskArea\"><div id=\"probNavTaskArea\">\n", j);
   }
 
   if (phr->action == NEW_SRV_ACTION_MAIN_PAGE) {
@@ -9792,16 +9818,28 @@ user_main_page(FILE *fout,
                    cnts->team_head_style, _("Problem"),
                    prob->long_name, cnts->team_head_style, dbuf);
         } else {
-          if (!(prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)) {
-            snprintf(bb, sizeof(bb), "<%s>%s %s-%s</%s>%s\n",
-                     cnts->team_head_style, _("Problem"),
-                     prob->short_name, prob->long_name, cnts->team_head_style,
-                     dbuf);
+          if (1 /*!(prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)*/) {
+            if (prob->long_name[0]) {
+              snprintf(bb, sizeof(bb), "<%s>%s %s-%s</%s>%s\n",
+                       cnts->team_head_style, _("Problem"),
+                       prob->short_name, prob->long_name, cnts->team_head_style,
+                       dbuf);
+            } else {
+              snprintf(bb, sizeof(bb), "<%s>%s %s</%s>%s\n",
+                       cnts->team_head_style, _("Problem"),
+                       prob->short_name, cnts->team_head_style, dbuf);
+            }
           } else {
-            snprintf(bb, sizeof(bb), "<%s>%s %s-%s</%s>%s\n",
-                     cnts->team_head_style, _("Submit a solution for"),
-                     prob->short_name, prob->long_name, cnts->team_head_style,
-                     dbuf);
+            if (prob->long_name[0]) {
+              snprintf(bb, sizeof(bb), "<%s>%s %s-%s</%s>%s\n",
+                       cnts->team_head_style, _("Submit a solution for"),
+                       prob->short_name, prob->long_name, cnts->team_head_style,
+                       dbuf);
+            } else {
+              snprintf(bb, sizeof(bb), "<%s>%s %s</%s>%s\n",
+                       cnts->team_head_style, _("Submit a solution for"),
+                       prob->short_name, cnts->team_head_style, dbuf);
+            }
           }
         }
       }
@@ -9824,7 +9862,13 @@ user_main_page(FILE *fout,
                   bb, _("The problem statement is not available"));
         } else {
           if (cnts->exam_mode) bb[0] = 0;
-          fprintf(fout, "%s%s", bb, pw->text);
+          fprintf(fout, "%s", bb);
+          if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)
+              && prob->type_val == PROB_TYPE_CUSTOM) {
+            html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+            skip_start_form = 1;
+          }
+          fprintf(fout, "%s", pw->text);
         }
       } else {
         fprintf(fout, "%s", bb);
@@ -9848,7 +9892,9 @@ user_main_page(FILE *fout,
           alternatives = pw->text;
         }
 
-        html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+        if (!skip_start_form) {
+          html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+        }
         fprintf(fout, "<input type=\"hidden\" name=\"prob_id\" value=\"%d\"/>\n",
                 prob_id);
         fprintf(fout, "<table class=\"borderless\">\n");
@@ -10009,9 +10055,11 @@ user_main_page(FILE *fout,
                   cnts->team_head_style, _("Select another problem"),
                   cnts->team_head_style);
         } else {
+          /*
           fprintf(fout, "<%s>%s</%s>\n",
                   cnts->team_head_style, _("Problem navigation"),
                   cnts->team_head_style);
+          */
         }
         html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
         fprintf(fout, "<table class=\"borderless\">\n");
@@ -10170,7 +10218,48 @@ user_main_page(FILE *fout,
   }
 
   /* new problem navigation */
-  if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
+  if (global->problem_navigation > 0 && global->vertical_navigation
+      && start_time > 0 && stop_time <= 0) {
+    fprintf(fout, "</div></td><td class=\"borderless\" id=\"probNavRightList\">\n");
+
+    for (i = 1, j = 0; i <= cs->max_prob; i++) {
+      if (!(prob = cs->probs[i])) continue;
+      if (!(prob_status[i] & PROB_STATUS_TABABLE)) continue;
+
+      if (prob->disable_user_submit > 0) {
+        cc = "probDisabled";
+      } else if (i == prob_id) {
+        cc = "probCurrent";
+      } else if (!all_attempts[i]) {
+        cc = "probEmpty";
+      } else if (pending_flag[i] || trans_flag[i]) {
+        cc = "probTrans";
+      } else if (accepted_flag[i] || solved_flag[i]) {
+        cc = "probOk";
+      } else {
+        cc = "probBad";
+      }
+      fprintf(fout, "<div class=\"%s\">", cc);
+      /*
+      if (accepting_mode && accepted_flag[i]) {
+        fprintf(fout, "<s>");
+      }
+      */
+      fprintf(fout, "%s%s</a>",
+              ns_aref_2(bb, sizeof(bb), phr, "tab",
+                        NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
+                        "prob_id=%d", i), prob->short_name);
+      /*
+      if (accepting_mode && accepted_flag[i]) {
+        fprintf(fout, "</s>");
+      }
+      */
+      fprintf(fout, "</div>\n");
+      j++;
+    }
+    fprintf(fout, "</td></tr></table>\n");
+  } else if (global->problem_navigation > 0
+             && start_time > 0 && stop_time <= 0) {
     fprintf(fout, "</div></td></tr>\n");
     fprintf(fout, "<tr id=\"probNavBottomList\">\n");
     for (i = 1, j = 0; i <= cs->max_prob; i++) {
@@ -10217,6 +10306,7 @@ user_main_page(FILE *fout,
     fprintf(fout, "</tr></table>\n");
   }
 
+#if 0
   if (!cnts->exam_mode /*&& global->show_generation_time*/) {
     gettimeofday(&phr->timestamp2, 0);
     tdiff = ((long long) phr->timestamp2.tv_sec) * 1000000;
@@ -10227,6 +10317,7 @@ user_main_page(FILE *fout,
             _("Page generation time"), tdiff / 1000,
             _("msec"));
   }
+#endif
 
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);

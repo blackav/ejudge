@@ -1688,6 +1688,7 @@ write_kirov_page_table(const struct standings_style *pss,
   fprintf(f, "</tr>\n</table>\n");
 }
 
+static int sec_to_min(int rounding_mode, int secs);
 
 void
 do_write_kirov_standings(const serve_state_t state,
@@ -1723,8 +1724,9 @@ do_write_kirov_standings(const serve_state_t state,
   int *full_sol = 0;
   time_t *sol_time = 0;
   int *trans_num = 0;
+  int *_penalty = 0;
 
-  int  *tot_score, *tot_full, *succ_att, *tot_att;
+  int  *tot_score, *tot_full, *succ_att, *tot_att, *tot_penalty;
   int  *t_sort = 0, *t_sort2, *t_n1, *t_n2;
   char dur_str[1024];
   unsigned char *head_style;
@@ -1750,6 +1752,7 @@ do_write_kirov_standings(const serve_state_t state,
   int prev_prob = -1, row_ind = 0, group_ind = 1;
   int total_trans = 0;
   struct standings_style ss;
+  int sort_flag;
 
   if (client_flag) head_style = cnts->team_head_style;
   else head_style = "h2";
@@ -1841,6 +1844,18 @@ do_write_kirov_standings(const serve_state_t state,
     if ((teamdb_get_flags(state->teamdb_state, 
                           i) & (TEAM_INVISIBLE | TEAM_BANNED))) continue;
     if (!t_runs[i]) continue;
+
+    if (global->stand_collate_name) {
+      // collate on team names
+      for (j = 0; j < t_tot; j++)
+        if (!strcmp(teamdb_get_name_2(state->teamdb_state, t_ind[j]),
+                    teamdb_get_name_2(state->teamdb_state, i))) {
+          t_rev[i] = j;
+          break;
+        }
+      if (j < t_tot) continue;
+    }
+
     t_rev[i] = t_tot;
     t_ind[t_tot++] = i;
   }
@@ -1886,9 +1901,11 @@ do_write_kirov_standings(const serve_state_t state,
     XCALLOC(sol_time, up_ind);
     XCALLOC(sol_att, up_ind);
     XCALLOC(trans_num, up_ind);
+    XCALLOC(_penalty, up_ind);
   }
   XALLOCAZ(tot_score, t_tot);
   XALLOCAZ(tot_full, t_tot);
+  XALLOCAZ(tot_penalty, t_tot);
   XALLOCAZ(succ_att, p_tot);
   XALLOCAZ(tot_att, p_tot);
 
@@ -1988,6 +2005,10 @@ do_write_kirov_standings(const serve_state_t state,
         trans_num[up_ind] = 0;
         prob_score[up_ind] = run_score;
         att_num[up_ind]++;
+        if (global->stand_enable_penalty) {
+          _penalty[up_ind] += sec_to_min(global->rounding_mode_val,
+                                         pe->time - start_time);
+        }
         //if (run_score > p->full_score) run_score = p->full_score;
         break;
       case RUN_PARTIAL:
@@ -1995,6 +2016,10 @@ do_write_kirov_standings(const serve_state_t state,
         full_sol[up_ind] = 0;
         trans_num[up_ind] = 0;
         att_num[up_ind]++;
+        if (global->stand_enable_penalty) {
+          _penalty[up_ind] += sec_to_min(global->rounding_mode_val,
+                                         pe->time - start_time);
+        }
         break;
       case RUN_ACCEPTED:
         att_num[up_ind]++;
@@ -2079,6 +2104,7 @@ do_write_kirov_standings(const serve_state_t state,
       up_ind = (i << row_sh) + j;
       tot_score[i] += prob_score[up_ind];
       tot_full[i] += full_sol[up_ind];
+      tot_penalty[i] += _penalty[up_ind];
     }
   }
 
@@ -2148,6 +2174,34 @@ do_write_kirov_standings(const serve_state_t state,
         }
         i = j;
       }
+    } else if (global->stand_enable_penalty) {
+      /* sort by the number of solved problems, then by the penalty */
+      XALLOCA(t_sort, t_tot);
+      for (t = 0; t < t_tot; t++)
+        t_sort[ind_score[tot_score[t]]++] = t;
+      // bubble sort on penalty
+      do {
+        sort_flag = 0;
+        for (i = 1; i < t_tot; i++)
+          if (tot_score[t_sort[i-1]] == tot_score[t_sort[i]]
+              && tot_penalty[t_sort[i-1]] > tot_penalty[t_sort[i]]) {
+            j = t_sort[i - 1]; t_sort[i - 1] = t_sort[i]; t_sort[i] = j;
+            sort_flag = 1;
+          }
+      } while (sort_flag);
+
+      /* resolve ties */
+      for(i = 0; i < t_tot;) {
+        for (j = i + 1; j < t_tot; j++) {
+          if (tot_penalty[t_sort[i]] != tot_penalty[t_sort[j]]
+              || tot_score[t_sort[i]] != tot_score[t_sort[j]]) break;
+        }
+        for (k = i; k < j; k++) {
+          t_n1[k] = i;
+          t_n2[k] = j - 1;
+        }
+        i = j;
+      }
     } else {
       /* sort by the score */
       XALLOCA(t_sort, t_tot);
@@ -2167,7 +2221,6 @@ do_write_kirov_standings(const serve_state_t state,
       }
     }
   }
-
 
   if (raw_flag) {
     /* print table contents */
@@ -2385,9 +2438,13 @@ do_write_kirov_standings(const serve_state_t state,
         }
         fprintf(f, "</th>");
       }
-      fprintf(f, "<th%s>%s</th><th%s>%s</th></tr>\n",
+      fprintf(f, "<th%s>%s</th><th%s>%s</th>",
               ss.solved_attr, _("Solved<br>problems"),
               ss.score_attr, _("Score"));
+      if (global->stand_enable_penalty) {
+        fprintf(f, "<th%s>%s</th>", ss.penalty_attr, _("Penalty"));
+      }
+      fprintf(f, "</tr>\n");
     }
 
     /* print page contents */
@@ -2494,9 +2551,13 @@ do_write_kirov_standings(const serve_state_t state,
         }
       }
     }
-    fprintf(f, "<td%s>%d</td><td%s>%d</td></tr>\n",
+    fprintf(f, "<td%s>%d</td><td%s>%d</td>",
             ss.solved_attr, tot_full[t],
             ss.score_attr, tot_score[t]);
+    if (global->stand_enable_penalty) {
+      fprintf(f, "<td%s>%d</td>", ss.penalty_attr, tot_penalty[t]);
+    }
+    fprintf(f, "</tr>\n");
 
     if (user_on_page == users_per_page - 1 && current_page != total_pages) {
       fputs("</table>\n", f);
@@ -2615,6 +2676,7 @@ do_write_kirov_standings(const serve_state_t state,
   xfree(full_sol);
   xfree(sol_time);
   xfree(trans_num);
+  xfree(_penalty);
 }
 
 static int
