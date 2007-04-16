@@ -627,6 +627,75 @@ check_str_2(const unsigned char *str, const unsigned char *map,
   return retval;
 }
 
+unsigned char *
+text_input_process_string(const unsigned char *s, int sep, int sep_repl)
+{
+  int len;
+  unsigned char *out = 0, *p, *q;
+
+  if (!s) return xstrdup("");
+  out = xstrdup(s);
+
+  // replace suspicious control characters with space
+  for (p = out; *p; p++) {
+    if (*p < ' ') *p = ' ';
+    else if (*p == sep) *p = sep_repl;
+    else if (*p == 127) *p = ' ';
+  }
+
+  // remove heading spaces
+  for (p = out; *p && isspace(*p); p++);
+  if (p != out) {
+    for (q = out; *p; *q++ = *p++);
+    *q = 0;
+  }
+
+  // remove trailing spaces
+  len = strlen(out);
+  while (len > 0 && isspace(out[len - 1])) len--;
+  out[len] = 0;
+
+  return out;
+}
+
+unsigned char *
+text_area_process_string(const unsigned char *s, int sep, int sep_repl)
+{
+  unsigned char *p, *q, *out;
+
+  if (!s && !*s) return xstrdup("");
+  out = (unsigned char *) xmalloc(strlen(s) + 2);
+  strcpy(out, s);
+
+  // replace suspicious control characters with space
+  for (p = out; *p; p++) {
+    if (*p < ' ' && *p != '\n') *p = ' ';
+    else if (*p == sep) *p = sep_repl;
+    else if (*p == 127) *p = ' ';
+  }
+  while (p > out && p[-1] == ' ') p--;
+  *p = 0;
+  if (p == out) return out;
+  if (p > out && p[-1] != '\n') {
+    *p++ = '\n';
+    *p = 0;
+  }
+
+  // remove whitespace preceding '\n'
+  for (p = q = out; *p; p++) {
+    while (*p == '\n' && q > out && q[-1] == ' ') q--;
+    *q++ = *p;
+  }
+  *q = 0;
+
+  // remove trailing empty lines
+  while (q > out && q[-1] == '\n') q--;
+  if (q > out) *q++ = '\n';
+  *q = 0;
+
+  return out;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

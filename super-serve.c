@@ -1726,6 +1726,7 @@ super_serve_clear_edited_contest(struct sid_state *p)
   xfree(p->priv_header_text); p->priv_header_text = 0;
   xfree(p->priv_footer_text); p->priv_footer_text = 0;
   xfree(p->copyright_text); p->copyright_text = 0;
+  xfree(p->welcome_text); p->welcome_text = 0;
   xfree(p->register_email_text); p->register_email_text = 0;
 
   p->advanced_view = 0;
@@ -1973,6 +1974,7 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_CNTS_EDIT_PRIV_HEADER:
   case SSERV_CMD_CNTS_EDIT_PRIV_FOOTER:
   case SSERV_CMD_CNTS_EDIT_COPYRIGHT:
+  case SSERV_CMD_CNTS_EDIT_WELCOME:
   case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE:
   case SSERV_CMD_CNTS_COMMIT:
   case SSERV_CMD_EDIT_CURRENT_GLOBAL:
@@ -2096,6 +2098,7 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_CNTS_EDIT_PRIV_HEADER:
   case SSERV_CMD_CNTS_EDIT_PRIV_FOOTER:
   case SSERV_CMD_CNTS_EDIT_COPYRIGHT:
+  case SSERV_CMD_CNTS_EDIT_WELCOME:
   case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE:
   case SSERV_CMD_GLOB_EDIT_CONTEST_START_CMD:
   case SSERV_CMD_GLOB_EDIT_STAND_HEADER_FILE:
@@ -2472,6 +2475,7 @@ cmd_simple_top_command(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CLEAR_PRIV_HEADER:
   case SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER:
   case SSERV_CMD_CNTS_CLEAR_COPYRIGHT:
+  case SSERV_CMD_CNTS_CLEAR_WELCOME:
   case SSERV_CMD_CNTS_CLEAR_USERS_HEAD_STYLE:
   case SSERV_CMD_CNTS_CLEAR_USERS_PAR_STYLE:
   case SSERV_CMD_CNTS_CLEAR_USERS_TABLE_STYLE:
@@ -2515,6 +2519,7 @@ cmd_simple_top_command(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CLEAR_PRIV_HEADER_TEXT:
   case SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER_TEXT:
   case SSERV_CMD_CNTS_CLEAR_COPYRIGHT_TEXT:
+  case SSERV_CMD_CNTS_CLEAR_WELCOME_TEXT:
   case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT:
     r = super_html_clear_variable(sstate, pkt->b.id);
     break;
@@ -2592,6 +2597,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CHANGE_PRIV_HEADER:
   case SSERV_CMD_CNTS_CHANGE_PRIV_FOOTER:
   case SSERV_CMD_CNTS_CHANGE_COPYRIGHT:
+  case SSERV_CMD_CNTS_CHANGE_WELCOME:
   case SSERV_CMD_CNTS_CHANGE_USERS_HEAD_STYLE:
   case SSERV_CMD_CNTS_CHANGE_USERS_PAR_STYLE:
   case SSERV_CMD_CNTS_CHANGE_USERS_TABLE_STYLE:
@@ -2651,6 +2657,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_SAVE_PRIV_HEADER:
   case SSERV_CMD_CNTS_SAVE_PRIV_FOOTER:
   case SSERV_CMD_CNTS_SAVE_COPYRIGHT:
+  case SSERV_CMD_CNTS_SAVE_WELCOME:
   case SSERV_CMD_CNTS_SAVE_REGISTER_EMAIL_FILE:
     r = super_html_set_contest_var(sstate, pkt->b.id, pkt->param1, param2_ptr,
                                    pkt->param3, pkt->param4, pkt->param5);
@@ -2827,6 +2834,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_GLOB_CHANGE_ALWAYS_SHOW_PROBLEMS:
   case SSERV_CMD_GLOB_CHANGE_DISABLE_USER_STANDINGS:
   case SSERV_CMD_GLOB_CHANGE_PROBLEM_NAVIGATION:
+  case SSERV_CMD_GLOB_CHANGE_VERTICAL_NAVIGATION:
   case SSERV_CMD_GLOB_CHANGE_TEST_DIR:
   case SSERV_CMD_GLOB_CLEAR_TEST_DIR:
   case SSERV_CMD_GLOB_CHANGE_CORR_DIR:
@@ -2911,6 +2919,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_GLOB_CHANGE_STAND_SHOW_ATT_NUM:
   case SSERV_CMD_GLOB_CHANGE_STAND_SORT_BY_SOLVED:
   case SSERV_CMD_GLOB_CHANGE_IGNORE_SUCCESS_TIME:
+  case SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME:
+  case SSERV_CMD_GLOB_CHANGE_STAND_ENABLE_PENALTY:
   case SSERV_CMD_GLOB_CHANGE_STAND_TIME_ATTR:
   case SSERV_CMD_GLOB_CLEAR_STAND_TIME_ATTR:
   case SSERV_CMD_GLOB_CHANGE_STAND_SUCCESS_ATTR:
@@ -3125,6 +3135,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_EDIT_PRIV_HEADER] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_PRIV_FOOTER] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_COPYRIGHT] = { cmd_main_page },
+  [SSERV_CMD_CNTS_EDIT_WELCOME] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE] = { cmd_main_page },
   [SSERV_CMD_CNTS_CLEAR_NAME] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_NAME_EN] = { cmd_simple_top_command },
@@ -3141,6 +3152,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CLEAR_PRIV_HEADER] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_COPYRIGHT] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_WELCOME] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_USERS_HEAD_STYLE] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_USERS_PAR_STYLE] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_USERS_TABLE_STYLE] = { cmd_simple_top_command },
@@ -3209,6 +3221,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_PRIV_HEADER] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_PRIV_FOOTER] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_COPYRIGHT] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_WELCOME] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_USERS_HEAD_STYLE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_USERS_PAR_STYLE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_USERS_TABLE_STYLE] = { cmd_set_value },
@@ -3268,6 +3281,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SAVE_PRIV_HEADER] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_PRIV_FOOTER] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_COPYRIGHT] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_WELCOME] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_REGISTER_EMAIL_FILE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CLEAR_USERS_HEADER_TEXT] = { cmd_set_value },
   [SSERV_CMD_CNTS_CLEAR_USERS_FOOTER_TEXT] = { cmd_set_value },
@@ -3279,6 +3293,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CLEAR_PRIV_HEADER_TEXT] = { cmd_set_value },
   [SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER_TEXT] = { cmd_set_value },
   [SSERV_CMD_CNTS_CLEAR_COPYRIGHT_TEXT] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CLEAR_WELCOME_TEXT] = { cmd_set_value },
   [SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT] = { cmd_set_value },
   [SSERV_CMD_CNTS_COMMIT] = { cmd_main_page },
   [SSERV_CMD_EDIT_CURRENT_GLOBAL] = { cmd_main_page },
@@ -3459,6 +3474,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_ENABLE_FULL_ARCHIVE] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_DISABLE_USER_STANDINGS] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_PROBLEM_NAVIGATION] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_VERTICAL_NAVIGATION] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_TEST_DIR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_TEST_DIR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_CORR_DIR] = { cmd_set_value },
@@ -3550,6 +3566,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_STAND_SHOW_ATT_NUM] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_STAND_SORT_BY_SOLVED] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_IGNORE_SUCCESS_TIME] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_STAND_ENABLE_PENALTY] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_STAND_TIME_ATTR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_STAND_TIME_ATTR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_STAND_SUCCESS_ATTR] = { cmd_set_value },

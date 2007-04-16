@@ -146,6 +146,7 @@ struct section_global_data
   int    always_show_problems;  /* show "Problems" link before contest start */
   int    disable_user_standings; /* disable built-in standings */
   int    problem_navigation;     /* extended problem navigation */
+  int    vertical_navigation;    /* align vertically */
 
   puc_t name[256];              /* name of the contest */
   path_t root_dir;
@@ -302,6 +303,8 @@ struct section_global_data
   char **stand_page_row_attr;   /* attributes for the page table rows */
   char **stand_page_col_attr;   /* attributes for the page table columns */
   puc_t stand_page_cur_attr[128]; /* attribute for Page %d out of %d msg */
+  int stand_collate_name;       /* collate standings using user name */
+  int stand_enable_penalty;     /* calculate penalty for kirov & olympiad */
 
   unsigned char *stand_header_txt; /* actual header text */
   unsigned char *stand_footer_txt; /* actual footer text */

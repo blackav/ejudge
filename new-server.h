@@ -333,6 +333,7 @@ struct contest_extra
   struct watched_file priv_header;
   struct watched_file priv_footer;
   struct watched_file copyright;
+  struct watched_file welcome;
 
   const unsigned char *header_txt;
   const unsigned char *footer_txt;
