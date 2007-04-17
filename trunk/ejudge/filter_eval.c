@@ -163,6 +163,7 @@ do_eval(struct filter_env *env,
   case TOK_PROB:
   case TOK_UID:
   case TOK_LOGIN:
+  case TOK_NAME:
   case TOK_LANG:
   case TOK_RESULT:
   case TOK_SCORE:
@@ -233,6 +234,16 @@ do_eval(struct filter_env *env,
         res->v.s = envdup(env, "");
       } else {
         res->v.s = envdup(env, teamdb_get_login(env->teamdb_state, user_id));
+      }
+      break;
+    case TOK_NAME:
+      res->kind = TOK_STRING_L;
+      res->type = FILTER_TYPE_STRING;
+      user_id = env->rentries[r1.v.i].user_id;
+      if (!user_id) {
+        res->v.s = envdup(env, "");
+      } else {
+        res->v.s = envdup(env, teamdb_get_name(env->teamdb_state, user_id));
       }
       break;
     case TOK_LANG:
@@ -431,6 +442,15 @@ do_eval(struct filter_env *env,
       res->v.s = envdup(env, "");
     } else {
       res->v.s = envdup(env, teamdb_get_login(env->teamdb_state, env->cur->user_id));
+    }
+    break;
+  case TOK_CURNAME:
+    res->kind = TOK_STRING_L;
+    res->type = FILTER_TYPE_STRING;
+    if (!env->cur->user_id) {
+      res->v.s = envdup(env, "");
+    } else {
+      res->v.s = envdup(env, teamdb_get_name(env->teamdb_state, env->cur->user_id));
     }
     break;
   case TOK_CURLANG:
