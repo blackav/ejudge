@@ -100,4 +100,7 @@ unsigned char *text_input_process_string(const unsigned char *s,
 unsigned char *text_area_process_string(const unsigned char *s,
                                         int sep, int sep_repl);
 
+unsigned char *filename_armor_bytes(unsigned char *out, size_t outsize,
+                                    const unsigned char *in, size_t insize);
+
 #endif /* __MISCTEXT_H__ */
