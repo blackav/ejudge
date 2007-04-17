@@ -2553,7 +2553,9 @@ ns_download_runs(
   path_t dir4, dir4a, dir5;
   unsigned char prob_buf[1024], *prob_ptr;
   unsigned char login_buf[1024], *login_ptr;
+  unsigned char name_buf[1024];
   unsigned char lang_buf[1024], *lang_ptr;
+  const unsigned char *name_ptr;
   const unsigned char *suff_ptr;
   unsigned char *file_name_str = 0;
   size_t file_name_size = 0, file_name_exp_len;
@@ -2623,6 +2625,10 @@ ns_download_runs(
       snprintf(login_buf, sizeof(login_buf), "!user_%d", info.user_id);
       login_ptr = login_buf;
     }
+    if (!(name_ptr = teamdb_get_name_2(cs->teamdb_state, info.user_id))) {
+      snprintf(name_buf, sizeof(name_buf), "!user_%d", info.user_id);
+      name_ptr = name_buf;
+    }
     if (info.prob_id > 0 && info.prob_id <= cs->max_prob
         && cs->probs[info.prob_id]) {
       prob_ptr = cs->probs[info.prob_id]->short_name;
@@ -2675,6 +2681,17 @@ ns_download_runs(
       snprintf(dir4, sizeof(dir4), "%s", login_ptr);
       snprintf(dir4a, sizeof(dir4a), "%s", prob_ptr);
       break;
+    case 8:// /<User_Name>/<File>
+      snprintf(dir4, sizeof(dir4), "%s", name_ptr);
+      break;
+    case 9:// /<Problem>/<User_Name>/<File>
+      snprintf(dir4, sizeof(dir4), "%s", prob_ptr);
+      snprintf(dir4a, sizeof(dir4a), "%s", name_ptr);
+      break;
+    case 10:// /<User_Name>/<Problem>/<File>
+      snprintf(dir4, sizeof(dir4), "%s", name_ptr);
+      snprintf(dir4a, sizeof(dir4a), "%s", prob_ptr);
+      break;
     default:
       abort();
     }
@@ -2697,8 +2714,8 @@ ns_download_runs(
       snprintf(dir5, sizeof(dir5), "%s", dir3);
     }
 
-    file_name_exp_len = 64 + strlen(login_ptr) + strlen(prob_ptr)
-      + strlen(lang_ptr) + strlen(suff_ptr);
+    file_name_exp_len = 64 + strlen(login_ptr) + strlen(name_ptr)
+      + strlen(prob_ptr) + strlen(lang_ptr) + strlen(suff_ptr);
     if (file_name_exp_len > file_name_size) {
       while (file_name_exp_len > file_name_size) file_name_size *= 2;
       xfree(file_name_str);
@@ -2717,6 +2734,10 @@ ns_download_runs(
     }
     if ((file_name_mask & NS_FILE_PATTERN_LOGIN)) {
       ptr += sprintf(ptr, "%s%s", sep, login_ptr);
+      sep = "-";
+    }
+    if ((file_name_mask & NS_FILE_PATTERN_NAME)) {
+      ptr += sprintf(ptr, "%s%s", sep, name_ptr);
       sep = "-";
     }
     if ((file_name_mask & NS_FILE_PATTERN_PROB)) {

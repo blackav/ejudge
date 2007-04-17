@@ -4792,6 +4792,7 @@ priv_download_runs_confirmation(
   fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_run\" checked=\"yes\"/></td><td>%s</td></tr>\n", _("Use run number"));
   fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_uid\"/></td><td>%s</td></tr>\n", _("Use user Id"));
   fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_login\"/></td><td>%s</td></tr>\n", _("Use user Login"));
+  fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_name\"/></td><td>%s</td></tr>\n", _("Use user Name"));
   fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_prob\"/></td><td>%s</td></tr>\n", _("Use problem short name"));
   fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_lang\"/></td><td>%s</td></tr>\n", _("Use programming language short name"));
   fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_suffix\" checked=\"yes\"/></td><td>%s</td></tr>\n", _("Use source language or content type suffix"));
@@ -4803,10 +4804,13 @@ priv_download_runs_confirmation(
   fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"1\"/></td><td>%s</td></tr>\n", _("/&lt;Problem&gt;/&lt;File&gt;"));
   fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"2\"/></td><td>%s</td></tr>\n", _("/&lt;User_Id&gt;/&lt;File&gt;"));
   fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"3\"/></td><td>%s</td></tr>\n", _("/&lt;User_Login&gt;/&lt;File&gt;"));
+  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"8\"/></td><td>%s</td></tr>\n", _("/&lt;User_Name&gt;/&lt;File&gt;"));
   fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"4\"/></td><td>%s</td></tr>\n", _("/&lt;Problem&gt;/&lt;User_Id&gt;/&lt;File&gt;"));
   fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"5\"/></td><td>%s</td></tr>\n", _("/&lt;Problem&gt;/&lt;User_Login&gt;/&lt;File&gt;"));
+  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"9\"/></td><td>%s</td></tr>\n", _("/&lt;Problem&gt;/&lt;User_Name&gt;/&lt;File&gt;"));
   fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"6\"/></td><td>%s</td></tr>\n", _("/&lt;User_Id&gt;/&lt;Problem&gt;/&lt;File&gt;"));
   fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"7\"/></td><td>%s</td></tr>\n", _("/&lt;User_Login&gt;/&lt;Problem&gt;/&lt;File&gt;"));
+  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"10\"/></td><td>%s</td></tr>\n", _("/&lt;User_Name&gt;/&lt;Problem&gt;/&lt;File&gt;"));
   fprintf(fout, "</table>\n");
 
   fprintf(fout, "<h2>%s</h2>\n", _("Download runs"));
@@ -4857,6 +4861,7 @@ priv_download_runs(
   // file_pattern_run
   // file_pattern_uid
   // file_pattern_login
+  // file_pattern_name
   // file_pattern_prob
   // file_pattern_lang
   // file_pattern_suffix
@@ -4871,7 +4876,7 @@ priv_download_runs(
     FAIL(NEW_SRV_ERR_INV_DIR_STRUCT);
   errno = 0;
   x = strtol(s, &ss, 10);
-  if (errno || *ss || x < 0 || x > 7) FAIL(NEW_SRV_ERR_INV_DIR_STRUCT);
+  if (errno || *ss || x < 0 || x > 10) FAIL(NEW_SRV_ERR_INV_DIR_STRUCT);
   dir_struct = x;
 
   if (ns_cgi_param(phr, "file_pattern_run", &s) > 0)
@@ -4880,6 +4885,8 @@ priv_download_runs(
     file_name_mask |= NS_FILE_PATTERN_UID;
   if (ns_cgi_param(phr, "file_pattern_login", &s) > 0)
     file_name_mask |= NS_FILE_PATTERN_LOGIN;
+  if (ns_cgi_param(phr, "file_pattern_name", &s) > 0)
+    file_name_mask |= NS_FILE_PATTERN_NAME;
   if (ns_cgi_param(phr, "file_pattern_prob", &s) > 0)
     file_name_mask |= NS_FILE_PATTERN_PROB;
   if (ns_cgi_param(phr, "file_pattern_lang", &s) > 0)

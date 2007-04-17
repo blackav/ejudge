@@ -108,6 +108,8 @@ static void *filter_expr_user_data;
 %token TOK_CURUID    "curuid"
 %token TOK_LOGIN     "login"
 %token TOK_CURLOGIN  "curlogin"
+%token TOK_NAME      "name"
+%token TOK_CURNAME   "curname"
 %token TOK_LANG      "lang"
 %token TOK_CURLANG   "curlang"
 %token TOK_RESULT    "result"
@@ -266,6 +268,9 @@ exprA :
 | "login" { $1->kind = TOK_CURLOGIN; $$ = $1; }
 | "login" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curlogin" { $$ = $1; }
+| "name" { $1->kind = TOK_CURNAME; $$ = $1; }
+| "name" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "curname" { $$ = $1; }
 | "lang" { $1->kind = TOK_CURLANG; $$ = $1; }
 | "lang" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curlang" { $$ = $1; }
