@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-15 11:55+0400\n"
-"PO-Revision-Date: 2007-04-15 11:55+0400\n"
+"POT-Creation-Date: 2007-04-17 20:59+0400\n"
+"PO-Revision-Date: 2007-04-17 21:04+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -52,6 +52,9 @@ msgstr "/&lt;Задача&gt;/&lt;Id_Польз.&gt;/&lt;Файл&gt;"
 msgid "/&lt;Problem&gt;/&lt;User_Login&gt;/&lt;File&gt;"
 msgstr "/&lt;Задача&gt;/&lt;Логин_Польз.&gt;/&lt;Файл&gt;"
 
+msgid "/&lt;Problem&gt;/&lt;User_Name&gt;/&lt;File&gt;"
+msgstr "/&lt;Задача&gt;/&lt;Имя_Польз.&gt;/&lt;Файл&gt;"
+
 msgid "/&lt;User_Id&gt;/&lt;File&gt;"
 msgstr "/&lt;Id_Польз.&gt;/&lt;Файл&gt;"
 
@@ -63,6 +66,12 @@ msgstr "/&lt;Логин_Польз.&gt;/&lt;Файл&gt;"
 
 msgid "/&lt;User_Login&gt;/&lt;Problem&gt;/&lt;File&gt;"
 msgstr "/&lt;Логин_Польз.&gt;/&lt;Задача&gt;/&lt;Файл&gt;"
+
+msgid "/&lt;User_Name&gt;/&lt;File&gt;"
+msgstr "/&lt;Имя_Польз.&gt;/&lt;Файл&gt;"
+
+msgid "/&lt;User_Name&gt;/&lt;Problem&gt;/&lt;File&gt;"
+msgstr "/&lt;Имя_Польз.&gt;/&lt;Задача&gt;/&lt;Файл&gt;"
 
 #, c-format
 msgid "<b>====== Test #%d =======</b>\n"
@@ -3641,6 +3650,9 @@ msgstr "Использовать идентификатор пользователя"
 
 msgid "Use user Login"
 msgstr "Использовать регистрационное имя пользователя"
+
+msgid "Use user Name"
+msgstr "Использовать имя участника"
 
 msgid "User "
 msgstr "Участник"
