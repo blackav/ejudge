@@ -2628,6 +2628,10 @@ ns_download_runs(
     if (!(name_ptr = teamdb_get_name_2(cs->teamdb_state, info.user_id))) {
       snprintf(name_buf, sizeof(name_buf), "!user_%d", info.user_id);
       name_ptr = name_buf;
+    } else {
+      filename_armor_bytes(name_buf, sizeof(name_buf), name_ptr,
+                           strlen(name_ptr));
+      name_ptr = name_buf;
     }
     if (info.prob_id > 0 && info.prob_id <= cs->max_prob
         && cs->probs[info.prob_id]) {
