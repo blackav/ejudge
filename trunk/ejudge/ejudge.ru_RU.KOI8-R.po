@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-17 20:59+0400\n"
-"PO-Revision-Date: 2007-04-17 21:04+0400\n"
+"POT-Creation-Date: 2007-04-19 16:23+0400\n"
+"PO-Revision-Date: 2007-04-19 16:24+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1103,9 +1103,6 @@ msgstr "Удалить роль НАБЛЮДАТЕЛЯ"
 msgid "Deleting role %d of user %d from contest %d failed"
 msgstr "Удаление роли %d у пользователя %d в турнире %d не удалось"
 
-msgid "Description"
-msgstr "Описание"
-
 msgid "Detailed information about participant"
 msgstr "Подробная информация об участнике"
 
@@ -1756,6 +1753,9 @@ msgstr "Дата поступления в учебное заведение"
 
 msgid "Institution graduation date"
 msgstr "Дата окончания учебного заведения"
+
+msgid "Instructions"
+msgstr "Инструкции"
 
 msgid "Insufficient duration to continue the contest"
 msgstr "Недостаточная продолжительность турнира"
@@ -4345,5 +4345,3 @@ msgstr "ошибка записи"
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
 
-#~ msgid "Problem navigation"
-#~ msgstr "Переход к другой задаче"
