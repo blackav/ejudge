@@ -1850,8 +1850,110 @@ serve_send_run_quit(const serve_state_t state)
   xfree(pkt_buf);
 }
 
+static unsigned char olympiad_rejudgeable_runs[RUN_LAST + 1] =
+{
+  [RUN_OK]               = 1,
+  [RUN_COMPILE_ERR]      = 0,
+  [RUN_RUN_TIME_ERR]     = 0,
+  [RUN_TIME_LIMIT_ERR]   = 0,
+  [RUN_PRESENTATION_ERR] = 0,
+  [RUN_WRONG_ANSWER_ERR] = 0,
+  [RUN_CHECK_FAILED]     = 0,
+  [RUN_PARTIAL]          = 1,
+  [RUN_ACCEPTED]         = 1,
+  [RUN_IGNORED]          = 0,
+  [RUN_DISQUALIFIED]     = 0,
+  [RUN_PENDING]          = 0,
+  [RUN_MEM_LIMIT_ERR]    = 0,
+  [RUN_SECURITY_ERR]     = 0,
+  [RUN_VIRTUAL_START]    = 0,
+  [RUN_VIRTUAL_STOP]     = 0,
+  [RUN_EMPTY]            = 0,
+  [RUN_RUNNING]          = 1,
+  [RUN_COMPILED]         = 1,
+  [RUN_COMPILING]        = 1,
+  [RUN_AVAILABLE]        = 1,
+};
+
+static unsigned char olympiad_output_only_rejudgeable_runs[RUN_LAST + 1] =
+{
+  [RUN_OK]               = 1,
+  [RUN_COMPILE_ERR]      = 0,
+  [RUN_RUN_TIME_ERR]     = 0,
+  [RUN_TIME_LIMIT_ERR]   = 0,
+  [RUN_PRESENTATION_ERR] = 0,
+  [RUN_WRONG_ANSWER_ERR] = 1,
+  [RUN_CHECK_FAILED]     = 0,
+  [RUN_PARTIAL]          = 1,
+  [RUN_ACCEPTED]         = 1,
+  [RUN_IGNORED]          = 0,
+  [RUN_DISQUALIFIED]     = 0,
+  [RUN_PENDING]          = 0,
+  [RUN_MEM_LIMIT_ERR]    = 0,
+  [RUN_SECURITY_ERR]     = 0,
+  [RUN_VIRTUAL_START]    = 0,
+  [RUN_VIRTUAL_STOP]     = 0,
+  [RUN_EMPTY]            = 0,
+  [RUN_RUNNING]          = 1,
+  [RUN_COMPILED]         = 1,
+  [RUN_COMPILING]        = 1,
+  [RUN_AVAILABLE]        = 1,
+};
+
+static unsigned char generally_rejudgable_runs[RUN_LAST + 1] =
+{
+  [RUN_OK]               = 1,
+  [RUN_COMPILE_ERR]      = 1,
+  [RUN_RUN_TIME_ERR]     = 1,
+  [RUN_TIME_LIMIT_ERR]   = 1,
+  [RUN_PRESENTATION_ERR] = 1,
+  [RUN_WRONG_ANSWER_ERR] = 1,
+  [RUN_CHECK_FAILED]     = 1,
+  [RUN_PARTIAL]          = 1,
+  [RUN_ACCEPTED]         = 1,
+  [RUN_IGNORED]          = 1,
+  [RUN_DISQUALIFIED]     = 1,
+  [RUN_PENDING]          = 1,
+  [RUN_MEM_LIMIT_ERR]    = 1,
+  [RUN_SECURITY_ERR]     = 1,
+  [RUN_VIRTUAL_START]    = 0,
+  [RUN_VIRTUAL_STOP]     = 0,
+  [RUN_EMPTY]            = 0,
+  [RUN_RUNNING]          = 1,
+  [RUN_COMPILED]         = 1,
+  [RUN_COMPILING]        = 1,
+  [RUN_AVAILABLE]        = 1,
+};
+
+static int
+is_generally_rejudgable(const serve_state_t state,
+                        const struct run_entry *pe,
+                        int total_users)
+{
+  const struct section_problem_data *prob;
+  const struct section_language_data *lang;
+
+  if (pe->status > RUN_LAST) return 0;
+  if (!generally_rejudgable_runs[pe->status]) return 0;
+  if (pe->is_imported) return 0;
+  if (pe->is_readonly) return 0;
+  if (pe->user_id <= 0 || pe->user_id >= total_users) return 0;
+  if (pe->prob_id <= 0 || pe->prob_id > state->max_prob
+      || !(prob = state->probs[pe->prob_id])) return 0;
+  if (pe->lang_id <= 0 || pe->lang_id > state->max_lang
+      || !(lang = state->langs[pe->lang_id])) return 0;
+  if (prob->disable_testing || lang->disable_testing) return 0;
+  if (prob->manual_checking) return 0;
+
+  return 1;
+}
+
 #define BITS_PER_LONG (8*sizeof(unsigned long)) 
 
+/* Since we're provided the exact set of runs to rejudge, we ignore
+ * "latest" condition in OLYMPIAD contests, or DISQUALIFIED or IGNORED
+ * runs
+ */
 void
 serve_rejudge_by_mask(serve_state_t state,
                       int user_id, ej_ip_t ip, int ssl_flag,
@@ -1860,10 +1962,6 @@ serve_rejudge_by_mask(serve_state_t state,
 {
   int total_runs, r;
   struct run_entry re;
-  int total_ids;
-  int total_probs;
-  int size, idx;
-  unsigned char *flag;
 
   ASSERT(mask_size > 0);
 
@@ -1872,6 +1970,7 @@ serve_rejudge_by_mask(serve_state_t state,
     total_runs = mask_size * BITS_PER_LONG;
   }
 
+  /*
   if (state->global->score_system_val == SCORE_OLYMPIAD
       && !state->accepting_mode) {
     // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
@@ -1886,13 +1985,15 @@ serve_rejudge_by_mask(serve_state_t state,
     memset(flag, 0, size);
     for (r = total_runs - 1; r >= 0; r--) {
       if (run_get_entry(state->runlog_state, r, &re) < 0) continue;
+      if (!run_is_source_available(re.status)) continue;
+      if (re.is_imported) continue;
+      if (re.is_readonly) continue;
+
       if (re.status != RUN_OK && re.status != RUN_PARTIAL
           && re.status != RUN_ACCEPTED) continue;
-      if (re.is_imported) continue;
       if (re.user_id <= 0 || re.user_id >= total_ids) continue;
       if (re.prob_id <= 0 || re.prob_id >= total_probs) continue;
       if (re.lang_id <= 0 || re.lang_id > state->max_lang) continue;
-      if (re.is_readonly) continue;
       if (!state->probs[re.prob_id]
           || state->probs[re.prob_id]->disable_testing) continue;
       if (!state->langs[re.lang_id]
@@ -1905,19 +2006,11 @@ serve_rejudge_by_mask(serve_state_t state,
     }
     return;
   }
+  */
 
   for (r = 0; r < total_runs; r++) {
     if (run_get_entry(state->runlog_state, r, &re) >= 0
-        && re.status <= RUN_MAX_STATUS
-        && re.status != RUN_IGNORED
-        && re.status != RUN_DISQUALIFIED
-        && re.prob_id >= 1 && re.prob_id <= state->max_prob
-        && re.lang_id >= 1 && re.lang_id <= state->max_lang
-        && state->probs[re.prob_id]
-        && !state->probs[re.prob_id]->disable_testing
-        && !state->langs[re.lang_id]->disable_testing
-        && !re.is_readonly
-        && !re.is_imported
+        && is_generally_rejudgable(state, &re, INT_MAX)
         && (mask[r / BITS_PER_LONG] & (1L << (r % BITS_PER_LONG)))) {
       serve_rejudge_run(state, r, user_id, ip, ssl_flag,
                         force_flag, priority_adjustment);
@@ -1950,16 +2043,14 @@ serve_rejudge_problem(serve_state_t state,
     memset(flag, 0, total_ids);
     for (r = total_runs - 1; r >= 0; r--) {
       if (run_get_entry(state->runlog_state, r, &re) < 0) continue;
-      if (re.status != RUN_OK && re.status != RUN_PARTIAL
-          && re.status != RUN_ACCEPTED) continue;
+      if (!is_generally_rejudgable(state, &re, total_ids)) continue;
+      if (state->probs[re.prob_id]->type_val != PROB_TYPE_STANDARD) {
+        if (!olympiad_output_only_rejudgeable_runs[re.status]) continue;
+      } else {
+        if (!olympiad_rejudgeable_runs[re.status]) continue;
+      }
       if (re.prob_id != prob_id) continue;
-      if (re.is_imported) continue;
-      if (re.is_readonly) continue;
-      if (re.user_id <= 0 || re.user_id >= total_ids) continue;
-      if (re.lang_id <= 0 || re.lang_id > state->max_lang) continue;
       if (flag[re.user_id]) continue;
-      if (!state->langs[re.lang_id]
-          || state->langs[re.lang_id]->disable_testing) continue;
       flag[re.user_id] = 1;
       serve_rejudge_run(state, r, user_id, ip, ssl_flag, 0, 0);
     }
@@ -1968,11 +2059,9 @@ serve_rejudge_problem(serve_state_t state,
 
   for (r = 0; r < total_runs; r++) {
     if (run_get_entry(state->runlog_state, r, &re) >= 0
-        && re.prob_id == prob_id && re.status <= RUN_MAX_STATUS
-        && !re.is_readonly
-        && re.status != RUN_IGNORED
-        && re.status != RUN_DISQUALIFIED
-        && !re.is_imported) {
+        && is_generally_rejudgable(state, &re, INT_MAX)
+        && re.status != RUN_IGNORED && re.status != RUN_DISQUALIFIED
+        && re.prob_id == prob_id) {
       serve_rejudge_run(state, r, user_id, ip, ssl_flag, 0, 0);
     }
   }
@@ -1993,17 +2082,8 @@ serve_judge_suspended(serve_state_t state,
 
   for (r = 0; r < total_runs; r++) {
     if (run_get_entry(state->runlog_state, r, &re) >= 0
-        && re.status == RUN_PENDING
-        && !re.is_imported
-        && re.prob_id > 0
-        && re.prob_id <= state->max_prob
-        && re.lang_id > 0 && re.lang_id <= state->max_lang
-        && state->probs[re.prob_id]
-        && !re.is_readonly
-        && !state->probs[re.prob_id]->disable_testing
-        && !state->probs[re.prob_id]->disable_auto_testing
-        && !state->langs[re.lang_id]->disable_testing
-        && !state->langs[re.lang_id]->disable_auto_testing) {
+        && is_generally_rejudgable(state, &re, INT_MAX)
+        && re.status == RUN_PENDING) {
       serve_rejudge_run(state, r, user_id, ip, ssl_flag, 0, 0);
     }
   }
@@ -2033,17 +2113,12 @@ serve_rejudge_all(serve_state_t state,
     memset(flag, 0, size);
     for (r = total_runs - 1; r >= 0; r--) {
       if (run_get_entry(state->runlog_state, r, &re) < 0) continue;
-      if (re.status != RUN_OK && re.status != RUN_PARTIAL
-          && re.status != RUN_ACCEPTED) continue;
-      if (re.is_imported) continue;
-      if (re.user_id <= 0 || re.user_id >= total_ids) continue;
-      if (re.prob_id <= 0 || re.prob_id >= total_probs) continue;
-      if (re.lang_id <= 0 || re.lang_id > state->max_lang) continue;
-      if (re.is_readonly) continue;
-      if (!state->probs[re.prob_id]
-          || state->probs[re.prob_id]->disable_testing) continue;
-      if (!state->langs[re.lang_id]
-          || state->langs[re.lang_id]->disable_testing) continue;
+      if (!is_generally_rejudgable(state, &re, total_ids)) continue;
+      if (state->probs[re.prob_id]->type_val != PROB_TYPE_STANDARD) {
+        if (!olympiad_output_only_rejudgeable_runs[re.status]) continue;
+      } else {
+        if (!olympiad_rejudgeable_runs[re.status]) continue;
+      }
       idx = re.user_id * total_probs + re.prob_id;
       if (flag[idx]) continue;
       flag[idx] = 1;
@@ -2054,16 +2129,8 @@ serve_rejudge_all(serve_state_t state,
 
   for (r = 0; r < total_runs; r++) {
     if (run_get_entry(state->runlog_state, r, &re) >= 0
-        && re.status <= RUN_MAX_STATUS
-        && re.status != RUN_IGNORED
-        && re.status != RUN_DISQUALIFIED
-        && re.prob_id >= 1 && re.prob_id <= state->max_prob
-        && re.lang_id >= 1 && re.lang_id <= state->max_lang
-        && state->probs[re.prob_id]
-        && !state->probs[re.prob_id]->disable_testing
-        && !state->langs[re.lang_id]->disable_testing
-        && !re.is_readonly
-        && !re.is_imported) {
+        && is_generally_rejudgable(state, &re, INT_MAX)
+        && re.status != RUN_IGNORED && re.status != RUN_DISQUALIFIED) {
       serve_rejudge_run(state, r, user_id, ip, ssl_flag, 0, 0);
     }
   }

@@ -79,6 +79,8 @@ super_html_clear_variable(struct sid_state *sstate, int cmd)
   case SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER: p_str = &cnts->register_header_file; break;
   case SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER: p_str = &cnts->register_footer_file; break;
   case SSERV_CMD_CNTS_CLEAR_TEAM_HEADER: p_str = &cnts->team_header_file; break;
+  case SSERV_CMD_CNTS_CLEAR_TEAM_MENU_1: p_str = &cnts->team_menu_1_file; break;
+  case SSERV_CMD_CNTS_CLEAR_TEAM_MENU_2: p_str = &cnts->team_menu_2_file; break;
   case SSERV_CMD_CNTS_CLEAR_TEAM_SEPARATOR: p_str = &cnts->team_separator_file; break;
   case SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER: p_str = &cnts->team_footer_file; break;
   case SSERV_CMD_CNTS_CLEAR_PRIV_HEADER: p_str = &cnts->priv_header_file; break;
@@ -132,6 +134,12 @@ super_html_clear_variable(struct sid_state *sstate, int cmd)
     break;
   case SSERV_CMD_CNTS_CLEAR_TEAM_HEADER_TEXT:
     p_str = &sstate->team_header_text;
+    break;
+  case SSERV_CMD_CNTS_CLEAR_TEAM_MENU_1_TEXT:
+    p_str = &sstate->team_menu_1_text;
+    break;
+  case SSERV_CMD_CNTS_CLEAR_TEAM_MENU_2_TEXT:
+    p_str = &sstate->team_menu_2_text;
     break;
   case SSERV_CMD_CNTS_CLEAR_TEAM_SEPARATOR_TEXT:
     p_str = &sstate->team_separator_text;
@@ -381,6 +389,12 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   case SSERV_CMD_CNTS_CHANGE_TEAM_HEADER:
     p_str = &cnts->team_header_file;
     break;
+  case SSERV_CMD_CNTS_CHANGE_TEAM_MENU_1:
+    p_str = &cnts->team_menu_1_file;
+    break;
+  case SSERV_CMD_CNTS_CHANGE_TEAM_MENU_2:
+    p_str = &cnts->team_menu_2_file;
+    break;
   case SSERV_CMD_CNTS_CHANGE_TEAM_SEPARATOR:
     p_str = &cnts->team_separator_file;
     break;
@@ -514,6 +528,12 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     break;
   case SSERV_CMD_CNTS_SAVE_TEAM_HEADER:
     p_str_d2u = &sstate->team_header_text;
+    break;
+  case SSERV_CMD_CNTS_SAVE_TEAM_MENU_1:
+    p_str_d2u = &sstate->team_menu_1_text;
+    break;
+  case SSERV_CMD_CNTS_SAVE_TEAM_MENU_2:
+    p_str_d2u = &sstate->team_menu_2_text;
     break;
   case SSERV_CMD_CNTS_SAVE_TEAM_SEPARATOR:
     p_str_d2u = &sstate->team_separator_text;
@@ -1076,6 +1096,10 @@ super_html_commit_contest(FILE *f,
   path_t register_footer_path_2 = { 0 };
   path_t team_header_path = { 0 };
   path_t team_header_path_2 = { 0 };
+  path_t team_menu_1_path = { 0 };
+  path_t team_menu_1_path_2 = { 0 };
+  path_t team_menu_2_path = { 0 };
+  path_t team_menu_2_path_2 = { 0 };
   path_t team_separator_path = { 0 };
   path_t team_separator_path_2 = { 0 };
   path_t team_footer_path = { 0 };
@@ -1108,7 +1132,7 @@ super_html_commit_contest(FILE *f,
   path_t vmap_path_2 = { 0 };
 
   int uhf, uff, rhf, rff, thf, tff, ref;
-  int csf = 0, shf = 0, sff = 0, s2hf = 0, s2ff = 0, phf = 0, pff = 0, sf = 0, vmf = 0, cpf = 0, ihf = 0, iff = 0, tsf = 0, cwf = 0;
+  int csf = 0, shf = 0, sff = 0, s2hf = 0, s2ff = 0, phf = 0, pff = 0, sf = 0, vmf = 0, cpf = 0, ihf = 0, iff = 0, tsf = 0, cwf = 0, t1f = 0, t2f = 0;
 
   path_t diff_cmdline;
   unsigned char *diff_str = 0, *vcs_str = 0;
@@ -1278,7 +1302,20 @@ super_html_commit_contest(FILE *f,
                             team_header_path, team_header_path_2)) < 0)
     goto failed;
 
-  /* Save the team_header_file as temporary file */
+  /* Save the team_menu_1_file as temporary file */
+  if ((t1f = save_conf_file(flog, "`team' HTML content menu1",
+                            cnts->team_menu_1_file, sstate->team_menu_1_text,
+                            conf_path,
+                            team_menu_1_path, team_menu_1_path_2)) < 0)
+
+  /* Save the team_menu_2_file as temporary file */
+  if ((t2f = save_conf_file(flog, "`team' HTML content menu2",
+                            cnts->team_menu_2_file, sstate->team_menu_2_text,
+                            conf_path,
+                            team_menu_2_path, team_menu_2_path_2)) < 0)
+    goto failed;
+
+  /* Save the team_separator_file as temporary file */
   if ((tsf = save_conf_file(flog, "`team' HTML separator file",
                             cnts->team_separator_file,
                             sstate->team_separator_text,
@@ -1494,6 +1531,8 @@ super_html_commit_contest(FILE *f,
   rename_files(flog, rhf, register_header_path, register_header_path_2);
   rename_files(flog, rff, register_footer_path, register_footer_path_2);
   rename_files(flog, thf, team_header_path, team_header_path_2);
+  rename_files(flog, t1f, team_menu_1_path, team_menu_1_path_2);
+  rename_files(flog, t2f, team_menu_2_path, team_menu_2_path_2);
   rename_files(flog, tsf, team_separator_path, team_separator_path_2);
   rename_files(flog, tff, team_footer_path, team_footer_path_2);
   rename_files(flog, ihf, priv_header_path, priv_header_path_2);
@@ -1624,6 +1663,8 @@ super_html_commit_contest(FILE *f,
   if (register_header_path_2[0]) unlink(register_header_path_2);
   if (register_footer_path_2[0]) unlink(register_footer_path_2);
   if (team_header_path_2[0]) unlink(team_header_path_2);
+  if (team_menu_1_path_2[0]) unlink(team_menu_1_path_2);
+  if (team_menu_2_path_2[0]) unlink(team_menu_2_path_2);
   if (team_separator_path_2[0]) unlink(team_separator_path_2);
   if (team_footer_path_2[0]) unlink(team_footer_path_2);
   if (priv_header_path_2[0]) unlink(priv_header_path_2);

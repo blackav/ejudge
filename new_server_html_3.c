@@ -103,6 +103,14 @@ const unsigned char ns_fancy_footer_2[] =
 "</body>"
 "</html>";
 
+// %1 - upper menu
+// %2 - lower menu
+// %3 - separator text
+// %4 - contest status
+const unsigned char ns_fancy_unpriv_content_header[] =
+"<div class=\"user_actions\">%1</div><div class=\"white_empty_block\">&nbsp;</div><div class=\"contest_actions\">%2</div>%3%4";
+//"%2<div class=\"white_empty_block\">&nbsp;</div>%4%3";
+
 const unsigned char * const ns_ssl_flag_str[] =
 {
   "http", "https",
