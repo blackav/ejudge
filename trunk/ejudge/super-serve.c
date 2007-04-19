@@ -1721,6 +1721,8 @@ super_serve_clear_edited_contest(struct sid_state *p)
   xfree(p->register_header_text); p->register_header_text = 0;
   xfree(p->register_footer_text); p->register_footer_text = 0;
   xfree(p->team_header_text); p->team_header_text = 0;
+  xfree(p->team_menu_1_text); p->team_menu_1_text = 0;
+  xfree(p->team_menu_2_text); p->team_menu_2_text = 0;
   xfree(p->team_separator_text); p->team_separator_text = 0;
   xfree(p->team_footer_text); p->team_footer_text = 0;
   xfree(p->priv_header_text); p->priv_header_text = 0;
@@ -1969,6 +1971,8 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_CNTS_EDIT_REGISTER_HEADER:
   case SSERV_CMD_CNTS_EDIT_REGISTER_FOOTER:
   case SSERV_CMD_CNTS_EDIT_TEAM_HEADER:
+  case SSERV_CMD_CNTS_EDIT_TEAM_MENU_1:
+  case SSERV_CMD_CNTS_EDIT_TEAM_MENU_2:
   case SSERV_CMD_CNTS_EDIT_TEAM_SEPARATOR:
   case SSERV_CMD_CNTS_EDIT_TEAM_FOOTER:
   case SSERV_CMD_CNTS_EDIT_PRIV_HEADER:
@@ -2093,6 +2097,8 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_CNTS_EDIT_REGISTER_HEADER:
   case SSERV_CMD_CNTS_EDIT_REGISTER_FOOTER:
   case SSERV_CMD_CNTS_EDIT_TEAM_HEADER:
+  case SSERV_CMD_CNTS_EDIT_TEAM_MENU_1:
+  case SSERV_CMD_CNTS_EDIT_TEAM_MENU_2:
   case SSERV_CMD_CNTS_EDIT_TEAM_SEPARATOR:
   case SSERV_CMD_CNTS_EDIT_TEAM_FOOTER:
   case SSERV_CMD_CNTS_EDIT_PRIV_HEADER:
@@ -2470,6 +2476,8 @@ cmd_simple_top_command(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER:
   case SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER:
   case SSERV_CMD_CNTS_CLEAR_TEAM_HEADER:
+  case SSERV_CMD_CNTS_CLEAR_TEAM_MENU_1:
+  case SSERV_CMD_CNTS_CLEAR_TEAM_MENU_2:
   case SSERV_CMD_CNTS_CLEAR_TEAM_SEPARATOR:
   case SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER:
   case SSERV_CMD_CNTS_CLEAR_PRIV_HEADER:
@@ -2514,6 +2522,8 @@ cmd_simple_top_command(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER_TEXT:
   case SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER_TEXT:
   case SSERV_CMD_CNTS_CLEAR_TEAM_HEADER_TEXT:
+  case SSERV_CMD_CNTS_CLEAR_TEAM_MENU_1_TEXT:
+  case SSERV_CMD_CNTS_CLEAR_TEAM_MENU_2_TEXT:
   case SSERV_CMD_CNTS_CLEAR_TEAM_SEPARATOR_TEXT:
   case SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER_TEXT:
   case SSERV_CMD_CNTS_CLEAR_PRIV_HEADER_TEXT:
@@ -2592,6 +2602,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CHANGE_REGISTER_HEADER:
   case SSERV_CMD_CNTS_CHANGE_REGISTER_FOOTER:
   case SSERV_CMD_CNTS_CHANGE_TEAM_HEADER:
+  case SSERV_CMD_CNTS_CHANGE_TEAM_MENU_1:
+  case SSERV_CMD_CNTS_CHANGE_TEAM_MENU_2:
   case SSERV_CMD_CNTS_CHANGE_TEAM_SEPARATOR:
   case SSERV_CMD_CNTS_CHANGE_TEAM_FOOTER:
   case SSERV_CMD_CNTS_CHANGE_PRIV_HEADER:
@@ -2652,6 +2664,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_SAVE_REGISTER_HEADER:
   case SSERV_CMD_CNTS_SAVE_REGISTER_FOOTER:
   case SSERV_CMD_CNTS_SAVE_TEAM_HEADER:
+  case SSERV_CMD_CNTS_SAVE_TEAM_MENU_1:
+  case SSERV_CMD_CNTS_SAVE_TEAM_MENU_2:
   case SSERV_CMD_CNTS_SAVE_TEAM_SEPARATOR:
   case SSERV_CMD_CNTS_SAVE_TEAM_FOOTER:
   case SSERV_CMD_CNTS_SAVE_PRIV_HEADER:
@@ -3130,6 +3144,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_EDIT_REGISTER_HEADER] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_REGISTER_FOOTER] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_TEAM_HEADER] = { cmd_main_page },
+  [SSERV_CMD_CNTS_EDIT_TEAM_MENU_1] = { cmd_main_page },
+  [SSERV_CMD_CNTS_EDIT_TEAM_MENU_2] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_TEAM_SEPARATOR] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_TEAM_FOOTER] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_PRIV_HEADER] = { cmd_main_page },
@@ -3147,6 +3163,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_TEAM_HEADER] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_TEAM_MENU_1] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_TEAM_MENU_2] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_TEAM_SEPARATOR] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_PRIV_HEADER] = { cmd_simple_top_command },
@@ -3216,6 +3234,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_REGISTER_HEADER] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_REGISTER_FOOTER] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_TEAM_HEADER] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_TEAM_MENU_1] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_TEAM_MENU_2] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_TEAM_SEPARATOR] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_TEAM_FOOTER] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_PRIV_HEADER] = { cmd_set_value },
@@ -3276,6 +3296,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SAVE_REGISTER_HEADER] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_REGISTER_FOOTER] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_TEAM_HEADER] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_TEAM_MENU_1] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_TEAM_MENU_2] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_TEAM_SEPARATOR] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_TEAM_FOOTER] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_PRIV_HEADER] = { cmd_set_value },
@@ -3288,6 +3310,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER_TEXT] = { cmd_set_value },
   [SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER_TEXT] = { cmd_set_value },
   [SSERV_CMD_CNTS_CLEAR_TEAM_HEADER_TEXT] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CLEAR_TEAM_MENU_1_TEXT] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CLEAR_TEAM_MENU_1_TEXT] = { cmd_set_value },
   [SSERV_CMD_CNTS_CLEAR_TEAM_SEPARATOR_TEXT] = { cmd_set_value },
   [SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER_TEXT] = { cmd_set_value },
   [SSERV_CMD_CNTS_CLEAR_PRIV_HEADER_TEXT] = { cmd_set_value },
