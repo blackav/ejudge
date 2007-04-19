@@ -2376,3 +2376,16 @@ filter_scan.lex 4106 0 673823
 misctext.h 4108 0 343472
 misctext.c 4108 0 1257386
 new_server_html_2.c 4108 0 12002706
+contests.h 4110 0 880077
+new-server.h 4110 0 1802827
+super_proto.h 4110 0 1868164
+super-serve.h 4110 0 379383
+serve-control.c 4110 0 8323783
+super-serve.c 4110 0 12137091
+contests.c 4110 0 4494416
+contest_tmpl.c 4110 0 909785
+new_server_html.c 4110 0 30018765
+new_server_html_3.c 4110 0 2143971
+serve_2.c 4110 0 6884084
+super_html.c 4110 0 11122208
+super_html_2.c 4110 0 4875205
