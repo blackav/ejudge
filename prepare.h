@@ -146,6 +146,7 @@ struct section_global_data
   int    always_show_problems;  /* show "Problems" link before contest start */
   int    disable_user_standings; /* disable built-in standings */
   int    problem_navigation;     /* extended problem navigation */
+  int    problem_tab_size;
   int    vertical_navigation;    /* align vertically */
 
   puc_t name[256];              /* name of the contest */

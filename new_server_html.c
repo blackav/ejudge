@@ -961,10 +961,31 @@ html_error_status_page(FILE *fout,
                        const struct contest_desc *cnts,
                        struct contest_extra *extra,
                        const unsigned char *log_txt,
-                       int back_action)
+                       int back_action,
+                       const char *format,
+                       ...)
+  __attribute__((format(printf,7,8)));
+static void
+html_error_status_page(FILE *fout,
+                       struct http_request_info *phr,
+                       const struct contest_desc *cnts,
+                       struct contest_extra *extra,
+                       const unsigned char *log_txt,
+                       int back_action,
+                       const char *format,
+                       ...)
 {
   unsigned char url[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char urlextra[1024];
+  va_list args;
+
+  urlextra[0] = 0;
+  if (format && *format) {
+    va_start(args, format);
+    vsnprintf(urlextra, sizeof(urlextra), format, args);
+    va_end(args);
+  }
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
@@ -974,7 +995,8 @@ html_error_status_page(FILE *fout,
   }
   fprintf(fout, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(log_txt));
   fprintf(fout, "<hr>%s%s</a>\n",
-          ns_aref(url, sizeof(url), phr, back_action, 0), _("Back"));
+          ns_aref(url, sizeof(url), phr, back_action, "%s", urlextra),
+          _("Back"));
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);
@@ -2007,7 +2029,7 @@ priv_change_password(FILE *fout,
     ns_refresh_page_2(fout, url);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_MAIN_PAGE);
+                           NEW_SRV_ACTION_MAIN_PAGE, 0);
   }
 
  cleanup:;
@@ -2687,7 +2709,7 @@ parse_run_id(FILE *fout, struct http_request_info *phr,
 
  failure:
   html_error_status_page(fout, phr, cnts, extra, errmsg,
-                         ns_priv_prev_state[phr->action]);
+                         ns_priv_prev_state[phr->action], 0);
   return -1;
 }
 
@@ -5468,7 +5490,7 @@ priv_generic_operation(FILE *fout,
     }
     ns_refresh_page(fout, phr, r, next_extra);
   } else {
-    html_error_status_page(fout, phr, cnts, extra, log_txt, rr);
+    html_error_status_page(fout, phr, cnts, extra, log_txt, rr, 0);
   }
   xfree(log_txt);
 }
@@ -5500,7 +5522,7 @@ priv_generic_page(FILE *fout,
 
   fclose(log_f);
   if (log_txt && *log_txt) {
-    html_error_status_page(fout, phr, cnts, extra, log_txt, r);
+    html_error_status_page(fout, phr, cnts, extra, log_txt, r, 0);
   }
   xfree(log_txt);
 }
@@ -5532,8 +5554,8 @@ ns_insert_variant_num(unsigned char *buf, size_t size,
 
 static void
 write_alternatives_file(FILE *fout, int is_radio, const unsigned char *txt,
-                        int last_answer, int prob_id, int enable_js,
-                        const unsigned char *class_name)
+                        int last_answer, int prob_id, int next_prob_id,
+                        int enable_js, const unsigned char *class_name)
 {
   const unsigned char *s, *p;
   unsigned char *txt2;
@@ -5589,8 +5611,8 @@ write_alternatives_file(FILE *fout, int is_radio, const unsigned char *txt,
     if (is_radio) {
       jsbuf[0] = 0;
       if (prob_id > 0 && enable_js) {
-        snprintf(jsbuf, sizeof(jsbuf), " onclick=\"submitAnswer(%d,%d)\"",
-                 prob_id, i + 1);
+        snprintf(jsbuf, sizeof(jsbuf), " onclick=\"submitAnswer(%d,%d,%d)\"",
+                 prob_id, i + 1, next_prob_id);
       }
       s = "";
       if (last_answer == i + 1) s = " checked=\"1\"";
@@ -6089,7 +6111,7 @@ priv_main_page(FILE *fout,
         break;
       case PROB_TYPE_SELECT_ONE:
         if (alternatives) {
-          write_alternatives_file(fout, 1, alternatives, -1, 0, 0,
+          write_alternatives_file(fout, 1, alternatives, -1, 0, 0, 0,
                                   "borderless");
         } else if (prob->alternative) {
           for (i = 0; prob->alternative[i]; i++) {
@@ -6099,7 +6121,7 @@ priv_main_page(FILE *fout,
         break;
       case PROB_TYPE_SELECT_MANY:
         if (alternatives) {
-          write_alternatives_file(fout, 0, alternatives, -1, 0, 0,
+          write_alternatives_file(fout, 0, alternatives, -1, 0, 0, 0,
                                   "borderless");
         } else if (prob->alternative) {
           for (i = 0; prob->alternative[i]; i++) {
@@ -6614,7 +6636,7 @@ unpriv_parse_run_id(FILE *fout, struct http_request_info *phr,
 
  failure:
   html_error_status_page(fout, phr, cnts, extra, errmsg,
-                         ns_unpriv_prev_state[phr->action]);
+                         ns_unpriv_prev_state[phr->action], 0);
   return -1;
 }
 
@@ -7173,7 +7195,7 @@ unpriv_change_language(FILE *fout,
     ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_MAIN_PAGE);
+                           NEW_SRV_ACTION_MAIN_PAGE, 0);
   }
 
  cleanup:
@@ -7242,7 +7264,7 @@ unpriv_change_password(FILE *fout,
     ns_refresh_page_2(fout, url);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_MAIN_PAGE);
+                           NEW_SRV_ACTION_MAIN_PAGE, 0);
   }
 
  cleanup:;
@@ -7307,7 +7329,7 @@ unpriv_print_run(FILE *fout,
     ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_MAIN_PAGE);
+                           NEW_SRV_ACTION_MAIN_PAGE, 0);
   }
 
  cleanup:;
@@ -7323,7 +7345,7 @@ unpriv_submit_run(FILE *fout,
 {
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
-  const struct section_problem_data *prob = 0;
+  const struct section_problem_data *prob = 0, *prob2;
   const struct section_language_data *lang = 0;
   char *log_txt = 0;
   size_t log_len = 0;
@@ -7767,7 +7789,9 @@ unpriv_submit_run(FILE *fout,
       i = prob->id;
       if (prob->advance_to_next > 0) {
         for (i++; i <= cs->max_prob; i++) {
-          if (!cs->probs[i]) continue;
+          if (!(prob2 = cs->probs[i])) continue;
+          if (prob2->t_start_date > 0 && prob2->t_start_date > cs->current_time)
+            continue;
           // FIXME: standard applicability checks
           break;
         }
@@ -7783,7 +7807,8 @@ unpriv_submit_run(FILE *fout,
   } else {
     unpriv_load_html_style(phr, cnts, 0, 0);
     html_error_status_page(fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT);
+                           NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
+                           "prob_id=%d", prob_id);
   }
 
   //cleanup:;
@@ -7927,7 +7952,7 @@ unpriv_submit_clar(FILE *fout,
     ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_CLARS, 0);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_VIEW_CLAR_SUBMIT);
+                           NEW_SRV_ACTION_VIEW_CLAR_SUBMIT, 0);
   }
 
   //cleanup:;
@@ -8070,7 +8095,7 @@ unpriv_submit_appeal(FILE *fout,
     ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_CLARS, 0);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_VIEW_CLAR_SUBMIT);
+                           NEW_SRV_ACTION_VIEW_CLAR_SUBMIT, 0);
   }
 
   //cleanup:;
@@ -8086,6 +8111,7 @@ unpriv_command(FILE *fout,
 {
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob;
   char *log_txt = 0;
   size_t log_size = 0;
   FILE *log_f = 0;
@@ -8171,7 +8197,9 @@ unpriv_command(FILE *fout,
     if (phr->action == NEW_SRV_ACTION_VIRTUAL_START
         && global->problem_navigation) {
       for (i = 1; i <= cs->max_prob; i++) {
-        if (!cs->probs[i]) continue;
+        if (!(prob = cs->probs[i])) continue;
+        if (prob->t_start_date > 0 && prob->t_start_date > cs->current_time)
+          continue;
         // FIXME: standard applicability checks
         break;
       }
@@ -8188,7 +8216,7 @@ unpriv_command(FILE *fout,
   } else {
     unpriv_load_html_style(phr, cnts, 0, 0);
     html_error_status_page(fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_MAIN_PAGE);
+                           NEW_SRV_ACTION_MAIN_PAGE, 0);
   }
 
   //cleanup:;
@@ -8286,7 +8314,7 @@ unpriv_view_source(FILE *fout,
   fclose(log_f); log_f = 0;
   if (log_txt && *log_txt) {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_MAIN_PAGE);
+                           NEW_SRV_ACTION_MAIN_PAGE, 0);
   }
 
  cleanup:
@@ -8361,7 +8389,7 @@ unpriv_view_test(FILE *fout,
   fclose(log_f); log_f = 0;
   if (log_txt && *log_txt) {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_MAIN_PAGE);
+                           NEW_SRV_ACTION_MAIN_PAGE, 0);
   }
 
  cleanup:
@@ -8548,7 +8576,7 @@ unpriv_view_report(FILE *fout,
   fclose(log_f); log_f = 0;
   if (log_txt && *log_txt) {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_MAIN_PAGE);
+                           NEW_SRV_ACTION_MAIN_PAGE, 0);
   }
 
  cleanup:
@@ -8682,7 +8710,7 @@ unpriv_view_clar(FILE *fout,
   fclose(log_f); log_f = 0;
   if (log_txt && *log_txt) {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_MAIN_PAGE);
+                           NEW_SRV_ACTION_MAIN_PAGE, 0);
   }
 
   if (log_f) fclose(log_f);
@@ -9551,7 +9579,7 @@ user_main_page(FILE *fout,
   path_t variant_stmt_file;
   struct watched_file *pw = 0;
   const unsigned char *pw_path;
-  const struct section_problem_data *prob = 0;
+  const struct section_problem_data *prob = 0, *prob2;
   unsigned char bb[1024];
   const unsigned char *alternatives = 0, *header = 0;
   int lang_count = 0, lang_id = 0;
@@ -9563,6 +9591,7 @@ user_main_page(FILE *fout,
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char *last_source = 0;
   unsigned char dbuf[1024];
+  unsigned char wbuf[1024];
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
@@ -9640,7 +9669,7 @@ user_main_page(FILE *fout,
       prob_id = 0;
 
     fprintf(fout, "<br/>\n");
-    fprintf(fout, "<table class=\"borderless\">\n");
+    fprintf(fout, "<table class=\"probNav\">\n");
     if (global->vertical_navigation <= 0) {
       fprintf(fout, "<tr id=\"probNavTopList\">\n");
       for (i = 1, j = 0; i <= cs->max_prob; i++) {
@@ -9666,7 +9695,11 @@ user_main_page(FILE *fout,
           cc = "probBad";
         }
         if (i == prob_id) hh = "probNavActiveTop";
-        fprintf(fout, "<td class=\"%s\" onclick=\"displayProblemSubmitForm(%d)\"><div class=\"%s\">", hh, i, cc);
+        wbuf[0] = 0;
+        if (global->problem_tab_size > 0)
+          snprintf(wbuf, sizeof(wbuf), " width=\"%dpx\"",
+                   global->problem_tab_size);
+        fprintf(fout, "<td class=\"%s\" onclick=\"displayProblemSubmitForm(%d)\"%s><div class=\"%s\">", hh, i, wbuf, cc);
       //fprintf(fout, "<td class=\"%s\" style=\"background-color: %s\">", hh, cc);
       /*
       if (accepting_mode && accepted_flag[i]) {
@@ -10026,11 +10059,22 @@ user_main_page(FILE *fout,
           }
           if (alternatives) {
             if (cnts->exam_mode) {
+              int next_prob_id = prob->id;
+              if (prob->advance_to_next > 0) {
+                next_prob_id++;
+                for (; next_prob_id <= cs->max_prob; next_prob_id++) {
+                  if (!(prob2 = cs->probs[next_prob_id])) continue;
+                  if (prob2->t_start_date > 0
+                      && prob2->t_start_date > cs->current_time) continue;
+                  break;
+                }
+                if (next_prob_id > cs->max_prob) next_prob_id = prob->id;
+              }
               write_alternatives_file(fout, 1, alternatives, last_answer,
-                                      prob->id, 1, "borderless");
+                                      prob->id, next_prob_id, 1, "borderless");
             } else {
               write_alternatives_file(fout, 1, alternatives, last_answer,
-                                      0, 0, "borderless");
+                                      0, 0, 0, "borderless");
             }
           } else if (prob->alternative) {
             for (i = 0; prob->alternative[i]; i++) {
@@ -10042,7 +10086,7 @@ user_main_page(FILE *fout,
           break;
         case PROB_TYPE_SELECT_MANY:
           if (alternatives) {
-            write_alternatives_file(fout, 0, alternatives, -1, 0, 0,
+            write_alternatives_file(fout, 0, alternatives, -1, 0, 0, 0,
                                     "borderless");
           } else if (prob->alternative) {
             for (i = 0; prob->alternative[i]; i++) {
@@ -10336,7 +10380,11 @@ user_main_page(FILE *fout,
       } else {
         cc = "probBad";
       }
-      fprintf(fout, "<td class=\"%s\" onclick=\"displayProblemSubmitForm(%d)\"><div class=\"%s\">", hh, i, cc);
+      wbuf[0] = 0;
+      if (global->problem_tab_size > 0)
+        snprintf(wbuf, sizeof(wbuf), " width=\"%dpx\"",
+                 global->problem_tab_size);
+      fprintf(fout, "<td class=\"%s\" onclick=\"displayProblemSubmitForm(%d)\"%s><div class=\"%s\">", hh, i, wbuf, cc);
       /*
       if (accepting_mode && accepted_flag[i]) {
         fprintf(fout, "<s>");
