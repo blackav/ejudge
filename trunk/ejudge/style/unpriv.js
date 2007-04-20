@@ -170,14 +170,19 @@ function submitStatus(type, data, evt)
 var next_problem_id;
 function gotoNextProblem(type, data, evt)
 {
-  document.location.href = self_url + "?SID=" + SID + "&action=" + NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT + "&prob_id=" + next_problem_id;
+  // FIXME: parse the response packet
+  if (next_problem_id != null) {
+    document.location.href = self_url + "?SID=" + SID + "&action=" + NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT + "&prob_id=" + next_problem_id;
+  }
 }
 
-function submitAnswer(probId, answer)
+function submitAnswer(probId, answer, nextProbId)
 {
   //alert("CLICK: " + probId + "," + answer);
 
-  next_problem_id = probId + 1;
+  next_problem_id = null;
+  if (probId != nextProbId)
+    next_problem_id = nextProbId;
   request = { SID : SID, action : NEW_SRV_ACTION_UPDATE_ANSWER, prob_id : probId, file : answer };
   dojo.io.bind({
       url: self_url,
