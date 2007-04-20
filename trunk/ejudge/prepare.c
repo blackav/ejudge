@@ -93,6 +93,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(always_show_problems, "d"),
   GLOBAL_PARAM(disable_user_standings, "d"),
   GLOBAL_PARAM(problem_navigation, "d"),
+  GLOBAL_PARAM(problem_tab_size, "d"),
   GLOBAL_PARAM(vertical_navigation, "d"),
 
   GLOBAL_PARAM(stand_ignore_after, "s"),
