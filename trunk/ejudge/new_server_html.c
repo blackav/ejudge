@@ -9152,7 +9152,6 @@ unpriv_page_header(FILE *fout,
 
     switch (*template_ptr++) {
     case '1':
-      fprintf(fout, "<table class=\"menu\"><tr>");
       for (i = 0; top_action_list[i] != -1; i++) {
         // phew ;)
         if (cnts->exam_mode) continue;
@@ -9176,10 +9175,8 @@ unpriv_page_header(FILE *fout,
       }
       if (!shown_items)
         fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
-      fprintf(fout, "</tr></table>\n");
       break;
     case '2':
-      fprintf(fout, "<table class=\"menu\"><tr>\n");
       for (i = 0; action_list[i] != -1; i++) {
         forced_url = 0;
         forced_text = 0;
@@ -9260,7 +9257,6 @@ unpriv_page_header(FILE *fout,
                   phr->self_url, phr->session_id, action_list[i], forced_text);
         }
       }
-      fprintf(fout, "</tr></table>\n");
       break;
 
     case '3':

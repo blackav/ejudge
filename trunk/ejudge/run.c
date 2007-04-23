@@ -1363,6 +1363,7 @@ run_tests(struct section_tester_data *tst,
         tests[jj].score = prb->tscores[jj];
       } else if (prb->scoring_checker
                  && tests[jj].status == RUN_WRONG_ANSWER_ERR) {
+        tests[jj].score = tests[jj].checker_score;
         score += tests[jj].checker_score;
       }
       if (tests[jj].status == RUN_CHECK_FAILED) {

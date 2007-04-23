@@ -92,6 +92,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(enable_memory_limit_error, "d"),
   GLOBAL_PARAM(always_show_problems, "d"),
   GLOBAL_PARAM(disable_user_standings, "d"),
+  GLOBAL_PARAM(disable_language, "d"),
   GLOBAL_PARAM(problem_navigation, "d"),
   GLOBAL_PARAM(problem_tab_size, "d"),
   GLOBAL_PARAM(vertical_navigation, "d"),
@@ -537,6 +538,7 @@ global_init_func(struct generic_section_config *gp)
   p->enable_full_archive = -1;
   p->always_show_problems = -1;
   p->disable_user_standings = -1;
+  p->disable_language = -1;
   p->problem_navigation = -1;
   p->vertical_navigation = -1;
   p->stand_fancy_style = -1;
@@ -1681,6 +1683,8 @@ set_defaults(serve_state_t state, int mode)
     state->global->always_show_problems = DFLT_G_ALWAYS_SHOW_PROBLEMS;
   if (state->global->disable_user_standings == -1)
     state->global->disable_user_standings = DFLT_G_DISABLE_USER_STANDINGS;
+  if (state->global->disable_language == -1)
+    state->global->disable_language = DFLT_G_DISABLE_LANGUAGE;
   if (state->global->problem_navigation == -1)
     state->global->problem_navigation = DFLT_G_PROBLEM_NAVIGATION;
   if (state->global->vertical_navigation == -1)
@@ -3074,6 +3078,22 @@ set_defaults(serve_state_t state, int mode)
     }
   }
 
+  // if no problem has long_name, disable it
+  state->global->disable_prob_long_name = 0;
+  for (i = 1; i <= state->max_prob; i++)
+    if (state->probs[i] && state->probs[i]->long_name[0])
+      break;
+  if (i > state->max_prob)
+    state->global->disable_prob_long_name = 1;
+
+  // if all problems are output-only, disable number of passed tests
+  state->global->disable_passed_tests = 0;
+  for (i = 1; i <= state->max_prob; i++)
+    if (state->probs[i] && state->probs[i]->type_val == PROB_TYPE_STANDARD)
+      break;
+  if (i > state->max_prob)
+    state->global->disable_passed_tests = 1;
+
   return 0;
 }
 
@@ -3193,6 +3213,7 @@ collect_sections(serve_state_t state, int mode)
       }
     }
   }
+
   return 0;
 }
 
@@ -3906,6 +3927,7 @@ prepare_set_global_defaults(struct section_global_data *g)
   if (g->team_enable_ce_view < 0) g->team_enable_ce_view = DFLT_G_TEAM_ENABLE_CE_VIEW;
   if (g->always_show_problems < 0) g->always_show_problems=DFLT_G_ALWAYS_SHOW_PROBLEMS;
   if (g->disable_user_standings < 0) g->disable_user_standings=DFLT_G_DISABLE_USER_STANDINGS;
+  if (g->disable_language < 0) g->disable_language = DFLT_G_DISABLE_LANGUAGE;
   if (g->problem_navigation < 0) g->problem_navigation = DFLT_G_PROBLEM_NAVIGATION;
   if (g->vertical_navigation < 0) g->vertical_navigation = DFLT_G_VERTICAL_NAVIGATION;
   if (g->team_show_judge_report < 0)
@@ -4163,6 +4185,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->disable_testing = DFLT_G_DISABLE_TESTING;
   global->always_show_problems = DFLT_G_ALWAYS_SHOW_PROBLEMS;
   global->disable_user_standings = DFLT_G_DISABLE_USER_STANDINGS;
+  global->disable_language = DFLT_G_DISABLE_LANGUAGE;
   global->problem_navigation = DFLT_G_PROBLEM_NAVIGATION;
   global->vertical_navigation = DFLT_G_VERTICAL_NAVIGATION;
 
