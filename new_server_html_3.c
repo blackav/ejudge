@@ -108,7 +108,7 @@ const unsigned char ns_fancy_footer_2[] =
 // %3 - separator text
 // %4 - contest status
 const unsigned char ns_fancy_unpriv_content_header[] =
-"<div class=\"user_actions\">%1</div><div class=\"white_empty_block\">&nbsp;</div><div class=\"contest_actions\">%2</div>%3%4";
+"<div class=\"user_actions\"><table class=\"menu\"><tr>%1</tr></table></div><div class=\"white_empty_block\">&nbsp;</div><div class=\"contest_actions\"><table class=\"menu\"><tr>%2</tr></table></div>%3%4";
 //"%2<div class=\"white_empty_block\">&nbsp;</div>%4%3";
 
 const unsigned char * const ns_ssl_flag_str[] =

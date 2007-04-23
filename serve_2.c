@@ -1934,8 +1934,8 @@ is_generally_rejudgable(const serve_state_t state,
                         const struct run_entry *pe,
                         int total_users)
 {
-  const struct section_problem_data *prob;
-  const struct section_language_data *lang;
+  const struct section_problem_data *prob = 0;
+  const struct section_language_data *lang = 0;
 
   if (pe->status > RUN_LAST) return 0;
   if (!generally_rejudgable_runs[pe->status]) return 0;
@@ -1944,9 +1944,12 @@ is_generally_rejudgable(const serve_state_t state,
   if (pe->user_id <= 0 || pe->user_id >= total_users) return 0;
   if (pe->prob_id <= 0 || pe->prob_id > state->max_prob
       || !(prob = state->probs[pe->prob_id])) return 0;
-  if (pe->lang_id <= 0 || pe->lang_id > state->max_lang
-      || !(lang = state->langs[pe->lang_id])) return 0;
-  if (prob->disable_testing || lang->disable_testing) return 0;
+  if (prob->disable_testing) return 0;
+  if (prob->type_val == PROB_TYPE_STANDARD) {
+    if (pe->lang_id <= 0 || pe->lang_id > state->max_lang
+        || !(lang = state->langs[pe->lang_id])) return 0;
+    if (lang->disable_testing) return 0;
+  }
   if (prob->manual_checking) return 0;
 
   return 1;

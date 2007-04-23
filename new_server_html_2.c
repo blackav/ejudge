@@ -3526,10 +3526,12 @@ ns_write_olympiads_user_runs(
   if (!cnts->exam_mode) fprintf(fout,"<th%s>%s</th>", cl, _("Time"));
   if (!cnts->exam_mode) fprintf(fout,"<th%s>%s</th>", cl, _("Size"));
   if (!filt_prob) fprintf(fout, "<th%s>%s</th>", cl, _("Problem"));
-  if (!filt_prob || filt_prob->type_val == PROB_TYPE_STANDARD)
+  if (global->disable_language <= 0
+      && (!filt_prob || filt_prob->type_val == PROB_TYPE_STANDARD))
     fprintf(fout, "<th%s>%s</th>", cl, _("Programming language"));
   fprintf(fout, "<th%s>%s</th>", cl, _("Result"));
-  if (!filt_prob || filt_prob->type_val == PROB_TYPE_STANDARD)
+  if (global->disable_passed_tests <= 0
+      && (!filt_prob || filt_prob->type_val == PROB_TYPE_STANDARD))
     fprintf(fout, "<th%s>%s</th>", cl, _("Tests passed"));
   if (!accepting_mode)
     fprintf(fout, "<th%s>%s</th>", cl, _("Score"));
@@ -3748,10 +3750,12 @@ ns_write_olympiads_user_runs(
     if (!cnts->exam_mode)
       fprintf(fout, "<td%s>%u</td>", cl, re.size);
     if (!filt_prob) fprintf(fout, "<td%s>%s</td>", cl, prob_name_ptr);
-    if (!filt_prob || filt_prob->type_val == PROB_TYPE_STANDARD)
+    if (global->disable_language <= 0
+        && (!filt_prob || filt_prob->type_val == PROB_TYPE_STANDARD))
       fprintf(fout, "<td%s>%s</td>", cl, lang_name_ptr);
     fprintf(fout, "<td%s>%s</td>", cl, stat_str);
-    if (!filt_prob || filt_prob->type_val == PROB_TYPE_STANDARD)
+    if (global->disable_passed_tests <= 0
+        && (!filt_prob || filt_prob->type_val == PROB_TYPE_STANDARD))
       fprintf(fout, "<td%s>%s</td>", cl, tests_buf);
     if (!accepting_mode)
       fprintf(fout, "<td%s>%s</td>", cl, score_buf);
@@ -3778,7 +3782,7 @@ ns_write_olympiads_user_runs(
       fprintf(fout, "<td%s>%s%s</a></td>", cl,
               ns_aref(ab, sizeof(ab), phr, NEW_SRV_ACTION_VIEW_REPORT,
                       "run_id=%d", i), _("View"));
-    } else if (global->team_enable_rep_view && global->team_enable_ce_view) {
+    } else if (global->team_enable_rep_view || global->team_enable_ce_view) {
       fprintf(fout, "<td%s>&nbsp;</td>", cl);
     }
 
@@ -4208,20 +4212,21 @@ ns_write_user_problems_summary(
   }
 
   fprintf(fout, "<table border=\"1\"%s><tr>", cl);
-  if (cnts->exam_mode) {
+  if (cnts->exam_mode || global->disable_prob_long_name > 0) {
     fprintf(fout, "<th%s>%s</th>", cl, _("Problem"));
-
   } else {
     fprintf(fout, "<th%s>%s</th><th%s>%s</th>",
             cl, _("Short name"), cl, _("Long name"));
   }
   fprintf(fout, "<th%s>%s</th>", cl, _("Status"));
-  if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+  if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode
+      && global->disable_passed_tests <= 0) {
     fprintf(fout, "<th%s>%s</th>", cl, _("Tests passed"));
-  } else if ((global->score_system_val == SCORE_OLYMPIAD
-              && !accepting_mode)
-      || global->score_system_val == SCORE_KIROV) {
-    fprintf(fout, "<th%s>%s</th>", cl, _("Tests passed"));
+  } else if ((global->score_system_val == SCORE_OLYMPIAD && !accepting_mode)
+             || global->score_system_val == SCORE_KIROV) {
+    if (global->disable_passed_tests <= 0) {
+      fprintf(fout, "<th%s>%s</th>", cl, _("Tests passed"));
+    }
     fprintf(fout, "<th%s>%s</th>", cl, _("Score"));
   } else if (global->score_system_val == SCORE_MOSCOW) {
     fprintf(fout, "<th%s>%s</th>", cl, _("Failed test"));
@@ -4257,14 +4262,17 @@ ns_write_user_problems_summary(
       fprintf(fout, "%s", ARMOR(cur_prob->short_name));
       if (global->prob_info_url[0]) fprintf(fout, "</a>");
       fprintf(fout, "</td>");
-      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(cur_prob->long_name));
+      if (global->disable_prob_long_name <= 0)
+        fprintf(fout, "<td%s>%s</td>", cl, ARMOR(cur_prob->long_name));
     }
     if (best_run[prob_id] < 0) {
       if (global->score_system_val == SCORE_KIROV
           || (global->score_system_val == SCORE_OLYMPIAD
               && !accepting_mode)
           || global->score_system_val == SCORE_MOSCOW) {
-        fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td><td%s>&nbsp;</td>", cl, cl, cl);
+        fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td>", cl, cl);
+        if (global->disable_passed_tests <= 0)
+          fprintf(fout, "<td%s>&nbsp;</td>", cl);
         if (!cnts->exam_mode) {
           fprintf(fout, "<td%s>&nbsp;</td>", cl);
         }
@@ -4291,18 +4299,20 @@ ns_write_user_problems_summary(
     fprintf(fout, "<td%s>%s</td>", cl, status_str);
 
     if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
-      switch (act_status) {
-      case RUN_RUN_TIME_ERR:
-      case RUN_TIME_LIMIT_ERR:
-      case RUN_PRESENTATION_ERR:
-      case RUN_WRONG_ANSWER_ERR:
-      case RUN_MEM_LIMIT_ERR:
-      case RUN_SECURITY_ERR:
-        fprintf(fout, "<td%s>%d</td>", cl, re.test);
-        break;
-      default:
-        fprintf(fout, "<td%s>&nbsp;</td>", cl);
-        break;
+      if (global->disable_passed_tests <= 0) {
+        switch (act_status) {
+        case RUN_RUN_TIME_ERR:
+        case RUN_TIME_LIMIT_ERR:
+        case RUN_PRESENTATION_ERR:
+        case RUN_WRONG_ANSWER_ERR:
+        case RUN_MEM_LIMIT_ERR:
+        case RUN_SECURITY_ERR:
+          fprintf(fout, "<td%s>%d</td>", cl, re.test);
+          break;
+        default:
+          fprintf(fout, "<td%s>&nbsp;</td>", cl);
+          break;
+        }
       }
     } else if (global->score_system_val == SCORE_OLYMPIAD) {
       total_score += best_score[prob_id];
@@ -4310,15 +4320,20 @@ ns_write_user_problems_summary(
       case RUN_OK:
       case RUN_PARTIAL:
         if (cur_prob->type_val != PROB_TYPE_STANDARD) {
-          fprintf(fout, "<td%s>&nbsp;</td><td%s>%d</td>",
-                  cl, cl, best_score[prob_id]);
+          if (global->disable_passed_tests <= 0) {
+            fprintf(fout, "<td%s>&nbsp;</td>", cl);
+          }
+          fprintf(fout, "<td%s>%d</td>", cl, best_score[prob_id]);
         } else {
           fprintf(fout, "<td%s>%d</td><td%s>%d</td>",
                   cl, re.test - 1, cl, best_score[prob_id]);
         }
         break;
       default:
-        fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td>", cl, cl);
+        if (global->disable_passed_tests <= 0) {
+          fprintf(fout, "<td%s>&nbsp;</td>", cl);
+        }
+        fprintf(fout, "<td%s>&nbsp;</td>", cl);
         break;
       }
     } else if (global->score_system_val == SCORE_KIROV) {

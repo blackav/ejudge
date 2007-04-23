@@ -145,6 +145,7 @@ struct section_global_data
   int    disable_failed_test_view; /* do not show the failed test number */
   int    always_show_problems;  /* show "Problems" link before contest start */
   int    disable_user_standings; /* disable built-in standings */
+  int    disable_language;       /* disable problem language column */
   int    problem_navigation;     /* extended problem navigation */
   int    problem_tab_size;
   int    vertical_navigation;    /* align vertically */
@@ -388,6 +389,11 @@ struct section_global_data
 
   // internal use: text with unhandled variables
   unsigned char *unhandled_vars;
+
+  // internal use: no problem defined long_name
+  int disable_prob_long_name;
+  // internal use: all problems are output-only
+  int disable_passed_tests;
 };
 
 struct section_problem_data

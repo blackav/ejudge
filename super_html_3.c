@@ -806,6 +806,15 @@ super_html_edit_global_parameters(FILE *f,
     html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_USER_STANDINGS, "Change");
     fprintf(f, "</td></tr></form>\n");
 
+    //GLOBAL_PARAM(disable_language, "d"),
+    html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Disable language column in new-client:</td><td>",
+            form_row_attrs[row ^= 1]);
+    html_boolean_select(f, global->disable_language, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_LANGUAGE, "Change");
+    fprintf(f, "</td></tr></form>\n");
+
     //GLOBAL_PARAM(problem_navigation, "d"),
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Advanced problem navigation:</td><td>",
@@ -2145,6 +2154,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_DISABLE_USER_STANDINGS:
     p_int = &global->disable_user_standings;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_DISABLE_LANGUAGE:
+    p_int = &global->disable_language;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_PROBLEM_NAVIGATION:
