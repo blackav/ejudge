@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -88,6 +88,7 @@ team_extra_destroy(team_extra_state_t state)
     }
     xfree(te->warns);
     xfree(te->clar_map);
+    xfree(te->disq_comment);
     xfree(te);
   }
   xfree(state->team_map);
@@ -350,6 +351,25 @@ team_extra_set_status(team_extra_state_t state, int user_id, int status)
 
   if (te->status == status) return 0;
   te->status = status;
+  te->is_dirty = 1;
+  return 1;
+}
+
+int
+team_extra_set_disq_comment(team_extra_state_t state, int user_id,
+                            const unsigned char *disq_comment)
+{
+  struct team_extra *te;
+
+  ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
+
+  if (user_id >= state->team_map_size) extend_team_map(state, user_id);
+  te = get_entry(state, user_id);
+  if (te == (struct team_extra*) -1) return -1;
+  ASSERT(te->user_id == user_id);
+
+  xfree(te->disq_comment);
+  te->disq_comment = xstrdup(disq_comment);
   te->is_dirty = 1;
   return 1;
 }

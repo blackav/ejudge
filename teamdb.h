@@ -22,7 +22,14 @@
 #include <time.h>
 
 /* various team flags */
-enum { TEAM_BANNED=1, TEAM_INVISIBLE=2, TEAM_LOCKED=4, TEAM_INCOMPLETE=8 };
+enum
+{
+  TEAM_BANNED       = 1,
+  TEAM_INVISIBLE    = 2,
+  TEAM_LOCKED       = 4,
+  TEAM_INCOMPLETE   = 8,
+  TEAM_DISQUALIFIED = 16,
+};
 
 struct teamdb_state;
 typedef struct teamdb_state *teamdb_state_t;

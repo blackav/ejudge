@@ -5338,7 +5338,8 @@ do_generate_passwd(int contest_id, FILE *log)
     // do not change password for privileged users
     if (is_privileged_user(u) >= 0) continue;
 
-    // also do not change password for invisible, banned or locked users
+    // also do not change password for invisible, banned, locked
+    // or disqualified users
     if ((c->flags & USERLIST_UC_ALL)) continue;
 
     default_remove_user_cookies(u->id);
@@ -7191,6 +7192,9 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
     fprintf(gen_f, ";%s", s);
     s = "";
     if ((c->flags & USERLIST_UC_LOCKED)) s = "L";
+    fprintf(gen_f, ";%s", s);
+    s = "";
+    if ((c->flags & USERLIST_UC_DISQUALIFIED)) s = "D";
     fprintf(gen_f, ";%s", s);
 
     for (i = 0; i < CONTEST_LAST_FIELD; i++) {

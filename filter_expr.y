@@ -140,6 +140,8 @@ static void *filter_expr_user_data;
 %token TOK_CURUSERLOCKED "curuserlocked"
 %token TOK_USERINCOMPLETE "userincomplete"
 %token TOK_CURUSERINCOMPLETE "curuserincomplete"
+%token TOK_USERDISQUALIFIED "userdisqualified"
+%token TOK_CURUSERDISQUALIFIED "curuserdisqualified"
 %token TOK_LATEST    "latest"
 %token TOK_CURLATEST "curlatest"
 %token TOK_AFTEROK   "afterok"
@@ -313,6 +315,9 @@ exprA :
 | "userincomplete" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "userincomplete" { $1->kind = TOK_CURUSERINCOMPLETE; $$ = $1; }
 | "curuserincomplete" { $$ = $1; }
+| "userdisqualified" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "userdisqualified" { $1->kind = TOK_CURUSERDISQUALIFIED; $$ = $1; }
+| "curuserdisqualified" { $$ = $1; }
 | "latest" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "latest" { $1->kind = TOK_CURLATEST; $$ = $1; }
 | "curlatest" { $$ = $1; }

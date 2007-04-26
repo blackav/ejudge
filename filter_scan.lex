@@ -133,6 +133,8 @@ lett    [A-Za-z_]
 "curuserlocked" { TT(TOK_CURUSERLOCKED, FILTER_TYPE_BOOL); }
 "userincomplete" { TT(TOK_USERINCOMPLETE, FILTER_TYPE_BOOL); }
 "curuserincomplete" { TT(TOK_CURUSERINCOMPLETE, FILTER_TYPE_BOOL); }
+"userdisqualified" { TT(TOK_USERDISQUALIFIED, FILTER_TYPE_BOOL); }
+"curuserdisqualified" { TT(TOK_CURUSERDISQUALIFIED, FILTER_TYPE_BOOL); }
 "latest" { TT(TOK_LATEST, FILTER_TYPE_BOOL); }
 "curlatest" { TT(TOK_CURLATEST, FILTER_TYPE_BOOL); }
 "afterok" { TT(TOK_AFTEROK, FILTER_TYPE_BOOL); }

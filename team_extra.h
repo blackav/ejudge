@@ -4,7 +4,7 @@
 #ifndef __TEAM_EXTRA_H__
 #define __TEAM_EXTRA_H__
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,6 +39,9 @@ struct team_extra
   int clar_map_size;
   int clar_map_alloc;
   unsigned long *clar_map;
+
+  // disqualification reason
+  unsigned char *disq_comment;
 
   // warnings
   int warn_u, warn_a;
@@ -75,6 +78,8 @@ int team_extra_append_warning(team_extra_state_t state,
                               const unsigned char *cmt);
 
 int team_extra_set_status(team_extra_state_t state, int user_id, int status);
+int team_extra_set_disq_comment(team_extra_state_t state, int user_id,
+                                const unsigned char *disq_comment);
 
 #endif /* __TEAM_EXTRA_H__ */
 

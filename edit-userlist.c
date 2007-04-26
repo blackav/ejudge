@@ -1316,12 +1316,13 @@ get_contest_str(unsigned char *buf, size_t len,
 
   if (!s) s = "???";
   return snprintf(buf, len,
-                  "%6d %c%c%c%c %-9.9s  %s",
+                  "%6d %c%c%c%c%c %-8.8s  %s",
                   reg->id, 
                   (reg->flags & USERLIST_UC_BANNED)?'B':' ',
                   (reg->flags & USERLIST_UC_INVISIBLE)?'I':' ',
                   (reg->flags & USERLIST_UC_LOCKED)?'L':' ',
                   (reg->flags & USERLIST_UC_INCOMPLETE)?'N':' ',
+                  (reg->flags & USERLIST_UC_DISQUALIFIED)?'D':' ',
                   userlist_unparse_reg_status(reg->status),
                   s);
 }
@@ -1753,6 +1754,9 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
       case 'n': case 'N': case 'Ô' & 255: case 'ô' & 255:
         c = 'n';
         goto menu_done;
+      case 'u': case 'U': case 'Ç' & 255: case 'ç' & 255:
+        c = 'u';
+        goto menu_done;
       }
       cmd = -1;
       switch (c) {
@@ -1833,6 +1837,13 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
                                               reg->id, -1, 3,
                                               USERLIST_UC_INCOMPLETE);
         if (r >= 0) reg->flags ^= USERLIST_UC_INCOMPLETE;
+        break;
+      case 'u':
+        if (okcancel("Toggle DISQUALIFIED status?") != 1) goto menu_continue;
+        r = userlist_clnt_change_registration(server_conn, u->id,
+                                              reg->id, -1, 3,
+                                              USERLIST_UC_DISQUALIFIED);
+        if (r >= 0) reg->flags ^= USERLIST_UC_DISQUALIFIED;
         break;
       }
       if (r < 0) {
@@ -2504,13 +2515,14 @@ generate_reg_user_item(unsigned char *buf, size_t size, int i,
   int buflen;
 
   // 77 - 6 - 16 - 10 - 6 = 77 - 38 = 39
-  buflen = snprintf(buf, size, "%c%6d  %-16.16s  %-36.36s %c%c%c%c %-8.8s",
+  buflen = snprintf(buf, size, "%c%6d  %-16.16s  %-36.36s %c%c%c%c%c %-7.7s",
                     mask[i]?'!':' ',
                     uu[i]->id, uu[i]->login, uu[i]->i.name,
                     (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
                     (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
                     (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
                     (uc[i]->flags & USERLIST_UC_INCOMPLETE)?'N':' ',
+                    (uc[i]->flags & USERLIST_UC_DISQUALIFIED)?'D':' ',
                     userlist_unparse_reg_status(uc[i]->status));
   return buflen;
 }
@@ -2731,6 +2743,9 @@ display_registered_users(unsigned char const *upper,
         goto menu_done;
       case 'n': case 'N': case 'Ô' & 255: case 'ô' & 255:
         c = 'n';
+        goto menu_done;
+      case 'u': case 'U': case 'Ç' & 255: case 'ç' & 255:
+        c = 'u';
         goto menu_done;
       }
       cmd = -1;
@@ -3069,6 +3084,42 @@ display_registered_users(unsigned char const *upper,
             continue;
           }
           uc[j]->flags ^= USERLIST_UC_INCOMPLETE;
+          sel_users.mask[j] = 0;
+          generate_reg_user_item(descs[j], 128, j, uu, uc, sel_users.mask);
+        }
+        memset(sel_users.mask, 0, sel_users.allocated);
+        sel_users.total_selected = 0;
+      }
+    } else if (c == 'u') {
+      if (!sel_users.total_selected) {
+        // operation on a single user
+        i = item_index(current_item(menu));
+        if (okcancel("Toggle DISQUALIFIED status for %s?", uu[i]->login) != 1)
+          continue;
+        r = userlist_clnt_change_registration(server_conn, uu[i]->id,
+                                              cnts->id, -1, 3,
+                                              USERLIST_UC_DISQUALIFIED);
+        if (r < 0) {
+          vis_err("Toggle flags failed: %s", userlist_strerror(-r));
+          continue;
+        }
+        uc[i]->flags ^= USERLIST_UC_DISQUALIFIED;
+        generate_reg_user_item(descs[i], 128, i, uu, uc, sel_users.mask);
+      } else {
+        // operation on the selected users
+        if (okcancel("Toggle DISQUALIFIED status for selected users?") != 1)
+          continue;
+        for (j = 0; j < nuser; j++) {
+          if (!sel_users.mask[j]) continue;
+          r = userlist_clnt_change_registration(server_conn, uu[j]->id,
+                                                cnts->id, -1, 3,
+                                                USERLIST_UC_DISQUALIFIED);
+          if (r < 0) {
+            vis_err("Toggle flags failed for %d: %s",
+                    uu[j]->id, userlist_strerror(-r));
+            continue;
+          }
+          uc[j]->flags ^= USERLIST_UC_DISQUALIFIED;
           sel_users.mask[j] = 0;
           generate_reg_user_item(descs[j], 128, j, uu, uc, sel_users.mask);
         }

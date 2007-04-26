@@ -177,6 +177,7 @@ do_eval(struct filter_env *env,
   case TOK_USERBANNED:
   case TOK_USERLOCKED:
   case TOK_USERINCOMPLETE:
+  case TOK_USERDISQUALIFIED:
   case TOK_LATEST:
   case TOK_AFTEROK:
   case TOK_EXAMINABLE:
@@ -353,6 +354,20 @@ do_eval(struct filter_env *env,
       } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
         res->v.b = 0;
       } else if ((flags & TEAM_INCOMPLETE)) {
+        res->v.b = 1;
+      } else {
+        res->v.b = 0;
+      }
+      break;
+    case TOK_USERDISQUALIFIED:
+      res->kind = TOK_BOOL_L;
+      res->type = FILTER_TYPE_BOOL;
+      user_id = env->rentries[r1.v.i].user_id;
+      if (!user_id) {
+        res->v.b = 0;
+      } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
+        res->v.b = 0;
+      } else if ((flags & TEAM_DISQUALIFIED)) {
         res->v.b = 1;
       } else {
         res->v.b = 0;
@@ -557,6 +572,20 @@ do_eval(struct filter_env *env,
     } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
       res->v.b = 0;
     } else if ((flags & TEAM_INCOMPLETE)) {
+      res->v.b = 1;
+    } else {
+      res->v.b = 0;
+    }
+    break;
+  case TOK_CURUSERDISQUALIFIED:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    user_id = env->cur->user_id;
+    if (!user_id) {
+      res->v.b = 0;
+    } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
+      res->v.b = 0;
+    } else if ((flags & TEAM_DISQUALIFIED)) {
       res->v.b = 1;
     } else {
       res->v.b = 0;
