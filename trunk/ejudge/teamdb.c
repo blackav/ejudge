@@ -447,6 +447,9 @@ teamdb_get_flags(teamdb_state_t state, int id)
   if ((old_flags & USERLIST_UC_INCOMPLETE)) {
     new_flags |= TEAM_INCOMPLETE;
   }
+  if ((old_flags & USERLIST_UC_DISQUALIFIED)) {
+    new_flags |= TEAM_DISQUALIFIED;
+  }
   return new_flags;
 }
 
@@ -494,6 +497,8 @@ teamdb_export_team(teamdb_state_t state, int tid, struct teamdb_export *pdata)
     pdata->flags |= TEAM_LOCKED;
   if ((u_flags & USERLIST_UC_INCOMPLETE))
     pdata->flags |= TEAM_INCOMPLETE;
+  if ((u_flags & USERLIST_UC_DISQUALIFIED))
+    pdata->flags |= TEAM_DISQUALIFIED;
   strncpy(pdata->login, u_login, TEAMDB_LOGIN_LEN - 1);
   strncpy(pdata->name, u_name, TEAMDB_NAME_LEN - 1);
   pdata->user = uu;
@@ -612,6 +617,9 @@ teamdb_get_user_status_map(teamdb_state_t state, int *p_size, int **p_map)
     }
     if ((old_flags & USERLIST_UC_INCOMPLETE)) {
       new_flags |= TEAM_INCOMPLETE;
+    }
+    if ((old_flags & USERLIST_UC_DISQUALIFIED)) {
+      new_flags |= TEAM_DISQUALIFIED;
     }
     map[i] = new_flags;
   }

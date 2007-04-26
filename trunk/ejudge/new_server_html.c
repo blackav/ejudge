@@ -852,24 +852,12 @@ ns_refresh_page(FILE *fout, struct http_request_info *phr, int new_action,
     ns_url_unescaped(url, sizeof(url), phr, new_action, 0);
   }
 
-  /*
-  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>%s</title></head><body><h1>%s</h1><p>If autorefresh does not work, follow <a href=\"%s\">this</a> link.</p></body></html>\n", EJUDGE_CHARSET, EJUDGE_CHARSET, 1, url, "Operation successful", "Operation successful", url);
-  */
-  /*
-  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"></head><body><p><a href=\"%s\">.</a></p></body></html>\n", EJUDGE_CHARSET, EJUDGE_CHARSET, 0, url, url);
-  */
   fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
 }
 
 void
 ns_refresh_page_2(FILE *fout, const unsigned char *url)
 {
-  /*
-  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>%s</title></head><body><h1>%s</h1><p>If autorefresh does not work, follow <a href=\"%s\">this</a> link.</p></body></html>\n", EJUDGE_CHARSET, EJUDGE_CHARSET, 1, url, "Operation successful", "Operation successful", url);
-  */
-  /*
-  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"></head><body><p><a href=\"%s\">.</a></p></body></html>\n", EJUDGE_CHARSET, EJUDGE_CHARSET, 0, url, url);
-  */
   fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
 }
 
@@ -1189,11 +1177,13 @@ priv_registration_operation(FILE *fout,
                             const struct contest_desc *cnts,
                             struct contest_extra *extra)
 {
+  const serve_state_t cs = extra->serve_state;
   int i, x, n, new_status, cmd, flag;
   intarray_t uset;
   const unsigned char *s;
   int retcode = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char *disq_comment = 0;
 
   // extract the selected set of users
   memset(&uset, 0, sizeof(uset));
@@ -1208,6 +1198,15 @@ priv_registration_operation(FILE *fout,
     }
     XEXPAND2(uset);
     uset.v[uset.u++] = x;
+  }
+
+  if (phr->action == NEW_SRV_ACTION_USERS_SET_DISQUALIFIED) {
+    if (ns_cgi_param(phr, "disq_comment", &s) < 0) {
+      ns_html_err_inv_param(fout, phr, 1, "invalid parameter disq_comment");
+      retcode = -1;
+      goto cleanup;
+    }
+    disq_comment = text_area_process_string(s, 0, 0);
   }
 
   // FIXME: probably we need to sort user_ids and remove duplicates
@@ -1260,6 +1259,8 @@ priv_registration_operation(FILE *fout,
     case NEW_SRV_ACTION_USERS_CLEAR_LOCKED:
     case NEW_SRV_ACTION_USERS_SET_INCOMPLETE:
     case NEW_SRV_ACTION_USERS_CLEAR_INCOMPLETE:
+    case NEW_SRV_ACTION_USERS_SET_DISQUALIFIED:
+    case NEW_SRV_ACTION_USERS_CLEAR_DISQUALIFIED:
       switch (phr->action) {
       case NEW_SRV_ACTION_USERS_SET_INVISIBLE:
         cmd = 1;
@@ -1293,6 +1294,16 @@ priv_registration_operation(FILE *fout,
         cmd = 2;
         flag = USERLIST_UC_INCOMPLETE;
         break;
+      case NEW_SRV_ACTION_USERS_SET_DISQUALIFIED:
+        cmd = 1;
+        flag = USERLIST_UC_DISQUALIFIED;
+        team_extra_set_disq_comment(cs->team_extra_state, uset.v[i],
+                                    disq_comment);
+        break;
+      case NEW_SRV_ACTION_USERS_CLEAR_DISQUALIFIED:
+        cmd = 2;
+        flag = USERLIST_UC_DISQUALIFIED;
+        break;
       default:
         abort();
       }
@@ -1312,7 +1323,12 @@ priv_registration_operation(FILE *fout,
     }
   }
 
+  if (phr->action == NEW_SRV_ACTION_USERS_SET_DISQUALIFIED) {
+    team_extra_flush(cs->team_extra_state);
+  }
+
  cleanup:
+  xfree(disq_comment);
   xfree(uset.v);
   html_armor_free(&ab);
   return retcode;
@@ -1589,11 +1605,12 @@ priv_user_operation(FILE *fout,
 }
 
 static int
-priv_user_issue_warning(FILE *fout,
-                        FILE *log_f,
-                        struct http_request_info *phr,
-                        const struct contest_desc *cnts,
-                        struct contest_extra *extra)
+priv_user_issue_warning(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
   int retval = 0;
@@ -1634,6 +1651,55 @@ priv_user_issue_warning(FILE *fout,
  cleanup:
   xfree(warn_txt);
   xfree(cmt_txt);
+  return retval;
+}
+
+static int
+priv_user_disqualify(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int retval = 0;
+  const unsigned char *s;
+  int user_id, n;
+  unsigned char *warn_txt = 0;
+
+  if (opcaps_check(phr->caps, OPCAP_EDIT_REG) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  /* user_id, disq_comment */
+  if (ns_cgi_param(phr, "user_id", &s) <= 0
+      || sscanf(s, "%d%n", &user_id, &n) != 1 || s[n]
+      || teamdb_lookup(cs->teamdb_state, user_id) <= 0)
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+  if ((n = ns_cgi_param(phr, "disq_comment", &s)) < 0)
+    FAIL(NEW_SRV_ERR_INV_WARN_TEXT);
+  warn_txt = text_area_process_string(s, 0, 0);
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    ns_html_err_ul_server_down(fout, phr, 1, 0);
+    retval = -1;
+    goto cleanup;
+  }
+  n = userlist_clnt_change_registration(ul_conn, user_id,
+                                        phr->contest_id, -1, 1,
+                                        USERLIST_UC_DISQUALIFIED);
+  if (n < 0) {
+    ns_error(log_f, NEW_SRV_ERR_USER_FLAGS_CHANGE_FAILED,
+             user_id, phr->contest_id, userlist_strerror(-n));
+    retval = -1;
+    goto cleanup;
+  }
+
+  team_extra_set_disq_comment(cs->team_extra_state, user_id, warn_txt);
+  team_extra_flush(cs->team_extra_state);
+
+ cleanup:
+  xfree(warn_txt);
   return retval;
 }
 
@@ -4053,6 +4119,8 @@ priv_view_users_page(FILE *fout,
         fprintf(fout, "%s%s", r++?",":"", "locked");
       if ((uc->flags & USERLIST_UC_INCOMPLETE))
         fprintf(fout, "%s%s", r++?",":"", "incomplete");
+      if ((uc->flags & USERLIST_UC_DISQUALIFIED))
+        fprintf(fout, "%s%s", r++?",":"", "disqualified");
       fprintf(fout, "</td>");
     } else {
       fprintf(fout, "<td%s>&nbsp;</td>", cl);
@@ -4116,7 +4184,21 @@ priv_view_users_page(FILE *fout,
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
           BUTTON(NEW_SRV_ACTION_USERS_CLEAR_INCOMPLETE),
           _("Clear the INCOMPLETE flag for the selected users"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_CLEAR_DISQUALIFIED),
+          _("Clear the DISQUALIFIED flag for the selected users"));
   fprintf(fout, "</table>\n");
+
+  fprintf(fout, "<h2>%s</h3>\n", _("Disqualify selected users"));
+  fprintf(fout, "<p>%s:<br>\n",
+          _("Disqualification explanation"));
+  fprintf(fout, "<p><textarea name=\"disq_comment\" rows=\"5\" cols=\"60\">");
+  fprintf(fout, "</textarea></p>\n");
+
+  fprintf(fout, "<table class=\"borderless\"><tr>");
+  fprintf(fout, "<td class=\"borderless\">%s</td>",
+          BUTTON(NEW_SRV_ACTION_USERS_SET_DISQUALIFIED));
+  fprintf(fout, "</tr></table>\n");
 
   fprintf(fout, "<h2>%s</h2>\n", _("Add new user"));
   fprintf(fout, "<table>\n");
@@ -5327,6 +5409,8 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_USERS_CLEAR_LOCKED] = priv_registration_operation,
   [NEW_SRV_ACTION_USERS_SET_INCOMPLETE] = priv_registration_operation,
   [NEW_SRV_ACTION_USERS_CLEAR_INCOMPLETE] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_SET_DISQUALIFIED] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_CLEAR_DISQUALIFIED] = priv_registration_operation,
   [NEW_SRV_ACTION_USERS_ADD_BY_LOGIN] = priv_add_user_by_login,
   [NEW_SRV_ACTION_USERS_ADD_BY_USER_ID] = priv_add_user_by_user_id,
   [NEW_SRV_ACTION_PRIV_USERS_REMOVE] = priv_priv_user_operation,
@@ -5396,6 +5480,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_RUN] = priv_clear_run,
   [NEW_SRV_ACTION_PRINT_RUN] = priv_print_run_cmd,
   [NEW_SRV_ACTION_ISSUE_WARNING] = priv_user_issue_warning,
+  [NEW_SRV_ACTION_SET_DISQUALIFICATION] = priv_user_disqualify,
   [NEW_SRV_ACTION_CLEAR_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_IGNORE_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2] = priv_clear_displayed,
@@ -6261,6 +6346,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_USERS_CLEAR_LOCKED] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_SET_INCOMPLETE] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_CLEAR_INCOMPLETE] = priv_generic_operation,
+  [NEW_SRV_ACTION_USERS_SET_DISQUALIFIED] = priv_generic_operation,
+  [NEW_SRV_ACTION_USERS_CLEAR_DISQUALIFIED] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_ADD_BY_LOGIN] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_ADD_BY_USER_ID] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_USERS_VIEW] = priv_view_priv_users_page,
@@ -6359,6 +6446,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_RUN] = priv_generic_operation,
   [NEW_SRV_ACTION_PRINT_RUN] = priv_generic_operation,
   [NEW_SRV_ACTION_ISSUE_WARNING] = priv_generic_operation,
+  [NEW_SRV_ACTION_SET_DISQUALIFICATION] = priv_generic_operation,
   [NEW_SRV_ACTION_LOGOUT] = priv_logout,
   [NEW_SRV_ACTION_CHANGE_PASSWORD] = priv_change_password,
   [NEW_SRV_ACTION_VIEW_USER_REPORT] = priv_generic_page,
@@ -6640,6 +6728,7 @@ unpriv_parse_run_id(FILE *fout, struct http_request_info *phr,
   return -1;
 }
 
+/* FIXME: this should be moved to `new-register' part */
 static void
 unpriv_page_forgot_password_1(FILE *fout, struct http_request_info *phr,
                               int orig_locale_id)
@@ -6723,6 +6812,7 @@ unpriv_page_forgot_password_1(FILE *fout, struct http_request_info *phr,
   html_armor_free(&ab);
 }
 
+/* FIXME: this should be moved to `new-register' part */
 static void
 unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr,
                               int orig_locale_id)
@@ -6824,6 +6914,7 @@ unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr,
   html_armor_free(&ab);
 }
 
+/* FIXME: this should be moved to `new-register' part */
 static void
 unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr,
                               int orig_locale_id)
@@ -10806,6 +10897,10 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr,
 
   extra->serve_state->current_time = time(0);
   ns_check_contest_events(extra->serve_state, cnts);
+
+  if ((teamdb_get_flags(extra->serve_state->teamdb_state,
+                        phr->user_id) & TEAM_DISQUALIFIED))
+    return ns_html_err_disqualified(fout, phr, cnts, extra);
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && user_actions_table[phr->action]) {

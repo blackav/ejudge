@@ -2325,7 +2325,8 @@ ns_user_info_page(FILE *fout, FILE *log_f,
           _("Incomplete?"), (flags & TEAM_INCOMPLETE)?_("Yes"):_("No"));
   if(allowed_edit) {
     fprintf(fout, "<td>%s</td>",
-            ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_TOGGLE_LOCK,
+            ns_submit_button(bb, sizeof(bb), 0,
+                             NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS,
                              (flags & TEAM_INCOMPLETE)?_("Clear"):_("Set")));
   } else {
     fprintf(fout, "<td>&nbsp;</td>");
@@ -2334,6 +2335,7 @@ ns_user_info_page(FILE *fout, FILE *log_f,
   if (allowed_edit) {
     fprintf(fout, "</form>");
   }
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>", _("Disqualified?"), (flags & TEAM_DISQUALIFIED)?_("Yes"):_("No"));
 
   fprintf(fout,"<tr><td>%s:</td><td>%d</td>%s</tr>\n",
           _("Number of Runs"), runs_num, nbsp2);
@@ -2417,6 +2419,30 @@ ns_user_info_page(FILE *fout, FILE *log_f,
     fprintf(fout, "<p>%s:<br>\n", _("Comment for other judges (optional)"));
     fprintf(fout, "<p><textarea name=\"warn_comment\" rows=\"5\" cols=\"60\"></textarea></p>\n");
     fprintf(fout, "<p>%s</p>\n", BUTTON(NEW_SRV_ACTION_ISSUE_WARNING));
+    fprintf(fout, "</form>\n");
+  }
+
+  if (opcaps_check(phr->caps, OPCAP_EDIT_REG) >= 0) {
+    fprintf(fout, "<h2>%s</h3>\n", _("Disqualify user"));
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(fout, "user_id", "%d", view_user_id);
+    fprintf(fout, "<p>%s:<br>\n",
+            _("Disqualification explanation"));
+    fprintf(fout, "<p><textarea name=\"disq_comment\" rows=\"5\" cols=\"60\">");
+    if (u_extra->disq_comment) {
+      fprintf(fout, "%s", ARMOR(u_extra->disq_comment));
+    }
+    fprintf(fout, "</textarea></p>\n");
+
+    fprintf(fout, "<table class=\"borderless\"><tr>");
+    fprintf(fout, "<td class=\"borderless\">%s</td>",
+            ns_submit_button(bb, sizeof(bb), 0,
+                             NEW_SRV_ACTION_SET_DISQUALIFICATION,
+                             (flags & TEAM_DISQUALIFIED)?_("Edit comment"):_("Disqualify")));
+    if ((flags & TEAM_DISQUALIFIED))
+      fprintf(fout, "<td class=\"borderless\">%s</td>\n",
+              BUTTON(NEW_SRV_ACTION_CLEAR_DISQUALIFICATION));
+    fprintf(fout, "</tr></table>\n");
     fprintf(fout, "</form>\n");
   }
 

@@ -47,6 +47,7 @@ enum
   TE_T_TEXT,
   TE_T_COMMENT,
   TE_T_STATUS,
+  TE_T_DISQ_COMMENT,
 
   TE_T_LAST_TAG,
 };
@@ -62,22 +63,23 @@ enum
 };
 static const char * const elem_map[] =
 {
-  [TE_T_TEAM_EXTRA]   "team_extra",
-  [TE_T_VIEWED_CLARS] "viewed_clars",
-  [TE_T_WARNINGS]     "warnings",
-  [TE_T_WARNING]      "warning",
-  [TE_T_TEXT]         "text",
-  [TE_T_COMMENT]      "comment",
-  [TE_T_STATUS]       "status",
-  [TE_T_LAST_TAG]     0,
+  [TE_T_TEAM_EXTRA]   = "team_extra",
+  [TE_T_VIEWED_CLARS] = "viewed_clars",
+  [TE_T_WARNINGS]     = "warnings",
+  [TE_T_WARNING]      = "warning",
+  [TE_T_TEXT]         = "text",
+  [TE_T_COMMENT]      = "comment",
+  [TE_T_STATUS]       = "status",
+  [TE_T_DISQ_COMMENT] = "disq_comment",
+  [TE_T_LAST_TAG]     = 0,
 };
 static const char * const attr_map[] =
 {
-  [TE_A_USER_ID]   "user_id",
-  [TE_A_ISSUER_ID] "issuer_id",
-  [TE_A_ISSUER_IP] "issuer_ip",
-  [TE_A_DATE]      "date",
-  [TE_A_LAST_ATTR] 0,
+  [TE_A_USER_ID]   = "user_id",
+  [TE_A_ISSUER_ID] = "issuer_id",
+  [TE_A_ISSUER_IP] = "issuer_ip",
+  [TE_A_DATE]      = "date",
+  [TE_A_LAST_ATTR] = 0,
 };
 
 static struct xml_parse_spec team_extra_parse_spec =
@@ -304,6 +306,13 @@ team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
     case TE_T_STATUS:
       if (parse_status(t2, te, &s_flag) < 0) goto cleanup;
       break;
+    case TE_T_DISQ_COMMENT:
+      if (t2->first) return xml_err_attrs(t2);
+      if (t2->first_down) return xml_err_nested_elems(t2);
+      if (te->disq_comment) return xml_err_elem_redefined(t2);
+      te->disq_comment = t2->text;
+      t2->text = 0;
+      break;
     default:
       xml_err_elem_not_allowed(t2);
       goto cleanup;
@@ -360,6 +369,9 @@ team_extra_unparse_xml(FILE *f, struct team_extra *te)
       fprintf(f, "    </%s>\n", elem_map[TE_T_WARNING]);
     }
     fprintf(f, "  </%s>\n", elem_map[TE_T_WARNINGS]);
+  }
+  if (te->disq_comment) {
+    xml_unparse_text(f, elem_map[TE_T_DISQ_COMMENT], te->disq_comment, "  ");
   }
   fprintf(f, "</%s>\n", elem_map[TE_T_TEAM_EXTRA]);
   return 0;

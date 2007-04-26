@@ -424,7 +424,7 @@ html_write_user_problems_summary(const serve_state_t state,
     if (re.user_id != user_id) {
       if (re.is_hidden) continue;
       if (teamdb_get_flags(state->teamdb_state,
-                           re.user_id) & (TEAM_INVISIBLE | TEAM_BANNED))
+                           re.user_id) & (TEAM_INVISIBLE | TEAM_BANNED | TEAM_DISQUALIFIED))
         continue;
       if (re.status == RUN_OK) {
         if (!user_flag[re.user_id * (state->max_prob + 1) + re.prob_id]) {
@@ -1842,7 +1842,7 @@ do_write_kirov_standings(const serve_state_t state,
     t_rev[i] = -1;
     if (!teamdb_lookup(state->teamdb_state, i)) continue;
     if ((teamdb_get_flags(state->teamdb_state, 
-                          i) & (TEAM_INVISIBLE | TEAM_BANNED))) continue;
+                          i) & (TEAM_INVISIBLE | TEAM_BANNED | TEAM_DISQUALIFIED))) continue;
     if (!t_runs[i]) continue;
 
     if (global->stand_collate_name) {
@@ -2925,7 +2925,7 @@ do_write_moscow_standings(const serve_state_t state,
   for (i = 1, u_tot = 0; i < u_max; i++)
     if (teamdb_lookup(state->teamdb_state, i) > 0
         && !(teamdb_get_flags(state->teamdb_state,
-                              i) & (TEAM_INVISIBLE | TEAM_BANNED))
+                              i) & (TEAM_INVISIBLE | TEAM_BANNED | TEAM_DISQUALIFIED))
         && u_runs[i]) {
       u_rev[i] = u_tot;
       u_ind[u_tot] = i;
@@ -3738,7 +3738,7 @@ do_write_standings(const serve_state_t state,
     t_rev[i] = -1;
     if (!teamdb_lookup(state->teamdb_state, i)) continue;
     if ((teamdb_get_flags(state->teamdb_state,
-                          i) & (TEAM_INVISIBLE | TEAM_BANNED))) continue;
+                          i) & (TEAM_INVISIBLE | TEAM_BANNED | TEAM_DISQUALIFIED))) continue;
     if (!t_runs[i]) continue;
     t_rev[i] = t_tot;
     t_ind[t_tot++] = i;

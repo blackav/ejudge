@@ -140,6 +140,8 @@ enum
   NEW_SRV_ACTION_USERS_CLEAR_LOCKED,
   NEW_SRV_ACTION_USERS_SET_INCOMPLETE,
   NEW_SRV_ACTION_USERS_CLEAR_INCOMPLETE,
+  NEW_SRV_ACTION_USERS_SET_DISQUALIFIED,
+  NEW_SRV_ACTION_USERS_CLEAR_DISQUALIFIED,
   NEW_SRV_ACTION_USERS_ADD_BY_LOGIN,
   NEW_SRV_ACTION_USERS_ADD_BY_USER_ID,
   NEW_SRV_ACTION_PRIV_USERS_VIEW,
@@ -239,6 +241,9 @@ enum
   NEW_SRV_ACTION_TOGGLE_VISIBILITY,
   NEW_SRV_ACTION_TOGGLE_BAN,
   NEW_SRV_ACTION_TOGGLE_LOCK,
+  NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS,
+  NEW_SRV_ACTION_SET_DISQUALIFICATION,
+  NEW_SRV_ACTION_CLEAR_DISQUALIFICATION,
   NEW_SRV_ACTION_USER_CHANGE_STATUS,
   NEW_SRV_ACTION_VIEW_USER_INFO,
   NEW_SRV_ACTION_ISSUE_WARNING,
@@ -411,6 +416,12 @@ void
 ns_html_err_registration_incomplete(
 	FILE *fout,
         struct http_request_info *phr);
+void
+ns_html_err_disqualified(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra);
 
 struct session_info *
 ns_get_session(ej_cookie_t session_id, time_t cur_time);
