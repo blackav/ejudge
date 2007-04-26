@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-19 16:23+0400\n"
-"PO-Revision-Date: 2007-04-19 16:24+0400\n"
+"POT-Creation-Date: 2007-04-26 21:58+0400\n"
+"PO-Revision-Date: 2007-04-26 22:01+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -849,6 +849,9 @@ msgstr "Очистить"
 msgid "Clear BANNED"
 msgstr "Сбросить флаг BANNED"
 
+msgid "Clear DISQUALIFIED flag"
+msgstr "Сбросить флаг ДИСКВАЛИФИКАЦИИ"
+
 msgid "Clear INCOMPLETE"
 msgstr "Сбросить флаг НЕПОЛНОТЫ"
 
@@ -870,6 +873,9 @@ msgstr "Очистить отображённые посылки"
 msgid "Clear displayed runs!"
 msgstr "Очистить отображённые посылки!"
 
+msgid "Clear disqualification"
+msgstr "Сбросить дисквалификацию"
+
 msgid "Clear runs"
 msgstr "Очистить посылки"
 
@@ -878,6 +884,9 @@ msgstr "Сбросить пароли участников!"
 
 msgid "Clear the BANNED flag for the selected users"
 msgstr "Сбросить флаг БЛОКИРОВКИ у отмеченных пользователей"
+
+msgid "Clear the DISQUALIFIED flag for the selected users"
+msgstr "Сбросить флаг ДИСКВАЛИФИКАЦИИ у отмеченных пользователей"
 
 msgid "Clear the INCOMPLETE flag for the selected users"
 msgstr "Сбросить флаг НЕПОЛНОТЫ у отмеченных пользователей"
@@ -1075,6 +1084,9 @@ msgstr "Текущее положение участников"
 msgid "Current virtual standings"
 msgstr "Виртуальное положение участников"
 
+msgid "DISQUALIFY users"
+msgstr "ДИСКВАЛИФИЦИРОВАТЬ пользователей"
+
 msgid "Deadline for this problem is expired"
 msgstr "Срок сдачи данной задачи истёк"
 
@@ -1128,8 +1140,17 @@ msgstr "Ошибка чтения с диска (файл не существует?)"
 msgid "Disk write error (disk full?)"
 msgstr "Ошибка записи на диск (закончилось место?)"
 
+msgid "Disqualification explanation"
+msgstr "Объяснение причины дисквалификации"
+
 msgid "Disqualified"
 msgstr "Дисквалифицирован"
+
+msgid "Disqualified?"
+msgstr "Дисквалифицирован?"
+
+msgid "Disqualify"
+msgstr "Дисквалифицировать"
 
 msgid "Disqualify displayed runs"
 msgstr "Дисквалифицировать отображённые посылки"
@@ -1139,6 +1160,12 @@ msgstr "Дисквалифицировать отображённые посылки!"
 
 msgid "Disqualify runs"
 msgstr "Дисквалифицировать посылки"
+
+msgid "Disqualify selected users"
+msgstr "Дисквалифицировать отмеченных участников"
+
+msgid "Disqualify user"
+msgstr "Дисквалифицировать участника"
 
 msgid "Do not show before the contest starts?"
 msgstr "Не показывать до начала турнира?"
@@ -1202,6 +1229,9 @@ msgstr "ЭКЗАМЕН ИДЁТ (заморозка)"
 
 msgid "Edit"
 msgstr "Редактировать"
+
+msgid "Edit comment"
+msgstr "Изменить комментарий"
 
 msgid "Edit personal data"
 msgstr "Редактировать<br>личные данные"
@@ -3917,6 +3947,12 @@ msgstr "Да, обновить таблицу"
 msgid "Yes."
 msgstr "Да."
 
+msgid "You are disqualified"
+msgstr "Вы дисквалифицированы"
+
+msgid "You are disqualified by the contest administration."
+msgstr "Вы дисквалифицированы администрацией турнира."
+
 msgid "You are not registered for this contest."
 msgstr "Вы не зарегистрированы на этот турнир."
 
@@ -4344,4 +4380,3 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
-
