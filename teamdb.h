@@ -53,6 +53,7 @@ void teamdb_set_update_flag(teamdb_state_t state);
 
 int teamdb_lookup(teamdb_state_t, int);
 int teamdb_lookup_login(teamdb_state_t, char const *);
+int teamdb_lookup_name(teamdb_state_t, char const *);
 
 char *teamdb_get_login(teamdb_state_t, int);
 char *teamdb_get_name(teamdb_state_t, int);
