@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-26 21:58+0400\n"
-"PO-Revision-Date: 2007-04-26 22:01+0400\n"
+"POT-Creation-Date: 2007-04-27 05:46+0400\n"
+"PO-Revision-Date: 2007-04-27 05:51+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1729,6 +1729,9 @@ msgstr "Неподдерживаемый столбец %d (%s) игнорируется\n"
 msgid "Import and merge XML runs log"
 msgstr "Импорт и слияние XML-посылок"
 
+msgid "Import results for existing runs"
+msgstr "Импортировать результаты существующих посылок"
+
 msgid "Imported?"
 msgstr "Импортирована?"
 
@@ -1796,6 +1799,14 @@ msgstr "Внутренняя ошибка"
 msgid "Internal error: insufficient memory."
 msgstr "Внутренняя ошибка: недостаточно памяти."
 
+#, c-format
+msgid "Invalid RunId %s in row %d\n"
+msgstr "Недопустимое значени RunId %s в строке %d\n"
+
+#, c-format
+msgid "Invalid UId %s in row %d\n"
+msgstr "Недопустимое значение UId %s в строке %d\n"
+
 msgid "Invalid action"
 msgstr "Неверная команда"
 
@@ -1849,6 +1860,10 @@ msgstr "Неверное регистрационное имя"
 msgid "Invalid login `%s' in row %d\n"
 msgstr "Недопустимое регистрационное имя `%s' в строке %d\n"
 
+#, c-format
+msgid "Invalid name `%s' in row %d\n"
+msgstr "Недопустимое имя `%s' в строке %d\n"
+
 msgid "Invalid pages count"
 msgstr "Неверное количество страниц"
 
@@ -1867,6 +1882,10 @@ msgstr "Неверная задача"
 #, c-format
 msgid "Invalid problem `%s' in row %d\n"
 msgstr "Недопустимая задача `%s' в строке %d\n"
+
+#, c-format
+msgid "Invalid problem in run %d in row %d\n"
+msgstr "Недопустимая задача в посылке %d в строке %d\n"
 
 msgid "Invalid problem specification"
 msgstr "Неверная спецификация задачи"
@@ -1989,6 +2008,10 @@ msgstr "Язык программирования %s запрещён в строке %d\n"
 msgid "Language %s is not enabled for problem %s in row %d\n"
 msgstr "Язык программирования %s не разрешён для задачи %s в строке %d\n"
 
+#, c-format
+msgid "Language column is undefined\n"
+msgstr "Столбец \"Язык\" не определен\n"
+
 msgid "Language is changed"
 msgstr "Язык изменён"
 
@@ -2103,10 +2126,6 @@ msgstr "Обязательное поле \"Имя пользователя\" не заполнено."
 
 msgid "Mandatory \"User name\" field is empty."
 msgstr "Обязательное поле \"Имя пользователя\" не заполнено."
-
-#, c-format
-msgid "Mandatory column %s is not specified"
-msgstr "Обязательный столбец %s не задан"
 
 #, c-format
 msgid "Mandatory field \"%s\" is empty."
@@ -2226,6 +2245,14 @@ msgstr "НЕ НАЧАЛСЯ"
 msgid "Name"
 msgstr "Имя"
 
+#, c-format
+msgid "Name is empty in row %d\n"
+msgstr "Имя пусто в строке %d\n"
+
+#, c-format
+msgid "Neither user_id, login, nor name are specified\n"
+msgstr "Ни UId, ни Login, ни Name не заданы\n"
+
 msgid "New duration is too small"
 msgstr "Новый продолжительность турнира слишком мала"
 
@@ -2303,6 +2330,14 @@ msgstr "Нет доступных турниров."
 
 msgid "No directory structure"
 msgstr "Нет структуры"
+
+#, c-format
+msgid "No entry for %d/%s\n"
+msgstr "Нет записи для %d/%s\n"
+
+#, c-format
+msgid "No entry for %s/%s\n"
+msgstr "Нет записи для %s/%s\n"
 
 msgid "No guests are allowed in this contest"
 msgstr "Категория \"гости\" не поддерживается для этого турнира"
@@ -2653,6 +2688,10 @@ msgstr "Привилегированный?"
 
 msgid "Problem"
 msgstr "Задача"
+
+#, c-format
+msgid "Problem column is undefined\n"
+msgstr "Столбец Problem не определен\n"
 
 msgid "Problem deadline"
 msgstr "Срок окончания сдачи"
@@ -3031,6 +3070,10 @@ msgstr "Баллы"
 
 msgid "Score adjustment"
 msgstr "Поправка баллов"
+
+#, c-format
+msgid "Score column is undefined\n"
+msgstr "Столбец Score не определен\n"
 
 msgid "Score gained"
 msgstr "Получено баллов"
@@ -3593,6 +3636,10 @@ msgstr ""
 
 msgid "Type your valid e-mail address"
 msgstr "Введите Ваш действующий адрес электронной почты"
+
+#, c-format
+msgid "UId is empty in row %d\n"
+msgstr "Поле UId пусто в строке %d\n"
 
 msgid "UPSOLVING"
 msgstr "ДОРЕШИВАНИЕ"
