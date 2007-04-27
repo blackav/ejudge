@@ -3308,14 +3308,15 @@ ns_upload_csv_results(
         }
         pe->user_id = x;
         // find the latest ACCEPTED run by uid/prob_id pair
-        for (run_id = run_get_total(cs->runlog_state); run_id >= 0; run_id--) {
+        for (run_id = run_get_total(cs->runlog_state) - 1; run_id >= 0; run_id--) {
           if (run_get_entry(cs->runlog_state, run_id, &te) < 0) continue;
           if (!run_is_source_available(te.status)) continue;
           if (pe->user_id == te.user_id && pe->prob_id == te.prob_id) break;
         }
         if (run_id < 0) {
           fprintf(log_f, _("No entry for %d/%s\n"), pe->user_id, prob->short_name);
-          goto cleanup;
+	  pe->run_id = -1;
+	  continue;
         }
         *pe = te;
       } else if (col_ind[CSV_LOGIN] >= 0) {
@@ -3330,14 +3331,15 @@ ns_upload_csv_results(
         pe->user_id = x;
 
         // find the latest ACCEPTED run by login/prob_id pair
-        for (run_id = run_get_total(cs->runlog_state); run_id >= 0; run_id--) {
+        for (run_id = run_get_total(cs->runlog_state) - 1; run_id >= 0; run_id--) {
           if (run_get_entry(cs->runlog_state, run_id, &te) < 0) continue;
           if (!run_is_source_available(te.status)) continue;
-          if (!strcmp(s, teamdb_get_login(cs->teamdb_state, te.user_id))) break;
+          if (!strcmp(s, teamdb_get_login(cs->teamdb_state, te.user_id)) && pe->prob_id == te.prob_id) break;
         }
         if (run_id < 0) {
           fprintf(log_f, _("No entry for %s/%s\n"), s, prob->short_name);
-          goto cleanup;
+	  pe->run_id = -1;
+	  continue;
         }
         *pe = te;
       } else if (col_ind[CSV_NAME] >= 0) {
@@ -3352,14 +3354,15 @@ ns_upload_csv_results(
         pe->user_id = x;
 
         // find the latest ACCEPTED run by name/prob_id pair
-        for (run_id = run_get_total(cs->runlog_state); run_id >= 0; run_id--) {
+        for (run_id = run_get_total(cs->runlog_state) - 1; run_id >= 0; run_id--) {
           if (run_get_entry(cs->runlog_state, run_id, &te) < 0) continue;
           if (!run_is_source_available(te.status)) continue;
-          if (!strcmp(s, teamdb_get_name_2(cs->teamdb_state, te.user_id))) break;
+          if (!strcmp(s, teamdb_get_name_2(cs->teamdb_state, te.user_id)) && pe->prob_id == te.prob_id) break;
         }
         if (run_id < 0) {
           fprintf(log_f, _("No entry for %s/%s\n"), s, prob->short_name);
-          goto cleanup;
+	  pe->run_id = -1;
+	  continue;
         }
         *pe = te;
       } else {
@@ -3428,6 +3431,7 @@ ns_upload_csv_results(
   }
 
   for (row = 1; row < csv->u; row++) {
+    if (runs[row].run_id == -1) continue;
     run_set_entry(cs->runlog_state, runs[row].run_id,
                   RUN_ENTRY_STATUS | RUN_ENTRY_TEST | RUN_ENTRY_SCORE,
                   &runs[row]);
