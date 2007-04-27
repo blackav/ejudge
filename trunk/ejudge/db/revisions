@@ -2446,3 +2446,14 @@ new_server_html_2.c 4124 0 13491772
 printing.c 4124 0 739836
 runlog.c 4124 0 6333835
 runlog_import.c 4124 0 1983145
+contests.h 4126 0 885280
+new-server.h 4126 0 1849503
+super_proto.h 4126 0 1884701
+super-serve.h 4126 0 382574
+serve-control.c 4126 0 8381889
+super-serve.c 4126 0 12188477
+contests.c 4126 0 4515862
+contest_tmpl.c 4126 0 923065
+super_html.c 4126 0 11194574
+super_html_2.c 4126 0 4944082
+run.c 4127 0 6272891
