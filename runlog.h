@@ -110,7 +110,7 @@ time_t run_get_duration(runlog_state_t);
 void run_get_team_usage(runlog_state_t, int, int *, size_t*);
 int  run_get_attempts(runlog_state_t, int, int *, int *, int);
 int run_count_all_attempts(runlog_state_t state, int user_id, int prob_id);
-char *run_status_str(int, char *, int, int);
+char *run_status_str(int, char *, int, int, int);
 
 int run_get_fog_period(runlog_state_t, time_t, int, int);
 int run_reset(runlog_state_t, time_t, time_t);

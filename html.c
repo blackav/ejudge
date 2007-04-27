@@ -208,7 +208,7 @@ write_html_run_status(const serve_state_t state, FILE *f,
 
   if (pe->prob_id > 0 && pe->prob_id <= state->max_prob)
     pr = state->probs[pe->prob_id];
-  run_status_str(pe->status, status_str, 0, pr?pr->type_val:0);
+  run_status_str(pe->status, status_str, 0, pr?pr->type_val:0, pr?pr->scoring_checker:0);
   fprintf(f, "<td%s>%s</td>", cl, status_str);
 
   if (global->score_system_val == SCORE_KIROV
@@ -811,7 +811,7 @@ html_write_user_problems_summary(const serve_state_t state,
               && cur_prob->type_val != PROB_TYPE_STANDARD))
         act_status = RUN_ACCEPTED;
     }
-    run_status_str(act_status, status_str, 0, cur_prob->type_val);
+    run_status_str(act_status, status_str, 0, cur_prob->type_val, cur_prob->scoring_checker);
     fprintf(f, "<td%s>%s</td>", cl, status_str);
 
     if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
@@ -1032,7 +1032,7 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
     if (!start_time) time = start_time;
     if (start_time > time) time = start_time;
     duration_str(global->show_astr_time, time, start_time, dur_str, 0);
-    run_status_str(re.status, stat_str, 0, 0);
+    run_status_str(re.status, stat_str, 0, 0, 0);
     prob_str = "???";
     if (state->probs[re.prob_id]) {
       if (state->probs[re.prob_id]->variant_num > 0) {
@@ -4304,7 +4304,7 @@ do_write_public_log(const serve_state_t state,
     if (!start) time = start;
     if (start > time) time = start;
     duration_str(global->show_astr_time, time, start, durstr, 0);
-    run_status_str(pe->status, statstr, 0, 0);
+    run_status_str(pe->status, statstr, 0, 0, 0);
 
     fputs("<tr>", f);
     fprintf(f, "<td>%d</td>", i);
@@ -4546,7 +4546,7 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
     font_color = "red";
   }
   fprintf(f, "<h2><font color=\"%s\">%s</font></h2>\n",
-          font_color, run_status_str(r->status, 0, 0, output_only));
+          font_color, run_status_str(r->status, 0, 0, output_only, 0));
 
   if (output_only) {
     if (r->run_tests != 1 || !(t = r->tests[0])) {
@@ -4572,7 +4572,7 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
       font_color = "red";
     }
     fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
-            cl, font_color, run_status_str(t->status, 0, 0, output_only));
+            cl, font_color, run_status_str(t->status, 0, 0, output_only, 0));
     if (t->score >= 0 && t->nominal_score >= 0)
       fprintf(f, "<td%s>%d (%d)</td>", cl, t->score, t->nominal_score);
     if (t->status == RUN_PRESENTATION_ERR) {
@@ -4643,7 +4643,7 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
       font_color = "red";
     }
     fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
-            cl, font_color, run_status_str(t->status, 0, 0, output_only));
+            cl, font_color, run_status_str(t->status, 0, 0, output_only, 0));
     fprintf(f, "<td%s>%d.%03d</td>", cl, t->time / 1000, t->time % 1000);
     if (t->real_time > 0) {
       disp_time = t->real_time;
@@ -4723,7 +4723,7 @@ write_xml_team_output_only_acc_report(FILE *f, const unsigned char *txt,
     font_color = "red";
   }
   fprintf(f, "<h2><font color=\"%s\">%s</font></h2>\n",
-          font_color, run_status_str(act_status, 0, 0, 1));
+          font_color, run_status_str(act_status, 0, 0, 1, 0));
 
   /*
   if (act_status != RUN_ACCEPTED) {
@@ -4753,7 +4753,7 @@ write_xml_team_output_only_acc_report(FILE *f, const unsigned char *txt,
       font_color = "red";
     }
     fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
-            cl, font_color, run_status_str(act_status, 0, 0, 1));
+            cl, font_color, run_status_str(act_status, 0, 0, 1, 0));
     // extra information
     fprintf(f, "<td%s>", cl);
     switch (t->status) {
@@ -4850,7 +4850,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
     font_color = "red";
   }
   fprintf(f, "<h2><font color=\"%s\">%s</font></h2>\n",
-          font_color, run_status_str(act_status, 0, 0, 0));
+          font_color, run_status_str(act_status, 0, 0, 0, 0));
 
   if (act_status != RUN_ACCEPTED) {
     fprintf(f, _("<big>Failed test: %d.<br><br></big>\n"), r->failed_test);
@@ -4889,7 +4889,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
       font_color = "red";
     }
     fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
-            cl, font_color, run_status_str(t->status, 0, 0, 0));
+            cl, font_color, run_status_str(t->status, 0, 0, 0, 0));
     if (!exam_mode) {
       fprintf(f, "<td%s>%d.%03d</td>", cl, t->time / 1000, t->time % 1000);
       if (t->real_time > 0) {

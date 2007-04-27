@@ -92,7 +92,7 @@ print_banner_page(const serve_state_t state,
   if (teaminfo.user && teaminfo.user->i.location) {
     fprintf(f, "Location:         %s\n", teaminfo.user->i.location);
   }
-  fprintf(f, "Status:           %s\n", run_status_str(info.status, 0, 0, 0));
+  fprintf(f, "Status:           %s\n", run_status_str(info.status, 0, 0, 0, 0));
   fclose(f);
 
   return 0;
