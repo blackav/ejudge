@@ -425,6 +425,7 @@ struct section_problem_data
   int    run_penalty;           /* penalty for one run */
   int    acm_run_penalty;       /* penalty for one run for ACM contests */
   int    disqualified_penalty;  /* penalty for one disqualified run */
+  int    ignore_penalty;        /* ignore penalty for this problem */
   int    use_corr;              /* whether the correct answers defined */
   int    use_info;              /* whether use the info files */
   int    use_tgz;               /* whether use tar test files */

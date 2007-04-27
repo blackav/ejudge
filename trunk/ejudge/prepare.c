@@ -309,6 +309,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(run_penalty, "d"),
   PROBLEM_PARAM(acm_run_penalty, "d"),
   PROBLEM_PARAM(disqualified_penalty, "d"),
+  PROBLEM_PARAM(ignore_penalty, "d"),
   PROBLEM_PARAM(use_corr, "d"),
   PROBLEM_PARAM(use_info, "d"),
   PROBLEM_PARAM(use_tgz, "d"),
