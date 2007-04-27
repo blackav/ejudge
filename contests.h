@@ -65,6 +65,7 @@ enum
     CONTEST_TEAM_HEADER_FILE,
     CONTEST_TEAM_MENU_1_FILE,
     CONTEST_TEAM_MENU_2_FILE,
+    CONTEST_TEAM_MENU_3_FILE,
     CONTEST_TEAM_SEPARATOR_FILE,
     CONTEST_TEAM_FOOTER_FILE,
     CONTEST_COPYRIGHT_FILE,
@@ -263,6 +264,7 @@ struct contest_desc
   unsigned char *team_header_file;
   unsigned char *team_menu_1_file;
   unsigned char *team_menu_2_file;
+  unsigned char *team_menu_3_file;
   unsigned char *team_separator_file;
   unsigned char *team_footer_file;
   unsigned char *priv_header_file;

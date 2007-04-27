@@ -209,6 +209,7 @@ load_header_files(struct sid_state *sstate, struct contest_desc *cnts)
   sstate->team_header_text = do_load_file(conf_path, cnts->team_header_file);
   sstate->team_menu_1_text = do_load_file(conf_path, cnts->team_menu_1_file);
   sstate->team_menu_2_text = do_load_file(conf_path, cnts->team_menu_2_file);
+  sstate->team_menu_3_text = do_load_file(conf_path, cnts->team_menu_3_file);
   sstate->team_separator_text = do_load_file(conf_path, cnts->team_separator_file);
   sstate->team_footer_text = do_load_file(conf_path, cnts->team_footer_file);
   sstate->copyright_text = do_load_file(conf_path, cnts->copyright_file);
@@ -253,6 +254,7 @@ contest_tmpl_clone(struct sid_state *sstate,
   subst_param(&cnts->team_header_file, 6, substs_from, substs_to);
   subst_param(&cnts->team_menu_1_file, 6, substs_from, substs_to);
   subst_param(&cnts->team_menu_2_file, 6, substs_from, substs_to);
+  subst_param(&cnts->team_menu_3_file, 6, substs_from, substs_to);
   subst_param(&cnts->team_separator_file, 6, substs_from, substs_to);
   subst_param(&cnts->team_footer_file, 6, substs_from, substs_to);
   subst_param(&cnts->copyright_file, 6, substs_from, substs_to);
