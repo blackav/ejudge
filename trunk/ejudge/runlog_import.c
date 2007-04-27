@@ -150,7 +150,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
     }
     ASSERT(st >= RUN_TRANSIENT_FIRST);
     fprintf(flog, "Run %d is a transient run %d ('%s')\n",
-            i, st, run_status_str(st, 0, 0, 0));
+            i, st, run_status_str(st, 0, 0, 0, 0));
     fprintf(flog, "Cannot merge logs with transient runs\n");
     goto done;
   }
@@ -225,7 +225,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
       goto done;
     }
     fprintf(flog, "Run %d is a transient run %d ('%s')\n",
-            i, st, run_status_str(st, 0, 0, 0));
+            i, st, run_status_str(st, 0, 0, 0, 0));
     goto done;
   }
   prev_time = 0;

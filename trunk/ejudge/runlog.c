@@ -1266,7 +1266,7 @@ run_get_prev_successes(runlog_state_t state, int run_id)
 }
 
 char *
-run_status_str(int status, char *out, int len, int prob_type)
+run_status_str(int status, char *out, int len, int prob_type, int var_score)
 {
   static char  buf[128];
   char const  *s;
@@ -1283,7 +1283,7 @@ run_status_str(int status, char *out, int len, int prob_type)
   case RUN_WRONG_ANSWER_ERR: s = _("Wrong answer");        break;
   case RUN_CHECK_FAILED:     s = _("Check failed");        break;
   case RUN_PARTIAL:
-    if (prob_type) s = _("Wrong answer");
+    if (prob_type && !var_score) s = _("Wrong answer");
     else s = _("Partial solution");
     break;
   case RUN_ACCEPTED:         s = _("Accepted for testing"); break;

@@ -356,7 +356,7 @@ ns_write_priv_all_runs(FILE *f,
       fprintf(f, "<tr>");
 
       if (pe->status == RUN_EMPTY) {
-        run_status_str(pe->status, statstr, 0, 0);
+        run_status_str(pe->status, statstr, 0, 0, 0);
         fprintf(f, "<td%s>%d</td>", cl, rid);
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         fprintf(f, "<td%s>&nbsp;</td>", cl);
@@ -386,7 +386,7 @@ ns_write_priv_all_runs(FILE *f,
         if (!env.rhead.start_time) run_time = 0;
         if (env.rhead.start_time > run_time) run_time = env.rhead.start_time;
         duration_str(1, run_time, env.rhead.start_time, durstr, 0);
-        run_status_str(pe->status, statstr, 0, 0);
+        run_status_str(pe->status, statstr, 0, 0, 0);
 
         fprintf(f, "<td%s>%d</td>", cl, rid);
         fprintf(f, "<td%s>%s</td>", cl, durstr);
@@ -496,7 +496,7 @@ ns_write_priv_all_runs(FILE *f,
       } else {
         fprintf(f, "<td%s>??? - %d</td>", cl, pe->lang_id);
       }
-      run_status_str(pe->status, statstr, 0, prob_type);
+      run_status_str(pe->status, statstr, 0, prob_type, 0);
       write_html_run_status(cs, f, pe, 1, attempts, disq_attempts,
                             prev_successes, "summary");
       if (phr->role == USER_ROLE_ADMIN) {
@@ -1255,7 +1255,7 @@ ns_write_priv_source(const serve_state_t state,
     html_hidden(f, "run_id", "%d", run_id);
   }
   fprintf(f, "<tr><td>%s:</td><td>%s</td>",
-          _("Status"), run_status_str(info.status, 0, 0, 0));
+          _("Status"), run_status_str(info.status, 0, 0, 0, 0));
   if (editable) {
     write_change_status_dialog(state, f, 0, info.is_imported, 0);
     fprintf(f, "<td>%s</td></tr></form>\n",
@@ -3189,7 +3189,7 @@ ns_upload_csv_runs(
                     "Command: new_run\n"
                     "Status: %s\n"
                     "Run-id: %d\n",
-                    run_status_str(runs[row].status, 0, 0, 0),
+                    run_status_str(runs[row].status, 0, 0, 0, 0),
                     run_id);
   }
 
@@ -4303,7 +4303,7 @@ ns_write_olympiads_user_runs(
       }
     }
 
-    run_status_str(re.status, stat_str, 0, prob?prob->type_val:0);
+    run_status_str(re.status, stat_str, 0, prob?prob->type_val:0, prob?prob->scoring_checker:0);
 
     row_attr = "";
     if (run_latest) {
@@ -4872,7 +4872,7 @@ ns_write_user_problems_summary(
               && cur_prob->type_val != PROB_TYPE_STANDARD))
         act_status = RUN_ACCEPTED;
     }
-    run_status_str(act_status, status_str, 0, cur_prob->type_val);
+    run_status_str(act_status, status_str, 0, cur_prob->type_val, cur_prob->scoring_checker);
     fprintf(fout, "<td%s>%s</td>", cl, status_str);
 
     if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
