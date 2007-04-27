@@ -1174,6 +1174,7 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   PROBLEM_PARAM(priority_adjustment, "d"),
   PROBLEM_PARAM(spelling, "s"),
   PROBLEM_PARAM(score_multiplier, "d"),
+  PROBLEM_PARAM(ignore_penalty, "d"),
   PROBLEM_PARAM(date_penalty, "x"),
   PROBLEM_PARAM(tgz_pat, "s"),
   PROBLEM_PARAM(personal_deadline, "x"),
@@ -1212,6 +1213,9 @@ prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
   //PROBLEM_PARAM(skip_testing, "d"),
   if (prob->skip_testing > 0) {
     fprintf(f, "skip_testing = %d\n", prob->skip_testing);
+  }
+  if (prob->ignore_penalty > 0) {
+    fprintf(f, "ignore_penalty\n");
   }
   //PROBLEM_PARAM(priority_adjustment, "d"),
   if (prob->priority_adjustment != -1000) {

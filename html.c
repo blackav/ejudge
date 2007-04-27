@@ -1724,7 +1724,7 @@ do_write_kirov_standings(const serve_state_t state,
   int *full_sol = 0;
   time_t *sol_time = 0;
   int *trans_num = 0;
-  int *_penalty = 0;
+  int *penalty = 0;
 
   int  *tot_score, *tot_full, *succ_att, *tot_att, *tot_penalty;
   int  *t_sort = 0, *t_sort2, *t_n1, *t_n2;
@@ -1901,7 +1901,7 @@ do_write_kirov_standings(const serve_state_t state,
     XCALLOC(sol_time, up_ind);
     XCALLOC(sol_att, up_ind);
     XCALLOC(trans_num, up_ind);
-    XCALLOC(_penalty, up_ind);
+    XCALLOC(penalty, up_ind);
   }
   XALLOCAZ(tot_score, t_tot);
   XALLOCAZ(tot_full, t_tot);
@@ -2005,9 +2005,9 @@ do_write_kirov_standings(const serve_state_t state,
         trans_num[up_ind] = 0;
         prob_score[up_ind] = run_score;
         att_num[up_ind]++;
-        if (global->stand_enable_penalty) {
-          _penalty[up_ind] += sec_to_min(global->rounding_mode_val,
-                                         pe->time - start_time);
+        if (global->stand_enable_penalty && p->ignore_penalty < 0) {
+          penalty[up_ind] += sec_to_min(global->rounding_mode_val,
+                                        pe->time - start_time);
         }
         //if (run_score > p->full_score) run_score = p->full_score;
         break;
@@ -2016,9 +2016,9 @@ do_write_kirov_standings(const serve_state_t state,
         full_sol[up_ind] = 0;
         trans_num[up_ind] = 0;
         att_num[up_ind]++;
-        if (global->stand_enable_penalty) {
-          _penalty[up_ind] += sec_to_min(global->rounding_mode_val,
-                                         pe->time - start_time);
+        if (global->stand_enable_penalty && p->ignore_penalty < 0) {
+          penalty[up_ind] += sec_to_min(global->rounding_mode_val,
+                                        pe->time - start_time);
         }
         break;
       case RUN_ACCEPTED:
@@ -2104,7 +2104,7 @@ do_write_kirov_standings(const serve_state_t state,
       up_ind = (i << row_sh) + j;
       tot_score[i] += prob_score[up_ind];
       tot_full[i] += full_sol[up_ind];
-      tot_penalty[i] += _penalty[up_ind];
+      tot_penalty[i] += penalty[up_ind];
     }
   }
 
@@ -2676,7 +2676,7 @@ do_write_kirov_standings(const serve_state_t state,
   xfree(full_sol);
   xfree(sol_time);
   xfree(trans_num);
-  xfree(_penalty);
+  xfree(penalty);
 }
 
 static int
