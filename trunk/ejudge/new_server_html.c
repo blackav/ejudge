@@ -4676,7 +4676,10 @@ priv_upload_runlog_csv_1(
             phr->contest_id, extra->contest_arm, "Add new runs in CSV format");
   html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
 
-  fprintf(fout, "<table><tr><td>%s</td><td><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
+  fprintf(fout, "<table>");
+  fprintf(fout, "<tr><td>%s</td><td><input type=\"checkbox\" name=\"results_only\"/></td></tr>\n", _("Import results for existing runs"));
+  fprintf(fout, "<tr><td>%s</td><td><input type=\"file\" name=\"file\"/></td></tr>\n",
+          _("File"));
   fprintf(fout, "<tr><td>&nbsp;</td><td>%s</td></tr></table>\n",
           BUTTON(NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2));
 
@@ -4699,7 +4702,7 @@ priv_upload_runlog_csv_2(
   const serve_state_t cs = extra->serve_state;
   int retval = 0, r;
   unsigned char bb[1024];
-  const unsigned char *s = 0, *p;
+  const unsigned char *s = 0, *p, *ro_flag = 0;
   char *log_text = 0;
   size_t log_size = 0;
   FILE *ff = 0;
@@ -4717,7 +4720,11 @@ priv_upload_runlog_csv_2(
   if (!*p) FAIL(NEW_SRV_ERR_FILE_EMPTY);
 
   ff = open_memstream(&log_text, &log_size);
-  r = ns_upload_csv_runs(phr, cs, ff, s);
+  if (ns_cgi_param(phr, "results_only", &ro_flag) > 0) {
+    r = ns_upload_csv_results(phr, cs, ff, s);
+  } else {
+    r = ns_upload_csv_runs(phr, cs, ff, s);
+  }
   fclose(ff); ff = 0;
 
   l10n_setlocale(phr->locale_id);

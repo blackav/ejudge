@@ -604,6 +604,11 @@ ns_upload_csv_runs(
 	struct http_request_info *phr,
 	const serve_state_t cs, FILE *log_f,
         const unsigned char *csv_text);
+int
+ns_upload_csv_results(
+	struct http_request_info *phr,
+	const serve_state_t cs, FILE *log_f,
+        const unsigned char *csv_text);
 
 int
 ns_write_user_run_status(

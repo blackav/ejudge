@@ -379,6 +379,25 @@ teamdb_lookup_login(teamdb_state_t state, char const *login)
   return -1;
 }
 
+int
+teamdb_lookup_name(teamdb_state_t state, char const *name)
+{
+  int i;
+  const unsigned char *v;
+
+  if (teamdb_refresh(state) < 0) return -1;
+  if (!state->participants) return -1;
+  for (i = 0; i < state->total_participants; i++) {
+    ASSERT(state->participants[i]);
+    v = state->participants[i]->i.name;
+    if (!v || !*v) v = state->participants[i]->login;
+    ASSERT(v);
+    if (!strcmp(v, name))
+      return state->participants[i]->id;
+  }
+  return -1;
+}
+
 char *
 teamdb_get_login(teamdb_state_t state, int teamid)
 {
