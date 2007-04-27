@@ -2005,7 +2005,7 @@ do_write_kirov_standings(const serve_state_t state,
         trans_num[up_ind] = 0;
         prob_score[up_ind] = run_score;
         att_num[up_ind]++;
-        if (global->stand_enable_penalty && p->ignore_penalty < 0) {
+        if (global->stand_enable_penalty && p->ignore_penalty <= 0) {
           penalty[up_ind] += sec_to_min(global->rounding_mode_val,
                                         pe->time - start_time);
         }
@@ -2016,7 +2016,7 @@ do_write_kirov_standings(const serve_state_t state,
         full_sol[up_ind] = 0;
         trans_num[up_ind] = 0;
         att_num[up_ind]++;
-        if (global->stand_enable_penalty && p->ignore_penalty < 0) {
+        if (global->stand_enable_penalty && p->ignore_penalty <= 0) {
           penalty[up_ind] += sec_to_min(global->rounding_mode_val,
                                         pe->time - start_time);
         }

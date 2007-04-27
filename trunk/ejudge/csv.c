@@ -30,6 +30,8 @@ csv_parse(const char *str, FILE *log_f, int fs)
   unsigned char *s4;
   struct csv_line *pp;
 
+  XCALLOC(p, 1);
+
   while (1) {
     s2 = s1;
     while (*s2 && *s2 != '\n' && *s2 != fs) s2++;
@@ -39,15 +41,12 @@ csv_parse(const char *str, FILE *log_f, int fs)
     } else {
       s3 = s2;
     }
-    if (!p && s3 == s1) break;  /* empty file */
+    if (s3 == s1) break;  /* empty file */
     s4 = (unsigned char*) xmalloc(s3 - s1 + 1);
     memcpy(s4, s1, s3 - s1);
     s4[s3 - s1] = 0;
     if (*s2) s1 = s2 + 1;
 
-    if (!p) {
-      XCALLOC(p, 1);
-    }
     if (p->u >= p->a) {
       if (!p->a) {
         p->a = 16;
@@ -80,6 +79,13 @@ csv_parse(const char *str, FILE *log_f, int fs)
     xfree(p->v[p->u].v[0]); p->v[p->u].v[0] = 0;
     xfree(p->v[p->u].v); p->v[p->u].v = 0;
     p->v[p->u].u = p->v[p->u].a = 0;
+  }
+
+  if (!p->u) {
+    // empty file
+    xfree(p->v);
+    xfree(p);
+    p = 0;
   }
 
   return p;
