@@ -1993,99 +1993,121 @@ check_config(void)
       continue;
     }
 
-    /* check existence of tests */
-    if (prb->variant_num <= 0) {
-      if (check_readable_dir(prb->test_dir) < 0) return -1;
-      if ((n1 = count_files(prb->test_dir, prb->test_sfx, prb->test_pat)) < 0)
-        return -1;
-      if (!n1) {
-        err("'%s' does not contain any tests", prb->test_dir);
-        return -1;
-      }
-      if (prb->type_val > 0 && n1 != 1) {
-        err("`%s' must have only one test (as output-only problem)",
-            prb->short_name);
-        return -1;
-      }
-      info("found %d tests for problem %s", n1, prb->short_name);
-      if (n1 < prb->tests_to_accept) {
-        err("%d tests required for problem acceptance!", prb->tests_to_accept);
-        return -1;
-      }
-      if (prb->use_corr) {
-        if (!prb->corr_dir[0]) {
-          err("directory with answers is not defined");
-          return -1;
+    if (prb->type_val > 0) {
+      // output-only problems have no input file
+      if (prb->variant_num <= 0) {
+        if (prb->use_corr) {
+          if (!prb->corr_dir[0]) {
+            err("directory with answers is not defined");
+            return -1;
+          }
+          if (check_readable_dir(prb->corr_dir) < 0) return -1;
+          if ((n2 = count_files(prb->corr_dir,prb->corr_sfx,prb->corr_pat)) < 0)
+            return -1;
+          info("found %d answers for problem %s", n2, prb->short_name);
+          if (n2 != 1) {
+            err("output-only problem must define only one answer file");
+            return -1;
+          }
         }
-        if (check_readable_dir(prb->corr_dir) < 0) return -1;
-        if ((n2 = count_files(prb->corr_dir,prb->corr_sfx,prb->corr_pat)) < 0)
-          return -1;
-        info("found %d answers for problem %s", n2, prb->short_name);
-        if (n1 != n2) {
-          err("number of test does not match number of answers");
-          return -1;
+        if (prb->use_info) {
+          if (!prb->info_dir[0]) {
+            err("directory with test information is not defined");
+            return -1;
+          }
+          if (check_readable_dir(prb->info_dir) < 0) return -1;
+          if ((n2 = count_files(prb->info_dir,prb->info_sfx,prb->info_pat)) < 0)
+            return -1;
+          info("found %d info files for problem %s", n2, prb->short_name);
+          if (n2 != 1) {
+            err("output-only problem must define only one info file");
+            return -1;
+          }
         }
-      }
-      if (prb->use_info) {
-        if (!prb->info_dir[0]) {
-          err("directory with test information is not defined");
-          return -1;
+        if (prb->use_tgz) {
+          if (!prb->tgz_dir[0]) {
+            err("directory with tgz information is not defined");
+            return -1;
+          }
+          if (check_readable_dir(prb->tgz_dir) < 0) return -1;
+          if ((n2 = count_files(prb->tgz_dir, prb->tgz_sfx, 0)) < 0) return -1;
+          info("found %d tgz files for problem %s", n2, prb->short_name);
+          if (n2 != 1) {
+            err("output-only problem must define only one tgz file");
+            return -1;
+          }
         }
-        if (check_readable_dir(prb->info_dir) < 0) return -1;
-        if ((n2 = count_files(prb->info_dir,prb->info_sfx,prb->info_pat)) < 0)
-          return -1;
-        info("found %d info files for problem %s", n2, prb->short_name);
-        if (n1 != n2) {
-          err("number of test does not match number of info files");
-          return -1;
-        }
-      }
-      if (prb->use_tgz) {
-        if (!prb->tgz_dir[0]) {
-          err("directory with tgz information is not defined");
-          return -1;
-        }
-        if (check_readable_dir(prb->tgz_dir) < 0) return -1;
-        if ((n2 = count_files(prb->tgz_dir, prb->tgz_sfx, 0)) < 0) return -1;
-        info("found %d tgz files for problem %s", n2, prb->short_name);
-        if (n1 != n2) {
-          err("number of test does not match number of tgz files");
-          return -1;
+      } else {
+        var_test_dir = (unsigned char *) alloca(sizeof(path_t));
+        var_corr_dir = (unsigned char *) alloca(sizeof(path_t));
+        var_info_dir = (unsigned char *) alloca(sizeof(path_t));
+        var_tgz_dir = (unsigned char *) alloca(sizeof(path_t));
+
+        for (k = 1; k <= prb->variant_num; k++) {
+          snprintf(var_test_dir, sizeof(path_t), "%s-%d", prb->test_dir, k);
+          snprintf(var_corr_dir, sizeof(path_t), "%s-%d", prb->corr_dir, k);
+          snprintf(var_info_dir, sizeof(path_t), "%s-%d", prb->info_dir, k);
+          snprintf(var_tgz_dir, sizeof(path_t), "%s-%d", prb->tgz_dir, k);
+          if (prb->use_corr) {
+            if (!prb->corr_dir[0]) {
+              err("directory with answers is not defined");
+              return -1;
+            }
+            if (check_readable_dir(var_corr_dir) < 0) return -1;
+            if ((j = count_files(var_corr_dir,prb->corr_sfx,prb->corr_pat)) < 0)
+              return -1;
+            if (j != 1) {
+              err("output-only problem must define only one answer file");
+              return -1;
+            }
+          }
+          if (prb->use_info) {
+            if (!prb->info_dir[0]) {
+              err("directory with test infos is not defined");
+              return -1;
+            }
+            if (check_readable_dir(var_info_dir) < 0) return -1;
+            if ((j = count_files(var_info_dir,prb->info_sfx,prb->info_pat)) < 0)
+              return -1;
+            if (j != 1) {
+              err("output-only problem must define only one info file");
+              return -1;
+            }
+          }
+          if (prb->use_tgz) {
+            if (!prb->tgz_dir[0]) {
+              err("directory with tgz is not defined");
+              return -1;
+            }
+            if (check_readable_dir(var_tgz_dir) < 0) return -1;
+            if ((j = count_files(var_tgz_dir, prb->tgz_sfx, 0)) < 0) return -1;
+            if (j != 1) {
+              err("output-only problem must define only one info file");
+              return -1;
+            }
+          }
         }
       }
     } else {
-      n1 = n2 = -1;
-      var_test_dir = (unsigned char *) alloca(sizeof(path_t));
-      var_corr_dir = (unsigned char *) alloca(sizeof(path_t));
-      var_info_dir = (unsigned char *) alloca(sizeof(path_t));
-      var_tgz_dir = (unsigned char *) alloca(sizeof(path_t));
-
-      for (k = 1; k <= prb->variant_num; k++) {
-        snprintf(var_test_dir, sizeof(path_t), "%s-%d", prb->test_dir, k);
-        snprintf(var_corr_dir, sizeof(path_t), "%s-%d", prb->corr_dir, k);
-        snprintf(var_info_dir, sizeof(path_t), "%s-%d", prb->info_dir, k);
-        snprintf(var_tgz_dir, sizeof(path_t), "%s-%d", prb->tgz_dir, k);
-        if (check_readable_dir(var_test_dir) < 0) return -1;
-        if ((j = count_files(var_test_dir, prb->test_sfx, prb->test_pat)) < 0)
+      /* check existence of tests */
+      if (prb->variant_num <= 0) {
+        if (check_readable_dir(prb->test_dir) < 0) return -1;
+        if ((n1 = count_files(prb->test_dir, prb->test_sfx, prb->test_pat)) < 0)
           return -1;
-        if (!j) {
-          err("'%s' does not contain any tests", var_test_dir);
+        if (!n1) {
+          err("'%s' does not contain any tests", prb->test_dir);
           return -1;
         }
+        /*
         if (prb->type_val > 0 && n1 != 1) {
-          err("`%s', variant %d must have only one test (as output-only problem)",
-              prb->short_name, j);
+          err("`%s' must have only one test (as output-only problem)",
+              prb->short_name);
           return -1;
         }
-        if (n1 < 0) n1 = j;
-        if (n1 != j) {
-          err("number of tests %d for variant %d does not equal %d", j, k, n1);
-          return -1;
-        }
-        info("found %d tests for problem %s, variant %d",n1,prb->short_name,k);
+        */
+        info("found %d tests for problem %s", n1, prb->short_name);
         if (n1 < prb->tests_to_accept) {
-          err("%d tests required for problem acceptance!",
-              prb->tests_to_accept);
+          err("%d tests required for problem acceptance!",prb->tests_to_accept);
           return -1;
         }
         if (prb->use_corr) {
@@ -2093,49 +2115,130 @@ check_config(void)
             err("directory with answers is not defined");
             return -1;
           }
-          if (check_readable_dir(var_corr_dir) < 0) return -1;
-          if ((j = count_files(var_corr_dir,prb->corr_sfx,prb->corr_pat)) < 0)
+          if (check_readable_dir(prb->corr_dir) < 0) return -1;
+          if ((n2 = count_files(prb->corr_dir,prb->corr_sfx,prb->corr_pat)) < 0)
             return -1;
-          info("found %d answers for problem %s, variant %d",
-               j, prb->short_name, k);
-          if (n1 != j) {
-            err("number of tests %d does not match number of answers %d",
-                n1, j);
+          info("found %d answers for problem %s", n2, prb->short_name);
+          if (n1 != n2) {
+            err("number of test does not match number of answers");
             return -1;
           }
         }
         if (prb->use_info) {
           if (!prb->info_dir[0]) {
-            err("directory with test infos is not defined");
+            err("directory with test information is not defined");
             return -1;
           }
-          if (check_readable_dir(var_info_dir) < 0) return -1;
-          if ((j = count_files(var_info_dir,prb->info_sfx,prb->info_pat)) < 0)
+          if (check_readable_dir(prb->info_dir) < 0) return -1;
+          if ((n2 = count_files(prb->info_dir,prb->info_sfx,prb->info_pat)) < 0)
             return -1;
-          info("found %d test infos for problem %s, variant %d",
-               j, prb->short_name, k);
-          if (n1 != j) {
-            err("number of tests %d does not match number of test infos %d",
-                n1, j);
+          info("found %d info files for problem %s", n2, prb->short_name);
+          if (n1 != n2) {
+            err("number of test does not match number of info files");
             return -1;
           }
         }
         if (prb->use_tgz) {
           if (!prb->tgz_dir[0]) {
-            err("directory with tgz is not defined");
+            err("directory with tgz information is not defined");
             return -1;
           }
-          if (check_readable_dir(var_tgz_dir) < 0) return -1;
-          if ((j = count_files(var_tgz_dir, prb->tgz_sfx, 0)) < 0) return -1;
-          info("found %d tgzs for problem %s, variant %d",
-               j, prb->short_name, k);
-          if (n1 != j) {
-            err("number of tests %d does not match number of tgz %d",
-                n1, j);
+          if (check_readable_dir(prb->tgz_dir) < 0) return -1;
+          if ((n2 = count_files(prb->tgz_dir, prb->tgz_sfx, 0)) < 0) return -1;
+          info("found %d tgz files for problem %s", n2, prb->short_name);
+          if (n1 != n2) {
+            err("number of test does not match number of tgz files");
             return -1;
           }
         }
-        n2 = n1;
+      } else {
+        n1 = n2 = -1;
+        var_test_dir = (unsigned char *) alloca(sizeof(path_t));
+        var_corr_dir = (unsigned char *) alloca(sizeof(path_t));
+        var_info_dir = (unsigned char *) alloca(sizeof(path_t));
+        var_tgz_dir = (unsigned char *) alloca(sizeof(path_t));
+
+        for (k = 1; k <= prb->variant_num; k++) {
+          snprintf(var_test_dir, sizeof(path_t), "%s-%d", prb->test_dir, k);
+          snprintf(var_corr_dir, sizeof(path_t), "%s-%d", prb->corr_dir, k);
+          snprintf(var_info_dir, sizeof(path_t), "%s-%d", prb->info_dir, k);
+          snprintf(var_tgz_dir, sizeof(path_t), "%s-%d", prb->tgz_dir, k);
+          if (check_readable_dir(var_test_dir) < 0) return -1;
+          if ((j = count_files(var_test_dir, prb->test_sfx, prb->test_pat)) < 0)
+            return -1;
+          if (!j) {
+            err("'%s' does not contain any tests", var_test_dir);
+            return -1;
+          }
+          /*
+          if (prb->type_val > 0 && n1 != 1) {
+            err("`%s', variant %d must have only one test (as output-only problem)",
+                prb->short_name, j);
+            return -1;
+          }
+          */
+          if (n1 < 0) n1 = j;
+          if (n1 != j) {
+            err("number of tests %d for variant %d does not equal %d",
+                j, k, n1);
+            return -1;
+          }
+          info("found %d tests for problem %s, variant %d",
+               n1, prb->short_name, k);
+          if (n1 < prb->tests_to_accept) {
+            err("%d tests required for problem acceptance!",
+                prb->tests_to_accept);
+            return -1;
+          }
+          if (prb->use_corr) {
+            if (!prb->corr_dir[0]) {
+              err("directory with answers is not defined");
+              return -1;
+            }
+            if (check_readable_dir(var_corr_dir) < 0) return -1;
+            if ((j = count_files(var_corr_dir,prb->corr_sfx,prb->corr_pat)) < 0)
+              return -1;
+            info("found %d answers for problem %s, variant %d",
+                 j, prb->short_name, k);
+            if (n1 != j) {
+              err("number of tests %d does not match number of answers %d",
+                  n1, j);
+              return -1;
+            }
+          }
+          if (prb->use_info) {
+            if (!prb->info_dir[0]) {
+              err("directory with test infos is not defined");
+              return -1;
+            }
+            if (check_readable_dir(var_info_dir) < 0) return -1;
+            if ((j = count_files(var_info_dir,prb->info_sfx,prb->info_pat)) < 0)
+              return -1;
+            info("found %d test infos for problem %s, variant %d",
+                 j, prb->short_name, k);
+            if (n1 != j) {
+              err("number of tests %d does not match number of test infos %d",
+                  n1, j);
+              return -1;
+            }
+          }
+          if (prb->use_tgz) {
+            if (!prb->tgz_dir[0]) {
+              err("directory with tgz is not defined");
+              return -1;
+            }
+            if (check_readable_dir(var_tgz_dir) < 0) return -1;
+            if ((j = count_files(var_tgz_dir, prb->tgz_sfx, 0)) < 0) return -1;
+            info("found %d tgzs for problem %s, variant %d",
+                 j, prb->short_name, k);
+            if (n1 != j) {
+              err("number of tests %d does not match number of tgz %d",
+                  n1, j);
+              return -1;
+            }
+          }
+          n2 = n1;
+        }
       }
     }
 
