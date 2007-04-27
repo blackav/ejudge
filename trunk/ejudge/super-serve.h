@@ -96,6 +96,7 @@ struct sid_state
   unsigned char *team_header_text;
   unsigned char *team_menu_1_text;
   unsigned char *team_menu_2_text;
+  unsigned char *team_menu_3_text;
   unsigned char *team_separator_text;
   unsigned char *team_footer_text;
   unsigned char *priv_header_text;

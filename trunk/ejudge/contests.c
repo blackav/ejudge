@@ -84,6 +84,7 @@ static char const * const elem_map[] =
   "team_header_file",
   "team_menu_1_file",
   "team_menu_2_file",
+  "team_menu_3_file",
   "team_separator_file",
   "team_footer_file",
   "copyright_file",
@@ -196,6 +197,7 @@ node_free(struct xml_tree *t)
       xfree(cnts->team_header_file);
       xfree(cnts->team_menu_1_file);
       xfree(cnts->team_menu_2_file);
+      xfree(cnts->team_menu_3_file);
       xfree(cnts->team_separator_file);
       xfree(cnts->team_footer_file);
       xfree(cnts->copyright_file);
@@ -615,6 +617,7 @@ static const size_t contest_final_offsets[CONTEST_LAST_TAG] =
   [CONTEST_TEAM_HEADER_FILE] = CONTEST_DESC_OFFSET(team_header_file),
   [CONTEST_TEAM_MENU_1_FILE] = CONTEST_DESC_OFFSET(team_menu_1_file),
   [CONTEST_TEAM_MENU_2_FILE] = CONTEST_DESC_OFFSET(team_menu_2_file),
+  [CONTEST_TEAM_MENU_3_FILE] = CONTEST_DESC_OFFSET(team_menu_3_file),
   [CONTEST_TEAM_SEPARATOR_FILE] = CONTEST_DESC_OFFSET(team_separator_file),
   [CONTEST_TEAM_FOOTER_FILE] = CONTEST_DESC_OFFSET(team_footer_file),
   [CONTEST_COPYRIGHT_FILE] = CONTEST_DESC_OFFSET(copyright_file),
@@ -879,6 +882,7 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
     process_conf_file_path(cnts, &cnts->team_header_file);
     process_conf_file_path(cnts, &cnts->team_menu_1_file);
     process_conf_file_path(cnts, &cnts->team_menu_2_file);
+    process_conf_file_path(cnts, &cnts->team_menu_3_file);
     process_conf_file_path(cnts, &cnts->team_separator_file);
     process_conf_file_path(cnts, &cnts->team_footer_file);
     process_conf_file_path(cnts, &cnts->copyright_file);
@@ -1606,6 +1610,7 @@ contests_unparse(FILE *f,
   unparse_text(f, CONTEST_TEAM_HEADER_FILE, cnts->team_header_file);
   unparse_text(f, CONTEST_TEAM_MENU_1_FILE, cnts->team_menu_1_file);
   unparse_text(f, CONTEST_TEAM_MENU_2_FILE, cnts->team_menu_2_file);
+  unparse_text(f, CONTEST_TEAM_MENU_3_FILE, cnts->team_menu_3_file);
   unparse_text(f, CONTEST_TEAM_SEPARATOR_FILE, cnts->team_separator_file);
   unparse_text(f, CONTEST_TEAM_FOOTER_FILE, cnts->team_footer_file);
   unparse_text(f, CONTEST_COPYRIGHT_FILE, cnts->copyright_file);
