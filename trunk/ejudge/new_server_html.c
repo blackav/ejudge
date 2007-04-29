@@ -4076,7 +4076,7 @@ priv_view_users_page(FILE *fout,
 
   fprintf(fout, "<h2>Registered users</h2>");
 
-  snprintf(cl, sizeof(cl), " class=\"summary\"");
+  snprintf(cl, sizeof(cl), " class=\"b1\"");
 
   html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
   fprintf(fout, "<table%s><tr><th%s>NN</th><th%s>Id</th><th%s>Login</th><th%s>Name</th><th%s>Status</th><th%s>Flags</th><th%s>Reg. date</th><th%s>Login date</th><th%s>Select</th></tr>\n", cl, cl, cl, cl, cl, cl, cl, cl, cl, cl);
@@ -4195,8 +4195,8 @@ priv_view_users_page(FILE *fout,
   fprintf(fout, "<p><textarea name=\"disq_comment\" rows=\"5\" cols=\"60\">");
   fprintf(fout, "</textarea></p>\n");
 
-  fprintf(fout, "<table class=\"borderless\"><tr>");
-  fprintf(fout, "<td class=\"borderless\">%s</td>",
+  fprintf(fout, "<table class=\"b0\"><tr>");
+  fprintf(fout, "<td class=\"b0\">%s</td>",
           BUTTON(NEW_SRV_ACTION_USERS_SET_DISQUALIFIED));
   fprintf(fout, "</tr></table>\n");
 
@@ -4334,7 +4334,7 @@ priv_view_priv_users_page(FILE *fout,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, _("Privileged users page"));
 
-  snprintf(cl, sizeof(cl), " class=\"summary\"");
+  snprintf(cl, sizeof(cl), " class=\"b1\"");
 
   fprintf(fout, "<h2>Privileged users</h2>");
 
@@ -5299,8 +5299,8 @@ unpriv_print_status(FILE *fout,
       }
     }
 
-    fprintf(fout, "<table class=\"borderless\">");
-    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
+    fprintf(fout, "<table class=\"b0\">");
+    fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
             _("Server time"), ctime(&cs->current_time));
     if (start_time > 0) {
       if (cnts->exam_mode) {
@@ -5308,11 +5308,11 @@ unpriv_print_status(FILE *fout,
       } else {
         s = _("Contest start time");
       }
-      fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
+      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
               s, ctime(&start_time));
     }
     if (!global->is_virtual && start_time <= 0 && sched_time > 0) {
-      fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
+      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
               _("Planned start time"), ctime(&sched_time));
     }
     if (stop_time <= 0 && (duration > 0 || global->contest_finish_time_d <= 0)) {
@@ -5321,40 +5321,40 @@ unpriv_print_status(FILE *fout,
       } else {
         snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
       }
-      fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
+      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
               _("Duration"), duration_buf);
     }
     if (start_time > 0 && stop_time <= 0 && duration > 0) {
       tmpt = start_time + duration;
-      fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
+      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
               _("Scheduled end time"), ctime(&tmpt));
     } else if (start_time > 0 && stop_time <= 0 && duration <= 0
                && global->contest_finish_time_d > 0) {
-      fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
+      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
               _("Scheduled end time"), ctime(&global->contest_finish_time_d));
     } else if (stop_time) {
-      fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
+      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
               _("End time"), ctime(&stop_time));
     }
 
     if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
-      fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
+      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
               _("Standings freeze time"), ctime(&fog_start_time));
     } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
                && global->board_unfog_time > 0 && !cs->standings_updated
                && cs->current_time < stop_time + global->board_unfog_time) {
       tmpt = stop_time + global->board_unfog_time;
-      fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
+      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
               _("Standings unfreeze time"), ctime(&tmpt));
     }
 
     if (start_time > 0 && stop_time <= 0 && duration > 0) {
       duration_str(0, cs->current_time, start_time, duration_buf, 0);
-      fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
+      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
               _("Elapsed time"), duration_buf);
       duration_str(0, start_time + duration - cs->current_time, 0,
                    duration_buf, 0);
-      fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n",
+      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
               _("Remaining time"), duration_buf);
     }
     fprintf(fout, "</table>\n");
@@ -6203,8 +6203,7 @@ priv_main_page(FILE *fout,
         break;
       case PROB_TYPE_SELECT_ONE:
         if (alternatives) {
-          write_alternatives_file(fout, 1, alternatives, -1, 0, 0, 0,
-                                  "borderless");
+          write_alternatives_file(fout, 1, alternatives, -1, 0, 0, 0, "b0");
         } else if (prob->alternative) {
           for (i = 0; prob->alternative[i]; i++) {
             fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
@@ -6213,8 +6212,7 @@ priv_main_page(FILE *fout,
         break;
       case PROB_TYPE_SELECT_MANY:
         if (alternatives) {
-          write_alternatives_file(fout, 0, alternatives, -1, 0, 0, 0,
-                                  "borderless");
+          write_alternatives_file(fout, 0, alternatives, -1, 0, 0, 0, "b0");
         } else if (prob->alternative) {
           for (i = 0; prob->alternative[i]; i++) {
             fprintf(fout, "<tr><td>%d</td><td><input type=\"checkbox\" name=\"ans_%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
@@ -8651,16 +8649,14 @@ unpriv_view_report(FILE *fout,
       write_xml_team_accepting_report(fout, rep_start, run_id, &re, prob,
                                       new_actions_vector,
                                       phr->session_id, cnts->exam_mode,
-                                      phr->self_url, "",
-                                      "summary");
+                                      phr->self_url, "", "b1");
     } else if (prob->team_show_judge_report) {
       write_xml_testing_report(fout, rep_start, phr->session_id,
-                               phr->self_url, "", new_actions_vector,
-                               "summary", "borderless");
+                               phr->self_url, "", new_actions_vector,"b1","b0");
     } else {
       write_xml_team_testing_report(cs, fout,
                                     prob->type_val != PROB_TYPE_STANDARD,
-                                    rep_start, "summary");
+                                    rep_start, "b1");
     }
     break;
   default:
@@ -8776,26 +8772,26 @@ unpriv_view_clar(FILE *fout,
 
   fprintf(fout, "<%s>%s #%d</%s>\n", cnts->team_head_style,
           _("Message"), clar_id, cnts->team_head_style);
-  fprintf(fout, "<table class=\"borderless\">\n");
-  fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%d</td></tr>\n", _("Number"), clar_id);
-  fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>\n", _("Time"), dur_str);
-  fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%u</td></tr>\n", _("Size"), ce.size);
-  fprintf(fout, "<tr><td class=\"borderless\">%s:</td>", _("Sender"));
+  fprintf(fout, "<table class=\"b0\">\n");
+  fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%d</td></tr>\n", _("Number"), clar_id);
+  fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n", _("Time"), dur_str);
+  fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%u</td></tr>\n", _("Size"), ce.size);
+  fprintf(fout, "<tr><td class=\"b0\">%s:</td>", _("Sender"));
   if (!ce.from) {
-    fprintf(fout, "<td class=\"borderless\"><b>%s</b></td>", _("judges"));
+    fprintf(fout, "<td class=\"b0\"><b>%s</b></td>", _("judges"));
   } else {
-    fprintf(fout, "<td class=\"borderless\">%s</td>", teamdb_get_name(cs->teamdb_state, ce.from));
+    fprintf(fout, "<td class=\"b0\">%s</td>", teamdb_get_name(cs->teamdb_state, ce.from));
   }
-  fprintf(fout, "</tr>\n<tr><td class=\"borderless\">%s:</td>", _("To"));
+  fprintf(fout, "</tr>\n<tr><td class=\"b0\">%s:</td>", _("To"));
   if (!ce.to && !ce.from) {
-    fprintf(fout, "<td class=\"borderless\"><b>%s</b></td>", _("all"));
+    fprintf(fout, "<td class=\"b0\"><b>%s</b></td>", _("all"));
   } else if (!ce.to) {
-    fprintf(fout, "<td class=\"borderless\"><b>%s</b></td>", _("judges"));
+    fprintf(fout, "<td class=\"b0\"><b>%s</b></td>", _("judges"));
   } else {
-    fprintf(fout, "<td class=\"borderless\">%s</td>", teamdb_get_name(cs->teamdb_state, ce.to));
+    fprintf(fout, "<td class=\"b0\">%s</td>", teamdb_get_name(cs->teamdb_state, ce.to));
   }
   fprintf(fout, "</tr>\n");
-  fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s</td></tr>", _("Subject"), html_subj);
+  fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>", _("Subject"), html_subj);
   fprintf(fout, "</table>\n");
   fprintf(fout, "<hr><pre>");
   fprintf(fout, "%s", html_text);
@@ -9815,7 +9811,7 @@ user_main_page(FILE *fout,
       fprintf(fout, "</tr>");
       fprintf(fout, "<tr><td colspan=\"%d\" id=\"probNavTaskArea\"><div id=\"probNavTaskArea\">\n", j);
     } else {
-      fprintf(fout, "<tr><td class=\"borderless\" id=\"probNavTaskArea\"><div id=\"probNavTaskArea\">\n");
+      fprintf(fout, "<tr><td class=\"b0\" id=\"probNavTaskArea\"><div id=\"probNavTaskArea\">\n");
     }
   }
 
@@ -9871,7 +9867,7 @@ user_main_page(FILE *fout,
               _("Problem status summary"),
               cnts->team_head_style);
       ns_write_user_problems_summary(cnts, cs, fout, phr->user_id,
-                                     accepting_mode, "summary",
+                                     accepting_mode, "b1",
                                      solved_flag, accepted_flag, pending_flag,
                                      trans_flag, best_run, attempts,
                                      disqualified, best_score, prev_successes);
@@ -9922,12 +9918,12 @@ user_main_page(FILE *fout,
             cnts->team_head_style, _("Select another problem"),
             cnts->team_head_style);
     html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
-    fprintf(fout, "<table class=\"borderless\">\n");
-    fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Problem"));
+    fprintf(fout, "<table class=\"b0\">\n");
+    fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">", _("Problem"));
 
     html_problem_selection_2(cs, fout, phr, 0, start_time);
 
-    fprintf(fout, "</td><td class=\"borderless\">%s</td></tr></table></form>\n",
+    fprintf(fout, "</td><td class=\"b0\">%s</td></tr></table></form>\n",
             ns_submit_button(bb, sizeof(bb), 0,
                              NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS,
                              _("Select problem")));
@@ -9953,13 +9949,13 @@ user_main_page(FILE *fout,
               _("View the problem statement and send a submission"),
               cnts->team_head_style);
       html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
-      fprintf(fout, "<table class=\"borderless\">\n");
-      fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Problem"));
+      fprintf(fout, "<table class=\"b0\">\n");
+      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">", _("Problem"));
 
       html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 0,
                              start_time);
 
-      fprintf(fout, "</td><td class=\"borderless\">%s</td></tr></table></form>\n",
+      fprintf(fout, "</td><td class=\"b0\">%s</td></tr></table></form>\n",
               ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
                                _("Select problem")));
     } else if (start_time > 0 && stop_time <= 0 && prob_id > 0) {
@@ -10075,7 +10071,7 @@ user_main_page(FILE *fout,
         }
         fprintf(fout, "<input type=\"hidden\" name=\"prob_id\" value=\"%d\"/>\n",
                 prob_id);
-        fprintf(fout, "<table class=\"borderless\">\n");
+        fprintf(fout, "<table class=\"b0\">\n");
         if (!prob->type_val) {
           for (i = 1; i <= cs->max_lang; i++) {
             if (!cs->langs[i] || cs->langs[i]->disabled) continue;
@@ -10096,13 +10092,13 @@ user_main_page(FILE *fout,
 
           if (lang_count == 1) {
             html_hidden(fout, "lang_id", "%d", lang_id);
-            fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">%s - %s</td></tr>\n",
+            fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s - %s</td></tr>\n",
                     _("Language"),
                     cs->langs[lang_id]->short_name,
                     cs->langs[lang_id]->long_name);
           } else {
             last_lang_id = get_last_language(cs, phr->user_id);
-            fprintf(fout, "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Language"));
+            fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">", _("Language"));
             fprintf(fout, "<select name=\"lang_id\"><option value=\"\">\n");
             for (i = 1; i <= cs->max_lang; i++) {
               if (!cs->langs[i] || cs->langs[i]->disabled) continue;
@@ -10128,7 +10124,7 @@ user_main_page(FILE *fout,
         switch (prob->type_val) {
         case PROB_TYPE_STANDARD:
         case PROB_TYPE_OUTPUT_ONLY:
-          fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\"><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
+          fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
           break;
         case PROB_TYPE_SHORT_ANSWER:
           last_source = 0;
@@ -10136,14 +10132,14 @@ user_main_page(FILE *fout,
             last_source = get_last_source(cs, phr->user_id, prob->id);
           }
           if (last_source) {
-            fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\"><input type=\"text\" name=\"file\" value=\"%s\"/></td></tr>\n", _("Answer"), ARMOR(last_source));
+            fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"text\" name=\"file\" value=\"%s\"/></td></tr>\n", _("Answer"), ARMOR(last_source));
           } else {
-            fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\"><input type=\"text\" name=\"file\"/></td></tr>\n", _("Answer"));
+            fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"text\" name=\"file\"/></td></tr>\n", _("Answer"));
           }
         xfree(last_source); last_source = 0;
           break;
         case PROB_TYPE_TEXT_ANSWER:
-          fprintf(fout, "<tr><td colspan=\"2\" class=\"borderless\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
+          fprintf(fout, "<tr><td colspan=\"2\" class=\"b0\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
           break;
         case PROB_TYPE_SELECT_ONE:
           last_answer = -1;
@@ -10165,26 +10161,25 @@ user_main_page(FILE *fout,
                 if (next_prob_id > cs->max_prob) next_prob_id = prob->id;
               }
               write_alternatives_file(fout, 1, alternatives, last_answer,
-                                      prob->id, next_prob_id, 1, "borderless");
+                                      prob->id, next_prob_id, 1, "b0");
             } else {
               write_alternatives_file(fout, 1, alternatives, last_answer,
-                                      0, 0, 0, "borderless");
+                                      0, 0, 0, "b0");
             }
           } else if (prob->alternative) {
             for (i = 0; prob->alternative[i]; i++) {
               cc = "";
               if (i + 1 == last_answer) cc = " checked=\"1\"";
-              fprintf(fout, "<tr><td class=\"borderless\">%d</td><td class=\"borderless\"><input type=\"radio\" name=\"file\" value=\"%d\"%s/></td><td>%s</td></tr>\n", i + 1, i + 1, cc, prob->alternative[i]);
+              fprintf(fout, "<tr><td class=\"b0\">%d</td><td class=\"b0\"><input type=\"radio\" name=\"file\" value=\"%d\"%s/></td><td>%s</td></tr>\n", i + 1, i + 1, cc, prob->alternative[i]);
             }
           }
           break;
         case PROB_TYPE_SELECT_MANY:
           if (alternatives) {
-            write_alternatives_file(fout, 0, alternatives, -1, 0, 0, 0,
-                                    "borderless");
+            write_alternatives_file(fout, 0, alternatives, -1, 0, 0, 0, "b0");
           } else if (prob->alternative) {
             for (i = 0; prob->alternative[i]; i++) {
-              fprintf(fout, "<tr><td class=\"borderless\">%d</td><td class=\"borderless\"><input type=\"checkbox\" name=\"ans_%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+              fprintf(fout, "<tr><td class=\"b0\">%d</td><td class=\"b0\"><input type=\"checkbox\" name=\"ans_%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
             }
           }
           break;
@@ -10194,8 +10189,8 @@ user_main_page(FILE *fout,
         if (cnts->exam_mode) {
           if (prob->type_val != PROB_TYPE_SELECT_ONE) {
             cc = "";
-            if (prob && (prob->type_val == PROB_TYPE_SELECT_MANY || prob->type_val == PROB_TYPE_SELECT_ONE)) cc = "<td class=\"borderless\">&nbsp;</td>";
-            fprintf(fout, "<tr>%s<td class=\"borderless\">&nbsp;</td><td class=\"borderless\">%s</td></tr></table></form>\n", cc,
+            if (prob && (prob->type_val == PROB_TYPE_SELECT_MANY || prob->type_val == PROB_TYPE_SELECT_ONE)) cc = "<td class=\"b0\">&nbsp;</td>";
+            fprintf(fout, "<tr>%s<td class=\"b0\">&nbsp;</td><td class=\"b0\">%s</td></tr></table></form>\n", cc,
                     ns_submit_button(bb, sizeof(bb), 0,
                                      NEW_SRV_ACTION_SUBMIT_RUN,
                                      _("Submit solution!")));
@@ -10203,7 +10198,7 @@ user_main_page(FILE *fout,
             fprintf(fout, "</tr></table></form>\n");
           }
         } else {
-          fprintf(fout, "<tr><td class=\"borderless\">%s</td><td class=\"borderless\">%s</td></tr></table></form>\n",
+          fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\">%s</td></tr></table></form>\n",
                   _("Send!"),
                   BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
         }
@@ -10227,14 +10222,14 @@ user_main_page(FILE *fout,
         }
         if (global->score_system_val == SCORE_OLYMPIAD) {
           ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
-                                       prob_id, "summary");
+                                       prob_id, "b1");
         } else {
           new_write_user_runs(cs, fout, phr->user_id, all_runs, prob->id,
                               NEW_SRV_ACTION_VIEW_SOURCE,
                               NEW_SRV_ACTION_VIEW_REPORT,
                               NEW_SRV_ACTION_PRINT_RUN,
                               phr->session_id, phr->self_url,
-                              phr->hidden_vars, "", "summary");
+                              phr->hidden_vars, "", "b1");
         }
       }
 
@@ -10251,7 +10246,7 @@ user_main_page(FILE *fout,
           */
         }
         html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
-        fprintf(fout, "<table class=\"borderless\">\n");
+        fprintf(fout, "<table class=\"b0\">\n");
         fprintf(fout, "<tr>");
 
         if (global->problem_navigation > 0) {
@@ -10260,7 +10255,7 @@ user_main_page(FILE *fout,
             break;
           }
           if (i > 0) {
-            fprintf(fout, "<td class=\"borderless\">%s%s</a></td>",
+            fprintf(fout, "<td class=\"b0\">%s%s</a></td>",
                     ns_aref(bb, sizeof(bb), phr,
                             NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
                             "prob_id=%d", i), _("Previous problem"));
@@ -10268,10 +10263,10 @@ user_main_page(FILE *fout,
         }
 
         if (global->problem_navigation <= 0) {
-          fprintf(fout, "<td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Problem"));
+          fprintf(fout, "<td class=\"b0\">%s:</td><td class=\"b0\">", _("Problem"));
           html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0,
                                  0, start_time);
-          fprintf(fout, "</td><td class=\"borderless\">%s</td>",
+          fprintf(fout, "</td><td class=\"b0\">%s</td>",
                   ns_submit_button(bb, sizeof(bb), 0,
                                    NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
                                    _("Select problem")));
@@ -10283,7 +10278,7 @@ user_main_page(FILE *fout,
             break;
           }
           if (i <= cs->max_prob) {
-            fprintf(fout, "<td class=\"borderless\">%s%s</a></td>",
+            fprintf(fout, "<td class=\"b0\">%s%s</a></td>",
                     ns_aref(bb, sizeof(bb), phr,
                             NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
                             "prob_id=%d", i), _("Next problem"));
@@ -10303,14 +10298,14 @@ user_main_page(FILE *fout,
             cnts->team_head_style);
     if (global->score_system_val == SCORE_OLYMPIAD) {
       ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
-                                   0, "summary");
+                                   0, "b1");
     } else {
       new_write_user_runs(cs, fout, phr->user_id, all_runs, 0,
                           NEW_SRV_ACTION_VIEW_SOURCE,
                           NEW_SRV_ACTION_VIEW_REPORT,
                           NEW_SRV_ACTION_PRINT_RUN,
                           phr->session_id, phr->self_url,
-                          phr->hidden_vars, "", "summary");
+                          phr->hidden_vars, "", "b1");
     }
     if (all_runs) s = _("View last 15");
     else s = _("View all");
@@ -10326,13 +10321,13 @@ user_main_page(FILE *fout,
               cnts->team_head_style, _("Send a message to judges"),
               cnts->team_head_style);
       html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
-      fprintf(fout, "<table class=\"borderless\"><tr><td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Problem"));
+      fprintf(fout, "<table class=\"b0\"><tr><td class=\"b0\">%s:</td><td class=\"b0\">", _("Problem"));
       html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 1,
                              start_time);
-      fprintf(fout, "</td></tr>\n<tr><td class=\"borderless\">%s:</td>"
-              "<td class=\"borderless\"><input type=\"text\" name=\"subject\"/></td></tr>\n"
-              "<tr><td colspan=\"2\" class=\"borderless\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
-              "<tr><td colspan=\"2\" class=\"borderless\">%s</td></tr>\n"
+      fprintf(fout, "</td></tr>\n<tr><td class=\"b0\">%s:</td>"
+              "<td class=\"b0\"><input type=\"text\" name=\"subject\"/></td></tr>\n"
+              "<tr><td colspan=\"2\" class=\"b0\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
+              "<tr><td colspan=\"2\" class=\"b0\">%s</td></tr>\n"
               "</table></form>\n",
               _("Subject"), BUTTON(NEW_SRV_ACTION_SUBMIT_CLAR));
     }
@@ -10344,13 +10339,13 @@ user_main_page(FILE *fout,
               cnts->team_head_style, _("Send an appeal"),
               cnts->team_head_style);
       html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
-      fprintf(fout, "<table class=\"borderless\"><tr><td class=\"borderless\">%s:</td><td class=\"borderless\">", _("Problem"));
+      fprintf(fout, "<table class=\"b0\"><tr><td class=\"b0\">%s:</td><td class=\"b0\">", _("Problem"));
       html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 1,
                              start_time);
-      fprintf(fout, "</td></tr>\n<tr><td class=\"borderless\">%s:</td>"
-              "<td class=\"borderless\"><input type=\"text\" name=\"test\"/></td></tr>\n"
-              "<tr><td colspan=\"2\" class=\"borderless\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
-              "<tr><td colspan=\"2\" class=\"borderless\">%s</td></tr>\n"
+      fprintf(fout, "</td></tr>\n<tr><td class=\"b0\">%s:</td>"
+              "<td class=\"b0\"><input type=\"text\" name=\"test\"/></td></tr>\n"
+              "<tr><td colspan=\"2\" class=\"b0\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
+              "<tr><td colspan=\"2\" class=\"b0\">%s</td></tr>\n"
               "</table></form>\n",
               _("Test number"), BUTTON(NEW_SRV_ACTION_SUBMIT_APPEAL));
     }
@@ -10364,7 +10359,7 @@ user_main_page(FILE *fout,
     new_write_user_clars(cs, fout, phr->user_id, all_clars,
                          NEW_SRV_ACTION_VIEW_CLAR,
                          phr->session_id,
-                         phr->self_url, phr->hidden_vars, "", "summary");
+                         phr->self_url, phr->hidden_vars, "", "b1");
 
     if (all_clars) s = _("View last 15");
     else s = _("View all");
@@ -10380,11 +10375,11 @@ user_main_page(FILE *fout,
               cnts->team_head_style);
       html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
 
-      fprintf(fout, "<table class=\"borderless\">\n"
-              "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"oldpasswd\" size=\"16\"/></td></tr>\n"
-              "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"newpasswd1\" size=\"16\"/></td></tr>\n"
-              "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"newpasswd2\" size=\"16\"/></td></tr>\n"
-              "<tr><td class=\"borderless\" colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr>\n"
+      fprintf(fout, "<table class=\"b0\">\n"
+              "<tr><td class=\"b0\">%s:</td><td class=\"b0\"><input type=\"password\" name=\"oldpasswd\" size=\"16\"/></td></tr>\n"
+              "<tr><td class=\"b0\">%s:</td><td class=\"b0\"><input type=\"password\" name=\"newpasswd1\" size=\"16\"/></td></tr>\n"
+              "<tr><td class=\"b0\">%s:</td><td class=\"b0\"><input type=\"password\" name=\"newpasswd2\" size=\"16\"/></td></tr>\n"
+              "<tr><td class=\"b0\" colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr>\n"
               "</table></form>",
               _("Old password"),
               _("New password"), _("Retype new password"),
@@ -10398,9 +10393,9 @@ user_main_page(FILE *fout,
               cnts->team_head_style, _("Change language"),
               cnts->team_head_style);
       html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-      fprintf(fout, "<table class=\"borderless\"><tr><td class=\"borderless\">%s</td><td class=\"borderless\">", _("Change language"));
+      fprintf(fout, "<table class=\"b0\"><tr><td class=\"b0\">%s</td><td class=\"b0\">", _("Change language"));
       l10n_html_locale_select(fout, phr->locale_id);
-      fprintf(fout, "</td><td class=\"borderless\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr></table></form>\n",
+      fprintf(fout, "</td><td class=\"b0\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr></table></form>\n",
               NEW_SRV_ACTION_CHANGE_LANGUAGE, _("Change"));
     }
 #endif /* CONF_HAS_LIBINTL */
@@ -10409,7 +10404,7 @@ user_main_page(FILE *fout,
   /* new problem navigation */
   if (global->problem_navigation > 0 && global->vertical_navigation
       && start_time > 0 && stop_time <= 0) {
-    fprintf(fout, "</div></td><td class=\"borderless\" id=\"probNavRightList\">\n");
+    fprintf(fout, "</div></td><td class=\"b0\" id=\"probNavRightList\">\n");
 
     for (i = 1, j = 0; i <= cs->max_prob; i++) {
       if (!(prob = cs->probs[i])) continue;

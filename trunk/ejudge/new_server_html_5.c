@@ -145,7 +145,7 @@ anon_select_contest_page(FILE *fout, struct http_request_info *phr)
   fprintf(fout, "<h2>%s</h2>\n", _("Select one of available contests"));
 
   cntsnum = contests_get_list(&cntslist);
-  cl = " class=\"summary\"";
+  cl = " class=\"b1\"";
   fprintf(fout, "<table%s><tr>"
           "<td%s>N</td><td%s>%s</td><td%s>%s</td><td%s>%s</td></tr>\n",
           cl, cl, cl, _("Contest name"), cl, _("Registration mode"),
@@ -323,7 +323,7 @@ login_page(
 
       fprintf(fout, _("<p%s>The account parameters are as follows:</p>\n"),
               par_style);
-      fprintf(fout, "<table class=\"summary\">\n");
+      fprintf(fout, "<table class=\"b1\">\n");
       fprintf(fout, "<tr><td>%s</td><td><tt>%s</tt></td></tr>\n",
               _("Login"), ARMOR(login));
       fprintf(fout, "<tr><td>%s</td><td><tt>%s</tt></td></tr>\n",
@@ -992,7 +992,7 @@ info_table_row(FILE *fout, const unsigned char *s1, const unsigned char *s2,
     red_end = "</font>";
   }
 
-  fprintf(fout, "<tr><td class=\"borderless\">%s%s%s:</td><td class=\"borderless\">", red_beg, s1, red_end);
+  fprintf(fout, "<tr><td class=\"b0\">%s%s%s:</td><td class=\"b0\">", red_beg, s1, red_end);
   if (is_empty || !s2 || !*s2) {
     fprintf(fout, "&nbsp;");
   } else if (is_href) {
@@ -1001,7 +1001,7 @@ info_table_row(FILE *fout, const unsigned char *s1, const unsigned char *s2,
   } else {
     fprintf(fout, "<tt>%s</tt>", html_armor_buf(pb, s2));
   }
-  fprintf(fout, "</td><td class=\"borderless\">");
+  fprintf(fout, "</td><td class=\"b0\">");
   if ((is_empty || !s2 || !*s2) && login && *login) {
     fprintf(fout, "<i>%s:</i> <tt>%s</tt>", _("Default value"), ARMOR(login));
   } else if ((is_empty || !s2 || !*s2) && is_mandatory) {
@@ -1273,7 +1273,7 @@ main_page_view_info(
               ns_aref(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE, 0), _("Edit"));
     }
     fprintf(fout, "</h2>\n");
-    fprintf(fout, "<table class=\"borderless\">\n");
+    fprintf(fout, "<table class=\"b0\">\n");
     s = 0;
     if (u && u->login && *u->login) {
       s = u->login;
@@ -1390,7 +1390,7 @@ main_page_view_info(
         }
         fprintf(fout, "</h3>\n");
         if (!(m = u->i.members[rr]->members[mm])) continue;
-        fprintf(fout, "<table class=\"borderless\">\n");
+        fprintf(fout, "<table class=\"b0\">\n");
 
         for (i = 0; (ff = member_fields_order[i]); i++) {
           if (!cnts->members[rr]->fields[ff]) continue;
@@ -1431,11 +1431,11 @@ main_page_view_settings(
   html_start_form(fout, 1, phr->self_url, "");
   html_hidden(fout, "SID", "%016llx", phr->session_id);
 
-  fprintf(fout, "<table class=\"borderless\">\n"
-          "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"oldpasswd\" size=\"16\"/></td></tr>\n"
-          "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"newpasswd1\" size=\"16\"/></td></tr>\n"
-          "<tr><td class=\"borderless\">%s:</td><td class=\"borderless\"><input type=\"password\" name=\"newpasswd2\" size=\"16\"/></td></tr>\n"
-          "<tr><td class=\"borderless\" colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr>\n"
+  fprintf(fout, "<table class=\"b0\">\n"
+          "<tr><td class=\"b0\">%s:</td><td class=\"b0\"><input type=\"password\" name=\"oldpasswd\" size=\"16\"/></td></tr>\n"
+          "<tr><td class=\"b0\">%s:</td><td class=\"b0\"><input type=\"password\" name=\"newpasswd1\" size=\"16\"/></td></tr>\n"
+          "<tr><td class=\"b0\">%s:</td><td class=\"b0\"><input type=\"password\" name=\"newpasswd2\" size=\"16\"/></td></tr>\n"
+          "<tr><td class=\"b0\" colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr>\n"
           "</table></form>",
           _("Old password"),
           _("New password"), _("Retype new password"),
@@ -1448,9 +1448,9 @@ main_page_view_settings(
     html_start_form(fout, 1, phr->self_url, "");
     html_hidden(fout, "SID", "%016llx", phr->session_id);
     html_hidden(fout, "next_action", "%d", NEW_SRV_ACTION_VIEW_SETTINGS);
-    fprintf(fout, "<table class=\"borderless\"><tr><td class=\"borderless\">%s</td><td class=\"borderless\">", _("Change language"));
+    fprintf(fout, "<table class=\"b0\"><tr><td class=\"b0\">%s</td><td class=\"b0\">", _("Change language"));
     l10n_html_locale_select(fout, phr->locale_id);
-    fprintf(fout, "</td><td class=\"borderless\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr></table></form>\n",
+    fprintf(fout, "</td><td class=\"b0\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr></table></form>\n",
             NEW_SRV_ACTION_CHANGE_LANGUAGE, _("Change"));
     }
 #endif /* CONF_HAS_LIBINTL */
@@ -1669,12 +1669,12 @@ edit_general_form(
 
   html_start_form(fout, 1, phr->self_url, "");
   html_hidden(fout, "SID", "%llx", phr->session_id);
-  fprintf(fout, "<table class=\"borderless\">");
+  fprintf(fout, "<table class=\"b0\">");
 
   bb[0] = 0;
   if (cnts->user_name_comment)
     snprintf(bb, sizeof(bb), "%s", cnts->user_name_comment);
-  fprintf(fout, "<tr><td class=\"borderless\"><b>%s</b>%s:</td>",
+  fprintf(fout, "<tr><td class=\"b0\"><b>%s</b>%s:</td>",
           cnts->personal?_("User name (for standings)"):_("Team name"), bb);
   bb[0] = 0;
   if (u->i.name) snprintf(bb, sizeof(bb), "%s", u->i.name);
@@ -1682,17 +1682,17 @@ edit_general_form(
   if (check_str(bb, name_accept_chars) < 0) {
     comment = __("contains invalid characters");
   }
-  fprintf(fout, "<td class=\"borderless\">%s</td>",
+  fprintf(fout, "<td class=\"b0\">%s</td>",
           html_input_text(bb, sizeof(bb), "name", 64, ARMOR(bb)));
   
   if (!comment) comment = "&nbsp;";
-  fprintf(fout, "<td class=\"borderless\"><font color=\"red\"><i>%s</i></font></td>", comment);
+  fprintf(fout, "<td class=\"b0\"><font color=\"red\"><i>%s</i></font></td>", comment);
   fprintf(fout, "</tr>\n");
 
   for (i = 0; (ff = contest_fields_order[i]); i++) {
     if (!cnts->fields[ff]) continue;
     fprintf(fout, "<tr>");
-    fprintf(fout, "<td class=\"borderless\" valign=\"top\">");
+    fprintf(fout, "<td class=\"b0\" valign=\"top\">");
     if (cnts->fields[ff]->mandatory) fprintf(fout, "<b>");
     fprintf(fout, "%s:", gettext(contest_field_desc[ff].description));
     if (cnts->fields[ff]->mandatory) fprintf(fout, "</b>");
@@ -1714,16 +1714,16 @@ edit_general_form(
       allowed_list_map(bb, allowed_languages, allowed_languages_u,
                        &user_lang_map);
 
-      fprintf(fout, "<td class=\"borderless\"><table class=\"borderless\">\n");
+      fprintf(fout, "<td class=\"b0\"><table class=\"b0\">\n");
       for (j = 0; j < allowed_languages_u; j++) {
-        fprintf(fout, "<tr><td class=\"borderless\"><input type=\"checkbox\" name=\"proglang_%d\"%s/></td>"
-               "<td class=\"borderless\">%s</td></tr>\n",
+        fprintf(fout, "<tr><td class=\"b0\"><input type=\"checkbox\" name=\"proglang_%d\"%s/></td>"
+               "<td class=\"b0\">%s</td></tr>\n",
                j, user_lang_map[j]?" checked=\"yes\"":"",
                ARMOR(allowed_languages[j]));
       }
       fprintf(fout, "</table></td>\n");
     } else if (ff == CONTEST_F_REGION && allowed_regions_u > 0) {
-      fprintf(fout, "<td class=\"borderless\"><select name=\"region\"><option></option>");
+      fprintf(fout, "<td class=\"b0\"><select name=\"region\"><option></option>");
       for (j = 0; j < allowed_regions_u; j++) {
         s = "";
         if (!strcmp(bb, allowed_regions[j]))
@@ -1733,14 +1733,14 @@ edit_general_form(
       fprintf(fout, "</select></td>\n");
     } else {
       snprintf(varname, sizeof(varname), "param_%d", ff);
-      fprintf(fout, "<td class=\"borderless\">%s</td>",
+      fprintf(fout, "<td class=\"b0\">%s</td>",
               html_input_text(bb, sizeof(bb), varname,
                               contest_field_desc[ff].size,
                               ARMOR(bb)));
     }
   
     if (!comment) comment = "&nbsp;";
-    fprintf(fout, "<td class=\"borderless\" valign=\"top\"><font color=\"red\"><i>%s</i></font></td>", comment);
+    fprintf(fout, "<td class=\"b0\" valign=\"top\"><font color=\"red\"><i>%s</i></font></td>", comment);
     fprintf(fout, "</tr>\n");
   }
 
@@ -1754,11 +1754,11 @@ edit_general_form(
   }
 
   fprintf(fout, "</table>\n");
-  fprintf(fout, "<table class=\"borderless\"><tr>");
-  fprintf(fout, "<td class=\"borderless\">%s</td>",
+  fprintf(fout, "<table class=\"b0\"><tr>");
+  fprintf(fout, "<td class=\"b0\">%s</td>",
           ns_submit_button(bb, sizeof(bb), 0,
                            NEW_SRV_ACTION_REG_CANCEL_GENERAL_EDITING, 0));
-  fprintf(fout, "<td class=\"borderless\">%s</td>",
+  fprintf(fout, "<td class=\"b0\">%s</td>",
           ns_submit_button(bb, sizeof(bb), 0,
                            NEW_SRV_ACTION_REG_SUBMIT_GENERAL_EDITING, 0));
   fprintf(fout, "</tr></table>");
@@ -1898,12 +1898,12 @@ edit_member_form(
     html_hidden(fout, "role", "%d", role);
     html_hidden(fout, "member", "%d", member);
 
-    fprintf(fout, "<table class=\"borderless\">");
+    fprintf(fout, "<table class=\"b0\">");
   }
   for (i = 0; (ff = member_fields_order[i]); i++) {
     if (!cm->fields[ff]) continue;
     fprintf(fout, "<tr>");
-    fprintf(fout, "<td class=\"borderless\" valign=\"top\">");
+    fprintf(fout, "<td class=\"b0\" valign=\"top\">");
     if (cm->fields[ff]->mandatory) fprintf(fout, "<b>");
     fprintf(fout, "%s:", gettext(member_field_desc[ff].description));
     if (cm->fields[ff]->mandatory) fprintf(fout, "</b>");
@@ -1926,20 +1926,20 @@ edit_member_form(
     case CONTEST_MF_STATUS:
       val = 0;
       if (m) val = m->status;
-      display_status_changing_dialog(fout, ff, val, "<td class=\"borderless\">",
+      display_status_changing_dialog(fout, ff, val, "<td class=\"b0\">",
                                      "</td>", var_prefix);
       break;
 
     case CONTEST_MF_BIRTH_DATE:
     case CONTEST_MF_ENTRY_DATE:
     case CONTEST_MF_GRADUATION_DATE:
-      display_date_change_dialog(fout, ff, bb, "<td class=\"borderless\">",
+      display_date_change_dialog(fout, ff, bb, "<td class=\"b0\">",
                                  "</td>", var_prefix);
       break;
 
     default:
       snprintf(varname, sizeof(varname), "%sparam_%d", var_prefix, ff);
-      fprintf(fout, "<td class=\"borderless\">%s</td>",
+      fprintf(fout, "<td class=\"b0\">%s</td>",
               html_input_text(bb, sizeof(bb), varname,
                               member_field_desc[ff].size,
                               ARMOR(bb)));
@@ -1948,18 +1948,18 @@ edit_member_form(
 
     if (!comment || !*comment) comment = "&nbsp;";
     else comment = gettext(comment);
-    fprintf(fout, "<td class=\"borderless\" valign=\"top\"><font color=\"red\"><i>%s</i></font></td>", comment);
+    fprintf(fout, "<td class=\"b0\" valign=\"top\"><font color=\"red\"><i>%s</i></font></td>", comment);
     fprintf(fout, "</tr>\n");
   }
 
   if (!skip_header) {
     fprintf(fout, "</table>\n");
 
-    fprintf(fout, "<table class=\"borderless\"><tr>");
-    fprintf(fout, "<td class=\"borderless\">%s</td>",
+    fprintf(fout, "<table class=\"b0\"><tr>");
+    fprintf(fout, "<td class=\"b0\">%s</td>",
             ns_submit_button(bb, sizeof(bb), 0,
                              NEW_SRV_ACTION_REG_CANCEL_MEMBER_EDITING, 0));
-    fprintf(fout, "<td class=\"borderless\">%s</td>",
+    fprintf(fout, "<td class=\"b0\">%s</td>",
             ns_submit_button(bb, sizeof(bb), 0,
                              NEW_SRV_ACTION_REG_SUBMIT_MEMBER_EDITING, 0));
     fprintf(fout, "</table>");

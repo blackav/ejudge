@@ -60,7 +60,8 @@ h3
 
 #l13 /* the main block which contains information about server, footer and the content of the page between them */
 {
-        position:relative; 
+        /*position:relative;*/
+        position: absolute; 
         z-index:0;
         width: 100%;	
         top: 150px;
@@ -166,25 +167,25 @@ p.ejudge_copyright /* just copyright */
 div.server_status_on /* server status block when the server is up */
 {
         background-color: #aaffaa;
-        padding: 5px 5px 10px 10px;
+        padding: 4px 5px 4px 20px;
 }
 
 div.server_status_off /* server status block when the server is down */
 {
         background-color: #aaaaaa;
-        padding: 5px 5px 10px 10px;
+        padding: 4px 5px 4px 20px;
 }
 
 div.server_status_alarm /* server status block when the server is up */
 {
         background-color: #ffffaa;
-        padding: 5px 5px 10px 10px;
+        padding: 4px 5px 4px 20px;
 }
 
 div.server_status_error /* server status block in case of error */
 {
         background-color: #ffaaaa;
-        padding: 5px 5px 10px 10px;
+        padding: 4px 5px 4px 20px;
 }
 
 div.dotted
@@ -263,13 +264,13 @@ p.fixed_width
         width: 850px;
 }
 
-table.summary /* table for problem summary and logs */
+table.b1 /* table for problem summary and logs */
 {
         border-style: none;
         border-collapse: collapse;
 }
 
-td.summary /* for summary tables */
+td.b1 /* for summary tables */
 {
         border: solid;
         border-width: 1px;
@@ -277,7 +278,7 @@ td.summary /* for summary tables */
         margin: 1px;
 }
 
-th.summary /* for summary tables */
+th.b1 /* for summary tables */
 {
         border: solid;
         border-width: 1px;
@@ -285,11 +286,11 @@ th.summary /* for summary tables */
         margin: 1px;
 }
 
-table.borderless
+table.b0
 {
         border-style: none;
 }
-td.borderless
+td.b0
 { 
         border-style: none;
         font-size: 16px;
