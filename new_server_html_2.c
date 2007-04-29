@@ -317,7 +317,7 @@ ns_write_priv_all_runs(FILE *f,
     }
 
     // FIXME: class should be a parameter
-    snprintf(cl, sizeof(cl), " class=\"summary\"");
+    snprintf(cl, sizeof(cl), " class=\"b1\"");
 
     fprintf(f, "<table%s><tr><th%s>%s</th><th%s>%s</th>"
             "<th%s>%s</th><th%s>%s</th>"
@@ -498,10 +498,9 @@ ns_write_priv_all_runs(FILE *f,
       }
       run_status_str(pe->status, statstr, 0, prob_type, 0);
       write_html_run_status(cs, f, pe, 1, attempts, disq_attempts,
-                            prev_successes, "summary");
+                            prev_successes, "b1");
       if (phr->role == USER_ROLE_ADMIN) {
-        write_change_status_dialog(cs, f, "status", pe->is_imported,
-                                   "summary");
+        write_change_status_dialog(cs, f, "status", pe->is_imported, "b1");
         fprintf(f, "<td%s>%s</td>", cl, BUTTON(NEW_SRV_ACTION_CHANGE_STATUS));
       }
 
@@ -767,7 +766,7 @@ ns_write_all_clars(FILE *f,
                            NEW_SRV_ACTION_RESET_CLAR_FILTER, 0));
   fprintf(f, "</p></form>\n");
 
-  snprintf(cl, sizeof(cl), " class=\"summary\"");
+  snprintf(cl, sizeof(cl), " class=\"b1\"");
 
   fprintf(f, "<table%s><tr><th%s>%s</th><th%s>%s</th><th%s>%s</th>"
           "<th%s>%s</th>"
@@ -885,12 +884,12 @@ ns_write_run_view_menu(
     __("Audit log"),
   };
 
-  fprintf(f, "<table class=\"borderless\"><tr>");
-  fprintf(f, "<td class=\"borderless\">%s%s</a></td>",
+  fprintf(f, "<table class=\"b0\"><tr>");
+  fprintf(f, "<td class=\"b0\">%s%s</a></td>",
           ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
           _("Main page"));
   for (i = 0; action_list[i] > 0; i++) {
-    fprintf(f, "<td class=\"borderless\">");
+    fprintf(f, "<td class=\"b0\">");
     if (phr->action != action_list[i]) {
       /*
       fprintf(f, "%s",
@@ -1621,10 +1620,10 @@ ns_write_priv_report(const serve_state_t cs,
     break;
   case CONTENT_TYPE_XML:
     if (team_report_flag) {
-      write_xml_team_testing_report(cs, f, 0, start_ptr, "summary");
+      write_xml_team_testing_report(cs, f, 0, start_ptr, "b1");
     } else {
       write_xml_testing_report(f, start_ptr, phr->session_id,phr->self_url, "",
-                               new_actions_vector, "summary", 0);
+                               new_actions_vector, "b1", 0);
     }
     break;
   default:
@@ -2073,7 +2072,7 @@ ns_write_passwords(FILE *fout, FILE *log_f,
   struct teamdb_export td;
   unsigned char cl[128];
 
-  snprintf(cl, sizeof(cl), " class=\"summary\"");
+  snprintf(cl, sizeof(cl), " class=\"b1\"");
 
   fprintf(fout, "<table%s>\n"
           "<tr><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th></tr>",
@@ -2434,13 +2433,13 @@ ns_user_info_page(FILE *fout, FILE *log_f,
     }
     fprintf(fout, "</textarea></p>\n");
 
-    fprintf(fout, "<table class=\"borderless\"><tr>");
-    fprintf(fout, "<td class=\"borderless\">%s</td>",
+    fprintf(fout, "<table class=\"b0\"><tr>");
+    fprintf(fout, "<td class=\"b0\">%s</td>",
             ns_submit_button(bb, sizeof(bb), 0,
                              NEW_SRV_ACTION_SET_DISQUALIFICATION,
                              (flags & TEAM_DISQUALIFIED)?_("Edit comment"):_("Disqualify")));
     if ((flags & TEAM_DISQUALIFIED))
-      fprintf(fout, "<td class=\"borderless\">%s</td>\n",
+      fprintf(fout, "<td class=\"b0\">%s</td>\n",
               BUTTON(NEW_SRV_ACTION_CLEAR_DISQUALIFICATION));
     fprintf(fout, "</tr></table>\n");
     fprintf(fout, "</form>\n");
@@ -5074,8 +5073,8 @@ ns_examiners_page(
     // examiners + drop-down box to add an examiner + button to delete
     html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
     html_hidden(fout, "prob_id", "%d", prob_id);
-    fprintf(fout, "<table class=\"summary\">");
-    fprintf(fout, "<tr><td class=\"summary\" valign=\"top\">%s</td>",
+    fprintf(fout, "<table class=\"b1\">");
+    fprintf(fout, "<tr><td class=\"b1\" valign=\"top\">%s</td>",
             _("Chief examiner"));
 
     user_id = nsdb_find_chief_examiner(phr->contest_id, prob_id);
@@ -5101,9 +5100,9 @@ ns_examiners_page(
         }
       }
     }
-    fprintf(fout, "<td class=\"summary\" valign=\"top\">%s%s%s</td>", s_beg, nbuf, s_end);
+    fprintf(fout, "<td class=\"b1\" valign=\"top\">%s%s%s</td>", s_beg, nbuf, s_end);
 
-    fprintf(fout, "<td class=\"summary\" valign=\"top\">");
+    fprintf(fout, "<td class=\"b1\" valign=\"top\">");
     fprintf(fout, "<select name=\"chief_user_id\"><option value=\"0\"></option>");
     for (i = 1; i <= max_user_id; i++) {
       if (!(roles[i] & (1 << USER_ROLE_CHIEF_EXAMINER)))
@@ -5123,11 +5122,11 @@ ns_examiners_page(
     fprintf(fout, "</tr>");
 
     // examiners
-    fprintf(fout, "<tr><td class=\"summary\" valign=\"top\">%s</td>",
+    fprintf(fout, "<tr><td class=\"b1\" valign=\"top\">%s</td>",
             _("Examiners"));
 
     // list of examiners
-    fprintf(fout, "<td class=\"summary\" valign=\"top\">");
+    fprintf(fout, "<td class=\"b1\" valign=\"top\">");
     ex_cnt = nsdb_get_examiner_count(phr->contest_id, prob_id);
     if (max_user_id > 0) memset(exam_flag, 0, max_user_id + 1);
     if (ex_cnt < 0) {
@@ -5135,7 +5134,7 @@ ns_examiners_page(
     } else if (!ex_cnt) {
       fprintf(fout, "<i>%s</i>", "Nobody");
     } else {
-      fprintf(fout, "<table class=\"borderless\">");
+      fprintf(fout, "<table class=\"b0\">");
       for (iter = nsdb_get_examiner_user_id_iterator(phr->contest_id, prob_id);
            iter->has_next(iter);
            iter->next(iter)) {
@@ -5156,7 +5155,7 @@ ns_examiners_page(
                      logins[user_id], ARMOR(names[user_id]));
           }
         }
-        fprintf(fout, "<tr><td class=\"borderless\">%s%s%s</td></tr>",
+        fprintf(fout, "<tr><td class=\"b0\">%s%s%s</td></tr>",
                 s_beg, nbuf, s_end);
       }
       iter->destroy(iter); iter = 0;
@@ -5165,14 +5164,14 @@ ns_examiners_page(
     fprintf(fout, "</td>");
 
     // control elements
-    fprintf(fout, "<td class=\"summary\" valign=\"top\">");
+    fprintf(fout, "<td class=\"b1\" valign=\"top\">");
     if (!ex_cnt && !exam_role_count) {
       fprintf(fout, "&nbsp;");
     } else {
-      fprintf(fout, "<table class=\"borderless\">");
+      fprintf(fout, "<table class=\"b0\">");
       if (ex_cnt > 0) {
         // remove examiner
-        fprintf(fout, "<tr><td class=\"borderless\"><select name=\"exam_del_user_id\"><option value=\"0\"></option>");
+        fprintf(fout, "<tr><td class=\"b0\"><select name=\"exam_del_user_id\"><option value=\"0\"></option>");
         for (iter=nsdb_get_examiner_user_id_iterator(phr->contest_id, prob_id);
              iter->has_next(iter);
              iter->next(iter)) {
@@ -5190,7 +5189,7 @@ ns_examiners_page(
           fprintf(fout, "<option value=\"%d\">%s</option>", user_id, nbuf);
         }
         iter->destroy(iter); iter = 0;
-        fprintf(fout, "</select></td><td class=\"borderless\">%s</td></tr>",
+        fprintf(fout, "</select></td><td class=\"b0\">%s</td></tr>",
                 BUTTON(NEW_SRV_ACTION_UNASSIGN_EXAMINER));
       }
       // add examiner
@@ -5199,7 +5198,7 @@ ns_examiners_page(
         if ((roles[i] & (1 << USER_ROLE_EXAMINER)) && !exam_flag[i])
           add_count++;
       if (add_count > 0) {
-        fprintf(fout, "<tr><td class=\"borderless\"><select name=\"exam_add_user_id\"><option value=\"0\"></option>");
+        fprintf(fout, "<tr><td class=\"b0\"><select name=\"exam_add_user_id\"><option value=\"0\"></option>");
         for (i = 1; i <= max_user_id; i++) {
           if (!(roles[i] & (1 << USER_ROLE_EXAMINER)) || exam_flag[i])
             continue;
@@ -5209,7 +5208,7 @@ ns_examiners_page(
             snprintf(nbuf, sizeof(nbuf), "%s (%s)", logins[i], ARMOR(names[i]));
           fprintf(fout, "<option value=\"%d\">%s</option>", i, nbuf);
         }
-        fprintf(fout, "</select></td><td class=\"borderless\">%s</td></tr>",
+        fprintf(fout, "</select></td><td class=\"b0\">%s</td></tr>",
                 BUTTON(NEW_SRV_ACTION_ASSIGN_EXAMINER));
       }
       fprintf(fout, "</table>");
