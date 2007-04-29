@@ -226,13 +226,13 @@ p.fixed_width
         width: 750px;
 }
 
-table.summary /* table for problem summary and logs */
+table.b1 /* table for problem summary and logs */
 {
         border-style: none;
         border-collapse: collapse;
 }
 
-td.summary /* for summary tables */
+td.b1 /* for summary tables */
 {
         border: solid;
         border-width: 1px;
@@ -240,7 +240,7 @@ td.summary /* for summary tables */
         margin: 1px;
 }
 
-th.summary /* for summary tables */
+th.b1 /* for summary tables */
 {
         border: solid;
         border-width: 1px;
@@ -248,11 +248,11 @@ th.summary /* for summary tables */
         margin: 1px;
 }
 
-table.borderless
+table.b0
 {
         border-style: none;
 }
-td.borderless
+td.b0
 { 
         border-style: none;
 }
