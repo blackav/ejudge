@@ -9771,10 +9771,10 @@ user_main_page(FILE *fout,
           j++;
         }
         hh = "probNavHidden";
-        if (prob->disable_user_submit > 0) {
-          cc = "probDisabled";
-        } else if (i == prob_id) {
+        if (i == prob_id) {
           cc = "probCurrent";
+        } else if (prob->disable_user_submit > 0) {
+          cc = "probDisabled";
         } else if (!all_attempts[i]) {
           cc = "probEmpty";
         } else if (pending_flag[i] || trans_flag[i]) {
@@ -10410,10 +10410,10 @@ user_main_page(FILE *fout,
       if (!(prob = cs->probs[i])) continue;
       if (!(prob_status[i] & PROB_STATUS_TABABLE)) continue;
 
-      if (prob->disable_user_submit > 0) {
-        cc = "probDisabled";
-      } else if (i == prob_id) {
+      if (i == prob_id) {
         cc = "probCurrent";
+      } else if (prob->disable_user_submit > 0) {
+        cc = "probDisabled";
       } else if (!all_attempts[i]) {
         cc = "probEmpty";
       } else if (pending_flag[i] || trans_flag[i]) {
