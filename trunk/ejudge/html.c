@@ -1870,8 +1870,10 @@ do_write_kirov_standings(const serve_state_t state,
   XALLOCAZ(p_ind, p_max);
   XALLOCAZ(p_rev, p_max);
   for (i = 1, p_tot = 0; i < p_max; i++) {
+    struct section_problem_data *p;
     p_rev[i] = -1;
-    if (!state->probs[i] || state->probs[i]->hidden) continue;
+    if (!(p = state->probs[i]) || p->hidden) continue;
+    if (p->t_start_date > 0 && cur_time < p->t_start_date) continue;
     p_rev[i] = p_tot;
     p_ind[p_tot++] = i;
   }
@@ -2839,6 +2841,7 @@ do_write_moscow_standings(const serve_state_t state,
   unsigned char *up_trans = 0;  /* whether there exist transient runs */
   unsigned char *up_cf = 0;     /* whether there exist "Check failed" messages */
   struct standings_style ss;
+  const struct section_problem_data *prob;
   
   if (client_flag) head_style = cnts->team_head_style;
   else head_style = "h2";
@@ -2942,12 +2945,14 @@ do_write_moscow_standings(const serve_state_t state,
   XALLOCA(p_ind, p_max);
   XALLOCA(p_rev, p_max);
   memset(p_rev, -1, p_max * sizeof(p_rev[0]));
-  for (i = 1, p_tot = 0; i < p_max; i++)
-    if (state->probs[i] && !state->probs[i]->hidden) {
-      p_rev[i] = p_tot;
-      p_ind[p_tot] = i;
-      p_tot++;
-    }
+  for (i = 1, p_tot = 0; i < p_max; i++) {
+    if (!(prob = state->probs[i])) continue;
+    if (prob->hidden > 0) continue;
+    if (prob->t_start_date > 0 && cur_time < prob->t_start_date) continue;
+    p_rev[i] = p_tot;
+    p_ind[p_tot] = i;
+    p_tot++;
+  }
 
   /* calculate the power of 2 not less than p_tot */
   for (row_sz = 1, row_sh = 0; row_sz < p_tot; row_sz <<= 1, row_sh++);
@@ -2984,7 +2989,6 @@ do_write_moscow_standings(const serve_state_t state,
   for (i = 0; i < r_tot; i++) {
     const struct run_entry *pe = &runs[i];
     time_t run_time = pe->time;
-    const struct section_problem_data *prob;
     int up_ind;
 
     if (pe->is_hidden) continue;
@@ -3754,7 +3758,8 @@ do_write_standings(const serve_state_t state,
   XALLOCAZ(p_rev, p_max);
   for (i = 1, p_tot = 0; i < p_max; i++) {
     p_rev[i] = -1;
-    if (!state->probs[i] || state->probs[i]->hidden) continue;
+    if (!(prob = state->probs[i]) || prob->hidden) continue;
+    if (prob->t_start_date > 0 && cur_time < prob->t_start_date) continue;
     p_rev[i] = p_tot;
     p_ind[p_tot++] = i;
   }
