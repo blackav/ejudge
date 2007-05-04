@@ -291,7 +291,6 @@ cmd_http_request(struct server_framework_state *state,
   hr.client_state = p;
   hr.fw_state = state;
   gettimeofday(&hr.timestamp1, 0);
-  hr.next_run_id = -1;
 
   if (pkt_size < sizeof(*pkt))
     return nsf_err_packet_too_small(state, p, pkt_size, sizeof(*pkt));

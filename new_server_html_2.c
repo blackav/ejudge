@@ -2138,7 +2138,7 @@ ns_user_info_page(FILE *fout, FILE *log_f,
   const unsigned char *s;
   const struct userlist_user *u = 0;
   const struct userlist_contest *uc = 0;
-  unsigned char bb[1024];
+  unsigned char bb[1024], hbuf[1024];
   int allowed_edit = 0, needed_cap = 0, init_value, i;
 
   teamdb_export_team(cs->teamdb_state, view_user_id, &u_info);
@@ -2149,6 +2149,23 @@ ns_user_info_page(FILE *fout, FILE *log_f,
   flags = teamdb_get_flags(cs->teamdb_state, view_user_id);
   u = u_info.user;
   if (u) uc = userlist_get_user_contest(u, phr->contest_id);
+
+  fprintf(fout, "<ul>\n");
+  fprintf(fout, "<li>%s%s</a></li>\n",
+          ns_aref(hbuf, sizeof(hbuf), phr, 0, 0),
+          _("Main page"));
+  fprintf(fout, "<li>%s%s</a></li>\n",
+          ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USERS, 0),
+          _("View regular users"));
+  fprintf(fout, "<li>%s%s</a></li>\n",
+          ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_REG_PWDS, 0),
+          _("View registration passwords"));
+  if (!cnts->disable_team_password) {
+    fprintf(fout, "<li>%s%s</a></li>\n",
+            ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_CNTS_PWDS, 0),
+            _("View contest passwords"));
+  }
+  fprintf(fout, "</ul>\n");
 
   // table has 4 columns
   fprintf(fout, "<table>\n");
