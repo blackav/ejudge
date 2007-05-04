@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-27 05:46+0400\n"
-"PO-Revision-Date: 2007-04-27 05:51+0400\n"
+"POT-Creation-Date: 2007-05-05 00:08+0400\n"
+"PO-Revision-Date: 2007-05-05 00:10+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -2458,6 +2458,12 @@ msgstr "Старый пароль некорректен"
 msgid "Old password is too long"
 msgstr "Старый пароль имеет слишком большую длину"
 
+msgid "On-line users in this contest"
+msgstr "Пользователей в турнире в этот момент"
+
+msgid "Online users"
+msgstr "Подключившиеся пользователи"
+
 #, c-format
 msgid "Only %d members \"%s\" are specified instead of minimum %d."
 msgstr "Только %d участников \"%s\" указаны вместо минимальных %d."
@@ -3864,6 +3870,9 @@ msgstr "Посмотреть команды"
 
 msgid "View the problem statement and send a submission"
 msgstr "Посмотреть условие задачи и отправить решение"
+
+msgid "View who is currently online"
+msgstr "Посмотреть подключившихся пользователей"
 
 msgid "Viewing advisors"
 msgstr "Просмотр руководителей"
