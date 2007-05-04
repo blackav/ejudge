@@ -128,6 +128,7 @@ enum
   NEW_SRV_ACTION_MAIN_PAGE = 2,
   NEW_SRV_ACTION_COOKIE_LOGIN = 3, /* number needed for super-serve */
   NEW_SRV_ACTION_VIEW_USERS,
+  NEW_SRV_ACTION_VIEW_ONLINE_USERS,
   NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS,
   NEW_SRV_ACTION_USERS_SET_PENDING,
   NEW_SRV_ACTION_USERS_SET_OK,
@@ -330,6 +331,26 @@ enum
   NEW_SRV_ACTION_LAST,
 };
 
+struct last_access_info
+{
+  ej_ip_t ip;
+  int     ssl;
+  time_t  time;
+  int     user_id;
+};
+
+struct last_access_array
+{
+  struct last_access_info *v;
+  int a, u;
+};
+
+struct last_access_idx
+{
+  short *v;
+  int a;
+};
+
 struct contest_extra
 {
   struct watched_file header;
@@ -351,6 +372,9 @@ struct contest_extra
   const unsigned char *separator_txt;
   const unsigned char *copyright_txt;
   unsigned char *contest_arm;
+
+  struct last_access_array user_access[USER_ROLE_LAST];
+  struct last_access_idx   user_access_idx;
 
   serve_state_t serve_state;
   time_t last_access_time;
@@ -540,6 +564,11 @@ ns_write_passwords(FILE *fout, FILE *log_f,
                    struct http_request_info *phr,
                    const struct contest_desc *cnts,
                    struct contest_extra *extra);
+int
+ns_write_online_users(FILE *fout, FILE *log_f,
+                      struct http_request_info *phr,
+                      const struct contest_desc *cnts,
+                      struct contest_extra *extra);
 
 int
 ns_user_info_page(FILE *fout, FILE *log_f,

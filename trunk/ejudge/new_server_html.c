@@ -255,6 +255,7 @@ ns_unload_contest(int contest_id)
 {
   struct contest_extra *extra;
   const struct contest_desc *cnts = 0;
+  int i;
 
   if (contest_id <= 0 || contest_id >= extra_a) return;
   if (!(extra = extras[contest_id])) return;
@@ -278,6 +279,11 @@ ns_unload_contest(int contest_id)
   watched_file_clear(&extra->priv_footer);
   watched_file_clear(&extra->copyright);
   watched_file_clear(&extra->welcome);
+
+  for (i = 0; i < USER_ROLE_LAST; i++) {
+    xfree(extra->user_access[i].v);
+  }
+  xfree(extra->user_access_idx.v);
 
   memset(extra, 0, sizeof(*extra));
   xfree(extra);
@@ -5266,6 +5272,31 @@ priv_view_passwords(FILE *fout,
   return retval;
 }
 
+static int
+priv_view_online_users(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+
+  if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
+            phr->name_arm, phr->contest_id, extra->contest_arm,
+            _("Online users"));
+  ns_write_online_users(fout, log_f, phr, cnts, extra);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  return retval;
+}
+
 void
 unpriv_print_status(FILE *fout,
                     struct http_request_info *phr,
@@ -5602,6 +5633,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_1] = priv_upsolving_configuration_1,
   [NEW_SRV_ACTION_EXAMINERS_PAGE] = priv_examiners_page,
+  [NEW_SRV_ACTION_VIEW_ONLINE_USERS] = priv_view_online_users,
 };
 
 static void
@@ -5794,7 +5826,7 @@ priv_main_page(FILE *fout,
   int filter_first_run = 0, filter_last_run = 0, filter_first_clar = 0;
   int filter_last_clar = 0, filter_mode_clar = 0;
   const unsigned char *filter_expr = 0;
-  int i, x, y, n, variant = 0, need_examiners = 0;
+  int i, x, y, n, variant = 0, need_examiners = 0, online_users = 0;
   const struct section_problem_data *prob = 0;
   path_t variant_stmt_file;
   struct watched_file *pw = 0;
@@ -5802,6 +5834,7 @@ priv_main_page(FILE *fout,
   const unsigned char *alternatives;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int skip_start_form = 0;
+  struct last_access_info *pa;
 
   if (ns_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
   if (ns_cgi_param(phr, "filter_first_run", &s) > 0
@@ -5862,6 +5895,9 @@ priv_main_page(FILE *fout,
   fprintf(fout, "<li>%s%s</a></li>\n",
           ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_PRIV_USERS_VIEW, 0),
           _("View privileged users"));
+  fprintf(fout, "<li>%s%s</a></li>\n",
+          ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_ONLINE_USERS, 0),
+          _("View who is currently online"));
   if (need_examiners)
     fprintf(fout, "<li>%s%s</a></li>\n",
             ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_EXAMINERS_PAGE, 0),
@@ -5953,6 +5989,15 @@ priv_main_page(FILE *fout,
     fprintf(fout, "<p><big><b>%s</b></big></p>\n",
             _("Print requests are suspended"));
   }
+
+  // count online users
+  online_users = 0;
+  for (i = 0; i < extra->user_access[USER_ROLE_CONTESTANT].u; i++) {
+    pa = &extra->user_access[USER_ROLE_CONTESTANT].v[i];
+    if (pa->time + 65 >= cs->current_time) online_users++;
+  }
+  fprintf(fout, "<p><big><b>%s: %d</b></big></p>\n",
+          _("On-line users in this contest"), online_users);
 
   if (phr->role == USER_ROLE_ADMIN
       && opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) >= 0) {
@@ -6543,6 +6588,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TOGGLE_BAN] = priv_generic_operation,
   [NEW_SRV_ACTION_TOGGLE_LOCK] = priv_generic_operation,
   [NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS] = priv_generic_operation,
+  [NEW_SRV_ACTION_VIEW_ONLINE_USERS] = priv_generic_page,
 };
 
 static void
@@ -10853,7 +10899,7 @@ static void
 unpriv_main_page(FILE *fout, struct http_request_info *phr,
                  int orig_locale_id)
 {
-  int r;
+  int r, i;
   const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
   time_t cur_time = time(0);
@@ -10963,6 +11009,41 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr,
 
   extra->serve_state->current_time = time(0);
   ns_check_contest_events(extra->serve_state, cnts);
+
+  // check the user map
+  if (phr->user_id >= extra->user_access_idx.a) {
+    int new_size = extra->user_access_idx.a;
+    if (!new_size) new_size = 128;
+    while (phr->user_id >= new_size) new_size *= 2;
+    short *new_idx = (short*) xmalloc(new_size * sizeof(new_idx[0]));
+    memset(new_idx, -1, new_size * sizeof(new_idx[0]));
+    if (extra->user_access_idx.a > 0) {
+      memcpy(new_idx, extra->user_access_idx.v,
+             extra->user_access_idx.a * sizeof(new_idx[0]));
+    }
+    xfree(extra->user_access_idx.v);
+    extra->user_access_idx.a = new_size;
+    extra->user_access_idx.v = new_idx;
+  }
+  if (extra->user_access_idx.v[phr->user_id] < 0
+      && extra->user_access[USER_ROLE_CONTESTANT].u < 32000) {
+    struct last_access_array *p = &extra->user_access[USER_ROLE_CONTESTANT];
+    if (p->u == p->a) {
+      if (!p->a) p->a = 64;
+      p->a *= 2;
+      XREALLOC(p->v, p->a);
+    }
+    extra->user_access_idx.v[phr->user_id] = p->u;
+    memset(&p->v[p->u], 0, sizeof(p->v[0]));
+    p->v[p->u].user_id = phr->user_id;
+    p->u++;
+  }
+  if ((i = extra->user_access_idx.v[phr->user_id]) >= 0) {
+    struct last_access_info *pp=&extra->user_access[USER_ROLE_CONTESTANT].v[i];
+    pp->ip = phr->ip;
+    pp->ssl = phr->ssl_flag;
+    pp->time = extra->serve_state->current_time;
+  }
 
   if ((teamdb_get_flags(extra->serve_state->teamdb_state,
                         phr->user_id) & TEAM_DISQUALIFIED))
