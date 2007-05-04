@@ -2170,6 +2170,7 @@ ns_write_online_users(
             cl, xml_unparse_ip(ai->ip), ai->ssl?"/ssl":"");
     fprintf(fout, "</tr>\n");
   }
+  fprintf(fout, "</table>\n");
   html_armor_free(&ab);
   return 0;
 }
