@@ -2119,6 +2119,62 @@ ns_write_passwords(FILE *fout, FILE *log_f,
 }
 
 int
+ns_write_online_users(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  int i, max_user_id, j, serial = 1;
+  struct last_access_info *ai;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct teamdb_export td;
+  unsigned char cl[128];
+
+  snprintf(cl, sizeof(cl), " class=\"b1\"");
+
+  fprintf(fout, "<table%s>"
+          "<tr>"
+          "<th%s>NN</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "</tr>",
+          cl,
+          cl,
+          cl, _("User Id"),
+          cl, _("User login"),
+          cl, _("User name"),
+          cl, _("IP address"));
+
+  max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
+  for (i = 1; i <= max_user_id; i++) {
+    if (i >= extra->user_access_idx.a) continue;
+    if ((j = extra->user_access_idx.v[i]) < 0) continue;
+    ai = &extra->user_access[USER_ROLE_CONTESTANT].v[j];
+    if (ai->time + 65 < cs->current_time) continue;
+    if (!teamdb_lookup(cs->teamdb_state, i)) continue;
+    if (teamdb_export_team(cs->teamdb_state, i, &td) < 0) continue;
+
+    fprintf(fout, "<tr><td%s>%d</td><td%s>%d</td><td%s>%s</td>",
+            cl, serial++, cl, i, cl, ARMOR(td.login));
+    if (td.name && *td.name) {
+      fprintf(fout, "<td%s><tt>%s</tt></td>", cl, ARMOR(td.name));
+    } else {
+      fprintf(fout, "<td%s><i>%s</i></td>", cl, _("Not set"));
+    }
+    fprintf(fout, "<td%s><tt>%s%s</tt></td>",
+            cl, xml_unparse_ip(ai->ip), ai->ssl?"/ssl":"");
+    fprintf(fout, "</tr>\n");
+  }
+  html_armor_free(&ab);
+  return 0;
+}
+
+int
 ns_user_info_page(FILE *fout, FILE *log_f,
                   struct http_request_info *phr,
                   const struct contest_desc *cnts,
