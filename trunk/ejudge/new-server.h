@@ -87,7 +87,7 @@ struct http_request_info
   unsigned char *body_attr;
 
   // for the next state
-  int next_run_id;
+  unsigned char next_extra[128];
   int protocol_reply;
   int allow_empty_output;
   int no_reply;

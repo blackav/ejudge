@@ -1655,6 +1655,61 @@ priv_user_issue_warning(
 }
 
 static int
+priv_user_toggle_flags(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0, flag, user_id, n;
+
+  if (phr->role < USER_ROLE_JUDGE)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (opcaps_check(phr->caps, OPCAP_EDIT_REG) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (ns_cgi_param_int(phr, "user_id", &user_id) < 0)
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_TOGGLE_VISIBILITY:
+    flag = USERLIST_UC_INVISIBLE;
+    break;
+  case NEW_SRV_ACTION_TOGGLE_BAN:
+    flag = USERLIST_UC_BANNED;
+    break;
+  case NEW_SRV_ACTION_TOGGLE_LOCK:
+    flag = USERLIST_UC_LOCKED;
+    break;
+  case NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS:
+    flag = USERLIST_UC_INCOMPLETE;
+    break;
+  default:
+    abort();
+  }
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    ns_html_err_ul_server_down(fout, phr, 1, 0);
+    retval = -1;
+    goto cleanup;
+  }
+  n = userlist_clnt_change_registration(ul_conn, user_id, phr->contest_id,
+                                        -1, 3, flag);
+  if (n < 0) {
+    ns_error(log_f, NEW_SRV_ERR_USER_FLAGS_CHANGE_FAILED,
+             user_id, phr->contest_id, userlist_strerror(-n));
+    retval = -1;
+    goto cleanup;
+  }
+
+  snprintf(phr->next_extra, sizeof(phr->next_extra), "user_id=%d", user_id);
+  retval = NEW_SRV_ACTION_VIEW_USER_INFO;
+
+ cleanup:
+  return retval;
+}
+
+static int
 priv_user_disqualify(
 	FILE *fout,
         FILE *log_f,
@@ -2873,7 +2928,7 @@ priv_edit_run(FILE *fout, FILE *log_f,
     ns_html_err_inv_param(fout, phr, 1, "param is not set");
     return -1;
   }
-  phr->next_run_id = run_id;
+  snprintf(phr->next_extra, sizeof(phr->next_extra), "run_id=%d", run_id);
 
   if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -3030,7 +3085,7 @@ priv_change_status(FILE *fout,
 
   // run_id, status
   if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
-  phr->next_run_id = run_id;
+  snprintf(phr->next_extra, sizeof(phr->next_extra), "run_id=%d", run_id);
   if (ns_cgi_param(phr, "status", &s) <= 0
       || sscanf(s, "%d%n", &status, &n) != 1 || s[n]
       || status < 0 || status > RUN_LAST) {
@@ -5497,6 +5552,10 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ASSIGN_CHIEF_EXAMINER] = priv_assign_chief_examiner,
   [NEW_SRV_ACTION_ASSIGN_EXAMINER] = priv_assign_examiner,
   [NEW_SRV_ACTION_UNASSIGN_EXAMINER] = priv_unassign_examiner,
+  [NEW_SRV_ACTION_TOGGLE_VISIBILITY] = priv_user_toggle_flags,
+  [NEW_SRV_ACTION_TOGGLE_BAN] = priv_user_toggle_flags,
+  [NEW_SRV_ACTION_TOGGLE_LOCK] = priv_user_toggle_flags,
+  [NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS] = priv_user_toggle_flags,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -5555,7 +5614,6 @@ priv_generic_operation(FILE *fout,
   char *log_txt = 0;
   size_t log_len = 0;
   int r, rr;
-  unsigned char next_extra[256] = { 0 };
 
   log_f = open_memstream(&log_txt, &log_len);
 
@@ -5575,12 +5633,14 @@ priv_generic_operation(FILE *fout,
 
   fclose(log_f);
   if (!log_txt || !*log_txt) {
+    /*
     if (r == NEW_SRV_ACTION_VIEW_SOURCE) {
       if (phr->next_run_id < 0) r = 0;
       else snprintf(next_extra, sizeof(next_extra), "run_id=%d",
                     phr->next_run_id);
     }
-    ns_refresh_page(fout, phr, r, next_extra);
+    */
+    ns_refresh_page(fout, phr, r, phr->next_extra);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt, rr, 0);
   }
@@ -6479,6 +6539,10 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ASSIGN_CHIEF_EXAMINER] = priv_generic_operation,
   [NEW_SRV_ACTION_ASSIGN_EXAMINER] = priv_generic_operation,
   [NEW_SRV_ACTION_UNASSIGN_EXAMINER] = priv_generic_operation,
+  [NEW_SRV_ACTION_TOGGLE_VISIBILITY] = priv_generic_operation,
+  [NEW_SRV_ACTION_TOGGLE_BAN] = priv_generic_operation,
+  [NEW_SRV_ACTION_TOGGLE_LOCK] = priv_generic_operation,
+  [NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS] = priv_generic_operation,
 };
 
 static void
