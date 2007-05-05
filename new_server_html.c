@@ -11063,6 +11063,7 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr,
   if (online_users > cs->max_online_count) {
     cs->max_online_count = online_users;
     cs->max_online_time = cs->current_time;
+    serve_update_status_file(cs, 1);
   }
 
   if ((teamdb_get_flags(cs->teamdb_state, phr->user_id) & TEAM_DISQUALIFIED))
