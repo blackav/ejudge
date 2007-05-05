@@ -268,6 +268,9 @@ serve_update_status_file(serve_state_t state, int force_flag)
   status.stat_reported_before = state->stat_reported_before;
   status.stat_report_time = state->stat_report_time;
 
+  status.max_online_time = state->max_online_time;
+  status.max_online_count = state->max_online_count;
+
   generic_write_file((char*) &status, sizeof(status), SAFE,
                      state->global->status_dir, "status", "");
   state->last_update_status_file = state->current_time;
@@ -326,6 +329,9 @@ serve_load_status_file(serve_state_t state)
   state->view_protocol = status.view_protocol;
   state->full_protocol = status.full_protocol;
   state->disable_clars = status.disable_clars;
+
+  state->max_online_time = status.max_online_time;
+  state->max_online_count = status.max_online_count;
 }
 
 int

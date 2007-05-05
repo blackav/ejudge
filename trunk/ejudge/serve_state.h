@@ -179,6 +179,9 @@ struct serve_state
 
   struct serve_event_queue *event_first, *event_last;
 
+  time_t max_online_time;
+  int max_online_count;
+
   // for full import
   int saved_testing_suspended;
   int client_id;
