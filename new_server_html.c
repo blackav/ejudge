@@ -5998,6 +5998,11 @@ priv_main_page(FILE *fout,
   }
   fprintf(fout, "<p><big><b>%s: %d</b></big></p>\n",
           _("On-line users in this contest"), online_users);
+  if (cs->max_online_count > 0) {
+    fprintf(fout, "<p><big><b>%s: %d, %s</b></big></p>\n",
+            _("Max number of users was"), cs->max_online_count,
+            xml_unparse_date(cs->max_online_time));
+  }
 
   if (phr->role == USER_ROLE_ADMIN
       && opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) >= 0) {
@@ -10905,6 +10910,9 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr,
   time_t cur_time = time(0);
   unsigned char hid_buf[1024];
   struct teamdb_db_callbacks callbacks;
+  struct last_access_info *pp;
+  int online_users = 0;
+  serve_state_t cs = 0;
 
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_1)
     return unpriv_page_forgot_password_1(fout, phr, orig_locale_id);
@@ -11007,8 +11015,9 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr,
     return ns_html_err_cnts_unavailable(fout, phr, 0, 0);
   }
 
-  extra->serve_state->current_time = time(0);
-  ns_check_contest_events(extra->serve_state, cnts);
+  cs = extra->serve_state;
+  cs->current_time = time(0);
+  ns_check_contest_events(cs, cnts);
 
   // check the user map
   if (phr->user_id >= extra->user_access_idx.a) {
@@ -11042,11 +11051,21 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr,
     struct last_access_info *pp=&extra->user_access[USER_ROLE_CONTESTANT].v[i];
     pp->ip = phr->ip;
     pp->ssl = phr->ssl_flag;
-    pp->time = extra->serve_state->current_time;
+    pp->time = cs->current_time;
   }
 
-  if ((teamdb_get_flags(extra->serve_state->teamdb_state,
-                        phr->user_id) & TEAM_DISQUALIFIED))
+  // count number of users online
+  online_users = 0;
+  for (i = 0; i < extra->user_access[USER_ROLE_CONTESTANT].u; i++) {
+    pp = &extra->user_access[USER_ROLE_CONTESTANT].v[i];
+    if (pp->time + 65 >= cs->current_time) online_users++;
+  }
+  if (online_users > cs->max_online_count) {
+    cs->max_online_count = online_users;
+    cs->max_online_time = cs->current_time;
+  }
+
+  if ((teamdb_get_flags(cs->teamdb_state, phr->user_id) & TEAM_DISQUALIFIED))
     return ns_html_err_disqualified(fout, phr, cnts, extra);
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST

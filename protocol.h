@@ -84,7 +84,12 @@ struct prot_serve_status_v2
   unsigned char full_protocol;
   unsigned char disable_clars;
 
-  unsigned char _pad[57];
+  unsigned char _pad1[1];
+
+  ej_time64_t   max_online_time;
+  int           max_online_count;
+
+  unsigned char _pad[44];
 };
 
 #define PROT_SERVE_PACKET_MAGIC (0xe342)
