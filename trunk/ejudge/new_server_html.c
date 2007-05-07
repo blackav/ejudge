@@ -2982,8 +2982,9 @@ priv_edit_run(FILE *fout, FILE *log_f,
     ne_mask = RUN_ENTRY_USER;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_USER_ID:
-    if ((ne.user_id = teamdb_lookup(cs->teamdb_state, param_int)) <= 0)
+    if (teamdb_lookup(cs->teamdb_state, param_int) <= 0)
       FAIL(NEW_SRV_ERR_INV_USER_ID);
+    ne.user_id = param_int;
     ne_mask = RUN_ENTRY_USER;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_PROB_ID:
