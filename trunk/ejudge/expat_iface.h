@@ -4,7 +4,7 @@
 #ifndef __EXPAT_IFACE_H__
 #define __EXPAT_IFACE_H__ 1
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -58,6 +58,8 @@ struct xml_parse_spec
   void (*elem_free)(struct xml_tree *);
   void (*attr_free)(struct xml_attr *);
   unsigned char const *verbatim_flags;
+  int text_elem;                /* element name for texts */
+  int unparse_entity;
 };
 
 struct xml_tree *

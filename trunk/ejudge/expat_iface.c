@@ -324,6 +324,30 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     pd->verbatim_nest++;
   }
 
+  if (pd->verbatim && pd->spec->text_elem > 0
+      && (tl = pd->tag_stack) && tl->str && *tl->str) {
+    if (pd->spec->elem_alloc)
+      new_node = (struct xml_tree*)(*pd->spec->elem_alloc)(pd->spec->text_elem);
+    else
+      new_node = xml_elem_alloc(pd->spec->text_elem, pd->spec->elem_sizes);
+
+    new_node->tag = pd->spec->text_elem;
+    new_node->line = XML_GetCurrentLineNumber(p);
+    new_node->column = XML_GetCurrentColumnNumber(p);
+    parent_node = tl->tree;
+    new_node->up = parent_node;
+    if (parent_node->first_down) {
+      parent_node->last_down->right = new_node;
+      new_node->left = parent_node->last_down;
+      parent_node->last_down = new_node;
+    } else {
+      parent_node->first_down = parent_node->last_down = new_node;
+    }
+    new_node->text = convert_utf8_to_local_heap(pd->conv_hnd, tl->str);
+    tl->u = 0;
+    //free(tl->str); tl->str = 0;
+  }
+
   generic_flag = 0;
   if (pd->verbatim) {
     itag = pd->spec->default_elem;
@@ -497,6 +521,17 @@ chardata_hnd(void *data, const XML_Char *s, int len)
 
   if (!pd->tag_stack) return;
   if (pd->skipping) return;
+
+  if (pd->spec->unparse_entity && len == 1) {
+    switch (*s) {
+    case '&':  s = "&amp;";  len = 5; break;
+    case '<':  s = "&lt;";   len = 4; break;
+    case '>':  s = "&gt;";   len = 4; break;
+    case '\'': s = "&apos;"; len = 6; break;
+    case '\"': s = "&quot;"; len = 6; break;
+    }
+  }
+  
   if (!pd->tag_stack->a) pd->tag_stack->a = 32;
   while (pd->tag_stack->u + len >= pd->tag_stack->a)
     pd->tag_stack->a *= 2;
@@ -530,6 +565,31 @@ struct xml_attr *
 xml_attr_alloc(int tag, const size_t *sizes)
 {
   return (struct xml_attr*) generic_attr_alloc(tag, sizes);
+}
+
+static void
+xml_skipped_entity_handler(
+	void *data,
+	const XML_Char *s,
+	int   is_parameter_entity)
+{
+  XML_Parser p = (XML_Parser) data;
+  struct parser_data *pd = (struct parser_data*) XML_GetUserData(p);
+  int len = strlen(s);
+
+  if (!pd->tag_stack) return;
+  if (pd->skipping) return;
+  if (is_parameter_entity) return;
+
+  if (!pd->tag_stack->a) pd->tag_stack->a = 32;
+  while (pd->tag_stack->u + len + 2 >= pd->tag_stack->a)
+    pd->tag_stack->a *= 2;
+  pd->tag_stack->str = (char*) xrealloc(pd->tag_stack->str, pd->tag_stack->a);
+  pd->tag_stack->str[pd->tag_stack->u] = '&';
+  memmove(pd->tag_stack->str + pd->tag_stack->u + 1, s, len);
+  pd->tag_stack->u += len + 1;
+  pd->tag_stack->str[pd->tag_stack->u++] = ';';
+  pd->tag_stack->str[pd->tag_stack->u] = 0;
 }
 
 struct xml_tree *
@@ -567,6 +627,7 @@ xml_build_tree(char const *path, const struct xml_parse_spec *spec)
   XML_SetCharacterDataHandler(p, chardata_hnd);
   XML_SetUserData(p, &data);
   XML_UseParserAsHandlerArg(p);
+  XML_SetSkippedEntityHandler(p, xml_skipped_entity_handler);
 
   data.spec = spec;
   data.conv_hnd = conv_hnd;
@@ -629,6 +690,7 @@ xml_build_tree_str(char const *str, const struct xml_parse_spec *spec)
   XML_SetCharacterDataHandler(p, chardata_hnd);
   XML_SetUserData(p, &data);
   XML_UseParserAsHandlerArg(p);
+  XML_SetSkippedEntityHandler(p, xml_skipped_entity_handler);
 
   data.spec = spec;
   data.conv_hnd = conv_hnd;
@@ -680,6 +742,7 @@ xml_build_tree_file(FILE *f, const struct xml_parse_spec *spec)
   XML_SetCharacterDataHandler(p, chardata_hnd);
   XML_SetUserData(p, &data);
   XML_UseParserAsHandlerArg(p);
+  XML_SetSkippedEntityHandler(p, xml_skipped_entity_handler);
 
   data.spec = spec;
   data.conv_hnd = conv_hnd;
