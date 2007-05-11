@@ -147,6 +147,7 @@ struct serve_state
   int testing_suspended;
   int printing_suspended;
   int accepting_mode;
+  int testing_finished;
   int standings_updated;
 
   // upsolving mode

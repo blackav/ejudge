@@ -83,8 +83,7 @@ struct prot_serve_status_v2
   unsigned char view_protocol;
   unsigned char full_protocol;
   unsigned char disable_clars;
-
-  unsigned char _pad1[1];
+  unsigned char testing_finished;
 
   ej_time64_t   max_online_time;
   int           max_online_count;

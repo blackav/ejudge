@@ -85,6 +85,7 @@ struct http_request_info
   opcap_t caps;
   unsigned char *script_part;
   unsigned char *body_attr;
+  int online_users;
 
   // for the next state
   unsigned char next_extra[128];
@@ -180,6 +181,8 @@ enum
   NEW_SRV_ACTION_PRINT_RESUME,
   NEW_SRV_ACTION_SET_JUDGING_MODE,
   NEW_SRV_ACTION_SET_ACCEPTING_MODE,
+  NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG,
+  NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG,
   NEW_SRV_ACTION_GENERATE_PASSWORDS_1,
   NEW_SRV_ACTION_CLEAR_PASSWORDS_1,
   NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1,
