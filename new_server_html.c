@@ -5367,10 +5367,10 @@ unpriv_print_status(FILE *fout,
         s = _("The contest is not started");
       }
     }
-    fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
+    fprintf(fout, "<p><b>%s</b></p>\n", s);
 
     if (cs->upsolving_mode) {
-      fprintf(fout, "<p><big><b>%s</b></big></p>\n", _("Upsolving mode"));
+      fprintf(fout, "<p><b>%s</b></p>\n", _("Upsolving mode"));
     }
 
     if (start_time > 0) {
@@ -5381,22 +5381,22 @@ unpriv_print_status(FILE *fout,
           s = _("Participants' solutions are being judged");
         else
           s = _("Participants' solutions are judged");
-        fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
+        fprintf(fout, "<p><b>%s</b></p>\n", s);
       }
     }
 
     if (cs->clients_suspended) {
-      fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+      fprintf(fout, "<p><b>%s</b></p>\n",
               _("Participants' requests are suspended"));
     }
 
     if (start_time > 0) {
       if (cs->testing_suspended) {
-        fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+        fprintf(fout, "<p><b>%s</b></p>\n",
                 _("Testing of participants' submits is suspended"));
       }
       if (cs->printing_suspended) {
-        fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+        fprintf(fout, "<p><b>%s</b></p>\n",
                 _("Print requests are suspended"));
       }
     }
@@ -5471,10 +5471,10 @@ unpriv_print_status(FILE *fout,
   }
 
   if (!cnts->exam_mode) {
-    fprintf(fout, "<p><big><b>%s: %d</b></big></p>\n",
+    fprintf(fout, "<p><b>%s: %d</b></p>\n",
             _("On-line users in this contest"), phr->online_users);
     if (cs->max_online_count > 0) {
-      fprintf(fout, "<p><big><b>%s: %d, %s</b></big></p>\n",
+      fprintf(fout, "<p><b>%s: %d, %s</b></p>\n",
               _("Max number of users was"), cs->max_online_count,
               xml_unparse_date(cs->max_online_time));
     }
