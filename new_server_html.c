@@ -6761,7 +6761,7 @@ unpriv_load_html_style(struct http_request_info *phr,
   extra->footer_txt = extra->footer.text;
   extra->separator_txt = extra->separator.text;
   extra->copyright_txt = extra->copyright.text;
-  if (!extra->header_txt || !extra->footer_txt) {
+  if (!extra->header_txt || !extra->footer_txt || !extra->separator_txt) {
     extra->header_txt = ns_fancy_header;
     extra->separator_txt = ns_fancy_separator;
     if (extra->copyright_txt) extra->footer_txt = ns_fancy_footer_2;
@@ -6914,7 +6914,8 @@ unpriv_page_forgot_password_1(FILE *fout, struct http_request_info *phr,
   fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td></tr></table></div>\n");
 
   //fprintf(fout, "<div class=\"l13\">\n");
-  fprintf(fout, "%s", extra->separator_txt);
+  if (extra->separator_txt && *extra->separator_txt)
+    fprintf(fout, "%s", extra->separator_txt);
 
   fprintf(fout, _("<p class=\"fixed_width\">Password recovery requires several steps. Now, please, specify the <b>login</b> and the <b>e-mail</b>, which was specified when the login was created.</p>\n<p class=\"fixed_width\">Note, that automatic password recovery is not possible for invisible, banned, locked, or privileged users!</p>\n"));
 
@@ -7009,9 +7010,11 @@ unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr,
     l10n_setlocale(phr->locale_id);
     ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
                      _("Password recovery error"));
-    fprintf(fout, "%s%s", ns_fancy_empty_status, extra->separator_txt);
+    fprintf(fout, "%s", ns_fancy_empty_status);
+    if (extra->separator_txt && *extra->separator_txt)
+      fprintf(fout, "%s", extra->separator_txt);
     fprintf(fout, "<p>Password recovery is not possible because of the following error.</p>\n");
-    fprintf(fout, "%s", extra->separator_txt);
+    //fprintf(fout, "%s", extra->separator_txt);
     fprintf(fout, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(log_txt));
     ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
     l10n_setlocale(0);
@@ -7022,7 +7025,9 @@ unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr,
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
             _("Password recovery, stage 1 [%s, %s]"),
             ARMOR(login), extra->contest_arm);
-  fprintf(fout, "%s%s", ns_fancy_empty_status, extra->separator_txt);
+  fprintf(fout, "%s", ns_fancy_empty_status);
+  if (extra->separator_txt && *extra->separator_txt)
+    fprintf(fout, "%s", extra->separator_txt);
 
   fprintf(fout, _("<p class=\"fixed_width\">First stage of password recovery is successful. You should receive an e-mail message with further instructions. <b>Note,</b> that you should confirm password recovery in 24 hours, or operation will be cancelled.</p>"));
 
@@ -7105,9 +7110,11 @@ unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr,
     l10n_setlocale(phr->locale_id);
     ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
               _("Password recovery error"));
-    fprintf(fout, "%s%s", ns_fancy_empty_status, extra->separator_txt);
+    fprintf(fout, "%s", ns_fancy_empty_status);
+    if (extra->separator_txt && *extra->separator_txt)
+      fprintf(fout, "%s", extra->separator_txt);
     fprintf(fout, "<p>Password recovery is not possible because of the following error.</p>\n");
-    fprintf(fout, "%s", extra->separator_txt);
+    //fprintf(fout, "%s", extra->separator_txt);
     fprintf(fout, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(log_txt));
     ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
     l10n_setlocale(0);
@@ -7121,7 +7128,9 @@ unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr,
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
             _("Password recovery completed [%s, %s]"),
             ARMOR(s), extra->contest_arm);
-  fprintf(fout, "%s%s", ns_fancy_empty_status, extra->separator_txt);
+  fprintf(fout, "%s", ns_fancy_empty_status);
+  if (extra->separator_txt && *extra->separator_txt)
+    fprintf(fout, "%s", extra->separator_txt);
 
   fprintf(fout, _("<p>New password is generated.</p>"));
   fprintf(fout, "<table><tr><td class=\"menu\">%s</td><td class=\"menu\"><tt>%s</tt></td></tr>\n",
@@ -7196,7 +7205,7 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
   extra->footer_txt = extra->footer.text;
   extra->separator_txt = extra->separator.text;
   extra->copyright_txt = extra->copyright.text;
-  if (!extra->header_txt || !extra->footer_txt) {
+  if (!extra->header_txt || !extra->footer_txt || !extra->separator_txt) {
     extra->header_txt = ns_fancy_header;
     if (extra->copyright_txt) extra->footer_txt = ns_fancy_footer_2;
     else extra->footer_txt = ns_fancy_footer;
@@ -7290,7 +7299,8 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
   */
 
   fprintf(fout, "</tr></table></div>\n");
-  fprintf(fout, "%s", extra->separator_txt);
+  if (extra->separator_txt && *extra->separator_txt)
+    fprintf(fout, "%s", extra->separator_txt);
 
   watched_file_update(&extra->welcome, cnts->welcome_file, cur_time);
   if (extra->welcome.text && extra->welcome.text[0])
