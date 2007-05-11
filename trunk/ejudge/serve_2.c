@@ -239,6 +239,7 @@ serve_update_status_file(serve_state_t state, int force_flag)
   status.printing_suspended = state->printing_suspended;
   status.always_show_problems = state->global->always_show_problems;
   status.accepting_mode = state->accepting_mode;
+  status.testing_finished = state->testing_finished;
 
   status.upsolving_mode = state->upsolving_mode;
   status.freeze_standings = state->freeze_standings;
@@ -329,6 +330,7 @@ serve_load_status_file(serve_state_t state)
   state->view_protocol = status.view_protocol;
   state->full_protocol = status.full_protocol;
   state->disable_clars = status.disable_clars;
+  state->testing_finished = status.testing_finished;
 
   state->max_online_time = status.max_online_time;
   state->max_online_count = status.max_online_count;

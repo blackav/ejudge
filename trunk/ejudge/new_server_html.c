@@ -1993,6 +1993,19 @@ priv_contest_operation(FILE *fout,
     serve_update_status_file(cs, 1);
     break;
 
+  case NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG:
+    if (global->score_system_val != SCORE_OLYMPIAD
+        && cs->accepting_mode) break;
+    cs->testing_finished = 1;
+    serve_update_status_file(cs, 1);
+    break;
+
+  case NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG:
+    if (global->score_system_val != SCORE_OLYMPIAD) break;
+    cs->testing_finished = 0;
+    serve_update_status_file(cs, 1);
+    break;
+
   case NEW_SRV_ACTION_RELOAD_SERVER:
     extra->last_access_time = 0;
     serve_send_run_quit(cs);
@@ -5364,8 +5377,10 @@ unpriv_print_status(FILE *fout,
       if (global->score_system_val == SCORE_OLYMPIAD && !global->is_virtual) {
         if (cs->accepting_mode)
           s = _("Participants' solutions are being accepted");
-        else
+        else if (!cs->testing_finished)
           s = _("Participants' solutions are being judged");
+        else
+          s = _("Participants' solutions are judged");
         fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
       }
     }
@@ -5455,6 +5470,16 @@ unpriv_print_status(FILE *fout,
     }
   }
 
+  if (!cnts->exam_mode) {
+    fprintf(fout, "<p><big><b>%s: %d</b></big></p>\n",
+            _("On-line users in this contest"), phr->online_users);
+    if (cs->max_online_count > 0) {
+      fprintf(fout, "<p><big><b>%s: %d, %s</b></big></p>\n",
+              _("Max number of users was"), cs->max_online_count,
+              xml_unparse_date(cs->max_online_time));
+    }
+  }
+
   if (!cnts->exam_mode && global->is_virtual && start_time <= 0) {
     html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
     if (cnts->exam_mode) {
@@ -5531,6 +5556,8 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRINT_RESUME] = priv_contest_operation,
   [NEW_SRV_ACTION_SET_JUDGING_MODE] = priv_contest_operation,
   [NEW_SRV_ACTION_SET_ACCEPTING_MODE] = priv_contest_operation,
+  [NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG] = priv_contest_operation,
+  [NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG] = priv_contest_operation,
   [NEW_SRV_ACTION_SQUEEZE_RUNS] = priv_contest_operation,
   [NEW_SRV_ACTION_RESET_FILTER] = priv_reset_filter,
   [NEW_SRV_ACTION_RESET_CLAR_FILTER] = priv_reset_filter,
@@ -5968,8 +5995,10 @@ priv_main_page(FILE *fout,
   if (global->score_system_val == SCORE_OLYMPIAD && !global->is_virtual) {
     if (cs->accepting_mode)
       s = _("Participants' solutions are being accepted");
-    else
+    else if (!cs->testing_finished)
       s = _("Participants' solutions are being judged");
+    else
+      s = _("Participants' solutions are judged");
     fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
   }
 
@@ -6113,6 +6142,13 @@ priv_main_page(FILE *fout,
     if (global->score_system_val == SCORE_OLYMPIAD && !global->is_virtual) {
       action = NEW_SRV_ACTION_SET_JUDGING_MODE;
       if (!cs->accepting_mode) action = NEW_SRV_ACTION_SET_ACCEPTING_MODE;
+      fprintf(fout, "%s\n", BUTTON(action));
+    }
+    if (global->score_system_val == SCORE_OLYMPIAD && !global->is_virtual
+        && !cs->accepting_mode) {
+      action = NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG;
+      if (cs->testing_finished)
+        action = NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG;
       fprintf(fout, "%s\n", BUTTON(action));
     }
     if (!cnts->disable_team_password) {
@@ -6491,6 +6527,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRINT_RESUME] = priv_generic_operation,
   [NEW_SRV_ACTION_SET_JUDGING_MODE] = priv_generic_operation,
   [NEW_SRV_ACTION_SET_ACCEPTING_MODE] = priv_generic_operation,
+  [NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG] = priv_generic_operation,
+  [NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG] = priv_generic_operation,
   [NEW_SRV_ACTION_SQUEEZE_RUNS] = priv_generic_operation,
   [NEW_SRV_ACTION_RESET_FILTER] = priv_generic_operation,
   [NEW_SRV_ACTION_RESET_CLAR_FILTER] = priv_generic_operation,
@@ -9538,8 +9576,10 @@ unpriv_page_header(FILE *fout,
         if (global->score_system_val == SCORE_OLYMPIAD && !global->is_virtual) {
           if (cs->accepting_mode)
             s = _("accepting");
-          else
+          else if (!cs->testing_finished)
             s = _("judging");
+          else
+            s = _("judged");
           fprintf(fout, " / <b>%s</b>", s);
         }
       }
@@ -11076,6 +11116,7 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr,
     cs->max_online_time = cs->current_time;
     serve_update_status_file(cs, 1);
   }
+  phr->online_users = online_users;
 
   if ((teamdb_get_flags(cs->teamdb_state, phr->user_id) & TEAM_DISQUALIFIED))
     return ns_html_err_disqualified(fout, phr, cnts, extra);
