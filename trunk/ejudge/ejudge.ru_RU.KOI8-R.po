@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-05-05 23:21+0400\n"
-"PO-Revision-Date: 2007-05-06 00:10+0400\n"
+"POT-Creation-Date: 2007-05-11 11:45+0400\n"
+"PO-Revision-Date: 2007-05-11 11:46+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -875,6 +875,9 @@ msgstr "Очистить отображённые посылки!"
 
 msgid "Clear disqualification"
 msgstr "Сбросить дисквалификацию"
+
+msgid "Clear finished flag"
+msgstr "Сбросить флаг проверенности решений"
 
 msgid "Clear runs"
 msgstr "Очистить посылки"
@@ -2537,6 +2540,9 @@ msgstr "Решения участников принимаются на проверку"
 msgid "Participants' solutions are being judged"
 msgstr "Решения участников проверяются"
 
+msgid "Participants' solutions are judged"
+msgstr "Решения участников проверены"
+
 msgid "Participate"
 msgstr "Участвовать"
 
@@ -3192,6 +3198,9 @@ msgstr "Установить"
 
 msgid "Set accepting mode"
 msgstr "Включить режим приёма решений"
+
+msgid "Set finished flag"
+msgstr "Установить флаг законченности проверки"
 
 msgid "Set judging mode"
 msgstr "Включить режим проверки"
@@ -4229,6 +4238,9 @@ msgstr "неверный номер теста"
 
 msgid "invalid user_id"
 msgstr "неверный идентификатор пользователя"
+
+msgid "judged"
+msgstr "решения проверены"
 
 msgid "judges"
 msgstr "судьи"
