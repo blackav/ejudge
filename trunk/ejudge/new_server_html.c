@@ -6636,8 +6636,9 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
 };
 
 static void
-privileged_page(FILE *fout,
-                struct http_request_info *phr)
+privileged_entry_point(
+	FILE *fout,
+        struct http_request_info *phr)
 {
   int r;
   opcap_t caps;
@@ -9808,10 +9809,10 @@ static const unsigned char *main_page_headers[NEW_SRV_ACTION_LAST] =
 };
 
 static void
-user_main_page(FILE *fout,
-               struct http_request_info *phr,
-               const struct contest_desc *cnts,
-               struct contest_extra *extra)
+unpriv_main_page(FILE *fout,
+                 struct http_request_info *phr,
+                 const struct contest_desc *cnts,
+                 struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
   struct section_global_data *global = cs->global;
@@ -9848,6 +9849,7 @@ user_main_page(FILE *fout,
   unsigned char *last_source = 0;
   unsigned char dbuf[1024];
   unsigned char wbuf[1024];
+  int upper_tab_id;
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
@@ -9937,6 +9939,7 @@ user_main_page(FILE *fout,
           j++;
         }
         hh = "probNavHidden";
+        upper_tab_id = prob_id;
         if (i == prob_id) {
           cc = "probCurrent";
         } else if (prob->disable_user_submit > 0) {
@@ -10621,11 +10624,11 @@ user_main_page(FILE *fout,
         j++;
       }
       hh = "probNavHidden";
-      if (prob_id == i) hh = "probNavActiveBottom";
-      if (prob->disable_user_submit > 0) {
-        cc = "probDisabled";
-      } else if (i == prob_id) {
+      if (upper_tab_id == i) hh = "probNavActiveBottom";
+      if (i == upper_tab_id) {
         cc = "probCurrent";
+      } else if (prob->disable_user_submit > 0) {
+        cc = "probDisabled";
       } else if (!all_attempts[i]) {
         cc = "probEmpty";
       } else if (pending_flag[i] || trans_flag[i]) {
@@ -10952,8 +10955,10 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 };
 
 static void
-unpriv_main_page(FILE *fout, struct http_request_info *phr,
-                 int orig_locale_id)
+unprivileged_entry_point(
+	FILE *fout,
+        struct http_request_info *phr,
+        int orig_locale_id)
 {
   int r, i;
   const struct contest_desc *cnts = 0;
@@ -11127,7 +11132,7 @@ unpriv_main_page(FILE *fout, struct http_request_info *phr,
   } else {
     if (phr->action < 0 || phr->action >= NEW_SRV_ACTION_LAST)
       phr->action = 0;
-    user_main_page(fout, phr, cnts, extra);
+    unpriv_main_page(fout, phr, cnts, extra);
   }
 }
 
@@ -11215,13 +11220,13 @@ ns_handle_http_request(struct server_framework_state *state,
 
   os_rGetLastname(script_filename, last_name, sizeof(last_name));
   if (!strcmp(last_name, "priv-client"))
-    privileged_page(fout, phr);
+    privileged_entry_point(fout, phr);
   else if (!strcmp(last_name, "new-master")) {
     phr->role = USER_ROLE_ADMIN;
-    privileged_page(fout, phr);
+    privileged_entry_point(fout, phr);
   } else if (!strcmp(last_name, "new-judge")) {
     phr->role = USER_ROLE_JUDGE;
-    privileged_page(fout, phr);
+    privileged_entry_point(fout, phr);
   } else if (!strcmp(last_name, "new-register")) {
     // FIXME: temporary hack
     phr->locale_id = orig_locale_id;
@@ -11229,7 +11234,7 @@ ns_handle_http_request(struct server_framework_state *state,
   } else if (!strcmp(last_name, "new-server-cmd")) {
     phr->protocol_reply = new_server_cmd_handler(fout, phr);
   } else
-    unpriv_main_page(fout, phr, orig_locale_id);
+    unprivileged_entry_point(fout, phr, orig_locale_id);
 }
 
 /*
