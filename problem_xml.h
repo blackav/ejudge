@@ -25,6 +25,7 @@ enum
 {
   PROB_T_PROBLEM = 1,
   PROB_T_STATEMENT,
+  PROB_T_TITLE,
   PROB_T_DESCRIPTION,
   PROB_T_INPUT_FORMAT,
   PROB_T_OUTPUT_FORMAT,
@@ -62,6 +63,7 @@ struct problem_stmt
   struct problem_stmt *next_stmt;
   unsigned char *lang;
 
+  struct xml_tree *title;
   struct xml_tree *desc;
   struct xml_tree *input_format;
   struct xml_tree *output_format;
