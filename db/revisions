@@ -2497,3 +2497,7 @@ prepare_out.c 4160 0 5845227
 problem_common.c 4160 0 129341
 problem_xml.c 4160 0 461400
 super_html_3.c 4160 0 22609960
+expat_iface.h 4162 0 282567
+problem_xml.h 4162 0 132336
+expat_iface.c 4162 0 2033467
+problem_xml.c 4162 0 539171
