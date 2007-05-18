@@ -175,6 +175,8 @@ COMMON_CFILES=\
  prepare_out.c\
  prepare_serve.c\
  printing.c\
+ problem_common.c\
+ problem_xml.c\
  protocol.c\
  random.c\
  runlog.c\
@@ -355,6 +357,8 @@ HFILES=\
  prepare_dflt.h\
  prepare_serve.h\
  printing.h\
+ problem_common.h\
+ problem_xml.h\
  protocol.h\
  random.h\
  runlog.h\
