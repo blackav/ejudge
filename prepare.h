@@ -22,6 +22,7 @@
 #include "contests.h"
 #include "parsecfg.h"
 #include "serve_state.h"
+#include "problem_common.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -31,20 +32,6 @@ enum { PREPARE_QUIET = 1 };
 
 /* rounding mode for seconds->minutes transformation */
 enum { SEC_CEIL, SEC_FLOOR, SEC_ROUND };
-
-/* problem types */
-enum
-{
-  PROB_TYPE_STANDARD = 0,       /* standard problem */
-  PROB_TYPE_OUTPUT_ONLY,        /* output-only problem */
-  PROB_TYPE_SHORT_ANSWER,       /* output-only with short answer */
-  PROB_TYPE_TEXT_ANSWER,        /* output-only with textarea input */
-  PROB_TYPE_SELECT_ONE,         /* select one answer from the list */
-  PROB_TYPE_SELECT_MANY,        /* select many answers from the list */
-  PROB_TYPE_CUSTOM,             /* custom form (part of prob. stmt) */
-
-  PROB_TYPE_LAST,
-};
 
 /* memory limit types */
 enum

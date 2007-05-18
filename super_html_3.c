@@ -3628,7 +3628,7 @@ super_html_print_problem(FILE *f,
     prepare_set_prob_value(PREPARE_FIELD_PROB_TYPE,
                            &tmp_prob, sup_prob, sstate->global);
     snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-             prepare_unparse_problem_type(tmp_prob.type_val));
+             problem_unparse_type(tmp_prob.type_val));
     extra_msg = msg_buf;
     problem_type_flag = tmp_prob.type_val;
   } else {
@@ -3648,7 +3648,7 @@ super_html_print_problem(FILE *f,
     s = "";
     if (prob->type_val == i) s = " selected=\"1\"";
     fprintf(f, "<option value=\"%d\"%s>%s</option>\n",
-            i, s, prepare_unparse_problem_type(i));
+            i, s, problem_unparse_type(i));
   }
   fprintf(f, "</select></td><td>");
   html_submit_button(f, SSERV_CMD_PROB_CHANGE_TYPE, "Change");

@@ -1507,38 +1507,6 @@ parse_score_bonus(const unsigned char *str, int *p_total, int **p_values)
   return -1;
 }
 
-const unsigned char * const problem_type_str[] =
-{
-  [PROB_TYPE_STANDARD] = "standard",
-  [PROB_TYPE_OUTPUT_ONLY] = "output-only",
-  [PROB_TYPE_SHORT_ANSWER] = "short-answer",
-  [PROB_TYPE_TEXT_ANSWER] = "text-answer",
-  [PROB_TYPE_SELECT_ONE] = "select-one",
-  [PROB_TYPE_SELECT_MANY] = "select-many",
-  [PROB_TYPE_CUSTOM] = "custom",
-
-  [PROB_TYPE_LAST] = 0,
-};
-
-static int
-parse_problem_type(const unsigned char *str)
-{
-  int i;
-
-  if (!str) return 0;
-  for (i = 0; i < PROB_TYPE_LAST; i++)
-    if (problem_type_str[i] && !strcasecmp(str, problem_type_str[i]))
-      return i;
-  return -1;
-}
-const unsigned char *
-prepare_unparse_problem_type(int val)
-{
-  ASSERT(val >= 0 && val < PROB_TYPE_LAST);
-  ASSERT(problem_type_str[val]);
-  return problem_type_str[val];
-}
-
 const unsigned char * const memory_limit_type_str[] =
 {
   [MEMLIMIT_TYPE_DEFAULT] = "default",
@@ -2315,7 +2283,7 @@ set_defaults(serve_state_t state, int mode)
       return -1;
     }
     if (aprob->type[0]) {
-      aprob->type_val = parse_problem_type(aprob->type);
+      aprob->type_val = problem_parse_type(aprob->type);
       if (aprob->type_val < 0 || aprob->type_val >= PROB_TYPE_LAST) {
         err("abstract problem %s has invalid type %s", ish, aprob->type);
         return -1;
@@ -2357,7 +2325,7 @@ set_defaults(serve_state_t state, int mode)
     */
 
     if (state->probs[i]->type[0]) {
-      state->probs[i]->type_val = parse_problem_type(state->probs[i]->type);
+      state->probs[i]->type_val = problem_parse_type(state->probs[i]->type);
       if (state->probs[i]->type_val < 0 || state->probs[i]->type_val > PROB_TYPE_LAST) {
         err("problem %s type %s is invalid", state->probs[i]->short_name, state->probs[i]->type);
         return -1;
@@ -4046,7 +4014,7 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
   if (!prob->abstract) return;
 
   if (prob->type[0]) {
-    prob->type_val = parse_problem_type(prob->type);
+    prob->type_val = problem_parse_type(prob->type);
     if (prob->type_val < 0 || prob->type_val >= PROB_TYPE_LAST)
       prob->type_val = -1;
   }
@@ -4138,7 +4106,7 @@ prepare_set_concr_problem_defaults(struct section_problem_data *prob,
   if (prob->abstract) return;
 
   if (prob->type[0]) {
-    prob->type_val = parse_problem_type(prob->type);
+    prob->type_val = problem_parse_type(prob->type);
     if (prob->type_val < 0 || prob->type_val >= PROB_TYPE_LAST)
       prob->type_val = -1;
   }

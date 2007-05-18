@@ -900,7 +900,7 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
 
   if ((prob->abstract && prob->type_val > 0)
       || (!prob->abstract && prob->type_val >= 0))
-    fprintf(f, "type = \"%s\"\n", prepare_unparse_problem_type(prob->type_val));
+    fprintf(f, "type = \"%s\"\n", problem_unparse_type(prob->type_val));
   /*
   if ((prob->abstract && prob->output_only == 1)
       || (!prob->abstract && prob->output_only >= 0))
