@@ -21,6 +21,7 @@
 #include "expat_iface.h"
 #include "pathutl.h"
 #include "errlog.h"
+#include "misctext.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -922,6 +923,54 @@ xml_link_node_last(struct xml_tree *p, struct xml_tree *c)
     p->last_down->right = c;
     p->last_down = c;
   }
+}
+
+void
+xml_unparse_raw_tree(
+	FILE *fout,
+        const struct xml_tree *tree,
+        const struct xml_parse_spec *spec)
+{
+  struct xml_tree *p;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct xml_attr *a;
+
+  if (!tree) return;
+
+  for (p = tree->first_down; p; p = p->right) {
+    if (p->tag == spec->text_elem) {
+      if (p->text) fprintf(fout, "%s", p->text);
+    } else {
+      if (p->tag == spec->default_elem) {
+        fprintf(fout, "<%s", p->name[0]);
+      } else {
+        fprintf(fout, "<%s", spec->elem_map[p->tag]);
+      }
+      for (a = p->first; a; a = a->next) {
+        if (a->tag == spec->default_attr) {
+          fprintf(fout, " %s=\"%s\"", a->name[0], html_armor_buf(&ab, a->text));
+        } else {
+          fprintf(fout, " %s=\"%s\"", spec->attr_map[a->tag],
+                  html_armor_buf(&ab, a->text));
+        }
+      }
+      if (!p->first_down && (!p->text || !*p->text)) {
+        fprintf(fout, "/>");
+      } else {
+        fprintf(fout, ">");
+        xml_unparse_raw_tree(fout, p, spec);
+        if (p->tag == spec->default_elem) {
+          fprintf(fout, "</%s>", p->name[0]);
+        } else {
+          fprintf(fout, "</%s>", spec->elem_map[p->tag]);
+        }
+      }
+    }
+  }
+
+  if (p->text) fprintf(fout, "%s", p->text);
+
+  html_armor_free(&ab);
 }
 
 /*

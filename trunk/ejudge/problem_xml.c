@@ -20,11 +20,14 @@
 
 #include <reuse/xalloc.h>
 
+#include <string.h>
+
 static char const * const elem_map[] =
 {
   0,
   "problem",
   "statement",
+  "title",
   "description",
   "input_format",
   "output_format",
@@ -130,6 +133,10 @@ parse_statement(problem_xml_t prb, struct xml_tree *pstmt)
 
   for (p1 = stmt->b.first_down; p1; p1 = p1->right) {
     switch (p1->tag) {
+    case PROB_T_TITLE:
+      if (stmt->title) return xml_err_elem_redefined(p1);
+      stmt->title = p1;
+      break;
     case PROB_T_DESCRIPTION:
       if (stmt->desc) return xml_err_elem_redefined(p1);
       stmt->desc = p1;
@@ -141,10 +148,6 @@ parse_statement(problem_xml_t prb, struct xml_tree *pstmt)
     case PROB_T_OUTPUT_FORMAT:
       if (stmt->output_format) return xml_err_elem_redefined(p1);
       stmt->output_format = p1;
-      break;
-    case PROB_T_EXAMPLES:
-      if (stmt->examples) return xml_err_elem_redefined(p1);
-      stmt->examples = p1;
       break;
     default:
       return xml_err_elem_not_allowed(p1);
@@ -253,13 +256,49 @@ problem_xml_parse_stream(const unsigned char *path, FILE *f)
   return 0;
 }
 
-void
+struct problem_stmt *
 problem_xml_unparse_elem(
 	FILE *fout,
         problem_xml_t p,
         int elem,                  /* STATEMENT, INPUT_FORMAT, etc */
-        const unsigned char *lang) /* 0 - default language */
+        const unsigned char *lang, /* 0 - default language */
+        struct problem_stmt *stmt) /* previously found element */
 {
+  struct xml_tree *t = 0;
+
+  if (!stmt && lang) {
+    // try to find the exact language
+    for (stmt = p->stmts; stmt; stmt = stmt->next_stmt) {
+      if (stmt->lang && !strcasecmp(stmt->lang, lang))
+        break;
+    }
+  }
+  if (!stmt) {
+    // try to find the default language
+    // FIXME: add and handle "default" attribute
+    for (stmt = p->stmts; stmt; stmt = stmt->next_stmt) {
+      if (!stmt->lang)
+        break;
+    }
+  }
+  if (!stmt) {
+    // get the first language
+    stmt = p->stmts;
+  }
+  if (!stmt) return 0;
+
+  switch (elem) {
+  case PROB_T_TITLE:         t = stmt->title;         break;
+  case PROB_T_DESCRIPTION:   t = stmt->desc;          break;
+  case PROB_T_INPUT_FORMAT:  t = stmt->input_format;  break; 
+  case PROB_T_OUTPUT_FORMAT: t = stmt->output_format; break;
+  default:
+    return stmt;
+  }
+
+  xml_unparse_raw_tree(fout, t, &problem_parse_spec);
+
+  return stmt;
 }
 
 /*
