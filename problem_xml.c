@@ -21,6 +21,8 @@
 #include <reuse/xalloc.h>
 
 #include <string.h>
+#include <errno.h>
+#include <limits.h>
 
 static char const * const elem_map[] =
 {
@@ -46,7 +48,7 @@ static char const * const attr_map[] =
   0,
   "id",
   "type",
-  "lang",
+  "language",
   0,
   "_default",
 
@@ -108,6 +110,43 @@ problem_xml_t
 problem_xml_free(problem_xml_t tree)
 {
   xml_tree_free(&tree->b, &problem_parse_spec);
+  return 0;
+}
+
+static int
+num_suffix(const unsigned char *str)
+{
+  if (!str[0]) return 1;
+  if (str[1]) return 0; 
+  if (str[0] == 'k' || str[0] == 'K') return 1024;
+  if (str[0] == 'm' || str[0] == 'M') return 1024 * 1024;
+  if (str[0] == 'g' || str[0] == 'G') return 1024 * 1024 * 1024;
+  return 0;
+}
+
+static int
+parse_size(const unsigned char *str, size_t *sz)
+{
+  long long val;
+  char *eptr = 0;
+  int sfx;
+
+  if (!str || !*str) return -1;
+  if (!strcasecmp(str, "unlimited")) {
+    *sz = (size_t) -1;
+    return 0;
+  }
+  if (!strcasecmp(str, "default")) {
+    *sz = 0;
+    return 0;
+  }
+  errno = 0;
+  val = strtoll(str, &eptr, 10);
+  if (errno || val <= 0 || (sfx = num_suffix(eptr)) <= 0) return -1;
+  if (val > LONG_LONG_MAX / sfx) return -1;
+  val *= sfx;
+  if (val >= 2147483648LL) return -1;
+  *sz = val;
   return 0;
 }
 
@@ -187,6 +226,19 @@ parse_tree(problem_xml_t tree)
     case PROB_T_STATEMENT:
       if (parse_statement(tree, p1) < 0)
         return -1;
+      break;
+    case PROB_T_EXAMPLES:
+      tree->examples = p1;
+      break;
+    case PROB_T_MAX_VM_SIZE:
+      if (tree->max_vm_size) return xml_err_elem_redefined(p1);
+      if (parse_size(p1->text, &tree->max_vm_size) < 0)
+        return xml_err_elem_invalid(p1);
+      break;
+    case PROB_T_MAX_STACK_SIZE:
+      if (tree->max_stack_size) return xml_err_elem_redefined(p1);
+      if (parse_size(p1->text, &tree->max_stack_size) < 0)
+        return xml_err_elem_invalid(p1);
       break;
     default:
       return xml_err_elem_not_allowed(p1);
