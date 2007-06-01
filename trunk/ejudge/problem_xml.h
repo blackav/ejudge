@@ -21,6 +21,8 @@
 #include "expat_iface.h"
 #include "problem_common.h"
 
+#include <time.h>
+
 enum
 {
   PROB_T_PROBLEM = 1,
@@ -33,6 +35,8 @@ enum
   PROB_T_EXAMPLE,
   PROB_T_INPUT,
   PROB_T_OUTPUT,
+  PROB_T_MAX_VM_SIZE,
+  PROB_T_MAX_STACK_SIZE,
 
   PROB_T__BARRIER,
   PROB_T__DEFAULT,
@@ -76,8 +80,15 @@ struct problem_desc
 
   int type;
 
+  size_t max_vm_size;
+  size_t max_stack_size;
+
   unsigned char *id;            /* corresponds to short_name */
   struct problem_stmt *stmts;
+  struct xml_tree *examples;
+
+  time_t last_check;
+  time_t last_update;
 };
 
 #endif /* __PROBLEM_XML_H__ */
