@@ -3124,14 +3124,14 @@ generate_ejudge_xml(FILE *f)
   fprintf(f, "  <email_program>%s</email_program>\n", config_sendmail);
   fprintf(f, "  <register_url>%s</register_url>\n", config_reg_url);
   fprintf(f, "  <register_email>%s</register_email>\n", config_reg_email);
-  if (config_server_name && *config_server_name) {
+  if (*config_server_name) {
     fprintf(f, "  <server_name>%s</server_name>\n", config_server_name);
   }
-  if (config_server_name_en && *config_server_name_en) {
+  if (*config_server_name_en) {
     fprintf(f, "  <server_name_en>%s</server_name_en>\n",
             config_server_name_en);
   }
-  if (config_server_main_url && *config_server_main_url) {
+  if (*config_server_main_url) {
     fprintf(f, "  <server_main_url>%s</server_main_url>\n",
             config_server_main_url);
   }
