@@ -2501,3 +2501,6 @@ expat_iface.h 4162 0 282567
 problem_xml.h 4162 0 132336
 expat_iface.c 4162 0 2033467
 problem_xml.c 4162 0 539171
+ejudge-setup.c 4164 0 9858053
+problem_xml.h 4165 0 148078
+problem_xml.c 4165 0 641311
