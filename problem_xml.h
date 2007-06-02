@@ -37,6 +37,8 @@ enum
   PROB_T_OUTPUT,
   PROB_T_MAX_VM_SIZE,
   PROB_T_MAX_STACK_SIZE,
+  PROB_T_TIME_LIMITS,
+  PROB_T_TIME_LIMIT,
 
   PROB_T__BARRIER,
   PROB_T__DEFAULT,
@@ -74,6 +76,12 @@ struct problem_stmt
   struct xml_tree *examples;
 };
 
+struct problem_time_limit
+{
+  struct xml_tree b;
+  struct problem_time_limit *next_tl;
+};
+
 struct problem_desc
 {
   struct xml_tree b;
@@ -86,6 +94,7 @@ struct problem_desc
   unsigned char *id;            /* corresponds to short_name */
   struct problem_stmt *stmts;
   struct xml_tree *examples;
+  struct problem_time_limit *tls;
 
   time_t last_check;
   time_t last_update;
