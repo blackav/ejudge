@@ -37,6 +37,8 @@ static char const * const elem_map[] =
   "example",
   "input",
   "output",
+  "time_limits",
+  "time_limit",
   0,
   "_default",
   "_text",
@@ -59,6 +61,7 @@ static size_t const elem_sizes[PROB_LAST_TAG] =
 {
   [PROB_T_PROBLEM] = sizeof(struct problem_desc),
   [PROB_T_STATEMENT] = sizeof(struct problem_stmt),
+  [PROB_T_TIME_LIMIT] = sizeof(struct problem_time_limit),
 };
 
 static const unsigned char verbatim_flags[PROB_LAST_TAG] =
