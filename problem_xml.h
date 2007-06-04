@@ -52,6 +52,10 @@ enum
   PROB_A_ID = 1,
   PROB_A_TYPE,
   PROB_A_LANG,
+  PROB_A_CPU,
+  PROB_A_WORDSIZE,
+  PROB_A_FREQ,
+  PROB_A_BOGOMIPS,
 
   PROB_A__BARRIER,
   PROB_A__DEFAULT,
@@ -80,6 +84,13 @@ struct problem_time_limit
 {
   struct xml_tree b;
   struct problem_time_limit *next_tl;
+
+  int time_limit_ms;
+
+  unsigned char *cpu;
+  int wordsize;
+  double bogomips;
+  long long freq;
 };
 
 struct problem_desc
