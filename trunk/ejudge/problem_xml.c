@@ -51,6 +51,10 @@ static char const * const attr_map[] =
   "id",
   "type",
   "language",
+  "cpu",
+  "wordsize",
+  "frequency",
+  "bogomips",
   0,
   "_default",
 
@@ -92,6 +96,13 @@ static void
 node_free(struct xml_tree *t)
 {
   switch (t->tag) {
+  case PROB_T_TIME_LIMIT:
+    {
+      struct problem_time_limit *pt = (struct problem_time_limit*) t;
+
+      xfree(pt->cpu);
+    }
+    break;
   case PROB_T_PROBLEM:
     {
       problem_xml_t pt = (problem_xml_t) t;
@@ -200,6 +211,83 @@ parse_statement(problem_xml_t prb, struct xml_tree *pstmt)
 }
 
 static int
+parse_time_limits(problem_xml_t prb, struct xml_tree *tree)
+{
+  struct xml_tree *p;
+  struct xml_attr *a;
+  struct problem_time_limit *ptl;
+  int t, n;
+  double v;
+
+  for (p = tree->first_down; p; p = p->right) {
+    if (p->tag != PROB_T_TIME_LIMIT) return xml_err_elem_not_allowed(p);
+    ptl = (struct problem_time_limit*) p;
+    ptl->next_tl = prb->tls;
+    prb->tls = ptl;
+    if (p->first_down) return xml_err_nested_elems(p);
+    for (a = p->first; a; a = a->next) {
+      switch (a->tag) {
+      case PROB_A_CPU:
+        ptl->cpu = a->text; a->text = 0;
+        break;
+      case PROB_A_WORDSIZE:
+        if (sscanf(a->text, "%d%n", &t, &n) != 1 || a->text[n])
+          return xml_err_attr_invalid(a);
+        if (t != 16 && t != 32 && t != 64)
+          return xml_err_attr_invalid(a);
+        ptl->wordsize = t;
+        break;
+      case PROB_A_FREQ:
+        if (sscanf(a->text, "%lf%n", &v, &n) != 1)
+          return xml_err_attr_invalid(a);
+        if (!a->text[n]) {
+          ptl->freq = (long long) v;
+        } else if (!strcasecmp(a->text + n, "GHz")) {
+          ptl->freq = (long long) (v * 1000000000.0);
+        } else if (!strcasecmp(a->text + n, "MHz")) {
+          ptl->freq = (long long) (v * 1000000.0);
+        } else if (!strcasecmp(a->text + n, "KHz")) {
+          ptl->freq = (long long) (v * 1000.0);
+        } else if (!strcasecmp(a->text + n, "Hz")) {
+          ptl->freq = (long long) v;
+        } else {
+          return xml_err_attr_invalid(a);
+        }
+        if (ptl->freq < 0) xml_err_attr_invalid(a);
+        break;
+      case PROB_A_BOGOMIPS:
+        if (sscanf(a->text, "%lf%n", &v, &n) != 1 || a->text[n] || v <= 0)
+          return xml_err_attr_invalid(a);
+        ptl->bogomips = v;
+        break;
+      default:
+        return xml_err_attr_not_allowed(p, a);
+      }
+    }
+    if (sscanf(p->text, "%d%n", &t, &n) != 1) return xml_err_elem_invalid(p);
+    if (t <= 0 || t > 1000000) return xml_err_elem_invalid(p);
+    if (!p->text[n]) {
+      t *= 1000;
+    } else if (!strcasecmp(p->text + n, "s")) {
+      t *= 1000;
+    } else if (!strcasecmp(p->text + n, "ms")) {
+    } else {
+      return xml_err_elem_invalid(p);
+    }
+    xfree(p->text); p->text = 0;
+    ptl->time_limit_ms = t;
+  }
+
+  return 0;
+}
+
+static int
+parse_answer_variants(problem_xml_t prb, struct xml_tree *tree)
+{
+  return 0;
+}
+
+static int
 parse_tree(problem_xml_t tree)
 {
   struct xml_tree *pt = &tree->b;
@@ -242,6 +330,12 @@ parse_tree(problem_xml_t tree)
       if (tree->max_stack_size) return xml_err_elem_redefined(p1);
       if (parse_size(p1->text, &tree->max_stack_size) < 0)
         return xml_err_elem_invalid(p1);
+      break;
+    case PROB_T_TIME_LIMITS:
+      if (parse_time_limits(tree, p1) < 0) return -1;
+      break;
+    case PROB_T_ANSWER_VARIANTS:
+      if (parse_answer_variants(tree, p1) < 0) return -1;
       break;
     default:
       return xml_err_elem_not_allowed(p1);
