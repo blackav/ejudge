@@ -40,6 +40,7 @@ static char const * const elem_map[] =
   "time_limits",
   "time_limit",
   "answer_variants",
+  "answer",
   0,
   "_default",
   "_text",
@@ -287,9 +288,12 @@ parse_answer_variants(problem_xml_t prb, struct xml_tree *tree)
 {
   struct xml_tree *p, *q;
   struct xml_attr *a;
+  int n = 1;
+  int correct = 0;
 
   for (p = tree->first_down; p; p = p->right) {
     if (p->tag != PROB_T_ANSWER) return xml_err_elem_not_allowed(p);
+    
   }
 
   return 0;
