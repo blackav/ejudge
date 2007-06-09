@@ -11219,6 +11219,21 @@ ns_handle_http_request(struct server_framework_state *state,
     return ns_html_err_inv_param(fout, phr, 0, "cannot get script filename");
 
   os_rGetLastname(script_filename, last_name, sizeof(last_name));
+
+#if defined CGI_PROG_SUFFIX
+  {
+    static const unsigned char cgi_prog_suffix_str[] = CGI_PROG_SUFFIX;
+    if (sizeof(cgi_prog_suffix_str) > 1) {
+      int ll;
+      if ((ll = strlen(last_name)) >= sizeof(cgi_prog_suffix_str)
+          && !strcmp(last_name + ll - (sizeof(cgi_prog_suffix_str) - 1),
+                     cgi_prog_suffix_str)) {
+        last_name[ll - (sizeof(cgi_prog_suffix_str) - 1)] = 0;
+      }
+    }
+  }
+#endif /* CGI_PROG_SUFFIX */
+
   if (!strcmp(last_name, "priv-client"))
     privileged_entry_point(fout, phr);
   else if (!strcmp(last_name, "new-master")) {
