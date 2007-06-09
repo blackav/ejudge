@@ -41,6 +41,7 @@ enum
   PROB_T_TIME_LIMIT,
   PROB_T_ANSWER_VARIANTS,
   PROB_T_ANSWER,
+  PROB_T_TRANSLATION,
 
   PROB_T__BARRIER,
   PROB_T__DEFAULT,
@@ -58,6 +59,7 @@ enum
   PROB_A_WORDSIZE,
   PROB_A_FREQ,
   PROB_A_BOGOMIPS,
+  PROB_A_CORRECT,
 
   PROB_A__BARRIER,
   PROB_A__DEFAULT,
@@ -108,6 +110,7 @@ struct problem_desc
   struct problem_stmt *stmts;
   struct xml_tree *examples;
   struct problem_time_limit *tls;
+  int correct_answer;
 
   time_t last_check;
   time_t last_update;

@@ -41,6 +41,7 @@ static char const * const elem_map[] =
   "time_limit",
   "answer_variants",
   "answer",
+  "translation",
   0,
   "_default",
   "_text",
@@ -57,6 +58,7 @@ static char const * const attr_map[] =
   "wordsize",
   "frequency",
   "bogomips",
+  "correct",
   0,
   "_default",
 
@@ -72,7 +74,11 @@ static size_t const elem_sizes[PROB_LAST_TAG] =
 
 static const unsigned char verbatim_flags[PROB_LAST_TAG] =
 {
-  [PROB_T_PROBLEM] = 1,
+  [PROB_T_TITLE] = 1,
+  [PROB_T_DESCRIPTION] = 1,
+  [PROB_T_INPUT_FORMAT] = 1,
+  [PROB_T_OUTPUT_FORMAT] = 1,
+  [PROB_T_TRANSLATION] = 1,
 };
 
 static void node_free(struct xml_tree *t);
@@ -244,11 +250,14 @@ parse_time_limits(problem_xml_t prb, struct xml_tree *tree)
           return xml_err_attr_invalid(a);
         if (!a->text[n]) {
           ptl->freq = (long long) v;
-        } else if (!strcasecmp(a->text + n, "GHz")) {
+        } else if (!strcasecmp(a->text + n, "G")
+                   || !strcasecmp(a->text + n, "GHz")) {
           ptl->freq = (long long) (v * 1000000000.0);
-        } else if (!strcasecmp(a->text + n, "MHz")) {
+        } else if (!strcasecmp(a->text + n, "M")
+                   || !strcasecmp(a->text + n, "MHz")) {
           ptl->freq = (long long) (v * 1000000.0);
-        } else if (!strcasecmp(a->text + n, "KHz")) {
+        } else if (!strcasecmp(a->text + n, "K")
+                   || !strcasecmp(a->text + n, "KHz")) {
           ptl->freq = (long long) (v * 1000.0);
         } else if (!strcasecmp(a->text + n, "Hz")) {
           ptl->freq = (long long) v;
@@ -288,13 +297,21 @@ parse_answer_variants(problem_xml_t prb, struct xml_tree *tree)
 {
   struct xml_tree *p, *q;
   struct xml_attr *a;
-  int n = 1;
-  int correct = 0;
+  int n, correct = 0, v;
 
-  for (p = tree->first_down; p; p = p->right) {
+  for (p = tree->first_down, n = 1; p; p = p->right, n++) {
     if (p->tag != PROB_T_ANSWER) return xml_err_elem_not_allowed(p);
-    
+    for (a = p->first; a; a = a->next) {
+      if (a->tag != PROB_A_CORRECT) return xml_err_attr_not_allowed(p, a);
+      if (xml_attr_bool(a, &v) < 0) return xml_err_attr_invalid(a);
+      if (correct > 0 && v) return xml_err_attr_invalid(a);
+      if (v) correct = n;
+    }
+    for (q = p->first_down; q; q = q->right) {
+      if (p->tag != PROB_T_TRANSLATION) return xml_err_elem_not_allowed(q);
+    }
   }
+  prb->correct_answer = correct;
 
   return 0;
 }
