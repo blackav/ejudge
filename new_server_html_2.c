@@ -3970,8 +3970,8 @@ static unsigned char *get_source(const serve_state_t cs, int run_id,
       val = html_armor_string_dup(prob->alternative[i]);
     } else {
       if (variant > 0 && prob->variant_num > 0) {
-        ns_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
-                              prob->alternatives_file, variant);
+        prepare_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
+                                   prob->alternatives_file, variant);
         pw = &cs->prob_extras[prob->id].v_alts[variant];
         pw_path = variant_stmt_file;
       } else {

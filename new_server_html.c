@@ -10054,8 +10054,8 @@ unpriv_main_page(FILE *fout,
         continue;
       if (!prob->statement_file[0]) continue;
       if (variant > 0) {
-        ns_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
-                              prob->statement_file, variant);
+        prepare_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
+                                   prob->statement_file, variant);
         pw = &cs->prob_extras[prob_id].v_stmts[variant];
         pw_path = variant_stmt_file;
       } else {
@@ -10176,8 +10176,9 @@ unpriv_main_page(FILE *fout,
       if (prob->statement_file[0]
           && (prob_status[prob_id] & PROB_STATUS_VIEWABLE)) {
         if (variant > 0) {
-          ns_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
-                                prob->statement_file, variant);
+          prepare_insert_variant_num(variant_stmt_file,
+                                     sizeof(variant_stmt_file),
+                                     prob->statement_file, variant);
           pw = &cs->prob_extras[prob_id].v_stmts[variant];
           pw_path = variant_stmt_file;
         } else {
@@ -10208,8 +10209,9 @@ unpriv_main_page(FILE *fout,
              || prob->type_val == PROB_TYPE_SELECT_MANY)
             && prob->alternatives_file[0]) {
           if (variant > 0) {
-            ns_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
-                                  prob->alternatives_file, variant);
+            prepare_insert_variant_num(variant_stmt_file,
+                                       sizeof(variant_stmt_file),
+                                       prob->alternatives_file, variant);
             pw = &cs->prob_extras[prob->id].v_alts[variant];
             pw_path = variant_stmt_file;
           } else {
