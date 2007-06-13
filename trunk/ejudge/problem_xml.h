@@ -22,6 +22,7 @@
 #include "problem_common.h"
 
 #include <time.h>
+#include <stdio.h>
 
 enum
 {
@@ -116,5 +117,10 @@ struct problem_desc
   time_t last_check;
   time_t last_update;
 };
+
+problem_xml_t problem_xml_parse(const unsigned char *path);
+problem_xml_t problem_xml_parse_string(const unsigned char *path,
+                                       const unsigned char *str);
+problem_xml_t problem_xml_parse_stream(const unsigned char *path, FILE *f);
 
 #endif /* __PROBLEM_XML_H__ */
