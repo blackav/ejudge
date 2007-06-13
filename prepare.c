@@ -692,6 +692,7 @@ void
 prepare_problem_free_func(struct generic_section_config *gp)
 {
   struct section_problem_data *p = (struct section_problem_data*) gp;
+  int i;
 
   xfree(p->tscores);
   xfree(p->x_score_tests);
@@ -710,6 +711,15 @@ prepare_problem_free_func(struct generic_section_config *gp)
   free_deadline_penalties(p->dp_total, p->dp_infos);
   free_personal_deadlines(p->pd_total, p->pd_infos);
   xfree(p->unhandled_vars);
+
+  if (p->variant_num > 0 && p->xml.a) {
+    for (i = 1; i <= p->variant_num; i++) {
+      p->xml.a[i - 1] = problem_xml_free(p->xml.a[i - 1]);
+    }
+    xfree(p->xml.a);
+  } else {
+    problem_xml_free(p->xml.p);
+  }
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);

@@ -578,6 +578,8 @@ xml_skipped_entity_handler(
   struct parser_data *pd = (struct parser_data*) XML_GetUserData(p);
   int len = strlen(s);
 
+  fprintf(stderr, ">>%.*s\n", len, s);
+
   if (!pd->tag_stack) return;
   if (pd->skipping) return;
   if (is_parameter_entity) return;
@@ -591,7 +593,21 @@ xml_skipped_entity_handler(
   pd->tag_stack->u += len + 1;
   pd->tag_stack->str[pd->tag_stack->u++] = ';';
   pd->tag_stack->str[pd->tag_stack->u] = 0;
+
+  fprintf(stderr, ">>%.*s\n", len, s);
 }
+
+/*
+static void
+xml_default_handler(
+	void *data,
+        const XML_Char *s,
+        int len)
+{
+  fprintf(stderr, "Default: %.*s\n", len, s);
+}
+*/
+                                
 
 struct xml_tree *
 xml_build_tree(char const *path, const struct xml_parse_spec *spec)
@@ -628,7 +644,12 @@ xml_build_tree(char const *path, const struct xml_parse_spec *spec)
   XML_SetCharacterDataHandler(p, chardata_hnd);
   XML_SetUserData(p, &data);
   XML_UseParserAsHandlerArg(p);
-  XML_SetSkippedEntityHandler(p, xml_skipped_entity_handler);
+  if (spec->unparse_entity) {
+    fprintf(stderr, "Here!\n");
+    //XML_SetDefaultHandler(p, xml_default_handler);
+    XML_UseForeignDTD(p, 1);
+    XML_SetSkippedEntityHandler(p, xml_skipped_entity_handler);
+  }
 
   data.spec = spec;
   data.conv_hnd = conv_hnd;
@@ -799,6 +820,8 @@ struct xml_tree *
 xml_tree_free(struct xml_tree *tree, const struct xml_parse_spec *spec)
 {
   struct xml_tree *d, *t;
+
+  if (!tree) return 0;
 
   for (d = tree->first_down; d; d = t) {
     t = d->right;

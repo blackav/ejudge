@@ -123,4 +123,6 @@ problem_xml_t problem_xml_parse_string(const unsigned char *path,
                                        const unsigned char *str);
 problem_xml_t problem_xml_parse_stream(const unsigned char *path, FILE *f);
 
+problem_xml_t problem_xml_free(problem_xml_t r);
+
 #endif /* __PROBLEM_XML_H__ */
