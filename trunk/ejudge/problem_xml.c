@@ -37,6 +37,8 @@ static char const * const elem_map[] =
   "example",
   "input",
   "output",
+  "max_vm_size",
+  "max_stack_size",
   "time_limits",
   "time_limit",
   "answer_variants",
@@ -61,7 +63,6 @@ static char const * const attr_map[] =
   "correct",
   0,
   "_default",
-
   0,
 };
 
@@ -87,7 +88,7 @@ static struct xml_parse_spec problem_parse_spec =
 {
   .elem_map = elem_map,
   .attr_map = attr_map,
-  .elem_sizes = NULL,
+  .elem_sizes = elem_sizes,
   .attr_sizes = NULL,
   .default_elem = PROB_T__DEFAULT,
   .default_attr = PROB_A__DEFAULT,
