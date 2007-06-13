@@ -6280,8 +6280,9 @@ priv_main_page(FILE *fout,
       /* put problem statement */
       if (prob->statement_file[0]) {
         if (variant > 0) {
-          ns_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
-                                prob->statement_file, variant);
+          prepare_insert_variant_num(variant_stmt_file,
+                                     sizeof(variant_stmt_file),
+                                     prob->statement_file, variant);
           pw = &cs->prob_extras[prob->id].v_stmts[variant];
           pw_path = variant_stmt_file;
         } else {
@@ -6305,8 +6306,9 @@ priv_main_page(FILE *fout,
            || prob->type_val == PROB_TYPE_SELECT_MANY)
           && prob->alternatives_file[0]) {
         if (variant > 0) {
-          ns_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
-                                prob->alternatives_file, variant);
+          prepare_insert_variant_num(variant_stmt_file,
+                                     sizeof(variant_stmt_file),
+                                     prob->alternatives_file, variant);
           pw = &cs->prob_extras[prob->id].v_alts[variant];
           pw_path = variant_stmt_file;
         } else {
@@ -9295,23 +9297,6 @@ html_problem_selection_2(serve_state_t cs,
   }
 
   fprintf(fout, "</select>");
-}
-
-int
-ns_insert_variant_num(unsigned char *buf, size_t size,
-                      const unsigned char *file, int variant)
-{
-  int flen, pos;
-
-  ASSERT(file);
-  flen = strlen(file);
-  ASSERT(flen > 0);
-  pos = flen - 1;
-  while (pos >= 0 && file[pos] != '/' && file[pos] != '.') pos--;
-  if (pos <= 0 || file[pos] == '/')
-    return snprintf(buf, size, "%s-%d", file, variant);
-  // pos > 0 && file[pos] == '.'
-  return snprintf(buf, size, "%.*s-%d%s", pos, file, variant, file + pos);
 }
 
 static unsigned char *
