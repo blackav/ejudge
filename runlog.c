@@ -88,7 +88,7 @@ struct run_entry_v1
   rint32_t       nsec;          /* nanosecond component of timestamp */
 };
 
-#define RUNLOG_MAX_SIZE    (1024 * 1024)
+#define RUNLOG_MAX_SIZE    (2*1024 * 1024)
 #define RUNLOG_MAX_TEAM_ID 100000
 #define RUNLOG_MAX_PROB_ID 100000
 #define RUNLOG_MAX_SCORE   100000

@@ -3,7 +3,7 @@
 #ifndef __SETTINGS_H__
 #define __SETTINGS_H__
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
  */
 
 /* maximal length of a CGI parameter value */
-#define MAX_CGI_VALUE_LEN 1048576
+#define MAX_CGI_VALUE_LEN 2097152
 
 /* maximal length of a `serve' command packet */
 #define MAX_SERVE_PACKET_LEN 1048576
