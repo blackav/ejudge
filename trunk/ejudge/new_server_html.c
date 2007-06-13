@@ -1937,6 +1937,7 @@ priv_contest_operation(FILE *fout,
       ns_error(log_f, NEW_SRV_ERR_INSUFFICIENT_DURATION);
       goto cleanup;
     }
+    run_set_finish_time(cs->runlog_state, 0);
     run_stop_contest(cs->runlog_state, 0);
     serve_update_status_file(cs, 1);
     break;
