@@ -23,6 +23,7 @@
 #include "parsecfg.h"
 #include "serve_state.h"
 #include "problem_common.h"
+#include "problem_xml.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -453,6 +454,7 @@ struct section_problem_data
   path_t statement_file;        /* file with inline problem statement */
   path_t alternatives_file;     /* file with alternatives for output-only */
   path_t plugin_file;           /* file with the custom problem handler */
+  path_t xml_file;              /* file with the problem in XML */
   puc_t stand_attr[128];        /* attributes for standings column */
   path_t source_header;         /* file to insert into the beginning of src */
   path_t source_footer;         /* file to insert at the end of src */
@@ -505,6 +507,13 @@ struct section_problem_data
 
   /* these fields are for CGI editing of contest configuration files */
   unsigned char *unhandled_vars;
+
+  /* parsed XML specs */
+  union
+  {
+    problem_xml_t p;            /* for single problems */
+    problem_xml_t *a;           /* for variant problems */
+  } xml;
 };
 
 struct section_language_data
@@ -781,5 +790,11 @@ void prepare_unparse_variants(FILE *f, const struct variant_map *vmap,
 int *prepare_parse_score_tests(const unsigned char *str, int score);
 const unsigned char *prepare_unparse_problem_type(int val);
 int prepare_parse_memory_limit_type(const unsigned char *str);
+int
+prepare_insert_variant_num(
+	unsigned char *buf,
+        size_t size,
+        const unsigned char *file,
+        int variant);
 
 #endif /* __PREPARE_H__ */

@@ -374,6 +374,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(statement_file, "s"),
   PROBLEM_PARAM(alternatives_file, "s"),
   PROBLEM_PARAM(plugin_file, "s"),
+  PROBLEM_PARAM(xml_file, "s"),
   PROBLEM_PARAM(type, "s"),
   PROBLEM_PARAM(alternative, "x"),
   PROBLEM_PARAM(stand_attr, "s"),
@@ -1554,11 +1555,34 @@ make_stand_file_name_2(serve_state_t state)
            "%.*s%s%s", i, s, "%d", s + i);
 }
 
+int
+prepare_insert_variant_num(
+	unsigned char *buf,
+        size_t size,
+        const unsigned char *file,
+        int variant)
+{
+  int flen, pos;
+
+  ASSERT(file);
+  flen = strlen(file);
+  ASSERT(flen > 0);
+  pos = flen - 1;
+  while (pos >= 0 && file[pos] != '/' && file[pos] != '.') pos--;
+  if (pos <= 0 || file[pos] == '/')
+    return snprintf(buf, size, "%s-%d", file, variant);
+  // pos > 0 && file[pos] == '.'
+  return snprintf(buf, size, "%.*s-%d%s", pos, file, variant, file + pos);
+}
+
 static int
 set_defaults(serve_state_t state, int mode)
 {
   struct generic_section_config *p;
   struct section_problem_data *aprob;
+  struct section_problem_data *prob;
+  struct section_global_data *g = 0;
+  struct section_language_data *lang;
 
   int i, j, si;
   char *ish;
@@ -1567,6 +1591,7 @@ set_defaults(serve_state_t state, int mode)
 
   size_t tmp_len = 0;
   int r;
+  path_t fpath;
 
   /* find global section */
   for (p = state->config; p; p = p->next)
@@ -1576,138 +1601,135 @@ set_defaults(serve_state_t state, int mode)
     err("Global configuration settings not found");
     return -1;
   }
-  state->global = (struct section_global_data*) p;
+  g = state->global = (struct section_global_data*) p;
 
   /* userlist-server interaction */
   if (mode == PREPARE_SERVE) {
 #if defined EJUDGE_SOCKET_PATH
-    if (!state->global->socket_path[0]) {
-      snprintf(state->global->socket_path, sizeof(state->global->socket_path),
-               "%s", EJUDGE_SOCKET_PATH);
+    if (!g->socket_path[0]) {
+      snprintf(g->socket_path,sizeof(g->socket_path),"%s", EJUDGE_SOCKET_PATH);
     }
 #endif /* EJUDGE_SOCKET_PATH */
-    if (!state->global->socket_path[0]) {
+    if (!g->socket_path[0]) {
       err("global.socket_path must be set");
       return -1;
     }
   }
 
   /* directory poll intervals */
-  if (state->global->sleep_time < 0 || state->global->sleep_time > 10000) {
+  if (g->sleep_time < 0 || g->sleep_time > 10000) {
     err("Invalid global.sleep_time value");
     return -1;
   }
   if (mode == PREPARE_SERVE) {
-    if (state->global->serve_sleep_time < 0 || state->global->serve_sleep_time > 10000) {
+    if (g->serve_sleep_time < 0 || g->serve_sleep_time > 10000) {
       err("Invalid global.serve_sleep_time value");
       return -1;
     }
   }
-  if (!state->global->sleep_time && !state->global->serve_sleep_time) {
+  if (!g->sleep_time && !g->serve_sleep_time) {
     vinfo("global.sleep_time set to %d", DFLT_G_SLEEP_TIME);
-    state->global->sleep_time = DFLT_G_SLEEP_TIME;
+    g->sleep_time = DFLT_G_SLEEP_TIME;
     if (mode == PREPARE_SERVE) {
       vinfo("global.serve_sleep_time set to %d", DFLT_G_SERVE_SLEEP_TIME);
-      state->global->serve_sleep_time = DFLT_G_SERVE_SLEEP_TIME;
+      g->serve_sleep_time = DFLT_G_SERVE_SLEEP_TIME;
     }
-  } else if (!state->global->sleep_time) {
+  } else if (!g->sleep_time) {
     vinfo("global.sleep_time set to %d", DFLT_G_SLEEP_TIME);
-    state->global->sleep_time = DFLT_G_SLEEP_TIME;
-  } else if (mode == PREPARE_SERVE && !state->global->serve_sleep_time) {
+    g->sleep_time = DFLT_G_SLEEP_TIME;
+  } else if (mode == PREPARE_SERVE && !g->serve_sleep_time) {
     vinfo("global.serve_sleep_time set to global.sleep_time");
-    state->global->serve_sleep_time = state->global->sleep_time;
+    g->serve_sleep_time = g->sleep_time;
   }
 
-  if (state->global->team_enable_src_view == -1)
-    state->global->team_enable_src_view = DFLT_G_TEAM_ENABLE_SRC_VIEW;
-  if (state->global->team_enable_rep_view == -1)
-    state->global->team_enable_rep_view = DFLT_G_TEAM_ENABLE_REP_VIEW;
-  if (state->global->team_enable_ce_view == -1)
-    state->global->team_enable_ce_view = DFLT_G_TEAM_ENABLE_CE_VIEW;
-  if (state->global->team_show_judge_report == -1)
-    state->global->team_show_judge_report = DFLT_G_TEAM_SHOW_JUDGE_REPORT;
-  if (state->global->report_error_code == -1)
-    state->global->report_error_code = DFLT_G_REPORT_ERROR_CODE;
-  if (state->global->disable_clars == -1)
-    state->global->disable_clars = DFLT_G_DISABLE_CLARS;
-  if (state->global->disable_team_clars == -1)
-    state->global->disable_team_clars = DFLT_G_DISABLE_TEAM_CLARS;
-  if (state->global->ignore_compile_errors == -1)
-    state->global->ignore_compile_errors = DFLT_G_IGNORE_COMPILE_ERRORS;
-  if (state->global->disable_failed_test_view == -1)
-    state->global->disable_failed_test_view = DFLT_G_DISABLE_FAILED_TEST_VIEW;
-  if (state->global->ignore_duplicated_runs == -1)
-    state->global->ignore_duplicated_runs = DFLT_G_IGNORE_DUPLICATED_RUNS;
-  if (state->global->show_deadline == -1)
-    state->global->show_deadline = DFLT_G_SHOW_DEADLINE;
-  if (state->global->enable_printing == -1)
-    state->global->enable_printing = DFLT_G_ENABLE_PRINTING;
-  if (state->global->disable_banner_page == -1)
-    state->global->disable_banner_page = DFLT_G_DISABLE_BANNER_PAGE;
-  if (state->global->prune_empty_users == -1)
-    state->global->prune_empty_users = DFLT_G_PRUNE_EMPTY_USERS;
-  if (state->global->enable_full_archive == -1)
-    state->global->enable_full_archive = DFLT_G_ENABLE_FULL_ARCHIVE;
-  if (state->global->always_show_problems == -1)
-    state->global->always_show_problems = DFLT_G_ALWAYS_SHOW_PROBLEMS;
-  if (state->global->disable_user_standings == -1)
-    state->global->disable_user_standings = DFLT_G_DISABLE_USER_STANDINGS;
-  if (state->global->disable_language == -1)
-    state->global->disable_language = DFLT_G_DISABLE_LANGUAGE;
-  if (state->global->problem_navigation == -1)
-    state->global->problem_navigation = DFLT_G_PROBLEM_NAVIGATION;
-  if (state->global->vertical_navigation == -1)
-    state->global->vertical_navigation = DFLT_G_VERTICAL_NAVIGATION;
-  if (state->global->stand_fancy_style == -1)
-    state->global->stand_fancy_style = 0;
-  if (state->global->stand_show_ok_time == -1)
-    state->global->stand_show_ok_time = DFLT_G_STAND_SHOW_OK_TIME;
-  if (state->global->stand_show_warn_number == -1)
-    state->global->stand_show_warn_number = DFLT_G_STAND_SHOW_WARN_NUMBER;
-  if (state->global->autoupdate_standings == -1)
-    state->global->autoupdate_standings = DFLT_G_AUTOUPDATE_STANDINGS;
-  if (state->global->disable_auto_testing == -1)
-    state->global->disable_auto_testing = DFLT_G_DISABLE_AUTO_TESTING;
-  if (state->global->disable_testing == -1)
-    state->global->disable_testing = DFLT_G_DISABLE_TESTING;
-  if (state->global->show_astr_time == -1)
-    state->global->show_astr_time = DFLT_G_SHOW_ASTR_TIME;
-  if (state->global->enable_report_upload == -1)
-    state->global->enable_report_upload = DFLT_G_ENABLE_REPORT_UPLOAD;
-  if (state->global->enable_runlog_merge == -1)
-    state->global->enable_runlog_merge = DFLT_G_ENABLE_RUNLOG_MERGE;
-  if (state->global->ignore_success_time == -1)
-    state->global->ignore_success_time = DFLT_G_IGNORE_SUCCESS_TIME;
-  if (state->global->secure_run == -1)
-    state->global->secure_run = DFLT_G_SECURE_RUN;
-  if (state->global->enable_memory_limit_error == -1)
-    state->global->enable_memory_limit_error = DFLT_G_ENABLE_MEMORY_LIMIT_ERROR;
+  if (g->team_enable_src_view == -1)
+    g->team_enable_src_view = DFLT_G_TEAM_ENABLE_SRC_VIEW;
+  if (g->team_enable_rep_view == -1)
+    g->team_enable_rep_view = DFLT_G_TEAM_ENABLE_REP_VIEW;
+  if (g->team_enable_ce_view == -1)
+    g->team_enable_ce_view = DFLT_G_TEAM_ENABLE_CE_VIEW;
+  if (g->team_show_judge_report == -1)
+    g->team_show_judge_report = DFLT_G_TEAM_SHOW_JUDGE_REPORT;
+  if (g->report_error_code == -1)
+    g->report_error_code = DFLT_G_REPORT_ERROR_CODE;
+  if (g->disable_clars == -1)
+    g->disable_clars = DFLT_G_DISABLE_CLARS;
+  if (g->disable_team_clars == -1)
+    g->disable_team_clars = DFLT_G_DISABLE_TEAM_CLARS;
+  if (g->ignore_compile_errors == -1)
+    g->ignore_compile_errors = DFLT_G_IGNORE_COMPILE_ERRORS;
+  if (g->disable_failed_test_view == -1)
+    g->disable_failed_test_view = DFLT_G_DISABLE_FAILED_TEST_VIEW;
+  if (g->ignore_duplicated_runs == -1)
+    g->ignore_duplicated_runs = DFLT_G_IGNORE_DUPLICATED_RUNS;
+  if (g->show_deadline == -1)
+    g->show_deadline = DFLT_G_SHOW_DEADLINE;
+  if (g->enable_printing == -1)
+    g->enable_printing = DFLT_G_ENABLE_PRINTING;
+  if (g->disable_banner_page == -1)
+    g->disable_banner_page = DFLT_G_DISABLE_BANNER_PAGE;
+  if (g->prune_empty_users == -1)
+    g->prune_empty_users = DFLT_G_PRUNE_EMPTY_USERS;
+  if (g->enable_full_archive == -1)
+    g->enable_full_archive = DFLT_G_ENABLE_FULL_ARCHIVE;
+  if (g->always_show_problems == -1)
+    g->always_show_problems = DFLT_G_ALWAYS_SHOW_PROBLEMS;
+  if (g->disable_user_standings == -1)
+    g->disable_user_standings = DFLT_G_DISABLE_USER_STANDINGS;
+  if (g->disable_language == -1)
+    g->disable_language = DFLT_G_DISABLE_LANGUAGE;
+  if (g->problem_navigation == -1)
+    g->problem_navigation = DFLT_G_PROBLEM_NAVIGATION;
+  if (g->vertical_navigation == -1)
+    g->vertical_navigation = DFLT_G_VERTICAL_NAVIGATION;
+  if (g->stand_fancy_style == -1)
+    g->stand_fancy_style = 0;
+  if (g->stand_show_ok_time == -1)
+    g->stand_show_ok_time = DFLT_G_STAND_SHOW_OK_TIME;
+  if (g->stand_show_warn_number == -1)
+    g->stand_show_warn_number = DFLT_G_STAND_SHOW_WARN_NUMBER;
+  if (g->autoupdate_standings == -1)
+    g->autoupdate_standings = DFLT_G_AUTOUPDATE_STANDINGS;
+  if (g->disable_auto_testing == -1)
+    g->disable_auto_testing = DFLT_G_DISABLE_AUTO_TESTING;
+  if (g->disable_testing == -1)
+    g->disable_testing = DFLT_G_DISABLE_TESTING;
+  if (g->show_astr_time == -1)
+    g->show_astr_time = DFLT_G_SHOW_ASTR_TIME;
+  if (g->enable_report_upload == -1)
+    g->enable_report_upload = DFLT_G_ENABLE_REPORT_UPLOAD;
+  if (g->enable_runlog_merge == -1)
+    g->enable_runlog_merge = DFLT_G_ENABLE_RUNLOG_MERGE;
+  if (g->ignore_success_time == -1)
+    g->ignore_success_time = DFLT_G_IGNORE_SUCCESS_TIME;
+  if (g->secure_run == -1)
+    g->secure_run = DFLT_G_SECURE_RUN;
+  if (g->enable_memory_limit_error == -1)
+    g->enable_memory_limit_error = DFLT_G_ENABLE_MEMORY_LIMIT_ERROR;
 
 #if defined EJUDGE_HTTPD_HTDOCS_DIR
-  if (!state->global->htdocs_dir[0]) {
-    snprintf(state->global->htdocs_dir, sizeof(state->global->htdocs_dir),
-             "%s", EJUDGE_HTTPD_HTDOCS_DIR);
+  if (!g->htdocs_dir[0]) {
+    snprintf(g->htdocs_dir,sizeof(g->htdocs_dir),"%s", EJUDGE_HTTPD_HTDOCS_DIR);
   }
 #endif
 
-  if (state->global->stand_ignore_after[0] &&
-      parse_date(state->global->stand_ignore_after, &state->global->stand_ignore_after_d) < 0) {
+  if (g->stand_ignore_after[0] &&
+      parse_date(g->stand_ignore_after, &g->stand_ignore_after_d) < 0) {
     err("cannot parse stand_ignore_after parameter");
     return -1;
   }
-  if (state->global->appeal_deadline[0] &&
-      parse_date(state->global->appeal_deadline, &state->global->appeal_deadline_d) < 0) {
+  if (g->appeal_deadline[0] &&
+      parse_date(g->appeal_deadline, &g->appeal_deadline_d) < 0) {
     err("cannot parse appeal_deadline parameter");
     return -1;
   }
-  if (state->global->contest_finish_time[0] &&
-      parse_date(state->global->contest_finish_time,
-                 &state->global->contest_finish_time_d) < 0) {
+  if (g->contest_finish_time[0] &&
+      parse_date(g->contest_finish_time, &g->contest_finish_time_d) < 0) {
     err("cannot parse contest_finish_time parameter");
     return -1;
   }
 
-#define GLOBAL_INIT_NUM_FIELD(f,v) do { if (!state->global->f) { vinfo("global.%s set to %d", #f, v); state->global->f = v; } } while (0)
+#define GLOBAL_INIT_NUM_FIELD(f,v) do { if (!g->f) { vinfo("global.%s set to %d", #f, v); g->f = v; } } while (0)
   /* limits (serve) */
   if (mode == PREPARE_SERVE) {
     GLOBAL_INIT_NUM_FIELD(max_run_size, DFLT_G_MAX_RUN_SIZE);
@@ -1719,78 +1741,76 @@ set_defaults(serve_state_t state, int mode)
   }
 
   /* timings */
-  if (state->global->board_fog_time < 0) {
+  if (g->board_fog_time < 0) {
     vinfo("global.board_fog_time set to %d", DFLT_G_BOARD_FOG_TIME);
-    state->global->board_fog_time = DFLT_G_BOARD_FOG_TIME;
+    g->board_fog_time = DFLT_G_BOARD_FOG_TIME;
   }
-  state->global->board_fog_time *= 60;
-  if (state->global->board_unfog_time == -1) {
+  g->board_fog_time *= 60;
+  if (g->board_unfog_time == -1) {
     vinfo("global.board_unfog_time set to %d", DFLT_G_BOARD_UNFOG_TIME);
-    state->global->board_unfog_time = DFLT_G_BOARD_UNFOG_TIME;
+    g->board_unfog_time = DFLT_G_BOARD_UNFOG_TIME;
   }
-  state->global->board_unfog_time *= 60;
-  if (state->global->contest_time < -1) {
-    err("bad value of global.contest_time: %d", state->global->contest_time);
+  g->board_unfog_time *= 60;
+  if (g->contest_time < -1) {
+    err("bad value of global.contest_time: %d", g->contest_time);
     return -1;
   }
-  if (state->global->contest_time == -1) {
+  if (g->contest_time == -1) {
     vinfo("global.contest_time set to %d", DFLT_G_CONTEST_TIME);
-    state->global->contest_time = DFLT_G_CONTEST_TIME;
+    g->contest_time = DFLT_G_CONTEST_TIME;
   }
-  state->global->contest_time *= 60;
+  g->contest_time *= 60;
 
   if (mode == PREPARE_SERVE || mode == PREPARE_RUN) {
-    if (state->global->inactivity_timeout == -1) {
+    if (g->inactivity_timeout == -1) {
       vinfo("global.inactivity_timeout set to %d", DFLT_G_INACTIVITY_TIMEOUT);
-      state->global->inactivity_timeout = DFLT_G_INACTIVITY_TIMEOUT;
+      g->inactivity_timeout = DFLT_G_INACTIVITY_TIMEOUT;
     }
   }
 
-  if (!state->global->root_dir[0]) {
+  if (!g->root_dir[0]) {
     err("global.root_dir must be set!");
     return -1;
   }
 
   /* root_dir, conf_dir, var_dir */
-  if (!state->global->root_dir[0] && !state->global->var_dir[0] && !state->global->conf_dir[0]) {
+  if (!g->root_dir[0] && !g->var_dir[0] && !g->conf_dir[0]) {
     vinfo("global.root_dir set to %s", DFLT_G_ROOT_DIR);
     vinfo("global.conf_dir set to %s", DFLT_G_CONF_DIR);
     vinfo("global.var_dir set to %s", DFLT_G_VAR_DIR);
-    snprintf(state->global->root_dir, sizeof(state->global->root_dir),
-             "%s", DFLT_G_ROOT_DIR);
-    path_init(state->global->conf_dir, state->global->root_dir, DFLT_G_CONF_DIR);
-    path_init(state->global->var_dir, state->global->root_dir, DFLT_G_VAR_DIR);
-  } else if (state->global->root_dir[0]) {
-    if (!state->global->conf_dir[0]) {
+    snprintf(g->root_dir, sizeof(g->root_dir), "%s", DFLT_G_ROOT_DIR);
+    path_init(g->conf_dir, g->root_dir, DFLT_G_CONF_DIR);
+    path_init(g->var_dir, g->root_dir, DFLT_G_VAR_DIR);
+  } else if (g->root_dir[0]) {
+    if (!g->conf_dir[0]) {
       vinfo("global.conf_dir set to %s", DFLT_G_CONF_DIR);
     }
-    if (!state->global->var_dir[0]) {
+    if (!g->var_dir[0]) {
       vinfo("global.var_dir set to %s", DFLT_G_VAR_DIR);
     }
-    path_init(state->global->conf_dir, state->global->root_dir, DFLT_G_CONF_DIR);
-    path_init(state->global->var_dir, state->global->root_dir, DFLT_G_VAR_DIR);
-  } else if (!state->global->var_dir[0]) {
+    path_init(g->conf_dir, g->root_dir, DFLT_G_CONF_DIR);
+    path_init(g->var_dir, g->root_dir, DFLT_G_VAR_DIR);
+  } else if (!g->var_dir[0]) {
     err("global.var_dir must be set!");
     return -1;
-  } else if (!state->global->conf_dir[0]) {
+  } else if (!g->conf_dir[0]) {
     err("global.conf_dir must be set!");
     return -1;
   }
 
   /* CONFIGURATION FILES DEFAULTS */
-#define GLOBAL_INIT_FIELD(f,d,c) do { if (!state->global->f[0]) { vinfo("global." #f " set to %s", d); snprintf(state->global->f, sizeof(state->global->f), "%s", d); } pathmake2(state->global->f,state->global->c, "/", state->global->f, NULL); } while (0)
+#define GLOBAL_INIT_FIELD(f,d,c) do { if (!g->f[0]) { vinfo("global." #f " set to %s", d); snprintf(g->f, sizeof(g->f), "%s", d); } pathmake2(g->f,g->c, "/", g->f, NULL); } while (0)
 
 #if defined EJUDGE_SCRIPT_DIR
-  if (!state->global->script_dir[0]) {
-    snprintf(state->global->script_dir, sizeof(state->global->script_dir), "%s",
-             EJUDGE_SCRIPT_DIR);
-    vinfo("global.script_dir is set to %s", state->global->script_dir);
+  if (!g->script_dir[0]) {
+    snprintf(g->script_dir, sizeof(g->script_dir), "%s", EJUDGE_SCRIPT_DIR);
+    vinfo("global.script_dir is set to %s", g->script_dir);
   }
-  if (!state->global->ejudge_checkers_dir[0]) {
-    snprintf(state->global->ejudge_checkers_dir, sizeof(state->global->ejudge_checkers_dir),
+  if (!g->ejudge_checkers_dir[0]) {
+    snprintf(g->ejudge_checkers_dir, sizeof(g->ejudge_checkers_dir),
              "%s", EJUDGE_SCRIPT_DIR);
     vinfo("global.ejudge_checkers_dir is set to %s",
-         state->global->ejudge_checkers_dir);
+         g->ejudge_checkers_dir);
   }
 #endif /* EJUDGE_SCRIPT_DIR */
 
@@ -1808,20 +1828,18 @@ set_defaults(serve_state_t state, int mode)
     GLOBAL_INIT_FIELD(statement_dir, DFLT_G_STATEMENT_DIR, conf_dir);
     GLOBAL_INIT_FIELD(plugin_dir, DFLT_G_PLUGIN_DIR, conf_dir);
   }
-  if (mode == PREPARE_SERVE && state->global->description_file[0]) {
+  if (mode == PREPARE_SERVE && g->description_file[0]) {
     GLOBAL_INIT_FIELD(description_file, "", statement_dir);
   }
 
   if (mode != PREPARE_COMPILE) {
-    if (!state->global->info_sfx[0]) {
-      snprintf(state->global->info_sfx, sizeof(state->global->info_sfx),
-               "%s", DFLT_G_INFO_SFX);
-      vinfo("global.info_sfx set to %s", state->global->info_sfx);
+    if (!g->info_sfx[0]) {
+      snprintf(g->info_sfx, sizeof(g->info_sfx), "%s", DFLT_G_INFO_SFX);
+      vinfo("global.info_sfx set to %s", g->info_sfx);
     }
-    if (!state->global->tgz_sfx[0]) {
-      snprintf(state->global->tgz_sfx, sizeof(state->global->tgz_sfx),
-               "%s", DFLT_G_TGZ_SFX);
-      vinfo("global.tgz_sfx set to %s", state->global->tgz_sfx);
+    if (!g->tgz_sfx[0]) {
+      snprintf(g->tgz_sfx, sizeof(g->tgz_sfx), "%s", DFLT_G_TGZ_SFX);
+      vinfo("global.tgz_sfx set to %s", g->tgz_sfx);
     }
   }
 
@@ -1840,50 +1858,50 @@ set_defaults(serve_state_t state, int mode)
 
     GLOBAL_INIT_FIELD(status_dir, DFLT_G_STATUS_DIR, var_dir);
     GLOBAL_INIT_FIELD(serve_socket, DFLT_G_SERVE_SOCKET, var_dir);
-    if (state->global->variant_map_file) {
+    if (g->variant_map_file) {
       GLOBAL_INIT_FIELD(variant_map_file, "", conf_dir);
     }
   }
 
   if (mode == PREPARE_COMPILE || mode == PREPARE_SERVE) {
     GLOBAL_INIT_FIELD(compile_dir, DFLT_G_COMPILE_DIR, var_dir);
-    pathmake(state->global->compile_queue_dir, state->global->compile_dir, "/",
+    pathmake(g->compile_queue_dir, g->compile_dir, "/",
              DFLT_G_COMPILE_QUEUE_DIR, 0);
-    vinfo("global.compile_queue_dir is %s", state->global->compile_queue_dir);
-    pathmake(state->global->compile_src_dir, state->global->compile_dir, "/",
+    vinfo("global.compile_queue_dir is %s", g->compile_queue_dir);
+    pathmake(g->compile_src_dir, g->compile_dir, "/",
              DFLT_G_COMPILE_SRC_DIR, 0);
-    vinfo("global.compile_src_dir is %s", state->global->compile_src_dir);
+    vinfo("global.compile_src_dir is %s", g->compile_src_dir);
   }
 
   if (mode == PREPARE_SERVE) {
     /* compile_out_dir is no longer parametrized, also it uses compile_dir */
-    snprintf(state->global->compile_out_dir, sizeof(state->global->compile_out_dir),
-             "%s/%06d", state->global->compile_dir, state->global->contest_id);
-    vinfo("global.compile_out_dir is %s", state->global->compile_out_dir);
-    pathmake(state->global->compile_status_dir, state->global->compile_out_dir, "/",
+    snprintf(g->compile_out_dir, sizeof(g->compile_out_dir),
+             "%s/%06d", g->compile_dir, g->contest_id);
+    vinfo("global.compile_out_dir is %s", g->compile_out_dir);
+    pathmake(g->compile_status_dir, g->compile_out_dir, "/",
              DFLT_G_COMPILE_STATUS_DIR, 0);
-    vinfo("global.compile_status_dir is %s", state->global->compile_status_dir);
-    pathmake(state->global->compile_report_dir, state->global->compile_out_dir, "/",
+    vinfo("global.compile_status_dir is %s", g->compile_status_dir);
+    pathmake(g->compile_report_dir, g->compile_out_dir, "/",
              DFLT_G_COMPILE_REPORT_DIR, 0);
-    vinfo("global.compile_report_dir is %s", state->global->compile_report_dir);
+    vinfo("global.compile_report_dir is %s", g->compile_report_dir);
   }
 
   GLOBAL_INIT_FIELD(work_dir, DFLT_G_WORK_DIR, var_dir);
   GLOBAL_INIT_FIELD(print_work_dir, DFLT_G_PRINT_WORK_DIR, work_dir);
   GLOBAL_INIT_FIELD(diff_work_dir, DFLT_G_DIFF_WORK_DIR, work_dir);
 
-  if (!state->global->a2ps_path[0]) {
-    strcpy(state->global->a2ps_path, DFLT_G_A2PS_PATH);
+  if (!g->a2ps_path[0]) {
+    strcpy(g->a2ps_path, DFLT_G_A2PS_PATH);
   }
-  if (!state->global->lpr_path[0]) {
-    strcpy(state->global->lpr_path, DFLT_G_LPR_PATH);
+  if (!g->lpr_path[0]) {
+    strcpy(g->lpr_path, DFLT_G_LPR_PATH);
   }
-  if (!state->global->diff_path[0]) {
-    strcpy(state->global->diff_path, DFLT_G_DIFF_PATH);
+  if (!g->diff_path[0]) {
+    strcpy(g->diff_path, DFLT_G_DIFF_PATH);
   }
 
-  if (state->global->team_page_quota < 0) {
-    state->global->team_page_quota = DFLT_G_TEAM_PAGE_QUOTA;
+  if (g->team_page_quota < 0) {
+    g->team_page_quota = DFLT_G_TEAM_PAGE_QUOTA;
   }
 
   if (mode == PREPARE_COMPILE) {
@@ -1892,32 +1910,30 @@ set_defaults(serve_state_t state, int mode)
 
   if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
     GLOBAL_INIT_FIELD(run_dir, DFLT_G_RUN_DIR, var_dir);
-    pathmake(state->global->run_queue_dir, state->global->run_dir, "/",
-             DFLT_G_RUN_QUEUE_DIR, 0);
-    vinfo("global.run_queue_dir is %s", state->global->run_queue_dir);
-    pathmake(state->global->run_exe_dir, state->global->run_dir, "/",
-             DFLT_G_RUN_EXE_DIR, 0);
-    vinfo("global.run_exe_dir is %s", state->global->run_exe_dir);
+    pathmake(g->run_queue_dir, g->run_dir, "/", DFLT_G_RUN_QUEUE_DIR, 0);
+    vinfo("global.run_queue_dir is %s", g->run_queue_dir);
+    pathmake(g->run_exe_dir, g->run_dir, "/", DFLT_G_RUN_EXE_DIR, 0);
+    vinfo("global.run_exe_dir is %s", g->run_exe_dir);
   }
   if (mode == PREPARE_SERVE) {
-    snprintf(state->global->run_out_dir, sizeof(state->global->run_out_dir),
-             "%s/%06d", state->global->run_dir, state->global->contest_id);
-    vinfo("global.run_out_dir is %s", state->global->run_out_dir);
-    pathmake(state->global->run_status_dir, state->global->run_out_dir, "/",
+    snprintf(g->run_out_dir, sizeof(g->run_out_dir),
+             "%s/%06d", g->run_dir, g->contest_id);
+    vinfo("global.run_out_dir is %s", g->run_out_dir);
+    pathmake(g->run_status_dir, g->run_out_dir, "/",
              DFLT_G_RUN_STATUS_DIR, 0);
-    vinfo("global.run_status_dir is %s", state->global->run_status_dir);
-    pathmake(state->global->run_report_dir, state->global->run_out_dir, "/",
+    vinfo("global.run_status_dir is %s", g->run_status_dir);
+    pathmake(g->run_report_dir, g->run_out_dir, "/",
              DFLT_G_RUN_REPORT_DIR, 0);
-    vinfo("global.run_report_dir is %s", state->global->run_report_dir);
-    if (state->global->team_enable_rep_view) {
-      pathmake(state->global->run_team_report_dir, state->global->run_out_dir, "/",
+    vinfo("global.run_report_dir is %s", g->run_report_dir);
+    if (g->team_enable_rep_view) {
+      pathmake(g->run_team_report_dir, g->run_out_dir, "/",
                DFLT_G_RUN_TEAM_REPORT_DIR, 0);
-      vinfo("global.run_team_report_dir is %s", state->global->run_team_report_dir);
+      vinfo("global.run_team_report_dir is %s", g->run_team_report_dir);
     }
-    if (state->global->enable_full_archive) {
-      pathmake(state->global->run_full_archive_dir, state->global->run_out_dir, "/",
+    if (g->enable_full_archive) {
+      pathmake(g->run_full_archive_dir, g->run_out_dir, "/",
                DFLT_G_RUN_FULL_ARCHIVE_DIR, 0);
-      vinfo("global.run_full_archive_dir is %s", state->global->run_full_archive_dir);
+      vinfo("global.run_full_archive_dir is %s", g->run_full_archive_dir);
     }
   }
 
@@ -1929,258 +1945,246 @@ set_defaults(serve_state_t state, int mode)
   /* score_system must be either "acm", either "kirov"
    * "acm" is the default
    */
-  if (!state->global->score_system[0]) {
-    state->global->score_system_val = SCORE_ACM;
-  } else if (!strcasecmp(state->global->score_system, "acm")) {
-    state->global->score_system_val = SCORE_ACM;
-  } else if (!strcasecmp(state->global->score_system, "kirov")) {
-    state->global->score_system_val = SCORE_KIROV;
-  } else if (!strcasecmp(state->global->score_system, "olympiad")) {
-    state->global->score_system_val = SCORE_OLYMPIAD;
-  } else if (!strcasecmp(state->global->score_system, "moscow")) {
-    state->global->score_system_val = SCORE_MOSCOW;
+  if (!g->score_system[0]) {
+    g->score_system_val = SCORE_ACM;
+  } else if (!strcasecmp(g->score_system, "acm")) {
+    g->score_system_val = SCORE_ACM;
+  } else if (!strcasecmp(g->score_system, "kirov")) {
+    g->score_system_val = SCORE_KIROV;
+  } else if (!strcasecmp(g->score_system, "olympiad")) {
+    g->score_system_val = SCORE_OLYMPIAD;
+  } else if (!strcasecmp(g->score_system, "moscow")) {
+    g->score_system_val = SCORE_MOSCOW;
   } else {
-    err("Invalid scoring system: %s", state->global->score_system);
+    err("Invalid scoring system: %s", g->score_system);
     return -1;
   }
 
   /*
    * Seconds rounding mode.
    */
-  if (!state->global->rounding_mode[0]) {
-    state->global->rounding_mode_val = SEC_CEIL;
-  } else if (!strcmp(state->global->rounding_mode, "ceil")) {
-    state->global->rounding_mode_val = SEC_CEIL;
-  } else if (!strcmp(state->global->rounding_mode, "floor")) {
-    state->global->rounding_mode_val = SEC_FLOOR;
-  } else if (!strcmp(state->global->rounding_mode, "round")) {
-    state->global->rounding_mode_val = SEC_ROUND;
+  if (!g->rounding_mode[0]) {
+    g->rounding_mode_val = SEC_CEIL;
+  } else if (!strcmp(g->rounding_mode, "ceil")) {
+    g->rounding_mode_val = SEC_CEIL;
+  } else if (!strcmp(g->rounding_mode, "floor")) {
+    g->rounding_mode_val = SEC_FLOOR;
+  } else if (!strcmp(g->rounding_mode, "round")) {
+    g->rounding_mode_val = SEC_ROUND;
   } else {
-    err("Invalid rounding mode: %s", state->global->rounding_mode);
+    err("Invalid rounding mode: %s", g->rounding_mode);
     return -1;
   }
 
-  if (state->global->enable_continue == -1) state->global->enable_continue = DFLT_G_ENABLE_CONTINUE;
-  if (state->global->html_report == -1) state->global->html_report = 1;
-  if (state->global->xml_report == -1) state->global->xml_report = 0;
-  if (state->global->xml_report) state->global->html_report = 0;
+  if (g->enable_continue == -1) g->enable_continue = DFLT_G_ENABLE_CONTINUE;
+  if (g->html_report == -1) g->html_report = 1;
+  if (g->xml_report == -1) g->xml_report = 0;
+  if (g->xml_report) g->html_report = 0;
 
-  if (state->global->tests_to_accept == -1) {
-    state->global->tests_to_accept = DFLT_G_TESTS_TO_ACCEPT;
+  if (g->tests_to_accept == -1) {
+    g->tests_to_accept = DFLT_G_TESTS_TO_ACCEPT;
   }
 
   if (mode == PREPARE_COMPILE) {
-    if (state->global->compile_real_time_limit == -1) {
-      state->global->compile_real_time_limit = DFLT_G_COMPILE_REAL_TIME_LIMIT;
+    if (g->compile_real_time_limit == -1) {
+      g->compile_real_time_limit = DFLT_G_COMPILE_REAL_TIME_LIMIT;
       vinfo("global.compile_real_time_limit set to %d",
-            state->global->compile_real_time_limit);
+            g->compile_real_time_limit);
     }
   }
 
   if (mode == PREPARE_RUN) {
-    if (state->global->checker_real_time_limit == -1) {
-      state->global->checker_real_time_limit = DFLT_G_CHECKER_REAL_TIME_LIMIT;
+    if (g->checker_real_time_limit == -1) {
+      g->checker_real_time_limit = DFLT_G_CHECKER_REAL_TIME_LIMIT;
       vinfo("global.checker_real_time_limit set to %d",
-            state->global->checker_real_time_limit);
+            g->checker_real_time_limit);
     }
   }
 
   if (mode == PREPARE_SERVE) {
-    if (!state->global->charset[0]) {
-      snprintf(state->global->charset, sizeof(state->global->charset),
-               "%s", DFLT_G_CHARSET);
-      vinfo("global.charset set to %s", state->global->charset);
+    if (!g->charset[0]) {
+      snprintf(g->charset, sizeof(g->charset), "%s", DFLT_G_CHARSET);
+      vinfo("global.charset set to %s", g->charset);
     }
     /*
-    if (!(state->global->charset_ptr = nls_lookup_table(state->global->charset))) {
-      err("global.charset `%s' is invalid", state->global->charset);
+    if (!(g->charset_ptr = nls_lookup_table(g->charset))) {
+      err("global.charset `%s' is invalid", g->charset);
       return -1;
     }
     */
     /*
-    if (!state->global->standings_charset[0]) {
-      snprintf(state->global->standings_charset, sizeof(state->global->standings_charset),
-               "%s", state->global->charset);
-      info("global.standings_charset set to %s", state->global->standings_charset);
+    if (!g->standings_charset[0]) {
+      snprintf(g->standings_charset, sizeof(g->standings_charset),
+               "%s", g->charset);
+      info("global.standings_charset set to %s", g->standings_charset);
     }
-    if (!(state->global->standings_charset_ptr = nls_lookup_table(state->global->standings_charset))) {
-      err("global.standings_charset `%s' is invalid", state->global->standings_charset);
+    if (!(g->standings_charset_ptr = nls_lookup_table(g->standings_charset))) {
+      err("global.standings_charset `%s' is invalid", g->standings_charset);
       return -1;
     }
     */
-    if (!state->global->standings_file_name[0]) {
-      snprintf(state->global->standings_file_name,sizeof(state->global->standings_file_name),
+    if (!g->standings_file_name[0]) {
+      snprintf(g->standings_file_name,sizeof(g->standings_file_name),
                "%s", DFLT_G_STANDINGS_FILE_NAME);
     }
     make_stand_file_name_2(state);
 
-    if (state->global->contest_start_cmd[0]) {
-      pathmake2(state->global->contest_start_cmd, state->global->conf_dir, "/",
-                state->global->contest_start_cmd, 0);
-      if (check_executable(state->global->contest_start_cmd) < 0) {
+    if (g->contest_start_cmd[0]) {
+      pathmake2(g->contest_start_cmd, g->conf_dir, "/",g->contest_start_cmd, 0);
+      if (check_executable(g->contest_start_cmd) < 0) {
         err("contest start command %s is not executable or does not exist",
-            state->global->contest_start_cmd);
+            g->contest_start_cmd);
         return -1;
       }
     }
 
-    if (state->global->stand_header_file[0]) {
-      pathmake2(state->global->stand_header_file, state->global->conf_dir, "/",
-                state->global->stand_header_file, 0);
-      vptr = &state->global->stand_header_txt;
-      r = generic_read_file(vptr, 0, &tmp_len, 0,
-                            0, state->global->stand_header_file, "");
+    if (g->stand_header_file[0]) {
+      pathmake2(g->stand_header_file, g->conf_dir, "/",g->stand_header_file, 0);
+      vptr = &g->stand_header_txt;
+      r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->stand_header_file, "");
       if (r < 0) return -1;
     }
 
-    if (state->global->stand_footer_file[0]) {
-      pathmake2(state->global->stand_footer_file, state->global->conf_dir, "/",
-                state->global->stand_footer_file, 0);
-      vptr = &state->global->stand_footer_txt;
-      r = generic_read_file(vptr, 0, &tmp_len, 0,
-                            0, state->global->stand_footer_file, "");
+    if (g->stand_footer_file[0]) {
+      pathmake2(g->stand_footer_file, g->conf_dir, "/",g->stand_footer_file, 0);
+      vptr = &g->stand_footer_txt;
+      r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->stand_footer_file, "");
       if (r < 0) return -1;
     }
 
-    if (state->global->stand2_file_name[0]) {
-      if (state->global->stand2_header_file[0]) {
-        pathmake2(state->global->stand2_header_file, state->global->conf_dir, "/",
-                  state->global->stand2_header_file, 0);
-        vptr = &state->global->stand2_header_txt;
-        r = generic_read_file(vptr, 0, &tmp_len,
-                              0, 0, state->global->stand2_header_file, "");
+    if (g->stand2_file_name[0]) {
+      if (g->stand2_header_file[0]) {
+        pathmake2(g->stand2_header_file, g->conf_dir, "/",
+                  g->stand2_header_file, 0);
+        vptr = &g->stand2_header_txt;
+        r = generic_read_file(vptr, 0,&tmp_len,0, 0, g->stand2_header_file, "");
         if (r < 0) return -1;
       }
-      if (state->global->stand2_footer_file[0]) {
-        pathmake2(state->global->stand2_footer_file, state->global->conf_dir, "/",
-                  state->global->stand2_footer_file, 0);
-        vptr = &state->global->stand2_footer_txt;
-        r = generic_read_file(vptr, 0, &tmp_len,
-                              0, 0, state->global->stand2_footer_file, "");
+      if (g->stand2_footer_file[0]) {
+        pathmake2(g->stand2_footer_file, g->conf_dir, "/",
+                  g->stand2_footer_file, 0);
+        vptr = &g->stand2_footer_txt;
+        r = generic_read_file(vptr, 0,&tmp_len,0, 0, g->stand2_footer_file, "");
         if (r < 0) return -1;
       } 
     }
 
-    if (state->global->plog_file_name[0]) {
-      if (state->global->plog_header_file[0]) {
-        pathmake2(state->global->plog_header_file, state->global->conf_dir, "/",
-                  state->global->plog_header_file, 0);
-        vptr = &state->global->plog_header_txt;
-        r = generic_read_file(vptr, 0, &tmp_len,
-                              0, 0, state->global->plog_header_file, "");
+    if (g->plog_file_name[0]) {
+      if (g->plog_header_file[0]) {
+        pathmake2(g->plog_header_file, g->conf_dir, "/",g->plog_header_file, 0);
+        vptr = &g->plog_header_txt;
+        r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->plog_header_file, "");
         if (r < 0) return -1;
       }
-      if (state->global->plog_footer_file[0]) {
-        pathmake2(state->global->plog_footer_file, state->global->conf_dir, "/",
-                  state->global->plog_footer_file, 0);
-        vptr = &state->global->plog_footer_txt;
-        r = generic_read_file(vptr, 0, &tmp_len,
-                              0, 0, state->global->plog_footer_file, "");
+      if (g->plog_footer_file[0]) {
+        pathmake2(g->plog_footer_file, g->conf_dir, "/",g->plog_footer_file, 0);
+        vptr = &g->plog_footer_txt;
+        r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->plog_footer_file, "");
         if (r < 0) return -1;
       }
-      if (!state->global->plog_update_time) {
-        state->global->plog_update_time = DFLT_G_PLOG_UPDATE_TIME;
+      if (!g->plog_update_time) {
+        g->plog_update_time = DFLT_G_PLOG_UPDATE_TIME;
       }
     } else {
-      state->global->plog_update_time = 0;
+      g->plog_update_time = 0;
     }
 
-    if (state->global->use_gzip < 0 || state->global->use_gzip > 1) {
-      state->global->use_gzip = DFLT_G_USE_GZIP;
+    if (g->use_gzip < 0 || g->use_gzip > 1) {
+      g->use_gzip = DFLT_G_USE_GZIP;
     }
-    if (state->global->use_dir_hierarchy < 0 || state->global->use_dir_hierarchy > 1) {
-      state->global->use_dir_hierarchy = DFLT_G_USE_DIR_HIERARCHY;
+    if (g->use_dir_hierarchy < 0 || g->use_dir_hierarchy > 1) {
+      g->use_dir_hierarchy = DFLT_G_USE_DIR_HIERARCHY;
     }
-    if (state->global->min_gzip_size < 0) {
-      state->global->min_gzip_size = DFLT_G_MIN_GZIP_SIZE;
+    if (g->min_gzip_size < 0) {
+      g->min_gzip_size = DFLT_G_MIN_GZIP_SIZE;
     }
   }
 
 #if CONF_HAS_LIBINTL - 0 == 1
-  if (state->global->enable_l10n < 0) state->global->enable_l10n = 1;
+  if (g->enable_l10n < 0) g->enable_l10n = 1;
 #if defined EJUDGE_LOCALE_DIR
-  if (state->global->enable_l10n && !state->global->l10n_dir[0]) {
-    strcpy(state->global->l10n_dir, EJUDGE_LOCALE_DIR);
+  if (g->enable_l10n && !g->l10n_dir[0]) {
+    strcpy(g->l10n_dir, EJUDGE_LOCALE_DIR);
   }
 #endif /* EJUDGE_LOCALE_DIR */
-  if (state->global->enable_l10n && !state->global->l10n_dir[0]) {
-    state->global->enable_l10n = 0;
+  if (g->enable_l10n && !g->l10n_dir[0]) {
+    g->enable_l10n = 0;
   }
 #else
-  state->global->enable_l10n = 0;
+  g->enable_l10n = 0;
 #endif /* CONF_HAS_LIBINTL */
 
 #if CONF_HAS_LIBINTL - 0 == 1
-  if (mode == PREPARE_SERVE && state->global->enable_l10n) {
+  if (mode == PREPARE_SERVE && g->enable_l10n) {
     /* convert locale string into locale id */
-    if (!strcmp(state->global->standings_locale, "ru_RU.KOI8-R")
-        || !strcmp(state->global->standings_locale, "ru")) {
-      state->global->standings_locale_id = 1;
+    if (!strcmp(g->standings_locale, "ru_RU.KOI8-R")
+        || !strcmp(g->standings_locale, "ru")) {
+      g->standings_locale_id = 1;
     } else {
-      state->global->standings_locale_id = 0;
+      g->standings_locale_id = 0;
     }
-    vinfo("standings_locale_id is %d", state->global->standings_locale_id);
+    vinfo("standings_locale_id is %d", g->standings_locale_id);
   }
 #endif /* CONF_HAS_LIBINTL */
 
-  if (state->global->team_download_time == -1) {
-    state->global->team_download_time = DFLT_G_TEAM_DOWNLOAD_TIME;
+  if (g->team_download_time == -1) {
+    g->team_download_time = DFLT_G_TEAM_DOWNLOAD_TIME;
   }
-  state->global->team_download_time *= 60;
+  g->team_download_time *= 60;
 
   /* only run needs these parameters */
   if (mode == PREPARE_RUN) {
-    if (!state->global->max_file_length) {
-      state->global->max_file_length = DFLT_G_MAX_FILE_LENGTH;
-      vinfo("global.max_file_length set to %d", state->global->max_file_length);
+    if (!g->max_file_length) {
+      g->max_file_length = DFLT_G_MAX_FILE_LENGTH;
+      vinfo("global.max_file_length set to %d", g->max_file_length);
     }
-    if (!state->global->max_line_length) {
-      state->global->max_line_length = DFLT_G_MAX_LINE_LENGTH;
-      vinfo("global.max_line_length set to %d", state->global->max_line_length);
+    if (!g->max_line_length) {
+      g->max_line_length = DFLT_G_MAX_LINE_LENGTH;
+      vinfo("global.max_line_length set to %d", g->max_line_length);
     }
-    if (!state->global->max_cmd_length) {
-      state->global->max_cmd_length = DFLT_G_MAX_CMD_LENGTH;
-      vinfo("global.max_cmd_length set to %d", state->global->max_cmd_length);
+    if (!g->max_cmd_length) {
+      g->max_cmd_length = DFLT_G_MAX_CMD_LENGTH;
+      vinfo("global.max_cmd_length set to %d", g->max_cmd_length);
     }
 
-    if (state->global->sound_player[0]) {
+    if (g->sound_player[0]) {
       char *tmps;
 
-      tmps = varsubst_heap(state, state->global->sound_player, 0,
+      tmps = varsubst_heap(state, g->sound_player, 0,
                            section_global_params, section_problem_params,
                            section_language_params, section_tester_params);
-      if (tmps != state->global->sound_player) {
-        snprintf(state->global->sound_player, sizeof(state->global->sound_player),"%s",tmps);
+      if (tmps != g->sound_player) {
+        snprintf(g->sound_player, sizeof(g->sound_player),"%s",tmps);
         xfree(tmps);
       }
     }
   }
 
-  if (mode == PREPARE_SERVE && state->global->user_priority_adjustments) {
-    state->global->user_adjustment_info = parse_user_adjustment(state->global->user_priority_adjustments);
-    if (!state->global->user_adjustment_info) return -1;
+  if (mode == PREPARE_SERVE && g->user_priority_adjustments) {
+    g->user_adjustment_info=parse_user_adjustment(g->user_priority_adjustments);
+    if (!g->user_adjustment_info) return -1;
   }
 
   if (mode == PREPARE_SERVE) {
-    if (state->global->contestant_status_num<0 || state->global->contestant_status_num>100) {
+    if (g->contestant_status_num<0 || g->contestant_status_num>100) {
       err("global.contestant_status_num is invalid");
       return -1;
     }
   }
-  if (mode == PREPARE_SERVE && state->global->contestant_status_num > 0) {
+  if (mode == PREPARE_SERVE && g->contestant_status_num > 0) {
     // there must be exact number of legend entries
-    if (!state->global->contestant_status_legend) {
+    if (!g->contestant_status_legend) {
       err("global.contestant_status_legend is not set");
       return -1;
     }
-    for (i = 0; state->global->contestant_status_legend[i]; i++);
-    if (i != state->global->contestant_status_num) {
+    for (i = 0; g->contestant_status_legend[i]; i++);
+    if (i != g->contestant_status_num) {
       err("global.contestant_status_legend has different number of entries, than global.contestant_status_num");
       return -1;
     }
-    if (state->global->contestant_status_row_attr) {
-      for (i = 0; state->global->contestant_status_row_attr[i]; i++);
-      if (i != state->global->contestant_status_num) {
+    if (g->contestant_status_row_attr) {
+      for (i = 0; g->contestant_status_row_attr[i]; i++);
+      if (i != g->contestant_status_num) {
         err("global.contestant_status_row_attr has different number of entries, than global.contestant_status_num");
         return -1;
       }
@@ -2188,77 +2192,74 @@ set_defaults(serve_state_t state, int mode)
   }
 
   for (i = 1; i <= state->max_lang && mode != PREPARE_RUN; i++) {
-    if (!state->langs[i]) continue;
-    if (!state->langs[i]->short_name[0]) {
+    if (!(lang = state->langs[i])) continue;
+    if (!lang->short_name[0]) {
       vinfo("language.%d.short_name set to \"lang%d\"", i, i);
-      sprintf(state->langs[i]->short_name, "lang%d", i);
+      sprintf(lang->short_name, "lang%d", i);
     }
-    if (!state->langs[i]->long_name[0]) {
+    if (!lang->long_name[0]) {
       vinfo("language.%d.long_name set to \"Language %d\"", i, i);
-      sprintf(state->langs[i]->long_name, "Language %d", i);
+      sprintf(lang->long_name, "Language %d", i);
     }
     
     if (mode == PREPARE_SERVE) {
-      if (!state->langs[i]->compile_dir[0]) {
+      if (!lang->compile_dir[0]) {
         // use the global compile queue settings
-        pathcpy(state->langs[i]->compile_dir, state->global->compile_dir);
-        pathcpy(state->langs[i]->compile_queue_dir, state->global->compile_queue_dir);
-        pathcpy(state->langs[i]->compile_src_dir, state->global->compile_src_dir);
-        pathcpy(state->langs[i]->compile_out_dir, state->global->compile_out_dir);
-        pathcpy(state->langs[i]->compile_status_dir, state->global->compile_status_dir);
-        pathcpy(state->langs[i]->compile_report_dir, state->global->compile_report_dir);
+        pathcpy(lang->compile_dir, g->compile_dir);
+        pathcpy(lang->compile_queue_dir, g->compile_queue_dir);
+        pathcpy(lang->compile_src_dir, g->compile_src_dir);
+        pathcpy(lang->compile_out_dir, g->compile_out_dir);
+        pathcpy(lang->compile_status_dir, g->compile_status_dir);
+        pathcpy(lang->compile_report_dir, g->compile_report_dir);
       } else {
         // prepare language-specific compile queue settings
-        pathmake(state->langs[i]->compile_queue_dir, state->langs[i]->compile_dir, "/",
+        pathmake(lang->compile_queue_dir, lang->compile_dir, "/",
                  DFLT_G_COMPILE_QUEUE_DIR, 0);
-        vinfo("language.%d.compile_queue_dir is %s",
-              i, state->langs[i]->compile_queue_dir);
-        pathmake(state->langs[i]->compile_src_dir, state->langs[i]->compile_dir, "/",
+        vinfo("language.%d.compile_queue_dir is %s",i, lang->compile_queue_dir);
+        pathmake(lang->compile_src_dir, lang->compile_dir, "/",
                  DFLT_G_COMPILE_SRC_DIR, 0);
-        vinfo("language.%d.compile_src_dir is %s",
-              i, state->langs[i]->compile_src_dir);
-        snprintf(state->langs[i]->compile_out_dir, sizeof(state->langs[i]->compile_out_dir),
-                 "%s/%06d", state->langs[i]->compile_dir, state->global->contest_id);
-        vinfo("language.%d.compile_out_dir is %s", i,
-              state->langs[i]->compile_out_dir);
-        pathmake(state->langs[i]->compile_status_dir, state->langs[i]->compile_out_dir, "/",
+        vinfo("language.%d.compile_src_dir is %s", i, lang->compile_src_dir);
+        snprintf(lang->compile_out_dir, sizeof(lang->compile_out_dir),
+                 "%s/%06d", lang->compile_dir, g->contest_id);
+        vinfo("language.%d.compile_out_dir is %s", i, lang->compile_out_dir);
+        pathmake(lang->compile_status_dir, lang->compile_out_dir, "/",
                  DFLT_G_COMPILE_STATUS_DIR, 0);
         vinfo("language.%d.compile_status_dir is %s", i,
-              state->langs[i]->compile_status_dir);
-        pathmake(state->langs[i]->compile_report_dir, state->langs[i]->compile_out_dir, "/",
+              lang->compile_status_dir);
+        pathmake(lang->compile_report_dir, lang->compile_out_dir, "/",
                  DFLT_G_COMPILE_REPORT_DIR, 0);
         vinfo("language.%d.compile_report_dir is %s", i,
-              state->langs[i]->compile_report_dir);
+              lang->compile_report_dir);
       }
     }
 
-    if (!state->langs[i]->src_sfx[0]) {
+    if (!lang->src_sfx[0]) {
       err("language.%d.src_sfx must be set", i);
       return -1;
     }
 
     if (mode == PREPARE_COMPILE) {
-      if (!state->langs[i]->cmd[0]) {
+      if (!lang->cmd[0]) {
         err("language.%d.cmd must be set", i);
         return -1;
       }
-      pathmake4(state->langs[i]->cmd,state->global->script_dir, "/", state->langs[i]->cmd, NULL);
-      vinfo("language.%d.cmd is %s", i, state->langs[i]->cmd);
-      if (state->langs[i]->compile_real_time_limit == -1) {
-        state->langs[i]->compile_real_time_limit = state->global->compile_real_time_limit;
-        vinfo("language.%d.compile_real_time_limit is inherited from global (%d)", i, state->langs[i]->compile_real_time_limit);
+      pathmake4(lang->cmd,g->script_dir, "/", lang->cmd, NULL);
+      vinfo("language.%d.cmd is %s", i, lang->cmd);
+      if (lang->compile_real_time_limit == -1) {
+        lang->compile_real_time_limit = g->compile_real_time_limit;
+        vinfo("language.%d.compile_real_time_limit is inherited from global (%d)", i, lang->compile_real_time_limit);
       }
-      ASSERT(state->langs[i]->compile_real_time_limit >= 0);
+      ASSERT(lang->compile_real_time_limit >= 0);
     }
 
-    if (state->langs[i]->compiler_env) {
-      for (j = 0; state->langs[i]->compiler_env[j]; j++) {
-        state->langs[i]->compiler_env[j] = varsubst_heap(state, state->langs[i]->compiler_env[j], 1,
-                                                  section_global_params,
-                                                  section_problem_params,
-                                                  section_language_params,
-                                                  section_tester_params);
-        if (!state->langs[i]->compiler_env[j]) return -1;
+    if (lang->compiler_env) {
+      for (j = 0; lang->compiler_env[j]; j++) {
+        lang->compiler_env[j] = varsubst_heap(state, lang->compiler_env[j], 1,
+                                              section_global_params,
+                                              section_problem_params,
+                                              section_language_params,
+                                              section_tester_params);
+        if (!lang->compiler_env[j]) return -1;
       }
     }
   }
@@ -2292,398 +2293,387 @@ set_defaults(serve_state_t state, int mode)
   }
 
   for (i = 1; i <= state->max_prob && mode != PREPARE_COMPILE; i++) {
-    if (!state->probs[i]) continue;
+    if (!(prob = state->probs[i])) continue;
     si = -1;
     sish = 0;
     aprob = 0;
-    if (state->probs[i]->super[0]) {
+    if (prob->super[0]) {
       for (si = 0; si < state->max_abstr_prob; si++)
-        if (!strcmp(state->abstr_probs[si]->short_name, state->probs[i]->super))
+        if (!strcmp(state->abstr_probs[si]->short_name, prob->super))
           break;
       if (si >= state->max_abstr_prob) {
-        err("abstract problem `%s' is not defined", state->probs[i]->super);
+        err("abstract problem `%s' is not defined", prob->super);
         return -1;
       }
       aprob = state->abstr_probs[si];
       sish = aprob->short_name;
     }
-    if (!state->probs[i]->short_name[0] && state->global->auto_short_problem_name) {
-      snprintf(state->probs[i]->short_name, sizeof(state->probs[i]->short_name),
-               "%06d", state->probs[i]->id);
-      vinfo("problem %d short name is set to %s", i, state->probs[i]->short_name);
+
+    if (!prob->short_name[0] && g->auto_short_problem_name) {
+      snprintf(prob->short_name, sizeof(prob->short_name), "%06d", prob->id);
+      vinfo("problem %d short name is set to %s", i, prob->short_name);
     }
-    if (!state->probs[i]->short_name[0]) {
+    if (!prob->short_name[0]) {
       err("problem %d short name must be set", i);
       return -1;
     }
-    ish = state->probs[i]->short_name;
-    /*
-    if (!state->probs[i]->long_name[0]) {
-      vinfo("problem.%s.long_name set to \"Problem %s\"", ish, ish);
-      sprintf(state->probs[i]->long_name, "Problem %s", ish);
-    }
-    */
+    ish = prob->short_name;
 
-    if (state->probs[i]->type[0]) {
-      state->probs[i]->type_val = problem_parse_type(state->probs[i]->type);
-      if (state->probs[i]->type_val < 0 || state->probs[i]->type_val > PROB_TYPE_LAST) {
-        err("problem %s type %s is invalid", state->probs[i]->short_name, state->probs[i]->type);
+    /* parse XML here */
+    if (!prob->xml_file[0] && si != -1 && aprob->xml_file[0]) {
+      sformat_message(prob->xml_file, sizeof(prob->xml_file),
+                      aprob->xml_file, 0, prob, 0, 0, 0, 0, 0, 0);
+    }
+    if (prob->xml_file[0]) {
+      path_add_dir(prob->xml_file, g->statement_dir);
+    }
+    if (prob->xml_file[0] && prob->variant_num > 0) {
+      XCALLOC(prob->xml.a, prob->variant_num);
+      for (j = 1; j <= prob->variant_num; j++) {
+        prepare_insert_variant_num(fpath, sizeof(fpath), prob->xml_file, j);
+        if (!(prob->xml.a[j] = problem_xml_parse(fpath))) return -1;
+      }
+    } else if (prob->xml_file[0]) {
+      if (!(prob->xml.p = problem_xml_parse(prob->xml_file))) return -1;
+    }
+
+    if (prob->type[0]) {
+      prob->type_val = problem_parse_type(prob->type);
+      if (prob->type_val < 0 || prob->type_val > PROB_TYPE_LAST) {
+        err("problem %s type %s is invalid", prob->short_name, prob->type);
         return -1;
       }
     }
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_TYPE,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEAM_ENABLE_REP_VIEW,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEAM_ENABLE_CE_VIEW,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEAM_SHOW_JUDGE_REPORT,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_IGNORE_COMPILE_ERRORS,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_TESTS_TO_ACCEPT,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_ACCEPT_PARTIAL,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_MIN_TESTS_TO_ACCEPT,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_USER_SUBMIT,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_TAB,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_RESTRICTED_STATEMENT,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_SUBMIT_AFTER_OK,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_AUTO_TESTING,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_TESTING,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_ENABLE_COMPILATION,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_SKIP_TESTING,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_FULL_SCORE,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_VARIABLE_FULL_SCORE,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_SCORE,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_RUN_PENALTY,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_ACM_RUN_PENALTY,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_DISQUALIFIED_PENALTY,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_HIDDEN,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_ADVANCE_TO_NEXT,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_MANUAL_CHECKING,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_EXAMINATOR_NUM,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_PRESENTATION,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDIN,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDOUT,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_IGNORE_EXIT_CODE,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT_MILLIS,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_REAL_TIME_LIMIT,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_SFX,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_CORR_SFX,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_INFO_SFX,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TGZ_SFX,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_PAT,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_CORR_PAT,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_INFO_PAT,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TGZ_PAT,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_CMD,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_VM_SIZE,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_STACK_SIZE,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_DATA_SIZE,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_CMD,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_SOURCE_HEADER,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_SOURCE_FOOTER,
-                           state->probs[i], aprob, state->global);
+                           prob, aprob, g);
 
-    if (state->probs[i]->priority_adjustment == -1000 && si != -1 &&
-        state->abstr_probs[si]->priority_adjustment != -1000) {
-      state->probs[i]->priority_adjustment = state->abstr_probs[si]->priority_adjustment;
+    if (prob->priority_adjustment == -1000 && si != -1 &&
+        aprob->priority_adjustment != -1000) {
+      prob->priority_adjustment = aprob->priority_adjustment;
     }
-    if (state->probs[i]->priority_adjustment == -1000) {
-      state->probs[i]->priority_adjustment = 0;
+    if (prob->priority_adjustment == -1000) {
+      prob->priority_adjustment = 0;
     }
 
-    if (!state->probs[i]->score_multiplier && si != -1 &&
-        state->abstr_probs[si]->score_multiplier >= 1) {
-      state->probs[i]->score_multiplier = state->abstr_probs[si]->score_multiplier;
+    if (!prob->score_multiplier && si != -1 &&
+        aprob->score_multiplier >= 1) {
+      prob->score_multiplier = aprob->score_multiplier;
     }
 
     if (mode == PREPARE_SERVE) {
-      if (state->probs[i]->deadline[0]) {
-        if (parse_date(state->probs[i]->deadline, &state->probs[i]->t_deadline) < 0) {
-          err("invalid deadline specified for problem `%s'",
-              state->probs[i]->short_name);
+      if (prob->deadline[0]) {
+        if (parse_date(prob->deadline, &prob->t_deadline) < 0) {
+          err("invalid deadline specified for problem `%s'", prob->short_name);
           return -1;
         }
-        vinfo("problem.%s.deadline is %ld", ish, state->probs[i]->t_deadline);
+        vinfo("problem.%s.deadline is %ld", ish, prob->t_deadline);
       }
-      if (state->probs[i]->personal_deadline) {
-        if (parse_personal_deadlines(state->probs[i]->personal_deadline,
-                                     &state->probs[i]->pd_total,
-                                     &state->probs[i]->pd_infos) < 0) {
+      if (prob->personal_deadline) {
+        if (parse_personal_deadlines(prob->personal_deadline,
+                                     &prob->pd_total, &prob->pd_infos) < 0) {
           return -1;
         }
       }
-      if (state->probs[i]->start_date[0]) {
-        if (parse_date(state->probs[i]->start_date, &state->probs[i]->t_start_date) < 0) {
-          err("invalid start_date specified for problem `%s'",
-              state->probs[i]->short_name);
+      if (prob->start_date[0]) {
+        if (parse_date(prob->start_date, &prob->t_start_date) < 0) {
+          err("invalid start_date specified for problem `%s'",prob->short_name);
           return -1;
         }
-        vinfo("problem.%s.start_date is %ld", ish, state->probs[i]->t_start_date);
+        vinfo("problem.%s.start_date is %ld", ish, prob->t_start_date);
       }
 
-      if (parse_deadline_penalties(state->probs[i]->date_penalty,
-                                   &state->probs[i]->dp_total,
-                                   &state->probs[i]->dp_infos) < 0) return -1;
+      if (parse_deadline_penalties(prob->date_penalty, &prob->dp_total,
+                                   &prob->dp_infos) < 0) return -1;
 
-      if (si != -1 && state->abstr_probs[si]->disable_language) {
-        state->probs[i]->disable_language = sarray_merge_pf(state->abstr_probs[si]->disable_language, state->probs[i]->disable_language);
+      if (si != -1 && aprob->disable_language) {
+        prob->disable_language = sarray_merge_pf(aprob->disable_language, prob->disable_language);
       }
-      if (si != -1 && state->abstr_probs[si]->enable_language) {
-        state->probs[i]->enable_language = sarray_merge_pf(state->abstr_probs[si]->enable_language, state->probs[i]->enable_language);
+      if (si != -1 && aprob->enable_language) {
+        prob->enable_language = sarray_merge_pf(aprob->enable_language, prob->enable_language);
       }
-      if (si != -1 && state->abstr_probs[si]->require) {
-        state->probs[i]->require = sarray_merge_pf(state->abstr_probs[si]->require, state->probs[i]->require);
+      if (si != -1 && aprob->require) {
+        prob->require = sarray_merge_pf(aprob->require, prob->require);
       }
-      if (si != -1 && state->abstr_probs[si]->checker_env) {
-        state->probs[i]->checker_env = sarray_merge_pf(state->abstr_probs[si]->checker_env,
-                                                state->probs[i]->checker_env);
+      if (si != -1 && aprob->checker_env) {
+        prob->checker_env = sarray_merge_pf(aprob->checker_env,
+                                            prob->checker_env);
       }
-      if (state->probs[i]->checker_env) {
-        for (j = 0; state->probs[i]->checker_env[j]; j++) {
-          state->probs[i]->checker_env[j] = varsubst_heap(state, state->probs[i]->checker_env[j], 1,
-                                                   section_global_params,
-                                                   section_problem_params,
-                                                   section_language_params,
-                                                   section_tester_params);
-          if (!state->probs[i]->checker_env[j]) return -1;
+      if (prob->checker_env) {
+        for (j = 0; prob->checker_env[j]; j++) {
+          prob->checker_env[j] = varsubst_heap(state, prob->checker_env[j], 1,
+                                               section_global_params,
+                                               section_problem_params,
+                                               section_language_params,
+                                               section_tester_params);
+          if (!prob->checker_env[j]) return -1;
         }
       }
 
       /* score bonus */
       prepare_set_prob_value(PREPARE_FIELD_PROB_SCORE_BONUS,
-                             state->probs[i], aprob, state->global);
-      if (state->probs[i]->score_bonus[0]) {
-        if (parse_score_bonus(state->probs[i]->score_bonus, &state->probs[i]->score_bonus_total,
-                              &state->probs[i]->score_bonus_val) < 0) return -1;
+                             prob, aprob, g);
+      if (prob->score_bonus[0]) {
+        if (parse_score_bonus(prob->score_bonus, &prob->score_bonus_total,
+                              &prob->score_bonus_val) < 0) return -1;
       }
     }
 
     if (mode == PREPARE_SERVE) {
-      if (!state->probs[i]->statement_file[0] && si != -1
-          && state->abstr_probs[si]->statement_file[0]) {
-        sformat_message(state->probs[i]->statement_file, PATH_MAX,
-                        state->abstr_probs[si]->statement_file,
-                        NULL, state->probs[i], NULL, NULL, NULL, 0, 0, 0);
+      if (!prob->statement_file[0] && si != -1
+          && aprob->statement_file[0]) {
+        sformat_message(prob->statement_file, PATH_MAX, aprob->statement_file,
+                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
       }
-      if (state->probs[i]->statement_file[0]) {
-        path_add_dir(state->probs[i]->statement_file,
-                     state->global->statement_dir);
+      if (prob->statement_file[0]) {
+        path_add_dir(prob->statement_file, g->statement_dir);
       }
 
-      if (!state->probs[i]->alternatives_file[0] && si != -1
-          && state->abstr_probs[si]->alternatives_file[0]) {
-        sformat_message(state->probs[i]->alternatives_file, PATH_MAX,
-                        state->abstr_probs[si]->alternatives_file,
-                        NULL, state->probs[i], NULL, NULL, NULL, 0, 0, 0);
+      if (!prob->alternatives_file[0] && si != -1
+          && aprob->alternatives_file[0]) {
+        sformat_message(prob->alternatives_file, PATH_MAX,
+                        aprob->alternatives_file,
+                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
       }
-      if (state->probs[i]->alternatives_file[0]) {
-        path_add_dir(state->probs[i]->alternatives_file,
-                     state->global->statement_dir);
+      if (prob->alternatives_file[0]) {
+        path_add_dir(prob->alternatives_file, g->statement_dir);
       }
 
-      if (!state->probs[i]->plugin_file[0] && si != -1
-          && state->abstr_probs[si]->plugin_file[0]) {
-        sformat_message(state->probs[i]->plugin_file, PATH_MAX,
-                        state->abstr_probs[si]->plugin_file,
-                        NULL, state->probs[i], NULL, NULL, NULL, 0, 0, 0);
+      if (!prob->plugin_file[0] && si != -1
+          && aprob->plugin_file[0]) {
+        sformat_message(prob->plugin_file, PATH_MAX, aprob->plugin_file,
+                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
       }
-      if (state->probs[i]->plugin_file[0]) {
-        path_add_dir(state->probs[i]->plugin_file,
-                     state->global->plugin_dir);
+      if (prob->plugin_file[0]) {
+        path_add_dir(prob->plugin_file, g->plugin_dir);
       }
 
       prepare_set_prob_value(PREPARE_FIELD_PROB_STAND_ATTR,
-                             state->probs[i], state->abstr_probs[si],
-                             state->global);
+                             prob, aprob, g);
     }
 
     if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
-      if (!state->probs[i]->test_dir[0] && si != -1
-          && state->abstr_probs[si]->test_dir[0]) {
-        sformat_message(state->probs[i]->test_dir, PATH_MAX,
-                        state->abstr_probs[si]->test_dir,
-                        NULL, state->probs[i], NULL, NULL, NULL, 0, 0, 0);
+      if (!prob->test_dir[0] && si != -1 && aprob->test_dir[0]) {
+        sformat_message(prob->test_dir, PATH_MAX, aprob->test_dir,
+                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
         vinfo("problem.%s.test_dir taken from problem.%s ('%s')",
-             ish, sish, state->probs[i]->test_dir);
+             ish, sish, prob->test_dir);
       }
-      if (!state->probs[i]->test_dir[0]) {
-        vinfo("problem.%s.test_dir set to %s", ish,state->probs[i]->short_name);
-        pathcpy(state->probs[i]->test_dir, state->probs[i]->short_name);
+      if (!prob->test_dir[0]) {
+        vinfo("problem.%s.test_dir set to %s", ish,prob->short_name);
+        pathcpy(prob->test_dir, prob->short_name);
       }
-      path_add_dir(state->probs[i]->test_dir, state->global->test_dir);
-      vinfo("problem.%s.test_dir is '%s'", ish, state->probs[i]->test_dir);
+      path_add_dir(prob->test_dir, g->test_dir);
+      vinfo("problem.%s.test_dir is '%s'", ish, prob->test_dir);
 
-      if (!state->probs[i]->corr_dir[0] && si != -1
-          && state->abstr_probs[si]->corr_dir[0]) {
-        sformat_message(state->probs[i]->corr_dir, PATH_MAX,
-                        state->abstr_probs[si]->corr_dir,
-                        NULL, state->probs[i], NULL, NULL, NULL, 0, 0, 0);
+      if (!prob->corr_dir[0] && si != -1 && aprob->corr_dir[0]) {
+        sformat_message(prob->corr_dir, PATH_MAX, aprob->corr_dir,
+                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
         vinfo("problem.%s.corr_dir taken from problem.%s ('%s')",
-             ish, sish, state->probs[i]->corr_dir);
+             ish, sish, prob->corr_dir);
       }
-      if (state->probs[i]->corr_dir[0]) {
-        path_add_dir(state->probs[i]->corr_dir, state->global->corr_dir);
-        vinfo("problem.%s.corr_dir is '%s'", ish, state->probs[i]->corr_dir);
+      if (prob->corr_dir[0]) {
+        path_add_dir(prob->corr_dir, g->corr_dir);
+        vinfo("problem.%s.corr_dir is '%s'", ish, prob->corr_dir);
       }
 
       prepare_set_prob_value(PREPARE_FIELD_PROB_USE_INFO,
-                             state->probs[i], aprob, state->global);
+                             prob, aprob, g);
 
-      if (!state->probs[i]->info_dir[0] && si != -1 && state->probs[i]->use_info
-          && state->abstr_probs[si]->info_dir[0]) {
-        sformat_message(state->probs[i]->info_dir, PATH_MAX,
-                        state->abstr_probs[si]->info_dir,
-                        NULL, state->probs[i], NULL, NULL, NULL, 0, 0, 0);
+      if (!prob->info_dir[0] && si != -1
+          && prob->use_info && aprob->info_dir[0]) {
+        sformat_message(prob->info_dir, PATH_MAX, aprob->info_dir,
+                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
         vinfo("problem.%s.info_dir taken from problem.%s ('%s')",
-             ish, sish, state->probs[i]->info_dir);
+             ish, sish, prob->info_dir);
       }
-      if (!state->probs[i]->info_dir[0] && state->probs[i]->use_info) {
-        pathcpy(state->probs[i]->info_dir, state->probs[i]->short_name);
-        vinfo("problem.%s.info_dir is set to '%s'", ish, state->probs[i]->info_dir);
+      if (!prob->info_dir[0] && prob->use_info) {
+        pathcpy(prob->info_dir, prob->short_name);
+        vinfo("problem.%s.info_dir is set to '%s'", ish, prob->info_dir);
       }
-      if (state->probs[i]->use_info) {
-        path_add_dir(state->probs[i]->info_dir, state->global->info_dir);
-        vinfo("problem.%s.info_dir is '%s'", ish, state->probs[i]->info_dir);
+      if (prob->use_info) {
+        path_add_dir(prob->info_dir, g->info_dir);
+        vinfo("problem.%s.info_dir is '%s'", ish, prob->info_dir);
       }
 
-      if (state->probs[i]->use_tgz == -1 && si != -1
-          && state->abstr_probs[si]->use_tgz != -1) {
-        state->probs[i]->use_tgz = state->abstr_probs[si]->use_tgz;
+      if (prob->use_tgz == -1 && si != -1 && aprob->use_tgz != -1) {
+        prob->use_tgz = aprob->use_tgz;
         vinfo("problem.%s.use_tgz taken from problem.%s (%d)",
-             ish, sish, state->probs[i]->use_tgz);
+             ish, sish, prob->use_tgz);
       }
-      if (state->probs[i]->use_tgz == -1) {
-        state->probs[i]->use_tgz = 0;
+      if (prob->use_tgz == -1) {
+        prob->use_tgz = 0;
       }
 
-      if (!state->probs[i]->tgz_dir[0] && si != -1 && state->probs[i]->use_tgz
-          && state->abstr_probs[si]->tgz_dir[0]) {
-        sformat_message(state->probs[i]->tgz_dir, PATH_MAX,
-                        state->abstr_probs[si]->tgz_dir,
-                        NULL, state->probs[i], NULL, NULL, NULL, 0, 0, 0);
+      if (!prob->tgz_dir[0] && si != -1 && prob->use_tgz && aprob->tgz_dir[0]) {
+        sformat_message(prob->tgz_dir, PATH_MAX, aprob->tgz_dir,
+                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
         vinfo("problem.%s.tgz_dir taken from problem.%s ('%s')",
-             ish, sish, state->probs[i]->tgz_dir);
+             ish, sish, prob->tgz_dir);
       }
-      if (!state->probs[i]->tgz_dir[0] && state->probs[i]->use_tgz) {
-        pathcpy(state->probs[i]->tgz_dir, state->probs[i]->short_name);
+      if (!prob->tgz_dir[0] && prob->use_tgz) {
+        pathcpy(prob->tgz_dir, prob->short_name);
         vinfo("problem.%s.tgz_dir is set to '%s'", ish,
-              state->probs[i]->tgz_dir);
+              prob->tgz_dir);
       }
-      if (state->probs[i]->use_tgz) {
-        path_add_dir(state->probs[i]->tgz_dir, state->global->tgz_dir);
-        vinfo("problem.%s.tgz_dir is '%s'", ish, state->probs[i]->tgz_dir);
+      if (prob->use_tgz) {
+        path_add_dir(prob->tgz_dir, g->tgz_dir);
+        vinfo("problem.%s.tgz_dir is '%s'", ish, prob->tgz_dir);
       }
     }
 
     if (mode == PREPARE_RUN) {
-      if (!state->probs[i]->input_file[0] && si != -1
-          && state->abstr_probs[si]->input_file[0]) {
-        sformat_message(state->probs[i]->input_file, PATH_MAX,
-                        state->abstr_probs[si]->input_file,
-                        NULL, state->probs[i], NULL, NULL, NULL, 0, 0, 0);
+      if (!prob->input_file[0] && si != -1 && aprob->input_file[0]) {
+        sformat_message(prob->input_file, PATH_MAX, aprob->input_file,
+                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
         vinfo("problem.%s.input_file inherited from problem.%s ('%s')",
-             ish, sish, state->probs[i]->input_file);
+             ish, sish, prob->input_file);
       }
-      if (!state->probs[i]->input_file[0]) {
+      if (!prob->input_file[0]) {
         vinfo("problem.%s.input_file set to %s", ish, DFLT_P_INPUT_FILE);
-        snprintf(state->probs[i]->input_file, sizeof(state->probs[i]->input_file),
+        snprintf(prob->input_file, sizeof(prob->input_file),
                  "%s", DFLT_P_INPUT_FILE);
       }
-      if (!state->probs[i]->output_file[0] && si != -1
-          && state->abstr_probs[si]->output_file[0]) {
-        sformat_message(state->probs[i]->output_file, PATH_MAX,
-                        state->abstr_probs[si]->output_file,
-                        NULL, state->probs[i], NULL, NULL, NULL, 0, 0, 0);
+      if (!prob->output_file[0] && si != -1 && aprob->output_file[0]) {
+        sformat_message(prob->output_file, PATH_MAX, aprob->output_file,
+                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
         vinfo("problem.%s.output_file inherited from problem.%s ('%s')",
-             ish, sish, state->probs[i]->output_file);
+             ish, sish, prob->output_file);
       }
-      if (!state->probs[i]->output_file[0]) {
+      if (!prob->output_file[0]) {
         vinfo("problem.%s.output_file set to %s", ish, DFLT_P_OUTPUT_FILE);
-        snprintf(state->probs[i]->output_file, sizeof(state->probs[i]->output_file),
+        snprintf(prob->output_file, sizeof(prob->output_file),
                  "%s", DFLT_P_OUTPUT_FILE);
       }
 
-      if (state->probs[i]->variant_num == -1 && si != -1
-          && state->abstr_probs[si]->variant_num != -1) {
-        state->probs[i]->variant_num = state->abstr_probs[si]->variant_num;
+      if (prob->variant_num == -1 && si != -1 && aprob->variant_num != -1) {
+        prob->variant_num = aprob->variant_num;
         vinfo("problem.%s.variant_num inherited from problem.%s (%d)",
-             ish, sish, state->probs[i]->variant_num);
+             ish, sish, prob->variant_num);
       }
-      if (state->probs[i]->variant_num == -1) {
-        state->probs[i]->variant_num = 0;
+      if (prob->variant_num == -1) {
+        prob->variant_num = 0;
       }
 
       prepare_set_prob_value(PREPARE_FIELD_PROB_USE_CORR,
-                             state->probs[i], aprob, state->global);
+                             prob, aprob, g);
 
       prepare_set_prob_value(PREPARE_FIELD_PROB_CHECKER_REAL_TIME_LIMIT,
-                             state->probs[i], aprob, state->global);
+                             prob, aprob, g);
     }
 
-    if (state->probs[i]->test_sets) {
-      if (parse_testsets(state->probs[i]->test_sets,
-                         &state->probs[i]->ts_total,
-                         &state->probs[i]->ts_infos) < 0)
+    if (prob->test_sets) {
+      if (parse_testsets(prob->test_sets,
+                         &prob->ts_total,
+                         &prob->ts_infos) < 0)
         return -1;
     }
   }
@@ -2698,14 +2688,14 @@ set_defaults(serve_state_t state, int mode)
     int var_prob_num = 0;
 
     for (i = 0; i <= state->max_prob; i++)
-      if (state->probs[i] && state->probs[i]->variant_num > 0) var_prob_num++;
+      if (prob && prob->variant_num > 0) var_prob_num++;
     if (var_prob_num > 0) {
-      if (!state->global->variant_map_file[0]) {
+      if (!g->variant_map_file[0]) {
         err("There are variant problems, but no variant file name");
         return -1;
       }
-      state->global->variant_map = parse_variant_map(state, state->global->variant_map_file);
-      if (!state->global->variant_map) return -1;
+      g->variant_map = parse_variant_map(state, g->variant_map_file);
+      if (!g->variant_map) return -1;
     }
   }
 
@@ -2766,40 +2756,39 @@ set_defaults(serve_state_t state, int mode)
       if (mode == PREPARE_RUN) {
         if (!tp->check_dir[0] && atp && atp->check_dir[0]) {
           sformat_message(tp->check_dir, PATH_MAX, atp->check_dir,
-                          state->global, state->probs[tp->problem], NULL,
+                          g, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
           vinfo("tester.%d.check_dir inherited from tester.%s ('%s')",
                i, sish, tp->check_dir);
         }
         if (!tp->check_dir[0]) {
           vinfo("tester.%d.check_dir inherited from global ('%s')",
-               i, state->global->run_check_dir);
-          pathcpy(tp->check_dir, state->global->run_check_dir);
+               i, g->run_check_dir);
+          pathcpy(tp->check_dir, g->run_check_dir);
         }
       }
 
       if (mode == PREPARE_SERVE) {
         if (!tp->run_dir[0] && atp && atp->run_dir[0]) {
           sformat_message(tp->run_dir, PATH_MAX, atp->run_dir,
-                          state->global, state->probs[tp->problem], NULL,
+                          g, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
           vinfo("tester.%d.run_dir inherited from tester.%s ('%s')",
                i, sish, tp->run_dir);
         }
         if (!tp->run_dir[0]) {
-          vinfo("tester.%d.run_dir inherited from global ('%s')",
-               i, state->global->run_dir);
-          pathcpy(tp->run_dir, state->global->run_dir);
-          pathcpy(tp->run_queue_dir, state->global->run_queue_dir);
-          pathcpy(tp->run_exe_dir, state->global->run_exe_dir);
-          pathcpy(tp->run_out_dir, state->global->run_out_dir);
-          pathcpy(tp->run_status_dir, state->global->run_status_dir);
-          pathcpy(tp->run_report_dir, state->global->run_report_dir);
-          if (state->global->team_enable_rep_view) {
-            pathcpy(tp->run_team_report_dir, state->global->run_team_report_dir);
+          vinfo("tester.%d.run_dir inherited from global ('%s')",i, g->run_dir);
+          pathcpy(tp->run_dir, g->run_dir);
+          pathcpy(tp->run_queue_dir, g->run_queue_dir);
+          pathcpy(tp->run_exe_dir, g->run_exe_dir);
+          pathcpy(tp->run_out_dir, g->run_out_dir);
+          pathcpy(tp->run_status_dir, g->run_status_dir);
+          pathcpy(tp->run_report_dir, g->run_report_dir);
+          if (g->team_enable_rep_view) {
+            pathcpy(tp->run_team_report_dir, g->run_team_report_dir);
           }
-          if (state->global->enable_full_archive) {
-            pathcpy(tp->run_full_archive_dir, state->global->run_full_archive_dir);
+          if (g->enable_full_archive) {
+            pathcpy(tp->run_full_archive_dir, g->run_full_archive_dir);
           }
         } else {
           pathmake(tp->run_queue_dir, tp->run_dir, "/",
@@ -2809,7 +2798,7 @@ set_defaults(serve_state_t state, int mode)
                    DFLT_G_RUN_EXE_DIR, 0);
           vinfo("tester.%d.run_exe_dir is %s", i, tp->run_exe_dir);
           snprintf(tp->run_out_dir, sizeof(tp->run_out_dir), "%s/%06d",
-                   tp->run_dir, state->global->contest_id);
+                   tp->run_dir, g->contest_id);
           vinfo("tester.%d.run_out_dir is %s", i, tp->run_out_dir);
           pathmake(tp->run_status_dir, tp->run_out_dir, "/",
                    DFLT_G_RUN_STATUS_DIR, 0);
@@ -2817,13 +2806,13 @@ set_defaults(serve_state_t state, int mode)
           pathmake(tp->run_report_dir, tp->run_out_dir, "/",
                    DFLT_G_RUN_REPORT_DIR, 0);
           vinfo("tester.%d.run_report_dir is %s", i, tp->run_report_dir);
-          if (state->global->team_enable_rep_view) {
+          if (g->team_enable_rep_view) {
             pathmake(tp->run_team_report_dir, tp->run_out_dir, "/",
                      DFLT_G_RUN_TEAM_REPORT_DIR, 0);
             vinfo("tester.%d.run_team_report_dir is %s", i,
                   tp->run_team_report_dir);
           }
-          if (state->global->enable_full_archive) {
+          if (g->enable_full_archive) {
             pathmake(tp->run_full_archive_dir, tp->run_out_dir, "/",
                      DFLT_G_RUN_FULL_ARCHIVE_DIR, 0);
             vinfo("tester.%d.run_full_archive_dir is %s", i,
@@ -2939,7 +2928,7 @@ set_defaults(serve_state_t state, int mode)
       }
       if (!tp->errorcode_file[0] && atp && atp->errorcode_file) {
         sformat_message(tp->errorcode_file, PATH_MAX, atp->errorcode_file,
-                        state->global, state->probs[tp->problem], NULL,
+                        g, state->probs[tp->problem], NULL,
                         tp, NULL, 0, 0, 0);
         vinfo("tester.%d.errorcode_file inherited from tester.%s ('%s')",
               i, sish, tp->errorcode_file);        
@@ -2975,7 +2964,7 @@ set_defaults(serve_state_t state, int mode)
       if (mode == PREPARE_RUN) {
         if (!tp->error_file[0] && atp && atp->error_file[0]) {
           sformat_message(tp->error_file, PATH_MAX, atp->error_file,
-                          state->global, state->probs[tp->problem], NULL,
+                          g, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
           vinfo("tester.%d.error_file inherited from tester.%s ('%s')",
                 i, sish, tp->error_file);        
@@ -2987,13 +2976,13 @@ set_defaults(serve_state_t state, int mode)
         }
         if (!tp->check_cmd[0] && state->probs[tp->problem]->standard_checker[0]) {
           strcpy(tp->check_cmd, state->probs[tp->problem]->standard_checker);
-          pathmake4(tp->check_cmd, state->global->ejudge_checkers_dir,
+          pathmake4(tp->check_cmd, g->ejudge_checkers_dir,
                     "/", tp->check_cmd, 0);
           tp->standard_checker_used = 1;
         }
         if (!tp->check_cmd[0] && atp && atp->check_cmd[0]) {
           sformat_message(tp->check_cmd, PATH_MAX, atp->check_cmd,
-                          state->global, state->probs[tp->problem], NULL,
+                          g, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
           vinfo("tester.%d.check_cmd inherited from tester.%s ('%s')",
                 i, sish, tp->check_cmd);        
@@ -3005,28 +2994,28 @@ set_defaults(serve_state_t state, int mode)
           err("tester.%d.check_cmd must be set", i);
           return -1;
         }
-        pathmake4(state->testers[i]->check_cmd, state->global->checker_dir, "/",
+        pathmake4(state->testers[i]->check_cmd, g->checker_dir, "/",
                   state->testers[i]->check_cmd, 0);
         if (!tp->start_cmd[0] && atp && atp->start_cmd[0]) {
           sformat_message(tp->start_cmd, PATH_MAX, atp->start_cmd,
-                          state->global, state->probs[tp->problem], NULL,
+                          g, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
           vinfo("tester.%d.start_cmd inherited from tester.%s ('%s')",
                 i, sish, tp->start_cmd);        
         }
         if (state->testers[i]->start_cmd[0]) {
-          pathmake4(state->testers[i]->start_cmd, state->global->script_dir, "/",
+          pathmake4(state->testers[i]->start_cmd, g->script_dir, "/",
                     state->testers[i]->start_cmd, 0);
         }
         if (!tp->prepare_cmd[0] && atp && atp->prepare_cmd[0]) {
           sformat_message(tp->prepare_cmd, PATH_MAX, atp->prepare_cmd,
-                          state->global, state->probs[tp->problem], NULL,
+                          g, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
           vinfo("tester.%d.prepare_cmd inherited from tester.%s ('%s')",
                 i, sish, tp->prepare_cmd);        
         }
         if (tp->prepare_cmd[0]) {
-          pathmake4(tp->prepare_cmd, state->global->script_dir, "/",
+          pathmake4(tp->prepare_cmd, g->script_dir, "/",
                     tp->prepare_cmd, 0);
         }
       }
@@ -3048,20 +3037,20 @@ set_defaults(serve_state_t state, int mode)
   }
 
   // if no problem has long_name, disable it
-  state->global->disable_prob_long_name = 0;
+  g->disable_prob_long_name = 0;
   for (i = 1; i <= state->max_prob; i++)
-    if (state->probs[i] && state->probs[i]->long_name[0])
+    if (prob && prob->long_name[0])
       break;
   if (i > state->max_prob)
-    state->global->disable_prob_long_name = 1;
+    g->disable_prob_long_name = 1;
 
   // if all problems are output-only, disable number of passed tests
-  state->global->disable_passed_tests = 0;
+  g->disable_passed_tests = 0;
   for (i = 1; i <= state->max_prob; i++)
-    if (state->probs[i] && state->probs[i]->type_val == PROB_TYPE_STANDARD)
+    if (prob && prob->type_val == PROB_TYPE_STANDARD)
       break;
   if (i > state->max_prob)
-    state->global->disable_passed_tests = 1;
+    g->disable_passed_tests = 1;
 
   return 0;
 }
@@ -3190,83 +3179,84 @@ int
 create_dirs(serve_state_t state, int mode)
 {
   int i;
+  struct section_global_data *g = state->global;
 
   if (mode == PREPARE_SERVE) {
-    if (state->global->root_dir[0] && make_dir(state->global->root_dir, 0) < 0) return -1;
-    if (make_dir(state->global->var_dir, 0) < 0) return -1;
+    if (g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
+    if (make_dir(g->var_dir, 0) < 0) return -1;
 
     /* COMPILE writes its response here */
-    if (make_dir(state->global->compile_dir, 0) < 0) return -1;
-    if (make_all_dir(state->global->compile_queue_dir, 0777) < 0) return -1;
-    if (make_dir(state->global->compile_src_dir, 0) < 0) return -1;
+    if (make_dir(g->compile_dir, 0) < 0) return -1;
+    if (make_all_dir(g->compile_queue_dir, 0777) < 0) return -1;
+    if (make_dir(g->compile_src_dir, 0) < 0) return -1;
     // remove possible symlink from previous versions
     // the return code is intentionally ignored
-    remove(state->global->compile_out_dir);
-    if (make_dir(state->global->compile_out_dir, 0) < 0) return -1;
-    if (make_all_dir(state->global->compile_status_dir, 0) < 0) return -1;
-    if (make_dir(state->global->compile_report_dir, 0) < 0) return -1;
+    remove(g->compile_out_dir);
+    if (make_dir(g->compile_out_dir, 0) < 0) return -1;
+    if (make_all_dir(g->compile_status_dir, 0) < 0) return -1;
+    if (make_dir(g->compile_report_dir, 0) < 0) return -1;
 
     /* RUN writes its response here */
-    if (make_dir(state->global->run_dir, 0) < 0) return -1;
-    if (make_all_dir(state->global->run_queue_dir, 0) < 0) return -1;
-    if (make_dir(state->global->run_exe_dir, 0) < 0) return -1;
-    remove(state->global->run_out_dir);
-    if (make_dir(state->global->run_out_dir, 0) < 0) return -1;
-    if (make_all_dir(state->global->run_status_dir, 0777) < 0) return -1;
-    if (make_dir(state->global->run_report_dir, 0777) < 0) return -1;
-    if (state->global->team_enable_rep_view) {
-      if (make_dir(state->global->run_team_report_dir, 0777) < 0) return -1;
+    if (make_dir(g->run_dir, 0) < 0) return -1;
+    if (make_all_dir(g->run_queue_dir, 0) < 0) return -1;
+    if (make_dir(g->run_exe_dir, 0) < 0) return -1;
+    remove(g->run_out_dir);
+    if (make_dir(g->run_out_dir, 0) < 0) return -1;
+    if (make_all_dir(g->run_status_dir, 0777) < 0) return -1;
+    if (make_dir(g->run_report_dir, 0777) < 0) return -1;
+    if (g->team_enable_rep_view) {
+      if (make_dir(g->run_team_report_dir, 0777) < 0) return -1;
     }
-    if (state->global->enable_full_archive) {
-      if (make_dir(state->global->run_full_archive_dir, 0777) < 0) return -1;
+    if (g->enable_full_archive) {
+      if (make_dir(g->run_full_archive_dir, 0777) < 0) return -1;
     }
 
     /* SERVE's status directory */
-    if (make_all_dir(state->global->status_dir, 0) < 0) return -1;
+    if (make_all_dir(g->status_dir, 0) < 0) return -1;
 
     /* working directory (if somebody needs it) */
-    if (make_dir(state->global->work_dir, 0) < 0) return -1;
-    if (make_dir(state->global->print_work_dir, 0) < 0) return -1;
-    if (make_dir(state->global->diff_work_dir, 0) < 0) return -1;
+    if (make_dir(g->work_dir, 0) < 0) return -1;
+    if (make_dir(g->print_work_dir, 0) < 0) return -1;
+    if (make_dir(g->diff_work_dir, 0) < 0) return -1;
 
     /* SERVE's archive directories */
-    if (make_dir(state->global->archive_dir, 0) < 0) return -1;
-    if (make_dir(state->global->clar_archive_dir, 0) < 0) return -1;
-    if (make_dir(state->global->run_archive_dir, 0) < 0) return -1;
-    if (make_dir(state->global->xml_report_archive_dir, 0) < 0) return -1;
-    if (make_dir(state->global->report_archive_dir, 0) < 0) return -1;
-    if (make_dir(state->global->audit_log_dir, 0777) < 0) return -1;
-    if (state->global->team_enable_rep_view) {
-      if (make_dir(state->global->team_report_archive_dir, 0) < 0) return -1;
+    if (make_dir(g->archive_dir, 0) < 0) return -1;
+    if (make_dir(g->clar_archive_dir, 0) < 0) return -1;
+    if (make_dir(g->run_archive_dir, 0) < 0) return -1;
+    if (make_dir(g->xml_report_archive_dir, 0) < 0) return -1;
+    if (make_dir(g->report_archive_dir, 0) < 0) return -1;
+    if (make_dir(g->audit_log_dir, 0777) < 0) return -1;
+    if (g->team_enable_rep_view) {
+      if (make_dir(g->team_report_archive_dir, 0) < 0) return -1;
     }
-    if (state->global->enable_full_archive) {
-      if (make_dir(state->global->full_archive_dir, 0) < 0) return -1;
+    if (g->enable_full_archive) {
+      if (make_dir(g->full_archive_dir, 0) < 0) return -1;
     }
-    if (make_dir(state->global->team_extra_dir, 0) < 0) return -1;
+    if (make_dir(g->team_extra_dir, 0) < 0) return -1;
   } else if (mode == PREPARE_COMPILE) {
-    if (state->global->root_dir[0] && make_dir(state->global->root_dir, 0) < 0) return -1;
-    if (make_dir(state->global->var_dir, 0) < 0) return -1;
+    if (g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
+    if (make_dir(g->var_dir, 0) < 0) return -1;
 
     /* COMPILE reads its commands from here */
-    if (make_dir(state->global->compile_dir, 0) < 0) return -1;
-    if (make_all_dir(state->global->compile_queue_dir, 0777) < 0) return -1;
-    if (make_dir(state->global->compile_src_dir, 0) < 0) return -1;
+    if (make_dir(g->compile_dir, 0) < 0) return -1;
+    if (make_all_dir(g->compile_queue_dir, 0777) < 0) return -1;
+    if (make_dir(g->compile_src_dir, 0) < 0) return -1;
 
     /* working directory (if somebody needs it) */
-    if (make_dir(state->global->work_dir, 0) < 0) return -1;
-    if (make_dir(state->global->compile_work_dir, 0) < 0) return -1;
+    if (make_dir(g->work_dir, 0) < 0) return -1;
+    if (make_dir(g->compile_work_dir, 0) < 0) return -1;
   } else if (mode == PREPARE_RUN) {
-    if (state->global->root_dir[0] && make_dir(state->global->root_dir, 0) < 0) return -1;
-    if (make_dir(state->global->var_dir, 0) < 0) return -1;
+    if (g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
+    if (make_dir(g->var_dir, 0) < 0) return -1;
 
     /* RUN reads its commands from here */
-    if (make_dir(state->global->run_dir, 0) < 0) return -1;
-    if (make_all_dir(state->global->run_queue_dir, 0777) < 0) return -1;
-    if (make_dir(state->global->run_exe_dir, 0) < 0) return -1;
+    if (make_dir(g->run_dir, 0) < 0) return -1;
+    if (make_all_dir(g->run_queue_dir, 0777) < 0) return -1;
+    if (make_dir(g->run_exe_dir, 0) < 0) return -1;
 
-    if (make_dir(state->global->work_dir, 0) < 0) return -1;
-    if (make_dir(state->global->run_work_dir, 0) < 0) return -1;
-    if (make_dir(state->global->run_check_dir, 0) < 0) return -1;
+    if (make_dir(g->work_dir, 0) < 0) return -1;
+    if (make_dir(g->run_work_dir, 0) < 0) return -1;
+    if (make_dir(g->run_check_dir, 0) < 0) return -1;
   }
 
   for (i = 1; i <= state->max_lang; i++) {
@@ -3294,10 +3284,10 @@ create_dirs(serve_state_t state, int mode)
       if (make_dir(state->testers[i]->run_out_dir, 0) < 0) return -1;
       if (make_all_dir(state->testers[i]->run_status_dir, 0) < 0) return -1;
       if (make_dir(state->testers[i]->run_report_dir, 0) < 0) return -1;
-      if (state->global->team_enable_rep_view) {
+      if (g->team_enable_rep_view) {
         if (make_dir(state->testers[i]->run_team_report_dir, 0) < 0) return -1;
       }
-      if (state->global->enable_full_archive) {
+      if (g->enable_full_archive) {
         if (make_dir(state->testers[i]->run_full_archive_dir, 0) < 0) return -1;
       }
     }

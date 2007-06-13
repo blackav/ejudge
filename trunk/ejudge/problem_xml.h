@@ -111,6 +111,7 @@ struct problem_desc
   struct xml_tree *examples;
   struct problem_time_limit *tls;
   int correct_answer;
+  int cur_tl_ms;                /* TL on the current hardware (ms) */
 
   time_t last_check;
   time_t last_update;
