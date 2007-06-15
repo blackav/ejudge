@@ -212,7 +212,7 @@ parse_statement(problem_xml_t prb, struct xml_tree *pstmt)
       stmt->output_format = p1;
       break;
     default:
-      return xml_err_elem_not_allowed(p1);
+     return xml_err_elem_not_allowed(p1);
     }
   }
 
@@ -441,7 +441,8 @@ problem_xml_unparse_elem(
         problem_xml_t p,
         int elem,                  /* STATEMENT, INPUT_FORMAT, etc */
         const unsigned char *lang, /* 0 - default language */
-        struct problem_stmt *stmt) /* previously found element */
+        struct problem_stmt *stmt, /* previously found element */
+        const unsigned char **subst) /* attribute value substitutions */
 {
   struct xml_tree *t = 0;
 
@@ -475,7 +476,7 @@ problem_xml_unparse_elem(
     return stmt;
   }
 
-  xml_unparse_raw_tree(fout, t, &problem_parse_spec);
+  xml_unparse_raw_tree(fout, t, &problem_parse_spec, subst);
 
   return stmt;
 }
