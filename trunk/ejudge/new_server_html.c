@@ -9782,6 +9782,34 @@ get_problem_status(serve_state_t cs, int user_id,
   }
 }
 
+static void
+unpriv_unparse_statement(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        const struct section_problem_data *prob,
+        problem_xml_t px,
+        const unsigned char *bb)
+{
+  struct problem_stmt *pp = 0;
+
+  if (bb && *bb && !cnts->exam_mode) fprintf(fout, "%s", bb);
+
+  pp = problem_xml_unparse_elem(fout, px, PROB_T_TITLE, 0, pp, 0);
+  pp = problem_xml_unparse_elem(fout, px, PROB_T_DESCRIPTION, 0, pp, 0);
+#if 0
+struct problem_stmt *
+problem_xml_unparse_elem(
+	FILE *fout,
+        problem_xml_t p,
+        int elem,                  /* STATEMENT, INPUT_FORMAT, etc */
+        const unsigned char *lang, /* 0 - default language */
+        struct problem_stmt *stmt, /* previously found element */
+        const unsigned char **subst) /* attribute value substitutions */
+#endif
+}
+
 static const unsigned char *main_page_headers[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_MAIN_PAGE] = __("Contest status"),
@@ -10174,7 +10202,12 @@ unpriv_main_page(FILE *fout,
       }
 
       /* put problem statement */
-      if (prob->statement_file[0]
+      if (variant > 0 && prob->xml.a[variant]->stmts) {
+        // ...
+        abort();
+      } else if (variant <= 0 && prob->xml.p->stmts) {
+        unpriv_unparse_statement(fout, phr, cnts, extra, prob, prob->xml.p, bb);
+      } else if (prob->statement_file[0]
           && (prob_status[prob_id] & PROB_STATUS_VIEWABLE)) {
         if (variant > 0) {
           prepare_insert_variant_num(variant_stmt_file,

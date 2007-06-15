@@ -125,4 +125,12 @@ problem_xml_t problem_xml_parse_stream(const unsigned char *path, FILE *f);
 
 problem_xml_t problem_xml_free(problem_xml_t r);
 
+struct problem_stmt *problem_xml_unparse_elem(
+	FILE *fout,
+        problem_xml_t p,
+        int elem,                  /* STATEMENT, INPUT_FORMAT, etc */
+        const unsigned char *lang, /* 0 - default language */
+        struct problem_stmt *stmt, /* previously found element */
+        const unsigned char **subst); /* attribute value substitutions */
+
 #endif /* __PROBLEM_XML_H__ */

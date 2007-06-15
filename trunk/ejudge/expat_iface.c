@@ -509,6 +509,7 @@ end_hnd(void *data, const XML_Char *name)
   free(tl->str); tl->str = 0;
   free(tl);
 
+  if (pd->verbatim) pd->verbatim_nest--;
   if (pd->verbatim && pd->verbatim_nest < 0) {
     pd->verbatim = 0;
   }
@@ -578,8 +579,6 @@ xml_skipped_entity_handler(
   struct parser_data *pd = (struct parser_data*) XML_GetUserData(p);
   int len = strlen(s);
 
-  fprintf(stderr, ">>%.*s\n", len, s);
-
   if (!pd->tag_stack) return;
   if (pd->skipping) return;
   if (is_parameter_entity) return;
@@ -593,21 +592,7 @@ xml_skipped_entity_handler(
   pd->tag_stack->u += len + 1;
   pd->tag_stack->str[pd->tag_stack->u++] = ';';
   pd->tag_stack->str[pd->tag_stack->u] = 0;
-
-  fprintf(stderr, ">>%.*s\n", len, s);
 }
-
-/*
-static void
-xml_default_handler(
-	void *data,
-        const XML_Char *s,
-        int len)
-{
-  fprintf(stderr, "Default: %.*s\n", len, s);
-}
-*/
-                                
 
 struct xml_tree *
 xml_build_tree(char const *path, const struct xml_parse_spec *spec)
@@ -645,7 +630,6 @@ xml_build_tree(char const *path, const struct xml_parse_spec *spec)
   XML_SetUserData(p, &data);
   XML_UseParserAsHandlerArg(p);
   if (spec->unparse_entity) {
-    fprintf(stderr, "Here!\n");
     //XML_SetDefaultHandler(p, xml_default_handler);
     XML_UseForeignDTD(p, 1);
     XML_SetSkippedEntityHandler(p, xml_skipped_entity_handler);
@@ -712,7 +696,11 @@ xml_build_tree_str(char const *str, const struct xml_parse_spec *spec)
   XML_SetCharacterDataHandler(p, chardata_hnd);
   XML_SetUserData(p, &data);
   XML_UseParserAsHandlerArg(p);
-  XML_SetSkippedEntityHandler(p, xml_skipped_entity_handler);
+  if (spec->unparse_entity) {
+    //XML_SetDefaultHandler(p, xml_default_handler);
+    XML_UseForeignDTD(p, 1);
+    XML_SetSkippedEntityHandler(p, xml_skipped_entity_handler);
+  }
 
   data.spec = spec;
   data.conv_hnd = conv_hnd;
@@ -764,7 +752,11 @@ xml_build_tree_file(FILE *f, const struct xml_parse_spec *spec)
   XML_SetCharacterDataHandler(p, chardata_hnd);
   XML_SetUserData(p, &data);
   XML_UseParserAsHandlerArg(p);
-  XML_SetSkippedEntityHandler(p, xml_skipped_entity_handler);
+  if (spec->unparse_entity) {
+    //XML_SetDefaultHandler(p, xml_default_handler);
+    XML_UseForeignDTD(p, 1);
+    XML_SetSkippedEntityHandler(p, xml_skipped_entity_handler);
+  }
 
   data.spec = spec;
   data.conv_hnd = conv_hnd;
@@ -948,14 +940,33 @@ xml_link_node_last(struct xml_tree *p, struct xml_tree *c)
   }
 }
 
+static const unsigned char *
+do_subst(
+	struct html_armor_buffer *pb,
+        const unsigned char *str,
+        const unsigned char **subst)
+{
+  const unsigned char *s;
+
+  if (!subst || !subst[0] || !str) return str;
+  for (s = str; *s && *s != '$'; s++);
+  if (!*s) return str;
+
+  //...
+
+  return "";
+}
+
 void
 xml_unparse_raw_tree(
 	FILE *fout,
         const struct xml_tree *tree,
-        const struct xml_parse_spec *spec)
+        const struct xml_parse_spec *spec,
+        const unsigned char **varsubst)
 {
   struct xml_tree *p;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct html_armor_buffer sb = HTML_ARMOR_INITIALIZER;
   struct xml_attr *a;
 
   if (!tree) return;
@@ -971,17 +982,18 @@ xml_unparse_raw_tree(
       }
       for (a = p->first; a; a = a->next) {
         if (a->tag == spec->default_attr) {
-          fprintf(fout, " %s=\"%s\"", a->name[0], html_armor_buf(&ab, a->text));
+          fprintf(fout, " %s=\"%s\"", a->name[0],
+                  html_armor_buf(&ab, do_subst(&sb, a->text, varsubst)));
         } else {
           fprintf(fout, " %s=\"%s\"", spec->attr_map[a->tag],
-                  html_armor_buf(&ab, a->text));
+                  html_armor_buf(&ab, do_subst(&sb, a->text, varsubst)));
         }
       }
       if (!p->first_down && (!p->text || !*p->text)) {
         fprintf(fout, "/>");
       } else {
         fprintf(fout, ">");
-        xml_unparse_raw_tree(fout, p, spec);
+        xml_unparse_raw_tree(fout, p, spec, varsubst);
         if (p->tag == spec->default_elem) {
           fprintf(fout, "</%s>", p->name[0]);
         } else {
@@ -991,9 +1003,10 @@ xml_unparse_raw_tree(
     }
   }
 
-  if (p->text) fprintf(fout, "%s", p->text);
+  if (tree->text) fprintf(fout, "%s", tree->text);
 
   html_armor_free(&ab);
+  html_armor_free(&sb);
 }
 
 /*
