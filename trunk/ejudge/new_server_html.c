@@ -9808,18 +9808,25 @@ unpriv_unparse_statement(
 
   if (bb && *bb && !cnts->exam_mode) fprintf(fout, "%s", bb);
 
-  fprintf(fout, "<h3>");
-  pp = problem_xml_unparse_elem(fout, px, PROB_T_TITLE, 0, pp, 0, 0);
-  fprintf(fout, "</h3>");
+  pp = problem_xml_find_statement(px, 0);
+  if (pp->title) {
+    fprintf(fout, "<h3>");
+    problem_xml_unparse_node(fout, pp->title, vars, vals);
+    fprintf(fout, "</h3>");
+  }
   
-  pp = problem_xml_unparse_elem(fout, px, PROB_T_DESCRIPTION, 0, pp,
-                                vars, vals);
-  fprintf(fout, "<h3>%s</h3>", _("Input format"));
-  pp = problem_xml_unparse_elem(fout, px, PROB_T_INPUT_FORMAT, 0, pp,
-                                vals, vals);
-  fprintf(fout, "<h3>%s</h3>", _("Output format"));
-  pp = problem_xml_unparse_elem(fout, px, PROB_T_OUTPUT_FORMAT, 0, pp,
-                                vars, vals);
+  if (pp->desc) {
+    problem_xml_unparse_node(fout, pp->desc, vars, vals);
+  }
+
+  if (pp->input_format) {
+    fprintf(fout, "<h3>%s</h3>", _("Input format"));
+    problem_xml_unparse_node(fout, pp->input_format, vars, vals);
+  }
+  if (pp->output_format) {
+    fprintf(fout, "<h3>%s</h3>", _("Output format"));
+    problem_xml_unparse_node(fout, pp->output_format, vars, vals);
+  }
 
   if (px->examples) {
     fprintf(fout, "<h3>%s</h3>", _("Examples"));
@@ -9828,10 +9835,10 @@ unpriv_unparse_statement(
       if (p->tag != PROB_T_EXAMPLE) continue;
       fprintf(fout, "<tr><td class=\"b1\"><pre>");
       for (q = p->first_down; q && q->tag != PROB_T_INPUT; q = q->right);
-      if (q && q->tag == PROB_T_INPUT) problem_xml_unparse_node(fout, q);
+      if (q && q->tag == PROB_T_INPUT) problem_xml_unparse_node(fout, q, 0, 0);
       fprintf(fout, "</pre></td><td class=\"b1\"><pre>");
       for (q = p->first_down; q && q->tag != PROB_T_OUTPUT; q = q->right);
-      if (q && q->tag == PROB_T_OUTPUT) problem_xml_unparse_node(fout, q);
+      if (q && q->tag == PROB_T_OUTPUT) problem_xml_unparse_node(fout, q, 0, 0);
       fprintf(fout, "</pre></td></tr>");
     }
     fprintf(fout, "</table>");
