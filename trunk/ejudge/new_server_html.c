@@ -3017,7 +3017,7 @@ priv_edit_run(FILE *fout, FILE *log_f,
     } else {
       if (param_int < 0 || param_int > prob->variant_num)
         FAIL(NEW_SRV_ERR_INV_VARIANT);
-      if (!param_int && find_variant(cs, re.user_id, re.prob_id) <= 0)
+      if (!param_int && find_variant(cs, re.user_id, re.prob_id, 0) <= 0)
         FAIL(NEW_SRV_ERR_VARIANT_UNASSIGNED);
     }
     ne.variant = param_int;
@@ -7869,7 +7869,7 @@ unpriv_submit_run(FILE *fout,
   }
 
   if (prob->variant_num > 0) {
-    if ((variant = find_variant(cs, phr->user_id, prob_id)) <= 0) {
+    if ((variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0) {
       ns_error(log_f, NEW_SRV_ERR_VARIANT_UNASSIGNED);
       goto done;
     }
@@ -9216,7 +9216,7 @@ html_problem_selection(serve_state_t cs,
     }
 
     if (prob->variant_num > 0) {
-      if ((variant = find_variant(cs, phr->user_id, i)) <= 0) continue;
+      if ((variant = find_variant(cs, phr->user_id, i, 0)) <= 0) continue;
       snprintf(problem_str, sizeof(problem_str),
                "%s-%d", prob->short_name, variant);
       problem_ptr = problem_str;
@@ -9285,7 +9285,7 @@ html_problem_selection_2(serve_state_t cs,
                " (%s)", xml_unparse_date(user_deadline));
 
     if (prob->variant_num > 0) {
-      if ((variant = find_variant(cs, phr->user_id, i)) <= 0) continue;
+      if ((variant = find_variant(cs, phr->user_id, i, 0)) <= 0) continue;
       snprintf(problem_str, sizeof(problem_str),
                "%s-%d", prob->short_name, variant);
       problem_ptr = problem_str;
@@ -9793,21 +9793,51 @@ unpriv_unparse_statement(
         const unsigned char *bb)
 {
   struct problem_stmt *pp = 0;
+  struct xml_tree *p, *q;
+  unsigned char b1[1024];
+  unsigned char b2[1024];
+  unsigned char b3[1024];
+  unsigned char b4[1024];
+  const unsigned char *vars[5] = { "self", "prob", "get", "getfile", 0 };
+  const unsigned char *vals[5] = { b1, b2, b3, b4, 0 };
+
+  snprintf(b1, sizeof(b1), "%s?SID=%016llx", phr->self_url, phr->session_id);
+  snprintf(b2, sizeof(b2), "&prob_id=%d", prob->id);
+  snprintf(b3, sizeof(b3), "&action=%d", NEW_SRV_ACTION_GET_FILE);
+  snprintf(b4, sizeof(b4), "%s%s%s&file", b1, b2, b3);
 
   if (bb && *bb && !cnts->exam_mode) fprintf(fout, "%s", bb);
 
-  pp = problem_xml_unparse_elem(fout, px, PROB_T_TITLE, 0, pp, 0);
-  pp = problem_xml_unparse_elem(fout, px, PROB_T_DESCRIPTION, 0, pp, 0);
-#if 0
-struct problem_stmt *
-problem_xml_unparse_elem(
-	FILE *fout,
-        problem_xml_t p,
-        int elem,                  /* STATEMENT, INPUT_FORMAT, etc */
-        const unsigned char *lang, /* 0 - default language */
-        struct problem_stmt *stmt, /* previously found element */
-        const unsigned char **subst) /* attribute value substitutions */
-#endif
+  fprintf(fout, "<h3>");
+  pp = problem_xml_unparse_elem(fout, px, PROB_T_TITLE, 0, pp, 0, 0);
+  fprintf(fout, "</h3>");
+  
+  pp = problem_xml_unparse_elem(fout, px, PROB_T_DESCRIPTION, 0, pp,
+                                vars, vals);
+  fprintf(fout, "<h3>%s</h3>", _("Input format"));
+  pp = problem_xml_unparse_elem(fout, px, PROB_T_INPUT_FORMAT, 0, pp,
+                                vals, vals);
+  fprintf(fout, "<h3>%s</h3>", _("Output format"));
+  pp = problem_xml_unparse_elem(fout, px, PROB_T_OUTPUT_FORMAT, 0, pp,
+                                vars, vals);
+
+  if (px->examples) {
+    fprintf(fout, "<h3>%s</h3>", _("Examples"));
+    fprintf(fout, "<table class=\"b1\">");
+    for (p = px->examples->first_down; p; p = p->right) {
+      if (p->tag != PROB_T_EXAMPLE) continue;
+      fprintf(fout, "<tr><td class=\"b1\"><pre>");
+      for (q = p->first_down; q && q->tag != PROB_T_INPUT; q = q->right);
+      if (q && q->tag == PROB_T_INPUT) problem_xml_unparse_node(fout, q);
+      fprintf(fout, "</pre></td><td class=\"b1\"><pre>");
+      for (q = p->first_down; q && q->tag != PROB_T_OUTPUT; q = q->right);
+      if (q && q->tag == PROB_T_OUTPUT) problem_xml_unparse_node(fout, q);
+      fprintf(fout, "</pre></td></tr>");
+    }
+    fprintf(fout, "</table>");
+  }
+
+  fprintf(fout, "<h3>%s</h3>", _("Submit a solution"));
 }
 
 static const unsigned char *main_page_headers[NEW_SRV_ACTION_LAST] =
@@ -9937,7 +9967,7 @@ unpriv_main_page(FILE *fout,
     if (prob_id > 0 && !(prob_status[prob_id] & PROB_STATUS_GOOD))
       prob_id = 0;
     if (prob_id > 0 && prob->variant_num > 0
-        && (variant = find_variant(cs, phr->user_id, prob_id)) <= 0)
+        && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
       prob_id = 0;
 
     fprintf(fout, "<br/>\n");
@@ -10079,7 +10109,7 @@ unpriv_main_page(FILE *fout,
       if (prob->t_start_date > 0 && cs->current_time < prob->t_start_date)
         continue;
       if (prob->variant_num > 0
-          && (variant = find_variant(cs, phr->user_id, prob_id)) <= 0)
+          && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
         continue;
       if (!prob->statement_file[0]) continue;
       if (variant > 0) {
@@ -10123,7 +10153,7 @@ unpriv_main_page(FILE *fout,
       prob_id = 0;
     //if (prob_id > 0 && prob->disable_user_submit > 0) prob_id = 0;
     if (prob_id > 0 && prob->variant_num > 0
-        && (variant = find_variant(cs, phr->user_id, prob_id)) <= 0)
+        && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
       prob_id = 0;
 
     if (start_time > 0 && stop_time <= 0 && !prob_id) {
@@ -10202,10 +10232,10 @@ unpriv_main_page(FILE *fout,
       }
 
       /* put problem statement */
-      if (variant > 0 && prob->xml.a[variant]->stmts) {
+      if (variant > 0 && prob->xml.a && prob->xml.a[variant]->stmts) {
         // ...
         abort();
-      } else if (variant <= 0 && prob->xml.p->stmts) {
+      } else if (variant <= 0 && prob->xml.p && prob->xml.p->stmts) {
         unpriv_unparse_statement(fout, phr, cnts, extra, prob, prob->xml.p, bb);
       } else if (prob->statement_file[0]
           && (prob_status[prob_id] & PROB_STATUS_VIEWABLE)) {
@@ -10866,7 +10896,7 @@ unpriv_xml_update_answer(
     FAIL(NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
 
   if (prob->variant_num > 0) {
-    if ((variant = find_variant(cs, phr->user_id, prob_id)) <= 0)
+    if ((variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
       FAIL(NEW_SRV_ERR_VARIANT_UNASSIGNED);
   }
 
@@ -10950,6 +10980,118 @@ unpriv_xml_update_answer(
   html_armor_free(&ab);
 }
 
+static void
+unpriv_get_file(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob = 0;
+  int retval = 0, prob_id, n, variant = 0, i, mime_type = 0;
+  const unsigned char *s = 0;
+  const unsigned char *login = 0;
+  time_t user_deadline = 0, start_time, stop_time;
+  path_t fpath, sfx;
+  char *file_bytes = 0;
+  size_t file_size = 0;
+  const unsigned char *content_type = 0;
+
+  if (ns_cgi_param(phr, "prob_id", &s) <= 0
+      || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
+      || prob_id <= 0 || prob_id > cs->max_prob
+      || !(prob = cs->probs[prob_id]))
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+
+  // check, that this problem may be viewed
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                          cs->current_time);
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+  }
+
+  if (cs->clients_suspended) FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
+  if (start_time <= 0) FAIL(NEW_SRV_ERR_CONTEST_NOT_STARTED);
+  if (stop_time > 0 && cs->current_time >= stop_time
+      && prob->restricted_statement > 0)
+    FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
+  if (prob->t_start_date > 0 && prob->t_start_date > cs->current_time)
+    FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
+      
+  // personal deadline
+  if (prob->pd_total > 0) {
+    login = teamdb_get_login(cs->teamdb_state, phr->user_id);
+    for (i = 0; i < prob->pd_total; i++) {
+      if (!strcmp(login, prob->pd_infos[i].login)) {
+        user_deadline = prob->pd_infos[i].deadline;
+        break;
+      }
+    }
+  }
+  if (user_deadline <= 0) user_deadline = prob->t_deadline;
+  if (user_deadline > 0 && cs->current_time >= user_deadline
+      && prob->restricted_statement > 0)
+    FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
+
+  // FIXME: check requisites
+  /*
+    // the problem is completely disabled before requirements are met
+    // check requirements
+    if (prob->require) {
+      for (j = 0; prob->require[j]; j++) {
+        for (k = 1; k <= cs->max_prob; k++) {
+          if (cs->probs[k]
+              && !strcmp(cs->probs[k]->short_name, prob->require[j]))
+            break;
+        }
+        // no such problem :(
+        if (k > cs->max_prob) break;
+        // this problem is not yet accepted or solved
+        if (!solved_flag[k] && !accepted_flag[k]) break;
+      }
+      // if the requirements are not met, skip this problem
+      if (prob->require[j]) continue;
+    }
+   */
+
+  if (prob->variant_num > 0
+      && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
+      FAIL(NEW_SRV_ERR_VARIANT_UNASSIGNED);
+
+  if (ns_cgi_param(phr, "file", &s) <= 0 || strchr(s, '/'))
+    FAIL(NEW_SRV_ERR_INV_FILE_NAME);
+
+  os_rGetSuffix(s, sfx, sizeof(sfx));
+  if (variant > 0) {
+    snprintf(fpath, sizeof(fpath), "%s/%s-%d/%s",
+             global->statement_dir, prob->short_name, variant, s);
+  } else {
+    snprintf(fpath, sizeof(fpath), "%s/%s/%s",
+             global->statement_dir, prob->short_name, s);
+  }
+  mime_type = mime_type_parse_suffix(sfx);
+  content_type = mime_type_get_type(mime_type);
+
+  if (generic_read_file(&file_bytes, 0, &file_size, 0, 0, fpath, "") < 0)
+    FAIL(NEW_SRV_ERR_INV_FILE_NAME);
+
+  fprintf(fout, "Content-type: %s\n\n", content_type);
+  fwrite(file_bytes, 1, file_size, fout);
+
+ cleanup:
+  if (retval) {
+    snprintf(fpath, sizeof(fpath), "Error %d", -retval);
+    html_error_status_page(fout, phr, cnts, extra, fpath,
+                           NEW_SRV_ACTION_MAIN_PAGE, 0);
+  }
+  xfree(file_bytes);
+}
+
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = unpriv_change_language,
@@ -10973,6 +11115,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIRTUAL_STOP] = unpriv_command,
   [NEW_SRV_ACTION_XML_USER_STATE] = unpriv_xml_user_state,
   [NEW_SRV_ACTION_UPDATE_ANSWER] = unpriv_xml_update_answer,
+  [NEW_SRV_ACTION_GET_FILE] = unpriv_get_file,
 };
 
 static void

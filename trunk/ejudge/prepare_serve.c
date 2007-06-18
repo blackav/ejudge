@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,10 +29,15 @@
 #include <reuse/xalloc.h>
 
 int
-find_variant(const serve_state_t state, int user_id, int prob_id)
+find_variant(
+	const serve_state_t state,
+        int user_id,
+        int prob_id,
+        int *p_virtual_variant)
 {
   int i, new_vint;
   struct variant_map *pmap = state->global->variant_map;
+  struct variant_map_item *vi;
 
   if (!pmap) return 0;
   if (prob_id <= 0 || prob_id > state->max_prob || !state->probs[prob_id]) return 0;
@@ -62,8 +67,18 @@ find_variant(const serve_state_t state, int user_id, int prob_id)
   }
 
   if (user_id <= 0 || user_id >= pmap->user_map_size) return 0;
-  if (pmap->user_map[user_id])
-    return pmap->user_map[user_id]->variants[pmap->prob_map[prob_id]];
+  if ((vi = pmap->user_map[user_id])) {
+    if (vi->real_variant) {
+      if (p_virtual_variant) {
+        if (vi->virtual_variant) *p_virtual_variant = vi->virtual_variant;
+        else *p_virtual_variant = vi->real_variant;
+      }
+      return vi->real_variant;
+    }
+    if (p_virtual_variant)
+      *p_virtual_variant = vi->variants[pmap->prob_map[prob_id]];
+    return vi->variants[pmap->prob_map[prob_id]];
+  }
   return 0;
 }
 

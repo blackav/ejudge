@@ -473,7 +473,7 @@ ns_write_priv_all_runs(FILE *f,
         prob_type = cur_prob->type_val;
         if (cur_prob->variant_num > 0) {
           variant = pe->variant;
-          if (!variant) variant = find_variant(cs, pe->user_id, pe->prob_id);
+          if (!variant) variant = find_variant(cs, pe->user_id, pe->prob_id, 0);
           prob_str = alloca(strlen(cur_prob->short_name) + 10);
           if (variant > 0) {
             sprintf(prob_str, "%s-%d", cur_prob->short_name, variant);
@@ -1108,7 +1108,7 @@ ns_write_priv_source(const serve_state_t state,
   // variant
   if (prob && prob->variant_num > 0) {
     variant = info.variant;
-    if (!variant) variant = find_variant(state, info.user_id, info.prob_id);
+    if (!variant) variant = find_variant(state, info.user_id, info.prob_id, 0);
     if (variant > 0) {
       snprintf(filtbuf1, sizeof(filtbuf1), "prob == \"%s\" && variant == %d", 
                prob->short_name, variant);
@@ -3841,7 +3841,7 @@ ns_write_user_run_status(
   if (cs->probs[re.prob_id]) {
     if (cs->probs[re.prob_id]->variant_num > 0) {
       int variant = re.variant;
-      if (!variant) variant = find_variant(cs, re.user_id, re.prob_id);
+      if (!variant) variant = find_variant(cs, re.user_id, re.prob_id, 0);
       prob_str = alloca(strlen(cs->probs[re.prob_id]->short_name) + 10);
       if (variant > 0) {
         sprintf(prob_str, "%s-%d", cs->probs[re.prob_id]->short_name, variant);
@@ -4212,7 +4212,7 @@ ns_write_olympiads_user_runs(
         prob_name_ptr = prob->short_name;
       } else {
         variant = re.variant;
-        if (!variant) variant = find_variant(cs, re.user_id, re.prob_id);
+        if (!variant) variant = find_variant(cs, re.user_id, re.prob_id, 0);
         if (variant > 0) {
           snprintf(prob_name_buf, sizeof(prob_name_buf), "%s-%d",
                    prob->short_name, variant);

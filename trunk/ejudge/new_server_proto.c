@@ -174,6 +174,7 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_EMAIL_INV_CHARS] = __("E-mail contains invalid characters"),
   [NEW_SRV_ERR_UL_CONNECT_FAILED] = __("No connection to the server"),
   [NEW_SRV_ERR_PLUGIN_NOT_AVAIL] = __("No plugin is available for problem"),
+  [NEW_SRV_ERR_INV_FILE_NAME] = __("Invalid file name"),
 };
 
 const unsigned char *

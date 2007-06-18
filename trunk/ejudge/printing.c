@@ -43,7 +43,7 @@ print_banner_page(const serve_state_t state,
   FILE *f = 0;
   time_t start_time;
   unsigned char *s;
-  int i, variant;
+  int i, variant, virt_variant;
   struct teamdb_export teaminfo;
 
   if (run_id < 0 || run_id >= run_get_total(state->runlog_state)) goto cleanup;
@@ -83,9 +83,14 @@ print_banner_page(const serve_state_t state,
   if (state->probs[info.prob_id]->variant_num > 0) {
     variant = info.variant;
     if (!variant) {
-      variant = find_variant(state, info.user_id, info.prob_id);
+      variant = find_variant(state, info.user_id, info.prob_id,
+                             &virt_variant);
     }
-    fprintf(f, "Variant:          %d\n", variant);
+    if (is_privileged && virt_variant != variant) {
+      fprintf(f, "Variant:          %d (%d)\n", virt_variant, variant);
+    } else {
+      fprintf(f, "Variant:          %d\n", virt_variant);
+    }
   }
   fprintf(f, "Language:         %s\n",
           (state->langs[info.lang_id])?((char*)state->langs[info.lang_id]->short_name):"");

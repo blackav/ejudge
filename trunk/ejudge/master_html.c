@@ -356,7 +356,7 @@ print_raw_record(const serve_state_t state, FILE *f, int run_id,
 
       variant = pe->variant;
       if (pp && pp->variant_num > 0) {
-        if (!variant) variant = find_variant(state, pe->user_id, pe->prob_id);
+        if (!variant) variant = find_variant(state, pe->user_id, pe->prob_id,0);
       }
       if (variant > 0) {
         snprintf((fields[RAW_RUN_VARIANT] = alloca(BSIZE)), BSIZE,
@@ -838,7 +838,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
         int variant = 0;
         if (cur_prob->variant_num > 0) {
           variant = pe->variant;
-          if (!variant) variant = find_variant(state, pe->user_id, pe->prob_id);
+          if (!variant) variant = find_variant(state,pe->user_id,pe->prob_id,0);
           prob_str = alloca(strlen(cur_prob->short_name) + 10);
           if (variant > 0) {
             sprintf(prob_str, "%s-%d", cur_prob->short_name, variant);
@@ -1376,7 +1376,7 @@ write_priv_source(const serve_state_t state, FILE *f,
   if (state->probs[info.prob_id]->variant_num > 0) {
     variant = info.variant;
     if (!variant) {
-      variant = find_variant(state, info.user_id, info.prob_id);
+      variant = find_variant(state, info.user_id, info.prob_id, 0);
     }
     ps1 = ""; ps2 = "";
     snprintf(filtbuf1, sizeof(filtbuf1), "prob == \"%s\" && variant == %d", 

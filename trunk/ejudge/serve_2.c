@@ -1048,7 +1048,7 @@ serve_run_request(serve_state_t state,
     return -1;
   }
   if (prob->variant_num > 0) {
-    if (variant <= 0) variant = find_variant(state, user_id, prob_id);
+    if (variant <= 0) variant = find_variant(state, user_id, prob_id, 0);
     if (variant <= 0) {
       fprintf(errf, "no appropriate variant for <%s>, <%s>\n",
               user_name, prob->short_name);

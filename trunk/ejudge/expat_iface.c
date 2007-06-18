@@ -944,17 +944,71 @@ static const unsigned char *
 do_subst(
 	struct html_armor_buffer *pb,
         const unsigned char *str,
-        const unsigned char **subst)
+        const unsigned char **vars,
+        const unsigned char **vals)
 {
-  const unsigned char *s;
+  const unsigned char *s, *q;
+  int len, newsz, i, l;
 
-  if (!subst || !subst[0] || !str) return str;
+  if (!vars || !vars[0] || !str) return str;
   for (s = str; *s && *s != '$'; s++);
   if (!*s) return str;
 
-  //...
+  s = str;
+  len = 0;
+  while (*s) {
+    if (*s != '$' || s[1] != '{') {
+      if (len >= pb->size) {
+        newsz = pb->size;
+        if (!newsz) newsz = 128;
+        else newsz *= 2;
+        pb->buf = (unsigned char*) xrealloc(pb->buf, (pb->size = newsz));
+      }
+      pb->buf[len++] = *s++;
+      continue;
+    }
+    q = s + 2;
+    while (*q && *q != '}') q++;
+    if (!*q || q == s) {
+      if (len >= pb->size) {
+        newsz = pb->size;
+        if (!newsz) newsz = 128;
+        else newsz *= 2;
+        pb->buf = (unsigned char*) xrealloc(pb->buf, (pb->size = newsz));
+      }
+      pb->buf[len++] = *s++;
+      continue;
+    }
+    // ${abc}: [s + 2, q - 1]: q - s - 2
+    for (i = 0; vars[i]; i++) {
+      if ((l = strlen(vars[i])) == q - s - 2
+          && !memcmp(vars[i], s + 2, q - s - 2)) break;
+    }
+    if (!vars[i] || !vals[i]) {
+      s = q + 1;
+      continue;
+    }
+    l = strlen(vals[i]);
+    if (len + l > pb->size) {
+      newsz = pb->size;
+      if (!newsz) newsz = 128;
+      while (len + l > newsz) newsz *= 2;
+      pb->buf = (unsigned char*) xrealloc(pb->buf, (pb->size = newsz));
+    }
+    memcpy(pb->buf + len, vals[i], l);
+    len += l;
+    s = q + 1;
+  }
 
-  return "";
+  if (len >= pb->size) {
+    newsz = pb->size;
+    if (!newsz) newsz = 128;
+    else newsz *= 2;
+    pb->buf = (unsigned char*) xrealloc(pb->buf, (pb->size = newsz));
+  }
+  pb->buf[len] = 0;
+
+  return pb->buf;
 }
 
 void
@@ -962,7 +1016,8 @@ xml_unparse_raw_tree(
 	FILE *fout,
         const struct xml_tree *tree,
         const struct xml_parse_spec *spec,
-        const unsigned char **varsubst)
+        const unsigned char **vars,
+        const unsigned char **vals)
 {
   struct xml_tree *p;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
@@ -983,17 +1038,17 @@ xml_unparse_raw_tree(
       for (a = p->first; a; a = a->next) {
         if (a->tag == spec->default_attr) {
           fprintf(fout, " %s=\"%s\"", a->name[0],
-                  html_armor_buf(&ab, do_subst(&sb, a->text, varsubst)));
+                  html_armor_buf(&ab, do_subst(&sb, a->text, vars, vals)));
         } else {
           fprintf(fout, " %s=\"%s\"", spec->attr_map[a->tag],
-                  html_armor_buf(&ab, do_subst(&sb, a->text, varsubst)));
+                  html_armor_buf(&ab, do_subst(&sb, a->text, vars, vals)));
         }
       }
       if (!p->first_down && (!p->text || !*p->text)) {
         fprintf(fout, "/>");
       } else {
         fprintf(fout, ">");
-        xml_unparse_raw_tree(fout, p, spec, varsubst);
+        xml_unparse_raw_tree(fout, p, spec, vars, vals);
         if (p->tag == spec->default_elem) {
           fprintf(fout, "</%s>", p->name[0]);
         } else {

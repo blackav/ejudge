@@ -591,7 +591,7 @@ cmd_submit_run(
     if (ns_cgi_param(phr, "variant", &s) != 0)
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     if (prob->variant_num > 0) {
-      if ((variant = find_variant(cs, phr->user_id, prob->id)) <= 0)
+      if ((variant = find_variant(cs, phr->user_id, prob->id, 0)) <= 0)
         FAIL(NEW_SRV_ERR_VARIANT_UNASSIGNED);
     }
     variant = 0;
@@ -607,13 +607,13 @@ cmd_submit_run(
       if ((r = ns_cgi_param(phr, "variant", &s)) < 0)
         FAIL(NEW_SRV_ERR_INV_VARIANT);
       if (!r) {
-        if ((variant = find_variant(cs, phr->user_id, prob->id)) <= 0)
+        if ((variant = find_variant(cs, phr->user_id, prob->id, 0)) <= 0)
           FAIL(NEW_SRV_ERR_VARIANT_UNASSIGNED);
       } else {
         if (parse_int(s, &variant) < 0 || variant < 0
             || variant > prob->variant_num)
           FAIL(NEW_SRV_ERR_INV_VARIANT);
-        if (!variant && (variant=find_variant(cs, phr->user_id, prob->id)) <= 0)
+        if (!variant && (variant=find_variant(cs, phr->user_id, prob->id, 0)) <= 0)
           FAIL(NEW_SRV_ERR_VARIANT_UNASSIGNED);
       }
     }
@@ -1329,7 +1329,7 @@ do_dump_master_runs(
         && (prob = cs->probs[pe->prob_id])) {
       if (prob->variant_num > 0) {
         snprintf(db_variant_buf, sizeof(db_variant_buf), "%d", pe->variant);
-        variant = find_variant(cs, pe->user_id, pe->prob_id);
+        variant = find_variant(cs, pe->user_id, pe->prob_id, 0);
         if (variant < 0) variant = 0;
         snprintf(variant_buf, sizeof(variant_buf), "%d", variant);
       } else {
