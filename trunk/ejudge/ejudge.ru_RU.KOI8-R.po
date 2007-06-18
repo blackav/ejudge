@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-05-11 11:45+0400\n"
-"PO-Revision-Date: 2007-05-11 11:46+0400\n"
+"POT-Creation-Date: 2007-06-16 17:29+0400\n"
+"PO-Revision-Date: 2007-06-18 08:14+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1287,6 +1287,9 @@ msgstr "Экзаменаторы"
 msgid "Examiners assignments"
 msgstr "Распределение экзаменаторов"
 
+msgid "Examples"
+msgstr "Примеры"
+
 msgid "Exit code"
 msgstr "Код завершения"
 
@@ -1766,6 +1769,9 @@ msgstr "Информация по Вашему запросу отсутствует"
 msgid "Information is not available"
 msgstr "Информация отсутствует"
 
+msgid "Input format"
+msgstr "Формат входных данных"
+
 msgid "Institution"
 msgstr "Учебное заведение"
 
@@ -1839,6 +1845,9 @@ msgstr "Неверный тип структуры каталогов"
 
 msgid "Invalid duration specification"
 msgstr "Неверная спецификация продолжительности турнира"
+
+msgid "Invalid file name"
+msgstr "Неверное имя файла"
 
 msgid "Invalid filter expression"
 msgstr "Неверное условие отбора"
@@ -2506,6 +2515,9 @@ msgstr "Прочее"
 
 msgid "Output error"
 msgstr "Ошибка вывода"
+
+msgid "Output format"
+msgstr "Формат результата"
 
 msgid "Packet is too big"
 msgstr "Пакет имеет слишком большой размер"
