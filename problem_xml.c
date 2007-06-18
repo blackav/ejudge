@@ -45,6 +45,7 @@ static char const * const elem_map[] =
   "answer_variants",
   "answer",
   "translation",
+  "tr",
   0,
   "_default",
   "_text",
@@ -116,7 +117,18 @@ node_free(struct xml_tree *t)
   case PROB_T_PROBLEM:
     {
       problem_xml_t pt = (problem_xml_t) t;
+      int i;
 
+      if (pt->tr_names) {
+        for (i = 0; i < pt->tr_num; i++)
+          xfree(pt->tr_names[i]);
+      }
+      if (pt->answers) {
+        for (i = 0; i < pt->ans_num; i++)
+          xfree(pt->answers[i]);
+      }
+      xfree(pt->tr_names);
+      xfree(pt->answers);
       xfree(pt->id);
     }
     break;
@@ -303,7 +315,8 @@ parse_answer_variants(problem_xml_t prb, struct xml_tree *tree)
 {
   struct xml_tree *p, *q;
   struct xml_attr *a;
-  int n, correct = 0, v;
+  int n, correct = 0, v, tr_num = -1, tr_n2, i, j;
+  unsigned char *s;
 
   for (p = tree->first_down, n = 1; p; p = p->right, n++) {
     if (p->tag != PROB_T_ANSWER) return xml_err_elem_not_allowed(p);
@@ -313,11 +326,69 @@ parse_answer_variants(problem_xml_t prb, struct xml_tree *tree)
       if (correct > 0 && v) return xml_err_attr_invalid(a);
       if (v) correct = n;
     }
-    for (q = p->first_down; q; q = q->right) {
+    for (q = p->first_down, tr_n2 = 0; q; q = q->right, tr_n2++) {
+      if (p->tag == PROB_T_TR) p->tag = PROB_T_TRANSLATION;
       if (p->tag != PROB_T_TRANSLATION) return xml_err_elem_not_allowed(q);
     }
+    if (tr_num >= 0 && tr_num != tr_n2) return xml_err_elem_invalid(p);
+    tr_num = tr_n2;
   }
   prb->correct_answer = correct;
+  if (n == 1) return 0;
+
+  if (!tr_num) return xml_err_elem_invalid(tree);
+
+  prb->ans_num = n - 1;
+  prb->tr_num = tr_num;
+
+  // collect translation names
+  XCALLOC(prb->tr_names, tr_num);
+  for (q = tree->first_down->first_down, i = 0; q; q = q->right, i++) {
+    s = 0;
+    for (a = q->first; a; a = a->next)
+      if (a->tag == PROB_A_LANG) {
+        s = a->text;
+        break;
+      }
+    for (j = 0; j < i; j++) {
+      if (!s && !prb->tr_names[j]) break;
+      else if (s && prb->tr_names[j] && !strcasecmp(s, prb->tr_names[j])) break;
+    }
+    if (j < i) return xml_err_elem_invalid(tree);
+    if (s) s = xstrdup(s);
+    prb->tr_names[i] = s;
+  }
+
+  // collect answer translations
+  XCALLOC(prb->answers, prb->ans_num);
+  for (i = 0; i < prb->ans_num; i++) {
+    XCALLOC(prb->answers[i], prb->ans_num);
+  }
+
+  for (p = tree->first_down, n = 0; p; p = p->right, n++) {
+    for (q = p->first_down, i = 0; q; q = q->right, i++) {
+      s = 0;
+      for (a = q->first; a; a = a->next)
+        if (a->tag == PROB_A_LANG) {
+          s = a->text;
+          break;
+        }
+      for (j = 0; j < prb->tr_num; j++) {
+        if (!s && !prb->tr_names[j])
+          break;
+        else if (s && prb->tr_names[j] && !strcasecmp(s, prb->tr_names[j]))
+          break;
+      }
+      if (j >= prb->tr_num) return xml_err_elem_invalid(tree);
+      if (prb->answers[n][j]) return xml_err_elem_invalid(tree);
+      prb->answers[n][j] = q;
+    }
+  }
+
+  for (n = 0; n < prb->ans_num; n++)
+    for (i = 0; i < prb->tr_num; i++)
+      if (!prb->answers[n][j])
+        return xml_err_elem_invalid(tree);
 
   return 0;
 }
@@ -510,12 +581,74 @@ problem_xml_unparse_elem(
   return stmt;
 }
 
+struct problem_stmt *
+problem_xml_find_statement(
+        problem_xml_t p,
+        const unsigned char *lang)
+{
+  struct problem_stmt *stmt;
+
+  if (!p || !p->stmts) return 0;
+
+  if (!lang) {
+    for (stmt = p->stmts; stmt; stmt = stmt->next_stmt)
+      if (!stmt->lang)
+        return stmt;
+    return p->stmts;
+  }
+
+  // try to find the exact language
+  for (stmt = p->stmts; stmt; stmt = stmt->next_stmt)
+    if (stmt->lang && !strcasecmp(stmt->lang, lang))
+      return stmt;
+  // try to find approximate language (ru will work for ru_RU)
+  for (stmt = p->stmts; stmt; stmt = stmt->next_stmt)
+    if (stmt->lang && !approxlangcmp(stmt->lang, lang))
+      return stmt;
+  // try to find the default language
+  // FIXME: add and handle "default" attribute
+  for (stmt = p->stmts; stmt; stmt = stmt->next_stmt)
+    if (!stmt->lang)
+      return stmt;
+  // get the first language
+  return p->stmts;
+}
+
 void
 problem_xml_unparse_node(
 	FILE *fout,
-        struct xml_tree *p)
+        struct xml_tree *p,
+        const unsigned char **vars, /* substitution variables  */
+        const unsigned char **vals) /* substitution values */
 {
   xml_unparse_raw_tree(fout, p, &problem_parse_spec, 0, 0);
+}
+
+int
+problem_xml_find_language(
+	const unsigned char *lang,
+        int tr_num,
+        unsigned char **tr_names)
+{
+  int i;
+
+  if (!lang) {
+    for (i = 0; i < tr_num; i++)
+      if (!tr_names[i])
+        return i;
+    return 0;
+  }
+
+  for (i = 0; i < tr_num; i++)
+    if (tr_names[i] && !strcasecmp(lang, tr_names[i]))
+      return i;
+  for (i = 0; i < tr_num; i++)
+    if (tr_names[i] && !approxlangcmp(lang, tr_names[i]))
+      return i;
+  for (i = 0; i < tr_num; i++)
+    if (!tr_names[i])
+      return i;
+  return 0;
 }
 
 /*

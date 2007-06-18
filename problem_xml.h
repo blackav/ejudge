@@ -43,6 +43,7 @@ enum
   PROB_T_ANSWER_VARIANTS,
   PROB_T_ANSWER,
   PROB_T_TRANSLATION,
+  PROB_T_TR,
 
   PROB_T__BARRIER,
   PROB_T__DEFAULT,
@@ -115,6 +116,11 @@ struct problem_desc
   int correct_answer;
   int cur_tl_ms;                /* TL on the current hardware (ms) */
 
+  int ans_num;                  /* number of possible answers */
+  int tr_num;                   /* number of answer translations */
+  unsigned char **tr_names;     /* translation names */
+  struct xml_tree ***answers;   /* two-dimensional array of pointers */
+
   time_t last_check;
   time_t last_update;
 };
@@ -137,6 +143,17 @@ struct problem_stmt *problem_xml_unparse_elem(
 void
 problem_xml_unparse_node(
 	FILE *fout,
-        struct xml_tree *p);
+        struct xml_tree *p,
+        const unsigned char **vars, /* attribute value substitutions */
+        const unsigned char **vals);
+struct problem_stmt *
+problem_xml_find_statement(
+        problem_xml_t p,
+        const unsigned char *lang);
+int
+problem_xml_find_language(
+	const unsigned char *lang,
+        int tr_num,
+        unsigned char **tr_names);
 
 #endif /* __PROBLEM_XML_H__ */
