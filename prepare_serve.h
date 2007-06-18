@@ -3,7 +3,7 @@
 #ifndef __PREPARE_SERVE_H__
 #define __PREPARE_SERVE_H__
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,10 @@ struct variant_map_item
   int user_id;
   int var_num;
   int *variants;
+
+  // variant map version 2
+  int real_variant;             /* one for all problems */
+  int virtual_variant;          /* the displayed variant */
 };
 
 struct variant_map

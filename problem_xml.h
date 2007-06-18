@@ -109,6 +109,7 @@ struct problem_desc
 
   unsigned char *id;            /* corresponds to short_name */
   struct problem_stmt *stmts;
+  struct problem_stmt *last_stmt;
   struct xml_tree *examples;
   struct problem_time_limit *tls;
   int correct_answer;
@@ -131,6 +132,11 @@ struct problem_stmt *problem_xml_unparse_elem(
         int elem,                  /* STATEMENT, INPUT_FORMAT, etc */
         const unsigned char *lang, /* 0 - default language */
         struct problem_stmt *stmt, /* previously found element */
-        const unsigned char **subst); /* attribute value substitutions */
+        const unsigned char **vars, /* attribute value substitutions */
+        const unsigned char **vals);
+void
+problem_xml_unparse_node(
+	FILE *fout,
+        struct xml_tree *p);
 
 #endif /* __PROBLEM_XML_H__ */

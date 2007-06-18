@@ -87,7 +87,8 @@ xml_unparse_raw_tree(
 	FILE *out,
         const struct xml_tree *tree,
         const struct xml_parse_spec *spec,
-        const unsigned char **varsubst);
+        const unsigned char **vars,
+        const unsigned char **vals);
 void
 xml_unparse_tree_str(char *buf,
                      int buf_size,

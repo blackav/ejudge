@@ -293,7 +293,7 @@ do_eval(struct filter_env *env,
       c = env->rentries[r1.v.i].variant;
       if (!c) {
         c = find_variant(env->serve_state, env->rentries[r1.v.i].user_id,
-                         env->rentries[r1.v.i].prob_id);
+                         env->rentries[r1.v.i].prob_id, 0);
       }
       res->v.i = c;
       break;
@@ -512,7 +512,7 @@ do_eval(struct filter_env *env,
     res->type = FILTER_TYPE_INT;
     c = env->cur->variant;
     if (!c) c = find_variant(env->serve_state, env->cur->user_id,
-                             env->cur->prob_id);
+                             env->cur->prob_id, 0);
     res->v.i = c;
     break;
   case TOK_CURRAWVARIANT:

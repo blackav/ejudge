@@ -1037,7 +1037,7 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
     if (state->probs[re.prob_id]) {
       if (state->probs[re.prob_id]->variant_num > 0) {
         int variant = re.variant;
-        if (!variant) variant = find_variant(state, re.user_id, re.prob_id);
+        if (!variant) variant = find_variant(state, re.user_id, re.prob_id, 0);
         prob_str = alloca(strlen(state->probs[re.prob_id]->short_name) + 10);
         if (variant > 0) {
           sprintf(prob_str, "%s-%d", state->probs[re.prob_id]->short_name, variant);
@@ -4319,7 +4319,7 @@ do_write_public_log(const serve_state_t state,
     if (state->probs[pe->prob_id]) {
       if (state->probs[pe->prob_id]->variant_num > 0) {
         int variant = pe->variant;
-        if (!variant) variant = find_variant(state, pe->user_id, pe->prob_id);
+        if (!variant) variant = find_variant(state, pe->user_id, pe->prob_id,0);
         if (variant > 0) {
           fprintf(f, "<td>%s-%d</td>", state->probs[pe->prob_id]->short_name,variant);
         } else {
@@ -4499,7 +4499,7 @@ write_user_run_status(const serve_state_t state, FILE *f, int uid, int rid,
   if (state->probs[re.prob_id]) {
     if (state->probs[re.prob_id]->variant_num > 0) {
       int variant = re.variant;
-      if (!variant) variant = find_variant(state, re.user_id, re.prob_id);
+      if (!variant) variant = find_variant(state, re.user_id, re.prob_id, 0);
       prob_str = alloca(strlen(state->probs[re.prob_id]->short_name) + 10);
       if (variant > 0) {
         sprintf(prob_str, "%s-%d", state->probs[re.prob_id]->short_name, variant);
@@ -5483,7 +5483,7 @@ write_team_page(const serve_state_t state,
         }
 
         if (state->probs[i]->variant_num > 0) {
-          int variant = find_variant(state, user_id, i);
+          int variant = find_variant(state, user_id, i, 0);
           prob_str = alloca(strlen(state->probs[i]->short_name) + 10);
           if (variant > 0) {
             sprintf(prob_str, "%s-%d", state->probs[i]->short_name, variant);
@@ -5591,7 +5591,7 @@ write_team_page(const serve_state_t state,
         }
 
         if (state->probs[i]->variant_num > 0) {
-          int variant = find_variant(state, user_id, i);
+          int variant = find_variant(state, user_id, i, 0);
           prob_str = alloca(strlen(state->probs[i]->short_name) + 10);
           if (variant > 0) {
             sprintf(prob_str, "%s-%d", state->probs[i]->short_name, variant);

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -187,6 +187,19 @@ mime_type_guess(const unsigned char *tmpdir,
   if (fd >= 0) close(fd);
   if (ff) pclose(ff);
   unlink(tmppath);
+  return -1;
+}
+
+int
+mime_type_parse_suffix(const unsigned char *str)
+{
+  int i;
+
+  if (!str) return -1;
+
+  for (i = 0; i < MIME_TYPE_LAST; i++)
+    if (!strcasecmp(mime_types[i].suffix, str))
+      return i;
   return -1;
 }
 

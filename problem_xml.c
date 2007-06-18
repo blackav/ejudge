@@ -23,6 +23,7 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
+#include <ctype.h>
 
 static char const * const elem_map[] =
 {
@@ -180,8 +181,12 @@ parse_statement(problem_xml_t prb, struct xml_tree *pstmt)
   struct xml_attr *a;
   struct xml_tree *p1;
 
-  stmt->next_stmt = prb->stmts;
-  prb->stmts = stmt;
+  if (!prb->last_stmt) {
+    prb->last_stmt = prb->stmts = stmt;
+  } else {
+    prb->last_stmt->next_stmt = stmt;
+    prb->last_stmt = stmt;
+  }
 
   for (a = stmt->b.first; a; a = a->next) {
     switch (a->tag) {
@@ -435,6 +440,22 @@ problem_xml_parse_stream(const unsigned char *path, FILE *f)
   return 0;
 }
 
+static int
+approxlangcmp(
+	const unsigned char *s1,
+        const unsigned char *s2)
+{
+  int x;
+
+  for (; *s1 && *s1 != '_' && *s2 && *s2 != '_'; s1++, s2++)
+    if ((x = toupper(*s1) - toupper(*s2)))
+      return x;
+  if ((!*s1 || *s1 == '_') && (!*s2 || *s2 == '_'))
+    return 0;
+  if (!*s1 || *s1 == '_') return -1;
+  return 0;
+}
+
 struct problem_stmt *
 problem_xml_unparse_elem(
 	FILE *fout,
@@ -442,7 +463,8 @@ problem_xml_unparse_elem(
         int elem,                  /* STATEMENT, INPUT_FORMAT, etc */
         const unsigned char *lang, /* 0 - default language */
         struct problem_stmt *stmt, /* previously found element */
-        const unsigned char **subst) /* attribute value substitutions */
+        const unsigned char **vars, /* substitution variables  */
+        const unsigned char **vals) /* substitution values */
 {
   struct xml_tree *t = 0;
 
@@ -450,6 +472,13 @@ problem_xml_unparse_elem(
     // try to find the exact language
     for (stmt = p->stmts; stmt; stmt = stmt->next_stmt) {
       if (stmt->lang && !strcasecmp(stmt->lang, lang))
+        break;
+    }
+  }
+  if (!stmt && lang) {
+    // try to find approximate language (ru will work for ru_RU)
+    for (stmt = p->stmts; stmt; stmt = stmt->next_stmt) {
+      if (stmt->lang && !approxlangcmp(stmt->lang, lang))
         break;
     }
   }
@@ -476,9 +505,17 @@ problem_xml_unparse_elem(
     return stmt;
   }
 
-  xml_unparse_raw_tree(fout, t, &problem_parse_spec, subst);
+  xml_unparse_raw_tree(fout, t, &problem_parse_spec, vars, vals);
 
   return stmt;
+}
+
+void
+problem_xml_unparse_node(
+	FILE *fout,
+        struct xml_tree *p)
+{
+  xml_unparse_raw_tree(fout, p, &problem_parse_spec, 0, 0);
 }
 
 /*

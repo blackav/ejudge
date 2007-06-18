@@ -1713,7 +1713,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
       return;
     }
-    if (!pkt->variant) pkt->variant = find_variant(&serve_state, pkt->user_id, pkt->prob_id);
+    if (!pkt->variant) pkt->variant = find_variant(&serve_state, pkt->user_id, pkt->prob_id, 0);
     if (!pkt->variant) {
       err("%d: variant is not known", p->id);
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
@@ -2054,7 +2054,7 @@ do_submit_run(struct client_state *p,
     return;
   }
   if (cur_prob->variant_num > 0) {
-    if (!find_variant(&serve_state, user_id, cur_prob->id)) {
+    if (!find_variant(&serve_state, user_id, cur_prob->id, 0)) {
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
       err("%d: cannot get variant", p->id);
       return;

@@ -1301,51 +1301,80 @@ prepare_free_variant_map(struct variant_map *p)
   xfree(p);
 }
 
-static struct variant_map *
-parse_variant_map(serve_state_t state, const unsigned char *path)
+static int
+get_variant_map_version(FILE *f)
+{
+  int vintage = -1;
+  int c;
+
+  /* in stream mode ignore everything before variant_map,
+     including <?xml ... ?>, <!-- ... -->
+  */
+  if ((c = getc(f)) == EOF) goto unexpected_EOF;
+  while (isspace(c)) c = getc(f);
+  if (c == EOF) goto unexpected_EOF;
+  if (c != '<') goto invalid_header;
+  if ((c = getc(f)) == EOF) goto unexpected_EOF;
+  if (c == '?') {
+    if ((c = getc(f)) == EOF) goto unexpected_EOF;
+    while (1) {
+      if (c != '?') {
+        if ((c = getc(f)) == EOF) goto unexpected_EOF;
+        continue;
+      }
+      if ((c = getc(f)) == EOF) goto unexpected_EOF;
+      if (c == '>') break;
+    }
+    if ((c = getc(f)) == EOF) goto unexpected_EOF;
+  }
+  while (1) {
+    while (isspace(c)) c = getc(f);
+    if (c == EOF) goto unexpected_EOF;
+    if (c != '<') goto invalid_header;
+    if ((c = getc(f)) == EOF) goto unexpected_EOF;
+    if (c == 'v') break;
+    if (c != '!') goto invalid_header;
+    if ((c = getc(f)) == EOF) goto unexpected_EOF;
+    while (1) {
+      if (c != '-') {
+        if ((c = getc(f)) == EOF) goto unexpected_EOF;
+        continue;
+      }
+      if ((c = getc(f)) == EOF) goto unexpected_EOF;
+      if (c == '>') break;
+    }
+  }
+  ungetc(c, f);
+
+  if (fscanf(f, "variant_map version = \"%d\" >", &vintage) != 1)
+    goto invalid_header;
+  if ((c = getc(f)) == EOF) goto unexpected_EOF;
+  while (c != '\n')
+    if ((c = getc(f)) == EOF)
+      goto unexpected_EOF;
+
+  return vintage;
+
+ unexpected_EOF:
+  err("unexpected EOF in variant map file header");
+  return -1;
+
+ invalid_header:
+  err("invalid variant map file header");
+  return -1;
+}
+
+static int
+parse_vm_v1(
+	serve_state_t state, 
+        const unsigned char *path,
+	FILE *f,
+        struct variant_map *pmap)
 {
   unsigned char buf[1200];
   unsigned char login_buf[sizeof(buf)];
   unsigned char *p;
-  int vintage, n, len, i, j, v;
-  FILE *f = 0;
-  struct variant_map *pmap = 0;
-
-  XCALLOC(pmap, 1);
-  XCALLOC(pmap->prob_map, state->max_prob + 1);
-  XCALLOC(pmap->prob_rev_map, state->max_prob + 1);
-  pmap->var_prob_num = 0;
-  for (i = 1; i <= state->max_prob; i++) {
-    if (!state->probs[i] || state->probs[i]->variant_num <= 0) continue;
-    pmap->prob_map[i] = ++pmap->var_prob_num;
-    pmap->prob_rev_map[pmap->var_prob_num] = i;
-  }
-  pmap->a = 16;
-  XCALLOC(pmap->v, pmap->a);
-
-  if (!(f = fopen(path, "r"))) {
-    err("Cannot open variant map file '%s'", path);
-    goto failed;
-  }
-  if (!fgets(buf, sizeof(buf), f)) {
-    err("Unexpected EOF in variant map file '%s'", path);
-    goto failed;
-  }
-  len = strlen(buf);
-  if (len > 1024) {
-    err("Line is too long in '%s'", path);
-    goto failed;
-  }
-  while (len > 0 && isspace(buf[len - 1])) buf[--len] = 0;
-  if (sscanf(buf, " < variant_map version = \"%d\" >%n",
-             &vintage, &n) != 1 || buf[n]) {
-    err("Invalid header of the variant map file '%s'", path);
-    goto failed;
-  }
-  if (vintage != 1) {
-    err("Cannot handle variant map file '%s' version %d", path, vintage);
-    goto failed;
-  }
+  int len, n, i, j, v;
 
   while (fgets(buf, sizeof(buf), f)) {
     if ((p = strchr(buf, '#'))) *p = 0;
@@ -1393,6 +1422,144 @@ parse_variant_map(serve_state_t state, const unsigned char *path)
       pmap->v[pmap->u].variants[j] = v;
     }
     pmap->u++;
+  }
+  return 0;
+
+ failed:
+  return -1;
+}
+
+static int
+parse_vm_v2(
+	serve_state_t state, 
+        const unsigned char *path,
+	FILE *f,
+        struct variant_map *pmap)
+{
+  unsigned char buf[1200];
+  unsigned char login_buf[sizeof(buf)];
+  unsigned char *p;
+  int len, n, i, j, v;
+
+  while (fgets(buf, sizeof(buf), f)) {
+    if ((p = strchr(buf, '#'))) *p = 0;
+    len = strlen(buf);
+    if (len > 1024) {
+      err("Line is too long in '%s'", path);
+      goto failed;
+    }
+    while (len > 0 && isspace(buf[len - 1])) buf[--len] = 0;
+    if (!len) continue;
+    if (!strcmp(buf, "</variant_map>")) break;
+
+    if (pmap->u >= pmap->a) {
+      pmap->a *= 2;
+      pmap->v = (typeof(pmap->v)) xrealloc(pmap->v,
+                                           pmap->a * sizeof(pmap->v[0]));
+    }
+    memset(&pmap->v[pmap->u], 0, sizeof(pmap->v[0]));
+    XCALLOC(pmap->v[pmap->u].variants, pmap->var_prob_num + 1);
+
+    p = buf;
+    if (sscanf(p, "%s%n", login_buf, &n) != 1) {
+      err("Cannot read team login");
+      goto failed;
+    }
+    p += n;
+    pmap->v[pmap->u].login = xstrdup(login_buf);
+
+    if (sscanf(p, "variant %d%n", &v, &n) == 1) {
+      if (v < 0) {
+        err("Invalid variant");
+        goto failed;
+      }
+      p += n;
+      // check that there are enough variants
+      if (v > 0) {
+        for (i = 1; i <= state->max_prob; i++) {
+          if (!state->probs[i] || state->probs[i]->variant_num <= 0) continue;
+          if (state->probs[i]->variant_num < v) {
+            err("Too few variants available in problem %s",
+                state->probs[i]->short_name);
+            goto failed;
+          }
+        }
+      }
+      pmap->v[pmap->u].real_variant = v;
+      if (!*p) {
+        pmap->u++;
+        continue;
+      }
+      if (sscanf(p, " virtual %d%n", &v, &n) != 1 || v < 0) {
+        err("Invalid virtual variant");
+        goto failed;
+      }
+      pmap->v[pmap->u].virtual_variant = v;
+      pmap->u++;
+      continue;
+    }
+
+    for (j = 1; j <= pmap->var_prob_num; j++) {
+      i = pmap->prob_rev_map[j];
+      ASSERT(i > 0 && i <= state->max_prob);
+      ASSERT(state->probs[i]);
+      ASSERT(state->probs[i]->variant_num > 0);
+      if (sscanf(p, "%d%n", &v, &n) != 1) {
+        err("Cannot read variant for team %s and problem %s",
+            login_buf, state->probs[i]->short_name);
+        goto failed;
+      }
+      if (v < 0 || v > state->probs[i]->variant_num) {
+        err("Invalid variant %d for team %s and problem %s",
+            v, login_buf, state->probs[i]->short_name);
+        goto failed;
+      }
+      p += n;
+      pmap->v[pmap->u].variants[j] = v;
+    }
+    pmap->u++;
+  }
+  return 0;
+
+ failed:
+  return -1;
+}
+
+static struct variant_map *
+parse_variant_map(serve_state_t state, const unsigned char *path)
+{
+  int vintage, i;
+  FILE *f = 0;
+  struct variant_map *pmap = 0;
+
+  XCALLOC(pmap, 1);
+  XCALLOC(pmap->prob_map, state->max_prob + 1);
+  XCALLOC(pmap->prob_rev_map, state->max_prob + 1);
+  pmap->var_prob_num = 0;
+  for (i = 1; i <= state->max_prob; i++) {
+    if (!state->probs[i] || state->probs[i]->variant_num <= 0) continue;
+    pmap->prob_map[i] = ++pmap->var_prob_num;
+    pmap->prob_rev_map[pmap->var_prob_num] = i;
+  }
+  pmap->a = 16;
+  XCALLOC(pmap->v, pmap->a);
+
+  if (!(f = fopen(path, "r"))) {
+    err("Cannot open variant map file '%s'", path);
+    goto failed;
+  }
+  if ((vintage = get_variant_map_version(f)) < 0) goto failed;
+
+  switch (vintage) {
+  case 1:
+    if (parse_vm_v1(state, path, f, pmap) < 0) goto failed;
+    break;
+  case 2:
+    if (parse_vm_v2(state, path, f, pmap) < 0) goto failed;
+    break;
+  default:
+    err("Cannot handle variant map file '%s' version %d", path, vintage);
+    goto failed;
   }
 
   if (ferror(f)) {
