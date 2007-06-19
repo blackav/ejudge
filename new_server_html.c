@@ -9847,6 +9847,52 @@ unpriv_unparse_statement(
   fprintf(fout, "<h3>%s</h3>", _("Submit a solution"));
 }
 
+static void
+unpriv_unparse_answers(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        const struct section_problem_data *prob,
+        problem_xml_t px,
+        const unsigned char *lang,
+        int is_radio,
+        int last_answer,
+        int next_prob_id,
+        int enable_js,
+        const unsigned char *class_name)
+{
+  unsigned char *cl = "";
+  unsigned char jsbuf[128];
+  int l, i;
+  const unsigned char *s;
+
+  if (class_name && *class_name) {
+    cl = (unsigned char *) alloca(strlen(class_name) + 32);
+    sprintf(cl, " class=\"%s\"", class_name);
+  }
+
+  l = problem_xml_find_language(lang, px->tr_num, px->tr_names);
+  for (i = 0; i < px->ans_num; i++) {
+    if (is_radio) {
+      jsbuf[0] = 0;
+      if (prob->id > 0 && enable_js) {
+        snprintf(jsbuf, sizeof(jsbuf), " onclick=\"submitAnswer(%d,%d,%d)\"",
+                 prob->id, i + 1, next_prob_id);
+      }
+      s = "";
+      if (last_answer == i + 1) s = " checked=\"1\"";
+      fprintf(fout, "<tr><td%s>%d</td><td%s><input type=\"radio\" name=\"file\" value=\"%d\"%s%s/></td><td%s>", cl, i + 1, cl, i + 1, s, jsbuf, cl);
+      problem_xml_unparse_node(fout, px->answers[i][l], 0, 0);
+      fprintf(fout, "</td></tr>\n");
+    } else {
+      fprintf(fout, "<tr><td%s>%d</td><td%s><input type=\"checkbox\" name=\"ans_%d\"/></td><td%s>", cl, i + 1, cl, i + 1, cl);
+      problem_xml_unparse_node(fout, px->answers[i][l], 0, 0);
+      fprintf(fout, "</td></tr>\n");
+    }
+  }
+}
+
 static const unsigned char *main_page_headers[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_MAIN_PAGE] = __("Contest status"),
@@ -9901,6 +9947,7 @@ unpriv_main_page(FILE *fout,
   unsigned char dbuf[1024];
   unsigned char wbuf[1024];
   int upper_tab_id;
+  problem_xml_t px;
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
@@ -10238,12 +10285,16 @@ unpriv_main_page(FILE *fout,
         }
       }
 
+      px = 0;
+      if (variant > 0 && prob->xml.a && prob->xml.a[variant]) {
+        px = prob->xml.a[variant];
+      } else if (variant <= 0 && prob->xml.p) {
+        px = prob->xml.p;
+      }
+
       /* put problem statement */
-      if (variant > 0 && prob->xml.a && prob->xml.a[variant]->stmts) {
-        // ...
-        abort();
-      } else if (variant <= 0 && prob->xml.p && prob->xml.p->stmts) {
-        unpriv_unparse_statement(fout, phr, cnts, extra, prob, prob->xml.p, bb);
+      if (px && px->stmts) {
+        unpriv_unparse_statement(fout, phr, cnts, extra, prob, px, bb);
       } else if (prob->statement_file[0]
           && (prob_status[prob_id] & PROB_STATUS_VIEWABLE)) {
         if (variant > 0) {
@@ -10374,7 +10425,25 @@ unpriv_main_page(FILE *fout,
             last_answer = get_last_answer_select_one(cs, phr->user_id,
                                                      prob->id);
           }
-          if (alternatives) {
+
+          if (px) {
+          /*
+static void
+unpriv_unparse_answers(
+	FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        const struct section_problem_data *prob,
+        problem_xml_t px,
+        const unsigned char *lang,
+        int is_radio,
+        int last_answer,
+        int next_prob_id,
+        int enable_js,
+        const unsigned char *class_name)
+          */
+          } else if (alternatives) {
             if (cnts->exam_mode) {
               int next_prob_id = prob->id;
               if (prob->advance_to_next > 0) {
