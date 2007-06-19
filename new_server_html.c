@@ -9946,7 +9946,7 @@ unpriv_main_page(FILE *fout,
   unsigned char *last_source = 0;
   unsigned char dbuf[1024];
   unsigned char wbuf[1024];
-  int upper_tab_id;
+  int upper_tab_id, next_prob_id;
   problem_xml_t px;
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
@@ -10427,25 +10427,31 @@ unpriv_main_page(FILE *fout,
           }
 
           if (px) {
-          /*
-static void
-unpriv_unparse_answers(
-	FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra,
-        const struct section_problem_data *prob,
-        problem_xml_t px,
-        const unsigned char *lang,
-        int is_radio,
-        int last_answer,
-        int next_prob_id,
-        int enable_js,
-        const unsigned char *class_name)
-          */
+            if (cnts->exam_mode) {
+              next_prob_id = prob->id;
+              if (prob->advance_to_next > 0) {
+                next_prob_id++;
+                for (; next_prob_id <= cs->max_prob; next_prob_id++) {
+                  if (!(prob2 = cs->probs[next_prob_id])) continue;
+                  if (prob2->t_start_date > 0
+                      && prob2->t_start_date > cs->current_time) continue;
+                  break;
+                }
+                if (next_prob_id > cs->max_prob) next_prob_id = prob->id;
+              }
+              unpriv_unparse_answers(fout, phr, cnts, extra, prob,
+                                     px, 0 /* lang */, 1 /* is_radio */,
+                                     last_answer, next_prob_id,
+                                     1 /* js_flag */, "b0");
+            } else {
+              unpriv_unparse_answers(fout, phr, cnts, extra, prob,
+                                     px, 0 /* lang */, 1 /* is_radio */,
+                                     last_answer, next_prob_id,
+                                     0 /* js_flag */, "b0");
+            }
           } else if (alternatives) {
             if (cnts->exam_mode) {
-              int next_prob_id = prob->id;
+              next_prob_id = prob->id;
               if (prob->advance_to_next > 0) {
                 next_prob_id++;
                 for (; next_prob_id <= cs->max_prob; next_prob_id++) {
