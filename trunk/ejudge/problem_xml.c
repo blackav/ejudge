@@ -327,8 +327,8 @@ parse_answer_variants(problem_xml_t prb, struct xml_tree *tree)
       if (v) correct = n;
     }
     for (q = p->first_down, tr_n2 = 0; q; q = q->right, tr_n2++) {
-      if (p->tag == PROB_T_TR) p->tag = PROB_T_TRANSLATION;
-      if (p->tag != PROB_T_TRANSLATION) return xml_err_elem_not_allowed(q);
+      if (q->tag == PROB_T_TR) q->tag = PROB_T_TRANSLATION;
+      if (q->tag != PROB_T_TRANSLATION) return xml_err_elem_not_allowed(q);
     }
     if (tr_num >= 0 && tr_num != tr_n2) return xml_err_elem_invalid(p);
     tr_num = tr_n2;
