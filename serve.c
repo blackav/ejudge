@@ -2684,7 +2684,7 @@ cmd_rejudge_by_mask(struct client_state *p, int len,
     priority_adjustment = 10;
   }
 
-  serve_rejudge_by_mask(&serve_state, p->user_id, p->ip, p->ssl,
+  serve_rejudge_by_mask(cur_contest, &serve_state, p->user_id, p->ip, p->ssl,
                         pkt->mask_size, pkt->mask,
                         force_full, priority_adjustment);
   new_send_reply(p, SRV_RPL_OK);
@@ -2935,7 +2935,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
 
-    serve_rejudge_all(&serve_state, p->user_id, p->ip, p->ssl);
+    serve_rejudge_all(cur_contest, &serve_state, p->user_id, p->ip, p->ssl);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_JUDGE_SUSPENDED:
@@ -2947,7 +2947,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
 
-    serve_judge_suspended(&serve_state, p->user_id, p->ip, p->ssl);
+    serve_judge_suspended(cur_contest, &serve_state, p->user_id, p->ip, p->ssl);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_REJUDGE_PROBLEM:
@@ -2964,7 +2964,8 @@ cmd_priv_command_0(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
       return;
     }
-    serve_rejudge_problem(&serve_state, p->user_id, p->ip, p->ssl, pkt->v.i);
+    serve_rejudge_problem(cur_contest, &serve_state,
+                          p->user_id, p->ip, p->ssl, pkt->v.i);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_SCHEDULE:
@@ -3445,7 +3446,7 @@ cmd_edit_run(struct client_state *p, int len,
 
   if ((run_flags & RUN_ENTRY_STATUS)
       && (run.status == RUN_REJUDGE || run.status == RUN_FULL_REJUDGE)) {
-    serve_rejudge_run(&serve_state, pkt->run_id,
+    serve_rejudge_run(cur_contest, &serve_state, pkt->run_id,
                       p->user_id, p->ip, p->ssl,
                       (run.status == RUN_FULL_REJUDGE), 0);
   }

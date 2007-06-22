@@ -233,9 +233,11 @@ void
 ns_client_destroy_callback(struct client_state *p)
 {
   struct contest_extra *extra;
+  const struct contest_desc *cnts = 0;
   serve_state_t cs;
 
   if (p->contest_id <= 0) return;
+  if (contests_get(p->contest_id, &cnts) < 0) return;
   if (!(extra = try_contest_extra(p->contest_id))) return;
   if (!(cs = extra->serve_state)) return;
   if (!cs->pending_xml_import || cs->client_id < 0) return;
@@ -243,7 +245,7 @@ ns_client_destroy_callback(struct client_state *p)
     cs->testing_suspended = cs->saved_testing_suspended;
     serve_update_status_file(cs, 1);
     if (!cs->testing_suspended)
-      serve_judge_suspended(cs, 0, 0, 0);
+      serve_judge_suspended(cnts, cs, 0, 0, 0);
   }
   xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
   cs->client_id = -1;
@@ -266,7 +268,7 @@ ns_unload_contest(int contest_id)
     serve_check_stat_generation(extra->serve_state, cnts, 1);
     serve_update_status_file(extra->serve_state, 1);
     team_extra_flush(extra->serve_state->team_extra_state);
-    extra->serve_state = serve_state_destroy(extra->serve_state, ul_conn);
+    extra->serve_state = serve_state_destroy(extra->serve_state, cnts, ul_conn);
   }
 
   xfree(extra->contest_arm);
@@ -318,7 +320,7 @@ ns_unload_expired_contests(time_t cur_time)
 }
 
 static void
-handle_pending_xml_import(serve_state_t cs)
+handle_pending_xml_import(const struct contest_desc *cnts, serve_state_t cs)
 {
   struct client_state *p;
   FILE *fout = 0;
@@ -330,7 +332,7 @@ handle_pending_xml_import(serve_state_t cs)
       cs->testing_suspended = cs->saved_testing_suspended;
       serve_update_status_file(cs, 1);
       if (!cs->testing_suspended)
-        serve_judge_suspended(cs, 0, 0, 0);
+        serve_judge_suspended(cnts, cs, 0, 0, 0);
     }
     xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
     cs->client_id = -1; cs->destroy_callback = 0;
@@ -353,7 +355,7 @@ handle_pending_xml_import(serve_state_t cs)
     cs->testing_suspended = cs->saved_testing_suspended;
     serve_update_status_file(cs, 1);
     if (!cs->testing_suspended)
-      serve_judge_suspended(cs, 0, 0, 0);
+      serve_judge_suspended(cnts, cs, 0, 0, 0);
   }
   xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
   cs->client_id = -1; cs->destroy_callback = 0;
@@ -403,7 +405,7 @@ ns_loop_callback(struct server_framework_state *state)
     }
 
     if (cs->pending_xml_import && !serve_count_transient_runs(cs))
-      handle_pending_xml_import(cs);
+      handle_pending_xml_import(cnts, cs);
   }
 
   ns_unload_expired_contests(cur_time);
@@ -897,7 +899,7 @@ ns_check_contest_events(serve_state_t cs, const struct contest_desc *cnts)
     }
   }
 
-  if (cs->event_first) serve_handle_events(cs);
+  if (cs->event_first) serve_handle_events(cnts, cs);
 }
 
 static void
@@ -3121,7 +3123,7 @@ priv_change_status(FILE *fout,
     goto cleanup;
   }
   if (status == RUN_REJUDGE || status == RUN_FULL_REJUDGE) {
-    serve_rejudge_run(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+    serve_rejudge_run(cnts, cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       (status == RUN_FULL_REJUDGE), 0);
     goto cleanup;
   }
@@ -3289,9 +3291,8 @@ priv_rejudge_displayed(FILE *fout,
     prio_adj = 10;
   }
 
-  serve_rejudge_by_mask(cs, phr->user_id, phr->ip, phr->ssl_flag,
-                        mask_size, mask,
-                        force_full, prio_adj);
+  serve_rejudge_by_mask(cnts, cs, phr->user_id, phr->ip, phr->ssl_flag,
+                        mask_size, mask, force_full, prio_adj);
 
  cleanup:
   xfree(mask);
@@ -3326,7 +3327,7 @@ priv_rejudge_problem(FILE *fout,
     goto cleanup;
   }
 
-  serve_rejudge_problem(cs, phr->user_id, phr->ip, phr->ssl_flag, prob_id);
+  serve_rejudge_problem(cnts,cs,phr->user_id, phr->ip, phr->ssl_flag, prob_id);
 
  cleanup:
   return 0;
@@ -3352,10 +3353,10 @@ priv_rejudge_all(FILE *fout,
 
   switch (phr->action) {
   case NEW_SRV_ACTION_REJUDGE_SUSPENDED_2:
-    serve_judge_suspended(cs, phr->user_id, phr->ip, phr->ssl_flag);
+    serve_judge_suspended(cnts, cs, phr->user_id, phr->ip, phr->ssl_flag);
     break;
   case NEW_SRV_ACTION_REJUDGE_ALL_2:
-    serve_rejudge_all(cs, phr->user_id, phr->ip, phr->ssl_flag);
+    serve_rejudge_all(cnts, cs, phr->user_id, phr->ip, phr->ssl_flag);
     break;
   default:
     abort();

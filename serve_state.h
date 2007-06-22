@@ -200,6 +200,7 @@ struct compile_run_extra
 
 serve_state_t serve_state_init(void);
 serve_state_t serve_state_destroy(serve_state_t state,
+                                  const struct contest_desc *cnts,
                                   struct userlist_clnt *ul_conn);
 
 void serve_state_set_config_path(serve_state_t state, const unsigned char *);
@@ -294,28 +295,26 @@ void
 serve_send_check_failed_email(const struct contest_desc *cnts, int run_id);
 
 void
-serve_rejudge_run(serve_state_t state,
-                  int run_id,
-                  int user_id, ej_ip_t ip, int ssl_flag,
-                  int force_full_rejudge,
-                  int priority_adjustment);
+serve_rejudge_run(const struct contest_desc *, serve_state_t state,
+                  int run_id, int user_id, ej_ip_t ip, int ssl_flag,
+                  int force_full_rejudge, int priority_adjustment);
 void
-serve_rejudge_by_mask(serve_state_t state,
+serve_rejudge_by_mask(const struct contest_desc *, serve_state_t state,
                       int user_id, ej_ip_t ip, int ssl_flag,
                       int mask_size, unsigned long *mask,
                       int force_flag, int priority_adjustment);
 
 void
-serve_rejudge_problem(serve_state_t state,
+serve_rejudge_problem(const struct contest_desc *cnst, serve_state_t state,
                       int user_id, ej_ip_t ip, int ssl_flag,
                       int prob_id);
 
 void
-serve_judge_suspended(serve_state_t state,
+serve_judge_suspended(const struct contest_desc *cnts, serve_state_t state,
                       int user_id, ej_ip_t ip, int ssl_flag);
 
 void
-serve_rejudge_all(serve_state_t state,
+serve_rejudge_all(const struct contest_desc *cnts, serve_state_t state,
                   int user_id, ej_ip_t ip, int ssl_flag);
 
 int
@@ -346,8 +345,9 @@ int serve_event_remove_matching(serve_state_t state, time_t time, int type,
                                 int user_id);
 
 int serve_collect_virtual_stop_events(serve_state_t cs);
-void serve_handle_events(serve_state_t cs);
-void serve_judge_virtual_olympiad(serve_state_t cs, int user_id, int run_id);
+void serve_handle_events(const struct contest_desc *cnts, serve_state_t cs);
+void serve_judge_virtual_olympiad(const struct contest_desc *,
+                                  serve_state_t cs, int user_id, int run_id);
 
 void serve_clear_by_mask(serve_state_t state,
                          int user_id, ej_ip_t ip, int ssl_flag,
