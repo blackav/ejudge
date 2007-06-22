@@ -187,11 +187,13 @@ html_print_by_line(FILE *f, unsigned char const *s, size_t size)
   putc('\n', f);
 }
 
-unsigned char *
+static unsigned char *
 prepare_checker_comment(const unsigned char *str)
 {
   size_t len = strlen(str);
   unsigned char *wstr = alloca(len + 1), *p;
+
+  // FIXME: handle UTF8 correctly
 
   strcpy(wstr, str);
   for (p = wstr; *p; p++)
@@ -1966,6 +1968,7 @@ check_config(void)
   unsigned char *var_info_dir;
   unsigned char *var_tgz_dir;
   unsigned char *var_check_cmd = 0;
+  problem_xml_t px;
 
   /* check spooler dirs */
   if (check_writable_spool(serve_state.global->run_queue_dir, SPOOL_OUT) < 0) return -1;
@@ -1980,6 +1983,18 @@ check_config(void)
     if (!prb) continue;
     if (prb->disable_testing) continue;
     if (prb->manual_checking) continue;
+
+    /* ignore output-only problems with XML and answer variants */
+    px = 0;
+    if (prb->variant_num > 0 && prb->xml.a) {
+      px = prb->xml.a[0];
+    } else {
+      px = prb->xml.p;
+    }
+    if (px && px->answers) {
+      prb->disable_testing = 1;
+      continue;
+    }
 
     // check if there exists a tester for this problem
     for (j = 1; j <= serve_state.max_tester; j++) {
