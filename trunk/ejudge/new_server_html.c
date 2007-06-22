@@ -2509,6 +2509,7 @@ priv_submit_run(FILE *fout,
                       "  Testing disabled for this problem\n",
                       run_id);
     } else {
+      /* FIXME: check for XML problem */
       if (serve_run_request(cs, log_f, run_text, run_size, run_id,
                             phr->user_id, prob_id, 0, variant, 0, -1, -1,
                             0, 0) < 0) {
@@ -6278,6 +6279,8 @@ priv_main_page(FILE *fout,
                 /*cnts->team_head_style*/ "h2");
       }
 
+      /* FIXME: handle problem XML */
+
       /* put problem statement */
       if (prob->statement_file[0]) {
         if (variant > 0) {
@@ -6352,6 +6355,7 @@ priv_main_page(FILE *fout,
         fprintf(fout, "<tr><td colspan=\"2\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
         break;
       case PROB_TYPE_SELECT_ONE:
+        /* FIXME: handle problem XML */
         if (alternatives) {
           write_alternatives_file(fout, 1, alternatives, -1, 0, 0, 0, "b0");
         } else if (prob->alternative) {
@@ -7925,6 +7929,8 @@ unpriv_submit_run(FILE *fout,
       ns_error(log_f, NEW_SRV_ERR_INV_ANSWER);
       goto done;
     }
+
+    /* FIXME: handle problem XML */
 
     // add this run and if we're in olympiad accepting mode mark
     // as accepted

@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "serve_state.h"
 #include "runlog.h"
 #include "prepare.h"
@@ -34,6 +36,7 @@
 #include "curtime.h"
 #include "userlist.h"
 #include "sformat.h"
+#include "misctext.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -46,6 +49,8 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <sys/time.h>
+
+#define ARMOR(s)  html_armor_buf(&ab, s)
 
 void
 serve_update_standings_file(serve_state_t state,
@@ -1763,6 +1768,181 @@ serve_read_run_packet(serve_state_t state,
   xfree(reply_buf);
   run_reply_packet_free(reply_pkt);
   return 0;
+}
+
+static const char * const scoring_system_strs[] =
+{
+  [SCORE_ACM] "ACM",
+  [SCORE_KIROV] "KIROV",
+  [SCORE_OLYMPIAD] "OLYMPIAD",
+  [SCORE_MOSCOW] "MOSCOW",
+};
+static const unsigned char *
+unparse_scoring_system(unsigned char *buf, size_t size, int val)
+{
+  if (val >= SCORE_ACM && val < SCORE_TOTAL) return scoring_system_strs[val];
+  snprintf(buf, size, "scoring_%d", val);
+  return buf;
+}
+
+void
+serve_judge_built_in_problem(
+	serve_state_t state,
+        const struct contest_desc *cnts,
+        int run_id,
+        int judge_id,
+        int variant,
+        int accepting_mode,
+        struct run_entry *re,
+        const struct section_problem_data *prob,
+        problem_xml_t px,
+        int user_id,
+        ej_ip_t ip,
+        int ssl_flag)
+{
+  const struct section_global_data *global = state->global;
+  int arch_flags, n, status, rep_flags;
+  path_t run_arch_path, rep_path;
+  char *run_text = 0, *eptr = 0;
+  size_t run_size = 0;
+  unsigned char msgbuf[1024] = { 0 }, buf1[128], buf2[128];
+  char *xml_buf = 0;
+  size_t xml_len = 0;
+  FILE *f = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int passed_tests = 0, score = 0, failed_test = 1;
+
+  arch_flags = archive_make_read_path(state, run_arch_path,
+                                      sizeof(run_arch_path),
+                                      global->run_archive_dir, run_id,
+                                      0, 0);
+  if (arch_flags < 0) {
+    snprintf(msgbuf, sizeof(msgbuf), "User answer file does not exist.");
+    status = RUN_CHECK_FAILED;
+    goto done;
+  }
+  if (generic_read_file(&run_text, 0, &run_size, arch_flags,
+                        0, run_arch_path, 0) < 0) {
+    snprintf(msgbuf, sizeof(msgbuf), "User answer file read error.");
+    status = RUN_CHECK_FAILED;
+    goto done;
+  }
+  if (strlen(run_text) != run_size) {
+    snprintf(msgbuf, sizeof(msgbuf), "User answer file is binary.");
+    status = RUN_PRESENTATION_ERR;
+    goto done;
+  }
+  while (run_size > 0 && isspace(run_text[run_size - 1])) run_size--;
+  run_text[run_size] = 0;
+
+  errno = 0;
+  n = strtol(run_text, &eptr, 10);
+  if (*eptr || errno) {
+    snprintf(msgbuf, sizeof(msgbuf), "Number expected in user answer file.");
+    status = RUN_PRESENTATION_ERR;
+    goto done;
+  }
+  if (n <= 0 || n > px->ans_num) {
+    snprintf(msgbuf, sizeof(msgbuf), "Number is out of range.");
+    status = RUN_PRESENTATION_ERR;
+    goto done;
+  }
+  if (n != px->correct_answer) {
+    snprintf(msgbuf, sizeof(msgbuf), "Wrong answer.");
+    status = RUN_WRONG_ANSWER_ERR;
+    goto done;
+  }
+
+  passed_tests = 1;
+  failed_test = 0;
+  score = prob->full_score;
+  status = RUN_OK;
+
+ done:
+  f = open_memstream(&xml_buf, &xml_len);
+  fprintf(f, "Content-type: text/xml\n\n");
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
+  run_status_to_str_short(buf1, sizeof(buf1), status);
+  fprintf(f, "<testing-report run-id=\"%d\" judge-id=\"%d\" status=\"%s\" scoring=\"%s\" archive-available=\"no\" run-tests=\"1\" correct-available=\"no\" info-available=\"no\"",
+          run_id, judge_id, buf1,
+          unparse_scoring_system(buf2, sizeof(buf2), global->score_system_val));
+  if (variant > 0) {
+    fprintf(f, " variant=\"%d\"", variant);
+  }
+  if (global->score_system_val == SCORE_OLYMPIAD) {
+    fprintf(f, " accepting-mode=\"%s\"", accepting_mode?"yes":"no");
+  }
+  if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode
+      && status != RUN_ACCEPTED) {
+    fprintf(f, " failed-test=\"1\"");
+  } else if (global->score_system_val == SCORE_ACM && status != RUN_OK) {
+    fprintf(f, " failed-test=\"1\"");
+  } else if (global->score_system_val == SCORE_OLYMPIAD && !accepting_mode) {
+    fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"",
+            passed_tests, score, prob->full_score);
+  } else if (global->score_system_val == SCORE_KIROV) {
+    fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"",
+            passed_tests, score, prob->full_score);
+  } else if (global->score_system_val == SCORE_MOSCOW) {
+    if (status != RUN_OK) {
+      fprintf(f, " failed-test=\"1\"");
+    }
+    fprintf(f, " score=\"%d\" max-score=\"%d\"", score, prob->full_score);
+  }
+  fprintf(f, " >\n");
+
+  fprintf(f, "  <tests>\n");
+  fprintf(f, "    <test num=\"1\" status=\"%s\"", buf1);
+  fprintf(f, " exit-code=\"0\"");
+  fprintf(f, " time=\"0\"");
+  fprintf(f, " real-time=\"0\"");
+  if (global->score_system_val == SCORE_OLYMPIAD && !accepting_mode) {
+    fprintf(f, " nominal-score=\"%d\" score=\"%d\"", prob->full_score, score);
+  } else if (global->score_system_val == SCORE_KIROV) {
+    fprintf(f, " nominal-score=\"%d\" score=\"%d\"", prob->full_score, score);
+  }
+  if (msgbuf[0]) {
+    fprintf(f, " checker-comment=\"%s\"", ARMOR(msgbuf));
+  }
+  fprintf(f, " >\n");
+
+  /*
+    if (tests[i].input_size >= 0 && !req_pkt->full_archive) {
+      fprintf(f, "      <input>");
+      html_print_by_line(f, tests[i].input, tests[i].input_size);
+      fprintf(f, "</input>\n");
+    }
+  */
+
+  fprintf(f, "      <output>%s</output>\n", ARMOR(run_text));
+  fprintf(f, "      <correct>%d</correct>\n", px->correct_answer);
+  fprintf(f, "      <checker>%s</checker>\n", ARMOR(msgbuf));
+  fprintf(f, "    </test>\n");
+  fprintf(f, "  </tests>\n");
+  fprintf(f, "</testing-report>\n");
+  fclose(f); f = 0;
+
+  serve_audit_log(state, run_id, user_id, ip, ssl_flag,
+                  "Command: submit\n"
+                  "Status: ok\n"
+                  "Run-id: %d\n", run_id);
+
+  if (status == RUN_CHECK_FAILED)
+    serve_send_check_failed_email(cnts, run_id);
+
+  /* FIXME: handle database update error */
+  run_change_status(state->runlog_state, run_id, status, failed_test, score, 0);
+  serve_update_standings_file(state, cnts, 0);
+  rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
+                                      global->xml_report_archive_dir,
+                                      run_id, xml_len, 0);
+  archive_dir_prepare(state, global->xml_report_archive_dir, run_id, 0, 0);
+  generic_write_file(xml_buf, xml_len, rep_flags, 0, rep_path, "");
+  serve_audit_log(state, run_id, 0, 0, 0,
+                  "Status: judging complete (built-in)\n");
+
+  xfree(xml_buf); xml_buf = 0;
+  html_armor_free(&ab);
 }
 
 void

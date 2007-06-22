@@ -3921,9 +3921,12 @@ get_nth_alternative(const unsigned char *txt, int n)
   return 0;
 }
 
-static unsigned char *get_source(const serve_state_t cs, int run_id,
-                                 const struct section_problem_data *prob,
-                                 int variant)
+static unsigned char *
+get_source(
+	const serve_state_t cs,
+        int run_id,
+        const struct section_problem_data *prob,
+        int variant)
 {
   const struct section_global_data *global = cs->global;
   int src_flag = 0, i, n;
@@ -3937,6 +3940,10 @@ static unsigned char *get_source(const serve_state_t cs, int run_id,
   const unsigned char *alternatives = 0;
   path_t variant_stmt_file;
   unsigned char buf[512];
+  problem_xml_t px = 0;
+  char *tmp_txt = 0;
+  size_t tmp_len = 0;
+  FILE *tmp_f = 0;
 
   if (!prob) goto cleanup;
   switch (prob->type_val) {
@@ -3964,7 +3971,20 @@ static unsigned char *get_source(const serve_state_t cs, int run_id,
     errno = 0;
     n = strtol(s, &eptr, 10);
     if (*eptr || errno) goto inv_answer_n;
-    if (prob->alternative) {
+    if (variant > 0 && prob->xml.a) {
+      px = prob->xml.a[variant];
+    } else {
+      px = prob->xml.p;
+    }
+
+    if (px && px->answers) {
+      if (n <= 0 || n > px->ans_num) goto inv_answer_n;
+      i = problem_xml_find_language(0, px->tr_num, px->tr_names);
+      tmp_f = open_memstream(&tmp_txt, &tmp_len);
+      problem_xml_unparse_node(tmp_f, px->answers[n - 1][i], 0, 0);
+      fclose(tmp_f); tmp_f = 0;
+      val = tmp_txt; tmp_txt = 0;
+    } else if (prob->alternative) {
       for (i = 0; i + 1 != n && prob->alternative[i]; i++);
       if (i + 1 != n || !prob->alternative[i]) goto inv_answer_n;
       val = html_armor_string_dup(prob->alternative[i]);
