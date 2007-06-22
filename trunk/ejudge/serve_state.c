@@ -52,7 +52,9 @@ serve_state_init(void)
 }
 
 serve_state_t
-serve_state_destroy(serve_state_t state, struct userlist_clnt *ul_conn)
+serve_state_destroy(serve_state_t state,
+                    const struct contest_desc *cnts,
+                    struct userlist_clnt *ul_conn)
 {
   int i, j;
   struct user_filter_info *ufp, *ufp2;
@@ -65,7 +67,7 @@ serve_state_destroy(serve_state_t state, struct userlist_clnt *ul_conn)
       state->testing_suspended = state->saved_testing_suspended;
       serve_update_status_file(state, 1);
       if (!state->testing_suspended)
-        serve_judge_suspended(state, 0, 0, 0);
+        serve_judge_suspended(cnts, state, 0, 0, 0);
     }
     if (state->destroy_callback) (*state->destroy_callback)(state);
     xfree(state->pending_xml_import);
@@ -287,7 +289,7 @@ serve_state_load_contest(int contest_id,
   return 1;
 
  failure:
-  serve_state_destroy(state, ul_conn);
+  serve_state_destroy(state, cnts, ul_conn);
   return -1;
 }
 

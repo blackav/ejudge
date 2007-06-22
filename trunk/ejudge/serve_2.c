@@ -1946,11 +1946,15 @@ serve_judge_built_in_problem(
 }
 
 void
-serve_rejudge_run(serve_state_t state,
-                  int run_id,
-                  int user_id, ej_ip_t ip, int ssl_flag,
-                  int force_full_rejudge,
-                  int priority_adjustment)
+serve_rejudge_run(
+	const struct contest_desc *cnts,
+        serve_state_t state,
+        int run_id,
+        int user_id,
+        ej_ip_t ip,
+        int ssl_flag,
+        int force_full_rejudge,
+        int priority_adjustment)
 {
   struct run_entry re;
   int accepting_mode = -1, arch_flags = 0;
@@ -1959,6 +1963,8 @@ serve_rejudge_run(serve_state_t state,
   size_t run_size = 0;
   const struct section_problem_data *prob = 0;
   const struct section_language_data *lang = 0;
+  problem_xml_t px = 0;
+  int variant = 0;
 
   if (run_get_entry(state->runlog_state, run_id, &re) < 0) return;
   if (re.is_imported) return;
@@ -1969,10 +1975,31 @@ serve_rejudge_run(serve_state_t state,
     err("rejudge_run: bad problem: %d", re.prob_id);
     return;
   }
-  if (state->probs[re.prob_id]->type_val > 0) {
+  if (prob->type_val > 0) {
     if (force_full_rejudge
         && state->global->score_system_val == SCORE_OLYMPIAD) {
       accepting_mode = 0;
+    }
+
+    if (prob->variant_num > 0) {
+      if (variant <= 0)
+        variant = re.variant;
+      if (variant <= 0)
+        variant = find_variant(state, re.user_id, re.prob_id, 0);
+      if (variant <= 0 || variant > prob->variant_num) {
+        err("rejudge_run: invalid variant for run %d", run_id);
+        return;
+      }
+      if (prob->xml.a) px = prob->xml.a[variant];
+    } else {
+      px = prob->xml.p;
+    }
+
+    if (prob->type_val == PROB_TYPE_SELECT_ONE && px && px->ans_num > 0) {
+      serve_judge_built_in_problem(state, cnts, run_id, 1 /* judge_id*/,
+                                   variant, accepting_mode, &re, prob,
+                                   px, user_id, ip, ssl_flag);
+      return;
     }
 
     arch_flags = archive_make_read_path(state, run_arch_path,
@@ -2005,7 +2032,7 @@ serve_rejudge_run(serve_state_t state,
 
   serve_compile_request(state, 0, -1, run_id,
                         state->langs[re.lang_id]->compile_id, re.locale_id,
-                        (state->probs[re.prob_id]->type_val > 0),
+                        (prob->type_val > 0),
                         state->langs[re.lang_id]->src_sfx,
                         state->langs[re.lang_id]->compiler_env,
                         accepting_mode, priority_adjustment, prob, lang);
@@ -2150,10 +2177,16 @@ is_generally_rejudgable(const serve_state_t state,
  * runs
  */
 void
-serve_rejudge_by_mask(serve_state_t state,
-                      int user_id, ej_ip_t ip, int ssl_flag,
-                      int mask_size, unsigned long *mask,
-                      int force_flag, int priority_adjustment)
+serve_rejudge_by_mask(
+        const struct contest_desc *cnts,
+	serve_state_t state,
+        int user_id,
+        ej_ip_t ip,
+        int ssl_flag,
+        int mask_size,
+        unsigned long *mask,
+        int force_flag,
+        int priority_adjustment)
 {
   int total_runs, r;
   struct run_entry re;
@@ -2207,16 +2240,20 @@ serve_rejudge_by_mask(serve_state_t state,
     if (run_get_entry(state->runlog_state, r, &re) >= 0
         && is_generally_rejudgable(state, &re, INT_MAX)
         && (mask[r / BITS_PER_LONG] & (1L << (r % BITS_PER_LONG)))) {
-      serve_rejudge_run(state, r, user_id, ip, ssl_flag,
+      serve_rejudge_run(cnts, state, r, user_id, ip, ssl_flag,
                         force_flag, priority_adjustment);
     }
   }
 }
 
 void
-serve_rejudge_problem(serve_state_t state,
-                      int user_id, ej_ip_t ip, int ssl_flag,
-                      int prob_id)
+serve_rejudge_problem(
+        const struct contest_desc *cnts,
+	serve_state_t state,
+        int user_id,
+        ej_ip_t ip,
+        int ssl_flag,
+        int prob_id)
 {
   int total_runs, r;
   struct run_entry re;
@@ -2247,7 +2284,7 @@ serve_rejudge_problem(serve_state_t state,
       if (re.prob_id != prob_id) continue;
       if (flag[re.user_id]) continue;
       flag[re.user_id] = 1;
-      serve_rejudge_run(state, r, user_id, ip, ssl_flag, 0, 0);
+      serve_rejudge_run(cnts, state, r, user_id, ip, ssl_flag, 0, 0);
     }
     return;
   }
@@ -2257,14 +2294,18 @@ serve_rejudge_problem(serve_state_t state,
         && is_generally_rejudgable(state, &re, INT_MAX)
         && re.status != RUN_IGNORED && re.status != RUN_DISQUALIFIED
         && re.prob_id == prob_id) {
-      serve_rejudge_run(state, r, user_id, ip, ssl_flag, 0, 0);
+      serve_rejudge_run(cnts, state, r, user_id, ip, ssl_flag, 0, 0);
     }
   }
 }
 
 void
-serve_judge_suspended(serve_state_t state,
-                      int user_id, ej_ip_t ip, int ssl_flag)
+serve_judge_suspended(
+        const struct contest_desc *cnts,
+	serve_state_t state,
+        int user_id,
+        ej_ip_t ip,
+        int ssl_flag)
 {
   int total_runs, r;
   struct run_entry re;
@@ -2279,14 +2320,18 @@ serve_judge_suspended(serve_state_t state,
     if (run_get_entry(state->runlog_state, r, &re) >= 0
         && is_generally_rejudgable(state, &re, INT_MAX)
         && re.status == RUN_PENDING) {
-      serve_rejudge_run(state, r, user_id, ip, ssl_flag, 0, 0);
+      serve_rejudge_run(cnts, state, r, user_id, ip, ssl_flag, 0, 0);
     }
   }
 }
 
 void
-serve_rejudge_all(serve_state_t state,
-                  int user_id, ej_ip_t ip, int ssl_flag)
+serve_rejudge_all(
+        const struct contest_desc *cnts,
+	serve_state_t state,
+        int user_id,
+        ej_ip_t ip,
+        int ssl_flag)
 {
   int total_runs, r, size, idx, total_ids, total_probs;
   struct run_entry re;
@@ -2317,7 +2362,7 @@ serve_rejudge_all(serve_state_t state,
       idx = re.user_id * total_probs + re.prob_id;
       if (flag[idx]) continue;
       flag[idx] = 1;
-      serve_rejudge_run(state, r, user_id, ip, ssl_flag, 0, 0);
+      serve_rejudge_run(cnts, state, r, user_id, ip, ssl_flag, 0, 0);
     }
     return;
   }
@@ -2326,7 +2371,7 @@ serve_rejudge_all(serve_state_t state,
     if (run_get_entry(state->runlog_state, r, &re) >= 0
         && is_generally_rejudgable(state, &re, INT_MAX)
         && re.status != RUN_IGNORED && re.status != RUN_DISQUALIFIED) {
-      serve_rejudge_run(state, r, user_id, ip, ssl_flag, 0, 0);
+      serve_rejudge_run(cnts, state, r, user_id, ip, ssl_flag, 0, 0);
     }
   }
 }
@@ -2598,7 +2643,10 @@ handle_virtual_stop_event(serve_state_t cs, struct serve_event_queue *p)
 }
 
 static void
-handle_judge_olympiad_event(serve_state_t cs, struct serve_event_queue *p)
+handle_judge_olympiad_event(
+	const struct contest_desc *cnts,
+        serve_state_t cs,
+        struct serve_event_queue *p)
 {
   int count;
   struct run_entry rs, re;
@@ -2618,7 +2666,7 @@ handle_judge_olympiad_event(serve_state_t cs, struct serve_event_queue *p)
     goto done;
   // already judged somehow
   if (rs.judge_id > 0) goto done;
-  serve_judge_virtual_olympiad(cs, p->user_id, re.run_id);
+  serve_judge_virtual_olympiad(cnts, cs, p->user_id, re.run_id);
 
  done:
   serve_event_remove(cs, p);
@@ -2626,7 +2674,7 @@ handle_judge_olympiad_event(serve_state_t cs, struct serve_event_queue *p)
 }
 
 void
-serve_handle_events(serve_state_t cs)
+serve_handle_events(const struct contest_desc *cnts, serve_state_t cs)
 {
   struct serve_event_queue *p, *q;
 
@@ -2640,7 +2688,7 @@ serve_handle_events(serve_state_t cs)
       handle_virtual_stop_event(cs, p);
       break;
     case SERVE_EVENT_JUDGE_OLYMPIAD:
-      handle_judge_olympiad_event(cs, p);
+      handle_judge_olympiad_event(cnts, cs, p);
       break;
     default:
       abort();
@@ -2649,7 +2697,11 @@ serve_handle_events(serve_state_t cs)
 }
 
 void
-serve_judge_virtual_olympiad(serve_state_t cs, int user_id, int run_id)
+serve_judge_virtual_olympiad(
+	const struct contest_desc *cnts,
+        serve_state_t cs,
+        int user_id,
+        int run_id)
 {
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob;
@@ -2693,7 +2745,7 @@ serve_judge_virtual_olympiad(serve_state_t cs, int user_id, int run_id)
 
   for (i = 1; i <= cs->max_prob; i++) {
     if (latest_runs[i] >= 0)
-      serve_rejudge_run(cs, latest_runs[i], user_id, 0, 0, 1, 10);
+      serve_rejudge_run(cnts, cs, latest_runs[i], user_id, 0, 0, 1, 10);
   }
   run_forced_set_judge_id(cs->runlog_state, vstart_id, 1);
 }
