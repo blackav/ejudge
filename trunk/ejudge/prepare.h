@@ -487,7 +487,9 @@ struct section_problem_data
   char **enable_language;
   char **require;
   char **checker_env;           /* environment variables for checker */
+  char **valuer_env;            /* environment variables for valuer */
   path_t check_cmd;
+  path_t valuer_cmd;
   char **lang_time_adj;         /* time limit adjustments depending on language */
   char **lang_time_adj_millis;  /* time limit milliseconds adjustments depending on language (priority over lang_time_adj) */
 
@@ -717,6 +719,7 @@ enum
   PREPARE_FIELD_PROB_TGZ_PAT,
   PREPARE_FIELD_PROB_SCORE_BONUS,
   PREPARE_FIELD_PROB_CHECK_CMD,
+  PREPARE_FIELD_PROB_VALUER_CMD,
   PREPARE_FIELD_PROB_SECURE_RUN,
   PREPARE_FIELD_PROB_STATEMENT_FILE,
   PREPARE_FIELD_PROB_ALTERNATIVES_FILE,

@@ -331,6 +331,23 @@ serve_read_run_packet(serve_state_t state,
                       const unsigned char *run_full_archive_dir,
                       const unsigned char *pname);
 
+struct run_entry;
+struct problem_desc;
+void
+serve_judge_built_in_problem(
+	serve_state_t state,
+        const struct contest_desc *cnts,
+        int run_id,
+        int judge_id,
+        int variant,
+        int accepting_mode,
+        struct run_entry *re,
+        const struct section_problem_data *prob,
+        struct problem_desc *px,
+        int user_id,
+        ej_ip_t ip,
+        int ssl_flag);
+
 void serve_invoke_start_script(serve_state_t state);
 
 void serve_send_run_quit(const serve_state_t state);

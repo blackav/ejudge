@@ -7637,6 +7637,8 @@ unpriv_submit_run(FILE *fout,
   char *tmp_ptr = 0;
   int ans_val = 0, accept_immediately = 0;
   struct problem_plugin_iface *plg = 0;
+  problem_xml_t px = 0;
+  struct run_entry re;
 
   l10n_setlocale(phr->locale_id);
   log_f = open_memstream(&log_txt, &log_len);
@@ -7931,8 +7933,6 @@ unpriv_submit_run(FILE *fout,
       goto done;
     }
 
-    /* FIXME: handle problem XML */
-
     // add this run and if we're in olympiad accepting mode mark
     // as accepted
     if (global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode)
@@ -8037,6 +8037,20 @@ unpriv_submit_run(FILE *fout,
                       "  Testing disabled for this problem\n",
                       run_id);
     } else {
+      if (prob->variant_num > 0 && prob->xml.a) {
+        px = prob->xml.a[variant -  1];
+      } else {
+        px = prob->xml.p;
+      }
+      if (px && px->ans_num > 0) {
+        run_get_entry(cs->runlog_state, run_id, &re);
+        serve_judge_built_in_problem(cs, cnts, run_id, 1 /* judge_id */,
+                                     variant, cs->accepting_mode, &re,
+                                     prob, px, phr->user_id, phr->ip,
+                                     phr->ssl_flag);
+        goto done;
+      }
+
       if (serve_run_request(cs, log_f, run_text, run_size, run_id,
                             phr->user_id, prob_id, 0, variant, 0, -1, -1,
                             0, 0) < 0) {
@@ -9838,12 +9852,14 @@ unpriv_unparse_statement(
   if (px->examples) {
     fprintf(fout, "<h3>%s</h3>", _("Examples"));
     fprintf(fout, "<table class=\"b1\">");
+    fprintf(fout, "<tr><td class=\"b1\" align=\"center\"><b>%s</b></td><td class=\"b1\" align=\"center\"><b>%s</b></td></tr>",
+            _("Input"), _("Output"));
     for (p = px->examples->first_down; p; p = p->right) {
       if (p->tag != PROB_T_EXAMPLE) continue;
-      fprintf(fout, "<tr><td class=\"b1\"><pre>");
+      fprintf(fout, "<tr><td class=\"b1\" valign=\"top\"><pre>");
       for (q = p->first_down; q && q->tag != PROB_T_INPUT; q = q->right);
       if (q && q->tag == PROB_T_INPUT) problem_xml_unparse_node(fout, q, 0, 0);
-      fprintf(fout, "</pre></td><td class=\"b1\"><pre>");
+      fprintf(fout, "</pre></td><td class=\"b1\" valign=\"top\"><pre>");
       for (q = p->first_down; q && q->tag != PROB_T_OUTPUT; q = q->right);
       if (q && q->tag == PROB_T_OUTPUT) problem_xml_unparse_node(fout, q, 0, 0);
       fprintf(fout, "</pre></td></tr>");
@@ -9851,7 +9867,11 @@ unpriv_unparse_statement(
     fprintf(fout, "</table>");
   }
 
-  fprintf(fout, "<h3>%s</h3>", _("Submit a solution"));
+  if (prob->type_val == PROB_TYPE_SELECT_ONE) {
+    fprintf(fout, "<h3>%s</h3>", _("Choose an answer"));
+  } else {
+    fprintf(fout, "<h3>%s</h3>", _("Submit a solution"));
+  }
 }
 
 static void
@@ -9889,11 +9909,11 @@ unpriv_unparse_answers(
       }
       s = "";
       if (last_answer == i + 1) s = " checked=\"1\"";
-      fprintf(fout, "<tr><td%s>%d</td><td%s><input type=\"radio\" name=\"file\" value=\"%d\"%s%s/></td><td%s>", cl, i + 1, cl, i + 1, s, jsbuf, cl);
+      fprintf(fout, "<tr><td%s>%d)</td><td%s><input type=\"radio\" name=\"file\" value=\"%d\"%s%s/></td><td%s>", cl, i + 1, cl, i + 1, s, jsbuf, cl);
       problem_xml_unparse_node(fout, px->answers[i][l], 0, 0);
       fprintf(fout, "</td></tr>\n");
     } else {
-      fprintf(fout, "<tr><td%s>%d</td><td%s><input type=\"checkbox\" name=\"ans_%d\"/></td><td%s>", cl, i + 1, cl, i + 1, cl);
+      fprintf(fout, "<tr><td%s>%d)</td><td%s><input type=\"checkbox\" name=\"ans_%d\"/></td><td%s>", cl, i + 1, cl, i + 1, cl);
       problem_xml_unparse_node(fout, px->answers[i][l], 0, 0);
       fprintf(fout, "</td></tr>\n");
     }
@@ -10294,7 +10314,7 @@ unpriv_main_page(FILE *fout,
 
       px = 0;
       if (variant > 0 && prob->xml.a && prob->xml.a[variant]) {
-        px = prob->xml.a[variant];
+        px = prob->xml.a[variant - 1];
       } else if (variant <= 0 && prob->xml.p) {
         px = prob->xml.p;
       }

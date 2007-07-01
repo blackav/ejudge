@@ -4925,6 +4925,47 @@ super_html_print_problem(FILE *f,
                                self_url, extra_args, prob_hidden_vars);
   }
 
+  //PROBLEM_PARAM(valuer_cmd, "s"),
+  extra_msg = 0;
+  if (show_adv) {
+    if (prob->abstract) extra_msg = "";
+    if (!prob->abstract && !prob->standard_checker[0]) {
+      extra_msg = "";
+      prepare_set_prob_value(PREPARE_FIELD_PROB_VALUER_CMD,
+                             &tmp_prob, sup_prob, sstate->global);
+      s = html_armor_string_dup(tmp_prob.valuer_cmd);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(%s\"%s\")</i>",
+               prob->valuer_cmd[0]?"Default - ":"", s);
+      xfree(s);
+      extra_msg = msg_buf;
+    }
+  }
+  if (extra_msg)
+    print_string_editing_row_3(f, "Score valuer name:", prob->valuer_cmd,
+                               SSERV_CMD_PROB_CHANGE_VALUER_CMD,
+                               SSERV_CMD_PROB_CLEAR_VALUER_CMD,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+
+  //PROBLEM_PARAM(valuer_env, "x"),
+  if (!prob->abstract) {
+    if (!prob->valuer_env || !prob->valuer_env[0]) {
+      extra_msg = "(not set)";
+      checker_env = xstrdup("");
+    } else {
+      extra_msg = "";
+      checker_env = sarray_unparse(prob->valuer_env);
+    }
+    print_string_editing_row_3(f, "Valuer environment:", checker_env,
+                               SSERV_CMD_PROB_CHANGE_VALUER_ENV,
+                               SSERV_CMD_PROB_CLEAR_VALUER_ENV,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+    xfree(checker_env);
+  }
+
   //PROBLEM_PARAM(lang_time_adj, "x"),
   if (!prob->abstract && !problem_type_flag && show_adv) {
     if (!prob->lang_time_adj || !prob->lang_time_adj[0]) {
@@ -5781,6 +5822,26 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CLEAR_CHECKER_ENV:
     sarray_free(prob->checker_env);
     prob->checker_env = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_VALUER_CMD:
+    PROB_ASSIGN_STRING(valuer_cmd);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_VALUER_CMD:
+    PROB_CLEAR_STRING(valuer_cmd);
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_VALUER_ENV:
+    if (sarray_parse(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(prob->valuer_env);
+    prob->valuer_env = tmp_env;
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_VALUER_ENV:
+    sarray_free(prob->valuer_env);
+    prob->valuer_env = 0;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ:

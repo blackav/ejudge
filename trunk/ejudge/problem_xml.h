@@ -62,6 +62,7 @@ enum
   PROB_A_FREQ,
   PROB_A_BOGOMIPS,
   PROB_A_CORRECT,
+  PROB_A_PACKAGE,
 
   PROB_A__BARRIER,
   PROB_A__DEFAULT,
@@ -108,6 +109,7 @@ struct problem_desc
   size_t max_vm_size;
   size_t max_stack_size;
 
+  unsigned char *package;       /* package */
   unsigned char *id;            /* corresponds to short_name */
   struct problem_stmt *stmts;
   struct problem_stmt *last_stmt;

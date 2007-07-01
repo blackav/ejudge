@@ -346,6 +346,7 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     }
     new_node->text = convert_utf8_to_local_heap(pd->conv_hnd, tl->str);
     tl->u = 0;
+    tl->str[0] = 0;
     //free(tl->str); tl->str = 0;
   }
 

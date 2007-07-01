@@ -63,6 +63,7 @@ static char const * const attr_map[] =
   "frequency",
   "bogomips",
   "correct",
+  "package",
   0,
   "_default",
   0,
@@ -82,6 +83,7 @@ static const unsigned char verbatim_flags[PROB_LAST_TAG] =
   [PROB_T_INPUT_FORMAT] = 1,
   [PROB_T_OUTPUT_FORMAT] = 1,
   [PROB_T_TRANSLATION] = 1,
+  [PROB_T_TR] = 1,
 };
 
 static void node_free(struct xml_tree *t);
@@ -130,6 +132,7 @@ node_free(struct xml_tree *t)
       xfree(pt->tr_names);
       xfree(pt->answers);
       xfree(pt->id);
+      xfree(pt->package);
     }
     break;
   case PROB_T_STATEMENT:
@@ -406,6 +409,9 @@ parse_tree(problem_xml_t tree)
   // handle attributes
   for (a = tree->b.first; a; a = a->next) {
     switch (a->tag) {
+    case PROB_A_PACKAGE:
+      tree->package = a->text; a->text = 0;
+      break;
     case PROB_A_ID:
       tree->id = a->text; a->text = 0;
       break;
@@ -621,7 +627,7 @@ problem_xml_unparse_node(
         const unsigned char **vars, /* substitution variables  */
         const unsigned char **vals) /* substitution values */
 {
-  xml_unparse_raw_tree(fout, p, &problem_parse_spec, 0, 0);
+  xml_unparse_raw_tree(fout, p, &problem_parse_spec, vars, vals);
 }
 
 int

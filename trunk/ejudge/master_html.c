@@ -63,6 +63,8 @@
 #define _(x) x
 #endif
 
+#define ARMOR(s)  html_armor_buf(&ab, s)
+
 static void
 print_nav_buttons(const serve_state_t state, FILE *f, int run_id,
                   ej_cookie_t sid,
@@ -1830,6 +1832,7 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
   unsigned char *cl1 = " border=\"1\"";
   unsigned char *cl2 = "";
   int max_cpu_time = -1, max_cpu_time_tl = -1;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   static const int default_actions_vector[] =
   {
@@ -1882,6 +1885,22 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
   } else {
     if (r->status != RUN_OK && r->status != RUN_ACCEPTED) {
       fprintf(f, _("<big>Failed test: %d.<br><br></big>\n"), r->failed_test);
+    }
+  }
+
+  if (r->valuer_comment || r->valuer_judge_comment || r->valuer_errors) {
+    fprintf(f, "<h3>%s</h3>\n", _("Valuer information"));
+    if (r->valuer_comment) {
+    fprintf(f, "<b><u>%s</u></b><br/><pre>%s</pre>\n",
+            _("Valuer comments"), ARMOR(r->valuer_comment));
+    }
+    if (r->valuer_judge_comment) {
+    fprintf(f, "<b><u>%s</u></b><br/><pre>%s</pre>\n",
+            _("Valuer judge comments"), ARMOR(r->valuer_judge_comment));
+    }
+    if (r->valuer_errors) {
+    fprintf(f, "<b><u>%s</u></b><br/><pre><font color=\"red\">%s</font></pre>\n",
+            _("Valuer errors"), ARMOR(r->valuer_errors));
     }
   }
 
@@ -2205,6 +2224,7 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
   fprintf(f, "</pre>");
 
   testing_report_free(r);
+  html_armor_free(&ab);
   return 0;
 }
 

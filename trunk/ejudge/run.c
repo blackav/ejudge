@@ -225,6 +225,8 @@ unparse_scoring_system(unsigned char *buf, size_t size, int val)
   return buf;
 }
 
+#define ARMOR(s)  html_armor_buf(&ab, s)
+
 static int
 generate_xml_report(struct run_request_packet *req_pkt,
                     struct run_reply_packet *reply_pkt,
@@ -232,12 +234,16 @@ generate_xml_report(struct run_request_packet *req_pkt,
                     int variant, int scores, int max_score,
                     int correct_available_flag,
                     int info_available_flag,
-                    const unsigned char *additional_comment)
+                    const unsigned char *additional_comment,
+                    const unsigned char *valuer_comment,
+                    const unsigned char *valuer_judge_comment,
+                    const unsigned char *valuer_errors)
 {
   FILE *f = 0;
   unsigned char buf1[32], buf2[32], buf3[128];
   int i;
   unsigned char *msg = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if (!(f = fopen(report_path, "w"))) {
     err("generate_xml_report: cannot open protocol file %s", report_path);
@@ -284,9 +290,19 @@ generate_xml_report(struct run_request_packet *req_pkt,
   fprintf(f, " >\n");
 
   if (additional_comment) {
-    msg = html_armor_string_dup(additional_comment);
-    fprintf(f, "  <comment>%s</comment>", msg);
-    xfree(msg);
+    fprintf(f, "  <comment>%s</comment>\n", ARMOR(additional_comment));
+  }
+  if (valuer_comment) {
+    fprintf(f, "  <valuer_comment>%s</valuer_comment>\n",
+            ARMOR(valuer_comment));
+  }
+  if (valuer_judge_comment) {
+    fprintf(f, "  <valuer_judge_comment>%s</valuer_judge_comment>\n",
+            ARMOR(valuer_judge_comment));
+  }
+  if (valuer_errors) {
+    fprintf(f, "  <valuer_errors>%s</valuer_errors>\n",
+            ARMOR(valuer_errors));
   }
 
   fprintf(f, "  <tests>\n");
@@ -313,14 +329,10 @@ generate_xml_report(struct run_request_packet *req_pkt,
               tests[i].max_score, tests[i].score);
     }
     if (tests[i].comment && tests[i].comment[0]) {
-      msg = html_armor_string_dup(tests[i].comment);
-      fprintf(f, " comment=\"%s\"", msg);
-      xfree(msg);
+      fprintf(f, " comment=\"%s\"", ARMOR(tests[i].comment));
     }
     if (tests[i].team_comment && tests[i].team_comment[0]) {
-      msg = html_armor_string_dup(tests[i].team_comment);
-      fprintf(f, " team-comment=\"%s\"", msg);
-      xfree(msg);
+      fprintf(f, " team-comment=\"%s\"", ARMOR(tests[i].team_comment));
     }
     if ((tests[i].status == RUN_WRONG_ANSWER_ERR 
          || tests[i].status == RUN_PRESENTATION_ERR || tests[i].status == RUN_OK)
@@ -358,9 +370,7 @@ generate_xml_report(struct run_request_packet *req_pkt,
     fprintf(f, " >\n");
 
     if (tests[i].args && strlen(tests[i].args) < serve_state.global->max_cmd_length) {
-      msg = html_armor_string_dup(tests[i].args);
-      fprintf(f, "      <args>%s</args>\n", msg);
-      xfree(msg);
+      fprintf(f, "      <args>%s</args>\n", ARMOR(tests[i].args));
     }
 
     if (tests[i].input_size >= 0 && !req_pkt->full_archive) {
@@ -400,6 +410,7 @@ generate_xml_report(struct run_request_packet *req_pkt,
 
   fprintf(f, "</testing-report>\n");
   fclose(f); f = 0;
+  html_armor_free(&ab);
   return 0;
 }
 
@@ -458,6 +469,7 @@ append_msg_to_log(const unsigned char *path, char *format, ...)
 static int
 read_checker_score(const unsigned char *path,
                    const unsigned char *log_path,
+                   const unsigned char *what,
                    int max_score,
                    int *p_score)
 {
@@ -468,11 +480,11 @@ read_checker_score(const unsigned char *path,
   r = generic_read_file(&score_buf, 0, &score_buf_size, 0,
                         0, path, "");
   if (r < 0) {
-    append_msg_to_log(log_path, "Cannot read checker score output");
+    append_msg_to_log(log_path, "Cannot read the %s score output", what);
     return -1;
   }
   if (strlen(score_buf) != score_buf_size) {
-    append_msg_to_log(log_path, "Checker score output is binary");
+    append_msg_to_log(log_path, "The %s score output is binary", what);
     xfree(score_buf);
     return -1;
   }
@@ -480,19 +492,19 @@ read_checker_score(const unsigned char *path,
   while (score_buf_size > 0 && isspace(score_buf[score_buf_size - 1]))
     score_buf[--score_buf_size] = 0;
   if (!score_buf_size) {
-    append_msg_to_log(log_path, "Checker score output is empty");
+    append_msg_to_log(log_path, "The %s score output is empty", what);
     xfree(score_buf);
     return -1;
   }
 
   if (sscanf(score_buf, "%d%n", &x, &n) != 1 || score_buf[n]) {
-    append_msg_to_log(log_path, "Checker score output (%s) is invalid",
-                      score_buf);
+    append_msg_to_log(log_path, "The %s score output (%s) is invalid",
+                      what, score_buf);
     xfree(score_buf);
     return -1;
   }
   if (x < 0 || x > max_score) {
-    append_msg_to_log(log_path, "Checker score (%d) is invalid", x);
+    append_msg_to_log(log_path, "The %s score (%d) is invalid", what, x);
     xfree(score_buf);
     return -1;
   }
@@ -500,6 +512,172 @@ read_checker_score(const unsigned char *path,
   *p_score = x;
   xfree(score_buf);
   return 0;
+}
+
+static int
+invoke_valuer(
+	const struct section_global_data *global,
+        const struct section_problem_data *prb,
+        int cur_variant,
+        int max_score,
+        int *p_score,
+        char **p_err_txt,
+        char **p_cmt_txt,
+        char **p_jcmt_txt)
+{
+  path_t ejudge_prefix_dir_env;
+  path_t score_list;
+  path_t score_res;
+  path_t score_err;
+  path_t score_cmt;
+  path_t score_jcmt;
+  path_t valuer_cmd;
+  FILE *f = 0;
+  int i, retval = -1;
+  tpTask tsk = 0;
+  char *err_txt = 0, *cmt_txt = 0, *jcmt_txt = 0;
+  size_t err_len = 0, cmt_len = 0, jcmt_len = 0;
+
+#ifdef EJUDGE_PREFIX_DIR
+  snprintf(ejudge_prefix_dir_env, sizeof(ejudge_prefix_dir_env),
+           "EJUDGE_PREFIX_DIR=%s", EJUDGE_PREFIX_DIR);
+#endif /* EJUDGE_PREFIX_DIR */
+
+  pathmake(score_list, global->run_work_dir, "/", "score_list", NULL);
+  pathmake(score_res, global->run_work_dir, "/", "score_res", NULL);
+  pathmake(score_err, global->run_work_dir, "/", "score_err", NULL);
+  pathmake(score_cmt, global->run_work_dir, "/", "score_cmt", NULL);
+  pathmake(score_jcmt, global->run_work_dir, "/", "score_jcmt", NULL);
+
+  // write down the score list
+  if (!(f = fopen(score_list, "w"))) {
+    append_msg_to_log(score_err, "cannot open %s for writing", score_list);
+    goto cleanup;
+  }
+  fprintf(f, "%d\n", total_tests - 1);
+  for (i = 1; i <= total_tests; i++) {
+    fprintf(f, "%d %d\n", tests[i].status, tests[i].score);
+  }
+  if (ferror(f)) {
+    append_msg_to_log(score_err, "failed to write to %s", score_list);
+    goto cleanup;
+  }
+  if (fclose(f) < 0) {
+    append_msg_to_log(score_err, "failed to write to %s", score_list);
+    f = 0;
+    goto cleanup;
+  }
+  f = 0;
+
+  if (prb->variant_num > 0) {
+    snprintf(valuer_cmd, sizeof(valuer_cmd), "%s-%d", prb->valuer_cmd,
+             cur_variant);
+  } else {
+    snprintf(valuer_cmd, sizeof(valuer_cmd), "%s", prb->valuer_cmd);
+  }
+
+  fprintf(stderr, "valuer: %s\n", valuer_cmd);
+
+  tsk = task_New();
+  task_AddArg(tsk, valuer_cmd);
+  task_AddArg(tsk, score_cmt);
+  task_AddArg(tsk, score_jcmt);
+  task_SetRedir(tsk, 0, TSR_FILE, score_list, TSK_READ);
+  task_SetRedir(tsk, 1, TSR_FILE, score_res, TSK_REWRITE, TSK_FULL_RW);
+  task_SetRedir(tsk, 2, TSR_FILE, score_err, TSK_REWRITE, TSK_FULL_RW);
+  task_SetWorkingDir(tsk, global->run_work_dir);
+  task_SetPathAsArg0(tsk);
+  if (prb->checker_real_time_limit > 0) {
+    task_SetMaxRealTime(tsk, prb->checker_real_time_limit);
+  }
+  if (prb->valuer_env) {
+    for (i = 0; prb->valuer_env[i]; i++)
+      task_PutEnv(tsk, prb->valuer_env[i]);
+  }
+
+  if (task_Start(tsk) < 0) {
+    append_msg_to_log(score_err, "valuer failed to start");
+    goto cleanup;
+  }
+  task_Wait(tsk);
+  if (task_IsTimeout(tsk)) {
+    append_msg_to_log(score_err, "valuer time-out");
+    goto cleanup;
+  } else if (task_IsAbnormal(tsk)) {
+    if (task_Status(tsk) == TSK_SIGNALED) {
+      i = task_TermSignal(tsk);
+      append_msg_to_log(score_err, "valuer exited by signal %d (%s)",
+                        i, os_GetSignalString(i));
+    } else {
+      append_msg_to_log(score_err, "valuer exited with code %d",
+                        task_ExitCode(tsk));
+    }
+    goto cleanup;
+  }
+
+  task_Delete(tsk); tsk = 0;
+
+  if (read_checker_score(score_res, score_err, "valuer", max_score, p_score) < 0) {
+    goto cleanup;
+  }
+  generic_read_file(&cmt_txt, 0, &cmt_len, 0, 0, score_cmt, "");
+  if (cmt_txt) {
+    while (cmt_len > 0 && isspace(cmt_txt[cmt_len - 1])) cmt_len--;
+    cmt_txt[cmt_len] = 0;
+    if (!cmt_len) {
+      xfree(cmt_txt);
+      cmt_txt = 0;
+    }
+  }
+  generic_read_file(&jcmt_txt, 0, &jcmt_len, 0, 0, score_jcmt, "");
+  if (jcmt_txt) {
+    while (jcmt_len > 0 && isspace(jcmt_txt[jcmt_len - 1])) jcmt_len--;
+    jcmt_txt[jcmt_len] = 0;
+    if (!jcmt_len) {
+      xfree(jcmt_txt);
+      jcmt_txt = 0;
+    }
+  }
+
+  if (p_cmt_txt) {
+    *p_cmt_txt = cmt_txt;
+    cmt_txt = 0;
+  }
+  if (p_jcmt_txt) {
+    *p_jcmt_txt = jcmt_txt;
+    jcmt_txt = 0;
+  }
+  retval = 0;
+
+ cleanup:
+  generic_read_file(&err_txt, 0, &err_len, 0, 0, score_err, "");
+  if (err_txt) {
+    while (err_len > 0 && isspace(err_txt[err_len - 1])) err_len--;
+    err_txt[err_len] = 0;
+    if (!err_len) {
+      xfree(err_txt); err_txt = 0;
+    }
+  }
+
+  if (tsk) {
+    task_Delete(tsk);
+    tsk = 0;
+  }
+
+  xfree(cmt_txt); cmt_txt = 0;
+  xfree(jcmt_txt); jcmt_txt = 0;
+  if (p_err_txt) {
+    *p_err_txt = err_txt; err_txt = 0;
+  } else {
+    xfree(err_txt); err_txt = 0;
+  }
+
+  unlink(score_list);
+  unlink(score_res);
+  unlink(score_err);
+  unlink(score_cmt);
+  unlink(score_jcmt);
+  return retval;
 }
 
 static int
@@ -559,6 +737,9 @@ run_tests(struct section_tester_data *tst,
   int jj, tmpfd, test_max_score, force_check_failed;
   unsigned char java_flags_buf[128], bb[128];
   unsigned char *java_flags_ptr = java_flags_buf;
+  char *valuer_comment = 0;
+  char *valuer_judge_comment = 0;
+  char *valuer_errors = 0;
 
 #ifdef HAVE_TERMIOS_H
   struct termios term_attrs;
@@ -1247,8 +1428,7 @@ run_tests(struct section_tester_data *tst,
       default:
         abort();
       }
-      if (read_checker_score(score_out_path,
-                             check_out_path,
+      if (read_checker_score(score_out_path, check_out_path, "checker",
                              test_max_score,
                              &tests[cur_test].checker_score) < 0) {
         force_check_failed = 1;
@@ -1516,10 +1696,22 @@ run_tests(struct section_tester_data *tst,
 
   get_current_time(&reply_pkt->ts7, &reply_pkt->ts7_us);
 
+  if (prb->valuer_cmd && !req_pkt->accepting_mode
+      && !reply_pkt->status != RUN_CHECK_FAILED) {
+    if (invoke_valuer(serve_state.global, prb, cur_variant, prb->full_score,
+                      &score, &valuer_errors, &valuer_comment,
+                      &valuer_judge_comment) < 0) {
+      reply_pkt->status = RUN_CHECK_FAILED;
+    } else {
+      reply_pkt->score = score;
+    }
+  }
+
   generate_xml_report(req_pkt, reply_pkt, report_path, cur_variant,
                       score, prb->full_score,
                       (prb->use_corr && prb->corr_dir[0]), prb->use_info,
-                      additional_comment);
+                      additional_comment, valuer_comment,
+                      valuer_judge_comment, valuer_errors);
 
   goto _cleanup;
 
@@ -1537,6 +1729,9 @@ run_tests(struct section_tester_data *tst,
   if (tsk) task_Delete(tsk);
   tsk = 0;
   clear_directory(tst->check_dir);
+  xfree(valuer_comment);
+  xfree(valuer_judge_comment);
+  xfree(valuer_errors);
   for (cur_test = 1; cur_test < total_tests; cur_test++) {
     xfree(tests[cur_test].input);
     xfree(tests[cur_test].output);

@@ -3972,7 +3972,7 @@ get_source(
     n = strtol(s, &eptr, 10);
     if (*eptr || errno) goto inv_answer_n;
     if (variant > 0 && prob->xml.a) {
-      px = prob->xml.a[variant];
+      px = prob->xml.a[variant - 1];
     } else {
       px = prob->xml.p;
     }
