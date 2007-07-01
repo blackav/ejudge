@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-06-16 17:29+0400\n"
-"PO-Revision-Date: 2007-06-18 08:14+0400\n"
+"POT-Creation-Date: 2007-06-30 22:16+0400\n"
+"PO-Revision-Date: 2007-07-01 13:18+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -818,6 +818,9 @@ msgstr "Главный экзаменатор"
 
 msgid "Chief examiner must be assigned."
 msgstr "Должен быть назначен главный экзаменатор."
+
+msgid "Choose an answer"
+msgstr "Варианты ответа"
 
 msgid "Choose language"
 msgstr "Выбрать язык"
@@ -1769,6 +1772,9 @@ msgstr "Информация по Вашему запросу отсутствует"
 msgid "Information is not available"
 msgstr "Информация отсутствует"
 
+msgid "Input"
+msgstr "Входные данные"
+
 msgid "Input format"
 msgstr "Формат входных данных"
 
@@ -2512,6 +2518,9 @@ msgstr "IP-адрес отправителя"
 
 msgid "Other"
 msgstr "Прочее"
+
+msgid "Output"
+msgstr "Результат работы"
 
 msgid "Output error"
 msgstr "Ошибка вывода"
@@ -3846,6 +3855,18 @@ msgstr "Список участников"
 #, c-format
 msgid "Value of field \"%s\" is invalid.\n"
 msgstr "Значение поля \"%s\" некорректно.\n"
+
+msgid "Valuer comments"
+msgstr "Комментарии оценивания"
+
+msgid "Valuer errors"
+msgstr "Ошибки при оценивании"
+
+msgid "Valuer information"
+msgstr "Информация об оценивании"
+
+msgid "Valuer judge comments"
+msgstr "Комментарий об оценивании для судей"
 
 msgid "Variant"
 msgstr "Вариант"
