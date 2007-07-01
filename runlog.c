@@ -1205,9 +1205,10 @@ run_count_all_attempts(runlog_state_t state, int user_id, int prob_id)
   int i, count = 0;
 
   for (i = 0; i < state->run_u; i++) {
-    if (state->runs[i].status == RUN_EMPTY) continue;
+    if (state->runs[i].status > RUN_MAX_STATUS
+        && state->runs[i].status < RUN_TRANSIENT_FIRST) continue;
     if (state->runs[i].user_id != user_id
-        || state->runs[i].prob_id != prob_id) continue;
+        || (prob_id > 0 && state->runs[i].prob_id != prob_id)) continue;
     count++;
   }
   return count;
@@ -1958,7 +1959,7 @@ run_has_transient_user_runs(runlog_state_t state, int user_id)
 {
   int i;
 
-  for (i = state->run_u; i >= 0; i--) {
+  for (i = state->run_u - 1; i >= 0; i--) {
     if (state->runs[i].status == RUN_EMPTY) continue;
     if (state->runs[i].user_id != user_id) continue;
     if (state->runs[i].status == RUN_VIRTUAL_START) return 0;

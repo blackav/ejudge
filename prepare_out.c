@@ -1106,6 +1106,9 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   if (prob->check_cmd[0])
     fprintf(f, "check_cmd = \"%s\"\n", c_armor(&sbuf, prob->check_cmd));
   do_xstr(f, &sbuf, "checker_env", prob->checker_env);
+  if (prob->valuer_cmd[0])
+    fprintf(f, "valuer_cmd = \"%s\"\n", c_armor(&sbuf, prob->valuer_cmd));
+  do_xstr(f, &sbuf, "valuer_env", prob->valuer_env);
   do_xstr(f, &sbuf, "lang_time_adj", prob->lang_time_adj);
   do_xstr(f, &sbuf, "lang_time_adj_millis", prob->lang_time_adj_millis);
   do_xstr(f, &sbuf, "test_sets", prob->test_sets);
@@ -1807,6 +1810,7 @@ prob_instr(FILE *f, const unsigned char *root_dir,
 {
   struct section_problem_data tmp_prob;
   path_t checker_path;
+  path_t valuer_path;
   path_t conf_path;
   path_t g_path;
   path_t l_path;
@@ -1836,6 +1840,17 @@ prob_instr(FILE *f, const unsigned char *root_dir,
     } else {
       fprintf(f, "Checker directory: %s\n", checker_path);
       fprintf(f, "Checker file name: %s\n", tmp_prob.check_cmd);
+    }
+  }
+  if (prob->valuer_cmd) {
+    mkpath(valuer_path, conf_path, global->checker_dir, DFLT_G_CHECKER_DIR);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_VALUER_CMD, &tmp_prob, abstr,
+                           global);
+    if (os_IsAbsolutePath(tmp_prob.valuer_cmd)) {
+      fprintf(f, "Valuer command: %s\n", tmp_prob.valuer_cmd);
+    } else {
+      fprintf(f, "Valuer directory: %s\n", valuer_path);
+      fprintf(f, "Valuer file name: %s\n", tmp_prob.valuer_cmd);
     }
   }
 

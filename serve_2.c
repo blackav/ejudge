@@ -1801,7 +1801,7 @@ serve_judge_built_in_problem(
         int ssl_flag)
 {
   const struct section_global_data *global = state->global;
-  int arch_flags, n, status, rep_flags;
+  int arch_flags, n, status, rep_flags, glob_status;
   path_t run_arch_path, rep_path;
   char *run_text = 0, *eptr = 0;
   size_t run_size = 0;
@@ -1859,10 +1859,16 @@ serve_judge_built_in_problem(
   status = RUN_OK;
 
  done:
+  glob_status = status;
+  if (global->score_system_val == SCORE_OLYMPIAD
+      || global->score_system_val == SCORE_KIROV) {
+    if (glob_status != RUN_OK && glob_status != RUN_CHECK_FAILED)
+      glob_status = RUN_PARTIAL;
+  }
   f = open_memstream(&xml_buf, &xml_len);
   fprintf(f, "Content-type: text/xml\n\n");
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
-  run_status_to_str_short(buf1, sizeof(buf1), status);
+  run_status_to_str_short(buf1, sizeof(buf1), glob_status);
   fprintf(f, "<testing-report run-id=\"%d\" judge-id=\"%d\" status=\"%s\" scoring=\"%s\" archive-available=\"no\" run-tests=\"1\" correct-available=\"no\" info-available=\"no\"",
           run_id, judge_id, buf1,
           unparse_scoring_system(buf2, sizeof(buf2), global->score_system_val));
@@ -1891,6 +1897,7 @@ serve_judge_built_in_problem(
   }
   fprintf(f, " >\n");
 
+  run_status_to_str_short(buf1, sizeof(buf1), status);
   fprintf(f, "  <tests>\n");
   fprintf(f, "    <test num=\"1\" status=\"%s\"", buf1);
   fprintf(f, " exit-code=\"0\"");
@@ -1914,9 +1921,9 @@ serve_judge_built_in_problem(
     }
   */
 
-  fprintf(f, "      <output>%s</output>\n", ARMOR(run_text));
-  fprintf(f, "      <correct>%d</correct>\n", px->correct_answer);
-  fprintf(f, "      <checker>%s</checker>\n", ARMOR(msgbuf));
+  fprintf(f, "      <output>%s\n\n</output>\n", ARMOR(run_text));
+  fprintf(f, "      <correct>%d\n\n</correct>\n", px->correct_answer);
+  fprintf(f, "      <checker>%s\n\n</checker>\n", ARMOR(msgbuf));
   fprintf(f, "    </test>\n");
   fprintf(f, "  </tests>\n");
   fprintf(f, "</testing-report>\n");
@@ -1931,7 +1938,8 @@ serve_judge_built_in_problem(
     serve_send_check_failed_email(cnts, run_id);
 
   /* FIXME: handle database update error */
-  run_change_status(state->runlog_state, run_id, status, failed_test, score, 0);
+  run_change_status(state->runlog_state, run_id, glob_status, failed_test,
+                    score, 0);
   serve_update_standings_file(state, cnts, 0);
   rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
                                       global->xml_report_archive_dir,
@@ -1990,7 +1998,7 @@ serve_rejudge_run(
         err("rejudge_run: invalid variant for run %d", run_id);
         return;
       }
-      if (prob->xml.a) px = prob->xml.a[variant];
+      if (prob->xml.a) px = prob->xml.a[variant - 1];
     } else {
       px = prob->xml.p;
     }

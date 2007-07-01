@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,9 @@
 /*
 <testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"]>
   <comment>T</comment>
+  <valuer_comment>T</valuer_comment>
+  <valuer_judge_comment>T</valuer_judge_comment>
+  <valuer_errors>T</valuer_errors>
   <tests>
     <test num="N" status="O" [exit-code="N"] [term-signal="N"] time="N" real-time="N" [nominal-score="N" score="N"] [comment="S"] [team-comment="S"] [checker-comment="S"] output-available="B" stderr-available="B" checker-output-available="B" args-too-long="B" [input-digest="X"] [correct-digest="X"]>
        [<args>T</args>]
@@ -63,6 +66,9 @@ enum
   TR_T_STDERR,
   TR_T_CHECKER,
   TR_T_COMMENT,
+  TR_T_VALUER_COMMENT,
+  TR_T_VALUER_JUDGE_COMMENT,
+  TR_T_VALUER_ERRORS,
 
   TR_T_LAST_TAG,
 };
@@ -114,6 +120,9 @@ static const char * const elem_map[] =
   [TR_T_STDERR] = "stderr",
   [TR_T_CHECKER] = "checker",
   [TR_T_COMMENT] = "comment",
+  [TR_T_VALUER_COMMENT] = "valuer_comment",
+  [TR_T_VALUER_JUDGE_COMMENT] = "valuer_judge_comment",
+  [TR_T_VALUER_ERRORS] = "valuer_errors",
 
   [TR_T_LAST_TAG] = 0,
 };
@@ -635,6 +644,15 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
     case TR_T_COMMENT:
       if (xml_leaf_elem(t2, &r->comment, 1, 1) < 0) return -1;
       break;
+    case TR_T_VALUER_COMMENT:
+      if (xml_leaf_elem(t2, &r->valuer_comment, 1, 1) < 0) return -1;
+      break;
+    case TR_T_VALUER_JUDGE_COMMENT:
+      if (xml_leaf_elem(t2, &r->valuer_judge_comment, 1, 1) < 0) return -1;
+      break;
+    case TR_T_VALUER_ERRORS:
+      if (xml_leaf_elem(t2, &r->valuer_errors, 1, 1) < 0) return -1;
+      break;
     case TR_T_TESTS:
       if (was_tests) {
         xml_err(t2, "duplicated element <tests>");
@@ -709,6 +727,9 @@ testing_report_free(testing_report_xml_t r)
     r->run_tests = 0;
   }
   xfree(r->comment); r->comment = 0;
+  xfree(r->valuer_comment); r->valuer_comment = 0;
+  xfree(r->valuer_judge_comment); r->valuer_judge_comment = 0;
+  xfree(r->valuer_errors); r->valuer_errors = 0;
 
   xfree(r);
   return 0;

@@ -362,9 +362,11 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(require, "x"),
   PROBLEM_PARAM(standard_checker, "s"),
   PROBLEM_PARAM(checker_env, "x"),
+  PROBLEM_PARAM(valuer_env, "x"),
   PROBLEM_PARAM(lang_time_adj, "x"),
   PROBLEM_PARAM(lang_time_adj_millis, "x"),
   PROBLEM_PARAM(check_cmd, "s"),
+  PROBLEM_PARAM(valuer_cmd, "s"),
   PROBLEM_PARAM(test_pat, "s"),
   PROBLEM_PARAM(corr_pat, "s"),
   PROBLEM_PARAM(info_pat, "s"),
@@ -702,6 +704,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->enable_language);
   sarray_free(p->require);
   sarray_free(p->checker_env);
+  sarray_free(p->valuer_env);
   sarray_free(p->lang_time_adj);
   sarray_free(p->lang_time_adj_millis);
   sarray_free(p->personal_deadline);
@@ -1343,6 +1346,7 @@ get_variant_map_version(FILE *f)
       if ((c = getc(f)) == EOF) goto unexpected_EOF;
       if (c == '>') break;
     }
+    if ((c = getc(f)) == EOF) goto unexpected_EOF;
   }
   ungetc(c, f);
 
@@ -1468,7 +1472,7 @@ parse_vm_v2(
     p += n;
     pmap->v[pmap->u].login = xstrdup(login_buf);
 
-    if (sscanf(p, "variant %d%n", &v, &n) == 1) {
+    if (sscanf(p, " variant %d%n", &v, &n) == 1) {
       if (v < 0) {
         err("Invalid variant");
         goto failed;
@@ -2001,10 +2005,8 @@ set_defaults(serve_state_t state, int mode)
   if (mode == PREPARE_RUN) {
     GLOBAL_INIT_FIELD(checker_dir, DFLT_G_CHECKER_DIR, conf_dir);
   }
-  if (mode == PREPARE_SERVE) {
-    GLOBAL_INIT_FIELD(statement_dir, DFLT_G_STATEMENT_DIR, conf_dir);
-    GLOBAL_INIT_FIELD(plugin_dir, DFLT_G_PLUGIN_DIR, conf_dir);
-  }
+  GLOBAL_INIT_FIELD(statement_dir, DFLT_G_STATEMENT_DIR, conf_dir);
+  GLOBAL_INIT_FIELD(plugin_dir, DFLT_G_PLUGIN_DIR, conf_dir);
   if (mode == PREPARE_SERVE && g->description_file[0]) {
     GLOBAL_INIT_FIELD(description_file, "", statement_dir);
   }
@@ -2508,7 +2510,7 @@ set_defaults(serve_state_t state, int mode)
       XCALLOC(prob->xml.a, prob->variant_num);
       for (j = 1; j <= prob->variant_num; j++) {
         prepare_insert_variant_num(fpath, sizeof(fpath), prob->xml_file, j);
-        if (!(prob->xml.a[j] = problem_xml_parse(fpath))) return -1;
+        if (!(prob->xml.a[j - 1] = problem_xml_parse(fpath))) return -1;
       }
     } else if (prob->xml_file[0]) {
       if (!(prob->xml.p = problem_xml_parse(prob->xml_file))) return -1;
@@ -2615,17 +2617,14 @@ set_defaults(serve_state_t state, int mode)
     prepare_set_prob_value(PREPARE_FIELD_PROB_TGZ_PAT,
                            prob, aprob, g);
 
-    prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_CMD,
-                           prob, aprob, g);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_CMD, prob, aprob, g);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_VALUER_CMD, prob, aprob, g);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_VM_SIZE,
                            prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_STACK_SIZE,
                            prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_DATA_SIZE,
-                           prob, aprob, g);
-
-    prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_CMD,
                            prob, aprob, g);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_SOURCE_HEADER,
@@ -2692,6 +2691,20 @@ set_defaults(serve_state_t state, int mode)
                                                section_language_params,
                                                section_tester_params);
           if (!prob->checker_env[j]) return -1;
+        }
+      }
+
+      if (si != -1 && aprob->valuer_env) {
+        prob->valuer_env = sarray_merge_pf(aprob->valuer_env, prob->valuer_env);
+      }
+      if (prob->valuer_env) {
+        for (j = 0; prob->valuer_env[j]; j++) {
+          prob->valuer_env[j] = varsubst_heap(state, prob->valuer_env[j], 1,
+                                              section_global_params,
+                                              section_problem_params,
+                                              section_language_params,
+                                              section_tester_params);
+          if (!prob->valuer_env[j]) return -1;
         }
       }
 
@@ -3844,6 +3857,14 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
     }
     pathmake4(out->check_cmd, state->global->checker_dir, "/", out->check_cmd, 0);
   }
+
+  /* copy valuer_cmd */
+  /*
+  if (prb->valuer_cmd[0]) {
+    strcpy(out->valuer_cmd, prb->valuer_cmd);
+    pathmake4(out->valuer_cmd, state->global->checker_dir, "/", out->valuer_cmd, 0);
+  }
+  */
 
   /* copy start_cmd */
   strcpy(out->start_cmd, tp->start_cmd);
@@ -5075,6 +5096,16 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       pathmake4(out->check_cmd, global->checker_dir, "/", out->check_cmd, 0);
     }
     */
+    break;
+
+  case PREPARE_FIELD_PROB_VALUER_CMD:
+    if (!out->valuer_cmd[0] && abstr && abstr->valuer_cmd[0]) {
+      sformat_message(out->valuer_cmd, PATH_MAX, abstr->valuer_cmd,
+                      NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    }
+    if (global) {
+      pathmake4(out->valuer_cmd, global->checker_dir, "/", out->valuer_cmd, 0);
+    }
     break;
 
   case PREPARE_FIELD_PROB_STATEMENT_FILE:
