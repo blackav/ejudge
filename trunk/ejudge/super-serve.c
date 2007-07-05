@@ -108,6 +108,8 @@ struct client_state
 static int daemon_mode;
 static int autonomous_mode;
 static int forced_mode;
+static int slave_mode;
+static unsigned char hostname[1024];
 
 static struct ejudge_cfg *config;
 static int self_uid;
@@ -359,6 +361,7 @@ prepare_serve_serving(const struct contest_desc *cnts,
   int cmd_socket = -1;
   struct sockaddr_un cmd_addr;
 
+  if (slave_mode) return;
   if (!cnts->managed && do_serve_manage <= 0) return;
 
   // FIXME: add a possibility to define socket name
@@ -420,8 +423,19 @@ prepare_run_serving(const struct contest_desc *cnts,
   unsigned char run_log_path[1024];
   int queue_dir_fd = -1;
   struct stat stbuf;
+  struct xml_tree *p = 0;
 
-  if (!cnts->run_managed && do_run_manage <= 0) return;
+  if (slave_mode) {
+    if (cnts->slave_rules) {
+      for (p = cnts->slave_rules->first_down; p; p = p->right) {
+        if (!strcasecmp(hostname, p->text))
+          break;
+      }
+      if (!p) return;
+    }
+  } else {
+    if (!cnts->run_managed && do_run_manage <= 0) return;
+  }
 
   snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/run/queue/dir",
            extra->var_dir);
@@ -854,13 +868,30 @@ acquire_contest_resources(const struct contest_desc *cnts,
   char *error_log_txt = 0;
   size_t error_log_size = 0;
   struct contest_extra *extra;
-  int i;
+  int i, run_managed = 0;
   struct stat stbuf;
   unsigned char config_path[1024];
   unsigned char var_path[1024];
+  struct xml_tree *p = 0;
+
+  if (slave_mode) {
+    if (cnts->slave_rules) {
+      for (p = cnts->slave_rules->first_down; p; p = p->right) {
+        fprintf(stderr, ">>%s,%s<<\n", hostname, p->text);
+        if (!strcasecmp(hostname, p->text))
+          break;
+      }
+      if (p) run_managed = 1;
+    }
+  } else {
+    run_managed = cnts->run_managed;
+  }
 
   if (!cnts->managed && do_serve_manage <= 0
-      && !cnts->run_managed && do_run_manage <= 0) return;
+      && !run_managed && do_run_manage <= 0) return;
+
+  if (slave_mode && run_managed)
+    info("contest %d will be served in slave mode", cnts->id);
 
   extra = get_contest_extra(cnts->id);
   memset(extra, 0, sizeof(*extra));
@@ -4277,41 +4308,43 @@ prepare_sockets(void)
   int log_fd;
   pid_t pid;
 
-  if (!autonomous_mode) {
-    // require super_serve_log and super_serve_socket to be specified
-    if (!config->super_serve_log) {
-      err("<super_serve_log> must be specified in daemon mode");
-      return 1;
-    }
-    if (!config->super_serve_socket) {
-      err("<super_serve_socket> must be specified in daemon mode");
-      return 1;
-    }
+  if (!slave_mode) {
+    if (!autonomous_mode) {
+      // require super_serve_log and super_serve_socket to be specified
+      if (!config->super_serve_log) {
+        err("<super_serve_log> must be specified in daemon mode");
+        return 1;
+      }
+      if (!config->super_serve_socket) {
+        err("<super_serve_socket> must be specified in daemon mode");
+        return 1;
+      }
 
-    // create a control socket
-    if ((control_socket_fd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
-      err("socket() failed: %s", os_ErrorMsg());
-      return 1;
-    }
+      // create a control socket
+      if ((control_socket_fd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
+        err("socket() failed: %s", os_ErrorMsg());
+        return 1;
+      }
 
-    if (forced_mode) unlink(config->super_serve_socket);
-    memset(&addr, 0, sizeof(addr));
-    addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, config->super_serve_socket, 108);
-    addr.sun_path[107] = 0;
-    if (bind(control_socket_fd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-      err("bind() failed: %s", os_ErrorMsg());
-      return 1;
-    }
-    control_socket_path = config->super_serve_socket;
+      if (forced_mode) unlink(config->super_serve_socket);
+      memset(&addr, 0, sizeof(addr));
+      addr.sun_family = AF_UNIX;
+      strncpy(addr.sun_path, config->super_serve_socket, 108);
+      addr.sun_path[107] = 0;
+      if (bind(control_socket_fd, (struct sockaddr *) &addr, sizeof(addr))<0) {
+        err("bind() failed: %s", os_ErrorMsg());
+        return 1;
+      }
+      control_socket_path = config->super_serve_socket;
 
-    if (listen(control_socket_fd, 5) < 0) {
-      err("listen() failed: %s", os_ErrorMsg());
-      return 1;
-    }
-    if (chmod(control_socket_path, 0777) < 0) {
-      err("chmod() failed: %s", os_ErrorMsg());
-      return 1;
+      if (listen(control_socket_fd, 5) < 0) {
+        err("listen() failed: %s", os_ErrorMsg());
+        return 1;
+      }
+      if (chmod(control_socket_path, 0777) < 0) {
+        err("chmod() failed: %s", os_ErrorMsg());
+        return 1;
+      }
     }
   }
 
@@ -4379,6 +4412,10 @@ main(int argc, char **argv)
       if (cur_arg + 1 >= argc) arg_expected(argv[0]);
       workdir = argv[cur_arg + 1];
       cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-s")) {
+      slave_mode = 1;
+      argv_restart[j++] = argv[cur_arg];
+      cur_arg++;
     } else {
       break;
     }
@@ -4409,6 +4446,7 @@ main(int argc, char **argv)
   if (start_prepare(user, group, workdir) < 0) return 1;
 
   info("super-serve %s, compiled %s", compile_version, compile_date);
+  if (slave_mode) info("slave mode enabled");
 
   config = ejudge_cfg_parse(ejudge_xml_path);
   if (!config) return 1;
@@ -4420,13 +4458,15 @@ main(int argc, char **argv)
     err("contests directory is invalid");
     return 1;
   }
-  if (!config->serve_path || !*config->serve_path) {
-    err("serve_path is not defined");
-    return 1;
-  }
-  if (access(config->serve_path, X_OK) < 0) {
-    err("serve_path '%s' is not executable", config->serve_path);
-    return 1;
+  if (!slave_mode) {
+    if (!config->serve_path || !*config->serve_path) {
+      err("serve_path is not defined");
+      return 1;
+    }
+    if (access(config->serve_path, X_OK) < 0) {
+      err("serve_path '%s' is not executable", config->serve_path);
+      return 1;
+    }
   }
   if (config->run_path && config->run_path[0]
       && access(config->run_path, X_OK) < 0) {
@@ -4437,6 +4477,8 @@ main(int argc, char **argv)
     err("cannot initialize random number source");
     return 1;
   }
+
+  snprintf(hostname, sizeof(hostname), "%s", os_NodeName());
 
   // FIXME: save all uids: real, effective, and saved?
   self_uid = getuid();
