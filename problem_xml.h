@@ -44,6 +44,7 @@ enum
   PROB_T_ANSWER,
   PROB_T_TRANSLATION,
   PROB_T_TR,
+  PROB_T_NOTES,
 
   PROB_T__BARRIER,
   PROB_T__DEFAULT,
@@ -84,7 +85,7 @@ struct problem_stmt
   struct xml_tree *desc;
   struct xml_tree *input_format;
   struct xml_tree *output_format;
-  struct xml_tree *examples;
+  struct xml_tree *notes;
 };
 
 struct problem_time_limit

@@ -9819,13 +9819,17 @@ unpriv_unparse_statement(
   unsigned char b2[1024];
   unsigned char b3[1024];
   unsigned char b4[1024];
-  const unsigned char *vars[5] = { "self", "prob", "get", "getfile", 0 };
-  const unsigned char *vals[5] = { b1, b2, b3, b4, 0 };
+  unsigned char b5[1024];
+  unsigned char b6[1024];
+  const unsigned char *vars[7] = { "self", "prob", "get", "getfile", "input_file", "output_file", 0 };
+  const unsigned char *vals[7] = { b1, b2, b3, b4, b5, b6, 0 };
 
   snprintf(b1, sizeof(b1), "%s?SID=%016llx", phr->self_url, phr->session_id);
   snprintf(b2, sizeof(b2), "&prob_id=%d", prob->id);
   snprintf(b3, sizeof(b3), "&action=%d", NEW_SRV_ACTION_GET_FILE);
   snprintf(b4, sizeof(b4), "%s%s%s&file", b1, b2, b3);
+  snprintf(b5, sizeof(b5), "%s", prob->input_file);
+  snprintf(b6, sizeof(b6), "%s", prob->output_file);
 
   if (bb && *bb && !cnts->exam_mode) fprintf(fout, "%s", bb);
 
@@ -9852,8 +9856,19 @@ unpriv_unparse_statement(
   if (px->examples) {
     fprintf(fout, "<h3>%s</h3>", _("Examples"));
     fprintf(fout, "<table class=\"b1\">");
-    fprintf(fout, "<tr><td class=\"b1\" align=\"center\"><b>%s</b></td><td class=\"b1\" align=\"center\"><b>%s</b></td></tr>",
-            _("Input"), _("Output"));
+    fprintf(fout, "<tr><td class=\"b1\" align=\"center\"><b>");
+    if (prob->use_stdin) {
+      fprintf(fout, "%s", _("Input"));
+    } else {
+      fprintf(fout, "%s <tt>%s</tt>", _("Input in"), prob->input_file);
+    }
+    fprintf(fout, "</b></td><td class=\"b1\" align=\"center\"><b>");
+    if (prob->use_stdout) {
+      fprintf(fout, "%s", _("Output"));
+    } else {
+      fprintf(fout, "%s <tt>%s</tt>", _("Output in"), prob->output_file);
+    }
+    fprintf(fout, "</b></td></tr>");
     for (p = px->examples->first_down; p; p = p->right) {
       if (p->tag != PROB_T_EXAMPLE) continue;
       fprintf(fout, "<tr><td class=\"b1\" valign=\"top\"><pre>");
@@ -9865,6 +9880,11 @@ unpriv_unparse_statement(
       fprintf(fout, "</pre></td></tr>");
     }
     fprintf(fout, "</table>");
+  }
+
+  if (pp->notes) {
+    fprintf(fout, "<h3>%s</h3>", _("Notes"));
+    problem_xml_unparse_node(fout, pp->notes, vars, vals);
   }
 
   if (prob->type_val == PROB_TYPE_SELECT_ONE) {

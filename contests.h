@@ -101,6 +101,8 @@ enum
     CONTEST_FILE_GROUP,
     CONTEST_DEFAULT_LOCALE,
     CONTEST_WELCOME_FILE,
+    CONTEST_SLAVE_RULES,
+    CONTEST_RUN_MANAGED_ON,
 
     CONTEST_LAST_TAG
   };
@@ -321,6 +323,8 @@ struct contest_desc
   unsigned char *file_group;
   unsigned char *default_locale;
   unsigned char *welcome_file;
+
+  struct xml_tree *slave_rules;
 
   unsigned char client_ignore_time_skew;
   unsigned char client_disable_team;

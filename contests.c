@@ -120,6 +120,8 @@ static char const * const elem_map[] =
   "file_group",
   "default_locale",
   "welcome_file",
+  "slave_rules",
+  "run_managed_on",
 
   0
 };
@@ -777,6 +779,9 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
                          reg_deadline_str, &cnts->reg_deadline) < 0)
         return -1;
       break;
+    case CONTEST_SLAVE_RULES:
+      cnts->slave_rules = t;
+      break;
 
     case CONTEST_CAPS:
       if (parse_capabilities(path, cnts, t) < 0) return -1;
@@ -1019,6 +1024,13 @@ contests_merge(struct contest_desc *pold, struct contest_desc *pnew)
   pnew->caps_node = 0;
   pold->capabilities.first = pnew->capabilities.first;
   pnew->capabilities.first = 0;
+
+  if ((p = pnew->slave_rules)) {
+    xml_unlink_node(p);
+    xml_link_node_last(&pold->b, p);
+  }
+  pold->slave_rules = p;
+  pnew->slave_rules = 0;
 
   pold->reg_deadline = pnew->reg_deadline;
   pold->client_ignore_time_skew = pnew->client_ignore_time_skew;
@@ -1544,6 +1556,7 @@ contests_unparse(FILE *f,
   struct opcap_list_item *cap;
   unsigned char *s;
   int i;
+  struct xml_tree *p;
 
   contests_write_header(f, cnts);
   fprintf(f, "\n");
@@ -1658,6 +1671,14 @@ contests_unparse(FILE *f,
     if (cnts->disable_member_delete)
       fprintf(f, "    DISABLE_MEMBER_DELETE,\n");
     fprintf(f, "  </%s>\n", elem_map[CONTEST_CLIENT_FLAGS]);
+  }
+  if (cnts->slave_rules) {
+    fprintf(f, "  <%s>\n", elem_map[CONTEST_SLAVE_RULES]);
+    for (p = cnts->slave_rules->first_down; p; p = p->right) {
+      fprintf(f, "    <%s>%s</%s>\n",
+              elem_map[p->tag], p->text, elem_map[p->tag]);
+    }
+    fprintf(f, "  </%s>\n", elem_map[CONTEST_SLAVE_RULES]);
   }
   fprintf(f, "</%s>", elem_map[CONTEST_CONTEST]);
 }

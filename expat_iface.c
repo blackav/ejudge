@@ -1029,7 +1029,7 @@ xml_unparse_raw_tree(
 
   for (p = tree->first_down; p; p = p->right) {
     if (p->tag == spec->text_elem) {
-      if (p->text) fprintf(fout, "%s", p->text);
+      if (p->text) fprintf(fout, "%s", do_subst(&sb, p->text, vars, vals));
     } else {
       if (p->tag == spec->default_elem) {
         fprintf(fout, "<%s", p->name[0]);
@@ -1059,7 +1059,7 @@ xml_unparse_raw_tree(
     }
   }
 
-  if (tree->text) fprintf(fout, "%s", tree->text);
+  if (tree->text) fprintf(fout, "%s", do_subst(&sb, tree->text, vars, vals));
 
   html_armor_free(&ab);
   html_armor_free(&sb);
