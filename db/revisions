@@ -2591,3 +2591,10 @@ runlog.c 4197 0 6339716
 serve_2.c 4197 0 7535209
 super_html_3.c 4197 0 22763790
 testing_report_xml.c 4197 0 1362128
+contests.h 4199 0 891864
+problem_xml.h 4199 0 312194
+super-serve.c 4199 0 12306053
+contests.c 4199 0 4561648
+expat_iface.c 4199 0 2213900
+new_server_html.c 4199 0 31679281
+problem_xml.c 4199 0 1301972
