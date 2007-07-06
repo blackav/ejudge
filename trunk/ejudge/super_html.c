@@ -312,7 +312,8 @@ super_html_main_page(FILE *f,
   unsigned char new_master_url[1024] = { 0 };
   unsigned char new_client_url[1024] = { 0 };
   unsigned char prog_pat[128];
-  int prog_pat_len, self_url_len;
+  int prog_pat_len, self_url_len, cnt;
+  struct xml_tree *p;
 
 #if defined CGI_PROG_SUFFIX
   snprintf(prog_pat, sizeof(prog_pat), "serve-control%s", CGI_PROG_SUFFIX);
@@ -409,6 +410,8 @@ super_html_main_page(FILE *f,
     if (!contests_map[contest_id]) {
       if (priv_level < PRIV_LEVEL_ADMIN) continue;
 
+      cnts = 0;
+      errcode = contests_get(contest_id, &cnts);
       extra = get_existing_contest_extra(contest_id);
       if (!extra) continue;
       if (!extra->serve_used && !extra->run_used) continue;
@@ -432,7 +435,21 @@ super_html_main_page(FILE *f,
       }
 
       if (!extra || !extra->run_used) {
-        fprintf(f, "<td><i>Not managed</i></td>\n");
+        cnt = 0;
+        if (cnts && cnts->slave_rules) {
+          for (p = cnts->slave_rules->first_down; p; p = p->right)
+            if (p->tag == CONTEST_RUN_MANAGED_ON)
+              cnt++;
+        }
+        if (cnt > 0) {
+          fprintf(f, "<td><i>Managed on:");
+          for (p = cnts->slave_rules->first_down; p; p = p->right)
+            if (p->tag == CONTEST_RUN_MANAGED_ON)
+              fprintf(f, " %s", p->text);
+          fprintf(f, "</i></td>\n");
+        } else {
+          fprintf(f, "<td><i>Not managed</i></td>\n");
+        }
       } else {
         if (extra->run_suspended) {
           fprintf(f, "<td bgcolor=\"#ff8888\">Failed</td>\n");
@@ -473,7 +490,21 @@ super_html_main_page(FILE *f,
       }
 
       if (!extra || !extra->run_used) {
-        fprintf(f, "<td><i>Not managed</i></td>\n");
+        cnt = 0;
+        if (cnts && cnts->slave_rules) {
+          for (p = cnts->slave_rules->first_down; p; p = p->right)
+            if (p->tag == CONTEST_RUN_MANAGED_ON)
+              cnt++;
+        }
+        if (cnt > 0) {
+          fprintf(f, "<td><i>Managed on:");
+          for (p = cnts->slave_rules->first_down; p; p = p->right)
+            if (p->tag == CONTEST_RUN_MANAGED_ON)
+              fprintf(f, " %s", p->text);
+          fprintf(f, "</i></td>\n");
+        } else {
+          fprintf(f, "<td><i>Not managed</i></td>\n");
+        }
       } else {
         if (extra->run_suspended) {
           fprintf(f, "<td bgcolor=\"#ff8888\">Failed</td>\n");
