@@ -805,7 +805,7 @@ msgid "Changing status of user %d in contest %d failed: %s"
 msgstr "Изменение статуса пользователя %d в турнире %d не удалось: %s"
 
 msgid "Check failed"
-msgstr "Проверка завершилась неудачно"
+msgstr "Ошибка проверяющей системы"
 
 msgid "Check the registration status"
 msgstr "Проверить состояние регистрации"
