@@ -576,7 +576,7 @@ invoke_valuer(
     snprintf(valuer_cmd, sizeof(valuer_cmd), "%s", prb->valuer_cmd);
   }
 
-  fprintf(stderr, "valuer: %s\n", valuer_cmd);
+  //fprintf(stderr, "valuer: %s\n", valuer_cmd);
 
   tsk = task_New();
   task_AddArg(tsk, valuer_cmd);
@@ -1696,7 +1696,7 @@ run_tests(struct section_tester_data *tst,
 
   get_current_time(&reply_pkt->ts7, &reply_pkt->ts7_us);
 
-  if (prb->valuer_cmd && !req_pkt->accepting_mode
+  if (prb->valuer_cmd[0] && !req_pkt->accepting_mode
       && !reply_pkt->status != RUN_CHECK_FAILED) {
     if (invoke_valuer(serve_state.global, prb, cur_variant, prb->full_score,
                       &score, &valuer_errors, &valuer_comment,

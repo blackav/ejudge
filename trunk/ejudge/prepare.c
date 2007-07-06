@@ -5103,7 +5103,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       sformat_message(out->valuer_cmd, PATH_MAX, abstr->valuer_cmd,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
-    if (global) {
+    if (global && out->valuer_cmd[0]) {
       pathmake4(out->valuer_cmd, global->checker_dir, "/", out->valuer_cmd, 0);
     }
     break;

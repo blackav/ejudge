@@ -877,7 +877,7 @@ acquire_contest_resources(const struct contest_desc *cnts,
   if (slave_mode) {
     if (cnts->slave_rules) {
       for (p = cnts->slave_rules->first_down; p; p = p->right) {
-        fprintf(stderr, ">>%s,%s<<\n", hostname, p->text);
+        //fprintf(stderr, ">>%s,%s<<\n", hostname, p->text);
         if (!strcasecmp(hostname, p->text))
           break;
       }
