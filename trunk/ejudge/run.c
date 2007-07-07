@@ -556,7 +556,7 @@ invoke_valuer(
   }
   fprintf(f, "%d\n", total_tests - 1);
   for (i = 1; i <= total_tests; i++) {
-    fprintf(f, "%d %d\n", tests[i].status, tests[i].score);
+    fprintf(f, "%d %d %ld\n", tests[i].status, tests[i].score, tests[i].times);
   }
   if (ferror(f)) {
     append_msg_to_log(score_err, "failed to write to %s", score_list);
