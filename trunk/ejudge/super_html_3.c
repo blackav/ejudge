@@ -7499,12 +7499,20 @@ super_html_check_tests(FILE *f,
 
     prepare_copy_problem(&tmp_prob, prob);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TYPE, &tmp_prob, abstr, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_XML_FILE,&tmp_prob,abstr, global);
+
+    if (tmp_prob.type_val == PROB_TYPE_SELECT_ONE && tmp_prob.xml_file[0]) {
+      fprintf(flog, "Select-one XML-specified problem, skipping\n");
+      continue;
+    }
+
     prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_MANUAL_CHECKING, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_EXAMINATOR_NUM, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_PRESENTATION, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_IGNORE_EXIT_CODE, &tmp_prob, abstr, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_VALUER_CMD, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_DIR, &tmp_prob, abstr, 0);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_CORR, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_SFX, &tmp_prob, abstr, global);
