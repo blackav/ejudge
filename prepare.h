@@ -727,6 +727,7 @@ enum
   PREPARE_FIELD_PROB_STAND_ATTR,
   PREPARE_FIELD_PROB_SOURCE_HEADER,
   PREPARE_FIELD_PROB_SOURCE_FOOTER,
+  PREPARE_FIELD_PROB_XML_FILE,
 };
 
 void prepare_copy_problem(struct section_problem_data *out,
