@@ -41,7 +41,7 @@ csv_parse(const char *str, FILE *log_f, int fs)
     } else {
       s3 = s2;
     }
-    if (s3 == s1) break;  /* empty file */
+    if (s3 == (const unsigned char*) str) break;  /* empty file */
     s4 = (unsigned char*) xmalloc(s3 - s1 + 1);
     memcpy(s4, s1, s3 - s1);
     s4[s3 - s1] = 0;
