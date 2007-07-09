@@ -1437,6 +1437,11 @@ else
 fi
 
 CHARSET_UPPERCASE=`echo ${ac_cv_charset} | tr '[[:lower:]]' '[[:upper:]]'`
+ac_cv_ncurses_suffix=
+if [[ "${CHARSET_UPPERCASE}" = UTF-8 ]]
+then
+  ac_cv_ncurses_suffix=w
+fi
 
 AC_SUBST(ac_cv_ejudge_arch)
 AC_SUBST(ac_cv_exe_suffix)
@@ -1467,6 +1472,7 @@ AC_SUBST(MSGMERGE)
 AC_SUBST(MSGFMT)
 AC_SUBST(ac_cv_style_prefix)
 AC_SUBST(CHARSET_UPPERCASE)
+AC_SUBST(ac_cv_ncurses_suffix)
 
 AC_SUBST(ac_cv_contest_gcc)
 AC_SUBST(ac_cv_contest_gcc_dir)
