@@ -50,6 +50,7 @@ LIBCAP_INCL_OPT=@ac_cv_libcap_include_opt@
 LIBCAP_LIB_OPT=@ac_cv_libcap_lib_opt@
 
 WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@
+NCURSES_SUFFIX=@ac_cv_ncurses_suffix@
 
 include files.make
 
@@ -276,10 +277,10 @@ users${CGI_PROG_SUFFIX}: ${US_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 edit-userlist: $(ED_OBJECTS)
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu -lpanel -lncurses
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu${NCURSES_SUFFIX} -lpanel${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX}
 
 ejudge-setup: ${ST_OBJECTS}
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu -lpanel -lncurses
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu${NCURSES_SUFFIX} -lpanel${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX}
 
 ejudge-control: ${EC_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
