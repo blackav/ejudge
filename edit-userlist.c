@@ -24,6 +24,7 @@
 #include "userlist.h"
 #include "ejudge_cfg.h"
 #include "xml_utils.h"
+#include "misctext.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/logger.h>
@@ -40,6 +41,7 @@
 #include <locale.h>
 #include <errno.h>
 #include <regex.h>
+#include <langinfo.h>
 
 /* special psedofields which are used for user info list markup */
 enum
@@ -117,6 +119,7 @@ enum
 static struct userlist_clnt *server_conn;
 static struct ejudge_cfg *config;
 static WINDOW *root_window;
+static int utf8_mode = 0;
 
 static int
 display_user_menu(unsigned char *upper, int start_item, int only_choose);
@@ -335,7 +338,7 @@ generic_menu(int min_width, int max_width, /* incl. frame */
       /* OK */
       cmd = -2;
       break;
-    case 'G' & 31:
+    case 'G' & 31: case '\033':
       /* CANCEL */
       cmd = -3;
       break;
@@ -461,7 +464,7 @@ okcancel(unsigned char const *fmt, ...)
     c = getch();
     switch (c) {
     case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
-    case 'G' & 31:
+    case 'G' & 31: case '\033':
       c = 'q';
       goto menu_done;
     case 'y': case 'Y': case 'Î' & 255: case 'î' & 255:
@@ -586,7 +589,7 @@ yesno(int init_val, unsigned char const *fmt, ...)
     c = getch();
     switch (c) {
     case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
-    case 'G' & 31:
+    case 'G' & 31: case '\033':
       c = 'q';
       goto menu_done;
     case 'y': case 'Y': case 'Î' & 255: case 'î' & 255:
@@ -701,7 +704,7 @@ display_reg_status_menu(int line, int init_val)
     c = getch();
     switch (c) {
     case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
-    case 'G' & 31:
+    case 'G' & 31: case '\033':
       c = 'q';
       goto menu_done;
     case '\n': case '\r': case ' ':
@@ -806,7 +809,7 @@ display_role_menu(int line, int init_val)
     c = getch();
     switch (c) {
     case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
-    case 'G' & 31:
+    case 'G' & 31: case '\033':
       c = 'q';
       goto menu_done;
     case '\n': case '\r': case ' ':
@@ -912,7 +915,7 @@ display_member_status_menu(int line, int init_val)
     c = getch();
     switch (c) {
     case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
-    case 'G' & 031:
+    case 'G' & 031: case '\033':
       c = 'q';
       goto menu_done;
     case '\n': case '\r': case ' ':
@@ -972,13 +975,29 @@ edit_string(int line, int scr_wid,
   int retval = -1;
   int req_lines, req_cols, line0, col0;
   int pos0, curpos, w, curlen;
-  int c;
+  int c, wc, wsz, i;
   char *mybuf;
+  int *gl_ind = 0;
+  unsigned char *pc;
 
   ASSERT(length > 0);
   mybuf = alloca(length + 10);
   memset(mybuf, 0, length + 10);
-  strcpy(mybuf, buf);
+  snprintf(mybuf, length, "%s", buf);
+  //strcpy(mybuf, buf);
+  if (utf8_mode) {
+    gl_ind = alloca((length + 10) * sizeof(gl_ind[0]));
+    curlen = utf8_fix_string(mybuf, gl_ind);
+    fprintf(stderr, ">>%d\n", curlen);
+    for (i = 0; i <= curlen; i++)
+      fprintf(stderr, " %d", gl_ind[i]);
+    fprintf(stderr, "\n");
+  } else {
+    gl_ind = alloca((length + 10) * sizeof(gl_ind[0]));
+    curlen = strlen(mybuf);
+    for (w = 0; w <= curlen; w++)
+      gl_ind[w] = w;
+  }
 
   if (!head) head = "";
   if (scr_wid > COLS) scr_wid = COLS;
@@ -991,7 +1010,7 @@ edit_string(int line, int scr_wid,
   if (line0 < 1) line0 = 1;
   col0 = (COLS - req_cols) / 2;
   if (col0 + req_cols >= COLS)
-    col0 =COLS - 1 - req_cols;
+    col0 = COLS - 1 - req_cols;
   if (col0 < 0) col0 = 0;
 
   out_win = newwin(req_lines, req_cols, line0, col0);
@@ -1014,9 +1033,8 @@ edit_string(int line, int scr_wid,
   print_help("Enter-Ok ^G-Cancel");
   update_panels();
   doupdate();
-  curlen = strlen(mybuf);
-  curpos = curlen;
-  pos0 = 0;
+  curpos = curlen; // glyph position of the cursor
+  pos0 = 0; // glyph position of the starting seq
 
   while(1) {
     // recalculate pos0
@@ -1030,13 +1048,93 @@ edit_string(int line, int scr_wid,
       pos0 = curpos;
     }
     if (pos0 < 0) pos0 = 0;
-    mvwaddnstr(txt_win, 0, 0, mybuf + pos0, w);
+    mvwaddnstr(txt_win, 0, 0, mybuf + gl_ind[pos0], -1 /*w*/);
     wclrtoeol(txt_win);
     wmove(txt_win, 0, curpos - pos0);
     wnoutrefresh(txt_win);
     doupdate();
-    c = getch();
-    if (c == ('G' & 31)) {
+    if (utf8_mode) {
+      wc = 0;
+      wsz = 0;
+      c = getch();
+      if (c < ' ' || c == 0x7f) {
+        // do nothing
+      } else if (c < 0x7f) {
+        wc = c;
+        wsz = 1;
+      } else if (c <= 0xbf) {
+        // invalid starting char
+        continue;
+      } else if (c <= 0xc1) {
+        // reserved starting char
+        continue;
+      } else if (c <= 0xdf) {
+        // two bytes: 0x80-0x7ff
+        wc = c & 0x1f;
+        wsz = 2;
+      } else if (c <= 0xef) {
+        // three bytes: 0x800-0xffff
+        wc = c & 0x0f;
+        wsz = 3;
+      } else if (c <= 0xf7) {
+        // four bytes: 0x10000-0x10ffff
+        wc = c & 0x07;
+        wsz = 4;
+      } else if (c <= 0xff) {
+        // reserved starting char
+        continue;
+      }
+      if (wsz > 0) {
+        for (i = 1; i < wsz; i++) {
+          c = getch();
+          if (c < 0x80 || c > 0xbf) break;
+          wc = (wc << 6) | (c & 0x3f);
+        }
+        if (i < wsz) continue;
+        if (wc <= 0x7f) wsz = 1;
+        else if (wc <= 0x7ff) wsz = 2;
+        else if (wc <= 0xffff) wsz = 3;
+        else wsz = 4;
+        if (gl_ind[curlen] + wsz > length) continue;
+        memmove(mybuf + gl_ind[curpos] + wsz, mybuf + gl_ind[curpos],
+                gl_ind[curlen] - gl_ind[curpos] + 1);
+        memmove(&gl_ind[curpos + 1], &gl_ind[curpos],
+                (curlen - curpos + 1) * sizeof(gl_ind[0]));
+        for (i = curpos + 1; i <= curlen + 1; i++)
+          gl_ind[i] += wsz;
+        pc = mybuf + gl_ind[curpos];
+        if (wsz == 1) {
+          *pc = wc;
+        } else if (wsz == 2) {
+          *pc++ = ((wc >> 6) & 0x1f) | 0xc0;
+          *pc = (wc & 0x3f) | 0x80;
+        } else if (wsz == 3) {
+          *pc++ = ((wc >> 12) & 0x0f) | 0xe0;
+          *pc++ = ((wc >> 6) & 0x3f) | 0x80;
+          *pc = (wc & 0x3f) | 0x80;
+        } else if (wsz == 4) {
+          *pc++ = ((wc >> 18) & 0x07) | 0xf0;
+          *pc++ = ((wc >> 12) & 0x3f) | 0x80;
+          *pc++ = ((wc >> 6) & 0x3f) | 0x80;
+          *pc = (wc & 0x3f) | 0x80;
+        }
+        curpos++;
+        curlen++;
+        continue;
+      }
+    } else {
+      c = getch();
+      if (c >= ' ' && c <= 255 && c != 127) {
+        if (curlen == length) continue;
+        memmove(mybuf + curpos + 1, mybuf + curpos, curlen - curpos + 1);
+        mybuf[curpos] = c;
+        curpos++;
+        curlen++;
+        gl_ind[curlen] = curlen;
+        continue;
+      }
+    }
+    if (c == ('G' & 31) || c == '\033') {
       break;
     }
     if (c == '\r' || c == '\n') {
@@ -1044,14 +1142,6 @@ edit_string(int line, int scr_wid,
       strcpy(buf, mybuf);
       retval = strlen(buf);
       break;
-    }
-    if (c >= ' ' && c <= 255 && c != 127) {
-      if (curlen == length) continue;
-      memmove(mybuf + curpos + 1, mybuf + curpos, curlen - curpos + 1);
-      mybuf[curpos] = c;
-      curpos++;
-      curlen++;
-      continue;
     }
     switch (c) {
     case KEY_LEFT:
@@ -1067,8 +1157,19 @@ edit_string(int line, int scr_wid,
       curpos--;
     case KEY_DC: case 4: case 127:
       if (curpos >= curlen) break;
-      memmove(mybuf + curpos, mybuf + curpos + 1, curlen - curpos);
-      curlen--;
+      if (utf8_mode) {
+        wsz = gl_ind[curpos + 1] - gl_ind[curpos];
+        memmove(mybuf + gl_ind[curpos], mybuf + gl_ind[curpos + 1],
+                gl_ind[curlen] + 1 - gl_ind[curpos + 1]);
+        memmove(&gl_ind[curpos], &gl_ind[curpos + 1],
+                (curlen - curpos) * sizeof(gl_ind[0]));
+        curlen--;
+        for (i = curpos; i <= curlen; i++)
+          gl_ind[i] -= wsz;
+      } else {
+        memmove(mybuf + curpos, mybuf + curpos + 1, curlen - curpos);
+        curlen--;
+      }
       break;
     case KEY_END: case 5:
       curpos = curlen;
@@ -1082,9 +1183,21 @@ edit_string(int line, int scr_wid,
       break;
     case 'U' & 31:
       if (curpos <= 0) break;
-      memmove(mybuf, mybuf + curpos, curlen - curpos + 1);
-      curlen -= curpos;
-      curpos = 0;
+      if (utf8_mode) {
+        wsz = gl_ind[curpos] - gl_ind[0];
+        memmove(mybuf, mybuf + gl_ind[curpos],
+                gl_ind[curlen] - gl_ind[curpos] + 1);
+        memmove(gl_ind, &gl_ind[curpos],
+                (curlen - curpos + 1) * sizeof(gl_ind[0]));
+        curlen -= curpos;
+        curpos = 0;
+        for (i = 0; i <= curlen; i++)
+          gl_ind[i] -= wsz;
+      } else {
+        memmove(mybuf, mybuf + curpos, curlen - curpos + 1);
+        curlen -= curpos;
+        curpos = 0;
+      }
       break;
     case 'Y' & 31:
       curlen = 0;
@@ -1363,6 +1476,7 @@ static void
 user_menu_string(struct userlist_user *u, int f, unsigned char *out)
 {
   unsigned char buf[128];
+  int w;
 
   if (f >= USERLIST_PSEUDO_FIRST && f < USERLIST_PSEUDO_LAST) {
     snprintf(out, 78, "%s", user_descs[f].name);
@@ -1370,19 +1484,24 @@ user_menu_string(struct userlist_user *u, int f, unsigned char *out)
     snprintf(out, 78, "%s", user_descs[f].name);
   } else {
     get_user_field(buf, sizeof(buf), u, f, 1);
-    snprintf(out, 78, "%-16.16s:%-60.60s", user_descs[f].name, buf);
+    w = 60;
+    if (utf8_mode) w = utf8_cnt(buf, w);
+    sprintf(out, "%-16.16s:%-*.*s", user_descs[f].name, w, w, buf);
   }
 }
 static void
 member_menu_string(struct userlist_member *m, int f, unsigned char *out)
 {
   unsigned char buf[128];
+  int w;
 
   if (!member_descs[f].has_value) {
     snprintf(out, 78, "%s", member_descs[f].name);
   } else {
     userlist_get_member_field_str(buf, sizeof(buf), m, f, 1);
-    snprintf(out, 78, "%-16.16s:%-60.60s", member_descs[f].name, buf);
+    w = 60;
+    if (utf8_mode) w = utf8_cnt(buf, w);
+    sprintf(out, "%-16.16s:%-*.*s", member_descs[f].name, w, w, buf);
   }
 }
 
@@ -1506,7 +1625,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
   XALLOCAZ(refs, tot_items + 1);
   XALLOCAZ(info, tot_items + 1);
   for (i = 0; i < tot_items; i++) {
-    XALLOCAZ(descs[i], 80);
+    XALLOCAZ(descs[i], 512);
   }
 
   j = 0;
@@ -1724,7 +1843,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         c = 'd';
         goto menu_done;
       case 'q': case 'Q': case 'ê' & 255: case 'Ê' & 255:
-      case 'G' & 31:
+      case 'G' & 31: case '\033':
         c = 'q';
         goto menu_done;
       case 'r': case 'R': case 'Ë' & 255: case 'ë' & 255:
@@ -2513,11 +2632,15 @@ generate_reg_user_item(unsigned char *buf, size_t size, int i,
                        unsigned char *mask)
 {
   int buflen;
+  int w = 36;
 
   // 77 - 6 - 16 - 10 - 6 = 77 - 38 = 39
-  buflen = snprintf(buf, size, "%c%6d  %-16.16s  %-36.36s %c%c%c%c%c %-7.7s",
+  if (utf8_mode) {
+    w = utf8_cnt(uu[i]->i.name, 36);
+  }
+  buflen = snprintf(buf, size, "%c%6d  %-16.16s  %-*.*s %c%c%c%c%c %-7.7s",
                     mask[i]?'!':' ',
-                    uu[i]->id, uu[i]->login, uu[i]->i.name,
+                    uu[i]->id, uu[i]->login, w, w, uu[i]->i.name,
                     (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
                     (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
                     (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
@@ -2690,7 +2813,7 @@ display_registered_users(unsigned char const *upper,
       }
       switch (c) {
       case 'q': case 'Q':
-      case 'Ê' & 255: case 'ê' & 255: case 'G' & 31:
+      case 'Ê' & 255: case 'ê' & 255: case 'G' & 31: case '\033':
         c = 'q';
         goto menu_done;
       case 'r': case 'R': case 'Ë' & 255: case 'ë' & 255:
@@ -3356,7 +3479,7 @@ display_registered_users(unsigned char const *upper,
 static int
 display_contests_menu(unsigned char *upper, int only_choose)
 {
-  int ncnts = 0, i, j;
+  int ncnts = 0, i, j, w;
   const struct contest_desc *cc;
   unsigned char **descs;
   unsigned char buf[128];
@@ -3427,8 +3550,12 @@ display_contests_menu(unsigned char *upper, int only_choose)
   for (i = 0; i < ncnts; i++) {
     j = cntsi[i];
     if (cnts_names[j]) {
-      snprintf(buf, sizeof(buf), "%c%-8d  %-66.66s",
-               sel_cnts.mask[j]?'!':' ', j, cnts_names[j]);
+      w = 66;
+      if (utf8_mode) {
+        w = utf8_cnt(cnts_names[j], 66);
+      }
+      snprintf(buf, sizeof(buf), "%c%-8d  %-*.*s",
+               sel_cnts.mask[j]?'!':' ', j, w, w, cnts_names[j]);
     } else {
       snprintf(buf, sizeof(buf), "%c%-8d  (removed)", sel_cnts.mask[j]?'!':' ', j);
     }
@@ -3489,7 +3616,7 @@ display_contests_menu(unsigned char *upper, int only_choose)
       c = getch();
       switch (c) {
       case 'q': case 'Q':
-      case 'Ê' & 255: case 'ê' & 255: case 'G' & 31:
+      case 'Ê' & 255: case 'ê' & 255: case 'G' & 31: case '\033':
         c = 'q';
         goto menu_done;
       case '\n': case '\r': case ' ':
@@ -3614,7 +3741,7 @@ static struct selected_users_info g_sel_users;
 static int
 do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
 {
-  int r;
+  int r, w;
   unsigned char *xml_text = 0;
   struct userlist_list *users = 0;
   int nusers, i, j, k;
@@ -3703,9 +3830,13 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   descs = alloca(nusers * sizeof(descs[0]));
   memset(descs, 0, nusers * sizeof(descs[0]));
   for (i = 0; i < nusers; i++) {
-    len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-50.50s",
+    w = 50;
+    if (utf8_mode) {
+      w = utf8_cnt(uu[i]->i.name, 50);
+    }
+    len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
 		   g_sel_users.mask[i]?"!":" ",
-                   uu[i]->id, uu[i]->login, uu[i]->i.name);
+                   uu[i]->id, uu[i]->login, w, w, uu[i]->i.name);
     descs[i] = alloca(len + 16);
     strcpy(descs[i], buf);
   }
@@ -3764,7 +3895,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
       }
       switch (c) {
       case 'q': case 'Q':
-      case 'Ê' & 255: case 'ê' & 255: case 'G' & 31:
+      case 'Ê' & 255: case 'ê' & 255: case 'G' & 31: case '\033':
         c = 'q';
         goto menu_done;
       case '\n': case '\r':
@@ -4002,9 +4133,11 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
         g_sel_users.mask[i] = 1;
         g_sel_users.total_selected++;
       }
-      len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-50.50s",
+      w = 50;
+      if (utf8_mode) w = utf8_cnt(uu[i]->i.name, w);
+      len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
                      g_sel_users.mask[i]?"!":" ",
-                     uu[i]->id, uu[i]->login, uu[i]->i.name);
+                     uu[i]->id, uu[i]->login, w, w, uu[i]->i.name);
       strcpy(descs[i], buf);
       menu_driver(menu, REQ_DOWN_ITEM);
       goto menu_continue;
@@ -4053,9 +4186,11 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
             goto menu_continue;
           }
           g_sel_users.mask[j] = 0;
-          len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-50.50s",
+          w = 50;
+          if (utf8_mode) w = utf8_cnt(uu[i]->i.name, w);
+          len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
                          g_sel_users.mask[j]?"!":" ",
-                         uu[j]->id, uu[j]->login, uu[j]->i.name);
+                         uu[j]->id, uu[j]->login, w, w, uu[j]->i.name);
           strcpy(descs[j], buf);
         }
         memset(g_sel_users.mask, 0, g_sel_users.allocated);
@@ -4093,9 +4228,11 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
             }
           }
           g_sel_users.mask[j] = 0;
-          len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-50.50s",
+          w = 50;
+          if (utf8_mode) w = utf8_cnt(uu[i]->i.name, w);
+          len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
                          g_sel_users.mask[j]?"!":" ",
-                         uu[j]->id, uu[j]->login, uu[j]->i.name);
+                         uu[j]->id, uu[j]->login, w, w, uu[j]->i.name);
           strcpy(descs[j], buf);
         }
         memset(g_sel_users.mask, 0, g_sel_users.allocated);
@@ -4202,7 +4339,7 @@ display_main_menu(void)
       c = getch();
       switch (c) {
       case 'q': case 'Q':
-      case 'Ê' & 255: case 'ê' & 255: case 'G' & 31:
+      case 'Ê' & 255: case 'ê' & 255: case 'G' & 31: case '\033':
         c = 'q';
         goto menu_done;
       case 'c': case 'C': case 'Ó' & 255: case 'ó' & 255:
@@ -4328,6 +4465,7 @@ main(int argc, char **argv)
   }
 
   setlocale(LC_ALL, "");
+  if (!strcmp(nl_langinfo(CODESET), "UTF-8")) utf8_mode = 1;
 
   if (!(root_window = initscr())) return 1;
   cbreak();

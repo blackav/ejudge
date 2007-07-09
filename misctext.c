@@ -773,6 +773,207 @@ filename_armor_bytes(
   return out;
 }
 
+int
+utf8_fix_string(unsigned char *str, int *gl_ind)
+{
+  unsigned char *s = str;
+  int w, i = 0, j = 0;
+
+  // i is byte index
+  // j is glyph index
+  if (gl_ind) gl_ind[0] = 0;
+  if (!s) return 0;
+  while (*s) {
+    if (*s <= 0x7f) {
+      s++;
+      if (gl_ind) gl_ind[j++] = i++;
+    } else if (*s <= 0xbf) {
+      // middle of multibyte sequence
+      *s++ = '?';
+      if (gl_ind) gl_ind[j++] = i++;
+    } else if (*s <= 0xc1) {
+      // reserved
+      *s++ = '?';
+      if (gl_ind) gl_ind[j++] = i++;
+    } else if (*s <= 0xdf) {
+      // two bytes: 0x80-0x7ff
+      if (s[1] >= 0x80 && s[1] <= 0xbf) {
+        w = ((s[0] & 0x1f) << 6) | (s[1] & 0x3f);
+        if (w < 0x80) {
+          *s++ = '?';
+          *s++ = '?';
+          if (gl_ind) {
+            gl_ind[j++] = i++;
+            gl_ind[j++] = i++;
+          }
+        } else {
+          s += 2;
+          if (gl_ind) {
+            gl_ind[j++] = i;
+            i += 2;
+          }
+        }
+      } else {
+        // second byte is invalid
+        *s++ = '?';
+        if (gl_ind) gl_ind[j++] = i++;
+      }
+    } else if (*s <= 0xef) {
+      // three bytes: 0x800-0xffff
+      if (s[1] >= 0x80 && s[1] <= 0xbf) {
+        if (s[2] >= 0x80 && s[2] <= 0xbf) {
+          w = ((s[0] & 0x0f) << 12) | ((s[1] & 0x3f) << 6) | (s[2] & 0x3f);
+          if (w < 0x800) {
+            *s++ = '?';
+            *s++ = '?';
+            *s++ = '?';
+            if (gl_ind) {
+              gl_ind[j++] = i++;
+              gl_ind[j++] = i++;
+              gl_ind[j++] = i++;
+            }
+          } else {
+            s += 3;
+            if (gl_ind) {
+              gl_ind[j++] = i;
+              i += 3;
+            }
+          }
+        } else {
+          // third byte is invalid
+          *s++ = '?';
+          *s++ = '?';
+          if (gl_ind) {
+            gl_ind[j++] = i++;
+            gl_ind[j++] = i++;
+          }
+        }
+      } else {
+        // second byte is invalid
+        *s++ = '?';
+        if (gl_ind) gl_ind[j++] = i++;
+      }
+    } else if (*s <= 0xf7) {
+      // four bytes: 0x10000-0x10ffff
+      if (s[1] >= 0x80 && s[1] <= 0xbf) {
+        if (s[2] >= 0x80 && s[2] <= 0xbf) {
+          if (s[3] >= 0x80 && s[3] <= 0xbf) {
+            w = ((s[0] & 0x07) << 18) | ((s[1] & 0x3f) << 12) | ((s[2] & 0x3f) << 6) | (s[3] & 0x3f);
+            if (w < 0x10000) {
+              *s++ = '?';
+              *s++ = '?';
+              *s++ = '?';
+              *s++ = '?';
+              if (gl_ind) {
+                gl_ind[j++] = i++;
+                gl_ind[j++] = i++;
+                gl_ind[j++] = i++;
+                gl_ind[j++] = i++;
+              }
+            } else {
+              s += 4;
+              if (gl_ind) {
+                gl_ind[j++] = i;
+                i += 4;
+              }
+            }
+          } else {
+            *s++ = '?';
+            *s++ = '?';
+            *s++ = '?';
+            if (gl_ind) {
+              gl_ind[j++] = i++;
+              gl_ind[j++] = i++;
+              gl_ind[j++] = i++;
+            }
+          }
+        } else {
+          *s++ = '?';
+          *s++ = '?';
+          if (gl_ind) {
+            gl_ind[j++] = i++;
+            gl_ind[j++] = i++;
+          }
+        }
+      } else {
+        *s++ = '?';
+        if (gl_ind) gl_ind[j++] = i++;
+      }
+    } else {
+      // reserved
+      *s++ = '?';
+      if (gl_ind) gl_ind[j++] = i++;
+    }
+  }
+  if (gl_ind) gl_ind[j] = i;
+  return j;
+}
+
+int
+utf8_cnt(const unsigned char *s, int width)
+{
+  int cnt = 0;
+
+  if (!s) return 0;
+  while (*s && width) {
+    if (*s <= 0x7f) {
+      s++;
+      width--;
+      cnt++;
+    } else if (*s <= 0xbf) {
+      // middle of multibyte sequence
+      s++;
+      width--;
+      cnt++;
+    } else if (*s <= 0xc1) {
+      // reserved
+      s++;
+      width--;
+      cnt++;
+    } else if (*s <= 0xdf) {
+      // two bytes: 0x80-0x7ff
+      if (s[1] >= 0x80 && s[1] <= 0xbf) {
+        s += 2;
+        width--;
+        cnt += 2;
+      } else {
+        s++;
+        width--;
+        cnt++;
+      }
+    } else if (*s <= 0xef) {
+      // three bytes: 0x800-0xffff
+      if (s[1] >= 0x80 && s[1] <= 0xbf && s[2] >= 0x80 && s[2] <= 0xbf) {
+        s += 3;
+        width--;
+        cnt += 3;
+      } else {
+        s++;
+        width--;
+        cnt++;
+      }
+    } else if (*s <= 0xf7) {
+      // four bytes: 0x10000-0x10ffff
+      if (s[1] >= 0x80 && s[1] <= 0xbf && s[2] >= 0x80 && s[2] <= 0xbf
+          && s[3] >= 0x80 && s[3] <= 0xbf) {
+        s += 4;
+        width--;
+        cnt += 4;
+      } else {
+        s++;
+        width--;
+        cnt++;
+      }
+    } else {
+      // reserved
+      s++;
+      width--;
+      cnt++;
+    }
+  }
+  return cnt;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
