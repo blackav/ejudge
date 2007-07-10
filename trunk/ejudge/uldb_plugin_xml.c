@@ -2494,6 +2494,8 @@ copy_user_info_func(void *data, int user_id,
 
   /* clear `printer_name' and `location' */
   xfree(ui_to->printer_name); ui_to->printer_name = 0;
+  xfree(ui_to->exam_id); ui_to->exam_id = 0;
+  xfree(ui_to->exam_cypher); ui_to->exam_cypher = 0;
   xfree(ui_to->location); ui_to->location = 0;
   /* copy spelling field */
   xfree(ui_to->spelling); ui_to->spelling = 0;

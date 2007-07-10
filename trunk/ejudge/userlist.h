@@ -112,6 +112,8 @@ enum
     USERLIST_T_LOCATION,
     USERLIST_T_SPELLING,
     USERLIST_T_PRINTER_NAME,
+    USERLIST_T_EXAM_ID,
+    USERLIST_T_EXAM_CYPHER,
     USERLIST_T_LANGUAGES,
     USERLIST_T_EXTRA1,
     USERLIST_T_CNTSINFOS,
@@ -224,12 +226,14 @@ enum
     USERLIST_NC_SPELLING,
     USERLIST_NC_PRINTER_NAME,
     /* 120 */
+    USERLIST_NC_EXAM_ID,
+    USERLIST_NC_EXAM_CYPHER,
     USERLIST_NC_LANGUAGES,
     USERLIST_NC_PHONE,
     USERLIST_NC_CREATE_TIME,
+    /* 125 */
     USERLIST_NC_LAST_LOGIN_TIME,
     USERLIST_NC_LAST_CHANGE_TIME,
-    /* 125 */
     USERLIST_NC_LAST_PWDCHANGE_TIME,
 
     USERLIST_NC_LAST,
@@ -380,6 +384,8 @@ struct userlist_user_info
   unsigned char *location;
   unsigned char *spelling;
   unsigned char *printer_name;
+  unsigned char *exam_id;
+  unsigned char *exam_cypher;
   unsigned char *languages;
   unsigned char *phone;
   struct userlist_members *members[USERLIST_MB_LAST];

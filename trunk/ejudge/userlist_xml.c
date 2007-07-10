@@ -91,6 +91,8 @@ static char const * const elem_map[] =
   "location",
   "spelling",
   "printer_name",
+  "exam_id",
+  "exam_cypher",
   "languages",
   "extra1",
   "cntsinfos",
@@ -207,6 +209,8 @@ elem_free(struct xml_tree *t)
       xfree(p->i.location);
       xfree(p->i.spelling);
       xfree(p->i.printer_name);
+      xfree(p->i.exam_id);
+      xfree(p->i.exam_cypher);
       xfree(p->i.languages);
       xfree(p->i.phone);
       xfree(p->extra1);
@@ -271,6 +275,8 @@ elem_free(struct xml_tree *t)
       xfree(p->i.location);
       xfree(p->i.spelling);
       xfree(p->i.printer_name);
+      xfree(p->i.exam_id);
+      xfree(p->i.exam_cypher);
       xfree(p->i.languages);
       xfree(p->i.phone);
     }
@@ -761,6 +767,8 @@ static const size_t leaf_info_offsets[USERLIST_LAST_TAG] =
   [USERLIST_T_LOCATION] = INFO_OFFSET(location),
   [USERLIST_T_SPELLING] = INFO_OFFSET(spelling),
   [USERLIST_T_PRINTER_NAME] = INFO_OFFSET(printer_name),
+  [USERLIST_T_EXAM_ID] = INFO_OFFSET(exam_id),
+  [USERLIST_T_EXAM_CYPHER] = INFO_OFFSET(exam_cypher),
   [USERLIST_T_LANGUAGES] = INFO_OFFSET(languages),
 };
 
@@ -1683,6 +1691,8 @@ userlist_real_unparse_user(const struct userlist_user *p, FILE *f, int mode, int
   xml_unparse_text(f, elem_map[USERLIST_T_LOCATION], ui->location, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_SPELLING], ui->spelling, "    ");
   xml_unparse_text(f,elem_map[USERLIST_T_PRINTER_NAME],ui->printer_name,"    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_EXAM_ID], ui->exam_id, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_EXAM_CYPHER],ui->exam_cypher,"    ");
   xml_unparse_text(f, elem_map[USERLIST_T_LANGUAGES], ui->languages, "    ");
 
   if (mode == USERLIST_MODE_STAND) {
