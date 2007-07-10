@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
 
 #include "ncurses_utils.h"
 #include "tex_dom.h"
+#include "misctext.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -770,22 +771,37 @@ ncurses_edit_password(int line, int scr_wid,
 }
 
 int
-ncurses_edit_string(int line, int scr_wid,
-                    unsigned char const *head,
-                    unsigned char *buf, int length)
+ncurses_edit_string(
+	int line,
+        int scr_wid,
+        unsigned char const *head,
+        unsigned char *buf,
+        int length,
+        int utf8_mode)
 {
   WINDOW *out_win, *txt_win, *head_win;
   PANEL *out_pan, *txt_pan, *head_pan;
   int retval = -1;
   int req_lines, req_cols, line0, col0;
   int pos0, curpos, w, curlen;
-  int c;
+  int c, wc, wsz, i;
   char *mybuf;
+  int *gl_ind = 0;
+  unsigned char *pc;
 
   ASSERT(length > 0);
   mybuf = alloca(length + 10);
   memset(mybuf, 0, length + 10);
-  strcpy(mybuf, buf);
+  snprintf(mybuf, length, "%s", buf);
+  if (utf8_mode) {
+    gl_ind = alloca((length + 10) * sizeof(gl_ind[0]));
+    curlen = utf8_fix_string(mybuf, gl_ind);
+  } else {
+    gl_ind = alloca((length + 10) * sizeof(gl_ind[0]));
+    curlen = strlen(mybuf);
+    for (w = 0; w <= curlen; w++)
+      gl_ind[w] = w;
+  }
 
   if (!head) head = "";
   if (scr_wid > COLS) scr_wid = COLS;
@@ -798,7 +814,7 @@ ncurses_edit_string(int line, int scr_wid,
   if (line0 < 1) line0 = 1;
   col0 = (COLS - req_cols) / 2;
   if (col0 + req_cols >= COLS)
-    col0 =COLS - 1 - req_cols;
+    col0 = COLS - 1 - req_cols;
   if (col0 < 0) col0 = 0;
 
   out_win = newwin(req_lines, req_cols, line0, col0);
@@ -821,9 +837,8 @@ ncurses_edit_string(int line, int scr_wid,
   ncurses_print_help("Enter-Ok ^G-Cancel");
   update_panels();
   doupdate();
-  curlen = strlen(mybuf);
-  curpos = curlen;
-  pos0 = 0;
+  curpos = curlen; // glyph position of the cursor
+  pos0 = 0; // glyph position of the starting seq
 
   while(1) {
     // recalculate pos0
@@ -837,13 +852,93 @@ ncurses_edit_string(int line, int scr_wid,
       pos0 = curpos;
     }
     if (pos0 < 0) pos0 = 0;
-    mvwaddnstr(txt_win, 0, 0, mybuf + pos0, w);
+    mvwaddnstr(txt_win, 0, 0, mybuf + gl_ind[pos0], -1 /*w*/);
     wclrtoeol(txt_win);
     wmove(txt_win, 0, curpos - pos0);
     wnoutrefresh(txt_win);
     doupdate();
-    c = getch();
-    if (c == ('G' & 31)) {
+    if (utf8_mode) {
+      wc = 0;
+      wsz = 0;
+      c = getch();
+      if (c < ' ' || c == 0x7f) {
+        // do nothing
+      } else if (c < 0x7f) {
+        wc = c;
+        wsz = 1;
+      } else if (c <= 0xbf) {
+        // invalid starting char
+        continue;
+      } else if (c <= 0xc1) {
+        // reserved starting char
+        continue;
+      } else if (c <= 0xdf) {
+        // two bytes: 0x80-0x7ff
+        wc = c & 0x1f;
+        wsz = 2;
+      } else if (c <= 0xef) {
+        // three bytes: 0x800-0xffff
+        wc = c & 0x0f;
+        wsz = 3;
+      } else if (c <= 0xf7) {
+        // four bytes: 0x10000-0x10ffff
+        wc = c & 0x07;
+        wsz = 4;
+      } else if (c <= 0xff) {
+        // reserved starting char
+        continue;
+      }
+      if (wsz > 0) {
+        for (i = 1; i < wsz; i++) {
+          c = getch();
+          if (c < 0x80 || c > 0xbf) break;
+          wc = (wc << 6) | (c & 0x3f);
+        }
+        if (i < wsz) continue;
+        if (wc <= 0x7f) wsz = 1;
+        else if (wc <= 0x7ff) wsz = 2;
+        else if (wc <= 0xffff) wsz = 3;
+        else wsz = 4;
+        if (gl_ind[curlen] + wsz > length) continue;
+        memmove(mybuf + gl_ind[curpos] + wsz, mybuf + gl_ind[curpos],
+                gl_ind[curlen] - gl_ind[curpos] + 1);
+        memmove(&gl_ind[curpos + 1], &gl_ind[curpos],
+                (curlen - curpos + 1) * sizeof(gl_ind[0]));
+        for (i = curpos + 1; i <= curlen + 1; i++)
+          gl_ind[i] += wsz;
+        pc = mybuf + gl_ind[curpos];
+        if (wsz == 1) {
+          *pc = wc;
+        } else if (wsz == 2) {
+          *pc++ = ((wc >> 6) & 0x1f) | 0xc0;
+          *pc = (wc & 0x3f) | 0x80;
+        } else if (wsz == 3) {
+          *pc++ = ((wc >> 12) & 0x0f) | 0xe0;
+          *pc++ = ((wc >> 6) & 0x3f) | 0x80;
+          *pc = (wc & 0x3f) | 0x80;
+        } else if (wsz == 4) {
+          *pc++ = ((wc >> 18) & 0x07) | 0xf0;
+          *pc++ = ((wc >> 12) & 0x3f) | 0x80;
+          *pc++ = ((wc >> 6) & 0x3f) | 0x80;
+          *pc = (wc & 0x3f) | 0x80;
+        }
+        curpos++;
+        curlen++;
+        continue;
+      }
+    } else {
+      c = getch();
+      if (c >= ' ' && c <= 255 && c != 127) {
+        if (curlen == length) continue;
+        memmove(mybuf + curpos + 1, mybuf + curpos, curlen - curpos + 1);
+        mybuf[curpos] = c;
+        curpos++;
+        curlen++;
+        gl_ind[curlen] = curlen;
+        continue;
+      }
+    }
+    if (c == ('G' & 31) || c == '\033') {
       break;
     }
     if (c == '\r' || c == '\n') {
@@ -851,14 +946,6 @@ ncurses_edit_string(int line, int scr_wid,
       strcpy(buf, mybuf);
       retval = strlen(buf);
       break;
-    }
-    if (c >= ' ' && c <= 255 && c != 127) {
-      if (curlen == length) continue;
-      memmove(mybuf + curpos + 1, mybuf + curpos, curlen - curpos + 1);
-      mybuf[curpos] = c;
-      curpos++;
-      curlen++;
-      continue;
     }
     switch (c) {
     case KEY_LEFT:
@@ -874,8 +961,19 @@ ncurses_edit_string(int line, int scr_wid,
       curpos--;
     case KEY_DC: case 4: case 127:
       if (curpos >= curlen) break;
-      memmove(mybuf + curpos, mybuf + curpos + 1, curlen - curpos);
-      curlen--;
+      if (utf8_mode) {
+        wsz = gl_ind[curpos + 1] - gl_ind[curpos];
+        memmove(mybuf + gl_ind[curpos], mybuf + gl_ind[curpos + 1],
+                gl_ind[curlen] + 1 - gl_ind[curpos + 1]);
+        memmove(&gl_ind[curpos], &gl_ind[curpos + 1],
+                (curlen - curpos) * sizeof(gl_ind[0]));
+        curlen--;
+        for (i = curpos; i <= curlen; i++)
+          gl_ind[i] -= wsz;
+      } else {
+        memmove(mybuf + curpos, mybuf + curpos + 1, curlen - curpos);
+        curlen--;
+      }
       break;
     case KEY_END: case 5:
       curpos = curlen;
@@ -889,9 +987,21 @@ ncurses_edit_string(int line, int scr_wid,
       break;
     case 'U' & 31:
       if (curpos <= 0) break;
-      memmove(mybuf, mybuf + curpos, curlen - curpos + 1);
-      curlen -= curpos;
-      curpos = 0;
+      if (utf8_mode) {
+        wsz = gl_ind[curpos] - gl_ind[0];
+        memmove(mybuf, mybuf + gl_ind[curpos],
+                gl_ind[curlen] - gl_ind[curpos] + 1);
+        memmove(gl_ind, &gl_ind[curpos],
+                (curlen - curpos + 1) * sizeof(gl_ind[0]));
+        curlen -= curpos;
+        curpos = 0;
+        for (i = 0; i <= curlen; i++)
+          gl_ind[i] -= wsz;
+      } else {
+        memmove(mybuf, mybuf + curpos, curlen - curpos + 1);
+        curlen -= curpos;
+        curpos = 0;
+      }
       break;
     case 'Y' & 31:
       curlen = 0;
@@ -940,8 +1050,11 @@ file_sort_func(const void *p1, const void *p2)
 }
 
 static int
-do_choose_file(const unsigned char *header, unsigned char *path_buf,
-               int *p_view_hidden_flag)
+do_choose_file(
+	const unsigned char *header,
+        unsigned char *path_buf,
+        int *p_view_hidden_flag,
+        int utf8_mode)
 {
   unsigned char dir_path[PATH_MAX], file_name[PATH_MAX];
   unsigned char tmp_path[PATH_MAX];
@@ -1264,7 +1377,7 @@ do_choose_file(const unsigned char *header, unsigned char *path_buf,
     }
     if (c == 'm') {
       j = ncurses_edit_string(LINES/2, COLS, "New directory name",
-                              new_dir_name, sizeof(new_dir_name));
+                              new_dir_name, sizeof(new_dir_name), utf8_mode);
       if (j < 0) continue;
       if (strchr(new_dir_name, '/')) {
         ncurses_errbox("\\begin{center}\nERROR!\n\nInvalid directory name!\n\\end{center}\n", dir_path);
@@ -1320,8 +1433,11 @@ do_choose_file(const unsigned char *header, unsigned char *path_buf,
 }
 
 int
-ncurses_choose_file(const unsigned char *header,
-                    unsigned char *buf, size_t buf_size)
+ncurses_choose_file(
+	const unsigned char *header,
+        unsigned char *buf,
+        size_t buf_size,
+        int utf8_mode)
 {
   unsigned char tmp_buf[PATH_MAX], wdir[PATH_MAX];
   size_t si, di;
@@ -1387,7 +1503,7 @@ ncurses_choose_file(const unsigned char *header,
   }
 
   while (1) {
-    res = do_choose_file(header, tmp_buf, &view_hidden_flag);
+    res = do_choose_file(header, tmp_buf, &view_hidden_flag, utf8_mode);
     if (res >= -1) break;
   }
 

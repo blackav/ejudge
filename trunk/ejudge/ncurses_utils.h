@@ -4,7 +4,7 @@
 #ifndef __NCURSES_UTILS_H__
 #define __NCURSES_UTILS_H__
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,7 @@ int ncurses_generic_menu(int min_width, int max_width, /* incl. frame */
 
 int ncurses_edit_string(int line, int scr_wid,
                         unsigned char const *head,
-                        unsigned char *buf, int length);
+                        unsigned char *buf, int length, int utf8_mode);
 
 int ncurses_edit_password(int line, int scr_wid,
                           unsigned char const *head,
@@ -51,13 +51,13 @@ void ncurses_msgbox(unsigned char const *fmt, ...);
 void ncurses_errbox(unsigned char const *fmt, ...);
 
 int ncurses_choose_file(const unsigned char *header,
-                        unsigned char *buf, size_t buf_size);
+                        unsigned char *buf, size_t buf_size, int utf8_mode);
 
 void ncurses_view_text(const unsigned char *header, const unsigned char *txt);
 
 #endif /* __NCURSES_UTILS_H__ */
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "WINDOW" "ITEM" "PANEL" "MENU")

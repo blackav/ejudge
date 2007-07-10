@@ -25,6 +25,7 @@
 #include "ejudge_cfg.h"
 #include "xml_utils.h"
 #include "misctext.h"
+#include "ncurses_utils.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/logger.h>
@@ -118,7 +119,6 @@ enum
 
 static struct userlist_clnt *server_conn;
 static struct ejudge_cfg *config;
-static WINDOW *root_window;
 static int utf8_mode = 0;
 
 static int
@@ -963,259 +963,6 @@ display_member_status_menu(int line, int init_val)
     free_item(items[i]);
   }
   return selected_value;
-}
-
-static int
-edit_string(int line, int scr_wid,
-            unsigned char const *head,
-            unsigned char *buf, int length)
-{
-  WINDOW *out_win, *txt_win, *head_win;
-  PANEL *out_pan, *txt_pan, *head_pan;
-  int retval = -1;
-  int req_lines, req_cols, line0, col0;
-  int pos0, curpos, w, curlen;
-  int c, wc, wsz, i;
-  char *mybuf;
-  int *gl_ind = 0;
-  unsigned char *pc;
-
-  ASSERT(length > 0);
-  mybuf = alloca(length + 10);
-  memset(mybuf, 0, length + 10);
-  snprintf(mybuf, length, "%s", buf);
-  //strcpy(mybuf, buf);
-  if (utf8_mode) {
-    gl_ind = alloca((length + 10) * sizeof(gl_ind[0]));
-    curlen = utf8_fix_string(mybuf, gl_ind);
-    fprintf(stderr, ">>%d\n", curlen);
-    for (i = 0; i <= curlen; i++)
-      fprintf(stderr, " %d", gl_ind[i]);
-    fprintf(stderr, "\n");
-  } else {
-    gl_ind = alloca((length + 10) * sizeof(gl_ind[0]));
-    curlen = strlen(mybuf);
-    for (w = 0; w <= curlen; w++)
-      gl_ind[w] = w;
-  }
-
-  if (!head) head = "";
-  if (scr_wid > COLS) scr_wid = COLS;
-  req_lines = 4;
-  req_cols = scr_wid;
-  w = req_cols - 3;
-  line0 = line - req_lines / 2;
-  if (line0 + req_lines >= LINES)
-    line0 = LINES - 1 - req_lines;
-  if (line0 < 1) line0 = 1;
-  col0 = (COLS - req_cols) / 2;
-  if (col0 + req_cols >= COLS)
-    col0 = COLS - 1 - req_cols;
-  if (col0 < 0) col0 = 0;
-
-  out_win = newwin(req_lines, req_cols, line0, col0);
-  head_win = newwin(1, req_cols - 2, line0 + 1, col0 + 1);
-  txt_win = newwin(1, req_cols - 2, line0 + 2, col0 + 1);
-  wattrset(out_win, COLOR_PAIR(1));
-  wbkgdset(out_win, COLOR_PAIR(1));
-  wattrset(head_win, COLOR_PAIR(1));
-  wbkgdset(head_win, COLOR_PAIR(1));
-  wattrset(txt_win, COLOR_PAIR(1));
-  wbkgdset(txt_win, COLOR_PAIR(1));
-  wclear(txt_win);
-  wclear(out_win);
-  wclear(head_win);
-  box(out_win, 0, 0);
-  out_pan = new_panel(out_win);
-  head_pan = new_panel(head_win);
-  txt_pan = new_panel(txt_win);
-  waddstr(head_win, head);
-  print_help("Enter-Ok ^G-Cancel");
-  update_panels();
-  doupdate();
-  curpos = curlen; // glyph position of the cursor
-  pos0 = 0; // glyph position of the starting seq
-
-  while(1) {
-    // recalculate pos0
-    if (curpos < 0) curpos = 0;
-    if (curpos > curlen) curpos = curlen;
-    if (curpos - pos0 > w && curpos == curlen) {
-      pos0 = curpos - w;
-    } else if (curpos - pos0 >= w && curpos < curlen) {
-      pos0 = curpos - w + 1;
-    } else if (curpos < pos0) {
-      pos0 = curpos;
-    }
-    if (pos0 < 0) pos0 = 0;
-    mvwaddnstr(txt_win, 0, 0, mybuf + gl_ind[pos0], -1 /*w*/);
-    wclrtoeol(txt_win);
-    wmove(txt_win, 0, curpos - pos0);
-    wnoutrefresh(txt_win);
-    doupdate();
-    if (utf8_mode) {
-      wc = 0;
-      wsz = 0;
-      c = getch();
-      if (c < ' ' || c == 0x7f) {
-        // do nothing
-      } else if (c < 0x7f) {
-        wc = c;
-        wsz = 1;
-      } else if (c <= 0xbf) {
-        // invalid starting char
-        continue;
-      } else if (c <= 0xc1) {
-        // reserved starting char
-        continue;
-      } else if (c <= 0xdf) {
-        // two bytes: 0x80-0x7ff
-        wc = c & 0x1f;
-        wsz = 2;
-      } else if (c <= 0xef) {
-        // three bytes: 0x800-0xffff
-        wc = c & 0x0f;
-        wsz = 3;
-      } else if (c <= 0xf7) {
-        // four bytes: 0x10000-0x10ffff
-        wc = c & 0x07;
-        wsz = 4;
-      } else if (c <= 0xff) {
-        // reserved starting char
-        continue;
-      }
-      if (wsz > 0) {
-        for (i = 1; i < wsz; i++) {
-          c = getch();
-          if (c < 0x80 || c > 0xbf) break;
-          wc = (wc << 6) | (c & 0x3f);
-        }
-        if (i < wsz) continue;
-        if (wc <= 0x7f) wsz = 1;
-        else if (wc <= 0x7ff) wsz = 2;
-        else if (wc <= 0xffff) wsz = 3;
-        else wsz = 4;
-        if (gl_ind[curlen] + wsz > length) continue;
-        memmove(mybuf + gl_ind[curpos] + wsz, mybuf + gl_ind[curpos],
-                gl_ind[curlen] - gl_ind[curpos] + 1);
-        memmove(&gl_ind[curpos + 1], &gl_ind[curpos],
-                (curlen - curpos + 1) * sizeof(gl_ind[0]));
-        for (i = curpos + 1; i <= curlen + 1; i++)
-          gl_ind[i] += wsz;
-        pc = mybuf + gl_ind[curpos];
-        if (wsz == 1) {
-          *pc = wc;
-        } else if (wsz == 2) {
-          *pc++ = ((wc >> 6) & 0x1f) | 0xc0;
-          *pc = (wc & 0x3f) | 0x80;
-        } else if (wsz == 3) {
-          *pc++ = ((wc >> 12) & 0x0f) | 0xe0;
-          *pc++ = ((wc >> 6) & 0x3f) | 0x80;
-          *pc = (wc & 0x3f) | 0x80;
-        } else if (wsz == 4) {
-          *pc++ = ((wc >> 18) & 0x07) | 0xf0;
-          *pc++ = ((wc >> 12) & 0x3f) | 0x80;
-          *pc++ = ((wc >> 6) & 0x3f) | 0x80;
-          *pc = (wc & 0x3f) | 0x80;
-        }
-        curpos++;
-        curlen++;
-        continue;
-      }
-    } else {
-      c = getch();
-      if (c >= ' ' && c <= 255 && c != 127) {
-        if (curlen == length) continue;
-        memmove(mybuf + curpos + 1, mybuf + curpos, curlen - curpos + 1);
-        mybuf[curpos] = c;
-        curpos++;
-        curlen++;
-        gl_ind[curlen] = curlen;
-        continue;
-      }
-    }
-    if (c == ('G' & 31) || c == '\033') {
-      break;
-    }
-    if (c == '\r' || c == '\n') {
-      ASSERT(strlen(mybuf) <= length);
-      strcpy(buf, mybuf);
-      retval = strlen(buf);
-      break;
-    }
-    switch (c) {
-    case KEY_LEFT:
-      if (!curpos) break;
-      curpos--;
-      break;
-    case KEY_RIGHT:
-      if (curpos > curlen) break;
-      curpos++;
-      break;
-    case KEY_BACKSPACE: case 8:
-      if (!curpos) break;
-      curpos--;
-    case KEY_DC: case 4: case 127:
-      if (curpos >= curlen) break;
-      if (utf8_mode) {
-        wsz = gl_ind[curpos + 1] - gl_ind[curpos];
-        memmove(mybuf + gl_ind[curpos], mybuf + gl_ind[curpos + 1],
-                gl_ind[curlen] + 1 - gl_ind[curpos + 1]);
-        memmove(&gl_ind[curpos], &gl_ind[curpos + 1],
-                (curlen - curpos) * sizeof(gl_ind[0]));
-        curlen--;
-        for (i = curpos; i <= curlen; i++)
-          gl_ind[i] -= wsz;
-      } else {
-        memmove(mybuf + curpos, mybuf + curpos + 1, curlen - curpos);
-        curlen--;
-      }
-      break;
-    case KEY_END: case 5:
-      curpos = curlen;
-      break;
-    case KEY_HOME: case 1:
-      curpos = 0;
-      break;
-    case 'K' & 31:
-      curlen = curpos;
-      mybuf[curlen] = 0;
-      break;
-    case 'U' & 31:
-      if (curpos <= 0) break;
-      if (utf8_mode) {
-        wsz = gl_ind[curpos] - gl_ind[0];
-        memmove(mybuf, mybuf + gl_ind[curpos],
-                gl_ind[curlen] - gl_ind[curpos] + 1);
-        memmove(gl_ind, &gl_ind[curpos],
-                (curlen - curpos + 1) * sizeof(gl_ind[0]));
-        curlen -= curpos;
-        curpos = 0;
-        for (i = 0; i <= curlen; i++)
-          gl_ind[i] -= wsz;
-      } else {
-        memmove(mybuf, mybuf + curpos, curlen - curpos + 1);
-        curlen -= curpos;
-        curpos = 0;
-      }
-      break;
-    case 'Y' & 31:
-      curlen = 0;
-      curpos = 0;
-      mybuf[curlen] = 0;
-      break;
-    }
-  }
-
-  del_panel(out_pan);
-  del_panel(txt_pan);
-  del_panel(head_pan);
-  delwin(out_win);
-  delwin(txt_win);
-  delwin(head_win);
-  update_panels();
-  doupdate();
-  return retval;
 }
 
 static unsigned char const * const participant_sort_keys[] =
@@ -2250,8 +1997,8 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         snprintf(edit_header, sizeof(edit_header),
                  "%s",
                  user_descs[info[cur_i].field].name);
-        r = edit_string(cur_line, COLS, edit_header,
-                        edit_buf, sizeof(edit_buf) - 1);
+        r = ncurses_edit_string(cur_line, COLS, edit_header,
+                                edit_buf, sizeof(edit_buf) - 1, utf8_mode);
         if (r < 0) goto menu_continue;
         r = set_user_field(u, info[cur_i].field, edit_buf);
         if (!r) goto menu_continue;
@@ -2324,8 +2071,8 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
                    member_string[info[cur_i].role],
                    info[cur_i].pers + 1,
                    member_descs[info[cur_i].field].name);
-          r = edit_string(cur_line, COLS, edit_header,
-                          edit_buf, sizeof(edit_buf) - 1);
+          r = ncurses_edit_string(cur_line, COLS, edit_header,
+                                  edit_buf, sizeof(edit_buf) - 1, utf8_mode);
           if (r < 0) goto menu_continue;
           r = userlist_set_member_field_str(m, info[cur_i].field, edit_buf);
           if (!r) goto menu_continue;
@@ -2490,8 +2237,9 @@ user_search(struct userlist_user **uu, int total_users, int cur_user)
       regfree(&search_regex_comp);
       search_regex_ready = 0;
     }
-    j = edit_string(LINES / 2, COLS, search_regex_kind_full[search_type],
-                    search_regex_buf, sizeof(search_regex_buf) - 16);
+    j = ncurses_edit_string(LINES / 2, COLS,search_regex_kind_full[search_type],
+                            search_regex_buf, sizeof(search_regex_buf) - 16,
+                            utf8_mode);
     if (j <= 0) return -2;
     j = regcomp(&search_regex_comp, search_regex_buf,
                 REG_EXTENDED | REG_NOSUB);
@@ -3287,7 +3035,8 @@ display_registered_users(unsigned char const *upper,
       char *tmpendptr = 0;
 
       memset(number_buf, 0, sizeof(number_buf));
-      i = edit_string(LINES / 2, COLS, "Jump to user id?", number_buf, 200);
+      i = ncurses_edit_string(LINES / 2, COLS, "Jump to user id?", number_buf,
+                              200, utf8_mode);
       if (i >= 0) {
         errno = 0;
         i = strtol(number_buf, &tmpendptr, 10);
@@ -4009,7 +3758,8 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
       char *tmpendptr = 0;
 
       memset(number_buf, 0, sizeof(number_buf));
-      i = edit_string(LINES / 2, COLS, "Jump to user id?", number_buf, 200);
+      i = ncurses_edit_string(LINES / 2, COLS, "Jump to user id?", number_buf,
+                              200, utf8_mode);
       if (i >= 0) {
         errno = 0;
         i = strtol(number_buf, &tmpendptr, 10);
@@ -4048,13 +3798,16 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
       // mass creating new user
 
       memset(templ_buf, 0, sizeof(templ_buf));
-      i = edit_string(LINES / 2, COLS, "Template for new logins?", templ_buf, 200);
+      i = ncurses_edit_string(LINES / 2, COLS, "Template for new logins?",
+                              templ_buf, 200, utf8_mode);
       if (i < 0) goto menu_continue;
       memset(passwd_buf, 0, sizeof(passwd_buf));
-      i = edit_string(LINES / 2, COLS, "Template for passwords?", passwd_buf, 200);
+      i = ncurses_edit_string(LINES / 2, COLS, "Template for passwords?",
+                              passwd_buf, 200, utf8_mode);
       if (i < 0) goto menu_continue;
       memset(num_buf, 0, sizeof(num_buf));
-      i = edit_string(LINES / 2, COLS, "First number:", num_buf, 200);
+      i = ncurses_edit_string(LINES / 2, COLS, "First number:", num_buf, 200,
+                              utf8_mode);
       if (i < 0) goto menu_continue;
       if (sscanf(num_buf, "%d%n", &first_num, &n) != 1 || num_buf[n]
           || first_num < 0 || first_num >= 1000000) {
@@ -4062,7 +3815,8 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
         goto menu_continue;
       }
       memset(num_buf, 0, sizeof(num_buf));
-      i = edit_string(LINES / 2, COLS, "Last number:", num_buf, 200);
+      i = ncurses_edit_string(LINES / 2, COLS, "Last number:", num_buf, 200,
+                              utf8_mode);
       if (i < 0) goto menu_continue;
       if (sscanf(num_buf, "%d%n", &last_num, &n) != 1 || num_buf[n]
           || last_num < 0 || last_num >= 1000000 || last_num < first_num) {
@@ -4070,7 +3824,8 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
         goto menu_continue;
       }
       memset(num_buf, 0, sizeof(num_buf));
-      i = edit_string(LINES / 2, COLS, "Contest number:", num_buf, 200);
+      i = ncurses_edit_string(LINES / 2, COLS, "Contest number:", num_buf, 200,
+                              utf8_mode);
       if (i < 0) goto menu_continue;
       if (sscanf(num_buf, "%d%n", &contest_num, &n) != 1 || num_buf[n]
           || contest_num <= 0 || contest_num >= 1000000) {
