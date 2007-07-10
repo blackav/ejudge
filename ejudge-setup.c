@@ -41,8 +41,10 @@
 
 #include <libintl.h>
 #include <locale.h>
+#include <langinfo.h>
 
 static unsigned char uudecode_path[PATH_MAX];
+static int utf8_mode;
 
 #ifndef CGI_PROG_SUFFIX
 #define CGI_PROG_SUFFIX ""
@@ -872,7 +874,7 @@ do_paths_menu(int *p_cur_item)
       // edit the variable
       snprintf(tmp_buf, sizeof(tmp_buf), "%s", cur_path_item->buf);
       j = ncurses_edit_string(LINES/2, COLS, cur_path_item->descr,
-                              tmp_buf, sizeof(tmp_buf));
+                              tmp_buf, sizeof(tmp_buf), utf8_mode);
       if (j < 0) continue;
     check_variable_value:
       if (!strcmp(cur_path_item->buf, tmp_buf)) continue;
@@ -949,7 +951,8 @@ do_paths_menu(int *p_cur_item)
       cur_path_item = &path_edit_items[i];
       if (!cur_path_item->buf) continue;
       snprintf(tmp_buf, sizeof(tmp_buf), "%s", cur_path_item->buf);
-      j = ncurses_choose_file(cur_path_item->descr, tmp_buf, sizeof(tmp_buf));
+      j = ncurses_choose_file(cur_path_item->descr, tmp_buf, sizeof(tmp_buf),
+                              utf8_mode);
       if (j < 0) continue;
       goto check_variable_value;
     }
@@ -1221,7 +1224,7 @@ do_identity_menu(int *p_cur_item)
 
       snprintf(buf1, sizeof(buf1), "%s", cur_id_item->buf);
       j = ncurses_edit_string(LINES / 2, COLS, cur_id_item->descr,
-                              buf1, sizeof(buf1));
+                              buf1, sizeof(buf1), utf8_mode);
       if (j < 0) continue;
       if (!buf1[0]) {
         cur_id_item->buf[0] = 0;
@@ -1713,7 +1716,7 @@ do_settings_menu(int *p_cur_item)
 
       snprintf(buf, sizeof(buf), "%s", cur_set_item->buf);
       j = ncurses_edit_string(LINES/2, COLS, cur_set_item->descr,
-                              buf, sizeof(buf));
+                              buf, sizeof(buf), utf8_mode);
       if (j < 0) continue;
 
     check_variable_value:
@@ -1800,7 +1803,7 @@ do_settings_menu(int *p_cur_item)
       cur_set_item = &set_edit_items[i];
       if (!cur_set_item->buf) continue;
       snprintf(buf, sizeof(buf), "%s", cur_set_item->buf);
-      j = ncurses_choose_file(cur_set_item->descr, buf, sizeof(buf));
+      j = ncurses_choose_file(cur_set_item->descr, buf, sizeof(buf), utf8_mode);
       if (j < 0) continue;
       goto check_variable_value;
     }
@@ -3859,7 +3862,7 @@ save_install_script(void)
 
   snprintf(filepath, sizeof(filepath), "ejudge-install.sh");
   j = ncurses_edit_string(LINES/2, COLS, "Setup script name",
-                          filepath, sizeof(filepath));
+                          filepath, sizeof(filepath), utf8_mode);
   if (j < 0) {
     goto cleanup;
   }
@@ -4063,6 +4066,7 @@ main(int argc, char **argv)
   if (start_prepare(user, group, workdir) < 0) return 1;
 
   setlocale(LC_ALL, "");
+  if (!strcmp(nl_langinfo(CODESET), "UTF-8")) utf8_mode = 1;
   get_system_identity();
 
   if (ncurses_init() < 0) return 1;
