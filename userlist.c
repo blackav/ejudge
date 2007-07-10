@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -472,6 +472,8 @@ static int user_info_field_offsets[] =
   [USERLIST_NC_LOCATION] = USER_INFO_OFFSET(location),
   [USERLIST_NC_SPELLING] = USER_INFO_OFFSET(spelling),
   [USERLIST_NC_PRINTER_NAME] = USER_INFO_OFFSET(printer_name),
+  [USERLIST_NC_EXAM_ID] = USER_INFO_OFFSET(exam_id),
+  [USERLIST_NC_EXAM_CYPHER] = USER_INFO_OFFSET(exam_cypher),
   [USERLIST_NC_LANGUAGES] = USER_INFO_OFFSET(languages),
   [USERLIST_NC_PHONE] = USER_INFO_OFFSET(phone),
   [USERLIST_NC_CREATE_TIME] = USER_INFO_OFFSET(create_time),
@@ -510,6 +512,8 @@ static int user_info_field_types[] =
   [USERLIST_NC_LOCATION] = USERLIST_NC_INST,
   [USERLIST_NC_SPELLING] = USERLIST_NC_INST,
   [USERLIST_NC_PRINTER_NAME] = USERLIST_NC_INST,
+  [USERLIST_NC_EXAM_ID] = USERLIST_NC_INST,
+  [USERLIST_NC_EXAM_CYPHER] = USERLIST_NC_INST,
   [USERLIST_NC_LANGUAGES] = USERLIST_NC_INST,
   [USERLIST_NC_PHONE] = USERLIST_NC_INST,
   [USERLIST_NC_CREATE_TIME] = USERLIST_NC_CREATE_TIME,
@@ -1474,6 +1478,8 @@ userlist_clone_user_info(struct userlist_user *u, int contest_id,
   ci->i.location = copy_field(u->i.location);
   ci->i.spelling = copy_field(u->i.spelling);
   ci->i.printer_name = copy_field(u->i.printer_name);
+  ci->i.exam_id = copy_field(u->i.exam_id);
+  ci->i.exam_cypher = copy_field(u->i.exam_cypher);
   ci->i.languages = copy_field(u->i.languages);
   ci->i.phone = copy_field(u->i.phone);
 

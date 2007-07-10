@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2001-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -62,6 +62,8 @@
  *   MD - fac_en
  *   ML - location
  *   Mp - printer_name
+ *   My - exam_id
+ *   MY - exam_cypher
  *  U - userinfo data
  *   Ui - user id
  *   Un - user name
@@ -84,6 +86,8 @@
  *   UD - fac_en
  *   UL - location
  *   Up - printer_name
+ *   Uy - exam_id
+ *   UY - exam_cypher
  *   Uh - homepage
  *   UH - phones
  *   UP - languages
@@ -419,6 +423,8 @@ sformat_message(char *buf, size_t maxsize, char const *format,
          *   MD - fac_en
          *   ML - location
          *   Mp - printer_name
+         *   Uy - exam_id
+         *   UY - exam_cypher
          *   M1 - extra1
          */
         pf++;
@@ -429,7 +435,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
         case 't': case 'T':
         case 'u': case 'U':
         case 'o': case 'O': case 'L': case 'p': case 'r':
-        case 'f': case 'F': case 'd': case 'D':
+        case 'f': case 'F': case 'd': case 'D': case 'y': case 'Y':
         case '1':
           break;
         case 0:
@@ -528,6 +534,16 @@ sformat_message(char *buf, size_t maxsize, char const *format,
             if (team_data->user && team_data->user->i.printer_name)
               papp = team_data->user->i.printer_name;
             break;
+          case 'y':
+            papp = "";
+            if (team_data->user && team_data->user->i.exam_id)
+              papp = team_data->user->i.exam_id;
+            break;
+          case 'Y':
+            papp = "";
+            if (team_data->user && team_data->user->i.exam_cypher)
+              papp = team_data->user->i.exam_cypher;
+            break;
           case '1':
             papp = "";
             if (team_data->user && team_data->user->extra1)
@@ -563,6 +579,8 @@ sformat_message(char *buf, size_t maxsize, char const *format,
          *   UD - fac_en
          *   UL - location
          *   Up - printer_name
+         *   Uy - exam_id
+         *   UY - exam_cypher
          *   Uh - homepage
          *   UH - phones
          *   UP - languages
@@ -693,6 +711,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
         case 'c': case 'C': case 'o': case 'O': case 't': case 'T':
         case 'u': case 'U': case 'f': case 'F': case 'd': case 'D':
         case 'L': case 'p': case 'h': case 'H': case 'P': case 'r':
+        case 'y': case 'Y':
           break;
         case 0:
           is_invalid = 1;
@@ -744,6 +763,8 @@ sformat_message(char *buf, size_t maxsize, char const *format,
         case 'D': papp = ui->fac_en; break;
         case 'L': papp = ui->location; break;
         case 'p': papp = ui->printer_name; break;
+        case 'y': papp = ui->exam_id; break;
+        case 'Y': papp = ui->exam_cypher; break;
         case 'h': papp = ui->homepage; break;
         case 'H': papp = ui->phone; break;
         case 'P': papp = ui->languages; break;

@@ -1097,6 +1097,8 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NC_LOCATION] = { "Location", 1, 1 },
   [USERLIST_NC_SPELLING] = { "Spelling", 1, 1 },
   [USERLIST_NC_PRINTER_NAME] = { "Printer name", 1, 1 },
+  [USERLIST_NC_EXAM_ID] = { "Exam ID", 1, 1 },
+  [USERLIST_NC_EXAM_CYPHER] = { "Exam Cypher", 1, 1 },
   [USERLIST_NC_LANGUAGES] = { "Prog. languages", 1, 1 },
   [USERLIST_NC_PHONE] = { "Phone", 1, 1 },
   [USERLIST_NC_CREATE_TIME] = { "User info create time", 1, 1 },
@@ -1280,6 +1282,8 @@ static int field_order[] =
   USERLIST_NC_LOCATION,
   USERLIST_NC_SPELLING,
   USERLIST_NC_PRINTER_NAME,
+  USERLIST_NC_EXAM_ID,
+  USERLIST_NC_EXAM_CYPHER,
   USERLIST_NC_LANGUAGES,
   USERLIST_NC_PHONE,
   USERLIST_PSEUDO_FLAGS,
@@ -1512,6 +1516,8 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         case USERLIST_NC_LOCATION:
         case USERLIST_NC_SPELLING:
         case USERLIST_NC_PRINTER_NAME:
+        case USERLIST_NC_EXAM_ID:
+        case USERLIST_NC_EXAM_CYPHER:
         case USERLIST_NC_LANGUAGES:
           help_str = "Enter-edit D-clear C-contest A-new member Q-quit";
           break;
