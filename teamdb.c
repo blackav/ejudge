@@ -200,11 +200,16 @@ teamdb_refresh(teamdb_state_t state)
   struct userlist_user *uu;
   struct userlist_contest *uc;
   size_t xml_size = 0;
+  const struct contest_desc *cnts = 0;
+  int user_contest_id = state->contest_id;
+
+  if (state->contest_id > 0) contests_get(state->contest_id, &cnts);
+  if (cnts && cnts->user_contest_num) user_contest_id = cnts->user_contest_num;
 
   if (state->callbacks) {
     if (state->users && !state->need_update) return 0;
     r = state->callbacks->list_all_users(state->callbacks->user_data,
-                                         state->contest_id, &xml_text);
+                                         user_contest_id, &xml_text);
     if (r < 0) {
       err("teamdb_refresh: cannot load userlist: %s", userlist_strerror(-r));
       return -1;
@@ -219,7 +224,7 @@ teamdb_refresh(teamdb_state_t state)
     state->need_update = 0;
     state->pseudo_vintage++;
   } else {
-    if (open_connection(&state->old, state->contest_id) < 0) return -1;
+    if (open_connection(&state->old, user_contest_id) < 0) return -1;
 
     if (state->old.server_users
         && state->old.server_users->vintage != 0xffffffff
@@ -240,7 +245,7 @@ teamdb_refresh(teamdb_state_t state)
 
     r = userlist_clnt_list_all_users(state->old.server_conn,
                                      ULS_LIST_STANDINGS_USERS,
-                                     state->contest_id, &xml_text);
+                                     user_contest_id, &xml_text);
     if (r < 0) {
       /* Don't try hard. Just proceed with the current copy. */
       state->old.local_users.vintage = prev_vintage;
@@ -290,7 +295,7 @@ teamdb_refresh(teamdb_state_t state)
 
     for (uc = (struct userlist_contest*) uu->contests->first_down;
          uc; uc = (struct userlist_contest*) uc->b.right) {
-      if (uc->id == state->contest_id) break;
+      if (uc->id == user_contest_id) break;
     }
     if (!uc) continue;
 

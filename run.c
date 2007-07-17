@@ -77,6 +77,7 @@ static int managed_mode_flag = 0;
 static time_t last_activity_time;
 struct serve_state serve_state;
 static int restart_flag = 0;
+static int utf8_mode = 0;
 
 static path_t self_exe;
 static char **self_argv;
@@ -172,13 +173,67 @@ html_print_by_line(FILE *f, unsigned char const *s, size_t size)
       fprintf(f, "(%s, %s = %td)\n",
               "line is too long", "size", s - p);
     } else {
-      while (p != s)
-        if (trans_table[*p]) {
-          fputs(trans_table[*p], f);
-          p++;
-        } else {
-          putc(*p++, f);
+      if (utf8_mode) {
+        while (p != s) {
+          if (*p <= 0x7f) {
+            if (trans_table[*p]) {
+              fputs(trans_table[*p++], f);
+            } else {
+              putc(*p++, f);
+            }
+          } else if (*p <= 0xbf) {
+            // middle of multibyte sequence
+            putc('?', f);
+            p++;
+          } else if (*p <= 0xc1) {
+            // reserved
+            putc('?', f);
+            p++;
+          } else if (*p <= 0xdf) {
+            // two bytes: 0x80-0x7ff
+            if (p + 1 < s && p[1] >= 0x80 && p[1] <= 0xbf && (((s[0] & 0x1f) << 6) | (s[1] & 0x3f)) >= 0x80) {
+              putc(*p++, f);
+              putc(*p++, f);
+            } else {
+              putc('?', f);
+              p++;
+            }
+          } else if (*p <= 0xef) {
+            // three bytes: 0x800-0xffff
+            if (p + 2 < s && p[1] >= 0x80 && p[1] <= 0xbf && p[2] >= 0x80 && p[2] <= 0xbf && (((s[0] & 0x0f) << 12) | ((s[1] & 0x3f) << 6) | (s[2] & 0x3f)) >= 0x800) {
+              putc(*p++, f);
+              putc(*p++, f);
+              putc(*p++, f);
+            } else {
+              putc('?', f);
+              p++;
+            }
+          } else if (*p <= 0xf7) {
+            // four bytes: 0x10000-0x10ffff
+            if (p + 3 < s && p[1] >= 0x80 && p[1] <= 0xbf && p[2] >= 0x80 && p[2] <= 0xbf && p[3] >= 0x80 && p[3] <= 0xbf && (((s[0] & 0x07) << 18) | ((s[1] & 0x3f) << 12) | ((s[2] & 0x3f) << 6) | (s[3] & 0x3f)) >= 0x10000) {
+              putc(*p++, f);
+              putc(*p++, f);
+              putc(*p++, f);
+              putc(*p++, f);
+            } else {
+              putc('?', f);
+              p++;
+            }
+          } else {
+            // reserved
+            putc('?', f);
+            p++;
+          }
         }
+      } else {
+        while (p != s)
+          if (trans_table[*p]) {
+            fputs(trans_table[*p], f);
+            p++;
+          } else {
+            putc(*p++, f);
+          }
+      }
     }
     while (*s == '\r' || *s == '\n')
       putc(*s++, f);
@@ -199,6 +254,17 @@ prepare_checker_comment(const unsigned char *str)
   for (p = wstr; *p; p++)
     if (*p < ' ') *p = ' ';
   for (--p; p >= wstr && *p == ' '; *p-- = 0);
+  for (p = wstr; *p; p++) {
+    switch (*p) {
+    case '"': case '&': case '<': case '>':
+      *p = '?';
+    }
+  }
+  if (utf8_mode) {
+    for (p = wstr; *p; p++) {
+      if (*p >= 0x7f) *p = '?';
+    }
+  }
   if (p - wstr > 64) {
     p = wstr + 60;
     *p++ = '.';
@@ -2657,6 +2723,8 @@ main(int argc, char *argv[])
     return 1;
   }
 #endif
+
+  if (!strcasecmp(EJUDGE_CHARSET, "UTF-8")) utf8_mode = 1;
 
   if (prepare(&serve_state, argv[i], p_flags, PREPARE_RUN,
               cpp_opts, managed_mode_flag) < 0)

@@ -163,6 +163,7 @@
 #endif
 
 #define ARMOR(s)  html_armor_buf(&ab, s)
+#define URLARMOR(s)  url_armor_buf(&ab, s)
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 
 enum { CONTEST_EXPIRE_TIME = 300 };
@@ -4132,7 +4133,9 @@ priv_view_users_page(FILE *fout,
   int details_allowed = 0;
   unsigned char cl[128];
   unsigned char b1[1024], b2[1024];
+  int new_contest_id = cnts->id;
 
+  if (cnts->user_contest_num > 0) new_contest_id = cnts->user_contest_num;
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 1, 0);
   if ((r = userlist_clnt_list_all_users(ul_conn, ULS_LIST_ALL_USERS,
@@ -4160,7 +4163,7 @@ priv_view_users_page(FILE *fout,
   fprintf(fout, "<table%s><tr><th%s>NN</th><th%s>Id</th><th%s>Login</th><th%s>Name</th><th%s>Status</th><th%s>Flags</th><th%s>Reg. date</th><th%s>Login date</th><th%s>Select</th></tr>\n", cl, cl, cl, cl, cl, cl, cl, cl, cl, cl);
   for (uid = 1; uid < users->user_map_size; uid++) {
     if (!(u = users->user_map[uid])) continue;
-    if (!(uc = userlist_get_user_contest(u, phr->contest_id))) continue;
+    if (!(uc = userlist_get_user_contest(u, new_contest_id))) continue;
 
     fprintf(fout, "<tr%s>", form_row_attrs[row ^= 1]);
     fprintf(fout, "<td%s>%d</td>", cl, serial++);
@@ -11221,6 +11224,90 @@ unpriv_get_file(
   xfree(file_bytes);
 }
 
+static void
+anon_select_contest_page(FILE *fout, struct http_request_info *phr)
+  __attribute__((unused));
+static void
+anon_select_contest_page(FILE *fout, struct http_request_info *phr)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char *cntslist = 0;
+  int cntsnum = 0;
+  const unsigned char *cl;
+  const struct contest_desc *cnts;
+  time_t curtime = time(0);
+  int row = 0, i, orig_locale_id;
+  const unsigned char *s;
+  const unsigned char *login = 0;
+  unsigned char bb[1024];
+
+  ns_cgi_param(phr, "login", &login);
+
+  // defaulting to English as we have no contest chosen
+  orig_locale_id = phr->locale_id;
+  if (phr->locale_id < 0) phr->locale_id = 0;
+
+  // even don't know about the contest specific settings
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, ns_fancy_header, 0, 0, 0, 0, phr->locale_id,
+            _("Contest selection"));
+
+  html_start_form(fout, 1, phr->self_url, "");
+  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>\n");
+  html_hidden(fout, "action", "%d", NEW_SRV_ACTION_CHANGE_LANGUAGE);
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
+          _("language"));
+  l10n_html_locale_select(fout, phr->locale_id);
+  fprintf(fout, "</div></td>\n");
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>\n", ns_submit_button(bb, sizeof(bb), "submit", 0, _("Change Language")));
+  fprintf(fout, "</tr></table></div></form>\n");
+
+  fprintf(fout,
+          "<div class=\"white_empty_block\">&nbsp;</div>\n"
+          "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
+
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td></tr></table></div>\n");
+
+  fprintf(fout, "%s", ns_fancy_separator);
+
+  fprintf(fout, "<h2>%s</h2>\n", _("Select one of available contests"));
+
+  cntsnum = contests_get_list(&cntslist);
+  cl = " class=\"b1\"";
+  fprintf(fout, "<table%s><tr>"
+          "<td%s>N</td><td%s>%s</td></tr>\n",
+          cl, cl, cl, _("Contest name"));
+  for (i = 1; i < cntsnum; i++) {
+    cnts = 0;
+    if (contests_get(i, &cnts) < 0 || !cnts) continue;
+    if (cnts->closed) continue;
+    if (!contests_check_register_ip_2(cnts, phr->ip, phr->ssl_flag)) continue;
+    if (cnts->reg_deadline > 0 && curtime >= cnts->reg_deadline) continue;
+
+    fprintf(fout, "<tr%s><td%s>%d</td>", form_row_attrs[(row++) & 1], cl, i);
+    fprintf(fout, "<td%s><a href=\"%s?contest_id=%d", cl, phr->self_url, i);
+
+    if (orig_locale_id >= 0 && cnts->default_locale_val >= 0
+        && orig_locale_id != cnts->default_locale_val) {
+      fprintf(fout, "&amp;locale_id=%d", phr->locale_id);
+    }
+
+    if (login && *login) fprintf(fout, "&amp;login=%s", URLARMOR(login));
+    s = 0;
+    if (phr->locale_id == 0 && cnts->name_en) s = cnts->name_en;
+    if (!s) s = cnts->name;
+    fprintf(fout, "\">%s</a></td>", ARMOR(s));
+    fprintf(fout, "</tr>\n");
+  }
+  fprintf(fout, "</table>\n");
+
+  ns_footer(fout, ns_fancy_footer, 0, phr->locale_id);
+  l10n_setlocale(0);
+
+  html_armor_free(&ab);
+  xfree(cntslist);
+}
+
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = unpriv_change_language,
@@ -11270,6 +11357,11 @@ unprivileged_entry_point(
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_3)
     return unpriv_page_forgot_password_3(fout, phr, orig_locale_id);
 
+  if ((phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
+      && !phr->session_id){
+    //return anon_select_contest_page(fout, phr);
+  }
+
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return unprivileged_page_login(fout, phr, orig_locale_id);
 
@@ -11299,9 +11391,11 @@ unprivileged_entry_point(
     }
   }
 
-  if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
+  if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts){
+    //return anon_select_contest_page(fout, phr);
     return ns_html_err_no_perm(fout, phr, 1, "invalid contest_id %d",
                                phr->contest_id);
+  }
   extra = ns_get_contest_extra(phr->contest_id);
   ASSERT(extra);
 

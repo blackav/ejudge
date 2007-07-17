@@ -455,7 +455,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
   int *list_idx = 0;
   int list_tot = 0;
   unsigned char *str1 = 0, *str2 = 0;
-  unsigned char durstr[64], statstr[64];
+  unsigned char durstr[64], statstr[128];
   int rid, attempts, disq_attempts, prev_successes;
   time_t run_time, start_time;
   const struct run_entry *pe;
@@ -704,7 +704,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
       displayed_mask[rid / BITS_PER_LONG] |= (1 << (rid % BITS_PER_LONG));
 
       if (pe->status == RUN_EMPTY) {
-        run_status_str(pe->status, statstr, 0, 0, 0);
+        run_status_str(pe->status, statstr, sizeof(statstr), 0, 0);
 
         if (raw_format) {
           print_raw_record(state, f, rid, pe, 0, 0, 0, 0);
@@ -741,7 +741,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
         if (!env.rhead.start_time) run_time = 0;
         if (env.rhead.start_time > run_time) run_time = env.rhead.start_time;
         duration_str(1, run_time, env.rhead.start_time, durstr, 0);
-        run_status_str(pe->status, statstr, 0, 0, 0);
+        run_status_str(pe->status, statstr, sizeof(statstr), 0, 0);
 
         if (raw_format) {
           print_raw_record(state, f, rid, pe, 0, 0, 0, 0);
@@ -816,7 +816,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
       if (start_time > run_time) run_time = start_time;
       duration_str(state->global->show_astr_time, run_time, start_time,
                    durstr, 0);
-      run_status_str(pe->status, statstr, 0, 0, 0);
+      run_status_str(pe->status, statstr, sizeof(statstr), 0, 0);
 
       if (raw_format) {
         print_raw_record(state, f, rid, pe, start_time, attempts, disq_attempts,
@@ -2890,7 +2890,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
   struct tm *pts;
   time_t start_time, dur;
   unsigned char *s;
-  unsigned char statstr[64];
+  unsigned char statstr[128];
   time_t tmp_time;
 
   if (url && *url) {
@@ -3005,7 +3005,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
 
     run_status_to_str_short(statstr, sizeof(statstr), re.status);
     fprintf(f, "%s;", statstr);
-    run_status_str(re.status, statstr, 0, 0, 0);
+    run_status_str(re.status, statstr, sizeof(statstr), 0, 0);
     fprintf(f, "%s;", statstr);
     fprintf(f, "%d;%d;", re.score, re.score_adj);
     fprintf(f, "%d;", re.test);

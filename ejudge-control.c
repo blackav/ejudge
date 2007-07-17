@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -114,7 +114,7 @@ invoke_stopper(const char *prog, const char *ejudge_xml_path)
 static int
 command_start(const struct ejudge_cfg *config,
               const char *user, const char *group,
-              const char *ejudge_xml_path)
+              const char *ejudge_xml_path, int force_mode)
 {
   tTask *tsk = 0;
   path_t path;
@@ -147,6 +147,9 @@ command_start(const struct ejudge_cfg *config,
     task_AddArg(tsk, "-C");
     task_AddArg(tsk, workdir);
   }
+  if (force_mode) {
+    task_AddArg(tsk, "-f");
+  }
   task_AddArg(tsk, ejudge_xml_path);
   task_SetPathAsArg0(tsk);
   task_Start(tsk);
@@ -171,6 +174,9 @@ command_start(const struct ejudge_cfg *config,
   if (workdir) {
     task_AddArg(tsk, "-C");
     task_AddArg(tsk, workdir);
+  }
+  if (force_mode) {
+    task_AddArg(tsk, "-f");
   }
   task_AddArg(tsk, ejudge_xml_path);
   task_SetPathAsArg0(tsk);
@@ -248,6 +254,9 @@ command_start(const struct ejudge_cfg *config,
     task_AddArg(tsk, "-C");
     task_AddArg(tsk, workdir);
   }
+  if (force_mode) {
+    task_AddArg(tsk, "-f");
+  }
   task_AddArg(tsk, ejudge_xml_path);
   task_SetPathAsArg0(tsk);
   task_Start(tsk);
@@ -300,6 +309,7 @@ main(int argc, char *argv[])
   struct ejudge_cfg *config = 0;
   const char *ejudge_xml_path = 0;
   const char *user = 0, *group = 0;
+  int force_mode = 0;
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
@@ -318,6 +328,9 @@ main(int argc, char *argv[])
       if (i + 1 >= argc) startup_error("argument expeted for `-g'");
       group = argv[i + 1];
       i += 2;
+    } else if (!strcmp(argv[i], "-f")) {
+      force_mode = 1;
+      i++;
     } else if (!strcmp(argv[i], "--")) {
       i++;
       break;
@@ -347,7 +360,8 @@ main(int argc, char *argv[])
   if (!(config = ejudge_cfg_parse(ejudge_xml_path))) return 1;
 
   if (!strcmp(command, "start")) {
-    if (command_start(config, user, group, ejudge_xml_path) < 0) r = 1;
+    if (command_start(config, user, group, ejudge_xml_path, force_mode) < 0) 
+      r = 1;
   } else if (!strcmp(command, "stop")) {
     if (command_stop(config, ejudge_xml_path) < 0) r = 1;
   } else if (!strcmp(command, "restart")) {

@@ -103,6 +103,7 @@ enum
     CONTEST_WELCOME_FILE,
     CONTEST_SLAVE_RULES,
     CONTEST_RUN_MANAGED_ON,
+    CONTEST_USER_CONTEST,
 
     CONTEST_LAST_TAG
   };
@@ -255,6 +256,8 @@ struct contest_desc
   unsigned char disable_locale_change;
   unsigned char personal;
 
+  int user_contest_num;
+
   time_t         reg_deadline;
   unsigned char *name;
   unsigned char *name_en;
@@ -316,6 +319,7 @@ struct contest_desc
   unsigned char *user_name_comment;
   unsigned char *allowed_languages;
   unsigned char *allowed_regions;
+  unsigned char *user_contest;
 
   unsigned char *dir_mode;
   unsigned char *dir_group;

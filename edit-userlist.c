@@ -1225,7 +1225,7 @@ static void
 user_menu_string(struct userlist_user *u, int f, unsigned char *out)
 {
   unsigned char buf[128];
-  int w;
+  int w = 60, y = 0;
 
   if (f >= USERLIST_PSEUDO_FIRST && f < USERLIST_PSEUDO_LAST) {
     snprintf(out, 78, "%s", user_descs[f].name);
@@ -1233,24 +1233,22 @@ user_menu_string(struct userlist_user *u, int f, unsigned char *out)
     snprintf(out, 78, "%s", user_descs[f].name);
   } else {
     get_user_field(buf, sizeof(buf), u, f, 1);
-    w = 60;
-    if (utf8_mode) w = utf8_cnt(buf, w);
-    sprintf(out, "%-16.16s:%-*.*s", user_descs[f].name, w, w, buf);
+    if (utf8_mode) w = utf8_cnt(buf, w, &y);
+    sprintf(out, "%-16.16s:%-*.*s", user_descs[f].name, w + y, w, buf);
   }
 }
 static void
 member_menu_string(struct userlist_member *m, int f, unsigned char *out)
 {
   unsigned char buf[128];
-  int w;
+  int w = 60, y = 0;
 
   if (!member_descs[f].has_value) {
     snprintf(out, 78, "%s", member_descs[f].name);
   } else {
     userlist_get_member_field_str(buf, sizeof(buf), m, f, 1);
-    w = 60;
-    if (utf8_mode) w = utf8_cnt(buf, w);
-    sprintf(out, "%-16.16s:%-*.*s", member_descs[f].name, w, w, buf);
+    if (utf8_mode) w = utf8_cnt(buf, w, &y);
+    sprintf(out, "%-16.16s:%-*.*s", member_descs[f].name, w + y, w, buf);
   }
 }
 
@@ -2386,15 +2384,13 @@ generate_reg_user_item(unsigned char *buf, size_t size, int i,
                        unsigned char *mask)
 {
   int buflen;
-  int w = 36;
+  int w = 36, y = 0;
 
   // 77 - 6 - 16 - 10 - 6 = 77 - 38 = 39
-  if (utf8_mode) {
-    w = utf8_cnt(uu[i]->i.name, 36);
-  }
+  if (utf8_mode) w = utf8_cnt(uu[i]->i.name, 36, &y);
   buflen = snprintf(buf, size, "%c%6d  %-16.16s  %-*.*s %c%c%c%c%c %-7.7s",
                     mask[i]?'!':' ',
-                    uu[i]->id, uu[i]->login, w, w, uu[i]->i.name,
+                    uu[i]->id, uu[i]->login, w + y, w, uu[i]->i.name,
                     (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
                     (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
                     (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
@@ -2425,11 +2421,13 @@ display_registered_users(unsigned char const *upper,
   int retcode = -1, errcode;
   const struct contest_desc *cnts = 0;
   unsigned char edit_buf[512];
+  int new_contest_id = contest_id;
 
   if ((errcode = contests_get(contest_id, &cnts)) < 0) {
     vis_err("%s", contests_strerror(-errcode));
     return -1;
   }
+  if (cnts->user_contest_num > 0) new_contest_id = cnts->user_contest_num;
 
   snprintf(current_level, sizeof(current_level),
            "%s->%s %d", upper, "Registered users for",
@@ -2509,7 +2507,7 @@ display_registered_users(unsigned char const *upper,
     ASSERT(uu[i]->contests);
     for (cc = (struct userlist_contest*) uu[i]->contests->first_down;
          cc; cc = (struct userlist_contest*) cc->b.right) {
-      if (cc->id == cnts->id) break;
+      if (cc->id == cnts->id || cc->id == new_contest_id) break;
     }
     ASSERT(cc);
     uc[i] = cc;
@@ -3234,7 +3232,7 @@ display_registered_users(unsigned char const *upper,
 static int
 display_contests_menu(unsigned char *upper, int only_choose)
 {
-  int ncnts = 0, i, j, w;
+  int ncnts = 0, i, j, w, y;
   const struct contest_desc *cc;
   unsigned char **descs;
   unsigned char buf[128];
@@ -3305,12 +3303,10 @@ display_contests_menu(unsigned char *upper, int only_choose)
   for (i = 0; i < ncnts; i++) {
     j = cntsi[i];
     if (cnts_names[j]) {
-      w = 66;
-      if (utf8_mode) {
-        w = utf8_cnt(cnts_names[j], 66);
-      }
+      w = 66; y = 0;
+      if (utf8_mode) w = utf8_cnt(cnts_names[j], w, &y);
       snprintf(buf, sizeof(buf), "%c%-8d  %-*.*s",
-               sel_cnts.mask[j]?'!':' ', j, w, w, cnts_names[j]);
+               sel_cnts.mask[j]?'!':' ', j, w + y, w, cnts_names[j]);
     } else {
       snprintf(buf, sizeof(buf), "%c%-8d  (removed)", sel_cnts.mask[j]?'!':' ', j);
     }
@@ -3496,13 +3492,13 @@ static struct selected_users_info g_sel_users;
 static int
 do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
 {
-  int r, w;
+  int r, w, y;
   unsigned char *xml_text = 0;
   struct userlist_list *users = 0;
   int nusers, i, j, k;
   struct userlist_user **uu = 0;
   unsigned char **descs = 0;
-  unsigned char buf[128];
+  unsigned char buf[1024];
   int len;
   ITEM **items;
   MENU *menu;
@@ -3585,13 +3581,11 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   descs = alloca(nusers * sizeof(descs[0]));
   memset(descs, 0, nusers * sizeof(descs[0]));
   for (i = 0; i < nusers; i++) {
-    w = 50;
-    if (utf8_mode) {
-      w = utf8_cnt(uu[i]->i.name, 50);
-    }
+    w = 50; y = 0;
+    if (utf8_mode) w = utf8_cnt(uu[i]->i.name, w, &y);
     len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
 		   g_sel_users.mask[i]?"!":" ",
-                   uu[i]->id, uu[i]->login, w, w, uu[i]->i.name);
+                   uu[i]->id, uu[i]->login, w + y, w, uu[i]->i.name);
     descs[i] = alloca(len + 16);
     strcpy(descs[i], buf);
   }
@@ -3894,11 +3888,11 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
         g_sel_users.mask[i] = 1;
         g_sel_users.total_selected++;
       }
-      w = 50;
-      if (utf8_mode) w = utf8_cnt(uu[i]->i.name, w);
+      w = 50; y = 0;
+      if (utf8_mode) w = utf8_cnt(uu[i]->i.name, w, &y);
       len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
                      g_sel_users.mask[i]?"!":" ",
-                     uu[i]->id, uu[i]->login, w, w, uu[i]->i.name);
+                     uu[i]->id, uu[i]->login, w + y, w, uu[i]->i.name);
       strcpy(descs[i], buf);
       menu_driver(menu, REQ_DOWN_ITEM);
       goto menu_continue;
@@ -3947,11 +3941,11 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
             goto menu_continue;
           }
           g_sel_users.mask[j] = 0;
-          w = 50;
-          if (utf8_mode) w = utf8_cnt(uu[i]->i.name, w);
+          w = 50; y = 0;
+          if (utf8_mode) w = utf8_cnt(uu[i]->i.name, w, &y);
           len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
                          g_sel_users.mask[j]?"!":" ",
-                         uu[j]->id, uu[j]->login, w, w, uu[j]->i.name);
+                         uu[j]->id, uu[j]->login, w + y, w, uu[j]->i.name);
           strcpy(descs[j], buf);
         }
         memset(g_sel_users.mask, 0, g_sel_users.allocated);
@@ -3989,11 +3983,11 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
             }
           }
           g_sel_users.mask[j] = 0;
-          w = 50;
-          if (utf8_mode) w = utf8_cnt(uu[i]->i.name, w);
+          w = 50; y = 0;
+          if (utf8_mode) w = utf8_cnt(uu[i]->i.name, w, &y);
           len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
                          g_sel_users.mask[j]?"!":" ",
-                         uu[j]->id, uu[j]->login, w, w, uu[j]->i.name);
+                         uu[j]->id, uu[j]->login, w + y, w, uu[j]->i.name);
           strcpy(descs[j], buf);
         }
         memset(g_sel_users.mask, 0, g_sel_users.allocated);

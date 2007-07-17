@@ -2213,6 +2213,16 @@ super_html_edit_contest_page(FILE *f,
                            self_url,
                            extra_args,
                            hidden_vars);
+  print_string_editing_row(f, "Contest to share users with:",
+                           cnts->user_contest,
+                           SSERV_CMD_CNTS_CHANGE_USER_CONTEST,
+                           SSERV_CMD_CNTS_CLEAR_USER_CONTEST,
+                           0,
+                           session_id,
+                           form_row_attrs[row ^= 1],
+                           self_url,
+                           extra_args,
+                           hidden_vars);
   // FIXME: use the locale selection dialog
   print_string_editing_row(f, "Default locale:", cnts->default_locale,
                            SSERV_CMD_CNTS_CHANGE_DEFAULT_LOCALE,

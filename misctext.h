@@ -104,7 +104,7 @@ unsigned char *filename_armor_bytes(unsigned char *out, size_t outsize,
                                     const unsigned char *in, size_t insize);
 
 int utf8_fix_string(unsigned char *str, int *gl_ind);
-int utf8_cnt(const unsigned char *s, int width);
+int utf8_cnt(const unsigned char *s, int width, int *p_w);
 
 
 #endif /* __MISCTEXT_H__ */

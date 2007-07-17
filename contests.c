@@ -122,6 +122,7 @@ static char const * const elem_map[] =
   "welcome_file",
   "slave_rules",
   "run_managed_on",
+  "user_contest",
 
   0
 };
@@ -244,6 +245,7 @@ node_free(struct xml_tree *t)
       xfree(cnts->file_group);
       xfree(cnts->default_locale);
       xfree(cnts->welcome_file);
+      xfree(cnts->user_contest);
     }
     break;
   case CONTEST_CAP:
@@ -654,6 +656,7 @@ static const size_t contest_final_offsets[CONTEST_LAST_TAG] =
   [CONTEST_FILE_GROUP] = CONTEST_DESC_OFFSET(file_group),
   [CONTEST_DEFAULT_LOCALE] = CONTEST_DESC_OFFSET(default_locale),
   [CONTEST_WELCOME_FILE] = CONTEST_DESC_OFFSET(welcome_file),
+  [CONTEST_USER_CONTEST] = CONTEST_DESC_OFFSET(user_contest),
 };
 
 static const size_t contest_access_offsets[CONTEST_LAST_TAG] =
@@ -724,6 +727,7 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
   unsigned char pathbuf[PATH_MAX];
   unsigned char *p_field;
   unsigned char **p_str;
+  char *eptr;
 
   cnts->clean_users = 1;
 
@@ -919,6 +923,15 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
       cnts->users_verb_style = xstrdup("");
   }
 
+  if (cnts->user_contest) {
+    errno = 0;
+    cnts->user_contest_num = strtol(cnts->user_contest, &eptr, 10);
+    if (*eptr || errno || cnts->user_contest_num < 0) {
+      xml_err(&cnts->b, "invalid value of <user_contest>");
+      return -1;
+    }
+  }
+
   /* personal contests do not have "reserve" and have only one participant */
   fix_personal_contest(cnts);
 
@@ -1038,6 +1051,7 @@ contests_merge(struct contest_desc *pold, struct contest_desc *pnew)
   pold->disable_member_delete = pnew->disable_member_delete;
   pold->last_check_time = pnew->last_check_time;
   pold->last_file_time = pnew->last_file_time;
+  pold->user_contest_num = pnew->user_contest_num;
 
   pold->default_locale_val = l10n_parse_locale(pold->default_locale);
 }
@@ -1567,6 +1581,8 @@ contests_unparse(FILE *f,
   unparse_text(f, CONTEST_MAIN_URL, cnts->main_url);
   unparse_text(f, CONTEST_ROOT_DIR, cnts->root_dir);
   unparse_text(f, CONTEST_CONF_DIR, cnts->conf_dir);
+  if (cnts->user_contest && cnts->user_contest[0])
+    unparse_text(f, CONTEST_USER_CONTEST, cnts->user_contest);
   if (cnts->reg_deadline) {
     fprintf(f, "  <%s>%s</%s>\n", elem_map[CONTEST_REGISTRATION_DEADLINE],
             xml_unparse_date(cnts->reg_deadline),
