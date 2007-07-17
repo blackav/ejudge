@@ -197,7 +197,7 @@ write_html_run_status(const serve_state_t state, FILE *f,
                       int prev_successes, const unsigned char *td_class)
 {
   const struct section_global_data *global = state->global;
-  unsigned char status_str[64], score_str[64];
+  unsigned char status_str[128], score_str[128];
   struct section_problem_data *pr = 0;
   int need_extra_col = 0;
   unsigned char cl[128] = { 0 };
@@ -208,7 +208,8 @@ write_html_run_status(const serve_state_t state, FILE *f,
 
   if (pe->prob_id > 0 && pe->prob_id <= state->max_prob)
     pr = state->probs[pe->prob_id];
-  run_status_str(pe->status, status_str, 0, pr?pr->type_val:0, pr?pr->scoring_checker:0);
+  run_status_str(pe->status, status_str, sizeof(status_str),
+                 pr?pr->type_val:0, pr?pr->scoring_checker:0);
   fprintf(f, "<td%s>%s</td>", cl, status_str);
 
   if (global->score_system_val == SCORE_KIROV
@@ -385,7 +386,7 @@ html_write_user_problems_summary(const serve_state_t state,
   struct section_problem_data *cur_prob = 0;
   unsigned char *s;
   unsigned char url_buf[1024];
-  unsigned char status_str[64];
+  unsigned char status_str[128];
   time_t current_time = time(0);
   int act_status;
   unsigned char *cl = "";
@@ -811,7 +812,8 @@ html_write_user_problems_summary(const serve_state_t state,
               && cur_prob->type_val != PROB_TYPE_STANDARD))
         act_status = RUN_ACCEPTED;
     }
-    run_status_str(act_status, status_str, 0, cur_prob->type_val, cur_prob->scoring_checker);
+    run_status_str(act_status, status_str, sizeof(status_str),
+                   cur_prob->type_val, cur_prob->scoring_checker);
     fprintf(f, "<td%s>%s</td>", cl, status_str);
 
     if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
@@ -932,7 +934,7 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
   int attempts, disq_attempts, prev_successes;
   time_t start_time, time;
   unsigned char dur_str[64];
-  unsigned char stat_str[64];
+  unsigned char stat_str[128];
   unsigned char *prob_str;
   unsigned char *lang_str;
   unsigned char href[128];
@@ -1032,7 +1034,7 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
     if (!start_time) time = start_time;
     if (start_time > time) time = start_time;
     duration_str(global->show_astr_time, time, start_time, dur_str, 0);
-    run_status_str(re.status, stat_str, 0, 0, 0);
+    run_status_str(re.status, stat_str, sizeof(stat_str), 0, 0);
     prob_str = "???";
     if (state->probs[re.prob_id]) {
       if (state->probs[re.prob_id]->variant_num > 0) {
@@ -4237,7 +4239,7 @@ do_write_public_log(const serve_state_t state,
   time_t time, start;
   int attempts, disq_attempts, prev_successes;
 
-  char durstr[64], statstr[64];
+  char durstr[64], statstr[128];
   char *str1 = 0, *str2 = 0;
 
   const struct run_entry *runs, *pe;
@@ -4309,7 +4311,7 @@ do_write_public_log(const serve_state_t state,
     if (!start) time = start;
     if (start > time) time = start;
     duration_str(global->show_astr_time, time, start, durstr, 0);
-    run_status_str(pe->status, statstr, 0, 0, 0);
+    run_status_str(pe->status, statstr, sizeof(statstr), 0, 0);
 
     fputs("<tr>", f);
     fprintf(f, "<td>%d</td>", i);

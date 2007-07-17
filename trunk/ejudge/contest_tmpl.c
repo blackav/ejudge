@@ -266,6 +266,8 @@ contest_tmpl_clone(struct sid_state *sstate,
   subst_param(&cnts->root_dir, 6, substs_from, substs_to);
   subst_param(&cnts->conf_dir, 6, substs_from, substs_to);
   subst_param(&cnts->register_email_file, 6, substs_from, substs_to);
+  subst_param(&cnts->main_url, 6, substs_from, substs_to);
+  subst_param(&cnts->standings_url, 6, substs_from, substs_to);
 
   for (cap = cnts->capabilities.first; cap; cap = (typeof(cap)) cap->b.right)
     if (!strcmp(cap->login, login))

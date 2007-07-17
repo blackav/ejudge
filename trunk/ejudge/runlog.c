@@ -1307,8 +1307,7 @@ run_status_str(int status, char *out, int len, int prob_type, int var_score)
   }
   if (!out) return (char*) s;
   if (len <= 0) return strcpy(out, s);
-  strncpy(out, s, len);
-  out[len - 1] = 0;
+  snprintf(out, len, "%s", s);
   return out;
 }
 

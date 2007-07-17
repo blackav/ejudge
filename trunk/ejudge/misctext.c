@@ -910,7 +910,7 @@ utf8_fix_string(unsigned char *str, int *gl_ind)
 }
 
 int
-utf8_cnt(const unsigned char *s, int width)
+utf8_cnt(const unsigned char *s, int width, int *p_rem)
 {
   int cnt = 0;
 
@@ -971,6 +971,7 @@ utf8_cnt(const unsigned char *s, int width)
       cnt++;
     }
   }
+  if (p_rem) *p_rem = width;
   return cnt;
 }
 
