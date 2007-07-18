@@ -319,6 +319,11 @@ struct section_global_data
   int internal_xml_update_time;
   int external_xml_update_time;
 
+  path_t user_exam_protocol_header_file;
+  path_t user_exam_protocol_footer_file;
+  unsigned char *user_exam_protocol_header_txt;
+  unsigned char *user_exam_protocol_footer_txt;
+
   // fun
   int extended_sound;
   int disable_sound;

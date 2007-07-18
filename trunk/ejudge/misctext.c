@@ -975,6 +975,57 @@ utf8_cnt(const unsigned char *s, int width, int *p_rem)
   return cnt;
 }
 
+unsigned char *
+get_nth_alternative(const unsigned char *txt, int n)
+{
+  const unsigned char *s, *p;
+  unsigned char *txt2;
+  size_t txt_len, t_len;
+  int line_max_count = 0, line_count = 0, i;
+  unsigned char **lines = 0;
+  unsigned char *t;
+
+  if (!txt) return 0;
+
+  // normalize the file
+  txt_len = strlen(txt);
+  txt2 = (unsigned char*) alloca(txt_len + 2);
+  memcpy(txt2, txt, txt_len + 1);
+  while (txt_len > 0 && isspace(txt2[txt_len - 1])) txt_len--;
+  if (!txt_len) return 0;
+  txt2[txt_len++] = '\n';
+  txt2[txt_len] = 0;
+
+  // count number of lines
+  for (s = txt2; *s; s++)
+    if (*s == '\n') line_max_count++;
+
+  lines = (unsigned char**) alloca((line_max_count + 1) * sizeof(lines[0]));
+  memset(lines, 0, (line_max_count + 1) * sizeof(lines[0]));
+
+  s = txt2;
+  while (*s) {
+    while (*s != '\n' && isspace(*s)) s++;
+    if (*s == '#') while (*s != '\n') s++;
+    if (*s == '\n') {
+      s++;
+      continue;
+    }
+    p = s;
+    while (*s != '\n') s++;
+    t_len = s - p;
+    t = (unsigned char*) alloca(t_len + 1);
+    memcpy(t, p, t_len);
+    while (t_len > 0 && isspace(t[t_len - 1])) t_len--;
+    t[t_len] = 0;
+    lines[line_count++] = t;
+  }
+
+  for (i = 0; i + 1 != n && i < line_count; i++);
+  if (i + 1 == n && i < line_count) return xstrdup(lines[i]);
+  return 0;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
