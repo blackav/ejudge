@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 
 #include "checker_internal.h"
 
-static unsigned short cp1251_to_ucs2_table[256] =
+static unsigned short cp1251_to_ucs4_table[256] =
 {
   0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
   0x0008, 0x0009, 0x000a, 0x000b, 0x000c, 0x000d, 0x000e, 0x000f,
@@ -54,17 +54,17 @@ static unsigned short cp1251_to_ucs2_table[256] =
 };
 
 int
-checker_cp1251_to_ucs2(int c)
+checker_cp1251_to_ucs4(int c)
 {
-  return cp1251_to_ucs2_table[c & 0xff];
+  return cp1251_to_ucs4_table[c & 0xff];
 }
 
-unsigned short *
-checker_cp1251_to_ucs2_buf(const char *in, unsigned short *out, size_t size)
+int
+checker_cp1251_to_ucs4_buf(int *out, const char *in, size_t in_size)
 {
   const unsigned char *p = (const unsigned char*) in;
-  unsigned short *q = out;
+  int *q = out;
 
-  for (; size; size--, q++, p++) *q = cp1251_to_ucs2_table[*p];
-  return out;
+  for (; in_size; in_size--, q++, p++) *q = cp1251_to_ucs4_table[*p];
+  return q - out;
 }

@@ -3,7 +3,7 @@
 
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -203,25 +203,40 @@ int checker_eq_float_abs(float v1, float v2, float eps);
 checker_sexpr_t checker_read_sexpr(int ind);
 int checker_eq_sexpr(checker_sexpr_t l_corr, checker_sexpr_t l_out);
 
-int checker_koi8r_to_ucs2(int c);
-unsigned short *checker_koi8r_to_ucs2_buf(const char*, unsigned short*, size_t);
-int checker_cp866_to_ucs2(int c);
-unsigned short *checker_cp866_to_ucs2_buf(const char*, unsigned short*, size_t);
-int checker_cp1251_to_ucs2(int c);
-unsigned short *checker_cp1251_to_ucs2_buf(const char*,unsigned short*, size_t);
-int checker_iso_to_ucs2(int c);
-unsigned short *checker_iso_to_ucs2_buf(const char*, unsigned short*, size_t);
-int checker_mac_to_ucs2(int c);
-unsigned short *checker_mac_to_ucs2_buf(const char*, unsigned short*, size_t);
+int checker_koi8r_to_ucs4(int c);
+int checker_koi8r_to_ucs4_buf(int*, const char*, size_t);
+int checker_koi8r_to_ucs4_str(int*, const char*);
+int checker_cp866_to_ucs4(int c);
+int checker_cp866_to_ucs4_buf(int*, const char*, size_t);
+int checker_cp866_to_ucs4_str(int*, const char*);
+int checker_cp1251_to_ucs4(int c);
+int checker_cp1251_to_ucs4_buf(int*, const char*, size_t);
+int checker_cp1251_to_ucs4_str(int*, const char*, size_t);
+int checker_iso_to_ucs4(int c);
+int checker_iso_to_ucs4_buf(int*, const char*, size_t);
+int checker_iso_to_ucs4_str(int*, const char*);
+int checker_mac_to_ucs4(int c);
+int checker_mac_to_ucs4_buf(int*, const char*, size_t);
+int checker_mac_to_ucs4_str(int*, const char*);
 
-int checker_utf8_to_ucs2_buf(const char *, unsigned short *, size_t);
+int checker_utf8_to_ucs4_buf(int *, const char *, size_t);
+int checker_utf8_to_ucs4_str(int *out, const char *in);
 
-int checker_ucs2_tolower(int c);
-unsigned short *checker_ucs2_tolower_buf(unsigned short *buf, size_t size);
+size_t checker_ucs4_to_utf8_size(const int *in);
+const unsigned char *
+checker_ucs4_to_utf8_str(unsigned char *buf, size_t size, const int *in);
 
-int checker_strcmp_ucs2(const unsigned short *s1, const unsigned short *s2);
-int checker_eq_str_rus_ucs2(const char *s1, const unsigned short *s2);
-int checker_eq_str_rus_ucs2_nocase(const char *s1, const unsigned short *s2);
+int checker_ucs4_to_koi8(int c);
+char *checker_ucs4_to_koi8_str(char *out, size_t size, const int *in);
+
+int checker_ucs4_tolower(int c);
+int *checker_ucs4_tolower_buf(int *buf, size_t size);
+
+int checker_strcmp_ucs4(const int *s1, const int *s2);
+int checker_eq_str_rus_ucs4(const char *s1, const int *s2);
+int checker_eq_str_rus_ucs4_nocase(const char *s1, const int *s2);
+
+int checker_is_utf8_locale(void);
 
 // backward compatibility
 #if defined __GNUC__
