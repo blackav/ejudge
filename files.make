@@ -179,6 +179,7 @@ COMMON_CFILES=\
  problem_xml.c\
  protocol.c\
  random.c\
+ reports.c\
  runlog.c\
  runlog_import.c\
  runlog_xml.c\

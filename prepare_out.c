@@ -578,6 +578,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   GLOBAL_PARAM(stand_show_contestant_status, "d"),
   GLOBAL_PARAM(stand_contestant_status_attr, "s"),
   GLOBAL_PARAM(problem_tab_size, "d"),
+  GLOBAL_PARAM(user_exam_protocol_header_file, "s"),
+  GLOBAL_PARAM(user_exam_protocol_footer_file, "s"),
   */
 void
 prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *global)
@@ -738,6 +740,11 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
   //GLOBAL_PARAM(problem_tab_size, "d"),
   if (global->problem_tab_size > 0)
     fprintf(f, "problem_tab_size = %d\n", global->problem_tab_size);
+
+  //GLOBAL_PARAM(user_exam_protocol_header_file, "s"),
+  do_str(f, &sbuf, "user_exam_protocol_header_file", global->user_exam_protocol_header_file);
+  //GLOBAL_PARAM(user_exam_protocol_footer_file, "s"),
+  do_str(f, &sbuf, "user_exam_protocol_footer_file", global->user_exam_protocol_footer_file);
 
   xfree(sbuf.s); sbuf.s = 0; sbuf.a = 0;
 }

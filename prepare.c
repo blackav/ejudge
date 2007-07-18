@@ -277,6 +277,9 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(stand_contestant_status_attr, "s"),
   GLOBAL_PARAM(stand_warn_number_attr, "s"),
 
+  GLOBAL_PARAM(user_exam_protocol_header_file, "s"),
+  GLOBAL_PARAM(user_exam_protocol_footer_file, "s"),
+
   { 0, 0, 0, 0 }
 };
 
@@ -2266,6 +2269,21 @@ set_defaults(serve_state_t state, int mode)
       }
     } else {
       g->plog_update_time = 0;
+    }
+
+    if (g->user_exam_protocol_header_file[0]) {
+      pathmake2(g->user_exam_protocol_header_file, g->conf_dir, "/",
+                g->user_exam_protocol_header_file, 0);
+      vptr = &g->user_exam_protocol_header_txt;
+      r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->user_exam_protocol_header_file, "");
+      if (r < 0) return -1;
+    }
+    if (g->user_exam_protocol_footer_file[0]) {
+      pathmake2(g->user_exam_protocol_footer_file, g->conf_dir, "/",
+                g->user_exam_protocol_footer_file, 0);
+      vptr = &g->user_exam_protocol_footer_txt;
+      r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->user_exam_protocol_footer_file, "");
+      if (r < 0) return -1;
     }
 
     if (g->use_gzip < 0 || g->use_gzip > 1) {

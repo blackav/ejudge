@@ -65,6 +65,7 @@ static char const * const attr_map[] =
   "bogomips",
   "correct",
   "package",
+  "tex",
   0,
   "_default",
   0,
