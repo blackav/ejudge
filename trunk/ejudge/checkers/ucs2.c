@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 #include "checker_internal.h"
 
 int
-checker_ucs2_tolower(int c)
+checker_ucs4_tolower(int c)
 {
   if (c < 0) return c;
 
@@ -28,10 +28,10 @@ checker_ucs2_tolower(int c)
   return c;
 }
 
-unsigned short *
-checker_ucs2_tolower_buf(unsigned short *buf, size_t size)
+int *
+checker_ucs4_tolower_buf(int *buf, size_t size)
 {
-  unsigned short *p = buf;
+  int *p = buf;
 
   for (; size; size--) {
     if (*p >= 'A' && *p <= 'Z') *p += 0x20;
