@@ -3719,7 +3719,8 @@ cmd_list_standings_users(struct client_state *p,
        iter->has_next(iter);
        iter->next(iter)) {
     u = (const struct userlist_user*) iter->get(iter);
-    userlist_real_unparse_user(u, f, USERLIST_MODE_STAND, data->contest_id);
+    userlist_real_unparse_user(u, f, USERLIST_MODE_STAND, data->contest_id,
+                               cnts->personal);
   }
   userlist_write_xml_footer(f);
   iter->destroy(iter);

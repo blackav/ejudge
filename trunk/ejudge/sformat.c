@@ -209,6 +209,11 @@ sformat_message(char *buf, size_t maxsize, char const *format,
       tbuf[1] = 0;
       papp = tbuf;
       pf++;
+    } else if (*pf == '%' && pf[1] == '%') {
+      tbuf[0] = *pf;
+      tbuf[1] = 0;
+      papp = tbuf;
+      pf += 2;
     } else {
       specstart = pf;
       pf++;
