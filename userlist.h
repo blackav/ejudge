@@ -495,9 +495,9 @@ void userlist_unparse(struct userlist_list *p, FILE *f);
 void userlist_unparse_user(const struct userlist_user *p, FILE *f, int mode,
                            int contest_id);
 void userlist_real_unparse_user(const struct userlist_user *p, FILE *f,
-                                int mode, int contest_id);
+                                int mode, int contest_id, int memb_force_flag);
 void userlist_unparse_short(struct userlist_list *p, FILE *f, int contest_id);
-void userlist_unparse_for_standings(struct userlist_list *, FILE *, int);
+void userlist_unparse_for_standings(struct userlist_list *, FILE *, int, int);
 void userlist_unparse_user_short(const struct userlist_user *p, FILE *f,
                                  int contest_id);
 

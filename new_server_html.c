@@ -5317,6 +5317,67 @@ priv_view_online_users(
   return retval;
 }
 
+static int
+priv_print_user_exam_protocol(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  int retval = 0, user_id, r;
+  char *log_text = 0;
+  size_t log_size = 0;
+  FILE *ff = 0;
+  unsigned char bb[1024];
+  unsigned char *ss = 0;
+  int locale_id = 0;
+
+  if (ns_cgi_param_int(phr, "user_id", &user_id) < 0)
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+  if (!teamdb_lookup(cs->teamdb_state, user_id))
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+
+  if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
+  if (locale_id > 0) l10n_setlocale(locale_id);
+  ff = open_memstream(&log_text, &log_size);
+  r = ns_print_user_exam_protocol(phr, cnts, cs, ff, user_id, locale_id);
+  fclose(ff); ff = 0;
+  if (locale_id > 0) l10n_setlocale(0);
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
+            phr->contest_id, extra->contest_arm, _("Printing user protocol"));
+
+  fprintf(fout, "<h2>%s</h2>\n",
+          (r >= 0)?_("Operation succeeded"):_("Operation failed"));
+
+  fprintf(fout, "<table>");
+  fprintf(fout, "<tr><td>%s%s</a></td></tr></table>",
+          ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
+          _("Main page"));
+
+  ss = html_armor_string_dup(log_text);
+  fprintf(fout, "<hr/><pre>");
+  if (r < 0) fprintf(fout, "<font color=\"red\">");
+  fprintf(fout, "%s", ss);
+  if (r < 0) fprintf(fout, "</font>");
+  fprintf(fout, "</pre>\n");
+  xfree(ss); ss = 0;
+  xfree(log_text); log_text = 0;
+
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  if (ff) fclose(ff);
+  xfree(ss);
+  xfree(log_text);
+  return retval;
+}
+
 void
 unpriv_print_status(FILE *fout,
                     struct http_request_info *phr,
@@ -5668,6 +5729,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_1] = priv_upsolving_configuration_1,
   [NEW_SRV_ACTION_EXAMINERS_PAGE] = priv_examiners_page,
   [NEW_SRV_ACTION_VIEW_ONLINE_USERS] = priv_view_online_users,
+  [NEW_SRV_ACTION_PRINT_USER_PROTOCOL] = priv_print_user_exam_protocol,
 };
 
 static void
@@ -6644,6 +6706,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TOGGLE_LOCK] = priv_generic_operation,
   [NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS] = priv_generic_operation,
   [NEW_SRV_ACTION_VIEW_ONLINE_USERS] = priv_generic_page,
+  [NEW_SRV_ACTION_PRINT_USER_PROTOCOL] = priv_generic_page,
 };
 
 static void

@@ -2468,6 +2468,11 @@ ns_user_info_page(FILE *fout, FILE *log_f,
 
   fprintf(fout, "</table>\n");
 
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+  html_hidden(fout, "user_id", "%d", view_user_id);
+  fprintf(fout, "<p>%s</p>\n", BUTTON(NEW_SRV_ACTION_PRINT_USER_PROTOCOL));
+  fprintf(fout, "</form>\n");
+
   if (!u_extra || !u_extra->warn_u) {
     fprintf(fout, "<h2>%s</h2>\n", _("No warnings"));
   } else {
@@ -3968,9 +3973,11 @@ get_source(
   return xstrdup(buf);
 }
 
-static unsigned char *get_checker_comment(
+unsigned char *
+ns_get_checker_comment(
 	const serve_state_t cs,
-        int run_id)
+        int run_id,
+        int need_html_armor)
 {
   const struct section_global_data *global = cs->global;
   int rep_flag;
@@ -4002,8 +4009,10 @@ static unsigned char *get_checker_comment(
     goto cleanup;
   if (!(rep_tst = rep_xml->tests[0]))
     goto cleanup;
-  if (rep_tst->checker_comment)
+  if (rep_tst->checker_comment && need_html_armor)
     str = html_armor_string_dup(rep_tst->checker_comment);
+  else if (rep_tst->checker_comment)
+    str = xstrdup(rep_tst->checker_comment);
 
  cleanup:
   testing_report_free(rep_xml);
@@ -4265,7 +4274,7 @@ ns_write_olympiads_user_runs(
       case RUN_SECURITY_ERR:
         if (prob && prob->type_val != PROB_TYPE_STANDARD) {
           // This is presentation error
-          report_comment = get_checker_comment(cs, i);
+          report_comment = ns_get_checker_comment(cs, i, 1);
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         } else {
           /*

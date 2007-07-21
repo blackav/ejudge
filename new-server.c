@@ -42,6 +42,8 @@
 #include <fcntl.h>
 #include <signal.h>
 
+int utf8_mode;
+
 static void startup_error(const char *, ...) __attribute__((noreturn,format(printf, 1, 2)));
 static void handle_packet_func(struct server_framework_state *,
                                struct client_state *,
@@ -667,6 +669,7 @@ main(int argc, char *argv[])
   if (!config) return 1;
   if (contests_set_directory(config->contests_dir) < 0) return 1;
   l10n_prepare(config->l10n, config->l10n_dir);
+  if (!strcasecmp(EJUDGE_CHARSET, "UTF-8")) utf8_mode = 1;
 #if defined EJUDGE_NEW_SERVER_SOCKET
   if (!config->new_server_socket)
     config->new_server_socket = xstrdup(EJUDGE_NEW_SERVER_SOCKET);

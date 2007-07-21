@@ -248,8 +248,6 @@ prepare_checker_comment(const unsigned char *str)
   size_t len = strlen(str);
   unsigned char *wstr = alloca(len + 1), *p;
 
-  // FIXME: handle UTF8 correctly
-
   strcpy(wstr, str);
   for (p = wstr; *p; p++)
     if (*p < ' ') *p = ' ';
@@ -261,16 +259,24 @@ prepare_checker_comment(const unsigned char *str)
     }
   }
   if (utf8_mode) {
-    for (p = wstr; *p; p++) {
-      if (*p >= 0x7f) *p = '?';
+    utf8_fix_string(wstr, 0);
+    len = strlen(wstr);
+    if (len > 128) {
+      p = wstr + 120;
+      while (*p >= 0x80 && *p <= 0xbf) p--; 
+      *p++ = '.';
+      *p++ = '.';
+      *p++ = '.';
+      *p = 0;
     }
-  }
-  if (p - wstr > 64) {
-    p = wstr + 60;
-    *p++ = '.';
-    *p++ = '.';
-    *p++ = '.';
-    *p = 0;
+  } else {
+    if (p - wstr > 64) {
+      p = wstr + 60;
+      *p++ = '.';
+      *p++ = '.';
+      *p++ = '.';
+      *p = 0;
+    }
   }
 
   return html_armor_string_dup(wstr);

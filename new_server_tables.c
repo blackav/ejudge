@@ -159,6 +159,7 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_ASSIGN_CHIEF_EXAMINER] = __("Assign chief examiner"),
   [NEW_SRV_ACTION_ASSIGN_EXAMINER] = __("Assign examiner"),
   [NEW_SRV_ACTION_UNASSIGN_EXAMINER] = __("Remove examiner"),
+  [NEW_SRV_ACTION_PRINT_USER_PROTOCOL] = __("Print user examination protocol"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =

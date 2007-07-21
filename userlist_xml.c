@@ -1589,11 +1589,18 @@ userlist_unparse_user_short(const struct userlist_user *p, FILE *f,
                     or print the default information
 */
 void
-userlist_real_unparse_user(const struct userlist_user *p, FILE *f, int mode, int contest_id)
+userlist_real_unparse_user(
+	const struct userlist_user *p,
+        FILE *f,
+        int mode,
+        int contest_id,
+        int force_first_member)
 {
   unsigned char attr_str[128];
   int i, cnt;
   const struct userlist_user_info *ui;
+  const struct userlist_members *mm;
+  const struct userlist_member *m;
 
   if (!p) return;
 
@@ -1695,6 +1702,7 @@ userlist_real_unparse_user(const struct userlist_user *p, FILE *f, int mode, int
   xml_unparse_text(f, elem_map[USERLIST_T_EXAM_CYPHER],ui->exam_cypher,"    ");
   xml_unparse_text(f, elem_map[USERLIST_T_LANGUAGES], ui->languages, "    ");
 
+  /*
   if (mode == USERLIST_MODE_STAND) {
     // generate some information about the first participant
     const struct userlist_members **pmemb = (const struct userlist_members **) ui->members;
@@ -1709,6 +1717,15 @@ userlist_real_unparse_user(const struct userlist_user *p, FILE *f, int mode, int
               pmemb[USERLIST_MB_CONTESTANT]->members[0]->grade,
               elem_map[USERLIST_T_EXTRA1]);
     }
+  }
+  */
+
+  if (mode == USERLIST_MODE_STAND && force_first_member
+      && (mm = ui->members[USERLIST_MB_CONTESTANT])
+      && mm->total > 0 && mm->members && (m = mm->members[0])) {
+    fprintf(f, "    <%s>\n", elem_map[USERLIST_T_CONTESTANTS]);
+    unparse_member(m, f);
+    fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CONTESTANTS]);
   }
 
   if (mode != USERLIST_MODE_STAND) {
@@ -1744,7 +1761,7 @@ userlist_unparse_user(const struct userlist_user *p, FILE *f, int mode,
 
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n",
           EJUDGE_CHARSET);
-  userlist_real_unparse_user(p, f, mode, contest_id);
+  userlist_real_unparse_user(p, f, mode, contest_id, 0);
 }
 
 /*
@@ -1803,7 +1820,7 @@ userlist_unparse(struct userlist_list *p, FILE *f)
     fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_NAME], p->name);
   fputs(">\n", f);
   for (i = 1; i < p->user_map_size; i++)
-    userlist_real_unparse_user(p->user_map[i], f, 0, -1);
+    userlist_real_unparse_user(p->user_map[i], f, 0, -1, 0);
   fprintf(f, "</%s>\n", elem_map[USERLIST_T_USERLIST]);
 }
 
@@ -1850,8 +1867,11 @@ userlist_write_xml_footer(FILE *f)
  *     userlist_unparse_for_standings(userlist, f, data->contest_id);
  */
 void
-userlist_unparse_for_standings(struct userlist_list *p,
-                               FILE *f, int contest_id)
+userlist_unparse_for_standings(
+	struct userlist_list *p,
+        FILE *f,
+        int contest_id,
+        int force_first_member)
 {
   int i;
   struct userlist_user *uu;
@@ -1877,7 +1897,8 @@ userlist_unparse_for_standings(struct userlist_list *p,
       if (uc->status != USERLIST_REG_OK) continue;
     }
 
-    userlist_real_unparse_user(uu, f, USERLIST_MODE_STAND, contest_id);
+    userlist_real_unparse_user(uu, f, USERLIST_MODE_STAND, contest_id,
+                               force_first_member);
   }
   fprintf(f, "</%s>\n", elem_map[USERLIST_T_USERLIST]);
 }

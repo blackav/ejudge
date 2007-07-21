@@ -308,6 +308,7 @@ enum
   NEW_SRV_ACTION_ASSIGN_EXAMINER,
   NEW_SRV_ACTION_UNASSIGN_EXAMINER,
   NEW_SRV_ACTION_GET_FILE,
+  NEW_SRV_ACTION_PRINT_USER_PROTOCOL,
 
   /* new-register stuff */
   NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE,
@@ -726,6 +727,12 @@ int ns_insert_variant_num(unsigned char *buf, size_t size,
                           const unsigned char *file, int variant);
 void ns_register_pages(FILE *fout, struct http_request_info *phr);
 
+unsigned char *
+ns_get_checker_comment(
+	const serve_state_t cs,
+        int run_id,
+        int need_html_armor);
+
 int
 ns_examiners_page(
 	FILE *fout,
@@ -733,5 +740,15 @@ ns_examiners_page(
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra);
+int
+ns_print_user_exam_protocol(
+	struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        FILE *log_f,
+        int user_id,
+        int locale_id);
+
+extern int utf8_mode;
 
 #endif /* __NEW_SERVER_H__ */
