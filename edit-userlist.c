@@ -2400,6 +2400,9 @@ generate_reg_user_item(unsigned char *buf, size_t size, int i,
   return buflen;
 }
 
+static unsigned char csv_path[1024];
+static unsigned char csv_sep[1024];
+
 static int
 display_registered_users(unsigned char const *upper,
                          int contest_id,
@@ -2621,6 +2624,9 @@ display_registered_users(unsigned char const *upper,
         goto menu_done;
       case 'u': case 'U': case 'Ç' & 255: case 'ç' & 255:
         c = 'u';
+        goto menu_done;
+      case 'v': case 'V': case 'Í' & 255: case 'í' & 255:
+        c = 'v';
         goto menu_done;
       }
       cmd = -1;
@@ -3200,6 +3206,59 @@ display_registered_users(unsigned char const *upper,
         c = 'q';
         retcode = 0;
       }
+    } else if (c == 'v') {
+      FILE *csv_f = 0, *csv_in = 0;
+      char *csv_txt = 0;
+      size_t csv_z = 0;
+      int curc;
+      unsigned char *csv_reply = 0;
+
+      // import CSV
+      r = ncurses_edit_string(LINES / 2, COLS, "CSV file name",
+                              csv_path, sizeof(csv_path) - 1, utf8_mode);
+      if (r < 0) continue;
+      r = ncurses_edit_string(LINES / 2, COLS, "CSV field separator",
+                              csv_sep, sizeof(csv_sep) - 1, utf8_mode);
+      if (r < 0) continue;
+      if (strlen(csv_sep) != 1 || csv_sep[0] < ' ' || csv_sep[0] >= 127) {
+        vis_err("Invalid field separator");
+        continue;
+      }
+      if (!(csv_in = fopen(csv_path, "r"))) {
+        vis_err("Cannot open file `%s'", csv_path);
+        continue;
+      }
+      csv_f = open_memstream(&csv_txt, &csv_z);
+      while ((curc = getc(csv_in)) != EOF)
+        putc(curc, csv_f);
+      putc(0, csv_f);
+      if (!feof(csv_in) && ferror(csv_in)) {
+        vis_err("Read error from `%s'", csv_path);
+        fclose(csv_f);
+        fclose(csv_in);
+        xfree(csv_txt);
+        continue;
+      }
+      fclose(csv_in); csv_in = 0;
+      fclose(csv_f); csv_f = 0;
+      if (strlen(csv_txt) + 1 != csv_z) {
+        vis_err("The file `%s' is binary", csv_path);
+        xfree(csv_txt);
+        continue;
+      }
+      r = userlist_clnt_import_csv_users(server_conn, ULS_IMPORT_CSV_USERS,
+                                         contest_id, csv_sep[0], 0, csv_txt,
+                                         &csv_reply);
+      if (r < 0) {
+        xfree(csv_txt);
+        vis_err("Operation failed: %s", userlist_strerror(-r));
+        continue;
+      }
+      ncurses_view_text("Import log", csv_reply);
+      xfree(csv_txt);
+      xfree(csv_reply);
+      c = 'q';
+      retcode = 0;
     }
 
     unpost_menu(menu);

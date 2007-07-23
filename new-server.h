@@ -309,6 +309,8 @@ enum
   NEW_SRV_ACTION_UNASSIGN_EXAMINER,
   NEW_SRV_ACTION_GET_FILE,
   NEW_SRV_ACTION_PRINT_USER_PROTOCOL,
+  NEW_SRV_ACTION_FORCE_START_VIRTUAL,
+  NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL,
 
   /* new-register stuff */
   NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE,
@@ -747,7 +749,18 @@ ns_print_user_exam_protocol(
         const serve_state_t cs,
         FILE *log_f,
         int user_id,
-        int locale_id);
+        int locale_id,
+        int use_user_printer);
+int
+ns_print_user_exam_protocols(
+	struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        FILE *log_f,
+        int nuser,
+        int *user_ids,
+        int locale_id,
+        int use_user_printer);
 
 extern int utf8_mode;
 

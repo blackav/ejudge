@@ -1037,7 +1037,8 @@ ns_print_user_exam_protocol(
         const serve_state_t cs,
         FILE *log_f,
         int user_id,
-        int locale_id)
+        int locale_id,
+        int use_user_printer)
 {
   const struct section_global_data *global = cs->global;
   path_t tex_path;
@@ -1045,6 +1046,14 @@ ns_print_user_exam_protocol(
   path_t dvi_path;
   path_t ps_path;
   int retval = -1;
+  const unsigned char *printer_name = 0;
+  struct teamdb_export tdb;
+
+  if (use_user_printer) {
+    memset(&tdb, 0, sizeof(tdb));
+    teamdb_export_team(cs->teamdb_state, user_id, &tdb);
+    if (tdb.user) printer_name = tdb.user->i.printer_name;
+  }
 
   tex_path[0] = 0;
   if (user_report_generate(tex_path, sizeof(tex_path), cnts, log_f, cs,
@@ -1063,9 +1072,74 @@ ns_print_user_exam_protocol(
   if (invoke_dvips(log_f, dvi_path, err_path, global->print_work_dir, 1) < 0)
     goto cleanup;
 #if 0
-  if (invoke_lpr(log_f, global, 0 /* printer_name */, ps_path, err_path, 1) < 0)
+  if (invoke_lpr(log_f, global, 0 printer_name, ps_path, err_path, 1) < 0)
     goto cleanup;
 #endif
+
+  retval = 0;
+
+ cleanup:
+  //clear_directory(global->print_work_dir);
+  return retval;
+}
+
+int
+ns_print_user_exam_protocols(
+	struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        FILE *log_f,
+        int nuser,
+        int *user_ids,
+        int locale_id,
+        int use_user_printer)
+{
+  const struct section_global_data *global = cs->global;
+  path_t tex_path;
+  path_t err_path;
+  path_t dvi_path;
+  path_t ps_path;
+  int retval = -1, i, user_id;
+  const unsigned char *printer_name = 0;
+  struct teamdb_export tdb;
+
+  for (i = 0; i < nuser; i++) {
+    user_id = user_ids[i];
+    tex_path[0] = 0;
+    if (user_report_generate(tex_path, sizeof(tex_path), cnts, log_f, cs,
+                             user_id, locale_id) < 0) goto cleanup;
+
+    snprintf(err_path, sizeof(err_path), "%s/%06d.err",
+             global->print_work_dir, user_id);
+    snprintf(dvi_path, sizeof(dvi_path), "%s/%06d.dvi",
+             global->print_work_dir, user_id);
+    if (invoke_latex(log_f, tex_path, err_path, global->print_work_dir, 1) < 0)
+      goto cleanup;
+    if (invoke_latex(log_f, tex_path, err_path, global->print_work_dir, 0) < 0)
+      goto cleanup;
+    if (invoke_dvips(log_f, dvi_path, err_path, global->print_work_dir, 1) < 0)
+      goto cleanup;
+  }
+
+  // all PS files are ready, so print them all
+  for (i = 0; i < nuser; i++) {
+    user_id = user_ids[i];
+
+    printer_name = 0;
+    if (use_user_printer) {
+      memset(&tdb, 0, sizeof(tdb));
+      teamdb_export_team(cs->teamdb_state, user_id, &tdb);
+      if (tdb.user) printer_name = tdb.user->i.printer_name;
+    }
+
+    snprintf(ps_path, sizeof(ps_path), "%s/%06d.ps",
+             global->print_work_dir, user_id);
+
+#if 0
+    if (invoke_lpr(log_f, global, 0 printer_name, ps_path, err_path, 1) < 0)
+      goto cleanup;
+#endif
+  }
 
   retval = 0;
 
