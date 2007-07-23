@@ -1719,6 +1719,59 @@ priv_user_toggle_flags(
 }
 
 static int
+priv_force_start_virtual(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const unsigned char *s;
+  int retval = 0, i, n, x;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  intarray_t uset;
+  struct timeval tt;
+
+  if (phr->role < USER_ROLE_ADMIN)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (!global->is_virtual)
+    FAIL(NEW_SRV_ERR_NOT_VIRTUAL);
+
+  memset(&uset, 0, sizeof(uset));
+  for (i = 0; i < phr->param_num; i++) {
+    if (strncmp(phr->param_names[i], "user_", 5) != 0) continue;
+    if (sscanf((s = phr->param_names[i] + 5), "%d%n", &x, &n) != 1
+        || s[n] || x <= 0) {
+      ns_html_err_inv_param(fout, phr, 1, "invalid parameter name %s",
+                            ARMOR(phr->param_names[i]));
+      retval = -1;
+      goto cleanup;
+    }
+    if (teamdb_lookup(cs->teamdb_state, x) <= 0)
+      FAIL(NEW_SRV_ERR_INV_USER_ID);
+
+    XEXPAND2(uset);
+    uset.v[uset.u++] = x;
+  }
+  gettimeofday(&tt, 0);
+  // FIXME: it's a bit risky, need to check the database...
+  if (tt.tv_usec + uset.u >= 1000000) tt.tv_usec = 999999 - uset.u;
+
+  for (i = 0; i < uset.u; i++, tt.tv_usec++) {
+    run_virtual_start(cs->runlog_state, uset.v[i], tt.tv_sec, 0, 0, tt.tv_usec);
+  }
+
+ cleanup:
+  xfree(uset.v);
+  html_armor_free(&ab);
+  return retval;
+}
+
+static int
 priv_user_disqualify(
 	FILE *fout,
         FILE *log_f,
@@ -4268,6 +4321,16 @@ priv_view_users_page(FILE *fout,
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
           BUTTON(NEW_SRV_ACTION_USERS_CLEAR_DISQUALIFIED),
           _("Clear the DISQUALIFIED flag for the selected users"));
+  if (extra->serve_state->global->is_virtual) {
+    fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+            BUTTON(NEW_SRV_ACTION_FORCE_START_VIRTUAL),
+            _("Force virtual contest start for the selected users"));
+    if (cnts->exam_mode) {
+      fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+              BUTTON(NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL),
+              _("Print the user examination protocols for the selected users"));
+    }
+  }
   fprintf(fout, "</table>\n");
 
   fprintf(fout, "<h2>%s</h3>\n", _("Disqualify selected users"));
@@ -5334,6 +5397,8 @@ priv_print_user_exam_protocol(
   unsigned char *ss = 0;
   int locale_id = 0;
 
+  if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   if (ns_cgi_param_int(phr, "user_id", &user_id) < 0)
     FAIL(NEW_SRV_ERR_INV_USER_ID);
   if (!teamdb_lookup(cs->teamdb_state, user_id))
@@ -5342,7 +5407,7 @@ priv_print_user_exam_protocol(
   if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
   if (locale_id > 0) l10n_setlocale(locale_id);
   ff = open_memstream(&log_text, &log_size);
-  r = ns_print_user_exam_protocol(phr, cnts, cs, ff, user_id, locale_id);
+  r = ns_print_user_exam_protocol(phr, cnts, cs, ff, user_id, locale_id, 1);
   fclose(ff); ff = 0;
   if (locale_id > 0) l10n_setlocale(0);
 
@@ -5373,6 +5438,82 @@ priv_print_user_exam_protocol(
 
  cleanup:
   if (ff) fclose(ff);
+  xfree(ss);
+  xfree(log_text);
+  return retval;
+}
+
+static int
+priv_print_users_exam_protocol(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  int retval = 0, r;
+  char *log_text = 0;
+  size_t log_size = 0;
+  FILE *ff = 0;
+  unsigned char bb[1024];
+  unsigned char *ss = 0;
+  int locale_id = 0, i, x, n;
+  intarray_t uset;
+  const unsigned char *s;
+
+  if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  memset(&uset, 0, sizeof(uset));
+  for (i = 0; i < phr->param_num; i++) {
+    if (strncmp(phr->param_names[i], "user_", 5) != 0) continue;
+    if (sscanf((s = phr->param_names[i] + 5), "%d%n", &x, &n) != 1
+        || s[n] || x <= 0)
+      FAIL(NEW_SRV_ERR_INV_USER_ID);
+    if (teamdb_lookup(cs->teamdb_state, x) <= 0)
+      FAIL(NEW_SRV_ERR_INV_USER_ID);
+
+    XEXPAND2(uset);
+    uset.v[uset.u++] = x;
+  }
+
+  if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
+  if (locale_id > 0) l10n_setlocale(locale_id);
+  ff = open_memstream(&log_text, &log_size);
+  r = ns_print_user_exam_protocols(phr, cnts, cs, ff, uset.u, uset.v,
+                                   locale_id, 1);
+  fclose(ff); ff = 0;
+  if (locale_id > 0) l10n_setlocale(0);
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
+            phr->contest_id, extra->contest_arm, _("Printing user protocol"));
+
+  fprintf(fout, "<h2>%s</h2>\n",
+          (r >= 0)?_("Operation succeeded"):_("Operation failed"));
+
+  fprintf(fout, "<table>");
+  fprintf(fout, "<tr><td>%s%s</a></td></tr></table>",
+          ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
+          _("Main page"));
+
+  ss = html_armor_string_dup(log_text);
+  fprintf(fout, "<hr/><pre>");
+  if (r < 0) fprintf(fout, "<font color=\"red\">");
+  fprintf(fout, "%s", ss);
+  if (r < 0) fprintf(fout, "</font>");
+  fprintf(fout, "</pre>\n");
+  xfree(ss); ss = 0;
+  xfree(log_text); log_text = 0;
+
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  if (ff) fclose(ff);
+  xfree(uset.v);
   xfree(ss);
   xfree(log_text);
   return retval;
@@ -5548,14 +5689,17 @@ unpriv_print_status(FILE *fout,
   }
 
   if (!cnts->exam_mode && global->is_virtual && start_time <= 0) {
-    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-    if (cnts->exam_mode) {
-      fprintf(fout, "<p>%s</p></form>",
-              ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_VIRTUAL_START,
-                               _("Start exam")));
-    } else {
-      fprintf(fout, "<p>%s</p></form>",
-              BUTTON(NEW_SRV_ACTION_VIRTUAL_START));
+    if (global->disable_virtual_start <= 0) {
+      html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+      if (cnts->exam_mode) {
+        fprintf(fout, "<p>%s</p></form>",
+                ns_submit_button(bb, sizeof(bb), 0,
+                                 NEW_SRV_ACTION_VIRTUAL_START,
+                                 _("Start exam")));
+      } else {
+        fprintf(fout, "<p>%s</p></form>",
+                BUTTON(NEW_SRV_ACTION_VIRTUAL_START));
+      }
     }
   } else if (!cnts->exam_mode && global->is_virtual && stop_time <= 0) {
     html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
@@ -5682,6 +5826,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TOGGLE_BAN] = priv_user_toggle_flags,
   [NEW_SRV_ACTION_TOGGLE_LOCK] = priv_user_toggle_flags,
   [NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS] = priv_user_toggle_flags,
+  [NEW_SRV_ACTION_FORCE_START_VIRTUAL] = priv_force_start_virtual,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -5730,6 +5875,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_EXAMINERS_PAGE] = priv_examiners_page,
   [NEW_SRV_ACTION_VIEW_ONLINE_USERS] = priv_view_online_users,
   [NEW_SRV_ACTION_PRINT_USER_PROTOCOL] = priv_print_user_exam_protocol,
+  [NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL] =priv_print_users_exam_protocol,
 };
 
 static void
@@ -6707,6 +6853,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS] = priv_generic_operation,
   [NEW_SRV_ACTION_VIEW_ONLINE_USERS] = priv_generic_page,
   [NEW_SRV_ACTION_PRINT_USER_PROTOCOL] = priv_generic_page,
+  [NEW_SRV_ACTION_FORCE_START_VIRTUAL] = priv_generic_operation,
+  [NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL] = priv_generic_page,
 };
 
 static void
@@ -8493,6 +8641,10 @@ unpriv_command(FILE *fout,
 
   switch (phr->action) {
   case NEW_SRV_ACTION_VIRTUAL_START:
+    if (global->disable_virtual_start) {
+      ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+      goto done;
+    }
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     if (start_time > 0) {
       ns_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_STARTED);
@@ -8534,8 +8686,10 @@ unpriv_command(FILE *fout,
     serve_move_files_to_insert_run(cs, run_id);
     if (global->score_system_val == SCORE_OLYMPIAD && global->is_virtual > 0) {
       serve_event_remove_matching(cs, 0, 0, phr->user_id);
-      serve_event_add(cs, precise_time.tv_sec + 1,
-                      SERVE_EVENT_JUDGE_OLYMPIAD, phr->user_id);
+      if (global->disable_virtual_auto_judge <= 0) {
+        serve_event_add(cs, precise_time.tv_sec + 1,
+                        SERVE_EVENT_JUDGE_OLYMPIAD, phr->user_id);
+      }
     }
     break;
   }
@@ -9521,6 +9675,7 @@ unpriv_page_header(FILE *fout,
         case NEW_SRV_ACTION_VIEW_STARTSTOP:
           if (!global->is_virtual) continue;
           if (start_time <= 0) {
+            if (global->disable_virtual_start > 0) continue;
             if (cnts->exam_mode) forced_text = _("Start exam");
             else forced_text = _("Start virtual contest");
           } else if (stop_time <= 0) {
@@ -10203,15 +10358,17 @@ unpriv_main_page(FILE *fout,
 
   if (phr->action == NEW_SRV_ACTION_VIEW_STARTSTOP) {
     if (global->is_virtual && start_time <= 0) {
-      html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-      if (cnts->exam_mode) {
-        fprintf(fout, "<p>%s</p></form>",
-                ns_submit_button(bb, sizeof(bb), 0,
-                                 NEW_SRV_ACTION_VIRTUAL_START,
-                                 _("Start exam")));
-      } else {
-        fprintf(fout, "<p>%s</p></form>",
-                BUTTON(NEW_SRV_ACTION_VIRTUAL_START));
+      if (global->disable_virtual_start <= 0) {
+        html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+        if (cnts->exam_mode) {
+          fprintf(fout, "<p>%s</p></form>",
+                  ns_submit_button(bb, sizeof(bb), 0,
+                                   NEW_SRV_ACTION_VIRTUAL_START,
+                                   _("Start exam")));
+        } else {
+          fprintf(fout, "<p>%s</p></form>",
+                  BUTTON(NEW_SRV_ACTION_VIRTUAL_START));
+        }
       }
     } else if (global->is_virtual && stop_time <= 0) {
       if (cnts->exam_mode) {
