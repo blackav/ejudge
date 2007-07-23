@@ -137,6 +137,8 @@ struct section_global_data
   int    problem_navigation;     /* extended problem navigation */
   int    problem_tab_size;
   int    vertical_navigation;    /* align vertically */
+  int    disable_virtual_start;  /* disable user "virtual start" button */
+  int    disable_virtual_auto_judge;  /* disable auto-judging after virtual olympiad */
 
   puc_t name[256];              /* name of the contest */
   path_t root_dir;

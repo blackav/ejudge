@@ -381,4 +381,14 @@ int userlist_clnt_priv_cookie_login(
         unsigned char **p_name
                                     );
 
+int
+userlist_clnt_import_csv_users(
+	struct userlist_clnt *clnt,
+        int cmd,
+        int contest_id,
+        int separator,
+        int flags,
+        const unsigned char *csv_text,
+        unsigned char **p_log);
+
 #endif /* __USERLIST_CLNT_H__ */

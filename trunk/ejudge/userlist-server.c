@@ -39,6 +39,7 @@
 #include "xml_utils.h"
 #include "random.h"
 #include "startstop.h"
+#include "csv.h"
 
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
@@ -7853,6 +7854,291 @@ cmd_move_member(struct client_state *p, int pkt_len,
   info("%s -> OK, %d", logbuf, reply_code);
 }
 
+static const struct { unsigned char *str; int ind; } field_names[] =
+{
+  { "Login", USERLIST_NN_LOGIN },
+  { "E-mail", USERLIST_NN_EMAIL },
+  { "Password", USERLIST_NN_PASSWD },
+
+  { "Name", USERLIST_NC_NAME },
+  { "Team_Password", USERLIST_NC_TEAM_PASSWD },
+  { "Inst", USERLIST_NC_INST },
+  { "Inst_En", USERLIST_NC_INST_EN },
+  { "Instshort", USERLIST_NC_INSTSHORT },
+  { "Instshort_En", USERLIST_NC_INSTSHORT_EN },
+  { "Fac", USERLIST_NC_FAC },
+  { "Fac_En", USERLIST_NC_FAC_EN },
+  { "Facshort", USERLIST_NC_FACSHORT },
+  { "Facshort_En", USERLIST_NC_FACSHORT_EN },
+  { "Homepage", USERLIST_NC_HOMEPAGE },
+  { "City", USERLIST_NC_CITY },
+  { "City_En", USERLIST_NC_CITY_EN },
+  { "Country", USERLIST_NC_COUNTRY },
+  { "Country_En", USERLIST_NC_COUNTRY_EN },
+  { "Region", USERLIST_NC_REGION },
+  { "Location", USERLIST_NC_LOCATION },
+  { "Spelling", USERLIST_NC_SPELLING },
+  { "Printer_Name", USERLIST_NC_PRINTER_NAME },
+  { "Exam_Id", USERLIST_NC_EXAM_ID },
+  { "Exam_Cypher", USERLIST_NC_EXAM_CYPHER },
+  { "Languages", USERLIST_NC_LANGUAGES },
+  { "Phone", USERLIST_NC_PHONE },
+
+  { "Status", USERLIST_NM_STATUS },
+  { "Grade", USERLIST_NM_GRADE },
+  { "Firstname", USERLIST_NM_FIRSTNAME },
+  { "Firstname_En", USERLIST_NM_FIRSTNAME_EN },
+  { "Middlename", USERLIST_NM_MIDDLENAME },
+  { "Middlename_En", USERLIST_NM_MIDDLENAME_EN },
+  { "Surname", USERLIST_NM_SURNAME },
+  { "Surname_En", USERLIST_NM_SURNAME_EN },
+  { "Group", USERLIST_NM_GROUP },
+  { "Group_En", USERLIST_NM_GROUP_EN },
+  { "Occupation", USERLIST_NM_OCCUPATION },
+  { "Occupation_En", USERLIST_NM_OCCUPATION_EN },
+  { "Birth_Date", USERLIST_NM_BIRTH_DATE },
+  { "Entry_Date", USERLIST_NM_ENTRY_DATE },
+  { "Graduation_Date", USERLIST_NM_GRADUATION_DATE },
+
+  { 0, -1 },
+};
+
+/*
+  `field' - field separator
+  `serial' - flags (1 - create new users)
+ */
+static void
+cmd_import_csv_users(
+	struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_edit_field *data)
+{
+  const struct contest_desc *cnts = 0;
+  unsigned char logbuf[1024];
+  int separator;
+  struct csv_file *csv = 0;
+  FILE *log_f = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  int i, j, k, field_num, errcode, user_id, f, need_member = 0;
+  int *field_ind = 0, *user_ids = 0;
+  int field_rev[USERLIST_NM_LAST];
+  const struct userlist_user *u;
+  const struct userlist_user_info *ui;
+  const struct userlist_contest *c;
+  const struct userlist_member *m;
+  int retval = ULS_TEXT_DATA_FAILURE;
+  struct userlist_pk_xml_data *out = 0;
+  size_t out_size = 0;
+  int cloned_flag = 0;
+
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet is too small: %d < %zu", pkt_len, sizeof(*data));
+    return;
+  }
+  if (strlen(data->data) != data->value_len) {
+    CONN_BAD("invalid data length");
+    return;
+  }
+  if (pkt_len != data->value_len + sizeof(*data)) {
+    CONN_BAD("packet size mismatch: %d, %zu", pkt_len,
+             data->value_len + sizeof(*data));
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "IMPORT_CSV_USERS: %d, %d, %d",
+           data->contest_id, data->field, data->serial);
+
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0 || !cnts) {
+    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (cnts && cnts->user_contest_num > 0) {
+    data->contest_id = cnts->user_contest_num;
+    if (contests_get(data->contest_id, &cnts) < 0 || !cnts) {
+      err("%s -> invalid user contest", logbuf);
+      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
+    if (cnts->user_contest_num > 0) {
+      err("%s -> transitive contest sharing", logbuf);
+      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
+      return;
+    }
+  }
+  if (p->user_id <= 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (is_cnts_capable(p, cnts, OPCAP_EDIT_USER, logbuf) < 0
+      || is_cnts_capable(p, cnts, OPCAP_PRIV_EDIT_USER, logbuf) < 0
+      || is_cnts_capable(p, cnts, OPCAP_CREATE_REG, logbuf) < 0
+      || is_cnts_capable(p, cnts, OPCAP_PRIV_CREATE_REG, logbuf) < 0)
+    return;
+  separator = data->field;
+  if (separator < ' ') separator = ';';
+
+  log_f = open_memstream(&log_txt, &log_len);
+  if (!(csv = csv_parse(data->data, log_f, separator))) {
+    fprintf(log_f, "cannot parse the CSV file\n");
+    goto cleanup;
+  }
+  if (csv->u < 1) {
+    fprintf(log_f, "too few rows in the table\n");
+    goto cleanup;
+  }
+  // check, that all rows have the same number of columns
+  for (i = 1; i < csv->u; i++) {
+    if (csv->v[i].u != csv->v[0].u) {
+      fprintf(log_f, "row %d has %d columns, but the header has %d columns\n",
+              i + 1, csv->v[i].u, csv->v[0].u);
+      goto cleanup;
+    }
+  }
+  // parse the first line
+  field_num = csv->v[0].u;
+  field_ind = (int*) alloca(field_num * sizeof(field_ind[0]));
+  memset(field_ind, -1, field_num * sizeof(field_ind[0]));
+  memset(field_rev, -1, sizeof(field_rev));
+  XALLOCAZ(user_ids, csv->u);
+  for (j = 0; j < field_num; j++) {
+    if (!csv->v[0].v[j][0]) {
+      fprintf(log_f, "Empty field (%d), ignored\n", j + 1);
+      continue;
+    }
+    for (k = 0; field_names[k].str; k++)
+      if (!strcasecmp(field_names[k].str, csv->v[0].v[j]))
+        break;
+    if (field_names[k].str) {
+      f = field_names[k].ind;
+      if (field_rev[f] >= 0) {
+        fprintf(log_f, "Duplicated field `%s'\n", field_names[k].str);
+        goto cleanup;
+      }
+      field_rev[f] = j;
+      field_ind[j] = f;
+      if (f >= USERLIST_NM_FIRST && f < USERLIST_NM_LAST
+          && !cnts->personal) {
+        fprintf(log_f, "Contest is not personal\n");
+        goto cleanup;
+      }
+      if (f >= USERLIST_NM_FIRST && f < USERLIST_NM_LAST)
+        need_member = 1;
+    } else {
+      fprintf(log_f, "Unknown field `%s', ignored\n", csv->v[0].v[j]);
+    }
+  }
+
+  // check the uniqueness of the logins
+  if ((j = field_rev[USERLIST_NN_LOGIN]) < 0) {
+    fprintf(log_f, "`Login' column is not specified\n");
+    goto cleanup;
+  }
+  for (i = 1; i < csv->u; i++) {
+    if ((user_id = default_get_user_by_login(csv->v[i].v[j])) <= 0) {
+      fprintf(log_f, "Invalid login `%s' in row %d\n", csv->v[i].v[j], i);
+      goto cleanup;
+    }
+    user_ids[i] = user_id;
+    for (k = 1; k < i; k++) {
+      if (user_ids[k] == user_ids[i]) {
+        fprintf(log_f, "Duplicated login `%s'\n", csv->v[i].v[j]);
+        goto cleanup;
+      }
+    }
+
+    // check contest registration
+    c = 0;
+    if (default_get_user_info_3(user_id, data->contest_id, &u, &ui, &c) < 0) {
+      fprintf(log_f, "Database error\n");
+      goto cleanup;
+    }
+    if (!c) {
+      fprintf(log_f, "User `%s' is not registered for the contest\n",
+              csv->v[i].v[j]);
+      goto cleanup;
+    }
+    if (c->status != USERLIST_REG_OK || c->flags != 0) {
+      fprintf(log_f, "User `%s' is not a regular user\n", csv->v[i].v[j]);
+      goto cleanup;
+    }
+    if (u->read_only || ui->cnts_read_only) {
+      fprintf(log_f, "User `%s' is read-only\n", u->login);
+      goto cleanup;
+    }
+  }
+
+  // set the fields
+  for (i = 1; i < csv->u; i++) {
+    user_id = user_ids[i];
+    u = 0; ui = 0;
+    if (default_get_user_info_2(user_id, data->contest_id, &u, &ui) < 0)
+      abort();
+    if (need_member && (!ui || !ui->members[CONTEST_M_CONTESTANT]
+                        || ui->members[CONTEST_M_CONTESTANT]->total <= 0
+                        || !ui->members[CONTEST_M_CONTESTANT]->members[0])) {
+      if (default_new_member(user_id, data->contest_id, CONTEST_M_CONTESTANT,
+                             cur_time, &cloned_flag) < 0) {
+        fprintf(log_f, "Cannot create a new member for user `%s'\n", u->login);
+        goto cleanup;
+      }
+    }
+    if (need_member) {
+      m = 0; u =0; ui = 0;
+      if (default_get_user_info_2(user_id, data->contest_id, &u, &ui) < 0)
+        abort();
+      if (ui && ui->members[CONTEST_M_CONTESTANT]
+          && ui->members[CONTEST_M_CONTESTANT]->total > 0
+          && ui->members[CONTEST_M_CONTESTANT]->members)
+        m = ui->members[CONTEST_M_CONTESTANT]->members[0];
+      if (!m) abort();
+    }
+    for (j = 0; j < csv->v[i].u; j++) {
+      if ((f = field_ind[j]) < 0 || f == USERLIST_NN_LOGIN) continue;
+      if (f >= USERLIST_NN_FIRST && f < USERLIST_NN_LAST) {
+        if (default_set_user_field(user_id, f, csv->v[i].v[j], cur_time) < 0) {
+          fprintf(log_f, "Failed to update user `%s'\n", u->login);
+          goto cleanup;
+        }
+      } else if (f >= USERLIST_NC_FIRST && f < USERLIST_NC_LAST) {
+        if (default_set_user_info_field(user_id, data->contest_id, f,
+                                        csv->v[i].v[j], cur_time,
+                                        &cloned_flag) < 0) {
+          fprintf(log_f, "Failed to update user `%s'\n", u->login);
+          goto cleanup;
+        }
+      } else if (f >= USERLIST_NM_FIRST && f < USERLIST_NM_LAST) {
+        if (default_set_user_member_field(user_id, data->contest_id,
+                                          m->serial, f, csv->v[i].v[j],
+                                          cur_time, &cloned_flag) < 0) {
+          fprintf(log_f, "Failed to update user `%s'\n", u->login);
+          goto cleanup;
+        }
+      }
+    }
+  }
+
+  fprintf(log_f, "Operation completed successfully\n");
+  fclose(log_f); log_f = 0;
+  retval = ULS_TEXT_DATA;
+
+ cleanup:
+  if (log_f) fclose(log_f);
+  log_f = 0;
+
+  out_size = sizeof(*out) + log_len;
+  out = (struct userlist_pk_xml_data*) alloca(out_size);
+  memset(out, 0, out_size);
+  out->reply_id = ULS_TEXT_DATA_FAILURE;
+  out->info_len = log_len;
+  memcpy(out->data, log_txt, log_len + 1);
+  enqueue_reply_to_client(p, out_size, out);
+  info("%s -> ok, %zu", logbuf, out_size);
+  xfree(log_txt);
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW]            cmd_register_new,
@@ -7928,6 +8214,7 @@ static void (*cmd_table[])() =
   [ULS_GET_COOKIE] =            cmd_get_cookie,
   [ULS_EDIT_FIELD_SEQ] =        cmd_edit_field_seq,
   [ULS_MOVE_MEMBER] =           cmd_move_member,
+  [ULS_IMPORT_CSV_USERS] =      cmd_import_csv_users,
 
   [ULS_LAST_CMD] 0
 };

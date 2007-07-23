@@ -39,6 +39,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/get_param.c\
  userlist_clnt/get_uid_by_pid.c\
  userlist_clnt/get_uid_by_pid_2.c\
+ userlist_clnt/import_csv_users.c\
  userlist_clnt/list_all_users.c\
  userlist_clnt/list_users.c\
  userlist_clnt/login.c\

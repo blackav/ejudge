@@ -265,6 +265,10 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "problem_navigation", global->problem_navigation);
   if (global->vertical_navigation != DFLT_G_VERTICAL_NAVIGATION)
     unparse_bool(f, "vertical_navigation", global->vertical_navigation);
+  if (global->disable_virtual_start != DFLT_G_DISABLE_VIRTUAL_START)
+    unparse_bool(f, "disable_virtual_start", global->disable_virtual_start);
+  if (global->disable_virtual_auto_judge != DFLT_G_DISABLE_VIRTUAL_AUTO_JUDGE)
+    unparse_bool(f, "disable_virtual_auto_judge", global->disable_virtual_auto_judge);
   if (global->appeal_deadline[0]) {
     fprintf(f, "appeal_deadline = \"%s\"\n", global->appeal_deadline);
   }

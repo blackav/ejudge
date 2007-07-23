@@ -2644,7 +2644,7 @@ handle_virtual_stop_event(serve_state_t cs, struct serve_event_queue *p)
   info("inserted virtual stop as run %d", run_id);
   serve_move_files_to_insert_run(cs, run_id);
   if (cs->global->score_system_val == SCORE_OLYMPIAD
-      && cs->global->is_virtual) {
+      && cs->global->is_virtual && cs->global->disable_virtual_auto_judge<= 0) {
     serve_event_add(cs, p->time + 1, SERVE_EVENT_JUDGE_OLYMPIAD, p->user_id);
   }
   serve_event_remove(cs, p);

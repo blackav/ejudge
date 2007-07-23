@@ -55,6 +55,7 @@ static unsigned char const * const error_map[] =
   _("e-mail sending failed"),
   _("incomplete registration"),
   _("invalid field"),
+  _("transitive user contest sharing"),
   _("unspecified error"),
 
   0
