@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-07-18 00:47+0400\n"
-"PO-Revision-Date: 2007-07-18 23:53+0400\n"
+"POT-Creation-Date: 2007-07-23 22:03+0400\n"
+"PO-Revision-Date: 2007-07-24 00:59+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -641,8 +641,14 @@ msgstr "Ответ"
 msgid "Answer code"
 msgstr "Код ответа"
 
+msgid "Answer is empty"
+msgstr "Ответ пуст"
+
 msgid "Answer is unspecified"
 msgstr "Ответ не задан"
+
+msgid "Answer text"
+msgstr "Текст ответа"
 
 msgid "Answer: NO"
 msgstr "Ответ: НЕТ"
@@ -1272,8 +1278,17 @@ msgstr "Английский"
 msgid "Enter password"
 msgstr "Введите пароль"
 
+msgid "Error"
+msgstr "Ошибка"
+
 msgid "Error during run comparison"
 msgstr "Ошибка при сравнении программ"
+
+msgid "Exam Id"
+msgstr "N экз. листа"
+
+msgid "Exam finish time"
+msgstr "Время окончания экзамена"
 
 msgid "Exam start time"
 msgstr "Время начала экзамена"
@@ -1461,6 +1476,12 @@ msgstr "Для зарегистрированных пользователей"
 msgid "For schools, liceums, etc, please, specify its number."
 msgstr ""
 "Для школ, лицеев и пр. укажите, пожалуйста, номер. Например, школа 1234."
+
+msgid "Force start virtual contest"
+msgstr "Начать виртуальный турнир"
+
+msgid "Force virtual contest start for the selected users"
+msgstr "Начать виртуальный турнир для отмеченных пользователей"
 
 msgid "Forgot password?"
 msgstr "Забыли пароль?"
@@ -2328,6 +2349,9 @@ msgstr "Нет"
 msgid "No advisors are allowed in this contest"
 msgstr "Категория \"руководители\" не поддерживается для этого турнира"
 
+msgid "No answer"
+msgstr "Ответ не дан"
+
 msgid "No answer is given"
 msgstr "Ответ не дан"
 
@@ -2416,6 +2440,9 @@ msgstr "Не зарегистрированы"
 
 msgid "Not set"
 msgstr "Не установлено"
+
+msgid "Note, lines are numbered just for your convinience."
+msgstr "Обратите внимание, что строки пронумерованы для Вашего удобства."
 
 #, c-format
 msgid ""
@@ -2582,6 +2609,9 @@ msgstr "Решения участников проверены"
 msgid "Participate"
 msgstr "Участвовать"
 
+msgid "Passed tests"
+msgstr "Пройдено тестов"
+
 msgid "Password"
 msgstr "Пароль"
 
@@ -2720,6 +2750,15 @@ msgstr "Обработка запросов на печать приостановлена"
 msgid "Print sources"
 msgstr "Распечатать исходный текст"
 
+msgid "Print the exam protocols"
+msgstr "Напечатать экзаменационные протоколы"
+
+msgid "Print the user examination protocols for the selected users"
+msgstr "Напечатать экзаменационные протоколы для отмеченных участников"
+
+msgid "Print user examination protocol"
+msgstr "Напечатать экзаменационный протокол участника"
+
 #, c-format
 msgid "Printing error: %d: %s"
 msgstr "Ошибка печати: %d: %s"
@@ -2730,6 +2769,9 @@ msgstr "Печать отключена"
 #, c-format
 msgid "Printing quota (%d pages) is exceeded"
 msgstr "Превышена квота печати (%d страниц)"
+
+msgid "Printing user protocol"
+msgstr "Печать экзаменационного протокола участника"
 
 msgid "Privileged users page"
 msgstr "Список привилегированных пользователей"
@@ -3306,6 +3348,9 @@ msgid "Solved<br>problems"
 msgstr "Решённые<br>задачи"
 
 msgid "Source"
+msgstr "Исходный код"
+
+msgid "Source code"
 msgstr "Исходный код"
 
 msgid "Source file does not exist"
@@ -4470,6 +4515,9 @@ msgstr "этот пользователь не зарегистрирован на данный турнир"
 msgid "total"
 msgstr "всего"
 
+msgid "transitive user contest sharing"
+msgstr "транзитивное разделение пользователей турнира"
+
 msgid "unexpected EOF"
 msgstr "неожиданный конец файла"
 
@@ -4499,3 +4547,10 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
+
+#~ msgid ""
+#~ "Note, that only solutions marked ``Accepted for testing'' are subject to "
+#~ "further testing. Other solutions \\textbf{will not} be tested."
+#~ msgstr ""
+#~ "Обратите внимание, что только ответы, помеченные как ``Принято на "
+#~ "проверку'', будут проверяться! Все другие ответы проверяться не будут!"
