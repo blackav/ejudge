@@ -2286,6 +2286,7 @@ check_config(void)
           if (check_readable_dir(prb->corr_dir) < 0) return -1;
           if ((n2 = count_files(prb->corr_dir,prb->corr_sfx,prb->corr_pat)) < 0)
             return -1;
+          n1 = n2;
           info("found %d answers for problem %s", n2, prb->short_name);
           if (n2 != 1) {
             err("output-only problem must define only one answer file");

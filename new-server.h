@@ -762,6 +762,15 @@ ns_print_user_exam_protocols(
         int locale_id,
         int use_user_printer);
 
+int
+ns_olympiad_final_user_report(
+	FILE *fout,
+        FILE *log_f,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        int user_id,
+        int locale_id);
+
 extern int utf8_mode;
 
 #endif /* __NEW_SERVER_H__ */

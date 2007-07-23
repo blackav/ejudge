@@ -10392,8 +10392,46 @@ unpriv_main_page(FILE *fout,
   if (start_time && phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
     if (cnts->exam_mode && global->score_system_val == SCORE_OLYMPIAD
         && global->is_virtual && stop_time > 0
-        && (run_has_transient_user_runs(cs->runlog_state, phr->user_id)
-            || !is_judged_virtual_olympiad(cs, phr->user_id))) {
+        && global->disable_virtual_auto_judge > 0
+        && !cs->testing_finished) {
+      char *ff_txt = 0, *fl_txt = 0;
+      size_t ff_len = 0, fl_len = 0;
+      FILE *ff = open_memstream(&ff_txt, &ff_len);
+      FILE *fl = open_memstream(&fl_txt, &fl_len);
+      int rr = ns_olympiad_final_user_report(ff, fl, cnts, cs,
+                                             phr->user_id, phr->locale_id);
+      if (rr < 0) {
+        fprintf(fout, "<%s>%s</%s>\n<p>%s %d</p>",
+                cnts->team_head_style,
+                _("Problem status summary"),
+                cnts->team_head_style, _("Error"), -rr);
+        fclose(fl); fl = 0; xfree(fl_txt); fl_txt = 0; fl_len = 0;
+        fclose(ff); ff = 0; xfree(ff_txt); ff_txt = 0; ff_len = 0;
+      } else {
+        fclose(fl); fl = 0;
+        if (fl_txt && *fl_txt) {
+          fprintf(fout,
+                  "<%s>%s</%s>\n<pre><font color=\"red\">%s</font></pre>\n",
+                  cnts->team_head_style,
+                  _("Problem status summary"),
+                  cnts->team_head_style, ARMOR(fl_txt));
+          xfree(fl_txt); fl_txt = 0; fl_len = 0;
+          fclose(ff); ff = 0; xfree(ff_txt); ff_txt = 0; ff_len = 0;
+        } else {
+          fclose(ff); ff = 0; 
+          fprintf(fout,
+                  "<%s>%s</%s>\n%s\n",
+                  cnts->team_head_style,
+                  _("Problem status summary"),
+                  cnts->team_head_style, ff_txt);
+          xfree(fl_txt); fl_txt = 0; fl_len = 0;
+          xfree(ff_txt); ff_txt = 0; ff_len = 0;
+        }
+      }
+    } else if (cnts->exam_mode && global->score_system_val == SCORE_OLYMPIAD
+               && global->is_virtual && stop_time > 0
+               && (run_has_transient_user_runs(cs->runlog_state, phr->user_id)
+                   || !is_judged_virtual_olympiad(cs, phr->user_id))) {
       fprintf(fout, "<%s>%s</%s>\n",
               cnts->team_head_style,
               _("Testing is in progress..."),
@@ -11140,6 +11178,7 @@ do_xml_user_state(FILE *fout, const serve_state_t cs, int user_id)
       (global->score_system_val == SCORE_OLYMPIAD
        && global->is_virtual
        && stop_time > 0
+       && global->disable_virtual_auto_judge <= 0
        && !is_judged_virtual_olympiad(cs, user_id))) {
     fprintf(fout, "<x>1</x>");
   }

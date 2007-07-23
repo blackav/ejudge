@@ -160,12 +160,17 @@ tex_armor_verbatim(unsigned char *str)
 }
 
 #define TARMOR(s) tex_armor_buf(&ab, s)
+#define ARMOR(s) html_armor_buf(&ab, s)
 
 int
-user_report_generate(unsigned char *out_path, size_t out_size,
-                     const struct contest_desc *cnts,
-                     FILE *log_f, const serve_state_t cs, int user_id,
-                     int locale_id)
+user_report_generate(
+	unsigned char *out_path,
+        size_t out_size,
+        const struct contest_desc *cnts,
+        FILE *log_f,
+        const serve_state_t cs,
+        int user_id,
+        int locale_id)
 {
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob;
@@ -1145,5 +1150,589 @@ ns_print_user_exam_protocols(
 
  cleanup:
   //clear_directory(global->print_work_dir);
+  return retval;
+}
+
+int
+ns_olympiad_final_user_report(
+	FILE *fout,
+        FILE *log_f,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        int user_id,
+        int locale_id)
+{
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob;
+  const struct section_language_data *lang;
+  int *run_ids;
+  int total_runs, run_id, retval = -1, f_id, l_id, i, j, k;
+  struct run_entry re;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  path_t src_path;
+  int src_flags, answer, variant, passed_tests;
+  char *src_txt = 0, *eptr, *num_txt = 0;
+  size_t src_len = 0, num_len = 0;
+  problem_xml_t px;
+  const unsigned char *ans_txt;
+  struct xml_attr *a;
+  struct watched_file *pw = 0;
+  const unsigned char *pw_path;
+  path_t variant_stmt_file;
+  struct teamdb_export tdb;
+  time_t start_time, stop_time;
+  unsigned char *psrc;
+  const struct userlist_user *u = 0;
+  const struct userlist_member *m = 0;
+  const unsigned char *s;
+  const unsigned char *td0 = "<td class=\"b0\">";
+  const unsigned char *td1 = "<td class=\"b1\">";
+  const unsigned char *th1 = "<th class=\"b1\">";
+
+  if (global->score_system_val != SCORE_OLYMPIAD) return -1;
+
+  if (teamdb_export_team(cs->teamdb_state, user_id, &tdb) < 0) {
+    fprintf(log_f, "Invalid user %d\n", user_id);
+    goto cleanup;
+  }
+  u = tdb.user;
+  if (u && u->i.members[CONTEST_M_CONTESTANT]
+      && u->i.members[CONTEST_M_CONTESTANT]->total > 0)
+    m = u->i.members[CONTEST_M_CONTESTANT]->members[0];
+
+  XALLOCA(run_ids, cs->max_prob + 1);
+  memset(run_ids, -1, sizeof(run_ids[0]) * (cs->max_prob + 1));
+
+  // find the latest run in acceptable state
+  total_runs = run_get_total(cs->runlog_state);
+  if (total_runs > 0) {
+    for (run_id = total_runs - 1; run_id >= 0; run_id--) {
+      if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+        fprintf(log_f, "Invalid run %d\n", run_id);
+        goto cleanup;
+      }
+      if (!run_is_source_available(re.status)) continue;
+      if (re.user_id != user_id) continue;
+      if (re.prob_id <= 0 || re.prob_id > cs->max_prob
+          || !(prob = cs->probs[re.prob_id])) {
+        fprintf(log_f, "Invalid problem %d in run %d\n", re.prob_id, run_id);
+        goto cleanup;
+      }
+      if (prob->type_val == PROB_TYPE_OUTPUT_ONLY
+          || prob->type_val == PROB_TYPE_SELECT_MANY
+          || prob->type_val == PROB_TYPE_CUSTOM) {
+        fprintf(log_f,"Problem type `%s' for problem %s is not yet supported\n",
+                problem_unparse_type(prob->type_val), prob->short_name);
+        goto cleanup;
+      }
+      if (run_ids[re.prob_id] >= 0) continue;
+      if (prob->type_val != PROB_TYPE_STANDARD) {
+        switch (re.status) {
+        case RUN_OK:
+        case RUN_WRONG_ANSWER_ERR:
+        case RUN_PARTIAL:
+        case RUN_ACCEPTED:
+          run_ids[re.prob_id] = run_id;
+          break;
+
+        case RUN_IGNORED:
+        case RUN_DISQUALIFIED:
+        case RUN_PRESENTATION_ERR:
+          break;
+
+        default:
+          fprintf(log_f, "Invalid run status %d (%s) in run %d\n",
+                  re.status, run_status_str(re.status, 0, 0, 0, 0),
+                  run_id);
+          goto cleanup;
+        }
+      } else {
+        switch (re.status) {
+        case RUN_OK:
+        case RUN_PARTIAL:
+        case RUN_ACCEPTED:
+          run_ids[re.prob_id] = run_id;
+          break;
+
+        case RUN_COMPILE_ERR:
+        case RUN_RUN_TIME_ERR:
+        case RUN_TIME_LIMIT_ERR:
+        case RUN_PRESENTATION_ERR:
+        case RUN_WRONG_ANSWER_ERR:
+        case RUN_IGNORED:
+        case RUN_DISQUALIFIED:
+        case RUN_MEM_LIMIT_ERR:
+        case RUN_SECURITY_ERR:
+          break;
+
+        default:
+          fprintf(log_f, "Invalid run status %d (%s) in run %d\n",
+                  re.status, run_status_str(re.status, 0, 0, 0, 0),
+                  run_id);
+          goto cleanup;
+        }
+      }
+    }
+  }
+
+  if (total_runs > 0) {
+    for (run_id = total_runs - 1; run_id >= 0; run_id--) {
+      if (run_get_entry(cs->runlog_state, run_id, &re) < 0) abort();
+      if (!run_is_source_available(re.status)) continue;
+      if (re.user_id != user_id) continue;
+      prob = cs->probs[re.prob_id];
+      if (run_ids[re.prob_id] >= 0) continue;
+      if (prob->type_val != PROB_TYPE_STANDARD) {
+        switch (re.status) {
+        case RUN_PRESENTATION_ERR:
+          run_ids[re.prob_id] = run_id;
+          break;
+
+        case RUN_IGNORED:
+        case RUN_DISQUALIFIED:
+          break;
+
+        default:
+          abort();
+        }
+      } else {
+        switch (re.status) {
+        case RUN_COMPILE_ERR:
+        case RUN_RUN_TIME_ERR:
+        case RUN_TIME_LIMIT_ERR:
+        case RUN_PRESENTATION_ERR:
+        case RUN_WRONG_ANSWER_ERR:
+        case RUN_MEM_LIMIT_ERR:
+        case RUN_SECURITY_ERR:
+          run_ids[re.prob_id] = run_id;
+          break;
+
+        case RUN_IGNORED:
+        case RUN_DISQUALIFIED:
+          break;
+
+        default:
+          abort();
+        }
+      }
+    }
+  }
+
+  // from this point on we cannot report fatal error
+
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, user_id,
+                                          cs->current_time);
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+  }
+
+  fprintf(fout, "<table class=\"b0\">\n");
+  fprintf(fout, "<tr>%s%s:</td>%s%s</td></tr>\n",
+          td0, _("Login"), td0, ARMOR(tdb.login));
+  s = 0;
+  if (m) {
+    if (locale_id > 0) {
+      s = m->surname;
+      if (!s) s = m->surname_en;
+    } else {
+      s = m->surname_en;
+      if (!s) s = m->surname;
+    }
+    if (s) fprintf(fout, "<tr>%s%s:</td>%s%s</td></tr>\n",
+                   td0, _("Family name"), td0, ARMOR(s));
+    s = 0;
+    if (locale_id > 0) {
+      s = m->firstname;
+      if (!s) s = m->firstname_en;
+    } else {
+      s = m->firstname_en;
+      if (!s) s = m->firstname;
+    }
+    if (s) fprintf(fout, "<tr>%s%s:</td>%s%s</td></tr>\n",
+                   td0, _("First name"), td0, ARMOR(s));
+    s = 0;
+    if (locale_id > 0) {
+      s = m->middlename;
+      if (!s) s = m->middlename_en;
+    } else {
+      s = m->middlename_en;
+      if (!s) s = m->middlename;
+    }
+    if (s) fprintf(fout, "<tr>%s%s:</td>%s%s</td></tr>\n",
+                   td0, _("Middle name"), td0, ARMOR(s));
+  } else {
+    fprintf(fout, "<tr>%s%s:</td>%s%s</td></tr>\n",
+            td0, _("Name"), td0, ARMOR(tdb.name));
+  }
+  if (u && u->i.exam_id)
+    fprintf(fout, "<tr>%s%s:</td>%s%s</td></tr>\n",
+            td0, _("Exam Id"), td0, ARMOR(u->i.exam_id));
+  if (u && u->i.location)
+    fprintf(fout, "<tr>%s%s:</td>%s%s</td></tr>\n",
+            td0, _("Location"), td0, ARMOR(u->i.location));
+
+  if (start_time > 0) {
+    fprintf(fout, "<tr>%s%s:</td>%s%s</td></tr>\n",
+            td0, _("Exam start time"), td0, xml_unparse_date(start_time));
+  }
+  if (stop_time > 0) {
+    fprintf(fout, "<tr>%s%s:</td>%s%s</td></tr>\n",
+            td0, _("Exam finish time"), td0, xml_unparse_date(stop_time));
+  }
+  fprintf(fout, "</table>\n");
+
+  f_id = 0;
+  while (1) {
+    for (; f_id <= cs->max_prob && !cs->probs[f_id]; f_id++);
+    if (f_id > cs->max_prob) break;
+    l_id = f_id + 1;
+    prob = cs->probs[f_id];
+    if (prob->type_val == PROB_TYPE_SHORT_ANSWER
+        || prob->type_val == PROB_TYPE_SELECT_ONE) {
+      for (; l_id <= cs->max_prob && (!cs->probs[l_id] || cs->probs[l_id]->type_val == prob->type_val); l_id++);
+    }
+    switch (prob->type_val) {
+    case PROB_TYPE_STANDARD:
+      fprintf(fout, "<br/><table class=\"b1\"><tr>%s%s</th>%s%s</th>%s%s</th>%s%s</th></tr>\n",
+              th1, _("Problem"), th1, _("Language"), th1, _("Passed tests"),
+              th1, _("Comment"));
+
+      fprintf(fout, "<tr>%s", td1);
+      prob = cs->probs[i = f_id];
+      if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+        fprintf(fout, "%s", ARMOR(prob->short_name));
+      } else {
+        fprintf(fout, "%s-", ARMOR(prob->short_name));
+        fprintf(fout, "%s", ARMOR(prob->long_name));
+      }
+      fprintf(fout, "</td>");
+      if ((run_id = run_ids[i]) < 0) {
+        fprintf(fout, "%s&nbsp;</td>%s&nbsp;</td>%s<i>%s</i></td></tr></table>\n",
+                td1, td1, td1, _("No answer is given"));
+        break;
+      }
+      if (run_get_entry(cs->runlog_state, run_ids[i], &re) < 0) abort();
+      if (re.status == RUN_OK || re.status == RUN_PARTIAL)
+        re.status = RUN_ACCEPTED;
+      passed_tests = re.test - 1;
+      if (passed_tests > prob->tests_to_accept)
+        passed_tests = prob->tests_to_accept;
+      if (re.lang_id <= 0 || re.lang_id > cs->max_lang
+          || !(lang = cs->langs[re.lang_id])) {
+        fprintf(log_f, "Invalid language %d in run %d\n", re.lang_id, run_id);
+        goto cleanup;
+      }
+      if (!lang->long_name[0] || !strcmp(lang->long_name, lang->short_name)) {
+        fprintf(fout, "%s%s</td>", td1, ARMOR(lang->short_name));
+      } else {
+        fprintf(fout, "%s%s-", td1, ARMOR(lang->short_name));
+        fprintf(fout, "%s</td>", ARMOR(lang->long_name));
+      }
+      fprintf(fout, "%s%d</td>", td1, passed_tests);
+      fprintf(fout, "%s<i>%s</i></td></tr></table>\n", td1,
+              run_status_str(re.status, 0, 0, 0, 0));
+
+      if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
+                                              global->run_archive_dir, run_id,
+                                              0, 0)) < 0) {
+        fprintf(log_f, "Source for run %d is not available\n", run_id);
+        goto cleanup;
+      }
+      if (generic_read_file(&src_txt, 0, &src_len, src_flags, 0, src_path, "") < 0) {
+        fprintf(log_f, "Error reading from %s\n", src_path);
+        goto cleanup;
+      }
+      if (strlen(src_txt) != src_len) {
+        fprintf(log_f, "Source file %s is binary\n", src_path);
+        goto cleanup;
+      }
+      while (src_len > 0 && isspace(src_txt[src_len - 1])) src_len--;
+      src_txt[src_len] = 0;
+
+      num_len = text_numbered_memlen(src_txt, src_len);
+      num_txt = xmalloc(num_len + 16);
+      text_number_lines(src_txt, src_len, num_txt);
+      fprintf(fout, "<br/><table class=\"b1\"><tr>%s%s</th></tr>\n<tr>%s<pre>%s</pre></td></tr></table>\n",
+              th1, _("Source code"),
+              td1, ARMOR(num_txt));
+      fprintf(fout, "<p>%s</p>\n",
+              _("Note, lines are numbered just for your convinience."));
+      xfree(num_txt); num_txt = 0; num_len = 0;
+      xfree(src_txt); src_txt = 0; src_len = 0;
+      break;
+
+    case PROB_TYPE_TEXT_ANSWER:
+      fprintf(fout, "<br/><table class=\"b1\"><tr>%s%s</th>%s%s</th></tr>\n",
+              th1, _("Problem"), th1, _("Comment"));
+      i = f_id;
+      prob = cs->probs[f_id];
+      fprintf(fout, "<tr>");
+      if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+        fprintf(fout, "%s%s</td>", td1, ARMOR(prob->short_name));
+      } else {
+        fprintf(fout, "%s%s-", td1, ARMOR(prob->short_name));
+        fprintf(fout, "%s</td>", ARMOR(prob->long_name));
+      }
+      if ((run_id = run_ids[i]) < 0) {
+        fprintf(fout, "%s<i>%s</i></td></tr></table>\n", td1,
+                _("No answer is given"));
+        break;
+      }
+      if (run_get_entry(cs->runlog_state, run_ids[i], &re) < 0) abort();
+      if (re.status == RUN_OK || re.status == RUN_PARTIAL
+          || re.status == RUN_WRONG_ANSWER_ERR)
+        re.status = RUN_ACCEPTED;
+      if (re.status != RUN_ACCEPTED) {
+        fprintf(log_f, "Invalid run status %d (%s) in run %d\n",
+                re.status, run_status_str(re.status, 0, 0, 0, 0),
+                run_id);
+        goto cleanup;
+      }
+
+      if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
+                                              global->run_archive_dir, run_id,
+                                              0, 0)) < 0) {
+        fprintf(log_f, "Source for run %d is not available\n", run_id);
+        goto cleanup;
+      }
+      if (generic_read_file(&src_txt, 0, &src_len, src_flags, 0, src_path, "") < 0) {
+        fprintf(log_f, "Error reading from %s\n", src_path);
+        goto cleanup;
+      }
+      if (strlen(src_txt) != src_len) {
+        fprintf(log_f, "Source file %s is binary\n", src_path);
+        goto cleanup;
+      }
+      while (src_len > 0 && isspace(src_txt[src_len - 1])) src_len--;
+      src_txt[src_len] = 0;
+
+      if (!src_len) {
+        fprintf(fout, "%s<i>%s</i></td></tr></table>\n", td1,
+                _("Answer is empty"));
+        break;
+      }
+      fprintf(fout, "%s<i>%s</i></td></tr></table>\n", td1,
+              _("Accepted for testing"));
+
+      num_len = text_numbered_memlen(src_txt, src_len);
+      num_txt = xmalloc(num_len + 16);
+      text_number_lines(src_txt, src_len, num_txt);
+      fprintf(fout,
+              "<br/><table class=\"b1\"><tr>%s%s</th></tr>\n<tr>%s<pre>%s</pre></td></tr></table>\n",
+              th1, _("Answer text"),
+              td1, ARMOR(num_txt));
+      fprintf(fout, "<p>%s</p>\n", 
+              _("Note, lines are numbered just for your convinience."));
+      xfree(num_txt); num_txt = 0; num_len = 0;
+      xfree(src_txt); src_txt = 0; src_len = 0;
+      break;
+
+    case PROB_TYPE_SHORT_ANSWER:
+      fprintf(fout, "<br/><table class=\"b1\">\n"
+              "<tr>%s%s</th>%s%s</th>%s%s</th>%s%s</th></tr>\n",
+              th1, _("Problem"), th1, _("Answer"),
+              th1, _("Problem"), th1, _("Answer"));
+      for (i = f_id, k = 0; i < l_id; i++, k++) {
+        if (!(prob = cs->probs[i])) continue;
+        if (!(k % 2)) fprintf(fout, "<tr>");
+        if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+          fprintf(fout, "%s%s</td>", td1, ARMOR(prob->short_name));
+        } else {
+          fprintf(fout, "%s%s-", td1, ARMOR(prob->short_name));
+          fprintf(fout, "%s</td>", ARMOR(prob->long_name));
+        }
+        if ((run_id = run_ids[i]) < 0) {
+          fprintf(fout, "%s<i>%s</i></td>", td1, _("No answer"));
+          if ((k % 2) == 1) fprintf(fout, "</tr>\n");
+          continue;
+        }
+        if (run_get_entry(cs->runlog_state, run_ids[i], &re) < 0) abort();
+        if (re.status == RUN_OK || re.status == RUN_PARTIAL
+            || re.status == RUN_WRONG_ANSWER_ERR)
+          re.status = RUN_ACCEPTED;
+        if (re.status != RUN_ACCEPTED && re.status != RUN_PRESENTATION_ERR) {
+          fprintf(log_f, "Invalid run status %d (%s) in run %d\n",
+                  re.status, run_status_str(re.status, 0, 0, 0, 0),
+                  run_id);
+          goto cleanup;
+        }
+
+        if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
+                                                global->run_archive_dir, run_id,
+                                                0, 0)) < 0) {
+          fprintf(log_f, "Source for run %d is not available\n", run_id);
+          goto cleanup;
+        }
+        if (generic_read_file(&src_txt, 0, &src_len, src_flags, 0, src_path, "") < 0) {
+          fprintf(log_f, "Error reading from %s\n", src_path);
+          goto cleanup;
+        }
+        if (strlen(src_txt) != src_len) {
+          fprintf(log_f, "Source file %s is binary\n", src_path);
+          goto cleanup;
+        }
+        while (src_len > 0 && isspace(src_txt[src_len - 1])) src_len--;
+        src_txt[src_len] = 0;
+        for (psrc = src_txt; *psrc; psrc++)
+          if (*psrc < ' ') *psrc = ' ';
+        //for (psrc = src_txt; *psrc && *psrc != ' '; psrc++);
+        fprintf(fout, "%s%s</td>", td1, ARMOR(src_txt));
+
+        /*
+        if (re.status == RUN_ACCEPTED) {
+          fprintf(fout, " \\textit{%s}\\\\\n", _("Accepted for testing"));
+        } else {
+        // presentation error
+          psrc = ns_get_checker_comment(cs, run_id, 0);
+          if (!psrc) psrc = xstrdup("");
+          fprintf(fout, "\\textit{%s} \\\\\n", TARMOR(psrc));
+          xfree(psrc);
+        }
+        */
+        xfree(src_txt); src_txt = 0;
+        src_len = 0;
+        if ((k % 2) == 1) fprintf(fout, "</tr>\n");
+      }
+      if (k % 2 == 1) fprintf(fout, "%s&nbsp;</td>%s&nbsp;</td></tr>",
+                              td1, td1);
+      fprintf(fout, "</table>\n");
+      /*
+      fprintf(fout, "\\noindent{}%s\n\n",
+              _("Note, that only solutions marked ``Accepted for testing'' are subject to further testing. Other solutions \\textbf{will not} be tested."));
+      */
+      break;
+
+    case PROB_TYPE_SELECT_ONE:
+      fprintf(fout, "<br/><table class=\"b1\">\n"
+              "<tr>%s%s</th>%s%s</th>%s%s</th>%s%s</th>%s%s</th>%s%s</th></tr>\n",
+              th1, _("Problem"), th1, _("Answer code"),
+              th1, _("Problem"), th1, _("Answer code"),
+              th1, _("Problem"), th1, _("Answer code"));
+      for (i = f_id, k = 0; i < l_id; i++, k++) {
+        if (!(prob = cs->probs[i])) continue;
+        if (!(k % 3)) fprintf(fout, "<tr>");
+        if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+          fprintf(fout, "%s%s</td>", td1, ARMOR(prob->short_name));
+        } else {
+          fprintf(fout, "%s%s-", td1, ARMOR(prob->short_name));
+          fprintf(fout, "%s</td>", ARMOR(prob->long_name));
+        }
+        if ((run_id = run_ids[i]) < 0) {
+          fprintf(fout, "%s<i>%s</i></td>", td1, _("No answer"));
+          if ((k % 3) == 2) fprintf(fout, "</tr>\n");
+          continue;
+        }
+        if (run_get_entry(cs->runlog_state, run_ids[i], &re) < 0) abort();
+        if (re.status != RUN_OK && re.status != RUN_PARTIAL
+            && re.status != RUN_ACCEPTED && re.status != RUN_WRONG_ANSWER_ERR) {
+          fprintf(log_f, "Invalid run status %d (%s) in run %d\n",
+                  re.status, run_status_str(re.status, 0, 0, 0, 0),
+                  run_id);
+          goto cleanup;
+        }
+
+        if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
+                                                global->run_archive_dir, run_id,
+                                                0, 0)) < 0) {
+          fprintf(log_f, "Source for run %d is not available\n", run_id);
+          goto cleanup;
+        }
+        if (generic_read_file(&src_txt, 0, &src_len, src_flags, 0, src_path, "") < 0) {
+          fprintf(log_f, "Error reading from %s\n", src_path);
+          goto cleanup;
+        }
+        if (strlen(src_txt) != src_len) {
+          fprintf(log_f, "Source file %s is binary\n", src_path);
+          goto cleanup;
+        }
+        while (src_len > 0 && isspace(src_txt[src_len - 1])) src_len--;
+        src_txt[src_len] = 0;
+        errno = 0;
+        answer = strtol(src_txt, &eptr, 10);
+        if (errno || *eptr) {
+          fprintf(log_f, "Source file %s is invalid\n", src_path);
+          goto cleanup;
+        }
+        xfree(src_txt); src_txt = 0; src_len = 0;
+        variant = 0;
+        if (prob->variant_num > 0) {
+          if ((variant = find_variant(cs, user_id, i, 0)) <= 0) {
+            fprintf(log_f, "Variant for run %d is invalid\n", run_ids[i]);
+            goto cleanup;
+          }
+        }
+        if (variant > 0 && prob->xml.a) {
+          px = prob->xml.a[variant - 1];
+        } else {
+          px = prob->xml.p;
+        }
+        ans_txt = 0;
+        if (px && px->answers) {
+          if (answer <= 0 || answer > px->ans_num) {
+            fprintf(log_f, "Answer code %d is invalid in run %d\n", answer,
+                    re.run_id);
+            goto cleanup;
+          }
+          j = problem_xml_find_language(0, px->tr_num, px->tr_names);
+          for (a = px->answers[answer - 1][j]->first;
+               a && a->tag != PROB_A_TEX;
+               a = a->next);
+          if (a) ans_txt = a->text;
+          if (!ans_txt)
+            ans_txt = TARMOR(px->answers[answer - 1][j]->text);
+        } else if (prob->alternative) {
+          for (j = 0; j + 1 != answer && prob->alternative[j]; j++);
+          if (j + 1 != answer || !prob->alternative[j]) {
+            fprintf(log_f, "Answer code %d is invalid in run %d\n", answer,
+                    re.run_id);
+            goto cleanup;
+          }
+        } else {
+          if (variant > 0) {
+            prepare_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file), prob->alternatives_file, variant);
+            pw = &cs->prob_extras[prob->id].v_alts[variant];
+            pw_path = variant_stmt_file;
+          } else {
+            pw = &cs->prob_extras[prob->id].alt;
+            pw_path = prob->alternatives_file;
+          }
+          watched_file_update(pw, pw_path, cs->current_time);
+          if (!(ans_txt = get_nth_alternative(pw->text, answer))) {
+            fprintf(log_f, "Answer code %d is invalid in run %d\n", answer,
+                    re.run_id);
+            goto cleanup;
+          }
+          ans_txt = TARMOR(ans_txt);
+        }
+        //fprintf(fout, "%d & %s\\\\\n", answer, ans_txt);
+        fprintf(fout, "%s%d</td>", td1, answer);
+        if ((k % 3) == 2) fprintf(fout, "</tr>\n");
+      }
+      if ((k % 3) == 1)
+        fprintf(fout, "%s&nbsp;</td>%s&nbsp;</td>%s&nbsp;</td>%s&nbsp;</td></tr>\n", td1, td1, td1, td1);
+      if ((k % 3) == 2)
+        fprintf(fout, "%s&nbsp;</td>%s&nbsp;</td></tr>\n", td1, td1);
+      fprintf(fout, "</table>\n");
+      break;
+
+    default:
+      //case PROB_TYPE_OUTPUT_ONLY:
+      //case PROB_TYPE_SELECT_MANY:
+      //case PROB_TYPE_CUSTOM:
+      abort();
+      break;
+    }
+    f_id = l_id;
+  }
+
+  retval = 0;
+
+ cleanup:
+  xfree(src_txt);
+  html_armor_free(&ab);
+  //if (out_path[0]) unlink(out_path);
   return retval;
 }
