@@ -2370,6 +2370,7 @@ check_config(void)
             }
           }
         }
+	n1 = n2 = 1;
       }
     } else {
       /* check existence of tests */
