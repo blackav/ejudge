@@ -5519,7 +5519,71 @@ priv_print_users_exam_protocol(
   return retval;
 }
 
-void
+static int
+priv_print_problem_exam_protocol(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  int retval = 0, r;
+  char *log_text = 0;
+  size_t log_size = 0;
+  FILE *ff = 0;
+  unsigned char bb[1024];
+  unsigned char *ss = 0;
+  int locale_id = 0;
+  int prob_id;
+
+  if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (ns_cgi_param_int(phr, "prob_id", &prob_id) < 0)
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob || !cs->probs[prob_id])
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+
+  if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
+  if (locale_id > 0) l10n_setlocale(locale_id);
+  ff = open_memstream(&log_text, &log_size);
+  r = ns_print_prob_exam_protocol(phr, cnts, cs, ff, prob_id, locale_id, 1);
+  fclose(ff); ff = 0;
+  if (locale_id > 0) l10n_setlocale(0);
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
+            phr->contest_id, extra->contest_arm,_("Printing problem protocol"));
+
+  fprintf(fout, "<h2>%s</h2>\n",
+          (r >= 0)?_("Operation succeeded"):_("Operation failed"));
+
+  fprintf(fout, "<table>");
+  fprintf(fout, "<tr><td>%s%s</a></td></tr></table>",
+          ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
+          _("Main page"));
+
+  ss = html_armor_string_dup(log_text);
+  fprintf(fout, "<hr/><pre>");
+  if (r < 0) fprintf(fout, "<font color=\"red\">");
+  fprintf(fout, "%s", ss);
+  if (r < 0) fprintf(fout, "</font>");
+  fprintf(fout, "</pre>\n");
+  xfree(ss); ss = 0;
+  xfree(log_text); log_text = 0;
+
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  if (ff) fclose(ff);
+  xfree(ss);
+  xfree(log_text);
+  return retval;
+}
+
+static void
 unpriv_print_status(FILE *fout,
                     struct http_request_info *phr,
                     const struct contest_desc *cnts,
@@ -5876,6 +5940,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_ONLINE_USERS] = priv_view_online_users,
   [NEW_SRV_ACTION_PRINT_USER_PROTOCOL] = priv_print_user_exam_protocol,
   [NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL] =priv_print_users_exam_protocol,
+  [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = priv_print_problem_exam_protocol,
 };
 
 static void
@@ -6855,6 +6920,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRINT_USER_PROTOCOL] = priv_generic_page,
   [NEW_SRV_ACTION_FORCE_START_VIRTUAL] = priv_generic_operation,
   [NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL] = priv_generic_page,
+  [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = priv_generic_page,
 };
 
 static void

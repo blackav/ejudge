@@ -652,6 +652,23 @@ ns_write_priv_all_runs(FILE *f,
             _("Merge runs in XML format"));
   }
 
+  if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) >= 0
+      && cnts->exam_mode > 0 && phr->role == USER_ROLE_ADMIN) {
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    fprintf(f, "<table class=\"b0\"><tr><td class=\"b0\">%s:</td><td>",
+            _("Print problem protocol"));
+    fprintf(f, "<select name=\"prob_id\"><option value=\"\"></option>\n");
+
+    for (i = 1; i <= cs->max_prob; i++) {
+      if (!(prob = cs->probs[i])) continue;
+      fprintf(f, "<option value=\"%d\">%s - %s\n", i, prob->short_name,
+              ARMOR(prob->long_name));
+    }
+
+    fprintf(f, "</select></td><td class=\"b0\">%s</td></tr></table></form>\n",
+            BUTTON(NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL));
+  }
+
   /*
   print_nav_buttons(state, f, 0, sid, self_url, hidden_vars, extra_args,
                     0, 0, 0, 0, 0, 0, 0);
