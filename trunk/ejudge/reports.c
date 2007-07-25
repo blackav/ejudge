@@ -30,6 +30,7 @@
 #include "xml_utils.h"
 #include "new-server.h"
 #include "userlist.h"
+#include "random.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/exec.h>
@@ -159,10 +160,23 @@ tex_armor_verbatim(unsigned char *str)
   return str;
 }
 
+static unsigned char *
+tex_armor_verbatim_2(unsigned char *str)
+{
+  unsigned char *s;
+
+  for (s = str; *s; s++)
+    if (*s < ' ' && *s != '\n') *s = ' ';
+  if (utf8_mode) {
+    utf8_fix_string(str, 0);
+  }
+  return str;
+}
+
 #define TARMOR(s) tex_armor_buf(&ab, s)
 #define ARMOR(s) html_armor_buf(&ab, s)
 
-int
+static int
 user_report_generate(
 	unsigned char *out_path,
         size_t out_size,
@@ -362,7 +376,7 @@ user_report_generate(
       s = m->surname_en;
       if (!s) s = m->surname;
     }
-    if (s) fprintf(fout, "%s: & %s\\\\\n", _("Family name"), s);
+    if (s) fprintf(fout, "%s: & %s\\\\\n", _("Family name"), TARMOR(s));
     s = 0;
     if (locale_id > 0) {
       s = m->firstname;
@@ -371,7 +385,7 @@ user_report_generate(
       s = m->firstname_en;
       if (!s) s = m->firstname;
     }
-    if (s) fprintf(fout, "%s: & %s\\\\\n", _("First name"), s);
+    if (s) fprintf(fout, "%s: & %s\\\\\n", _("First name"), TARMOR(s));
     s = 0;
     if (locale_id > 0) {
       s = m->middlename;
@@ -380,7 +394,7 @@ user_report_generate(
       s = m->middlename_en;
       if (!s) s = m->middlename;
     }
-    if (s) fprintf(fout, "%s: & %s\\\\\n", _("Middle name"), s);
+    if (s) fprintf(fout, "%s: & %s\\\\\n", _("Middle name"), TARMOR(s));
   } else {
     fprintf(fout, "%s: & %s\\\\\n", _("Name"), TARMOR(tdb.name));
   }
@@ -537,7 +551,7 @@ user_report_generate(
       num_txt = xmalloc(num_len + 16);
       text_number_lines(src_txt, src_len, num_txt);
       fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n%s\n\n",
-              tex_armor_verbatim(num_txt),
+              tex_armor_verbatim_2(num_txt),
               _("Note, lines are numbered just for your convinience."));
       xfree(num_txt); num_txt = 0; num_len = 0;
       xfree(src_txt); src_txt = 0; src_len = 0;
@@ -1050,6 +1064,7 @@ ns_print_user_exam_protocol(
   path_t err_path;
   path_t dvi_path;
   path_t ps_path;
+  path_t tst_path;
   int retval = -1;
   const unsigned char *printer_name = 0;
   struct teamdb_export tdb;
@@ -1076,15 +1091,20 @@ ns_print_user_exam_protocol(
     goto cleanup;
   if (invoke_dvips(log_f, dvi_path, err_path, global->print_work_dir, 1) < 0)
     goto cleanup;
-#if 0
-  if (invoke_lpr(log_f, global, 0 printer_name, ps_path, err_path, 1) < 0)
-    goto cleanup;
-#endif
+
+  snprintf(tst_path, sizeof(tst_path), "%s/.noprint", global->print_work_dir);
+  if (os_CheckAccess(tst_path, REUSE_F_OK) < 0) {
+    if (invoke_lpr(log_f, global, printer_name, ps_path, err_path, 1) < 0)
+      goto cleanup;
+  }
 
   retval = 0;
 
  cleanup:
-  //clear_directory(global->print_work_dir);
+  snprintf(tst_path, sizeof(tst_path), "%s/.noclean", global->print_work_dir);
+  if (os_CheckAccess(tst_path, REUSE_F_OK) < 0) {
+    clear_directory(global->print_work_dir);
+  }
   return retval;
 }
 
@@ -1104,6 +1124,7 @@ ns_print_user_exam_protocols(
   path_t err_path;
   path_t dvi_path;
   path_t ps_path;
+  path_t tst_path;
   int retval = -1, i, user_id;
   const unsigned char *printer_name = 0;
   struct teamdb_export tdb;
@@ -1140,16 +1161,20 @@ ns_print_user_exam_protocols(
     snprintf(ps_path, sizeof(ps_path), "%s/%06d.ps",
              global->print_work_dir, user_id);
 
-#if 0
-    if (invoke_lpr(log_f, global, 0 printer_name, ps_path, err_path, 1) < 0)
-      goto cleanup;
-#endif
+    snprintf(tst_path, sizeof(tst_path), "%s/.noprint", global->print_work_dir);
+    if (os_CheckAccess(tst_path, REUSE_F_OK) < 0) {
+      if (invoke_lpr(log_f, global, printer_name, ps_path, err_path, 1) < 0)
+        goto cleanup;
+    }
   }
 
   retval = 0;
 
  cleanup:
-  //clear_directory(global->print_work_dir);
+  snprintf(tst_path, sizeof(tst_path), "%s/.noclean", global->print_work_dir);
+  if (os_CheckAccess(tst_path, REUSE_F_OK) < 0) {
+    clear_directory(global->print_work_dir);
+  }
   return retval;
 }
 
@@ -1734,5 +1759,413 @@ ns_olympiad_final_user_report(
   xfree(src_txt);
   html_armor_free(&ab);
   //if (out_path[0]) unlink(out_path);
+  return retval;
+}
+
+int
+problem_report_generate(
+	FILE *fout,
+        FILE *log_f,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        int prob_id,
+        int locale_id,
+        int use_exam_cypher)
+{
+  const struct section_global_data *global = cs->global;
+  int retval = -1;
+  const struct section_problem_data *prob;
+  int user_num = 0, i, j, total_runs, run_id, user_id, run_cnt, variant;
+  int *run_ids = 0, *user_ind = 0;
+  unsigned char **user_str = 0;
+  int *u_flags = 0;
+  struct teamdb_export tdb;
+  struct run_entry re;
+  unsigned char bigbuf[16384];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int src_flags;
+  path_t src_path;
+  char *src_txt = 0, *num_txt = 0;
+  size_t src_len = 0, num_len = 0;
+
+  if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id])) {
+    fprintf(log_f, "Invalind prob_id %d\n", prob_id);
+    goto cleanup;
+  }
+  if ((user_num = teamdb_get_max_team_id(cs->teamdb_state)) <= 0) {
+    fprintf(log_f, "No users registered for the contest\n");
+    goto cleanup;
+  }
+  user_num++;
+  run_ids = (int*) malloc(user_num * sizeof(run_ids[0]));
+  memset(run_ids, -1, user_num * sizeof(run_ids[0]));
+  XCALLOC(user_str, user_num);
+  u_flags = (int*) malloc(user_num * sizeof(u_flags[0]));
+  memset(u_flags, -1, user_num * sizeof(u_flags[0]));
+  XCALLOC(user_ind, user_num);
+
+  if (use_exam_cypher) {
+    for (i = 1; i < user_num; i++) {
+      if (teamdb_lookup(cs->teamdb_state, i) <= 0) continue;
+      if (teamdb_export_team(cs->teamdb_state, i, &tdb) < 0) continue;
+      u_flags[i] = tdb.flags;
+      if (tdb.user && tdb.user->i.exam_cypher)
+        user_str[i] = xstrdup(tdb.user->i.exam_cypher);
+    }
+  } else {
+    for (i = 1; i < user_num; i++) {
+      if (teamdb_lookup(cs->teamdb_state, i) <= 0) continue;
+      if (teamdb_export_team(cs->teamdb_state, i, &tdb) < 0) continue;
+      u_flags[i] = tdb.flags;
+      if (tdb.user) {
+        bigbuf[0] = 0;
+        if (tdb.user->i.name[0] && tdb.user->i.exam_id) {
+          snprintf(bigbuf, sizeof(bigbuf), "%s (%s)", tdb.user->i.name,
+                   tdb.user->i.exam_id);
+        } else if (tdb.user->i.exam_id) {
+          snprintf(bigbuf, sizeof(bigbuf), "%s", tdb.user->i.exam_id);
+        } else if (tdb.user->i.name) {
+          snprintf(bigbuf, sizeof(bigbuf), "%s", tdb.user->i.name);
+        }
+        if (bigbuf[0]) user_str[i] = xstrdup(bigbuf);
+      }
+    }
+  }
+
+  // check for duplicated identification
+  for (i = 1; i < user_num; i++) {
+    if (!user_str[i]) continue;
+    for (j = 1; j < i; j++)
+      if (user_str[j] && !strcmp(user_str[i], user_str[j]))
+        break;
+    if (j < i) {
+      fprintf(log_f, "duplicated user identification for users %d and %d\n",
+              i, j);
+      goto cleanup;
+    }
+  }
+
+  // find the latest run in acceptable state
+  if ((total_runs = run_get_total(cs->runlog_state)) <= 0) {
+    fprintf(log_f, "No runs\n");
+    goto cleanup;
+  }
+
+  for (run_id = total_runs - 1; run_id >= 0; run_id--) {
+    if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+      fprintf(log_f, "Invalid run %d\n", run_id);
+      goto cleanup;
+    }
+    if (!run_is_source_available(re.status)) continue;
+    if (re.prob_id != prob_id) continue;
+    if (re.user_id <= 0 || re.user_id >= user_num) {
+      fprintf(log_f, "Invalid user_id %d in run %d\n", re.user_id, run_id);
+      goto cleanup;
+    }
+    user_id = re.user_id;
+    if (u_flags[user_id] < 0) {
+      fprintf(log_f, "User %d in run %d is not registered\n", user_id, run_id);
+      continue;
+    }
+    if (u_flags[user_id] & (TEAM_BANNED | TEAM_INVISIBLE | TEAM_LOCKED | TEAM_DISQUALIFIED)) {
+      fprintf(log_f, "User %d in run %d is banned, invisible, locked, or disqualified\n", user_id, run_id);
+      continue;
+    }
+    if (prob->type_val == PROB_TYPE_OUTPUT_ONLY
+        || prob->type_val == PROB_TYPE_SELECT_MANY
+        || prob->type_val == PROB_TYPE_CUSTOM) {
+      fprintf(log_f,"Problem type `%s' for problem %s is not yet supported\n",
+              problem_unparse_type(prob->type_val), prob->short_name);
+      goto cleanup;
+    }
+    if (run_ids[user_id] >= 0) continue;
+    if (prob->type_val != PROB_TYPE_STANDARD) {
+      switch (re.status) {
+      case RUN_OK:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_PARTIAL:
+      case RUN_ACCEPTED:
+        run_ids[user_id] = run_id;
+        break;
+
+      case RUN_IGNORED:
+      case RUN_DISQUALIFIED:
+      case RUN_PRESENTATION_ERR:
+        break;
+
+      default:
+        fprintf(log_f, "Invalid run status %d (%s) in run %d\n",
+                re.status, run_status_str(re.status, 0, 0, 0, 0),
+                run_id);
+        goto cleanup;
+      }
+    } else {
+      switch (re.status) {
+      case RUN_OK:
+      case RUN_PARTIAL:
+      case RUN_ACCEPTED:
+        run_ids[user_id] = run_id;
+        break;
+
+      case RUN_COMPILE_ERR:
+      case RUN_RUN_TIME_ERR:
+      case RUN_TIME_LIMIT_ERR:
+      case RUN_PRESENTATION_ERR:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_IGNORED:
+      case RUN_DISQUALIFIED:
+      case RUN_MEM_LIMIT_ERR:
+      case RUN_SECURITY_ERR:
+        break;
+
+      default:
+        fprintf(log_f, "Invalid run status %d (%s) in run %d\n",
+                re.status, run_status_str(re.status, 0, 0, 0, 0),
+                run_id);
+        goto cleanup;
+      }
+    }
+  }
+
+  for (run_id = total_runs - 1; run_id >= 0; run_id--) {
+    if (run_get_entry(cs->runlog_state, run_id, &re) < 0) abort();
+    if (!run_is_source_available(re.status)) continue;
+    if (re.prob_id != prob_id) continue;
+    user_id = re.user_id;
+    if (re.user_id <= 0 || re.user_id >= user_num) abort();
+    if (u_flags[user_id] < 0) {
+      fprintf(log_f, "User %d in run %d is not registered\n", user_id, run_id);
+      continue;
+    }
+    if (u_flags[user_id] & (TEAM_BANNED | TEAM_INVISIBLE | TEAM_LOCKED | TEAM_DISQUALIFIED)) {
+      fprintf(log_f, "User %d in run %d is banned, invisible, locked, or disqualified\n", user_id, run_id);
+      continue;
+    }
+
+    if (run_ids[user_id] >= 0) continue;
+    if (prob->type_val != PROB_TYPE_STANDARD) {
+      switch (re.status) {
+      case RUN_PRESENTATION_ERR:
+        run_ids[user_id] = run_id;
+        break;
+
+      case RUN_IGNORED:
+      case RUN_DISQUALIFIED:
+        break;
+
+      default:
+        abort();
+      }
+    } else {
+      switch (re.status) {
+      case RUN_COMPILE_ERR:
+      case RUN_RUN_TIME_ERR:
+      case RUN_TIME_LIMIT_ERR:
+      case RUN_PRESENTATION_ERR:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_MEM_LIMIT_ERR:
+      case RUN_SECURITY_ERR:
+        run_ids[user_id] = run_id;
+        break;
+
+      case RUN_IGNORED:
+      case RUN_DISQUALIFIED:
+        break;
+
+      default:
+        abort();
+      }
+    }
+  }
+
+  // check, that identification exists for all users
+  for (i = 1; i < user_num; i++) {
+    if (run_ids[i] >= 0 && !user_str[i]) {
+      fprintf(log_f, "User %d has no identification\n", i);
+      goto cleanup;
+    }
+  }
+
+  if (use_exam_cypher) {
+    // do a random shuffle
+    srand(random_u16());
+    for (i = 1, run_cnt = 0; i < user_num; i++)
+      if (run_ids[i] >= 0)
+        run_cnt++;
+    for (i = 1; i < user_num; i++) {
+      if (run_ids[i] < 0) continue;
+      do {
+        j = (int) ((rand() / (RAND_MAX + 1.0)) * run_cnt);
+      } while (run_ids[j] > 0);
+      user_ind[j] = i;
+    }
+  } else {
+    for (i = 1, run_cnt = 0; i < user_num; i++)
+      if (run_ids[i] >= 0)
+        user_ind[run_cnt++] = i;
+  }
+
+  if (global->prob_exam_protocol_header_file[0]
+      && global->prob_exam_protocol_header_txt) {
+    sformat_message(bigbuf, sizeof(bigbuf),
+                    global->prob_exam_protocol_header_txt,
+                    global, 0, 0, 0, 0, 0, cnts, 0);
+    fprintf(fout, "%s", bigbuf);
+  }
+
+  switch (prob->type_val) {
+  case PROB_TYPE_TEXT_ANSWER:
+    for (i = 0; i < run_cnt; i++) {
+      user_id = user_ind[i];
+      run_id = run_ids[user_id];
+
+      variant = 0;
+      if (prob->variant_num > 0) {
+        if ((variant = find_variant(cs, user_id, prob_id, 0)) <= 0) {
+          fprintf(log_f, "No variant for user %d\n", user_id);
+          goto cleanup;
+        }
+      }
+
+      fprintf(fout, "\\subsection*{%s ", _("Problem"));
+      if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+        fprintf(fout, "%s", TARMOR(prob->short_name));
+      } else {
+        fprintf(fout, "%s-", TARMOR(prob->short_name));
+        fprintf(fout, "%s", TARMOR(prob->long_name));
+      }
+      if (variant > 0) {
+        fprintf(fout, ", %s %d", _("variant"), variant);
+      }
+      fprintf(fout, ", %s %s}\n", _("user"), user_str[user_id]);
+
+      if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
+                                              global->run_archive_dir, run_id,
+                                              0, 0)) < 0) {
+        fprintf(log_f, "Source for run %d is not available\n", run_id);
+        goto cleanup;
+      }
+      if (generic_read_file(&src_txt, 0, &src_len, src_flags, 0, src_path, "") < 0) {
+        fprintf(log_f, "Error reading from %s\n", src_path);
+        goto cleanup;
+      }
+      if (strlen(src_txt) != src_len) {
+        fprintf(log_f, "Source file %s is binary\n", src_path);
+        goto cleanup;
+      }
+      while (src_len > 0 && isspace(src_txt[src_len - 1])) src_len--;
+      src_txt[src_len] = 0;
+
+      num_len = text_numbered_memlen(src_txt, src_len);
+      num_txt = xmalloc(num_len + 16);
+      text_number_lines(src_txt, src_len, num_txt);
+      fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n",
+              tex_armor_verbatim_2(num_txt));
+      xfree(num_txt); num_txt = 0; num_len = 0;
+      xfree(src_txt); src_txt = 0; src_len = 0;
+    }
+    break;
+
+  default:
+    abort();
+  }
+
+  if (global->prob_exam_protocol_footer_file[0]
+      && global->prob_exam_protocol_footer_txt) {
+    sformat_message(bigbuf, sizeof(bigbuf),
+                    global->prob_exam_protocol_footer_txt,
+                    global, 0, 0, 0, 0, 0, cnts, 0);
+    fprintf(fout, "%s", bigbuf);
+  }
+
+  retval = 0;
+
+ cleanup:
+  xfree(src_txt);
+  xfree(num_txt);
+  if (user_str) {
+    for (i = 0; i < user_num; i++)
+      xfree(user_str[i]);
+  }
+  xfree(user_ind);
+  xfree(run_ids);
+  xfree(user_str);
+  xfree(u_flags);
+  html_armor_free(&ab);
+  return retval;
+}
+
+int
+ns_print_prob_exam_protocol(
+	struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        FILE *log_f,
+        int prob_id,
+        int locale_id,
+        int use_exam_cypher)
+{
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob;
+  path_t tex_path;
+  path_t err_path;
+  path_t dvi_path;
+  path_t ps_path;
+  path_t tst_path;
+  int retval = -1;
+  FILE *fout = 0;
+  unsigned char prob_base[1024];
+
+  if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id]))
+    goto cleanup;
+
+  snprintf(prob_base, sizeof(prob_base), "prob_%s", prob->short_name);
+  snprintf(tex_path, sizeof(tex_path), "%s/%s.tex", global->print_work_dir,
+           prob_base);
+  if (!(fout = fopen(tex_path, "w"))) {
+    fprintf(log_f, "cannot open `%s' for writing\n", tex_path);
+    goto cleanup;
+  }
+  if (problem_report_generate(fout, log_f, cnts, cs, prob_id, locale_id,
+                              use_exam_cypher) < 0)
+    goto cleanup;
+  if (ferror(fout)) {
+    fprintf(log_f, "write error to `%s'\n", tex_path);
+    goto cleanup;
+  }
+  if (fclose(fout) < 0) {
+    fout = 0;
+    fprintf(log_f, "write error to `%s'\n", tex_path);
+    goto cleanup;
+  }
+  fout = 0;
+
+  snprintf(err_path, sizeof(err_path), "%s/%s.err", global->print_work_dir,
+           prob_base);
+  snprintf(dvi_path, sizeof(dvi_path), "%s/%s.dvi", global->print_work_dir,
+           prob_base);
+  snprintf(ps_path, sizeof(ps_path), "%s/%s.ps", global->print_work_dir,
+           prob_base);
+  if (invoke_latex(log_f, tex_path, err_path, global->print_work_dir, 1) < 0)
+    goto cleanup;
+  if (invoke_latex(log_f, tex_path, err_path, global->print_work_dir, 0) < 0)
+    goto cleanup;
+  if (invoke_dvips(log_f, dvi_path, err_path, global->print_work_dir, 1) < 0)
+    goto cleanup;
+
+  snprintf(tst_path, sizeof(tst_path), "%s/.noprint", global->print_work_dir);
+  if (os_CheckAccess(tst_path, REUSE_F_OK) < 0) {
+    if (invoke_lpr(log_f, global, 0, ps_path, err_path, 1) < 0)
+      goto cleanup;
+  }
+
+  retval = 0;
+
+ cleanup:
+  if (fout) fclose(fout);
+  snprintf(tst_path, sizeof(tst_path), "%s/.noclean", global->print_work_dir);
+  if (os_CheckAccess(tst_path, REUSE_F_OK) < 0) {
+    clear_directory(global->print_work_dir);
+  }
   return retval;
 }

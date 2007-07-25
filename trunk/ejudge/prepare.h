@@ -325,6 +325,10 @@ struct section_global_data
   path_t user_exam_protocol_footer_file;
   unsigned char *user_exam_protocol_header_txt;
   unsigned char *user_exam_protocol_footer_txt;
+  path_t prob_exam_protocol_header_file;
+  path_t prob_exam_protocol_footer_file;
+  unsigned char *prob_exam_protocol_header_txt;
+  unsigned char *prob_exam_protocol_footer_txt;
 
   // fun
   int extended_sound;
