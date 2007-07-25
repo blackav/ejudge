@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-07-23 22:03+0400\n"
-"PO-Revision-Date: 2007-07-24 00:59+0400\n"
+"POT-Creation-Date: 2007-07-24 23:45+0400\n"
+"PO-Revision-Date: 2007-07-25 00:01+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -2744,6 +2744,9 @@ msgstr "Предыдущие решения этой задачи"
 msgid "Print"
 msgstr "Распечатать"
 
+msgid "Print problem protocol"
+msgstr "Напечатать протокол по задаче"
+
 msgid "Print requests are suspended"
 msgstr "Обработка запросов на печать приостановлена"
 
@@ -2765,6 +2768,9 @@ msgstr "Ошибка печати: %d: %s"
 
 msgid "Printing is disabled"
 msgstr "Печать отключена"
+
+msgid "Printing problem protocol"
+msgstr "Печать протокола по задаче"
 
 #, c-format
 msgid "Printing quota (%d pages) is exceeded"
@@ -4530,11 +4536,17 @@ msgstr "неизвестная ошибка"
 msgid "unspecified error"
 msgstr "неспецифицированная ошибка"
 
+msgid "user"
+msgstr "участник"
+
 msgid "user tries to download runs too often"
 msgstr "пользователь слишком часто пытается загрузить свои посылки "
 
 msgid "user's runs downloading disabled"
 msgstr "загрузка пользовательских посылок запрещена"
+
+msgid "variant"
+msgstr "вариант"
 
 msgid "viewing report is disabled"
 msgstr "просмотр отчётов отключён"
