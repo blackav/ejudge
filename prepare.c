@@ -613,6 +613,10 @@ prepare_global_free_func(struct generic_section_config *gp)
   free_user_adjustment_info(p->user_adjustment_info);
   free_user_adjustment_map(p->user_adjustment_map);
   xfree(p->unhandled_vars);
+  xfree(p->user_exam_protocol_header_txt);
+  xfree(p->user_exam_protocol_footer_txt);
+  xfree(p->prob_exam_protocol_header_txt);
+  xfree(p->prob_exam_protocol_footer_txt);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);

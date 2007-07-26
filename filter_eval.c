@@ -21,6 +21,7 @@
 #include "filter_expr.h"
 #include "filter_eval.h"
 #include "teamdb.h"
+#include "userlist.h"
 
 #include <reuse/logger.h>
 #include <reuse/MemPage.h>
@@ -96,6 +97,8 @@ do_eval(struct filter_env *env,
   int c;
   struct filter_tree r1, r2;
   int lang_id, prob_id, user_id, flags;
+  const struct userlist_user *u;
+  const unsigned char *s;
 
   memset(res, 0, sizeof(res));
   switch (t->kind) {
@@ -181,6 +184,7 @@ do_eval(struct filter_env *env,
   case TOK_LATEST:
   case TOK_AFTEROK:
   case TOK_EXAMINABLE:
+  case TOK_CYPHER:
     if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
     ASSERT(r1.kind == TOK_INT_L);
     if (r1.v.i < 0) r1.v.i = env->rtotal + r1.v.i;
@@ -388,6 +392,16 @@ do_eval(struct filter_env *env,
       res->type = FILTER_TYPE_BOOL;
       res->v.b = env->rentries[r1.v.i].is_examinable;
       break;
+    case TOK_CYPHER:
+      res->kind = TOK_STRING_L;
+      res->type = FILTER_TYPE_STRING;
+      user_id = env->rentries[r1.v.i].user_id;
+      u = 0; s = 0;
+      if (user_id > 0) u = teamdb_get_userlist(env->teamdb_state, user_id);
+      if (u) s = u->i.exam_cypher;
+      res->v.s = envdup(env, s);
+      break;
+
     default:
       abort();
     }
@@ -605,6 +619,15 @@ do_eval(struct filter_env *env,
     res->kind = TOK_BOOL_L;
     res->type = FILTER_TYPE_BOOL;
     res->v.b = env->cur->is_examinable;
+    break;
+  case TOK_CURCYPHER:
+    res->kind = TOK_STRING_L;
+    res->type = FILTER_TYPE_STRING;
+    user_id = env->cur->user_id;
+    u = 0; s = 0;
+    if (user_id > 0) u = teamdb_get_userlist(env->teamdb_state, user_id);
+    if (u) s = u->i.exam_cypher;
+    res->v.s = envdup(env, s);
     break;
 
   case TOK_NOW:
