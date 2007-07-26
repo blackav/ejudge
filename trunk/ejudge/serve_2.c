@@ -1983,6 +1983,7 @@ serve_rejudge_run(
     err("rejudge_run: bad problem: %d", re.prob_id);
     return;
   }
+  if (prob->manual_checking > 0 || prob->disable_testing > 0) return;
   if (prob->type_val > 0) {
     if (force_full_rejudge
         && state->global->score_system_val == SCORE_OLYMPIAD) {

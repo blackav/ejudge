@@ -39,6 +39,7 @@ struct teamdb_db_callbacks
   void *user_data;
   int (*list_all_users)(void *, int, unsigned char **);
 };
+struct userlist_user;
 
 teamdb_state_t teamdb_init(void);
 teamdb_state_t teamdb_destroy(teamdb_state_t);
@@ -54,10 +55,13 @@ void teamdb_set_update_flag(teamdb_state_t state);
 int teamdb_lookup(teamdb_state_t, int);
 int teamdb_lookup_login(teamdb_state_t, char const *);
 int teamdb_lookup_name(teamdb_state_t, char const *);
+int teamdb_lookup_cypher(teamdb_state_t, char const *);
 
 char *teamdb_get_login(teamdb_state_t, int);
 char *teamdb_get_name(teamdb_state_t, int);
 const unsigned char *teamdb_get_name_2(teamdb_state_t, int);
+const unsigned char *teamdb_get_cypher(teamdb_state_t, int);
+const struct userlist_user *teamdb_get_userlist(teamdb_state_t, int);
 int   teamdb_get_max_team_id(teamdb_state_t);
 int   teamdb_get_flags(teamdb_state_t, int);
 int   teamdb_get_total_teams(teamdb_state_t);
@@ -69,7 +73,6 @@ enum {
   TEAMDB_NAME_LEN = 64,
 };
 
-struct userlist_user;
 struct teamdb_export
 {
   int id;

@@ -2943,6 +2943,7 @@ enum
   CSV_UID,
   CSV_LOGIN,
   CSV_NAME,
+  CSV_CYPHER,
   CSV_PROB,
   CSV_LANG,
   CSV_STATUS,
@@ -2958,6 +2959,7 @@ static const unsigned char * const supported_columns[] =
   "UserId",
   "Login",
   "Name",
+  "Cypher",
   "Problem",
   "Language",
   "Status",
@@ -3309,6 +3311,7 @@ ns_upload_csv_results(
   struct csv_line *rr;
   int ncol, row, col, i, x, n, run_id;
   unsigned char *s;
+  const unsigned char *cyph;
   const struct section_problem_data *prob = 0;
   char *eptr;
 
@@ -3460,8 +3463,33 @@ ns_upload_csv_results(
 	  continue;
         }
         *pe = te;
+      } else if (col_ind[CSV_CYPHER] >= 0) {
+        if (!(s = rr->v[col_ind[CSV_CYPHER]]) || !*s) {
+          fprintf(log_f, _("Cypher is empty in row %d\n"), row);
+          goto cleanup;
+        }
+        if ((x = teamdb_lookup_cypher(cs->teamdb_state, s)) <= 0){
+          fprintf(log_f, _("Invalid cypher `%s' in row %d\n"), s, row);
+          goto cleanup;
+        }
+        pe->user_id = x;
+
+        // find the latest ACCEPTED run by cypher/prob_id pair
+        for (run_id = run_get_total(cs->runlog_state) - 1; run_id >= 0; run_id--) {
+          if (run_get_entry(cs->runlog_state, run_id, &te) < 0) continue;
+          if (!run_is_source_available(te.status)) continue;
+          if (!(cyph = teamdb_get_cypher(cs->teamdb_state, te.user_id)))
+            continue;
+          if (!strcmp(s, cyph) && pe->prob_id == te.prob_id) break;
+        }
+        if (run_id < 0) {
+          fprintf(log_f, _("No entry for %s/%s\n"), s, prob->short_name);
+	  pe->run_id = -1;
+	  continue;
+        }
+        *pe = te;
       } else {
-        fprintf(log_f, _("Neither user_id, login, nor name are specified\n"));
+        fprintf(log_f, _("Neither user_id, login, name, nor cypher are specified\n"));
         goto cleanup;
       }
     }

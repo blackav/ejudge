@@ -403,6 +403,22 @@ teamdb_lookup_name(teamdb_state_t state, char const *name)
   return -1;
 }
 
+int
+teamdb_lookup_cypher(teamdb_state_t state, char const *cypher)
+{
+  int i;
+  const struct userlist_user *u;
+
+  if (teamdb_refresh(state) < 0) return -1;
+  if (!state->participants) return -1;
+  for (i = 0; i < state->total_participants; i++) {
+    if (!(u = state->participants[i])) continue;
+    if (u->i.exam_cypher && !strcmp(u->i.exam_cypher, cypher))
+      return u->id;
+  }
+  return -1;
+}
+
 char *
 teamdb_get_login(teamdb_state_t state, int teamid)
 {
@@ -447,6 +463,17 @@ teamdb_get_name_2(teamdb_state_t state, int teamid)
   return name;
 }
 
+const unsigned char *
+teamdb_get_cypher(teamdb_state_t state, int user_id)
+{
+  if (teamdb_refresh(state) < 0) return 0;
+  if (!teamdb_lookup_client(state, user_id)) {
+    err("teamdb_get_login: bad id: %d", user_id);
+    return 0;
+  }
+  return state->users->user_map[user_id]->i.exam_cypher;
+}
+
 int
 teamdb_get_flags(teamdb_state_t state, int id)
 {
@@ -475,6 +502,17 @@ teamdb_get_flags(teamdb_state_t state, int id)
     new_flags |= TEAM_DISQUALIFIED;
   }
   return new_flags;
+}
+
+const struct userlist_user *
+teamdb_get_userlist(teamdb_state_t state, int user_id)
+{
+  if (teamdb_refresh(state) < 0) return 0;
+  if (!teamdb_lookup_client(state, user_id)) {
+    err("teamdb_get_login: bad id: %d", user_id);
+    return 0;
+  }
+  return state->users->user_map[user_id];
 }
 
 int

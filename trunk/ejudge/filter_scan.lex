@@ -143,6 +143,8 @@ lett    [A-Za-z_]
 "curexaminable" { TT(TOK_CUREXAMINABLE, FILTER_TYPE_BOOL); }
 "examinator" { TT(TOK_EXAMINATOR, FILTER_TYPE_BOOL); }
 "curexaminator" { TT(TOK_CUREXAMINATOR, FILTER_TYPE_BOOL); }
+"cypher" { TT(TOK_CYPHER, FILTER_TYPE_STRING); }
+"curcypher" { TT(TOK_CURCYPHER, FILTER_TYPE_STRING); }
 
 "int" { TT(TOK_INT, FILTER_TYPE_INT); }
 "string" { TT(TOK_STRING, FILTER_TYPE_STRING); }

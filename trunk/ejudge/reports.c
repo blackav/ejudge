@@ -31,6 +31,7 @@
 #include "new-server.h"
 #include "userlist.h"
 #include "random.h"
+#include "testing_report_xml.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/exec.h>
@@ -161,15 +162,97 @@ tex_armor_verbatim(unsigned char *str)
 }
 
 static unsigned char *
-tex_armor_verbatim_2(unsigned char *str)
+tex_armor_verbatim_2(unsigned char *str, int width)
 {
-  unsigned char *s;
+  unsigned char *s, *p;
+  int pos;
+  int slen, *sind, i, j;
 
   for (s = str; *s; s++)
     if (*s < ' ' && *s != '\n') *s = ' ';
   if (utf8_mode) {
-    utf8_fix_string(str, 0);
+    slen = strlen(str);
+    sind = (int*) xmalloc((slen + 1) * sizeof(sind[0]));
+    utf8_fix_string(str, sind);
+    for (i = 0, pos = 0; i < slen; ) {
+      if (str[sind[i]] == '\n') {
+        i++;
+        pos = 0;
+      } else if (pos == width && str[sind[i]] == ' ') {
+        str[sind[i]] = '\n';
+        i++;
+        pos = 0;
+      } else if (pos == width) {
+        j = i - 1;
+        while (j >= 0 && str[sind[j]] != '\n' && str[sind[j]] != ' ') j--;
+        if (j < 0 || str[sind[j]] == '\n') {
+          while (str[sind[i]] && str[sind[i]] != ' ' && str[sind[i]] != '\n')
+            i++;
+          if (str[sind[i]] == ' ') {
+            str[sind[i]] = '\n';
+            pos = 0;
+            i++;
+          } else if (str[sind[i]] == '\n') {
+            pos = 0;
+            i++;
+          }
+        } else {
+          str[sind[j]] = '\n';
+          pos = 0;
+          i = j + 1;
+        }
+      } else {
+        i++;
+        pos++;
+      }
+    }
+    xfree(sind); sind = 0;
+  } else {
+    // split the lines longer than `width'
+    for (s = str, pos = 0; *s; ) {
+      if (*s == '\n') {
+        s++;
+        pos = 0;
+      } else if (pos == width && *s == ' ') {
+        *s = '\n';
+        s++;
+        pos = 0;
+      } else if (pos == width) {
+        p = s - 1;
+        while (p >= str && *p != '\n' && *p != ' ') p--;
+        if (p < str || *p == '\n') {
+          while (*s && *s != ' ' && *s != '\n') s++;
+          if (*s == ' ') {
+            *s = '\n';
+            pos = 0;
+            s++;
+          } else if (*s == '\n') {
+            pos = 0;
+            s++;
+          }
+        } else {
+          *p = '\n';
+          pos = 0;
+          s = p + 1;
+        }
+      } else {
+        s++;
+        pos++;
+      }
+    }
   }
+  return str;
+}
+
+static unsigned char *
+chop2(unsigned char *str)
+{
+  size_t len;
+
+  if (!str) return 0;
+  len = strlen(str);
+  if (len > 0 && isspace(str[len - 1])) len--;
+  str[len] = 0;
   return str;
 }
 
@@ -551,7 +634,7 @@ user_report_generate(
       num_txt = xmalloc(num_len + 16);
       text_number_lines(src_txt, src_len, num_txt);
       fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n%s\n\n",
-              tex_armor_verbatim_2(num_txt),
+              tex_armor_verbatim_2(num_txt, 60),
               _("Note, lines are numbered just for your convinience."));
       xfree(num_txt); num_txt = 0; num_len = 0;
       xfree(src_txt); src_txt = 0; src_len = 0;
@@ -1762,6 +1845,201 @@ ns_olympiad_final_user_report(
   return retval;
 }
 
+static void
+write_xml_tex_testing_report(
+	FILE *fout,
+        const serve_state_t cs,
+        int run_id)
+{
+  const struct section_global_data *global = cs->global;
+  path_t rep_path;
+  int rep_flag, i;
+  char *rep_text = 0;
+  size_t rep_len = 0;
+  const unsigned char *start_ptr = 0;
+  testing_report_xml_t r = 0;
+  struct testing_report_test *t;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int max_cpu_time = -1, max_cpu_time_tl = -1, need_comment = 0;
+
+  rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
+                                    global->xml_report_archive_dir,
+                                    run_id, 0, 1);
+  if (rep_flag < 0) {
+    fprintf(fout, "\n\nReport for run %d is not available.\n\n", run_id);
+    goto cleanup;
+  }
+
+  if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0) {
+    fprintf(fout, "\n\nRead error for report %d.\n\n", run_id);
+    goto cleanup;
+  }
+
+  if (get_content_type(rep_text, &start_ptr) != CONTENT_TYPE_XML) {
+    fprintf(fout, "\n\nReport is not in XML format.\n\n");
+    goto cleanup;
+  }
+
+  if (!(r = testing_report_parse_xml(start_ptr))) {
+    fprintf(fout, "\n\nXML report parse error.\n\n");
+    goto cleanup;
+  }
+
+  fprintf(fout, _("\n\n%d total tests runs, %d passed, %d failed.\n\n"),
+            r->run_tests, r->tests_passed, r->run_tests - r->tests_passed);
+  fprintf(fout, _("Score gained: %d (out of %d).\n\n"), r->score, r->max_score);
+
+  if (r->valuer_comment) {
+    fprintf(fout, "%s:\n", _("Valuer comments"));
+    fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n",
+            tex_armor_verbatim_2(chop2(r->valuer_comment), 60));
+  }
+  if (r->valuer_judge_comment) {
+    fprintf(fout, "%s:\n", _("Valuer judge comments"));
+    fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n",
+            tex_armor_verbatim_2(chop2(r->valuer_judge_comment), 60));
+  }
+  if (r->valuer_errors) {
+    fprintf(fout, "%s:\n", _("Valuer errors"));
+    fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n",
+            tex_armor_verbatim_2(chop2(r->valuer_errors), 60));
+  }
+
+  // calculate max CPU time
+  for (i = 0; i < r->run_tests; i++) {
+    if (!(t = r->tests[i])) continue;
+    switch (t->status) {
+    case RUN_OK:
+    case RUN_RUN_TIME_ERR:
+    case RUN_PRESENTATION_ERR:
+    case RUN_WRONG_ANSWER_ERR:
+    case RUN_MEM_LIMIT_ERR:
+    case RUN_SECURITY_ERR:
+      if (max_cpu_time_tl > 0) break;
+      max_cpu_time_tl = 0;
+      if (max_cpu_time < 0 || max_cpu_time < r->tests[i]->time) {
+        max_cpu_time = r->tests[i]->time;
+      }
+      break;
+    case RUN_TIME_LIMIT_ERR:
+      if (max_cpu_time_tl <= 0 || max_cpu_time < 0
+          || max_cpu_time < r->tests[i]->time) {
+        max_cpu_time = r->tests[i]->time;
+      }
+      max_cpu_time_tl = 1;
+      break;
+    }
+  }
+
+  if (max_cpu_time_tl > 0) {
+    fprintf(fout, _("Max. CPU time: %d.%03d (time-limit exceeded)\n\n"),
+            max_cpu_time / 1000, max_cpu_time % 1000);
+  } else if (!max_cpu_time_tl) {
+    fprintf(fout, _("Max. CPU time: %d.%03d\n\n"),
+            max_cpu_time / 1000, max_cpu_time % 1000);
+  }
+
+  if (r->comment) {
+    fprintf(fout, "Note:\n\\begin{verbatim}\n%s\\end{verbatim}\n\n",
+            tex_armor_verbatim_2(chop2(r->comment), 60));
+  }
+
+  for (i = 0; i < r->run_tests; i++) {
+    if (!(t = r->tests[i])) continue;
+    if (t->comment || t->team_comment) {
+      need_comment = 1;
+      break;
+    }
+  }
+
+  fprintf(fout, "\n\n\\noindent\\begin{tabular}{|l|p{4cm}|p{1.5cm}|p{1.5cm}|p{5cm}|p{1.5cm}");
+  if (need_comment) fprintf(fout, "|p{4cm}");
+  fprintf(fout, "|}\n\\hline\n"
+          "N & %s & %s & %s & %s & %s",
+          _("Result"), _("Time (sec)"), _("Real time (sec)"),
+          _("Extra info"), _("Score"));
+  if (need_comment) fprintf(fout, " & %s", _("Comment"));
+  fprintf(fout, "\\\\\n\\hline\n");
+
+  for (i = 0; i < r->run_tests; i++) {
+    if (!(t = r->tests[i])) continue;
+    fprintf(fout, "%d", t->num);
+    fprintf(fout, " & %s", run_status_str(t->status, 0, 0, 0, 0));
+    fprintf(fout, " & %d.%03d", t->time / 1000, t->time % 1000);
+    if (t->real_time > 0) {
+      fprintf(fout, " & %d.%03d", t->real_time / 1000, t->real_time % 1000);
+    } else {
+      fprintf(fout, " &");
+    }
+
+    // extra information
+    switch (t->status) {
+    case RUN_OK:
+    case RUN_ACCEPTED:
+      if (t->checker_comment) {
+        fprintf(fout, " & %s", TARMOR(t->checker_comment));
+      } else {
+        fprintf(fout, " &");
+      }
+      break;
+
+    case RUN_RUN_TIME_ERR:
+      if (t->term_signal >= 0) {
+        fprintf(fout, " & %s %d (%s)", _("Signal"), t->term_signal,
+                os_GetSignalString(t->term_signal));
+      } else {
+        fprintf(fout, " & %s %d", _("Exit code"), t->exit_code);
+      }
+      break;
+
+    case RUN_TIME_LIMIT_ERR:
+      fprintf(fout, " &");
+      break;
+
+    case RUN_PRESENTATION_ERR:
+    case RUN_WRONG_ANSWER_ERR:
+      if (t->checker_comment) {
+        fprintf(fout, " & %s", TARMOR(t->checker_comment));
+      } else {
+        fprintf(fout, " &");
+      }
+      break;
+
+    case RUN_CHECK_FAILED:
+      fprintf(fout, " &");
+      break;
+
+    case RUN_MEM_LIMIT_ERR:
+    case RUN_SECURITY_ERR:
+      fprintf(fout, " &");
+      break;
+
+    default:
+      fprintf(fout, "&nbsp;");
+    }
+
+    fprintf(fout, " & %d (%d)", t->score, t->nominal_score);
+    if (need_comment) {
+      if (t->comment) {
+        fprintf(fout, " & %s", TARMOR (t->comment));
+      } else if (t->team_comment) {
+        fprintf(fout, " & %s", TARMOR(t->team_comment));
+      } else {
+        fprintf(fout, " &");
+      }
+    }
+    fprintf(fout, "\\\\\n");
+  }
+  fprintf(fout, "\\hline\n\\end{tabular}\n\n");
+
+ cleanup:
+  xfree(rep_text);
+  testing_report_free(r);
+  html_armor_free(&ab);
+}
+
+enum { SHORT_ANSWER_GROUP = 25 };
+
 int
 problem_report_generate(
 	FILE *fout,
@@ -1787,10 +2065,18 @@ problem_report_generate(
   path_t src_path;
   char *src_txt = 0, *num_txt = 0;
   size_t src_len = 0, num_len = 0;
+  unsigned char probname[1024];
+  unsigned char *psrc;
 
   if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id])) {
     fprintf(log_f, "Invalind prob_id %d\n", prob_id);
     goto cleanup;
+  }
+  if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+    snprintf(probname, sizeof(probname), "%s", prob->short_name);
+  } else {
+    snprintf(probname, sizeof(probname), "%s-%s", prob->short_name,
+             TARMOR(prob->long_name));
   }
   if ((user_num = teamdb_get_max_team_id(cs->teamdb_state)) <= 0) {
     fprintf(log_f, "No users registered for the contest\n");
@@ -1996,7 +2282,7 @@ problem_report_generate(
       if (run_ids[i] < 0) continue;
       do {
         j = (int) ((rand() / (RAND_MAX + 1.0)) * run_cnt);
-      } while (run_ids[j] > 0);
+      } while (user_ind[j] > 0);
       user_ind[j] = i;
     }
   } else {
@@ -2027,17 +2313,30 @@ problem_report_generate(
         }
       }
 
-      fprintf(fout, "\\subsection*{%s ", _("Problem"));
-      if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
-        fprintf(fout, "%s", TARMOR(prob->short_name));
-      } else {
-        fprintf(fout, "%s-", TARMOR(prob->short_name));
-        fprintf(fout, "%s", TARMOR(prob->long_name));
-      }
+      fprintf(fout, "\\subsection*{%s %s", _("Problem"), probname);
       if (variant > 0) {
         fprintf(fout, ", %s %d", _("variant"), variant);
       }
-      fprintf(fout, ", %s %s}\n", _("user"), user_str[user_id]);
+      fprintf(fout, ", %s %s}\n\n", _("user"), TARMOR(user_str[user_id]));
+      if (run_get_entry(cs->runlog_state, run_id, &re) < 0) abort();
+      if (re.status != RUN_OK && re.status != RUN_PARTIAL
+          && re.status != RUN_WRONG_ANSWER_ERR && re.status != RUN_ACCEPTED) {
+        fprintf(log_f, "Invalid run status %d (%s) in run %d\n",
+                re.status, run_status_str(re.status, 0, 0, 0, 0),
+                run_id);
+        goto cleanup;
+      }
+
+      // print the table
+      fprintf(fout, "\\noindent\\begin{tabular}{|p{3cm}|p{4cm}|p{1cm}|p{5cm}|}\n");
+      fprintf(fout, "\\hline\n");
+      bigbuf[0] = 0;
+      if (re.score >= 0) snprintf(bigbuf, sizeof(bigbuf), "%d", re.score);
+      fprintf(fout, "%s & %s & %s & %s \\\\\n",  probname,
+              TARMOR(user_str[user_id]), bigbuf,
+              run_status_str(re.status, 0, 0, 0, 0));
+      fprintf(fout, "\\hline\n");
+      fprintf(fout, "\\end{tabular}\n\n");
 
       if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
                                               global->run_archive_dir, run_id,
@@ -2060,9 +2359,202 @@ problem_report_generate(
       num_txt = xmalloc(num_len + 16);
       text_number_lines(src_txt, src_len, num_txt);
       fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n",
-              tex_armor_verbatim_2(num_txt));
+              tex_armor_verbatim_2(num_txt, 60));
       xfree(num_txt); num_txt = 0; num_len = 0;
       xfree(src_txt); src_txt = 0; src_len = 0;
+    }
+    break;
+
+  case PROB_TYPE_STANDARD:
+    for (i = 0; i < run_cnt; i++) {
+      user_id = user_ind[i];
+      run_id = run_ids[user_id];
+
+      variant = 0;
+      if (prob->variant_num > 0) {
+        if ((variant = find_variant(cs, user_id, prob_id, 0)) <= 0) {
+          fprintf(log_f, "No variant for user %d\n", user_id);
+          goto cleanup;
+        }
+      }
+
+      fprintf(fout, "\\subsection*{%s %s", _("Problem"), probname);
+      if (variant > 0) {
+        fprintf(fout, ", %s %d", _("variant"), variant);
+      }
+      fprintf(fout, ", %s %s}\n\n", _("user"), TARMOR(user_str[user_id]));
+      if (run_get_entry(cs->runlog_state, run_id, &re) < 0) abort();
+
+      // print the table
+      fprintf(fout, "\\noindent\\begin{tabular}{|p{1.5cm}|p{3cm}|p{3.5cm}|p{1.5cm}|p{5cm}|}\n");
+      fprintf(fout, "\\hline\n");
+      fprintf(fout, "%s & %s & %s & %s & %s\\\\\n\\hline\n",
+              _("Problem"), use_exam_cypher?_("Cypher"):_("Name"), _("Tests passed"), _("Score"), _("Status"));
+      fprintf(fout, "%s & %s", probname, TARMOR(user_str[user_id]));
+      if (re.test > 0) {
+        fprintf(fout, " & %d", re.test - 1);
+      } else {
+        fprintf(fout, " &");
+      }
+      if (re.score >= 0) {
+        fprintf(fout, " & %d", re.score);
+      } else {
+        fprintf(fout, " &");
+      }
+      fprintf(fout, " & %s\\\\\n", run_status_str(re.status, 0, 0, 0, 0));
+      fprintf(fout, "\\hline\n");
+      fprintf(fout, "\\end{tabular}\n\n");
+
+      if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
+                                              global->run_archive_dir, run_id,
+                                              0, 0)) < 0) {
+        fprintf(log_f, "Source for run %d is not available\n", run_id);
+        goto cleanup;
+      }
+      if (generic_read_file(&src_txt, 0, &src_len, src_flags, 0, src_path, "") < 0) {
+        fprintf(log_f, "Error reading from %s\n", src_path);
+        goto cleanup;
+      }
+      if (strlen(src_txt) != src_len) {
+        fprintf(log_f, "Source file %s is binary\n", src_path);
+        goto cleanup;
+      }
+      while (src_len > 0 && isspace(src_txt[src_len - 1])) src_len--;
+      src_txt[src_len] = 0;
+
+      num_len = text_numbered_memlen(src_txt, src_len);
+      num_txt = xmalloc(num_len + 16);
+      text_number_lines(src_txt, src_len, num_txt);
+      fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n",
+              tex_armor_verbatim(num_txt));
+      xfree(num_txt); num_txt = 0; num_len = 0;
+      xfree(src_txt); src_txt = 0; src_len = 0;
+
+      if (run_is_report_available(re.status)) {
+        write_xml_tex_testing_report(fout, cs, run_id);
+      }
+    }
+    break;
+
+  case PROB_TYPE_SHORT_ANSWER:
+    fprintf(fout, "\\subsection*{%s %s}\n\n", _("Problem"), probname);
+
+    // group tables by SHORT_ANSWER_GROUP entries
+    for (i = 0; i < run_cnt; i++) {
+      user_id = user_ind[i];
+      run_id = run_ids[user_id];
+
+      if (run_get_entry(cs->runlog_state, run_id, &re) < 0) abort();
+
+      variant = 0;
+      if (prob->variant_num > 0) {
+        if ((variant = find_variant(cs, user_id, prob_id, 0)) <= 0) {
+          fprintf(log_f, "No variant for user %d\n", user_id);
+          goto cleanup;
+        }
+      }
+
+      if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
+                                              global->run_archive_dir, run_id,
+                                              0, 0)) < 0) {
+        fprintf(log_f, "Source for run %d is not available\n", run_id);
+        goto cleanup;
+      }
+      if (generic_read_file(&src_txt, 0, &src_len, src_flags, 0, src_path, "") < 0) {
+        fprintf(log_f, "Error reading from %s\n", src_path);
+        goto cleanup;
+      }
+      if (strlen(src_txt) != src_len) {
+        fprintf(log_f, "Source file %s is binary\n", src_path);
+        goto cleanup;
+      }
+      while (src_len > 0 && isspace(src_txt[src_len - 1])) src_len--;
+      src_txt[src_len] = 0;
+      for (psrc = src_txt; *psrc; psrc++)
+        if (*psrc < ' ') *psrc = ' ';
+
+      // [variant] user answer status score comment
+      if (i % SHORT_ANSWER_GROUP == 0) {
+        fprintf(fout, "\\noindent\\begin{tabular}{");
+        if (prob->variant_num > 0) fprintf(fout, "|l");
+        fprintf(fout, "|p{2cm}|p{4cm}|p{3cm}|p{1.5cm}|p{3cm}|}\n");
+        fprintf(fout, "\\hline\n");
+        if (prob->variant_num > 0) fprintf(fout, "%s &", "V");
+        fprintf(fout, "%s & %s & %s & %s & %s \\\\\n",
+                use_exam_cypher?_("Cypher"):_("Name"),
+                _("Answer"), _("Status"), _("Score"), _("Comment"));
+      }
+      fprintf(fout, "\\hline\n");
+      if (prob->variant_num) fprintf(fout, "%d &", variant);
+      fprintf(fout, " %s", TARMOR(user_str[user_id]));
+      fprintf(fout, " & %s", TARMOR(src_txt));
+      fprintf(fout, " & %s", run_status_str(re.status, 0, 0, 0, 0));
+      if (re.score >= 0)
+        fprintf(fout, " & %d", re.score);
+      else 
+        fprintf(fout, " &");
+      psrc = ns_get_checker_comment(cs, run_id, 0);
+      if (!psrc) psrc = xstrdup("");
+      fprintf(fout, " & %s \\\\\n", TARMOR(psrc));
+      xfree(psrc);
+
+
+
+
+
+
+
+      /*
+        if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
+                                                global->run_archive_dir, run_id,
+                                                0, 0)) < 0) {
+          fprintf(log_f, "Source for run %d is not available\n", run_id);
+          goto cleanup;
+        }
+        if (generic_read_file(&src_txt, 0, &src_len, src_flags, 0, src_path, "") < 0) {
+          fprintf(log_f, "Error reading from %s\n", src_path);
+          goto cleanup;
+        }
+        if (strlen(src_txt) != src_len) {
+          fprintf(log_f, "Source file %s is binary\n", src_path);
+          goto cleanup;
+        }
+        while (src_len > 0 && isspace(src_txt[src_len - 1])) src_len--;
+        src_txt[src_len] = 0;
+        for (psrc = src_txt; *psrc; psrc++)
+          if (*psrc < ' ') *psrc = ' ';
+        //for (psrc = src_txt; *psrc && *psrc != ' '; psrc++);
+        fprintf(fout, " %s ", TARMOR(src_txt));
+
+
+        if (re.status == RUN_ACCEPTED) {
+          fprintf(fout, " \\textit{%s}\\\\\n", _("Accepted for testing"));
+        } else {
+        // presentation error
+          psrc = ns_get_checker_comment(cs, run_id, 0);
+          if (!psrc) psrc = xstrdup("");
+          fprintf(fout, "\\textit{%s} \\\\\n", TARMOR(psrc));
+          xfree(psrc);
+        }
+
+        xfree(src_txt); src_txt = 0;
+        src_len = 0;
+        if ((k % 2) == 1) fprintf(fout, " \\\\\n");
+        else fprintf(fout, " & ");
+      }
+      if (k % 2 == 1) fprintf(fout, " & & \\\\\n");
+      fprintf(fout, "\\hline\n");
+      fprintf(fout, "\\end{tabular}\n\n");
+      */
+
+
+      xfree(src_txt); src_txt = 0; src_len = 0;
+      if (i % SHORT_ANSWER_GROUP == (SHORT_ANSWER_GROUP - 1)) {
+        fprintf(fout, "\\hline\n\\end{tabular}\n\n");
+      }
+    }
+    if (i % SHORT_ANSWER_GROUP != 0) {
+      fprintf(fout, "\\hline\n\\end{tabular}\n\n");
     }
     break;
 
