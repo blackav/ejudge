@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -17,3 +17,4 @@ all :
 install :
 clean :
 distclean :
+	-rm -f Makefile
