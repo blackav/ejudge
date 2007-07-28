@@ -5407,7 +5407,7 @@ priv_print_user_exam_protocol(
   if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
   if (locale_id > 0) l10n_setlocale(locale_id);
   ff = open_memstream(&log_text, &log_size);
-  r = ns_print_user_exam_protocol(phr, cnts, cs, ff, user_id, locale_id, 1);
+  r = ns_print_user_exam_protocol(cnts, cs, ff, user_id, locale_id, 1);
   fclose(ff); ff = 0;
   if (locale_id > 0) l10n_setlocale(0);
 
@@ -5481,8 +5481,7 @@ priv_print_users_exam_protocol(
   if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
   if (locale_id > 0) l10n_setlocale(locale_id);
   ff = open_memstream(&log_text, &log_size);
-  r = ns_print_user_exam_protocols(phr, cnts, cs, ff, uset.u, uset.v,
-                                   locale_id, 1);
+  r = ns_print_user_exam_protocols(cnts, cs, ff, uset.u, uset.v, locale_id, 1);
   fclose(ff); ff = 0;
   if (locale_id > 0) l10n_setlocale(0);
 
@@ -5547,7 +5546,7 @@ priv_print_problem_exam_protocol(
   if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
   if (locale_id > 0) l10n_setlocale(locale_id);
   ff = open_memstream(&log_text, &log_size);
-  r = ns_print_prob_exam_protocol(phr, cnts, cs, ff, prob_id, locale_id, 1);
+  r = ns_print_prob_exam_protocol(cnts, cs, ff, prob_id, locale_id, 1);
   fclose(ff); ff = 0;
   if (locale_id > 0) l10n_setlocale(0);
 
@@ -8669,6 +8668,31 @@ unpriv_submit_appeal(FILE *fout,
 }
 
 static void
+virtual_stop_callback(
+	const struct contest_desc *cnts,
+        struct serve_state *cs,
+        struct serve_event_queue *p)
+{
+  const struct section_global_data *global = cs->global;
+
+  char *tmps = 0;
+  size_t tmpz = 0;
+  FILE *tmpf = 0;
+  int locale_id = 0;
+
+  if (global->enable_auto_print_protocol <= 0) return;
+
+  // Note, that all printing errors are ignored... 
+  if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
+  if (locale_id > 0) l10n_setlocale(locale_id);
+  tmpf = open_memstream(&tmps, &tmpz);
+  ns_print_user_exam_protocol(cnts, cs, tmpf, p->user_id, locale_id, 1);
+  fclose(tmpf); tmpf = 0;
+  xfree(tmps); tmps = 0; tmpz = 0;
+  if (locale_id > 0) l10n_setlocale(0);
+}
+
+static void
 unpriv_command(FILE *fout,
                struct http_request_info *phr,
                const struct contest_desc *cnts,
@@ -8727,7 +8751,8 @@ unpriv_command(FILE *fout,
     serve_move_files_to_insert_run(cs, run_id);
     serve_event_add(cs,
                     precise_time.tv_sec + run_get_duration(cs->runlog_state),
-                    SERVE_EVENT_VIRTUAL_STOP, phr->user_id);
+                    SERVE_EVENT_VIRTUAL_STOP, phr->user_id,
+                    virtual_stop_callback);
     break;
   case NEW_SRV_ACTION_VIRTUAL_STOP:
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
@@ -8754,9 +8779,26 @@ unpriv_command(FILE *fout,
       serve_event_remove_matching(cs, 0, 0, phr->user_id);
       if (global->disable_virtual_auto_judge <= 0) {
         serve_event_add(cs, precise_time.tv_sec + 1,
-                        SERVE_EVENT_JUDGE_OLYMPIAD, phr->user_id);
+                        SERVE_EVENT_JUDGE_OLYMPIAD, phr->user_id, 0);
       }
     }
+
+    if (global->enable_auto_print_protocol > 0) {
+      char *tmps = 0;
+      size_t tmpz = 0;
+      FILE *tmpf = 0;
+      int locale_id = 0;
+
+      /* Note, that all printing errors are ignored... */
+      if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
+      if (locale_id > 0) l10n_setlocale(locale_id);
+      tmpf = open_memstream(&tmps, &tmpz);
+      ns_print_user_exam_protocol(cnts, cs, tmpf, phr->user_id, locale_id, 1);
+      fclose(tmpf); tmpf = 0;
+      xfree(tmps); tmps = 0; tmpz = 0;
+      if (locale_id > 0) l10n_setlocale(0);
+    }
+
     break;
   }
 

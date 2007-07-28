@@ -393,8 +393,15 @@ ns_write_priv_all_runs(FILE *f,
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         fprintf(f, "<td%s>%s</td>", cl, xml_unparse_ip(pe->a.ip));
         fprintf(f, "<td%s>%d</td>", cl, pe->user_id);
+        /*
         fprintf(f, "<td%s>%s</td>", cl, teamdb_get_name_2(cs->teamdb_state,
                                                           pe->user_id));
+        */
+        fprintf(f, "<td%s><a href=\"%s\">%s</a></td>", cl,
+                ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USER_INFO,
+                       "user_id=%d", pe->user_id),
+                teamdb_get_name_2(cs->teamdb_state, pe->user_id));
+
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         fprintf(f, "<td%s><b>%s</b></td>", cl, statstr);

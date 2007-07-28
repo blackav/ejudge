@@ -98,6 +98,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(vertical_navigation, "d"),
   GLOBAL_PARAM(disable_virtual_start, "d"),
   GLOBAL_PARAM(disable_virtual_auto_judge, "d"),
+  GLOBAL_PARAM(enable_auto_print_protocol, "d"),
 
   GLOBAL_PARAM(stand_ignore_after, "s"),
   GLOBAL_PARAM(appeal_deadline, "s"),
@@ -554,6 +555,7 @@ global_init_func(struct generic_section_config *gp)
   p->vertical_navigation = -1;
   p->disable_virtual_start = -1;
   p->disable_virtual_auto_judge = -1;
+  p->enable_auto_print_protocol = -1;
   p->stand_fancy_style = -1;
   p->stand_show_ok_time = -1;
   p->stand_show_warn_number = -1;
@@ -1880,6 +1882,8 @@ set_defaults(serve_state_t state, int mode)
     g->disable_virtual_start = DFLT_G_DISABLE_VIRTUAL_START;
   if (g->disable_virtual_auto_judge == -1)
     g->disable_virtual_auto_judge = DFLT_G_DISABLE_VIRTUAL_AUTO_JUDGE;
+  if (g->enable_auto_print_protocol == -1)
+    g->enable_auto_print_protocol = DFLT_G_ENABLE_AUTO_PRINT_PROTOCOL;
   if (g->stand_fancy_style == -1)
     g->stand_fancy_style = 0;
   if (g->stand_show_ok_time == -1)
@@ -4136,6 +4140,7 @@ prepare_set_global_defaults(struct section_global_data *g)
   if (g->vertical_navigation < 0) g->vertical_navigation = DFLT_G_VERTICAL_NAVIGATION;
   if (g->disable_virtual_start < 0) g->disable_virtual_start = DFLT_G_DISABLE_VIRTUAL_START;
   if (g->disable_virtual_auto_judge < 0) g->disable_virtual_auto_judge = DFLT_G_DISABLE_VIRTUAL_AUTO_JUDGE;
+  if (g->enable_auto_print_protocol < 0) g->enable_auto_print_protocol = DFLT_G_ENABLE_AUTO_PRINT_PROTOCOL;
   if (g->team_show_judge_report < 0)
     g->team_show_judge_report = DFLT_G_TEAM_SHOW_JUDGE_REPORT;
   if (g->disable_clars < 0) g->disable_clars = DFLT_G_DISABLE_CLARS;
@@ -4396,6 +4401,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->vertical_navigation = DFLT_G_VERTICAL_NAVIGATION;
   global->disable_virtual_start = DFLT_G_DISABLE_VIRTUAL_START;
   global->disable_virtual_auto_judge = DFLT_G_DISABLE_VIRTUAL_AUTO_JUDGE;
+  global->enable_auto_print_protocol = DFLT_G_ENABLE_AUTO_PRINT_PROTOCOL;
 
   global->cr_serialization_key = config->serialization_key;
   global->show_astr_time = DFLT_G_SHOW_ASTR_TIME;

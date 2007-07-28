@@ -2604,7 +2604,7 @@ serve_collect_virtual_stop_events(serve_state_t cs)
   for (i = 1; i < user_time_size; i++)
     if (user_time[i] > 0) {
       serve_event_add(cs, user_time[i] + head.duration,
-                      SERVE_EVENT_VIRTUAL_STOP, i);
+                      SERVE_EVENT_VIRTUAL_STOP, i, 0);
     }
 
   xfree(user_time); user_time = 0;
@@ -2612,7 +2612,10 @@ serve_collect_virtual_stop_events(serve_state_t cs)
 }
 
 static void
-handle_virtual_stop_event(serve_state_t cs, struct serve_event_queue *p)
+handle_virtual_stop_event(
+	const struct contest_desc *cnts,
+        serve_state_t cs,
+        struct serve_event_queue *p)
 {
   int trans_runs = -1, nsec = -1, run_id;
   struct timeval precise_time;
@@ -2646,8 +2649,9 @@ handle_virtual_stop_event(serve_state_t cs, struct serve_event_queue *p)
   serve_move_files_to_insert_run(cs, run_id);
   if (cs->global->score_system_val == SCORE_OLYMPIAD
       && cs->global->is_virtual && cs->global->disable_virtual_auto_judge<= 0) {
-    serve_event_add(cs, p->time + 1, SERVE_EVENT_JUDGE_OLYMPIAD, p->user_id);
+    serve_event_add(cs, p->time + 1, SERVE_EVENT_JUDGE_OLYMPIAD, p->user_id, 0);
   }
+  if (p->handler) (*p->handler)(cnts, cs, p);
   serve_event_remove(cs, p);
 }
 
@@ -2676,6 +2680,7 @@ handle_judge_olympiad_event(
   // already judged somehow
   if (rs.judge_id > 0) goto done;
   serve_judge_virtual_olympiad(cnts, cs, p->user_id, re.run_id);
+  if (p->handler) (*p->handler)(cnts, cs, p);
 
  done:
   serve_event_remove(cs, p);
@@ -2694,7 +2699,7 @@ serve_handle_events(const struct contest_desc *cnts, serve_state_t cs)
     if (p->time > cs->current_time) break;
     switch (p->type) {
     case SERVE_EVENT_VIRTUAL_STOP:
-      handle_virtual_stop_event(cs, p);
+      handle_virtual_stop_event(cnts, cs, p);
       break;
     case SERVE_EVENT_JUDGE_OLYMPIAD:
       handle_judge_olympiad_event(cnts, cs, p);

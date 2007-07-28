@@ -269,6 +269,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "disable_virtual_start", global->disable_virtual_start);
   if (global->disable_virtual_auto_judge != DFLT_G_DISABLE_VIRTUAL_AUTO_JUDGE)
     unparse_bool(f, "disable_virtual_auto_judge", global->disable_virtual_auto_judge);
+  if (global->enable_auto_print_protocol != DFLT_G_ENABLE_AUTO_PRINT_PROTOCOL)
+    unparse_bool(f, "enable_auto_print_protocol", global->enable_auto_print_protocol);
   if (global->appeal_deadline[0]) {
     fprintf(f, "appeal_deadline = \"%s\"\n", global->appeal_deadline);
   }

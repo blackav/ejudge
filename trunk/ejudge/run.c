@@ -666,6 +666,9 @@ invoke_valuer(
     for (i = 0; prb->valuer_env[i]; i++)
       task_PutEnv(tsk, prb->valuer_env[i]);
   }
+#if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
+  task_EnableAllSignals(tsk);
+#endif
 
   if (task_Start(tsk) < 0) {
     append_msg_to_log(score_err, "valuer failed to start");
@@ -873,6 +876,9 @@ run_tests(struct section_tester_data *tst,
     task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ, 0);
     task_SetRedir(tsk, 1, TSR_FILE, report_path, TSK_REWRITE, TSK_FULL_RW);
     task_SetRedir(tsk, 2, TSR_DUP, 1);
+#if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
+    task_EnableAllSignals(tsk);
+#endif
     task_Start(tsk);
     task_Wait(tsk);
     if (task_IsAbnormal(tsk)) goto _internal_execution_error;
@@ -1209,6 +1215,9 @@ run_tests(struct section_tester_data *tst,
         }
       }
 #endif
+#if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
+      task_EnableAllSignals(tsk);
+#endif
 
       if (task_Start(tsk) < 0) {
         /* failed to start task */
@@ -1459,6 +1468,9 @@ run_tests(struct section_tester_data *tst,
       for (jj = 0; tst->checker_env[jj]; jj++)
         task_PutEnv(tsk, tst->checker_env[jj]);
     }
+#if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
+    task_EnableAllSignals(tsk);
+#endif
 
     task_Start(tsk);
     task_Wait(tsk);
