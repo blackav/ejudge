@@ -2919,6 +2919,12 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
       fprintf(f, "%d;Cannot read entry!\n", i);
       continue;
     }
+    if (!run_is_valid_status(re.status)) {
+      fprintf(f, "%d;Invalid status %d!\n", i, re.status);
+      continue;
+    }
+    if (re.status == RUN_EMPTY) continue;
+
     fprintf(f, "%d;", i);
     fprintf(f, "%lld;%09d;", re.time, re.nsec);
     tmp_time = re.time;
@@ -2985,6 +2991,17 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
     s = "";
     if ((j & TEAM_LOCKED)) s = "L";
     fprintf(f, "%s;", s);
+
+    if (re.status == RUN_VIRTUAL_START || re.status == RUN_VIRTUAL_STOP) {
+      //fprintf(f, "<problem>;<variant>;<lang_short>;<mime_type>;<short_status>;<status>;<score>;<score_adj>;<test>;<is_imported>;<is_hidden>;<is_readonly>;<locale_id>;<pages>;<judge_id>\n");
+      fprintf(f, ";;;;");
+      run_status_to_str_short(statstr, sizeof(statstr), re.status);
+      fprintf(f, "%s;", statstr);
+      run_status_str(re.status, statstr, sizeof(statstr), 0, 0);
+      fprintf(f, "%s;", statstr);
+      fprintf(f, ";;;;;;;;\n");
+      continue;
+    }
 
     if (re.prob_id > 0 && re.prob_id <= state->max_prob
         && state->probs[re.prob_id] && state->probs[re.prob_id]->short_name) {
