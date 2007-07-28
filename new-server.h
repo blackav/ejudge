@@ -745,7 +745,6 @@ ns_examiners_page(
         struct contest_extra *extra);
 int
 ns_print_user_exam_protocol(
-	struct http_request_info *phr,
         const struct contest_desc *cnts,
         const serve_state_t cs,
         FILE *log_f,
@@ -754,7 +753,6 @@ ns_print_user_exam_protocol(
         int use_user_printer);
 int
 ns_print_user_exam_protocols(
-	struct http_request_info *phr,
         const struct contest_desc *cnts,
         const serve_state_t cs,
         FILE *log_f,
@@ -774,7 +772,6 @@ ns_olympiad_final_user_report(
 
 int
 ns_print_prob_exam_protocol(
-	struct http_request_info *phr,
         const struct contest_desc *cnts,
         const serve_state_t cs,
         FILE *log_f,

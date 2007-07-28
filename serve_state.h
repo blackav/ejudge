@@ -95,12 +95,20 @@ enum
   SERVE_EVENT_LAST,
 };
 
+struct serve_state;
+struct serve_event_queue;
+typedef void (*serve_event_hander_t)(
+	const struct contest_desc *cnts,
+        struct serve_state *cs,
+        struct serve_event_queue *p);
+
 struct serve_event_queue
 {
   struct serve_event_queue *next, *prev;
   time_t time;
   int type;
   int user_id;
+  serve_event_hander_t handler;
 };
 
 struct serve_state
@@ -355,7 +363,8 @@ void serve_reset_contest(serve_state_t state);
 void serve_squeeze_runs(serve_state_t state);
 int serve_count_transient_runs(serve_state_t state);
 
-void serve_event_add(serve_state_t state, time_t time, int type, int user_id);
+void serve_event_add(serve_state_t state, time_t time, int type, int user_id,
+                     serve_event_hander_t);
 void serve_event_remove(serve_state_t state, struct serve_event_queue *event);
 void serve_event_destroy_queue(serve_state_t state);
 int serve_event_remove_matching(serve_state_t state, time_t time, int type,

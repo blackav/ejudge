@@ -856,6 +856,17 @@ super_html_edit_global_parameters(FILE *f,
       html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_VIRTUAL_AUTO_JUDGE, "Change");
       fprintf(f, "</td></tr></form>\n");
     }
+
+    //GLOBAL_PARAM(enable_auto_print_protocol, "d"),
+    if (global->score_system_val == SCORE_OLYMPIAD) {
+      html_start_form(f, 1, self_url, hidden_vars);
+      fprintf(f, "<tr%s><td>Enable automatic protocol printing:</td><td>",
+              form_row_attrs[row ^= 1]);
+      html_boolean_select(f, global->enable_auto_print_protocol, "param", 0, 0);
+      fprintf(f, "</td><td>");
+      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ENABLE_AUTO_PRINT_PROTOCOL, "Change");
+      fprintf(f, "</td></tr></form>\n");
+    }
   }
 
   html_start_form(f, 1, self_url, hidden_vars);
@@ -2196,6 +2207,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_DISABLE_VIRTUAL_AUTO_JUDGE:
     p_int = &global->disable_virtual_auto_judge;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_ENABLE_AUTO_PRINT_PROTOCOL:
+    p_int = &global->enable_auto_print_protocol;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_TEST_DIR:

@@ -334,7 +334,12 @@ user_filter_info_allocate(serve_state_t state, int user_id,
 }
 
 void
-serve_event_add(serve_state_t state, time_t time, int type, int user_id)
+serve_event_add(
+	serve_state_t state,
+        time_t time,
+        int type,
+        int user_id,
+        serve_event_hander_t handler)
 {
   struct serve_event_queue *e, *p;
 
@@ -346,6 +351,7 @@ serve_event_add(serve_state_t state, time_t time, int type, int user_id)
   e->time = time;
   e->type = type;
   e->user_id = user_id;
+  e->handler = handler;
 
   for (p = state->event_first; p && p->time < time; p = p->next);
   if (!p) {

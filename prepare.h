@@ -139,6 +139,7 @@ struct section_global_data
   int    vertical_navigation;    /* align vertically */
   int    disable_virtual_start;  /* disable user "virtual start" button */
   int    disable_virtual_auto_judge;  /* disable auto-judging after virtual olympiad */
+  int    enable_auto_print_protocol;  /* print user examination protocols automatically */
 
   puc_t name[256];              /* name of the contest */
   path_t root_dir;

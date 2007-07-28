@@ -161,20 +161,22 @@ tex_armor_verbatim(unsigned char *str)
   return str;
 }
 
+enum { VERBATIM_WIDTH = 70 };
+
 static unsigned char *
 tex_armor_verbatim_2(unsigned char *str, int width)
 {
   unsigned char *s, *p;
   int pos;
-  int slen, *sind, i, j;
+  int slen, swidth, *sind, i, j;
 
   for (s = str; *s; s++)
     if (*s < ' ' && *s != '\n') *s = ' ';
   if (utf8_mode) {
     slen = strlen(str);
     sind = (int*) xmalloc((slen + 1) * sizeof(sind[0]));
-    utf8_fix_string(str, sind);
-    for (i = 0, pos = 0; i < slen; ) {
+    swidth = utf8_fix_string(str, sind);
+    for (i = 0, pos = 0; i < swidth; ) {
       if (str[sind[i]] == '\n') {
         i++;
         pos = 0;
@@ -634,7 +636,7 @@ user_report_generate(
       num_txt = xmalloc(num_len + 16);
       text_number_lines(src_txt, src_len, num_txt);
       fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n%s\n\n",
-              tex_armor_verbatim_2(num_txt, 60),
+              tex_armor_verbatim_2(num_txt, VERBATIM_WIDTH),
               _("Note, lines are numbered just for your convinience."));
       xfree(num_txt); num_txt = 0; num_len = 0;
       xfree(src_txt); src_txt = 0; src_len = 0;
@@ -1134,7 +1136,6 @@ invoke_lpr(
 
 int
 ns_print_user_exam_protocol(
-	struct http_request_info *phr,
         const struct contest_desc *cnts,
         const serve_state_t cs,
         FILE *log_f,
@@ -1193,7 +1194,6 @@ ns_print_user_exam_protocol(
 
 int
 ns_print_user_exam_protocols(
-	struct http_request_info *phr,
         const struct contest_desc *cnts,
         const serve_state_t cs,
         FILE *log_f,
@@ -1892,17 +1892,18 @@ write_xml_tex_testing_report(
   if (r->valuer_comment) {
     fprintf(fout, "%s:\n", _("Valuer comments"));
     fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n",
-            tex_armor_verbatim_2(chop2(r->valuer_comment), 60));
+            tex_armor_verbatim_2(chop2(r->valuer_comment), VERBATIM_WIDTH));
   }
   if (r->valuer_judge_comment) {
     fprintf(fout, "%s:\n", _("Valuer judge comments"));
     fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n",
-            tex_armor_verbatim_2(chop2(r->valuer_judge_comment), 60));
+            tex_armor_verbatim_2(chop2(r->valuer_judge_comment),
+                                 VERBATIM_WIDTH));
   }
   if (r->valuer_errors) {
     fprintf(fout, "%s:\n", _("Valuer errors"));
     fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n",
-            tex_armor_verbatim_2(chop2(r->valuer_errors), 60));
+            tex_armor_verbatim_2(chop2(r->valuer_errors), VERBATIM_WIDTH));
   }
 
   // calculate max CPU time
@@ -1941,7 +1942,7 @@ write_xml_tex_testing_report(
 
   if (r->comment) {
     fprintf(fout, "Note:\n\\begin{verbatim}\n%s\\end{verbatim}\n\n",
-            tex_armor_verbatim_2(chop2(r->comment), 60));
+            tex_armor_verbatim_2(chop2(r->comment), VERBATIM_WIDTH));
   }
 
   for (i = 0; i < r->run_tests; i++) {
@@ -2038,7 +2039,7 @@ write_xml_tex_testing_report(
   html_armor_free(&ab);
 }
 
-enum { SHORT_ANSWER_GROUP = 25 };
+enum { SHORT_ANSWER_GROUP = 10 };
 
 int
 problem_report_generate(
@@ -2359,7 +2360,7 @@ problem_report_generate(
       num_txt = xmalloc(num_len + 16);
       text_number_lines(src_txt, src_len, num_txt);
       fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n",
-              tex_armor_verbatim_2(num_txt, 60));
+              tex_armor_verbatim_2(num_txt, VERBATIM_WIDTH));
       xfree(num_txt); num_txt = 0; num_len = 0;
       xfree(src_txt); src_txt = 0; src_len = 0;
     }
@@ -2589,7 +2590,6 @@ problem_report_generate(
 
 int
 ns_print_prob_exam_protocol(
-	struct http_request_info *phr,
         const struct contest_desc *cnts,
         const serve_state_t cs,
         FILE *log_f,
