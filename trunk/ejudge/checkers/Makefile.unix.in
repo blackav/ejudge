@@ -94,7 +94,7 @@ pic :
 	mkdir pic
 
 distclean : clean
-	rm -f Makefile
+	rm -f Makefile Makefile.in
 
 install : all
 	mkdir -p "${DESTDIR}${includedir}"
