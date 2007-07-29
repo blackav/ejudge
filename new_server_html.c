@@ -4335,6 +4335,9 @@ priv_view_users_page(FILE *fout,
       fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
               BUTTON(NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL),
               _("Print the user examination protocols for the selected users"));
+      fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+              BUTTON(NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL),
+              _("Print the user full examination protocols for the selected users"));
     }
   }
   fprintf(fout, "</table>\n");
@@ -5402,6 +5405,9 @@ priv_print_user_exam_protocol(
   unsigned char bb[1024];
   unsigned char *ss = 0;
   int locale_id = 0;
+  int use_user_printer = 0;
+  int full_report = 0;
+  int use_cypher = 0;
 
   if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -5410,10 +5416,17 @@ priv_print_user_exam_protocol(
   if (!teamdb_lookup(cs->teamdb_state, user_id))
     FAIL(NEW_SRV_ERR_INV_USER_ID);
 
+  if (phr->action == NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL) {
+    full_report = 1;
+  } else {
+    use_user_printer = 1;
+  }
+
   if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
   if (locale_id > 0) l10n_setlocale(locale_id);
   ff = open_memstream(&log_text, &log_size);
-  r = ns_print_user_exam_protocol(cnts, cs, ff, user_id, locale_id, 1);
+  r = ns_print_user_exam_protocol(cnts, cs, ff, user_id, locale_id,
+                                  use_user_printer, full_report, use_cypher);
   fclose(ff); ff = 0;
   if (locale_id > 0) l10n_setlocale(0);
 
@@ -5467,6 +5480,9 @@ priv_print_users_exam_protocol(
   int locale_id = 0, i, x, n;
   intarray_t uset;
   const unsigned char *s;
+  int use_user_printer = 0;
+  int full_report = 0;
+  int use_cypher = 0;
 
   if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -5484,10 +5500,21 @@ priv_print_users_exam_protocol(
     uset.v[uset.u++] = x;
   }
 
+  if (phr->action == NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL) {
+    use_user_printer = 0;
+    full_report = 1;
+    use_cypher = 0;
+  } else {
+    use_user_printer = 1;
+    full_report = 0;
+    use_cypher = 0;
+  }
+
   if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
   if (locale_id > 0) l10n_setlocale(locale_id);
   ff = open_memstream(&log_text, &log_size);
-  r = ns_print_user_exam_protocols(cnts, cs, ff, uset.u, uset.v, locale_id, 1);
+  r = ns_print_user_exam_protocols(cnts, cs, ff, uset.u, uset.v, locale_id,
+                                   use_user_printer, full_report, use_cypher);
   fclose(ff); ff = 0;
   if (locale_id > 0) l10n_setlocale(0);
 
@@ -5944,7 +5971,9 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_EXAMINERS_PAGE] = priv_examiners_page,
   [NEW_SRV_ACTION_VIEW_ONLINE_USERS] = priv_view_online_users,
   [NEW_SRV_ACTION_PRINT_USER_PROTOCOL] = priv_print_user_exam_protocol,
+  [NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL] = priv_print_user_exam_protocol,
   [NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL] =priv_print_users_exam_protocol,
+  [NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL] =priv_print_users_exam_protocol,
   [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = priv_print_problem_exam_protocol,
 };
 
@@ -6924,8 +6953,10 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS] = priv_generic_operation,
   [NEW_SRV_ACTION_VIEW_ONLINE_USERS] = priv_generic_page,
   [NEW_SRV_ACTION_PRINT_USER_PROTOCOL] = priv_generic_page,
+  [NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL] = priv_generic_page,
   [NEW_SRV_ACTION_FORCE_START_VIRTUAL] = priv_generic_operation,
   [NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL] = priv_generic_page,
+  [NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL] = priv_generic_page,
   [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = priv_generic_page,
 };
 
@@ -8693,7 +8724,7 @@ virtual_stop_callback(
   if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
   if (locale_id > 0) l10n_setlocale(locale_id);
   tmpf = open_memstream(&tmps, &tmpz);
-  ns_print_user_exam_protocol(cnts, cs, tmpf, p->user_id, locale_id, 1);
+  ns_print_user_exam_protocol(cnts, cs, tmpf, p->user_id, locale_id, 1, 0, 0);
   fclose(tmpf); tmpf = 0;
   xfree(tmps); tmps = 0; tmpz = 0;
   if (locale_id > 0) l10n_setlocale(0);
@@ -8800,7 +8831,8 @@ unpriv_command(FILE *fout,
       if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
       if (locale_id > 0) l10n_setlocale(locale_id);
       tmpf = open_memstream(&tmps, &tmpz);
-      ns_print_user_exam_protocol(cnts, cs, tmpf, phr->user_id, locale_id, 1);
+      ns_print_user_exam_protocol(cnts, cs, tmpf, phr->user_id, locale_id, 1,
+                                  0, 0);
       fclose(tmpf); tmpf = 0;
       xfree(tmps); tmps = 0; tmpz = 0;
       if (locale_id > 0) l10n_setlocale(0);

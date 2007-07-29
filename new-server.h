@@ -309,8 +309,10 @@ enum
   NEW_SRV_ACTION_UNASSIGN_EXAMINER,
   NEW_SRV_ACTION_GET_FILE,
   NEW_SRV_ACTION_PRINT_USER_PROTOCOL,
+  NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL,
   NEW_SRV_ACTION_FORCE_START_VIRTUAL,
   NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL,
+  NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL,
   NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL,
 
   /* new-register stuff */
@@ -750,7 +752,9 @@ ns_print_user_exam_protocol(
         FILE *log_f,
         int user_id,
         int locale_id,
-        int use_user_printer);
+        int use_user_printer,
+        int full_report,
+        int use_cypher);
 int
 ns_print_user_exam_protocols(
         const struct contest_desc *cnts,
@@ -759,7 +763,9 @@ ns_print_user_exam_protocols(
         int nuser,
         int *user_ids,
         int locale_id,
-        int use_user_printer);
+        int use_user_printer,
+        int full_report,
+        int use_cypher);
 
 int
 ns_olympiad_final_user_report(
