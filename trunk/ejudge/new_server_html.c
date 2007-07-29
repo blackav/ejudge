@@ -1733,6 +1733,8 @@ priv_force_start_virtual(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   intarray_t uset;
   struct timeval tt;
+  long nsec;
+  int run_id;
 
   if (phr->role < USER_ROLE_ADMIN)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -1758,11 +1760,13 @@ priv_force_start_virtual(
     uset.v[uset.u++] = x;
   }
   gettimeofday(&tt, 0);
+  nsec = tt.tv_usec * 1000;
   // FIXME: it's a bit risky, need to check the database...
-  if (tt.tv_usec + uset.u >= 1000000) tt.tv_usec = 999999 - uset.u;
+  if (nsec + uset.u >= 1000000000) nsec = 999999998 - uset.u;
 
-  for (i = 0; i < uset.u; i++, tt.tv_usec++) {
-    run_virtual_start(cs->runlog_state, uset.v[i], tt.tv_sec, 0, 0, tt.tv_usec);
+  for (i = 0; i < uset.u; i++, nsec++) {
+    run_id = run_virtual_start(cs->runlog_state, uset.v[i], tt.tv_sec,0,0,nsec);
+    serve_move_files_to_insert_run(cs, run_id);
   }
 
  cleanup:
