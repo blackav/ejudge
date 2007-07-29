@@ -2055,8 +2055,10 @@ priv_contest_operation(FILE *fout,
     break;
 
   case NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG:
-    if (global->score_system_val != SCORE_OLYMPIAD
-        && cs->accepting_mode) break;
+    if (global->score_system_val != SCORE_OLYMPIAD) break;
+    if ((!global->is_virtual && cs->accepting_mode)
+        ||(global->is_virtual && global->disable_virtual_auto_judge <= 0))
+      break;
     cs->testing_finished = 1;
     serve_update_status_file(cs, 1);
     break;
@@ -6426,8 +6428,9 @@ priv_main_page(FILE *fout,
       if (!cs->accepting_mode) action = NEW_SRV_ACTION_SET_ACCEPTING_MODE;
       fprintf(fout, "%s\n", BUTTON(action));
     }
-    if (global->score_system_val == SCORE_OLYMPIAD && !global->is_virtual
-        && !cs->accepting_mode) {
+    if (global->score_system_val == SCORE_OLYMPIAD
+        && ((!global->is_virtual && !cs->accepting_mode)
+            || (global->is_virtual && global->disable_virtual_auto_judge >0))) {
       action = NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG;
       if (cs->testing_finished)
         action = NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG;
@@ -9050,8 +9053,13 @@ unpriv_view_report(FILE *fout,
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
                                           cs->current_time);
-    if (global->score_system_val == SCORE_OLYMPIAD && stop_time <= 0)
-      accepting_mode = 1;
+    if (global->score_system_val == SCORE_OLYMPIAD) {
+      if (global->disable_virtual_auto_judge <= 0 && stop_time <= 0)
+        accepting_mode = 1;
+      else if (global->disable_virtual_auto_judge > 0
+               && cs->testing_finished <= 0)
+        accepting_mode = 1;
+    }
   } else {
     accepting_mode = cs->accepting_mode;
   }
@@ -10543,7 +10551,8 @@ unpriv_main_page(FILE *fout,
     } else if (cnts->exam_mode && global->score_system_val == SCORE_OLYMPIAD
                && global->is_virtual && stop_time > 0
                && (run_has_transient_user_runs(cs->runlog_state, phr->user_id)
-                   || !is_judged_virtual_olympiad(cs, phr->user_id))) {
+                   || (global->disable_virtual_auto_judge <= 0
+                       && !is_judged_virtual_olympiad(cs, phr->user_id)))) {
       fprintf(fout, "<%s>%s</%s>\n",
               cnts->team_head_style,
               _("Testing is in progress..."),
@@ -10553,6 +10562,10 @@ unpriv_main_page(FILE *fout,
               cnts->team_head_style,
               _("Problem status summary"),
               cnts->team_head_style);
+      if (global->score_system_val == SCORE_OLYMPIAD
+          && global->is_virtual
+          && cs->testing_finished)
+        accepting_mode = 0;
       ns_write_user_problems_summary(cnts, cs, fout, phr->user_id,
                                      accepting_mode, "b1",
                                      solved_flag, accepted_flag, pending_flag,
