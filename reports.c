@@ -94,7 +94,7 @@ static unsigned char const * const armored_tex_translate_table[256] =
 
 static void
 write_xml_tex_testing_report(
-	FILE *fout,
+        FILE *fout,
         const serve_state_t cs,
         int run_id);
 
@@ -271,7 +271,7 @@ chop2(unsigned char *str)
 
 static int
 user_report_generate(
-	unsigned char *out_path,
+        unsigned char *out_path,
         size_t out_size,
         const struct contest_desc *cnts,
         FILE *log_f,
@@ -882,7 +882,7 @@ user_report_generate(
 
 static int
 full_user_report_generate(
-	unsigned char *out_path,
+        unsigned char *out_path,
         size_t out_size,
         const struct contest_desc *cnts,
         FILE *log_f,
@@ -1556,7 +1556,7 @@ static char * latex_args[] =
 
 static int
 invoke_latex(
-	FILE *log_f,
+        FILE *log_f,
         const unsigned char *tex_path,
         const unsigned char *err_path,
         const unsigned char *work_dir,
@@ -1639,7 +1639,7 @@ static char * dvips_args[] =
 
 static int
 invoke_dvips(
-	FILE *log_f,
+        FILE *log_f,
         const unsigned char *dvi_path,
         const unsigned char *err_path,
         const unsigned char *work_dir,
@@ -1717,7 +1717,7 @@ invoke_dvips(
 
 int
 invoke_lpr(
-	FILE *log_f,
+        FILE *log_f,
         const struct section_global_data *global,
         const unsigned char *printer_name,
         const unsigned char *ps_path,
@@ -1953,7 +1953,7 @@ ns_print_user_exam_protocols(
 
 int
 ns_olympiad_final_user_report(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         const struct contest_desc *cnts,
         const serve_state_t cs,
@@ -2537,7 +2537,7 @@ ns_olympiad_final_user_report(
 
 static void
 write_xml_tex_testing_report(
-	FILE *fout,
+        FILE *fout,
         const serve_state_t cs,
         int run_id)
 {
@@ -2733,7 +2733,7 @@ enum { SHORT_ANSWER_GROUP = 10 };
 
 int
 problem_report_generate(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         const struct contest_desc *cnts,
         const serve_state_t cs,
