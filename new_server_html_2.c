@@ -4187,7 +4187,14 @@ ns_write_olympiads_user_runs(
       accepting_mode = 0;
       start_time = run_get_start_time(cs->runlog_state);
     } else {
-      if (!re.judge_id) accepting_mode = 1;
+      if (run_get_virtual_stop_time(cs->runlog_state, phr->user_id, 0) <= 0) {
+        accepting_mode = 1;
+      } else {
+        if (!re.judge_id && global->disable_virtual_auto_judge <= 0)
+          accepting_mode = 1;
+        if (global->disable_virtual_auto_judge > 0 && cs->testing_finished <= 0)
+          accepting_mode = 1;
+      }
       start_time = re.time;
     }
   } else {
