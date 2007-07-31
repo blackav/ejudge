@@ -2500,6 +2500,10 @@ ns_user_info_page(FILE *fout, FILE *log_f,
   html_hidden(fout, "user_id", "%d", view_user_id);
   fprintf(fout, "<p>%s</p>\n", BUTTON(NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL));
   fprintf(fout, "</form>\n");
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+  html_hidden(fout, "user_id", "%d", view_user_id);
+  fprintf(fout, "<p>%s</p>\n", BUTTON(NEW_SRV_ACTION_PRINT_UFC_PROTOCOL));
+  fprintf(fout, "</form>\n");
 
   if (!u_extra || !u_extra->warn_u) {
     fprintf(fout, "<h2>%s</h2>\n", _("No warnings"));

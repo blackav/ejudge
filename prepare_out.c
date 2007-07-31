@@ -588,6 +588,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   GLOBAL_PARAM(user_exam_protocol_footer_file, "s"),
   GLOBAL_PARAM(prob_exam_protocol_header_file, "s"),
   GLOBAL_PARAM(prob_exam_protocol_footer_file, "s"),
+  GLOBAL_PARAM(full_exam_protocol_header_file, "s"),
+  GLOBAL_PARAM(full_exam_protocol_footer_file, "s"),
   */
 void
 prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *global)
@@ -757,6 +759,10 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
   do_str(f, &sbuf, "prob_exam_protocol_header_file", global->prob_exam_protocol_header_file);
   //GLOBAL_PARAM(prob_exam_protocol_footer_file, "s"),
   do_str(f, &sbuf, "prob_exam_protocol_footer_file", global->prob_exam_protocol_footer_file);
+  //GLOBAL_PARAM(full_exam_protocol_header_file, "s"),
+  do_str(f, &sbuf, "full_exam_protocol_header_file", global->full_exam_protocol_header_file);
+  //GLOBAL_PARAM(full_exam_protocol_footer_file, "s"),
+  do_str(f, &sbuf, "full_exam_protocol_footer_file", global->full_exam_protocol_footer_file);
 
   xfree(sbuf.s); sbuf.s = 0; sbuf.a = 0;
 }

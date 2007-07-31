@@ -3099,9 +3099,11 @@ priv_edit_run(FILE *fout, FILE *log_f,
     ne_mask = RUN_ENTRY_TEST;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_SCORE:
+    /*
     if (global->score_system_val == SCORE_ACM
         || (global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode))
       FAIL(NEW_SRV_ERR_INV_PARAM);
+    */
     if (re.prob_id <= 0 || re.prob_id > cs->max_prob
         || !(prob = cs->probs[re.prob_id]))
       FAIL(NEW_SRV_ERR_INV_PROB_ID);
@@ -4338,6 +4340,9 @@ priv_view_users_page(FILE *fout,
       fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
               BUTTON(NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL),
               _("Print the user full examination protocols for the selected users"));
+      fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+              BUTTON(NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL),
+              _("Print the user full cyphered examination protocols for the selected users"));
     }
   }
   fprintf(fout, "</table>\n");
@@ -5416,7 +5421,10 @@ priv_print_user_exam_protocol(
   if (!teamdb_lookup(cs->teamdb_state, user_id))
     FAIL(NEW_SRV_ERR_INV_USER_ID);
 
-  if (phr->action == NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL) {
+  if (phr->action == NEW_SRV_ACTION_PRINT_UFC_PROTOCOL) {
+    full_report = 1;
+    use_cypher = 1;
+  } else if (phr->action == NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL) {
     full_report = 1;
   } else {
     use_user_printer = 1;
@@ -5500,14 +5508,13 @@ priv_print_users_exam_protocol(
     uset.v[uset.u++] = x;
   }
 
-  if (phr->action == NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL) {
-    use_user_printer = 0;
+  if (phr->action == NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL) {
     full_report = 1;
-    use_cypher = 0;
+    use_cypher = 1;
+  } else if (phr->action == NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL) {
+    full_report = 1;
   } else {
     use_user_printer = 1;
-    full_report = 0;
-    use_cypher = 0;
   }
 
   if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
@@ -5972,8 +5979,10 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_ONLINE_USERS] = priv_view_online_users,
   [NEW_SRV_ACTION_PRINT_USER_PROTOCOL] = priv_print_user_exam_protocol,
   [NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL] = priv_print_user_exam_protocol,
+  [NEW_SRV_ACTION_PRINT_UFC_PROTOCOL] = priv_print_user_exam_protocol,
   [NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL] =priv_print_users_exam_protocol,
   [NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL] =priv_print_users_exam_protocol,
+  [NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL] =priv_print_users_exam_protocol,
   [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = priv_print_problem_exam_protocol,
 };
 
@@ -6954,9 +6963,11 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_ONLINE_USERS] = priv_generic_page,
   [NEW_SRV_ACTION_PRINT_USER_PROTOCOL] = priv_generic_page,
   [NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL] = priv_generic_page,
+  [NEW_SRV_ACTION_PRINT_UFC_PROTOCOL] = priv_generic_page,
   [NEW_SRV_ACTION_FORCE_START_VIRTUAL] = priv_generic_operation,
   [NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL] = priv_generic_page,
   [NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL] = priv_generic_page,
+  [NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL] = priv_generic_page,
   [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = priv_generic_page,
 };
 

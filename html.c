@@ -1951,6 +1951,8 @@ do_write_kirov_standings(const serve_state_t state,
     }
 
     run_score = pe->score;
+    if (pe->status == RUN_OK && !p->variable_full_score)
+      run_score = p->full_score;
     run_tests = pe->test - 1;
     if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       if (run_score < 0) run_score = 0;
