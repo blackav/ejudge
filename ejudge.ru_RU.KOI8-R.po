@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-07-29 15:17+0400\n"
-"PO-Revision-Date: 2007-07-29 17:32+0400\n"
+"POT-Creation-Date: 2007-07-31 11:44+0400\n"
+"PO-Revision-Date: 2007-07-31 11:45+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -2796,6 +2796,9 @@ msgstr "Обработка запросов на печать приостановлена"
 msgid "Print sources"
 msgstr "Распечатать исходный текст"
 
+msgid "Print the exam full cyphered protocols"
+msgstr "Напечатать полные зашифрованные экзаменационные протоколы"
+
 msgid "Print the exam full protocols"
 msgstr "Напечатать полные экзаменационные протоколы"
 
@@ -2805,11 +2808,18 @@ msgstr "Напечатать экзаменационные протоколы"
 msgid "Print the user examination protocols for the selected users"
 msgstr "Напечатать экзаменационные протоколы для отмеченных участников"
 
+msgid ""
+"Print the user full cyphered examination protocols for the selected users"
+msgstr "Напечатать полные зашифрованные экзаменационные протоколы для отмеченных участников"
+
 msgid "Print the user full examination protocols for the selected users"
 msgstr "Напечатать полные экзаменационные протоколы для отмеченных участников"
 
 msgid "Print user examination protocol"
 msgstr "Напечатать экзаменационный протокол участника"
+
+msgid "Print user full cyphered examination protocol"
+msgstr "Напечатать полный зашифрованный экзаменационный протокол участника"
 
 msgid "Print user full examination protocol"
 msgstr "Напечатать полный экзаменационный протокол участника"
