@@ -918,6 +918,12 @@ full_user_report_generate(
   const unsigned char *s;
   int need_variant = 0;
   int total_score = 0, cur_score;
+  struct sformat_extra_data sf_extra;
+  unsigned char sf_extra_buf[1024];
+
+  memset(&sf_extra, 0, sizeof(sf_extra));
+  sf_extra.str1 = sf_extra_buf;
+  sf_extra_buf[0] = 0;
 
   if (global->score_system_val != SCORE_OLYMPIAD) return -1;
 
@@ -1069,11 +1075,25 @@ full_user_report_generate(
     goto cleanup;
   }
 
-  if (global->user_exam_protocol_header_file[0]
-      && global->user_exam_protocol_header_txt) {
+  if (use_cypher) {
+    if (u && u->i.exam_cypher)
+      snprintf(sf_extra_buf, sizeof(sf_extra_buf), "%s", u->i.exam_cypher);
+  } else {
+    if (u && u->i.exam_id) {
+      snprintf(sf_extra_buf, sizeof(sf_extra_buf), "%s, %s",
+               teamdb_get_name_2(cs->teamdb_state, user_id),
+               u->i.exam_id);
+    } else {
+      snprintf(sf_extra_buf, sizeof(sf_extra_buf), "%s",
+               teamdb_get_name_2(cs->teamdb_state, user_id));
+    }
+  }
+
+  if (global->full_exam_protocol_header_file[0]
+      && global->full_exam_protocol_header_txt) {
     sformat_message(bigbuf, sizeof(bigbuf),
-                    global->user_exam_protocol_header_txt,
-                    global, 0, 0, 0, &tdb, tdb.user, cnts, 0);
+                    global->full_exam_protocol_header_txt,
+                    global, 0, 0, 0, &tdb, tdb.user, cnts, &sf_extra);
     fprintf(fout, "%s", bigbuf);
   }
 
@@ -1515,10 +1535,10 @@ full_user_report_generate(
     f_id = l_id;
   }
 
-  if (global->user_exam_protocol_footer_file[0]
-      && global->user_exam_protocol_footer_txt) {
+  if (global->full_exam_protocol_footer_file[0]
+      && global->full_exam_protocol_footer_txt) {
     sformat_message(bigbuf, sizeof(bigbuf),
-                    global->user_exam_protocol_footer_txt,
+                    global->full_exam_protocol_footer_txt,
                     global, 0, 0, 0, &tdb, tdb.user, cnts, 0);
     fprintf(fout, "%s", bigbuf);
   }

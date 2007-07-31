@@ -161,9 +161,11 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_UNASSIGN_EXAMINER] = __("Remove examiner"),
   [NEW_SRV_ACTION_PRINT_USER_PROTOCOL] = __("Print user examination protocol"),
   [NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL] = __("Print user full examination protocol"),
+  [NEW_SRV_ACTION_PRINT_UFC_PROTOCOL] = __("Print user full cyphered examination protocol"),
   [NEW_SRV_ACTION_FORCE_START_VIRTUAL] = __("Force start virtual contest"),
   [NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL] = __("Print the exam protocols"),
   [NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL] = __("Print the exam full protocols"),
+  [NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL] = __("Print the exam full cyphered protocols"),
   [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = __("Print problem protocol"),
 };
 
