@@ -7992,7 +7992,7 @@ cmd_import_csv_users(
   // check, that all rows have the same number of columns
   for (i = 1; i < csv->u; i++) {
     if (csv->v[i].u != csv->v[0].u) {
-      fprintf(log_f, "row %d has %d columns, but the header has %d columns\n",
+      fprintf(log_f, "row %d has %zu columns, but the header has %zu columns\n",
               i + 1, csv->v[i].u, csv->v[0].u);
       goto cleanup;
     }
