@@ -1155,8 +1155,8 @@ full_user_report_generate(
       fprintf(fout, "%s: & %s\\\\\n", _("Exam finish time"),
               xml_unparse_date(stop_time));
     }
-    fprintf(fout, "%s: & %d\\\\\n", _("Score"), total_score);
   }
+  fprintf(fout, "%s: & %d\\\\\n", _("Score"), total_score);
   fprintf(fout, "\\end{tabular}\n\n");
 
   f_id = 0;
@@ -1214,6 +1214,11 @@ full_user_report_generate(
         fprintf(fout, "%s", TARMOR(lang->long_name));
       }
 
+      // here calculate the score
+      cur_score = re.score;
+      if (re.status == RUN_OK && !prob->variable_full_score)
+        cur_score = prob->full_score;
+
       // print the table
       if (re.test > 0) {
         fprintf(fout, " & %d", re.test - 1);
@@ -1221,7 +1226,7 @@ full_user_report_generate(
         fprintf(fout, " &");
       }
       if (re.score >= 0) {
-        fprintf(fout, " & %d", re.score);
+        fprintf(fout, " & %d", cur_score);
       } else {
         fprintf(fout, " &");
       }
@@ -1292,8 +1297,11 @@ full_user_report_generate(
       }
 
       if (run_get_entry(cs->runlog_state, run_id, &re) < 0) abort();
+      cur_score = re.score;
+      if (re.status == RUN_OK && !prob->variable_full_score)
+        cur_score = prob->full_score;
       bigbuf[0] = 0;
-      if (re.score >= 0) snprintf(bigbuf, sizeof(bigbuf), "%d", re.score);
+      if (cur_score >= 0) snprintf(bigbuf, sizeof(bigbuf), "%d", cur_score);
       fprintf(fout, "& %s & %s \\\\\n", bigbuf,
               run_status_str(re.status, 0, 0, 0, 0));
       fprintf(fout, "\\hline\n");
@@ -1386,8 +1394,11 @@ full_user_report_generate(
           if (*psrc < ' ') *psrc = ' ';
 
         fprintf(fout, " & %s", TARMOR(src_txt));
-        if (re.score >= 0)
-          fprintf(fout, " & %d", re.score);
+        cur_score = re.score;
+        if (re.status == RUN_OK && !prob->variable_full_score)
+          cur_score = prob->full_score;
+        if (cur_score >= 0)
+          fprintf(fout, " & %d", cur_score);
         else 
           fprintf(fout, " &");
         fprintf(fout, " & %s", run_status_str(re.status, 0, 0, 0, 0));
@@ -1441,6 +1452,9 @@ full_user_report_generate(
 
         if (run_get_entry(cs->runlog_state, run_ids[i], &re) < 0) abort();
         if (re.status == RUN_PARTIAL) re.status = RUN_WRONG_ANSWER_ERR;
+        cur_score = re.score;
+        if (re.status == RUN_OK && !prob->variable_full_score)
+          cur_score = prob->full_score;
 
         if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
                                                 global->run_archive_dir, run_id,
@@ -1514,8 +1528,8 @@ full_user_report_generate(
 
         fprintf(fout, " & %s", ans_txt);
         //fprintf(fout, " & %s", TARMOR(src_txt));
-        if (re.score >= 0)
-          fprintf(fout, " & %d", re.score);
+        if (cur_score >= 0)
+          fprintf(fout, " & %d", cur_score);
         else 
           fprintf(fout, " &");
         fprintf(fout, " & %s\\\\\n",

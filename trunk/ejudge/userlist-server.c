@@ -2122,6 +2122,11 @@ cmd_team_login(struct client_state *p, int pkt_len,
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
       return;
     }
+    if (cnts->user_contest_num > 0) {
+      err("%s -> transitive contest sharing", logbuf);
+      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
+      return;
+    }
   }
   if (!contests_check_team_ip(orig_contest_id, data->origin_ip, data->ssl)) {
     err("%s -> IP is not allowed", logbuf);
@@ -2298,6 +2303,11 @@ cmd_team_check_user(struct client_state *p, int pkt_len,
       err("%s -> invalid user contest: %s", logbuf,
           contests_strerror(-errcode));
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
+    if (cnts->user_contest_num > 0) {
+      err("%s -> transitive contest sharing", logbuf);
+      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
       return;
     }
   }
@@ -3463,6 +3473,11 @@ cmd_get_user_info(struct client_state *p,
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
       return;
     }
+    if (cnts->user_contest_num > 0) {
+      err("%s -> transitive contest sharing", logbuf);
+      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
+      return;
+    }
   }
 
   if (default_get_user_info_4(p->user_id, data->contest_id, &u) < 0) {
@@ -3633,6 +3648,11 @@ cmd_list_all_users(struct client_state *p,
         send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
         return;
       }
+      if (cnts->user_contest_num > 0) {
+        err("%s -> transitive contest sharing", logbuf);
+        send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
+        return;
+      }
     }
     if (is_cnts_capable(p, cnts, OPCAP_LIST_CONTEST_USERS, logbuf) < 0) return;
   } else {
@@ -3709,6 +3729,11 @@ cmd_list_standings_users(struct client_state *p,
       err("%s -> invalid user contest: %s", logbuf,
           contests_strerror(-errcode));
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
+    if (cnts->user_contest_num > 0) {
+      err("%s -> transitive contest sharing", logbuf);
+      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
       return;
     }
   }
@@ -3849,6 +3874,11 @@ cmd_set_user_info(struct client_state *p,
         err("%s -> invalid user contest: %s", logbuf,
             contests_strerror(-errcode));
         send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+        return;
+      }
+      if (cnts->user_contest_num > 0) {
+        err("%s -> transitive contest sharing", logbuf);
+        send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
         return;
       }
     }
@@ -4059,6 +4089,11 @@ cmd_team_set_passwd(struct client_state *p, int pkt_len,
       err("%s -> invalid user contest: %s", logbuf,
           contests_strerror(-errcode));
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
+    if (cnts->user_contest_num > 0) {
+      err("%s -> transitive contest sharing", logbuf);
+      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
       return;
     }
   }
@@ -5115,6 +5150,11 @@ cmd_list_users(struct client_state *p, int pkt_len,
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
       return;
     }
+    if (cnts->user_contest_num > 0) {
+      err("%s -> transitive contest sharing", logbuf);
+      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
+      return;
+    }
   }
 
   if (!(f = open_memstream(&html_ptr, &html_size))) {
@@ -5185,6 +5225,11 @@ cmd_dump_database(struct client_state *p, int pkt_len,
       err("%s -> invalid user contest: %s", logbuf,
           contests_strerror(-errcode));
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
+    if (cnts->user_contest_num > 0) {
+      err("%s -> transitive contest sharing", logbuf);
+      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
       return;
     }
   }
@@ -5619,6 +5664,11 @@ cmd_generate_team_passwords_2(struct client_state *p, int pkt_len,
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
       return;
     }
+    if (cnts->user_contest_num > 0) {
+      err("%s -> transitive contest sharing", logbuf);
+      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
+      return;
+    }
   }
   if (p->user_id < 0) {
     err("%s -> not authentificated", logbuf);
@@ -5723,6 +5773,11 @@ cmd_generate_team_passwords(struct client_state *p, int pkt_len,
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
       return;
     }
+    if (cnts->user_contest_num > 0) {
+      err("%s -> transitive contest sharing", logbuf);
+      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
+      return;
+    }
   }
   if (p->user_id < 0) {
     err("%s -> not authentificated", logbuf);
@@ -5813,6 +5868,11 @@ cmd_clear_team_passwords(struct client_state *p, int pkt_len,
       err("%s -> invalid user contest: %s", logbuf,
           contests_strerror(-errcode));
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
+    if (cnts->user_contest_num > 0) {
+      err("%s -> transitive contest sharing", logbuf);
+      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
       return;
     }
   }
@@ -6151,6 +6211,11 @@ cmd_delete_user_info(struct client_state *p, int pkt_len,
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
       return;
     }
+    if (cnts->user_contest_num > 0) {
+      err("%s -> transitive contest sharing", logbuf);
+      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
+      return;
+    }
   }
 
   snprintf(logbuf, sizeof(logbuf), "DELETE_USER_INFO: %d, %d, %d",
@@ -6210,6 +6275,11 @@ cmd_delete_field(struct client_state *p, int pkt_len,
     if (contests_get(data->contest_id, &cnts) < 0) {
       err("%s -> invalid user contest: %d", logbuf, data->contest_id);
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
+    if (cnts->user_contest_num > 0) {
+      err("%s -> transitive contest sharing", logbuf);
+      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
       return;
     }
   }
@@ -6333,6 +6403,11 @@ cmd_edit_field(struct client_state *p, int pkt_len,
       if (contests_get(data->contest_id, &cnts) < 0 || !cnts) {
         err("%s -> invalid user contest: %d", logbuf, data->contest_id);
         send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+        return;
+      }
+      if (cnts->user_contest_num > 0) {
+        err("%s -> transitive contest sharing", logbuf);
+        send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
         return;
       }
     }
@@ -6476,6 +6551,11 @@ cmd_create_member(struct client_state *p, int pkt_len,
     if (contests_get(data->contest_id, &cnts) < 0 || !cnts) {
       err("%s -> invalid user contest: %d", logbuf, data->contest_id);
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
+    if (cnts->user_contest_num > 0) {
+      err("%s -> transitive contest sharing", logbuf);
+      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
       return;
     }
   }
@@ -6700,6 +6780,11 @@ cmd_user_op(struct client_state *p,
       if (contests_get(data->contest_id, &cnts) < 0 || !cnts) {
         err("%s -> invalid user contest: %d", logbuf, data->contest_id);
         send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+        return;
+      }
+      if (cnts->user_contest_num > 0) {
+        err("%s -> transitive contest sharing", logbuf);
+        send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
         return;
       }
     }
@@ -7646,6 +7731,11 @@ cmd_edit_field_seq(
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
       return;
     }
+    if (cnts->user_contest_num > 0) {
+      err("%s -> transitive contest sharing", logbuf);
+      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
+      return;
+    }
   }
   if (p->user_id <= 0) {
     err("%s -> not authentificated", logbuf);
@@ -7804,6 +7894,11 @@ cmd_move_member(struct client_state *p, int pkt_len,
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
       return;
     }
+    if (cnts->user_contest_num > 0) {
+      err("%s -> transitive contest sharing", logbuf);
+      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
+      return;
+    }
   }
   if (data->serial > 0) {
     if (contests_get(data->serial, &cnts2) < 0 || !cnts2) {
@@ -7816,6 +7911,11 @@ cmd_move_member(struct client_state *p, int pkt_len,
       if (contests_get(data->serial, &cnts2) < 0 || !cnts2) {
         err("%s -> invalid user contest2: %d", logbuf, data->serial);
         send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+        return;
+      }
+      if (cnts2->user_contest_num > 0) {
+        err("%s -> transitive contest sharing", logbuf);
+        send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
         return;
       }
     }

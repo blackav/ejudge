@@ -123,15 +123,32 @@ l10n_html_locale_select(FILE *fout, int locale_id)
 #endif
 }
 
+static struct locale_names 
+{
+  const char * const name;
+  int value;
+} locale_names[] =
+{
+  { "en", 0 },
+  { "en_US", 0 },
+  { "English", 0 },
+
+  { "ru", 1 },
+  { "ru_RU", 1 },
+  { "Russian", 1 },
+
+  { 0, 0 }
+};
+
 int
 l10n_parse_locale(const unsigned char *locale_str)
 {
   int i;
 
   if (!locale_str || !*locale_str) return -1;
-  for (i = 0; locales[i]; i++)
-    if (!strcasecmp(locale_str, locales[i]))
-      return i;
+  for (i = 0; locale_names[i].name; i++)
+    if (!strcasecmp(locale_str, locale_names[i].name))
+      return locale_names[i].value;
   return -1;
 }
 
