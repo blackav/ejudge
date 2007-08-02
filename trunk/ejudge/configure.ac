@@ -361,7 +361,37 @@ CPPFLAGS="${saved_CPPFLAGS}"
 LDFLAGS="${saved_LDFLAGS}"
 LIBS="${saved_LIBS}"
 
-if [[ x"${ac_cv_has_libcap}" = x ]]
+AC_MSG_CHECKING([for new secure execution interface in the running kernel])
+  AC_RUN_IFELSE(
+[[
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <signal.h>
+#include <errno.h>
+#include <sys/ptrace.h>
+int main(void)
+{
+  int p;
+  
+  if (ptrace(0x4281, 0, 0, 0) < 0) _exit(1);
+  if ((p = fork()) < 0 && errno == EPERM) return 0;
+  if (p < 0) return 1;
+  if (!p) _exit(1);
+  return 1;
+}
+]],
+[
+AC_MSG_RESULT([supported])
+ac_cv_has_new_secure_exec=1
+],
+[
+AC_MSG_RESULT([not supported])
+ac_cv_has_new_secure_exec=""
+])
+
+if [[ x"${ac_cv_has_libcap}" = x -a x"${ac_cv_has_new_secure_exec}" = x ]]
 then
 ac_cv_no_kernel=1
 else
@@ -611,7 +641,7 @@ fi
 dnl Check new reuse features
 if [[ x"${ac_cv_has_reuse}" = x1 ]]
 then
-  AC_CHECK_FUNCS([task_SetMaxTimeMillis task_GetRealTime task_IsMemoryLimit task_EnableMemoryLimitError task_EnableSecureExec task_SetQuietFlag task_GetErrorMessage task_EnableAllSignals])
+  AC_CHECK_FUNCS([task_SetMaxTimeMillis task_GetRealTime task_IsMemoryLimit task_EnableMemoryLimitError task_EnableSecureExec task_SetQuietFlag task_GetErrorMessage task_EnableAllSignals task_fPrintArgs])
 fi
 
 ac_cv_version_detected=
@@ -1524,6 +1554,11 @@ then
   AC_DEFINE(CONF_ENABLE_AJAX,1)
 fi
 
+if [[ x"${ac_cv_has_libcap}" != x ]]
+then
+  AC_DEFINE(HAVE_CAP_SYS_OPERATIONS, 1)
+fi
+
 AC_DEFINE_UNQUOTED(CONF_STYLE_PREFIX, "${ac_cv_style_prefix}")
 
 AC_DEFINE_UNQUOTED(CGI_PROG_SUFFIX,"$ac_cv_cgi_suffix")
@@ -1644,7 +1679,7 @@ AC_OUTPUT(Makefile extra/Makefile checkers/Makefile scripts/Makefile scripts/gcc
 
 chmod +x scripts/gcc scripts/gcc-version scripts/g++ scripts/g++-version scripts/fpc scripts/fpc-version scripts/gpc scripts/gpc-version scripts/dcc scripts/dcc-version scripts/g77 scripts/g77-version scripts/gcj scripts/gcj-version scripts/gprolog scripts/gprolog-version scripts/yabasic scripts/yabasic-version scripts/mzscheme scripts/mzscheme-version scripts/perl scripts/perl-version scripts/python scripts/python-version scripts/txt scripts/txt-version ejudge-config.v scripts/festival scripts/javac scripts/javac-version scripts/runjava scripts/mcs scripts/mcs-version scripts/runmono scripts/mbas scripts/mbas-version scripts/runperl
 
-if [[ "x${ac_cv_has_libcap}" = x1 -a "x${ac_cv_has_runtime_libcap}" != x1 ]]
+if [[ "x${ac_cv_has_libcap}" = x1 -a "x${ac_cv_has_runtime_libcap}" != x1 -a x"${ac_cv_has_new_secure_exec}" = x ]]
 then
   echo
   echo "WARNING:"
