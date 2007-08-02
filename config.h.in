@@ -64,6 +64,9 @@
 /* terminal controlling facilities */
 #undef HAVE_TERMIOS_H
 
+/* CAP_SYS_OPERATIONS bit */
+#undef HAVE_CAP_SYS_OPERATIONS
+
 /* new reuse features */
 #undef HAVE_TASK_SETMAXTIMEMILLIS
 #undef HAVE_TASK_GETREALTIME
@@ -73,6 +76,7 @@
 #undef HAVE_TASK_SETQUIETFLAG
 #undef HAVE_TASK_GETERRORMESSAGE
 #undef HAVE_TASK_ENABLEALLSIGNALS
+#undef HAVE_TASK_FPRINTARGS
 
 /* path to the web server cgi-bin dir */
 #undef EJUDGE_HTTPD_CGI_BIN_DIR
