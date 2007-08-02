@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -58,7 +58,7 @@ endif
 
 CC=gcc
 LD=gcc
-CFLAGS=${LIBCAP_INCL_OPT} ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CINTLFLAG} ${CEXTRAFLAGS} ${WPTRSIGN}
+CFLAGS=${LIBCAP_INCL_OPT} ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CINTLFLAG} ${CEXTRAFLAGS} ${WPTRSIGN} -DHAVE_CONFIG_H
 LDFLAGS=${LIBCAP_LIB_OPT} ${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
 
 TARGETS=bpcemu2 dosrun3 bppemu bccemu qbemu ej-javac
