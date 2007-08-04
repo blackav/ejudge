@@ -66,6 +66,7 @@ void do_son(void)
     fprintf(stderr, "failed: ptrace() error: %s\n", strerror(errno));
     _exit(111);
   }
+  ptrace(0x4281, 0, 0, 0);
   execl("./t5_helper", "./t5_helper", NULL);
   fprintf(stderr, "failed: execl() error: %s\n", strerror(errno));
   _exit(111);
