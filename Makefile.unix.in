@@ -322,6 +322,7 @@ distclean : subdir_distclean local_clean local_distclean
 
 subdir_distclean :
 	$(MAKE) -C extra distclean
+	$(MAKE) -C extra/captest distclean
 	$(MAKE) -C checkers distclean
 	$(MAKE) -C scripts distclean
 	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" distclean
