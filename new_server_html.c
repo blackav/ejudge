@@ -10377,7 +10377,7 @@ unpriv_main_page(FILE *fout,
   unsigned char *last_source = 0;
   unsigned char dbuf[1024];
   unsigned char wbuf[1024];
-  int upper_tab_id, next_prob_id;
+  int upper_tab_id = 0, next_prob_id;
   problem_xml_t px;
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
@@ -10457,6 +10457,7 @@ unpriv_main_page(FILE *fout,
 
     fprintf(fout, "<br/>\n");
     fprintf(fout, "<table class=\"probNav\">\n");
+    upper_tab_id = prob_id;
     if (global->vertical_navigation <= 0) {
       fprintf(fout, "<tr id=\"probNavTopList\">\n");
       for (i = 1, j = 0; i <= cs->max_prob; i++) {
@@ -10468,7 +10469,6 @@ unpriv_main_page(FILE *fout,
           j++;
         }
         hh = "probNavHidden";
-        upper_tab_id = prob_id;
         if (i == prob_id) {
           cc = "probCurrent";
         } else if (prob->disable_user_submit > 0) {
@@ -10903,8 +10903,8 @@ unpriv_main_page(FILE *fout,
           }
 
           if (px) {
+            next_prob_id = prob->id;
             if (cnts->exam_mode) {
-              next_prob_id = prob->id;
               if (prob->advance_to_next > 0) {
                 next_prob_id++;
                 for (; next_prob_id <= cs->max_prob; next_prob_id++) {

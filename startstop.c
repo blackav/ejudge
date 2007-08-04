@@ -56,8 +56,8 @@ start_set_self_args(int argc, char *argv[])
 int
 start_switch_user(const unsigned char *user, const unsigned char *group)
 {
-  struct passwd *pwinfo;
-  struct group *grinfo;
+  struct passwd *pwinfo = 0;
+  struct group *grinfo = 0;
 
   if (user && !*user) user = 0;
   if (group && !*group) group = 0;
