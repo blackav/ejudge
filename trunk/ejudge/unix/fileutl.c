@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -190,7 +190,7 @@ struct q_dir_entry
 
 /* scans 'dir' directory and returns the filename found */
 int
-scan_dir(char const *partial_path, char *found_item)
+scan_dir(char const *partial_path, char *found_item, size_t fi_size)
 {
   path_t         dir_path;
   DIR           *d;
@@ -271,7 +271,7 @@ scan_dir(char const *partial_path, char *found_item)
   }
 
   if (got_quit) {
-    pathcpy(found_item, "QUIT");
+    snprintf(found_item, fi_size, "%s", "QUIT");
     info("scan_dir: found QUIT packet");
     return 1;
   }
@@ -280,7 +280,7 @@ scan_dir(char const *partial_path, char *found_item)
 
   for (i = 0; i < 32; i++) {
     if (items[i]) {
-      pathcpy(found_item, items[i]);
+      snprintf(found_item, fi_size, "%s", items[i]);
       info("scan_dir: found '%s' (priority %d)", found_item, i - 16);
       return 1;
     }
@@ -1648,7 +1648,7 @@ make_symlink(unsigned char const *dest, unsigned char const *path)
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "DIR" "gzFile")
