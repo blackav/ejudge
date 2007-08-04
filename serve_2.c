@@ -1113,6 +1113,7 @@ serve_run_request(serve_state_t state,
   run_pkt->disable_sound = state->global->disable_sound;
   run_pkt->full_archive = state->global->enable_full_archive;
   run_pkt->memory_limit = state->global->enable_memory_limit_error;
+  run_pkt->secure_run = state->global->secure_run;
   get_current_time(&run_pkt->ts4, &run_pkt->ts4_us);
   if (comp_pkt) {
     run_pkt->ts1 = comp_pkt->ts1;

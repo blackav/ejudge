@@ -20,14 +20,25 @@
 #include "ej_types.h"
 
 /* taken from linux/include/asm-i386/msr.h */
-#define rdtsc(low,high) \
-     __asm__ __volatile__("rdtsc" : "=a" (low), "=d" (high))
+/* corresponds to the kernel 2.6.22.1 */
 
-#define rdtscl(low) \
-     __asm__ __volatile__("rdtsc" : "=a" (low) : : "edx")
-
-#define rdtscll(val) \
-     __asm__ __volatile__("rdtsc" : "=A" (val))
+#if defined __i386__
+static inline unsigned long long native_read_tsc(void)
+{
+        unsigned long long val;
+        asm volatile("rdtsc" : "=A" (val));
+        return val;
+}
+#define rdtscll(val) ((val) = native_read_tsc())
+#elif defined __x86_64__
+#define rdtscll(val) do { \
+     unsigned int __a,__d; \
+     asm volatile("rdtsc" : "=a" (__a), "=d" (__d)); \
+     (val) = ((unsigned long)__a) | (((unsigned long)__d)<<32); \
+} while(0)
+#else
+#define rdtscll(val) ((val) = 0)
+#endif
 
 extern ej_tsc_t cpu_frequency;
 

@@ -97,7 +97,8 @@ do_loop(void)
     // terminate if signaled
     if (interrupt_get_status() || interrupt_restart_requested()) break;
 
-    r = scan_dir(serve_state.global->compile_queue_dir, pkt_name);
+    r = scan_dir(serve_state.global->compile_queue_dir,
+                 pkt_name, sizeof(pkt_name));
 
     if (r < 0) {
       switch (-r) {

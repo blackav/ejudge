@@ -3,7 +3,7 @@
 #ifndef __FILEUTL_H__
 #define __FILEUTL_H__
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-int   scan_dir(char const *dir, char *result);
+int   scan_dir(char const *dir, char *result, size_t res_size);
 void  scan_dir_add_ignored(const unsigned char *dir,
                            const unsigned char *filename);
 

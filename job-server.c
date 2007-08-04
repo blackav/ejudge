@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -538,7 +538,7 @@ do_work(void)
   struct stat stbuf;
 
   while (!term_signal_flag) {
-    if ((r = scan_dir(job_server_spool_path, pkt_name)) < 0) {
+    if ((r = scan_dir(job_server_spool_path, pkt_name, sizeof(pkt_name))) < 0) {
       // error
       break;
     }
