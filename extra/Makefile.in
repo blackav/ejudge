@@ -45,6 +45,7 @@ EXPAT_LIB_OPT=@ac_cv_expat_lib_opt@
 LIBCAP_DIR=@ac_cv_libcap_root@
 LIBCAP_INCL_OPT=@ac_cv_libcap_include_opt@
 LIBCAP_LIB_OPT=@ac_cv_libcap_lib_opt@
+LIBCAP_LINK=@ac_cv_libcap_link@
 
 ifdef RELEASE
 CDEBUGFLAGS=-O2 -s -Wall -DNDEBUG -DRELEASE
@@ -98,11 +99,11 @@ qbemu: qbemu.o
 qbemu.o: qbemu.c
 
 capexec: capexec.o
-	${LD} ${LDFLAGS} $^ -o $@ -lcap ${LDLIBS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LIBCAP_LINK} ${LDLIBS}
 capexec.o: capexec.c
 
 libdropcaps.so : libdropcaps.o
-	${LD} -shared ${LDFLAGS} $^ -o $@ -lcap ${LDLIBS}
+	${LD} -shared ${LDFLAGS} $^ -o $@ ${LIBCAP_LINK} ${LDLIBS}
 libdropcaps.o : libdropcaps.c
 	${CC} ${CFLAGS} -DPIC -fPIC -c libdropcaps.c -o libdropcaps.o
 
