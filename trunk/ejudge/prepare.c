@@ -2947,8 +2947,10 @@ set_defaults(serve_state_t state, int mode)
   if (mode == PREPARE_SERVE) {
     int var_prob_num = 0;
 
-    for (i = 0; i <= state->max_prob; i++)
+    for (i = 0; i <= state->max_prob; i++) {
+      if (!(prob = state->probs[i])) continue;
       if (prob && prob->variant_num > 0) var_prob_num++;
+    }
     if (var_prob_num > 0) {
       if (!g->variant_map_file[0]) {
         err("There are variant problems, but no variant file name");
@@ -3298,17 +3300,21 @@ set_defaults(serve_state_t state, int mode)
 
   // if no problem has long_name, disable it
   g->disable_prob_long_name = 0;
-  for (i = 1; i <= state->max_prob; i++)
+  for (i = 1; i <= state->max_prob; i++) {
+    if (!(prob = state->probs[i])) continue;
     if (prob && prob->long_name[0])
       break;
+  }
   if (i > state->max_prob)
     g->disable_prob_long_name = 1;
 
   // if all problems are output-only, disable number of passed tests
   g->disable_passed_tests = 0;
-  for (i = 1; i <= state->max_prob; i++)
+  for (i = 1; i <= state->max_prob; i++) {
+    if (!(prob = state->probs[i])) continue;
     if (prob && prob->type_val == PROB_TYPE_STANDARD)
       break;
+  }
   if (i > state->max_prob)
     g->disable_passed_tests = 1;
 

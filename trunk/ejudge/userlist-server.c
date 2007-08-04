@@ -8185,6 +8185,7 @@ cmd_import_csv_users(
         goto cleanup;
       }
     }
+    m = 0;
     if (need_member) {
       m = 0; u =0; ui = 0;
       if (default_get_user_info_2(user_id, data->contest_id, &u, &ui) < 0)

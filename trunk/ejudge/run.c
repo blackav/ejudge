@@ -2238,7 +2238,7 @@ process_default_testers(void)
 int
 check_config(void)
 {
-  int     i, n1, n2, j, n, k;
+  int     i, n1 = 0, n2, j, n, k;
   int     total = 0;
 
   struct section_problem_data *prb = 0;

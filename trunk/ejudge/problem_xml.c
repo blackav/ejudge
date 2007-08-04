@@ -325,7 +325,7 @@ parse_answer_variants(problem_xml_t prb, struct xml_tree *tree)
 {
   struct xml_tree *p, *q;
   struct xml_attr *a;
-  int n, correct = 0, v, tr_num = -1, tr_n2, i, j;
+  int n, correct = 0, v, tr_num = -1, tr_n2, i, j = 0;
   unsigned char *s;
 
   for (p = tree->first_down, n = 1; p; p = p->right, n++) {

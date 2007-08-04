@@ -1471,7 +1471,7 @@ main_page(
 {
   unsigned char ub[1024];
   unsigned char bb[1024];
-  int shown_items = 0, i;
+  int shown_items = 0, i = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *status_style;
   const unsigned char *status_info;
