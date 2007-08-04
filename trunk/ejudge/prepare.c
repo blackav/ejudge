@@ -1874,7 +1874,7 @@ prepare_parse_secure_exec_type(const unsigned char *str)
   int i;
 
   if (!str || !*str) return 0;
-  for (i = 0; i < MEMLIMIT_TYPE_LAST; i++)
+  for (i = 0; i < SEXEC_TYPE_LAST; i++)
     if (secure_exec_type_str[i] && !strcasecmp(str, secure_exec_type_str[i]))
       return i;
   return -1;
@@ -3314,7 +3314,7 @@ set_defaults(serve_state_t state, int mode)
       if (tp->secure_exec_type[0] != 1) {
         tp->secure_exec_type_val = prepare_parse_secure_exec_type(tp->secure_exec_type);
         if (tp->secure_exec_type_val < 0) {
-          err("invalid memory limit type `%s'", tp->secure_exec_type);
+          err("invalid secure exec type `%s'", tp->secure_exec_type);
           return -1;
         }
       }
@@ -3976,7 +3976,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   if (tp->secure_exec_type[0] != 1) {
     out->secure_exec_type_val = prepare_parse_secure_exec_type(tp->secure_exec_type);
     if (out->secure_exec_type_val < 0) {
-      err("invalid memory limit type `%s'", tp->secure_exec_type);
+      err("invalid secure exec type `%s'", tp->secure_exec_type);
       return -1;
     }
   }
@@ -3984,7 +3984,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
     if (atp->secure_exec_type_val < 0 && atp->secure_exec_type[0] != 1) {
       atp->secure_exec_type_val = prepare_parse_secure_exec_type(atp->secure_exec_type);
       if (atp->secure_exec_type_val < 0) {
-        err("invalid memory limit type `%s'", atp->secure_exec_type);
+        err("invalid secure exec type `%s'", atp->secure_exec_type);
         return -1;
       }
     }
