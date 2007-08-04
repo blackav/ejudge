@@ -1368,6 +1368,7 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
             "enable_memory_limit_error\n"
             "kill_signal = KILL\n"
             "memory_limit_type = \"default\"\n"
+            "secure_exec_type = \"static\"\n"
             "clear_env\n",
             arch_abstract_names[arch], supported_archs[arch]);
     /*
@@ -1378,10 +1379,12 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
       fprintf(f, "max_stack_size = %s\n",
               size_t_to_size(nbuf, sizeof(nbuf), max_stack_size));
     */
+    /*
 #if CONF_HAS_LIBCAP - 0 == 1
     if (secure_run)
       fprintf(f, "start_cmd = \"capexec\"\n");
-#endif /* CONF_HAS_LIBCAP */
+#endif
+    */
     break;
 
   case ARCH_LINUX_SHARED:
@@ -1393,6 +1396,7 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
             "enable_memory_limit_error\n"
             "kill_signal = KILL\n"
             "memory_limit_type = \"default\"\n"
+            "secure_exec_type = \"dll\"\n"
             "clear_env\n",
             arch_abstract_names[arch], supported_archs[arch]);
     /*
@@ -1403,11 +1407,13 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
       fprintf(f, "max_stack_size = %s\n",
               size_t_to_size(nbuf, sizeof(nbuf), max_stack_size));
     */
+    /*
 #if CONF_HAS_LIBCAP - 0 == 1
     if (secure_run)
       fprintf(f, "start_env = \"LD_BIND_NOW=1\"\n"
               "start_env = \"LD_PRELOAD=${script_dir}/libdropcaps.so\"\n");
-#endif /* CONF_HAS_LIBCAP */
+#endif
+    */
     break;
 
   case ARCH_JAVA:
@@ -1419,6 +1425,7 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
             "no_core_dump\n"
             "kill_signal = TERM\n"
             "memory_limit_type = \"java\"\n"
+            "secure_exec_type = \"java\"\n"
             "start_cmd = \"runjava%s\"\n"
             "start_env = \"LANG=C\"\n"
             "start_env = \"EJUDGE_PREFIX_DIR\"\n",
@@ -1437,11 +1444,13 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
               size_t_to_size(nbuf, sizeof(nbuf), max_stack_size));
     }
     */
+    /*
     if (!secure_run) {
       fprintf(f, "start_env = \"EJUDGE_JAVA_POLICY=none\"\n");
     } else if (use_files) {
       fprintf(f, "start_env = \"EJUDGE_JAVA_POLICY=fileio.policy\"\n");
     }
+    */
     break;
 
   case ARCH_DOS:

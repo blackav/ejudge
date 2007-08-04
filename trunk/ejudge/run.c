@@ -810,8 +810,8 @@ run_tests(struct section_tester_data *tst,
   full_archive_t far = 0;
   unsigned char *additional_comment = 0;
   int jj, tmpfd, test_max_score, force_check_failed;
-  unsigned char java_flags_buf[128], bb[128];
-  unsigned char *java_flags_ptr = java_flags_buf;
+  unsigned char flags_buf[128], bb[128];
+  unsigned char *java_flags_ptr = flags_buf;
   char *valuer_comment = 0;
   char *valuer_judge_comment = 0;
   char *valuer_errors = 0;
@@ -1158,7 +1158,7 @@ run_tests(struct section_tester_data *tst,
 #endif
           break;
         case MEMLIMIT_TYPE_JAVA:
-          java_flags_ptr = java_flags_buf;
+          java_flags_ptr = flags_buf;
           java_flags_ptr += sprintf(java_flags_ptr, "EJUDGE_JAVA_FLAGS=");
           if (prb->max_vm_size && prb->max_vm_size != -1L) {
             java_flags_ptr += sprintf(java_flags_ptr, "-Xmx%s",
@@ -1174,7 +1174,7 @@ run_tests(struct section_tester_data *tst,
                                                      
           }
           if (java_flags_ptr[-1] != '=') {
-            task_PutEnv(tsk, java_flags_buf);
+            task_PutEnv(tsk, flags_buf);
           }
           // debug
 #if 0
@@ -1187,7 +1187,7 @@ run_tests(struct section_tester_data *tst,
                   prb->max_vm_size,
                   prb->max_stack_size,
                   prb->max_data_size,
-                  java_flags_buf);
+                  flags_buf);
 #endif
           break;
 
@@ -1198,6 +1198,52 @@ run_tests(struct section_tester_data *tst,
                   "memory limit type: dos\n");
 #endif
           // dosbox has natural memory limit :)
+          break;
+        default:
+          abort();
+        }
+      }
+      if (tst->secure_exec_type > 0) {
+        switch (tst->secure_exec_type_val) {
+        case SEXEC_TYPE_STATIC:
+          if (req_pkt->secure_run) {
+#if defined HAVE_TASK_ENABLESECUREEXEC
+            if (task_EnableSecureExec(tsk) < 0) {
+              // FIXME: also report this condition
+              err("task_EnableSecureExec() failed");
+              status = RUN_CHECK_FAILED;
+              tests[cur_test].code = 0;
+              task_Delete(tsk); tsk = 0;
+              total_failed_tests++;
+              goto done_this_test;
+            }
+#else
+            // FIXME: also report this condition
+            err("no task_EnableSecureExec support in the reuse library");
+            status = RUN_CHECK_FAILED;
+            tests[cur_test].code = 0;
+            task_Delete(tsk); tsk = 0;
+            total_failed_tests++;
+            goto done_this_test;
+#endif
+          }
+          break;
+        case SEXEC_TYPE_DLL:
+          if (req_pkt->secure_run) {
+            task_PutEnv(tsk, "LD_BIND_NOW=1");
+            snprintf(flags_buf, sizeof(flags_buf),
+                     "LD_PRELOAD=%s/libdropcaps.so", EJUDGE_SCRIPT_DIR);
+            task_PutEnv(tsk, flags_buf);
+          }
+          break;
+        case SEXEC_TYPE_JAVA:
+          if (req_pkt->secure_run) {
+            if (!prb->use_stdin || !prb->use_stdout) {
+              task_PutEnv(tsk, "EJUDGE_JAVA_POLICY=fileio.policy");
+            }
+          } else {
+            task_PutEnv(tsk, "EJUDGE_JAVA_POLICY=none");
+          }
           break;
         default:
           abort();
@@ -1838,7 +1884,7 @@ do_loop(void)
   path_t report_path;
   path_t full_report_path;
 
-  unsigned char pkt_name[64];
+  path_t pkt_name;
   unsigned char exe_pkt_name[64];
   unsigned char run_base[64];
   path_t full_report_dir;
@@ -1877,7 +1923,7 @@ do_loop(void)
     }
     if (restart_flag) break;
 
-    r = scan_dir(serve_state.global->run_queue_dir, pkt_name);
+    r = scan_dir(serve_state.global->run_queue_dir, pkt_name, sizeof(pkt_name));
     if (r < 0) return -1;
     if (!r) {
       if (got_quit_packet && managed_mode_flag) {
@@ -2049,6 +2095,8 @@ do_loop(void)
 
     if (tst == &tn) {
       sarray_free(tst->start_env);
+      sarray_free(tst->checker_env);
+      sarray_free(tst->super);
     }
 
     snprintf(full_report_dir, sizeof(full_report_dir),
@@ -2125,6 +2173,10 @@ do_loop(void)
 
     clear_directory(serve_state.global->run_work_dir);
   }
+
+  req_pkt = run_request_packet_free(req_pkt);
+  xfree(req_buf), req_buf = 0;
+  req_buf_size = 0;
 
   return 0;
 }
@@ -2229,6 +2281,10 @@ process_default_testers(void)
       if (tn.prepare_cmd[0] && check_executable(tn.prepare_cmd) < 0) return -1;
       if (tn.start_cmd[0] && check_executable(tn.start_cmd) < 0) return -1;
       total++;
+
+      sarray_free(tn.start_env);
+      sarray_free(tn.checker_env);
+      sarray_free(tn.super);
     }
   }
 

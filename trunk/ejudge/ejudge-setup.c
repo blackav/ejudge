@@ -2425,11 +2425,14 @@ generate_serve_cfg(FILE *f)
         "no_core_dump\n"
         "kill_signal = KILL\n"
         "memory_limit_type = \"default\"\n"
+        "secure_exec_type = \"static\"\n"
         "clear_env\n",
         f);
+  /*
 #if CONF_HAS_LIBCAP - 0 == 1
   fprintf(f, "start_cmd = \"capexec\"\n");
-#endif /* CONF_HAS_LIBCAP */
+#endif
+  */
   if (!strcmp(config_workdisk_flag, "yes")) {
     fprintf(f, "check_dir = \"%s/work\"\n", config_workdisk_mount_dir);
   } else {
@@ -2446,14 +2449,16 @@ generate_serve_cfg(FILE *f)
         "no_core_dump\n"
         "kill_signal = KILL\n"
         "memory_limit_type = \"default\"\n"
+        "secure_exec_type = \"dll\"\n"
         "clear_env\n",
         f);
-
+  /*
 #if CONF_HAS_LIBCAP - 0 == 1
   fprintf(f,
           "start_env = \"LD_BIND_NOW=1\"\n"
           "start_env = \"LD_PRELOAD=${script_dir}/libdropcaps.so\"\n");
-#endif /* CONF_HAS_LIBCAP */
+#endif
+  */
   if (!strcmp(config_workdisk_flag, "yes")) {
     fprintf(f, "check_dir = \"%s/work\"\n", config_workdisk_mount_dir);
   } else {
@@ -2471,6 +2476,7 @@ generate_serve_cfg(FILE *f)
         "no_core_dump\n"
         "kill_signal = TERM\n"
         "memory_limit_type = \"java\"\n"
+        "secure_exec_type = \"java\"\n"
         "start_cmd = runjava\n"
         "start_env = \"LANG=C\"\n"
         "start_env = \"EJUDGE_PREFIX_DIR\"\n",
@@ -2495,6 +2501,7 @@ generate_serve_cfg(FILE *f)
         "no_core_dump\n"
         "kill_signal = TERM\n"
         "memory_limit_type = \"default\"\n"
+        //        "secure_exec_type = \"mono\"\n" -- not implemented
         "start_cmd = runmono\n"
         "start_env = \"EJUDGE_PREFIX_DIR\"\n"
         "# start_env = \"EJUDGE_MONO_FLAGS=\"\n",

@@ -387,7 +387,8 @@ ns_loop_callback(struct server_framework_state *state)
     serve_update_internal_xml_log(e->serve_state, cnts);
 
     for (i = 0; i < cs->compile_dirs_u; i++) {
-      if ((r = scan_dir(cs->compile_dirs[i].status_dir, packetname)) <= 0)
+      if ((r = scan_dir(cs->compile_dirs[i].status_dir,
+                        packetname, sizeof(packetname))) <= 0)
         continue;
       serve_read_compile_packet(cs, cnts,
                                 cs->compile_dirs[i].status_dir,
@@ -396,7 +397,8 @@ ns_loop_callback(struct server_framework_state *state)
     }
 
     for (i = 0; i < cs->run_dirs_u; i++) {
-      if ((r = scan_dir(cs->run_dirs[i].status_dir, packetname)) <= 0)
+      if ((r = scan_dir(cs->run_dirs[i].status_dir,
+                        packetname, sizeof(packetname))) <= 0)
         continue;
       serve_read_run_packet(cs, cnts,
                             cs->run_dirs[i].status_dir,

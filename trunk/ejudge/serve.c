@@ -4486,7 +4486,8 @@ do_loop(void)
     may_wait_flag = check_sockets(may_wait_flag);
 
     for (i = 0; i < serve_state.compile_dirs_u; i++) {
-      r = scan_dir(serve_state.compile_dirs[i].status_dir, packetname);
+      r = scan_dir(serve_state.compile_dirs[i].status_dir,
+                   packetname, sizeof(packetname));
       if (r < 0) return -1;
       if (r > 0) {
         if (serve_read_compile_packet(&serve_state, cur_contest,
@@ -4498,7 +4499,8 @@ do_loop(void)
     }
 
     for (i = 0; i < serve_state.run_dirs_u; i++) {
-      r = scan_dir(serve_state.run_dirs[i].status_dir, packetname);
+      r = scan_dir(serve_state.run_dirs[i].status_dir,
+                   packetname, sizeof(packetname));
       if (r < 0) return -1;
       if (!r) continue;
       if (serve_read_run_packet(&serve_state, cur_contest,

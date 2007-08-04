@@ -44,6 +44,17 @@ enum
   MEMLIMIT_TYPE_LAST,
 };
 
+/* secure execution types */
+enum
+{
+  SEXEC_TYPE_NONE = 0,
+  SEXEC_TYPE_STATIC,
+  SEXEC_TYPE_DLL,
+  SEXEC_TYPE_JAVA,
+
+  SEXEC_TYPE_LAST,
+};
+
 struct testset_info
 {
   int total;                  /* total number of tests in set */
@@ -586,6 +597,7 @@ struct section_tester_data
   puc_t arch[32];               /* checker architecture */
   puc_t key[32];                /* configuration key */
   puc_t memory_limit_type[32];  /* type of memory limit handling */
+  puc_t secure_exec_type[32];   /* type of secure execution handling */
 
   int    abstract;              /* is this tester abstract */
   char **super;                 /* names of the supertesters */
@@ -624,6 +636,7 @@ struct section_tester_data
 
   int standard_checker_used;    /* internal: the standard checker is used */
   int memory_limit_type_val;    /* internal: parsed memory_limit_type */
+  int secure_exec_type_val;     /* internal: parsed secure_exec_type */
 };
 
 #undef puc_t
@@ -810,11 +823,20 @@ void prepare_unparse_variants(FILE *f, const struct variant_map *vmap,
 int *prepare_parse_score_tests(const unsigned char *str, int score);
 const unsigned char *prepare_unparse_problem_type(int val);
 int prepare_parse_memory_limit_type(const unsigned char *str);
+int prepare_parse_secure_exec_type(const unsigned char *str);
 int
 prepare_insert_variant_num(
 	unsigned char *buf,
         size_t size,
         const unsigned char *file,
         int variant);
+
+struct variant_map *
+prepare_parse_variant_map(
+        FILE *log_f,
+	serve_state_t state,
+        const unsigned char *path,
+        unsigned char **p_header_txt,
+        unsigned char **p_footer_txt);
 
 #endif /* __PREPARE_H__ */
