@@ -15,19 +15,28 @@
  * GNU General Public License for more details.
  */
 
+#if defined HAVE_CONFIG_H && HAVE_CONFIG_H > 0
+#include "../../config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
-#include <sys/capability.h>
 #include <sys/ptrace.h>
+
+#if defined HAVE_CAP_SYS_OPERATIONS && HAVE_CAP_SYS_OPERATIONS > 0
+#include <sys/capability.h>
+#endif
 
 int main(void)
 {
+#if defined HAVE_CAP_SYS_OPERATIONS && HAVE_CAP_SYS_OPERATIONS > 0
   cap_t old_caps, new_caps;
   int   setcaps[] = { CAP_SYS_OPERATIONS };
+#endif
   int   p;
 
   fprintf(stderr, "t1: checking for disabled syscalls\n");
@@ -36,6 +45,7 @@ int main(void)
     // new interface
     fprintf(stderr, "t1: new interface detected\n");
   } else {
+#if defined HAVE_CAP_SYS_OPERATIONS && HAVE_CAP_SYS_OPERATIONS > 0
     old_caps = cap_get_proc();
     new_caps = cap_dup(old_caps);
     cap_set_flag(new_caps, CAP_EFFECTIVE, 1, setcaps, CAP_CLEAR);
@@ -45,6 +55,7 @@ int main(void)
       fprintf(stderr, "failed: cap_set_proc() failed\n");
       return 1;
     }
+#endif
   }
   errno = 0;
   if ((p = fork()) < 0 && errno == EPERM) {

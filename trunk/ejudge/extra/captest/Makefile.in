@@ -13,10 +13,15 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
 
+LIBCAP_DIR=@ac_cv_libcap_root@
+LIBCAP_INCL_OPT=@ac_cv_libcap_include_opt@
+LIBCAP_LIB_OPT=@ac_cv_libcap_lib_opt@
+LIBCAP_LINK=@ac_cv_libcap_link@
+
 CC = gcc
 LD = gcc
-LDLIBS = -lcap
-CFLAGS = -Wall -g
+LDLIBS = ${LIBCAP_LINK}
+CFLAGS = -Wall -g -DHAVE_CONFIG_H
 
 CFILES = t1.c t2.c t2_helper.c t2_helper_2.c t3.c t4.c t5.c t5_helper.c t6.c
 XFILES = $(CFILES:.c=)
@@ -24,6 +29,8 @@ XFILES = $(CFILES:.c=)
 all : $(XFILES)
 clean:
 	-rm -f $(XFILES)
+distclean :
+	-rm -f $(XFILES) Makefile
 
 
 t2_helper : t2_helper.c
@@ -42,4 +49,4 @@ tests:
 	./t4
 	./t5
 	./t6
-	@echo "All tests passed successfully"
+	@echo "All tests have passed successfully"
