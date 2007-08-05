@@ -1,6 +1,6 @@
 #!/bin/bash
 # $Id$
-# Copyright (c) 2004-2006 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2004-2007 Alexander Chernov <cher@ejudge.ru>
 
 # Usage: javac in-file out-file
 # The working dir must not contain any .class files.
@@ -24,9 +24,13 @@ then
   exit 1
 fi
 
-JAVA_HOME="${JAVADIR}"
-PATH="${JAVA_HOME}/bin:${PATH}"
-export JAVA_HOME PATH
+# avoid setting JAVA_HOME if it is already set
+if [ "${JAVA_HOME}" = "" ]
+then
+    JAVA_HOME="${JAVADIR}"
+    PATH="${JAVA_HOME}/bin:${PATH}"
+    export JAVA_HOME PATH
+fi
 
 rm -f *.class
 exec "${libexecdir}/ejudge/ej-javac" "${infile}" "${outfile}" "${JAVACRUN}" "${JAVAVER}" "${JAVA_HOME}"

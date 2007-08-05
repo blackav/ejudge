@@ -1,6 +1,6 @@
 #!/bin/bash
 # $Id$
-# Copyright (c) 2004-2006 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2004-2007 Alexander Chernov <cher@ejudge.ru>
 
 # assume that we have single argument
 # EJUDGE_JAVA_FLAGS may be used to pass additional flags
@@ -13,13 +13,17 @@ JAVARUN="@ac_cv_contest_java@"
 JAVADIR="@ac_cv_contest_java_dir@"
 JAVAVER="@ac_cv_contest_java_version@"
 
-JAVA_HOME="${JAVADIR}"
-PATH="${JAVA_HOME}/bin:${PATH}"
-export JAVA_HOME PATH
+# avoid setting JAVA_HOME if it is already set
+if [ "${JAVA_HOME}" = "" ]
+then
+    JAVA_HOME="${JAVADIR}"
+    PATH="${JAVA_HOME}/bin:${PATH}"
+    export JAVA_HOME PATH
+fi
 
 if [ x"${EJUDGE_JAVA_POLICY}" = xnone ]
 then
-  # no securuty policy, use with caution!
+  # no security policy, use with caution!
   mv "$1" Main.jar || exit 128
   exec "${JAVARUN}" ${EJUDGE_JAVA_FLAGS} -jar ./Main.jar
 fi
@@ -32,7 +36,7 @@ then
 else
   if [ x"${EJUDGE_PREFIX_DIR}" = x ]
   then
-    echo "EJUDGE_PREFIX_DIR is not set - impossible to set securuty policy" >&2
+    echo "EJUDGE_PREFIX_DIR is not set - impossible to set security policy" >&2
     exit 128
   fi
   policy_file="${EJUDGE_PREFIX_DIR}/share/ejudge/${EJUDGE_JAVA_POLICY}"
