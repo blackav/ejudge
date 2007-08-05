@@ -1405,13 +1405,13 @@ get_variant_map_version(
 
   if (fscanf(f, "variant_map version = \"%d\" >", &vintage) != 1)
     goto invalid_header;
-  if (head_f) fprintf(head_f, "ariant_map version = \"%d\" >", vintage);
+  //if (head_f) fprintf(head_f, "ariant_map version = \"%d\" >", vintage);
   if ((c = getc(f)) == EOF) goto unexpected_EOF;
-  if (head_f) putc(c, head_f);
+  //if (head_f) putc(c, head_f);
   while (c != '\n') {
     if ((c = getc(f)) == EOF)
       goto unexpected_EOF;
-    if (head_f) putc(c, head_f);
+    //if (head_f) putc(c, head_f);
   }
 
   return vintage;
@@ -1634,16 +1634,19 @@ prepare_parse_variant_map(
   }
 
   XCALLOC(pmap, 1);
-  XCALLOC(pmap->prob_map, state->max_prob + 1);
-  XCALLOC(pmap->prob_rev_map, state->max_prob + 1);
-  pmap->var_prob_num = 0;
-  for (i = 1; i <= state->max_prob; i++) {
-    if (!state->probs[i] || state->probs[i]->variant_num <= 0) continue;
-    pmap->prob_map[i] = ++pmap->var_prob_num;
-    pmap->prob_rev_map[pmap->var_prob_num] = i;
-  }
   pmap->a = 16;
   XCALLOC(pmap->v, pmap->a);
+
+  if (state) {
+    XCALLOC(pmap->prob_map, state->max_prob + 1);
+    XCALLOC(pmap->prob_rev_map, state->max_prob + 1);
+    pmap->var_prob_num = 0;
+    for (i = 1; i <= state->max_prob; i++) {
+      if (!state->probs[i] || state->probs[i]->variant_num <= 0) continue;
+      pmap->prob_map[i] = ++pmap->var_prob_num;
+      pmap->prob_rev_map[pmap->var_prob_num] = i;
+    }
+  }
 
   if (!(f = fopen(path, "r"))) {
     fprintf(log_f, "%s: cannot open variant map file '%s'\b", pvm, path);

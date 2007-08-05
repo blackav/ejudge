@@ -7795,184 +7795,6 @@ super_html_check_tests(FILE *f,
   return 0;
 }
 
-static struct variant_map *
-parse_variant_map(FILE *flog, const unsigned char *path,
-                  unsigned char **p_header_txt,
-                  unsigned char **p_footer_txt)
-{
-  FILE *f = 0;
-  struct variant_map *pmap = 0;
-  int lineno = 0, i, j;
-  unsigned char lbuf[1200], login_buf[sizeof(lbuf)], *str;
-  size_t lbuflen;
-  int mode = -1, vintage, n, var;
-  char *header_txt = 0;
-  char *footer_txt = 0;
-  size_t header_len = 0, footer_len = 0;
-  FILE *header_f = 0, *footer_f = 0;
-  int *vars = 0;
-  int vars_u = 0, vars_a = 0;
-
-  if (!(f = fopen(path, "r"))) {
-    fprintf(flog, "parse_variant_map: cannot open file `%s'\n", path);
-    goto failed;
-  }
-
-  if (p_header_txt)
-    header_f = open_memstream(&header_txt, &header_len);
-  if (p_footer_txt)
-    footer_f = open_memstream(&footer_txt, &footer_len);
-
-  XCALLOC(pmap, 1);
-
-  while (fgets(lbuf, sizeof(lbuf), f)) {
-    lineno++;
-    lbuflen = strlen(lbuf);
-    if (lbuflen > sizeof(lbuf) - 2) {
-      fprintf(flog, "parse_variant_map: %s: %d: line is too long\n",
-              path, lineno);
-      goto failed;
-    }
-    while (lbuflen > 0 && isspace(lbuf[lbuflen - 1])) lbuf[--lbuflen] = 0;
-    if (!lbuflen) continue;
-
-    if (mode == -1) {
-      if (sscanf(lbuf, " < variant_map version = \"%d\" >%n",
-                 &vintage, &n) != 2 && !lbuf[n] && vintage == 1) {
-        mode = 0;
-      } else {
-        fprintf(flog, "parse_variant_map: %s: %d: file header is expected\n",
-                path, lineno);
-        goto failed;
-      }
-      continue;
-    }
-    if (mode == 2) {
-      // in file footer mode
-      if (footer_f) {
-        if (lbuf[0] != '#') putc('#', footer_f);
-        fprintf(footer_f, "%s\n", lbuf);
-      }
-      continue;
-    }
-
-    // in the body mode
-    if (!strcmp(lbuf, "</variant_map>")) {
-      mode = 2;
-      continue;
-    }
-
-    if (mode == 0) {
-      if (lbuf[0] == '#') {
-        if (header_f) {
-          fprintf(header_f, "%s\n", lbuf);
-        }
-      }
-      mode = 1;
-    }
-
-    if ((str = strchr(lbuf, '#'))) *str = 0;
-    lbuflen = strlen(lbuf);
-    while (lbuflen > 0 && isspace(lbuf[lbuflen - 1])) lbuf[--lbuflen] = 0;
-    if (!lbuflen) continue;
-
-    if (pmap->u >= pmap->a) {
-      if (!pmap->a) pmap->a = 32;
-      pmap->a *= 2;
-      pmap->v = (typeof(pmap->v)) xrealloc(pmap->v,
-                                           pmap->a * sizeof(pmap->v[0]));
-    }
-    memset(&pmap->v[pmap->u], 0, sizeof(pmap->v[0]));
-
-    str = lbuf;
-    if (sscanf(str, "%s%n", login_buf, &n) != 1) {
-      fprintf(flog, "parse_variant_map: %s: %d: user login expected\n",
-              path, lineno);
-      goto failed;
-    }
-    str += n;
-    pmap->v[pmap->u].login = xstrdup(login_buf);
-
-    vars_u = 0;
-    while (*str) {
-      if (sscanf(str, "%d%n", &var, &n) != 1) {
-        fprintf(flog, 
-                "parse_variant_map: %s: %d: cannot parse variant for [%s,%d]\n",
-                path, lineno, login_buf, vars_u);
-        goto failed;
-      }
-      str += n;
-      if (var < 0) {
-        fprintf(flog,
-                "parse_variant_map: %s: %d: variant %d is invalid for [%s,%d]\n",
-                path, lineno, var, login_buf, vars_u);
-        goto failed;
-      }
-      if (vars_u >= vars_a) {
-        if (!vars_a) vars_a = 16;
-        vars_a *= 2;
-        vars = (typeof(vars)) xrealloc(vars, vars_a * sizeof(vars[0]));
-      }
-      vars[vars_u++] = var;
-    }
-
-    pmap->v[pmap->u].var_num = vars_u;
-    if (vars_u > 0) {
-      XCALLOC(pmap->v[pmap->u].variants, vars_u);
-      memcpy(pmap->v[pmap->u].variants, vars, vars_u * sizeof(vars[0]));
-    }
-    pmap->u++;
-  }
-
-  if (ferror(f)) {
-    fprintf(flog, "parse_variant_map: input error on `%s'\n", path);
-    goto failed;
-  }
-  fclose(f); f = 0;
-  xfree(vars); vars = 0;
-  if (header_f) {
-    fclose(header_f); header_f = 0;
-  }
-  if (footer_f) {
-    fclose(footer_f); footer_f = 0;
-  }
-
-  for (i = 1; i < pmap->u; i++) {
-    if (pmap->v[i].var_num != pmap->v[0].var_num) {
-      fprintf(flog, "parse_variant_map: different number of problems specified for different users\n");
-      goto failed;
-    }
-    for (j = 0; j < i; j++)
-      if (!strcmp(pmap->v[i].login, pmap->v[j].login))
-        break;
-    if (j < i) {
-      fprintf(flog, "parse_variant_map: duplicated entry for login %s\n",
-              pmap->v[i].login);
-      goto failed;
-    }
-  }
-
-  pmap->var_prob_num = pmap->v[0].var_num;
-  if (p_header_txt) *p_header_txt = header_txt;
-  if (p_footer_txt) *p_footer_txt = footer_txt;
-  return pmap;
-
- failed:
-  if (f) fclose(f);
-  if (footer_f) fclose(footer_f);
-  xfree(footer_txt);
-  if (header_f) fclose(header_f);
-  xfree(header_txt);
-  for (i = 0; i < pmap->u; i++) {
-    xfree(pmap->v[i].login);
-    xfree(pmap->v[i].variants);
-  }
-  xfree(pmap->v);
-  xfree(pmap);
-  xfree(vars);
-  return 0;
-}
-
 static int
 vmap_sort_func(const void *v1, const void *v2)
 {
@@ -8051,8 +7873,7 @@ super_html_update_variant_map(FILE *flog, int contest_id,
         goto failed;
       }
 
-      if (!(global->variant_map = parse_variant_map(flog, variant_file,
-                                                    p_header_txt, p_footer_txt)))
+      if (!(global->variant_map = prepare_parse_variant_map(flog, 0, variant_file, p_header_txt, p_footer_txt)))
         goto failed;
     }
   }
@@ -8188,6 +8009,7 @@ super_html_update_variant_map(FILE *flog, int contest_id,
       vmap->v = (typeof(vmap->v)) xrealloc(vmap->v,
                                            vmap->a * sizeof(vmap->v[0]));
     }
+    memset(&vmap->v[vmap->u], 0, sizeof(vmap->v[vmap->u]));
     vmap->v[vmap->u].login = xstrdup(user->login);
     vmap->v[vmap->u].user_id = uid;
     vmap->v[vmap->u].var_num = vmap->prob_rev_map_size;
