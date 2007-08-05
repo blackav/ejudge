@@ -6102,7 +6102,8 @@ unparse_serve_cfg(FILE *f,
                           sstate->probs,
                           sstate->atester_total,
                           sstate->atesters,
-                          config->testing_work_dir);
+                          config->testing_work_dir,
+                          config->contests_home_dir);
 }
 
 int
