@@ -2766,3 +2766,7 @@ run_packet_1.c 4272 0 455431
 run_packet_2.c 4272 0 490995
 serve_2.c 4272 0 7561515
 prepare.c 4274 0 14053986
+ejudge-setup.c 4280 0 9884633
+prepare.c 4281 0 14056076
+prepare_out.c 4281 0 6093605
+super_html_3.c 4281 0 22594761
