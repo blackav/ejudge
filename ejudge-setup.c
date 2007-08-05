@@ -2148,9 +2148,9 @@ generate_serve_cfg(FILE *f)
           config_serialization_key, config_compile_home_dir,
           cpu_get_bogomips());
 
-#if CONF_HAS_LIBCAP - 0 == 1
+#if CONF_HAS_SECURE_EXEC - 0 == 1
   fprintf(f, "secure_run\n");
-#endif /* CONF_HAS_LIBCAP */
+#endif
 
 #if defined COMPILE_FPC_VERSION
   fprintf(f,
