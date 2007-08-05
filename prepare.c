@@ -3175,14 +3175,12 @@ set_defaults(serve_state_t state, int mode)
           sformat_message(tp->check_dir, PATH_MAX, atp->check_dir,
                           g, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
-          vinfo("tester.%d.check_dir inherited from tester.%s ('%s')",
-               i, sish, tp->check_dir);
         }
         if (!tp->check_dir[0]) {
-          vinfo("tester.%d.check_dir inherited from global ('%s')",
-               i, g->run_check_dir);
           pathcpy(tp->check_dir, g->run_check_dir);
         }
+        pathmake4(tp->check_dir, EJUDGE_CONTESTS_HOME_DIR, "/",
+                  tp->check_dir, 0);
       }
 
       if (mode == PREPARE_SERVE) {
@@ -3893,6 +3891,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   if (!out->check_dir[0]) {
     pathcpy(out->check_dir, state->global->run_check_dir);
   }
+  pathmake4(out->check_dir, EJUDGE_CONTESTS_HOME_DIR, "/", out->check_dir, 0);
 
   /* copy no_core_dump */
   out->no_core_dump = tp->no_core_dump;

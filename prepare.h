@@ -797,7 +797,8 @@ int prepare_unparse_testers(FILE *f,
                             struct section_problem_data **probs,
                             int total_atesters,
                             struct section_tester_data **atesters,
-                            const unsigned char *testing_work_dir);
+                            const unsigned char *testing_work_dir,
+                            const unsigned char *contests_home_dir);
 
 void prepare_further_instructions(FILE *f,
                                   const unsigned char *root_dir,

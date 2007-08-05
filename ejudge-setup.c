@@ -23,6 +23,8 @@
 #include "base64.h"
 #include "startstop.h"
 #include "cpu.h"
+#include "misctext.h"
+#include "pathutl.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -1868,6 +1870,24 @@ generate_current_date(unsigned char *buf, size_t size)
           ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
 }
 
+static const unsigned char *
+c_armor_2(
+	struct html_armor_buffer *pa,
+        const unsigned char *str, 
+        const unsigned char *pfx)
+{
+  int plen;
+  const unsigned char *s;
+
+  // FIXME: do armoring
+  if (!os_IsAbsolutePath(str) || !pfx || !os_IsAbsolutePath(pfx)) return str;
+  plen = strlen(pfx);
+  if (strncmp(str, pfx, plen) != 0) return str;
+  s = str + plen;
+  while (*s == '/') s++;
+  return s;
+}
+
 static int
 is_cgi_config_needed(void)
 {
@@ -2040,6 +2060,8 @@ generate_serve_cfg(FILE *f)
   unsigned char date_buf[64];
   const struct path_edit_item *cur = 0;
   int nbuiltin = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  path_t check_dir;
 
   generate_current_date(date_buf, sizeof(date_buf));
 
@@ -2433,12 +2455,18 @@ generate_serve_cfg(FILE *f)
   fprintf(f, "start_cmd = \"capexec\"\n");
 #endif
   */
+  check_dir[0] = 0;
   if (!strcmp(config_workdisk_flag, "yes")) {
-    fprintf(f, "check_dir = \"%s/work\"\n", config_workdisk_mount_dir);
+    snprintf(check_dir, sizeof(check_dir), "%s/work",
+             config_workdisk_mount_dir);
   } else {
     if (config_testing_work_dir[0]) {
-      fprintf(f, "check_dir = \"%s\"\n", config_testing_work_dir);
+      snprintf(check_dir, sizeof(check_dir), "%s", config_testing_work_dir);
     }
+  }
+  if (check_dir[0]) {
+    fprintf(f, "check_dir = \"%s\"\n",
+            c_armor_2(&ab, check_dir, config_ejudge_contests_home_dir));
   }
   fputs("\n", f);
   
@@ -2459,12 +2487,9 @@ generate_serve_cfg(FILE *f)
           "start_env = \"LD_PRELOAD=${script_dir}/libdropcaps.so\"\n");
 #endif
   */
-  if (!strcmp(config_workdisk_flag, "yes")) {
-    fprintf(f, "check_dir = \"%s/work\"\n", config_workdisk_mount_dir);
-  } else {
-    if (config_testing_work_dir[0]) {
-      fprintf(f, "check_dir = \"%s\"\n", config_testing_work_dir);
-    }
+  if (check_dir[0]) {
+    fprintf(f, "check_dir = \"%s\"\n",
+            c_armor_2(&ab, check_dir, config_ejudge_contests_home_dir));
   }
   fputs("\n", f);
 
@@ -2482,12 +2507,9 @@ generate_serve_cfg(FILE *f)
         "start_env = \"EJUDGE_PREFIX_DIR\"\n",
         f);
 
-  if (!strcmp(config_workdisk_flag, "yes")) {
-    fprintf(f, "check_dir = \"%s/work\"\n", config_workdisk_mount_dir);
-  } else {
-    if (config_testing_work_dir[0]) {
-      fprintf(f, "check_dir = \"%s\"\n", config_testing_work_dir);
-    }
+  if (check_dir[0]) {
+    fprintf(f, "check_dir = \"%s\"\n",
+            c_armor_2(&ab, check_dir, config_ejudge_contests_home_dir));
   }
   fputs("\n", f);
 #endif /* COMPILE_JAVA_VERSION */
@@ -2507,12 +2529,9 @@ generate_serve_cfg(FILE *f)
         "# start_env = \"EJUDGE_MONO_FLAGS=\"\n",
         f);
 
-  if (!strcmp(config_workdisk_flag, "yes")) {
-    fprintf(f, "check_dir = \"%s/work\"\n", config_workdisk_mount_dir);
-  } else {
-    if (config_testing_work_dir[0]) {
-      fprintf(f, "check_dir = \"%s\"\n", config_testing_work_dir);
-    }
+  if (check_dir[0]) {
+    fprintf(f, "check_dir = \"%s\"\n",
+            c_armor_2(&ab, check_dir, config_ejudge_contests_home_dir));
   }
   fputs("\n", f);
 #endif /* COMPILE_MONO_VERSION */
@@ -2548,6 +2567,8 @@ generate_serve_cfg(FILE *f)
         f);
 #endif /* COMPILE_MONO_VERSION */
 #endif
+
+  html_armor_free(&ab);
 }
 
 static void

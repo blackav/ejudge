@@ -110,6 +110,24 @@ c_armor(struct str_buf *pb, const unsigned char *s)
   return pb->s;
 }
 
+static const unsigned char *
+c_armor_2(
+	struct str_buf *pb,
+        const unsigned char *str, 
+        const unsigned char *pfx)
+{
+  int plen;
+  const unsigned char *s;
+
+  if (!os_IsAbsolutePath(str) || !pfx || !os_IsAbsolutePath(pfx))
+    return c_armor(pb, str);
+  plen = strlen(pfx);
+  if (strncmp(str, pfx, plen) != 0) return c_armor(pb, str);
+  s = str + plen;
+  while (*s == '/') s++;
+  return c_armor(pb, s);
+}
+
 static void
 unparse_bool(FILE *f, const unsigned char *name, int value)
 {
@@ -1341,18 +1359,24 @@ prepare_unparse_is_supported_tester(const unsigned char *tester_name)
 }
 
 static void
-generate_abstract_tester(FILE *f, int arch, int secure_run,
-                         /*size_t max_vm_size,
-                           size_t max_stack_size,*/
-                         int use_files,
-                         int total_abstr_testers,
-                         struct section_tester_data **abstr_testers,
-                         const unsigned char *testing_work_dir)
+generate_abstract_tester(
+	FILE *f,
+        int arch,
+        int secure_run,
+        int use_files,
+        int total_abstr_testers,
+        struct section_tester_data **abstr_testers,
+        const unsigned char *testing_work_dir,
+        const unsigned char *contests_home_dir)
 {
   //unsigned char nbuf[256], nbuf2[256];
   struct str_buf sbuf = { 0, 0};
   int i;
   struct section_tester_data *atst = 0;
+
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  if (!contests_home_dir) contests_home_dir = EJUDGE_CONTESTS_HOME_DIR;
+#endif
 
   for (i = 0; i < total_abstr_testers; i++) {
     if (abstr_testers[i] && !strcmp(abstr_testers[i]->name, arch_abstract_names[arch]))
@@ -1498,12 +1522,13 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
 
   if (atst && atst->check_dir[0]) {
     fprintf(f, "check_dir = \"%s\"\n",
-            c_armor(&sbuf, atst->check_dir));
+            c_armor_2(&sbuf, atst->check_dir, contests_home_dir));
   } else if (arch == ARCH_DOS) {
-    fprintf(f, "check_dir = \"%s\"\n", "/home/judges/dosemu/run");
+    fprintf(f, "check_dir = \"%s\"\n",
+            c_armor_2(&sbuf, "/home/judges/dosemu/run", contests_home_dir));
   } else if(testing_work_dir) {
     fprintf(f, "check_dir = \"%s\"\n",
-            c_armor(&sbuf, testing_work_dir));
+            c_armor_2(&sbuf, testing_work_dir, contests_home_dir));
   }
   fprintf(f, "\n");
 
@@ -1579,18 +1604,20 @@ generate_concrete_tester(FILE *f, int arch,
 }
 
 int
-prepare_unparse_testers(FILE *f,
-                        int secure_run,
-                        const struct section_global_data *global,
-                        int total_langs,
-                        struct section_language_data **langs,
-                        int total_aprobs,
-                        struct section_problem_data **aprobs,
-                        int total_probs,
-                        struct section_problem_data **probs,
-                        int total_atesters,
-                        struct section_tester_data **atesters,
-                        const unsigned char *testing_work_dir)
+prepare_unparse_testers(
+	FILE *f,
+        int secure_run,
+        const struct section_global_data *global,
+        int total_langs,
+        struct section_language_data **langs,
+        int total_aprobs,
+        struct section_problem_data **aprobs,
+        int total_probs,
+        struct section_problem_data **probs,
+        int total_atesters,
+        struct section_tester_data **atesters,
+        const unsigned char *testing_work_dir,
+        const unsigned char *contests_home_dir)
 {
   unsigned char **archs = 0;
   //size_t *vm_sizes = 0, *stack_sizes = 0, *vm_ind = 0, *stack_ind = 0;
@@ -1766,7 +1793,8 @@ prepare_unparse_testers(FILE *f,
   for (i = 0; i < total_archs; i++) {
     generate_abstract_tester(f, arch_codes[i], secure_run,
                              /*def_vm_size, def_stack_size, */def_use_files,
-                             total_atesters, atesters, testing_work_dir);
+                             total_atesters, atesters, testing_work_dir,
+                             contests_home_dir);
   }
 
   if (def_tester_total) {
