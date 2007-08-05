@@ -55,8 +55,11 @@
 /* path (absolute or relative) to CGI configuration files */
 #undef CGI_DATA_PATH
 
-/* whether kernel patch is ok */
+/* whether libcap and CAP_SYS_OPERATIONS is ok */
 #undef CONF_HAS_LIBCAP
+
+/* whether kernel patch is ok (used only by ejudge-setup!) */
+#undef CONF_HAS_SECURE_EXEC
 
 /* whether MySQL is detected */
 #undef CONF_HAS_MYSQL
