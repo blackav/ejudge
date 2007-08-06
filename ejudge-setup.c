@@ -1880,12 +1880,33 @@ c_armor_2(
   const unsigned char *s;
 
   // FIXME: do armoring
-  if (!os_IsAbsolutePath(str) || !pfx || !os_IsAbsolutePath(pfx)) return str;
+  if (!os_IsAbsolutePath(str) || !pfx || !pfx[0]
+      || !os_IsAbsolutePath(pfx)) return str;
   plen = strlen(pfx);
   if (strncmp(str, pfx, plen) != 0) return str;
   s = str + plen;
   while (*s == '/') s++;
   return s;
+}
+static const unsigned char *
+xml_armor_2(
+	struct html_armor_buffer *pa,
+        const unsigned char *str, 
+        const unsigned char *pfx)
+{
+  int plen;
+  const unsigned char *s;
+
+  // FIXME: do armoring
+  if (!os_IsAbsolutePath(str) || !pfx || !pfx[0]
+      || !os_IsAbsolutePath(pfx))
+    return html_armor_buf(pa, str);
+  plen = strlen(pfx);
+  if (strncmp(str, pfx, plen) != 0)
+    return html_armor_buf(pa, str);
+  s = str + plen;
+  while (*s == '/') s++;
+  return html_armor_buf(pa, s);
 }
 
 static int
@@ -2070,7 +2091,9 @@ generate_serve_cfg(FILE *f)
   fprintf(f, "# Generation date: %s\n\n", date_buf);
 
   fprintf(f, "contest_id = 1\n");
-  fprintf(f, "root_dir = \"%s\"\n\n", config_contest1_home_dir);
+  fprintf(f, "root_dir = \"%s\"\n\n",
+          c_armor_2(&ab, config_contest1_home_dir,
+                    config_ejudge_contests_home_dir));
 
   cur = &path_edit_items[PATH_LINE_SOCKET_PATH];
   if (cur->default_value && !strcmp(cur->default_value, cur->buf)) {
@@ -2920,6 +2943,7 @@ static void
 generate_contest_xml(FILE *f)
 {
   unsigned char date_buf[64];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   generate_current_date(date_buf, sizeof(date_buf));
 
@@ -2994,7 +3018,10 @@ generate_contest_xml(FILE *f)
           "  </client_flags>\n"
           "\n"
           "  <root_dir>%s</root_dir>\n"
-          "</contest>\n", config_login, config_contest1_home_dir);
+          "</contest>\n", config_login,
+          xml_armor_2(&ab, config_contest1_home_dir,
+                      config_ejudge_contests_home_dir));
+  html_armor_free(&ab);
 }
 
 static void
