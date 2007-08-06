@@ -408,4 +408,8 @@ int contests_unparse_and_save(struct contest_desc *cnts,
                                                           const unsigned char *),
                               unsigned char **p_diff_txt);
 
+/* This is INTENTIONALLY not an `extern' variable */
+struct ejudge_cfg;
+struct ejudge_cfg *ejudge_config;
+
 #endif /* __CONTESTS_H__ */

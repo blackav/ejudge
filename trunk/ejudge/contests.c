@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "contests.h"
 #include "pathutl.h"
 #include "errlog.h"
@@ -24,6 +26,7 @@
 #include "fileutl.h"
 #include "xml_utils.h"
 #include "l10n.h"
+#include "ejudge_cfg.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -865,7 +868,27 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
 
   if (!cnts->name) return xml_err_elem_undefined(&cnts->b, CONTEST_NAME);
 
-  if (cnts->root_dir && !os_IsAbsolutePath(cnts->root_dir)) {
+  if (!cnts->root_dir) {
+    // use the standard pattern?
+    snprintf(pathbuf, sizeof(pathbuf), "%06d", cnts->id);
+    cnts->root_dir = xstrdup(pathbuf);
+  }
+  if (!os_IsAbsolutePath(cnts->root_dir) && ejudge_config
+      && ejudge_config->contests_home_dir
+      && os_IsAbsolutePath(ejudge_config->contests_home_dir)) {
+    snprintf(pathbuf, sizeof(pathbuf), "%s/%s",
+             ejudge_config->contests_home_dir, cnts->root_dir);
+    xfree(cnts->root_dir);
+    cnts->root_dir = xstrdup(pathbuf);
+  }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  if (!os_IsAbsolutePath(cnts->root_dir)
+      && os_IsAbsolutePath(EJUDGE_CONTESTS_HOME_DIR)) {
+    snprintf(pathbuf, sizeof(pathbuf), "%s/%s", EJUDGE_CONTESTS_HOME_DIR,
+             cnts->root_dir);
+  }
+#endif
+  if (!os_IsAbsolutePath(cnts->root_dir)) {
     xml_err(&cnts->b, "<root_dir> must be absolute path");
     return -1;
   }
