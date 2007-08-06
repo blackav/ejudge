@@ -905,7 +905,7 @@ run_tests(struct section_tester_data *tst,
 
   error_code[0] = 0;
   if (tst->errorcode_file[0]) {
-    pathmake(error_code, tst->check_dir, "/", tst->errorcode_file, 0);
+    pathmake(error_code, tst->check_dir, "/", tst->errorcode_file, NULL);
   }
 
   while (1) {
@@ -998,11 +998,11 @@ run_tests(struct section_tester_data *tst,
     generic_copy_file(0, NULL, test_src, "",
                       copy_flag, tst->check_dir, prb->input_file, "");
 
-    pathmake(input_path, tst->check_dir, "/", prb->input_file, 0);
-    pathmake(output_path, tst->check_dir, "/", prb->output_file, 0);
-    pathmake(error_path, tst->check_dir, "/", tst->error_file, 0);
-    pathmake(check_out_path, serve_state.global->run_work_dir, "/", "checkout", 0);
-    pathmake(score_out_path, serve_state.global->run_work_dir, "/", "scoreout", 0);
+    pathmake(input_path, tst->check_dir, "/", prb->input_file, NULL);
+    pathmake(output_path, tst->check_dir, "/", prb->output_file, NULL);
+    pathmake(error_path, tst->check_dir, "/", tst->error_file, NULL);
+    pathmake(check_out_path, serve_state.global->run_work_dir, "/", "checkout", NULL);
+    pathmake(score_out_path, serve_state.global->run_work_dir, "/", "scoreout", NULL);
 
     if (prb->type_val > 0) {
       /* output-only problem */

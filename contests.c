@@ -886,6 +886,8 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
       && os_IsAbsolutePath(EJUDGE_CONTESTS_HOME_DIR)) {
     snprintf(pathbuf, sizeof(pathbuf), "%s/%s", EJUDGE_CONTESTS_HOME_DIR,
              cnts->root_dir);
+    xfree(cnts->root_dir);
+    cnts->root_dir = xstrdup(pathbuf);
   }
 #endif
   if (!os_IsAbsolutePath(cnts->root_dir)) {
@@ -1592,8 +1594,9 @@ contests_unparse(FILE *f,
 {
   struct opcap_list_item *cap;
   unsigned char *s;
-  int i;
+  int i, len, skip_elem;
   struct xml_tree *p;
+  path_t tmp1, tmp2;
 
   contests_write_header(f, cnts);
   fprintf(f, "\n");
@@ -1602,8 +1605,40 @@ contests_unparse(FILE *f,
   unparse_text(f, CONTEST_NAME_EN, cnts->name_en);
   unparse_text(f, CONTEST_DEFAULT_LOCALE, cnts->default_locale);
   unparse_text(f, CONTEST_MAIN_URL, cnts->main_url);
-  unparse_text(f, CONTEST_ROOT_DIR, cnts->root_dir);
-  unparse_text(f, CONTEST_CONF_DIR, cnts->conf_dir);
+
+  // avoid generating root_dir and conf_dir if their values are default
+  skip_elem = 0;
+  tmp1[0] = 0;
+  if (ejudge_config && ejudge_config->contests_home_dir) {
+    snprintf(tmp1, sizeof(tmp1), "%s", ejudge_config->contests_home_dir);
+  }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  if (!tmp1[0]) {
+    snprintf(tmp1, sizeof(tmp1), "%s", EJUDGE_CONTESTS_HOME_DIR);
+  }
+#endif
+  if (tmp1[0] && cnts->root_dir) {
+    len = strlen(tmp1);
+    snprintf(tmp2, sizeof(tmp2), "%s/%06d", tmp1, cnts->id);
+    if (!strcmp(tmp2, cnts->root_dir)) {
+      // do nothing, <root_dir> has the default value
+      skip_elem = 1;
+    } else if (!strncmp(tmp1, cnts->root_dir, len)
+               && cnts->root_dir[len] == '/') {
+      while (cnts->root_dir[len] == '/') len++;
+      unparse_text(f, CONTEST_ROOT_DIR, cnts->root_dir + len);
+      skip_elem = 1;
+    }
+  }
+  if (!skip_elem) unparse_text(f, CONTEST_ROOT_DIR, cnts->root_dir);
+
+  skip_elem = 0;
+  if (cnts->root_dir && cnts->conf_dir) {
+    snprintf(tmp1, sizeof(tmp1), "%s/conf", cnts->root_dir);
+    if (!strcmp(tmp1, cnts->conf_dir)) skip_elem = 1;
+  }
+  if (!skip_elem) unparse_text(f, CONTEST_CONF_DIR, cnts->conf_dir);
+
   if (cnts->user_contest && cnts->user_contest[0])
     unparse_text(f, CONTEST_USER_CONTEST, cnts->user_contest);
   if (cnts->reg_deadline) {

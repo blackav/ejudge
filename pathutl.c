@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -79,15 +79,6 @@ pathmake(char *dst, ...)
   return strlen(dst);
 }
 
-static int
-start_from_dot(char const *path)
-{
-  if (path[0] != '.') return 0;
-  if (path[1] == '/') return 1;
-  if (path[1] == PATH_SEP[0]) return 1;
-  return 0;
-}
-
 int
 pathmake2(char *dst, ...)
 {
@@ -96,7 +87,6 @@ pathmake2(char *dst, ...)
   path_t   temp;
 
   if (os_IsAbsolutePath(dst)) return strlen(dst);
-  if (start_from_dot(dst)) return strlen(dst);
   
   temp[0] = 0;
   va_start(args, dst);
@@ -139,34 +129,6 @@ pathmake3(char *dst, ...)
   return strlen(dst);
 }
 
-int
-pathmake4(char *dst, ...)
-{
-  va_list  args;
-  char    *p;
-  path_t   temp;
-
-  if (os_IsAbsolutePath(dst)) return strlen(dst);
-  temp[0] = 0;
-  va_start(args, dst);
-  while ((p = va_arg(args, char*))) {
-    if (p[0] == '/' && p[1] == 0) {
-      strmcat(temp, PATH_SEP, PATH_MAX);
-    } else {
-      strmcat(temp, p, PATH_MAX);
-    }
-  }
-  va_end(args);
-  
-  dst[0] = 0;
-  if (!os_IsAbsolutePath(temp)) {
-    os_rGetWorkingDir(dst, PATH_MAX, 1);
-    pathcat(dst, PATH_SEP);
-  }
-  pathcat(dst, temp);
-  return strlen(dst);
-}
-
 char *
 chop(char *s)
 {
@@ -187,7 +149,7 @@ chop(char *s)
 void
 path_add_dir(char *path, char const *dir)
 {
-  pathmake2(path, dir, "/", path, 0);
+  pathmake2(path, dir, "/", path, NULL);
 }
 
 void 
@@ -197,8 +159,23 @@ path_init(char *path, char const *dir, char const *def)
   path_add_dir(path, dir);
 }
 
+int
+path_split(const unsigned char *path, unsigned char ***p_split)
+{
+  path_t p;
+  unsigned char *s;
+  int cnt;
+  unsigned char **split;
 
-/**
+  snprintf(p, sizeof(p), "%s", path);
+  os_normalize_path(p);
+
+  // count the '/'
+  for (s = p, cnt = 1; *s; s++)
+    if (*s == '/') cnt++;
+}
+
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")

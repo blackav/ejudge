@@ -840,4 +840,8 @@ prepare_parse_variant_map(
         unsigned char **p_header_txt,
         unsigned char **p_footer_txt);
 
+/* This is INTENTIONALLY not an `extern' variable */
+struct ejudge_cfg;
+struct ejudge_cfg *ejudge_config;
+
 #endif /* __PREPARE_H__ */
