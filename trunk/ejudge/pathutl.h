@@ -3,7 +3,7 @@
 #ifndef __PATHUTL_H__
 #define __PATHUTL_H__
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,6 @@ extern char *strmcat(char *, char const *, size_t);
 extern int   pathmake(char *, ...);
 extern int   pathmake2(char *, ...);
 extern int   pathmake3(char *, ...);
-extern int   pathmake4(char *, ...);
 
 extern char *chop(char *);
 

@@ -6331,6 +6331,7 @@ super_html_read_serve(FILE *flog,
   size_t fuh_size = 0;
   path_t cs_spool_dir;
   path_t conf_dir;
+  path_t tmppath;
   unsigned char *prob_no_any = 0;
   size_t cs_spool_dir_len = 0;
 
@@ -6378,6 +6379,30 @@ super_html_read_serve(FILE *flog,
     return -1;
   }
   global = sstate->global = (struct section_global_data *) pg;
+
+  // set up the default value of the root_dir
+  if (!global->root_dir[0]) {
+    snprintf(global->root_dir, sizeof(global->root_dir), "%06d",
+             global->contest_id);
+  }
+  if (!os_IsAbsolutePath(global->root_dir) && config
+      && config->contests_home_dir
+      && os_IsAbsolutePath(config->contests_home_dir)) {
+    snprintf(tmppath, sizeof(tmppath), "%s/%s", config->contests_home_dir,
+             global->root_dir);
+    snprintf(global->root_dir, sizeof(global->root_dir), "%s", tmppath);
+  }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  if (!os_IsAbsolutePath(global->root_dir)) {
+    snprintf(tmppath, sizeof(tmppath), "%s/%s", EJUDGE_CONTESTS_HOME_DIR,
+             global->root_dir);
+    snprintf(global->root_dir, sizeof(global->root_dir), "%s", tmppath);
+  }
+#endif
+  if (!os_IsAbsolutePath(global->root_dir)) {
+    err("global.root_dir must be absolute directory!");
+    return -1;
+  }
 
   // check variables that we don't want to be ever set
   if (prepare_check_forbidden_global(flog, global) < 0) return -1;

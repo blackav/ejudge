@@ -22,6 +22,7 @@
 #include "xml_utils.h"
 #include "prepare_serve.h"
 #include "errlog.h"
+#include "ejudge_cfg.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -193,7 +194,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
                        int need_variant_map)
 {
   struct str_buf sbuf = { 0, 0};
-  path_t compile_spool_dir;
+  path_t compile_spool_dir, tmp1, tmp2;
+  int skip_elem, len;
   static const unsigned char * const contest_types[] =
   {
     "acm",
@@ -212,8 +214,42 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   unsigned char nbuf[64];
 
   fprintf(f, "contest_id = %d\n", global->contest_id);
-  fprintf(f, "root_dir = \"%s\"\n", c_armor(&sbuf, global->root_dir));
-  if (global->conf_dir[0] && strcmp(global->conf_dir, DFLT_G_CONF_DIR))
+
+  // avoid generating root_dir and conf_dir if their values are default
+  skip_elem = 0;
+  tmp1[0] = 0;
+  if (ejudge_config && ejudge_config->contests_home_dir) {
+    snprintf(tmp1, sizeof(tmp1), "%s", ejudge_config->contests_home_dir);
+  }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  if (!tmp1[0]) {
+    snprintf(tmp1, sizeof(tmp1), "%s", EJUDGE_CONTESTS_HOME_DIR);
+  }
+#endif
+  if (tmp1[0] && global->root_dir[0]) {
+    len = strlen(tmp1);
+    snprintf(tmp2, sizeof(tmp2), "%s/%06d", tmp1, global->contest_id);
+    if (!strcmp(tmp2, global->root_dir)) {
+      // do nothing, <root_dir> has the default value
+      skip_elem = 1;
+    } else if (!strncmp(tmp1, global->root_dir, len)
+               && global->root_dir[len] == '/') {
+      while (global->root_dir[len] == '/') len++;
+      fprintf(f, "root_dir = \"%s\"\n",
+              c_armor(&sbuf, global->root_dir + len));
+      skip_elem = 1;
+    }
+  }
+  if (!skip_elem)
+    fprintf(f, "root_dir = \"%s\"\n", c_armor(&sbuf, global->root_dir));
+
+  skip_elem = 0;
+  if (global->root_dir[0] && global->conf_dir[0]) {
+    snprintf(tmp1, sizeof(tmp1), "%s/conf", global->root_dir);
+    if (!strcmp(tmp1, global->conf_dir)
+        || !strcmp(global->conf_dir, DFLT_G_CONF_DIR)) skip_elem = 1;
+  }
+  if (!skip_elem && global->conf_dir[0])
     fprintf(f, "conf_dir = \"%s\"\n", c_armor(&sbuf, global->conf_dir));
   fprintf(f, "\n");
 

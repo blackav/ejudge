@@ -2130,34 +2130,35 @@ set_defaults(serve_state_t state, int mode)
   }
 
   if (!g->root_dir[0]) {
-    err("global.root_dir must be set!");
+    snprintf(g->root_dir, sizeof(g->root_dir), "%06d", g->contest_id);
+  }
+  if (!os_IsAbsolutePath(g->root_dir) && ejudge_config
+      && ejudge_config->contests_home_dir
+      && os_IsAbsolutePath(ejudge_config->contests_home_dir)) {
+    snprintf(fpath, sizeof(fpath), "%s/%s", ejudge_config->contests_home_dir,
+             g->root_dir);
+    snprintf(g->root_dir, sizeof(g->root_dir), "%s", fpath);
+  }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  if (!os_IsAbsolutePath(g->root_dir)) {
+    snprintf(fpath, sizeof(fpath), "%s/%s", EJUDGE_CONTESTS_HOME_DIR,
+             g->root_dir);
+    snprintf(g->root_dir, sizeof(g->root_dir), "%s", fpath);
+  }
+#endif
+  if (!os_IsAbsolutePath(g->root_dir)) {
+    err("global.root_dir must be absolute directory!");
     return -1;
   }
 
-  /* root_dir, conf_dir, var_dir */
-  if (!g->root_dir[0] && !g->var_dir[0] && !g->conf_dir[0]) {
-    vinfo("global.root_dir set to %s", DFLT_G_ROOT_DIR);
-    vinfo("global.conf_dir set to %s", DFLT_G_CONF_DIR);
-    vinfo("global.var_dir set to %s", DFLT_G_VAR_DIR);
-    snprintf(g->root_dir, sizeof(g->root_dir), "%s", DFLT_G_ROOT_DIR);
-    path_init(g->conf_dir, g->root_dir, DFLT_G_CONF_DIR);
-    path_init(g->var_dir, g->root_dir, DFLT_G_VAR_DIR);
-  } else if (g->root_dir[0]) {
-    if (!g->conf_dir[0]) {
-      vinfo("global.conf_dir set to %s", DFLT_G_CONF_DIR);
-    }
-    if (!g->var_dir[0]) {
-      vinfo("global.var_dir set to %s", DFLT_G_VAR_DIR);
-    }
-    path_init(g->conf_dir, g->root_dir, DFLT_G_CONF_DIR);
-    path_init(g->var_dir, g->root_dir, DFLT_G_VAR_DIR);
-  } else if (!g->var_dir[0]) {
-    err("global.var_dir must be set!");
-    return -1;
-  } else if (!g->conf_dir[0]) {
-    err("global.conf_dir must be set!");
-    return -1;
+  if (!g->conf_dir[0]) {
+    snprintf(g->conf_dir, sizeof(g->conf_dir), "conf");
   }
+  pathmake2(g->conf_dir, g->root_dir, "/", g->conf_dir, NULL);
+  if (!g->var_dir[0]) {
+    snprintf(g->var_dir, sizeof(g->var_dir), "var");
+  }
+  pathmake2(g->var_dir, g->root_dir, "/", g->var_dir, NULL);
 
   /* CONFIGURATION FILES DEFAULTS */
 #define GLOBAL_INIT_FIELD(f,d,c) do { if (!g->f[0]) { vinfo("global." #f " set to %s", d); snprintf(g->f, sizeof(g->f), "%s", d); } pathmake2(g->f,g->c, "/", g->f, NULL); } while (0)
@@ -2225,10 +2226,10 @@ set_defaults(serve_state_t state, int mode)
   if (mode == PREPARE_COMPILE || mode == PREPARE_SERVE) {
     GLOBAL_INIT_FIELD(compile_dir, DFLT_G_COMPILE_DIR, var_dir);
     pathmake(g->compile_queue_dir, g->compile_dir, "/",
-             DFLT_G_COMPILE_QUEUE_DIR, 0);
+             DFLT_G_COMPILE_QUEUE_DIR, NULL);
     vinfo("global.compile_queue_dir is %s", g->compile_queue_dir);
     pathmake(g->compile_src_dir, g->compile_dir, "/",
-             DFLT_G_COMPILE_SRC_DIR, 0);
+             DFLT_G_COMPILE_SRC_DIR, NULL);
     vinfo("global.compile_src_dir is %s", g->compile_src_dir);
   }
 
@@ -2389,7 +2390,7 @@ set_defaults(serve_state_t state, int mode)
     make_stand_file_name_2(state);
 
     if (g->contest_start_cmd[0]) {
-      pathmake2(g->contest_start_cmd, g->conf_dir, "/",g->contest_start_cmd, 0);
+      pathmake2(g->contest_start_cmd, g->conf_dir, "/",g->contest_start_cmd, NULL);
       if (check_executable(g->contest_start_cmd) < 0) {
         err("contest start command %s is not executable or does not exist",
             g->contest_start_cmd);
@@ -2398,14 +2399,14 @@ set_defaults(serve_state_t state, int mode)
     }
 
     if (g->stand_header_file[0]) {
-      pathmake2(g->stand_header_file, g->conf_dir, "/",g->stand_header_file, 0);
+      pathmake2(g->stand_header_file, g->conf_dir, "/",g->stand_header_file, NULL);
       vptr = &g->stand_header_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->stand_header_file, "");
       if (r < 0) return -1;
     }
 
     if (g->stand_footer_file[0]) {
-      pathmake2(g->stand_footer_file, g->conf_dir, "/",g->stand_footer_file, 0);
+      pathmake2(g->stand_footer_file, g->conf_dir, "/",g->stand_footer_file, NULL);
       vptr = &g->stand_footer_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->stand_footer_file, "");
       if (r < 0) return -1;
@@ -2414,14 +2415,14 @@ set_defaults(serve_state_t state, int mode)
     if (g->stand2_file_name[0]) {
       if (g->stand2_header_file[0]) {
         pathmake2(g->stand2_header_file, g->conf_dir, "/",
-                  g->stand2_header_file, 0);
+                  g->stand2_header_file, NULL);
         vptr = &g->stand2_header_txt;
         r = generic_read_file(vptr, 0,&tmp_len,0, 0, g->stand2_header_file, "");
         if (r < 0) return -1;
       }
       if (g->stand2_footer_file[0]) {
         pathmake2(g->stand2_footer_file, g->conf_dir, "/",
-                  g->stand2_footer_file, 0);
+                  g->stand2_footer_file, NULL);
         vptr = &g->stand2_footer_txt;
         r = generic_read_file(vptr, 0,&tmp_len,0, 0, g->stand2_footer_file, "");
         if (r < 0) return -1;
@@ -2430,13 +2431,13 @@ set_defaults(serve_state_t state, int mode)
 
     if (g->plog_file_name[0]) {
       if (g->plog_header_file[0]) {
-        pathmake2(g->plog_header_file, g->conf_dir, "/",g->plog_header_file, 0);
+        pathmake2(g->plog_header_file, g->conf_dir, "/",g->plog_header_file, NULL);
         vptr = &g->plog_header_txt;
         r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->plog_header_file, "");
         if (r < 0) return -1;
       }
       if (g->plog_footer_file[0]) {
-        pathmake2(g->plog_footer_file, g->conf_dir, "/",g->plog_footer_file, 0);
+        pathmake2(g->plog_footer_file, g->conf_dir, "/",g->plog_footer_file, NULL);
         vptr = &g->plog_footer_txt;
         r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->plog_footer_file, "");
         if (r < 0) return -1;
@@ -2450,14 +2451,14 @@ set_defaults(serve_state_t state, int mode)
 
     if (g->user_exam_protocol_header_file[0]) {
       pathmake2(g->user_exam_protocol_header_file, g->conf_dir, "/",
-                g->user_exam_protocol_header_file, 0);
+                g->user_exam_protocol_header_file, NULL);
       vptr = &g->user_exam_protocol_header_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->user_exam_protocol_header_file, "");
       if (r < 0) return -1;
     }
     if (g->user_exam_protocol_footer_file[0]) {
       pathmake2(g->user_exam_protocol_footer_file, g->conf_dir, "/",
-                g->user_exam_protocol_footer_file, 0);
+                g->user_exam_protocol_footer_file, NULL);
       vptr = &g->user_exam_protocol_footer_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->user_exam_protocol_footer_file, "");
       if (r < 0) return -1;
@@ -2465,14 +2466,14 @@ set_defaults(serve_state_t state, int mode)
 
     if (g->prob_exam_protocol_header_file[0]) {
       pathmake2(g->prob_exam_protocol_header_file, g->conf_dir, "/",
-                g->prob_exam_protocol_header_file, 0);
+                g->prob_exam_protocol_header_file, NULL);
       vptr = &g->prob_exam_protocol_header_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->prob_exam_protocol_header_file, "");
       if (r < 0) return -1;
     }
     if (g->prob_exam_protocol_footer_file[0]) {
       pathmake2(g->prob_exam_protocol_footer_file, g->conf_dir, "/",
-                g->prob_exam_protocol_footer_file, 0);
+                g->prob_exam_protocol_footer_file, NULL);
       vptr = &g->prob_exam_protocol_footer_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->prob_exam_protocol_footer_file, "");
       if (r < 0) return -1;
@@ -2480,14 +2481,14 @@ set_defaults(serve_state_t state, int mode)
 
     if (g->full_exam_protocol_header_file[0]) {
       pathmake2(g->full_exam_protocol_header_file, g->conf_dir, "/",
-                g->full_exam_protocol_header_file, 0);
+                g->full_exam_protocol_header_file, NULL);
       vptr = &g->full_exam_protocol_header_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->full_exam_protocol_header_file, "");
       if (r < 0) return -1;
     }
     if (g->full_exam_protocol_footer_file[0]) {
       pathmake2(g->full_exam_protocol_footer_file, g->conf_dir, "/",
-                g->full_exam_protocol_footer_file, 0);
+                g->full_exam_protocol_footer_file, NULL);
       vptr = &g->full_exam_protocol_footer_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->full_exam_protocol_footer_file, "");
       if (r < 0) return -1;
@@ -2647,7 +2648,7 @@ set_defaults(serve_state_t state, int mode)
         err("language.%d.cmd must be set", i);
         return -1;
       }
-      pathmake4(lang->cmd,g->script_dir, "/", lang->cmd, NULL);
+      pathmake2(lang->cmd, g->script_dir, "/", lang->cmd, NULL);
       vinfo("language.%d.cmd is %s", i, lang->cmd);
       if (lang->compile_real_time_limit == -1) {
         lang->compile_real_time_limit = g->compile_real_time_limit;
@@ -3179,8 +3180,8 @@ set_defaults(serve_state_t state, int mode)
         if (!tp->check_dir[0]) {
           pathcpy(tp->check_dir, g->run_check_dir);
         }
-        pathmake4(tp->check_dir, EJUDGE_CONTESTS_HOME_DIR, "/",
-                  tp->check_dir, 0);
+        pathmake2(tp->check_dir, EJUDGE_CONTESTS_HOME_DIR, "/",
+                  tp->check_dir, NULL);
       }
 
       if (mode == PREPARE_SERVE) {
@@ -3401,8 +3402,8 @@ set_defaults(serve_state_t state, int mode)
         }
         if (!tp->check_cmd[0] && state->probs[tp->problem]->standard_checker[0]) {
           strcpy(tp->check_cmd, state->probs[tp->problem]->standard_checker);
-          pathmake4(tp->check_cmd, g->ejudge_checkers_dir,
-                    "/", tp->check_cmd, 0);
+          pathmake2(tp->check_cmd, g->ejudge_checkers_dir,
+                    "/", tp->check_cmd, NULL);
           tp->standard_checker_used = 1;
         }
         if (!tp->check_cmd[0] && atp && atp->check_cmd[0]) {
@@ -3419,8 +3420,8 @@ set_defaults(serve_state_t state, int mode)
           err("tester.%d.check_cmd must be set", i);
           return -1;
         }
-        pathmake4(state->testers[i]->check_cmd, g->checker_dir, "/",
-                  state->testers[i]->check_cmd, 0);
+        pathmake2(state->testers[i]->check_cmd, g->checker_dir, "/",
+                  state->testers[i]->check_cmd, NULL);
         if (!tp->start_cmd[0] && atp && atp->start_cmd[0]) {
           sformat_message(tp->start_cmd, PATH_MAX, atp->start_cmd,
                           g, state->probs[tp->problem], NULL,
@@ -3429,8 +3430,8 @@ set_defaults(serve_state_t state, int mode)
                 i, sish, tp->start_cmd);        
         }
         if (state->testers[i]->start_cmd[0]) {
-          pathmake4(state->testers[i]->start_cmd, g->script_dir, "/",
-                    state->testers[i]->start_cmd, 0);
+          pathmake2(state->testers[i]->start_cmd, g->script_dir, "/",
+                    state->testers[i]->start_cmd, NULL);
         }
         if (!tp->prepare_cmd[0] && atp && atp->prepare_cmd[0]) {
           sformat_message(tp->prepare_cmd, PATH_MAX, atp->prepare_cmd,
@@ -3440,8 +3441,8 @@ set_defaults(serve_state_t state, int mode)
                 i, sish, tp->prepare_cmd);        
         }
         if (tp->prepare_cmd[0]) {
-          pathmake4(tp->prepare_cmd, g->script_dir, "/",
-                    tp->prepare_cmd, 0);
+          pathmake2(tp->prepare_cmd, g->script_dir, "/",
+                    tp->prepare_cmd, NULL);
         }
       }
     }
@@ -3891,7 +3892,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   if (!out->check_dir[0]) {
     pathcpy(out->check_dir, state->global->run_check_dir);
   }
-  pathmake4(out->check_dir, EJUDGE_CONTESTS_HOME_DIR, "/", out->check_dir, 0);
+  pathmake2(out->check_dir, EJUDGE_CONTESTS_HOME_DIR, "/", out->check_dir, NULL);
 
   /* copy no_core_dump */
   out->no_core_dump = tp->no_core_dump;
@@ -4096,7 +4097,8 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   /* copy check_cmd */
   if (prb->standard_checker[0]) {
     strcpy(out->check_cmd, prb->standard_checker);
-    pathmake4(out->check_cmd,state->global->ejudge_checkers_dir,"/",out->check_cmd,0);
+    pathmake2(out->check_cmd, state->global->ejudge_checkers_dir,
+              "/", out->check_cmd,NULL);
     out->standard_checker_used = 1;
   } else {
     strcpy(out->check_cmd, tp->check_cmd);
@@ -4112,14 +4114,15 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
           out->arch);
       return -1;
     }
-    pathmake4(out->check_cmd, state->global->checker_dir, "/", out->check_cmd, 0);
+    pathmake2(out->check_cmd, state->global->checker_dir, "/",
+              out->check_cmd, NULL);
   }
 
   /* copy valuer_cmd */
   /*
   if (prb->valuer_cmd[0]) {
     strcpy(out->valuer_cmd, prb->valuer_cmd);
-    pathmake4(out->valuer_cmd, state->global->checker_dir, "/", out->valuer_cmd, 0);
+    pathmake2(out->valuer_cmd, state->global->checker_dir, "/", out->valuer_cmd, NULL);
   }
   */
 
@@ -4131,7 +4134,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
                     0, 0, 0);
   }
   if (out->start_cmd[0]) {
-    pathmake4(out->start_cmd, state->global->script_dir, "/", out->start_cmd, 0);
+    pathmake2(out->start_cmd, state->global->script_dir, "/", out->start_cmd, NULL);
   }
 
   /* copy prepare_cmd */
@@ -4142,7 +4145,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
                     NULL, 0, 0, 0);
   }
   if (out->prepare_cmd[0]) {
-    pathmake4(out->prepare_cmd, state->global->script_dir, "/", out->prepare_cmd, 0);
+    pathmake2(out->prepare_cmd, state->global->script_dir, "/", out->prepare_cmd, NULL);
   }
 
   // for debug
@@ -5356,7 +5359,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     /*
     if (global) {
-      pathmake4(out->check_cmd, global->checker_dir, "/", out->check_cmd, 0);
+      pathmake2(out->check_cmd, global->checker_dir, "/", out->check_cmd, NULL);
     }
     */
     break;
@@ -5367,7 +5370,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
     if (global && out->valuer_cmd[0]) {
-      pathmake4(out->valuer_cmd, global->checker_dir, "/", out->valuer_cmd, 0);
+      pathmake2(out->valuer_cmd, global->checker_dir, "/", out->valuer_cmd, NULL);
     }
     break;
 
