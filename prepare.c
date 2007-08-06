@@ -2225,6 +2225,7 @@ set_defaults(serve_state_t state, int mode)
 
   if (mode == PREPARE_COMPILE || mode == PREPARE_SERVE) {
     GLOBAL_INIT_FIELD(compile_dir, DFLT_G_COMPILE_DIR, var_dir);
+    path_normalize(g->compile_dir, sizeof(g->compile_dir));
     pathmake(g->compile_queue_dir, g->compile_dir, "/",
              DFLT_G_COMPILE_QUEUE_DIR, NULL);
     vinfo("global.compile_queue_dir is %s", g->compile_queue_dir);

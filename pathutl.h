@@ -60,7 +60,7 @@ pathcat(char *dst, char const *src)
 extern inline void
 path_add_dir(char *path, char const *dir)
 {
-  pathmake2(path, dir, "/", path, 0);
+  pathmake2(path, dir, "/", path, NULL);
 }
 extern inline void 
 path_init(char *path, char const *dir, char const *def)
@@ -75,5 +75,14 @@ char *pathcat(char *dst, char const *src);
 void path_add_dir(char *path, char const *dir);
 void path_init(char *path, char const *dir, char const *def);
 #endif /* __GNUC__ */
+
+void path_normalize(unsigned char *path, size_t size);
+void
+path_make_relative(
+	unsigned char *out,
+        size_t size,
+        const unsigned char *path,
+        const unsigned char *relto,
+        const unsigned char *prefix);
 
 #endif /* __PATHUTL_H__ */

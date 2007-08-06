@@ -194,7 +194,7 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
                        int need_variant_map)
 {
   struct str_buf sbuf = { 0, 0};
-  path_t compile_spool_dir, tmp1, tmp2;
+  path_t compile_spool_dir, tmp1, tmp2, contests_home_dir;
   int skip_elem, len;
   static const unsigned char * const contest_types[] =
   {
@@ -215,24 +215,29 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
 
   fprintf(f, "contest_id = %d\n", global->contest_id);
 
-  // avoid generating root_dir and conf_dir if their values are default
-  skip_elem = 0;
-  tmp1[0] = 0;
+  // make the contests_home_dir path for future use
+  contests_home_dir[0] = 0;
   if (ejudge_config && ejudge_config->contests_home_dir) {
-    snprintf(tmp1, sizeof(tmp1), "%s", ejudge_config->contests_home_dir);
+    snprintf(contests_home_dir, sizeof(contests_home_dir), "%s",
+             ejudge_config->contests_home_dir);
   }
 #if defined EJUDGE_CONTESTS_HOME_DIR
-  if (!tmp1[0]) {
-    snprintf(tmp1, sizeof(tmp1), "%s", EJUDGE_CONTESTS_HOME_DIR);
+  if (!contests_home_dir[0]) {
+    snprintf(contests_home_dir, sizeof(contests_home_dir), "%s",
+             EJUDGE_CONTESTS_HOME_DIR);
   }
 #endif
-  if (tmp1[0] && global->root_dir[0]) {
-    len = strlen(tmp1);
-    snprintf(tmp2, sizeof(tmp2), "%s/%06d", tmp1, global->contest_id);
-    if (!strcmp(tmp2, global->root_dir)) {
+
+  // avoid generating root_dir and conf_dir if their values are default
+  skip_elem = 0;
+  if (contests_home_dir[0] && global->root_dir[0]) {
+    len = strlen(contests_home_dir);
+    snprintf(tmp1, sizeof(tmp1), "%s/%06d", contests_home_dir,
+             global->contest_id);
+    if (!strcmp(tmp1, global->root_dir)) {
       // do nothing, <root_dir> has the default value
       skip_elem = 1;
-    } else if (!strncmp(tmp1, global->root_dir, len)
+    } else if (!strncmp(contests_home_dir, global->root_dir, len)
                && global->root_dir[len] == '/') {
       while (global->root_dir[len] == '/') len++;
       fprintf(f, "root_dir = \"%s\"\n",
@@ -274,7 +279,10 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   if (compile_dir) {
     snprintf(compile_spool_dir, sizeof(compile_spool_dir),
              "%s/var/compile", compile_dir);
-    fprintf(f, "compile_dir = \"%s\"\n\n", c_armor(&sbuf, compile_spool_dir));
+    snprintf(tmp1, sizeof(tmp1), "%s/var", global->root_dir);
+    path_make_relative(tmp2, sizeof(tmp2), compile_spool_dir,
+                       tmp1, contests_home_dir);
+    fprintf(f, "compile_dir = \"%s\"\n\n", c_armor(&sbuf, tmp2));
   }
 
   if (global->team_enable_src_view != DFLT_G_TEAM_ENABLE_SRC_VIEW)
