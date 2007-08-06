@@ -165,7 +165,7 @@ path_split(const unsigned char *path, unsigned char ***p_split)
   path_t p;
   unsigned char *s;
   int cnt;
-  unsigned char **split;
+  //unsigned char **split;
 
   snprintf(p, sizeof(p), "%s", path);
   os_normalize_path(p);
@@ -173,6 +173,7 @@ path_split(const unsigned char *path, unsigned char ***p_split)
   // count the '/'
   for (s = p, cnt = 1; *s; s++)
     if (*s == '/') cnt++;
+  abort();
 }
 
 /*
