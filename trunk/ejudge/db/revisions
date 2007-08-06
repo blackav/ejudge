@@ -2775,3 +2775,6 @@ ejudge-setup.c 4283 0 9916855
 prepare.c 4283 0 14053253
 prepare_out.c 4283 0 6142475
 super_html_3.c 4283 0 22598198
+contests.h 4285 0 907992
+ejudge-setup.c 4285 0 9976272
+contests.c 4285 0 4670570
