@@ -135,6 +135,7 @@
 #include "diff.h"
 #include "protocol.h"
 #include "printing.h"
+#include "sformat.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -9778,6 +9779,9 @@ unpriv_page_header(FILE *fout,
   time_t duration = 0, sched_time = 0, fog_start_time = 0;
   int shown_items = 0;
   const unsigned char *template_ptr;
+  unsigned char stand_url_buf[1024];
+  struct teamdb_export tdb;
+  struct sformat_extra_data fe;
 
   template_ptr = extra->menu_2_txt;
   if (!template_ptr || !*template_ptr)
@@ -9881,6 +9885,17 @@ unpriv_page_header(FILE *fout,
           if (start_time <= 0) continue;
           if (global->disable_user_standings > 0) continue;
           //if (global->score_system_val == SCORE_OLYMPIAD) continue;
+          if (cnts->standings_url) {
+            memset(&tdb, 0, sizeof(tdb));
+            teamdb_export_team(cs->teamdb_state, phr->user_id, &tdb);
+            memset(&fe, 0, sizeof(fe));
+            fe.locale_id = phr->locale_id;
+            sformat_message(stand_url_buf, sizeof(stand_url_buf),
+                            cnts->standings_url, global, 0, 0, 0, &tdb,
+                            tdb.user, cnts, &fe);
+            forced_url = stand_url_buf;
+            target = " target=\"_blank\"";
+          }
           if (cnts->personal) forced_text = _("User standings");
           break;
         case NEW_SRV_ACTION_VIEW_CLAR_SUBMIT:
