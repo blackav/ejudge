@@ -276,6 +276,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
             c_armor(&sbuf, global->standings_locale));
   fprintf(f, "\n");
 
+  // if the `compile_dir' and the `var_dir' has the common prefix,
+  // prefer relative path to absolute
   if (compile_dir) {
     snprintf(compile_spool_dir, sizeof(compile_spool_dir),
              "%s/var/compile", compile_dir);
