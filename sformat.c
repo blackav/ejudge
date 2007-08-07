@@ -125,6 +125,7 @@
  *   Cn - name
  *   CN - name_en
  *  V - variable data
+ *   VS - SID
  *   Vl - locale_id
  *   Vu - url
  *   V1 - str1
@@ -164,7 +165,9 @@ sformat_message(char *buf, size_t maxsize, char const *format,
   int width = -1;
   int prec = -1;
   int need_int_format = 0;
+  int need_ullongx_format = 0;
   int int_format_value = 0;
+  unsigned long long ullong_format_value = 0;
   int is_invalid = 0;
   int locale_dependant = 0;
 
@@ -200,7 +203,9 @@ sformat_message(char *buf, size_t maxsize, char const *format,
     width = -1;
     prec = -1;
     need_int_format = 0;
+    need_ullongx_format = 0;
     int_format_value = 0;
+    ullong_format_value = 0;
     is_invalid = 0;
     locale_dependant = 0;
 
@@ -818,6 +823,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
       case 'V':
         /*
          *   Vl - locale_id
+         *   VS - sid
          *   Vu - url
          *   V1 - str1
          *   Vn - server_name
@@ -829,6 +835,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
         case 'u':
         case '1':
         case 'n': case 'N':
+        case 'S':
           break;
         case 0:
           is_invalid = 1;
@@ -844,6 +851,10 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           case 'l':
             need_int_format = 1;
             int_format_value = extra_data->locale_id;
+            break;
+          case 'S':
+            need_ullongx_format = 1;
+            ullong_format_value = extra_data->sid;
             break;
           case 'u':
             papp = extra_data->url;
@@ -900,6 +911,17 @@ sformat_message(char *buf, size_t maxsize, char const *format,
         os_snprintf(tbuf, sizeof(tbuf), "%0*d", width, int_format_value);
       } else {
         os_snprintf(tbuf, sizeof(tbuf), "%d", int_format_value);
+      }
+      papp = tbuf;
+    }
+
+    if (!is_invalid && need_ullongx_format) {
+      // FIXME: ugly hack
+      if (width > 100) width = 100;
+      if (width >= 0 && put_zeros) {
+        os_snprintf(tbuf, sizeof(tbuf), "%0*llx", width, ullong_format_value);
+      } else {
+        os_snprintf(tbuf, sizeof(tbuf), "%llx", ullong_format_value);
       }
       papp = tbuf;
     }
