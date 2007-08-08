@@ -1232,7 +1232,7 @@ run_tests(struct section_tester_data *tst,
           if (req_pkt->secure_run) {
             task_PutEnv(tsk, "LD_BIND_NOW=1");
             snprintf(flags_buf, sizeof(flags_buf),
-                     "LD_PRELOAD=%s/libdropcaps.so", EJUDGE_SCRIPT_DIR);
+                     "LD_PRELOAD=%s/lang/libdropcaps.so", EJUDGE_SCRIPT_DIR);
             task_PutEnv(tsk, flags_buf);
           }
           break;
