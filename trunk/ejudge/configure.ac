@@ -56,6 +56,7 @@ AC_ARG_ENABLE([contests-dir],AC_HELP_STRING([--enable-contests-dir],[specify the
 AC_ARG_ENABLE([contests-home-dir],AC_HELP_STRING([--enable-contests-home-dir],[specify the default path to the contests home directory]),[ac_cv_contests_home_dir="$enableval"],[ac_cv_contests_home_dir=""])
 AC_ARG_ENABLE([ajax],AC_HELP_STRING([--enable-ajax],[enable use of the ajax technology for the client web interface]),[ac_cv_ajax="$enableval"],[ac_cv_ajax=""])
 AC_ARG_ENABLE([style-prefix],AC_HELP_STRING([--enable-style-prefix],[specify the prefix for HTML style files]),[ac_cv_style_prefix="$enableval"],[ac_cv_style_prefix=""])
+AC_ARG_ENABLE([hidden-server-bins],AC_HELP_STRING([--enable-hidden-server-bins],[do not install the server binaries into bin directory]),[ac_cv_hidden_bins=1][ac_cv_hidden_bins=])
 
 AC_ARG_WITH([httpd-cgi-bin-dir],AC_HELP_STRING([--with-httpd-cgi-bin-dir],[specify the path to the web serve CGI directory]),[ac_cv_httpd_cgi_bin_dir="${withval}"])
 AC_ARG_WITH([httpd-htdocs-dir],AC_HELP_STRING([--with-httpd-htdocs-dir],[specify the path to the web server HTML directory]),[ac_cv_httpd_htdocs_dir="${withval}"])
@@ -1399,8 +1400,16 @@ fi
 
 ac_cv_expanded_prefix="${actual_prefix}"
 ac_cv_expanded_locale_dir="${actual_prefix}/share/locale"
-ac_cv_ejudge_serve_path="${actual_prefix}/bin/serve"
-ac_cv_ejudge_run_path="${actual_prefix}/bin/run"
+if [[ x"${ac_cv_hidden_bins}" != x ]]
+then
+  ac_cv_ejudge_server_bin_path="${actual_prefix}/libexec/ejudge/bin"
+  ac_cv_ejudge_server_bin_path_m="${libexecdir}/ejudge/bin"
+else
+  ac_cv_ejudge_server_bin_path="${actual_prefix}/bin"
+  ac_cv_ejudge_server_bin_path_m="${bindir}"
+fi
+ac_cv_ejudge_serve_path="${ac_cv_ejudge_server_bin_path}/serve"
+ac_cv_ejudge_run_path="${ac_cv_ejudge_server_bin_path}/run"
 ac_cv_ejudge_script_dir="${libexecdir}/ejudge"
 ac_cv_ejudge_script_dir_expanded="${actual_libexecdir}/ejudge"
 if [[ x"${cgibindir}" = x'${libexecdir}/ejudge/cgi-bin' ]]
@@ -1539,6 +1548,7 @@ AC_SUBST(ac_cv_contest_mono)
 AC_SUBST(ac_cv_contest_mono_dir)
 AC_SUBST(ac_cv_contest_mbas)
 AC_SUBST(ac_cv_libcap_link)
+AC_SUBST(ac_cv_ejudge_server_bin_path_m)
 
 if [[ x"${ac_cv_nls}" = x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
@@ -1595,6 +1605,7 @@ then
 fi
 AC_DEFINE_UNQUOTED(EJUDGE_PREFIX_DIR,"${ac_cv_expanded_prefix}")
 AC_DEFINE_UNQUOTED(EJUDGE_LOCALE_DIR,"$ac_cv_expanded_locale_dir")
+AC_DEFINE_UNQUOTED(EJUDGE_SERVER_BIN_PATH,"${ac_cv_ejudge_server_bin_path}")
 AC_DEFINE_UNQUOTED(EJUDGE_SERVE_PATH,"${ac_cv_ejudge_serve_path}")
 AC_DEFINE_UNQUOTED(EJUDGE_RUN_PATH,"${ac_cv_ejudge_run_path}")
 AC_DEFINE_UNQUOTED(EJUDGE_SCRIPT_DIR,"${ac_cv_ejudge_script_dir_expanded}")
