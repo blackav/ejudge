@@ -33,4 +33,4 @@ then
 fi
 
 rm -f *.class
-exec "${libexecdir}/ejudge/ej-javac" "${infile}" "${outfile}" "${JAVACRUN}" "${JAVAVER}" "${JAVA_HOME}"
+exec "${libexecdir}/ejudge/lang/ej-javac" "${infile}" "${outfile}" "${JAVACRUN}" "${JAVAVER}" "${JAVA_HOME}"
