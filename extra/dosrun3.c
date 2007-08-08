@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -14,6 +14,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+
+#if defined HAVE_CONFIG_H
+#include "../config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,7 +32,7 @@
 #include <dirent.h>
 #include <sys/wait.h>
 
-#define EMUPATH "/home/judges/dosemu/run"
+static unsigned char emupath[4096];
 
 void
 myerr(char const *format, ...)
@@ -122,13 +126,13 @@ cleanup_hnd(void)
   return;
 
   while (1) {
-    if (!(d = opendir(EMUPATH))) return;
+    if (!(d = opendir(emupath))) return;
     while ((e = readdir(d))) {
       if (!strcmp(e->d_name, ".") || !strcmp(e->d_name, "..")) continue;
       break;
     }
     if (!e) break;
-    snprintf(buf, sizeof(buf), "%s/%s", EMUPATH, e->d_name);
+    snprintf(buf, sizeof(buf), "%s/%s", emupath, e->d_name);
     closedir(d);
     if (unlink(buf) < 0) return;
   }
@@ -145,16 +149,22 @@ main(int argc, char *argv[])
 
   if (argc != 2) myerr("wrong number of arguments: %d", argc);
 
-  atexit(cleanup_hnd);
-  if (chmod(EMUPATH, 0700) < 0) myerr("chmod failed: %s", strerror(errno));
-  //clean_dir(EMUPATH);
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  snprintf(emupath, sizeof(emupath), "%s/dosemu/run", EJUDGE_CONTESTS_HOME_DIR);
+#else
+  snprintf(emupath, sizeof(emupath), "/home/judges/dosemu/run");
+#endif
 
-  snprintf(buf, sizeof(buf), "%s/input", EMUPATH);
+  atexit(cleanup_hnd);
+  if (chmod(emupath, 0700) < 0) myerr("chmod failed: %s", strerror(errno));
+  //clean_dir(emupath);
+
+  snprintf(buf, sizeof(buf), "%s/input", emupath);
   if (lstat(buf, &ss) >= 0) {
     input_name = "input.";
   }
 
-  snprintf(buf, sizeof(buf), "%s/command.txt", EMUPATH);
+  snprintf(buf, sizeof(buf), "%s/command.txt", emupath);
   if (!(f = fopen(buf, "w")))
     myerr("fopen w failed on %s: %s", buf, strerror(errno));
   fprintf(f,
@@ -167,24 +177,24 @@ main(int argc, char *argv[])
           "\r\n", input_name);
   fclose(f);
 
-  snprintf(buf, sizeof(buf), "%s/output", EMUPATH);
+  snprintf(buf, sizeof(buf), "%s/output", emupath);
   if (!(f = fopen(buf, "w")))
     myerr("fopen failed on %s: %s", buf, strerror(errno));
   fclose(f);
-  snprintf(buf, sizeof(buf), "%s/error", EMUPATH);
+  snprintf(buf, sizeof(buf), "%s/error", emupath);
   if (!(f = fopen(buf, "w")))
     myerr("fopen failed on %s: %s", buf, strerror(errno));
   fclose(f);
-  snprintf(buf, sizeof(buf), "%s/retcode.txt", EMUPATH);
+  snprintf(buf, sizeof(buf), "%s/retcode.txt", emupath);
   if (!(f = fopen(buf, "w")))
     myerr("fopen failed on %s: %s", buf, strerror(errno));
   fclose(f);
 
-  snprintf(buf, sizeof(buf), "%s/program.exe", EMUPATH);
+  snprintf(buf, sizeof(buf), "%s/program.exe", emupath);
   copy_file(argv[1], buf);
 
-  snprintf(buf, sizeof(buf), "%s/../bin/dos", EMUPATH);
-  if (chmod(EMUPATH, 0500) < 0) myerr("chmod failed: %s", strerror(errno));
+  snprintf(buf, sizeof(buf), "%s/../bin/dos", emupath);
+  if (chmod(emupath, 0500) < 0) myerr("chmod failed: %s", strerror(errno));
 
   execl(buf, buf, "-I", "keystroke \"\\r\" video { none } dpmi off", NULL);
   myerr("execl failed: %s", strerror(errno));
