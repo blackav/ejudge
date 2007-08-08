@@ -101,7 +101,7 @@ invoke_stopper(const char *prog, const char *ejudge_xml_path)
   path_t path;
   tTask *tsk = 0;
 
-  snprintf(path, sizeof(path), "%s/bin/%s-control", EJUDGE_PREFIX_DIR, prog);
+  snprintf(path, sizeof(path), "%s/%s-control", EJUDGE_SERVER_BIN_PATH, prog);
   tsk = task_New();
   task_AddArg(tsk, path);
   task_AddArg(tsk, "stop");
@@ -131,7 +131,7 @@ command_start(const struct ejudge_cfg *config,
 #endif
 
   // start userlist-server
-  snprintf(path, sizeof(path), "%s/bin/userlist-server", EJUDGE_PREFIX_DIR);
+  snprintf(path, sizeof(path), "%s/userlist-server", EJUDGE_SERVER_BIN_PATH);
   tsk = task_New();
   task_AddArg(tsk, path);
   task_AddArg(tsk, "-D");
@@ -159,7 +159,7 @@ command_start(const struct ejudge_cfg *config,
   userlist_server_started = 1;
 
   // start super-serve
-  snprintf(path, sizeof(path), "%s/bin/super-serve", EJUDGE_PREFIX_DIR);
+  snprintf(path, sizeof(path), "%s/super-serve", EJUDGE_SERVER_BIN_PATH);
   tsk = task_New();
   task_AddArg(tsk, path);
   task_AddArg(tsk, "-D");
@@ -187,7 +187,7 @@ command_start(const struct ejudge_cfg *config,
   super_serve_started = 1;
 
   // start compile
-  snprintf(path, sizeof(path), "%s/bin/compile", EJUDGE_PREFIX_DIR);
+  snprintf(path, sizeof(path), "%s/compile", EJUDGE_SERVER_BIN_PATH);
   tsk = task_New();
   task_AddArg(tsk, path);
   task_AddArg(tsk, "-D");
@@ -213,7 +213,7 @@ command_start(const struct ejudge_cfg *config,
   compile_started = 1;
 
   // start job-server
-  snprintf(path, sizeof(path), "%s/bin/job-server", EJUDGE_PREFIX_DIR);
+  snprintf(path, sizeof(path), "%s/job-server", EJUDGE_SERVER_BIN_PATH);
   tsk = task_New();
   task_AddArg(tsk, path);
   task_AddArg(tsk, "-D");
@@ -238,7 +238,7 @@ command_start(const struct ejudge_cfg *config,
   job_server_started = 1;
 
   // start new-server
-  snprintf(path, sizeof(path), "%s/bin/new-server", EJUDGE_PREFIX_DIR);
+  snprintf(path, sizeof(path), "%s/new-server", EJUDGE_SERVER_BIN_PATH);
   tsk = task_New();
   task_AddArg(tsk, path);
   task_AddArg(tsk, "-D");

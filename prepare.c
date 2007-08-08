@@ -2170,7 +2170,7 @@ set_defaults(serve_state_t state, int mode)
   }
   if (!g->ejudge_checkers_dir[0]) {
     snprintf(g->ejudge_checkers_dir, sizeof(g->ejudge_checkers_dir),
-             "%s", EJUDGE_SCRIPT_DIR);
+             "%s/checkers", EJUDGE_SCRIPT_DIR);
     vinfo("global.ejudge_checkers_dir is set to %s",
          g->ejudge_checkers_dir);
   }
@@ -2649,7 +2649,7 @@ set_defaults(serve_state_t state, int mode)
         err("language.%d.cmd must be set", i);
         return -1;
       }
-      pathmake2(lang->cmd, g->script_dir, "/", lang->cmd, NULL);
+      pathmake2(lang->cmd, g->script_dir, "/", "lang", "/", lang->cmd, NULL);
       vinfo("language.%d.cmd is %s", i, lang->cmd);
       if (lang->compile_real_time_limit == -1) {
         lang->compile_real_time_limit = g->compile_real_time_limit;
@@ -3432,7 +3432,7 @@ set_defaults(serve_state_t state, int mode)
         }
         if (state->testers[i]->start_cmd[0]) {
           pathmake2(state->testers[i]->start_cmd, g->script_dir, "/",
-                    state->testers[i]->start_cmd, NULL);
+                    "lang", "/", state->testers[i]->start_cmd, NULL);
         }
         if (!tp->prepare_cmd[0] && atp && atp->prepare_cmd[0]) {
           sformat_message(tp->prepare_cmd, PATH_MAX, atp->prepare_cmd,
@@ -3442,7 +3442,7 @@ set_defaults(serve_state_t state, int mode)
                 i, sish, tp->prepare_cmd);        
         }
         if (tp->prepare_cmd[0]) {
-          pathmake2(tp->prepare_cmd, g->script_dir, "/",
+          pathmake2(tp->prepare_cmd, g->script_dir, "/", "lang", "/",
                     tp->prepare_cmd, NULL);
         }
       }
@@ -4135,7 +4135,8 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
                     0, 0, 0);
   }
   if (out->start_cmd[0]) {
-    pathmake2(out->start_cmd, state->global->script_dir, "/", out->start_cmd, NULL);
+    pathmake2(out->start_cmd, state->global->script_dir, "/", "lang", "/",
+              out->start_cmd, NULL);
   }
 
   /* copy prepare_cmd */
@@ -4146,7 +4147,8 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
                     NULL, 0, 0, 0);
   }
   if (out->prepare_cmd[0]) {
-    pathmake2(out->prepare_cmd, state->global->script_dir, "/", out->prepare_cmd, NULL);
+    pathmake2(out->prepare_cmd, state->global->script_dir, "/", "lang", "/",
+              out->prepare_cmd, NULL);
   }
 
   // for debug

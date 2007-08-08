@@ -23,6 +23,7 @@ includedir=@includedir@
 libdir=@libdir@
 libexecdir=@libexecdir@
 cgibindir=@cgibindir@
+serverbindir=@ac_cv_ejudge_server_bin_path_m@
 
 CGI_PROG_SUFFIX=@ac_cv_cgi_suffix@
 STATIC=@ac_cv_static@
@@ -165,9 +166,10 @@ NSM_OBJECTS = $(NSM_CFILES:.c=.o) libcommon.a libnew_server_clnt.a libuserlist_c
 NSC_CFILES=new-server-control.c version.c
 NSC_OBJECTS=$(NSC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a
 
-BINTARGETS = compile compile-control serve run userlist-server userlist-server-control job-server job-server-control job-server-cmd edit-userlist super-serve super-serve-control clean-users ejudge-setup ejudge-control collect-emails serve-cmd slice-userlist execute new-server new-server-cmd new-server-control uudecode
+BINTARGETS = job-server-cmd edit-userlist ejudge-setup ejudge-control execute new-server-cmd
+SERVERBINTARGETS = compile compile-control serve run userlist-server userlist-server-control job-server job-server-control super-serve super-serve-control clean-users collect-emails serve-cmd slice-userlist new-server new-server-control uudecode
 CGITARGETS = master${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX} users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
-TARGETS = ${BINTARGETS} ${CGITARGETS} style/actions.js
+TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} style/actions.js
 STYLEFILES = style/actions.js style/logo.gif style/priv.css style/unpriv.css style/unpriv.js
 
 all: local_all subdirs_all mo
@@ -195,6 +197,8 @@ install_new_server: new-server
 local_install: ${TARGETS} ejudge-config po mo
 	install -d "${DESTDIR}${bindir}"
 	for i in ${BINTARGETS}; do install -m 0755 $$i "${DESTDIR}${bindir}"; done
+	install -d "${DESTDIR}${serverbindir}"
+	for i in ${SERVERBINTARGETS}; do install -m 0755 $$i "${DESTDIR}${serverbindir}"; done
 	install -m 0755 ejudge-config "${DESTDIR}${bindir}"
 	install -d "${DESTDIR}${cgibindir}"
 	for i in ${CGITARGETS}; do install -m 0755 $$i "${DESTDIR}${cgibindir}"; done
@@ -207,8 +211,8 @@ local_install: ${TARGETS} ejudge-config po mo
 	install -d "${DESTDIR}${datadir}/ejudge"
 	install -d "${DESTDIR}${datadir}/ejudge/style"
 	for i in ${STYLEFILES}; do install -m 0644 $$i "${DESTDIR}${datadir}/ejudge/style"; done
-	mkdir -p "${DESTDIR}${includedir}"
-	for i in problem_plugin_impl.h problem_plugin.h ejudge_plugin.h ej_types.h iterators.h; do install -m 644 $$i "${DESTDIR}${includedir}"; done
+	mkdir -p "${DESTDIR}${includedir}/ejudge"
+	for i in problem_plugin_impl.h problem_plugin.h ejudge_plugin.h ej_types.h iterators.h; do install -m 644 $$i "${DESTDIR}${includedir}/ejudge"; done
 
 install: local_install
 	$(MAKE) -C scripts DESTDIR="${DESTDIR}" install
