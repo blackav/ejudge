@@ -1483,7 +1483,7 @@ generate_abstract_tester(
 #if CONF_HAS_LIBCAP - 0 == 1
     if (secure_run)
       fprintf(f, "start_env = \"LD_BIND_NOW=1\"\n"
-              "start_env = \"LD_PRELOAD=${script_dir}/libdropcaps.so\"\n");
+              "start_env = \"LD_PRELOAD=${script_dir}/lang/libdropcaps.so\"\n");
 #endif
     */
     break;

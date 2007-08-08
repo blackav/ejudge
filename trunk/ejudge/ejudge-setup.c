@@ -3871,16 +3871,18 @@ generate_install_script(FILE *f)
               config_system_uid, config_system_gid, config_contest1_home_dir);
 
   fprintf(f, "# Do probe run of the compile server to create dirs\n");
-  gen_cmd_run(f, "%s/bin/compile -u %s -g %s -C \"%s\" -i conf/compile.cfg",
-              EJUDGE_PREFIX_DIR, config_system_uid, config_system_gid,
+  gen_cmd_run(f, "%s/compile -u %s -g %s -C \"%s\" -i conf/compile.cfg",
+              EJUDGE_SERVER_BIN_PATH, config_system_uid, config_system_gid,
               config_compile_home_dir);
+  /*
   fprintf(f, "# Do probe run of the contest server to create dirs\n");
   gen_cmd_run(f, "%s -u %s -g %s -C \"%s\" -i conf/serve.cfg",
               config_ejudge_serve_path, config_system_uid,
               config_system_gid, config_contest1_home_dir);
+  */
   fprintf(f, "# Create necessary files for `new-server'\n");
-  gen_cmd_run(f, "%s/bin/new-server -u %s -g %s -C \"%s\" --create",
-              EJUDGE_PREFIX_DIR, config_system_uid,
+  gen_cmd_run(f, "%s/new-server -u %s -g %s -C \"%s\" --create",
+              EJUDGE_SERVER_BIN_PATH, config_system_uid,
               config_system_gid, config_ejudge_contests_home_dir);
 }
 
@@ -4126,8 +4128,8 @@ main(int argc, char **argv)
 
   if (ncurses_init() < 0) return 1;
 
-  snprintf(uudecode_path, sizeof(uudecode_path), "%s/bin/uudecode",
-           EJUDGE_PREFIX_DIR);
+  snprintf(uudecode_path, sizeof(uudecode_path), "%s/uudecode",
+           EJUDGE_SERVER_BIN_PATH);
   initialize_config_vars();
   initialize_setting_vars();
   //answer = ncurses_yesno(0, initial_warning);

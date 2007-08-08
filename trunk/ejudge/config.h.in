@@ -16,6 +16,9 @@
 /* the default path to the l10n_dir */
 #undef EJUDGE_LOCALE_DIR
 
+/* the path to the ejudge server binaries (bin or libexec/ejudge) */
+#undef EJUDGE_SERVER_BIN_PATH
+
 /* the path to the `serve' program */
 #undef EJUDGE_SERVE_PATH
 

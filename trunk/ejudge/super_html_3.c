@@ -2916,14 +2916,15 @@ load_cs_languages(const struct ejudge_cfg *config,
     // detect actual language versions
     for (cur_lang = 1; cur_lang < sstate->cs_lang_total; cur_lang++) {
       if (!(lp = sstate->cs_langs[cur_lang])) continue;
-      snprintf(cmdpath, sizeof(cmdpath), "%s/%s-version", script_dir, lp->cmd);
+      snprintf(cmdpath, sizeof(cmdpath), "%s/lang/%s-version", script_dir,
+               lp->cmd);
       /*
       if (!check_version_flag && sstate->?) {
         snprintf(cmdline, sizeof(cmdline), "\"%s/%s-version\"",
                  script_dir, lp->cmd);
       } else {
       */
-      snprintf(cmdline, sizeof(cmdline), "\"%s/%s-version\" -f",
+      snprintf(cmdline, sizeof(cmdline), "\"%s/lang/%s-version\" -f",
                script_dir, lp->cmd);
         //}
       if (access(cmdpath, X_OK) >= 0) {
@@ -7274,8 +7275,8 @@ get_compiler_path(const unsigned char *short_name, unsigned char *old_path)
 
   if (old_path) return old_path;
 
-  snprintf(cmd, sizeof(cmd), "%s/libexec/ejudge/%s-version -p",
-           EJUDGE_PREFIX_DIR, short_name);
+  snprintf(cmd, sizeof(cmd), "%s/lang/%s-version -p",
+           EJUDGE_SCRIPT_DIR, short_name);
   if (!(s = read_process_output(cmd, 0, 0, 0))) s = xstrdup("");
   return s;
 } 
@@ -7377,7 +7378,7 @@ recompile_checker(FILE *f, const unsigned char *checker_path)
       fprintf(f, "Error: GNU C support is not configured\n");
       return -1;
     }
-    snprintf(cmd, sizeof(cmd), "%s -std=gnu99 -O2 -Wall -I%s/include -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gcc_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
+    snprintf(cmd, sizeof(cmd), "%s -std=gnu99 -O2 -Wall -I%s/include/ejudge -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gcc_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
     break;
   case CHECKER_LANG_CPP:
     gpp_path = get_compiler_path("g++", gpp_path);
@@ -7385,7 +7386,7 @@ recompile_checker(FILE *f, const unsigned char *checker_path)
       fprintf(f, "Error: GNU C++ support is not configured\n");
       return -1;
     }
-    snprintf(cmd, sizeof(cmd), "%s -O2 -Wall -I%s/include -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gpp_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
+    snprintf(cmd, sizeof(cmd), "%s -O2 -Wall -I%s/include/ejudge -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gpp_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
     break;
 
   default:
