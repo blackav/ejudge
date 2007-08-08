@@ -2796,3 +2796,9 @@ sformat.h 4293 0 136361
 new_server_html.c 4293 0 33165202
 sformat.c 4293 0 1803244
 prepare_out.c 4292 0 6279801
+ejudge-control.c 4301 0 767568
+ejudge-setup.c 4301 0 9976706
+run.c 4302 0 7039185
+prepare.c 4301 0 14079065
+prepare_out.c 4301 0 6280247
+super_html_3.c 4301 0 22699444
