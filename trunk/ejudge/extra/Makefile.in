@@ -77,10 +77,10 @@ clean:
 distclean: clean
 	rm -f Makefile
 install:
-	mkdir -p "${DESTDIR}${libexecdir}/ejudge"
-	for i in ${TARGETALLWAYS}; do install -m 755 $$i "${DESTDIR}${libexecdir}/ejudge"; done
-	if [ x"${NO_KERNEL}" = x ]; then install -m 755 capexec "${DESTDIR}${libexecdir}/ejudge"; fi
-	if [ x"${NO_KERNEL}" = x -a x"${STATIC}" = x ]; then install -m 755 libdropcaps.so "${DESTDIR}${libexecdir}/ejudge"; fi
+	mkdir -p "${DESTDIR}${libexecdir}/ejudge/lang"
+	for i in ${TARGETALLWAYS}; do install -m 755 $$i "${DESTDIR}${libexecdir}/ejudge/lang"; done
+	if [ x"${NO_KERNEL}" = x ]; then install -m 755 capexec "${DESTDIR}${libexecdir}/ejudge/lang"; fi
+	if [ x"${NO_KERNEL}" = x -a x"${STATIC}" = x ]; then install -m 755 libdropcaps.so "${DESTDIR}${libexecdir}/ejudge/lang"; fi
 
 bpcemu2: bpcemu2.o
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
