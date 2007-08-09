@@ -273,40 +273,40 @@ struct section_global_data
 
   path_t team_info_url;         /* the team info URL template */
   path_t prob_info_url;         /* the problem info URL template */
-  puc_t standings_file_name[64]; /* public standings file name */
+  puc_t standings_file_name[256]; /* public standings file name */
   path_t stand_header_file;     /* file to use as standings header */
   path_t stand_footer_file;     /* file to use as standings footer */
   path_t stand_symlink_dir;
   int    users_on_page;         /* number of users on page */
-  puc_t stand_file_name_2[64];
+  puc_t stand_file_name_2[256];
 
   int stand_fancy_style;        /* fancy standings style */
-  puc_t stand_extra_format[128];/* extra standings info */
-  puc_t stand_extra_legend[64]; /* extra standings info legend */
-  puc_t stand_extra_attr[128];  /* extra standings info attributes */
-  puc_t stand_table_attr[128];  /* standings table attributes */
-  puc_t stand_place_attr[128];  /* standings place column attributes */
-  puc_t stand_team_attr[128];   /* standings team column attributes */
-  puc_t stand_prob_attr[128];   /* standings problems column attributes */
-  puc_t stand_solved_attr[128]; /* standings solved column attributes */
-  puc_t stand_score_attr[128];  /* standings solved column attributes */
-  puc_t stand_penalty_attr[128];/* standings penalty column attributes */
-  puc_t stand_time_attr[128];   /* standings time attributes */
-  puc_t stand_self_row_attr[128];/* self-row attributes */
-  puc_t stand_r_row_attr[128];  /* standings real team row attributes */
-  puc_t stand_v_row_attr[128];  /* standings virtual team row attributes */
-  puc_t stand_u_row_attr[128];  /* standings unknown team row attributes */
-  puc_t stand_success_attr[128];/* last success attributes */
-  puc_t stand_fail_attr[128];   /* attributes for "Check failed" */
-  puc_t stand_trans_attr[128];  /* attributes for transient cells */
+  puc_t stand_extra_format[256];/* extra standings info */
+  puc_t stand_extra_legend[256];/* extra standings info legend */
+  puc_t stand_extra_attr[256];  /* extra standings info attributes */
+  puc_t stand_table_attr[256];  /* standings table attributes */
+  puc_t stand_place_attr[256];  /* standings place column attributes */
+  puc_t stand_team_attr[256];   /* standings team column attributes */
+  puc_t stand_prob_attr[256];   /* standings problems column attributes */
+  puc_t stand_solved_attr[256]; /* standings solved column attributes */
+  puc_t stand_score_attr[256];  /* standings solved column attributes */
+  puc_t stand_penalty_attr[256];/* standings penalty column attributes */
+  puc_t stand_time_attr[256];   /* standings time attributes */
+  puc_t stand_self_row_attr[256];/* self-row attributes */
+  puc_t stand_r_row_attr[256];  /* standings real team row attributes */
+  puc_t stand_v_row_attr[256];  /* standings virtual team row attributes */
+  puc_t stand_u_row_attr[256];  /* standings unknown team row attributes */
+  puc_t stand_success_attr[256];/* last success attributes */
+  puc_t stand_fail_attr[256];   /* attributes for "Check failed" */
+  puc_t stand_trans_attr[256];  /* attributes for transient cells */
   int stand_show_ok_time;       /* whether show time */
   int stand_show_att_num;       /* show number of attempts in Kirov standings */
   int stand_sort_by_solved;     /* sort by solved problems first in Kirov standings */
   char **stand_row_attr;
-  puc_t stand_page_table_attr[128]; /* attribute for the page table */
+  puc_t stand_page_table_attr[256]; /* attribute for the page table */
   char **stand_page_row_attr;   /* attributes for the page table rows */
   char **stand_page_col_attr;   /* attributes for the page table columns */
-  puc_t stand_page_cur_attr[128]; /* attribute for Page %d out of %d msg */
+  puc_t stand_page_cur_attr[256]; /* attribute for Page %d out of %d msg */
   int stand_collate_name;       /* collate standings using user name */
   int stand_enable_penalty;     /* calculate penalty for kirov & olympiad */
 
@@ -314,7 +314,7 @@ struct section_global_data
   unsigned char *stand_footer_txt; /* actual footer text */
 
   // standings2 information
-  puc_t stand2_file_name[64];   /* must be set to standings 2 be activated */
+  puc_t stand2_file_name[256];   /* must be set to standings 2 be activated */
   path_t stand2_header_file;
   path_t stand2_footer_file;
   unsigned char *stand2_header_txt;
@@ -322,7 +322,7 @@ struct section_global_data
   path_t stand2_symlink_dir;
 
   // public log information
-  puc_t plog_file_name[64];
+  puc_t plog_file_name[256];
   path_t plog_header_file;
   path_t plog_footer_file;
   unsigned char *plog_header_txt;
@@ -399,8 +399,8 @@ struct section_global_data
   char **contestant_status_row_attr;
   int stand_show_contestant_status;
   int stand_show_warn_number;
-  puc_t stand_contestant_status_attr[128];
-  puc_t stand_warn_number_attr[128];
+  puc_t stand_contestant_status_attr[256];
+  puc_t stand_warn_number_attr[256];
 
   // internal use: text with unhandled variables
   unsigned char *unhandled_vars;
@@ -463,7 +463,7 @@ struct section_problem_data
   int    advance_to_next;       /* advance to the next prob. in nav. mode */
   puc_t super[32];              /* superproblem's short_name */
   puc_t short_name[32];         /* short problem name, eg A, B, ... */
-  puc_t long_name[128];         /* long problem name */
+  puc_t long_name[256];         /* long problem name */
   path_t test_dir;              /* directory with tests */
   puc_t test_sfx[32];           /* test files suffix */
   path_t corr_dir;              /* directory with correct answers */
@@ -472,17 +472,17 @@ struct section_problem_data
   puc_t info_sfx[32];           /* info files suffix */
   path_t tgz_dir;               /* directory with tar test archive */
   puc_t tgz_sfx[32];            /* tar test archive suffix */
-  puc_t input_file[64];         /* input file name */
-  puc_t output_file[64];        /* output file name */
+  puc_t input_file[256];        /* input file name */
+  puc_t output_file[256];       /* output file name */
   puc_t test_score_list[256];   /* scores for individual tests */
   puc_t score_tests[256];       /* number of tests for Moscow scoring */
   path_t standard_checker;      /* the name of the built-in checker */
-  puc_t spelling[128];          /* spelling for speach generator */
+  puc_t spelling[256];          /* spelling for speach generator */
   path_t statement_file;        /* file with inline problem statement */
   path_t alternatives_file;     /* file with alternatives for output-only */
   path_t plugin_file;           /* file with the custom problem handler */
   path_t xml_file;              /* file with the problem in XML */
-  puc_t stand_attr[128];        /* attributes for standings column */
+  puc_t stand_attr[256];        /* attributes for standings column */
   path_t source_header;         /* file to insert into the beginning of src */
   path_t source_footer;         /* file to insert at the end of src */
 
@@ -556,12 +556,12 @@ struct section_language_data
   int    binary;                /* whether binary files are accepted */
   int    priority_adjustment;   /* priority adjustment for this language */
   puc_t short_name[32];         /* language short name */
-  puc_t long_name[128];         /* language long name */
+  puc_t long_name[256];         /* language long name */
   puc_t key[32];                /* configuration key */
   puc_t arch[32];               /* language architecture */
   puc_t src_sfx[32];            /* source file suffix */
   puc_t exe_sfx[32];            /* executable file suffix */
-  puc_t content_type[128];      /* Content-type: header for downloads */
+  puc_t content_type[256];      /* Content-type: header for downloads */
   path_t cmd;                   /* compile command */
 
   int disable_auto_testing;     /* do not test this language automatically */
@@ -624,8 +624,8 @@ struct section_tester_data
   path_t run_full_archive_dir;  /* run->serve full output archive dir */
 
   path_t check_dir;
-  puc_t errorcode_file[64];     /* file that contains completion status */
-  puc_t error_file[64];         /* stderr output of the checked program */
+  puc_t errorcode_file[256];    /* file that contains completion status */
+  puc_t error_file[256];        /* stderr output of the checked program */
 
   path_t prepare_cmd;           /* helper to prepare the executable */
   path_t start_cmd;             /* helper to start testing */
