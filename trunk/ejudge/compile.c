@@ -386,7 +386,6 @@ main(int argc, char *argv[])
   char   *key = 0;
   path_t  cpp_opts = {0};
   int     code = 0;
-  int     T_flag = 0;
   int     prepare_flags = 0;
   unsigned char *user = 0, *group = 0, *workdir = 0;
   path_t  log_path;
@@ -401,10 +400,7 @@ main(int argc, char *argv[])
   code = 1;
 
   while (i < argc) {
-    if (!strcmp(argv[i], "-T")) {
-      T_flag = 1;
-      i++;
-    } else if (!strcmp(argv[i], "-i")) {
+    if (!strcmp(argv[i], "-i")) {
       initialize_mode = 1;
       i++;
     } else if (!strcmp(argv[i], "-k")) {
@@ -442,10 +438,6 @@ main(int argc, char *argv[])
   if (prepare(&serve_state, argv[i], prepare_flags, PREPARE_COMPILE,
               cpp_opts, 0) < 0)
     return 1;
-  if (T_flag) {
-    print_configuration(&serve_state, stdout);
-    return 0;
-  }
   if (key && filter_languages(key) < 0) return 1;
   if (create_dirs(&serve_state, PREPARE_COMPILE) < 0) return 1;
   if (check_config() < 0) return 1;
@@ -479,7 +471,6 @@ main(int argc, char *argv[])
 
  print_usage:
   printf("Usage: %s [ OPTS ] config-file\n", argv[0]);
-  printf("  -T     - print configuration and exit\n");
   printf("  -k key - specify language key\n");
   printf("  -DDEF  - define a symbol for preprocessor\n");
   /*

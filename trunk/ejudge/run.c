@@ -2768,7 +2768,7 @@ main(int argc, char *argv[])
 {
   int   i = 1;
   char *key = 0;
-  int   p_flags = 0, code = 0, T_flag = 0;
+  int   p_flags = 0, code = 0;
   path_t cpp_opts = { 0 };
 
   set_self_args(argc, argv);
@@ -2777,10 +2777,7 @@ main(int argc, char *argv[])
   code = 1;
 
   while (i < argc) {
-    if (!strcmp(argv[i], "-T")) {
-      T_flag = 1;
-      i++;
-    } else if (!strcmp(argv[i], "-k")) {
+    if (!strcmp(argv[i], "-k")) {
       if (++i >= argc) goto print_usage;
       key = argv[i++];
     } else if (!strcmp(argv[i], "-S")) {
@@ -2805,10 +2802,6 @@ main(int argc, char *argv[])
   if (prepare(&serve_state, argv[i], p_flags, PREPARE_RUN,
               cpp_opts, managed_mode_flag) < 0)
     return 1;
-  if (T_flag) {
-    print_configuration(&serve_state, stdout);
-    return 0;
-  }
   if (filter_testers(key) < 0) return 1;
   if (create_dirs(&serve_state, PREPARE_RUN) < 0) return 1;
   if (check_config() < 0) return 1;
@@ -2820,7 +2813,6 @@ main(int argc, char *argv[])
 
  print_usage:
   printf("Usage: %s [ OPTS ] config-file\n", argv[0]);
-  printf("  -T     - print configuration and exit");
   printf("  -k key - specify tester key\n");
   printf("  -DDEF  - define a symbol for preprocessor\n");
   return code;

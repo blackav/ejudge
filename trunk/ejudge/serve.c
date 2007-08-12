@@ -4518,7 +4518,7 @@ main(int argc, char *argv[])
 {
   path_t  cpp_opts = { 0 };
   int     code = 0;
-  int     p_flags = 0, T_flag = 0;
+  int     p_flags = 0;
   int     i = 1;
   unsigned char *user = 0, *group = 0, *workdir = 0;
 
@@ -4528,10 +4528,7 @@ main(int argc, char *argv[])
   code = 1;
 
   while (i < argc) {
-    if (!strcmp(argv[i], "-T")) {
-      i++;
-      T_flag = 1;
-    } else if (!strncmp(argv[i], "-D", 2)) {
+    if (!strncmp(argv[i], "-D", 2)) {
       if (cpp_opts[0]) pathcat(cpp_opts, " ");
       pathcat(cpp_opts, argv[i++]);
     } else if (!strcmp(argv[i], "-f")) {
@@ -4574,10 +4571,6 @@ main(int argc, char *argv[])
 
   l10n_prepare(serve_state.global->enable_l10n, serve_state.global->l10n_dir);
 
-  if (T_flag) {
-    print_configuration(&serve_state, stdout);
-    return 0;
-  }
   if (create_dirs(&serve_state, PREPARE_SERVE) < 0) return 1;
   if (serve_state.global->contest_id <= 0) {
     err("contest_id is not defined");
