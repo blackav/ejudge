@@ -650,17 +650,6 @@ int find_tester(const serve_state_t, int, char const *);
 int find_variant(const serve_state_t, int, int, int *);
 int find_user_priority_adjustment(const serve_state_t, int user_id);
 
-void print_problem(FILE *, struct section_problem_data *);
-void print_language(FILE *, struct section_language_data *);
-void print_tester(FILE *, struct section_tester_data *);
-
-void print_global(serve_state_t, FILE *);
-void print_all_problems(serve_state_t, FILE *);
-void print_all_languages(serve_state_t, FILE *);
-void print_all_testers(serve_state_t, FILE *);
-
-void print_configuration(serve_state_t, FILE *);
-
 int prepare_tester_refinement(serve_state_t, struct section_tester_data *,
                               int, int);
 int create_tester_dirs(struct section_tester_data *);
