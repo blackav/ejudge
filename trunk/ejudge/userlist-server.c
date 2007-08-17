@@ -8876,7 +8876,7 @@ load_plugins(void)
 
   plugin_set_directory(config->plugin_dir);
 
-  ejudge_cfg_unparse_plugins(config, stdout);
+  //ejudge_cfg_unparse_plugins(config, stdout);
 
   // XML plugin always loaded
   uldb_plugins_num = 0;

@@ -489,7 +489,7 @@ load_plugins(void)
 
   plugin_set_directory(config->plugin_dir);
 
-  ejudge_cfg_unparse_plugins(config, stdout);
+  //ejudge_cfg_unparse_plugins(config, stdout);
 
   // find config section for files plugin
   for (p = config->plugin_list; p; p = p->right) {

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -52,7 +52,7 @@ tsc_init(void)
       goto failure;
     }
     cpu_frequency = (ej_tsc_t) (cpuf * 1000000.0L);
-    fprintf(stderr, "Detected CPU frequency is %lld\n", cpu_frequency);
+    //fprintf(stderr, "Detected CPU frequency is %lld\n", cpu_frequency);
     break;
   }
   fclose(f);
@@ -63,7 +63,7 @@ tsc_init(void)
   return -1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
