@@ -2812,3 +2812,5 @@ prepare.c 4306 0 13720229
 new-server.c 4308 0 1704696
 userlist-server.c 4308 0 22221346
 tsc.c 4308 0 147471
+team.c 4310 0 4031691
+new_server_html.c 4310 0 33164749
