@@ -1658,7 +1658,7 @@ main(int argc, char *argv[])
 #endif /* CONF_HAS_LIBINTL */
   if (cur_contest->standings_url && server_start_time) {
     printf("<li><a href=\"%s\" target=_blank>%s</a>\n",
-           cur_contest->standings_url, _("Team standings"));
+           cur_contest->standings_url, _("Standings"));
   }
   if (server_always_show_problems ||
       (!server_is_virtual && cur_contest->problems_url && server_start_time)) {
