@@ -1203,7 +1203,7 @@ run_tests(struct section_tester_data *tst,
           abort();
         }
       }
-      if (tst->secure_exec_type > 0) {
+      if (tst->secure_exec_type_val > 0) {
         switch (tst->secure_exec_type_val) {
         case SEXEC_TYPE_STATIC:
           if (req_pkt->secure_run) {
