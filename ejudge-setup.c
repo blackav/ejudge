@@ -2181,6 +2181,7 @@ generate_serve_cfg(FILE *f)
   }
   fprintf(f,
           "team_download_time = 0\n"
+          "problem_navigation\n"
           "\n"
           "contest_time = 300\n"
           "sleep_time = 1000\n"
