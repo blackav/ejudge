@@ -226,8 +226,8 @@ size_t checker_ucs4_to_utf8_size(const int *in);
 const unsigned char *
 checker_ucs4_to_utf8_str(unsigned char *buf, size_t size, const int *in);
 
-int checker_ucs4_to_koi8(int c);
-char *checker_ucs4_to_koi8_str(char *out, size_t size, const int *in);
+int checker_ucs4_to_koi8r(int c);
+char *checker_ucs4_to_koi8r_str(char *out, size_t size, const int *in);
 
 int checker_ucs4_tolower(int c);
 int *checker_ucs4_tolower_buf(int *buf, size_t size);
