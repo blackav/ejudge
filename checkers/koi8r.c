@@ -80,7 +80,7 @@ checker_koi8r_to_ucs4_str(int *out, const char *in)
 }
 
 enum { MAX_CODE_POINT = 0x460 };
-static unsigned char ucs4_to_koi8_table[MAX_CODE_POINT] =
+static unsigned char ucs4_to_koi8r_table[MAX_CODE_POINT] =
 {
 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,
 0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,
@@ -155,14 +155,14 @@ static unsigned char ucs4_to_koi8_table[MAX_CODE_POINT] =
 };
 
 int
-checker_ucs4_to_koi8(int c)
+checker_ucs4_to_koi8r(int c)
 {
   if (c < 0 || c >= MAX_CODE_POINT) return '?';
-  return ucs4_to_koi8_table[c];
+  return ucs4_to_koi8r_table[c];
 }
 
 char *
-checker_ucs4_to_koi8_str(char *out, size_t size, const int *in)
+checker_ucs4_to_koi8r_str(char *out, size_t size, const int *in)
 {
   const int *p = in;
   unsigned char *q = (unsigned char*) out;
@@ -171,7 +171,7 @@ checker_ucs4_to_koi8_str(char *out, size_t size, const int *in)
   size--;
   for (; size && *in; size--, q++, p++) {
     if (*p >= MAX_CODE_POINT) *q = '?';
-    else *q = ucs4_to_koi8_table[*p];
+    else *q = ucs4_to_koi8r_table[*p];
   }
   *q = 0;
   return out;
