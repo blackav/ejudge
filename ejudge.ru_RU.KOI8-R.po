@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-08-18 21:46+0400\n"
+"POT-Creation-Date: 2007-08-24 17:38+0400\n"
 "PO-Revision-Date: 2007-07-31 11:45+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -139,10 +139,6 @@ msgstr "<i>Не установлено</i>"
 #, c-format
 msgid "<li>The contest is closed for participation.</li>\n"
 msgstr "<li>Турнир закрыт для участия.</li>\n"
-
-#, c-format
-msgid "<li>The server might be overloaded.</li>\n"
-msgstr "<li>Сервер, возможно, перегружен.</li>\n"
 
 #, c-format
 msgid ""
