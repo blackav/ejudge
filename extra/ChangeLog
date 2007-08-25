@@ -1,3 +1,36 @@
+2007-08-08 (r4296) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.in:
+	all programs are installed to `${libexecdir}/ejudge/lang' instead of
+	  `${libexecdir}/ejudge'.
+
+	* bccemu.c, bppemu.c, qbemu.c, bpcemu2.c, dosrun3.c: copyright notice is updated;
+	"../config.h" is included;
+	the path to the dos work directory is configured using the
+	  EJUDGE_CONTESTS_HOME_DIR from the "config.h".
+
+2007-08-04 (r4267) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.in: `-lcap' library name is now configured by the top-level
+	  `configure' script.
+
+2007-08-02 (r4259) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.in: copyright year is updated;
+	  -DHAVE_CONFIG_H option is addeg to CFLAGS.
+
+	* capexec.c, libdropcaps.c: copyright notice is updated;
+	"../config.h" is included;
+	<sys/ptrace.h> is included;
+	CAP_SYS_OPERATIONS stuff is compiled only if HAVE_CAP_SYS_OPERATIONS
+	  is defined in ../config.h;
+	new secure exec interface (ptrace based) is supported.
+
+2007-08-02 (r4257) Alexander Chernov  <cher@ejudge.ru>
+
+	* captest/t1.c, captest/t2_helper.c, captest/t2.c, captest/t2_helper_2.c, captest/t3.c, captest/t4.c, captest/t5_helper.c, captest/t5.c, captest/t6.c, captest/Makefile, captest:
+	initial revision
+
 2007-01-03 (r3812) Alexander Chernov  <cher@ejudge.ru>
 
 	* ej-javac.c: copyright year is updated;

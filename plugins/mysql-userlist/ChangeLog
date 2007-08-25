@@ -1,3 +1,8 @@
+2007-07-28 (r4239) Alexander Chernov  <cher@ejudge.ru>
+
+	* empty.make: copyright year is updated;
+	(distclean) `Makefile' is removed.
+
 2006-11-17 (r3668) Alexander Chernov  <cher@ejudge.ru>
 
 	* Makefile.in: copyright notice is updated;

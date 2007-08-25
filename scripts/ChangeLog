@@ -1,3 +1,21 @@
+2007-08-08 (r4297) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.in: scripts are installed to `${libexecdir}/ejudge/lang'
+	  instead of `${libexecdir}/ejudge'.
+
+	* javac.in:
+	path to `ej-javac' is updated accordingly.
+
+2007-08-05 (r4277) Alexander Chernov  <cher@ejudge.ru>
+
+	* javac.in, javac-version.in, runjava.in: copyright notice is updated;
+	JAVA_HOME is not set, if it is aready set.
+
+2007-07-28 (r4241) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.in: copyright year is updated;
+	`runperl' added to script list.
+
 2006-12-14 (r3741) Alexander Chernov  <cher@ejudge.ru>
 
 	* javac.in: copyright notice is updated;

@@ -1,3 +1,65 @@
+2007-08-23 (r4316) Alexander Chernov  <cher@ejudge.ru>
+
+	* checker_internal.h:
+	(checker_ucs4_to_koi8r) renamed from `checker_ucs4_to_koi8';
+	(checker_ucs4_to_koi8r_str) the same.
+
+	* koi8r.c:
+	(checker_ucs4_to_koi8r) renamed from `checker_ucs4_to_koi8';
+	(checker_ucs4_to_koi8r_str) the same.
+
+2007-08-08 (r4298) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	header files are installed to `${includedir}/ejudge'.
+
+2007-07-28 (r4240) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	Makefile.unix.in:
+	(distclean) `Makefile.in' is removed.
+
+2007-07-19 (r4226) Alexander Chernov  <cher@ejudge.ru>
+
+	* ucs2.c, files.make, ucs4.c:
+	ucs2.c renamed to ucs4.c
+
+2007-07-18 (r4222) Alexander Chernov  <cher@ejudge.ru>
+
+	* checker_internal.h:
+	  ucs4 is used instead if ucs2;
+	  prototypes of related functions are also changed.
+
+	* cp1251.c, cp866.c, iso.c, koi8.c, mac.c, ruscmp.c, ucs2.c, utf8.c:
+	  copyright year is updated;
+	  ucs4 is used instead of ucs2.
+
+2007-04-07 (r4075) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in: copyright year is updated;
+	`-lm' added to libchecker.so building.
+
+2007-03-29 (r4049) Alexander Chernov  <cher@ejudge.ru>
+
+	* cmp_double.c, cmp_huge_int.c, cmp_int.c, cmp_long_double.c, cmp_long_long.c, cmp_sexpr.c, cmp_unsigned_int.c, cmp_unsigned_long_long.c, cmp_yesno.c: copyright year is updated;
+	"Check failed" error has priority over "Wrong answer" error.
+
+2007-03-29 (r4048) Alexander Chernov  <cher@ejudge.ru>
+
+	* cmp_huge_int.c: copyright year is updated;
+	(normalize_number) the trailing garbage is properly cleared.
+
+2007-03-23 (r4037) Alexander Chernov  <cher@ejudge.ru>
+
+	* cmp_yesno.c: copyright year is updated;
+	(checker_main) support for case-insensitive checking is added;
+	  CASE_INSENSITIVE environment variable enables this behaviour.
+
+2007-03-09 (r4009) Alexander Chernov  <cher@ejudge.ru>
+
+	* cmp_bytes.c: copyright year is updated;
+	(checker_main) characters are printed as unsinged chars.
+
 2006-12-17 (r3745) Alexander Chernov  <cher@ejudge.ru>
 
 	* files.make: russan charsets handling modules are added.

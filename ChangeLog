@@ -1,3 +1,3119 @@
+2007-08-19 (r4314) Alexander Chernov  <cher@ejudge.ru>
+
+	* run.c:
+	(run_tests) `secure_exec_type' bug is fixed.
+
+2007-08-19 (r4312) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge-setup.c:
+	(generate_serve_cfg) `problem_navigation' flag is set.
+
+2007-08-18 (r4310) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	"Team standings" -> "Standings".
+
+	* team.c:
+	"Team standings" -> "Standings".
+
+2007-08-17 (r4308) Alexander Chernov  <cher@ejudge.ru>
+
+	* cher-configure: --enable-hidden-server-bins option is added.
+
+	* new-server.c, userlist-server.c:
+	(load_plugins) call of `ejudge_cfg_unparse_plugins' is commented out.
+
+	* tsc.c: copyright notice is updated;
+	(tsc_init) debug message is commented out.
+
+2007-08-12 (r4306) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(print_global) function is removed;
+	(print_problem) function is removed;
+	(print_all_problems) function is removed;
+	(print_language) function is removed;
+	(print_all_languages) function is removed;
+	(print_tester) function is removed;
+	(print_all_testers) function is removed.
+
+	* prepare.c:
+	(print_global) function is removed;
+	(print_problem) function is removed;
+	(print_all_problems) function is removed;
+	(print_language) function is removed;
+	(print_all_languages) function is removed;
+	(print_tester) function is removed;
+	(print_all_testers) function is removed.
+
+	* compile.c, run.c, serve.c:
+	`-T' option is removed.
+
+	* struct-sizes.c:
+	"prepare.h" is included;
+	(main) sizes of `struct section_*_data' are printed.
+
+2007-08-09 (r4304) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	string sizes are increased.
+
+2007-08-08 (r4301) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	all binaries are separated in two groups: user-visible
+	  (installed into bin) and user-hidden (installed into the
+	  directory depending on the --enable-hidden-server-bins configure
+	  option value;
+	header files are installed to `${includedir}/ejudge'.
+
+	* ejudge-config.v.in: copyright year is updated;
+	include directory is now ${includedir}/ejudge.
+
+	* config.h.in:
+	`EJUDGE_SERVER_BIN_PATH' is added.
+
+	* ejudge-control.c:
+	`EJUDGE_SERVER_BIN_PATH' is used instead of `EJUDGE_PREFIX_DIR'.
+
+	* ejudge-setup.c:
+	directory structure is updated.
+
+	* prepare.c:
+	(set_defaults)
+	  `ejudge_checkers_dir' is now in checkers subdir of EJUDGE_SCRIPT_DIR;
+	  language scripts are now in `lang' subdir of `script_dir'.
+
+	* prepare_out.c:
+	(generate_abstract_tester) `libdropcaps.so' is now located in
+	  `${script_dir}/lang/libdropcaps.so'.
+
+	* run.c:
+	(run_tests) `libdropcaps.so' is now located in
+	  `${script_dir}/lang/libdropcaps.so'.
+
+	* super_html_3.c:
+	  checker include directry is updated to ${includedir}/ejudge;
+	  language scripts are now in `lang' subdir of `script_dir'.
+
+2007-08-08 (r4299) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	new option `--enable-hidden-server-bins' is added;
+	the path to the ejudge internal binaries is updated depending
+	whether the abovementioned option is set.
+
+2007-08-07 (r4293) Alexander Chernov  <cher@ejudge.ru>
+
+	* sformat.h: copyright notice is updated;
+	(struct contest_desc) `sid' field is added.
+
+	* new_server_html.c:
+	"sformat.h" is included;
+	(unpriv_page_header) `standings_url' is supported.
+
+	* sformat.c:
+	(sformat_message) "%VS" transformation (print SID) is supported.
+
+2007-08-06 (r4290) Alexander Chernov  <cher@ejudge.ru>
+
+	* pathutl.h:
+	(path_add_dir) 64-bit fix;
+	(path_normalize) prototype is added;
+	(path_make_relative) prototype is added.
+
+	* pathutl.c:
+	<reuse/xalloc.h> is added;
+	(path_split) completed;
+	(path_split_free) new function;
+	(path_normalize_split) new function;
+	(path_normalize) new function;
+	(path_is_prefix) new function;
+	(do_relative) new function;
+	(path_make_relative) new function.
+
+	* prepare.c:
+	`compile_dir' is always normalized.
+
+	* prepare_out.c:
+	`compile_dir' variable is written in the relative form.
+
+	* super_html_3.c:
+	(super_html_read_serve) `compile_dir' is properly handled.
+
+2007-08-06 (r4287) Alexander Chernov  <cher@ejudge.ru>
+
+	* pathutl.h: copyright notice is updated;
+	(pathmake4) prototype removed.
+
+	* prepare.h:
+	definition of `ejudge_config' is added;
+
+	* contests.c:
+	(parse_contest) fix;
+	(contests_unparse) `root_dir' and `conf_dir' are written in
+	  minimal form (i. e. avoid full absolute path as long as possible).
+
+	* pathutl.c: copyright notice is updated;
+	(start_from_dot) function is removed;
+	(pathmake2) `start_from_dot' call is removed;
+	(pathmake4) function removed;
+	(path_add_dir) 64-bit fix;
+	(path_split) new function, unfinished.
+
+	* prepare.c:
+	(set_defaults) handling of `root_dir', `conf_dir' is updated;
+	  64-bit fixes in pathmake* functions;
+	  pathmake2 is used instead of pathmake4.
+
+	* prepare_out.c:
+	"ejudge_cfg.h" is included;
+	(prepare_unparse_global) `root_dir' and `conf_dir' are written in
+	  minimal form (i. e. avoid full absolute path as long as possible).
+
+	* run.c:
+	(run_tests) 64-bit fixes: NULL is used instead of 0 in va-functions
+	  for null pointer.
+
+	* super_html_3.c:
+	(super_html_read_serve) handling of `root_dir', `conf_dir' is updated.
+
+2007-08-06 (r4285) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	definition of `ejudge_config' global variable is added.
+
+	* contests.c:
+	"config.h" is included;
+	"ejudge_cfg.h" is included;
+	(parse_contest) undefined or relative `root_dir' is supported.
+
+	* ejudge-setup.c:
+	(xml_armor_2) new function;
+	(generate_serve_cfg) relative path is generated for `root_dir';
+	(generate_contest_xml) relative path is generated for `root_dir'.
+
+2007-08-05 (r4283) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(prepare_unparse_testers) `contests_home_dir' parameter is added.
+
+	* ejudge-setup.c:
+	"misctext.h", "pathutl.h" is included;
+	(c_armor_2) new function;
+	(generate_serve_cfg) `check_dir' is generated as relative path,
+	  if its prefix equals to `contests_home_dir'.
+
+	* prepare.c:
+	(set_defaults) if the tester `check_dir' variable is relative,
+	  it is prefixed with EJUDGE_CONTESTS_HOME_DIR;
+	(prepare_tester_refinement) the same as above.
+
+	* prepare_out.c:
+	(c_armor_2) new function;
+	(generate_abstract_tester) `contests_home_dir' parameter is added;
+	  `check_dir' is generated as relative path instead of absolute if
+	  the path prefix equals to `contests_home_dir';
+	(prepare_unparse_testers) `contests_home_dir' parameter is added;
+	  `contests_home_dir' is passed to `generate_abstract_tester'.
+
+	* super_html_3.c:
+	(unparse_serve_cfg) call of `prepare_unparse_testers' is updated.
+
+2007-08-05 (r4281) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	(get_variant_map_version) header generation is improved;
+	(prepare_parse_variant_map) bug is fixed.
+
+	* prepare_out.c:
+	(prepare_unparse_unhandled_prob) `xml_file' configuration variable
+	  is handled;
+	(prepare_unparse_variants) version 2 variant file is generated.
+
+	* super_html_3.c:
+	(parse_variant_map) removed, the `prepare_parse_variant_map' from
+	  `prepare.c' should be used instead;
+	(super_html_update_variant_map) `prepare_parse_variant_map' is used
+	  instead of local `parse_variant_map';
+	  user general variants are supported.
+
+2007-08-05 (r4280) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge-setup.c:
+	(generate_serve_cfg)
+	`secure_run' global configuration variable is set if
+	  `CONF_HAS_SECURE_EXEC' is defined in config.h.
+
+2007-08-05 (r4278) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	ac_cv_no_kernel is never set to 1, so capexec and libdropcaps
+	are always compiled;
+	CONF_HAS_LIBCAP is set to 1, if `libcap' library is available;
+	CONF_HAS_SECURE_EXEC is set to 1, if any kind of secure execution is
+	available.
+
+	* config.h.in:
+	CONF_HAS_SECURE_EXEC is added.
+
+2007-08-04 (r4274) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	bug in secure exec types parsing is fixed.
+
+2007-08-04 (r4272) Alexander Chernov  <cher@ejudge.ru>
+
+	* fileutl.h: copyright notice is updated;
+	(scan_dir) new parameter `res_size' is added to allow specifying
+	  of the buffer size.
+
+	* prepare.h:
+	`SEXEC_*' secure run enum type is added;
+	(struct section_tester_data) `secure_exec_type', `secure_exec_type_val'
+	  fields are added;
+	(prepare_parse_secure_exec_type) new function prototype;
+	(prepare_parse_variant_map) new function prototype.
+
+	* run_packet.h:
+	(struct run_request_packet) `secure_run' flag is added.
+
+	* run_packet_priv.h:
+	`FLAGS_SECURE_RUN' is added.
+
+	* tsc.h:
+	rdtscl, rdtsc macros are removed;
+	rdtscll macro is updated to the current linux kernel version;
+	version for x86_64 is added.
+
+	* compile.c:
+	(do_loop) `scan_dir' call is updated.
+
+	* ejudge-setup.c:
+	(generate_serve_cfg) `secure_exec_type' tester variable is used
+	  instead of direct specification of secure invocation tools.
+
+	* job-server.c: copyright year is updated;
+	(do_work) call of `scan_dir' is updated.
+
+	* new_server_html.c:
+	(ns_loop_callback) call of `scan_dir' is updated.
+
+	* prepare.c:
+	<errno.h> is included;
+	new tester parameter `secure_exec_type' is added;
+	(get_variant_map_version) `log_f', `head_f' parameters are added;
+	(parse_vm_v1) `state' parameter is removed;
+	  `log_f', `foot_f' parameters are added;
+	(parse_vm_v2) the same, as above;
+	(prepare_parse_variant_map) renamed from `parse_variant_map';
+	  `log_f', `p_header_txt', `p_footer_txt' parameters are added;
+	(prepare_parse_secure_exec_type) new function;
+	(set_defaults) call of `prepare_parse_variant_map' is updated.
+
+	* prepare_out.c:
+	(generate_abstract_tester) `secure_exec_type' variable is used instead
+	  of direct specification of secure invocation tools.
+
+	* serve.c:
+	(do_loop) `scan_dir' calls are updated.
+
+	* serve_2.c:
+	(serve_run_request) `secure_run' flag is passed to the tester.
+
+	* run.c:
+	(run_tests) new tester `secure_exec_type_val' tester configuration
+	  variable is handled;
+	(do_loop) call of `scan_dir' is updated;
+	  the resources are freed better;
+	(process_default_testers) minor memory leak is fixed.
+
+	* run_packet_1.c:
+	(run_request_packet_read) `secure_run' flag is handled.
+
+	* run_packet_2.c:
+	(run_request_packet_write) `secure_run' flag is handled.
+
+2007-08-04 (r4270) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	  `extra/captest' directory is added to the `distclean' rule.
+
+2007-08-04 (r4268) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	`-lcap' library presence is configured;
+	extra/captest directory is added to processed dirs.
+
+2007-08-04 (r4264) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(unpriv_main_page) gcc compilation warnings are fixed.
+
+	* new_server_html_5.c:
+	(main_page) gcc compilation warnings are fixed.
+
+	* prepare.c:
+	(set_defaults) gcc compilation warnings are fixed.
+
+	* problem_xml.c:
+	(parse_answer_variants) gcc compilation warnings are fixed.
+
+	* run.c:
+	(process_default_testers) gcc compilation warnings are fixed.
+
+	* startstop.c:
+	(start_switch_user) gcc compilation warnings are fixed.
+
+	* userlist-server.c:
+	(cmd_import_csv_users) gcc compilation warnings are fixed.
+
+2007-08-02 (r4262) Alexander Chernov  <cher@ejudge.ru>
+
+	* l10n.c:
+	"en", "en_US", "English" and
+	"ru", "ru_RU", "Russian" locale names are supported.
+
+	* reports.c:
+	(full_user_report_generate) the total score is printed both for
+	  named and for cyphered protocols;
+	  the score is generated correctly for RUN_OK submits (i. e.
+	  `full_score' is used unless `variable_full_score' is set).
+
+	* userlist-server.c:
+	"transitive contest sharing" error is detected in all situations.
+
+2007-08-02 (r4260) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	new kernel secure execution interface (ptrace-based) is supported;
+	`task_fPrintArgs' function is detected;
+	HAVE_CAP_SYS_OPERATIONS is set in config.h if this capability works.
+
+	* config.h.in:
+	`HAVE_CAP_SYS_OPERATIONS' is added;
+	`HAVE_TASK_FPRINTARGS' is added.
+
+2007-07-31 (r4252) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	new actions are added.
+
+	* prepare.h:
+	new global variables `full_exam_protocol_header_file',
+	  `full_exam_protocol_footer_file' are added.
+
+	* html.c:
+	(do_write_kirov_standings) full_score is assigned to the score
+	  if the status is OK in OLYMPIAD mode.
+
+	* new_server_html.c:
+	(priv_edit_run) score is always allowed to edit;
+	(priv_view_users_page) "Print UFC protocol" button is added;
+	(priv_print_user_exam_protocol) `NEW_SRV_ACTION_PRINT_UFC_PROTOCOL'
+	  is supported;
+	(priv_print_users_exam_protocol) the same as above.
+
+	* new_server_html_2.c:
+	(ns_user_info_page) "Print UFC protocol" button is added.
+
+	* new_server_tables.c:
+	new button labels are added.
+
+	* prepare.c, prepare_out.c:
+	new global variables `full_exam_protocol_header_file',
+	  `full_exam_protocol_footer_file' are added.
+
+	* reports.c:
+	(full_user_report_generate) cyphered protocol is supported.
+
+2007-07-29 (r4249) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	new actions NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL,
+	  NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL
+	  are added;
+	(ns_print_user_exam_protocol) `full_report', `use_cypher'
+	  parameters are added;
+	(ns_print_user_exam_protocols) the same.
+
+	* new_server_html.c:
+	(priv_view_users_page) "Print full examination protocols"
+	  button is added;
+	(priv_print_user_exam_protocol) full protocol mode is supported;
+	(priv_print_users_exam_protocol) full protocol mode is supported;
+	(virtual_stop_callback) call of `ns_print_user_exam_protocol'
+	  is updated;
+	(unpriv_command) the same.
+
+	* new_server_html_2.c:
+	(ns_user_info_page) "Print full user protocol" button is added.
+
+	* new_server_tables.c:
+	new button labels are added.
+
+	* reports.c:
+	(tex_armor_needed) commented out;
+	(full_user_report_generate) new function;
+	(ns_print_user_exam_protocol) `full_report', `use_cypher' parameters
+	  are added;
+	(ns_print_user_exam_protocols) the same as above.
+
+2007-07-29 (r4248) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(priv_contest_operation) "Testing finished" button now works
+	  for virtual olympiad contests;
+	(priv_main_page) the same;
+	(unpriv_view_report) virtual olympiad contest support is improved;
+	(unpriv_main_page) the same.
+
+	* new_server_html_2.c:
+	(ns_write_olympiads_user_runs) virtual olympiad contest support is
+	  improved.
+
+2007-07-29 (r4246) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(priv_force_start_virtual) bug fixed: the usec time was not
+	  multiplied by 1000.
+
+2007-07-28 (r4244) Alexander Chernov  <cher@ejudge.ru>
+
+	* master_html.c:
+	(write_runs_dump) EMPTY, VIRTUAL START, VIRTUAL STOP, and invalid
+	  entries are handled correctly.
+
+2007-07-28 (r4242) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	(distclean) rule now works correctly.
+
+	* new-server.h:
+	(ns_print_user_exam_protocol) `phr' parameter is removed;
+	(ns_print_user_exam_protocols) the same;
+	(ns_print_prob_exam_protocol) the same.
+
+	* prepare.h, prepare_dflt.h:
+	`enable_auto_print_protocol' global configuration variable is added.
+
+	* serve_state.h:
+	(struct serve_event_queue) `handler' field is added;
+	(serve_event_add) `handler' parameter is added.
+
+	* super_proto.h:
+	editing of the `enable_auto_print_protocol' global configuration
+	  variable is supported.
+
+	* new_server_html.c:
+	(priv_print_user_exam_protocol) call of `ns_print_user_exam_protocol'
+	  is updated;
+	(priv_print_users_exam_protocol) call of
+	  `ns_print_user_exam_protocols' is updated;
+	(priv_print_problem_exam_protocol) call of
+	  `ns_print_prob_exam_protocol' is updated;
+	(virtual_stop_callback) new function to print the user protocol
+	  on "virtual stop" event;
+	(unpriv_command) calls of `serve_event_add' are updated;
+	  the user protocol is printed on "virtual stop" event.
+
+	* new_server_html_2.c:
+	(ns_write_priv_all_runs) hyperlink to user info is generated for
+	  virtual stop entries.
+
+	* prepare.c, prepare_out.c:
+	`enable_auto_print_protocol' global configuration variable is added.
+
+	* reports.c:
+	(tex_armor_verbatim_2) bug is fixed;
+	VERBATIM_WIDTH constant (70) is used instead of width value
+	  on calls of `tex_armor_verbatim_2';
+	(user_report_generate) `phr' parameter is removed;
+	(ns_print_user_exam_protocol) `phr' parameter is removed;
+	(ns_print_user_exam_protocols) `phr' parameter is removed;
+	(problem_report_generate) `phr' parameter is removed;
+	(ns_print_prob_exam_protocol) `phr' parameter is removed.
+
+	* run.c:
+	(invoke_valuer) all signals are enabled `task_EnableAllSignals';
+	(run_tests) the same.
+
+	* serve_2.c:
+	(serve_collect_virtual_stop_events) call of `serve_event_add' is
+	  updated;
+	(handle_virtual_stop_event) `cnts' parameter is added;
+	  call of `serve_event_add' is updated;
+	  the event handler provided by `serve_event_add' is invoked;
+	(handle_judge_olympiad_event) the event handler provided by
+	  `serve_event_add' is invoked;
+	(serve_handle_events) call of `handle_virtual_stop_event' is updated.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of the `enable_auto_print_protocol' global configuration
+	  variable is supported.
+
+	* serve_state.c:
+	(serve_event_add) `handler' parameter is added.
+
+2007-07-26 (r4237) Alexander Chernov  <cher@ejudge.ru>
+
+	* teamdb.h:
+	(teamdb_lookup_cypher) new function prototype;
+	(teamdb_get_cypher) new function prototype;
+	(teamdb_get_userlist) new function prototype.
+
+	* filter_eval.c:
+	"userlist.h" is included;
+	`cypher' and `curcypher' tokens are supported.
+
+	* filter_expr.y:
+	"cypher", "curcypher" expressions are supported.
+
+	* filter_scan.lex:
+	`cypher', `curcypher' tokens are supported.
+
+	* new_server_html_2.c:
+	(ns_upload_csv_runs) "cypher" column is supported.
+
+	* prepare.c:
+	(prepare_global_free_func) the protocol header and footer texts are
+	  freed.
+
+	* serve_2.c:
+	(serve_rejudge_run) `manual_checking' and `disable_testing' runs
+	  are skipped.
+
+	* reports.c:
+	(tex_armor_verbatim) the long lines are printed into several output
+	  lines;
+	(chop2) new function;
+	(write_xml_tex_testing_report) new function;
+	(problem_report_generate) basically completed.
+
+	* teamdb.c:
+	(teamdb_lookup_cypher) new function;
+	(teamdb_get_cypher) new function;
+	(teamdb_get_userlist) new function.
+
+2007-07-25 (r4235) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	`NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL' action is added;
+	(ns_print_prob_exam_protocol) new function prototype.
+
+	* prepare.h:
+	new `prob_exam_protocol_header_file', `prob_exam_protocol_header_file'
+	  global configuration variables are added.
+
+	* new_server_html.c:
+	(priv_print_problem_exam_protocol) new function to handle
+	  `PRIV_PROBLEM_PROTOCOL' request.
+
+	* new_server_html_2.c:
+	(ns_write_priv_all_runs) "Print problem protocol" control is added.
+
+	* new_server_tables.c:
+	label for `NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL' button is added.
+
+	* prepare.c, prepare_out.c:
+	new `prob_exam_protocol_header_file', `prob_exam_protocol_header_file'
+	  global configuration variables are added, these variables are
+	  treated as unhandled global variables for now.
+
+	* reports.c:
+	"random.h" is included;
+	(tex_armor_verbatim_2) new function, which passes through characters
+	  with code >= 0x7f;
+	(user_report_generate) TARMOR is used for surname, etc;
+	  `tex_armor_verbatim_2' is called for PROB_TYPE_TEXT_ANSWER problems;
+	(ns_print_user_exam_protocol) `.noprint' and `.noclean' special files
+	  are honored in the print working directory;
+	(ns_print_user_exam_protocols) the same as above;
+	(problem_report_generate) new function, not yet completed;
+	(ns_print_prob_exam_protocol) new function.
+
+2007-07-24 (r4233) Alexander Chernov  <cher@ejudge.ru>
+
+	* run.c:
+	(check_config) test counting in output-only variant problems is
+	  fixed.
+
+2007-07-23 (r4231) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(ns_olympiad_final_user_report) new function prototype.
+
+	* new_server_html.c:
+	(unpriv_main_page) support for `disable_virtual_auto_judge'
+	  global configuration variable is implemented;
+	(do_xml_user_state) `disable_virtual_auto_judge' is honored.
+
+	* reports.c:
+	(ns_olympiad_final_user_report) new function.
+
+	* run.c:
+	(check_config) bug with incorrect counting of the number of tests
+	  for output-only problems is fixed.
+
+2007-07-23 (r4229) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`userlist_clnt/import_csv_users.c' file is added.
+
+	* new-server.h:
+	new commands `NEW_SRV_ACTION_FORCE_START_VIRTUAL',
+	  `NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL' are added;
+	(ns_print_user_exam_protocol) `use_user_printer' parameter is added;
+	(ns_print_user_exam_protocols) new function prototype.
+
+	* prepare.h, prepare_dflt.h:
+	`disable_virtual_start', `disable_virtual_auto_judge' global
+	  configuration variables are added.
+
+	* super_proto.h:
+	editing of the `disable_virtual_start' and `disable_virtual_auto_judge'
+	global configuration variables is supported.
+
+	* userlist_clnt.h:
+	(userlist_clnt_import_csv_users) new function prototype.
+
+	* userlist_proto.h:
+	`ULS_IMPORT_CSV_USERS' command code is added;
+	`ULS_TEXT_DATA_FAILURE' responce code is added;
+	`ULS_ERR_TRANSITIVE_SHARING' error code is added.
+
+	* edit-userlist.c:
+	(display_registered_users) CSV importing is supported ('v' command).
+
+	* new_server_html.c:
+	(priv_force_start_virtual) new function that handles
+	  `NEW_SRV_ACTION_FORCE_START_VIRTUAL';
+	(priv_view_users_page) "Force virtual start" and "Print protocols"
+	  buttons are added;
+	(priv_print_user_exam_protocol) permission check is added;
+	  call of `ns_print_user_exam_protocol' is updated;
+	(priv_print_users_exam_protocol) new function that handles
+	  `NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL';
+	(unpriv_print_status) `disable_virtual_start' global configuration
+	  variable is honored;
+	(unpriv_command) the same;
+	(unpriv_page_header) the same;
+	(unpriv_main_page) the same.
+
+	* new_server_tables.c:
+	new button labels are added.
+
+	* prepare.c, prepare_out.c:
+	`disable_virtual_start', `disable_virtual_auto_judge' global
+	  configuration variables are added.
+
+	* reports.c:
+	(ns_print_user_exam_protocol) `use_user_printer' parameter is added;
+	  the printer defined in the user database is used in this case;
+	(ns_print_user_exam_protocols) new function, which prints the
+	  protocol for the given users.
+
+	* serve_2.c:
+	(handle_virtual_stop_event) `disable_virtual_auto_judge' global
+	  configuration variable is honored.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of the `disable_virtual_start' and `disable_virtual_auto_judge'
+	global configuration variables is supported.
+	
+
+	* userlist_proto.c:
+	new error description is added.
+
+	* userlist-server.c:
+	"csv.h" is included;
+	(cmd_import_csv_users) new function to handle CSV import request.
+
+2007-07-21 (r4227) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(ns_get_checker_comment) new function prototype is added;
+	(ns_print_user_exam_protocol) new function prototype;
+	`utf8_mode' global variable is added.
+
+	* userlist.h:
+	(userlist_real_unparse_user) new paramer `force_first_member' is added;
+	(userlist_unparse_for_standings) the same as above.
+
+	* new-server.c:
+	`utf8_mode' global variable is added, it is set to 1, if the
+	  current locale is UTF-8 based locale.
+
+	* new_server_html.c:
+	(priv_print_user_exam_protocol) new command handled.
+
+	* new_server_html_2.c:
+	(ns_user_info_page) `Print user protocol' button is added;
+	(ns_get_checker_comment) renamed from `get_checker_comment';
+	  `need_html_armor' parameter is added;
+	(ns_write_olympiads_user_runs) call of `ns_get_checker_comment'
+	  is updated.
+
+	* new_server_tables.c:
+	`NEW_SRV_ACTION_PRINT_USER_PROTOCOL' is added.
+
+	* reports.c:
+	the user examination report is basically completed.
+
+	* run.c:
+	(prepare_checker_comment) UTF-8 is handled correctly.
+
+	* sformat.c:
+	"%%" is handled correctly.
+
+	* userlist-server.c:
+	(cmd_list_standings_users) the first contestant is unparsed
+	  (new `force_first_member' parameter is used) for personal contests.
+
+	* userlist_xml.c:
+	(userlist_real_unparse_user) `force_first_member' parameter is added;
+	  if this parameter is true, the first contestant is unparsed;
+	(userlist_unparse_user) call of `userlist_real_unparse_user' updated;
+	(userlist_unparse) the same as above;
+	(userlist_unparse_for_standings) `force_first_member' parameter is
+	  added and passed to `userlist_real_unparse_user'.
+
+2007-07-18 (r4224) Alexander Chernov  <cher@ejudge.ru>
+
+	* reports.c:
+	initial revision
+
+2007-07-18 (r4223) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	reports.c is added.
+
+	* misctext.h:
+	(get_nth_alternative) function prototype is added.
+
+	* prepare.h:
+	(struct section_global_data) new fields
+	  `user_exam_protocol_header_file', `user_exam_protocol_footer_file',
+	  `user_exam_protocol_header_txt', `user_exam_protocol_footer_txt'.
+
+	* problem_xml.h:
+	  "tex" attribute is supported.
+
+	* misctext.c:
+	(get_nth_alternative) new function copied here from
+	  `new_server_html_2.c'.
+
+	* new_server_html_2.c:
+	(get_nth_alternative) function moved to `misctext.c'.
+
+	* prepare.c:
+	`user_exam_protocol_header_file', `user_exam_protocol_footer_file'
+	  global configuration variables are added.
+
+	* prepare_out.c:
+	(prepare_unparse_global) `user_exam_protocol_header_file',
+	  `user_exam_protocol_footer_file' are added to the list of unsupported
+	  global variables.
+
+	* problem_xml.c:
+	  "tex" attribute is supported.
+
+2007-07-17 (r4220) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	some previously forgotten object files are cleared on `clean'.
+
+	* contests.h:
+	support for <user_contest> element is added.
+
+	* misctext.h:
+	(utf8_cnt) `p_w' parameter is added.
+
+	* super-proto.h:
+	editing of <user_contest> element is supported.
+
+	* contests.c:
+	support for <user_contest> element is added.
+
+	* contest_tmpl.c:
+	(contest_tmpl_clone) `main_url' and `standings_url' elements
+	  are updated to the new contest number.
+
+	* edit-userlist.c:
+	UTF-8 support is improved.
+
+	* ejudge-control.c: copyright year is updated;
+	(command_start) `force_mode' parameter is added;
+	  force mode (-f) is supported;
+	(main) `-f' option (force_mode) is supported;
+	  use of `command_start' is updated.
+
+	* html.c, master_html.c, new_server_html_2.c:
+	use of `run_status_str' is updated: buffer size is specified in
+	  all calls;
+	buffer size for status string is increased to 128 bytes.
+
+	* misctext.c:
+	(utf8_cnt) `p_rem' parameter is added;
+	  the remaining screen width is returned.
+
+	* new_server_html.c:
+	(priv_view_users_page) contest users sharing is supported;
+	(anon_select_contest_page) new function to select contest if
+	  no contest_id is specified;
+	(unprivileged_entry_point) call of `anon_select_contest_page'
+	  is added but is commented out for now.
+
+	* run.c:
+	(html_print_by_line) utf-8 output armoring is supported;
+	(prepare_checker_comment) XML armoring is hardened.
+	(main) utf-8 mode is activated, if ejudge charset is UTF-8.
+
+	* runlog.c:
+	(run_status_str) `snprintf' is used instead of `strncpy'.
+
+	* serve-control.c, super_html.c, super_html_2.c, super-serve.c:
+	editing of <user_contest> element is supported.
+
+	* teamdb.c:
+	<user_contest> element is supported.
+
+	* userlist-server.c:
+	<user_contest> element is supported in most of commands.
+
+2007-07-10 (r4218) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist.h:
+	(struct userlist_user_info) new fields `exam_id' and `exam_cypher'
+	  are added.
+
+	* edit-userlist.c, uldb_plugin_xml.c, userlist_xml.c:
+	new fields `exam_id' and `exam_cypher' are supported.
+
+	* sformat.c, userlist.c: copyright year is updated;
+	new fields `exam_id' and `exam_cypher' are supported.
+
+2007-07-10 (r4216) Alexander Chernov  <cher@ejudge.ru>
+
+	* ncurses_utils.h: copyright notice is updated;
+	(ncurses_edit_string) `utf8_mode' parameter is added;
+	(ncurses_choose_file) `utf8_mode' parameter is added.
+
+	* edit-userlist.c:
+	"ncurses_utils.h" is included;
+	(edit_string) removed, `ncurses_edit_string' is used instead;
+	`ncurses_edit_string' is used instead of `edit_string'.
+
+	* ejudge-setup.c:
+	<langinfo.h> is included;
+	use of `ncurses_edit_string' and `ncurses_choose_file' are updated;
+	(main) utf-8 charset is detected and the flag is set.
+
+	* ncurses_utils.c: copyright notice is updated;
+	"misctext.h" is included;
+	(ncurses_edit_string) `utf8_mode' parameter is added;
+	  utf-8 charset is properly supported;
+	(do_choose_file) `utf8_mode' parameter is added;
+	(ncurses_choose_file) `utf8_mode' parameter is added.
+
+2007-07-09 (r4214) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	"w" suffix is added to ncurses library in case of UTF-8 charset.
+
+	* misctext.h:
+	(utf8_fix_string) new function prototype is added;
+	(utf8_cnt) new function prototype is added.
+
+	* edit-userlist.c:
+	"misctext.h" is included;
+	<langinfo.h> is included;
+	UTF-8 is handled correctly in all functions;
+	ESC ('\033') is handled as escape command.
+
+	* misctext.c:
+	(utf8_fix_string) new function;
+	(utf8_cnt) new function.
+
+2007-07-09 (r4212) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	"w" suffix is added for ncurses libraries in case of
+	UTF-8 charset
+
+2007-07-08 (r4210) Alexander Chernov  <cher@ejudge.ru>
+
+	* csv.c:
+	(csv_parse) empty CSV detection bug is fixed.
+
+	* runlog.c:
+	(runlog_check) ssl_flag and ipv6_flag are cleared before check.
+
+2007-07-07 (r4208) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	`PREPARE_FIELD_PROB_XML_FILE' is added.
+
+	* prepare.c:
+	(prepare_set_prob_value) `xml_file' problem variable is supported.
+
+	* super_html_3.c:
+	(super_html_check_tests) select-one XML-specified problems are
+	  skipped.
+
+2007-07-07 (r4206) Alexander Chernov  <cher@ejudge.ru>
+
+	* run.c:
+	(invoke_valuer) the execution times is added to the score file.
+
+2007-07-05 (r4199) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	support for <slave_rules>, <run_managed_on> is implemented.
+
+	* problem_xml.h:
+	support for <notes> element is added.
+
+	* contests.c:
+	support for <slave_rules>, <run_managed_on> is implemented.
+
+	* expat_iface.c:
+	(xml_unparse_raw_tree) element text is subject for variable
+	  substitution.
+
+	* new_server_html.c:
+	(unpriv_unparse_statement) ${input_file}, ${output_file} are supported;
+	  <notes> element is supported.
+
+	* problem_xml.c:
+	support for <notes> element is added.
+
+	* super-serve.c:
+	slave mode (-s) support is implemented.
+
+2007-07-01 (r4197) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) new fields `valuer_cmd',
+	  `valuer_env' are added.
+
+	* problem_xml.h:
+	(struct problem_desc) `package' field is added.
+
+	* serve_state.h:
+	(serve_judge_built_in_problem) new function prototype.
+
+	* super_proto.h:
+	editing of `valuer_cmd', `valuer_env' variables is supported.
+
+	* testing_report_xml.h: copyright year is updated;
+	(struct testing_report_xml) new fields `valuer_comment',
+	  `valuer_judge_comment', `valuer_errors' are added.
+
+	* expat_iface.c:
+	(start_hnd) bug is fixed.
+
+	* master_html.c:
+	valuer information is displayed.
+
+	* new_server_html.c:
+	(unpriv_submit_run) problem XML is supported;
+	  `serve_judge_built_in_problem' is called;
+	(unpriv_unparse_statement) XML problem support is improved;
+	(unpriv_main_page) bug is fixed.
+
+	* new_server_html_2.c:
+	(get_source) bug is fixed.
+
+	* prepare.c, prepare_out.c:
+	support for `valuer_cmd' and `valuer_env' is improved.
+
+	* problem_xml.c:
+	  support for "package" attribute is added.
+
+	* run.c:
+	(generate_xml_report) new parameters are added: `valuer_comment',
+	  `valuer_judge_comment', `valuer_errors';
+	  these values are written to XML report;
+	(read_checker_score) `what' parameter is added;
+	(invoke_valuer) new function to invoke the score valuer;
+	(run_tests) parameters of `read_checker_score' are updated;
+	  `invoke_valuer' is called;
+	  parameters of `generate_xml_report' are updated.
+
+	* runlog.c:
+	(run_count_all_attempts) virtual events are ignored;
+	(run_has_transient_user_runs) bug is fixed.
+
+	* serve_2.c:
+	(serve_judge_built_in_problem) bug fixes.
+
+	* serve-control.c, super-serve.c, super_html_3.c:
+	editing of `valuer_cmd', `valuer_env' variables is supported.
+
+	* testing_report_xml.c: copyright year is updated;
+	new elements <valuer_comment>, <valuer_judge_comment>,
+	  <valuer_errors> are supported.
+
+2007-06-22 (r4195) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_state.h:
+	(serve_state_destroy) `cnts' parameter is added;
+	(serve_rejudge_run) `cnts' parameter is added;
+	(serve_rejudge_by_mask) `cnts' parameter is added;
+	(serve_rejudge_problem) `cnts' parameter is added;
+	(serve_judge_suspended) `cnts' parameter is added;
+	(serve_rejudge_all) `cnts' parameter is added;
+	(serve_handle_events) `cnts' parameter is added;
+	(serve_judge_virtual_olympiad) `cnts' parameter is added.
+
+	* new_server_html.c:
+	(ns_client_destroy_callback) call of `serve_judge_suspended' updated;
+	(ns_unload_contest) call of `serve_state_destroy' is updated;
+	(handle_pending_xml_import) `cnts' parameter is added;
+	  call of `serve_judge_suspended' is updated;
+	(ns_check_contest_events) call of `serve_handle_events' is updated;
+	(priv_change_status) call of `serve_rejudge_run' is updated;
+	(priv_rejudge_displayed) call of `serve_rejudge_by_mask' is updated;
+	(priv_rejudge_problem) call of `serve_rejudge_problem' is updated;
+	(priv_rejudge_all) call of `serve_judge_suspended' is updated;
+	  call of `serve_rejudge_all' is updated.
+
+	* new_server_html_4.c:
+	(cmd_operation) call of `serve_judge_suspended' is updated.
+
+	* serve.c:
+	(cmd_rejudge_by_mask) call of `serve_rejudge_by_mask' is updated;
+	(cmd_priv_command_0) call of `serve_rejudge_all' is updated;
+	  call of `serve_judge_suspended' is updated;
+	  call of `serve_rejudge_problem' is updated;
+	(cmd_edit_run) call of `serve_rejudge_run' is updated.
+
+	* serve_2.c:
+	(serve_rejudge_run) `cnts' parameter is added;
+	  rejuding of the select-one problems with XML-specified answers
+	  is supported;
+	(serve_rejudge_by_mask) `cnts' parameter is added;
+	  call of `serve_rejudge_run' is updated;
+	(serve_rejudge_problem) `cnts' parameter is added;
+	  calls of `serve_rejudge_run' are updated;
+	(serve_judge_suspended) `cnts' parameter is added;
+	  call of `serve_rejudge_run' is updated;
+	(serve_rejudge_all) `cnts' parameter is added;
+	  calls of `serve_rejudge_run' are updated;
+	(handle_judge_olympiad_event) `cnts' parameter is added;
+	  call of `serve_judge_virtual_olympiad' is updated;
+	(serve_handle_events) `cnts' parameter is added;
+	  call of `handle_judge_olympiad_event' is updated;
+	(serve_judge_virtual_olympiad) `cnts' parameter is added;
+	  call of `serve_rejudge_run' is updated.
+
+	* serve_state.c:
+	(serve_state_destroy) `cnts' parameter is added;
+	  call of `serve_judge_suspended' is updated;
+	(serve_state_load_contest) call of `serve_state_destroy' is updated.
+
+2007-06-22 (r4194) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_2.c:
+	(get_source) support for answers in problem XML file is added.
+
+	* run.c:
+	(prepare_checker_comment) declared as `static';
+	(check_config) select-one problems with answers specified in XML
+	  file are ignored.
+
+	* serve_2.c:
+	"config.h", "misctext.h" are included;
+	(serve_judge_built_in_problem) new function to handle select-one
+	  answers in XML file.
+
+2007-06-18 (r4185) Alexander Chernov  <cher@ejudge.ru>
+
+	* expat_iface.h:
+	(xml_unparse_raw_tree) `vars', `vals' parameters repace
+	  `varsubst' parameter.
+
+	* mime_type.h: copyright year is updated;
+	(mime_type_parse_suffix) new function prototype is added.
+
+	* new-server.h:
+	new command `NEW_SRV_ACTION_GET_FILE' is added.
+
+	* new_server_proto.h:
+	new error code `NEW_SRV_ERR_INV_FILE_NAME' is added.
+
+	* prepare.h:
+	(find_variant) `p_virtual_variant' parameter is added.
+
+	* prepare_serve.h: copyright year is updated;
+	(find_variant) `p_virtual_variant' parameter is added.
+
+	* expat_iface.c:
+	(do_subst) variable substitution is implemented;
+	(xml_unparse_raw_tree) `vars', `vals' parameters repace
+	  `varsubst' parameter.
+
+	* filter_eval.c, html.c, master_html.c:
+	uses of `find_variant' are updated.
+
+	* mime_type.c: copyright year is updated;
+	(mime_type_parse_suffix) new function.
+
+	* new_server_html.c:
+	use of `find_variant' are updated;
+	(unpriv_unparse_statement) support for variable substitutions
+	  in problem XML statement is added;
+	(unpriv_get_file) new function to handle `GET_FILE' request.
+
+	* new_server_html_2.c, new_server_html_4.c:
+	uses of `find_variant' are updated.
+
+	* new_server_proto.c:
+	new error code is handled.
+
+	* prepare.c:
+	(get_variant_map_version) new function;
+	(parse_vm_v1) new function;
+	(parse_vm_v2) new function;
+	(parse_variant_map) variant map version 1 and 2 are supported.
+
+	* prepare_serve.c: copyright year is updated;
+	(find_variant) `p_virtual_variant' parameter is added for virtual
+	  variant support.
+
+	* printing.c:
+	(print_banner_page) use of `find_variant' is updated;
+	  virtual variants are supported.
+
+	* serve.c:
+	uses of `find_variant' are updated.
+
+	* serve_2.c:
+	(serve_run_request) use of `find_variant' is updated.
+
+2007-06-13 (r4180) Alexander Chernov  <cher@ejudge.ru>
+
+	* settings.h: copyright notice is updated;
+	MAX_CGI_VALUE_LEN increased to 2MiB.
+
+	* new_server_html.c:
+	(priv_contest_operation) `run_set_finish_time' is called.
+
+	* runlog.c:
+	RUNLOG_MAX_SIZE increased to 2MiB.
+
+2007-06-09 (r4174) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(ns_handle_http_request) CGI_PROG_SUFFIX is supported.
+
+2007-06-01 (r4164) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge-setup.c:
+	gcc 4.2 warnings are fixed.
+
+2007-05-18 (r4162) Alexander Chernov  <cher@ejudge.ru>
+
+	* expat_iface.h:
+	(xml_unparse_raw_tree) new function prototype.
+
+	* problem_xml.h: progress...
+
+	* expat_iface.c:
+	"misctext.h" is included;
+	(xml_unparse_raw_tree) new function.
+
+	* problem_xml.c: progress...
+
+2007-05-18 (r4160) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	problem_common.[hc], problem_xml.[hc] are added.
+
+	* prepare.h:
+	"problem_common.h" is included;
+	problem type enumeration moved to `problem_common.h'.
+
+	* problem_common.h: initial revision.
+
+	* problem_xml.h: progress...
+
+	* prepare.c:
+	(parse_problem_type) moved to `problem_common.c' as
+	  `problem_parse_type';
+	(prepare_unparse_problem_type) moved to `problem_common.c'
+	  as `problem_unparse_type'.
+
+	* prepare_out.c, super_html_3.c:
+	`prepare_unparse_problem_type' renamed to `problem_unparse_type'.
+
+	* problem_common.c: initial revision.
+
+	* problem_xml.c: progress...
+
+2007-05-11 (r4159) Alexander Chernov  <cher@ejudge.ru>
+
+	* problem_xml.c, problem_xml.h:
+	initial revision
+
+2007-05-11 (r4153) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(struct http_request_info) `online_users' field is added;
+	  "Testing finished" flag manipulation commands are added.
+
+	* protocol.h:
+	(struct prot_serve_status_v2) `testing_finished' field is added.
+
+	* serve_state.h:
+	(struct serve_state) `testing_finished' field is added.
+
+	* new_server_html.c:
+	(priv_contest_operation) setting and clearing "Testing finished"
+	  flag is supported;
+	(unpriv_print_status) "Testing finished" flag is honored;
+	  on-line users count is printed;
+	(priv_main_page) "Testing finished" flag is honored;
+	  "Testing finished" control buttons are added;
+	(unpriv_page_header) "Testing finished" flag is honored.
+
+	* new_server_tables.c:
+	button labels are added.
+
+	* serve_2.c:
+	(serve_update_status_file) `testing_finished' flag is saved;
+	(serve_load_status_file) `testing_finished' flag is loaded.
+
+2007-05-07 (r4149) Alexander Chernov  <cher@ejudge.ru>
+
+	* expat_iface.h: copyright notice is updated;
+	(struct xml_parse_spec) new fields `text_elem' and `unparse_entity'
+	  are added.
+
+	* expat_iface.c:
+	(start_hnd) `text_elem' parameter is supported;
+	(chardata_hnd) `unparse_entity' parameter is supported;
+	(xml_skipped_entity_handler) new function;
+	(xml_build_tree) skipped entity handler is set;
+	(xml_build_tree_str) the same;
+	(xml_build_tree_file) the same.
+
+2007-05-07 (r4147) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(priv_edit_run) bug in setting run user_id is fixed.
+
+2007-05-05 (r4144) Alexander Chernov  <cher@ejudge.ru>
+
+	* protocol.h:
+	(struct prot_serve_status_v2) new fields `max_online_count',
+	  `max_online_time' are added.
+
+	* serve_state.h:
+	(struct serve_state) new fields `max_online_count',
+	  `max_online_time' are added.
+
+	* new_server_html.c:
+	(priv_main_page) maximal number of online users is reported;
+	(unpriv_main_page) maximal number of online users is counted.
+
+	* serve_2.c:
+	(serve_update_status_file) `max_online_count', `max_online_time'
+	  vars are written;
+	(serve_load_status_file) `max_online_count', `max_online_time'
+	  are read.
+
+2007-05-04 (r4140) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(struct last_access_info) new type;
+	(struct last_access_array) new type;
+	(struct last_access_idx) new type;
+	(struct contest_extra) new fields `user_access', `user_access_idx';
+	(ns_write_online_users) new function prototype.
+
+	* new_server_html.c:
+	(ns_unload_contests) online user info is freed;
+	(priv_view_online_users) new function;
+	(priv_main_page) the number of online users is calculated;
+	(unpriv_main_page) online user info is updated.
+
+	* new_server_html_2.c:
+	(ns_write_online_users) new function.
+
+2007-05-04 (r4138) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(struct http_request_info) `next_run_id' field is removed;
+	  `next_extra' is added.
+
+	* new-server.c:
+	(cmd_http_request) `next_run_id' field is removed.
+
+	* new_server_html.c:
+	(priv_user_toggle_flags) new function;
+	`next_extra' is used instead of `next_run_id';
+	toggle actiosn are implemented.
+
+	* new_server_html_2.c:
+	(ns_user_info_page) top menu is added.
+
+2007-05-03 (r4137) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	problem plugin related headers are installed to `include' directory.
+
+2007-05-03 (r4136) Alexander Chernov  <cher@ejudge.ru>
+
+	* problem_plugin_impl.h:
+	initial revision
+
+2007-05-03 (r4134) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.c:
+	(do_write_kirov_standings) problems are not shown before
+	  their start date;
+	(do_write_moscow_standings) the same;
+	(do_write_standings) the same.
+
+2007-04-27 (r4127) Alexander Chernov  <cher@ejudge.ru>
+
+	* run.c:
+	(check_config) support for output-only problems is improved.
+
+2007-04-27 (r4126) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	(struct contest_desc) `team_menu_3_file' field is added.
+
+	* new-server.h:
+	(struct contest_extra) new fields `menu_3', `menu_3_txt' are added.
+
+	* super_proto.h:
+	editing of <team_menu_3_file> is supported.
+
+	* super-serve.h:
+	(struct sid_state) `team_menu_3_text' is added.
+
+	* contests.c, contest_tmpl.c:
+	support for <team_menu_3_file> element is added.
+
+	* serve-control.c, super_html.c, super_html_2.c, super-serve.c:
+	editing of <team_menu_3_file> is supported.
+
+2007-04-27 (r4124) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog.h:
+	(run_status_str) `var_score' parameter is added.
+
+	* master_html.c, html.c, new_server_html_2.c:
+	calls of `run_status_str' are updated.
+
+	* printing.c:
+	(print_banner_page) call of `run_status_str' is updated.
+
+	* runlog.c:
+	(run_status_str) `var_score' parameter is added.
+
+	* runlog_import.c:
+	(runlog_import_xml) call of `run_status_str' is updated.
+
+2007-04-27 (r4123) Alexander Chernov  <cher@ejudge.ru>
+
+	* csv.c:
+	(csv_parse) handling of empty fields is improved.
+
+	* html.c:
+	(do_write_kirov_standings) bugs fixed.
+
+	* new_server_html_2.c:
+	(ns_upload_csv_results) bugs fixed.
+
+2007-04-27 (r4121) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) `ignore_penalty' field is added.
+
+	* html.c:
+	(do_write_kirov_standings) `ignore_penalty' is handled.
+
+	* prepare.c:
+	new problem configuration variable `ignore_penalty' is added.
+
+	* prepare_out.c:
+	(prepare_unparse_unhandled_prob) `ignore_penalty' is handled.
+
+2007-04-27 (r4119) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(ns_upload_csv_results) new function prototype.
+
+	* teamdb.h:
+	(teamdb_lookup_name) new function prototype.
+
+	* new_server_html.c:
+	(priv_upload_runlog_csv_1) "Import results for existing runs" option is added;
+	(priv_upload_runlog_csv_2) new option mentioned above is supported.
+
+	* new_server_html_2.c:
+	(ns_upload_csv_results) new function.
+
+	* teamdb.c:
+	(teamdb_lookup_name) new function.
+
+2007-04-26 (r4117) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_types.h:
+	`DISQUALIFIED' user flag is supported.
+
+	* new-server.h:
+	new command codes are added;
+	(ns_html_err_disqualified) new function prototype.
+
+	* teamdb.h:
+	`TEAM_DISQUALIFIED' flag is added.
+
+	* team_extra.h: copyright year is updated;
+	<disq_comment> element is supported.
+
+	* userlist.h:
+	"disqualified" attribute is supported.
+
+	* edit-userlist.c:
+	editing of the "disqualified" attribute is supported.
+
+	* filter_eval.c:
+	(do_eval) `userdisqualified' token is supported.
+
+	* filter_expr.y:
+	"userdisqualified" token is supported.
+
+	* filter_scan.lex:
+	"userdisqualified" token is supported.
+
+	* html.c:
+	disqualified users are now shown in standings.
+
+	* new_server_html.c:
+	(priv_registration_operation) user disqualification is supported;
+	(priv_user_disqualify) new function;
+	(priv_view_users_page) user disqualification is supported;
+	(unpriv_main_page) user disqualification is supported.
+
+	* new_server_html_2.c:
+	(ns_user_info_page) user disqualification is supported.
+
+	* new_server_html_3.c:
+	"team_extra.h" is included;
+	(ns_html_err_disqualified) new function.
+
+	* new_server_tables.c:
+	new button labels are added.
+
+	* teamdb.c:
+	DISQUALIFIED user flag is supported.
+
+	* team_extra.c: copyright year is updated;
+	<disq_comment> element is supported.
+
+	* team_extra_xml.c:
+	<disq_comment> element is supported.
+
+	* userlist-server.c:
+	(do_get_database) user disqualification is supported.
+
+	* userlist_xml.c:
+	"disqualified" attribute is supported.
+
+2007-04-23 (r4115) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) new fields `disable_language',
+	  `disable_prob_long_name', `disable_passed_tests' are added.
+
+	* serve_2.c:
+	(is_generally_rejudgable) output-only problems are supported.
+
+	* super_proto.h:
+	editing of `disable_language' global configuration variable
+	  is supported.
+
+	* new_server_html.c:
+	(unpriv_page_header) <table><tr> formatting is moved to template.
+
+	* new_server_html_2.c:
+	(ns_write_olympiads_user_runs) visual improvements;
+	(ns_write_user_problems_summary) visual improvements.
+
+	* new_server_html_3.c:
+	<table><tr> formatting is moved to template.
+
+	* prepare.c:
+	`disable_language' global configuration variable is added;
+	`disable_prob_long_name', `disable_passed_tests' flags are
+	  calculated.
+
+	* prepare_out.c:
+	`disable_language' global configuration variable is added.
+
+	* run.c:
+	(run_tests) scoring checking results are stored for individual test.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of `disable_language' global configuration variable
+	  is supported.
+
+2007-04-20 (r4113) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) `problem_tab_size' field is added.
+
+	* new_server_html.c:
+	(html_error_status_page) `format' argument is added;
+	(write_alternatives_file) `next_prob_id' argument is added;
+	(unpriv_submit_run) next problem calculation is improved;
+	  the current prob_id is passed to `html_error_status_page'
+	  to make the "back" link work correctly;
+	(unpriv_command) the first problem calculation is improved;
+	(user_main_page) the next problem calculation is improved;
+	  `problem_tab_size' global configuration variable is handled.
+
+	* prepare.c:
+	`problem_tab_size' global configuration variable is added.
+
+	* prepare_out.c:
+	(prepare_unparse_unhandled_global) `problem_tab_size' global
+	  configuration variable is handled.
+
+	* serve_2.c:
+	(serve_load_status_file) the `accepting_mode' variable is always 1
+	  in OLYMPIAD virtual contests.
+
+2007-04-19 (r4110) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	(struct contest_desc) team_menu_1_file', `team_menu_2_file'
+	  elements are added.
+
+	* new-server.h:
+	(struct contest_extra) `menu_1', `menu_2', `menu_1_txt',
+	  `menu_2_txt' fields are added.
+
+	* super_proto.h:
+	<team_1_menu>, <team_2_menu> contest XML element editing is supported.
+
+	* super-serve.h:
+	(struct sid_state) `team_menu_1_text', `team_menu_2_text'
+	  field is added.
+
+	* contests.c, contest_tmpl.c:
+	<team_menu_1_file>, <team_menu_2_file> elements are added.
+
+	* new_server_html.c:
+	(unpriv_page_header) reworked.
+
+	* new_server_html_3.c:
+	`ns_fancy_unpriv_contest_header' is added.
+
+	* serve_2.c:
+	(is_generally_rejudgable) new function;
+	(serve_rejudge_by_mask) reworked;
+	(serve_rejudge_problem) reworked;
+	(serve_judge_suspended) reworked;
+	(serve_rejudge_all) reworked.
+
+	* serve-control.c, super_html.c, super_html_2.c, super-serve.c:
+	<team_menu_1_file>, <team_menu_2_file> contest XML element editing is
+	  supported.
+
+2007-04-17 (r4108) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.h:
+	(filename_armor_bytes) new function prototype.
+
+	* misctext.c:
+	(filename_armor_bytes) new function.
+
+	* new_server_html_2.c:
+	(ns_download_runs) user name in filenames are armored.
+
+2007-04-17 (r4106) Alexander Chernov  <cher@ejudge.ru>
+
+	* filter_eval.c:
+	"name" expression is supported.
+
+	* filter_expr.y:
+	"name" expression is supported.
+
+	* filter_scan.lex:
+	"name" expression is supported.
+
+	* new_server_html.c:
+	(priv_download_runs_confirmation) support for user names is added;
+	(priv_download_runs) support for user names is added.
+
+	* new_server_html_2.c:
+	(ns_download_runs) support for user names is added.
+
+2007-04-16 (r4104) Alexander Chernov  <cher@ejudge.ru>
+
+	* contest.h:
+	(struct contest_desc) `welcome_file' field is added.
+
+	* misctext.h:
+	(text_input_process_string) new function prototype;
+	(text_area_process_string) new function prototype.
+
+	* new-server.h:
+	(struct contest_extra) `welcome' field is added.
+
+	* prepare.h:
+	(struct section_global_data) new fields `vertical_navigation',
+	  `stand_collate_name', `stand_enable_penalty' are added.
+
+	* super_proto.h:
+	editing of the <welcome_text> contest XML element is supported;
+	editing of the `stand_collate_name', `stand_enable_penalty' global
+	  configuration variables is supported.
+
+	* super-serve.h:
+	(struct sid_state) `welcome_text' field is added.
+
+	* contests.c:
+	<welcome_file> element is supported.
+
+	* html.c:
+	(do_write_kirov_standings) `stand_collate_name' and
+	  `stand_enable_penalty' global configuration variables are
+	  supported.
+
+	* misctext.c:
+	(text_input_process_string) new function implemented;
+	(text_area_process_string) new function implemented.
+
+	* new_server_html.c:
+	(ns_unload_contest) `welcome' field is freed;
+	(load_problem_plugin) fixes;
+	(priv_main_page) the problem answer form starts before the text
+	  in CUSTOM problems;
+	(user_main_page) vertical problem tabbing i supported;
+	  the problem answer form starts before the text in CUSTOM problems.
+
+	* new_server_html_3.c:
+	(ns_html_err_no_perm) error message os corrected.
+
+	* prepare.c, prepare_out.c:
+	`vertical_navigation', `stand_collate_name', `stand_enable_penalty'
+	  global configuration variables are supported.
+
+	* serve-control.c, super_html.c, super_html_2.c, super_html_3.c, super-serve.c:
+	editing of the <welcome_text> contest XML element is supported;
+	editing of the `stand_collate_name', `stand_enable_penalty' global
+	  configuration variables is supported.
+
+2007-04-12 (r4102) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	"-rdynamic" added to `new-server' build;
+	"-ldl" added to `serve' build.
+
+	* ejudge_plugin.h: copyright notice is updated;
+	(plugin_unload) new function prototype.
+
+	* new_server_proto.h:
+	new error code is added.
+
+	* problem_plugin.h:
+	mostly implemented.
+
+	* serve_state.h:
+	"problem_plugin.h" is included;
+	(struct problem_extra_info) problem plugin fields
+	  `plugin_error', `plugin', `plugin_data' are added.
+
+	* new_server_html.c:
+	(load_problem_plugin) new function;
+	(priv_submit_run) support for problem plugins is added;
+	(unpriv_submit_run) support for problem plugins is added.
+
+	* new_server_proto.c:
+	new error description is added.
+
+	* plugin.c: copyright notice is updated;
+	(plugin_unload) new function.
+
+	* serve_state.c:
+	"ejudge_plugin.h" is included;
+	(serve_state_destroy) problem plugin unloading is supported.
+
+2007-04-11 (r4100) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	`plugin_file' problem configuration variable is added.
+
+	* super_proto.h:
+	editing of `plugin_file' is supported.
+
+	* prepare.c, prepare_out.c:
+	`plugin_file' problem configuration variable is added.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of `plugin_file' is supported.
+
+2007-04-11 (r4098) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h, prepare_dflt.h:
+	new `plugin_dir' global configuration variable is added.
+
+	* super_proto.h:
+	editing of the new `plugin_dir' global configuration variable
+	  is supported.
+
+	* prepare.c, prepare_out.c:
+	new `plugin_dir' global configuration variable is added.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of the new `plugin_dir' global configuration variable
+	  is supported.
+
+2007-04-10 (r4095) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	problem type "custom" is supported.
+
+	* new_server_html.c, new_server_html_2.c, new_server_html_4.c, prepare.c:
+	problem type "custom" is supported.
+
+2007-04-10 (r4093) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	new `team_separator_file' element is supported.
+
+	* super_proto.h, super-serve.h:
+	editing of the new `team_separator_file' contest XML element
+	  is supported.
+
+	* new-server.h:
+	(struct contest_extra) `separator' field is added.
+
+	* contests.c:
+	new `team_separator_file' element is supported.
+
+	* new_server_html.c, new_server_html_3.c, new_server_html_5.c:
+	`team_separator_file' contest XML element is used.
+
+	* contest_tmpl.c, serve-control.c, super_html.c, super_html_2.c, super-serve.c:
+	editing of the new `team_separator_file' contest XML element
+	  is supported.
+
+2007-04-10 (r4091) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist_check.c:
+	(userlist_count_info_errors) personal contest support is improved.
+
+2007-04-09 (r4089) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	`NEW_SRV_ACTION_CHANGE_RUN_IS_EXAMINABLE' added.
+
+	* runlog.h:
+	(struct run_entry) `is_examinable', `examiners' and
+	  `exam_score' fields are added;
+	(run_count_examinable_runs) function prototype is added.
+
+	* filter_eval.c:
+	(do_eval) `examinable' and `examinator' expressions are supported.
+
+	* filter_expr.y:
+	"examinable" and "examinator" expressons are supported.
+
+	* filter_scan.lex:
+	"examinable" and "examinator" tokens are supported.
+
+	* new_server_html.c:
+	`examinable' flag of the run entries is editable.
+
+	* new_server_html_2.c:
+	(ns_write_priv_runs) `is_examinable' flag is displayed as "!";
+	(ns_examiners_page) more info.
+
+	* runlog.c:
+	(run_set_entry) `examinable' field is settable;
+	(run_count_examinable_runs) new function.
+
+	* runlog_xml.c:
+	"is_examinable" attribute is supported.
+
+2007-04-09 (r4085) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge-setup.c:
+	"startstop.h" is included;
+	(main) `-C', `-u', `-g' options are parsed and passed to the
+	  `start_prepare' function.
+
+	* startstop.c: copyright year is updated;
+	(start_switch_user) all situations are handled correctly;
+	(start_prepare) `start_switch_user' is called even in case of
+	  non-root user.
+
+2007-04-08 (r4082) Alexander Chernov  <cher@ejudge.ru>
+
+	* copyright.c:
+	(get_copyright) buffer size is increased to 8192.
+
+2007-04-07 (r4076) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	`CHARSET_UPPERCASE' is setup.
+
+	* Makefile.unix.in:
+	support for arbitrary russian charsets is implemented.
+
+	* l10n.c:
+	<ctype.h> is included;
+	(l10n_setlocale) automatic setup of russian locale name based
+	  on the default charset name is implemented.
+
+2007-04-06 (r4073) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	examiners assignment actions are added;
+	(nsdb_find_chief_examiner) new function prototype;
+	(nsdb_assign_chief_examiner) the same;
+	(nsdb_assign_examiner) the same;
+	(nsdb_remove_examiner) the same;
+	(nsdb_get_examiner_user_id_iterator) the same;
+	(nsdb_get_examiner_count) the same.
+	(ns_cgi_param_int) the same.
+	(ns_examiners_page) the same.
+
+	* nsdb_plugin.h: copyright year is updated;
+	(struct nsdb_plugin_iface) new function pointers are added:
+	  `assign_examiner',
+	  `assign_chief_examiner',
+	  `remove_examiner',
+	  `get_examiner_role',
+	  `find_chief_examiner',
+	  `get_examiner_user_id_iterator',
+	  `get_examiner_count'.
+
+	* contests.c:
+	(contests_get) a memory leak is fixed.
+
+	* contest_tmpl.c:
+	(contest_tmpl_new) `new_managed' flag is by default 1,
+	  `managed' is 0, and `disable_team_password' is 1.
+
+	* new-server.c:
+	(nsdb_find_chief_examiner) new function;
+	(nsdb_assign_chief_examiner) new function;
+	(nsdb_assign_examiner) new function;
+	(nsdb_remove_examiner) new function;
+	(nsdb_get_examiner_user_id_iterator) new function;
+	(nsdb_get_examiner_count) new function.
+
+	* new_server_html.c:
+	(ns_cgi_param_int) function moved here from `new_server_html_5.c';
+	(priv_examiners_page) new function;
+	(priv_assign_chief_examiner) new function;
+	(priv_assign_examiner) new function;
+	(priv_unassign_examiner) new function.
+	(priv_main_page) `Examiners assignment' link is added.
+
+	* new_server_html_2.c:
+	"userlist_clnt.h" is included;
+	(ns_examiners_page) new function.
+
+	* new_server_html_5.c:
+	(cgi_param_int) moved to `new_server_html.c' as `ns_cgi_param_int';
+	uses of `cgi_param_int' are updated.
+
+	* new_server_tables.c:
+	labels for examiner-related buttons are added.
+
+	* nsdb_plugin_files.c: copyright year is updated;
+	new functional members are added;
+	(prob_asgn_flush) new function;
+	(prob_asgn_close) new function;
+	(prob_asgn_do_create) new function;
+	(prob_asgn_do_open) new function;
+	(prob_asgn_append) new function;
+	(prob_asgn_remove) new function;
+	(assign_examiner_func) new function;
+	(assign_chief_examiner_func) new function;
+	(remove_examiner_func) new function;
+	(get_examiner_role_func) new function;
+	(find_chief_examiner_func) new function;
+	(examiner_user_id_iterator_has_next) new function;
+	(examiner_user_id_iterator_get) new function;
+	(examiner_user_id_iterator_next) new function;
+	(examiner_user_id_iterator_destroy) new function;
+	(get_examiner_user_id_iterator_func) new function;
+	(get_examiner_count_func) new function.
+
+	* prepare.c:
+	(vinfo) new function, less verbose replacement of `info';
+	the startup code generates much less info messages, than before;
+
+	* userlist_xml.c:
+	(elem_free) memory leak is fixed.
+
+2007-04-04 (r4070) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve-control.c:
+	(client_put_refresh_header) new HTTP headers are used, as in
+	  `new-server'.
+
+2007-04-03 (r4067) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	rule for building `struct-sizes' is added.
+
+	* files.make:
+	`struct-sizes.c' is added.
+
+	* protocol.h:
+	(struct prot_serve_status_v2) structure size is 128 bytes again.
+
+	* struct-sizes.c: initial revision.
+
+2007-04-03 (r4065) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`html_checkbox.c' is added.
+
+	* mischtml.h:
+	(html_checkbox) new function prototype.
+
+	* new-server.h:
+	upsolving-related actions are added.
+
+	* protocol.h: copyright year is updated;
+	(struct prot_serve_status_v2) upsolving-related fields are added.
+
+	* runlog.h:
+	(run_get_saved_times) new function prototype;
+	(run_save_times) new function prototype;
+	(struct run_header) new fields `saved_duration', `saved_stop_time'
+	  are added.
+
+	* serve_state.h:
+	(struct serve_state) upsolving-related fields are added.
+
+	* html_checkbox.c: initial revision.
+
+	* new_server_html.c:
+	all privileged page headers now include the contest number;
+	contest upsolving is supported;
+	(priv_upsolving_configuration_1) new function;
+	(priv_upsolving_operation) new function.
+
+	* new_server_tables.c:
+	upsolving-related actions are added.
+
+	* runlog.c:
+	(run_get_saved_times) new function is implemented;
+	(run_save_timeS) new function is implemented.
+
+	* serve_2.c:
+	(serve_update_status_file) upsolving configuration vars are saved;
+	(serve_load_status_file) upsolving configuration vars are restored.
+
+	* serve_state.c:
+	(serve_set_upsolving_mode) new function;
+	(serve_state_load_contest) call to `serve_set_upsolving_mode' is added.
+
+2007-04-02 (r4063) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_5.c:
+	various fixes.
+
+	* userlist_check.c:
+	(userlist_count_info_errors) check for role members overrun is added.
+
+2007-04-02 (r4061) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`userlist_clnt/move_member.c' is added.
+
+	* Makefile.unix.in:
+	debug rules are added.
+
+	* new-server.h:
+	`NEW_SRV_ACTION_REG_REGISTER' is added.
+
+	* uldb_plugin.h:
+	(struct uldb_plugin_iface::move_member) new member added.
+
+	* userlist_clnt.h:
+	(userlist_clnt_move_member) new function prototype.
+
+	* userlist_proto.h:
+	`ULS_MOVE_MEMBER' is added;
+	(struct userlist_pk_move_info) new packet structure.
+
+	* userlist-server.c:
+	(cmd_edit_field_seq) fixes;
+	(cmd_move_member) new function to handle `ULS_MOVE_MEMBER' request.
+
+	* new_register_5.c:
+	basically completed.
+
+	* uldb_plugin_xml.c:
+	(move_member_func) new function.
+
+2007-03-31 (r4055) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`userlist_clnt/edit_field_seq.c' is added.
+
+	* userlist_clnt.h:
+	(userlist_clnt_edit_field_seq) new function prototype is added.
+
+	* userlist_proto.h:
+	`ULS_EDIT_FIELD_SEQ' is added;
+	`ULS_ERR_BAD_FIELD' is added;
+	(struct userlist_pk_edit_field_seq) added.
+
+	* userlist_proto.c:
+	description for `ULS_ERR_BAD_FIELD' is added.
+
+	* userlist-server.c:
+	`ULS_EDIT_FIELD_SEQ' request is handled;
+	(cmd_edit_field_seq) partially implemented.
+
+2007-03-30 (r4052) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.h:
+	(check_str_2) new function prototype.
+
+	* new-server.h:
+	(ns_url_unescaped) prototype is added;
+	(ns_refresh_page) prototype is added;
+	(ns_refresh_page_2) prototype is added.
+
+	* prepare.h:
+	(struct section_problem_data) `ignore_compile_errors' field is added.
+
+	* super_proto.h: editing of the new `ignore_compile_errors' problem
+	  configuration variable is supported.
+
+	* compile.c: copyright year is updated;
+	"config.h" is included;
+	<sys/stat.h>, <unistd.h> are included;
+	(do_loop) max time instead of max real time limit is set for
+	  compiler invocation;
+	  all signals are enabled;
+	  compilation logs longer than 1MB are truncated,
+	  diagnostic message is appended, though.
+
+	* contests.c:
+	(fix_personal_contest) new function to fix member settings for
+	  personal contests;
+	(parse_contest) `fix_personal_contest' is called.
+
+	* html.c:
+	problem configuration variable `ignore_compile_errors' is used
+	instead of the global configuration variable.
+
+	* master_html.c:
+	problem configuration variable `ignore_compile_errors' is used
+	instead of the global configuration variable.
+
+	* misctext.c:
+	(check_str_2) new function;
+
+	* new_server_html.c:
+	(ns_refresh_page) renamed from `html_refresh_page';
+	(ns_refresh_page_2) renamed from `html_refresh_page_2';
+	(unpriv_view_report) if text report size is > 2MB, buffer space
+	  is allocated on heap instead of stack.
+
+	* new_server_html_2.c:
+	problem configuration variable `ignore_compile_errors' is used
+	instead of the global configuration variable;
+	(ns_write_priv_report) if the text report size > 2MB, the buffer
+	  is allocated on heap instead of stack.
+
+	* new_server_html_5.c: progress...
+
+	* prepare.c, prepare_out.c:
+	new `ignore_compile_errors' problem configuration variable is added.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	  editing of the new `ignore_compile_errors' problem
+	  configuration variable is supported.
+
+2007-03-30 (r4050) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	check for the new reuse function `task_EnableAllSignals' is added.
+
+	* config.h.in:
+	`HAVE_TASK_ENABLEALLSIGNALS' is added.
+
+2007-03-27 (r4045) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_plugin.h: copyright year is updated;
+	check_user_reg_data function member is added.
+
+	* userlist.h:
+	(userlist_count_info_errors) new parameter `ui' is added.
+
+	* uldb_plugin_xml.c: copyright year is updated;
+	"misctext.h" is included;
+	(check_user_reg_data_func) new function implemented.
+
+	* userlist_check.c:
+	(userlist_count_info_errors) `ui' parameter is added.
+
+	* userlist-server.c:
+	(cmd_set_user_info) user registration data is rechecked after the
+	  command;
+	(cmd_register_contest) the same;
+	(cmd_register_contest_2) the same;
+	(cmd_generate_register_passwords_2) GENERATE_TEAM_PASSWORDS
+	  capability is checked for the contest rather than globally;
+	(cmd_edit_registration) user registration data is rechecked after the
+	  command;
+	(cmd_priv_delete_member) the same;
+	(cmd_delete_user_info) the same;
+	(cmd_delete_fields) the same;
+	(cmd_edit_field) the same;
+	(cmd_create_member) the same;
+	(cmd_copy_user_info) the same.
+
+2007-03-26 (r4043) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`userlist_check.c' is added.
+
+	* misctext.h:
+	(check_str) function prototype is added.
+
+	* new-server.h:
+	(ns_html_err_registration_incomplete) new function prototype.
+
+	* userlist.h:
+	SMTH_accepting_chars global variables are added;
+	`userlist_contest_field_ids', `member_contest_field_ids' variables
+	  are added;
+	(userlist_count_info_errors) prototype is added;
+	(userlist_get_contest_accepting_chars) prototype is added;
+	(userlist_get_member_accepting_chars) prototype is added.
+
+	* misctext.c:
+	(check_str) new function is added.
+
+	* new_server_html.c:
+	(unprivileged_page_login) "incomplete registration" error is handled;
+	(unpriv_main_page) the same.
+
+	* new_server_html_3.c:
+	(ns_html_err_registration_incomplete) new function.
+
+	* new_server_html_5.c:
+	(check_str) moved to `userlist_check.c';
+	`SMTH_accepting_chars' are moved to `userlist_check.c';
+	field tables are reworked;
+	(count_info_errors) moved to `userlist_check.c'.
+
+	* register.c:
+	smth_accept_chars variables are removed, functions from the
+	  `userlist_check' module are used instead;
+	(struct field_desc) `accept_chars' parameter is removed;
+	(fix_string) function now accepts the map of valid characters instead of
+	  the string of valid characters;
+	(read_user_info_from_form) use of `fix_string' is updated.
+
+	* super_html_2.c:
+	`login_accepting_chars' is removed;
+	(super_html_set_contest_var) `check_str' is used instead of `strspn'.
+
+	* super_html_3.c:
+	`login_accepting_chars' is removed;
+	(super_html_prob_cmd) `check_str' is used instead of `strspn'.
+
+	* userlist_check.c: initial revision.
+
+2007-03-26 (r4041) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_types.h: copyright notice is updated;
+	INCOMPLETE registration flag is added.
+
+	* new-server.h:
+	editing of `INCOMPLETE' registration flag is supported.
+
+	* teamdb.h: copyright year is updated;
+	`TEAM_INCOMPLETE' constant is added.
+
+	* userlist.h:
+	support for "incomplete" attribute is added.
+
+	* userlist_proto.h:
+	error message code is added.
+
+	* edit-userlist.c: copyright year is updated;
+	editing of `INCOMPLETE' registration flag is supported.
+
+	* filter_eval.c: copyright year is updated;
+	(do_eval) evaluation of `incomplete' token is added.
+
+	* filter_expr.y: copyright year is updated;
+	support for "incomplete" primary expression is added.
+
+	* filter_scan.lex: copyright year is updated;
+	support for "incomplete" token is added.
+
+	* new_server_html.c:
+	(priv_registration_operation) changing the `INCOMPLETE' flag is
+	  supported;
+	(priv_view_users_page) viewing `INCOMPLETE' flag is supported;
+
+	* new_server_html_2.c:
+	(ns_user_info_page) editing of `INCOMPLETE' registration flag
+	  is implemented.
+
+	* new_server_html_4.c:
+	(do_dump_master_runs) `INCOMPLETE' flag is supported.
+
+	* new_server_tables.c:
+	editing of `INCOMPLETE' registration flag is supported.
+
+	* team.c:
+	(error_registration_incomplete) new function;
+	(authentificate) `registration incomplete' error is checked.
+
+	* teamdb.c: copyright year is updated;
+	(teamdb_get_flags) `INCOMPLETE' flag is supported;
+	(teamdb_export_team) the same;
+	(teamdb_get_user_status_map) the same.
+
+	* userlist_proto.c: copyright notice is updated;
+	error message text for `incomplete registration' is added.
+
+	* userlist-server.c:
+	(cmd_team_login) `INCOMPLETE' registration flag is checked;
+	(cmd_team_check_user) the same as above;
+	(cmd_team_check_cookie) the same as above;
+	(cmd_get_cookie) the same as above.
+
+	* userlist_xml.c:
+	`INCOMPLETE' contest registration flag is supported.
+
+2007-03-26 (r4039) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	"allowed_list.c" is added.
+
+	* misctext.h: copyright year is updated;
+	(allowed_list_parse) new function prototype;
+	(allowed_list_free) new function prototype;
+
+	* new-server.h:
+	(struct session_info) `user_info' field is added.
+
+	* allowed_list.c: initial revision.
+
+	* new-server.c:
+	"userlist.h" is included;
+	(do_remove_session) user info field is freed.
+
+	* new_server_html_5.c: progress...
+
+	* new_server_tables.c: new actions are added.
+
+	* register.c:
+	(parse_allowed_list) moved to `allowed_list.c' as `allowed_list_parse';
+	(map_user_languages) moved to `allowed_list.c' as `allowed_list_map';
+	(initialize) uses of `allowed_list_parse' are updated;
+	(display_edit_registration_data_page) use of `allowed_list_map'
+	  are updated.
+
+	* run.c:
+	(process_default_testers) problems with `manual_checking' flag are
+	  skipped;
+	(check_config) the same.
+
+2007-03-19 (r4031) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h:
+	(write_standings) `force_fancy_style' parameter is added;
+	(do_write_kirov_standings) the same as above;
+	(do_write_standings) the same as above;
+	(do_write_moscow_standings) the same as above;
+	(write_virtual_standings) the same as above.
+
+	* new-server.h:
+	(ns_set_fancy_standings_style) function is removed.
+
+	* html.c:
+	(struct standings_style) new structure to store the tunable standings
+	  style;
+	(setup_standings_style) new function to setup the standings style;
+	  this function handles `stand_fancy_style' variable;
+	(write_standings_header) avoid using "Team" is headers;
+	(write_kirov_page_table) `state' parameter is replaced with `pss'
+	  (the standings style table pointer) parameter;
+	(write_moscow_page_table) the same as above;
+	(do_write_kirov_standings) `force_fancy_style' parameter is added;
+	  `setup_standings_style' is called;
+	  the local table of standings style (set up by
+	  `setup_standings_style') is used instead of `global' configuration
+	  variables;
+	(do_write_moscow_standings) the same as above;
+	(do_write_standings) the same as above;
+	(write_standings) `force_fancy_style' parameter is added and passed to
+	  `do_write_{,kirov,moscow}_standings' functions;
+	(write_virtual_standings) `force_fancy_style' parameter is added and
+	  passed to `do_write_standings'.
+
+	* master_html.c:
+	(write_priv_standings) calls of `do_write_{,kirov,moscow}_standings'
+	  are updated;
+	(write_raw_standings) the same as above.
+
+	* new_server_html.c:
+	(privileged_page) `ns_set_fancy_standings_style' call is removed;
+	(unpriv_view_standings) calls of `do_write_{,kirov,moscow}_standings'
+	  are updated;
+	(unpriv_main_page) `ns_set_fancy_standings_style' call is removed.
+
+	* new_server_html_2.c:
+	(ns_write_priv_standings) calls of `do_write_{,kirov,moscow}_standings'
+	  are updated.
+
+	* new_server_html_3.c:
+	(ns_set_fancy_standings_style) function is removed, fancy style
+	  functionality is set up at the do_write_standings function; this
+	  fixes "ugly" standings in default mode.
+
+	* new_server_html_5.c: progress...
+
+	* prepare_out.c:
+	(prepare_unparse_unhandled_prob) `use_tgz' is removed.
+
+	* serve.c:
+	(cmd_team_show_item) call of `write_virtual_standings' is updated.
+
+	* serve_2.c:
+	(serve_update_standings_file) calls of `write_standings' are updated.
+
+	* super_html_3.c:
+	(super_html_global_param) support for `stand_fancy_style' is added.
+
+2007-03-19 (r4030) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog.c:
+	(run_find_duplicate) check for empty runlog is added.
+
+2007-03-19 (r4028) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	new global variable `stand_fancy_style' is added.
+
+	* super_proto.h:
+	editing of the `stand_fancy_style' new global variable is supported.
+
+	* prepare.c, prepare_out.c:
+	new global variable `stand_fancy_style' is added.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of the `stand_fancy_style' new global variable is supported.
+
+2007-03-16 (r4025) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(struct http_request_info) new fields `reg_status', `reg_flags'
+	  are added.
+
+	* userlist_clnt.h:
+	(userlist_clnt_get_cookie) `p_reg_status', `p_reg_flags' parameters
+	  are added.
+
+	* userlist_proto.h:
+	(struct userlist_pk_login_ok) new fields `reg_status', `reg_flags'
+	  are added.
+
+	* new_server_html.c:
+	(privileged_page) use of `userlist_clnt_get_cookie' is updated;
+	(unpriv_main_page) the same as above.
+
+	* new_server_html_4.c:
+	(new_server_cmd_handler) use of `userlist_clnt_get_cookie' is updated.
+
+	* userlist-server.c:
+	(cmd_get_cookie) `reg_status', `reg_flags' fields of the reply
+	  packet are filled.
+
+2007-03-16 (r4024) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	AUTOASSIGNED_ACCOUNT action codes are removed.
+
+	* userlist_proto.h:
+	ULS_TEAM_GET_COOKIE - new name for ULS_GET_COOKIE;
+	ULS_REGISTER_CONTEST_2 - new action;
+	ULS_GET_COOKIE - new action.
+
+	* new_server_html.c:
+	(unprivileged_page_login_page) `new-register' action name
+	  is updated;
+	(unpriv_main_page) `ULS_GET_COOKIE' is replaced with
+	  `ULS_TEAM_GET_COOKIE'.
+
+	* userlist-server.c:
+	(cmd_check_user) `simple_registration' flag is checked;
+	(cmd_register_contest_2) new function;
+	(cmd_get_cookie) `ULS_GET_COOKIE' requiest is handled.
+
+2007-03-16 (r4022) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist_clnt.h:
+	(userlist_clnt_register_new_2) parameters `action', `self_url'
+	  are added.
+
+	* register.c:
+	(action_register_new_user) use of `userlist_clnt_register_new_2'
+	  is updated.
+
+	* userlist-server.c:
+	(cmd_register_new_2) `action' and `self_url' from the request
+	  packet are handled.
+
+2007-03-14 (r4020) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	installation of `new-register' is added.
+
+	* execute.c: copyright notice is updated;
+	help message is fixed.
+
+	* new-client.c, testinfo.c: copyright year is updated;
+	"gcc-4.1.2 -O2 -Wall" warnings are fixed.
+
+	* new_server_html.c, new_server_html_2.c, new_server_html_4.c, prepare.c, runlog.c:
+	"gcc-4.1.2 -O2 -Wall" warnings are fixed.
+
+2007-03-14 (r4018) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	`new-register' actions are renamed.
+
+	* userlist_clnt.h:
+	(userlist_clnt_register_new_2) `p_login' parameter is added.
+
+	* register.c:
+	(action_register_new_user) use of `userlist_clnt_register_new_2'
+	  is updated.
+
+	* new_server_html.c:
+	(unprivileged_page_login_page) "Register" link is updated.
+
+	* new_server_html_5.c:
+	restructurizations and changes.
+
+	* userlist-server.c:
+	(cmd_register_new_2) user login is sent back as well as the password;
+	(cmd_login) renamed from `cmd_do_login'.
+
+2007-03-12 (r4016) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist_clnt.h:
+	(userlist_clnt_get_cookie) `p_team_login' parameter is added.
+
+	* userlist_proto.h:
+	(struct userlist_pk_login_ok) `team_login' field is added.
+
+	* new_server_html.c:
+	(privileged_page) `userlist_clnt_get_cookie' usage is updated;
+	(unpriv_main_page) the same as above.
+
+	* new_server_html_4.c:
+	(new_server_cmd_handler) `userlist_clnt_get_cookie' usage is updated.
+
+	* userlist-server.c:
+	(cmd_recover_password) use of `default_new_cookie' is updated;
+	(cmd_do_login) the same;
+	(cmd_check_user) the same;
+	(cmd_team_login) the same;
+	(cmd_team_check_user) the same;
+	(cmd_priv_login) the same;
+	(cmd_priv_check_user) the same;
+	(cmd_check_cookie) `team_login' field of the cookie is honored;
+	(cmd_team_check_cookie) the same.
+
+2007-03-12 (r4014) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_plugin.h: copyright year is updated;
+	(struct uldb_plugin_iface::new_cookie) `team_login' parameter is added.
+
+	* userlist.h: copyright year is updated;
+	(struct userlist_cookie) `team_login' field is added.
+
+	* uldb_plugin_xml.c: copyright year is updated;
+	(new_cookie_func) new parameter `team_login' is added.
+
+	* userlist_xml.c: copyright year is updated;
+	new "team_login" attribute of the <cookie> element is supported.
+
+2007-03-11 (r4011) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(user_main_page) user interface is improved.
+
+	* prepare.c:
+	(parse_variant_map) check for f == NULL in cleanup code is added.
+
+	* run_packet_7.c: copyright notice is updated;
+	(run_request_packet_quit) packet size is properly aligned.
+
+2007-03-09 (r4010) Alexander Chernov  <cher@ejudge.ru>
+
+	* expat_iface.c:
+	(is_correct_utf8) `p_ucs32' parameter is added;
+	(convert_utf8_to_local) unicode characters U+2400-U+241F, U+2421
+	  are mapped to the control characters \0-\x1f, \x7f.
+
+	* misctext.c: copyright year is updated;
+	control characters \0-\x1f, \x7f are mapped to the unicode characters
+	  U+2400-U+241F, U+2421.
+
+2007-03-09 (r4006) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h:
+	(new_write_user_runs) `prob_id' parameter is added.
+
+	* prepare.h:
+	`disable_tab', `restricted_statement' problem configuration variables
+	  are supported;
+	(struct section_problem_data) new fields `disable_tab',
+	  `restricted_statement' are added.
+
+	* super_proto.h:
+	editing of the new problem configuration variables `disable_tab' and
+	  `restricted_statement' is supported.
+
+	* html.c:
+	(new_write_user_runs) `prob_id' parameter is added.
+
+	* new_server_html.c:
+	(unpriv_page_header) "User stadings" are printed in `personal' contest
+	  mode;
+	(get_last_answer_select_one) defined `static';
+	(is_judged_virtual_olympiad) defined `static';
+	(get_problem_status) new function;
+	(user_main_page) UI improvements.
+
+	* prepare.c, prepare_out.c:
+	`disable_tab', `restricted_statement' problem configuration variables
+	  are supported.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of the new problem configuration variables `disable_tab' and
+	  `restricted_statement' is supported.
+
+2007-03-08 (r4002) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	new problem configuration variables `source_header', `source_footer'
+	  are added;
+	(struct section_problem_data) new fields `source_header',
+	  `source_footer' are added.
+
+	* serve_state.h:
+	(serve_compile_request) new parameters `prob', `lang' are added.
+
+	* super_proto.h:
+	editing of the new problem configuration variables `source_header',
+	  `source_footer' is supported.
+
+	* new_server_html.c:
+	(priv_submit_run) use of `serve_compile_request' is updated;
+	(unpriv_submit_run) the same as above.
+
+	* new_server_html_4.c:
+	(cmd_submit_run) use of `serve_compile_request' is updated.
+
+	* prepare.c, prepare_out.c:
+	new problem configuration variables `source_header', `source_footer'
+	  are added.
+
+	* serve.c:
+	(cmd_priv_submit_run) use of `serve_compile_request' is updated;
+	(do_submit_run) the same as above.
+
+	* serve_2.c:
+	"sformat.h" is included;
+	(serve_compile_request) new parameters `prob', `lang' are added;
+	  `source_header', `source_footer' problem configuration variables
+	  are supported;
+	(serve_rejudge_run) use of `serve_compile_request' is updated.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of the new problem configuration variables `source_header',
+	  `source_footer' is supported.
+
+2007-03-06 (r3996) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h:
+	(write_xml_team_accepting_report) `exam_mode' parameter is added.
+
+	* new-server.h:
+	NEW_SRV_ACTION_UPDATE_ANSWER is added.
+
+	* runlog.h:
+	(run_count_all_attempts) new function prototype;
+	(run_has_transient_user_runs) new function prototype;
+	(run_is_source_available) new function prototype.
+
+	* html.c:
+	(write_xml_team_accepting_report) `exam_mode' parameter is added.
+
+	* make-js-actions.c:
+	NEW_SRV_ACTION_UPDATE_ANSWER is added.
+
+	* new_server_html.c:
+	(unprivileged_page_login) `orig_locale_id' parameter is added;
+	(write_alternatives_file) new parameters `last_answer', `prob_id',
+	  `enable_js' are added;
+	(unpriv_load_html_style) XML state information is embedded into the
+	  html document to avoid server request and race conditions;
+	(unpriv_page_forgot_password_1) `orig_locale_id' parameter is added;
+	(unpriv_page_forgot_password_2) `orig_locale_id' parameter is added;
+	(unpriv_page_forgot_password_3) `orig_locale_id' parameter is added;
+	(unprivileged_page_login_page) `orig_locale_id' parameter is added;
+	(get_last_language) new function;
+	(get_last_source) new function;
+	(get_last_answer_select_one) new function;
+	(is_judged_virtual_olympiad) new function;
+	(user_main_page) more contrast colors are used;
+	  exam_mode enhancements;
+	(do_xml_user_state) new function;
+	(unpriv_xml_update_answer) new function.
+
+	* new_server_html_2.c:
+	(ns_write_olympiads_user_runs) exam_mode improvements.
+
+	* runlog.c:
+	(run_count_all_attempts) new function;
+	(run_has_transient_user_runs) new function;
+	(run_is_source_available) new function.
+
+	* serve_2.c:
+	(serve_judge_virtual_olympiad) virtual olympiad judging improved.
+
+2007-03-04 (r3993) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	html_input_selection.c is added.
+
+	* mischtml.h: copyright year is updated;
+	(html_input_password) function prototype is added.
+
+	* new_server_html.c:
+	(priv_change_password) "&amp;" turned back to "&" because URL
+	  is used in refresh request;
+	(priv_logout) the same;
+	(unpriv_change_password) the same;
+	(unpriv_logout) the same.
+
+	* new_server_html_5.c: progress...
+
+2007-03-02 (r3991) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist_clnt.h:
+	(userlist_clnt_login) `p_locale_id' parameter is removed;
+	(userlist_clnt_team_login) `p_locale_id' parameter is removed;
+	(userlist_clnt_priv_login) `p_locale_id' parameter is removed.
+
+	* master.c:
+	(authentificate) use of `userlist_clnt_priv_login' is updated.
+
+	* new_server_html.c:
+	(privileged_page_login) use of `userlist_clnt_priv_login' is updated;
+	(unprivileged_page_login) use of `userlist_clnt_team_login' is updated;
+	(ns_handle_http_request) raw `locale_id' is passed to "new-register"
+	  handling.
+
+	* new_server_html_4.c:
+	(cmd_login) use of `userlist_clnt_team_login' is updated;
+	  use of `userlist_clnt_priv_login' is updated.
+
+	* register.c:
+	(action_login) use of `userlist_clnt_login' is updated.
+
+	* serve-cmd.c:
+	(handle_login) use of `userlist_clnt_priv_login' is updated;
+	(handle_team_login) use of `userlist_clnt_team_login' is updated.
+
+	* serve-control.c:
+	(authentificate) use of `userlist_clnt_priv_login' is updated.
+
+	* team.c:
+	(authentificate) use of `userlist_clnt_team_login' is updated.
+
+2007-03-02 (r3989) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	(struct contest_desc) `default_locale', `default_locale_val'
+	  fields are added.
+
+	* l10n.h: copyright year is updated;
+	(l10n_parse_locale) function prototype is added.
+
+	* super_proto.h:
+	editing of `default_locale' contest configuration variable is
+	  supported.
+
+	* contests.c:
+	"l10n.h" is included;
+	<default_locale> element is supported.
+
+	* l10n.c:
+	<string.h> is included;
+	(l10n_parse_locale) function is added.
+
+	* serve-control.c, super_html.c, super_html_2.c, super-serve.c:
+	editing of `default_locale' contest configuration variable is
+	  supported.
+
+2007-03-01 (r3987) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist_clnt.h: copyright year is updated;
+	(userlist_clnt_login) `p_locale_id' and `p_name' parameters
+	  are exchanged.
+
+	* userlist_proto.h:
+	`ULS_CHECK_USER' renamed to `ULS_TEAM_CHECK_USER';
+	`ULS_CHECK_USER' is added.
+
+	* new_server_html.c:
+	(unprivileged_page_login) use of `userlist_clnt_team_login'
+	  is updated.
+
+	* new_server_html_4.c:
+	(cmd_login) use of `userlist_clnt_team_login' is updated.
+
+	* new_server_html_5.c:
+	progress...
+
+	* register.c:
+	(action_login) use of `userlist_clnt_login' is updated.
+
+	* serve-cmd.c: copyright year is updated;
+	(handle_team_login) use of `userlist_clnt_login' is updated.
+
+	* userlist-server.c: copyright year is updated;
+	(cmd_register_new) `self_url' and `action' fields of the command
+	  packet are handled;
+	(cmd_check_user) new function;
+	(cmd_team_check_user) renamed from `cmd_check_user'.
+
+2007-02-25 (r3981) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge-control.c:
+	(op_error) attribute `unused' is added.
+
+	* run.c:
+	(run_tests) bug is fixed.
+
+	* runlog_import.c:
+	(runlog_import_xml) runs with source are not marked as `imported',
+	  instead their status is changed to `pending'.
+
+	* runlog_xml.c:
+	fixes.
+
+2007-02-25 (r3979) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog.h:
+	(struct run_file) new structure;
+	(struct run_data) new structure.
+	(parse_runlog_xml) extra parameter is added for importing sources.
+
+	* new_server_html.c:
+	(unpriv_load_html_style) warning if no `--enable-ajax' is fixed.
+
+	* runlog_import.c:
+	(runlog_import_xml) support for importing source is added.
+
+	* runlog_xml.c:
+	parsing of the source and audit textx is supported.
+
+2007-02-25 (r3977) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.h:
+	(html_armor_extend) new function prototype is added.
+
+	* misctext.c:
+	(html_armor_extend) new function.
+
+	* runlog_xml.c: in progress of adding sources and audits.
+
+2007-02-24 (r3973) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog_xml.c:
+	(unparse_runlog_xml) `full_archive' is written.
+
+	* userlist_xml.c:
+	(userlist_real_unparse_user) warning, produced by gcc-4.1.2
+	  is fixed.
+
+2007-02-24 (r3971) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.h:
+	(html_armor_buf_bin) new function prototype.
+
+	* runlog.h:
+	(run_write_xml) `source_mode' parameter is added;
+	(unparse_runlog_xml) `source_mode' parameter is added.
+
+	* misctext.c:
+	(html_armor_needed_bin) new function;
+	(html_armor_buf_bin) new function.
+
+	* new_server_html.c:
+	(priv_view_runs_dump) `NEW_SRV_ACTION_WRITE_XML_RUNS_WITH_SRC'
+	  is implemented.
+
+	* new_server_html_4.c:
+	(cmd_dump_runs) `NEW_SRV_ACTION_WRITE_XML_RUNS_WITH_SRC'
+	  is implemented.
+
+	* runlog.c:
+	(run_write_xml) `source_mode' parameter is added.
+
+	* runlog_xml.c: copyright year is updated;
+	"archive_paths.h", "fileutl.h" are included;
+	(unparse_runlog_xml) `source_mode' parameter is added;
+	  <source>, <audit>, <xml_report> elements are written in
+	  `source_mode'.
+
+	* serve.c:
+	(cmd_view) `unparse_runlog_xml' use is updated.
+
+	* serve_2.c:
+	(do_update_xml_log) `unparse_runlog_xml' use is updated.
+
+2007-02-24 (r3969) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) `lang_time_adj_millis' field is added;
+	(struct section_tester_data) `time_limit_adj_millis' field is added.
+
+	* run_packet.h: copyright year is updated;
+	(struct run_request_packet) `time_limit_adj_millis' field is added.
+
+	* run_packet_priv.h: copyright notice is updated;
+	(struct run_request_bin_packet) field `time_limit_adj_millis' is added.
+
+	* super_proto.h:
+	editing of `lang_time_adj_millis' problem configuration variable
+	  is supported.
+
+	* prepare.c:
+	`lang_time_adj_millis' problem configuration variable is handled;
+	`time_limit_adj_millis' tester configuration variable is handled.
+
+	* prepare_out.c:
+	  problem configuration variable `time_limit_adj_millis' is handled.
+
+	* run.c:
+	(run_tests) tester parameter `time_limit_adj_millis' is handled;
+	  run request packet parameter `time_limit_adj_millis' is handled.
+
+	* run_packet_1.c: copyright notice is updated;
+	(run_request_packet_read) `time_limit_adj_millis' field is handled.
+
+	* run_packet_2.c: copyright notice is updated;
+	(run_request_packet_write) `time_limit_adj_millis' field is handled.
+
+	* serve_2.c:
+	(serve_run_request) `lang_time_adj_millis' problem configuration
+	  variable is handled.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of `lang_time_adj_millis' problem configuration variable
+	  is supported.
+
+2007-02-20 (r3963) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server.h:
+	new actions are added.
+
+	* new_server_proto.h:
+	new errors are added.
+
+	* master_html.c:
+	(write_xml_testing_report) "Max. CPU time" statistics is shown.
+
+	* new_server_html.c:
+	(priv_view_runs_dump) NEW_SRV_ACTION_WRITE_XML_RUNS_WITH_SRC is
+	  handled (but as alias to NEW_SRV_ACTION_WRITE_XML_RUNS);
+	(priv_main_page) write XML with source link is added;
+	(unprivileged_page_login_page) `register' link is fixed to
+	  redirect to `new-register' in the simplest case.
+
+	* new_server_html_5.c: progress...
+
+	* new_server_proto.c:
+	new error descriptions are added.
+
+2007-02-18 (r3961) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.h:
+	(url_armor_buf) new function prototype.
+
+	* new-server.h:
+	new actions are added.
+
+	* misctext.c:
+	(url_armor_string_unchecked) new function;
+	(url_armor_needed) new function;
+	(html_armor_buf) buffer reallocation strategy is changed;
+	(url_armor_buf) new function.
+
+	* new_server_html.c:
+	(ns_handle_http_request) `ns_register_pages' is called.
+
+	* new_server_html_5.c: progress...
+
+2007-02-16 (r3959) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	(struct contest_desc) `dir_mode', `dir_group', `file_mode',
+	`file_group' fields are added.
+
+	* super_proto.h:
+	editing of <dir_mode>, <dir_group>, <file_mode>, <file_group>
+	contest.xml elements is supported.
+
+	* contests.c:
+	support for <dir_mode>, <dir_group>, <file_mode>, <file_group>
+	contest.xml elements is added.
+
+	* serve-control.c, super_html.c, super_html_2.c, super-serve.c:
+	editing of <dir_mode>, <dir_group>, <file_mode>, <file_group>
+	contest.xml elements is supported.
+
+2007-02-16 (r3955) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`new_server_html_5.c' is added.
+
+	* new_server_html.c:
+	(ns_handle_http_request) "new-register" is added.
+
+	* new_server_html_5.c: initial revision.
+
+2007-02-15 (r3953) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	(struct contest_desc) `personal' field is added.
+
+	* super_proto.h:
+	editing of the `personal' contest attribute is supported.
+
+	* contests.c:
+	support for "personal" attribute of the <contest> element.
+
+	* serve-control.c, super_html.c, super_html_2.c, super-serve.c:
+	editing of the `personal' contest attribute is supported.
+
+2007-02-13 (r3949) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(ns_url_unescaped) version of `ns_url', which generates URLS with
+	  `&' instead of `&amp;';
+	(html_refresh_page) `ns_url_unescaped' is used;
+	(unpriv_command) SERVE_EVENT_VIRTUAL_STOP is added to the event queue.
+
+	* new_server_html_2.c:
+	(get_source) the answer number is also added (in italic).
+
+2007-02-13 (r3947) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(html_refresh_page) "Location:" header is used;
+	(html_refresh_page_2) "Location:" header is used;
+	(unpriv_load_html_style) `self_url' is added to the JS part;
+	(user_main_page) lower problem tabs also use JS.
+
+	* make-js-actions.c:
+	NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT is added.
+
+2007-02-12 (r3945) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(unpriv_view_standings) final standings are shown in OLYMPIAD mode;
+	(unpriv_page_header) "Standings" tab is supported;
+	(user_main_page) the problem tab is clickable in problem_navigation
+	  mode (uses JS);
+	(unpriv_xml_user_state) reply caching is disabled.
+
+2007-02-10 (r3942) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) new field `advance_to_next' is added.
+
+	* super_proto.h:
+	editing of the new problem configuration variable `advance_to_next'
+	is supported.
+
+	* prepare.c, prepare_out.c:
+	new problem configuration variable `advance_to_next' is supported.
+
+	* new_server_html.c:
+	(unpriv_submit_run) `advance_to_next' is supported.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of the new problem configuration variable `advance_to_next'
+	is supported.
+
+2007-02-10 (r3938) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_2.c:
+	(get_accepting_passed_tests) new function;
+	(ns_write_olympiads_user_runs) `min_tests_to_accept' and
+	  `accept_partial' support is improved.
+
+2007-02-10 (r3936) Alexander Chernov  <cher@ejudge.ru>
+
+	* run.c:
+	(run_tests) support for `min_tests_to_accept' is added.
+
+2007-02-09 (r3934) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) `min_tests_to_accept' field is added.
+
+	* super_proto.h:
+	editing of `min_tests_to_accept' problem configuration variable
+	is supported.
+
+	* prepare.c, prepare_out.c:
+	new problem configuration variable `min_tests_to_accept' is added.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of `min_tests_to_accept' problem configuration variable
+	is supported.
+
+2007-02-07 (r3932) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_tester_data) `ignore_stderr' field is added.
+
+	* prepare.c:
+	`ignore_stderr' tester configuration variable is added.
+
+	* prepare_out.c:
+	(generate_abstract_tester) `ignore_stderr' is added for DOS.
+
+	* run.c:
+	(run_tests) `ignore_stderr' tester variable is handled.
+
 2007-02-06 (r3927) Alexander Chernov  <cher@ejudge.ru>
 
 	* configure.ac:
