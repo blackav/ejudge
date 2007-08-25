@@ -1,3 +1,9 @@
+2007-08-04 (r4271) Alexander Chernov  <cher@ejudge.ru>
+
+	* fileutl.c: copyright notice is updated;
+	(scan_dir) `fi_size' parameter is added to allow specifying
+	  the buffer size.
+
 2006-10-05 (r3489) Alexander Chernov  <cher@ejudge.ru>
 
 	* interrupt.c: copyright notice is updated;
