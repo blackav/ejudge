@@ -1094,6 +1094,8 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NC_COUNTRY] = { "Country", 1, 1 },
   [USERLIST_NC_COUNTRY_EN] = { "Country (En)", 1, 1 },
   [USERLIST_NC_REGION] = { "Region", 1, 1 },
+  [USERLIST_NC_ZIP] = { "Zip code", 1, 1 },
+  [USERLIST_NC_STREET] = { "Street addr.", 1, 1 },
   [USERLIST_NC_LOCATION] = { "Location", 1, 1 },
   [USERLIST_NC_SPELLING] = { "Spelling", 1, 1 },
   [USERLIST_NC_PRINTER_NAME] = { "Printer name", 1, 1 },
@@ -1125,6 +1127,7 @@ static const struct user_field_desc member_descs[] =
   [USERLIST_NM_GROUP_EN]   { "Group (En)", 1, 1 },
   [USERLIST_NM_OCCUPATION] { "Occupation", 1, 1 },
   [USERLIST_NM_OCCUPATION_EN] { "Occupation (En)", 1, 1 },
+  [USERLIST_NM_DISCIPLINE] { "Discipline", 1, 1 },
   [USERLIST_NM_EMAIL]      { "E-mail", 1, 1 },
   [USERLIST_NM_HOMEPAGE]   { "Homepage", 1, 1 },
   [USERLIST_NM_PHONE]      { "Phone", 1, 1 },
@@ -1277,6 +1280,8 @@ static int field_order[] =
   USERLIST_NC_COUNTRY,
   USERLIST_NC_COUNTRY_EN,
   USERLIST_NC_REGION,
+  USERLIST_NC_ZIP,
+  USERLIST_NC_STREET,
   USERLIST_NC_LOCATION,
   USERLIST_NC_SPELLING,
   USERLIST_NC_PRINTER_NAME,
@@ -1511,6 +1516,8 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         case USERLIST_NC_COUNTRY:
         case USERLIST_NC_COUNTRY_EN:
         case USERLIST_NC_REGION:
+        case USERLIST_NC_ZIP:
+        case USERLIST_NC_STREET:
         case USERLIST_NC_LOCATION:
         case USERLIST_NC_SPELLING:
         case USERLIST_NC_PRINTER_NAME:
@@ -2211,6 +2218,7 @@ user_match(struct userlist_user *u, int kind)
           if (user_regmatch(pm->phone)) return 1;
           if (user_regmatch(pm->occupation)) return 1;
           if (user_regmatch(pm->occupation_en)) return 1;
+          if (user_regmatch(pm->discipline)) return 1;
           if (user_regmatch(pm->inst)) return 1;
           if (user_regmatch(pm->inst_en)) return 1;
           if (user_regmatch(pm->instshort)) return 1;

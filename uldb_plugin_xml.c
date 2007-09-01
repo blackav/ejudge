@@ -2403,6 +2403,10 @@ set_user_xml_func(void *data,
         xfree(om->occupation_en);
         om->occupation_en = xstrdup(nm->occupation_en);
       }
+      if (needs_update(om->discipline, nm->discipline)) {
+        xfree(om->discipline);
+        om->discipline = xstrdup(nm->discipline);
+      }
       if (nm->birth_date && nm->birth_date != om->birth_date)
         om->birth_date = nm->birth_date;
       if (nm->entry_date && nm->entry_date != om->entry_date)
@@ -2434,6 +2438,8 @@ static const int copy_user_general_fields[] =
   USERLIST_NC_COUNTRY,
   USERLIST_NC_COUNTRY_EN,
   USERLIST_NC_REGION,
+  USERLIST_NC_ZIP,
+  USERLIST_NC_STREET,
   USERLIST_NC_LANGUAGES,
   USERLIST_NC_PHONE,
 

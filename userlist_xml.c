@@ -75,6 +75,7 @@ static char const * const elem_map[] =
   "status",
   "occupation",
   "occupation_en",
+  "discipline",
   "contestants",
   "reserves",
   "coaches",
@@ -88,6 +89,8 @@ static char const * const elem_map[] =
   "country",
   "country_en",
   "region",
+  "zip",
+  "street",
   "location",
   "spelling",
   "printer_name",
@@ -206,6 +209,8 @@ elem_free(struct xml_tree *t)
       xfree(p->i.country);
       xfree(p->i.country_en);
       xfree(p->i.region);
+      xfree(p->i.zip);
+      xfree(p->i.street);
       xfree(p->i.location);
       xfree(p->i.spelling);
       xfree(p->i.printer_name);
@@ -232,6 +237,7 @@ elem_free(struct xml_tree *t)
       xfree(p->homepage);
       xfree(p->occupation);
       xfree(p->occupation_en);
+      xfree(p->discipline);
       xfree(p->inst);
       xfree(p->inst_en);
       xfree(p->instshort);
@@ -272,6 +278,8 @@ elem_free(struct xml_tree *t)
       xfree(p->i.country);
       xfree(p->i.country_en);
       xfree(p->i.region);
+      xfree(p->i.zip);
+      xfree(p->i.street);
       xfree(p->i.location);
       xfree(p->i.spelling);
       xfree(p->i.printer_name);
@@ -538,6 +546,7 @@ static const size_t leaf_member_offsets[USERLIST_LAST_TAG] =
   [USERLIST_T_GROUP_EN] = MEMBER_OFFSET(group_en),
   [USERLIST_T_OCCUPATION] = MEMBER_OFFSET(occupation),
   [USERLIST_T_OCCUPATION_EN] = MEMBER_OFFSET(occupation_en),
+  [USERLIST_T_DISCIPLINE] = MEMBER_OFFSET(discipline),
   [USERLIST_T_FIRSTNAME] = MEMBER_OFFSET(firstname),
   [USERLIST_T_FIRSTNAME_EN] = MEMBER_OFFSET(firstname_en),
 };
@@ -764,6 +773,8 @@ static const size_t leaf_info_offsets[USERLIST_LAST_TAG] =
   [USERLIST_T_COUNTRY] = INFO_OFFSET(country),
   [USERLIST_T_COUNTRY_EN] = INFO_OFFSET(country_en),
   [USERLIST_T_REGION] = INFO_OFFSET(region),
+  [USERLIST_T_ZIP] = INFO_OFFSET(zip),
+  [USERLIST_T_STREET] = INFO_OFFSET(street),
   [USERLIST_T_LOCATION] = INFO_OFFSET(location),
   [USERLIST_T_SPELLING] = INFO_OFFSET(spelling),
   [USERLIST_T_PRINTER_NAME] = INFO_OFFSET(printer_name),
@@ -1695,6 +1706,8 @@ userlist_real_unparse_user(
   xml_unparse_text(f, elem_map[USERLIST_T_COUNTRY], ui->country, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_COUNTRY_EN], ui->country_en, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_REGION], ui->region, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_ZIP], ui->zip, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_STREET], ui->street, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_LOCATION], ui->location, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_SPELLING], ui->spelling, "    ");
   xml_unparse_text(f,elem_map[USERLIST_T_PRINTER_NAME],ui->printer_name,"    ");

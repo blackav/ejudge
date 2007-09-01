@@ -47,6 +47,8 @@ static const unsigned char * const contest_accept_chars[CONTEST_LAST_FIELD] =
   [CONTEST_F_COUNTRY] = name_accept_chars,
   [CONTEST_F_COUNTRY_EN] = name_en_accept_chars,
   [CONTEST_F_REGION] = name_accept_chars,
+  [CONTEST_F_ZIP] = login_accept_chars,
+  [CONTEST_F_STREET] = name_accept_chars,
   [CONTEST_F_LANGUAGES] = name_accept_chars,
 };
 
@@ -75,6 +77,7 @@ static const unsigned char * const member_accept_chars[CONTEST_LAST_MEMBER_FIELD
   [CONTEST_MF_FACSHORT_EN] = name_en_accept_chars,
   [CONTEST_MF_OCCUPATION] = name_accept_chars,
   [CONTEST_MF_OCCUPATION_EN] = name_en_accept_chars,
+  [CONTEST_MF_DISCIPLINE] = name_accept_chars,
   [CONTEST_MF_BIRTH_DATE] = url_accept_chars,
   [CONTEST_MF_ENTRY_DATE] = url_accept_chars,
   [CONTEST_MF_GRADUATION_DATE] = url_accept_chars,
@@ -97,6 +100,8 @@ const int userlist_contest_field_ids[CONTEST_LAST_FIELD] =
   [CONTEST_F_COUNTRY] = USERLIST_NC_COUNTRY,
   [CONTEST_F_COUNTRY_EN] = USERLIST_NC_COUNTRY_EN,
   [CONTEST_F_REGION] = USERLIST_NC_REGION,
+  [CONTEST_F_ZIP] = USERLIST_NC_ZIP,
+  [CONTEST_F_STREET] = USERLIST_NC_STREET,
   [CONTEST_F_LANGUAGES] = USERLIST_NC_LANGUAGES,
 };
 
@@ -125,6 +130,7 @@ const int userlist_member_field_ids[CONTEST_LAST_MEMBER_FIELD] =
   [CONTEST_MF_FACSHORT_EN] = USERLIST_NM_FACSHORT_EN,
   [CONTEST_MF_OCCUPATION] = USERLIST_NM_OCCUPATION,
   [CONTEST_MF_OCCUPATION_EN] = USERLIST_NM_OCCUPATION_EN,
+  [CONTEST_MF_DISCIPLINE] = USERLIST_NM_DISCIPLINE,
   [CONTEST_MF_BIRTH_DATE] = USERLIST_NM_BIRTH_DATE,
   [CONTEST_MF_ENTRY_DATE] = USERLIST_NM_ENTRY_DATE,
   [CONTEST_MF_GRADUATION_DATE] = USERLIST_NM_GRADUATION_DATE,

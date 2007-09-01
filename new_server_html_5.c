@@ -1031,6 +1031,8 @@ contest_fields_order[] =
   CONTEST_F_CITY,
   CONTEST_F_CITY_EN,
   CONTEST_F_REGION,
+  CONTEST_F_ZIP,
+  CONTEST_F_STREET,
   CONTEST_F_COUNTRY,
   CONTEST_F_COUNTRY_EN,
   CONTEST_F_LANGUAGES,
@@ -1065,6 +1067,7 @@ member_fields_order[] =
   CONTEST_MF_FACSHORT_EN,
   CONTEST_MF_OCCUPATION,
   CONTEST_MF_OCCUPATION_EN,
+  CONTEST_MF_DISCIPLINE,
   CONTEST_MF_BIRTH_DATE,
   CONTEST_MF_ENTRY_DATE,
   CONTEST_MF_GRADUATION_DATE,
@@ -1097,6 +1100,8 @@ static struct field_desc_s contest_field_desc[CONTEST_LAST_FIELD] =
   [CONTEST_F_COUNTRY] = { __("Country"), '?', 128, 64, 0 },
   [CONTEST_F_COUNTRY_EN] = { __("Country (En)"),  '?', 128, 64, 0 },
   [CONTEST_F_REGION] = { __("Region"), '?', 128, 64, 0 },
+  [CONTEST_F_ZIP] = { __("Zip code"), '?', 128, 64, 0 },
+  [CONTEST_F_STREET] = { __("Street address"), '?', 128, 64, 0 },
   [CONTEST_F_LANGUAGES] = { __("Programming languages"), '?', 128, 64, 0 },
 };
 
@@ -1125,6 +1130,7 @@ static struct field_desc_s member_field_desc[CONTEST_LAST_MEMBER_FIELD] =
   [CONTEST_MF_FACSHORT_EN] = { __("Faculty (abbreviated) (En)"), '?', 32, 32, 0 },
   [CONTEST_MF_OCCUPATION] = { __("Occupation"), '?', 128, 64, 0 },
   [CONTEST_MF_OCCUPATION_EN] = { __("Occupation (En)"), '?', 128, 64, 0 },
+  [CONTEST_MF_DISCIPLINE] = { __("Discipline"), '?', 128, 64, 0 },
   [CONTEST_MF_BIRTH_DATE] = { __("Birth Date"), '?', 128, 64, 0 },
   [CONTEST_MF_ENTRY_DATE] = { __("Institution entry date"), '?', 128, 64, 0 },
   [CONTEST_MF_GRADUATION_DATE] = { __("Institution graduation date"), '?', 128, 64, 0 },

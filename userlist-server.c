@@ -4746,6 +4746,11 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
                 d->users_verb_style, _("Occupation (En)"),
                 d->users_verb_style, m->occupation_en?m->occupation_en:notset);
       }
+      if (!d || (cm && cm->fields[CONTEST_MF_DISCIPLINE])) {
+        fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                d->users_verb_style, _("Discipline"),
+                d->users_verb_style, m->discipline?m->discipline:notset);
+      }
         /*
     CONTEST_MF_EMAIL,
     CONTEST_MF_HOMEPAGE,
@@ -7432,6 +7437,8 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
     [CONTEST_F_COUNTRY] = "Country",
     [CONTEST_F_COUNTRY_EN] = "Country_en",
     [CONTEST_F_REGION] = "Region",
+    [CONTEST_F_ZIP] = "Zip",
+    [CONTEST_F_STREET] = "Street",
     [CONTEST_F_LANGUAGES] = "Languages",
   };
 
@@ -7976,6 +7983,8 @@ static const struct { unsigned char *str; int ind; } field_names[] =
   { "Country", USERLIST_NC_COUNTRY },
   { "Country_En", USERLIST_NC_COUNTRY_EN },
   { "Region", USERLIST_NC_REGION },
+  { "Zip", USERLIST_NC_ZIP },
+  { "Street", USERLIST_NC_STREET },
   { "Location", USERLIST_NC_LOCATION },
   { "Spelling", USERLIST_NC_SPELLING },
   { "Printer_Name", USERLIST_NC_PRINTER_NAME },
@@ -7996,6 +8005,7 @@ static const struct { unsigned char *str; int ind; } field_names[] =
   { "Group_En", USERLIST_NM_GROUP_EN },
   { "Occupation", USERLIST_NM_OCCUPATION },
   { "Occupation_En", USERLIST_NM_OCCUPATION_EN },
+  { "Discipline", USERLIST_NM_DISCIPLINE },
   { "Birth_Date", USERLIST_NM_BIRTH_DATE },
   { "Entry_Date", USERLIST_NM_ENTRY_DATE },
   { "Graduation_Date", USERLIST_NM_GRADUATION_DATE },
