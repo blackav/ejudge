@@ -96,6 +96,7 @@ enum
     USERLIST_T_STATUS,
     USERLIST_T_OCCUPATION,
     USERLIST_T_OCCUPATION_EN,
+    USERLIST_T_DISCIPLINE,
     USERLIST_T_CONTESTANTS,
     USERLIST_T_RESERVES,
     USERLIST_T_COACHES,
@@ -109,6 +110,8 @@ enum
     USERLIST_T_COUNTRY,
     USERLIST_T_COUNTRY_EN,
     USERLIST_T_REGION,
+    USERLIST_T_ZIP,
+    USERLIST_T_STREET,
     USERLIST_T_LOCATION,
     USERLIST_T_SPELLING,
     USERLIST_T_PRINTER_NAME,
@@ -222,20 +225,23 @@ enum
     /* 115 */
     USERLIST_NC_COUNTRY_EN,
     USERLIST_NC_REGION,
+    USERLIST_NC_ZIP,
+    USERLIST_NC_STREET,
     USERLIST_NC_LOCATION,
+    /* 120 */
     USERLIST_NC_SPELLING,
     USERLIST_NC_PRINTER_NAME,
-    /* 120 */
     USERLIST_NC_EXAM_ID,
     USERLIST_NC_EXAM_CYPHER,
     USERLIST_NC_LANGUAGES,
+    /* 125 */
     USERLIST_NC_PHONE,
     USERLIST_NC_CREATE_TIME,
-    /* 125 */
     USERLIST_NC_LAST_LOGIN_TIME,
     USERLIST_NC_LAST_CHANGE_TIME,
     USERLIST_NC_LAST_PWDCHANGE_TIME,
 
+    /* 130 */
     USERLIST_NC_LAST,
 
     /* user member info fields */
@@ -258,18 +264,19 @@ enum
     USERLIST_NM_OCCUPATION,
     USERLIST_NM_OCCUPATION_EN,
     /* 215 */
+    USERLIST_NM_DISCIPLINE,
     USERLIST_NM_INST,
     USERLIST_NM_INST_EN,
     USERLIST_NM_INSTSHORT,
     USERLIST_NM_INSTSHORT_EN,
-    USERLIST_NM_FAC,
     /* 220 */
+    USERLIST_NM_FAC,
     USERLIST_NM_FAC_EN,
     USERLIST_NM_FACSHORT,
     USERLIST_NM_FACSHORT_EN,
     USERLIST_NM_PHONE,
-    USERLIST_NM_CREATE_TIME,
     /* 225 */
+    USERLIST_NM_CREATE_TIME,
     USERLIST_NM_LAST_CHANGE_TIME,
     USERLIST_NM_BIRTH_DATE,
     USERLIST_NM_ENTRY_DATE,
@@ -300,6 +307,7 @@ struct userlist_member
   unsigned char *homepage;
   unsigned char *occupation;
   unsigned char *occupation_en;
+  unsigned char *discipline;
   unsigned char *inst;
   unsigned char *inst_en;
   unsigned char *instshort;
@@ -381,6 +389,8 @@ struct userlist_user_info
   unsigned char *country;
   unsigned char *country_en;
   unsigned char *region;
+  unsigned char *zip;
+  unsigned char *street;
   unsigned char *location;
   unsigned char *spelling;
   unsigned char *printer_name;

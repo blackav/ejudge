@@ -292,6 +292,8 @@ static char const * const field_map[] =
   "country",
   "country_en",
   "region",
+  "zip",
+  "street",
   "languages",
 
   0
@@ -323,6 +325,7 @@ static char const * const member_field_map[] =
   "facshort_en",
   "occupation",
   "occupation_en",
+  "discipline",
   "birth_date",
   "entry_date",
   "graduation_date",

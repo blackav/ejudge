@@ -1992,6 +1992,8 @@ static const unsigned char *const form_field_names[] =
   [CONTEST_F_COUNTRY] = "Country",
   [CONTEST_F_COUNTRY_EN] = "Country (English)",
   [CONTEST_F_REGION] = "Region",
+  [CONTEST_F_ZIP] = "Zip code",
+  [CONTEST_F_STREET] = "Street address",
   [CONTEST_F_LANGUAGES] = "Programming Languages",
 };
 
@@ -2020,6 +2022,7 @@ static const unsigned char *const member_field_names[] =
   [CONTEST_MF_FACSHORT_EN] = "Faculty, short (English)",
   [CONTEST_MF_OCCUPATION] = "Occupation",
   [CONTEST_MF_OCCUPATION_EN] = "Occupation (English)",
+  [CONTEST_MF_DISCIPLINE] = "Discipline",
   [CONTEST_MF_BIRTH_DATE] = "Birth date",
   [CONTEST_MF_ENTRY_DATE] = "Entry date",
   [CONTEST_MF_GRADUATION_DATE] = "Graduation date",
