@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-08-24 17:38+0400\n"
-"PO-Revision-Date: 2007-07-31 11:45+0400\n"
+"POT-Creation-Date: 2007-09-02 00:38+0400\n"
+"PO-Revision-Date: 2007-09-02 01:16+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1163,6 +1163,9 @@ msgstr "Структура каталогов"
 
 msgid "Disable clarifications"
 msgstr "Запретить отправку участниками сообщений"
+
+msgid "Discipline"
+msgstr "Учебная дисциплина"
 
 msgid "Disk read error (nonexistant file?)"
 msgstr "Ошибка чтения с диска (файл не существует?)"
@@ -3491,6 +3494,9 @@ msgstr "Закрыть дорешивание"
 msgid "Stop virtual contest"
 msgstr "Закончить виртуальный турнир"
 
+msgid "Street address"
+msgstr "Улица, дом, квартира"
+
 msgid "Student"
 msgstr "Студент"
 
@@ -4251,6 +4257,9 @@ msgid ""
 msgstr ""
 "Ваш запрос вызвал внутреннюю ошибку сервера. Пожалуйста, сообщите об этом "
 "как об ошибке."
+
+msgid "Zip code"
+msgstr "Почтовый индекс"
 
 msgid "`run_id' parameter is undefined"
 msgstr "Параметр `run_id' не определён"
