@@ -250,6 +250,12 @@ static char const * const member_status_string[] =
   _("Scientist"),
   _("Other")
 };
+static char const * const member_gender_string[] =
+{
+  0,
+  _("Male"),
+  _("Female"),
+};
 #undef _
 
 #if CONF_HAS_LIBINTL - 0 == 1
@@ -4681,6 +4687,11 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
                 d->users_verb_style, _("Status"),
                 d->users_verb_style, gettext(member_status_string[m->status]));
       }
+      if (!d || (cm && cm->fields[CONTEST_MF_GENDER])) {
+        fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                d->users_verb_style, _("Gender"),
+                d->users_verb_style, gettext(member_gender_string[m->gender]));
+      }
       if (!d || (cm && cm->fields[CONTEST_MF_GRADE])) {
         fprintf(f, "<tr><td%s>%s:</td><td%s>%d</td></tr>\n",
                 d->users_verb_style, _("Grade"),
@@ -8907,7 +8918,7 @@ load_plugins(void)
     plg = (struct ejudge_plugin*) p;
 
     if (!plg->load_flag) continue;
-    if (strcmp(plg->type, "userdb") != 0) continue;
+    if (strcmp(plg->type, "uldb") != 0) continue;
 
     if (uldb_plugins_num == ULDB_PLUGIN_MAX_NUM) {
       err("too many userlist database plugins");
@@ -8935,7 +8946,6 @@ load_plugins(void)
       err("plugin failed to parse its configuration");
       return 1;
     }
-
 
     uldb_plugins[uldb_plugins_num].iface = uldb_iface;
     uldb_plugins[uldb_plugins_num].data = plugin_data;
@@ -9009,11 +9019,11 @@ convert_database(const unsigned char *from_name, const unsigned char *to_name)
 
   // prepare the destination plugin
   if (to_plugin->iface->open(to_plugin->data) < 0) {
-    err("plugin %s failed to open its connection", to_name);
+    err("plugin %s failed to open its connection", to_plugin->iface->b.name);
     return 1;
   }
   if (to_plugin->iface->create(to_plugin->data) < 0) {
-    err("plugin %s failed to create a new database", to_name);
+    err("plugin %s failed to create a new database", to_plugin->iface->b.name);
     return 1;
   }
 
@@ -9138,7 +9148,7 @@ main(int argc, char *argv[])
   if (random_init() < 0) return 1;
   l10n_prepare(config->l10n, config->l10n_dir);
 
-  if (load_plugins() < 0) return 1;
+  if (load_plugins() != 0) return 1;
 
   if (convert_flag) {
     return convert_database(from_plugin, to_plugin);

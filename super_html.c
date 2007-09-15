@@ -2006,6 +2006,7 @@ static const unsigned char *const member_field_names[] =
   [CONTEST_MF_SURNAME] = "Surname",
   [CONTEST_MF_SURNAME_EN] = "Surname (English)",
   [CONTEST_MF_STATUS] = "Status",
+  [CONTEST_MF_GENDER] = "Gender",
   [CONTEST_MF_GRADE] = "Grade",
   [CONTEST_MF_GROUP] = "Group",
   [CONTEST_MF_GROUP_EN] = "Group (English)",

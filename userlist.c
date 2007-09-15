@@ -96,6 +96,19 @@ userlist_member_status_str(int status)
   return member_status_string[status];
 }
 
+static char const * const gender_string[] =
+{
+  "",
+  _("Male"),
+  _("Female"),
+};
+unsigned char const *
+userlist_gender_str(int gender)
+{
+  ASSERT(gender >= 0 && gender <= 2);
+  return gender_string[gender];
+}
+
 const unsigned char *
 userlist_unparse_date(time_t d, int convert_null)
 {
@@ -154,6 +167,7 @@ static int member_field_offsets[] =
 {
   [USERLIST_NM_SERIAL] = MEMBER_OFFSET(serial),
   [USERLIST_NM_STATUS] = MEMBER_OFFSET(status),
+  [USERLIST_NM_GENDER] = MEMBER_OFFSET(gender),
   [USERLIST_NM_GRADE] = MEMBER_OFFSET(grade),
   [USERLIST_NM_FIRSTNAME] = MEMBER_OFFSET(firstname),
   [USERLIST_NM_FIRSTNAME_EN] = MEMBER_OFFSET(firstname_en),
@@ -197,6 +211,7 @@ static int member_field_types[] =
 {
   [USERLIST_NM_SERIAL] = USERLIST_NM_SERIAL,
   [USERLIST_NM_STATUS] = USERLIST_NM_STATUS,
+  [USERLIST_NM_GENDER] = USERLIST_NM_GENDER,
   [USERLIST_NM_GRADE] = USERLIST_NM_GRADE,
   [USERLIST_NM_FIRSTNAME] = USERLIST_NM_FIRSTNAME,
   [USERLIST_NM_FIRSTNAME_EN] = USERLIST_NM_FIRSTNAME,
@@ -241,6 +256,7 @@ userlist_is_empty_member_field(const struct userlist_member *m, int field_id)
   case USERLIST_NM_SERIAL:
     return 0;
   case USERLIST_NM_STATUS:
+  case USERLIST_NM_GENDER:
   case USERLIST_NM_GRADE:
     p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
     return (*p_int == 0);
@@ -271,6 +287,7 @@ userlist_is_equal_member_field(const struct userlist_member *m, int field_id,
   switch (member_field_types[field_id]) {
   case USERLIST_NM_SERIAL:
   case USERLIST_NM_STATUS:
+  case USERLIST_NM_GENDER:
   case USERLIST_NM_GRADE:
     p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
     if (!value && !*p_int) return 1;
@@ -319,6 +336,9 @@ userlist_get_member_field_str(unsigned char *buf, size_t len,
   case USERLIST_NM_STATUS:
     p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
     return snprintf(buf, len, "%s", userlist_member_status_str(*p_int));
+  case USERLIST_NM_GENDER:
+    p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
+    return snprintf(buf, len, "%s", userlist_gender_str(*p_int));
   case USERLIST_NM_FIRSTNAME:
     p_str = (const unsigned char**) userlist_get_member_field_ptr(m, field_id);
     s = *p_str;
@@ -353,6 +373,7 @@ userlist_delete_member_field(struct userlist_member *m, int field_id)
   case USERLIST_NM_SERIAL:
     return -1;
   case USERLIST_NM_STATUS:
+  case USERLIST_NM_GENDER:
   case USERLIST_NM_GRADE:
     p_int = (int*) userlist_get_member_field_ptr(m, field_id);
     if (!*p_int) return 0;
@@ -395,6 +416,16 @@ userlist_set_member_field_str(struct userlist_member *m, int field_id,
     if (field_val &&
         (sscanf(field_val, "%d%n", &x, &n) != 1 || field_val[n]
          || x < 0 || x >= USERLIST_ST_LAST))
+      return -1;
+    if (x == *p_int) return 0;
+    *p_int = x;
+    return 1;
+  case USERLIST_NM_GENDER:
+    p_int = (int*) userlist_get_member_field_ptr(m, field_id);
+    x = 0;
+    if (field_val &&
+        (sscanf(field_val, "%d%n", &x, &n) != 1 || field_val[n]
+         || x < 0 || x > 2))
       return -1;
     if (x == *p_int) return 0;
     *p_int = x;
@@ -1396,6 +1427,7 @@ userlist_clone_member(struct userlist_member *src, int *p_serial,
   dst->serial = (*p_serial)++;
   dst->copied_from = src->serial;
   dst->status = src->status;
+  dst->gender = src->gender;
   dst->grade = src->grade;
 
   dst->firstname = copy_field(src->firstname);

@@ -85,6 +85,12 @@ static char const * const member_status_string[] =
   _("Scientist"),
   _("Other")
 };
+static char const * const member_gender_string[] =
+{
+  _("Empty"),
+  _("Male"),
+  _("Female"),
+};
 #undef _
 
 /* various sort criteria for participants */
@@ -965,6 +971,113 @@ display_member_status_menu(int line, int init_val)
   return selected_value;
 }
 
+static int
+display_member_gender_menu(int line, int init_val)
+{
+  int i;
+  ITEM *items[USERLIST_SX_LAST + 1];
+  int req_lines, req_cols, line0, col0;
+  MENU *menu;
+  WINDOW *out_win, *in_win;
+  PANEL *out_pan, *in_pan;
+  int selected_value = -1;
+  int c, cmd;
+
+  XMEMZERO(items, USERLIST_SX_LAST + 1);
+  for (i = 0; i < USERLIST_SX_LAST; i++) {
+    items[i] = new_item(member_status_string[i], 0);
+  }
+  menu = new_menu(items);
+  scale_menu(menu, &req_lines, &req_cols);
+  set_menu_back(menu, COLOR_PAIR(1));
+  set_menu_fore(menu, COLOR_PAIR(3));
+  line0 = line - req_lines/2 - 1;
+  if (line0 + req_lines + 2 >= LINES)
+    line0 = LINES - 1 - req_lines - 2;
+  if (line0 < 1) line0 = 1;
+  col0 = COLS / 2;
+  if (col0 + req_cols + 2 >= COLS)
+    col0 =COLS - 1 - req_cols - 2;
+  if (col0 < 0) col0 = 0;
+  out_win = newwin(req_lines + 2, req_cols + 2, line0, col0);
+  in_win = newwin(req_lines, req_cols, line0 + 1, col0 + 1);
+  wattrset(out_win, COLOR_PAIR(1));
+  wbkgdset(out_win, COLOR_PAIR(1));
+  wattrset(in_win, COLOR_PAIR(1));
+  wbkgdset(in_win, COLOR_PAIR(1));
+  wclear(in_win);
+  wclear(out_win);
+  box(out_win, 0, 0);
+  out_pan = new_panel(out_win);
+  in_pan = new_panel(in_win);
+  set_menu_win(menu, in_win);
+
+  if (init_val < 0) init_val = 0;
+  if (init_val >= USERLIST_SX_LAST) init_val = USERLIST_SX_LAST - 1;
+  set_current_item(menu, items[init_val]);
+  /*
+    show_panel(out_pan);
+    show_panel(in_pan);
+  */
+  post_menu(menu);
+  print_help("Enter-select Q-quit");
+  update_panels();
+  doupdate();
+
+  while (1) {
+    c = getch();
+    switch (c) {
+    case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
+    case 'G' & 031: case '\033':
+      c = 'q';
+      goto menu_done;
+    case '\n': case '\r': case ' ':
+      c = '\n';
+      goto menu_done;
+    }
+    cmd = -1;
+    switch (c) {
+    case KEY_UP:
+    case KEY_LEFT:
+      cmd = REQ_UP_ITEM;
+      break;
+    case KEY_DOWN:
+    case KEY_RIGHT:
+      cmd = REQ_DOWN_ITEM;
+      break;
+    }
+    if (cmd != -1) {
+      menu_driver(menu, cmd);
+      update_panels();
+      doupdate();
+    }
+  }
+ menu_done:
+  unpost_menu(menu);
+  /*
+    hide_panel(out_pan);
+    hide_panel(in_pan);
+    update_panels();
+    doupdate();
+  */
+  if (c == '\n') {
+    i = item_index(current_item(menu));
+    if (i >= 0 && i < USERLIST_SX_LAST) selected_value = i;
+  }
+
+  del_panel(in_pan);
+  del_panel(out_pan);
+  free_menu(menu);
+  delwin(out_win);
+  delwin(in_win);
+  update_panels();
+  doupdate();
+  for (i = 0; i < USERLIST_SX_LAST; i++) {
+    free_item(items[i]);
+  }
+  return selected_value;
+}
+
 static unsigned char const * const participant_sort_keys[] =
 {
   "None",
@@ -1122,6 +1235,7 @@ static const struct user_field_desc member_descs[] =
   [USERLIST_NM_SURNAME]    { "Surname", 1, 1 },
   [USERLIST_NM_SURNAME_EN] { "Surname (En)", 1, 1 },
   [USERLIST_NM_STATUS]     { "Status", 1, 1 },
+  [USERLIST_NM_GENDER]     { "Gender", 1, 1 },
   [USERLIST_NM_GRADE]      { "Grade", 1, 1 },
   [USERLIST_NM_GROUP]      { "Group", 1, 1 },
   [USERLIST_NM_GROUP_EN]   { "Group (En)", 1, 1 },
@@ -2056,6 +2170,32 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
               || new_status == m->status)
             goto menu_continue;
           snprintf(edit_buf, sizeof(edit_buf), "%d", new_status);
+          r = userlist_set_member_field_str(m, info[cur_i].field, edit_buf);
+          if (!r) goto menu_continue;
+          if (r < 0) {
+            vis_err("Invalid field value");
+            goto menu_continue;
+          }
+          r = userlist_clnt_edit_field(server_conn, u->id, contest_id,
+                                       m->serial, info[cur_i].field, edit_buf);
+          if (r < 0) {
+            vis_err("Server error: %s", userlist_strerror(-r));
+            goto menu_continue;
+          }
+          //member_menu_string(m, info[cur_i].field, descs[cur_i]);
+          retcode = 0;
+          c = 'q';
+          *p_start_item = cur_i;
+          goto menu_continue;
+        }
+        if (info[cur_i].field == USERLIST_NM_GENDER) {
+          int new_gender;
+          
+          new_gender = display_member_gender_menu(cur_line, m->gender);
+          if (new_gender < 0 || new_gender >= USERLIST_SX_LAST
+              || new_gender == m->gender)
+            goto menu_continue;
+          snprintf(edit_buf, sizeof(edit_buf), "%d", new_gender);
           r = userlist_set_member_field_str(m, info[cur_i].field, edit_buf);
           if (!r) goto menu_continue;
           if (r < 0) {

@@ -103,6 +103,7 @@ static char const * const elem_map[] =
   "birth_date",
   "entry_date",
   "graduation_date",
+  "gender",
 
   0
 };
@@ -307,6 +308,24 @@ static struct xml_parse_spec userlist_parse_spec =
 };
 
 void
+userlist_elem_free_data(struct xml_tree *t)
+{
+  int tag;
+  size_t sz = 0;
+
+  if (!t) return;
+
+  tag = t->tag;
+  // free the data
+  elem_free(t);
+  // initialize with 0
+  if (tag > 0 || tag < USERLIST_LAST_TAG) sz = elem_sizes[tag];
+  if (!sz) sz = sizeof(struct xml_tree);
+  memset(t, 0, sz);
+  t->tag = tag;
+}
+
+void
 userlist_free_attrs(struct xml_tree *t)
 {
   xml_tree_free_attrs(t, &userlist_parse_spec);
@@ -411,6 +430,25 @@ parse_contestant_status_elem(struct xml_tree *p, int *p_val)
   };
 
   if ((v = string_to_enum(p->text, contestant_status_tbl)) < 0)
+    return xml_err_elem_invalid(p);
+  *p_val = v;
+  return v;
+}
+
+static int
+parse_contestant_gender_elem(struct xml_tree *p, int *p_val)
+{
+  int v;
+
+  static struct string_to_int_tbl contestant_gender_tbl[] =
+  {
+    { "male", USERLIST_SX_MALE },
+    { "female", USERLIST_SX_FEMALE },
+
+    { 0, 0 },
+  };
+
+  if ((v = string_to_enum(p->text, contestant_gender_tbl)) < 0)
     return xml_err_elem_invalid(p);
   *p_val = v;
   return v;
@@ -647,6 +685,14 @@ parse_members(char const *path, struct xml_tree *q,
         if (p->first) return xml_err_attrs(p);
         if (p->first_down) return xml_err_nested_elems(p);
         if (parse_contestant_status_elem(p, &mb->status) < 0) return -1;
+        xml_unlink_node(p);
+        userlist_free(p);
+        break;
+      case USERLIST_T_GENDER:
+        if (mb->gender) return xml_err_elem_redefined(p);
+        if (p->first) return xml_err_attrs(p);
+        if (p->first_down) return xml_err_nested_elems(p);
+        if (parse_contestant_gender_elem(p, &mb->gender) < 0) return -1;
         xml_unlink_node(p);
         userlist_free(p);
         break;
@@ -1292,6 +1338,16 @@ unparse_member_status(int s)
   ASSERT(s >= USERLIST_ST_SCHOOL && s <= USERLIST_ST_OTHER);
   return member_status_map[s];
 }
+static unsigned char const *
+unparse_member_gender(int gender)
+{
+  static char const * const member_gender_map[] =
+  {
+    0, "male", "female",
+  };
+  ASSERT(gender>= 0 && gender <= 2);
+  return member_gender_map[gender];
+}
 
 static void
 unparse_bool_attr(FILE *f, int attr, int val)
@@ -1375,8 +1431,14 @@ unparse_member(const struct userlist_member *p, FILE *f)
   }
 
   if (p->status) {
-    xml_unparse_text(f, elem_map[USERLIST_T_STATUS], unparse_member_status(p->status),
-                      ind);
+    xml_unparse_text(f, elem_map[USERLIST_T_STATUS],
+                     unparse_member_status(p->status),
+                     ind);
+  }
+  if (p->gender) {
+    xml_unparse_text(f, elem_map[USERLIST_T_GENDER],
+                     unparse_member_gender(p->gender),
+                     ind);
   }
   if (p->grade) {
     fprintf(f, "        <%s>%d</%s>\n",

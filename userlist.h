@@ -65,6 +65,14 @@ enum
 
 enum
   {
+    USERLIST_SX_MALE = 1,
+    USERLIST_SX_FEMALE = 2,
+
+    USERLIST_SX_LAST,
+  };
+
+enum
+  {
     USERLIST_T_USERLIST = 1,
     USERLIST_T_USER,
     USERLIST_T_LOGIN,
@@ -124,6 +132,7 @@ enum
     USERLIST_T_BIRTH_DATE,
     USERLIST_T_ENTRY_DATE,
     USERLIST_T_GRADUATION_DATE,
+    USERLIST_T_GENDER,
 
     USERLIST_LAST_TAG,
   };
@@ -248,38 +257,40 @@ enum
     /* 200 */
     USERLIST_NM_FIRST = 200, USERLIST_NM_SERIAL = USERLIST_NM_FIRST,
     USERLIST_NM_STATUS,
+    USERLIST_NM_GENDER,
     USERLIST_NM_GRADE,
     USERLIST_NM_FIRSTNAME,
-    USERLIST_NM_FIRSTNAME_EN,
     /* 205 */
+    USERLIST_NM_FIRSTNAME_EN,
     USERLIST_NM_MIDDLENAME,
     USERLIST_NM_MIDDLENAME_EN,
     USERLIST_NM_SURNAME,
     USERLIST_NM_SURNAME_EN,
-    USERLIST_NM_GROUP,
     /* 210 */
+    USERLIST_NM_GROUP,
     USERLIST_NM_GROUP_EN,
     USERLIST_NM_EMAIL,
     USERLIST_NM_HOMEPAGE,
     USERLIST_NM_OCCUPATION,
-    USERLIST_NM_OCCUPATION_EN,
     /* 215 */
+    USERLIST_NM_OCCUPATION_EN,
     USERLIST_NM_DISCIPLINE,
     USERLIST_NM_INST,
     USERLIST_NM_INST_EN,
     USERLIST_NM_INSTSHORT,
-    USERLIST_NM_INSTSHORT_EN,
     /* 220 */
+    USERLIST_NM_INSTSHORT_EN,
     USERLIST_NM_FAC,
     USERLIST_NM_FAC_EN,
     USERLIST_NM_FACSHORT,
     USERLIST_NM_FACSHORT_EN,
-    USERLIST_NM_PHONE,
     /* 225 */
+    USERLIST_NM_PHONE,
     USERLIST_NM_CREATE_TIME,
     USERLIST_NM_LAST_CHANGE_TIME,
     USERLIST_NM_BIRTH_DATE,
     USERLIST_NM_ENTRY_DATE,
+    /* 230 */
     USERLIST_NM_GRADUATION_DATE,
 
     USERLIST_NM_LAST,
@@ -294,6 +305,7 @@ struct userlist_member
   int serial;
   int copied_from;
   int status;
+  int gender;
   int grade;
   unsigned char *firstname;
   unsigned char *firstname_en;
@@ -513,6 +525,7 @@ void userlist_unparse_user_short(const struct userlist_user *p, FILE *f,
 
 unsigned char const *userlist_unparse_reg_status(int s);
 unsigned char const *userlist_member_status_str(int status);
+unsigned char const *userlist_gender_str(int gender);
 
 int userlist_parse_date_2(const unsigned char *str, time_t *pd);
 const unsigned char *userlist_unparse_date_2(unsigned char *buf, size_t size,
@@ -642,5 +655,7 @@ userlist_count_info_errors(
         const struct userlist_user *u,
         const struct userlist_user_info *ui,
         int role_err_count[]);
+
+void userlist_elem_free_data(struct xml_tree *t);
 
 #endif /* __USERLIST_H__ */

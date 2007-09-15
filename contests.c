@@ -309,6 +309,7 @@ static char const * const member_field_map[] =
   "surname",
   "surname_en",
   "status",
+  "gender",
   "grade",
   "group",
   "group_en",
