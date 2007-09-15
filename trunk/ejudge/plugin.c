@@ -102,8 +102,8 @@ plugin_load(const unsigned char *path,
   if (path) {
     snprintf(plugin_path, sizeof(plugin_path), "%s", path);
   } else {
-    snprintf(plugin_path, sizeof(plugin_path), "%s/plugin_%s.so",
-             plugin_dir, name);
+    snprintf(plugin_path, sizeof(plugin_path), "%s/%s_%s.so",
+             plugin_dir, type, name);
   }
 
   if (!(hnd = dlopen(plugin_path, RTLD_NOW | RTLD_GLOBAL))) {
@@ -111,7 +111,7 @@ plugin_load(const unsigned char *path,
     return NULL;
   }
 
-  snprintf(plugin_desc, sizeof(plugin_desc), "plugin_%s", name);
+  snprintf(plugin_desc, sizeof(plugin_desc), "plugin_%s_%s", type, name);
   if (!(plg = (struct ejudge_plugin_iface*) dlsym(hnd, plugin_desc))) {
     errmsg = dlerror();
     if (!errmsg) errmsg = "unknown error";

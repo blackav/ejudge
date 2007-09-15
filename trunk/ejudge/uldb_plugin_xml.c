@@ -116,8 +116,8 @@ struct uldb_plugin_iface uldb_plugin_xml =
   {
     sizeof (struct uldb_plugin_iface),
     EJUDGE_PLUGIN_IFACE_VERSION,
-    "userdb",
-    "uldb_xml",
+    "uldb",
+    "xml",
   },
 
   ULDB_PLUGIN_IFACE_VERSION,

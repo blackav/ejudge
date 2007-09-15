@@ -1044,6 +1044,7 @@ contest_fields_order[] =
 static int
 member_fields_order[] =
 {
+  CONTEST_MF_GENDER,
   CONTEST_MF_FIRSTNAME,
   CONTEST_MF_FIRSTNAME_EN,
   CONTEST_MF_MIDDLENAME,
@@ -1114,6 +1115,7 @@ static struct field_desc_s member_field_desc[CONTEST_LAST_MEMBER_FIELD] =
   [CONTEST_MF_SURNAME] = { __("Family name"), '?', 64, 64, 0 },
   [CONTEST_MF_SURNAME_EN] = { __("Family name (En)"), '?', 64, 64, 0 },
   [CONTEST_MF_STATUS] = { __("Status"), '?', 64, 64, 0 },
+  [CONTEST_MF_GENDER] = { __("Gender"), '?', 64, 64, 0 },
   [CONTEST_MF_GRADE] = { __("Grade"), '?', 16, 16, 0 },
   [CONTEST_MF_GROUP] = { __("Group"), '?', 16, 16, 0 },
   [CONTEST_MF_GROUP_EN] = { __("Group (En)"), '?', 16, 16, 0 },
@@ -1878,6 +1880,41 @@ display_status_changing_dialog(
   fprintf(fout, "</select>%s", end_str);
 }
 
+static unsigned char const * const member_gender_string[] =
+{
+  0,
+  __("Male"),
+  __("Female"),
+};
+
+static void
+display_gender_changing_dialog(
+	FILE *fout,
+        int field,
+        int val,
+        const unsigned char *beg_str,
+        const unsigned char *end_str,
+        const unsigned char *var_prefix)
+{
+  int n = 0;
+
+  if (!beg_str) beg_str = "";
+  if (!end_str) end_str = "";
+  if (!var_prefix) var_prefix = "";
+
+  fprintf(fout, "%s<select name=\"%sparam_%d\"><option value=\"\"></option>",
+          beg_str, var_prefix, field);
+
+  if (val < 0 || val >= USERLIST_SX_LAST) val = 0;
+
+  for (n = 1; n < USERLIST_SX_LAST; n++) {
+    fprintf(fout, "<option value=\"%d\"%s>%s</option>",
+           n, n == val?" selected=\"selected\"":"",
+           gettext(member_gender_string[n]));
+  }
+  fprintf(fout, "</select>%s", end_str);
+}
+
 static void
 edit_member_form(
 	FILE *fout,
@@ -1933,6 +1970,12 @@ edit_member_form(
       val = 0;
       if (m) val = m->status;
       display_status_changing_dialog(fout, ff, val, "<td class=\"b0\">",
+                                     "</td>", var_prefix);
+      break;
+    case CONTEST_MF_GENDER:
+      val = 0;
+      if (m) val = m->gender;
+      display_gender_changing_dialog(fout, ff, val, "<td class=\"b0\">",
                                      "</td>", var_prefix);
       break;
 
@@ -2228,6 +2271,23 @@ get_member_field(
     if (*v) {
       if (sscanf(v, "%d%n", &r, &n) != 1 || v[n] || r < 0
           || r >= USERLIST_ST_LAST)
+        goto invalid_field;
+    }
+    buf[0] = 0;
+    if (r > 0) snprintf(buf, size, "%d", r);
+    break;
+
+  case CONTEST_MF_GENDER:
+    snprintf(varname, sizeof(varname), "%sparam_%d", var_prefix, field);
+    if ((r = ns_cgi_param(phr, varname, &v)) < 0)
+      goto non_printable;
+    else if (!r || !v)
+      v = "";
+
+    r = 0;
+    if (*v) {
+      if (sscanf(v, "%d%n", &r, &n) != 1 || v[n] || r < 0
+          || r >= USERLIST_SX_LAST)
         goto invalid_field;
     }
     buf[0] = 0;

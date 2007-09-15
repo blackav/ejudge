@@ -577,11 +577,13 @@ ejudge_cfg_parse(char const *path)
 #endif /* EJUDGE_RUN_PATH */
 
   if (!cfg->plugin_dir && cfg->script_dir) {
-    cfg->plugin_dir = xstrdup(cfg->script_dir);
+    snprintf(pathbuf, sizeof(pathbuf), "%s/plugins", cfg->script_dir);
+    cfg->plugin_dir = xstrdup(pathbuf);
   }
 #if defined EJUDGE_SCRIPT_DIR
   if (!cfg->plugin_dir) {
-    cfg->plugin_dir = xstrdup(EJUDGE_SCRIPT_DIR);
+    snprintf(pathbuf, sizeof(pathbuf), "%s/plugins", EJUDGE_SCRIPT_DIR);
+    cfg->plugin_dir = xstrdup(pathbuf);
   }
 #endif /* EJUDGE_SCRIPT_DIR */
 
