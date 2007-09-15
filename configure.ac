@@ -1402,7 +1402,7 @@ ac_cv_expanded_prefix="${actual_prefix}"
 ac_cv_expanded_locale_dir="${actual_prefix}/share/locale"
 if [[ x"${ac_cv_hidden_bins}" != x ]]
 then
-  ac_cv_ejudge_server_bin_path="${actual_prefix}/libexec/ejudge/bin"
+  ac_cv_ejudge_server_bin_path="${actual_libexecdir}/ejudge/bin"
   ac_cv_ejudge_server_bin_path_m="${libexecdir}/ejudge/bin"
 else
   ac_cv_ejudge_server_bin_path="${actual_prefix}/bin"
