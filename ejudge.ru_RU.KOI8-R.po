@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-09-02 00:38+0400\n"
-"PO-Revision-Date: 2007-09-02 01:16+0400\n"
+"POT-Creation-Date: 2007-09-14 14:43+0400\n"
+"PO-Revision-Date: 2007-09-14 14:44+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1391,6 +1391,9 @@ msgstr "Фатальная ошибка"
 msgid "Feb"
 msgstr "Фев"
 
+msgid "Female"
+msgstr "Женский"
+
 #, c-format
 msgid ""
 "Field \"%s\" contained invalid characters, which were replaced with '%c'."
@@ -1521,6 +1524,9 @@ msgstr "Полностью перепроверить отображённые посылки!"
 
 msgid "Fully rejudge runs"
 msgstr "Полностью перепроверить посылки"
+
+msgid "Gender"
+msgstr "Пол"
 
 msgid "General info"
 msgstr "Общая информация"
@@ -2184,6 +2190,9 @@ msgstr "Сделать невидимой"
 
 msgid "Make visible"
 msgstr "Сделать видимой"
+
+msgid "Male"
+msgstr "Мужской"
 
 msgid "Mandatory \"E-mail\" field is empty."
 msgstr "Обязательное поле \"Адрес электронной почты\" не заполнено."
