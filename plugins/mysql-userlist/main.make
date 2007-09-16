@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,7 +25,7 @@ CFLAGS = -I. -I../.. $(MYSQL_INCL_OPT) $(REUSE_INCL_OPT) $(EXPAT_INCL_OPT) $(CDE
 LDFLAGS = $(MYSQL_LIB_OPT) $(REUSE_LIB_OPT) $(EXPAT_LIB_OPT) $(CDEBUGFLAGS) $(LDCOMPFLAGS) $(LDEXTRAFLAGS)
 LDLIBS = $(EXTRALIBS) $(MYSQL_LIBS) -lreuse -lexpat -lm
 
-all : plugin_uldb_mysql.so
+all : uldb_mysql.so
 
 install :
 
@@ -40,6 +40,6 @@ deps.make : $(CFILES) $(HFILES)
 
 include deps.make
 
-plugin_uldb_mysql.so : $(ULDB_MYSQL_OFILES)
+uldb_mysql.so : $(ULDB_MYSQL_OFILES)
 	$(LD) -shared $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
