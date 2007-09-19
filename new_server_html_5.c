@@ -1208,7 +1208,7 @@ main_page_view_info(
   int i, ff, nr;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct userlist_user *u = 0;
-  const unsigned char *s, *hh = 0, *cc = 0;
+  const unsigned char *s, *hh = 0, *cc = 0, *legend;
   unsigned char fbuf[1024];
   int tab_count, err_count, role_err_count[CONTEST_LAST_MEMBER + 1];
   int rr, mm, mmbound, main_area_span;
@@ -1303,8 +1303,11 @@ main_page_view_info(
       if (!cnts->fields[ff]) continue;
       userlist_get_user_info_field_str(fbuf, sizeof(fbuf), &u->i,
                                        userlist_contest_field_ids[ff], 0);
-      info_table_row(fout, gettext(contest_field_desc[ff].description),
-                     fbuf,
+      
+      legend = cnts->fields[ff]->legend;
+      if (!legend || !*legend)
+        legend = gettext(contest_field_desc[ff].description);
+      info_table_row(fout, legend, fbuf,
                      userlist_is_empty_user_info_field(&u->i, userlist_contest_field_ids[ff]),
                      cnts->fields[ff]->mandatory,
                      userlist_get_contest_accepting_chars(ff),
@@ -1319,8 +1322,10 @@ main_page_view_info(
           if (!cnts->members[rr]->fields[ff]) continue;
           userlist_get_member_field_str(fbuf, sizeof(fbuf), m,
                                         userlist_member_field_ids[ff], 0);
-          info_table_row(fout, gettext(member_field_desc[ff].description),
-                         fbuf,
+          legend = cnts->members[rr]->fields[ff]->legend;
+          if (!legend || !*legend)
+            legend = gettext(member_field_desc[ff].description);
+          info_table_row(fout, legend, fbuf,
                          userlist_is_empty_member_field(m, userlist_member_field_ids[ff]),
                          cnts->members[rr]->fields[ff]->mandatory,
                          userlist_get_member_accepting_chars(ff),
@@ -1330,8 +1335,10 @@ main_page_view_info(
         fbuf[0] = 0;
         for (i = 0; (ff = member_fields_order[i]); i++) {
           if (!cnts->members[rr]->fields[ff]) continue;
-          info_table_row(fout, gettext(member_field_desc[ff].description),
-                         fbuf, 1,
+          legend = cnts->members[rr]->fields[ff]->legend;
+          if (!legend || !*legend)
+            legend = gettext(member_field_desc[ff].description);
+          info_table_row(fout, legend, fbuf, 1,
                          cnts->members[rr]->fields[ff]->mandatory,
                          userlist_get_member_accepting_chars(ff),
                          &ab, member_field_desc[ff].is_href, 0);
@@ -1404,8 +1411,10 @@ main_page_view_info(
           if (!cnts->members[rr]->fields[ff]) continue;
           userlist_get_member_field_str(fbuf, sizeof(fbuf), m,
                                         userlist_member_field_ids[ff], 0);
-          info_table_row(fout, gettext(member_field_desc[ff].description),
-                         fbuf,
+          legend = cnts->members[rr]->fields[ff]->legend;
+          if (!legend || !*legend)
+            legend = gettext(member_field_desc[ff].description);
+          info_table_row(fout, legend, fbuf,
                          userlist_is_empty_member_field(m, userlist_member_field_ids[ff]),
                          cnts->members[rr]->fields[ff]->mandatory,
                          userlist_get_member_accepting_chars(ff),
@@ -1660,7 +1669,7 @@ edit_general_form(
   unsigned char varname[1024];
   int i, ff, j, rr;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  const unsigned char *comment = 0, *s = 0, *ac;
+  const unsigned char *comment = 0, *s = 0, *ac, *legend;
   size_t allowed_languages_u = 0, allowed_regions_u = 0;
   unsigned char **allowed_languages = 0, **allowed_regions = 0;
   int *user_lang_map = 0;
@@ -1702,7 +1711,10 @@ edit_general_form(
     fprintf(fout, "<tr>");
     fprintf(fout, "<td class=\"b0\" valign=\"top\">");
     if (cnts->fields[ff]->mandatory) fprintf(fout, "<b>");
-    fprintf(fout, "%s:", gettext(contest_field_desc[ff].description));
+    legend = cnts->fields[ff]->legend;
+    if (!legend || !*legend)
+      legend = gettext(contest_field_desc[ff].description);
+    fprintf(fout, "%s:", legend);
     if (cnts->fields[ff]->mandatory) fprintf(fout, "</b>");
     fprintf(fout, "</td>");
     userlist_get_user_info_field_str(bb, sizeof(bb), &u->i,
@@ -1931,7 +1943,7 @@ edit_member_form(
   unsigned char varname[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int i, ff, val;
-  const unsigned char *comment = 0, *ac;
+  const unsigned char *comment = 0, *ac, *legend;
 
   if (!var_prefix) var_prefix = "";
 
@@ -1948,7 +1960,10 @@ edit_member_form(
     fprintf(fout, "<tr>");
     fprintf(fout, "<td class=\"b0\" valign=\"top\">");
     if (cm->fields[ff]->mandatory) fprintf(fout, "<b>");
-    fprintf(fout, "%s:", gettext(member_field_desc[ff].description));
+    legend = cm->fields[ff]->legend;
+    if (!legend || !*legend)
+      legend = gettext(member_field_desc[ff].description);
+    fprintf(fout, "%s:", legend);
     if (cm->fields[ff]->mandatory) fprintf(fout, "</b>");
     fprintf(fout, "</td>");
     bb[0] = 0;
@@ -2249,7 +2264,8 @@ get_member_field(
 	struct http_request_info *phr,
         int field,
         const unsigned char *var_prefix,
-        FILE *log_f)
+        FILE *log_f,
+        const unsigned char *legend)
 {
   unsigned char varname[128];
   int r, n, dd, mm, yy;
@@ -2385,12 +2401,11 @@ get_member_field(
 
  non_printable:
   fprintf(log_f, _("Field \"%s\" contains non-printable characters.\n"),
-          member_field_desc[field].description);
+          legend);
   return 0;
 
  invalid_field:
-  fprintf(log_f, _("Value of field \"%s\" is invalid.\n"),
-          member_field_desc[field].description);
+  fprintf(log_f, _("Value of field \"%s\" is invalid.\n"), legend);
   return 0;
 }
 
@@ -2413,6 +2428,7 @@ submit_member_editing(
   int deleted_ids[USERLIST_NM_LAST], edited_ids[USERLIST_NM_LAST];
   unsigned char *edited_strs[USERLIST_NM_LAST];
   int deleted_num = 0, edited_num = 0;
+  const unsigned char *legend;
 
   if (cnts->personal) {
     // they kidding us...
@@ -2447,7 +2463,11 @@ submit_member_editing(
   for (ff = CONTEST_MF_FIRSTNAME; ff < CONTEST_LAST_MEMBER_FIELD; ff++) {
     if (!cnts->members[CONTEST_M_CONTESTANT]->fields[ff]) continue;
 
-    if (!get_member_field(vbuf, sizeof(vbuf), phr, ff, "", log_f))
+    legend = cnts->members[CONTEST_M_CONTESTANT]->fields[ff]->legend;
+    if (!legend || !*legend)
+      legend = gettext(member_field_desc[ff].description);
+
+    if (!get_member_field(vbuf, sizeof(vbuf), phr, ff, "", log_f, legend))
       goto done;
 
     if (vbuf[0]) {
@@ -2505,6 +2525,7 @@ submit_general_editing(
   int deleted_ids[USERLIST_NM_LAST], edited_ids[USERLIST_NM_LAST];
   unsigned char *edited_strs[USERLIST_NM_LAST];
   int deleted_num = 0, edited_num = 0;
+  const unsigned char *legend;
 
   log_f = open_memstream(&log_t, &log_z);
 
@@ -2538,6 +2559,10 @@ submit_general_editing(
   for (ff = CONTEST_FIRST_FIELD; ff < CONTEST_LAST_FIELD; ff++) {
     if (!cnts->fields[ff]) continue;
 
+    legend = cnts->fields[ff]->legend;
+    if (!legend || !*legend)
+      legend = gettext(contest_field_desc[ff].description);
+
     if (ff == CONTEST_F_LANGUAGES && cnts->allowed_languages) {
       assemble_programming_languages(vbuf, sizeof(vbuf), phr,
                                      cnts->allowed_languages);
@@ -2545,7 +2570,7 @@ submit_general_editing(
       snprintf(varname, sizeof(varname), "param_%d", ff);
       if ((r = ns_cgi_param(phr, varname, &v)) < 0) {
         fprintf(log_f, _("Field \"%s\" contains non-printable characters.\n"),
-                contest_field_desc[ff].description);
+                legend);
         goto done;
       } else if (!r || !v) {
         v = "";
@@ -2567,7 +2592,11 @@ submit_general_editing(
     for (ff = CONTEST_MF_FIRSTNAME; ff < CONTEST_LAST_MEMBER_FIELD; ff++) {
       if (!cnts->members[CONTEST_M_CONTESTANT]->fields[ff]) continue;
 
-      if (!get_member_field(vbuf, sizeof(vbuf), phr, ff, "m", log_f))
+      legend = cnts->members[CONTEST_M_CONTESTANT]->fields[ff]->legend;
+      if (!legend || !*legend)
+        legend = gettext(member_field_desc[ff].description);
+
+      if (!get_member_field(vbuf, sizeof(vbuf), phr, ff, "m", log_f, legend))
         goto done;
 
       if (vbuf[0]) {

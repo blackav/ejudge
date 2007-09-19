@@ -212,6 +212,7 @@ struct contest_field
   struct xml_tree b;
   int mandatory;
   int id;
+  unsigned char *legend;
 };
 
 struct contest_ip
