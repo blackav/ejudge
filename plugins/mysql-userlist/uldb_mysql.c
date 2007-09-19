@@ -220,6 +220,19 @@ enum { CNTSREGS_WIDTH = 10 };
 enum { COOKIES_POOL_SIZE = 1024 };
 enum { COOKIES_MAX_HASH_SIZE = 600 };
 
+// the size of the cntsregs pool
+enum { CNTSREGS_POOL_SIZE = 1024 };
+
+struct cntsregs_container;
+struct cntsregs_user;
+
+struct cntsregs_cache
+{
+  int size, count;
+  struct cntsregs_user *user_map;
+  struct cntsregs_container *first, *last;
+};
+
 struct uldb_mysql_state
 {
   // configuration settings
@@ -246,6 +259,9 @@ struct uldb_mysql_state
   struct userlist_cookie *cookie_hash[COOKIES_POOL_SIZE];
   struct xml_tree *cookie_first, *cookie_last;
   int cookie_count;
+
+  // cntsregs caching
+  struct cntsregs_cache cntsregs;
 };
 
 struct user_id_iterator
@@ -1756,6 +1772,131 @@ parse_cntsregs_row(
 
  fail:
   return -1;
+}
+
+struct cntsregs_container
+{
+  struct xml_tree b;
+  int user_id;
+  int contest_id;
+  struct userlist_contest *c;
+  struct cntsregs_container *next, *prev;
+  struct cntsregs_container *next_user, *prev_user;
+};
+struct cntsregs_user
+{
+  struct cntsregs_container *first_user, *last_user;
+  int min_id, max_id;           // [min_id, max_id)
+};
+
+static struct userlist_contest *
+allocate_cntsregs_on_pool(
+	struct uldb_mysql_state *state,
+        int user_id,
+        int contest_id)
+{
+  struct cntsregs_cache *cc = &state->cntsregs;
+  struct cntsregs_user *cu;
+  struct cntsregs_container *co;
+  struct userlist_contest *c;
+  int new_size = 0;
+  struct cntsregs_user *new_ptr = 0;
+
+  if (user_id <= 0 || contest_id <= 0) return 0;
+  if (user_id < cc->size && cc->user_map && (cu = &cc->user_map[user_id])
+      && contest_id >= cu->min_id && contest_id < cu->max_id) {
+    for (co = cu->first_user; co; co = co->next_user)
+      if (co->contest_id == contest_id)
+        break;
+    if (co) {
+      c = co->c;
+      userlist_elem_free_data(&c->b);
+      c->id = contest_id;
+      // move to the front of the united list
+      if (co != cc->first) {
+        if (co->next) co->next->prev = co->prev;
+        else cc->last = co->prev;
+        co->prev->next = co->next;
+        co->next = cc->first;
+        co->next->prev = co;
+        cc->first = co;
+      }
+      // move to the front of the user list
+      if (co != cu->first_user) {
+        if (co->next_user) co->next_user->prev_user = co->prev_user;
+        else cu->last_user = co->prev_user;
+        co->prev_user->next_user = co->prev_user;
+        co->next_user = cu->first_user;
+        co->next_user->prev_user = co;
+        cu->first_user = co;
+      }
+      return c;
+    }
+  }
+
+  if (cc->count >= CNTSREGS_POOL_SIZE) {
+    // detach the least user entry
+    co = cc->last;
+    cu = &cc->user_map[co->user_id];
+    if (cu->first_user == co) {
+      memset(&cu, 0, sizeof(*cu));
+    } else {
+      ASSERT(cu->last_user == co);
+      co->prev_user->next_user = 0;
+      cu->last_user = co->prev_user;
+    }
+    co->prev->next = 0;
+    cc->last = co->prev;
+    c = co->c;
+    userlist_elem_free_data(&c->b);
+    xfree(c);
+    memset(co, 0, sizeof(*co));
+    xfree(co);
+    cc->count--;
+    cu->min_id = cu->max_id = 0;
+    for (co = cu->first_user; co; co = co->next_user) {
+      if (co->user_id < cu->min_id) cu->min_id = co->user_id;
+      if (co->user_id >= cu->max_id) cu->max_id = co->user_id + 1;
+    }
+  }
+
+  // allocate new entry
+  c = (struct userlist_contest*) userlist_node_alloc(USERLIST_T_CONTEST);
+  XCALLOC(co, 1);
+  co->user_id = user_id;
+  co->contest_id = contest_id;
+  co->c = c;
+  cc->count++;
+  if (!cc->first) {
+    cc->first = cc->last = co;
+  } else {
+    co->prev = cc->last;
+    co->prev->next = co;
+    cc->last = co;
+  }
+  if (cc->size <= user_id) {
+    if (!(new_size = cc->size)) new_size = 128;
+    while (new_size <= user_id) new_size *= 2;
+    XCALLOC(new_ptr, new_size);
+    if (cc->size)
+      memcpy(new_ptr, cc->user_map, cc->size * sizeof(cc->user_map[0]));
+    xfree(cc->user_map);
+    cc->user_map = new_ptr;
+    cc->size = new_size;
+  }
+  cu = &cc->user_map[user_id];
+  if (!cu->first_user) {
+    cu->first_user = cu->last_user = co;
+    cu->min_id = user_id;
+    cu->max_id = user_id + 1;
+  } else {
+    co->prev_user = cu->last_user;
+    co->prev_user->next_user = co;
+    cu->last_user = co;
+    if (user_id < cu->min_id) cu->min_id = user_id;
+    if (user_id >= cu->max_id) cu->max_id = user_id + 1;
+  }
+  return c;
 }
 
 static int
