@@ -257,6 +257,12 @@ node_free(struct xml_tree *t)
       xfree(pp->login);
     }
     break;
+  case CONTEST_FIELD:
+    {
+      struct contest_field *ff = (struct contest_field*) t;
+      xfree(ff->legend);
+    }
+    break;
   }
 }
 
@@ -435,9 +441,12 @@ parse_member(struct contest_member *mb, char const *path)
   xfree(mb->b.text); mb->b.text = 0;
   for (t = mb->b.first_down; t; t = t->right) {
     if (t->tag != CONTEST_FIELD) return xml_err_elem_not_allowed(t);
-    if (t->text && *t->text) return xml_err_elem_empty(t);
     if (t->first_down) return xml_err_nested_elems(t);
     pf = (struct contest_field*) t;
+    if (t->text && *t->text) {
+      pf->legend = t->text; t->text = 0;
+    }
+    xfree(t->text); t->text = 0;
 
     pf->mandatory = -1;
     for (a = t->first; a; a = a->next) {
@@ -822,12 +831,14 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
 
     case CONTEST_FIELD:
       if (t->first_down) return xml_err_nested_elems(t);
-      if (xml_empty_text(t) < 0) return -1;
-      xfree(t->text);
-      t->text = 0;
       {
         struct contest_field *pf = (struct contest_field*) t;
         int i;
+
+        if (t->text && *t->text) {
+          pf->legend = t->text; t->text = 0;
+        }
+        xfree(t->text); t->text = 0;
 
         pf->mandatory = -1;
         for (a = t->first; a; a = a->next) {
@@ -1553,6 +1564,37 @@ unparse_access(FILE *f, const struct contest_access *acc, int tag)
   }
   fprintf(f, "  </%s>\n", elem_map[tag]);
 }
+
+static void
+unparse_field(
+	FILE *f,
+        const struct contest_field *pf,
+        int id,
+        char const * const field_map[],
+        const unsigned char *indent)
+{
+  unsigned char *txt = 0, *arm_txt = 0;
+  size_t arm_sz = 0;
+
+  if (!f) return;
+  txt = pf->legend;
+  if (txt && *txt && html_armor_needed(txt, &arm_sz)) {
+    arm_txt = (unsigned char*) alloca(arm_sz + 1);
+    html_armor_string(txt, arm_txt);
+    txt = arm_txt;
+  }
+  fprintf(f, "%s<%s %s=\"%s\" %s=\"%s\"",
+          indent, elem_map[CONTEST_FIELD], attr_map[CONTEST_A_ID],
+          field_map[id],
+          attr_map[CONTEST_A_MANDATORY],
+          pf->mandatory?"yes":"no");
+  if (txt && *txt) {
+    fprintf(f, ">%s</%s>\n", txt, elem_map[CONTEST_FIELD]);
+  } else {
+    fprintf(f, "/>\n");
+  }
+}
+
 static void
 unparse_fields(FILE *f, const struct contest_member *memb, int tag)
 {
@@ -1567,13 +1609,8 @@ unparse_fields(FILE *f, const struct contest_member *memb, int tag)
   if (memb->init_count >= 0)
     fprintf(f, " %s=\"%d\"", attr_map[CONTEST_A_INITIAL], memb->init_count);
   fprintf(f, ">\n");
-  for (i = 1; i < CONTEST_LAST_MEMBER_FIELD; i++) {
-    if (!memb->fields[i]) continue;
-    fprintf(f, "    <%s %s=\"%s\" %s=\"%s\"/>\n",
-            elem_map[CONTEST_FIELD], attr_map[CONTEST_A_ID], member_field_map[i],
-            attr_map[CONTEST_A_MANDATORY],
-            memb->fields[i]->mandatory?"yes":"no");
-  }
+  for (i = 1; i < CONTEST_LAST_MEMBER_FIELD; i++)
+    unparse_field(f, memb->fields[i], i, member_field_map, "    ");
   fprintf(f, "  </%s>\n", elem_map[tag]);
 }
 
@@ -1681,11 +1718,7 @@ contests_unparse(FILE *f,
   }
 
   for (i = 1; i < CONTEST_LAST_FIELD; i++) {
-    if (!cnts->fields[i]) continue;
-    fprintf(f, "  <%s %s=\"%s\" %s=\"%s\"/>\n",
-            elem_map[CONTEST_FIELD], attr_map[CONTEST_A_ID],
-            field_map[i], attr_map[CONTEST_A_MANDATORY],
-            cnts->fields[i]->mandatory?"yes":"no");
+    unparse_field(f, cnts->fields[i], i, field_map, "  ");
   }
 
   unparse_fields(f, cnts->members[CONTEST_M_CONTESTANT], CONTEST_CONTESTANTS);
