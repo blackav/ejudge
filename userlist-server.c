@@ -7523,7 +7523,7 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
         for (i = 0; i < CONTEST_LAST_MEMBER_FIELD; i++) {
           if (!cm->fields[i] || !userlist_member_field_ids[i]) continue;
           userlist_get_member_field_str(vbuf, sizeof(vbuf), m,
-                                        userlist_member_field_ids[i], 0);
+                                        userlist_member_field_ids[i], 0, 0);
           fprintf(f, ";%s", vbuf);
         }
         fprintf(f, "\n");

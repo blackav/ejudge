@@ -1346,7 +1346,7 @@ main_page_view_info(
         for (i = 0; (ff = member_fields_order_1[i]); i++) {
           if (!cnts->members[rr]->fields[ff]) continue;
           userlist_get_member_field_str(fbuf, sizeof(fbuf), m,
-                                        userlist_member_field_ids[ff], 0);
+                                        userlist_member_field_ids[ff], 0, 1);
           legend = cnts->members[rr]->fields[ff]->legend;
           if (!legend || !*legend)
             legend = gettext(member_field_desc[ff].description);
@@ -1391,7 +1391,7 @@ main_page_view_info(
         for (i = 0; (ff = member_fields_order_2[i]); i++) {
           if (!cnts->members[rr]->fields[ff]) continue;
           userlist_get_member_field_str(fbuf, sizeof(fbuf), m,
-                                        userlist_member_field_ids[ff], 0);
+                                        userlist_member_field_ids[ff], 0, 1);
           legend = cnts->members[rr]->fields[ff]->legend;
           if (!legend || !*legend)
             legend = gettext(member_field_desc[ff].description);
@@ -1480,7 +1480,7 @@ main_page_view_info(
         for (i = 0; (ff = member_fields_order[i]); i++) {
           if (!cnts->members[rr]->fields[ff]) continue;
           userlist_get_member_field_str(fbuf, sizeof(fbuf), m,
-                                        userlist_member_field_ids[ff], 0);
+                                        userlist_member_field_ids[ff], 0, 1);
           legend = cnts->members[rr]->fields[ff]->legend;
           if (!legend || !*legend)
             legend = gettext(member_field_desc[ff].description);
@@ -2037,7 +2037,7 @@ edit_member_form(
 
     fprintf(fout, "<table class=\"b0\">");
   }
-  for (i = 0; (ff = member_fields_order[i]); i++) {
+  for (i = 0; (ff = fields_order[i]); i++) {
     if (!cm->fields[ff]) continue;
     fprintf(fout, "<tr>");
     fprintf(fout, "<td class=\"b0\" valign=\"top\">");
@@ -2051,7 +2051,7 @@ edit_member_form(
     bb[0] = 0;
     if (m) 
       userlist_get_member_field_str(bb, sizeof(bb), m,
-                                    userlist_member_field_ids[ff], 0);
+                                    userlist_member_field_ids[ff], 0, 1);
     comment = 0;
     if (cm->fields[ff]->mandatory
         && ((m && userlist_is_empty_member_field(m, userlist_member_field_ids[ff]))

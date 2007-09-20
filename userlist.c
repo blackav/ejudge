@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "userlist.h"
 #include "contests.h"
 #include "pathutl.h"
@@ -30,6 +32,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#if CONF_HAS_LIBINTL - 0 == 1
+#include <libintl.h>
+#endif
 
 #define _(x) x
 
@@ -316,9 +322,13 @@ userlist_is_equal_member_field(const struct userlist_member *m, int field_id,
 }
 
 int
-userlist_get_member_field_str(unsigned char *buf, size_t len,
-                              const struct userlist_member *m, int field_id,
-                              int convert_null)
+userlist_get_member_field_str(
+	unsigned char *buf,
+        size_t len,
+        const struct userlist_member *m,
+        int field_id,
+        int convert_null,
+        int use_locale)
 {
   unsigned char dbuf[64];
   const int *p_int;
@@ -335,10 +345,14 @@ userlist_get_member_field_str(unsigned char *buf, size_t len,
     return snprintf(buf, len, "%d", *p_int);
   case USERLIST_NM_STATUS:
     p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
-    return snprintf(buf, len, "%s", userlist_member_status_str(*p_int));
+    s = userlist_member_status_str(*p_int);
+    if (use_locale) s = gettext(s);
+    return snprintf(buf, len, "%s", s);
   case USERLIST_NM_GENDER:
     p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
-    return snprintf(buf, len, "%s", userlist_gender_str(*p_int));
+    s = userlist_gender_str(*p_int);
+    if (use_locale) s = gettext(s);
+    return snprintf(buf, len, "%s", s);
   case USERLIST_NM_FIRSTNAME:
     p_str = (const unsigned char**) userlist_get_member_field_ptr(m, field_id);
     s = *p_str;
