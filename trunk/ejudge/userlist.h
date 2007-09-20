@@ -134,6 +134,16 @@ enum
     USERLIST_T_ENTRY_DATE,
     USERLIST_T_GRADUATION_DATE,
     USERLIST_T_GENDER,
+    USERLIST_T_FIELD0,
+    USERLIST_T_FIELD1,
+    USERLIST_T_FIELD2,
+    USERLIST_T_FIELD3,
+    USERLIST_T_FIELD4,
+    USERLIST_T_FIELD5,
+    USERLIST_T_FIELD6,
+    USERLIST_T_FIELD7,
+    USERLIST_T_FIELD8,
+    USERLIST_T_FIELD9,
 
     USERLIST_LAST_TAG,
   };
@@ -247,10 +257,22 @@ enum
     /* 125 */
     USERLIST_NC_LANGUAGES,
     USERLIST_NC_PHONE,
+    USERLIST_NC_FIELD0,
+    USERLIST_NC_FIELD1,
+    USERLIST_NC_FIELD2,
+    /* 130 */
+    USERLIST_NC_FIELD3,
+    USERLIST_NC_FIELD4,
+    USERLIST_NC_FIELD5,
+    USERLIST_NC_FIELD6,
+    USERLIST_NC_FIELD7,
+    /* 135 */
+    USERLIST_NC_FIELD8,
+    USERLIST_NC_FIELD9,
     USERLIST_NC_CREATE_TIME,
     USERLIST_NC_LAST_LOGIN_TIME,
     USERLIST_NC_LAST_CHANGE_TIME,
-    /* 130 */
+    /* 140 */
     USERLIST_NC_LAST_PWDCHANGE_TIME,
 
     USERLIST_NC_LAST,
@@ -413,6 +435,16 @@ struct userlist_user_info
   unsigned char *exam_cypher;
   unsigned char *languages;
   unsigned char *phone;
+  unsigned char *field0;
+  unsigned char *field1;
+  unsigned char *field2;
+  unsigned char *field3;
+  unsigned char *field4;
+  unsigned char *field5;
+  unsigned char *field6;
+  unsigned char *field7;
+  unsigned char *field8;
+  unsigned char *field9;
   struct userlist_members *members[USERLIST_MB_LAST];
 
   time_t create_time;

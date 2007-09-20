@@ -1039,6 +1039,16 @@ contest_fields_order[] =
   CONTEST_F_LANGUAGES,
   CONTEST_F_HOMEPAGE,
   CONTEST_F_PHONE,
+  CONTEST_F_FIELD0,
+  CONTEST_F_FIELD1,
+  CONTEST_F_FIELD2,
+  CONTEST_F_FIELD3,
+  CONTEST_F_FIELD4,
+  CONTEST_F_FIELD5,
+  CONTEST_F_FIELD6,
+  CONTEST_F_FIELD7,
+  CONTEST_F_FIELD8,
+  CONTEST_F_FIELD9,
   0,
 };
 
@@ -1146,6 +1156,16 @@ static struct field_desc_s contest_field_desc[CONTEST_LAST_FIELD] =
   [CONTEST_F_ZIP] = { __("Zip code"), '?', 128, 64, 0 },
   [CONTEST_F_STREET] = { __("Street address"), '?', 128, 64, 0 },
   [CONTEST_F_LANGUAGES] = { __("Programming languages"), '?', 128, 64, 0 },
+  [CONTEST_F_FIELD0] = { __("Field 0"), '?', 128, 64, 0 },
+  [CONTEST_F_FIELD1] = { __("Field 1"), '?', 128, 64, 0 },
+  [CONTEST_F_FIELD2] = { __("Field 2"), '?', 128, 64, 0 },
+  [CONTEST_F_FIELD3] = { __("Field 3"), '?', 128, 64, 0 },
+  [CONTEST_F_FIELD4] = { __("Field 4"), '?', 128, 64, 0 },
+  [CONTEST_F_FIELD5] = { __("Field 5"), '?', 128, 64, 0 },
+  [CONTEST_F_FIELD6] = { __("Field 6"), '?', 128, 64, 0 },
+  [CONTEST_F_FIELD7] = { __("Field 7"), '?', 128, 64, 0 },
+  [CONTEST_F_FIELD8] = { __("Field 8"), '?', 128, 64, 0 },
+  [CONTEST_F_FIELD9] = { __("Field 9"), '?', 128, 64, 0 },
 };
 
 static struct field_desc_s member_field_desc[CONTEST_LAST_MEMBER_FIELD] =

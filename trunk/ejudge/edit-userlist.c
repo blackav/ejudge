@@ -1217,6 +1217,16 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NC_EXAM_CYPHER] = { "Exam Cypher", 1, 1 },
   [USERLIST_NC_LANGUAGES] = { "Prog. languages", 1, 1 },
   [USERLIST_NC_PHONE] = { "Phone", 1, 1 },
+  [USERLIST_NC_FIELD0] = { "Field 0", 1, 1 },
+  [USERLIST_NC_FIELD1] = { "Field 1", 1, 1 },
+  [USERLIST_NC_FIELD2] = { "Field 2", 1, 1 },
+  [USERLIST_NC_FIELD3] = { "Field 3", 1, 1 },
+  [USERLIST_NC_FIELD4] = { "Field 4", 1, 1 },
+  [USERLIST_NC_FIELD5] = { "Field 5", 1, 1 },
+  [USERLIST_NC_FIELD6] = { "Field 6", 1, 1 },
+  [USERLIST_NC_FIELD7] = { "Field 7", 1, 1 },
+  [USERLIST_NC_FIELD8] = { "Field 8", 1, 1 },
+  [USERLIST_NC_FIELD9] = { "Field 9", 1, 1 },
   [USERLIST_NC_CREATE_TIME] = { "User info create time", 1, 1 },
   [USERLIST_NC_LAST_LOGIN_TIME] = { "Contest last login", 1, 1 },
   [USERLIST_NC_LAST_CHANGE_TIME] = { "User info change time", 1, 1 },
@@ -1405,6 +1415,16 @@ static int field_order[] =
   USERLIST_NC_EXAM_CYPHER,
   USERLIST_NC_LANGUAGES,
   USERLIST_NC_PHONE,
+  USERLIST_NC_FIELD0,
+  USERLIST_NC_FIELD1,
+  USERLIST_NC_FIELD2,
+  USERLIST_NC_FIELD3,
+  USERLIST_NC_FIELD4,
+  USERLIST_NC_FIELD5,
+  USERLIST_NC_FIELD6,
+  USERLIST_NC_FIELD7,
+  USERLIST_NC_FIELD8,
+  USERLIST_NC_FIELD9,
   USERLIST_PSEUDO_FLAGS,
   USERLIST_NN_READ_ONLY,
   USERLIST_NC_CNTS_READ_ONLY,
@@ -1641,6 +1661,16 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         case USERLIST_NC_EXAM_ID:
         case USERLIST_NC_EXAM_CYPHER:
         case USERLIST_NC_LANGUAGES:
+        case USERLIST_NC_FIELD0:
+        case USERLIST_NC_FIELD1:
+        case USERLIST_NC_FIELD2:
+        case USERLIST_NC_FIELD3:
+        case USERLIST_NC_FIELD4:
+        case USERLIST_NC_FIELD5:
+        case USERLIST_NC_FIELD6:
+        case USERLIST_NC_FIELD7:
+        case USERLIST_NC_FIELD8:
+        case USERLIST_NC_FIELD9:
           help_str = "Enter-edit D-clear C-contest A-new member Q-quit";
           break;
         case USERLIST_NN_PASSWD:
