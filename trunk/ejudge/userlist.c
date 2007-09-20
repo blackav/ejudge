@@ -32,6 +32,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <ctype.h>
+#include <errno.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -506,6 +508,7 @@ static int user_info_field_offsets[] =
   [USERLIST_NC_INST_EN] = USER_INFO_OFFSET(inst_en),
   [USERLIST_NC_INSTSHORT] = USER_INFO_OFFSET(instshort),
   [USERLIST_NC_INSTSHORT_EN] = USER_INFO_OFFSET(instshort_en),
+  [USERLIST_NC_INSTNUM] = USER_INFO_OFFSET(instnum),
   [USERLIST_NC_FAC] = USER_INFO_OFFSET(fac),
   [USERLIST_NC_FAC_EN] = USER_INFO_OFFSET(fac_en),
   [USERLIST_NC_FACSHORT] = USER_INFO_OFFSET(facshort),
@@ -548,6 +551,7 @@ static int user_info_field_types[] =
   [USERLIST_NC_INST_EN] = USERLIST_NC_INST,
   [USERLIST_NC_INSTSHORT] = USERLIST_NC_INST,
   [USERLIST_NC_INSTSHORT_EN] = USERLIST_NC_INST,
+  [USERLIST_NC_INSTNUM] = USERLIST_NC_INSTNUM,
   [USERLIST_NC_FAC] = USERLIST_NC_INST,
   [USERLIST_NC_FAC_EN] = USERLIST_NC_INST,
   [USERLIST_NC_FACSHORT] = USERLIST_NC_INST,
@@ -596,6 +600,9 @@ userlist_is_empty_user_info_field(const struct userlist_user_info *ui,
   case USERLIST_NC_INST:
     p_str=(const unsigned char**)userlist_get_user_info_field_ptr(ui, field_id);
     return (*p_str == 0);
+  case USERLIST_NC_INSTNUM:
+    p_int = (const int*) userlist_get_user_info_field_ptr(ui, field_id);
+    return (*p_int < 0);
   case USERLIST_NC_CREATE_TIME:
     p_time = (const time_t*) userlist_get_user_info_field_ptr(ui, field_id);
     return (*p_time == 0);
@@ -639,6 +646,12 @@ userlist_is_equal_user_info_field(const struct userlist_user_info *ui,
     if (!value && !*p_str) return 1;
     if (!value || !*p_str) return 0;
     return (strcmp(*p_str, value) == 0);
+  case USERLIST_NC_INSTNUM:
+    p_int = (const int*) userlist_get_user_info_field_ptr(ui, field_id);
+    if (!value && *p_int < 0) return 1;
+    if (!value || *p_int < 0) return 0;
+    snprintf(buf, sizeof(buf), "%d", *p_int);
+    return (strcmp(buf, value) == 0);
   case USERLIST_NC_CREATE_TIME:
     p_time = (const time_t*) userlist_get_user_info_field_ptr(ui, field_id);
     if (!value && !*p_time) return 1;
@@ -688,6 +701,11 @@ userlist_get_user_info_field_str(unsigned char *buf, size_t len,
       else s = "";
     }
     return snprintf(buf, len, "%s", s);
+  case USERLIST_NC_INSTNUM:
+    p_int = (const int*) userlist_get_user_info_field_ptr(ui, field_id);
+    if (convert_null && *p_int < 0) return snprintf(buf, len, "<Not set>");
+    if (*p_int < 0) return snprintf(buf, len, "%s", "");
+    return snprintf(buf, len, "%d", *p_int);
   case USERLIST_NC_CREATE_TIME:
     p_time = (const time_t*) userlist_get_user_info_field_ptr(ui, field_id);
     return snprintf(buf, len, "%s", userlist_unparse_date(*p_time, convert_null));    
@@ -706,6 +724,9 @@ userlist_set_user_info_field_str(struct userlist_user_info *ui,
   time_t *p_time;
   int x, n;
   time_t newt;
+  unsigned char *buf;
+  char *eptr;
+  int buflen;
 
   ASSERT(ui);
   ASSERT(field_id >= USERLIST_NC_FIRST && field_id < USERLIST_NC_LAST);
@@ -756,6 +777,29 @@ userlist_set_user_info_field_str(struct userlist_user_info *ui,
     xfree(*p_str);
     *p_str = xstrdup(field_val);
     return 1;
+  case USERLIST_NC_INSTNUM:
+    p_int = (int*) userlist_get_user_info_field_ptr(ui, field_id);
+    if (*p_int < 0 && !field_val) return 0;
+    if (!field_val) {
+      *p_int = -1;
+      return 1;
+    }
+    buflen = strlen(field_val);
+    buf = (unsigned char*) alloca(buflen + 1);
+    strcpy(buf, field_val);
+    while (buflen > 0 && isspace(buf[buflen - 1])) buflen--;
+    buf[buflen] = 0;
+    if (*p_int < 0 && !buf[0]) return 0;
+    if (!buf[0]) {
+      *p_int = -1;
+      return 1;
+    }
+    errno = 0;
+    x = strtol(buf, &eptr, 10);
+    if (errno || *eptr || x < 0) return -1;
+    if (*p_int == x) return 0;
+    *p_int = x;
+    return 1;
   case USERLIST_NC_CREATE_TIME:
     p_time = (time_t*) userlist_get_user_info_field_ptr(ui, field_id);
     if (xml_parse_date(0, 0, 0, field_val, &newt) < 0) return -1;
@@ -801,6 +845,11 @@ userlist_delete_user_info_field(struct userlist_user_info *ui,
     if (!*p_str) return 0;
     xfree(*p_str);
     *p_str = 0;
+    return 1;
+  case USERLIST_NC_INSTNUM:
+    p_int = (int*) userlist_get_user_info_field_ptr(ui, field_id);
+    if (*p_int < 0) return 0;
+    *p_int = -1;
     return 1;
   case USERLIST_NC_CREATE_TIME:
     p_time = (time_t*) userlist_get_user_info_field_ptr(ui, field_id);
@@ -1511,6 +1560,7 @@ userlist_clone_user_info(struct userlist_user *u, int contest_id,
 
   // NOTE: should we reset the cnts_read_only flag?
   ci->i.cnts_read_only = u->i.cnts_read_only;
+  ci->i.instnum = u->i.instnum;
 
   ci->i.name = xstrdup(u->i.name);
 
@@ -1602,6 +1652,7 @@ userlist_new_cntsinfo(struct userlist_user *u, int contest_id,
   u->cntsinfo[contest_id] = ci;
 
   ci->contest_id = contest_id;
+  ci->i.instnum = -1;
   ci->i.create_time = current_time;
   ci->i.last_change_time = current_time;
 
@@ -1691,6 +1742,7 @@ static const int user_to_contest_field_map[USERLIST_NC_LAST] =
   [USERLIST_NC_INST_EN] = CONTEST_F_INST_EN,
   [USERLIST_NC_INSTSHORT] = CONTEST_F_INSTSHORT,
   [USERLIST_NC_INSTSHORT_EN] = CONTEST_F_INSTSHORT_EN,
+  [USERLIST_NC_INSTNUM] = CONTEST_F_INSTNUM,
   [USERLIST_NC_FAC] = CONTEST_F_FAC,
   [USERLIST_NC_FAC_EN] = CONTEST_F_FAC_EN,
   [USERLIST_NC_FACSHORT] = CONTEST_F_FACSHORT,

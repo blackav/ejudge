@@ -2486,6 +2486,7 @@ copy_user_info_func(void *data, int user_id,
     ui_to->team_passwd = xstrdup(ui_from->team_passwd);
     ui_to->team_passwd_method = ui_from->team_passwd_method;
   }
+  ui_to->instnum = ui_from->instnum;
 
   for (i = 0; copy_user_general_fields[i] > 0; i++) {
     j = copy_user_general_fields[i];

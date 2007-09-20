@@ -289,6 +289,7 @@ static char const * const field_map[] =
   "inst_en",
   "instshort",
   "instshort_en",
+  "instnum",
   "fac",
   "fac_en",
   "facshort",

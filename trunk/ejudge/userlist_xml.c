@@ -52,6 +52,7 @@ static char const * const elem_map[] =
   "inst_en",
   "instshort",
   "instshort_en",
+  "instnum",
   "fac",
   "fac_en",
   "facshort",
@@ -895,6 +896,7 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
 
   if (ui->contest_id <= 0)
     return xml_err_attr_undefined(node, USERLIST_A_CONTEST_ID);
+  ui->i.instnum = -1;
 
   /* parse elements */
   for (p = node->first_down; p; p = saved_next) {
@@ -923,6 +925,11 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
     case USERLIST_T_GUESTS:
       if (parse_members(path, p, ui->i.members) < 0) return -1;
       ui->i.filled = 1;
+      break;
+    case USERLIST_T_INSTNUM:
+      if (xml_parse_int(path, p->line, p->column, p->text, &ui->i.instnum) < 0)
+        return -1;
+      if (ui->i.instnum < 0) return xml_err_elem_invalid(p);
       break;
     default:
       return xml_err_elem_not_allowed(p);
@@ -1757,6 +1764,10 @@ userlist_real_unparse_user(
   xml_unparse_text(f, elem_map[USERLIST_T_INST_EN], ui->inst_en, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_INSTSHORT], ui->instshort, "    ");
   xml_unparse_text(f,elem_map[USERLIST_T_INSTSHORT_EN],ui->instshort_en,"    ");
+  if (ui->instnum >= 0) {
+    fprintf(f, "    <%s>%d</%s>\n", elem_map[USERLIST_T_INSTNUM],
+            ui->instnum, elem_map[USERLIST_T_INSTNUM]);
+  }
   xml_unparse_text(f, elem_map[USERLIST_T_FAC], ui->fac, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_FAC_EN], ui->fac_en, "    ");
   xml_unparse_text(f, elem_map[USERLIST_T_FACSHORT], ui->facshort, "    ");

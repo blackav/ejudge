@@ -1197,6 +1197,7 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NC_INST_EN] = { "Institution (En)", 1, 1 },
   [USERLIST_NC_INSTSHORT] = { "Inst. (short)", 1, 1 },
   [USERLIST_NC_INSTSHORT_EN] = { "Inst. (short) (En)", 1, 1 },
+  [USERLIST_NC_INSTNUM] = { "Inst. number", 1, 1 },
   [USERLIST_NC_FAC] = { "Faculty", 1, 1 },
   [USERLIST_NC_FAC_EN] = { "Faculty (En)", 1, 1 },
   [USERLIST_NC_FACSHORT] = { "Fac. (short)", 1, 1 },
@@ -1384,6 +1385,7 @@ static int field_order[] =
   USERLIST_NC_INST_EN,
   USERLIST_NC_INSTSHORT,
   USERLIST_NC_INSTSHORT_EN,
+  USERLIST_NC_INSTNUM,
   USERLIST_NC_FAC,
   USERLIST_NC_FAC_EN,
   USERLIST_NC_FACSHORT,
@@ -1619,6 +1621,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         case USERLIST_NC_INST_EN:
         case USERLIST_NC_INSTSHORT:
         case USERLIST_NC_INSTSHORT_EN:
+        case USERLIST_NC_INSTNUM:
         case USERLIST_NC_FAC:
         case USERLIST_NC_FAC_EN:
         case USERLIST_NC_FACSHORT:
