@@ -2611,6 +2611,7 @@ submit_general_editing(
   unsigned char *edited_strs[USERLIST_NM_LAST];
   int deleted_num = 0, edited_num = 0;
   const unsigned char *legend;
+  char *eptr;
 
   l10n_setlocale(phr->locale_id);
   log_f = open_memstream(&log_t, &log_z);
@@ -2662,6 +2663,15 @@ submit_general_editing(
         v = "";
       }
       preprocess_string(vbuf, sizeof(vbuf), v);
+      if (ff == CONTEST_F_INSTNUM) {
+        errno = 0;
+        r = strtol(vbuf, &eptr, 10);
+        if (errno || *eptr || r < -1) {
+          fprintf(log_f, _("Value of field \"%s\" is invalid.\n"),
+                  gettext(contest_field_desc[ff].description));
+          goto done;
+        }
+      }
     }
 
     if (vbuf[0]) {
@@ -2702,7 +2712,7 @@ submit_general_editing(
                                    edited_ids,
                                    (const unsigned char**) edited_strs);
   if (r < 0) {
-    fprintf(log_f, "%s.\n", userlist_strerror(-r));
+    fprintf(log_f, "%s.\n", gettext(userlist_strerror(-r)));
     goto done;
   }
 
