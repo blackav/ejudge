@@ -221,7 +221,7 @@ userlist_count_info_errors(
           err_count++;
         } else if (member_accept_chars[ff]) {
           userlist_get_member_field_str(fbuf, sizeof(fbuf), m,
-                                        userlist_member_field_ids[ff], 0);
+                                        userlist_member_field_ids[ff], 0, 0);
           if (check_str(fbuf, member_accept_chars[ff]) < 0) {
             role_err_count[rr + 1]++;
             err_count++;

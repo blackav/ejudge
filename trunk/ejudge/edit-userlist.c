@@ -1363,7 +1363,7 @@ member_menu_string(struct userlist_member *m, int f, unsigned char *out)
   if (!member_descs[f].has_value) {
     snprintf(out, 78, "%s", member_descs[f].name);
   } else {
-    userlist_get_member_field_str(buf, sizeof(buf), m, f, 1);
+    userlist_get_member_field_str(buf, sizeof(buf), m, f, 1, 0);
     if (utf8_mode) w = utf8_cnt(buf, w, &y);
     sprintf(out, "%-16.16s:%-*.*s", member_descs[f].name, w + y, w, buf);
   }
@@ -2216,7 +2216,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         }
         if (info[cur_i].field >= 0) {
           userlist_get_member_field_str(edit_buf, sizeof(edit_buf),
-                                        m, info[cur_i].field, 0);
+                                        m, info[cur_i].field, 0, 0);
           snprintf(edit_header, sizeof(edit_header),
                    "%s_%d::%s",
                    member_string[info[cur_i].role],

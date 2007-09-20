@@ -555,7 +555,8 @@ int userlist_is_equal_member_field(const struct userlist_member *m,
 int userlist_get_member_field_str(unsigned char *buf, size_t len,
                                   const struct userlist_member *m,
                                   int field_id,
-                                  int convert_null);
+                                  int convert_null,
+                                  int use_locale);
 int userlist_set_member_field_str(struct userlist_member *m,
                                   int field_id,
                                   unsigned char const *field_val);
