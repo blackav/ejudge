@@ -2467,7 +2467,7 @@ get_member_field(
     ptm = localtime(&ttm);
     snprintf(buf, size, "%04d/%02d/%02d", ptm->tm_year + 1900,
              ptm->tm_mon + 1, ptm->tm_mday);
-    fprintf(stderr, ">>%s<<\n", buf);
+    //fprintf(stderr, ">>%s<<\n", buf);
     break;
 
   default:
@@ -2485,11 +2485,12 @@ get_member_field(
 
  non_printable:
   fprintf(log_f, _("Field \"%s\" contains non-printable characters.\n"),
-          legend);
+          gettext(member_field_desc[field].description));
   return 0;
 
  invalid_field:
-  fprintf(log_f, _("Value of field \"%s\" is invalid.\n"), legend);
+  fprintf(log_f, _("Value of field \"%s\" is invalid.\n"),
+          gettext(member_field_desc[field].description));
   return 0;
 }
 
