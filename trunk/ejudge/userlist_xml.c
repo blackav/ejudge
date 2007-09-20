@@ -1814,7 +1814,7 @@ userlist_real_unparse_user(
 
   for (i = 1; i < USERLIST_LAST_TAG; i++) {
     if (i != USERLIST_T_NAME && leaf_info_offsets[i] > 0) {
-      p_str = XPDEREF(unsigned char *, ui, leaf_member_offsets[i]);
+      p_str = XPDEREF(unsigned char *, ui, leaf_info_offsets[i]);
       xml_unparse_text(f, elem_map[i], *p_str, "    ");
     }
   }
