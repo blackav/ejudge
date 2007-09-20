@@ -2256,11 +2256,11 @@ action_error_page(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *n, *s;
 
+  l10n_setlocale(phr->locale_id);
+
   s = _("Operation errors");
   n = phr->name;
   if (!n || !*n) n = phr->login;
-
-  l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
             "%s [%s, %s]", s, ARMOR(n), extra->contest_arm);
 
@@ -2403,11 +2403,11 @@ get_member_field(
 
     r = 0;
     if (*v) {
-      if (sscanf(v, "%d%n", &r, &n) != 1 || v[n] || r < 0 || r >= 100000)
+      if (sscanf(v, "%d%n", &r, &n) != 1 || v[n] || r < -1 || r >= 100000)
         goto invalid_field;
     }
     buf[0] = 0;
-    if (r > 0) snprintf(buf, size, "%d", r);
+    if (r >= 0) snprintf(buf, size, "%d", r);
     break;
 
   case CONTEST_MF_BIRTH_DATE:
@@ -2611,6 +2611,7 @@ submit_general_editing(
   int deleted_num = 0, edited_num = 0;
   const unsigned char *legend;
 
+  l10n_setlocale(phr->locale_id);
   log_f = open_memstream(&log_t, &log_z);
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
@@ -2718,6 +2719,7 @@ submit_general_editing(
     ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
   }
 
+  l10n_setlocale(0);
   xfree(log_t);
 }
 

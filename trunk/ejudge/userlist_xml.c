@@ -704,7 +704,7 @@ parse_members(char const *path, struct xml_tree *q,
         if (!p->text || !*p->text) break;
         if (xml_parse_int(path, p->line, p->column, p->text, &mb->grade) < 0)
           return xml_err_elem_invalid(p);
-        if (mb->grade < 0 || mb->grade >= 100000)
+        if (mb->grade < -1 || mb->grade >= 100000)
           return xml_err_elem_invalid(p);
         xml_unlink_node(p);
         userlist_free(p);
@@ -1453,7 +1453,7 @@ unparse_member(const struct userlist_member *p, FILE *f)
                      unparse_member_gender(p->gender),
                      ind);
   }
-  if (p->grade) {
+  if (p->grade >= 0) {
     fprintf(f, "        <%s>%d</%s>\n",
             elem_map[USERLIST_T_GRADE], p->grade, elem_map[USERLIST_T_GRADE]);
   }
