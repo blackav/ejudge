@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-09-20 11:34+0400\n"
-"PO-Revision-Date: 2007-09-20 14:03+0400\n"
+"POT-Creation-Date: 2007-09-21 00:37+0400\n"
+"PO-Revision-Date: 2007-09-21 00:39+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1438,6 +1438,36 @@ msgstr ""
 
 msgid "Field \"User name\" was too long."
 msgstr "Поле \"Имя пользователя\" имело слишком большую длину."
+
+msgid "Field 0"
+msgstr "Поле 0"
+
+msgid "Field 1"
+msgstr "Поле 1"
+
+msgid "Field 2"
+msgstr "Поле 2"
+
+msgid "Field 3"
+msgstr "Поле 3"
+
+msgid "Field 4"
+msgstr "Поле 4"
+
+msgid "Field 5"
+msgstr "Поле 5"
+
+msgid "Field 6"
+msgstr "Поле 6"
+
+msgid "Field 7"
+msgstr "Поле 7"
+
+msgid "Field 8"
+msgstr "Поле 8"
+
+msgid "Field 9"
+msgstr "Поле 9"
 
 msgid "File"
 msgstr "Файл"
