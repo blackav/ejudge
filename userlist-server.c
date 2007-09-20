@@ -4697,7 +4697,7 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
                 d->users_verb_style, _("Gender"),
                 d->users_verb_style, gettext(member_gender_string[m->gender]));
       }
-      if (!d || (cm && cm->fields[CONTEST_MF_GRADE])) {
+      if ((!d || (cm && cm->fields[CONTEST_MF_GRADE])) && m->grade >= 0) {
         fprintf(f, "<tr><td%s>%s:</td><td%s>%d</td></tr>\n",
                 d->users_verb_style, _("Grade"),
                 d->users_verb_style, m->grade);

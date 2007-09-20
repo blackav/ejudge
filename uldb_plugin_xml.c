@@ -2316,7 +2316,7 @@ set_user_xml_func(void *data,
       if (nm->status && om->status != nm->status) {
         om->status = nm->status;
       }
-      if (nm->grade && om->grade != nm->grade) {
+      if (nm->grade >= 0 && om->grade != nm->grade) {
         om->grade = nm->grade;
       }
       if (needs_update(om->firstname, nm->firstname)) {

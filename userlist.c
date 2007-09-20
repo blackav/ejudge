@@ -265,9 +265,11 @@ userlist_is_empty_member_field(const struct userlist_member *m, int field_id)
     return 0;
   case USERLIST_NM_STATUS:
   case USERLIST_NM_GENDER:
-  case USERLIST_NM_GRADE:
     p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
     return (*p_int == 0);
+  case USERLIST_NM_GRADE:
+    p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
+    return (*p_int < 0);
   case USERLIST_NM_FIRSTNAME:
     p_str = (const unsigned char**) userlist_get_member_field_ptr(m, field_id);
     return (*p_str == 0);
@@ -296,10 +298,15 @@ userlist_is_equal_member_field(const struct userlist_member *m, int field_id,
   case USERLIST_NM_SERIAL:
   case USERLIST_NM_STATUS:
   case USERLIST_NM_GENDER:
-  case USERLIST_NM_GRADE:
     p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
     if (!value && !*p_int) return 1;
     if (!value) return 0;
+    snprintf(buf, sizeof(buf), "%d", *p_int);
+    return (strcmp(buf, value) == 0);
+  case USERLIST_NM_GRADE:
+    p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
+    if (!value && *p_int < 0) return 1;
+    if (!value || *p_int < 0) return 0;
     snprintf(buf, sizeof(buf), "%d", *p_int);
     return (strcmp(buf, value) == 0);
   case USERLIST_NM_FIRSTNAME:
@@ -342,8 +349,12 @@ userlist_get_member_field_str(
   ASSERT(field_id >= USERLIST_NM_FIRST && field_id < USERLIST_NM_LAST);
   switch (member_field_types[field_id]) {
   case USERLIST_NM_SERIAL:
+    p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
+    return snprintf(buf, len, "%d", *p_int);
   case USERLIST_NM_GRADE:
     p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
+    if (*p_int < 0 && convert_null) return snprintf(buf,len,"%s", "<Not set>");
+    if (*p_int < 0) return snprintf(buf, len, "%s", "");
     return snprintf(buf, len, "%d", *p_int);
   case USERLIST_NM_STATUS:
     p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
@@ -390,10 +401,14 @@ userlist_delete_member_field(struct userlist_member *m, int field_id)
     return -1;
   case USERLIST_NM_STATUS:
   case USERLIST_NM_GENDER:
-  case USERLIST_NM_GRADE:
     p_int = (int*) userlist_get_member_field_ptr(m, field_id);
     if (!*p_int) return 0;
     *p_int = 0;
+    return 1;
+  case USERLIST_NM_GRADE:
+    p_int = (int*) userlist_get_member_field_ptr(m, field_id);
+    if (*p_int < 0) return 0;
+    *p_int = -1;
     return 1;
   case USERLIST_NM_FIRSTNAME:
     p_str = (unsigned char**) userlist_get_member_field_ptr(m, field_id);
@@ -420,6 +435,9 @@ userlist_set_member_field_str(struct userlist_member *m, int field_id,
   time_t *p_time;
   int x, n;
   time_t newt;
+  unsigned char *buf;
+  int buflen;
+  char *eptr;
 
   ASSERT(m);
   ASSERT(field_id >= USERLIST_NM_FIRST && field_id < USERLIST_NM_LAST);
@@ -448,11 +466,24 @@ userlist_set_member_field_str(struct userlist_member *m, int field_id,
     return 1;
   case USERLIST_NM_GRADE:
     p_int = (int*) userlist_get_member_field_ptr(m, field_id);
-    x = 0;
-    if (field_val &&
-        (sscanf(field_val, "%d%n", &x, &n) != 1 || field_val[n]
-         || x < 0 || x >= 100))
-      return -1;
+    if (!field_val) {
+      if (*p_int < 0) return 0;
+      *p_int = -1;
+      return 1;
+    }
+    buflen = strlen(field_val);
+    buf = (unsigned char*) alloca(buflen + 1);
+    strcpy(buf, field_val);
+    while (buflen > 0 && isspace(buf[buflen - 1])) buflen--;
+    buf[buflen] = 0;
+    if (!buf[0]) {
+      if (*p_int < 0) return 0;
+      *p_int = -1;
+      return 1;
+    }
+    errno = 0;
+    x = strtol(buf, &eptr, 10);
+    if (errno || *eptr || x < -1 || x >= 100) return -1;
     if (x == *p_int) return 0;
     *p_int = x;
     return 1;
