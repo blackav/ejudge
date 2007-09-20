@@ -4572,6 +4572,11 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
             d->users_verb_style, _("Institution (short) (En)"),
             d->users_verb_style, ui->instshort_en?ui->instshort_en:notset);
   }
+  if ((!d || d->fields[CONTEST_F_INSTNUM]) && ui->instnum >= 0) {
+    fprintf(f, "<tr><td%s>%s:</td><td%s>%d</td></tr>\n",
+            d->users_verb_style, _("Institution number"),
+            d->users_verb_style, ui->instnum);
+  }
   if (!d || d->fields[CONTEST_F_FAC]) {
     fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
             d->users_verb_style, _("Faculty"),
@@ -7439,6 +7444,7 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
     [CONTEST_F_INST_EN] = "Inst_en",
     [CONTEST_F_INSTSHORT] = "Instshort",
     [CONTEST_F_INSTSHORT_EN] = "Instshort_en",
+    [CONTEST_F_INSTNUM] = "Instnum",
     [CONTEST_F_FAC] = "Fac",
     [CONTEST_F_FAC_EN] = "Fac_en",
     [CONTEST_F_FACSHORT] = "Facshort",
@@ -7984,6 +7990,7 @@ static const struct { unsigned char *str; int ind; } field_names[] =
   { "Inst_En", USERLIST_NC_INST_EN },
   { "Instshort", USERLIST_NC_INSTSHORT },
   { "Instshort_En", USERLIST_NC_INSTSHORT_EN },
+  { "Instnum", USERLIST_NC_INSTNUM },
   { "Fac", USERLIST_NC_FAC },
   { "Fac_En", USERLIST_NC_FAC_EN },
   { "Facshort", USERLIST_NC_FACSHORT },

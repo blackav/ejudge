@@ -1983,6 +1983,7 @@ static const unsigned char *const form_field_names[] =
   [CONTEST_F_INST_EN] = "Institution (English)",
   [CONTEST_F_INSTSHORT] = "Institution, short",
   [CONTEST_F_INSTSHORT_EN] = "Institution, short (English)",
+  [CONTEST_F_INSTNUM] = "Institution number",
   [CONTEST_F_FAC] = "Faculty",
   [CONTEST_F_FAC_EN] = "Faculty (English)",
   [CONTEST_F_FACSHORT] = "Faculty, short",
