@@ -1058,6 +1058,7 @@ do_parse_user(char const *path, struct userlist_user *usr)
   userlist_free_attrs(&usr->b);
   if (usr->id == -1)
     return xml_err_attr_undefined(&usr->b, USERLIST_A_ID);
+  usr->i.instnum = -1;
 
   for (t = usr->b.first_down; t; t = saved_next) {
     saved_next = t->right;
@@ -1132,6 +1133,11 @@ do_parse_user(char const *path, struct userlist_user *usr)
       break;
     case USERLIST_T_CNTSINFOS:
       if (parse_cntsinfos(path, t, usr) < 0) return -1;
+      break;
+    case USERLIST_T_INSTNUM:
+      if (xml_parse_int(path,t->line,t->column,t->text,&usr->i.instnum) < 0)
+        return -1;
+      if (usr->i.instnum < 0) return xml_err_elem_invalid(t);
       break;
     default:
       return xml_err_elem_not_allowed(t);
