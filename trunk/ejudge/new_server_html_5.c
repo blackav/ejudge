@@ -1075,6 +1075,46 @@ member_fields_order[] =
   0,
 };
 
+static int
+member_fields_order_1[] =
+{
+  CONTEST_MF_SURNAME,
+  CONTEST_MF_SURNAME_EN,
+  CONTEST_MF_FIRSTNAME,
+  CONTEST_MF_FIRSTNAME_EN,
+  CONTEST_MF_MIDDLENAME,
+  CONTEST_MF_MIDDLENAME_EN,
+  0,
+};
+
+static int
+member_fields_order_2[] =
+{
+  CONTEST_MF_GENDER,
+  CONTEST_MF_STATUS,
+  CONTEST_MF_GRADE,
+  CONTEST_MF_GROUP,
+  CONTEST_MF_GROUP_EN,
+  CONTEST_MF_EMAIL,
+  CONTEST_MF_HOMEPAGE,
+  CONTEST_MF_PHONE,
+  CONTEST_MF_INST,
+  CONTEST_MF_INST_EN,
+  CONTEST_MF_INSTSHORT,
+  CONTEST_MF_INSTSHORT_EN,
+  CONTEST_MF_FAC,
+  CONTEST_MF_FAC_EN,
+  CONTEST_MF_FACSHORT,
+  CONTEST_MF_FACSHORT_EN,
+  CONTEST_MF_OCCUPATION,
+  CONTEST_MF_OCCUPATION_EN,
+  CONTEST_MF_DISCIPLINE,
+  CONTEST_MF_BIRTH_DATE,
+  CONTEST_MF_ENTRY_DATE,
+  CONTEST_MF_GRADUATION_DATE,
+  0,
+};
+
 struct field_desc_s
 {
   char *description;
@@ -1299,6 +1339,37 @@ main_page_view_info(
       }
       info_table_row(fout, cnts->personal?_("User name (for standings)"):_("Team name"), s, 0, 0, name_accept_chars, &ab, 0, u->login);
     }
+    if (cnts->personal && cnts->members[(rr = CONTEST_M_CONTESTANT)]
+        && cnts->members[rr]->max_count > 0) {
+      if (u->i.members[rr] && u->i.members[rr]->total > 0
+          && (m = u->i.members[rr]->members[0])) {
+        for (i = 0; (ff = member_fields_order_1[i]); i++) {
+          if (!cnts->members[rr]->fields[ff]) continue;
+          userlist_get_member_field_str(fbuf, sizeof(fbuf), m,
+                                        userlist_member_field_ids[ff], 0);
+          legend = cnts->members[rr]->fields[ff]->legend;
+          if (!legend || !*legend)
+            legend = gettext(member_field_desc[ff].description);
+          info_table_row(fout, legend, fbuf,
+                         userlist_is_empty_member_field(m, userlist_member_field_ids[ff]),
+                         cnts->members[rr]->fields[ff]->mandatory,
+                         userlist_get_member_accepting_chars(ff),
+                         &ab, member_field_desc[ff].is_href, 0);
+        }
+      } else {
+        fbuf[0] = 0;
+        for (i = 0; (ff = member_fields_order_1[i]); i++) {
+          if (!cnts->members[rr]->fields[ff]) continue;
+          legend = cnts->members[rr]->fields[ff]->legend;
+          if (!legend || !*legend)
+            legend = gettext(member_field_desc[ff].description);
+          info_table_row(fout, legend, fbuf, 1,
+                         cnts->members[rr]->fields[ff]->mandatory,
+                         userlist_get_member_accepting_chars(ff),
+                         &ab, member_field_desc[ff].is_href, 0);
+        }
+      }
+    }
     for (i = 0; (ff = contest_fields_order[i]); i++) {
       if (!cnts->fields[ff]) continue;
       userlist_get_user_info_field_str(fbuf, sizeof(fbuf), &u->i,
@@ -1315,10 +1386,9 @@ main_page_view_info(
     }
     if (cnts->personal && cnts->members[(rr = CONTEST_M_CONTESTANT)]
         && cnts->members[rr]->max_count > 0) {
-
       if (u->i.members[rr] && u->i.members[rr]->total > 0
           && (m = u->i.members[rr]->members[0])) {
-        for (i = 0; (ff = member_fields_order[i]); i++) {
+        for (i = 0; (ff = member_fields_order_2[i]); i++) {
           if (!cnts->members[rr]->fields[ff]) continue;
           userlist_get_member_field_str(fbuf, sizeof(fbuf), m,
                                         userlist_member_field_ids[ff], 0);
@@ -1333,7 +1403,7 @@ main_page_view_info(
         }
       } else {
         fbuf[0] = 0;
-        for (i = 0; (ff = member_fields_order[i]); i++) {
+        for (i = 0; (ff = member_fields_order_2[i]); i++) {
           if (!cnts->members[rr]->fields[ff]) continue;
           legend = cnts->members[rr]->fields[ff]->legend;
           if (!legend || !*legend)
@@ -1656,7 +1726,8 @@ edit_member_form(
         int role,
         int member,
         int skip_header,
-        const unsigned char *var_prefix);
+        const unsigned char *var_prefix,
+        int fields_order[]);
 
 static void
 edit_general_form(
@@ -1705,6 +1776,15 @@ edit_general_form(
   if (!comment) comment = "&nbsp;";
   fprintf(fout, "<td class=\"b0\"><font color=\"red\"><i>%s</i></font></td>", comment);
   fprintf(fout, "</tr>\n");
+
+  // for personal contest put the member form here
+  if (cnts->personal && cnts->members[(rr = CONTEST_M_CONTESTANT)]
+      && cnts->members[rr]->max_count > 0) {
+    m = 0;
+    if (u->i.members[rr] && u->i.members[rr]->total > 0)
+      m = u->i.members[rr]->members[0];
+    edit_member_form(fout, phr, cnts, m, rr, 0, 1, "m", member_fields_order_1);
+  }
 
   for (i = 0; (ff = contest_fields_order[i]); i++) {
     if (!cnts->fields[ff]) continue;
@@ -1770,7 +1850,7 @@ edit_general_form(
     m = 0;
     if (u->i.members[rr] && u->i.members[rr]->total > 0)
       m = u->i.members[rr]->members[0];
-    edit_member_form(fout, phr, cnts, m, rr, 0, 1, "m");
+    edit_member_form(fout, phr, cnts, m, rr, 0, 1, "m", member_fields_order_2);
   }
 
   fprintf(fout, "</table>\n");
@@ -1936,7 +2016,8 @@ edit_member_form(
         int role,
         int member,
         int skip_header,
-        const unsigned char *var_prefix)
+        const unsigned char *var_prefix,
+        int fields_order[])
 {
   const struct contest_member *cm = cnts->members[role];
   unsigned char bb[1024];
@@ -1946,6 +2027,7 @@ edit_member_form(
   const unsigned char *comment = 0, *ac, *legend;
 
   if (!var_prefix) var_prefix = "";
+  if (!fields_order) fields_order = member_fields_order;
 
   if (!skip_header) {
     html_start_form(fout, 1, phr->self_url, "");
@@ -2126,7 +2208,7 @@ edit_page(
   if (phr->action == NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE) {
     fprintf(fout, "<br/><h2>%s %d</h2>\n",
             gettext(role_labels[role]), member + 1);
-    edit_member_form(fout, phr, cnts, m, role, member, 0, 0);
+    edit_member_form(fout, phr, cnts, m, role, member, 0, 0, 0);
   } else {
     fprintf(fout, "<br/><h2>%s</h2>\n", _("General information"));
     edit_general_form(fout, phr, cnts, u);
