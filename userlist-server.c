@@ -7457,6 +7457,16 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
     [CONTEST_F_ZIP] = "Zip",
     [CONTEST_F_STREET] = "Street",
     [CONTEST_F_LANGUAGES] = "Languages",
+    [CONTEST_F_FIELD0] = "Field0",
+    [CONTEST_F_FIELD1] = "Field1",
+    [CONTEST_F_FIELD2] = "Field2",
+    [CONTEST_F_FIELD3] = "Field3",
+    [CONTEST_F_FIELD4] = "Field4",
+    [CONTEST_F_FIELD5] = "Field5",
+    [CONTEST_F_FIELD6] = "Field6",
+    [CONTEST_F_FIELD7] = "Field7",
+    [CONTEST_F_FIELD8] = "Field8",
+    [CONTEST_F_FIELD9] = "Field9",
   };
 
   // check, that we need iterate over members
@@ -8010,6 +8020,16 @@ static const struct { unsigned char *str; int ind; } field_names[] =
   { "Exam_Cypher", USERLIST_NC_EXAM_CYPHER },
   { "Languages", USERLIST_NC_LANGUAGES },
   { "Phone", USERLIST_NC_PHONE },
+  { "Field0", USERLIST_NC_FIELD0 },
+  { "Field1", USERLIST_NC_FIELD1 },
+  { "Field2", USERLIST_NC_FIELD2 },
+  { "Field3", USERLIST_NC_FIELD3 },
+  { "Field4", USERLIST_NC_FIELD4 },
+  { "Field5", USERLIST_NC_FIELD5 },
+  { "Field6", USERLIST_NC_FIELD6 },
+  { "Field7", USERLIST_NC_FIELD7 },
+  { "Field8", USERLIST_NC_FIELD8 },
+  { "Field9", USERLIST_NC_FIELD9 },
 
   { "Status", USERLIST_NM_STATUS },
   { "Grade", USERLIST_NM_GRADE },

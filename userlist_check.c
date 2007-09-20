@@ -51,6 +51,16 @@ static const unsigned char * const contest_accept_chars[CONTEST_LAST_FIELD] =
   [CONTEST_F_ZIP] = login_accept_chars,
   [CONTEST_F_STREET] = name_accept_chars,
   [CONTEST_F_LANGUAGES] = name_accept_chars,
+  [CONTEST_F_FIELD0] = name_accept_chars,
+  [CONTEST_F_FIELD1] = name_accept_chars,
+  [CONTEST_F_FIELD2] = name_accept_chars,
+  [CONTEST_F_FIELD3] = name_accept_chars,
+  [CONTEST_F_FIELD4] = name_accept_chars,
+  [CONTEST_F_FIELD5] = name_accept_chars,
+  [CONTEST_F_FIELD6] = name_accept_chars,
+  [CONTEST_F_FIELD7] = name_accept_chars,
+  [CONTEST_F_FIELD8] = name_accept_chars,
+  [CONTEST_F_FIELD9] = name_accept_chars,
 };
 
 static const unsigned char * const member_accept_chars[CONTEST_LAST_MEMBER_FIELD] =
@@ -106,6 +116,16 @@ const int userlist_contest_field_ids[CONTEST_LAST_FIELD] =
   [CONTEST_F_ZIP] = USERLIST_NC_ZIP,
   [CONTEST_F_STREET] = USERLIST_NC_STREET,
   [CONTEST_F_LANGUAGES] = USERLIST_NC_LANGUAGES,
+  [CONTEST_F_FIELD0] = USERLIST_NC_FIELD0,
+  [CONTEST_F_FIELD1] = USERLIST_NC_FIELD1,
+  [CONTEST_F_FIELD2] = USERLIST_NC_FIELD2,
+  [CONTEST_F_FIELD3] = USERLIST_NC_FIELD3,
+  [CONTEST_F_FIELD4] = USERLIST_NC_FIELD4,
+  [CONTEST_F_FIELD5] = USERLIST_NC_FIELD5,
+  [CONTEST_F_FIELD6] = USERLIST_NC_FIELD6,
+  [CONTEST_F_FIELD7] = USERLIST_NC_FIELD7,
+  [CONTEST_F_FIELD8] = USERLIST_NC_FIELD8,
+  [CONTEST_F_FIELD9] = USERLIST_NC_FIELD9,
 };
 
 const int userlist_member_field_ids[CONTEST_LAST_MEMBER_FIELD] =

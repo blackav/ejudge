@@ -105,6 +105,16 @@ static char const * const elem_map[] =
   "entry_date",
   "graduation_date",
   "gender",
+  "field0",
+  "field1",
+  "field2",
+  "field3",
+  "field4",
+  "field5",
+  "field6",
+  "field7",
+  "field8",
+  "field9",
 
   0
 };
@@ -220,6 +230,16 @@ elem_free(struct xml_tree *t)
       xfree(p->i.exam_cypher);
       xfree(p->i.languages);
       xfree(p->i.phone);
+      xfree(p->i.field0);
+      xfree(p->i.field1);
+      xfree(p->i.field2);
+      xfree(p->i.field3);
+      xfree(p->i.field4);
+      xfree(p->i.field5);
+      xfree(p->i.field6);
+      xfree(p->i.field7);
+      xfree(p->i.field8);
+      xfree(p->i.field9);
       xfree(p->extra1);
       xfree(p->cntsinfo);
     }
@@ -289,6 +309,16 @@ elem_free(struct xml_tree *t)
       xfree(p->i.exam_cypher);
       xfree(p->i.languages);
       xfree(p->i.phone);
+      xfree(p->i.field0);
+      xfree(p->i.field1);
+      xfree(p->i.field2);
+      xfree(p->i.field3);
+      xfree(p->i.field4);
+      xfree(p->i.field5);
+      xfree(p->i.field6);
+      xfree(p->i.field7);
+      xfree(p->i.field8);
+      xfree(p->i.field9);
     }
     break;
   }
@@ -828,6 +858,16 @@ static const size_t leaf_info_offsets[USERLIST_LAST_TAG] =
   [USERLIST_T_EXAM_ID] = INFO_OFFSET(exam_id),
   [USERLIST_T_EXAM_CYPHER] = INFO_OFFSET(exam_cypher),
   [USERLIST_T_LANGUAGES] = INFO_OFFSET(languages),
+  [USERLIST_T_FIELD0] = INFO_OFFSET(field0),
+  [USERLIST_T_FIELD1] = INFO_OFFSET(field1),
+  [USERLIST_T_FIELD2] = INFO_OFFSET(field2),
+  [USERLIST_T_FIELD3] = INFO_OFFSET(field3),
+  [USERLIST_T_FIELD4] = INFO_OFFSET(field4),
+  [USERLIST_T_FIELD5] = INFO_OFFSET(field5),
+  [USERLIST_T_FIELD6] = INFO_OFFSET(field6),
+  [USERLIST_T_FIELD7] = INFO_OFFSET(field7),
+  [USERLIST_T_FIELD8] = INFO_OFFSET(field8),
+  [USERLIST_T_FIELD9] = INFO_OFFSET(field9),
 };
 
 static int
@@ -1687,6 +1727,7 @@ userlist_real_unparse_user(
   const struct userlist_user_info *ui;
   const struct userlist_members *mm;
   const struct userlist_member *m;
+  unsigned char **p_str;
 
   if (!p) return;
 
@@ -1766,33 +1807,17 @@ userlist_real_unparse_user(
   }
   unparse_contests(p->contests, f, USERLIST_MODE_STAND, contest_id);
 
-  xml_unparse_text(f, elem_map[USERLIST_T_INST], ui->inst, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_INST_EN], ui->inst_en, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_INSTSHORT], ui->instshort, "    ");
-  xml_unparse_text(f,elem_map[USERLIST_T_INSTSHORT_EN],ui->instshort_en,"    ");
   if (ui->instnum >= 0) {
     fprintf(f, "    <%s>%d</%s>\n", elem_map[USERLIST_T_INSTNUM],
             ui->instnum, elem_map[USERLIST_T_INSTNUM]);
   }
-  xml_unparse_text(f, elem_map[USERLIST_T_FAC], ui->fac, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_FAC_EN], ui->fac_en, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_FACSHORT], ui->facshort, "    ");
-  xml_unparse_text(f,elem_map[USERLIST_T_FACSHORT_EN], ui->facshort_en, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_HOMEPAGE], ui->homepage, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_PHONE], ui->phone, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_CITY], ui->city, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_CITY_EN], ui->city_en, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_COUNTRY], ui->country, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_COUNTRY_EN], ui->country_en, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_REGION], ui->region, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_ZIP], ui->zip, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_STREET], ui->street, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_LOCATION], ui->location, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_SPELLING], ui->spelling, "    ");
-  xml_unparse_text(f,elem_map[USERLIST_T_PRINTER_NAME],ui->printer_name,"    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_EXAM_ID], ui->exam_id, "    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_EXAM_CYPHER],ui->exam_cypher,"    ");
-  xml_unparse_text(f, elem_map[USERLIST_T_LANGUAGES], ui->languages, "    ");
+
+  for (i = 1; i < USERLIST_LAST_TAG; i++) {
+    if (i != USERLIST_T_NAME && leaf_info_offsets[i] > 0) {
+      p_str = XPDEREF(unsigned char *, ui, leaf_member_offsets[i]);
+      xml_unparse_text(f, elem_map[i], *p_str, "    ");
+    }
+  }
 
   /*
   if (mode == USERLIST_MODE_STAND) {

@@ -1996,6 +1996,16 @@ static const unsigned char *const form_field_names[] =
   [CONTEST_F_ZIP] = "Zip code",
   [CONTEST_F_STREET] = "Street address",
   [CONTEST_F_LANGUAGES] = "Programming Languages",
+  [CONTEST_F_FIELD0] = "Field 0",
+  [CONTEST_F_FIELD1] = "Field 1",
+  [CONTEST_F_FIELD2] = "Field 2",
+  [CONTEST_F_FIELD3] = "Field 3",
+  [CONTEST_F_FIELD4] = "Field 4",
+  [CONTEST_F_FIELD5] = "Field 5",
+  [CONTEST_F_FIELD6] = "Field 6",
+  [CONTEST_F_FIELD7] = "Field 7",
+  [CONTEST_F_FIELD8] = "Field 8",
+  [CONTEST_F_FIELD9] = "Field 9",
 };
 
 static const unsigned char *const member_field_names[] =
