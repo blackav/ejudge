@@ -1825,7 +1825,7 @@ edit_general_form(
       }
       fprintf(fout, "</table></td>\n");
     } else if (ff == CONTEST_F_REGION && allowed_regions_u > 0) {
-      fprintf(fout, "<td class=\"b0\"><select name=\"region\"><option></option>");
+      fprintf(fout, "<td class=\"b0\"><select name=\"param_%d\"><option></option>", ff);
       for (j = 0; j < allowed_regions_u; j++) {
         s = "";
         if (!strcmp(bb, allowed_regions[j]))
