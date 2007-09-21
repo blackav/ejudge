@@ -797,6 +797,7 @@ insert_contest_info(struct uldb_mysql_state *state,
   write_escaped_string(fcmd, state, ", ", info->city);
   write_escaped_string(fcmd, state, ", ", info->city_en);
   write_escaped_string(fcmd, state, ", ", info->region);
+  write_escaped_string(fcmd, state, ", ", info->area);
   write_escaped_string(fcmd, state, ", ", info->zip);
   write_escaped_string(fcmd, state, ", ", info->street);
   write_escaped_string(fcmd, state, ", ", info->country);
