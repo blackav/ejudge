@@ -2889,3 +2889,5 @@ userlist_xml.c 4349 0 4604999
 new_server_html_5.c 4351 0 8930828
 plugins/mysql-userlist/uldb_mysql.c 4351 0 4944611
 new_server_html_5.c 4353 0 8930833
+contests.c 4355 0 4819701
+new_server_html_5.c 4355 0 8931637
