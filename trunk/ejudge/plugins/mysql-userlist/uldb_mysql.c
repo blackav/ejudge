@@ -767,6 +767,11 @@ insert_contest_info(struct uldb_mysql_state *state,
   fprintf(fcmd, "%d, %d", user_id, contest_id);
 
   fprintf(fcmd, ", %d", info->cnts_read_only);
+  if (info->instnum >= 0) {
+    fprintf(fcmd, ", %d", info->instnum);
+  } else {
+    fprintf(fcmd, ", NULL");
+  }
   write_escaped_string(fcmd, state, ", ", info->name);
   // pwdmethod: 0 - plain, 1 - base64 (not used), 2 - sha1
   // team_passwd
@@ -802,6 +807,16 @@ insert_contest_info(struct uldb_mysql_state *state,
   write_escaped_string(fcmd, state, ", ", info->languages);
   write_escaped_string(fcmd, state, ", ", info->exam_id);
   write_escaped_string(fcmd, state, ", ", info->exam_cypher);
+  write_escaped_string(fcmd, state, ", ", info->field0);
+  write_escaped_string(fcmd, state, ", ", info->field1);
+  write_escaped_string(fcmd, state, ", ", info->field2);
+  write_escaped_string(fcmd, state, ", ", info->field3);
+  write_escaped_string(fcmd, state, ", ", info->field4);
+  write_escaped_string(fcmd, state, ", ", info->field5);
+  write_escaped_string(fcmd, state, ", ", info->field6);
+  write_escaped_string(fcmd, state, ", ", info->field7);
+  write_escaped_string(fcmd, state, ", ", info->field8);
+  write_escaped_string(fcmd, state, ", ", info->field9);
   fprintf(fcmd, " )");
   fclose(fcmd); fcmd = 0;
 
@@ -1909,8 +1924,18 @@ static const void *
 user_contest_iterator_get_func(ptr_iterator_t data)
 {
   struct user_contest_iterator *iter = (struct user_contest_iterator *) data;
-  // TODO
-  abort();
+  struct uldb_mysql_state *state = iter->state;
+  unsigned char cmd[1024];
+  int cmdlen = sizeof(cmd);
+  struct userlist_contest *c = 0;
+
+  if (iter->cur_i >= iter->id_num) return 0;
+  cmdlen = snprintf(cmd, cmdlen, "SELECT * FROM %scntsregs WHERE user_id = %d AND contest_id = %d ;", state->table_prefix, iter->user_id, iter->ids[iter->cur_i]);
+  if (one_row_request(state, cmd, cmdlen, COOKIES_WIDTH) < 0) return 0;
+  c = allocate_cntsregs_on_pool(state, iter->user_id, iter->ids[iter->cur_i]);
+  if (!c) return 0;
+  if (parse_cntsregs_row(state, c) < 0) return 0;
+  return (void*) c;
 }
 static void
 user_contest_iterator_next_func(ptr_iterator_t data)
@@ -1945,6 +1970,7 @@ get_user_contest_iterator_func(
 
   XCALLOC(iter, 1);
   iter->b = user_contest_iterator_funcs;
+  iter->state = state;
   iter->user_id = user_id;
 
   cmdlen = sizeof(cmd);
