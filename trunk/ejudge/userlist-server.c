@@ -4622,6 +4622,11 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
             d->users_verb_style, _("Region"),
             d->users_verb_style, ui->region?ui->region:notset);
   }
+  if (!d || d->fields[CONTEST_F_AREA]) {
+    fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+            d->users_verb_style, _("Area"),
+            d->users_verb_style, ui->area?ui->area:notset);
+  }
     /* Location is never shown
     if (!d || d->fields[CONTEST_F_LOCATION]) {
       fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
@@ -7454,6 +7459,7 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
     [CONTEST_F_COUNTRY] = "Country",
     [CONTEST_F_COUNTRY_EN] = "Country_en",
     [CONTEST_F_REGION] = "Region",
+    [CONTEST_F_AREA] = "Area",
     [CONTEST_F_ZIP] = "Zip",
     [CONTEST_F_STREET] = "Street",
     [CONTEST_F_LANGUAGES] = "Languages",
@@ -8011,6 +8017,7 @@ static const struct { unsigned char *str; int ind; } field_names[] =
   { "Country", USERLIST_NC_COUNTRY },
   { "Country_En", USERLIST_NC_COUNTRY_EN },
   { "Region", USERLIST_NC_REGION },
+  { "Area", USERLIST_NC_AREA },
   { "Zip", USERLIST_NC_ZIP },
   { "Street", USERLIST_NC_STREET },
   { "Location", USERLIST_NC_LOCATION },

@@ -90,6 +90,7 @@ static char const * const elem_map[] =
   "country",
   "country_en",
   "region",
+  "area",
   "zip",
   "street",
   "location",
@@ -221,6 +222,7 @@ elem_free(struct xml_tree *t)
       xfree(p->i.country);
       xfree(p->i.country_en);
       xfree(p->i.region);
+      xfree(p->i.area);
       xfree(p->i.zip);
       xfree(p->i.street);
       xfree(p->i.location);
@@ -300,6 +302,7 @@ elem_free(struct xml_tree *t)
       xfree(p->i.country);
       xfree(p->i.country_en);
       xfree(p->i.region);
+      xfree(p->i.area);
       xfree(p->i.zip);
       xfree(p->i.street);
       xfree(p->i.location);
@@ -850,6 +853,7 @@ static const size_t leaf_info_offsets[USERLIST_LAST_TAG] =
   [USERLIST_T_COUNTRY] = INFO_OFFSET(country),
   [USERLIST_T_COUNTRY_EN] = INFO_OFFSET(country_en),
   [USERLIST_T_REGION] = INFO_OFFSET(region),
+  [USERLIST_T_AREA] = INFO_OFFSET(area),
   [USERLIST_T_ZIP] = INFO_OFFSET(zip),
   [USERLIST_T_STREET] = INFO_OFFSET(street),
   [USERLIST_T_LOCATION] = INFO_OFFSET(location),

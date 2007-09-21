@@ -1993,6 +1993,7 @@ static const unsigned char *const form_field_names[] =
   [CONTEST_F_COUNTRY] = "Country",
   [CONTEST_F_COUNTRY_EN] = "Country (English)",
   [CONTEST_F_REGION] = "Region",
+  [CONTEST_F_AREA] = "Area",
   [CONTEST_F_ZIP] = "Zip code",
   [CONTEST_F_STREET] = "Street address",
   [CONTEST_F_LANGUAGES] = "Programming Languages",
