@@ -2228,6 +2228,10 @@ set_user_xml_func(void *data,
     xfree(ui->region);
     ui->region = xstrdup(new_u->i.region);
   }
+  if (needs_update(ui->area, new_u->i.area)) {
+    xfree(ui->area);
+    ui->area = xstrdup(new_u->i.area);
+  }
   if (needs_update(ui->languages, new_u->i.languages)) {
     xfree(ui->languages);
     ui->languages = xstrdup(new_u->i.languages);
@@ -2438,6 +2442,7 @@ static const int copy_user_general_fields[] =
   USERLIST_NC_COUNTRY,
   USERLIST_NC_COUNTRY_EN,
   USERLIST_NC_REGION,
+  USERLIST_NC_AREA,
   USERLIST_NC_ZIP,
   USERLIST_NC_STREET,
   USERLIST_NC_LANGUAGES,

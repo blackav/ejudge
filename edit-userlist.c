@@ -1208,6 +1208,7 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NC_COUNTRY] = { "Country", 1, 1 },
   [USERLIST_NC_COUNTRY_EN] = { "Country (En)", 1, 1 },
   [USERLIST_NC_REGION] = { "Region", 1, 1 },
+  [USERLIST_NC_AREA] = { "Area", 1, 1 },
   [USERLIST_NC_ZIP] = { "Zip code", 1, 1 },
   [USERLIST_NC_STREET] = { "Street addr.", 1, 1 },
   [USERLIST_NC_LOCATION] = { "Location", 1, 1 },
@@ -1406,6 +1407,7 @@ static int field_order[] =
   USERLIST_NC_COUNTRY,
   USERLIST_NC_COUNTRY_EN,
   USERLIST_NC_REGION,
+  USERLIST_NC_AREA,
   USERLIST_NC_ZIP,
   USERLIST_NC_STREET,
   USERLIST_NC_LOCATION,
@@ -1653,6 +1655,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         case USERLIST_NC_COUNTRY:
         case USERLIST_NC_COUNTRY_EN:
         case USERLIST_NC_REGION:
+        case USERLIST_NC_AREA:
         case USERLIST_NC_ZIP:
         case USERLIST_NC_STREET:
         case USERLIST_NC_LOCATION:
@@ -2364,6 +2367,7 @@ user_match(struct userlist_user *u, int kind)
     if (user_regmatch(u->i.country)) return 1;
     if (user_regmatch(u->i.country_en)) return 1;
     if (user_regmatch(u->i.region)) return 1;
+    if (user_regmatch(u->i.area)) return 1;
     if (user_regmatch(u->i.location)) return 1;
     if (user_regmatch(u->i.spelling)) return 1;
     if (user_regmatch(u->i.languages)) return 1;
