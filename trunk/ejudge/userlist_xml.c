@@ -1645,6 +1645,11 @@ unparse_cntsinfo(const struct userlist_cntsinfo *p, FILE *f)
   }
   fprintf(f, ">\n");
 
+  if (p->i.instnum >= 0) {
+    fprintf(f, "%s<%s>%d</%s>\n", sp1, elem_map[USERLIST_T_INSTNUM],
+            p->i.instnum, elem_map[USERLIST_T_INSTNUM]);
+  }
+
   for (i = 1; i < USERLIST_LAST_TAG; i++) {
     if (leaf_info_offsets[i] > 0) {
       p_str = XPDEREF(unsigned char *, &p->i, leaf_info_offsets[i]);
