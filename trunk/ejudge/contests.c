@@ -1587,7 +1587,7 @@ unparse_field(
   unsigned char *txt = 0, *arm_txt = 0;
   size_t arm_sz = 0;
 
-  if (!f) return;
+  if (!pf) return;
   txt = pf->legend;
   if (txt && *txt && html_armor_needed(txt, &arm_sz)) {
     arm_txt = (unsigned char*) alloca(arm_sz + 1);
