@@ -77,6 +77,7 @@ CREATE TABLE %susers
        city VARCHAR (512),
        city_en VARCHAR (512),
        region VARCHAR (512),
+       area VARCHAR (512),
        zip VARCHAR (512),
        street VARCHAR (512),
        country VARCHAR (512),
