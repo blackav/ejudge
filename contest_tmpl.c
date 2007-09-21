@@ -81,9 +81,9 @@ contest_tmpl_new(int contest_id,
   cnts->run_managed = 1;
   cnts->disable_team_password = 1;
   if (url_base[0]) {
-    snprintf(ubuf, sizeof(ubuf), "%s/register", url_base);
+    snprintf(ubuf, sizeof(ubuf), "%s/new-register", url_base);
     cnts->register_url = xstrdup(ubuf);
-    snprintf(ubuf, sizeof(ubuf), "%s/team", url_base);
+    snprintf(ubuf, sizeof(ubuf), "%s/new-client", url_base);
     cnts->team_url = xstrdup(ubuf);
   }
 
