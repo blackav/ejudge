@@ -2471,12 +2471,12 @@ get_member_field(
       v = "";
 
     r = 0;
+    buf[0] = 0;
     if (*v) {
       if (sscanf(v, "%d%n", &r, &n) != 1 || v[n] || r < -1 || r >= 100000)
         goto invalid_field;
+      if (r >= 0) snprintf(buf, size, "%d", r);
     }
-    buf[0] = 0;
-    if (r >= 0) snprintf(buf, size, "%d", r);
     break;
 
   case CONTEST_MF_BIRTH_DATE:
