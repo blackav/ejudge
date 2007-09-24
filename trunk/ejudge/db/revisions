@@ -2906,3 +2906,6 @@ plugins/mysql-userlist/uldb_mysql.c 4358 0 4949231
 userlist_xml.c 4360 0 4623437
 contest_tmpl.c 4362 0 935219
 new_server_html_5.c 4362 0 8936127
+misctext.h 4364 0 454575
+misctext.c 4364 0 1904260
+new_server_html_5.c 4364 0 9019383
