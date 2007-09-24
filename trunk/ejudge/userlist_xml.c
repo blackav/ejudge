@@ -659,6 +659,7 @@ parse_members(char const *path, struct xml_tree *q,
     mbs->total++;
     mb = (struct userlist_member*) t;
     xfree(t->text); t->text = 0;
+    mb->grade = -1;
 
     for (a = t->first; a; a = a->next) {
       switch (a->tag) {
