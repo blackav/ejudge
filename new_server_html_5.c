@@ -1721,7 +1721,7 @@ main_page(
   if (phr->reg_status < 0) {
     fprintf(fout, " <b><a href=\"%s\" class=\"menu\">[%s]</a></b>",
             ns_url(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_REGISTER, 0),
-            _("Register"));
+            _("Confirm registration"));
   }
 
   u = phr->session_extra->user_info;
