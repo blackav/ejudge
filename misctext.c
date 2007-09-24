@@ -600,29 +600,72 @@ check_str(const unsigned char *str, const unsigned char *map)
 }
 
 int
-check_str_2(const unsigned char *str, const unsigned char *map,
-            unsigned char *invchars)
+check_str_2(
+	const unsigned char *str,
+        const unsigned char *map, /*if char 255 is valid,any char >= 128 valid*/
+        unsigned char *invchars,
+        size_t invsize,
+        int utf8_flag)
 {
-  unsigned char invset[256];
+  unsigned char *invset;
   unsigned char *p = invchars;
-  int retval = 0, i;
+  int retval = 0, i, slen, *wstr, maxinv = -1, invc, *ibuf, j;
 
-  if (p) *p = 0;
   if (!str) return 0;
-  memset(invset, 0, sizeof(invset));
+  if (p) *p = 0;
 
-  for (; *str; str++)
-    if (!map[*str]) {
-      invset[*str] = 1;
-      retval = -1;
+  if (!utf8_flag) {
+    invset = (unsigned char*) alloca(256);
+    memset(invset, 0, sizeof(invset));
+
+    for (; *str; str++)
+      if (!map[*str]) {
+        invset[*str] = 1;
+        retval = -1;
+      }
+
+    if (retval >= 0 || !p) return retval;
+
+    for (i = 0; i < 256; i++)
+      if (invset[i])
+        *p++ = i;
+    *p = 0;
+  } else {
+    // unicode version
+    invset = (unsigned char*) alloca(65536);
+    slen = strlen(str);
+    wstr = (int*) alloca((slen + 1) * sizeof(wstr[0]));
+    utf8_to_ucs4_str(wstr, str);
+    for (; *wstr; wstr++) {
+      invc = -1;
+      if (*wstr < 0) {
+        invc = '?';
+      } else if (*wstr >= 128) {
+        if (!map[255]) {
+          if (*wstr >= 65536) invc = '?';
+          else invc = *wstr;
+        }
+      } else if (!map[*wstr]) {
+        if (*wstr < 32) invc = '?';
+        else invc = *wstr;
+      }
+      if (invc > 0) {
+        invset[invc] = 1;
+        retval = -1;
+        if (invc > maxinv) maxinv = invc;
+      }
     }
 
-  if (retval >= 0 || !p) return retval;
+    if (retval >= 0 || !p) return retval;
 
-  for (i = 0; i < 256; i++)
-    if (invset[i])
-      *p++ = i;
-  *p = 0;
+    ASSERT(maxinv >= ' ');
+    ibuf = (int*) alloca((maxinv + 1) * sizeof(ibuf[0]));
+    for (i = 0, j = 0; i <= maxinv; i++)
+      if (invset[i])
+        ibuf[j++] = i;
+    ibuf[j++] = 0;
+    ucs4_to_utf8_str(invchars, invsize, ibuf);
+  }
 
   return retval;
 }
@@ -1024,6 +1067,131 @@ get_nth_alternative(const unsigned char *txt, int n)
   for (i = 0; i + 1 != n && i < line_count; i++);
   if (i + 1 == n && i < line_count) return xstrdup(lines[i]);
   return 0;
+}
+
+int
+utf8_to_ucs4_buf(int *out, const unsigned char *in, size_t in_size)
+{
+  const unsigned char *p = in;
+  int *q = out;
+  int w;
+
+  while (in_size) {
+    if (*p < 0x80) {
+      *q++ = *p++;
+      in_size--;
+    } else if ((*p & 0xc0) == 0x80) {
+      goto broken_coding;
+    } else if ((*p & 0xe0) == 0xc0) {
+      if (in_size < 2) goto broken_coding;
+      if ((p[1] & 0xc0) != 0x80) goto broken_coding;
+      w = (*p++ & 0x1f) << 6;
+      w |= (*p++ & 0x3f);
+      if (w < 0x80) goto broken_coding;
+      *q++ = w;
+      in_size -= 2;
+    } else if ((*p & 0xf0) == 0xe0) {
+      // three-byte character
+      if (in_size < 3) goto broken_coding;
+      if ((p[1] & 0xc0) != 0x80) goto broken_coding;
+      if ((p[2] & 0xc0) != 0x80) goto broken_coding;
+      w = (*p++ & 0x0f) << 12;
+      w |= (*p++ & 0x3f) << 6;
+      w |= (*p++ & 0x3f);
+      if (w < 0x800) goto broken_coding;
+      *q++ = w;
+      in_size -= 3;
+    } else if ((*p & 0xf8) == 0xf0) {
+      // four-byte character
+      if (in_size < 4) goto broken_coding;
+      if ((p[1] & 0xc0) != 0x80) goto broken_coding;
+      if ((p[2] & 0xc0) != 0x80) goto broken_coding;
+      if ((p[3] & 0xc0) != 0x80) goto broken_coding;
+      w = (*p++ & 0x07) << 18;
+      w |= (*p++ & 0x3f) << 12;
+      w |= (*p++ & 0x3f) << 6;
+      w |= (*p++ & 0x3f);
+      if (w < 0x10000) goto broken_coding;
+      *q++ = w;
+      in_size -= 4;
+    } else {
+      goto broken_coding;
+    }
+
+    continue;
+
+  broken_coding:
+    *q++ = '?';
+    p++;
+    in_size--;
+  }
+
+  return q - out;
+}
+
+int
+utf8_to_ucs4_str(int *out, const unsigned char *in)
+{
+  size_t in_size = strlen(in);
+  int out_size = utf8_to_ucs4_buf(out, in, in_size);
+  if (out_size >= 0) out[out_size] = 0;
+  return out_size;
+}
+
+size_t
+ucs4_to_utf8_size(const int *in)
+{
+  size_t out_size = 1;
+  while (*in) {
+    if (*in <= 0x7f) {
+      out_size++;
+    } else if (*in <= 0x7ff) {
+      out_size += 2;
+    } else if (*in <= 0xffff) {
+      out_size += 3;
+    } else {
+      out_size += 4;
+    }
+  }
+
+  return out_size;
+}
+
+const unsigned char *
+ucs4_to_utf8_str(unsigned char *buf, size_t size, const int *in)
+{
+  const int *pin = in;
+  unsigned char *pout = buf;
+  
+  if (!buf || !size) return "";
+  size--;
+  while (*pin && size) {
+    if (*pin <= 0x7f) {
+      *pout++ = *pin;
+      size--;
+    } else if (*pin <= 0x7ff) {
+      if (size < 2) break;
+      *pout++ = (*pin >> 6) | 0xc0;
+      *pout++ = (*pin & 0x3f) | 0x80;
+      size -= 2;
+    } else if (*pin <= 0xffff) {
+      if (size < 3) break;
+      *pout++ = (*pin >> 12) | 0xe0;
+      *pout++ = ((*pin >> 6) & 0x3f) | 0x80;
+      *pout++ = (*pin & 0x3f) | 0x80;
+      size -= 3;
+    } else {
+      if (size < 4) break;
+      *pout++ = ((*pin >> 18) & 0x07) | 0xf0;
+      *pout++ = ((*pin >> 12) & 0x3f) | 0x80;
+      *pout++ = ((*pin >> 6) & 0x3f) | 0x80;
+      *pout++ = (*pin & 0x3f) | 0x80;
+      size -= 4;
+    }
+    pin++;
+  }
+  *pout = 0;
+  return buf;
 }
 
 /*

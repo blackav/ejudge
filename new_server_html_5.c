@@ -987,7 +987,8 @@ info_table_row(FILE *fout, const unsigned char *s1, const unsigned char *s2,
     red_beg = "<font color=\"red\">";
     red_end = "</font>";
   } else if (s2 && valid_chars
-             && (strres = check_str_2(s2, valid_chars, invstr)) < 0) {
+             && (strres = check_str_2(s2, valid_chars, invstr,
+                                      sizeof(invstr), utf8_mode)) < 0) {
     red_beg = "<font color=\"red\">";
     red_end = "</font>";
   }
@@ -2032,6 +2033,45 @@ display_gender_changing_dialog(
 }
 
 static void
+display_grade_changing_dialog(
+	FILE *fout,
+        int field,
+        int val,
+        const unsigned char *beg_str,
+        const unsigned char *end_str,
+        const unsigned char *var_prefix)
+{
+  int n = 0;
+  const unsigned char *sel, *s1, *s2;
+  unsigned char buf[64];
+
+  if (!beg_str) beg_str = "";
+  if (!end_str) end_str = "";
+  if (!var_prefix) var_prefix = "";
+
+  fprintf(fout, "%s<select name=\"%sparam_%d\">",
+          beg_str, var_prefix, field);
+
+  if (val < -1 || val >= 13) val = -1;
+
+  for (n = -1; n < 13; n++) {
+    sel = "";
+    if (n == val) sel = " selected=\"selected\"";
+    if (n == -1) {
+      s1 = s2 = "";
+    } else if (!n) {
+      s1 = "0";
+      s2 = _("Other");
+    } else {
+      snprintf(buf, sizeof(buf), "%d", n);
+      s1 = s2 = buf;
+    }
+    fprintf(fout, "<option value=\"%s\"%s>%s</option>", s1, sel, s2);
+  }
+  fprintf(fout, "</select>%s", end_str);
+}
+
+static void
 edit_member_form(
 	FILE *fout,
         struct http_request_info *phr,
@@ -2097,6 +2137,13 @@ edit_member_form(
       val = 0;
       if (m) val = m->gender;
       display_gender_changing_dialog(fout, ff, val, "<td class=\"b0\">",
+                                     "</td>", var_prefix);
+      break;
+
+    case CONTEST_MF_GRADE:
+      val = 0;
+      if (m) val = m->grade;
+      display_grade_changing_dialog(fout, ff, val, "<td class=\"b0\">",
                                      "</td>", var_prefix);
       break;
 
