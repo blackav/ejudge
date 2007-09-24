@@ -633,6 +633,7 @@ check_str_2(
   } else {
     // unicode version
     invset = (unsigned char*) alloca(65536);
+    memset(invset, 0, 65536);
     slen = strlen(str);
     wstr = (int*) alloca((slen + 1) * sizeof(wstr[0]));
     utf8_to_ucs4_str(wstr, str);
