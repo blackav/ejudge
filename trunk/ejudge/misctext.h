@@ -93,7 +93,7 @@ void allowed_list_map(
 
 int check_str(const unsigned char *str, const unsigned char *map);
 int check_str_2(const unsigned char *str, const unsigned char *map,
-                unsigned char *invchars);
+                unsigned char *invchars, size_t invsize, int utf8_flag);
 
 unsigned char *text_input_process_string(const unsigned char *s,
                                          int sep, int sep_repl);
@@ -105,6 +105,38 @@ unsigned char *filename_armor_bytes(unsigned char *out, size_t outsize,
 
 int utf8_fix_string(unsigned char *str, int *gl_ind);
 int utf8_cnt(const unsigned char *s, int width, int *p_w);
+
+/*
+ * converts UTF8 buffer `in' of the size `in_size' to UCS4 buffer `out'
+ * `out' MUST be large enough to hold all the characters
+ * safe rule is to allocate `out' buffer for the same elements, as in `in'
+ */
+int utf8_to_ucs4_buf(int *out, const unsigned char *in, size_t in_size);
+
+/*
+ * converts UTF8 string ('\0'-terminated) to UCS4 buffer `out'
+ * `out' MUST be large enough to hold all the characters of `in' buffer
+ * `out' will be 0-terminated UCS4 string
+ * safe usage:
+ *   in_len = strlen(in);
+ *   out = (int*) alloca((in_len + 1) * sizeof(out[0]));
+ *   utf8_to_ucs4_buf(out, in);
+ */
+int utf8_to_ucs4_str(int *out, const unsigned char *in);
+
+/*
+ * calculates the size required to store the UCS4 string `in' in UTF8
+ * `in' is a 0-terminated UCS4 string
+ * the return value counts the terminating '\0' byte
+ * usage:
+ *   out_size = ucs4_to_utf8_size(in);
+ *   out = (unsigned char*) alloca(out_size);
+ *   ucs4_to_utf8_str(out, out_size, in);
+ */
+size_t ucs4_to_utf8_size(const int *in);
+
+const unsigned char *
+ucs4_to_utf8_str(unsigned char *buf, size_t size, const int *in);
 
 unsigned char *get_nth_alternative(const unsigned char *txt, int n);
 
