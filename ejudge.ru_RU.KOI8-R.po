@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-09-21 12:50+0400\n"
-"PO-Revision-Date: 2007-09-21 13:32+0400\n"
+"POT-Creation-Date: 2007-09-24 09:13+0400\n"
+"PO-Revision-Date: 2007-09-24 09:13+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -987,6 +987,9 @@ msgstr "Подтвердить выполнение"
 
 msgid "Confirm printing run"
 msgstr "Подтвердить распечатывание"
+
+msgid "Confirm registration"
+msgstr "Подтвердить регистрацию"
 
 #, c-format
 msgid "Conflicting user_id (%d) and user_login (%s)"
