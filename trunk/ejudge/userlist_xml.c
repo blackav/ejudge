@@ -732,7 +732,7 @@ parse_members(char const *path, struct xml_tree *q,
         userlist_free(p);
         break;
       case USERLIST_T_GRADE:
-        if (mb->grade) return xml_err_elem_redefined(p);
+        if (mb->grade >= 0) return xml_err_elem_redefined(p);
         if (p->first) return xml_err_attrs(p);
         if (p->first_down) return xml_err_nested_elems(p);
         if (!p->text || !*p->text) break;
