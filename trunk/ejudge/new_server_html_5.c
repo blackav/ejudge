@@ -815,6 +815,15 @@ cmd_login(
 
     ns_get_session(phr->session_id, 0);
     ns_refresh_page_2(fout, urlbuf);
+  } else if (cnts->force_registration) {
+    // register for the contest anyway, but do not redirect to new-client
+    // since we're not allowed to login unless the registration form
+    // is complete, we may relax registration procedure
+    r = userlist_clnt_register_contest(ul_conn, ULS_REGISTER_CONTEST_2,
+                                       phr->user_id, phr->contest_id);
+    if (r < 0)
+      return ns_html_err_no_perm(fout, phr, 0, "user_login failed: %s",
+                                 userlist_strerror(-r));
   }
 
   snprintf(urlbuf, sizeof(urlbuf), "%s?SID=%llx", phr->self_url,
@@ -2052,9 +2061,9 @@ display_grade_changing_dialog(
   fprintf(fout, "%s<select name=\"%sparam_%d\">",
           beg_str, var_prefix, field);
 
-  if (val < -1 || val >= 13) val = -1;
+  if (val < -1 || val >= 12) val = -1;
 
-  for (n = -1; n < 13; n++) {
+  for (n = -1; n < 12; n++) {
     sel = "";
     if (n == val) sel = " selected=\"selected\"";
     if (n == -1) {
