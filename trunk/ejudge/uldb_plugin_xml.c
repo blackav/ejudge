@@ -555,6 +555,7 @@ new_user_func(void *data,
   }
 
   u = (struct userlist_user*) userlist_node_alloc(USERLIST_T_USER);
+  u->i.instnum = -1;
   xml_link_node_last(&ul->b, &u->b);
 
   for (i = 1; i < ul->user_map_size && ul->user_map[i]; i++);
@@ -1917,6 +1918,7 @@ new_member_func(void *data, int user_id, int contest_id, int role,
   m = (struct userlist_member*) userlist_node_alloc(USERLIST_T_MEMBER);
   m->serial = ul->member_serial++;
   m->create_time = m->last_change_time = cur_time;
+  m->grade = -1;
   xml_link_node_last(&mm->b, &m->b);
 
   if (mm->total >= mm->allocd) {
