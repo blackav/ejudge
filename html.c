@@ -2372,9 +2372,10 @@ do_write_kirov_standings(const serve_state_t state,
         fprintf(f, "<p%s>%s: %s, ",
                 ss.success_attr, _("Last submit"), dur_str);
         if (global->team_info_url[0]) {
-          teamdb_export_team(state->teamdb_state, runs[last_submit_run].user_id, &u_info);
+          teamdb_export_team(state->teamdb_state,runs[last_submit_run].user_id,
+                             &u_info);
           sformat_message(dur_str, sizeof(dur_str), global->team_info_url,
-                          NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
+                          NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
         fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state,
@@ -2488,7 +2489,7 @@ do_write_kirov_standings(const serve_state_t state,
     fprintf(f, "<td%s>", ss.team_attr);
     if (global->team_info_url[0]) {
       sformat_message(dur_str, sizeof(dur_str), global->team_info_url,
-                      NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
+                      NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
       fprintf(f, "<a href=\"%s\">", dur_str);
     }
     fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state, t_ind[t]));
@@ -2498,7 +2499,7 @@ do_write_kirov_standings(const serve_state_t state,
     fprintf(f, "</td>");
     if (global->stand_extra_format[0]) {
       sformat_message(dur_str, sizeof(dur_str), global->stand_extra_format,
-                      NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
+                      NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
       fprintf(f, "<td%s>%s</td>", ss.extra_attr, dur_str);
     }
     if (global->stand_show_contestant_status
@@ -3268,7 +3269,7 @@ do_write_moscow_standings(const serve_state_t state,
           teamdb_export_team(state->teamdb_state, runs[last_success_run].user_id,
                              &u_info);
           sformat_message(strbuf, sizeof(strbuf), global->team_info_url,
-                          NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
+                          NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
         fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state,
@@ -3304,7 +3305,7 @@ do_write_moscow_standings(const serve_state_t state,
         if (global->team_info_url[0]) {
           teamdb_export_team(state->teamdb_state, runs[last_submit_run].user_id, &u_info);
           sformat_message(strbuf, sizeof(strbuf), global->team_info_url,
-                          NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
+                          NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
         fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state,
@@ -3406,7 +3407,7 @@ do_write_moscow_standings(const serve_state_t state,
     fprintf(f, "</td><td%s>", ss.team_attr);
     if (global->team_info_url[0]) {
       sformat_message(strbuf, sizeof(strbuf), global->team_info_url,
-                      NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
+                      NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
       fprintf(f, "<a href=\"%s\">", strbuf);
     }
     fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state, u_ind[u]));
@@ -3416,7 +3417,7 @@ do_write_moscow_standings(const serve_state_t state,
     fprintf(f, "</td>");
     if (global->stand_extra_format[0]) {
       sformat_message(strbuf, sizeof(strbuf), global->stand_extra_format,
-                      NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
+                      NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
       fprintf(f, "<td%s>%s</td>", ss.extra_attr, strbuf);
     }
     if (global->stand_show_contestant_status
@@ -3938,7 +3939,7 @@ do_write_standings(const serve_state_t state,
       if (global->team_info_url[0]) {
         teamdb_export_team(state->teamdb_state, runs[last_success_run].user_id, &ttt);
         sformat_message(dur_buf, sizeof(dur_buf), global->team_info_url,
-                        NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
+                        NULL, NULL, NULL, NULL, &ttt, ttt.user, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_buf);      
       }
       fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state,
@@ -4050,7 +4051,7 @@ do_write_standings(const serve_state_t state,
       }
       if (global->team_info_url[0]) {
         sformat_message(url_str, sizeof(url_str), global->team_info_url,
-                        NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
+                        NULL, NULL, NULL, NULL, &ttt, ttt.user, 0, 0);
         fprintf(f, "<a href=\"%s\">", url_str);      
       }
       fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state, t_ind[t]));
@@ -4060,7 +4061,7 @@ do_write_standings(const serve_state_t state,
       fprintf(f, "</td>");
       if (global->stand_extra_format[0]) {
         sformat_message(url_str, sizeof(url_str), global->stand_extra_format,
-                        NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
+                        NULL, NULL, NULL, NULL, &ttt, ttt.user, 0, 0);
         fprintf(f, "<td%s>%s</td>", ss.extra_attr, url_str);
       }
       if (global->stand_show_contestant_status
