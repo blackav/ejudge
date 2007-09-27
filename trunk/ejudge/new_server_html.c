@@ -182,6 +182,12 @@ unpriv_page_header(FILE *fout,
                    time_t start_time, time_t stop_time);
 static void
 do_xml_user_state(FILE *fout, const serve_state_t cs, int user_id);
+static int
+get_register_url(
+	unsigned char *buf,
+        size_t size,
+        const struct contest_desc *cnts,
+        const unsigned char *self_url);
 
 struct contest_extra *
 ns_get_contest_extra(int contest_id)
@@ -9726,6 +9732,7 @@ unpriv_page_header(FILE *fout,
   static int top_action_list[] =
   {
     NEW_SRV_ACTION_VIEW_SETTINGS,
+    NEW_SRV_ACTION_REG_DATA_EDIT,
     NEW_SRV_ACTION_LOGOUT,
 
     -1,
@@ -9734,6 +9741,7 @@ unpriv_page_header(FILE *fout,
   static const unsigned char *top_action_names[] =
   {
     __("Settings"),
+    __("Registration data"),
     __("Logout"),
   };
 
@@ -9812,6 +9820,18 @@ unpriv_page_header(FILE *fout,
         if (cnts->exam_mode) continue;
         if (phr->action == top_action_list[i]) {
           fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>", gettext(top_action_names[i]));
+          shown_items++;
+        } else if (top_action_list[i] == NEW_SRV_ACTION_REG_DATA_EDIT) {
+          if (!cnts->allow_reg_data_edit) continue;
+          if (!contests_check_register_ip_2(cnts, phr->ip, phr->ssl_flag))
+            continue;
+          if (cnts->reg_deadline > 0 && cs->current_time >= cnts->reg_deadline)
+            continue;
+          get_register_url(stand_url_buf, sizeof(stand_url_buf), cnts,
+                           phr->self_url);
+          fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx\">%s</a></div></td>",
+                  stand_url_buf, phr->session_id,
+                  gettext(top_action_names[i]));
           shown_items++;
         } else if (top_action_list[i] == NEW_SRV_ACTION_LOGOUT) {
           forced_text = 0;
@@ -11965,6 +11985,30 @@ unprivileged_entry_point(
       phr->action = 0;
     unpriv_main_page(fout, phr, cnts, extra);
   }
+}
+
+static int
+get_register_url(
+	unsigned char *buf,
+        size_t size,
+        const struct contest_desc *cnts,
+        const unsigned char *self_url)
+{
+  int i, len;
+
+  if (cnts->team_url)
+    return snprintf(buf, size, "%s", cnts->team_url);
+
+  if (!self_url) return snprintf(buf, size, "%s", "/new-register");
+  len = strlen(self_url);
+  for (i = len - 1; i >= 0 && self_url[i] != '/'; i--);
+  if (i < 0) return snprintf(buf, size, "%s", "/new-register");
+#if defined CGI_PROG_SUFFIX
+  return snprintf(buf, size, "%.*s/new-register%s", i, self_url,
+                  CGI_PROG_SUFFIX);
+#else
+  return snprintf(buf, size, "%.*s/new-register", i, self_url);
+#endif
 }
 
 void
