@@ -11996,8 +11996,8 @@ get_register_url(
 {
   int i, len;
 
-  if (cnts->team_url)
-    return snprintf(buf, size, "%s", cnts->team_url);
+  if (cnts->register_url)
+    return snprintf(buf, size, "%s", cnts->register_url);
 
   if (!self_url) return snprintf(buf, size, "%s", "/new-register");
   len = strlen(self_url);
