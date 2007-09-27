@@ -160,6 +160,7 @@ static char const * const attr_map[] =
   "exam_mode",
   "disable_locale_change",
   "personal",
+  "allow_reg_data_edit",
 
   0
 };
@@ -716,6 +717,7 @@ static const size_t contest_bool_attr_offsets[CONTEST_LAST_ATTR] =
   [CONTEST_A_EXAM_MODE] = CONTEST_DESC_OFFSET(exam_mode),
   [CONTEST_A_DISABLE_LOCALE_CHANGE] = CONTEST_DESC_OFFSET(disable_locale_change),
   [CONTEST_A_PERSONAL] = CONTEST_DESC_OFFSET(personal),
+  [CONTEST_A_ALLOW_REG_DATA_EDIT] = CONTEST_DESC_OFFSET(allow_reg_data_edit),
 };
 
 static void
@@ -1522,6 +1524,10 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
   if (cnts->personal) {
     fprintf(f, "\n         %s=\"%s\"",
             attr_map[CONTEST_A_PERSONAL], "yes");
+  }
+  if (cnts->allow_reg_data_edit) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attr_map[CONTEST_A_ALLOW_REG_DATA_EDIT], "yes");
   }
 
   if (cnts->closed) {

@@ -137,6 +137,7 @@ enum
     CONTEST_A_EXAM_MODE,
     CONTEST_A_DISABLE_LOCALE_CHANGE,
     CONTEST_A_PERSONAL,
+    CONTEST_A_ALLOW_REG_DATA_EDIT,
 
     CONTEST_LAST_ATTR
   };
@@ -272,6 +273,7 @@ struct contest_desc
   unsigned char exam_mode;
   unsigned char disable_locale_change;
   unsigned char personal;
+  unsigned char allow_reg_data_edit;
 
   int user_contest_num;
 
