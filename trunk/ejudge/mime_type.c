@@ -70,9 +70,9 @@ static const struct mime_type_info mime_types[MIME_TYPE_LAST] =
   [MIME_TYPE_APPL_ZIP] =
   { "application/zip", ".zip", "" },
   [MIME_TYPE_IMAGE_BMP] =
-  { "image/bmp", ".bmp", "" },
+  { "image/bmp", ".bmp", "PC bitmap data" },
   [MIME_TYPE_IMAGE_GIF] =
-  { "image/gif", ".gif", "" },
+  { "image/gif", ".gif", "GIF image data" },
   [MIME_TYPE_IMAGE_JPEG] =
   { "image/jpeg", ".jpg", "JPEG image data" },
   [MIME_TYPE_IMAGE_PNG] =
