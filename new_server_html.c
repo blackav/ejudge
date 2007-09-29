@@ -8009,8 +8009,9 @@ unpriv_submit_run(FILE *fout,
     break;
   case PROB_TYPE_OUTPUT_ONLY:
     if (prob->enable_text_form > 0) {
-      if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)
-          &&!ns_cgi_param_bin(phr,"text_form",&text_form_text,&text_form_size)){
+      int r1 = ns_cgi_param_bin(phr, "file", &run_text, &run_size);
+      int r2 =ns_cgi_param_bin(phr,"text_form",&text_form_text,&text_form_size);
+      if (!r1 && !r2) {
         ns_error(log_f, NEW_SRV_ERR_FILE_UNSPECIFIED);
         goto done;
       }
