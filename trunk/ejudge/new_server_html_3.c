@@ -766,8 +766,8 @@ ns_html_err_registration_incomplete(
       snprintf(reg_buf, sizeof(reg_buf), "<a href=\"%s?SID=%llx\">", reg_url,
                phr->session_id);
     } else {
-      snprintf(reg_buf, sizeof(reg_buf), "<a href=\"%s?contest_id=%d\">",
-               reg_url, phr->contest_id);
+      snprintf(reg_buf, sizeof(reg_buf), "<a href=\"%s?contest_id=%d&amp;action=%d\">",
+               reg_url, phr->contest_id, NEW_SRV_ACTION_REG_LOGIN_PAGE);
     }
     a_open = reg_buf;
     a_close = "</a>";
