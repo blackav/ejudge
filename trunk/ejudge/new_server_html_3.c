@@ -763,10 +763,11 @@ ns_html_err_registration_incomplete(
       && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
     get_register_url(reg_url, sizeof(reg_url), cnts, phr->self_url);
     if (phr->session_id) {
-      snprintf(reg_buf, sizeof(reg_buf), "%s?SID=%llx", reg_url,
+      snprintf(reg_buf, sizeof(reg_buf), "<a href=\"%s?SID=%llx\">", reg_url,
                phr->session_id);
     } else {
-      snprintf(reg_buf, sizeof(reg_buf), "%s", reg_url);
+      snprintf(reg_buf, sizeof(reg_buf), "<a href=\"%s?contest_id=%d\">",
+               reg_url, phr->contest_id);
     }
     a_open = reg_buf;
     a_close = "</a>";
