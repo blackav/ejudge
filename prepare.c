@@ -342,6 +342,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(spelling, "s"),
   PROBLEM_PARAM(stand_hide_time, "d"),
   PROBLEM_PARAM(advance_to_next, "d"),
+  PROBLEM_PARAM(enable_text_form, "d"),
   PROBLEM_PARAM(score_multiplier, "d"),
   PROBLEM_ALIAS(output_only, type_val, "d"),
   PROBLEM_PARAM(max_vm_size, "z"),
@@ -351,6 +352,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
   PROBLEM_PARAM(long_name, "s"),
+  PROBLEM_PARAM(group_name, "s"),
   PROBLEM_PARAM(test_dir, "s"),
   PROBLEM_PARAM(test_sfx, "s"),
   PROBLEM_PARAM(corr_dir, "s"),
@@ -697,6 +699,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->variable_full_score = -1;
   p->hidden = -1;
   p->advance_to_next = -1;
+  p->enable_text_form = -1;
   p->priority_adjustment = -1000;
   p->test_pat[0] = 1;
   p->corr_pat[0] = 1;
@@ -2803,6 +2806,8 @@ set_defaults(serve_state_t state, int mode)
                            prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_ADVANCE_TO_NEXT,
                            prob, aprob, g);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_ENABLE_TEXT_FORM,
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER,
                            prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_MANUAL_CHECKING,
@@ -4343,6 +4348,7 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
   if (prob->accept_partial < 0) prob->accept_partial = 0;
   if (prob->hidden < 0) prob->hidden = 0;
   if (prob->advance_to_next < 0) prob->advance_to_next = 0;
+  if (prob->enable_text_form < 0) prob->enable_text_form = 0;
   if (prob->priority_adjustment == -1000) prob->priority_adjustment = 0;
   if (prob->variant_num < 0) prob->variant_num = 0;
   if (prob->test_sfx[0] == 1) {
@@ -4968,6 +4974,13 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->advance_to_next = abstr->advance_to_next;
     if (out->advance_to_next == -1)
       out->advance_to_next = 0;
+    break;
+
+  case PREPARE_FIELD_PROB_ENABLE_TEXT_FORM:
+    if (out->enable_text_form == -1 && abstr)
+      out->enable_text_form = abstr->enable_text_form;
+    if (out->enable_text_form == -1)
+      out->enable_text_form = 0;
     break;
 
   case PREPARE_FIELD_PROB_CHECKER_REAL_TIME_LIMIT:

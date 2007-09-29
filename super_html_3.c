@@ -4885,6 +4885,25 @@ super_html_print_problem(FILE *f,
                                  self_url, extra_args, prob_hidden_vars);
   }
 
+  if (show_adv && sstate->global && sstate->global->problem_navigation
+      && prob->type_val == PROB_TYPE_OUTPUT_ONLY) {
+    //PROBLEM_PARAM(enable_text_form, "d"),
+      extra_msg = "Undefined";
+      if (!prob->abstract) {
+        prepare_set_prob_value(PREPARE_FIELD_PROB_ENABLE_TEXT_FORM,
+                               &tmp_prob, sup_prob, sstate->global);
+        snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+                 tmp_prob.enable_text_form?"Yes":"No");
+        extra_msg = msg_buf;
+      }
+      print_boolean_3_select_row(f,"Enable text input form anyway:",
+                                 prob->enable_text_form,
+                                 SSERV_CMD_PROB_CHANGE_ENABLE_TEXT_FORM,
+                                 extra_msg,
+                                 session_id, form_row_attrs[row ^= 1],
+                                 self_url, extra_args, prob_hidden_vars);
+  }
+
   if (show_adv) {
     //PROBLEM_PARAM(stand_attr, "s"),
     extra_msg = 0;
@@ -5702,6 +5721,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_ADVANCE_TO_NEXT:
     p_int = &prob->advance_to_next;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_ENABLE_TEXT_FORM:
+    p_int = &prob->enable_text_form;
     goto handle_boolean_1;
 
   case SSERV_CMD_PROB_CHANGE_CHECKER_REAL_TIME_LIMIT:
