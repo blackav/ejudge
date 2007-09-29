@@ -10582,9 +10582,9 @@ unpriv_main_page(FILE *fout,
         j++;
       }
       fprintf(fout, "</tr>");
-      fprintf(fout, "<tr><td colspan=\"%d\" id=\"probNavTaskArea\"><div id=\"probNavTaskArea\">\n", j);
+      fprintf(fout, "<tr><td colspan=\"%d\" id=\"probNavTaskArea\" valign=\"top\"><div id=\"probNavTaskArea\">\n", j);
     } else {
-      fprintf(fout, "<tr><td class=\"b0\" id=\"probNavTaskArea\"><div id=\"probNavTaskArea\">\n");
+      fprintf(fout, "<tr><td class=\"b0\" id=\"probNavTaskArea\" valign=\"top\"><div id=\"probNavTaskArea\">\n");
     }
   }
 
@@ -11262,7 +11262,7 @@ unpriv_main_page(FILE *fout,
   /* new problem navigation */
   if (global->problem_navigation > 0 && global->vertical_navigation > 0
       && start_time > 0 && stop_time <= 0) {
-    fprintf(fout, "</div></td><td class=\"b0\" id=\"probNavRightList\">\n");
+    fprintf(fout, "</div></td><td class=\"b0\" id=\"probNavRightList\" valign=\"top\">\n");
     prev_group_name[0] = 0;
 
     for (i = 1, j = 0; i <= cs->max_prob; i++) {
