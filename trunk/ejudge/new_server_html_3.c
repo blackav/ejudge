@@ -693,6 +693,30 @@ ns_html_err_inv_session(FILE *fout,
   l10n_setlocale(0);
 }
 
+static int
+get_register_url(
+	unsigned char *buf,
+        size_t size,
+        const struct contest_desc *cnts,
+        const unsigned char *self_url)
+{
+  int i, len;
+
+  if (cnts->register_url)
+    return snprintf(buf, size, "%s", cnts->register_url);
+
+  if (!self_url) return snprintf(buf, size, "%s", "/new-register");
+  len = strlen(self_url);
+  for (i = len - 1; i >= 0 && self_url[i] != '/'; i--);
+  if (i < 0) return snprintf(buf, size, "%s", "/new-register");
+#if defined CGI_PROG_SUFFIX
+  return snprintf(buf, size, "%.*s/new-register%s", i, self_url,
+                  CGI_PROG_SUFFIX);
+#else
+  return snprintf(buf, size, "%.*s/new-register", i, self_url);
+#endif
+}
+
 void
 ns_html_err_registration_incomplete(
 	FILE *fout,
@@ -704,6 +728,8 @@ ns_html_err_registration_incomplete(
   const unsigned char *copyright = 0;
   time_t cur_time = time(0);
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *a_open = "", *a_close = "";
+  unsigned char reg_url[1024], reg_buf[1024];
 
   err("%d: registration incomplete", phr->id);
 
@@ -731,8 +757,23 @@ ns_html_err_registration_incomplete(
     fprintf(fout, "%s", ns_fancy_empty_status);
     fprintf(fout, "%s", separator);
   }
-  fprintf(fout, "<p>%s</p>\n",
-          _("You cannot participate in the contest because your registration is incomplete. Please, go back to the registration forms and fill up them correctly."));
+
+  if (cnts && cnts->allow_reg_data_edit
+      && contests_check_register_ip_2(cnts, phr->ip, phr->ssl_flag) > 0
+      && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
+    get_register_url(reg_url, sizeof(reg_url), cnts, phr->self_url);
+    if (phr->session_id) {
+      snprintf(reg_buf, sizeof(reg_buf), "%s?SID=%llx", reg_url,
+               phr->session_id);
+    } else {
+      snprintf(reg_buf, sizeof(reg_buf), "%s", reg_url);
+    }
+    a_open = reg_buf;
+    a_close = "</a>";
+  }
+
+  fprintf(fout,
+          _("<p>You cannot participate in the contest because your registration is incomplete. Please, %sgo back to the registration forms%s and fill up them correctly.</p>\n"), a_open, a_close);
   ns_footer(fout, footer, copyright, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);

@@ -11890,6 +11890,9 @@ unprivileged_entry_point(
                                     &phr->user_id, &phr->contest_id,
                                     &phr->locale_id, 0, &phr->role, 0, 0, 0,
                                     &phr->login, &phr->name)) < 0) {
+    if (r < 0 && orig_locale_id < 0 && cnts->default_locale_val >= 0) {
+      phr->locale_id = cnts->default_locale_val;
+    }
     switch (-r) {
     case ULS_ERR_NO_COOKIE:
     case ULS_ERR_CANNOT_PARTICIPATE:
