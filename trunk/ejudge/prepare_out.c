@@ -1241,6 +1241,9 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   if (prob->advance_to_next >= 0
       && ((prob->abstract && prob->advance_to_next) || !prob->abstract))
       unparse_bool(f, "advance_to_next", prob->advance_to_next);
+  if (prob->enable_text_form >= 0
+      && ((prob->abstract && prob->enable_text_form) || !prob->abstract))
+      unparse_bool(f, "enable_text_form", prob->enable_text_form);
 
   if (!prob->abstract && prob->start_date[0])
     fprintf(f, "start_date = \"%s\"\n", c_armor(&sbuf, prob->start_date));
@@ -1271,6 +1274,8 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   PROBLEM_PARAM(tgz_pat, "s"),
   PROBLEM_PARAM(personal_deadline, "x"),
   PROBLEM_PARAM(skip_testing, "d"),
+  PROBLEM_PARAM(xml_file, "s"),
+  PROBLEM_PARAM(group_name, "s"),
 */
 void
 prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
@@ -1316,6 +1321,8 @@ prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
   }
   //PROBLEM_PARAM(xml_file, "s"),
   do_str(f, &sbuf, "xml_file", prob->xml_file);
+  //PROBLEM_PARAM(group_name, "s"),
+  do_str(f, &sbuf, "group_name", prob->group_name);
   //PROBLEM_PARAM(spelling, "s"),
   do_str(f, &sbuf, "spelling", prob->spelling);
   //PROBLEM_PARAM(score_multiplier, "d"),

@@ -461,9 +461,11 @@ struct section_problem_data
   int    stand_hide_time;       /* do not show ok time */
   int    score_multiplier;      /* additional score multiplier */
   int    advance_to_next;       /* advance to the next prob. in nav. mode */
+  int    enable_text_form;      /* still enable text form in output-only prb. */
   puc_t super[32];              /* superproblem's short_name */
   puc_t short_name[32];         /* short problem name, eg A, B, ... */
   puc_t long_name[256];         /* long problem name */
+  puc_t group_name[64];         /* the problem group name */
   path_t test_dir;              /* directory with tests */
   puc_t test_sfx[32];           /* test files suffix */
   path_t corr_dir;              /* directory with correct answers */
@@ -714,6 +716,7 @@ enum
   PREPARE_FIELD_PROB_HIDDEN,
   PREPARE_FIELD_PROB_STAND_HIDE_TIME,
   PREPARE_FIELD_PROB_ADVANCE_TO_NEXT,
+  PREPARE_FIELD_PROB_ENABLE_TEXT_FORM,
   PREPARE_FIELD_PROB_CHECKER_REAL_TIME_LIMIT,
   PREPARE_FIELD_PROB_MAX_VM_SIZE,
   PREPARE_FIELD_PROB_MAX_DATA_SIZE,

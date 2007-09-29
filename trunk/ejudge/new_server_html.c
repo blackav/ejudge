@@ -7957,8 +7957,8 @@ unpriv_submit_run(FILE *fout,
   size_t log_len = 0;
   FILE *log_f = 0;
   int prob_id, n, lang_id = 0, i, ans, max_ans, j;
-  const unsigned char *s, *run_text = 0;
-  size_t run_size = 0, ans_size;
+  const unsigned char *s, *run_text = 0, *text_form_text = 0;
+  size_t run_size = 0, ans_size, text_form_size = 0;
   unsigned char *ans_buf, *ans_map, *ans_tmp;
   time_t start_time, stop_time, user_deadline = 0;
   const unsigned char *login, *mime_type_str = 0;
@@ -7976,6 +7976,7 @@ unpriv_submit_run(FILE *fout,
   struct problem_plugin_iface *plg = 0;
   problem_xml_t px = 0;
   struct run_entry re;
+  int skip_mime_type_test = 0;
 
   l10n_setlocale(phr->locale_id);
   log_f = open_memstream(&log_txt, &log_len);
@@ -8001,10 +8002,23 @@ unpriv_submit_run(FILE *fout,
 
   switch (prob->type_val) {
   case PROB_TYPE_STANDARD:      // "file"
-  case PROB_TYPE_OUTPUT_ONLY:
     if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)) {
       ns_error(log_f, NEW_SRV_ERR_FILE_UNSPECIFIED);
       goto done;
+    }
+    break;
+  case PROB_TYPE_OUTPUT_ONLY:
+    if (prob->enable_text_form > 0) {
+      if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)
+          &&!ns_cgi_param_bin(phr,"text_form",&text_form_text,&text_form_size)){
+        ns_error(log_f, NEW_SRV_ERR_FILE_UNSPECIFIED);
+        goto done;
+      }
+    } else {
+      if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)) {
+        ns_error(log_f, NEW_SRV_ERR_FILE_UNSPECIFIED);
+        goto done;
+      }
     }
     break;
   case PROB_TYPE_TEXT_ANSWER:
@@ -8084,6 +8098,25 @@ unpriv_submit_run(FILE *fout,
     if (!prob->binary_input && strlen(run_text) != run_size) {
       ns_error(log_f, NEW_SRV_ERR_BINARY_FILE);
       goto done;
+    }
+    if (prob->enable_text_form > 0 && text_form_text
+        && strlen(text_form_text) != text_form_size) {
+      ns_error(log_f, NEW_SRV_ERR_BINARY_FILE);
+      goto done;
+    }
+    if (prob->enable_text_form > 0) {
+      if (!run_size && !text_form_size) {
+        ns_error(log_f, NEW_SRV_ERR_SUBMIT_EMPTY);
+        goto done;
+      }
+      if (!run_size) {
+        run_text = text_form_text;
+        run_size = text_form_size;
+        skip_mime_type_test = 1;
+      } else {
+        text_form_text = 0;
+        text_form_size = 0;
+      }
     }
     break;
 
@@ -8183,6 +8216,9 @@ unpriv_submit_run(FILE *fout,
         goto done;
       }
     }
+  } else if (skip_mime_type_test) {
+    mime_type = 0;
+    mime_type_str = mime_type_get_type(mime_type);
   } else {
     // guess the content-type and check it against the list
     if ((mime_type = mime_type_guess(cs->global->diff_work_dir,
@@ -10416,6 +10452,7 @@ unpriv_main_page(FILE *fout,
   unsigned char wbuf[1024];
   int upper_tab_id = 0, next_prob_id;
   problem_xml_t px;
+  unsigned char prev_group_name[256] = { 0 };
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
@@ -10914,7 +10951,12 @@ unpriv_main_page(FILE *fout,
         }
         switch (prob->type_val) {
         case PROB_TYPE_STANDARD:
+          fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
+          break;
         case PROB_TYPE_OUTPUT_ONLY:
+          if (prob->enable_text_form > 0) {
+            fprintf(fout, "<tr><td colspan=\"2\" class=\"b0\"><textarea name=\"text_form\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
+          }
           fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
           break;
         case PROB_TYPE_SHORT_ANSWER:
@@ -11217,13 +11259,22 @@ unpriv_main_page(FILE *fout,
   }
 
   /* new problem navigation */
-  if (global->problem_navigation > 0 && global->vertical_navigation
+  if (global->problem_navigation > 0 && global->vertical_navigation > 0
       && start_time > 0 && stop_time <= 0) {
     fprintf(fout, "</div></td><td class=\"b0\" id=\"probNavRightList\">\n");
+    prev_group_name[0] = 0;
 
     for (i = 1, j = 0; i <= cs->max_prob; i++) {
       if (!(prob = cs->probs[i])) continue;
       if (!(prob_status[i] & PROB_STATUS_TABABLE)) continue;
+
+      if (prob->group_name[0] && strcmp(prob->group_name, prev_group_name)) {
+        fprintf(fout, "<div class=\"%s\">", "probDisabled");
+        fprintf(fout, "%s", prob->group_name);
+        fprintf(fout, "</div>\n");
+        snprintf(prev_group_name, sizeof(prev_group_name),
+                 "%s", prob->group_name);
+      }
 
       if (i == prob_id) {
         cc = "probCurrent";

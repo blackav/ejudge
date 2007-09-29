@@ -2258,14 +2258,6 @@ super_html_edit_contest_page(FILE *f,
   html_submit_button(f, SSERV_CMD_CNTS_CHANGE_PERSONAL, "Change");
   fprintf(f, "</td></tr></form>\n");
 
-  html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<tr%s><td>Allow edit registration data during contest?</td><td>",
-          form_row_attrs[row ^= 1]);
-  html_boolean_select(f, cnts->allow_reg_data_edit, "param", 0, 0);
-  fprintf(f, "</td><td>");
-  html_submit_button(f, SSERV_CMD_CNTS_CHANGE_ALLOW_REG_DATA_EDIT, "Change");
-  fprintf(f, "</td></tr></form>\n");
-
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Registration settings</b></td></tr>", head_row_attr);
   row = 1;
 
@@ -2529,6 +2521,16 @@ super_html_edit_contest_page(FILE *f,
     html_boolean_select(f, cnts->disable_locale_change, "param", 0, 0);
     fprintf(f, "</td><td>");
     html_submit_button(f, SSERV_CMD_CNTS_CHANGE_DISABLE_LOCALE_CHANGE, "Change");
+    fprintf(f, "</td></tr></form>\n");
+  }
+
+  if (sstate->advanced_view) {
+    html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Allow edit registration data during contest?</td><td>",
+            form_row_attrs[row ^= 1]);
+    html_boolean_select(f, cnts->allow_reg_data_edit, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_ALLOW_REG_DATA_EDIT, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 
