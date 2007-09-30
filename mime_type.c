@@ -40,7 +40,7 @@ static const struct mime_type_info mime_types[MIME_TYPE_LAST] =
   [MIME_TYPE_BINARY] =
   { "application/octet-stream", "", "" },
   [MIME_TYPE_APPL_MSWORD] =
-  { "application/msword", ".doc", "Microsoft Office Document" },
+  { "application/msword", ".doc", "Microsoft" },
   [MIME_TYPE_APPL_RTF] =
   { "application/rtf", ".rtf", "Rich Text Format data" },
   [MIME_TYPE_APPL_PDF] =
