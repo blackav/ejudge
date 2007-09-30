@@ -1269,6 +1269,7 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   PROBLEM_PARAM(priority_adjustment, "d"),
   PROBLEM_PARAM(spelling, "s"),
   PROBLEM_PARAM(score_multiplier, "d"),
+  PROBLEM_PARAM(prev_runs_to_show, "d"),
   PROBLEM_PARAM(ignore_penalty, "d"),
   PROBLEM_PARAM(date_penalty, "x"),
   PROBLEM_PARAM(tgz_pat, "s"),
@@ -1328,6 +1329,8 @@ prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
   //PROBLEM_PARAM(score_multiplier, "d"),
   if (prob->score_multiplier)
     fprintf(f, "score_multiplier = %d\n", prob->score_multiplier);
+  if (prob->prev_runs_to_show > 0)
+    fprintf(f, "prev_runs_to_show = %d\n", prob->prev_runs_to_show);
   //PROBLEM_PARAM(date_penalty, "x"),
   do_xstr(f, &sbuf, "date_penalty", prob->date_penalty);
   //PROBLEM_PARAM(personal_deadline, "x"),
