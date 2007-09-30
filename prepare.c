@@ -344,6 +344,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(advance_to_next, "d"),
   PROBLEM_PARAM(enable_text_form, "d"),
   PROBLEM_PARAM(score_multiplier, "d"),
+  PROBLEM_PARAM(prev_runs_to_show, "d"),
   PROBLEM_ALIAS(output_only, type_val, "d"),
   PROBLEM_PARAM(max_vm_size, "z"),
   PROBLEM_PARAM(max_stack_size, "z"),
@@ -2875,6 +2876,11 @@ set_defaults(serve_state_t state, int mode)
     if (!prob->score_multiplier && si != -1 &&
         aprob->score_multiplier >= 1) {
       prob->score_multiplier = aprob->score_multiplier;
+    }
+
+    if (prob->prev_runs_to_show <= 0 && si != -1
+        && aprob->prev_runs_to_show >= 1) {
+      prob->prev_runs_to_show = aprob->prev_runs_to_show;
     }
 
     if (mode == PREPARE_SERVE) {

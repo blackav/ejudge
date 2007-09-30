@@ -957,7 +957,8 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
   } else {
     start_time = run_get_start_time(state->runlog_state);
   }
-  runs_to_show = 15;
+  if (prob_id > 0) runs_to_show = state->probs[prob_id]->prev_runs_to_show;
+  if (runs_to_show <= 0) runs_to_show = 15;
   if (show_flags) runs_to_show = 100000;
 
   /* write run statistics: show last 15 in the reverse order */

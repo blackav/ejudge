@@ -460,6 +460,7 @@ struct section_problem_data
   int    priority_adjustment;   /* priority adjustment for this problem */
   int    stand_hide_time;       /* do not show ok time */
   int    score_multiplier;      /* additional score multiplier */
+  int    prev_runs_to_show;     /* number of previous runs to show */
   int    advance_to_next;       /* advance to the next prob. in nav. mode */
   int    enable_text_form;      /* still enable text form in output-only prb. */
   puc_t super[32];              /* superproblem's short_name */
