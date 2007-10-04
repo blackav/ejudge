@@ -1582,14 +1582,18 @@ userlist_clone_member(struct userlist_member *src, int *p_serial,
 }
 
 struct userlist_cntsinfo *
-userlist_clone_user_info(struct userlist_user *u, int contest_id,
-                         int *p_serial, time_t current_time,
-                         int *p_cloned_flag)
+userlist_clone_user_info(
+	struct userlist_user *u,
+        int contest_id,
+        int *p_serial,
+        time_t current_time,
+        int *p_cloned_flag)
 {
   struct xml_tree *p;
   struct userlist_cntsinfo *ci;
   struct userlist_members *mm, *ms;
-  int mt, i, sz;
+  int mt, i, sz, copy_total;
+  const struct contest_desc *cnts = 0;
 
   if (p_cloned_flag) *p_cloned_flag = 0;
   if (contest_id <= 0 || contest_id > MAX_CONTEST_ID) return 0;
@@ -1651,8 +1655,11 @@ userlist_clone_user_info(struct userlist_user *u, int contest_id,
     ci->i.team_passwd_method = u->i.team_passwd_method;
   }
 
+  contests_get(contest_id, &cnts);
   for (mt = 0; mt < USERLIST_MB_LAST; mt++) {
     if (!u->i.members[mt]) continue;
+    if (cnts && !cnts->members[mt]) continue;
+    if (cnts && cnts->members[mt]->max_count <= 0) continue;
     ms = u->i.members[mt];
     mm = (struct userlist_members*) userlist_node_alloc(USERLIST_T_CONTESTANTS);
     mm->role = mt;
@@ -1660,11 +1667,13 @@ userlist_clone_user_info(struct userlist_user *u, int contest_id,
     xml_link_node_last(&ci->b, &mm->b);
 
     sz = 1;
-    while (sz < ms->total) sz *= 2;
+    copy_total = ms->total;
+    if (cnts) copy_total = cnts->members[mt]->max_count;
+    while (sz < copy_total) sz *= 2;
     mm->allocd = sz;
-    mm->total = ms->total;
+    mm->total = copy_total;
     XCALLOC(mm->members, sz);
-    for (i = 0; i < ms->total; i++) {
+    for (i = 0; i < copy_total; i++) {
       mm->members[i] = userlist_clone_member(ms->members[i], p_serial,
                                              current_time);
       xml_link_node_last(&mm->b, &mm->members[i]->b);
