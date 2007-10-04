@@ -223,6 +223,8 @@ userlist_count_info_errors(
       role_err_count[rr + 1]++;
       err_count++;
     }
+    // temporary hack
+    if (cnts->personal && mmbound > 1) mmbound = 1;
     if (mmbound > cnts->members[rr]->max_count) {
       role_err_count[rr + 1]++;
       err_count++;
