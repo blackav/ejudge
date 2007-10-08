@@ -2624,9 +2624,9 @@ submit_member_editing(
   }
 
   for (ff = CONTEST_MF_FIRSTNAME; ff < CONTEST_LAST_MEMBER_FIELD; ff++) {
-    if (!cnts->members[CONTEST_M_CONTESTANT]->fields[ff]) continue;
+    if (!cnts->members[role]->fields[ff]) continue;
 
-    legend = cnts->members[CONTEST_M_CONTESTANT]->fields[ff]->legend;
+    legend = cnts->members[role]->fields[ff]->legend;
     if (!legend || !*legend)
       legend = gettext(member_field_desc[ff].description);
 
