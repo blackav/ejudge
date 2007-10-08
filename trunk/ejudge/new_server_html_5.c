@@ -2550,7 +2550,7 @@ get_member_field(
 
   default:
     snprintf(varname, sizeof(varname), "%sparam_%d", var_prefix, field);
-  if ((r = ns_cgi_param(phr, varname, &v)) < 0) {
+    if ((r = ns_cgi_param(phr, varname, &v)) < 0) {
       goto non_printable;
     } else if (!r || !v) {
       v = "";

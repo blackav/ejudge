@@ -1700,6 +1700,282 @@ ncurses_shutdown(void)
   endwin();
 }
 
+/**
+ * Returns the next read character, UTF8 charset is supported
+ */
+int
+ncurses_getch(int utf8_mode, int *p_code)
+{
+  int key, key1, key2, key3, w;
+
+  if ((key = getch()) < 0) key &= 0xff;
+  if (key < 128) {
+    if (p_code) *p_code = key;
+    return key;
+  }
+  if (key >= 256) {
+    if (p_code) *p_code = 0;
+    return key;
+  }
+  if (!utf8_mode) {
+    if (p_code) *p_code = key;
+    return key;
+  }
+  if (key <= 0xbf) goto invalid_key;
+  if (key <= 0xc1) goto invalid_key;
+  if (key <= 0xdf) {
+    // two bytes: 0x80-0x7ff
+    if ((key1 = getch()) < 0) key1 &= 0xff;
+    if (key1 < 0x80 || key1 > 0xbf) goto invalid_key;
+    w = ((key & 0x1f) << 6) | (key1 & 0x3f);
+    if (w < 0x80) goto invalid_key;
+    if (p_code) *p_code = w;
+    return 0;
+  }
+  if (key <= 0xef) {
+    // three bytes: 0x800-0xffff
+    if ((key1 = getch()) < 0) key1 &= 0xff;
+    if (key1 < 0x80 || key1 > 0xbf) goto invalid_key;
+    if ((key2 = getch()) < 0) key2 &= 0xff;
+    if (key2 < 0x80 || key2 > 0xbf) goto invalid_key;
+    w = ((key & 0x0f) << 12) | ((key1 & 0x3f) << 6) | (key2 & 0x3f);
+    if (w < 0x800) goto invalid_key;
+    if (p_code) *p_code = w;
+    return 0;
+  }
+  if (key <= 0xf7) {
+    // four bytes: 0x10000-0x10ffff
+    if ((key1 = getch()) < 0) key1 &= 0xff;
+    if (key1 < 0x80 || key1 > 0xbf) goto invalid_key;
+    if ((key2 = getch()) < 0) key2 &= 0xff;
+    if (key2 < 0x80 || key2 > 0xbf) goto invalid_key;
+    if ((key3 = getch()) < 0) key3 &= 0xff;
+    if (key3 < 0x80 || key3 > 0xbf) goto invalid_key;
+    w = ((key & 0x07) << 18) | ((key1 & 0x3f) << 12) | ((key2 & 0x3f) << 6) | (key3 & 0x3f);
+    if (w < 0x10000) goto invalid_key;
+    if (p_code) *p_code = w;
+    return 0;
+  }
+
+ invalid_key:
+  if (p_code) *p_code = '?';
+  return '?';
+}
+
+static unsigned char
+latin_kbd_map[128] =
+{
+  ['`'] = '~', ['!'] = '1', ['@'] = '2', ['#'] = '3',
+  ['$'] = '4',
+  ['%'] = '5',
+  ['^'] = '6',
+  ['&'] = '7',
+  ['*'] = '8',
+  ['('] = '9',
+  [')'] = '0',
+  ['_'] = '-',
+  ['+'] = '=',
+  ['|'] = '\\',
+  ['Q'] = 'q',
+  ['W'] = 'w',
+  ['E'] = 'e',
+  ['R'] = 'r',
+  ['T'] = 't',
+  ['Y'] = 'y',
+  ['U'] = 'u',
+  ['I'] = 'i',
+  ['O'] = 'o',
+  ['P'] = 'p',
+  ['{'] = '[',
+  ['}'] = ']',
+  ['A'] = 'a',
+  ['S'] = 's',
+  ['D'] = 'd',
+  ['F'] = 'f',
+  ['G'] = 'g',
+  ['H'] = 'h',
+  ['J'] = 'j',
+  ['K'] = 'k',
+  ['L'] = 'l',
+  [':'] = ';',
+  ['\"'] = '\'',
+  ['Z'] = 'z',
+  ['X'] = 'x',
+  ['C'] = 'c',
+  ['V'] = 'v',
+  ['B'] = 'b',
+  ['N'] = 'n',
+  ['M'] = 'm',
+  ['<'] = ',',
+  ['>'] = '.',
+  ['?'] = '/',
+};
+
+static unsigned char koi8_kdb_map[256] =
+{
+  ['£' & 255] = '~',
+  ['³' & 255] = '~',
+  ['Ê' & 255] = 'q',
+  ['ê' & 255] = 'q',
+  ['Ã' & 255] = 'w',
+  ['ã' & 255] = 'w',
+  ['Õ' & 255] = 'e',
+  ['õ' & 255] = 'e',
+  ['Ë' & 255] = 'r',
+  ['ë' & 255] = 'r',
+  ['Å' & 255] = 't',
+  ['å' & 255] = 't',
+  ['Î' & 255] = 'y',
+  ['î' & 255] = 'y',
+  ['Ç' & 255] = 'u',
+  ['ç' & 255] = 'u',
+  ['Û' & 255] = 'i',
+  ['û' & 255] = 'i',
+  ['Ý' & 255] = 'o',
+  ['ý' & 255] = 'o',
+  ['Ú' & 255] = 'p',
+  ['ú' & 255] = 'p',
+  ['È' & 255] = '[',
+  ['è' & 255] = '[',
+  ['ß' & 255] = ']',
+  ['ÿ' & 255] = ']',
+  ['Æ' & 255] = 'a',
+  ['æ' & 255] = 'a',
+  ['Ù' & 255] = 's',
+  ['ù' & 255] = 's',
+  ['×' & 255] = 'd',
+  ['÷' & 255] = 'd',
+  ['Á' & 255] = 'f',
+  ['á' & 255] = 'f',
+  ['Ð' & 255] = 'g',
+  ['ð' & 255] = 'g',
+  ['Ò' & 255] = 'h',
+  ['ò' & 255] = 'h',
+  ['Ï' & 255] = 'j',
+  ['ï' & 255] = 'j',
+  ['Ì' & 255] = 'k',
+  ['ì' & 255] = 'k',
+  ['Ä' & 255] = 'l',
+  ['ä' & 255] = 'l',
+  ['Ö' & 255] = ';',
+  ['ö' & 255] = ';',
+  ['Ü' & 255] = '\'',
+  ['ü' & 255] = '\'',
+  ['Ñ' & 255] = 'z',
+  ['ñ' & 255] = 'z',
+  ['Þ' & 255] = 'x',
+  ['þ' & 255] = 'x',
+  ['Ó' & 255] = 'c',
+  ['ó' & 255] = 'c',
+  ['Í' & 255] = 'v',
+  ['í' & 255] = 'v',
+  ['É' & 255] = 'b',
+  ['é' & 255] = 'b',
+  ['Ô' & 255] = 'n',
+  ['ô' & 255] = 'n',
+  ['Ø' & 255] = 'm',
+  ['ø' & 255] = 'm',
+  ['Â' & 255] = ',',
+  ['â' & 255] = ',',
+  ['À' & 255] = '.',
+  ['à' & 255] = '.',
+};
+
+static unsigned char utf8_kbd_map[0x500] =
+{
+  [0x451] = '~',
+  [0x401] = '~',
+  [0x439] = 'q',
+  [0x419] = 'q',
+  [0x446] = 'w',
+  [0x426] = 'w',
+  [0x443] = 'e',
+  [0x423] = 'e',
+  [0x43a] = 'r',
+  [0x41a] = 'r',
+  [0x435] = 't',
+  [0x415] = 't',
+  [0x43d] = 'y',
+  [0x41d] = 'y',
+  [0x433] = 'u',
+  [0x413] = 'u',
+  [0x448] = 'i',
+  [0x428] = 'i',
+  [0x449] = 'o',
+  [0x429] = 'o',
+  [0x437] = 'p',
+  [0x417] = 'p',
+  [0x445] = '[',
+  [0x425] = '[',
+  [0x44a] = ']',
+  [0x42a] = ']',
+  [0x444] = 'a',
+  [0x424] = 'a',
+  [0x44b] = 's',
+  [0x42b] = 's',
+  [0x432] = 'd',
+  [0x412] = 'd',
+  [0x430] = 'f',
+  [0x410] = 'f',
+  [0x43f] = 'g',
+  [0x41f] = 'g',
+  [0x440] = 'h',
+  [0x420] = 'h',
+  [0x43e] = 'j',
+  [0x41e] = 'j',
+  [0x43b] = 'k',
+  [0x41b] = 'k',
+  [0x434] = 'l',
+  [0x414] = 'l',
+  [0x436] = ';',
+  [0x416] = ';',
+  [0x44d] = '\'',
+  [0x42d] = '\'',
+  [0x44f] = 'z',
+  [0x42f] = 'z',
+  [0x447] = 'x',
+  [0x427] = 'x',
+  [0x441] = 'c',
+  [0x421] = 'c',
+  [0x43c] = 'v',
+  [0x41c] = 'v',
+  [0x438] = 'b',
+  [0x418] = 'b',
+  [0x442] = 'n',
+  [0x422] = 'n',
+  [0x44c] = 'm',
+  [0x42c] = 'm',
+  [0x431] = ',',
+  [0x411] = ',',
+  [0x44e] = '.',
+  [0x42e] = '.',
+};
+
+/**
+ * 
+ */
+int
+ncurses_getkey(int utf8_mode, int *p_code)
+{
+  int wc = 0;
+  int k = ncurses_getch(utf8_mode, &wc);
+
+  if (p_code) *p_code = wc;
+  if (k > 0 && k < 128) {
+    if (latin_kbd_map[k]) return latin_kbd_map[k];
+    return k;
+  }
+  if (k >= 256) return k;
+  if (utf8_mode) {
+    // convert russian UTF-8 codes to keycodes
+    if (wc < 0x500 && utf8_kbd_map[wc]) return utf8_kbd_map[wc];
+    return k;
+  }
+  // convert russian KOI8-R codes to keycodes
+  if (koi8_kdb_map[k]) return koi8_kdb_map[k];
+  return k;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

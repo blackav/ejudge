@@ -60,6 +60,7 @@ int  message_reply_subj(char const *, char *);
 int  message_base64_subj(char const *, char *, int);
 
 size_t url_armor_string(unsigned char *, size_t, const unsigned char *);
+int url_armor_needed(const unsigned char *s, size_t *psize);
 
 size_t text_numbered_memlen(const unsigned char *intxt, size_t insize);
 void text_number_lines(const unsigned char *intxt, size_t insize,
