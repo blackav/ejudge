@@ -55,6 +55,9 @@ int ncurses_choose_file(const unsigned char *header,
 
 void ncurses_view_text(const unsigned char *header, const unsigned char *txt);
 
+int ncurses_getch(int utf8_mode, int *p_code);
+int ncurses_getkey(int utf8_mode, int *p_code);
+
 #endif /* __NCURSES_UTILS_H__ */
 
 /*

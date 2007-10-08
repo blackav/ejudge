@@ -43,8 +43,9 @@
 #include <errno.h>
 #include <regex.h>
 #include <langinfo.h>
+#include <ctype.h>
 
-/* special psedofields which are used for user info list markup */
+/* special pseudofields which are used for user info list markup */
 enum
 {
   USERLIST_PSEUDO_FIRST = 500,
@@ -336,8 +337,7 @@ generic_menu(int min_width, int max_width, /* incl. frame */
   doupdate();
 
   while (1) {
-    c = getch();
-    if (c < 0) c &= 255;
+    c = ncurses_getkey(utf8_mode, 0);
     cmd = -1;
     switch (c) {
     case '\r': case '\n': case ' ':
@@ -467,16 +467,15 @@ okcancel(unsigned char const *fmt, ...)
   doupdate();
 
   while (1) {
-    c = getch();
+    c = ncurses_getkey(utf8_mode, 0);
     switch (c) {
-    case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
-    case 'G' & 31: case '\033':
+    case 'q': case 'G' & 31: case '\033':
       c = 'q';
       goto menu_done;
-    case 'y': case 'Y': case 'Î' & 255: case 'î' & 255:
+    case 'y': 
       c = 'y';
       goto menu_done;
-    case 'n': case 'N': case 'Ô' & 255: case 'ô' & 255:
+    case 'n': 
       c = 'n';
       goto menu_done;
     case '\n': case '\r': case ' ':
@@ -592,16 +591,15 @@ yesno(int init_val, unsigned char const *fmt, ...)
   doupdate();
 
   while (1) {
-    c = getch();
+    c = ncurses_getkey(utf8_mode, 0);
     switch (c) {
-    case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
-    case 'G' & 31: case '\033':
+    case 'q': case 'G' & 31: case '\033':
       c = 'q';
       goto menu_done;
-    case 'y': case 'Y': case 'Î' & 255: case 'î' & 255:
+    case 'y': 
       c = 'y';
       goto menu_done;
-    case 'n': case 'N': case 'Ô' & 255: case 'ô' & 255:
+    case 'n': 
       c = 'n';
       goto menu_done;
     case '\n': case '\r': case ' ':
@@ -707,10 +705,9 @@ display_reg_status_menu(int line, int init_val)
   doupdate();
 
   while (1) {
-    c = getch();
+    c = ncurses_getkey(utf8_mode, 0);
     switch (c) {
-    case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
-    case 'G' & 31: case '\033':
+    case 'q': case 'G' & 31: case '\033':
       c = 'q';
       goto menu_done;
     case '\n': case '\r': case ' ':
@@ -812,10 +809,9 @@ display_role_menu(int line, int init_val)
   doupdate();
 
   while (1) {
-    c = getch();
+    c = ncurses_getkey(utf8_mode, 0);
     switch (c) {
-    case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
-    case 'G' & 31: case '\033':
+    case 'q': case 'G' & 31: case '\033':
       c = 'q';
       goto menu_done;
     case '\n': case '\r': case ' ':
@@ -918,10 +914,9 @@ display_member_status_menu(int line, int init_val)
   doupdate();
 
   while (1) {
-    c = getch();
+    c = ncurses_getkey(utf8_mode, 0);
     switch (c) {
-    case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
-    case 'G' & 031: case '\033':
+    case 'q': case 'G' & 031: case '\033':
       c = 'q';
       goto menu_done;
     case '\n': case '\r': case ' ':
@@ -1025,10 +1020,9 @@ display_member_gender_menu(int line, int init_val)
   doupdate();
 
   while (1) {
-    c = getch();
+    c = ncurses_getkey(utf8_mode, 0);
     switch (c) {
-    case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
-    case 'G' & 031: case '\033':
+    case 'q': case 'G' & 031: case '\033':
       c = 'q';
       goto menu_done;
     case '\n': case '\r': case ' ':
@@ -1737,7 +1731,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
       update_panels();
       doupdate();
 
-      c = getch();
+      c = ncurses_getkey(utf8_mode, 0);
       // in the following may be duplicates
       if (c == KEY_BACKSPACE || c == KEY_DC || c == 127 || c == 8) {
         c = 'd';
@@ -1747,42 +1741,12 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
       case '\n': case '\r': case ' ':
         c = '\n';
         goto menu_done;
-      case 'd': case 'D': case '÷' & 255: case '×' & 255:
-        c = 'd';
-        goto menu_done;
-      case 'q': case 'Q': case 'ê' & 255: case 'Ê' & 255:
-      case 'G' & 31: case '\033':
+      case 'q': case 'G' & 31: case '\033':
         c = 'q';
         goto menu_done;
-      case 'r': case 'R': case 'Ë' & 255: case 'ë' & 255:
-        c = 'r';
-        goto menu_done;
-      case 'b': case 'B': case 'É' & 255: case 'é' & 255:
-        c = 'b';
-        goto menu_done;
-      case 'i': case 'I': case 'Û' & 255: case 'û' & 255:
-        c = 'i';
-        goto menu_done;
-      case 'l': case 'L': case 'Ä' & 255: case 'ä' & 255:
-        c = 'l';
-        goto menu_done;
-      case 'a': case 'A': case 'Æ' & 255: case 'æ' & 255:
-        c = 'a';
-        goto menu_done;
-      case 'c': case 'C': case 'Ó' & 255: case 'ó' & 255:
-        c = 'c';
-        goto menu_done;
-      case 'o': case 'O': case 'Ý' & 255: case 'ý' & 255:
-        c = 'o';
-        goto menu_done;
-      case 'y': case 'Y': case 'Î' & 255: case 'î' & 255:
-        c = 'y';
-        goto menu_done;
-      case 'n': case 'N': case 'Ô' & 255: case 'ô' & 255:
-        c = 'n';
-        goto menu_done;
-      case 'u': case 'U': case 'Ç' & 255: case 'ç' & 255:
-        c = 'u';
+      case 'd': case 'r': case 'b': case 'i': case 'l':
+      case 'a': case 'c': case 'o': case 'y': case 'n':
+      case 'u':
         goto menu_done;
       }
       cmd = -1;
@@ -2744,74 +2708,22 @@ display_registered_users(unsigned char const *upper,
     doupdate();
 
     while (1) {
-      c = getch();
-      if (c < 0) c &= 255;
+      c = ncurses_getkey(utf8_mode, 0);
       // in the following may be duplicates
       if (c == KEY_BACKSPACE || c == KEY_DC || c == 127 || c == 8) {
         c = 'd';
         break;
       }
       switch (c) {
-      case 'q': case 'Q':
-      case 'Ê' & 255: case 'ê' & 255: case 'G' & 31: case '\033':
+      case 'q': case 'G' & 31: case '\033':
         c = 'q';
-        goto menu_done;
-      case 'r': case 'R': case 'Ë' & 255: case 'ë' & 255:
-        c = 'r';
-        goto menu_done;
-      case 'd': case 'D': case '×' & 255: case '÷' & 255:
-        c = 'd';
-        goto menu_done;
-      case 'i': case 'I': case 'Û' & 255: case 'û' & 255:
-        c = 'i';
-        goto menu_done;
-      case 'b': case 'B': case 'É' & 255: case 'é' & 255:
-        c = 'b';
-        goto menu_done;
-      case 'l': case 'L': case 'Ä' & 255: case 'ä' & 255:
-        c = 'l';
         goto menu_done;
       case '\n': case '\r': case ' ':
         c = '\n';
         goto menu_done;
-      case 'a': case 'A': case 'Æ' & 255: case 'æ' & 255:
-        c = 'a';
-        goto menu_done;
-      case 's': case 'S': case 'Ù' & 255: case 'ù' & 255:
-        c = 's';
-        goto menu_done;
-      case 'j': case 'J': case 'Ï' & 255: case 'ï' & 255:
-        c = 'j';
-        goto menu_done;
-      case 'e': case 'E': case 'Õ' & 255: case 'õ' & 255:
-        c = 'e';
-        goto menu_done;
-      case ':': case ';': case 'Ö' & 255: case 'ö' & 255:
-        c = ':';
-        goto menu_done;
-      case 'c': case 'C': case 'Ó' & 255: case 'ó' & 255:
-        c = 'c';
-        goto menu_done;
-      case 't': case 'T': case 'Å' & 255: case 'å' & 255:
-        c = 't';
-        goto menu_done;
-      case '0': case ')':
-        c = '0';
-        goto menu_done;
-      case 'f': case 'F': case 'Á' & 255: case 'á' & 255:
-        c = 'f';
-        goto menu_done;
-      case 'o': case 'O': case 'Ý' & 255: case 'ý' & 255:
-        c = 'o';
-        goto menu_done;
-      case 'n': case 'N': case 'Ô' & 255: case 'ô' & 255:
-        c = 'n';
-        goto menu_done;
-      case 'u': case 'U': case 'Ç' & 255: case 'ç' & 255:
-        c = 'u';
-        goto menu_done;
-      case 'v': case 'V': case 'Í' & 255: case 'í' & 255:
-        c = 'v';
+      case 'r': case 'd': case 'i': case 'b': case 'l': case 'a':
+      case 's': case 'j': case 'e': case ';': case 'c': case 't':
+      case '0': case 'f': case 'o': case 'n': case 'u': case 'v':
         goto menu_done;
       }
       cmd = -1;
@@ -2848,7 +2760,7 @@ display_registered_users(unsigned char const *upper,
       }
     }
   menu_done:
-    if (c == ':') {
+    if (c == ';') {
       i = item_index(current_item(menu));
       if (sel_users.mask[i]) {
         sel_users.mask[i] = 0;
@@ -3491,8 +3403,8 @@ display_contests_menu(unsigned char *upper, int only_choose)
   unsigned char *cnts_set = 0;
   int cnts_set_card;
   int *cntsi;
-  unsigned char **cnts_names = 0;
-  int cur_item = 0, first_row;
+  unsigned char **cnts_names = 0,*s;
+  int cur_item = 0, first_row, slen;
 
   snprintf(current_level, sizeof(current_level),
            "%s->%s", upper, "Contest list");
@@ -3528,7 +3440,14 @@ display_contests_menu(unsigned char *upper, int only_choose)
   XALLOCAZ(cnts_names, cnts_set_card);
   for (i = 1; i < cnts_set_card; i++) {
     if (contests_get(i, &cc) >= 0) {
-      cnts_names[i] = xstrdup(cc->name);
+      cnts_names[i] = s = xstrdup(cc->name);
+      // fix the contest names
+      slen = strlen(s);
+      while (slen > 0 && isspace(s[slen - 1])) slen--;
+      s[slen] = 0;
+      for (; *s; s++)
+        if (*s < ' ')
+          *s = ' ';
     }
   }
 
@@ -3608,23 +3527,15 @@ display_contests_menu(unsigned char *upper, int only_choose)
     doupdate();
 
     while (1) {
-      c = getch();
+      c = ncurses_getkey(utf8_mode, 0);
       switch (c) {
-      case 'q': case 'Q':
-      case 'Ê' & 255: case 'ê' & 255: case 'G' & 31: case '\033':
+      case 'q': case 'G' & 31: case '\033':
         c = 'q';
         goto menu_done;
       case '\n': case '\r': case ' ':
         c = '\n';
         goto menu_done;
-      case ':': case ';': case 'Ö' & 255: case 'ö' & 255:
-        c = ':';
-        goto menu_done;
-      case 't': case 'T': case 'Å' & 255: case 'å' & 255:
-        c = 't';
-        goto menu_done;
-      case '0': case ')':
-        c = '0';
+      case ';': case 't': case '0':
         goto menu_done;
       }
       cmd = -1;
@@ -3667,7 +3578,7 @@ display_contests_menu(unsigned char *upper, int only_choose)
     update_panels();
     doupdate();
 
-    if (c == ':') {
+    if (c == ';') {
       cur_item = i = item_index(current_item(menu));
       if (i >= 0 && i < ncnts) {
         j = cntsi[i];
@@ -3880,46 +3791,20 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
     doupdate();
 
     while (1) {
-      c = getch();
-      if (c == KEY_BACKSPACE || c == KEY_DC || c == 127 || c == 8
-          || c == 'd' || c == 'D' || c == '÷' || c == '×') {
+      c = ncurses_getkey(utf8_mode, 0);
+      if (c == KEY_BACKSPACE || c == KEY_DC || c == 127 || c == 8 || c == 'd') {
         c = 'd';
         goto menu_done;
       }
       switch (c) {
-      case 'q': case 'Q':
-      case 'Ê' & 255: case 'ê' & 255: case 'G' & 31: case '\033':
+      case 'q': case 'G' & 31: case '\033':
         c = 'q';
         goto menu_done;
       case '\n': case '\r':
         c = '\n';
         goto menu_done;
-      case 'a': case 'A': case 'Æ' & 255: case 'æ' & 255:
-        c = 'a';
-        goto menu_done;
-      case 's': case 'S': case 'Ù' & 255: case 'ù' & 255:
-        c = 's';
-        goto menu_done;
-      case 'j': case 'J': case 'Ï' & 255: case 'ï' & 255:
-        c = 'j';
-        goto menu_done;
-      case 'e': case 'E': case 'Õ' & 255: case 'õ' & 255:
-        c = 'e';
-        goto menu_done;
-      case 'm': case 'M': case 'Ø' & 255: case 'ø' & 255:
-        c = 'm';
-        goto menu_done;
-      case ':': case ';': case 'Ö' & 255: case 'ö' & 255:
-	c = ':';
-	goto menu_done;
-      case 'c': case 'C': case 'Ó' & 255: case 'ó' & 255:
-        c = 'c';
-        goto menu_done;
-      case 't': case 'T': case 'Å' & 256: case 'å' & 255:
-        c = 't';
-        goto menu_done;
-      case '0': case ')':
-        c = '0';
+      case 'a': case 's': case 'j': case 'e': case 'm':
+      case ';': case 'c': case 't': case '0':
         goto menu_done;
       }
       cmd = -1;
@@ -4122,7 +4007,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
       retval = -2;
       c = 'q';
     }
-    if (c == ':') {
+    if (c == ';') {
       i = item_index(current_item(menu));
       ASSERT(i >= 0 && i < nusers);
       if (g_sel_users.mask[i]) {
@@ -4335,20 +4220,15 @@ display_main_menu(void)
     doupdate();
 
     while (1) {
-      c = getch();
+      c = ncurses_getkey(utf8_mode, 0);
       switch (c) {
-      case 'q': case 'Q':
-      case 'Ê' & 255: case 'ê' & 255: case 'G' & 31: case '\033':
+      case 'q': case 'G' & 31: case '\033':
         c = 'q';
-        goto menu_done;
-      case 'c': case 'C': case 'Ó' & 255: case 'ó' & 255:
-        c = 'c';
-        goto menu_done;
-      case 'u': case 'U': case 'Ç' & 255: case 'ç' & 255:
-        c = 'u';
         goto menu_done;
       case '\n': case '\r': case ' ':
         c = '\n';
+        goto menu_done;
+      case 'c': case 'u':
         goto menu_done;
       }
       cmd = -1;
@@ -4427,7 +4307,7 @@ main(int argc, char **argv)
 
 #if defined EJUDGE_XML_PATH
   if (argc == 1) {
-    fprintf(stderr, "%s: using the default %s\n", argv[0], EJUDGE_XML_PATH);
+    //fprintf(stderr, "%s: using the default %s\n", argv[0], EJUDGE_XML_PATH);
     ejudge_xml_path = EJUDGE_XML_PATH;
   } else if (argc != 2) {
     fprintf(stderr, "%s: invalid number of arguments\n", argv[0]);

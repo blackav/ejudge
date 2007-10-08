@@ -57,6 +57,12 @@
 #define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
 #endif /* EJUDGE_CHARSET */
 
+#if defined EJUDGE_CHARSET
+#define DEFAULT_CHARSET              EJUDGE_CHARSET
+#else
+#define DEFAULT_CHARSET              "iso8859-1"
+#endif /* EJUDGE_CHARSET */
+
 #define FIRST_COOKIE(u) ((struct userlist_cookie*) (u)->cookies->first_down)
 #define NEXT_COOKIE(c)  ((struct userlist_cookie*) (c)->b.right)
 #define FIRST_CONTEST(u) ((struct userlist_contest*)(u)->contests->first_down)
@@ -578,6 +584,71 @@ check_config_exist(unsigned char const *path)
   return 0;
 }
 
+static void
+client_put_refresh_header(unsigned char const *coding,
+                          unsigned char const *url,
+                          int interval,
+                          unsigned char const *format, ...)
+{
+  va_list args;
+
+  if (!coding) coding = DEFAULT_CHARSET;
+
+  va_start(args, format);
+  fprintf(stdout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>\n", coding, coding, interval, url);
+  vfprintf(stdout, format, args);
+  fputs("\n</title></head><body><h1>\n", stdout);
+  vfprintf(stdout, format, args);
+  fputs("\n</h1>\n", stdout);
+}
+
+static void
+redirect_to_new_client(int contest_id)
+{
+  const unsigned char *login_str = cgi_param("login"), *s;
+  unsigned char *login_arm = 0, *url_buf = 0, *ptr;
+  size_t arm_size = 0, url_size = 0;
+  int url_len = 0, n, locale_id = -1, vi, i;
+  unsigned long long sid = 0, vl;
+
+  if (login_str) {
+    if (url_armor_needed(login_str, &arm_size)) {
+      login_arm = (unsigned char*) alloca(arm_size + 10);
+      url_armor_string(login_arm, arm_size + 10, login_str);
+    } else {
+      login_arm = (unsigned char *) login_str;
+    }
+  }
+
+  if ((s = cgi_param("SID")) && sscanf(s, "%llx%n", &vl, &n) == 1 && !s[n])
+    sid = vl;
+  if ((s = cgi_param("locale_id")) && sscanf(s, "%d%n", &vi, &n) == 1
+      && !s[n] && vi >= 0)
+    locale_id = vi;
+
+  url_size = strlen(self_url) + 128;
+  if (login_arm) url_size += strlen(login_arm);
+
+  url_buf = (unsigned char*) alloca(url_size);
+  strcpy(url_buf, self_url);
+  url_len = strlen(url_buf);
+  for (i = url_len - 1; i >= 0 && url_buf[i] != '/'; i--);
+  if (i < 0) i = 0;
+  ptr = url_buf + i;
+  ptr += sprintf(ptr, "%s", "/new-register");
+#if defined CGI_PROG_SUFFIX
+  ptr += sprintf(ptr, "%s", CGI_PROG_SUFFIX);
+#endif
+  if (contest_id > 0) ptr += sprintf(ptr, "?contest_id=%d", contest_id);
+  if (login_arm) ptr += sprintf(ptr, "&login=%s", login_arm);
+  if (sid) ptr += sprintf(ptr, "&SID=%llx", sid);
+  if (locale_id >= 0) ptr += sprintf(ptr, "&locale_id=%d", locale_id);
+
+  client_put_refresh_header(0, url_buf, 0,
+                            "redirecting to the new-register...");
+  exit(0);
+}
+
 static const unsigned char default_config[] =
 "<?xml version=\"1.0\" ?>\n"
 "<register_config><access default=\"allow\"/></register_config>\n";
@@ -755,6 +826,8 @@ initialize(int argc, char const *argv[])
     snprintf(fullname, sizeof(fullname), "%s://%s%s", protocol, http_host, script_name);
     self_url = xstrdup(fullname);
   }
+
+  if (cnts && cnts->new_managed) redirect_to_new_client(cnts->id);
 }
 
 static int
@@ -801,24 +874,6 @@ error(char const *format, ...)
   va_end(args);
   strcpy(buf + len, "\n");
   error_log = xstrmerge1(error_log, buf);
-}
-
-static void
-client_put_refresh_header(unsigned char const *coding,
-                          unsigned char const *url,
-                          int interval,
-                          unsigned char const *format, ...)
-{
-  va_list args;
-
-  if (!coding) coding = EJUDGE_CHARSET;
-
-  va_start(args, format);
-  fprintf(stdout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>\n", coding, coding, interval, url);
-  vfprintf(stdout, format, args);
-  fputs("\n</title></head><body><h1>\n", stdout);
-  vfprintf(stdout, format, args);
-  fputs("\n</h1>\n", stdout);
 }
 
 static void
