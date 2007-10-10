@@ -6091,10 +6091,6 @@ priv_logout(FILE *fout,
 }
 
 
-int
-ns_insert_variant_num(unsigned char *buf, size_t size,
-                      const unsigned char *file, int variant);
-
 static void
 write_alternatives_file(FILE *fout, int is_radio, const unsigned char *txt,
                         int last_answer, int prob_id, int next_prob_id,
@@ -10837,7 +10833,7 @@ unpriv_main_page(FILE *fout,
       }
 
       px = 0;
-      if (variant > 0 && prob->xml.a && prob->xml.a[variant]) {
+      if (variant > 0 && prob->xml.a && prob->xml.a[variant - 1]) {
         px = prob->xml.a[variant - 1];
       } else if (variant <= 0 && prob->xml.p) {
         px = prob->xml.p;
