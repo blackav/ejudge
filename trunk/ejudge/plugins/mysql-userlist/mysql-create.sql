@@ -17,9 +17,9 @@ CREATE TABLE %slogins
        neverclean TINYINT NOT NULL DEFAULT 0,
        simplereg TINYINT NOT NULL DEFAULT 0,
        regtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-       logintime TIMESTAMP DEFAULT 0,
-       pwdtime TIMESTAMP DEFAULT 0,
-       changetime TIMESTAMP DEFAULT 0
+       logintime TIMESTAMP DEFAULT NULL,
+       pwdtime TIMESTAMP DEFAULT NULL,
+       changetime TIMESTAMP DEFAULT NULL
        );
 
 CREATE TABLE %scookies
