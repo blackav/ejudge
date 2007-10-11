@@ -72,6 +72,9 @@ static int remove_cookie_func(void *data,
 static int remove_user_cookies_func(void *data, int user_id);
 static int remove_expired_cookies_func(void *data, time_t cur_time);
 static ptr_iterator_t get_user_contest_iterator_func(void *data, int user_id);
+static int remove_expired_users_func(void *data, time_t min_reg_time);
+static int get_user_info_1_func(void *data, int user_id,
+                                const struct userlist_user **p_user);
 
 /* plugin entry point */
 struct uldb_plugin_iface plugin_uldb_mysql =
@@ -126,13 +129,12 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   remove_expired_cookies_func,
   // get an iterator over the user's contests
   get_user_contest_iterator_func,
+  // remove expired users
+  remove_expired_users_func,
+  // get the login user info
+  get_user_info_1_func,
 
   /*
-  // remove expired users
-  int (*remove_expired_users)(void *, time_t);
-  // get the login user info
-  int (*get_user_info_1)(void *, int, const struct userlist_user **);
-  // get the login and basic contest-specific user info
   int (*get_user_info_2)(void *, int, int, const struct userlist_user **, const struct userlist_user_info **);
   // set the login time
   int (*touch_login_time)(void *, int, int, time_t);
@@ -215,6 +217,8 @@ struct uldb_plugin_iface plugin_uldb_mysql =
 enum { COOKIES_WIDTH = 12 };
 // the number of columns in `cntsregs' table
 enum { CNTSREGS_WIDTH = 10 };
+// the number of columns in `logins' table
+enum { LOGINS_WIDTH = 16 };
 
 // the size of the cookies pool, must be power of 2
 enum { COOKIES_POOL_SIZE = 1024 };
@@ -222,6 +226,9 @@ enum { COOKIES_MAX_HASH_SIZE = 600 };
 
 // the size of the cntsregs pool
 enum { CNTSREGS_POOL_SIZE = 1024 };
+
+// the size of the users pool
+enum { USERS_POOL_SIZE = 1024 };
 
 struct cntsregs_container;
 struct cntsregs_user;
@@ -231,6 +238,13 @@ struct cntsregs_cache
   int size, count;
   struct cntsregs_user *user_map;
   struct cntsregs_container *first, *last;
+};
+
+struct users_cache
+{
+  int map_size, count;
+  struct xml_tree *first, *last;
+  struct userlist_user **map;
 };
 
 struct uldb_mysql_state
@@ -262,6 +276,9 @@ struct uldb_mysql_state
 
   // cntsregs caching
   struct cntsregs_cache cntsregs;
+
+  // users caching
+  struct users_cache users;
 };
 
 struct user_id_iterator
@@ -1097,6 +1114,9 @@ handle_parse_spec(struct uldb_mysql_state *state,
       if (state->row[i]) {
         p_str = XPDEREF(unsigned char *, data, specs[i].offset);
         *p_str = xstrdup(state->row[i]);
+      } else {
+        p_str = XPDEREF(unsigned char *, data, specs[i].offset);
+        *p_str = 0;
       }
       break;
     case 't':
@@ -2007,6 +2027,220 @@ get_user_contest_iterator_func(
   xfree(iter->ids);
   xfree(iter);
   return 0;
+}
+
+static int
+remove_expired_users_func(
+	void *data,
+        time_t min_reg_time)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *q_txt = 0;
+  size_t q_len = 0;
+  FILE *q_f = 0;
+  int *ids = 0, i, val, count;
+
+  if (min_reg_time <= 0) min_reg_time = time(0) - 24 * 60 * 60;
+
+  q_f = open_memstream(&q_txt, &q_len);
+  fprintf(q_f, "SELECT user_id FROM %slogins WHERE regtime < ", 
+          state->table_prefix);
+  write_timestamp(q_f, state, "", min_reg_time);
+  fprintf(q_f, " AND (logintime = NULL OR logintime = 0) ;");
+  fclose(q_f); q_f = 0;
+
+  if (mysql_real_query(state->conn, q_txt, q_len))
+    db_error_fail(state);
+
+  if((state->field_count = mysql_field_count(state->conn)) != 1)
+    db_wrong_field_count_fail(state, 1);
+  if (!(state->res = mysql_store_result(state->conn)))
+    db_error_fail(state);
+  count = state->row_count = mysql_num_rows(state->res);
+  if (!count) return 0;
+
+  // save the result set into the temp array
+  XCALLOC(ids, count);
+  for (i = 0; i < count; i++) {
+    if (!(state->row = mysql_fetch_row(state->res)))
+      db_no_data_fail();
+    state->lengths = mysql_fetch_lengths(state->res);
+    if (!state->lengths[0])
+      db_inv_value_fail();
+    if (parse_int(state->row[0], &val) < 0 || val <= 0)
+      db_inv_value_fail();
+    ids[i] = val;
+  }
+
+  for (i = 0; i < count; i++) {
+    remove_user_func(data, ids[i]);
+  }
+
+  return 0;
+
+ fail:
+  if (q_f) fclose(q_f);
+  xfree(q_txt);
+  xfree(ids);
+  return -1;
+}
+
+static struct userlist_user *
+allocate_users_on_pool(
+	struct uldb_mysql_state *state,
+        int user_id)
+{
+  struct users_cache *uc = &state->users;
+  struct userlist_user *u;
+
+  if (user_id <= 0) return 0;
+  // user_id is ridiculously big?
+  if (user_id >= 1000000000) return 0;
+
+  if (user_id < uc->map_size && (u = uc->map[user_id])) {
+    userlist_elem_free_data(&u->b);
+    u->id = user_id;
+    u->b.tag = USERLIST_T_USER;
+    if (&u->b == uc->first) return u;
+    // detach u
+    u->b.left->right = u->b.right;
+    if (&u->b == uc->last)
+      uc->last = u->b.left;
+    else
+      u->b.right->left = u->b.left;
+    u->b.left = u->b.right = 0;
+    // reattach u to the first element
+    u->b.right = uc->first;
+    uc->first->left = &u->b;
+    uc->first = &u->b;
+    return u;
+  }
+
+  if (uc->count == USERS_POOL_SIZE) {
+    // free the least used element
+    u = (struct userlist_user*) uc->last;
+    uc->map[u->id] = 0;
+    u->b.left->right = 0;
+    uc->last = u->b.left;
+    u->b.left = u->b.right = 0;
+    userlist_elem_free_data(&u->b);
+    memset(u, 0, sizeof(*u));
+    xfree(u);
+    uc->count--;
+  }
+
+  u = (struct userlist_user*) userlist_node_alloc(USERLIST_T_USER);
+  u->id = user_id;
+  if (!uc->first) {
+    uc->first = uc->last = &u->b;
+  } else {
+    u->b.right = uc->first;
+    uc->first->left = &u->b;
+    uc->first = &u->b;
+  }
+  if (user_id >= uc->map_size) {
+    int new_map_size = uc->map_size;
+    struct userlist_user **new_map;
+
+    if (!new_map_size) new_map_size = 1024;
+    while (user_id >= new_map_size) new_map_size *= 2;
+    XCALLOC(new_map, new_map_size);
+    if (uc->map_size > 0)
+      memcpy(new_map, uc->map, uc->map_size * sizeof(uc->map[0]));
+    xfree(uc->map);
+    uc->map_size = new_map_size;
+    uc->map = new_map;
+  }
+  uc->map[user_id] = u;
+  uc->count++;
+  return u;
+}
+
+/*
+[0]   (user_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+[1]    login VARCHAR(64) NOT NULL UNIQUE KEY COLLATE utf8_bin,
+[2]    email VARCHAR(128),
+[3]    pwdmethod TINYINT NOT NULL DEFAULT 0,
+[4]    password VARCHAR(64),
+[5]    privileged TINYINT NOT NULL DEFAULT 0,
+[6]    invisible TINYINT NOT NULL DEFAULT 0,
+[7]    banned TINYINT NOT NULL DEFAULT 0,
+[8]    locked TINYINT NOT NULL DEFAULT 0,
+[9]    readonly TINYINT NOT NULL DEFAULT 0,
+[10]   neverclean TINYINT NOT NULL DEFAULT 0,
+[11]   simplereg TINYINT NOT NULL DEFAULT 0,
+[12]   regtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+[13]   logintime TIMESTAMP DEFAULT NULL,
+[14]   pwdtime TIMESTAMP DEFAULT NULL,
+[15]   changetime TIMESTAMP DEFAULT NULL
+       );
+*/
+#define LOGINS_OFFSET(f) XOFFSET(struct userlist_user, f)
+static struct mysql_parse_spec logins2_spec[LOGINS_WIDTH] =
+{
+  { 0, 'd', "user_id", LOGINS_OFFSET(id) },
+  { 0, 's', "login", LOGINS_OFFSET(login) },
+  { 1, 's', "email", LOGINS_OFFSET(email) },
+  { 0, 'd', "pwdmethod", LOGINS_OFFSET(passwd_method) },
+  { 1, 's', "password", LOGINS_OFFSET(passwd) },
+  { 0, 'b', "privileged", LOGINS_OFFSET(is_privileged) },
+  { 0, 'b', "invisible", LOGINS_OFFSET(is_invisible) },
+  { 0, 'b', "banned", LOGINS_OFFSET(is_banned) },
+  { 0, 'b', "locked", LOGINS_OFFSET(is_locked) },
+  { 0, 'b', "readonly", LOGINS_OFFSET(read_only) },
+  { 0, 'b', "neverclean", LOGINS_OFFSET(never_clean) },
+  { 0, 'b', "simplereg", LOGINS_OFFSET(simple_registration) },
+  { 1, 't', "regtime", LOGINS_OFFSET(registration_time) },
+  { 1, 't', "logintime", LOGINS_OFFSET(last_login_time) },
+  { 1, 't', "pwdtime", LOGINS_OFFSET(last_pwdchange_time) },
+  { 1, 't', "changetime", LOGINS_OFFSET(last_change_time) },
+};
+
+static int
+parse_users_row(
+	struct uldb_mysql_state *state,
+        struct userlist_user *u)
+{
+  if (handle_parse_spec(state, LOGINS_WIDTH, logins2_spec, u) < 0)
+    goto fail;
+  if (u->id <= 0) goto fail;
+  if (u->passwd_method < USERLIST_PWD_PLAIN
+      || u->passwd_method > USERLIST_PWD_SHA1)
+    goto fail;
+  if (u->registration_time < 0) u->registration_time = 0;
+  if (u->last_login_time < 0) u->last_login_time = 0;
+  if (u->last_pwdchange_time < 0) u->last_pwdchange_time = 0;
+  if (u->last_change_time < 0) u->last_change_time = 0;
+  return 0;
+
+    fail:
+  return -1;
+}
+
+static int
+get_user_info_1_func(
+	void *data,
+        int user_id,
+        const struct userlist_user **p_user)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  unsigned char cmd[1024];
+  int cmdlen = sizeof(cmd);
+  struct userlist_user *u = 0;
+
+  if (user_id <= 0) goto fail;
+
+  cmdlen = snprintf(cmd, cmdlen, "SELECT * FROM %slogins WHERE user_id = %d ;",
+                    state->table_prefix, user_id);
+  if (one_row_request(state, cmd, cmdlen, LOGINS_WIDTH) < 0) return 0;
+  if (!(u = allocate_users_on_pool(state, user_id))) return 0;
+  if (parse_users_row(state, u) < 0) return 0;
+  if (p_user) *p_user = u;
+  return 1;
+
+ fail:
+  if (p_user) *p_user = 0;
+  return -1;
 }
 
 /*
