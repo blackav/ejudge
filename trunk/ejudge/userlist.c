@@ -1668,7 +1668,8 @@ userlist_clone_user_info(
 
     sz = 1;
     copy_total = ms->total;
-    if (cnts) copy_total = cnts->members[mt]->max_count;
+    if (cnts && cnts->members[mt]->max_count < copy_total)
+      copy_total = cnts->members[mt]->max_count;
     while (sz < copy_total) sz *= 2;
     mm->allocd = sz;
     mm->total = copy_total;
