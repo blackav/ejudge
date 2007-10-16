@@ -659,6 +659,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           case 'g': case 'G': case 'e': case 'h': case 'H':
           case 'o': case 'O': case 'u': case 'U': case 't': case 'T':
           case 'd': case 'D': case 'a': case 'A': case 'b': case 'B':
+          case 'c': case 'C':
             break;
           default:
             is_invalid = 1;
