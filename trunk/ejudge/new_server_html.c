@@ -5344,6 +5344,43 @@ priv_upsolving_operation(
 }
 
 static int
+priv_assign_cyphers_1(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+  //unsigned char bb[1024];
+
+  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
+            phr->contest_id, extra->contest_arm, "Assign cyphers");
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+
+    /*
+  fprintf(fout, "<table>");
+  fprintf(fout, "<tr><td>%s</td><td><input type=\"checkbox\" name=\"results_only\"/></td></tr>\n", _("Import results for existing runs"));
+  fprintf(fout, "<tr><td>%s</td><td><input type=\"file\" name=\"file\"/></td></tr>\n",
+          _("File"));
+  fprintf(fout, "<tr><td>&nbsp;</td><td>%s</td></tr></table>\n",
+          BUTTON(NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2));
+  */
+
+  fprintf(fout, "</form>\n");
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  return retval;
+}
+
+static int
 priv_view_passwords(FILE *fout,
                     FILE *log_f,
                     struct http_request_info *phr,
@@ -5993,6 +6030,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL] =priv_print_users_exam_protocol,
   [NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL] =priv_print_users_exam_protocol,
   [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = priv_print_problem_exam_protocol,
+  [NEW_SRV_ACTION_ASSIGN_CYPHERS_1] = priv_assign_cyphers_1,
 };
 
 static void
@@ -6974,6 +7012,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL] = priv_generic_page,
   [NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL] = priv_generic_page,
   [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = priv_generic_page,
+  [NEW_SRV_ACTION_ASSIGN_CYPHERS_1] = priv_generic_page,
 };
 
 static void

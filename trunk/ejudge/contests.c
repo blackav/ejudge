@@ -43,7 +43,7 @@
 #include <limits.h>
 #include <errno.h>
 
-#define MAX_CONTEST_ID 1000
+#define MAX_CONTEST_ID 999999
 #define CONTEST_CHECK_TIME 5
 
 static char const * const elem_map[] =
