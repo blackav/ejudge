@@ -49,4 +49,4 @@ then
 fi
 
 mv "$1" Main.jar || exit 128
-exec "${JAVARUN}" ${EJUDGE_JAVA_FLAGS} -Djava.security.manager -Djava.security.policy="${policy_file}" -jar ./Main.jar
+exec "${JAVARUN}" -server ${EJUDGE_JAVA_FLAGS} -Djava.security.manager -Djava.security.policy="${policy_file}" -jar ./Main.jar
