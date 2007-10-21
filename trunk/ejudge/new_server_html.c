@@ -1745,9 +1745,9 @@ priv_force_start_virtual(
   long nsec;
   int run_id;
 
-  if (phr->role < USER_ROLE_ADMIN)
+  if (phr->role < USER_ROLE_JUDGE)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+  if (opcaps_check(phr->caps, OPCAP_EDIT_REG) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   if (!global->is_virtual)
     FAIL(NEW_SRV_ERR_NOT_VIRTUAL);
