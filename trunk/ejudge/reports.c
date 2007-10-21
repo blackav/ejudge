@@ -153,6 +153,18 @@ tex_armor_buf(struct html_armor_buffer *pb, const unsigned char *s)
   return pb->buf;
 }
 
+static void
+fix_tex_utf8(unsigned char *str)
+{
+  unsigned char *p = str;
+  while (*p) {
+    if (*p == 0342 && p[1] == 0200 && p[2] == 0224) {
+      p[0] = '?'; p[1] = '?'; p[2] = '?';
+    }
+    p++;
+  }
+}
+
 static unsigned char *
 tex_armor_verbatim(unsigned char *str)
 {
@@ -162,6 +174,7 @@ tex_armor_verbatim(unsigned char *str)
     if (*s < ' ' && *s != '\n') *s = ' ';
   if (utf8_mode) {
     utf8_fix_string(str, 0);
+    fix_tex_utf8(str);
   } else {
     for (s = str; *s; s++)
       if (*s >= 0x7f) *s = '?';
