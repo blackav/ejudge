@@ -105,10 +105,11 @@ typedef void (*serve_event_hander_t)(
 struct serve_event_queue
 {
   struct serve_event_queue *next, *prev;
-  time_t time;
+  time_t time;                  /* the time for queue ordering */
   int type;
   int user_id;
   serve_event_hander_t handler;
+  time_t real_time;             /* the actual event time */
 };
 
 struct serve_state

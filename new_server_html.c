@@ -1775,7 +1775,7 @@ priv_force_start_virtual(
 
   for (i = 0; i < uset.u; i++, nsec++) {
     run_id = run_virtual_start(cs->runlog_state, uset.v[i], tt.tv_sec,0,0,nsec);
-    serve_move_files_to_insert_run(cs, run_id);
+    if (run_id >= 0) serve_move_files_to_insert_run(cs, run_id);
   }
 
  cleanup:

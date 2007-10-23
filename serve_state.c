@@ -352,6 +352,7 @@ serve_event_add(
   e->type = type;
   e->user_id = user_id;
   e->handler = handler;
+  e->real_time = time;
 
   for (p = state->event_first; p && p->time < time; p = p->next);
   if (!p) {
