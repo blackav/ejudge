@@ -747,7 +747,7 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
     archive_rename(state, global->audit_log_dir, 0, i, 0, i + 1, 0, 0);
     serve_audit_log(state, i + 1, 0, 0, 0,
                     "Command: rename\n"
-                    "From-run-id: %d\n",
+                    "From-run-id: %d\n"
                     "To-run-id: %d\n", i, i + 1);
 
     s = run_get_status(state->runlog_state, i + 1);
