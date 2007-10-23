@@ -729,7 +729,7 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
   int i, s;
   const struct section_global_data *global = state->global;
 
-  ASSERT(run_id < total);
+  ASSERT(run_id >= 0 && run_id < total);
   // the last run
   if (run_id == total - 1) return;
   for (i = total - 2; i >= run_id; i--) {
@@ -2630,6 +2630,12 @@ handle_virtual_stop_event(
 {
   int trans_runs = -1, nsec = -1, run_id;
   struct timeval precise_time;
+
+  /* FIXME: if we're trying to add backlogged virtual stop while
+   * having transient runs, we do some kind of busy wait
+   * by not removing the pending virtual stop event from the
+   * event queue...
+   */
 
   if (p->time < cs->current_time) {
     if (trans_runs < 0) trans_runs = serve_count_transient_runs(cs);
