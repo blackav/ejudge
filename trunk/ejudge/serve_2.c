@@ -729,7 +729,9 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
   int i, s;
   const struct section_global_data *global = state->global;
 
-  if (run_id >= total - 1) return;
+  ASSERT(run_id < total);
+  // the last run
+  if (run_id == total - 1) return;
   for (i = total - 2; i >= run_id; i--) {
     archive_remove(state, global->run_archive_dir, i + 1, 0);
     archive_remove(state, global->xml_report_archive_dir, i + 1, 0);
@@ -741,11 +743,18 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
       archive_remove(state, global->full_archive_dir, i + 1, 0);
     }
     archive_remove(state, global->audit_log_dir, i + 1, 0);
+
+    archive_rename(state, global->audit_log_dir, 0, i, 0, i + 1, 0, 0);
+    serve_audit_log(state, i + 1, 0, 0, 0,
+                    "Command: rename\n"
+                    "From-run-id: %d\n",
+                    "To-run-id: %d\n", i, i + 1);
+
     s = run_get_status(state->runlog_state, i + 1);
     if (s >= RUN_PSEUDO_FIRST && s <= RUN_PSEUDO_LAST) continue;
+    archive_rename(state, global->run_archive_dir, 0, i, 0, i + 1, 0, 0);
     if (s == RUN_IGNORED || s == RUN_DISQUALIFIED || s ==RUN_PENDING) continue;
     if (run_is_imported(state->runlog_state, i + 1)) continue;
-    archive_rename(state, global->run_archive_dir, 0, i, 0, i + 1, 0, 0);
     archive_rename(state, global->xml_report_archive_dir, 0, i, 0, i + 1, 0, 0);
     archive_rename(state, global->report_archive_dir, 0, i, 0, i + 1, 0, 0);
     if (global->team_enable_rep_view) {
@@ -754,10 +763,7 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
     if (global->enable_full_archive) {
       archive_rename(state, global->full_archive_dir, 0, i, 0, i + 1, 0, 0);
     }
-    archive_rename(state, global->audit_log_dir, 0, i, 0, i + 1, 0, 0);
   }
-
-  /* FIXME: add audit information for all the renamed runs */
 }
 
 void
@@ -2418,6 +2424,9 @@ void
 serve_squeeze_runs(serve_state_t state)
 {
   int i, j, tot;
+
+  // sorry...
+  return;
 
   tot = run_get_total(state->runlog_state);
   for (i = 0, j = 0; i < tot; i++) {
