@@ -733,6 +733,7 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
   // the last run
   if (run_id == total - 1) return;
   for (i = total - 2; i >= run_id; i--) {
+    info("rename: %d -> %d", i, i + 1);
     archive_remove(state, global->run_archive_dir, i + 1, 0);
     archive_remove(state, global->xml_report_archive_dir, i + 1, 0);
     archive_remove(state, global->report_archive_dir, i + 1, 0);
