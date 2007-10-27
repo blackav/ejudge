@@ -752,8 +752,8 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
                     "To-run-id: %d\n", i, i + 1);
 
     s = run_get_status(state->runlog_state, i + 1);
-    if (s >= RUN_PSEUDO_FIRST && s <= RUN_PSEUDO_LAST) continue;
     archive_rename(state, global->run_archive_dir, 0, i, 0, i + 1, 0, 0);
+    if (s >= RUN_PSEUDO_FIRST && s <= RUN_PSEUDO_LAST) continue;
     if (s == RUN_IGNORED || s == RUN_DISQUALIFIED || s ==RUN_PENDING) continue;
     if (run_is_imported(state->runlog_state, i + 1)) continue;
     archive_rename(state, global->xml_report_archive_dir, 0, i, 0, i + 1, 0, 0);

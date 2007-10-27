@@ -152,6 +152,8 @@ static void *filter_expr_user_data;
 %token TOK_CUREXAMINATOR "curexaminator"
 %token TOK_CYPHER "cypher"
 %token TOK_CURCYPHER "curcypher"
+%token TOK_MISSINGSOURCE "missingsource"
+%token TOK_CURMISSINGSOURCE "curmissingsource"
 %token TOK_INT       "int"
 %token TOK_STRING    "string"
 %token TOK_BOOL      "bool"
@@ -332,6 +334,9 @@ exprA :
 | "examinator" '(' expr0 ',' expr0 ')' { $1->v.t[0] = check_int($3); $1->v.t[1] = check_int($5); $$ = $1; }
 | "examinator" '(' expr0 ')' { $1->kind = TOK_CUREXAMINATOR; $1->v.t[0] = check_int($3); $$ = $1; }
 | "curexaminator" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "missingsource" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "missingsource" { $1->kind = TOK_CURMISSINGSOURCE; $$ = $1; }
+| "curmissingsource" { $$ = $1; }
 | "cypher" { $1->kind = TOK_CURCYPHER; $$ = $1; }
 | "cypher" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curcypher" { $$ = $1; }

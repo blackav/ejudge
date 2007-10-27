@@ -737,6 +737,8 @@ write_priv_all_runs(serve_state_t state, FILE *f,
         continue;
       }
       if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP) {
+        imported_str = "";
+        if (pe->judge_id > 0) imported_str = "!";
         run_time = pe->time;
         if (!env.rhead.start_time) run_time = 0;
         if (env.rhead.start_time > run_time) run_time = env.rhead.start_time;
@@ -749,7 +751,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
         }
 
         fprintf(f, "<tr>");
-        fprintf(f, "<td>%d</td>", rid);
+        fprintf(f, "<td>%d%s</td>", rid, imported_str);
         fprintf(f, "<td>%s</td>", durstr);
         fprintf(f, "<td>&nbsp;</td>");
         fprintf(f, "<td>%s</td>", xml_unparse_ip(pe->a.ip));
