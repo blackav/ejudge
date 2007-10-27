@@ -93,7 +93,7 @@ is_afterok(struct filter_env *env, int rid)
 static int
 is_missing_source(
 	struct filter_env *env,
-        int i)
+        const struct run_entry *re)
 {
   serve_state_t cs = 0;
   struct section_global_data *g = 0;
@@ -102,9 +102,14 @@ is_missing_source(
 
   if (!env || !(cs = env->serve_state) || !(g = cs->global)) return 0;
 
+  if (re->status > RUN_MAX_STATUS && re->status < RUN_TRANSIENT_FIRST)
+    return 0;
+  if (re->status > RUN_LAST)
+    return 0;
+
   if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
                                           g->run_archive_dir,
-                                          i, 0, 1)) < 0)
+                                          re->run_id, 0, 1)) < 0)
     return 1;
   return 0;
 }
@@ -426,7 +431,7 @@ do_eval(struct filter_env *env,
     case TOK_MISSINGSOURCE:
       res->kind = TOK_BOOL_L;
       res->type = FILTER_TYPE_BOOL;
-      res->v.b = is_missing_source(env, r1.v.i);
+      res->v.b = is_missing_source(env, &env->rentries[r1.v.i]);
       break;
     case TOK_JUDGE_ID:
       res->kind = TOK_INT_L;
@@ -663,7 +668,7 @@ do_eval(struct filter_env *env,
   case TOK_CURMISSINGSOURCE:
     res->kind = TOK_BOOL_L;
     res->type = FILTER_TYPE_BOOL;
-    res->v.b = is_missing_source(env, env->cur->run_id);
+    res->v.b = is_missing_source(env, env->cur);
     break;
   case TOK_CURJUDGE_ID:
     res->kind = TOK_INT_L;
