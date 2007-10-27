@@ -382,13 +382,15 @@ ns_write_priv_all_runs(FILE *f,
         continue;
       }
       if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP) {
+        examinable_str = "";
+        if (pe->judge_id > 0) examinable_str = "!";
         run_time = pe->time;
         if (!env.rhead.start_time) run_time = 0;
         if (env.rhead.start_time > run_time) run_time = env.rhead.start_time;
         duration_str(1, run_time, env.rhead.start_time, durstr, 0);
         run_status_str(pe->status, statstr, sizeof(statstr), 0, 0);
 
-        fprintf(f, "<td%s>%d</td>", cl, rid);
+        fprintf(f, "<td%s>%d%s</td>", cl, rid, examinable_str);
         fprintf(f, "<td%s>%s</td>", cl, durstr);
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         fprintf(f, "<td%s>%s</td>", cl, xml_unparse_ip(pe->a.ip));
