@@ -206,6 +206,7 @@ do_eval(struct filter_env *env,
   case TOK_EXAMINABLE:
   case TOK_CYPHER:
   case TOK_MISSINGSOURCE:
+  case TOK_JUDGE_ID:
     if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
     ASSERT(r1.kind == TOK_INT_L);
     if (r1.v.i < 0) r1.v.i = env->rtotal + r1.v.i;
@@ -426,6 +427,11 @@ do_eval(struct filter_env *env,
       res->kind = TOK_BOOL_L;
       res->type = FILTER_TYPE_BOOL;
       res->v.b = is_missing_source(env, r1.v.i);
+      break;
+    case TOK_JUDGE_ID:
+      res->kind = TOK_INT_L;
+      res->type = FILTER_TYPE_INT;
+      res->v.i = env->rentries[r1.v.i].judge_id;
       break;
     default:
       abort();
@@ -658,6 +664,11 @@ do_eval(struct filter_env *env,
     res->kind = TOK_BOOL_L;
     res->type = FILTER_TYPE_BOOL;
     res->v.b = is_missing_source(env, env->cur->run_id);
+    break;
+  case TOK_CURJUDGE_ID:
+    res->kind = TOK_INT_L;
+    res->type = FILTER_TYPE_INT;
+    res->v.i = env->cur->judge_id;
     break;
 
   case TOK_NOW:

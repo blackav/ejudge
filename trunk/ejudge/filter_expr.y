@@ -154,6 +154,8 @@ static void *filter_expr_user_data;
 %token TOK_CURCYPHER "curcypher"
 %token TOK_MISSINGSOURCE "missingsource"
 %token TOK_CURMISSINGSOURCE "curmissingsource"
+%token TOK_JUDGE_ID "judge_id"
+%token TOK_CURJUDGE_ID "curjudge_id"
 %token TOK_INT       "int"
 %token TOK_STRING    "string"
 %token TOK_BOOL      "bool"
@@ -337,6 +339,9 @@ exprA :
 | "missingsource" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "missingsource" { $1->kind = TOK_CURMISSINGSOURCE; $$ = $1; }
 | "curmissingsource" { $$ = $1; }
+| "judge_id" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "judge_id" { $1->kind = TOK_CURJUDGE_ID; $$ = $1; }
+| "curjudge_id" { $$ = $1; }
 | "cypher" { $1->kind = TOK_CURCYPHER; $$ = $1; }
 | "cypher" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curcypher" { $$ = $1; }
