@@ -147,6 +147,8 @@ lett    [A-Za-z_]
 "curcypher" { TT(TOK_CURCYPHER, FILTER_TYPE_STRING); }
 "missingsource" { TT(TOK_MISSINGSOURCE, FILTER_TYPE_BOOL); }
 "curmissingsource" { TT(TOK_CURMISSINGSOURCE, FILTER_TYPE_BOOL); }
+"judge_id" { TT(TOK_JUDGE_ID, FILTER_TYPE_INT); }
+"curjudge_id" { TT(TOK_CURJUDGE_ID, FILTER_TYPE_INT); }
 
 "int" { TT(TOK_INT, FILTER_TYPE_INT); }
 "string" { TT(TOK_STRING, FILTER_TYPE_STRING); }
