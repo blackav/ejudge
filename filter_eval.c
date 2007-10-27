@@ -22,6 +22,7 @@
 #include "filter_eval.h"
 #include "teamdb.h"
 #include "userlist.h"
+#include "archive_paths.h"
 
 #include <reuse/logger.h>
 #include <reuse/MemPage.h>
@@ -86,6 +87,25 @@ is_afterok(struct filter_env *env, int rid)
       continue;
     return 1;
   }
+  return 0;
+}
+
+static int
+is_missing_source(
+	struct filter_env *env,
+        int i)
+{
+  serve_state_t cs = 0;
+  struct section_global_data *g = 0;
+  int src_flags;
+  path_t src_path;
+
+  if (!env || !(cs = env->serve_state) || !(g = cs->global)) return 0;
+
+  if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
+                                          g->run_archive_dir,
+                                          i, 0, 1)) < 0)
+    return 1;
   return 0;
 }
 
@@ -185,6 +205,7 @@ do_eval(struct filter_env *env,
   case TOK_AFTEROK:
   case TOK_EXAMINABLE:
   case TOK_CYPHER:
+  case TOK_MISSINGSOURCE:
     if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
     ASSERT(r1.kind == TOK_INT_L);
     if (r1.v.i < 0) r1.v.i = env->rtotal + r1.v.i;
@@ -401,7 +422,11 @@ do_eval(struct filter_env *env,
       if (u) s = u->i.exam_cypher;
       res->v.s = envdup(env, s);
       break;
-
+    case TOK_MISSINGSOURCE:
+      res->kind = TOK_BOOL_L;
+      res->type = FILTER_TYPE_BOOL;
+      res->v.b = is_missing_source(env, r1.v.i);
+      break;
     default:
       abort();
     }
@@ -628,6 +653,11 @@ do_eval(struct filter_env *env,
     if (user_id > 0) u = teamdb_get_userlist(env->teamdb_state, user_id);
     if (u) s = u->i.exam_cypher;
     res->v.s = envdup(env, s);
+    break;
+  case TOK_CURMISSINGSOURCE:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    res->v.b = is_missing_source(env, env->cur->run_id);
     break;
 
   case TOK_NOW:

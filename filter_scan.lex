@@ -145,6 +145,8 @@ lett    [A-Za-z_]
 "curexaminator" { TT(TOK_CUREXAMINATOR, FILTER_TYPE_BOOL); }
 "cypher" { TT(TOK_CYPHER, FILTER_TYPE_STRING); }
 "curcypher" { TT(TOK_CURCYPHER, FILTER_TYPE_STRING); }
+"missingsource" { TT(TOK_MISSINGSOURCE, FILTER_TYPE_BOOL); }
+"curmissingsource" { TT(TOK_CURMISSINGSOURCE, FILTER_TYPE_BOOL); }
 
 "int" { TT(TOK_INT, FILTER_TYPE_INT); }
 "string" { TT(TOK_STRING, FILTER_TYPE_STRING); }
