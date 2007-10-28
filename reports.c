@@ -3317,7 +3317,7 @@ problem_report_generate(
         num_txt = xmalloc(num_len + 16);
         text_number_lines(src_txt, src_len, num_txt);
         fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n",
-                tex_armor_verbatim(num_txt));
+                tex_armor_verbatim_2(num_txt, VERBATIM_WIDTH));
         xfree(num_txt); num_txt = 0; num_len = 0;
       } else {
       }
