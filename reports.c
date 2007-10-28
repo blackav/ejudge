@@ -3341,7 +3341,7 @@ problem_report_generate(
                  global->print_work_dir, run_id);
         generic_write_file(src_txt, src_len, 0, 0, img_path, "");
         invoke_convert(log_f, global, img_path, eps_path, ierr_path, 1);
-        fprintf(fout, "\\includegraphics{i%06d.eps}\n", run_id);
+        fprintf(fout, "\\includegraphics[width=90%%]{i%06d.eps}\n", run_id);
       }
       xfree(src_txt); src_txt = 0; src_len = 0;
     }
