@@ -3304,6 +3304,23 @@ problem_report_generate(
         fprintf(log_f, "Error reading from %s\n", src_path);
         goto cleanup;
       }
+      if (re.mime_type == 0) {
+        // plain text
+        if (strlen(src_txt) != src_len) {
+          fprintf(log_f, "Source file %s is binary\n", src_path);
+          goto cleanup;
+        }
+        while (src_len > 0 && isspace(src_txt[src_len - 1])) src_len--;
+        src_txt[src_len] = 0;
+
+        num_len = text_numbered_memlen(src_txt, src_len);
+        num_txt = xmalloc(num_len + 16);
+        text_number_lines(src_txt, src_len, num_txt);
+        fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n",
+                tex_armor_verbatim(num_txt));
+        xfree(num_txt); num_txt = 0; num_len = 0;
+        xfree(src_txt); src_txt = 0; src_len = 0;
+      }
       /*
       if (strlen(src_txt) != src_len) {
         fprintf(log_f, "Source file %s is binary\n", src_path);
