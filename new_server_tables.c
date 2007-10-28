@@ -167,6 +167,7 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL] = __("Print the exam full protocols"),
   [NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL] = __("Print the exam full cyphered protocols"),
   [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = __("Print problem protocol"),
+  [NEW_SRV_ACTION_ASSIGN_CYPHERS_2] = __("Assign random cyphers"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =

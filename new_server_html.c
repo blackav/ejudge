@@ -5352,7 +5352,7 @@ priv_assign_cyphers_1(
         struct contest_extra *extra)
 {
   int retval = 0;
-  //unsigned char bb[1024];
+  unsigned char bb[1024];
 
   if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
@@ -5362,21 +5362,156 @@ priv_assign_cyphers_1(
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, "Assign cyphers");
   html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+  fprintf(fout, "<table>\n");
 
-    /*
-  fprintf(fout, "<table>");
-  fprintf(fout, "<tr><td>%s</td><td><input type=\"checkbox\" name=\"results_only\"/></td></tr>\n", _("Import results for existing runs"));
-  fprintf(fout, "<tr><td>%s</td><td><input type=\"file\" name=\"file\"/></td></tr>\n",
-          _("File"));
-  fprintf(fout, "<tr><td>&nbsp;</td><td>%s</td></tr></table>\n",
-          BUTTON(NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2));
-  */
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          html_input_text(bb, sizeof(bb), "prefix", 16, 0),
+          _("Cypher prefix"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          html_input_text(bb, sizeof(bb), "min_num", 16, 0),
+          _("Minimal random number"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          html_input_text(bb, sizeof(bb), "max_num", 16, 0),
+          _("Maximal random number"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          html_input_text(bb, sizeof(bb), "seed", 16, 0),
+          _("Random seed"));
+  fprintf(fout, "<tr><td>%s</td><td>&nbsp;</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_ASSIGN_CYPHERS_2));
 
+  fprintf(fout, "</table>\n");
   fprintf(fout, "</form>\n");
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
  cleanup:
+  return retval;
+}
+
+static int
+priv_assign_cyphers_2(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  //const struct section_global_data *global = cs->global;
+  int retval = 0;
+  const unsigned char *prefix = 0;
+  int min_num = 0, max_num = 0, seed = 0, total_users = 0, user_count, user_id;
+  int max_user_id, i, j, r;
+  int *user_ids = 0, *rand_map = 0, *user_cyphers = 0;
+  char *msg_txt = 0;
+  size_t msg_len = 0;
+  FILE *msg_f = 0;
+  unsigned char **user_logins = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char *csv_reply = 0;
+
+  if (phr->role < USER_ROLE_ADMIN)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (opcaps_check(phr->caps, OPCAP_EDIT_REG) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  if (ns_cgi_param(phr, "prefix", &prefix) <= 0)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  if (ns_cgi_param_int(phr, "min_num", &min_num) < 0)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  if (ns_cgi_param_int(phr, "max_num", &max_num) < 0)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  if (ns_cgi_param_int(phr, "seed", &seed) < 0)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  if (min_num < 0 || max_num < 0 || min_num > max_num || seed < 0)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+
+  total_users = teamdb_get_total_teams(cs->teamdb_state);
+  if (total_users >= max_num - min_num)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  XCALLOC(user_ids, total_users + 2);
+  XCALLOC(user_cyphers, total_users + 2);
+  XCALLOC(user_logins, total_users + 2);
+  max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
+  for (user_id = 1, user_count = 0;
+       user_id <= max_user_id && user_count <= total_users; user_id++) {
+    if (teamdb_lookup(cs->teamdb_state, user_id) <= 0) continue;
+    if (teamdb_get_flags(cs->teamdb_state, user_id) != 0) continue;
+    user_logins[user_count] = xstrdup(teamdb_get_login(cs->teamdb_state, user_id));
+    user_ids[user_count++] = user_id;
+  }
+
+  if (!seed) {
+    struct timeval tv;
+    gettimeofday(&tv, 0);
+    seed = (tv.tv_sec ^ tv.tv_usec) & INT_MAX;
+    if (!seed) seed = tv.tv_sec;
+  }
+  srand(seed);
+  XCALLOC(rand_map, max_num - min_num + 1);
+
+  for (i = 0; i < user_count; i++) {
+    do {
+      j = min_num + (int)((rand() / (RAND_MAX + 1.0)) * (max_num - min_num + 1));
+    } while (rand_map[j - min_num]);
+    rand_map[j - min_num] = user_ids[i];
+    user_cyphers[i] = j;
+  }
+
+  if (!prefix) prefix = "";
+  msg_f = open_memstream(&msg_txt, &msg_len);
+  fprintf(msg_f, "Login;Exam_Cypher\n");
+  for (i = 0; i < user_count; i++) {
+    fprintf(msg_f, "%s;%s%d\n", user_logins[i], prefix, user_cyphers[i]);
+  }
+  fclose(msg_f); msg_f = 0;
+
+
+  if (ns_open_ul_connection(phr->fw_state) < 0)
+    FAIL(NEW_SRV_ERR_TRY_AGAIN);
+  r = userlist_clnt_import_csv_users(ul_conn, ULS_IMPORT_CSV_USERS,
+                                     phr->contest_id, ';', 0, msg_txt,
+                                     &csv_reply);
+  if (r < 0) FAIL(NEW_SRV_ERR_INTERNAL);
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
+            phr->name_arm, phr->contest_id, extra->contest_arm,
+            _("Assigned cyphers"));
+
+  fprintf(fout, "<table class=\"b1\">\n");
+  fprintf(fout, "<tr><td class=\"b1\">NN</td><td class=\"b1\">%s</td><td class=\"b1\">%s</td><td class=\"b1\">%s</td></tr>\n",
+          _("User Id"), _("Login"), _("Cypher"));
+  for (i = 0; i < user_count; i++) {
+    fprintf(fout, "<tr><td class=\"b1\">%d</td><td class=\"b1\">%d</td><td class=\"b1\">%s</td>",
+            i + 1, user_ids[i], ARMOR(user_logins[i]));
+    fprintf(fout, "<td class=\"b1\">%s%d</td></tr>\n",
+            ARMOR(prefix), user_cyphers[i]);
+  }
+  fprintf(fout, "</table>\n");
+
+  if (csv_reply && *csv_reply) {
+    fprintf(fout, "<h2>Operation status</h2>\n");
+    fprintf(fout, "<pre>%s</pre>\n", ARMOR(csv_reply));
+  }
+
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  xfree(csv_reply);
+  if (user_logins) {
+    for (i = 0; i < total_users + 2; i++)
+      xfree(user_logins[i]);
+    xfree(user_logins);
+  }
+  xfree(msg_txt);
+  if (msg_f) fclose(msg_f);
+  xfree(rand_map);
+  xfree(user_cyphers);
+  xfree(user_ids);
+  html_armor_free(&ab);
   return retval;
 }
 
@@ -5976,6 +6111,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TOGGLE_LOCK] = priv_user_toggle_flags,
   [NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS] = priv_user_toggle_flags,
   [NEW_SRV_ACTION_FORCE_START_VIRTUAL] = priv_force_start_virtual,
+  [NEW_SRV_ACTION_ASSIGN_CYPHERS_2] = priv_assign_cyphers_2,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -6327,6 +6463,9 @@ priv_main_page(FILE *fout,
             ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_WRITE_XML_RUNS_WITH_SRC, 0),
             _("Write runs in XML internal format with source"));
   }
+  fprintf(fout, "<li>%s%s</a></li>\n",
+          ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_ASSIGN_CYPHERS_1, 0),
+          _("Assign random cyphers"));
   fprintf(fout, "<li>%s%s</a></li>\n",
           ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_LOGOUT, 0),
           _("Logout"));
@@ -7013,6 +7152,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL] = priv_generic_page,
   [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = priv_generic_page,
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_1] = priv_generic_page,
+  [NEW_SRV_ACTION_ASSIGN_CYPHERS_2] = priv_generic_page,
 };
 
 static void
