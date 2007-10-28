@@ -1915,21 +1915,21 @@ invoke_convert(
   }
 
   if (task_IsTimeout(tsk)) {
-    fprintf(log_f, "lpr process time-out\n");
+    fprintf(log_f, "convert process time-out\n");
     goto cleanup;
   } else if (task_IsAbnormal(tsk)) {
     if (task_Status(tsk) == TSK_SIGNALED) {
       i = task_TermSignal(tsk);
-      fprintf(log_f, "lpr process terminated by signal %d (%s)\n",
+      fprintf(log_f, "convert process terminated by signal %d (%s)\n",
               i, os_GetSignalString(i));
     } else {
-      fprintf(log_f, "lpr process exited with code %d\n",
+      fprintf(log_f, "convert process exited with code %d\n",
               task_ExitCode(tsk));
     }
     goto cleanup;
   }
 
-  fprintf(log_f, "lpr process exited normally\n");
+  fprintf(log_f, "convert process exited normally\n");
   task_Delete(tsk); tsk = 0;
   retval = 0;
 
@@ -3289,11 +3289,13 @@ problem_report_generate(
       fprintf(fout, "%s & %s & %s & %s\\\\\n\\hline\n",
               _("Problem"), use_exam_cypher?_("Cypher"):_("Name"), _("Score"), _("Status"));
       fprintf(fout, "%s & %s", probname, TARMOR(user_str[user_id]));
+      /*
       if (re.test > 0) {
         fprintf(fout, " & %d", re.test - 1);
       } else {
         fprintf(fout, " &");
       }
+      */
       if (re.score >= 0) {
         fprintf(fout, " & %d", re.score);
       } else {
@@ -3341,26 +3343,6 @@ problem_report_generate(
         invoke_convert(log_f, global, img_path, eps_path, ierr_path, 1);
         fprintf(fout, "\\includegraphics{i%06d.eps}\n", run_id);
       }
-      /*
-      if (strlen(src_txt) != src_len) {
-        fprintf(log_f, "Source file %s is binary\n", src_path);
-        goto cleanup;
-      }
-      while (src_len > 0 && isspace(src_txt[src_len - 1])) src_len--;
-      src_txt[src_len] = 0;
-
-      num_len = text_numbered_memlen(src_txt, src_len);
-      num_txt = xmalloc(num_len + 16);
-      text_number_lines(src_txt, src_len, num_txt);
-      fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n",
-              tex_armor_verbatim(num_txt));
-      xfree(num_txt); num_txt = 0; num_len = 0;
-      xfree(src_txt); src_txt = 0; src_len = 0;
-
-      if (run_is_report_available(re.status)) {
-        write_xml_tex_testing_report(fout, cs, run_id);
-      }
-      */
       xfree(src_txt); src_txt = 0; src_len = 0;
     }
     break;
