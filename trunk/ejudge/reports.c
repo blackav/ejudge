@@ -32,6 +32,7 @@
 #include "userlist.h"
 #include "random.h"
 #include "testing_report_xml.h"
+#include "mime_type.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/exec.h>
@@ -2890,6 +2891,10 @@ problem_report_generate(
   size_t src_len = 0, num_len = 0;
   unsigned char probname[1024];
   unsigned char *psrc;
+  path_t img_path;
+  path_t eps_path;
+  path_t ierr_path;
+  const unsigned char *img_suffix = 0;
 
   if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id])) {
     fprintf(log_f, "Invalind prob_id %d\n", prob_id);
@@ -3279,10 +3284,10 @@ problem_report_generate(
       if (run_get_entry(cs->runlog_state, run_id, &re) < 0) abort();
 
       // print the table
-      fprintf(fout, "\\noindent\\begin{tabular}{|p{1.5cm}|p{3cm}|p{3.5cm}|p{1.5cm}|p{5cm}|}\n");
+      fprintf(fout, "\\noindent\\begin{tabular}{|p{1.5cm}|p{3cm}|p{1.5cm}|p{5cm}|}\n");
       fprintf(fout, "\\hline\n");
-      fprintf(fout, "%s & %s & %s & %s & %s\\\\\n\\hline\n",
-              _("Problem"), use_exam_cypher?_("Cypher"):_("Name"), _("Tests passed"), _("Score"), _("Status"));
+      fprintf(fout, "%s & %s & %s & %s\\\\\n\\hline\n",
+              _("Problem"), use_exam_cypher?_("Cypher"):_("Name"), _("Score"), _("Status"));
       fprintf(fout, "%s & %s", probname, TARMOR(user_str[user_id]));
       if (re.test > 0) {
         fprintf(fout, " & %d", re.test - 1);
@@ -3324,6 +3329,17 @@ problem_report_generate(
                 tex_armor_verbatim_2(num_txt, VERBATIM_WIDTH));
         xfree(num_txt); num_txt = 0; num_len = 0;
       } else {
+        img_suffix = mime_type_get_suffix(re.mime_type);
+        if (!img_suffix) img_suffix = "";
+        snprintf(img_path, sizeof(img_path), "%s/i%06d%s",
+                 global->print_work_dir, run_id, img_suffix);
+        snprintf(eps_path, sizeof(eps_path), "%s/i%06d.eps",
+                 global->print_work_dir, run_id);
+        snprintf(ierr_path, sizeof(ierr_path), "%s/i%06d.err",
+                 global->print_work_dir, run_id);
+        generic_write_file(src_txt, src_len, 0, 0, img_path, "");
+        invoke_convert(log_f, global, img_path, eps_path, ierr_path, 1);
+        fprintf(fout, "\\includegraphics{i%06d.eps}\n", run_id);
       }
       /*
       if (strlen(src_txt) != src_len) {
