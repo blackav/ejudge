@@ -3306,6 +3306,7 @@ problem_report_generate(
       }
       if (re.mime_type == 0) {
         // plain text
+        fprintf(stderr, "%zu,%zu\n", strlen(src_txt), src_len);
         if (strlen(src_txt) != src_len) {
           fprintf(log_f, "Source file %s is binary\n", src_path);
           goto cleanup;
