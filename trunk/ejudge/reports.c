@@ -177,6 +177,9 @@ fix_tex_utf8(unsigned char *str)
     if (*p == 0302 && p[1] == 0262) {
       p[0] = '^'; p[1] = '2';
     }
+    if (*p == 0302 && p[1] == 0275) {
+      p[0] = '/'; p[1] = '2';
+    }
     p++;
   }
 }
@@ -1889,7 +1892,7 @@ invoke_convert(
   task_AddArg(tsk, "/usr/bin/convert");
   task_AddArg(tsk, in_path);
   task_AddArg(tsk, "-resize");
-  task_AddArg(tsk, "3800>");
+  task_AddArg(tsk, "1024>");    /* 3800 */
   task_AddArg(tsk, ps_path);
   task_SetPathAsArg0(tsk);
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", O_RDONLY);
@@ -1903,7 +1906,7 @@ invoke_convert(
 
   fprintf(log_f, "%s", "/usr/bin/convert");
   fprintf(log_f, " %s", in_path);
-  fprintf(log_f, " -resize 3800>");
+  fprintf(log_f, " -resize 1024>");
   fprintf(log_f, " %s", ps_path);
   if (save_log_flag) {
     fprintf(log_f, " </dev/null 2>%s 1>&2\n", err_path);
