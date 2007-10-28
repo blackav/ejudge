@@ -197,6 +197,7 @@ tex_armor_verbatim_2(unsigned char *str, int width)
   for (s = str; *s; s++)
     if (*s < ' ' && *s != '\n') *s = ' ';
   if (utf8_mode) {
+    fix_tex_utf8(str);
     slen = strlen(str);
     sind = (int*) xmalloc((slen + 1) * sizeof(sind[0]));
     swidth = utf8_fix_string(str, sind);
