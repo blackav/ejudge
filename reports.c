@@ -3306,7 +3306,6 @@ problem_report_generate(
       }
       if (re.mime_type == 0) {
         // plain text
-        fprintf(stderr, "%zu,%zu\n", strlen(src_txt), src_len);
         if (strlen(src_txt) != src_len) {
           fprintf(log_f, "Source file %s is binary\n", src_path);
           goto cleanup;
@@ -3320,7 +3319,7 @@ problem_report_generate(
         fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n",
                 tex_armor_verbatim(num_txt));
         xfree(num_txt); num_txt = 0; num_len = 0;
-        xfree(src_txt); src_txt = 0; src_len = 0;
+      } else {
       }
       /*
       if (strlen(src_txt) != src_len) {
@@ -3342,6 +3341,7 @@ problem_report_generate(
         write_xml_tex_testing_report(fout, cs, run_id);
       }
       */
+      xfree(src_txt); src_txt = 0; src_len = 0;
     }
     break;
 
