@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-09-30 01:08+0400\n"
-"PO-Revision-Date: 2007-09-30 01:10+0400\n"
+"POT-Creation-Date: 2007-10-28 12:56+0300\n"
+"PO-Revision-Date: 2007-10-28 11:18+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -501,7 +501,10 @@ msgid ""
 "<p>You cannot participate in the contest because your registration is "
 "incomplete. Please, %sgo back to the registration forms%s and fill up them "
 "correctly.</p>\n"
-msgstr "<p>Вы не можете участвовать в данном турнире потому что Вы не заполнили до конца поля регистрационной анкеты. Пожалуйста, %sвернитесь к заполнению%s регистрационной анкеты.</p>\n"
+msgstr ""
+"<p>Вы не можете участвовать в данном турнире потому что Вы не заполнили до "
+"конца поля регистрационной анкеты. Пожалуйста, %sвернитесь к заполнению%s "
+"регистрационной анкеты.</p>\n"
 
 #, c-format
 msgid "<p>You may define up to %d members.</p>"
@@ -697,6 +700,13 @@ msgstr "Назначить старшего экзаменатора"
 
 msgid "Assign examiner"
 msgstr "Назначить экзаменатора"
+
+msgid "Assign random cyphers"
+msgstr "Назначить случайный шифр"
+
+#, fuzzy
+msgid "Assigned cyphers"
+msgstr "Назначить случайный шифр"
 
 msgid "Attempt to submit a binary file"
 msgstr "Попытка послать бинарный файл"
@@ -1126,6 +1136,9 @@ msgstr "Шифр"
 #, c-format
 msgid "Cypher is empty in row %d\n"
 msgstr "Шифр пуст в строке %d\n"
+
+msgid "Cypher prefix"
+msgstr "Префикс шифра"
 
 msgid "DISQUALIFY users"
 msgstr "ДИСКВАЛИФИЦИРОВАТЬ пользователей"
@@ -2300,6 +2313,9 @@ msgstr ""
 "Макс. время ЦП: %d.%03d (превышено)\n"
 "\n"
 
+msgid "Maximal random number"
+msgstr "Максимальное случайное число"
+
 msgid "May"
 msgstr "Май"
 
@@ -2348,6 +2364,9 @@ msgstr "Отчество"
 
 msgid "Middle name (En)"
 msgstr "Отчество (Англ.)"
+
+msgid "Minimal random number"
+msgstr "Максимальное случайное число"
 
 #, c-format
 msgid "Mkdir(%s) failed: %s"
@@ -2982,6 +3001,9 @@ msgstr "ТУРНИР ИДЕТ"
 
 msgid "RUNNING (frozen)"
 msgstr "ТУРНИР ИДЕТ (заморозка)"
+
+msgid "Random seed"
+msgstr ""
 
 msgid "Re"
 msgstr "Re"
