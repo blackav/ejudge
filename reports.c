@@ -1857,6 +1857,84 @@ invoke_lpr(
 }
 
 int
+invoke_convert(
+        FILE *log_f,
+        const struct section_global_data *global,
+        const unsigned char *in_path,
+        const unsigned char *ps_path,
+        const unsigned char *err_path,
+        int save_log_flag)
+{
+  tpTask tsk = 0;
+  int retval = -1, i;
+  char *err_txt = 0;
+  size_t err_len = 0;
+
+  if (!(tsk = task_New())) goto cleanup;
+  task_SetWorkingDir(tsk, global->print_work_dir);
+  task_AddArg(tsk, "/usr/bin/convert");
+  task_AddArg(tsk, in_path);
+  task_AddArg(tsk, ps_path);
+  task_SetPathAsArg0(tsk);
+  task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", O_RDONLY);
+  if (save_log_flag) {
+    task_SetRedir(tsk, 2, TSR_FILE, err_path, O_WRONLY|O_CREAT|O_TRUNC, 0600);
+    task_SetRedir(tsk, 1, TSR_DUP, 2);
+  } else {
+    task_SetRedir(tsk, 1, TSR_FILE, "/dev/null", O_WRONLY, 0);
+    task_SetRedir(tsk, 2, TSR_FILE, "/dev/null", O_WRONLY, 0);
+  }
+
+  fprintf(log_f, "%s", "/usr/bin/convert");
+  fprintf(log_f, " %s", in_path);
+  fprintf(log_f, " %s", ps_path);
+  if (save_log_flag) {
+    fprintf(log_f, " </dev/null 2>%s 1>&2\n", err_path);
+  } else {
+    fprintf(log_f, " </dev/null 2>/dev/null 1>/dev/null\n");
+  }
+  if (task_Start(tsk) < 0) {
+    fprintf(log_f, "failed to start process\n");
+    goto cleanup;
+  }
+  task_Wait(tsk);
+  if (save_log_flag) {
+    if (generic_read_file(&err_txt, 0, &err_len, 0, 0, err_path, 0) < 0) {
+      fprintf(log_f, "failed to read log file from %s\n", err_path);
+    } else {
+      fwrite(err_txt, 1, err_len, log_f);
+      fprintf(log_f, "\n");
+      xfree(err_txt); err_txt = 0;
+      err_len = 0;
+    }
+  }
+
+  if (task_IsTimeout(tsk)) {
+    fprintf(log_f, "lpr process time-out\n");
+    goto cleanup;
+  } else if (task_IsAbnormal(tsk)) {
+    if (task_Status(tsk) == TSK_SIGNALED) {
+      i = task_TermSignal(tsk);
+      fprintf(log_f, "lpr process terminated by signal %d (%s)\n",
+              i, os_GetSignalString(i));
+    } else {
+      fprintf(log_f, "lpr process exited with code %d\n",
+              task_ExitCode(tsk));
+    }
+    goto cleanup;
+  }
+
+  fprintf(log_f, "lpr process exited normally\n");
+  task_Delete(tsk); tsk = 0;
+  retval = 0;
+
+ cleanup:
+  xfree(err_txt);
+  if (tsk) task_Delete(tsk);
+  return retval;
+}
+
+int
 ns_print_user_exam_protocol(
         const struct contest_desc *cnts,
         const serve_state_t cs,
@@ -2898,8 +2976,7 @@ problem_report_generate(
       fprintf(log_f, "User %d in run %d is banned, invisible, locked, or disqualified\n", user_id, run_id);
       continue;
     }
-    if (prob->type_val == PROB_TYPE_OUTPUT_ONLY
-        || prob->type_val == PROB_TYPE_SELECT_MANY
+    if (prob->type_val == PROB_TYPE_SELECT_MANY
         || prob->type_val == PROB_TYPE_CUSTOM) {
       fprintf(log_f,"Problem type `%s' for problem %s is not yet supported\n",
               problem_unparse_type(prob->type_val), prob->short_name);
@@ -3174,6 +3251,79 @@ problem_report_generate(
       if (run_is_report_available(re.status)) {
         write_xml_tex_testing_report(fout, cs, run_id);
       }
+    }
+    break;
+
+  case PROB_TYPE_OUTPUT_ONLY:
+    for (i = 0; i < run_cnt; i++) {
+      user_id = user_ind[i];
+      run_id = run_ids[user_id];
+
+      variant = 0;
+      if (prob->variant_num > 0) {
+        if ((variant = find_variant(cs, user_id, prob_id, 0)) <= 0) {
+          fprintf(log_f, "No variant for user %d\n", user_id);
+          goto cleanup;
+        }
+      }
+
+      fprintf(fout, "\\subsection*{%s %s", _("Problem"), probname);
+      if (variant > 0) {
+        fprintf(fout, ", %s %d", _("variant"), variant);
+      }
+      fprintf(fout, ", %s %s}\n\n", _("user"), TARMOR(user_str[user_id]));
+      if (run_get_entry(cs->runlog_state, run_id, &re) < 0) abort();
+
+      // print the table
+      fprintf(fout, "\\noindent\\begin{tabular}{|p{1.5cm}|p{3cm}|p{3.5cm}|p{1.5cm}|p{5cm}|}\n");
+      fprintf(fout, "\\hline\n");
+      fprintf(fout, "%s & %s & %s & %s & %s\\\\\n\\hline\n",
+              _("Problem"), use_exam_cypher?_("Cypher"):_("Name"), _("Tests passed"), _("Score"), _("Status"));
+      fprintf(fout, "%s & %s", probname, TARMOR(user_str[user_id]));
+      if (re.test > 0) {
+        fprintf(fout, " & %d", re.test - 1);
+      } else {
+        fprintf(fout, " &");
+      }
+      if (re.score >= 0) {
+        fprintf(fout, " & %d", re.score);
+      } else {
+        fprintf(fout, " &");
+      }
+      fprintf(fout, " & %s\\\\\n", run_status_str(re.status, 0, 0, 0, 0));
+      fprintf(fout, "\\hline\n");
+      fprintf(fout, "\\end{tabular}\n\n");
+
+      if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
+                                              global->run_archive_dir, run_id,
+                                              0, 0)) < 0) {
+        fprintf(log_f, "Source for run %d is not available\n", run_id);
+        goto cleanup;
+      }
+      if (generic_read_file(&src_txt, 0, &src_len, src_flags, 0, src_path, "") < 0) {
+        fprintf(log_f, "Error reading from %s\n", src_path);
+        goto cleanup;
+      }
+      /*
+      if (strlen(src_txt) != src_len) {
+        fprintf(log_f, "Source file %s is binary\n", src_path);
+        goto cleanup;
+      }
+      while (src_len > 0 && isspace(src_txt[src_len - 1])) src_len--;
+      src_txt[src_len] = 0;
+
+      num_len = text_numbered_memlen(src_txt, src_len);
+      num_txt = xmalloc(num_len + 16);
+      text_number_lines(src_txt, src_len, num_txt);
+      fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n",
+              tex_armor_verbatim(num_txt));
+      xfree(num_txt); num_txt = 0; num_len = 0;
+      xfree(src_txt); src_txt = 0; src_len = 0;
+
+      if (run_is_report_available(re.status)) {
+        write_xml_tex_testing_report(fout, cs, run_id);
+      }
+      */
     }
     break;
 
