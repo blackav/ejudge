@@ -662,7 +662,7 @@ ns_write_priv_all_runs(FILE *f,
   }
 
   if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) >= 0
-      && cnts->exam_mode > 0 && phr->role == USER_ROLE_ADMIN) {
+      && /* cnts->exam_mode > 0 && */ phr->role == USER_ROLE_ADMIN) {
     html_start_form(f, 1, phr->self_url, phr->hidden_vars);
     fprintf(f, "<table class=\"b0\"><tr><td class=\"b0\">%s:</td><td>",
             _("Print problem protocol"));
