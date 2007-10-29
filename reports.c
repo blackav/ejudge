@@ -1891,8 +1891,8 @@ invoke_convert(
   task_SetWorkingDir(tsk, global->print_work_dir);
   task_AddArg(tsk, "/usr/bin/convert");
   task_AddArg(tsk, in_path);
-  task_AddArg(tsk, "-resize");
-  task_AddArg(tsk, "2700>");    /* 3800 */
+  //task_AddArg(tsk, "-resize");
+  //task_AddArg(tsk, "1300>");    /* 3800 */
   task_AddArg(tsk, ps_path);
   task_SetPathAsArg0(tsk);
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", O_RDONLY);
@@ -1906,7 +1906,7 @@ invoke_convert(
 
   fprintf(log_f, "%s", "/usr/bin/convert");
   fprintf(log_f, " %s", in_path);
-  fprintf(log_f, " -resize 2700>");
+  //fprintf(log_f, " -resize 1300>");
   fprintf(log_f, " %s", ps_path);
   if (save_log_flag) {
     fprintf(log_f, " </dev/null 2>%s 1>&2\n", err_path);
@@ -3356,8 +3356,8 @@ problem_report_generate(
                  global->print_work_dir, run_id);
         generic_write_file(src_txt, src_len, 0, 0, img_path, "");
         invoke_convert(log_f, global, img_path, eps_path, ierr_path, 1);
-        //fprintf(fout, "\\includegraphics[width=0.90\\textwidth]{i%06d.eps}\n", run_id);
-        fprintf(fout, "\\noindent\\includegraphics{i%06d.eps}\n", run_id);
+        fprintf(fout, "\\includegraphics[width=0.90\\textwidth]{i%06d.eps}\n", run_id);
+        //fprintf(fout, "\\noindent\\includegraphics{i%06d.eps}\n", run_id);
       }
       xfree(src_txt); src_txt = 0; src_len = 0;
     }
