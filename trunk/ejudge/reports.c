@@ -1892,7 +1892,7 @@ invoke_convert(
   task_AddArg(tsk, "/usr/bin/convert");
   task_AddArg(tsk, in_path);
   task_AddArg(tsk, "-resize");
-  task_AddArg(tsk, "3200>");    /* 3800 */
+  task_AddArg(tsk, "2700>");    /* 3800 */
   task_AddArg(tsk, ps_path);
   task_SetPathAsArg0(tsk);
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", O_RDONLY);
@@ -1906,7 +1906,7 @@ invoke_convert(
 
   fprintf(log_f, "%s", "/usr/bin/convert");
   fprintf(log_f, " %s", in_path);
-  fprintf(log_f, " -resize 3200>");
+  fprintf(log_f, " -resize 2700>");
   fprintf(log_f, " %s", ps_path);
   if (save_log_flag) {
     fprintf(log_f, " </dev/null 2>%s 1>&2\n", err_path);
