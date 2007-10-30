@@ -1396,6 +1396,17 @@ run_tests(struct section_tester_data *tst,
     }
 #endif
 
+#if defined HAVE_TASK_ISSECURITYVIOLATION
+    if (tsk && tst->enable_memory_limit_error && req_pkt->memory_limit
+        && task_IsSecurityViolation(tsk)) {
+      failed_test = cur_test;
+      status = RUN_SECURITY_ERR;
+      total_failed_tests++;
+      task_Delete(tsk); tsk = 0;
+      goto done_this_test;
+    }
+#endif
+
     if (tsk && task_IsTimeout(tsk)) {
       failed_test = cur_test;
       status = RUN_TIME_LIMIT_ERR;

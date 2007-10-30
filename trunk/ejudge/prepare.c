@@ -128,6 +128,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(tgz_pat, "s"),
   GLOBAL_PARAM(contest_start_cmd, "s"),
   GLOBAL_PARAM(description_file, "s"),
+  GLOBAL_PARAM(report_plugin_file, "s"),
 
   GLOBAL_PARAM(var_dir, "s"),
 

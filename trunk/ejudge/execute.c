@@ -278,6 +278,12 @@ run_program(int argc, char *argv[])
             "Description: memory limit exceeded\n");
   } else
 #endif
+#if defined HAVE_TASK_ISSECURITYVIOLATION
+  if (memory_limit && task_IsSecurityViolation(tsk)) {
+    fprintf(stderr, "Status: SV\n"
+            "Description: security violation\n");
+  } else
+#endif
   if (task_IsTimeout(tsk)) {
     fprintf(stderr, "Status: TL\n"
             "Description: time limit exceeded\n");
