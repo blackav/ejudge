@@ -33,6 +33,7 @@ struct xml_tree;
 struct http_request_info;
 struct contest_desc;
 struct contest_extra;
+struct serve_state;
 
 struct report_plugin_iface
 {
@@ -41,6 +42,36 @@ struct report_plugin_iface
 
   void *(*init)(void);
   void (*finalize)(void *);
+
+  int (*generate_tex_user_report)(
+	void *handle,           /* the plugin handle */
+	FILE *log_f,            /* the logging stream */
+        FILE *fout,             /* the output stream */
+        const unsigned char *out_path, /* the output file path */
+        const struct contest_desc *cnts,
+        const struct serve_state *cs,
+        int user_id,
+        int locale_id);
+  int (*generate_tex_full_user_report)(
+	void *handle,
+        FILE *log_f,
+        FILE *fout,
+        const unsigned char *out_path,
+        const struct contest_desc *cnts,
+        const struct serve_state *cs,
+        int user_id,
+        int locale_id,
+        int use_cypher);
+  int (*generate_tex_problem_report)(
+	void *handle,
+        FILE *log_f,
+        FILE *fout,
+        const unsigned char *out_path,
+        const struct contest_desc *cnts,
+        const struct serve_state *cs,
+        int prob_id,
+        int locale_id,
+        int use_exam_cypher);
 };
 
 #endif /* __REPORT_PLUGIN_H__ */

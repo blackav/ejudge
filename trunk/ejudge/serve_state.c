@@ -113,6 +113,13 @@ serve_state_destroy(serve_state_t state,
   }
   xfree(state->prob_extras);
 
+  if (state->report_plugin && state->report_plugin_data) {
+    (*state->report_plugin->finalize)(state->report_plugin_data);
+  }
+  if (state->report_plugin) {
+    plugin_unload((struct ejudge_plugin_iface*) state->report_plugin);
+  }
+
   prepare_free_config(state->config);
 
   for (i = 1; i < state->users_a; i++) {
@@ -248,6 +255,15 @@ serve_state_load_contest(int contest_id,
   if (ul_conn) {
     // ignore error code
     userlist_clnt_notify(ul_conn, ULS_ADD_NOTIFY, contest_id);
+  }
+
+  // load reporting plugin
+  if (state->global->report_plugin_file[0]) {
+    state->report_plugin = (struct report_plugin_iface *) plugin_load(state->global->report_plugin_file, "report", "");
+    if (!state->report_plugin) goto failure;
+    if (state->report_plugin->report_plugin_version != REPORT_PLUGIN_IFACE_VERSION) goto failure;
+    if (state->report_plugin->init)
+      state->report_plugin_data = (*state->report_plugin->init)();
   }
 
   if (state->global->is_virtual) {
