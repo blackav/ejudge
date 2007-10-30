@@ -2226,7 +2226,7 @@ set_defaults(serve_state_t state, int mode)
     if (g->variant_map_file) {
       GLOBAL_INIT_FIELD(variant_map_file, "", conf_dir);
     }
-    if (g->report_plugin_file) {
+    if (g->report_plugin_file[0]) {
       GLOBAL_INIT_FIELD(report_plugin_file, "", plugin_dir);
     }
   }
