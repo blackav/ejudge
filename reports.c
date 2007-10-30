@@ -154,8 +154,9 @@ tex_armor_buf(struct html_armor_buffer *pb, const unsigned char *s)
   return pb->buf;
 }
 
-static void
-fix_tex_utf8(unsigned char *str)
+/* fix the valid utf-8 characters, which LaTeX does not handle :( */
+void
+tex_fix_unhandled_utf8(unsigned char *str)
 {
   unsigned char *p = str;
   while (*p) {
@@ -213,7 +214,7 @@ fix_tex_utf8(unsigned char *str)
   }
 }
 
-static unsigned char *
+unsigned char *
 tex_armor_verbatim(unsigned char *str)
 {
   unsigned char *s;
@@ -222,7 +223,7 @@ tex_armor_verbatim(unsigned char *str)
     if (*s < ' ' && *s != '\n') *s = ' ';
   if (utf8_mode) {
     utf8_fix_string(str, 0);
-    fix_tex_utf8(str);
+    tex_fix_unhandled_utf8(str);
   } else {
     for (s = str; *s; s++)
       if (*s >= 0x7f) *s = '?';
@@ -232,7 +233,7 @@ tex_armor_verbatim(unsigned char *str)
 
 enum { VERBATIM_WIDTH = 70 };
 
-static unsigned char *
+unsigned char *
 tex_armor_verbatim_2(unsigned char *str, int width)
 {
   unsigned char *s, *p;
@@ -242,7 +243,7 @@ tex_armor_verbatim_2(unsigned char *str, int width)
   for (s = str; *s; s++)
     if (*s < ' ' && *s != '\n') *s = ' ';
   if (utf8_mode) {
-    fix_tex_utf8(str);
+    tex_fix_unhandled_utf8(str);
     slen = strlen(str);
     sind = (int*) xmalloc((slen + 1) * sizeof(sind[0]));
     swidth = utf8_fix_string(str, sind);
@@ -333,10 +334,10 @@ chop2(unsigned char *str)
 
 static int
 user_report_generate(
-        unsigned char *out_path,
-        size_t out_size,
-        const struct contest_desc *cnts,
         FILE *log_f,
+        FILE *fout,
+        const unsigned char *out_path,
+        const struct contest_desc *cnts,
         const serve_state_t cs,
         int user_id,
         int locale_id)
@@ -347,7 +348,6 @@ user_report_generate(
   int *run_ids;
   int total_runs, run_id, retval = -1, f_id, l_id, i, j, k;
   struct run_entry re;
-  FILE *fout = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   path_t src_path;
   int src_flags, answer, variant, passed_tests;
@@ -380,7 +380,6 @@ user_report_generate(
 
   XALLOCA(run_ids, cs->max_prob + 1);
   memset(run_ids, -1, sizeof(run_ids[0]) * (cs->max_prob + 1));
-  out_path[0] = 0;
 
   // find the latest run in acceptable state
   total_runs = run_get_total(cs->runlog_state);
@@ -495,12 +494,6 @@ user_report_generate(
         }
       }
     }
-  }
-
-  snprintf(out_path, out_size, "%s/%06d.tex", global->print_work_dir, user_id);
-  if (!(fout = fopen(out_path, "w"))) {
-    fprintf(log_f, "Cannot open `%s' for writing\n", out_path);
-    goto cleanup;
   }
 
   if (global->user_exam_protocol_header_file[0]
@@ -925,29 +918,21 @@ user_report_generate(
     fprintf(log_f, "Write error to `%s'\n", out_path);
     goto cleanup;
   }
-  if (fclose(fout) < 0) {
-    fout = 0;
-    fprintf(log_f, "Write error to `%s'\n", out_path);
-    goto cleanup;
-  }
-  fout = 0;
 
   retval = 0;
 
  cleanup:
   xfree(src_txt);
   html_armor_free(&ab);
-  if (fout) fclose(fout);
-  //if (out_path[0]) unlink(out_path);
   return retval;
 }
 
 static int
 full_user_report_generate(
-        unsigned char *out_path,
-        size_t out_size,
-        const struct contest_desc *cnts,
         FILE *log_f,
+        FILE *fout,
+        const unsigned char *out_path,
+        const struct contest_desc *cnts,
         const serve_state_t cs,
         int user_id,
         int locale_id,
@@ -959,7 +944,6 @@ full_user_report_generate(
   int *run_ids;
   int total_runs, run_id, retval = -1, f_id, l_id, i, j, k;
   struct run_entry re;
-  FILE *fout = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   path_t src_path;
   int src_flags, answer, variant;
@@ -1000,7 +984,6 @@ full_user_report_generate(
 
   XALLOCA(run_ids, cs->max_prob + 1);
   memset(run_ids, -1, sizeof(run_ids[0]) * (cs->max_prob + 1));
-  out_path[0] = 0;
 
   // find the latest run in acceptable state
   total_runs = run_get_total(cs->runlog_state);
@@ -1129,12 +1112,6 @@ full_user_report_generate(
       cur_score = prob->full_score;
     if (prob->score_multiplier > 0) cur_score *= prob->score_multiplier;
     total_score += cur_score;
-  }
-
-  snprintf(out_path, out_size, "%s/%06d.tex", global->print_work_dir, user_id);
-  if (!(fout = fopen(out_path, "w"))) {
-    fprintf(log_f, "Cannot open `%s' for writing\n", out_path);
-    goto cleanup;
   }
 
   if (use_cypher) {
@@ -1623,20 +1600,12 @@ full_user_report_generate(
     fprintf(log_f, "Write error to `%s'\n", out_path);
     goto cleanup;
   }
-  if (fclose(fout) < 0) {
-    fout = 0;
-    fprintf(log_f, "Write error to `%s'\n", out_path);
-    goto cleanup;
-  }
-  fout = 0;
 
   retval = 0;
 
  cleanup:
   xfree(src_txt);
   html_armor_free(&ab);
-  if (fout) fclose(fout);
-  //if (out_path[0]) unlink(out_path);
   return retval;
 }
 
@@ -1650,7 +1619,7 @@ static char * latex_args[] =
   0,
 };
 
-static int
+int
 invoke_latex(
         FILE *log_f,
         const unsigned char *tex_path,
@@ -1733,7 +1702,7 @@ static char * dvips_args[] =
   0,
 };
 
-static int
+int
 invoke_dvips(
         FILE *log_f,
         const unsigned char *dvi_path,
@@ -2003,6 +1972,7 @@ ns_print_user_exam_protocol(
   int retval = -1;
   const unsigned char *printer_name = 0;
   struct teamdb_export tdb;
+  FILE *fout = 0;
 
   if (use_user_printer) {
     memset(&tdb, 0, sizeof(tdb));
@@ -2010,16 +1980,34 @@ ns_print_user_exam_protocol(
     if (tdb.user) printer_name = tdb.user->i.printer_name;
   }
 
-  tex_path[0] = 0;
-  if (full_report) {
-    if (full_user_report_generate(tex_path, sizeof(tex_path), cnts, log_f, cs,
-                                  user_id, locale_id, use_cypher) < 0)
-      goto cleanup;
-  } else {
-    if (user_report_generate(tex_path, sizeof(tex_path), cnts, log_f, cs,
-                             user_id, locale_id) < 0)
-      goto cleanup;
+  snprintf(tex_path, sizeof(tex_path), "%s/%06d.tex", global->print_work_dir,
+           user_id);
+  if (!(fout = fopen(tex_path, "w"))) {
+    fprintf(log_f, "cannot open %s for writing\n", tex_path);
+    goto cleanup;
   }
+
+  if (full_report) {
+    if (cs->report_plugin && cs->report_plugin->generate_tex_full_user_report){
+      if ((*cs->report_plugin->generate_tex_full_user_report)(cs->report_plugin_data, log_f, fout, tex_path, cnts, cs, user_id, locale_id, use_cypher) < 0)
+        goto cleanup;
+    } else {
+      if (full_user_report_generate(log_f, fout, tex_path, cnts, cs, user_id,
+                                    locale_id, use_cypher) < 0)
+        goto cleanup;
+    }
+  } else {
+    if (cs->report_plugin && cs->report_plugin->generate_tex_user_report) {
+      if ((*cs->report_plugin->generate_tex_user_report)(cs->report_plugin_data, log_f, fout, tex_path, cnts, cs, user_id, locale_id) < 0)
+        goto cleanup;
+    } else {
+      if (user_report_generate(log_f, fout, tex_path, cnts, cs, user_id,
+                               locale_id) < 0)
+        goto cleanup;
+    }
+  }
+
+  fclose(fout); fout = 0;
 
   snprintf(err_path, sizeof(err_path), "%s/%06d.err",
            global->print_work_dir, user_id);
@@ -2043,6 +2031,7 @@ ns_print_user_exam_protocol(
   retval = 0;
 
  cleanup:
+  if (fout) fclose(fout);
   snprintf(tst_path, sizeof(tst_path), "%s/.noclean", global->print_work_dir);
   if (os_CheckAccess(tst_path, REUSE_F_OK) < 0) {
     clear_directory(global->print_work_dir);
@@ -2071,19 +2060,36 @@ ns_print_user_exam_protocols(
   int retval = -1, i, user_id;
   const unsigned char *printer_name = 0;
   struct teamdb_export tdb;
+  FILE *fout = 0;
 
   for (i = 0; i < nuser; i++) {
     user_id = user_ids[i];
-    tex_path[0] = 0;
-    if (full_report) {
-      if (full_user_report_generate(tex_path, sizeof(tex_path), cnts, log_f, cs,
-                                    user_id, locale_id, use_cypher) < 0)
-        goto cleanup;
-    } else {
-      if (user_report_generate(tex_path, sizeof(tex_path), cnts, log_f, cs,
-                               user_id, locale_id) < 0)
-        goto cleanup;
+    snprintf(tex_path, sizeof(tex_path), "%s/%06d.tex", global->print_work_dir,
+             user_id);
+    if (!(fout = fopen(tex_path, "w"))) {
+      fprintf(log_f, "cannot open %s for writing\n", tex_path);
+      goto cleanup;
     }
+    if (full_report) {
+      if (cs->report_plugin && cs->report_plugin->generate_tex_full_user_report) {
+        if ((*cs->report_plugin->generate_tex_full_user_report)(cs->report_plugin_data, log_f, fout, tex_path, cnts, cs, user_id, locale_id, use_cypher) < 0)
+          goto cleanup;
+      } else {
+        if (full_user_report_generate(log_f, fout, tex_path, cnts, cs, user_id,
+                                      locale_id, use_cypher) < 0)
+          goto cleanup;
+      }
+    } else {
+      if (cs->report_plugin && cs->report_plugin->generate_tex_user_report) {
+        if ((*cs->report_plugin->generate_tex_user_report)(cs->report_plugin_data, log_f, fout, tex_path, cnts, cs, user_id, locale_id) < 0)
+          goto cleanup;
+      } else {
+        if (user_report_generate(log_f, fout, tex_path, cnts, cs, user_id,
+                                 locale_id) < 0)
+          goto cleanup;
+      }
+    }
+    fclose(fout); fout = 0;
 
     snprintf(err_path, sizeof(err_path), "%s/%06d.err",
              global->print_work_dir, user_id);
@@ -2121,6 +2127,7 @@ ns_print_user_exam_protocols(
   retval = 0;
 
  cleanup:
+  if (fout) fclose(fout);
   snprintf(tst_path, sizeof(tst_path), "%s/.noclean", global->print_work_dir);
   if (os_CheckAccess(tst_path, REUSE_F_OK) < 0) {
     clear_directory(global->print_work_dir);
@@ -2908,10 +2915,11 @@ write_xml_tex_testing_report(
 
 enum { SHORT_ANSWER_GROUP = 10 };
 
-int
+static int
 problem_report_generate(
-        FILE *fout,
         FILE *log_f,
+        FILE *fout,
+        const unsigned char *out_path,
         const struct contest_desc *cnts,
         const serve_state_t cs,
         int prob_id,
@@ -3522,9 +3530,14 @@ ns_print_prob_exam_protocol(
     fprintf(log_f, "cannot open `%s' for writing\n", tex_path);
     goto cleanup;
   }
-  if (problem_report_generate(fout, log_f, cnts, cs, prob_id, locale_id,
-                              use_exam_cypher) < 0)
-    goto cleanup;
+  if (cs->report_plugin && cs->report_plugin->generate_tex_problem_report) {
+    if ((*cs->report_plugin->generate_tex_problem_report)(cs->report_plugin_data, log_f, fout, tex_path, cnts, cs, prob_id, locale_id, use_exam_cypher) < 0)
+      goto cleanup;
+  } else {
+    if (problem_report_generate(log_f, fout, tex_path, cnts, cs, prob_id,
+                                locale_id, use_exam_cypher) < 0)
+      goto cleanup;
+  }
   if (ferror(fout)) {
     fprintf(log_f, "write error to `%s'\n", tex_path);
     goto cleanup;

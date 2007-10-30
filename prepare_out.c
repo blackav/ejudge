@@ -654,6 +654,7 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   GLOBAL_PARAM(prob_exam_protocol_footer_file, "s"),
   GLOBAL_PARAM(full_exam_protocol_header_file, "s"),
   GLOBAL_PARAM(full_exam_protocol_footer_file, "s"),
+  GLOBAL_PARAM(report_plugin_file, "s"),
   */
 void
 prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *global)
@@ -733,6 +734,8 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
   do_xstr(f, &sbuf, "lpr_args", global->lpr_args);
   //GLOBAL_PARAM(diff_path, "s"),
   do_str(f, &sbuf, "diff_path", global->diff_path);
+  //GLOBAL_PARAM(report_plugin_file, "s"),
+  do_str(f, &sbuf, "report_plugin_file", global->report_plugin_file);
 
   //GLOBAL_PARAM(run_dir, "s"),
   do_str(f, &sbuf, "run_dir", global->run_dir);

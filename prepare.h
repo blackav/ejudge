@@ -183,7 +183,7 @@ struct section_global_data
   path_t tgz_dir;               /* common prefix dir for directory tests */
   path_t checker_dir;           /* default location of checkers */
   path_t statement_dir;         /* default location of inline prob. stat. */
-  path_t plugin_dir;            /* default location of problem plugins */
+  path_t plugin_dir;            /* default location of plugins */
   puc_t test_sfx[32];           /* default test files suffix */
   puc_t corr_sfx[32];           /* default correct files suffix */
   puc_t info_sfx[32];           /* default info files suffix */
@@ -191,6 +191,7 @@ struct section_global_data
   path_t ejudge_checkers_dir;   /* path to the built-in checkers */
   path_t contest_start_cmd;     /* command to run when contest starts */
   path_t description_file;      /* contest description */
+  path_t report_plugin_file;    /* report plugin */
 
   puc_t test_pat[32];
   puc_t corr_pat[32];
