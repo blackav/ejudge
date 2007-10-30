@@ -55,6 +55,7 @@ static int clear_env_flag = 0;
 static int no_core_dump = 0;
 static int memory_limit = 0;
 static int secure_exec = 0;
+static int security_violation = 0;
 
 static int time_limit = 0;
 static int time_limit_millis = 0;
@@ -137,6 +138,9 @@ static const unsigned char help_str[] =
 #if defined HAVE_TASK_ENABLESECUREEXEC
 "--secure-exec            enable secure execution\n"
 #endif
+#if defined HAVE_TASK_ENABLESECURITYVIOLATIONERROR
+"--security-violation     enable security violation error detection\n"
+#endif
 "--max-vm-size=SIZE       specify the virtual memory size limit\n"
 "--max-stack-size=SIZE    specify the stack size limit\n"
 "--max-data-size=SIZE     specify the heap size limit\n"
@@ -196,6 +200,12 @@ handle_options(const unsigned char *opt)
     fatal("option --secure-exec is not supported");
 #else
     secure_exec = 1;
+#endif
+  } else if (!strcmp("--security-violation", opt)) {
+#if !defined HAVE_TASK_ENABLESECURITYVIOLATIONERROR
+    fatal("option --security-violation is not supported");
+#else
+    security_violation = 1;
 #endif
   } else if (!strncmp("--max-vm-size=", opt, 14)) {
     parse_size("--max-vm-size", opt + 14, &max_vm_size, 4096, 1 << 30);
@@ -259,6 +269,11 @@ run_program(int argc, char *argv[])
     if (task_EnableSecureExec(tsk) < 0)
       fatal("--secure-exec is not supported");
 #endif
+#if defined HAVE_TASK_ENABLESECURITYVIOLATIONERROR
+  if (security_violation)
+    if (task_EnableSecurityViolationError(tsk) < 0)
+      fatal("--security-violation is not supported");
+#endif
 
   if (task_Start(tsk) < 0) {
 #if defined HAVE_TASK_GETERRORMESSAGE
@@ -279,7 +294,7 @@ run_program(int argc, char *argv[])
   } else
 #endif
 #if defined HAVE_TASK_ISSECURITYVIOLATION
-  if (memory_limit && task_IsSecurityViolation(tsk)) {
+  if (security_violation && task_IsSecurityViolation(tsk)) {
     fprintf(stderr, "Status: SV\n"
             "Description: security violation\n");
   } else
