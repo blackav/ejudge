@@ -82,6 +82,7 @@ run_request_packet_read(size_t in_size, const void *in_data,
   if ((flags & FLAGS_FULL_ARCHIVE)) pout->full_archive = 1;
   if ((flags & FLAGS_MEMORY_LIMIT)) pout->memory_limit = 1;
   if ((flags & FLAGS_SECURE_RUN)) pout->secure_run = 1;
+  if ((flags & FLAGS_SECURITY_VIOLATION)) pout->security_violation = 1;
 
   pout->ts1 = cvt_bin_to_host_32(pin->ts1);
   pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);

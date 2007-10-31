@@ -90,6 +90,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(disable_auto_testing, "d"),
   GLOBAL_PARAM(disable_testing, "d"),
   GLOBAL_PARAM(secure_run, "d"),
+  GLOBAL_PARAM(detect_violations, "d"),
   GLOBAL_PARAM(enable_memory_limit_error, "d"),
   GLOBAL_PARAM(always_show_problems, "d"),
   GLOBAL_PARAM(disable_user_standings, "d"),
@@ -573,6 +574,7 @@ global_init_func(struct generic_section_config *gp)
   p->enable_report_upload = -1;
   p->enable_runlog_merge = -1;
   p->secure_run = -1;
+  p->detect_violations = -1;
   p->enable_memory_limit_error = -1;
   p->ignore_success_time = -1;
 
@@ -2068,8 +2070,8 @@ set_defaults(serve_state_t state, int mode)
     g->enable_runlog_merge = DFLT_G_ENABLE_RUNLOG_MERGE;
   if (g->ignore_success_time == -1)
     g->ignore_success_time = DFLT_G_IGNORE_SUCCESS_TIME;
-  if (g->secure_run == -1)
-    g->secure_run = DFLT_G_SECURE_RUN;
+  if (g->secure_run == -1) g->secure_run = DFLT_G_SECURE_RUN;
+  if (g->detect_violations == -1) g->detect_violations = 0;
   if (g->enable_memory_limit_error == -1)
     g->enable_memory_limit_error = DFLT_G_ENABLE_MEMORY_LIMIT_ERROR;
 
@@ -4296,8 +4298,8 @@ prepare_set_global_defaults(struct section_global_data *g)
     g->enable_runlog_merge = DFLT_G_ENABLE_RUNLOG_MERGE;
   if (g->ignore_success_time < 0)
     g->ignore_success_time = DFLT_G_IGNORE_SUCCESS_TIME;
-  if (g->secure_run < 0)
-    g->secure_run = DFLT_G_SECURE_RUN;
+  if (g->secure_run < 0) g->secure_run = DFLT_G_SECURE_RUN;
+  if (g->detect_violations < 0) g->detect_violations = 0;
   if (g->enable_memory_limit_error < 0)
     g->enable_memory_limit_error = DFLT_G_ENABLE_MEMORY_LIMIT_ERROR;
   if (g->prune_empty_users < 0)
@@ -4488,6 +4490,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->enable_runlog_merge = 1;
   global->ignore_success_time = DFLT_G_IGNORE_SUCCESS_TIME;
   global->secure_run = 1;
+  global->detect_violations = 0;
   global->enable_memory_limit_error = DFLT_G_ENABLE_MEMORY_LIMIT_ERROR;
   global->prune_empty_users = DFLT_G_PRUNE_EMPTY_USERS;
   global->enable_report_upload = DFLT_G_ENABLE_REPORT_UPLOAD;

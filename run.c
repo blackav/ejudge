@@ -1131,6 +1131,11 @@ run_tests(struct section_tester_data *tst,
           task_EnableMemoryLimitError(tsk);
         }
 #endif
+#if defined HAVE_TASK_ENABLESECURITYVIOLATIONERROR
+        if (tst->enable_memory_limit_error && req_pkt->security_violation) {
+          task_EnableSecurityViolationError(tsk);
+        }
+#endif
       } else {
         switch (tst->memory_limit_type_val) {
         case MEMLIMIT_TYPE_DEFAULT:
@@ -1154,6 +1159,11 @@ run_tests(struct section_tester_data *tst,
 #if defined HAVE_TASK_ENABLEMEMORYLIMITERROR
           if (tst->enable_memory_limit_error && req_pkt->memory_limit) {
             task_EnableMemoryLimitError(tsk);
+          }
+#endif
+#if defined HAVE_TASK_ENABLEMEMORYLIMITERROR
+          if (tst->enable_memory_limit_error && req_pkt->security_violation) {
+            task_EnableSecurityViolationError(tsk);
           }
 #endif
           break;
@@ -1397,7 +1407,7 @@ run_tests(struct section_tester_data *tst,
 #endif
 
 #if defined HAVE_TASK_ISSECURITYVIOLATION
-    if (tsk && tst->enable_memory_limit_error && req_pkt->memory_limit
+    if (tsk && tst->enable_memory_limit_error && req_pkt->security_violation
         && task_IsSecurityViolation(tsk)) {
       failed_test = cur_test;
       status = RUN_SECURITY_ERR;

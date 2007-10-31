@@ -36,6 +36,7 @@ struct run_request_packet
   int time_limit_adj_millis;    /* time-limit adjustment (milliseconds) */
   int memory_limit;             /* enable memory limit (if supported by reuse&kernel) */
   int secure_run;               /* enable secure run (if supported by reuse&kernel) */
+  int security_violation;       /* enable security violation detection */
   /* time when the compile request was queued by serve */
   int ts1;
   int ts1_us;
