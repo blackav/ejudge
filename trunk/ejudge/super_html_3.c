@@ -613,6 +613,13 @@ super_html_edit_global_parameters(FILE *f,
                            session_id, form_row_attrs[row ^= 1],
                            self_url, extra_args, hidden_vars);
 
+  //GLOBAL_PARAM(detect_violations, "d"),
+  print_boolean_select_row(f, "Detect security violations:",
+                           global->detect_violations,
+                           SSERV_CMD_GLOB_CHANGE_DETECT_VIOLATIONS,
+                           session_id, form_row_attrs[row ^= 1],
+                           self_url, extra_args, hidden_vars);
+
   //GLOBAL_PARAM(standings_locale, "s"),
   if (!strcmp(global->standings_locale, "ru_RU.KOI8-R")
       || !strcmp(global->standings_locale, "ru")) {
@@ -2697,6 +2704,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_SECURE_RUN:
     p_int = &global->secure_run;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_DETECT_VIOLATIONS:
+    p_int = &global->detect_violations;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR:

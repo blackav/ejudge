@@ -114,6 +114,7 @@ struct section_global_data
   int    disable_testing;       /* do not test the submit at all */
   int    enable_runlog_merge;   /* enable runlog merging */
   int    secure_run;            /* run securely */
+  int    detect_violations;     /* detect security violations */
   int    enable_memory_limit_error; /* enable support for memory limit detection */
 
   puc_t  stand_ignore_after[256];

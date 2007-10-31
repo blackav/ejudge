@@ -563,6 +563,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "enable_runlog_merge", global->enable_runlog_merge);
   if (global->secure_run != DFLT_G_SECURE_RUN)
     unparse_bool(f, "secure_run", global->secure_run);
+  if (global->detect_violations > 0)
+    unparse_bool(f, "detect_violations", global->detect_violations);
   if (global->enable_memory_limit_error != DFLT_G_ENABLE_MEMORY_LIMIT_ERROR)
     unparse_bool(f, "enable_memory_limit_error", global->enable_memory_limit_error);
   //???

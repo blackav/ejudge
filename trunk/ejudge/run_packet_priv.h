@@ -33,8 +33,9 @@ enum
   FLAGS_FULL_ARCHIVE         = 0x080,
   FLAGS_MEMORY_LIMIT         = 0x100,
   FLAGS_SECURE_RUN           = 0x200,
+  FLAGS_SECURITY_VIOLATION   = 0x400,
 
-  FLAGS_ALL_MASK             = 0x3ff, /* scoring system incl. */
+  FLAGS_ALL_MASK             = 0x7ff, /* scoring system incl. */
 };
 
 /* serve->run binary packet structure */

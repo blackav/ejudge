@@ -102,6 +102,7 @@ run_request_packet_write(const struct run_request_packet *in_data,
   if (in_data->full_archive) flags |= FLAGS_FULL_ARCHIVE;
   if (in_data->memory_limit) flags |= FLAGS_MEMORY_LIMIT;
   if (in_data->secure_run) flags |= FLAGS_SECURE_RUN;
+  if (in_data->security_violation) flags |= FLAGS_SECURITY_VIOLATION;
   out_data->flags = cvt_host_to_bin_32(flags);
 
   /* copy timestamps without care */
