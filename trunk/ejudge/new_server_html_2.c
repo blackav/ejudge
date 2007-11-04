@@ -286,11 +286,11 @@ ns_write_priv_all_runs(FILE *f,
   fprintf(f, "<p>%s: <input type=\"text\" name=\"filter_expr\" size=\"32\" maxlength=\"128\" value=\"%s\"/>", _("Filter expression"), fe_html);
   fprintf(f, "%s: <input type=\"text\" name=\"filter_first_run\" size=\"16\" value=\"%s\"/>", _("First run"), first_run_str);
   fprintf(f, "%s: <input type=\"text\" name=\"filter_last_run\" size=\"16\" value=\"%s\"/>", _("Last run"), last_run_str);
-  fprintf(f, "%s</form>",
+  fprintf(f, "%s",
           ns_submit_button(bb, sizeof(bb), "filter_view", 1, _("View")));
-  html_start_form(f, 0, phr->self_url, phr->hidden_vars);
+  //html_start_form(f, 0, phr->self_url, phr->hidden_vars);
   fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_RESET_FILTER));
-  fprintf(f, "</form></p>\n");
+  fprintf(f, "</p></form><br/>\n");
 
   if (u->error_msgs) {
     fprintf(f, "<h2>Filter expression errors</h2>\n");
@@ -772,8 +772,9 @@ ns_write_all_clars(FILE *f,
     snprintf(last_clar_str, sizeof(last_clar_str), "%d",
              (u->prev_last_clar > 0)?u->prev_last_clar - 1:u->prev_last_clar);
   }
-  html_start_form(f, 0, phr->self_url, phr->hidden_vars);
 
+  fprintf(f, "<p>");
+  html_start_form(f, 0, phr->self_url, phr->hidden_vars);
   fprintf(f,
           "<select name=\"%s\"><option value=\"1\"%s>%s</option>"
           "<option value=\"2\"%s>%s</option></select>\n",
@@ -790,7 +791,7 @@ ns_write_all_clars(FILE *f,
   fprintf(f, "%s",
           ns_submit_button(bbuf, sizeof(bbuf), 0,
                            NEW_SRV_ACTION_RESET_CLAR_FILTER, 0));
-  fprintf(f, "</p></form>\n");
+  fprintf(f, "</p></form><br/>\n");
 
   snprintf(cl, sizeof(cl), " class=\"b1\"");
 
@@ -2653,7 +2654,7 @@ ns_write_priv_standings(const serve_state_t state,
                         const struct contest_desc *cnts,
                         FILE *f, int accepting_mode)
 {
-  write_standings_header(state, cnts, f, 1, 0, 0, 0);
+  //write_standings_header(state, cnts, f, 1, 0, 0, 0);
 
   if (state->global->score_system_val == SCORE_KIROV
       || state->global->score_system_val == SCORE_OLYMPIAD)

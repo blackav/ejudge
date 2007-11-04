@@ -2196,6 +2196,7 @@ generate_serve_cfg(FILE *f)
 
 #if CONF_HAS_SECURE_EXEC - 0 == 1
   fprintf(f, "secure_run\n");
+  fprintf(f, "detect_violations\n");
 #endif
 
 #if defined COMPILE_FPC_VERSION
@@ -2396,7 +2397,7 @@ generate_serve_cfg(FILE *f)
 #if defined COMPILE_JAVA_VERSION
   fprintf(f,
           "[language]\n"
-          "id = 17\n"
+          "id = 18\n"
           "short_name = \"java\"\n"
           "long_name = \"Java %s\"\n"
           "src_sfx = \".java\"\n"
@@ -2878,7 +2879,7 @@ generate_compile_cfg(FILE *f)
 #endif /* COMPILE_JAVA_VERSION */
   fprintf(f,
           "%s[language]\n"
-          "%sid = 17\n"
+          "%sid = 18\n"
           "%sshort_name = \"java\"\n"
           "%slong_name = \"Java %s\"\n"
           "%ssrc_sfx = \".java\"\n"
@@ -2930,6 +2931,7 @@ generate_compile_cfg(FILE *f)
           "%s\n",
           cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt, cmt);
 
+  /*
   fprintf(f,
           "[language]\n"
           "id = 21\n"
@@ -2938,6 +2940,7 @@ generate_compile_cfg(FILE *f)
           "src_sfx = \".txt\"\n"
           "cmd = \"txt\"\n"
           "\n");
+  */
 }
 
 static void
