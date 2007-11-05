@@ -4343,20 +4343,20 @@ priv_view_users_page(FILE *fout,
     fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
             BUTTON(NEW_SRV_ACTION_FORCE_START_VIRTUAL),
             _("Force virtual contest start for the selected users"));
-
-    if (global->user_exam_protocol_header_txt)
-      fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-              BUTTON(NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL),
-              _("Print the user examination protocols for the selected users"));
-    if (global->full_exam_protocol_header_txt)
-      fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-              BUTTON(NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL),
-              _("Print the user full examination protocols for the selected users"));
-    if (global->full_exam_protocol_header_txt)
-      fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-              BUTTON(NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL),
-              _("Print the user full cyphered examination protocols for the selected users"));
   }
+
+  if (global->user_exam_protocol_header_txt)
+    fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+            BUTTON(NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL),
+            _("Print the user examination protocols for the selected users"));
+  if (global->full_exam_protocol_header_txt)
+    fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+            BUTTON(NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL),
+            _("Print the user full examination protocols for the selected users"));
+  if (global->full_exam_protocol_header_txt)
+    fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+            BUTTON(NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL),
+            _("Print the user full cyphered examination protocols for the selected users"));
   fprintf(fout, "</table>\n");
 
   fprintf(fout, "<h2>%s</h3>\n", _("Disqualify selected users"));
