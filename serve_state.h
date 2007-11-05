@@ -22,7 +22,7 @@
 #include "opcaps.h"
 #include "watched_file.h"
 #include "problem_plugin.h"
-#include "report_plugin.h"
+#include "contest_plugin.h"
 
 #include <time.h>
 
@@ -193,8 +193,8 @@ struct serve_state
   time_t max_online_time;
   int max_online_count;
 
-  struct report_plugin_iface *report_plugin;
-  void *report_plugin_data;
+  struct contest_plugin_iface *contest_plugin;
+  void *contest_plugin_data;
 
   // for full import
   int saved_testing_suspended;

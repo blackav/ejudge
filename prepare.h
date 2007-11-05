@@ -192,7 +192,7 @@ struct section_global_data
   path_t ejudge_checkers_dir;   /* path to the built-in checkers */
   path_t contest_start_cmd;     /* command to run when contest starts */
   path_t description_file;      /* contest description */
-  path_t report_plugin_file;    /* report plugin */
+  path_t contest_plugin_file;   /* contest plugin */
 
   puc_t test_pat[32];
   puc_t corr_pat[32];

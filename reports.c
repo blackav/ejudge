@@ -1988,8 +1988,8 @@ ns_print_user_exam_protocol(
   }
 
   if (full_report) {
-    if (cs->report_plugin && cs->report_plugin->generate_tex_full_user_report){
-      if ((*cs->report_plugin->generate_tex_full_user_report)(cs->report_plugin_data, log_f, fout, tex_path, cnts, cs, user_id, locale_id, use_cypher) < 0)
+    if (cs->contest_plugin && cs->contest_plugin->generate_tex_full_user_report){
+      if ((*cs->contest_plugin->generate_tex_full_user_report)(cs->contest_plugin_data, log_f, fout, tex_path, cnts, cs, user_id, locale_id, use_cypher) < 0)
         goto cleanup;
     } else {
       if (full_user_report_generate(log_f, fout, tex_path, cnts, cs, user_id,
@@ -1997,8 +1997,8 @@ ns_print_user_exam_protocol(
         goto cleanup;
     }
   } else {
-    if (cs->report_plugin && cs->report_plugin->generate_tex_user_report) {
-      if ((*cs->report_plugin->generate_tex_user_report)(cs->report_plugin_data, log_f, fout, tex_path, cnts, cs, user_id, locale_id) < 0)
+    if (cs->contest_plugin && cs->contest_plugin->generate_tex_user_report) {
+      if ((*cs->contest_plugin->generate_tex_user_report)(cs->contest_plugin_data, log_f, fout, tex_path, cnts, cs, user_id, locale_id) < 0)
         goto cleanup;
     } else {
       if (user_report_generate(log_f, fout, tex_path, cnts, cs, user_id,
@@ -2071,8 +2071,8 @@ ns_print_user_exam_protocols(
       goto cleanup;
     }
     if (full_report) {
-      if (cs->report_plugin && cs->report_plugin->generate_tex_full_user_report) {
-        if ((*cs->report_plugin->generate_tex_full_user_report)(cs->report_plugin_data, log_f, fout, tex_path, cnts, cs, user_id, locale_id, use_cypher) < 0)
+      if (cs->contest_plugin && cs->contest_plugin->generate_tex_full_user_report) {
+        if ((*cs->contest_plugin->generate_tex_full_user_report)(cs->contest_plugin_data, log_f, fout, tex_path, cnts, cs, user_id, locale_id, use_cypher) < 0)
           goto cleanup;
       } else {
         if (full_user_report_generate(log_f, fout, tex_path, cnts, cs, user_id,
@@ -2080,8 +2080,8 @@ ns_print_user_exam_protocols(
           goto cleanup;
       }
     } else {
-      if (cs->report_plugin && cs->report_plugin->generate_tex_user_report) {
-        if ((*cs->report_plugin->generate_tex_user_report)(cs->report_plugin_data, log_f, fout, tex_path, cnts, cs, user_id, locale_id) < 0)
+      if (cs->contest_plugin && cs->contest_plugin->generate_tex_user_report) {
+        if ((*cs->contest_plugin->generate_tex_user_report)(cs->contest_plugin_data, log_f, fout, tex_path, cnts, cs, user_id, locale_id) < 0)
           goto cleanup;
       } else {
         if (user_report_generate(log_f, fout, tex_path, cnts, cs, user_id,
@@ -3530,8 +3530,8 @@ ns_print_prob_exam_protocol(
     fprintf(log_f, "cannot open `%s' for writing\n", tex_path);
     goto cleanup;
   }
-  if (cs->report_plugin && cs->report_plugin->generate_tex_problem_report) {
-    if ((*cs->report_plugin->generate_tex_problem_report)(cs->report_plugin_data, log_f, fout, tex_path, cnts, cs, prob_id, locale_id, use_exam_cypher) < 0)
+  if (cs->contest_plugin && cs->contest_plugin->generate_tex_problem_report) {
+    if ((*cs->contest_plugin->generate_tex_problem_report)(cs->contest_plugin_data, log_f, fout, tex_path, cnts, cs, prob_id, locale_id, use_exam_cypher) < 0)
       goto cleanup;
   } else {
     if (problem_report_generate(log_f, fout, tex_path, cnts, cs, prob_id,

@@ -212,7 +212,7 @@ local_install: ${TARGETS} ejudge-config po mo
 	install -d "${DESTDIR}${datadir}/ejudge/style"
 	for i in ${STYLEFILES}; do install -m 0644 $$i "${DESTDIR}${datadir}/ejudge/style"; done
 	mkdir -p "${DESTDIR}${includedir}/ejudge"
-	for i in problem_plugin_impl.h problem_plugin.h ejudge_plugin.h ej_types.h iterators.h report_plugin.h; do install -m 644 $$i "${DESTDIR}${includedir}/ejudge"; done
+	for i in problem_plugin_impl.h problem_plugin.h ejudge_plugin.h ej_types.h iterators.h contest_plugin.h; do install -m 644 $$i "${DESTDIR}${includedir}/ejudge"; done
 
 install: local_install
 	$(MAKE) -C scripts DESTDIR="${DESTDIR}" install

@@ -129,7 +129,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(tgz_pat, "s"),
   GLOBAL_PARAM(contest_start_cmd, "s"),
   GLOBAL_PARAM(description_file, "s"),
-  GLOBAL_PARAM(report_plugin_file, "s"),
+  GLOBAL_PARAM(contest_plugin_file, "s"),
 
   GLOBAL_PARAM(var_dir, "s"),
 
@@ -2228,8 +2228,8 @@ set_defaults(serve_state_t state, int mode)
     if (g->variant_map_file) {
       GLOBAL_INIT_FIELD(variant_map_file, "", conf_dir);
     }
-    if (g->report_plugin_file[0]) {
-      GLOBAL_INIT_FIELD(report_plugin_file, "", plugin_dir);
+    if (g->contest_plugin_file[0]) {
+      GLOBAL_INIT_FIELD(contest_plugin_file, "", plugin_dir);
     }
   }
 
