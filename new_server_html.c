@@ -4204,6 +4204,7 @@ priv_view_users_page(FILE *fout,
   unsigned char cl[128];
   unsigned char b1[1024], b2[1024];
   int new_contest_id = cnts->id;
+  const struct section_global_data *global = extra->serve_state->global;
 
   if (cnts->user_contest_num > 0) new_contest_id = cnts->user_contest_num;
   if (ns_open_ul_connection(phr->fw_state) < 0)
@@ -4338,21 +4339,23 @@ priv_view_users_page(FILE *fout,
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
           BUTTON(NEW_SRV_ACTION_USERS_CLEAR_DISQUALIFIED),
           _("Clear the DISQUALIFIED flag for the selected users"));
-  if (extra->serve_state->global->is_virtual) {
+  if (global->is_virtual) {
     fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
             BUTTON(NEW_SRV_ACTION_FORCE_START_VIRTUAL),
             _("Force virtual contest start for the selected users"));
-    if (cnts->exam_mode) {
+
+    if (global->user_exam_protocol_header_txt)
       fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
               BUTTON(NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL),
               _("Print the user examination protocols for the selected users"));
+    if (global->full_exam_protocol_header_txt)
       fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
               BUTTON(NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL),
               _("Print the user full examination protocols for the selected users"));
+    if (global->full_exam_protocol_header_txt)
       fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
               BUTTON(NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL),
               _("Print the user full cyphered examination protocols for the selected users"));
-    }
   }
   fprintf(fout, "</table>\n");
 
