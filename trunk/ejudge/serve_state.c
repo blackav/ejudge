@@ -113,11 +113,11 @@ serve_state_destroy(serve_state_t state,
   }
   xfree(state->prob_extras);
 
-  if (state->report_plugin && state->report_plugin_data) {
-    (*state->report_plugin->finalize)(state->report_plugin_data);
+  if (state->contest_plugin && state->contest_plugin_data) {
+    (*state->contest_plugin->finalize)(state->contest_plugin_data);
   }
-  if (state->report_plugin) {
-    plugin_unload((struct ejudge_plugin_iface*) state->report_plugin);
+  if (state->contest_plugin) {
+    plugin_unload((struct ejudge_plugin_iface*) state->contest_plugin);
   }
 
   prepare_free_config(state->config);
@@ -258,12 +258,12 @@ serve_state_load_contest(int contest_id,
   }
 
   // load reporting plugin
-  if (state->global->report_plugin_file[0]) {
-    state->report_plugin = (struct report_plugin_iface *) plugin_load(state->global->report_plugin_file, "report", "");
-    if (!state->report_plugin) goto failure;
-    if (state->report_plugin->report_plugin_version != REPORT_PLUGIN_IFACE_VERSION) goto failure;
-    if (state->report_plugin->init)
-      state->report_plugin_data = (*state->report_plugin->init)();
+  if (state->global->contest_plugin_file[0]) {
+    state->contest_plugin = (struct contest_plugin_iface *) plugin_load(state->global->contest_plugin_file, "report", "");
+    if (!state->contest_plugin) goto failure;
+    if (state->contest_plugin->contest_plugin_version != CONTEST_PLUGIN_IFACE_VERSION) goto failure;
+    if (state->contest_plugin->init)
+      state->contest_plugin_data = (*state->contest_plugin->init)();
   }
 
   if (state->global->is_virtual) {

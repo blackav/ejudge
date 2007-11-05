@@ -1,8 +1,8 @@
 /* -*- c -*- */
 /* $Id$ */
 
-#ifndef __REPORT_PLUGIN_H__
-#define __REPORT_PLUGIN_H__
+#ifndef __CONTEST_PLUGIN_H__
+#define __CONTEST_PLUGIN_H__
 
 /* Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
 
@@ -28,17 +28,17 @@ struct ejudge_cfg;
 struct xml_tree;
 
 /* version of the plugin interface structure */
-#define REPORT_PLUGIN_IFACE_VERSION 1
+#define CONTEST_PLUGIN_IFACE_VERSION 1
 
 struct http_request_info;
 struct contest_desc;
 struct contest_extra;
 struct serve_state;
 
-struct report_plugin_iface
+struct contest_plugin_iface
 {
   struct ejudge_plugin_iface b;
-  int report_plugin_version;
+  int contest_plugin_version;
 
   void *(*init)(void);
   void (*finalize)(void *);
@@ -74,4 +74,4 @@ struct report_plugin_iface
         int use_exam_cypher);
 };
 
-#endif /* __REPORT_PLUGIN_H__ */
+#endif /* __CONTEST_PLUGIN_H__ */
