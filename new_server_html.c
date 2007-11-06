@@ -521,6 +521,33 @@ ns_cgi_param_int(
   return 0;
 }
 
+int
+ns_cgi_param_int_opt(
+	struct http_request_info *phr,
+        const unsigned char *name,
+        int *p_val,
+        int default_value)
+{
+  const unsigned char *s = 0, *p;
+  char *eptr = 0;
+  int x;
+
+  if (!(x = ns_cgi_param(phr, name, &s))) {
+    if (p_val) *p_val = default_value;
+    return 0;
+  } else if (x < 0) return -1;
+  p = s;
+  while (*p && isspace(*p)) p++;
+  if (!*p) {
+    if (p_val) *p_val = default_value;
+    return 0;
+  }
+  errno = 0;
+  x = strtol(s, &eptr, 10);
+  if (errno || *eptr) return -1;
+  if (p_val) *p_val = x;
+  return 0;
+}
 static void
 close_ul_connection(struct server_framework_state *state)
 {
@@ -5379,11 +5406,18 @@ priv_assign_cyphers_1(
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
           html_input_text(bb, sizeof(bb), "seed", 16, 0),
           _("Random seed"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          html_input_text(bb, sizeof(bb), "mult", 16, 0),
+          _("Mult parameter"));
+  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+          html_input_text(bb, sizeof(bb), "shift", 16, 0),
+          _("Shift parameter"));
   fprintf(fout, "<tr><td>%s</td><td>&nbsp;</td></tr>\n",
           BUTTON(NEW_SRV_ACTION_ASSIGN_CYPHERS_2));
 
   fprintf(fout, "</table>\n");
   fprintf(fout, "</form>\n");
+  fprintf(fout, "<p>The following formula is applied: mult * X + shift.</p>\n");
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
@@ -5405,6 +5439,7 @@ priv_assign_cyphers_2(
   const unsigned char *prefix = 0;
   int min_num = 0, max_num = 0, seed = 0, total_users = 0, user_count, user_id;
   int max_user_id, i, j, r;
+  int mult = 1, shift = 0;
   int *user_ids = 0, *rand_map = 0, *user_cyphers = 0;
   char *msg_txt = 0;
   size_t msg_len = 0;
@@ -5425,6 +5460,10 @@ priv_assign_cyphers_2(
   if (ns_cgi_param_int(phr, "max_num", &max_num) < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
   if (ns_cgi_param_int(phr, "seed", &seed) < 0)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  if (ns_cgi_param_int_opt(phr, "mult", &mult, 1) < 0)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  if (ns_cgi_param_int_opt(phr, "shift", &shift, 1) < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
   if (min_num < 0 || max_num < 0 || min_num > max_num || seed < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -5465,7 +5504,8 @@ priv_assign_cyphers_2(
   msg_f = open_memstream(&msg_txt, &msg_len);
   fprintf(msg_f, "Login;Exam_Cypher\n");
   for (i = 0; i < user_count; i++) {
-    fprintf(msg_f, "%s;%s%d\n", user_logins[i], prefix, user_cyphers[i]);
+    fprintf(msg_f, "%s;%s%d\n", user_logins[i], prefix,
+            mult * user_cyphers[i] + shift);
   }
   fclose(msg_f); msg_f = 0;
 
@@ -5490,7 +5530,7 @@ priv_assign_cyphers_2(
     fprintf(fout, "<tr><td class=\"b1\">%d</td><td class=\"b1\">%d</td><td class=\"b1\">%s</td>",
             i + 1, user_ids[i], ARMOR(user_logins[i]));
     fprintf(fout, "<td class=\"b1\">%s%d</td></tr>\n",
-            ARMOR(prefix), user_cyphers[i]);
+            ARMOR(prefix), mult * user_cyphers[i] + shift);
   }
   fprintf(fout, "</table>\n");
 
