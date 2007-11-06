@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-10-28 12:56+0300\n"
-"PO-Revision-Date: 2007-10-28 11:18+0300\n"
+"POT-Creation-Date: 2007-11-06 08:50+0300\n"
+"PO-Revision-Date: 2007-11-06 08:56+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -704,9 +704,8 @@ msgstr "Назначить экзаменатора"
 msgid "Assign random cyphers"
 msgstr "Назначить случайный шифр"
 
-#, fuzzy
 msgid "Assigned cyphers"
-msgstr "Назначить случайный шифр"
+msgstr "Назначенные шифры"
 
 msgid "Attempt to submit a binary file"
 msgstr "Попытка послать бинарный файл"
@@ -2387,6 +2386,9 @@ msgstr "Перевести в участников"
 msgid "Move to reserves"
 msgstr "Перевести в запасные"
 
+msgid "Mult parameter"
+msgstr "Параметр mult"
+
 msgid "N/A"
 msgstr "Неизв."
 
@@ -3003,7 +3005,7 @@ msgid "RUNNING (frozen)"
 msgstr "ТУРНИР ИДЕТ (заморозка)"
 
 msgid "Random seed"
-msgstr ""
+msgstr "Затравка ГПСЧ"
 
 msgid "Re"
 msgstr "Re"
@@ -3466,6 +3468,9 @@ msgstr "Установить статус регистрации в REJECTED, то есть отказать в участии"
 
 msgid "Settings"
 msgstr "Настройки"
+
+msgid "Shift parameter"
+msgstr "Параметр shift"
 
 msgid "Short name"
 msgstr "ID Задачи"
