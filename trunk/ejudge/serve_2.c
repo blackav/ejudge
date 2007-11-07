@@ -207,7 +207,6 @@ serve_update_internal_xml_log(serve_state_t state,
                               const struct contest_desc *cnts)
 {
   if (!state->global->internal_xml_update_time) return;
-  fprintf(stderr, ">>%ld,%ld,%d\n", state->current_time, state->last_update_internal_xml_log, state->global->internal_xml_update_time);
   if (state->current_time < state->last_update_internal_xml_log + state->global->internal_xml_update_time) return;
   state->last_update_internal_xml_log = state->current_time;
   do_update_xml_log(state, cnts, "internal.xml", 0);
