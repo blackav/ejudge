@@ -109,63 +109,71 @@ enum
   RUNLOG_A_PAGES,
   RUNLOG_A_HIDDEN,
   RUNLOG_A_EXAMINABLE,
+  RUNLOG_A_SCHED_START_TIME,
+  RUNLOG_A_SCHED_STOP_TIME,
+  RUNLOG_A_FOG_TIME,
+  RUNLOG_A_UNFOG_TIME,
 
   RUNLOG_LAST_ATTR,
 };
 
 static const char * const elem_map[] =
 {
-  [RUNLOG_T_RUNLOG] "runlog",
-  [RUNLOG_T_RUNS]   "runs",
-  [RUNLOG_T_RUN]    "run",
-  [RUNLOG_T_USERS]  "users",
-  [RUNLOG_T_USER]   "user",
-  [RUNLOG_T_PROBLEMS] "problems",
-  [RUNLOG_T_PROBLEM] "problem",
-  [RUNLOG_T_LANGUAGES] "languages",
-  [RUNLOG_T_LANGUAGE] "language",
-  [RUNLOG_T_NAME]   "name",
-  [RUNLOG_T_SOURCE] "source",
-  [RUNLOG_T_AUDIT] "audit",
-  [RUNLOG_T_XML_REPORT] "xml_report",
-  [RUNLOG_T_FULL_ARCHIVE] "full_archive",
+  [RUNLOG_T_RUNLOG]       = "runlog",
+  [RUNLOG_T_RUNS]         = "runs",
+  [RUNLOG_T_RUN]          = "run",
+  [RUNLOG_T_USERS]        = "users",
+  [RUNLOG_T_USER]         = "user",
+  [RUNLOG_T_PROBLEMS]     = "problems",
+  [RUNLOG_T_PROBLEM]      = "problem",
+  [RUNLOG_T_LANGUAGES]    = "languages",
+  [RUNLOG_T_LANGUAGE]     = "language",
+  [RUNLOG_T_NAME]         = "name",
+  [RUNLOG_T_SOURCE]       = "source",
+  [RUNLOG_T_AUDIT]        = "audit",
+  [RUNLOG_T_XML_REPORT]   = "xml_report",
+  [RUNLOG_T_FULL_ARCHIVE] = "full_archive",
 
   [RUNLOG_LAST_TAG] 0,
 };
 static const char * const attr_map[] =
 {
-  [RUNLOG_A_RUN_ID]    "run_id",
-  [RUNLOG_A_TIME]      "time",
-  [RUNLOG_A_SIZE]      "size",
-  [RUNLOG_A_IP]        "ip",
-  [RUNLOG_A_SHA1]      "sha1",
-  [RUNLOG_A_USER_ID]   "user_id",
-  [RUNLOG_A_PROB_ID]   "prob_id",
-  [RUNLOG_A_LANG_ID]   "lang_id",
-  [RUNLOG_A_LOCALE_ID] "locale_id",
-  [RUNLOG_A_STATUS]    "status",
-  [RUNLOG_A_SCORE]     "score",
-  [RUNLOG_A_TEST]      "test",
-  [RUNLOG_A_AUTHORITATIVE] "authoritative",
-  [RUNLOG_A_ID]        "id",
-  [RUNLOG_A_NAME]      "name",
-  [RUNLOG_A_SHORT_NAME] "short_name",
-  [RUNLOG_A_LONG_NAME] "long_name",
-  [RUNLOG_A_VARIANT]   "variant",
-  [RUNLOG_A_READONLY]  "readonly",
-  [RUNLOG_A_NSEC]      "nsec",
-  [RUNLOG_A_SCORE_ADJ] "score_adj",
-  [RUNLOG_A_CONTEST_ID] "contest_id",
-  [RUNLOG_A_DURATION]  "duration",
-  [RUNLOG_A_START_TIME] "start_time",
-  [RUNLOG_A_STOP_TIME] "stop_time",
-  [RUNLOG_A_CURRENT_TIME] "current_time",
-  [RUNLOG_A_IPV6] "ipv6",
-  [RUNLOG_A_SSL] "ssl",
-  [RUNLOG_A_MIME_TYPE] "mime_type",
-  [RUNLOG_A_PAGES] "pages",
-  [RUNLOG_A_HIDDEN] "hidden",
-  [RUNLOG_A_EXAMINABLE] "examinable",
+  [RUNLOG_A_RUN_ID]           = "run_id",
+  [RUNLOG_A_TIME]             = "time",
+  [RUNLOG_A_SIZE]             = "size",
+  [RUNLOG_A_IP]               = "ip",
+  [RUNLOG_A_SHA1]             = "sha1",
+  [RUNLOG_A_USER_ID]          = "user_id",
+  [RUNLOG_A_PROB_ID]          = "prob_id",
+  [RUNLOG_A_LANG_ID]          = "lang_id",
+  [RUNLOG_A_LOCALE_ID]        = "locale_id",
+  [RUNLOG_A_STATUS]           = "status",
+  [RUNLOG_A_SCORE]            = "score",
+  [RUNLOG_A_TEST]             = "test",
+  [RUNLOG_A_AUTHORITATIVE]    = "authoritative",
+  [RUNLOG_A_ID]               = "id",
+  [RUNLOG_A_NAME]             = "name",
+  [RUNLOG_A_SHORT_NAME]       = "short_name",
+  [RUNLOG_A_LONG_NAME]        = "long_name",
+  [RUNLOG_A_VARIANT]          = "variant",
+  [RUNLOG_A_READONLY]         = "readonly",
+  [RUNLOG_A_NSEC]             = "nsec",
+  [RUNLOG_A_SCORE_ADJ]        = "score_adj",
+  [RUNLOG_A_CONTEST_ID]       = "contest_id",
+  [RUNLOG_A_DURATION]         = "duration",
+  [RUNLOG_A_START_TIME]       = "start_time",
+  [RUNLOG_A_STOP_TIME]        = "stop_time",
+  [RUNLOG_A_CURRENT_TIME]     = "current_time",
+  [RUNLOG_A_IPV6]             = "ipv6",
+  [RUNLOG_A_SSL]              = "ssl",
+  [RUNLOG_A_MIME_TYPE]        = "mime_type",
+  [RUNLOG_A_PAGES]            = "pages",
+  [RUNLOG_A_HIDDEN]           =  "hidden",
+  [RUNLOG_A_EXAMINABLE]       = "examinable",
+  [RUNLOG_A_SCHED_START_TIME] = "sched_start_time",
+  [RUNLOG_A_SCHED_STOP_TIME]  = "sched_stop_time",
+  [RUNLOG_A_FOG_TIME]         = "fog_time",
+  [RUNLOG_A_UNFOG_TIME]       = "unfog_time",
 
   [RUNLOG_LAST_ATTR] 0,
 };
@@ -663,15 +671,16 @@ encode_file(
 }
 
 int
-unparse_runlog_xml(serve_state_t state,
-                   const struct contest_desc *cnts,
-                   FILE *f,
-                   const struct run_header *phead,
-                   size_t nelems,
-                   const struct run_entry *entries,
-                   int external_mode,
-                   int source_mode,
-                   time_t current_time)
+unparse_runlog_xml(
+	serve_state_t state,
+        const struct contest_desc *cnts,
+        FILE *f,
+        const struct run_header *phead,
+        size_t nelems,
+        const struct run_entry *entries,
+        int external_mode,
+        int source_mode,
+        time_t current_time)
 {
   int i, flags;
   const struct run_entry *pp;
@@ -708,6 +717,22 @@ unparse_runlog_xml(serve_state_t state,
   if (current_time > 0) {
     fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_CURRENT_TIME],
             xml_unparse_date(current_time));
+  }
+  if (phead->sched_time > 0) {
+    fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_SCHED_START_TIME],
+            xml_unparse_date(phead->sched_time));
+  }
+  if (phead->finish_time > 0) {
+    fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_SCHED_STOP_TIME],
+            xml_unparse_date(phead->finish_time));
+  }
+  if (global->board_fog_time > 0) {
+    fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_FOG_TIME],
+            xml_unparse_date(global->board_fog_time));
+    if (global->board_unfog_time > 0) {
+      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_UNFOG_TIME],
+              xml_unparse_date(global->board_unfog_time));
+    }
   }
   fprintf(f, ">\n");
   if (external_mode) {
