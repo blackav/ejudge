@@ -131,6 +131,7 @@
  *   V1 - str1
  *   Vn - server_name
  *   VN - server_name_en
+ *   Vv - variant
  */
 
 int
@@ -829,6 +830,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
          *   V1 - str1
          *   Vn - server_name
          *   VN - server_name_en
+         *   Vv - variant
          */
         pf++;
         switch (*pf) {
@@ -837,6 +839,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
         case '1':
         case 'n': case 'N':
         case 'S':
+        case 'v':
           break;
         case 0:
           is_invalid = 1;
@@ -852,6 +855,10 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           case 'l':
             need_int_format = 1;
             int_format_value = extra_data->locale_id;
+            break;
+          case 'v':
+            need_int_format = 1;
+            int_format_value = extra_data->variant;
             break;
           case 'S':
             need_ullongx_format = 1;

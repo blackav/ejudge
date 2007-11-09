@@ -653,6 +653,7 @@ int prepare_serve_defaults(serve_state_t, const struct contest_desc **);
 
 int find_tester(const serve_state_t, int, char const *);
 int find_variant(const serve_state_t, int, int, int *);
+int find_user_variant(const serve_state_t, int, int *);
 int find_user_priority_adjustment(const serve_state_t, int user_id);
 
 int prepare_tester_refinement(serve_state_t, struct section_tester_data *,

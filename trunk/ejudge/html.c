@@ -1756,6 +1756,7 @@ do_write_kirov_standings(const serve_state_t state,
   int total_trans = 0;
   struct standings_style ss;
   int sort_flag;
+  struct sformat_extra_data fed;
 
   if (client_flag) head_style = cnts->team_head_style;
   else head_style = "h2";
@@ -2499,8 +2500,10 @@ do_write_kirov_standings(const serve_state_t state,
     }
     fprintf(f, "</td>");
     if (global->stand_extra_format[0]) {
+      memset(&fed, 0, sizeof(fed));
+      fed.variant = find_user_variant(state, u_info.id, 0);
       sformat_message(dur_str, sizeof(dur_str), global->stand_extra_format,
-                      NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
+                      NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, &fed);
       fprintf(f, "<td%s>%s</td>", ss.extra_attr, dur_str);
     }
     if (global->stand_show_contestant_status
@@ -2848,6 +2851,7 @@ do_write_moscow_standings(const serve_state_t state,
   unsigned char *up_cf = 0;     /* whether there exist "Check failed" messages */
   struct standings_style ss;
   const struct section_problem_data *prob;
+  struct sformat_extra_data fed;
   
   if (client_flag) head_style = cnts->team_head_style;
   else head_style = "h2";
@@ -3417,8 +3421,10 @@ do_write_moscow_standings(const serve_state_t state,
     }
     fprintf(f, "</td>");
     if (global->stand_extra_format[0]) {
+      memset(&fed, 0, sizeof(fed));
+      fed.variant = find_user_variant(state, u_info.id, 0);
       sformat_message(strbuf, sizeof(strbuf), global->stand_extra_format,
-                      NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
+                      NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, &fed);
       fprintf(f, "<td%s>%s</td>", ss.extra_attr, strbuf);
     }
     if (global->stand_show_contestant_status
@@ -3663,6 +3669,7 @@ do_write_standings(const serve_state_t state,
   const unsigned char *col_attr = 0;
   struct standings_style ss;
   const struct section_problem_data *prob = 0;
+  struct sformat_extra_data fed;
 
   if (cur_time <= 0) cur_time = time(0);
   if (!only_table_flag) {
@@ -4061,6 +4068,8 @@ do_write_standings(const serve_state_t state,
       }
       fprintf(f, "</td>");
       if (global->stand_extra_format[0]) {
+        memset(&fed, 0, sizeof(fed));
+        fed.variant = find_user_variant(state, ttt.id, 0);
         sformat_message(url_str, sizeof(url_str), global->stand_extra_format,
                         NULL, NULL, NULL, NULL, &ttt, ttt.user, 0, 0);
         fprintf(f, "<td%s>%s</td>", ss.extra_attr, url_str);
