@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-11-06 08:50+0300\n"
-"PO-Revision-Date: 2007-11-06 08:56+0300\n"
+"POT-Creation-Date: 2007-11-10 09:00+0300\n"
+"PO-Revision-Date: 2007-11-10 11:40+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1528,6 +1528,9 @@ msgstr "Завершить сеанс работы"
 msgid "Finish the exam"
 msgstr "Завершить экзамен"
 
+msgid "First User_Id"
+msgstr "Первый User_Id"
+
 msgid "First clar"
 msgstr "Первое сообщение"
 
@@ -2149,6 +2152,9 @@ msgstr "Язык изменён"
 #, c-format
 msgid "Language is empty in row %d\n"
 msgstr "В строке %d не определён язык\n"
+
+msgid "Last User_Id (incl.)"
+msgstr "Последний User_Id (вкл.)"
 
 msgid "Last clar"
 msgstr "Последнее сообщение"
