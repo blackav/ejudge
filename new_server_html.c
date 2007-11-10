@@ -5812,8 +5812,14 @@ priv_print_users_exam_protocol(
   if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
   if (locale_id > 0) l10n_setlocale(locale_id);
   ff = open_memstream(&log_text, &log_size);
-  r = ns_print_user_exam_protocols(cnts, cs, ff, uset.u, uset.v, locale_id,
-                                   use_user_printer, full_report, use_cypher);
+  if (cs->contest_plugin && cs->contest_plugin->print_user_reports) {
+    r = (*cs->contest_plugin->print_user_reports)
+      (cs->contest_plugin_data, ff, cnts, cs, uset.u, uset.v, locale_id,
+       use_user_printer, full_report, use_cypher);
+  } else {
+    r = ns_print_user_exam_protocols(cnts, cs, ff, uset.u, uset.v, locale_id,
+                                     use_user_printer, full_report, use_cypher);
+  }
   fclose(ff); ff = 0;
   if (locale_id > 0) l10n_setlocale(0);
 

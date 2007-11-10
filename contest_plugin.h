@@ -72,6 +72,18 @@ struct contest_plugin_iface
         int prob_id,
         int locale_id,
         int use_exam_cypher);
+
+  int (*print_user_reports)(
+	void *handle,
+        FILE *log_f,
+        const struct contest_desc *cnts,
+        const struct serve_state *cs,
+        int nuser,
+        int *user_ids,
+        int locale_id,
+        int use_user_printer,
+        int full_report,
+        int use_cypher);
 };
 
 #endif /* __CONTEST_PLUGIN_H__ */
