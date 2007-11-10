@@ -2064,6 +2064,7 @@ ns_print_user_exam_protocols(
 
   for (i = 0; i < nuser; i++) {
     user_id = user_ids[i];
+    if (teamdb_lookup(cs->teamdb_state, user_id) <= 0) continue;
     snprintf(tex_path, sizeof(tex_path), "%s/%06d.tex", global->print_work_dir,
              user_id);
     if (!(fout = fopen(tex_path, "w"))) {
