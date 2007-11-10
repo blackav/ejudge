@@ -2243,6 +2243,17 @@ get_user_info_1_func(
   return -1;
 }
 
+static int get_user_info_2_func(
+	void *data,
+        int user_id,
+        int contest_id,
+        const struct userlist_user **p_u,
+        const struct userlist_user_info **p_ui)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+
+}
+
 /*
  * Local variables:
  *  compile-command: "make -C ../.."
