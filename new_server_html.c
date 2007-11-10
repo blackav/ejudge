@@ -1215,6 +1215,26 @@ privileged_page_login(FILE *fout,
   ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
 }
 
+static void
+priv_parse_user_id_range(
+	struct http_request_info *phr,
+        int *p_first_id,
+        int *p_last_id)
+{
+  int first = 0, last = -1, x, y;
+
+  if (ns_cgi_param_int_opt(phr, "first_user_id", &x, 0) < 0) goto done;
+  if (ns_cgi_param_int_opt(phr, "last_user_id", &y, -1) < 0) goto done;
+  if (x <= 0 || y <= 0 || x > y || y - x > 10000) goto done;
+
+  first = x;
+  last = y;
+
+ done:
+  if (p_first_id) *p_first_id = first;
+  if (p_last_id) *p_last_id = last;
+}
+
 static int
 priv_registration_operation(FILE *fout,
                             FILE *log_f,
@@ -1229,6 +1249,7 @@ priv_registration_operation(FILE *fout,
   int retcode = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char *disq_comment = 0;
+  int first_user_id = 0, last_user_id  = -1;
 
   // extract the selected set of users
   memset(&uset, 0, sizeof(uset));
@@ -1243,6 +1264,14 @@ priv_registration_operation(FILE *fout,
     }
     XEXPAND2(uset);
     uset.v[uset.u++] = x;
+  }
+
+  priv_parse_user_id_range(phr, &first_user_id, &last_user_id);
+  if (first_user_id > 0) {
+    for (i = first_user_id; i <= last_user_id; i++) {
+      XEXPAND2(uset);
+      uset.v[uset.u++] = i;
+    }
   }
 
   if (phr->action == NEW_SRV_ACTION_USERS_SET_DISQUALIFIED) {
@@ -1459,6 +1488,7 @@ priv_priv_user_operation(FILE *fout,
   const unsigned char *s;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int retval = 0;
+  int first_user_id = 0, last_user_id = -1;
 
   // extract the selected set of users
   memset(&uset, 0, sizeof(uset));
@@ -1473,6 +1503,14 @@ priv_priv_user_operation(FILE *fout,
     }
     XEXPAND2(uset);
     uset.v[uset.u++] = x;
+  }
+
+  priv_parse_user_id_range(phr, &first_user_id, &last_user_id);
+  if (first_user_id > 0) {
+    for (i = first_user_id; i <= last_user_id; i++) {
+      XEXPAND2(uset);
+      uset.v[uset.u++] = i;
+    }
   }
 
   // FIXME: probably we need to sort user_ids and remove duplicates
@@ -1771,6 +1809,7 @@ priv_force_start_virtual(
   struct timeval tt;
   long nsec;
   int run_id;
+  int first_user_id = 0, last_user_id = -1;
 
   if (phr->role < USER_ROLE_JUDGE)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -1795,6 +1834,15 @@ priv_force_start_virtual(
     XEXPAND2(uset);
     uset.v[uset.u++] = x;
   }
+
+  priv_parse_user_id_range(phr, &first_user_id, &last_user_id);
+  if (first_user_id > 0) {
+    for (i = first_user_id; i <= last_user_id; i++) {
+      XEXPAND2(uset);
+      uset.v[uset.u++] = i;
+    }
+  }
+
   gettimeofday(&tt, 0);
   nsec = tt.tv_usec * 1000;
   // FIXME: it's a bit risky, need to check the database...
@@ -4321,6 +4369,17 @@ priv_view_users_page(FILE *fout,
   }
   fprintf(fout, "</table>\n");
 
+  fprintf(fout, "<h2>Users range</h2>\n");
+
+  fprintf(fout, "<table>\n");
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+          _("First User_Id"),
+          html_input_text(bb, sizeof(bb), "first_user_id", 16, 0));
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+          _("Last User_Id (incl.)"),
+          html_input_text(bb, sizeof(bb), "last_user_id", 16, 0));
+  fprintf(fout, "</table>\n");
+
   fprintf(fout, "<h2>Available actions</h2>\n");
 
   fprintf(fout, "<table>\n");
@@ -5715,6 +5774,7 @@ priv_print_users_exam_protocol(
   int use_user_printer = 0;
   int full_report = 0;
   int use_cypher = 0;
+  int first_user_id = 0, last_user_id = -1;
 
   if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -5730,6 +5790,14 @@ priv_print_users_exam_protocol(
 
     XEXPAND2(uset);
     uset.v[uset.u++] = x;
+  }
+
+  priv_parse_user_id_range(phr, &first_user_id, &last_user_id);
+  if (first_user_id > 0) {
+    for (i = first_user_id; i <= last_user_id; i++) {
+      XEXPAND2(uset);
+      uset.v[uset.u++] = i;
+    }
   }
 
   if (phr->action == NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL) {
