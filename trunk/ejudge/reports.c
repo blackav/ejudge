@@ -2095,12 +2095,14 @@ ns_print_user_exam_protocols(
              global->print_work_dir, user_id);
     snprintf(dvi_path, sizeof(dvi_path), "%s/%06d.dvi",
              global->print_work_dir, user_id);
+    /*
     if (invoke_latex(log_f, tex_path, err_path, global->print_work_dir, 1) < 0)
       goto cleanup;
     if (invoke_latex(log_f, tex_path, err_path, global->print_work_dir, 0) < 0)
       goto cleanup;
     if (invoke_dvips(log_f, dvi_path, err_path, global->print_work_dir, 1) < 0)
       goto cleanup;
+    */
   }
 
   // all PS files are ready, so print them all
@@ -2118,10 +2120,12 @@ ns_print_user_exam_protocols(
              global->print_work_dir, user_id);
 
     snprintf(tst_path, sizeof(tst_path), "%s/.noprint", global->print_work_dir);
+    /*
     if (os_CheckAccess(tst_path, REUSE_F_OK) < 0) {
       if (invoke_lpr(log_f, global, printer_name, ps_path, err_path, 1) < 0)
         goto cleanup;
     }
+    */
   }
 
   retval = 0;
