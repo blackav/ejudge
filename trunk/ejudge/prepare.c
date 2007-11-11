@@ -1624,7 +1624,7 @@ prepare_parse_variant_map(
         unsigned char **p_header_txt,
         unsigned char **p_footer_txt)
 {
-  int vintage, i, j, k;
+  int vintage, i, j, k, var_prob_num;
   FILE *f = 0;
   struct variant_map *pmap = 0;
   const unsigned char * const pvm = "parse_variant_map";
@@ -1632,6 +1632,7 @@ prepare_parse_variant_map(
   char *head_t = 0, *foot_t = 0;
   size_t head_z = 0, foot_z = 0;
   const struct section_problem_data *prob;
+  int *newvar;
 
   if (p_header_txt) {
     head_f = open_memstream(&head_t, &head_z);
@@ -1707,6 +1708,22 @@ prepare_parse_variant_map(
         }
       }
     }
+  } else {
+    // set pmap->var_prob_num based on the given variant specifications
+    var_prob_num = 0;
+    for (i = 0; i < pmap->u; i++) {
+      if (pmap->v[i].var_num > var_prob_num)
+        var_prob_num = pmap->v[i].var_num;
+    }
+    for (i = 0; i < pmap->u; i++) {
+      if (pmap->v[i].var_num != var_prob_num) {
+        XCALLOC(newvar, var_prob_num + 1);
+        memcpy(newvar, pmap->v[i].variants, (pmap->v[i].var_num + 1) * sizeof(newvar[0]));
+        xfree(pmap->v[i].variants);
+        pmap->v[i].variants = newvar;
+      }
+    }
+    pmap->var_prob_num = var_prob_num;
   }
 
 #if 0
