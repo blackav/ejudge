@@ -7898,6 +7898,13 @@ super_html_update_variant_map(FILE *flog, int contest_id,
   struct variant_map *vmap = 0;
   int *tvec = 0, *new_map, *new_rev_map;
   struct userlist_user *user;
+  struct serve_state cs;
+
+  // we need that for parse_variant_map
+  memset(&cs, 0, sizeof(cs));
+  cs.global = global;
+  cs.max_prob = total_probs - 1;
+  memcpy(cs.probs, probs, total_probs * sizeof(cs.probs[0]));
 
   if (!cnts->root_dir && !cnts->root_dir[0]) {
     fprintf(flog, "update_variant_map: contest root_dir is not set");
@@ -7940,7 +7947,7 @@ super_html_update_variant_map(FILE *flog, int contest_id,
         goto failed;
       }
 
-      if (!(global->variant_map = prepare_parse_variant_map(flog, 0, variant_file, p_header_txt, p_footer_txt)))
+      if (!(global->variant_map = prepare_parse_variant_map(flog, &cs, variant_file, p_header_txt, p_footer_txt)))
         goto failed;
     }
   }
