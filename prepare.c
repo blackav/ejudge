@@ -1710,18 +1710,23 @@ prepare_parse_variant_map(
     }
   } else {
     // set pmap->var_prob_num based on the given variant specifications
+    // FIXME: super_html_3.c expects, that variants are listed starting
+    // from 0, but parse_variant_map parses variants starting from 1...
     var_prob_num = 0;
     for (i = 0; i < pmap->u; i++) {
-      if (pmap->v[i].var_num > var_prob_num)
-        var_prob_num = pmap->v[i].var_num;
+      if (pmap->v[i].var_num > var_prob_num + 1)
+        var_prob_num = pmap->v[i].var_num - 1;
     }
     for (i = 0; i < pmap->u; i++) {
-      if (pmap->v[i].var_num != var_prob_num) {
-        XCALLOC(newvar, var_prob_num + 1);
+      if (pmap->v[i].var_num < var_prob_num + 1) {
+        XCALLOC(newvar, var_prob_num + 2);
         memcpy(newvar, pmap->v[i].variants, (pmap->v[i].var_num + 1) * sizeof(newvar[0]));
         xfree(pmap->v[i].variants);
         pmap->v[i].variants = newvar;
+        pmap->v[i].var_num = var_prob_num + 1;
       }
+      memmove(pmap->v[i].variants, pmap->v[i].variants + 1, pmap->v[i].var_num);
+      pmap->v[i].var_num--;
     }
     pmap->var_prob_num = var_prob_num;
   }
