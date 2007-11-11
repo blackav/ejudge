@@ -7995,15 +7995,17 @@ super_html_update_variant_map(FILE *flog, int contest_id,
   } else if (vmap->var_prob_num > 0) {
     // reallocate new array for each entry
     for (i = 0; i < vmap->u; i++) {
-      XCALLOC(tvec, var_prob_num);
-      if (vmap->v[i].var_num > 0) {
-        n = vmap->v[i].var_num;
-        if (n > var_prob_num) n = var_prob_num;
-        memcpy(tvec, vmap->v[i].variants, n * sizeof(tvec[0]));
-        xfree(vmap->v[i].variants);
+      if (vmap->v[i].var_num != var_prob_num) {
+        XCALLOC(tvec, var_prob_num);
+        if (vmap->v[i].var_num > 0) {
+          n = vmap->v[i].var_num;
+          if (n > var_prob_num) n = var_prob_num;
+          memcpy(tvec, vmap->v[i].variants, n * sizeof(tvec[0]));
+          xfree(vmap->v[i].variants);
+        }
+        vmap->v[i].var_num = var_prob_num;
+        vmap->v[i].variants = tvec;
       }
-      vmap->v[i].var_num = var_prob_num;
-      vmap->v[i].variants = tvec;
     }
     // create forward and reverse mappings
     vmap->prob_map_size = total_probs;
