@@ -1714,19 +1714,18 @@ prepare_parse_variant_map(
     // from 0, but parse_variant_map parses variants starting from 1...
     var_prob_num = 0;
     for (i = 0; i < pmap->u; i++) {
-      if (pmap->v[i].var_num > var_prob_num + 1)
-        var_prob_num = pmap->v[i].var_num - 1;
+      if (pmap->v[i].var_num > var_prob_num)
+        var_prob_num = pmap->v[i].var_num;
     }
     for (i = 0; i < pmap->u; i++) {
-      if (pmap->v[i].var_num < var_prob_num + 1) {
-        XCALLOC(newvar, var_prob_num + 2);
+      if (pmap->v[i].var_num < var_prob_num) {
+        XCALLOC(newvar, var_prob_num + 1);
         memcpy(newvar, pmap->v[i].variants, (pmap->v[i].var_num + 1) * sizeof(newvar[0]));
         xfree(pmap->v[i].variants);
         pmap->v[i].variants = newvar;
-        pmap->v[i].var_num = var_prob_num + 1;
+        pmap->v[i].var_num = var_prob_num;
       }
       memmove(pmap->v[i].variants, pmap->v[i].variants + 1, pmap->v[i].var_num);
-      pmap->v[i].var_num--;
     }
     pmap->var_prob_num = var_prob_num;
   }
