@@ -1725,23 +1725,22 @@ prepare_parse_variant_map(
         pmap->v[i].variants = newvar;
         pmap->v[i].var_num = var_prob_num;
       }
-      memmove(pmap->v[i].variants, pmap->v[i].variants + 1, pmap->v[i].var_num);
+      memmove(pmap->v[i].variants, pmap->v[i].variants + 1, pmap->v[i].var_num * sizeof(newvar[0]));
     }
     pmap->var_prob_num = var_prob_num;
-  }
 
-#if 0
-  fprintf(stderr, "Parsed variant map version %d\n", vintage);
-  for (i = 0; i < pmap->u; i++) {
-    fprintf(stderr, "%s: ", pmap->v[i].login);
-    for (j = 1; j <= pmap->var_prob_num; j++)
-      fprintf(stderr, "%s(%d) ",
-              state->probs[pmap->prob_rev_map[j]]->short_name,
-              pmap->v[i].variants[j]);
-    fprintf(stderr, "\n");
+    /*
+    fprintf(stderr, "Parsed variant map version %d\n", vintage);
+    for (i = 0; i < pmap->u; i++) {
+      fprintf(stderr, "%s: ", pmap->v[i].login);
+      for (j = 0; j < pmap->var_prob_num; j++)
+        fprintf(stderr, "%d ",
+                pmap->v[i].variants[j]);
+      fprintf(stderr, "\n");
+    }
+    */
   }
-#endif
-
+  
   if (head_f) {
     fclose(head_f);
     head_f = 0;
