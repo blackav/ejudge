@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-11-10 09:00+0300\n"
-"PO-Revision-Date: 2007-11-10 11:40+0300\n"
+"POT-Creation-Date: 2007-11-20 12:28+0300\n"
+"PO-Revision-Date: 2007-11-20 12:29+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1341,6 +1341,9 @@ msgstr "Состояние экзамена"
 
 msgid "Examinable?"
 msgstr "Проверяема?"
+
+msgid "Examination information"
+msgstr "Информация об экзаменуемых"
 
 msgid "Examiner"
 msgstr "Экзаменатор"
@@ -4110,6 +4113,9 @@ msgstr "Отчёт о проверке"
 
 msgid "View contest passwords"
 msgstr "Просмотреть турнирные пароли"
+
+msgid "View examination information"
+msgstr "Посмотреть информацию об экзаменуемых"
 
 msgid "View last 15"
 msgstr "Смотреть последние 15"
