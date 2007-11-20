@@ -1604,7 +1604,7 @@ super_html_commit_contest(FILE *f,
     capp = (struct opcap_list_item*) cnts->caps_node->first_down;
 
     for (; capp; capp = (struct opcap_list_item*) capp->b.right) {
-      if ((i = userlist_clnt_lookup_user(us_conn, capp->login, &uid, NULL)) != ULS_LOGIN_OK) {
+      if ((i = userlist_clnt_lookup_user(us_conn, capp->login, 0, &uid, NULL)) != ULS_LOGIN_OK) {
         fprintf(flog, "Error: cannot find user \"%s\": %s\n", capp->login,
                 userlist_strerror(-i));
         continue;
