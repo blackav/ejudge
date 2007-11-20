@@ -75,6 +75,12 @@ static ptr_iterator_t get_user_contest_iterator_func(void *data, int user_id);
 static int remove_expired_users_func(void *data, time_t min_reg_time);
 static int get_user_info_1_func(void *data, int user_id,
                                 const struct userlist_user **p_user);
+static int get_user_info_2_func(
+	void *data,
+        int user_id,
+        int contest_id,
+        const struct userlist_user **p_u,
+        const struct userlist_user_info **p_ui);
 
 /* plugin entry point */
 struct uldb_plugin_iface plugin_uldb_mysql =
@@ -133,9 +139,10 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   remove_expired_users_func,
   // get the login user info
   get_user_info_1_func,
+  // get the login user info
+  get_user_info_2_func,
 
   /*
-  int (*get_user_info_2)(void *, int, int, const struct userlist_user **, const struct userlist_user_info **);
   // set the login time
   int (*touch_login_time)(void *, int, int, time_t);
   // get the login, basic contest-specific user info, and registration
@@ -230,6 +237,9 @@ enum { CNTSREGS_POOL_SIZE = 1024 };
 // the size of the users pool
 enum { USERS_POOL_SIZE = 1024 };
 
+// the size of the user info pool
+enum { USER_INFO_POOL_SIZE = 1024 };
+
 struct cntsregs_container;
 struct cntsregs_user;
 
@@ -245,6 +255,16 @@ struct users_cache
   int map_size, count;
   struct xml_tree *first, *last;
   struct userlist_user **map;
+};
+
+struct user_info_container;
+struct user_info_user;
+
+struct user_info_cache
+{
+  int size, count;
+  struct user_info_user *user_map;
+  struct user_info_container *first, *last;
 };
 
 struct uldb_mysql_state
@@ -279,6 +299,9 @@ struct uldb_mysql_state
 
   // users caching
   struct users_cache users;
+
+  // user_info caching
+  struct user_info_cache user_infos;
 };
 
 struct user_id_iterator
@@ -2243,6 +2266,85 @@ get_user_info_1_func(
   return -1;
 }
 
+/*
+struct user_info_cache
+{
+  int size, count;
+  struct user_info_user *user_map;
+  struct user_info_container *first, *last;
+};
+*/
+struct user_info_container
+{
+  struct xml_tree b;
+  int user_id;
+  int contest_id;
+  struct userlist_cntsinfo *ui;
+  struct user_info_container *next, *prev;
+  struct user_info_container *next_user, *prev_user;
+};
+struct user_info_user
+{
+  struct user_info_container *first_user, *last_user;
+  int min_id, max_id;           // [min_id, max_id)
+};
+
+static struct userlist_user_info *
+allocate_user_info_on_pool(
+	struct uldb_mysql_state *state,
+        int user_id,
+        int contest_id)
+{
+  struct user_info_cache *ic = &state->user_infos;
+  struct user_info_user *uiu;
+  struct user_info_container *pp = 0;
+
+  if (user_id >= ic->size) {
+    int new_size = ic->size;
+    struct user_info_user *new_map = 0;
+
+    if (!new_size) new_size = 128;
+    while (user_id >= new_size) new_size *= 2;
+
+    XCALLOC(new_map, new_size);
+    if (ic->size > 0) {
+      memcpy(new_map, ic->user_map, ic->size * sizeof(new_map[0]));
+    }
+    xfree(ic->user_map);
+    ic->user_map = new_map;
+    ic->size = new_size;
+  }
+  uiu = &ic->user_map[user_id];
+
+  if (contest_id >= uiu->min_id && contest_id < uiu->max_id) {
+    for (pp = uiu->first_user; pp; pp = pp->next_user)
+      if (pp->contest_id == contest_id)
+        break;
+  }
+  if (pp) {
+    userlist_elem_free_data(&pp->ui->b);
+    pp->ui->b.tag = USERLIST_T_CNTSINFO;
+    // move the element to the head of list
+    if (pp != ic->first) {
+      if (pp->next) {
+        pp->next->prev = pp->prev;
+      } else {
+        ic->last = pp->prev;
+      }
+      pp->prev->next = pp->next;
+      pp->prev = 0;
+      pp->next = ic->first;
+      ic->first = pp;
+    }
+    return &pp->ui->i;
+  }
+
+  if (ic->count == USER_INFO_POOL_SIZE) {
+  }
+
+  abort();
+}
+
 static int get_user_info_2_func(
 	void *data,
         int user_id,
@@ -2251,7 +2353,11 @@ static int get_user_info_2_func(
         const struct userlist_user_info **p_ui)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  struct userlist_user_info *ii;
 
+  ii = allocate_user_info_on_pool(state, user_id, contest_id);
+
+  abort();
 }
 
 /*
