@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,7 @@ userlist_clnt_open(char const *socketpath)
 {
   int fd = -1;
   struct userlist_clnt *clnt = 0;
-  int max_path_buf;
+  int max_path_buf = 100;
   int val;
   struct sockaddr_un addr;
   int ret;
@@ -40,6 +40,7 @@ userlist_clnt_open(char const *socketpath)
   struct cmsghdr *pmsg;
   struct iovec send_vec[1];
 
+#if !defined PYTHON
   signal(SIGPIPE, SIG_IGN);
 
   ASSERT(socketpath);
@@ -49,15 +50,24 @@ userlist_clnt_open(char const *socketpath)
     err("socket path length is too long (%zu)", strlen(socketpath));
     goto failure;
   }
+#endif
 
   if ((fd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
+#if defined PYTHON
+    PyErr_SetFromErrno(PyExc_IOError);
+#else
     err("socket() failed: %s", os_ErrorMsg());
+#endif
     goto failure;
   }
 
   val = 1;
   if (setsockopt(fd, SOL_SOCKET, SO_PASSCRED, &val, sizeof(val)) < 0) {
+#if defined PYTHON
+    PyErr_SetFromErrno(PyExc_IOError);
+#else
     err("setsockopt() failed: %s", os_ErrorMsg());
+#endif
     goto failure;
   }
 
@@ -65,7 +75,11 @@ userlist_clnt_open(char const *socketpath)
   addr.sun_family = AF_UNIX;
   strncpy(addr.sun_path, socketpath, max_path_buf - 1);
   if (connect(fd, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
+#if defined PYTHON
+    PyErr_SetFromErrnoWithFilename(PyExc_IOError, (char*) socketpath);
+#else
     err("connect() failed: %s", os_ErrorMsg());
+#endif
     goto failure;
   }
 
@@ -89,11 +103,19 @@ userlist_clnt_open(char const *socketpath)
   val = 0;
   ret = sendmsg(fd, &msg, 0);
   if (ret < 0) {
+#if defined PYTHON
+    PyErr_SetFromErrno(PyExc_IOError);
+#else
     err("sendmsg() failed: %s", os_ErrorMsg());
+#endif
     goto failure;
   }
   if (ret != 4) {
+#if defined PYTHON
+    PyErr_SetString(PyExc_IOError, "short write");
+#else
     err("sendmsg() short write: %d bytes", ret);
+#endif
     goto failure;
   }
 

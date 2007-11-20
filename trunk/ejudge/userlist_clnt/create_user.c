@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,19 +18,26 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_create_user(struct userlist_clnt *clnt, int *p_user_id)
+userlist_clnt_create_user(
+	struct userlist_clnt *clnt,
+        const unsigned char *login,
+        int *p_user_id)
 {
   struct userlist_pk_edit_field *out = 0;
   struct userlist_packet *in = 0;
   int r;
-  size_t out_size, in_size = 0;
+  size_t out_size, login_len, in_size = 0;
   struct userlist_pk_login_ok *uin = 0;
   void *void_in = 0;
 
-  out_size = sizeof(*out);
+  if (!login) login = "";
+  login_len = strlen(login);
+  out_size = sizeof(*out) + login_len;
   out = alloca(out_size);
   memset(out, 0, out_size);
   out->request_id = ULS_CREATE_USER;
+  out->value_len = login_len;
+  strcpy(out->data, login);
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
   if ((r = userlist_clnt_read_and_notify(clnt, &in_size, &void_in)) < 0)
     return r;

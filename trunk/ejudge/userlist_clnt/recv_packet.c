@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,12 +26,16 @@ userlist_clnt_recv_packet(struct userlist_clnt *clnt,
   unsigned char len_buf[4], *b, *bb = 0;
   int r, n;
   int sz;
+#if !defined PYTHON
   int code = 0;
+#endif
 
+#if !defined PYTHON
   ASSERT(clnt);
   ASSERT(p_size);
   ASSERT(p_data);
   ASSERT(clnt->fd >= 0);
+#endif
 
   *p_size = 0;
   *p_data = 0;
@@ -42,21 +46,33 @@ userlist_clnt_recv_packet(struct userlist_clnt *clnt,
   while (r > 0) {
     n = read(clnt->fd, b, r);
     if (n < 0) {
+#if defined PYTHON
+      PyErr_SetFromErrno(PyExc_IOError);
+#else
       err("read() from userlist-server failed: %s", os_ErrorMsg());
       code = -ULS_ERR_READ_ERROR;
+#endif
       goto io_error;
     }
     if (!n) {
+#if defined PYTHON
+      PyErr_SetString(PyExc_IOError, "unexpected EOF");
+#else
       err("unexpected EOF from userlist-server");
       code = -ULS_ERR_UNEXPECTED_EOF;
+#endif
       goto io_error;
     }
     r -= n; b += n;
   }
   memcpy(&sz, len_buf, 4);
   if (sz <= 0) {
+#if defined PYTHON
+    PyErr_SetString(PyExc_IOError, "invalid packet length");
+#else
     err("invalid packet length %d from userlist-server", sz);
     code = -ULS_ERR_PROTOCOL;
+#endif
     goto io_error;
   }
   bb = b = (unsigned char*) xcalloc(1, sz);
@@ -66,13 +82,21 @@ userlist_clnt_recv_packet(struct userlist_clnt *clnt,
   while (r > 0) {
     n = read(clnt->fd, b, r);
     if (n < 0) {
+#if defined PYTHON
+      PyErr_SetFromErrno(PyExc_IOError);
+#else
       err("read() from userlist-server failed: %s", os_ErrorMsg());
       code = -ULS_ERR_READ_ERROR;
+#endif
       goto io_error;
     }
     if (!n) {
+#if defined PYTHON
+      PyErr_SetString(PyExc_IOError, "unexpected EOF");
+#else
       err("unexpected EOF from userlist-server");
       code = -ULS_ERR_UNEXPECTED_EOF;
+#endif
       goto io_error;
     }
     r -= n; b += n;
@@ -83,11 +107,16 @@ userlist_clnt_recv_packet(struct userlist_clnt *clnt,
 
   return 0;
  io_error:
-  if (bb) xfree(bb);
+#if defined PYTHON
+  free(bb);
+  return -1;
+#else
+  xfree(bb);
   return code;
+#endif
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
