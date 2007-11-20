@@ -2203,6 +2203,88 @@ ns_write_online_users(
 }
 
 int
+ns_write_exam_info(
+	FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  int i, max_user_id, serial = 1;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct teamdb_export td;
+  unsigned char cl[128];
+  struct userlist_members *mm = 0;
+  struct userlist_member *m = 0;
+
+  snprintf(cl, sizeof(cl), " class=\"b1\"");
+
+  fprintf(fout, "<table%s>\n"
+          "<tr><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th></tr>",
+          cl, cl, "NN", cl, _("User Id"), cl, _("User login"),
+          cl, _("User name"),
+          cl, _("Flags"),
+          cl, _("First name"),
+          cl, _("Family name"),
+          cl, _("Location"),
+          cl, _("Exam Id"),
+          cl, _("Cypher"));
+  max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
+  for (i = 1; i <= max_user_id; i++) {
+    if (!teamdb_lookup(cs->teamdb_state, i)) continue;
+    if (teamdb_export_team(cs->teamdb_state, i, &td) < 0) continue;
+    //if (td.flags) continue;
+    if (!td.user) continue;
+
+    fprintf(fout, "<tr><td%s>%d</td><td%s>%d</td><td%s><tt>%s</tt></td>",
+            cl, serial++, cl, i, cl, ARMOR(td.login));
+    if (td.name && *td.name) {
+      fprintf(fout, "<td%s><tt>%s</tt></td>", cl, ARMOR(td.name));
+    } else {
+      fprintf(fout, "<td%s><i>%s</i></td>", cl, _("Not set"));
+    }
+    fprintf(fout, "<td%s>%s</td>", cl, "&nbsp;"); /* FIXME: print flags */
+
+    if (td.user && (mm = td.user->i.members[USERLIST_MB_CONTESTANT])
+        && mm->total > 0)
+      m = mm->members[0];
+
+    if (m && m->firstname) {
+      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(m->firstname));
+    } else {
+      fprintf(fout, "<td%s><i>&nbsp;</i></td>", cl);
+    }
+    if (m && m->surname) {
+      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(m->surname));
+    } else {
+      fprintf(fout, "<td%s><i>&nbsp;</i></td>", cl);
+    }
+
+    if (td.user->i.location) {
+      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(td.user->i.location));
+    } else {
+      fprintf(fout, "<td%s><i>&nbsp;</i></td>", cl);
+    }
+    if (td.user->i.exam_id) {
+      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(td.user->i.exam_id));
+    } else {
+      fprintf(fout, "<td%s><i>&nbsp;</i></td>", cl);
+    }
+    if (td.user->i.exam_cypher) {
+      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(td.user->i.exam_cypher));
+    } else {
+      fprintf(fout, "<td%s><i>&nbsp;</i></td>", cl);
+    }
+    fprintf(fout, "</tr>");
+  }
+  fprintf(fout, "</table>\n");
+
+  html_armor_free(&ab);
+  return 0;
+}
+
+int
 ns_user_info_page(FILE *fout, FILE *log_f,
                   struct http_request_info *phr,
                   const struct contest_desc *cnts,

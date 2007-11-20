@@ -318,6 +318,7 @@ enum
   NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL,
   NEW_SRV_ACTION_ASSIGN_CYPHERS_1,
   NEW_SRV_ACTION_ASSIGN_CYPHERS_2,
+  NEW_SRV_ACTION_VIEW_EXAM_INFO,
 
   /* new-register stuff */
   NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE,
@@ -584,6 +585,12 @@ ns_write_online_users(FILE *fout, FILE *log_f,
                       struct http_request_info *phr,
                       const struct contest_desc *cnts,
                       struct contest_extra *extra);
+
+int
+ns_write_exam_info(FILE *fout, FILE *log_f,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra);
 
 int
 ns_user_info_page(FILE *fout, FILE *log_f,
