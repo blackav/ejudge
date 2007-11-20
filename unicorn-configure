@@ -1,3 +1,3 @@
 #!/bin/sh -x
 
-exec ./configure --prefix=/home/cher/inst-ejudge  --with-reuse=/home/cher/new-reuse  --enable-charset=koi8-r --with-httpd-cgi-bin-dir=/home/httpd/cgi-bin --with-httpd-htdocs-dir=/home/httpd/html --with-fpc=/usr/local/pkg/fpc-2.0.4/bin/fpc --with-gpc=/usr/local/pkg/gpc-2.1/bin/gpc --with-dcc=/usr/local/pkg/kylix3/bin/dcc --with-festival=/usr/local/pkg/festival-1.95/festival --with-javac=/usr/local/java/bin/javac --with-mysql=/usr/local/pkg/mysql --enable-ajax "$@"
+exec ./configure --prefix=/home/cher/inst-ejudge  --with-reuse=/home/cher/new-reuse  --enable-charset=koi8-r --with-httpd-cgi-bin-dir=/home/httpd/cgi-bin --with-httpd-htdocs-dir=/home/httpd/html --with-fpc=/usr/local/pkg/fpc/bin/fpc --with-gpc=/usr/local/pkg/gpc-2.1/bin/gpc --with-dcc=/usr/local/pkg/kylix3/bin/dcc --with-festival=/usr/local/pkg/festival-1.95/festival --with-javac=/usr/local/java/bin/javac --with-mysql=/usr/local/pkg/mysql --enable-ajax "$@"
