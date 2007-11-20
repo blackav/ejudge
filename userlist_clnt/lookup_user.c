@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,10 +18,12 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_lookup_user(struct userlist_clnt *clnt,
-                          unsigned char const *login,
-                          int *p_user_id,
-                          unsigned char **p_name)
+userlist_clnt_lookup_user(
+	struct userlist_clnt *clnt,
+        unsigned char const *login,
+        int contest_id,
+        int *p_user_id,
+        unsigned char **p_name)
 {
   struct userlist_pk_do_login *out = 0;
   struct userlist_pk_login_ok *in = 0;
@@ -37,6 +39,7 @@ userlist_clnt_lookup_user(struct userlist_clnt *clnt,
   memset(out, 0, out_size);
   login_ptr = out->data;
   out->request_id = ULS_LOOKUP_USER;
+  out->contest_id = contest_id;
   out->login_length = login_len;
   out->password_length = 0;
   strcpy(login_ptr, login);
