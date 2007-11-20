@@ -930,7 +930,7 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
                     const unsigned char *table_class)
 {
   const struct section_global_data *global = state->global;
-  int i, showed, runs_to_show;
+  int i, showed, runs_to_show = 0;
   int attempts, disq_attempts, prev_successes;
   time_t start_time, time;
   unsigned char dur_str[64];
