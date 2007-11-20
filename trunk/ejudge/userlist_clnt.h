@@ -61,6 +61,7 @@ userlist_clnt_register_new_2(struct userlist_clnt *clnt,
                              unsigned char const *login,
                              unsigned char const *email,
                              const unsigned char *self_url,
+                             int *p_user_id,
                              unsigned char **p_login,
                              unsigned char **p_passwd);
 
@@ -76,19 +77,6 @@ userlist_clnt_login(struct userlist_clnt *clnt,
                     int *p_user_id,
                     ej_cookie_t *p_cookie,
                     unsigned char **p_name);
-
-int
-userlist_clnt_team_login(struct userlist_clnt *clnt,
-                         int cmd,
-                         ej_ip_t origin_ip,
-                         int ssl,
-                         int contest_id,
-                         int locale_id,
-                         unsigned char const *login,
-                         unsigned char const *passwd,
-                         int *p_user_id,
-                         ej_cookie_t *p_cookie,
-                         unsigned char **p_name);
 
 int
 userlist_clnt_lookup_user(struct userlist_clnt *clnt,
@@ -270,7 +258,10 @@ userlist_clnt_delete_cookie(struct userlist_clnt *clnt,
                             int contest_id,
                             ej_cookie_t cookie);
 
-int userlist_clnt_create_user(struct userlist_clnt *clnt, int *p_user_id);
+int userlist_clnt_create_user(
+	struct userlist_clnt *clnt,
+        const unsigned char *login,
+        int *p_user_id);
 int userlist_clnt_create_member(struct userlist_clnt *clnt, int user_id,
                                 int contest_id, int role);
 int userlist_clnt_copy_user_info(struct userlist_clnt *clnt, int user_id,

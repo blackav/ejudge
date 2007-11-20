@@ -701,7 +701,7 @@ create_account(
                                             phr->contest_id, phr->locale_id,
                                             next_action,
                                             login, email, phr->self_url,
-                                            &new_login, &new_password);
+                                            0, &new_login, &new_password);
 
 
   } else {

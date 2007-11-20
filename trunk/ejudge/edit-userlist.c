@@ -3691,7 +3691,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   if (!nusers) {
     j = okcancel("No users in database. Add new user?");
     if (j != 1) return -1;
-    j = userlist_clnt_create_user(server_conn, 0);
+    j = userlist_clnt_create_user(server_conn, 0, 0);
     if (j < 0) {
       vis_err("Add failed: %s", userlist_strerror(-j));
       return -1;
@@ -3859,7 +3859,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
     if (c == 'a' && !only_choose) {
       j = okcancel("Add new user?");
       if (j != 1) goto menu_continue;
-      j = userlist_clnt_create_user(server_conn, 0);
+      j = userlist_clnt_create_user(server_conn, 0, 0);
       if (j < 0) {
         vis_err("Add failed: %s", userlist_strerror(-j));
         goto menu_continue;
@@ -3964,7 +3964,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
 
       for (i = first_num; i <= last_num; i++) {
         user_id = -1;
-        j = userlist_clnt_create_user(server_conn, &user_id);
+        j = userlist_clnt_create_user(server_conn, 0, &user_id);
         if (j < 0) {
           vis_err("Adding failed: %s", userlist_strerror(-j));
           goto menu_continue;

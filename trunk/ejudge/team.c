@@ -859,13 +859,13 @@ authentificate(void)
   }
 
   open_userlist_server();
-  r = userlist_clnt_team_login(server_conn, ULS_TEAM_LOGIN,
-                               client_ip, ssl_flag, global->contest_id,
-                               client_locale_id,
-                               client_login, client_password,
-                               &client_team_id,
-                               &client_sid,
-                               &client_team_name);
+  r = userlist_clnt_login(server_conn, ULS_TEAM_LOGIN,
+                          client_ip, ssl_flag, global->contest_id,
+                          client_locale_id,
+                          client_login, client_password,
+                          &client_team_id,
+                          &client_sid,
+                          &client_team_name);
   if (r < 0) {
     switch (-r) {
     case ULS_ERR_INVALID_LOGIN:
