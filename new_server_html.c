@@ -7299,6 +7299,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = priv_generic_page,
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_1] = priv_generic_page,
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_2] = priv_generic_page,
+  [NEW_SRV_ACTION_VIEW_EXAM_INFO] = priv_generic_page,
 };
 
 static void
