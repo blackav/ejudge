@@ -161,6 +161,7 @@ enum
   };
 
 unsigned char const *userlist_strerror(int code);
+int userlist_str_to_request(const unsigned char *reqs);
 
 struct userlist_table
 {

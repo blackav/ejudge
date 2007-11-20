@@ -6494,17 +6494,25 @@ cmd_create_user(struct client_state *p, int pkt_len,
   unsigned char logbuf[1024];
   int serial = -1, user_id;
   unsigned char buf[64];
+  int login_len;
+  unsigned char *login_ptr = 0;
 
-  if (pkt_len != sizeof(*data)) {
+  if (pkt_len < sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
     return;
   }
-  if (data->value_len != 0) {
-    CONN_BAD("value_len != 0: %d", data->value_len);
+  login_len = strlen(data->data);
+  if (login_len != data->value_len) {
+    CONN_BAD("login_len mismatch");
+    return;
+  }
+  if (login_len + sizeof(*data) != pkt_len) {
+    CONN_BAD("packet size mismatch");
     return;
   }
 
-  snprintf(logbuf, sizeof(logbuf), "CREATE_USER: %d", p->user_id);
+  snprintf(logbuf, sizeof(logbuf), "CREATE_USER: %d, %s", p->user_id,
+           data->data);
 
   if (p->user_id < 0) {
     err("%s -> not authentificated", logbuf);
@@ -6514,16 +6522,26 @@ cmd_create_user(struct client_state *p, int pkt_len,
   ASSERT(p->user_id > 0);
   if (is_db_capable(p, OPCAP_CREATE_USER, logbuf) < 0) return;
 
-  do {
-    serial++;
-    if (!serial) {
-      snprintf(buf, sizeof(buf), "New_login");
-    } else {
-      snprintf(buf, sizeof(buf), "New_login_%d", serial);
+  if (login_len > 0) {
+    if (default_get_user_by_login(data->data) >= 0) {
+      err("%s -> login already exists", logbuf);
+      send_reply(p, -ULS_ERR_LOGIN_USED);
+      return;
     }
-  } while (default_get_user_by_login(buf) >= 0);
+    login_ptr = data->data;
+  } else {
+    do {
+      serial++;
+      if (!serial) {
+        snprintf(buf, sizeof(buf), "New_login");
+      } else {
+        snprintf(buf, sizeof(buf), "New_login_%d", serial);
+      }
+    } while (default_get_user_by_login(buf) >= 0);
+    login_ptr = buf;
+  }
 
-  if ((user_id = default_new_user(buf, "N/A", NULL, 0)) <= 0) {
+  if ((user_id = default_new_user(login_ptr, "N/A", NULL, 0)) <= 0) {
     err("%s -> cannot create user", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;

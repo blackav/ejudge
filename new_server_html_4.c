@@ -113,11 +113,11 @@ cmd_login(
     FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
 
   if (phr->role == USER_ROLE_CONTESTANT) {
-    r = userlist_clnt_team_login(ul_conn, ULS_TEAM_CHECK_USER,
-                                 phr->ip, phr->ssl_flag, phr->contest_id,
-                                 phr->locale_id, login, password,
-                                 &phr->user_id, &phr->session_id,
-                                 &phr->name);
+    r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
+                            phr->ip, phr->ssl_flag, phr->contest_id,
+                            phr->locale_id, login, password,
+                            &phr->user_id, &phr->session_id,
+                            &phr->name);
   } else {
     r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
                                  phr->ip, phr->ssl_flag, phr->contest_id,
