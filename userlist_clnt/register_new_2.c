@@ -18,17 +18,19 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_register_new_2(struct userlist_clnt *clnt,
-                             ej_ip_t origin_ip,
-                             int ssl,
-                             int contest_id,
-                             int locale_id,
-                             int action,
-                             unsigned char const *login,
-                             unsigned char const *email,
-                             const unsigned char *self_url,
-                             unsigned char **p_login,
-                             unsigned char **p_passwd)
+userlist_clnt_register_new_2(
+	struct userlist_clnt *clnt,
+        ej_ip_t origin_ip,
+        int ssl,
+        int contest_id,
+        int locale_id,
+        int action,
+        unsigned char const *login,
+        unsigned char const *email,
+        const unsigned char *self_url,
+        int *p_user_id,
+        unsigned char **p_login,
+        unsigned char **p_passwd)
 {
   struct userlist_pk_register_new *data;
   struct userlist_pk_new_password *answer;
@@ -82,6 +84,7 @@ userlist_clnt_register_new_2(struct userlist_clnt *clnt,
   if (strlen(answer->data + answer->login_len + 2) != answer->passwd_len)
     goto protocol_error;
 
+  if (p_user_id) *p_user_id = answer->user_id;
   if (p_login) *p_login = xstrdup(answer->data);
   if (p_passwd) *p_passwd = xstrdup(answer->data + answer->login_len + 2);
   xfree(answer);

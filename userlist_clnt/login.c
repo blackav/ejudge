@@ -30,40 +30,77 @@ userlist_clnt_login(struct userlist_clnt *clnt,
                     ej_cookie_t *p_cookie,
                     unsigned char **p_name)
 {
-  struct userlist_pk_do_login * data;
-  struct userlist_pk_login_ok * answer;
-  void *void_answer = 0;
-  int len;
-  size_t anslen;
-  int res;
-  int r;
+  struct userlist_pk_do_login *out = 0;
+  struct userlist_pk_login_ok *in = 0;
+  unsigned char *login_ptr, *passwd_ptr, *name_ptr;
+  int r, login_len, passwd_len;
+  size_t out_size = 0, in_size = 0;
+  void *void_in = 0;
 
-  len = sizeof(struct userlist_pk_do_login) + strlen(login) + strlen(passwd);
-  data = alloca(len);
-  memset(data, 0, len);
-  data->request_id = cmd;
-  data->origin_ip = origin_ip;
-  data->ssl = ssl;
-  data->contest_id = contest_id;
-  data->locale_id = locale_id;
-  data->login_length = strlen(login);
-  data->password_length = strlen(passwd);
-  strcpy(data->data,login);
-  strcpy(data->data + data->login_length + 1,passwd);
-  if ((r = userlist_clnt_send_packet(clnt,len,data)) < 0) return r;
-  if ((r = userlist_clnt_read_and_notify(clnt,&anslen, &void_answer)) < 0)
+  if (!login) login = "";
+  if (!passwd) passwd = "";
+  login_len = strlen(login);
+  passwd_len = strlen(passwd);
+  out_size = sizeof(*out) + login_len + passwd_len;
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  login_ptr = out->data;
+  passwd_ptr = login_ptr + login_len + 1;
+  out->request_id = cmd;
+  out->origin_ip = origin_ip;
+  out->ssl = ssl;
+  out->contest_id = contest_id;
+  out->locale_id = locale_id;
+  out->login_length = login_len;
+  out->password_length = passwd_len;
+  strcpy(login_ptr, login);
+  strcpy(passwd_ptr, passwd);
+  if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
+  if ((r = userlist_clnt_read_and_notify(clnt, &in_size, &void_in)) < 0)
     return r;
-  answer = void_answer;
-  if ((answer->reply_id == ULS_LOGIN_OK)||
-      (answer->reply_id == ULS_LOGIN_COOKIE)) {
-    *p_user_id = answer->user_id;
-    *p_cookie = answer->cookie;
-    *p_name = xcalloc(1,answer->name_len + 1);
-    strcpy(*p_name,answer->data + answer->login_len);
+  if (in_size < sizeof(struct userlist_packet)) {
+    r = -ULS_ERR_PROTOCOL;
+    goto cleanup;
   }
-  res = answer->reply_id;
-  xfree(answer);
-  return res;
+  in = void_in;
+  if (in->reply_id < 0) {
+    if (in_size != sizeof(struct userlist_packet)) {
+      r = -ULS_ERR_PROTOCOL;
+      goto cleanup;
+    }
+    r = in->reply_id;
+    goto cleanup;
+  }
+  if (in_size < sizeof(*in)) {
+    r = -ULS_ERR_PROTOCOL;
+    goto cleanup;
+  }
+  if (in->reply_id != ULS_LOGIN_OK && in->reply_id != ULS_LOGIN_COOKIE) {
+    r = in->reply_id;
+    goto cleanup;
+  }
+  login_ptr = in->data;
+  if (strlen(login_ptr) != in->login_len) {
+    r = -ULS_ERR_PROTOCOL;
+    goto cleanup;
+  }
+  name_ptr = login_ptr + in->login_len + 1;
+  if (strlen(name_ptr) != in->name_len) {
+    r = -ULS_ERR_PROTOCOL;
+    goto cleanup;
+  }
+  if (in_size != sizeof(*in) + in->login_len + in->name_len) {
+    r = -ULS_ERR_PROTOCOL;
+    goto cleanup;
+  }
+  if (p_user_id) *p_user_id = in->user_id;
+  if (p_cookie) *p_cookie = in->cookie;
+  if (p_name) *p_name = xstrdup(name_ptr);
+
+  r = in->reply_id;
+ cleanup:
+  xfree(in);
+  return r;
 }
 
 /*

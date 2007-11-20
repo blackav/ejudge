@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -37,9 +37,11 @@ userlist_clnt_do_pass_fd(struct userlist_clnt *clnt,
   int *fd2;
   int arrsize, val, ret;
 
+#if !defined PYTHON
   ASSERT(clnt);
   ASSERT(fds_num > 0 && fds_num <= 32);
   ASSERT(fds);
+#endif
 
   memset(&msg, 0, sizeof(msg));
   msg.msg_control = msgbuf;
@@ -59,19 +61,29 @@ userlist_clnt_do_pass_fd(struct userlist_clnt *clnt,
   val = 0;
   ret = sendmsg(clnt->fd, &msg, 0);
   if (ret < 0) {
+#if defined PYTHON
+    PyErr_SetFromErrno(PyExc_IOError);
+    return -1;
+#else
     ret = errno;
     err("sendmsg() failed: %s", os_ErrorMsg());
     if (ret == EPIPE) return -ULS_ERR_DISCONNECT;
     return -ULS_ERR_WRITE_ERROR;
+#endif
   }
   if (ret != 4) {
+#if defined PYTHON
+    PyErr_SetString(PyExc_IOError, "short write");
+    return -1;
+#else
     err("sendmsg() short write: %d bytes", ret);
     return -ULS_ERR_WRITE_ERROR;
+#endif
   }
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

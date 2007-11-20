@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,14 +33,21 @@ userlist_clnt_send_packet(struct userlist_clnt *clnt,
   rint32_t size32;
   struct iovec vv[2];
 
+#if !defined PYTHON
   ASSERT(clnt);
   ASSERT(size > 0);
   ASSERT(clnt->fd >= 0);
+#endif
 
   /* -1073741824 is 0xc0000000 or 0xffffffffc0000000 */
   if ((size & -1073741824L)) {
+#if defined PYTHON
+    PyErr_SetString(PyExc_ValueError, "packet length exceeds 1GiB");
+    return -1;
+#else
     err("send_packet: packet length exceeds 1GiB");
     return -ULS_ERR_WRITE_ERROR;
+#endif
   }
   size32 = (ruint32_t) size;
 
@@ -75,15 +82,22 @@ userlist_clnt_send_packet(struct userlist_clnt *clnt,
   return 0;
 
  write_error:
+#if defined PYTHON
+  PyErr_SetFromErrno(PyExc_IOError);
+  close(clnt->fd);
+  clnt->fd = -1;
+  return -1;
+#else
   n = errno;
   err("send_packet: write() failed: %s", os_ErrorMsg());
   close(clnt->fd);
   clnt->fd = -1;
   if (n == EPIPE) return -ULS_ERR_DISCONNECT;
   return -ULS_ERR_WRITE_ERROR;
+#endif
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
