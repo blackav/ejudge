@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@ xml_parse_ip(unsigned char const *path, int line, int column,
 
   if (!s || sscanf(s, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
       || s[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255) {
+#if !defined PYTHON
     if (line > 0) {
       if (path) {
         err("%s:%d:%d: invalid IP-address", path, line, column);
@@ -35,6 +36,7 @@ xml_parse_ip(unsigned char const *path, int line, int column,
         err("%d:%d: invalid IP-address", line, column);
       }
     }
+#endif
     return -1;
   }
   ip = b1 << 24 | b2 << 16 | b3 << 8 | b4;
