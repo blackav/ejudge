@@ -81,6 +81,7 @@ userlist_clnt_login(struct userlist_clnt *clnt,
 int
 userlist_clnt_lookup_user(struct userlist_clnt *clnt,
                           unsigned char const *login,
+                          int contest_id,
                           int *p_user_id,
                           unsigned char **p_name);
 

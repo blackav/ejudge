@@ -1461,7 +1461,7 @@ priv_add_user_by_login(FILE *fout,
     retval = -1;
     goto cleanup;
   }
-  if ((r = userlist_clnt_lookup_user(ul_conn, s, &user_id, 0)) < 0) {
+  if ((r = userlist_clnt_lookup_user(ul_conn, s, 0, &user_id, 0)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_USER_LOGIN_NONEXISTANT, ARMOR(s));
     goto cleanup;
   }
@@ -1635,7 +1635,7 @@ priv_add_priv_user_by_login(FILE *fout,
     retval = -1;
     goto cleanup;
   }
-  if ((r = userlist_clnt_lookup_user(ul_conn, login, &user_id, 0)) < 0) {
+  if ((r = userlist_clnt_lookup_user(ul_conn, login, 0, &user_id, 0)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_USER_LOGIN_NONEXISTANT, ARMOR(s));
     goto cleanup;
   }
@@ -4537,7 +4537,7 @@ priv_view_priv_users_page(FILE *fout,
       role_mask |= (1 << USER_ROLE_JUDGE);
     }
     if (!role_mask) continue;
-    if (userlist_clnt_lookup_user(ul_conn, op->login, &user_id, &name) < 0)
+    if (userlist_clnt_lookup_user(ul_conn, op->login, 0, &user_id, &name) < 0)
       continue;
     for (i = 0; i < users.u; i++)
       if (users.v[i]->user_id == user_id)
