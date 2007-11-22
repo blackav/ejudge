@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,8 +30,10 @@ userlist_clnt_get_info(struct userlist_clnt *clnt,
   int info_len;
   int r;
 
+#if !defined PYTHON
   ASSERT(clnt);
   ASSERT(clnt->fd >= 0);
+#endif
 
   if (cmd != ULS_GET_USER_INFO && cmd != ULS_PRIV_GET_USER_INFO)
     return -ULS_ERR_PROTOCOL;

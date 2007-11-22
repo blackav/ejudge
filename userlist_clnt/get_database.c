@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,8 +29,10 @@ userlist_clnt_get_database(struct userlist_clnt *clnt,
   int info_len;
   int r;
 
+#if !defined PYTHON
   ASSERT(clnt);
   ASSERT(clnt->fd >= 0);
+#endif
 
   memset(&out_pkt, 0, sizeof(out_pkt));
   out_pkt.request_id = cmd;
