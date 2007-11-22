@@ -28,49 +28,127 @@
  * userlist_clnt_register_new
  * userlist_clnt_register_new_2			OK
  * userlist_clnt_login				OK
- * userlist_clnt_lookup_user
- * userlist_clnt_lookup_user_id
- * userlist_clnt_get_cookie
- * userlist_clnt_set_cookie
- * userlist_clnt_lookup_cookie
- * userlist_clnt_team_cookie
- * userlist_clnt_get_info
- * userlist_clnt_get_database
+ * userlist_clnt_lookup_user			OK
+ * userlist_clnt_lookup_user_id			OK
+ * userlist_clnt_get_cookie			OK
+ * userlist_clnt_set_cookie			OK
+ * userlist_clnt_lookup_cookie			OK
+ * userlist_clnt_team_cookie			OK
+ * userlist_clnt_get_info			OK
+ * userlist_clnt_get_database			OK
  * userlist_clnt_get_param
  * userlist_clnt_set_info
- * userlist_clnt_set_passwd
+ * userlist_clnt_set_passwd			OK
  * userlist_clnt_get_contests
  * userlist_clnt_register_contest		OK
- * userlist_clnt_delete_info
- * userlist_clnt_move_member
+ * userlist_clnt_delete_info			OK
+ * userlist_clnt_move_member			OK
  * userlist_clnt_list_users
  * userlist_clnt_admin_process			OK
  * userlist_clnt_map_contest
  * userlist_clnt_generate_team_passwd
- * userlist_clnt_list_all_users
+ * userlist_clnt_list_all_users			OK
  * userlist_clnt_change_registration		OK
  * userlist_clnt_edit_field			OK
  * userlist_clnt_edit_field_seq
- * userlist_clnt_delete_field
- * userlist_clnt_delete_cookie
+ * userlist_clnt_delete_field			OK
+ * userlist_clnt_delete_cookie			OK
  * userlist_clnt_create_user			OK
- * userlist_clnt_create_member
- * userlist_clnt_copy_user_info
+ * userlist_clnt_create_member			OK
+ * userlist_clnt_copy_user_info			OK
  * userlist_clnt_get_uid_by_pid
  * userlist_clnt_get_uid_by_pid_2
- * userlist_clnt_priv_login
+ * userlist_clnt_priv_login			OK
  * userlist_clnt_priv_cookie
- * userlist_clnt_logout
+ * userlist_clnt_logout				OK
  * userlist_clnt_dump_database
- * userlist_clnt_cnts_passwd_op
+ * userlist_clnt_cnts_passwd_op			OK
  * userlist_clnt_notify
  * userlist_clnt_read_notification
  * userlist_clnt_bytes_available
  * userlist_clnt_set_notification_callback	
  * userlist_clnt_recover_passwd_2
- * userlist_clnt_control
+ * userlist_clnt_control			OK
  * userlist_clnt_priv_cookie_login
- * userlist_clnt_import_csv_users
+ * userlist_clnt_import_csv_users		OK
+ */
+
+/*
+    ULS_PASS_FD,				-
+    ULS_STOP,					OK
+    ULS_RESTART,				OK
+    ULS_REGISTER_NEW,
+    ULS_DO_LOGIN,				OK
+    ULS_CHECK_COOKIE,				OK	FIX IT!
+    ULS_DO_LOGOUT,				OK
+    ULS_GET_USER_INFO,				OK
+    ULS_SET_USER_INFO,
+    ULS_SET_PASSWD,				OK
+    ULS_GET_USER_CONTESTS,
+    ULS_REGISTER_CONTEST,			OK
+    ULS_DELETE_MEMBER,				OK
+    ULS_LIST_USERS,
+    ULS_MAP_CONTEST,
+    ULS_ADMIN_PROCESS,				OK
+    ULS_GENERATE_TEAM_PASSWORDS,
+    ULS_TEAM_LOGIN,				OK
+    ULS_TEAM_CHECK_COOKIE,			OK	FIX IT!
+    ULS_GET_CONTEST_NAME,
+    ULS_TEAM_SET_PASSWD,			OK
+    ULS_LIST_ALL_USERS,				OK
+    ULS_EDIT_REGISTRATION,			OK
+    ULS_EDIT_FIELD,				OK
+    ULS_DELETE_FIELD,				OK
+    ULS_ADD_FIELD,				*
+    ULS_GET_UID_BY_PID,
+    ULS_PRIV_LOGIN,				OK
+    ULS_PRIV_CHECK_COOKIE,
+    ULS_DUMP_DATABASE,
+    ULS_PRIV_GET_USER_INFO,			OK
+    ULS_PRIV_SET_USER_INFO,
+    ULS_PRIV_REGISTER_CONTEST,			OK
+    ULS_GENERATE_PASSWORDS,
+    ULS_CLEAR_TEAM_PASSWORDS,			OK
+    ULS_LIST_STANDINGS_USERS,			OK
+    ULS_GET_UID_BY_PID_2,
+    ULS_IS_VALID_COOKIE,			*
+    ULS_DUMP_WHOLE_DATABASE,
+    ULS_RANDOM_PASSWD,				OK
+    ULS_RANDOM_TEAM_PASSWD,			OK
+    ULS_COPY_TO_TEAM,				OK
+    ULS_COPY_TO_REGISTER,			OK
+    ULS_FIX_PASSWORD,				OK
+    ULS_LOOKUP_USER,				OK
+    ULS_REGISTER_NEW_2,				OK
+    ULS_DELETE_USER,				OK
+    ULS_DELETE_COOKIE,				OK
+    ULS_DELETE_USER_INFO,			*
+    ULS_CREATE_USER,				OK
+    ULS_CREATE_MEMBER,				OK
+    ULS_PRIV_DELETE_MEMBER,			OK
+    ULS_PRIV_CHECK_USER,			OK
+    ULS_PRIV_GET_COOKIE,			OK
+    ULS_LOOKUP_USER_ID,				OK
+    ULS_TEAM_CHECK_USER,			OK
+    ULS_TEAM_GET_COOKIE,			OK
+    ULS_ADD_NOTIFY,
+    ULS_DEL_NOTIFY,
+    ULS_SET_COOKIE_LOCALE,			OK
+    ULS_PRIV_SET_REG_PASSWD,			OK
+    ULS_PRIV_SET_TEAM_PASSWD,			OK
+    ULS_GENERATE_TEAM_PASSWORDS_2,		OK
+    ULS_GENERATE_PASSWORDS_2,			OK
+    ULS_GET_DATABASE,				OK
+    ULS_COPY_USER_INFO,				OK
+    ULS_RECOVER_PASSWORD_1,
+    ULS_RECOVER_PASSWORD_2,
+    ULS_PRIV_COOKIE_LOGIN,
+    ULS_CHECK_USER,				OK
+    ULS_REGISTER_CONTEST_2,			OK
+    ULS_GET_COOKIE,				OK
+    ULS_EDIT_FIELD_SEQ,
+    ULS_MOVE_MEMBER,				OK
+    ULS_IMPORT_CSV_USERS,			OK
  */
 
 static const struct
@@ -255,30 +333,26 @@ Ul_adminProcess(UlObject *self)
   }
 
   val = Py_BuildValue("{s:i,s:s,s:s}",
-                      "uid", uid, "login", login, "name", name);
+                      "user_id", uid, "login", login, "name", name);
   free(login);
   free(name);
   return val;
 }
 
 static PyObject *
-Ul_login(UlObject *self, PyObject *args, PyObject *kwds)
+Ul_do_login(int cmd, UlObject *self, PyObject *args)
 {
-  int cmd, ssl_flag, contest_id, locale_id, r, uid;
-  const char *cmd_str, *ip_str, *login, *password;
+  int ssl_flag, contest_id, locale_id, r, uid;
+  const char *ip_str, *login, *password;
   unsigned char *name = 0;
   ej_ip_t ip_val;
   ej_cookie_t sid;
   PyObject *val = 0;
 
-  if (!PyArg_ParseTuple(args, "ssiiiss", &cmd_str, &ip_str, &ssl_flag,
+  if (!PyArg_ParseTuple(args, "siiiss", &ip_str, &ssl_flag,
                         &contest_id, &locale_id, &login, &password))
     return 0;
 
-  if ((cmd = userlist_str_to_request(cmd_str)) <= 0) {
-    PyErr_SetString(PyExc_ValueError, "invalid command");
-    return 0;
-  }
   if (xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
     PyErr_SetString(PyExc_ValueError, "invalid IP");
     return 0;
@@ -292,14 +366,35 @@ Ul_login(UlObject *self, PyObject *args, PyObject *kwds)
   }
 
   val = Py_BuildValue("{s:i,s:K,s:s}",
-                      "uid", uid, "sid", sid, "name", name);
+                      "user_id", uid, "sid", sid, "name", name);
 
   free(name);
   return val;
 }
 
 static PyObject *
-Ul_registerNew2(UlObject *self, PyObject *args, PyObject *kwds)
+Ul_login(UlObject *self, PyObject *args)
+{
+  return Ul_do_login(ULS_DO_LOGIN, self, args);
+}
+static PyObject *
+Ul_contestLogin(UlObject *self, PyObject *args)
+{
+  return Ul_do_login(ULS_TEAM_LOGIN, self, args);
+}
+static PyObject *
+Ul_checkUser(UlObject *self, PyObject *args)
+{
+  return Ul_do_login(ULS_CHECK_USER, self, args);
+}
+static PyObject *
+Ul_checkContestUser(UlObject *self, PyObject *args)
+{
+  return Ul_do_login(ULS_TEAM_CHECK_USER, self, args);
+}
+
+static PyObject *
+Ul_registerNew2(UlObject *self, PyObject *args)
 {
   const char *ip_str = 0, *login = 0, *email = 0, *self_url = 0;
   int ssl_flag = 0, contest_id = 0, locale_id = 0, action = 0, r, user_id = 0;
@@ -326,7 +421,8 @@ Ul_registerNew2(UlObject *self, PyObject *args, PyObject *kwds)
   }
 
   val = Py_BuildValue("{s:i,s:s,s:s}",
-                      "uid", user_id, "login", login_out, "password", password);
+                      "user_id", user_id, "login", login_out,
+                      "password", password);
 
   free(login_out);
   free(password);
@@ -334,7 +430,7 @@ Ul_registerNew2(UlObject *self, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-Ul_createUser(UlObject *self, PyObject *args, PyObject *kwds)
+Ul_createUser(UlObject *self, PyObject *args)
 {
   const char *login = 0;
   int r, user_id = 0;
@@ -349,7 +445,7 @@ Ul_createUser(UlObject *self, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-Ul_editField(UlObject *self, PyObject *args, PyObject *kwds)
+Ul_editField(UlObject *self, PyObject *args)
 {
   int user_id = 0, contest_id = 0, serial = 0, field_id, r;
   const char *field_str = 0, *value = 0;
@@ -403,7 +499,7 @@ str_to_registration_op(const unsigned char *str)
 }
 
 static PyObject *
-Ul_changeRegistration(UlObject *self, PyObject *args, PyObject *kwds)
+Ul_changeRegistration(UlObject *self, PyObject *args)
 {
   int user_id = 0, contest_id = 0, flags = 0, status_val, cmd_val, r;
   const char *cmd_str = 0, *status_str = 0;
@@ -436,17 +532,12 @@ Ul_changeRegistration(UlObject *self, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-Ul_registerContest(UlObject *self, PyObject *args, PyObject *kwds)
+Ul_do_register_contest(int cmd, UlObject *self, PyObject *args)
 {
-  int user_id = 0, contest_id = 0, r, cmd;
-  const char *cmd_str = 0;
+  int user_id = 0, contest_id = 0, r;
 
-  if (!PyArg_ParseTuple(args, "sii", &cmd_str, &user_id, &contest_id))
+  if (!PyArg_ParseTuple(args, "ii", &user_id, &contest_id))
     return 0;
-  if ((cmd = userlist_str_to_request(cmd_str)) <= 0) {
-    PyErr_SetString(PyExc_ValueError, "invalid command");
-    return 0;
-  }
   if ((r = userlist_clnt_register_contest(self->clnt, cmd, user_id,
                                           contest_id)) < 0) {
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
@@ -455,12 +546,656 @@ Ul_registerContest(UlObject *self, PyObject *args, PyObject *kwds)
   return Py_BuildValue("i", 0);
 }
 
+static PyObject *
+Ul_registerContest(UlObject *self, PyObject *args)
+{
+  return Ul_do_register_contest(ULS_REGISTER_CONTEST, self, args);
+}
+static PyObject *
+Ul_privRegisterContest(UlObject *self, PyObject *args)
+{
+  return Ul_do_register_contest(ULS_PRIV_REGISTER_CONTEST, self, args);
+}
+static PyObject *
+Ul_registerContest2(UlObject *self, PyObject *args)
+{
+  return Ul_do_register_contest(ULS_REGISTER_CONTEST_2, self, args);
+}
+
+static PyObject *
+Ul_lookupUser(UlObject *self, PyObject *args)
+{
+  const char *login = 0;
+  unsigned char *name = 0;
+  int user_id = 0, contest_id = 0, r;
+  PyObject *val;
+
+  if (!PyArg_ParseTuple(args, "si", &login, &contest_id))
+    return 0;
+  if ((r = userlist_clnt_lookup_user(self->clnt, login, contest_id,
+                                     &user_id, &name)) < 0) {
+    if (r == -ULS_ERR_INVALID_LOGIN) {
+      Py_RETURN_NONE;
+    }
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  val = Py_BuildValue("{s:i,s:s}", "user_id", user_id, "name", name);
+  free(name);
+  return val;
+}
+
+static PyObject *
+Ul_lookupUserId(UlObject *self, PyObject *args)
+{
+  int user_id = 0, contest_id = 0, r;
+  unsigned char *login = 0, *name = 0;
+  PyObject *val;
+
+  if (!PyArg_ParseTuple(args, "ii", &user_id, &contest_id))
+    return 0;
+  if ((r = userlist_clnt_lookup_user_id(self->clnt, user_id, contest_id,
+                                     &login, &name)) < 0) {
+    if (r == -ULS_ERR_BAD_UID) {
+      Py_RETURN_NONE;
+    }
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  val = Py_BuildValue("{s:s,s:s}", "login", login, "name", name);
+  free(login);
+  free(name);
+  return val;
+}
+
+static PyObject *
+Ul_deleteField(UlObject *self, PyObject *args)
+{
+  int user_id = 0, contest_id = 0, serial = 0, field_val, r;
+  const char *field_str = 0;
+
+  if (!PyArg_ParseTuple(args, "ii", &user_id, &contest_id, &serial, &field_str))
+    return 0;
+  if ((field_val = str_to_user_field_code(field_str)) < 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid field");
+    return 0;
+  }
+  if ((r = userlist_clnt_delete_field(self->clnt, user_id, contest_id,
+                                      serial, field_val)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
+}
+
+static PyObject *
+Ul_copyUserInfo(UlObject *self, PyObject *args)
+{
+  int user_id = 0, cnts_from = 0, cnts_to = 0, r;
+
+  if (!PyArg_ParseTuple(args, "iii", &user_id, &cnts_from, &cnts_to))
+    return 0;
+  if ((r = userlist_clnt_copy_user_info(self->clnt, user_id, cnts_from,
+                                        cnts_to)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
+}
+
+static PyObject *
+Ul_do_get_cookie(int cmd, UlObject *self, PyObject *args)
+{
+  const char *ip_str = 0;
+  unsigned char *login = 0, *name = 0;
+  ej_cookie_t sid = 0;
+  ej_ip_t ip_val = 0;
+  int ssl_flag = 0, user_id = 0, contest_id = 0, locale_id = 0,
+    priv_level = 0, role = 0, is_contest = 0, reg_status = 0,
+    reg_flags = 0, r;
+  PyObject *val;
+
+  if (!PyArg_ParseTuple(args, "siK", &ip_str, &ssl_flag, &sid))
+    return 0;
+  if (xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid IP");
+    return 0;
+  }
+  if ((r = userlist_clnt_get_cookie
+       (self->clnt, cmd, ip_val, ssl_flag, sid,
+        &user_id, &contest_id, &locale_id, &priv_level,
+        &role, &is_contest, &reg_status, &reg_flags, &login, &name)) < 0) {
+    if (r == -ULS_ERR_NO_COOKIE) {
+      Py_RETURN_NONE;
+    }
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  val = Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i,s:i,s:i,s:s,s:s}",
+                      "user_id", user_id,
+                      "contest_id", contest_id,
+                      "locale_id", locale_id,
+                      "priv_level", priv_level,
+                      "role", role,
+                      "is_contest", is_contest,
+                      "reg_status", reg_status,
+                      "reg_flags", reg_flags,
+                      "login", login,
+                      "name", name);
+  free(login);
+  free(name);
+  return val;
+}
+
+static PyObject *
+Ul_getCookie(UlObject *self, PyObject *args)
+{
+  return Ul_do_get_cookie(ULS_GET_COOKIE, self, args);
+}
+static PyObject *
+Ul_getContestCookie(UlObject *self, PyObject *args)
+{
+  return Ul_do_get_cookie(ULS_TEAM_GET_COOKIE, self, args);
+}
+static PyObject *
+Ul_getPrivCookie(UlObject *self, PyObject *args)
+{
+  return Ul_do_get_cookie(ULS_PRIV_GET_COOKIE, self, args);
+}
+
+static PyObject *
+Ul_logout(UlObject *self, PyObject *args)
+{
+  int ssl_flag = 0, r;
+  ej_ip_t ip_val = 0;
+  ej_cookie_t sid = 0;
+  const char *ip_str = 0;
+
+  if (!PyArg_ParseTuple(args, "siK", &ip_str, &ssl_flag, &sid))
+    return 0;
+  if (xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid IP");
+    return 0;
+  }
+  if ((r = userlist_clnt_logout(self->clnt, ULS_DO_LOGOUT, ip_val, ssl_flag, sid)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
+}
+
+static PyObject *
+Ul_do_priv_login(int cmd, UlObject *self, PyObject *args)
+{
+  PyObject *val;
+  const char *ip_str = 0, *login = 0, *password = 0;
+  ej_ip_t ip_val = 0;
+  ej_cookie_t sid = 0;
+  unsigned char *name = 0;
+  int ssl_flag = 0, contest_id = 0, locale_id = 0, priv_level = 0, role = 0, user_id = 0, priv_level_out = 0, r;
+
+  if (!PyArg_ParseTuple(args, "siiiiiss", &ip_str, &ssl_flag, &contest_id, &locale_id, &priv_level, &role, &login, &password))
+    return 0;
+  if (xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid IP");
+    return 0;
+  }
+  if ((r = userlist_clnt_priv_login(self->clnt, cmd, ip_val, ssl_flag, contest_id, locale_id, priv_level, role, login, password, &user_id, &sid, &priv_level_out, &name)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  val = Py_BuildValue("{s:i,s:K,s:i,s:s}","user_id", user_id, "sid", sid, "priv_level", priv_level_out, "name", name);
+  free(name);
+  return val;
+}
+
+static PyObject *
+Ul_privLogin(int cmd, UlObject *self, PyObject *args)
+{
+  return Ul_do_priv_login(ULS_PRIV_LOGIN, self, args);
+}
+static PyObject *
+Ul_checkPrivUser(int cmd, UlObject *self, PyObject *args)
+{
+  return Ul_do_priv_login(ULS_PRIV_CHECK_USER, self, args);
+}
+
+static PyObject *
+Ul_do_set_cookie(int cmd, UlObject *self, PyObject *args)
+{
+  ej_cookie_t sid = 0;
+  int locale_id = 0, r;
+
+  if (!PyArg_ParseTuple(args, "Ki", &sid, &locale_id))
+    return 0;
+  if ((r = userlist_clnt_set_cookie(self->clnt, cmd, sid, locale_id)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
+}
+static PyObject *
+Ul_setCookieLocale(UlObject *self, PyObject *args)
+{
+  return Ul_do_set_cookie(ULS_SET_COOKIE_LOCALE, self, args);
+}
+
+static PyObject *
+Ul_do_set_passwd(int cmd, UlObject *self, PyObject *args)
+{
+  int user_id = 0, contest_id = 0, r;
+  const char *old_pwd = 0, *new_pwd = 0;
+
+  if (!PyArg_ParseTuple(args, "iiss", &user_id, &contest_id, &old_pwd,&new_pwd))
+    return 0;
+  if ((r = userlist_clnt_set_passwd(self->clnt, cmd, user_id, contest_id, old_pwd, new_pwd)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
+}
+static PyObject *
+Ul_setPassword(UlObject *self, PyObject *args)
+{
+  return Ul_do_set_passwd(ULS_SET_PASSWD, self, args);
+}
+static PyObject *
+Ul_setContestPassword(UlObject *self, PyObject *args)
+{
+  return Ul_do_set_passwd(ULS_TEAM_SET_PASSWD, self, args);
+}
+static PyObject *
+Ul_privSetPassword(UlObject *self, PyObject *args)
+{
+  return Ul_do_set_passwd(ULS_PRIV_SET_REG_PASSWD, self, args);
+}
+static PyObject *
+Ul_privSetContestPassword(UlObject *self, PyObject *args)
+{
+  return Ul_do_set_passwd(ULS_PRIV_SET_TEAM_PASSWD, self, args);
+}
+
+static PyObject *
+Ul_stop(UlObject *self)
+{
+  int r;
+
+  if ((r = userlist_clnt_control(self->clnt, ULS_STOP)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
+}
+static PyObject *
+Ul_restart(UlObject *self)
+{
+  int r;
+
+  if ((r = userlist_clnt_control(self->clnt, ULS_RESTART)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
+}
+
+static PyObject *
+Ul_deleteCookie(UlObject *self, PyObject *args)
+{
+  int user_id = 0, contest_id = 0, r;
+  ej_cookie_t sid = 0;
+
+  if (!PyArg_ParseTuple(args, "iiK", &user_id, &contest_id, &sid))
+    return 0;
+  if ((r = userlist_clnt_delete_cookie(self->clnt, user_id, contest_id,
+                                       sid)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
+}
+
+static PyObject *
+Ul_deleteMember(UlObject *self, PyObject *args)
+{
+  int user_id = 0, contest_id = 0, serial = 0, r;
+
+  if (!PyArg_ParseTuple(args, "iii", &user_id, &contest_id, &serial))
+    return 0;
+  if ((r = userlist_clnt_delete_info(self->clnt, ULS_DELETE_MEMBER,
+                                     user_id, contest_id, serial)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
+}
+static PyObject *
+Ul_privDeleteMember(UlObject *self, PyObject *args)
+{
+  int user_id = 0, contest_id = 0, serial = 0, r;
+
+  if (!PyArg_ParseTuple(args, "iii", &user_id, &contest_id, &serial))
+    return 0;
+  if ((r = userlist_clnt_delete_info(self->clnt, ULS_PRIV_DELETE_MEMBER,
+                                     user_id, contest_id, serial)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
+}
+static PyObject *
+Ul_deleteUser(UlObject *self, PyObject *args)
+{
+  int user_id = 0, r;
+
+  if (!PyArg_ParseTuple(args, "i", &user_id))
+    return 0;
+  if ((r = userlist_clnt_delete_info(self->clnt, ULS_PRIV_DELETE_MEMBER,
+                                     user_id, 0, 0)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
+}
+
+static PyObject *
+Ul_moveMember(UlObject *self, PyObject *args)
+{
+  int user_id = 0, contest_id = 0, serial = 0, new_role = 0, r;
+
+  if (!PyArg_ParseTuple(args, "iiii", &user_id, &contest_id, &serial, &new_role))
+    return 0;
+  if ((r = userlist_clnt_move_member(self->clnt, ULS_MOVE_MEMBER,
+                                     user_id, contest_id, serial,
+                                     new_role)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
+}
+
+static PyObject *
+Ul_do_cnts_passwd_op(int cmd, UlObject *self, PyObject *args)
+{
+  int contest_id = 0, r;
+
+  if (!PyArg_ParseTuple(args, "i", &contest_id))
+    return 0;
+  if ((r = userlist_clnt_cnts_passwd_op(self->clnt, cmd, contest_id)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
+}
+static PyObject *
+Ul_clearContestPasswords(int cmd, UlObject *self, PyObject *args)
+{
+  return Ul_do_cnts_passwd_op(ULS_CLEAR_TEAM_PASSWORDS, self, args);
+}
+static PyObject *
+Ul_generateRandomContestPasswords(int cmd, UlObject *self, PyObject *args)
+{
+  return Ul_do_cnts_passwd_op(ULS_GENERATE_TEAM_PASSWORDS_2, self, args);
+}
+static PyObject *
+Ul_generateRandomPasswords(int cmd, UlObject *self, PyObject *args)
+{
+  return Ul_do_cnts_passwd_op(ULS_GENERATE_PASSWORDS_2, self, args);
+}
+
+static PyObject *
+Ul_createMember(UlObject *self, PyObject *args)
+{
+  int user_id = 0, contest_id = 0, role = 0, r;
+
+  if (!PyArg_ParseTuple(args, "iii", &user_id, &contest_id, &role))
+    return 0;
+  if ((r = userlist_clnt_create_member(self->clnt, user_id, contest_id,
+                                       role)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
+}
+
+static PyObject *
+Ul_importCSVUsers(UlObject *self, PyObject *args)
+{
+  int contest_id = 0, flags = 0, r, status = 0;
+  const char *separator = 0, *text = 0;
+  unsigned char *log_text = 0;
+  PyObject *val;
+
+  if (!PyArg_ParseTuple(args, "isis", &contest_id, &separator, &flags, &text))
+    return 0;
+  if ((r = userlist_clnt_import_csv_users(self->clnt, ULS_IMPORT_CSV_USERS,
+                                          contest_id, separator[0],
+                                          flags, text, &log_text)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  if (r == ULS_TEXT_DATA) status = 1;
+  val = Py_BuildValue("{s:i,s:s}", "status", status, "log", log_text);
+  free(log_text);
+  return val;
+}
+
+static PyObject *
+Ul_do_user_passwd_op(int cmd, UlObject *self, PyObject *args)
+{
+  int user_id = 0, contest_id = 0, r;
+
+  if (!PyArg_ParseTuple(args, "ii", &user_id, &contest_id))
+    return 0;
+  if ((r = userlist_clnt_register_contest(self->clnt, cmd, user_id, 0)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
+}
+static PyObject *
+Ul_generateRandomPassword(int cmd, UlObject *self, PyObject *args)
+{
+  return Ul_do_user_passwd_op(ULS_RANDOM_PASSWD, self, args);
+}
+static PyObject *
+Ul_generateRandomContestPassword(int cmd, UlObject *self, PyObject *args)
+{
+  return Ul_do_user_passwd_op(ULS_RANDOM_TEAM_PASSWD, self, args);
+}
+static PyObject *
+Ul_copyContestPasswordToPassword(int cmd, UlObject *self, PyObject *args)
+{
+  return Ul_do_user_passwd_op(ULS_COPY_TO_REGISTER, self, args);
+}
+static PyObject *
+Ul_copyPasswordToContestPassword(int cmd, UlObject *self, PyObject *args)
+{
+  return Ul_do_user_passwd_op(ULS_COPY_TO_TEAM, self, args);
+}
+static PyObject *
+Ul_fixPassword(int cmd, UlObject *self, PyObject *args)
+{
+  return Ul_do_user_passwd_op(ULS_FIX_PASSWORD, self, args);
+}
+
+static PyObject *
+Ul_lookupCookie(UlObject *self, PyObject *args)
+{
+  const char *ip_str = 0;
+  ej_cookie_t sid = 0;
+  ej_ip_t ip_val = 0;
+  int ssl_flag = 0, user_id = 0, locale_id = 0, contest_id = 0, r;
+  unsigned char *login = 0, *name = 0;
+  PyObject *val;
+
+  if (!PyArg_ParseTuple(args, "siK", &ip_str, &ssl_flag, &sid))
+    return 0;
+  if (xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid IP");
+    return 0;
+  }
+  if ((r = userlist_clnt_lookup_cookie
+       (self->clnt, ip_val, ssl_flag, sid,
+        &user_id, &login, &name, &locale_id, &contest_id)) < 0) {
+    if (r == -ULS_ERR_NO_COOKIE) {
+      Py_RETURN_NONE;
+    }
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  val = Py_BuildValue("{s:i,s:i,s:i,s:s,s:s}",
+                      "user_id", user_id,
+                      "contest_id", contest_id,
+                      "locale_id", locale_id,
+                      "login", login,
+                      "name", name);
+  free(login);
+  free(name);
+  return val;
+}
+
+static PyObject *
+Ul_lookupContestCookie(UlObject *self, PyObject *args)
+{
+  const char *ip_str = 0;
+  ej_cookie_t sid = 0;
+  ej_ip_t ip_val = 0;
+  int ssl_flag = 0, user_id = 0, locale_id = 0, contest_id = 0, r;
+  unsigned char *login = 0, *name = 0;
+  PyObject *val;
+
+  if (!PyArg_ParseTuple(args, "siiK", &ip_str, &ssl_flag, &contest_id, &sid))
+    return 0;
+  if (xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid IP");
+    return 0;
+  }
+  if ((r = userlist_clnt_team_cookie
+       (self->clnt, ip_val, ssl_flag, contest_id, sid, -1,
+        &user_id, &contest_id, &locale_id, &login, &name)) < 0) {
+    if (r == -ULS_ERR_NO_COOKIE) {
+      Py_RETURN_NONE;
+    }
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  val = Py_BuildValue("{s:i,s:i,s:i,s:s,s:s}",
+                      "user_id", user_id,
+                      "contest_id", contest_id,
+                      "locale_id", locale_id,
+                      "login", login,
+                      "name", name);
+  free(login);
+  free(name);
+  return val;
+}
+
+static PyObject *
+Ul_do_get_info(int cmd, UlObject *self, PyObject *args)
+{
+  int user_id = 0, contest_id = 0, r;
+  unsigned char *xml_text = 0;
+  PyObject *val;
+
+  if (!PyArg_ParseTuple(args, "ii", &user_id, &contest_id))
+    return 0;
+  if ((r = userlist_clnt_get_info(self->clnt, cmd, user_id, contest_id,
+                                  &xml_text)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  val = Py_BuildValue("s", xml_text);
+  free(xml_text);
+  return val;
+}
+static PyObject *
+Ul_getUserInfo(UlObject *self, PyObject *args)
+{
+  return Ul_do_get_info(ULS_GET_USER_INFO, self, args);
+}
+static PyObject *
+Ul_privGetUserInfo(UlObject *self, PyObject *args)
+{
+  return Ul_do_get_info(ULS_PRIV_GET_USER_INFO, self, args);
+}
+
+static PyObject *
+Ul_getDatabase(UlObject *self, PyObject *args)
+{
+  int contest_id = 0, r;
+  unsigned char *db_text = 0;
+  PyObject *val;
+
+  if (!PyArg_ParseTuple(args, "i", &contest_id))
+    return 0;
+  if ((r = userlist_clnt_get_database(self->clnt, ULS_GET_DATABASE, contest_id,
+                                      &db_text)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  val = Py_BuildValue("s", db_text);
+  free(db_text);
+  return val;
+}
+
+static PyObject *
+Ul_do_list_users(int cmd, UlObject *self, PyObject *args)
+{
+  int contest_id = 0, r;
+  unsigned char *xml_text = 0;
+  PyObject *val;
+
+  if (!PyArg_ParseTuple(args, "i", &contest_id))
+    return 0;
+  if ((r = userlist_clnt_list_all_users(self->clnt, cmd, contest_id,
+                                        &xml_text)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  val = Py_BuildValue("s", xml_text);
+  free(xml_text);
+  return val;
+}
+static PyObject *
+Ul_listContestUsers(int cmd, UlObject *self, PyObject *args)
+{
+  return Ul_do_list_users(ULS_LIST_ALL_USERS, self, args);
+}
+static PyObject *
+Ul_getContestUsers(int cmd, UlObject *self, PyObject *args)
+{
+  return Ul_do_list_users(ULS_LIST_STANDINGS_USERS, self, args);
+}
+
+static PyObject *
+Ul_listAllUsers(UlObject *self)
+{
+  int r;
+  unsigned char *xml_text = 0;
+  PyObject *val;
+
+  if ((r = userlist_clnt_list_all_users(self->clnt, ULS_LIST_ALL_USERS, 0,
+                                        &xml_text)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  val = Py_BuildValue("s", xml_text);
+  free(xml_text);
+  return val;
+}
+
 static PyMethodDef Ul_methods[] =
 {
   { "adminProcess", (PyCFunction) Ul_adminProcess, METH_NOARGS,
     "adminProcess" },
   { "login", (PyCFunction) Ul_login, METH_VARARGS,
     "login" },
+  { "contestLogin", (PyCFunction) Ul_contestLogin, METH_VARARGS,
+    "contestLogin" },
+  { "checkUser", (PyCFunction) Ul_checkUser, METH_VARARGS,
+    "checkUser" },
+  { "checkContestUser", (PyCFunction) Ul_checkContestUser, METH_VARARGS,
+    "checkContestUser" },
   { "registerNew2", (PyCFunction) Ul_registerNew2, METH_VARARGS,
     "registerNew2" },
   { "createUser", (PyCFunction) Ul_createUser, METH_VARARGS,
@@ -471,6 +1206,90 @@ static PyMethodDef Ul_methods[] =
     "changeRegistration" },
   { "registerContest", (PyCFunction) Ul_registerContest, METH_VARARGS,
     "registerContest" },
+  { "privRegisterContest", (PyCFunction) Ul_privRegisterContest, METH_VARARGS,
+    "privRegisterContest" },
+  { "registerContest2", (PyCFunction) Ul_registerContest2, METH_VARARGS,
+    "registerContest2" },
+  { "lookupUser", (PyCFunction) Ul_lookupUser, METH_VARARGS,
+    "lookupUser" },
+  { "lookupUserId", (PyCFunction) Ul_lookupUserId, METH_VARARGS,
+    "lookupUserId" },
+  { "deleteField", (PyCFunction) Ul_deleteField, METH_VARARGS,
+    "deleteField" },
+  { "copyUserInfo", (PyCFunction) Ul_copyUserInfo, METH_VARARGS,
+    "copyUserInfo" },
+  { "getCookie", (PyCFunction) Ul_getCookie, METH_VARARGS,
+    "getCookie" },
+  { "getContestCookie", (PyCFunction) Ul_getContestCookie, METH_VARARGS,
+    "getContestCookie" },
+  { "getPrivCookie", (PyCFunction) Ul_getPrivCookie, METH_VARARGS,
+    "getPrivCookie" },
+  { "logout", (PyCFunction) Ul_logout, METH_VARARGS,
+    "logout" },
+  { "privLogin", (PyCFunction) Ul_privLogin, METH_VARARGS,
+    "privLogin" },
+  { "checkPrivUser", (PyCFunction) Ul_checkPrivUser, METH_VARARGS,
+    "checkPrivUser" },
+  { "setCookieLocale", (PyCFunction) Ul_setCookieLocale, METH_VARARGS,
+    "setCookieLocale" },
+  { "setPassword", (PyCFunction) Ul_setPassword, METH_VARARGS,
+    "setPassword" },
+  { "setContestPassword", (PyCFunction) Ul_setContestPassword, METH_VARARGS,
+    "setContestPassword" },
+  { "privSetPassword", (PyCFunction) Ul_privSetPassword, METH_VARARGS,
+    "privSetPassword" },
+  { "privSetContestPassword", (PyCFunction) Ul_privSetContestPassword, METH_VARARGS,
+    "privSetContestPassword" },
+  { "stop", (PyCFunction) Ul_stop, METH_NOARGS,
+    "stop" },
+  { "restart", (PyCFunction) Ul_restart, METH_NOARGS,
+    "restart" },
+  { "deleteCookie", (PyCFunction) Ul_deleteCookie, METH_VARARGS,
+    "deleteCookie" },
+  { "deleteMember", (PyCFunction) Ul_deleteMember, METH_VARARGS,
+    "deleteMember" },
+  { "privDeleteMember", (PyCFunction) Ul_privDeleteMember, METH_VARARGS,
+    "privDeleteMember" },
+  { "deleteUser", (PyCFunction) Ul_deleteUser, METH_VARARGS,
+    "deleteUser" },
+  { "moveMember", (PyCFunction) Ul_moveMember, METH_VARARGS,
+    "moveMember" },
+  { "clearContestPasswords", (PyCFunction) Ul_clearContestPasswords, METH_VARARGS,
+    "clearContestPasswords" },
+  { "generateRandomContestPasswords", (PyCFunction) Ul_generateRandomContestPasswords, METH_VARARGS,
+    "generateRandomContestPasswords" },
+  { "generateRandomPasswords", (PyCFunction) Ul_generateRandomPasswords, METH_VARARGS,
+    "generateRandomPasswords" },
+  { "createMember", (PyCFunction) Ul_createMember, METH_VARARGS,
+    "createMember" },
+  { "importCSVUsers", (PyCFunction) Ul_importCSVUsers, METH_VARARGS,
+    "importCSVUsers" },
+  { "generateRandomPassword", (PyCFunction) Ul_generateRandomPassword, METH_VARARGS,
+    "generateRandomPassword" },
+  { "generateRandomContestPassword", (PyCFunction) Ul_generateRandomContestPassword, METH_VARARGS,
+    "generateRandomContestPassword" },
+  { "copyContestPasswordToPassword", (PyCFunction) Ul_copyContestPasswordToPassword, METH_VARARGS,
+    "copyContestPasswordToPassword" },
+  { "copyPasswordToContestPassword", (PyCFunction) Ul_copyPasswordToContestPassword, METH_VARARGS,
+    "copyPasswordToContestPassword" },
+  { "fixPassword", (PyCFunction) Ul_fixPassword, METH_VARARGS,
+    "fixPassword" },
+  { "lookupCookie", (PyCFunction) Ul_lookupCookie, METH_VARARGS,
+    "lookupCookie" },
+  { "lookupContestCookie", (PyCFunction) Ul_lookupContestCookie, METH_VARARGS,
+    "lookupContestCookie" },
+  { "getUserInfo", (PyCFunction) Ul_getUserInfo, METH_VARARGS,
+    "getUserInfo" },
+  { "privGetUserInfo", (PyCFunction) Ul_privGetUserInfo, METH_VARARGS,
+    "privGetUserInfo" },
+  { "getDatabase", (PyCFunction) Ul_getDatabase, METH_VARARGS,
+    "getDatabase" },
+  { "listContestUsers", (PyCFunction) Ul_listContestUsers, METH_VARARGS,
+    "listContestUsers" },
+  { "getContestUsers", (PyCFunction) Ul_getContestUsers, METH_VARARGS,
+    "getContestUsers" },
+  { "listAllUsers", (PyCFunction) Ul_listAllUsers, METH_NOARGS,
+    "listAllUsers" },
 
   { NULL }
 };
@@ -529,7 +1348,8 @@ static PyMethodDef ejudge_methods[] =
 PyMODINIT_FUNC
 initejudge(void) 
 {
-  PyObject* m;
+  PyObject *m;
+  PyObject *t = (PyObject*) (void*) &UlType;
 
   //UlType.tp_new = PyType_GenericNew;
   if (PyType_Ready(&UlType) < 0)
@@ -539,5 +1359,5 @@ initejudge(void)
                      "Ejudge interface module.");
 
   Py_INCREF(&UlType);
-  PyModule_AddObject(m, "Userlist", (PyObject *)&UlType);
+  PyModule_AddObject(m, "Userlist", t);
 }
