@@ -34,8 +34,10 @@ userlist_clnt_import_csv_users(
   void *in_void = 0;
   int r;
 
+#if !defined PYTHON
   ASSERT(clnt);
   ASSERT(clnt->fd >= 0);
+#endif
 
   if (!csv_text) csv_text = "";
   text_len = strlen(csv_text);

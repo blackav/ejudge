@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,10 +18,13 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_set_passwd(struct userlist_clnt *clnt,
-                         int cmd, int user_id, int contest_id,
-                         const unsigned char *old_pwd,
-                         const unsigned char *new_pwd)
+userlist_clnt_set_passwd(
+	struct userlist_clnt *clnt,
+        int cmd,
+        int user_id,
+        int contest_id,
+        const unsigned char *old_pwd,
+        const unsigned char *new_pwd)
 {
   struct userlist_pk_set_password *out;
   struct userlist_packet *in;
@@ -30,9 +33,11 @@ userlist_clnt_set_passwd(struct userlist_clnt *clnt,
   unsigned char *pkt_old_ptr;
   unsigned char *pkt_new_ptr;
 
+#if !defined PYTHON
   ASSERT(clnt);
   ASSERT(old_pwd);
   ASSERT(new_pwd);
+#endif
 
   old_len = strlen(old_pwd);
   new_len = strlen(new_pwd);

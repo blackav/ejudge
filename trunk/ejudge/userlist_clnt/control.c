@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,10 +25,12 @@ silent_recv_packet(struct userlist_clnt *clnt, size_t *p_size, void **p_data)
   int sz;
   int code = 0;
 
+#if !defined PYTHON
   ASSERT(clnt);
   ASSERT(p_size);
   ASSERT(p_data);
   ASSERT(clnt->fd >= 0);
+#endif
 
   *p_size = 0;
   *p_data = 0;
