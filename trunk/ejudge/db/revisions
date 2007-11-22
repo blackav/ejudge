@@ -3081,3 +3081,10 @@ userlist_clnt.h 4535 0 968796
 new_server_html.c 4535 0 34290059
 super_html_2.c 4535 0 4965415
 userlist_clnt/lookup_user.c 4534 0 198513
+run_packet_priv.h 4538 0 276584
+runlog.c 4538 0 6340547
+userlist_clnt/control.c 4537 0 193374
+userlist_clnt/get_database.c 4537 0 152070
+userlist_clnt/get_info.c 4537 0 161256
+userlist_clnt/import_csv_users.c 4537 0 215643
+userlist_clnt/set_passwd.c 4537 0 179341
