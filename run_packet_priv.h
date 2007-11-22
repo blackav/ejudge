@@ -119,7 +119,7 @@ struct run_reply_bin_packet
 #define MAX_EXE_SFX_LEN       255
 #define MAX_ARCH_LEN          255
 #define MAX_VARIANT           255
-#define MAX_FAILED_TEST       127
+#define MAX_FAILED_TEST       999999
 #define MAX_SCORE             999999
 #define MAX_TIME_LIMIT_ADJ    100
 #define MAX_TIME_LIMIT_ADJ_MILLIS    1000000

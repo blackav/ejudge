@@ -1010,7 +1010,7 @@ run_change_status(runlog_state_t state, int runid, int newstatus,
 {
   if (runid < 0 || runid >= state->run_u) ERR_R("bad runid: %d", runid);
   if (newstatus < 0 || newstatus > 255) ERR_R("bad newstatus: %d", newstatus);
-  if (newtest < -1 || newtest > 127) ERR_R("bad newtest: %d", newtest);
+  if (newtest < -1) ERR_R("bad newtest: %d", newtest);
   if (newscore < -1 || newscore > RUNLOG_MAX_SCORE)
     ERR_R("bad newscore: %d", newscore);
   if (judge_id < 0 || judge_id > 65535) ERR_R("bad judge_id: %d", judge_id);
