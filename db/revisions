@@ -3088,3 +3088,8 @@ userlist_clnt/get_database.c 4537 0 152070
 userlist_clnt/get_info.c 4537 0 161256
 userlist_clnt/import_csv_users.c 4537 0 215643
 userlist_clnt/set_passwd.c 4537 0 179341
+clarlog.h 4541 0 273671
+userlist-server.c 4541 0 22415344
+clarlog.c 4541 0 1328995
+new_server_html.c 4541 0 34297316
+userlist-server.c 4542 0 22420965

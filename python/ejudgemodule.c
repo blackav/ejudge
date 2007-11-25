@@ -430,12 +430,12 @@ Ul_registerNew2(UlObject *self, PyObject *args)
 }
 
 static PyObject *
-Ul_createUser(UlObject *self, PyObject *args)
+Ul_privCreateUser(UlObject *self, PyObject *args)
 {
   const char *login = 0;
   int r, user_id = 0;
 
-  if (!PyArg_ParseTuple(args, "s", &login))
+  if (!PyArg_ParseTuple(args, "z", &login))
     return 0;
   if ((r = userlist_clnt_create_user(self->clnt, login, &user_id)) < 0) {
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
@@ -445,7 +445,7 @@ Ul_createUser(UlObject *self, PyObject *args)
 }
 
 static PyObject *
-Ul_editField(UlObject *self, PyObject *args)
+Ul_privEditField(UlObject *self, PyObject *args)
 {
   int user_id = 0, contest_id = 0, serial = 0, field_id, r;
   const char *field_str = 0, *value = 0;
@@ -609,12 +609,13 @@ Ul_lookupUserId(UlObject *self, PyObject *args)
 }
 
 static PyObject *
-Ul_deleteField(UlObject *self, PyObject *args)
+Ul_privDeleteField(UlObject *self, PyObject *args)
 {
   int user_id = 0, contest_id = 0, serial = 0, field_val, r;
   const char *field_str = 0;
 
-  if (!PyArg_ParseTuple(args, "ii", &user_id, &contest_id, &serial, &field_str))
+  if (!PyArg_ParseTuple(args, "iiii",
+                        &user_id, &contest_id, &serial, &field_str))
     return 0;
   if ((field_val = str_to_user_field_code(field_str)) < 0) {
     PyErr_SetString(PyExc_ValueError, "invalid field");
@@ -629,7 +630,7 @@ Ul_deleteField(UlObject *self, PyObject *args)
 }
 
 static PyObject *
-Ul_copyUserInfo(UlObject *self, PyObject *args)
+Ul_privCopyUserInfo(UlObject *self, PyObject *args)
 {
   int user_id = 0, cnts_from = 0, cnts_to = 0, r;
 
@@ -868,6 +869,7 @@ Ul_deleteMember(UlObject *self, PyObject *args)
   }
   return Py_BuildValue("i", 0);
 }
+
 static PyObject *
 Ul_privDeleteMember(UlObject *self, PyObject *args)
 {
@@ -898,7 +900,7 @@ Ul_deleteUser(UlObject *self, PyObject *args)
 }
 
 static PyObject *
-Ul_moveMember(UlObject *self, PyObject *args)
+Ul_privMoveMember(UlObject *self, PyObject *args)
 {
   int user_id = 0, contest_id = 0, serial = 0, new_role = 0, r;
 
@@ -944,6 +946,21 @@ Ul_generateRandomPasswords(int cmd, UlObject *self, PyObject *args)
 
 static PyObject *
 Ul_createMember(UlObject *self, PyObject *args)
+{
+  int contest_id = 0, role = 0, r;
+
+  if (!PyArg_ParseTuple(args, "ii", &contest_id, &role))
+    return 0;
+  if ((r = userlist_clnt_create_member(self->clnt, 0, contest_id,
+                                       role)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
+}
+
+static PyObject *
+Ul_privCreateMember(UlObject *self, PyObject *args)
 {
   int user_id = 0, contest_id = 0, role = 0, r;
 
@@ -1091,15 +1108,15 @@ Ul_lookupContestCookie(UlObject *self, PyObject *args)
 }
 
 static PyObject *
-Ul_do_get_info(int cmd, UlObject *self, PyObject *args)
+Ul_getUserInfo(UlObject *self, PyObject *args)
 {
   int user_id = 0, contest_id = 0, r;
   unsigned char *xml_text = 0;
   PyObject *val;
 
-  if (!PyArg_ParseTuple(args, "ii", &user_id, &contest_id))
+  if (!PyArg_ParseTuple(args, "i", &contest_id))
     return 0;
-  if ((r = userlist_clnt_get_info(self->clnt, cmd, user_id, contest_id,
+  if ((r = userlist_clnt_get_info(self->clnt, ULS_GET_USER_INFO, 0, contest_id,
                                   &xml_text)) < 0) {
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
     return 0;
@@ -1108,15 +1125,25 @@ Ul_do_get_info(int cmd, UlObject *self, PyObject *args)
   free(xml_text);
   return val;
 }
-static PyObject *
-Ul_getUserInfo(UlObject *self, PyObject *args)
-{
-  return Ul_do_get_info(ULS_GET_USER_INFO, self, args);
-}
+
 static PyObject *
 Ul_privGetUserInfo(UlObject *self, PyObject *args)
 {
-  return Ul_do_get_info(ULS_PRIV_GET_USER_INFO, self, args);
+  int user_id = 0, contest_id = 0, r;
+  unsigned char *xml_text = 0;
+  PyObject *val;
+
+  if (!PyArg_ParseTuple(args, "ii", &user_id, &contest_id))
+    return 0;
+  if ((r = userlist_clnt_get_info(self->clnt, ULS_PRIV_GET_USER_INFO,
+                                  user_id, contest_id,
+                                  &xml_text)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  val = Py_BuildValue("s", xml_text);
+  free(xml_text);
+  return val;
 }
 
 static PyObject *
@@ -1157,18 +1184,18 @@ Ul_do_list_users(int cmd, UlObject *self, PyObject *args)
   return val;
 }
 static PyObject *
-Ul_listContestUsers(int cmd, UlObject *self, PyObject *args)
+Ul_privListContestUsers(int cmd, UlObject *self, PyObject *args)
 {
   return Ul_do_list_users(ULS_LIST_ALL_USERS, self, args);
 }
 static PyObject *
-Ul_getContestUsers(int cmd, UlObject *self, PyObject *args)
+Ul_privGetContestUsers(int cmd, UlObject *self, PyObject *args)
 {
   return Ul_do_list_users(ULS_LIST_STANDINGS_USERS, self, args);
 }
 
 static PyObject *
-Ul_listAllUsers(UlObject *self)
+Ul_privListAllUsers(UlObject *self)
 {
   int r;
   unsigned char *xml_text = 0;
@@ -1187,21 +1214,21 @@ Ul_listAllUsers(UlObject *self)
 static PyMethodDef Ul_methods[] =
 {
   { "adminProcess", (PyCFunction) Ul_adminProcess, METH_NOARGS,
-    "adminProcess" },
+    "adminProcess*" },
   { "login", (PyCFunction) Ul_login, METH_VARARGS,
-    "login" },
+    "login*" },
   { "contestLogin", (PyCFunction) Ul_contestLogin, METH_VARARGS,
-    "contestLogin" },
+    "contestLogin*" },
   { "checkUser", (PyCFunction) Ul_checkUser, METH_VARARGS,
     "checkUser" },
   { "checkContestUser", (PyCFunction) Ul_checkContestUser, METH_VARARGS,
     "checkContestUser" },
   { "registerNew2", (PyCFunction) Ul_registerNew2, METH_VARARGS,
     "registerNew2" },
-  { "createUser", (PyCFunction) Ul_createUser, METH_VARARGS,
-    "createUser" },
-  { "editField", (PyCFunction) Ul_editField, METH_VARARGS,
-    "editField" },
+  { "privCreateUser", (PyCFunction) Ul_privCreateUser, METH_VARARGS,
+    "privCreateUser*" },
+  { "privEditField", (PyCFunction) Ul_privEditField, METH_VARARGS,
+    "privEditField*" },
   { "changeRegistration", (PyCFunction) Ul_changeRegistration, METH_VARARGS,
     "changeRegistration" },
   { "registerContest", (PyCFunction) Ul_registerContest, METH_VARARGS,
@@ -1214,10 +1241,10 @@ static PyMethodDef Ul_methods[] =
     "lookupUser" },
   { "lookupUserId", (PyCFunction) Ul_lookupUserId, METH_VARARGS,
     "lookupUserId" },
-  { "deleteField", (PyCFunction) Ul_deleteField, METH_VARARGS,
-    "deleteField" },
-  { "copyUserInfo", (PyCFunction) Ul_copyUserInfo, METH_VARARGS,
-    "copyUserInfo" },
+  { "privDeleteField", (PyCFunction) Ul_privDeleteField, METH_VARARGS,
+    "privDeleteField*" },
+  { "privCopyUserInfo", (PyCFunction) Ul_privCopyUserInfo, METH_VARARGS,
+    "privCopyUserInfo*" },
   { "getCookie", (PyCFunction) Ul_getCookie, METH_VARARGS,
     "getCookie" },
   { "getContestCookie", (PyCFunction) Ul_getContestCookie, METH_VARARGS,
@@ -1249,11 +1276,11 @@ static PyMethodDef Ul_methods[] =
   { "deleteMember", (PyCFunction) Ul_deleteMember, METH_VARARGS,
     "deleteMember" },
   { "privDeleteMember", (PyCFunction) Ul_privDeleteMember, METH_VARARGS,
-    "privDeleteMember" },
+    "privDeleteMember*" },
   { "deleteUser", (PyCFunction) Ul_deleteUser, METH_VARARGS,
     "deleteUser" },
-  { "moveMember", (PyCFunction) Ul_moveMember, METH_VARARGS,
-    "moveMember" },
+  { "privMoveMember", (PyCFunction) Ul_privMoveMember, METH_VARARGS,
+    "privMoveMember" },
   { "clearContestPasswords", (PyCFunction) Ul_clearContestPasswords, METH_VARARGS,
     "clearContestPasswords" },
   { "generateRandomContestPasswords", (PyCFunction) Ul_generateRandomContestPasswords, METH_VARARGS,
@@ -1262,6 +1289,8 @@ static PyMethodDef Ul_methods[] =
     "generateRandomPasswords" },
   { "createMember", (PyCFunction) Ul_createMember, METH_VARARGS,
     "createMember" },
+  { "privCreateMember", (PyCFunction) Ul_privCreateMember, METH_VARARGS,
+    "privCreateMember" },
   { "importCSVUsers", (PyCFunction) Ul_importCSVUsers, METH_VARARGS,
     "importCSVUsers" },
   { "generateRandomPassword", (PyCFunction) Ul_generateRandomPassword, METH_VARARGS,
@@ -1279,17 +1308,17 @@ static PyMethodDef Ul_methods[] =
   { "lookupContestCookie", (PyCFunction) Ul_lookupContestCookie, METH_VARARGS,
     "lookupContestCookie" },
   { "getUserInfo", (PyCFunction) Ul_getUserInfo, METH_VARARGS,
-    "getUserInfo" },
+    "getUserInfo*" },
   { "privGetUserInfo", (PyCFunction) Ul_privGetUserInfo, METH_VARARGS,
-    "privGetUserInfo" },
+    "privGetUserInfo*" },
   { "getDatabase", (PyCFunction) Ul_getDatabase, METH_VARARGS,
     "getDatabase" },
-  { "listContestUsers", (PyCFunction) Ul_listContestUsers, METH_VARARGS,
-    "listContestUsers" },
-  { "getContestUsers", (PyCFunction) Ul_getContestUsers, METH_VARARGS,
-    "getContestUsers" },
-  { "listAllUsers", (PyCFunction) Ul_listAllUsers, METH_NOARGS,
-    "listAllUsers" },
+  { "privListContestUsers", (PyCFunction) Ul_privListContestUsers, METH_VARARGS,
+    "privListContestUsers*" },
+  { "privGetContestUsers", (PyCFunction) Ul_privGetContestUsers, METH_VARARGS,
+    "privGetContestUsers*" },
+  { "privListAllUsers", (PyCFunction) Ul_privListAllUsers, METH_NOARGS,
+    "privListAllUsers*" },
 
   { NULL }
 };
