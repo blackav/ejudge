@@ -3,7 +3,7 @@
 #ifndef __CLARLOG_H__
 #define __CLARLOG_H__
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -87,6 +87,7 @@ int clar_add_record_new(clarlog_state_t state,
                         int            locale_id,
                         int            in_reply_to,
                         int            appeal_flag,
+                        int            utf8_mode,
                         const unsigned char *subj);
 int clar_get_record(clarlog_state_t state,
                     int            id,

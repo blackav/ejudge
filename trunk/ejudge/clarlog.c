@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -450,9 +450,10 @@ clar_add_record_new(clarlog_state_t state,
                     int            locale_id,
                     int            in_reply_to,
                     int            appeal_flag,
+                    int            utf8_mode,
                     const unsigned char *subj)
 {
-  int i;
+  int i, j;
   unsigned char subj2[CLAR_ENTRY_SUBJ_SIZE];
   size_t subj_len;
   struct clar_entry_v1 *pc;
@@ -485,10 +486,15 @@ clar_add_record_new(clarlog_state_t state,
   subj_len = strlen(subj);
   if (subj_len >= CLAR_ENTRY_SUBJ_SIZE) {
     memcpy(subj2, subj, CLAR_ENTRY_SUBJ_SIZE - 4);
-    subj2[CLAR_ENTRY_SUBJ_SIZE - 1] = 0;
-    subj2[CLAR_ENTRY_SUBJ_SIZE - 2] = '.';
-    subj2[CLAR_ENTRY_SUBJ_SIZE - 3] = '.';
-    subj2[CLAR_ENTRY_SUBJ_SIZE - 4] = '.';
+    j = CLAR_ENTRY_SUBJ_SIZE - 5;
+    if (utf8_mode) {
+      while (j >= 0 && subj2[j] >= 0x80 && subj2[j] <= 0xbf) j--;
+    }
+    j++;
+    subj2[j++] = '.';
+    subj2[j++] = '.';
+    subj2[j++] = '.';
+    subj2[j++] = 0;
     memcpy(pc->subj, subj2, CLAR_ENTRY_SUBJ_SIZE);
   } else {
     strcpy(pc->subj, subj);

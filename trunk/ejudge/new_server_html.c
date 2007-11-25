@@ -2797,7 +2797,7 @@ priv_submit_clar(FILE *fout,
                                      phr->ip, phr->ssl_flag,
                                      0, user_id, 0, phr->user_id,
                                      hide_flag, phr->locale_id, 0, 0,
-                                     subj2)) < 0) {
+                                     utf8_mode, subj2)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto cleanup;
   }
@@ -2936,7 +2936,8 @@ priv_clar_reply(FILE *fout,
                                 msg_len,
                                 phr->ip, phr->ssl_flag,
                                 0, from_id, 0, phr->user_id, 0,
-                                clar.locale_id, in_reply_to + 1, 0, clar.subj);
+                                clar.locale_id, in_reply_to + 1, 0,
+                                utf8_mode, clar.subj);
 
   if (clar_id < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
@@ -8913,7 +8914,8 @@ unpriv_submit_clar(FILE *fout,
                                      text3_len,
                                      phr->ip, phr->ssl_flag,
                                      phr->user_id, 0, 0, 0, 0,
-                                     phr->locale_id, 0, 0, subj3)) < 0) {
+                                     phr->locale_id, 0, 0,
+                                     utf8_mode, subj3)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto done;
   }
@@ -9056,7 +9058,8 @@ unpriv_submit_appeal(FILE *fout,
                                      text3_len,
                                      phr->ip, phr->ssl_flag,
                                      phr->user_id, 0, 0, 0, 0,
-                                     phr->locale_id, 0, 1, subj3)) < 0) {
+                                     phr->locale_id, 0, 1,
+                                     utf8_mode, subj3)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto done;
   }
