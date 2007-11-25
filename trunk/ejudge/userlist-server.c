@@ -6575,6 +6575,7 @@ cmd_create_member(struct client_state *p, int pkt_len,
     return;
   }
 
+  if (data->user_id <= 0 && p->user_id > 0) data->user_id = p->user_id;
   snprintf(logbuf, sizeof(logbuf), "CREATE_MEMBER: %d, %d, %d, %d",
            p->user_id, data->user_id, data->contest_id, data->serial);
 
