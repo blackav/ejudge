@@ -3449,6 +3449,7 @@ cmd_get_user_info(struct client_state *p,
     return;
   }
 
+  if (data->user_id <= 0 && p->user_id > 0) data->user_id = p->user_id;
   snprintf(logbuf, sizeof(logbuf), "GET_USER_INFO: %d", data->user_id);
 
   if (p->user_id < 0) {
