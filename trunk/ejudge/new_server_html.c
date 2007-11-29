@@ -6613,6 +6613,10 @@ priv_main_page(FILE *fout,
   fprintf(fout, "<li>%s%s</a></li>\n",
           ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_ASSIGN_CYPHERS_1, 0),
           _("Assign random cyphers"));
+  if (cnts->problems_url) {
+    fprintf(fout, "<li><a href=\"%s\" target=_blank>%s</a>\n",
+            cnts->problems_url, _("Problems"));
+  }
   fprintf(fout, "<li>%s%s</a></li>\n",
           ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_LOGOUT, 0),
           _("Logout"));

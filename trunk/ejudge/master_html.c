@@ -648,6 +648,8 @@ write_priv_all_runs(serve_state_t state, FILE *f,
     //html_start_form(f, 0, sid, self_url, hidden_vars);
     fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
             ACTION_RESET_FILTER, _("Reset filter"));
+    fprintf(f, "<a href=\"%sfilter_expr.html\" target=\"_blank\">%s</a>",
+            CONF_STYLE_PREFIX, _("Help"));
     fprintf(f, "</form></p>\n");
   }
 
