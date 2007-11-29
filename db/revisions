@@ -3119,3 +3119,4 @@ userlist_clnt/register_contest.c 4544 0 136490
 userlist_clnt/team_cookie.c 4544 0 206461
 master_html.c 4548 0 10604455
 new_server_html.c 4548 0 34301812
+new_server_html_2.c 4550 0 14060678
