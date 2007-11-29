@@ -110,6 +110,8 @@ extern struct userlist_clnt *ul_conn;
 extern int ul_uid;
 extern unsigned char *ul_login;
 
+#ifndef __USER_ROLE_DEFINED__
+#define __USER_ROLE_DEFINED__
 enum
 {
   USER_ROLE_CONTESTANT,
@@ -122,6 +124,7 @@ enum
 
   USER_ROLE_LAST,
 };
+#endif
 
 enum
 {

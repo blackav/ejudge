@@ -2793,7 +2793,8 @@ action_login(void)
     errcode = userlist_clnt_register_contest(server_conn,
                                              ULS_REGISTER_CONTEST,
                                              user_id,
-                                             user_contest_id);
+                                             user_contest_id,
+                                             user_ip, ssl_flag);
     if (errcode < 0) {
       client_put_header(stdout, header_txt, 0, config->charset, 1,
                         client_locale_id, _("Registration failed"));
@@ -3116,7 +3117,8 @@ action_register_for_contest(void)
     errcode = userlist_clnt_register_contest(server_conn,
                                              ULS_REGISTER_CONTEST,
                                              user_id,
-                                             user_contest_id);
+                                             user_contest_id,
+                                             user_ip, ssl_flag);
     if (errcode < 0) {
       error("%s", gettext(userlist_strerror(-errcode)));
       goto failed;

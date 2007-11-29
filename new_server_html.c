@@ -1041,7 +1041,7 @@ privileged_page_cookie_login(FILE *fout,
 {
   const struct contest_desc *cnts = 0;
   opcap_t caps;
-  int priv_level = 0, r, n;
+  int r, n;
   const unsigned char *s = 0;
 
   if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts)
@@ -1058,8 +1058,6 @@ privileged_page_cookie_login(FILE *fout,
   }
   if (phr->role <= USER_ROLE_CONTESTANT || phr->role >= USER_ROLE_LAST)
       return ns_html_err_no_perm(fout, phr, 1, "invalid role");
-  if (phr->role == USER_ROLE_ADMIN) priv_level = PRIV_LEVEL_ADMIN;
-  else if (phr->role == USER_ROLE_JUDGE) priv_level = PRIV_LEVEL_JUDGE;
   if (!phr->session_id)
       return ns_html_err_no_perm(fout, phr, 1, "SID is undefined");    
 
@@ -1082,7 +1080,7 @@ privileged_page_cookie_login(FILE *fout,
   if ((r = userlist_clnt_priv_cookie_login(ul_conn, ULS_PRIV_COOKIE_LOGIN,
                                            phr->ip, phr->ssl_flag,
                                            phr->contest_id, phr->session_id,
-                                           phr->locale_id, priv_level,
+                                           phr->locale_id,
                                            phr->role, &phr->user_id,
                                            &phr->session_id, &phr->login,
                                            &phr->name)) < 0) {
@@ -1430,7 +1428,8 @@ priv_add_user_by_user_id(FILE *fout,
   }
   
   r = userlist_clnt_register_contest(ul_conn, ULS_PRIV_REGISTER_CONTEST,
-                                     x, phr->contest_id);
+                                     x, phr->contest_id, phr->ip,
+                                     phr->ssl_flag);
   if (r < 0) {
     ns_error(log_f, NEW_SRV_ERR_REGISTRATION_FAILED, userlist_strerror(-r));
     goto cleanup;
@@ -1466,7 +1465,8 @@ priv_add_user_by_login(FILE *fout,
     goto cleanup;
   }
   if ((r = userlist_clnt_register_contest(ul_conn, ULS_PRIV_REGISTER_CONTEST,
-                                          user_id, phr->contest_id)) < 0) {
+                                          user_id, phr->contest_id,
+                                          phr->ip, phr->ssl_flag)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_REGISTRATION_FAILED, userlist_strerror(-r));
     goto cleanup;
   }

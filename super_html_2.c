@@ -1610,7 +1610,7 @@ super_html_commit_contest(FILE *f,
         continue;
       }
       if ((i = userlist_clnt_register_contest(us_conn,ULS_PRIV_REGISTER_CONTEST,
-                                              uid, cnts->id)) < 0
+                                              uid, cnts->id, 0, 0)) < 0
           || (i = userlist_clnt_change_registration(us_conn, uid, cnts->id,
                                                     USERLIST_REG_OK, 0, 0)) < 0
           || (i = userlist_clnt_change_registration(us_conn,uid,cnts->id,-1, 1,

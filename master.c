@@ -473,7 +473,6 @@ authentificate(void)
     open_userlist_server();
     r = userlist_clnt_priv_cookie(userlist_conn, client_ip, ssl_flag,
                                   global->contest_id, session_id,
-                                  0 /* locale_id */,
                                   priv_level, &client_user_id,
                                   0 /* p_contest_id */,
                                   0 /* p_locale_id */,

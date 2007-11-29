@@ -211,8 +211,18 @@ struct userlist_pk_check_cookie
   int                ssl;
   int                contest_id;
   ej_cookie_t        cookie;
-  signed char        locale_id;
   unsigned char      priv_level;
+  int                role;
+};
+
+struct userlist_pk_cookie_login
+{
+  short              request_id;
+  ej_ip_t            origin_ip;
+  int                ssl;
+  int                contest_id;
+  int                locale_id;
+  ej_cookie_t        cookie;
   int                role;
 };
 
@@ -252,9 +262,11 @@ struct userlist_pk_set_password
 
 struct userlist_pk_register_contest
 {
-  short request_id;
-  int   user_id;
-  int   contest_id;
+  short   request_id;
+  int     user_id;
+  int     contest_id;
+  ej_ip_t ip;
+  int     ssl_flag;
 };
 
 struct userlist_pk_delete_info

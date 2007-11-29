@@ -823,9 +823,7 @@ authentificate(void)
     open_userlist_server();
     r = userlist_clnt_team_cookie(server_conn, client_ip, ssl_flag, global->contest_id,
                                   session_id,
-                                  client_locale_id,
                                   &client_team_id,
-                                  0 /* p_contest_id */,
                                   &new_locale_id,
                                   &client_login, &client_team_name);
     if (r >= 0) {

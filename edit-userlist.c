@@ -1994,7 +1994,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
       if (r != 1) goto menu_continue;
       r = userlist_clnt_register_contest(server_conn,
                                          ULS_PRIV_REGISTER_CONTEST,
-                                         u->id, i);
+                                         u->id, i, 0, 0);
       if (r < 0) {
         vis_err("Registration failed: %s", userlist_strerror(-r));
         goto menu_continue;
@@ -2046,7 +2046,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
       }
       r = okcancel(msg_txt);
       if (r != 1) goto menu_continue;
-      r = userlist_clnt_register_contest(server_conn, cmd, u->id, 0);
+      r = userlist_clnt_register_contest(server_conn, cmd, u->id, 0, 0, 0);
       if (r < 0) {
         vis_err("Server error: %s", userlist_strerror(-r));
         goto menu_continue;
@@ -2610,7 +2610,7 @@ display_registered_users(unsigned char const *upper,
       if (r == 1) {
         r = userlist_clnt_register_contest(server_conn,
                                            ULS_PRIV_REGISTER_CONTEST,
-                                           i, cnts->id);
+                                           i, cnts->id, 0, 0);
         if (r < 0) {
           vis_err("Registration failed: %s", userlist_strerror(-r));
           return -1;
@@ -2794,7 +2794,7 @@ display_registered_users(unsigned char const *upper,
           continue;
         r = userlist_clnt_register_contest(server_conn,
                                            ULS_PRIV_REGISTER_CONTEST,
-                                           uu[i]->id, k);
+                                           uu[i]->id, k, 0, 0);
         if (r < 0) {
           vis_err("Registration failed: %s", userlist_strerror(-r));
           continue;
@@ -2807,7 +2807,7 @@ display_registered_users(unsigned char const *upper,
           if (!sel_users.mask[j]) continue;
           r = userlist_clnt_register_contest(server_conn,
                                              ULS_PRIV_REGISTER_CONTEST,
-                                             uu[j]->id, k);
+                                             uu[j]->id, k, 0, 0);
           if (r < 0) {
             vis_err("Registration failed: %s", userlist_strerror(-r));
             continue;
@@ -2826,7 +2826,7 @@ display_registered_users(unsigned char const *upper,
           if (!sel_cnts.mask[k]) continue;
           r = userlist_clnt_register_contest(server_conn,
                                              ULS_PRIV_REGISTER_CONTEST,
-                                             uu[i]->id, k);
+                                             uu[i]->id, k, 0, 0);
           if (r < 0) {
             vis_err("Registration for contest %d failed: %s", userlist_strerror(-r), k);
             continue;
@@ -2842,7 +2842,7 @@ display_registered_users(unsigned char const *upper,
             if (!sel_cnts.mask[k]) continue;
             r = userlist_clnt_register_contest(server_conn,
                                                ULS_PRIV_REGISTER_CONTEST,
-                                               uu[j]->id, k);
+                                               uu[j]->id, k, 0, 0);
             if (r < 0) {
               vis_err("Registration of user %d to contest %d failed: %s",
                       j, k, userlist_strerror(-r));
@@ -3117,7 +3117,7 @@ display_registered_users(unsigned char const *upper,
         if (r == 1) {
           r = userlist_clnt_register_contest(server_conn,
                                              ULS_PRIV_REGISTER_CONTEST,
-                                             i, cnts->id);
+                                             i, cnts->id, 0, 0);
           if (r < 0) {
             vis_err("Registration failed: %s", userlist_strerror(-r));
           } else {
@@ -3209,7 +3209,7 @@ display_registered_users(unsigned char const *upper,
           if (!sel_cnts.mask[k]) continue;
           r = userlist_clnt_register_contest(server_conn,
                                              ULS_PRIV_REGISTER_CONTEST,
-                                             uu[i]->id, k);
+                                             uu[i]->id, k, 0, 0);
           if (r < 0) {
             vis_err("Registration for contest %d failed: %s", userlist_strerror(-r), k);
             continue;
@@ -3225,7 +3225,7 @@ display_registered_users(unsigned char const *upper,
             if (!sel_cnts.mask[k]) continue;
             r = userlist_clnt_register_contest(server_conn,
                                                ULS_PRIV_REGISTER_CONTEST,
-                                               uu[j]->id, k);
+                                               uu[j]->id, k, 0, 0);
             if (r < 0) {
               vis_err("Registration of user %d to contest %d failed: %s",
                       j, k, userlist_strerror(-r));
@@ -3269,7 +3269,7 @@ display_registered_users(unsigned char const *upper,
           break;
         case 3:
           r = userlist_clnt_register_contest(server_conn, ULS_FIX_PASSWORD,
-                                             uu[i]->id, 0);
+                                             uu[i]->id, 0, 0, 0);
           break;
         }
         if (r < 0) {
@@ -3290,7 +3290,7 @@ display_registered_users(unsigned char const *upper,
                                          0, field_code, edit_buf);
           case 3:
             r = userlist_clnt_register_contest(server_conn, ULS_FIX_PASSWORD,
-                                               uu[i]->id, 0);
+                                               uu[i]->id, 0, 0, 0);
             break;
           }
           if (r < 0) {
@@ -3997,7 +3997,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
           goto menu_continue;
         }
         j = userlist_clnt_register_contest(server_conn, ULS_PRIV_REGISTER_CONTEST,
-                                           user_id,contest_num);
+                                           user_id,contest_num, 0, 0);
         if (j < 0) {
           vis_err("Registration for contest %d failed: %s",
                   contest_num, userlist_strerror(-j));
@@ -4051,7 +4051,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
           goto menu_continue;
         r = userlist_clnt_register_contest(server_conn,
                                            ULS_PRIV_REGISTER_CONTEST,
-                                           uu[i]->id, k);
+                                           uu[i]->id, k, 0, 0);
         if (r < 0) {
           vis_err("Registration failed: %s", userlist_strerror(-r));
           goto menu_continue;
@@ -4064,7 +4064,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
           if (!g_sel_users.mask[j]) continue;
           r = userlist_clnt_register_contest(server_conn,
                                              ULS_PRIV_REGISTER_CONTEST,
-                                             uu[j]->id, k);
+                                             uu[j]->id, k, 0, 0);
           if (r < 0) {
             vis_err("Registration failed: %s", userlist_strerror(-r));
             goto menu_continue;
@@ -4088,7 +4088,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
           if (!sel_cnts.mask[j]) continue;
           r = userlist_clnt_register_contest(server_conn,
                                              ULS_PRIV_REGISTER_CONTEST,
-                                             uu[i]->id, j);
+                                             uu[i]->id, j, 0, 0);
           if (r < 0) {
             vis_err("Registration for contest %d failed: %s", j, userlist_strerror(-r));
             goto menu_continue;
@@ -4104,7 +4104,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
             if (!sel_cnts.mask[k]) continue;
             r = userlist_clnt_register_contest(server_conn,
                                                ULS_PRIV_REGISTER_CONTEST,
-                                               uu[j]->id, k);
+                                               uu[j]->id, k, 0, 0);
             if (r < 0) {
               vis_err("Registration of user %d to contest %d failed: %s",
                       uu[j]->id, k, userlist_strerror(-r));

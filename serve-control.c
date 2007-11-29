@@ -691,7 +691,6 @@ authentificate(void)
     r = userlist_clnt_priv_cookie(userlist_conn, user_ip, ssl_flag,
                                   0, /* contest_id */
                                   session_id,
-                                  0, /* locale_id */
                                   PRIV_LEVEL_ADMIN,
                                   &user_id,
                                   0, /* p_contest_id */
@@ -1099,7 +1098,7 @@ static const unsigned char * const predef_sets[4] =
   "0000000000000000000000000000000000000000000000000000000000000000", // none
   "0100100100000000000111111000000000000000000000000000000000000000", // observ
   "0110100110000000001111111001100100000000000000000000000000000000", // judge
-  "1111111111111111111111111111111110000000000000000000000000000000", // master
+  "1111111111111111111111111111111111000000000000000000000000000000", // master
 };
 
 static void action_perform_permission_op(int, int) __attribute__((noreturn));

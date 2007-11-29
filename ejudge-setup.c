@@ -3014,6 +3014,7 @@ generate_contest_xml(FILE *f)
           "      IMPORT_XML_RUNS,\n"
           "      PRINT_RUN,\n"
           "      EDIT_CONTEST,\n"
+          "      PRIV_EDIT_REG,\n"
           "    </cap>\n"
           "  </caps>\n"
           "\n"
