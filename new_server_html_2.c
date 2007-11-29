@@ -290,6 +290,8 @@ ns_write_priv_all_runs(FILE *f,
           ns_submit_button(bb, sizeof(bb), "filter_view", 1, _("View")));
   //html_start_form(f, 0, phr->self_url, phr->hidden_vars);
   fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_RESET_FILTER));
+  fprintf(f, "<a href=\"%sfilter_expr.html\" target=\"_blank\">%s</a>",
+          CONF_STYLE_PREFIX, _("Help"));
   fprintf(f, "</p></form><br/>\n");
 
   if (u->error_msgs) {
