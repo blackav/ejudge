@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,19 +18,19 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_priv_cookie(struct userlist_clnt *clnt,
-                          ej_ip_t origin_ip,
-                          int ssl,
-                          int contest_id,
-                          ej_cookie_t cookie,
-                          int locale_id,
-                          int priv_level,
-                          int *p_user_id,
-                          int *p_contest_id,
-                          int *p_locale_id,
-                          int *p_priv_level,
-                          unsigned char **p_login,
-                          unsigned char **p_name)
+userlist_clnt_priv_cookie(
+        struct userlist_clnt *clnt,
+        ej_ip_t origin_ip,
+        int ssl,
+        int contest_id,
+        ej_cookie_t cookie,
+        int priv_level,
+        int *p_user_id,
+        int *p_contest_id,
+        int *p_locale_id,
+        int *p_priv_level,
+        unsigned char **p_login,
+        unsigned char **p_name)
 {
   struct userlist_pk_check_cookie *out = 0;
   struct userlist_pk_login_ok *in = 0;
@@ -51,7 +51,6 @@ userlist_clnt_priv_cookie(struct userlist_clnt *clnt,
   out->ssl = ssl;
   out->contest_id = contest_id;
   out->cookie = cookie;
-  out->locale_id = locale_id;
   out->priv_level = priv_level;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
   if ((r = userlist_clnt_read_and_notify(clnt, &in_size, &void_in)) < 0)

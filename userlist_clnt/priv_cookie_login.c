@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,16 +26,14 @@ userlist_clnt_priv_cookie_login(
         int contest_id,
         ej_cookie_t cookie,
         int locale_id,
-        int priv_level,
         int role,
         // output parameters
         int *p_user_id,
         ej_cookie_t *p_cookie,
         unsigned char **p_login,
-        unsigned char **p_name
-                                )
+        unsigned char **p_name)
 {
-  struct userlist_pk_check_cookie *out = 0;
+  struct userlist_pk_cookie_login *out = 0;
   struct userlist_pk_login_ok *in = 0;
   size_t out_size, in_size = 0;
   int r;
@@ -55,7 +53,6 @@ userlist_clnt_priv_cookie_login(
   out->contest_id = contest_id;
   out->cookie = cookie;
   out->locale_id = locale_id;
-  out->priv_level = priv_level;
   out->role = role;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
   if ((r = userlist_clnt_read_and_notify(clnt, &in_size, &void_in)) < 0)
