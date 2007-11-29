@@ -804,7 +804,8 @@ cmd_login(
   if (cnts->force_registration && cnts->disable_name
       && cnts->autoregister && cnts->disable_team_password) {
     r = userlist_clnt_register_contest(ul_conn, ULS_REGISTER_CONTEST_2,
-                                       phr->user_id, phr->contest_id);
+                                       phr->user_id, phr->contest_id,
+                                       phr->ip, phr->ssl_flag);
     if (r < 0)
       return ns_html_err_no_perm(fout, phr, 0, "user_login failed: %s",
                                  userlist_strerror(-r));
@@ -820,7 +821,8 @@ cmd_login(
     // since we're not allowed to login unless the registration form
     // is complete, we may relax registration procedure
     r = userlist_clnt_register_contest(ul_conn, ULS_REGISTER_CONTEST_2,
-                                       phr->user_id, phr->contest_id);
+                                       phr->user_id, phr->contest_id,
+                                       phr->ip, phr->ssl_flag);
     if (r < 0)
       return ns_html_err_no_perm(fout, phr, 0, "user_login failed: %s",
                                  userlist_strerror(-r));
@@ -3151,7 +3153,8 @@ register_for_contest(
     goto done;
   }
   r = userlist_clnt_register_contest(ul_conn, ULS_REGISTER_CONTEST_2,
-                                     phr->user_id, phr->contest_id);
+                                     phr->user_id, phr->contest_id,
+                                     phr->ip, phr->ssl_flag);
   if (r < 0) {
     fprintf(log_f, "%s: %s.\n", _("Registration for contest failed"),
             userlist_strerror(-r));

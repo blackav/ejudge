@@ -131,9 +131,7 @@ userlist_clnt_team_cookie(struct userlist_clnt *clnt,
                           int ssl,
                           int contest_id,
                           ej_cookie_t cookie,
-                          int locale_id,
                           int *p_user_id,
-                          int *p_contest_id,
                           int *p_locale_id,
                           unsigned char **p_login,
                           unsigned char **p_name);
@@ -164,7 +162,9 @@ int
 userlist_clnt_register_contest(struct userlist_clnt *clnt,
                                int cmd,
                                int user_id,
-                               int contest_id);
+                               int contest_id,
+                               ej_ip_t ip,
+                               int ssl_flag);
 int
 userlist_clnt_delete_info(struct userlist_clnt *clnt, int cmd,
                           int user_id, int contest_id, int serial);
@@ -312,7 +312,6 @@ int userlist_clnt_priv_cookie(struct userlist_clnt *clnt,
                               int ssl,
                               int contest_id,
                               ej_cookie_t cookie,
-                              int locale_id,
                               int priv_level,
                               int *p_user_id,
                               int *p_contest_id,
@@ -364,14 +363,12 @@ int userlist_clnt_priv_cookie_login(
         int contest_id,
         ej_cookie_t cookie,
         int locale_id,
-        int priv_level,
         int role,
         // output parameters
         int *p_user_id,
         ej_cookie_t *p_cookie,
         unsigned char **p_login,
-        unsigned char **p_name
-                                    );
+        unsigned char **p_name);
 
 int
 userlist_clnt_import_csv_users(

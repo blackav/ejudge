@@ -105,7 +105,6 @@ authentificate(const unsigned char *pwdfile)
 
   r = userlist_clnt_priv_cookie(userlist_conn, local_ip, ssl_flag, contest_id,
                                 session_id,
-                                0 /* locale_id */,
                                 PRIV_LEVEL_ADMIN,
                                 &user_id,
                                 0, /* p_contest_id */
@@ -150,9 +149,7 @@ user_authentificate(const unsigned char *pwdfile)
 
   r = userlist_clnt_team_cookie(userlist_conn, local_ip, ssl_flag, contest_id,
                                 session_id,
-                                0 /* locale_id */,
                                 &user_id,
-                                0, /* p_contest_id */
                                 0 /* p_locale_id */,
                                 &user_login, &user_name);
   if (r < 0) {

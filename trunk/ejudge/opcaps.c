@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -61,6 +61,7 @@ static const unsigned char * const cap_list [] =
   [OPCAP_IMPORT_XML_RUNS]         "IMPORT_XML_RUNS",
   [OPCAP_PRINT_RUN]               "PRINT_RUN",
   [OPCAP_EDIT_CONTEST]            "EDIT_CONTEST",
+  [OPCAP_PRIV_EDIT_REG]           "PRIV_EDIT_REG",
 
   [OPCAP_LAST]                    0
 };
@@ -100,6 +101,7 @@ static const unsigned char is_contest_cap[] =
   [OPCAP_IMPORT_XML_RUNS] = 1,
   [OPCAP_PRINT_RUN] = 1,
   [OPCAP_EDIT_CONTEST] = 1,
+  [OPCAP_PRIV_EDIT_REG] = 1,
 };
 
 int
@@ -247,7 +249,7 @@ opcaps_get_name(int cap)
   return cap_list[cap];
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")

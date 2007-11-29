@@ -3269,6 +3269,7 @@ static const char * contest_cap_descs[] =
   [OPCAP_IMPORT_XML_RUNS] = "Import and merge the XML run database",
   [OPCAP_PRINT_RUN] = "Print any run without quota restrictions",
   [OPCAP_EDIT_CONTEST] = "Edit the contest settings using `serve-control'",
+  [OPCAP_PRIV_EDIT_REG] = "Change the registration status for privileged users",
 };
 
 int

@@ -35,6 +35,22 @@ enum priv_level
   PRIV_LEVEL_ADMIN,
 };
 
+#ifndef __USER_ROLE_DEFINED__
+#define __USER_ROLE_DEFINED__
+enum
+{
+  USER_ROLE_CONTESTANT,
+  USER_ROLE_OBSERVER,
+  USER_ROLE_EXAMINER,
+  USER_ROLE_CHIEF_EXAMINER,
+  USER_ROLE_COORDINATOR,
+  USER_ROLE_JUDGE,
+  USER_ROLE_ADMIN,
+
+  USER_ROLE_LAST,
+};
+#endif
+
 /* scoring systems */
 enum scoring_system
 {
