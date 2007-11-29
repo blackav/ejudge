@@ -3117,3 +3117,5 @@ userlist_clnt/priv_cookie.c 4544 0 225725
 userlist_clnt/priv_cookie_login.c 4544 0 221802
 userlist_clnt/register_contest.c 4544 0 136490
 userlist_clnt/team_cookie.c 4544 0 206461
+master_html.c 4548 0 10604455
+new_server_html.c 4548 0 34301812
