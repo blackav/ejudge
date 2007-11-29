@@ -83,6 +83,7 @@ lett    [A-Za-z_]
 "<" { T(*yytext); }
 
 "id" { TT(TOK_ID, FILTER_TYPE_INT); }
+"run_id" { TT(TOK_ID, FILTER_TYPE_INT); }
 "time" { TT(TOK_TIME, FILTER_TYPE_TIME); }
 "curtime" { TT(TOK_CURTIME, FILTER_TYPE_TIME); }
 "dur" { TT(TOK_DUR, FILTER_TYPE_DUR); }
@@ -94,15 +95,21 @@ lett    [A-Za-z_]
 "ip" { TT(TOK_IP, FILTER_TYPE_IP); }
 "curip" { TT(TOK_CURIP, FILTER_TYPE_IP); }
 "uid" { TT(TOK_UID, FILTER_TYPE_INT); }
+"user_id" { TT(TOK_UID, FILTER_TYPE_INT); }
 "curuid" { TT(TOK_CURUID, FILTER_TYPE_INT); }
+"curuser_id" { TT(TOK_CURUID, FILTER_TYPE_INT); }
 "login" { TT(TOK_LOGIN, FILTER_TYPE_STRING); }
 "curlogin" { TT(TOK_CURLOGIN, FILTER_TYPE_STRING); }
 "name" { TT(TOK_NAME, FILTER_TYPE_STRING); }
 "curname" { TT(TOK_CURNAME, FILTER_TYPE_STRING); }
 "lang" { TT(TOK_LANG, FILTER_TYPE_STRING); }
+"lang_id" { TT(TOK_LANG, FILTER_TYPE_STRING); }
 "curlang" { TT(TOK_CURLANG, FILTER_TYPE_STRING); }
+"curlang_id" { TT(TOK_CURLANG, FILTER_TYPE_STRING); }
 "prob" { TT(TOK_PROB, FILTER_TYPE_STRING); }
+"prob_id" { TT(TOK_PROB, FILTER_TYPE_STRING); }
 "curprob" { TT(TOK_CURPROB, FILTER_TYPE_STRING); }
+"curprob_id" { TT(TOK_CURPROB, FILTER_TYPE_STRING); }
 "result" { TT(TOK_RESULT, FILTER_TYPE_RESULT); }
 "curresult" { TT(TOK_CURRESULT, FILTER_TYPE_RESULT); }
 "status" { TT(TOK_RESULT, FILTER_TYPE_RESULT); }

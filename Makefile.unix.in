@@ -170,7 +170,7 @@ BINTARGETS = job-server-cmd edit-userlist ejudge-setup ejudge-control execute ne
 SERVERBINTARGETS = compile compile-control serve run userlist-server userlist-server-control job-server job-server-control super-serve super-serve-control clean-users collect-emails serve-cmd slice-userlist new-server new-server-control uudecode
 CGITARGETS = master${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX} users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
 TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} style/actions.js
-STYLEFILES = style/actions.js style/logo.gif style/priv.css style/unpriv.css style/unpriv.js
+STYLEFILES = style/actions.js style/logo.gif style/priv.css style/unpriv.css style/unpriv.js style/filter_expr.html
 
 all: local_all subdirs_all mo
 local_all: $(TARGETS) ejudge-config style/actions.js
