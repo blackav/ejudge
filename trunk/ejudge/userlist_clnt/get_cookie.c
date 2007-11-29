@@ -52,7 +52,6 @@ userlist_clnt_get_cookie(struct userlist_clnt *clnt,
   out->ssl = ssl;
   out->contest_id = 0;
   out->cookie = cookie;
-  out->locale_id = 0;
   out->priv_level = 0;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
   if ((r = userlist_clnt_read_and_notify(clnt, &in_size, &void_in)) < 0)

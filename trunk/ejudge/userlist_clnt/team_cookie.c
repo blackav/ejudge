@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,17 +18,16 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_team_cookie(struct userlist_clnt *clnt,
-                          ej_ip_t origin_ip,
-                          int ssl,
-                          int contest_id,
-                          ej_cookie_t cookie,
-                          int locale_id,
-                          int *p_user_id,
-                          int *p_contest_id,
-                          int *p_locale_id,
-                          unsigned char **p_login,
-                          unsigned char **p_name)
+userlist_clnt_team_cookie(
+        struct userlist_clnt *clnt,
+        ej_ip_t origin_ip,
+        int ssl,
+        int contest_id,
+        ej_cookie_t cookie,
+        int *p_user_id,
+        int *p_locale_id,
+        unsigned char **p_login,
+        unsigned char **p_name)
 {
   struct userlist_pk_check_cookie *out = 0;
   struct userlist_pk_login_ok *in = 0;
@@ -49,7 +48,6 @@ userlist_clnt_team_cookie(struct userlist_clnt *clnt,
   out->ssl = ssl;
   out->contest_id = contest_id;
   out->cookie = cookie;
-  out->locale_id = locale_id;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
   if ((r = userlist_clnt_read_and_notify(clnt, &in_size, &void_in)) < 0)
     return r;
@@ -78,7 +76,6 @@ userlist_clnt_team_cookie(struct userlist_clnt *clnt,
   }
   if (p_user_id) *p_user_id = in->user_id;
   if (p_locale_id) *p_locale_id = in->locale_id;
-  if (p_contest_id) *p_contest_id = in->contest_id;
   if (p_login) *p_login = xstrdup(login_ptr);
   if (p_name) *p_name = xstrdup(name_ptr);
 

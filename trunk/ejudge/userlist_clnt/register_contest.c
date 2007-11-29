@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,10 +18,13 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_register_contest(struct userlist_clnt *clnt,
-                               int cmd,
-                               int user_id,
-                               int contest_id)
+userlist_clnt_register_contest(
+        struct userlist_clnt *clnt,
+        int cmd,
+        int user_id,
+        int contest_id,
+        ej_ip_t ip,
+        int ssl_flag)
 {
   struct userlist_pk_register_contest *out;
   struct userlist_packet *in = 0;
@@ -40,6 +43,8 @@ userlist_clnt_register_contest(struct userlist_clnt *clnt,
   out->request_id = cmd;
   out->user_id = user_id;
   out->contest_id = contest_id;
+  out->ip = ip;
+  out->ssl_flag = ssl_flag;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
   if ((r = userlist_clnt_read_and_notify(clnt, &in_size, (void*) &in)) < 0)
     return r;

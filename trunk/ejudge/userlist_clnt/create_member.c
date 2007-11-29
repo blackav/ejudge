@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,11 +18,15 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_create_member(struct userlist_clnt *clnt, int user_id,
-                            int contest_id, int role)
+userlist_clnt_create_member(
+        struct userlist_clnt *clnt,
+        int user_id,
+        int contest_id,
+        int role)
 {
   struct userlist_pk_edit_field *out = 0;
   struct userlist_packet *in = 0;
+  struct userlist_pk_login_ok *in2 = 0;
   int r;
   size_t out_size, in_size = 0;
   void *void_in = 0;
@@ -42,12 +46,26 @@ userlist_clnt_create_member(struct userlist_clnt *clnt, int user_id,
     xfree(in);
     return -ULS_ERR_PROTOCOL;
   }
-
-  if (in_size != sizeof(*in)) {
+  if (in->id < 0) {
+    if (in_size != sizeof(*in)) {
+      xfree(in);
+      return -ULS_ERR_PROTOCOL;
+    }
+    r = in->id;
+    xfree(in);
+    return r;
+  }
+  if (in_size != sizeof(*in2)) {
     xfree(in);
     return -ULS_ERR_PROTOCOL;
   }
-  r = in->id;
+  in2 = (struct userlist_pk_login_ok *) void_in;
+  if (in2->reply_id != ULS_LOGIN_OK) {
+    xfree(in);
+    return -ULS_ERR_PROTOCOL;
+  }
+
+  r = in2->user_id;
   xfree(in);
   return r;
 }

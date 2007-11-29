@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,6 @@ userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
   data->ssl = ssl;
   //  data->contest_id = contest_id;
   data->cookie = cookie;
-  data->locale_id = -1;
   if ((r = userlist_clnt_send_packet(clnt,len,data)) < 0) return r;
   if ((r = userlist_clnt_read_and_notify(clnt,&anslen,&void_answer)) < 0)
     return r;
