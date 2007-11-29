@@ -467,9 +467,11 @@ Ul_privEditField(UlObject *self, PyObject *args)
 
 static const unsigned char * const status_map[] =
 {
-  [USERLIST_REG_OK] = "OK",
-  [USERLIST_REG_PENDING] = "PENDING",
-  [USERLIST_REG_REJECTED] = "REJECTED",
+  [0] = "REMOVE",
+  [1] = "NOP",
+  [USERLIST_REG_OK+2] = "OK",
+  [USERLIST_REG_PENDING+2] = "PENDING",
+  [USERLIST_REG_REJECTED+2] = "REJECTED",
   NULL,
 };
 static int
@@ -479,8 +481,8 @@ str_to_registration_status(const unsigned char *str)
 
   for (i = 0; status_map[i]; i++)
     if (!strcmp(status_map[i], str))
-      return i;
-  return -1;
+      return i - 2;
+  return -3;
 }
 
 static const unsigned char * const operation_map[] =
@@ -499,7 +501,7 @@ str_to_registration_op(const unsigned char *str)
 }
 
 static PyObject *
-Ul_changeRegistration(UlObject *self, PyObject *args)
+Ul_privChangeContestReg(UlObject *self, PyObject *args)
 {
   int user_id = 0, contest_id = 0, flags = 0, status_val, cmd_val, r;
   const char *cmd_str = 0, *status_str = 0;
@@ -508,7 +510,7 @@ Ul_changeRegistration(UlObject *self, PyObject *args)
                         &cmd_str, &flags))
     return 0;
   if (status_str) {
-    if ((status_val = str_to_registration_status(status_str)) < 0) {
+    if ((status_val = str_to_registration_status(status_str)) < -2) {
       PyErr_SetString(PyExc_ValueError, "invalid status");
       return 0;
     }
@@ -532,14 +534,21 @@ Ul_changeRegistration(UlObject *self, PyObject *args)
 }
 
 static PyObject *
-Ul_do_register_contest(int cmd, UlObject *self, PyObject *args)
+Ul_registerContest(UlObject *self, PyObject *args)
 {
-  int user_id = 0, contest_id = 0, r;
+  int contest_id = 0, r, ssl_flag = 0;
+  ej_ip_t ip_val = 0;
+  const char *ip_str = 0;
 
-  if (!PyArg_ParseTuple(args, "ii", &user_id, &contest_id))
+  if (!PyArg_ParseTuple(args, "izi", &contest_id, &ip_str, &ssl_flag))
     return 0;
-  if ((r = userlist_clnt_register_contest(self->clnt, cmd, user_id,
-                                          contest_id)) < 0) {
+  if (ip_str && xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid IP");
+    return 0;
+  }
+  if ((r = userlist_clnt_register_contest(self->clnt, ULS_REGISTER_CONTEST,
+                                          0, contest_id,
+                                          ip_val, ssl_flag)) < 0) {
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
     return 0;
   }
@@ -547,19 +556,40 @@ Ul_do_register_contest(int cmd, UlObject *self, PyObject *args)
 }
 
 static PyObject *
-Ul_registerContest(UlObject *self, PyObject *args)
+Ul_privForcedRegisterContest(UlObject *self, PyObject *args)
 {
-  return Ul_do_register_contest(ULS_REGISTER_CONTEST, self, args);
+  int user_id = 0, contest_id = 0, r;
+
+  if (!PyArg_ParseTuple(args, "ii", &user_id, &contest_id))
+    return 0;
+  if ((r = userlist_clnt_register_contest(self->clnt, ULS_PRIV_REGISTER_CONTEST,
+                                          user_id, contest_id, 0, 0)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
 }
+
 static PyObject *
 Ul_privRegisterContest(UlObject *self, PyObject *args)
 {
-  return Ul_do_register_contest(ULS_PRIV_REGISTER_CONTEST, self, args);
-}
-static PyObject *
-Ul_registerContest2(UlObject *self, PyObject *args)
-{
-  return Ul_do_register_contest(ULS_REGISTER_CONTEST_2, self, args);
+  int user_id = 0, contest_id = 0, r, ssl_flag = 0;
+  ej_ip_t ip_val = 0;
+  const char *ip_str = 0;
+
+  if (!PyArg_ParseTuple(args,"iizi",&user_id,&contest_id,&ip_str,&ssl_flag))
+    return 0;
+  if (ip_str && xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid IP");
+    return 0;
+  }
+  if ((r = userlist_clnt_register_contest(self->clnt, ULS_REGISTER_CONTEST_2,
+                                          user_id, contest_id,
+                                          ip_val, ssl_flag)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
 }
 
 static PyObject *
@@ -956,7 +986,7 @@ Ul_createMember(UlObject *self, PyObject *args)
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
     return 0;
   }
-  return Py_BuildValue("i", 0);
+  return Py_BuildValue("i", r);
 }
 
 static PyObject *
@@ -1003,7 +1033,7 @@ Ul_do_user_passwd_op(int cmd, UlObject *self, PyObject *args)
 
   if (!PyArg_ParseTuple(args, "ii", &user_id, &contest_id))
     return 0;
-  if ((r = userlist_clnt_register_contest(self->clnt, cmd, user_id, 0)) < 0) {
+  if ((r = userlist_clnt_register_contest(self->clnt,cmd,user_id,0,0,0)) < 0) {
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
     return 0;
   }
@@ -1088,8 +1118,8 @@ Ul_lookupContestCookie(UlObject *self, PyObject *args)
     return 0;
   }
   if ((r = userlist_clnt_team_cookie
-       (self->clnt, ip_val, ssl_flag, contest_id, sid, -1,
-        &user_id, &contest_id, &locale_id, &login, &name)) < 0) {
+       (self->clnt, ip_val, ssl_flag, contest_id, sid,
+        &user_id, &locale_id, &login, &name)) < 0) {
     if (r == -ULS_ERR_NO_COOKIE) {
       Py_RETURN_NONE;
     }
@@ -1098,7 +1128,6 @@ Ul_lookupContestCookie(UlObject *self, PyObject *args)
   }
   val = Py_BuildValue("{s:i,s:i,s:i,s:s,s:s}",
                       "user_id", user_id,
-                      "contest_id", contest_id,
                       "locale_id", locale_id,
                       "login", login,
                       "name", name);
@@ -1110,7 +1139,7 @@ Ul_lookupContestCookie(UlObject *self, PyObject *args)
 static PyObject *
 Ul_getUserInfo(UlObject *self, PyObject *args)
 {
-  int user_id = 0, contest_id = 0, r;
+  int contest_id = 0, r;
   unsigned char *xml_text = 0;
   PyObject *val;
 
@@ -1229,18 +1258,18 @@ static PyMethodDef Ul_methods[] =
     "privCreateUser*" },
   { "privEditField", (PyCFunction) Ul_privEditField, METH_VARARGS,
     "privEditField*" },
-  { "changeRegistration", (PyCFunction) Ul_changeRegistration, METH_VARARGS,
-    "changeRegistration" },
+  { "privChangeContestReg", (PyCFunction) Ul_privChangeContestReg, METH_VARARGS,
+    "privChangeContestReg*" },
   { "registerContest", (PyCFunction) Ul_registerContest, METH_VARARGS,
-    "registerContest" },
+    "registerContest*" },
   { "privRegisterContest", (PyCFunction) Ul_privRegisterContest, METH_VARARGS,
-    "privRegisterContest" },
-  { "registerContest2", (PyCFunction) Ul_registerContest2, METH_VARARGS,
-    "registerContest2" },
+    "privRegisterContest*" },
+  { "privForcedRegisterContest", (PyCFunction) Ul_privForcedRegisterContest, METH_VARARGS,
+    "privForcedRegisterContest*" },
   { "lookupUser", (PyCFunction) Ul_lookupUser, METH_VARARGS,
-    "lookupUser" },
+    "lookupUser*" },
   { "lookupUserId", (PyCFunction) Ul_lookupUserId, METH_VARARGS,
-    "lookupUserId" },
+    "lookupUserId*" },
   { "privDeleteField", (PyCFunction) Ul_privDeleteField, METH_VARARGS,
     "privDeleteField*" },
   { "privCopyUserInfo", (PyCFunction) Ul_privCopyUserInfo, METH_VARARGS,
