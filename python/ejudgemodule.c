@@ -593,7 +593,7 @@ Ul_privRegisterContest(UlObject *self, PyObject *args)
 }
 
 static PyObject *
-Ul_lookupUser(UlObject *self, PyObject *args)
+Ul_privLookupUser(UlObject *self, PyObject *args)
 {
   const char *login = 0;
   unsigned char *name = 0;
@@ -616,7 +616,7 @@ Ul_lookupUser(UlObject *self, PyObject *args)
 }
 
 static PyObject *
-Ul_lookupUserId(UlObject *self, PyObject *args)
+Ul_privLookupUserId(UlObject *self, PyObject *args)
 {
   int user_id = 0, contest_id = 0, r;
   unsigned char *login = 0, *name = 0;
@@ -1266,10 +1266,10 @@ static PyMethodDef Ul_methods[] =
     "privRegisterContest*" },
   { "privForcedRegisterContest", (PyCFunction) Ul_privForcedRegisterContest, METH_VARARGS,
     "privForcedRegisterContest*" },
-  { "lookupUser", (PyCFunction) Ul_lookupUser, METH_VARARGS,
-    "lookupUser*" },
-  { "lookupUserId", (PyCFunction) Ul_lookupUserId, METH_VARARGS,
-    "lookupUserId*" },
+  { "privLookupUser", (PyCFunction) Ul_privLookupUser, METH_VARARGS,
+    "privLookupUser*" },
+  { "privLookupUserId", (PyCFunction) Ul_privLookupUserId, METH_VARARGS,
+    "privLookupUserId*" },
   { "privDeleteField", (PyCFunction) Ul_privDeleteField, METH_VARARGS,
     "privDeleteField*" },
   { "privCopyUserInfo", (PyCFunction) Ul_privCopyUserInfo, METH_VARARGS,
