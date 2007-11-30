@@ -3066,7 +3066,7 @@ cmd_priv_check_cookie(struct client_state *p,
     return;
   }
   if (data->priv_level <= 0 || data->priv_level > PRIV_LEVEL_ADMIN) {
-    err("%s -> invalid privilege level", logbuf);
+    err("%s -> invalid privilege level %d", logbuf, data->priv_level);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
