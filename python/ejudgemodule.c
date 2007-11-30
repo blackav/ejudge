@@ -915,13 +915,13 @@ Ul_privDeleteMember(UlObject *self, PyObject *args)
   return Py_BuildValue("i", 0);
 }
 static PyObject *
-Ul_deleteUser(UlObject *self, PyObject *args)
+Ul_privDeleteUser(UlObject *self, PyObject *args)
 {
   int user_id = 0, r;
 
   if (!PyArg_ParseTuple(args, "i", &user_id))
     return 0;
-  if ((r = userlist_clnt_delete_info(self->clnt, ULS_PRIV_DELETE_MEMBER,
+  if ((r = userlist_clnt_delete_info(self->clnt, ULS_DELETE_USER,
                                      user_id, 0, 0)) < 0) {
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
     return 0;
@@ -1306,8 +1306,8 @@ static PyMethodDef Ul_methods[] =
     "deleteMember" },
   { "privDeleteMember", (PyCFunction) Ul_privDeleteMember, METH_VARARGS,
     "privDeleteMember*" },
-  { "deleteUser", (PyCFunction) Ul_deleteUser, METH_VARARGS,
-    "deleteUser" },
+  { "privDeleteUser", (PyCFunction) Ul_privDeleteUser, METH_VARARGS,
+    "privDeleteUser" },
   { "privMoveMember", (PyCFunction) Ul_privMoveMember, METH_VARARGS,
     "privMoveMember" },
   { "clearContestPasswords", (PyCFunction) Ul_clearContestPasswords, METH_VARARGS,
