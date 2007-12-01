@@ -1994,7 +1994,7 @@ cmd_check_user(
     return;
   }
   ASSERT(p->user_id > 0);
-  if (is_db_capable(p, OPCAP_LIST_ALL_USERS, logbuf)) return;
+  if (is_db_capable(p, OPCAP_LIST_USERS, logbuf)) return;
 
   if (passwd_convert_to_internal(password, &pwdint) < 0) {
     err("%s -> invalid password", logbuf);
@@ -2286,7 +2286,7 @@ cmd_team_check_user(struct client_state *p, int pkt_len,
     return;
   }
   ASSERT(p->user_id > 0);
-  if (is_db_capable(p, OPCAP_LIST_ALL_USERS, logbuf)) return;
+  if (is_db_capable(p, OPCAP_LIST_USERS, logbuf)) return;
   if (!data->origin_ip) {
     err("%s -> origin_ip is not set", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
@@ -2651,7 +2651,7 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
     return;
   }
   ASSERT(p->user_id > 0);
-  if (is_db_capable(p, OPCAP_LIST_ALL_USERS, logbuf)) return;
+  if (is_db_capable(p, OPCAP_LIST_USERS, logbuf)) return;
   if (!data->origin_ip) {
     err("%s -> origin_ip is not set", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
@@ -3651,10 +3651,10 @@ cmd_list_all_users(struct client_state *p,
         return;
       }
     }
-    if (is_cnts_capable(p, cnts, OPCAP_LIST_CONTEST_USERS, logbuf) < 0) return;
+    if (is_cnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf) < 0) return;
   } else {
     // list all users
-    if (is_db_capable(p, OPCAP_LIST_ALL_USERS, logbuf) < 0) return;
+    if (is_db_capable(p, OPCAP_LIST_USERS, logbuf) < 0) return;
   }
 
   f = open_memstream(&xml_ptr, &xml_size);
@@ -7007,7 +7007,7 @@ cmd_lookup_user(struct client_state *p,
     return;
   }
   ASSERT(p->user_id > 0);
-  if (is_db_capable(p, OPCAP_LIST_ALL_USERS, logbuf)) return;
+  if (is_db_capable(p, OPCAP_LIST_USERS, logbuf)) return;
 
   if (data->login_length <= 0) {
     err("%s -> EMPTY LOGIN", logbuf);
@@ -7067,7 +7067,7 @@ cmd_lookup_user_id(struct client_state *p,
     return;
   }
   ASSERT(p->user_id > 0);
-  if (is_db_capable(p, OPCAP_LIST_ALL_USERS, logbuf)) return;
+  if (is_db_capable(p, OPCAP_LIST_USERS, logbuf)) return;
 
   
   if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0
@@ -7129,7 +7129,7 @@ cmd_get_cookie(struct client_state *p,
     return;
   }
   ASSERT(p->user_id > 0);
-  if (is_db_capable(p, OPCAP_LIST_ALL_USERS, logbuf)) return;
+  if (is_db_capable(p, OPCAP_LIST_USERS, logbuf)) return;
   if (!data->origin_ip) {
     err("%s -> origin_ip is not set", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
@@ -7263,7 +7263,7 @@ cmd_set_cookie(struct client_state *p,
     return;
   }
   ASSERT(p->user_id > 0);
-  if (is_db_capable(p, OPCAP_LIST_ALL_USERS, logbuf)) return;
+  if (is_db_capable(p, OPCAP_LIST_USERS, logbuf)) return;
 
   if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie) {
     err("%s -> no such cookie", logbuf);

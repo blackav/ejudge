@@ -32,8 +32,9 @@ static const unsigned char * const cap_list [] =
   [OPCAP_JUDGE_LOGIN]             "JUDGE_LOGIN",
   [OPCAP_SUBMIT_RUN]              "SUBMIT_RUN",
   [OPCAP_MAP_CONTEST]             "MAP_CONTEST",
-  [OPCAP_LIST_CONTEST_USERS]      "LIST_CONTEST_USERS",
-  [OPCAP_LIST_ALL_USERS]          "LIST_ALL_USERS",
+  //[OPCAP_LIST_CONTEST_USERS]      "LIST_CONTEST_USERS",
+  //[OPCAP_LIST_ALL_USERS]          "LIST_ALL_USERS",
+  [OPCAP_LIST_USERS]              "LIST_USERS",
   [OPCAP_CREATE_USER]             "CREATE_USER",
   [OPCAP_GET_USER]                "GET_USER",
   [OPCAP_EDIT_USER]               "EDIT_USER",
@@ -72,8 +73,9 @@ static const unsigned char is_contest_cap[] =
   [OPCAP_JUDGE_LOGIN] = 1,
   [OPCAP_SUBMIT_RUN] = 1,
   [OPCAP_MAP_CONTEST] = 1,
-  [OPCAP_LIST_CONTEST_USERS] = 1,
-  [OPCAP_LIST_ALL_USERS] = 0,
+  //[OPCAP_LIST_CONTEST_USERS] = 1,
+  //[OPCAP_LIST_ALL_USERS] = 0,
+  [OPCAP_LIST_USERS] = 1,
   [OPCAP_CREATE_USER] = 0,
   [OPCAP_GET_USER] = 1,
   [OPCAP_EDIT_USER] = 1,
@@ -191,9 +193,15 @@ opcaps_parse(unsigned char const *str, opcap_t *pcap)
       memset(str3, 0, len + 10);
       memcpy(str3, q, e - q);
 
-      for (bit = 0; cap_list[bit]; bit++)
-        if (!strcmp(cap_list[bit], str3)) break;
-      if (!cap_list[bit]) return -1;
+      // backward compatibility
+      if (!strcmp("LIST_CONTEST_USERS", str3)
+          || !strcmp("LIST_ALL_USERS", str3)) {
+        bit = OPCAP_LIST_USERS;
+      } else {
+        for (bit = 0; cap_list[bit]; bit++)
+          if (!strcmp(cap_list[bit], str3)) break;
+        if (!cap_list[bit]) return -1;
+      }
       ASSERT(bit < OPCAP_LAST);
       lcap |= 1ULL << bit;
 
