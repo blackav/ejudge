@@ -2371,7 +2371,7 @@ ns_user_info_page(FILE *fout, FILE *log_f,
   }
   fprintf(fout, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
           _("Last login time"), s, nbsp2);
-  if (opcaps_check(phr->caps, OPCAP_GENERATE_TEAM_PASSWORDS) >= 0) {
+  if (/*opcaps_check(phr->caps, OPCAP_GENERATE_TEAM_PASSWORDS) >= 0*/ 1) {
   // registration password (if available)
     bb[0] = 0;
     if (u && !u->passwd) {

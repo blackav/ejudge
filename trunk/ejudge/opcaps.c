@@ -41,7 +41,7 @@ static const unsigned char * const cap_list [] =
   [OPCAP_DELETE_USER]             "DELETE_USER",
   [OPCAP_PRIV_EDIT_USER]          "PRIV_EDIT_USER",
   [OPCAP_PRIV_DELETE_USER]        "PRIV_DELETE_USER",
-  [OPCAP_GENERATE_TEAM_PASSWORDS] "GENERATE_TEAM_PASSWORDS",
+  //  [OPCAP_GENERATE_TEAM_PASSWORDS] "GENERATE_TEAM_PASSWORDS",
   [OPCAP_CREATE_REG]              "CREATE_REG",
   [OPCAP_EDIT_REG]                "EDIT_REG",
   [OPCAP_DELETE_REG]              "DELETE_REG",
@@ -63,6 +63,8 @@ static const unsigned char * const cap_list [] =
   [OPCAP_PRINT_RUN]               "PRINT_RUN",
   [OPCAP_EDIT_CONTEST]            "EDIT_CONTEST",
   [OPCAP_PRIV_EDIT_REG]           "PRIV_EDIT_REG",
+  [OPCAP_EDIT_PASSWD]             "EDIT_PASSWD",
+  [OPCAP_PRIV_EDIT_PASSWD]        "PRIV_EDIT_PASSWD",
 
   [OPCAP_LAST]                    0
 };
@@ -82,7 +84,7 @@ static const unsigned char is_contest_cap[] =
   [OPCAP_DELETE_USER] = 0,
   [OPCAP_PRIV_EDIT_USER] = 1,
   [OPCAP_PRIV_DELETE_USER] = 0,
-  [OPCAP_GENERATE_TEAM_PASSWORDS] = 1,
+  //  [OPCAP_GENERATE_TEAM_PASSWORDS] = 1,
   [OPCAP_CREATE_REG] = 1,
   [OPCAP_EDIT_REG] = 1,
   [OPCAP_DELETE_REG] = 1,
@@ -104,6 +106,8 @@ static const unsigned char is_contest_cap[] =
   [OPCAP_PRINT_RUN] = 1,
   [OPCAP_EDIT_CONTEST] = 1,
   [OPCAP_PRIV_EDIT_REG] = 1,
+  [OPCAP_EDIT_PASSWD] = 1,
+  [OPCAP_PRIV_EDIT_PASSWD] = 1,
 };
 
 int
@@ -194,16 +198,20 @@ opcaps_parse(unsigned char const *str, opcap_t *pcap)
       memcpy(str3, q, e - q);
 
       // backward compatibility
-      if (!strcmp("LIST_CONTEST_USERS", str3)
-          || !strcmp("LIST_ALL_USERS", str3)) {
-        bit = OPCAP_LIST_USERS;
+      if (!strcmp("GENERATE_TEAM_PASSWORDS", str3)) {
+        // just ignore this bit
       } else {
-        for (bit = 0; cap_list[bit]; bit++)
-          if (!strcmp(cap_list[bit], str3)) break;
-        if (!cap_list[bit]) return -1;
+        if (!strcmp("LIST_CONTEST_USERS", str3)
+            || !strcmp("LIST_ALL_USERS", str3)) {
+          bit = OPCAP_LIST_USERS;
+        } else {
+          for (bit = 0; cap_list[bit]; bit++)
+            if (!strcmp(cap_list[bit], str3)) break;
+          if (!cap_list[bit]) return -1;
+        }
+        ASSERT(bit < OPCAP_LAST);
+        lcap |= 1ULL << bit;
       }
-      ASSERT(bit < OPCAP_LAST);
-      lcap |= 1ULL << bit;
 
       q = e;
       while (*q == ',') q++;

@@ -3248,7 +3248,7 @@ static const char * contest_cap_descs[] =
   [OPCAP_GET_USER] = "View the user details for the participating users",
   [OPCAP_EDIT_USER] = "Edit the user details for the non-privileged participating users",
   [OPCAP_PRIV_EDIT_USER] = "Edit the user details for the privileged participating users",
-  [OPCAP_GENERATE_TEAM_PASSWORDS] = "Generate random `team' passwords for non-privileged users",
+  //  [OPCAP_GENERATE_TEAM_PASSWORDS] = "Generate random `team' passwords for non-privileged users",
   [OPCAP_CREATE_REG] = "Register non-privileged users for the contest",
   [OPCAP_EDIT_REG] = "Change the registration status for non-privileged users",
   [OPCAP_DELETE_REG] = "Delete registration for non-privileged users",
@@ -3270,6 +3270,8 @@ static const char * contest_cap_descs[] =
   [OPCAP_PRINT_RUN] = "Print any run without quota restrictions",
   [OPCAP_EDIT_CONTEST] = "Edit the contest settings using `serve-control'",
   [OPCAP_PRIV_EDIT_REG] = "Change the registration status for privileged users",
+  [OPCAP_EDIT_PASSWD] = "View and edit passwords for regular users",
+  [OPCAP_PRIV_EDIT_PASSWD] = "View and edit passwords for privileged users",
 };
 
 int
