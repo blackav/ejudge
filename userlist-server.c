@@ -879,6 +879,22 @@ is_admin(struct client_state *p, const unsigned char *pfx)
 }
 
 static int
+is_judge(struct client_state *p, const unsigned char *pfx)
+{
+  if (p->user_id <= 0) {
+    err("%s -> not authentificated", pfx);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return -1;
+  }
+  if (p->priv_level < PRIV_LEVEL_JUDGE) {
+    err("%s -> invalid privilege level", pfx);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return -1;
+  }
+  return 0;
+}
+
+static int
 is_db_capable(struct client_state *p, int bit, const unsigned char *pfx)
 {
   opcap_t caps;
@@ -981,6 +997,36 @@ is_dbcnts_capable(
   return 0;
 }
 
+static int
+full_get_contest(
+	struct client_state *p,
+        const unsigned char *pfx,
+        int *p_contest_id,
+        const struct contest_desc **p_cnts)
+{
+  int errcode = 0;
+
+  if ((errcode = contests_get(*p_contest_id, p_cnts)) < 0 || !*p_cnts) {
+    err("%s -> invalid contest: %s", pfx, contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return -1;
+  }
+  if ((*p_cnts)->user_contest_num > 0) {
+    *p_contest_id = (*p_cnts)->user_contest_num;
+    if ((errcode = contests_get(*p_contest_id, p_cnts)) < 0 || !*p_cnts) {
+      err("%s -> invalid user contest: %s", pfx, contests_strerror(-errcode));
+      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return -1;
+    }
+    if ((*p_cnts)->user_contest_num > 0) {
+      err("%s -> transitive contest sharing", pfx);
+      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
+      return -1;
+    }
+  }
+  return 0;
+}
+
 /*
  * FIXME: this is terribly wrong, since a user may have capabilities
  * FIXME: for some contest, but not for the userbase.
@@ -992,7 +1038,19 @@ is_privileged_user(const struct userlist_user *u)
 {
   opcap_t caps;
 
-  if (u->is_privileged) return 1;
+  if (u->is_privileged) return 0;
+  return opcaps_find(&config->capabilities, u->login, &caps);
+}
+
+static int
+is_privileged_cnts_user(
+	const struct userlist_user *u,
+        const struct contest_desc *cnts)
+{
+  opcap_t caps;
+
+  if (u->is_privileged) return 0;
+  if (cnts && opcaps_find(&cnts->capabilities, u->login, &caps) >= 0) return 0;
   return opcaps_find(&config->capabilities, u->login, &caps);
 }
 
@@ -4286,7 +4344,7 @@ cmd_register_contest_2(struct client_state *p, int pkt_len,
 {
   const struct contest_desc *c = 0;
   const struct userlist_contest *r;
-  int errcode, status = USERLIST_REG_PENDING;
+  int errcode, status = USERLIST_REG_PENDING, bit;
   unsigned char logbuf[1024];
   const struct userlist_user *u = 0;
 
@@ -4298,22 +4356,18 @@ cmd_register_contest_2(struct client_state *p, int pkt_len,
   snprintf(logbuf, sizeof(logbuf), "REGISTER_CONTEST_2: %d, %d",
            data->user_id, data->contest_id);
 
-  if (p->user_id < 0) {
-    err("%s -> not authentificated", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
-  ASSERT(p->user_id > 0);
+  if (is_judge(p, logbuf) < 0) return;
+  if (full_get_contest(p, logbuf, &data->contest_id, &c) < 0) return;
 
-  if ((errcode = contests_get(data->contest_id, &c)) < 0) {
-    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
-    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+  if (default_get_user_info_1(data->user_id, &u) < 0) {
+    err("%s -> invalid user_id", logbuf);
+    send_reply(p, -ULS_ERR_BAD_UID);
     return;
   }
-  if (is_cnts_capable(p, c, OPCAP_CREATE_REG, logbuf) < 0) {
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
+
+  bit = OPCAP_CREATE_REG;
+  if (is_privileged_cnts_user(u, c) >= 0) bit = OPCAP_PRIV_CREATE_REG;
+  if (is_cnts_capable(p, c, bit, logbuf) < 0) return;
 
   if (c->reg_deadline && cur_time > c->reg_deadline) {
     err("%s -> registration deadline exceeded", logbuf);
@@ -4326,11 +4380,6 @@ cmd_register_contest_2(struct client_state *p, int pkt_len,
     return;
   }
 
-  if (default_get_user_info_1(data->user_id, &u) < 0) {
-    err("%s -> invalid user_id", logbuf);
-    send_reply(p, -ULS_ERR_BAD_UID);
-    return;
-  }
   if (u->simple_registration && !c->simple_registration) {
     err("%s -> user is simple_registered, but the contest is not", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
@@ -4373,7 +4422,7 @@ cmd_priv_register_contest(struct client_state *p, int pkt_len,
   const struct userlist_user *u;
   const struct contest_desc *c = 0;
   const struct userlist_contest *r;
-  int errcode, status = USERLIST_REG_PENDING;
+  int errcode, status = USERLIST_REG_PENDING, bit;
   unsigned char logbuf[1024];
 
   if (pkt_len != sizeof(*data)) {
@@ -4384,18 +4433,8 @@ cmd_priv_register_contest(struct client_state *p, int pkt_len,
   snprintf(logbuf, sizeof(logbuf), "PRIV_REGISTER_CONTEST: %d, %d, %d",
            p->user_id, data->user_id, data->contest_id);
 
-  if (p->user_id < 0) {
-    err("%s -> not authentificated", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
-  ASSERT(p->user_id > 0);
-
-  if ((errcode = contests_get(data->contest_id, &c)) < 0) {
-    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
-    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-    return;
-  }
+  if (is_judge(p, logbuf) < 0) return;
+  if (full_get_contest(p, logbuf, &data->contest_id, &c) < 0) return;
 
   if (default_get_user_info_1(data->user_id, &u) < 0) {
     err("%s -> invalid user_id", logbuf);
@@ -4403,15 +4442,9 @@ cmd_priv_register_contest(struct client_state *p, int pkt_len,
     return;
   }
 
-  if (p->user_id != data->user_id) {
-    if (is_privileged_user(u) >= 0) {
-      if (is_cnts_capable(p, c, OPCAP_PRIV_CREATE_REG, logbuf) < 0) return;
-    } else {
-      if (is_cnts_capable(p, c, OPCAP_CREATE_REG, logbuf) < 0) return;
-    }
-  }
-  // FIXME: this is a potential hole: a user without any permission
-  // for a particular contest may register itself...
+  bit = OPCAP_CREATE_REG;
+  if (is_privileged_cnts_user(u, c) >= 0) bit = OPCAP_PRIV_CREATE_REG;
+  if (is_cnts_capable(p, c, bit, logbuf) < 0) return;
 
   if (c->autoregister) status = USERLIST_REG_OK;
   status = default_register_contest(data->user_id, data->contest_id, status,
@@ -6010,22 +6043,14 @@ cmd_edit_registration(struct client_state *p, int pkt_len,
     return;
   }
 
+  if (!data->user_id) data->user_id = p->user_id;
   snprintf(logbuf, sizeof(logbuf),
            "EDIT_REGISTRATION: %d, %d, %d, %d, %d, %08x",
            p->user_id, data->user_id, data->contest_id, data->new_status,
            data->flags_cmd, data->new_flags);
 
-  if (p->user_id < 0) {
-    err("%s -> not authentificated", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
-  ASSERT(p->user_id > 0);
-  if ((errcode = contests_get(data->contest_id, &c)) < 0) {
-    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
-    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-    return;
-  }
+  if (is_judge(p, logbuf) < 0) return;
+  if (full_get_contest(p, logbuf, &data->contest_id, &c) < 0) return;
 
   if (default_get_user_info_3(data->user_id, data->contest_id, &u, 0, &uc)<0){
     err("%s -> invalid user", logbuf);
@@ -6057,14 +6082,14 @@ cmd_edit_registration(struct client_state *p, int pkt_len,
 
   if (data->new_status == -2) {
     // remove a registration
-    if (is_privileged_user(u) >= 0) {
-      if (is_cnts_capable(p, c, OPCAP_PRIV_DELETE_REG, logbuf) < 0) return;
-    } else {
-      if (is_cnts_capable(p, c, OPCAP_DELETE_REG, logbuf) < 0) return;
-    }
+    bit = OPCAP_DELETE_REG;
+    if (is_privileged_cnts_user(u, c) >= 0) bit = OPCAP_PRIV_DELETE_REG;
+    if (is_cnts_capable(p, c, bit, logbuf) < 0) return;
     default_remove_registration(data->user_id, data->contest_id);
   } else {
-    if (is_cnts_capable(p, c, OPCAP_EDIT_REG, logbuf) < 0) return;
+    bit = OPCAP_EDIT_REG;
+    if (is_privileged_cnts_user(u, c) >= 0) bit = OPCAP_PRIV_EDIT_REG;
+    if (is_cnts_capable(p, c, bit, logbuf) < 0) return;
 
     if (data->new_status != -1) {
       default_set_reg_status(data->user_id, data->contest_id, data->new_status);
@@ -6315,13 +6340,14 @@ cmd_delete_field(struct client_state *p, int pkt_len,
   const struct userlist_user *u;
   const struct contest_desc *cnts = 0;
   unsigned char logbuf[1024];
-  int r, reply_code = ULS_OK, cloned_flag = 0;
+  int r, reply_code = ULS_OK, cloned_flag = 0, bit = 0;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
     return;
   }
 
+  if (!data->user_id) data->user_id = p->user_id;
   snprintf(logbuf, sizeof(logbuf), "DELETE_FIELD: %d, %d, %d, %d, %d",
            p->user_id, data->user_id, data->contest_id,
            data->serial, data->field);
@@ -6331,35 +6357,33 @@ cmd_delete_field(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
   }
-  if (data->contest_id < 0
-      || (data->contest_id > 0 && contests_get(data->contest_id, &cnts) < 0)) {
-    err("%s -> invalid contest_id: %d", logbuf, data->contest_id);
-    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-    return;
+  if (data->contest_id != 0) {
+    if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   }
-  if (data->contest_id > 0 && cnts && cnts->user_contest_num > 0) {
-    data->contest_id = cnts->user_contest_num;
-    if (contests_get(data->contest_id, &cnts) < 0) {
-      err("%s -> invalid user contest: %d", logbuf, data->contest_id);
-      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-      return;
-    }
-    if (cnts->user_contest_num > 0) {
-      err("%s -> transitive contest sharing", logbuf);
-      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
-      return;
-    }
-  }
-  
 
   default_get_user_info_1(data->user_id, &u);
 
+  /*
   if (check_editing_caps(p->user_id, data->user_id, u, data->contest_id) < 0) {
     err("%s -> no capability to edit user", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
+  */
 
+  if (data->field==USERLIST_NN_PASSWD || data->field==USERLIST_NC_TEAM_PASSWD) {
+    bit = OPCAP_EDIT_PASSWD;
+    if (is_privileged_cnts_user(u, cnts) >= 0) bit = OPCAP_PRIV_EDIT_PASSWD;
+  } else {
+    bit = OPCAP_EDIT_USER;
+    if (is_privileged_cnts_user(u, cnts) >= 0) bit = OPCAP_PRIV_EDIT_USER;
+  }
+  if (data->field >= USERLIST_NN_FIRST && data->field < USERLIST_NN_LAST) {
+    if (is_db_capable(p, bit, logbuf) < 0) return;
+  } else {
+    if (is_dbcnts_capable(p, cnts, bit, logbuf) < 0) return;
+  }
+  
   if (data->field >= USERLIST_NN_FIRST && data->field < USERLIST_NN_LAST) {
     switch (data->field) {
     case USERLIST_NN_ID:
@@ -6426,7 +6450,7 @@ cmd_edit_field(struct client_state *p, int pkt_len,
   const struct contest_desc *cnts = 0;
   int vallen, explen;
   unsigned char logbuf[1024];
-  int r = 0, reply_code = ULS_OK, cloned_flag = 0;
+  int r = 0, reply_code = ULS_OK, cloned_flag = 0, bit;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet is too small: %d", pkt_len);
@@ -6443,14 +6467,14 @@ cmd_edit_field(struct client_state *p, int pkt_len,
     return;
   }
 
+  if (!data->user_id) data->user_id = p->user_id;
   snprintf(logbuf, sizeof(logbuf), "EDIT_FIELD: %d, %d, %d, %d, %d",
            p->user_id, data->user_id, data->contest_id,
            data->serial, data->field);
 
-  if (p->user_id < 0) {
-    err("%s -> not authentificated", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
+  if (is_judge(p, logbuf) < 0) return;
+  if (data->contest_id > 0) {
+    if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   }
 
   if (default_get_user_info_1(data->user_id, &u) < 0) {
@@ -6459,31 +6483,25 @@ cmd_edit_field(struct client_state *p, int pkt_len,
     return;
   }
 
-  if (data->contest_id > 0) {
-    if (contests_get(data->contest_id, &cnts) < 0 || !cnts) {
-      err("%s -> invalid contest: %d", logbuf, data->contest_id);
-      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-      return;
-    }
-    if (cnts && cnts->user_contest_num > 0) {
-      data->contest_id = cnts->user_contest_num;
-      if (contests_get(data->contest_id, &cnts) < 0 || !cnts) {
-        err("%s -> invalid user contest: %d", logbuf, data->contest_id);
-        send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-        return;
-      }
-      if (cnts->user_contest_num > 0) {
-        err("%s -> transitive contest sharing", logbuf);
-        send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
-        return;
-      }
-    }
-  }
-
+  /*
   if (check_editing_caps(p->user_id, data->user_id, u, data->contest_id) < 0) {
     err("%s -> no capability to edit user", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
+  }
+  */
+
+  if (data->field==USERLIST_NN_PASSWD || data->field==USERLIST_NC_TEAM_PASSWD) {
+    bit = OPCAP_EDIT_PASSWD;
+    if (is_privileged_cnts_user(u, cnts) >= 0) bit = OPCAP_PRIV_EDIT_PASSWD;
+  } else {
+    bit = OPCAP_EDIT_USER;
+    if (is_privileged_cnts_user(u, cnts) >= 0) bit = OPCAP_PRIV_EDIT_USER;
+  }
+  if (data->field >= USERLIST_NN_FIRST && data->field < USERLIST_NN_LAST) {
+    if (is_db_capable(p, bit, logbuf) < 0) return;
+  } else {
+    if (is_dbcnts_capable(p, cnts, bit, logbuf) < 0) return;
   }
 
   if (data->field >= USERLIST_NN_FIRST && data->field < USERLIST_NN_LAST) {
@@ -6873,24 +6891,7 @@ cmd_user_op(struct client_state *p,
   if (data->user_id != p->user_id && is_admin(p, logbuf) < 0) return;
 
   if (data->contest_id > 0) {
-    if (contests_get(data->contest_id, &cnts) < 0 || !cnts) {
-      err("%s -> invalid contest: %d", logbuf, data->contest_id);
-      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-      return;
-    }
-    if (cnts && cnts->user_contest_num > 0) {
-      data->contest_id = cnts->user_contest_num;
-      if (contests_get(data->contest_id, &cnts) < 0 || !cnts) {
-        err("%s -> invalid user contest: %d", logbuf, data->contest_id);
-        send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-        return;
-      }
-      if (cnts->user_contest_num > 0) {
-        err("%s -> transitive contest sharing", logbuf);
-        send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
-        return;
-      }
-    }
+    if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   }
 
   if (default_get_user_info_1(data->user_id, &u) < 0) goto invalid_user;
@@ -6906,7 +6907,7 @@ cmd_user_op(struct client_state *p,
   switch (data->request_id) {
   case ULS_RANDOM_PASSWD:
     if (p->user_id != data->user_id) {
-      if (is_privileged_user(u)) {
+      if (is_privileged_user(u) >= 0) {
         if (is_db_capable(p, OPCAP_PRIV_EDIT_PASSWD, logbuf) < 0) return;
       } else {
         if (is_db_capable(p, OPCAP_EDIT_PASSWD, logbuf) < 0) return;
@@ -6918,7 +6919,7 @@ cmd_user_op(struct client_state *p,
     break;
   case ULS_COPY_TO_REGISTER:
     if (p->user_id != data->user_id) {
-      if (is_privileged_user(u)) {
+      if (is_privileged_cnts_user(u, cnts) >= 0) {
         if (is_db_capable(p, OPCAP_PRIV_EDIT_PASSWD, logbuf) < 0) return;
       } else {
         if (is_db_capable(p, OPCAP_EDIT_PASSWD, logbuf) < 0) return;
@@ -6933,7 +6934,7 @@ cmd_user_op(struct client_state *p,
     break;
   case ULS_RANDOM_TEAM_PASSWD:
     if (p->user_id != data->user_id) {
-      if (is_privileged_user(u)) {
+      if (is_privileged_cnts_user(u, cnts) >= 0) {
         if (is_dbcnts_capable(p, cnts, OPCAP_PRIV_EDIT_PASSWD, logbuf) < 0)
           return;
       } else {
@@ -6947,7 +6948,7 @@ cmd_user_op(struct client_state *p,
     break;
   case ULS_COPY_TO_TEAM:
     if (p->user_id != data->user_id) {
-      if (is_privileged_user(u)) {
+      if (is_privileged_cnts_user(u, cnts) >= 0) {
         if (is_dbcnts_capable(p, cnts, OPCAP_PRIV_EDIT_PASSWD, logbuf) < 0)
           return;
       } else {
@@ -6962,7 +6963,7 @@ cmd_user_op(struct client_state *p,
     break;
   case ULS_FIX_PASSWORD:
     if (p->user_id != data->user_id) {
-      if (is_privileged_user(u)) {
+      if (is_privileged_cnts_user(u, cnts) >= 0) {
         if (is_db_capable(p, OPCAP_PRIV_EDIT_PASSWD, logbuf) < 0) return;
       } else {
         if (is_db_capable(p, OPCAP_EDIT_PASSWD, logbuf) < 0) return;
@@ -7063,6 +7064,7 @@ cmd_lookup_user(struct client_state *p,
   const struct userlist_user *u = 0;
   const struct userlist_user_info *ui;
   int user_id;
+  const struct contest_desc *cnts = 0;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet length is too small: %d, must be >= %zu",
@@ -7087,13 +7089,11 @@ cmd_lookup_user(struct client_state *p,
 
   snprintf(logbuf, sizeof(logbuf), "LOOKUP_USER: %s", data->data);
 
-  if (p->user_id < 0) {
-    err("%s -> not authentificated", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
+  if (is_judge(p, logbuf) < 0) return;
+  if (data->contest_id > 0) {
+    if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   }
-  ASSERT(p->user_id > 0);
-  if (is_db_capable(p, OPCAP_LIST_USERS, logbuf)) return;
+  if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf)) return;
 
   if (data->login_length <= 0) {
     err("%s -> EMPTY LOGIN", logbuf);
@@ -7137,6 +7137,7 @@ cmd_lookup_user_id(struct client_state *p,
   unsigned char *login_ptr, *name_ptr;
   const struct userlist_user *u = 0;
   const struct userlist_user_info *ui;
+  const struct contest_desc *cnts = 0;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("packet length is too small: %d, must be >= %zu",
@@ -7144,17 +7145,15 @@ cmd_lookup_user_id(struct client_state *p,
     return;
   }
 
+  if (!data->user_id) data->user_id = p->user_id;
   snprintf(logbuf, sizeof(logbuf), "LOOKUP_USER_ID: %d, %d", data->user_id,
            data->contest_id);
 
-  if (p->user_id < 0) {
-    err("%s -> not authentificated", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
+  if (is_judge(p, logbuf) < 0) return;
+  if (data->contest_id > 0) {
+    if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   }
-  ASSERT(p->user_id > 0);
-  if (is_db_capable(p, OPCAP_LIST_USERS, logbuf)) return;
-
+  if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf)) return;
   
   if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0
       || !u || !ui) {
@@ -7441,16 +7440,11 @@ cmd_priv_set_passwd(struct client_state *p, int pkt_len,
     return;
   }
 
+  if (!data->user_id) data->user_id = p->user_id;
   snprintf(logbuf, sizeof(logbuf), "PRIV_SET_PASSWD: %d, %d, %d",
            data->request_id, data->user_id, data->contest_id);
 
-  if (p->user_id < 0) {
-    err("%s -> not authentificated", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
-  ASSERT(p->user_id > 0);
-  if (is_db_capable(p, OPCAP_CONTROL_CONTEST, logbuf)) return;
+  if (is_admin(p, logbuf) < 0) return;
 
   if (!old_len) {
     err("%s -> old password is empty", logbuf);
@@ -7480,6 +7474,13 @@ cmd_priv_set_passwd(struct client_state *p, int pkt_len,
       send_reply(p, -ULS_ERR_BAD_UID);
       return;
     }
+    if (data->user_id != p->user_id) {
+      if (is_privileged_user(u) >= 0) {
+        if (is_db_capable(p, OPCAP_PRIV_EDIT_PASSWD, logbuf) < 0) return;
+      } else {
+        if (is_db_capable(p, OPCAP_EDIT_PASSWD, logbuf) < 0) return;
+      }
+    }
     if (!u->passwd) {
       err("%s -> old password is not set", logbuf);
       send_reply(p, -ULS_ERR_INVALID_PASSWORD);
@@ -7495,21 +7496,31 @@ cmd_priv_set_passwd(struct client_state *p, int pkt_len,
     break;
 
   case ULS_PRIV_SET_TEAM_PASSWD:
-    if ((r = contests_get(data->contest_id, &cnts)) < 0) {
-      err("%s -> invalid contest: %s", logbuf, contests_strerror(-r));
-      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-      return;
-    }
-    if (cnts->disable_team_password) {
-      err("%s -> team password is disabled", logbuf);
-      send_reply(p, -ULS_ERR_NO_PERMS);
-      return;
+    if (data->contest_id > 0) {
+      if ((r = contests_get(data->contest_id, &cnts)) < 0) {
+        err("%s -> invalid contest: %s", logbuf, contests_strerror(-r));
+        send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+        return;
+      }
+      if (cnts->disable_team_password) {
+        err("%s -> team password is disabled", logbuf);
+        send_reply(p, -ULS_ERR_NO_PERMS);
+        return;
+      }
     }
 
     if (default_get_user_info_3(data->user_id,data->contest_id,&u,&ui,&c) < 0) {
       err("%s -> invalid user", logbuf);
       send_reply(p, -ULS_ERR_BAD_UID);
       return;
+    }
+    if (data->user_id != p->user_id) {
+      if (is_privileged_cnts_user(u, cnts) >= 0) {
+        if (is_dbcnts_capable(p, cnts, OPCAP_PRIV_EDIT_PASSWD, logbuf) < 0)
+          return;
+      } else {
+        if (is_dbcnts_capable(p, cnts, OPCAP_EDIT_PASSWD, logbuf) < 0) return;
+      }
     }
     if (!c || c->status != USERLIST_REG_OK) {
       err("%s -> not registered", logbuf);
