@@ -2186,9 +2186,6 @@ priv_password_operation(FILE *fout,
 {
   int retval = 0, r = 0;
 
-  if (opcaps_check(phr->caps, OPCAP_GENERATE_TEAM_PASSWORDS) < 0)
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     ns_html_err_ul_server_down(fout, phr, 0, 0);
     FAIL(1);
@@ -2196,17 +2193,25 @@ priv_password_operation(FILE *fout,
 
   switch (phr->action) {
   case NEW_SRV_ACTION_GENERATE_PASSWORDS_2:
+    if (opcaps_check(phr->caps, OPCAP_EDIT_USER) < 0
+        && opcaps_check(phr->dbcaps, OPCAP_EDIT_USER) < 0)
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     if (cnts->disable_team_password) FAIL(NEW_SRV_ERR_TEAM_PWD_DISABLED);
     r = userlist_clnt_cnts_passwd_op(ul_conn,
                                      ULS_GENERATE_TEAM_PASSWORDS_2,
                                      cnts->id);
     break;
   case NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_2:
+    if (opcaps_check(phr->dbcaps, OPCAP_EDIT_USER) < 0)
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     r = userlist_clnt_cnts_passwd_op(ul_conn,
                                      ULS_GENERATE_PASSWORDS_2,
                                      cnts->id);
     break;
   case NEW_SRV_ACTION_CLEAR_PASSWORDS_2:
+    if (opcaps_check(phr->caps, OPCAP_EDIT_USER) < 0
+        && opcaps_check(phr->dbcaps, OPCAP_EDIT_USER) < 0)
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     if (cnts->disable_team_password) FAIL(NEW_SRV_ERR_TEAM_PWD_DISABLED);
     r = userlist_clnt_cnts_passwd_op(ul_conn,
                                      ULS_CLEAR_TEAM_PASSWORDS,
@@ -5628,8 +5633,10 @@ priv_view_passwords(FILE *fout,
   int retval = 0;
   const unsigned char *s = 0;
 
+  /*
   if (opcaps_check(phr->caps, OPCAP_GENERATE_TEAM_PASSWORDS) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  */
   if (phr->action == NEW_SRV_ACTION_VIEW_CNTS_PWDS
       && cnts->disable_team_password)
     FAIL(NEW_SRV_ERR_TEAM_PWD_DISABLED);
@@ -7416,6 +7423,10 @@ privileged_entry_point(
   phr->caps = 0;
   if (opcaps_find(&cnts->capabilities, phr->login, &caps) >= 0) {
     phr->caps = caps;
+  }
+  phr->dbcaps = 0;
+  if (opcaps_find(&config->capabilities, phr->login, &caps) >= 0) {
+    phr->dbcaps = caps;
   }
 
   memset(&callbacks, 0, sizeof(callbacks));

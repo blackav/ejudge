@@ -863,6 +863,22 @@ get_uid_caps(const opcaplist_t *list, int uid, opcap_t *pcap)
 }
 
 static int
+is_admin(struct client_state *p, const unsigned char *pfx)
+{
+  if (p->user_id <= 0) {
+    err("%s -> not authentificated", pfx);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return -1;
+  }
+  if (p->priv_level != PRIV_LEVEL_ADMIN) {
+    err("%s -> invalid privilege level", pfx);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return -1;
+  }
+  return 0;
+}
+
+static int
 is_db_capable(struct client_state *p, int bit, const unsigned char *pfx)
 {
   opcap_t caps;
@@ -893,6 +909,54 @@ is_cnts_capable(struct client_state *p, const struct contest_desc *cnts,
                 int bit, const unsigned char *pfx)
 {
   opcap_t caps;
+
+  if (get_uid_caps(&cnts->capabilities, p->user_id, &caps) < 0) {
+    if (pfx) {
+      err("%s -> no capability %d", pfx, bit);
+    } else {
+      CONN_ERR("user %d has no capabilities for contest %d",
+               p->user_id, cnts->id);
+    }
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return -1;
+  }
+  if (opcaps_check(caps, bit) < 0) {
+    if (pfx) {
+      err("%s -> no capability %d", pfx, bit);
+    } else {
+      CONN_ERR("user %d has no %d capability for contest %d",
+               p->user_id, bit, cnts->id);
+    }
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return -1;
+  }
+  return 0;
+}
+
+static int
+is_dbcnts_capable(
+	struct client_state *p,
+        const struct contest_desc *cnts,
+        int bit,
+        const unsigned char *pfx)
+{
+  opcap_t caps;
+
+  // have general DB capability
+  if (get_uid_caps(&config->capabilities, p->user_id, &caps) >= 0
+      && opcaps_check(caps, bit) >= 0)
+    return 0;
+
+  if (!cnts) {
+    if (pfx) {
+      err("%s -> no capability %d", pfx, bit);
+    } else {
+      CONN_ERR("user %d has no capabilities for contest %d",
+               p->user_id, cnts->id);
+    }
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return -1;
+  }
 
   if (get_uid_caps(&cnts->capabilities, p->user_id, &caps) < 0) {
     if (pfx) {
@@ -5553,14 +5617,11 @@ cmd_generate_register_passwords(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
     return;
   }
-  if (p->user_id < 0) {
-    err("%s -> not authentificated", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
-  ASSERT(p->user_id > 0);
-  if (is_cnts_capable(p, cnts, OPCAP_GENERATE_TEAM_PASSWORDS, logbuf) < 0)
-    return;
+
+  if (is_admin(p, logbuf) < 0) return;
+  if (is_db_capable(p, OPCAP_EDIT_PASSWD, logbuf) < 0) return;
+  if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf) < 0) return;
+
   if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
     CONN_BAD("two client file descriptors required");
     return;
@@ -5618,14 +5679,9 @@ cmd_generate_register_passwords_2(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
     return;
   }
-  if (p->user_id < 0) {
-    err("%s -> not authentificated", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
-  ASSERT(p->user_id > 0);
-  if (is_cnts_capable(p, cnts, OPCAP_GENERATE_TEAM_PASSWORDS, logbuf) < 0)
-    return;
+  if (is_admin(p, logbuf) < 0) return;
+  if (is_db_capable(p, OPCAP_EDIT_PASSWD, logbuf) < 0) return;
+  if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf) < 0) return;
 
   for (iter = default_get_standings_list_iterator(data->contest_id);
        iter->has_next(iter);
@@ -5691,14 +5747,10 @@ cmd_generate_team_passwords_2(struct client_state *p, int pkt_len,
       return;
     }
   }
-  if (p->user_id < 0) {
-    err("%s -> not authentificated", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
-  ASSERT(p->user_id > 0);
-  if (is_cnts_capable(p, cnts, OPCAP_GENERATE_TEAM_PASSWORDS, logbuf) < 0)
-    return;
+
+  if (is_admin(p, logbuf) < 0) return;
+  if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf) < 0) return;
+  if (is_dbcnts_capable(p, cnts, OPCAP_EDIT_PASSWD, logbuf) < 0) return;
 
   for (iter = default_get_standings_list_iterator(data->contest_id);
        iter->has_next(iter);
@@ -5800,14 +5852,11 @@ cmd_generate_team_passwords(struct client_state *p, int pkt_len,
       return;
     }
   }
-  if (p->user_id < 0) {
-    err("%s -> not authentificated", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
-  ASSERT(p->user_id > 0);
-  if (is_cnts_capable(p, cnts, OPCAP_GENERATE_TEAM_PASSWORDS, logbuf) < 0)
-    return;
+
+  if (is_admin(p, logbuf) < 0) return;
+  if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf) < 0) return;
+  if (is_dbcnts_capable(p, cnts, OPCAP_EDIT_PASSWD, logbuf) < 0) return;
+
   if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
     CONN_BAD("two client file descriptors required");
     return;
@@ -5897,14 +5946,11 @@ cmd_clear_team_passwords(struct client_state *p, int pkt_len,
       return;
     }
   }
-  if (p->user_id < 0) {
-    err("%s -> not authentificated", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
-  ASSERT(p->user_id > 0);
-  if (is_cnts_capable(p, cnts, OPCAP_GENERATE_TEAM_PASSWORDS, logbuf) < 0)
-    return;
+
+  if (is_admin(p, logbuf) < 0) return;
+  if (is_dbcnts_capable(p, cnts, OPCAP_EDIT_PASSWD, logbuf) < 0) return;
+  if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf) < 0) return;
+
   do_clear_team_passwords(data->contest_id);
   info("%s -> OK", logbuf);
   send_reply(p, ULS_OK);
@@ -6820,14 +6866,11 @@ cmd_user_op(struct client_state *p,
     return;
   }
 
+  if (!data->user_id) data->user_id = p->user_id;
   snprintf(logbuf, sizeof(logbuf), "USER_OP: %d, %d, %d, %d",
            p->user_id, data->user_id, data->contest_id, data->request_id);
 
-  if (p->user_id <= 0) {
-    CONN_ERR("%s -> not authentificated", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
+  if (data->user_id != p->user_id && is_admin(p, logbuf) < 0) return;
 
   if (data->contest_id > 0) {
     if (contests_get(data->contest_id, &cnts) < 0 || !cnts) {
@@ -6851,19 +6894,37 @@ cmd_user_op(struct client_state *p,
   }
 
   if (default_get_user_info_1(data->user_id, &u) < 0) goto invalid_user;
+
+  /*
   if (check_editing_caps(p->user_id, data->user_id, u, data->contest_id) < 0) {
     err("%s -> no capability to edit user", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
+  */
 
   switch (data->request_id) {
   case ULS_RANDOM_PASSWD:
+    if (p->user_id != data->user_id) {
+      if (is_privileged_user(u)) {
+        if (is_db_capable(p, OPCAP_PRIV_EDIT_PASSWD, logbuf) < 0) return;
+      } else {
+        if (is_db_capable(p, OPCAP_EDIT_PASSWD, logbuf) < 0) return;
+      }
+    }
     memset(buf, 0, sizeof(buf));
     generate_random_password(8, buf);
     default_set_reg_passwd(data->user_id, USERLIST_PWD_PLAIN, buf, cur_time);
     break;
   case ULS_COPY_TO_REGISTER:
+    if (p->user_id != data->user_id) {
+      if (is_privileged_user(u)) {
+        if (is_db_capable(p, OPCAP_PRIV_EDIT_PASSWD, logbuf) < 0) return;
+      } else {
+        if (is_db_capable(p, OPCAP_EDIT_PASSWD, logbuf) < 0) return;
+      }
+      if (is_dbcnts_capable(p, cnts, OPCAP_GET_USER, logbuf) < 0) return;
+    }
     if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0)
       goto invalid_user;
     if (!ui || !ui->team_passwd) goto empty_password;
@@ -6871,18 +6932,43 @@ cmd_user_op(struct client_state *p,
                            ui->team_passwd, cur_time);
     break;
   case ULS_RANDOM_TEAM_PASSWD:
+    if (p->user_id != data->user_id) {
+      if (is_privileged_user(u)) {
+        if (is_dbcnts_capable(p, cnts, OPCAP_PRIV_EDIT_PASSWD, logbuf) < 0)
+          return;
+      } else {
+        if (is_dbcnts_capable(p, cnts, OPCAP_EDIT_PASSWD, logbuf) < 0) return;
+      }
+    }
     memset(buf, 0, sizeof(buf));
     generate_random_password(8, buf);
     default_set_team_passwd(data->user_id, data->contest_id,
                             USERLIST_PWD_PLAIN, buf, cur_time, &cloned_flag);
     break;
   case ULS_COPY_TO_TEAM:
+    if (p->user_id != data->user_id) {
+      if (is_privileged_user(u)) {
+        if (is_dbcnts_capable(p, cnts, OPCAP_PRIV_EDIT_PASSWD, logbuf) < 0)
+          return;
+      } else {
+        if (is_dbcnts_capable(p, cnts, OPCAP_EDIT_PASSWD, logbuf) < 0) return;
+      }
+      if (is_dbcnts_capable(p, cnts, OPCAP_GET_USER, logbuf) < 0) return;
+    }
     if (!u->passwd) goto empty_password;
     default_set_team_passwd(data->user_id, data->contest_id,
                             u->passwd_method, u->passwd, cur_time,
                             &cloned_flag);
     break;
   case ULS_FIX_PASSWORD:
+    if (p->user_id != data->user_id) {
+      if (is_privileged_user(u)) {
+        if (is_db_capable(p, OPCAP_PRIV_EDIT_PASSWD, logbuf) < 0) return;
+      } else {
+        if (is_db_capable(p, OPCAP_EDIT_PASSWD, logbuf) < 0) return;
+      }
+      if (is_dbcnts_capable(p, cnts, OPCAP_GET_USER, logbuf) < 0) return;
+    }
     if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0)
       goto invalid_user;
     if (!ui->team_passwd) break;

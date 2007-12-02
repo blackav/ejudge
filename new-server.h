@@ -83,6 +83,7 @@ struct http_request_info
   const unsigned char *hidden_vars;
   struct session_info *session_extra;
   opcap_t caps;
+  opcap_t dbcaps;
   unsigned char *script_part;
   unsigned char *body_attr;
   int online_users;
