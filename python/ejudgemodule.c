@@ -959,17 +959,17 @@ Ul_do_cnts_passwd_op(int cmd, UlObject *self, PyObject *args)
   return Py_BuildValue("i", 0);
 }
 static PyObject *
-Ul_clearContestPasswords(int cmd, UlObject *self, PyObject *args)
+Ul_privClearContestPasswords(int cmd, UlObject *self, PyObject *args)
 {
   return Ul_do_cnts_passwd_op(ULS_CLEAR_TEAM_PASSWORDS, self, args);
 }
 static PyObject *
-Ul_generateRandomContestPasswords(int cmd, UlObject *self, PyObject *args)
+Ul_privGenerateRandomContestPasswords(int cmd, UlObject *self, PyObject *args)
 {
   return Ul_do_cnts_passwd_op(ULS_GENERATE_TEAM_PASSWORDS_2, self, args);
 }
 static PyObject *
-Ul_generateRandomPasswords(int cmd, UlObject *self, PyObject *args)
+Ul_privGenerateRandomPasswords(int cmd, UlObject *self, PyObject *args)
 {
   return Ul_do_cnts_passwd_op(ULS_GENERATE_PASSWORDS_2, self, args);
 }
@@ -1033,36 +1033,46 @@ Ul_do_user_passwd_op(int cmd, UlObject *self, PyObject *args)
 
   if (!PyArg_ParseTuple(args, "ii", &user_id, &contest_id))
     return 0;
-  if ((r = userlist_clnt_register_contest(self->clnt,cmd,user_id,0,0,0)) < 0) {
+  if ((r = userlist_clnt_register_contest(self->clnt,cmd,user_id,contest_id,0,0)) < 0) {
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
     return 0;
   }
   return Py_BuildValue("i", 0);
 }
 static PyObject *
-Ul_generateRandomPassword(int cmd, UlObject *self, PyObject *args)
-{
-  return Ul_do_user_passwd_op(ULS_RANDOM_PASSWD, self, args);
-}
-static PyObject *
-Ul_generateRandomContestPassword(int cmd, UlObject *self, PyObject *args)
+Ul_privGenerateRandomContestPassword(int cmd, UlObject *self, PyObject *args)
 {
   return Ul_do_user_passwd_op(ULS_RANDOM_TEAM_PASSWD, self, args);
 }
 static PyObject *
-Ul_copyContestPasswordToPassword(int cmd, UlObject *self, PyObject *args)
+Ul_privCopyContestPasswordToPassword(int cmd, UlObject *self, PyObject *args)
 {
   return Ul_do_user_passwd_op(ULS_COPY_TO_REGISTER, self, args);
 }
 static PyObject *
-Ul_copyPasswordToContestPassword(int cmd, UlObject *self, PyObject *args)
+Ul_privCopyPasswordToContestPassword(int cmd, UlObject *self, PyObject *args)
 {
   return Ul_do_user_passwd_op(ULS_COPY_TO_TEAM, self, args);
 }
 static PyObject *
-Ul_fixPassword(int cmd, UlObject *self, PyObject *args)
+Ul_privFixPassword(int cmd, UlObject *self, PyObject *args)
 {
   return Ul_do_user_passwd_op(ULS_FIX_PASSWORD, self, args);
+}
+
+static PyObject *
+Ul_privGenerateRandomPassword(int cmd, UlObject *self, PyObject *args)
+{
+  int user_id = 0, r;
+
+  if (!PyArg_ParseTuple(args, "i", &user_id))
+    return 0;
+  if ((r = userlist_clnt_register_contest(self->clnt, ULS_RANDOM_PASSWD,
+                                          user_id, 0, 0, 0)) < 0) {
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
 }
 
 static PyObject *
@@ -1322,16 +1332,16 @@ static PyMethodDef Ul_methods[] =
     "privCreateMember" },
   { "importCSVUsers", (PyCFunction) Ul_importCSVUsers, METH_VARARGS,
     "importCSVUsers" },
-  { "generateRandomPassword", (PyCFunction) Ul_generateRandomPassword, METH_VARARGS,
-    "generateRandomPassword" },
-  { "generateRandomContestPassword", (PyCFunction) Ul_generateRandomContestPassword, METH_VARARGS,
-    "generateRandomContestPassword" },
-  { "copyContestPasswordToPassword", (PyCFunction) Ul_copyContestPasswordToPassword, METH_VARARGS,
-    "copyContestPasswordToPassword" },
-  { "copyPasswordToContestPassword", (PyCFunction) Ul_copyPasswordToContestPassword, METH_VARARGS,
-    "copyPasswordToContestPassword" },
-  { "fixPassword", (PyCFunction) Ul_fixPassword, METH_VARARGS,
-    "fixPassword" },
+  { "privGenerateRandomPassword", (PyCFunction) Ul_privGenerateRandomPassword, METH_VARARGS,
+    "privGenerateRandomPassword*" },
+  { "privGenerateRandomContestPassword", (PyCFunction) Ul_privGenerateRandomContestPassword, METH_VARARGS,
+    "privGenerateRandomContestPassword*" },
+  { "privCopyContestPasswordToPassword", (PyCFunction) Ul_privCopyContestPasswordToPassword, METH_VARARGS,
+    "privCopyContestPasswordToPassword*" },
+  { "privCopyPasswordToContestPassword", (PyCFunction) Ul_privCopyPasswordToContestPassword, METH_VARARGS,
+    "privCopyPasswordToContestPassword*" },
+  { "privFixPassword", (PyCFunction) Ul_privFixPassword, METH_VARARGS,
+    "privFixPassword" },
   { "lookupCookie", (PyCFunction) Ul_lookupCookie, METH_VARARGS,
     "lookupCookie" },
   { "lookupContestCookie", (PyCFunction) Ul_lookupContestCookie, METH_VARARGS,
