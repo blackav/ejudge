@@ -4422,7 +4422,7 @@ cmd_priv_register_contest(struct client_state *p, int pkt_len,
   const struct userlist_user *u;
   const struct contest_desc *c = 0;
   const struct userlist_contest *r;
-  int errcode, status = USERLIST_REG_PENDING, bit;
+  int status = USERLIST_REG_PENDING, bit;
   unsigned char logbuf[1024];
 
   if (pkt_len != sizeof(*data)) {
@@ -6035,7 +6035,7 @@ cmd_edit_registration(struct client_state *p, int pkt_len,
   const struct userlist_user *u;
   const struct contest_desc *c = 0;
   const struct userlist_contest *uc = 0;
-  int errcode;
+  int bit;
   unsigned char logbuf[1024];
 
   if (pkt_len != sizeof(*data)) {
