@@ -402,6 +402,7 @@ var
     code: integer;
 begin
     help := readword (NUMBERBEFORE, NUMBERAFTER);
+    if length(help)>4000 then quit(_PE,'Length of real number is more then 4000 symbols');
     val(help, result, code);
     if code <> 0 then quit(_PE, 'Expected real instead of "' + help + '"');
 end;
