@@ -836,14 +836,25 @@ Ul_setContestPassword(UlObject *self, PyObject *args)
   return Ul_do_set_passwd(ULS_TEAM_SET_PASSWD, self, args);
 }
 static PyObject *
-Ul_privSetPassword(UlObject *self, PyObject *args)
-{
-  return Ul_do_set_passwd(ULS_PRIV_SET_REG_PASSWD, self, args);
-}
-static PyObject *
 Ul_privSetContestPassword(UlObject *self, PyObject *args)
 {
   return Ul_do_set_passwd(ULS_PRIV_SET_TEAM_PASSWD, self, args);
+}
+
+static PyObject *
+Ul_privSetPassword(UlObject *self, PyObject *args)
+{
+  int user_id = 0, r;
+  const char *old_pwd = 0, *new_pwd = 0;
+
+  if (!PyArg_ParseTuple(args, "iss", &user_id, &old_pwd, &new_pwd))
+    return 0;
+  if ((r = userlist_clnt_set_passwd(self->clnt, ULS_PRIV_SET_REG_PASSWD,
+                                    user_id, 0, old_pwd, new_pwd)) < 0){
+    if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
+    return 0;
+  }
+  return Py_BuildValue("i", 0);
 }
 
 static PyObject *
@@ -1320,12 +1331,12 @@ static PyMethodDef Ul_methods[] =
     "privDeleteUser" },
   { "privMoveMember", (PyCFunction) Ul_privMoveMember, METH_VARARGS,
     "privMoveMember" },
-  { "clearContestPasswords", (PyCFunction) Ul_clearContestPasswords, METH_VARARGS,
-    "clearContestPasswords" },
-  { "generateRandomContestPasswords", (PyCFunction) Ul_generateRandomContestPasswords, METH_VARARGS,
-    "generateRandomContestPasswords" },
-  { "generateRandomPasswords", (PyCFunction) Ul_generateRandomPasswords, METH_VARARGS,
-    "generateRandomPasswords" },
+  { "privClearContestPasswords", (PyCFunction) Ul_privClearContestPasswords, METH_VARARGS,
+    "privClearContestPasswords*" },
+  { "privGenerateRandomContestPasswords", (PyCFunction) Ul_privGenerateRandomContestPasswords, METH_VARARGS,
+    "privGenerateRandomContestPasswords*" },
+  { "privGenerateRandomPasswords", (PyCFunction) Ul_privGenerateRandomPasswords, METH_VARARGS,
+    "privGenerateRandomPasswords*" },
   { "createMember", (PyCFunction) Ul_createMember, METH_VARARGS,
     "createMember" },
   { "privCreateMember", (PyCFunction) Ul_privCreateMember, METH_VARARGS,
