@@ -5559,6 +5559,7 @@ cmd_admin_process(struct client_state *p, int pkt_len,
     return;
   }
   p->user_id = user_id;
+  p->priv_level = PRIV_LEVEL_ADMIN;
 
   snprintf(logbuf, sizeof(logbuf), "ADMIN_PROCESS: %d, %d, %d",
            p->peer_pid, p->peer_uid, p->user_id);
