@@ -106,7 +106,7 @@ static int maintenance_func(void *, time_t);
 static int change_member_role_func(void *, int, int, int, int, time_t, int *);
 static int set_user_xml_func(void *, int, int, struct userlist_user *,
                              time_t, int *);
-static int copy_user_info_func(void *, int, int, int, time_t,
+static int copy_user_info_func(void *, int, int, int, int, time_t,
                                const struct contest_desc *);
 static int check_user_reg_data_func(void *, int, int);
 static int move_member_func(void *, int, int, int, int, time_t, int *);
@@ -2464,9 +2464,14 @@ static const int copy_user_general_fields[] =
 };
 
 static int
-copy_user_info_func(void *data, int user_id,
-                    int from_cnts, int to_cnts,
-                    time_t cur_time, const struct contest_desc *cnts)
+copy_user_info_func(
+	void *data,
+        int user_id,
+        int from_cnts,
+        int to_cnts,
+        int copy_passwd_flag,
+        time_t cur_time,
+        const struct contest_desc *cnts)
 {
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
   struct userlist_list *ul = state->userlist;
@@ -2498,7 +2503,7 @@ copy_user_info_func(void *data, int user_id,
 
   xfree(ui_to->name);
   ui_to->name = xstrdup(ui_from->name);
-  if (ui_from->team_passwd) {
+  if (copy_passwd_flag && ui_from->team_passwd) {
     xfree(ui_to->team_passwd);
     ui_to->team_passwd = xstrdup(ui_from->team_passwd);
     ui_to->team_passwd_method = ui_from->team_passwd_method;
