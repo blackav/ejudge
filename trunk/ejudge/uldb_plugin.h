@@ -166,7 +166,7 @@ struct uldb_plugin_iface
   int (*set_user_xml)(void *, int, int, struct userlist_user *,
                       time_t, int *);
   // copy contest-specific user info to another contest
-  int (*copy_user_info)(void *, int, int, int, time_t,
+  int (*copy_user_info)(void *, int, int, int, int, time_t,
                         const struct contest_desc *);
   int (*check_user_reg_data)(void *, int, int);
   // move a particular member to a different role
