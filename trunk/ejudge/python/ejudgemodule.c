@@ -500,6 +500,21 @@ str_to_registration_op(const unsigned char *str)
   return -1;
 }
 
+static const unsigned char * const role_map[] =
+{
+  "CONTESTANT", "RESERVE", "COACH", "ADVISOR", "GUEST", NULL,
+};
+static int
+str_to_role(const unsigned char *str)
+{
+  int i;
+
+  for (i = 0; role_map[i]; i++)
+    if (!strcmp(role_map[i], str))
+      return i;
+  return -1;
+}
+
 static PyObject *
 Ul_privChangeContestReg(UlObject *self, PyObject *args)
 {
@@ -903,7 +918,7 @@ Ul_deleteMember(UlObject *self, PyObject *args)
 
   if (!PyArg_ParseTuple(args, "iii", &user_id, &contest_id, &serial))
     return 0;
-  if ((r = userlist_clnt_delete_info(self->clnt, ULS_DELETE_MEMBER,
+  if ((r = userlist_clnt_delete_info(self->clnt, ULS_PRIV_DELETE_MEMBER,
                                      user_id, contest_id, serial)) < 0) {
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
     return 0;
@@ -944,9 +959,14 @@ static PyObject *
 Ul_privMoveMember(UlObject *self, PyObject *args)
 {
   int user_id = 0, contest_id = 0, serial = 0, new_role = 0, r;
+  const char *new_role_str = 0;
 
-  if (!PyArg_ParseTuple(args, "iiii", &user_id, &contest_id, &serial, &new_role))
+  if (!PyArg_ParseTuple(args, "iiis", &user_id, &contest_id, &serial, &new_role_str))
     return 0;
+  if ((new_role = str_to_role(new_role_str)) < 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid role");
+    return 0;
+  }
   if ((r = userlist_clnt_move_member(self->clnt, ULS_MOVE_MEMBER,
                                      user_id, contest_id, serial,
                                      new_role)) < 0) {
@@ -1004,9 +1024,14 @@ static PyObject *
 Ul_privCreateMember(UlObject *self, PyObject *args)
 {
   int user_id = 0, contest_id = 0, role = 0, r;
+  const char *role_str = 0;
 
-  if (!PyArg_ParseTuple(args, "iii", &user_id, &contest_id, &role))
+  if (!PyArg_ParseTuple(args, "iis", &user_id, &contest_id, &role_str))
     return 0;
+  if ((role = str_to_role(role_str)) < 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid role");
+    return 0;
+  }
   if ((r = userlist_clnt_create_member(self->clnt, user_id, contest_id,
                                        role)) < 0) {
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
