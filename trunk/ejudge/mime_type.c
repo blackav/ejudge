@@ -66,9 +66,11 @@ static const struct mime_type_info mime_types[MIME_TYPE_LAST] =
   [MIME_TYPE_APPL_FLASH] =
   { "application/x-shockwave-flash", ".swf", "" },
   [MIME_TYPE_APPL_TAR] =
-  { "application/x-tar", ".tar", "" },
+  { "application/x-tar", ".tar", "POSIX tar archive" },
   [MIME_TYPE_APPL_ZIP] =
-  { "application/zip", ".zip", "" },
+  { "application/zip", ".zip", "Zip archive data" },
+  [MIME_TYPE_APPL_BZIP2] =
+  { "application/x-bzip2", ".bz2", "bzip2 compressed data" },
   [MIME_TYPE_IMAGE_BMP] =
   { "image/bmp", ".bmp", "PC bitmap data" },
   [MIME_TYPE_IMAGE_GIF] =

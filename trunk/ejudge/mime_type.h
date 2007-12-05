@@ -39,6 +39,7 @@ enum
   MIME_TYPE_APPL_FLASH,         // application/x-shockwave-flash
   MIME_TYPE_APPL_TAR,           // application/x-tar
   MIME_TYPE_APPL_ZIP,           // application/zip
+  MIME_TYPE_APPL_BZIP2,         // application/zip
   MIME_TYPE_IMAGE_FIRST,
   MIME_TYPE_IMAGE_BMP = MIME_TYPE_IMAGE_FIRST, // image/bmp
   MIME_TYPE_IMAGE_GIF,          // image/gif
