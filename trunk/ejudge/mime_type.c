@@ -62,7 +62,7 @@ static const struct mime_type_info mime_types[MIME_TYPE_LAST] =
   [MIME_TYPE_APPL_DVI] =
   { "application/x-dvi", ".dvi", "" },
   [MIME_TYPE_APPL_GZIP] =
-  { "application/x-gzip", ".gz", "" },
+  { "application/x-gzip", ".gz", "gzip compressed data" },
   [MIME_TYPE_APPL_FLASH] =
   { "application/x-shockwave-flash", ".swf", "" },
   [MIME_TYPE_APPL_TAR] =
