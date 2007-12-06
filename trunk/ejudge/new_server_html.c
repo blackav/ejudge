@@ -8595,10 +8595,12 @@ unpriv_submit_run(FILE *fout,
   }
 
   sha_buffer(run_text, run_size, shaval);
-  if ((run_id = run_find_duplicate(cs->runlog_state, phr->user_id, prob_id,
-                                   lang_id, variant, run_size, shaval)) >= 0) {
-    ns_error(log_f, NEW_SRV_ERR_DUPLICATE_SUBMIT, run_id);
-    goto done;
+  if (global->ignore_duplicated_runs != 0) {
+    if ((run_id = run_find_duplicate(cs->runlog_state, phr->user_id, prob_id,
+                                     lang_id, variant, run_size, shaval)) >= 0){
+      ns_error(log_f, NEW_SRV_ERR_DUPLICATE_SUBMIT, run_id);
+      goto done;
+    }
   }
 
   if (prob->disable_submit_after_ok

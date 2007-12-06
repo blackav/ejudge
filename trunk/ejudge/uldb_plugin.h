@@ -171,6 +171,8 @@ struct uldb_plugin_iface
   int (*check_user_reg_data)(void *, int, int);
   // move a particular member to a different role
   int (*move_member)(void *, int, int, int, int, time_t, int *);
+  // change the team_login flag of the cookie
+  int (*set_cookie_team_login)(void *, const struct userlist_cookie *, int);
 };
 
 /* default plugin: compiled into userlist-server */
