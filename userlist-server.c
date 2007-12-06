@@ -150,12 +150,13 @@ struct client_state
   int peer_gid;
 
   // database user_id for access control
-  // 0 - root, -1 - unknown (anonymous)
   int user_id;
+  int contest_id;
   int priv_level;
   ej_cookie_t cookie;
   ej_ip_t ip;
   int ssl;
+  int cnts_login;               /* 1, if logged to contest */
 
   // user capabilities
   //opcap_t caps;
@@ -267,6 +268,83 @@ static char const * const member_gender_string[] =
 
 #define FIRST_CONTEST(u) ((struct userlist_contest*)(u)->contests->first_down)
 #define NEXT_CONTEST(c)  ((struct userlist_contest*)(c)->b.right)
+
+/* commands recheck status
+   cmd_register_new,
+   cmd_login,
+   cmd_check_cookie,
+   cmd_do_logout,
+   cmd_get_user_info,
+   cmd_set_user_info,
+   cmd_set_passwd,
+   cmd_get_user_contests,
+   cmd_register_contest,
+   cmd_delete_member,
+   cmd_pass_fd,
+   cmd_list_users,
+   cmd_map_contest,
+   cmd_admin_process,
+   cmd_generate_team_passwords,
+   cmd_team_login,				OK
+   cmd_team_check_cookie,
+   cmd_get_contest_name,
+   cmd_team_set_passwd,
+   cmd_list_all_users,
+   cmd_edit_registration,
+   cmd_edit_field,
+   cmd_delete_field,
+   cmd_add_field,
+   cmd_get_uid_by_pid,
+   cmd_priv_login,
+   cmd_priv_check_cookie,
+   cmd_dump_database,
+   cmd_priv_get_user_info,
+   cmd_priv_register_contest,
+   cmd_generate_register_passwords,
+   cmd_clear_team_passwords,
+   cmd_list_standings_users,
+   cmd_get_uid_by_pid_2,
+   cmd_is_valid_cookie,
+   cmd_dump_whole_database,
+   cmd_user_op,
+   cmd_user_op,
+   cmd_user_op,
+   cmd_user_op,
+   cmd_user_op,
+   cmd_lookup_user,
+   cmd_register_new_2,
+   cmd_delete_user,
+   cmd_delete_cookie,
+   cmd_delete_user_info,
+   cmd_create_user,
+   cmd_create_member,
+   cmd_priv_delete_member,
+   cmd_priv_check_user,
+   cmd_get_cookie,
+   cmd_lookup_user_id,
+   cmd_team_check_user,
+   cmd_get_cookie,
+   cmd_observer_cmd,
+   cmd_observer_cmd,
+   cmd_set_cookie,
+   cmd_priv_set_passwd,
+   cmd_priv_set_passwd,
+   cmd_generate_team_passwords_2,
+   cmd_generate_register_passwords_2,
+   cmd_get_database,
+   cmd_copy_user_info,
+   cmd_recover_password_1,
+   cmd_recover_password_2,
+   cmd_control_server,
+   cmd_control_server,
+   cmd_priv_cookie_login,
+   cmd_check_user,
+   cmd_register_contest_2,
+   cmd_get_cookie,
+   cmd_edit_field_seq,
+   cmd_move_member,
+   cmd_import_csv_users,
+*/
 
 static struct contest_extra *
 attach_contest_extra(int id, const struct contest_desc *cnts)
@@ -548,6 +626,7 @@ link_client_state(struct client_state *p)
 #define default_set_cookie_contest(a, b) uldb_default->iface->set_cookie_contest(uldb_default->data, a, b)
 #define default_set_cookie_locale(a, b) uldb_default->iface->set_cookie_locale(uldb_default->data, a, b)
 #define default_set_cookie_priv_level(a, b) uldb_default->iface->set_cookie_priv_level(uldb_default->data, a, b)
+#define default_set_cookie_team_login(a, b) uldb_default->iface->set_cookie_team_login(uldb_default->data, a, b)
 #define default_get_user_info_4(a, b, c) uldb_default->iface->get_user_info_4(uldb_default->data, a, b, c)
 #define default_get_user_info_5(a, b, c) uldb_default->iface->get_user_info_5(uldb_default->data, a, b, c)
 #define default_get_brief_list_iterator(a) uldb_default->iface->get_brief_list_iterator(uldb_default->data, a)
@@ -1027,6 +1106,11 @@ full_get_contest(
 {
   int errcode = 0;
 
+  if (!*p_contest_id) {
+    err("%s -> contest is not specified", pfx);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return -1;
+  }
   if ((errcode = contests_get(*p_contest_id, p_cnts)) < 0 || !*p_cnts) {
     err("%s -> invalid contest: %s", pfx, contests_strerror(-errcode));
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
@@ -2038,7 +2122,7 @@ cmd_login(struct client_state *p,
   snprintf(logbuf, sizeof(logbuf), "LOGIN: %s, %d, %s",
            xml_unparse_ip(data->origin_ip), data->ssl, login);
 
-  if (p->user_id >= 0) {
+  if (p->user_id > 0) {
     err("%s -> already authentificated", logbuf);
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
@@ -2230,7 +2314,6 @@ cmd_team_login(struct client_state *p, int pkt_len,
   struct userlist_pk_login_ok *out = 0;
   const struct userlist_cookie *cookie;
   int out_size = 0, login_len, name_len;
-  int errcode;
   ej_tsc_t tsc1, tsc2;
   unsigned char logbuf[1024];
   const struct userlist_user_info *ui;
@@ -2261,8 +2344,7 @@ cmd_team_login(struct client_state *p, int pkt_len,
            xml_unparse_ip(data->origin_ip), data->ssl, login_ptr,
            data->contest_id, data->locale_id);
 
-  orig_contest_id = data->contest_id;
-  if (p->user_id >= 0) {
+  if (p->user_id > 0) {
     err("%s -> already authentificated", logbuf);
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
@@ -2272,25 +2354,8 @@ cmd_team_login(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
-  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
-    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
-    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-    return;
-  }
-  if (cnts && cnts->user_contest_num > 0) {
-    data->contest_id = cnts->user_contest_num;
-    if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
-      err("%s -> invalid user contest: %s", logbuf,
-          contests_strerror(-errcode));
-      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-      return;
-    }
-    if (cnts->user_contest_num > 0) {
-      err("%s -> transitive contest sharing", logbuf);
-      send_reply(p, -ULS_ERR_TRANSITIVE_SHARING);
-      return;
-    }
-  }
+  orig_contest_id = data->contest_id;
+  if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   if (!contests_check_team_ip(orig_contest_id, data->origin_ip, data->ssl)) {
     err("%s -> IP is not allowed", logbuf);
     send_reply(p, -ULS_ERR_IP_NOT_ALLOWED);
@@ -2381,11 +2446,13 @@ cmd_team_login(struct client_state *p, int pkt_len,
   strcpy(name_ptr, ui->name);
   
   p->user_id = u->id;
+  p->contest_id = orig_contest_id;
+  p->cnts_login = 1;
   p->ip = data->origin_ip;
   p->ssl = data->ssl;
   p->cookie = out->cookie;
   enqueue_reply_to_client(p, out_size, out);
-  default_touch_login_time(user_id, data->contest_id, cur_time);
+  default_touch_login_time(user_id, orig_contest_id, cur_time);
   if (daemon_mode) {
     info("%s -> OK, %d, %llx", logbuf, u->id, out->cookie);
   } else {
@@ -2584,12 +2651,12 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   const struct userlist_contest *c = 0;
   struct userlist_pk_login_ok *out = 0;
   int priv_level, login_len, name_len;
-  size_t out_size = 0, errcode;
+  size_t out_size = 0;
   const struct userlist_cookie *cookie;
   opcap_t caps;
   ej_tsc_t tsc1, tsc2;
   unsigned char logbuf[1024];
-  int user_id;
+  int user_id, orig_contest_id;
   const struct userlist_user_info *ui;
 
   if (pkt_len < sizeof(*data)) {
@@ -2628,12 +2695,9 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   }
   // if contest_id == 0, the user must have the correspondent global
   // capability bit
+  orig_contest_id = data->contest_id;
   if (data->contest_id > 0) {
-    if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
-      err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
-      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-      return;
-    }
+    if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   }
   if (data->priv_level <= 0 || data->priv_level > PRIV_LEVEL_ADMIN) {
     err("%s -> invalid privelege level: %d", logbuf, data->priv_level);
@@ -2728,7 +2792,7 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   }
 
   if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
-                         data->contest_id, data->locale_id,
+                         orig_contest_id, data->locale_id,
                          data->priv_level, data->role, 0, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
@@ -2738,7 +2802,7 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   out->cookie = cookie->cookie;
   out->reply_id = ULS_LOGIN_COOKIE;
   out->user_id = u->id;
-  out->contest_id = data->contest_id;
+  out->contest_id = orig_contest_id;
   out->locale_id = data->locale_id;
   out->priv_level = data->priv_level;
   out->login_len = login_len;
@@ -2775,8 +2839,9 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
   const struct userlist_cookie *cookie;
   ej_tsc_t tsc1, tsc2;
   unsigned char logbuf[1024];
-  int user_id;
+  int user_id, orig_contest_id;
   const struct userlist_user_info *ui;
+  const struct contest_desc *cnts = 0;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet length too small: %d", pkt_len);
@@ -2802,12 +2867,12 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
            xml_unparse_ip(data->origin_ip), data->ssl, login_ptr,
            data->contest_id, data->locale_id, data->role);
 
-  if (p->user_id < 0) {
+  if (p->user_id <= 0) {
     err("%s -> not authentificated", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  ASSERT(p->user_id > 0);
+
   if (is_db_capable(p, OPCAP_LIST_USERS, logbuf)) return;
   if (!data->origin_ip) {
     err("%s -> origin_ip is not set", logbuf);
@@ -2819,6 +2884,11 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
     err("%s -> invalid password", logbuf);
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
+  }
+
+  orig_contest_id = data->contest_id;
+  if (data->contest_id > 0) {
+    if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   }
 
   rdtscll(tsc1);
@@ -2859,7 +2929,7 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
   }
 
   if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
-                         data->contest_id, data->locale_id,
+                         orig_contest_id, data->locale_id,
                          data->priv_level, data->role, 0, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
@@ -2869,7 +2939,7 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
   out->cookie = cookie->cookie;
   out->reply_id = ULS_LOGIN_COOKIE;
   out->user_id = u->id;
-  out->contest_id = data->contest_id;
+  out->contest_id = orig_contest_id;
   out->locale_id = data->locale_id;
   out->priv_level = data->priv_level;
   out->login_len = login_len;
@@ -2999,7 +3069,7 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   const struct userlist_cookie *cookie = 0;
   const struct userlist_contest *c = 0;
   struct userlist_pk_login_ok *out = 0;
-  int out_size = 0, login_len = 0, name_len = 0, errcode;
+  int out_size = 0, login_len = 0, name_len = 0;
   unsigned char *login_ptr, *name_ptr;
   ej_tsc_t tsc1, tsc2;
   time_t current_time = time(0);
@@ -3017,15 +3087,13 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
            xml_unparse_ip(data->origin_ip), data->ssl, data->contest_id,
            data->cookie);
 
-  orig_contest_id = data->contest_id;
-  if (data->contest_id > 0) contests_get(data->contest_id, &cnts);
-  if (cnts && cnts->user_contest_num > 0)
-    data->contest_id = cnts->user_contest_num;
   if (p->user_id >= 0) {
     err("%s -> already authentificated", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
+  orig_contest_id = data->contest_id;
+  if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   if (!data->cookie) {
     err("%s -> cookie value is 0", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
@@ -3058,24 +3126,13 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
-  if (!data->contest_id && !cookie->contest_id) {
-    err("%s -> contest is not defined", logbuf);
-    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-    return;
-  }
-  if (orig_contest_id && cookie->contest_id
-      && orig_contest_id != cookie->contest_id) {
+  if (cookie->contest_id && orig_contest_id != cookie->contest_id) {
     err("%s -> contest_id mismatch", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
-  if (orig_contest_id && !cookie->contest_id) {
+  if (!cookie->contest_id) {
     // assigning contest_id to unassigned cookie
-    if ((errcode = contests_get(orig_contest_id, &cnts)) < 0) {
-      err("%s -> invalid contest: %s", logbuf, contests_strerror(-errno));
-      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-      return;
-    }
     if (!cnts->disable_team_password) {
       err("%s -> attempt to set cookie's contest_id", logbuf);
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
@@ -3087,27 +3144,14 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
       return;
     }
     default_set_cookie_contest(cookie, orig_contest_id);
-  }
-  if (!orig_contest_id) {
-    err("%s -> contest is not defined", logbuf);
-    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-    return;
-  }
-  if (cookie->contest_id != orig_contest_id) {
-    err("%s -> contest_id mismatch", logbuf);
-    send_reply(p, -ULS_ERR_NO_COOKIE);
-    return;
-  }
-  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
-    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errno));
-    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-    return;
+    default_set_cookie_team_login(cookie, 1);
   }
   if (!cnts->disable_team_password && !cookie->team_login) {
     err("%s -> not a team cookie", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
+  default_set_cookie_team_login(cookie, 1);
   if (!contests_check_team_ip(orig_contest_id, data->origin_ip, data->ssl)) {
     err("%s -> IP is not allowed", logbuf);
     send_reply(p, -ULS_ERR_IP_NOT_ALLOWED);
@@ -3130,10 +3174,6 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
     return;
   }
 
-  if (orig_contest_id > 0) {
-    default_set_cookie_contest(cookie, orig_contest_id);
-  }
-
   login_len = strlen(u->login);
   name_len = strlen(ui->name);
   out_size = sizeof(*out) + login_len + name_len + 2;
@@ -3152,6 +3192,8 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   strcpy(name_ptr, ui->name);
   
   p->user_id = u->id;
+  p->contest_id = orig_contest_id;
+  p->cnts_login = 1;
   p->ip = data->origin_ip;
   p->ssl = data->ssl;
   p->cookie = data->cookie;
@@ -3174,7 +3216,7 @@ cmd_priv_check_cookie(struct client_state *p,
   const struct userlist_user_info *ui = 0;
   size_t login_len, name_len, out_size;
   unsigned char *login_ptr, *name_ptr;
-  int priv_level, errcode;
+  int priv_level, orig_contest_id;
   opcap_t caps;
   time_t current_time = time(0);
   ej_tsc_t tsc1, tsc2;
@@ -3187,31 +3229,20 @@ cmd_priv_check_cookie(struct client_state *p,
 
   snprintf(logbuf, sizeof(logbuf),
            "PRIV_COOKIE: %s, %d, %d, %llx",
-           xml_unparse_ip(data->origin_ip), data->ssl, data->contest_id, data->cookie);
+           xml_unparse_ip(data->origin_ip), data->ssl, data->contest_id,
+           data->cookie);
 
-  if (p->user_id >= 0) {
+  if (p->user_id > 0) {
     err("%s -> already authentificated", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
+
+  orig_contest_id = data->contest_id;
   if (data->contest_id > 0) {
-    if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
-      err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
-      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-      return;
-    }
-    /*
-    if (cnts && cnts->user_contest_num > 0) {
-      data->contest_id = cnts->user_contest_num;
-      if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
-        err("%s -> invalid user contest: %s", logbuf,
-            contests_strerror(-errcode));
-        send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-        return;
-      }
-    }
-    */
+    if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   }
+
   if (!data->cookie) {
     err("%s -> cookie value is 0", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
@@ -3254,13 +3285,11 @@ cmd_priv_check_cookie(struct client_state *p,
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
-  /*
-  if (cookie->contest_id != data->contest_id) {
+  if (data->contest_id != cookie->contest_id) {
     err("%s -> contest_id mismatch", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
-  */
 
   if (data->contest_id > 0) {
     if (!c) {
@@ -3329,7 +3358,7 @@ cmd_priv_check_cookie(struct client_state *p,
   out->cookie = cookie->cookie;
   out->reply_id = ULS_LOGIN_COOKIE;
   out->user_id = u->id;
-  out->contest_id = cookie->contest_id;
+  out->contest_id = orig_contest_id;
   out->locale_id = cookie->locale_id;
   out->login_len = login_len;
   out->name_len = name_len;
@@ -3362,7 +3391,7 @@ cmd_priv_cookie_login(struct client_state *p,
   const struct userlist_user_info *ui = 0;
   size_t login_len, name_len, out_size;
   unsigned char *login_ptr, *name_ptr;
-  int priv_level, errcode, capbit;
+  int priv_level, capbit, orig_contest_id;
   opcap_t caps;
   time_t current_time = time(0);
   ej_tsc_t tsc1, tsc2;
@@ -3378,16 +3407,9 @@ cmd_priv_cookie_login(struct client_state *p,
            xml_unparse_ip(data->origin_ip), data->ssl, data->contest_id,
            data->cookie);
 
-  if (data->contest_id <= 0) {
-    err("%s -> invalid contest", logbuf);
-    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-    return;
-  }
-  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
-    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
-    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-    return;
-  }
+  orig_contest_id = data->contest_id;
+  if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
+
   if (!data->cookie) {
     err("%s -> cookie value is 0", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
@@ -3487,7 +3509,7 @@ cmd_priv_cookie_login(struct client_state *p,
   name_ptr = login_ptr + login_len + 1;
 
   if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
-                         data->contest_id, data->locale_id,
+                         orig_contest_id, data->locale_id,
                          priv_level, data->role, 0, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
@@ -3497,7 +3519,7 @@ cmd_priv_cookie_login(struct client_state *p,
   out->cookie = cookie->cookie;
   out->reply_id = ULS_LOGIN_COOKIE;
   out->user_id = u->id;
-  out->contest_id = data->contest_id;
+  out->contest_id = orig_contest_id;
   out->locale_id = data->locale_id;
   out->priv_level = priv_level;
   out->login_len = login_len;
@@ -3532,7 +3554,7 @@ cmd_do_logout(struct client_state *p,
            "LOGOUT: %s, %016llx",
            xml_unparse_ip(data->origin_ip), data->cookie);
 
-  if (p->user_id < 0) {
+  if (p->user_id <= 0) {
     err("%s -> not authentificated", logbuf);
     send_reply(p, ULS_OK);
     return;
@@ -3599,13 +3621,11 @@ cmd_get_user_info(struct client_state *p,
   if (data->user_id <= 0 && p->user_id > 0) data->user_id = p->user_id;
   snprintf(logbuf, sizeof(logbuf), "GET_USER_INFO: %d", data->user_id);
 
-  if (p->user_id < 0) {
+  if (p->user_id <= 0) {
     err("%s -> not authentificated", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  // user_id == 0 is deprecated
-  ASSERT(p->user_id > 0);
 
   if (data->user_id != p->user_id) {
     err("%s -> user ids does not match: %d, %d",

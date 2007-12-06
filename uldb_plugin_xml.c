@@ -77,6 +77,7 @@ static int get_user_info_3_func(void *, int, int,
 static int set_cookie_contest_func(void *, const struct userlist_cookie *, int);
 static int set_cookie_locale_func(void *, const struct userlist_cookie *, int);
 static int set_cookie_priv_level_func(void *, const struct userlist_cookie *, int);
+static int set_cookie_team_login_func(void *, const struct userlist_cookie *, int);
 static int get_user_info_4_func(void *, int, int,
                                 const struct userlist_user **);
 static int get_user_info_5_func(void *, int, int,
@@ -180,6 +181,7 @@ struct uldb_plugin_iface uldb_plugin_xml =
   copy_user_info_func,
   check_user_reg_data_func,
   move_member_func,
+  set_cookie_team_login_func,
 };
 
 struct uldb_xml_state
@@ -1019,6 +1021,22 @@ set_cookie_priv_level_func(void *data,
 
   if (cc->priv_level != priv_level) {
     cc->priv_level = priv_level;
+    state->dirty = 1;
+  }
+  return 0;
+}
+
+static int
+set_cookie_team_login_func(
+	void *data,
+        const struct userlist_cookie *c,
+        int team_login)
+{
+  struct uldb_xml_state *state = (struct uldb_xml_state*) data;
+  struct userlist_cookie *cc = (struct userlist_cookie*) c;
+
+  if (cc->team_login != team_login) {
+    cc->team_login = team_login;
     state->dirty = 1;
   }
   return 0;
