@@ -1170,7 +1170,7 @@ privileged_page_login(FILE *fout,
     return ns_html_err_ul_server_down(fout, phr, 1, 0);
   if ((r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
                                     phr->ip, phr->ssl_flag, phr->contest_id,
-                                    phr->locale_id, 0, phr->role, login,
+                                    phr->locale_id, phr->role, login,
                                     password, &phr->user_id, &phr->session_id,
                                     0, &phr->name)) < 0) {
     switch (-r) {
