@@ -691,7 +691,7 @@ authentificate(void)
     r = userlist_clnt_priv_cookie(userlist_conn, user_ip, ssl_flag,
                                   0, /* contest_id */
                                   session_id,
-                                  PRIV_LEVEL_ADMIN,
+                                  -1,
                                   &user_id,
                                   0, /* p_contest_id */
                                   0, /* p_locale_id */
