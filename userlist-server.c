@@ -3373,10 +3373,10 @@ cmd_priv_check_cookie(struct client_state *p,
   }
 
   // check user capabilities
-  capbit = 0;
+  capbit = -1;
   if (data->priv_level == PRIV_LEVEL_ADMIN) capbit = OPCAP_MASTER_LOGIN;
   else if (data->priv_level == PRIV_LEVEL_JUDGE) capbit = OPCAP_JUDGE_LOGIN;
-  if (!capbit) {
+  if (capbit < 0) {
     err("%s -> invalid privilege level", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
