@@ -3160,3 +3160,6 @@ new_server_html.c 4577 0 34336938
 new_server_html_4.c 4577 0 4359820
 userlist_clnt/priv_login.c 4578 0 254293
 userlist_clnt/team_cookie.c 4578 0 213053
+master.c 4581 0 7181694
+serve-cmd.c 4581 0 2001806
+serve-control.c 4581 0 8487538
