@@ -18,20 +18,20 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_priv_login(struct userlist_clnt *clnt,
-                         int cmd,
-                         ej_ip_t origin_ip,
-                         int ssl,
-                         int contest_id,
-                         int locale_id,
-                         int priv_level,
-                         int role,
-                         unsigned char const *login,
-                         unsigned char const *passwd,
-                         int *p_user_id,
-                         ej_cookie_t *p_cookie,
-                         int *p_priv_level,
-                         unsigned char **p_name)
+userlist_clnt_priv_login(
+        struct userlist_clnt *clnt,
+        int cmd,
+        ej_ip_t origin_ip,
+        int ssl,
+        int contest_id,
+        int locale_id,
+        int role,
+        unsigned char const *login,
+        unsigned char const *passwd,
+        int *p_user_id,
+        ej_cookie_t *p_cookie,
+        int *p_priv_level,
+        unsigned char **p_name)
 {
   struct userlist_pk_do_login *out = 0;
   struct userlist_pk_login_ok *in = 0;
@@ -54,7 +54,6 @@ userlist_clnt_priv_login(struct userlist_clnt *clnt,
   out->ssl = ssl;
   out->contest_id = contest_id;
   out->locale_id = locale_id;
-  out->priv_level = priv_level;
   out->role = role;
   out->login_length = login_len;
   out->password_length = passwd_len;

@@ -25,6 +25,7 @@ userlist_clnt_team_cookie(
         int contest_id,
         ej_cookie_t cookie,
         int *p_user_id,
+        int *p_contest_id,
         int *p_locale_id,
         unsigned char **p_login,
         unsigned char **p_name)
@@ -75,6 +76,7 @@ userlist_clnt_team_cookie(
     goto cleanup;
   }
   if (p_user_id) *p_user_id = in->user_id;
+  if (p_contest_id) *p_contest_id = in->contest_id;
   if (p_locale_id) *p_locale_id = in->locale_id;
   if (p_login) *p_login = xstrdup(login_ptr);
   if (p_name) *p_name = xstrdup(name_ptr);
