@@ -149,7 +149,7 @@ user_authentificate(const unsigned char *pwdfile)
 
   r = userlist_clnt_team_cookie(userlist_conn, local_ip, ssl_flag, contest_id,
                                 session_id,
-                                &user_id,
+                                &user_id, 0,
                                 0 /* p_locale_id */,
                                 &user_login, &user_name);
   if (r < 0) {
@@ -220,7 +220,7 @@ handle_login(const unsigned char *cmd,
 
   r = userlist_clnt_priv_login(userlist_conn, ULS_PRIV_LOGIN,
                                local_ip, ssl_flag, contest_id,
-                               0, PRIV_LEVEL_ADMIN, 0,
+                               0, USER_ROLE_ADMIN,
                                argv[1], argv[2],
                                &user_id, &session_id, 0, &user_name);
   if (r < 0) {

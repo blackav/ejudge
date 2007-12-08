@@ -121,7 +121,7 @@ cmd_login(
   } else {
     r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
                                  phr->ip, phr->ssl_flag, phr->contest_id,
-                                 phr->locale_id, 0, phr->role, login,
+                                 phr->locale_id, phr->role, login,
                                  password, &phr->user_id, &phr->session_id,
                                  0, &phr->name);
   }

@@ -466,7 +466,7 @@ static int
 authentificate(void)
 {
   ej_cookie_t session_id;
-  int r;
+  int r, role = 0;
   unsigned char hbuf[128];
 
   if (get_session_id("SID", &session_id)) {
@@ -501,11 +501,15 @@ authentificate(void)
     exit(0);
   }
 
+  if (priv_level == PRIV_LEVEL_ADMIN) role = USER_ROLE_ADMIN;
+  else if (priv_level == PRIV_LEVEL_JUDGE) role = USER_ROLE_JUDGE;
+  else role = USER_ROLE_CONTESTANT;
+
   open_userlist_server();
   r = userlist_clnt_priv_login(userlist_conn, ULS_PRIV_LOGIN,
                                client_ip, ssl_flag, global->contest_id,
                                0, /* locale_id */
-                               priv_level, 0, client_login, client_password,
+                               role, client_login, client_password,
                                &client_user_id,
                                &client_sid,
                                &priv_level,
