@@ -19,7 +19,7 @@
 
 int
 userlist_clnt_lookup_user(
-	struct userlist_clnt *clnt,
+        struct userlist_clnt *clnt,
         unsigned char const *login,
         int contest_id,
         int *p_user_id,

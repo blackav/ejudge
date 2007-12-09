@@ -19,7 +19,7 @@
 
 int
 userlist_clnt_create_user(
-	struct userlist_clnt *clnt,
+        struct userlist_clnt *clnt,
         const unsigned char *login,
         int *p_user_id)
 {

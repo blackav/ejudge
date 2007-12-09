@@ -19,7 +19,7 @@
 
 int
 userlist_clnt_priv_cookie_login(
-	struct userlist_clnt *clnt,
+        struct userlist_clnt *clnt,
         int cmd,
         ej_ip_t origin_ip,
         int ssl,

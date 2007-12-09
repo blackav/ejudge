@@ -19,7 +19,7 @@
 
 int
 userlist_clnt_register_new_2(
-	struct userlist_clnt *clnt,
+        struct userlist_clnt *clnt,
         ej_ip_t origin_ip,
         int ssl,
         int contest_id,

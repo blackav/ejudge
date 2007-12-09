@@ -68,7 +68,7 @@ read_from_pipe(int fd, unsigned char **reply_bytes, size_t *reply_size)
 
 int
 new_server_clnt_http_request(
-	new_server_conn_t conn,
+        new_server_conn_t conn,
         int out_fd,
         unsigned char *args[],
         unsigned char *envs[],

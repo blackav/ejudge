@@ -123,7 +123,7 @@ scan_dir(char const *partial_path, char *found_item)
     if (!strcmp(result.cFileName, ".") || !strcmp(result.cFileName, ".."))
       continue;
 
-	if (cur_ign) {
+        if (cur_ign) {
       for (i = 0; i < cur_ign->u; i++)
         if (!strcmp(cur_ign->items[i], result.cFileName))
           break;
@@ -328,7 +328,7 @@ clear_directory(char const *path)
       pathcat(fdel, "\\");
       pathcat(fdel, data.cFileName);
       if (!DeleteFile(fdel)) {
-	write_log(0, LOG_INFO, "DeleteFile('%s') failed: %d", fdel,
+        write_log(0, LOG_INFO, "DeleteFile('%s') failed: %d", fdel,
                   GetLastError());
       }
     }

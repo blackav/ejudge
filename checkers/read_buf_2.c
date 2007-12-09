@@ -19,7 +19,7 @@
 
 char *
 checker_read_buf_2(
-	int ind,
+        int ind,
         const char *name,
         int eof_error_flag,
         char *sbuf,

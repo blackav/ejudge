@@ -19,7 +19,7 @@
 
 int
 userlist_clnt_move_member(
-	struct userlist_clnt *clnt,
+        struct userlist_clnt *clnt,
         int cmd,
         int user_id,
         int contest_id,
