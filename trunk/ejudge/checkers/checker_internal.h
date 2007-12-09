@@ -120,7 +120,7 @@ typedef unsigned __int64 libchecker_u64_t;
 #endif
 
 void fatal(int code, char const *format, ...)
-	 LIBCHECKER_ATTRIB((noreturn, format(printf, 2, 3)));
+         LIBCHECKER_ATTRIB((noreturn, format(printf, 2, 3)));
 void fatal_CF(char const *format, ...)
      LIBCHECKER_ATTRIB((noreturn, format(printf, 1, 2)));
 void fatal_PE(char const *format, ...)
@@ -146,7 +146,7 @@ void checker_normalize_line(char *);
 
 int  checker_read_buf(int, const char *, int,
                       char *,size_t)
-	LIBCHECKER_ATTRIB((deprecated));
+        LIBCHECKER_ATTRIB((deprecated));
 char *checker_read_buf_2(int ind, const char *name, int eof_error_flag,
                          char *sbuf, size_t ssz, char **pdbuf, size_t *pdsz);
 

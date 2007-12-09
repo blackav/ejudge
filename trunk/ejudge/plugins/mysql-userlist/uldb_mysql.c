@@ -76,7 +76,7 @@ static int remove_expired_users_func(void *data, time_t min_reg_time);
 static int get_user_info_1_func(void *data, int user_id,
                                 const struct userlist_user **p_user);
 static int get_user_info_2_func(
-	void *data,
+        void *data,
         int user_id,
         int contest_id,
         const struct userlist_user **p_u,
@@ -1358,7 +1358,7 @@ get_user_id_iterator_func(void *data)
 
 static int
 one_row_request(
-	struct uldb_mysql_state *state,
+        struct uldb_mysql_state *state,
         const unsigned char *cmd,
         int cmdlen,
         int colnum)
@@ -1439,7 +1439,7 @@ get_login_func(void *data, int user_id)
 
 static int
 new_user_func(
-	void *data,
+        void *data,
         const unsigned char *login,
         const unsigned char *email,
         const unsigned char *passwd,
@@ -1501,7 +1501,7 @@ remove_user_func(void *data, int user_id)
 
 static struct userlist_cookie *
 allocate_cookie_on_pool(
-	struct uldb_mysql_state *state,
+        struct uldb_mysql_state *state,
         unsigned long long val)
 {
   int i, j, h;
@@ -1649,7 +1649,7 @@ parse_cookie_row(struct uldb_mysql_state *state,
 
 static int
 get_cookie_func(
-	void *data,
+        void *data,
         ej_cookie_t value,
         const struct userlist_cookie **p_cookie)
 {
@@ -1673,7 +1673,7 @@ get_cookie_func(
 
 static int
 new_cookie_func(
-	void *data,
+        void *data,
         int user_id,
         ej_ip_t ip,
         int ssl_flag,
@@ -1725,7 +1725,7 @@ new_cookie_func(
 
 static int
 remove_cookie_func(
-	void *data,
+        void *data,
         const struct userlist_cookie *c)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
@@ -1742,7 +1742,7 @@ remove_cookie_func(
 
 static int
 remove_user_cookies_func(
-	void *data,
+        void *data,
         int user_id)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
@@ -1757,7 +1757,7 @@ remove_user_cookies_func(
 
 static int
 remove_expired_cookies_func(
-	void *data,
+        void *data,
         time_t cur_time)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
@@ -1807,7 +1807,7 @@ static struct mysql_parse_spec cntsregs_spec[CNTSREGS_WIDTH] =
 
 static int
 parse_cntsregs_row(
-	struct uldb_mysql_state *state,
+        struct uldb_mysql_state *state,
         struct userlist_contest *c)
 {
   int user_id = 0, is_banned = 0, is_invisible = 0, is_locked = 0;
@@ -1850,7 +1850,7 @@ struct cntsregs_user
 
 static struct userlist_contest *
 allocate_cntsregs_on_pool(
-	struct uldb_mysql_state *state,
+        struct uldb_mysql_state *state,
         int user_id,
         int contest_id)
 {
@@ -2004,7 +2004,7 @@ static struct ptr_iterator user_contest_iterator_funcs =
 
 static ptr_iterator_t
 get_user_contest_iterator_func(
-	void *data,
+        void *data,
         int user_id)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
@@ -2054,7 +2054,7 @@ get_user_contest_iterator_func(
 
 static int
 remove_expired_users_func(
-	void *data,
+        void *data,
         time_t min_reg_time)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
@@ -2110,7 +2110,7 @@ remove_expired_users_func(
 
 static struct userlist_user *
 allocate_users_on_pool(
-	struct uldb_mysql_state *state,
+        struct uldb_mysql_state *state,
         int user_id)
 {
   struct users_cache *uc = &state->users;
@@ -2221,7 +2221,7 @@ static struct mysql_parse_spec logins2_spec[LOGINS_WIDTH] =
 
 static int
 parse_users_row(
-	struct uldb_mysql_state *state,
+        struct uldb_mysql_state *state,
         struct userlist_user *u)
 {
   if (handle_parse_spec(state, LOGINS_WIDTH, logins2_spec, u) < 0)
@@ -2242,7 +2242,7 @@ parse_users_row(
 
 static int
 get_user_info_1_func(
-	void *data,
+        void *data,
         int user_id,
         const struct userlist_user **p_user)
 {
@@ -2291,7 +2291,7 @@ struct user_info_user
 
 static struct userlist_user_info *
 allocate_user_info_on_pool(
-	struct uldb_mysql_state *state,
+        struct uldb_mysql_state *state,
         int user_id,
         int contest_id)
 {
@@ -2346,7 +2346,7 @@ allocate_user_info_on_pool(
 }
 
 static int get_user_info_2_func(
-	void *data,
+        void *data,
         int user_id,
         int contest_id,
         const struct userlist_user **p_u,

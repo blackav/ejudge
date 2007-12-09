@@ -26,129 +26,129 @@
 /* userlist_clnt implementation status
  *
  * userlist_clnt_register_new
- * userlist_clnt_register_new_2			OK
- * userlist_clnt_login				OK
- * userlist_clnt_lookup_user			OK
- * userlist_clnt_lookup_user_id			OK
- * userlist_clnt_get_cookie			OK
- * userlist_clnt_set_cookie			OK
- * userlist_clnt_lookup_cookie			OK
- * userlist_clnt_team_cookie			OK
- * userlist_clnt_get_info			OK
- * userlist_clnt_get_database			OK
+ * userlist_clnt_register_new_2                 OK
+ * userlist_clnt_login                          OK
+ * userlist_clnt_lookup_user                    OK
+ * userlist_clnt_lookup_user_id                 OK
+ * userlist_clnt_get_cookie                     OK
+ * userlist_clnt_set_cookie                     OK
+ * userlist_clnt_lookup_cookie                  OK
+ * userlist_clnt_team_cookie                    OK
+ * userlist_clnt_get_info                       OK
+ * userlist_clnt_get_database                   OK
  * userlist_clnt_get_param
  * userlist_clnt_set_info
- * userlist_clnt_set_passwd			OK
+ * userlist_clnt_set_passwd                     OK
  * userlist_clnt_get_contests
- * userlist_clnt_register_contest		OK
- * userlist_clnt_delete_info			OK
- * userlist_clnt_move_member			OK
+ * userlist_clnt_register_contest               OK
+ * userlist_clnt_delete_info                    OK
+ * userlist_clnt_move_member                    OK
  * userlist_clnt_list_users
- * userlist_clnt_admin_process			OK
+ * userlist_clnt_admin_process                  OK
  * userlist_clnt_map_contest
  * userlist_clnt_generate_team_passwd
- * userlist_clnt_list_all_users			OK
- * userlist_clnt_change_registration		OK
- * userlist_clnt_edit_field			OK
+ * userlist_clnt_list_all_users                 OK
+ * userlist_clnt_change_registration            OK
+ * userlist_clnt_edit_field                     OK
  * userlist_clnt_edit_field_seq
- * userlist_clnt_delete_field			OK
- * userlist_clnt_delete_cookie			OK
- * userlist_clnt_create_user			OK
- * userlist_clnt_create_member			OK
- * userlist_clnt_copy_user_info			OK
+ * userlist_clnt_delete_field                   OK
+ * userlist_clnt_delete_cookie                  OK
+ * userlist_clnt_create_user                    OK
+ * userlist_clnt_create_member                  OK
+ * userlist_clnt_copy_user_info                 OK
  * userlist_clnt_get_uid_by_pid
  * userlist_clnt_get_uid_by_pid_2
- * userlist_clnt_priv_login			OK
+ * userlist_clnt_priv_login                     OK
  * userlist_clnt_priv_cookie
- * userlist_clnt_logout				OK
+ * userlist_clnt_logout                         OK
  * userlist_clnt_dump_database
- * userlist_clnt_cnts_passwd_op			OK
+ * userlist_clnt_cnts_passwd_op                 OK
  * userlist_clnt_notify
  * userlist_clnt_read_notification
  * userlist_clnt_bytes_available
- * userlist_clnt_set_notification_callback	
+ * userlist_clnt_set_notification_callback      
  * userlist_clnt_recover_passwd_2
- * userlist_clnt_control			OK
+ * userlist_clnt_control                        OK
  * userlist_clnt_priv_cookie_login
- * userlist_clnt_import_csv_users		OK
+ * userlist_clnt_import_csv_users               OK
  */
 
 /*
-    ULS_PASS_FD,				-
-    ULS_STOP,					OK
-    ULS_RESTART,				OK
+    ULS_PASS_FD,                                -
+    ULS_STOP,                                   OK
+    ULS_RESTART,                                OK
     ULS_REGISTER_NEW,
-    ULS_DO_LOGIN,				OK
-    ULS_CHECK_COOKIE,				OK	FIX IT!
-    ULS_DO_LOGOUT,				OK
-    ULS_GET_USER_INFO,				OK
+    ULS_DO_LOGIN,                               OK
+    ULS_CHECK_COOKIE,                           OK      FIX IT!
+    ULS_DO_LOGOUT,                              OK
+    ULS_GET_USER_INFO,                          OK
     ULS_SET_USER_INFO,
-    ULS_SET_PASSWD,				OK
+    ULS_SET_PASSWD,                             OK
     ULS_GET_USER_CONTESTS,
-    ULS_REGISTER_CONTEST,			OK
-    ULS_DELETE_MEMBER,				OK
+    ULS_REGISTER_CONTEST,                       OK
+    ULS_DELETE_MEMBER,                          OK
     ULS_LIST_USERS,
     ULS_MAP_CONTEST,
-    ULS_ADMIN_PROCESS,				OK
+    ULS_ADMIN_PROCESS,                          OK
     ULS_GENERATE_TEAM_PASSWORDS,
-    ULS_TEAM_LOGIN,				OK
-    ULS_TEAM_CHECK_COOKIE,			OK	FIX IT!
+    ULS_TEAM_LOGIN,                             OK
+    ULS_TEAM_CHECK_COOKIE,                      OK      FIX IT!
     ULS_GET_CONTEST_NAME,
-    ULS_TEAM_SET_PASSWD,			OK
-    ULS_LIST_ALL_USERS,				OK
-    ULS_EDIT_REGISTRATION,			OK
-    ULS_EDIT_FIELD,				OK
-    ULS_DELETE_FIELD,				OK
-    ULS_ADD_FIELD,				*
+    ULS_TEAM_SET_PASSWD,                        OK
+    ULS_LIST_ALL_USERS,                         OK
+    ULS_EDIT_REGISTRATION,                      OK
+    ULS_EDIT_FIELD,                             OK
+    ULS_DELETE_FIELD,                           OK
+    ULS_ADD_FIELD,                              *
     ULS_GET_UID_BY_PID,
-    ULS_PRIV_LOGIN,				OK
+    ULS_PRIV_LOGIN,                             OK
     ULS_PRIV_CHECK_COOKIE,
     ULS_DUMP_DATABASE,
-    ULS_PRIV_GET_USER_INFO,			OK
+    ULS_PRIV_GET_USER_INFO,                     OK
     ULS_PRIV_SET_USER_INFO,
-    ULS_PRIV_REGISTER_CONTEST,			OK
+    ULS_PRIV_REGISTER_CONTEST,                  OK
     ULS_GENERATE_PASSWORDS,
-    ULS_CLEAR_TEAM_PASSWORDS,			OK
-    ULS_LIST_STANDINGS_USERS,			OK
+    ULS_CLEAR_TEAM_PASSWORDS,                   OK
+    ULS_LIST_STANDINGS_USERS,                   OK
     ULS_GET_UID_BY_PID_2,
-    ULS_IS_VALID_COOKIE,			*
+    ULS_IS_VALID_COOKIE,                        *
     ULS_DUMP_WHOLE_DATABASE,
-    ULS_RANDOM_PASSWD,				OK
-    ULS_RANDOM_TEAM_PASSWD,			OK
-    ULS_COPY_TO_TEAM,				OK
-    ULS_COPY_TO_REGISTER,			OK
-    ULS_FIX_PASSWORD,				OK
-    ULS_LOOKUP_USER,				OK
-    ULS_REGISTER_NEW_2,				OK
-    ULS_DELETE_USER,				OK
-    ULS_DELETE_COOKIE,				OK
-    ULS_DELETE_USER_INFO,			*
-    ULS_CREATE_USER,				OK
-    ULS_CREATE_MEMBER,				OK
-    ULS_PRIV_DELETE_MEMBER,			OK
-    ULS_PRIV_CHECK_USER,			OK
-    ULS_PRIV_GET_COOKIE,			OK
-    ULS_LOOKUP_USER_ID,				OK
-    ULS_TEAM_CHECK_USER,			OK
-    ULS_TEAM_GET_COOKIE,			OK
+    ULS_RANDOM_PASSWD,                          OK
+    ULS_RANDOM_TEAM_PASSWD,                     OK
+    ULS_COPY_TO_TEAM,                           OK
+    ULS_COPY_TO_REGISTER,                       OK
+    ULS_FIX_PASSWORD,                           OK
+    ULS_LOOKUP_USER,                            OK
+    ULS_REGISTER_NEW_2,                         OK
+    ULS_DELETE_USER,                            OK
+    ULS_DELETE_COOKIE,                          OK
+    ULS_DELETE_USER_INFO,                       *
+    ULS_CREATE_USER,                            OK
+    ULS_CREATE_MEMBER,                          OK
+    ULS_PRIV_DELETE_MEMBER,                     OK
+    ULS_PRIV_CHECK_USER,                        OK
+    ULS_PRIV_GET_COOKIE,                        OK
+    ULS_LOOKUP_USER_ID,                         OK
+    ULS_TEAM_CHECK_USER,                        OK
+    ULS_TEAM_GET_COOKIE,                        OK
     ULS_ADD_NOTIFY,
     ULS_DEL_NOTIFY,
-    ULS_SET_COOKIE_LOCALE,			OK
-    ULS_PRIV_SET_REG_PASSWD,			OK
-    ULS_PRIV_SET_TEAM_PASSWD,			OK
-    ULS_GENERATE_TEAM_PASSWORDS_2,		OK
-    ULS_GENERATE_PASSWORDS_2,			OK
-    ULS_GET_DATABASE,				OK
-    ULS_COPY_USER_INFO,				OK
+    ULS_SET_COOKIE_LOCALE,                      OK
+    ULS_PRIV_SET_REG_PASSWD,                    OK
+    ULS_PRIV_SET_TEAM_PASSWD,                   OK
+    ULS_GENERATE_TEAM_PASSWORDS_2,              OK
+    ULS_GENERATE_PASSWORDS_2,                   OK
+    ULS_GET_DATABASE,                           OK
+    ULS_COPY_USER_INFO,                         OK
     ULS_RECOVER_PASSWORD_1,
     ULS_RECOVER_PASSWORD_2,
     ULS_PRIV_COOKIE_LOGIN,
-    ULS_CHECK_USER,				OK
-    ULS_REGISTER_CONTEST_2,			OK
-    ULS_GET_COOKIE,				OK
+    ULS_CHECK_USER,                             OK
+    ULS_REGISTER_CONTEST_2,                     OK
+    ULS_GET_COOKIE,                             OK
     ULS_EDIT_FIELD_SEQ,
-    ULS_MOVE_MEMBER,				OK
-    ULS_IMPORT_CSV_USERS,			OK
+    ULS_MOVE_MEMBER,                            OK
+    ULS_IMPORT_CSV_USERS,                       OK
  */
 
 static const struct
@@ -1489,7 +1489,7 @@ static PyMethodDef ejudge_methods[] =
   {NULL}  /* Sentinel */
 };
 
-#ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
+#ifndef PyMODINIT_FUNC  /* declarations for DLL import/export */
 #define PyMODINIT_FUNC void
 #endif
 PyMODINIT_FUNC

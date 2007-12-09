@@ -53,7 +53,7 @@ full_archive_open_write(const unsigned char *path)
 
   wtot = sizeof(header), buf = (char*) &header;
   while (wtot > 0) {
-	if (!WriteFile(fd, buf, wtot, &wsz, NULL)) {
+        if (!WriteFile(fd, buf, wtot, &wsz, NULL)) {
       err("full_archive_open_write: write error: %s", os_ErrorMsg());
       goto failure;
     }
@@ -85,9 +85,9 @@ full_archive_close(full_archive_t af)
   ASSERT(fd != INVALID_HANDLE_VALUE);
 
   if (af->mptr) {
-	//CreateFileMapping
+        //CreateFileMapping
     // Here we must remove (possible) file mapping
-	// but since mappings are created for read operations, we ignore for now
+        // but since mappings are created for read operations, we ignore for now
   }
 
   CloseHandle(fd);
@@ -171,7 +171,7 @@ full_archive_append_file(full_archive_t af,
     // write compressed file
     wtot = comp_size, buf = comp_buf;
     while (wtot > 0) {
-	  if (!WriteFile(fd, buf, wtot, &wsz, NULL)) {
+          if (!WriteFile(fd, buf, wtot, &wsz, NULL)) {
         err("full_archive_append_file: write error: %s", os_ErrorMsg());
         goto failure;
       }
@@ -183,7 +183,7 @@ full_archive_append_file(full_archive_t af,
     wtot = ((comp_size + 15) & ~15) - comp_size;
     buf = pad_buf;
     while (wtot > 0) {
-	  if (!WriteFile(fd, buf, wtot, &wsz, NULL)) {
+          if (!WriteFile(fd, buf, wtot, &wsz, NULL)) {
         err("full_archive_append_file: write error: %s", os_ErrorMsg());
         goto failure;
       }
@@ -211,7 +211,7 @@ full_archive_append_file(full_archive_t af,
 full_archive_t
 full_archive_open_read(const unsigned char *path)
 {
-	SWERR(("not implemented"));
+        SWERR(("not implemented"));
 }
 
 int
@@ -222,7 +222,7 @@ full_archive_find_file(full_archive_t af,
                        unsigned int *p_flags,
                        const unsigned char **p_data)
 {
-	SWERR(("not implemented"));
+        SWERR(("not implemented"));
 }
 
 /**

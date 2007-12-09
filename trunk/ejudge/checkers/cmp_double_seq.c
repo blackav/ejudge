@@ -46,7 +46,7 @@ int checker_main(int argc, char **argv)
     }
     if (!(abs_flag?checker_eq_double_abs:checker_eq_double)(out_ans, corr_ans, eps))
       fatal_WA("Answers differ: %s: out: %.10g, corr: %.10g",
-	       buf, out_ans, corr_ans);
+               buf, out_ans, corr_ans);
   }
   if (checker_read_out_double("x", 0, &out_ans) >= 0) {
     fatal_WA("Too many numbers in the out output");

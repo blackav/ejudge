@@ -69,8 +69,8 @@ file_stamp_is_updated(const unsigned char *path, const file_stamp_t ts)
 
   /* FIXME: check for time interval */
   if (new_size.QuadPart != ts->size.QuadPart
-	  || new_mtime.dwLowDateTime != ts->mtime.dwLowDateTime
-	  || new_mtime.dwHighDateTime != ts->mtime.dwHighDateTime)
+          || new_mtime.dwLowDateTime != ts->mtime.dwLowDateTime
+          || new_mtime.dwHighDateTime != ts->mtime.dwHighDateTime)
     return 1;
   GetSystemTime(&st);
   SystemTimeToFileTime(&st, &ts->check_time);
