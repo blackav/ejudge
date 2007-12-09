@@ -695,7 +695,7 @@ ns_html_err_inv_session(FILE *fout,
 
 static int
 get_register_url(
-	unsigned char *buf,
+        unsigned char *buf,
         size_t size,
         const struct contest_desc *cnts,
         const unsigned char *self_url)
@@ -719,7 +719,7 @@ get_register_url(
 
 void
 ns_html_err_registration_incomplete(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr)
 {
   const struct contest_desc *cnts = 0;
@@ -782,7 +782,7 @@ ns_html_err_registration_incomplete(
 
 void
 ns_html_err_disqualified(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra)

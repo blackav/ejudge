@@ -30,7 +30,7 @@
 
 int
 find_variant(
-	const serve_state_t state,
+        const serve_state_t state,
         int user_id,
         int prob_id,
         int *p_virtual_variant)
@@ -84,7 +84,7 @@ find_variant(
 
 int
 find_user_variant(
-	const serve_state_t state,
+        const serve_state_t state,
         int user_id,
         int *p_virtual_variant)
 {

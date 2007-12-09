@@ -1028,7 +1028,7 @@ set_cookie_priv_level_func(void *data,
 
 static int
 set_cookie_team_login_func(
-	void *data,
+        void *data,
         const struct userlist_cookie *c,
         int team_login)
 {
@@ -2483,7 +2483,7 @@ static const int copy_user_general_fields[] =
 
 static int
 copy_user_info_func(
-	void *data,
+        void *data,
         int user_id,
         int from_cnts,
         int to_cnts,
@@ -2641,7 +2641,7 @@ check_user_reg_data_func(void *data, int user_id, int contest_id)
 
 static int
 move_member_func(
-	void *data,
+        void *data,
         int user_id,
         int contest_id,
         int serial,

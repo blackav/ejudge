@@ -24,7 +24,7 @@
 
 void
 allowed_list_parse(
-	const unsigned char *str,
+        const unsigned char *str,
         unsigned char ***pv,
         size_t *pu)
 {
@@ -88,7 +88,7 @@ allowed_list_free(unsigned char **pv, size_t u)
 
 void
 allowed_list_map(
-	const unsigned char *user_langs,
+        const unsigned char *user_langs,
         unsigned char **pv,
         size_t pu,
         int **pmap)

@@ -1872,7 +1872,7 @@ generate_current_date(unsigned char *buf, size_t size)
 
 static const unsigned char *
 c_armor_2(
-	struct html_armor_buffer *pa,
+        struct html_armor_buffer *pa,
         const unsigned char *str, 
         const unsigned char *pfx)
 {
@@ -1890,7 +1890,7 @@ c_armor_2(
 }
 static const unsigned char *
 xml_armor_2(
-	struct html_armor_buffer *pa,
+        struct html_armor_buffer *pa,
         const unsigned char *str, 
         const unsigned char *pfx)
 {

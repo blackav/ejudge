@@ -1796,7 +1796,7 @@ unparse_scoring_system(unsigned char *buf, size_t size, int val)
 
 void
 serve_judge_built_in_problem(
-	serve_state_t state,
+        serve_state_t state,
         const struct contest_desc *cnts,
         int run_id,
         int judge_id,
@@ -1964,7 +1964,7 @@ serve_judge_built_in_problem(
 
 void
 serve_rejudge_run(
-	const struct contest_desc *cnts,
+        const struct contest_desc *cnts,
         serve_state_t state,
         int run_id,
         int user_id,
@@ -2197,7 +2197,7 @@ is_generally_rejudgable(const serve_state_t state,
 void
 serve_rejudge_by_mask(
         const struct contest_desc *cnts,
-	serve_state_t state,
+        serve_state_t state,
         int user_id,
         ej_ip_t ip,
         int ssl_flag,
@@ -2267,7 +2267,7 @@ serve_rejudge_by_mask(
 void
 serve_rejudge_problem(
         const struct contest_desc *cnts,
-	serve_state_t state,
+        serve_state_t state,
         int user_id,
         ej_ip_t ip,
         int ssl_flag,
@@ -2320,7 +2320,7 @@ serve_rejudge_problem(
 void
 serve_judge_suspended(
         const struct contest_desc *cnts,
-	serve_state_t state,
+        serve_state_t state,
         int user_id,
         ej_ip_t ip,
         int ssl_flag)
@@ -2346,7 +2346,7 @@ serve_judge_suspended(
 void
 serve_rejudge_all(
         const struct contest_desc *cnts,
-	serve_state_t state,
+        serve_state_t state,
         int user_id,
         ej_ip_t ip,
         int ssl_flag)
@@ -2625,7 +2625,7 @@ serve_collect_virtual_stop_events(serve_state_t cs)
 
 static void
 handle_virtual_stop_event(
-	const struct contest_desc *cnts,
+        const struct contest_desc *cnts,
         serve_state_t cs,
         struct serve_event_queue *p)
 {
@@ -2675,7 +2675,7 @@ handle_virtual_stop_event(
 
 static void
 handle_judge_olympiad_event(
-	const struct contest_desc *cnts,
+        const struct contest_desc *cnts,
         serve_state_t cs,
         struct serve_event_queue *p)
 {
@@ -2730,7 +2730,7 @@ serve_handle_events(const struct contest_desc *cnts, serve_state_t cs)
 
 void
 serve_judge_virtual_olympiad(
-	const struct contest_desc *cnts,
+        const struct contest_desc *cnts,
         serve_state_t cs,
         int user_id,
         int run_id)

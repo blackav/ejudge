@@ -44,18 +44,18 @@ struct contest_extra;
 
 int
 ns_cgi_param(
-	const struct http_request_info *phr,
+        const struct http_request_info *phr,
         const unsigned char *param,
         const unsigned char **p_value);
 int
 ns_cgi_param_bin(
-	const struct http_request_info *phr,
+        const struct http_request_info *phr,
         const unsigned char *param,
         const unsigned char **p_value,
         size_t *p_size);
 int
 ns_cgi_param_int(
-	struct http_request_info *phr,
+        struct http_request_info *phr,
         const unsigned char *name,
         int *p_val);
 
@@ -74,7 +74,7 @@ text_area_process_string(const unsigned char *s,
 
 static int
 parse_form(
-	FILE *fout, 
+        FILE *fout, 
         FILE *flog,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -82,7 +82,7 @@ parse_form(
 
 static unsigned char *
 parse_form_func(
-	void *data, 
+        void *data, 
         FILE *flog,
         struct http_request_info *phr,
         const struct contest_desc *cnts,

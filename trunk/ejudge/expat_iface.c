@@ -572,9 +572,9 @@ xml_attr_alloc(int tag, const size_t *sizes)
 
 static void
 xml_skipped_entity_handler(
-	void *data,
-	const XML_Char *s,
-	int   is_parameter_entity)
+        void *data,
+        const XML_Char *s,
+        int   is_parameter_entity)
 {
   XML_Parser p = (XML_Parser) data;
   struct parser_data *pd = (struct parser_data*) XML_GetUserData(p);
@@ -943,7 +943,7 @@ xml_link_node_last(struct xml_tree *p, struct xml_tree *c)
 
 static const unsigned char *
 do_subst(
-	struct html_armor_buffer *pb,
+        struct html_armor_buffer *pb,
         const unsigned char *str,
         const unsigned char **vars,
         const unsigned char **vals)
@@ -1014,7 +1014,7 @@ do_subst(
 
 void
 xml_unparse_raw_tree(
-	FILE *fout,
+        FILE *fout,
         const struct xml_tree *tree,
         const struct xml_parse_spec *spec,
         const unsigned char **vars,

@@ -1585,7 +1585,7 @@ unparse_access(FILE *f, const struct contest_access *acc, int tag)
 
 static void
 unparse_field(
-	FILE *f,
+        FILE *f,
         const struct contest_field *pf,
         int id,
         char const * const field_map[],

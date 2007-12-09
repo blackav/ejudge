@@ -1726,7 +1726,7 @@ userlist_unparse_user_short(const struct userlist_user *p, FILE *f,
 */
 void
 userlist_real_unparse_user(
-	const struct userlist_user *p,
+        const struct userlist_user *p,
         FILE *f,
         int mode,
         int contest_id,
@@ -1883,7 +1883,7 @@ userlist_real_unparse_user(
  */
 void
 userlist_unparse_user(
-	const struct userlist_user *p,
+        const struct userlist_user *p,
         FILE *f,
         int mode,
         int contest_id,
@@ -1998,7 +1998,7 @@ userlist_write_xml_footer(FILE *f)
  */
 void
 userlist_unparse_for_standings(
-	struct userlist_list *p,
+        struct userlist_list *p,
         FILE *f,
         int contest_id,
         int flags,

@@ -1345,7 +1345,7 @@ prepare_free_variant_map(struct variant_map *p)
 
 static int
 get_variant_map_version(
-	FILE *log_f,            /* to write diagnostic messages */
+        FILE *log_f,            /* to write diagnostic messages */
         FILE *f,                /* to read from */
         FILE *head_f)           /* to write the file header (m.b. NULL) */
 {
@@ -1434,9 +1434,9 @@ get_variant_map_version(
 
 static int
 parse_vm_v1(
-	FILE *log_f,
+        FILE *log_f,
         const unsigned char *path,
-	FILE *f,
+        FILE *f,
         struct variant_map *pmap,
         FILE *foot_f)
 {
@@ -1516,9 +1516,9 @@ parse_vm_v1(
 
 static int
 parse_vm_v2(
-	FILE *log_f,
+        FILE *log_f,
         const unsigned char *path,
-	FILE *f,
+        FILE *f,
         struct variant_map *pmap,
         FILE *foot_f)
 {
@@ -1619,7 +1619,7 @@ parse_vm_v2(
 struct variant_map *
 prepare_parse_variant_map(
         FILE *log_f,
-	serve_state_t state,
+        serve_state_t state,
         const unsigned char *path,
         unsigned char **p_header_txt,
         unsigned char **p_footer_txt)
@@ -1939,7 +1939,7 @@ make_stand_file_name_2(serve_state_t state)
 
 int
 prepare_insert_variant_num(
-	unsigned char *buf,
+        unsigned char *buf,
         size_t size,
         const unsigned char *file,
         int variant)

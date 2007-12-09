@@ -137,7 +137,7 @@ problem_xml_t problem_xml_parse_stream(const unsigned char *path, FILE *f);
 problem_xml_t problem_xml_free(problem_xml_t r);
 
 struct problem_stmt *problem_xml_unparse_elem(
-	FILE *fout,
+        FILE *fout,
         problem_xml_t p,
         int elem,                  /* STATEMENT, INPUT_FORMAT, etc */
         const unsigned char *lang, /* 0 - default language */
@@ -146,7 +146,7 @@ struct problem_stmt *problem_xml_unparse_elem(
         const unsigned char **vals);
 void
 problem_xml_unparse_node(
-	FILE *fout,
+        FILE *fout,
         struct xml_tree *p,
         const unsigned char **vars, /* attribute value substitutions */
         const unsigned char **vals);
@@ -156,7 +156,7 @@ problem_xml_find_statement(
         const unsigned char *lang);
 int
 problem_xml_find_language(
-	const unsigned char *lang,
+        const unsigned char *lang,
         int tr_num,
         unsigned char **tr_names);
 

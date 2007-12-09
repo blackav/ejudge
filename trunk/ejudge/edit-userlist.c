@@ -3739,7 +3739,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
     w = 50; y = 0;
     if (utf8_mode) w = utf8_cnt(uu[i]->i.name, w, &y);
     len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
-		   g_sel_users.mask[i]?"!":" ",
+                   g_sel_users.mask[i]?"!":" ",
                    uu[i]->id, uu[i]->login, w + y, w, uu[i]->i.name);
     descs[i] = alloca(len + 16);
     strcpy(descs[i], buf);

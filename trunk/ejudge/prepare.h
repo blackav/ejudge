@@ -823,7 +823,7 @@ int prepare_parse_memory_limit_type(const unsigned char *str);
 int prepare_parse_secure_exec_type(const unsigned char *str);
 int
 prepare_insert_variant_num(
-	unsigned char *buf,
+        unsigned char *buf,
         size_t size,
         const unsigned char *file,
         int variant);
@@ -831,7 +831,7 @@ prepare_insert_variant_num(
 struct variant_map *
 prepare_parse_variant_map(
         FILE *log_f,
-	serve_state_t state,
+        serve_state_t state,
         const unsigned char *path,
         unsigned char **p_header_txt,
         unsigned char **p_footer_txt);

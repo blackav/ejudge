@@ -172,7 +172,7 @@ userlist_clnt_delete_info(struct userlist_clnt *clnt, int cmd,
 
 int
 userlist_clnt_move_member(
-	struct userlist_clnt *clnt,
+        struct userlist_clnt *clnt,
         int cmd,
         int user_id,
         int contest_id,
@@ -237,7 +237,7 @@ userlist_clnt_edit_field(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_edit_field_seq(
-	struct userlist_clnt *clnt,
+        struct userlist_clnt *clnt,
         int cmd,
         int user_id,
         int contest_id,
@@ -261,7 +261,7 @@ userlist_clnt_delete_cookie(struct userlist_clnt *clnt,
                             ej_cookie_t cookie);
 
 int userlist_clnt_create_user(
-	struct userlist_clnt *clnt,
+        struct userlist_clnt *clnt,
         const unsigned char *login,
         int *p_user_id);
 int userlist_clnt_create_member(struct userlist_clnt *clnt, int user_id,
@@ -357,7 +357,7 @@ userlist_clnt_recover_passwd_2(struct userlist_clnt *clnt,
 int userlist_clnt_control(struct userlist_clnt *clnt, int cmd);
 
 int userlist_clnt_priv_cookie_login(
-	struct userlist_clnt *clnt,
+        struct userlist_clnt *clnt,
         int cmd,
         ej_ip_t origin_ip,
         int ssl,
@@ -373,7 +373,7 @@ int userlist_clnt_priv_cookie_login(
 
 int
 userlist_clnt_import_csv_users(
-	struct userlist_clnt *clnt,
+        struct userlist_clnt *clnt,
         int cmd,
         int contest_id,
         int separator,

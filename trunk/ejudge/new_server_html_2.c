@@ -890,7 +890,7 @@ html_select_yesno(unsigned char *buf, size_t size,
 
 void
 ns_write_run_view_menu(
-	FILE *f, struct http_request_info *phr,
+        FILE *f, struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
         int run_id)
@@ -1208,7 +1208,7 @@ ns_write_priv_source(const serve_state_t state,
   // mime_type
   if (!info.lang_id) {
     fprintf(f, "<tr><td>%s</td><td>%s</td>%s</tr>\n",
-	    _("Content type"), mime_type_get_type(info.mime_type), nbsp);
+            _("Content type"), mime_type_get_type(info.mime_type), nbsp);
   }
 
   // is_imported
@@ -1463,7 +1463,7 @@ ns_write_priv_source(const serve_state_t state,
   filtbuf1[0] = 0;
   if (run_id > 0) {
     run_id2 = run_find(state->runlog_state, run_id - 1, 0, info.user_id,
-		       info.prob_id, info.lang_id);
+                       info.prob_id, info.lang_id);
     if (run_id2 >= 0) {
       snprintf(filtbuf1, sizeof(filtbuf1), "%d", run_id2);
     }
@@ -1471,9 +1471,9 @@ ns_write_priv_source(const serve_state_t state,
   html_start_form(f, 1, phr->self_url, phr->hidden_vars);
   html_hidden(f, "run_id", "%d", run_id);
   fprintf(f, "<p>%s: %s %s</p></form>\n",
-	  _("Compare this run with run"),
+          _("Compare this run with run"),
           html_input_text(bt, sizeof(bt), "run_id2", 10, "%s", filtbuf1),
-	  BUTTON(NEW_SRV_ACTION_COMPARE_RUNS));
+          BUTTON(NEW_SRV_ACTION_COMPARE_RUNS));
 
   if (global->enable_report_upload) {
     html_start_form(f, 2, phr->self_url, phr->hidden_vars);
@@ -2149,7 +2149,7 @@ ns_write_passwords(FILE *fout, FILE *log_f,
 
 int
 ns_write_online_users(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -2206,7 +2206,7 @@ ns_write_online_users(
 
 int
 ns_write_exam_info(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -2751,7 +2751,7 @@ ns_write_priv_standings(const serve_state_t state,
 
 void
 ns_download_runs(
-	const serve_state_t cs, FILE *fout, FILE *log_f,
+        const serve_state_t cs, FILE *fout, FILE *log_f,
         int run_selection,
         int dir_struct,
         int file_name_mask,
@@ -3073,8 +3073,8 @@ static const unsigned char * const supported_columns[] =
 
 int
 ns_upload_csv_runs(
-	struct http_request_info *phr,
-	const serve_state_t cs, FILE *log_f,
+        struct http_request_info *phr,
+        const serve_state_t cs, FILE *log_f,
         const unsigned char *csv_text)
 {
   int retval = -1;
@@ -3402,8 +3402,8 @@ ns_upload_csv_runs(
 
 int
 ns_upload_csv_results(
-	struct http_request_info *phr,
-	const serve_state_t cs, FILE *log_f,
+        struct http_request_info *phr,
+        const serve_state_t cs, FILE *log_f,
         const unsigned char *csv_text)
 {
   int retval = -1;
@@ -3515,8 +3515,8 @@ ns_upload_csv_results(
         }
         if (run_id < 0) {
           fprintf(log_f, _("No entry for %d/%s\n"), pe->user_id, prob->short_name);
-	  pe->run_id = -1;
-	  continue;
+          pe->run_id = -1;
+          continue;
         }
         *pe = te;
       } else if (col_ind[CSV_LOGIN] >= 0) {
@@ -3538,8 +3538,8 @@ ns_upload_csv_results(
         }
         if (run_id < 0) {
           fprintf(log_f, _("No entry for %s/%s\n"), s, prob->short_name);
-	  pe->run_id = -1;
-	  continue;
+          pe->run_id = -1;
+          continue;
         }
         *pe = te;
       } else if (col_ind[CSV_NAME] >= 0) {
@@ -3561,8 +3561,8 @@ ns_upload_csv_results(
         }
         if (run_id < 0) {
           fprintf(log_f, _("No entry for %s/%s\n"), s, prob->short_name);
-	  pe->run_id = -1;
-	  continue;
+          pe->run_id = -1;
+          continue;
         }
         *pe = te;
       } else if (col_ind[CSV_CYPHER] >= 0) {
@@ -3586,8 +3586,8 @@ ns_upload_csv_results(
         }
         if (run_id < 0) {
           fprintf(log_f, _("No entry for %s/%s\n"), s, prob->short_name);
-	  pe->run_id = -1;
-	  continue;
+          pe->run_id = -1;
+          continue;
         }
         *pe = te;
       } else {
@@ -3937,7 +3937,7 @@ ns_upload_csv_results(
 
 int
 ns_write_user_run_status(
-	const serve_state_t cs,
+        const serve_state_t cs,
         FILE *fout,
         int run_id)
 {
@@ -4024,7 +4024,7 @@ ns_write_user_run_status(
 
 static unsigned char *
 get_source(
-	const serve_state_t cs,
+        const serve_state_t cs,
         int run_id,
         const struct section_problem_data *prob,
         int variant)
@@ -4122,7 +4122,7 @@ get_source(
 
 unsigned char *
 ns_get_checker_comment(
-	const serve_state_t cs,
+        const serve_state_t cs,
         int run_id,
         int need_html_armor)
 {
@@ -4168,10 +4168,10 @@ ns_get_checker_comment(
 }
 
 static int get_accepting_passed_tests(
-	const serve_state_t cs,
+        const serve_state_t cs,
         const struct section_problem_data *prob,
         int run_id,
-	const struct run_entry *re)
+        const struct run_entry *re)
 {
   const struct section_global_data *global = cs->global;
   int rep_flag;
@@ -4237,7 +4237,7 @@ static int get_accepting_passed_tests(
 
 void
 ns_write_olympiads_user_runs(
-	struct http_request_info *phr,
+        struct http_request_info *phr,
         FILE *fout,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -4581,7 +4581,7 @@ ns_write_olympiads_user_runs(
 
 void
 ns_get_user_problems_summary(
-	const serve_state_t cs, int user_id, int accepting_mode,
+        const serve_state_t cs, int user_id, int accepting_mode,
         unsigned char *solved_flag,   /* whether the problem was OK */
         unsigned char *accepted_flag, /* whether the problem was accepted */
         unsigned char *pending_flag,  /* whether there are pending runs */
@@ -4952,8 +4952,8 @@ ns_get_user_problems_summary(
 
 void
 ns_write_user_problems_summary(
-	const struct contest_desc *cnts,
-	const serve_state_t cs,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
         FILE *fout,
         int user_id,
         int accepting_mode,
@@ -5195,7 +5195,7 @@ ns_write_user_problems_summary(
 
 int
 ns_examiners_page(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
