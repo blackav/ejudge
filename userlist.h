@@ -547,17 +547,28 @@ enum
     USERLIST_MODE_STAND,
   };
 
+enum
+  {
+    USERLIST_FORCE_FIRST_MEMBER = 1,
+    USERLIST_SHOW_REG_PASSWD = 2,
+    USERLIST_SHOW_CNTS_PASSWD = 4,
+    USERLIST_SHOW_PRIV_REG_PASSWD = 8,
+    USERLIST_SHOW_PRIV_CNTS_PASSWD = 16,
+  };
+
 struct userlist_list *userlist_new(void);
 struct userlist_list *userlist_parse(char const *path);
 struct userlist_list *userlist_parse_str(unsigned char const *str);
 struct userlist_user *userlist_parse_user_str(char const *str);
 void userlist_unparse(struct userlist_list *p, FILE *f);
 void userlist_unparse_user(const struct userlist_user *p, FILE *f, int mode,
-                           int contest_id);
+                           int contest_id, int flags);
 void userlist_real_unparse_user(const struct userlist_user *p, FILE *f,
-                                int mode, int contest_id, int memb_force_flag);
+                                int mode, int contest_id, int flags);
 void userlist_unparse_short(struct userlist_list *p, FILE *f, int contest_id);
-void userlist_unparse_for_standings(struct userlist_list *, FILE *, int, int);
+/*
+void userlist_unparse_for_standings(struct userlist_list *, FILE *, int, int, int, const unsigned char *);
+*/
 void userlist_unparse_user_short(const struct userlist_user *p, FILE *f,
                                  int contest_id);
 

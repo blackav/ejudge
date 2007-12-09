@@ -1730,7 +1730,7 @@ userlist_real_unparse_user(
         FILE *f,
         int mode,
         int contest_id,
-        int force_first_member)
+        int flags)
 {
   unsigned char attr_str[128];
   int i, cnt;
@@ -1790,13 +1790,14 @@ userlist_real_unparse_user(
              attr_map[USERLIST_A_PUBLIC], xml_unparse_bool(p->show_login));
     unparse_attributed_elem(f, USERLIST_T_LOGIN, p->login, attr_str, "    ");
   }
-  if (p->passwd && (mode == USERLIST_MODE_ALL || mode == USERLIST_MODE_STAND)) {
+  if (p->passwd && (flags & USERLIST_SHOW_REG_PASSWD)
+      && (mode == USERLIST_MODE_ALL || mode == USERLIST_MODE_STAND)) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
              attr_map[USERLIST_A_METHOD],
              unparse_passwd_method(p->passwd_method));
     unparse_attributed_elem(f, USERLIST_T_PASSWORD, p->passwd,attr_str, "    ");
   }
-  if (ui->team_passwd
+  if (ui->team_passwd && (flags & USERLIST_SHOW_CNTS_PASSWD)
       && (mode == USERLIST_MODE_ALL || mode == USERLIST_MODE_STAND)) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
              attr_map[USERLIST_A_METHOD],
@@ -1847,7 +1848,7 @@ userlist_real_unparse_user(
   }
   */
 
-  if (mode == USERLIST_MODE_STAND && force_first_member
+  if (mode == USERLIST_MODE_STAND && (flags & USERLIST_FORCE_FIRST_MEMBER)
       && (mm = ui->members[USERLIST_MB_CONTESTANT])
       && mm->total > 0 && mm->members && (m = mm->members[0])) {
     fprintf(f, "    <%s>\n", elem_map[USERLIST_T_CONTESTANTS]);
@@ -1881,14 +1882,18 @@ userlist_real_unparse_user(
  *     userlist_unparse_user(user, f, USERLIST_MODE_ALL);
  */
 void
-userlist_unparse_user(const struct userlist_user *p, FILE *f, int mode,
-                      int contest_id)
+userlist_unparse_user(
+	const struct userlist_user *p,
+        FILE *f,
+        int mode,
+        int contest_id,
+        int flags)
 {
   if (!p) return;
 
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n",
           EJUDGE_CHARSET);
-  userlist_real_unparse_user(p, f, mode, contest_id, 0);
+  userlist_real_unparse_user(p, f, mode, contest_id, flags);
 }
 
 /*
@@ -1947,7 +1952,7 @@ userlist_unparse(struct userlist_list *p, FILE *f)
     fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_NAME], p->name);
   fputs(">\n", f);
   for (i = 1; i < p->user_map_size; i++)
-    userlist_real_unparse_user(p->user_map[i], f, 0, -1, 0);
+    userlist_real_unparse_user(p->user_map[i], f, 0, -1, USERLIST_SHOW_REG_PASSWD | USERLIST_SHOW_CNTS_PASSWD);
   fprintf(f, "</%s>\n", elem_map[USERLIST_T_USERLIST]);
 }
 
@@ -1989,20 +1994,21 @@ userlist_write_xml_footer(FILE *f)
 }
 
 /*
- * called from userlist-server.c:cmd_list_standings_users, when
- *   generating the list of contestants for `serve' program
- *     userlist_unparse_for_standings(userlist, f, data->contest_id);
+ * currently unused
  */
 void
 userlist_unparse_for_standings(
 	struct userlist_list *p,
         FILE *f,
         int contest_id,
-        int force_first_member)
+        int flags,
+        int priv_map_size,
+        const unsigned char *priv_map)
 {
   int i;
   struct userlist_user *uu;
   struct userlist_contest *uc;
+  int subflags = 0;
 
   if (!p) return;
   if (contest_id < 0) contest_id = 0;
@@ -2024,8 +2030,18 @@ userlist_unparse_for_standings(
       if (uc->status != USERLIST_REG_OK) continue;
     }
 
+    subflags = flags & USERLIST_FORCE_FIRST_MEMBER;
+    if (i < priv_map_size && priv_map[i]) {
+      if ((flags & USERLIST_SHOW_PRIV_REG_PASSWD))
+        subflags |= USERLIST_SHOW_REG_PASSWD;
+      if ((flags & USERLIST_SHOW_PRIV_CNTS_PASSWD))
+        subflags |= USERLIST_SHOW_CNTS_PASSWD;
+    } else {
+      subflags |= flags & (USERLIST_SHOW_REG_PASSWD|USERLIST_SHOW_CNTS_PASSWD);
+    }
+
     userlist_real_unparse_user(uu, f, USERLIST_MODE_STAND, contest_id,
-                               force_first_member);
+                               subflags);
   }
   fprintf(f, "</%s>\n", elem_map[USERLIST_T_USERLIST]);
 }
