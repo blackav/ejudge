@@ -92,7 +92,7 @@ is_afterok(struct filter_env *env, int rid)
 
 static int
 is_missing_source(
-	struct filter_env *env,
+        struct filter_env *env,
         const struct run_entry *re)
 {
   serve_state_t cs = 0;

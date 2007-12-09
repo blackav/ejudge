@@ -63,7 +63,7 @@ parse_int(const char *str, int *p_val)
 
 static int
 cmd_login(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr)
 {
   int retval = 0, r;
@@ -169,7 +169,7 @@ cmd_login(
 
 static int
 cmd_logout(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra)
@@ -184,7 +184,7 @@ cmd_logout(
 
 static int
 cmd_dump_runs(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra)
@@ -226,7 +226,7 @@ cmd_dump_runs(
            
 static int
 cmd_dump_problems(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra)
@@ -244,7 +244,7 @@ cmd_dump_problems(
 
 static int
 cmd_operation(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra)
@@ -284,7 +284,7 @@ cmd_operation(
 
 static int
 cmd_operation_2(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra)
@@ -331,7 +331,7 @@ cmd_operation_2(
 
 static int
 cmd_run_operation(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra)
@@ -452,7 +452,7 @@ cmd_run_operation(
 
 static int
 cmd_clar_operation(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra)
@@ -523,7 +523,7 @@ cmd_clar_operation(
 
 static int
 cmd_submit_run(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra)
@@ -917,7 +917,7 @@ cmd_submit_run(
 
 static int
 cmd_import_xml_runs(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra)
@@ -1056,7 +1056,7 @@ static const unsigned char has_kirov_score[RUN_LAST + 1] =
 
 static int
 do_dump_master_runs(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -1557,7 +1557,7 @@ do_dump_master_runs(
 
 static int
 cmd_dump_master_runs(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra)

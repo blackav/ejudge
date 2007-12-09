@@ -577,8 +577,8 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
       if (min_i >= 0) {
         min_j = cur_new_map[min_i];
         if (min_j != -1 && !in_entries[min_j].is_imported) {
-	  fprintf(flog, "Overriding local run %d with imported %d\n",
-		  min_i, min_j);
+          fprintf(flog, "Overriding local run %d with imported %d\n",
+                  min_i, min_j);
           memcpy(&out_entries[cur_out], &in_entries[min_j],
                  sizeof(out_entries[0]));
           out_entries[cur_out].run_id = cur_out;
@@ -587,7 +587,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
           in_used_flag[min_j] = 1;
           cur_merged_map[min_i] = cur_out;
           cur_used_flag[min_i] = 1;
-	  cur_out++;
+          cur_out++;
         } else {
           /* copying from the current log */
           memcpy(&out_entries[cur_out], &cur_entries[min_i],

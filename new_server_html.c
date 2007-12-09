@@ -17,86 +17,86 @@
 
 /*
  * Command reimplementation status:
-    SRV_CMD_GET_ARCHIVE,		OK
-    SRV_CMD_SHOW_CLAR,			OK
-    SRV_CMD_SHOW_SOURCE,		OK
-    SRV_CMD_SHOW_REPORT,		OK
-    SRV_CMD_SUBMIT_RUN,			OK
-    SRV_CMD_SUBMIT_CLAR,		OK
-    SRV_CMD_TEAM_PAGE,			OK
-    SRV_CMD_MASTER_PAGE,		OK
-    SRV_CMD_PRIV_STANDINGS,		OK
-    SRV_CMD_VIEW_CLAR,			OK
-    SRV_CMD_VIEW_SOURCE,		OK
-    SRV_CMD_VIEW_REPORT,		OK
-    SRV_CMD_VIEW_USERS,			OK
-    SRV_CMD_PRIV_MSG,			OK
-    SRV_CMD_PRIV_REPLY,			OK
-    SRV_CMD_SUSPEND,			OK
-    SRV_CMD_RESUME,			OK
-    SRV_CMD_UPDATE_STAND,		OK
-    SRV_CMD_RESET,			OK
-    SRV_CMD_START,			OK
-    SRV_CMD_STOP,			OK
-    SRV_CMD_REJUDGE_ALL,		OK
-    SRV_CMD_REJUDGE_PROBLEM,		OK
-    SRV_CMD_SCHEDULE,			OK
-    SRV_CMD_DURATION,			OK
-    SRV_CMD_EDIT_RUN,			OK
-    SRV_CMD_VIRTUAL_START,		OK
-    SRV_CMD_VIRTUAL_STOP,		OK
-    SRV_CMD_VIRTUAL_STANDINGS,		OK
-    SRV_CMD_RESET_FILTER,		OK
-    SRV_CMD_CLEAR_RUN,			OK
-    SRV_CMD_SQUEEZE_RUNS,		OK
-    SRV_CMD_DUMP_RUNS,			OK
+    SRV_CMD_GET_ARCHIVE,                OK
+    SRV_CMD_SHOW_CLAR,                  OK
+    SRV_CMD_SHOW_SOURCE,                OK
+    SRV_CMD_SHOW_REPORT,                OK
+    SRV_CMD_SUBMIT_RUN,                 OK
+    SRV_CMD_SUBMIT_CLAR,                OK
+    SRV_CMD_TEAM_PAGE,                  OK
+    SRV_CMD_MASTER_PAGE,                OK
+    SRV_CMD_PRIV_STANDINGS,             OK
+    SRV_CMD_VIEW_CLAR,                  OK
+    SRV_CMD_VIEW_SOURCE,                OK
+    SRV_CMD_VIEW_REPORT,                OK
+    SRV_CMD_VIEW_USERS,                 OK
+    SRV_CMD_PRIV_MSG,                   OK
+    SRV_CMD_PRIV_REPLY,                 OK
+    SRV_CMD_SUSPEND,                    OK
+    SRV_CMD_RESUME,                     OK
+    SRV_CMD_UPDATE_STAND,               OK
+    SRV_CMD_RESET,                      OK
+    SRV_CMD_START,                      OK
+    SRV_CMD_STOP,                       OK
+    SRV_CMD_REJUDGE_ALL,                OK
+    SRV_CMD_REJUDGE_PROBLEM,            OK
+    SRV_CMD_SCHEDULE,                   OK
+    SRV_CMD_DURATION,                   OK
+    SRV_CMD_EDIT_RUN,                   OK
+    SRV_CMD_VIRTUAL_START,              OK
+    SRV_CMD_VIRTUAL_STOP,               OK
+    SRV_CMD_VIRTUAL_STANDINGS,          OK
+    SRV_CMD_RESET_FILTER,               OK
+    SRV_CMD_CLEAR_RUN,                  OK
+    SRV_CMD_SQUEEZE_RUNS,               OK
+    SRV_CMD_DUMP_RUNS,                  OK
     SRV_CMD_DUMP_STANDINGS,
-    SRV_CMD_SET_JUDGING_MODE,		OK
-    SRV_CMD_CONTINUE,			OK
-    SRV_CMD_WRITE_XML_RUNS,		OK
-    SRV_CMD_IMPORT_XML_RUNS,		OK
-    SRV_CMD_QUIT,			OK
-    SRV_CMD_EXPORT_XML_RUNS,		OK
-    SRV_CMD_PRIV_SUBMIT_RUN,		OK
-    SRV_CMD_TEST_SUSPEND,		OK
-    SRV_CMD_TEST_RESUME,		OK
-    SRV_CMD_JUDGE_SUSPENDED,		OK
-    SRV_CMD_SET_ACCEPTING_MODE,		OK
-    SRV_CMD_PRIV_PRINT_RUN,		OK
-    SRV_CMD_PRINT_RUN,			OK
-    SRV_CMD_PRIV_DOWNLOAD_RUN,		OK
-    SRV_CMD_PRINT_SUSPEND,		OK
-    SRV_CMD_PRINT_RESUME,		OK
-    SRV_CMD_COMPARE_RUNS,		OK
+    SRV_CMD_SET_JUDGING_MODE,           OK
+    SRV_CMD_CONTINUE,                   OK
+    SRV_CMD_WRITE_XML_RUNS,             OK
+    SRV_CMD_IMPORT_XML_RUNS,            OK
+    SRV_CMD_QUIT,                       OK
+    SRV_CMD_EXPORT_XML_RUNS,            OK
+    SRV_CMD_PRIV_SUBMIT_RUN,            OK
+    SRV_CMD_TEST_SUSPEND,               OK
+    SRV_CMD_TEST_RESUME,                OK
+    SRV_CMD_JUDGE_SUSPENDED,            OK
+    SRV_CMD_SET_ACCEPTING_MODE,         OK
+    SRV_CMD_PRIV_PRINT_RUN,             OK
+    SRV_CMD_PRINT_RUN,                  OK
+    SRV_CMD_PRIV_DOWNLOAD_RUN,          OK
+    SRV_CMD_PRINT_SUSPEND,              OK
+    SRV_CMD_PRINT_RESUME,               OK
+    SRV_CMD_COMPARE_RUNS,               OK
     SRV_CMD_UPLOAD_REPORT,
-    SRV_CMD_REJUDGE_BY_MASK,		OK
-    SRV_CMD_NEW_RUN_FORM,		OK
-    SRV_CMD_NEW_RUN,			OK
-    SRV_CMD_VIEW_TEAM,			OK
-    SRV_CMD_SET_TEAM_STATUS,		OK
-    SRV_CMD_ISSUE_WARNING,		OK
-    SRV_CMD_SOFT_UPDATE_STAND,		OK
-    SRV_CMD_PRIV_DOWNLOAD_REPORT,	OK
+    SRV_CMD_REJUDGE_BY_MASK,            OK
+    SRV_CMD_NEW_RUN_FORM,               OK
+    SRV_CMD_NEW_RUN,                    OK
+    SRV_CMD_VIEW_TEAM,                  OK
+    SRV_CMD_SET_TEAM_STATUS,            OK
+    SRV_CMD_ISSUE_WARNING,              OK
+    SRV_CMD_SOFT_UPDATE_STAND,          OK
+    SRV_CMD_PRIV_DOWNLOAD_REPORT,       OK
     SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT,
-    SRV_CMD_DUMP_MASTER_RUNS,		OK
-    SRV_CMD_RESET_CLAR_FILTER,		OK
-    SRV_CMD_HAS_TRANSIENT_RUNS,		OK
+    SRV_CMD_DUMP_MASTER_RUNS,           OK
+    SRV_CMD_RESET_CLAR_FILTER,          OK
+    SRV_CMD_HAS_TRANSIENT_RUNS,         OK
     SRV_CMD_GET_TEST_SUSPEND,
-    SRV_CMD_VIEW_TEST_INPUT,		OK
-    SRV_CMD_VIEW_TEST_OUTPUT,		OK
-    SRV_CMD_VIEW_TEST_ANSWER,		OK
-    SRV_CMD_VIEW_TEST_ERROR,		OK
-    SRV_CMD_VIEW_TEST_CHECKER,		OK
-    SRV_CMD_VIEW_TEST_INFO,		OK
-    SRV_CMD_VIEW_AUDIT_LOG,		OK
-    SRV_CMD_DUMP_PROBLEMS,		OK
-    SRV_CMD_GET_CONTEST_TYPE,		OK
-    SRV_CMD_SUBMIT_RUN_2,		OK
-    SRV_CMD_FULL_REJUDGE_BY_MASK,	OK
-    SRV_CMD_DUMP_SOURCE,		OK
-    SRV_CMD_DUMP_CLAR,			OK
-    SRV_CMD_RUN_STATUS,			OK
-    SRV_CMD_DUMP_SOURCE_2,		OK
+    SRV_CMD_VIEW_TEST_INPUT,            OK
+    SRV_CMD_VIEW_TEST_OUTPUT,           OK
+    SRV_CMD_VIEW_TEST_ANSWER,           OK
+    SRV_CMD_VIEW_TEST_ERROR,            OK
+    SRV_CMD_VIEW_TEST_CHECKER,          OK
+    SRV_CMD_VIEW_TEST_INFO,             OK
+    SRV_CMD_VIEW_AUDIT_LOG,             OK
+    SRV_CMD_DUMP_PROBLEMS,              OK
+    SRV_CMD_GET_CONTEST_TYPE,           OK
+    SRV_CMD_SUBMIT_RUN_2,               OK
+    SRV_CMD_FULL_REJUDGE_BY_MASK,       OK
+    SRV_CMD_DUMP_SOURCE,                OK
+    SRV_CMD_DUMP_CLAR,                  OK
+    SRV_CMD_RUN_STATUS,                 OK
+    SRV_CMD_DUMP_SOURCE_2,              OK
 */
 
 #include "config.h"
@@ -184,7 +184,7 @@ static void
 do_xml_user_state(FILE *fout, const serve_state_t cs, int user_id);
 static int
 get_register_url(
-	unsigned char *buf,
+        unsigned char *buf,
         size_t size,
         const struct contest_desc *cnts,
         const unsigned char *self_url);
@@ -505,7 +505,7 @@ ns_cgi_nname(const struct http_request_info *phr,
 
 int
 ns_cgi_param_int(
-	struct http_request_info *phr,
+        struct http_request_info *phr,
         const unsigned char *name,
         int *p_val)
 {
@@ -523,7 +523,7 @@ ns_cgi_param_int(
 
 int
 ns_cgi_param_int_opt(
-	struct http_request_info *phr,
+        struct http_request_info *phr,
         const unsigned char *name,
         int *p_val,
         int default_value)
@@ -689,7 +689,7 @@ load_problem_plugin(serve_state_t cs, int prob_id)
 
 int
 ns_list_all_users_callback(
-	void *user_data,
+        void *user_data,
         int contest_id,
         unsigned char **p_xml)
 {
@@ -772,11 +772,11 @@ ns_url(unsigned char *buf, size_t size,
 
 unsigned char *
 ns_url_unescaped(
-	unsigned char *buf,
-	size_t size,
+        unsigned char *buf,
+        size_t size,
         const struct http_request_info *phr,
         int action,
-	const char *format,
+        const char *format,
         ...)
 {
   unsigned char fbuf[1024];
@@ -1215,7 +1215,7 @@ privileged_page_login(FILE *fout,
 
 static void
 priv_parse_user_id_range(
-	struct http_request_info *phr,
+        struct http_request_info *phr,
         int *p_first_id,
         int *p_last_id)
 {
@@ -1689,7 +1689,7 @@ priv_user_operation(FILE *fout,
 
 static int
 priv_user_issue_warning(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -1739,7 +1739,7 @@ priv_user_issue_warning(
 
 static int
 priv_user_toggle_flags(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -1794,7 +1794,7 @@ priv_user_toggle_flags(
 
 static int
 priv_force_start_virtual(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -1861,7 +1861,7 @@ priv_force_start_virtual(
 
 static int
 priv_user_disqualify(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -4125,7 +4125,7 @@ priv_new_run_form_page(FILE *fout,
 
 static int
 priv_examiners_page(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -4153,7 +4153,7 @@ priv_examiners_page(
 
 static int
 priv_assign_chief_examiner(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -4193,7 +4193,7 @@ priv_assign_chief_examiner(
 
 static int
 priv_assign_examiner(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -4229,7 +4229,7 @@ priv_assign_examiner(
 
 static int
 priv_unassign_examiner(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -4920,7 +4920,7 @@ priv_view_test(FILE *fout,
 
 static int
 priv_upload_runlog_csv_1(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -4955,7 +4955,7 @@ priv_upload_runlog_csv_1(
 
 static int
 priv_upload_runlog_csv_2(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -5023,7 +5023,7 @@ priv_upload_runlog_csv_2(
 
 static int
 priv_upload_runlog_xml_1(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -5055,7 +5055,7 @@ priv_upload_runlog_xml_1(
 
 static int
 priv_upload_runlog_xml_2(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -5119,7 +5119,7 @@ priv_upload_runlog_xml_2(
 
 static int
 priv_download_runs_confirmation(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -5211,7 +5211,7 @@ priv_download_runs_confirmation(
 
 static int
 priv_download_runs(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -5287,7 +5287,7 @@ priv_download_runs(
 
 static int
 priv_upsolving_configuration_1(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -5368,7 +5368,7 @@ priv_upsolving_configuration_1(
 
 static int
 priv_upsolving_operation(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -5440,7 +5440,7 @@ priv_upsolving_operation(
 
 static int
 priv_assign_cyphers_1(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -5492,7 +5492,7 @@ priv_assign_cyphers_1(
 
 static int
 priv_assign_cyphers_2(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -5662,7 +5662,7 @@ priv_view_passwords(FILE *fout,
 
 static int
 priv_view_online_users(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -5687,7 +5687,7 @@ priv_view_online_users(
 
 static int
 priv_view_exam_info(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -5712,7 +5712,7 @@ priv_view_exam_info(
 
 static int
 priv_print_user_exam_protocol(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -5788,7 +5788,7 @@ priv_print_user_exam_protocol(
 
 static int
 priv_print_users_exam_protocol(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -5891,7 +5891,7 @@ priv_print_users_exam_protocol(
 
 static int
 priv_print_problem_exam_protocol(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -7316,7 +7316,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
 
 static void
 privileged_entry_point(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr)
 {
   int r;
@@ -9106,7 +9106,7 @@ unpriv_submit_appeal(FILE *fout,
 
 static void
 virtual_stop_callback(
-	const struct contest_desc *cnts,
+        const struct contest_desc *cnts,
         struct serve_state *cs,
         struct serve_event_queue *p)
 {
@@ -10605,7 +10605,7 @@ get_problem_status(serve_state_t cs, int user_id,
 
 static void
 unpriv_unparse_statement(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -10696,7 +10696,7 @@ unpriv_unparse_statement(
 
 static void
 unpriv_unparse_answers(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -11786,7 +11786,7 @@ do_xml_user_state(FILE *fout, const serve_state_t cs, int user_id)
 
 static void
 unpriv_xml_user_state(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra)
@@ -11801,7 +11801,7 @@ unpriv_xml_user_state(
 
 static void
 unpriv_xml_update_answer(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra)
@@ -11972,7 +11972,7 @@ unpriv_xml_update_answer(
 
 static void
 unpriv_get_file(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra)
@@ -12194,7 +12194,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 
 static void
 unprivileged_entry_point(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         int orig_locale_id)
 {
@@ -12386,7 +12386,7 @@ unprivileged_entry_point(
 
 static int
 get_register_url(
-	unsigned char *buf,
+        unsigned char *buf,
         size_t size,
         const struct contest_desc *cnts,
         const unsigned char *self_url)

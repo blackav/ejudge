@@ -113,7 +113,7 @@ c_armor(struct str_buf *pb, const unsigned char *s)
 
 static const unsigned char *
 c_armor_2(
-	struct str_buf *pb,
+        struct str_buf *pb,
         const unsigned char *str, 
         const unsigned char *pfx)
 {
@@ -1421,7 +1421,7 @@ prepare_unparse_is_supported_tester(const unsigned char *tester_name)
 
 static void
 generate_abstract_tester(
-	FILE *f,
+        FILE *f,
         int arch,
         int secure_run,
         int use_files,
@@ -1666,7 +1666,7 @@ generate_concrete_tester(FILE *f, int arch,
 
 int
 prepare_unparse_testers(
-	FILE *f,
+        FILE *f,
         int secure_run,
         const struct section_global_data *global,
         int total_langs,

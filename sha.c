@@ -50,8 +50,8 @@ static inline ruint32_t
 rol(ruint32_t x, int n)
 {
   __asm__("roll %%cl,%0"
-	  :"=r" (x)
-	  :"0" (x),"c" (n));
+          :"=r" (x)
+          :"0" (x),"c" (n));
   return x;
 }
 #else
@@ -65,7 +65,7 @@ rol(ruint32_t x, int n)
 
 #if CONF_ENDIAN - 1 == 0
 # define NOTSWAP(n) (n)
-# define SWAP(n)							\
+# define SWAP(n)                                                        \
     (((n) << 24) | (((n) & 0xff00) << 8) | (((n) >> 8) & 0xff00) | ((n) >> 24))
 #else
 # define NOTSWAP(n)                                                         \
@@ -136,7 +136,7 @@ sha_finish_ctx (struct sha_ctx *ctx, void *resbuf)
   /* Put the 64-bit file length in *bits* at the end of the buffer.  */
   *(ruint32_t *) &ctx->buffer[bytes + pad + 4] = NOTSWAP (ctx->total[0] << 3);
   *(ruint32_t *) &ctx->buffer[bytes + pad] = NOTSWAP ((ctx->total[1] << 3) |
-						    (ctx->total[0] >> 29));
+                                                    (ctx->total[0] >> 29));
 
   /* Process last bytes.  */
   sha_process_block (ctx->buffer, bytes + pad + 8, ctx);
@@ -163,28 +163,28 @@ sha_stream (FILE *stream, void *resblock)
   while (1)
     {
       /* We read the file in blocks of BLOCKSIZE bytes.  One call of the
-	 computation function processes the whole buffer so that with the
-	 next round of the loop another block can be read.  */
+         computation function processes the whole buffer so that with the
+         next round of the loop another block can be read.  */
       size_t n;
       sum = 0;
 
       /* Read block.  Take care for partial reads.  */
       do
-	{
-	  n = fread (buffer + sum, 1, BLOCKSIZE - sum, stream);
+        {
+          n = fread (buffer + sum, 1, BLOCKSIZE - sum, stream);
 
-	  sum += n;
-	}
+          sum += n;
+        }
       while (sum < BLOCKSIZE && n != 0);
       if (n == 0 && ferror (stream))
         return 1;
 
       /* If end of file is reached, end the loop.  */
       if (n == 0)
-	break;
+        break;
 
       /* Process buffer with BLOCKSIZE bytes.  Note that
-			BLOCKSIZE % 64 == 0
+                        BLOCKSIZE % 64 == 0
        */
       sha_process_block (buffer, BLOCKSIZE, &ctx);
     }
@@ -231,13 +231,13 @@ sha_process_bytes (const void *buffer, size_t len, struct sha_ctx *ctx)
       ctx->buflen += add;
 
       if (left_over + add > 64)
-	{
-	  sha_process_block (ctx->buffer, (left_over + add) & ~63, ctx);
-	  /* The regions in the following copy operation cannot overlap.  */
-	  memcpy (ctx->buffer, &ctx->buffer[(left_over + add) & ~63],
-		  (left_over + add) & 63);
-	  ctx->buflen = (left_over + add) & 63;
-	}
+        {
+          sha_process_block (ctx->buffer, (left_over + add) & ~63, ctx);
+          /* The regions in the following copy operation cannot overlap.  */
+          memcpy (ctx->buffer, &ctx->buffer[(left_over + add) & ~63],
+                  (left_over + add) & 63);
+          ctx->buflen = (left_over + add) & 63;
+        }
 
       buffer = (const char *) buffer + add;
       len -= add;
@@ -298,15 +298,15 @@ sha_process_block (const void *buffer, size_t len, struct sha_ctx *ctx)
     ++ctx->total[1];
 
 #define M(I) ( tm =   x[I&0x0f] ^ x[(I-14)&0x0f] \
-		    ^ x[(I-8)&0x0f] ^ x[(I-3)&0x0f] \
-	       , (x[I&0x0f] = rol(tm, 1)) )
+                    ^ x[(I-8)&0x0f] ^ x[(I-3)&0x0f] \
+               , (x[I&0x0f] = rol(tm, 1)) )
 
 #define R(A,B,C,D,E,F,K,M)  do { E += rol( A, 5 )     \
-				      + F( B, C, D )  \
-				      + K	      \
-				      + M;	      \
-				 B = rol( B, 30 );    \
-			       } while(0)
+                                      + F( B, C, D )  \
+                                      + K             \
+                                      + M;            \
+                                 B = rol( B, 30 );    \
+                               } while(0)
 
   while (words < endp)
     {
@@ -314,10 +314,10 @@ sha_process_block (const void *buffer, size_t len, struct sha_ctx *ctx)
       int t;
       /* FIXME: see sha1.c for a better implementation.  */
       for (t = 0; t < 16; t++)
-	{
-	  x[t] = NOTSWAP (*words);
-	  words++;
-	}
+        {
+          x[t] = NOTSWAP (*words);
+          words++;
+        }
 
       R( a, b, c, d, e, F1, K1, x[ 0] );
       R( e, a, b, c, d, F1, K1, x[ 1] );

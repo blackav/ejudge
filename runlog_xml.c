@@ -239,7 +239,7 @@ parse_status(const unsigned char *str)
 
 static int
 decode_file(
-	const unsigned char *enc_txt,
+        const unsigned char *enc_txt,
         size_t *p_size,
         unsigned char **p_buf)
 {
@@ -646,7 +646,7 @@ is_non_empty_sha1(const ruint32_t *psha1)
 
 static const unsigned char *
 encode_file(
-	struct html_armor_buffer *b1,
+        struct html_armor_buffer *b1,
         struct html_armor_buffer *b2,
         const unsigned char *txt,
         size_t len)
@@ -672,7 +672,7 @@ encode_file(
 
 int
 unparse_runlog_xml(
-	serve_state_t state,
+        serve_state_t state,
         const struct contest_desc *cnts,
         FILE *f,
         const struct run_header *phead,

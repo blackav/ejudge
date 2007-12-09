@@ -84,7 +84,7 @@ xml_unparse_tree(FILE *out,
                  void (*fmt_print)(FILE *, struct xml_tree const *, int, int));
 void
 xml_unparse_raw_tree(
-	FILE *out,
+        FILE *out,
         const struct xml_tree *tree,
         const struct xml_parse_spec *spec,
         const unsigned char **vars,

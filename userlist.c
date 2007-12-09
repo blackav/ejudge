@@ -332,7 +332,7 @@ userlist_is_equal_member_field(const struct userlist_member *m, int field_id,
 
 int
 userlist_get_member_field_str(
-	unsigned char *buf,
+        unsigned char *buf,
         size_t len,
         const struct userlist_member *m,
         int field_id,
@@ -1583,7 +1583,7 @@ userlist_clone_member(struct userlist_member *src, int *p_serial,
 
 struct userlist_cntsinfo *
 userlist_clone_user_info(
-	struct userlist_user *u,
+        struct userlist_user *u,
         int contest_id,
         int *p_serial,
         time_t current_time,

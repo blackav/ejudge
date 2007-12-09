@@ -726,7 +726,7 @@ prob_asgn_do_open(struct nsdb_files_state *state)
 
 static void
 prob_asgn_append(
-	struct prob_assignment_table *pt,
+        struct prob_assignment_table *pt,
         int user_id,
         int contest_id,
         int prob_id,
@@ -760,7 +760,7 @@ prob_asgn_remove(struct prob_assignment_table *pt, int i)
 
 static int
 assign_examiner_func(
-	void *data,
+        void *data,
         int user_id,
         int contest_id,
         int prob_id)
@@ -789,7 +789,7 @@ assign_examiner_func(
 
 static int
 assign_chief_examiner_func(
-	void *data,
+        void *data,
         int user_id,
         int contest_id,
         int prob_id,
@@ -832,7 +832,7 @@ assign_chief_examiner_func(
 
 static int
 remove_examiner_func(
-	void *data,
+        void *data,
         int user_id,
         int contest_id,
         int prob_id)
@@ -856,7 +856,7 @@ remove_examiner_func(
 
 static int
 get_examiner_role_func(
-	void *data,
+        void *data,
         int user_id,
         int contest_id,
         int prob_id)
@@ -876,7 +876,7 @@ get_examiner_role_func(
 
 static int
 find_chief_examiner_func(
-	void *data,
+        void *data,
         int contest_id,
         int prob_id)
 {
@@ -978,7 +978,7 @@ get_examiner_user_id_iterator_func(void *data, int contest_id, int prob_id)
 
 static int
 get_examiner_count_func(
-	void *data,
+        void *data,
         int contest_id,
         int prob_id)
 {

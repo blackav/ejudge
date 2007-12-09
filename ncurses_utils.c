@@ -772,7 +772,7 @@ ncurses_edit_password(int line, int scr_wid,
 
 int
 ncurses_edit_string(
-	int line,
+        int line,
         int scr_wid,
         unsigned char const *head,
         unsigned char *buf,
@@ -1051,7 +1051,7 @@ file_sort_func(const void *p1, const void *p2)
 
 static int
 do_choose_file(
-	const unsigned char *header,
+        const unsigned char *header,
         unsigned char *path_buf,
         int *p_view_hidden_flag,
         int utf8_mode)
@@ -1434,7 +1434,7 @@ do_choose_file(
 
 int
 ncurses_choose_file(
-	const unsigned char *header,
+        const unsigned char *header,
         unsigned char *buf,
         size_t buf_size,
         int utf8_mode)

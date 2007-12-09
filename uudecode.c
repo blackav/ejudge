@@ -36,8 +36,8 @@ static const char cright_years_z[] =
       documentation and/or other materials provided with the distribution.
    3. All advertising materials mentioning features or use of this software
       must display the following acknowledgement:
-	 This product includes software developed by the University of
-	 California, Berkeley and its contributors.
+         This product includes software developed by the University of
+         California, Berkeley and its contributors.
    4. Neither the name of the University nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -71,8 +71,8 @@ static const char cright_years_z[] =
 #include <getopt.h>
 
 /*=====================================================================\
-| uudecode [FILE ...]						       |
-| 								       |
+| uudecode [FILE ...]                                                  |
+|                                                                      |
 | Create the specified FILE, decoding as you go.  Used with uuencode.  |
 \=====================================================================*/
 
@@ -110,7 +110,7 @@ static void usage __P ((int))
 const char *program_name;
 
 /* Single character decode.  */
-#define	DEC(Char) (((Char) - ' ') & 077)
+#define DEC(Char) (((Char) - ' ') & 077)
 
 #if !defined S_ISLNK && defined S_IFLNK
 # define S_ISLNK(m) (((m) & S_IFMT) == S_IFLNK)
@@ -135,30 +135,30 @@ read_stduu (inname, outname)
       char *p;
 
       if (fgets ((char *) buf, sizeof(buf), stdin) == NULL)
-	{
-	  error (0, 0, "%s: Short file", inname);
-	  return 1;
-	}
+        {
+          error (0, 0, "%s: Short file", inname);
+          return 1;
+        }
       p = buf;
 
       /* N is used to avoid writing out all the characters at the end of
-	 the file.  */
+         the file.  */
 
       n = DEC (*p);
       if (n <= 0)
-	break;
+        break;
       for (++p; n >= 3; p += 4, n -= 3)
-	{
-	  TRY_PUTCHAR (DEC (p[0]) << 2 | DEC (p[1]) >> 4);
-	  TRY_PUTCHAR (DEC (p[1]) << 4 | DEC (p[2]) >> 2);
-	  TRY_PUTCHAR (DEC (p[2]) << 6 | DEC (p[3]));
+        {
+          TRY_PUTCHAR (DEC (p[0]) << 2 | DEC (p[1]) >> 4);
+          TRY_PUTCHAR (DEC (p[1]) << 4 | DEC (p[2]) >> 2);
+          TRY_PUTCHAR (DEC (p[2]) << 6 | DEC (p[3]));
         }
       if (n > 0)
-	{
-	  TRY_PUTCHAR (DEC (p[0]) << 2 | DEC (p[1]) >> 4);
-	  if (n >= 2)
-	    TRY_PUTCHAR (DEC (p[1]) << 4 | DEC (p[2]) >> 2);
-	}
+        {
+          TRY_PUTCHAR (DEC (p[0]) << 2 | DEC (p[1]) >> 4);
+          if (n >= 2)
+            TRY_PUTCHAR (DEC (p[1]) << 4 | DEC (p[2]) >> 2);
+        }
     }
 
   do {
@@ -223,75 +223,75 @@ read_base64 (inname, outname)
       unsigned char *p;
 
       if (fgets (buf, sizeof(buf), stdin) == NULL)
-	{
-	  error (0, 0, "%s: Short file", inname);
-	  return 1;
-	}
+        {
+          error (0, 0, "%s: Short file", inname);
+          return 1;
+        }
       p = (unsigned char *) buf;
 
       if (memcmp (buf, "====", 4) == 0)
-	break;
+        break;
       if (last_data != 0)
-	{
-	  error (0, 0, "%s: data following `=' padding character", inname);
-	  return 1;
-	}
+        {
+          error (0, 0, "%s: data following `=' padding character", inname);
+          return 1;
+        }
 
       /* The following implementation of the base64 decoding might look
-	 a bit clumsy but I only try to follow the POSIX standard:
-	 ``All line breaks or other characters not found in the table
-	   [with base64 characters] shall be ignored by decoding
-	   software.''  */
+         a bit clumsy but I only try to follow the POSIX standard:
+         ``All line breaks or other characters not found in the table
+           [with base64 characters] shall be ignored by decoding
+           software.''  */
       while (*p != '\n')
-	{
-	  char c1, c2, c3;
+        {
+          char c1, c2, c3;
 
-	  while ((b64_tab[*p] & '\100') != 0)
-	    if (*p == '\n' || *p++ == '=')
-	      break;
-	  if (*p == '\n')
-	    /* This leaves the loop.  */
-	    continue;
-	  c1 = b64_tab[*p++];
+          while ((b64_tab[*p] & '\100') != 0)
+            if (*p == '\n' || *p++ == '=')
+              break;
+          if (*p == '\n')
+            /* This leaves the loop.  */
+            continue;
+          c1 = b64_tab[*p++];
 
-	  while ((b64_tab[*p] & '\100') != 0)
-	    if (*p == '\n' || *p++ == '=')
-	      {
-		error (0, 0, "%s: illegal line", inname);
-		return 1;
-	      }
-	  c2 = b64_tab[*p++];
+          while ((b64_tab[*p] & '\100') != 0)
+            if (*p == '\n' || *p++ == '=')
+              {
+                error (0, 0, "%s: illegal line", inname);
+                return 1;
+              }
+          c2 = b64_tab[*p++];
 
-	  while (b64_tab[*p] == '\177')
-	    if (*p++ == '\n')
-	      {
-		error (0, 0, "%s: illegal line", inname);
-		return 1;
-	      }
-	  if (*p == '=')
-	    {
-	      TRY_PUTCHAR (c1 << 2 | c2 >> 4);
-	      last_data = 1;
-	      break;
-	    }
-	  c3 = b64_tab[*p++];
+          while (b64_tab[*p] == '\177')
+            if (*p++ == '\n')
+              {
+                error (0, 0, "%s: illegal line", inname);
+                return 1;
+              }
+          if (*p == '=')
+            {
+              TRY_PUTCHAR (c1 << 2 | c2 >> 4);
+              last_data = 1;
+              break;
+            }
+          c3 = b64_tab[*p++];
 
-	  while (b64_tab[*p] == '\177')
-	    if (*p++ == '\n')
-	      {
-		error (0, 0, "%s: illegal line", inname);
-		return 1;
-	      }
-	  TRY_PUTCHAR (c1 << 2 | c2 >> 4);
-	  TRY_PUTCHAR (c2 << 4 | c3 >> 2);
-	  if (*p == '=')
-	    {
-	      last_data = 1;
-	      break;
-	    }
-	  else
-	    TRY_PUTCHAR (c3 << 6 | b64_tab[*p++]);
-	}
+          while (b64_tab[*p] == '\177')
+            if (*p++ == '\n')
+              {
+                error (0, 0, "%s: illegal line", inname);
+                return 1;
+              }
+          TRY_PUTCHAR (c1 << 2 | c2 >> 4);
+          TRY_PUTCHAR (c2 << 4 | c3 >> 2);
+          if (*p == '=')
+            {
+              last_data = 1;
+              break;
+            }
+          else
+            TRY_PUTCHAR (c3 << 6 | b64_tab[*p++]);
+        }
     }
 
   return 0;
@@ -318,21 +318,21 @@ decode (inname, forced_outname)
   while (1)
     {
       if (fgets (buf, sizeof (buf), stdin) == NULL)
-	{
-	  error (0, 0, "%s: No `begin' line", inname);
-	  return 1;
-	}
+        {
+          error (0, 0, "%s: No `begin' line", inname);
+          return 1;
+        }
 
       if (strncmp (buf, "begin", 5) == 0)
-	{
-	  if (sscanf (buf, "begin-base64 %o %[^\n]", &mode, buf) == 2)
-	    {
-	      do_base64 = 1;
-	      break;
-	    }
-	  else if (sscanf (buf, "begin %o %[^\n]", &mode, buf) == 2)
-	    break;
-	}
+        {
+          if (sscanf (buf, "begin-base64 %o %[^\n]", &mode, buf) == 2)
+            {
+              do_base64 = 1;
+              break;
+            }
+          else if (sscanf (buf, "begin %o %[^\n]", &mode, buf) == 2)
+            break;
+        }
     }
 
   /* If the output file name is given on the command line this rules.  */
@@ -343,31 +343,31 @@ decode (inname, forced_outname)
       /* Handle ~user/file format.  */
 
       if (buf[0] != '~')
-	outname = buf;
+        outname = buf;
       else
-	{
-	  p = buf + 1;
-	  while (*p != '/')
-	    ++p;
-	  if (*p == '\0')
-	    {
-	      error (0, 0, "%s: Illegal ~user", inname);
-	      return 1;
-	    }
-	  *p++ = '\0';
-	  pw = getpwnam (buf + 1);
-	  if (pw == NULL)
-	    {
-	      error (0, 0, "%s: No user `%s'", inname, buf + 1);
-	      return 1;
-	    }
-	  n = strlen (pw->pw_dir);
-	  n1 = strlen (p);
-	  outname = (char *) alloca ((size_t) (n + n1 + 2));
-	  memcpy (outname + n + 1, p, (size_t) (n1 + 1));
-	  memcpy (outname, pw->pw_dir, (size_t) n);
-	  outname[n] = '/';
-	}
+        {
+          p = buf + 1;
+          while (*p != '/')
+            ++p;
+          if (*p == '\0')
+            {
+              error (0, 0, "%s: Illegal ~user", inname);
+              return 1;
+            }
+          *p++ = '\0';
+          pw = getpwnam (buf + 1);
+          if (pw == NULL)
+            {
+              error (0, 0, "%s: No user `%s'", inname, buf + 1);
+              return 1;
+            }
+          n = strlen (pw->pw_dir);
+          n1 = strlen (p);
+          outname = (char *) alloca ((size_t) (n + n1 + 2));
+          memcpy (outname + n + 1, p, (size_t) (n1 + 1));
+          memcpy (outname, pw->pw_dir, (size_t) n);
+          outname[n] = '/';
+        }
     }
 
   /* Create output file and set mode.  */
@@ -435,7 +435,7 @@ usage (status)
 {
   if (status != 0)
     fprintf (stderr, "Try `%s --help' for more information.\n",
-	     program_name);
+             program_name);
   else
     {
       printf ("Usage: %s [FILE]...\n", program_name);
@@ -465,34 +465,34 @@ main (argc, argv)
   outname = NULL;
 
   while (opt = getopt_long (argc, argv, "o:", longopts, (int *) NULL),
-	 opt != EOF)
+         opt != EOF)
     {
       switch (opt)
-	{
-	case 'h':
-	  usage (EXIT_SUCCESS);
+        {
+        case 'h':
+          usage (EXIT_SUCCESS);
 
-	case 'o':
-	  outname = optarg;
-	  break;
+        case 'o':
+          outname = optarg;
+          break;
 
-	case 'v':
-	  printf ("%s (GNU %s) %s\n", basename (bname),
-		  PACKAGE, VERSION);
-	  /* xgettext: no-wrap */
-	  printf ("Copyright (C) %s Free Software Foundation, Inc.\n\
+        case 'v':
+          printf ("%s (GNU %s) %s\n", basename (bname),
+                  PACKAGE, VERSION);
+          /* xgettext: no-wrap */
+          printf ("Copyright (C) %s Free Software Foundation, Inc.\n\
 This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
 ",
-		  cright_years_z);
-	  exit (EXIT_SUCCESS);
+                  cright_years_z);
+          exit (EXIT_SUCCESS);
 
-	case 0:
-	  break;
+        case 0:
+          break;
 
-	default:
-	  usage (EXIT_FAILURE);
-	}
+        default:
+          usage (EXIT_FAILURE);
+        }
     }
 
   if (optind == argc)
@@ -501,19 +501,19 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
     {
       exit_status = EXIT_SUCCESS;
       do
-	{
-	  if (freopen (argv[optind], "r", stdin) != NULL)
-	    {
-	      if (decode (argv[optind], outname) != 0)
-		exit_status = EXIT_FAILURE;
-	    }
-	  else
-	    {
-	      error (0, errno, "%s", argv[optind]);
-	      exit_status = EXIT_FAILURE;
-	    }
-	  optind++;
-	}
+        {
+          if (freopen (argv[optind], "r", stdin) != NULL)
+            {
+              if (decode (argv[optind], outname) != 0)
+                exit_status = EXIT_FAILURE;
+            }
+          else
+            {
+              error (0, errno, "%s", argv[optind]);
+              exit_status = EXIT_FAILURE;
+            }
+          optind++;
+        }
       while (optind < argc);
     }
 

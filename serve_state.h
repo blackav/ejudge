@@ -99,7 +99,7 @@ enum
 struct serve_state;
 struct serve_event_queue;
 typedef void (*serve_event_hander_t)(
-	const struct contest_desc *cnts,
+        const struct contest_desc *cnts,
         struct serve_state *cs,
         struct serve_event_queue *p);
 
@@ -348,7 +348,7 @@ struct run_entry;
 struct problem_desc;
 void
 serve_judge_built_in_problem(
-	serve_state_t state,
+        serve_state_t state,
         const struct contest_desc *cnts,
         int run_id,
         int judge_id,

@@ -1124,7 +1124,7 @@ run_get_times(runlog_state_t state,
 
 void
 run_get_saved_times(
-	runlog_state_t state,
+        runlog_state_t state,
         time_t *p_saved_duration,
         time_t *p_saved_stop_time)
 {
@@ -1490,7 +1490,7 @@ run_get_entry(runlog_state_t state, int run_id, struct run_entry *out)
 
 int
 run_get_virtual_start_entry(
-	runlog_state_t state,
+        runlog_state_t state,
         int user_id,
         struct run_entry *out)
 {

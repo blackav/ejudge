@@ -588,7 +588,7 @@ read_checker_score(const unsigned char *path,
 
 static int
 invoke_valuer(
-	const struct section_global_data *global,
+        const struct section_global_data *global,
         const struct section_problem_data *prb,
         int cur_variant,
         int max_score,
@@ -2459,7 +2459,7 @@ check_config(void)
             }
           }
         }
-	n1 = n2 = 1;
+        n1 = n2 = 1;
       }
     } else {
       /* check existence of tests */

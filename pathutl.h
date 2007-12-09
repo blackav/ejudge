@@ -79,7 +79,7 @@ void path_init(char *path, char const *dir, char const *def);
 void path_normalize(unsigned char *path, size_t size);
 void
 path_make_relative(
-	unsigned char *out,
+        unsigned char *out,
         size_t size,
         const unsigned char *path,
         const unsigned char *relto,

@@ -69,7 +69,7 @@ ns_snprintf(unsigned char *buf, size_t size, const char *format, ...)
 
 static unsigned char *
 get_client_url(
-	unsigned char *buf,
+        unsigned char *buf,
         size_t size,
         const struct contest_desc *cnts,
         const unsigned char *str)
@@ -192,7 +192,7 @@ anon_select_contest_page(FILE *fout, struct http_request_info *phr)
 
 static void
 login_page(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -349,7 +349,7 @@ create_account_page( FILE *fout, struct http_request_info *phr,
 
 static void
 create_autoassigned_account_page(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -502,7 +502,7 @@ create_autoassigned_account_page(
 
 static void
 create_account_page(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -647,7 +647,7 @@ create_account_page(
 
 static void
 create_account(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -746,7 +746,7 @@ create_account(
 
 static void
 cmd_login(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -837,7 +837,7 @@ typedef void (*reg_action_handler_func_t)(FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
-	time_t cur_time);
+        time_t cur_time);
 static reg_action_handler_func_t action_handlers[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE] = create_account_page,
@@ -1273,7 +1273,7 @@ static const int role_move_dir_code[] =
 
 static void
 main_page_view_info(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -1542,7 +1542,7 @@ main_page_view_info(
 
 static void
 main_page_view_settings(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -1586,7 +1586,7 @@ static reg_action_handler_func_t main_page_action_handlers[NEW_SRV_ACTION_LAST]=
 
 static void
 main_page(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -1755,7 +1755,7 @@ main_page(
 
 static void
 edit_member_form(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         const struct userlist_member *m,
@@ -1767,7 +1767,7 @@ edit_member_form(
 
 static void
 edit_general_form(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         const struct userlist_user *u)
@@ -1982,7 +1982,7 @@ static unsigned char const * const member_status_string[] =
 
 static void
 display_status_changing_dialog(
-	FILE *fout,
+        FILE *fout,
         int field,
         int val,
         const unsigned char *beg_str,
@@ -2017,7 +2017,7 @@ static unsigned char const * const member_gender_string[] =
 
 static void
 display_gender_changing_dialog(
-	FILE *fout,
+        FILE *fout,
         int field,
         int val,
         const unsigned char *beg_str,
@@ -2045,7 +2045,7 @@ display_gender_changing_dialog(
 
 static void
 display_grade_changing_dialog(
-	FILE *fout,
+        FILE *fout,
         int field,
         int val,
         const unsigned char *beg_str,
@@ -2084,7 +2084,7 @@ display_grade_changing_dialog(
 
 static void
 edit_member_form(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         const struct userlist_member *m,
@@ -2199,7 +2199,7 @@ edit_member_form(
 
 static void
 edit_page(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -2308,7 +2308,7 @@ edit_page(
 
 static void
 cancel_editing(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -2327,7 +2327,7 @@ cancel_editing(
 
 static void
 action_error_page(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -2387,7 +2387,7 @@ preprocess_string(unsigned char *buf, size_t size, const unsigned char *str)
 
 static unsigned char *
 assemble_programming_languages(
-	unsigned char *buf,
+        unsigned char *buf,
         size_t size,
         struct http_request_info *phr,
         const unsigned char *cnts_allowed_languages)
@@ -2423,9 +2423,9 @@ assemble_programming_languages(
 
 static unsigned char *
 get_member_field(
-	unsigned char *buf,
+        unsigned char *buf,
         size_t size,
-	struct http_request_info *phr,
+        struct http_request_info *phr,
         int field,
         const unsigned char *var_prefix,
         FILE *log_f,
@@ -2576,7 +2576,7 @@ get_member_field(
 
 static void
 submit_member_editing(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -2674,7 +2674,7 @@ submit_member_editing(
 
 static void
 submit_general_editing(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -2816,7 +2816,7 @@ submit_general_editing(
 
 static void
 add_member(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -2880,7 +2880,7 @@ add_member(
 
 static void
 remove_member(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -2949,7 +2949,7 @@ remove_member(
 
 static void
 move_member(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -3042,7 +3042,7 @@ move_member(
 
 static void
 logout(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -3063,7 +3063,7 @@ logout(
 
 static void
 change_password(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -3135,7 +3135,7 @@ change_password(
 
 static void
 register_for_contest(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,

@@ -460,11 +460,11 @@ ns_html_err_inv_session(FILE *fout,
   __attribute__((format(printf, 4, 5)));
 void
 ns_html_err_registration_incomplete(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr);
 void
 ns_html_err_disqualified(
-	FILE *fout,
+        FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra);
@@ -545,7 +545,7 @@ void ns_write_priv_report(const serve_state_t cs,
                           int run_id);
 
 void ns_write_audit_log(
-	const serve_state_t state,
+        const serve_state_t state,
         FILE *f,
         FILE *log_f,
         struct http_request_info *phr,
@@ -649,7 +649,7 @@ enum
 
 void
 ns_download_runs(
-	const serve_state_t cs, FILE *fout, FILE *log_f,
+        const serve_state_t cs, FILE *fout, FILE *log_f,
         int run_selection,
         int dir_struct,
         int file_name_mask,
@@ -658,23 +658,23 @@ ns_download_runs(
 
 int
 ns_upload_csv_runs(
-	struct http_request_info *phr,
-	const serve_state_t cs, FILE *log_f,
+        struct http_request_info *phr,
+        const serve_state_t cs, FILE *log_f,
         const unsigned char *csv_text);
 int
 ns_upload_csv_results(
-	struct http_request_info *phr,
-	const serve_state_t cs, FILE *log_f,
+        struct http_request_info *phr,
+        const serve_state_t cs, FILE *log_f,
         const unsigned char *csv_text);
 
 int
 ns_write_user_run_status(
-	const serve_state_t cs,
+        const serve_state_t cs,
         FILE *fout,
         int run_id);
 void
 ns_write_olympiads_user_runs(
-	struct http_request_info *phr,
+        struct http_request_info *phr,
         FILE *fout,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
@@ -701,7 +701,7 @@ int ns_open_ul_connection(struct server_framework_state *state);
 
 int
 ns_list_all_users_callback(
-	void *user_data,
+        void *user_data,
         int contest_id,
         unsigned char **p_xml);
 void
@@ -714,7 +714,7 @@ void ns_new_autoclose(struct client_state *p, void *, size_t);
 
 void
 ns_get_user_problems_summary(
-	const serve_state_t cs, int user_id, int accepting_mode,
+        const serve_state_t cs, int user_id, int accepting_mode,
         unsigned char *solved_flag,   /* whether the problem was OK */
         unsigned char *accepted_flag, /* whether the problem was accepted */
         unsigned char *pending_flag,  /* whether there are pending runs */
@@ -728,8 +728,8 @@ ns_get_user_problems_summary(
 
 void
 ns_write_user_problems_summary(
-	const struct contest_desc *cnts,
-	const serve_state_t cs,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
         FILE *fout,
         int user_id,
         int accepting_mode,
@@ -750,13 +750,13 @@ void ns_register_pages(FILE *fout, struct http_request_info *phr);
 
 unsigned char *
 ns_get_checker_comment(
-	const serve_state_t cs,
+        const serve_state_t cs,
         int run_id,
         int need_html_armor);
 
 int
 ns_examiners_page(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -785,7 +785,7 @@ ns_print_user_exam_protocols(
 
 int
 ns_olympiad_final_user_report(
-	FILE *fout,
+        FILE *fout,
         FILE *log_f,
         const struct contest_desc *cnts,
         const serve_state_t cs,

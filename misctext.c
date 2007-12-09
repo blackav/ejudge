@@ -601,7 +601,7 @@ check_str(const unsigned char *str, const unsigned char *map)
 
 int
 check_str_2(
-	const unsigned char *str,
+        const unsigned char *str,
         const unsigned char *map, /*if char 255 is valid,any char >= 128 valid*/
         unsigned char *invchars,
         size_t invsize,
@@ -798,7 +798,7 @@ const unsigned char filename_armor_table_len[256] =
 
 unsigned char *
 filename_armor_bytes(
-	unsigned char *out,
+        unsigned char *out,
         size_t outsize,
         const unsigned char *in,
         size_t insize)

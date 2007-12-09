@@ -282,7 +282,7 @@ path_normalize(unsigned char *path, size_t size)
 
 int
 path_is_prefix(
-	unsigned char **s_path,
+        unsigned char **s_path,
         unsigned char **s_prefix)
 {
   int i;
@@ -297,7 +297,7 @@ path_is_prefix(
 
 static void
 do_relative(
-	unsigned char *out,
+        unsigned char *out,
         size_t size,
         unsigned char **s_path,
         unsigned char **s_relto)
@@ -330,7 +330,7 @@ do_relative(
 
 void
 path_make_relative(
-	unsigned char *out,
+        unsigned char *out,
         size_t size,
         const unsigned char *path,
         const unsigned char *relto,

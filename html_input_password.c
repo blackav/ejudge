@@ -22,7 +22,7 @@
 
 unsigned char *
 html_input_password(
-	unsigned char *buf,
+        unsigned char *buf,
         size_t size,
         const unsigned char *var_name,
         int text_size,

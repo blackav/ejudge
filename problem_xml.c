@@ -526,7 +526,7 @@ problem_xml_parse_stream(const unsigned char *path, FILE *f)
 
 static int
 approxlangcmp(
-	const unsigned char *s1,
+        const unsigned char *s1,
         const unsigned char *s2)
 {
   int x;
@@ -542,7 +542,7 @@ approxlangcmp(
 
 struct problem_stmt *
 problem_xml_unparse_elem(
-	FILE *fout,
+        FILE *fout,
         problem_xml_t p,
         int elem,                  /* STATEMENT, INPUT_FORMAT, etc */
         const unsigned char *lang, /* 0 - default language */
@@ -630,7 +630,7 @@ problem_xml_find_statement(
 
 void
 problem_xml_unparse_node(
-	FILE *fout,
+        FILE *fout,
         struct xml_tree *p,
         const unsigned char **vars, /* substitution variables  */
         const unsigned char **vals) /* substitution values */
@@ -640,7 +640,7 @@ problem_xml_unparse_node(
 
 int
 problem_xml_find_language(
-	const unsigned char *lang,
+        const unsigned char *lang,
         int tr_num,
         unsigned char **tr_names)
 {
