@@ -3924,7 +3924,7 @@ cmd_list_standings_users(struct client_state *p,
   if (is_cnts_capable(p, cnts, OPCAP_MAP_CONTEST, logbuf) < 0) return;
 
   if (cnts->personal) flags |= USERLIST_FORCE_FIRST_MEMBER;
-  flags = USERLIST_SHOW_PRIV_REG_PASSWD | USERLIST_SHOW_PRIV_CNTS_PASSWD
+  flags |= USERLIST_SHOW_PRIV_REG_PASSWD | USERLIST_SHOW_PRIV_CNTS_PASSWD
     | USERLIST_SHOW_REG_PASSWD | USERLIST_SHOW_CNTS_PASSWD;
   if (check_dbcnts_capable(p, cnts, OPCAP_PRIV_EDIT_PASSWD) < 0) {
     flags &= ~(USERLIST_SHOW_PRIV_REG_PASSWD | USERLIST_SHOW_PRIV_CNTS_PASSWD);
