@@ -19,6 +19,7 @@
 
 #include "settings.h"
 #include "ej_types.h"
+#include "ej_limits.h"
 #include "opcaps.h"
 #include "watched_file.h"
 #include "problem_plugin.h"
@@ -121,8 +122,8 @@ struct serve_state
   struct generic_section_config *config;
   struct section_global_data    *global;
 
-  struct section_language_data *langs[MAX_LANGUAGE + 1];
-  struct section_problem_data  *probs[MAX_PROBLEM + 1];
+  struct section_language_data *langs[EJ_MAX_LANG_ID + 1];
+  struct section_problem_data  *probs[EJ_MAX_PROB_ID + 1];
   struct section_tester_data   *testers[MAX_TESTER + 1];
 
   int max_lang;
@@ -147,7 +148,7 @@ struct serve_state
   struct user_filter_info *cur_user;
 
   /* for prepare to store the abstract entities */
-  struct section_problem_data  *abstr_probs[MAX_PROBLEM + 1];
+  struct section_problem_data  *abstr_probs[EJ_MAX_PROB_ID + 1];
   struct section_tester_data   *abstr_testers[MAX_TESTER + 1];
   int max_abstr_prob;
   int max_abstr_tester;

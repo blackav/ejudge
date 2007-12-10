@@ -35,12 +35,6 @@
  */
 #define SERVE_PACKET_NAME_SIZE 13
 
-/* maximal number of simultaneously supported languages */
-#define MAX_LANGUAGE 100
-
-/* maximal number of simultaneously supported problems */
-#define MAX_PROBLEM  100
-
 /* maximal number of simultaneously supported testers */
 #define MAX_TESTER  100
 

@@ -3538,7 +3538,7 @@ collect_sections(serve_state_t state, int mode)
     if (!strcmp(p->name, "language") && mode != PREPARE_RUN) {
       l = (struct section_language_data*) p;
       if (!l->id) vinfo("assigned language id = %d", (l->id = last_lang + 1));
-      if (l->id <= 0 || l->id > MAX_LANGUAGE) {
+      if (l->id <= 0 || l->id > EJ_MAX_LANG_ID) {
         err("language id %d is out of range", l->id);
         return -1;
       }
@@ -3553,14 +3553,14 @@ collect_sections(serve_state_t state, int mode)
     } else if (!strcmp(p->name, "problem") && mode != PREPARE_COMPILE) {
       q = (struct section_problem_data*) p;
       if (q->abstract) {
-        if (state->max_abstr_prob > MAX_PROBLEM) {
+        if (state->max_abstr_prob > EJ_MAX_PROB_ID) {
           err("too many abstract problems");
           return -1;
         }
         state->abstr_probs[state->max_abstr_prob++] = q;
       } else {
         if (!q->id) vinfo("assigned problem id = %d", (q->id=last_prob + 1));
-        if (q->id <= 0 || q->id > MAX_PROBLEM) {
+        if (q->id <= 0 || q->id > EJ_MAX_PROB_ID) {
           err("problem id %d is out of range", q->id);
           return -1;
         }

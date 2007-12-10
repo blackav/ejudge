@@ -3,7 +3,7 @@
 #ifndef __EJ_LIMITS_H__
 #define __EJ_LIMITS_H__
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -31,6 +31,9 @@
 
 /* maximal possible number of a programming language */
 #define EJ_MAX_LANG_ID  255
+
+/* maximal possible number of a problem */
+#define EJ_MAX_PROB_ID  255
 
 /* maximal directory depth in base32-encoding */
 #define EJ_MAX_32DIGITS 4
