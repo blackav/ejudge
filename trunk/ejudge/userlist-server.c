@@ -3905,7 +3905,7 @@ cmd_list_standings_users(struct client_state *p,
   size_t xml_size = 0;
   struct userlist_pk_xml_data *out = 0;
   size_t out_size = 0;
-  int flags, subflags;
+  int flags = 0, subflags;
   const struct contest_desc *cnts = 0;
   unsigned char logbuf[1024];
   ptr_iterator_t iter;
@@ -3923,6 +3923,7 @@ cmd_list_standings_users(struct client_state *p,
   if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   if (is_cnts_capable(p, cnts, OPCAP_MAP_CONTEST, logbuf) < 0) return;
 
+  if (cnts->personal) flags |= USERLIST_FORCE_FIRST_MEMBER;
   flags = USERLIST_SHOW_PRIV_REG_PASSWD | USERLIST_SHOW_PRIV_CNTS_PASSWD
     | USERLIST_SHOW_REG_PASSWD | USERLIST_SHOW_CNTS_PASSWD;
   if (check_dbcnts_capable(p, cnts, OPCAP_PRIV_EDIT_PASSWD) < 0) {
@@ -3954,7 +3955,6 @@ cmd_list_standings_users(struct client_state *p,
     } else {
       subflags |= flags & (USERLIST_SHOW_REG_PASSWD|USERLIST_SHOW_CNTS_PASSWD);
     }
-
 
     userlist_real_unparse_user(u, f, USERLIST_MODE_STAND, data->contest_id,
                                subflags);
