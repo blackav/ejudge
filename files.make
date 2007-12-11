@@ -368,7 +368,6 @@ HFILES=\
  server_framework.h\
  serve_clnt.h\
  serve_state.h\
- settings.h\
  sformat.h\
  startstop.h\
  super_clnt.h\

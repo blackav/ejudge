@@ -18,7 +18,6 @@
 #include "config.h"
 
 #include "prepare.h"
-#include "settings.h"
 #include "varsubst.h"
 #include "version.h"
 
@@ -3576,7 +3575,7 @@ collect_sections(serve_state_t state, int mode)
     } else if (!strcmp(p->name, "tester") && mode != PREPARE_COMPILE) {
       t = (struct section_tester_data *) p;
       if (t->abstract) {
-        if (state->max_abstr_tester > MAX_TESTER) {
+        if (state->max_abstr_tester > EJ_MAX_TESTER) {
           err("too many abstract tester");
           return -1;
         }
@@ -3584,7 +3583,7 @@ collect_sections(serve_state_t state, int mode)
       } else {
         if (!t->id)
           vinfo("assigned tester id = %d",(t->id = last_tester + 1));
-        if (t->id <= 0 || t->id > MAX_TESTER) {
+        if (t->id <= 0 || t->id > EJ_MAX_TESTER) {
           err("tester id %d is out of range", t->id);
           return -1;
         }

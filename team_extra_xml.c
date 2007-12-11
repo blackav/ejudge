@@ -16,7 +16,6 @@
  */
 
 #include "config.h"
-#include "settings.h"
 
 #include "team_extra.h"
 #include "expat_iface.h"
@@ -30,7 +29,7 @@
 #include <ctype.h>
 
 #ifndef EJUDGE_CHARSET
-#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
+#define EJUDGE_CHARSET EJ_INTERNAL_CHARSET
 #endif /* EJUDGE_CHARSET */
 
 #define RUNLOG_MAX_TEAM_ID 100000

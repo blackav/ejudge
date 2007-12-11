@@ -16,7 +16,6 @@
  */
 
 #include "config.h"
-#include "settings.h"
 
 #include "html.h"
 #include "misctext.h"
@@ -51,7 +50,7 @@
 #include <unistd.h>
 
 #ifndef EJUDGE_CHARSET
-#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
+#define EJUDGE_CHARSET EJ_INTERNAL_CHARSET
 #endif /* EJUDGE_CHARSET */
 
 #if CONF_HAS_LIBINTL - 0 == 1

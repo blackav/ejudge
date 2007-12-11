@@ -16,7 +16,6 @@
  */
 
 #include "config.h"
-#include "settings.h"
 
 #include "testing_report_xml.h"
 #include "expat_iface.h"
@@ -31,7 +30,7 @@
 #include <string.h>
 
 #ifndef EJUDGE_CHARSET
-#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
+#define EJUDGE_CHARSET EJ_INTERNAL_CHARSET
 #endif /* EJUDGE_CHARSET */
 
 /*

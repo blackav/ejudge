@@ -16,7 +16,6 @@
  */
 
 #include "config.h"
-#include "settings.h"
 
 #include "expat_iface.h"
 #include "pathutl.h"
@@ -34,7 +33,7 @@
 #include <errno.h>
 
 #ifndef EJUDGE_CHARSET
-#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
+#define EJUDGE_CHARSET EJ_INTERNAL_CHARSET
 #endif /* EJUDGE_CHARSET */
 
 struct tag_list

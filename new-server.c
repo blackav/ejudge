@@ -16,7 +16,6 @@
  */
 
 #include "config.h"
-#include "settings.h"
 #include "ej_types.h"
 #include "version.h"
 

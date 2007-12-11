@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -70,7 +70,7 @@ compile_reply_packet_read(size_t in_size, const void *in_data,
     goto failed;
   }
   pout->contest_id = cvt_bin_to_host(pin->contest_id);
-  if (pout->contest_id <= 0 || pout->contest_id > MAX_CONTEST_ID) {
+  if (pout->contest_id <= 0 || pout->contest_id > EJ_MAX_CONTEST_ID) {
     errcode = 7;
     goto failed;
   }
@@ -158,7 +158,7 @@ compile_reply_packet_read(size_t in_size, const void *in_data,
   return -1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

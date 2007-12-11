@@ -60,7 +60,7 @@ run_request_packet_read(size_t in_size, const void *in_data,
     *p_out_data = pout;
     return 0;
   }
-  if (pout->contest_id <= 0 || pout->contest_id > MAX_CONTEST_ID) ERR(5);
+  if (pout->contest_id <= 0 || pout->contest_id > EJ_MAX_CONTEST_ID) ERR(5);
   pout->run_id = cvt_bin_to_host_32(pin->run_id);
   if (pout->run_id < 0 || pout->run_id > EJ_MAX_RUN_ID) ERR(6);
   pout->problem_id = cvt_bin_to_host_32(pin->problem_id);

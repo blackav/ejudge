@@ -1596,7 +1596,7 @@ userlist_clone_user_info(
   const struct contest_desc *cnts = 0;
 
   if (p_cloned_flag) *p_cloned_flag = 0;
-  if (contest_id <= 0 || contest_id > MAX_CONTEST_ID) return 0;
+  if (contest_id <= 0 || contest_id > EJ_MAX_CONTEST_ID) return 0;
   if (!u) return 0;
   if (u->cntsinfo && contest_id < u->cntsinfo_a && u->cntsinfo[contest_id])
     return u->cntsinfo[contest_id];
@@ -1695,7 +1695,7 @@ userlist_new_cntsinfo(struct userlist_user *u, int contest_id,
   struct xml_tree *p;
   struct userlist_cntsinfo *ci;
 
-  ASSERT(contest_id > 0 && contest_id <= MAX_CONTEST_ID);
+  ASSERT(contest_id > 0 && contest_id <= EJ_MAX_CONTEST_ID);
   ASSERT(u);
 
   if (u->cntsinfo && contest_id < u->cntsinfo_a && u->cntsinfo[contest_id])
