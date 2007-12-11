@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -14,8 +14,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  */
-
-#include "settings.h"
 
 #include "fileutl.h"
 #include "pathutl.h"
@@ -820,7 +818,7 @@ generic_file_size(const unsigned char *dir, const unsigned char *name,
   return retval;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "HANDLE" "STARTUPINFO" "PROCESS_INFORMATION" "SECURITY_ATTRIBUTES" "WIN32_FIND_DATA" "FILETIME" "DWORD")
