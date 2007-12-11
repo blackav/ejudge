@@ -19,7 +19,7 @@
 #include "unix/unix_fileutl.h"
 #include "pathutl.h"
 #include "errlog.h"
-#include "settings.h"
+#include "ej_limits.h"
 
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
@@ -237,7 +237,7 @@ scan_dir(char const *partial_path, char *found_item, size_t fi_size)
       continue;
     }
 
-    if (strlen(de->d_name) != SERVE_PACKET_NAME_SIZE - 1) {
+    if (strlen(de->d_name) != EJ_SERVE_PACKET_NAME_SIZE - 1) {
       prio = 0;
     } else if (de->d_name[0] >= '0' && de->d_name[0] <= '9') {
       prio = -16 + (de->d_name[0] - '0');
