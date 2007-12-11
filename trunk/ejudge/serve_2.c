@@ -822,9 +822,9 @@ b32_number(unsigned long long num, unsigned char buf[])
 {
   int i;
 
-  memset(buf, '0', SERVE_PACKET_NAME_SIZE - 1);
-  buf[SERVE_PACKET_NAME_SIZE - 1] = 0;
-  i = SERVE_PACKET_NAME_SIZE - 2;
+  memset(buf, '0', EJ_SERVE_PACKET_NAME_SIZE - 1);
+  buf[EJ_SERVE_PACKET_NAME_SIZE - 1] = 0;
+  i = EJ_SERVE_PACKET_NAME_SIZE - 2;
   while (num > 0 && i >= 0) {
     buf[i] = b32_digits[num & 0x1f];
     i--;
@@ -872,7 +872,7 @@ serve_compile_request(serve_state_t state,
   struct compile_request_packet cp;
   void *pkt_buf = 0;
   size_t pkt_len = 0;
-  unsigned char pkt_name[SERVE_PACKET_NAME_SIZE];
+  unsigned char pkt_name[EJ_SERVE_PACKET_NAME_SIZE];
   int arch_flags;
   path_t run_arch;
   const struct section_global_data *global = state->global;
@@ -1020,7 +1020,7 @@ serve_run_request(serve_state_t state,
   unsigned char *arch = "", *exe_sfx = "";
   const unsigned char *user_name;
   int prio, i;
-  unsigned char pkt_base[SERVE_PACKET_NAME_SIZE];
+  unsigned char pkt_base[EJ_SERVE_PACKET_NAME_SIZE];
   unsigned char exe_out_name[256];
   unsigned char exe_in_name[256];
   struct run_request_packet *run_pkt = 0;

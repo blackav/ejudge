@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,8 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_limits.h"
 #include "cgi.h"
-#include "settings.h"
 #include "errlog.h"
 
 #include <reuse/xalloc.h>
@@ -27,8 +27,8 @@
 #include <string.h>
 
 #define MAX_NAME_SIZE      63
-#define MAX_VALUE_SIZE     MAX_CGI_VALUE_LEN
-#define MAX_CONTENT_LENGTH MAX_CGI_VALUE_LEN
+#define MAX_VALUE_SIZE     EJ_MAX_CGI_VALUE_LEN
+#define MAX_CONTENT_LENGTH EJ_MAX_CGI_VALUE_LEN
 
 #if defined EJUDGE_CHARSET
 #define DEFAULT_CHARSET              EJUDGE_CHARSET

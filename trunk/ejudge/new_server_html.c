@@ -100,7 +100,6 @@
 */
 
 #include "config.h"
-#include "settings.h"
 #include "ej_types.h"
 #include "ej_limits.h"
 
@@ -195,7 +194,7 @@ ns_get_contest_extra(int contest_id)
   size_t new_extra_a = 0;
   struct contest_extra **new_extras = 0, *p;
 
-  ASSERT(contest_id > 0 && contest_id <= MAX_CONTEST_ID);
+  ASSERT(contest_id > 0 && contest_id <= EJ_MAX_CONTEST_ID);
 
   if (contest_id >= extra_a) {
     if (!(new_extra_a = extra_a)) new_extra_a = 8;
@@ -217,7 +216,7 @@ ns_get_contest_extra(int contest_id)
 static struct contest_extra *
 try_contest_extra(int contest_id)
 {
-  if (contest_id <= 0 || contest_id > MAX_CONTEST_ID) return 0;
+  if (contest_id <= 0 || contest_id > EJ_MAX_CONTEST_ID) return 0;
   if (contest_id >= extra_a) return 0;
   return extras[contest_id];
 }

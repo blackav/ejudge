@@ -16,7 +16,6 @@
  */
 
 #include "config.h"
-#include "settings.h"
 #include "ej_types.h"
 
 #include "runlog.h"
@@ -72,7 +71,7 @@
 #include <pwd.h>
 
 #ifndef EJUDGE_CHARSET
-#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
+#define EJUDGE_CHARSET EJ_INTERNAL_CHARSET
 #endif /* EJUDGE_CHARSET */
 
 #if CONF_HAS_LIBINTL - 0 == 1
@@ -84,7 +83,7 @@
 #endif
 
 #define PACKET_NAME_SIZE SERVE_PACKET_NAME_SIZE
-#define MAX_EXPECTED_LEN MAX_SERVE_PACKET_LEN
+#define MAX_EXPECTED_LEN EJ_MAX_SERVE_PACKET_LEN
 
 // server connection states
 enum

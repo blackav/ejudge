@@ -17,7 +17,6 @@
  * GNU General Public License for more details.
  */
 
-#include "settings.h"
 #include "ej_types.h"
 #include "ej_limits.h"
 #include "opcaps.h"
@@ -124,7 +123,7 @@ struct serve_state
 
   struct section_language_data *langs[EJ_MAX_LANG_ID + 1];
   struct section_problem_data  *probs[EJ_MAX_PROB_ID + 1];
-  struct section_tester_data   *testers[MAX_TESTER + 1];
+  struct section_tester_data   *testers[EJ_MAX_TESTER + 1];
 
   int max_lang;
   int max_prob;
@@ -149,7 +148,7 @@ struct serve_state
 
   /* for prepare to store the abstract entities */
   struct section_problem_data  *abstr_probs[EJ_MAX_PROB_ID + 1];
-  struct section_tester_data   *abstr_testers[MAX_TESTER + 1];
+  struct section_tester_data   *abstr_testers[EJ_MAX_TESTER + 1];
   int max_abstr_prob;
   int max_abstr_tester;
 

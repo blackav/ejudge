@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2001-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,6 @@
  */
 
 #include "config.h"
-#include "settings.h"
 #include "ej_types.h"
 
 #include "expat_iface.h"
@@ -56,7 +55,7 @@
 #endif /* CONF_HAS_LIBINTL */
 
 #ifndef EJUDGE_CHARSET
-#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
+#define EJUDGE_CHARSET EJ_INTERNAL_CHARSET
 #endif /* EJUDGE_CHARSET */
 
 enum

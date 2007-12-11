@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,7 @@ compile_reply_packet_write(const struct compile_reply_packet *in_data,
     errcode = 1;
     goto failed;
   }
-  if (in_data->contest_id <= 0 || in_data->contest_id > MAX_CONTEST_ID) {
+  if (in_data->contest_id <= 0 || in_data->contest_id > EJ_MAX_CONTEST_ID) {
     errcode = 2;
     goto failed;
   }
@@ -111,7 +111,7 @@ compile_reply_packet_write(const struct compile_reply_packet *in_data,
   return -1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

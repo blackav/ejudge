@@ -60,7 +60,7 @@ run_request_packet_write(const struct run_request_packet *in_data,
 
   out_data->packet_len = cvt_host_to_bin_32(out_size);
   out_data->version = cvt_host_to_bin_32(1);
-  if (in_data->contest_id <= 0 || in_data->contest_id > MAX_CONTEST_ID) {
+  if (in_data->contest_id <= 0 || in_data->contest_id > EJ_MAX_CONTEST_ID) {
     errcode = 2;
     goto failed;
   }

@@ -16,7 +16,6 @@
  */
 
 #include "config.h"
-#include "settings.h"
 #include "ej_limits.h"
 
 #include "userlist.h"
@@ -38,7 +37,7 @@
 #include <time.h>
 
 #ifndef EJUDGE_CHARSET
-#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
+#define EJUDGE_CHARSET EJ_INTERNAL_CHARSET
 #endif /* EJUDGE_CHARSET */
 
 static char const * const elem_map[] =
@@ -897,7 +896,7 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
     switch (a->tag) {
     case USERLIST_A_CONTEST_ID:
       if (xml_attr_int(a, &ui->contest_id) < 0) return -1;
-      if (ui->contest_id <= 0 || ui->contest_id > MAX_CONTEST_ID)
+      if (ui->contest_id <= 0 || ui->contest_id > EJ_MAX_CONTEST_ID)
         return xml_err_attr_invalid(a);
       if (ui->contest_id < usr->cntsinfo_a && usr->cntsinfo[ui->contest_id]) {
         xml_err_a(a, "duplicated contest_id %d", ui->contest_id);

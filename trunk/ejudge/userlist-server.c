@@ -16,8 +16,8 @@
  */
 
 #include "config.h"
-#include "settings.h"
 #include "ej_types.h"
+#include "ej_limits.h"
 
 #include "ejudge_cfg.h"
 #include "userlist.h"
@@ -70,13 +70,13 @@
 #endif
 
 #ifndef EJUDGE_CHARSET
-#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
+#define EJUDGE_CHARSET EJ_INTERNAL_CHARSET
 #endif /* EJUDGE_CHARSET */
 
 #define DEFAULT_COOKIE_CHECK_INTERVAL 60
 #define DEFAULT_USER_CHECK_INTERVAL 600
 #define CLIENT_TIMEOUT 600
-#define MAX_EXPECTED_LEN MAX_USERLIST_PACKET_LEN
+#define MAX_EXPECTED_LEN EJ_MAX_USERLIST_PACKET_LEN
 
 #define CONN_ERR(msg, ...) err("%d: %s: " msg, p->id, __FUNCTION__, ## __VA_ARGS__)
 #define CONN_INFO(msg, ...) info("%d: %s: " msg, p->id, __FUNCTION__, ## __VA_ARGS__)

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,6 @@
  */
 
 #include "config.h"
-#include "settings.h"
 #include "ej_types.h"
 #include "version.h"
 
@@ -113,9 +112,9 @@ b32_number(unsigned long long num, unsigned char buf[])
 {
   int i;
 
-  memset(buf, '0', SERVE_PACKET_NAME_SIZE - 1);
-  buf[SERVE_PACKET_NAME_SIZE - 1] = 0;
-  i = SERVE_PACKET_NAME_SIZE - 2;
+  memset(buf, '0', EJ_SERVE_PACKET_NAME_SIZE - 1);
+  buf[EJ_SERVE_PACKET_NAME_SIZE - 1] = 0;
+  i = EJ_SERVE_PACKET_NAME_SIZE - 2;
   while (num > 0 && i >= 0) {
     buf[i] = b32_digits[num & 0x1f];
     i--;
@@ -166,7 +165,7 @@ main(int argc, char *argv[])
   struct compile_request_packet cp;
   void *pkt_buf = 0;
   size_t pkt_len = 0;
-  unsigned char pkt_name[SERVE_PACKET_NAME_SIZE];
+  unsigned char pkt_name[EJ_SERVE_PACKET_NAME_SIZE];
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);

@@ -16,7 +16,6 @@
  */
 
 #include "config.h"
-#include "settings.h"
 
 #include "ejudge_cfg.h"
 #include "pathutl.h"
