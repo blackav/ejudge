@@ -3461,7 +3461,7 @@ cmd_priv_cookie_login(struct client_state *p,
 {
   const struct contest_desc *cnts = 0;
   const struct userlist_user *u = 0;
-  const struct userlist_cookie *cookie = 0;
+  const struct userlist_cookie *cookie = 0, *new_cookie = 0;
   struct userlist_pk_login_ok *out;
   const struct userlist_contest *c = 0;
   const struct userlist_user_info *ui = 0;
@@ -3602,13 +3602,13 @@ cmd_priv_cookie_login(struct client_state *p,
 
   if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
                          orig_contest_id, data->locale_id,
-                         priv_level, data->role, 0, 0, &cookie) < 0) {
+                         priv_level, data->role, 0, 0, &new_cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
 
-  out->cookie = cookie->cookie;
+  out->cookie = new_cookie->cookie;
   out->reply_id = ULS_LOGIN_COOKIE;
   out->user_id = u->id;
   out->contest_id = orig_contest_id;
