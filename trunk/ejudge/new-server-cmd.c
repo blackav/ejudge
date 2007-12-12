@@ -730,6 +730,7 @@ static const struct command_handler handler_table[] =
   { "dump-master-runs", prepare_dump_master_runs, 0, 0, 0 },
   { "dump-report", prepare_run_id, 0, 0, NEW_SRV_ACTION_DUMP_REPORT },
   { "full-import-xml-runs", prepare_import_xml, 0, 0, NEW_SRV_ACTION_FULL_UPLOAD_RUNLOG_XML },
+  { "unload", prepare_simple, 0, 0, NEW_SRV_ACTION_RELOAD_SERVER },
 
   { 0, 0 },
 };
