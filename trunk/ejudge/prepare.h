@@ -543,6 +543,11 @@ struct section_problem_data
   /* these fields are for CGI editing of contest configuration files */
   unsigned char *unhandled_vars;
 
+  /* external score view */
+  char **score_view;
+  int *score_view_score;
+  char **score_view_text;
+
   /* parsed XML specs */
   union
   {

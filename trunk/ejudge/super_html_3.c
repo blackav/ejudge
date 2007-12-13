@@ -3522,6 +3522,7 @@ print_std_checker_row(FILE *f,
   PROBLEM_PARAM(tgz_dir, "s"),
   PROBLEM_PARAM(tgz_sfx, "s"),
   PROBLEM_PARAM(test_sets, "x"),
+  PROBLEM_PARAM(score_view, "x"),
   PROBLEM_PARAM(deadline, "s"),
   PROBLEM_PARAM(start_date, "s"),
   PROBLEM_PARAM(variant_num, "d"),
@@ -5061,6 +5062,28 @@ super_html_print_problem(FILE *f,
     xfree(checker_env);
   }
 
+  // PROBLEM_PARAM(score_view, "x")
+  if (!prob->abstract && show_adv) {
+    if (!prob->score_view || !prob->score_view[0]) {
+      extra_msg = "(not set)";
+      checker_env = xstrdup("");
+    } else {
+      extra_msg = "";
+      checker_env = sarray_unparse_2(prob->score_view);
+    }
+    print_string_editing_row_3(f, "Special view for scores:", checker_env,
+                               SSERV_CMD_PROB_CHANGE_SCORE_VIEW,
+                               SSERV_CMD_PROB_CLEAR_SCORE_VIEW,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+    xfree(checker_env);
+  }
+
+
+
+
+
   //PROBLEM_PARAM(lang_time_adj, "x"),
   if (!prob->abstract && !problem_type_flag && show_adv) {
     if (!prob->lang_time_adj || !prob->lang_time_adj[0]) {
@@ -6013,6 +6036,18 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CLEAR_TEST_SETS:
     sarray_free(prob->test_sets);
     prob->test_sets = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_SCORE_VIEW:
+    if (sarray_parse_2(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(prob->score_view);
+    prob->score_view = tmp_env;
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_SCORE_VIEW:
+    sarray_free(prob->score_view);
+    prob->score_view = 0;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_START_DATE:
