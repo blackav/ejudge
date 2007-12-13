@@ -405,6 +405,7 @@ Standings table attributes:
   GLOBAL_PARAM(stand_success_attr, "s"),
   GLOBAL_PARAM(stand_fail_attr, "s"),
   GLOBAL_PARAM(stand_trans_attr, "s"),
+  GLOBAL_PARAM(stand_disq_attr, "s"),
   GLOBAL_PARAM(stand_show_ok_time, "d"),
   GLOBAL_PARAM(stand_show_att_num, "d"),
   GLOBAL_PARAM(stand_sort_by_solved, "d"),
@@ -1598,6 +1599,18 @@ super_html_edit_global_parameters(FILE *f,
                              extra_args,
                              hidden_vars);
 
+    //GLOBAL_PARAM(stand_disq_attr, "s"),
+    print_string_editing_row(f, "HTML attributes for \"Disqualified\" cells:",
+                             global->stand_disq_attr,
+                             SSERV_CMD_GLOB_CHANGE_STAND_DISQ_ATTR,
+                             SSERV_CMD_GLOB_CLEAR_STAND_DISQ_ATTR,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+
     if (global->is_virtual) {
       //GLOBAL_PARAM(stand_self_row_attr, "s"),
       print_string_editing_row(f, "HTML attributes for the participant's table row:",
@@ -2568,6 +2581,12 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CLEAR_STAND_TRANS_ATTR:
     GLOB_CLEAR_STRING(stand_trans_attr);
+
+  case SSERV_CMD_GLOB_CHANGE_STAND_DISQ_ATTR:
+    GLOB_SET_STRING(stand_disq_attr);
+
+  case SSERV_CMD_GLOB_CLEAR_STAND_DISQ_ATTR:
+    GLOB_CLEAR_STRING(stand_disq_attr);
 
   case SSERV_CMD_GLOB_CHANGE_STAND_SELF_ROW_ATTR:
     GLOB_SET_STRING(stand_self_row_attr);

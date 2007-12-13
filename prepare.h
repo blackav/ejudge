@@ -301,6 +301,7 @@ struct section_global_data
   puc_t stand_success_attr[256];/* last success attributes */
   puc_t stand_fail_attr[256];   /* attributes for "Check failed" */
   puc_t stand_trans_attr[256];  /* attributes for transient cells */
+  puc_t stand_disq_attr[256];   /* attributes for "Check failed" */
   int stand_show_ok_time;       /* whether show time */
   int stand_show_att_num;       /* show number of attempts in Kirov standings */
   int stand_sort_by_solved;     /* sort by solved problems first in Kirov standings */
