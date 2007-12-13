@@ -5080,9 +5080,23 @@ super_html_print_problem(FILE *f,
     xfree(checker_env);
   }
 
-
-
-
+  if (show_adv && sstate->global) {
+    //PROBLEM_PARAM(stand_ignore_score, "d"),
+      extra_msg = "Undefined";
+      if (!prob->abstract) {
+        prepare_set_prob_value(PREPARE_FIELD_PROB_STAND_IGNORE_SCORE,
+                               &tmp_prob, sup_prob, sstate->global);
+        snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+                 tmp_prob.stand_ignore_score?"Yes":"No");
+        extra_msg = msg_buf;
+      }
+      print_boolean_3_select_row(f,"Ignore problem score in standings:",
+                                 prob->stand_ignore_score,
+                                 SSERV_CMD_PROB_CHANGE_STAND_IGNORE_SCORE,
+                                 extra_msg,
+                                 session_id, form_row_attrs[row ^= 1],
+                                 self_url, extra_args, prob_hidden_vars);
+  }
 
   //PROBLEM_PARAM(lang_time_adj, "x"),
   if (!prob->abstract && !problem_type_flag && show_adv) {
@@ -5778,6 +5792,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_ENABLE_TEXT_FORM:
     p_int = &prob->enable_text_form;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_STAND_IGNORE_SCORE:
+    p_int = &prob->stand_ignore_score;
     goto handle_boolean_1;
 
   case SSERV_CMD_PROB_CHANGE_CHECKER_REAL_TIME_LIMIT:
