@@ -3184,6 +3184,9 @@ priv_edit_run(FILE *fout, FILE *log_f,
   case NEW_SRV_ACTION_CHANGE_RUN_TEST:
     if (param_int < -1 || param_int >= 100000)
       FAIL(NEW_SRV_ERR_INV_TEST);
+    if (global->score_system_val == SCORE_KIROV
+        || global->score_system_val == SCORE_OLYMPIAD)
+      param_int++;
     ne.test = param_int;
     ne_mask = RUN_ENTRY_TEST;
     break;
