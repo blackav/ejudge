@@ -3352,7 +3352,8 @@ cmd_priv_check_cookie(struct client_state *p,
   }
 
   if (data->contest_id != cookie->contest_id) {
-    err("%s -> contest_id mismatch", logbuf);
+    err("%s -> contest_id mismatch: %d, %d", logbuf,
+        data->contest_id, cookie->contest_id);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
