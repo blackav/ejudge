@@ -1253,6 +1253,9 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   if (prob->enable_text_form >= 0
       && ((prob->abstract && prob->enable_text_form) || !prob->abstract))
       unparse_bool(f, "enable_text_form", prob->enable_text_form);
+  if (prob->stand_ignore_score >= 0
+      && ((prob->abstract && prob->stand_ignore_score) || !prob->abstract))
+      unparse_bool(f, "stand_ignore_score", prob->stand_ignore_score);
 
   if (!prob->abstract && prob->start_date[0])
     fprintf(f, "start_date = \"%s\"\n", c_armor(&sbuf, prob->start_date));

@@ -2143,7 +2143,8 @@ do_write_kirov_standings(const serve_state_t state,
   for (i = 0; i < t_tot; i++) {
     for (j = 0; j < p_tot; j++) {
       up_ind = (i << row_sh) + j;
-      tot_score[i] += prob_score[up_ind];
+      if (state->probs[p_ind[j]]->stand_ignore_score <= 0)
+        tot_score[i] += prob_score[up_ind];
       tot_full[i] += full_sol[up_ind];
       tot_penalty[i] += penalty[up_ind];
     }
