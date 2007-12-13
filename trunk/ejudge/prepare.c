@@ -212,6 +212,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(stand_success_attr, "s"),
   GLOBAL_PARAM(stand_fail_attr, "s"),
   GLOBAL_PARAM(stand_trans_attr, "s"),
+  GLOBAL_PARAM(stand_disq_attr, "s"),
   GLOBAL_PARAM(stand_show_ok_time, "d"),
   GLOBAL_PARAM(stand_show_att_num, "d"),
   GLOBAL_PARAM(stand_sort_by_solved, "d"),

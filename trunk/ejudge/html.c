@@ -1413,6 +1413,7 @@ struct standings_style
   // for table cells
   const unsigned char *fail_attr;
   const unsigned char *trans_attr;
+  const unsigned char *disq_attr;
 
   // for page table
   const unsigned char *page_table_attr;
@@ -1458,6 +1459,7 @@ setup_standings_style(struct standings_style *ps,
 
   ps->fail_attr = global->stand_fail_attr;
   ps->trans_attr = global->stand_trans_attr;
+  ps->disq_attr = global->stand_disq_attr;
 
   ps->page_table_attr = global->stand_page_table_attr;
   ps->page_cur_attr = global->stand_page_cur_attr;
@@ -1495,6 +1497,8 @@ setup_standings_style(struct standings_style *ps,
       ps->fail_attr = " class=\"st_prob\" bgcolor=\"#ff8888\"";
     if (!ps->trans_attr[0])
       ps->trans_attr = " class=\"st_prob\" bgcolor=\"#ffff88\"";
+    if (!ps->disq_attr[0])
+      ps->disq_attr = " class=\"st_prob\" bgcolor=\"#ffcccc\"";
 
     //ps->page_table_attr = global->stand_page_table_attr;
     //ps->page_cur_attr = global->stand_page_cur_attr;
@@ -1727,6 +1731,7 @@ do_write_kirov_standings(const serve_state_t state,
   time_t *sol_time = 0;
   int *trans_num = 0;
   int *penalty = 0;
+  int *cf_num = 0;
 
   int  *tot_score, *tot_full, *succ_att, *tot_att, *tot_penalty;
   int  *t_sort = 0, *t_sort2, *t_n1, *t_n2;
@@ -1907,6 +1912,7 @@ do_write_kirov_standings(const serve_state_t state,
     XCALLOC(sol_att, up_ind);
     XCALLOC(trans_num, up_ind);
     XCALLOC(penalty, up_ind);
+    XCALLOC(cf_num, up_ind);
   }
   XALLOCAZ(tot_score, t_tot);
   XALLOCAZ(tot_full, t_tot);
@@ -2000,6 +2006,9 @@ do_write_kirov_standings(const serve_state_t state,
       case RUN_RUNNING:
         trans_num[up_ind]++;
         break;
+      case RUN_CHECK_FAILED:
+        cf_num[up_ind]++;
+        break;
       default:
         break;
       }
@@ -2052,6 +2061,9 @@ do_write_kirov_standings(const serve_state_t state,
       case RUN_RUNNING:
         trans_num[up_ind]++;
         break;
+      case RUN_CHECK_FAILED:
+        cf_num[up_ind]++;
+        break;
       default:
         break;
       }
@@ -2099,6 +2111,8 @@ do_write_kirov_standings(const serve_state_t state,
                  || pe->status == RUN_RUNNING) {
         trans_num[up_ind]++;
         total_trans++;
+      } else if (pe->status == RUN_CHECK_FAILED) {
+        cf_num[up_ind]++;
       } else {
         /* something strange... */
       }
@@ -2526,8 +2540,12 @@ do_write_kirov_standings(const serve_state_t state,
       up_ind = (t << row_sh) + j;
       row_attr = state->probs[p_ind[j]]->stand_attr;
       if (!*row_attr) row_attr = ss.prob_attr;
-      if (trans_num[up_ind] && ss.trans_attr[0])
+      if (trans_num[up_ind] && ss.trans_attr && ss.trans_attr[0])
         row_attr = ss.trans_attr;
+      if (disq_num[up_ind] > 0 && ss.disq_attr && ss.disq_attr[0])
+        row_attr = ss.disq_attr;
+      if (cf_num[up_ind] > 0 && ss.fail_attr && ss.fail_attr[0])
+        row_attr = ss.fail_attr;
       if (!att_num[up_ind]) {
         fprintf(f, "<td%s>&nbsp;</td>", row_attr);
       } else if (full_sol[up_ind]) {
@@ -2686,6 +2704,7 @@ do_write_kirov_standings(const serve_state_t state,
   xfree(full_sol);
   xfree(sol_time);
   xfree(trans_num);
+  xfree(cf_num);
   xfree(penalty);
 }
 

@@ -474,6 +474,9 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   if (global->stand_trans_attr[0])
     fprintf(f, "stand_trans_attr = \"%s\"\n",
             c_armor(&sbuf, global->stand_trans_attr));
+  if (global->stand_disq_attr[0])
+    fprintf(f, "stand_disq_attr = \"%s\"\n",
+            c_armor(&sbuf, global->stand_disq_attr));
   if (global->stand_show_ok_time != DFLT_G_STAND_SHOW_OK_TIME)
     unparse_bool(f, "stand_show_ok_time", global->stand_show_ok_time);
   if (global->stand_show_att_num)
