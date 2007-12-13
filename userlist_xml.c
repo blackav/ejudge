@@ -590,6 +590,8 @@ parse_cookies(char const *path, struct xml_tree *cookies,
     if (!c->ip) return xml_err_attr_undefined(t, USERLIST_A_IP);
     if (!c->cookie) return xml_err_attr_undefined(t, USERLIST_A_VALUE);
     if (!c->expire) return xml_err_attr_undefined(t, USERLIST_A_EXPIRE);
+    if (c->contest_id < 0 && (c->priv_level > 0 || c->role > 0))
+      c->contest_id = 0;
   }
   return 0;
 }
