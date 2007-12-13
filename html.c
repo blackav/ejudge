@@ -1696,6 +1696,25 @@ write_kirov_page_table(const struct standings_style *pss,
 
 static int sec_to_min(int rounding_mode, int secs);
 
+static void
+score_view_display(
+	unsigned char *buf,
+        size_t size,
+        const struct section_problem_data *prob,
+        int score)
+{
+  int i;
+
+  if (!prob || !prob->score_view || !prob->score_view[0]
+      || !prob->score_view_score) {
+    snprintf(buf, size, "%d", score);
+    return;
+  }
+
+  for (i = 0; prob->score_view[i] && prob->score_view_score[i] != score; i++);
+  snprintf(buf, size, "%s", prob->score_view_text[i]);
+}
+
 void
 do_write_kirov_standings(const serve_state_t state,
                          const struct contest_desc *cnts,
@@ -1748,6 +1767,7 @@ do_write_kirov_standings(const serve_state_t state,
   int *pg_n1 = 0, *pg_n2 = 0;
   path_t stand_name, stand_tmp, stand_path;
   unsigned char att_buf[128];
+  unsigned char score_buf[128];
   unsigned char *r_attrs[2][2] = { { "", "" }, { "", "" }};
   unsigned char *pr_attrs[4] = { "", "", "", ""};
   unsigned char *pc_attrs[2] = { "", "" };
@@ -2553,29 +2573,33 @@ do_write_kirov_standings(const serve_state_t state,
         if (global->stand_show_att_num) {
           snprintf(att_buf, sizeof(att_buf), " (%d)", sol_att[up_ind]);
         }
+        score_view_display(score_buf, sizeof(score_buf),
+                           state->probs[p_ind[j]], prob_score[up_ind]);
         if (global->stand_show_ok_time && sol_time[up_ind] > 0) {
           duration_str(global->show_astr_time, sol_time[up_ind], start_time,
                        dur_str, 0);
-          fprintf(f, "<td%s><b>%d</b>%s<div%s>%s</div></td>",
-                  row_attr, prob_score[up_ind], att_buf,
+          fprintf(f, "<td%s><b>%s</b>%s<div%s>%s</div></td>",
+                  row_attr, score_buf, att_buf,
                   ss.time_attr, dur_str);
         } else {
-          fprintf(f, "<td%s><b>%d</b>%s</td>", row_attr, 
-                  prob_score[up_ind], att_buf);
+          fprintf(f, "<td%s><b>%s</b>%s</td>", row_attr, 
+                  score_buf, att_buf);
         }
       } else {
         att_buf[0] = 0;
         if (global->stand_show_att_num) {
           snprintf(att_buf, sizeof(att_buf), " (%d)", sol_att[up_ind]);
         }
+        score_view_display(score_buf, sizeof(score_buf),
+                           state->probs[p_ind[j]], prob_score[up_ind]);
         if (global->stand_show_ok_time && sol_time[up_ind] > 0) {
           duration_str(global->show_astr_time, sol_time[up_ind],
                        start_time, dur_str, 0);
-          fprintf(f, "<td%s>%d%s<div%s>%s</div></td>",
-                  row_attr, prob_score[up_ind], att_buf,
+          fprintf(f, "<td%s>%s%s<div%s>%s</div></td>",
+                  row_attr, score_buf, att_buf,
                   ss.time_attr, dur_str);
         } else {
-          fprintf(f, "<td%s>%d%s</td>", row_attr, prob_score[up_ind], att_buf);
+          fprintf(f, "<td%s>%s%s</td>", row_attr, score_buf, att_buf);
         }
       }
     }

@@ -397,7 +397,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(alternative, "x"),
   PROBLEM_PARAM(stand_attr, "s"),
   PROBLEM_PARAM(source_header, "s"),
-  PROBLEM_PARAM(source_footer, "s"),
+  PROBLEM_PARAM(source_footer, "x"),
 
   { 0, 0, 0, 0 }
 };
@@ -742,6 +742,9 @@ prepare_problem_free_func(struct generic_section_config *gp)
   free_deadline_penalties(p->dp_total, p->dp_infos);
   free_personal_deadlines(p->pd_total, p->pd_infos);
   xfree(p->unhandled_vars);
+  sarray_free(p->score_view);
+  xfree(p->score_view_score);
+  xfree(p->score_view_text);
 
   if (p->variant_num > 0 && p->xml.a) {
     for (i = 1; i <= p->variant_num; i++) {
@@ -1321,6 +1324,37 @@ parse_personal_deadlines(char **pdstr, int *p_total,
   *p_dl = dinfo;
   *p_total = total;
   return i;
+}
+
+static int
+parse_score_view(struct section_problem_data *prob)
+{
+  int i, n, v;
+  char *eptr;
+
+  if (!prob || !prob->score_view || !prob->score_view[0]) return 0;
+
+  for (n = 0; prob->score_view[n]; n++);
+  XCALLOC(prob->score_view_score, n);
+  XCALLOC(prob->score_view_text, n + 1);
+  prob->score_view_text[n] = "???";
+
+  for (i = 0; i < n; i++) {
+    errno = 0;
+    v = strtol(prob->score_view[i], &eptr, 10);
+    if (errno || !*eptr || !isspace(*eptr) || v < 0) {
+      err("%d: invalid score_view specification %s", i, prob->score_view[i]);
+      return -1;
+    }
+    while (isspace(*eptr)) eptr++;
+    if (!*eptr) {
+      err("%d: invalid score_view specification %s", i, prob->score_view[i]);
+      return -1;
+    }
+    prob->score_view_score[i] = v;
+    prob->score_view_text[i] = eptr;
+  }
+  return 0;
 }
 
 void
@@ -2922,6 +2956,9 @@ set_defaults(serve_state_t state, int mode)
                                      &prob->pd_total, &prob->pd_infos) < 0) {
           return -1;
         }
+      }
+      if (prob->score_view) {
+        if (parse_score_view(prob) < 0) return -1;
       }
       if (prob->start_date[0]) {
         if (parse_date(prob->start_date, &prob->t_start_date) < 0) {
@@ -4763,6 +4800,9 @@ prepare_copy_problem(struct section_problem_data *out,
   out->pd_infos = 0;
   out->score_bonus_total = 0;
   out->score_bonus_val = 0;
+  out->score_view = 0;
+  out->score_view_score = 0;
+  out->score_view_text = 0;
 }
 
 void
