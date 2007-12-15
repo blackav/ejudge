@@ -398,7 +398,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(alternative, "x"),
   PROBLEM_PARAM(stand_attr, "s"),
   PROBLEM_PARAM(source_header, "s"),
-  PROBLEM_PARAM(source_footer, "x"),
+  PROBLEM_PARAM(source_footer, "s"),
   PROBLEM_PARAM(score_view, "x"),
 
   { 0, 0, 0, 0 }
