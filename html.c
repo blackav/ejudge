@@ -114,6 +114,11 @@ calc_kirov_score(unsigned char *outbuf,
   if (score < 0) score = 0;
   if (!outbuf) return score;
 
+  if (pr && pr->score_view && pr->score_view[0]) {
+    score_view_display(outbuf, outsize, pr, score);
+    return score;
+  }
+
   {
     unsigned char init_score_str[64];
     unsigned char run_penalty_str[64];
@@ -1696,7 +1701,7 @@ write_kirov_page_table(const struct standings_style *pss,
 
 static int sec_to_min(int rounding_mode, int secs);
 
-static void
+unsigned char *
 score_view_display(
 	unsigned char *buf,
         size_t size,
@@ -1708,11 +1713,12 @@ score_view_display(
   if (!prob || !prob->score_view || !prob->score_view[0]
       || !prob->score_view_score) {
     snprintf(buf, size, "%d", score);
-    return;
+    return buf;
   }
 
   for (i = 0; prob->score_view[i] && prob->score_view_score[i] != score; i++);
   snprintf(buf, size, "%s", prob->score_view_text[i]);
+  return buf;
 }
 
 void

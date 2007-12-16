@@ -11028,11 +11028,23 @@ unpriv_main_page(FILE *fout,
           && global->is_virtual
           && cs->testing_finished)
         accepting_mode = 0;
-      ns_write_user_problems_summary(cnts, cs, fout, phr->user_id,
-                                     accepting_mode, "b1",
-                                     solved_flag, accepted_flag, pending_flag,
-                                     trans_flag, best_run, attempts,
-                                     disqualified, best_score, prev_successes);
+      if (cs->contest_plugin
+          && cs->contest_plugin->generate_html_user_problems_summary) {
+        // FIXME: return code and logging stream is not used now
+        char *us_text = 0;
+        size_t us_size = 0;
+        FILE *us_file = open_memstream(&us_text, &us_size);
+        (*cs->contest_plugin->generate_html_user_problems_summary)(cs->contest_plugin_data, us_file, fout, cnts, cs, phr->user_id, accepting_mode, "b1", solved_flag, accepted_flag, pending_flag, trans_flag, best_run, attempts, disqualified, best_score, prev_successes);
+        fclose(us_file); us_file = 0;
+        xfree(us_text); us_text = 0;
+      } else {
+        ns_write_user_problems_summary(cnts, cs, fout, phr->user_id,
+                                       accepting_mode, "b1",
+                                       solved_flag, accepted_flag, pending_flag,
+                                       trans_flag, best_run, attempts,
+                                       disqualified, best_score,
+                                       prev_successes);
+      }
     }
   }
 
