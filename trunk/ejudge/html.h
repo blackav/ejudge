@@ -282,4 +282,11 @@ write_text_run_status(const serve_state_t state, FILE *f, struct run_entry *pe,
                       int priv_level, int attempts, int disq_attempts,
                       int prev_successes);
 
+unsigned char*
+score_view_display(
+	unsigned char *buf,
+        size_t size,
+        const struct section_problem_data *prob,
+        int score);
+
 #endif /* __HTML_H__ */

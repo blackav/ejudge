@@ -4460,7 +4460,7 @@ ns_write_olympiads_user_runs(
         if (prob && !prob->variable_full_score) score = prob->full_score;
         if (re.score_adj) score += re.score_adj;
         if (score < 0) score = 0;
-        snprintf(score_buf, sizeof(score_buf), "%d", score);
+        score_view_display(score_buf, sizeof(score_buf), prob, score);
         break;
       case RUN_PARTIAL:
         if (prob && prob->type_val != PROB_TYPE_STANDARD) {
@@ -4473,7 +4473,7 @@ ns_write_olympiads_user_runs(
         score = re.score;
         if (re.score_adj) score += re.score_adj;
         if (score < 0) score = 0;
-        snprintf(score_buf, sizeof(score_buf), "%d", score);
+        score_view_display(score_buf, sizeof(score_buf), prob, score);
         break;
       case RUN_COMPILE_ERR:
         snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
@@ -4975,6 +4975,7 @@ ns_write_user_problems_summary(
   unsigned char *s;
   unsigned char url_buf[1024];
   unsigned char status_str[128];
+  unsigned char score_buf[128];
   time_t current_time = time(0);
   int act_status;
   unsigned char *cl = "";
@@ -5106,10 +5107,14 @@ ns_write_user_problems_summary(
           if (global->disable_passed_tests <= 0) {
             fprintf(fout, "<td%s>&nbsp;</td>", cl);
           }
-          fprintf(fout, "<td%s>%d</td>", cl, best_score[prob_id]);
+          fprintf(fout, "<td%s>%s</td>", cl,
+                  score_view_display(score_buf, sizeof(score_buf),
+                                     cur_prob, best_score[prob_id]));
         } else {
-          fprintf(fout, "<td%s>%d</td><td%s>%d</td>",
-                  cl, re.test - 1, cl, best_score[prob_id]);
+          fprintf(fout, "<td%s>%d</td><td%s>%s</td>",
+                  cl, re.test - 1, cl,
+                  score_view_display(score_buf, sizeof(score_buf),
+                                     cur_prob, best_score[prob_id]));
         }
         break;
       default:
@@ -5124,8 +5129,10 @@ ns_write_user_problems_summary(
       switch (re.status) {
       case RUN_OK:
       case RUN_PARTIAL:
-        fprintf(fout, "<td%s>%d</td><td%s>%d</td>",
-                cl, re.test - 1, cl, best_score[prob_id]);
+        fprintf(fout, "<td%s>%d</td><td%s>%s</td>",
+                cl, re.test - 1, cl,
+                score_view_display(score_buf, sizeof(score_buf),
+                                   cur_prob, best_score[prob_id]));
         break;
       default:
         fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td>", cl, cl);

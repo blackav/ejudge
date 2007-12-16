@@ -84,6 +84,26 @@ struct contest_plugin_iface
         int use_user_printer,
         int full_report,
         int use_cypher);
+
+  int (*generate_html_user_problems_summary)(
+        void *handle,
+        FILE *log_f,
+        FILE *fout,
+        const struct contest_desc *cnts,
+        const struct serve_state *cs,
+        int user_id,
+        int accepting_mode,
+        const unsigned char *table_class,
+        unsigned char *solved_flag,   /* whether the problem was OK */
+        unsigned char *accepted_flag, /* whether the problem was accepted */
+        unsigned char *pending_flag,  /* whether there are pending runs */
+        unsigned char *trans_flag,    /* whether there are transient runs */
+        int *best_run,                /* the number of the best run */
+        int *attempts,                /* the number of previous attempts */
+        int *disqualified,            /* the number of prev. disq. attempts */
+        int *best_score,              /* the best score for the problem */
+        int *prev_successes);         /* the number of prev. successes */
+
 };
 
 #endif /* __CONTEST_PLUGIN_H__ */
