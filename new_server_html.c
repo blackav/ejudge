@@ -11519,7 +11519,17 @@ unpriv_main_page(FILE *fout,
             _("Sent submissions"),
             all_runs?_("all"):_("last 15"),
             cnts->team_head_style);
-    if (global->score_system_val == SCORE_OLYMPIAD) {
+
+    if (cs->contest_plugin && cs->contest_plugin->generate_html_user_runs){
+      // FIXME: logged output is also ignored
+      // FIXME: return code is ignored for now
+      char *ur_text = 0;
+      size_t ur_size = 0;
+      FILE *ur_file = open_memstream(&ur_text, &ur_size);
+      (*cs->contest_plugin->generate_html_user_runs)(cs->contest_plugin_data, ur_file, fout, cnts, cs, phr, phr->user_id, 0, all_runs, "b1");
+      fclose(ur_file); ur_file = 0;
+      xfree(ur_text); ur_text = 0;
+    } else if (global->score_system_val == SCORE_OLYMPIAD) {
       ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
                                    0, "b1");
     } else {
