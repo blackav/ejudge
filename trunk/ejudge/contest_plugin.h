@@ -104,6 +104,18 @@ struct contest_plugin_iface
         int *best_score,              /* the best score for the problem */
         int *prev_successes);         /* the number of prev. successes */
 
+  int (*generate_html_user_runs)(
+        void *handle,
+        FILE *log_f,
+        FILE *fout,
+        const struct contest_desc *cnts,
+        const struct serve_state *cs,
+        const struct http_request_info *phr,
+        int user_id,
+        int prob_id,
+        int all_runs_flag,
+        const unsigned char *table_class);
+
 };
 
 #endif /* __CONTEST_PLUGIN_H__ */
