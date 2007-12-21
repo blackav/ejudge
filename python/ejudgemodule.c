@@ -796,12 +796,12 @@ Ul_do_priv_login(int cmd, UlObject *self, PyObject *args)
 }
 
 static PyObject *
-Ul_privLogin(int cmd, UlObject *self, PyObject *args)
+Ul_privLogin(UlObject *self, PyObject *args)
 {
   return Ul_do_priv_login(ULS_PRIV_LOGIN, self, args);
 }
 static PyObject *
-Ul_checkPrivUser(int cmd, UlObject *self, PyObject *args)
+Ul_checkPrivUser(UlObject *self, PyObject *args)
 {
   return Ul_do_priv_login(ULS_PRIV_CHECK_USER, self, args);
 }
