@@ -282,7 +282,7 @@ ns_write_priv_all_runs(FILE *f,
              (u->prev_last_run > 0)?u->prev_last_run - 1:u->prev_last_run);
   }
   html_start_form(f, 0, phr->self_url, phr->hidden_vars);
-  fprintf(f, "<p>%s: <input type=\"text\" name=\"filter_expr\" size=\"32\" maxlength=\"128\" value=\"%s\"/>", _("Filter expression"), fe_html);
+  fprintf(f, "<p>%s: <input type=\"text\" name=\"filter_expr\" size=\"32\" maxlength=\"1024\" value=\"%s\"/>", _("Filter expression"), fe_html);
   fprintf(f, "%s: <input type=\"text\" name=\"filter_first_run\" size=\"16\" value=\"%s\"/>", _("First run"), first_run_str);
   fprintf(f, "%s: <input type=\"text\" name=\"filter_last_run\" size=\"16\" value=\"%s\"/>", _("Last run"), last_run_str);
   fprintf(f, "%s",
