@@ -1717,7 +1717,12 @@ score_view_display(
   }
 
   for (i = 0; prob->score_view[i] && prob->score_view_score[i] != score; i++);
-  snprintf(buf, size, "%s", prob->score_view_text[i]);
+  //snprintf(buf, size, "%s", prob->score_view_text[i]);
+  if (!prob->score_view[i]) {
+    snprintf(buf, size, "%d", score);
+  } else {
+    snprintf(buf, size, "%s", prob->score_view_text[i]);
+  }
   return buf;
 }
 
