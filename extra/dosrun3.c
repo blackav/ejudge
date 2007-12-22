@@ -144,8 +144,9 @@ main(int argc, char *argv[])
 {
   FILE *f;
   char buf[1024];
-  struct stat ss;
-  char *input_name = "";
+  unsigned char in_path[1024] = { 0 };
+  unsigned char out_path[1024] = { 0 };
+  const unsigned char *s = 0;
 
   if (argc != 2) myerr("wrong number of arguments: %d", argc);
 
@@ -159,10 +160,17 @@ main(int argc, char *argv[])
   if (chmod(emupath, 0700) < 0) myerr("chmod failed: %s", strerror(errno));
   //clean_dir(emupath);
 
-  snprintf(buf, sizeof(buf), "%s/input", emupath);
-  if (lstat(buf, &ss) >= 0) {
-    input_name = "input.";
+  if ((s = getenv("INPUT_FILE"))) {
+    snprintf(in_path, sizeof(in_path) - 10, "%s", s);
   }
+  if (!in_path[0]) strcpy(in_path, "input");
+  if (!strchr(in_path, '.')) strcat(in_path, ".");
+
+  if ((s = getenv("OUTPUT_FILE"))) { 
+    snprintf(out_path, sizeof(out_path) - 10, "%s", s);
+  }
+  if (!out_path[0]) strcpy(out_path, "output");
+  if (!strchr(out_path, '.')) strcat(out_path, ".");
 
   snprintf(buf, sizeof(buf), "%s/command.txt", emupath);
   if (!(f = fopen(buf, "w")))
@@ -170,11 +178,11 @@ main(int argc, char *argv[])
   fprintf(f,
           "\r\n"
           "%s\r\n"
-          "output.\r\n"
+          "%s\r\n"
           "error.\r\n"
           "d:\\program.exe\r\n"
           "\r\n"
-          "\r\n", input_name);
+          "\r\n", in_path, out_path);
   fclose(f);
 
   snprintf(buf, sizeof(buf), "%s/output", emupath);
