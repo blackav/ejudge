@@ -1012,8 +1012,17 @@ run_tests(struct section_tester_data *tst,
       /* run the tested program */
       tsk = task_New();
       if (tst->start_cmd[0]) {
+        unsigned char env_buf[1024];
         info("starting: %s %s", tst->start_cmd, arg0_path);
         task_AddArg(tsk, tst->start_cmd);
+        if (prb->input_file[0]) {
+          snprintf(env_buf, sizeof(env_buf), "INPUT_FILE=%s", prb->input_file);
+          task_PutEnv(tsk, env_buf);
+        }
+        if (prb->output_file[0]) {
+          snprintf(env_buf, sizeof(env_buf),"OUTPUT_FILE=%s", prb->output_file);
+          task_PutEnv(tsk, env_buf);
+        }
       } else {
         info("starting: %s", arg0_path);
       }
