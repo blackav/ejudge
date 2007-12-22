@@ -1300,12 +1300,12 @@ Ul_do_list_users(int cmd, UlObject *self, PyObject *args)
   return val;
 }
 static PyObject *
-Ul_privListContestUsers(int cmd, UlObject *self, PyObject *args)
+Ul_privListContestUsers(UlObject *self, PyObject *args)
 {
   return Ul_do_list_users(ULS_LIST_ALL_USERS, self, args);
 }
 static PyObject *
-Ul_privGetContestUsers(int cmd, UlObject *self, PyObject *args)
+Ul_privGetContestUsers(UlObject *self, PyObject *args)
 {
   return Ul_do_list_users(ULS_LIST_STANDINGS_USERS, self, args);
 }
