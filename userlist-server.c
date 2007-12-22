@@ -2745,6 +2745,7 @@ cmd_priv_login(struct client_state *p, int pkt_len,
     return;
   }
 
+  r = -1;
   if (data->contest_id > 0 && priv_level == PRIV_LEVEL_ADMIN) {
     r = contests_check_master_ip(orig_contest_id, data->origin_ip, data->ssl);
   } else if (data->contest_id > 0 && priv_level == PRIV_LEVEL_JUDGE) {
@@ -2953,6 +2954,7 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
   orig_contest_id = data->contest_id;
   if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
 
+  r = -1;
   if (data->contest_id > 0 && priv_level == PRIV_LEVEL_ADMIN) {
     r = contests_check_master_ip(orig_contest_id, data->origin_ip, data->ssl);
   } else if (data->contest_id > 0 && priv_level == PRIV_LEVEL_JUDGE) {
