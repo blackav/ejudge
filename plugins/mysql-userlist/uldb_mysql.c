@@ -1897,7 +1897,7 @@ allocate_cntsregs_on_pool(
     co = cc->last;
     cu = &cc->user_map[co->user_id];
     if (cu->first_user == co) {
-      memset(&cu, 0, sizeof(*cu));
+      memset(cu, 0, sizeof(*cu));
     } else {
       ASSERT(cu->last_user == co);
       co->prev_user->next_user = 0;
