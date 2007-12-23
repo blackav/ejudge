@@ -1170,7 +1170,7 @@ run_tests(struct section_tester_data *tst,
             task_EnableMemoryLimitError(tsk);
           }
 #endif
-#if defined HAVE_TASK_ENABLEMEMORYLIMITERROR
+#if defined HAVE_TASK_ENABLESECURITYVIOLATIONERROR
           if (tst->enable_memory_limit_error && req_pkt->security_violation) {
             task_EnableSecurityViolationError(tsk);
           }
