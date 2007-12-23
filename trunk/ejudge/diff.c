@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -132,7 +132,7 @@ compare_runs(const serve_state_t state, FILE *fout, int run_id1, int run_id2)
 
   if (!(tsk = task_New())) goto cleanup;
   task_AddArg(tsk, state->global->diff_path);
-  task_AddArg(tsk, "-u");
+  task_AddArg(tsk, "-uBb");
   task_AddArg(tsk, par1);
   task_AddArg(tsk, par2);
   task_SetPathAsArg0(tsk);
