@@ -5098,6 +5098,24 @@ super_html_print_problem(FILE *f,
                                  self_url, extra_args, prob_hidden_vars);
   }
 
+  if (show_adv && sstate->global) {
+    //PROBLEM_PARAM(stand_last_column, "d"),
+      extra_msg = "Undefined";
+      if (!prob->abstract) {
+        prepare_set_prob_value(PREPARE_FIELD_PROB_STAND_LAST_COLUMN,
+                               &tmp_prob, sup_prob, sstate->global);
+        snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+                 tmp_prob.stand_last_column?"Yes":"No");
+        extra_msg = msg_buf;
+      }
+      print_boolean_3_select_row(f,"Show the problem after all results:",
+                                 prob->stand_last_column,
+                                 SSERV_CMD_PROB_CHANGE_STAND_LAST_COLUMN,
+                                 extra_msg,
+                                 session_id, form_row_attrs[row ^= 1],
+                                 self_url, extra_args, prob_hidden_vars);
+  }
+
   //PROBLEM_PARAM(lang_time_adj, "x"),
   if (!prob->abstract && !problem_type_flag && show_adv) {
     if (!prob->lang_time_adj || !prob->lang_time_adj[0]) {
@@ -5796,6 +5814,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_STAND_IGNORE_SCORE:
     p_int = &prob->stand_ignore_score;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_STAND_LAST_COLUMN:
+    p_int = &prob->stand_last_column;
     goto handle_boolean_1;
 
   case SSERV_CMD_PROB_CHANGE_CHECKER_REAL_TIME_LIMIT:

@@ -1740,6 +1740,7 @@ do_write_kirov_standings(const serve_state_t state,
                          time_t cur_time)
 {
   struct section_global_data *global = state->global;
+  const struct section_problem_data *prob;
   time_t start_time;
   time_t stop_time;
   time_t cur_duration;
@@ -1792,6 +1793,7 @@ do_write_kirov_standings(const serve_state_t state,
   struct standings_style ss;
   int sort_flag;
   struct sformat_extra_data fed;
+  int last_col_ind = -1;
 
   if (client_flag) head_style = cnts->team_head_style;
   else head_style = "h2";
@@ -1909,10 +1911,10 @@ do_write_kirov_standings(const serve_state_t state,
   XALLOCAZ(p_ind, p_max);
   XALLOCAZ(p_rev, p_max);
   for (i = 1, p_tot = 0; i < p_max; i++) {
-    struct section_problem_data *p;
     p_rev[i] = -1;
-    if (!(p = state->probs[i]) || p->hidden) continue;
-    if (p->t_start_date > 0 && cur_time < p->t_start_date) continue;
+    if (!(prob = state->probs[i]) || prob->hidden) continue;
+    if (prob->t_start_date > 0 && cur_time < prob->t_start_date) continue;
+    if (prob->stand_last_column > 0 && last_col_ind < 0) last_col_ind = p_tot;
     p_rev[i] = p_tot;
     p_ind[p_tot++] = i;
   }
@@ -1963,7 +1965,6 @@ do_write_kirov_standings(const serve_state_t state,
     int tind;
     int pind;
     int score, run_score, run_tests;
-    struct section_problem_data *p;
     const struct run_entry *pe = &runs[k];
 
     if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP
@@ -1974,8 +1975,8 @@ do_write_kirov_standings(const serve_state_t state,
     tind = t_rev[pe->user_id];
     pind = p_rev[pe->prob_id];
     up_ind = (tind << row_sh) + pind;
-    p = state->probs[pe->prob_id];
-    if (!p || tind < 0 || pind < 0 || p->hidden) continue;
+    prob = state->probs[pe->prob_id];
+    if (!prob || tind < 0 || pind < 0 || prob->hidden) continue;
 
     // ignore future runs when not in privileged mode
     if (!client_flag) {
@@ -1989,8 +1990,8 @@ do_write_kirov_standings(const serve_state_t state,
     }
 
     run_score = pe->score;
-    if (pe->status == RUN_OK && !p->variable_full_score)
-      run_score = p->full_score;
+    if (pe->status == RUN_OK && !prob->variable_full_score)
+      run_score = prob->full_score;
     run_tests = pe->test - 1;
     if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       if (run_score < 0) run_score = 0;
@@ -2000,12 +2001,13 @@ do_write_kirov_standings(const serve_state_t state,
       case RUN_ACCEPTED:
         if (!full_sol[up_ind]) sol_att[up_ind]++;
         full_sol[up_ind] = 1;
-        prob_score[up_ind] = p->tests_to_accept;
+        prob_score[up_ind] = prob->tests_to_accept;
         att_num[up_ind]++;  /* hmm, it is not used... */
         break;
       case RUN_PARTIAL:
         if (!full_sol[up_ind]) sol_att[up_ind]++;
-        if (run_tests > p->tests_to_accept) run_tests = p->tests_to_accept;
+        if (run_tests > prob->tests_to_accept)
+          run_tests = prob->tests_to_accept;
         if (run_tests > prob_score[up_ind]) 
           prob_score[up_ind] = run_tests;
         full_sol[up_ind] = 1;
@@ -2019,7 +2021,8 @@ do_write_kirov_standings(const serve_state_t state,
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
         if (!full_sol[up_ind]) sol_att[up_ind]++;
-        if (run_tests > p->tests_to_accept) run_tests = p->tests_to_accept;
+        if (run_tests > prob->tests_to_accept)
+          run_tests = prob->tests_to_accept;
         if (run_tests > prob_score[up_ind]) 
           prob_score[up_ind] = run_score;
         att_num[up_ind]++;
@@ -2052,18 +2055,18 @@ do_write_kirov_standings(const serve_state_t state,
         trans_num[up_ind] = 0;
         prob_score[up_ind] = run_score;
         att_num[up_ind]++;
-        if (global->stand_enable_penalty && p->ignore_penalty <= 0) {
+        if (global->stand_enable_penalty && prob->ignore_penalty <= 0) {
           penalty[up_ind] += sec_to_min(global->rounding_mode_val,
                                         pe->time - start_time);
         }
-        //if (run_score > p->full_score) run_score = p->full_score;
+        //if (run_score > prob->full_score) run_score = prob->full_score;
         break;
       case RUN_PARTIAL:
         prob_score[up_ind] = run_score;
         full_sol[up_ind] = 0;
         trans_num[up_ind] = 0;
         att_num[up_ind]++;
-        if (global->stand_enable_penalty && p->ignore_penalty <= 0) {
+        if (global->stand_enable_penalty && prob->ignore_penalty <= 0) {
           penalty[up_ind] += sec_to_min(global->rounding_mode_val,
                                         pe->time - start_time);
         }
@@ -2102,15 +2105,15 @@ do_write_kirov_standings(const serve_state_t state,
       if (run_score == -1) run_score = 0;
       if (pe->status == RUN_OK) {
         if (!full_sol[up_ind]) sol_att[up_ind]++;
-        score = calc_kirov_score(0, 0, pe, p, att_num[up_ind],
+        score = calc_kirov_score(0, 0, pe, prob, att_num[up_ind],
                                  disq_num[up_ind],
                                  full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
                                  0, 0);
         if (score > prob_score[up_ind]) {
           prob_score[up_ind] = score;
-          if (!p->stand_hide_time) sol_time[up_ind] = pe->time;
+          if (!prob->stand_hide_time) sol_time[up_ind] = pe->time;
         }
-        if (!sol_time[up_ind] && !p->stand_hide_time)
+        if (!sol_time[up_ind] && !prob->stand_hide_time)
           sol_time[up_ind] = pe->time;
         if (!full_sol[up_ind]) {
           succ_att[pind]++;
@@ -2122,13 +2125,13 @@ do_write_kirov_standings(const serve_state_t state,
         last_success_run = k;
       } else if (pe->status == RUN_PARTIAL) {
         if (!full_sol[up_ind]) sol_att[up_ind]++;
-        score = calc_kirov_score(0, 0, pe, p, att_num[up_ind],
+        score = calc_kirov_score(0, 0, pe, prob, att_num[up_ind],
                                  disq_num[up_ind], RUN_TOO_MANY, 0, 0);
         if (score > prob_score[up_ind]) prob_score[up_ind] = score;
         att_num[up_ind]++;
         if (!full_sol[up_ind]) tot_att[pind]++;
         last_submit_run = k;
-      } else if (pe->status==RUN_COMPILE_ERR && !p->ignore_compile_errors) {
+      } else if (pe->status==RUN_COMPILE_ERR && !prob->ignore_compile_errors) {
         if (!full_sol[up_ind]) sol_att[up_ind]++;
         att_num[up_ind]++;
         if (!full_sol[up_ind]) tot_att[pind]++;
@@ -2154,10 +2157,11 @@ do_write_kirov_standings(const serve_state_t state,
   for (i = 0; i < t_tot; i++) {
     for (j = 0; j < p_tot; j++) {
       up_ind = (i << row_sh) + j;
-      if (state->probs[p_ind[j]]->stand_ignore_score <= 0)
+      if (state->probs[p_ind[j]]->stand_ignore_score <= 0) {
         tot_score[i] += prob_score[up_ind];
-      tot_full[i] += full_sol[up_ind];
-      tot_penalty[i] += penalty[up_ind];
+        tot_full[i] += full_sol[up_ind];
+        tot_penalty[i] += penalty[up_ind];
+      }
     }
   }
 
@@ -2359,9 +2363,10 @@ do_write_kirov_standings(const serve_state_t state,
       }
       fprintf(f, "</th>");
     }
-    fprintf(f, "<th%s>%s</th><th%s>%s</th></tr>\n",
+    fprintf(f, "<th%s>%s</th><th%s>%s</th>",
             ss.solved_attr, _("Solved<br>problems"),
             ss.score_attr, _("Score"));
+    fprintf(f, "</tr>\n");
   }
 
   for (i = 0; i < t_tot; i++, user_on_page = (user_on_page + 1) % users_per_page) {
@@ -2478,6 +2483,7 @@ do_write_kirov_standings(const serve_state_t state,
         fprintf(f, "<th%s>%s</th>", ss.warn_number_attr, _("Warnings"));
       }
       for (j = 0; j < p_tot; j++) {
+        if (state->probs[p_ind[j]]->stand_last_column > 0) continue;
         col_attr = state->probs[p_ind[j]]->stand_attr;
         if (!*col_attr) col_attr = ss.prob_attr;
         fprintf(f, "<th%s>", col_attr);
@@ -2498,6 +2504,27 @@ do_write_kirov_standings(const serve_state_t state,
       if (global->stand_enable_penalty) {
         fprintf(f, "<th%s>%s</th>", ss.penalty_attr, _("Penalty"));
       }
+
+      if (last_col_ind >= 0) {
+        for (j = last_col_ind; j < p_tot; j++) {
+          if (state->probs[p_ind[j]]->stand_last_column <= 0) continue;
+          col_attr = state->probs[p_ind[j]]->stand_attr;
+          if (!*col_attr) col_attr = ss.prob_attr;
+          fprintf(f, "<th%s>", col_attr);
+          if (global->prob_info_url[0]) {
+            sformat_message(dur_str, sizeof(dur_str), global->prob_info_url,
+                            NULL, state->probs[p_ind[j]], NULL, NULL, NULL,
+                            0, 0, 0);
+            fprintf(f, "<a href=\"%s\">", dur_str);
+          }
+          fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+          if (global->prob_info_url[0]) {
+            fprintf(f, "</a>");
+          }
+          fprintf(f, "</th>");
+        }
+      }
+
       fprintf(f, "</tr>\n");
     }
 
@@ -2569,6 +2596,7 @@ do_write_kirov_standings(const serve_state_t state,
       }
     }
     for (j = 0; j < p_tot; j++) {
+      if (state->probs[p_ind[j]]->stand_last_column > 0) continue;
       up_ind = (t << row_sh) + j;
       row_attr = state->probs[p_ind[j]]->stand_attr;
       if (!*row_attr) row_attr = ss.prob_attr;
@@ -2621,6 +2649,56 @@ do_write_kirov_standings(const serve_state_t state,
     if (global->stand_enable_penalty) {
       fprintf(f, "<td%s>%d</td>", ss.penalty_attr, tot_penalty[t]);
     }
+    if (last_col_ind >= 0) {
+      for (j = last_col_ind; j < p_tot; j++) {
+        if (state->probs[p_ind[j]]->stand_last_column <= 0) continue;
+        up_ind = (t << row_sh) + j;
+        row_attr = state->probs[p_ind[j]]->stand_attr;
+        if (!*row_attr) row_attr = ss.prob_attr;
+        if (trans_num[up_ind] && ss.trans_attr && ss.trans_attr[0])
+          row_attr = ss.trans_attr;
+        if (disq_num[up_ind] > 0 && ss.disq_attr && ss.disq_attr[0])
+          row_attr = ss.disq_attr;
+        if (cf_num[up_ind] > 0 && ss.fail_attr && ss.fail_attr[0])
+          row_attr = ss.fail_attr;
+        if (!att_num[up_ind]) {
+          fprintf(f, "<td%s>&nbsp;</td>", row_attr);
+        } else if (full_sol[up_ind]) {
+          att_buf[0] = 0;
+          if (global->stand_show_att_num) {
+            snprintf(att_buf, sizeof(att_buf), " (%d)", sol_att[up_ind]);
+          }
+          score_view_display(score_buf, sizeof(score_buf),
+                             state->probs[p_ind[j]], prob_score[up_ind]);
+          if (global->stand_show_ok_time && sol_time[up_ind] > 0) {
+            duration_str(global->show_astr_time, sol_time[up_ind], start_time,
+                         dur_str, 0);
+            fprintf(f, "<td%s><b>%s</b>%s<div%s>%s</div></td>",
+                    row_attr, score_buf, att_buf,
+                    ss.time_attr, dur_str);
+          } else {
+            fprintf(f, "<td%s><b>%s</b>%s</td>", row_attr, 
+                    score_buf, att_buf);
+          }
+        } else {
+          att_buf[0] = 0;
+          if (global->stand_show_att_num) {
+            snprintf(att_buf, sizeof(att_buf), " (%d)", sol_att[up_ind]);
+          }
+          score_view_display(score_buf, sizeof(score_buf),
+                             state->probs[p_ind[j]], prob_score[up_ind]);
+          if (global->stand_show_ok_time && sol_time[up_ind] > 0) {
+            duration_str(global->show_astr_time, sol_time[up_ind],
+                         start_time, dur_str, 0);
+            fprintf(f, "<td%s>%s%s<div%s>%s</div></td>",
+                    row_attr, score_buf, att_buf,
+                    ss.time_attr, dur_str);
+          } else {
+            fprintf(f, "<td%s>%s%s</td>", row_attr, score_buf, att_buf);
+          }
+        }
+      }
+    }
     fprintf(f, "</tr>\n");
 
     if (user_on_page == users_per_page - 1 && current_page != total_pages) {
@@ -2660,11 +2738,20 @@ do_write_kirov_standings(const serve_state_t state,
     fprintf(f, "<td%s>&nbsp;</td>", ss.warn_number_attr);
   }
   for (j = 0, ttot_att = 0; j < p_tot; j++) {
+    if (state->probs[p_ind[j]]->stand_last_column > 0) continue;
     fprintf(f, "<td%s>%d</td>", ss.prob_attr, tot_att[j]);
     ttot_att += tot_att[j];
   }
-  fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>\n",
+  fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td>",
           ss.solved_attr, ttot_att, ss.penalty_attr);
+  if (last_col_ind >= 0) {
+    for (j = last_col_ind, ttot_att = 0; j < p_tot; j++) {
+      if (state->probs[p_ind[j]]->stand_last_column <= 0) continue;
+      fprintf(f, "<td%s>%d</td>", ss.prob_attr, tot_att[j]);
+      ttot_att += tot_att[j];
+    }
+  }
+  fprintf(f, "</tr>\n");
   // print row of success
   fprintf(f, "<tr%s>", rT_attr);
   fprintf(f, "<td%s>&nbsp;</td>", ss.place_attr);
@@ -2680,11 +2767,20 @@ do_write_kirov_standings(const serve_state_t state,
     fprintf(f, "<td%s>&nbsp;</td>", ss.warn_number_attr);
   }
   for (j = 0, ttot_succ = 0; j < p_tot; j++) {
+    if (state->probs[p_ind[j]]->stand_last_column > 0) continue;
     fprintf(f, "<td%s>%d</td>", ss.prob_attr, succ_att[j]);
     ttot_succ += succ_att[j];
   }
-  fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>\n",
+  fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td>",
           ss.solved_attr, ttot_succ, ss.penalty_attr);
+  if (last_col_ind >= 0) {
+    for (j = last_col_ind, ttot_succ = 0; j < p_tot; j++) {
+      if (state->probs[p_ind[j]]->stand_last_column <= 0) continue;
+      fprintf(f, "<td%s>%d</td>", ss.prob_attr, succ_att[j]);
+      ttot_succ += succ_att[j];
+    }
+  }
+  fprintf(f, "</tr>\n");
   // print row of percentage
   fprintf(f, "<tr%s>", rT_attr);
   fprintf(f, "<td%s>&nbsp;</td>", ss.place_attr);
@@ -2700,6 +2796,7 @@ do_write_kirov_standings(const serve_state_t state,
     fprintf(f, "<td%s>&nbsp;</td>", ss.warn_number_attr);
   }
   for (j = 0; j < p_tot; j++) {
+    if (state->probs[p_ind[j]]->stand_last_column > 0) continue;
     perc = 0;
     if (tot_att[j] > 0) {
       perc = (int) ((double) succ_att[j] / tot_att[j] * 100.0 + 0.5);
@@ -2710,8 +2807,19 @@ do_write_kirov_standings(const serve_state_t state,
   if (ttot_att > 0) {
     perc = (int) ((double) ttot_succ / ttot_att * 100.0 + 0.5);
   }
-  fprintf(f, "<td%s>%d%%</td><td%s>&nbsp;</td></tr>\n",
+  fprintf(f, "<td%s>%d%%</td><td%s>&nbsp;</td>",
           ss.solved_attr, perc, ss.penalty_attr);
+  if (last_col_ind >= 0) {
+    for (j = last_col_ind; j < p_tot; j++) {
+      if (state->probs[p_ind[j]]->stand_last_column <= 0) continue;
+      perc = 0;
+      if (tot_att[j] > 0) {
+        perc = (int) ((double) succ_att[j] / tot_att[j] * 100.0 + 0.5);
+      }
+      fprintf(f, "<td%s>%d%%</td>", ss.prob_attr, perc);
+    }
+  }
+  fprintf(f, "</tr>\n");
 
   fputs("</table>\n", f);
 
