@@ -3325,3 +3325,11 @@ plugins/mysql-userlist/uldb_mysql.c 4635 0 5696255
 run.c 4637 0 7109332
 ejudge-setup.c 4639 0 10014286
 diff.c 4641 0 425730
+prepare.h 4643 0 2985620
+super_proto.h 4643 0 1938906
+serve-control.c 4643 0 8538509
+super-serve.c 4643 0 12429082
+html.c 4643 0 15192600
+prepare.c 4643 0 14039309
+prepare_out.c 4643 0 6388807
+super_html_3.c 4643 0 23073749
