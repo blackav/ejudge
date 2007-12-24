@@ -116,6 +116,27 @@ struct contest_plugin_iface
         int all_runs_flag,
         const unsigned char *table_class);
 
+  int (*generate_html_standings)(
+        void *handle,           /* the plugin own data */
+        FILE *log_f,            /* the logging stream */
+        FILE *fout,             /* the output stream (MAY BE NULL) */
+        const struct contest_desc *cnts,
+        const struct serve_state *cs,
+        const struct http_request_info *phr,
+        time_t cur_time,        /* the current time */
+        const unsigned char *stand_dir, /* the output path */
+        const unsigned char *header_str,
+        const unsigned char *footer_str,
+        int user_id,            /* the user which standings */
+        const unsigned char *user_name,
+        int priv_mode,          /* privileged standings */
+        int client_flag,        /* generate for client (omit headers) */
+        int only_table_flag,    /* omit table indices */
+        int raw_flag,           /* CSV standings */
+        int xml_flag,           /* XML standings */
+        int accepting_mode,     /* generate for accepting mode */
+        int force_fancy_style); /* use fancy table style */
+
 };
 
 #endif /* __CONTEST_PLUGIN_H__ */

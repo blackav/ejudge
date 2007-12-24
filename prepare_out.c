@@ -1256,6 +1256,9 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   if (prob->stand_ignore_score >= 0
       && ((prob->abstract && prob->stand_ignore_score) || !prob->abstract))
       unparse_bool(f, "stand_ignore_score", prob->stand_ignore_score);
+  if (prob->stand_last_column >= 0
+      && ((prob->abstract && prob->stand_last_column) || !prob->abstract))
+      unparse_bool(f, "stand_last_column", prob->stand_last_column);
 
   if (!prob->abstract && prob->start_date[0])
     fprintf(f, "start_date = \"%s\"\n", c_armor(&sbuf, prob->start_date));

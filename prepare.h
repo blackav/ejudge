@@ -467,6 +467,7 @@ struct section_problem_data
   int    advance_to_next;       /* advance to the next prob. in nav. mode */
   int    enable_text_form;      /* still enable text form in output-only prb. */
   int    stand_ignore_score;    /* ignore the score in total calculation */
+  int    stand_last_column;     /* show column after totals */
   puc_t super[32];              /* superproblem's short_name */
   puc_t short_name[32];         /* short problem name, eg A, B, ... */
   puc_t long_name[256];         /* long problem name */
@@ -729,6 +730,7 @@ enum
   PREPARE_FIELD_PROB_ADVANCE_TO_NEXT,
   PREPARE_FIELD_PROB_ENABLE_TEXT_FORM,
   PREPARE_FIELD_PROB_STAND_IGNORE_SCORE,
+  PREPARE_FIELD_PROB_STAND_LAST_COLUMN,
   PREPARE_FIELD_PROB_CHECKER_REAL_TIME_LIMIT,
   PREPARE_FIELD_PROB_MAX_VM_SIZE,
   PREPARE_FIELD_PROB_MAX_DATA_SIZE,
