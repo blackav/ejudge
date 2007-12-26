@@ -1,3 +1,8 @@
+2007-11-20 (r4520) Alexander Chernov  <cher@ejudge.ru>
+
+	* parse_ip.c: copyright notice is updated;
+	(xml_parse_ip) PYTHON module is supported.
+
 2006-09-25 (r3433) Alexander Chernov  <cher@ejudge.ru>
 
 	* parse_ip.c: copyright notice is updated;

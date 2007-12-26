@@ -43,7 +43,7 @@ cd ejudge
 
 5. Configure the ejudge
 
-./configure --prefix=/home/ejudge/inst-ejudge  --with-reuse=/home/ejudge/reuse  --enable-charset=koi8-r --enable-socket-path=/tmp/userlist-socket --enable-super-serve-socket=/tmp/super-serve-socket --enable-contests-home-dir=/home/judges --enable-conf-dir=/home/judges/data --enable-cgi-conf-dir=../cgi-data --with-httpd-cgi-bin-dir=CGI-BIN-DIR --with-httpd-htdocs-dir=HTDOCS-DIR
+./configure --prefix=/home/ejudge/inst-ejudge  --with-reuse=/home/ejudge/reuse  --enable-charset=utf-8 --enable-contests-home-dir=/home/judges --enable-conf-dir=/home/judges/data --enable-cgi-conf-dir=../cgi-data --with-httpd-cgi-bin-dir=CGI-BIN-DIR --with-httpd-htdocs-dir=HTDOCS-DIR
 
 Here CGI-BIN-DIR is the CGI directory of your web server
 installation (for example, `/home/httpd/cgi-bin'), HTDOCS-DIR is
@@ -77,13 +77,7 @@ cd ~ejudge/ejudge
 9. Start the ejudge system. The programs must be started by the
 `ejudge' user.
 
-cd /home/judges/data/db
-~/inst-ejudge/bin/userlist-server -D &
-cd /home/judges/compile
-~/inst-ejudge/bin/compile conf/compile.cfg &
-cd /home/judges
-~/inst-ejudge/bin/super-serve &
-~/inst-ejudge/bin/job-server &
+ejudge-control start
 
 Make sure, that the access permissions of the `/home/ejudge'
 directory allows reading of files for arbitrary users. Some

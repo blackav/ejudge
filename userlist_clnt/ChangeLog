@@ -1,3 +1,68 @@
+2007-12-08 (r4578) Alexander Chernov  <cher@ejudge.ru>
+
+	* priv_login.c:
+	(userlist_clnt_priv_login) `priv_level' parameter is removed.
+
+	* team_cookie.c:
+	(userlist_clnt_team_cookie) `p_contest_id' parameter is added.
+
+2007-11-29 (r4544) Alexander Chernov  <cher@ejudge.ru>
+
+	* create_member.c: copyright notice is updated;
+	(userlist_clnt_create_member) the new member serial is returned.
+
+	* get_cookie.c:
+	(userlist_clnt_get_cookie) `locale_id' field is removed.
+
+	* lookup_cookie.c: copyright notice is updated;
+	(userlist_clnt_lookup_cookie) `locale_id' field is removed.
+
+	* priv_cookie.c: copyright notice is updated;
+	(userlist_clnt_priv_cookie) `locale_id' parameter is removed.
+
+	* priv_cookie_login.c: copyright notice is updated;
+	(userlist_clnt_priv_cookie_login) `priv_level' parameter removed;
+	  the outbound packet now has type `userlist_pk_cookie_login'.
+
+	* register_contest.c: copyright notice is updated;
+	(userlist_clnt_register_contest) new parameters `ip', `ssl_flag'
+	  are added.
+
+	* team_cookie.c: copyright notice is updated;
+	(userlist_clnt_team_cookie) `locale_id', `p_contest_id' parameters
+	  are removed.
+
+2007-11-20 (r4534) Alexander Chernov  <cher@ejudge.ru>
+
+	* lookup_user.c: copyright notice is updated;
+	(userlist_clnt_lookup_user) `contest_id' parameter is added.
+
+2007-11-20 (r4521) Alexander Chernov  <cher@ejudge.ru>
+
+	* private.h: copyright notice is updated;
+	python compatibility is improved.
+
+	* create_user.c: copyright notice is updated;
+	(userlist_clnt_create_user) `login' parameter is added.
+
+	* do_pass_fd.c: copyright notice is updated;
+	(userlist_clnt_do_pass_fd) python compatibility is improved.
+
+	* login.c:
+	(userlist_clnt_login) minor fixes.
+
+	* open.c: copyright notice is updated;
+	(userlist_clnt_open) python compatibility is improved.
+
+	* register_new_2.c:
+	(userlist_clnt_register_new_2) `p_user_id' parameter is added.
+
+	* send_packet.c: copyright notice is updated;
+	(userlist_clnt_send_packet) python compatibility is improved.
+
+	* recv_packet.c: copyright notice is updated;
+	(userlist_clnt_recv_packet) notice is updated.
+
 2007-07-23 (r4228) Alexander Chernov  <cher@ejudge.ru>
 
 	* import_csv_users.c:

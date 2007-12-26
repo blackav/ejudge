@@ -1,3 +1,990 @@
+2007-12-24 (r4643) Alexander Chernov  <cher@ejudge.ru>
+
+	* contest_plugin.h:
+	(struct contest_plugin_iface) `generate_html_standings' member
+	  is added.
+
+	* prepare.h:
+	(struct section_problem_data) `stand_last_column' field is added;
+	`stand_last_column' problem configuration variable is added.
+
+	* super_proto.h:
+	editing of `stand_last_column' problem configuration variable is
+	supported.
+
+	* html.c:
+	(do_write_kirov_standings) `stand_last_column' problem configuration
+	  variable is supported.
+
+	* prepare.c, prepare_out.c:
+	`stand_last_column' problem configuration variable is added.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of `stand_last_column' problem configuration variable is
+	supported.
+
+2007-12-23 (r4641) Alexander Chernov  <cher@ejudge.ru>
+
+	* diff.c:
+	(compare_runs) "-Bb" options are added.
+
+2007-12-23 (r4639) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge-setup.c: sample contest is updated.
+
+2007-12-22 (r4630) Alexander Chernov  <cher@ejudge.ru>
+
+	* run.c:
+	(run_tests) input_file and output_file are passed in
+	  "INPUT_FILE" and "OUTPUT_FILE" env vars to the start helper
+	  program.
+
+2007-12-21 (r4628) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.c:
+	(score_view_display) non-matching scores are printed as numbers.
+
+	* new_server_html_2.c:
+	(ns_write_priv_all_runs) filter expression length is increased.
+
+2007-12-17 (r4623) Alexander Chernov  <cher@ejudge.ru>
+
+	* contest_plugin.h:
+	(struct contest_plugin_iface) `generate_html_user_runs' function is added.
+
+	* new_server_html:
+	(unpriv_main_page) `generate_html_user_runs' contest plugin function is supported.
+
+2007-12-16 (r4621) Alexander Chernov  <cher@ejudge.ru>
+
+	* contest_plugin.h:
+	(struct contest_plugin_iface) new member
+	  `generate_html_user_problems_summary' is added.
+
+	* html.h:
+	(score_view_display) function prototype is added.
+
+	* html.c:
+	(calc_kirov_score) `score_view_display' is called;
+	(score_view_display) the pointer to the original buffer is returned.
+
+	* new_server_html.c:
+	(unpriv_main_page) `generate_html_user_problems_summary' contest
+	  plugin function is supported.
+
+	* new_server_html_2.c:
+	(ns_write_olympiads_user_runs) `score_view_display' is used;
+	(ns_write_user_problems_summary) `score_view_display' is used.
+
+2007-12-13 (r4613) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) `stand_ignore_score' field is added.
+
+	* super_proto.h:
+	`stand_ignore_score' editing is supported.
+
+	* html.c:
+	(do_write_kirov_standings) `stand_ignore_score' is supported.
+
+	* prepare.c, prepare_out.c:
+	`stand_ignore_score' problem configuration variable is added.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	`stand_ignore_score' editing is supported.
+
+2007-12-13 (r4612) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) new fields `score_view',
+	  `score_view_score', `score_view_text' are added.
+
+	* super_proto.h:
+	editing of `score_view' problem configuration variable is supported.
+
+	* html.c:
+	(score_view_display) new function;
+	(do_write_kirov_standings) `score_view' problem configuration variable
+	  is supported.
+
+	* prepare.c, prepare_out.c:
+	new problem configuration variable `score_view' is added.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of `score_view' problem configuration variable is supported.
+
+2007-12-13 (r4610) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist_xml.c:
+	(parse_cookies) for privileged cookies default contest_id is 0.
+
+2007-12-13 (r4606) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) `stand_disq_attr' field is added.
+
+	* super_proto.h:
+	editing of the `stand_disq_attr' GCV is supported.
+
+	* html.c:
+	(struct standings_style) `disq_attr' field is added;
+	(setup_standings_style) `stand_disq_attr' GCV is supported;
+	(do_write_kirov_standings) `stand_fail_attr' and `stand_disq_attr'
+	  GCV are supported.
+
+	* prepare.c, prepare_out.c:
+	`stand_disq_attr' global configuration variable is supported.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of the `stand_disq_attr' GCV is supported.
+
+2007-12-11 (r4599) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`settings.h' is removed.
+
+	* ej_limits.h:
+	`EJ_MAX_CONTEST_ID' is renamed from `MAX_CONTEST_ID';
+	`EJ_MAX_TESTER' is added;
+	`EJ_INTERNAL_CHARSET' is added;
+	`EJ_SERVE_PACKET_NAME_SIZE' is added;
+	`EJ_MAX_CGI_VALUE_LEN' is added;
+	`EJ_MAX_SERVE_PACKET_LEN' is added;
+	`EJ_MAX_USERLIST_PACKET_LEN' is added.
+
+	* serve_state.h:
+	"settings.h" include is removed;
+	`EJ_MAX_TESTER' is used instead of `MAX_TESTER'.
+
+	* compile-control.c: copyright notice is updated;
+	"settings.h" include is removed;
+	`EJ_SERVE_PACKET_NAME_SIZE' is used instead `SERVE_PACKET_NAME_SIZE'.
+
+	* compile_packet_1.c, compile_packet_2.c: compile_packet_4.c, compile_packet_5.c, run_packet_4.c, run_packet_5.c: copyright notice is updated;
+	`EJ_MAX_CONTEST_ID' is used instead of `MAX_CONTEST_ID'.
+
+	* cgi.c: copyright notice is updated;
+	"ej_limits.h" is included;
+	constants are updated.
+
+	* ejudge-control.c, job-server.c, new-client.c, new-server.c, serve-control.c, new-server-cmd.c,  new_server_html_2, new_server_html_4.c, new_server_html_5.c, new_server_proto.c, new_server_tables.c, plugin.c, prepare_serve.c, reports.c, serve-cmd.c, server_framework.c, startstop.c:
+	"settings.h" include is removed.
+
+	* new_server_html.c:
+	"settings.h" include is removed;
+	`EJ_MAX_CONTEST_ID' is used instead of `MAX_CONTEST_ID'.
+
+	* expat_iface.c, new_server_html_3.c, register.c, runlog_xml.c, team_extra_xml.c, testing_report_xml.c:
+	"settings.h" include is removed;
+	`EJ_INTERNAL_CHARSET' is used instead of `EJUDGE_INTERNAL_CHARSET'.
+
+	* super_html_2.c, run.c:
+	`EJ_INTERNAL_CHARSET' is used instead of `EJUDGE_INTERNAL_CHARSET'.
+
+	* job-server-cmd.c, job-server-control.c, new-server-control.c, send_job_packet.c, super-serve-control.c, userlist-server-control.c: copyright notice is updated;
+	"settings.h" include is removed.
+
+	* prepare.c:
+	"settings.h" include is removed;
+	`EJ_MAX_TESTER' is used instead of `MAX_TESTER'.
+
+	* serve.c:
+	"settings.h" include is removed;
+	`EJ_MAX_SERVE_PACKET_LEN' is used instead of `MAX_SERVE_PACKET_LEN';
+	`EJ_INTERNAL_CHARSET' is used instead of `EJUDGE_INTERNAL_CHARSET'.
+
+	* run_packet_1.c, run_packet_2.c, userlist.c:
+	`EJ_MAX_CONTEST_ID' is used instead of `MAX_CONTEST_ID'.
+
+	* serve_2.c:
+	`EJ_SERVE_PACKET_NAME_SIZE' is used instead `SERVE_PACKET_NAME_SIZE'.
+
+	* userlist-server.c:
+	"settings.h" is removed;
+	"ej_limits.h" is added;
+	`EJ_INTERNAL_CHARSET' is used instead of `EJUDGE_INTERNAL_CHARSET';
+	`EJ_MAX_USERLIST_PACKET_LEN' is used instead of
+	  `MAX_USERLIST_PACKET_LEN'.
+
+	* userlist_xml.c:
+	"settings.h" is removed;
+	`EJ_INTERNAL_CHARSET' is used instead of `EJUDGE_INTERNAL_CHARSET';
+	`EJ_MAX_CONTEST_ID' is used instead of `MAX_CONTEST_ID'.
+
+	* html.c, users.c: copyright notice is updated;
+	"settings.h" include is removed;
+	`EJ_INTERNAL_CHARSET' is used instead of `EJUDGE_INTERNAL_CHARSET'.
+
+2007-12-10 (r4589) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_limits.h: copyright notice is updated;
+	EJ_MAX_PROB_ID is added.
+
+	* serve_state.h:
+	"ej_limits.h" is included;
+	EJ_MAX_LANG_ID is used instead of MAX_LANGUAGE;
+	EJ_MAX_PROB_ID is used instead of MAX_PROBLEM.
+
+	* settings.h:
+	MAX_LANGUAGE, MAX_PROBLEM definitions are removed.
+
+	* prepare.c:
+	EJ_MAX_LANG_ID is used instead of MAX_LANGUAGE;
+	EJ_MAX_PROB_ID is used instead of MAX_PROBLEM.
+
+2007-12-09 (r4585) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist.h:
+	enumeration for XML generation flags is added;
+	(userlist_unparse_user) `flags' parameter is added;
+	(userlist_real_unparse_user) `memb_force_flag' renamed to `flags';
+	(userlist_unparse_for_standings) commented out.
+
+	* userlist-server.c:
+	code cleanups.
+
+	* userlist_xml.c:
+	(userlist_real_unparse_user) `force_first_member' parameter is renamed
+	  to `flags';
+	(userlist_unparse_user) `flags' parameter is added.
+
+2007-12-08 (r4577) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist_clnt.h:
+	(userlist_clnt_team_cookie) `p_contest_id' parameter is added;
+	(userlist_clnt_priv_login) `priv_level' parameter is removed.
+
+	* userlist_proto.h:
+	(struct userlist_pk_check_cookie) `priv_level' field now has type int.
+
+	* new_server_html.c:
+	(privileged_page_login) call of `userlist_clnt_priv_login' is updated.
+
+	* new_server_html_4.c:
+	(cmd_login) call of `userlist_clnt_priv_login' is updated.
+
+	* master.c, serve-control.c, team.c:
+	(authentificate) `userlist_clnt_team_cookie' call is updated.
+
+	* userlist-server.c:
+	code improvements.
+
+2007-12-06 (r4575) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_plugin.h:
+	`set_cookie_team_login' function pointer is added.
+
+	* new_server_html.c:
+	(unpriv_submit_run) `ignore_duplicated_runs' global configuration
+	  variable is honored.
+
+	* uldb_plugin_xml.c:
+	(set_cookie_team_login_func) new function is added.
+
+	* userlist-server.c:
+	(struct client_state) fields `contest_id', `cnts_login' are added;
+	(full_get_contest) check for contest_id == 0 is added;
+	(cmd_team_login) contest_id check is reworked;
+	(cmd_priv_login) contest_id check is reworked;
+	(cmd_priv_check_user) contest_id check is reworked;
+	(cmd_team_check_cookie) contest_id check is reworked;
+	(cmd_priv_cookie_login) contest_id check is reworked.
+
+2007-12-03 (r4570) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_plugin.h:
+	(copy_user_info) `copy_passwd_flag' parameter is added.
+
+	* ejudge-setup.c:
+	(generate_contest_xml) capability bits are updated;
+	(generate_ejudge_xml) capability bits are updated.
+
+	* uldb_plugin_xml.c:
+	(copy_user_info_func) `copy_passwd_flag' parameter is added.
+
+	* userlist-server.c:
+	(is_judge_or_same_user) new function;
+	(is_privileged_cnts2_user) new function;
+	(cmd_priv_delete_member) permission checks are redone;
+	(cmd_create_member) permission checks are redone;
+	(cmd_copy_user_info) permission checks are redone;
+	(cmd_move_member) permission checks are redone.
+
+2007-12-02 (r4564) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist-server.c:
+	numerous changes in permission handling.
+
+2007-12-02 (r4560) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(struct http_request_info) `dbcaps' field is added.
+
+	* opcaps.h:
+	`GENERATE_TEAM_PASSWORDS' capability bit is removed;
+	`EDIT_PASSWD', `PRIV_EDIT_PASSWD' capability bits are added.
+
+	* new_server_html.c:
+	(priv_password_operation) permission checks change.
+
+	* new_server_html_2.c:
+	(ns_user_info_page) permission checks change.
+
+	* opcaps.c, serve-control.c, super_html.c:
+	`GENERATE_TEAM_PASSWORDS' capability bit is removed;
+	`EDIT_PASSWD', `PRIV_EDIT_PASSWD' capability bits are added.
+
+	* userlist-server.c:
+	(is_admin) new function;
+	(is_dbcnts_capable) new function;
+	(cmd_generate_register_passwords) permission check is changed;
+	(cmd_generate_register_passwords_2) permission check is changed;
+	(cmd_generate_team_passwords) permission check is changed;
+	(cmd_generate_team_passwords_2) permission check is changed;
+	(cmd_clear_team_passwords) permission check is changed;
+	(cmd_user_op) permission check is changed.
+
+2007-12-01 (r4559) Alexander Chernov  <cher@ejudge.ru>
+
+	* opcaps.h:
+	capabilities LIST_CONTEST_USERS and LIST_ALL_USERS are replaced by
+	  LIST_USERS.
+
+	* opcaps.c, serve.c, serve-control.c, super_html.c, userlist-server.c:
+	capabilities LIST_CONTEST_USERS and LIST_ALL_USERS are replaced by
+	  LIST_USERS.
+
+2007-11-29 (r4553) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	installation of filter_expr.html is added.
+
+	* filter_scan.lex:
+	aliases for some operations are added:
+	  user_id is an alias for uid;
+	  prob_id is an alias for prob;
+	  lang_id is an alias for lang.
+
+2007-11-29 (r4548) Alexander Chernov  <cher@ejudge.ru>
+
+	* master_html.c:
+	(write_priv_all_runs) "Help" link is added for filter exprs.
+
+	* new_server_html.c:
+	(priv_main_page) "Problems" link is added.
+
+2007-11-29 (r4545) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	user role constants are conditionally compiled.
+
+	* opcaps.h: copyright notice is updated;
+	`OPCAP_PRIV_EDIT_REG' capability bit is added.
+
+	* userlist_clnt.h:
+	(userlist_clnt_team_cookie) `locale_id', `p_contest_id' parameters
+	  are removed;
+	(userlist_clnt_register_contest) `ip', `ssl_flag' parameters are
+	  added;
+	(userlist_clnt_priv_cookie) `locale_id' parameter is removed;
+	(userlist_clnt_priv_cookie_login) `priv_level' parameter is removed.
+
+	* userlist_proto.h:
+	(struct userlist_pk_check_cookie) `locale_id' field is removed;
+	(struct userlist_pk_cookie_login) new structure;
+	(struct userlist_pk_register_contest) `new fields `ip', `ssl_flag'
+	  are added.
+
+	* edit-userlist.c:
+	calls of `userlist_clnt_register_contest' are updated.
+
+	* ejudge-setup.c:
+	(generate_contest_xml) `PRIV_EDIT_REG' bit is added.
+
+	* master.c:
+	calls of `userlist_clnt_priv_cookie' are updated.
+
+	* new_server_html.c:
+	calls of `userlist_clnt_priv_cookie_login' are updated;
+	calls of `userlist_clnt_register_contest' are updated.
+
+	* new_server_html_5.c:
+	calls of `userlist_clnt_register_contest' are updated.
+
+	* opcaps.c: copyright notice is updated;
+	`PRIV_EDIT_REG' capability bit is added.
+
+	* register.c:
+	calls of `userlist_clnt_register_contest' are updated.
+
+	* serve-cmd.c:
+	calls of `userlist_clnt_team_cookie' are updated;
+	calls of `userlist_clnt_priv_cookie' are updated.
+
+	* serve-control.c:
+	calls of `userlist_clnt_priv_cookie' are updated;
+	bitmask for master capabilities is updated.
+
+	* super_html.c:
+	comment for `PRIV_EDIT_REG' capability is added.
+
+	* super_html_2.c:
+	calls of `userlist_clnt_register_contest' are updated.
+
+	* team.c:
+	calls of `userlist_clnt_team_cookie' are updated.
+
+	* userlist-server.c:
+	(cmd_check_cookie) `locale_id' in input packet is removed;
+	(cmd_team_check_cookie) `locale_id' in input packet is removed;
+	(cmd_priv_check_cookie) `locale_id' in input packet is removed;
+	(cmd_priv_cookie_login) input packet now has type
+	  `userlist_pk_cookie_login';
+	(cmd_register_contest_2) IP-addresses are checked;
+	(cmd_create_member) the serial of the new member is returned.
+
+2007-11-25 (r4541) Alexander Chernov  <cher@ejudge.ru>
+
+	* clarlog.h: copyright notice is updated;
+	(clar_add_record_new) `utf8_mode' parameter is added.
+
+	* clarlog.c: copyright notice is updated;
+	(clar_add_record_new) `utf8_mode' parameter is added;
+	  UTF-8 handling is improved.
+
+	* new_server_html.c:
+	`clar_add_record_new' calls are updated.
+
+	* userlist-server.c:
+	(cmd_get_user_info) packet user_id == 0 is handled.
+
+2007-11-20 (r4535) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist_clnt.h:
+	(userlist_clnt_lookup_user) `contest_id' parameter is added.
+
+	* new_server_html.c, super_html_2.c:
+	calls of `userlist_clnt_lookup_user' are updated.
+
+2007-11-20 (r4527) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	`NEW_SRV_ACTION_VIEW_EXAM_INFO' is added;
+	(ns_write_exam_info) new function prototype is added.
+
+	* new_server_html.c:
+	(priv_view_exam_info) new function is added;
+	(priv_main_page) link to "Examination information" page is added.
+
+	* new_server_html_2.c:
+	(ns_write_exam_info) new function.
+
+2007-11-20 (r4524) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	python/Makefile is added to the output list.
+
+2007-11-20 (r4522) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`userlist_clnt/team_login.c' is removed.
+
+	* userlist.h:
+	(userlist_str_to_user_field_code) new function prototype.
+
+	* userlist_clnt.h:
+	(userlist_clnt_register_new_2) `p_user_id' parameter is added;
+	(userlist_clnt_team_login) removed;
+	(userlist_clnt_create_user) `login' parameter is added.
+
+	* userlist_proto.h:
+	(userlist_str_to_request) new function prototype.
+
+	* new_server_html.c, new_server_html_4.c, team.c:
+	`userlist_clnt_login' is used instead of `userlist_clnt_team_login'.
+
+	* edit-userlist.c, new_server_html_5.c, register.c:
+	use of `userlist_clnt_create_user' is updated.
+
+	* userlist.c:
+	(userlist_str_to_user_field_code) new function.
+
+	* userlist_proto.c:
+	<string.h> is included;
+	(userlist_str_to_request) new function.
+
+	* userlist-server.c:
+	(cmd_create_user) `login' field is handled.
+
+2007-11-10 (r4508) Alexander Chernov  <cher@ejudge.ru>
+
+	* contest_plugin.h:
+	(struct contest_plugin_iface) new member `print_user_reports' added.
+
+	* new_server_html.c:
+	(priv_print_users_exam_protocol) contest plugin member
+	  `print_user_reports' is called.
+
+2007-11-09 (r4502) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(find_user_variant) new function prototype.
+
+	* sformat.h:
+	(struct sformat_extra_data) `variant' field is added.
+
+	* html.c:
+	(do_write_kirov_standings) user variant is supported;
+	(do_write_moscow_standings) user variant is supported;
+	(do_write_standings) user variant is supported.
+
+	* prepare_serve.c:
+	(find_user_variant) new function.
+
+	* sformat.c:
+	(sformat_message) `variant' field from extra data is printed.
+
+2007-11-08 (r4500) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog_xml.c:
+	(unparse_runlog_xml) fog_time, unfog_time, sched_start_time,
+	   stop_time are generated.
+
+2007-11-04 (r4488) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge-setup.c:
+	(generate_serve_cfg) "detect_violations" flag is set;
+	  java language id is 18 instead of 17;
+	(generate_compile_cfg) "txt" language is removed;
+	  java language id is 18 instead of 17.
+
+	* new_server_html_2.c:
+	(ns_write_priv_all_runs) HTML generation improvements;
+	(ns_write_priv_standings) HTML generation improvements.
+
+	* serve_2.c:
+	(serve_run_request) `security_violation' support is added.
+
+2007-10-31 (r4487) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) `detect_violations' field is added.
+
+	* run_packet.h:
+	(struct run_request_packet) `security_violation' field is supported.
+
+	* run_packet_priv.h:
+	`FLAGS_SECURITY_VIOLATION' is added.
+
+	* super_proto.h:
+	editing of `detect_violations' global configuration variable
+	  is supported.
+
+	* prepare.c, prepare_out.c:
+	global variable `detect_violations' is supported.
+
+	* run.c:
+	security violation support is improved.
+
+	* run_packet_1.c:
+	(run_request_packet_read) `security_violation' field is supported.
+
+	* run_packet_2.c:
+	(run_request_packet_write) `security_violation' field is supported.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of `detect_violations' global configuration variable
+	  is supported.
+
+2007-10-30 (r4486) Alexander Chernov  <cher@ejudge.ru>
+
+	* execute.c:
+	--security-violation option is added.
+
+2007-10-30 (r4484) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	detection of `task_EnableSecurityViolationError' is added.
+
+	* config.h.in:
+	`HAVE_TASK_ENABLESECURITYVIOLATIONERROR' added.
+
+2007-10-30 (r4479) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	detection of task_IsSecurityViolation is added.
+
+	* config.h.in:
+	HAVE_TASK_ISSECURITYVIOLATION is added.
+
+	* Makefile.unix.in:
+	report_plugin.h is installed to `include' directory.
+
+	* prepare.c:
+	`report_plugin_file' global configuration variable is added.
+
+	* execute.c:
+	(run_program) security violation detection code is added,
+	  the kernel support is required, though...
+
+	* run.c:
+	(run_tests) security violation detection code is added,
+	  the kernel support is required, though...
+
+2007-10-30 (r4477) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) `report_plugin_file' field is added.
+
+	* report_plugin.h:
+	(struct report_plugin_iface) new function pointers
+	  `generate_tex_user_report', `generate_tex_full_user_report',
+	  `generate_tex_problem_report' are added.
+
+	* serve_state.h:
+	"report_plugin.h" is included;
+	(struct serve_state) new fields `report_plugin', `report_plugin_data'.
+
+	* prepare.c:
+	(set_defaults) `report_plugin_file' is handled.
+
+	* prepare_out.c:
+	(prepare_unparse_unhandled_global) `report_plugin_file' variable
+	  is added.
+
+	* reports.c:
+	(tex_fix_unhandled_utf8) renamed from `fix_tex_utf8';
+	(tex_armor_verbatim) `static' is removed;
+	(tex_armor_verbatim_2) `static' is removed;
+	(user_report_generate) parameter list is reorganized;
+	(full_user_report_generate) parameter list is reorganized;
+	(invoke_latex) `static' is removed;
+	(invoke_dvips) `static' is removed;
+	(ns_print_user_exam_protocol) report plugin is supported;
+	(ns_print_user_exam_protocols) report plugin is supported;
+	(problem_report_generate) `static' is added;
+	  parameter list is reorganized.
+
+	* serve_state.c:
+	(serve_state_destroy) report plugin is unloaded;
+	(serve_state_load_contest) report plugin is loaded.
+
+2007-10-29 (r4476) Alexander Chernov  <cher@ejudge.ru>
+
+	* report_plugin.h:
+	initial revision
+
+2007-10-28 (r4439) Alexander Chernov  <cher@ejudge.ru>
+
+	* edit-userlist.c:
+	(display_registered_users) buffer size increased to 256.
+
+	* new_server_html.c:
+	(priv_assign_cyphers_1) completed;
+	(priv_assign_cyphers_2) completed;
+	(priv_main_page) link to cypher assignment page is added.
+
+	* new_server_tables.c:
+	`NEW_SRV_ACTION_ASSIGN_CYPHERS_2' button label is added.
+
+2007-10-27 (r4435) Alexander Chernov  <cher@ejudge.ru>
+
+	* filter_eval.c, filter_expr.y, filter_scan.lex:
+	support for "judge_id" primary expression is implemented.
+
+2007-10-27 (r4434) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_2.c:
+	(serve_move_files_to_insert_run) cases when the source is removed
+	  are excluded.
+
+	* master_html.c:
+	(write_priv_all_runs) judged virtual stop events are marked with "!".
+
+	* filter_eval.c, filter_expr.y, filter_scan.lex:
+	"missingsource" primary expression is handled.
+
+2007-10-23 (r4432) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_state.h:
+	(struct serve_event_queue) `real_time' field is added.
+
+	* new_server_html.c:
+	(priv_force_start_virtual) fix.
+
+	* serve_2.c: fixes.
+
+	* serve_state.c:
+	(serve_event_add) `real_time' is assigned as well as `time'.
+
+2007-10-23 (r4427) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_2.c:
+	(serve_move_files_to_insert_run) fixes;
+	(serve_squeeze_runs) function returns immediately.
+
+2007-10-08 (r4407) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.h:
+	(url_armor_needed) new function prototype.
+
+	* ncurses_utils.h:
+	(ncurses_getch) new function prototype;
+	(ncurses_getkey) new function prototype.
+
+	* edit-userlist.c:
+	utf-8 handling is imporved: russian labels on keys are handled;
+	`ncurses_getkey' is used instead of `getch';
+	extra whitespace is ignored in contest names.
+
+	* ncurses_utils.c:
+	(ncurses_getch) new function;
+	(ncurses_getkey) new function.
+
+	* register.c:
+	(redirect_to_new_client) new function, which redirects the client
+	  to the `new-register', if the `new_managed' contest flag is set.
+
+2007-10-04 (r4405) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist.c:
+	(userlist_clone_user_info) only required members are copied.
+
+2007-09-30 (r4399) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) `prev_runs_to_show' field is added.
+
+	* html.c:
+	(new_write_user_runs) `prev_runs_to_show' is handled.
+
+	* prepare.c, prepare_out.c:
+	new problem configuration variable `prev_runs_to_show' is handled.
+
+2007-09-29 (r4385) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) new fields `enable_text_form',
+	  `group_name'.
+
+	* super_proto.h:
+	editing of the `enable_text_form' problem configuration variable
+	  is supported.
+
+	* new_server_html.c:
+	(unpriv_submit_run) support for `enable_text_form' problem
+	  configuration variable is implemented;
+	(unpriv_main_page) support for `enable_text_form' and
+	  `group_name' problem configuration variables is implemented.
+
+	* prepare.c:
+	`enable_text_form' and `group_name' problem configuration
+	  variables are added.
+
+	* prepare_out.c:
+	(prepare_unparse_prob) `enable_text_form' is handled;
+	(prepare_unparse_unhandled_prob) `group_name' is handled.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of the `enable_text_form' problem configuration variable
+	  is supported.
+
+	* super_html.c:
+	(super_html_edit_contest_page) `allow_reg_data_edit' editing form
+	  is moved to a different place.
+
+2007-09-27 (r4379) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	new attribute "allow_reg_data_edit" is added.
+
+	* new-server.h:
+	`NEW_SRV_ACTION_REG_DATA_EDIT' is added.
+
+	* super_proto.h:
+	editing of the new "allow_reg_data_edit" contest attribute
+	  is supported.
+
+	* contests.c:
+	new attribute "allow_reg_data_edit" is added.
+
+	* new_server_html.c:
+	(unpriv_page_header) link to the registration form is added;
+	(get_register_url) new function.
+
+	* serve-control.c, super-serve.c, super_html.c, super_html_2.c:
+	editing of the new "allow_reg_data_edit" contest attribute
+	  is supported.
+
+2007-09-24 (r4364) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.h:
+	(check_str_2) `utf8_flag' parameter is added;
+	(utf8_to_ucs4_buf) new function prototype;
+	(utf8_to_ucs4_str) new function prototype;
+	(ucs4_to_utf8_size) new function prototype;
+	(ucs4_to_utf8_str) new function prototype.
+
+	* misctext.c:
+	(check_str_2) `utf8_flag' parameter is added;
+	  UTF8 charset is supported;
+	(utf8_to_ucs4_buf) new function;
+	(utf8_to_ucs4_str) new function;
+	(ucs4_to_utf8_size) new function;
+	(ucs4_to_utf8_str) new function.
+
+	* new_server_html_5.c:
+	(info_table_row) call of `check_str_2' is updated;
+	(display_grade_changing_dialog) new function;
+	(edit_member_form) grade is changed through pull-down menu.
+
+2007-09-21 (r4357) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	`CONTEST_F_AREA' is added.
+
+	* userlist.h:
+	<area> element is supported;
+	`USERLIST_NC_AREA' is added;
+	(struct userlist_user_info) `area' field is added.
+
+	* contests.c, edit-userlist.c, new_server_html_5.c, super_html.c, userlist.c, userlist_check.c, userlist-server.c, userlist_xml.c, uldb_plugin_xml.c:
+	new user info field `area' is supported.
+
+2007-09-20 (r4346) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h, userlist.h:
+	user information fields `field0' ... `field9' are supported.
+
+	* contests.c, edit-userlist.c, new_server_html_5.c, super_html.c, uldb_plugin_xml.c, userlist.c, userlist_check.c, userlist-server.c, userlist_xml.c:
+	user information fields `field0' ... `field9' are supported.
+
+2007-09-20 (r4342) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_5.c:
+	minor bugfixes.
+
+	* userlist.c, userlist-server.c, uldb_plugin_xml.c:
+	-1 value is allowed for `grade' member field.
+
+2007-09-20 (r4339) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist_xml.c:
+	<instnum> handling is improved.
+
+2007-09-20 (r4337) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	`instnum' user information field is supported.
+
+	* userlist.h:
+	<instnum> element is supported.
+
+	* contests.c:
+	`instnum' user information field is supported.
+
+	* edit-userlist.c, new_server_html_5.c:
+	editing of the `instnum' field is supported.
+
+	* super_html.c:
+	editing of the `instnum' editing settings is supported.
+
+	* userlist.c:
+	<ctype.h>, <errno.h> are included;
+	`instnum' field of the contest-specific user info is supported.
+
+	* userlist-server.c, userlist_xml.c, uldb_plugin_xml.c, userlist_check.c:
+	`instnum' field is supported.
+
+2007-09-20 (r4335) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist_check.c:
+	any characters are acceptable for gender and status
+
+2007-09-20 (r4333) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist.h:
+	(userlist_get_member_field_str) `use_locale' parameter is added.
+
+	* edit-userlist.c:
+	use of `userlist_get_member_field_str' is updated.
+
+	* new_server_html_5.c:
+	use of `userlist_get_member_field_str' is updated.
+
+	* userlist.c:
+	"config.h" is included;
+	<libintl.h> is included;
+	(userlist_get_member_field_str) `use_locale' parameter is added.
+
+	* userlist_check.c:
+	use of `userlist_get_member_field_str' is updated.
+
+	* userlist-server.c:
+	use of `userlist_get_member_field_str' is updated.
+
+2007-09-20 (r4331) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_5.c:
+	field order is changed for personal contests.
+
+2007-09-19 (r4328) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	(struct contest_field) `legend' field is added.
+
+	* contests.c:
+	`legend' for contest fields is supported.
+
+	* new_server_html_5.c:
+	`legend' for contest fields is supported.
+
+2007-09-15 (r4325) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	"gender" user member info field is supported.
+
+	* userlist.h:
+	"gender" user member info field is supported.
+
+	* contests.c:
+	"gender" user member info field is supported.
+
+	* edit-userlist.c:
+	editing of "gender" field is supported.
+
+	* ejudge_cfg.c:
+	(ejudge_cfg_parse) plugins are moved to `plugins' subdirectory.
+
+	* new_server_html_5.c, super_html.c:
+	editing of "gender" field is supported.
+
+	* userlist.c, userlist-server.c, userlist_xml.c, userlist_check.c:
+	"gender" user member info field is supported.
+
+	* plugin.c, uldb_plugin_xml.c:
+	minor plugin rename.
+
+2007-09-01 (r4321) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	support for "zip", "street" contestant fields is added;
+	support for "discipline" member field is added.
+
+	* userlist.h:
+	support for "zip", "street" contestant elements is added;
+	support for "discipline" member element is added;
+	(struct userlist_member) `discipline' field is added;
+	(struct userlist_user_info) `zip', `street' fields are added.
+
+	* contests.c, super_html.c:
+	support for "zip", "street" contestant fields is added;
+	support for "discipline" member field is added.
+
+	* edit-userlist.c, new_server_html_5.c, userlist.c, userlist-server.c, userlist_xml.c, uldb_plugin_xml.c, userlist_check.c:
+	support for "zip", "street" contestant elements is added;
+	support for "discipline" member element is added.
+
 2007-08-19 (r4314) Alexander Chernov  <cher@ejudge.ru>
 
 	* run.c:

@@ -1,3 +1,8 @@
+2007-12-22 (r4629) Alexander Chernov  <cher@ejudge.ru>
+
+	* dosrun3.c:
+	(main) "INPUT_FILE", "OUTPUT_FILE" environment vars are supported.
+
 2007-08-08 (r4296) Alexander Chernov  <cher@ejudge.ru>
 
 	* Makefile.in:
