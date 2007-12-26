@@ -39,7 +39,7 @@ cd ~
 tar xvfz EJUDGE-ARCH-DIR/ejudge-VERSION.tgz
 cd ejudge
 5. Сконфигурируйте ejudge
-./configure --prefix=/home/ejudge/inst-ejudge  --with-reuse=/home/ejudge/reuse  --enable-charset=koi8-r --enable-socket-path=/tmp/userlist-socket --enable-super-serve-socket=/tmp/super-serve-socket --enable-contests-home-dir=/home/judges --enable-conf-dir=/home/judges/data --enable-cgi-conf-dir=../cgi-data --with-httpd-cgi-bin-dir=CGI-BIN-DIR --with-httpd-htdocs-dir=HTDOCS-DIR
+./configure --prefix=/home/ejudge/inst-ejudge  --with-reuse=/home/ejudge/reuse --enable-contests-home-dir=/home/judges --enable-conf-dir=/home/judges/data --enable-cgi-conf-dir=../cgi-data --with-httpd-cgi-bin-dir=CGI-BIN-DIR --with-httpd-htdocs-dir=HTDOCS-DIR
 
 Здесь CGI-BIN-DIR - это каталог CGI скриптов веб сервера
 (например, это может быть /home/httpd/cgi-bin), HTDOCS-DIR -
@@ -66,13 +66,7 @@ cd ~ejudge/ejudge
 ./ejudge-install.sh
 9. Запустите систему. Запуск программ должен выполняться из-под
 пользователя ejudge:
-cd /home/judges/data/db
-~/inst-ejudge/bin/userlist-server -D &
-cd /home/judges/compile
-~/inst-ejudge/bin/compile conf/compile.cfg &
-cd /home/judges
-~/inst-ejudge/bin/super-serve &
-~/inst-ejudge/bin/job-server &
+ejudge-control start
 
 Убедитесь, что права доступа к каталогу /home/ejudge позволяют
 читать файлы в нём всем пользователям. Некоторые дистрибутивы
@@ -606,44 +600,6 @@ serve.cfg вручную и удалить строку `disabled = 1' из раздела
 В подавляющем большинстве случаев явного указания этих опций не
 требуется.
 
-    --with-libcap=LIBCAP-DIR
-        Данная опция позволяет указать корневой каталог
-        инсталляции библиотеки libcap. Если библиотека libcap
-        скомпилирована с поддержкой специальных битов полномочий
-        (CAP_SYS_OPERATIONS, CAP_SYS_ONE_EXEC), предоставляемых
-        специальным патчем к ядру Linux
-        (http://acm.msu.ru/ejudge/kernel.shtml), скрипт
-        configure включит компиляцию программы capexec и
-        разделяемой библиотеки libdropcaps.so для безопасного
-        выполнения тестируемых программ. Если библиотека libcap
-        установлена в одном из стандартных корневых каталогов
-        (/usr, /usr/local), опцию --with-libcap указывать не
-        нужно.
-
-        Если библиотека libcap не найдена в системе, не
-        поддерживает указанных выше битов полномочий, или эти
-        биты полномочий не поддерживаются ядром Linux в момент
-        выполнения скрипта configure, компиляция программы
-        capexec и библиотеки libdropcaps.so отключается. Кроме
-        того, их компиляцию можно отключить явно, задав в
-        командной строке configure опцию --without-libcap.
-
-    --with-libcap-include-dir=DIR
-        Данная опция позволяет явно указать путь к каталогу
-        загловочных файлов на Си, в котором находится файл
-        <sys/capability.h>. По умолчанию значение данной опции
-        равно LIBCAP-DIR/include, если указано значение опции
-        --with-libcap, а в противном случае используются
-        стандартные пути к каталогам заголовочных файлов.
-
-    --with-libcap-lib-dir=DIR
-        Данная опция позволяет явно указать путь к каталогу
-        библиотечных файлов, в котором находится библиотека
-        -lcap. По умолчанию значение данной опции равно
-        LIBCAP-DIR/lib, если указано значение опции
-        --with-libcap, а в противном случае используются
-        стандартные пути к каталогам библиотечных файлов.
-
     --with-expat=EXPAT-DIR
         Данная опция позволяет задать корневой каталог
         инсталляции библиотеки для разбора XML-файлов expat.
@@ -751,11 +707,7 @@ serve.cfg вручную и удалить строку `disabled = 1' из раздела
 
     NO_KERNEL=1
         Отменить компиляцию программы capexec и библиотеки
-        libdropcaps.so. Аналогично указанию опции
-        --without-libcap в командной строке скрипта configure.
-        Если библиотека libcap в системе не обнаружена или не
-        может быть использована, эта переменная устанавливается
-        в 1 автоматически скриптом configure.
+        libdropcaps.so.
 
     RELEASE=1
         Компилирует систему ejudge в режиме окончательной

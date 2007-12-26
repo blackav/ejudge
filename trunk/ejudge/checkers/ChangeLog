@@ -1,3 +1,8 @@
+2007-12-02 (r4561) Alexander Chernov  <cher@ejudge.ru>
+
+	* testlib.pas:
+	(instream.readreal) failure during reading of very long strings is fixed.
+
 2007-08-23 (r4316) Alexander Chernov  <cher@ejudge.ru>
 
 	* checker_internal.h:
