@@ -1,6 +1,10 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Version 2.3.5 (r4652) (20080107)
+================================
+The test contest configuration file generation bug is fixed.
+
 Version 2.3.4 (r4646) (20071226)
 ================================
 Sorry, no English version yet.
