@@ -86,3 +86,11 @@ HTDOCS_DIR/ejudge directory (i.e. the same directory where the
 ejudge HTML style files are located). `dojo.js',
 `iframe_history.html' files and the `src' directory should be
 copied there from the dojo distribution.
+
+5. The ejudge system is now started by a single command:
+ejudge-control start
+all the ejudge components are started in the background (daemon)
+mode. The log files are located in the CONF_DIR/var directory.
+
+The system is stopped also by a single command:
+ejudge-control stop
