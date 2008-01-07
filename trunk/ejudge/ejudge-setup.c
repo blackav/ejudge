@@ -2446,7 +2446,7 @@ generate_serve_cfg(FILE *f)
         "corr_dir = \"%Ps\"\n"
         "real_time_limit = 30\n"
         "check_cmd = \"check_%lPs\"\n"
-        "xml_file = \"%Ps.html\"\n"
+        "xml_file = \"%Ps.xml\"\n"
         "max_vm_size = 64M\n"
         "time_limit = 1\n"
         "\n"
