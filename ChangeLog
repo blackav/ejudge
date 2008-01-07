@@ -1,3 +1,8 @@
+2008-01-07 (r4648) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge-setup.c:
+	(generate_serve_cfg) bug is fixed.
+
 2007-12-24 (r4643) Alexander Chernov  <cher@ejudge.ru>
 
 	* contest_plugin.h:
