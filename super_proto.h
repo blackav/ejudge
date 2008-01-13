@@ -4,7 +4,7 @@
 #ifndef __SUPER_PROTO_H__
 #define __SUPER_PROTO_H__
 
-/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -535,6 +535,7 @@ enum
   SSERV_CMD_PROB_CHANGE_USE_STDOUT,
   SSERV_CMD_PROB_CHANGE_BINARY_INPUT,
   SSERV_CMD_PROB_CHANGE_IGNORE_EXIT_CODE,
+  SSERV_CMD_PROB_CHANGE_OLYMPIAD_MODE,
   SSERV_CMD_PROB_CHANGE_TIME_LIMIT,
   SSERV_CMD_PROB_CHANGE_TIME_LIMIT_MILLIS,
   SSERV_CMD_PROB_CHANGE_REAL_TIME_LIMIT,

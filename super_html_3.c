@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -4615,6 +4615,24 @@ super_html_print_problem(FILE *f,
                                self_url, extra_args, prob_hidden_vars);
   }
 
+  if (sstate->global && sstate->global->score_system_val == SCORE_KIROV
+      && show_adv) {
+    //PROBLEM_PARAM(olympiad_mode, "d"),
+    extra_msg = 0;
+    if (!prob->abstract) {
+      prepare_set_prob_value(PREPARE_FIELD_PROB_OLYMPIAD_MODE,
+                             &tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+               tmp_prob.olympiad_mode?"Yes":"No");
+      extra_msg = msg_buf;
+    }
+    print_boolean_3_select_row(f, "Use Olympiad mode?", prob->olympiad_mode,
+                               SSERV_CMD_PROB_CHANGE_OLYMPIAD_MODE,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+  }
+
   if (sstate->global && sstate->global->score_system_val != SCORE_ACM) {
     //PROBLEM_PARAM(full_score, "d"),
     extra_msg = "";
@@ -5459,6 +5477,7 @@ super_html_prob_cmd(struct sid_state *sstate, int cmd,
     prob->use_stdout = 1;
     prob->binary_input = DFLT_P_BINARY_INPUT;
     prob->ignore_exit_code = 0;
+    prob->olympiad_mode = 0;
     prob->time_limit = 5;
     prob->time_limit_millis = 0;
     prob->real_time_limit = 30;
@@ -5667,6 +5686,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_IGNORE_EXIT_CODE:
     p_int = &prob->ignore_exit_code;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_OLYMPIAD_MODE:
+    p_int = &prob->olympiad_mode;
     goto handle_boolean_1;
 
   case SSERV_CMD_PROB_CHANGE_TIME_LIMIT:
