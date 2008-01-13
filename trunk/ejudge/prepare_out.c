@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1031,6 +1031,9 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   if ((prob->abstract && prob->ignore_exit_code == 1)
       || (!prob->abstract && prob->ignore_exit_code >= 0))
     unparse_bool(f, "ignore_exit_code", prob->ignore_exit_code);
+  if ((prob->abstract && prob->olympiad_mode == 1)
+      || (!prob->abstract && prob->olympiad_mode >= 0))
+    unparse_bool(f, "olympiad_mode", prob->olympiad_mode);
   if (prob->statement_file[0])
     fprintf(f, "statement_file = \"%s\"\n",c_armor(&sbuf,prob->statement_file));
   if (prob->alternatives_file[0])

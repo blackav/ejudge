@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -310,6 +310,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(use_stdout, "d"),
   PROBLEM_PARAM(binary_input, "d"),
   PROBLEM_PARAM(ignore_exit_code, "d"),
+  PROBLEM_PARAM(olympiad_mode, "d"),
   PROBLEM_PARAM(time_limit, "d"),
   PROBLEM_PARAM(time_limit_millis, "d"),
   PROBLEM_PARAM(real_time_limit, "d"),
@@ -671,6 +672,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->use_stdout = -1;
   p->binary_input = -1;
   p->ignore_exit_code = -1;
+  p->olympiad_mode = -1;
   p->time_limit = -1;
   p->time_limit_millis = -1;
   p->real_time_limit = -1;
@@ -2894,6 +2896,8 @@ set_defaults(serve_state_t state, int mode)
                            prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_IGNORE_EXIT_CODE,
                            prob, aprob, g);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_OLYMPIAD_MODE,
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT,
                            prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT_MILLIS,
@@ -4409,6 +4413,7 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
   if (prob->use_stdout < 0) prob->use_stdout = 0;
   if (prob->binary_input < 0) prob->binary_input = DFLT_P_BINARY_INPUT;
   if (prob->ignore_exit_code < 0) prob->ignore_exit_code = 0;
+  if (prob->olympiad_mode < 0) prob->olympiad_mode = 0;
   if (prob->time_limit < 0) prob->time_limit = 0;
   if (prob->time_limit_millis < 0) prob->time_limit_millis = 0;
   if (prob->real_time_limit < 0) prob->real_time_limit = 0;
@@ -4869,6 +4874,11 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
   case PREPARE_FIELD_PROB_IGNORE_EXIT_CODE:
     if (out->ignore_exit_code == -1 && abstr) out->ignore_exit_code = abstr->ignore_exit_code;
     if (out->ignore_exit_code == -1) out->ignore_exit_code = 0;
+    break;
+
+  case PREPARE_FIELD_PROB_OLYMPIAD_MODE:
+    if (out->olympiad_mode == -1 && abstr) out->olympiad_mode = abstr->olympiad_mode;
+    if (out->olympiad_mode == -1) out->olympiad_mode = 0;
     break;
 
   case PREPARE_FIELD_PROB_TIME_LIMIT:

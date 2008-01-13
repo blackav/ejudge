@@ -3,7 +3,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -430,6 +430,7 @@ struct section_problem_data
   int    use_stdout;            /* 1, if solution uses stdout for output */
   int    binary_input;          /* input data for problem is binary */
   int    ignore_exit_code;      /* do not tread non-zero exit code as RE */
+  int    olympiad_mode;         /* for KIROV contests: handle problem as O. M.*/
   int    real_time_limit;       /* maximum astronomical time for a problem */
   int    time_limit;            /* time limit in secs */
   int    time_limit_millis;     /* time limit in milliseconds */
@@ -701,6 +702,7 @@ enum
   PREPARE_FIELD_PROB_USE_STDOUT,
   PREPARE_FIELD_PROB_BINARY_INPUT,
   PREPARE_FIELD_PROB_IGNORE_EXIT_CODE,
+  PREPARE_FIELD_PROB_OLYMPIAD_MODE,
   PREPARE_FIELD_PROB_TIME_LIMIT,
   PREPARE_FIELD_PROB_TIME_LIMIT_MILLIS,
   PREPARE_FIELD_PROB_REAL_TIME_LIMIT,
