@@ -1,14 +1,14 @@
 # -*- mode: po; coding: koi8-r -*-
 # ejudge messages catalog
 # $Id$
-# Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-11-29 20:40+0300\n"
-"PO-Revision-Date: 2007-11-29 20:40+0300\n"
+"PO-Revision-Date: 2008-01-16 11:45+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -210,18 +210,10 @@ msgid ""
 "<p class=\"ejudge_copyright\">Visual design and web-interface &copy; %s <a "
 "href=\"%s\">Toto Lasvik</a>.</p>"
 msgstr ""
-"<p class=\"ejudge_copyright\">Это - система администрирования турниров <a "
-"href=\"%s\"><b>ejudge</b></a>, версия %s, дата компиляции %s.</p>\n"
-"<p class=\"ejudge_copyright\">Авторские права на программу: &copy; %s "
-"Александр Чернов.</p>\n"
-"<p class=\"ejudge_copyright\">Данная программа является свободным ПО. Вы "
-"можете распространять и/или модифицировать её в соответствии с <a href="
-"\"http://www.gnu.org/licenses/gpl.html\">Общей Лицензией GNU</a> (GNU "
-"General Public License), опубликованной <a href=\"http://www.fsf.org"
-"\">Фондом свободного ПО</a> (Free Software Foundation), либо версии 2 "
-"Лицензии, либо (по Вашему желанию) любой последующей версии.</p>\n"
-"<p class=\"ejudge_copyright\">Веб-дизайн и AJAX-интерфейс &copy; %s <a href="
-"\"%s\">Toto Lasvik</a>.</p>"
+"<p class=\"ejudge_copyright\">Это &mdash; система администрирования турниров <a href=\"%s\"><b>ejudge</b></a>, версия %s, дата компиляции %s.</p>\n"
+"<p class=\"ejudge_copyright\">Авторские права на программу: &copy; %s Александр Чернов.</p>\n"
+"<p class=\"ejudge_copyright\">Данная программа является свободным ПО. Вы можете распространять и/или модифицировать её в соответствии с <a href=\"http://www.gnu.org/licenses/gpl.html\">Общей Лицензией GNU</a> (GNU General Public License), опубликованной <a href=\"http://www.fsf.org\">Фондом свободного ПО</a> (Free Software Foundation), либо версии 2 Лицензии, либо (по Вашему желанию) любой последующей версии.</p>\n"
+"<p class=\"ejudge_copyright\">Веб-дизайн и AJAX-интерфейс &copy; %s <a href=\"%s\">Toto Lasvik</a>.</p>"
 
 #, c-format
 msgid ""
