@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -5008,6 +5008,17 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
   unsigned char *closing_a = "";
   unsigned char cl[128] = { 0 };
 
+  static const int default_actions_vector[] =
+  {
+    ACTION_VIEW_TEST_INPUT,     /* 0 */
+    ACTION_VIEW_TEST_OUTPUT,    /* 1 */
+    ACTION_VIEW_TEST_ANSWER,    /* 2 */
+    ACTION_VIEW_TEST_ERROR,     /* 3 */
+    ACTION_VIEW_TEST_CHECKER,   /* 4 */
+    ACTION_VIEW_TEST_INFO,      /* 5 */
+  };
+  if (!action_vec) action_vec = default_actions_vector;
+
   if (table_class && *table_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
   }
@@ -5164,7 +5175,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
     if (r->archive_available) {
       html_hyperref(opening_a, sizeof(opening_a), sid, self_url, extra_args,
                     "action=%d&run_id=%d&test_num=%d",
-                    ACTION_VIEW_TEST_INPUT, r->run_id, t->num);
+                    action_vec[0], r->run_id, t->num);
       closing_a = "</a>";
     } else if (t->input) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dI\">", t->num);
@@ -5178,7 +5189,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
     if (r->archive_available && t->output_available) {
       html_hyperref(opening_a, sizeof(opening_a), sid, self_url, extra_args,
                     "action=%d&run_id=%d&test_num=%d",
-                    ACTION_VIEW_TEST_OUTPUT, r->run_id, t->num);
+                    action_vec[1], r->run_id, t->num);
       closing_a = "</a>";
     } else if (t->output) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dO\">", t->num);
@@ -5192,7 +5203,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
     if (r->archive_available && r->correct_available) {
       html_hyperref(opening_a, sizeof(opening_a), sid, self_url, extra_args,
                     "action=%d&run_id=%d&test_num=%d",
-                    ACTION_VIEW_TEST_ANSWER, r->run_id, t->num);
+                    action_vec[2], r->run_id, t->num);
       closing_a = "</a>";
     } else if (t->correct) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dA\">", t->num);
@@ -5206,7 +5217,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
     if (r->archive_available && t->stderr_available) {
       html_hyperref(opening_a, sizeof(opening_a), sid, self_url, extra_args,
                     "action=%d&run_id=%d&test_num=%d",
-                    ACTION_VIEW_TEST_ERROR, r->run_id, t->num);
+                    action_vec[3], r->run_id, t->num);
       closing_a = "</a>";
     } else if (t->error) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dE\">", t->num);
@@ -5220,7 +5231,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
     if (r->archive_available && t->checker_output_available) {
       html_hyperref(opening_a, sizeof(opening_a), sid, self_url, extra_args,
                     "action=%d&run_id=%d&test_num=%d",
-                    ACTION_VIEW_TEST_CHECKER, r->run_id, t->num);
+                    action_vec[4], r->run_id, t->num);
       closing_a = "</a>";
     } else if (t->checker) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dC\">", t->num);
@@ -5234,7 +5245,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
     if (r->archive_available && r->info_available) {
       html_hyperref(opening_a, sizeof(opening_a), sid, self_url, extra_args,
                     "action=%d&run_id=%d&test_num=%d",
-                    ACTION_VIEW_TEST_INFO, r->run_id, t->num);
+                    action_vec[5], r->run_id, t->num);
       closing_a = "</a>";
     } else {
       opening_a[0] = 0;
