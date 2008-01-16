@@ -3,7 +3,7 @@
 #ifndef __SERVE_STATE_H__
 #define __SERVE_STATE_H__
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -159,6 +159,7 @@ struct serve_state
   int accepting_mode;
   int testing_finished;
   int standings_updated;
+  int has_olympiad_mode;
 
   // upsolving mode
   int upsolving_mode;

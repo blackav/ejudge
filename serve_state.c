@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -196,6 +196,7 @@ serve_state_load_contest(int contest_id,
 {
   serve_state_t state = 0;
   const struct contest_desc *cnts = 0;
+  const struct section_problem_data *prob = 0;
   path_t config_path;
   const unsigned char *conf_dir;
   struct stat stbuf;
@@ -246,6 +247,14 @@ serve_state_load_contest(int contest_id,
     goto failure;
   if (prepare_serve_defaults(state, p_cnts) < 0) goto failure;
   if (create_dirs(state, PREPARE_SERVE) < 0) goto failure;
+
+  /* find olympiad_mode problems in KIROV contests */
+  if (state->global->score_system_val == SCORE_KIROV) {
+    for (i = 1; i <= state->max_prob; i++) {
+      if (!(prob = state->probs[i])) continue;
+      if (prob->olympiad_mode > 0) state->has_olympiad_mode = 1;
+    }
+  }
 
   team_extra_set_dir(state->team_extra_state, state->global->team_extra_dir);
 
