@@ -311,6 +311,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(binary_input, "d"),
   PROBLEM_PARAM(ignore_exit_code, "d"),
   PROBLEM_PARAM(olympiad_mode, "d"),
+  PROBLEM_PARAM(score_latest, "d"),
   PROBLEM_PARAM(time_limit, "d"),
   PROBLEM_PARAM(time_limit_millis, "d"),
   PROBLEM_PARAM(real_time_limit, "d"),
@@ -673,6 +674,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->binary_input = -1;
   p->ignore_exit_code = -1;
   p->olympiad_mode = -1;
+  p->score_latest = -1;
   p->time_limit = -1;
   p->time_limit_millis = -1;
   p->real_time_limit = -1;
@@ -2898,6 +2900,8 @@ set_defaults(serve_state_t state, int mode)
                            prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_OLYMPIAD_MODE,
                            prob, aprob, g);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_SCORE_LATEST,
+                           prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT,
                            prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT_MILLIS,
@@ -4414,6 +4418,7 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
   if (prob->binary_input < 0) prob->binary_input = DFLT_P_BINARY_INPUT;
   if (prob->ignore_exit_code < 0) prob->ignore_exit_code = 0;
   if (prob->olympiad_mode < 0) prob->olympiad_mode = 0;
+  if (prob->score_latest < 0) prob->score_latest = 0;
   if (prob->time_limit < 0) prob->time_limit = 0;
   if (prob->time_limit_millis < 0) prob->time_limit_millis = 0;
   if (prob->real_time_limit < 0) prob->real_time_limit = 0;
@@ -4879,6 +4884,11 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
   case PREPARE_FIELD_PROB_OLYMPIAD_MODE:
     if (out->olympiad_mode == -1 && abstr) out->olympiad_mode = abstr->olympiad_mode;
     if (out->olympiad_mode == -1) out->olympiad_mode = 0;
+    break;
+
+  case PREPARE_FIELD_PROB_SCORE_LATEST:
+    if (out->score_latest == -1 && abstr) out->score_latest = abstr->score_latest;
+    if (out->score_latest == -1) out->score_latest = 0;
     break;
 
   case PREPARE_FIELD_PROB_TIME_LIMIT:

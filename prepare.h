@@ -431,6 +431,7 @@ struct section_problem_data
   int    binary_input;          /* input data for problem is binary */
   int    ignore_exit_code;      /* do not tread non-zero exit code as RE */
   int    olympiad_mode;         /* for KIROV contests: handle problem as O. M.*/
+  int    score_latest;          /* for KIROV contests: score latest submit */
   int    real_time_limit;       /* maximum astronomical time for a problem */
   int    time_limit;            /* time limit in secs */
   int    time_limit_millis;     /* time limit in milliseconds */
@@ -703,6 +704,7 @@ enum
   PREPARE_FIELD_PROB_BINARY_INPUT,
   PREPARE_FIELD_PROB_IGNORE_EXIT_CODE,
   PREPARE_FIELD_PROB_OLYMPIAD_MODE,
+  PREPARE_FIELD_PROB_SCORE_LATEST,
   PREPARE_FIELD_PROB_TIME_LIMIT,
   PREPARE_FIELD_PROB_TIME_LIMIT_MILLIS,
   PREPARE_FIELD_PROB_REAL_TIME_LIMIT,
