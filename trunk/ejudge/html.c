@@ -584,7 +584,7 @@ html_write_user_problems_summary(const serve_state_t state,
                                      disqualified[re.prob_id],
                                      prev_successes[re.prob_id], 0, 0);
 
-        if (cur_score >= best_score[re.prob_id]) {
+        if (cur_prob->score_latest > 0 || cur_score >= best_score[re.prob_id]){
           best_score[re.prob_id] = cur_score;
           best_run[re.prob_id] = run_id;
         }
@@ -594,7 +594,7 @@ html_write_user_problems_summary(const serve_state_t state,
         if (!cur_prob->ignore_compile_errors) {
           attempts[re.prob_id]++;
           cur_score = 0;
-          if (cur_score >= best_score[re.prob_id]) {
+          if (cur_prob->score_latest>0 || cur_score >= best_score[re.prob_id]){
             best_score[re.prob_id] = cur_score;
             best_run[re.prob_id] = run_id;
           }
@@ -617,7 +617,7 @@ html_write_user_problems_summary(const serve_state_t state,
                                      prev_successes[re.prob_id], 0, 0);
 
         attempts[re.prob_id]++;
-        if (cur_score >= best_score[re.prob_id]) {
+        if (cur_prob->score_latest>0 || cur_score >= best_score[re.prob_id]) {
           best_score[re.prob_id] = cur_score;
           best_run[re.prob_id] = run_id;
         }
@@ -2109,7 +2109,7 @@ do_write_kirov_standings(const serve_state_t state,
                                  disq_num[up_ind],
                                  full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
                                  0, 0);
-        if (score > prob_score[up_ind]) {
+        if (prob->score_latest > 0 || score > prob_score[up_ind]) {
           prob_score[up_ind] = score;
           if (!prob->stand_hide_time) sol_time[up_ind] = pe->time;
         }
@@ -2127,7 +2127,9 @@ do_write_kirov_standings(const serve_state_t state,
         if (!full_sol[up_ind]) sol_att[up_ind]++;
         score = calc_kirov_score(0, 0, pe, prob, att_num[up_ind],
                                  disq_num[up_ind], RUN_TOO_MANY, 0, 0);
-        if (score > prob_score[up_ind]) prob_score[up_ind] = score;
+        if (prob->score_latest > 0 || score > prob_score[up_ind]) {
+          prob_score[up_ind] = score;
+        }
         att_num[up_ind]++;
         if (!full_sol[up_ind]) tot_att[pind]++;
         last_submit_run = k;
