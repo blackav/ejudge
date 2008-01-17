@@ -59,6 +59,7 @@
 
 #define SUSPEND_TIMEOUT    60
 #define MAX_IN_PACKET_SIZE 134217728 /* 128 mb */
+#define SPOOL_DIR_CHECK_INTERVAL 10
 
 enum
 {
@@ -4054,7 +4055,8 @@ do_loop(void)
         if (!(cur = extras[i])) continue;
         if (!cur->run_used || cur->run_suspended || cur->run_pid > 0
             || !cur->run_queue_dir) continue;
-        if (current_time < cur->last_forced_check + 60) continue;
+        if (current_time < cur->last_forced_check + SPOOL_DIR_CHECK_INTERVAL)
+          continue;
         cur->last_forced_check = current_time;
         if (get_number_of_files(cur->run_queue_dir) > 0) {
           cur->dnotify_flag = 1;
