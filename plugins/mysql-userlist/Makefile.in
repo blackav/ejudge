@@ -38,11 +38,12 @@ MYSQL_LIB_OPT=@ac_cv_mysql_lib_opt@
 MYSQL_LIBS=@ac_cv_mysql_libs@
 
 WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@
+WERROR=@ac_cv_werror_flag@
 
 ifdef RELEASE
-CDEBUGFLAGS=-O2 -s -Wall -DNDEBUG -DRELEASE
+CDEBUGFLAGS=-O2 -s -Wall -DNDEBUG -DRELEASE ${WERROR}
 else
-CDEBUGFLAGS=-g -Wall
+CDEBUGFLAGS=-g -Wall ${WERROR}
 endif
 ifdef STATIC
 CDEBUGFLAGS += -static

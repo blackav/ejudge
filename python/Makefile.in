@@ -43,9 +43,10 @@ REUSE_INCL_OPT=@ac_cv_reuse_include_opt@
 REUSE_LIB_OPT=@ac_cv_reuse_lib_opt@
 
 WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@
+WERROR=@ac_cv_werror_flag@
 
 CC = gcc
-CFLAGS = -g -Wall -Werror $(WPTRSIGN)
+CFLAGS = -g -Wall -Werror $(WPTRSIGN) $(WERROR)
 
 PYTHONFLAGS = $(shell /usr/bin/python-config --includes)
 CBUILDFLAGS = -fPIC -DPIC -I .. -DPYTHON
