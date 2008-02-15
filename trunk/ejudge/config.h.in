@@ -55,6 +55,9 @@
 /* the path to the contests home directory */
 #undef EJUDGE_CONTESTS_HOME_DIR
 
+/* the path to the local state directory */
+#undef EJUDGE_LOCAL_DIR
+
 /* path (absolute or relative) to CGI configuration files */
 #undef CGI_DATA_PATH
 
