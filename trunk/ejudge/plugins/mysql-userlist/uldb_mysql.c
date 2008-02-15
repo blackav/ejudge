@@ -1446,7 +1446,7 @@ new_user_func(
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   unsigned char *login_arm, *email_arm = "NULL", *passwd_arm = "NULL", *cmd;
-  size_t login_len, email_len, passwd_len, cmdlen;
+  size_t login_len, email_len = 0, passwd_len = 0, cmdlen;
   int val;
 
   if (!login || !*login) return -1;
@@ -1469,6 +1469,7 @@ new_user_func(
   simple_reg_flag = !!simple_reg_flag;
 
   cmdlen = 512 + login_len + email_len + passwd_len;
+  cmd = (unsigned char*) alloca(cmdlen);
   cmdlen = snprintf(cmd, cmdlen, "INSERT into %slogins VALUES ( DEFAULT, '%s', '%s', 0, '%s', 0, 0, 0, 0, 0, 0, %d, DEFAULT, NULL, NULL, NULL ) ;", state->table_prefix, login_arm, email_arm, passwd_arm, simple_reg_flag);
   if (mysql_real_query(state->conn, cmd, cmdlen))
     db_error_fail(state);
