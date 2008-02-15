@@ -1,5 +1,5 @@
 dnl $Id$
-dnl Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru>
+dnl Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru>
 
 AC_INIT(ejudge,2.2)
 AC_PREREQ(2.59)
@@ -54,9 +54,11 @@ AC_ARG_ENABLE([cgi-conf-dir], AC_HELP_STRING([--enable-cgi-conf-dir],[specify pa
 AC_ARG_ENABLE([ejudge-xml],AC_HELP_STRING([--enable-ejudge-xml],[specify the default location of ejudge.xml]),[ac_cv_ejudge_xml="$enableval"],[ac_cv_ejudge_xml=""])
 AC_ARG_ENABLE([contests-dir],AC_HELP_STRING([--enable-contests-dir],[specify the default path to the contest configuration directory]),[ac_cv_contests_dir="$enableval"],[ac_cv_contests_dir=""])
 AC_ARG_ENABLE([contests-home-dir],AC_HELP_STRING([--enable-contests-home-dir],[specify the default path to the contests home directory]),[ac_cv_contests_home_dir="$enableval"],[ac_cv_contests_home_dir=""])
+AC_ARG_ENABLE([local-dir],AC_HELP_STRING([--enable-local-dir],[specify the default path to the local state directory]),[ac_cv_local_dir="$enableval"],[ac_cv_local_dir=""])
 AC_ARG_ENABLE([ajax],AC_HELP_STRING([--enable-ajax],[enable use of the ajax technology for the client web interface]),[ac_cv_ajax="$enableval"],[ac_cv_ajax=""])
 AC_ARG_ENABLE([style-prefix],AC_HELP_STRING([--enable-style-prefix],[specify the prefix for HTML style files]),[ac_cv_style_prefix="$enableval"],[ac_cv_style_prefix=""])
-AC_ARG_ENABLE([hidden-server-bins],AC_HELP_STRING([--enable-hidden-server-bins],[do not install the server binaries into bin directory]),[ac_cv_hidden_bins=1][ac_cv_hidden_bins=])
+AC_ARG_ENABLE([hidden-server-bins],AC_HELP_STRING([--enable-hidden-server-bins],[do not install the server binaries into bin directory]),[ac_cv_hidden_bins=1],[ac_cv_hidden_bins=])
+AC_ARG_ENABLE([werror],AC_HELP_STRING([--enable-werror],[enable -Werror compilation flag]),[ac_cv_werror_flag=-Werror],[ac_cv_werror_flag=])
 
 AC_ARG_WITH([httpd-cgi-bin-dir],AC_HELP_STRING([--with-httpd-cgi-bin-dir],[specify the path to the web serve CGI directory]),[ac_cv_httpd_cgi_bin_dir="${withval}"])
 AC_ARG_WITH([httpd-htdocs-dir],AC_HELP_STRING([--with-httpd-htdocs-dir],[specify the path to the web server HTML directory]),[ac_cv_httpd_htdocs_dir="${withval}"])
@@ -79,9 +81,18 @@ AC_ARG_WITH([mcs],AC_HELP_STRING([--with-mcs],[specify the C-sharp Mono mcs path
 AC_ARG_WITH([mbas],AC_HELP_STRING([--with-mbas],[specify the Visual Basic Mono mbas path to use in contests]),[ac_cv_contest_mbas="$withval"])
 
 dnl setup default values
-[[ x"${ac_cv_socket_path}" = x -o x"${ac_cv_socket_path}" = xyes ]] && ac_cv_socket_path="/tmp/userlist-socket"
-[[ x"${ac_cv_super_serve_socket}" = x -o x"${ac_cv_super_serve_socket}" = xyes ]] && ac_cv_super_serve_socket="/tmp/super-serve-socket"
-[[ x"${ac_cv_new_server_socket}" = x -o x"${ac_cv_new_server_socket}" = xyes ]] && ac_cv_new_server_socket="/tmp/new-server-socket"
+[[ x"${ac_cv_local_dir}" = xyes ]] && ac_cv_local_dir="/var/lib/ejudge"
+if [[ x"${ac_cv_local_dir}" != x ]]
+then
+  [[ x"${ac_cv_socket_path}" = x -o x"${ac_cv_socket_path}" = xyes ]] && ac_cv_socket_path="${ac_cv_local_dir}/sockets/userlist"
+  [[ x"${ac_cv_super_serve_socket}" = x -o x"${ac_cv_super_serve_socket}" = xyes ]] && ac_cv_super_serve_socket="${ac_cv_local_dir}/sockets/super-serve"
+  [[ x"${ac_cv_new_server_socket}" = x -o x"${ac_cv_new_server_socket}" = xyes ]] && ac_cv_new_server_socket="${ac_cv_local_dir}/sockets/new-server"
+else
+  [[ x"${ac_cv_socket_path}" = x -o x"${ac_cv_socket_path}" = xyes ]] && ac_cv_socket_path="/tmp/userlist-socket"
+  [[ x"${ac_cv_super_serve_socket}" = x -o x"${ac_cv_super_serve_socket}" = xyes ]] && ac_cv_super_serve_socket="/tmp/super-serve-socket"
+  [[ x"${ac_cv_new_server_socket}" = x -o x"${ac_cv_new_server_socket}" = xyes ]] && ac_cv_new_server_socket="/tmp/new-server-socket"
+fi
+
 [[ x"${ac_cv_contests_home_dir}" = x -o x"${ac_cv_contests_home_dir}" = xyes ]] && ac_cv_contests_home_dir="/home/judges"
 [[ x"${ac_cv_conf_dir}" = x -o x"${ac_cv_conf_dir}" = xyes ]] && ac_cv_conf_dir="/home/judges/data"
 [[ x"${ac_cv_cgi_conf_dir}" = x -o x"${ac_cv_cgi_conf_dir}" = xyes ]] && ac_cv_cgi_conf_dir="../cgi-data"
@@ -1243,7 +1254,7 @@ then
   if [[ x"${ac_cv_contest_java}" != xno ]]
   then
     case x"${ac_cv_contest_java_version_string}" in
-      x1.6.*) ac_cv_contest_java_version=1.5;;
+      x1.6.*) ac_cv_contest_java_version=1.6;;
       x1.5.*) ac_cv_contest_java_version=1.5;;
       x1.4.*) ac_cv_contest_java_version=1.4;;
       x1.3.*) ac_cv_contest_java_version=1.3;;
@@ -1517,6 +1528,8 @@ AC_SUBST(MSGFMT)
 AC_SUBST(ac_cv_style_prefix)
 AC_SUBST(CHARSET_UPPERCASE)
 AC_SUBST(ac_cv_ncurses_suffix)
+AC_SUBST(ac_cv_local_dir)
+AC_SUBST(ac_cv_werror_flag)
 
 AC_SUBST(ac_cv_contest_gcc)
 AC_SUBST(ac_cv_contest_gcc_dir)
@@ -1602,6 +1615,10 @@ fi
 if [[ x"${ac_cv_contests_home_dir}" != x ]]
 then
   AC_DEFINE_UNQUOTED(EJUDGE_CONTESTS_HOME_DIR,"${ac_cv_contests_home_dir}")
+fi
+if [[ x"${ac_cv_local_dir}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_LOCAL_DIR,"${ac_cv_local_dir}")
 fi
 AC_DEFINE_UNQUOTED(EJUDGE_PREFIX_DIR,"${ac_cv_expanded_prefix}")
 AC_DEFINE_UNQUOTED(EJUDGE_LOCALE_DIR,"$ac_cv_expanded_locale_dir")
