@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -98,6 +98,7 @@ SUPER_CLNT_CFILES=\
  super_clnt/control.c\
  super_clnt/create_contest.c\
  super_clnt/do_pass_fd.c\
+ super_clnt/http_request.c\
  super_clnt/main_page.c\
  super_clnt/open.c\
  super_clnt/pass_fd.c\
@@ -199,6 +200,7 @@ COMMON_CFILES=\
  super_html.c\
  super_html_2.c\
  super_html_3.c\
+ super_html_4.c\
  super_proto.c\
  sha.c\
  teamdb.c\
