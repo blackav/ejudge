@@ -3,7 +3,7 @@
 #ifndef __PREPARE_DFLT_H__
 #define __PREPARE_DFLT_H__
 
-/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -126,6 +126,7 @@
 #define DFLT_G_PRUNE_EMPTY_USERS 0
 #define DFLT_G_ENABLE_FULL_ARCHIVE 0
 #define DFLT_G_PLOG_UPDATE_TIME 30
+#define DFLT_G_STAND_USE_LOGIN 0
 #define DFLT_G_STAND_SHOW_OK_TIME 0
 #define DFLT_G_STAND_SHOW_WARN_NUMBER 0
 #define DFLT_G_AUTOUPDATE_STANDINGS 1

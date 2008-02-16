@@ -406,6 +406,7 @@ Standings table attributes:
   GLOBAL_PARAM(stand_fail_attr, "s"),
   GLOBAL_PARAM(stand_trans_attr, "s"),
   GLOBAL_PARAM(stand_disq_attr, "s"),
+  GLOBAL_PARAM(stand_use_login, "d"),
   GLOBAL_PARAM(stand_show_ok_time, "d"),
   GLOBAL_PARAM(stand_show_att_num, "d"),
   GLOBAL_PARAM(stand_sort_by_solved, "d"),
@@ -1494,6 +1495,15 @@ super_html_edit_global_parameters(FILE *f,
                                hidden_vars);
     }
 
+    //GLOBAL_PARAM(stand_use_login, "d"),
+    html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Use login instead of name:</td><td>",
+            form_row_attrs[row ^= 1]);
+    html_boolean_select(f, global->stand_use_login, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_STAND_USE_LOGIN, "Change");
+    fprintf(f, "</td></tr></form>\n");
+
     //GLOBAL_PARAM(stand_show_ok_time, "d"),
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Show success time in standings:</td><td>",
@@ -2533,6 +2543,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CLEAR_STAND_PENALTY_ATTR:
     GLOB_CLEAR_STRING(stand_penalty_attr);
+
+  case SSERV_CMD_GLOB_CHANGE_STAND_USE_LOGIN:
+    p_int = &global->stand_use_login;
+    goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_STAND_SHOW_OK_TIME:
     p_int = &global->stand_show_ok_time;
