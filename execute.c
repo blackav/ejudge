@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -55,7 +55,9 @@ static int clear_env_flag = 0;
 static int no_core_dump = 0;
 static int memory_limit = 0;
 static int secure_exec = 0;
+#if defined HAVE_TASK_ISSECURITYVIOLATION
 static int security_violation = 0;
+#endif
 
 static int time_limit = 0;
 static int time_limit_millis = 0;

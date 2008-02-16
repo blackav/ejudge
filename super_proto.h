@@ -666,8 +666,17 @@ enum
   SSERV_CMD_PROB_RANDOM_VARIANTS,
 
   SSERV_CMD_LOGOUT,
+  SSERV_CMD_HTTP_REQUEST,
 
   SSERV_CMD_LAST,
+};
+
+/* subcommands for SSERV_CMD_HTTP_REQUEST */
+enum
+{
+  SSERV_OP_VIEW_CNTS_DETAILS = 1,
+
+  SSERV_OP_LAST,
 };
 
 /* replies */
@@ -710,6 +719,7 @@ enum
   SSERV_ERR_DUPLICATED_LOGIN,
   SSERV_ERR_DUPLICATED_PROBLEM,
   SSERV_ERR_PROBLEM_IS_USED,
+  SSERV_ERR_PARAM_OUT_OF_RANGE,
 
   SSERV_UNKNOWN_ERROR,
   SSERV_ERR_LAST,
@@ -766,6 +776,14 @@ struct prot_super_pkt_set_param
   int param4;
   int param5;
   unsigned char data[1];
+};
+
+struct prot_super_pkt_http_request
+{
+  struct prot_super_packet b;
+  int arg_num;
+  int env_num;
+  int param_num;
 };
 
 #endif /* __SUPER_PROTO_H__ */

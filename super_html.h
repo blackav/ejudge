@@ -3,7 +3,7 @@
 #ifndef __SUPER_HTML_H__
 #define __SUPER_HTML_H__
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -383,5 +383,12 @@ super_html_update_variant_map(FILE *flog, int contest_id,
                               struct section_problem_data **probs,
                               unsigned char **p_header_txt,
                               unsigned char **p_footer_txt);
+
+struct super_http_request_info;
+void
+super_html_http_request(
+	char **p_out_t,
+        size_t *p_out_z,
+        struct super_http_request_info *hr);
 
 #endif /* __SUPER_HTML_H__ */

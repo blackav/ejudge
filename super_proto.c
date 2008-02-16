@@ -52,6 +52,7 @@ static unsigned char const * const error_map[] =
   "duplicated login name",
   "such problem already exists",
   "this problem is used as base problem",
+  "parameter is out of range",
 
   "unknown error",
 };

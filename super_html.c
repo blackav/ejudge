@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -314,28 +314,35 @@ super_html_main_page(FILE *f,
   unsigned char prog_pat[128];
   int prog_pat_len, self_url_len, cnt;
   struct xml_tree *p;
+  const unsigned char *cgi_suffix = "";
 
 #if defined CGI_PROG_SUFFIX
-  snprintf(prog_pat, sizeof(prog_pat), "serve-control%s", CGI_PROG_SUFFIX);
-#else
-  snprintf(prog_pat, sizeof(prog_pat), "serve-control");
+  cgi_suffix = CGI_PROG_SUFFIX;
 #endif
+
+  snprintf(prog_pat, sizeof(prog_pat), "serve-control%s", cgi_suffix);
   prog_pat_len = strlen(prog_pat);
   self_url_len = strlen(self_url);
   if (self_url_len > prog_pat_len
       && !strcmp(self_url + self_url_len - prog_pat_len, prog_pat)) {
     snprintf(judge_url, sizeof(judge_url),
-             "%.*sjudge", self_url_len - prog_pat_len, self_url);
+             "%.*sjudge%s", self_url_len - prog_pat_len, self_url,
+             cgi_suffix);
     snprintf(master_url, sizeof(master_url),
-             "%.*smaster", self_url_len - prog_pat_len, self_url);
+             "%.*smaster%s", self_url_len - prog_pat_len, self_url,
+             cgi_suffix);
     snprintf(client_url, sizeof(client_url),
-             "%.*steam", self_url_len - prog_pat_len, self_url);
+             "%.*steam%s", self_url_len - prog_pat_len, self_url,
+             cgi_suffix);
     snprintf(new_judge_url, sizeof(new_judge_url),
-             "%.*snew-judge", self_url_len - prog_pat_len, self_url);
+             "%.*snew-judge%s", self_url_len - prog_pat_len, self_url,
+             cgi_suffix);
     snprintf(new_master_url, sizeof(new_master_url),
-             "%.*snew-master", self_url_len - prog_pat_len, self_url);
+             "%.*snew-master%s", self_url_len - prog_pat_len, self_url,
+             cgi_suffix);
     snprintf(new_client_url, sizeof(new_client_url),
-             "%.*snew-client", self_url_len - prog_pat_len, self_url);
+             "%.*snew-client%s", self_url_len - prog_pat_len, self_url,
+             cgi_suffix);
   }
 
   fprintf(f, "<h2>Controls</h2>\n");
@@ -728,28 +735,35 @@ super_html_contest_page(FILE *f,
   int mng_status, nodevnull = 0, logfilemode = 0;
   struct stat devnullstat, logfilestat;
   unsigned char *raw_log, *html_log;
+  const unsigned char *cgi_suffix = "";
 
 #if defined CGI_PROG_SUFFIX
-  snprintf(prog_pat, sizeof(prog_pat), "serve-control%s", CGI_PROG_SUFFIX);
-#else
-  snprintf(prog_pat, sizeof(prog_pat), "serve-control");
+  cgi_suffix = CGI_PROG_SUFFIX;
 #endif
+
+  snprintf(prog_pat, sizeof(prog_pat), "serve-control%s", cgi_suffix);
   prog_pat_len = strlen(prog_pat);
   self_url_len = strlen(self_url);
   if (self_url_len > prog_pat_len
       && !strcmp(self_url + self_url_len - prog_pat_len, prog_pat)) {
     snprintf(judge_url, sizeof(judge_url),
-             "%.*sjudge", self_url_len - prog_pat_len, self_url);
+             "%.*sjudge%s", self_url_len - prog_pat_len, self_url,
+             cgi_suffix);
     snprintf(master_url, sizeof(master_url),
-             "%.*smaster", self_url_len - prog_pat_len, self_url);
+             "%.*smaster%s", self_url_len - prog_pat_len, self_url,
+             cgi_suffix);
     snprintf(client_url, sizeof(client_url),
-             "%.*steam", self_url_len - prog_pat_len, self_url);
+             "%.*steam%s", self_url_len - prog_pat_len, self_url,
+             cgi_suffix);
     snprintf(new_judge_url, sizeof(new_judge_url),
-             "%.*snew-judge", self_url_len - prog_pat_len, self_url);
+             "%.*snew-judge%s", self_url_len - prog_pat_len, self_url,
+             cgi_suffix);
     snprintf(new_master_url, sizeof(new_master_url),
-             "%.*snew-master", self_url_len - prog_pat_len, self_url);
+             "%.*snew-master%s", self_url_len - prog_pat_len, self_url,
+             cgi_suffix);
     snprintf(new_client_url, sizeof(new_client_url),
-             "%.*snew-client", self_url_len - prog_pat_len, self_url);
+             "%.*snew-client%s", self_url_len - prog_pat_len, self_url,
+             cgi_suffix);
   }
 
   snprintf(new_hidden_vars, sizeof(new_hidden_vars),
@@ -1208,6 +1222,15 @@ super_html_contest_page(FILE *f,
   }
   if (!refcount) fprintf(f, "&nbsp;");
   fprintf(f, "</td>");
+  fprintf(f, "</tr>\n");
+
+  fprintf(f, "<tr>");
+  fprintf(f, "<td>View problems and tests details</td><td>&nbsp;</td>");
+  fprintf(f, "<td>%sView</a></td>",
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                        "contest_id=%d&action=%d&op=%d",
+                        contest_id, SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_VIEW_CNTS_DETAILS));
   fprintf(f, "</tr>\n");
 
   fprintf(f, "</table>\n");

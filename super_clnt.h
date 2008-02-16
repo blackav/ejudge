@@ -4,7 +4,7 @@
 #ifndef __SUPER_CLNT_H__
 #define __SUPER_CLNT_H__
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -66,5 +66,18 @@ int super_clnt_set_param(int sock_fd,
                          int param5);
 
 int super_clnt_control(int sock_fd, int cmd);
+
+int
+super_clnt_http_request(
+        int sock_fd,
+        int out_fd,
+        unsigned char *args[],
+        unsigned char *envs[],
+        int param_num,
+        unsigned char *param_names[],
+        size_t param_sizes_in[],
+        unsigned char *params[],
+        unsigned char **reply_bytes,
+        size_t *reply_size);
 
 #endif /* __SUPER_CLNT_H__ */
