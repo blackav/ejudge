@@ -213,6 +213,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(stand_fail_attr, "s"),
   GLOBAL_PARAM(stand_trans_attr, "s"),
   GLOBAL_PARAM(stand_disq_attr, "s"),
+  GLOBAL_PARAM(stand_use_login, "d"),
   GLOBAL_PARAM(stand_show_ok_time, "d"),
   GLOBAL_PARAM(stand_show_att_num, "d"),
   GLOBAL_PARAM(stand_sort_by_solved, "d"),
@@ -571,6 +572,7 @@ global_init_func(struct generic_section_config *gp)
   p->disable_virtual_auto_judge = -1;
   p->enable_auto_print_protocol = -1;
   p->stand_fancy_style = -1;
+  p->stand_use_login = -1;
   p->stand_show_ok_time = -1;
   p->stand_show_warn_number = -1;
   p->disable_auto_testing = -1;
@@ -2115,6 +2117,8 @@ set_defaults(serve_state_t state, int mode)
     g->enable_auto_print_protocol = DFLT_G_ENABLE_AUTO_PRINT_PROTOCOL;
   if (g->stand_fancy_style == -1)
     g->stand_fancy_style = 0;
+  if (g->stand_use_login == -1)
+    g->stand_use_login = DFLT_G_STAND_USE_LOGIN;
   if (g->stand_show_ok_time == -1)
     g->stand_show_ok_time = DFLT_G_STAND_SHOW_OK_TIME;
   if (g->stand_show_warn_number == -1)
@@ -4394,6 +4398,8 @@ prepare_set_global_defaults(struct section_global_data *g)
     g->stand_fancy_style = 0;
   if (g->stand_show_ok_time < 0)
     g->stand_show_ok_time = DFLT_G_STAND_SHOW_OK_TIME;
+  if (g->stand_use_login < 0)
+    g->stand_use_login = DFLT_G_STAND_USE_LOGIN;
 }
 
 void
@@ -4583,6 +4589,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->team_page_quota = DFLT_G_TEAM_PAGE_QUOTA;
   global->enable_l10n = 1;
   global->stand_fancy_style = 0;
+  global->stand_use_login = DFLT_G_STAND_USE_LOGIN;
   global->stand_show_ok_time = DFLT_G_STAND_SHOW_OK_TIME;
   global->stand_show_warn_number = DFLT_G_STAND_SHOW_WARN_NUMBER;
 

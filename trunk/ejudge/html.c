@@ -1382,7 +1382,7 @@ new_write_user_clar(const serve_state_t state, const struct contest_desc *cnts,
     fprintf(f, "</tr>\n");
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"), asubj);
     fprintf(f, "</table>\n");
-    fprintf(f, "<hr><pre>");
+    fprintf(f, "<hr/><pre>");
     fprintf(f, "%s", atxt);
     fprintf(f, "</pre>");
   }
@@ -1511,6 +1511,15 @@ setup_standings_style(struct standings_style *ps,
   }
 }
 
+static const unsigned char *
+stand_get_name(serve_state_t state, int user_id)
+{
+  if (state->global->stand_use_login)
+    return teamdb_get_login(state->teamdb_state, user_id);
+  else
+    return teamdb_get_name_2(state->teamdb_state, user_id);
+}
+
 static void
 process_template(FILE *out,
                  unsigned char const *template,
@@ -1589,7 +1598,7 @@ write_standings_header(const serve_state_t state,
       if (header_str) {
         process_template(f, header_str, 0, global->charset, header, 0);
       } else {
-        fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>\n",
+        fprintf(f, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"/><title>%s</title></head><body><h1>%s</h1>\n",
                 global->charset,
                 header, header);
       }
@@ -1631,7 +1640,7 @@ write_standings_header(const serve_state_t state,
     if (header_str) {
       process_template(f, header_str, 0, global->charset, header, 0);
     } else {
-      fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>",
+      fprintf(f, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"/><title>%s</title></head><body><h1>%s</h1>",
               global->charset,
               header, header);
     }
@@ -2338,7 +2347,7 @@ do_write_kirov_standings(const serve_state_t state,
     /* print table header */
     fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",
             ss.table_attr, r0_attr, ss.place_attr, _("Place"),
-            ss.team_attr, _("User "));
+            ss.team_attr, _("User"));
     if (global->stand_extra_format[0]) {
       if (global->stand_extra_legend[0])
         fprintf(f, "<th%s>%s</th>", ss.extra_attr,
@@ -2367,7 +2376,7 @@ do_write_kirov_standings(const serve_state_t state,
       fprintf(f, "</th>");
     }
     fprintf(f, "<th%s>%s</th><th%s>%s</th>",
-            ss.solved_attr, _("Solved<br>problems"),
+            ss.solved_attr, _("Solved<br/>problems"),
             ss.score_attr, _("Score"));
     fprintf(f, "</tr>\n");
   }
@@ -2400,8 +2409,7 @@ do_write_kirov_standings(const serve_state_t state,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state,
-                                           runs[last_success_run].user_id));
+        fprintf(f, "%s", stand_get_name(state, runs[last_success_run].user_id));
         if (global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -2433,8 +2441,7 @@ do_write_kirov_standings(const serve_state_t state,
                           NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state,
-                                           runs[last_submit_run].user_id));
+        fprintf(f, "%s", stand_get_name(state, runs[last_submit_run].user_id));
         if (global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -2470,7 +2477,7 @@ do_write_kirov_standings(const serve_state_t state,
       fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",
               ss.table_attr, r0_attr,
               ss.place_attr, _("Place"),
-              ss.team_attr, _("User "));
+              ss.team_attr, _("User"));
       if (global->stand_extra_format[0]) {
         if (global->stand_extra_legend[0])
           fprintf(f, "<th%s>%s</th>", ss.extra_attr,
@@ -2502,7 +2509,7 @@ do_write_kirov_standings(const serve_state_t state,
         fprintf(f, "</th>");
       }
       fprintf(f, "<th%s>%s</th><th%s>%s</th>",
-              ss.solved_attr, _("Solved<br>problems"),
+              ss.solved_attr, _("Solved<br/>problems"),
               ss.score_attr, _("Score"));
       if (global->stand_enable_penalty) {
         fprintf(f, "<th%s>%s</th>", ss.penalty_attr, _("Penalty"));
@@ -2569,7 +2576,7 @@ do_write_kirov_standings(const serve_state_t state,
                       NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
       fprintf(f, "<a href=\"%s\">", dur_str);
     }
-    fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state, t_ind[t]));
+    fprintf(f, "%s", stand_get_name(state, t_ind[t]));
     if (global->team_info_url[0]) {
       fprintf(f, "</a>");
     }
@@ -3442,8 +3449,7 @@ do_write_moscow_standings(const serve_state_t state,
                           NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state,
-                                           runs[last_success_run].user_id));
+        fprintf(f, "%s", stand_get_name(state, runs[last_success_run].user_id));
         if (global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -3478,8 +3484,7 @@ do_write_moscow_standings(const serve_state_t state,
                           NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state,
-                                           runs[last_submit_run].user_id));
+        fprintf(f, "%s", stand_get_name(state, runs[last_submit_run].user_id));
         if (global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -3511,7 +3516,7 @@ do_write_moscow_standings(const serve_state_t state,
       fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",
               ss.table_attr, r0_attr,
               ss.place_attr, _("Place"),
-              ss.team_attr, _("User "));
+              ss.team_attr, _("User"));
       if (global->stand_extra_format[0]) {
         if (global->stand_extra_legend[0])
           fprintf(f, "<th%s>%s</th>", ss.extra_attr,
@@ -3580,7 +3585,7 @@ do_write_moscow_standings(const serve_state_t state,
                       NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
       fprintf(f, "<a href=\"%s\">", strbuf);
     }
-    fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state, u_ind[u]));
+    fprintf(f, "%s", stand_get_name(state, u_ind[u]));
     if (global->team_info_url[0]) {
       fprintf(f, "</a>");
     }
@@ -4115,8 +4120,7 @@ do_write_standings(const serve_state_t state,
                         NULL, NULL, NULL, NULL, &ttt, ttt.user, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_buf);      
       }
-      fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state,
-                                         runs[last_success_run].user_id));
+      fprintf(f, "%s", stand_get_name(state, runs[last_success_run].user_id));
       if (global->team_info_url[0]) {
         fprintf(f, "</a>");
       }
@@ -4137,7 +4141,7 @@ do_write_standings(const serve_state_t state,
     fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",
             ss.table_attr, r0_attr,
             ss.place_attr, _("Place"),
-            ss.team_attr, _("User "));
+            ss.team_attr, _("User"));
     if (global->stand_extra_format[0]) {
       if (global->stand_extra_legend[0])
         fprintf(f, "<th%s>%s</th>", ss.extra_attr,
@@ -4227,7 +4231,7 @@ do_write_standings(const serve_state_t state,
                         NULL, NULL, NULL, NULL, &ttt, ttt.user, 0, 0);
         fprintf(f, "<a href=\"%s\">", url_str);      
       }
-      fprintf(f, "%s", teamdb_get_name_2(state->teamdb_state, t_ind[t]));
+      fprintf(f, "%s", stand_get_name(state, t_ind[t]));
       if (global->team_info_url[0]) {
         fprintf(f, "</a>");
       }
@@ -4776,19 +4780,19 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
   }
 
   if (is_kirov) {
-    fprintf(f, _("<big>%d total tests runs, %d passed, %d failed.<br>\n"),
+    fprintf(f, _("<big>%d total tests runs, %d passed, %d failed.<br/>\n"),
             r->run_tests, r->tests_passed, r->run_tests - r->tests_passed);
-    fprintf(f, _("Score gained: %d (out of %d).<br><br></big>\n"),
+    fprintf(f, _("Score gained: %d (out of %d).<br/><br/></big>\n"),
             r->score, r->max_score);
   } else {
     if (r->status != RUN_OK && r->status != RUN_ACCEPTED) {
-      fprintf(f, _("<big>Failed test: %d.<br><br></big>\n"), r->failed_test);
+      fprintf(f, _("<big>Failed test: %d.<br/><br/></big>\n"), r->failed_test);
     }
   }
 
   if (r->comment) {
     s = html_armor_string_dup(r->comment);
-    fprintf(f, "<big>Note: %s.<br><br></big>\n", s);
+    fprintf(f, "<big>Note: %s.<br/><br/></big>\n", s);
     xfree(s);
   }
 
@@ -4912,7 +4916,7 @@ write_xml_team_output_only_acc_report(FILE *f, const unsigned char *txt,
 
   /*
   if (act_status != RUN_ACCEPTED) {
-    fprintf(f, _("<big>Failed test: %d.<br><br></big>\n"), r->failed_test);
+    fprintf(f, _("<big>Failed test: %d.<br/><br/></big>\n"), r->failed_test);
   }
   */
 
@@ -5049,7 +5053,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
           font_color, run_status_str(act_status, 0, 0, 0, 0));
 
   if (act_status != RUN_ACCEPTED) {
-    fprintf(f, _("<big>Failed test: %d.<br><br></big>\n"), r->failed_test);
+    fprintf(f, _("<big>Failed test: %d.<br/><br/></big>\n"), r->failed_test);
   }
 
   tests_to_show = r->run_tests;
@@ -5262,7 +5266,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
 
   if (!exam_mode) {
     fprintf(f,
-            "<br><table%s><font size=\"-2\">\n"
+            "<br/><table%s><font size=\"-2\">\n"
             "<tr><td%s>L</td><td%s>%s</td></tr>\n"
             "<tr><td%s>I</td><td%s>%s</td></tr>\n"
             "<tr><td%s>O</td><td%s>%s</td></tr>\n"
@@ -5593,14 +5597,14 @@ write_team_page(const serve_state_t state,
   if (!global->disable_clars || !global->disable_team_clars){
     unread_clars = serve_count_unread_clars(state, user_id, server_start);
     if (unread_clars > 0) {
-      fprintf(f, _("<hr><big><b>You have %d unread message(s)!</b></big>\n"),
+      fprintf(f, _("<hr/><big><b>You have %d unread message(s)!</b></big>\n"),
               unread_clars);
     }
   }
 
   t_extra = team_extra_get_entry(state->team_extra_state, user_id);
   if (t_extra && t_extra->warn_u > 0) {
-    fprintf(f, "<hr><%s>%s (%s %d)</%s>\n", cnts->team_head_style,
+    fprintf(f, "<hr/><%s>%s (%s %d)</%s>\n", cnts->team_head_style,
             _("Warnings"), _("total"), t_extra->warn_u,
             cnts->team_head_style);
     for (i = 0; i < t_extra->warn_u; i++) {
@@ -5615,7 +5619,7 @@ write_team_page(const serve_state_t state,
   }
 
   if (server_start) {
-    fprintf(f, "<hr><a name=\"probstat\"></a><%s>%s</%s>\n",
+    fprintf(f, "<hr/><a name=\"probstat\"></a><%s>%s</%s>\n",
             cnts->team_head_style,
             _("Problem status summary"),
             cnts->team_head_style);
@@ -5628,7 +5632,7 @@ write_team_page(const serve_state_t state,
   }
 
   if (server_start && !server_end) {
-    fprintf(f, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
+    fprintf(f, "<hr/><a name=\"submit\"></a><%s>%s</%s>\n",
             cnts->team_head_style, _("Send a submission"),
             cnts->team_head_style);
     html_start_form(f, 2, self_url, hidden_vars);
@@ -5711,7 +5715,7 @@ write_team_page(const serve_state_t state,
   }
 
   if (server_start) {
-    fprintf(f, "<hr><a name=\"runstat\"></a><%s>%s (%s)</%s>\n",
+    fprintf(f, "<hr/><a name=\"runstat\"></a><%s>%s (%s)</%s>\n",
             cnts->team_head_style,
             _("Sent submissions"),
             all_runs?_("all"):_("last 15"),
@@ -5738,7 +5742,7 @@ write_team_page(const serve_state_t state,
 
   if (!global->disable_clars && !global->disable_team_clars
       && server_start && !server_end) {
-    fprintf(f, "<hr><a name=\"clar\"></a><%s>%s</%s>\n",
+    fprintf(f, "<hr/><a name=\"clar\"></a><%s>%s</%s>\n",
             cnts->team_head_style, _("Send a message to judges"),
             cnts->team_head_style);
     html_start_form(f, 2, self_url, hidden_vars);
@@ -5808,7 +5812,7 @@ write_team_page(const serve_state_t state,
   }
 
   if (!global->disable_clars) {
-    fprintf(f, "<hr><a name=\"clarstat\"></a><%s>%s (%s)</%s>\n",
+    fprintf(f, "<hr/><a name=\"clarstat\"></a><%s>%s (%s)</%s>\n",
             cnts->team_head_style, _("Messages"),
             all_clars?_("all"):_("last 15"), cnts->team_head_style);
 

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -267,7 +267,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
     }
     r = in_entries[i].lang_id;
     if (r <= 0 || r > state->max_lang || !state->langs[r]) {
-      fprintf(flog, "Run %d problem %d is not known\n", i, r);
+      fprintf(flog, "Run %d language %d is not known\n", i, r);
       goto done;
     }
     if (in_entries[i].nsec < 0 || in_entries[i].nsec >= 1000000000) {
