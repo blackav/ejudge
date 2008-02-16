@@ -3127,6 +3127,164 @@ cmd_control_server(struct client_state *p, int len,
   }
 }
 
+static void
+cmd_http_request(
+	struct client_state *p,
+        int pkt_size,
+        struct prot_super_pkt_http_request *pkt)
+{
+  enum
+  {
+    MAX_PARAM_NUM = 10000,
+    MAX_PARAM_SIZE = 128 * 1024 * 1024,
+  };
+
+  struct super_http_request_info hr;
+  char *out_t = 0;
+  size_t out_z = 0;
+  int i, r;
+  size_t in_size;
+  const unsigned char ** args;
+  const unsigned char ** envs;
+  const unsigned char ** param_names;
+  const unsigned char ** params;
+  size_t *my_param_sizes;
+  unsigned long bptr;
+  const ej_size_t *arg_sizes, *env_sizes, *param_name_sizes, *param_sizes;
+  struct client_state *q;
+
+  memset(&hr, 0, sizeof(hr));
+
+  // FIXME: check for passed fd
+
+  if (pkt_size < sizeof(*pkt))
+    return error_bad_packet_length(p, pkt_size, sizeof(*pkt));
+  //pkt = (const struct super_prot_http_request *) pkt_gen;
+
+  if (pkt->arg_num < 0 || pkt->arg_num > MAX_PARAM_NUM) {
+    err("%d: too many arguments: %d", p->id, pkt->arg_num);
+    return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
+  }
+  if (pkt->env_num < 0 || pkt->env_num > MAX_PARAM_NUM) {
+    err("%d: too many env vars: %d", p->id, pkt->env_num);
+    return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
+  }
+  if (pkt->param_num < 0 || pkt->param_num > MAX_PARAM_NUM) {
+    err("%d: too many params: %d", p->id, pkt->param_num);
+    return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
+  }
+
+  in_size = sizeof(*pkt);
+  in_size += pkt->arg_num * sizeof(ej_size_t);
+  in_size += pkt->env_num * sizeof(ej_size_t);
+  in_size += pkt->param_num * 2 * sizeof(ej_size_t);
+  if (pkt_size < in_size)
+    return error_bad_packet_length(p, pkt_size, in_size);
+
+  XALLOCAZ(args, pkt->arg_num);
+  XALLOCAZ(envs, pkt->env_num);
+  XALLOCAZ(param_names, pkt->param_num);
+  XALLOCAZ(params, pkt->param_num);
+  XALLOCAZ(my_param_sizes, pkt->param_num);
+
+  bptr = (unsigned long) pkt;
+  bptr += sizeof(*pkt);
+  arg_sizes = (const ej_size_t *) bptr;
+  bptr += pkt->arg_num * sizeof(ej_size_t);
+  env_sizes = (const ej_size_t *) bptr;
+  bptr += pkt->env_num * sizeof(ej_size_t);
+  param_name_sizes = (const ej_size_t *) bptr;
+  bptr += pkt->param_num * sizeof(ej_size_t);
+  param_sizes = (const ej_size_t *) bptr;
+  bptr += pkt->param_num * sizeof(ej_size_t);
+
+  for (i = 0; i < pkt->arg_num; i++) {
+    if (arg_sizes[i] > MAX_PARAM_SIZE) {
+      err("%d: argument %d is too long: %d", p->id, i, arg_sizes[i]);
+      return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
+    }
+    in_size += arg_sizes[i] + 1;
+  }
+  for (i = 0; i < pkt->env_num; i++) {
+    if (env_sizes[i] > MAX_PARAM_SIZE) {
+      err("%d: env var %d is too long: %d", p->id, i, env_sizes[i]);
+      return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
+    }
+    in_size += env_sizes[i] + 1;
+  }
+  for (i = 0; i < pkt->param_num; i++) {
+    if (param_name_sizes[i] > MAX_PARAM_SIZE) {
+      err("%d: param name %d is too long: %d", p->id, i, param_name_sizes[i]);
+      return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
+    }
+    if (param_sizes[i] > MAX_PARAM_SIZE) {
+      err("%d: param %d is too long: %d", p->id, i, param_sizes[i]);
+      return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
+    }
+    in_size += param_name_sizes[i] + 1;
+    in_size += param_sizes[i] + 1;
+  }
+  if (pkt_size != in_size)
+    return error_bad_packet_length(p, pkt_size, in_size);
+
+  for (i = 0; i < pkt->arg_num; i++) {
+    args[i] = (const unsigned char*) bptr;
+    bptr += arg_sizes[i] + 1;
+    if (strlen(args[i]) != arg_sizes[i]) {
+      err("%d: arg %d length mismatch", p->id, i);
+      return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
+    }
+  }
+  for (i = 0; i < pkt->env_num; i++) {
+    envs[i] = (const unsigned char*) bptr;
+    bptr += env_sizes[i] + 1;
+    if (strlen(envs[i]) != env_sizes[i]) {
+      err("%d: env var %d length mismatch", p->id, i);
+      return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
+    }
+  }
+  for (i = 0; i < pkt->param_num; i++) {
+    param_names[i] = (const unsigned char*) bptr;
+    bptr += param_name_sizes[i] + 1;
+    if (strlen(param_names[i]) != param_name_sizes[i]) {
+      err("%d: param name %d length mismatch", p->id, i);
+      return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
+    }
+    params[i] = (const unsigned char *) bptr;
+    my_param_sizes[i] = param_sizes[i];
+    bptr += param_sizes[i] + 1;
+  }
+
+  hr.arg_num = pkt->arg_num;
+  hr.args = args;
+  hr.env_num = pkt->env_num;
+  hr.envs = envs;
+  hr.param_num = pkt->param_num;
+  hr.param_names = param_names;
+  hr.param_sizes = my_param_sizes;
+  hr.params = params;
+
+  if ((r = get_peer_local_user(p)) < 0) {
+    send_reply(p, r);
+    return;
+  }
+
+  if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
+    err("cmd_main_page: two file descriptors expected");
+    return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
+  }
+
+  hr.ss = sid_state_get(p->cookie);
+
+  super_html_http_request(&out_t, &out_z, &hr);
+
+  q = client_state_new_autoclose(p, out_t, out_z);
+  info("cmd_http_request: %zu", out_z);
+  send_reply(p, SSERV_RPL_OK);
+
+  //cleanup:
+}
+
 struct packet_handler
 {
   void (*func)();
@@ -3760,6 +3918,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
 
   [SSERV_CMD_STOP] = { cmd_control_server },
   [SSERV_CMD_RESTART] = { cmd_control_server },
+
+  [SSERV_CMD_HTTP_REQUEST] = { cmd_http_request },
 };
 
 static void

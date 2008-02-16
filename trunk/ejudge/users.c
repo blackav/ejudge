@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2001-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
 
 #include "config.h"
 #include "ej_types.h"
+#include "ej_limits.h"
 
 #include "expat_iface.h"
 #include "cgi.h"

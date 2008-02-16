@@ -1382,6 +1382,36 @@ action_prob_add(int cmd, int next_state)
   operation_status_page(-1, -1, "Invalid parameter");
 }
 
+static void action_http_request(char **argv)
+  __attribute__((noreturn));
+static void
+action_http_request(char **argv)
+{
+  int param_num, i, r;
+  unsigned char **param_names, **params;
+  size_t *param_sizes;
+
+  open_super_server();
+
+  param_num = cgi_get_param_num();
+  XALLOCAZ(param_names, param_num);
+  XALLOCAZ(param_sizes, param_num);
+  XALLOCAZ(params, param_num);
+  for (i = 0; i < param_num; i++) {
+    cgi_get_nth_param_bin(i, &param_names[i], &param_sizes[i], &params[i]);
+  }
+
+  r = super_clnt_http_request(super_serve_fd, 1, (unsigned char**) argv,
+                              (unsigned char **) environ,
+                              param_num, param_names,
+                              param_sizes, params, 0, 0);
+  if (r < 0) {
+    operation_status_page(-1, -1, "Invalid request");
+  }
+
+  exit(0);
+}
+
 static const int next_action_map[SSERV_CMD_LAST] =
 {
   [SSERV_CMD_OPEN_CONTEST] = SSERV_CMD_CONTEST_PAGE,
@@ -2702,6 +2732,10 @@ main(int argc, char *argv[])
   case SSERV_CMD_PROB_CHANGE_VARIANTS:
   case SSERV_CMD_PROB_DELETE_VARIANTS:
     action_variant_param(client_action, next_action_map[client_action]);
+    break;
+
+  case SSERV_CMD_HTTP_REQUEST:
+    action_http_request(argv);
     break;
   }
 

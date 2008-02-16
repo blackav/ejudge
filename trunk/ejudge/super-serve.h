@@ -3,7 +3,7 @@
 #ifndef __SUPER_SERVE_H__
 #define __SUPER_SERVE_H__
 
-/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -163,6 +163,26 @@ struct sid_state
   unsigned char *var_footer_text;
 
   unsigned char *compile_home_dir;
+};
+
+struct sid_state;
+struct super_http_request_info
+{
+  // program invocation arguments
+  int arg_num;
+  const unsigned char **args;
+  // environment variables
+  int env_num;
+  const unsigned char **envs;
+  // HTTP request parameters
+  int param_num;
+  const unsigned char **param_names;
+  const size_t *param_sizes;
+  const unsigned char **params;
+
+  struct sid_state *ss;
+
+  int opcode;
 };
 
 void super_serve_clear_edited_contest(struct sid_state *sstate);

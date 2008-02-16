@@ -16,6 +16,7 @@
  */
 
 #include "config.h"
+#include "ej_limits.h"
 
 #include "html.h"
 #include "misctext.h"
