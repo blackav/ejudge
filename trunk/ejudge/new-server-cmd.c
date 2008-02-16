@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -731,6 +731,18 @@ static const struct command_handler handler_table[] =
   { "dump-report", prepare_run_id, 0, 0, NEW_SRV_ACTION_DUMP_REPORT },
   { "full-import-xml-runs", prepare_import_xml, 0, 0, NEW_SRV_ACTION_FULL_UPLOAD_RUNLOG_XML },
   { "unload", prepare_simple, 0, 0, NEW_SRV_ACTION_RELOAD_SERVER },
+  { "start-contest", prepare_simple, 0, 0, NEW_SRV_ACTION_START_CONTEST },
+  { "stop-contest", prepare_simple, 0, 0, NEW_SRV_ACTION_STOP_CONTEST },
+  { "continue-contest", prepare_simple, 0, 0, NEW_SRV_ACTION_CONTINUE_CONTEST },
+  { "suspend-contest", prepare_simple, 0, 0, NEW_SRV_ACTION_SUSPEND },
+  { "resume-contest", prepare_simple, 0, 0, NEW_SRV_ACTION_RESUME },
+  { "suspend-printing", prepare_simple, 0, 0, NEW_SRV_ACTION_PRINT_SUSPEND },
+  { "resume-printing", prepare_simple, 0, 0, NEW_SRV_ACTION_PRINT_RESUME },
+  { "set-judging-mode", prepare_simple, 0, 0, NEW_SRV_ACTION_SET_JUDGING_MODE },
+  { "set-accepting-mode", prepare_simple, 0, 0, NEW_SRV_ACTION_SET_ACCEPTING_MODE },
+  { "set-testing-finished", prepare_simple, 0, 0, NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG },
+  { "clear-testing-finished", prepare_simple, 0, 0, NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG },
+  { "rejudge-all", prepare_simple, 0, 0, NEW_SRV_ACTION_REJUDGE_ALL_2 },
 
   { 0, 0 },
 };
