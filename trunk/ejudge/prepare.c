@@ -2343,6 +2343,12 @@ set_defaults(serve_state_t state, int mode)
   }
 
   if (mode == PREPARE_COMPILE) {
+#if defined EJUDGE_LOCAL_DIR
+    if (!g->compile_work_dir[0]) {
+      snprintf(g->compile_work_dir, sizeof(g->compile_work_dir),
+               "%s/compile/work", EJUDGE_LOCAL_DIR);
+    }
+#endif
     GLOBAL_INIT_FIELD(compile_work_dir, DFLT_G_COMPILE_WORK_DIR, work_dir);
   }
 
@@ -3770,7 +3776,7 @@ create_dirs(serve_state_t state, int mode)
 
     /* working directory (if somebody needs it) */
     if (make_dir(g->work_dir, 0) < 0) return -1;
-    if (make_dir(g->compile_work_dir, 0) < 0) return -1;
+    if (os_MakeDirPath(g->compile_work_dir, 0755) < 0) return -1;
   } else if (mode == PREPARE_RUN) {
     if (g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
     if (make_dir(g->var_dir, 0) < 0) return -1;
