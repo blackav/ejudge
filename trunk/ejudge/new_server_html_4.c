@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -57,6 +57,7 @@ parse_int(const char *str, int *p_val)
   errno = 0;
   v = strtol(str, &eptr, 10);
   if (errno || *eptr) return -1;
+  *p_val = v;
   return 0;
 }
 
@@ -84,6 +85,7 @@ cmd_login(
   if (parse_int(role_str, &phr->role) < 0
       || phr->role < 0 || phr->role >= USER_ROLE_LAST)
     FAIL(NEW_SRV_ERR_INV_ROLE);
+  phr->login = xstrdup(login);
 
   switch (phr->role) {
   case USER_ROLE_CONTESTANT:

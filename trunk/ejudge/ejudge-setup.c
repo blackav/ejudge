@@ -70,6 +70,8 @@ static unsigned char config_ejudge_contests_dir[PATH_MAX];
 static int config_ejudge_contests_dir_modified;
 static unsigned char config_ejudge_contests_home_dir[PATH_MAX];
 static int config_ejudge_contests_home_dir_modified;
+static unsigned char config_ejudge_local_dir[PATH_MAX];
+static int config_ejudge_local_dir_modified;
 static unsigned char config_cgi_data_dir[PATH_MAX];
 static unsigned char config_full_cgi_data_dir[PATH_MAX];
 
@@ -159,6 +161,7 @@ enum
   PATH_LINE_EJUDGE_XML,
   PATH_LINE_CONTESTS_DIR,
   PATH_LINE_CONTESTS_HOME_DIR,
+  PATH_LINE_EJUDGE_LOCAL_DIR,
   PATH_LINE_CGI_BIN_DIR,
   PATH_LINE_HTDOCS_DIR,
   PATH_LINE_CGI_DATA_DIR,
@@ -270,6 +273,15 @@ static const struct path_edit_item path_edit_items[] =
 #if defined EJUDGE_CONTESTS_HOME_DIR
     EJUDGE_CONTESTS_HOME_DIR,
 #endif /* EJUDGE_CONTESTS_HOME_DIR */
+  },
+  [PATH_LINE_EJUDGE_LOCAL_DIR] =
+  {
+    "Local state directory", 0, config_ejudge_local_dir,
+    sizeof(config_ejudge_local_dir),
+    &config_ejudge_local_dir_modified,
+#if defined EJUDGE_LOCAL_DIR
+    EJUDGE_LOCAL_DIR
+#endif /* EJUDGE_LOCAL_DIR */
   },
   [PATH_LINE_CGI_DATA_DIR] =
   {
@@ -416,6 +428,7 @@ initialize_config_var(int idx)
   case PATH_LINE_EJUDGE_XML:
   case PATH_LINE_CONTESTS_DIR:
   case PATH_LINE_CONTESTS_HOME_DIR:
+  case PATH_LINE_EJUDGE_LOCAL_DIR:
   case PATH_LINE_CGI_BIN_DIR:
   case PATH_LINE_HTDOCS_DIR:
   case PATH_LINE_EJUDGE_CGI_BIN_DIR:
@@ -500,7 +513,10 @@ initialize_config_var(int idx)
     config_testing_work_dir_modified = 0;
     break;
   case PATH_LINE_WORKDISK_IMAGE_PATH:
-    if (config_ejudge_contests_home_dir[0]) {
+    if (config_ejudge_local_dir[0]) {
+      snprintf(config_workdisk_image_path, sizeof(config_workdisk_image_path),
+               "%s/work-img", config_ejudge_local_dir);
+    } else if (config_ejudge_contests_home_dir[0]) {
       snprintf(config_workdisk_image_path, sizeof(config_workdisk_image_path),
                "%s/work-img", config_ejudge_contests_home_dir);
     } else {
@@ -508,7 +524,10 @@ initialize_config_var(int idx)
     }
     break;
   case PATH_LINE_WORKDISK_MOUNT_DIR:
-    if (config_ejudge_contests_home_dir[0]) {
+    if (config_ejudge_local_dir[0]) {
+      snprintf(config_workdisk_mount_dir, sizeof(config_workdisk_mount_dir),
+               "%s/work-disk", config_ejudge_local_dir);
+    } else if (config_ejudge_contests_home_dir[0]) {
       snprintf(config_workdisk_mount_dir, sizeof(config_workdisk_mount_dir),
                "%s/work-disk", config_ejudge_contests_home_dir);
     } else {
@@ -562,6 +581,7 @@ is_valid_path(int idx)
   case PATH_LINE_EJUDGE_XML:
   case PATH_LINE_CONTESTS_DIR:
   case PATH_LINE_CONTESTS_HOME_DIR:
+  case PATH_LINE_EJUDGE_LOCAL_DIR:
     if (path_edit_items[idx].buf[0]) return 1;
     return 0;
 
@@ -707,6 +727,7 @@ do_paths_menu(int *p_cur_item)
       break;
 
     case PATH_LINE_CONTESTS_HOME_DIR:
+    case PATH_LINE_EJUDGE_LOCAL_DIR:
     case PATH_LINE_CGI_DATA_DIR:
     case PATH_LINE_FULL_CGI_DATA_DIR:
     case PATH_LINE_USERLIST_XML:
@@ -3593,6 +3614,7 @@ generate_install_script(FILE *f)
   // create all the necessary directories
   fprintf(f, "# create all necessary directories\n");
   generate_dir_creation(f, &created_dirs, 0, config_ejudge_contests_home_dir);
+  generate_dir_creation(f, &created_dirs, 0, config_ejudge_local_dir);
   generate_dir_creation(f, &created_dirs, 0, config_ejudge_conf_dir);
   generate_dir_creation(f, &created_dirs, 1, config_ejudge_xml_path);
   generate_dir_creation(f, &created_dirs, 0, config_ejudge_contests_dir);
