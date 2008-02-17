@@ -4503,6 +4503,7 @@ prepare_sockets(void)
   struct sockaddr_un addr;
   int log_fd;
   pid_t pid;
+  path_t socket_dir;
 
   if (!slave_mode) {
     if (!autonomous_mode) {
@@ -4522,6 +4523,19 @@ prepare_sockets(void)
         return 1;
       }
 
+      // create the socket directory
+      os_rDirName(config->super_serve_socket, socket_dir, sizeof(socket_dir));
+      if (os_IsFile(socket_dir) < 0) {
+        if (os_MakeDirPath(socket_dir, 0755) < 0) {
+          err("cannot create directory %s: %s", socket_dir, os_ErrorMsg());
+          return 1;
+        }
+      }
+      if (os_IsFile(socket_dir) != OSPK_DIR) {
+        err("%s is not a directory", socket_dir);
+        return 1;
+      }
+      
       if (forced_mode) unlink(config->super_serve_socket);
       memset(&addr, 0, sizeof(addr));
       addr.sun_family = AF_UNIX;
