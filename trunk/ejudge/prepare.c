@@ -2389,6 +2389,12 @@ set_defaults(serve_state_t state, int mode)
     }
 #endif
     GLOBAL_INIT_FIELD(run_work_dir, DFLT_G_RUN_WORK_DIR, work_dir);
+#if defined EJUDGE_LOCAL_DIR
+    if (!g->run_check_dir[0]) {
+      snprintf(g->run_check_dir, sizeof(g->run_check_dir),
+               "%s/%06d/check", EJUDGE_LOCAL_DIR, g->contest_id);
+    }
+#endif
     GLOBAL_INIT_FIELD(run_check_dir, DFLT_G_RUN_CHECK_DIR, work_dir);
   }
 
@@ -3798,7 +3804,7 @@ create_dirs(serve_state_t state, int mode)
 
     if (make_dir(g->work_dir, 0) < 0) return -1;
     if (os_MakeDirPath(g->run_work_dir, 0755) < 0) return -1;
-    if (make_dir(g->run_check_dir, 0) < 0) return -1;
+    if (os_MakeDirPath(g->run_check_dir, 0) < 0) return -1;
   }
 
   for (i = 1; i <= state->max_lang; i++) {
