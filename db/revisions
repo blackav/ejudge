@@ -3395,3 +3395,5 @@ server_framework.c 4677 0 1884801
 ejudge-setup.c 4680 0 10091297
 new_server_html_4.c 4680 0 4364450
 new_server_html_4.c 4682 0 4671832
+ejudge-control.c 4684 0 837906
+super-serve.c 4684 0 12925683
