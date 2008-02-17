@@ -3392,3 +3392,5 @@ new-server-cmd.c 4675 0 2220641
 super-serve.c 4677 0 12892516
 userlist-server.c 4677 0 22302290
 server_framework.c 4677 0 1884801
+ejudge-setup.c 4680 0 10091297
+new_server_html_4.c 4680 0 4364450
