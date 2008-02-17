@@ -251,6 +251,8 @@ cmd_operation(
         struct contest_extra *extra)
 {
   const serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  time_t start_time = 0, duration = 0, stop_time = 0;
 
   if (phr->role != USER_ROLE_ADMIN
       || opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST))
@@ -276,6 +278,82 @@ cmd_operation(
     if (serve_count_transient_runs(cs) > 0)
       return -NEW_SRV_ERR_TRANSIENT_RUNS;
     break;
+  case NEW_SRV_ACTION_RELOAD_SERVER:
+    extra->last_access_time = 0;
+    serve_send_run_quit(cs);
+    break;
+  case NEW_SRV_ACTION_START_CONTEST:
+    run_get_times(cs->runlog_state, &start_time, 0, &duration, &stop_time, 0);
+    if (stop_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_FINISHED;
+    if (start_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_STARTED;
+    run_start_contest(cs->runlog_state, cs->current_time);
+    serve_update_status_file(cs, 1);
+    serve_invoke_start_script(cs);
+    serve_update_standings_file(cs, cnts, 0);
+    break;
+  case NEW_SRV_ACTION_STOP_CONTEST:
+    run_get_times(cs->runlog_state, &start_time, 0, &duration, &stop_time, 0);
+    if (stop_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_FINISHED;
+    if (start_time <= 0) return -NEW_SRV_ERR_CONTEST_NOT_STARTED;
+    run_stop_contest(cs->runlog_state, cs->current_time);
+    serve_update_status_file(cs, 1);
+    break;
+  case NEW_SRV_ACTION_CONTINUE_CONTEST:
+    run_get_times(cs->runlog_state, &start_time, 0, &duration, &stop_time, 0);
+    if (!global->enable_continue) return -NEW_SRV_ERR_CANNOT_CONTINUE_CONTEST;
+    if (start_time <= 0) return -NEW_SRV_ERR_CONTEST_NOT_STARTED;
+    if (stop_time <= 0) return -NEW_SRV_ERR_CONTEST_NOT_FINISHED;
+    if (duration > 0 && cs->current_time >= start_time + duration)
+      return -NEW_SRV_ERR_INSUFFICIENT_DURATION;
+    run_set_finish_time(cs->runlog_state, 0);
+    run_stop_contest(cs->runlog_state, 0);
+    serve_update_status_file(cs, 1);
+    break;
+  case NEW_SRV_ACTION_SUSPEND:
+    cs->clients_suspended = 1;
+    serve_update_status_file(cs, 1);
+    break;
+  case NEW_SRV_ACTION_RESUME:
+    cs->clients_suspended = 0;
+    serve_update_status_file(cs, 1);
+    break;
+  case NEW_SRV_ACTION_PRINT_SUSPEND:
+    if (!global->enable_printing) break;
+    cs->printing_suspended = 1;
+    serve_update_status_file(cs, 1);
+    break;
+  case NEW_SRV_ACTION_PRINT_RESUME:
+    if (!global->enable_printing) break;
+    cs->printing_suspended = 1;
+    serve_update_status_file(cs, 1);
+    break;
+  case NEW_SRV_ACTION_SET_JUDGING_MODE:
+    if (global->score_system_val != SCORE_OLYMPIAD) break;
+    cs->accepting_mode = 0;
+    serve_update_status_file(cs, 1);
+    break;
+  case NEW_SRV_ACTION_SET_ACCEPTING_MODE:
+    if (global->score_system_val != SCORE_OLYMPIAD) break;
+    cs->accepting_mode = 1;
+    serve_update_status_file(cs, 1);
+    break;
+  case NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG:
+    if (global->score_system_val != SCORE_OLYMPIAD) break;
+    if ((!global->is_virtual && cs->accepting_mode)
+        ||(global->is_virtual && global->disable_virtual_auto_judge <= 0))
+      break;
+    cs->testing_finished = 1;
+    serve_update_status_file(cs, 1);
+    break;
+  case NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG:
+    if (global->score_system_val != SCORE_OLYMPIAD) break;
+    cs->testing_finished = 0;
+    serve_update_status_file(cs, 1);
+    break;
+  case NEW_SRV_ACTION_REJUDGE_ALL_2:
+    serve_rejudge_all(cnts, cs, phr->user_id, phr->ip, phr->ssl_flag);
+    break;
+
   default:
     abort();
   }
@@ -1620,6 +1698,19 @@ static cmd_handler_t cmd_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_DUMP_MASTER_RUNS] = cmd_dump_master_runs,
   [NEW_SRV_ACTION_DUMP_REPORT] = cmd_run_operation,
   [NEW_SRV_ACTION_FULL_UPLOAD_RUNLOG_XML] = cmd_import_xml_runs,
+  [NEW_SRV_ACTION_RELOAD_SERVER] = cmd_operation,
+  [NEW_SRV_ACTION_START_CONTEST] = cmd_operation,
+  [NEW_SRV_ACTION_STOP_CONTEST] = cmd_operation,
+  [NEW_SRV_ACTION_CONTINUE_CONTEST] = cmd_operation,
+  [NEW_SRV_ACTION_SUSPEND] = cmd_operation,
+  [NEW_SRV_ACTION_RESUME] = cmd_operation,
+  [NEW_SRV_ACTION_PRINT_SUSPEND] = cmd_operation,
+  [NEW_SRV_ACTION_PRINT_RESUME] = cmd_operation,
+  [NEW_SRV_ACTION_SET_JUDGING_MODE] = cmd_operation,
+  [NEW_SRV_ACTION_SET_ACCEPTING_MODE] = cmd_operation,
+  [NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG] = cmd_operation,
+  [NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG] = cmd_operation,
+  [NEW_SRV_ACTION_REJUDGE_ALL_2] = cmd_operation,
 };
 
 int
