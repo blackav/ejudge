@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -153,7 +153,9 @@ main(int argc, char *argv[])
 
   if (argc != 3) myerr("wrong number of arguments: %d", argc);
 
-#if defined EJUDGE_CONTESTS_HOME_DIR
+#if defined EJUDGE_LOCAL_DIR
+  snprintf(emupath, sizeof(emupath), "%s/dosemu/run", EJUDGE_LOCAL_DIR);
+#elif defined EJUDGE_CONTESTS_HOME_DIR
   snprintf(emupath, sizeof(emupath), "%s/dosemu/run", EJUDGE_CONTESTS_HOME_DIR);
 #else
   snprintf(emupath, sizeof(emupath), "/home/judges/dosemu/run");
