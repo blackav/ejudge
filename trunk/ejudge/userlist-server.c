@@ -8338,6 +8338,7 @@ do_work(void)
   fd_set rset, wset;
   struct client_state *p, *q;
   int saved_fd;
+  path_t socket_dir;
 
   signal(SIGPIPE, SIG_IGN);
   signal(SIGINT, interrupt_signal);
@@ -8348,6 +8349,19 @@ do_work(void)
 
   if ((listen_socket = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
     err("socket() failed: %s", os_ErrorMsg());
+    return 1;
+  }
+
+  // create the socket directory
+  os_rDirName(config->socket_path, socket_dir, sizeof(socket_dir));
+  if (os_IsFile(socket_dir) < 0) {
+    if (os_MakeDirPath(socket_dir, 0755) < 0) {
+      err("cannot create directory %s: %s", socket_dir, os_ErrorMsg());
+      return 1;
+    }
+  }
+  if (os_IsFile(socket_dir) != OSPK_DIR) {
+    err("%s is not a directory", socket_dir);
     return 1;
   }
 

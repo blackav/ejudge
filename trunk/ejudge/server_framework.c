@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -773,6 +773,7 @@ nsf_prepare(struct server_framework_state *state)
   struct sigaction act;
   int log_fd, pid;
   unsigned char *log_path;
+  unsigned char socket_dir[4096];
 
   if (getuid() == 0) {
     state->params->startup_error("sorry, will not run as the root");
@@ -787,6 +788,18 @@ nsf_prepare(struct server_framework_state *state)
   // create a control socket
   if ((state->socket_fd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0)
     state->params->startup_error("socket() failed: %s", os_ErrorMsg());
+
+  // create the socket directory
+  os_rDirName(state->params->socket_path, socket_dir, sizeof(socket_dir));
+  if (os_IsFile(socket_dir) < 0) {
+    if (os_MakeDirPath(socket_dir, 0755) < 0) {
+      state->params->startup_error("cannot create directory %s: %s",
+                                   socket_dir, os_ErrorMsg());
+    }
+  }
+  if (os_IsFile(socket_dir) != OSPK_DIR) {
+    state->params->startup_error("%s is not a directory", socket_dir);
+  }
 
   memset(&addr, 0, sizeof(addr));
   addr.sun_family = AF_UNIX;
