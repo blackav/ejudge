@@ -110,6 +110,8 @@ static int daemon_mode;
 static int autonomous_mode;
 static int forced_mode;
 static int slave_mode;
+static int manage_all_runs;
+static int master_mode;
 static unsigned char hostname[1024];
 
 static struct ejudge_cfg *config;
@@ -426,7 +428,7 @@ prepare_run_serving(const struct contest_desc *cnts,
   struct stat stbuf;
   struct xml_tree *p = 0;
 
-  if (slave_mode) {
+  if (slave_mode && !manage_all_runs) {
     if (cnts->slave_rules) {
       for (p = cnts->slave_rules->first_down; p; p = p->right) {
         if (!strcasecmp(hostname, p->text))
@@ -434,6 +436,8 @@ prepare_run_serving(const struct contest_desc *cnts,
       }
       if (!p) return;
     }
+  } else if (master_mode) {
+    return;
   } else {
     if (!cnts->run_managed && do_run_manage <= 0) return;
   }
@@ -875,7 +879,7 @@ acquire_contest_resources(const struct contest_desc *cnts,
   unsigned char var_path[1024];
   struct xml_tree *p = 0;
 
-  if (slave_mode) {
+  if (slave_mode && !manage_all_runs) {
     if (cnts->slave_rules) {
       for (p = cnts->slave_rules->first_down; p; p = p->right) {
         //fprintf(stderr, ">>%s,%s<<\n", hostname, p->text);
@@ -884,7 +888,7 @@ acquire_contest_resources(const struct contest_desc *cnts,
       }
       if (p) run_managed = 1;
     }
-  } else {
+  } else if (!master_mode) {
     run_managed = cnts->run_managed;
   }
 
@@ -4624,6 +4628,14 @@ main(int argc, char **argv)
       cur_arg += 2;
     } else if (!strcmp(argv[cur_arg], "-s")) {
       slave_mode = 1;
+      argv_restart[j++] = argv[cur_arg];
+      cur_arg++;
+    } else if (!strcmp(argv[cur_arg], "-r")) {
+      manage_all_runs = 1;
+      argv_restart[j++] = argv[cur_arg];
+      cur_arg++;
+    } else if (!strcmp(argv[cur_arg], "-m")) {
+      master_mode = 1;
       argv_restart[j++] = argv[cur_arg];
       cur_arg++;
     } else {

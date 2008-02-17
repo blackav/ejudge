@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -78,6 +78,10 @@ write_help(void)
          "    --version report version and exit\n"
          "    -u USER   specify the user to run under\n"
          "    -g GROUP  specify the group to run under\n"
+         "    -f        forced start mode\n"
+         "    -s        slave mode (compile and super-serve)\n"
+         "    -r        serve all contests in run mode\n"
+         "    -m        master mode (all except compile)\n"
          "  COMMAND:\n"
          "    start     start the ejudge daemons\n"
          "    stop      stop the ejudge daemons\n"
@@ -111,9 +115,15 @@ invoke_stopper(const char *prog, const char *ejudge_xml_path)
 }
 
 static int
-command_start(const struct ejudge_cfg *config,
-              const char *user, const char *group,
-              const char *ejudge_xml_path, int force_mode)
+command_start(
+	const struct ejudge_cfg *config,
+        const char *user,
+        const char *group,
+        const char *ejudge_xml_path,
+        int force_mode,
+        int slave_mode,
+        int all_run_serve,
+        int master_mode)
 {
   tTask *tsk = 0;
   path_t path;
@@ -130,32 +140,34 @@ command_start(const struct ejudge_cfg *config,
 #endif
 
   // start userlist-server
-  snprintf(path, sizeof(path), "%s/userlist-server", EJUDGE_SERVER_BIN_PATH);
-  tsk = task_New();
-  task_AddArg(tsk, path);
-  task_AddArg(tsk, "-D");
-  if (user) {
-    task_AddArg(tsk, "-u");
-    task_AddArg(tsk, user);
+  if (!slave_mode) {
+    snprintf(path, sizeof(path), "%s/userlist-server", EJUDGE_SERVER_BIN_PATH);
+    tsk = task_New();
+    task_AddArg(tsk, path);
+    task_AddArg(tsk, "-D");
+    if (user) {
+      task_AddArg(tsk, "-u");
+      task_AddArg(tsk, user);
+    }
+    if (group) {
+      task_AddArg(tsk, "-g");
+      task_AddArg(tsk, group);
+    }
+    if (workdir) {
+      task_AddArg(tsk, "-C");
+      task_AddArg(tsk, workdir);
+    }
+    if (force_mode) {
+      task_AddArg(tsk, "-f");
+    }
+    task_AddArg(tsk, ejudge_xml_path);
+    task_SetPathAsArg0(tsk);
+    task_Start(tsk);
+    task_Wait(tsk);
+    if (task_IsAbnormal(tsk)) goto failed;
+    task_Delete(tsk); tsk = 0;
+    userlist_server_started = 1;
   }
-  if (group) {
-    task_AddArg(tsk, "-g");
-    task_AddArg(tsk, group);
-  }
-  if (workdir) {
-    task_AddArg(tsk, "-C");
-    task_AddArg(tsk, workdir);
-  }
-  if (force_mode) {
-    task_AddArg(tsk, "-f");
-  }
-  task_AddArg(tsk, ejudge_xml_path);
-  task_SetPathAsArg0(tsk);
-  task_Start(tsk);
-  task_Wait(tsk);
-  if (task_IsAbnormal(tsk)) goto failed;
-  task_Delete(tsk); tsk = 0;
-  userlist_server_started = 1;
 
   // start super-serve
   snprintf(path, sizeof(path), "%s/super-serve", EJUDGE_SERVER_BIN_PATH);
@@ -177,6 +189,15 @@ command_start(const struct ejudge_cfg *config,
   if (force_mode) {
     task_AddArg(tsk, "-f");
   }
+  if (slave_mode) {
+    task_AddArg(tsk, "-s");
+  }
+  if (all_run_serve) {
+    task_AddArg(tsk, "-r");
+  }
+  if (master_mode) {
+    task_AddArg(tsk, "-m");
+  }
   task_AddArg(tsk, ejudge_xml_path);
   task_SetPathAsArg0(tsk);
   task_Start(tsk);
@@ -186,83 +207,89 @@ command_start(const struct ejudge_cfg *config,
   super_serve_started = 1;
 
   // start compile
-  snprintf(path, sizeof(path), "%s/compile", EJUDGE_SERVER_BIN_PATH);
-  tsk = task_New();
-  task_AddArg(tsk, path);
-  task_AddArg(tsk, "-D");
-  if (user) {
-    task_AddArg(tsk, "-u");
-    task_AddArg(tsk, user);
-  }
-  if (group) {
-    task_AddArg(tsk, "-g");
-    task_AddArg(tsk, group);
-  }
-  if (workdir) {
-    snprintf(path, sizeof(path), "%s/compile", workdir);
-    task_AddArg(tsk, "-C");
+  if (!master_mode) {
+    snprintf(path, sizeof(path), "%s/compile", EJUDGE_SERVER_BIN_PATH);
+    tsk = task_New();
     task_AddArg(tsk, path);
+    task_AddArg(tsk, "-D");
+    if (user) {
+      task_AddArg(tsk, "-u");
+      task_AddArg(tsk, user);
+    }
+    if (group) {
+      task_AddArg(tsk, "-g");
+      task_AddArg(tsk, group);
+    }
+    if (workdir) {
+      snprintf(path, sizeof(path), "%s/compile", workdir);
+      task_AddArg(tsk, "-C");
+      task_AddArg(tsk, path);
+    }
+    task_AddArg(tsk, "conf/compile.cfg");
+    task_SetPathAsArg0(tsk);
+    task_Start(tsk);
+    task_Wait(tsk);
+    if (task_IsAbnormal(tsk)) goto failed;
+    task_Delete(tsk); tsk = 0;
+    compile_started = 1;
   }
-  task_AddArg(tsk, "conf/compile.cfg");
-  task_SetPathAsArg0(tsk);
-  task_Start(tsk);
-  task_Wait(tsk);
-  if (task_IsAbnormal(tsk)) goto failed;
-  task_Delete(tsk); tsk = 0;
-  compile_started = 1;
 
   // start job-server
-  snprintf(path, sizeof(path), "%s/job-server", EJUDGE_SERVER_BIN_PATH);
-  tsk = task_New();
-  task_AddArg(tsk, path);
-  task_AddArg(tsk, "-D");
-  if (user) {
-    task_AddArg(tsk, "-u");
-    task_AddArg(tsk, user);
+  if (!slave_mode) {
+    snprintf(path, sizeof(path), "%s/job-server", EJUDGE_SERVER_BIN_PATH);
+    tsk = task_New();
+    task_AddArg(tsk, path);
+    task_AddArg(tsk, "-D");
+    if (user) {
+      task_AddArg(tsk, "-u");
+      task_AddArg(tsk, user);
+    }
+    if (group) {
+      task_AddArg(tsk, "-g");
+      task_AddArg(tsk, group);
+    }
+    if (workdir) {
+      task_AddArg(tsk, "-C");
+      task_AddArg(tsk, workdir);
+    }
+    task_AddArg(tsk, ejudge_xml_path);
+    task_SetPathAsArg0(tsk);
+    task_Start(tsk);
+    task_Wait(tsk);
+    if (task_IsAbnormal(tsk)) goto failed;
+    task_Delete(tsk); tsk = 0;
+    job_server_started = 1;
   }
-  if (group) {
-    task_AddArg(tsk, "-g");
-    task_AddArg(tsk, group);
-  }
-  if (workdir) {
-    task_AddArg(tsk, "-C");
-    task_AddArg(tsk, workdir);
-  }
-  task_AddArg(tsk, ejudge_xml_path);
-  task_SetPathAsArg0(tsk);
-  task_Start(tsk);
-  task_Wait(tsk);
-  if (task_IsAbnormal(tsk)) goto failed;
-  task_Delete(tsk); tsk = 0;
-  job_server_started = 1;
 
   // start new-server
-  snprintf(path, sizeof(path), "%s/new-server", EJUDGE_SERVER_BIN_PATH);
-  tsk = task_New();
-  task_AddArg(tsk, path);
-  task_AddArg(tsk, "-D");
-  if (user) {
-    task_AddArg(tsk, "-u");
-    task_AddArg(tsk, user);
+  if (!slave_mode) {
+    snprintf(path, sizeof(path), "%s/new-server", EJUDGE_SERVER_BIN_PATH);
+    tsk = task_New();
+    task_AddArg(tsk, path);
+    task_AddArg(tsk, "-D");
+    if (user) {
+      task_AddArg(tsk, "-u");
+      task_AddArg(tsk, user);
+    }
+    if (group) {
+      task_AddArg(tsk, "-g");
+      task_AddArg(tsk, group);
+    }
+    if (workdir) {
+      task_AddArg(tsk, "-C");
+      task_AddArg(tsk, workdir);
+    }
+    if (force_mode) {
+      task_AddArg(tsk, "-f");
+    }
+    task_AddArg(tsk, ejudge_xml_path);
+    task_SetPathAsArg0(tsk);
+    task_Start(tsk);
+    task_Wait(tsk);
+    if (task_IsAbnormal(tsk)) goto failed;
+    task_Delete(tsk); tsk = 0;
+    new_server_started = 1;
   }
-  if (group) {
-    task_AddArg(tsk, "-g");
-    task_AddArg(tsk, group);
-  }
-  if (workdir) {
-    task_AddArg(tsk, "-C");
-    task_AddArg(tsk, workdir);
-  }
-  if (force_mode) {
-    task_AddArg(tsk, "-f");
-  }
-  task_AddArg(tsk, ejudge_xml_path);
-  task_SetPathAsArg0(tsk);
-  task_Start(tsk);
-  task_Wait(tsk);
-  if (task_IsAbnormal(tsk)) goto failed;
-  task_Delete(tsk); tsk = 0;
-  new_server_started = 1;
 
   return 0;
 
@@ -309,6 +336,9 @@ main(int argc, char *argv[])
   const char *ejudge_xml_path = 0;
   const char *user = 0, *group = 0;
   int force_mode = 0;
+  int slave_mode = 0;
+  int all_run_serve = 0;
+  int master_mode = 0;
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
@@ -329,6 +359,15 @@ main(int argc, char *argv[])
       i += 2;
     } else if (!strcmp(argv[i], "-f")) {
       force_mode = 1;
+      i++;
+    } else if (!strcmp(argv[i], "-s")) {
+      slave_mode = 1;
+      i++;
+    } else if (!strcmp(argv[i], "-r")) {
+      all_run_serve = 1;
+      i++;
+    } else if (!strcmp(argv[i], "-m")) {
+      master_mode = 1;
       i++;
     } else if (!strcmp(argv[i], "--")) {
       i++;
@@ -359,7 +398,8 @@ main(int argc, char *argv[])
   if (!(config = ejudge_cfg_parse(ejudge_xml_path))) return 1;
 
   if (!strcmp(command, "start")) {
-    if (command_start(config, user, group, ejudge_xml_path, force_mode) < 0) 
+    if (command_start(config, user, group, ejudge_xml_path, force_mode,
+                      slave_mode, all_run_serve, master_mode) < 0) 
       r = 1;
   } else if (!strcmp(command, "stop")) {
     if (command_stop(config, ejudge_xml_path) < 0) r = 1;
