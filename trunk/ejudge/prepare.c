@@ -2382,6 +2382,12 @@ set_defaults(serve_state_t state, int mode)
   }
 
   if (mode == PREPARE_RUN) {
+#if defined EJUDGE_LOCAL_DIR
+    if (!g->run_work_dir[0]) {
+      snprintf(g->run_work_dir, sizeof(g->run_work_dir),
+               "%s/%06d/work", EJUDGE_LOCAL_DIR, g->contest_id);
+    }
+#endif
     GLOBAL_INIT_FIELD(run_work_dir, DFLT_G_RUN_WORK_DIR, work_dir);
     GLOBAL_INIT_FIELD(run_check_dir, DFLT_G_RUN_CHECK_DIR, work_dir);
   }
@@ -3282,6 +3288,10 @@ set_defaults(serve_state_t state, int mode)
         if (!tp->check_dir[0]) {
           pathcpy(tp->check_dir, g->run_check_dir);
         }
+#if defined EJUDGE_LOCAL_DIR
+        pathmake2(tp->check_dir, EJUDGE_LOCAL_DIR, "/",
+                  tp->check_dir, NULL);
+#endif
         pathmake2(tp->check_dir, EJUDGE_CONTESTS_HOME_DIR, "/",
                   tp->check_dir, NULL);
       }
@@ -3787,7 +3797,7 @@ create_dirs(serve_state_t state, int mode)
     if (make_dir(g->run_exe_dir, 0) < 0) return -1;
 
     if (make_dir(g->work_dir, 0) < 0) return -1;
-    if (make_dir(g->run_work_dir, 0) < 0) return -1;
+    if (os_MakeDirPath(g->run_work_dir, 0755) < 0) return -1;
     if (make_dir(g->run_check_dir, 0) < 0) return -1;
   }
 
@@ -3994,6 +4004,9 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   if (!out->check_dir[0]) {
     pathcpy(out->check_dir, state->global->run_check_dir);
   }
+#if defined EJUDGE_LOCAL_DIR
+  pathmake2(out->check_dir, EJUDGE_LOCAL_DIR, "/", out->check_dir, NULL);
+#endif
   pathmake2(out->check_dir, EJUDGE_CONTESTS_HOME_DIR, "/", out->check_dir, NULL);
 
   /* copy no_core_dump */
