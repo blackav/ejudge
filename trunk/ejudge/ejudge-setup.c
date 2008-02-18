@@ -3634,6 +3634,7 @@ generate_install_script(FILE *f)
   generate_dir_creation(f, &created_dirs, 1, compile_cfg_path);
   generate_dir_creation(f, &created_dirs, 1, serve_cfg_path);
   generate_dir_creation(f, &created_dirs, 0, config_var_dir);
+
   fprintf(f, "\n");
 
   if (!strcmp(config_workdisk_flag, "yes")) {
@@ -3699,6 +3700,7 @@ generate_install_script(FILE *f)
       snprintf(style_prefix, sizeof(style_prefix), "%s%s", config_htdocs_dir,
                CONF_STYLE_PREFIX);
       os_rDirName(style_prefix, style_dir, sizeof(style_dir));
+      generate_dir_creation(f, &created_dirs, 0, style_dir);
       snprintf(style_src_dir, sizeof(style_src_dir),
                "%s/share/ejudge/style", EJUDGE_PREFIX_DIR);
       generate_dir_creation(f, &created_dirs, 0, style_dir);
