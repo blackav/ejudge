@@ -1,6 +1,11 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Version 2.3.6 (r4700) (20080218)
+================================
+See the changes in NEWS.RUS.
+Sorry, no English translation yet.
+
 Version 2.3.5 (r4652) (20080107)
 ================================
 The test contest configuration file generation bug is fixed.
