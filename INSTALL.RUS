@@ -39,7 +39,7 @@ cd ~
 tar xvfz EJUDGE-ARCH-DIR/ejudge-VERSION.tgz
 cd ejudge
 5. Сконфигурируйте ejudge
-./configure --prefix=/home/ejudge/inst-ejudge  --with-reuse=/home/ejudge/reuse --enable-contests-home-dir=/home/judges --enable-conf-dir=/home/judges/data --enable-cgi-conf-dir=../cgi-data --with-httpd-cgi-bin-dir=CGI-BIN-DIR --with-httpd-htdocs-dir=HTDOCS-DIR
+./configure --prefix=/home/ejudge/inst-ejudge  --with-reuse=/home/ejudge/reuse --enable-contests-home-dir=/home/judges --enable-conf-dir=/home/judges/data --enable-cgi-conf-dir=../cgi-data --with-httpd-cgi-bin-dir=CGI-BIN-DIR --with-httpd-htdocs-dir=HTDOCS-DIR --enable-ajax --enable-hidden-server-bins --enable-local-dir=/var/lib/ejudge
 
 Здесь CGI-BIN-DIR - это каталог CGI скриптов веб сервера
 (например, это может быть /home/httpd/cgi-bin), HTDOCS-DIR -
@@ -67,6 +67,12 @@ cd ~ejudge/ejudge
 9. Запустите систему. Запуск программ должен выполняться из-под
 пользователя ejudge:
 ejudge-control start
+10. Скачайте DoJo Toolkit
+(http://download.dojotoolkit.org/release-0.4.3/dojo-0.4.3-ajax.tar.gz).
+Установите его в каталоге HTDOCS-DIR/ejudge:
+cd HTDOCS-DIR/ejudge
+tar xvf dojo-0.4.3-ajax.tar.gz
+mv dojo-0.4.3-ajax/* .
 
 Убедитесь, что права доступа к каталогу /home/ejudge позволяют
 читать файлы в нём всем пользователям. Некоторые дистрибутивы

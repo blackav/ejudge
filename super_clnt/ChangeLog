@@ -1,3 +1,8 @@
+2008-02-15 (r4667) Alexander Chernov  <cher@ejudge.ru>
+
+	* http_request.c:
+	initial revision
+
 2006-06-10 (r3156) Alexander Chernov  <cher@ispras.ru>
 
 	* ChangeLog:

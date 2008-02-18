@@ -43,7 +43,7 @@ cd ejudge
 
 5. Configure the ejudge
 
-./configure --prefix=/home/ejudge/inst-ejudge  --with-reuse=/home/ejudge/reuse  --enable-charset=utf-8 --enable-contests-home-dir=/home/judges --enable-conf-dir=/home/judges/data --enable-cgi-conf-dir=../cgi-data --with-httpd-cgi-bin-dir=CGI-BIN-DIR --with-httpd-htdocs-dir=HTDOCS-DIR
+./configure --prefix=/home/ejudge/inst-ejudge --with-reuse=/home/ejudge/reuse  --enable-charset=utf-8 --enable-contests-home-dir=/home/judges --enable-conf-dir=/home/judges/data --enable-cgi-conf-dir=../cgi-data --with-httpd-cgi-bin-dir=CGI-BIN-DIR --with-httpd-htdocs-dir=HTDOCS-DIR --enable-ajax --enable-hidden-server-bins --enable-local-dir=/var/lib/ejudge
 
 Here CGI-BIN-DIR is the CGI directory of your web server
 installation (for example, `/home/httpd/cgi-bin'), HTDOCS-DIR is
@@ -78,6 +78,13 @@ cd ~ejudge/ejudge
 `ejudge' user.
 
 ejudge-control start
+
+10. Download the DoJo Toolkit
+(http://download.dojotoolkit.org/release-0.4.3/dojo-0.4.3-ajax.tar.gz).
+Install it to HTDOCS-DIR/ejudge:
+cd HTDOCS-DIR/ejudge
+tar xvf dojo-0.4.3-ajax.tar.gz
+mv dojo-0.4.3-ajax/* .
 
 Make sure, that the access permissions of the `/home/ejudge'
 directory allows reading of files for arbitrary users. Some

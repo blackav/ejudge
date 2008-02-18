@@ -1,3 +1,8 @@
+2008-02-17 (r4678) Alexander Chernov  <cher@ejudge.ru>
+
+	* bccemu.c, bpcemu2.c, bppemu.c, dosrun3.c, qbemu.c: copyright notice is updated;
+	(main) EJUDGE_LOCAL_DIR is checked as primary location for dosemu.
+
 2007-12-22 (r4629) Alexander Chernov  <cher@ejudge.ru>
 
 	* dosrun3.c:

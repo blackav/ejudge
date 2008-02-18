@@ -1,3 +1,209 @@
+2008-02-18 (r4693) Alexander Chernov  <cher@ejudge.ru>
+
+	* super-serve.c:
+	support for --help and --version options is added.
+
+2008-02-17 (r4690) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	(set_defaults) `run_check_dir' is set depending on EJUDGE_LOCAL_DIR;
+	(create_dirs) `run_check_dir' is created recursively.
+
+2008-02-17 (r4688) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	(set_defaults) `run_work_dir' and `check_dir' is set depending
+	  on EJUDGE_LOCAL_DIR;
+	(create_dirs) `run_work_dir' is created recursively;
+	(prepare_tester_refinement) `check_dir' is set depending
+	  on EJUDGE_LOCAL_DIR.
+
+2008-02-17 (r4686) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	(set_defaults) EJUDGE_LOCAL_DIR is used;
+	(create_dirs) `compile_work_dir' creation is updated.
+
+2008-02-17 (r4684) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge-control.c: copyright notice is updated;
+	(command_start) `slave_mode', `all_run_serve', `master_mode'
+	  new parameters added;
+	  master_mode, slave_mode are supported;
+	(main) "-s", "-r", "-m" options are supported.
+
+	* super-serve.c:
+	(prepare_run_serving) `master_mode', `manage_all_runs' are supported;
+	(acquire_contest_resources) new modes are supported;
+	(main) "-r", "-m" options are supported.
+
+2008-02-17 (r4682) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_4.c:
+	many new commands are implemented.
+
+2008-02-17 (r4680) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge-setup.c:
+	EJUDGE_LOCAL_DIR is supported.
+
+	* new_server_html_4.c: copyright notice is updated;
+	(parse_int) bug fixed;
+	(cmd_login) bug fixed.
+
+2008-02-17 (r4677) Alexander Chernov  <cher@ejudge.ru>
+
+	* server_framework.c: copyright notice is updated;
+	(nsf_prepare) socket directory is created.
+
+	* super-serve.c:
+	(prepare_sockets) socket directory is created.
+
+	* userlist-server.c:
+	(do_work) socket directory is created.
+
+2008-02-16 (r4675) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server-cmd.c: copyright notice is updated;
+	many new commands are added.
+
+2008-02-16 (r4673) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) `stand_use_login' field is added.
+
+	* prepare_dflt.h: copyright notice is updated;
+	`stand_use_login' global configuration variable is added.
+
+	* super_proto.h:
+	editing of the `stand_use_login' global configuration variable
+	  is supported.
+
+	* html.c:
+	XHTML fixes;
+	`stand_use_login' global variable is supported.
+
+	* prepare.c, prepare_out.c:
+	new global configuration variable `stand_use_login' is added.
+
+	* runlog_import.c: copyright notice is updated;
+	wrong error message is fixed.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of the `stand_use_login' global configuration variable
+	  is supported.
+
+2008-02-16 (r4669) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_clnt.h: copyright notice is updated;
+	(super_clnt_http_request) new function prototype.
+
+	* super_html.h: copyright notice is updated;
+	(super_html_http_request) new function prototype.
+
+	* super_proto.h:
+	new request SSERV_CMD_HTTP_REQUEST;
+	new subcommands type;
+	new error code SSERV_ERR_PARAM_OUT_OF_RANGE;
+	(struct prot_super_pkt_http_request) new packet structure.
+
+	* super-serve.h: copyright notice is updated;
+	(struct super_http_request_info) new structure.
+
+	* execute.c: copyright notice is updated;
+	`security_violation' defition is put under conditional compilation.
+
+	* expat_iface.c, register.c, run.c, runlog_xml.c, serve.c, super_html_2.c, team_extra_xml.c, testing_report_xml.c, users.c: copyright notice is updated;
+	"ej_limits.h" is included.
+
+	* html.c:
+	"ej_limits.h" is included.
+
+	* serve-control.c:
+	(action_http_request) new function;
+	(main) `SSERV_CMD_HTTP_REQUEST' is handled.
+
+	* super_html.c: copyright notice is updated;
+	(super_html_main_page) CGI_PROG_SUFFIX is supported correctly;
+	(super_html_contest_page) CGI_PROG_SUFFIX is supported correctly;
+	  link to "Test details" page is added.
+
+	* super_proto.c:
+	new error code description is added.
+
+	* super-serve.c:
+	(cmd_http_request) new function to handle the new request.
+
+	* userlist-server.c: copyright notice is updated.
+
+2008-02-15 (r4668) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_4.c:
+	initial revision
+
+2008-02-15 (r4663) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac: copyright notice is updated;
+	--enable-local-dir option is added;
+	--enable-werror option is added.
+
+2008-01-17 (r4661) Alexander Chernov  <cher@ejudge.ru>
+
+	* super-serve.c:
+	(do_loop) directory check interval decreased to 10 seconds.
+
+2008-01-16 (r4659) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.c:
+	(html_write_user_problems_summary) `score_latest' problem configuration
+	  variable is supported;
+	(do_write_kirov_standings) the same.
+
+2008-01-16 (r4658) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	new problem configuration variable `score_latest' is added.
+
+	* super_proto.h:
+	editing of the `score_latest' problem configuration variable
+	is supported.
+
+	* prepare.c, prepare_out.c:
+	new problem configuration variable `score_latest' is added.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of the `score_latest' problem configuration variable
+	is supported.
+
+2008-01-16 (r4656) Alexander Chernov  <cher@ejudge.ru>
+
+	* copyright.c: copyright notice is updated.
+
+2008-01-16 (r4655) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_state.h: copyright notice is updated;
+	(struct serve_state) `has_olympiad_mode' field is added.
+
+	* html.c: copyright notice is updated;
+	(write_xml_team_accepting_report) obsoleted action numbers are fixed.
+
+	* serve_state.c: copyright notice is updated;
+	(serve_state_load_contest) `has_olympiad_mode' flag is set.
+
+2008-01-13 (r4653) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h: copyright notice is updated;
+	`olympiad_mode' problem configuration variable is added.
+
+	* super_proto.h: copyright notice is updated;
+	editing of `olympiad_mode' problem configuration variable is supported.
+
+	* prepare.c, prepare_out.c: copyright notice is updated;
+	`olympiad_mode' problem configuration variable is added.
+
+	* serve-control.c, super_html_3.c, super_serve.c: copyright notice is updated; editing of
+	`olympiad_mode' problem configuration variable is supported.
+
 2008-01-07 (r4648) Alexander Chernov  <cher@ejudge.ru>
 
 	* ejudge-setup.c:
