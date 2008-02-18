@@ -4589,6 +4589,35 @@ arg_expected(const unsigned char *progname)
   exit(1);
 }
 
+static const unsigned char *program_name = 0;
+static void write_help(void) __attribute__((noreturn));
+static void
+write_help(void)
+{
+  printf("%s: ejudge super server\n"
+         "Usage: %s [OPTIONS] [EJUDGE-XML-PATH]\n"
+         "  OPTIONS:\n"
+         "    --help    write message and exit\n"
+         "    --version report version and exit\n"
+         "    -u USER   specify the user to run under\n"
+         "    -g GROUP  specify the group to run under\n"
+         "    -C DIR    specify the current directory\n"
+         "    -D        daemon mode\n"
+         "    -f        forced start mode\n"
+         "    -s        slave mode\n"
+         "    -r        serve all contests in slave mode\n"
+         "    -m        master mode\n",
+         program_name, program_name);
+  exit(0);
+}
+static void write_version(void) __attribute__((noreturn));
+static void
+write_version(void)
+{
+  printf("%s %s, compiled %s\n", program_name, compile_version, compile_date);
+  exit(0);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -4598,12 +4627,17 @@ main(int argc, char **argv)
   const unsigned char *user = 0, *group = 0, *workdir = 0;
   char **argv_restart = 0;
 
+  program_name = os_GetBasename(argv[0]);
   start_set_self_args(argc, argv);
   XCALLOC(argv_restart, argc + 1);
   argv_restart[j++] = argv[0];
 
   while (cur_arg < argc) {
-    if (!strcmp(argv[cur_arg], "-D")) {
+    if (!strcmp(argv[cur_arg], "--help")) {
+      write_help();
+    } else if (!strcmp(argv[cur_arg], "--version")) {
+      write_version();
+    } else if (!strcmp(argv[cur_arg], "-D")) {
       daemon_mode = 1;
       cur_arg++;
     } else if (!strcmp(argv[cur_arg], "-a")) {
