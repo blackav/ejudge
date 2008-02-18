@@ -3586,7 +3586,7 @@ generate_install_script(FILE *f)
 {
   FILE *floc = 0;
   char *txt_ptr = 0;
-  size_t txt_len = 0;
+  size_t txt_len = 0, style_len = 0;
   unsigned char fpath[PATH_MAX]; 
   int cgi_config_needed = is_cgi_config_needed();
   unsigned char date_buf[64];
@@ -3699,11 +3699,15 @@ generate_install_script(FILE *f)
     } else {
       snprintf(style_prefix, sizeof(style_prefix), "%s%s", config_htdocs_dir,
                CONF_STYLE_PREFIX);
-      os_rDirName(style_prefix, style_dir, sizeof(style_dir));
+      style_len = strlen(style_prefix);
+      if (style_len > 0 && style_prefix[style_len - 1] != '/') {
+        os_rDirName(style_prefix, style_dir, sizeof(style_dir));
+      } else {
+        snprintf(style_dir, sizeof(style_dir), "%s", style_prefix);
+      }
       generate_dir_creation(f, &created_dirs, 0, style_dir);
       snprintf(style_src_dir, sizeof(style_src_dir),
                "%s/share/ejudge/style", EJUDGE_PREFIX_DIR);
-      generate_dir_creation(f, &created_dirs, 0, style_dir);
       gen_cmd_run(f, "ln -sf \"%s/actions.js\" \"%sactions.js\"",
                   style_src_dir, style_prefix);
       gen_cmd_run(f, "ln -sf \"%s/logo.gif\" \"%slogo.gif\"",
