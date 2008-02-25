@@ -3403,3 +3403,14 @@ prepare.c 4690 0 14189707
 super-serve.c 4693 0 13014750
 ejudge-setup.c 4695 0 10096525
 ejudge-setup.c 4697 0 10107904
+opcaps.h 4701 0 199927
+runlog.h 4701 0 847836
+super_proto.h 4701 0 1972209
+edit-userlist.c 4701 0 9884324
+serve-control.c 4701 0 8634815
+super-serve.c 4701 0 13110322
+opcaps.c 4701 0 528573
+runlog_import.c 4701 0 2090848
+runlog_xml.c 4701 0 2323138
+super_html.c 4701 0 11473826
+super_proto.c 4701 0 169452
