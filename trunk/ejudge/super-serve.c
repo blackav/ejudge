@@ -1560,6 +1560,12 @@ error_field_len_mismatch(struct client_state *p, const unsigned char *name,
       p->id, name, actual_len, expected_len);
   p->state = STATE_DISCONNECT;
 }
+static void
+error_slave_mode(struct client_state *p)
+{
+  err("%d: request disabled in slave mode", p->id);
+  send_reply(p, -SSERV_ERR_SLAVE_MODE);
+}
 
 static int
 open_connection(void)
@@ -1844,6 +1850,8 @@ cmd_main_page(struct client_state *p, int len,
   const struct contest_desc *cnts = 0;
   struct contest_desc *rw_cnts = 0;
   struct sid_state *sstate = 0;
+
+  if (slave_mode) return error_slave_mode(p);
 
   if (len < sizeof(*pkt)) return error_packet_too_short(p, len, sizeof(*pkt));
   self_url_ptr = pkt->data;
@@ -2231,6 +2239,8 @@ cmd_create_contest(struct client_state *p, int len,
   FILE *f;
   struct client_state *q;
 
+  if (slave_mode) return error_slave_mode(p);
+
   if (len < sizeof(*pkt)) return error_packet_too_short(p, len, sizeof(*pkt));
   self_url_ptr = pkt->data;
   self_url_len = strlen(self_url_ptr);
@@ -2310,6 +2320,8 @@ cmd_simple_command(struct client_state *p, int len,
   struct contest_desc *rw_cnts;
   opcap_t caps;
 
+  if (slave_mode) return error_slave_mode(p);
+
   if (sizeof(*pkt) != len)
     return error_bad_packet_length(p, len, sizeof(*pkt));
 
@@ -2383,6 +2395,8 @@ cmd_simple_top_command(struct client_state *p, int len,
 {
   int r;
   struct sid_state *sstate;
+
+  if (slave_mode) return error_slave_mode(p);
 
   if (sizeof(*pkt) != len)
     return error_bad_packet_length(p, len, sizeof(*pkt));
@@ -2597,6 +2611,8 @@ cmd_set_value(struct client_state *p, int len,
   size_t param2_len, total_len;
   struct sid_state *sstate;
   int r;
+
+  if (slave_mode) return error_slave_mode(p);
 
   if (len < sizeof(*pkt))
     return error_packet_too_short(p, len, sizeof(*pkt));
@@ -3092,6 +3108,33 @@ cmd_set_value(struct client_state *p, int len,
   send_reply(p, r);
 }
 
+static int
+check_restart_permissions(struct client_state *p)
+{
+  struct passwd *sysp = 0;
+  struct xml_tree *um = 0;
+  struct ejudge_cfg_user_map *m = 0;
+  opcap_t caps = 0;
+
+  if (!p->peer_uid) return 1;   /* root is allowed */
+  if (p->peer_uid == getuid()) return 1; /* the current user also allowed */
+  if (!(sysp = getpwuid(p->peer_uid)) || !sysp->pw_name) {
+    err("no user %d in system tables", p->peer_uid);
+    return -1;
+  }
+  if (!config->user_map) return 0;
+  for (um = config->user_map->first_down; um; um = um->right) {
+    m = (struct ejudge_cfg_user_map*) um;
+    if (!strcmp(m->system_user_str, sysp->pw_name)) break;
+  }
+  if (!um) return 0;
+
+  if (opcaps_find(&config->capabilities, m->local_user_str, &caps) < 0)
+    return 0;
+  if (opcaps_check(caps, OPCAP_RESTART) < 0) return 0;
+  return 1;
+}
+
 static void
 cmd_control_server(struct client_state *p, int len,
                    struct prot_super_packet *pkt)
@@ -3101,7 +3144,7 @@ cmd_control_server(struct client_state *p, int len,
   if (sizeof(*pkt) != len)
     return error_bad_packet_length(p, len, sizeof(*pkt));
 
-  if (p->peer_uid != 0 && p->peer_uid != getuid()) {
+  if (check_restart_permissions(p) <= 0) {
     return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
   }
 
@@ -4509,56 +4552,54 @@ prepare_sockets(void)
   pid_t pid;
   path_t socket_dir;
 
-  if (!slave_mode) {
-    if (!autonomous_mode) {
-      // require super_serve_log and super_serve_socket to be specified
-      if (!config->super_serve_log) {
-        err("<super_serve_log> must be specified in daemon mode");
-        return 1;
-      }
-      if (!config->super_serve_socket) {
-        err("<super_serve_socket> must be specified in daemon mode");
-        return 1;
-      }
+  if (!autonomous_mode) {
+    // require super_serve_log and super_serve_socket to be specified
+    if (!config->super_serve_log) {
+      err("<super_serve_log> must be specified in daemon mode");
+      return 1;
+    }
+    if (!config->super_serve_socket) {
+      err("<super_serve_socket> must be specified in daemon mode");
+      return 1;
+    }
 
-      // create a control socket
-      if ((control_socket_fd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
-        err("socket() failed: %s", os_ErrorMsg());
-        return 1;
-      }
+    // create a control socket
+    if ((control_socket_fd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
+      err("socket() failed: %s", os_ErrorMsg());
+      return 1;
+    }
 
-      // create the socket directory
-      os_rDirName(config->super_serve_socket, socket_dir, sizeof(socket_dir));
-      if (os_IsFile(socket_dir) < 0) {
-        if (os_MakeDirPath(socket_dir, 0755) < 0) {
-          err("cannot create directory %s: %s", socket_dir, os_ErrorMsg());
-          return 1;
-        }
-      }
-      if (os_IsFile(socket_dir) != OSPK_DIR) {
-        err("%s is not a directory", socket_dir);
+    // create the socket directory
+    os_rDirName(config->super_serve_socket, socket_dir, sizeof(socket_dir));
+    if (os_IsFile(socket_dir) < 0) {
+      if (os_MakeDirPath(socket_dir, 0755) < 0) {
+        err("cannot create directory %s: %s", socket_dir, os_ErrorMsg());
         return 1;
       }
+    }
+    if (os_IsFile(socket_dir) != OSPK_DIR) {
+      err("%s is not a directory", socket_dir);
+      return 1;
+    }
       
-      if (forced_mode) unlink(config->super_serve_socket);
-      memset(&addr, 0, sizeof(addr));
-      addr.sun_family = AF_UNIX;
-      strncpy(addr.sun_path, config->super_serve_socket, 108);
-      addr.sun_path[107] = 0;
-      if (bind(control_socket_fd, (struct sockaddr *) &addr, sizeof(addr))<0) {
-        err("bind() failed: %s", os_ErrorMsg());
-        return 1;
-      }
-      control_socket_path = config->super_serve_socket;
+    if (forced_mode) unlink(config->super_serve_socket);
+    memset(&addr, 0, sizeof(addr));
+    addr.sun_family = AF_UNIX;
+    strncpy(addr.sun_path, config->super_serve_socket, 108);
+    addr.sun_path[107] = 0;
+    if (bind(control_socket_fd, (struct sockaddr *) &addr, sizeof(addr))<0) {
+      err("bind() failed: %s", os_ErrorMsg());
+      return 1;
+    }
+    control_socket_path = config->super_serve_socket;
 
-      if (listen(control_socket_fd, 5) < 0) {
-        err("listen() failed: %s", os_ErrorMsg());
-        return 1;
-      }
-      if (chmod(control_socket_path, 0777) < 0) {
-        err("chmod() failed: %s", os_ErrorMsg());
-        return 1;
-      }
+    if (listen(control_socket_fd, 5) < 0) {
+      err("listen() failed: %s", os_ErrorMsg());
+      return 1;
+    }
+    if (chmod(control_socket_path, 0777) < 0) {
+      err("chmod() failed: %s", os_ErrorMsg());
+      return 1;
     }
   }
 

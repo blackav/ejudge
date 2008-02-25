@@ -77,6 +77,44 @@ rename_archive_files(const serve_state_t state, FILE *flog, int num, int *map)
   }
 }
 
+static int
+parse_login_func(struct run_xml_helpers *self, const unsigned char *str)
+{
+  serve_state_t state = (serve_state_t) self->user_data;
+
+  return teamdb_lookup_login(state->teamdb_state, str);
+}
+
+static int
+parse_prob_func(struct run_xml_helpers *self, const unsigned char *str)
+{
+  serve_state_t state = (serve_state_t) self->user_data;
+  int i;
+
+  if  (state->max_prob <= 0 || !state->probs) return -1;
+  for (i = 1; i <= state->max_prob; i++) {
+    if (state->probs[i] && !strcmp(str, state->probs[i]->short_name))
+      break;
+  }
+  if (i > state->max_prob) return -1;
+  return i;
+}
+
+static int
+parse_lang_func(struct run_xml_helpers *self, const unsigned char *str)
+{
+  serve_state_t state = (serve_state_t) self->user_data;
+  int i;
+
+  if (state->max_lang <= 0 || !state->langs) return -1;
+  for (i = 1; i <= state->max_lang; i++) {
+    if (state->langs[i] && !strcmp(str, state->langs[i]->short_name))
+      break;
+  }
+  if (i > state->max_lang) return -1;
+  return i;
+}
+
 void
 runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
                   FILE *hlog, int flags, const unsigned char *in_xml)
@@ -109,6 +147,14 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
   int both_auth_warn_printed = 0;
   int arch_flags = 0;
   path_t run_path;
+
+  struct run_xml_helpers helper;
+  memset(&helper, 0, sizeof(helper));
+
+  helper.user_data = (void *) state;
+  helper.parse_login_func = parse_login_func;
+  helper.parse_prob_func = parse_prob_func;
+  helper.parse_lang_func = parse_lang_func;
 
   flog = open_memstream(&flog_text, &flog_len);
   memset(&in_header, 0, sizeof(in_header));
@@ -185,7 +231,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
   fprintf(flog, "Scanning the existing entries done successfully\n");
 
   r = parse_runlog_xml(in_xml, &in_header, &in_entries_num, &in_entries,
-                       &in_data);
+                       &in_data, &helper);
   if (r < 0) {
     fprintf(flog, "XML parsing failed\n");
     goto done;

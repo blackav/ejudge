@@ -3295,6 +3295,7 @@ static const char * contest_cap_descs[] =
   [OPCAP_PRIV_EDIT_REG] = "Change the registration status for privileged users",
   [OPCAP_EDIT_PASSWD] = "View and edit passwords for regular users",
   [OPCAP_PRIV_EDIT_PASSWD] = "View and edit passwords for privileged users",
+  [OPCAP_RESTART] = "Restart the server programs",
 };
 
 int

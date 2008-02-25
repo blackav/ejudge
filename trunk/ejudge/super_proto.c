@@ -53,6 +53,7 @@ static unsigned char const * const error_map[] =
   "such problem already exists",
   "this problem is used as base problem",
   "parameter is out of range",
+  "request disabled in slave mode",
 
   "unknown error",
 };
