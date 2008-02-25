@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2001-2004 Alexander Chernov
+# Copyright (c) 2001-2008 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -18,4 +18,5 @@ then
     PATH="${GCCDIR}:${PATH}"
 fi
 
+unset LANG
 exec "${GCCRUN}" ${EJUDGE_FLAGS} -Wall -static -s -O2 "$1" -o "$2" -lm
