@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2001-2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+# Copyright (c) 2001-2008 Alexander Chernov <cher@ejudge.ru>
 
 GPPRUN="@ac_cv_contest_gpp@"
 GPPDIR="@ac_cv_contest_gpp_dir@"
@@ -16,4 +16,5 @@ then
     PATH="${GPPDIR}:${PATH}"
 fi
 
+unset LANG
 exec "${GPPRUN}" ${EJUDGE_FLAGS} -Wall -static -s -O2 "$1" -o "$2" -lm
