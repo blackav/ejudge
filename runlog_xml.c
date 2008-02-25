@@ -113,6 +113,9 @@ enum
   RUNLOG_A_SCHED_STOP_TIME,
   RUNLOG_A_FOG_TIME,
   RUNLOG_A_UNFOG_TIME,
+  RUNLOG_A_LANG_SHORT,
+  RUNLOG_A_PROB_SHORT,
+  RUNLOG_A_LOGIN,
 
   RUNLOG_LAST_ATTR,
 };
@@ -174,6 +177,9 @@ static const char * const attr_map[] =
   [RUNLOG_A_SCHED_STOP_TIME]  = "sched_stop_time",
   [RUNLOG_A_FOG_TIME]         = "fog_time",
   [RUNLOG_A_UNFOG_TIME]       = "unfog_time",
+  [RUNLOG_A_LANG_SHORT]       = "lang_short",
+  [RUNLOG_A_PROB_SHORT]       = "prob_short",
+  [RUNLOG_A_LOGIN]            = "login",
 
   [RUNLOG_LAST_ATTR] 0,
 };
@@ -307,7 +313,7 @@ parse_encoded_file(struct xml_tree *p, unsigned char **p_text, size_t *p_size)
 }
 
 static int
-process_run_elements(struct xml_tree *xt)
+process_run_elements(struct xml_tree *xt, struct run_xml_helpers *helper)
 {
   struct run_element *xr;
   struct xml_attr *xa;
@@ -382,6 +388,14 @@ process_run_elements(struct xml_tree *xt)
         if (iv <= 0) goto invalid_attr_value;
         xr->r.user_id = iv;
         break;
+      case RUNLOG_A_LOGIN:
+        if (!xa->text) goto empty_attr_value;
+        iv = -1;
+        if (helper && helper->parse_login_func)
+          iv = helper->parse_login_func(helper, xa->text);
+        if (iv <= 0 || iv >= 255) goto invalid_attr_value;
+        xr->r.user_id = iv;
+        break;
       case RUNLOG_A_PROB_ID:
         if (!xa->text) goto empty_attr_value;
         n = 0;
@@ -390,11 +404,27 @@ process_run_elements(struct xml_tree *xt)
         if (iv <= 0) goto invalid_attr_value;
         xr->r.prob_id = iv;
         break;
+      case RUNLOG_A_PROB_SHORT:
+        if (!xa->text) goto empty_attr_value;
+        iv = -1;
+        if (helper && helper->parse_prob_func)
+          iv = helper->parse_prob_func(helper, xa->text);
+        if (iv <= 0 || iv >= 255) goto invalid_attr_value;
+        xr->r.prob_id = iv;
+        break;
       case RUNLOG_A_LANG_ID:
         if (!xa->text) goto empty_attr_value;
         n = 0;
         if (sscanf(xa->text, "%d %n", &iv, &n) != 1 || xa->text[n])
           goto invalid_attr_value;
+        if (iv <= 0 || iv >= 255) goto invalid_attr_value;
+        xr->r.lang_id = iv;
+        break;
+      case RUNLOG_A_LANG_SHORT:
+        if (!xa->text) goto empty_attr_value;
+        iv = -1;
+        if (helper && helper->parse_lang_func)
+          iv = helper->parse_lang_func(helper, xa->text);
         if (iv <= 0 || iv >= 255) goto invalid_attr_value;
         xr->r.lang_id = iv;
         break;
@@ -518,7 +548,10 @@ process_run_elements(struct xml_tree *xt)
 }
 
 static int
-process_runlog_element(struct xml_tree *xt, struct xml_tree **ptruns)
+process_runlog_element(
+	struct xml_tree *xt,
+        struct xml_tree **ptruns,
+        struct run_xml_helpers *helper)
 {
   struct xml_tree *tt;
   struct xml_tree *truns = 0;
@@ -544,7 +577,7 @@ process_runlog_element(struct xml_tree *xt, struct xml_tree **ptruns)
   if (xml_empty_text(truns) < 0) return -1;
   truns = truns->first_down;
 
-  if (process_run_elements(truns) < 0)
+  if (process_run_elements(truns, helper) < 0)
     return -1;
   if (ptruns) *ptruns = truns;
   return 0;
@@ -607,11 +640,13 @@ collect_runlog(struct xml_tree *xt, size_t *psize,
 
 
 int
-parse_runlog_xml(const unsigned char *str, 
-                 struct run_header *phead,
-                 size_t *psize,
-                 struct run_entry **pentries,
-                 struct run_data **pdata)
+parse_runlog_xml(
+	const unsigned char *str, 
+        struct run_header *phead,
+        size_t *psize,
+        struct run_entry **pentries,
+        struct run_data **pdata,
+        struct run_xml_helpers *helper)
 {
   struct xml_tree *xt = 0;
   struct xml_tree *truns = 0;
@@ -622,7 +657,7 @@ parse_runlog_xml(const unsigned char *str,
   xt = xml_build_tree_str(str, &runlog_parse_spec);
   memset(phead, 0, sizeof(*phead));
   if (!xt) return -1;
-  if (process_runlog_element(xt, &truns) < 0) {
+  if (process_runlog_element(xt, &truns, helper) < 0) {
     xml_tree_free(xt, &runlog_parse_spec);
     return -1;
   }
@@ -855,14 +890,33 @@ unparse_runlog_xml(
     }
     run_status_to_str_short(status_buf, sizeof(status_buf), pp->status);
     fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_STATUS], status_buf);
-    if (pp->user_id) {
-      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_USER_ID], pp->user_id);
+    if (source_mode) {
+      if (pp->user_id > 0) {
+        fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_LOGIN],
+                teamdb_get_login(state->teamdb_state, pp->user_id));
+      }
+    } else {
+      if (pp->user_id) {
+        fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_USER_ID], pp->user_id);
+      }
     }
-    if (pp->prob_id) {
-      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_PROB_ID], pp->prob_id);
+    if (source_mode) {
+      if (pp->prob_id > 0) {
+        fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_PROB_SHORT],
+                state->probs[pp->prob_id]->short_name);
+      }
+    } else {
+      if (pp->prob_id) {
+        fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_PROB_ID], pp->prob_id);
+      }
     }
     if (pp->lang_id > 0) {
-      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_LANG_ID], pp->lang_id);
+      if (source_mode) {
+        fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_LANG_SHORT],
+                state->langs[pp->lang_id]->short_name);
+      } else {
+        fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_LANG_ID], pp->lang_id);
+      }
     } else {
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_MIME_TYPE],
               mime_type_get_type(pp->mime_type));

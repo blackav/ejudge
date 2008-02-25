@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -65,6 +65,7 @@ static const unsigned char * const cap_list [] =
   [OPCAP_PRIV_EDIT_REG]           "PRIV_EDIT_REG",
   [OPCAP_EDIT_PASSWD]             "EDIT_PASSWD",
   [OPCAP_PRIV_EDIT_PASSWD]        "PRIV_EDIT_PASSWD",
+  [OPCAP_RESTART] =               "RESTART",
 
   [OPCAP_LAST]                    0
 };

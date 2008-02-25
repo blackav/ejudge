@@ -3,7 +3,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -243,6 +243,17 @@ int run_forced_clear_entry(runlog_state_t, int run_id);
 int run_forced_set_hidden(runlog_state_t state, int run_id);
 int run_forced_set_judge_id(runlog_state_t state, int run_id, int judge_id);
 
+struct run_xml_helpers
+{
+  void *user_data;
+  int (*parse_login_func)(struct run_xml_helpers *self,
+                          const unsigned char *str);
+  int (*parse_prob_func)(struct run_xml_helpers *self,
+                         const unsigned char *str);
+  int (*parse_lang_func)(struct run_xml_helpers *self,
+                         const unsigned char *str);
+};
+
 int run_write_xml(runlog_state_t, void *, const struct contest_desc *cnts,
                   FILE *f, int, int, time_t);
 int unparse_runlog_xml(serve_state_t,
@@ -250,7 +261,8 @@ int unparse_runlog_xml(serve_state_t,
                        FILE *, const struct run_header*,
                        size_t, const struct run_entry*, int, int, time_t);
 int parse_runlog_xml(const unsigned char *, struct run_header *,
-                     size_t *, struct run_entry **, struct run_data **);
+                     size_t *, struct run_entry **, struct run_data **,
+                     struct run_xml_helpers *);
 void runlog_import_xml(serve_state_t, struct runlog_state *,
                        FILE *flog, int flags,
                        const unsigned char *in_xml);

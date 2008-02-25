@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -980,7 +980,7 @@ display_member_gender_menu(int line, int init_val)
 
   XMEMZERO(items, USERLIST_SX_LAST + 1);
   for (i = 0; i < USERLIST_SX_LAST; i++) {
-    items[i] = new_item(member_status_string[i], 0);
+    items[i] = new_item(member_gender_string[i], 0);
   }
   menu = new_menu(items);
   scale_menu(menu, &req_lines, &req_cols);
