@@ -393,7 +393,7 @@ process_run_elements(struct xml_tree *xt, struct run_xml_helpers *helper)
         iv = -1;
         if (helper && helper->parse_login_func)
           iv = helper->parse_login_func(helper, xa->text);
-        if (iv <= 0 || iv >= 255) goto invalid_attr_value;
+        if (iv <= 0) goto invalid_attr_value;
         xr->r.user_id = iv;
         break;
       case RUNLOG_A_PROB_ID:
@@ -409,7 +409,7 @@ process_run_elements(struct xml_tree *xt, struct run_xml_helpers *helper)
         iv = -1;
         if (helper && helper->parse_prob_func)
           iv = helper->parse_prob_func(helper, xa->text);
-        if (iv <= 0 || iv >= 255) goto invalid_attr_value;
+        if (iv <= 0) goto invalid_attr_value;
         xr->r.prob_id = iv;
         break;
       case RUNLOG_A_LANG_ID:
