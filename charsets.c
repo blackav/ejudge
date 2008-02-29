@@ -31,7 +31,7 @@
 #if defined EJUDGE_CHARSET
 #define INTERNAL_CHARSET EJUDGE_CHARSET
 #else
-#define INTERNAL_CHARSET "iso8859-1"
+#define INTERNAL_CHARSET "utf-8"
 #endif
 
 struct charset_info_s

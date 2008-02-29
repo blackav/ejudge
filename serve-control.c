@@ -53,7 +53,7 @@
 #if defined EJUDGE_CHARSET
 #define DEFAULT_CHARSET              EJUDGE_CHARSET
 #else
-#define DEFAULT_CHARSET              "iso8859-1"
+#define DEFAULT_CHARSET              "utf-8"
 #endif /* EJUDGE_CHARSET */
 
 /* configuration file:
@@ -260,7 +260,7 @@ parse_config(const unsigned char *path, const unsigned char *default_config)
 #if defined EJUDGE_CHARSET
   if (!cfg->charset) cfg->charset = xstrdup(EJUDGE_CHARSET);
 #endif /* EJUDGE_CHARSET */
-  if (!cfg->charset) cfg->charset = "iso8859-1";
+  if (!cfg->charset) cfg->charset = "utf-8";
 
 #if defined EJUDGE_SOCKET_PATH
   if (!cfg->socket_path) cfg->socket_path = xstrdup(EJUDGE_SOCKET_PATH);

@@ -60,7 +60,7 @@
 #if defined EJUDGE_CHARSET
 #define DEFAULT_CHARSET              EJUDGE_CHARSET
 #else
-#define DEFAULT_CHARSET              "iso8859-1"
+#define DEFAULT_CHARSET              "utf-8"
 #endif /* EJUDGE_CHARSET */
 
 #define FIRST_COOKIE(u) ((struct userlist_cookie*) (u)->cookies->first_down)

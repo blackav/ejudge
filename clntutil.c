@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -52,7 +52,7 @@
 #if defined EJUDGE_CHARSET
 #define DEFAULT_CHARSET              EJUDGE_CHARSET
 #else
-#define DEFAULT_CHARSET              "iso8859-1"
+#define DEFAULT_CHARSET              "utf-8"
 #endif /* EJUDGE_CHARSET */
 
 time_t server_cur_time;
