@@ -121,6 +121,7 @@ COMMON_CFILES=\
  archive_paths.c\
  base64.c\
  cgi.c\
+ charsets.c\
  clarlog.c\
  clntutil.c\
  compile_packet_1.c\
@@ -317,6 +318,7 @@ HFILES=\
  archive_paths.h\
  base64.h\
  cgi.h\
+ charsets.h\
  clarlog.h\
  client_actions.h\
  clntutil.h\

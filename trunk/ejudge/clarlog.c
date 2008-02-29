@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -486,11 +486,13 @@ clar_add_record_new(clarlog_state_t state,
   subj_len = strlen(subj);
   if (subj_len >= CLAR_ENTRY_SUBJ_SIZE) {
     memcpy(subj2, subj, CLAR_ENTRY_SUBJ_SIZE - 4);
-    j = CLAR_ENTRY_SUBJ_SIZE - 5;
     if (utf8_mode) {
+      j = CLAR_ENTRY_SUBJ_SIZE - 4;
       while (j >= 0 && subj2[j] >= 0x80 && subj2[j] <= 0xbf) j--;
+      if (j < 0) j = 0;
+    } else {
+      j = CLAR_ENTRY_SUBJ_SIZE - 4;
     }
-    j++;
     subj2[j++] = '.';
     subj2[j++] = '.';
     subj2[j++] = '.';
