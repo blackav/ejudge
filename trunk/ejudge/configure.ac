@@ -1435,6 +1435,8 @@ fi
 [[ x"${ac_cv_super_serve_socket}" = xyes -o x"${ac_cv_super_serve_socket}" = xno ]] && ac_cv_super_serve_socket=""
 [[ x"${ac_cv_new_server_socket}" = xno ]] && ac_cv_new_server_socket=""
 
+[[ x"${ac_cv_charset}" = x ]] && ac_cv_charset="utf-8"
+
 [[ x"${ac_cv_conf_dir}" = xyes -o x"${ac_cv_conf_dir}" = xno ]] && ac_cv_conf_dir=""
 if [[ x"${ac_cv_conf_dir}" != x ]]
 then
