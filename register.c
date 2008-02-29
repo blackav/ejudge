@@ -49,9 +49,9 @@
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
 #include <locale.h>
+#endif
 
 #define __(x) x
-#endif
 
 #ifndef EJUDGE_CHARSET
 #define EJUDGE_CHARSET EJ_INTERNAL_CHARSET
