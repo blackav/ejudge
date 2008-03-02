@@ -685,6 +685,21 @@ prepare_dump_master_runs(const unsigned char *cmd, int argc, char *argv[],
   put_cgi_param_f("action", "%d", NEW_SRV_ACTION_DUMP_MASTER_RUNS);
 }
 
+static void
+prepare_schedule(
+        const unsigned char *cmd,
+        int argc,
+        char *argv[],
+        int role,
+        int action)
+{
+  parse_session_id(&argc, argv);
+  if (argc != 1)
+    startup_error("invalid number of arguments for `%s'", cmd);
+  put_cgi_param("sched_time", argv[0]);
+  put_cgi_param_f("action", "%d", action);
+}
+
 struct command_handler
 {
   const char *cmd;
@@ -743,6 +758,7 @@ static const struct command_handler handler_table[] =
   { "set-testing-finished", prepare_simple, 0, 0, NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG },
   { "clear-testing-finished", prepare_simple, 0, 0, NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG },
   { "rejudge-all", prepare_simple, 0, 0, NEW_SRV_ACTION_REJUDGE_ALL_2 },
+  { "schedule", prepare_schedule, 0, 0, NEW_SRV_ACTION_SCHEDULE },
 
   { 0, 0 },
 };

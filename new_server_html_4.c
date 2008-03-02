@@ -245,6 +245,59 @@ cmd_dump_problems(
 }
 
 static int
+do_schedule(
+        struct http_request_info *phr,
+        serve_state_t cs,
+        const struct contest_desc *cnts)
+{
+  const unsigned char *s = 0;
+  int hour = 0, min = 0, sec = 0, year = 0, mon = 0, day = 0, n;
+  struct tm loc2;
+  struct tm *ploc;
+  time_t sloc, start_time, stop_time;
+
+  if (ns_cgi_param(phr, "sched_time", &s) <= 0)
+    return -NEW_SRV_ERR_INV_TIME_SPEC;
+  if (sscanf(s, "%d/%d/%d %d:%d:%d%n",
+             &year, &mon, &day, &hour, &min, &sec, &n) == 6 && !s[n]) {
+    memset(&loc2, 0, sizeof(loc2));
+    loc2.tm_isdst = -1;
+    loc2.tm_year = year - 1900;
+    loc2.tm_mon = mon - 1;
+    loc2.tm_mday = day;
+    loc2.tm_hour = hour;
+    loc2.tm_min = min;
+    loc2.tm_sec = sec;
+    ploc = &loc2;
+  } else if (sscanf(s, "%d:%d%n", &hour, &min, &n) == 2 && !s[n]) {
+    ploc = localtime(&cs->current_time);
+    ploc->tm_hour = hour;
+    ploc->tm_min = min;
+    ploc->tm_sec = 0;
+  } else if (sscanf(s, "%d%n", &hour, &n) == 1 && !s[n]) {
+    ploc = localtime(&cs->current_time);
+    ploc->tm_hour = hour;
+    ploc->tm_min = 0;
+    ploc->tm_sec = 0;
+  } else {
+    return -NEW_SRV_ERR_INV_TIME_SPEC;
+  }
+
+  if ((sloc = mktime(ploc)) == (time_t) -1) {
+    return -NEW_SRV_ERR_INV_TIME_SPEC;
+  }
+
+  run_get_times(cs->runlog_state, &start_time, 0, 0, &stop_time, 0);
+
+  if (stop_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_FINISHED;
+  if (start_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_STARTED;
+  run_sched_contest(cs->runlog_state, sloc);
+  serve_update_standings_file(cs, cnts, 0);
+  serve_update_status_file(cs, 1);
+  return 0;
+}
+
+static int
 cmd_operation(
         FILE *fout,
         struct http_request_info *phr,
@@ -354,6 +407,8 @@ cmd_operation(
   case NEW_SRV_ACTION_REJUDGE_ALL_2:
     serve_rejudge_all(cnts, cs, phr->user_id, phr->ip, phr->ssl_flag);
     break;
+  case NEW_SRV_ACTION_SCHEDULE:
+    return do_schedule(phr, cs, cnts);
 
   default:
     abort();
@@ -1719,6 +1774,7 @@ static cmd_handler_t cmd_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG] = cmd_operation,
   [NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG] = cmd_operation,
   [NEW_SRV_ACTION_REJUDGE_ALL_2] = cmd_operation,
+  [NEW_SRV_ACTION_SCHEDULE] = cmd_operation,
 };
 
 int
