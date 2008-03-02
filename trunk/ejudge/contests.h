@@ -4,7 +4,7 @@
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -420,6 +420,7 @@ int contests_save_xml(struct contest_desc *cnts,
                       const unsigned char *txt2,
                       const unsigned char *txt3);
 int contests_unparse_and_save(struct contest_desc *cnts,
+                              const unsigned char *charset,
                               const unsigned char *header,
                               const unsigned char *footer,
                               const unsigned char *add_footer,
