@@ -197,6 +197,7 @@ charset_recode(
   ASSERT(str);
 
   if (!id) return str;
+  ci = &charset_info[id];
   if (ci->tr == (iconv_t) -2) open_charset_iconv(ci);
   if (ci->tr == (iconv_t) -1) {
     unsigned char tmpbuf[128];
