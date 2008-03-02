@@ -966,20 +966,24 @@ read_first_line(FILE *f)
   buf[buflen] = 0;
   if (buflen <= 3) return 0;
 
+  p = buf;
+  if (*p == '#' || *p == ';' || *p == '%') p++; 
   while (isspace(*p)) p++;
   if (p[0] != '-' || p[1] != '*' || p[2] != '-') return 0;
   p += 3;
   while (isspace(*p)) p++;
-  if (sscanf(p, "%s%d", buf2, &n) != 1) return 0;
+  if (sscanf(p, "%s%n", buf2, &n) != 1) return 0;
   if (strcasecmp(buf2, "coding:") != 0) return 0;
   p += n;
-  if (sscanf(p, "%s%d", buf2, &n) != 1) return 0;
+  if (sscanf(p, "%s%n", buf2, &n) != 1) return 0;
   p += n;
   if (*p) return 0;
 
   parsecfg_state.charset_id = charset_get_id(buf2);
+  /*
   fprintf(stderr, "detected charset: %s (%d)\n", buf2,
           parsecfg_state.charset_id);
+  */
   return 0;
 }
 
