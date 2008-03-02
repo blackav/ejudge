@@ -3,7 +3,7 @@
 #ifndef __CLARLOG_H__
 #define __CLARLOG_H__
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@ enum
 struct clarlog_state;
 typedef struct clarlog_state *clarlog_state_t;
 
-enum { CLAR_ENTRY_SUBJ_SIZE = 32 };
+enum { CLAR_ENTRY_SUBJ_SIZE = 32, CLAR_ENTRY_CHARSET_SIZE = 16 };
 
 struct clar_entry_v1
 {
@@ -56,7 +56,8 @@ struct clar_entry_v1
   unsigned short locale_id;     /* 2 */
   unsigned char _pad2[2];       /* 2 */
   int in_reply_to;              /* 4 */ /* 1 means in clar_id 0! */
-  unsigned char _pad3[32];
+  unsigned char _pad3[16];
+  unsigned char charset[CLAR_ENTRY_CHARSET_SIZE];
   unsigned char subj[CLAR_ENTRY_SUBJ_SIZE];
 };                              /* 128 */
 
@@ -88,6 +89,7 @@ int clar_add_record_new(clarlog_state_t state,
                         int            in_reply_to,
                         int            appeal_flag,
                         int            utf8_mode,
+                        const unsigned char *charset,
                         const unsigned char *subj);
 int clar_get_record(clarlog_state_t state,
                     int            id,
@@ -105,6 +107,9 @@ int clar_get_total(clarlog_state_t state);
 int clar_get_record_new(clarlog_state_t state,
                         int clar_id,
                         struct clar_entry_v1 *pclar);
+int clar_get_charset_id(clarlog_state_t state,
+                        int clar_id);
+const unsigned char *clar_get_subject(clarlog_state_t state, int clar_id);
 
 void clar_get_team_usage(clarlog_state_t, int, int *, size_t *);
 char *clar_flags_html(clarlog_state_t, int, int, int, char *, int);

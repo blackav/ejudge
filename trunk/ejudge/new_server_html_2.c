@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -44,6 +44,7 @@
 #include "sha.h"
 #include "sformat.h"
 #include "userlist_clnt.h"
+#include "charsets.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -711,6 +712,7 @@ ns_write_all_clars(FILE *f,
   const struct section_global_data *global = cs->global;
   struct user_filter_info *u = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *clar_subj = 0;
 
   u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
 
@@ -810,6 +812,7 @@ ns_write_all_clars(FILE *f,
     if (clar_get_record_new(cs->clarlog_state, i, &clar) < 0) continue;
     if (mode_clar != 1 && (clar.from <= 0 || clar.flags >= 2)) continue; 
 
+    clar_subj = clar_get_subject(cs->clarlog_state, i);
     submit_time = clar.time;
     if (submit_time < 0) submit_time = 0;
     if (!start) {
@@ -846,7 +849,7 @@ ns_write_all_clars(FILE *f,
       fprintf(f, "<td%s>%s</td>", cl,
               teamdb_get_name_2(cs->teamdb_state, clar.to));
     }
-    fprintf(f, "<td%s>%s</td>", cl, ARMOR(clar.subj));
+    fprintf(f, "<td%s>%s</td>", cl, ARMOR(clar_subj));
     fprintf(f, "<td%s><a href=\"%s\">%s</a></td>", cl,
             ns_url(bbuf, sizeof(bbuf), phr, NEW_SRV_ACTION_VIEW_CLAR,
                    "clar_id=%d", i), _("View"));
@@ -1742,12 +1745,15 @@ ns_write_priv_clar(const serve_state_t cs,
   const struct section_global_data *global = cs->global;
   struct clar_entry_v1 clar;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct html_armor_buffer rb = HTML_ARMOR_INITIALIZER;
   time_t start_time;
   path_t name_buf;
   char *msg_txt = 0;
   size_t msg_len = 0;
   unsigned char bb[1024];
   unsigned char b1[1024], b2[1024];
+  const unsigned char *clar_subj = 0;
+  int charset_id;
 
   if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
       || clar_get_record_new(cs->clarlog_state, clar_id, &clar) < 0) {
@@ -1755,6 +1761,7 @@ ns_write_priv_clar(const serve_state_t cs,
     goto done;
   }
   start_time = run_get_start_time(cs->runlog_state);
+  clar_subj = clar_get_subject(cs->clarlog_state, clar_id);
 
   fprintf(f, "<h2>%s %d</h2>\n", _("Message"), clar_id);
   fprintf(f, "<table border=\"0\">\n");
@@ -1813,7 +1820,7 @@ ns_write_priv_clar(const serve_state_t cs,
   }
   fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>", _("Locale code"),
           clar.locale_id);
-  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"),ARMOR(clar.subj));
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"),ARMOR(clar_subj));
   fprintf(f, "</table>\n");
   /*
   print_nav_buttons(state, f, 0, sid, self_url, hidden_vars, extra_args,
@@ -1827,7 +1834,8 @@ ns_write_priv_clar(const serve_state_t cs,
     fprintf(f, "<big><font color=\"red\">%s</font></big>\n",
             _("Cannot read message text!"));
   } else {
-    fprintf(f, "<pre>%s</pre><hr>", ARMOR(msg_txt));
+    charset_id = clar_get_charset_id(cs->clarlog_state, clar_id);
+    fprintf(f, "<pre>%s</pre><hr>", ARMOR(charset_recode(charset_id, &rb, msg_txt)));
   }
 
   if (phr->role >= USER_ROLE_JUDGE && clar.from
@@ -1846,6 +1854,7 @@ ns_write_priv_clar(const serve_state_t cs,
 
  done:;
   html_armor_free(&ab);
+  html_armor_free(&rb);
   xfree(msg_txt);
 }
 

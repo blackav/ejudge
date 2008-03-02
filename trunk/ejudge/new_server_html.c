@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -135,6 +135,7 @@
 #include "protocol.h"
 #include "printing.h"
 #include "sformat.h"
+#include "charsets.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -2801,7 +2802,7 @@ priv_submit_clar(FILE *fout,
                                      phr->ip, phr->ssl_flag,
                                      0, user_id, 0, phr->user_id,
                                      hide_flag, phr->locale_id, 0, 0,
-                                     utf8_mode, subj2)) < 0) {
+                                     utf8_mode, NULL, subj2)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto cleanup;
   }
@@ -2847,6 +2848,10 @@ priv_clar_reply(FILE *fout,
   unsigned char *new_subj, *quoted, *msg;
   size_t new_subj_len, quoted_len, msg_len;
   struct timeval precise_time;
+  struct html_armor_buffer rb = HTML_ARMOR_INITIALIZER;
+  int charset_id;
+  const unsigned char *recoded_txt;
+  size_t recoded_len;
 
   // reply, in_reply_to
   if (ns_cgi_param(phr, "in_reply_to", &s) <= 0
@@ -2918,14 +2923,18 @@ priv_clar_reply(FILE *fout,
     goto cleanup;
   }
 
+  charset_id = clar_get_charset_id(cs->clarlog_state, in_reply_to);
+  recoded_txt = charset_recode(charset_id, &rb, orig_txt);
+  recoded_len = strlen(recoded_txt);
+
   l10n_setlocale(clar.locale_id);
-  new_subj = alloca(orig_txt_len + 64);
-  new_subj_len = message_reply_subj(orig_txt, new_subj);
+  new_subj = alloca(recoded_len + 64);
+  new_subj_len = message_reply_subj(recoded_txt, new_subj);
   l10n_setlocale(0);
 
-  quoted_len = message_quoted_size(orig_txt);
+  quoted_len = message_quoted_size(recoded_txt);
   quoted = alloca(quoted_len + 16);
-  message_quote(orig_txt, quoted);
+  message_quote(recoded_txt, quoted);
 
   msg = alloca(reply_len + quoted_len + new_subj_len + 64);
   msg_len = sprintf(msg, "%s%s\n%s\n", new_subj, quoted, reply_txt_2);
@@ -2941,7 +2950,9 @@ priv_clar_reply(FILE *fout,
                                 phr->ip, phr->ssl_flag,
                                 0, from_id, 0, phr->user_id, 0,
                                 clar.locale_id, in_reply_to + 1, 0,
-                                utf8_mode, clar.subj);
+                                utf8_mode, NULL,
+                                clar_get_subject(cs->clarlog_state,
+                                                 in_reply_to));
 
   if (clar_id < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
@@ -2959,9 +2970,11 @@ priv_clar_reply(FILE *fout,
 
  cleanup:
   xfree(orig_txt);
+  html_armor_free(&rb);
   return 0;
 
  invalid_param:
+  html_armor_free(&rb);
   ns_html_err_inv_param(fout, phr, 0, errmsg);
   return -1;
 }
@@ -8934,7 +8947,7 @@ unpriv_submit_clar(FILE *fout,
                                      phr->ip, phr->ssl_flag,
                                      phr->user_id, 0, 0, 0, 0,
                                      phr->locale_id, 0, 0,
-                                     utf8_mode, subj3)) < 0) {
+                                     utf8_mode, NULL, subj3)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto done;
   }
@@ -9078,7 +9091,7 @@ unpriv_submit_appeal(FILE *fout,
                                      phr->ip, phr->ssl_flag,
                                      phr->user_id, 0, 0, 0, 0,
                                      phr->locale_id, 0, 1,
-                                     utf8_mode, subj3)) < 0) {
+                                     utf8_mode, NULL, subj3)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto done;
   }
@@ -9660,6 +9673,7 @@ unpriv_view_clar(FILE *fout,
   char *clar_text = 0;
   unsigned char *html_subj, *html_text;
   unsigned char dur_str[64];
+  const unsigned char *clar_subj = 0;
 
   if ((n = ns_cgi_param(phr, "clar_id", &s)) <= 0)
     return ns_html_err_inv_param(fout, phr, 0, "clar_id is binary or not set");
@@ -9710,9 +9724,10 @@ unpriv_view_clar(FILE *fout,
     goto done;
   }
 
-  html_subj_len = html_armored_strlen(ce.subj);
+  clar_subj = clar_get_subject(cs->clarlog_state, clar_id);
+  html_subj_len = html_armored_strlen(clar_subj);
   html_subj = alloca(html_subj_len + 1);
-  html_armor_string(ce.subj, html_subj);
+  html_armor_string(clar_subj, html_subj);
   html_text_len = html_armored_strlen(clar_text);
   html_text = alloca(html_text_len + 1);
   html_armor_string(clar_text, html_text);
