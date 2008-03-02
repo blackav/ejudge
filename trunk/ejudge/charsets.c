@@ -92,6 +92,7 @@ charset_recode_buf(
   struct charset_info_s *ci;
   size_t inbytesleft, outbytesleft, r;
   char *inbuf, *outbuf;
+  unsigned char *tmpbuf;
 
   ASSERT(buf);
   ASSERT(size > 1);
@@ -107,9 +108,10 @@ charset_recode_buf(
 
   // FIXME: maybe there are cases when it is possible to recode
   // using the same buffer...
+  tmpbuf = (unsigned char*) alloca(size);
   inbuf = (char*) buf;
   inbytesleft = strnlen(buf, size);
-  outbuf = (char*) alloca(size);
+  outbuf = (char*) tmpbuf;
   outbytesleft = size - 1;
 
   if (!inbytesleft) {
@@ -127,8 +129,8 @@ charset_recode_buf(
   } while (inbytesleft && outbytesleft && errno != E2BIG);
 
   // yes, I know what I'm doing
-  outbuf[size - outbytesleft - 1] = 0;
-  strcpy(buf, outbuf);
+  tmpbuf[size - outbytesleft - 1] = 0;
+  strcpy(buf, tmpbuf);
   return buf;
 }
 
@@ -179,7 +181,13 @@ charset_recode_to_buf(
     }
   } while (inbytesleft && outbytesleft && errno != E2BIG);
 
-  outbuf[size - outbytesleft - 1] = 0;
+  buf[size - outbytesleft - 1] = 0;
+  /*
+  for (r = 0; buf[r]; r++) {
+    fprintf(stderr, "<%02x>", buf[r]);
+  }
+  fprintf(stderr, "\n");
+  */
   return buf;
 }
 
@@ -239,7 +247,13 @@ charset_recode(
     }
   }
 
-  outbuf[ab->size - outbytesleft - 1] = 0;
+  ab->buf[ab->size - outbytesleft - 1] = 0;
+  /*
+  for (r = 0; ab->buf[r]; r++) {
+    fprintf(stderr, "<%02x>", ab->buf[r]);
+  }
+  fprintf(stderr, "\n");
+  */
   return ab->buf;
 }
 
