@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,12 @@
 #include <ctype.h>
 #include <limits.h>
 #include <errno.h>
+
+#if defined EJUDGE_CHARSET
+#define INTERNAL_CHARSET EJUDGE_CHARSET
+#else
+#define INTERNAL_CHARSET "utf-8"
+#endif
 
 #define MAX_CONTEST_ID 999999
 #define CONTEST_CHECK_TIME 5
@@ -1882,13 +1888,15 @@ contests_save_xml(struct contest_desc *cnts,
 }
 
 int
-contests_unparse_and_save(struct contest_desc *cnts,
-                          const unsigned char *header,
-                          const unsigned char *footer,
-                          const unsigned char *add_footer,
-                          unsigned char *(*diff_func)(const unsigned char *,
-                                                      const unsigned char *),
-                          unsigned char **p_diff_txt)
+contests_unparse_and_save(
+        struct contest_desc *cnts,
+        const unsigned char *charset,
+        const unsigned char *header,
+        const unsigned char *footer,
+        const unsigned char *add_footer,
+        unsigned char *(*diff_func)(const unsigned char *,
+                                    const unsigned char *),
+        unsigned char **p_diff_txt)
 {
   int serial = 1;
   unsigned char tmp_path[1024];
@@ -1902,7 +1910,10 @@ contests_unparse_and_save(struct contest_desc *cnts,
   size_t new_size = 0;
   unsigned char *diff_txt = 0;
 
+  if (!charset || !*charset) charset = INTERNAL_CHARSET;
+
   f = open_memstream(&new_text, &new_size);
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n", charset);
   fputs(header, f);
   contests_unparse(f, cnts);
   fputs(footer, f);

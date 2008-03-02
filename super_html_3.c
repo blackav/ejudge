@@ -52,6 +52,12 @@
 #include <sys/wait.h>
 #include <errno.h>
 
+#if defined EJUDGE_CHARSET
+#define INTERNAL_CHARSET EJUDGE_CHARSET
+#else
+#define INTERNAL_CHARSET "utf-8"
+#endif
+
 static const unsigned char head_row_attr[] =
   " bgcolor=\"#a0a0a0\"";
 static const unsigned char prob_row_attr[] =
@@ -8052,6 +8058,7 @@ super_html_update_variant_map(FILE *flog, int contest_id,
   struct variant_map *vmap = 0;
   int *tvec = 0, *new_map, *new_rev_map;
   struct userlist_user *user;
+  unsigned char header_buf[1024];
 
   if (!cnts->root_dir && !cnts->root_dir[0]) {
     fprintf(flog, "update_variant_map: contest root_dir is not set");
@@ -8085,8 +8092,13 @@ super_html_update_variant_map(FILE *flog, int contest_id,
 
     if (stat(variant_file, &stbuf) < 0) {
       XCALLOC(global->variant_map, 1);
-      if (p_header_txt)
-        *p_header_txt = xstrdup("# $" "Id" "$\n");
+      if (p_header_txt) {
+        snprintf(header_buf, sizeof(header_buf),
+                 "<?xml version=\"1.0\" encoding=\"%s\" ?>\n"
+                 "<!-- $%s$ -->\n",
+                 INTERNAL_CHARSET, "Id");
+        *p_header_txt = xstrdup(header_buf);
+      }
     } else {
       if (!S_ISREG(stbuf.st_mode)) {
         fprintf(flog, "update_variant_map: variant map file %s is not regular file\n",

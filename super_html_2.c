@@ -937,7 +937,7 @@ get_contest_header_and_footer(const unsigned char *path,
                               unsigned char **before_start,
                               unsigned char **after_end)
 {
-  char *xml_text = 0, *p1, *p2;
+  char *xml_text = 0, *p1, *p2, *p3;
   unsigned char *s1 = 0, *s2 = 0;
   size_t xml_text_size = 0;
   struct stat sb;
@@ -956,12 +956,17 @@ get_contest_header_and_footer(const unsigned char *path,
     errcode = -SSERV_ERR_FILE_FORMAT_INVALID;
     goto failure;
   }
+  p3 = xml_text;
+  if (!strncmp(p3, "<?xml ", 6)) {
+    while (*p3 != '\n' && p3 < p1) p3++;
+    if (*p3 == '\n') p3++;
+  }
     
   s1 = xmalloc(xml_text_size + 1);
   s2 = xmalloc(xml_text_size + 1);
 
-  memcpy(s1, xml_text, p1 - xml_text);
-  s1[p1 - xml_text] = 0;
+  memcpy(s1, p3, p1 - p3);
+  s1[p1 - p3] = 0;
   strcpy(s2, p2 + 10);
 
   *before_start = s1;
@@ -1464,8 +1469,7 @@ super_html_commit_contest(FILE *f,
   }
   if (!xml_header) {
     snprintf(hbuf, sizeof(hbuf),
-             "<?xml version=\"1.0\" encoding=\"%s\" ?>\n"
-             "<!-- %cId%c -->\n", EJUDGE_CHARSET, '$', '$');
+             "<!-- $%s$ -->\n", "Id");
     xml_header = xstrdup(hbuf);
   }
   if (!xml_footer) xml_footer = xstrdup("\n");
@@ -1517,8 +1521,8 @@ super_html_commit_contest(FILE *f,
   }
 
   /* 11. Save the XML file */
-  errcode = contests_unparse_and_save(cnts, xml_header, xml_footer, audit_rec, 
-                                      diff_func, &diff_str);
+  errcode = contests_unparse_and_save(cnts, NULL, xml_header, xml_footer,
+                                      audit_rec, diff_func, &diff_str);
   if (errcode < 0) {
     fprintf(flog, "error: saving of `%s' failed: %s\n", xml_path,
             contests_strerror(-errcode));
