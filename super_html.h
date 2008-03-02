@@ -326,6 +326,7 @@ int super_html_serve_unparse_and_save(const unsigned char *path,
                                       const unsigned char *tmp_path,
                                       const struct sid_state *sstate,
                                       const struct ejudge_cfg *config,
+                                      const unsigned char *charset,
                                       const unsigned char *header,
                                       const unsigned char *footer,
                                       const unsigned char *audit);

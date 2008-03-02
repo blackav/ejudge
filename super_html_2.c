@@ -1505,7 +1505,7 @@ super_html_commit_contest(FILE *f,
     }
 
     if ((sf = super_html_serve_unparse_and_save(serve_path, serve_path_2,
-                                                sstate, config,
+                                                sstate, config, NULL,
                                                 serve_header, serve_footer,
                                                 serve_audit_rec)) < 0)
       goto failed;
