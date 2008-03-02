@@ -6404,6 +6404,7 @@ super_html_get_serve_header_and_footer(const unsigned char *path,
   if (!strncmp(tstart, "# -*- ", 6)) {
     while (*tstart && *tstart != '\n') tstart++;
     if (*tstart == '\n') tstart++;
+    size -= (tstart - (unsigned char*) text);
   }
 
   s = tstart;
