@@ -85,7 +85,7 @@ open_charset_iconv(struct charset_info_s *ci)
 
 const unsigned char *
 charset_recode_buf(
-	int id,
+        int id,
         unsigned char *buf,
         size_t size)
 {
@@ -136,7 +136,7 @@ charset_recode_buf(
 
 const unsigned char *
 charset_recode_to_buf(
-	int id,
+        int id,
         unsigned char *buf,
         size_t size,
         const unsigned char *str)
@@ -193,7 +193,7 @@ charset_recode_to_buf(
 
 const unsigned char *
 charset_recode(
-	int id,
+        int id,
         struct html_armor_buffer *ab,
         const unsigned char *str)
 {
@@ -255,6 +255,35 @@ charset_recode(
   fprintf(stderr, "\n");
   */
   return ab->buf;
+}
+
+unsigned char *
+charset_recode_heap(
+        int id,
+        unsigned char *str)
+{
+  struct html_armor_buffer rb = HTML_ARMOR_INITIALIZER;
+  const unsigned char *str2;
+
+  if (id <= 0) return str;
+  str2 = charset_recode(id, &rb, str);
+  if (str2 == (const unsigned char*) str) return str;
+  xfree(str);
+  return rb.buf;
+}
+
+unsigned char *
+charset_recode_to_heap(
+        int id,
+        const unsigned char *str)
+{
+  struct html_armor_buffer rb = HTML_ARMOR_INITIALIZER;
+  const unsigned char *str2;
+
+  if (id <= 0) return xstrdup(str);
+  str2 = charset_recode(id, &rb, str);
+  if (str2 == str) return xstrdup(str);
+  return rb.buf;
 }
 
 /*

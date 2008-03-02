@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  */
 
 #include "parsecfg.h"
+#include "charsets.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -60,6 +61,7 @@ struct parsecfg_state
   cfg_cond_var_t *cond_vars;
   struct cond_stack *cond_stack;
   int output_enabled;
+  int charset_id;
 };
 
 static struct parsecfg_state parsecfg_state;
@@ -938,11 +940,55 @@ read_variable(FILE *f, char *name, int nlen, char *val, int vlen)
   */
 }
 
+/* check for "-*- coding: CHARSET -*-" stuff */
+static int
+read_first_line(FILE *f)
+{
+  unsigned char buf[1024];
+  unsigned char buf2[1024];
+  unsigned char *p;
+  size_t buflen;
+  int n;
+
+  if (!fgets(buf, sizeof(buf), f)) return 0;
+  if ((buflen = strlen(buf)) == sizeof(buf) - 1) {
+    parsecfg_state.lineno++;
+    return 0;
+  }
+  parsecfg_state.lineno++;
+  while (buflen > 0 && isspace(buf[buflen - 1])) buflen--;
+  buf[buflen] = 0;
+  if (buflen <= 3) return 0;
+  if (buf[buflen - 3]!='-' || buf[buflen - 2]!='*' || buf[buflen - 1]!='-')
+    return 0;
+  buflen -= 3;
+  while (buflen > 0 && isspace(buf[buflen - 1])) buflen--;
+  buf[buflen] = 0;
+  if (buflen <= 3) return 0;
+
+  while (isspace(*p)) p++;
+  if (p[0] != '-' || p[1] != '*' || p[2] != '-') return 0;
+  p += 3;
+  while (isspace(*p)) p++;
+  if (sscanf(p, "%s%d", buf2, &n) != 1) return 0;
+  if (strcasecmp(buf2, "coding:") != 0) return 0;
+  p += n;
+  if (sscanf(p, "%s%d", buf2, &n) != 1) return 0;
+  p += n;
+  if (*p) return 0;
+
+  parsecfg_state.charset_id = charset_get_id(buf2);
+  fprintf(stderr, "detected charset: %s (%d)\n", buf2,
+          parsecfg_state.charset_id);
+  return 0;
+}
+
 static int
 read_comment(FILE *f)
 {
   int c;
 
+  if (parsecfg_state.lineno == 1) return read_first_line(f);
   c = getc(f);
   while (c != EOF && c != '\n') c =getc(f);
   parsecfg_state.lineno++;
@@ -1015,6 +1061,9 @@ copy_param(void *cfg, const struct config_parse_info *params,
     }
     ptr = (char*) cfg + params[i].offset;
     strcpy(ptr, varvalue);
+    if (parsecfg_state.charset_id > 0) {
+      charset_recode_buf(parsecfg_state.charset_id, ptr, param_size);
+    }
   } else if (!strcmp(params[i].type, "x")) {
     char ***ppptr = 0;
     char **pptr = 0;
@@ -1037,7 +1086,11 @@ copy_param(void *cfg, const struct config_parse_info *params,
       pptr = newptr;
       *ppptr = newptr;
     }
-    pptr[j] = xstrdup(varvalue);
+    if (parsecfg_state.charset_id > 0) {
+      pptr[j] = charset_recode_to_heap(parsecfg_state.charset_id, varvalue);
+    } else {
+      pptr[j] = xstrdup(varvalue);
+    }
     pptr[j + 1] = 0;
   }
   return 0;
