@@ -93,7 +93,6 @@ charset_recode_buf(
   size_t inbytesleft, outbytesleft, r;
   char *inbuf, *outbuf;
 
-  ASSERT(id >= 0 && id < charset_info_u);
   ASSERT(buf);
   ASSERT(size > 1);
 
@@ -144,7 +143,6 @@ charset_recode_to_buf(
   size_t inbytesleft, outbytesleft, r;
   char *inbuf, *outbuf;
 
-  ASSERT(id >= 0 && id < charset_info_u);
   ASSERT(buf);
   ASSERT(size > 0);
   ASSERT(str);
@@ -195,7 +193,6 @@ charset_recode(
   size_t inbytesleft, outbytesleft, r, conv_size;
   char *inbuf, *outbuf;
 
-  ASSERT(id >= 0 && id < charset_info_u);
   ASSERT(ab);
   ASSERT(str);
 
