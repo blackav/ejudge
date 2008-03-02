@@ -27,6 +27,7 @@
 #include "pathutl.h"
 #include "errlog.h"
 #include "xml_utils.h"
+#include "charsets.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -39,6 +40,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <ctype.h>
+
+#if defined EJUDGE_CHARSET
+#define INTERNAL_CHARSET EJUDGE_CHARSET
+#else
+#define INTERNAL_CHARSET "utf-8"
+#endif
 
 #define CLAR_RECORD_SIZE 79
 #define SUBJ_STRING_SIZE 24
@@ -67,6 +75,10 @@ struct clarlog_state
   struct clar_header_v1 header;
   struct clar_array clars;
   int clar_fd;
+
+  size_t allocd;
+  unsigned char **subjects;
+  int *charset_codes;
 };
 
 #define ERR_R(t, args...) do { do_err_r(__FUNCTION__, t , ##args); return -1; } while (0)
@@ -302,9 +314,15 @@ clar_init(void)
 clarlog_state_t
 clar_destroy(clarlog_state_t state)
 {
+  int i;
+
   if (!state) return 0;
   xfree(state->clars.v);
   if (state->clar_fd >= 0) close(state->clar_fd);
+  for (i = 0; i < state->allocd; i++)
+    xfree(state->subjects[i]);
+  xfree(state->subjects);
+  xfree(state->charset_codes);
   memset(state, 0, sizeof(*state));
   xfree(state);
   return 0;
@@ -398,8 +416,9 @@ clar_add_record(clarlog_state_t state,
                 int            hide_flag,
                 char const    *subj)
 {
-  int i;
+  int i, j;
   ej_ip_t r_ip;
+  const unsigned char *charset;
 
   if (size == 0 || size > 9999) ERR_R("bad size: %lu", size);
   // FIXME: how to check consistency?
@@ -430,28 +449,37 @@ clar_add_record(clarlog_state_t state,
   state->clars.v[i].j_from = j_from;
   state->clars.v[i].hide_flag = hide_flag;
   state->clars.v[i].a.ip = r_ip;
+
+  charset = INTERNAL_CHARSET;
+  strncpy(state->clars.v[i].charset, charset, CLAR_ENTRY_CHARSET_SIZE);
+  state->clars.v[i].charset[CLAR_ENTRY_CHARSET_SIZE - 1] = 0;
+  for (j = 0; state->clars.v[i].charset[j]; j++)
+    state->clars.v[i].charset[j] = tolower(state->clars.v[i].charset[j]);
+
   base64_decode_str(subj, state->clars.v[i].subj, 0);
   if (clar_flush_entry(state, i) < 0) return -1;
   return i;
 }
 
 int
-clar_add_record_new(clarlog_state_t state,
-                    time_t         time,
-                    int            nsec,
-                    size_t         size,
-                    ej_ip_t        ip,
-                    int            ssl_flag,
-                    int            from,
-                    int            to,
-                    int            flags,
-                    int            j_from,
-                    int            hide_flag,
-                    int            locale_id,
-                    int            in_reply_to,
-                    int            appeal_flag,
-                    int            utf8_mode,
-                    const unsigned char *subj)
+clar_add_record_new(
+	clarlog_state_t state,
+        time_t         time,
+        int            nsec,
+        size_t         size,
+        ej_ip_t        ip,
+        int            ssl_flag,
+        int            from,
+        int            to,
+        int            flags,
+        int            j_from,
+        int            hide_flag,
+        int            locale_id,
+        int            in_reply_to,
+        int            appeal_flag,
+        int            utf8_mode,
+        const unsigned char *charset,
+        const unsigned char *subj)
 {
   int i, j;
   unsigned char subj2[CLAR_ENTRY_SUBJ_SIZE];
@@ -481,6 +509,12 @@ clar_add_record_new(clarlog_state_t state,
   pc->locale_id = locale_id;
   pc->in_reply_to = in_reply_to;
   pc->appeal_flag = appeal_flag;
+
+  if (!charset) charset = INTERNAL_CHARSET;
+  strncpy(pc->charset, charset, CLAR_ENTRY_CHARSET_SIZE);
+  pc->charset[CLAR_ENTRY_CHARSET_SIZE - 1] = 0;
+  for (j = 0; pc->charset[j]; j++)
+    pc->charset[j] = tolower(pc->charset[j]);
 
   if (!subj) subj = "";
   subj_len = strlen(subj);
@@ -545,6 +579,72 @@ clar_get_record_new(clarlog_state_t state,
     ERR_R("id mismatch: %d, %d", clar_id, state->clars.v[clar_id].id);
   memcpy(pclar, &state->clars.v[clar_id], sizeof(*pclar));
   return 0;
+}
+
+static void
+extend_charset_ids(clarlog_state_t state)
+{
+  size_t new_size;
+  int *new_ids = 0;
+  unsigned char **new_subj = 0;
+
+  if (!state->clars.u || state->clars.u <= state->allocd) return;
+  new_size = 128;
+  while (new_size < state->clars.u) new_size *= 2;
+  XCALLOC(new_ids, new_size);
+  XCALLOC(new_subj, new_size);
+  memset(new_ids, -1, new_size * sizeof(new_ids[0]));
+  if (state->allocd > 0) {
+    memcpy(new_ids, state->charset_codes, state->allocd * sizeof(new_ids[0]));
+    memcpy(new_subj, state->subjects, state->allocd * sizeof(new_subj[0]));
+  }
+  xfree(state->charset_codes);
+  xfree(state->subjects);
+  state->allocd = new_size;
+  state->charset_codes = new_ids;
+  state->subjects = new_subj;
+}
+
+const unsigned char *
+clar_get_subject(
+	clarlog_state_t state,
+        int id)
+{
+  unsigned char buf[1024];
+
+  if (id < 0 || id >= state->clars.u) return NULL;
+
+  extend_charset_ids(state);
+  // pre-recoded subject is already stored
+  if (state->subjects[id]) return state->subjects[id];
+  // charset is not yet defined
+  if (state->charset_codes[id] < 0)
+    state->charset_codes[id] = charset_get_id(state->clars.v[id].charset);
+  // subject is in local charset
+  if (!state->charset_codes[id]) return state->clars.v[id].subj;
+  // subject is in non-local charset, but not yet encoded
+  if (state->charset_codes[id] > 0) {
+    buf[0] = 0;
+    charset_recode_to_buf(state->charset_codes[id],
+                          buf, sizeof (buf), state->clars.v[id].subj);
+    state->subjects[id] = xstrdup(buf);
+    return state->subjects[id];
+  }
+  // something got wrong...
+  return "invalid subject";
+}
+
+int
+clar_get_charset_id(
+	clarlog_state_t state,
+        int id)
+{
+  if (id < 0 || id >= state->clars.u) return 0;
+  extend_charset_ids(state);
+  if (state->charset_codes[id] < 0)
+    state->charset_codes[id] = charset_get_id(state->clars.v[id].charset);
+  if (state->charset_codes[id] < 0) state->charset_codes[id] = 0;
+  return state->charset_codes[id];
 }
 
 int

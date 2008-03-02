@@ -38,6 +38,7 @@
 #include "filter_tree.h"
 #include "filter_eval.h"
 #include "xml_utils.h"
+#include "charsets.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -544,7 +545,10 @@ cmd_clar_operation(
   struct clar_entry_v1 ce;
   path_t msg_path;
   char *msg_txt = 0;
-  size_t msg_len = 0;
+  const unsigned char *recoded_txt = 0;
+  size_t msg_len = 0, recoded_len = 0;
+  int charset_id;
+  struct html_armor_buffer rb = HTML_ARMOR_INITIALIZER;
 
   if (ns_cgi_param(phr, "clar_id", &s) <= 0)
     FAIL(NEW_SRV_ERR_INV_CLAR_ID);
@@ -590,12 +594,16 @@ cmd_clar_operation(
     if (generic_read_file(&msg_txt, 0, &msg_len, 0,
                           global->clar_archive_dir, msg_path, "") < 0)
       FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
-    if (fwrite(msg_txt, 1, msg_len, fout) != msg_len)
+    charset_id = clar_get_charset_id(cs->clarlog_state, clar_id);
+    recoded_txt = charset_recode(charset_id, &rb, msg_txt);
+    recoded_len = strlen(recoded_txt);
+    if (fwrite(recoded_txt, 1, recoded_len, fout) != msg_len)
       FAIL(NEW_SRV_ERR_WRITE_ERROR);
     break;
   }
 
  cleanup:
+  html_armor_free(&rb);
   xfree(msg_txt);
   return retval;
 }
