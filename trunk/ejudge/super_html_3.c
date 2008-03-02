@@ -6302,13 +6302,15 @@ unparse_serve_cfg(FILE *f,
 }
 
 int
-super_html_serve_unparse_and_save(const unsigned char *path,
-                                  const unsigned char *tmp_path,
-                                  const struct sid_state *sstate,
-                                  const struct ejudge_cfg *config,
-                                  const unsigned char *header,
-                                  const unsigned char *footer,
-                                  const unsigned char *audit)
+super_html_serve_unparse_and_save(
+        const unsigned char *path,
+        const unsigned char *tmp_path,
+        const struct sid_state *sstate,
+        const struct ejudge_cfg *config,
+        const unsigned char *charset,
+        const unsigned char *header,
+        const unsigned char *footer,
+        const unsigned char *audit)
 {
   char *new_text = 0;
   size_t new_size = 0;
@@ -6318,9 +6320,11 @@ super_html_serve_unparse_and_save(const unsigned char *path,
 
   if (sstate->serve_parse_errors || !sstate->global) return 0;
 
+  if (!charset || !*charset) charset = INTERNAL_CHARSET;
   if (!header) header = "";
   if (!footer) footer = "";
   f = open_memstream(&new_text, &new_size);
+  fprintf(f, "# -*- coding: %s -*-\n", charset);
   fputs(header, f);
   unparse_serve_cfg(f, config, sstate);
   fputs(footer, f);
@@ -6396,7 +6400,13 @@ super_html_get_serve_header_and_footer(const unsigned char *path,
   if (generic_read_file(&text, 0, &size, 0, 0, path, 0) < 0)
     return -SSERV_ERR_FILE_READ_ERROR;
 
-  tstart = s = (unsigned char *) text;
+  tstart = (unsigned char *) text;
+  if (!strncmp(tstart, "# -*- ", 6)) {
+    while (*tstart && *tstart != '\n') tstart++;
+    if (*tstart == '\n') tstart++;
+  }
+
+  s = tstart;
   while (s - tstart < size) {
     if (at_beg) {
       if (*s == '#' || *s == ';') {
