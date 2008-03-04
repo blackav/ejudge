@@ -2375,6 +2375,29 @@ priv_submit_run(FILE *fout,
   path_t run_path;
   struct problem_plugin_iface *plg = 0;
 
+  if (ns_cgi_param_int(phr, "problem", &prob_id) < 0) {
+    errmsg = "problem is not set or binary";
+    goto invalid_param;
+  }
+  if (prob_id <= 0 || prob_id > cs->max_prob
+      || !(prob = cs->probs[prob_id])) {
+    errmsg = "invalid prob_id";
+    goto invalid_param;
+  }
+  if (ns_cgi_param_int_opt(phr, "variant", &variant, 0) < 0) {
+    errmsg = "variant is invalid";
+    goto invalid_param;
+  }
+  if (prob->variant_num <= 0 && variant != 0) {
+    errmsg = "variant is invalid";
+    goto invalid_param;
+  } else if (prob->variant_num > 0
+             && (variant <= 0 || variant > prob->variant_num)) {
+    errmsg = "variant is invalid";
+    goto invalid_param;
+  }
+
+  /*
   if (ns_cgi_param(phr, "problem", &s) <= 0) {
     errmsg = "problem is not set or binary";
     goto invalid_param;
@@ -2403,6 +2426,7 @@ priv_submit_run(FILE *fout,
     errmsg = "cannot parse problem";
     goto invalid_param;
   }
+  */
 
   if (prob->type_val == PROB_TYPE_STANDARD) {
     if (ns_cgi_param(phr, "lang_id", &s) <= 0) {
@@ -6503,6 +6527,273 @@ write_alternatives_file(FILE *fout, int is_radio, const unsigned char *txt,
 }
 
 static void
+unparse_statement(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        const struct section_problem_data *prob,
+        problem_xml_t px,
+        const unsigned char *bb);
+static void
+unparse_answers(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        const struct section_problem_data *prob,
+        problem_xml_t px,
+        const unsigned char *lang,
+        int is_radio,
+        int last_answer,
+        int next_prob_id,
+        int enable_js,
+        const unsigned char *class_name);
+
+static void
+priv_submit_page(
+        FILE *fout,
+        struct http_request_info *phr, 
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  //const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob = 0;
+  int prob_id = 0, variant = 0, i;
+  FILE *log_f = 0;
+  char *log_t = 0;
+  size_t log_z = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char bb[1024];
+  const unsigned char *sel_flag = 0;
+  unsigned char optval[128];
+  problem_xml_t px = 0;
+  struct watched_file *pw = 0;
+  const unsigned char *pw_path = 0;
+  path_t variant_stmt_file;
+  const unsigned char *alternatives = 0;
+
+  log_f = open_memstream(&log_t, &log_z);
+  if (ns_cgi_param_int_opt(phr, "problem", &prob_id, 0) < 0) {
+    fprintf(log_f, "Invalid problem.\n");
+    goto cleanup;
+  }
+  if (prob_id < 0 || prob_id > cs->max_prob) {
+    fprintf(log_f, "Invalid problem.\n");
+    goto cleanup;
+  }
+  if (prob_id > 0 && !(prob = cs->probs[prob_id])) {
+    fprintf(log_f, "Invalid problem.\n");
+    goto cleanup;
+  }
+  if (ns_cgi_param_int_opt(phr, "variant", &variant, 0) < 0) {
+    fprintf(log_f, "Invalid variant.\n");
+    goto cleanup;
+  }
+  if (variant < 0
+      || (prob && prob->variant_num <= 0 && variant > 0)
+      || (prob && prob->variant_num > 0 && variant > prob->variant_num)) {
+    fprintf(log_f, "Invalid variant.\n");
+    goto cleanup;
+  }
+  if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
+    fprintf(log_f, "Permission denied.\n");
+    goto cleanup;
+  }
+
+  l10n_setlocale(phr->locale_id);
+  if (prob && variant > 0) {
+    snprintf(bb, sizeof(bb), "%s %s-%d", _("Submit a solution for"),
+             prob->short_name, variant);
+  } else if (prob) {
+    snprintf(bb, sizeof(bb), "%s %s", _("Submit a solution for"),
+             prob->short_name);
+  } else {
+    snprintf(bb, sizeof(bb), "%s", _("Submit a solution"));
+  }
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
+            phr->name_arm, phr->contest_id, extra->contest_arm, bb);
+
+  if (prob) {
+    fprintf(fout, "<h2>%s %s: %s</h2>\n",
+            _("Problem"), prob->short_name, ARMOR(prob->long_name));
+  }
+
+  html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+
+  /* output the problem selection dialog */
+  fprintf(fout, "<table class=\"b0\"><tr>\n");
+  fprintf(fout, "<tr><td>%s:</td><td><select name=\"problem\">",
+          _("Problem"));
+  for (i = 1; i <= cs->max_prob; i++) {
+    if (!(cs->probs[i])) continue;
+    sel_flag = "";
+    if (prob_id > 0 && i == prob_id) sel_flag = " selected=\"selected\"";
+    fprintf(fout, "<option value=\"%d\"%s>%s - %s</option>",
+            i, sel_flag, cs->probs[i]->short_name,
+            ARMOR(cs->probs[i]->long_name));
+  }
+  fprintf(fout, "</select></td><td>%s</td></tr></table></form>\n",
+          ns_submit_button(bb, sizeof(bb), 0,
+                           NEW_SRV_ACTION_PRIV_SUBMIT_PAGE,
+                           _("Select problem")));
+  fprintf(fout, "</tr></table>\n");
+
+  if (prob && prob->variant_num > 0) {
+    fprintf(fout, "<table class=\"b0\"><tr>\n");
+    fprintf(fout, "<td class=\"b0\">%s</td><td class=\"b0\">",
+            _("Variant"));
+    fprintf(fout, "<select name=\"variant\">");
+    for (i = 0; i <= prob->variant_num; i++) {
+      sel_flag = "";
+      if (i == variant) sel_flag = " selected=\"selected\"";
+      optval[0] = 0;
+      if (i > 0) snprintf(optval, sizeof(optval), "%d", i);
+      fprintf(fout, "<option value=\"%d\"%s>%s</option>",
+              i, sel_flag, optval);
+    }
+    fprintf(fout, "</select></td><td class=\"b0\">%s</td>",
+            ns_submit_button(bb, sizeof(bb), 0,
+                             NEW_SRV_ACTION_PRIV_SUBMIT_PAGE,
+                             _("Select variant")));
+    fprintf(fout, "</tr></table>\n");
+  }
+
+  /* output the problem statement */
+  px = 0; pw = 0; pw_path = 0;
+  if (prob && prob->variant_num > 0 && variant > 0 && prob->xml.a
+      && prob->xml.a[variant - 1]) {
+    px = prob->xml.a[variant - 1];
+  } else if (prob && prob->variant_num <= 0 && prob->xml.p) {
+    px = prob->xml.p;
+  }
+  if (px && px->stmts) {
+    unparse_statement(fout, phr, cnts, extra, prob, px, NULL);
+  }
+
+  if (!px && prob && prob->statement_file[0]) {
+    if (prob->variant_num > 0 && variant > 0) {
+      prepare_insert_variant_num(variant_stmt_file,
+                                 sizeof(variant_stmt_file),
+                                 prob->statement_file, variant);
+      pw = &cs->prob_extras[prob_id].v_stmts[variant];
+      pw_path = variant_stmt_file;
+    } else if (prob->variant_num <= 0) {
+      pw = &cs->prob_extras[prob_id].stmt;
+      pw_path = prob->statement_file;
+    }
+    watched_file_update(pw, pw_path, cs->current_time);
+    if (!pw->text) {
+      fprintf(fout, "<big><font color=\"red\"><p>%s</p></font></big>\n",
+              _("The problem statement is not available"));
+     } else {
+      fprintf(fout, "%s", pw->text);
+    }
+  }
+
+  /* update the alternatives */
+  alternatives = 0;
+  if (prob && (prob->type_val == PROB_TYPE_SELECT_ONE
+               || prob->type_val == PROB_TYPE_SELECT_MANY)
+      && prob->alternatives_file[0]) {
+    if (prob->variant_num > 0 && variant > 0) {
+      prepare_insert_variant_num(variant_stmt_file,
+                                 sizeof(variant_stmt_file),
+                                 prob->alternatives_file, variant);
+      pw = &cs->prob_extras[prob->id].v_alts[variant];
+      pw_path = variant_stmt_file;
+    } else if (prob->variant_num <= 0) {
+      pw = &cs->prob_extras[prob->id].alt;
+      pw_path = prob->alternatives_file;
+    }
+    watched_file_update(pw, pw_path, cs->current_time);
+    alternatives = pw->text;
+  }
+
+  /* language selection */
+  if (!prob || !prob->type_val) {
+    fprintf(fout, "<table class=\"b0\"><tr>\n");
+    fprintf(fout, "<td class=\"b0\">%s:</td>", _("Language"));
+    fprintf(fout, "<td class=\"b0\"><select name=\"lang_id\"><option value=\"\"></option>");
+    for (i = 1; i <= cs->max_lang; i++) {
+      if (cs->langs[i]) {
+        fprintf(fout, "<option value=\"%d\">%s - %s</option>",
+                i, cs->langs[i]->short_name, ARMOR(cs->langs[i]->long_name));
+      }
+    }
+    fprintf(fout, "</tr></table>\n");
+  }
+
+  /* solution/answer form */
+  fprintf(fout, "<table class=\"b0\">\n");
+  if (!prob || !prob->type_val) {
+    fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
+   } else {
+    switch (prob->type_val) {
+    case PROB_TYPE_OUTPUT_ONLY:
+      if (prob->enable_text_form > 0) {
+        fprintf(fout, "<tr><td colspan=\"2\" class=\"b0\"><textarea name=\"text_form\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
+      }
+      fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
+      break;
+    case PROB_TYPE_SHORT_ANSWER:
+      fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"text\" name=\"file\"/></td></tr>\n", _("Answer"));
+      break;
+    case PROB_TYPE_TEXT_ANSWER:
+      fprintf(fout, "<tr><td colspan=\"2\" class=\"b0\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
+      break;
+    case PROB_TYPE_SELECT_ONE:
+      if (px) {
+        unparse_answers(fout, phr, cnts, extra, prob,
+                        px, 0 /* lang */, 1 /* is_radio */,
+                        -1, prob_id, 0 /* js_flag */, "b0");
+      } else if (alternatives) {
+        write_alternatives_file(fout, 1, alternatives, -1, 0, 0, 0, "b0");
+      } else if (prob->alternative) {
+        for (i = 0; prob->alternative[i]; i++) {
+          fprintf(fout, "<tr><td class=\"b0\">%d</td><td class=\"b0\"><input type=\"radio\" name=\"file\" value=\"%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+        }
+      }
+      break;
+    case PROB_TYPE_SELECT_MANY:
+      if (alternatives) {
+        write_alternatives_file(fout, 0, alternatives, -1, 0, 0, 0, "b0");
+      } else if (prob->alternative) {
+        for (i = 0; prob->alternative[i]; i++) {
+          fprintf(fout, "<tr><td class=\"b0\">%d</td><td class=\"b0\"><input type=\"checkbox\" name=\"ans_%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+        }
+      }
+      break;
+    case PROB_TYPE_CUSTOM:
+      break;
+
+    default:
+      abort();
+    }
+  }
+  fprintf(fout, "</table>\n");
+
+  fprintf(fout, "<table class=\"b0\">\n");
+  fprintf(fout, "<tr><td>&nbsp;</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
+  fprintf(fout, "</table>\n");
+
+  fprintf(fout, "</form>\n");
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+cleanup:
+  html_armor_free(&ab);
+  fclose(log_f); log_f = 0;
+  if (log_t && *log_t) {
+    html_error_status_page(fout, phr, cnts, extra, log_t, 0, 0);
+  }
+  xfree(log_t); log_t = 0;
+}
+
+static void
 priv_main_page(FILE *fout,
                struct http_request_info *phr,
                const struct contest_desc *cnts,
@@ -6639,6 +6930,9 @@ priv_main_page(FILE *fout,
     fprintf(fout, "<li><a href=\"%s\" target=_blank>%s</a>\n",
             cnts->problems_url, _("Problems"));
   }
+  fprintf(fout, "<li>%s%s</a></li>\n",
+          ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_PRIV_SUBMIT_PAGE, 0),
+          _("Submit a solution"));
   fprintf(fout, "<li>%s%s</a></li>\n",
           ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_LOGOUT, 0),
           _("Logout"));
@@ -6925,9 +7219,10 @@ priv_main_page(FILE *fout,
               _("Problem"));
       for (x = 1; x <= cs->max_prob; x++) {
         if (!(prob = cs->probs[x])) continue;
+        fprintf(fout, "<option value=\"%d\">%s - %s</option>",
+                x, prob->short_name, ARMOR(prob->long_name));
+        /*
         if (prob->variant_num <= 0) {
-          fprintf(fout, "<option value=\"%d\">%s - %s</option>",
-                  x, prob->short_name, ARMOR(prob->long_name));
         } else {
           for (y = 1; y <= prob->variant_num; y++) {
             fprintf(fout, "<option value=\"%d_%d\">%s - %s, %s %d</option>",
@@ -6935,9 +7230,11 @@ priv_main_page(FILE *fout,
                     _("Variant"), y);
           }
         }
+        */
       }
       fprintf(fout, "</select></td><td>%s</td></tr></table></form>\n",
-              ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_MAIN_PAGE,
+              ns_submit_button(bb, sizeof(bb), 0,
+                               NEW_SRV_ACTION_PRIV_SUBMIT_PAGE,
                                _("Select problem")));
       prob = 0;
     } else {
@@ -7327,6 +7624,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_1] = priv_generic_page,
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_2] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_EXAM_INFO] = priv_generic_page,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_PAGE] = priv_submit_page,
 };
 
 static void
@@ -10621,7 +10919,7 @@ get_problem_status(serve_state_t cs, int user_id,
 }
 
 static void
-unpriv_unparse_statement(
+unparse_statement(
         FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -10712,7 +11010,7 @@ unpriv_unparse_statement(
 }
 
 static void
-unpriv_unparse_answers(
+unparse_answers(
         FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -11216,7 +11514,7 @@ unpriv_main_page(FILE *fout,
 
       /* put problem statement */
       if (px && px->stmts) {
-        unpriv_unparse_statement(fout, phr, cnts, extra, prob, px, bb);
+        unparse_statement(fout, phr, cnts, extra, prob, px, bb);
       } else if (prob->statement_file[0]
           && (prob_status[prob_id] & PROB_STATUS_VIEWABLE)) {
         if (variant > 0) {
@@ -11366,15 +11664,15 @@ unpriv_main_page(FILE *fout,
                 }
                 if (next_prob_id > cs->max_prob) next_prob_id = prob->id;
               }
-              unpriv_unparse_answers(fout, phr, cnts, extra, prob,
-                                     px, 0 /* lang */, 1 /* is_radio */,
-                                     last_answer, next_prob_id,
-                                     1 /* js_flag */, "b0");
+              unparse_answers(fout, phr, cnts, extra, prob,
+                              px, 0 /* lang */, 1 /* is_radio */,
+                              last_answer, next_prob_id,
+                              1 /* js_flag */, "b0");
             } else {
-              unpriv_unparse_answers(fout, phr, cnts, extra, prob,
-                                     px, 0 /* lang */, 1 /* is_radio */,
-                                     last_answer, next_prob_id,
-                                     0 /* js_flag */, "b0");
+              unparse_answers(fout, phr, cnts, extra, prob,
+                              px, 0 /* lang */, 1 /* is_radio */,
+                              last_answer, next_prob_id,
+                              0 /* js_flag */, "b0");
             }
           } else if (alternatives) {
             if (cnts->exam_mode) {
