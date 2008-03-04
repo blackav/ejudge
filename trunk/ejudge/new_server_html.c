@@ -6592,6 +6592,8 @@ priv_submit_page(
     fprintf(log_f, "Invalid variant.\n");
     goto cleanup;
   }
+  if (!prob) variant = 0;
+  if (prob && prob->variant_num <= 0) variant = 0;
   if (variant < 0
       || (prob && prob->variant_num <= 0 && variant > 0)
       || (prob && prob->variant_num > 0 && variant > prob->variant_num)) {
@@ -6643,8 +6645,8 @@ priv_submit_page(
   fprintf(fout, "</tr>\n");
 
   if (prob && prob->variant_num > 0) {
-    fprintf(fout, "<table%s><tr>\n", cl);
-    fprintf(fout, "<td%s>%s</td><td%s>", cl, _("Variant"), cl);
+    fprintf(fout, "<tr>\n");
+    fprintf(fout, "<td%s>%s:</td><td%s>", cl, _("Variant"), cl);
     fprintf(fout, "<select name=\"variant\">");
     for (i = 0; i <= prob->variant_num; i++) {
       sel_flag = "";
@@ -6732,7 +6734,7 @@ priv_submit_page(
 
   /* solution/answer form */
   if (!prob || !prob->type_val) {
-    fprintf(fout, "<tr><td%s>%s</td><td%s><input type=\"file\" name=\"file\"/></td></tr>\n", cl, cl, _("File"));
+    fprintf(fout, "<tr><td%s>%s</td><td%s><input type=\"file\" name=\"file\"/></td></tr>\n", cl, _("File"), cl);
    } else {
     switch (prob->type_val) {
     case PROB_TYPE_OUTPUT_ONLY:
