@@ -1595,6 +1595,20 @@ generate_abstract_tester(
     break;
 
   case ARCH_MSIL:
+    fprintf(f, "[tester]\n"
+            "name = %s\n"
+            "arch = \"%s\"\n"
+            "abstract\n"
+            "no_core_dump\n"
+            "kill_signal = TERM\n"
+            //            "memory_limit_type = \"java\"\n"
+            //            "secure_exec_type = \"java\"\n"
+            "start_cmd = \"runmono\"\n"
+            "start_env = \"LANG=C\"\n"
+            "start_env = \"EJUDGE_PREFIX_DIR\"\n",
+            arch_abstract_names[arch], supported_archs[arch]);
+    break;
+
   default:
     abort();
   }
@@ -1675,6 +1689,8 @@ generate_concrete_tester(FILE *f, int arch,
     break;
 
   case ARCH_MSIL:
+    break;
+
   default:
     abort();
   }
