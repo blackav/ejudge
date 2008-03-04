@@ -6573,6 +6573,7 @@ priv_submit_page(
   const unsigned char *pw_path = 0;
   path_t variant_stmt_file;
   const unsigned char *alternatives = 0;
+  const unsigned char *cl = " class=\"b0\"";
 
   log_f = open_memstream(&log_t, &log_z);
   if (ns_cgi_param_int_opt(phr, "problem", &prob_id, 0) < 0) {
@@ -6624,9 +6625,9 @@ priv_submit_page(
   html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
 
   /* output the problem selection dialog */
-  fprintf(fout, "<table class=\"b0\"><tr>\n");
-  fprintf(fout, "<tr><td>%s:</td><td><select name=\"problem\">",
-          _("Problem"));
+  fprintf(fout, "<table%s><tr>\n", cl);
+  fprintf(fout, "<tr><td%s>%s:</td><td%s><select name=\"problem\">",
+          cl, _("Problem"), cl);
   for (i = 1; i <= cs->max_prob; i++) {
     if (!(cs->probs[i])) continue;
     sel_flag = "";
@@ -6635,16 +6636,15 @@ priv_submit_page(
             i, sel_flag, cs->probs[i]->short_name,
             ARMOR(cs->probs[i]->long_name));
   }
-  fprintf(fout, "</select></td><td>%s</td></tr></table></form>\n",
+  fprintf(fout, "</select></td><td%s>%s</td>\n", cl,
           ns_submit_button(bb, sizeof(bb), 0,
                            NEW_SRV_ACTION_PRIV_SUBMIT_PAGE,
                            _("Select problem")));
-  fprintf(fout, "</tr></table>\n");
+  fprintf(fout, "</tr>\n");
 
   if (prob && prob->variant_num > 0) {
-    fprintf(fout, "<table class=\"b0\"><tr>\n");
-    fprintf(fout, "<td class=\"b0\">%s</td><td class=\"b0\">",
-            _("Variant"));
+    fprintf(fout, "<table%s><tr>\n", cl);
+    fprintf(fout, "<td%s>%s</td><td%s>", cl, _("Variant"), cl);
     fprintf(fout, "<select name=\"variant\">");
     for (i = 0; i <= prob->variant_num; i++) {
       sel_flag = "";
@@ -6654,12 +6654,13 @@ priv_submit_page(
       fprintf(fout, "<option value=\"%d\"%s>%s</option>",
               i, sel_flag, optval);
     }
-    fprintf(fout, "</select></td><td class=\"b0\">%s</td>",
+    fprintf(fout, "</select></td><td%s>%s</td>", cl,
             ns_submit_button(bb, sizeof(bb), 0,
                              NEW_SRV_ACTION_PRIV_SUBMIT_PAGE,
                              _("Select variant")));
-    fprintf(fout, "</tr></table>\n");
+    fprintf(fout, "</tr>\n");
   }
+  fprintf(fout, "</table>\n");
 
   /* output the problem statement */
   px = 0; pw = 0; pw_path = 0;
@@ -6712,37 +6713,39 @@ priv_submit_page(
     alternatives = pw->text;
   }
 
+  fprintf(fout, "<table%s>\n", cl);
+
   /* language selection */
   if (!prob || !prob->type_val) {
-    fprintf(fout, "<table class=\"b0\"><tr>\n");
-    fprintf(fout, "<td class=\"b0\">%s:</td>", _("Language"));
-    fprintf(fout, "<td class=\"b0\"><select name=\"lang_id\"><option value=\"\"></option>");
+    fprintf(fout, "<tr>");
+    fprintf(fout, "<td%s>%s:</td>", cl, _("Language"));
+    fprintf(fout, "<td%s><select name=\"lang_id\"><option value=\"\"></option>",
+            cl);
     for (i = 1; i <= cs->max_lang; i++) {
       if (cs->langs[i]) {
         fprintf(fout, "<option value=\"%d\">%s - %s</option>",
                 i, cs->langs[i]->short_name, ARMOR(cs->langs[i]->long_name));
       }
     }
-    fprintf(fout, "</tr></table>\n");
+    fprintf(fout, "</td></tr>\n");
   }
 
   /* solution/answer form */
-  fprintf(fout, "<table class=\"b0\">\n");
   if (!prob || !prob->type_val) {
-    fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
+    fprintf(fout, "<tr><td%s>%s</td><td%s><input type=\"file\" name=\"file\"/></td></tr>\n", cl, cl, _("File"));
    } else {
     switch (prob->type_val) {
     case PROB_TYPE_OUTPUT_ONLY:
       if (prob->enable_text_form > 0) {
-        fprintf(fout, "<tr><td colspan=\"2\" class=\"b0\"><textarea name=\"text_form\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
+        fprintf(fout, "<tr><td colspan=\"2\"%s><textarea name=\"text_form\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n", cl);
       }
-      fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
+      fprintf(fout, "<tr><td%s>%s</td><td%s><input type=\"file\" name=\"file\"/></td></tr>\n", cl, cl, _("File"));
       break;
     case PROB_TYPE_SHORT_ANSWER:
-      fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"text\" name=\"file\"/></td></tr>\n", _("Answer"));
+      fprintf(fout, "<tr><td%s>%s</td><td%s><input type=\"text\" name=\"file\"/></td></tr>\n", cl, cl, _("Answer"));
       break;
     case PROB_TYPE_TEXT_ANSWER:
-      fprintf(fout, "<tr><td colspan=\"2\" class=\"b0\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
+      fprintf(fout, "<tr><td colspan=\"2\"%s><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n", cl);
       break;
     case PROB_TYPE_SELECT_ONE:
       if (px) {
@@ -6753,7 +6756,7 @@ priv_submit_page(
         write_alternatives_file(fout, 1, alternatives, -1, 0, 0, 0, "b0");
       } else if (prob->alternative) {
         for (i = 0; prob->alternative[i]; i++) {
-          fprintf(fout, "<tr><td class=\"b0\">%d</td><td class=\"b0\"><input type=\"radio\" name=\"file\" value=\"%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+          fprintf(fout, "<tr><td%s>%d</td><td%s><input type=\"radio\" name=\"file\" value=\"%d\"/></td><td%s>%s</td></tr>\n", cl, i + 1, cl, i + 1, cl, prob->alternative[i]);
         }
       }
       break;
@@ -6762,7 +6765,8 @@ priv_submit_page(
         write_alternatives_file(fout, 0, alternatives, -1, 0, 0, 0, "b0");
       } else if (prob->alternative) {
         for (i = 0; prob->alternative[i]; i++) {
-          fprintf(fout, "<tr><td class=\"b0\">%d</td><td class=\"b0\"><input type=\"checkbox\" name=\"ans_%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+          fprintf(fout, "<tr><td%s>%d</td><td%s><input type=\"checkbox\" name=\"ans_%d\"/></td><td%s>%s</td></tr>\n", cl, i + 1, cl, i + 1,
+                  cl, prob->alternative[i]);
         }
       }
       break;
@@ -6773,11 +6777,12 @@ priv_submit_page(
       abort();
     }
   }
-  fprintf(fout, "</table>\n");
 
-  fprintf(fout, "<table class=\"b0\">\n");
-  fprintf(fout, "<tr><td>&nbsp;</td><td>%s</td></tr>\n",
-          BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
+  fprintf(fout, "<tr><td%s>&nbsp;</td><td%s>%s</td></tr>\n",
+          cl, cl, BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
+  fprintf(fout, "<tr><td%s>&nbsp;</td><td%s>%s%s</a></td></tr>",
+          cl, cl, ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
+          _("Main page"));
   fprintf(fout, "</table>\n");
 
   fprintf(fout, "</form>\n");
