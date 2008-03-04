@@ -6674,7 +6674,7 @@ priv_submit_page(
     px = prob->xml.p;
   }
   if (px && px->stmts) {
-    unparse_statement(fout, phr, cnts, extra, prob, -1, px, NULL);
+    unparse_statement(fout, phr, cnts, extra, prob, variant, px, NULL);
   }
 
   if (!px && prob && prob->statement_file[0]) {
@@ -11590,7 +11590,7 @@ unpriv_main_page(FILE *fout,
 
       /* put problem statement */
       if (px && px->stmts) {
-        unparse_statement(fout, phr, cnts, extra, prob, -1, px, bb);
+        unparse_statement(fout, phr, cnts, extra, prob, 0, px, bb);
       } else if (prob->statement_file[0]
           && (prob_status[prob_id] & PROB_STATUS_VIEWABLE)) {
         if (variant > 0) {
