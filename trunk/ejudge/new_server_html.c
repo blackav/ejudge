@@ -6533,6 +6533,7 @@ unparse_statement(
         const struct contest_desc *cnts,
         struct contest_extra *extra,
         const struct section_problem_data *prob,
+        int variant,
         problem_xml_t px,
         const unsigned char *bb);
 static void
@@ -6673,7 +6674,7 @@ priv_submit_page(
     px = prob->xml.p;
   }
   if (px && px->stmts) {
-    unparse_statement(fout, phr, cnts, extra, prob, px, NULL);
+    unparse_statement(fout, phr, cnts, extra, prob, -1, px, NULL);
   }
 
   if (!px && prob && prob->statement_file[0]) {
@@ -6741,10 +6742,10 @@ priv_submit_page(
       if (prob->enable_text_form > 0) {
         fprintf(fout, "<tr><td colspan=\"2\"%s><textarea name=\"text_form\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n", cl);
       }
-      fprintf(fout, "<tr><td%s>%s</td><td%s><input type=\"file\" name=\"file\"/></td></tr>\n", cl, cl, _("File"));
+      fprintf(fout, "<tr><td%s>%s</td><td%s><input type=\"file\" name=\"file\"/></td></tr>\n", cl, _("File"), cl);
       break;
     case PROB_TYPE_SHORT_ANSWER:
-      fprintf(fout, "<tr><td%s>%s</td><td%s><input type=\"text\" name=\"file\"/></td></tr>\n", cl, cl, _("Answer"));
+      fprintf(fout, "<tr><td%s>%s</td><td%s><input type=\"text\" name=\"file\"/></td></tr>\n", cl, _("Answer"), cl);
       break;
     case PROB_TYPE_TEXT_ANSWER:
       fprintf(fout, "<tr><td colspan=\"2\"%s><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n", cl);
@@ -6798,6 +6799,69 @@ cleanup:
     html_error_status_page(fout, phr, cnts, extra, log_t, 0, 0);
   }
   xfree(log_t); log_t = 0;
+}
+
+static void
+priv_get_file(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob = 0;
+  int retval = 0, prob_id, n, variant = 0, mime_type = 0;
+  const unsigned char *s = 0;
+  path_t fpath, sfx;
+  char *file_bytes = 0;
+  size_t file_size = 0;
+  const unsigned char *content_type = 0;
+
+  if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  if (ns_cgi_param(phr, "prob_id", &s) <= 0
+      || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
+      || prob_id <= 0 || prob_id > cs->max_prob
+      || !(prob = cs->probs[prob_id]))
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  if (ns_cgi_param_int_opt(phr, "variant", &variant, 0) < 0)
+    FAIL(NEW_SRV_ERR_INV_VARIANT);
+  if (prob->variant_num <= 0) {
+    variant = 0;
+  } else {
+    if (variant <= 0 || variant > prob->variant_num)
+      FAIL(NEW_SRV_ERR_INV_VARIANT);
+  }
+
+  if (ns_cgi_param(phr, "file", &s) <= 0 || strchr(s, '/'))
+    FAIL(NEW_SRV_ERR_INV_FILE_NAME);
+
+  os_rGetSuffix(s, sfx, sizeof(sfx));
+  if (variant > 0) {
+    snprintf(fpath, sizeof(fpath), "%s/%s-%d/%s",
+             global->statement_dir, prob->short_name, variant, s);
+  } else {
+    snprintf(fpath, sizeof(fpath), "%s/%s/%s",
+             global->statement_dir, prob->short_name, s);
+  }
+  mime_type = mime_type_parse_suffix(sfx);
+  content_type = mime_type_get_type(mime_type);
+
+  if (generic_read_file(&file_bytes, 0, &file_size, 0, 0, fpath, "") < 0)
+    FAIL(NEW_SRV_ERR_INV_FILE_NAME);
+
+  fprintf(fout, "Content-type: %s\n\n", content_type);
+  fwrite(file_bytes, 1, file_size, fout);
+
+ cleanup:
+  if (retval) {
+    snprintf(fpath, sizeof(fpath), "Error %d", -retval);
+    html_error_status_page(fout, phr, cnts, extra, fpath,
+                           NEW_SRV_ACTION_MAIN_PAGE, 0);
+  }
+  xfree(file_bytes);
 }
 
 static void
@@ -7632,6 +7696,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_2] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_EXAM_INFO] = priv_generic_page,
   [NEW_SRV_ACTION_PRIV_SUBMIT_PAGE] = priv_submit_page,
+  [NEW_SRV_ACTION_GET_FILE] = priv_get_file,
 };
 
 static void
@@ -10932,6 +10997,7 @@ unparse_statement(
         const struct contest_desc *cnts,
         struct contest_extra *extra,
         const struct section_problem_data *prob,
+        int variant,
         problem_xml_t px,
         const unsigned char *bb)
 {
@@ -10943,13 +11009,16 @@ unparse_statement(
   unsigned char b4[1024];
   unsigned char b5[1024];
   unsigned char b6[1024];
-  const unsigned char *vars[7] = { "self", "prob", "get", "getfile", "input_file", "output_file", 0 };
-  const unsigned char *vals[7] = { b1, b2, b3, b4, b5, b6, 0 };
+  unsigned char b7[1024];
+  const unsigned char *vars[8] = { "self", "prob", "get", "getfile", "input_file", "output_file", "variant", 0 };
+  const unsigned char *vals[8] = { b1, b2, b3, b4, b5, b6, b7, 0 };
 
   snprintf(b1, sizeof(b1), "%s?SID=%016llx", phr->self_url, phr->session_id);
   snprintf(b2, sizeof(b2), "&prob_id=%d", prob->id);
   snprintf(b3, sizeof(b3), "&action=%d", NEW_SRV_ACTION_GET_FILE);
-  snprintf(b4, sizeof(b4), "%s%s%s&file", b1, b2, b3);
+  b7[0] = 0;
+  if (variant > 0) snprintf(b7, sizeof(b7), "&variant=%d", variant);
+  snprintf(b4, sizeof(b4), "%s%s%s%s&file", b1, b2, b3, b7);
   snprintf(b5, sizeof(b5), "%s", prob->input_file);
   snprintf(b6, sizeof(b6), "%s", prob->output_file);
 
@@ -11521,7 +11590,7 @@ unpriv_main_page(FILE *fout,
 
       /* put problem statement */
       if (px && px->stmts) {
-        unparse_statement(fout, phr, cnts, extra, prob, px, bb);
+        unparse_statement(fout, phr, cnts, extra, prob, -1, px, bb);
       } else if (prob->statement_file[0]
           && (prob_status[prob_id] & PROB_STATUS_VIEWABLE)) {
         if (variant > 0) {
