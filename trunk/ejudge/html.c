@@ -252,7 +252,7 @@ write_html_run_status(const serve_state_t state, FILE *f,
   }
 
   if (global->score_system_val == SCORE_ACM) {
-    if (pe->status == RUN_OK || pe->test <= 0
+    if (pe->status == RUN_OK || pe->status == RUN_ACCEPTED || pe->test <= 0
         || global->disable_failed_test_view > 0) {
       fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
     } else {
@@ -262,7 +262,7 @@ write_html_run_status(const serve_state_t state, FILE *f,
   }
 
   if (global->score_system_val == SCORE_MOSCOW) {
-    if (pe->status == RUN_OK || pe->test <= 0
+    if (pe->status == RUN_OK || pe->status == RUN_ACCEPTED || pe->test <= 0
         || global->disable_failed_test_view > 0) {
       fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
     } else {
@@ -329,7 +329,7 @@ write_text_run_status(const serve_state_t state, FILE *f, struct run_entry *pe,
   }
 
   if (global->score_system_val == SCORE_ACM) {
-    if (pe->status == RUN_OK || pe->test <= 0
+    if (pe->status == RUN_OK || pe->status == RUN_ACCEPTED || pe->test <= 0
         || global->disable_failed_test_view > 0) {
       fprintf(f, ";");
     } else {
@@ -339,7 +339,7 @@ write_text_run_status(const serve_state_t state, FILE *f, struct run_entry *pe,
   }
 
   if (global->score_system_val == SCORE_MOSCOW) {
-    if (pe->status == RUN_OK || pe->test <= 0
+    if (pe->status == RUN_OK || pe->status == RUN_ACCEPTED || pe->test <= 0
         || global->disable_failed_test_view > 0) {
       fprintf(f, ";");
     } else {
@@ -857,6 +857,7 @@ html_write_user_problems_summary(const serve_state_t state,
       switch (re.status) {
       case RUN_OK:
       case RUN_PARTIAL:
+      case RUN_ACCEPTED:
         fprintf(f, "<td%s>%d</td><td%s>%d</td>",
                 cl, re.test - 1, cl, best_score[prob_id]);
         break;
@@ -868,6 +869,7 @@ html_write_user_problems_summary(const serve_state_t state,
       total_score += best_score[prob_id];
       switch (re.status) {
       case RUN_OK:
+      case RUN_ACCEPTED:
         fprintf(f, "<td%s>&nbsp;</td><td%s>%d</td>",
                 cl, cl, best_score[prob_id]);
         break;
