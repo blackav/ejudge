@@ -4043,7 +4043,7 @@ do_write_standings(const serve_state_t state,
     } else if (pe->status >= RUN_TRANSIENT_FIRST
                && pe->status <= RUN_TRANSIENT_LAST) {
       trans_flag[up_ind] = 1;
-    } else {
+    } else if (pe->status == RUN_CHECK_FAILED) {
       cf_flag[up_ind] = 1;
     }
   }
