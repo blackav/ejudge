@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -234,7 +234,7 @@ create_func(void *data)
 {
   struct nsdb_files_state *state = (struct nsdb_files_state*) data;
 
-  if (mkdir(state->data_dir, 0700) < 0 && errno != EEXIST) {
+  if (mkdir(state->data_dir, 0770) < 0 && errno != EEXIST) {
     err("mkdir failed on `%s': %s", state->data_dir, os_ErrorMsg());
     return -1;
   }
@@ -630,7 +630,7 @@ prob_asgn_do_create(struct nsdb_files_state *state)
 
   memset(pt, 0, sizeof(*pt));
 
-  if (mkdir(state->data_dir, 0700) < 0 && errno != EEXIST) {
+  if (mkdir(state->data_dir, 0770) < 0 && errno != EEXIST) {
     err("prob_asgn: mkdir failed on %s: %s", state->data_dir, os_ErrorMsg());
     pt->error_flag = 1;
     return;

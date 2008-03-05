@@ -2816,7 +2816,7 @@ ns_download_runs(
   while (1) {
     snprintf(dir2, sizeof(dir2), "%s/%s%d", tmpdir, dir1, serial);
     errno = 0;
-    if (mkdir(dir2, 0700) >= 0) break;
+    if (mkdir(dir2, 0770) >= 0) break;
     if (errno != EEXIST) {
       ns_error(log_f, NEW_SRV_ERR_MKDIR_FAILED, dir2, os_ErrorMsg());
       goto cleanup;
@@ -2830,7 +2830,7 @@ ns_download_runs(
            ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
            ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
   snprintf(dir3, sizeof(dir3), "%s/%s", dir2, name3);
-  if (mkdir(dir3, 0755) < 0) {
+  if (mkdir(dir3, 0775) < 0) {
     ns_error(log_f, NEW_SRV_ERR_MKDIR_FAILED, dir2, os_ErrorMsg());
     goto cleanup;
   }
@@ -2933,14 +2933,14 @@ ns_download_runs(
     if (dir4[0]) {
       snprintf(dir5, sizeof(dir5), "%s/%s", dir3, dir4);
       errno = 0;
-      if (mkdir(dir5, 0755) < 0 && errno != EEXIST) {
+      if (mkdir(dir5, 0775) < 0 && errno != EEXIST) {
         ns_error(log_f, NEW_SRV_ERR_MKDIR_FAILED, dir5, os_ErrorMsg());
         goto cleanup;
       }
       if (dir4a[0]) {
         snprintf(dir5, sizeof(dir5), "%s/%s/%s", dir3, dir4, dir4a);
         errno = 0;
-        if (mkdir(dir5, 0755) < 0 && errno != EEXIST) {
+        if (mkdir(dir5, 0775) < 0 && errno != EEXIST) {
           ns_error(log_f, NEW_SRV_ERR_MKDIR_FAILED, dir5, os_ErrorMsg());
           goto cleanup;
         }

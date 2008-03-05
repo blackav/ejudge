@@ -3963,7 +3963,7 @@ save_install_script(void)
     goto cleanup;
   }
 
-  if ((fd = open(filepath, O_WRONLY | O_CREAT | O_TRUNC, 0700)) < 0) {
+  if ((fd = open(filepath, O_WRONLY | O_CREAT | O_TRUNC, 0770)) < 0) {
     ncurses_errbox("\\begin{center}\nERROR!\n\nCannot create %s: %s!\n\\end{center}\n", filepath, os_ErrorString());
     goto cleanup;
   }

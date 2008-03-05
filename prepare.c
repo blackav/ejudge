@@ -3792,7 +3792,7 @@ create_dirs(serve_state_t state, int mode)
 
     /* working directory (if somebody needs it) */
     if (make_dir(g->work_dir, 0) < 0) return -1;
-    if (os_MakeDirPath(g->compile_work_dir, 0755) < 0) return -1;
+    if (os_MakeDirPath(g->compile_work_dir, 0775) < 0) return -1;
   } else if (mode == PREPARE_RUN) {
     if (g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
     if (make_dir(g->var_dir, 0) < 0) return -1;
@@ -3803,7 +3803,7 @@ create_dirs(serve_state_t state, int mode)
     if (make_dir(g->run_exe_dir, 0) < 0) return -1;
 
     if (make_dir(g->work_dir, 0) < 0) return -1;
-    if (os_MakeDirPath(g->run_work_dir, 0755) < 0) return -1;
+    if (os_MakeDirPath(g->run_work_dir, 0775) < 0) return -1;
     if (os_MakeDirPath(g->run_check_dir, 0) < 0) return -1;
   }
 

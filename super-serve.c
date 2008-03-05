@@ -4572,7 +4572,7 @@ prepare_sockets(void)
     // create the socket directory
     os_rDirName(config->super_serve_socket, socket_dir, sizeof(socket_dir));
     if (os_IsFile(socket_dir) < 0) {
-      if (os_MakeDirPath(socket_dir, 0755) < 0) {
+      if (os_MakeDirPath(socket_dir, 0775) < 0) {
         err("cannot create directory %s: %s", socket_dir, os_ErrorMsg());
         return 1;
       }

@@ -388,7 +388,7 @@ cmd_team_get_archive(struct client_state *p, int len,
   snprintf(dirname, sizeof(dirname), "runs_%d_%d",
            serve_state.global->contest_id, pkt->user_id);
   snprintf(fullpath, sizeof(fullpath), "%s/%s", serve_state.global->var_dir, dirname);
-  if (mkdir(fullpath, 0755) < 0) {
+  if (mkdir(fullpath, 0775) < 0) {
     new_send_reply(p, -SRV_ERR_TRY_AGAIN);
     err("%d: cannot create new directory %s", p->id, fullpath);
     return;
