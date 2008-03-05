@@ -73,6 +73,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_ALIAS(stand_melt_time, board_unfog_time, "d"),
 
   GLOBAL_PARAM(autoupdate_standings, "d"),
+  GLOBAL_PARAM(use_ac_not_ok, "d"),
   GLOBAL_PARAM(team_enable_src_view, "d"),
   GLOBAL_PARAM(team_enable_rep_view, "d"),
   GLOBAL_PARAM(team_enable_ce_view, "d"),
@@ -316,6 +317,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(time_limit, "d"),
   PROBLEM_PARAM(time_limit_millis, "d"),
   PROBLEM_PARAM(real_time_limit, "d"),
+  PROBLEM_PARAM(use_ac_not_ok, "d"),
   PROBLEM_PARAM(team_enable_rep_view, "d"),
   PROBLEM_PARAM(team_enable_ce_view, "d"),
   PROBLEM_PARAM(team_show_judge_report, "d"),
@@ -586,6 +588,7 @@ global_init_func(struct generic_section_config *gp)
   p->ignore_success_time = -1;
 
   p->autoupdate_standings = -1;
+  p->use_ac_not_ok = -1;
   p->board_fog_time = -1;
   p->board_unfog_time = -1;
   p->contest_time = -1;
@@ -680,6 +683,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->time_limit = -1;
   p->time_limit_millis = -1;
   p->real_time_limit = -1;
+  p->use_ac_not_ok = -1;
   p->team_enable_rep_view = -1;
   p->team_enable_ce_view = -1;
   p->team_show_judge_report = -1;
@@ -2125,6 +2129,8 @@ set_defaults(serve_state_t state, int mode)
     g->stand_show_warn_number = DFLT_G_STAND_SHOW_WARN_NUMBER;
   if (g->autoupdate_standings == -1)
     g->autoupdate_standings = DFLT_G_AUTOUPDATE_STANDINGS;
+  if (g->use_ac_not_ok == -1)
+    g->use_ac_not_ok = DFLT_G_USE_AC_NOT_OK;
   if (g->disable_auto_testing == -1)
     g->disable_auto_testing = DFLT_G_DISABLE_AUTO_TESTING;
   if (g->disable_testing == -1)
@@ -2847,6 +2853,8 @@ set_defaults(serve_state_t state, int mode)
     }
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_TYPE,
+                           prob, aprob, g);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_USE_AC_NOT_OK,
                            prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEAM_ENABLE_REP_VIEW,
                            prob, aprob, g);
@@ -4306,6 +4314,7 @@ prepare_set_global_defaults(struct section_global_data *g)
   if (g->board_fog_time < 0) g->board_fog_time = DFLT_G_BOARD_FOG_TIME;
   if (g->board_unfog_time < 0) g->board_unfog_time = DFLT_G_BOARD_UNFOG_TIME;
   if (g->autoupdate_standings < 0) g->autoupdate_standings=DFLT_G_AUTOUPDATE_STANDINGS;
+  if (g->use_ac_not_ok < 0) g->use_ac_not_ok = DFLT_G_USE_AC_NOT_OK;
   if (g->team_enable_src_view < 0) g->team_enable_src_view=DFLT_G_TEAM_ENABLE_SRC_VIEW;
   if (g->team_enable_rep_view < 0) g->team_enable_rep_view=DFLT_G_TEAM_ENABLE_REP_VIEW;
   if (g->team_enable_ce_view < 0) g->team_enable_ce_view = DFLT_G_TEAM_ENABLE_CE_VIEW;
@@ -4563,6 +4572,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->board_unfog_time = DFLT_G_BOARD_UNFOG_TIME;
 
   global->autoupdate_standings = DFLT_G_AUTOUPDATE_STANDINGS;
+  global->use_ac_not_ok = DFLT_G_USE_AC_NOT_OK;
   global->team_enable_src_view = DFLT_G_TEAM_ENABLE_SRC_VIEW;
   global->team_enable_rep_view = DFLT_G_TEAM_ENABLE_REP_VIEW;
   global->team_enable_ce_view = 1;
@@ -4938,6 +4948,15 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     if (out->real_time_limit == -1 && abstr)
       out->real_time_limit = abstr->real_time_limit;
     if (out->real_time_limit == -1) out->real_time_limit = 0;
+    break;
+
+  case PREPARE_FIELD_PROB_USE_AC_NOT_OK:
+    if (out->use_ac_not_ok == -1 && abstr)
+      out->use_ac_not_ok = abstr->use_ac_not_ok;
+    if (out->use_ac_not_ok == -1 && global)
+      out->use_ac_not_ok = global->use_ac_not_ok;
+    if (out->use_ac_not_ok == -1)
+      out->use_ac_not_ok = 0;
     break;
 
   case PREPARE_FIELD_PROB_TEAM_ENABLE_REP_VIEW:

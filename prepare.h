@@ -109,6 +109,7 @@ struct section_global_data
   int    board_unfog_time;      /* time after the end of the contest
                                  * when the board is again updated */
   int    autoupdate_standings;  /* update standings automatically? */
+  int    use_ac_not_ok;         /* use AC status for passing solutions */
   int    inactivity_timeout;    /* timeout for slave case */
   int    disable_auto_testing;  /* do not test automatically */
   int    disable_testing;       /* do not test the submit at all */
@@ -436,6 +437,7 @@ struct section_problem_data
   int    real_time_limit;       /* maximum astronomical time for a problem */
   int    time_limit;            /* time limit in secs */
   int    time_limit_millis;     /* time limit in milliseconds */
+  int    use_ac_not_ok;         /* use AC instead of OK for passing runs */
   int    team_enable_rep_view;  /* are teams allowed to view reports? */
   int    team_enable_ce_view;
   int    team_show_judge_report;
@@ -709,6 +711,7 @@ enum
   PREPARE_FIELD_PROB_TIME_LIMIT,
   PREPARE_FIELD_PROB_TIME_LIMIT_MILLIS,
   PREPARE_FIELD_PROB_REAL_TIME_LIMIT,
+  PREPARE_FIELD_PROB_USE_AC_NOT_OK,
   PREPARE_FIELD_PROB_TEAM_ENABLE_REP_VIEW,
   PREPARE_FIELD_PROB_TEAM_ENABLE_CE_VIEW,
   PREPARE_FIELD_PROB_TEAM_SHOW_JUDGE_REPORT,
