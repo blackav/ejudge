@@ -3454,3 +3454,15 @@ new_server_html.c 4736 0 35386102
 new_server_html.c 4738 0 35698706
 new_server_html.c 4740 0 35566074
 prepare_out.c 4742 0 6459930
+ejudge-setup.c 4745 0 10107899
+serve.c 4745 0 11591838
+super-serve.c 4745 0 13110323
+userlist-server.c 4745 0 22302281
+unix/fileutl.c 4744 0 2995948
+archive_paths.c 4745 0 723282
+new_server_html_2.c 4745 0 14130392
+nsdb_plugin_files.c 4745 0 2215244
+prepare.c 4745 0 14189702
+server_framework.c 4745 0 1884792
+super_html_2.c 4745 0 4968607
+team_extra.c 4745 0 800896
