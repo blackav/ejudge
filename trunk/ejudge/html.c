@@ -3842,6 +3842,9 @@ do_write_standings(const serve_state_t state,
   struct standings_style ss;
   const struct section_problem_data *prob = 0;
   struct sformat_extra_data fed;
+  unsigned char *trans_flag = 0;
+  unsigned char *disq_flag = 0;
+  unsigned char *cf_flag = 0;
 
   if (cur_time <= 0) cur_time = time(0);
   if (!only_table_flag) {
@@ -3956,6 +3959,9 @@ do_write_standings(const serve_state_t state,
   if (t_tot > 0) {
     XCALLOC(calc, t_tot * row_sz);
     XCALLOC(ok_time, t_tot * row_sz);
+    XCALLOC(trans_flag, t_tot * row_sz);
+    XCALLOC(disq_flag, t_tot * row_sz);
+    XCALLOC(cf_flag, t_tot * row_sz);
   }
 
   XALLOCAZ(succ_att, p_tot);
@@ -4030,6 +4036,15 @@ do_write_standings(const serve_state_t state,
         calc[up_ind]--;
         tot_att[pp]++;
       }
+    } else if (pe->status == RUN_DISQUALIFIED) {
+      disq_flag[up_ind] = 1;
+    } else if (pe->status == RUN_PENDING || pe->status == RUN_ACCEPTED) {
+      trans_flag[up_ind] = 1;
+    } else if (pe->status >= RUN_TRANSIENT_FIRST
+               && pe->status <= RUN_TRANSIENT_LAST) {
+      trans_flag[up_ind] = 1;
+    } else {
+      cf_flag[up_ind] = 1;
     }
   }
 
@@ -4267,6 +4282,12 @@ do_write_standings(const serve_state_t state,
         up_ind = (t << row_sh) + j;
         col_attr = state->probs[p_ind[j]]->stand_attr;
         if (!*col_attr) col_attr = ss.prob_attr;
+        if (trans_flag[up_ind] && ss.trans_attr && ss.trans_attr[0])
+          col_attr = ss.trans_attr;
+        if (disq_flag[up_ind] && ss.disq_attr && ss.disq_attr[0])
+          col_attr = ss.disq_attr;
+        if (cf_flag[up_ind] && ss.fail_attr && ss.fail_attr[0])
+          col_attr = ss.fail_attr;
         fprintf(f, "<td%s>", col_attr);
         if (calc[up_ind] < 0) {
           fprintf(f, "%d", calc[up_ind]);
@@ -4376,6 +4397,9 @@ do_write_standings(const serve_state_t state,
 
   xfree(calc);
   xfree(ok_time);
+  xfree(trans_flag);
+  xfree(disq_flag);
+  xfree(cf_flag);
 }
 
 void
