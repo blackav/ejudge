@@ -152,6 +152,7 @@ struct serve_state
   int max_abstr_prob;
   int max_abstr_tester;
 
+  time_t load_time;
   time_t current_time;
   int clients_suspended;
   int testing_suspended;

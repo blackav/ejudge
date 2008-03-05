@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -73,6 +73,7 @@ int ul_uid;
 unsigned char *ul_login;
 
 struct session_info *session_first, *session_last;
+time_t server_start_time;
 
 // plugin information
 struct nsdb_loaded_plugin
@@ -607,6 +608,7 @@ main(int argc, char *argv[])
   int restart_flag = 0;
   char **argv_restart = 0;
 
+  time(&server_start_time);
   start_set_self_args(argc, argv);
   /* certain options should be removed for restart */
   XCALLOC(argv_restart, argc + 1);
