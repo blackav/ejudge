@@ -4835,9 +4835,6 @@ ns_get_user_problems_summary(
         }
         break;
 
-      case RUN_ACCEPTED:
-        break;
-
       case RUN_IGNORED:
         break;
 
@@ -4845,6 +4842,7 @@ ns_get_user_problems_summary(
         disqualified[re.prob_id]++;
         break;
 
+      case RUN_ACCEPTED:
       case RUN_PENDING:
         pending_flag[re.prob_id] = 1;
         attempts[re.prob_id]++;
@@ -4896,11 +4894,11 @@ ns_get_user_problems_summary(
         break;
 
       case RUN_PARTIAL:
-      case RUN_ACCEPTED:
       case RUN_IGNORED:
       case RUN_DISQUALIFIED:
         break;
 
+      case RUN_ACCEPTED:
       case RUN_PENDING:
         pending_flag[re.prob_id] = 1;
         attempts[re.prob_id]++;
@@ -4938,11 +4936,11 @@ ns_get_user_problems_summary(
         break;
 
       case RUN_PARTIAL:
-      case RUN_ACCEPTED:
       case RUN_IGNORED:
       case RUN_DISQUALIFIED:
         break;
-
+ 
+      case RUN_ACCEPTED:
       case RUN_PENDING:
         pending_flag[re.prob_id] = 1;
         attempts[re.prob_id]++;
