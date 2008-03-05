@@ -541,6 +541,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     fprintf(f, "serve_sleep_time = %d\n", global->serve_sleep_time);
   if (global->autoupdate_standings != DFLT_G_AUTOUPDATE_STANDINGS)
     unparse_bool(f, "autoupdate_standings", global->autoupdate_standings);
+  if (global->use_ac_not_ok != DFLT_G_USE_AC_NOT_OK)
+    unparse_bool(f, "use_ac_not_ok", global->use_ac_not_ok);
   if (global->inactivity_timeout
       && global->inactivity_timeout != DFLT_G_INACTIVITY_TIMEOUT)
     fprintf(f, "inactivity_timeout = %d\n", global->inactivity_timeout);
@@ -1226,6 +1228,8 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     fprintf(f, "variant_num = %d\n", prob->variant_num);
   }
  
+  if (prob->use_ac_not_ok >= 0)
+    unparse_bool(f, "use_ac_not_ok", prob->use_ac_not_ok);
   if (prob->team_enable_rep_view >= 0)
     unparse_bool(f, "team_enable_rep_view", prob->team_enable_rep_view);
   if (prob->team_enable_ce_view >= 0)

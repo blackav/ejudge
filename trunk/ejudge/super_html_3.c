@@ -424,6 +424,7 @@ Advanced settings:
   GLOBAL_PARAM(sleep_time, "d"),
   GLOBAL_PARAM(serve_sleep_time, "d"),
   GLOBAL_PARAM(autoupdate_standings, "d"),
+  GLOBAL_PARAM(use_ac_not_ok, "d"),
   GLOBAL_PARAM(charset, "s"),
   GLOBAL_PARAM(rounding_mode, "s"),
   GLOBAL_PARAM(max_file_length, "d"),
@@ -1856,6 +1857,14 @@ super_html_edit_global_parameters(FILE *f,
     html_submit_button(f, SSERV_CMD_GLOB_CHANGE_AUTOUPDATE_STANDINGS, "Change");
     fprintf(f, "</td></tr></form>\n");
 
+    //GLOBAL_PARAM(use_ac_not_ok, "d"),
+    html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Use AC status instead of OK:</td><td>", form_row_attrs[row ^= 1]);
+    html_boolean_select(f, global->use_ac_not_ok, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_USE_AC_NOT_OK, "Change");
+    fprintf(f, "</td></tr></form>\n");
+
     //GLOBAL_PARAM(rounding_mode, "s"),
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Seconds to minutes rounding mode:</td><td>",
@@ -2687,6 +2696,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_AUTOUPDATE_STANDINGS:
     p_int = &global->autoupdate_standings;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_USE_AC_NOT_OK:
+    p_int = &global->use_ac_not_ok;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_ROUNDING_MODE:
@@ -4422,6 +4435,23 @@ super_html_print_problem(FILE *f,
   }
 
   if (show_adv) {
+    //PROBLEM_PARAM(use_ac_not_ok, "d"),
+    extra_msg = "Undefined";
+    tmp_prob.use_ac_not_ok = prob->use_ac_not_ok;
+    if (!prob->abstract) {
+      prepare_set_prob_value(PREPARE_FIELD_PROB_USE_AC_NOT_OK,
+                             &tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+               tmp_prob.use_ac_not_ok?"Yes":"No");
+      extra_msg = msg_buf;
+    }
+    print_boolean_3_select_row(f, "Use AC status instead of OK:",
+                               prob->use_ac_not_ok,
+                               SSERV_CMD_PROB_CHANGE_USE_AC_NOT_OK,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+
     //PROBLEM_PARAM(team_enable_rep_view, "d"),
     extra_msg = "Undefined";
     tmp_prob.team_enable_rep_view = prob->team_enable_rep_view;
@@ -5753,8 +5783,8 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
     p_int = &prob->real_time_limit;
     goto handle_int_1;
 
-  case SSERV_CMD_PROB_CHANGE_TEAM_ENABLE_REP_VIEW:
-    p_int = &prob->team_enable_rep_view;
+  case SSERV_CMD_PROB_CHANGE_USE_AC_NOT_OK:
+    p_int = &prob->use_ac_not_ok;
 
   handle_boolean_2:
     if (!param2 || sscanf(param2, "%d%n", &val, &n) != 1 || param2[n])
@@ -5762,6 +5792,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
     if (val < -1 || val > 1) return -SSERV_ERR_INVALID_PARAMETER;
     *p_int = val;
     return 0;
+
+  case SSERV_CMD_PROB_CHANGE_TEAM_ENABLE_REP_VIEW:
+    p_int = &prob->team_enable_rep_view;
+    goto handle_boolean_2;
 
   case SSERV_CMD_PROB_CHANGE_TEAM_ENABLE_CE_VIEW:
     p_int = &prob->team_enable_ce_view;
