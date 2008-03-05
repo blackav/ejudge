@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -102,7 +102,7 @@ make_dir(char const *path, int access)
   int saved_errno, r;
   int prev_umask = umask(0);
 
-  if (!access) access = 0755 & ~prev_umask;
+  if (!access) access = 0775 & ~prev_umask;
   if ((r = mkdir(path, access)) < 0 && errno != EEXIST) {
     saved_errno = errno;
     umask(prev_umask);
@@ -1134,7 +1134,7 @@ make_executable(char const *path)
 int
 make_writable(char const *path)
 {
-  if (chmod(path, 0755) < 0) {
+  if (chmod(path, 0775) < 0) {
     write_log(0, LOG_ERR, "chmod(%s) failed: %d, %s",
               path, errno, strerror(errno));
     return -1;
@@ -1427,7 +1427,7 @@ remove_directory_recursively(const unsigned char *path)
   
   while (head) {
     /* ignore the errors */
-    chmod(head->fullpath, 0700);
+    chmod(head->fullpath, 0770);
 
     if ((d = opendir(head->fullpath))) {
       while ((dd = readdir(d))) {
