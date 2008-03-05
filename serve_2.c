@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1519,6 +1519,7 @@ serve_is_valid_status(serve_state_t state, int status, int mode)
     case RUN_OK:
     case RUN_PARTIAL:
     case RUN_CHECK_FAILED:
+    case RUN_ACCEPTED:
       return 1;
     case RUN_COMPILE_ERR:
     case RUN_REJUDGE:
@@ -1533,6 +1534,7 @@ serve_is_valid_status(serve_state_t state, int status, int mode)
   } else {
     switch (status) {
     case RUN_OK:
+    case RUN_ACCEPTED:
     case RUN_RUN_TIME_ERR:
     case RUN_TIME_LIMIT_ERR:
     case RUN_PRESENTATION_ERR:
@@ -1676,6 +1678,11 @@ serve_read_run_packet(serve_state_t state,
       goto bad_packet_error;
   } else {
     reply_pkt->score = -1;
+  }
+  if (re.prob_id >= 1 && re.prob_id <= state->max_prob
+      && state->probs[re.prob_id] && state->probs[re.prob_id]->use_ac_not_ok
+      && reply_pkt->status == RUN_OK) {
+    reply_pkt->status = RUN_ACCEPTED;
   }
   if (reply_pkt->status == RUN_CHECK_FAILED)
     serve_send_check_failed_email(cnts, reply_pkt->run_id);

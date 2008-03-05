@@ -1148,6 +1148,7 @@ static const unsigned char has_kirov_score[RUN_LAST + 1] =
   [RUN_OK]               = 1,
   [RUN_COMPILE_ERR]      = 1,
   [RUN_PARTIAL]          = 1,
+  [RUN_ACCEPTED]         = 1,
 };
 
 /* Run information structure:

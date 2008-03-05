@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -164,13 +164,13 @@ static const unsigned char * const change_status_strings[RUN_LAST + 1] =
 static const int kirov_no_rejudge_status_list[] =
 {
   RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
-  RUN_OK, RUN_COMPILE_ERR, RUN_PARTIAL,
+  RUN_OK, RUN_COMPILE_ERR, RUN_PARTIAL, RUN_ACCEPTED,
   -1,
 };
 static const int kirov_status_list[] =
 {
   RUN_REJUDGE, RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
-  RUN_OK, RUN_COMPILE_ERR, RUN_PARTIAL,
+  RUN_OK, RUN_COMPILE_ERR, RUN_PARTIAL, RUN_ACCEPTED,
   -1,
 };
 static const int olymp_accepting_no_rejudge_status_list[] =
@@ -208,14 +208,14 @@ static const int acm_no_rejudge_status_list[] =
 {
   RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
   RUN_OK, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR, RUN_TIME_LIMIT_ERR,
-  RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR, RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR,
+  RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR, RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_ACCEPTED,
   -1,
 };
 static const int acm_status_list[] =
 {
   RUN_REJUDGE, RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
   RUN_OK, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR, RUN_TIME_LIMIT_ERR,
-  RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR, RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR,
+  RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR, RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_ACCEPTED,
   -1,
 };
 
@@ -386,6 +386,7 @@ print_raw_record(const serve_state_t state, FILE *f, int run_id,
       case RUN_PARTIAL:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
+      case RUN_ACCEPTED:
         if (state->global->score_system_val == SCORE_ACM) {
           if (pe->test > 0) {
             snprintf((fields[RAW_RUN_PASSED] = alloca(BSIZE)), BSIZE,
