@@ -1572,7 +1572,7 @@ super_html_commit_contest(FILE *f,
   rename_files(flog, cwf, welcome_path, welcome_path_2);
   rename_files(flog, ref, register_email_path, register_email_path_2);
   rename_files(flog, csf, contest_start_cmd_path, contest_start_cmd_path_2);
-  if (csf) chmod(contest_start_cmd_path, 0755);
+  if (csf) chmod(contest_start_cmd_path, 0775);
   rename_files(flog, shf, stand_header_path, stand_header_path_2);
   rename_files(flog, sff, stand_footer_path, stand_footer_path_2);
   rename_files(flog, s2hf, stand2_header_path, stand2_header_path_2);

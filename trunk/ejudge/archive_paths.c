@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -93,7 +93,7 @@ archive_dir_prepare(const serve_state_t state,
     *pp = 0;
 
     if (lstat(path, &sb) < 0) {
-      if (mkdir(path, 0755) < 0) {
+      if (mkdir(path, 0775) < 0) {
         err("archive_dir_prepare: mkdir `%s' failed: %s", path, os_ErrorMsg());
         return -1;
       }

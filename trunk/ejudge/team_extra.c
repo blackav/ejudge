@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -135,7 +135,7 @@ make_write_path(team_extra_state_t state, unsigned char *path, size_t size,
     *p++ = '/';
     *p++ = b32[i];
     *p = 0;
-    if (mkdir(mpath, 0700) < 0) {
+    if (mkdir(mpath, 0770) < 0) {
       if (errno != EEXIST) {
         err("team_extra: %s: mkdir failed: %s", mpath, os_ErrorMsg());
         return -1;
