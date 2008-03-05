@@ -7163,6 +7163,11 @@ priv_main_page(FILE *fout,
                 _("Remaining time"), duration_buf);
       }
     }
+    fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+            "Contest load time", ctime(&cs->load_time));
+    fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+            "Server start time", ctime(&server_start_time));
+
     fprintf(fout, "</table></form>\n");
 
     fprintf(fout, "<hr>\n");

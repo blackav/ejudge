@@ -241,6 +241,7 @@ serve_state_load_contest(int contest_id,
   state = serve_state_init();
   state->config_path = xstrdup(config_path);
   state->current_time = time(0);
+  state->load_time = state->current_time;
 
   info("loading contest %d configuration file", contest_id);
   if (prepare(state, state->config_path, 0, PREPARE_SERVE, "", 1) < 0)

@@ -803,5 +803,6 @@ ns_print_prob_exam_protocol(
         int use_exam_cypher);
 
 extern int utf8_mode;
+extern time_t server_start_time;
 
 #endif /* __NEW_SERVER_H__ */
