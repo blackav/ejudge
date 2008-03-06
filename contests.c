@@ -164,6 +164,7 @@ static char const * const attr_map[] =
   "disable_name",
   "enable_forgot_password",
   "exam_mode",
+  "disable_password_change",
   "disable_locale_change",
   "personal",
   "allow_reg_data_edit",
@@ -721,6 +722,7 @@ static const size_t contest_bool_attr_offsets[CONTEST_LAST_ATTR] =
   [CONTEST_A_DISABLE_NAME] = CONTEST_DESC_OFFSET(disable_name),
   [CONTEST_A_ENABLE_FORGOT_PASSWORD] = CONTEST_DESC_OFFSET(enable_forgot_password),
   [CONTEST_A_EXAM_MODE] = CONTEST_DESC_OFFSET(exam_mode),
+  [CONTEST_A_DISABLE_PASSWORD_CHANGE] = CONTEST_DESC_OFFSET(disable_password_change),
   [CONTEST_A_DISABLE_LOCALE_CHANGE] = CONTEST_DESC_OFFSET(disable_locale_change),
   [CONTEST_A_PERSONAL] = CONTEST_DESC_OFFSET(personal),
   [CONTEST_A_ALLOW_REG_DATA_EDIT] = CONTEST_DESC_OFFSET(allow_reg_data_edit),
@@ -1522,6 +1524,10 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
   if (cnts->exam_mode) {
     fprintf(f, "\n         %s=\"%s\"",
             attr_map[CONTEST_A_EXAM_MODE], "yes");
+  }
+  if (cnts->disable_password_change) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attr_map[CONTEST_A_DISABLE_PASSWORD_CHANGE], "yes");
   }
   if (cnts->disable_locale_change) {
     fprintf(f, "\n         %s=\"%s\"",

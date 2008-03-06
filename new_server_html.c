@@ -12008,7 +12008,7 @@ unpriv_main_page(FILE *fout,
 
   if (phr->action == NEW_SRV_ACTION_VIEW_SETTINGS) {
     /* change the password */
-    if (!cs->clients_suspended) {
+    if (!cs->clients_suspended && !cnts->disable_password_change) {
       fprintf(fout, "<%s>%s</%s>\n",
               cnts->team_head_style,
               _("Change password"),
