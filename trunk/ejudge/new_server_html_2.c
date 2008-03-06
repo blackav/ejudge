@@ -466,9 +466,11 @@ ns_write_priv_all_runs(FILE *f,
       duration_str(global->show_astr_time, run_time, start_time,
                    durstr, 0);
 
+      /*
       if (phr->role == USER_ROLE_ADMIN) {
         html_start_form(f, 1, phr->self_url, phr->hidden_vars);
       }
+      */
       fprintf(f, "<td%s>%d%s%s</td>", cl, rid, imported_str, examinable_str);
       fprintf(f, "<td%s>%s</td>", cl, durstr);
       fprintf(f, "<td%s>%u</td>", cl, pe->size);
