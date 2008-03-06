@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -191,7 +191,7 @@ ns_strerror(int code, ...)
   }
 
   va_start(args, code);
-  snprintf(buf2, sizeof(buf2), gettext(s), args);
+  vsnprintf(buf2, sizeof(buf2), gettext(s), args);
   va_end(args);
   snprintf(buf, sizeof(buf), "%s.\n", buf2);
   return buf;
@@ -211,7 +211,7 @@ ns_strerror_2(int code, ...)
   }
 
   va_start(args, code);
-  snprintf(buf, sizeof(buf), gettext(s), args);
+  vsnprintf(buf, sizeof(buf), gettext(s), args);
   va_end(args);
   return buf;
 }
@@ -225,14 +225,14 @@ ns_strerror_r(unsigned char *buf, size_t size, int code, ...)
 
   if (code < 0) code = -code;
   if (code >= NEW_SRV_ERR_LAST || !(s = ns_error_messages[code])) {
-    snprintf(buf, sizeof(buf), _("Unknown error %d.\n"), code);
+    snprintf(buf, size, _("Unknown error %d.\n"), code);
     return buf;
   }
 
   va_start(args, code);
-  snprintf(buf2, sizeof(buf2), gettext(s), args);
+  vsnprintf(buf2, sizeof(buf2), gettext(s), args);
   va_end(args);
-  snprintf(buf, sizeof(buf), "%s.\n", buf2);
+  snprintf(buf, size, "%s.\n", buf2);
   return buf;
 }
 
