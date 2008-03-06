@@ -2539,6 +2539,16 @@ super_html_edit_contest_page(FILE *f,
 
   if (sstate->advanced_view) {
     html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Disable password change?</td><td>",
+            form_row_attrs[row ^= 1]);
+    html_boolean_select(f, cnts->disable_password_change, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_DISABLE_PASSWORD_CHANGE, "Change");
+    fprintf(f, "</td></tr></form>\n");
+  }
+
+  if (sstate->advanced_view) {
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Disable locale change?</td><td>",
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, cnts->disable_locale_change, "param", 0, 0);

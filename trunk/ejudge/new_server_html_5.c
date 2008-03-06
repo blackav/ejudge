@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1547,21 +1547,23 @@ main_page_view_settings(
         struct contest_extra *extra,
         time_t cur_time)
 {
-  /* change the password */
-  fprintf(fout, "<%s>%s</%s>\n", cnts->register_head_style,
-          _("Change password"), cnts->register_head_style);
-  html_start_form(fout, 1, phr->self_url, "");
-  html_hidden(fout, "SID", "%016llx", phr->session_id);
+  if (!cnts->disable_password_change) {
+    /* change the password */
+    fprintf(fout, "<%s>%s</%s>\n", cnts->register_head_style,
+            _("Change password"), cnts->register_head_style);
+    html_start_form(fout, 1, phr->self_url, "");
+    html_hidden(fout, "SID", "%016llx", phr->session_id);
 
-  fprintf(fout, "<table class=\"b0\">\n"
-          "<tr><td class=\"b0\">%s:</td><td class=\"b0\"><input type=\"password\" name=\"oldpasswd\" size=\"16\"/></td></tr>\n"
-          "<tr><td class=\"b0\">%s:</td><td class=\"b0\"><input type=\"password\" name=\"newpasswd1\" size=\"16\"/></td></tr>\n"
-          "<tr><td class=\"b0\">%s:</td><td class=\"b0\"><input type=\"password\" name=\"newpasswd2\" size=\"16\"/></td></tr>\n"
-          "<tr><td class=\"b0\" colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr>\n"
-          "</table></form>",
-          _("Old password"),
-          _("New password"), _("Retype new password"),
-          NEW_SRV_ACTION_CHANGE_PASSWORD, _("Change!"));
+    fprintf(fout, "<table class=\"b0\">\n"
+            "<tr><td class=\"b0\">%s:</td><td class=\"b0\"><input type=\"password\" name=\"oldpasswd\" size=\"16\"/></td></tr>\n"
+            "<tr><td class=\"b0\">%s:</td><td class=\"b0\"><input type=\"password\" name=\"newpasswd1\" size=\"16\"/></td></tr>\n"
+            "<tr><td class=\"b0\">%s:</td><td class=\"b0\"><input type=\"password\" name=\"newpasswd2\" size=\"16\"/></td></tr>\n"
+            "<tr><td class=\"b0\" colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr>\n"
+            "</table></form>",
+            _("Old password"),
+            _("New password"), _("Retype new password"),
+            NEW_SRV_ACTION_CHANGE_PASSWORD, _("Change!"));
+  }
 
 #if CONF_HAS_LIBINTL - 0 == 1
   if (!cnts->disable_locale_change) {

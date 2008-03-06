@@ -135,6 +135,7 @@ enum
     CONTEST_A_DISABLE_NAME,
     CONTEST_A_ENABLE_FORGOT_PASSWORD,
     CONTEST_A_EXAM_MODE,
+    CONTEST_A_DISABLE_PASSWORD_CHANGE,
     CONTEST_A_DISABLE_LOCALE_CHANGE,
     CONTEST_A_PERSONAL,
     CONTEST_A_ALLOW_REG_DATA_EDIT,
@@ -271,6 +272,7 @@ struct contest_desc
   unsigned char disable_name;
   unsigned char enable_forgot_password;
   unsigned char exam_mode;
+  unsigned char disable_password_change;
   unsigned char disable_locale_change;
   unsigned char personal;
   unsigned char allow_reg_data_edit;

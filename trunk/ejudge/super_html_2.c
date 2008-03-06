@@ -344,6 +344,9 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   case SSERV_CMD_CNTS_CHANGE_EXAM_MODE:
     p_bool = &cnts->exam_mode;
     break;
+  case SSERV_CMD_CNTS_CHANGE_DISABLE_PASSWORD_CHANGE:
+    p_bool = &cnts->disable_password_change;
+    break;
   case SSERV_CMD_CNTS_CHANGE_DISABLE_LOCALE_CHANGE:
     p_bool = &cnts->disable_locale_change;
     break;
