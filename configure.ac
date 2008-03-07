@@ -69,6 +69,7 @@ AC_ARG_WITH([fpc],AC_HELP_STRING([--with-fpc],[specify the Free Pascal compiler 
 AC_ARG_WITH([gpc],AC_HELP_STRING([--with-gpc],[specify the GNU Pascal compiler to use in contests]),[ac_cv_contest_gpc=$withval])
 AC_ARG_WITH([gcj],AC_HELP_STRING([--with-gcj],[specify the GNU Java (GCJ) compiler to use in contests]),[ac_cv_contest_gcj=$withval])
 AC_ARG_WITH([g77],AC_HELP_STRING([--with-g77],[specify the GNU Fortran 77 compiler to use in contests]),[ac_cv_contest_g77=$withval])
+AC_ARG_WITH([gfortran],AC_HELP_STRING([--with-gfortran],[specify the GNU Fortran 90 compiler to use in contests]),[ac_cv_contest_gfortran=$withval])
 AC_ARG_WITH([dcc],AC_HELP_STRING([--with-dcc],[specify the Borland Delphi compiler to use in contests]),[ac_cv_contest_dcc=$withval])
 AC_ARG_WITH([yabasic],AC_HELP_STRING([--with-yabasic],[specify the Yabasic interpreter to use in contests]),[ac_cv_contest_yabasic=$withval])
 AC_ARG_WITH([scheme],AC_HELP_STRING([--with-scheme],[specify the MzScheme interpreter to use in contests]),[ac_cv_contest_mzscheme=$withval])
@@ -1027,6 +1028,42 @@ else
   AC_MSG_RESULT([disabled by user])
 fi
 
+AC_MSG_CHECKING([whether GNU Fortran 90 is available])
+if [[ x"${ac_cv_contest_gfortran}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
+then
+  [[ x"${ac_cv_contest_gfortran}" = xyes ]] && ac_cv_contest_gfortran=""
+  [[ x"${ac_cv_contest_gfortran}" = x ]] && ac_cv_contest_gfortran="gfortran"
+  ${ac_cv_contest_gfortran} -v >/dev/null 2>/dev/null
+  [[ $? != 0 ]] && ac_cv_contest_gfortran=no
+  if [[ x"${ac_cv_contest_gfortran}" != xno ]]
+  then
+    ac_cv_gfortran_version=`${ac_cv_contest_gfortran} --version | grep "GNU Fortran (GCC)" | gawk '{ print $4; }'`
+    [[ $? != 0 -a $? != 1 ]] && ac_cv_contest_gfortran=no
+  fi
+  if [[ x"${ac_cv_contest_gfortran}" != xno ]]
+  then
+    echo "        END" > conftest.for
+    ${ac_cv_contest_gfortran} conftest.for -o conftest 2>/dev/null >/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_gfortran=no
+  fi
+  if [[ x"${ac_cv_contest_gfortran}" != xno ]]
+  then
+    ./conftest 2>/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_gfortran=no
+  fi  
+  rm -f ./conftest*
+  ac_cv_contest_gfortran_dir=`dirname "${ac_cv_contest_gfortran}"`
+  [[ x"${ac_cv_contest_gfortran_dir}" = x. ]] && ac_cv_contest_gfortran_dir=""
+  if [[ x"${ac_cv_contest_gfortran}" != xno ]]
+  then
+    AC_MSG_RESULT([yes, ${ac_cv_contest_gfortran}, ${ac_cv_gfortran_version}])
+  else
+    AC_MSG_RESULT([no])
+  fi
+else
+  AC_MSG_RESULT([disabled by user])
+fi
+
 AC_MSG_CHECKING([whether Yabasic interpreter is available])
 if [[ x"${ac_cv_contest_yabasic}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
@@ -1545,6 +1582,8 @@ AC_SUBST(ac_cv_contest_dcc)
 AC_SUBST(ac_cv_contest_dcc_dir)
 AC_SUBST(ac_cv_contest_g77)
 AC_SUBST(ac_cv_contest_g77_dir)
+AC_SUBST(ac_cv_contest_gfortran)
+AC_SUBST(ac_cv_contest_gfortran_dir)
 AC_SUBST(ac_cv_contest_gcj)
 AC_SUBST(ac_cv_contest_gcj_dir)
 AC_SUBST(ac_cv_contest_gprolog)
@@ -1678,6 +1717,10 @@ if [[ x"${ac_cv_g77_version}" != x ]]
 then
   AC_DEFINE_UNQUOTED(COMPILE_G77_VERSION,"${ac_cv_g77_version}")
 fi
+if [[ x"${ac_cv_gfortran_version}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(COMPILE_GFORTRAN_VERSION,"${ac_cv_gfortran_version}")
+fi
 if [[ x"${ac_cv_gcj_version}" != x ]]
 then
   AC_DEFINE_UNQUOTED(COMPILE_GCJ_VERSION,"${ac_cv_gcj_version}")
@@ -1716,9 +1759,9 @@ then
 fi
 
 AC_CONFIG_HEADERS([config.h])
-AC_OUTPUT(Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile scripts/gcc scripts/gcc-version scripts/g++ scripts/g++-version scripts/fpc scripts/fpc-version scripts/gpc scripts/gpc-version scripts/dcc scripts/dcc-version scripts/g77 scripts/g77-version scripts/gcj scripts/gcj-version scripts/gprolog scripts/gprolog-version scripts/yabasic scripts/yabasic-version scripts/mzscheme scripts/mzscheme-version scripts/perl scripts/perl-version scripts/python scripts/python-version scripts/txt scripts/txt-version ejudge-config.v scripts/festival scripts/javac scripts/javac-version scripts/runjava scripts/mcs scripts/mcs-version scripts/runmono scripts/mbas scripts/mbas-version scripts/runperl plugins/mysql-userlist/Makefile python/Makefile)
+AC_OUTPUT(Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile scripts/gcc scripts/gcc-version scripts/g++ scripts/g++-version scripts/fpc scripts/fpc-version scripts/gpc scripts/gpc-version scripts/dcc scripts/dcc-version scripts/g77 scripts/g77-version scripts/gfortran scripts/gfortran-version scripts/gcj scripts/gcj-version scripts/gprolog scripts/gprolog-version scripts/yabasic scripts/yabasic-version scripts/mzscheme scripts/mzscheme-version scripts/perl scripts/perl-version scripts/python scripts/python-version scripts/txt scripts/txt-version ejudge-config.v scripts/festival scripts/javac scripts/javac-version scripts/runjava scripts/mcs scripts/mcs-version scripts/runmono scripts/mbas scripts/mbas-version scripts/runperl plugins/mysql-userlist/Makefile python/Makefile)
 
-chmod +x scripts/gcc scripts/gcc-version scripts/g++ scripts/g++-version scripts/fpc scripts/fpc-version scripts/gpc scripts/gpc-version scripts/dcc scripts/dcc-version scripts/g77 scripts/g77-version scripts/gcj scripts/gcj-version scripts/gprolog scripts/gprolog-version scripts/yabasic scripts/yabasic-version scripts/mzscheme scripts/mzscheme-version scripts/perl scripts/perl-version scripts/python scripts/python-version scripts/txt scripts/txt-version ejudge-config.v scripts/festival scripts/javac scripts/javac-version scripts/runjava scripts/mcs scripts/mcs-version scripts/runmono scripts/mbas scripts/mbas-version scripts/runperl
+chmod +x scripts/gcc scripts/gcc-version scripts/g++ scripts/g++-version scripts/fpc scripts/fpc-version scripts/gpc scripts/gpc-version scripts/dcc scripts/dcc-version scripts/g77 scripts/g77-version scripts/gfortran scripts/gfortran-version scripts/gcj scripts/gcj-version scripts/gprolog scripts/gprolog-version scripts/yabasic scripts/yabasic-version scripts/mzscheme scripts/mzscheme-version scripts/perl scripts/perl-version scripts/python scripts/python-version scripts/txt scripts/txt-version ejudge-config.v scripts/festival scripts/javac scripts/javac-version scripts/runjava scripts/mcs scripts/mcs-version scripts/runmono scripts/mbas scripts/mbas-version scripts/runperl
 
 if [[ "x${ac_cv_has_libcap}" = x -a "${ac_cv_has_new_secure_exec}" = x ]]
 then
