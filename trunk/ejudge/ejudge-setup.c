@@ -2276,7 +2276,16 @@ generate_serve_cfg(FILE *f)
           COMPILE_GCJ_VERSION);
 #endif /* COMPILE_GCJ_VERSION */
 
-#if defined COMPILE_G77_VERSION
+#if defined COMPILE_GFORTRAN_VERSION
+  fprintf(f,
+          "[language]\n"
+          "id = 6\n"
+          "short_name = \"gfortran\"\n"
+          "long_name = \"GNU Fortran 90 %s\"\n"
+          "src_sfx = \".for\"\n"
+          "\n",
+          COMPILE_GFORTRAN_VERSION);
+#elif defined COMPILE_G77_VERSION
   fprintf(f,
           "[language]\n"
           "id = 6\n"
@@ -2708,11 +2717,19 @@ generate_compile_cfg(FILE *f)
           "%s\n",
           cmt, cmt, cmt, cmt, version, cmt, cmt, cmt);
 
-#if defined COMPILE_G77_VERSION
+#if defined COMPILE_GFORTRAN_VERSION
+  cmt = ""; version = COMPILE_GFORTRAN_VERSION;
+  fprintf(f,
+          "%s[language]\n"
+          "%sid = 6\n"
+          "%sshort_name = \"gfortran\"\n"
+          "%slong_name = \"GNU Fortran 90 %s\"\n"
+          "%ssrc_sfx = \".for\"\n"
+          "%scmd = \"gfortran\"\n"
+          "%s\n",
+          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt);
+#else if defined COMPILE_G77_VERSION
   cmt = ""; version = COMPILE_G77_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_G77_VERSION */
   fprintf(f,
           "%s[language]\n"
           "%sid = 6\n"
@@ -2722,6 +2739,18 @@ generate_compile_cfg(FILE *f)
           "%scmd = \"g77\"\n"
           "%s\n",
           cmt, cmt, cmt, cmt, version, cmt, cmt, cmt);
+#else
+  cmt = "# "; version = "";
+  fprintf(f,
+          "%s[language]\n"
+          "%sid = 6\n"
+          "%sshort_name = \"g77\"\n"
+          "%slong_name = \"GNU Fortran 77 %s\"\n"
+          "%ssrc_sfx = \".for\"\n"
+          "%scmd = \"g77\"\n"
+          "%s\n",
+          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt);
+#endif /* COMPILE_GFORTRAN_VERSION */
 
   // not yet supported, so always commented out
 #if defined COMPILE_TPC_VERSION
