@@ -410,7 +410,8 @@ register.xml, users.xml и каталог конфигурационных файлов для
   o GNU C                               http://gcc.gnu.org
   o GNU C++                             http://gcc.gnu.org
   o GNU Java (CGJ)                      http://gcc.gnu.org
-  o GNU Fortran 77 (g77)                http://gcc.gnu.org
+  o GNU Fortran 77 (g77)                http://gcc.gnu.org - устарел
+  o GNU Fortran 90 (gfortran)           http://gcc.gnu.org
   o GNU Prolog                          http://pauillac.inria.fr/~diaz/gnu-prolog
   o GNU Pascal                          http://www.gnu-pascal.de
   o Free Pascal                         http://www.freepascal.org
@@ -445,6 +446,10 @@ LANG --- требуемый язык.
         Указать путь к компилятору GNU Java (gcj).
     --with-g77
         Указать путь к компилятору GNU Fortran 77 (g77).
+        Обратите внимание, что в новых версиях GCC этот
+        компилятор заменен на gfortran.
+    --with-gfortran
+        Указать путь к компилятору GNU Fortran 90 (gfortran).
     --with-dcc
         Указать путь к компилятору Borland Delphi (dcc).
     --with-prolog

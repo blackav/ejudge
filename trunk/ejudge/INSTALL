@@ -439,7 +439,8 @@ automatically detected and supported:
   o GNU C                               http://gcc.gnu.org
   o GNU C++                             http://gcc.gnu.org
   o GNU Java (CGJ)                      http://gcc.gnu.org
-  o GNU Fortran 77 (g77)                http://gcc.gnu.org
+  o GNU Fortran 77 (g77)                http://gcc.gnu.org - obsolete
+  o GNU Fortran 90 (gfortran)           http://gcc.gnu.org
   o GNU Prolog                          http://pauillac.inria.fr/~diaz/gnu-prolog
   o GNU Pascal                          http://www.gnu-pascal.de
   o Free Pascal                         http://www.freepascal.org
@@ -475,6 +476,10 @@ disable.
         Specify the path to the GNU Java (gcj) compiler.
     --with-g77
         Specify the path to the GNU Fortran 77 (g77) compiler.
+        Note, that this compiler is replaced by the gfortran
+        in the recent releases of the GCC.
+    --with-gfortran
+        Specify the path to the GNU Fortran 90 (gfortran) compiler.
     --with-dcc
         Specify the path to the Borland Delphi (dcc) compiler.
     --with-prolog
