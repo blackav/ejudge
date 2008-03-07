@@ -1,0 +1,21 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2008 Alexander Chernov <cher@ejudge.ru>
+
+# using EJUDGE_FLAGS we may pass additional flags
+
+GFORTRANRUN="@ac_cv_contest_gfortran@"
+GFORTRANDIR="@ac_cv_contest_gfortran_dir@"
+
+if [ x"${GFORTRANRUN}" = x -o x"${GFORTRANRUN}" = xno ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${GFORTRANDIR}" != x ]
+then
+    PATH="${GFORTRANDIR}:${PATH}"
+fi
+
+exec "${GFORTRANRUN}" ${EJUDGE_FLAGS} -static -s -O2 "$1" -o "$2"
