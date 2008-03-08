@@ -116,7 +116,7 @@ invoke_stopper(const char *prog, const char *ejudge_xml_path)
 
 static int
 command_start(
-	const struct ejudge_cfg *config,
+        const struct ejudge_cfg *config,
         const char *user,
         const char *group,
         const char *ejudge_xml_path,
@@ -316,13 +316,23 @@ command_start(
 }
 
 static int
-command_stop(const struct ejudge_cfg *config, const char *ejudge_xml_path)
+command_stop(
+        const struct ejudge_cfg *config,
+        const char *ejudge_xml_path,
+        int slave_mode,
+        int master_mode)
 {
-  invoke_stopper("new-server", ejudge_xml_path);
-  invoke_stopper("compile", ejudge_xml_path);
+  if (!slave_mode) {
+    invoke_stopper("new-server", ejudge_xml_path);
+  }
+  if (!master_mode) {
+    invoke_stopper("compile", ejudge_xml_path);
+  }
   invoke_stopper("super-serve", ejudge_xml_path);
-  invoke_stopper("userlist-server", ejudge_xml_path);
-  invoke_stopper("job-server", ejudge_xml_path);
+  if (!slave_mode) {
+    invoke_stopper("userlist-server", ejudge_xml_path);
+    invoke_stopper("job-server", ejudge_xml_path);
+  }
 
   return 0;
 }
@@ -402,7 +412,8 @@ main(int argc, char *argv[])
                       slave_mode, all_run_serve, master_mode) < 0) 
       r = 1;
   } else if (!strcmp(command, "stop")) {
-    if (command_stop(config, ejudge_xml_path) < 0) r = 1;
+    if (command_stop(config, ejudge_xml_path, slave_mode, master_mode) < 0)
+      r = 1;
   } else if (!strcmp(command, "restart")) {
     startup_error("`restart' command is not yet implemented");
   } else {
