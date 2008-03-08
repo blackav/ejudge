@@ -3182,7 +3182,7 @@ cmd_control_server(struct client_state *p, int len,
 
 static void
 cmd_http_request(
-	struct client_state *p,
+        struct client_state *p,
         int pkt_size,
         struct prot_super_pkt_http_request *pkt)
 {
