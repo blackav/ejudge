@@ -68,6 +68,7 @@ static char const * const elem_map[] =
   "name",
   "name_en",
   "main_url",
+  "keywords",
   "contestants",
   "reserves",
   "coaches",
@@ -204,6 +205,7 @@ node_free(struct xml_tree *t)
       xfree(cnts->name);
       xfree(cnts->name_en);
       xfree(cnts->main_url);
+      xfree(cnts->keywords);
       xfree(cnts->users_header_file);
       xfree(cnts->users_footer_file);
       xfree(cnts->register_header_file);
@@ -640,6 +642,7 @@ static const size_t contest_final_offsets[CONTEST_LAST_TAG] =
   [CONTEST_NAME] = CONTEST_DESC_OFFSET(name),
   [CONTEST_NAME_EN] = CONTEST_DESC_OFFSET(name_en),
   [CONTEST_MAIN_URL] = CONTEST_DESC_OFFSET(main_url),
+  [CONTEST_KEYWORDS] = CONTEST_DESC_OFFSET(keywords),
   [CONTEST_USERS_HEADER_FILE] = CONTEST_DESC_OFFSET(users_header_file),
   [CONTEST_USERS_FOOTER_FILE] = CONTEST_DESC_OFFSET(users_footer_file),
   [CONTEST_REGISTER_EMAIL] = CONTEST_DESC_OFFSET(register_email),
@@ -1676,6 +1679,7 @@ contests_unparse(FILE *f,
   unparse_text(f, CONTEST_NAME_EN, cnts->name_en);
   unparse_text(f, CONTEST_DEFAULT_LOCALE, cnts->default_locale);
   unparse_text(f, CONTEST_MAIN_URL, cnts->main_url);
+  unparse_text(f, CONTEST_KEYWORDS, cnts->keywords);
 
   // avoid generating root_dir and conf_dir if their values are default
   skip_elem = 0;
