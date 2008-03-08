@@ -581,9 +581,11 @@ is_valid_path(int idx)
   case PATH_LINE_EJUDGE_XML:
   case PATH_LINE_CONTESTS_DIR:
   case PATH_LINE_CONTESTS_HOME_DIR:
-  case PATH_LINE_EJUDGE_LOCAL_DIR:
     if (path_edit_items[idx].buf[0]) return 1;
     return 0;
+
+  case PATH_LINE_EJUDGE_LOCAL_DIR:
+    return 1;
 
   case PATH_LINE_USERLIST_XML:
   case PATH_LINE_COMPILE_DIR:
@@ -2728,7 +2730,7 @@ generate_compile_cfg(FILE *f)
           "%scmd = \"gfortran\"\n"
           "%s\n",
           cmt, cmt, cmt, cmt, version, cmt, cmt, cmt);
-#else if defined COMPILE_G77_VERSION
+#elif defined COMPILE_G77_VERSION
   cmt = ""; version = COMPILE_G77_VERSION;
   fprintf(f,
           "%s[language]\n"
@@ -3643,7 +3645,9 @@ generate_install_script(FILE *f)
   // create all the necessary directories
   fprintf(f, "# create all necessary directories\n");
   generate_dir_creation(f, &created_dirs, 0, config_ejudge_contests_home_dir);
-  generate_dir_creation(f, &created_dirs, 0, config_ejudge_local_dir);
+  if (config_ejudge_local_dir[0]) {
+    generate_dir_creation(f, &created_dirs, 0, config_ejudge_local_dir);
+  }
   generate_dir_creation(f, &created_dirs, 0, config_ejudge_conf_dir);
   generate_dir_creation(f, &created_dirs, 1, config_ejudge_xml_path);
   generate_dir_creation(f, &created_dirs, 0, config_ejudge_contests_dir);
