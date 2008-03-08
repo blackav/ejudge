@@ -824,6 +824,9 @@ super_html_contest_page(FILE *f,
   if (cnts->main_url) {
     fprintf(f, "<tr><td>Contest main URL:</td><td><tt><a href=\"%s\" target=\"_blank\">%s</a></tt></td></tr>\n", cnts->main_url, cnts->main_url);
   }
+  if (cnts->keywords) {
+    fprintf(f, "<tr><td>Contest keywords:</td><td><tt><a href=\"%s\" target=\"_blank\">%s</a></tt></td></tr>\n", cnts->keywords, cnts->keywords);
+  }
 
   // report judge URL
   if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
@@ -2246,6 +2249,15 @@ super_html_edit_contest_page(FILE *f,
   print_string_editing_row(f, "Main URL:", cnts->main_url,
                            SSERV_CMD_CNTS_CHANGE_MAIN_URL,
                            SSERV_CMD_CNTS_CLEAR_MAIN_URL,
+                           0,
+                           session_id,
+                           form_row_attrs[row ^= 1],
+                           self_url,
+                           extra_args,
+                           hidden_vars);
+  print_string_editing_row(f, "Keywords:", cnts->keywords,
+                           SSERV_CMD_CNTS_CHANGE_KEYWORDS,
+                           SSERV_CMD_CNTS_CLEAR_KEYWORDS,
                            0,
                            session_id,
                            form_row_attrs[row ^= 1],

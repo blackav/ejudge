@@ -40,6 +40,7 @@ enum
     CONTEST_NAME,
     CONTEST_NAME_EN,
     CONTEST_MAIN_URL,
+    CONTEST_KEYWORDS,
     CONTEST_CONTESTANTS,
     CONTEST_RESERVES,
     CONTEST_COACHES,
@@ -283,6 +284,7 @@ struct contest_desc
   unsigned char *name;
   unsigned char *name_en;
   unsigned char *main_url;
+  unsigned char *keywords;
   unsigned char *users_header_file;
   unsigned char *users_footer_file;
   unsigned char *register_header_file;
