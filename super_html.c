@@ -825,7 +825,7 @@ super_html_contest_page(FILE *f,
     fprintf(f, "<tr><td>Contest main URL:</td><td><tt><a href=\"%s\" target=\"_blank\">%s</a></tt></td></tr>\n", cnts->main_url, cnts->main_url);
   }
   if (cnts->keywords) {
-    fprintf(f, "<tr><td>Contest keywords:</td><td><tt><a href=\"%s\" target=\"_blank\">%s</a></tt></td></tr>\n", cnts->keywords, cnts->keywords);
+    fprintf(f, "<tr><td>Contest keywords:</td><td><tt>%s</tt></td></tr>\n", cnts->keywords);
   }
 
   // report judge URL
