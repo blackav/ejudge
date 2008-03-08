@@ -3499,3 +3499,12 @@ new_server_html_5.c 4760 0 9080588
 super_html.c 4760 0 11506763
 super_html_2.c 4760 0 4977319
 filter_scan.lex 4760 0 741121
+ejudge-setup.c 4763 0 10175766
+ejudge-setup.c 4765 0 10175518
+contests.h 4766 0 952964
+super_proto.h 4766 0 1986468
+serve-control.c 4766 0 8678287
+super-serve.c 4766 0 13152027
+contests.c 4766 0 4889498
+super_html.c 4766 0 11545306
+super_html_2.c 4766 0 4989051
