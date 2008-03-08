@@ -1037,7 +1037,7 @@ then
   [[ $? != 0 ]] && ac_cv_contest_gfortran=no
   if [[ x"${ac_cv_contest_gfortran}" != xno ]]
   then
-    ac_cv_gfortran_version=`${ac_cv_contest_gfortran} --version | grep "GNU Fortran (GCC)" | gawk '{ print $4; }'`
+    ac_cv_gfortran_version=`${ac_cv_contest_gfortran} --version | grep "GNU Fortran" | grep "GCC" | gawk '{ print $(NF); }'`
     [[ $? != 0 -a $? != 1 ]] && ac_cv_contest_gfortran=no
   fi
   if [[ x"${ac_cv_contest_gfortran}" != xno ]]

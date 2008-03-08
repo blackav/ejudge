@@ -26,6 +26,6 @@ fi
 
 [ x"$1" = x-f ] && echo -n "GNU Fortran 90 "
 
-"${GFORTRANRUN}" --version | grep "GNU Fortran (GCC)" | gawk '{ print $4; }'
+"${GFORTRANRUN}" --version | grep "GNU Fortran" | grep "GCC" | gawk '{ print $(NF); }'
 [ $? != 0 -a $? != 1 ] && exit 1
 exit 0
