@@ -40,6 +40,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <pwd.h>
 
 int utf8_mode;
 
@@ -421,6 +422,33 @@ cmd_http_request(struct server_framework_state *state,
   xfree(hr.body_attr);
 }
 
+static int
+check_restart_permissions(struct client_state *p)
+{
+  struct passwd *sysp = 0;
+  struct xml_tree *um = 0;
+  struct ejudge_cfg_user_map *m = 0;
+  opcap_t caps = 0;
+
+  if (!p->peer_uid) return 1;   /* root is allowed */
+  if (p->peer_uid == getuid()) return 1; /* the current user also allowed */
+  if (!(sysp = getpwuid(p->peer_uid)) || !sysp->pw_name) {
+    err("no user %d in system tables", p->peer_uid);
+    return -1;
+  }
+  if (!config->user_map) return 0;
+  for (um = config->user_map->first_down; um; um = um->right) {
+    m = (struct ejudge_cfg_user_map*) um;
+    if (!strcmp(m->system_user_str, sysp->pw_name)) break;
+  }
+  if (!um) return 0;
+
+  if (opcaps_find(&config->capabilities, m->local_user_str, &caps) < 0)
+    return 0;
+  if (opcaps_check(caps, OPCAP_RESTART) < 0) return 0;
+  return 1;
+}
+
 static void
 cmd_control(struct server_framework_state *state,
             struct client_state *p,
@@ -433,7 +461,7 @@ cmd_control(struct server_framework_state *state,
   if (pkt_size != sizeof(*pkt))
     return nsf_err_bad_packet_length(state, p, pkt_size, sizeof(*pkt));
 
-  if (p->peer_uid != 0 && p->peer_uid != getuid()) {
+  if (check_restart_permissions(p) <= 0) {
     return nsf_send_reply(state, p, -NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
