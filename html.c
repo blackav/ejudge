@@ -1715,7 +1715,7 @@ static int sec_to_min(int rounding_mode, int secs);
 
 unsigned char *
 score_view_display(
-	unsigned char *buf,
+        unsigned char *buf,
         size_t size,
         const struct section_problem_data *prob,
         int score)

@@ -549,7 +549,7 @@ process_run_elements(struct xml_tree *xt, struct run_xml_helpers *helper)
 
 static int
 process_runlog_element(
-	struct xml_tree *xt,
+        struct xml_tree *xt,
         struct xml_tree **ptruns,
         struct run_xml_helpers *helper)
 {
@@ -641,7 +641,7 @@ collect_runlog(struct xml_tree *xt, size_t *psize,
 
 int
 parse_runlog_xml(
-	const unsigned char *str, 
+        const unsigned char *str, 
         struct run_header *phead,
         size_t *psize,
         struct run_entry **pentries,

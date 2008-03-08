@@ -284,7 +284,7 @@ write_text_run_status(const serve_state_t state, FILE *f, struct run_entry *pe,
 
 unsigned char*
 score_view_display(
-	unsigned char *buf,
+        unsigned char *buf,
         size_t size,
         const struct section_problem_data *prob,
         int score);

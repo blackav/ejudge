@@ -463,7 +463,7 @@ clar_add_record(clarlog_state_t state,
 
 int
 clar_add_record_new(
-	clarlog_state_t state,
+        clarlog_state_t state,
         time_t         time,
         int            nsec,
         size_t         size,
@@ -607,7 +607,7 @@ extend_charset_ids(clarlog_state_t state)
 
 const unsigned char *
 clar_get_subject(
-	clarlog_state_t state,
+        clarlog_state_t state,
         int id)
 {
   unsigned char buf[1024];
@@ -636,7 +636,7 @@ clar_get_subject(
 
 int
 clar_get_charset_id(
-	clarlog_state_t state,
+        clarlog_state_t state,
         int id)
 {
   if (id < 0 || id >= state->clars.u) return 0;

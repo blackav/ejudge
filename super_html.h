@@ -388,7 +388,7 @@ super_html_update_variant_map(FILE *flog, int contest_id,
 struct super_http_request_info;
 void
 super_html_http_request(
-	char **p_out_t,
+        char **p_out_t,
         size_t *p_out_z,
         struct super_http_request_info *hr);
 

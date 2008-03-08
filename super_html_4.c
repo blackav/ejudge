@@ -45,12 +45,12 @@ enum
 
 static const unsigned char*
 ss_getenv(
-	const struct super_http_request_info *phr,
+        const struct super_http_request_info *phr,
         const unsigned char *var)
   __attribute__((unused));
 static const unsigned char*
 ss_getenv(
-	const struct super_http_request_info *phr,
+        const struct super_http_request_info *phr,
         const unsigned char *var)
 {
   int i;
@@ -68,13 +68,13 @@ ss_getenv(
 
 static int
 ss_cgi_param(
-	const struct super_http_request_info *phr,
+        const struct super_http_request_info *phr,
         const unsigned char *param,
         const unsigned char **p_value)
   __attribute__((unused));
 static int
 ss_cgi_param(
-	const struct super_http_request_info *phr,
+        const struct super_http_request_info *phr,
         const unsigned char *param,
         const unsigned char **p_value)
 {
@@ -92,14 +92,14 @@ ss_cgi_param(
 
 static int
 ss_cgi_param_bin(
-	const struct super_http_request_info *phr,
+        const struct super_http_request_info *phr,
         const unsigned char *param,
         const unsigned char **p_value,
         size_t *p_size)
   __attribute__((unused));
 static int
 ss_cgi_param_bin(
-	const struct super_http_request_info *phr,
+        const struct super_http_request_info *phr,
         const unsigned char *param,
         const unsigned char **p_value,
         size_t *p_size)
@@ -118,13 +118,13 @@ ss_cgi_param_bin(
 
 static const unsigned char *
 ss_cgi_nname(
-	const struct super_http_request_info *phr,
+        const struct super_http_request_info *phr,
         const unsigned char *prefix,
         size_t pflen)
   __attribute__((unused));
 static const unsigned char *
 ss_cgi_nname(
-	const struct super_http_request_info *phr,
+        const struct super_http_request_info *phr,
         const unsigned char *prefix,
         size_t pflen)
 {
@@ -227,7 +227,7 @@ typedef int (*handler_func_t)(FILE *log_f, FILE *out_f, struct super_http_reques
 
 static int
 cmd_cnts_details(
-	FILE *log_f,
+        FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
 {
@@ -270,7 +270,7 @@ static unsigned char const * const error_messages[] =
 
 void
 super_html_http_request(
-	char **p_out_t,
+        char **p_out_t,
         size_t *p_out_z,
         struct super_http_request_info *phr)
 {
