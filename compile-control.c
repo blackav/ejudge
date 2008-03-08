@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -166,6 +166,8 @@ main(int argc, char *argv[])
   void *pkt_buf = 0;
   size_t pkt_len = 0;
   unsigned char pkt_name[EJ_SERVE_PACKET_NAME_SIZE];
+  const unsigned char *signame = 0;
+  unsigned char cmdstr[1024];
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
@@ -219,8 +221,10 @@ main(int argc, char *argv[])
 
   if (!strcmp(command, "stop")) {
     cmd = 1;
+    signame = "TERM";
   } else if (!strcmp(command, "restart")) {
     cmd = 2;
+    signame = "HUP";
   } else {
     startup_error("invalid command");
   }
@@ -249,6 +253,11 @@ main(int argc, char *argv[])
     }
   }
 
+  /* FIXME: reimplement it normally */
+  snprintf(cmdstr, sizeof(cmdstr), "killall -%s compile", signame);
+  if (system(cmdstr) < 0)
+    op_error("killall failed");
+#if 0
   memset(&cp, 0, sizeof(cp));
   cp.lang_id = cmd;
   if (compile_request_packet_write(&cp, &pkt_len, &pkt_buf) < 0)
@@ -267,6 +276,7 @@ main(int argc, char *argv[])
     if (cur_wait > 1000000) cur_wait = 1000000;
     if (access(pkt_path, F_OK) < 0) break;
   }
+#endif
 
   return 0;
 }
