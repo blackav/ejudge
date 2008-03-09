@@ -1109,7 +1109,7 @@ then
   [[ $? != 0 ]] && ac_cv_contest_mzscheme=no
   if [[ x"${ac_cv_contest_mzscheme}" != xno ]]
   then
-    ac_cv_mzscheme_version=`${ac_cv_contest_mzscheme} --version 2>&1 | grep "MzScheme version" | gawk -v FS="[[ ,]]" '{ print $5; }'`
+    ac_cv_mzscheme_version=`${ac_cv_contest_mzscheme} --version 2>&1 | grep "MzScheme version" | gawk -v FS="[[ ,]]" '{ if ($4 == "version") print $5; else print $4; }'`
     [[ $? != 0 ]] && ac_cv_contest_mzscheme=no
   fi
   if [[ x"${ac_cv_contest_mzscheme}" != xno ]]

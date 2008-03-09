@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+# Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
 MZSCHEMEPATH="@ac_cv_contest_mzscheme_path@"
 
@@ -20,4 +20,4 @@ fi
 
 [ x"$1" = x-f ] && echo -n "Mz Scheme "
 
-"${MZSCHEMEPATH}" --version 2>&1 | grep "MzScheme version" | gawk -v FS="[ ,]" '{ print $5; }'
+"${MZSCHEMEPATH}" --version 2>&1 | grep "MzScheme" | gawk -v FS="[ ,]" '{ if ($4 == "version") print $5; else print $4; }'
