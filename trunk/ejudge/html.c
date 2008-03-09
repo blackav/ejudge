@@ -4481,9 +4481,9 @@ do_write_public_log(const serve_state_t state,
   if (!start_time) {
     if (global->name[0]) {
       sprintf(header, "%s &quot;%s&quot; - %s",
-              _("Contest"), ARMOR(global->name), _("standings"));
+              _("Contest"), ARMOR(global->name), _("submission log"));
     } else {
-      sprintf(header, "%s", _("Standings"));
+      sprintf(header, "%s", _("Submission log"));
     }
 
     if (header_str) {
@@ -4501,9 +4501,9 @@ do_write_public_log(const serve_state_t state,
 
     if (global->name[0]) {
       sprintf(header, "%s &quot;%s&quot; - %s [%s]",
-              _("Contest"), ARMOR(global->name), _("standings"), durstr);
+              _("Contest"), ARMOR(global->name), _("submission log"), durstr);
     } else {
-      sprintf(header, "%s [%s]", _("Standings"), durstr);
+      sprintf(header, "%s [%s]", _("Submission log"), durstr);
     }
 
     if (header_str) {
