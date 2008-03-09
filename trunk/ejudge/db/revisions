@@ -3526,3 +3526,5 @@ ejudge-setup.c 4787 0 10184227
 ejudge-setup.c 4789 0 10195556
 html.c 4791 0 15473760
 html.c 4793 0 15475698
+new_server_html.c 4795 0 35660836
+collect-emails.c 4796 0 354812
