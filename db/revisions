@@ -3522,3 +3522,5 @@ super_html_4.c 4777 0 664838
 new-server.c 4778 0 1776193
 userlist-server.c 4778 0 22364966
 new_server_html.c 4780 0 35622590
+ejudge-setup.c 4787 0 10184227
+ejudge-setup.c 4789 0 10195556
