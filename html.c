@@ -61,6 +61,8 @@
 #define _(x) x
 #endif
 
+#define ARMOR(s)  html_armor_buf(&ab, s)
+
 FILE *
 sf_fopen(char const *path, char const *flags)
 {
@@ -4444,16 +4446,19 @@ do_write_public_log(const serve_state_t state,
   int total;
   int i;
 
-  time_t time, start;
+  time_t run_time, start_time, cur_time, stop_time;
   int attempts, disq_attempts, prev_successes;
 
   char durstr[64], statstr[128];
   char *str1 = 0, *str2 = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char header[1024];
 
   const struct run_entry *runs, *pe;
   const struct section_problem_data *cur_prob;
 
-  start = run_get_start_time(state->runlog_state);
+  start_time = run_get_start_time(state->runlog_state);
+  stop_time = run_get_stop_time(state->runlog_state);
   total = run_get_total(state->runlog_state);
   runs = run_get_entries_ptr(state->runlog_state);
 
@@ -4473,11 +4478,43 @@ do_write_public_log(const serve_state_t state,
     abort();
   }
 
-  if (header_str) {
-    fprintf(f, "%s", header_str);
+  if (!start_time) {
+    if (global->name[0]) {
+      sprintf(header, "%s &quot;%s&quot; - %s",
+              _("Contest"), ARMOR(global->name), _("standings"));
+    } else {
+      sprintf(header, "%s", _("Standings"));
+    }
+
+    if (header_str) {
+      process_template(f, header_str, 0, global->charset, header, 0);
+    } else {
+      fprintf(f, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"/><title>%s</title></head><body><h1>%s</h1>\n",
+              global->charset,
+              header, header);
+    }
   } else {
-    fprintf(f, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
+    cur_time = time(0);
+    if (start_time > cur_time) cur_time = start_time;
+    if (stop_time && cur_time > stop_time) cur_time = stop_time;
+    duration_str(global->show_astr_time, cur_time, start_time, durstr, 0);
+
+    if (global->name[0]) {
+      sprintf(header, "%s &quot;%s&quot; - %s [%s]",
+              _("Contest"), ARMOR(global->name), _("standings"), durstr);
+    } else {
+      sprintf(header, "%s [%s]", _("Standings"), durstr);
+    }
+
+    if (header_str) {
+      process_template(f, header_str, 0, global->charset, header, 0);
+    } else {
+      fprintf(f, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"/><title>%s</title></head><body><h1>%s</h1>",
+              global->charset,
+              header, header);
+    }
   }
+
 
   /* header */
   fprintf(f, "<p%s>%s: %d</p>\n", cnts->team_par_style,
@@ -4506,7 +4543,7 @@ do_write_public_log(const serve_state_t state,
     disq_attempts = 0;
     prev_successes = RUN_TOO_MANY;
 
-    time = pe->time;
+    run_time = pe->time;
     if (global->score_system_val == SCORE_KIROV) {
       run_get_attempts(state->runlog_state, i, &attempts, &disq_attempts,
                        cur_prob->ignore_compile_errors);
@@ -4516,9 +4553,9 @@ do_write_public_log(const serve_state_t state,
       }
     }
 
-    if (!start) time = start;
-    if (start > time) time = start;
-    duration_str(global->show_astr_time, time, start, durstr, 0);
+    if (!start_time) run_time = start_time;
+    if (start_time > run_time) run_time = start_time;
+    duration_str(global->show_astr_time, run_time, start_time, durstr, 0);
     run_status_str(pe->status, statstr, sizeof(statstr), 0, 0);
 
     fputs("<tr>", f);
@@ -4554,6 +4591,8 @@ do_write_public_log(const serve_state_t state,
   if (footer_str) {
     fprintf(f, "%s", footer_str);
   }
+
+  html_armor_free(&ab);
 }
 
 void
