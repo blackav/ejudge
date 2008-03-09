@@ -401,6 +401,7 @@ ns_loop_callback(struct server_framework_state *state)
                                 cs->compile_dirs[i].status_dir,
                                 cs->compile_dirs[i].report_dir,
                                 packetname);
+      e->last_access_time = cur_time;
     }
 
     for (i = 0; i < cs->run_dirs_u; i++) {
@@ -412,6 +413,7 @@ ns_loop_callback(struct server_framework_state *state)
                             cs->run_dirs[i].report_dir,
                             cs->run_dirs[i].full_report_dir,
                             packetname);
+      e->last_access_time = cur_time;
     }
 
     if (cs->pending_xml_import && !serve_count_transient_runs(cs))
