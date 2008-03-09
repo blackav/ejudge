@@ -2283,7 +2283,7 @@ generate_serve_cfg(FILE *f)
           "[language]\n"
           "id = 6\n"
           "short_name = \"gfortran\"\n"
-          "long_name = \"GNU Fortran 90 %s\"\n"
+          "long_name = \"GNU Fortran %s\"\n"
           "src_sfx = \".for\"\n"
           "\n",
           COMPILE_GFORTRAN_VERSION);
@@ -3044,10 +3044,12 @@ generate_contest_xml(FILE *f)
           "      LIST_USERS,\n"
           "      GET_USER,\n"
           "      EDIT_USER,\n"
+          "      PRIV_EDIT_USER,\n"
           "      CREATE_REG,\n"
           "      EDIT_REG,\n"
           "      DELETE_REG,\n"
           "      PRIV_CREATE_REG,\n"
+          "      PRIV_DELETE_REG,\n"
           "      DUMP_USERS,\n"
           "      DUMP_RUNS,\n"
           "      DUMP_STANDINGS,\n"
@@ -3065,7 +3067,9 @@ generate_contest_xml(FILE *f)
           "      EDIT_CONTEST,\n"
           "      PRIV_EDIT_REG,\n"
           "      EDIT_PASSWD,\n"
+          "      PRIV_EDIT_PASSWD,\n"
           "      PRIV_EDIT_REG,\n"
+          "      RESTART,\n"
           "    </cap>\n"
           "  </caps>\n"
           "\n"
@@ -3271,6 +3275,7 @@ generate_ejudge_xml(FILE *f)
           "      CONTROL_CONTEST,\n"
           "      EDIT_PASSWD,\n"
           "      PRIV_EDIT_PASSWD,\n"
+          "      RESTART,\n"
           "    </cap>\n"
           "  </caps>\n", config_login);
 
