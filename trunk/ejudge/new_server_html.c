@@ -2709,6 +2709,14 @@ priv_submit_run(FILE *fout,
 }
 
 static int
+is_empty_string(const unsigned char *str)
+{
+  if (!str) return 1;
+  while (*str && isspace(*str)) str++;
+  return !*str;
+}
+
+static int
 priv_submit_clar(FILE *fout,
                  FILE *log_f,
                  struct http_request_info *phr,
@@ -2726,6 +2734,7 @@ priv_submit_clar(FILE *fout,
   unsigned char *subj2, *text2, *text3;
   path_t clar_file;
   struct timeval precise_time;
+  int msg_dest_id_empty = 0, msg_dest_login_empty = 0;
 
   html_armor_init(&ab);
 
@@ -2734,7 +2743,9 @@ priv_submit_clar(FILE *fout,
     errmsg = "msg_dest_id is binary";
     goto invalid_param;
   }
-  if (n > 0 && *s) {
+  if (n <= 0 || is_empty_string(s)) {
+    msg_dest_id_empty = 1;
+  } else {
     if (sscanf(s, "%d%n", &user_id, &n) != 1 || s[n]) {
       errmsg = "msg_dest_id is invalid";
       goto invalid_param;
@@ -2748,7 +2759,9 @@ priv_submit_clar(FILE *fout,
     errmsg = "msg_dest_login is binary";
     goto invalid_param;
   }
-  if (n > 0 && *s) {
+  if (n <= 0 || is_empty_string(s)) {
+    msg_dest_login_empty = 1;
+  } else {
     if (!strcasecmp(s, "all")) {
       if (user_id > 0) {
         ns_error(log_f, NEW_SRV_ERR_CONFLICTING_USER_ID_LOGIN,
@@ -2768,6 +2781,10 @@ priv_submit_clar(FILE *fout,
       }
       user_id = n;
     }
+  }
+  if (msg_dest_id_empty && msg_dest_login_empty) {
+    errmsg = "neither user_id nor login are not specified";
+    goto invalid_param;
   }
   if ((n = ns_cgi_param(phr, "msg_subj", &subject)) < 0) {
     errmsg = "msg_subj is binary";
