@@ -78,7 +78,7 @@ AC_ARG_WITH([perl],AC_HELP_STRING([--with-perl],[specify the Perl interpreter to
 AC_ARG_WITH([prolog],AC_HELP_STRING([--with-prolog],[specify the GNU Prolog compiler to use in contests]),[ac_cv_contest_gprolog=$withval])
 AC_ARG_WITH([festival],AC_HELP_STRING([--with-festival],[specify the home directory of the festival speech generator]),[ac_cv_festival_home="$withval"])
 AC_ARG_WITH([javac],AC_HELP_STRING([--with-javac],[specify the Java2 SDK javac path to use in contests]),[ac_cv_contest_javac="$withval"])
-AC_ARG_WITH([mcs],AC_HELP_STRING([--with-mcs],[specify the C-sharp Mono mcs path to use in contests]),[ac_cv_contest_mcs="$withval"])
+AC_ARG_WITH([mcs],AC_HELP_STRING([--with-mcs],[specify the C-sharp Mono mcs/gmcs path to use in contests]),[ac_cv_contest_mcs="$withval"])
 AC_ARG_WITH([mbas],AC_HELP_STRING([--with-mbas],[specify the Visual Basic Mono mbas path to use in contests]),[ac_cv_contest_mbas="$withval"])
 
 dnl setup default values
@@ -1332,7 +1332,7 @@ AC_MSG_CHECKING([whether C-sharp (Mono) is available])
 if [[ x"${ac_cv_contest_mcs}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   [[ x"${ac_cv_contest_mcs}" = xyes ]] && ac_cv_contest_mcs=""
-  [[ x"${ac_cv_contest_mcs}" = x ]] && ac_cv_contest_mcs="mcs"
+  [[ x"${ac_cv_contest_mcs}" = x ]] && ac_cv_contest_mcs="gmcs"
 
   ac_cv_contest_mono=`dirname "${ac_cv_contest_mcs}"`
   if [[ x"${ac_cv_contest_mono}" = x. ]]
