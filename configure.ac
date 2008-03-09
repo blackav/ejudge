@@ -807,6 +807,7 @@ then
     AC_MSG_RESULT([yes, ${ac_cv_contest_gcc}, ${ac_cv_gcc_version}])
   else
     AC_MSG_RESULT([no])
+    unset ac_cv_gcc_version
   fi
 else
   AC_MSG_RESULT([disabled by user])
@@ -843,6 +844,7 @@ then
     AC_MSG_RESULT([yes, ${ac_cv_contest_gpp}, ${ac_cv_gpp_version}])
   else
     AC_MSG_RESULT([no])
+    unset ac_cv_gpp_version
   fi
 else
   AC_MSG_RESULT([disabled by user])
@@ -879,6 +881,7 @@ then
     AC_MSG_RESULT([yes, ${ac_cv_contest_fpc}, ${ac_cv_fpc_version}])
   else
     AC_MSG_RESULT([no])
+    unset ac_cv_fpc_version
   fi
 else
   AC_MSG_RESULT([disabled by user])
@@ -915,6 +918,7 @@ then
     AC_MSG_RESULT([yes, ${ac_cv_contest_gpc}, ${ac_cv_gpc_version}])
   else
     AC_MSG_RESULT([no])
+    unset ac_cv_gpc_version
   fi
 else
   AC_MSG_RESULT([disabled by user])
@@ -951,6 +955,7 @@ then
     AC_MSG_RESULT([yes, ${ac_cv_contest_dcc}, ${ac_cv_dcc_version}])
   else
     AC_MSG_RESULT([no])
+    unset ac_cv_dcc_version
   fi
 else
   AC_MSG_RESULT([disabled by user])
@@ -987,6 +992,7 @@ then
     AC_MSG_RESULT([yes, ${ac_cv_contest_gcj}, ${ac_cv_gcj_version}])
   else
     AC_MSG_RESULT([no])
+    unset ac_cv_gcj_version
   fi
 else
   AC_MSG_RESULT([disabled by user])
@@ -1023,6 +1029,7 @@ then
     AC_MSG_RESULT([yes, ${ac_cv_contest_g77}, ${ac_cv_g77_version}])
   else
     AC_MSG_RESULT([no])
+    unset ac_cv_g77_version
   fi
 else
   AC_MSG_RESULT([disabled by user])
@@ -1059,6 +1066,7 @@ then
     AC_MSG_RESULT([yes, ${ac_cv_contest_gfortran}, ${ac_cv_gfortran_version}])
   else
     AC_MSG_RESULT([no])
+    unset ac_cv_gfortran_version
   fi
 else
   AC_MSG_RESULT([disabled by user])
@@ -1095,6 +1103,7 @@ then
     AC_MSG_RESULT([yes, ${ac_cv_contest_yabasic}, ${ac_cv_yabasic_version}])
   else
     AC_MSG_RESULT([no])
+    unset ac_cv_yabasic_version
   fi
 else
   AC_MSG_RESULT([disabled by user])
@@ -1130,6 +1139,7 @@ then
     AC_MSG_RESULT([yes, ${ac_cv_contest_mzscheme}, ${ac_cv_mzscheme_version}])
   else
     AC_MSG_RESULT([no])
+    unset ac_cv_mzscheme_version
   fi
 else
   AC_MSG_RESULT([disabled by user])
@@ -1165,6 +1175,7 @@ then
     AC_MSG_RESULT([yes, ${ac_cv_contest_perl}, ${ac_cv_perl_version}])
   else
     AC_MSG_RESULT([no])
+    unset ac_cv_perl_version
   fi
 else
   AC_MSG_RESULT([disabled by user])
@@ -1200,6 +1211,7 @@ then
     AC_MSG_RESULT([yes, ${ac_cv_contest_python}, ${ac_cv_python_version}])
   else
     AC_MSG_RESULT([no])
+    unset ac_cv_python_version
   fi
 else
   AC_MSG_RESULT([disabled by user])
@@ -1237,6 +1249,7 @@ then
     AC_MSG_RESULT([yes, ${ac_cv_contest_gprolog}, ${ac_cv_gprolog_version}])
   else
     AC_MSG_RESULT([no])
+    unset ac_cv_gprolog_version
   fi
 else
   AC_MSG_RESULT([disabled by user])
@@ -1322,6 +1335,7 @@ then
   else
     AC_MSG_RESULT([no])
     ac_cv_contest_javac=no
+    unset ac_cv_contest_java_version_string
   fi
 else
   AC_MSG_RESULT([disabled by user])
@@ -1372,6 +1386,7 @@ then
   else
     AC_MSG_RESULT([no])
     ac_cv_contest_mcs=no
+    unset ac_cv_contest_mono_version_string
   fi
 else
   AC_MSG_RESULT([disabled by user])
@@ -1415,6 +1430,7 @@ then
     else
       AC_MSG_RESULT([no])
       ac_cv_contest_mbas=no
+      unset ac_cv_contest_mbas_version_string
     fi
   else
     AC_MSG_RESULT([disabled by user])
