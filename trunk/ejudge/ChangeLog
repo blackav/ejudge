@@ -1,3 +1,335 @@
+2008-03-09 (r4796) Alexander Chernov  <cher@ejudge.ru>
+
+	* collect-emails.c: copyright notice is updated;
+	<stdarg.h> is included;
+	(fatal) new function;
+	(process_keywords) new function;
+	(main) "-k" option is added.
+
+2008-03-09 (r4795) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(is_empty_string) new function;
+	(priv_submit_clar) either user_id, or user_login must be specified.
+
+2008-03-09 (r4780) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(ns_loop_callback) last_access_time is updated when reading
+	  compile or run packet.
+
+2008-03-08 (r4778) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.c, userlist-server.c:
+	(check_restart_permissions) new function to check the permissions
+	  to restart the program;
+	(cmd_control_server) `check_restart_permissions' is used.
+
+2008-03-08 (r4772) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge-control.c:
+	(main) slave mode is supported for "stop" command.
+
+2008-03-08 (r4770) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile-control.c:
+	compile-control.c: copyright notice is updated;
+	(main) `killall' is used instead of writing a packet into the
+	  spool directory.
+
+2008-03-08 (r4766) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	new element <keywords> is added.
+
+	* super_proto.h:
+	editing of the new <keywords> element is supported.
+
+	* contests.c:
+	new element <keywords> is added.
+
+	* serve-control.c, super_html.c, super_html_2.c, super-serve.c:
+	editing of the new <keywords> element is supported.
+
+2008-03-07 (r4763) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac, config.h.in, ejudge-setup.c:
+	gfortran compiler is supported.
+
+2008-03-07 (r4762) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.in: copyright notice is updated;
+	gfortran is added.
+
+	* gfortran.in, gfortran-version.in:
+	initial revision.
+
+2008-03-06 (r4760) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	"disable_password_change" attribute of <contest> is added.
+
+	* super_proto.h:
+	editing of `disable_password_change' contest flag is supported.
+
+	* contests.c:
+	"disable_password_change" attribute of <contest> is added.
+
+	* filter_scan.lex: copyright notice is updated;
+	a gcc warning is fixed.
+
+	* new_server_html.c:
+	(unpriv_main_page) `disable_password_change' contest flag is supported.
+
+	* new_server_html_5.c: copyright notice is updated;
+	(main_page_view_settings) `disable_password_change' contest flag is
+	  supported.
+
+	* serve-control.c, super_html.c, super_html_2.c, super-serve.c:
+	editing of `disable_password_change' contest attribute is supported.
+
+2008-03-06 (r4756) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(parse_run_id) more verbose diagnostics.
+
+	* new_server_proto.c: copyright notice is updated;
+	multiple bugs are fixed.
+
+2008-03-05 (r4754) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	`server_start_time' global variable is added.
+
+	* serve_state.h:
+	(struct serve_state) `load_time' field is added.
+
+	* new-server.c: copyright notice is updated;
+	(main) server start time is saved.
+
+	* new_server_html.c:
+	(priv_main_page) more server info is shown.
+
+	* serve_state.c:
+	(serve_state_load_contest) `load_time' is initialized.
+
+2008-03-05 (r4750) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.c:
+	(do_write_standings) transient, failed and disqualified runs
+	  are displayed in corresponding attributes.
+
+	* new_server_html_2.c:
+	(ns_get_user_problems_summary) RUN_ACCEPTED is treated as pending
+	  run in ACM mode.
+
+2008-03-05 (r4748) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.c:
+	RUN_ACCEPTED is a valid status in all contests.
+
+	* master_html.c: copyright notice is updated;
+	RUN_ACCEPTED is a valid status in all contests.
+
+	* new_server_html_4.c:
+	RUN_ACCEPTED is a valid KIROV contest status.
+
+	* serve_2.c: copyright notice is updated;
+	(serve_is_valid_status) RUN_ACCEPTED is always valid;
+	(serve_read_run_packet) `use_ac_not_ok' problem variable is honored.
+
+2008-03-05 (r4747) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h, prepare_dflt.h:
+	new global configuration variable `use_ac_not_ok' is added;
+	new problem configuration variable `use_ac_not_ok' is added.
+
+	* super_proto.h:
+	editing of `use_ac_not_ok' variables is supported.
+
+	* prepare.c, prepare_out.c:
+	new global configuration variable `use_ac_not_ok' is added;
+	new problem configuration variable `use_ac_not_ok' is added.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of `use_ac_not_ok' variables is supported.
+
+2008-03-05 (r4745) Alexander Chernov  <cher@ejudge.ru>
+
+	* archive_paths.c, nsdb_plugin_files.c, team_extra.c: copyright notice is updated;
+	directory creation permissions are relaxed: group write is enabled.
+
+	* ejudge-setup.c, new_server_html_2.c, prepare.c, serve.c, server_framework.c, super_html_2.c, super-serve.c:
+	directory creation permissions are relaxed: group write is enabled.
+
+2008-03-04 (r4734) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h: copyright notice is updated;
+	NEW_SRV_ACTION_PRIV_SUBMIT_PAGE is added.
+
+	* new_server_html.c:
+	(priv_submit_run) problem identification passing is reworked;
+	(priv_submit_page) new function to handle the submit dialog;
+	(priv_main_page) hyperlink to submit page is added to the top;
+	(unparse_statement) renamed from `unpriv_unparse_statement';
+	(unparse_answers) renamed from `unpriv_unparse_answers'.
+
+2008-03-02 (r4732) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server-cmd.c:
+	`schedule' command is implemented.
+
+	* new_server_html_4.c:
+	(do_schedule) new function;
+	(cmd_operation) SCHEDULE request is handled.
+
+2008-03-02 (r4728) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html.h:
+	(super_html_serve_unparse_and_save) `charset' parameter is added.
+
+	* super_html_2.c:
+	(super_html_commit_contest) call of `super_html_serve_unparse_and_save'
+	  is updated.
+
+	* super_html_3.c:
+	(super_html_serve_unparse_and_save) `charset' parameter is added;
+	  the '# -*- ..." signature line is written;
+	(super_html_get_serve_header_and_footer) the "# -*- ..." signature
+	  line is stripped off.
+
+2008-03-02 (r4726) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h: copyright notice is updated;
+	(contests_unparse_and_save) `charset' parameter is added.
+
+	* contests.c: copyright notice is updated;
+	(contests_unparse_and_save) `charset' parameter is added;
+	  the "<?xml..." signature line is always written.
+
+	* super_html_2.c:
+	(get_contest_header_and_footer) "<?xml..." signature is stripped off;
+	(super_html_commit_contest) call of `contests_unparse_and_save' is
+	  updated.
+
+	* super_html_3.c:
+	(super_html_update_variant_map) the output format is updated.
+
+2008-03-02 (r4722) Alexander Chernov  <cher@ejudge.ru>
+
+	* charsets.h:
+	(charset_recode_heap) new function prototype;
+	(charset_recode_to_heap) new function prototype.
+
+	* charsets.c:
+	(charset_recode_heap) new function;
+	(charset_recode_to_heap) new function.
+
+	* parsecfg.c: copyright notice is updated;
+	"charsets.h" is included;
+	(struct parsecfg_state) `charset_id' field is added;
+	(read_first_line) new function;
+	(read_comment) special comment "-*- coding: CHARSET -*-" is handled;
+	(copy_param) recoding to the internal charset is implemented.
+
+2008-03-02 (r4714) Alexander Chernov  <cher@ejudge.ru>
+
+	* clarlog.h: copyright notice is updated;
+	(struct clar_entry_v1) `charset' field is added;
+	(clar_add_record_new) `charset' parameter is added;
+	(clar_get_charset_id) new function prototype;
+	(clar_get_subject) new function prototype.
+
+	* clarlog.c:
+	"charsets.h" is included;
+	<ctype.h> is included;
+	the local charset is stored in the clar information structure;
+	(clar_add_record_new) `charset' parameter is added;
+	(extend_charset_ids) new function to reallocate local charset array;
+	(clar_get_subject) new function to return the subject (in correct
+	  charset);
+	(clar_get_charset_id) new function to return the charset id of the
+	  given clar.
+
+	* new_server_html.c: copyright notice is updated;
+	"charsets.h" is included;
+	(priv_submit_clar) call of `clar_add_record_new' is updated;
+	(priv_clar_reply) recoding to the current charset is supported;
+	  call of `clar_add_record_new' is updated;
+	(unpriv_view_clar) recoding to the current charset is supported.
+
+	* new_server_html_2.c: copyright notice is updated;
+	"charsets.h" is included;
+	(ns_write_all_clars) subject is recoded to the local charset;
+	(ns_write_priv_clar) subject and text is recoded to the local
+	  charset.
+
+	* new_server_html_4.c:
+	"charsets.h" is included;
+	(cmd_clar_operation) recoding to the current charset is supported.
+
+2008-02-29 (r4711) Alexander Chernov  <cher@ejudge.ru>
+
+	* clntutil.c, cgi.c, master.c, team.c: copyright notice is updated;
+	default charset is set to "utf-8" instead of "iso8859-1".
+
+	* charsets.c, configure.ac, register.c, serve-control.c:
+	default charset is set to "utf-8" instead of "iso8859-1".
+
+2008-02-29 (r4710) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	charsets.[ch] is added.
+	
+	clarlog.c: copyright notice is updated;
+	(clar_add_record_new) UTF-8 handling is fixed.
+
+2008-02-29 (r4706) Alexander Chernov  <cher@ejudge.ru>
+
+	* charsets.c, charsets.h:
+	initial revision
+
+2008-02-25 (r4701) Alexander Chernov  <cher@ejudge.ru>
+
+	* opcaps.h: copyright notice is updated;
+	RESTART capability is added.
+
+	* runlog.h: copyright notice is updated;
+	(struct run_xml_helpers) new structure for XML parsing;
+	(parse_runlog_xml) new parameter `helper' is added.
+
+	* super_proto.h: slave mode error is added.
+
+	* edit-userlist.c: copyright notice is updated;
+	(display_member_gender_menu) fix.
+
+	* opcaps.c: copyright notice is updated;
+	RESTART capability is added.
+
+	* runlog_import.c:
+	new attribute parsing is supported.
+
+	* runlog_xml.c:
+	new attributes "login", "lang_short", "prob_short" are added;
+	(process_run_elements) `helper' parameter is added;
+	  new attributes are handled;
+	(process_runlog_element) `helper' parameter is added;
+	(parse_runlog_xml) `helper' parameter is added;
+	(unparse_runlog_xml) in source mode textual representations
+	  of login, problem and language are generated.
+
+	* serve-control.c:
+	RESTART capability is added.
+
+	* super_html.c:
+	RESTART capability is added.
+
+	* super-serve.c:
+	some requests are disabled in slave mode;
+	RESTART permission is required for restart;
+	in "slave" mode the control socket is created, but most requests
+	(except restart) are not handled.
+
 2008-02-18 (r4693) Alexander Chernov  <cher@ejudge.ru>
 
 	* super-serve.c:
