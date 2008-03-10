@@ -1,3 +1,9 @@
+2008-03-05 (r4744) Alexander Chernov  <cher@ejudge.ru>
+
+	* fileutl.c: copyright notice is updated;
+	directory creation permissions are relaxed: group write is
+	enabled.
+
 2007-08-04 (r4271) Alexander Chernov  <cher@ejudge.ru>
 
 	* fileutl.c: copyright notice is updated;

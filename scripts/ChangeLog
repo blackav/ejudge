@@ -1,3 +1,16 @@
+2008-03-07 (r4762) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.in: copyright notice is updated;
+	gfortran is added.
+
+	* gfortran.in, gfortran-version.in:
+	initial revision.
+
+2008-02-25 (r4703) Alexander Chernov  <cher@ejudge.ru>
+
+	* gcc.in, g++.in: copyright notice is updated;
+	LANG environment variable is unset.
+
 2007-08-08 (r4297) Alexander Chernov  <cher@ejudge.ru>
 
 	* Makefile.in: scripts are installed to `${libexecdir}/ejudge/lang'
