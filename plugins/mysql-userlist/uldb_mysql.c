@@ -2336,10 +2336,28 @@ allocate_user_info_on_pool(
       pp->next = ic->first;
       ic->first = pp;
     }
+    // also move the element to the head of the user list
+    if (pp != uiu->first_user) {
+      if (pp->next_user) {
+        pp->next_user->prev_user = pp->prev_user;
+      } else {
+        uiu->last_user = pp->prev_user;
+      }
+      pp->prev_user->next_user = pp->next_user;
+      pp->prev_user = 0;
+      pp->next_user = uiu->first_user;
+      uiu->first_user= pp;
+    }
     return &pp->ui->i;
   }
 
   if (ic->count == USER_INFO_POOL_SIZE) {
+    // remove the least used entry from the list
+    pp = ic->last;
+    ic->last = pp->prev;
+    ic->last->next = 0;
+    pp->prev = 0;
+    // also remove the entry from user list
   }
 
   abort();
