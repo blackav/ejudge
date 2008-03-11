@@ -358,12 +358,12 @@ initialize(int argc, char *argv[])
   if (!s) s = "";
   snprintf(full_path, sizeof(full_path), "%s", s);
   os_rDirName(full_path, dir_path, PATH_MAX);
-  os_rGetBasename(full_path, base_name, PATH_MAX);
+  os_rGetLastname(full_path, base_name, PATH_MAX);
 
 #if defined CGI_PROG_SUFFIX
   snprintf(exp_base, sizeof(exp_base),"%s%s","serve-control", CGI_PROG_SUFFIX);
 #else
-  snprintf(exp_base, sizeof(exp_base), "%s", "serve_control");
+  snprintf(exp_base, sizeof(exp_base), "%s", "serve-control");
 #endif
   if (strcmp(exp_base, base_name) != 0) {
     client_not_configured(0, "bad program name", 0);
