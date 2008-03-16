@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2003-2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+# Copyright (c) 2003-2008 Alexander Chernov <cher@ejudge.ru>
 
 # This is a `compilation' script for yabasic language.
 # The idea is to append "#!${YABASICPATH}" string
@@ -9,9 +9,17 @@
 
 # using EJUDGE_FLAGS we may pass additional flags
 
-YABASICPATH="@ac_cv_contest_yabasic_path@"
+SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
 
-if [ x"${YABASICPATH}" = x -o x"${YABASICPATH}" = xno ]
+if [ -x "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  YABASICPATH="/usr/bin/yabasic"
+fi
+
+if [ x"${YABASICPATH}" = x -o x"${YABASICPATH}" = xfalse ]
 then
   echo "This language is not supported." >&2
   exit 1

@@ -1,11 +1,20 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+# Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
-GCCRUN="@ac_cv_contest_gcc@"
-GCCDIR="@ac_cv_contest_gcc_dir@"
+SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
 
-if [ x"${GCCRUN}" = x -o x"${GCCRUN}" = xno ]
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+
+if [ -x "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  GCCRUN="gcc"
+  GCCDIR=
+fi
+
+if [ x"${GCCRUN}" = x -o x"${GCCRUN}" = xfalse ]
 then
   echo "This language is not supported." >&2
   exit 1

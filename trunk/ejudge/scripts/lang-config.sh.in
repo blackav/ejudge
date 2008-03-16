@@ -1,0 +1,67 @@
+#! /bin/sh
+# $Id$
+# Copyright (c) 2008 Alexander Chernov <cher@ejudge.ru>
+
+# GNU C
+GCCRUN="@ac_cv_contest_gcc@"
+GCCDIR="@ac_cv_contest_gcc_dir@"
+
+# GNU C++
+GPPRUN="@ac_cv_contest_gpp@"
+GPPDIR="@ac_cv_contest_gpp_dir@"
+
+# Free Pascal
+FPCRUN="@ac_cv_contest_fpc@"
+FPCDIR="@ac_cv_contest_fpc_dir@"
+
+# GNU Pascal (deprecated)
+GPCRUN="@ac_cv_contest_gpc@"
+GPCDIR="@ac_cv_contest_gpc_dir@"
+
+# Borland Kylix (deprecated)
+DCCRUN="@ac_cv_contest_dcc@"
+DCCDIR="@ac_cv_contest_dcc_dir@"
+
+# GNU Java compiler (broken)
+GCJRUN="@ac_cv_contest_gcj@"
+GCJDIR="@ac_cv_contest_gcj_dir@"
+
+# GNU Fortran 77 (deprecated)
+G77RUN="@ac_cv_contest_g77@"
+G77DIR="@ac_cv_contest_g77_dir@"
+
+# GNU Fortran
+GFORTRANRUN="@ac_cv_contest_gfortran@"
+GFORTRANDIR="@ac_cv_contest_gfortran_dir@"
+
+# YaBasic
+YABASICPATH="@ac_cv_contest_yabasic_path@"
+
+# MzScheme
+MZSCHEMEPATH="@ac_cv_contest_mzscheme_path@"
+
+# Perl
+PERLPATH="@ac_cv_contest_perl_path@"
+
+# Python
+PYTHONPATH="@ac_cv_contest_python_path@"
+
+# GNU Prolog
+GPLCRUN="@ac_cv_contest_gprolog@"
+GPROLOGDIR="@ac_cv_contest_gprolog_dir@"
+
+# SUN Java jdk
+JAVARUN="@ac_cv_contest_java@"
+JAVACRUN="@ac_cv_contest_javac@"
+JAVADIR="@ac_cv_contest_java_dir@"
+JAVAVER="@ac_cv_contest_java_version@"
+
+# Mono C#
+MONORUN="@ac_cv_contest_mono@"
+MONODIR="@ac_cv_contest_mono_dir@"
+MCSRUN="@ac_cv_contest_mcs@"
+MCSDIR="@ac_cv_contest_mono_dir@"
+
+# Mono visual basic
+MBASRUN="@ac_cv_contest_mbas@"
+MBASDIR="@ac_cv_contest_mono_dir@"

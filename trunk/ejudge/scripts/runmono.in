@@ -1,6 +1,6 @@
 #!/bin/bash
 # $Id$
-# Copyright (c) 2005 Alexander Chernov
+# Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
 # A helper script to start C# programs using the mono runtime.
 # Usage: runmono file
@@ -10,8 +10,16 @@
 
 runfile="$1"
 
-MONORUN="@ac_cv_contest_mono@"
-MONODIR="@ac_cv_contest_mono_dir@"
+SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+
+if [ -x "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  MONORUN="mono"
+  MONODIR=""
+fi
 
 [ x"${MONODIR}" != x ] && PATH="${MONODIR}/bin:$PATH"
 

@@ -1,13 +1,21 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2001-2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+# Copyright (c) 2001-2008 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
-GPCRUN="@ac_cv_contest_gpc@"
-GPCDIR="@ac_cv_contest_gpc_dir@"
+SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
 
-if [ x"${GPCRUN}" = x -o x"${GPCRUN}" = xno ]
+if [ -x "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  GPCRUN="gpc"
+  GPCDIR=
+fi
+
+if [ x"${GPCRUN}" = x -o x"${GPCRUN}" = xfalse ]
 then
   echo "This language is not supported." >&2
   exit 1

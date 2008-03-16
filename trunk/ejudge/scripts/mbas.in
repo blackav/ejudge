@@ -1,16 +1,24 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2005 Alexander Chernov
+# Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
 # A script for compilation of Visual Basic programs using the Mono suite.
 # Usage: mbas in-file out-file
 
 # using EJUDGE_FLAGS we may pass additional flags
 
-MBASRUN="@ac_cv_contest_mbas@"
-MBASDIR="@ac_cv_contest_mono_dir@"
+SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
 
-if [ x"${MBASRUN}" = x -o x"${MBASRUN}" = xno ]
+if [ -x "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  MBASRUN="mbas"
+  MBASDIR=""
+fi
+
+if [ x"${MBASRUN}" = x -o x"${MBASRUN}" = xfalse ]
 then
   echo "This language is not supported." >&2
   exit 1

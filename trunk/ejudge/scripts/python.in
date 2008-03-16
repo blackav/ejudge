@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2003-2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+# Copyright (c) 2003-2008 Alexander Chernov <cher@ejudge.ru>
 
 # This is a `compilation' script for the Python language.
 # The idea is to append "#!${PYTHONPATH}" string
@@ -9,9 +9,17 @@
 
 # using EJUDGE_FLAGS we may pass additional flags
 
-PYTHONPATH="@ac_cv_contest_python_path@"
+SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
 
-if [ x"${PYTHONPATH}" = x -o x"${PYTHONPATH}" = xno ]
+if [ -x "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  PYTHONPATH="/usr/bin/python"
+fi
+
+if [ x"${PYTHONPATH}" = x -o x"${PYTHONPATH}" = xfalse ]
 then
   echo "This language is not supported." >&2
   exit 1

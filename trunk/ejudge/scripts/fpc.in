@@ -1,11 +1,21 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2002-2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+# Copyright (c) 2002-2008 Alexander Chernov <cher@ejudge.ru>
 
-FPCRUN="@ac_cv_contest_fpc@"
-FPCDIR="@ac_cv_contest_fpc_dir@"
+# using EJUDGE_FLAGS we may pass additional flags
 
-if [ x"${FPCRUN}" = x -o x"${FPCRUN}" = xno ]
+SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+
+if [ -x "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  FPCRUN="fpc"
+  FPCDIR=
+fi
+
+if [ x"${FPCRUN}" = x -o x"${FPCRUN}" = xfalse ]
 then
   echo "This language is not supported." >&2
   exit 1

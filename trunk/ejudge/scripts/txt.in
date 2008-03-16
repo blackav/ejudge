@@ -1,7 +1,0 @@
-#!/bin/sh
-# $Id$
-
-echo '#!/bin/sh' > "$2"
-echo 'exit 1' >> "$2"
-chmod +x "$2"
-exit 0
