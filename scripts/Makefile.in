@@ -68,6 +68,7 @@ SCRIPTS = \
  gpc-version\
  gprolog\
  gprolog-version\
+ lang-config.sh\
  mzscheme\
  mzscheme-version\
  perl\
@@ -76,8 +77,6 @@ SCRIPTS = \
  python-version\
  yabasic\
  yabasic-version\
- txt\
- txt-version\
  festival\
  javac\
  javac-version\
