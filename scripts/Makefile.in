@@ -28,6 +28,7 @@ CGI_PROG_SUFFIX=@ac_cv_cgi_suffix@
 STATIC=@ac_cv_static@
 NO_KERNEL=@ac_cv_no_kernel@
 ENABLE_NLS=@ac_cv_nls@
+PRESERVE=@ac_cv_preserve_scripts@
 
 XGETTEXT=@XGETTEXT@
 MSGMERGE=@MSGMERGE@
@@ -45,6 +46,8 @@ EXPAT_LIB_OPT=@ac_cv_expat_lib_opt@
 LIBCAP_DIR=@ac_cv_libcap_root@
 LIBCAP_INCL_OPT=@ac_cv_libcap_include_opt@
 LIBCAP_LIB_OPT=@ac_cv_libcap_lib_opt@
+
+LANG_SCRIPT_DIR=@ac_cv_lang_script_dir@
 
 SCRIPTS = \
  dcc\
@@ -94,8 +97,8 @@ POLICIES = \
 all :
 
 install :
-	mkdir -p "${DESTDIR}${libexecdir}/ejudge/lang"
-	for i in ${SCRIPTS}; do j="${DESTDIR}${libexecdir}/ejudge/lang/$$i"; if [ -f "$$j" ]; then if ! diff -q "$$i" "$$j" >/dev/null 2>&1; then rm -f "$$j.old"; mv "$$j" "$$j.old"; fi; fi; install -m 0755 "$$i" "$$j"; done
+	mkdir -p "${DESTDIR}${LANG_SCRIPT_DIR}"
+	for i in ${SCRIPTS}; do j="${DESTDIR}${LANG_SCRIPT_DIR}/$$i"; if [ "${PRESERVE}" = 1 ]; then if [ -f "$$j" ]; then rm -f "$$j.new"; install -m 0755 "$$i" "$$j.new"; else install -m 0755 "$$i" "$$j"; fi; else if [ -f "$$j" ]; then if ! diff -q "$$i" "$$j" >/dev/null 2>&1; then rm -f "$$j.old"; mv "$$j" "$$j.old"; fi; fi; install -m 0755 "$$i" "$$j"; fi; done
 	mkdir -p "${DESTDIR}${datadir}/ejudge"
 	for i in ${POLICIES}; do j="${DESTDIR}${datadir}/ejudge/$$i"; if [ -f "$$j" ]; then if ! diff -q "$$i" "$$j" >/dev/null 2>&1; then rm -f "$$j.old"; mv "$$j" "$$j.old"; fi; fi; install -m 0644 "$$i" "$$j"; done
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 # $Id$
-# Copyright (c) 2004-2007 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2004-2008 Alexander Chernov <cher@ejudge.ru>
 
 # Usage: javac in-file out-file
 # The working dir must not contain any .class files.
@@ -11,14 +11,23 @@ prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 libexecdir="@libexecdir@"
 
+SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+
 infile="$1"
 outfile="$2"
 
-JAVACRUN="@ac_cv_contest_javac@"
-JAVADIR="@ac_cv_contest_java_dir@"
-JAVAVER="@ac_cv_contest_java_version@"
+if [ -x "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  JAVARUN="/usr/bin/java"
+  JAVACRUN="/usr/bin/javac"
+  JAVADIR="/usr"
+  JAVAVER="1.6"
+fi
 
-if [ x"${JAVACRUN}" = x -o x"${JAVACRUN}" = xno ]
+if [ x"${JAVACRUN}" = x -o x"${JAVACRUN}" = xfalse ]
 then
   echo "This language is not supported." >&2
   exit 1

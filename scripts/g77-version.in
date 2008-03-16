@@ -1,11 +1,20 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+# Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
-G77RUN="@ac_cv_contest_g77@"
-G77DIR="@ac_cv_contest_g77_dir@"
+SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
 
-if [ x"${G77RUN}" = x -o x"${G77RUN}" = xno ]
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+
+if [ -x "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  G77RUN="g77"
+  G77DIR=
+fi
+
+if [ x"${G77RUN}" = x -o x"${G77RUN}" = xfalse ]
 then
   echo "This language is not supported." >&2
   exit 1

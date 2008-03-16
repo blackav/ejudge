@@ -1,13 +1,22 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2005-2007 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
-JAVARUN="@ac_cv_contest_java@"
-JAVACRUN="@ac_cv_contest_javac@"
-JAVADIR="@ac_cv_contest_java_dir@"
-JAVAVER="@ac_cv_contest_java_version@"
+SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
 
-if [ x"${JAVACRUN}" = x -o x"${JAVACRUN}" = xno ]
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+
+if [ -x "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  JAVARUN="/usr/bin/java"
+  JAVACRUN="/usr/bin/javac"
+  JAVADIR="/usr"
+  JAVAVER="1.6"
+fi
+
+if [ x"${JAVACRUN}" = x -o x"${JAVACRUN}" = xfalse ]
 then
   echo "This language is not supported." >&2
   exit 1

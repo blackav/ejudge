@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2003-2005 Alexander Chernov
+# Copyright (c) 2003-2008 Alexander Chernov <cher@ejudge.ru>
 
 # This is a `compilation' script for the Perl language.
 # The idea is to append "#!${PERLPATH} -W" string
@@ -9,9 +9,17 @@
 
 # using EJUDGE_FLAGS we may pass additional flags
 
-PERLPATH="@ac_cv_contest_perl_path@"
+SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
 
-if [ x"${PERLPATH}" = x -o x"${PERLPATH}" = xno ]
+if [ -x "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  PERLPATH="/usr/bin/perl"
+fi
+
+if [ x"${PERLPATH}" = x -o x"${PERLPATH}" = xfalse ]
 then
   echo "This language is not supported." >&2
   exit 1

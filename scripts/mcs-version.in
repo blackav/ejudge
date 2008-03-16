@@ -1,11 +1,20 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+# Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
-MCSRUN="@ac_cv_contest_mcs@"
-MCSDIR="@ac_cv_contest_mono_dir@"
+SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
 
-if [ x"${MCSRUN}" = x -o x"${MCSRUN}" = xno ]
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+
+if [ -x "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  MCSRUN="gmcs"
+  MCSDIR=""
+fi
+
+if [ x"${MCSRUN}" = x -o x"${MCSRUN}" = xfalse ]
 then
   echo "This language is not supported." >&2
   exit 1

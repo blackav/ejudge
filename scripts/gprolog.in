@@ -1,13 +1,21 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2003-2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+# Copyright (c) 2003-2008 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
-GPLCRUN="@ac_cv_contest_gprolog@"
-GPROLOGDIR="@ac_cv_contest_gprolog_dir@"
+SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
 
-if [ x"${GPLCRUN}" = x -o x"${GPLCRUN}" = xno ]
+if [ -x "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  GPLCRUN="gplc"
+  GPROLOGDIR=""
+fi
+
+if [ x"${GPLCRUN}" = x -o x"${GPLCRUN}" = xfalse ]
 then
   echo "This language is not supported." >&2
   exit 1

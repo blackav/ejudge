@@ -4,10 +4,18 @@
 
 # using EJUDGE_FLAGS we may pass additional flags
 
-GFORTRANRUN="@ac_cv_contest_gfortran@"
-GFORTRANDIR="@ac_cv_contest_gfortran_dir@"
+SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
 
-if [ x"${GFORTRANRUN}" = x -o x"${GFORTRANRUN}" = xno ]
+if [ -x "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  GFORTRANRUN="gfortran"
+  GFORTRANDIR=
+fi
+
+if [ x"${GFORTRANRUN}" = x -o x"${GFORTRANRUN}" = xfalse ]
 then
   echo "This language is not supported." >&2
   exit 1
@@ -18,4 +26,6 @@ then
     PATH="${GFORTRANDIR}:${PATH}"
 fi
 
-exec "${GFORTRANRUN}" ${EJUDGE_FLAGS} -static -s -O2 "$1" -o "$2"
+[ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-O2"
+
+exec "${GFORTRANRUN}" ${EJUDGE_FLAGS} -static -s "$1" -o "$2"
