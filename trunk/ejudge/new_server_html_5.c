@@ -1310,6 +1310,11 @@ main_page_view_info(
 
   err_count = userlist_count_info_errors(cnts, u, &u->i, role_err_count);
 
+  if (phr->reg_status < 0) {
+    fprintf(fout, "<br/>\n");
+    fprintf(fout, "<p>%s</p>\n", _("In order to complete the registration procedure, hit the \"Confirm registration\" link."));
+  }
+
   // generate upper tabs
   fprintf(fout, "<br/>\n");
   main_area_span = 1;
