@@ -28,6 +28,9 @@
 /* the path to the script directory */
 #undef EJUDGE_SCRIPT_DIR
 
+/* the path to the language script directory */
+#undef EJUDGE_LANG_SCRIPT_DIR
+
 /* the path to the ejudge's cgi programs */
 #undef EJUDGE_CGI_BIN_DIR
 
