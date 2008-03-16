@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -225,6 +225,8 @@ enum { COOKIES_WIDTH = 12 };
 enum { CNTSREGS_WIDTH = 10 };
 // the number of columns in `logins' table
 enum { LOGINS_WIDTH = 16 };
+// the number of columns in `users' table
+enum { USER_INFO_WIDTH = 44 };
 
 // the size of the cookies pool, must be power of 2
 enum { COOKIES_POOL_SIZE = 1024 };
@@ -1133,11 +1135,18 @@ handle_parse_spec(struct uldb_mysql_state *state,
       *p_int = x;
       break;
     case 's':
+      p_str = XPDEREF(unsigned char *, data, specs[i].offset);
       if (state->row[i]) {
-        p_str = XPDEREF(unsigned char *, data, specs[i].offset);
         *p_str = xstrdup(state->row[i]);
       } else {
-        p_str = XPDEREF(unsigned char *, data, specs[i].offset);
+        *p_str = 0;
+      }
+      break;
+    case 'S':
+      p_str = va_arg(args, unsigned char **);
+      if (state->row[i]) {
+        *p_str = xstrdup(state->row[i]);
+      } else {
         *p_str = 0;
       }
       break;
@@ -2286,7 +2295,7 @@ struct user_info_container
 struct user_info_user
 {
   struct user_info_container *first_user, *last_user;
-  int min_id, max_id;           // [min_id, max_id)
+  int min_id, max_id;           // [min_id, max_id) - contest_id
 };
 
 static struct userlist_user_info *
@@ -2297,7 +2306,7 @@ allocate_user_info_on_pool(
 {
   struct user_info_cache *ic = &state->user_infos;
   struct user_info_user *uiu;
-  struct user_info_container *pp = 0;
+  struct user_info_container *pp = 0, *qq = 0;
 
   if (user_id >= ic->size) {
     int new_size = ic->size;
@@ -2358,12 +2367,223 @@ allocate_user_info_on_pool(
     ic->last->next = 0;
     pp->prev = 0;
     // also remove the entry from user list
+    ASSERT(pp->user_id > 0 && pp->user_id < ic->size);
+    uiu = &ic->user_map[pp->user_id];
+    ASSERT(uiu);
+    if (pp == uiu->first_user) {
+      uiu->first_user = pp->next_user;
+    } else {
+      pp->prev_user->next_user = pp->next_user;
+    }
+    if (pp == uiu->last_user) {
+      uiu->last_user = pp->prev_user;
+    } else {
+      pp->next_user->prev_user = pp->prev_user;
+    }
+    pp->prev_user = 0;
+    pp->next_user = 0;
+    userlist_free(&pp->ui->b);
+    pp->ui = 0;
+    xfree(pp);
+    ic->count--;
+    // recalculate [min_id, max_id)
+    if (pp->contest_id == uiu->min_id || pp->contest_id + 1 == uiu->max_id) {
+      uiu->min_id = uiu->max_id = 0;
+      if (uiu->first_user) {
+        uiu->min_id = uiu->first_user->contest_id;
+        uiu->max_id = uiu->first_user->contest_id + 1;
+      }
+      for (qq = uiu->first_user; qq; qq = qq->next_user) {
+        if (qq->contest_id < uiu->min_id) uiu->min_id = qq->contest_id;
+        if (qq->contest_id >= uiu->max_id) uiu->max_id = qq->contest_id + 1;
+      }
+    }
   }
 
-  abort();
+  XCALLOC(pp, 1);
+  pp->ui = (struct userlist_cntsinfo*) userlist_node_alloc(USERLIST_T_CNTSINFO);
+  pp->ui->b.tag = USERLIST_T_CNTSINFO;
+  pp->user_id = user_id;
+  pp->contest_id = contest_id;
+
+  pp->next = ic->first;
+  if (ic->first) {
+    pp->next->prev = pp;
+  } else {
+    ic->last = pp;
+  }
+  ic->first = pp;
+
+  if (!uiu->first_user) {
+    ASSERT(!uiu->last_user);
+    uiu->first_user = uiu->last_user = pp;
+    uiu->min_id = pp->contest_id;
+    uiu->max_id = pp->contest_id + 1;
+  } else {
+    ASSERT(uiu->last_user);
+    pp->next_user = uiu->first_user;
+    pp->next_user->prev_user = pp;
+    uiu->first_user = pp;
+    if (pp->contest_id < uiu->min_id) uiu->min_id = pp->contest_id;
+    if (pp->contest_id >= uiu->max_id) uiu->max_id = pp->contest_id + 1;
+  }
+
+  return &pp->ui->i;
 }
 
-static int get_user_info_2_func(
+/*
+[0]	user_id INT UNSIGNED NOT NULL,
+[1]	contest_id INT UNSIGNED NOT NULL,
+[2]	cnts_read_only TINYINT NOT NULL DEFAULT 0,
+[3]	instnum INT,
+[4]	username VARCHAR(512),
+[5]	pwdmethod TINYINT NOT NULL DEFAULT 0,
+[6]	password VARCHAR(64),
+[7]	pwdtime TIMESTAMP DEFAULT 0,
+[8]	createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+[9]	changetime TIMESTAMP DEFAULT 0,
+[10]	inst VARCHAR(512),
+[11]	inst_en VARCHAR (512),
+[12]	instshort VARCHAR (512),
+[13]	instshort_en VARCHAR (512),
+[14]	fac VARCHAR(512),
+[15]	fac_en VARCHAR (512),
+[16]	facshort VARCHAR (512),
+[17]	facshort_en VARCHAR (512),
+[18]	homepage VARCHAR (512),
+[19]	phone VARCHAR (512),
+[20]	city VARCHAR (512),
+[21]	city_en VARCHAR (512),
+[22]	region VARCHAR (512),
+[23]	area VARCHAR (512),
+[24]	zip VARCHAR (512),
+[25]	street VARCHAR (512),
+[26]	country VARCHAR (512),
+[27]	country_en VARCHAR (512),
+[28]	location VARCHAR (512),
+[29]	spelling VARCHAR (512),
+[30]	printer VARCHAR (512),
+[31]	languages VARCHAR (512),
+[32]	exam_id VARCHAR (512),
+[33]	exam_cypher VARCHAR (512),
+[34]	field0 VARCHAR(512),
+[35]	field1 VARCHAR(512),
+[36]	field2 VARCHAR(512),
+[37]	field3 VARCHAR(512),
+[38]	field4 VARCHAR(512),
+[39]	field5 VARCHAR(512),
+[40]	field6 VARCHAR(512),
+[41]	field7 VARCHAR(512),
+[42]	field8 VARCHAR(512),
+[43]	field9 VARCHAR(512),
+*/
+
+ /*
+#define USER_INFO_OFFSET(f) XOFFSET(struct userlist_user_info, f)
+static struct mysql_parse_spec user_info_spec[USER_INFO_WIDTH] =
+{
+  { 0, 'D', "user_id", 0 },     // read into the variable, not structure
+  { 0, 'D', "contest_id", 0 },  // the same
+  { 0, 'b', "cnts_read_only", USER_INFO_OFFSET(cnts_read_only) },
+  { 1, 's', "name", USER_INFO_OFFSET(name) },
+  { 0, 'D', "team_passwd_method", 0 }, // read into the variable
+  { 1, 'S', "team_passwd", 0 },        // read into the variable
+  { 1, 's', "inst", USER_INFO_OFFSET(inst) },
+  { 1, 's', "inst_en", USER_INFO_OFFSET(inst_en) },
+  { 1, 's', "instshort", USER_INFO_OFFSET(instshort) },
+  { 1, 's', "instshort_en", USER_INFO_OFFSET(instshort_en) },
+  { 1, 's', "fac", USER_INFO_OFFSET(fac) },
+  { 1, 's', "fac_en", USER_INFO_OFFSET(fac_en) },
+  { 1, 's', "facshort", USER_INFO_OFFSET(facshort) },
+  { 1, 's', "facshort_en", USER_INFO_OFFSET(facshort_en) },
+  { 1, 's', "homepage", USER_INFO_OFFSET(homepage) },
+  { 1, 's', "city", USER_INFO_OFFSET(city) },
+  { 1, 's', "city_en", USER_INFO_OFFSET(city_en) },
+  { 1, 's', "country", USER_INFO_OFFSET(country) },
+  { 1, 's', "country_en", USER_INFO_OFFSET(country_en) },
+  { 1, 's', "region", USER_INFO_OFFSET(region) },
+  { 1, 's', "area", USER_INFO_OFFSET(area) },
+  { 1, 's', "zip", USER_INFO_OFFSET(zip) },
+  { 1, 's', "street", USER_INFO_OFFSET(street) },
+  { 1, 's', "location", USER_INFO_OFFSET(location) },
+  { 1, 's', "spelling", USER_INFO_OFFSET(spelling) },
+  { 1, 's', "printer_name", USER_INFO_OFFSET(printer_name) },
+  { 1, 's', "exam_id", USER_INFO_OFFSET(exam_id) },
+  { 1, 's', "exam_cypher", USER_INFO_OFFSET(exam_cypher) },
+  { 1, 's', "languages", USER_INFO_OFFSET(languages) },
+  { 1, 's', "phone", USER_INFO_OFFSET(phone) },
+  { 1, 's', "field0", USER_INFO_OFFSET(field0) },
+  { 1, 's', "field1", USER_INFO_OFFSET(field1) },
+  { 1, 's', "field2", USER_INFO_OFFSET(field2) },
+  { 1, 's', "field3", USER_INFO_OFFSET(field3) },
+  { 1, 's', "field4", USER_INFO_OFFSET(field4) },
+  { 1, 's', "field5", USER_INFO_OFFSET(field5) },
+  { 1, 's', "field6", USER_INFO_OFFSET(field6) },
+  { 1, 's', "field7", USER_INFO_OFFSET(field7) },
+  { 1, 's', "field8", USER_INFO_OFFSET(field8) },
+  { 1, 's', "field9", USER_INFO_OFFSET(field9) },
+};
+ */
+
+ /*
+struct userlist_user_info
+{
+  int cnts_read_only;
+  int filled;
+
+  unsigned char *name;
+  int instnum;
+
+  // team password
+  int team_passwd_method;
+  unsigned char *team_passwd;
+
+  unsigned char *inst;
+  unsigned char *inst_en;
+  unsigned char *instshort;
+  unsigned char *instshort_en;
+  unsigned char *fac;
+  unsigned char *fac_en;
+  unsigned char *facshort;
+  unsigned char *facshort_en;
+  unsigned char *homepage;
+  unsigned char *city;
+  unsigned char *city_en;
+  unsigned char *country;
+  unsigned char *country_en;
+  unsigned char *region;
+  unsigned char *area;
+  unsigned char *zip;
+  unsigned char *street;
+  unsigned char *location;
+  unsigned char *spelling;
+  unsigned char *printer_name;
+  unsigned char *exam_id;
+  unsigned char *exam_cypher;
+  unsigned char *languages;
+  unsigned char *phone;
+  unsigned char *field0;
+  unsigned char *field1;
+  unsigned char *field2;
+  unsigned char *field3;
+  unsigned char *field4;
+  unsigned char *field5;
+  unsigned char *field6;
+  unsigned char *field7;
+  unsigned char *field8;
+  unsigned char *field9;
+  struct userlist_members *members[USERLIST_MB_LAST];
+
+  time_t create_time;
+  time_t last_login_time;
+  time_t last_change_time;
+  time_t last_access_time;
+  time_t last_pwdchange_time;
+};
+  */
+
+static int
+get_user_info_2_func(
         void *data,
         int user_id,
         int contest_id,
@@ -2374,6 +2594,10 @@ static int get_user_info_2_func(
   struct userlist_user_info *ii;
 
   ii = allocate_user_info_on_pool(state, user_id, contest_id);
+
+  // lookup table for the specified user_id
+  // lookup table for the specified user_id, contest_id
+  // if not exist, insert a record
 
   abort();
 }
