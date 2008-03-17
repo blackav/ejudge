@@ -4026,7 +4026,8 @@ priv_view_user_dump(FILE *fout,
     }
   }
 
-  fprintf(fout, "Content-type: text/plain\n\n%s\n", db_text);
+  fprintf(fout, "Content-type: text/plain; charset=%s\n\n%s\n",
+          EJUDGE_CHARSET, db_text);
   xfree(db_text);
 
  cleanup:
