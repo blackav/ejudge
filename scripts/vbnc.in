@@ -3,7 +3,7 @@
 # Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
 # A script for compilation of Visual Basic programs using the Mono suite.
-# Usage: mbas in-file out-file
+# Usage: vbnc in-file out-file
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -14,19 +14,19 @@ if [ -x "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
-  MBASRUN="mbas"
-  MBASDIR=""
+  VBNCRUN="vbnc"
+  VBNCDIR=""
 fi
 
-if [ x"${MBASRUN}" = x -o x"${MBASRUN}" = xfalse ]
+if [ x"${VBNCRUN}" = x -o x"${VBNCRUN}" = xfalse ]
 then
   echo "This language is not supported." >&2
   exit 1
 fi
 
-if [ x"${MBASDIR}" != x ]
+if [ x"${VBNCDIR}" != x ]
 then
-  PATH="${MBASDIR}/bin:${PATH}"
+  PATH="${VBNCDIR}/bin:${PATH}"
 fi
 
-exec "${MBASRUN}" ${EJUDGE_FLAGS} "$1" -out:"$2"
+exec "${VBNCRUN}" ${EJUDGE_FLAGS} "$1" -out:"$2"

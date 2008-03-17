@@ -63,5 +63,5 @@ MCSRUN="@ac_cv_contest_mcs@"
 MCSDIR="@ac_cv_contest_mono_dir@"
 
 # Mono visual basic
-MBASRUN="@ac_cv_contest_mbas@"
-MBASDIR="@ac_cv_contest_mono_dir@"
+VBNCRUN="@ac_cv_contest_vbnc@"
+VBNCDIR="@ac_cv_contest_mono_dir@"
