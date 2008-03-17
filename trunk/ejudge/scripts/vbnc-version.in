@@ -10,29 +10,29 @@ if [ -x "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
-  MBASRUN="mbas"
-  MBASDIR=""
+  VBNCRUN="vbnc"
+  VBNCDIR=""
 fi
 
-if [ x"${MBASRUN}" = x -o x"${MBASRUN}" = xfalse ]
+if [ x"${VBNCRUN}" = x -o x"${VBNCRUN}" = xfalse ]
 then
   echo "This language is not supported." >&2
   exit 1
 fi
 
-if [ x"${MBASDIR}" != x ]
+if [ x"${VBNCDIR}" != x ]
 then
-  PATH="${MBASDIR}/bin:${PATH}"
+  PATH="${VBNCDIR}/bin:${PATH}"
 fi
 
 if [ x"$1" = x-p ]
 then
-    echo "${MBASRUN}"
+    echo "${VBNCRUN}"
     exit 0
 fi
     
-"${MBASRUN}" -about 2>/dev/null >/dev/null || exit 1
+"${VBNCRUN}" /help 2>/dev/null >/dev/null || exit 1
 
 [ x"$1" = x-f ] && echo -n "Mono Visual Basic "
 
-"${MBASRUN}" -about 2>&1 | head -1 | awk '{print $3;}'
+"${VBNCRUN}" /help 2>&1 | head -1 | awk '{print $5;}'
