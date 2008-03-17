@@ -2446,7 +2446,7 @@ generate_serve_cfg(FILE *f)
           "# Note, support for Mono C# is experimental!\n"
           "# [language]\n"
           "# id = 19\n"
-          "# short_name = \"CS\"\n"
+          "# short_name = \"mcs\"\n"
           "# long_name = \"Mono C# %s\"\n"
           "# disabled = 1 # Enable manually!\n"
           "# src_sfx = \".cs\"\n"
@@ -2456,20 +2456,20 @@ generate_serve_cfg(FILE *f)
           COMPILE_MONO_VERSION);
 #endif /* COMPILE_MONO_VERSION */
 
-#if defined COMPILE_MBAS_VERSION
+#if defined COMPILE_VBNC_VERSION
   fprintf(f,
           "# Note, support for Mono Visual Basic is experimental!\n"
           "# [language]\n"
           "# id = 20\n"
-          "# short_name = \"VB\"\n"
+          "# short_name = \"vbnc\"\n"
           "# long_name = \"Mono Visual Basic %s\"\n"
           "# disabled = 1 # Enable manually!\n"
           "# src_sfx = \".vb\"\n"
           "# exe_sfx = \".exe\"\n"
           "# arch = \"msil\"\n"
           "# \n",
-          COMPILE_MBAS_VERSION);
-#endif /* COMPILE_MBAS_VERSION */
+          COMPILE_VBNC_VERSION);
+#endif /* COMPILE_VBNC_VERSION */
 
   fputs("[problem]\n"
         "short_name = Generic\n"
@@ -2956,7 +2956,7 @@ generate_compile_cfg(FILE *f)
   fprintf(f,
           "%s[language]\n"
           "%sid = 19\n"
-          "%sshort_name = \"CS\"\n"
+          "%sshort_name = \"mcs\"\n"
           "%slong_name = \"Mono C# %s\"\n"
           "%ssrc_sfx = \".cs\"\n"
           "%sexe_sfx = \".exe\"\n"
@@ -2965,11 +2965,11 @@ generate_compile_cfg(FILE *f)
           "%s\n",
           cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt, cmt);
 
-#if defined COMPILE_MBAS_VERSION
-  cmt = ""; version = COMPILE_MBAS_VERSION;
+#if defined COMPILE_VBNC_VERSION
+  cmt = ""; version = COMPILE_VBNC_VERSION;
 #else
   cmt = "# "; version = "";
-#endif /* COMPILE_MBAS_VERSION */
+#endif /* COMPILE_VBNC_VERSION */
 
   // disable it for now...
   cmt = "#";
@@ -2977,11 +2977,11 @@ generate_compile_cfg(FILE *f)
   fprintf(f,
           "%s[language]\n"
           "%sid = 20\n"
-          "%sshort_name = \"VB\"\n"
+          "%sshort_name = \"vbnc\"\n"
           "%slong_name = \"Mono Visual Basic %s\"\n"
           "%ssrc_sfx = \".vb\"\n"
           "%sexe_sfx = \".exe\"\n"
-          "%scmd = \"mbas\"\n"
+          "%scmd = \"vbnc\"\n"
           "%sarch = \"msil\"\n"
           "%s\n",
           cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt, cmt);

@@ -450,8 +450,8 @@ automatically detected and supported:
   o Python                              http://www.python.org
   o Perl                                http://www.cpan.org
   o SUN Java SDK 2                      http://java.sun.com
-  o Mono C# (mcs)                       http://www.mono-project.com
-  o Mono Visual Basic (mbas)            http://www.mono-project.com
+  o Mono C# (gmcs)                      http://www.mono-project.com
+  o Mono Visual Basic (vbnc)            http://www.mono-project.com
 
 If a supported compiler or interpreter is located in a
 non-standard location, i.e. it is not accessible via the PATH
@@ -495,17 +495,17 @@ disable.
     --with-javac
         Specify the path to the Java bytecode compiler (javac).
     --with-mcs
-        Specify the path to the Mono C# compiler (mcs).
-    --with-mbas
+        Specify the path to the Mono C# compiler (gmcs/mcs).
+    --with-vbnc
         Specify the path to the Mono Visual Basic compiler
-        (mbas).
+        (vbnc).
 
 Note, that support for the Mono C# and Visual Basic languages is
 experimental. The current version of the mono package does not
 support specification of data size and stack size limitations as
 well as specification of security policy. Thus use of these
 compilers in open (untrusted) contests is not recommended. Even
-if the mcs and mbas compilers are found in the system, they are
+if the gmcs and vbnc compilers are found in the system, they are
 disabled in the serve.cfg configuration file for the test
 contest 1. To enable their use it is necessary to edit the
 serve.cfg file manually and remove `disabled = 1' line from the
