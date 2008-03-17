@@ -82,8 +82,8 @@ SCRIPTS = \
  javac-version\
  mcs\
  mcs-version\
- mbas\
- mbas-version\
+ vbnc\
+ vbnc-version\
  runjava\
  runmono\
  runperl
