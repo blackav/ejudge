@@ -81,7 +81,7 @@ AC_ARG_WITH([prolog],AC_HELP_STRING([--with-prolog],[specify the GNU Prolog comp
 AC_ARG_WITH([festival],AC_HELP_STRING([--with-festival],[specify the home directory of the festival speech generator]),[ac_cv_festival_home="$withval"])
 AC_ARG_WITH([javac],AC_HELP_STRING([--with-javac],[specify the Java2 SDK javac path to use in contests]),[ac_cv_contest_javac="$withval"])
 AC_ARG_WITH([mcs],AC_HELP_STRING([--with-mcs],[specify the C-sharp Mono mcs/gmcs path to use in contests]),[ac_cv_contest_mcs="$withval"])
-AC_ARG_WITH([mbas],AC_HELP_STRING([--with-mbas],[specify the Visual Basic Mono mbas path to use in contests]),[ac_cv_contest_mbas="$withval"])
+AC_ARG_WITH([vbnc],AC_HELP_STRING([--with-vbnc],[specify the Visual Basic Mono vbnc path to use in contests]),[ac_cv_contest_vbnc="$withval"])
 
 dnl setup default values
 [[ x"${ac_cv_local_dir}" = xyes ]] && ac_cv_local_dir="/var/lib/ejudge"
@@ -1413,49 +1413,55 @@ fi
 if [[ x"${ac_cv_contest_mono}" != xfalse -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   AC_MSG_CHECKING([whether Visual Basic (Mono) is available])
-  [[ x"${ac_cv_contest_mbas}" = xno ]] && ac_cv_contest_mbas=false
-  if [[ x"${ac_cv_contest_mbas}" != xfalse ]]
+  [[ x"${ac_cv_contest_vbnc}" = xno ]] && ac_cv_contest_vbnc=false
+  if [[ x"${ac_cv_contest_vbnc}" != xfalse ]]
   then
-    [[ x"${ac_cv_contest_mbas}" = xyes ]] && ac_cv_contest_mbas=""
-    [[ x"${ac_cv_contest_mbas}" = x ]] && ac_cv_contest_mbas="mbas"
+    [[ x"${ac_cv_contest_vbnc}" = xyes ]] && ac_cv_contest_vbnc=""
+    [[ x"${ac_cv_contest_vbnc}" = x ]] && ac_cv_contest_vbnc="vbnc"
 
-    "${ac_cv_contest_mbas}" -about >/dev/null 2>/dev/null
-    [[ $? != 0 -a $? != 1 ]] && ac_cv_contest_mbas=false
+    "${ac_cv_contest_vbnc}" /help >/dev/null 2>/dev/null
+    [[ $? != 0 -a $? != 1 ]] && ac_cv_contest_vbnc=false
 
-    if [[ x"${ac_cv_contest_mbas}" != xfalse ]]
+    if [[ x"${ac_cv_contest_vbnc}" != xfalse ]]
     then
-      ac_cv_contest_mbas_version_string=`${ac_cv_contest_mbas} -about 2>&1 | head -1 | awk '{print $3;}'`
-      [[ x"${ac_cv_contest_mbas_version_string}" = x ]] && ac_cv_contest_mbas=false
+      ac_cv_contest_vbnc_version_string=`${ac_cv_contest_vbnc} /help 2>&1 | head -1 | awk '{print $5;}'`
+      [[ x"${ac_cv_contest_vbnc_version_string}" = x ]] && ac_cv_contest_vbnc=false
     fi
 
-    if [[ x"${ac_cv_contest_mbas}" != xfalse ]]
+    if [[ x"${ac_cv_contest_vbnc}" != xfalse ]]
     then
-      echo 'Imports System\nModule Test\nSub Main()\nConsole.WriteLine("OK")\nEnd Sub\nEnd Module' > conftest.vb
-      ${ac_cv_contest_mbas} conftest.vb -out:conftest.exe >/dev/null 2>/dev/null
-      [[ $? != 0 ]] && ac_cv_contest_mbas=false
+      echo 'Imports System
+Module Test
+Sub Main()
+Console.WriteLine("OK")
+End Sub
+End Module
+' > conftest.vb
+      ${ac_cv_contest_vbnc} conftest.vb -out:conftest.exe >/dev/null 2>/dev/null
+      [[ $? != 0 ]] && ac_cv_contest_vbnc=false
     fi
 
-    if [[ x"${ac_cv_contest_mbas}" != xfalse ]]
+    if [[ x"${ac_cv_contest_vbnc}" != xfalse ]]
     then
       ${ac_cv_contest_mono} conftest.exe >/dev/null 2>/dev/null
-      [[ $? != 0 ]] && ac_cv_contest_mbas=false
+      [[ $? != 0 ]] && ac_cv_contest_vbnc=false
     fi
     rm -f ./conftest*
 
-    if [[ x"${ac_cv_contest_mbas}" != xfalse ]]
+    if [[ x"${ac_cv_contest_vbnc}" != xfalse ]]
     then
-      AC_MSG_RESULT([yes, ${ac_cv_contest_mbas}, ${ac_cv_contest_mbas_version_string}])
+      AC_MSG_RESULT([yes, ${ac_cv_contest_vbnc}, ${ac_cv_contest_vbnc_version_string}])
     else
       AC_MSG_RESULT([no])
-      ac_cv_contest_mbas=false
-      unset ac_cv_contest_mbas_version_string
+      ac_cv_contest_vbnc=false
+      unset ac_cv_contest_vbnc_version_string
     fi
   else
     AC_MSG_RESULT([disabled by user])
-    ac_cv_contest_mbas=false
+    ac_cv_contest_vbnc=false
   fi
 else
-  ac_cv_contest_mbas=false
+  ac_cv_contest_vbnc=false
 fi
 
 dnl Create the expanded locale_dir path
@@ -1641,7 +1647,7 @@ AC_SUBST(ac_cv_contest_java_version)
 AC_SUBST(ac_cv_contest_mcs)
 AC_SUBST(ac_cv_contest_mono)
 AC_SUBST(ac_cv_contest_mono_dir)
-AC_SUBST(ac_cv_contest_mbas)
+AC_SUBST(ac_cv_contest_vbnc)
 AC_SUBST(ac_cv_libcap_link)
 AC_SUBST(ac_cv_ejudge_server_bin_path_m)
 AC_SUBST(ac_cv_lang_script_dir)
@@ -1797,15 +1803,15 @@ if [[ x"${ac_cv_contest_mono_version_string}" != x ]]
 then
   AC_DEFINE_UNQUOTED(COMPILE_MONO_VERSION,"${ac_cv_contest_mono_version_string}")
 fi
-if [[ x"${ac_cv_contest_mbas_version_string}" != x ]]
+if [[ x"${ac_cv_contest_vbnc_version_string}" != x ]]
 then
-  AC_DEFINE_UNQUOTED(COMPILE_MBAS_VERSION,"${ac_cv_contest_mbas_version_string}")
+  AC_DEFINE_UNQUOTED(COMPILE_VBNC_VERSION,"${ac_cv_contest_vbnc_version_string}")
 fi
 
 AC_CONFIG_HEADERS([config.h])
-AC_OUTPUT(Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile scripts/gcc scripts/gcc-version scripts/g++ scripts/g++-version scripts/fpc scripts/fpc-version scripts/gpc scripts/gpc-version scripts/dcc scripts/dcc-version scripts/g77 scripts/g77-version scripts/gfortran scripts/gfortran-version scripts/gcj scripts/gcj-version scripts/gprolog scripts/gprolog-version scripts/yabasic scripts/yabasic-version scripts/mzscheme scripts/mzscheme-version scripts/perl scripts/perl-version scripts/python scripts/python-version ejudge-config.v scripts/festival scripts/javac scripts/javac-version scripts/runjava scripts/mcs scripts/mcs-version scripts/runmono scripts/mbas scripts/mbas-version scripts/runperl plugins/mysql-userlist/Makefile python/Makefile scripts/lang-config.sh)
+AC_OUTPUT(Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile scripts/gcc scripts/gcc-version scripts/g++ scripts/g++-version scripts/fpc scripts/fpc-version scripts/gpc scripts/gpc-version scripts/dcc scripts/dcc-version scripts/g77 scripts/g77-version scripts/gfortran scripts/gfortran-version scripts/gcj scripts/gcj-version scripts/gprolog scripts/gprolog-version scripts/yabasic scripts/yabasic-version scripts/mzscheme scripts/mzscheme-version scripts/perl scripts/perl-version scripts/python scripts/python-version ejudge-config.v scripts/festival scripts/javac scripts/javac-version scripts/runjava scripts/mcs scripts/mcs-version scripts/runmono scripts/vbnc scripts/vbnc-version scripts/runperl plugins/mysql-userlist/Makefile python/Makefile scripts/lang-config.sh)
 
-chmod +x scripts/gcc scripts/gcc-version scripts/g++ scripts/g++-version scripts/fpc scripts/fpc-version scripts/gpc scripts/gpc-version scripts/dcc scripts/dcc-version scripts/g77 scripts/g77-version scripts/gfortran scripts/gfortran-version scripts/gcj scripts/gcj-version scripts/gprolog scripts/gprolog-version scripts/yabasic scripts/yabasic-version scripts/mzscheme scripts/mzscheme-version scripts/perl scripts/perl-version scripts/python scripts/python-version ejudge-config.v scripts/festival scripts/javac scripts/javac-version scripts/runjava scripts/mcs scripts/mcs-version scripts/runmono scripts/mbas scripts/mbas-version scripts/runperl scripts/lang-config.sh
+chmod +x scripts/gcc scripts/gcc-version scripts/g++ scripts/g++-version scripts/fpc scripts/fpc-version scripts/gpc scripts/gpc-version scripts/dcc scripts/dcc-version scripts/g77 scripts/g77-version scripts/gfortran scripts/gfortran-version scripts/gcj scripts/gcj-version scripts/gprolog scripts/gprolog-version scripts/yabasic scripts/yabasic-version scripts/mzscheme scripts/mzscheme-version scripts/perl scripts/perl-version scripts/python scripts/python-version ejudge-config.v scripts/festival scripts/javac scripts/javac-version scripts/runjava scripts/mcs scripts/mcs-version scripts/runmono scripts/vbnc scripts/vbnc-version scripts/runperl scripts/lang-config.sh
 
 if [[ "x${ac_cv_has_libcap}" = x -a "${ac_cv_has_new_secure_exec}" = x ]]
 then
