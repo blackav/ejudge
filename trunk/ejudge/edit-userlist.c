@@ -2046,7 +2046,8 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
       }
       r = okcancel(msg_txt);
       if (r != 1) goto menu_continue;
-      r = userlist_clnt_register_contest(server_conn, cmd, u->id, 0, 0, 0);
+      r = userlist_clnt_register_contest(server_conn, cmd, u->id,
+                                         contest_id, 0, 0);
       if (r < 0) {
         vis_err("Server error: %s", userlist_strerror(-r));
         goto menu_continue;
