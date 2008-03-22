@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-16 23:18+0300\n"
-"PO-Revision-Date: 2008-03-16 23:19+0300\n"
+"POT-Creation-Date: 2008-03-22 07:23+0300\n"
+"PO-Revision-Date: 2008-03-22 07:29+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1867,7 +1867,9 @@ msgstr "Импортирована?"
 msgid ""
 "In order to complete the registration procedure, hit the \"Confirm "
 "registration\" link."
-msgstr "Для завершения процедуры регистрации нажмите ссылку \"Подтвердить регистрацию\"."
+msgstr ""
+"Для завершения процедуры регистрации нажмите ссылку \"Подтвердить регистрацию"
+"\"."
 
 msgid "In reply to"
 msgstr "В ответ на"
@@ -1899,6 +1901,9 @@ msgstr "Информация отсутствует"
 
 msgid "Input"
 msgstr "Входные данные"
+
+msgid "Input file name"
+msgstr "Имя входного файла"
 
 msgid "Input format"
 msgstr "Формат входных данных"
@@ -2352,6 +2357,9 @@ msgstr "Уникальный номер участника"
 msgid "Members of this role are not allowed."
 msgstr "Участники команды с такой ролью не допускаются."
 
+msgid "Memory limit"
+msgstr "Ограничение памяти"
+
 msgid "Memory limit exceeded"
 msgstr "Превышен лимит по памяти"
 
@@ -2706,6 +2714,9 @@ msgstr "Результат работы"
 
 msgid "Output error"
 msgstr "Ошибка вывода"
+
+msgid "Output file name"
+msgstr "Имя выходного файла"
 
 msgid "Output format"
 msgstr "Формат результата"
@@ -3855,6 +3866,9 @@ msgstr "Время"
 msgid "Time (sec)"
 msgstr "Время (с)"
 
+msgid "Time limit"
+msgstr "Ограничение времени"
+
 msgid "Time-limit exceeded"
 msgstr "Превышено максимальное время работы"
 
@@ -4553,6 +4567,9 @@ msgstr "слишком длинная тема сообщения"
 msgid "moderated"
 msgstr "модерируемая"
 
+msgid "ms"
+msgstr "мс"
+
 msgid "msec"
 msgstr "мс"
 
@@ -4639,6 +4656,9 @@ msgstr "ошибка чтения данных от сервера"
 
 msgid "report is not available"
 msgstr "протокол недоступен"
+
+msgid "s"
+msgstr "с"
 
 msgid "some component of request is too large"
 msgstr "некоторые компоненты запроса имеют слишком большой размер"
