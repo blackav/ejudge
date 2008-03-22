@@ -11029,6 +11029,24 @@ get_problem_status(serve_state_t cs, int user_id,
 }
 
 static void
+write_row(
+	FILE *fout,
+        const unsigned char *row_label,
+        char *format,
+        ...)
+{
+  va_list args;
+  char buf[1024];
+
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+
+  fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\">%s</td></tr>\n",
+          row_label, buf);
+}
+
+static void
 unparse_statement(
         FILE *fout,
         struct http_request_info *phr,
@@ -11050,6 +11068,7 @@ unparse_statement(
   unsigned char b7[1024];
   const unsigned char *vars[8] = { "self", "prob", "get", "getfile", "input_file", "output_file", "variant", 0 };
   const unsigned char *vals[8] = { b1, b2, b3, b4, b5, b6, b7, 0 };
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   snprintf(b1, sizeof(b1), "%s?SID=%016llx", phr->self_url, phr->session_id);
   snprintf(b2, sizeof(b2), "&prob_id=%d", prob->id);
@@ -11068,7 +11087,35 @@ unparse_statement(
     problem_xml_unparse_node(fout, pp->title, vars, vals);
     fprintf(fout, "</h3>");
   }
-  
+
+  if (prob->type_val == PROB_TYPE_STANDARD) {
+    fprintf(fout, "<table class=\"b0\">\n");
+    if (prob->use_stdin <= 0 && prob->input_file[0]) {
+      write_row(fout, _("Input file name"), "<tt>%s</tt>",
+                ARMOR(prob->input_file));
+    }
+    if (prob->use_stdout <= 0 && prob->output_file[0]) {
+      write_row(fout, _("Output file name"), "<tt>%s</tt>",
+                ARMOR(prob->output_file));
+    }
+    if (prob->time_limit_millis > 0) {
+      write_row(fout, _("Time limit"), "%d %s",
+                prob->time_limit_millis, _("ms"));
+    } else if (prob->time_limit > 0) {
+      write_row(fout, _("Time limit"), "%d %s", prob->time_limit, _("s"));
+    }
+    if (prob->max_vm_size > 0) {
+      if (!(prob->max_vm_size % (1024 * 1024))) {
+        write_row(fout, _("Memory limit"), "%zu M",
+                  prob->max_vm_size / (1024*1024));
+      } else {
+        write_row(fout, _("Memory limit"), "%zu",
+                  prob->max_vm_size);
+      }
+    }
+    fprintf(fout, "</table>\n");
+  }
+
   if (pp->desc) {
     problem_xml_unparse_node(fout, pp->desc, vars, vals);
   }
@@ -11121,6 +11168,8 @@ unparse_statement(
   } else {
     fprintf(fout, "<h3>%s</h3>", _("Submit a solution"));
   }
+
+  html_armor_free(&ab);
 }
 
 static void
