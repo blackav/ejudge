@@ -11042,7 +11042,7 @@ write_row(
   vsnprintf(buf, sizeof(buf), format, args);
   va_end(args);
 
-  fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\">%s</td></tr>\n",
+  fprintf(fout, "<tr><td class=\"b0\"><b>%s:</b></td><td class=\"b0\">%s</td></tr>\n",
           row_label, buf);
 }
 
