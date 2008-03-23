@@ -7948,6 +7948,7 @@ cmd_move_member(struct client_state *p, int pkt_len,
 
 static const struct { unsigned char *str; int ind; } field_names[] =
 {
+  { "User_Id", USERLIST_NN_ID },
   { "Login", USERLIST_NN_LOGIN },
   { "E-mail", USERLIST_NN_EMAIL },
   { "Password", USERLIST_NN_PASSWD },
@@ -8119,14 +8120,29 @@ cmd_import_csv_users(
   }
 
   // check the uniqueness of the logins
-  if ((j = field_rev[USERLIST_NN_LOGIN]) < 0) {
-    fprintf(log_f, "`Login' column is not specified\n");
+  if (field_rev[USERLIST_NN_ID] >= 0 && field_rev[USERLIST_NN_LOGIN] >= 0) {
+    fprintf(log_f, "Both `User_Id' and `Login' are specified\n");
     goto cleanup;
   }
+  if (field_rev[USERLIST_NN_ID] < 0 && field_rev[USERLIST_NN_LOGIN] < 0) {
+    fprintf(log_f, "Neither `User_Id' nor `Login' is specified\n");
+    goto cleanup;
+  }
+  if ((j = field_rev[USERLIST_NN_LOGIN]) < 0) j = field_rev[USERLIST_NN_ID];
   for (i = 1; i < csv->u; i++) {
-    if ((user_id = default_get_user_by_login(csv->v[i].v[j])) <= 0) {
-      fprintf(log_f, "Invalid login `%s' in row %d\n", csv->v[i].v[j], i);
-      goto cleanup;
+    if (field_rev[USERLIST_NN_LOGIN] >= 0) {
+      if ((user_id = default_get_user_by_login(csv->v[i].v[j])) <= 0) {
+        fprintf(log_f, "Invalid login `%s' in row %d\n", csv->v[i].v[j], i);
+        goto cleanup;
+      }
+    } else {
+      int n;
+      if (sscanf(csv->v[i].v[j], "%d%n", &user_id, &n) != 1
+          || csv->v[i].v[j][n] || user_id <= 0
+          || default_check_user(user_id) < 0) {
+        fprintf(log_f, "Invalid user_id `%s' in row %d\n", csv->v[i].v[j], i);
+        goto cleanup;
+      }
     }
     user_ids[i] = user_id;
     for (k = 1; k < i; k++) {
