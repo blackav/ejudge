@@ -3,65 +3,111 @@
 # Copyright (c) 2008 Alexander Chernov <cher@ejudge.ru>
 
 # GNU C
+### BEGIN gcc
+enable_gcc=@ac_cv_contest_gcc_enabled@
 GCCRUN="@ac_cv_contest_gcc@"
 GCCDIR="@ac_cv_contest_gcc_dir@"
+### END gcc
 
 # GNU C++
+### BEGIN g++
+enable_gx2Bx2B=@ac_cv_contest_gpp_enabled@
 GPPRUN="@ac_cv_contest_gpp@"
 GPPDIR="@ac_cv_contest_gpp_dir@"
+### END g++
 
 # Free Pascal
+### BEGIN fpc
+enable_fpc=@ac_cv_contest_fpc_enabled@
 FPCRUN="@ac_cv_contest_fpc@"
 FPCDIR="@ac_cv_contest_fpc_dir@"
+### END fpc
 
 # GNU Pascal (deprecated)
+### BEGIN gpc
+enable_gpc=@ac_cv_contest_gpc_enabled@
 GPCRUN="@ac_cv_contest_gpc@"
 GPCDIR="@ac_cv_contest_gpc_dir@"
+### END gpc
 
 # Borland Kylix (deprecated)
+### BEGIN dcc
+enable_dcc=@ac_cv_contest_dcc_enabled@
 DCCRUN="@ac_cv_contest_dcc@"
 DCCDIR="@ac_cv_contest_dcc_dir@"
+### END dcc
 
 # GNU Java compiler (broken)
+### BEGIN gcj
+enable_gcj=@ac_cv_contest_gcj_enabled@
 GCJRUN="@ac_cv_contest_gcj@"
 GCJDIR="@ac_cv_contest_gcj_dir@"
+### END gcj
 
 # GNU Fortran 77 (deprecated)
+### BEGIN g77
+enable_g77=@ac_cv_contest_g77_enabled@
 G77RUN="@ac_cv_contest_g77@"
 G77DIR="@ac_cv_contest_g77_dir@"
+### END g77
 
 # GNU Fortran
+### BEGIN gfortran
+enable_g77=@ac_cv_contest_gfortran_enabled@
 GFORTRANRUN="@ac_cv_contest_gfortran@"
 GFORTRANDIR="@ac_cv_contest_gfortran_dir@"
+### END gfortran
 
 # YaBasic
+### BEGIN yabasic
+enable_yabasic=@ac_cv_contest_yabasic_enabled@
 YABASICPATH="@ac_cv_contest_yabasic_path@"
+### END yabasic
 
 # MzScheme
+### BEGIN mzscheme
+enable_mzscheme=@ac_cv_contest_mzscheme_enabled@
 MZSCHEMEPATH="@ac_cv_contest_mzscheme_path@"
+### END mzscheme
 
 # Perl
+### BEGIN perl
 PERLPATH="@ac_cv_contest_perl_path@"
+### END perl
 
 # Python
+### BEGIN python
 PYTHONPATH="@ac_cv_contest_python_path@"
+### END python
 
 # GNU Prolog
+### BEGIN gprolog
+enable_prolog=@ac_cv_contest_gprolog_enabled@
 GPLCRUN="@ac_cv_contest_gprolog@"
 GPROLOGDIR="@ac_cv_contest_gprolog_dir@"
+### END gprolog
 
 # SUN Java jdk
+### BEGIN javac
+enable_java=@ac_cv_contest_java_enabled@
 JAVARUN="@ac_cv_contest_java@"
 JAVACRUN="@ac_cv_contest_javac@"
 JAVADIR="@ac_cv_contest_java_dir@"
 JAVAVER="@ac_cv_contest_java_version@"
+### END javac
 
 # Mono C#
+### BEGIN mcs
+enable_mcs=@ac_cv_contest_mcs_enabled@
 MONORUN="@ac_cv_contest_mono@"
 MONODIR="@ac_cv_contest_mono_dir@"
 MCSRUN="@ac_cv_contest_mcs@"
 MCSDIR="@ac_cv_contest_mono_dir@"
+### END mcs
 
 # Mono visual basic
+### BEGIN vbnc
+enable_vbnc=@ac_cv_contest_vbnc_enabled@
 VBNCRUN="@ac_cv_contest_vbnc@"
 VBNCDIR="@ac_cv_contest_mono_dir@"
+### END vbnc
