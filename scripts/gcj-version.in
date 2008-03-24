@@ -4,6 +4,48 @@
 
 SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
 
+function failure()
+{
+  rm -f conftest*
+  echo 'enable_gcj=false'
+  echo 'GCJRUN=false'
+  echo 'GCJDIR='
+  echo 'GCJVER='
+  exit 1
+}
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  [ x"$2" != x ] && GCJRUN="$2"
+  [ "${GCJRUN}" = "" ] && GCJRUN="gcj"
+
+  "${GCJRUN}" -v >/dev/null 2>/dev/null || failure
+  GCJVER=`"${GCJRUN}" --version | grep gcj | gawk '{ print $3; }'` || failure
+  [ "${GCJVER}" != "" ] || failure
+cat > conftest.java <<EOF
+class Main
+{
+  public static void main(String args[])
+  {
+    System.exit(0);
+  }
+}
+EOF
+  "${GCJRUN}" --main=Main conftest.java -o conftest 2>/dev/null >/dev/null || failure
+  [ -x conftest ] || failure
+  ./conftest 2>/dev/null >/dev/null || failure
+
+  rm -f ./conftest*
+  GCJDIR=`dirname "${GCJRUN}"`
+  [ "${GCJDIR}" = . ] && GCJDIR=""
+  echo 'enable_gcj=true'
+  echo 'GCJRUN="'"${GCJRUN}"'"'
+  echo 'GCJDIR="'"${GCJDIR}"'"'
+  echo 'GCJVER="'"${GCJVER}"'"'
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
 
 if [ -x "${EJUDGE_LANG_CONFIG}" ]
