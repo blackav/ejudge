@@ -2,11 +2,78 @@
 # $Id$
 # Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
-SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+function failure()
+{
+  rm -f conftest*
+  echo 'enable_vbnc=false'
+  echo 'MONORUN=false'
+  echo 'MONODIR='
+  echo 'MONOVER='
+  echo 'VBNCRUN=false'
+  echo 'VBNCDIR='
+  echo 'VBNCVER='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
 
-if [ -x "${EJUDGE_LANG_CONFIG}" ]
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  [ x"$2" != x ] && VBNCRUN="$2"
+  [ "${VBNCRUN}" = "" ] && VBNCRUN="vbnc"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether Mono Visual Basic is available..." >&2
+  VBNCDIR=`dirname "${VBNCRUN}"` || failure
+  if [ "${VBNCDIR}" = . ]
+  then
+    MONORUN=mono
+    MONODIR=
+    VBNCDIR=
+  else
+    VBNCRUN="${MCSDIR}/mono"
+    VBNCDIR="${MCSDIR}"
+  fi
+  "${MONORUN}" --version >/dev/null 2>&1 || failure
+  MONOVER=`"${MONORUN}" --version 2>&1 | grep "version" | awk '{gsub(",","",$5); print $5;}'` || failure
+  [ "${MONOVER}" != "" ] || failure
+  "${VBNCRUN}" /help >/dev/null 2>&1 || failure
+  VBNCVER=`"${VBNCRUN}" /help 2>&1 | head -1 | awk '{print $5;}'` || failure
+  [ "${VBNCVER}" != "" ] || failure
+  cat > conftest.vb <<EOF
+Imports System
+Module Test
+Sub Main()
+Console.WriteLine("OK")
+End Sub
+End Module
+EOF
+  "${VBNCRUN}" conftest.vb -out:conftest.exe >/dev/null 2>&1 || failure
+  [ -f conftest.exe ] || failure
+  "${MONORUN}" conftest.exe >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  echo 'enable_vbnc=true'
+  echo 'MONORUN="'"${MONORUN}"'"'
+  echo 'MONODIR="'"${MONODIR}"'"'
+  echo 'MONOVER="'"${MONOVER}"'"'
+  echo 'VBNCRUN="'"${VBNCRUN}"'"'
+  echo 'VBNCDIR="'"${VBNCDIR}"'"'
+  echo 'VBNCVER="'"${VBNCVER}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${VBNCRUN}, ${VBNCVER}" >&2
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/vbnc.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else

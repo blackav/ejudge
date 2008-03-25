@@ -9,10 +9,10 @@
 
 # using EJUDGE_FLAGS we may pass additional flags
 
-SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
-EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/yabasic.cfg"
 
-if [ -x "${EJUDGE_LANG_CONFIG}" ]
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
@@ -25,7 +25,7 @@ then
   exit 1
 fi
 
-echo "#!${YABASICPATH} ${EJUDGE_FLAGS}" > $2
+echo "#! ${YABASICPATH} ${EJUDGE_FLAGS}" > $2
 echo >> $2
 cat $1 >> $2
 chmod +x $2

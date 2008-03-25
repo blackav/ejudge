@@ -2,11 +2,54 @@
 # $Id$
 # Copyright (c) 2008 Alexander Chernov <cher@ejudge.ru>
 
-SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+function failure()
+{
+  rm -f conftest*
+  echo 'enable_gfortran=false'
+  echo 'GFORTRANRUN=false'
+  echo 'GFORTRANDIR='
+  echo 'GFORTRANVER='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
 
-if [ -x "${EJUDGE_LANG_CONFIG}" ]
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  [ x"$2" != x ] && GFORTRANRUN="$2"
+  [ "${GFORTRANRUN}" = "" ] && GFORTRANRUN="gfortran"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether GNU Fortran is available..." >&2
+  "${GFORTRANRUN}" -v >/dev/null 2>/dev/null || failure
+  GFORTRANVER=`"${GFORTRANRUN}" --version | grep "GCC" | gawk '{ print $(NF); }'` || failure
+  [ "${GFORTRANVER}" != x ] || failure
+  echo "        END" > conftest.for
+  "${GFORTRANRUN}" -static -s conftest.for -o conftest 2>/dev/null >/dev/null || failure
+  [ -x conftest ] || failure
+  ./conftest > /dev/null 2>/dev/null || failure
+
+  rm -f ./conftest*
+  GFORTRANDIR=`dirname "${GFORTRANRUN}"`
+  [ "${GFORTRANDIR}" = . ] && GFORTRANDIR=""
+  echo 'enable_gfortran=true'
+  echo 'GFORTRANRUN="'"${GFORTRANRUN}"'"'
+  echo 'GFORTRANDIR="'"${GFORTRANDIR}"'"'
+  echo 'GFORTRANVER="'"${GFORTRANVER}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${GFORTRANRUN}, ${GFORTRANVER}" >&2
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/gfortran.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else

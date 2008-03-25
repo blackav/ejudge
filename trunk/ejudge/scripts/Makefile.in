@@ -47,7 +47,8 @@ LIBCAP_DIR=@ac_cv_libcap_root@
 LIBCAP_INCL_OPT=@ac_cv_libcap_include_opt@
 LIBCAP_LIB_OPT=@ac_cv_libcap_lib_opt@
 
-LANG_SCRIPT_DIR=@ac_cv_lang_script_dir@
+LANG_SCRIPT_DIR=${libexecdir}/ejudge/lang
+LANG_CONFIG_DIR=@ac_cv_lang_config_dir@
 
 SCRIPTS = \
  dcc\
@@ -98,6 +99,8 @@ all :
 install :
 	mkdir -p "${DESTDIR}${LANG_SCRIPT_DIR}"
 	for i in ${SCRIPTS}; do j="${DESTDIR}${LANG_SCRIPT_DIR}/$$i"; if [ "${PRESERVE}" = 1 ]; then if [ -f "$$j" ]; then rm -f "$$j.new"; install -m 0755 "$$i" "$$j.new"; else install -m 0755 "$$i" "$$j"; fi; else if [ -f "$$j" ]; then if ! diff -q "$$i" "$$j" >/dev/null 2>&1; then rm -f "$$j.old"; mv "$$j" "$$j.old"; fi; fi; install -m 0755 "$$i" "$$j"; fi; done
+	mkdir -p "${DESTDIR}${LANG_CONFIG_DIR}"
+	./install-configs "${PRESERVE}" "${DESTDIR}${LANG_CONFIG_DIR}"
 	mkdir -p "${DESTDIR}${datadir}/ejudge"
 	for i in ${POLICIES}; do j="${DESTDIR}${datadir}/ejudge/$$i"; if [ -f "$$j" ]; then if ! diff -q "$$i" "$$j" >/dev/null 2>&1; then rm -f "$$j.old"; mv "$$j" "$$j.old"; fi; fi; install -m 0644 "$$i" "$$j"; done
 
@@ -105,3 +108,5 @@ clean:
 
 distclean:
 	rm -f Makefile ${SCRIPTS}
+	rm -f config.d/*
+	rmdir -f config.d
