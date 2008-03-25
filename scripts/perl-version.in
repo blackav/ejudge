@@ -2,11 +2,52 @@
 # $Id$
 # Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
-SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+function failure()
+{
+  rm -f conftest*
+  echo 'enable_perl=false'
+  echo 'PERLPATH=/bin/false'
+  echo 'PERLVER='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
 
-if [ -x "${EJUDGE_LANG_CONFIG}" ]
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  [ x"$2" != x ] && perl="$2"
+  [ "${perl}" = "" ] && perl="perl"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether Perl is available..." >&2
+  "${perl}" --version >/dev/null 2>&1 || failure
+  PERLVER=`"${perl}" --version 2>&1 | grep "This is perl" | gawk -v FS="[ v]" '{ print $5; }'` || failure
+  [ "${PERLVER}" != "" ] || failure
+  PERLPATH=`which "${perl}"` || failure
+  [ "${PERLPATH}" != "" ] || failure
+  echo "#! ${PERLPATH} -W" > conftest.pl
+  echo 'print "OK"' >> conftest.pl
+  chmod +x ./conftest.pl || failure
+  ./conftest.pl >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  echo 'enable_perl=true'
+  echo 'PERLPATH="'"${PERLPATH}"'"'
+  echo 'PERLVER="'"${PERLVER}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${PERLPATH}, ${PERLVER}" >&2
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/perl.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else

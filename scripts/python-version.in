@@ -2,11 +2,52 @@
 # $Id$
 # Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
-SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+function failure()
+{
+  rm -f conftest*
+  echo 'enable_python=false'
+  echo 'PYTHONPATH=/bin/false'
+  echo 'PYTHONVER='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
 
-if [ -x "${EJUDGE_LANG_CONFIG}" ]
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  [ x"$2" != x ] && python="$2"
+  [ "${python}" = "" ] && python="python"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether Python is available..." >&2
+  "${python}" -V >/dev/null 2>&1 || failure
+  PYTHONVER=`"${python}" -V 2>&1 | gawk '{ print $2; }'` || failure
+  [ "${PYTHONVER}" != "" ] || failure
+  PYTHONPATH=`which "${python}"` || failure
+  [ "${PYTHONPATH}" != "" ] || failure
+  echo "#! ${PYTHONPATH}" > conftest.py
+  echo 'print "OK"' >> conftest.py
+  chmod +x ./conftest.py || failure
+  ./conftest.py >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  echo 'enable_python=true'
+  echo 'PYTHONPATH="'"${PYTHONPATH}"'"'
+  echo 'PYTHONVER="'"${PYTHONVER}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${PYTHONPATH}, ${PYTHONVER}" >&2
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/python.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else

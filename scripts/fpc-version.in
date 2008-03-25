@@ -2,11 +2,60 @@
 # $Id$
 # Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
-SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+function failure()
+{
+  rm -f conftest*
+  echo 'enable_fpc=false'
+  echo 'FPCRUN=false'
+  echo 'FPCDIR='
+  echo 'FPCVER='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
 
-if [ -x "${EJUDGE_LANG_CONFIG}" ]
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  [ x"$2" != x ] && FPCRUN="$2"
+  [ "${FPCRUN}" = "" ] && FPCRUN="fpc"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether Free Pascal is available..." >&2
+  "${FPCRUN}" -v >/dev/null 2>/dev/null
+  [ $? != 0 -a $? != 1 ] && failure
+  FPCVER=`"${FPCRUN}" -h 2>/dev/null | grep "Free Pascal Compiler" | gawk '{ print $5; }'`
+  [ $? != 0 -a $? != 1 ] && failure
+  [ "${FPCVER}" != "" ] || failure
+  cat > conftest.pas <<EOF
+begin
+  writeln('ok')
+end.
+EOF
+  "${FPCRUN}" -So -XS conftest.pas -oconftest 2>/dev/null >/dev/null || failure
+  [ -x conftest ] || failure
+  ./conftest > /dev/null 2>/dev/null || failure
+
+  rm -f ./conftest*
+  FPCDIR=`dirname "${FPCRUN}"`
+  [ "${FPCDIR}" = . ] && FPCDIR=""
+  echo 'enable_fpc=true'
+  echo 'FPCRUN="'"${FPCRUN}"'"'
+  echo 'FPCDIR="'"${FPCDIR}"'"'
+  echo 'FPCVER="'"${FPCVER}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${FPCRUN}, ${FPCVER}" >&2
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/fpc.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else

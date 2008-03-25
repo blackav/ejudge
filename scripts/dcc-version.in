@@ -2,11 +2,59 @@
 # $Id$
 # Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
-SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+function failure()
+{
+  rm -f conftest*
+  echo 'enable_dcc=false'
+  echo 'DCCRUN=false'
+  echo 'DCCDIR='
+  echo 'DCCVER='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
 
-if [ -x "${EJUDGE_LANG_CONFIG}" ]
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  [ x"$2" != x ] && DCCRUN="$2"
+  [ "${DCCRUN}" = "" ] && DCCRUN="dcc"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether Borland Delphi is available..." >&2
+  "${DCCRUN}" -h 2>/dev/null >/dev/null || failure
+  DCCVER=`"${DCCRUN}" -h 2>/dev/null | grep "Borland Delphi" | gawk '{ print $6; }'` || failure
+  [ "${DCCVER}" != "" ] || failure
+
+  cat > conftest.pas <<EOF
+begin
+  writeln('ok')
+end.
+EOF
+  "${DCCRUN}" -Q conftest.pas 2>/dev/null >/dev/null || failure
+  [ -x conftest ] || failure
+  ./conftest 2>/dev/null >/dev/null || failure
+
+  rm -f ./conftest*
+  DCCDIR=`dirname "${DCCRUN}"`
+  [ "${DCCDIR}" = . ] && DCCDIR=""
+  echo 'enable_dcc=true'
+  echo 'DCCRUN="'"${DCCRUN}"'"'
+  echo 'DCCDIR="'"${DCCDIR}"'"'
+  echo 'DCCVER="'"${DCCVER}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${DCCRUN}, ${DCCVER}" >&2
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/dcc.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else

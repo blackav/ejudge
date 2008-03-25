@@ -2,11 +2,79 @@
 # $Id$
 # Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
-SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+function failure()
+{
+  rm -f conftest*
+  echo 'enable_mcs=false'
+  echo 'MONORUN=false'
+  echo 'MONODIR='
+  echo 'MONOVER='
+  echo 'MCSRUN=false'
+  echo 'MCSDIR='
+  echo 'MCSVER='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
 
-if [ -x "${EJUDGE_LANG_CONFIG}" ]
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  [ x"$2" != x ] && MCSRUN="$2"
+  [ "${MCSRUN}" = "" ] && MCSRUN="gmcs"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether Mono C# is available..." >&2
+  MCSDIR=`dirname "${MCSRUN}"` || failure
+  if [ "${MCSDIR}" = . ]
+  then
+    MONORUN=mono
+    MONODIR=
+    MCSDIR=
+  else
+    MONORUN="${MCSDIR}/mono"
+    MONODIR="${MCSDIR}"
+  fi
+  "${MONORUN}" --version >/dev/null 2>&1 || failure
+  MONOVER=`"${MONORUN}" --version 2>&1 | grep "version" | awk '{gsub(",","",$5); print $5;}'` || failure
+  [ "${MONOVER}" != "" ] || failure
+  "${MCSRUN}" --version >/dev/null 2>&1 || failure
+  MCSVER=`"${MCSRUN}" --version 2>&1 | grep "version" | awk '{gsub(",","",$5); print $5;}'` || failure
+  [ "${MCSVER}" != "" ] || failure
+  cat > conftest.cs <<EOF
+public class conftest
+{
+  public static void Main()
+  {
+    System.Console.WriteLine("OK");
+  }
+}
+EOF
+  "${MCSRUN}" conftest.cs -out:conftest.exe >/dev/null 2>&1 || failure
+  [ -f conftest.exe ] || failure
+  "${MONORUN}" conftest.exe >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  echo 'enable_mcs=true'
+  echo 'MONORUN="'"${MONORUN}"'"'
+  echo 'MONODIR="'"${MONODIR}"'"'
+  echo 'MONOVER="'"${MONOVER}"'"'
+  echo 'MCSRUN="'"${MCSRUN}"'"'
+  echo 'MCSDIR="'"${MCSDIR}"'"'
+  echo 'MCSVER="'"${MCSVER}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${MCSRUN}, ${MCSVER}" >&2
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/mcs.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
@@ -31,7 +99,7 @@ then
     exit 0
 fi
 
-"${MCSRUN}" --version 2>/dev/null >/dev/null || exit 1
+"${MCSRUN}" --version >/dev/null 2>&1 || exit 1
     
 [ x"$1" = x-f ] && echo -n "Mono C# "
 

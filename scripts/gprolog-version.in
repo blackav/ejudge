@@ -2,11 +2,59 @@
 # $Id$
 # Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
-SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+function failure()
+{
+  rm -f conftest*
+  echo 'enable_prolog=false'
+  echo 'short_name_prolog="prolog"'
+  echo 'GPLCRUN=false'
+  echo 'GPROLOGDIR='
+  echo 'GPROLOGVER='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
 
-if [ -x "${EJUDGE_LANG_CONFIG}" ]
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  [ x"$2" != x ] && GPLCRUN="$2"
+  [ "${GPLCRUN}" = "" ] && GPLCRUN="gplc"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether GNU Prolog is available..." >&2
+  "${GPLCRUN}" --version >/dev/null 2>&1 || failure
+  GPROLOGVER=`"${GPLCRUN}" --version 2>&1 | grep "Prolog compiler" | gawk '{ print $5; }'` || failure
+  [ "${GPROLOGVER}" != "" ] || failure
+  cat > conftest.pro <<EOF
+:-initialization(main).
+main :- write('OK'), halt.
+EOF
+  "${GPLCRUN}" -L --no-top-level conftest.pro -o conftest >/dev/null 2>&1 || failure
+  [ -x conftest ] || failure
+  ./conftest >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  GPROLOGDIR=`dirname "${GPLCRUN}"`
+  [ "${GPROLOGDIR}" = . ] && GPROLOGDIR=""
+  echo 'enable_prolog=true'
+  echo 'short_name_prolog="prolog"'
+  echo 'GPLCRUN="'"${GPLCRUN}"'"'
+  echo 'GPROLOGDIR="'"${GPROLOGDIR}"'"'
+  echo 'GPROLOGVER="'"${GPROLOGVER}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${GPLCRUN}, ${GPROLOGVER}" >&2
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/gprolog.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else

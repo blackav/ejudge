@@ -2,11 +2,52 @@
 # $Id$
 # Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
-SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+function failure()
+{
+  rm -f conftest*
+  echo 'enable_mzscheme=false'
+  echo 'MZSCHEMEPATH=/bin/false'
+  echo 'MZSCHEMEVER='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
 
-if [ -x "${EJUDGE_LANG_CONFIG}" ]
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  [ x"$2" != x ] && mzscheme="$2"
+  [ "${mzscheme}" = "" ] && mzscheme="mzscheme"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether MzScheme is available..." >&2
+  "${mzscheme}" --version >/dev/null 2>&1 || failure
+  MZSCHEMEVER=`"${mzscheme}" --version 2>&1 | grep "MzScheme" | gawk -v FS="[ ,]" '{ if ($4 == "version") print $5; else print $4; }'`
+  [ "${MZSCHEMEVER}" != "" ] || failure
+  MZSCHEMEPATH=`which "${mzscheme}"` || failure
+  [ "${MZSCHEMEPATH}" != "" ] || failure
+  echo "#! ${MZSCHEMEPATH} -qr" > conftest.scm
+  echo '(display "OK")' >> conftest.scm
+  chmod +x ./conftest.scm || failure
+  ./conftest.scm >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  echo 'enable_mzscheme=true'
+  echo 'MZSCHEMEPATH="'"${MZSCHEMEPATH}"'"'
+  echo 'MZSCHEMEVER="'"${MZSCHEMEVER}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${MZSCHEMEPATH}, ${MZSCHEMEVER}" >&2
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/mzscheme.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else

@@ -2,11 +2,71 @@
 # $Id$
 # Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
-SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+# compiler script interface is as follows
+# <comp>-version [OPTION]
+# OPTION is:
+#  -r P fully check the availability of the compiler (like configure
+#       script does). P is a proposed path to the compiler (like in
+#       --with-<comp> configure option).
+#       returns failure (exit code 1), if the compiler is not available
+#       or is not functional.
+#       in case of success exit code is 0, and the necessary configuration
+#       variables are written to stdout.
+#  -v   verbose operation (configure mode)
+#  -c   dump the language configuration section for the `compile' program
+#  -p   write to the stdout the command line of the compiler
+#  -f   write the compiler full name and the compiler version
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
-if [ -x "${EJUDGE_LANG_CONFIG}" ]
+function failure()
+{
+  rm -f conftest*
+  echo 'enable_gcc=false'
+  echo 'GCCRUN=false'
+  echo 'GCCDIR='
+  echo 'GCCVER='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  [ x"$2" != x ] && GCCRUN="$2"
+  [ "${GCCRUN}" = "" ] && GCCRUN="gcc"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether GNU C is available... " >&2
+  "${GCCRUN}" -v >/dev/null 2>&1 || failure
+  GCCVER=`"${GCCRUN}" -v 2>&1 | grep "gcc version" | gawk '{ print $3; }'`|| failure
+  cat > conftest.c <<EOF
+#include <stdio.h>
+int main(void) { printf("ok\n"); return 0; }
+EOF
+  "${GCCRUN}" -static conftest.c -o conftest >/dev/null 2>&1 || failure
+  [ -x conftest ] || failure
+  ./conftest >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  GCCDIR=`dirname "${GCCRUN}"`
+  [ "${GCCDIR}" = . ] && GCCDIR=""
+  echo 'enable_gcc=true'
+  echo 'GCCRUN="'"${GCCRUN}"'"'
+  echo 'GCCDIR="'"${GCCDIR}"'"'
+  echo 'GCCVER="'"${GCCVER}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${GCCRUN}, ${GCCVER}" >&2
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/gcc.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
@@ -31,7 +91,7 @@ then
     exit 0
 fi
     
-"${GCCRUN}" -v 2>/dev/null >/dev/null || exit 1
+"${GCCRUN}" -v >/dev/null 2>&1 || exit 1
 
 [ x"$1" = x-f ] && echo -n "GNU C "
 

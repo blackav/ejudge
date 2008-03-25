@@ -2,15 +2,64 @@
 # $Id$
 # Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
-SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+function failure()
+{
+  rm -f conftest*
+  echo 'enable_gx2Bx2B=false'
+  echo 'short_name_gx2Bx2B="g++"'
+  echo 'GPPRUN=false'
+  echo 'GPPDIR='
+  echo 'GPPVER='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
 
-if [ -x "${EJUDGE_LANG_CONFIG}" ]
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  [ x"$2" != x ] && GPPRUN="$2"
+  [ "${GPPRUN}" = "" ] && GPPRUN="g++"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether GNU C++ is available..." >&2
+  "${GPPRUN}" -v >/dev/null 2>/dev/null || failure
+  GPPVER=`"${GPPRUN}" -v 2>&1 | grep "gcc version" | gawk '{ print $3; }'` || failure
+  [ "${GPPVER}" != "" ] || failure
+  cat > conftest.cpp <<EOF
+#include <iostream>
+using namespace std;
+int main() { cout << "ok" << endl; return 0; }
+EOF
+  "${GPPRUN}" -static conftest.cpp -o conftest 2>/dev/null >/dev/null || failure
+  [ -x conftest ] || failure
+  ./conftest 2>/dev/null >/dev/null || failure
+
+  rm -f ./conftest*
+  GPPDIR=`dirname "${GPPRUN}"`
+  [ "${GPPDIR}" = . ] && GPPDIR=""
+  echo 'enable_gx2Bx2B=true'
+  echo 'short_name_gx2Bx2B="g++"'
+  echo 'GPPRUN="'"${GPPRUN}"'"'
+  echo 'GPPDIR="'"${GPPDIR}"'"'
+  echo 'GPPVER="'"${GPPVER}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${GPPRUN}, ${GPPVER}" >&2
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/g++.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
-  GPPRUN="gcc"
+  GPPRUN="g++"
   GPPDIR=
 fi
 

@@ -2,11 +2,55 @@
 # $Id$
 # Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
-SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+function failure()
+{
+  rm -f conftest*
+  echo 'enable_yabasic=false'
+  echo 'short_name_yabasic="basic"'
+  echo 'YABASICPATH=/bin/false'
+  echo 'YABASICVER='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
 
-if [ -x "${EJUDGE_LANG_CONFIG}" ]
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  [ x"$2" != x ] && yabasic="$2"
+  [ "${yabasic}" = "" ] && yabasic="yabasic"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether YaBasic is available..." >&2
+  "${yabasic}" -help >/dev/null 2>&1 || failure
+  YABASICVER=`${yabasic} -help 2>&1 | grep "yabasic version" | gawk '{ gsub(",", "", $5); print $5; }'`
+  [ "${YABASICVER}" != "" ] || failure
+  YABASICPATH=`which "${yabasic}"` || failure
+  [ "${YABASICPATH}" != "" ] || failure
+  echo "#! ${YABASICPATH}" > conftest.bas
+  echo 'PRINT "OK"' >> conftest.bas 
+  echo "END" >> conftest.bas
+  chmod +x ./conftest.bas
+  ./conftest.bas >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  echo 'enable_yabasic=true'
+  echo 'short_name_yabasic="basic"'
+  echo 'YABASICPATH="'"${YABASICPATH}"'"'
+  echo 'YABASICVER="'"${YABASICVER}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${YABASICPATH}, ${YABASICVER}" >&2
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/yabasic.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else

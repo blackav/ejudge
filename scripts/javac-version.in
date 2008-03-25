@@ -2,11 +2,89 @@
 # $Id$
 # Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
-SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+function failure()
+{
+  rm -f conftest*
+  echo 'enable_java=false'
+  echo 'JAVARUN=false'
+  echo 'JAVACRUN=false'
+  echo 'JAVADIR='
+  echo 'JAVAVER='
+  echo 'JAVACVER='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
 
-if [ -x "${EJUDGE_LANG_CONFIG}" ]
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  [ x"$2" != x ] && JAVACRUN="$2"
+  [ "${JAVACRUN}" = "" ] && JAVACRUN="javac"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether Java JDK is available..." >&2
+  javacdir1=`dirname "${JAVACRUN}"`
+  if [ "${javacdir1}" = . ]
+  then
+    JAVARUN="java"
+  else
+    JAVARUN="${javacdir1}/java"
+  fi
+  "${JAVARUN}" -version >/dev/null 2>/dev/null || failure
+  javafullpath=`which "${JAVARUN}"` || failure
+  [ "${javafullpath}" != "" ] || failure
+  javafulldir=`dirname "${javafullpath}"` || failure
+  [ "${javafulldir}" != "" -a "${javafulldir}" != "." ] || failure
+  javalastdir=`basename "${javafulldir}"` || failure
+  [ "${javalastdir}" = "bin" ] || failure
+  JAVADIR=`dirname "${javafulldir}"` || failure
+  [ "${JAVADIR}" != "" ] || failure
+  JAVACVER=`${JAVARUN} -version 2>&1 | grep "java version" | sed 's/^.*"\(.*\)"$/\1/g'` || failure
+  [ "${JAVACVER}" != "" ] || failure
+  case x"${JAVACVER}" in
+    x1.6.*) JAVAVER=1.6;;
+    x1.5.*) JAVAVER=1.5;;
+    x1.4.*) JAVAVER=1.4;;
+    x1.3.*) JAVAVER=1.3;;
+    x1.2.*) JAVAVER=1.2;;
+    *) failure;;
+  esac
+
+  cat > conftest.java <<EOF
+public class conftest
+{
+  public static void main(String args[])
+  {
+    System.out.println("OK");
+  }
+}
+EOF
+  "${JAVACRUN}" -source ${JAVAVER} conftest.java >/dev/null 2>/dev/null || failure
+  [ -f conftest.class ] || failure
+  touch conftest.policy
+  "${JAVARUN}" -Djava.security.manager -Djava.security.policy=conftest.policy conftest >/dev/null 2>/dev/null || failure
+
+  rm -f ./conftest*
+  echo 'enable_java=true'
+  echo 'JAVARUN="'"${JAVARUN}"'"'
+  echo 'JAVACRUN="'"${JAVACRUN}"'"'
+  echo 'JAVADIR="'"${JAVADIR}"'"'
+  echo 'JAVAVER="'"${JAVAVER}"'"'
+  echo 'JAVACVER="'"${JAVACVER}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${JAVACRUN}, ${JAVACVER}" >&2
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/javac.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else

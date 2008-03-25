@@ -11,13 +11,13 @@ prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 libexecdir="@libexecdir@"
 
-SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
-EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/javac.cfg"
 
 infile="$1"
 outfile="$2"
 
-if [ -x "${EJUDGE_LANG_CONFIG}" ]
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else

@@ -2,11 +2,54 @@
 # $Id$
 # Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
 
-SCRIPT_DIR="@ac_cv_lang_script_dir_expanded@"
+LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${SCRIPT_DIR}/lang-config.sh"
+function failure()
+{
+  rm -f conftest*
+  echo 'enable_g77=false'
+  echo 'G77RUN=false'
+  echo 'G77DIR='
+  echo 'G77VER='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
 
-if [ -x "${EJUDGE_LANG_CONFIG}" ]
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  [ x"$2" != x ] && G77RUN="$2"
+  [ "${G77RUN}" = "" ] && G77RUN="g77"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether GNU Fortran 77 is available..." >&2
+  "${G77RUN}" -v >/dev/null 2>/dev/null || failure
+  G77VER=`"${G77RUN}" --version | grep "GNU Fortran (GCC)" | gawk '{ print $4; }'` || failure
+  [ "${G77VER}" != x ] || failure
+  echo "        END" > conftest.for
+  "${G77RUN}" -static -s conftest.for -o conftest 2>/dev/null >/dev/null || failure
+  [ -x conftest ] || failure
+  ./conftest > /dev/null 2>/dev/null || failure
+
+  rm -f ./conftest*
+  G77DIR=`dirname "${G77RUN}"`
+  [ "${G77DIR}" = . ] && G77DIR=""
+  echo 'enable_g77=true'
+  echo 'G77RUN="'"${G77RUN}"'"'
+  echo 'G77DIR="'"${G77DIR}"'"'
+  echo 'G77VER="'"${G77VER}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${G77RUN}, ${G77VER}" >&2
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/g77.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
