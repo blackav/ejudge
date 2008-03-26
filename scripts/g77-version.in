@@ -7,10 +7,9 @@ LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 function failure()
 {
   rm -f conftest*
-  echo 'enable_g77=false'
+  echo 'version_g77='
   echo 'G77RUN=false'
   echo 'G77DIR='
-  echo 'G77VER='
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
 }
@@ -29,8 +28,8 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether GNU Fortran 77 is available..." >&2
   "${G77RUN}" -v >/dev/null 2>/dev/null || failure
-  G77VER=`"${G77RUN}" --version | grep "GNU Fortran (GCC)" | gawk '{ print $4; }'` || failure
-  [ "${G77VER}" != x ] || failure
+  version_g77=`"${G77RUN}" --version | grep "GNU Fortran (GCC)" | gawk '{ print $4; }'` || failure
+  [ "${version_g77}" != x ] || failure
   echo "        END" > conftest.for
   "${G77RUN}" -static -s conftest.for -o conftest 2>/dev/null >/dev/null || failure
   [ -x conftest ] || failure
@@ -39,11 +38,10 @@ then
   rm -f ./conftest*
   G77DIR=`dirname "${G77RUN}"`
   [ "${G77DIR}" = . ] && G77DIR=""
-  echo 'enable_g77=true'
+  echo 'version_g77="'"${version_g77}"'"'
   echo 'G77RUN="'"${G77RUN}"'"'
   echo 'G77DIR="'"${G77DIR}"'"'
-  echo 'G77VER="'"${G77VER}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${G77RUN}, ${G77VER}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${G77RUN}, ${version_g77}" >&2
   exit 0
 fi
 

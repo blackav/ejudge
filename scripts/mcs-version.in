@@ -7,13 +7,12 @@ LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 function failure()
 {
   rm -f conftest*
-  echo 'enable_mcs=false'
+  echo 'version_mcs='
   echo 'MONORUN=false'
   echo 'MONODIR='
   echo 'MONOVER='
   echo 'MCSRUN=false'
   echo 'MCSDIR='
-  echo 'MCSVER='
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
 }
@@ -45,8 +44,8 @@ then
   MONOVER=`"${MONORUN}" --version 2>&1 | grep "version" | awk '{gsub(",","",$5); print $5;}'` || failure
   [ "${MONOVER}" != "" ] || failure
   "${MCSRUN}" --version >/dev/null 2>&1 || failure
-  MCSVER=`"${MCSRUN}" --version 2>&1 | grep "version" | awk '{gsub(",","",$5); print $5;}'` || failure
-  [ "${MCSVER}" != "" ] || failure
+  version_mcs=`"${MCSRUN}" --version 2>&1 | grep "version" | awk '{gsub(",","",$5); print $5;}'` || failure
+  [ "${version_mcs}" != "" ] || failure
   cat > conftest.cs <<EOF
 public class conftest
 {
@@ -61,14 +60,13 @@ EOF
   "${MONORUN}" conftest.exe >/dev/null 2>&1 || failure
 
   rm -f ./conftest*
-  echo 'enable_mcs=true'
+  echo 'version_mcs="'"${version_mcs}"'"'
   echo 'MONORUN="'"${MONORUN}"'"'
   echo 'MONODIR="'"${MONODIR}"'"'
   echo 'MONOVER="'"${MONOVER}"'"'
   echo 'MCSRUN="'"${MCSRUN}"'"'
   echo 'MCSDIR="'"${MCSDIR}"'"'
-  echo 'MCSVER="'"${MCSVER}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${MCSRUN}, ${MCSVER}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${MCSRUN}, ${version_mcs}" >&2
   exit 0
 fi
 

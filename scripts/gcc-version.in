@@ -22,10 +22,9 @@ LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 function failure()
 {
   rm -f conftest*
-  echo 'enable_gcc=false'
+  echo 'version_gcc='
   echo 'GCCRUN=false'
   echo 'GCCDIR='
-  echo 'GCCVER='
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
 }
@@ -44,7 +43,7 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether GNU C is available... " >&2
   "${GCCRUN}" -v >/dev/null 2>&1 || failure
-  GCCVER=`"${GCCRUN}" -v 2>&1 | grep "gcc version" | gawk '{ print $3; }'`|| failure
+  version_gcc=`"${GCCRUN}" -v 2>&1 | grep "gcc version" | gawk '{ print $3; }'`|| failure
   cat > conftest.c <<EOF
 #include <stdio.h>
 int main(void) { printf("ok\n"); return 0; }
@@ -56,11 +55,10 @@ EOF
   rm -f ./conftest*
   GCCDIR=`dirname "${GCCRUN}"`
   [ "${GCCDIR}" = . ] && GCCDIR=""
-  echo 'enable_gcc=true'
+  echo 'version_gcc="'"${version_gcc}"'"'
   echo 'GCCRUN="'"${GCCRUN}"'"'
   echo 'GCCDIR="'"${GCCDIR}"'"'
-  echo 'GCCVER="'"${GCCVER}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${GCCRUN}, ${GCCVER}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${GCCRUN}, ${version_gcc}" >&2
   exit 0
 fi
 

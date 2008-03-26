@@ -21,13 +21,14 @@ if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
+  version_javac="unknown"
   JAVARUN="/usr/bin/java"
   JAVACRUN="/usr/bin/javac"
   JAVADIR="/usr"
   JAVAVER="1.6"
 fi
 
-if [ x"${JAVACRUN}" = x -o x"${JAVACRUN}" = xfalse ]
+if [ x"${version_javac}" = x ]
 then
   echo "This language is not supported." >&2
   exit 1

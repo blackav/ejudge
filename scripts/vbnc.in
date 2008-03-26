@@ -14,11 +14,12 @@ if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
+  version_vbnc="unknown"
   VBNCRUN="vbnc"
   VBNCDIR=""
 fi
 
-if [ x"${VBNCRUN}" = x -o x"${VBNCRUN}" = xfalse ]
+if [ x"${version_vbnc}" = x ]
 then
   echo "This language is not supported." >&2
   exit 1

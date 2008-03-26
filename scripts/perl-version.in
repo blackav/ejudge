@@ -7,9 +7,8 @@ LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 function failure()
 {
   rm -f conftest*
-  echo 'enable_perl=false'
+  echo 'version_perl='
   echo 'PERLPATH=/bin/false'
-  echo 'PERLVER='
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
 }
@@ -28,8 +27,8 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether Perl is available..." >&2
   "${perl}" --version >/dev/null 2>&1 || failure
-  PERLVER=`"${perl}" --version 2>&1 | grep "This is perl" | gawk -v FS="[ v]" '{ print $5; }'` || failure
-  [ "${PERLVER}" != "" ] || failure
+  version_perl=`"${perl}" --version 2>&1 | grep "This is perl" | gawk -v FS="[ v]" '{ print $5; }'` || failure
+  [ "${version_perl}" != "" ] || failure
   PERLPATH=`which "${perl}"` || failure
   [ "${PERLPATH}" != "" ] || failure
   echo "#! ${PERLPATH} -W" > conftest.pl
@@ -38,10 +37,9 @@ then
   ./conftest.pl >/dev/null 2>&1 || failure
 
   rm -f ./conftest*
-  echo 'enable_perl=true'
+  echo 'version_perl="'"${version_perl}"'"'
   echo 'PERLPATH="'"${PERLPATH}"'"'
-  echo 'PERLVER="'"${PERLVER}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${PERLPATH}, ${PERLVER}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${PERLPATH}, ${version_perl}" >&2
   exit 0
 fi
 

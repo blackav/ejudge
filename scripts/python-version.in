@@ -7,9 +7,8 @@ LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 function failure()
 {
   rm -f conftest*
-  echo 'enable_python=false'
+  echo 'version_python='
   echo 'PYTHONPATH=/bin/false'
-  echo 'PYTHONVER='
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
 }
@@ -28,8 +27,8 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether Python is available..." >&2
   "${python}" -V >/dev/null 2>&1 || failure
-  PYTHONVER=`"${python}" -V 2>&1 | gawk '{ print $2; }'` || failure
-  [ "${PYTHONVER}" != "" ] || failure
+  version_python=`"${python}" -V 2>&1 | gawk '{ print $2; }'` || failure
+  [ "${version_python}" != "" ] || failure
   PYTHONPATH=`which "${python}"` || failure
   [ "${PYTHONPATH}" != "" ] || failure
   echo "#! ${PYTHONPATH}" > conftest.py
@@ -38,10 +37,9 @@ then
   ./conftest.py >/dev/null 2>&1 || failure
 
   rm -f ./conftest*
-  echo 'enable_python=true'
+  echo 'version_python="'"${version_python}"'"'
   echo 'PYTHONPATH="'"${PYTHONPATH}"'"'
-  echo 'PYTHONVER="'"${PYTHONVER}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${PYTHONPATH}, ${PYTHONVER}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${PYTHONPATH}, ${version_python}" >&2
   exit 0
 fi
 

@@ -7,13 +7,12 @@ LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 function failure()
 {
   rm -f conftest*
-  echo 'enable_vbnc=false'
+  echo 'version_vbnc='
   echo 'MONORUN=false'
   echo 'MONODIR='
   echo 'MONOVER='
   echo 'VBNCRUN=false'
   echo 'VBNCDIR='
-  echo 'VBNCVER='
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
 }
@@ -45,8 +44,8 @@ then
   MONOVER=`"${MONORUN}" --version 2>&1 | grep "version" | awk '{gsub(",","",$5); print $5;}'` || failure
   [ "${MONOVER}" != "" ] || failure
   "${VBNCRUN}" /help >/dev/null 2>&1 || failure
-  VBNCVER=`"${VBNCRUN}" /help 2>&1 | head -1 | awk '{print $5;}'` || failure
-  [ "${VBNCVER}" != "" ] || failure
+  version_vbnc=`"${VBNCRUN}" /help 2>&1 | head -1 | awk '{print $5;}'` || failure
+  [ "${version_vbnc}" != "" ] || failure
   cat > conftest.vb <<EOF
 Imports System
 Module Test
@@ -60,14 +59,13 @@ EOF
   "${MONORUN}" conftest.exe >/dev/null 2>&1 || failure
 
   rm -f ./conftest*
-  echo 'enable_vbnc=true'
+  echo 'version_vbnc="'"${version_vbnc}"'"'
   echo 'MONORUN="'"${MONORUN}"'"'
   echo 'MONODIR="'"${MONODIR}"'"'
   echo 'MONOVER="'"${MONOVER}"'"'
   echo 'VBNCRUN="'"${VBNCRUN}"'"'
   echo 'VBNCDIR="'"${VBNCDIR}"'"'
-  echo 'VBNCVER="'"${VBNCVER}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${VBNCRUN}, ${VBNCVER}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${VBNCRUN}, ${version_vbnc}" >&2
   exit 0
 fi
 

@@ -7,10 +7,9 @@ LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 function failure()
 {
   rm -f conftest*
-  echo 'enable_dcc=false'
+  echo 'version_dcc='
   echo 'DCCRUN=false'
   echo 'DCCDIR='
-  echo 'DCCVER='
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
 }
@@ -29,8 +28,8 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether Borland Delphi is available..." >&2
   "${DCCRUN}" -h 2>/dev/null >/dev/null || failure
-  DCCVER=`"${DCCRUN}" -h 2>/dev/null | grep "Borland Delphi" | gawk '{ print $6; }'` || failure
-  [ "${DCCVER}" != "" ] || failure
+  version_dcc=`"${DCCRUN}" -h 2>/dev/null | grep "Borland Delphi" | gawk '{ print $6; }'` || failure
+  [ "${version_dcc}" != "" ] || failure
 
   cat > conftest.pas <<EOF
 begin
@@ -44,11 +43,10 @@ EOF
   rm -f ./conftest*
   DCCDIR=`dirname "${DCCRUN}"`
   [ "${DCCDIR}" = . ] && DCCDIR=""
-  echo 'enable_dcc=true'
+  echo 'version_dcc="'"${version_dcc}"'"'
   echo 'DCCRUN="'"${DCCRUN}"'"'
   echo 'DCCDIR="'"${DCCDIR}"'"'
-  echo 'DCCVER="'"${DCCVER}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${DCCRUN}, ${DCCVER}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${DCCRUN}, ${version_dcc}" >&2
   exit 0
 fi
 
