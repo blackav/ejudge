@@ -11,11 +11,12 @@ if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
+  version_dcc="unknown"
   DCCRUN="dcc"
   DCCDIR=
 fi
 
-if [ x"${DCCRUN}" = x -o x"${DCCRUN}" = xfalse ]
+if [ x"${version_dcc}" = x ]
 then
   echo "This language is not supported." >&2
   exit 1

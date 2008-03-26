@@ -7,10 +7,9 @@ LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 function failure()
 {
   rm -f conftest*
-  echo 'enable_yabasic=false'
+  echo 'version_yabasic='
   echo 'short_name_yabasic="basic"'
   echo 'YABASICPATH=/bin/false'
-  echo 'YABASICVER='
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
 }
@@ -29,8 +28,8 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether YaBasic is available..." >&2
   "${yabasic}" -help >/dev/null 2>&1 || failure
-  YABASICVER=`${yabasic} -help 2>&1 | grep "yabasic version" | gawk '{ gsub(",", "", $5); print $5; }'`
-  [ "${YABASICVER}" != "" ] || failure
+  version_yabasic=`${yabasic} -help 2>&1 | grep "yabasic version" | gawk '{ gsub(",", "", $5); print $5; }'`
+  [ "${version_yabasic}" != "" ] || failure
   YABASICPATH=`which "${yabasic}"` || failure
   [ "${YABASICPATH}" != "" ] || failure
   echo "#! ${YABASICPATH}" > conftest.bas
@@ -40,11 +39,10 @@ then
   ./conftest.bas >/dev/null 2>&1 || failure
 
   rm -f ./conftest*
-  echo 'enable_yabasic=true'
+  echo 'version_yabasic="'"${version_yabasic}"'"'
   echo 'short_name_yabasic="basic"'
   echo 'YABASICPATH="'"${YABASICPATH}"'"'
-  echo 'YABASICVER="'"${YABASICVER}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${YABASICPATH}, ${YABASICVER}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${YABASICPATH}, ${version_yabasic}" >&2
   exit 0
 fi
 

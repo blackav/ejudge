@@ -7,10 +7,9 @@ LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 function failure()
 {
   rm -f conftest*
-  echo 'enable_gcj=false'
+  echo 'version_gcj='
   echo 'GCJRUN=false'
   echo 'GCJDIR='
-  echo 'GCJVER='
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
 }
@@ -29,8 +28,8 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether GNU Java (GCJ) is available..." >&2
   "${GCJRUN}" -v >/dev/null 2>/dev/null || failure
-  GCJVER=`"${GCJRUN}" --version | grep gcj | gawk '{ print $3; }'` || failure
-  [ "${GCJVER}" != "" ] || failure
+  version_gcj=`"${GCJRUN}" --version | grep gcj | gawk '{ print $3; }'` || failure
+  [ "${version_gcj}" != "" ] || failure
 cat > conftest.java <<EOF
 class Main
 {
@@ -47,11 +46,10 @@ EOF
   rm -f ./conftest*
   GCJDIR=`dirname "${GCJRUN}"`
   [ "${GCJDIR}" = . ] && GCJDIR=""
-  echo 'enable_gcj=true'
+  echo 'version_gcj="'"${version_gcj}"'"'
   echo 'GCJRUN="'"${GCJRUN}"'"'
   echo 'GCJDIR="'"${GCJDIR}"'"'
-  echo 'GCJVER="'"${GCJVER}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${GCJRUN}, ${GCJVER}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${GCJRUN}, ${version_gcj}" >&2
   exit 0
 fi
 

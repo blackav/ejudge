@@ -16,10 +16,11 @@ if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
+  version_mzscheme="unknown"
   MZSCHEMEPATH="/usr/bin/mzscheme"
 fi
 
-if [ x"${MZSCHEMEPATH}" = x -o x"${MZSCHEMEPATH}" = xfalse ]
+if [ x"${version_mzscheme}" = x ]
 then
   echo "This language is not supported." >&2
   exit 1

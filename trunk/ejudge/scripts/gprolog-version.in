@@ -7,11 +7,10 @@ LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 function failure()
 {
   rm -f conftest*
-  echo 'enable_prolog=false'
-  echo 'short_name_prolog="prolog"'
+  echo 'version_gprolog='
+  echo 'short_name_gprolog="prolog"'
   echo 'GPLCRUN=false'
   echo 'GPROLOGDIR='
-  echo 'GPROLOGVER='
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
 }
@@ -30,8 +29,8 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether GNU Prolog is available..." >&2
   "${GPLCRUN}" --version >/dev/null 2>&1 || failure
-  GPROLOGVER=`"${GPLCRUN}" --version 2>&1 | grep "Prolog compiler" | gawk '{ print $5; }'` || failure
-  [ "${GPROLOGVER}" != "" ] || failure
+  version_gprolog=`"${GPLCRUN}" --version 2>&1 | grep "Prolog compiler" | gawk '{ print $5; }'` || failure
+  [ "${version_gprolog}" != "" ] || failure
   cat > conftest.pro <<EOF
 :-initialization(main).
 main :- write('OK'), halt.
@@ -43,12 +42,11 @@ EOF
   rm -f ./conftest*
   GPROLOGDIR=`dirname "${GPLCRUN}"`
   [ "${GPROLOGDIR}" = . ] && GPROLOGDIR=""
-  echo 'enable_prolog=true'
-  echo 'short_name_prolog="prolog"'
+  echo 'version_gprolog="'"${version_gprolog}"'"'
+  echo 'short_name_gprolog="prolog"'
   echo 'GPLCRUN="'"${GPLCRUN}"'"'
   echo 'GPROLOGDIR="'"${GPROLOGDIR}"'"'
-  echo 'GPROLOGVER="'"${GPROLOGVER}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${GPLCRUN}, ${GPROLOGVER}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${GPLCRUN}, ${version_gprolog}" >&2
   exit 0
 fi
 

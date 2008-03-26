@@ -11,11 +11,12 @@ if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
+  version_gcc="unknown"
   GCCRUN="gcc"
   GCCDIR=
 fi
 
-if [ x"${GCCRUN}" = x -o x"${GCCRUN}" = xfalse ]
+if [ x"${version_gcc}" = x ]
 then
   echo "This language is not supported." >&2
   exit 1
@@ -26,7 +27,7 @@ then
     PATH="${GCCDIR}:${PATH}"
 fi
 
-[ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-Wall -O2"
+[ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-Wall -O2 -std=gnu99"
 
 unset LANG
 exec "${GCCRUN}" ${EJUDGE_FLAGS} -static -s "$1" -o "$2" -lm

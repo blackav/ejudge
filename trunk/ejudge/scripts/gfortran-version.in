@@ -7,10 +7,9 @@ LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 function failure()
 {
   rm -f conftest*
-  echo 'enable_gfortran=false'
+  echo 'version_gfortran='
   echo 'GFORTRANRUN=false'
   echo 'GFORTRANDIR='
-  echo 'GFORTRANVER='
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
 }
@@ -29,8 +28,8 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether GNU Fortran is available..." >&2
   "${GFORTRANRUN}" -v >/dev/null 2>/dev/null || failure
-  GFORTRANVER=`"${GFORTRANRUN}" --version | grep "GCC" | gawk '{ print $(NF); }'` || failure
-  [ "${GFORTRANVER}" != x ] || failure
+  version_gfortran=`"${GFORTRANRUN}" --version | grep "GCC" | gawk '{ print $(NF); }'` || failure
+  [ "${version_gfortran}" != x ] || failure
   echo "        END" > conftest.for
   "${GFORTRANRUN}" -static -s conftest.for -o conftest 2>/dev/null >/dev/null || failure
   [ -x conftest ] || failure
@@ -39,11 +38,10 @@ then
   rm -f ./conftest*
   GFORTRANDIR=`dirname "${GFORTRANRUN}"`
   [ "${GFORTRANDIR}" = . ] && GFORTRANDIR=""
-  echo 'enable_gfortran=true'
+  echo 'version_gfortran="'"${version_gfortran}"'"'
   echo 'GFORTRANRUN="'"${GFORTRANRUN}"'"'
   echo 'GFORTRANDIR="'"${GFORTRANDIR}"'"'
-  echo 'GFORTRANVER="'"${GFORTRANVER}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${GFORTRANRUN}, ${GFORTRANVER}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${GFORTRANRUN}, ${version_gfortran}" >&2
   exit 0
 fi
 

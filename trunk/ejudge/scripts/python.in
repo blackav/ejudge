@@ -16,10 +16,11 @@ if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
+  version_python="unknown"
   PYTHONPATH="/usr/bin/python"
 fi
 
-if [ x"${PYTHONPATH}" = x -o x"${PYTHONPATH}" = xfalse ]
+if [ x"${version_python}" = x ]
 then
   echo "This language is not supported." >&2
   exit 1

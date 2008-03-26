@@ -7,12 +7,12 @@ LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 function failure()
 {
   rm -f conftest*
-  echo 'enable_java=false'
+  echo 'version_javac='
+  echo 'short_name_javac=java'
   echo 'JAVARUN=false'
   echo 'JAVACRUN=false'
   echo 'JAVADIR='
   echo 'JAVAVER='
-  echo 'JAVACVER='
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
 }
@@ -46,9 +46,9 @@ then
   [ "${javalastdir}" = "bin" ] || failure
   JAVADIR=`dirname "${javafulldir}"` || failure
   [ "${JAVADIR}" != "" ] || failure
-  JAVACVER=`${JAVARUN} -version 2>&1 | grep "java version" | sed 's/^.*"\(.*\)"$/\1/g'` || failure
-  [ "${JAVACVER}" != "" ] || failure
-  case x"${JAVACVER}" in
+  version_javac=`${JAVARUN} -version 2>&1 | grep "java version" | sed 's/^.*"\(.*\)"$/\1/g'` || failure
+  [ "${version_javac}" != "" ] || failure
+  case x"${version_javac}" in
     x1.6.*) JAVAVER=1.6;;
     x1.5.*) JAVAVER=1.5;;
     x1.4.*) JAVAVER=1.4;;
@@ -72,13 +72,13 @@ EOF
   "${JAVARUN}" -Djava.security.manager -Djava.security.policy=conftest.policy conftest >/dev/null 2>/dev/null || failure
 
   rm -f ./conftest*
-  echo 'enable_java=true'
+  echo 'version_javac="'"${version_javac}"'"'
+  echo 'short_name_javac=java'
   echo 'JAVARUN="'"${JAVARUN}"'"'
   echo 'JAVACRUN="'"${JAVACRUN}"'"'
   echo 'JAVADIR="'"${JAVADIR}"'"'
   echo 'JAVAVER="'"${JAVAVER}"'"'
-  echo 'JAVACVER="'"${JAVACVER}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${JAVACRUN}, ${JAVACVER}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${JAVACRUN}, ${version_javac}" >&2
   exit 0
 fi
 

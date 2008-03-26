@@ -7,11 +7,10 @@ LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 function failure()
 {
   rm -f conftest*
-  echo 'enable_gx2Bx2B=false'
+  echo 'version_gx2Bx2B='
   echo 'short_name_gx2Bx2B="g++"'
   echo 'GPPRUN=false'
   echo 'GPPDIR='
-  echo 'GPPVER='
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
 }
@@ -30,8 +29,8 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether GNU C++ is available..." >&2
   "${GPPRUN}" -v >/dev/null 2>/dev/null || failure
-  GPPVER=`"${GPPRUN}" -v 2>&1 | grep "gcc version" | gawk '{ print $3; }'` || failure
-  [ "${GPPVER}" != "" ] || failure
+  version_gx2Bx2B=`"${GPPRUN}" -v 2>&1 | grep "gcc version" | gawk '{ print $3; }'` || failure
+  [ "${version_gx2Bx2B}" != "" ] || failure
   cat > conftest.cpp <<EOF
 #include <iostream>
 using namespace std;
@@ -44,12 +43,11 @@ EOF
   rm -f ./conftest*
   GPPDIR=`dirname "${GPPRUN}"`
   [ "${GPPDIR}" = . ] && GPPDIR=""
-  echo 'enable_gx2Bx2B=true'
+  echo 'version_gx2Bx2B="'"${version_gx2Bx2B}"'"'
   echo 'short_name_gx2Bx2B="g++"'
   echo 'GPPRUN="'"${GPPRUN}"'"'
   echo 'GPPDIR="'"${GPPDIR}"'"'
-  echo 'GPPVER="'"${GPPVER}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${GPPRUN}, ${GPPVER}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${GPPRUN}, ${version_gx2Bx2B}" >&2
   exit 0
 fi
 

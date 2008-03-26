@@ -7,10 +7,9 @@ LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 function failure()
 {
   rm -f conftest*
-  echo 'enable_gpc=false'
+  echo 'version_gpc='
   echo 'GPCRUN=false'
   echo 'GPCDIR='
-  echo 'GPCVER='
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
 }
@@ -29,8 +28,8 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether GNU Pascal is available..." >&2
   "${GPCRUN}" -v >/dev/null 2>/dev/null || failure
-  GPCVER=`"${GPCRUN}" --version | gawk '{ print $1; exit 0; }'` || failure
-  [ "${GPCVER}" != "" ] || failure
+  version_gpc=`"${GPCRUN}" --version | gawk '{ print $1; exit 0; }'` || failure
+  [ "${version_gpc}" != "" ] || failure
   cat > conftest.pas <<EOF
 begin
   writeln('ok');
@@ -43,11 +42,10 @@ EOF
   rm -f ./conftest*
   GPCDIR=`dirname "${GPCRUN}"`
   [ "${GPCDIR}" = . ] && GPCDIR=""
-  echo 'enable_gpc=true'
+  echo 'version_gpc="'"${version_gpc}"'"'
   echo 'GPCRUN="'"${GPCRUN}"'"'
   echo 'GPCDIR="'"${GPCDIR}"'"'
-  echo 'GPCVER="'"${GPCVER}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${GPCRUN}, ${GPCVER}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${GPCRUN}, ${version_gpc}" >&2
   exit 0
 fi
 
