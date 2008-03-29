@@ -29,7 +29,7 @@
 #undef EJUDGE_SCRIPT_DIR
 
 /* the path to the language script directory */
-#undef EJUDGE_LANG_SCRIPT_DIR
+#undef EJUDGE_LANG_CONFIG_DIR
 
 /* the path to the ejudge's cgi programs */
 #undef EJUDGE_CGI_BIN_DIR
@@ -103,24 +103,6 @@
 
 /* prefix for HTML style files */
 #undef CONF_STYLE_PREFIX
-
-/* compiler versions */
-#undef COMPILE_GCC_VERSION
-#undef COMPILE_GPP_VERSION
-#undef COMPILE_FPC_VERSION
-#undef COMPILE_GPC_VERSION
-#undef COMPILE_DCC_VERSION
-#undef COMPILE_G77_VERSION
-#undef COMPILE_GFORTRAN_VERSION
-#undef COMPILE_GCJ_VERSION
-#undef COMPILE_GPROLOG_VERSION
-#undef COMPILE_YABASIC_VERSION
-#undef COMPILE_MZSCHEME_VERSION
-#undef COMPILE_PERL_VERSION
-#undef COMPILE_PYTHON_VERSION
-#undef COMPILE_JAVA_VERSION
-#undef COMPILE_MONO_VERSION
-#undef COMPILE_VBNC_VERSION
 
 #endif /* __CONFIG_H__ */
 
