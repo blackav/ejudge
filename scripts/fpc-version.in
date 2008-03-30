@@ -8,6 +8,7 @@ function failure()
 {
   rm -f conftest*
   echo 'version_fpc='
+  echo 'arg_fpc="'"${arg_fpc}"'"'
   echo 'FPCRUN=false'
   echo 'FPCDIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
@@ -23,6 +24,7 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
+  arg_fpc="$2"
   [ x"$2" != x ] && FPCRUN="$2"
   [ "${FPCRUN}" = "" ] && FPCRUN="fpc"
 
@@ -45,6 +47,7 @@ EOF
   FPCDIR=`dirname "${FPCRUN}"`
   [ "${FPCDIR}" = . ] && FPCDIR=""
   echo 'version_fpc="'"${version_fpc}"'"'
+  echo 'arg_fpc="'"${arg_fpc}"'"'
   echo 'FPCRUN="'"${FPCRUN}"'"'
   echo 'FPCDIR="'"${FPCDIR}"'"'
   [ "${verbose}" = 1 ] && echo "yes, ${FPCRUN}, ${version_fpc}" >&2

@@ -8,6 +8,7 @@ function failure()
 {
   rm -f conftest*
   echo 'version_perl='
+  echo 'arg_perl="'"${arg_perl}"'"'
   echo 'PERLPATH=/bin/false'
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
@@ -22,6 +23,7 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
+  arg_perl="$2"
   [ x"$2" != x ] && perl="$2"
   [ "${perl}" = "" ] && perl="perl"
 
@@ -38,6 +40,7 @@ then
 
   rm -f ./conftest*
   echo 'version_perl="'"${version_perl}"'"'
+  echo 'arg_perl="'"${arg_perl}"'"'
   echo 'PERLPATH="'"${PERLPATH}"'"'
   [ "${verbose}" = 1 ] && echo "yes, ${PERLPATH}, ${version_perl}" >&2
   exit 0

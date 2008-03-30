@@ -9,6 +9,7 @@ function failure()
   rm -f conftest*
   echo 'version_gx2Bx2B='
   echo 'short_name_gx2Bx2B="g++"'
+  echo 'arg_gx2Bx2B="'"${arg_gx2Bx2B}"'"'
   echo 'GPPRUN=false'
   echo 'GPPDIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
@@ -24,6 +25,7 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
+  arg_gx2Bx2B="$2"
   [ x"$2" != x ] && GPPRUN="$2"
   [ "${GPPRUN}" = "" ] && GPPRUN="g++"
 
@@ -45,6 +47,7 @@ EOF
   [ "${GPPDIR}" = . ] && GPPDIR=""
   echo 'version_gx2Bx2B="'"${version_gx2Bx2B}"'"'
   echo 'short_name_gx2Bx2B="g++"'
+  echo 'arg_gx2Bx2B="'"${arg_gx2Bx2B}"'"'
   echo 'GPPRUN="'"${GPPRUN}"'"'
   echo 'GPPDIR="'"${GPPDIR}"'"'
   [ "${verbose}" = 1 ] && echo "yes, ${GPPRUN}, ${version_gx2Bx2B}" >&2

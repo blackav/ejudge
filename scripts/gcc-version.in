@@ -23,6 +23,7 @@ function failure()
 {
   rm -f conftest*
   echo 'version_gcc='
+  echo 'arg_gcc="'"${arg_gcc}"'"'
   echo 'GCCRUN=false'
   echo 'GCCDIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
@@ -38,6 +39,7 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
+  arg_gcc="$2"
   [ x"$2" != x ] && GCCRUN="$2"
   [ "${GCCRUN}" = "" ] && GCCRUN="gcc"
 
@@ -56,6 +58,7 @@ EOF
   GCCDIR=`dirname "${GCCRUN}"`
   [ "${GCCDIR}" = . ] && GCCDIR=""
   echo 'version_gcc="'"${version_gcc}"'"'
+  echo 'arg_gcc="'"${arg_gcc}"'"'
   echo 'GCCRUN="'"${GCCRUN}"'"'
   echo 'GCCDIR="'"${GCCDIR}"'"'
   [ "${verbose}" = 1 ] && echo "yes, ${GCCRUN}, ${version_gcc}" >&2

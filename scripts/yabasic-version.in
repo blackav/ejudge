@@ -9,6 +9,7 @@ function failure()
   rm -f conftest*
   echo 'version_yabasic='
   echo 'short_name_yabasic="basic"'
+  echo 'arg_yabasic="'"${arg_yabasic}"'"'
   echo 'YABASICPATH=/bin/false'
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
@@ -23,6 +24,7 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
+  arg_yabasic="$2"
   [ x"$2" != x ] && yabasic="$2"
   [ "${yabasic}" = "" ] && yabasic="yabasic"
 
@@ -41,6 +43,7 @@ then
   rm -f ./conftest*
   echo 'version_yabasic="'"${version_yabasic}"'"'
   echo 'short_name_yabasic="basic"'
+  echo 'arg_yabasic="'"${arg_yabasic}"'"'
   echo 'YABASICPATH="'"${YABASICPATH}"'"'
   [ "${verbose}" = 1 ] && echo "yes, ${YABASICPATH}, ${version_yabasic}" >&2
   exit 0

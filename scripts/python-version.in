@@ -8,6 +8,7 @@ function failure()
 {
   rm -f conftest*
   echo 'version_python='
+  echo 'arg_python="'"${arg_python}"'"'
   echo 'PYTHONPATH=/bin/false'
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
@@ -22,6 +23,7 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
+  arg_python="$2"
   [ x"$2" != x ] && python="$2"
   [ "${python}" = "" ] && python="python"
 
@@ -38,6 +40,7 @@ then
 
   rm -f ./conftest*
   echo 'version_python="'"${version_python}"'"'
+  echo 'arg_python="'"${arg_python}"'"'
   echo 'PYTHONPATH="'"${PYTHONPATH}"'"'
   [ "${verbose}" = 1 ] && echo "yes, ${PYTHONPATH}, ${version_python}" >&2
   exit 0

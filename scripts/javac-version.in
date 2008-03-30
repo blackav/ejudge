@@ -9,6 +9,7 @@ function failure()
   rm -f conftest*
   echo 'version_javac='
   echo 'short_name_javac=java'
+  echo 'arg_javac="'"${arg_javac}"'"'
   echo 'JAVARUN=false'
   echo 'JAVACRUN=false'
   echo 'JAVADIR='
@@ -26,6 +27,7 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
+  arg_javac="$2"
   [ x"$2" != x ] && JAVACRUN="$2"
   [ "${JAVACRUN}" = "" ] && JAVACRUN="javac"
 
@@ -74,6 +76,7 @@ EOF
   rm -f ./conftest*
   echo 'version_javac="'"${version_javac}"'"'
   echo 'short_name_javac=java'
+  echo 'arg_javac="'"${arg_javac}"'"'
   echo 'JAVARUN="'"${JAVARUN}"'"'
   echo 'JAVACRUN="'"${JAVACRUN}"'"'
   echo 'JAVADIR="'"${JAVADIR}"'"'
