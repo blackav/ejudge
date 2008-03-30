@@ -8,6 +8,7 @@ function failure()
 {
   rm -f conftest*
   echo 'version_gfortran='
+  echo 'arg_gfortran="'"${arg_gfortran}"'"'
   echo 'GFORTRANRUN=false'
   echo 'GFORTRANDIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
@@ -23,6 +24,7 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
+  arg_gfortran="$2"
   [ x"$2" != x ] && GFORTRANRUN="$2"
   [ "${GFORTRANRUN}" = "" ] && GFORTRANRUN="gfortran"
 
@@ -39,6 +41,7 @@ then
   GFORTRANDIR=`dirname "${GFORTRANRUN}"`
   [ "${GFORTRANDIR}" = . ] && GFORTRANDIR=""
   echo 'version_gfortran="'"${version_gfortran}"'"'
+  echo 'arg_gfortran="'"${arg_gfortran}"'"'
   echo 'GFORTRANRUN="'"${GFORTRANRUN}"'"'
   echo 'GFORTRANDIR="'"${GFORTRANDIR}"'"'
   [ "${verbose}" = 1 ] && echo "yes, ${GFORTRANRUN}, ${version_gfortran}" >&2

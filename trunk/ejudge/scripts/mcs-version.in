@@ -8,6 +8,7 @@ function failure()
 {
   rm -f conftest*
   echo 'version_mcs='
+  echo 'arg_mcs="'"${arg_mcs}"'"'
   echo 'MONORUN=false'
   echo 'MONODIR='
   echo 'MONOVER='
@@ -26,6 +27,7 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
+  arg_mcs="$2"
   [ x"$2" != x ] && MCSRUN="$2"
   [ "${MCSRUN}" = "" ] && MCSRUN="gmcs"
 
@@ -61,6 +63,7 @@ EOF
 
   rm -f ./conftest*
   echo 'version_mcs="'"${version_mcs}"'"'
+  echo 'arg_mcs="'"${arg_mcs}"'"'
   echo 'MONORUN="'"${MONORUN}"'"'
   echo 'MONODIR="'"${MONODIR}"'"'
   echo 'MONOVER="'"${MONOVER}"'"'

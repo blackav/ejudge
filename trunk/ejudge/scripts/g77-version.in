@@ -8,6 +8,7 @@ function failure()
 {
   rm -f conftest*
   echo 'version_g77='
+  echo 'arg_g77="'"${arg_g77}"'"'
   echo 'G77RUN=false'
   echo 'G77DIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
@@ -23,6 +24,7 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
+  arg_g77="$2"
   [ x"$2" != x ] && G77RUN="$2"
   [ "${G77RUN}" = "" ] && G77RUN="g77"
 
@@ -39,6 +41,7 @@ then
   G77DIR=`dirname "${G77RUN}"`
   [ "${G77DIR}" = . ] && G77DIR=""
   echo 'version_g77="'"${version_g77}"'"'
+  echo 'arg_g77="'"${arg_g77}"'"'
   echo 'G77RUN="'"${G77RUN}"'"'
   echo 'G77DIR="'"${G77DIR}"'"'
   [ "${verbose}" = 1 ] && echo "yes, ${G77RUN}, ${version_g77}" >&2

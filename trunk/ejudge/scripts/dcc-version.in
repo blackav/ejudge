@@ -8,6 +8,7 @@ function failure()
 {
   rm -f conftest*
   echo 'version_dcc='
+  echo 'arg_dcc="'"${arg_dcc}"'"'
   echo 'DCCRUN=false'
   echo 'DCCDIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
@@ -23,6 +24,7 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
+  arg_dcc="$2"
   [ x"$2" != x ] && DCCRUN="$2"
   [ "${DCCRUN}" = "" ] && DCCRUN="dcc"
 
@@ -44,6 +46,7 @@ EOF
   DCCDIR=`dirname "${DCCRUN}"`
   [ "${DCCDIR}" = . ] && DCCDIR=""
   echo 'version_dcc="'"${version_dcc}"'"'
+  echo 'arg_dcc="'"${arg_dcc}"'"'
   echo 'DCCRUN="'"${DCCRUN}"'"'
   echo 'DCCDIR="'"${DCCDIR}"'"'
   [ "${verbose}" = 1 ] && echo "yes, ${DCCRUN}, ${version_dcc}" >&2

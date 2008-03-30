@@ -8,6 +8,7 @@ function failure()
 {
   rm -f conftest*
   echo 'version_vbnc='
+  echo 'arg_vbnc="'"${arg_vbnc}"'"'
   echo 'MONORUN=false'
   echo 'MONODIR='
   echo 'MONOVER='
@@ -26,6 +27,7 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
+  arg_vbnc="$2"
   [ x"$2" != x ] && VBNCRUN="$2"
   [ "${VBNCRUN}" = "" ] && VBNCRUN="vbnc"
 
@@ -60,6 +62,7 @@ EOF
 
   rm -f ./conftest*
   echo 'version_vbnc="'"${version_vbnc}"'"'
+  echo 'arg_vbnc="'"${arg_vbnc}"'"'
   echo 'MONORUN="'"${MONORUN}"'"'
   echo 'MONODIR="'"${MONODIR}"'"'
   echo 'MONOVER="'"${MONOVER}"'"'

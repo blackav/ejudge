@@ -8,6 +8,7 @@ function failure()
 {
   rm -f conftest*
   echo 'version_gcj='
+  echo 'arg_gcj="'"${arg_gcj}"'"'
   echo 'GCJRUN=false'
   echo 'GCJDIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
@@ -23,6 +24,7 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
+  arg_gcj="$2"
   [ x"$2" != x ] && GCJRUN="$2"
   [ "${GCJRUN}" = "" ] && GCJRUN="gcj"
 
@@ -47,6 +49,7 @@ EOF
   GCJDIR=`dirname "${GCJRUN}"`
   [ "${GCJDIR}" = . ] && GCJDIR=""
   echo 'version_gcj="'"${version_gcj}"'"'
+  echo 'arg_gcj="'"${arg_gcj}"'"'
   echo 'GCJRUN="'"${GCJRUN}"'"'
   echo 'GCJDIR="'"${GCJDIR}"'"'
   [ "${verbose}" = 1 ] && echo "yes, ${GCJRUN}, ${version_gcj}" >&2

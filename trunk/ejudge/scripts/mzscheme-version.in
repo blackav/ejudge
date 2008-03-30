@@ -9,6 +9,7 @@ function failure()
   rm -f conftest*
   echo 'version_mzscheme='
   echo 'short_name_mzscheme=scheme'
+  echo 'arg_mzscheme="'"${arg_mzscheme}"'"'
   echo 'MZSCHEMEPATH=/bin/false'
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
@@ -23,6 +24,7 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
+  arg_mzscheme="$2"
   [ x"$2" != x ] && mzscheme="$2"
   [ "${mzscheme}" = "" ] && mzscheme="mzscheme"
 
@@ -40,6 +42,7 @@ then
   rm -f ./conftest*
   echo 'version_mzscheme="'"${version_mzscheme}"'"'
   echo 'short_name_mzscheme=scheme'
+  echo 'arg_mzscheme="'"${arg_mzscheme}"'"'
   echo 'MZSCHEMEPATH="'"${MZSCHEMEPATH}"'"'
   [ "${verbose}" = 1 ] && echo "yes, ${MZSCHEMEPATH}, ${version_mzscheme}" >&2
   exit 0

@@ -9,6 +9,7 @@ function failure()
   rm -f conftest*
   echo 'version_gprolog='
   echo 'short_name_gprolog="prolog"'
+  echo 'arg_gprolog="'"${arg_gprolog}"'"'
   echo 'GPLCRUN=false'
   echo 'GPROLOGDIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
@@ -24,6 +25,7 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
+  arg_gprolog="$2"
   [ x"$2" != x ] && GPLCRUN="$2"
   [ "${GPLCRUN}" = "" ] && GPLCRUN="gplc"
 
@@ -44,6 +46,7 @@ EOF
   [ "${GPROLOGDIR}" = . ] && GPROLOGDIR=""
   echo 'version_gprolog="'"${version_gprolog}"'"'
   echo 'short_name_gprolog="prolog"'
+  echo 'arg_gprolog="'"${arg_gprolog}"'"'
   echo 'GPLCRUN="'"${GPLCRUN}"'"'
   echo 'GPROLOGDIR="'"${GPROLOGDIR}"'"'
   [ "${verbose}" = 1 ] && echo "yes, ${GPLCRUN}, ${version_gprolog}" >&2
