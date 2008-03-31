@@ -25,6 +25,8 @@
 #include "cpu.h"
 #include "misctext.h"
 #include "pathutl.h"
+#include "shellcfg_parse.h"
+#include "lang_config_vis.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -40,6 +42,9 @@
 #include <time.h>
 #include <stdarg.h>
 #include <fcntl.h>
+#include <dirent.h>
+#include <errno.h>
+#include <sys/wait.h>
 
 #include <libintl.h>
 #include <locale.h>
@@ -100,6 +105,8 @@ static unsigned char config_ejudge_locale_dir[PATH_MAX];
 static int config_ejudge_locale_dir_modified;
 static unsigned char config_ejudge_script_dir[PATH_MAX];
 static int config_ejudge_script_dir_modified;
+static unsigned char config_ejudge_lang_config_dir[PATH_MAX];
+static int config_ejudge_lang_config_dir_modified;
 static unsigned char config_ejudge_serve_path[PATH_MAX];
 static int config_ejudge_serve_path_modified;
 static unsigned char config_ejudge_run_path[PATH_MAX];
@@ -169,7 +176,7 @@ enum
 
   PATH_LINE_OTHER,
   PATH_LINE_USERLIST_XML,
-  PATH_LINE_COMPILE_DIR,
+  PATH_LINE_COMPILE_HOME_DIR,
   PATH_LINE_CONTEST1_DIR,
   PATH_LINE_VAR_DIR,
   PATH_LINE_TESTING_DIR,
@@ -182,6 +189,7 @@ enum
   PATH_LINE_EJUDGE_CGI_BIN_DIR,
   PATH_LINE_LOCALE_DIR,
   PATH_LINE_SCRIPT_DIR,
+  PATH_LINE_LANG_CONFIG_DIR,
   PATH_LINE_SERVE_PATH,
   PATH_LINE_RUN_PATH,
 
@@ -299,7 +307,7 @@ static const struct path_edit_item path_edit_items[] =
     sizeof(config_userlist_xml_path),
     &config_userlist_xml_path_modified,
   },
-  [PATH_LINE_COMPILE_DIR] =
+  [PATH_LINE_COMPILE_HOME_DIR] =
   {
     "Compile server dir", 0, config_compile_home_dir,
     sizeof(config_compile_home_dir),
@@ -390,6 +398,15 @@ static const struct path_edit_item path_edit_items[] =
     EJUDGE_SCRIPT_DIR,
 #endif /* EJUDGE_SCRIPT_DIR */
   },
+  [PATH_LINE_LANG_CONFIG_DIR] =
+  {
+    "Lang config dir", 1, config_ejudge_lang_config_dir,
+    sizeof(config_ejudge_lang_config_dir),
+    &config_ejudge_lang_config_dir_modified,
+#if defined EJUDGE_LANG_CONFIG_DIR
+    EJUDGE_LANG_CONFIG_DIR,
+#endif /* EJUDGE_LANG_CONFIG_DIR */
+  },
   [PATH_LINE_SERVE_PATH] =
   {
     "Path to `serve'", 1, config_ejudge_serve_path,
@@ -434,6 +451,7 @@ initialize_config_var(int idx)
   case PATH_LINE_EJUDGE_CGI_BIN_DIR:
   case PATH_LINE_LOCALE_DIR:
   case PATH_LINE_SCRIPT_DIR:
+  case PATH_LINE_LANG_CONFIG_DIR:
   case PATH_LINE_SERVE_PATH:
   case PATH_LINE_RUN_PATH:
     path_edit_items[idx].buf[0] = 0;
@@ -481,7 +499,7 @@ initialize_config_var(int idx)
     }
     config_userlist_xml_path_modified = 0;
     break;
-  case PATH_LINE_COMPILE_DIR:
+  case PATH_LINE_COMPILE_HOME_DIR:
     if (config_ejudge_contests_home_dir[0]) {
       snprintf(config_compile_home_dir, sizeof(config_compile_home_dir),
                "%s/compile", config_ejudge_contests_home_dir);
@@ -588,9 +606,10 @@ is_valid_path(int idx)
     return 1;
 
   case PATH_LINE_USERLIST_XML:
-  case PATH_LINE_COMPILE_DIR:
+  case PATH_LINE_COMPILE_HOME_DIR:
   case PATH_LINE_CONTEST1_DIR:
   case PATH_LINE_VAR_DIR:
+  case PATH_LINE_LANG_CONFIG_DIR:
     if (path_edit_items[idx].buf[0]) return 1;
     return 0;
 
@@ -658,6 +677,26 @@ valid_var_str(int idx)
   return "!";
 }
 
+static void
+update_lang_config_dir(const unsigned char *new_compile_dir)
+{
+  size_t len;
+  unsigned char new_buf[PATH_MAX];
+
+  if (!new_compile_dir) return;
+  if (!strcmp(new_compile_dir, config_compile_home_dir)) return;
+  len = strlen(config_compile_home_dir);
+  if (strncmp(config_compile_home_dir, config_ejudge_lang_config_dir,
+              len) != 0) return;
+  snprintf(new_buf, sizeof(new_buf), "%s%s", new_compile_dir,
+           config_ejudge_lang_config_dir + len);
+  if (!strcmp(new_buf, config_ejudge_lang_config_dir)) return;
+  snprintf(config_ejudge_lang_config_dir,sizeof(config_ejudge_lang_config_dir),
+           "%s", new_buf);
+  config_ejudge_lang_config_dir_modified = 1;
+  
+}
+
 static const unsigned char builtin_change_warning[] =
 "\\begin{center}\n"
 "WARNING!\n"
@@ -716,6 +755,7 @@ do_paths_menu(int *p_cur_item)
     case PATH_LINE_EJUDGE_XML:
     case PATH_LINE_CONTESTS_DIR:
     case PATH_LINE_SCRIPT_DIR:
+    case PATH_LINE_LANG_CONFIG_DIR:
     case PATH_LINE_SERVE_PATH:
     case PATH_LINE_RUN_PATH:
     case PATH_LINE_CGI_BIN_DIR:
@@ -733,7 +773,7 @@ do_paths_menu(int *p_cur_item)
     case PATH_LINE_CGI_DATA_DIR:
     case PATH_LINE_FULL_CGI_DATA_DIR:
     case PATH_LINE_USERLIST_XML:
-    case PATH_LINE_COMPILE_DIR:
+    case PATH_LINE_COMPILE_HOME_DIR:
     case PATH_LINE_CONTEST1_DIR:
     case PATH_LINE_VAR_DIR:
     case PATH_LINE_STAND_HTML_DIR:
@@ -933,6 +973,9 @@ do_paths_menu(int *p_cur_item)
         if (j != 1) continue;
       }
 
+      if (i == PATH_LINE_COMPILE_HOME_DIR) {
+        update_lang_config_dir(tmp_buf);
+      }
       snprintf(cur_path_item->buf, cur_path_item->size, "%s", tmp_buf);
       if (cur_path_item->updated_ptr) *cur_path_item->updated_ptr = 1;
       if (i == PATH_LINE_CGI_BIN_DIR) {
@@ -969,6 +1012,7 @@ do_paths_menu(int *p_cur_item)
     }
     if (c == 'b') {
       if (i != PATH_LINE_LOCALE_DIR && i != PATH_LINE_SCRIPT_DIR
+          && i != PATH_LINE_LANG_CONFIG_DIR
           && i != PATH_LINE_SERVE_PATH && i != PATH_LINE_RUN_PATH
           && i != PATH_LINE_CGI_BIN_DIR && i != PATH_LINE_TESTING_DIR
           && i != PATH_LINE_HTDOCS_DIR && i != PATH_LINE_EJUDGE_CGI_BIN_DIR)
@@ -2098,6 +2142,18 @@ generate_master_cfg(FILE *f)
   }
 }
 
+static int
+is_lang_available(const unsigned char *lang, unsigned char **p_version)
+{
+  const struct lang_config_info *pcfg;
+
+  return (pcfg = lang_config_lookup(lang))
+    && pcfg->enabled > 0
+    && pcfg->version
+    && *pcfg->version
+    && (*p_version = pcfg->version);
+}
+
 static void
 generate_serve_cfg(FILE *f)
 {
@@ -2106,6 +2162,12 @@ generate_serve_cfg(FILE *f)
   int nbuiltin = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   path_t check_dir;
+  unsigned char *version = 0;
+  int need_default_arch = 0;
+  int need_shared_arch = 0;
+  int need_dos_arch = 0;
+  int need_java_arch = 0;
+  int need_msil_arch = 0;
 
   generate_current_date(date_buf, sizeof(date_buf));
 
@@ -2215,7 +2277,7 @@ generate_serve_cfg(FILE *f)
           "enable_continue\n"
           "stand_fancy_style\n"
           "compile_dir = \"%s/var/compile\"\n"
-          "cpu_bogomips = %d\n\n",
+          "cpu_bogomips = %d\n",
           config_serialization_key, config_compile_home_dir,
           cpu_get_bogomips());
 
@@ -2224,252 +2286,270 @@ generate_serve_cfg(FILE *f)
   fprintf(f, "detect_violations\n");
 #endif
 
-#if defined COMPILE_FPC_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 1\n"
-          "short_name = \"fpc\"\n"
-          "long_name = \"Free Pascal %s\"\n"
-          "src_sfx = \".pas\"\n"
-          "\n",
-          COMPILE_FPC_VERSION);
-#endif /* COMPILE_FPC_VERSION */
+  fprintf(f, "\n");
+
+  if (is_lang_available("fpc", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 1\n"
+            "short_name = \"fpc\"\n"
+            "long_name = \"Free Pascal %s\"\n"
+            "src_sfx = \".pas\"\n"
+            "\n",
+            version);
+    need_default_arch = 1;
+  }
   
-#if defined COMPILE_GCC_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 2\n"
-          "short_name = \"gcc\"\n"
-          "long_name = \"GNU C %s\"\n"
-          "src_sfx = \".c\"\n"
-          "\n",
-          COMPILE_GCC_VERSION);
-#endif /* COMPILE_GCC_VERSION */
+  if (is_lang_available("gcc", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 2\n"
+            "short_name = \"gcc\"\n"
+            "long_name = \"GNU C %s\"\n"
+            "src_sfx = \".c\"\n"
+            "\n",
+            version);
+    need_default_arch = 1;
+  }
 
-#if defined COMPILE_GPP_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 3\n"
-          "short_name = \"g++\"\n"
-          "long_name = \"GNU C++ %s\"\n"
-          "src_sfx = \".cpp\"\n"
-          "\n",
-          COMPILE_GPP_VERSION);
-#endif /* COMPILE_GPP_VERSION */
+  if (is_lang_available("g++", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 3\n"
+            "short_name = \"g++\"\n"
+            "long_name = \"GNU C++ %s\"\n"
+            "src_sfx = \".cpp\"\n"
+            "\n",
+            version);
+    need_default_arch = 1;
+  }
 
-#if defined COMPILE_GPC_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 4\n"
-          "short_name = \"gpc\"\n"
-          "long_name = \"GNU Pascal %s\"\n"
-          "src_sfx = \".pas\"\n"
-          "\n",
-          COMPILE_GPC_VERSION);
-#endif /* COMPILE_GPC_VERSION */
+  if (is_lang_available("gpc", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 4\n"
+            "short_name = \"gpc\"\n"
+            "long_name = \"GNU Pascal %s\"\n"
+            "src_sfx = \".pas\"\n"
+            "\n",
+            version);
+    need_default_arch = 1;
+  }
 
-#if defined COMPILE_GCJ_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 5\n"
-          "short_name = \"gcj\"\n"
-          "long_name = \"GNU Java (GCJ) %s\"\n"
-          "src_sfx = \".java\"\n"
-          "arch = linux-shared\n"
-          "\n",
-          COMPILE_GCJ_VERSION);
-#endif /* COMPILE_GCJ_VERSION */
+  if (is_lang_available("gcj", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 5\n"
+            "short_name = \"gcj\"\n"
+            "long_name = \"GNU Java (GCJ) %s\"\n"
+            "src_sfx = \".java\"\n"
+            "arch = linux-shared\n"
+            "\n",
+            version);
+    need_shared_arch = 1;
+  }
 
-#if defined COMPILE_GFORTRAN_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 6\n"
-          "short_name = \"gfortran\"\n"
-          "long_name = \"GNU Fortran %s\"\n"
-          "src_sfx = \".for\"\n"
-          "\n",
-          COMPILE_GFORTRAN_VERSION);
-#elif defined COMPILE_G77_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 6\n"
-          "short_name = \"g77\"\n"
-          "long_name = \"GNU Fortran 77 %s\"\n"
-          "src_sfx = \".for\"\n"
-          "\n",
-          COMPILE_G77_VERSION);
-#endif /* COMPILE_G77_VERSION */
+  if (is_lang_available("gfortran", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 6\n"
+            "short_name = \"gfortran\"\n"
+            "long_name = \"GNU Fortran %s\"\n"
+            "src_sfx = \".for\"\n"
+            "\n",
+            version);
+    need_default_arch = 1;
+  } else if (is_lang_available("g77", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 6\n"
+            "short_name = \"g77\"\n"
+            "long_name = \"GNU Fortran 77 %s\"\n"
+            "src_sfx = \".for\"\n"
+            "\n",
+            version);
+    need_default_arch = 1;
+  }
 
-  // not yet supported, so always commented out
-#if defined COMPILE_TPC_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 7\n"
-          "short_name = \"tpc\"\n"
-          "long_name = \"Turbo Pascal %s\"\n"
-          "src_sfx = \".pas\"\n"
-          "exe_sfx = \".exe\"\n"
-          "arch = dos\n"
-          "\n",
-          COMPILE_TPC_VERSION);
-#endif /* COMPILE_TPC_VERSION */
+  if (is_lang_available("tpc", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 7\n"
+            "short_name = \"tpc\"\n"
+            "long_name = \"Turbo Pascal %s\"\n"
+            "src_sfx = \".pas\"\n"
+            "exe_sfx = \".exe\"\n"
+            "arch = dos\n"
+            "\n",
+            version);
+    need_dos_arch = 1;
+  }
 
-#if defined COMPILE_DCC_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 8\n"
-          "short_name = \"dcc\"\n"
-          "long_name = \"Borland Delphi %s\"\n"
-          "src_sfx = \".pas\"\n"
-          "arch = linux-shared\n"
-          "\n",
-          COMPILE_DCC_VERSION);
-#endif /* COMPILE_DCC_VERSION */
+  if (is_lang_available("dcc", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 8\n"
+            "short_name = \"dcc\"\n"
+            "long_name = \"Borland Delphi %s\"\n"
+            "src_sfx = \".pas\"\n"
+            "arch = linux-shared\n"
+            "\n",
+            version);
+    need_shared_arch = 1;
+  }
 
-  // not yet supported, so always commented out
-#if defined COMPILE_BCC_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 9\n"
-          "short_name = \"bcc\"\n"
-          "long_name = \"Borland C %s\"\n"
-          "src_sfx = \".c\"\n"
-          "exe_sfx = \".exe\"\n"
-          "arch = dos\n"
-          "\n",
-          COMPILE_BCC_VERSION);
-#endif /* COMPILE_BCC_VERSION */
+  if (is_lang_available("bcc", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 9\n"
+            "short_name = \"bcc\"\n"
+            "long_name = \"Borland C %s\"\n"
+            "src_sfx = \".c\"\n"
+            "exe_sfx = \".exe\"\n"
+            "arch = dos\n"
+            "\n",
+            version);
+    need_dos_arch = 1;
+  }
 
-  // not yet supported, so always commented out
-#if defined COMPILE_BPP_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 10\n"
-          "short_name = \"bpp\"\n"
-          "long_name = \"Borland C++ %s\"\n"
-          "src_sfx = \".cpp\"\n"
-          "exe_sfx = \".exe\"\n"
-          "cmd = \"bppemu\"\n"
-          "\n",
-          COMPILE_BPP_VERSION);
-#endif /* COMPILE_BPP_VERSION */
+  if (is_lang_available("bpp", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 10\n"
+            "short_name = \"bpp\"\n"
+            "long_name = \"Borland C++ %s\"\n"
+            "src_sfx = \".cpp\"\n"
+            "exe_sfx = \".exe\"\n"
+            "cmd = \"bppemu\"\n"
+            "\n",
+            version);
+    need_dos_arch = 1;
+  }
 
-#if defined COMPILE_YABASIC_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 11\n"
-          "short_name = \"basic\"\n"
-          "long_name = \"Yabasic %s\"\n"
-          "src_sfx = \".bas\"\n"
-          "arch = linux-shared\n"
-          "\n",
-          COMPILE_YABASIC_VERSION);
-#endif /* COMPILE_YABASIC_VERSION */
+  if (is_lang_available("yabasic", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 11\n"
+            "short_name = \"basic\"\n"
+            "long_name = \"Yabasic %s\"\n"
+            "src_sfx = \".bas\"\n"
+            "arch = linux-shared\n"
+            "\n",
+            version);
+    need_shared_arch = 1;
+  }
 
-#if defined COMPILE_MZSCHEME_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 12\n"
-          "short_name = \"scheme\"\n"
-          "long_name = \"Mz Scheme %s\"\n"
-          "src_sfx = \".scm\"\n"
-          "arch = linux-shared\n"
-          "\n",
-          COMPILE_MZSCHEME_VERSION);
-#endif /* COMPILE_MZSCHEME_VERSION */
+  if (is_lang_available("mzscheme", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 12\n"
+            "short_name = \"scheme\"\n"
+            "long_name = \"Mz Scheme %s\"\n"
+            "src_sfx = \".scm\"\n"
+            "arch = linux-shared\n"
+            "\n",
+            version);
+    need_shared_arch = 1;
+  }
 
-#if defined COMPILE_PYTHON_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 13\n"
-          "short_name = \"python\"\n"
-          "long_name = \"Python %s\"\n"
-          "src_sfx = \".py\"\n"
-          "arch = linux-shared\n"
-          "\n",
-          COMPILE_PYTHON_VERSION);
-#endif /* COMPILE_PYTHON_VERSION */
+  if (is_lang_available("python", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 13\n"
+            "short_name = \"python\"\n"
+            "long_name = \"Python %s\"\n"
+            "src_sfx = \".py\"\n"
+            "arch = linux-shared\n"
+            "\n",
+            version);
+    need_shared_arch = 1;
+  }
 
-#if defined COMPILE_PERL_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 14\n"
-          "short_name = \"perl\"\n"
-          "long_name = \"Perl %s\"\n"
-          "src_sfx = \".pl\"\n"
-          "arch = \"linux-shared\"\n"
-          "\n",
-          COMPILE_PERL_VERSION);
-#endif /* COMPILE_PERL_VERSION */
+  if (is_lang_available("perl", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 14\n"
+            "short_name = \"perl\"\n"
+            "long_name = \"Perl %s\"\n"
+            "src_sfx = \".pl\"\n"
+            "arch = \"linux-shared\"\n"
+            "\n",
+            version);
+    need_shared_arch = 1;
+  }
 
-#if defined COMPILE_GPROLOG_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 15\n"
-          "short_name = \"prolog\"\n"
-          "long_name = \"GNU Prolog %s\"\n"
-          "src_sfx = \".pro\"\n"
-          "arch = \"linux-shared\"\n"
-          "\n",
-          COMPILE_GPROLOG_VERSION);
-#endif /* COMPILE_GPROLOG_VERSION */
+  if (is_lang_available("gprolog", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 15\n"
+            "short_name = \"prolog\"\n"
+            "long_name = \"GNU Prolog %s\"\n"
+            "src_sfx = \".pro\"\n"
+            "arch = \"linux-shared\"\n"
+            "\n",
+            version);
+    need_shared_arch = 1;
+  }
 
-  // not yet supported, so always commented out
-#if defined COMPILE_QB_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 16\n"
-          "short_name = \"qb\"\n"
-          "long_name = \"Quick Basic %s\"\n"
-          "src_sfx = \".bas\"\n"
-          "exe_sfx = \".exe\"\n"
-          "arch = dos\n"
-          "\n",
-          COMPILE_QB_VERSION);
-#endif /* COMPILE_QB_VERSION */
+  if (is_lang_available("qb", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 16\n"
+            "short_name = \"qb\"\n"
+            "long_name = \"Quick Basic %s\"\n"
+            "src_sfx = \".bas\"\n"
+            "exe_sfx = \".exe\"\n"
+            "arch = dos\n"
+            "\n",
+            version);
+    need_dos_arch = 1;
+  }
 
-#if defined COMPILE_JAVA_VERSION
-  fprintf(f,
-          "[language]\n"
-          "id = 18\n"
-          "short_name = \"java\"\n"
-          "long_name = \"Java %s\"\n"
-          "src_sfx = \".java\"\n"
-          "exe_sfx = \".jar\"\n"
-          "arch = \"java\"\n"
-          "\n",
-          COMPILE_JAVA_VERSION);
-#endif /* COMPILE_JAVA_VERSION */
+  if (is_lang_available("javac", &version)) {
+    fprintf(f,
+            "[language]\n"
+            "id = 18\n"
+            "short_name = \"java\"\n"
+            "long_name = \"Java %s\"\n"
+            "src_sfx = \".java\"\n"
+            "exe_sfx = \".jar\"\n"
+            "arch = \"java\"\n"
+            "\n",
+            version);
+    need_java_arch = 1;
+  }
 
-#if defined COMPILE_MONO_VERSION
-  fprintf(f,
-          "# Note, support for Mono C# is experimental!\n"
-          "# [language]\n"
-          "# id = 19\n"
-          "# short_name = \"mcs\"\n"
-          "# long_name = \"Mono C# %s\"\n"
-          "# disabled = 1 # Enable manually!\n"
-          "# src_sfx = \".cs\"\n"
-          "# exe_sfx = \".exe\"\n"
-          "# arch = \"msil\"\n"
-          "# \n",
-          COMPILE_MONO_VERSION);
-#endif /* COMPILE_MONO_VERSION */
+  if (is_lang_available("mcs", &version)) {
+    fprintf(f,
+            "# Note, support for Mono C# is experimental!\n"
+            "[language]\n"
+            "id = 19\n"
+            "short_name = \"mcs\"\n"
+            "long_name = \"Mono C# %s\"\n"
+            "disabled = 1 # Enable manually!\n"
+            "src_sfx = \".cs\"\n"
+            "exe_sfx = \".exe\"\n"
+            "arch = \"msil\"\n"
+            "\n",
+            version);
+    need_msil_arch = 1;
+  }
 
-#if defined COMPILE_VBNC_VERSION
-  fprintf(f,
-          "# Note, support for Mono Visual Basic is experimental!\n"
-          "# [language]\n"
-          "# id = 20\n"
-          "# short_name = \"vbnc\"\n"
-          "# long_name = \"Mono Visual Basic %s\"\n"
-          "# disabled = 1 # Enable manually!\n"
-          "# src_sfx = \".vb\"\n"
-          "# exe_sfx = \".exe\"\n"
-          "# arch = \"msil\"\n"
-          "# \n",
-          COMPILE_VBNC_VERSION);
-#endif /* COMPILE_VBNC_VERSION */
+  if (is_lang_available("vbnc", &version)) {
+    fprintf(f,
+            "# Note, support for Mono Visual Basic is experimental!\n"
+            "[language]\n"
+            "id = 20\n"
+            "short_name = \"vbnc\"\n"
+            "long_name = \"Mono Visual Basic %s\"\n"
+            "disabled = 1 # Enable manually!\n"
+            "src_sfx = \".vb\"\n"
+            "exe_sfx = \".exe\"\n"
+            "arch = \"msil\"\n"
+            "\n",
+            version);
+    need_msil_arch = 1;
+  }
 
   fputs("[problem]\n"
         "short_name = Generic\n"
@@ -2501,45 +2581,48 @@ generate_serve_cfg(FILE *f)
         "\n",
         f);
 
-  fputs("[tester]\n"
-        "name = Generic\n"
-        "abstract\n"
-        "no_core_dump\n"
-        "kill_signal = KILL\n"
-        "memory_limit_type = \"default\"\n"
-        "secure_exec_type = \"static\"\n"
-        "clear_env\n",
-        f);
+  if (need_default_arch) {
+    fputs("[tester]\n"
+          "name = Generic\n"
+          "abstract\n"
+          "no_core_dump\n"
+          "kill_signal = KILL\n"
+          "memory_limit_type = \"default\"\n"
+          "secure_exec_type = \"static\"\n"
+          "clear_env\n",
+          f);
   /*
 #if CONF_HAS_LIBCAP - 0 == 1
   fprintf(f, "start_cmd = \"capexec\"\n");
 #endif
   */
-  check_dir[0] = 0;
-  if (!strcmp(config_workdisk_flag, "yes")) {
-    snprintf(check_dir, sizeof(check_dir), "%s/work",
-             config_workdisk_mount_dir);
-  } else {
-    if (config_testing_work_dir[0]) {
-      snprintf(check_dir, sizeof(check_dir), "%s", config_testing_work_dir);
+    check_dir[0] = 0;
+    if (!strcmp(config_workdisk_flag, "yes")) {
+      snprintf(check_dir, sizeof(check_dir), "%s/work",
+               config_workdisk_mount_dir);
+    } else {
+      if (config_testing_work_dir[0]) {
+        snprintf(check_dir, sizeof(check_dir), "%s", config_testing_work_dir);
+      }
     }
+    if (check_dir[0]) {
+      fprintf(f, "check_dir = \"%s\"\n",
+              c_armor_2(&ab, check_dir, config_ejudge_contests_home_dir));
+    }
+    fputs("\n", f);
   }
-  if (check_dir[0]) {
-    fprintf(f, "check_dir = \"%s\"\n",
-            c_armor_2(&ab, check_dir, config_ejudge_contests_home_dir));
-  }
-  fputs("\n", f);
-  
-  fputs("[tester]\n"
-        "name = Linux-shared\n"
-        "arch = linux-shared\n"
-        "abstract\n"
-        "no_core_dump\n"
-        "kill_signal = KILL\n"
-        "memory_limit_type = \"default\"\n"
-        "secure_exec_type = \"dll\"\n"
-        "clear_env\n",
-        f);
+
+  if (need_shared_arch) {
+    fputs("[tester]\n"
+          "name = Linux-shared\n"
+          "arch = linux-shared\n"
+          "abstract\n"
+          "no_core_dump\n"
+          "kill_signal = KILL\n"
+          "memory_limit_type = \"default\"\n"
+          "secure_exec_type = \"dll\"\n"
+          "clear_env\n",
+          f);
   /*
 #if CONF_HAS_LIBCAP - 0 == 1
   fprintf(f,
@@ -2547,86 +2630,89 @@ generate_serve_cfg(FILE *f)
           "start_env = \"LD_PRELOAD=${script_dir}/libdropcaps.so\"\n");
 #endif
   */
-  if (check_dir[0]) {
-    fprintf(f, "check_dir = \"%s\"\n",
-            c_armor_2(&ab, check_dir, config_ejudge_contests_home_dir));
+    if (check_dir[0]) {
+      fprintf(f, "check_dir = \"%s\"\n",
+              c_armor_2(&ab, check_dir, config_ejudge_contests_home_dir));
+    }
+    fputs("\n", f);
   }
-  fputs("\n", f);
 
-#if defined COMPILE_JAVA_VERSION
-  fputs("[tester]\n"
-        "name = Linux-java\n"
-        "arch = java\n"
-        "abstract\n"
-        "no_core_dump\n"
-        "kill_signal = TERM\n"
-        "memory_limit_type = \"java\"\n"
-        "secure_exec_type = \"java\"\n"
-        "start_cmd = runjava\n"
-        "start_env = \"LANG=C\"\n"
-        "start_env = \"EJUDGE_PREFIX_DIR\"\n",
-        f);
+  if (need_java_arch) {
+    fputs("[tester]\n"
+          "name = Linux-java\n"
+          "arch = java\n"
+          "abstract\n"
+          "no_core_dump\n"
+          "kill_signal = TERM\n"
+          "memory_limit_type = \"java\"\n"
+          "secure_exec_type = \"java\"\n"
+          "start_cmd = runjava\n"
+          "start_env = \"LANG=C\"\n"
+          "start_env = \"EJUDGE_PREFIX_DIR\"\n",
+          f);
 
-  if (check_dir[0]) {
-    fprintf(f, "check_dir = \"%s\"\n",
-            c_armor_2(&ab, check_dir, config_ejudge_contests_home_dir));
+    if (check_dir[0]) {
+      fprintf(f, "check_dir = \"%s\"\n",
+              c_armor_2(&ab, check_dir, config_ejudge_contests_home_dir));
+    }
+    fputs("\n", f);
   }
-  fputs("\n", f);
-#endif /* COMPILE_JAVA_VERSION */
 
-#if 0 // disable it for now...
-#if defined COMPILE_MONO_VERSION
-  fputs("[tester]\n"
-        "name = Linux-msil\n"
-        "arch = msil\n"
-        "abstract\n"
-        "no_core_dump\n"
-        "kill_signal = TERM\n"
-        "memory_limit_type = \"default\"\n"
-        //        "secure_exec_type = \"mono\"\n" -- not implemented
-        "start_cmd = runmono\n"
-        "start_env = \"EJUDGE_PREFIX_DIR\"\n"
-        "# start_env = \"EJUDGE_MONO_FLAGS=\"\n",
-        f);
+  if(need_msil_arch) {
+    fputs("[tester]\n"
+          "name = Linux-msil\n"
+          "arch = msil\n"
+          "abstract\n"
+          "no_core_dump\n"
+          "kill_signal = TERM\n"
+          "memory_limit_type = \"default\"\n"
+          //        "secure_exec_type = \"mono\"\n" -- not implemented
+          "start_cmd = runmono\n"
+          "start_env = \"EJUDGE_PREFIX_DIR\"\n"
+          "# start_env = \"EJUDGE_MONO_FLAGS=\"\n",
+          f);
 
-  if (check_dir[0]) {
-    fprintf(f, "check_dir = \"%s\"\n",
-            c_armor_2(&ab, check_dir, config_ejudge_contests_home_dir));
+    if (check_dir[0]) {
+      fprintf(f, "check_dir = \"%s\"\n",
+              c_armor_2(&ab, check_dir, config_ejudge_contests_home_dir));
+    }
+    fputs("\n", f);
   }
-  fputs("\n", f);
-#endif /* COMPILE_MONO_VERSION */
-#endif
 
-  fputs("[tester]\n"
-        "any\n"
-        "super = Generic\n"
-        "\n"
-        "[tester]\n"
-        "any\n"
-        "super = Linux-shared\n"
-        "arch = linux-shared\n",
-        f);
+  if (need_default_arch) {
+    fputs("[tester]\n"
+          "any\n"
+          "super = Generic\n"
+          "\n",
+          f);
+  }
 
-#if defined COMPILE_JAVA_VERSION
-  fputs("\n"
-        "[tester]\n"
-        "any\n"
-        "super = Linux-java\n"
-        "arch = java\n",
-        f);
-#endif /* COMPILE_JAVA_VERSION */
+  if (need_shared_arch) {
+    fputs("[tester]\n"
+          "any\n"
+          "super = Linux-shared\n"
+          "arch = linux-shared\n"
+          "\n",
+          f);
+  }
 
-  // disable it for now...
-#if 0
-#if defined COMPILE_MONO_VERSION
-  fputs("\n"
-        "[tester]\n"
-        "any\n"
-        "super = Linux-msil\n"
-        "arch = msil\n",
-        f);
-#endif /* COMPILE_MONO_VERSION */
-#endif
+  if (need_java_arch) {
+    fputs("\n"
+          "[tester]\n"
+          "any\n"
+          "super = Linux-java\n"
+          "arch = java\n",
+          f);
+  }
+
+  if (need_msil_arch) {
+    fputs("\n"
+          "[tester]\n"
+          "any\n"
+          "super = Linux-msil\n"
+          "arch = msil\n",
+          f);
+  }
 
   html_armor_free(&ab);
 }
@@ -2635,7 +2721,6 @@ static void
 generate_compile_cfg(FILE *f)
 {
   unsigned char date_buf[64];
-  const unsigned char *cmt, *version;
 
   generate_current_date(date_buf, sizeof(date_buf));
 
@@ -2648,82 +2733,67 @@ generate_compile_cfg(FILE *f)
           "sleep_time = 1000\n"
           "\n");
 
-#if defined COMPILE_FPC_VERSION
-  cmt = ""; version = COMPILE_FPC_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_FPC_VERSION */
+  if (config_ejudge_lang_config_dir[0]) {
+    fprintf(f, "lang_config_dir = \"%s\"\n\n",
+            config_ejudge_lang_config_dir);
+  }
+
   fprintf(f,
-          "%s[language]\n"
-          "%sid = 1\n"
-          "%sshort_name = \"fpc\"\n"
-          "%slong_name = \"Free Pascal %s\"\n"
-          "%ssrc_sfx = \".pas\"\n"
-          "%scmd = \"fpc\"\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt);
+          "[language]\n"
+          "id = 1\n"
+          "short_name = \"fpc\"\n"
+          "long_name = \"Free Pascal\"\n"
+          "src_sfx = \".pas\"\n"
+          "cmd = \"fpc\"\n"
+          "\n");
   
-#if defined COMPILE_GCC_VERSION
-  cmt = ""; version = COMPILE_GCC_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_GCC_VERSION */
   fprintf(f,
-          "%s[language]\n"
-          "%sid = 2\n"
-          "%sshort_name = \"gcc\"\n"
-          "%slong_name = \"GNU C %s\"\n"
-          "%ssrc_sfx = \".c\"\n"
-          "%scmd = \"gcc\"\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt);
+          "[language]\n"
+          "id = 2\n"
+          "short_name = \"gcc\"\n"
+          "long_name = \"GNU C\"\n"
+          "src_sfx = \".c\"\n"
+          "cmd = \"gcc\"\n"
+          "\n");
 
-#if defined COMPILE_GPP_VERSION
-  cmt = ""; version = COMPILE_GPP_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_GPP_VERSION */
   fprintf(f,
-          "%s[language]\n"
-          "%sid = 3\n"
-          "%sshort_name = \"g++\"\n"
-          "%slong_name = \"GNU C++ %s\"\n"
-          "%ssrc_sfx = \".cpp\"\n"
-          "%scmd = \"g++\"\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt);
+          "[language]\n"
+          "id = 3\n"
+          "short_name = \"g++\"\n"
+          "long_name = \"GNU C++\"\n"
+          "src_sfx = \".cpp\"\n"
+          "cmd = \"g++\"\n"
+          "\n");
 
-#if defined COMPILE_GPC_VERSION
-  cmt = ""; version = COMPILE_GPC_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_GPC_VERSION */
   fprintf(f,
-          "%s[language]\n"
-          "%sid = 4\n"
-          "%sshort_name = \"gpc\"\n"
-          "%slong_name = \"GNU Pascal %s\"\n"
-          "%ssrc_sfx = \".pas\"\n"
-          "%scmd = \"gpc\"\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt);
+          "[language]\n"
+          "id = 4\n"
+          "short_name = \"gpc\"\n"
+          "long_name = \"GNU Pascal\"\n"
+          "src_sfx = \".pas\"\n"
+          "cmd = \"gpc\"\n"
+          "\n");
 
-#if defined COMPILE_GCJ_VERSION
-  cmt = ""; version = COMPILE_GCJ_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_GCJ_VERSION */
   fprintf(f,
-          "%s[language]\n"
-          "%sid = 5\n"
-          "%sshort_name = \"gcj\"\n"
-          "%slong_name = \"GNU Java (GCJ) %s\"\n"
-          "%ssrc_sfx = \".java\"\n"
-          "%scmd = \"gcj\"\n"
+          "[language]\n"
+          "id = 5\n"
+          "short_name = \"gcj\"\n"
+          "long_name = \"GNU Java (GCJ)\"\n"
+          "src_sfx = \".java\"\n"
+          "cmd = \"gcj\"\n"
           "arch = linux-shared\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt);
+          "\n");
 
+  fprintf(f,
+          "[language]\n"
+          "id = 6\n"
+          "short_name = \"gfortran\"\n"
+          "long_name = \"GNU Fortran\"\n"
+          "src_sfx = \".for\"\n"
+          "cmd = \"gfortran\"\n"
+          "\n");
+
+  /*
 #if defined COMPILE_GFORTRAN_VERSION
   cmt = ""; version = COMPILE_GFORTRAN_VERSION;
   fprintf(f,
@@ -2757,245 +2827,145 @@ generate_compile_cfg(FILE *f)
           "%scmd = \"g77\"\n"
           "%s\n",
           cmt, cmt, cmt, cmt, version, cmt, cmt, cmt);
-#endif /* COMPILE_GFORTRAN_VERSION */
+#endif
+*/
 
-  // not yet supported, so always commented out
-#if defined COMPILE_TPC_VERSION
-  cmt = ""; version = COMPILE_TPC_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_TPC_VERSION */
-  fprintf(f,
-          "%s[language]\n"
-          "%sid = 7\n"
-          "%sshort_name = \"tpc\"\n"
-          "%slong_name = \"Turbo Pascal %s\"\n"
-          "%ssrc_sfx = \".pas\"\n"
-          "%sexe_sfx = \".exe\"\n"
-          "%scmd = \"bpcemu2\"\n"
-          "%sarch = dos\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt, cmt);
-
-#if defined COMPILE_DCC_VERSION
-  cmt = ""; version = COMPILE_DCC_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_DCC_VERSION */
-  fprintf(f,
-          "%s[language]\n"
-          "%sid = 8\n"
-          "%sshort_name = \"dcc\"\n"
-          "%slong_name = \"Borland Delphi %s\"\n"
-          "%ssrc_sfx = \".pas\"\n"
-          "%scmd = \"dcc\"\n"
-          "%sarch = linux-shared\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt);
-
-  // not yet supported, so always commented out
-#if defined COMPILE_BCC_VERSION
-  cmt = ""; version = COMPILE_BCC_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_BCC_VERSION */
-  fprintf(f,
-          "%s[language]\n"
-          "%sid = 9\n"
-          "%sshort_name = \"bcc\"\n"
-          "%slong_name = \"Borland C %s\"\n"
-          "%ssrc_sfx = \".c\"\n"
-          "%sexe_sfx = \".exe\"\n"
-          "%scmd = \"bccemu\"\n"
-          "%sarch = dos\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt, cmt);
-
-  // not yet supported, so always commented out
-#if defined COMPILE_BPP_VERSION
-  cmt = ""; version = COMPILE_BPP_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_BPP_VERSION */
-  fprintf(f,
-          "%s[language]\n"
-          "%sid = 10\n"
-          "%sshort_name = \"bpp\"\n"
-          "%slong_name = \"Borland C++ %s\"\n"
-          "%ssrc_sfx = \".cpp\"\n"
-          "%sexe_sfx = \".exe\"\n"
-          "%scmd = \"bppemu\"\n"
-          "%sarch = dos\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt, cmt);
-
-#if defined COMPILE_YABASIC_VERSION
-  cmt = ""; version = COMPILE_YABASIC_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_YABASIC_VERSION */
-  fprintf(f,
-          "%s[language]\n"
-          "%sid = 11\n"
-          "%sshort_name = \"basic\"\n"
-          "%slong_name = \"Yabasic %s\"\n"
-          "%ssrc_sfx = \".bas\"\n"
-          "%scmd = \"yabasic\"\n"
-          "%sarch = linux-shared\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt);
-
-#if defined COMPILE_MZSCHEME_VERSION
-  cmt = ""; version = COMPILE_MZSCHEME_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_MZSCHEME_VERSION */
-  fprintf(f,
-          "%s[language]\n"
-          "%sid = 12\n"
-          "%sshort_name = \"scheme\"\n"
-          "%slong_name = \"Mz Scheme %s\"\n"
-          "%ssrc_sfx = \".scm\"\n"
-          "%scmd = \"mzscheme\"\n"
-          "%sarch = linux-shared\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt);
-
-#if defined COMPILE_PYTHON_VERSION
-  cmt = ""; version = COMPILE_PYTHON_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_PYTHON_VERSION */
-  fprintf(f,
-          "%s[language]\n"
-          "%sid = 13\n"
-          "%sshort_name = \"python\"\n"
-          "%slong_name = \"Python %s\"\n"
-          "%ssrc_sfx = \".py\"\n"
-          "%scmd = \"python\"\n"
-          "%sarch = linux-shared\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt);
-
-#if defined COMPILE_PERL_VERSION
-  cmt = ""; version = COMPILE_PERL_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_PERL_VERSION */
-  fprintf(f,
-          "%s[language]\n"
-          "%sid = 14\n"
-          "%sshort_name = \"perl\"\n"
-          "%slong_name = \"Perl %s\"\n"
-          "%ssrc_sfx = \".pl\"\n"
-          "%scmd = \"perl\"\n"
-          "%sarch = \"linux-shared\"\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt);
-
-#if defined COMPILE_GPROLOG_VERSION
-  cmt = ""; version = COMPILE_GPROLOG_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_GPROLOG_VERSION */
-  fprintf(f,
-          "%s[language]\n"
-          "%sid = 15\n"
-          "%sshort_name = \"prolog\"\n"
-          "%slong_name = \"GNU Prolog %s\"\n"
-          "%ssrc_sfx = \".pro\"\n"
-          "%scmd = \"gprolog\"\n"
-          "%sarch = \"linux-shared\"\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt);
-
-  // not yet supported, so always commented out
-#if defined COMPILE_QB_VERSION
-  cmt = ""; version = COMPILE_QB_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_QB_VERSION */
-  fprintf(f,
-          "%s[language]\n"
-          "%sid = 16\n"
-          "%sshort_name = \"qb\"\n"
-          "%slong_name = \"Quick Basic %s\"\n"
-          "%ssrc_sfx = \".bas\"\n"
-          "%sexe_sfx = \".exe\"\n"
-          "%scmd = \"qbemu\"\n"
-          "%sarch = dos\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt, cmt);
-
-#if defined COMPILE_JAVA_VERSION
-  cmt = ""; version = COMPILE_JAVA_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_JAVA_VERSION */
-  fprintf(f,
-          "%s[language]\n"
-          "%sid = 18\n"
-          "%sshort_name = \"java\"\n"
-          "%slong_name = \"Java %s\"\n"
-          "%ssrc_sfx = \".java\"\n"
-          "%sexe_sfx = \".jar\"\n"
-          "%scmd = \"javac\"\n"
-          "%sarch = \"java\"\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt, cmt);
-
-#if defined COMPILE_MONO_VERSION
-  cmt = ""; version = COMPILE_MONO_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_MONO_VERSION */
-
-  // disable it for now...
-  cmt = "#";
-
-  fprintf(f,
-          "%s[language]\n"
-          "%sid = 19\n"
-          "%sshort_name = \"mcs\"\n"
-          "%slong_name = \"Mono C# %s\"\n"
-          "%ssrc_sfx = \".cs\"\n"
-          "%sexe_sfx = \".exe\"\n"
-          "%scmd = \"mcs\"\n"
-          "%sarch = \"msil\"\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt, cmt);
-
-#if defined COMPILE_VBNC_VERSION
-  cmt = ""; version = COMPILE_VBNC_VERSION;
-#else
-  cmt = "# "; version = "";
-#endif /* COMPILE_VBNC_VERSION */
-
-  // disable it for now...
-  cmt = "#";
-
-  fprintf(f,
-          "%s[language]\n"
-          "%sid = 20\n"
-          "%sshort_name = \"vbnc\"\n"
-          "%slong_name = \"Mono Visual Basic %s\"\n"
-          "%ssrc_sfx = \".vb\"\n"
-          "%sexe_sfx = \".exe\"\n"
-          "%scmd = \"vbnc\"\n"
-          "%sarch = \"msil\"\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt, cmt);
-
-  /*
   fprintf(f,
           "[language]\n"
-          "id = 21\n"
-          "short_name = \"txt\"\n"
-          "long_name = \"Plain text\"\n"
-          "src_sfx = \".txt\"\n"
-          "cmd = \"txt\"\n"
+          "id = 7\n"
+          "short_name = \"tpc\"\n"
+          "long_name = \"Turbo Pascal\"\n"
+          "src_sfx = \".pas\"\n"
+          "exe_sfx = \".exe\"\n"
+          "cmd = \"bpcemu2\"\n"
+          "arch = dos\n"
           "\n");
-  */
+
+  fprintf(f,
+          "[language]\n"
+          "id = 8\n"
+          "short_name = \"dcc\"\n"
+          "long_name = \"Borland Delphi\"\n"
+          "src_sfx = \".pas\"\n"
+          "cmd = \"dcc\"\n"
+          "arch = linux-shared\n"
+          "\n");
+
+  fprintf(f,
+          "[language]\n"
+          "id = 9\n"
+          "short_name = \"bcc\"\n"
+          "long_name = \"Borland C\"\n"
+          "src_sfx = \".c\"\n"
+          "exe_sfx = \".exe\"\n"
+          "cmd = \"bccemu\"\n"
+          "arch = dos\n"
+          "\n");
+
+  fprintf(f,
+          "[language]\n"
+          "id = 10\n"
+          "short_name = \"bpp\"\n"
+          "long_name = \"Borland C++\"\n"
+          "src_sfx = \".cpp\"\n"
+          "exe_sfx = \".exe\"\n"
+          "cmd = \"bppemu\"\n"
+          "arch = dos\n"
+          "\n");
+
+  fprintf(f,
+          "[language]\n"
+          "id = 11\n"
+          "short_name = \"basic\"\n"
+          "long_name = \"Yabasic\"\n"
+          "src_sfx = \".bas\"\n"
+          "cmd = \"yabasic\"\n"
+          "arch = linux-shared\n"
+          "\n");
+
+  fprintf(f,
+          "[language]\n"
+          "id = 12\n"
+          "short_name = \"scheme\"\n"
+          "long_name = \"Mz Scheme\"\n"
+          "src_sfx = \".scm\"\n"
+          "cmd = \"mzscheme\"\n"
+          "arch = linux-shared\n"
+          "\n");
+
+  fprintf(f,
+          "[language]\n"
+          "id = 13\n"
+          "short_name = \"python\"\n"
+          "long_name = \"Python\"\n"
+          "src_sfx = \".py\"\n"
+          "cmd = \"python\"\n"
+          "arch = linux-shared\n"
+          "\n");
+
+  fprintf(f,
+          "[language]\n"
+          "id = 14\n"
+          "short_name = \"perl\"\n"
+          "long_name = \"Perl\"\n"
+          "src_sfx = \".pl\"\n"
+          "cmd = \"perl\"\n"
+          "arch = \"linux-shared\"\n"
+          "\n");
+
+  fprintf(f,
+          "[language]\n"
+          "id = 15\n"
+          "short_name = \"prolog\"\n"
+          "long_name = \"GNU Prolog\"\n"
+          "src_sfx = \".pro\"\n"
+          "cmd = \"gprolog\"\n"
+          "arch = \"linux-shared\"\n"
+          "\n");
+
+  fprintf(f,
+          "[language]\n"
+          "id = 16\n"
+          "short_name = \"qb\"\n"
+          "long_name = \"Quick Basic\"\n"
+          "src_sfx = \".bas\"\n"
+          "exe_sfx = \".exe\"\n"
+          "cmd = \"qbemu\"\n"
+          "arch = dos\n"
+          "\n");
+
+  fprintf(f,
+          "[language]\n"
+          "id = 18\n"
+          "short_name = \"java\"\n"
+          "long_name = \"Java\"\n"
+          "src_sfx = \".java\"\n"
+          "exe_sfx = \".jar\"\n"
+          "cmd = \"javac\"\n"
+          "arch = \"java\"\n"
+          "\n");
+
+  fprintf(f,
+          "[language]\n"
+          "id = 19\n"
+          "short_name = \"mcs\"\n"
+          "long_name = \"Mono C#\"\n"
+          "src_sfx = \".cs\"\n"
+          "exe_sfx = \".exe\"\n"
+          "cmd = \"mcs\"\n"
+          "arch = \"msil\"\n"
+          "\n");
+
+  fprintf(f,
+          "[language]\n"
+          "id = 20\n"
+          "short_name = \"vbnc\"\n"
+          "long_name = \"Mono Visual Basic\"\n"
+          "src_sfx = \".vb\"\n"
+          "exe_sfx = \".exe\"\n"
+          "cmd = \"vbnc\"\n"
+          "arch = \"msil\"\n"
+          "\n");
 }
 
 static void
@@ -3394,6 +3364,13 @@ do_preview_menu(void)
   char *txt_ptr = 0;
   size_t txt_len = 0;
   unsigned char preview_header[PATH_MAX];
+  path_t script_dir;
+
+  snprintf(preview_header, sizeof(preview_header),
+           "Ejudge %s configurator", compile_version);
+  snprintf(script_dir, sizeof(script_dir), "%s/lang",
+           config_ejudge_script_dir);
+  lang_configure_screen(script_dir, 0, 0, 0, preview_header);
 
   while (1) {
     mvwprintw(stdscr, 0, 0, "Ejudge %s configurator > File preview",
@@ -3639,6 +3616,7 @@ generate_install_script(FILE *f)
   unsigned char style_dir[PATH_MAX];
   unsigned char style_src_dir[PATH_MAX];
   struct stat sb1, sb2;
+  struct lang_config_info *pcfg;
 
   XMEMZERO(&created_dirs, 1);
   generate_current_date(date_buf, sizeof(date_buf));
@@ -3677,6 +3655,7 @@ generate_install_script(FILE *f)
   generate_dir_creation(f, &created_dirs, 1, compile_cfg_path);
   generate_dir_creation(f, &created_dirs, 1, serve_cfg_path);
   generate_dir_creation(f, &created_dirs, 0, config_var_dir);
+  generate_dir_creation(f, &created_dirs, 0, config_ejudge_lang_config_dir);
 
   fprintf(f, "\n");
 
@@ -3943,6 +3922,20 @@ generate_install_script(FILE *f)
   } else {
     fprintf(f, "# configuration files for CGI programs are not needed\n\n");
   }
+
+  fprintf(f, "# install language configuration files\n");
+  for (pcfg = lang_config_get_first(); pcfg; pcfg = pcfg->next) {
+    if (!pcfg->cfg || !pcfg->cfg_txt) continue;
+    snprintf(fpath, sizeof(fpath), "%s/%s.cfg", config_ejudge_lang_config_dir,
+             pcfg->lang);
+    fprintf(f, "cat << _EOF | %s\n", uudecode_path);
+    base64_encode_file(f, fpath, 0775, pcfg->cfg_txt);
+    fprintf(f, "_EOF\n");
+    gen_check_retcode(f, fpath);
+    gen_cmd_run(f, "chown %s:%s \"%s\"",
+                config_system_uid, config_system_gid, fpath);
+  }
+  fprintf(f, "\n");
   
   fprintf(f, "# install tests and answer files\n");
   fprintf(f, "cat << _EOF | %s -o - | tar xvfz - -C \"%s\"\n",
@@ -3974,6 +3967,13 @@ preview_install_script(void)
   FILE *f = 0;
   char *txt_ptr = 0;
   size_t txt_len = 0;
+  unsigned char header[1024];
+  path_t script_dir;
+
+  snprintf(header, sizeof(header), "Ejudge %s configurator", compile_version);
+  snprintf(script_dir, sizeof(script_dir), "%s/lang",
+           config_ejudge_script_dir);
+  lang_configure_screen(script_dir, 0, 0, 0, header);
 
   if (check_install_script_validity() < 0) return;
 
@@ -3992,6 +3992,13 @@ save_install_script(void)
   size_t txt_len = 0;
   unsigned char filepath[PATH_MAX];
   int j, fd, r, w;
+  unsigned char header[1024];
+  path_t script_dir;
+
+  snprintf(header, sizeof(header), "Ejudge %s configurator", compile_version);
+  snprintf(script_dir, sizeof(script_dir), "%s/lang",
+           config_ejudge_script_dir);
+  lang_configure_screen(script_dir, 0, 0, 0, header);
 
   if (check_install_script_validity() < 0) return;
 
@@ -4034,6 +4041,7 @@ static const unsigned char * const main_menu_items[] =
   "Edit paths",
   "Edit global settings",
   "Edit administrator identity",
+  "Setup compilers",
   "Preview files",
   "Preview setup script",
   "Save setup script",
@@ -4044,30 +4052,37 @@ static const unsigned char * const main_menu_hotkeys[] =
   "PpúÚ",
   "SsùÙ",
   "AaæÆ",
+  "CcóÓ",
   "VvíÍ",
   "IiûÛ",
   "TtåÅ",
   "QqêÊ",
 };
 static const unsigned char main_menu_help_string[] =
-"P - paths, S - settings, A - admin, I - install, V - preview, Q - quit";
+"P-paths,S-settings,A-admin,C-compilers,I-install,V-preview,Q-quit";
 static void
 do_main_menu(void)
 {
-  int answer = 6;
+  int answer = 7;
   int cur_paths_item = 0;
   int cur_id_item = 0;
   int cur_settings_item = 0;
+  int cur_lang_item = 0;
+  unsigned char header[1024];
+  path_t script_dir;
+
+  snprintf(header, sizeof(header), "Ejudge %s configurator", compile_version);
+  //lang_configure_screen(config_ejudge_lang_config_dir, header);
 
   while (1) {
     mvwprintw(stdscr, 0, 0,
               "The ejudge %s initial setup configuration utility",
               compile_version);
     wclrtoeol(stdscr);
-    answer = ncurses_generic_menu(-1, -1, -1, -1, answer, 7, -1, -1,
+    answer = ncurses_generic_menu(-1, -1, -1, -1, answer, 8, -1, -1,
                                   main_menu_items, main_menu_hotkeys,
                                   main_menu_help_string, "Choose action");
-    if (answer == 6) break;
+    if (answer == 7) break;
     switch (answer) {
     case 0:
       while (do_paths_menu(&cur_paths_item));
@@ -4079,12 +4094,17 @@ do_main_menu(void)
       while (do_identity_menu(&cur_id_item));
       break;
     case 3:
-      do_preview_menu();
+      snprintf(script_dir, sizeof(script_dir), "%s/lang",
+               config_ejudge_script_dir);
+      while (lang_config_menu(script_dir, header, utf8_mode, &cur_lang_item));
       break;
     case 4:
-      preview_install_script();
+      do_preview_menu();
       break;
     case 5:
+      preview_install_script();
+      break;
+    case 6:
       save_install_script();
       break;
     }

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2091,7 +2091,10 @@ run_write_xml(runlog_state_t state,
 }
 
 static void
-check_msg(int is_err, FILE *flog, const unsigned char *format, ...)
+check_msg(int is_err, FILE *flog, const char *format, ...)
+  __attribute__((format(printf,3,4)));
+static void
+check_msg(int is_err, FILE *flog, const char *format, ...)
 {
   va_list args;
   unsigned char buf[1024];
@@ -2130,15 +2133,15 @@ runlog_check(FILE *ferr,
   ASSERT(phead);
 
   if (phead->start_time < 0) {
-    check_msg(1, ferr, "Start time %ld is before the epoch",phead->start_time);
+    check_msg(1, ferr, "Start time %lld is before the epoch",phead->start_time);
     return -1;
   }
   if (phead->stop_time < 0) {
-    check_msg(1,ferr, "Stop time %ld is before the epoch", phead->stop_time);
+    check_msg(1,ferr, "Stop time %lld is before the epoch", phead->stop_time);
     return -1;
   }
   if (phead->duration < -1) {
-    check_msg(1,ferr, "Contest duration %ld is negative", phead->duration);
+    check_msg(1,ferr, "Contest duration %lld is negative", phead->duration);
     return -1;
   }
   if (!phead->start_time && phead->stop_time) {
@@ -2147,7 +2150,7 @@ runlog_check(FILE *ferr,
   }
   if (phead->start_time && phead->stop_time
       && phead->start_time > phead->stop_time) {
-    check_msg(1,ferr, "Contest stop time %ld is less than start time %ld",
+    check_msg(1,ferr, "Contest stop time %lld is less than start time %lld",
               phead->stop_time, phead->start_time);
     return -1;
   }
@@ -2213,7 +2216,7 @@ runlog_check(FILE *ferr,
       continue;
     }
     if (e->time < 0) {
-      check_msg(1, ferr, "Run %d timestamp %ld is negative", i, e->time);
+      check_msg(1, ferr, "Run %d timestamp %lld is negative", i, e->time);
       nerr++;
       continue;
     }
@@ -2223,7 +2226,7 @@ runlog_check(FILE *ferr,
       continue;
     }
     if (e->time < prev_time) {
-      check_msg(1, ferr, "Run %d timestamp %ld is less than previous %ld",
+      check_msg(1, ferr, "Run %d timestamp %lld is less than previous %ld",
                 i, e->time, prev_time);
       nerr++;
       continue;
@@ -2409,14 +2412,14 @@ runlog_check(FILE *ferr,
           v_stop_time = v->start_time + phead->duration;
         if (e->time < v->start_time) {
           check_msg(1, ferr,
-                    "Run %d timestamp %ld is less that virtual start %ld",
+                    "Run %d timestamp %lld is less that virtual start %d",
                     i, e->time, v->start_time);
           nerr++;
           continue;
         }
         if (v_stop_time && e->time > v_stop_time) {
           check_msg(1, ferr,
-                    "Run %d timestamp %ld is greater than virtual stop %ld",
+                    "Run %d timestamp %lld is greater than virtual stop %ld",
                     i, e->time, v_stop_time);
           nerr++;
           continue;
@@ -2427,14 +2430,14 @@ runlog_check(FILE *ferr,
         ASSERT(v->status == 0 || v->status == V_REAL_USER);
         if (e->time < phead->start_time) {
           check_msg(1,ferr,
-                    "Run %d timestamp %ld is less than contest start %ld",
+                    "Run %d timestamp %lld is less than contest start %lld",
                     i, e->time, phead->start_time);
           nerr++;
           continue;
         }
         if (stop_time && e->time > stop_time) {
           check_msg(1, ferr,
-                    "Run %d timestamp %ld is greater than contest stop %ld",
+                    "Run %d timestamp %lld is greater than contest stop %ld",
                     i, e->time, stop_time);
           nerr++;
           continue;

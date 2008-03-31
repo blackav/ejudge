@@ -156,6 +156,8 @@ COMMON_CFILES=\
  html_hyperref.c\
  html_start_form.c\
  l10n.c\
+ lang_config.c\
+ lang_config_vis.c\
  master_html.c\
  mime_type.c\
  misctext.c\
@@ -197,6 +199,7 @@ COMMON_CFILES=\
  serve_2.c\
  serve_state.c\
  sformat.c\
+ shellcfg_parse.c\
  startstop.c\
  super_html.c\
  super_html_2.c\
@@ -266,6 +269,7 @@ CFILES=\
  compile.c\
  compile-control.c\
  edit-userlist.c\
+ ejudge-configure-compilers.c\
  ejudge-control.c\
  ejudge-setup.c\
  execute.c\
@@ -349,6 +353,7 @@ HFILES=\
  iterators.h\
  job_packet.h\
  l10n.h\
+ lang_config_vis.h\
  mime_type.h\
  mischtml.h\
  misctext.h\
@@ -373,6 +378,7 @@ HFILES=\
  serve_clnt.h\
  serve_state.h\
  sformat.h\
+ shellcfg_parse.h\
  startstop.h\
  super_clnt.h\
  super_html.h\

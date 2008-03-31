@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -338,10 +338,13 @@ static int
 filter_languages(char *key)
 {
   int i, total = 0;
+  const struct section_language_data *lang = 0;
 
   for (i = 1; i <= serve_state.max_lang; i++) {
-    if (!serve_state.langs[i]) continue;
-    if (strcmp(serve_state.langs[i]->key, key)) {
+    if (!(lang = serve_state.langs[i])) continue;
+    if (lang->disabled_by_config > 0) {
+      serve_state.langs[i] = 0;
+    } else if (strcmp(lang->key, key)) {
       serve_state.langs[i] = 0;
     }
   }
@@ -437,6 +440,9 @@ main(int argc, char *argv[])
 
   if (prepare(&serve_state, argv[i], prepare_flags, PREPARE_COMPILE,
               cpp_opts, 0) < 0)
+    return 1;
+  if (lang_config_configure(stderr, serve_state.global->lang_config_dir,
+                            serve_state.max_lang, serve_state.langs) < 0)
     return 1;
   if (key && filter_languages(key) < 0) return 1;
   if (create_dirs(&serve_state, PREPARE_COMPILE) < 0) return 1;

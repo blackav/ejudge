@@ -138,6 +138,8 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(contests_dir, "s"),
   GLOBAL_PARAM(serve_socket, "s"),
 
+  GLOBAL_PARAM(lang_config_dir, "s"),
+
   //GLOBAL_PARAM(log_file, "s"),
   GLOBAL_PARAM(run_log_file, "s"),
   GLOBAL_PARAM(clar_log_file, "s"),
@@ -4590,7 +4592,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->always_show_problems = DFLT_G_ALWAYS_SHOW_PROBLEMS;
   global->disable_user_standings = DFLT_G_DISABLE_USER_STANDINGS;
   global->disable_language = DFLT_G_DISABLE_LANGUAGE;
-  global->problem_navigation = DFLT_G_PROBLEM_NAVIGATION;
+  global->problem_navigation = 1;
   global->vertical_navigation = DFLT_G_VERTICAL_NAVIGATION;
   global->disable_virtual_start = DFLT_G_DISABLE_VIRTUAL_START;
   global->disable_virtual_auto_judge = DFLT_G_DISABLE_VIRTUAL_AUTO_JUDGE;
@@ -4618,7 +4620,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->use_gzip = DFLT_G_USE_GZIP;
   global->min_gzip_size = DFLT_G_MIN_GZIP_SIZE;
   global->use_dir_hierarchy = DFLT_G_USE_DIR_HIERARCHY;
-  global->enable_full_archive = 1;
+  global->enable_full_archive = 0;
   global->enable_printing = DFLT_G_ENABLE_PRINTING;
   global->disable_banner_page = DFLT_G_DISABLE_BANNER_PAGE;
   global->team_page_quota = DFLT_G_TEAM_PAGE_QUOTA;
