@@ -48,6 +48,12 @@ then
   exit 0
 fi
 
+if [ x"$1" = x-l ]
+then
+  echo "GNU Fortran 77 compiler (obsoleted by gfortran) [http://gcc.gnu.org]"
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/g77.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]

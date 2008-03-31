@@ -49,6 +49,12 @@ then
   exit 0
 fi
 
+if [ x"$1" = x-l ]
+then
+  echo "Yabasic interpreter [http://www.yabasic.de]"
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/yabasic.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]

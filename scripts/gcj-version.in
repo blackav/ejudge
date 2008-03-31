@@ -56,6 +56,12 @@ EOF
   exit 0
 fi
 
+if [ x"$1" = x-l ]
+then
+  echo "GNU Java compiler [http://gcc.gnu.org]"
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/gcj.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]

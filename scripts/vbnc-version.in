@@ -72,6 +72,12 @@ EOF
   exit 0
 fi
 
+if [ x"$1" = x-l ]
+then
+  echo "Mono Visual Basic .NET compiler [http://www.mono-project.com]"
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/vbnc.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]

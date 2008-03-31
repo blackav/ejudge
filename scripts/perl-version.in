@@ -46,6 +46,12 @@ then
   exit 0
 fi
 
+if [ x"$1" = x-l ]
+then
+  echo "Perl interpreter [http://www.perl.org]"
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/perl.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]

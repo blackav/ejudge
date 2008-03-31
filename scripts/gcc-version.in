@@ -13,6 +13,7 @@
 #       in case of success exit code is 0, and the necessary configuration
 #       variables are written to stdout.
 #  -v   verbose operation (configure mode)
+#  -l   output the compiler name to the stdout (list mode)
 #  -c   dump the language configuration section for the `compile' program
 #  -p   write to the stdout the command line of the compiler
 #  -f   write the compiler full name and the compiler version
@@ -62,6 +63,12 @@ EOF
   echo 'GCCRUN="'"${GCCRUN}"'"'
   echo 'GCCDIR="'"${GCCDIR}"'"'
   [ "${verbose}" = 1 ] && echo "yes, ${GCCRUN}, ${version_gcc}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "GNU C compiler [http://gcc.gnu.org]"
   exit 0
 fi
 
