@@ -54,6 +54,12 @@ EOF
   exit 0
 fi
 
+if [ x"$1" = x-l ]
+then
+  echo "Free Pascal compiler [http://www.freepascal.org]"
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/fpc.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]

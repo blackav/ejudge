@@ -53,6 +53,12 @@ EOF
   exit 0
 fi
 
+if [ x"$1" = x-l ]
+then
+  echo "Borland Kylix (Delphi) compiler (unsupported by Borland)"
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/dcc.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]

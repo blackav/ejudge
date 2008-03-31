@@ -46,6 +46,12 @@ then
   exit 0
 fi
 
+if [ x"$1" = x-l ]
+then
+  echo "Python interpreter [http://www.python.org]"
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/python.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
