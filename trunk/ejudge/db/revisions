@@ -3539,3 +3539,17 @@ edit-userlist.c 4815 0 9886633
 new_server_html.c 4817 0 35769858
 new_server_html.c 4819 0 35770412
 userlist-server.c 4821 0 22414356
+shellcfg_parse.h 4832 0 112872
+shellcfg_parse.c 4832 0 372342
+lang_config_vis.h 4833 0 143100
+ejudge-configure-compilers.c 4833 0 688553
+lang_config.c 4833 0 280482
+lang_config_vis.c 4833 0 1257956
+prepare.h 4835 0 3046799
+compile.c 4835 0 1110427
+ejudge-configure-compilers.c 4835 0 1075591
+ejudge-setup.c 4835 0 10217541
+prepare.c 4835 0 14246430
+runlog.c 4835 0 6350603
+shellcfg_parse.c 4835 0 372655
+ejudge-configure-compilers.c 4836 0 1074408
