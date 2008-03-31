@@ -346,9 +346,47 @@ report_version(void)
   exit(0);
 }
 
+static const char help_txt[] =
+"ejudge-configure-compilers: ejudge programming language configuration utility\n"
+"Usage: ejudge-configure-compilers [OPTIONS]\n"
+"  OPTIONS:\n"
+"    --help\n"
+"      write this help text and exit\n"
+"    --version\n"
+"      write the ejudge version and exit\n"
+"    --list\n"
+"      list the supported programming languages\n"
+"    --batch\n"
+"      batch mode configuration\n"
+"    --visual\n"
+"      visual (terminal-based) mode configuration (default)\n"
+"    --enable-lang-config-dir=DIR\n"
+"      use the DIR as the programming language configuration directory\n"
+"      default value: %s\n"
+"    --enable-lang-script-dir=DIR\n"
+"      use the DIR as the programming language helper script directory\n"
+"      default value: %s\n"
+"    --with-LANG=PATH\n"
+"      use the PATH as the path to the compiler/interpreter for LANG\n"
+"    --without-LANG\n"
+"      disable the compiler/interpreter LANG\n"
+;
+
 static void
 report_help(void)
 {
+  path_t script_dir_default = { 0 };
+  path_t config_dir_default = { 0 };
+#if defined EJUDGE_SCRIPT_DIR
+  snprintf(script_dir_default, sizeof(script_dir_default),
+           "%s/lang", EJUDGE_SCRIPT_DIR);
+#endif
+#if defined EJUDGE_LANG_CONFIG_DIR
+  snprintf(config_dir_default, sizeof(config_dir_default),
+           "%s", EJUDGE_LANG_CONFIG_DIR);
+#endif
+
+  printf(help_txt, config_dir_default, script_dir_default);
   exit(0);
 }
 
@@ -379,6 +417,8 @@ main(int argc, char **argv)
       snprintf(script_dir, sizeof(script_dir), "%s", val);
     } else if (!strcmp(argv[i], "--batch")) {
       batch_mode = 1;
+    } else if (!strcmp(argv[i], "--visual")) {
+      batch_mode = 0;
     } else if (!strncmp(argv[i], "--with-", 7)) {
       if (!(p = strchr(argv[i], '='))) {
         snprintf(key, sizeof(key), "%s", argv[i] + 7);
