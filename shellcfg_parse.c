@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "shellconfig.h"
+#include "shellcfg_parse.h"
 
 #include <reuse/xalloc.h>
 

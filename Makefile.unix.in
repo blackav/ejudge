@@ -149,6 +149,9 @@ CE_OBJECTS = ${CE_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 ST_CFILES = ejudge-setup.c version.c
 ST_OBJECTS = ${ST_CFILES:.c=.o} libcommon.a
 
+ECC_CFILES = ejudge-configure-compilers.c version.c
+ECC_OBJECTS = ${ECC_CFILES:.c=.o} libcommon.a
+
 EC_CFILES = ejudge-control.c version.c
 EC_OBJECTS = ${EC_CFILES:.c=.o} libcommon.a
 
@@ -167,7 +170,7 @@ NSM_OBJECTS = $(NSM_CFILES:.c=.o) libcommon.a libnew_server_clnt.a libuserlist_c
 NSC_CFILES=new-server-control.c version.c
 NSC_OBJECTS=$(NSC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a
 
-BINTARGETS = job-server-cmd edit-userlist ejudge-setup ejudge-control execute new-server-cmd
+BINTARGETS = job-server-cmd edit-userlist ejudge-setup ejudge-configure-compilers ejudge-control execute new-server-cmd
 SERVERBINTARGETS = compile compile-control serve run userlist-server userlist-server-control job-server job-server-control super-serve super-serve-control clean-users collect-emails serve-cmd slice-userlist new-server new-server-control uudecode
 CGITARGETS = master${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX} users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
 TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} style/actions.js
@@ -285,6 +288,9 @@ edit-userlist: $(ED_OBJECTS)
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu${NCURSES_SUFFIX} -lpanel${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX}
 
 ejudge-setup: ${ST_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu${NCURSES_SUFFIX} -lpanel${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX}
+
+ejudge-configure-compilers: ${ECC_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu${NCURSES_SUFFIX} -lpanel${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX}
 
 ejudge-control: ${EC_OBJECTS}

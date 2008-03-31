@@ -32,6 +32,9 @@
 #include <langinfo.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <ctype.h>
 
 static int utf8_mode;
 static path_t script_dir;
@@ -214,6 +217,111 @@ visual_setup(unsigned char **keys, unsigned char **vals)
   return 0;
 }
 
+static void
+get_compiler_info(const unsigned char *lang, unsigned char *buf, size_t size)
+{
+  path_t cmd;
+  FILE *pf = 0;
+  FILE *log_f = 0;
+  char *log_t = 0;
+  size_t log_z = 0;
+  unsigned char tmpbuf[1024];
+
+  buf[0] = 0;
+  snprintf(cmd, sizeof(cmd), "\"%s/%s-version\" -l </dev/null 2>/dev/null", script_dir, lang);
+
+  if (!(log_f = open_memstream(&log_t, &log_z))) goto cleanup;
+  if (!(pf = popen(cmd, "r"))) {
+    goto cleanup;
+  }
+  while (fgets(tmpbuf, sizeof(tmpbuf), pf))
+    fputs(tmpbuf, log_f);
+  pclose(pf); pf = 0;
+  fclose(log_f); log_f = 0;
+  snprintf(buf, size, "%.*s", log_z, log_t);
+  xfree(log_t); log_t = 0;
+  log_z = strlen(buf);
+  while (log_z > 0 && isspace(buf[log_z - 1])) log_z--;
+  buf[log_z] = 0;
+
+ cleanup:
+  if (pf) pclose(pf);
+  if (log_f) fclose(log_f);
+  if (log_t) xfree(log_t);
+}
+
+static int
+lang_sort_func(const void *v1, const void *v2)
+{
+  const unsigned char *s1 = *(const unsigned char**) v1;
+  const unsigned char *s2 = *(const unsigned char**) v2;
+  return strcmp(s1, s2);
+}
+
+static int
+list_all_compilers(void)
+{
+  DIR *d = 0;
+  struct dirent *dd;
+  int len, x, n, i;
+  path_t langbase;
+  path_t langinfo;
+  int is_term = isatty(1);
+  int column_num = 80, max_lang_len = -1;
+  const unsigned char *env;
+  unsigned char *outbuf = 0;
+  size_t outbuf_size = 0;
+  size_t outbuf_len = 0;
+  strarray_t langs;
+
+  memset(&langs, 0, sizeof(langs));
+  if (is_term && (env = getenv("COLUMNS")) && sscanf(env, "%d%n", &x, &n) == 1
+      && !env[n] && x > 0 && x < 10000 && (column_num = x));
+  if (is_term) {
+    if (column_num < 10) column_num = 10;
+    outbuf_size = column_num + 100;
+    outbuf = (unsigned char*) alloca(outbuf_size);
+  }
+
+  if (!(d = opendir(script_dir))) return 1;
+  while ((dd = readdir(d))) {
+    len = strlen(dd->d_name);
+    if (len <= 8) continue;
+    if (!strcmp(dd->d_name + len - 8, "-version")) {
+      if (len - 8 > max_lang_len) max_lang_len = len - 8;
+      xexpand(&langs);
+      langs.v[langs.u++] = xmemdup(dd->d_name, len - 8);
+    }
+  }
+  closedir(d); d = 0;
+  if (langs.u <= 0) return 0;
+  if (max_lang_len <= 0) return 0;
+
+  qsort(langs.v, langs.u, sizeof(langs.v[0]), lang_sort_func);
+
+  for (i = 0; i < langs.u; i++) {
+    snprintf(langbase, sizeof(langbase), "%s", langs.v[i]);
+    langinfo[0] = 0;
+    get_compiler_info(langbase, langinfo, sizeof(langinfo));
+    if (!langinfo[0]) continue;
+    if (is_term) {
+      snprintf(outbuf, outbuf_size, "%-*.*s %s", max_lang_len, max_lang_len,
+               langbase, langinfo);
+      outbuf_len = strlen(outbuf);
+      if (outbuf_len > column_num - 1) {
+        outbuf[column_num - 4] = '.';
+        outbuf[column_num - 3] = '.';
+        outbuf[column_num - 2] = '.';
+        outbuf[column_num - 1] = 0;
+      }
+      printf("%s\n", outbuf);
+    } else {
+      printf("%-*.*s %s\n", max_lang_len, max_lang_len, langbase, langinfo);
+    }
+  }
+  return 0;
+}
+
 static int
 is_prefix(
         const unsigned char *str,
@@ -230,6 +338,20 @@ is_prefix(
   }
 }
 
+static void
+report_version(void)
+{
+  fprintf(stderr, "ejudge-configure-compilers %s, compiled %s\n",
+          compile_version, compile_date);
+  exit(0);
+}
+
+static void
+report_help(void)
+{
+  exit(0);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -238,10 +360,13 @@ main(int argc, char **argv)
   unsigned char **vals;
   const unsigned char *val;
   int batch_mode = 0;
+  int list_mode = 0;
   char *p;
   unsigned char key[1024];
   unsigned char path[1024];
   struct stat sb;
+
+  progname = argv[0];
 
   XCALLOC(keys, argc + 1);
   XCALLOC(vals, argc + 1);
@@ -267,6 +392,12 @@ main(int argc, char **argv)
         die("option value is not permitted for %s", argv[i]);
       snprintf(key, sizeof(key), "%s", argv[i] + 10);
       snprintf(path, sizeof(path), "%s", "false");
+    } else if (!strcmp(argv[i], "--version")) {
+      report_version();
+    } else if (!strcmp(argv[i], "--help")) {
+      report_help();
+    } else if (!strcmp(argv[i], "--list")) {
+      list_mode = 1;
     } else {
       die("invalid option %s\n", argv[i]);
     }
@@ -321,6 +452,7 @@ main(int argc, char **argv)
   if (stat(config_dir, &sb) < 0) die("config directory does not exist");
   if (!S_ISDIR(sb.st_mode)) die("config directory is not a directory");
 
+  if (list_mode) return list_all_compilers();
   if (!batch_mode) return visual_setup(keys, vals);
 
   fprintf(stderr, "ejudge-configure-compilers %s, compiled %s\n",

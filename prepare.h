@@ -168,6 +168,8 @@ struct section_global_data
   path_t socket_path;
   path_t contests_dir;
 
+  path_t lang_config_dir;       /* compiler configuration scripts dir */
+
   /* charsets */
   puc_t charset[128];            /* html pages charset */
   //struct nls_table *charset_ptr; /* internal charset */
@@ -595,6 +597,7 @@ struct section_language_data
 
   // for internal use
   unsigned char *unhandled_vars;
+  int disabled_by_config;       /* disabled by configuration script */
 };
 
 struct section_tester_data
@@ -857,5 +860,12 @@ prepare_parse_variant_map(
 /* This is INTENTIONALLY not an `extern' variable */
 struct ejudge_cfg;
 struct ejudge_cfg *ejudge_config;
+
+int
+lang_config_configure(
+	FILE *log_f,
+	const unsigned char *config_dir,
+        int max_lang,
+        struct section_language_data **langs);
 
 #endif /* __PREPARE_H__ */
