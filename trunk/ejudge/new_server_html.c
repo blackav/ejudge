@@ -5459,7 +5459,7 @@ priv_upsolving_operation(
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
   /* check that the contest is stopped */
-  run_get_saved_times(cs->runlog_state, &duration, &saved_stop_time);
+  run_get_saved_times(cs->runlog_state, &duration, &saved_stop_time, 0);
   stop_time = run_get_stop_time(cs->runlog_state);
   if (stop_time <= 0 && saved_stop_time <= 0) return 0;
 
@@ -5488,6 +5488,7 @@ priv_upsolving_operation(
     run_save_times(cs->runlog_state);
     run_set_duration(cs->runlog_state, 0);
     run_stop_contest(cs->runlog_state, 0);
+    run_set_finish_time(cs->runlog_state, 0);
     cs->upsolving_mode = 1;
     cs->freeze_standings = 0;
     cs->view_source = 0;
@@ -10695,7 +10696,7 @@ unpriv_page_header(FILE *fout,
             forced_url = cnts->problems_url;
             target = " target=\"_blank\"";
           }
-          if (global->problem_navigation) continue;
+          if (global->problem_navigation && !cnts->problems_url) continue;
           break;
         case NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT:
           if (start_time <= 0 || stop_time > 0) continue;

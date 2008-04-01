@@ -162,13 +162,14 @@ serve_state_set_config_path(serve_state_t state, const unsigned char *path)
 void
 serve_set_upsolving_mode(serve_state_t state)
 {
-  time_t saved_duration = 0, saved_stop_time = 0;
+  time_t saved_duration = 0, saved_stop_time = 0, saved_finish_time = 0;
   int prob_id;
   struct section_problem_data *prob;
 
   if (!state->upsolving_mode) return;
 
-  run_get_saved_times(state->runlog_state, &saved_duration, &saved_stop_time);
+  run_get_saved_times(state->runlog_state, &saved_duration, &saved_stop_time,
+                      &saved_finish_time);
   if (saved_stop_time <= 0) return;
 
   if (state->freeze_standings)

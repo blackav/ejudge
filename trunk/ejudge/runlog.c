@@ -1126,18 +1126,23 @@ void
 run_get_saved_times(
         runlog_state_t state,
         time_t *p_saved_duration,
-        time_t *p_saved_stop_time)
+        time_t *p_saved_stop_time,
+        time_t *p_saved_finish_time)
 {
   if (p_saved_duration) *p_saved_duration = state->head.saved_duration;
   if (p_saved_stop_time) *p_saved_stop_time = state->head.saved_stop_time;
+  if (p_saved_finish_time) *p_saved_finish_time = state->head.saved_finish_time;
 }
 
 int
 run_save_times(runlog_state_t state)
 {
-  if (state->head.saved_duration || state->head.saved_stop_time) return 0;
+  if (state->head.saved_duration || state->head.saved_stop_time
+      || state->head.saved_finish_time)
+    return 0;
   state->head.saved_duration = state->head.duration;
   state->head.saved_stop_time = state->head.stop_time;
+  state->head.saved_finish_time = state->head.finish_time;
   return run_flush_header(state);  
 }
 

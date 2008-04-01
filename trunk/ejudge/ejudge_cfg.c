@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -98,6 +98,7 @@ enum
     AT_TYPE,
     AT_LOAD,
     AT_DEFAULT,
+    AT_DISABLE_COOKIE_IP_CHECK,
 
     AT__BARRIER,
     AT__DEFAULT,
@@ -173,6 +174,7 @@ static char const * const attr_map[] =
   "type",
   "load",
   "default",
+  "disable_cookie_ip_check",
   0,
   "_default",
 
@@ -444,6 +446,9 @@ ejudge_cfg_parse(char const *path)
     case AT_L10N:
       if (xml_attr_bool(a, &cfg->l10n) < 0) goto failed;
       if (a->tag == AT_DISABLE_L10N) cfg->l10n = !cfg->l10n;
+      break;
+    case AT_DISABLE_COOKIE_IP_CHECK:
+      if (xml_attr_bool(a, &cfg->disable_cookie_ip_check) < 0) goto failed;
       break;
     default:
       xml_err_attr_not_allowed(&cfg->b, a);

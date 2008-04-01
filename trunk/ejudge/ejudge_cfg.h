@@ -4,7 +4,7 @@
 #ifndef __EJUDGE_CFG_H__
 #define __EJUDGE_CFG_H__ 1
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -50,6 +50,7 @@ struct ejudge_cfg
 
   int l10n;
   int serialization_key;
+  int disable_cookie_ip_check;
 
   // these strings actually point into another strings in XML tree
   unsigned char *socket_path;

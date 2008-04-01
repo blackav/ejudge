@@ -3855,7 +3855,7 @@ create_dirs(serve_state_t state, int mode)
     }
   }
 
-  write_log(0, LOG_INFO, "all directories created");
+  //write_log(0, LOG_INFO, "all directories created");
   return 0;
 }
 

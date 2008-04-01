@@ -3083,10 +3083,12 @@ cmd_check_cookie(struct client_state *p,
   orig_contest_id = data->contest_id;
   if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
 
-  if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
-    err("%s -> IP address mismatch", logbuf);
-    send_reply(p, -ULS_ERR_NO_COOKIE);
-    return;
+  if (config->disable_cookie_ip_check <= 0) {
+    if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
+      err("%s -> IP address mismatch", logbuf);
+      send_reply(p, -ULS_ERR_NO_COOKIE);
+      return;
+    }
   }
   if (current_time > cookie->expire) {
     err("%s -> cookie expired", logbuf);
@@ -3210,10 +3212,12 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
 
   default_get_user_info_3(cookie->user_id, data->contest_id, &u, &ui, &c);
 
-  if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
-    err("%s -> IP address mismatch", logbuf);
-    send_reply(p, -ULS_ERR_NO_COOKIE);
-    return;
+  if (config->disable_cookie_ip_check <= 0) {
+    if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
+      err("%s -> IP address mismatch", logbuf);
+      send_reply(p, -ULS_ERR_NO_COOKIE);
+      return;
+    }
   }
   if (current_time > cookie->expire) {
     err("%s -> cookie expired", logbuf);
@@ -3374,10 +3378,12 @@ cmd_priv_check_cookie(struct client_state *p,
 
   default_get_user_info_3(cookie->user_id, data->contest_id, &u, &ui, &c);
 
-  if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
-    err("%s -> IP address mismatch", logbuf);
-    send_reply(p, -ULS_ERR_NO_COOKIE);
-    return;
+  if (config->disable_cookie_ip_check <= 0) {
+    if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
+      err("%s -> IP address mismatch", logbuf);
+      send_reply(p, -ULS_ERR_NO_COOKIE);
+      return;
+    }
   }
   if (current_time > cookie->expire) {
     err("%s -> cookie expired", logbuf);
@@ -3521,10 +3527,12 @@ cmd_priv_cookie_login(struct client_state *p,
 
   default_get_user_info_3(cookie->user_id, data->contest_id, &u, &ui, &c);
 
-  if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
-    err("%s -> IP address or SSL flag mismatch", logbuf);
-    send_reply(p, -ULS_ERR_NO_COOKIE);
-    return;
+  if (config->disable_cookie_ip_check <= 0) {
+    if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
+      err("%s -> IP address or SSL flag mismatch", logbuf);
+      send_reply(p, -ULS_ERR_NO_COOKIE);
+      return;
+    }
   }
   if (current_time > cookie->expire) {
     err("%s -> cookie expired", logbuf);
@@ -3684,10 +3692,12 @@ cmd_do_logout(struct client_state *p,
     send_reply(p, ULS_OK);
     return;
   }
-  if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
-    err("%s -> IP address does not match", logbuf);
-    send_reply(p, -ULS_ERR_NO_COOKIE);
-    return;
+  if (config->disable_cookie_ip_check <= 0) {
+    if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
+      err("%s -> IP address does not match", logbuf);
+      send_reply(p, -ULS_ERR_NO_COOKIE);
+      return;
+    }
   }
 
   default_remove_cookie(cookie);
@@ -7075,10 +7085,12 @@ cmd_get_cookie(struct client_state *p,
 
   default_get_user_info_3(cookie->user_id, new_contest_id, &u, &ui, &c);
 
-  if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
-    err("%s -> IP address mismatch", logbuf);
-    send_reply(p, -ULS_ERR_NO_COOKIE);
-    return;
+  if (config->disable_cookie_ip_check <= 0) {
+    if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
+      err("%s -> IP address mismatch", logbuf);
+      send_reply(p, -ULS_ERR_NO_COOKIE);
+      return;
+    }
   }
   if (current_time > cookie->expire) {
     err("%s -> cookie expired", logbuf);
