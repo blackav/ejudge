@@ -394,6 +394,9 @@ main(int argc, char *argv[])
   path_t  log_path;
   int log_fd = -1, pid = -1;
   char **argv_restart = 0;
+  FILE *lang_log_f = 0;
+  char *lang_log_t = 0;
+  size_t lang_log_z = 0;
 
   start_set_self_args(argc, argv);
   XCALLOC(argv_restart, argc + 1);
@@ -441,9 +444,14 @@ main(int argc, char *argv[])
   if (prepare(&serve_state, argv[i], prepare_flags, PREPARE_COMPILE,
               cpp_opts, 0) < 0)
     return 1;
-  if (lang_config_configure(stderr, serve_state.global->lang_config_dir,
-                            serve_state.max_lang, serve_state.langs) < 0)
+  if (!(lang_log_f = open_memstream(&lang_log_t, &lang_log_z))) return 1;
+  if (lang_config_configure(lang_log_f, serve_state.global->lang_config_dir,
+                            serve_state.max_lang, serve_state.langs) < 0) {
+    fclose(lang_log_f); lang_log_f = 0;
+    fprintf(stderr, "%s", lang_log_t);
     return 1;
+  }
+  fclose(lang_log_f); lang_log_f = 0;
   if (key && filter_languages(key) < 0) return 1;
   if (create_dirs(&serve_state, PREPARE_COMPILE) < 0) return 1;
   if (check_config() < 0) return 1;
@@ -467,8 +475,11 @@ main(int argc, char *argv[])
     if ((pid = fork()) < 0) return 1;
     if (pid > 0) _exit(0);
     if (setsid() < 0) return 1;
+
+    fprintf(stderr, "%s", lang_log_t);
   }
 
+  xfree(lang_log_t); lang_log_t = 0; lang_log_z = 0;
   if (do_loop() < 0) return 1;
 
   if (interrupt_restart_requested()) start_restart();

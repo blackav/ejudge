@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -46,6 +46,8 @@ l10n_prepare(int _l10n_flag, unsigned char const *l10n_dir)
 {
 #if CONF_HAS_LIBINTL - 0 == 1
   static unsigned char env_buf[64] = "LANG";
+  static unsigned char env_buf2[64] = "LANGUAGE";
+  static unsigned char env_buf3[64] = "LC_MESSAGES";
 
   if (!l10n_dir) _l10n_flag = 0;
   if (_l10n_flag != 1) return;
@@ -53,6 +55,8 @@ l10n_prepare(int _l10n_flag, unsigned char const *l10n_dir)
   bindtextdomain("ejudge", l10n_dir);
   textdomain("ejudge");
   putenv(env_buf);
+  putenv(env_buf2);
+  putenv(env_buf3);
 #endif /* CONF_HAS_LIBINTL */
 }
 
@@ -72,7 +76,7 @@ l10n_setlocale(int locale_id)
       unsigned char cbuf[512];
       int i;
 #if !defined EJUDGE_CHARSET
-      snprintf(cbuf, sizeof(cbuf), "%s", "koi8-r");
+      snprintf(cbuf, sizeof(cbuf), "%s", "UTF-8");
 #else
       snprintf(cbuf, sizeof(cbuf), "%s", EJUDGE_CHARSET);
 #endif

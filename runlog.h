@@ -99,7 +99,7 @@ int    run_stop_contest(runlog_state_t, time_t);
 int    run_sched_contest(runlog_state_t, time_t);
 int    run_get_total(runlog_state_t);
 
-void run_get_saved_times(runlog_state_t, time_t *p_sd, time_t *p_sst);
+void run_get_saved_times(runlog_state_t, time_t *p_sd, time_t *p_sst, time_t*);
 int run_save_times(runlog_state_t);
 
 int run_set_finish_time(runlog_state_t state, time_t finish_time);
@@ -141,7 +141,8 @@ struct run_header
   ej_time64_t finish_time;      /* when the contest expected to finish */
   ej_time64_t saved_duration;
   ej_time64_t saved_stop_time;
-  unsigned char _pad3[40];
+  ej_time64_t saved_finish_time;
+  unsigned char _pad3[32];
 };
 
 enum
