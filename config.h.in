@@ -104,8 +104,5 @@
 /* prefix for HTML style files */
 #undef CONF_STYLE_PREFIX
 
-/* do not check cookie IP address */
-#undef CONF_NO_COOKIE_IP_CHECK
-
 #endif /* __CONFIG_H__ */
 
