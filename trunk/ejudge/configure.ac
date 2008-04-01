@@ -60,7 +60,8 @@ AC_ARG_ENABLE([style-prefix],AC_HELP_STRING([--enable-style-prefix],[specify the
 AC_ARG_ENABLE([hidden-server-bins],AC_HELP_STRING([--enable-hidden-server-bins],[do not install the server binaries into bin directory]),[ac_cv_hidden_bins=1],[ac_cv_hidden_bins=])
 AC_ARG_ENABLE([werror],AC_HELP_STRING([--enable-werror],[enable -Werror compilation flag]),[ac_cv_werror_flag=-Werror],[ac_cv_werror_flag=])
 AC_ARG_ENABLE([preserve-scripts],AC_HELP_STRING([--enable-preserve-scripts],[do not overwrite the existing language scripts]), [ac_cv_preserve_scripts=1],[ac_cv_preserve_scripts=])
-AC_ARG_ENABLE([lang-config-dir],AC_HELP_STRING([--enable-lang-config-dir],[install language config scripts into specified directory]),[ac_cv_lang_config_dir="${withval}"],[ac_cv_lang_config_dir=])
+AC_ARG_ENABLE([lang-config-dir],AC_HELP_STRING([--enable-lang-config-dir],[install language config scripts into specified directory]),[ac_cv_lang_config_dir="${enableval}"],[ac_cv_lang_config_dir=])
+AC_ARG_ENABLE([cookie-ip-check],AC_HELP_STRING([--disable-cookie-ip-check],[do not check cookie IP]),[ac_cv_cookie_ip_check="${enableval}"],[ac_cv_cookie_ip_check=])
 
 AC_ARG_WITH([httpd-cgi-bin-dir],AC_HELP_STRING([--with-httpd-cgi-bin-dir],[specify the path to the web serve CGI directory]),[ac_cv_httpd_cgi_bin_dir="${withval}"])
 AC_ARG_WITH([httpd-htdocs-dir],AC_HELP_STRING([--with-httpd-htdocs-dir],[specify the path to the web server HTML directory]),[ac_cv_httpd_htdocs_dir="${withval}"])
@@ -992,6 +993,11 @@ fi
 if [[ x"${ac_cv_ajax}" != xno -a x"${ac_cv_ajax}" != x ]]
 then
   AC_DEFINE(CONF_ENABLE_AJAX,1)
+fi
+
+if [[ x"${ac_cv_cookie_ip_check}" = xno ]]
+then
+  AC_DEFINE(CONF_NO_COOKIE_IP_CHECK, 1)
 fi
 
 if [[ x"${ac_cv_has_libcap}" != x ]]
