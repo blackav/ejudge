@@ -3553,3 +3553,14 @@ prepare.c 4835 0 14246430
 runlog.c 4835 0 6350603
 shellcfg_parse.c 4835 0 372655
 ejudge-configure-compilers.c 4836 0 1074408
+ejudge_cfg.h 4842 0 241434
+runlog.h 4842 0 851609
+compile.c 4842 0 1140160
+userlist-server.c 4842 0 22440806
+ejudge_cfg.c 4842 0 1396498
+l10n.c 4842 0 288490
+new_server_html.c 4842 0 35776606
+prepare.c 4842 0 14246519
+runlog.c 4842 0 6370068
+serve_state.c 4842 0 1107403
+userlist_check.c 4842 0 1041560
