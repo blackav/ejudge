@@ -4,12 +4,19 @@
 
 LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
+function common_config()
+{
+  echo 'long_name="YaBasic"'
+  echo 'src_sfx=".bas"'
+  echo 'arch = "linux-shared"'
+}
+
 function failure()
 {
   rm -f conftest*
-  echo 'version_yabasic='
-  echo 'short_name_yabasic="basic"'
-  echo 'arg_yabasic="'"${arg_yabasic}"'"'
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'YABASICPATH=/bin/false'
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
@@ -24,14 +31,14 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
-  arg_yabasic="$2"
+  arg="$2"
   [ x"$2" != x ] && yabasic="$2"
   [ "${yabasic}" = "" ] && yabasic="yabasic"
 
   [ "${verbose}" = 1 ] && echo -n "checking whether YaBasic is available..." >&2
   "${yabasic}" -help >/dev/null 2>&1 || failure
-  version_yabasic=`${yabasic} -help 2>&1 | grep "yabasic version" | gawk '{ gsub(",", "", $5); print $5; }'`
-  [ "${version_yabasic}" != "" ] || failure
+  version=`${yabasic} -help 2>&1 | grep "yabasic version" | gawk '{ gsub(",", "", $5); print $5; }'`
+  [ "${version}" != "" ] || failure
   YABASICPATH=`which "${yabasic}"` || failure
   [ "${YABASICPATH}" != "" ] || failure
   echo "#! ${YABASICPATH}" > conftest.bas
@@ -41,32 +48,17 @@ then
   ./conftest.bas >/dev/null 2>&1 || failure
 
   rm -f ./conftest*
-  echo 'version_yabasic="'"${version_yabasic}"'"'
-  echo 'short_name_yabasic="basic"'
-  echo 'arg_yabasic="'"${arg_yabasic}"'"'
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'YABASICPATH="'"${YABASICPATH}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${YABASICPATH}, ${version_yabasic}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${YABASICPATH}, ${version}" >&2
   exit 0
 fi
 
 if [ x"$1" = x-l ]
 then
   echo "YaBasic interpreter [http://www.yabasic.de]"
-  exit 0
-fi
-
-if [ x"$1" = x-b ]
-then
-  echo "YaBasic"
-  exit 0
-fi
-
-if [ x"$1" = x-c ]
-then
-  cat <<EOF
-src_sfx = ".bas"
-arch = linux-shared
-EOF
   exit 0
 fi
 

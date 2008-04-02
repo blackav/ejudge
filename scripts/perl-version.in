@@ -4,11 +4,19 @@
 
 LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
+function common_config()
+{
+  echo 'long_name="Perl"'
+  echo 'src_sfx=".pl"'
+  echo 'arch = "linux-shared"'
+}
+
 function failure()
 {
   rm -f conftest*
-  echo 'version_perl='
-  echo 'arg_perl="'"${arg_perl}"'"'
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'PERLPATH=/bin/false'
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
@@ -23,14 +31,14 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
-  arg_perl="$2"
+  arg="$2"
   [ x"$2" != x ] && perl="$2"
   [ "${perl}" = "" ] && perl="perl"
 
   [ "${verbose}" = 1 ] && echo -n "checking whether Perl is available..." >&2
   "${perl}" --version >/dev/null 2>&1 || failure
-  version_perl=`"${perl}" --version 2>&1 | grep "This is perl" | gawk -v FS="[ v]" '{ print $5; }'` || failure
-  [ "${version_perl}" != "" ] || failure
+  version=`"${perl}" --version 2>&1 | grep "This is perl" | gawk -v FS="[ v]" '{ print $5; }'` || failure
+  [ "${version}" != "" ] || failure
   PERLPATH=`which "${perl}"` || failure
   [ "${PERLPATH}" != "" ] || failure
   echo "#! ${PERLPATH} -W" > conftest.pl
@@ -39,31 +47,17 @@ then
   ./conftest.pl >/dev/null 2>&1 || failure
 
   rm -f ./conftest*
-  echo 'version_perl="'"${version_perl}"'"'
-  echo 'arg_perl="'"${arg_perl}"'"'
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'PERLPATH="'"${PERLPATH}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${PERLPATH}, ${version_perl}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${PERLPATH}, ${version}" >&2
   exit 0
 fi
 
 if [ x"$1" = x-l ]
 then
   echo "Perl interpreter [http://www.perl.org]"
-  exit 0
-fi
-
-if [ x"$1" = x-b ]
-then
-  echo "Perl"
-  exit 0
-fi
-
-if [ x"$1" = x-c ]
-then
-  cat <<EOF
-src_sfx = ".pl"
-arch = linux-shared
-EOF
   exit 0
 fi
 

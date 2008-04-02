@@ -4,11 +4,18 @@
 
 LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
+function common_config()
+{
+  echo 'long_name="GNU Fortran"'
+  echo 'src_sfx=".for"'
+}
+
 function failure()
 {
   rm -f conftest*
-  echo 'version_gfortran='
-  echo 'arg_gfortran="'"${arg_gfortran}"'"'
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'GFORTRANRUN=false'
   echo 'GFORTRANDIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
@@ -24,14 +31,14 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
-  arg_gfortran="$2"
+  arg="$2"
   [ x"$2" != x ] && GFORTRANRUN="$2"
   [ "${GFORTRANRUN}" = "" ] && GFORTRANRUN="gfortran"
 
   [ "${verbose}" = 1 ] && echo -n "checking whether GNU Fortran is available..." >&2
   "${GFORTRANRUN}" -v >/dev/null 2>/dev/null || failure
-  version_gfortran=`"${GFORTRANRUN}" --version | grep "GCC" | gawk '{ print $(NF); }'` || failure
-  [ "${version_gfortran}" != x ] || failure
+  version=`"${GFORTRANRUN}" --version | grep "GCC" | gawk '{ print $(NF); }'` || failure
+  [ "${version}" != x ] || failure
   echo "        END" > conftest.for
   "${GFORTRANRUN}" -static -s conftest.for -o conftest 2>/dev/null >/dev/null || failure
   [ -x conftest ] || failure
@@ -40,31 +47,18 @@ then
   rm -f ./conftest*
   GFORTRANDIR=`dirname "${GFORTRANRUN}"`
   [ "${GFORTRANDIR}" = . ] && GFORTRANDIR=""
-  echo 'version_gfortran="'"${version_gfortran}"'"'
-  echo 'arg_gfortran="'"${arg_gfortran}"'"'
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'GFORTRANRUN="'"${GFORTRANRUN}"'"'
   echo 'GFORTRANDIR="'"${GFORTRANDIR}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${GFORTRANRUN}, ${version_gfortran}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${GFORTRANRUN}, ${version}" >&2
   exit 0
 fi
 
 if [ x"$1" = x-l ]
 then
   echo "GNU Fortran compiler [http://gcc.gnu.org]"
-  exit 0
-fi
-
-if [ x"$1" = x-b ]
-then
-  echo "GNU Fortran"
-  exit 0
-fi
-
-if [ x"$1" = x-c ]
-then
-  cat <<EOF
-src_sfx = ".for"
-EOF
   exit 0
 fi
 

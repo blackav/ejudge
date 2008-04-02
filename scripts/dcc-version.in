@@ -4,11 +4,19 @@
 
 LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
+function common_config()
+{
+  echo 'long_name="Borland Delphi 6 (Kylix)"'
+  echo 'src_sfx=".pas"'
+  echo 'arch = "linux-shared"'
+}
+
 function failure()
 {
   rm -f conftest*
-  echo 'version_dcc='
-  echo 'arg_dcc="'"${arg_dcc}"'"'
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'DCCRUN=false'
   echo 'DCCDIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
@@ -24,14 +32,14 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
-  arg_dcc="$2"
+  arg="$2"
   [ x"$2" != x ] && DCCRUN="$2"
   [ "${DCCRUN}" = "" ] && DCCRUN="dcc"
 
   [ "${verbose}" = 1 ] && echo -n "checking whether Borland Delphi is available..." >&2
   "${DCCRUN}" -h 2>/dev/null >/dev/null || failure
-  version_dcc=`"${DCCRUN}" -h 2>/dev/null | grep "Borland Delphi" | gawk '{ print $6; }'` || failure
-  [ "${version_dcc}" != "" ] || failure
+  version=`"${DCCRUN}" -h 2>/dev/null | grep "Borland Delphi" | gawk '{ print $6; }'` || failure
+  [ "${version}" != "" ] || failure
 
   cat > conftest.pas <<EOF
 begin
@@ -45,32 +53,18 @@ EOF
   rm -f ./conftest*
   DCCDIR=`dirname "${DCCRUN}"`
   [ "${DCCDIR}" = . ] && DCCDIR=""
-  echo 'version_dcc="'"${version_dcc}"'"'
-  echo 'arg_dcc="'"${arg_dcc}"'"'
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'DCCRUN="'"${DCCRUN}"'"'
   echo 'DCCDIR="'"${DCCDIR}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${DCCRUN}, ${version_dcc}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${DCCRUN}, ${version}" >&2
   exit 0
 fi
 
 if [ x"$1" = x-l ]
 then
   echo "Borland Delphi 6 (Kylix) compiler (unsupported by Borland)"
-  exit 0
-fi
-
-if [ x"$1" = x-b ]
-then
-  echo "Borland Delphi 6 (Kylix)"
-  exit 0
-fi
-
-if [ x"$1" = x-c ]
-then
-  cat <<EOF
-src_sfx = ".pas"
-arch = linux-shared
-EOF
   exit 0
 fi
 

@@ -4,11 +4,18 @@
 
 LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
+function common_config()
+{
+  echo 'long_name="GNU Pascal"'
+  echo 'src_sfx=".pas"'
+}
+
 function failure()
 {
   rm -f conftest*
-  echo 'version_gpc='
-  echo 'arg_gpc="'"${arg_gpc}"'"'
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'GPCRUN=false'
   echo 'GPCDIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
@@ -24,14 +31,14 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
-  arg_gpc="$2"
+  arg="$2"
   [ x"$2" != x ] && GPCRUN="$2"
   [ "${GPCRUN}" = "" ] && GPCRUN="gpc"
 
   [ "${verbose}" = 1 ] && echo -n "checking whether GNU Pascal is available..." >&2
   "${GPCRUN}" -v >/dev/null 2>/dev/null || failure
-  version_gpc=`"${GPCRUN}" --version | gawk '{ print $1; exit 0; }'` || failure
-  [ "${version_gpc}" != "" ] || failure
+  version=`"${GPCRUN}" --version | gawk '{ print $1; exit 0; }'` || failure
+  [ "${version}" != "" ] || failure
   cat > conftest.pas <<EOF
 begin
   writeln('ok');
@@ -44,31 +51,18 @@ EOF
   rm -f ./conftest*
   GPCDIR=`dirname "${GPCRUN}"`
   [ "${GPCDIR}" = . ] && GPCDIR=""
-  echo 'version_gpc="'"${version_gpc}"'"'
-  echo 'arg_gpc="'"${arg_gpc}"'"'
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'GPCRUN="'"${GPCRUN}"'"'
   echo 'GPCDIR="'"${GPCDIR}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${GPCRUN}, ${version_gpc}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${GPCRUN}, ${version}" >&2
   exit 0
 fi
 
 if [ x"$1" = x-l ]
 then
   echo "GNU Pascal compiler (obsolete)"
-  exit 0
-fi
-
-if [ x"$1" = x-b ]
-then
-  echo "GNU Pascal"
-  exit 0
-fi
-
-if [ x"$1" = x-c ]
-then
-  cat <<EOF
-src_sfx = ".pas"
-EOF
   exit 0
 fi
 
