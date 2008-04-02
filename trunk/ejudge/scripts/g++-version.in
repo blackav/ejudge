@@ -4,12 +4,18 @@
 
 LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
+function common_config()
+{
+  echo 'long_name="GNU C++"'
+  echo 'src_sfx=".cpp"'
+}
+
 function failure()
 {
   rm -f conftest*
-  echo 'version_gx2Bx2B='
-  echo 'short_name_gx2Bx2B="g++"'
-  echo 'arg_gx2Bx2B="'"${arg_gx2Bx2B}"'"'
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'GPPRUN=false'
   echo 'GPPDIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
@@ -25,14 +31,14 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
-  arg_gx2Bx2B="$2"
+  arg="$2"
   [ x"$2" != x ] && GPPRUN="$2"
   [ "${GPPRUN}" = "" ] && GPPRUN="g++"
 
   [ "${verbose}" = 1 ] && echo -n "checking whether GNU C++ is available..." >&2
   "${GPPRUN}" -v >/dev/null 2>/dev/null || failure
-  version_gx2Bx2B=`"${GPPRUN}" -v 2>&1 | grep "gcc version" | gawk '{ print $3; }'` || failure
-  [ "${version_gx2Bx2B}" != "" ] || failure
+  version=`"${GPPRUN}" -v 2>&1 | grep "gcc version" | gawk '{ print $3; }'` || failure
+  [ "${version}" != "" ] || failure
   cat > conftest.cpp <<EOF
 #include <iostream>
 using namespace std;
@@ -45,32 +51,18 @@ EOF
   rm -f ./conftest*
   GPPDIR=`dirname "${GPPRUN}"`
   [ "${GPPDIR}" = . ] && GPPDIR=""
-  echo 'version_gx2Bx2B="'"${version_gx2Bx2B}"'"'
-  echo 'short_name_gx2Bx2B="g++"'
-  echo 'arg_gx2Bx2B="'"${arg_gx2Bx2B}"'"'
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'GPPRUN="'"${GPPRUN}"'"'
   echo 'GPPDIR="'"${GPPDIR}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${GPPRUN}, ${version_gx2Bx2B}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${GPPRUN}, ${version}" >&2
   exit 0
 fi
 
 if [ x"$1" = x-l ]
 then
   echo "GNU C++ compiler [http://gcc.gnu.org]"
-  exit 0
-fi
-
-if [ x"$1" = x-b ]
-then
-  echo "GNU C++"
-  exit 0
-fi
-
-if [ x"$1" = x-c ]
-then
-  cat <<EOF
-src_sfx = ".cpp"
-EOF
   exit 0
 fi
 

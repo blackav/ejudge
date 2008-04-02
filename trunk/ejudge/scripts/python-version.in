@@ -4,11 +4,19 @@
 
 LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
+function common_config()
+{
+  echo 'long_name="Python"'
+  echo 'src_sfx=".py"'
+  echo 'arch = "linux-shared"'
+}
+
 function failure()
 {
   rm -f conftest*
-  echo 'version_python='
-  echo 'arg_python="'"${arg_python}"'"'
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'PYTHONPATH=/bin/false'
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
@@ -23,14 +31,14 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
-  arg_python="$2"
+  arg="$2"
   [ x"$2" != x ] && python="$2"
   [ "${python}" = "" ] && python="python"
 
   [ "${verbose}" = 1 ] && echo -n "checking whether Python is available..." >&2
   "${python}" -V >/dev/null 2>&1 || failure
-  version_python=`"${python}" -V 2>&1 | gawk '{ print $2; }'` || failure
-  [ "${version_python}" != "" ] || failure
+  version=`"${python}" -V 2>&1 | gawk '{ print $2; }'` || failure
+  [ "${version}" != "" ] || failure
   PYTHONPATH=`which "${python}"` || failure
   [ "${PYTHONPATH}" != "" ] || failure
   echo "#! ${PYTHONPATH}" > conftest.py
@@ -39,31 +47,17 @@ then
   ./conftest.py >/dev/null 2>&1 || failure
 
   rm -f ./conftest*
-  echo 'version_python="'"${version_python}"'"'
-  echo 'arg_python="'"${arg_python}"'"'
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'PYTHONPATH="'"${PYTHONPATH}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${PYTHONPATH}, ${version_python}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${PYTHONPATH}, ${version}" >&2
   exit 0
 fi
 
 if [ x"$1" = x-l ]
 then
   echo "Python interpreter [http://www.python.org]"
-  exit 0
-fi
-
-if [ x"$1" = x-b ]
-then
-  echo "Python"
-  exit 0
-fi
-
-if [ x"$1" = x-c ]
-then
-  cat <<EOF
-src_sfx = ".py"
-arch = linux-shared
-EOF
   exit 0
 fi
 

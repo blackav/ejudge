@@ -4,12 +4,19 @@
 
 LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
+function common_config()
+{
+  echo 'long_name="GNU Prolog"'
+  echo 'src_sfx=".pro"'
+  echo 'arch = "linux-shared"'
+}
+
 function failure()
 {
   rm -f conftest*
-  echo 'version_gprolog='
-  echo 'short_name_gprolog="prolog"'
-  echo 'arg_gprolog="'"${arg_gprolog}"'"'
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'GPLCRUN=false'
   echo 'GPROLOGDIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
@@ -25,14 +32,14 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
-  arg_gprolog="$2"
+  arg="$2"
   [ x"$2" != x ] && GPLCRUN="$2"
   [ "${GPLCRUN}" = "" ] && GPLCRUN="gplc"
 
   [ "${verbose}" = 1 ] && echo -n "checking whether GNU Prolog is available..." >&2
   "${GPLCRUN}" --version >/dev/null 2>&1 || failure
-  version_gprolog=`"${GPLCRUN}" --version 2>&1 | grep "Prolog compiler" | gawk '{ print $5; }'` || failure
-  [ "${version_gprolog}" != "" ] || failure
+  version=`"${GPLCRUN}" --version 2>&1 | grep "Prolog compiler" | gawk '{ print $5; }'` || failure
+  [ "${version}" != "" ] || failure
   cat > conftest.pro <<EOF
 :-initialization(main).
 main :- write('OK'), halt.
@@ -44,33 +51,18 @@ EOF
   rm -f ./conftest*
   GPROLOGDIR=`dirname "${GPLCRUN}"`
   [ "${GPROLOGDIR}" = . ] && GPROLOGDIR=""
-  echo 'version_gprolog="'"${version_gprolog}"'"'
-  echo 'short_name_gprolog="prolog"'
-  echo 'arg_gprolog="'"${arg_gprolog}"'"'
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'GPLCRUN="'"${GPLCRUN}"'"'
   echo 'GPROLOGDIR="'"${GPROLOGDIR}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${GPLCRUN}, ${version_gprolog}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${GPLCRUN}, ${version}" >&2
   exit 0
 fi
 
 if [ x"$1" = x-l ]
 then
   echo "GNU Prolog compiler [http://www.gprolog.org]"
-  exit 0
-fi
-
-if [ x"$1" = x-b ]
-then
-  echo "GNU Prolog"
-  exit 0
-fi
-
-if [ x"$1" = x-c ]
-then
-  cat <<EOF
-src_sfx = ".pro"
-arch = linux-shared
-EOF
   exit 0
 fi
 

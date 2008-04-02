@@ -14,18 +14,23 @@
 #       variables are written to stdout.
 #  -v   verbose operation (configure mode)
 #  -l   output the compiler name to the stdout (list mode)
-#  -b   output the language long_name to the stdout
-#  -c   dump the language configuration section for the `compile' program
 #  -p   write to the stdout the command line of the compiler
 #  -f   write the compiler full name and the compiler version
 
 LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
+function common_config()
+{
+  echo 'long_name="GNU Fortran 77"'
+  echo 'src_sfx=".c"'
+}
+
 function failure()
 {
   rm -f conftest*
-  echo 'version_gcc='
-  echo 'arg_gcc="'"${arg_gcc}"'"'
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'GCCRUN=false'
   echo 'GCCDIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
@@ -41,13 +46,13 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
-  arg_gcc="$2"
+  arg="$2"
   [ x"$2" != x ] && GCCRUN="$2"
   [ "${GCCRUN}" = "" ] && GCCRUN="gcc"
 
   [ "${verbose}" = 1 ] && echo -n "checking whether GNU C is available... " >&2
   "${GCCRUN}" -v >/dev/null 2>&1 || failure
-  version_gcc=`"${GCCRUN}" -v 2>&1 | grep "gcc version" | gawk '{ print $3; }'`|| failure
+  version=`"${GCCRUN}" -v 2>&1 | grep "gcc version" | gawk '{ print $3; }'`|| failure
   cat > conftest.c <<EOF
 #include <stdio.h>
 int main(void) { printf("ok\n"); return 0; }
@@ -59,31 +64,18 @@ EOF
   rm -f ./conftest*
   GCCDIR=`dirname "${GCCRUN}"`
   [ "${GCCDIR}" = . ] && GCCDIR=""
-  echo 'version_gcc="'"${version_gcc}"'"'
-  echo 'arg_gcc="'"${arg_gcc}"'"'
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'GCCRUN="'"${GCCRUN}"'"'
   echo 'GCCDIR="'"${GCCDIR}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${GCCRUN}, ${version_gcc}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${GCCRUN}, ${version}" >&2
   exit 0
 fi
 
 if [ x"$1" = x-l ]
 then
   echo "GNU C compiler [http://gcc.gnu.org]"
-  exit 0
-fi
-
-if [ x"$1" = x-b ]
-then
-  echo "GNU C"
-  exit 0
-fi
-
-if [ x"$1" = x-c ]
-then
-  cat <<EOF
-src_sfx = ".c"
-EOF
   exit 0
 fi
 

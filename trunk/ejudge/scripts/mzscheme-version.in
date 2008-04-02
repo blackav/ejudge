@@ -4,12 +4,19 @@
 
 LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
+function common_config()
+{
+  echo 'long_name="MzScheme"'
+  echo 'src_sfx=".scm"'
+  echo 'arch = "linux-shared"'
+}
+
 function failure()
 {
   rm -f conftest*
-  echo 'version_mzscheme='
-  echo 'short_name_mzscheme=scheme'
-  echo 'arg_mzscheme="'"${arg_mzscheme}"'"'
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'MZSCHEMEPATH=/bin/false'
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
@@ -24,14 +31,14 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
-  arg_mzscheme="$2"
+  arg="$2"
   [ x"$2" != x ] && mzscheme="$2"
   [ "${mzscheme}" = "" ] && mzscheme="mzscheme"
 
   [ "${verbose}" = 1 ] && echo -n "checking whether MzScheme is available..." >&2
   "${mzscheme}" --version >/dev/null 2>&1 || failure
-  version_mzscheme=`"${mzscheme}" --version 2>&1 | grep "MzScheme" | gawk -v FS="[ ,]" '{ if ($4 == "version") print $5; else print $4; }'`
-  [ "${version_mzscheme}" != "" ] || failure
+  version=`"${mzscheme}" --version 2>&1 | grep "MzScheme" | gawk -v FS="[ ,]" '{ if ($4 == "version") print $5; else print $4; }'`
+  [ "${version}" != "" ] || failure
   MZSCHEMEPATH=`which "${mzscheme}"` || failure
   [ "${MZSCHEMEPATH}" != "" ] || failure
   echo "#! ${MZSCHEMEPATH} -qr" > conftest.scm
@@ -40,32 +47,17 @@ then
   ./conftest.scm >/dev/null 2>&1 || failure
 
   rm -f ./conftest*
-  echo 'version_mzscheme="'"${version_mzscheme}"'"'
-  echo 'short_name_mzscheme=scheme'
-  echo 'arg_mzscheme="'"${arg_mzscheme}"'"'
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'MZSCHEMEPATH="'"${MZSCHEMEPATH}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${MZSCHEMEPATH}, ${version_mzscheme}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${MZSCHEMEPATH}, ${version}" >&2
   exit 0
 fi
 
 if [ x"$1" = x-l ]
 then
   echo "MzScheme interpreter [http://www.drscheme.org]"
-  exit 0
-fi
-
-if [ x"$1" = x-b ]
-then
-  echo "MzScheme"
-  exit 0
-fi
-
-if [ x"$1" = x-c ]
-then
-  cat <<EOF
-src_sfx = ".scm"
-arch = linux-shared
-EOF
   exit 0
 fi
 

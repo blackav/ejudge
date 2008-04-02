@@ -4,12 +4,21 @@
 
 LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
+function common_config()
+{
+  echo 'long_name="Java JDK"'
+  echo 'src_sfx=".java"'
+  echo 'exe_sfx=".jar"'
+  echo 'arch="java"'
+}
+
 function failure()
 {
   rm -f conftest*
-  echo 'version_javac='
-  echo 'short_name_javac=java'
-  echo 'arg_javac="'"${arg_javac}"'"'
+  echo 'version='
+  echo 'short_name=java'
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'JAVARUN=false'
   echo 'JAVACRUN=false'
   echo 'JAVADIR='
@@ -27,7 +36,7 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
-  arg_javac="$2"
+  arg="$2"
   [ x"$2" != x ] && JAVACRUN="$2"
   [ "${JAVACRUN}" = "" ] && JAVACRUN="javac"
 
@@ -48,9 +57,9 @@ then
   [ "${javalastdir}" = "bin" ] || failure
   JAVADIR=`dirname "${javafulldir}"` || failure
   [ "${JAVADIR}" != "" ] || failure
-  version_javac=`${JAVARUN} -version 2>&1 | grep "java version" | sed 's/^.*"\(.*\)"$/\1/g'` || failure
-  [ "${version_javac}" != "" ] || failure
-  case x"${version_javac}" in
+  version=`${JAVARUN} -version 2>&1 | grep "java version" | sed 's/^.*"\(.*\)"$/\1/g'` || failure
+  [ "${version}" != "" ] || failure
+  case x"${version}" in
     x1.6.*) JAVAVER=1.6;;
     x1.5.*) JAVAVER=1.5;;
     x1.4.*) JAVAVER=1.4;;
@@ -74,36 +83,21 @@ EOF
   "${JAVARUN}" -Djava.security.manager -Djava.security.policy=conftest.policy conftest >/dev/null 2>/dev/null || failure
 
   rm -f ./conftest*
-  echo 'version_javac="'"${version_javac}"'"'
-  echo 'short_name_javac=java'
-  echo 'arg_javac="'"${arg_javac}"'"'
+  echo 'version="'"${version}"'"'
+  echo 'short_name=java'
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'JAVARUN="'"${JAVARUN}"'"'
   echo 'JAVACRUN="'"${JAVACRUN}"'"'
   echo 'JAVADIR="'"${JAVADIR}"'"'
   echo 'JAVAVER="'"${JAVAVER}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${JAVACRUN}, ${version_javac}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${JAVACRUN}, ${version}" >&2
   exit 0
 fi
 
 if [ x"$1" = x-l ]
 then
   echo "Java JDK (SUN or compatible) compiler [http://java.sun.com]"
-  exit 0
-fi
-
-if [ x"$1" = x-b ]
-then
-  echo "Java JDK"
-  exit 0
-fi
-
-if [ x"$1" = x-c ]
-then
-  cat <<EOF
-src_sfx = ".java"
-exe_sfx = ".jar"
-arch = "java"
-EOF
   exit 0
 fi
 

@@ -4,11 +4,18 @@
 
 LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
+function common_config()
+{
+  echo 'long_name="GNU Fortran 77"'
+  echo 'src_sfx=".for"'
+}
+
 function failure()
 {
   rm -f conftest*
-  echo 'version_g77='
-  echo 'arg_g77="'"${arg_g77}"'"'
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'G77RUN=false'
   echo 'G77DIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
@@ -24,14 +31,14 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
-  arg_g77="$2"
+  arg="$2"
   [ x"$2" != x ] && G77RUN="$2"
   [ "${G77RUN}" = "" ] && G77RUN="g77"
 
   [ "${verbose}" = 1 ] && echo -n "checking whether GNU Fortran 77 is available..." >&2
   "${G77RUN}" -v >/dev/null 2>/dev/null || failure
-  version_g77=`"${G77RUN}" --version | grep "GNU Fortran (GCC)" | gawk '{ print $4; }'` || failure
-  [ "${version_g77}" != x ] || failure
+  version=`"${G77RUN}" --version | grep "GNU Fortran (GCC)" | gawk '{ print $4; }'` || failure
+  [ "${version}" != x ] || failure
   echo "        END" > conftest.for
   "${G77RUN}" -static -s conftest.for -o conftest 2>/dev/null >/dev/null || failure
   [ -x conftest ] || failure
@@ -40,11 +47,12 @@ then
   rm -f ./conftest*
   G77DIR=`dirname "${G77RUN}"`
   [ "${G77DIR}" = . ] && G77DIR=""
-  echo 'version_g77="'"${version_g77}"'"'
-  echo 'arg_g77="'"${arg_g77}"'"'
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'G77RUN="'"${G77RUN}"'"'
   echo 'G77DIR="'"${G77DIR}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${G77RUN}, ${version_g77}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${G77RUN}, ${version}" >&2
   exit 0
 fi
 

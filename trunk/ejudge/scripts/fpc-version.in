@@ -4,11 +4,18 @@
 
 LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
+function common_config()
+{
+  echo 'long_name="Free Pascal"'
+  echo 'src_sfx=".pas"'
+}
+
 function failure()
 {
   rm -f conftest*
-  echo 'version_fpc='
-  echo 'arg_fpc="'"${arg_fpc}"'"'
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'FPCRUN=false'
   echo 'FPCDIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
@@ -24,16 +31,16 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
-  arg_fpc="$2"
+  arg="$2"
   [ x"$2" != x ] && FPCRUN="$2"
   [ "${FPCRUN}" = "" ] && FPCRUN="fpc"
 
   [ "${verbose}" = 1 ] && echo -n "checking whether Free Pascal is available..." >&2
   "${FPCRUN}" -v >/dev/null 2>/dev/null
   [ $? != 0 -a $? != 1 ] && failure
-  version_fpc=`"${FPCRUN}" -h 2>/dev/null | grep "Free Pascal Compiler" | gawk '{ print $5; }'`
+  version=`"${FPCRUN}" -h 2>/dev/null | grep "Free Pascal Compiler" | gawk '{ print $5; }'`
   [ $? != 0 -a $? != 1 ] && failure
-  [ "${version_fpc}" != "" ] || failure
+  [ "${version}" != "" ] || failure
   cat > conftest.pas <<EOF
 begin
   writeln('ok')
@@ -46,31 +53,18 @@ EOF
   rm -f ./conftest*
   FPCDIR=`dirname "${FPCRUN}"`
   [ "${FPCDIR}" = . ] && FPCDIR=""
-  echo 'version_fpc="'"${version_fpc}"'"'
-  echo 'arg_fpc="'"${arg_fpc}"'"'
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'FPCRUN="'"${FPCRUN}"'"'
   echo 'FPCDIR="'"${FPCDIR}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${FPCRUN}, ${version_fpc}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${FPCRUN}, ${version}" >&2
   exit 0
 fi
 
 if [ x"$1" = x-l ]
 then
   echo "Free Pascal compiler [http://www.freepascal.org]"
-  exit 0
-fi
-
-if [ x"$1" = x-b ]
-then
-  echo "Free Pascal"
-  exit 0
-fi
-
-if [ x"$1" = x-c ]
-then
-  cat <<EOF
-src_sfx = ".pas"
-EOF
   exit 0
 fi
 

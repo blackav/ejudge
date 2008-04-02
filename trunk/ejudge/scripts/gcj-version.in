@@ -4,11 +4,19 @@
 
 LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
+function common_config()
+{
+  echo 'long_name="GNU Java"'
+  echo 'src_sfx=".java"'
+  echo 'arch = "linux-shared"'
+}
+
 function failure()
 {
   rm -f conftest*
-  echo 'version_gcj='
-  echo 'arg_gcj="'"${arg_gcj}"'"'
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'GCJRUN=false'
   echo 'GCJDIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
@@ -24,14 +32,14 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
-  arg_gcj="$2"
+  arg="$2"
   [ x"$2" != x ] && GCJRUN="$2"
   [ "${GCJRUN}" = "" ] && GCJRUN="gcj"
 
   [ "${verbose}" = 1 ] && echo -n "checking whether GNU Java (GCJ) is available..." >&2
   "${GCJRUN}" -v >/dev/null 2>/dev/null || failure
-  version_gcj=`"${GCJRUN}" --version | grep gcj | gawk '{ print $3; }'` || failure
-  [ "${version_gcj}" != "" ] || failure
+  version=`"${GCJRUN}" --version | grep gcj | gawk '{ print $3; }'` || failure
+  [ "${version}" != "" ] || failure
 cat > conftest.java <<EOF
 class Main
 {
@@ -48,32 +56,18 @@ EOF
   rm -f ./conftest*
   GCJDIR=`dirname "${GCJRUN}"`
   [ "${GCJDIR}" = . ] && GCJDIR=""
-  echo 'version_gcj="'"${version_gcj}"'"'
-  echo 'arg_gcj="'"${arg_gcj}"'"'
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'GCJRUN="'"${GCJRUN}"'"'
   echo 'GCJDIR="'"${GCJDIR}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${GCJRUN}, ${version_gcj}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${GCJRUN}, ${version}" >&2
   exit 0
 fi
 
 if [ x"$1" = x-l ]
 then
   echo "GNU Java compiler [http://gcc.gnu.org]"
-  exit 0
-fi
-
-if [ x"$1" = x-b ]
-then
-  echo "GNU Java"
-  exit 0
-fi
-
-if [ x"$1" = x-c ]
-then
-  cat <<EOF
-src_sfx = ".java"
-arch = linux-shared
-EOF
   exit 0
 fi
 

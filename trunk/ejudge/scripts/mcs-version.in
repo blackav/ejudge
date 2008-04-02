@@ -4,11 +4,20 @@
 
 LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
 
+function common_config()
+{
+  echo 'long_name="Mono C#"'
+  echo 'src_sfx=".cs"'
+  echo 'exe_sfx=".exe"'
+  echo 'arch="msil"'
+}
+
 function failure()
 {
   rm -f conftest*
-  echo 'version_mcs='
-  echo 'arg_mcs="'"${arg_mcs}"'"'
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'MONORUN=false'
   echo 'MONODIR='
   echo 'MONOVER='
@@ -27,7 +36,7 @@ fi
 # recheck the language
 if [ x"$1" = x-r ]
 then
-  arg_mcs="$2"
+  arg="$2"
   [ x"$2" != x ] && MCSRUN="$2"
   [ "${MCSRUN}" = "" ] && MCSRUN="gmcs"
 
@@ -46,8 +55,8 @@ then
   MONOVER=`"${MONORUN}" --version 2>&1 | grep "version" | awk '{gsub(",","",$5); print $5;}'` || failure
   [ "${MONOVER}" != "" ] || failure
   "${MCSRUN}" --version >/dev/null 2>&1 || failure
-  version_mcs=`"${MCSRUN}" --version 2>&1 | grep "version" | awk '{gsub(",","",$5); print $5;}'` || failure
-  [ "${version_mcs}" != "" ] || failure
+  version=`"${MCSRUN}" --version 2>&1 | grep "version" | awk '{gsub(",","",$5); print $5;}'` || failure
+  [ "${version}" != "" ] || failure
   cat > conftest.cs <<EOF
 public class conftest
 {
@@ -62,36 +71,21 @@ EOF
   "${MONORUN}" conftest.exe >/dev/null 2>&1 || failure
 
   rm -f ./conftest*
-  echo 'version_mcs="'"${version_mcs}"'"'
-  echo 'arg_mcs="'"${arg_mcs}"'"'
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
   echo 'MONORUN="'"${MONORUN}"'"'
   echo 'MONODIR="'"${MONODIR}"'"'
   echo 'MONOVER="'"${MONOVER}"'"'
   echo 'MCSRUN="'"${MCSRUN}"'"'
   echo 'MCSDIR="'"${MCSDIR}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${MCSRUN}, ${version_mcs}" >&2
+  [ "${verbose}" = 1 ] && echo "yes, ${MCSRUN}, ${version}" >&2
   exit 0
 fi
 
 if [ x"$1" = x-l ]
 then
   echo "Mono C# compiler [http://www.mono-project.com]"
-  exit 0
-fi
-
-if [ x"$1" = x-b ]
-then
-  echo "Mono C#"
-  exit 0
-fi
-
-if [ x"$1" = x-c ]
-then
-  cat <<EOF
-src_sfx = ".cs"
-exe_sfx = ".exe"
-arch = "msil"
-EOF
   exit 0
 fi
 
