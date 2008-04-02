@@ -54,6 +54,20 @@ then
   exit 0
 fi
 
+if [ x"$1" = x-b ]
+then
+  echo "GNU Fortran 77"
+  exit 0
+fi
+
+if [ x"$1" = x-c ]
+then
+  cat <<EOF
+src_sfx = ".for"
+EOF
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/g77.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]

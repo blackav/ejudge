@@ -59,6 +59,21 @@ then
   exit 0
 fi
 
+if [ x"$1" = x-b ]
+then
+  echo "GNU Prolog"
+  exit 0
+fi
+
+if [ x"$1" = x-c ]
+then
+  cat <<EOF
+src_sfx = ".pro"
+arch = linux-shared
+EOF
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/gprolog.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]

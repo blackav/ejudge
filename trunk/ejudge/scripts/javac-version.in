@@ -87,7 +87,23 @@ fi
 
 if [ x"$1" = x-l ]
 then
-  echo "SUN Java JDK (or compatible) compiler [http://java.sun.com]"
+  echo "Java JDK (SUN or compatible) compiler [http://java.sun.com]"
+  exit 0
+fi
+
+if [ x"$1" = x-b ]
+then
+  echo "Java JDK"
+  exit 0
+fi
+
+if [ x"$1" = x-c ]
+then
+  cat <<EOF
+src_sfx = ".java"
+exe_sfx = ".jar"
+arch = "java"
+EOF
   exit 0
 fi
 

@@ -60,6 +60,20 @@ then
   exit 0
 fi
 
+if [ x"$1" = x-b ]
+then
+  echo "GNU C++"
+  exit 0
+fi
+
+if [ x"$1" = x-c ]
+then
+  cat <<EOF
+src_sfx = ".cpp"
+EOF
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/g++.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
@@ -91,4 +105,4 @@ fi
 
 [ x"$1" = x-f ] && echo -n "GNU C++ "
 
-"${GPPRUN}" -v 2>&1 | grep "gcc version" | sed 's/gcc version //g'
+"${GPPRUN}" -v 2>&1 | grep "gcc version" | gawk '{ print $3; }'

@@ -62,6 +62,21 @@ then
   exit 0
 fi
 
+if [ x"$1" = x-b ]
+then
+  echo "GNU Java"
+  exit 0
+fi
+
+if [ x"$1" = x-c ]
+then
+  cat <<EOF
+src_sfx = ".java"
+arch = linux-shared
+EOF
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/gcj.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
@@ -91,7 +106,7 @@ fi
     
 "${GCJRUN}" --version 2>/dev/null >/dev/null || exit 1
 
-[ x"$1" = x-f ] && echo -n "GNU Java (GCJ) "
+[ x"$1" = x-f ] && echo -n "GNU Java "
 
 "${GCJRUN}" --version | grep gcj | gawk '{ print $3; }'
 [ $? != 0 -a $? != 1 ] && exit 1

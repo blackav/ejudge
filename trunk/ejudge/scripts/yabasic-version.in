@@ -51,7 +51,22 @@ fi
 
 if [ x"$1" = x-l ]
 then
-  echo "Yabasic interpreter [http://www.yabasic.de]"
+  echo "YaBasic interpreter [http://www.yabasic.de]"
+  exit 0
+fi
+
+if [ x"$1" = x-b ]
+then
+  echo "YaBasic"
+  exit 0
+fi
+
+if [ x"$1" = x-c ]
+then
+  cat <<EOF
+src_sfx = ".bas"
+arch = linux-shared
+EOF
   exit 0
 fi
 

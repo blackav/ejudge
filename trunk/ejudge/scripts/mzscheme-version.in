@@ -54,6 +54,21 @@ then
   exit 0
 fi
 
+if [ x"$1" = x-b ]
+then
+  echo "MzScheme"
+  exit 0
+fi
+
+if [ x"$1" = x-c ]
+then
+  cat <<EOF
+src_sfx = ".scm"
+arch = linux-shared
+EOF
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/mzscheme.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
@@ -77,6 +92,6 @@ fi
     
 "${MZSCHEMEPATH}" --version 2>/dev/null >/dev/null || exit 1
 
-[ x"$1" = x-f ] && echo -n "Mz Scheme "
+[ x"$1" = x-f ] && echo -n "MzScheme "
 
 "${MZSCHEMEPATH}" --version 2>&1 | grep "MzScheme" | gawk -v FS="[ ,]" '{ if ($4 == "version") print $5; else print $4; }'

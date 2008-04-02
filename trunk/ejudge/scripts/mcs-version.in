@@ -79,6 +79,22 @@ then
   exit 0
 fi
 
+if [ x"$1" = x-b ]
+then
+  echo "Mono C#"
+  exit 0
+fi
+
+if [ x"$1" = x-c ]
+then
+  cat <<EOF
+src_sfx = ".cs"
+exe_sfx = ".exe"
+arch = "msil"
+EOF
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/mcs.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
