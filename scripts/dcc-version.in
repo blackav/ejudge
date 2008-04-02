@@ -55,7 +55,22 @@ fi
 
 if [ x"$1" = x-l ]
 then
-  echo "Borland Kylix (Delphi) compiler (unsupported by Borland)"
+  echo "Borland Delphi 6 (Kylix) compiler (unsupported by Borland)"
+  exit 0
+fi
+
+if [ x"$1" = x-b ]
+then
+  echo "Borland Delphi 6 (Kylix)"
+  exit 0
+fi
+
+if [ x"$1" = x-c ]
+then
+  cat <<EOF
+src_sfx = ".pas"
+arch = linux-shared
+EOF
   exit 0
 fi
 
@@ -90,6 +105,6 @@ fi
 
 "${DCCRUN}" -h 2>/dev/null >/dev/null || exit 1
     
-[ x"$1" = x-f ] && echo -n "Borland Delphi 6 - "
+[ x"$1" = x-f ] && echo -n "Borland Delphi 6 (Kylix) "
 
 "${DCCRUN}" -h 2>/dev/null | grep "Borland Delphi" | gawk '{ print $6; }'

@@ -58,6 +58,20 @@ then
   exit 0
 fi
 
+if [ x"$1" = x-b ]
+then
+  echo "GNU Pascal"
+  exit 0
+fi
+
+if [ x"$1" = x-c ]
+then
+  cat <<EOF
+src_sfx = ".pas"
+EOF
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/gpc.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]

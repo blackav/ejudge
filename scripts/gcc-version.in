@@ -14,6 +14,7 @@
 #       variables are written to stdout.
 #  -v   verbose operation (configure mode)
 #  -l   output the compiler name to the stdout (list mode)
+#  -b   output the language long_name to the stdout
 #  -c   dump the language configuration section for the `compile' program
 #  -p   write to the stdout the command line of the compiler
 #  -f   write the compiler full name and the compiler version
@@ -72,6 +73,20 @@ then
   exit 0
 fi
 
+if [ x"$1" = x-b ]
+then
+  echo "GNU C"
+  exit 0
+fi
+
+if [ x"$1" = x-c ]
+then
+  cat <<EOF
+src_sfx = ".c"
+EOF
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/gcc.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
@@ -103,4 +118,4 @@ fi
 
 [ x"$1" = x-f ] && echo -n "GNU C "
 
-"${GCCRUN}" -v 2>&1 | grep "gcc version" | sed 's/gcc version //g'
+"${GCCRUN}" -v 2>&1 | grep "gcc version" | gawk '{ print $3; }'

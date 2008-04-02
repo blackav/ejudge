@@ -78,6 +78,22 @@ then
   exit 0
 fi
 
+if [ x"$1" = x-b ]
+then
+  echo "Mono Visual Basic .NET"
+  exit 0
+fi
+
+if [ x"$1" = x-c ]
+then
+  cat <<EOF
+src_sfx = ".vb"
+exe_sfx = ".exe"
+arch = "msil"
+EOF
+  exit 0
+fi
+
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/vbnc.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
@@ -107,6 +123,6 @@ fi
     
 "${VBNCRUN}" /help 2>/dev/null >/dev/null || exit 1
 
-[ x"$1" = x-f ] && echo -n "Mono Visual Basic "
+[ x"$1" = x-f ] && echo -n "Mono Visual Basic .NET "
 
 "${VBNCRUN}" /help 2>&1 | head -1 | awk '{print $5;}'
