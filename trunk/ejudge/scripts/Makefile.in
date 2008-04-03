@@ -51,43 +51,44 @@ LANG_SCRIPT_DIR=${libexecdir}/ejudge/lang
 LANG_CONFIG_DIR=@ac_cv_lang_config_dir@
 
 SCRIPTS = \
- dcc\
- dcc-version\
- fpc\
- fpc-version\
- g++\
- g++-version\
- g77\
- g77-version\
- gfortran\
- gfortran-version\
- gcc\
- gcc-version\
- gcj\
- gcj-version\
- gpc\
- gpc-version\
- gprolog\
- gprolog-version\
- lang-config.sh\
- mzscheme\
- mzscheme-version\
- perl\
- perl-version\
- python\
- python-version\
- yabasic\
- yabasic-version\
- festival\
- javac\
- javac-version\
- mcs\
- mcs-version\
- vbnc\
- vbnc-version\
- runjava\
- runmono\
- runperl
+ festival
+
+SCRIPTS_IN = \
+ dcc.in\
+ dcc-version.in\
+ fpc.in\
+ fpc-version.in\
+ g++.in\
+ g++-version.in\
+ g77.in\
+ g77-version.in\
+ gfortran.in\
+ gfortran-version.in\
+ gcc.in\
+ gcc-version.in\
+ gcj.in\
+ gcj-version.in\
+ gpc.in\
+ gpc-version.in\
+ gprolog.in\
+ gprolog-version.in\
+ mzscheme.in\
+ mzscheme-version.in\
+ perl.in\
+ perl-version.in\
+ python.in\
+ python-version.in\
+ yabasic.in\
+ yabasic-version.in\
+ javac.in\
+ javac-version.in\
+ mcs.in\
+ mcs-version.in\
+ vbnc.in\
+ vbnc-version.in\
+ runjava.in\
+ runmono.in\
+ runperl.in
 
 POLICIES = \
  fileio.policy \
@@ -98,6 +99,8 @@ all :
 
 install :
 	mkdir -p "${DESTDIR}${LANG_SCRIPT_DIR}"
+	mkdir -p "${DESTDIR}${LANG_SCRIPT_DIR}/in"
+	for i in ${SCRIPTS_IN}; do j="${DESTDIR}${LANG_SCRIPT_DIR}/in/$$i"; if [ "${PRESERVE}" = 1 ]; then if [ -f "$$j" ]; then rm -f "$$j.new"; install -m 0755 "$$i" "$$j.new"; else install -m 0755 "$$i" "$$j"; fi; else if [ -f "$$j" ]; then if ! diff -q "$$i" "$$j" >/dev/null 2>&1; then rm -f "$$j.old"; mv "$$j" "$$j.old"; fi; fi; install -m 0755 "$$i" "$$j"; fi; done
 	for i in ${SCRIPTS}; do j="${DESTDIR}${LANG_SCRIPT_DIR}/$$i"; if [ "${PRESERVE}" = 1 ]; then if [ -f "$$j" ]; then rm -f "$$j.new"; install -m 0755 "$$i" "$$j.new"; else install -m 0755 "$$i" "$$j"; fi; else if [ -f "$$j" ]; then if ! diff -q "$$i" "$$j" >/dev/null 2>&1; then rm -f "$$j.old"; mv "$$j" "$$j.old"; fi; fi; install -m 0755 "$$i" "$$j"; fi; done
 	install -m 0644 lang_ids.cfg "${DESTDIR}/${LANG_SCRIPT_DIR}"
 	mkdir -p "${DESTDIR}${datadir}/ejudge"

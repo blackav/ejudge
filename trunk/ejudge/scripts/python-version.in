@@ -8,7 +8,7 @@ function common_config()
 {
   echo 'long_name="Python"'
   echo 'src_sfx=".py"'
-  echo 'arch = "linux-shared"'
+  echo 'arch="linux-shared"'
 }
 
 function failure()

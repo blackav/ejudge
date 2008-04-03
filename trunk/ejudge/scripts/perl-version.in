@@ -8,7 +8,7 @@ function common_config()
 {
   echo 'long_name="Perl"'
   echo 'src_sfx=".pl"'
-  echo 'arch = "linux-shared"'
+  echo 'arch="linux-shared"'
 }
 
 function failure()
