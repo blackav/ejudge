@@ -13,6 +13,9 @@
 /* the installation prefix directory */
 #undef EJUDGE_PREFIX_DIR
 
+/* the installation libexec directory */
+#undef EJUDGE_LIBEXEC_DIR
+
 /* the default path to the l10n_dir */
 #undef EJUDGE_LOCALE_DIR
 
