@@ -1027,6 +1027,7 @@ then
   AC_DEFINE_UNQUOTED(EJUDGE_LOCAL_DIR,"${ac_cv_local_dir}")
 fi
 AC_DEFINE_UNQUOTED(EJUDGE_PREFIX_DIR,"${ac_cv_expanded_prefix}")
+AC_DEFINE_UNQUOTED(EJUDGE_LIBEXEC_DIR,"${actual_libexecdir}")
 AC_DEFINE_UNQUOTED(EJUDGE_LOCALE_DIR,"$ac_cv_expanded_locale_dir")
 AC_DEFINE_UNQUOTED(EJUDGE_SERVER_BIN_PATH,"${ac_cv_ejudge_server_bin_path}")
 AC_DEFINE_UNQUOTED(EJUDGE_SERVE_PATH,"${ac_cv_ejudge_serve_path}")
@@ -1060,9 +1061,9 @@ then
 fi
 
 AC_CONFIG_HEADERS([config.h])
-AC_OUTPUT(Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile scripts/gcc scripts/gcc-version scripts/g++ scripts/g++-version scripts/fpc scripts/fpc-version scripts/gpc scripts/gpc-version scripts/dcc scripts/dcc-version scripts/g77 scripts/g77-version scripts/gfortran scripts/gfortran-version scripts/gcj scripts/gcj-version scripts/gprolog scripts/gprolog-version scripts/yabasic scripts/yabasic-version scripts/mzscheme scripts/mzscheme-version scripts/perl scripts/perl-version scripts/python scripts/python-version ejudge-config.v scripts/festival scripts/javac scripts/javac-version scripts/runjava scripts/mcs scripts/mcs-version scripts/runmono scripts/vbnc scripts/vbnc-version scripts/runperl plugins/mysql-userlist/Makefile python/Makefile)
+AC_OUTPUT(Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/mysql-userlist/Makefile python/Makefile)
 
-chmod +x scripts/gcc scripts/gcc-version scripts/g++ scripts/g++-version scripts/fpc scripts/fpc-version scripts/gpc scripts/gpc-version scripts/dcc scripts/dcc-version scripts/g77 scripts/g77-version scripts/gfortran scripts/gfortran-version scripts/gcj scripts/gcj-version scripts/gprolog scripts/gprolog-version scripts/yabasic scripts/yabasic-version scripts/mzscheme scripts/mzscheme-version scripts/perl scripts/perl-version scripts/python scripts/python-version ejudge-config.v scripts/festival scripts/javac scripts/javac-version scripts/runjava scripts/mcs scripts/mcs-version scripts/runmono scripts/vbnc scripts/vbnc-version scripts/runperl
+chmod +x ejudge-config.v scripts/festival
 
 if [[ "x${ac_cv_has_libcap}" = x -a "${ac_cv_has_new_secure_exec}" = x ]]
 then
