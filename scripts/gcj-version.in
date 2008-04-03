@@ -8,7 +8,7 @@ function common_config()
 {
   echo 'long_name="GNU Java"'
   echo 'src_sfx=".java"'
-  echo 'arch = "linux-shared"'
+  echo 'arch="linux-shared"'
 }
 
 function failure()
