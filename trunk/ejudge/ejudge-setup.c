@@ -3709,6 +3709,9 @@ generate_install_script(FILE *f)
       gen_cmd_run(f, "ln -sf \"%s/new-judge%s\" \"%s/new-judge%s\"",
                   config_ejudge_cgi_bin_dir, CGI_PROG_SUFFIX,
                   config_cgi_bin_dir, CGI_PROG_SUFFIX);
+      gen_cmd_run(f, "ln -sf \"%s/new-register%s\" \"%s/new-register%s\"",
+                  config_ejudge_cgi_bin_dir, CGI_PROG_SUFFIX,
+                  config_cgi_bin_dir, CGI_PROG_SUFFIX);
     }
   }
 

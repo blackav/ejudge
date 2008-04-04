@@ -27,6 +27,7 @@ struct lang_config_info
   unsigned char *lang;
   unsigned char *config_arg;
   int enabled;
+  int id;
   unsigned char *cfg_txt;
   size_t cfg_len;
   unsigned char *short_name;
