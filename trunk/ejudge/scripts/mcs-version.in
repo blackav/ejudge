@@ -10,6 +10,7 @@ function common_config()
   echo 'src_sfx=".cs"'
   echo 'exe_sfx=".exe"'
   echo 'arch="msil"'
+  echo 'insecure=1'
 }
 
 function failure()
