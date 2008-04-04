@@ -16,7 +16,6 @@ function failure()
 {
   rm -f conftest*
   echo 'version='
-  echo 'short_name=java'
   echo 'arg="'"${arg}"'"'
   common_config
   echo 'JAVARUN=false'
@@ -84,7 +83,6 @@ EOF
 
   rm -f ./conftest*
   echo 'version="'"${version}"'"'
-  echo 'short_name=java'
   echo 'arg="'"${arg}"'"'
   common_config
   echo 'JAVARUN="'"${JAVARUN}"'"'
