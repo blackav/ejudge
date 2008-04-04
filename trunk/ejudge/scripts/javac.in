@@ -11,7 +11,7 @@ prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 libexecdir="@libexecdir@"
 
-LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
+LANG_CONFIG_DIR="@lang_config_dir@"
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/javac.cfg"
 
 infile="$1"
