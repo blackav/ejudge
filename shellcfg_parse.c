@@ -65,7 +65,7 @@ shellconfig_parse(FILE *log_f, FILE *f, const unsigned char *path)
       goto failure;
     }
     namei = 0;
-    while ((isalnum(c) || c == '_') && namei < sizeof(varname) - 2) {
+    while ((isalnum(c) || c == '_' || c == '-' || c == '+') && namei < sizeof(varname) - 2) {
       varname[namei++] = c;
       c = next_char(f);
     }
