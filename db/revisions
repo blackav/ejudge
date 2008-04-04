@@ -3564,3 +3564,7 @@ prepare.c 4842 0 14246519
 runlog.c 4842 0 6370068
 serve_state.c 4842 0 1107403
 userlist_check.c 4842 0 1041560
+lang_config_vis.h 4850 0 143806
+ejudge-setup.c 4850 0 10231754
+shellcfg_parse.c 4850 0 374088
+lang_config_vis.c 4851 0 1906527
