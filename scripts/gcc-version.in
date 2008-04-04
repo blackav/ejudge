@@ -17,11 +17,11 @@
 #  -p   write to the stdout the command line of the compiler
 #  -f   write the compiler full name and the compiler version
 
-LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
+LANG_CONFIG_DIR="@lang_config_dir@"
 
 function common_config()
 {
-  echo 'long_name="GNU Fortran 77"'
+  echo 'long_name="GNU C"'
   echo 'src_sfx=".c"'
 }
 

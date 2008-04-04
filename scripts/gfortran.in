@@ -4,7 +4,7 @@
 
 # using EJUDGE_FLAGS we may pass additional flags
 
-LANG_CONFIG_DIR="@ac_cv_lang_config_dir_expanded@"
+LANG_CONFIG_DIR="@lang_config_dir@"
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/gfortran.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
