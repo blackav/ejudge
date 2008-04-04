@@ -32,9 +32,21 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include <dirent.h>
+#include <utime.h>
 
 static struct lang_config_info *lang_first, *lang_last;
 static int lang_configured = 0;
+
+struct lang_id_info
+{
+  unsigned char *lang;
+  int id;
+};
+
+static int lang_id_configured = 0;
+static int lang_id_total = 0;
+static int lang_id_max_id = 0;
+static struct lang_id_info *lang_id_infos = 0;
 
 struct lang_config_info *
 lang_config_get_first(void)
@@ -134,6 +146,311 @@ lang_config_get(const unsigned char *lang)
     lang_last = p;
   }
   return p;
+}
+
+static void log_printf(FILE *out_f, WINDOW *out_win, const char *format, ...)
+  __attribute__((format(printf, 3, 4)));
+static void log_printf(FILE *out_f, WINDOW *out_win, const char *format, ...)
+{
+  va_list args;
+  char buf[1024];
+
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+
+  if (out_f) {
+    fprintf(out_f, "%s", buf);
+  }
+  if (out_win) {
+    wprintw(out_win, "%s", buf);
+    update_panels();
+    doupdate();
+  }
+}
+
+static void
+parse_lang_id_file(
+	const unsigned char *script_dir,
+        FILE *err_f,
+        WINDOW *win)
+{
+  path_t id_file;
+  FILE *in_f = 0;
+  FILE *log_f = 0;
+  char *log_t = 0;
+  size_t log_z = 0;
+  shellconfig_t cfg = 0;
+  int i, val, j;
+  char *eptr;
+
+  if (lang_id_configured) return;
+  lang_id_configured = 1;
+
+  snprintf(id_file, sizeof(id_file), "%s/lang_ids.cfg", script_dir);
+  if (!(in_f = fopen(id_file, "r"))) {
+    log_printf(err_f, win, "cannot open `%s' for reading\n", id_file);
+    goto cleanup;
+  }
+  if (!(log_f = open_memstream(&log_t, &log_z))) goto cleanup;
+  if (!(cfg = shellconfig_parse(log_f, in_f, id_file))) {
+    fclose(log_f); log_f = 0;
+    log_printf(err_f, win, "%s", log_t);
+    goto cleanup;
+  }
+  fclose(log_f); log_f = 0;
+  xfree(log_t); log_t = 0; log_z = 0;
+  fclose(in_f); in_f = 0;
+
+  lang_id_total = cfg->usage;
+  lang_id_max_id = 0;
+  XCALLOC(lang_id_infos, lang_id_total);
+  for (i = 0, j = 0; i < lang_id_total; i++) {
+    errno = 0;
+    val = strtol(cfg->values[i], &eptr, 10);
+    if (errno || *eptr || val <= 0 || val > 999999) {
+      log_printf(err_f, win, "invalid language id `%s' for language `%s'\n",
+                 cfg->values[i], cfg->names[i]);
+    } else {
+      lang_id_infos[j].lang = xstrdup(cfg->names[i]);
+      lang_id_infos[j].id = val;
+      if (val > lang_id_max_id) lang_id_max_id = val;
+      ++j;
+    }
+  }
+  lang_id_total = j;
+  if (!lang_id_total) {
+    log_printf(err_f, win, "no language ids are configured\n");
+  }
+
+ cleanup:
+  shellconfig_free(cfg);
+  if (in_f) fclose(in_f);
+  if (log_f) fclose(log_f);
+  xfree(log_t);
+}
+
+static void
+assign_lang_ids(void)
+{
+  struct lang_config_info *p;
+  struct lang_config_info **m;
+  int i;
+
+  if (lang_id_total <= 0 || lang_id_max_id <= 0) return;
+  for (p = lang_first; p; p = p->next)
+    p->id = 0;
+
+  XALLOCAZ(m, lang_id_max_id + 1);
+  for (i = lang_id_total - 1; i >= 0; --i) {
+    ASSERT(lang_id_infos[i].id > 0 && lang_id_infos[i].id <= lang_id_max_id);
+    if (m[lang_id_infos[i].id] && m[lang_id_infos[i].id]->enabled) continue;
+    for (p = lang_first; p; p = p->next) {
+      if (p->short_name && !strcmp(lang_id_infos[i].lang, p->short_name))
+        break;
+      //else if (!p->short_name && !strcmp(lang_id_infos[i].lang, p->lang))
+      //break;
+    }
+    if (!p) continue;
+    if (m[lang_id_infos[i].id]) m[lang_id_infos[i].id]->id = 0;
+    p->id = lang_id_infos[i].id;
+    m[p->id] = p;
+  }
+}
+
+static unsigned char *
+do_substitute(
+	unsigned char *txt,
+        const unsigned char * const *names,
+        const unsigned char * const *values)
+{
+  int i, nlen, vlen, tlen;
+  unsigned char *pp;
+  unsigned char *txt2 = 0;
+
+  if (!txt || !*txt) return txt;
+
+  while (1) {
+    pp = 0;
+    for (i = 0; names[i]; i++)
+      if ((pp = strstr(txt, names[i])))
+        break;
+    if (!pp) break;
+
+    ASSERT(values[i]);
+    nlen = strlen(names[i]);
+    vlen = strlen(values[i]);
+    tlen = strlen(txt);
+
+    ASSERT(nlen > 0);
+    txt2 = (unsigned char*) xmalloc(tlen - nlen + vlen + 1);
+    sprintf(txt2, "%.*s%s%s", pp - txt, txt, values[i], pp + nlen);
+    xfree(txt); txt = txt2; txt2 = 0;
+  }
+
+  return txt;
+}
+              
+
+static void
+update_language_script(
+	const unsigned char *script_in,
+        const unsigned char *script_out,
+        const unsigned char *script_base,
+        FILE *log_f,
+        FILE *err_f,
+        WINDOW *win)
+{
+  char *in_t = 0, *out_t = 0;
+  FILE *in_f = 0, *out_f = 0;
+  size_t in_z = 0, out_z = 0;
+  FILE *f = 0;
+  char buf[1024];
+  static const unsigned char * const names[] = 
+  {
+    "@ac_cv_lang_config_dir_expanded@",
+    "@prefix@",
+    "@exec_prefix@",
+    "@libexecdir@",
+    0
+  };
+  static const unsigned char * const values[] =
+  {
+#if defined EJUDGE_LANG_CONFIG_DIR
+    EJUDGE_LANG_CONFIG_DIR,
+#else
+    "",
+#endif
+#if defined EJUDGE_PREFIX_DIR
+    EJUDGE_PREFIX_DIR,
+#else
+    "",
+#endif
+#if defined EJUDGE_PREFIX_DIR
+    EJUDGE_PREFIX_DIR,
+#else
+    "",
+#endif
+#if defined EJUDGE_LIBEXEC_DIR
+    EJUDGE_LIBEXEC_DIR,
+#else
+    "",
+#endif
+    0
+  };
+
+  // read the source file
+  if (!(f = fopen(script_in, "r"))) {
+    log_printf(err_f, win, "error: cannot open `%s' for reading\n", script_in);
+    goto cleanup;
+  }
+  if (!(in_f = open_memstream(&in_t, &in_z))) goto cleanup;
+  while (fgets(buf, sizeof(buf), f))
+    fputs(buf, in_f);
+  fclose(in_f); in_f = 0;
+  fclose(f); f = 0;
+
+  // substitute stuff
+  in_t = do_substitute(in_t, names, values);
+
+  // read the destination file (if such exists)
+  if ((f = fopen(script_out, "r"))) {
+    if (!(out_f = open_memstream(&out_t, &out_z))) goto cleanup;
+    while (fgets(buf, sizeof(buf), f))
+      fputs(buf, out_f);
+    fclose(out_f); out_f = 0;
+    fclose(f); f = 0;
+    if (!strcmp(out_t, in_t)) {
+      // no difference, but update the modtime
+      if (utime(script_out, 0) < 0) {
+        log_printf(err_f, win, "error: cannot change mod time for `%s'\n",
+                   script_out);
+        // error
+      }
+      goto cleanup;
+    }
+    xfree(out_t); out_t = 0;
+  }
+
+  // write the output file
+  if (!(f = fopen(script_out, "w"))) {
+    log_printf(err_f, win, "error: cannot open `%s' for writing\n",
+               script_out);
+    goto cleanup;
+  }
+  fprintf(f, "%s", in_t);
+  fflush(f);
+  if (ferror(f)) {
+    log_printf(err_f, win, "error: write to `%s' failed\n", script_out);
+    goto cleanup;
+  }
+  fclose(f); f = 0;
+
+  if (chmod(script_out, 0775) < 0) {
+    log_printf(err_f, win, "error: cannot do chmod on `%s'", script_out);
+  }
+
+  fprintf(log_f, " %s", script_base);
+
+ cleanup:
+  if (f) fclose(f);
+  if (in_f) fclose(in_f);
+  xfree(in_t);
+  if (out_f) fclose(out_f);
+  xfree(out_t);
+}
+
+static void
+update_language_scripts(
+	const unsigned char *script_dir,
+        FILE *log_f,
+        WINDOW *win)
+{
+  path_t script_in_dir;
+  path_t script_base;
+  path_t script_in;
+  path_t script_out;
+  DIR *d = 0;
+  struct dirent *dd;
+  int nlen, need_update = -1;
+  struct stat is, os;
+  FILE *upd_f = 0;
+  char *upd_t = 0;
+  size_t upd_z = 0;
+
+  if (!script_dir) return;
+  snprintf(script_in_dir, sizeof(script_in_dir), "%s/in", script_dir);
+  if (!(d = opendir(script_in_dir))) {
+    log_printf(log_f, win, "error: directory `%s' does not exist\n",
+               script_in_dir);
+    return;
+  }
+  upd_f = open_memstream(&upd_t, &upd_z);
+  while ((dd = readdir(d))) {
+    need_update = -1;
+    if ((nlen = strlen(dd->d_name)) <= 3) continue;
+    if (strcmp(dd->d_name + nlen - 3, ".in") != 0) continue;
+    snprintf(script_base, sizeof(script_base), "%.*s", nlen - 3, dd->d_name);
+    snprintf(script_in, sizeof(script_in), "%s/in/%s.in",
+             script_dir, script_base);
+    snprintf(script_out, sizeof(script_out), "%s/%s", script_dir, script_base);
+    if (stat(script_in, &is) < 0) continue;
+    if (!S_ISREG(is.st_mode)) continue;
+    if (stat(script_out, &os) >= 0) {
+      if (!S_ISREG(os.st_mode)) {
+        log_printf(log_f, win, "error: `%s' is not a regular file\n",
+                   script_out);
+        continue;
+      }
+      if (os.st_mtime >= is.st_mtime) continue;
+    }
+    update_language_script(script_in, script_out, script_base, upd_f, log_f,
+                           win);
+  }
+  closedir(d); d = 0;
+  fclose(upd_f); upd_f = 0;
+  if (upd_t && *upd_t) log_printf(log_f, win, "Scripts updated:%s\n", upd_t);
+  xfree(upd_t); upd_t = 0; upd_z = 0;
 }
 
 static int
@@ -312,6 +629,9 @@ reconfigure_all_languages(
   struct dirent *dd;
   int len;
 
+  update_language_scripts(script_dir, log_f, win);
+  parse_lang_id_file(script_dir, log_f, win);
+
   if (!(d = opendir(script_dir))) {
     return;
   }
@@ -324,6 +644,8 @@ reconfigure_all_languages(
                          values, log_f, win);
   }
   closedir(d); d = 0;
+
+  assign_lang_ids();
 
 #if 0
   {
@@ -427,8 +749,10 @@ lang_config_menu(
   PANEL *in_pan = 0, *out_pan = 0;
   int first_row = 0;
   int c, cmd, j;
+  unsigned char lang_id_buf[32];
 
   lang_configure_screen(script_dir, 0, 0, 0, header);
+  assign_lang_ids();
 
   for (pcfg = lang_first; pcfg; pcfg = pcfg->next) {
     // ignore everything that has no parsed config
@@ -449,8 +773,12 @@ lang_config_menu(
     ver_str = "disabled";
     if (pcfg->enabled > 0 && pcfg->version && *pcfg->version)
       ver_str = pcfg->version;
-    snprintf(buf, sizeof(buf), "%-10.10s %-10.10s %-50.50s",
-             pcfg->lang, ver_str, arg_str);
+    lang_id_buf[0] = 0;
+    if (pcfg->id > 0) {
+      snprintf(lang_id_buf, sizeof(lang_id_buf), "%d", pcfg->id);
+    }
+    snprintf(buf, sizeof(buf), "%-10.10s %-5.5s %-10.10s %-44.44s",
+             pcfg->lang, lang_id_buf, ver_str, arg_str);
     descs[i] = xstrdup(buf);
   }
   XCALLOC(items, lang_count + 1);
