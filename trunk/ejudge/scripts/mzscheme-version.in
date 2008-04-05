@@ -38,7 +38,7 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether MzScheme is available..." >&2
   "${mzscheme}" --version >/dev/null 2>&1 || failure
-  version=`"${mzscheme}" --version 2>&1 | grep "MzScheme" | gawk -v FS="[ ,]" '{ if ($4 == "version") print $5; else print $4; }'`
+  version=`"${mzscheme}" --version 2>&1 | grep "MzScheme" | gawk -v FS="[ ,]" '{ if ($4 == "version") v=$5; else v=$4; gsub("v", "", v); print v; }'`
   [ "${version}" != "" ] || failure
   MZSCHEMEPATH=`which "${mzscheme}"` || failure
   [ "${MZSCHEMEPATH}" != "" ] || failure
@@ -87,4 +87,4 @@ fi
 
 [ x"$1" = x-f ] && echo -n "MzScheme "
 
-"${MZSCHEMEPATH}" --version 2>&1 | grep "MzScheme" | gawk -v FS="[ ,]" '{ if ($4 == "version") print $5; else print $4; }'
+"${MZSCHEMEPATH}" --version 2>&1 | grep "MzScheme" | gawk -v FS="[ ,]" '{ if ($4 == "version") v=$5; else v=$4; gsub("v", "", v); print v; }'
