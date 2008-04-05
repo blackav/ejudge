@@ -11,12 +11,12 @@ if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
-  version_gprolog="unknown"
+  version="unknown"
   GPLCRUN="gplc"
   GPROLOGDIR=""
 fi
 
-if [ x"${version_gprolog}" = x ]
+if [ x"${version}" = x ]
 then
   echo "This language is not supported." >&2
   exit 1

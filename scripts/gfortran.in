@@ -11,12 +11,12 @@ if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
-  version_gfortran="unknown"
+  version="unknown"
   GFORTRANRUN="gfortran"
   GFORTRANDIR=
 fi
 
-if [ x"${version_gfortran}" = x ]
+if [ x"${version}" = x ]
 then
   echo "This language is not supported." >&2
   exit 1

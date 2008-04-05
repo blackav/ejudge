@@ -1,23 +1,23 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2003-2008 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2008 Alexander Chernov <cher@ejudge.ru>
 
-# This is a `compilation' script for the Perl language.
-# The idea is to append "#!${PERLPATH} -W" string
+# This is a `compilation' script for the PHP language.
+# The idea is to append "#! ${PHPPATH} -nf" string
 # to the beginning of the file.
-# Usage: perl <input> <output>
+# Usage: php <input> <output>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
 LANG_CONFIG_DIR="@lang_config_dir@"
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/perl.cfg"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/php.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
   version="unknown"
-  PERLPATH="/usr/bin/perl"
+  PHPPATH="/usr/bin/php"
 fi
 
 if [ x"${version}" = x ]
@@ -26,7 +26,7 @@ then
   exit 1
 fi
 
-echo "#! ${PERLPATH} -W ${EJUDGE_FLAGS}" > $2
+echo "#! ${PHPPATH} -nf" > $2
 echo >> $2
 cat $1 >> $2
 chmod +x $2

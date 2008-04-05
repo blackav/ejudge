@@ -11,12 +11,12 @@ if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
-  version_g77="unknown"
+  version="unknown"
   G77RUN="g77"
   G77DIR=
 fi
 
-if [ x"${version_g77}" = x ]
+if [ x"${version}" = x ]
 then
   echo "This language is not supported." >&2
   exit 1

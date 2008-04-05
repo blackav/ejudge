@@ -1,0 +1,21 @@
+#! /bin/sh
+# $Id$
+# Copyright (c) 2008 Alexander Chernov <cher@ejudge.ru>
+
+libexecdir="@libexecdir@"
+LANG_CONFIG_DIR="@lang_config_dir@"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/bcc.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+fi
+
+if [ x"${version}" = x ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+unset LANG
+exec "${BCCRUN}" "$@"
