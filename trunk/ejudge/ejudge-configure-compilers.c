@@ -118,6 +118,52 @@ is_file_changed(
 }
 
 static int
+is_comment_line(const unsigned char *str)
+{
+  while (isspace(*str)) str++;
+  return (!*str || *str == '#');
+}
+
+static unsigned char *
+fgets_no_cmt(unsigned char *buf, size_t size, FILE *f)
+{
+  unsigned char *r;
+
+  while ((r = fgets(buf, size, f)) && is_comment_line(buf));
+  return r;
+}
+
+static int
+is_file_changed_no_cmt(
+        const unsigned char *path,
+        unsigned char *text,
+        size_t size)
+{
+  FILE *f1, *f2;
+  unsigned char buf1[4096], buf2[4096];
+  int retval = 1;
+  unsigned char *r1, *r2;
+
+  if (!(f1 = fopen(path, "r"))) return 1;
+  if (!(f2 = fmemopen(text, size, "r"))) return 1;
+
+  while (((r1 = fgets_no_cmt(buf1, sizeof(buf1), f1)),
+          (r2 = fgets_no_cmt(buf2, sizeof(buf2), f2)), r1) && r2
+         && !strcmp(buf1, buf2)) {
+  }
+  if (r1 || r2) goto cleanup;
+
+  fclose(f1); f1 = 0;
+  fclose(f2); f2 = 0;
+  retval = 0;
+
+ cleanup:;
+  if (f1) fclose(f1);
+  if (f2) fclose(f2);
+  return retval;
+}
+
+static int
 do_save(const unsigned char *path, const unsigned char *text, size_t size)
 {
   FILE *f = 0;
@@ -191,7 +237,7 @@ save_compile_cfg(FILE  *log_f, WINDOW *out_win)
     goto cleanup;
   }
 
-  if (!is_file_changed(cfg_path, cfg_t, cfg_z)) {
+  if (!is_file_changed_no_cmt(cfg_path, cfg_t, cfg_z)) {
     log_printf(log_f, out_win, "%s is unchanged\n", cfg_path);
     goto cleanup;
   }
