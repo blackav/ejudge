@@ -788,7 +788,7 @@ then
 fi
 
 dnl Checking for available languages
-AC_MSG_NOTICE([checking available languages])
+dnl AC_MSG_NOTICE([checking available languages])
 
 dnl Iterate over version scripts in scripts directory
 dnl ac_cv_contest_LANG is passed as arg
