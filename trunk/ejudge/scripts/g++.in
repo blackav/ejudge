@@ -11,12 +11,12 @@ if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
-  version_gx2Bx2B="unknown"
+  version="unknown"
   GPPRUN="g++"
   GPPDIR=
 fi
 
-if [ x"${version_gx2Bx2B}" = x ]
+if [ x"${version}" = x ]
 then
   echo "This language is not supported." >&2
   exit 1

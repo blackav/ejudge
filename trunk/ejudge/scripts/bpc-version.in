@@ -1,0 +1,89 @@
+#! /bin/sh
+# $Id$
+# Copyright (c) 2008 Alexander Chernov <cher@ejudge.ru>
+
+libexecdir="@libexecdir@"
+contests_home_dir="@contests_home_dir@"
+local_dir="@local_dir@"
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+function common_config()
+{
+  echo 'long_name="Borland Pascal"'
+  echo 'src_sfx=".c"'
+  echo 'exe_sfx=".exe"'
+  echo 'arch="dos"'
+}
+
+function failure()
+{
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'BPCRUN=false'
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && BPCRUN="$2"
+  [ "${BPCRUN}" = "" ] && BPCRUN="${libexecdir}/ejudge/lang/bpcemu2"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether Borland Pascal 7.0 is available..." >&2
+
+  [ -x "${BPCRUN}" ] || failure
+  dosdir="${local_dir}"
+  [ "${dosdir}" != "" ] || dosdir="${contests_home_dir}"
+  [ -d "${dosdir}" ] || failure
+  dosdir="${dosdir}/dosemu"
+  [ -d "${dosdir}" ] || failure
+  [ -x "${dosdir}/bin/dos" ] || failure
+  [ -f "${dosdir}/boot/BP7/BIN/BPC.EXE" ] || failure
+  version="7.0"
+
+  rm -f ./conftest*
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'BPCRUN="'"${BPCRUN}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${BPCRUN}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "Borland Pascal 7.0 (DOS mode)"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/bpc.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+fi
+
+if [ x"${BPCRUN}" = x -o x"${BPCRUN}" = xfalse ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${BPCRUN}"
+    exit 0
+fi
+
+[ x"$1" = x-f ] && echo -n "Borland Pascal "
+echo "7.0"

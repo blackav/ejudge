@@ -1,0 +1,92 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2008 Alexander Chernov <cher@ejudge.ru>
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+function common_config()
+{
+  echo 'long_name="PHP"'
+  echo 'src_sfx=".php"'
+  echo 'arch="linux-shared"'
+  echo 'insecure=1'
+}
+
+function failure()
+{
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'PHPPATH=/bin/false'
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && php="$2"
+  [ "${php}" = "" ] && php="php"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether PHP is available..." >&2
+  "${php}" --version >/dev/null 2>&1 || failure
+  version=`"${php}" --version 2>&1 | head -1 | gawk '{ print $2; }'` || failure
+  [ "${version}" != "" ] || failure
+  PHPPATH=`which "${php}"` || failure
+  [ "${PHPPATH}" != "" ] || failure
+  echo "#! ${PHPPATH} -nf" > conftest.php
+  echo '<?' >> conftest.php
+  echo 'print "OK";' >> conftest.php
+  echo '?>' >> conftest.php
+  chmod +x ./conftest.php || failure
+  ./conftest.php >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'PHPPATH="'"${PHPPATH}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${PHPPATH}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "PHP interpreter [http://www.php.net]"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/php.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  PHPPATH="/usr/bin/php"
+fi
+
+if [ x"${PHPPATH}" = x -o x"${PHPPATH}" = xfalse ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${PHPPATH}"
+    exit 0
+fi
+
+"${PHPPATH}" --version 2>/dev/null >/dev/null || exit 1
+    
+[ x"$1" = x-f ] && echo -n "PHP "
+
+"${PHPPATH}" --version 2>&1 | head -1 | gawk '{ print $2; }'

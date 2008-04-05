@@ -1,0 +1,90 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2008 Alexander Chernov <cher@ejudge.ru>
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+function common_config()
+{
+  echo 'long_name="Ruby"'
+  echo 'src_sfx=".rb"'
+  echo 'arch="linux-shared"'
+  echo 'insecure=1'
+}
+
+function failure()
+{
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'RUBYPATH=/bin/false'
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && ruby="$2"
+  [ "${ruby}" = "" ] && ruby="ruby"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether Ruby is available..." >&2
+  "${ruby}" --version >/dev/null 2>&1 || failure
+  version=`"${ruby}" --version 2>&1 | gawk '{ print $2; }'` || failure
+  [ "${version}" != "" ] || failure
+  RUBYPATH=`which "${ruby}"` || failure
+  [ "${RUBYPATH}" != "" ] || failure
+  echo "#! ${RUBYPATH}" > conftest.rb
+  echo 'puts "OK"' >> conftest.rb
+  chmod +x ./conftest.rb || failure
+  ./conftest.rb >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'RUBYPATH="'"${RUBYPATH}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${RUBYPATH}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "Ruby interpreter [http://www.ruby-lang.org]"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/ruby.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  RUBYPATH="/usr/bin/ruby"
+fi
+
+if [ x"${RUBYPATH}" = x -o x"${RUBYPATH}" = xfalse ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${RUBYPATH}"
+    exit 0
+fi
+
+"${RUBYPATH}" --version 2>/dev/null >/dev/null || exit 1
+    
+[ x"$1" = x-f ] && echo -n "Ruby "
+
+"${RUBYPATH}" --version 2>&1 | gawk '{ print $2; }'

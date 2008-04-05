@@ -54,6 +54,12 @@ SCRIPTS = \
  festival
 
 SCRIPTS_IN = \
+ bcc.in\
+ bcc-version.in\
+ bpc.in\
+ bpc-version.in\
+ bpp.in\
+ bpp-version.in\
  dcc.in\
  dcc-version.in\
  fpc.in\
@@ -74,10 +80,16 @@ SCRIPTS_IN = \
  gprolog-version.in\
  mzscheme.in\
  mzscheme-version.in\
+ qb.in\
+ qb-version.in\
  perl.in\
  perl-version.in\
+ php.in\
+ php-version.in\
  python.in\
  python-version.in\
+ ruby.in\
+ ruby-version.in\
  yabasic.in\
  yabasic-version.in\
  javac.in\

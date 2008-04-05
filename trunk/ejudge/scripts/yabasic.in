@@ -16,11 +16,11 @@ if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
-  version_yabasic="unknown"
+  version="unknown"
   YABASICPATH="/usr/bin/yabasic"
 fi
 
-if [ x"${version_yabasic}" = x ]
+if [ x"${version}" = x ]
 then
   echo "This language is not supported." >&2
   exit 1

@@ -11,12 +11,12 @@ if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
-  version_fpc="unknown"
+  version="unknown"
   FPCRUN="fpc"
   FPCDIR=
 fi
 
-if [ x"${version_fpc}" = x ]
+if [ x"${version}" = x ]
 then
   echo "This language is not supported." >&2
   exit 1
