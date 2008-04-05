@@ -56,8 +56,6 @@ SCRIPTS = \
 SCRIPTS_IN = \
  bcc.in\
  bcc-version.in\
- bpc.in\
- bpc-version.in\
  bpp.in\
  bpp-version.in\
  dcc.in\
@@ -90,6 +88,8 @@ SCRIPTS_IN = \
  python-version.in\
  ruby.in\
  ruby-version.in\
+ tpc.in\
+ tpc-version.in\
  yabasic.in\
  yabasic-version.in\
  javac.in\
