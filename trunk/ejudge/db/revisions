@@ -3568,3 +3568,11 @@ lang_config_vis.h 4850 0 143806
 ejudge-setup.c 4850 0 10231754
 shellcfg_parse.c 4850 0 374088
 lang_config_vis.c 4851 0 1906527
+lang_config_vis.h 4861 0 169179
+shellcfg_parse.h 4861 0 121748
+stringset.h 4861 0 92185
+ejudge-configure-compilers.c 4861 0 1375252
+ejudge-setup.c 4861 0 9975040
+lang_config_vis.c 4861 0 2232826
+shellcfg_parse.c 4861 0 399094
+stringset.c 4861 0 160292
