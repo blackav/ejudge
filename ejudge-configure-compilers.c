@@ -21,6 +21,7 @@
 #include "ncurses_utils.h"
 #include "lang_config_vis.h"
 #include "pathutl.h"
+#include "ejudge_cfg.h"
 
 #include <reuse/xalloc.h>
 
@@ -37,8 +38,13 @@
 #include <ctype.h>
 
 static int utf8_mode;
+static int preserve_compile_cfg;
 static path_t script_dir;
 static path_t config_dir;
+static path_t ejudge_xml;
+static path_t contests_home_dir;
+static path_t conf_dir;
+static struct ejudge_cfg *config;
 static const unsigned char *progname;
 
 static void die(const char *format, ...)
@@ -75,6 +81,15 @@ static void log_printf(FILE *out_f, WINDOW *out_win, const char *format, ...)
     update_panels();
     doupdate();
   }
+}
+
+static void
+generate_compile_cfg(FILE *f)
+{
+  lang_config_generate_compile_cfg(f, "ejudge-configure-compilers",
+                                   config->compile_home_dir,
+                                   config->serialization_key,
+                                   config_dir);
 }
 
 static int
@@ -149,6 +164,65 @@ save_config_file(
 }
 
 static void
+save_compile_cfg(FILE  *log_f, WINDOW *out_win)
+{
+  FILE *cfg_f = 0;
+  char *cfg_t = 0;
+  size_t cfg_z = 0;
+  struct stat stb;
+  path_t cfg_path;
+  path_t cfg_path_old;
+  path_t cfg_path_new;
+
+  cfg_f = open_memstream(&cfg_t, &cfg_z);
+  generate_compile_cfg(cfg_f);
+  fclose(cfg_f); cfg_f = 0;
+
+  snprintf(cfg_path, sizeof(cfg_path), "%s/conf/compile.cfg",
+           config->compile_home_dir);
+  if (stat(cfg_path, &stb) < 0) {
+    log_printf(log_f, out_win, "%s does not exist\n", cfg_path);
+    if (do_save(cfg_path, cfg_t, cfg_z) < 0)
+      log_printf(log_f, out_win, "error: write to %s failed\n", cfg_path);
+    goto cleanup;
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    log_printf(log_f, out_win, "error: %s is not a regular file\n", cfg_path);
+    goto cleanup;
+  }
+
+  if (!is_file_changed(cfg_path, cfg_t, cfg_z)) {
+    log_printf(log_f, out_win, "%s is unchanged\n", cfg_path);
+    goto cleanup;
+  }
+
+  snprintf(cfg_path_new, sizeof(cfg_path_new), "%s.new", cfg_path);
+  snprintf(cfg_path_old, sizeof(cfg_path_old), "%s.old", cfg_path);
+  if (do_save(cfg_path_new, cfg_t, cfg_z) < 0) {
+    log_printf(log_f, out_win, "error: write to %s failed\n", cfg_path_new);
+    goto cleanup;
+  }
+  if (rename(cfg_path, cfg_path_old) < 0) {
+    log_printf(log_f, out_win, "error: rename %s to %s failed\n",
+               cfg_path, cfg_path_old);
+    unlink(cfg_path_new);
+    goto cleanup;
+  }
+  if (rename(cfg_path_new, cfg_path) < 0) {
+    log_printf(log_f, out_win, "error: rename %s to %s failed\n",
+               cfg_path_new, cfg_path);
+    unlink(cfg_path_new);
+    goto cleanup;
+  }
+
+  log_printf(log_f, out_win, "%s is updated\n", cfg_path);
+
+ cleanup:
+  if (cfg_f) fclose(cfg_f);
+  xfree(cfg_t);
+}
+
+static void
 save_config_files(FILE *log_f, WINDOW *out_win)
 {
   struct lang_config_info *pcfg;
@@ -157,6 +231,7 @@ save_config_files(FILE *log_f, WINDOW *out_win)
     if (!pcfg->cfg || !pcfg->cfg_txt) continue;
     save_config_file(pcfg, log_f, out_win);
   }
+  if (!preserve_compile_cfg) save_compile_cfg(log_f, out_win);
 }
 
 static void
@@ -168,6 +243,8 @@ visual_save_config(const unsigned char *header)
 
   out_win = newwin(LINES - 2, COLS, 1, 0);
   in_win = newwin(LINES - 4, COLS - 2, 2, 1);
+  scrollok(in_win, TRUE);
+  idlok(in_win, TRUE);
   wattrset(out_win, COLOR_PAIR(1));
   wbkgdset(out_win, COLOR_PAIR(1));
   wattrset(in_win, COLOR_PAIR(1));
@@ -415,10 +492,18 @@ main(int argc, char **argv)
       snprintf(config_dir, sizeof(config_dir), "%s", val);
     } else if (is_prefix(argv[i], "--enable-lang-script-dir=", &val)) {
       snprintf(script_dir, sizeof(script_dir), "%s", val);
+    } else if (is_prefix(argv[i], "--enable-ejudge-xml=", &val)) {
+      snprintf(ejudge_xml, sizeof(ejudge_xml), "%s", val);
+    } else if (is_prefix(argv[i], "--enable-contests-home-dir=", &val)) {
+      snprintf(contests_home_dir, sizeof(contests_home_dir), "%s", val);
+    } else if (is_prefix(argv[i], "--enable-conf-dir=", &val)) {
+      snprintf(conf_dir, sizeof(conf_dir), "%s", val);
     } else if (!strcmp(argv[i], "--batch")) {
       batch_mode = 1;
     } else if (!strcmp(argv[i], "--visual")) {
       batch_mode = 0;
+    } else if (!strcmp(argv[i], "--preserve-compile-cfg")) {
+      preserve_compile_cfg = 1;
     } else if (!strncmp(argv[i], "--with-", 7)) {
       if (!(p = strchr(argv[i], '='))) {
         snprintf(key, sizeof(key), "%s", argv[i] + 7);
@@ -470,6 +555,34 @@ main(int argc, char **argv)
       }
     }
   }
+
+  if (!ejudge_xml[0] && conf_dir[0]) {
+    snprintf(ejudge_xml, sizeof(ejudge_xml), "%s/ejudge.xml", conf_dir);
+  }
+  if (!ejudge_xml[0] && contests_home_dir[0]) {
+    snprintf(ejudge_xml, sizeof(ejudge_xml), "%s/data/ejudge.xml",
+             contests_home_dir);
+  }
+#if defined EJUDGE_XML_PATH
+  if (!ejudge_xml[0]) {
+    snprintf(ejudge_xml, sizeof(ejudge_xml), "%s", EJUDGE_XML_PATH);
+  }
+#endif /* EJUDGE_XML_PATH */
+#if defined EJUDGE_CONF_DIR
+  if (!ejudge_xml[0]) {
+    snprintf(ejudge_xml, sizeof(ejudge_xml), "%s/ejudge.xml", EJUDGE_CONF_DIR);
+  }
+#endif /* EJUDGE_CONF_DIR */
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  if (!ejudge_xml[0]) {
+    snprintf(ejudge_xml, sizeof(ejudge_xml), "%s/data/ejudge.xml",
+             EJUDGE_CONTESTS_HOME_DIR);
+  }
+#endif /* EJUDGE_CONTESTS_HOME_DIR */
+
+  if (!ejudge_xml[0]) die("path to configuration file is not specified");
+  config = ejudge_cfg_parse(ejudge_xml);
+  if (!config) return 1;
 
   setlocale(LC_ALL, "");
   if (!strcmp(nl_langinfo(CODESET), "UTF-8")) utf8_mode = 1;

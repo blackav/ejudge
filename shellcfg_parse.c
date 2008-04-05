@@ -88,17 +88,17 @@ shellconfig_parse(FILE *log_f, FILE *f, const unsigned char *path)
         continue;
       } else if (c == '\'' || c == '\"') {
         endc = c;
-        c = next_char(f);
+        c = getc(f);
         while (c != EOF && c != '\n' && c != endc) {
           if (c < ' ' && !isspace(c)) {
             fprintf(log_f, "%s: %d: invalid control character %d\n",
                     path, lineno, c);
             errcount++;
-            c = next_char(f);
+            c = getc(f);
             continue;
           }
           varval[vali++] = c;
-          c = next_char(f);
+          c = getc(f);
         }
         if (c != endc) {
           fprintf(log_f, "%s: %d: `\\%c' expected\n", path, lineno, c);
@@ -171,7 +171,7 @@ shellconfig_free(shellconfig_t cfg)
 
 int
 shellconfig_find_by_prefix(
-	shellconfig_t cfg,
+        shellconfig_t cfg,
         const unsigned char *pfx,
         size_t pfxlen)
 {
@@ -187,7 +187,7 @@ shellconfig_find_by_prefix(
 
 const unsigned char *
 shellconfig_get_name_by_num(
-	shellconfig_t cfg,
+        shellconfig_t cfg,
         int num)
 {
   if (!cfg || num < 0 || num >= cfg->usage) return 0;
@@ -196,12 +196,28 @@ shellconfig_get_name_by_num(
 
 const unsigned char *
 shellconfig_get_value_by_num(
-	shellconfig_t cfg,
+        shellconfig_t cfg,
         int num)
 {
   if (!cfg || num < 0 || num >= cfg->usage) return 0;
   if (strlen(cfg->values[num]) != cfg->lengths[num]) return 0;
   return cfg->values[num];
+}
+
+const unsigned char *
+shellconfig_get(
+        shellconfig_t cfg,
+        const unsigned char *name)
+{
+  size_t i;
+
+  if (!cfg || !name) return 0;
+  for (i = 0; i < cfg->usage; i++)
+    if (!strcmp(cfg->names[i], name)) {
+      if (strlen(cfg->values[i]) != cfg->lengths[i]) return 0;
+      return cfg->values[i];
+    }
+  return 0;
 }
 
 /*

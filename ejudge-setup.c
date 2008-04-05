@@ -27,6 +27,7 @@
 #include "pathutl.h"
 #include "shellcfg_parse.h"
 #include "lang_config_vis.h"
+#include "stringset.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -1924,19 +1925,6 @@ base64_encode_file(FILE *f, const unsigned char *path, int mode,
   xfree(out_buf);
 }
 
-static void
-generate_current_date(unsigned char *buf, size_t size)
-{
-  time_t curtime;
-  struct tm *ptm;
-
-  curtime = time(0);
-  ptm = localtime(&curtime);
-  snprintf(buf, size, "%04d/%02d/%02d %02d:%02d:%02d",
-          ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
-          ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
-}
-
 static const unsigned char *
 c_armor_2(
         struct html_armor_buffer *pa,
@@ -2010,6 +1998,19 @@ is_cgi_config_needed(void)
     return 1;
 
   return 0;
+}
+
+static void
+generate_current_date(unsigned char *buf, size_t size)
+{
+  time_t curtime;
+  struct tm *ptm;
+
+  curtime = time(0);
+  ptm = localtime(&curtime);
+  snprintf(buf, size, "%04d/%02d/%02d %02d:%02d:%02d",
+          ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
+          ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
 }
 
 static void
@@ -2142,6 +2143,7 @@ generate_master_cfg(FILE *f)
   }
 }
 
+/*
 static int
 is_lang_available(const unsigned char *lang, unsigned char **p_version)
 {
@@ -2153,6 +2155,7 @@ is_lang_available(const unsigned char *lang, unsigned char **p_version)
     && *pcfg->version
     && (*p_version = pcfg->version);
 }
+*/
 
 static void
 generate_serve_cfg(FILE *f)
@@ -2162,13 +2165,14 @@ generate_serve_cfg(FILE *f)
   int nbuiltin = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   path_t check_dir;
-  unsigned char *version = 0;
-  int need_default_arch = 0;
-  int need_shared_arch = 0;
-  int need_dos_arch = 0;
-  int need_java_arch = 0;
-  int need_msil_arch = 0;
+  int lang_num = 0, i;
+  struct lang_config_info **langs = 0;
+  struct lang_config_info *p;
+  const unsigned char *s;
+  stringset_t archs = 0;
 
+  lang_config_get_sorted(&lang_num, &langs);
+  archs = stringset_new();
   generate_current_date(date_buf, sizeof(date_buf));
 
   if (config_charset[0]) {
@@ -2288,6 +2292,41 @@ generate_serve_cfg(FILE *f)
 
   fprintf(f, "\n");
 
+  for (i = 0; i < lang_num; i++) {
+    p = langs[i];
+    if (!p->cfg) continue;
+    if (p->enabled <= 0) continue;
+    fprintf(f, "[language]\n");
+    fprintf(f, "id = %d\n", p->id);
+    if ((s = shellconfig_get(p->cfg, "short_name"))) {
+      fprintf(f, "short_name = \"%s\"\n", s);
+    } else {
+      fprintf(f, "short_name = \"%s\"\n", p->lang);
+    }
+    s = shellconfig_get(p->cfg, "long_name");
+    if (!s) s = "";
+    fprintf(f, "long_name = \"%s ", s);
+    s = shellconfig_get(p->cfg, "version");
+    if (!s) s = "";
+    fprintf(f, "%s\"\n", s);
+    if ((s = shellconfig_get(p->cfg, "src_sfx"))) {
+      fprintf(f, "src_sfx = \"%s\"\n", s);
+    }
+    if ((s = shellconfig_get(p->cfg, "exe_sfx"))) {
+      fprintf(f, "exe_sfx = \"%s\"\n", s);
+    }
+    if ((s = shellconfig_get(p->cfg, "insecure"))) {
+      fprintf(f, "insecure\n");
+    }
+    if ((s = shellconfig_get(p->cfg, "arch"))) {
+      fprintf(f, "arch = \"%s\"\n", s);
+    }
+    if (!s) s = "";
+    stringset_add(archs, s);
+    fprintf(f, "\n");
+  }
+
+  /*
   if (is_lang_available("fpc", &version)) {
     fprintf(f,
             "[language]\n"
@@ -2550,6 +2589,7 @@ generate_serve_cfg(FILE *f)
             version);
     need_msil_arch = 1;
   }
+  */
 
   fputs("[problem]\n"
         "short_name = Generic\n"
@@ -2581,7 +2621,17 @@ generate_serve_cfg(FILE *f)
         "\n",
         f);
 
-  if (need_default_arch) {
+  check_dir[0] = 0;
+  if (!strcmp(config_workdisk_flag, "yes")) {
+    snprintf(check_dir, sizeof(check_dir), "%s/work",
+             config_workdisk_mount_dir);
+  } else {
+    if (config_testing_work_dir[0]) {
+      snprintf(check_dir, sizeof(check_dir), "%s", config_testing_work_dir);
+    }
+  }
+
+  if (stringset_check(archs, "")) {
     fputs("[tester]\n"
           "name = Generic\n"
           "abstract\n"
@@ -2596,15 +2646,6 @@ generate_serve_cfg(FILE *f)
   fprintf(f, "start_cmd = \"capexec\"\n");
 #endif
   */
-    check_dir[0] = 0;
-    if (!strcmp(config_workdisk_flag, "yes")) {
-      snprintf(check_dir, sizeof(check_dir), "%s/work",
-               config_workdisk_mount_dir);
-    } else {
-      if (config_testing_work_dir[0]) {
-        snprintf(check_dir, sizeof(check_dir), "%s", config_testing_work_dir);
-      }
-    }
     if (check_dir[0]) {
       fprintf(f, "check_dir = \"%s\"\n",
               c_armor_2(&ab, check_dir, config_ejudge_contests_home_dir));
@@ -2612,7 +2653,7 @@ generate_serve_cfg(FILE *f)
     fputs("\n", f);
   }
 
-  if (need_shared_arch) {
+  if (stringset_check(archs, "linux-shared")) {
     fputs("[tester]\n"
           "name = Linux-shared\n"
           "arch = linux-shared\n"
@@ -2637,7 +2678,7 @@ generate_serve_cfg(FILE *f)
     fputs("\n", f);
   }
 
-  if (need_java_arch) {
+  if (stringset_check(archs, "java")) {
     fputs("[tester]\n"
           "name = Linux-java\n"
           "arch = java\n"
@@ -2658,7 +2699,7 @@ generate_serve_cfg(FILE *f)
     fputs("\n", f);
   }
 
-  if(need_msil_arch) {
+  if(stringset_check(archs, "msil")) {
     fputs("[tester]\n"
           "name = Linux-msil\n"
           "arch = msil\n"
@@ -2679,7 +2720,25 @@ generate_serve_cfg(FILE *f)
     fputs("\n", f);
   }
 
-  if (need_default_arch) {
+  if (stringset_check(archs, "dos")) {
+    fprintf(f, "[tester]\n"
+            "name = DOSTester\n"
+            "arch = dos\n"
+            "abstract\n"
+            "no_core_dump\n"
+            "no_redirect\n"
+            "ignore_stderr\n"
+            "time_limit_adjustment\n"
+            "is_dos\n"
+            "kill_signal = KILL\n"
+            "memory_limit_type = \"dos\"\n"
+            "errorcode_file = \"retcode.txt\"\n"
+            "start_cmd = \"dosrun3\"\n"
+            "check_dir = \"dosemu/run\"\n");
+    fputs("\n", f);
+  }
+
+  if (stringset_check(archs, "")) {
     fputs("[tester]\n"
           "any\n"
           "super = Generic\n"
@@ -2687,16 +2746,15 @@ generate_serve_cfg(FILE *f)
           f);
   }
 
-  if (need_shared_arch) {
+  if (stringset_check(archs, "linux-shared")) {
     fputs("[tester]\n"
           "any\n"
           "super = Linux-shared\n"
-          "arch = linux-shared\n"
-          "\n",
+          "arch = linux-shared\n",
           f);
   }
 
-  if (need_java_arch) {
+  if (stringset_check(archs, "java")) {
     fputs("\n"
           "[tester]\n"
           "any\n"
@@ -2705,7 +2763,7 @@ generate_serve_cfg(FILE *f)
           f);
   }
 
-  if (need_msil_arch) {
+  if (stringset_check(archs, "msil")) {
     fputs("\n"
           "[tester]\n"
           "any\n"
@@ -2714,258 +2772,18 @@ generate_serve_cfg(FILE *f)
           f);
   }
 
-  html_armor_free(&ab);
-}
-
-static void
-generate_compile_cfg(FILE *f)
-{
-  unsigned char date_buf[64];
-
-  generate_current_date(date_buf, sizeof(date_buf));
-
-  fprintf(f, "# Generated by ejudge-setup, version %s\n", compile_version);
-  fprintf(f, "# Generation date: %s\n\n", date_buf);
-  fprintf(f, "root_dir = %s\n", config_compile_home_dir);
-  fprintf(f, "cr_serialization_key = %s\n\n", config_serialization_key);
-
-  fprintf(f,
-          "sleep_time = 1000\n"
-          "\n");
-
-  if (config_ejudge_lang_config_dir[0]) {
-    fprintf(f, "lang_config_dir = \"%s\"\n\n",
-            config_ejudge_lang_config_dir);
+  if (stringset_check(archs, "dos")) {
+    fputs("\n"
+          "[tester]\n"
+          "any\n"
+          "super = DOSTester\n"
+          "arch = dos\n",
+          f);
   }
 
-  fprintf(f,
-          "[language]\n"
-          "id = 1\n"
-          "short_name = \"fpc\"\n"
-          "long_name = \"Free Pascal\"\n"
-          "src_sfx = \".pas\"\n"
-          "cmd = \"fpc\"\n"
-          "\n");
-  
-  fprintf(f,
-          "[language]\n"
-          "id = 2\n"
-          "short_name = \"gcc\"\n"
-          "long_name = \"GNU C\"\n"
-          "src_sfx = \".c\"\n"
-          "cmd = \"gcc\"\n"
-          "\n");
-
-  fprintf(f,
-          "[language]\n"
-          "id = 3\n"
-          "short_name = \"g++\"\n"
-          "long_name = \"GNU C++\"\n"
-          "src_sfx = \".cpp\"\n"
-          "cmd = \"g++\"\n"
-          "\n");
-
-  fprintf(f,
-          "[language]\n"
-          "id = 4\n"
-          "short_name = \"gpc\"\n"
-          "long_name = \"GNU Pascal\"\n"
-          "src_sfx = \".pas\"\n"
-          "cmd = \"gpc\"\n"
-          "\n");
-
-  fprintf(f,
-          "[language]\n"
-          "id = 5\n"
-          "short_name = \"gcj\"\n"
-          "long_name = \"GNU Java (GCJ)\"\n"
-          "src_sfx = \".java\"\n"
-          "cmd = \"gcj\"\n"
-          "arch = linux-shared\n"
-          "\n");
-
-  fprintf(f,
-          "[language]\n"
-          "id = 6\n"
-          "short_name = \"gfortran\"\n"
-          "long_name = \"GNU Fortran\"\n"
-          "src_sfx = \".for\"\n"
-          "cmd = \"gfortran\"\n"
-          "\n");
-
-  /*
-#if defined COMPILE_GFORTRAN_VERSION
-  cmt = ""; version = COMPILE_GFORTRAN_VERSION;
-  fprintf(f,
-          "%s[language]\n"
-          "%sid = 6\n"
-          "%sshort_name = \"gfortran\"\n"
-          "%slong_name = \"GNU Fortran 90 %s\"\n"
-          "%ssrc_sfx = \".for\"\n"
-          "%scmd = \"gfortran\"\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt);
-#elif defined COMPILE_G77_VERSION
-  cmt = ""; version = COMPILE_G77_VERSION;
-  fprintf(f,
-          "%s[language]\n"
-          "%sid = 6\n"
-          "%sshort_name = \"g77\"\n"
-          "%slong_name = \"GNU Fortran 77 %s\"\n"
-          "%ssrc_sfx = \".for\"\n"
-          "%scmd = \"g77\"\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt);
-#else
-  cmt = "# "; version = "";
-  fprintf(f,
-          "%s[language]\n"
-          "%sid = 6\n"
-          "%sshort_name = \"g77\"\n"
-          "%slong_name = \"GNU Fortran 77 %s\"\n"
-          "%ssrc_sfx = \".for\"\n"
-          "%scmd = \"g77\"\n"
-          "%s\n",
-          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt);
-#endif
-*/
-
-  fprintf(f,
-          "[language]\n"
-          "id = 7\n"
-          "short_name = \"tpc\"\n"
-          "long_name = \"Turbo Pascal\"\n"
-          "src_sfx = \".pas\"\n"
-          "exe_sfx = \".exe\"\n"
-          "cmd = \"bpcemu2\"\n"
-          "arch = dos\n"
-          "\n");
-
-  fprintf(f,
-          "[language]\n"
-          "id = 8\n"
-          "short_name = \"dcc\"\n"
-          "long_name = \"Borland Delphi\"\n"
-          "src_sfx = \".pas\"\n"
-          "cmd = \"dcc\"\n"
-          "arch = linux-shared\n"
-          "\n");
-
-  fprintf(f,
-          "[language]\n"
-          "id = 9\n"
-          "short_name = \"bcc\"\n"
-          "long_name = \"Borland C\"\n"
-          "src_sfx = \".c\"\n"
-          "exe_sfx = \".exe\"\n"
-          "cmd = \"bccemu\"\n"
-          "arch = dos\n"
-          "\n");
-
-  fprintf(f,
-          "[language]\n"
-          "id = 10\n"
-          "short_name = \"bpp\"\n"
-          "long_name = \"Borland C++\"\n"
-          "src_sfx = \".cpp\"\n"
-          "exe_sfx = \".exe\"\n"
-          "cmd = \"bppemu\"\n"
-          "arch = dos\n"
-          "\n");
-
-  fprintf(f,
-          "[language]\n"
-          "id = 11\n"
-          "short_name = \"basic\"\n"
-          "long_name = \"Yabasic\"\n"
-          "src_sfx = \".bas\"\n"
-          "cmd = \"yabasic\"\n"
-          "arch = linux-shared\n"
-          "\n");
-
-  fprintf(f,
-          "[language]\n"
-          "id = 12\n"
-          "short_name = \"scheme\"\n"
-          "long_name = \"Mz Scheme\"\n"
-          "src_sfx = \".scm\"\n"
-          "cmd = \"mzscheme\"\n"
-          "arch = linux-shared\n"
-          "\n");
-
-  fprintf(f,
-          "[language]\n"
-          "id = 13\n"
-          "short_name = \"python\"\n"
-          "long_name = \"Python\"\n"
-          "src_sfx = \".py\"\n"
-          "cmd = \"python\"\n"
-          "arch = linux-shared\n"
-          "\n");
-
-  fprintf(f,
-          "[language]\n"
-          "id = 14\n"
-          "short_name = \"perl\"\n"
-          "long_name = \"Perl\"\n"
-          "src_sfx = \".pl\"\n"
-          "cmd = \"perl\"\n"
-          "arch = \"linux-shared\"\n"
-          "\n");
-
-  fprintf(f,
-          "[language]\n"
-          "id = 15\n"
-          "short_name = \"prolog\"\n"
-          "long_name = \"GNU Prolog\"\n"
-          "src_sfx = \".pro\"\n"
-          "cmd = \"gprolog\"\n"
-          "arch = \"linux-shared\"\n"
-          "\n");
-
-  fprintf(f,
-          "[language]\n"
-          "id = 16\n"
-          "short_name = \"qb\"\n"
-          "long_name = \"Quick Basic\"\n"
-          "src_sfx = \".bas\"\n"
-          "exe_sfx = \".exe\"\n"
-          "cmd = \"qbemu\"\n"
-          "arch = dos\n"
-          "\n");
-
-  fprintf(f,
-          "[language]\n"
-          "id = 18\n"
-          "short_name = \"java\"\n"
-          "long_name = \"Java\"\n"
-          "src_sfx = \".java\"\n"
-          "exe_sfx = \".jar\"\n"
-          "cmd = \"javac\"\n"
-          "arch = \"java\"\n"
-          "\n");
-
-  fprintf(f,
-          "[language]\n"
-          "id = 19\n"
-          "short_name = \"mcs\"\n"
-          "long_name = \"Mono C#\"\n"
-          "src_sfx = \".cs\"\n"
-          "exe_sfx = \".exe\"\n"
-          "cmd = \"mcs\"\n"
-          "arch = \"msil\"\n"
-          "\n");
-
-  fprintf(f,
-          "[language]\n"
-          "id = 20\n"
-          "short_name = \"vbnc\"\n"
-          "long_name = \"Mono Visual Basic\"\n"
-          "src_sfx = \".vb\"\n"
-          "exe_sfx = \".exe\"\n"
-          "cmd = \"vbnc\"\n"
-          "arch = \"msil\"\n"
-          "\n");
+  html_armor_free(&ab);
+  xfree(langs);
+  stringset_free(archs);
 }
 
 static void
@@ -3355,6 +3173,17 @@ static const unsigned char * const preview_menu_hotkeys[] =
 {
   "qQ Í", "1", "2", "3", "4", "5", "6", "7", "8", "9", "aA∆Ê",
 };
+
+static void
+generate_compile_cfg(FILE *f)
+{
+  int k;
+
+  k = strtol(config_serialization_key, 0, 10);
+  lang_config_generate_compile_cfg(f, "ejudge-setup",
+                                   config_compile_home_dir,
+                                   k, config_ejudge_lang_config_dir);
+}
 
 static void
 do_preview_menu(void)

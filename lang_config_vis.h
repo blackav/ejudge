@@ -60,4 +60,17 @@ lang_config_menu(
         int utf8_mode,
         int *p_cur_item);
 
+void
+lang_config_get_sorted(
+        int *p_num,
+        struct lang_config_info ***p_langs);
+
+void
+lang_config_generate_compile_cfg(
+        FILE *f,
+        const unsigned char *prog,
+        const unsigned char *compile_home_dir,
+        int serialization_key,
+        const unsigned char *lang_config_dir);
+
 #endif /* __LANG_CONFIG_VIS_H__ */
