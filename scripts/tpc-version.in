@@ -21,7 +21,7 @@ function failure()
   echo 'version='
   echo 'arg="'"${arg}"'"'
   common_config
-  echo 'BPCRUN=false'
+  echo 'TPCRUN=false'
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
 }
@@ -36,12 +36,12 @@ fi
 if [ x"$1" = x-r ]
 then
   arg="$2"
-  [ x"$2" != x ] && BPCRUN="$2"
-  [ "${BPCRUN}" = "" ] && BPCRUN="${libexecdir}/ejudge/lang/bpcemu2"
+  [ x"$2" != x ] && TPCRUN="$2"
+  [ "${TPCRUN}" = "" ] && TPCRUN="${libexecdir}/ejudge/lang/bpcemu2"
 
   [ "${verbose}" = 1 ] && echo -n "checking whether Borland Pascal 7.0 is available..." >&2
 
-  [ -x "${BPCRUN}" ] || failure
+  [ -x "${TPCRUN}" ] || failure
   dosdir="${local_dir}"
   [ "${dosdir}" != "" ] || dosdir="${contests_home_dir}"
   [ -d "${dosdir}" ] || failure
@@ -55,8 +55,8 @@ then
   echo 'version="'"${version}"'"'
   echo 'arg="'"${arg}"'"'
   common_config
-  echo 'BPCRUN="'"${BPCRUN}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${BPCRUN}, ${version}" >&2
+  echo 'TPCRUN="'"${TPCRUN}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${TPCRUN}, ${version}" >&2
   exit 0
 fi
 
@@ -66,14 +66,14 @@ then
   exit 0
 fi
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/bpc.cfg"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/tpc.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 fi
 
-if [ x"${BPCRUN}" = x -o x"${BPCRUN}" = xfalse ]
+if [ x"${TPCRUN}" = x -o x"${TPCRUN}" = xfalse ]
 then
   echo "This language is not supported." >&2
   exit 1
@@ -81,7 +81,7 @@ fi
 
 if [ x"$1" = x-p ]
 then
-    echo "${BPCRUN}"
+    echo "${TPCRUN}"
     exit 0
 fi
 

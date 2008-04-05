@@ -4,7 +4,7 @@
 
 libexecdir="@libexecdir@"
 LANG_CONFIG_DIR="@lang_config_dir@"
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/bpc.cfg"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/tpc.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
@@ -18,4 +18,4 @@ then
 fi
 
 unset LANG
-exec "${BPCRUN}" "$@"
+exec "${TPCRUN}" "$@"
