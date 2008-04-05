@@ -36,11 +36,15 @@ int shellconfig_find_by_prefix(shellconfig_t, const unsigned char *,
                                size_t);
 const unsigned char *
 shellconfig_get_name_by_num(
-	shellconfig_t cfg,
+        shellconfig_t cfg,
         int num);
 const unsigned char *
 shellconfig_get_value_by_num(
-	shellconfig_t cfg,
+        shellconfig_t cfg,
         int num);
+const unsigned char *
+shellconfig_get(
+        shellconfig_t cfg,
+        const unsigned char *name);
 
 #endif /* __SHELLCONFIG_H__ */

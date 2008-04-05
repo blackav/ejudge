@@ -201,6 +201,7 @@ COMMON_CFILES=\
  sformat.c\
  shellcfg_parse.c\
  startstop.c\
+ stringset.c\
  super_html.c\
  super_html_2.c\
  super_html_3.c\
@@ -380,6 +381,7 @@ HFILES=\
  sformat.h\
  shellcfg_parse.h\
  startstop.h\
+ stringset.h\
  super_clnt.h\
  super_html.h\
  super_proto.h\
