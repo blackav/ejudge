@@ -361,7 +361,7 @@ get_compiler_info(const unsigned char *lang, unsigned char *buf, size_t size)
     fputs(tmpbuf, log_f);
   pclose(pf); pf = 0;
   fclose(log_f); log_f = 0;
-  snprintf(buf, size, "%.*s", log_z, log_t);
+  snprintf(buf, size, "%.*s", (int) log_z, log_t);
   xfree(log_t); log_t = 0;
   log_z = strlen(buf);
   while (log_z > 0 && isspace(buf[log_z - 1])) log_z--;
@@ -555,7 +555,7 @@ main(int argc, char **argv)
         snprintf(key, sizeof(key), "%s", argv[i] + 7);
         path[0] = 0;
       } else {
-        snprintf(key, sizeof(key), "%.*s", p - argv[i] - 7, argv[i] + 7);
+        snprintf(key, sizeof(key), "%.*s", (int)(p - argv[i] - 7), argv[i] + 7);
         snprintf(path, sizeof(path), "%s", p + 1);
       }
     } else if (!strncmp(argv[i], "--without-", 10)) {
