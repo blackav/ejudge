@@ -320,7 +320,7 @@ do_substitute(
 
     ASSERT(nlen > 0);
     txt2 = (unsigned char*) xmalloc(tlen - nlen + vlen + 1);
-    sprintf(txt2, "%.*s%s%s", pp - txt, txt, values[i], pp + nlen);
+    sprintf(txt2, "%.*s%s%s", (int) (pp - txt), txt, values[i], pp + nlen);
     xfree(txt); txt = txt2; txt2 = 0;
   }
 
