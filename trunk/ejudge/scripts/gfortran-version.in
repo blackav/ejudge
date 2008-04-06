@@ -8,6 +8,7 @@ function common_config()
 {
   echo 'long_name="GNU Fortran"'
   echo 'src_sfx=".for"'
+  echo 'insecure=1'
 }
 
 function failure()

@@ -9,7 +9,6 @@ function common_config()
   echo 'long_name="Ruby"'
   echo 'src_sfx=".rb"'
   echo 'arch="linux-shared"'
-  echo 'insecure=1'
 }
 
 function failure()

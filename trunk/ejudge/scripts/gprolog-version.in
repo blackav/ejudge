@@ -9,7 +9,6 @@ function common_config()
   echo 'long_name="GNU Prolog"'
   echo 'src_sfx=".pro"'
   echo 'arch="linux-shared"'
-  echo 'insecure=1'
 }
 
 function failure()
