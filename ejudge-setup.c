@@ -2309,6 +2309,11 @@ generate_serve_cfg(FILE *f)
     s = shellconfig_get(p->cfg, "version");
     if (!s) s = "";
     fprintf(f, "%s\"\n", s);
+    if ((s = shellconfig_get(p->cfg, "arch"))) {
+      fprintf(f, "arch = \"%s\"\n", s);
+    }
+    if (!s) s = "";
+    stringset_add(archs, s);
     if ((s = shellconfig_get(p->cfg, "src_sfx"))) {
       fprintf(f, "src_sfx = \"%s\"\n", s);
     }
@@ -2318,11 +2323,6 @@ generate_serve_cfg(FILE *f)
     if ((s = shellconfig_get(p->cfg, "insecure"))) {
       fprintf(f, "insecure\n");
     }
-    if ((s = shellconfig_get(p->cfg, "arch"))) {
-      fprintf(f, "arch = \"%s\"\n", s);
-    }
-    if (!s) s = "";
-    stringset_add(archs, s);
     fprintf(f, "\n");
   }
 
@@ -3460,6 +3460,7 @@ generate_install_script(FILE *f)
   unsigned char style_prefix[PATH_MAX];
   unsigned char style_dir[PATH_MAX];
   unsigned char style_src_dir[PATH_MAX];
+  unsigned char plugin_path[PATH_MAX];
   struct stat sb1, sb2;
   struct lang_config_info *pcfg;
 
@@ -3501,6 +3502,9 @@ generate_install_script(FILE *f)
   generate_dir_creation(f, &created_dirs, 1, serve_cfg_path);
   generate_dir_creation(f, &created_dirs, 0, config_var_dir);
   generate_dir_creation(f, &created_dirs, 0, config_ejudge_lang_config_dir);
+  snprintf(plugin_path, sizeof(plugin_path), "%s/plugins",
+           config_ejudge_script_dir);
+  generate_dir_creation(f, &created_dirs, 0, plugin_path);
 
   fprintf(f, "\n");
 
