@@ -3591,3 +3591,4 @@ ejudge-setup.c 4867 0 10062489
 lang_config_vis.c 4869 0 2233617
 runlog.c 4871 0 6370799
 runlog.c 4872 0 6370835
+ejudge-configure-compilers.c 4874 0 1447699
