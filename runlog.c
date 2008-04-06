@@ -2267,7 +2267,7 @@ runlog_check(FILE *ferr,
 
     /* a regular or transient run */
     if (e->size > RUNLOG_MAX_SIZE) {
-      check_msg(1, ferr, "Run %d has huge size %zu", i, e->size);
+      check_msg(1, ferr, "Run %d has huge size %zu", i, size_t(e->size));
       nerr++;
       continue;
     }
