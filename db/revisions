@@ -3577,3 +3577,14 @@ lang_config_vis.c 4861 0 2232826
 shellcfg_parse.c 4861 0 399094
 stringset.c 4861 0 160292
 ejudge-configure-compilers.c 4863 0 1447207
+prepare.h 4866 0 3050925
+super_proto.h 4866 0 1988897
+ejudge-configure-compilers.c 4866 0 1446760
+serve-control.c 4866 0 8686015
+super-serve.c 4866 0 13159584
+lang_config_vis.c 4866 0 2233076
+new_server_html.c 4866 0 35790484
+prepare.c 4866 0 14248873
+prepare_out.c 4866 0 6486793
+super_html_3.c 4866 0 23459828
+ejudge-setup.c 4867 0 10062489
