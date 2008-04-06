@@ -238,7 +238,7 @@ save_compile_cfg(FILE  *log_f, WINDOW *out_win)
   }
 
   if (!is_file_changed_no_cmt(cfg_path, cfg_t, cfg_z)) {
-    log_printf(log_f, out_win, "%s is unchanged\n", cfg_path);
+    log_printf(log_f, out_win, "%s: not changed\n", cfg_path);
     goto cleanup;
   }
 
@@ -261,7 +261,7 @@ save_compile_cfg(FILE  *log_f, WINDOW *out_win)
     goto cleanup;
   }
 
-  log_printf(log_f, out_win, "%s is updated\n", cfg_path);
+  log_printf(log_f, out_win, "%s: saved\n", cfg_path);
 
  cleanup:
   if (cfg_f) fclose(cfg_f);

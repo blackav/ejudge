@@ -8955,7 +8955,7 @@ unpriv_submit_run(FILE *fout,
   }
   /* check for disabled languages */
   if (lang_id > 0) {
-    if (lang->disabled) {
+    if (lang->disabled || (lang->insecure > 0 && global->secure_run)) {
       ns_error(log_f, NEW_SRV_ERR_LANG_DISABLED);
       goto done;
     }
@@ -11736,7 +11736,8 @@ unpriv_main_page(FILE *fout,
         fprintf(fout, "<table class=\"b0\">\n");
         if (!prob->type_val) {
           for (i = 1; i <= cs->max_lang; i++) {
-            if (!cs->langs[i] || cs->langs[i]->disabled) continue;
+            if (!cs->langs[i] || cs->langs[i]->disabled
+                || (cs->langs[i]->insecure && global->secure_run)) continue;
             if ((lang_list = prob->enable_language)) {
               for (j = 0; lang_list[j]; j++)
                 if (!strcmp(lang_list[j], cs->langs[i]->short_name))
@@ -11763,7 +11764,8 @@ unpriv_main_page(FILE *fout,
             fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">", _("Language"));
             fprintf(fout, "<select name=\"lang_id\"><option value=\"\">\n");
             for (i = 1; i <= cs->max_lang; i++) {
-              if (!cs->langs[i] || cs->langs[i]->disabled) continue;
+              if (!cs->langs[i] || cs->langs[i]->disabled
+                  || (cs->langs[i]->insecure && global->secure_run)) continue;
               if ((lang_list = prob->enable_language)) {
                 for (j = 0; lang_list[j]; j++)
                   if (!strcmp(lang_list[j], cs->langs[i]->short_name))

@@ -885,9 +885,11 @@ prepare_unparse_lang(FILE *f, const struct section_language_data *lang,
     fprintf(f, "long_name = \"%s\"\n", c_armor(&sbuf, long_name));
   else if (lang->long_name[0])
     fprintf(f, "long_name = \"%s\"\n", c_armor(&sbuf, lang->long_name));
-  fprintf(f, "arch = \"%s\"\n", c_armor(&sbuf, lang->arch));
+  if (lang->arch[0])
+    fprintf(f, "arch = \"%s\"\n", c_armor(&sbuf, lang->arch));
   fprintf(f, "src_sfx = \"%s\"\n", c_armor(&sbuf, lang->src_sfx));
-  fprintf(f, "exe_sfx = \"%s\"\n", c_armor(&sbuf, lang->exe_sfx));
+  if (lang->exe_sfx[0])
+    fprintf(f, "exe_sfx = \"%s\"\n", c_armor(&sbuf, lang->exe_sfx));
   /*
   if (lang->key[0])
     fprintf(f, "key = \"%s\"\n", c_armor(&sbuf, lang->key));
@@ -896,6 +898,8 @@ prepare_unparse_lang(FILE *f, const struct section_language_data *lang,
   */
   if (lang->disabled)
     unparse_bool(f, "disabled", lang->disabled);
+  if (lang->insecure)
+    unparse_bool(f, "insecure", lang->insecure);
   if (lang->binary)
     unparse_bool(f, "binary", lang->binary);
   if (lang->disable_auto_testing)

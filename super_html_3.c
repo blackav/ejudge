@@ -3018,6 +3018,7 @@ super_html_edit_languages(FILE *f,
 {
   int i;
   unsigned char *s;
+  struct section_global_data *global = sstate->global;
   struct section_language_data *lang = 0, *cs_lang;
   unsigned char buf[1024], buf2[1024];
   unsigned char *cmt, *lang_name, *td_attr;
@@ -3059,6 +3060,8 @@ super_html_edit_languages(FILE *f,
 
   for (i = 1; i < sstate->cs_lang_total; i++) {
     if (!(cs_lang = sstate->cs_langs[i])) continue;
+    if (!sstate->cs_lang_names[i]) continue;
+    if (!*sstate->cs_lang_names[i]) continue;
     lang = 0;
     if (sstate->cs_loc_map[i] > 0) lang = sstate->langs[sstate->cs_loc_map[i]];
     if (lang && lang->long_name[0]) {
@@ -3082,7 +3085,9 @@ super_html_edit_languages(FILE *f,
       lang_name = sstate->cs_lang_names[i];
     }
     td_attr = "";
-    if (lang) {
+    if (lang && lang->insecure && global && global->secure_run > 0) {
+      td_attr = " bgcolor=\"#ffffdd\"";
+    } else if (lang) {
       td_attr = " bgcolor=\"#ddffdd\"";
     }
     html_start_form(f, 1, self_url, hidden_vars);
@@ -3159,6 +3164,14 @@ super_html_edit_languages(FILE *f,
     print_boolean_select_row(f, "Disable this language for participants",
                              lang->disabled,
                              SSERV_CMD_LANG_CHANGE_DISABLED,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url, extra_args, lang_hidden_vars);
+
+    //LANGUAGE_PARAM(insecure, "d"),
+    print_boolean_select_row(f, "This language is insecure",
+                             lang->insecure,
+                             SSERV_CMD_LANG_CHANGE_INSECURE,
                              session_id,
                              form_row_attrs[row ^= 1],
                              self_url, extra_args, lang_hidden_vars);
@@ -3363,6 +3376,7 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
     strcpy(pl_new->src_sfx, pl_old->src_sfx);
     strcpy(pl_new->exe_sfx, pl_old->exe_sfx);
     pl_new->binary = pl_old->binary;
+    pl_new->insecure = pl_old->insecure;
     strcpy(pl_new->content_type, pl_old->content_type);
     break;
 
@@ -3375,7 +3389,12 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
         || val < 0 || val > 1) return -SSERV_ERR_INVALID_PARAMETER;
     *p_int = val;
     break;
-    
+
+  case SSERV_CMD_LANG_CHANGE_INSECURE:
+    if (!pl_new) return 0;
+    p_int = &pl_new->insecure;
+    goto handle_boolean;
+
   case SSERV_CMD_LANG_CHANGE_LONG_NAME:
     if (!pl_new) return 0;
     snprintf(pl_new->long_name, sizeof(pl_new->long_name), "%s", param2);

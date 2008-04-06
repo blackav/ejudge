@@ -2747,6 +2747,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_LANG_DEACTIVATE:
   case SSERV_CMD_LANG_ACTIVATE:
   case SSERV_CMD_LANG_CHANGE_DISABLED:
+  case SSERV_CMD_LANG_CHANGE_INSECURE:
   case SSERV_CMD_LANG_CHANGE_LONG_NAME:
   case SSERV_CMD_LANG_CLEAR_LONG_NAME:
   case SSERV_CMD_LANG_CHANGE_DISABLE_AUTO_TESTING:
@@ -3623,6 +3624,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_LANG_ACTIVATE] = { cmd_set_value },
 
   [SSERV_CMD_LANG_CHANGE_DISABLED] = { cmd_set_value },
+  [SSERV_CMD_LANG_CHANGE_INSECURE] = { cmd_set_value },
   [SSERV_CMD_LANG_CHANGE_LONG_NAME] = { cmd_set_value },
   [SSERV_CMD_LANG_CLEAR_LONG_NAME] = { cmd_set_value },
   [SSERV_CMD_LANG_CHANGE_CONTENT_TYPE] = { cmd_set_value },
