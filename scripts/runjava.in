@@ -9,9 +9,17 @@
 
 runfile="$1"
 
-JAVARUN="@ac_cv_contest_java@"
-JAVADIR="@ac_cv_contest_java_dir@"
-JAVAVER="@ac_cv_contest_java_version@"
+LANG_CONFIG_DIR="@lang_config_dir@"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/javac.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  JAVARUN="/usr/bin/java"
+  JAVADIR="/usr"
+  JAVAVER="1.6"
+fi
 
 # avoid setting JAVA_HOME if it is already set
 if [ "${JAVA_HOME}" = "" ]

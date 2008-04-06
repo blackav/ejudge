@@ -9,7 +9,6 @@ function common_config()
   echo 'long_name="Perl"'
   echo 'src_sfx=".pl"'
   echo 'arch="linux-shared"'
-  echo 'insecure=1'
 }
 
 function failure()
