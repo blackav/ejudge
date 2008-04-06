@@ -575,6 +575,7 @@ struct section_language_data
   int    compile_real_time_limit;
   int    binary;                /* whether binary files are accepted */
   int    priority_adjustment;   /* priority adjustment for this language */
+  int    insecure;              /* language is insecure */
   puc_t short_name[32];         /* language short name */
   puc_t long_name[256];         /* language long name */
   puc_t key[32];                /* configuration key */

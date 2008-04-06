@@ -1044,7 +1044,7 @@ lang_config_generate_compile_cfg(
     if (!(s = shellconfig_get(p->cfg, "cmd"))) s = p->lang;
     fprintf(f, "cmd = \"%s\"\n", s);
     if ((s = shellconfig_get(p->cfg, "arch"))) {
-      fprintf(f, "arch = %s\n", s);
+      fprintf(f, "arch = \"%s\"\n", s);
     }
     fprintf(f, "\n");
   }
