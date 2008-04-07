@@ -2763,10 +2763,7 @@ check_config(void)
   info("checking default testers done");
   total += i;
 
-  if (!total) {
-    err("no testers");
-    return -1;
-  }
+  if (!total) info("no testers");
 
 #if CONF_HAS_LIBINTL - 0 == 1
   // bind message catalogs, if specified
