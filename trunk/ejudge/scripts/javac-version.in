@@ -26,6 +26,11 @@ function failure()
   exit 1
 }
 
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGES
+
 if [ x"$1" = x-v ]
 then
   verbose=1
