@@ -22,6 +22,7 @@
 #include "lang_config_vis.h"
 #include "pathutl.h"
 #include "ejudge_cfg.h"
+#include "fileutl.h"
 
 #include <reuse/xalloc.h>
 
@@ -645,6 +646,10 @@ main(int argc, char **argv)
 #endif
 
   if (!script_dir[0]) die("script directory is not specified");
+  if (stat(script_dir, &sb) < 0) {
+    if (make_dir(script_dir, 0775) < 0) return -1;
+    die("cannot create script directory %s", script_dir);
+  }
   if (stat(script_dir, &sb) < 0) die("script directory does not exist");
   if (!S_ISDIR(sb.st_mode)) die("script directory is not a directory");
   if (!config_dir[0]) die("config directory is not specified");
