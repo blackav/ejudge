@@ -10,7 +10,7 @@ LANG_CONFIG_DIR="@lang_config_dir@"
 function common_config()
 {
   echo 'long_name="Borland Pascal"'
-  echo 'src_sfx=".c"'
+  echo 'src_sfx=".pas"'
   echo 'exe_sfx=".exe"'
   echo 'arch="dos"'
 }
