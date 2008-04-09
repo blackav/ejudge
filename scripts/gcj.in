@@ -29,5 +29,10 @@ fi
 
 [ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-Wall -O2"
 
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
 mv "$1" Main.java
 exec "${GCJRUN}" ${EJUDGE_FLAGS} --main=Main -s Main.java -o "$2"

@@ -29,7 +29,7 @@ function failure()
 unset LANG
 unset LC_ALL
 unset LC_MESSAGES
-unset LANGUAGES
+unset LANGUAGE
 
 if [ x"$1" = x-v ]
 then

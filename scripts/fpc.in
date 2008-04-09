@@ -27,6 +27,11 @@ then
     PATH="${FPCDIR}:${PATH}"
 fi
 
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
 # These compilation options enables various run-time checks
 #${FPCRUN} -Ci -Co -Cr -Ct -So -XS $1 -o${2}
 

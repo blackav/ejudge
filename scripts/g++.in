@@ -30,4 +30,8 @@ fi
 [ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-Wall -O2"
 
 unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
 exec "${GPPRUN}" ${EJUDGE_FLAGS} -static -s "$1" -o "$2" -lm
