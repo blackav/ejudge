@@ -27,4 +27,9 @@ then
     PATH="${GPROLOGDIR}:${PATH}"
 fi
 
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
 exec "${GPLCRUN}" -L --no-top-level ${EJUDGE_FLAGS} "$1" -o "$2"

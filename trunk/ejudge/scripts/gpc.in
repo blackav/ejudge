@@ -29,4 +29,9 @@ fi
 
 [ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-O2"
 
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
 exec "${GPCRUN}" ${EJUDGE_FLAGS} -static -s "$1" -o "$2"

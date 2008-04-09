@@ -32,4 +32,9 @@ fi
 
 [[ "${EJUDGE_FLAGS}" = "" ]] && EJUDGE_FLAGS="-optimize+"
 
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
 exec "${MCSRUN}" ${EJUDGE_FLAGS} "$1" -out:"$2"

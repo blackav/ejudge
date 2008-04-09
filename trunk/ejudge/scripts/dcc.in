@@ -29,4 +29,9 @@ then
     export KYLIXDIR
 fi
 
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
 exec "${DCCRUN}" ${EJUDGE_FLAGS} -Q "$1"
