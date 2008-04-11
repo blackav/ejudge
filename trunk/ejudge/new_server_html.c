@@ -11031,7 +11031,7 @@ get_problem_status(serve_state_t cs, int user_id,
 
 static void
 write_row(
-	FILE *fout,
+        FILE *fout,
         const unsigned char *row_label,
         char *format,
         ...)
