@@ -48,6 +48,7 @@ l10n_prepare(int _l10n_flag, unsigned char const *l10n_dir)
   static unsigned char env_buf[64] = "LANG";
   static unsigned char env_buf2[64] = "LANGUAGE";
   static unsigned char env_buf3[64] = "LC_MESSAGES";
+  static unsigned char env_buf4[64] = "LC_ALL";
 
   if (!l10n_dir) _l10n_flag = 0;
   if (_l10n_flag != 1) return;
@@ -57,6 +58,7 @@ l10n_prepare(int _l10n_flag, unsigned char const *l10n_dir)
   putenv(env_buf);
   putenv(env_buf2);
   putenv(env_buf3);
+  putenv(env_buf4);
 #endif /* CONF_HAS_LIBINTL */
 }
 
