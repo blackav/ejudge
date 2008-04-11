@@ -646,13 +646,13 @@ main(int argc, char **argv)
 #endif
 
   if (!script_dir[0]) die("script directory is not specified");
-  if (stat(script_dir, &sb) < 0) {
-    if (make_dir(script_dir, 0775) < 0) return -1;
-    die("cannot create script directory %s", script_dir);
-  }
   if (stat(script_dir, &sb) < 0) die("script directory does not exist");
   if (!S_ISDIR(sb.st_mode)) die("script directory is not a directory");
   if (!config_dir[0]) die("config directory is not specified");
+  if (stat(config_dir, &sb) < 0) {
+    if (make_dir(config_dir, 0775) < 0) return -1;
+    die("cannot create config directory %s", config_dir);
+  }
   if (stat(config_dir, &sb) < 0) die("config directory does not exist");
   if (!S_ISDIR(sb.st_mode)) die("config directory is not a directory");
 
