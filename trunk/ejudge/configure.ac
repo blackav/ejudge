@@ -111,7 +111,7 @@ else
 fi
 
 [[ x"${ac_cv_contests_home_dir}" = x -o x"${ac_cv_contests_home_dir}" = xyes ]] && ac_cv_contests_home_dir="/home/judges"
-[[ x"${ac_cv_conf_dir}" = x -o x"${ac_cv_conf_dir}" = xyes ]] && ac_cv_conf_dir="/home/judges/data"
+[[ x"${ac_cv_conf_dir}" = x -o x"${ac_cv_conf_dir}" = xyes ]] && ac_cv_conf_dir="${ac_cv_contests_home_dir}/data"
 [[ x"${ac_cv_cgi_conf_dir}" = x -o x"${ac_cv_cgi_conf_dir}" = xyes ]] && ac_cv_cgi_conf_dir="../cgi-data"
 [[ x"${ac_cv_style_prefix}" = x -o x"${ac_cv_style_prefix}" = xyes ]] && ac_cv_style_prefix="/ejudge/"
 [[ x"${ac_cv_lang_config_dir}" = x -o x"${ac_cv_lang_config_dir}" = xyes ]] && ac_cv_lang_config_dir="${ac_cv_contests_home_dir}/compile/conf/lang.d"
