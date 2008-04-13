@@ -1,3 +1,215 @@
+2008-04-11 (r4887) Alexander Chernov  <cher@ejudge.ru>
+
+	* l10n.c:
+	(l10n_prepare) `LC_ALL' environment variable is cleared.
+
+2008-04-07 (r4878) Alexander Chernov  <cher@ejudge.ru>
+
+	* run.c:
+	(check_config) no error if there are no problems to test.
+
+2008-04-06 (r4867) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge-setup.c:
+	Test contest is updated.
+
+2008-04-06 (r4866) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_language_data) `insecure' field is added.
+
+	* super_proto.h:
+	editing of `insecure' language configuration variable is supported.
+
+	* lang_config_vis.c:
+	(lang_config_generate_compile_cfg) `arch' value is put in quotes.
+
+	* new_server_html.c:
+	(unpriv_submit_run) `insecure' language attribute is supported.
+
+	* prepare.c:
+	`insecure' language attribute is added.
+
+	* prepare_out.c:
+	(prepare_unparse_lang) only non-empty `arch' and `exe_sfx' are
+	  generated;
+	  `insecure' attribute is supported.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of `insecure' language configuration variable is supported.
+
+2008-04-05 (r4863) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge-configure-compilers.c:
+	(is_comment_line) new function;
+	(fgets_no_cmt) new function;
+	(is_file_changed_no_cmt) new function;
+	(save_compile_cfg) comments are ignored when files are compared.
+
+2008-04-05 (r4861) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	stringset.[ch] are added.
+
+	* lang_config_vis.h:
+	(lang_config_get_sorted) new function prototype;
+	(lang_config_generate_compile_cfg) new function prototype.
+
+	* shellcfg_parse.h:
+	(shellconfig_get) new function prototype.
+
+	* ejudge-configure-compilers.c:
+	saving of `compile.cfg' is supported.
+
+	* ejudge-setup.c:
+	compiler support is improved.
+
+	* lang_config_vis.c:
+	many new features implemented.
+
+	* shellcfg_parse.c:
+	(shellconfig_parse) '#' inside strings is allowed;
+	(shellconfig_get) new function.
+
+2008-04-04 (r4851) Alexander Chernov  <cher@ejudge.ru>
+
+	* lang_config_vis.c:
+	language id setup is implemented.
+
+2008-04-04 (r4850) Alexander Chernov  <cher@ejudge.ru>
+
+	* lang_config_vis.h:
+	(struct lang_config_info) `id' field is added.
+
+	* ejudge-setup.c:
+	(generate_install_script) `new-register' symlink is installed.
+
+	* shellcfg_parse.c:
+	(shellcfg_parse) '-' and '+' are allowed in variable names.
+
+2008-04-03 (r4847) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	EJUDGE_LIBEXEC_DIR generation is added;
+	compiler script generation is removed.
+
+2008-04-01 (r4842) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge_cfg.h: copyright notice is updated;
+	(struct ejudge_cfg) `disable_cookie_ip_check' field is added.
+
+	* runlog.h:
+	(run_get_saved_times) `p_saved_finish_time' parameter is added;
+	(struct run_header) `saved_finish_time' field is added.
+
+	* compile.c:
+	(main) `lang_config_configure' logging output is directed to a
+	temporary buffer instead of stderr.
+
+	* ejudge_cfg.c: copyright notice is updated;
+	support for "disable_cookie_ip_check" is added.
+
+	* l10n.c: copyright notice is updated;
+	(l10n_prepare) `LANGUAGE' and `LC_MESSAGES' environment variables
+	  are cleared.
+
+	* new_server_html.c:
+	(priv_upsolving_operation) finish time is cleared upon upsolving;
+	  `run_get_saved_times' call is updated;
+	(unpriv_page_header) "Problems" link is preserved in problem_navigation
+	  mode.
+
+	* prepare.c:
+	less debugging output.
+
+	* runlog.c:
+	(run_get_saved_times) `p_saved_finish_time' parameter is added;
+	(run_save_times) finish time is saved.
+
+	* serve_state.c:
+	(serve_state_set_config_path) `run_get_saved_times' call is updated.
+
+	* userlist_check.c: copyright notice is updated;
+	valid charsets for names are changed.
+
+	* userlist-server.c:
+	`disable_cookie_ip_check' configuration attribute is supported.
+
+2008-04-01 (r4840) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac: reverted previous change.
+
+2008-04-01 (r4838) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	--disable-cookie-ip-check option is added.
+
+2008-03-31 (r4835) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	rules for ejudge-configure-compilers are added.
+
+	* files.make:
+	new files added: `lang_config.c', `lang_config_vis.[ch]',
+	  `shellcfg_parse.[ch]', `ejudge-configure-compilers.c'.
+
+	* prepare.h:
+	(struct section_global_data) `lang_config_dir' field is added;
+	(struct section_language_data) `disabled_by_config' field is added;
+	(lang_config_configure) new function prototype.
+
+	* compile.c: copyright notice is updated;
+	(filter_languages) languages disabled by shell config files are skipped;
+	(main) `lang_config_configure' is called.
+
+	* ejudge-configure-compilers.c:
+	basically completed.
+
+	* ejudge-setup.c:
+	programming language configuration is reimplemented.
+
+	* prepare.c:
+	new global configuration variable `lang_config_dir' is added;
+	`problem_navigation' is set to 1 for new contests;
+	`enable_full_archive' is set to 0 for new contests.
+
+	* runlog.c: copyright notice is updated;
+	(check_msg) format specifications are added;
+	multiple format specification problems are fixed.
+
+	* shellcfg_parse.c:
+	include directive fix.
+
+2008-03-30 (r4833) Alexander Chernov  <cher@ejudge.ru>
+
+	* lang_config_vis.h, ejudge-configure-compilers.c, lang_config.c, lang_config_vis.c:
+	initial revision
+
+2008-03-29 (r4828) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	`--enable-lang-config-dir' option is added instead of
+	  `--enable-lang-script-dir';
+	`--with-<COMPILER>' options now cause error;
+	compiler configure code is removed;
+	compiler-related configuration variables are no longer exported.
+
+2008-03-17 (r4813) Alexander Chernov  <cher@ejudge.ru>
+
+	* INSTALL.RUS, config.h.in, ejudge-setup.c, configure.ac, INSTALL:
+	MBAS renamed to VBNC
+
+2008-03-16 (r4806) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	new options added: --enable-preserve-scripts, --enable-lang-script-dir.
+
+2008-03-16 (r4805) Alexander Chernov  <cher@ejudge.ru>
+
+	* scripts:
+	copyright notice is updated;
+	scripting model is changed.
+
 2008-03-09 (r4796) Alexander Chernov  <cher@ejudge.ru>
 
 	* collect-emails.c: copyright notice is updated;

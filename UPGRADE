@@ -19,6 +19,11 @@ HTDOCS_DIR	the root directory of the HTML documents of the
 		web-server (for example, /var/www/htdocs, but depends
 		on the linux distribution used and apache settings).
 
+Migration to version 2.3.8
+--------------------------
+After installation of the new version, do not forget to run
+ejudge-configure-compilers tool.
+
 Migration to version 2.3.2
 --------------------------
 To upgrade to the ejudge 2.3.2 from the earlier versions preserving

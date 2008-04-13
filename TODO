@@ -14,11 +14,6 @@ None known.
 Minor enhancements
 ==================
 
-o Support SIGHUP signal in userlist-server, compile, job-server,
-  super-serve. 
-o Do not show buttons in master/judge, which are not applicable
-  to the current contest, or if the user has no enough
-  permissions.
 o Enhanced creation of new contests from an existing contest.
   During creation it should be possible to specify whether users
   should be copied, whether problems should be copied, and allow
@@ -33,15 +28,9 @@ o Passing of the run packets via the super-serve proxy, if the contest
   by the `super-serve' program to a single directory instead of
   one directory for each managed contest.
   Difficulty: medium. It may require changing of the run packet format.
-o Daemonized mode for `super-serve' and `compile' programs.
-  Difficulty: medium. It may require changing of the log format of
-  the utilities.
 o Log analyzing utilities for the log files of the abovementioned
   tools.
 o Implement full support for conditional compilation.
-o Remove limitation on 127 tests in the runlog database.
-  Difficulty: medium. May require changing of the runlog data format.
-  Compatibility problems may appear.
 
 Major enhancements
 ==================
