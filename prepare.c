@@ -1740,6 +1740,19 @@ prepare_parse_variant_map(
           pmap->v[i].variants[j] = pmap->v[i].real_variant;
         }
       } else {
+        if (pmap->v[i].var_num > pmap->var_prob_num) {
+          pmap->v[i].var_num = pmap->var_prob_num;
+        } else if (pmap->v[i].var_num < pmap->var_prob_num) {
+          int *vv = 0;
+          XCALLOC(vv, pmap->var_prob_num + 1);
+          if (pmap->v[i].variants) {
+            memcpy(vv, pmap->v[i].variants,
+                   (pmap->v[i].var_num + 1) * sizeof(vv[0]));
+          }
+          xfree(pmap->v[i].variants);
+          pmap->v[i].variants = vv;
+          pmap->v[i].var_num = pmap->var_prob_num;
+        }
         if (pmap->v[i].var_num != pmap->var_prob_num) {
           fprintf(log_f, "%s: invalid number of entries for user %s\n",
                   pvm, pmap->v[i].login);
