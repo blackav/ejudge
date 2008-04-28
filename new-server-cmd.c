@@ -311,6 +311,7 @@ parse_int(const char *str, int *p_val)
   errno = 0;
   v = strtol(str, &eptr, 10);
   if (errno || *eptr) return -1;
+  if (p_val) *p_val = v;
   return 0;
 }
 
