@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -212,7 +212,7 @@ duration_str(int show_astr, time_t cur, time_t start, char *buf, int len)
   if (show_astr) {
     struct tm *tt = localtime(&cur);
 
-    sprintf(b, "%04d/%02d/%02d %02d:%02d:%02d ",
+    sprintf(b, "%04d/%02d/%02d %02d:%02d:%02d",
             tt->tm_year + 1900, tt->tm_mon + 1, tt->tm_mday,
             tt->tm_hour, tt->tm_min, tt->tm_sec);
   } else {
