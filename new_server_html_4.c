@@ -1250,20 +1250,22 @@ do_dump_master_runs(
   u->tree_mem = 0;
   u->prev_filter_expr = xstrdup(filter_expr);
   u->tree_mem = filter_tree_new();
-  filter_expr_set_string(filter_expr, u->tree_mem, parse_error_func, cs);
-  filter_expr_init_parser(u->tree_mem, parse_error_func, cs);
-  i = filter_expr_parse();
-  if (i + filter_expr_nerrs == 0 && filter_expr_lval &&
-      filter_expr_lval->type == FILTER_TYPE_BOOL) {
-    // parsing successful
-    u->prev_tree = filter_expr_lval;
-    xfree(u->error_msgs); u->error_msgs = 0;
-  } else {
-    // parsing failed
-    u->tree_mem = filter_tree_delete(u->tree_mem);
-    u->prev_tree = 0;
-    u->tree_mem = 0;
-    return -NEW_SRV_ERR_INV_FILTER_EXPR;
+  if (filter_expr && *filter_expr) {
+    filter_expr_set_string(filter_expr, u->tree_mem, parse_error_func, cs);
+    filter_expr_init_parser(u->tree_mem, parse_error_func, cs);
+    i = filter_expr_parse();
+    if (i + filter_expr_nerrs == 0 && filter_expr_lval &&
+        filter_expr_lval->type == FILTER_TYPE_BOOL) {
+      // parsing successful
+      u->prev_tree = filter_expr_lval;
+      xfree(u->error_msgs); u->error_msgs = 0;
+    } else {
+      // parsing failed
+      u->tree_mem = filter_tree_delete(u->tree_mem);
+      u->prev_tree = 0;
+      u->tree_mem = 0;
+      return -NEW_SRV_ERR_INV_FILTER_EXPR;
+    }
   }
 
   memset(&env, 0, sizeof(env));
@@ -1470,6 +1472,7 @@ do_dump_master_runs(
 
     if (pe->prob_id > 0 && pe->prob_id <= cs->max_prob
         && (prob = cs->probs[pe->prob_id])) {
+      prob_short_name = prob->short_name;
       if (prob->variant_num > 0) {
         snprintf(db_variant_buf, sizeof(db_variant_buf), "%d", pe->variant);
         variant = find_variant(cs, pe->user_id, pe->prob_id, 0);
