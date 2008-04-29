@@ -1530,10 +1530,11 @@ do_dump_master_runs(
         continue;
       }
 
-      snprintf(passed_tests_buf, sizeof(passed_tests_buf), "%d", pe->test);
+      snprintf(passed_tests_buf, sizeof(passed_tests_buf), "%d", pe->test - 1);
       csv_rec[F_PASSED_TESTS] = passed_tests_buf;
 
       prev_successes = RUN_TOO_MANY;
+      score_bonus = 0;
       if (pe->status == RUN_OK && !pe->is_hidden
           && prob && prob->score_bonus_total > 0) {
         if ((prev_successes = run_get_prev_successes(cs->runlog_state, rid))<0)
