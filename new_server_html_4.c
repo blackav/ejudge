@@ -1151,51 +1151,72 @@ static const unsigned char has_kirov_score[RUN_LAST + 1] =
   [RUN_ACCEPTED]         = 1,
 };
 
-/* Run information structure:
- * [0]  run_id
- * [1]  "H", if hidden
- * [2]  "I", if imported
- * [3]  time
- * [4]  nsec
- * [5]  duration
- * [6]  size
- * [7]  1, if IPv6, 0, if IPv4
- * [8]  IP
- * [9]  ssl_flag
- * [10] user_id
- * [11] user_login
- * [12] "I", if user invisible
- * [13] "B", if user banned
- * [14] "L", if user locked
- * [15] prob_id
- * [16] prob_short_name
- * [17] variant_actual
- * [18] variant_db
- * [19] lang_id
- * [20] lang_short_name
- * [21] mime_type
- * [22] source_suffix
- * [23] status_short
- * [24] failed test
- * [25] passed tests
- * [26] total_score
- * [27] orig_score
- * [28] prev_attempts
- * [29] attempt_penalty
- * [30] prev_disqualified
- * [31] disq_penalty
- * [32] time_penalty
- * [33] prev_successes
- * [34] prev_success_bonus
- * [35] score_adjustment
- * [36] is_after_ok
- * [37] is_latest
- * [38] sha1
- * [39] locale_id
- * [40] is_readonly
- * [41] pages
- * [42] judge_id
- */
+// field codes
+enum
+{
+  F_RUN_ID,                     /* 0 */
+  F_IS_HIDDEN,                  /* 1 */
+  F_IS_IMPORTED,                /* 2 */
+  F_TIME,                       /* 3 */
+  F_NSEC,                       /* 4 */
+  F_DURATION,                   /* 5 */
+  F_SIZE,                       /* 6 */
+  F_IS_IPV6,                    /* 7 */
+  F_IP,                         /* 8 */
+  F_IS_SSL,                     /* 9 */
+  F_USER_ID,                    /* 10 */
+  F_USER_LOGIN,                 /* 11 */
+  F_IS_USER_BANNED,             /* 12 */
+  F_IS_USER_INVISIBLE,          /* 13 */
+  F_IS_USER_LOCKED,             /* 14 */
+  F_IS_USER_INCOMPLETE,         /* 15 */
+  F_IS_USER_DISQUALIFIED,       /* 16 */
+  F_PROB_ID,                    /* 17 */
+  F_PROB_SHORT_NAME,            /* 18 */
+  F_VARIANT,                    /* 19 */
+  F_VARIANT_DB,                 /* 20 */
+  F_LANG_ID,                    /* 21 */
+  F_LANG_SHORT_NAME,            /* 22 */
+  F_MIME_TYPE,                  /* 23 */
+  F_SOURCE_SUFFIX,              /* 24 */
+  F_STATUS_SHORT,               /* 25 */
+  F_FAILED_TEST,                /* 26 */
+  F_PASSED_TESTS,               /* 27 */
+  F_TOTAL_SCORE,                /* 28 */
+  F_BASE_SCORE,                 /* 29 */
+  F_PREV_ATTEMPTS,              /* 30 */
+  F_ATTEMPT_PENALTY,            /* 31 */
+  F_PREV_DISQUAL,               /* 32 */
+  F_DISQUAL_PENALTY,            /* 33 */
+  F_TIME_PENALTY,               /* 34 */
+  F_PREV_SUCCESSES,             /* 35 */
+  F_SUCCESS_BONUS,              /* 36 */
+  F_SCORE_ADJUSTMENT,           /* 37 */
+  F_IS_AFTER_OK,                /* 38 */
+  F_IS_LATEST,                  /* 39 */
+  F_SHA1,                       /* 40 */
+  F_LOCALE_ID,                  /* 41 */
+  F_IS_READONLY,                /* 42 */
+  F_PAGES,                      /* 43 */
+  F_JUDGE_ID,                   /* 44 */
+
+  F_TOTAL_FIELDS,               /* 45 */
+};
+
+static void
+write_csv_record(
+        FILE *fout,
+        int nfield,
+        const unsigned char **fields)
+{
+  int i;
+
+  for (i = 0; i < nfield; i++) {
+    if (i > 0) putc(';', fout);
+    if (fields[i]) fputs(fields[i], fout);
+  }
+  putc('\n', fout);
+}
 
 static int
 do_dump_master_runs(
@@ -1218,21 +1239,21 @@ do_dump_master_runs(
   int rid, attempts, disq_attempts, prev_successes;
   time_t run_time, start_time;
   const struct run_entry *pe;
-  const unsigned char *run_date = 0;
   unsigned char dur_str[128];
   int duration, dur_sec, dur_min, dur_hour, user_flags, variant;
   int score, score_bonus, orig_score, date_penalty;
-  const unsigned char *user_login, *user_invisible_flag;
-  const unsigned char *user_banned_flag, *user_locked_flag;
-  const unsigned char *run_hidden_flag, *run_imported_flag;
-  const unsigned char *prob_short_name = 0;
-  const unsigned char *lang_short_name, *source_suffix, *mime_type_str;
+  const unsigned char *user_login;
   unsigned char variant_buf[128], db_variant_buf[128];
   unsigned char failed_test_buf[128], passed_tests_buf[128], score_buf[128];
   unsigned char prev_successes_buf[128], score_bonus_buf[128];
   unsigned char attempts_buf[128], attempts_penalty_buf[128];
   unsigned char disq_attempts_buf[128], disq_attempts_penalty_buf[128];
   unsigned char date_penalty_buf[128], score_adj_buf[128];
+  unsigned char run_id_buf[128], run_date_buf[128], nsec_buf[128];
+  unsigned char user_id_buf[128], ip_buf[128], prob_id_buf[128];
+  unsigned char lang_id_buf[128], judge_id_buf[128], pages_buf[128];
+  unsigned char locale_id_buf[128], sha1_buf[256], base_score_buf[128];
+  const unsigned char *csv_rec[F_TOTAL_FIELDS];
 
   const serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
@@ -1349,71 +1370,34 @@ do_dump_master_runs(
       list_idx[list_tot++] = match_idx[i];
   }
 
-  // table header
-  fputs("run_id"
-        ";is_hidden"
-        ";is_imported"
-        ";time"
-        ";nsec"
-        ";duration"
-        ";size"
-        ";is_ipv6"
-        ";IP"
-        ";ssl_flag"
-        ";user_id"
-        ";user_login"
-        ";is_user_invisible"
-        ";is_user_banned"
-        ";is_user_locked"
-        ";prob_id"
-        ";prob_short_name"
-        ";variant_actual"
-        ";variant_db"
-        ";lang_id"
-        ";lang_short_name"
-        ";mime_type"
-        ";source_suffix"
-        ";status_short"
-        ";failed_test"
-        ";passed_tests"
-        ";total_score"
-        ";orig_score"
-        ";prev_attempts"
-        ";attempt_penalty"
-        ";prev_disqualified"
-        ";disq_penalty"
-        ";time_penalty"
-        ";prev_successes"
-        ";success_bonus"
-        ";score_adjustment"
-        ";is_after_ok"
-        ";is_latest"
-        ";sha1"
-        ";locale_id"
-        ";is_readonly"
-        ";pages"
-        ";judge_id"
-        "\n", fout);
-
   for (i = 0; i < list_tot; i++) {
+    memset(csv_rec, 0, sizeof(csv_rec));
+
     rid = list_idx[i];
     ASSERT(rid >= 0 && rid < env.rtotal);
     pe = &env.rentries[rid];
+    snprintf(run_id_buf, sizeof(run_id_buf), "%d", rid);
+    csv_rec[F_RUN_ID] = run_id_buf;
+    if (!run_is_valid_status(pe->status)) {
+      snprintf(statstr, sizeof(statstr), "%d", pe->status);
+      csv_rec[F_STATUS_SHORT] = statstr;
+      write_csv_record(fout, F_TOTAL_FIELDS, csv_rec);
+      continue;
+    }
 
     run_status_to_str_short(statstr, sizeof(statstr), pe->status);
+    csv_rec[F_STATUS_SHORT] = statstr;
 
-    if (!run_is_valid_status(pe->status)) {
-      fprintf(fout, "%d;;;;;;;;;;;;;;;;;;;;;;;%d;;;;;;;;;;;;;;;;;;;\n",
-              rid, pe->status);
-      continue;
-    }
     if (pe->status == RUN_EMPTY) {
-      fprintf(fout, "%d;;;;;;;;;;;;;;;;;;;;;;;%s;;;;;;;;;;;;;;;;;;;\n",
-              rid, statstr);
+      write_csv_record(fout, F_TOTAL_FIELDS, csv_rec);
       continue;
     }
 
-    run_date = xml_unparse_date(pe->time);
+    snprintf(run_date_buf, sizeof(run_date_buf), "%s",
+             xml_unparse_date(pe->time));
+    csv_rec[F_TIME] = run_date_buf;
+    snprintf(nsec_buf, sizeof(nsec_buf), "%d", pe->nsec);
+    csv_rec[F_NSEC] = nsec_buf;
     run_time = pe->time;
     if (global->is_virtual) {
       start_time = run_get_virtual_start_time(cs->runlog_state, pe->user_id);
@@ -1435,188 +1419,121 @@ do_dump_master_runs(
                  dur_hour, dur_min, dur_sec);
       }
     }
+    csv_rec[F_DURATION] = dur_str;
 
+    snprintf(user_id_buf, sizeof(user_id_buf), "%d", pe->user_id);
+    csv_rec[F_USER_ID] = user_id_buf;
     if ((user_login = teamdb_get_login(cs->teamdb_state, pe->user_id))) {
       user_flags = teamdb_get_flags(cs->teamdb_state, pe->user_id);
-      user_invisible_flag = "";
-      user_banned_flag = "";
-      user_locked_flag = "";
-      if ((user_flags & TEAM_INVISIBLE)) user_invisible_flag = "I";
-      if ((user_flags & TEAM_BANNED)) user_banned_flag = "B";
-      if ((user_flags & TEAM_LOCKED)) user_banned_flag = "L";
-      if ((user_flags & TEAM_INCOMPLETE)) user_banned_flag = "N";
+      if ((user_flags & TEAM_BANNED)) csv_rec[F_IS_USER_BANNED] = "1";
+      if ((user_flags & TEAM_INVISIBLE)) csv_rec[F_IS_USER_INVISIBLE] = "1";
+      if ((user_flags & TEAM_LOCKED)) csv_rec[F_IS_USER_LOCKED] = "1";
+      if ((user_flags & TEAM_INCOMPLETE)) csv_rec[F_IS_USER_INCOMPLETE] = "1";
+      if ((user_flags & TEAM_DISQUALIFIED)) csv_rec[F_IS_USER_DISQUALIFIED]="1";
     } else {
       user_login = "";
-      user_invisible_flag = "";
-      user_banned_flag = "";
-      user_locked_flag = "";
     }
+    csv_rec[F_USER_LOGIN] = user_login;
+
+    snprintf(ip_buf, sizeof(ip_buf), "%s", xml_unparse_ip(pe->a.ip));
+    csv_rec[F_IP] = ip_buf;
+    if (pe->ipv6_flag) csv_rec[F_IS_IPV6] = "1";
+    if (pe->ssl_flag) csv_rec[F_IS_SSL] = "1";
 
     if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP) {
-      fprintf(fout, "%d;;"
-              ";%s;%09d;%s;"
-              ";%d;%s;%d"
-              ";%d;%s;%s;%s;%s;;;;;;;;"
-              ";%s;;;;;;;;;;;;;;;;;;;\n",
-              rid, run_date, pe->nsec, dur_str,
-              pe->ipv6_flag, xml_unparse_ip(pe->a.ip), pe->ssl_flag,
-              pe->user_id, user_login, user_invisible_flag, user_banned_flag,
-              user_locked_flag, statstr);
+      write_csv_record(fout, F_TOTAL_FIELDS, csv_rec);
       continue;
     }
 
-    run_hidden_flag = "";
-    if (pe->is_hidden) run_hidden_flag = "H";
-    run_imported_flag = "";
-    if (pe->is_imported) run_imported_flag = "I";
+    if (pe->is_hidden) csv_rec[F_IS_HIDDEN] = "1";
+    if (pe->is_imported) csv_rec[F_IS_IMPORTED] = "1";
+    if (pe->is_readonly) csv_rec[F_IS_READONLY] = "1";
+    snprintf(sha1_buf, sizeof(sha1_buf), "%s", unparse_sha1(pe->sha1));
+    csv_rec[F_SHA1] = sha1_buf;
+    if (pe->locale_id >= 0) {
+      snprintf(locale_id_buf, sizeof(locale_id_buf), "%d", pe->locale_id);
+      csv_rec[F_LOCALE_ID] = locale_id_buf;
+    }
+    if (pe->pages > 0) {
+      snprintf(pages_buf, sizeof(pages_buf), "%d", pe->pages);
+      csv_rec[F_PAGES] = pages_buf;
+    }
+    if (pe->judge_id > 0) {
+      snprintf(judge_id_buf, sizeof(judge_id_buf), "%d", pe->judge_id);
+      csv_rec[F_JUDGE_ID] = judge_id_buf;
+    }
+
+    snprintf(prob_id_buf, sizeof(prob_id_buf), "%d", pe->prob_id);
+    csv_rec[F_PROB_ID] = prob_id_buf;
 
     if (pe->prob_id > 0 && pe->prob_id <= cs->max_prob
         && (prob = cs->probs[pe->prob_id])) {
-      prob_short_name = prob->short_name;
+      csv_rec[F_PROB_SHORT_NAME] = prob->short_name;
       if (prob->variant_num > 0) {
         snprintf(db_variant_buf, sizeof(db_variant_buf), "%d", pe->variant);
         variant = find_variant(cs, pe->user_id, pe->prob_id, 0);
         if (variant < 0) variant = 0;
         snprintf(variant_buf, sizeof(variant_buf), "%d", variant);
-      } else {
-        variant_buf[0] = 0;
-        db_variant_buf[0] = 0;
+        csv_rec[F_VARIANT] = variant_buf;
+        csv_rec[F_VARIANT_DB] = db_variant_buf;
       }
-    } else {
-      prob_short_name = "";
-      variant_buf[0] = 0;
-      db_variant_buf[0] = 0;
     }
+
+    snprintf(lang_id_buf, sizeof(lang_id_buf), "%d", pe->lang_id);
+    csv_rec[F_LANG_ID] = lang_id_buf;
 
     if (pe->lang_id > 0 && pe->lang_id <= cs->max_lang
         && (lang = cs->langs[pe->lang_id])) {
-      lang_short_name = lang->short_name;
-      source_suffix = lang->src_sfx;
-      mime_type_str = "";
+      csv_rec[F_LANG_SHORT_NAME] = lang->short_name;
+      csv_rec[F_SOURCE_SUFFIX] = lang->src_sfx;
     } else if (!pe->lang_id) {
-      lang_short_name = "";
-      mime_type_str = mime_type_get_type(pe->mime_type);
-      source_suffix = mime_type_get_suffix(pe->mime_type);
-    } else {
-      lang_short_name = "";
-      mime_type_str = "";
-      source_suffix = "";
+      csv_rec[F_MIME_TYPE] = mime_type_get_type(pe->mime_type);
+      csv_rec[F_SOURCE_SUFFIX] = mime_type_get_suffix(pe->mime_type);
     }
 
     if (global->score_system_val == SCORE_ACM) {
-      failed_test_buf[0] = 0;
-      if (has_failed_test_num[pe->status])
+      if (has_failed_test_num[pe->status]) {
         snprintf(failed_test_buf, sizeof(failed_test_buf), "%d", pe->test);
-      fprintf(fout,
-              "%d;%s;%s"
-              ";%s;%09d;%s;%u"
-              ";%d;%s;%d"
-              ";%d;%s;%s;%s;%s"
-              ";%d;%s;%s;%s"
-              ";%d;%s;%s;%s"
-              ";%s;%s;;;;;;;;;;;"
-              ";"               /* is_after_ok */
-              ";"               /* is_latest */
-              ";%s;%d;%d;%d;%d\n",
-              rid, run_hidden_flag, run_imported_flag,
-              run_date, pe->nsec, dur_str, pe->size,
-              pe->ipv6_flag, xml_unparse_ip(pe->a.ip), pe->ssl_flag,
-              pe->user_id, user_login,
-              user_invisible_flag, user_banned_flag, user_locked_flag,
-              pe->prob_id, prob_short_name, variant_buf, db_variant_buf,
-              pe->lang_id, lang_short_name, mime_type_str, source_suffix,
-              statstr, failed_test_buf,
-              unparse_sha1(pe->sha1), pe->locale_id, pe->is_readonly,
-              pe->pages, pe->judge_id);
+        csv_rec[F_FAILED_TEST] = failed_test_buf;
+      }
+      write_csv_record(fout, F_TOTAL_FIELDS, csv_rec);
+      continue;
     } else if (global->score_system_val == SCORE_MOSCOW) {
-      failed_test_buf[0] = 0;
-      if (has_failed_test_num[pe->status])
+      if (has_failed_test_num[pe->status]) {
         snprintf(failed_test_buf, sizeof(failed_test_buf), "%d", pe->test);
-      fprintf(fout,
-              "%d;%s;%s"
-              ";%s;%09d;%s;%u"
-              ";%d;%s;%d"
-              ";%d;%s;%s;%s;%s"
-              ";%d;%s;%s;%s"
-              ";%d;%s;%s;%s"
-              ";%s;%s;;%d;%d;;;;;;;;"
-              ";"               /* is_after_ok */
-              ";"               /* is_latest */
-              ";%s;%d;%d;%d;%d\n",
-              rid, run_hidden_flag, run_imported_flag,
-              run_date, pe->nsec, dur_str, pe->size,
-              pe->ipv6_flag, xml_unparse_ip(pe->a.ip), pe->ssl_flag,
-              pe->user_id, user_login,
-              user_invisible_flag, user_banned_flag, user_locked_flag,
-              pe->prob_id, prob_short_name, variant_buf, db_variant_buf,
-              pe->lang_id, lang_short_name, mime_type_str, source_suffix,
-              statstr, failed_test_buf, pe->score, pe->score,
-              unparse_sha1(pe->sha1), pe->locale_id, pe->is_readonly,
-              pe->pages, pe->judge_id);
+        csv_rec[F_FAILED_TEST] = failed_test_buf;
+      }
+      snprintf(score_buf, sizeof(score_buf), "%d", pe->score);
+      csv_rec[F_TOTAL_SCORE] = score_buf;
+      csv_rec[F_BASE_SCORE] = score_buf;
+      write_csv_record(fout, F_TOTAL_FIELDS, csv_rec);
+      continue;
     } else if (global->score_system_val == SCORE_OLYMPIAD) {
-      failed_test_buf[0] = 0;
-      if (has_failed_test_num[pe->status])
+      if (has_failed_test_num[pe->status]) {
         snprintf(failed_test_buf, sizeof(failed_test_buf), "%d", pe->test);
-      passed_tests_buf[0] = 0;
+        csv_rec[F_FAILED_TEST] = failed_test_buf;
+      }
       if (has_passed_tests[pe->status]) {
         snprintf(passed_tests_buf, sizeof(passed_tests_buf), "%d", pe->test);
+        csv_rec[F_PASSED_TESTS] = passed_tests_buf;
       }
-      score_buf[0] = 0;
       if (has_olympiad_score[pe->status]) {
         snprintf(score_buf, sizeof(score_buf), "%d", pe->score);
+        csv_rec[F_TOTAL_SCORE] = score_buf;
+        csv_rec[F_BASE_SCORE] = score_buf;
       }
-      fprintf(fout,
-              "%d;%s;%s"
-              ";%s;%09d;%s;%u"
-              ";%d;%s;%d"
-              ";%d;%s;%s;%s;%s"
-              ";%d;%s;%s;%s"
-              ";%d;%s;%s;%s"
-              ";%s;%s;%s"
-              ";%s;%s;;;;;;;;"
-              ";"               /* is_after_ok */
-              ";"               /* is_latest */
-              ";%s;%d;%d;%d;%d\n",
-              rid, run_hidden_flag, run_imported_flag,
-              run_date, pe->nsec, dur_str, pe->size,
-              pe->ipv6_flag, xml_unparse_ip(pe->a.ip), pe->ssl_flag,
-              pe->user_id, user_login,
-              user_invisible_flag, user_banned_flag, user_locked_flag,
-              pe->prob_id, prob_short_name, variant_buf, db_variant_buf,
-              pe->lang_id, lang_short_name, mime_type_str, source_suffix,
-              statstr, failed_test_buf, passed_tests_buf, score_buf, score_buf,
-              unparse_sha1(pe->sha1), pe->locale_id, pe->is_readonly,
-              pe->pages, pe->judge_id);
+      write_csv_record(fout, F_TOTAL_FIELDS, csv_rec);
+      continue;
     } else if (global->score_system_val == SCORE_KIROV) {
       if (!has_kirov_score[pe->status]) {
-        fprintf(fout,
-                "%d;%s;%s"
-                ";%s;%09d;%s;%u"
-                ";%d;%s;%d"
-                ";%d;%s;%s;%s;%s"
-                ";%d;%s;%s;%s"
-                ";%d;%s;%s;%s"
-                ";%s;;;;;;;;;;;;"
-                ";"               /* is_after_ok */
-                ";"               /* is_latest */
-                ";%s;%d;%d;%d;%d\n",
-                rid, run_hidden_flag, run_imported_flag,
-                run_date, pe->nsec, dur_str, pe->size,
-                pe->ipv6_flag, xml_unparse_ip(pe->a.ip), pe->ssl_flag,
-                pe->user_id, user_login,
-                user_invisible_flag, user_banned_flag, user_locked_flag,
-                pe->prob_id, prob_short_name, variant_buf, db_variant_buf,
-                pe->lang_id, lang_short_name, mime_type_str, source_suffix,
-                statstr,
-                unparse_sha1(pe->sha1), pe->locale_id, pe->is_readonly,
-                pe->pages, pe->judge_id);
+        write_csv_record(fout, F_TOTAL_FIELDS, csv_rec);
         continue;
       }
 
+      snprintf(passed_tests_buf, sizeof(passed_tests_buf), "%d", pe->test);
+      csv_rec[F_PASSED_TESTS] = passed_tests_buf;
+
       prev_successes = RUN_TOO_MANY;
-      score_bonus = 0;
-      prev_successes_buf[0] = 0;
-      score_bonus_buf[0] = 0;
       if (pe->status == RUN_OK && !pe->is_hidden
           && prob && prob->score_bonus_total > 0) {
         if ((prev_successes = run_get_prev_successes(cs->runlog_state, rid))<0)
@@ -1624,10 +1541,12 @@ do_dump_master_runs(
         if (prev_successes != RUN_TOO_MANY) {
           snprintf(prev_successes_buf, sizeof(prev_successes_buf),
                    "%d", prev_successes);
+          csv_rec[F_PREV_SUCCESSES] = prev_successes_buf;
         }
         if (prev_successes >= 0 && prev_successes < prob->score_bonus_total)
           score_bonus = prob->score_bonus_val[prev_successes];
         snprintf(score_bonus_buf, sizeof(score_bonus_buf), "%d", score_bonus);
+        csv_rec[F_SUCCESS_BONUS] = score_bonus_buf;
       }
 
       attempts = 0; disq_attempts = 0;
@@ -1639,61 +1558,42 @@ do_dump_master_runs(
       orig_score = pe->score;
       if (pe->status == RUN_OK && !prob->variable_full_score)
         orig_score = prob->full_score;
+      snprintf(base_score_buf, sizeof(base_score_buf), "%d", orig_score);
+      csv_rec[F_BASE_SCORE] = base_score_buf;
       score = calc_kirov_score(0, 0, pe, prob, attempts, disq_attempts,
                                prev_successes, &date_penalty, 0);
-      attempts_buf[0] = 0;
-      if (attempts > 0)
+      snprintf(score_buf, sizeof(score_buf), "%d", score);
+      csv_rec[F_TOTAL_SCORE] = score_buf;
+      if (attempts > 0) {
         snprintf(attempts_buf, sizeof(attempts_buf), "%d", attempts);
-      attempts_penalty_buf[0] = 0;
-      if (attempts * prob->run_penalty != 0)
+        csv_rec[F_PREV_ATTEMPTS] = attempts_buf;
+      }
+      if (attempts * prob->run_penalty != 0) {
         snprintf(attempts_penalty_buf, sizeof(attempts_penalty_buf),
                  "%d", attempts * prob->run_penalty);
-      disq_attempts_buf[0] = 0;
-      if (disq_attempts > 0)
+        csv_rec[F_ATTEMPT_PENALTY] = attempts_penalty_buf;
+      }
+      if (disq_attempts > 0) {
         snprintf(disq_attempts_buf, sizeof(disq_attempts_buf),
                  "%d", disq_attempts);
-      disq_attempts_penalty_buf[0] = 0;
-      if (disq_attempts * prob->disqualified_penalty != 0)
+        csv_rec[F_PREV_DISQUAL] = disq_attempts_buf;
+      }
+      if (disq_attempts * prob->disqualified_penalty != 0) {
         snprintf(disq_attempts_penalty_buf, sizeof(disq_attempts_penalty_buf),
                  "%d", disq_attempts * prob->disqualified_penalty);
-      date_penalty_buf[0] = 0;
-      if (date_penalty != 0)
+        csv_rec[F_DISQUAL_PENALTY] = disq_attempts_penalty_buf;
+      }
+      if (date_penalty != 0) {
         snprintf(date_penalty_buf, sizeof(date_penalty_buf),
                  "%d", date_penalty);
-      score_adj_buf[0] = 0;
-      if (pe->score_adj != 0)
+        csv_rec[F_TIME_PENALTY] = date_penalty_buf;
+      }
+      if (pe->score_adj != 0) {
         snprintf(score_adj_buf, sizeof(score_adj_buf), "%d", pe->score_adj);
-      fprintf(fout,
-              "%d;%s;%s"
-              ";%s;%09d;%s;%u"
-              ";%d;%s;%d"
-              ";%d;%s;%s;%s;%s"
-              ";%d;%s;%s;%s"
-              ";%d;%s;%s;%s"
-              ";%s;;%d;%d;%d"
-              ";%s;%s"
-              ";%s;%s"
-              ";%s"
-              ";%s;%s"
-              ";%s"
-              ";"               /* is_after_ok */
-              ";"               /* is_latest */
-              ";%s;%d;%d;%d;%d\n",
-              rid, run_hidden_flag, run_imported_flag,
-              run_date, pe->nsec, dur_str, pe->size,
-              pe->ipv6_flag, xml_unparse_ip(pe->a.ip), pe->ssl_flag,
-              pe->user_id, user_login,
-              user_invisible_flag, user_banned_flag, user_locked_flag,
-              pe->prob_id, prob_short_name, variant_buf, db_variant_buf,
-              pe->lang_id, lang_short_name, mime_type_str, source_suffix,
-              statstr, pe->test, score, orig_score,
-              attempts_buf, attempts_penalty_buf,
-              disq_attempts_buf, disq_attempts_penalty_buf,
-              date_penalty_buf,
-              prev_successes_buf, score_bonus_buf,
-              score_adj_buf,
-              unparse_sha1(pe->sha1), pe->locale_id, pe->is_readonly,
-              pe->pages, pe->judge_id);
+        csv_rec[F_SCORE_ADJUSTMENT] = score_adj_buf;
+      }
+      write_csv_record(fout, F_TOTAL_FIELDS, csv_rec);
+      continue;
     } else {
       abort();
     }
