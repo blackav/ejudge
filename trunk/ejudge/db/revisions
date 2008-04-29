@@ -3602,3 +3602,5 @@ ejudge-configure-compilers.c 4892 0 1460594
 prepare.c 4899 0 14287357
 new-server-cmd.c 4901 0 2254683
 misctext.c 4902 0 1906785
+new-server-cmd.c 4904 0 2255335
+new_server_html_4.c 4904 0 4841007
