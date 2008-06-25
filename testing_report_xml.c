@@ -272,7 +272,7 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       break;
     case TR_A_NOMINAL_SCORE:
       if (xml_attr_int(a, &x) < 0) goto failure;
-      if (x < 0 || x > 100000) {
+      if (x < 0 || x > EJ_MAX_SCORE) {
         xml_err_attr_invalid(a);
         goto failure;
       }
@@ -280,7 +280,7 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       break;
     case TR_A_SCORE:
       if (xml_attr_int(a, &x) < 0) goto failure;
-      if (x < 0 || x > 100000) {
+      if (x < 0 || x > EJ_MAX_SCORE) {
         xml_err_attr_invalid(a);
         goto failure;
       }
@@ -448,7 +448,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
     switch (a->tag) {
     case TR_A_RUN_ID:
       if (xml_attr_int(a, &x) < 0) return -1;
-      if (x < 0 || x > 999999) {
+      if (x < 0 || x > EJ_MAX_RUN_ID) {
         xml_err_attr_invalid(a);
         return -1;
       }
@@ -457,7 +457,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
 
     case TR_A_JUDGE_ID:
       if (xml_attr_int(a, &x) < 0) return -1;
-      if (x < 0 || x > 65535) {
+      if (x < 0 || x > EJ_MAX_JUDGE_ID) {
         xml_err_attr_invalid(a);
         return -1;
       }
@@ -495,9 +495,12 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       r->info_available = x;
       break;
 
+      /*
+        The total number of tests is allowed to be 0.
+       */
     case TR_A_RUN_TESTS:
       if (xml_attr_int(a, &x) < 0) return -1;
-      if (x < 0 || x > 255) {
+      if (x < 0 || x > EJ_MAX_TEST_NUM) {
         xml_err_attr_invalid(a);
         return -1;
       }
@@ -506,7 +509,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
 
     case TR_A_VARIANT:
       if (xml_attr_int(a, &x) < 0) return -1;
-      if (x < 0 || x > 127) {
+      if (x < 0 || x > EJ_MAX_VARIANT) {
         xml_err_attr_invalid(a);
         return -1;
       }
@@ -518,9 +521,12 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       r->accepting_mode = x;
       break;
 
+      /*
+        Tests are counted from 1.
+       */
     case TR_A_FAILED_TEST:
       if (xml_attr_int(a, &x) < 0) return -1;
-      if (x <= 0 || x > 255) {
+      if (x <= 0 || x >= EJ_MAX_TEST_NUM) {
         xml_err_attr_invalid(a);
         return -1;
       }
@@ -530,7 +536,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
 
     case TR_A_TESTS_PASSED:
       if (xml_attr_int(a, &x) < 0) return -1;
-      if (x < 0 || x > 255) {
+      if (x < 0 || x > EJ_MAX_TEST_NUM) {
         xml_err_attr_invalid(a);
         return -1;
       }
@@ -540,7 +546,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
 
     case TR_A_SCORE:
       if (xml_attr_int(a, &x) < 0) return -1;
-      if (x < 0 || x > 100000) {
+      if (x < 0 || x > 100000) { /* FIXME: use ej_limits.h */
         xml_err_attr_invalid(a);
         return -1;
       }
@@ -550,7 +556,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
 
     case TR_A_MAX_SCORE:
       if (xml_attr_int(a, &x) < 0) return -1;
-      if (x < 0 || x > 100000) {
+      if (x < 0 || x > EJ_MAX_SCORE) {
         xml_err_attr_invalid(a);
         return -1;
       }

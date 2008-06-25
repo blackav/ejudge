@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
 
 #include "ej_types.h"
 #include "ej_limits.h"
+#include "ej_byteorder.h"
 
 #include "compile_packet.h"
 #include "compile_packet_priv.h"
@@ -33,6 +34,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define FAIL_IF(c) if (c)do { errcode = __LINE__; goto failed; } while (0)
+
 int
 compile_request_packet_read(const serve_state_t state,
                             size_t in_size, const void *in_data,
@@ -44,71 +47,34 @@ compile_request_packet_read(const serve_state_t state,
   int pkt_size, pkt_version, errcode = 0, i;
   rint32_t *str_lens;
 
-  if (in_size < sizeof(struct compile_request_bin_packet)) {
-    errcode = 1;
-    goto failed_badly;
-  }
-  pkt_size = cvt_bin_to_host(pin->packet_len);
-  if (pkt_size != in_size) {
-    errcode = 2;
-    goto failed_badly;
-  }
-  if (pkt_size < 0 || pkt_size > MAX_PACKET_SIZE) {
-    errcode = 3;
-    goto failed_badly;
-  }
-  if ((pkt_size & 0xf)) {
-    /* unaligned packet size */
-    errcode = 4;
-    goto failed_badly;
-  }
-  pkt_version = cvt_bin_to_host(pin->version);
-  if (pkt_version != 1) {
-    errcode = 5;
-    goto failed_badly;
-  }
+  FAIL_IF(in_size < sizeof(struct compile_request_bin_packet));
+  pkt_size = cvt_bin_to_host_32(pin->packet_len);
+  FAIL_IF(pkt_size != in_size);
+  FAIL_IF(pkt_size < 0 || pkt_size > EJ_MAX_COMPILE_PACKET_SIZE);
+  /* unaligned packet size */
+  FAIL_IF((pkt_size & 0xf));
+  pkt_version = cvt_bin_to_host_32(pin->version);
+  FAIL_IF(pkt_version != 1);
   XCALLOC(pout, 1);
-  pout->judge_id = cvt_bin_to_host(pin->judge_id);
-  if (pout->judge_id < 0 || pout->judge_id > MAX_JUDGE_ID) {
-    errcode = 6;
-    goto failed_badly;
-  }
-  pout->contest_id = cvt_bin_to_host(pin->contest_id);
-  if (pout->contest_id < 0 || pout->contest_id > EJ_MAX_CONTEST_ID) {
-    errcode = 7;
-    goto failed_badly;
-  }
+  pout->judge_id = cvt_bin_to_host_32(pin->judge_id);
+  FAIL_IF(pout->judge_id < 0 || pout->judge_id > EJ_MAX_JUDGE_ID);
+  pout->contest_id = cvt_bin_to_host_32(pin->contest_id);
+  FAIL_IF(pout->contest_id < 0 || pout->contest_id > EJ_MAX_CONTEST_ID);
 
   /* from now on the contest id is available */
-  pout->run_id = cvt_bin_to_host(pin->run_id);
-  if (pout->run_id < 0 || pout->run_id > EJ_MAX_RUN_ID) {
-    errcode = 8;
-    goto failed_badly;
-  }
-  pout->lang_id = cvt_bin_to_host(pin->lang_id);
+  pout->run_id = cvt_bin_to_host_32(pin->run_id);
+  FAIL_IF(pout->run_id < 0 || pout->run_id > EJ_MAX_RUN_ID);
+  pout->lang_id = cvt_bin_to_host_32(pin->lang_id);
   if (pout->contest_id > 0) {
-    if (pout->lang_id < 0 || pout->lang_id > state->max_lang
-        || !state->langs[pout->lang_id]) {
-      errcode = 9;
-      goto failed_badly;
-    }
+    FAIL_IF(pout->lang_id < 0 || pout->lang_id > state->max_lang || !state->langs[pout->lang_id]);
   }
-  pout->locale_id = cvt_bin_to_host(pin->locale_id);
-  if (pout->locale_id < 0 || pout->locale_id > 127) {
-    errcode = 10;
-    goto failed_badly;
-  }
-  pout->output_only = cvt_bin_to_host(pin->output_only);
-  if (pout->output_only < 0 || pout->output_only > 1) {
-    errcode = 11;
-    goto failed_badly;
-  }
-  pout->ts1 = cvt_bin_to_host(pin->ts1);
-  pout->ts1_us = cvt_bin_to_host(pin->ts1_us);
-  if (pout->ts1_us < 0 || pout->ts1_us > 999999) {
-    errcode = 12;
-    goto failed_badly;
-  }
+  pout->locale_id = cvt_bin_to_host_32(pin->locale_id);
+  FAIL_IF(pout->locale_id < 0 || pout->locale_id > EJ_MAX_LOCALE_ID);
+  pout->output_only = cvt_bin_to_host_32(pin->output_only);
+  FAIL_IF(pout->output_only < 0 || pout->output_only > 1);
+  pout->ts1 = cvt_bin_to_host_32(pin->ts1);
+  pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);
+  FAIL_IF(pout->ts1_us < 0 || pout->ts1_us > 999999);
 
   /* extract the additional data */
   // set up the additional data pointer
@@ -116,49 +82,31 @@ compile_request_packet_read(const serve_state_t state,
   // set up the packet end pointer
   end_ptr = (const unsigned char*) in_data + pkt_size;
 
-  pout->run_block_len = cvt_bin_to_host(pin->run_block_len);
-  if (pout->run_block_len < 0 || pout->run_block_len > MAX_RUN_BLOCK_LEN) {
-    errcode = 13;
-    goto failed_badly;
-  }
-  if (pin_ptr + pout->run_block_len > end_ptr) {
-    errcode = 14;
-    goto failed_badly;
-  }
+  pout->run_block_len = cvt_bin_to_host_32(pin->run_block_len);
+  FAIL_IF(pout->run_block_len < 0 || pout->run_block_len > EJ_MAX_COMPILE_RUN_BLOCK_LEN);
+  FAIL_IF(pin_ptr + pout->run_block_len > end_ptr);
   if (pout->run_block_len > 0) {
     pout->run_block = xmalloc(pout->run_block_len);
     memcpy(pout->run_block, pin_ptr, pout->run_block_len);
     pin_ptr += pkt_bin_align(pout->run_block_len);
   }
 
-  pout->env_num = cvt_bin_to_host(pin->env_num);
-  if (pout->env_num < 0 || pout->env_num > MAX_ENV_NUM) {
-    errcode = 15;
-    goto failed_badly;
-  }
-  if (pin_ptr + pout->env_num * sizeof(rint32_t) > end_ptr) {
-    errcode = 16;
-    goto failed_badly;
-  }
+  pout->env_num = cvt_bin_to_host_32(pin->env_num);
+  FAIL_IF(pout->env_num < 0 || pout->env_num > EJ_MAX_COMPILE_ENV_NUM);
+  FAIL_IF(pin_ptr + pout->env_num * sizeof(rint32_t) > end_ptr);
   if (pout->env_num > 0) {
     XCALLOC(pout->env_vars, pout->env_num + 1);
     str_lens = (rint32_t*) alloca(pout->env_num * sizeof(rint32_t));
     memcpy(str_lens, pin_ptr, pout->env_num * sizeof(rint32_t));
     for (i = 0; i < pout->env_num; i++) {
-      str_lens[i] = cvt_bin_to_host(str_lens[i]);
-      if (str_lens[i] < 0 || str_lens[i] > MAX_ENV_LEN) {
-        errcode = 17;
-        goto failed_badly;
-      }
+      str_lens[i] = cvt_bin_to_host_32(str_lens[i]);
+      FAIL_IF(str_lens[i] < 0 || str_lens[i] > EJ_MAX_COMPILE_ENV_LEN);
       pout->env_vars[i] = xmalloc(str_lens[i] + 1);
     }
     pin_ptr += pkt_bin_align(pout->env_num * sizeof(rint32_t));
 
     for (i = 0; i < pout->env_num; i++) {
-      if (pin_ptr + str_lens[i] > end_ptr) {
-        errcode = 18;
-        goto failed_badly;
-      }
+      FAIL_IF(pin_ptr + str_lens[i] > end_ptr);
       memcpy(pout->env_vars[i], pin_ptr, str_lens[i]);
       pout->env_vars[i][str_lens[i]] = 0;
       pin_ptr += str_lens[i];
@@ -167,10 +115,7 @@ compile_request_packet_read(const serve_state_t state,
 
   // align the address at the 16-byte boundary
   pkt_bin_align_addr(pin_ptr, in_data);
-  if (pin_ptr != end_ptr) {
-    errcode = 19;
-    goto failed_badly;
-  }
+  FAIL_IF(pin_ptr != end_ptr);
 
 #if 0
   /* debugging */
@@ -195,18 +140,9 @@ compile_request_packet_read(const serve_state_t state,
   *p_out_data = pout;
   return 1;
 
-#if 0
  failed:
-  /* reading failed, but the contest id is available */
-  err("compile_request_packet_read: error %d", errcode);
-  compile_request_packet_free(pout);
-  if (p_contest_id) *p_contest_id = contest_id;
-  return 0;
-#endif
-
- failed_badly:
   /* even the contest id is not available */
-  err("compile_request_packet_read: error %d", errcode);
+  err("compile_request_packet_read: error %s, %d", "$Revision$", errcode);
   compile_request_packet_free(pout);
   return -1;
 }

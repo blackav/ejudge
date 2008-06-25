@@ -3,7 +3,7 @@
 #ifndef __RUN_PACKET_PRIV_H__
 #define __RUN_PACKET_PRIV_H__
 
-/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -101,27 +101,5 @@ struct run_reply_bin_packet
   rint32_t  ts7_us;
   unsigned char pad[40];        /* padding to 128 bytes */
 };
-
-/* FIXME: these normally should depend on host endianness */
-#define cvt_bin_to_host_32(x) (x)
-#define cvt_host_to_bin_32(x) (x)
-#define cvt_bin_to_host_16(x) (x)
-#define cvt_host_to_bin_16(x) (x)
-
-#define pkt_bin_align(v) (((v) + 0xf) & ~0xf)
-#define pkt_bin_align_addr(v,b) ((v) = (typeof(v)) ((unsigned long) b + pkt_bin_align((unsigned long) v - (unsigned long) b)))
-
-#define MAX_PACKET_SIZE       65535
-#define MAX_JUDGE_ID          65535
-#define MAX_PROB_ID           999999
-#define MAX_USER_SPELLING_LEN 65535
-#define MAX_PROB_SPELLING_LEN 65535
-#define MAX_EXE_SFX_LEN       255
-#define MAX_ARCH_LEN          255
-#define MAX_VARIANT           255
-#define MAX_FAILED_TEST       999999
-#define MAX_SCORE             999999
-#define MAX_TIME_LIMIT_ADJ    100
-#define MAX_TIME_LIMIT_ADJ_MILLIS    1000000
 
 #endif /* __RUN_PACKET_PRIV_H__ */
