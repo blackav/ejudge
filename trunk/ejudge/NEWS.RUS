@@ -50,7 +50,7 @@ ejudge-configure-compilers, поэтому не должен редактироваться вручную.
 
 configure
 ---------
-Добавлена опция --lang-config-dir=DIR, позволяющая настраивать
+Добавлена опция --enable-lang-config-dir=DIR, позволяющая настраивать
 путь к каталогу файлов конфигурации языков программирования. По
 умолчанию этот путь равен CONTESTS-HOME/compile/conf/lang.d, где
 CONTESTS-HOME - это корневой каталог турниров (/home/judges по
