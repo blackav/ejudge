@@ -3,7 +3,7 @@
 #ifndef __COMPILE_PACKET_PRIV_H__
 #define __COMPILE_PACKET_PRIV_H__
 
-/* Copyright (C) 2005,2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2008 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -66,18 +66,5 @@ struct compile_reply_bin_packet
   unsigned char pad[12];        /* padding to 64-byte boundary */
   /* run block (aligned to 16 byte boundary) */
 };
-
-/* FIXME: these normally should depend on host endianness */
-#define cvt_bin_to_host(x) (x)
-#define cvt_host_to_bin(x) (x)
-
-#define pkt_bin_align(v) (((v) + 0xf) & ~0xf)
-#define pkt_bin_align_addr(v,b) ((v) = (typeof(v)) ((unsigned long) b + pkt_bin_align((unsigned long) v - (unsigned long) b)))
-
-#define MAX_PACKET_SIZE   65535
-#define MAX_JUDGE_ID      65535
-#define MAX_RUN_BLOCK_LEN 65535
-#define MAX_ENV_NUM       65535
-#define MAX_ENV_LEN       65535
 
 #endif /* __COMPILE_PACKET_PRIV_H__ */

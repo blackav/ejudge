@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
 
 #include "ej_types.h"
 #include "ej_limits.h"
+#include "ej_byteorder.h"
 
 #include "run_packet.h"
 #include "run_packet_priv.h"
@@ -31,6 +32,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+
+#define FAIL_IF(c) if (c)do { errcode = __LINE__; goto failed; } while (0)
 
 int
 run_request_packet_write(const struct run_request_packet *in_data,
@@ -51,50 +54,26 @@ run_request_packet_write(const struct run_request_packet *in_data,
   if (in_data->prob_spelling)
     out_size += (prob_spelling_len = strlen(in_data->prob_spelling));
   out_size = pkt_bin_align(out_size);
-  if (out_size < sizeof(*out_data) || out_size > MAX_PACKET_SIZE) {
-    errcode = 1;
-    goto failed;
-  }
+  FAIL_IF(out_size < sizeof(*out_data) || out_size > EJ_MAX_RUN_PACKET_SIZE);
   out_data = (typeof(out_data)) xcalloc(1, out_size);
   out_ptr = (unsigned char*) out_data + sizeof(*out_data);
 
   out_data->packet_len = cvt_host_to_bin_32(out_size);
   out_data->version = cvt_host_to_bin_32(1);
-  if (in_data->contest_id <= 0 || in_data->contest_id > EJ_MAX_CONTEST_ID) {
-    errcode = 2;
-    goto failed;
-  }
+  FAIL_IF(in_data->contest_id <= 0 || in_data->contest_id > EJ_MAX_CONTEST_ID);
   out_data->contest_id = cvt_host_to_bin_32(in_data->contest_id);
-  if (in_data->run_id < 0 || in_data->run_id > EJ_MAX_RUN_ID) {
-    errcode = 3;
-    goto failed;
-  }
+  FAIL_IF(in_data->run_id < 0 || in_data->run_id > EJ_MAX_RUN_ID);
   out_data->run_id = cvt_host_to_bin_32(in_data->run_id);
-  if (in_data->problem_id <= 0 || in_data->problem_id > MAX_PROB_ID) {
-    errcode = 4;
-    goto failed;
-  }
+  FAIL_IF(in_data->problem_id <= 0 || in_data->problem_id > EJ_MAX_PROB_ID);
   out_data->problem_id = cvt_host_to_bin_32(in_data->problem_id);
-  if (in_data->user_id <= 0 || in_data->user_id > EJ_MAX_USER_ID) {
-    errcode = 5;
-    goto failed;
-  }
+  FAIL_IF(in_data->user_id <= 0 || in_data->user_id > EJ_MAX_USER_ID);
   out_data->user_id = cvt_host_to_bin_32(in_data->user_id);
-  if (in_data->time_limit_adj < 0 || in_data->time_limit_adj > MAX_TIME_LIMIT_ADJ) {
-    errcode = 6;
-    goto failed;
-  }
+  FAIL_IF(in_data->time_limit_adj < 0 || in_data->time_limit_adj > EJ_MAX_TIME_LIMIT_ADJ);
   out_data->time_limit_adj = cvt_host_to_bin_32(in_data->time_limit_adj);
-  if (in_data->time_limit_adj_millis < 0 || in_data->time_limit_adj_millis > MAX_TIME_LIMIT_ADJ_MILLIS) {
-    errcode = 6;
-    goto failed;
-  }
+  FAIL_IF(in_data->time_limit_adj_millis < 0 || in_data->time_limit_adj_millis > EJ_MAX_TIME_LIMIT_ADJ_MILLIS);
   out_data->time_limit_adj_millis = cvt_host_to_bin_32(in_data->time_limit_adj_millis);
 
-  if (in_data->scoring_system < 0 || in_data->scoring_system >= SCORE_TOTAL) {
-    errcode = 7;
-    goto failed;
-  }
+  FAIL_IF(in_data->scoring_system < 0||in_data->scoring_system >= SCORE_TOTAL);
   flags |= FLAGS_PUT_SCORING_SYSTEM(in_data->scoring_system);
   if (in_data->accepting_mode) flags |= FLAGS_ACCEPTING_MODE;
   if (in_data->accept_partial) flags |= FLAGS_ACCEPT_PARTIAL;
@@ -115,35 +94,17 @@ run_request_packet_write(const struct run_request_packet *in_data,
   out_data->ts4 = cvt_host_to_bin_32(in_data->ts4);
   out_data->ts4_us = cvt_host_to_bin_32(in_data->ts4_us);
 
-  if (in_data->judge_id < 0 || in_data->judge_id > MAX_JUDGE_ID) {
-    errcode = 8;
-    goto failed;
-  }
+  FAIL_IF(in_data->judge_id < 0 || in_data->judge_id > EJ_MAX_JUDGE_ID);
   out_data->judge_id = cvt_host_to_bin_16(in_data->judge_id);
-  if (user_spelling_len > MAX_USER_SPELLING_LEN) {
-    errcode = 9;
-    goto failed;
-  }
+  FAIL_IF(user_spelling_len > EJ_MAX_USER_SPELLING_LEN);
   out_data->user_spelling_len = cvt_host_to_bin_16(user_spelling_len);
-  if (prob_spelling_len > MAX_PROB_SPELLING_LEN) {
-    errcode = 10;
-    goto failed;
-  }
+  FAIL_IF(prob_spelling_len > EJ_MAX_PROB_SPELLING_LEN);
   out_data->prob_spelling_len = cvt_host_to_bin_16(prob_spelling_len);
-  if (exe_sfx_len > MAX_EXE_SFX_LEN) {
-    errcode = 11;
-    goto failed;
-  }
+  FAIL_IF(exe_sfx_len > EJ_MAX_EXE_SFX_LEN);
   out_data->exe_sfx_len = exe_sfx_len;
-  if (arch_len > MAX_ARCH_LEN) {
-    errcode = 12;
-    goto failed;
-  }
+  FAIL_IF(arch_len > EJ_MAX_ARCH_LEN);
   out_data->arch_len = arch_len;
-  if (in_data->variant < 0 || in_data->variant > MAX_VARIANT) {
-    errcode = 13;
-    goto failed;
-  }
+  FAIL_IF(in_data->variant < 0 || in_data->variant > EJ_MAX_VARIANT);
   out_data->variant = in_data->variant;
 
   if (exe_sfx_len > 0) {
@@ -168,12 +129,12 @@ run_request_packet_write(const struct run_request_packet *in_data,
   return 0;
 
  failed:
-  err("run_request_packet_write: error %d", errcode);
+  err("run_request_packet_write: error %s, %d", "$Revision$", errcode);
   xfree(out_data);
   return -1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

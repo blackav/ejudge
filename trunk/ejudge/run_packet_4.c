@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
 
 #include "ej_types.h"
 #include "ej_limits.h"
+#include "ej_byteorder.h"
 
 #include "run_packet.h"
 #include "run_packet_priv.h"
@@ -32,6 +33,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define FAIL_IF(c) if (c)do { errcode = __LINE__; goto failed; } while (0)
+
 int
 run_reply_packet_read(size_t in_size, const void *in_data,
                       struct run_reply_packet **p_out_data)
@@ -41,53 +44,26 @@ run_reply_packet_read(size_t in_size, const void *in_data,
   int errcode = 0, version;
   size_t packet_len;
 
-  if (in_size != sizeof(*pin)) {
-    errcode = 1;
-    goto failed;
-  }
+  FAIL_IF(in_size != sizeof(*pin));
   packet_len = cvt_bin_to_host_32(pin->packet_len);
-  if (packet_len != in_size) {
-    errcode = 2;
-    goto failed;
-  }
+  FAIL_IF(packet_len != in_size);
   version = cvt_bin_to_host_32(pin->version);
-  if (version != 1) {
-    errcode = 3;
-    goto failed;
-  }
+  FAIL_IF(version != 1);
 
   pout = (typeof(pout)) xcalloc(1, sizeof(*pout));
 
   pout->judge_id = cvt_bin_to_host_32(pin->judge_id);
-  if (pout->judge_id < 0 || pout->judge_id > MAX_JUDGE_ID) {
-    errcode = 4;
-    goto failed;
-  }
+  FAIL_IF(pout->judge_id < 0 || pout->judge_id > EJ_MAX_JUDGE_ID);
   pout->contest_id = cvt_bin_to_host_32(pin->contest_id);
-  if (pout->contest_id <= 0 || pout->contest_id > EJ_MAX_CONTEST_ID) {
-    errcode = 5;
-    goto failed;
-  }
+  FAIL_IF(pout->contest_id <= 0 || pout->contest_id > EJ_MAX_CONTEST_ID);
   pout->run_id = cvt_bin_to_host_32(pin->run_id);
-  if (pout->run_id < 0 || pout->run_id > EJ_MAX_RUN_ID) {
-    errcode = 6;
-    goto failed;
-  }
+  FAIL_IF(pout->run_id < 0 || pout->run_id > EJ_MAX_RUN_ID);
   pout->status = cvt_bin_to_host_32(pin->status);
-  if (pout->status < 0 || pout->status > RUN_MAX_STATUS) {
-    errcode = 7;
-    goto failed;
-  }
+  FAIL_IF(pout->status < 0 || pout->status > RUN_MAX_STATUS);
   pout->failed_test = cvt_bin_to_host_32(pin->failed_test);
-  if (pout->failed_test < -1 || pout->failed_test > MAX_FAILED_TEST) {
-    errcode = 8;
-    goto failed;
-  }
+  FAIL_IF(pout->failed_test < -1 || pout->failed_test > EJ_MAX_TEST_NUM);
   pout->score = cvt_bin_to_host_32(pin->score);
-  if (pout->score < -1 || pout->score > MAX_SCORE) {
-    errcode = 9;
-    goto failed;
-  }
+  FAIL_IF(pout->score < -1 || pout->score > EJ_MAX_SCORE);
 
   pout->ts1 = cvt_bin_to_host_32(pin->ts1);
   pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);
@@ -108,7 +84,7 @@ run_reply_packet_read(size_t in_size, const void *in_data,
   return 0;
 
  failed:
-  err("run_reply_packet_read: error %d", errcode);
+  err("run_reply_packet_read: error %s, %d", "$Revision$", errcode);
   run_reply_packet_free(pout);
   return -1;
 }
