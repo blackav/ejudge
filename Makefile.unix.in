@@ -89,26 +89,11 @@ C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a
 CC_CFILES=compile-control.c version.c
 CC_OBJECTS=$(CC_CFILES:.c=.o) libcommon.a
 
-SERVE_CFILES=serve.c version.c
-SERVE_OBJECTS=$(SERVE_CFILES:.c=.o) libcommon.a libuserlist_clnt.a
-
 RUN_CFILES=run.c version.c
 RUN_OBJECTS=$(RUN_CFILES:.c=.o) libcommon.a
 
-M_CFILES=master.c version.c 
-M_OBJECTS=$(M_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libserve_clnt.a
-
-T_CFILES = team.c version.c
-T_OBJECTS = $(T_CFILES:.c=.o) libcommon.a libserve_clnt.a libuserlist_clnt.a
-
 SC_CFILES = serve-control.c version.c
 SC_OBJECTS = $(SC_CFILES:.c=.o) libcommon.a libserve_clnt.a libuserlist_clnt.a libsuper_clnt.a
-
-SM_CFILES = serve-cmd.c version.c
-SM_OBJECTS = $(SM_CFILES:.c=.o) libcommon.a libserve_clnt.a libuserlist_clnt.a
-
-REG_CFILES = register.c version.c
-REG_OBJECTS = ${REG_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 
 UL_CFILES = userlist-server.c version.c
 UL_OBJECTS = ${UL_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
@@ -171,8 +156,8 @@ NSC_CFILES=new-server-control.c version.c
 NSC_OBJECTS=$(NSC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a
 
 BINTARGETS = job-server-cmd edit-userlist ejudge-setup ejudge-configure-compilers ejudge-control execute new-server-cmd
-SERVERBINTARGETS = compile compile-control serve run userlist-server userlist-server-control job-server job-server-control super-serve super-serve-control clean-users collect-emails serve-cmd slice-userlist new-server new-server-control uudecode
-CGITARGETS = master${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX} users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
+SERVERBINTARGETS = compile compile-control run userlist-server userlist-server-control job-server job-server-control super-serve super-serve-control clean-users collect-emails slice-userlist new-server new-server-control uudecode
+CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
 TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} style/actions.js
 STYLEFILES = style/actions.js style/logo.gif style/priv.css style/unpriv.css style/unpriv.js style/filter_expr.html
 
@@ -206,7 +191,6 @@ local_install: ${TARGETS} ejudge-config po mo
 	install -m 0755 ejudge-config "${DESTDIR}${bindir}"
 	install -d "${DESTDIR}${cgibindir}"
 	for i in ${CGITARGETS}; do install -m 0755 $$i "${DESTDIR}${cgibindir}"; done
-	cd "${DESTDIR}${cgibindir}"; rm -f judge${CGI_PROG_SUFFIX}; ln master${CGI_PROG_SUFFIX} judge${CGI_PROG_SUFFIX}
 	cd "${DESTDIR}${cgibindir}"; rm -f new-master${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-master${CGI_PROG_SUFFIX}
 	cd "${DESTDIR}${cgibindir}"; rm -f new-judge${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-judge${CGI_PROG_SUFFIX}
 	cd "${DESTDIR}${cgibindir}"; rm -f new-register${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-register${CGI_PROG_SUFFIX}
@@ -233,22 +217,7 @@ compile-control : $(CC_OBJECTS)
 run${EXESFX} : $(RUN_OBJECTS)
 	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
-serve : $(SERVE_OBJECTS)
-	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB}
-
-serve-cmd : ${SM_OBJECTS}
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
-
-master${CGI_PROG_SUFFIX} : $(M_OBJECTS)
-	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
-
-team${CGI_PROG_SUFFIX}: $(T_OBJECTS)
-	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
-
 serve-control${CGI_PROG_SUFFIX}: ${SC_OBJECTS}
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
-
-register${CGI_PROG_SUFFIX}: ${REG_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 userlist-server: ${UL_OBJECTS}
@@ -318,7 +287,7 @@ struct-sizes : struct-sizes.o
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 local_clean:
-	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 serve_clnt/*.o userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c master master${CGI_PROG_SUFFIX} team team${CGI_PROG_SUFFIX} register register${CGI_PROG_SUFFIX} users users${CGI_PROG_SUFFIX} ejudge-config serve-control serve-control${CGI_PROG_SUFFIX} serve-cmd prjutils/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes
+	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 serve_clnt/*.o userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c users users${CGI_PROG_SUFFIX} ejudge-config serve-control serve-control${CGI_PROG_SUFFIX} prjutils/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes
 	-rm -rf locale
 clean: subdir_clean local_clean
 

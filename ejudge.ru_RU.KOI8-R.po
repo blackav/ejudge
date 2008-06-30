@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-22 07:23+0300\n"
+"POT-Creation-Date: 2008-06-26 22:47+0400\n"
 "PO-Revision-Date: 2008-03-22 07:29+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -42,12 +42,6 @@ msgstr " [окончен, заморожены]"
 #, c-format
 msgid " [over]"
 msgstr " [окончен]"
-
-msgid "\"E-mail\" field contains invalid characters"
-msgstr "Поле \"Электронный адрес\" содержит недопустимые символы"
-
-msgid "\"Login\" field contains invalid characters"
-msgstr "Поле \"Регистрационное имя\" содержит недопустимые символы"
 
 msgid "(no subject)"
 msgstr "(без темы)"
@@ -88,9 +82,6 @@ msgstr "/&lt;Имя_Польз.&gt;/&lt;Задача&gt;/&lt;Файл&gt;"
 #, c-format
 msgid "<b>====== Test #%d =======</b>\n"
 msgstr "<b>====== Тест #%d =======</b>\n"
-
-msgid "<b>Note!</b> All uncommited changes will be lost!"
-msgstr "<b>Внимание!</b> Все несохранённые изменения будут потеряны!"
 
 msgid ""
 "<b>Note</b>, that you must log in 24 hours after the form is filled and "
@@ -301,30 +292,6 @@ msgstr ""
 "регистрации</a>.</p>\n"
 
 #, c-format
-msgid "<p%s>Click <a href=\"%s\">on this link</a> to login again.</p>\n"
-msgstr ""
-"<p%s>Нажмите <a href=\"%s\">на эту ссылку</a> для повторного входа.</p>\n"
-
-#, c-format
-msgid ""
-"<p%s>Follow this <a href=\"%s?contest_id=%d%s\">link</a> to login again.</p>"
-msgstr ""
-"<p%s>Пойдите <a href=\"%s?contest_id=%d%s\">по этой ссылке</a> для "
-"повторного входа.</p>"
-
-#, c-format
-msgid "<p%s>Hello, %s!</p>\n"
-msgstr "<p%s>Здравствуйте, %s!</p>\n"
-
-#, c-format
-msgid ""
-"<p%s>If automatic updating does not work, click on <a href=\"%s\">this</a> "
-"link.</p>"
-msgstr ""
-"<p%s>Если автоматическое обновление не работает, нажмите <a href=\"%s\">на "
-"эту</a> ссылку.</p>"
-
-#, c-format
 msgid ""
 "<p%s>If you already have an ejudge account on this server, you may use it. "
 "If so, follow the <a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d"
@@ -334,22 +301,6 @@ msgstr ""
 "можете использовать её. Для этого проследуйте по ссылке <a href=\"%s?"
 "contest_id=%d&amp;locale_id=%d&amp;action=%d\">\"Использовать существующую "
 "учётную запись\"</a>.</p>"
-
-#, c-format
-msgid ""
-"<p%s>If you are already registered, you may proceed to <a href=\"%s?"
-"contest_id=%d&locale_id=%d\">personal page</a>.</p>"
-msgstr ""
-"<p%s>Если Вы уже зарегистрированы, Вы можете перейти на <a href=\"%s?"
-"contest_id=%d&locale_id=%d\">личную страницу</a> для участия в турнире.</p>"
-
-#, c-format
-msgid ""
-"<p%s>If you have not registered before, please <a href=\"%s\">register</a>.</"
-"p>\n"
-msgstr ""
-"<p%s>Если Вы ещё не зарегистрировались, пожалуйста, <a href=\"%s"
-"\">зарегистрируйтесь</a>.</p>\n"
 
 #, c-format
 msgid ""
@@ -402,60 +353,12 @@ msgstr ""
 "будет удалена.</p>"
 
 #, c-format
-msgid ""
-"<p%s>New user account is created successfully. An initial password is "
-"generated automatically, you will be able to change it later.\n"
-"<p%s>The new account is as follows:\n"
-msgstr ""
-"<p%s>Учетная запись нового пользователя успешно создана. Начальный\n"
-"пароль сгенерирован автоматически, Вы сможете поменять его позже.\n"
-"<p%s>Параметры учетной записи следующие:\n"
-
-#, c-format
 msgid "<p%s>Page %d of %d.</p>\n"
 msgstr "<p%s>Страница %d из %d.</p>\n"
 
 #, c-format
-msgid "<p%s>Press the &quot;Next&quot; button to continue registration."
-msgstr "<p%s>Нажмите кнопку &quot;Дальше&quot; для продолжения регистрации."
-
-#, c-format
-msgid ""
-"<p%s>Registration of a new user is completed successfully. An e-mail "
-"messages is sent to the address <tt>%s</tt>. This message contains the login "
-"name, assigned to you, as well as your password for initial login. To "
-"proceed with registration, clink <a href=\"%s\">on this link</a>.</p><p%"
-"s><b>Note</b>, that you should login to the system for the first time no "
-"later, than in 24 hours after the initial user registration, or the "
-"registration is void."
-msgstr ""
-"<p%s>Регистрация нового пользователя успешно завершена. На адрес <tt>%s</tt> "
-"послано электронное письмо. Это сообщение содержит регистрационное имя, "
-"присвоенное Вам, а также пароль для входа в систему. Чтобы продолжить "
-"регистрацию, двигайтесь <a href=\"%s\">по этой ссылке</a>.</p><p%"
-"s><b>Обратите внимание</b>, что Вы должны первый раз войти в систему в "
-"течении 24 часов после первоначальной регистрации, а в противном случае "
-"регистрация будет отменена."
-
-#, c-format
-msgid "<p%s>Remember or write down the password!."
-msgstr "<p%s>Запомните или запишите пароль!"
-
-#, c-format
 msgid "<p%s>The account parameters are as follows:</p>\n"
 msgstr "<p%s>Ваша регистрационная запись имеет следующие параметры:</p>\n"
-
-#, c-format
-msgid "<p%s>The current number of %s is %d.</p>\n"
-msgstr "<p%s>Текущее количество %s - %d.</p>\n"
-
-#, c-format
-msgid "<p%s>The maximal number of %s is %d.</p>\n"
-msgstr "<p%s>Максимальное количество %s - %d.</p>\n"
-
-#, c-format
-msgid "<p%s>The minimal number of %s is %d.</p>\n"
-msgstr "<p%s>Минимальное количество %s - %d.</p>\n"
 
 #, c-format
 msgid ""
@@ -581,9 +484,6 @@ msgstr "Добавить по LOGIN"
 
 msgid "Add new"
 msgstr "Добавить"
-
-msgid "Add new member"
-msgstr "Добавить нового члена команды"
 
 msgid "Add new run"
 msgstr "Добавить новую посылку"
@@ -730,17 +630,8 @@ msgstr "Журнал аудита пуст"
 msgid "Aug"
 msgstr "Авг"
 
-msgid "Authentification failed"
-msgstr "Авторизация не выполнена"
-
-msgid "Authentification failed for some reason"
-msgstr "Авторизация неудалась по некоторой причине"
-
 msgid "Available"
 msgstr "Доступна"
-
-msgid "Available contests"
-msgstr "Доступные турниры"
 
 msgid "Available only after contest start"
 msgstr "Доступен только после начала турнира"
@@ -772,12 +663,6 @@ msgstr "Дата рождения"
 msgid "Cancel"
 msgstr "Отменить"
 
-msgid "Cannot add a new"
-msgstr "Не могу добавить нового члена команды"
-
-msgid "Cannot add a new member"
-msgstr "Невозможно добавить нового члена команды"
-
 #, c-format
 msgid "Cannot allocate space to store run row %d\n"
 msgstr "Ошибка выделения памяти для сохранения строки %d\n"
@@ -788,23 +673,8 @@ msgstr "Ошибка подсчёта контрольной суммы файла"
 msgid "Cannot guess the content type"
 msgstr "Невозможно определить тип содержимого"
 
-msgid "Cannot parse role/person."
-msgstr "Не могу считать роль/члена команды."
-
-msgid "Cannot parse serial number."
-msgstr "Невозможно считать уникальный номер."
-
-msgid "Cannot participate"
-msgstr "Участие в турнире невозможно"
-
 msgid "Cannot read message text!"
 msgstr "Ошибка чтения файла сообщения!"
-
-msgid "Cannot remove a member due a reason given below"
-msgstr "Невозможно удалить члена команды по причинам, перечисленным ниже"
-
-msgid "Cannot remove team member"
-msgstr "Невозможно удалить участника"
 
 #, c-format
 msgid "Cannot write run row %d\n"
@@ -831,9 +701,6 @@ msgstr "Изменить результат"
 msgid "Change status"
 msgstr "Изменить статус"
 
-msgid "Change the password"
-msgstr "Сменить пароль"
-
 msgid "Change!"
 msgstr "Изменить!"
 
@@ -851,9 +718,6 @@ msgstr "Изменение статуса пользователя %d в турнире %d не удалось: %s"
 msgid "Check failed"
 msgstr "Ошибка проверяющей системы"
 
-msgid "Check the registration status"
-msgstr "Проверить состояние регистрации"
-
 msgid "Checker output"
 msgstr "Вывод проверяющей программы"
 
@@ -865,9 +729,6 @@ msgstr "Должен быть назначен главный экзаменатор."
 
 msgid "Choose an answer"
 msgstr "Варианты ответа"
-
-msgid "Choose language"
-msgstr "Выбрать язык"
 
 msgid "City"
 msgstr "Город"
@@ -928,9 +789,6 @@ msgstr "Сбросить флаг проверенности решений"
 
 msgid "Clear runs"
 msgstr "Очистить посылки"
-
-msgid "Clear team passwords!"
-msgstr "Сбросить пароли участников!"
 
 msgid "Clear the BANNED flag for the selected users"
 msgstr "Сбросить флаг БЛОКИРОВКИ у отмеченных пользователей"
@@ -1000,17 +858,11 @@ msgstr "Компилируется..."
 msgid "Compose a message to all participants"
 msgstr "Написать сообщение всем участникам"
 
-msgid "Compose a message to all the teams"
-msgstr "Написать сообщение всем командам"
-
 msgid "Configuration error"
 msgstr "Ошибка конфигурации"
 
 msgid "Confirm action"
 msgstr "Подтвердить выполнение"
-
-msgid "Confirm printing run"
-msgstr "Подтвердить распечатывание"
 
 msgid "Confirm registration"
 msgstr "Подтвердить регистрацию"
@@ -1021,9 +873,6 @@ msgstr "Конфликтуют user_id (%d) и user_login (%s)"
 
 msgid "Connection failed"
 msgstr "Подключение завершилось неудачно"
-
-msgid "Connection to the server is broken."
-msgstr "Нет связи с сервером."
 
 msgid "Content type"
 msgstr "Тип содержимого"
@@ -1047,17 +896,11 @@ msgstr "Тип файла <tt>%s</tt> недоступен для этой задачи"
 msgid "Contest"
 msgstr "Турнир"
 
-msgid "Contest ID"
-msgstr "ID"
-
 msgid "Contest already finished"
 msgstr "Турнир уже завершён"
 
 msgid "Contest already started"
 msgstr "Турнир уже запущен"
-
-msgid "Contest is closed"
-msgstr "Турнир закрыт"
 
 msgid "Contest is not finished"
 msgstr "Турнир ещё не закончился"
@@ -1134,9 +977,6 @@ msgstr "Создать новую учётную запись"
 msgid "Current standings"
 msgstr "Текущее положение участников"
 
-msgid "Current virtual standings"
-msgstr "Виртуальное положение участников"
-
 msgid "Cypher"
 msgstr "Шифр"
 
@@ -1155,9 +995,6 @@ msgstr "Срок сдачи данной задачи истёк"
 
 msgid "Dec"
 msgstr "Дек"
-
-msgid "Default language"
-msgstr "Язык по умолчанию"
 
 msgid "Default value"
 msgstr "Значение по умолчанию"
@@ -1183,10 +1020,6 @@ msgstr "Подробная информация об участнике"
 
 msgid "Detailed information for user (team)"
 msgstr "Подробная информация о пользователе (команде)"
-
-#, c-format
-msgid "Details about run %d, test %d"
-msgstr "Подробная информация о посылке %d, тесте %d"
 
 msgid "Details for user "
 msgstr "Подробная информация о пользователе "
@@ -1257,17 +1090,8 @@ msgstr "Загрузить выбранные посылки"
 msgid "Download your submits"
 msgstr "Загрузить свои посылки"
 
-msgid "Dump runs database"
-msgstr "База запусков"
-
 msgid "Dump runs in CSV format"
 msgstr "Вывести базу посылок в CSV-формате"
-
-msgid "Dump standings database"
-msgstr "База состояния"
-
-msgid "Dump users database"
-msgstr "База пользователей"
 
 msgid "Dump users in CSV format"
 msgstr "Вывести базу пользователей в CSV-формате"
@@ -1299,9 +1123,6 @@ msgstr "Редактировать"
 msgid "Edit comment"
 msgstr "Изменить комментарий"
 
-msgid "Edit personal data"
-msgstr "Редактировать<br>личные данные"
-
 msgid "Editing general info"
 msgstr "Редактирование общей информации"
 
@@ -1322,12 +1143,6 @@ msgstr "Текст предупреждения пуст"
 
 msgid "End time"
 msgstr "Время окончания"
-
-msgid "English"
-msgstr "Английский"
-
-msgid "Enter password"
-msgstr "Введите пароль"
 
 msgid "Error"
 msgstr "Ошибка"
@@ -1371,9 +1186,6 @@ msgstr "Код завершения"
 msgid "Expected stop time"
 msgstr "Ожидаемое время окончания турнира"
 
-msgid "Export XML runs (external format)"
-msgstr "Сохранить журнал посылок во внешнем XML-формате"
-
 msgid "Export runs in XML external format"
 msgstr "Сохранить журнал посылок во внешнем XML-формате"
 
@@ -1405,24 +1217,15 @@ msgstr "Ошибка на тесте"
 msgid "Failed to add row %d to runlog\n"
 msgstr "Ошибка добавления строки %d в базу\n"
 
-msgid "Failed to change password"
-msgstr "Невозможно сменить пароль"
-
 #, c-format
 msgid "Failed to fetch run log entry %d"
 msgstr "Ошибка чтения записи о посылке %d с диска"
-
-msgid "Failed to read information from the server"
-msgstr "Невозможно считать информацию с сервера"
 
 msgid "Family name"
 msgstr "Фамилия"
 
 msgid "Family name (En)"
 msgstr "Фамилия (Англ.)"
-
-msgid "Fatal error"
-msgstr "Фатальная ошибка"
 
 msgid "Feb"
 msgstr "Фев"
@@ -1431,49 +1234,11 @@ msgid "Female"
 msgstr "Женский"
 
 #, c-format
-msgid ""
-"Field \"%s\" contained invalid characters, which were replaced with '%c'."
-msgstr "Поле \"%s\" содержало недопустимые символы, заменённые на '%c'."
-
-#, c-format
 msgid "Field \"%s\" contains non-printable characters.\n"
 msgstr "Поле \"%s\" содержит неотображаемые символы.\n"
 
-#, c-format
-msgid "Field \"%s\" was too long."
-msgstr "Поле \"%s\" имело слишком большую длину."
-
-#, c-format
-msgid ""
-"Field \"%s.%d.%s\" contained invalid characters, which were replaced with '%"
-"c'."
-msgstr "Поле \"%s.%d.%s\" содержало недопустимые символы, заменённые на '%c'."
-
-#, c-format
-msgid "Field \"%s.%d.%s\" was too long."
-msgstr "Поле \"%s.%d.%s\" имело слишком большую длину."
-
 msgid "Field \"Name\" contains non-printable characters"
 msgstr "Поле \"Имя\" содержит неотображаемые символы"
-
-msgid ""
-"Field \"User email\" contained invalid characters, which were replaced with "
-"'?'."
-msgstr ""
-"Поле \"Адрес электронной почты\" содержало недопустимые символы, заменённые "
-"на '?'."
-
-msgid "Field \"User email\" was too long."
-msgstr "Поле \"Адрес электронной почты\" имело слишком большую длину."
-
-msgid ""
-"Field \"User name\" contained invalid characters, which were replaced with "
-"'?'."
-msgstr ""
-"Поле \"Имя пользователя\" содержало недопустимые символы, заменённые на '?'."
-
-msgid "Field \"User name\" was too long."
-msgstr "Поле \"Имя пользователя\" имело слишком большую длину."
 
 msgid "Field 0"
 msgstr "Поле 0"
@@ -1517,21 +1282,11 @@ msgstr "Файл не задан"
 msgid "File name pattern"
 msgstr "Шаблон имени файла"
 
-msgid ""
-"File sending error. Maybe the file you've sent is not a text file (or is not "
-"saved as a text file)."
-msgstr ""
-"Ошибка отправки файла. Возможно, файл, который Вы отправляете, не является "
-"текстовым файлом (или не был сохранён как текстовый файл)."
-
 msgid "Filter expression"
 msgstr "Условие отбора"
 
 msgid "Filtered"
 msgstr "Отобрано"
-
-msgid "Finalize registration"
-msgstr "Завершить регистрацию"
 
 msgid "Finish session"
 msgstr "Завершить сеанс работы"
@@ -1556,16 +1311,6 @@ msgstr "Первая посылка"
 
 msgid "Flags"
 msgstr "Флаги"
-
-msgid "For new users"
-msgstr "Для новых пользователей"
-
-msgid "For registered users"
-msgstr "Для зарегистрированных пользователей"
-
-msgid "For schools, liceums, etc, please, specify its number."
-msgstr ""
-"Для школ, лицеев и пр. укажите, пожалуйста, номер. Например, школа 1234."
 
 msgid "Force start virtual contest"
 msgstr "Начать виртуальный турнир"
@@ -1603,9 +1348,6 @@ msgstr "Общая информация"
 msgid "General information"
 msgstr "Общая информация"
 
-msgid "General user information"
-msgstr "Общая информация об участнике"
-
 msgid "Generate random contest passwords"
 msgstr "Сгенерировать случайные турнирные пароли"
 
@@ -1620,12 +1362,6 @@ msgstr "Сгенерировать случайные регистрационные пароли!"
 
 msgid "Good!"
 msgstr "Отлично!"
-
-msgid "Good-bye"
-msgstr "До свидания"
-
-msgid "Good-bye!"
-msgstr "До свидания!"
 
 msgid "Grade"
 msgstr "Уровень (класс, курс)"
@@ -1828,13 +1564,6 @@ msgstr "IP-адрес"
 msgid "IPC operation failed"
 msgstr "операция IPC завершилась с ошибкой"
 
-msgid ""
-"If you have registered before, please enter your login and password in the "
-"corresponding fields. Then press the \"Submit\" button."
-msgstr ""
-"Если Вы уже зарегистрировались, введите Ваше регистрационное имя и пароль в "
-"соответствующих полях. Затем нажмите кнопку \"Отправить\"."
-
 msgid "Ignore displayed runs"
 msgstr "Игнорировать отображённые посылки"
 
@@ -1873,13 +1602,6 @@ msgstr ""
 
 msgid "In reply to"
 msgstr "В ответ на"
-
-msgid ""
-"In the next field type the name, which will be used in standings, personal "
-"information display, etc."
-msgstr ""
-"В следующей строке введите имя, под которым Вы будете отображаться в таблице "
-"результатов, в списке зарегистрированных участников и т. д."
 
 msgid "Incompatible server"
 msgstr "Несовместимый сервер"
@@ -1947,9 +1669,6 @@ msgstr "Недостаточная продолжительность турнира"
 msgid "Internal error"
 msgstr "Внутренняя ошибка"
 
-msgid "Internal error: insufficient memory."
-msgstr "Внутренняя ошибка: недостаточно памяти."
-
 #, c-format
 msgid "Invalid RunId %s in row %d\n"
 msgstr "Недопустимое значени RunId %s в строке %d\n"
@@ -1972,15 +1691,6 @@ msgstr "Неверная конфигурация"
 
 msgid "Invalid contest"
 msgstr "Неверный турнир"
-
-msgid "Invalid contest identifier"
-msgstr "Неверный идентификатор турнира"
-
-msgid "Invalid contest identifier specified"
-msgstr "Задан неверный идентификатор турнира."
-
-msgid "Invalid contest identifier."
-msgstr "Неверный идентификатор турнира."
 
 #, c-format
 msgid "Invalid cypher `%s' in row %d\n"
@@ -2005,9 +1715,6 @@ msgstr "Неверный идентификатор языка программирования"
 msgid "Invalid language `%s' in row %d\n"
 msgstr "Недопустимый язык `%s' в строке %d\n"
 
-msgid "Invalid language specification"
-msgstr "Неверная спецификация языка программирования"
-
 msgid "Invalid locale_id"
 msgstr "Неверный идентификатор языка"
 
@@ -2028,12 +1735,6 @@ msgstr "Неверное количество страниц"
 msgid "Invalid parameter"
 msgstr "Неверный параметр"
 
-msgid "Invalid parameters"
-msgstr "Неверные параметры"
-
-msgid "Invalid person."
-msgstr "Неверный участник."
-
 msgid "Invalid problem"
 msgstr "Неверная задача"
 
@@ -2045,14 +1746,8 @@ msgstr "Недопустимая задача `%s' в строке %d\n"
 msgid "Invalid problem in run %d in row %d\n"
 msgstr "Недопустимая задача в посылке %d в строке %d\n"
 
-msgid "Invalid problem specification"
-msgstr "Неверная спецификация задачи"
-
 msgid "Invalid role"
 msgstr "Неверная роль пользователя"
-
-msgid "Invalid role parameter."
-msgstr "Неверная роль."
 
 msgid "Invalid run selection type"
 msgstr "Неверный тип выбора посылок"
@@ -2060,17 +1755,11 @@ msgstr "Неверный тип выбора посылок"
 msgid "Invalid run to compare to"
 msgstr "Неверный номер посылки для сравнения"
 
-msgid "Invalid run_id"
-msgstr "Неверный номер посылки"
-
 msgid "Invalid score"
 msgstr "Неверные баллы"
 
 msgid "Invalid score adjustment"
 msgstr "Неверная поправка баллов"
-
-msgid "Invalid serial number."
-msgstr "Неверный уникальный номер."
 
 msgid "Invalid session"
 msgstr "Неверный идентификатор сессии."
@@ -2170,9 +1859,6 @@ msgstr "Язык программирования %s не разрешён для задачи %s в строке %d\n"
 msgid "Language column is undefined\n"
 msgstr "Столбец \"Язык\" не определен\n"
 
-msgid "Language is changed"
-msgstr "Язык изменён"
-
 #, c-format
 msgid "Language is empty in row %d\n"
 msgstr "В строке %d не определён язык\n"
@@ -2222,9 +1908,6 @@ msgstr "Войти"
 msgid "Log in to edit registration data"
 msgstr "Войти и редактировать регистрационные данные"
 
-msgid "Log into the system"
-msgstr "Войти в систему"
-
 msgid "Log out"
 msgstr "Выйти из системы"
 
@@ -2233,9 +1916,6 @@ msgstr "Login"
 
 msgid "Login contains invalid characters"
 msgstr "Поле \"Регистрационное имя\" содержит недопустимые символы"
-
-msgid "Login failed"
-msgstr "Вход в систему невозможен"
 
 #, c-format
 msgid "Login is empty in row %d\n"
@@ -2250,9 +1930,6 @@ msgid ""
 msgstr ""
 "Имя учётной записи (login) может содержать только латинские буквы, цифры, "
 "знаки <tt>.</tt> (точка), <tt>-</tt> (минус), <tt>_</tt> (подчёркивание)."
-
-msgid "Login successful"
-msgstr "Вход успешен"
 
 msgid "Login successfull. Now entering the main page."
 msgstr "Вход успешный. Теперь переходим к главной странице."
@@ -2281,23 +1958,6 @@ msgstr "Сделать видимой"
 
 msgid "Male"
 msgstr "Мужской"
-
-msgid "Mandatory \"E-mail\" field is empty."
-msgstr "Обязательное поле \"Адрес электронной почты\" не заполнено."
-
-msgid "Mandatory \"Login\" field is empty."
-msgstr "Обязательное поле \"Имя пользователя\" не заполнено."
-
-msgid "Mandatory \"User name\" field is empty."
-msgstr "Обязательное поле \"Имя пользователя\" не заполнено."
-
-#, c-format
-msgid "Mandatory field \"%s\" is empty."
-msgstr "Обязательное поле \"%s\" не заполнено."
-
-#, c-format
-msgid "Mandatory field \"%s.%d.%s\" is empty."
-msgstr "Обязательное поле \"%s.%d.%s\" не заполнено."
 
 msgid "Mar"
 msgstr "Мар"
@@ -2348,15 +2008,6 @@ msgstr "Максимальное случайное число"
 msgid "May"
 msgstr "Май"
 
-msgid "Member information"
-msgstr "Информация об участниках"
-
-msgid "Member serial number is"
-msgstr "Уникальный номер участника"
-
-msgid "Members of this role are not allowed."
-msgstr "Участники команды с такой ролью не допускаются."
-
 msgid "Memory limit"
 msgstr "Ограничение памяти"
 
@@ -2379,17 +2030,8 @@ msgstr "Сообщение пусто"
 msgid "Message length is too big (%zu)"
 msgstr "Текст сообщения имеет слишком большую длину (%zu)"
 
-msgid "Message view"
-msgstr "Список сообщений"
-
 msgid "Messages"
 msgstr "Сообщения"
-
-msgid "Messages are disabled."
-msgstr "Возможность посылки сообщений отключена."
-
-msgid "Messages from judges"
-msgstr "Сообщения от жюри"
 
 msgid "Middle name"
 msgstr "Отчество"
@@ -2403,9 +2045,6 @@ msgstr "Максимальное случайное число"
 #, c-format
 msgid "Mkdir(%s) failed: %s"
 msgstr "Mkdir(%s) не сработал: %s"
-
-msgid "Monitor"
-msgstr "Монитор"
 
 msgid "Move to advisors"
 msgstr "Перевести в руководители"
@@ -2427,9 +2066,6 @@ msgstr "Неизв."
 
 msgid "NO"
 msgstr "НЕТ"
-
-msgid "NO."
-msgstr "НЕТ."
 
 msgid "NOT REGISTERED"
 msgstr "НЕ ЗАРЕГИСТРИРОВАН"
@@ -2458,20 +2094,11 @@ msgstr "Новый продолжительность турнира слишком мала"
 msgid "New password"
 msgstr "Новый пароль"
 
-msgid "New password (1)"
-msgstr "Новый пароль (1)"
-
 msgid "New password (1) is invalid"
 msgstr "Новый пароль (1) некорректен"
 
-msgid "New password (2)"
-msgstr "Новый пароль (2)"
-
 msgid "New password (2) is invalid"
 msgstr "Новый пароль (2) некорректен"
-
-msgid "New password contain invalid characters."
-msgstr "Новый пароль содержит недопустимые символы"
 
 msgid "New password is too long"
 msgstr "Новый пароль имеет слишком большую длину"
@@ -2484,12 +2111,6 @@ msgstr "Новый вердикт"
 
 msgid "New user account is created"
 msgstr "Новая учётная запись создана"
-
-msgid "New user is registered"
-msgstr "Новый пользователь зарегистрирован"
-
-msgid "Next"
-msgstr "Дальше"
 
 msgid "Next problem"
 msgstr "Следующая задача"
@@ -2521,17 +2142,11 @@ msgstr "Без комментариев"
 msgid "No comments."
 msgstr "Без комментариев."
 
-msgid "No comments.\n"
-msgstr "Без комментариев.\n"
-
 msgid "No connection to the server"
 msgstr "Нет связи с сервером"
 
 msgid "No contestants are allowed in this contest"
 msgstr "Категория \"участники\" не поддерживается для этого турнира"
-
-msgid "No contests available."
-msgstr "Нет доступных турниров."
 
 msgid "No directory structure"
 msgstr "Нет структуры"
@@ -2555,9 +2170,6 @@ msgstr "Категория \"запасные\" не поддерживается для этого турнира"
 
 msgid "No runs to rejudge"
 msgstr "Нет посылок для перепроверки"
-
-msgid "No server request performed"
-msgstr "Запрос на сервер не выполнялся"
 
 msgid "No users registered for this contest"
 msgstr "На этот турнир никто не зарегистрировался"
@@ -2586,9 +2198,6 @@ msgstr "Решены не все требуемые задачи"
 msgid "Not connected"
 msgstr "Нет связи с сервером"
 
-msgid "Not registered"
-msgstr "Не зарегистрированы"
-
 msgid "Not set"
 msgstr "Не установлено"
 
@@ -2616,10 +2225,6 @@ msgstr "Примечания"
 
 msgid "Nov"
 msgstr "Ноя"
-
-msgid ""
-"Now please press the \"Back\" button of your browser and fix the error(s)."
-msgstr "Теперь нажмите кнопку \"Назад\" Вашего браузера и исправьте ошибки."
 
 msgid "Number"
 msgstr "Номер"
@@ -2660,9 +2265,6 @@ msgstr "Окт"
 msgid "Old password"
 msgstr "Старый пароль"
 
-msgid "Old password contain invalid characters"
-msgstr "Старый пароль содержит недопустимые символы"
-
 msgid "Old password is invalid"
 msgstr "Старый пароль некорректен"
 
@@ -2675,15 +2277,8 @@ msgstr "Пользователей в турнире в этот момент"
 msgid "Online users"
 msgstr "Подключившиеся пользователи"
 
-#, c-format
-msgid "Only %d members \"%s\" are specified instead of minimum %d."
-msgstr "Только %d участников \"%s\" указаны вместо минимальных %d."
-
 msgid "Operation completed"
 msgstr "Операция завершена"
-
-msgid "Operation completed successfully"
-msgstr "Операция успешно выполнена"
 
 msgid "Operation completed with errors"
 msgstr "Операция завершилась с ошибками"
@@ -2698,9 +2293,6 @@ msgid "Operation is not supported"
 msgstr "Операция не поддерживается"
 
 msgid "Operation succeeded"
-msgstr "Операция успешно выполнена"
-
-msgid "Operation successfull"
 msgstr "Операция успешно выполнена"
 
 msgid "Originator IP"
@@ -2769,15 +2361,6 @@ msgstr "Пройдено тестов"
 msgid "Password"
 msgstr "Пароль"
 
-msgid "Password changed successfully"
-msgstr "Пароль успешно изменён"
-
-msgid "Password changed successfully."
-msgstr "Пароль успешно изменён."
-
-msgid "Password changing failed due to the following reasons."
-msgstr "Изменение пароля не удалось по следующим причинам."
-
 #, c-format
 msgid "Password generation failed: %s"
 msgstr "Генерация паролей не удалась: %s"
@@ -2818,17 +2401,6 @@ msgstr "В доступе отказано"
 msgid "Permission denied. The possible reasons are as follows."
 msgstr "В доступе отказано. Возможные причины этой ошибки перечислены ниже."
 
-msgid ""
-"Permission denied. You have typed invalid login, invalid password, invalid "
-"contest, or your host is banned."
-msgstr ""
-"В доступе отказано. Вы ввели неверное регистрационное имя, неверный пароль, "
-"неверный идентификатор турнира или участие с Вашего компьютера запрещено."
-
-#, c-format
-msgid "Personal page of %s"
-msgstr "Личная страница для %s"
-
 msgid "PhD student"
 msgstr "Аспирант"
 
@@ -2842,25 +2414,11 @@ msgid "Planned start time"
 msgstr "Планируемое время начала турнира"
 
 msgid ""
-"Please fill up blank fields in this form. Mandatory fields are marked with "
-"(*)."
-msgstr ""
-"Пожалуйста, заполните анкету. Поля, обязательные к заполнению, помечены (*)."
-
-msgid ""
 "Please, enter your valid e-mail address and press the \"Create account\" "
 "button."
 msgstr ""
 "Пожалуйста, введите Ваш работающий адрес e-mail и нажмите кнопку \"Создать "
 "учётную запись\"."
-
-msgid ""
-"Please, fill up all the fields in the form below. Fields, marked with (*), "
-"are mandatory. When the form is completed, press \"Register\" button."
-msgstr ""
-"Пожалуйста, заполните все поля в нижеприведённой анкете. Поля, отмеченные "
-"(*), обязательны к заполнению. Когда анкета готова, нажмите кнопку "
-"\"Зарегистрироваться\"."
 
 msgid "Presentation error"
 msgstr "Неправильный формат вывода"
@@ -2871,23 +2429,6 @@ msgid ""
 msgstr ""
 "Нажмите на кнопку \"Завершить экзамен\" чтобы завершить экзамен. После этого "
 "Ваши ответы будут проверены."
-
-msgid ""
-"Press on the \"Back\" button to return to the previous page without saving "
-"all your changes."
-msgstr ""
-"Нажмите на кнопку \"Назад\" для возврата на предыдущую страницу без "
-"сохранения изменений."
-
-msgid ""
-"Press on the \"Register\" button to commit the entered values to server and "
-"register for participation for the chosen contest."
-msgstr ""
-"Нажмите на кнопку \"ЗАРЕГИСТРИРОВАТЬСЯ!\" для сохранения введённых Вами "
-"данных на сервере и регистрации на выбранный турнир."
-
-msgid "Press on the \"Save\" button to save the entered values on the server."
-msgstr "Нажмите на кнопку \"Сохранить\" для сохранения изменений на сервере."
 
 msgid "Previous problem"
 msgstr "Предыдущая задача"
@@ -3007,14 +2548,8 @@ msgstr "Языки программирования"
 msgid "Protocol error"
 msgstr "Ошибка протокола"
 
-msgid "Quit the system"
-msgstr "Выйти из системы"
-
 msgid "READ-ONLY"
 msgstr "ТОЛЬКО ПРОСМОТР"
-
-msgid "REGISTER!"
-msgstr "ЗАРЕГИСТРИРОВАТЬСЯ!"
 
 msgid "REGISTERED"
 msgstr "ЗАРЕГИСТРИРОВАН"
@@ -3058,9 +2593,6 @@ msgstr "Читайте условие задачи"
 msgid "Read the problem."
 msgstr "Читайте условие задачи."
 
-msgid "Read the problem.\n"
-msgstr "Читайте условие задачи.\n"
-
 msgid "Read-only?"
 msgstr "Только чтение?"
 
@@ -3087,23 +2619,11 @@ msgstr ""
 msgid "Regenerate contest passwords!"
 msgstr "Перегенерировать турнирные пароли!"
 
-msgid "Regenerate register user passwords!"
-msgstr "Сгенерировать регистрационные пароли заново!"
-
 msgid "Regenerate registration passwords!"
 msgstr "Перегенерировать регистрационные пароли!"
 
-msgid "Regenerate user passwords!"
-msgstr "Сгенерировать пароли заново!"
-
 msgid "Region"
 msgstr "Регион"
-
-msgid "Register"
-msgstr "Зарегистрироваться"
-
-msgid "Register a new user"
-msgstr "Зарегистрировать нового пользователя"
 
 msgid "Registration"
 msgstr "Регистрация"
@@ -3117,12 +2637,6 @@ msgstr "Срок регистрации"
 msgid "Registration errors"
 msgstr "Ошибки при регистрации"
 
-msgid "Registration failed"
-msgstr "Регистрация не удалась"
-
-msgid "Registration failed by the following reason:"
-msgstr "Регистрация не удалось по следующим причинам:"
-
 #, c-format
 msgid "Registration failed: %s"
 msgstr "Регистрация не удалась: %s"
@@ -3132,9 +2646,6 @@ msgstr "Регистрация на турнир завершилась с ошибкой"
 
 msgid "Registration incomplete"
 msgstr "Регистрационные данные неполны"
-
-msgid "Registration is successful"
-msgstr "Регистрация завершилась успешно"
 
 msgid "Registration mode"
 msgstr "Режим регистрации"
@@ -3181,9 +2692,6 @@ msgstr "Пересудить!"
 msgid "Reload config files"
 msgstr "Перезагрузить конфигурационные файлы"
 
-msgid "Reload server"
-msgstr "Перезапустить сервер"
-
 msgid "Remaining"
 msgstr "Остаётся"
 
@@ -3206,9 +2714,6 @@ msgstr "Снять блокировку"
 
 msgid "Remove examiner"
 msgstr "Удалить экзаменатора"
-
-msgid "Remove member"
-msgstr "Удалить участника"
 
 msgid "Remove registrations"
 msgstr "Удалить регистрации"
@@ -3251,9 +2756,6 @@ msgstr "Отчет по посылке"
 
 msgid "Report is not available"
 msgstr "Протокол недоступен"
-
-msgid "Report view"
-msgstr "Просмотр протокола"
 
 msgid "Report viewing is disabled"
 msgstr "Просмотр протоколов отключён"
@@ -3300,9 +2802,6 @@ msgstr "Пароль ещё раз"
 msgid "Role"
 msgstr "Роль"
 
-msgid "Role/person parameters are not defined."
-msgstr "Параметры роли/члена не определены."
-
 msgid "Run ID"
 msgstr "Номер решения"
 
@@ -3326,9 +2825,6 @@ msgstr "Выполняется..."
 
 msgid "Runs being processed"
 msgstr "Обрабатываемые посылки"
-
-msgid "Russian"
-msgstr "Русский"
 
 msgid "Save"
 msgstr "Сохранить"
@@ -3397,9 +2893,6 @@ msgstr "Выбрать задачу"
 msgid "Select variant"
 msgstr "Выбрать вариант"
 
-msgid "Send"
-msgstr "Отправить"
-
 msgid "Send a message"
 msgstr "Отправить сообщение судьям"
 
@@ -3444,9 +2937,6 @@ msgstr "Ошибка сервера"
 
 msgid "Server is down"
 msgstr "Сервер не работает"
-
-msgid "Server is down."
-msgstr "Сервер не работает."
 
 msgid "Server is down. Please, come later."
 msgstr "Сервер не работает. Пожалуйста, приходите позже."
@@ -3518,19 +3008,6 @@ msgstr "Параметр shift"
 msgid "Short name"
 msgstr "ID Задачи"
 
-msgid ""
-"Shortly after that you should receive an e-mail message with a password to "
-"the system. Use this password for the first  login. <b>Note</b>, that you "
-"must log in 24 hours after the form is filled and submitted, or your "
-"registration will be void!"
-msgstr ""
-"После этого на Ваш электронный адрес будет направлено письмо, которое будет "
-"содержать пароль для входа в систему. Этот пароль необходимо использовать "
-"для первого входа в систему, после чего его можно будет поменять. "
-"<b>Обратите внимание</b>, что Вы должны зайти в систему в течении 24 часов "
-"после заполнения и посылки анкеты, или в противном случае Ваша регистрация "
-"будет отменена!"
-
 msgid "Shown"
 msgstr "Показано"
 
@@ -3563,9 +3040,6 @@ msgstr "Запрошенный файл не существует"
 
 msgid "Source for this run is not available"
 msgstr "Текст для этой посылки недоступен"
-
-msgid "Source view"
-msgstr "Просмотр исходного текста"
 
 msgid "Squeeze runs"
 msgstr "Сжать журнал"
@@ -3607,9 +3081,6 @@ msgstr "Статус"
 msgid "Status is empty in row %d\n"
 msgstr "Статус не задан в строке %d\n"
 
-msgid "Step 1 of registration is complete"
-msgstr "Первый шаг регистрации завершен"
-
 msgid "Stop"
 msgstr "Остановить"
 
@@ -3638,9 +3109,6 @@ msgstr "Тема сообщения не задана"
 msgid "Subject length is too big (%zu)"
 msgstr "Поле \"Тема\" имеет слишком большую длину (%zu)"
 
-msgid "Submission data is empty"
-msgstr "Посылка пуста"
-
 msgid "Submission log"
 msgstr "Журнал посылок"
 
@@ -3664,9 +3132,6 @@ msgstr "Отправить апелляцию"
 
 msgid "Submit clar"
 msgstr "Отправить вопрос"
-
-msgid "Submit solution"
-msgstr "Сдача решений"
 
 msgid "Submit solution!"
 msgstr "Сдать решение!"
@@ -3697,9 +3162,6 @@ msgstr "Системная ошибка"
 
 msgid "Team ID"
 msgstr "ID Команды"
-
-msgid "Team member is removed"
-msgstr "Участник команды удалён"
 
 msgid "Team name"
 msgstr "Название команды"
@@ -3739,9 +3201,6 @@ msgstr "Пройдено тестов"
 msgid "Tests value `%s' is invalid in row %d\n"
 msgstr "Значение тестов `%s' недопустимо в строке %d\n"
 
-msgid "The contest is closed."
-msgstr "Турнир закрыт."
-
 msgid "The contest is in progress"
 msgstr "Турнир идёт"
 
@@ -3779,27 +3238,9 @@ msgstr "Экзамен закончился"
 msgid "The exam is over (standings are frozen)"
 msgstr "Экзамен закончился (текущее положение участников не отображается)"
 
-msgid "The following runs will be rejudged"
-msgstr "Следующие посылки будут пересужены"
-
-msgid "The form contains error(s)"
-msgstr "Анкета заполнена неправильно"
-
 #, c-format
 msgid "The language %s is disabled for this problem"
 msgstr "Язык %s запрещён для этой задачи"
-
-msgid "The last command completion status"
-msgstr "Статус выполнения последнего запроса"
-
-msgid "The message cannot be sent. Messages are disabled."
-msgstr "Сообщение не может быть послано. Сообщения отключены."
-
-msgid "The message cannot be sent. The contest is not started."
-msgstr "Сообщение не может быть послано. Турнир не начался."
-
-msgid "The message cannot be sent. The contest is over."
-msgstr "Сообщение не может быть послано. Турнир закончился."
 
 msgid "The problem statement is not available"
 msgstr "Условие задачи недоступно"
@@ -3817,12 +3258,6 @@ msgstr ""
 "по указанному адресу. Это, возможно, произошло из-за\n"
 "слишком высокой загрузки сервера, а не из-за неправильного\n"
 "адреса e-mail. Повторите попытку регистрации позже.\n"
-
-msgid "The submission cannot be sent. The contest is not started."
-msgstr "Решение не может быть послано. Турнир не начался."
-
-msgid "The submission cannot be sent. The contest is over."
-msgstr "Решение не может быть послано. Турнир окончен."
 
 msgid ""
 "The user database server is currently not available. Please, retry the "
@@ -3929,21 +3364,6 @@ msgstr "Попробовать еще раз"
 msgid "Try again this operation later"
 msgstr "Повторите операцию позже"
 
-msgid ""
-"Type in a desirable login identifier. <b>Note</b>, that your login still "
-"<i>may be</i> (in some cases) assigned automatically."
-msgstr ""
-"Введите желаемое регистрационное имя. <b>Обратите внимание</b>, что Ваше "
-"регистрационное имя в некоторых случаях всё равно <i>может</i> быть "
-"назначено автоматически."
-
-msgid "Type your login and password and then press \"Submit\" button"
-msgstr ""
-"Введите Ваше регистрационное имя и пароль, затем нажмите кнопку \"Отправить\""
-
-msgid "Type your valid e-mail address"
-msgstr "Введите Ваш действующий адрес электронной почты"
-
 #, c-format
 msgid "UId is empty in row %d\n"
 msgstr "Поле UId пусто в строке %d\n"
@@ -3959,13 +3379,6 @@ msgstr "Неопределен ни user_id, ни login"
 
 msgid "Unexpected EOF"
 msgstr "Неожиданный конец файла"
-
-msgid ""
-"Unfortunately, your form cannot be accepted, since it contains several "
-"errors. The list of errors is given below."
-msgstr ""
-"К сожалению, заполненная Вами анкета не может быть принята. Ниже приведён "
-"список замечаний к ней. Пожалуйста, исправьте анкету и пошлите её снова."
 
 #, c-format
 msgid "Unhandled action: %d"
@@ -4042,10 +3455,6 @@ msgid "User"
 msgstr "Участник"
 
 #, c-format
-msgid "User %s: registration for %s"
-msgstr "Пользователь %s: регистрация на %s"
-
-#, c-format
 msgid "User <tt>%s</tt> does not exist"
 msgstr "Пользователь <tt>%s</tt> не существует"
 
@@ -4101,9 +3510,6 @@ msgstr ""
 "Превышена квота пользователя. Данная посылка имеет слишком большой размер, "
 "Вами сделано слишком много посылок, или суммарный размер Ваших посылок "
 "слишком велик"
-
-msgid "User registration is complete"
-msgstr "Регистрация пользователя завершена"
 
 msgid "User report"
 msgstr "Пользовательский протокол"
@@ -4256,9 +3662,6 @@ msgstr "Текст предупреждения для пользователя"
 msgid "Warnings"
 msgstr "Предупреждения"
 
-msgid "Write XML runs (internal format)"
-msgstr "Сохранить журнал посылок во внутреннем XML-формате"
-
 msgid "Write error"
 msgstr "Ошибка записи"
 
@@ -4280,41 +3683,8 @@ msgstr "ошибка разбора XML"
 msgid "YES"
 msgstr "ДА"
 
-msgid "YES."
-msgstr "ДА."
-
 msgid "Yes"
 msgstr "Да"
-
-msgid "Yes, clear passwords!"
-msgstr "Да, сбросить пароли!"
-
-msgid "Yes, clear!"
-msgstr "Да, очистить!"
-
-msgid "Yes, continue!"
-msgstr "Да, продолжить!"
-
-msgid "Yes, generate passwords!"
-msgstr "Да, перегенерировать пароли!"
-
-msgid "Yes, judge!"
-msgstr "Да, проверить!"
-
-msgid "Yes, print!"
-msgstr "Да, напечатать!"
-
-msgid "Yes, rejudge!"
-msgstr "Да, пересудить!"
-
-msgid "Yes, reset the contest!"
-msgstr "Да, сбросить турнир!"
-
-msgid "Yes, squeeze!"
-msgstr "Да, сжать!"
-
-msgid "Yes, update standings!"
-msgstr "Да, обновить таблицу"
 
 msgid "Yes."
 msgstr "Да."
@@ -4325,45 +3695,17 @@ msgstr "Вы дисквалифицированы"
 msgid "You are disqualified by the contest administration."
 msgstr "Вы дисквалифицированы администрацией турнира."
 
-msgid "You are not registered for this contest."
-msgstr "Вы не зарегистрированы на этот турнир."
-
-msgid "You cannot participate in this contest"
-msgstr "Вы не можете участвовать в этом турнире"
-
-msgid ""
-"You cannot participate in this contest. Your registration is not confirmed, "
-"or you have been banned."
-msgstr ""
-"Вы не можете участвовать в данном турнире. Ваша регистрация не подтверждена, "
-"либо Ваше участие заблокировано администратором."
-
 msgid "You do not have permissions to use this service"
 msgstr "У Вас нет прав использовать данный сервис"
 
 msgid "You do not have permissions to use this service."
 msgstr "У Вас нет прав использовать данный сервис."
 
-msgid "You have already registered for this contest."
-msgstr "Вы уже зарегистрировались на этот турнир."
-
 msgid "You have been registered"
 msgstr "Вы успешно зарегистрированы"
 
 msgid "You have no permissions to view this contest."
 msgstr "У Вас нет прав просматривать данный турнир."
-
-msgid "You have specified incorrect login or password."
-msgstr "Вы указали неправильное регистрационное имя или пароль."
-
-msgid "You may edit your personal information."
-msgstr "Вы можете отредактировать Ваши личные данные."
-
-msgid "You may not edit your personal information."
-msgstr "Вы НЕ можете редактировать Ваши личные данные."
-
-msgid "You may register for this contest."
-msgstr "Вы можете зарегистрироваться на этот турнир."
 
 msgid ""
 "You should receive an e-mail message with a password to the system. Use this "
@@ -4373,9 +3715,6 @@ msgstr ""
 "На Ваш электронный адрес будет направлено письмо, которое будет содержать "
 "пароль для входа в систему. Этот пароль необходимо использовать для первого "
 "входа в систему, после чего его можно будет поменять."
-
-msgid "Your contest registration is incomplete."
-msgstr "Ваши регистрационные данные неполны."
 
 msgid ""
 "Your request has caused an internal server error. Please, report it as a bug."
@@ -4558,9 +3897,6 @@ msgstr "login"
 msgid "login already used"
 msgstr "регистрационное имя занято"
 
-msgid "maximal number reached"
-msgstr "достигнуто максимальное количество"
-
 msgid "message subject is too long"
 msgstr "слишком длинная тема сообщения"
 
@@ -4576,21 +3912,6 @@ msgstr "мс"
 msgid "must be specified"
 msgstr "должно быть заполнено"
 
-msgid "new password (1) not specified"
-msgstr "новый пароль (1) не задан"
-
-msgid "new password (2) not specified"
-msgstr "новый пароль (2) не задан"
-
-msgid "new password contain invalid characters"
-msgstr "новый пароль содержит недопустимые символы"
-
-msgid "new password is too long"
-msgstr "новый пароль имеет слишком большую длину"
-
-msgid "new passwords does not match"
-msgstr "новые пароли не совпадают друг с другом"
-
 msgid "no connection to server"
 msgstr "нет связи с сервером"
 
@@ -4605,15 +3926,6 @@ msgstr "нет связи с сервером"
 
 msgid "not implemented"
 msgstr "не реализовано"
-
-msgid "old password contain invalid characters"
-msgstr "старый пароль содержит недопустимые символы"
-
-msgid "old password is too long"
-msgstr "старый пароль имеет слишком большую длину"
-
-msgid "old password not specified"
-msgstr "старый пароль не задан"
 
 msgid "open"
 msgstr "открытая"

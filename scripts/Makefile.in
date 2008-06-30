@@ -123,4 +123,4 @@ clean:
 distclean:
 	rm -f Makefile ${SCRIPTS}
 	rm -f config.d/*
-	rmdir -f config.d
+	-rmdir config.d
