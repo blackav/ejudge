@@ -278,21 +278,16 @@ CFILES=\
  job-server-control.c\
  job-server-cmd.c\
  make-js-actions.c\
- master.c\
  new-client.c\
  new-server.c\
  new-server-cmd.c\
  new-server-control.c\
- register.c\
  run.c\
- serve.c\
- serve-cmd.c\
  serve-control.c\
  slice-userlist.c\
  struct-sizes.c\
  super-serve.c\
  super-serve-control.c\
- team.c\
  testinfo.c\
  userlist-server.c\
  userlist-server-control.c\
