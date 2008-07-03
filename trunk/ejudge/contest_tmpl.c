@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,7 @@
 #include "config.h"
 #include "version.h"
 
+#include "ej_limits.h"
 #include "contests.h"
 #include "ejudge_cfg.h"
 #include "expat_iface.h"
@@ -64,7 +65,7 @@ contest_tmpl_new(int contest_id,
   struct xml_tree *t;
   struct opcap_list_item *cap;
 
-  ASSERT(contest_id > 0 && contest_id <= 999999);
+  ASSERT(contest_id > 0 && contest_id <= EJ_MAX_CONTEST_ID);
 
   url_base[0] = 0;
   self_url_len = strlen(self_url);

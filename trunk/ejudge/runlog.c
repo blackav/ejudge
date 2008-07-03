@@ -730,7 +730,7 @@ append_record(runlog_state_t state, time_t t, int uid, int nsec)
   if (j < 0) return append_to_end(state, t, nsec);
   if (t > runs[j].time) return append_to_end(state, t, nsec);
   if (t == runs[j].time) {
-    if (nsec < 0 && runs[j].nsec < 999999999) {
+    if (nsec < 0 && runs[j].nsec < NSEC_MAX) {
       nsec = runs[j].nsec + 1;
       return append_to_end(state, t, nsec);
     }
@@ -749,12 +749,12 @@ append_record(runlog_state_t state, time_t t, int uid, int nsec)
       while (runs[i].status == RUN_EMPTY || runs[i].time == t) i++;
       j = i - 1;
       while (runs[j].status == RUN_EMPTY) j--;
-      if (runs[j].nsec < 999999999) {
+      if (runs[j].nsec < NSEC_MAX) {
         nsec = runs[j].nsec + 1;
         break;
       }
       // DUMB :(
-      nsec = random_u32() % 1000000000;
+      nsec = random_u32() % (NSEC_MAX + 1);
       goto try_with_nsec;
     }
     ASSERT(i < state->run_u);

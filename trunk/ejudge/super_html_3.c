@@ -5488,7 +5488,7 @@ super_html_prob_cmd(struct sid_state *sstate, int cmd,
 
   switch (cmd) {
   case SSERV_CMD_PROB_ADD:
-    if (prob_id < 0 || prob_id > 999999)
+    if (prob_id < 0 || prob_id > EJ_MAX_PROB_ID)
       return -SSERV_ERR_INVALID_PARAMETER;
     if (!prob_id) {
       for (i = 1; i < sstate->prob_a; i++)
@@ -6751,7 +6751,7 @@ super_html_read_serve(FILE *flog,
     lang = (struct section_language_data*) pg;
     if (!lang->id) lang->id = cur_id + 1;
     cur_id = lang->id;
-    if (lang->id <= 0 || lang->id > 999999) {
+    if (lang->id <= 0 || lang->id > EJ_MAX_LANG_ID) {
       fprintf(flog, "Invalid language ID\n");
       return -1;
     }
@@ -6888,7 +6888,7 @@ super_html_read_serve(FILE *flog,
     if (prob->abstract) continue;
     if (!prob->id) prob->id = cur_id + 1;
     cur_id = prob->id;
-    if (prob->id <= 0 || prob->id > 999999) {
+    if (prob->id <= 0 || prob->id > EJ_MAX_PROB_ID) {
       fprintf(flog, "Invalid problem ID\n");
       return -1;
     }
@@ -6997,7 +6997,7 @@ super_html_read_serve(FILE *flog,
     if (tst->abstract) continue;
     if (!tst->id) tst->id = cur_id + 1;
     cur_id = tst->id;
-    if (tst->id <= 0 || tst->id > 999999) {
+    if (tst->id <= 0 || tst->id > EJ_MAX_TESTER) {
       fprintf(flog, "Invalid tester ID\n");
       return -1;
     }

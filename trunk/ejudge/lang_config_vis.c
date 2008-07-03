@@ -18,6 +18,7 @@
 #include "config.h"
 #include "version.h"
 
+#include "ej_limits.h"
 #include "lang_config_vis.h"
 #include "ncurses_utils.h"
 #include "pathutl.h"
@@ -210,7 +211,7 @@ parse_lang_id_file(
   for (i = 0, j = 0; i < lang_id_total; i++) {
     errno = 0;
     val = strtol(cfg->values[i], &eptr, 10);
-    if (errno || *eptr || val <= 0 || val > 999999) {
+    if (errno || *eptr || val <= 0 || val > EJ_MAX_LANG_ID) {
       log_printf(err_f, win, "invalid language id `%s' for language `%s'\n",
                  cfg->values[i], cfg->names[i]);
     } else {

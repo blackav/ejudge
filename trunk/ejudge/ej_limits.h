@@ -106,4 +106,10 @@
 /* maximal length of environment vars for a compile packet */
 #define EJ_MAX_COMPILE_ENV_LEN       65535
 
+/* number of microseconds in a second */
+#define USEC_MAX 999999
+
+/* number of nanoseconds in a second */
+#define NSEC_MAX 999999999
+
 #endif /* __EJ_LIMITS_H__ */

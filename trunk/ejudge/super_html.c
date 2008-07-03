@@ -4073,7 +4073,7 @@ super_html_create_contest_2(FILE *f,
     contest_id = contests_num;
     if (!contest_id) contest_id = 1;
   } else {
-    if (contest_id <= 0 || contest_id > 999999) {
+    if (contest_id <= 0 || contest_id > EJ_MAX_CONTEST_ID) {
       errcode = -SSERV_ERR_INVALID_CONTEST;
       goto cleanup;
     }

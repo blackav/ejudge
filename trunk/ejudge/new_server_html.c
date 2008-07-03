@@ -1848,7 +1848,7 @@ priv_force_start_virtual(
   gettimeofday(&tt, 0);
   nsec = tt.tv_usec * 1000;
   // FIXME: it's a bit risky, need to check the database...
-  if (nsec + uset.u >= 1000000000) nsec = 999999998 - uset.u;
+  if (nsec + uset.u >= NSEC_MAX + 1) nsec = NSEC_MAX - 1 - uset.u;
 
   for (i = 0; i < uset.u; i++, nsec++) {
     run_id = run_virtual_start(cs->runlog_state, uset.v[i], tt.tv_sec,0,0,nsec);

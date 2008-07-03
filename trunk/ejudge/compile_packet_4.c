@@ -63,13 +63,13 @@ compile_reply_packet_read(size_t in_size, const void *in_data,
   FAIL_IF(pout->status != RUN_OK && pout->status != RUN_COMPILE_ERR && pout->status != RUN_CHECK_FAILED);
   pout->ts1 = cvt_bin_to_host_32(pin->ts1);
   pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);
-  FAIL_IF(pout->ts1_us < 0 || pout->ts1_us > 999999);
+  FAIL_IF(pout->ts1_us < 0 || pout->ts1_us > USEC_MAX);
   pout->ts2 = cvt_bin_to_host_32(pin->ts2);
   pout->ts2_us = cvt_bin_to_host_32(pin->ts2_us);
-  FAIL_IF(pout->ts2_us < 0 || pout->ts2_us > 999999);
+  FAIL_IF(pout->ts2_us < 0 || pout->ts2_us > USEC_MAX);
   pout->ts3 = cvt_bin_to_host_32(pin->ts3);
   pout->ts3_us = cvt_bin_to_host_32(pin->ts3_us);
-  FAIL_IF(pout->ts3_us < 0 || pout->ts3_us > 999999);
+  FAIL_IF(pout->ts3_us < 0 || pout->ts3_us > USEC_MAX);
 
   in_ptr = (const unsigned char*) pin + sizeof(*pin);
   end_ptr = (const unsigned char*) pin + pkt_size;

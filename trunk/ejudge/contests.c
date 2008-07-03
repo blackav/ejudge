@@ -17,6 +17,7 @@
 
 #include "config.h"
 
+#include "ej_limits.h"
 #include "contests.h"
 #include "pathutl.h"
 #include "errlog.h"
@@ -49,7 +50,6 @@
 #define INTERNAL_CHARSET "utf-8"
 #endif
 
-#define MAX_CONTEST_ID 999999
 #define CONTEST_CHECK_TIME 5
 
 static char const * const elem_map[] =
@@ -784,7 +784,7 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
     case CONTEST_A_ID:
       x = n = 0;
       if (sscanf(a->text, "%d %n", &x, &n) != 1 || a->text[n]
-          || x <= 0 || x > MAX_CONTEST_ID) return xml_err_attr_invalid(a);
+          || x <= 0 || x > EJ_MAX_CONTEST_ID) return xml_err_attr_invalid(a);
       cnts->id = x;
       break;
     default:
