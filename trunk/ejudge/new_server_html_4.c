@@ -1050,6 +1050,7 @@ cmd_submit_run(
                       "Run-id: %d\n", run_id);
     }
   }
+  fprintf(fout, "%d\n", run_id);
 
  cleanup:
   if (ans_f) fclose(ans_f);
