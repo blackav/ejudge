@@ -74,7 +74,7 @@ compile_request_packet_read(const serve_state_t state,
   FAIL_IF(pout->output_only < 0 || pout->output_only > 1);
   pout->ts1 = cvt_bin_to_host_32(pin->ts1);
   pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);
-  FAIL_IF(pout->ts1_us < 0 || pout->ts1_us > 999999);
+  FAIL_IF(pout->ts1_us < 0 || pout->ts1_us > USEC_MAX);
 
   /* extract the additional data */
   // set up the additional data pointer

@@ -50,7 +50,7 @@ compile_request_packet_write(const struct compile_request_packet *in_data,
   FAIL_IF(in_data->lang_id < 0 || in_data->lang_id > EJ_MAX_LANG_ID);
   FAIL_IF(in_data->locale_id < 0 || in_data->locale_id > EJ_MAX_LOCALE_ID);
   FAIL_IF(in_data->output_only < 0 || in_data->output_only > 1);
-  FAIL_IF(in_data->ts1_us < 0 || in_data->ts1_us > 999999);
+  FAIL_IF(in_data->ts1_us < 0 || in_data->ts1_us > USEC_MAX);
   FAIL_IF(in_data->run_block_len < 0 || in_data->run_block_len > EJ_MAX_COMPILE_RUN_BLOCK_LEN);
   env_num = in_data->env_num;
   if (env_num == -1) {

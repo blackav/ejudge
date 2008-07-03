@@ -18,6 +18,7 @@
 #include "config.h"
 #include "ej_types.h"
 
+#include "ej_limits.h"
 #include "expat_iface.h"
 #include "xml_utils.h"
 #include "pathutl.h"
@@ -915,14 +916,14 @@ action_create_contest_2(void)
     if (!(s = cgi_param("contest_id"))
         || sscanf(s, "%d%n", &contest_id, &n) != 1
         || s[n]
-        || contest_id <= 0 || contest_id > 999999)
+        || contest_id <= 0 || contest_id > EJ_MAX_CONTEST_ID)
       goto invalid_parameter;
   }
   if (templ_mode) {
     if (!(s = cgi_param("templ_id"))
         || sscanf(s, "%d%n", &templ_id, &n) != 1
         || s[n]
-        || templ_id <= 0 || templ_id > 999999)
+        || templ_id <= 0 || templ_id > EJ_MAX_CONTEST_ID)
       goto invalid_parameter;
   }
 
@@ -1198,7 +1199,8 @@ action_lang_cmd(int cmd, int next_state)
   unsigned char *param = cgi_param("param");
 
   if (!(s = cgi_param("lang_id")) || sscanf(s, "%d%n", &lang_id, &n) != 1
-      || s[n] || lang_id <= 0 || lang_id > 999999) goto invalid_parameter;
+      || s[n] || lang_id <= 0 || lang_id > EJ_MAX_LANG_ID)
+    goto invalid_parameter;
 
   open_super_server();
   r = super_clnt_set_param(super_serve_fd, cmd, lang_id, param, 0, 0, 0);
@@ -1219,7 +1221,7 @@ action_prob_cmd(int cmd, int next_state)
   unsigned char *s;
 
   if (!(s = cgi_param("prob_id")) || sscanf(s, "%d%n", &prob_id, &n) != 1
-      || s[n] || prob_id < -999999 || prob_id > 999999)
+      || s[n] || prob_id < -EJ_MAX_PROB_ID || prob_id > EJ_MAX_PROB_ID)
     goto invalid_parameter;
 
   open_super_server();
@@ -1242,7 +1244,7 @@ action_prob_param(int cmd, int next_state)
   unsigned char *param = cgi_param("param");
 
   if (!(s = cgi_param("prob_id")) || sscanf(s, "%d%n", &prob_id, &n) != 1
-      || s[n] || prob_id < -999999 || prob_id > 999999)
+      || s[n] || prob_id < -EJ_MAX_PROB_ID || prob_id > EJ_MAX_PROB_ID)
     goto invalid_parameter;
 
   open_super_server();
@@ -1270,7 +1272,7 @@ action_variant_param(int cmd, int next_state)
   size_t param_len = 0;
 
   if (!(s = cgi_param("row")) || sscanf(s, "%d%n", &row, &n) != 1
-      || s[n] || row < 0 || row > 999999)
+      || s[n] || row < 0 || row > EJ_MAX_USER_ID)
     goto invalid_parameter;
 
   // collect all param_<NUM> into a single string
@@ -1285,7 +1287,7 @@ action_variant_param(int cmd, int next_state)
   for (i = 0; i < total; i++) {
     snprintf(nbuf, sizeof(nbuf), "param_%d", i);
     if (!(s = cgi_param(nbuf)) || sscanf(s, "%d%n", &r, &n) != 1
-        || s[n] || r < 0 || r > 999999)
+        || s[n] || r < 0 || r > EJ_MAX_USER_ID)
       goto invalid_parameter;
     fprintf(param_f, " %d", r);
   }
@@ -1321,7 +1323,7 @@ action_prob_date_param(int cmd, int next_state)
   unsigned char buf[256];
 
   if (!(s = cgi_param("prob_id")) || sscanf(s, "%d%n", &prob_id, &n) != 1
-      || s[n] || prob_id < -999999 || prob_id > 999999)
+      || s[n] || prob_id < -EJ_MAX_PROB_ID || prob_id > EJ_MAX_PROB_ID)
     goto invalid_parameter;
 
   if (!d_hour) d_hour = "0";
@@ -1370,7 +1372,7 @@ action_prob_add(int cmd, int next_state)
 
   if ((s = cgi_param("prob_id")) && *s) {
     if (sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
-        || prob_id < 0 || prob_id > 999999)
+        || prob_id < 0 || prob_id > EJ_MAX_PROB_ID)
       goto invalid_parameter;
   }
 
