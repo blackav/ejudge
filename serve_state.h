@@ -121,9 +121,9 @@ struct serve_state
   struct generic_section_config *config;
   struct section_global_data    *global;
 
-  struct section_language_data *langs[EJ_MAX_LANG_ID + 1];
-  struct section_problem_data  *probs[EJ_MAX_PROB_ID + 1];
-  struct section_tester_data   *testers[EJ_MAX_TESTER + 1];
+  struct section_language_data **langs;
+  struct section_problem_data  **probs;
+  struct section_tester_data   **testers;
 
   int max_lang;
   int max_prob;

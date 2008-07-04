@@ -30,10 +30,10 @@
 #define EJ_MAX_CLAR_ID  999999         // [0 .. MAX]
 
 /* maximal possible number of a programming language */
-#define EJ_MAX_LANG_ID  255            // [1 .. MAX]
+#define EJ_MAX_LANG_ID  999999         // [1 .. MAX]
 
 /* maximal possible number of a problem */
-#define EJ_MAX_PROB_ID  255            // [1 .. MAX]
+#define EJ_MAX_PROB_ID  999999         // [1 .. MAX]
 
 /* maximal number of simultaneously supported testers */
 #define EJ_MAX_TESTER  100             // [1 .. MAX]

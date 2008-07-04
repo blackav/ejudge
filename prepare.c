@@ -3639,6 +3639,7 @@ collect_sections(serve_state_t state, int mode)
 
   state->max_lang = state->max_prob = state->max_tester = 0;
 
+  // process abstract problems and testers
   for (p = state->config; p; p = p->next) {
     if (!strcmp(p->name, "problem") && mode != PREPARE_COMPILE) {
       q = (struct section_problem_data*) p;
@@ -3655,6 +3656,7 @@ collect_sections(serve_state_t state, int mode)
     XCALLOC(state->abstr_testers, abstr_tester_count);
   }
 
+  // process concrete languages, problems, and testers
   for (p = state->config; p; p = p->next) {
     if (!strcmp(p->name, "language") && mode != PREPARE_RUN) {
       l = (struct section_language_data*) p;
@@ -3663,14 +3665,51 @@ collect_sections(serve_state_t state, int mode)
         err("language id %d is out of range", l->id);
         return -1;
       }
+      if (l->id > state->max_lang) state->max_lang = l->id;
+      last_lang = l->id;
+      if (!l->compile_id) l->compile_id = l->id;
+    } else if (!strcmp(p->name, "problem") && mode != PREPARE_COMPILE) {
+      q = (struct section_problem_data*) p;
+      if (q->abstract) continue;
+      if (!q->id) vinfo("assigned problem id = %d", (q->id=last_prob + 1));
+      if (q->id <= 0 || q->id > EJ_MAX_PROB_ID) {
+        err("problem id %d is out of range", q->id);
+        return -1;
+      }
+      if (q->id > state->max_prob) state->max_prob = q->id;
+      last_prob = q->id;
+      if (!q->tester_id) q->tester_id = q->id;
+    } else if (!strcmp(p->name, "tester") && mode != PREPARE_COMPILE) {
+      t = (struct section_tester_data *) p;
+      if (t->abstract) continue;
+      if (!t->id) vinfo("assigned tester id = %d",(t->id = last_tester + 1));
+      if (t->id <= 0 || t->id > EJ_MAX_TESTER) {
+        err("tester id %d is out of range", t->id);
+        return -1;
+      }
+      if (t->id > state->max_tester) state->max_tester = t->id;
+      last_tester = t->id;
+    }
+  }
+
+  if (state->max_lang > 0) {
+    XCALLOC(state->langs, state->max_lang + 1);
+  }
+  if (state->max_prob > 0) {
+    XCALLOC(state->probs, state->max_prob + 1);
+  }
+  if (state->max_tester > 0) {
+    XCALLOC(state->testers, state->max_tester + 1);
+  }
+
+  for (p = state->config; p; p = p->next) {
+    if (!strcmp(p->name, "language") && mode != PREPARE_RUN) {
+      l = (struct section_language_data*) p;
       if (state->langs[l->id]) {
         err("duplicated language id %d", l->id);
         return -1;
       }
       state->langs[l->id] = l;
-      if (l->id > state->max_lang) state->max_lang = l->id;
-      last_lang = l->id;
-      if (!l->compile_id) l->compile_id = l->id;
     } else if (!strcmp(p->name, "problem") && mode != PREPARE_COMPILE) {
       q = (struct section_problem_data*) p;
       if (q->abstract) {
@@ -3680,19 +3719,11 @@ collect_sections(serve_state_t state, int mode)
         }
         state->abstr_probs[state->max_abstr_prob++] = q;
       } else {
-        if (!q->id) vinfo("assigned problem id = %d", (q->id=last_prob + 1));
-        if (q->id <= 0 || q->id > EJ_MAX_PROB_ID) {
-          err("problem id %d is out of range", q->id);
-          return -1;
-        }
         if (state->probs[q->id]) {
           err("duplicated problem id %d", q->id);
           return -1;
         }
         state->probs[q->id] = q;
-        if (q->id > state->max_prob) state->max_prob = q->id;
-        last_prob = q->id;
-        if (!q->tester_id) q->tester_id = q->id;
       }
     } else if (!strcmp(p->name, "tester") && mode != PREPARE_COMPILE) {
       t = (struct section_tester_data *) p;
@@ -3703,12 +3734,6 @@ collect_sections(serve_state_t state, int mode)
         }
         state->abstr_testers[state->max_abstr_tester++] = t;
       } else {
-        if (!t->id)
-          vinfo("assigned tester id = %d",(t->id = last_tester + 1));
-        if (t->id <= 0 || t->id > EJ_MAX_TESTER) {
-          err("tester id %d is out of range", t->id);
-          return -1;
-        }
         if (state->testers[t->id]) {
           err("duplicated tester id %d", t->id);
           return -1;
@@ -3755,8 +3780,6 @@ collect_sections(serve_state_t state, int mode)
           }
         }
         state->testers[t->id] = t;
-        if (t->id > state->max_tester) state->max_tester = t->id;
-        last_tester = t->id;
       }
     }
   }
@@ -5408,7 +5431,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     /*
     if (state->probs[i]->score_bonus[0]) {
-        if (parse_score_bonus(state->probs[i]->score_bonus, &state->probs[i]->score_bonus_total,
+    if (parse_score_bonus(state->probs[i]->score_bonus, &state->probs[i]->score_bonus_total,
                               &state->probs[i]->score_bonus_val) < 0) return -1;
       }
     */

@@ -220,7 +220,8 @@ do_loop(void)
       ce_flag = 0;
       rpl.status = RUN_OK;
     } else {
-      info("Starting: %s %s %s", serve_state.langs[req->lang_id]->cmd, src_name, exe_name);
+      info("Starting: %s %s %s", serve_state.langs[req->lang_id]->cmd,
+           src_name, exe_name);
       tsk = task_New();
       task_AddArg(tsk, serve_state.langs[req->lang_id]->cmd);
       task_AddArg(tsk, src_name);
