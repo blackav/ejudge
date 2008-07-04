@@ -147,8 +147,8 @@ struct serve_state
   struct user_filter_info *cur_user;
 
   /* for prepare to store the abstract entities */
-  struct section_problem_data  *abstr_probs[EJ_MAX_PROB_ID + 1];
-  struct section_tester_data   *abstr_testers[EJ_MAX_TESTER + 1];
+  struct section_problem_data **abstr_probs;
+  struct section_tester_data **abstr_testers;
   int max_abstr_prob;
   int max_abstr_tester;
 

@@ -3635,8 +3635,25 @@ collect_sections(serve_state_t state, int mode)
   struct section_problem_data   *q;
   struct section_tester_data    *t;
   int last_lang = 0, last_prob = 0, last_tester = 0;
+  int abstr_prob_count = 0, abstr_tester_count = 0;
 
   state->max_lang = state->max_prob = state->max_tester = 0;
+
+  for (p = state->config; p; p = p->next) {
+    if (!strcmp(p->name, "problem") && mode != PREPARE_COMPILE) {
+      q = (struct section_problem_data*) p;
+      if (q->abstract) abstr_prob_count++;
+    } else if (!strcmp(p->name, "tester") && mode != PREPARE_COMPILE) {
+      t = (struct section_tester_data *) p;
+      if (t->abstract) abstr_tester_count++;
+    }
+  }
+  if (abstr_prob_count > 0) {
+    XCALLOC(state->abstr_probs, abstr_prob_count);
+  }
+  if (abstr_tester_count > 0) {
+    XCALLOC(state->abstr_testers, abstr_tester_count);
+  }
 
   for (p = state->config; p; p = p->next) {
     if (!strcmp(p->name, "language") && mode != PREPARE_RUN) {

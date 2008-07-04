@@ -148,6 +148,9 @@ serve_state_destroy(serve_state_t state,
   }
   xfree(state->run_dirs);
 
+  xfree(state->abstr_probs);
+  xfree(state->abstr_testers);
+
   memset(state, 0, sizeof(*state));
   xfree(state);
   return 0;
