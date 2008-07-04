@@ -151,6 +151,10 @@ serve_state_destroy(serve_state_t state,
   xfree(state->abstr_probs);
   xfree(state->abstr_testers);
 
+  xfree(state->langs);
+  xfree(state->probs);
+  xfree(state->testers);
+
   memset(state, 0, sizeof(*state));
   xfree(state);
   return 0;

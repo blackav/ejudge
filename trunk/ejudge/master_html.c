@@ -1430,7 +1430,8 @@ write_priv_source(const serve_state_t state, FILE *f,
     for (i = 1; i <= state->max_lang; i++)
       if (state->langs[i]) {
         fprintf(f, "<option value=\"%d\">%s - %s\n",
-                state->langs[i]->id, state->langs[i]->short_name, state->langs[i]->long_name);
+                state->langs[i]->id, state->langs[i]->short_name,
+                state->langs[i]->long_name);
       }
     fprintf(f, "</select></td>\n");
     fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></form>\n", ACTION_RUN_CHANGE_LANG, _("Change"));
@@ -1752,7 +1753,8 @@ write_new_run_form(const serve_state_t state, FILE *f,
   for (i = 1; i <= state->max_lang; i++)
     if (state->langs[i]) {
       fprintf(f, "<option value=\"%d\">%s - %s\n",
-              state->langs[i]->id, state->langs[i]->short_name, state->langs[i]->long_name);
+              state->langs[i]->id, state->langs[i]->short_name,
+              state->langs[i]->long_name);
     }
   fprintf(f, "</select></td>\n");
   fprintf(f, "</tr>\n");
@@ -3080,7 +3082,8 @@ write_raw_source(const serve_state_t state, FILE *f,
 
   if (self_url && *self_url) {
     if (state->langs[info.lang_id]->content_type) {
-      fprintf(f, "Content-type: %s\n", state->langs[info.lang_id]->content_type);
+      fprintf(f, "Content-type: %s\n",
+              state->langs[info.lang_id]->content_type);
       fprintf(f, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
               run_id, state->langs[info.lang_id]->src_sfx);
     } else if (state->langs[info.lang_id]->binary) {

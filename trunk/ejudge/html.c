@@ -4661,7 +4661,8 @@ new_write_user_source_view(const serve_state_t state,
   } else if (format == 1) {
     fwrite(src, 1, src_len, f);
   } else if (format == 2) {
-    if (re.lang_id > 0 && re.lang_id < state->max_lang && state->langs[re.lang_id])
+    if (re.lang_id > 0 && re.lang_id < state->max_lang
+        && state->langs[re.lang_id])
       lang = state->langs[re.lang_id];
     if (lang->content_type) {
       fprintf(f, "Content-type: %s\n", lang->content_type);
