@@ -89,6 +89,9 @@ C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a
 CC_CFILES=compile-control.c version.c
 CC_OBJECTS=$(CC_CFILES:.c=.o) libcommon.a
 
+SERVE_CFILES=serve.c version.c
+SERVE_OBJECTS=$(SERVE_CFILES:.c=.o) libcommon.a libuserlist_clnt.a
+
 RUN_CFILES=run.c version.c
 RUN_OBJECTS=$(RUN_CFILES:.c=.o) libcommon.a
 
@@ -156,7 +159,7 @@ NSC_CFILES=new-server-control.c version.c
 NSC_OBJECTS=$(NSC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a
 
 BINTARGETS = job-server-cmd edit-userlist ejudge-setup ejudge-configure-compilers ejudge-control execute new-server-cmd
-SERVERBINTARGETS = compile compile-control run userlist-server userlist-server-control job-server job-server-control super-serve super-serve-control clean-users collect-emails slice-userlist new-server new-server-control uudecode
+SERVERBINTARGETS = compile compile-control run serve userlist-server userlist-server-control job-server job-server-control super-serve super-serve-control clean-users collect-emails slice-userlist new-server new-server-control uudecode
 CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
 TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} style/actions.js
 STYLEFILES = style/actions.js style/logo.gif style/priv.css style/unpriv.css style/unpriv.js style/filter_expr.html
@@ -216,6 +219,9 @@ compile-control : $(CC_OBJECTS)
 
 run${EXESFX} : $(RUN_OBJECTS)
 	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
+
+serve : $(SERVE_OBJECTS)
+	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB}
 
 serve-control${CGI_PROG_SUFFIX}: ${SC_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}

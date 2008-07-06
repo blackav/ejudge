@@ -283,6 +283,7 @@ CFILES=\
  new-server-cmd.c\
  new-server-control.c\
  run.c\
+ serve.c\
  serve-control.c\
  slice-userlist.c\
  struct-sizes.c\
