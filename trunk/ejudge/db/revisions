@@ -3508,3 +3508,9 @@ prepare.c 4919 0 14396724
 serve_state.c 4919 0 1118914
 serve.c 4745 0 11591838
 serve.c 4921 0 11591850
+lang_config_vis.h 4923 0 182567
+ejudge-configure-compilers.c 4923 0 1609422
+ejudge-setup.c 4923 0 10408785
+lang_config_vis.c 4923 0 2296950
+runlog.c 4923 0 6373774
+prepare.c 4924 0 14409718
