@@ -2766,8 +2766,13 @@ set_defaults(serve_state_t state, int mode)
         err("language.%d.cmd must be set", i);
         return -1;
       }
+      /*
       pathmake2(lang->cmd, g->script_dir, "/", "lang", "/", lang->cmd, NULL);
       vinfo("language.%d.cmd is %s", i, lang->cmd);
+      */
+      pathmake2(lang->cmd, ejudge_config->compile_home_dir,
+                "/", "scripts", "/", lang->cmd, NULL);
+      vinfo("language.%d.cmd is %s", i, lang->cmd);      
       if (lang->compile_real_time_limit == -1) {
         lang->compile_real_time_limit = g->compile_real_time_limit;
         vinfo("language.%d.compile_real_time_limit is inherited from global (%d)", i, lang->compile_real_time_limit);
