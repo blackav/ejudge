@@ -28,6 +28,7 @@
 #include "shellcfg_parse.h"
 #include "lang_config_vis.h"
 #include "stringset.h"
+#include "fileutl.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -142,6 +143,8 @@ static unsigned char system_group[256];
 static unsigned char config_workdisk_flag[64];
 static unsigned char config_workdisk_size[64];
 static unsigned char config_install_flag[64];
+
+static unsigned char tmp_work_dir[PATH_MAX];
 
 static unsigned char const login_accept_chars[] =
 "._-0123456789?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -3194,12 +3197,24 @@ do_preview_menu(void)
   size_t txt_len = 0;
   unsigned char preview_header[PATH_MAX];
   path_t script_dir;
+  unsigned char script_in_dir0[PATH_MAX];
+  const unsigned char *script_in_dirs[2];
 
   snprintf(preview_header, sizeof(preview_header),
            "Ejudge %s configurator", compile_version);
+
+  /*
   snprintf(script_dir, sizeof(script_dir), "%s/lang",
            config_ejudge_script_dir);
   lang_configure_screen(script_dir, 0, 0, 0, preview_header);
+  */
+  snprintf(script_in_dir0, sizeof(script_in_dir0), "%s/lang/in",
+           config_ejudge_script_dir);
+  script_in_dirs[0] = script_in_dir0;
+  script_in_dirs[1] = 0;
+  snprintf(script_dir, sizeof(script_dir), "%s/lang",
+           tmp_work_dir);
+  lang_configure_screen(script_dir, script_in_dirs, 0, 0, 0, preview_header);
 
   while (1) {
     mvwprintw(stdscr, 0, 0, "Ejudge %s configurator > File preview",
@@ -3447,7 +3462,7 @@ const unsigned char b64_contest1_tgz[] =
 static void
 generate_install_script(FILE *f)
 {
-  FILE *floc = 0;
+  FILE *floc = 0, *ff = 0;
   char *txt_ptr = 0;
   size_t txt_len = 0, style_len = 0;
   unsigned char fpath[PATH_MAX]; 
@@ -3461,14 +3476,24 @@ generate_install_script(FILE *f)
   unsigned char style_dir[PATH_MAX];
   unsigned char style_src_dir[PATH_MAX];
   unsigned char plugin_path[PATH_MAX];
+  unsigned char compile_script_dir[PATH_MAX];
+  unsigned char tmp_script_dir[PATH_MAX];
+  unsigned char script_file[PATH_MAX];
+  unsigned char script_out_file[PATH_MAX];
   struct stat sb1, sb2;
   struct lang_config_info *pcfg;
+  DIR *d = 0;
+  struct dirent *dd = 0;
+  struct stat sb;
+  int c;
 
   XMEMZERO(&created_dirs, 1);
   generate_current_date(date_buf, sizeof(date_buf));
 
   snprintf(compile_cfg_path, sizeof(compile_cfg_path),
            "%s/conf/compile.cfg",config_compile_home_dir);
+  snprintf(compile_script_dir, sizeof(compile_script_dir),
+           "%s/scripts", config_compile_home_dir);
   snprintf(serve_cfg_path, sizeof(serve_cfg_path),
            "%s/conf/serve.cfg",config_contest1_home_dir);
 
@@ -3502,6 +3527,7 @@ generate_install_script(FILE *f)
   generate_dir_creation(f, &created_dirs, 1, serve_cfg_path);
   generate_dir_creation(f, &created_dirs, 0, config_var_dir);
   generate_dir_creation(f, &created_dirs, 0, config_ejudge_lang_config_dir);
+  generate_dir_creation(f, &created_dirs, 0, compile_script_dir);
   snprintf(plugin_path, sizeof(plugin_path), "%s/plugins",
            config_ejudge_script_dir);
   generate_dir_creation(f, &created_dirs, 0, plugin_path);
@@ -3670,6 +3696,34 @@ generate_install_script(FILE *f)
   fprintf(f, "fi\n");
   free(txt_ptr); txt_ptr = 0; txt_len = 0;
 
+  // language scripts
+  snprintf(tmp_script_dir, sizeof(tmp_script_dir), "%s/lang", tmp_work_dir);
+  if ((d = opendir(tmp_script_dir))) {
+    while ((dd = readdir(d))) {
+      if (!strcmp(dd->d_name, ".")) continue;
+      if (!strcmp(dd->d_name, "..")) continue;
+      snprintf(script_file, sizeof(script_file),
+               "%s/%s", tmp_script_dir, dd->d_name);
+      snprintf(script_out_file, sizeof(script_out_file),
+               "%s/%s", compile_script_dir, dd->d_name);
+      if (stat(script_file, &sb) < 0) continue;
+      if (!S_ISREG(sb.st_mode)) continue;
+      if (!(ff = fopen(script_file, "r"))) continue;
+      floc = open_memstream(&txt_ptr, &txt_len);
+      while ((c = getc(ff)) != EOF) putc(c, floc);
+      fclose(ff); ff = 0; fclose(floc); floc = 0;
+
+      fprintf(f, "cat << _EOF | %s\n", uudecode_path);
+      base64_encode_file(f, script_out_file, 0664, txt_ptr);
+      fprintf(f, "_EOF\n");
+      gen_check_retcode(f, script_out_file);
+      gen_cmd_run(f, "chown %s:%s \"%s\"", config_system_uid, config_system_gid,
+                  script_out_file);
+      free(txt_ptr); txt_ptr = 0; txt_len = 0;
+    }
+    closedir(d); d = 0;
+  }
+
   // serve.cfg
   fprintf(f, "if [ -f \"%s\" ]\n"
           "then\n"
@@ -3821,11 +3875,23 @@ preview_install_script(void)
   size_t txt_len = 0;
   unsigned char header[1024];
   path_t script_dir;
+  unsigned char script_in_dir0[PATH_MAX];
+  const unsigned char *script_in_dirs[2];
 
   snprintf(header, sizeof(header), "Ejudge %s configurator", compile_version);
+
+  snprintf(script_in_dir0, sizeof(script_in_dir0), "%s/lang/in",
+           config_ejudge_script_dir);
+  script_in_dirs[0] = script_in_dir0;
+  script_in_dirs[1] = 0;
+  snprintf(script_dir, sizeof(script_dir), "%s/lang", tmp_work_dir);
+  lang_configure_screen(script_dir, script_in_dirs, 0, 0, 0, header);
+
+  /*
   snprintf(script_dir, sizeof(script_dir), "%s/lang",
            config_ejudge_script_dir);
   lang_configure_screen(script_dir, 0, 0, 0, header);
+  */
 
   if (check_install_script_validity() < 0) return;
 
@@ -3846,11 +3912,17 @@ save_install_script(void)
   int j, fd, r, w;
   unsigned char header[1024];
   path_t script_dir;
+  unsigned char script_in_dir0[PATH_MAX];
+  const unsigned char *script_in_dirs[2];
 
   snprintf(header, sizeof(header), "Ejudge %s configurator", compile_version);
-  snprintf(script_dir, sizeof(script_dir), "%s/lang",
+
+  snprintf(script_in_dir0, sizeof(script_in_dir0), "%s/lang/in",
            config_ejudge_script_dir);
-  lang_configure_screen(script_dir, 0, 0, 0, header);
+  script_in_dirs[0] = script_in_dir0;
+  script_in_dirs[1] = 0;
+  snprintf(script_dir, sizeof(script_dir), "%s/lang", tmp_work_dir);
+  lang_configure_screen(script_dir, script_in_dirs, 0, 0, 0, header);
 
   if (check_install_script_validity() < 0) return;
 
@@ -3922,6 +3994,8 @@ do_main_menu(void)
   int cur_lang_item = 0;
   unsigned char header[1024];
   path_t script_dir;
+  unsigned char script_in_dir0[PATH_MAX];
+  const unsigned char *script_in_dirs[2];
 
   snprintf(header, sizeof(header), "Ejudge %s configurator", compile_version);
   //lang_configure_screen(config_ejudge_lang_config_dir, header);
@@ -3946,9 +4020,14 @@ do_main_menu(void)
       while (do_identity_menu(&cur_id_item));
       break;
     case 3:
-      snprintf(script_dir, sizeof(script_dir), "%s/lang",
+
+      snprintf(script_in_dir0, sizeof(script_in_dir0), "%s/lang/in",
                config_ejudge_script_dir);
-      while (lang_config_menu(script_dir, header, utf8_mode, &cur_lang_item));
+      script_in_dirs[0] = script_in_dir0;
+      script_in_dirs[1] = 0;
+      snprintf(script_dir, sizeof(script_dir), "%s/lang", tmp_work_dir);
+      while (lang_config_menu(script_dir, script_in_dirs,
+                              header, utf8_mode, &cur_lang_item));
       break;
     case 4:
       do_preview_menu();
@@ -4019,6 +4098,42 @@ get_system_identity(void)
   snprintf(system_group, sizeof(system_group), "%s", gg->gr_name);
 }
 
+static void
+create_tmp_dir(void)
+{
+  int serial = 0;
+  int pid = getpid();
+  const char *tmpdir = 0;
+  unsigned char lang_work_dir[PATH_MAX];
+
+  tmpdir = getenv("TMPDIR");
+  if (!tmpdir) tmpdir = getenv("TEMPDIR");
+#if defined P_tmpdir
+  if (!tmpdir) tmpdir = P_tmpdir;
+#endif
+  if (!tmpdir) tmpdir = "/tmp";
+
+  while (1) {
+    if (serial > 0)
+      snprintf(tmp_work_dir, sizeof(tmp_work_dir), "%s/ejudge-setup.%d.%d",
+               tmpdir, pid, serial);
+    else
+      snprintf(tmp_work_dir, sizeof(tmp_work_dir), "%s/ejudge-setup.%d",
+               tmpdir, pid);
+    if (mkdir(tmp_work_dir, 0700) >= 0) break;
+    if (errno != EEXIST) {
+      fprintf(stderr, "Cannot create a temporary directory\n");
+      exit(1);
+    }
+    serial++;
+  }
+  snprintf(lang_work_dir, sizeof(lang_work_dir), "%s/lang", tmp_work_dir);
+  if (mkdir(lang_work_dir, 0700) < 0) {
+    fprintf(stderr, "Cannot create a temporary directory\n");
+    exit(1);
+  }
+}
+
 static const unsigned char initial_warning[] =
 "\\begin{center}\n"
 "WARNING!\n"
@@ -4079,6 +4194,7 @@ main(int argc, char **argv)
   setlocale(LC_ALL, "");
   if (!strcmp(nl_langinfo(CODESET), "UTF-8")) utf8_mode = 1;
   get_system_identity();
+  create_tmp_dir();
 
   if (ncurses_init() < 0) return 1;
 
@@ -4092,6 +4208,7 @@ main(int argc, char **argv)
   }
 
   ncurses_shutdown();
+  if (tmp_work_dir[0]) remove_directory_recursively(tmp_work_dir);
   return 0;
 }
 

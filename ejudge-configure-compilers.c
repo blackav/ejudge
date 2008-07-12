@@ -41,6 +41,7 @@
 static int utf8_mode;
 static int preserve_compile_cfg;
 static path_t script_dir;
+static path_t script_in_dir;
 static path_t config_dir;
 static path_t ejudge_xml;
 static path_t contests_home_dir;
@@ -326,13 +327,24 @@ visual_setup(unsigned char **keys, unsigned char **vals)
 {
   unsigned char header[1024];
   int cur_item = 0, j;
+  unsigned char script_in_dir0[PATH_MAX];
+  unsigned char script_in_dir1[PATH_MAX];
+  const unsigned char * script_in_dirs[3];
 
   if (ncurses_init() < 0) return 1;
 
   snprintf(header, sizeof(header), "Ejudge %s compiler configuration",
            compile_version);
-  lang_configure_screen(script_dir, config_dir, keys, vals, header);
-  while (lang_config_menu(script_dir, header, utf8_mode, &cur_item));
+
+  snprintf(script_in_dir0, sizeof(script_in_dir0), "%s/in", script_dir);
+  snprintf(script_in_dir1, sizeof(script_in_dir1), "%s", script_in_dir);
+  script_in_dirs[0] = script_in_dir0;
+  script_in_dirs[1] = script_in_dir1;
+  script_in_dirs[2] = 0;
+  lang_configure_screen(script_dir, script_in_dirs,
+                        config_dir, keys, vals, header);
+  while (lang_config_menu(script_dir, script_in_dirs,
+                          header, utf8_mode, &cur_item));
 
   j = ncurses_yesno(0, "\\begin{center}\nSave the configuration updates?\n\\end{center}\n");
   if (j == 1) visual_save_config(header);
@@ -501,10 +513,15 @@ report_help(void)
 {
   path_t script_dir_default = { 0 };
   path_t config_dir_default = { 0 };
-#if defined EJUDGE_SCRIPT_DIR
-  snprintf(script_dir_default, sizeof(script_dir_default),
-           "%s/lang", EJUDGE_SCRIPT_DIR);
+  if (config && config->compile_home_dir) {
+    snprintf(script_dir_default, sizeof(script_dir_default),
+             "%s/scripts", config->compile_home_dir);
+  } else {
+#if defined EJUDGE_CONTESTS_HOME_DIR
+    snprintf(script_dir_default, sizeof(script_dir_default),
+             "%s/compile/scripts", EJUDGE_CONTESTS_HOME_DIR);
 #endif
+  }
 #if defined EJUDGE_LANG_CONFIG_DIR
   snprintf(config_dir_default, sizeof(config_dir_default),
            "%s", EJUDGE_LANG_CONFIG_DIR);
@@ -527,6 +544,9 @@ main(int argc, char **argv)
   unsigned char key[1024];
   unsigned char path[1024];
   struct stat sb;
+  unsigned char script_in_dir0[PATH_MAX];
+  unsigned char script_in_dir1[PATH_MAX];
+  const unsigned char * script_in_dirs[3];
 
   progname = argv[0];
 
@@ -539,6 +559,8 @@ main(int argc, char **argv)
       snprintf(config_dir, sizeof(config_dir), "%s", val);
     } else if (is_prefix(argv[i], "--enable-lang-script-dir=", &val)) {
       snprintf(script_dir, sizeof(script_dir), "%s", val);
+    } else if (is_prefix(argv[i], "--enable-lang-script-in-dir=", &val)) {
+      snprintf(script_in_dir, sizeof(script_in_dir), "%s", val);
     } else if (is_prefix(argv[i], "--enable-ejudge-xml=", &val)) {
       snprintf(ejudge_xml, sizeof(ejudge_xml), "%s", val);
     } else if (is_prefix(argv[i], "--enable-contests-home-dir=", &val)) {
@@ -634,9 +656,14 @@ main(int argc, char **argv)
   setlocale(LC_ALL, "");
   if (!strcmp(nl_langinfo(CODESET), "UTF-8")) utf8_mode = 1;
 
-#if defined EJUDGE_SCRIPT_DIR
+  if (!script_dir[0] && config && config->compile_home_dir) {
+    snprintf(script_dir, sizeof(script_dir), "%s/scripts",
+             config->compile_home_dir);
+  }
+#if defined EJUDGE_CONTESTS_HOME_DIR
   if (!script_dir[0]) {
-    snprintf(script_dir, sizeof(script_dir), "%s/lang", EJUDGE_SCRIPT_DIR);
+    snprintf(script_dir, sizeof(script_dir), "%s/compile/scripts",
+             EJUDGE_CONTESTS_HOME_DIR);
   }
 #endif
 #if defined EJUDGE_LANG_CONFIG_DIR
@@ -644,9 +671,21 @@ main(int argc, char **argv)
     snprintf(config_dir, sizeof(config_dir), "%s", EJUDGE_LANG_CONFIG_DIR);
   }
 #endif
+#if defined EJUDGE_SCRIPT_DIR
+  if (!script_in_dir[0]) {
+    snprintf(script_in_dir, sizeof(script_in_dir), "%s/lang/in",
+             EJUDGE_SCRIPT_DIR);
+  }
+#endif
 
   if (!script_dir[0]) die("script directory is not specified");
-  if (stat(script_dir, &sb) < 0) die("script directory does not exist");
+  if (stat(script_dir, &sb) < 0) {
+    fprintf(stderr, "script directory does not exist, creating...\n");
+    if (make_dir(script_dir, 0775) < 0) {
+      die("cannot create script directory %s", script_dir);
+    }
+    if (stat(script_dir, &sb) < 0) die("oops...");
+  }
   if (!S_ISDIR(sb.st_mode)) die("script directory is not a directory");
   if (!config_dir[0]) die("config directory is not specified");
   if (stat(config_dir, &sb) < 0) {
@@ -662,7 +701,13 @@ main(int argc, char **argv)
 
   fprintf(stderr, "ejudge-configure-compilers %s, compiled %s\n",
           compile_version, compile_date);
-  lang_configure_batch(script_dir, config_dir, keys, vals, stderr);
+  snprintf(script_in_dir0, sizeof(script_in_dir0), "%s/in", script_dir);
+  snprintf(script_in_dir1, sizeof(script_in_dir1), "%s", script_in_dir);
+  script_in_dirs[0] = script_in_dir0;
+  script_in_dirs[1] = script_in_dir1;
+  script_in_dirs[2] = 0;
+  lang_configure_batch(script_dir, script_in_dirs,
+                       config_dir, keys, vals, stderr);
   save_config_files(stderr, 0);
 
   return 0;

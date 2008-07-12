@@ -885,23 +885,23 @@ run_add_record(runlog_state_t state,
     }
   }
 
-  if (locale_id < -1 || locale_id > 127) {
+  if (locale_id < -1 || locale_id > EJ_MAX_LOCALE_ID) {
     err("run_add_record: locale_id is out of range");
     return -1;
   }
-  if (team <= 0 || team > RUNLOG_MAX_TEAM_ID) {
+  if (team <= 0 || team > EJ_MAX_USER_ID) {
     err("run_add_record: team is out of range");
     return -1;
   }
-  if (language < 0 || language >= 255) {
+  if (language < 0 || language > EJ_MAX_LANG_ID) {
     err("run_add_record: language is out of range");
     return -1;
   }
-  if (problem <= 0 || problem > RUNLOG_MAX_PROB_ID) {
+  if (problem <= 0 || problem > EJ_MAX_PROB_ID) {
     err("run_add_record: problem is out of range");
     return -1;
   }
-  if (variant < 0 || variant > 255) {
+  if (variant < 0 || variant > EJ_MAX_VARIANT) {
     err("run_add_record: variant is out of range");
     return -1;
   }
@@ -909,7 +909,7 @@ run_add_record(runlog_state_t state,
     err("run_add_record: is_hidden field value is invalid");
     return -1;
   }
-  if (nsec < 0 || nsec >= 1000000000) {
+  if (nsec < 0 || nsec > NSEC_MAX) {
     err("run_add_record: nsec field value %d is invalid", nsec);
     return -1;
   }
