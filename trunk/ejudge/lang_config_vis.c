@@ -192,7 +192,14 @@ parse_lang_id_file(
 
   snprintf(id_file, sizeof(id_file), "%s/lang_ids.cfg", script_dir);
   if (!(in_f = fopen(id_file, "r"))) {
-    log_printf(err_f, win, "cannot open `%s' for reading\n", id_file);
+#if defined EJUDGE_SCRIPT_DIR
+    snprintf(id_file, sizeof(id_file), "%s/lang/lang_ids.cfg",
+             EJUDGE_SCRIPT_DIR);
+    in_f = fopen(id_file, "r");
+#endif
+  }
+  if (!in_f) {
+    log_printf(err_f, win, "cannot open lang_ids.cfg\n");
     goto cleanup;
   }
   if (!(log_f = open_memstream(&log_t, &log_z))) goto cleanup;
@@ -452,54 +459,68 @@ update_language_script(
 static void
 update_language_scripts(
         const unsigned char *script_dir,
+        const unsigned char * const *in_dirs,
         FILE *log_f,
         WINDOW *win)
 {
-  path_t script_in_dir;
   path_t script_base;
   path_t script_in;
   path_t script_out;
   DIR *d = 0;
   struct dirent *dd;
-  int nlen, need_update = -1;
+  int nlen, need_update = -1, i, j;
   struct stat is, os;
   FILE *upd_f = 0;
   char *upd_t = 0;
   size_t upd_z = 0;
+  unsigned char **scrs = 0;
+  size_t scr_a = 0;
+  size_t scr_u = 0;
 
-  if (!script_dir) return;
-  snprintf(script_in_dir, sizeof(script_in_dir), "%s/in", script_dir);
-  if (!(d = opendir(script_in_dir))) {
-    log_printf(log_f, win, "error: directory `%s' does not exist\n",
-               script_in_dir);
-    return;
-  }
+  if (!script_dir || !in_dirs) return;
   upd_f = open_memstream(&upd_t, &upd_z);
-  while ((dd = readdir(d))) {
-    need_update = -1;
-    if ((nlen = strlen(dd->d_name)) <= 3) continue;
-    if (strcmp(dd->d_name + nlen - 3, ".in") != 0) continue;
-    snprintf(script_base, sizeof(script_base), "%.*s", nlen - 3, dd->d_name);
-    snprintf(script_in, sizeof(script_in), "%s/in/%s.in",
-             script_dir, script_base);
-    snprintf(script_out, sizeof(script_out), "%s/%s", script_dir, script_base);
-    if (stat(script_in, &is) < 0) continue;
-    if (!S_ISREG(is.st_mode)) continue;
-    if (stat(script_out, &os) >= 0) {
-      if (!S_ISREG(os.st_mode)) {
-        log_printf(log_f, win, "error: `%s' is not a regular file\n",
-                   script_out);
-        continue;
+  for (i = 0; in_dirs[i]; i++) {
+    if (!(d = opendir(in_dirs[i]))) continue;
+    while ((dd = readdir(d))) {
+      need_update = -1;
+      if ((nlen = strlen(dd->d_name)) <= 3) continue;
+      if (strcmp(dd->d_name + nlen - 3, ".in") != 0) continue;
+      snprintf(script_base, sizeof(script_base), "%.*s", nlen - 3, dd->d_name);
+      snprintf(script_in, sizeof(script_in), "%s/%s.in",
+               in_dirs[i], script_base);
+      snprintf(script_out, sizeof(script_out), "%s/%s", script_dir,
+               script_base);
+      for (j = 0; j < scr_u; j++)
+        if (!strcmp(scrs[j], script_base))
+          break;
+      if (j < scr_u) continue;
+      if (stat(script_in, &is) < 0) continue;
+      if (!S_ISREG(is.st_mode)) continue;
+      if (stat(script_out, &os) >= 0) {
+        if (!S_ISREG(os.st_mode)) {
+          log_printf(log_f, win, "error: `%s' is not a regular file\n",
+                     script_out);
+          continue;
+        }
+        if (os.st_mtime >= is.st_mtime) continue;
       }
-      if (os.st_mtime >= is.st_mtime) continue;
+      update_language_script(script_in, script_out, script_base, upd_f, log_f,
+                             win);
+      if (scr_u == scr_a) {
+        if (!scr_a) scr_a = 32;
+        else scr_a *= 2;
+        XREALLOC(scrs, scr_a);
+      }
+      scrs[scr_u++] = xstrdup(script_base);
     }
-    update_language_script(script_in, script_out, script_base, upd_f, log_f,
-                           win);
+    closedir(d); d = 0;
   }
-  closedir(d); d = 0;
   fclose(upd_f); upd_f = 0;
   if (upd_t && *upd_t) log_printf(log_f, win, "Scripts updated:%s\n", upd_t);
   xfree(upd_t); upd_t = 0; upd_z = 0;
+  for (i = 0; i < scr_u; i++)
+    xfree(scrs[i]);
+  xfree(scrs);
 }
 
 static int
@@ -667,6 +688,7 @@ reconfigure_language(
 static void
 reconfigure_all_languages(
         const unsigned char *script_dir,
+        const unsigned char * const *script_in_dirs,
         const unsigned char *config_dir,
         unsigned char **keys,
         unsigned char **values,
@@ -678,7 +700,7 @@ reconfigure_all_languages(
   struct dirent *dd;
   int len;
 
-  update_language_scripts(script_dir, log_f, win);
+  update_language_scripts(script_dir, script_in_dirs, log_f, win);
   parse_lang_id_file(script_dir, log_f, win);
 
   if (!(d = opendir(script_dir))) {
@@ -716,6 +738,7 @@ reconfigure_all_languages(
 void
 lang_configure_screen(
         const unsigned char *script_dir,
+        const unsigned char * const * script_in_dirs,
         const unsigned char *config_dir,
         unsigned char **keys,
         unsigned char **values,
@@ -750,7 +773,8 @@ lang_configure_screen(
   update_panels();
   doupdate();
 
-  reconfigure_all_languages(script_dir, config_dir, keys, values, 0, in_win);
+  reconfigure_all_languages(script_dir, script_in_dirs,
+                            config_dir, keys, values, 0, in_win);
   ncurses_print_help("Press any key");
   doupdate();
   c = getch();
@@ -764,12 +788,14 @@ lang_configure_screen(
 void
 lang_configure_batch(
         const unsigned char *script_dir,
+        const unsigned char * const * script_in_dirs,
         const unsigned char *config_dir,
         unsigned char **keys,
         unsigned char **values,
         FILE *log_f)
 {
-  reconfigure_all_languages(script_dir, config_dir, keys, values, log_f, 0);
+  reconfigure_all_languages(script_dir, script_in_dirs,
+                            config_dir, keys, values, log_f, 0);
 }
 
 static int
@@ -783,6 +809,7 @@ lang_sort_func(const void *p1, const void *p2)
 int
 lang_config_menu(
         const unsigned char *script_dir,
+        const unsigned char * const * script_in_dirs,
         const unsigned char *header,
         int utf8_mode,
         int *p_cur_item)
@@ -802,7 +829,7 @@ lang_config_menu(
   int c, cmd, j;
   unsigned char lang_id_buf[32];
 
-  lang_configure_screen(script_dir, 0, 0, 0, header);
+  lang_configure_screen(script_dir, script_in_dirs, 0, 0, 0, header);
   assign_lang_ids();
 
   for (pcfg = lang_first; pcfg; pcfg = pcfg->next) {

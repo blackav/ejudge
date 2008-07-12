@@ -42,6 +42,7 @@ lang_config_lookup(const unsigned char *lang);
 void
 lang_configure_screen(
         const unsigned char *script_dir,
+        const unsigned char * const * script_in_dirs,
         const unsigned char *config_dir,
         unsigned char **keys,
         unsigned char **values,
@@ -49,6 +50,7 @@ lang_configure_screen(
 void
 lang_configure_batch(
         const unsigned char *script_dir,
+        const unsigned char * const * script_in_dirs,
         const unsigned char *config_dir,
         unsigned char **keys,
         unsigned char **values,
@@ -56,6 +58,7 @@ lang_configure_batch(
 int
 lang_config_menu(
         const unsigned char *script_dir,
+        const unsigned char * const * script_in_dirs,
         const unsigned char *header,
         int utf8_mode,
         int *p_cur_item);
