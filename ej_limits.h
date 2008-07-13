@@ -59,6 +59,9 @@
 /* maximal locale identifier */
 #define EJ_MAX_LOCALE_ID 127
 
+/* maximal mime_type value */
+#define EJ_MAX_MIME_TYPE 32767
+
 /* maximal directory depth in base32-encoding */
 #define EJ_MAX_32DIGITS 4
 
@@ -111,5 +114,7 @@
 
 /* number of nanoseconds in a second */
 #define NSEC_MAX 999999999
+
+#define IS_INVALID_BOOL(v) ((v) < 0 || (v) > 1)
 
 #endif /* __EJ_LIMITS_H__ */

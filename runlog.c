@@ -89,9 +89,6 @@ struct run_entry_v1
 };
 
 #define RUNLOG_MAX_SIZE    (2*1024 * 1024)
-#define RUNLOG_MAX_TEAM_ID 100000
-#define RUNLOG_MAX_PROB_ID 100000
-#define RUNLOG_MAX_SCORE   100000
 
 enum
   {
@@ -324,7 +321,9 @@ is_runlog_version_1(runlog_state_t state)
 }
 
 static int
-save_runlog_backup(const unsigned char *path, const unsigned char *suffix)
+save_runlog_backup(
+        const unsigned char *path,
+        const unsigned char *suffix)
 {
   unsigned char *back;
   size_t len;
@@ -503,8 +502,10 @@ write_full_runlog_current_version(runlog_state_t state, const char *path)
 }
 
 int
-run_set_runlog(runlog_state_t state,
-               int total_entries, struct run_entry *entries)
+run_set_runlog(
+        runlog_state_t state,
+        int total_entries,
+        struct run_entry *entries)
 {
   if (runlog_check(0, &state->head, total_entries, entries) < 0)
     return -1;
@@ -532,7 +533,10 @@ run_set_runlog(runlog_state_t state,
 static int run_flush_header(runlog_state_t state);
 
 static int
-read_runlog(runlog_state_t state, time_t init_duration, time_t init_finish_time)
+read_runlog(
+        runlog_state_t state,
+        time_t init_duration,
+        time_t init_finish_time)
 {
   off_t filesize;
   int rem;
@@ -575,9 +579,11 @@ read_runlog(runlog_state_t state, time_t init_duration, time_t init_finish_time)
   while (state->run_u > state->run_a) state->run_a *= 2;
   XCALLOC(state->runs, state->run_a);
   if (state->run_u > 0) {
-    if (do_read(state->run_fd, state->runs, sizeof(state->runs[0]) * state->run_u) < 0) return -1;
+    if (do_read(state->run_fd, state->runs,
+                sizeof(state->runs[0]) * state->run_u) < 0) return -1;
   }
-  if ((r = runlog_check(0, &state->head, state->run_u, state->runs)) < 0) return -1;
+  if ((r = runlog_check(0, &state->head, state->run_u, state->runs)) < 0)
+    return -1;
   if (r > 0) runlog_flush(state);
   build_indices(state);
 
@@ -605,8 +611,12 @@ read_runlog(runlog_state_t state, time_t init_duration, time_t init_finish_time)
 static void teamdb_update_callback(void *);
 
 int
-run_open(runlog_state_t state, const char *path, int flags,
-         time_t init_duration, time_t init_finish_time)
+run_open(
+        runlog_state_t state,
+        const char *path,
+        int flags,
+        time_t init_duration,
+        time_t init_finish_time)
 {
   int           oflags = 0;
   int           i;
@@ -676,9 +686,11 @@ run_flush_entry(runlog_state_t state, int num)
 {
   if (state->run_fd < 0) ERR_R("invalid descriptor %d", state->run_fd);
   if (num < 0 || num >= state->run_u) ERR_R("invalid entry number %d", num);
-  if (sf_lseek(state->run_fd, sizeof(state->head) + sizeof(state->runs[0]) * num,
+  if (sf_lseek(state->run_fd,
+               sizeof(state->head) + sizeof(state->runs[0]) * num,
                SEEK_SET, "run") == (off_t) -1) return -1;
-  if (do_write(state->run_fd, &state->runs[num], sizeof(state->runs[0])) < 0) return -1;
+  if (do_write(state->run_fd, &state->runs[num], sizeof(state->runs[0])) < 0)
+    return -1;
   return 0;
 }
 
@@ -851,20 +863,21 @@ append_record(runlog_state_t state, time_t t, int uid, int nsec)
 }
 
 int
-run_add_record(runlog_state_t state,
-               time_t         timestamp,
-               int            nsec,
-               size_t         size,
-               ruint32_t      sha1[5],
-               ruint32_t      ip,
-               int            ssl_flag,
-               int            locale_id,
-               int            team,
-               int            problem,
-               int            language,
-               int            variant,
-               int            is_hidden,
-               int            mime_type)
+run_add_record(
+        runlog_state_t state,
+        time_t         timestamp,
+        int            nsec,
+        size_t         size,
+        ruint32_t      sha1[5],
+        ruint32_t      ip,
+        int            ssl_flag,
+        int            locale_id,
+        int            team,
+        int            problem,
+        int            language,
+        int            variant,
+        int            is_hidden,
+        int            mime_type)
 {
   int i;
   struct user_entry *ue;
@@ -905,7 +918,7 @@ run_add_record(runlog_state_t state,
     err("run_add_record: variant is out of range");
     return -1;
   }
-  if (is_hidden < 0 || is_hidden > 1) {
+  if (IS_INVALID_BOOL(is_hidden)) {
     err("run_add_record: is_hidden field value is invalid");
     return -1;
   }
@@ -913,11 +926,11 @@ run_add_record(runlog_state_t state,
     err("run_add_record: nsec field value %d is invalid", nsec);
     return -1;
   }
-  if (mime_type < 0 || mime_type > 32767) {
+  if (mime_type < 0 || mime_type > EJ_MAX_MIME_TYPE) {
     err("run_add_record: mime_type field value %d is invalid", mime_type);
     return -1;
   }
-  if (ssl_flag < 0 || ssl_flag > 1) {
+  if (IS_INVALID_BOOL(ssl_flag)) {
     err("run_add_record: ssl_flag field value is invalid");
     return -1;
   }
@@ -1005,15 +1018,21 @@ run_flush_header(runlog_state_t state)
 }
 
 int
-run_change_status(runlog_state_t state, int runid, int newstatus,
-                  int newtest, int newscore, int judge_id)
+run_change_status(
+        runlog_state_t state,
+        int runid,
+        int newstatus,
+        int newtest,
+        int newscore,
+        int judge_id)
 {
   if (runid < 0 || runid >= state->run_u) ERR_R("bad runid: %d", runid);
   if (newstatus < 0 || newstatus > 255) ERR_R("bad newstatus: %d", newstatus);
   if (newtest < -1) ERR_R("bad newtest: %d", newtest);
-  if (newscore < -1 || newscore > RUNLOG_MAX_SCORE)
+  if (newscore < -1 || newscore > EJ_MAX_SCORE)
     ERR_R("bad newscore: %d", newscore);
-  if (judge_id < 0 || judge_id > 65535) ERR_R("bad judge_id: %d", judge_id);
+  if (judge_id < 0 || judge_id > EJ_MAX_JUDGE_ID)
+    ERR_R("bad judge_id: %d", judge_id);
 
   if (newstatus == RUN_VIRTUAL_START || newstatus == RUN_VIRTUAL_STOP)
     ERR_R("virtual status cannot be changed that way");
@@ -1111,9 +1130,13 @@ run_get_finish_time(runlog_state_t state)
 }
 
 void
-run_get_times(runlog_state_t state, 
-              time_t *start, time_t *sched, time_t *dur, time_t *stop,
-              time_t *p_finish_time)
+run_get_times(
+        runlog_state_t state, 
+        time_t *start,
+        time_t *sched,
+        time_t *dur,
+        time_t *stop,
+        time_t *p_finish_time)
 {
   if (start) *start = state->head.start_time;
   if (sched) *sched = state->head.sched_time;
@@ -1153,7 +1176,11 @@ run_get_total(runlog_state_t state)
 }
 
 void
-run_get_team_usage(runlog_state_t state, int teamid, int *pn, size_t *ps)
+run_get_team_usage(
+        runlog_state_t state,
+        int teamid,
+        int *pn,
+        size_t *ps)
 {
   int i;
   int n = 0;
@@ -1175,8 +1202,12 @@ run_get_team_usage(runlog_state_t state, int teamid, int *pn, size_t *ps)
 
 /* FIXME: VERY DUMB */
 int
-run_get_attempts(runlog_state_t state, int runid, int *pattempts,
-                 int *pdisqattempts, int skip_ce_flag)
+run_get_attempts(
+        runlog_state_t state,
+        int runid,
+        int *pattempts,
+        int *pdisqattempts,
+        int skip_ce_flag)
 {
   int i, n = 0, m = 0;
 
@@ -1317,8 +1348,11 @@ run_status_str(int status, char *out, int len, int prob_type, int var_score)
 }
 
 int
-run_get_fog_period(runlog_state_t state, time_t cur_time, int fog_time,
-                   int unfog_time)
+run_get_fog_period(
+        runlog_state_t state,
+        time_t cur_time,
+        int fog_time,
+        int unfog_time)
 {
   time_t estimated_stop;
   time_t fog_start;
@@ -1407,13 +1441,14 @@ run_check_duplicate(runlog_state_t state, int run_id)
 }
 
 int
-run_find_duplicate(runlog_state_t state,
-                   int user_id,
-                   int prob_id,
-                   int lang_id,
-                   int variant,
-                   size_t size,
-                   ruint32_t sha1[])
+run_find_duplicate(
+        runlog_state_t state,
+        int user_id,
+        int prob_id,
+        int lang_id,
+        int variant,
+        size_t size,
+        ruint32_t sha1[])
 {
   int i;
   const struct run_entry *q;
@@ -1443,8 +1478,12 @@ run_find_duplicate(runlog_state_t state,
 }
 
 void
-run_get_accepted_set(runlog_state_t state, int user_id, int accepting_mode,
-                     int max_prob, unsigned char *acc_set)
+run_get_accepted_set(
+        runlog_state_t state,
+        int user_id,
+        int accepting_mode,
+        int max_prob,
+        unsigned char *acc_set)
 {
   int i;
   const struct run_entry *q;
@@ -1511,8 +1550,11 @@ run_get_virtual_start_entry(
 }
 
 int
-run_set_entry(runlog_state_t state, int run_id, unsigned int mask,
-              const struct run_entry *in)
+run_set_entry(
+        runlog_state_t state,
+        int run_id,
+        unsigned int mask,
+        const struct run_entry *in)
 {
   struct run_entry *out;
   struct run_entry te;
@@ -1638,7 +1680,7 @@ run_set_entry(runlog_state_t state, int run_id, unsigned int mask,
     err("run_set_entry: %d: invalid status %d", run_id, te.status);
     return -1;
   }
-  if (te.user_id <= 0 || te.user_id > RUNLOG_MAX_TEAM_ID) {
+  if (te.user_id <= 0 || te.user_id > EJ_MAX_USER_ID) {
     err("run_set_entry: %d: invalid team %d", run_id, te.user_id);
     return -1;
   }
@@ -1677,15 +1719,15 @@ run_set_entry(runlog_state_t state, int run_id, unsigned int mask,
     err("run_set_entry: %d: size %u is invalid", run_id, te.size);
     return -1;
   }
-  if (te.prob_id <= 0 || te.prob_id > RUNLOG_MAX_PROB_ID) {
+  if (te.prob_id <= 0 || te.prob_id > EJ_MAX_PROB_ID) {
     err("run_set_entry: %d: problem %d is invalid", run_id, te.prob_id);
     return -1;
   }
-  if (te.score < -1 || te.score > RUNLOG_MAX_SCORE) {
+  if (te.score < -1 || te.score > EJ_MAX_SCORE) {
     err("run_set_entry: %d: score %d is invalid", run_id, te.score);
     return -1;
   }
-  if (te.locale_id < -1) {
+  if (te.locale_id < -1 || te.locale_id > EJ_MAX_LOCALE_ID) {
     err("run_set_entry: %d: locale_id %d is invalid", run_id, te.locale_id);
     return -1;
   }
@@ -1699,11 +1741,11 @@ run_set_entry(runlog_state_t state, int run_id, unsigned int mask,
     err("run_set_entry: %d: test %d is invalid", run_id, te.test);
     return -1;
   }
-  if (te.is_imported != 0 && te.is_imported != 1) {
+  if (IS_INVALID_BOOL(te.is_imported)) {
     err("run_set_entry: %d: is_imported %d is invalid", run_id,te.is_imported);
     return -1;
   }
-  if (te.is_hidden != 0 && te.is_hidden != 1) {
+  if (IS_INVALID_BOOL(te.is_hidden)) {
     err("run_set_entry: %d: is_hidden %d is invalid", run_id, te.is_hidden);
     return -1;
   }
@@ -1712,11 +1754,11 @@ run_set_entry(runlog_state_t state, int run_id, unsigned int mask,
         run_id);
     return -1;
   }
-  if (te.is_readonly != 0 && te.is_readonly != 1) {
+  if (IS_INVALID_BOOL(te.is_readonly)) {
     err("run_set_entry: %d: is_readonly %d is invalid", run_id,te.is_readonly);
     return -1;
   }
-  if (te.nsec < 0 || te.nsec >= 1000000000) {
+  if (te.nsec < 0 || te.nsec > NSEC_MAX) {
     err("run_set_entry: %d: nsec %d is invalid", run_id, te.nsec);
     return -1;
   }
@@ -1786,8 +1828,13 @@ run_get_virtual_status(runlog_state_t state, int user_id)
 }
 
 int
-run_virtual_start(runlog_state_t state, int user_id, time_t t, ej_ip_t ip,
-                  int ssl_flag, int nsec)
+run_virtual_start(
+        runlog_state_t state,
+        int user_id,
+        time_t t,
+        ej_ip_t ip,
+        int ssl_flag,
+        int nsec)
 {
   struct user_entry *pvt = get_user_entry(state, user_id);
   int i;
@@ -1809,7 +1856,7 @@ run_virtual_start(runlog_state_t state, int user_id, time_t t, ej_ip_t ip,
     err("run_virtual_start: virtual contest for %d already started", user_id);
     return -1;
   }
-  if (nsec < 0 || nsec >= 1000000000) {
+  if (nsec < 0 || nsec > NSEC_MAX) {
     err("run_virtual_start: nsec field value %d is invalid", nsec);
     return -1;
   }
@@ -1825,8 +1872,13 @@ run_virtual_start(runlog_state_t state, int user_id, time_t t, ej_ip_t ip,
 }
 
 int
-run_virtual_stop(runlog_state_t state, int user_id, time_t t, ej_ip_t ip,
-                 int ssl_flag, int nsec)
+run_virtual_stop(
+        runlog_state_t state,
+        int user_id,
+        time_t t,
+        ej_ip_t ip,
+        int ssl_flag,
+        int nsec)
 {
   struct user_entry *pvt = get_user_entry(state, user_id);
   int i;
@@ -1952,7 +2004,8 @@ int
 run_forced_set_judge_id(runlog_state_t state, int run_id, int judge_id)
 {
   if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
-  if (judge_id < 0 || judge_id > 65535) ERR_R("bad judge_id: %d", judge_id);
+  if (judge_id < 0 || judge_id > EJ_MAX_JUDGE_ID)
+    ERR_R("bad judge_id: %d", judge_id);
 
   state->runs[run_id].judge_id = judge_id;
   return run_flush_entry(state, run_id);
@@ -2051,11 +2104,14 @@ run_clear_variables(runlog_state_t state)
 }
 
 int
-run_write_xml(runlog_state_t state,
-              void *serve_state,
-              const struct contest_desc *cnts,
-              FILE *f, int export_mode, int source_mode,
-              time_t current_time)
+run_write_xml(
+        runlog_state_t state,
+        void *serve_state,
+        const struct contest_desc *cnts,
+        FILE *f,
+        int export_mode,
+        int source_mode,
+        time_t current_time)
 {
   //int i;
 
@@ -2118,10 +2174,11 @@ check_msg(int is_err, FILE *flog, const char *format, ...)
 }
 
 int
-runlog_check(FILE *ferr,
-             struct run_header *phead,
-             size_t nentries,
-             struct run_entry *pentries)
+runlog_check(
+        FILE *ferr,
+        struct run_header *phead,
+        size_t nentries,
+        struct run_entry *pentries)
 {
   int i, j;
   int max_team_id;
@@ -2282,7 +2339,7 @@ runlog_check(FILE *ferr,
       nerr++;
       continue;
     }
-    if (e->prob_id > RUNLOG_MAX_PROB_ID) {
+    if (e->prob_id > EJ_MAX_PROB_ID) {
       check_msg(1, ferr, "Run %d problem %d is too large", i, e->prob_id);
       nerr++;
       continue;
@@ -2292,7 +2349,7 @@ runlog_check(FILE *ferr,
       nerr++;
       continue;
     }
-    if (e->score > RUNLOG_MAX_SCORE) {
+    if (e->score > EJ_MAX_SCORE) {
       check_msg(1, ferr, "Run %d score %d is too large", i, e->score);
       nerr++;
       continue;
@@ -2314,17 +2371,17 @@ runlog_check(FILE *ferr,
       nerr++;
       continue;
     }
-    if (e->is_imported != 0 && e->is_imported != 1) {
+    if (IS_INVALID_BOOL(e->is_imported)) {
       check_msg(1,ferr, "Run %d is_imported %d is invalid", i, e->is_imported);
       nerr++;
       continue;
     }
-    if (e->is_readonly != 0 && e->is_readonly != 1) {
+    if (IS_INVALID_BOOL(e->is_readonly)) {
       check_msg(1,ferr, "Run %d is_readonly %d is invalid",i,e->is_readonly);
       nerr++;
       continue;
     }
-    if (e->nsec < 0 || e->nsec >= 1000000000) {
+    if (e->nsec < 0 || e->nsec > NSEC_MAX) {
       check_msg(1,ferr, "Run %d nsec %d is invalid", i, e->nsec);
       nerr++;
       continue;
@@ -2536,7 +2593,7 @@ run_get_total_pages(runlog_state_t state, int user_id)
 {
   int i, total = 0;
 
-  if (user_id <= 0 || user_id > 100000) ERR_R("bad user_id: %d", user_id);
+  if (user_id <= 0 || user_id > EJ_MAX_USER_ID) ERR_R("bad user_id: %d", user_id);
   for (i = 0; i < state->run_u; i++) {
     if (state->runs[i].status == RUN_VIRTUAL_START || state->runs[i].status == RUN_VIRTUAL_STOP
         || state->runs[i].status == RUN_EMPTY) continue;
@@ -2547,8 +2604,13 @@ run_get_total_pages(runlog_state_t state, int user_id)
 }
 
 int
-run_find(runlog_state_t state, int first_run, int last_run,
-         int team_id, int prob_id, int lang_id)
+run_find(
+        runlog_state_t state,
+        int first_run,
+        int last_run,
+        int team_id,
+        int prob_id,
+        int lang_id)
 {
   int i;
 
@@ -2819,8 +2881,11 @@ run_is_source_available(int status)
 }
 
 int
-run_get_virtual_info(runlog_state_t state, int user_id,
-                     struct run_entry *vs, struct run_entry *ve)
+run_get_virtual_info(
+        runlog_state_t state,
+        int user_id,
+        struct run_entry *vs,
+        struct run_entry *ve)
 {
   int count = 0, i, run_start = -1, run_end = -1, s;
 
@@ -2845,8 +2910,11 @@ run_get_virtual_info(runlog_state_t state, int user_id,
 }
 
 int
-run_count_examinable_runs(runlog_state_t state, int prob_id,
-                          int exam_num, int *p_assigned)
+run_count_examinable_runs(
+        runlog_state_t state,
+        int prob_id,
+        int exam_num,
+        int *p_assigned)
 {
   int count = 0, i, assigned_count = 0, j;
   struct run_entry *p;
