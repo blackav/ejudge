@@ -117,7 +117,8 @@ parse_lang_func(struct run_xml_helpers *self, const unsigned char *str)
 
 void
 runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
-                  FILE *hlog, int flags, const unsigned char *in_xml)
+                  FILE *hlog, int flags,
+		  const unsigned char *in_xml)
 {
   const struct section_global_data *global = state->global;
 
