@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007,2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,15 +28,19 @@
 static int get_linux_version(void)
 {
   struct utsname ub;
+  int minor = 0, major = 0, rev = 0;
 
   if (uname(&ub) < 0) {
     fprintf(stderr, "failed: uname() error: %s\n", strerror(errno));
     return -1;
   }
   if (strcmp(ub.sysname, "Linux")) return 0;
-  if (!strncmp(ub.release, "2.4.", 4)) return 4;
-  if (!strncmp(ub.release, "2.6.", 4)) return 6;
-  return 0;
+  if (sscanf(ub.release, "%d.%d.%d", &major, &minor, &rev) != 3) return 0;
+  if (major < 2 || minor < 0 || rev < 0) return 0;
+  if (major == 2 && minor < 4) return 0;
+  if (minor > 999) minor = 999;
+  if (rev > 999) rev = 999;
+  return (major * 1000 + minor) * 1000 + rev;
 }
 static int linux_version = -1;
 
@@ -62,10 +66,11 @@ void do_son(void)
   struct rlimit rl;
   int ptcmd = 0;
 
-  switch (linux_version) {
-  case 4: ptcmd = 0x20; break;
-  case 6: ptcmd = 0x4280; break;
-  default:
+  if (linux_version >= 2006000) {
+    ptcmd = 0x4280;
+  } else if (linux_version >= 2004000) {
+    ptcmd = 0x20;
+  } else {
     fprintf(stderr, "failed: unsupported Linux kernel\n");
     _exit(111);
   }
@@ -99,6 +104,7 @@ int main(void)
     fprintf(stderr, "failed: not Linux or unknown linux version\n");
     return 1;
   }
+  fprintf(stderr, "t3: linux version %d\n", linux_version);
 
   if ((p = fork()) < 0) {
     fprintf(stderr, "failed: unexpected fork() error: %s\n", strerror(errno));
