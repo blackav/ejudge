@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,17 +26,19 @@
 #include <signal.h>
 #include <errno.h>
 #include <sys/ptrace.h>
+#include <limits.h>
 
 #if defined HAVE_CAP_SYS_OPERATIONS && HAVE_CAP_SYS_OPERATIONS > 0
 #include <sys/capability.h>
 #endif
 
-int main(void)
+int main(int argc, char **argv)
 {
 #if defined HAVE_CAP_SYS_OPERATIONS && HAVE_CAP_SYS_OPERATIONS > 0
   cap_t old_caps, new_caps;
   int   setcaps[] = { CAP_SYS_OPERATIONS };
 #endif
+  char progname[PATH_MAX];
 
   fprintf(stderr, "t2: checking for one-time exec\n");
 
@@ -56,8 +58,9 @@ int main(void)
     }
 #endif
   }
+  snprintf(progname, sizeof(progname), "%s_helper", argv[0]);
   errno = 0;
-  execl("./t2_helper", "./t2_helper", NULL);
+  execl(progname, progname, NULL);
   fprintf(stderr, "failed: execl failed: %s\n", strerror(errno));
   return 1;
 }

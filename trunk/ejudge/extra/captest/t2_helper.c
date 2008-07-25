@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,10 +21,14 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
+#include <limits.h>
 
-int main(void)
+int main(int argc, char **argv)
 {
   int p;
+  char progname[PATH_MAX];
+
+  snprintf(progname, sizeof(progname), "%s_2", argv[0]);
 
   p = fork();
   if (!p) _exit(0);
@@ -36,7 +40,7 @@ int main(void)
     fprintf(stderr, "failed: fork() succeeded\n");
     return 1;
   }
-  execl("./t2_helper_2", "./t2_helper_2", NULL);
+  execl(progname, progname, NULL);
   if (errno != EPERM) {
     fprintf(stderr, "failed: unexpected execl() error: %s\n", strerror(errno));
     return 1;

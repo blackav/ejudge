@@ -25,6 +25,9 @@
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <sys/utsname.h>
+#include <limits.h>
+
+static char progname[PATH_MAX];
 
 static int get_linux_version(void)
 {
@@ -72,14 +75,16 @@ void do_son(void)
     _exit(111);
   }
   ptrace(0x4281, 0, 0, 0);
-  execl("./t5_helper", "./t5_helper", NULL);
+  execl(progname, progname, NULL);
   fprintf(stderr, "failed: execl() error: %s\n", strerror(errno));
   _exit(111);
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
   int p, s, d = 0;
+
+  snprintf(progname, sizeof(progname), "%s_helper", argv[0]);
 
   fprintf(stderr, "t5: checking memory limit error for program size\n");
 
