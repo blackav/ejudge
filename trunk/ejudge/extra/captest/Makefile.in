@@ -23,7 +23,7 @@ LD = gcc
 LDLIBS = ${LIBCAP_LINK}
 CFLAGS = -Wall -g -DHAVE_CONFIG_H
 
-CFILES = t1.c t2.c t2_helper.c t2_helper_2.c t3.c t4.c t5.c t5_helper.c t6.c
+CFILES = t1.c t2.c t2_helper.c t2_helper_2.c t3.c t4.c t5.c t5_helper.c t6.c t7.c
 XFILES = $(CFILES:.c=)
 
 all : $(XFILES)
@@ -42,6 +42,9 @@ t2_helper_2 : t2_helper_2.c
 t5_helper : t5_helper.c
 	$(CC) $(CFLAGS) t5_helper.c -o t5_helper
 
+t7_helper : t7_helper.c
+	$(CC) $(CFLAGS) t7_helper.c -o t7_helper -static
+
 tests:
 	./t1
 	./t2
@@ -49,4 +52,5 @@ tests:
 	./t4
 	./t5
 	./t6
+	./t7
 	@echo "All tests have passed successfully"
