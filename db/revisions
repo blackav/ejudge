@@ -3524,3 +3524,12 @@ ejudge_cfg.c 4931 0 1410390
 new_server_html.c 4931 0 35803288
 super_html.c 4931 0 11541445
 testing_report_xml.c 4931 0 1378372
+clarlog.h 4933 0 260510
+ejudge_cfg.h 4933 0 243938
+clean-users.c 4933 0 1031952
+serve.c 4933 0 11552784
+clarlog.c 4933 0 1379226
+html.c 4933 0 15485144
+master_html.c 4933 0 10616486
+new_server_html_2.c 4933 0 14130185
+serve_2.c 4933 0 7622909
