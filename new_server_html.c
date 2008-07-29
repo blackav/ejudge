@@ -12728,8 +12728,8 @@ unprivileged_entry_point(
     return unpriv_page_forgot_password_3(fout, phr, orig_locale_id);
 
   if ((phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
-      && !phr->session_id){
-    //return anon_select_contest_page(fout, phr);
+      && !phr->session_id && config->enable_contest_select){
+    return anon_select_contest_page(fout, phr);
   }
 
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
@@ -13020,13 +13020,14 @@ ns_handle_http_request(struct server_framework_state *state,
 
   if (!strcmp(last_name, "priv-client"))
     privileged_entry_point(fout, phr);
-  else if (!strcmp(last_name, "new-master")) {
+  else if (!strcmp(last_name, "new-master") || !strcmp(last_name, "master")) {
     phr->role = USER_ROLE_ADMIN;
     privileged_entry_point(fout, phr);
-  } else if (!strcmp(last_name, "new-judge")) {
+  } else if (!strcmp(last_name, "new-judge") || !strcmp(last_name, "judge")) {
     phr->role = USER_ROLE_JUDGE;
     privileged_entry_point(fout, phr);
-  } else if (!strcmp(last_name, "new-register")) {
+  } else if (!strcmp(last_name, "new-register")
+             || !strcmp(last_name, "register")) {
     // FIXME: temporary hack
     phr->locale_id = orig_locale_id;
     ns_register_pages(fout, phr);
