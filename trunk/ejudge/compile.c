@@ -34,6 +34,7 @@
 #include "curtime.h"
 #include "serve_state.h"
 #include "startstop.h"
+#include "ejudge_cfg.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -398,6 +399,9 @@ main(int argc, char *argv[])
   FILE *lang_log_f = 0;
   char *lang_log_t = 0;
   size_t lang_log_z = 0;
+  unsigned char *ejudge_xml_path = 0;
+  unsigned char *compile_cfg_path = 0;
+  path_t compile_cfg_buf = { 0 };
 
   start_set_self_args(argc, argv);
   XCALLOC(argv_restart, argc + 1);
@@ -433,16 +437,60 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "-d")) {
       daemon_mode = 1;
       i++;
+    } else if (!strcmp(argv[i], "-x")) {
+      if (++i >= argc) goto print_usage;
+      ejudge_xml_path = argv[i++];
+      argv_restart[j++] = "-x";
+      argv_restart[j++] = ejudge_xml_path;
     } else break;
   }
-  if (i >= argc) goto print_usage;
-  argv_restart[j++] = argv[i];
+  if (i < argc) {
+    compile_cfg_path = argv[i];
+    argv_restart[j++] = argv[i++];
+  }
+  if (i < argc) goto print_usage;
   argv_restart[j] = 0;
   start_set_args(argv_restart);
 
+#if defined EJUDGE_XML_PATH
+  if (!ejudge_xml_path) ejudge_xml_path = EJUDGE_XML_PATH;
+#endif /* EJUDGE_XML_PATH */
+  if (!ejudge_xml_path) {
+    fprintf(stderr, "%s: ejudge.xml configuration file is not specified\n",
+            argv[0]);
+    return 1;
+  }
+  ejudge_config = ejudge_cfg_parse(ejudge_xml_path);
+  if (!ejudge_config) {
+    fprintf(stderr, "%s: ejudge.xml is invalid\n", argv[0]);
+    return 1;
+  }
+
+  if (!compile_cfg_path && ejudge_config->compile_home_dir) {
+    snprintf(compile_cfg_buf, sizeof(compile_cfg_buf),
+             "%s/conf/compile.cfg", ejudge_config->compile_home_dir);
+    compile_cfg_path = compile_cfg_buf;
+  }
+  if (!compile_cfg_path && ejudge_config->contests_home_dir) {
+    snprintf(compile_cfg_buf, sizeof(compile_cfg_buf),
+             "%s/compile/conf/compile.cfg", ejudge_config->contests_home_dir);
+    compile_cfg_path = compile_cfg_buf;
+  }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  if (!compile_cfg_path) {
+    snprintf(compile_cfg_buf, sizeof(compile_cfg_buf),
+             "%s/compile/conf/compile.cfg", EJUDGE_CONTESTS_HOME_DIR);
+    compile_cfg_path = compile_cfg_buf;
+  }
+#endif /* EJUDGE_CONTESTS_HOME_DIR */
+  if (!compile_cfg_path) {
+    fprintf(stderr, "%s: compile.cfg is not specified\n", argv[0]);
+    return 1;
+  }
+
   if (start_prepare(user, group, workdir) < 0) return 1;
 
-  if (prepare(&serve_state, argv[i], prepare_flags, PREPARE_COMPILE,
+  if (prepare(&serve_state, compile_cfg_path, prepare_flags, PREPARE_COMPILE,
               cpp_opts, 0) < 0)
     return 1;
   if (!(lang_log_f = open_memstream(&lang_log_t, &lang_log_z))) return 1;
