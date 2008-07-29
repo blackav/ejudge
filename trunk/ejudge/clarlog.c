@@ -213,8 +213,11 @@ write_all_clarlog(clarlog_state_t state)
 }
 
 static int
-convert_log_from_version_0(clarlog_state_t state, int flags, off_t length,
-                           const unsigned char *path)
+convert_log_from_version_0(
+        clarlog_state_t state,
+        int flags,
+        off_t length,
+        const unsigned char *path)
 {
   path_t v0_path;
   int i;
@@ -405,63 +408,6 @@ clar_flush_entry(clarlog_state_t state, int num)
 }
 
 int
-clar_add_record(clarlog_state_t state,
-                time_t         time,
-                size_t         size,
-                char const    *ip,
-                int            from,
-                int            to,
-                int            flags,
-                int            j_from,
-                int            hide_flag,
-                char const    *subj)
-{
-  int i, j;
-  ej_ip_t r_ip;
-  const unsigned char *charset;
-
-  if (size == 0 || size > 9999) ERR_R("bad size: %lu", size);
-  // FIXME: how to check consistency?
-  /*
-  if (from && !teamdb_lookup(from)) ERR_R("bad from: %d", from);
-  if (to && !teamdb_lookup(to)) ERR_R("bad to: %d", to);
-  */
-  if (flags < 0 || flags > 255) ERR_R("bad flags: %d", flags);
-  if (strlen(subj) > SUBJ_STRING_SIZE)
-    ERR_R("bad subj size: %d", strlen(subj));
-  if (strlen(ip) > IP_STRING_SIZE) ERR_R("bad ip size: %d", strlen(ip));
-  if (xml_parse_ip(0, 0, 0, ip, &r_ip) < 0) ERR_R("bad IP");
-
-  if (state->clars.u >= state->clars.a) {
-    if (!(state->clars.a *= 2)) state->clars.a = 128;
-    state->clars.v = xrealloc(state->clars.v, state->clars.a * sizeof(state->clars.v[0]));
-    info("clar_add_record: array extended: %d", state->clars.a);
-  }
-  i = state->clars.u++;
-
-  memset(&state->clars.v[i], 0, sizeof(state->clars.v[0]));
-  state->clars.v[i].id = i;
-  state->clars.v[i].time = time;
-  state->clars.v[i].size = size;
-  state->clars.v[i].from = from;
-  state->clars.v[i].to = to;
-  state->clars.v[i].flags = flags;
-  state->clars.v[i].j_from = j_from;
-  state->clars.v[i].hide_flag = hide_flag;
-  state->clars.v[i].a.ip = r_ip;
-
-  charset = INTERNAL_CHARSET;
-  strncpy(state->clars.v[i].charset, charset, CLAR_ENTRY_CHARSET_SIZE);
-  state->clars.v[i].charset[CLAR_ENTRY_CHARSET_SIZE - 1] = 0;
-  for (j = 0; state->clars.v[i].charset[j]; j++)
-    state->clars.v[i].charset[j] = tolower(state->clars.v[i].charset[j]);
-
-  base64_decode_str(subj, state->clars.v[i].subj, 0);
-  if (clar_flush_entry(state, i) < 0) return -1;
-  return i;
-}
-
-int
 clar_add_record_new(
         clarlog_state_t state,
         time_t         time,
@@ -541,38 +487,10 @@ clar_add_record_new(
 }
 
 int
-clar_get_record(clarlog_state_t state,
-                int id,
-                time_t        *ptime,
-                size_t        *psize,
-                char          *ip,
-                int           *pfrom,
-                int           *pto,
-                int           *pflags,
-                int           *pj_from,
-                int           *p_hide_flag,
-                char          *subj)
-{
-  if (id < 0 || id >= state->clars.u) ERR_R("bad id: %d", id);
-  if (state->clars.v[id].id != id)
-    ERR_R("id mismatch: %d, %d", id, state->clars.v[id].id);
-
-  if (ptime)   *ptime   = state->clars.v[id].time;
-  if (psize)   *psize   = state->clars.v[id].size;
-  if (ip)                 strcpy(ip, xml_unparse_ip(state->clars.v[id].a.ip));
-  if (pfrom)   *pfrom   = state->clars.v[id].from;
-  if (pto)     *pto     = state->clars.v[id].to;
-  if (pflags)  *pflags  = state->clars.v[id].flags;
-  if (pj_from) *pj_from = state->clars.v[id].j_from;
-  if (p_hide_flag) *p_hide_flag = state->clars.v[id].hide_flag;
-  if (subj)               base64_encode_str(state->clars.v[id].subj, subj);
-  return 0;
-}
-
-int
-clar_get_record_new(clarlog_state_t state,
-                    int clar_id,
-                    struct clar_entry_v1 *pclar)
+clar_get_record_new(
+        clarlog_state_t state,
+        int clar_id,
+        struct clar_entry_v1 *pclar)
 {
   if (clar_id < 0 || clar_id >= state->clars.u) ERR_R("bad id: %d", clar_id);
   if (state->clars.v[clar_id].id != clar_id)
@@ -648,7 +566,10 @@ clar_get_charset_id(
 }
 
 int
-clar_update_flags(clarlog_state_t state, int id, int flags)
+clar_update_flags(
+        clarlog_state_t state,
+        int id,
+        int flags)
 {
   if (id < 0 || id >= state->clars.u) ERR_R("bad id: %d", id);
   if (state->clars.v[id].id != id)
@@ -661,13 +582,32 @@ clar_update_flags(clarlog_state_t state, int id, int flags)
 }
 
 int
+clar_set_charset(
+        clarlog_state_t state,
+        int id,
+        const unsigned char *charset)
+{
+  if (id < 0 || id >= state->clars.u) ERR_R("bad id: %d", id);
+  if (state->clars.v[id].id != id)
+    ERR_R("id mismatch: %d, %d", id, state->clars.v[id].id);
+  snprintf(state->clars.v[id].charset, sizeof(state->clars.v[id].charset),
+           "%s", charset);
+  if (clar_flush_entry(state, id) < 0) return -1;
+  return 0;
+}
+
+int
 clar_get_total(clarlog_state_t state)
 {
   return state->clars.u;
 }
 
 void
-clar_get_team_usage(clarlog_state_t state, int from, int *pn, size_t *ps)
+clar_get_user_usage(
+        clarlog_state_t state,
+        int from,
+        int *pn,
+        size_t *ps)
 {
   int i;
   size_t total = 0;
@@ -683,8 +623,13 @@ clar_get_team_usage(clarlog_state_t state, int from, int *pn, size_t *ps)
 }
 
 char *
-clar_flags_html(clarlog_state_t state, int flags, int from, int to, char *buf,
-                int len)
+clar_flags_html(
+        clarlog_state_t state,
+        int flags,
+        int from,
+        int to,
+        char *buf,
+        int len)
 {
   char *s = "";
 

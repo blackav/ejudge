@@ -17,6 +17,8 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
+
 #include <time.h>
 #include <stdlib.h>
 
@@ -64,45 +66,29 @@ struct clar_entry_v1
 clarlog_state_t clar_init(void);
 clarlog_state_t clar_destroy(clarlog_state_t state);
 int clar_open(clarlog_state_t state, char const *path, int flags);
-int clar_add_record(clarlog_state_t state,
-                    time_t         time,
-                    size_t         size,
-                    char const    *ip,
-                    int            from,
-                    int            to,
-                    int            flags,
-                    int            j_from,
-                    int            hide_flag,
-                    char const    *subj);
-int clar_add_record_new(clarlog_state_t state,
-                        time_t         time,
-                        int            nsec,
-                        size_t         size,
-                        ej_ip_t        ip,
-                        int            ssl_flag,
-                        int            from,
-                        int            to,
-                        int            flags,
-                        int            j_from,
-                        int            hide_flag,
-                        int            locale_id,
-                        int            in_reply_to,
-                        int            appeal_flag,
-                        int            utf8_mode,
-                        const unsigned char *charset,
-                        const unsigned char *subj);
-int clar_get_record(clarlog_state_t state,
-                    int            id,
-                    time_t        *ptime,
-                    size_t        *psize,
-                    char          *ip,
-                    int           *pfrom,
-                    int           *pto,
-                    int           *pflags,
-                    int           *pj_from,
-                    int           *p_hide_flag,
-                    char          *subj);
+int clar_add_record_new(
+        clarlog_state_t state,
+        time_t         time,
+        int            nsec,
+        size_t         size,
+        ej_ip_t        ip,
+        int            ssl_flag,
+        int            from,
+        int            to,
+        int            flags,
+        int            j_from,
+        int            hide_flag,
+        int            locale_id,
+        int            in_reply_to,
+        int            appeal_flag,
+        int            utf8_mode,
+        const unsigned char *charset,
+        const unsigned char *subj);
 int clar_update_flags(clarlog_state_t state, int id, int flags);
+int clar_set_charset(
+        clarlog_state_t state,
+        int id,
+        const unsigned char *charset);
 int clar_get_total(clarlog_state_t state);
 int clar_get_record_new(clarlog_state_t state,
                         int clar_id,
@@ -111,9 +97,19 @@ int clar_get_charset_id(clarlog_state_t state,
                         int clar_id);
 const unsigned char *clar_get_subject(clarlog_state_t state, int clar_id);
 
-void clar_get_team_usage(clarlog_state_t, int, int *, size_t *);
-char *clar_flags_html(clarlog_state_t, int, int, int, char *, int);
-void clar_reset(clarlog_state_t);
-void clar_clear_variables(clarlog_state_t);
+void clar_get_user_usage(
+        clarlog_state_t state,
+        int from,
+        int *pn,
+        size_t *pz);
+char *clar_flags_html(
+        clarlog_state_t state,
+        int flags,
+        int from,
+        int to,
+        char *buf,
+        int len);
+void clar_reset(clarlog_state_t state);
+void clar_clear_variables(clarlog_state_t state);
 
 #endif /* __CLARLOG_H__ */

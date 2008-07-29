@@ -1040,17 +1040,15 @@ write_all_clars(const serve_state_t state, FILE *f, struct user_filter_info *u,
 
   unsigned char first_clar_str[64] = { 0 }, last_clar_str[64] = { 0 };
 
-  size_t size;
-  time_t start, time;
-  int from, to, flags, j_from, hide_flag;
-  unsigned char subj[CLAR_MAX_SUBJ_LEN + 4];
-  unsigned char psubj[CLAR_MAX_SUBJ_TXT_LEN + 4];
+  time_t start;
   unsigned char durstr[64];
-  unsigned char ip[CLAR_MAX_IP_LEN + 4];
   unsigned char hbuf[128];
   unsigned char *asubj = 0;
   int asubj_len = 0, new_len;
   int show_astr_time;
+  const unsigned char *psubj;
+  struct clar_entry_v1 clar;
+  time_t time;
 
   fprintf(f, "<hr><h2>%s</h2>\n", _("Messages"));
 
@@ -1138,42 +1136,45 @@ write_all_clars(const serve_state_t state, FILE *f, struct user_filter_info *u,
   for (j = 0; j < list_tot; j++) {
     i = list_idx[j];
 
-    clar_get_record(state->clarlog_state, i, &time, &size, ip, &from, &to, &flags,
-                    &j_from, &hide_flag, subj);
-    if (mode_clar != 1 && (from <= 0 || flags >= 2)) continue; 
+    if (clar_get_record_new(state->clarlog_state, i, &clar) < 0) continue;
+    if (mode_clar != 1 && (clar.from <= 0 || clar.flags >= 2)) continue; 
 
-    base64_decode_str(subj, psubj, 0);
+    psubj = clar_get_subject(state->clarlog_state, i);
     new_len = html_armored_strlen(psubj);
     new_len = (new_len + 7) & ~3;
     if (new_len > asubj_len) asubj = alloca(asubj_len = new_len);
     html_armor_string(psubj, asubj);
+    time = clar.time;
     if (!start) time = start;
     if (start > time) time = start;
     duration_str(show_astr_time, time, start, durstr, 0);
 
     fprintf(f, "<tr>");
-    if (hide_flag) fprintf(f, "<td>%d#</td>", i);
+    if (clar.hide_flag) fprintf(f, "<td>%d#</td>", i);
     else fprintf(f, "<td>%d</td>", i);
-    fprintf(f, "<td>%s</td>", clar_flags_html(state->clarlog_state, flags, from, to,
+    fprintf(f, "<td>%s</td>", clar_flags_html(state->clarlog_state,
+                                              clar.flags, clar.from, clar.to,
                                               0, 0));
     fprintf(f, "<td>%s</td>", durstr);
-    fprintf(f, "<td>%s</td>", ip);
-    fprintf(f, "<td>%zu</td>", size);
-    if (!from) {
-      if (!j_from)
+    fprintf(f, "<td>%s</td>", xml_unparse_ip(clar.a.ip));
+    fprintf(f, "<td>%zu</td>", clar.size);
+    if (!clar.from) {
+      if (!clar.j_from)
         fprintf(f, "<td><b>%s</b></td>", _("judges"));
       else
         fprintf(f, "<td><b>%s</b> (%s)</td>", _("judges"),
-                teamdb_get_name_2(state->teamdb_state, j_from));
+                teamdb_get_name_2(state->teamdb_state, clar.j_from));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name_2(state->teamdb_state, from));
+      fprintf(f, "<td>%s</td>", teamdb_get_name_2(state->teamdb_state,
+                                                  clar.from));
     }
-    if (!to && !from) {
+    if (!clar.to && !clar.from) {
       fprintf(f, "<td><b>%s</b></td>", _("all"));
-    } else if (!to) {
+    } else if (!clar.to) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name_2(state->teamdb_state, to));
+      fprintf(f, "<td>%s</td>", teamdb_get_name_2(state->teamdb_state,
+                                                  clar.to));
     }
     fprintf(f, "<td>%s</td>", asubj);
     fprintf(f, "<td>%s%s</a></td>",
@@ -2328,25 +2329,25 @@ write_priv_clar(const serve_state_t state, FILE *f, int user_id, int priv_level,
                 int clar_id, const opcap_t *pcaps)
 {
   time_t clar_time, start_time;
-  size_t size, txt_subj_len, html_subj_len, txt_msg_len = 0, html_msg_len;
-  int from, to, flags, j_from, hide_flag;
-  unsigned char ip[CLAR_MAX_IP_LEN + 16];
-  unsigned char b64_subj[CLAR_MAX_SUBJ_LEN + 16];
-  unsigned char txt_subj[CLAR_MAX_SUBJ_LEN + 16];
+  size_t txt_subj_len, html_subj_len, txt_msg_len = 0, html_msg_len;
   unsigned char *html_subj, *txt_msg = 0, *html_msg;
   unsigned char name_buf[64];
   char *tmp_txt_msg = 0;
   unsigned char filtbuf1[1024];
   unsigned char filtbuf2[1024];
   unsigned char filtbuf3[1024];
+  struct clar_entry_v1 clar;
+  const unsigned char *txt_subj;
 
   if (clar_id < 0 || clar_id >= clar_get_total(state->clarlog_state))
     return -SRV_ERR_BAD_CLAR_ID;
 
   start_time = run_get_start_time(state->runlog_state);
-  clar_get_record(state->clarlog_state, clar_id, &clar_time, &size, ip, &from, &to,
-                  &flags, &j_from, &hide_flag, b64_subj);
-  txt_subj_len = base64_decode_str(b64_subj, txt_subj, 0);
+  memset(&clar, 0, sizeof(clar));
+  clar_get_record_new(state->clarlog_state, clar_id, &clar);
+  clar_time = clar.time;
+  txt_subj = clar_get_subject(state->clarlog_state, clar_id);
+  txt_subj_len = strlen(txt_subj);
   html_subj_len = html_armored_strlen(txt_subj);
   html_subj = alloca(html_subj_len);
   html_armor_string(txt_subj, html_subj);
@@ -2354,48 +2355,50 @@ write_priv_clar(const serve_state_t state, FILE *f, int user_id, int priv_level,
   fprintf(f, "<h2>%s %d</h2>\n", _("Message"), clar_id);
   fprintf(f, "<table border=\"0\">\n");
   fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Clar ID"), clar_id);
-  if (hide_flag)
-    fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Available only after contest start"), hide_flag?_("YES"):_("NO"));
+  if (clar.hide_flag)
+    fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Available only after contest start"), clar.hide_flag?_("YES"):_("NO"));
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Flags"),
-          clar_flags_html(state->clarlog_state, flags, from, to, 0, 0));
+          clar_flags_html(state->clarlog_state,
+                          clar.flags, clar.from, clar.to, 0, 0));
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
           _("Time"), duration_str(1, clar_time, 0, 0, 0));
   if (!state->global->is_virtual) {
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
             _("Duration"), duration_str(0, clar_time, start_time, 0, 0));
   }
-  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("IP address"), ip);
-  fprintf(f, "<tr><td>%s:</td><td>%zu</td></tr>\n", _("Size"), size);
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("IP address"),
+          xml_unparse_ip(clar.a.ip));
+  fprintf(f, "<tr><td>%s:</td><td>%zu</td></tr>\n", _("Size"), clar.size);
 
   fprintf(f, "<tr><td>%s:</td>", _("Sender"));
-  if (!from) {
-    if (!j_from)
+  if (!clar.from) {
+    if (!clar.j_from)
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     else
       fprintf(f, "<td><b>%s</b> (%s)</td>", _("judges"),
-              teamdb_get_name(state->teamdb_state, j_from));
+              teamdb_get_name(state->teamdb_state, clar.j_from));
   } else {
-    snprintf(filtbuf1, sizeof(filtbuf1), "uid == %d", from);
+    snprintf(filtbuf1, sizeof(filtbuf1), "uid == %d", clar.from);
     url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
     html_hyperref(filtbuf3, sizeof(filtbuf3), sid, self_url,
                   extra_args, "filter_expr=%s&filter_view=View",
                   filtbuf2);
     fprintf(f, "<td>%s%s (%d)</a></td>", filtbuf3,
-            teamdb_get_name_2(state->teamdb_state, from), from);
+            teamdb_get_name_2(state->teamdb_state, clar.from), clar.from);
   }
   fprintf(f, "</tr>\n<tr><td>%s:</td>", _("To"));
-  if (!to && !from) {
+  if (!clar.to && !clar.from) {
     fprintf(f, "<td><b>%s</b></td>", _("all"));
-  } else if (!to) {
+  } else if (!clar.to) {
     fprintf(f, "<td><b>%s</b></td>", _("judges"));
   } else {
-    snprintf(filtbuf1, sizeof(filtbuf1), "uid == %d", to);
+    snprintf(filtbuf1, sizeof(filtbuf1), "uid == %d", clar.to);
     url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
     html_hyperref(filtbuf3, sizeof(filtbuf3), sid, self_url,
                   extra_args, "filter_expr=%s&filter_view=View",
                   filtbuf2);
     fprintf(f, "<td>%s%s (%d)</a></td>", filtbuf3,
-            teamdb_get_name_2(state->teamdb_state, to), to);
+            teamdb_get_name_2(state->teamdb_state, clar.to), clar.to);
   }
   fprintf(f, "</tr>\n");
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"), html_subj);
@@ -2417,7 +2420,7 @@ write_priv_clar(const serve_state_t state, FILE *f, int user_id, int priv_level,
     fprintf(f, "<pre>%s</pre><hr>", html_msg);
   }
 
-  if (priv_level >= PRIV_LEVEL_JUDGE && from) {
+  if (priv_level >= PRIV_LEVEL_JUDGE && clar.from) {
     html_start_form(f, 2, self_url, hidden_vars);
     fprintf(f, "<input type=\"hidden\" name=\"in_reply_to\" value=\"%d\"/>\n",
             clar_id);
@@ -2492,7 +2495,7 @@ write_priv_users(const serve_state_t state, FILE *f,
     t_extra = team_extra_get_entry(state->team_extra_state, i);
 
     run_get_team_usage(state->runlog_state, i, &runs_num, &runs_total);
-    clar_get_team_usage(state->clarlog_state, i, &clars_num, &clars_total);
+    clar_get_user_usage(state->clarlog_state, i, &clars_num, &clars_total);
     /*
     if (priv_level == PRIV_LEVEL_ADMIN) {
       html_start_form(f, 1, sid, self_url, hidden_vars, extra_args);
@@ -2653,7 +2656,7 @@ write_priv_user(const serve_state_t state, FILE *f, int user_id, int priv_level,
   teamdb_export_team(state->teamdb_state, view_user_id, &info);
   t_extra = team_extra_get_entry(state->team_extra_state, view_user_id);
   run_get_team_usage(state->runlog_state, view_user_id, &runs_num, &runs_total);
-  clar_get_team_usage(state->clarlog_state, view_user_id, &clars_num, &clars_total);
+  clar_get_user_usage(state->clarlog_state, view_user_id, &clars_num, &clars_total);
   pages_total = run_get_total_pages(state->runlog_state, view_user_id);
   flags = teamdb_get_flags(state->teamdb_state, view_user_id);
 
@@ -3491,8 +3494,9 @@ generate_daily_statistics(const serve_state_t state, FILE *f,
   unsigned char *login, *name, probname[256], langname[256];
 
   int clar_total = 0, clar_total_today = 0, clar_from_judges = 0;
-  int clar_to_judges = 0, clar_flags, clar_from, clar_to;
+  int clar_to_judges = 0;
   time_t clar_time;
+  struct clar_entry_v1 clar;
 
   /* u_tot             - total number of teams in index array
    * u_max             - maximal possible number of teams
@@ -3710,14 +3714,13 @@ generate_daily_statistics(const serve_state_t state, FILE *f,
 
   clar_total = clar_get_total(state->clarlog_state);
   for (i = 0; i < clar_total; i++) {
-    if (clar_get_record(state->clarlog_state, i, &clar_time, NULL, NULL,
-                        &clar_from, &clar_to, &clar_flags, NULL, NULL,NULL) < 0)
-      continue;
+    if (clar_get_record_new(state->clarlog_state, i, &clar) < 0) continue;
+    clar_time = clar.time;
     if (clar_time >= to_time) break;
     if (clar_time < from_time) continue;
 
     clar_total_today++;
-    if (!clar_from) clar_from_judges++;
+    if (!clar.from) clar_from_judges++;
     else clar_to_judges++;
   }
 

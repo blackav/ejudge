@@ -862,6 +862,7 @@ cmd_view(struct client_state *p, int len,
   opcap_t caps;
   struct run_entry re;
   struct section_problem_data *prob;
+  struct clar_entry_v1 clar;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -1032,7 +1033,9 @@ cmd_view(struct client_state *p, int len,
     if (p->priv_level == PRIV_LEVEL_JUDGE) {
       int flags = 1;
 
-      clar_get_record(serve_state.clarlog_state, pkt->item, 0, 0, 0, 0, 0, &flags, 0, 0, 0);
+      memset(&clar, 0, sizeof(clar));
+      clar_get_record_new(serve_state.clarlog_state, pkt->item, &clar);
+      flags = clar.flags;
       if (!flags) {
         flags = 1;
         clar_update_flags(serve_state.clarlog_state, pkt->item, flags);
@@ -1363,14 +1366,13 @@ cmd_message(struct client_state *p, int len,
 {
   unsigned char const *dest_login_ptr, *subj_ptr, *text_ptr;
   int dest_uid, hide_flag = 0;
-  unsigned char txt_subj_short[CLAR_MAX_SUBJ_TXT_LEN + 10];
-  unsigned char b64_subj_short[CLAR_MAX_SUBJ_LEN + 10];
   unsigned char *msg, *quoted_ptr, *new_subj;
   char *orig_txt = 0;
   size_t msg_len, orig_txt_len, new_subj_len, quoted_len;
   int clar_id;
   unsigned char clar_name[64], orig_clar_name[64];
   time_t start_time, stop_time;
+  struct clar_entry_v1 clar;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -1437,20 +1439,15 @@ cmd_message(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_BAD_USER_ID);
       return;
     }
-    strncpy(txt_subj_short, subj_ptr, CLAR_MAX_SUBJ_TXT_LEN);
-    if (txt_subj_short[CLAR_MAX_SUBJ_TXT_LEN - 1]) {
-      txt_subj_short[CLAR_MAX_SUBJ_TXT_LEN - 1] = 0;
-      txt_subj_short[CLAR_MAX_SUBJ_TXT_LEN - 2] = '.';
-      txt_subj_short[CLAR_MAX_SUBJ_TXT_LEN - 3] = '.';
-      txt_subj_short[CLAR_MAX_SUBJ_TXT_LEN - 4] = '.';
-    }
-    base64_encode_str(txt_subj_short, b64_subj_short);
     msg = alloca(pkt->subj_len + pkt->text_len + 32);
     msg_len = sprintf(msg, "Subject: %s\n\n%s", subj_ptr, text_ptr);
-    clar_id = clar_add_record(serve_state.clarlog_state, serve_state.current_time, msg_len,
-                              xml_unparse_ip(p->ip),
-                              0, dest_uid, 0, p->user_id,
-                              hide_flag, b64_subj_short);
+    clar_id = clar_add_record_new(serve_state.clarlog_state,
+                                  serve_state.current_time, 0 /* nsec */,
+                                  msg_len, p->ip, p->ssl,
+                                  0, dest_uid, 0, p->user_id,
+                                  hide_flag, 0, 0, 0, 0,
+                                  "", subj_ptr);
+
     if (clar_id < 0) {
       err("%d: cannot add new message", p->id);
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
@@ -1485,11 +1482,13 @@ cmd_message(struct client_state *p, int len,
     // subj_ptr, dest_login_ptr to be ignored
     // if dest_user_id == 0, the reply is sent to all
     // ref_clar_id to be processed
-    if (clar_get_record(serve_state.clarlog_state, pkt->ref_clar_id, 0, 0, 0, &dest_uid, 0, 0,0,0,0) < 0) {
+    if (clar_get_record_new(serve_state.clarlog_state, pkt->ref_clar_id,
+                            &clar) < 0) {
       err("%d: invalid ref_clar_id %d", p->id, pkt->ref_clar_id);
       new_send_reply(p, -SRV_ERR_BAD_CLAR_ID);
       return;
     }
+    dest_uid = clar.from;
     snprintf(orig_clar_name, sizeof(orig_clar_name), "%06d", pkt->ref_clar_id);
     orig_txt = 0;
     orig_txt_len = 0;
@@ -1501,16 +1500,25 @@ cmd_message(struct client_state *p, int len,
 
     new_subj = alloca(orig_txt_len + 64);
     new_subj_len = message_reply_subj(orig_txt, new_subj);
-    message_base64_subj(new_subj, b64_subj_short, CLAR_MAX_SUBJ_TXT_LEN);
     quoted_len = message_quoted_size(orig_txt);
     quoted_ptr = alloca(quoted_len + 16);
     message_quote(orig_txt, quoted_ptr);
     msg = alloca(pkt->text_len + quoted_len + new_subj_len + 64);
     msg_len = sprintf(msg, "%s%s\n%s", new_subj, quoted_ptr, text_ptr);
     if (!pkt->dest_user_id) dest_uid = 0;
-    clar_id = clar_add_record(serve_state.clarlog_state, serve_state.current_time, msg_len,
-                              xml_unparse_ip(p->ip), 0, dest_uid, 0,
-                              p->user_id, hide_flag, b64_subj_short);
+
+    clar_id = clar_add_record_new(serve_state.clarlog_state,
+                                  serve_state.current_time, 0 /* nsec */,
+                                  msg_len, p->ip, p->ssl,
+                                  0 /* from */, dest_uid, 0 /* flags */,
+                                  p->user_id, hide_flag,
+                                  0 /* locale_id */,
+                                  0 /* in_reply_to */,
+                                  0 /* appeal_flag */,
+                                  0 /* utf8_mode */,
+                                  "" /* charset */,
+                                  new_subj);
+
     if (clar_id < 0) {
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
@@ -2332,9 +2340,6 @@ cmd_team_submit_clar(struct client_state *p, int len,
   time_t start_time, stop_time;
   const struct contest_desc *cnts = 0;
 
-  unsigned char subj[CLAR_MAX_SUBJ_TXT_LEN + 16];
-  unsigned char bsubj[CLAR_MAX_SUBJ_LEN + 16];
-
   if (get_peer_local_user(p) < 0) return;
 
   if (len < sizeof(*pkt)) {
@@ -2404,20 +2409,7 @@ cmd_team_submit_clar(struct client_state *p, int len,
   }
 
   // process subject and message body
-  memset(subj, 0, sizeof(subj));
-  if (pkt->subj_len >= CLAR_MAX_SUBJ_TXT_LEN) {
-    strncpy(subj, subj_ptr, CLAR_MAX_SUBJ_TXT_LEN);
-    subj[CLAR_MAX_SUBJ_TXT_LEN - 1] = '.';
-    subj[CLAR_MAX_SUBJ_TXT_LEN - 2] = '.';
-    subj[CLAR_MAX_SUBJ_TXT_LEN - 3] = '.';
-  } else if (!pkt->subj_len) {
-    subj_ptr = _("(no subject)");
-    strcpy(subj, subj_ptr);
-  } else {
-    strcpy(subj, subj_ptr);
-  }
-  subj_len = strlen(subj_ptr);
-  base64_encode_str(subj, bsubj);
+  if (!pkt->subj_len) subj_ptr = _("(no subject)");
 
   full_txt = alloca(subj_len + pkt->text_len + 64);
   full_len = sprintf(full_txt, "Subject: %s\n\n%s", subj_ptr, text_ptr);
@@ -2428,13 +2420,20 @@ cmd_team_submit_clar(struct client_state *p, int len,
     return;
   }
 
-  if ((clar_id = clar_add_record(serve_state.clarlog_state,
-                                 serve_state.current_time, full_len,
-                                 xml_unparse_ip(pkt->ip),
-                                 pkt->user_id, 0, 0, 0, 0, bsubj)) < 0) {
+  clar_id = clar_add_record_new(serve_state.clarlog_state,
+                                serve_state.current_time, 0 /* nsec */,
+                                full_len, pkt->ip, pkt->ssl,
+                                pkt->user_id, 0 /* to */, 0 /* flags */,
+                                0 /* j_from */, 0 /* hide_flag */,
+                                0 /* locale_id */, 0 /* in_reply_to */,
+                                0 /* appeal_flag */, 0 /* utf8_mode */,
+                                "" /* charset */, subj_ptr);
+
+  if (clar_id < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
+
   sprintf(clar_name, "%06d", clar_id);
   if (generic_write_file(full_txt, full_len, 0,
                          serve_state.global->clar_archive_dir, clar_name, "") < 0) {

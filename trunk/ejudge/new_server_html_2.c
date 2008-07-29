@@ -2322,7 +2322,7 @@ ns_user_info_page(FILE *fout, FILE *log_f,
   teamdb_export_team(cs->teamdb_state, view_user_id, &u_info);
   u_extra = team_extra_get_entry(cs->team_extra_state, view_user_id);
   run_get_team_usage(cs->runlog_state, view_user_id, &runs_num, &runs_total);
-  clar_get_team_usage(cs->clarlog_state,view_user_id, &clars_num, &clars_total);
+  clar_get_user_usage(cs->clarlog_state,view_user_id, &clars_num, &clars_total);
   pages_total = run_get_total_pages(cs->runlog_state, view_user_id);
   flags = teamdb_get_flags(cs->teamdb_state, view_user_id);
   u = u_info.user;

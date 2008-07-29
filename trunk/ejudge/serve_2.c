@@ -362,7 +362,7 @@ serve_check_clar_quota(serve_state_t state, int user_id, size_t size)
   size_t total;
 
   if (size > state->global->max_clar_size) return -1;
-  clar_get_team_usage(state->clarlog_state, user_id, &num, &total);
+  clar_get_user_usage(state->clarlog_state, user_id, &num, &total);
   if (num > state->global->max_clar_num
       || total + size > state->global->max_clar_total)
     return -1;

@@ -53,7 +53,7 @@ struct ejudge_cfg
   int disable_cookie_ip_check;
   int enable_contest_select;
 
-  // these strings actually point into another strings in XML tree
+  // these strings actually point into other strings in XML tree
   unsigned char *socket_path;
   unsigned char *db_path;
   unsigned char *contests_dir;

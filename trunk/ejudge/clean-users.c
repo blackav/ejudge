@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -82,8 +82,6 @@ main(int argc, char **argv)
   int total_runs, total_clars;
   struct run_entry *run_entries, *cur_entry;
   int empty_entries, virt_events, temp_events, inv_events, reg_events;
-  size_t clar_size;
-  int clar_from, clar_to;
   unsigned char *out_flags;
   struct vcntslist *cntsp;
   struct userlist_clnt *server_conn;
@@ -91,6 +89,7 @@ main(int argc, char **argv)
   const unsigned char *cfg_path = 0;
   unsigned char reply_buf[128], *reply;
   size_t reply_len;
+  struct clar_entry_v1 clar;
 
   /*
   if (argc == 1) {
@@ -280,35 +279,34 @@ main(int argc, char **argv)
       info("contest %d found %d clarlog entries", i, total_clars);
       printf("contest %d clar statistics: %d total\n", i, total_clars);
       for (j = 0; j < total_clars; j++) {
-        if (clar_get_record(clarlog_state, j, 0, &clar_size, 0, &clar_from,
-                            &clar_to, 0, 0, 0, 0) < 0) {
+        if (clar_get_record_new(clarlog_state, j, &clar) < 0) {
           err("contest %d failed to read clar %d", i, j);
         } else {
-          if (clar_from != 0 && clar_from == clar_to) {
-            if (clar_from <= 0 || clar_from > max_user_id
-                || !userlist->user_map[clar_from]) {
-              err("contest %d clarlog %d invalid user_id %d", i, j, clar_from);
+          if (clar.from != 0 && clar.from == clar.to) {
+            if (clar.from <= 0 || clar.from > max_user_id
+                || !userlist->user_map[clar.from]) {
+              err("contest %d clarlog %d invalid user_id %d", i, j, clar.from);
             } else {
-              user_stat[clar_from].clar_num++;
-              user_stat[clar_from].clar_size += clar_size;
+              user_stat[clar.from].clar_num++;
+              user_stat[clar.from].clar_size += clar.size;
             }
           } else {
-            if (clar_from != 0) {
-              if (clar_from <= 0 || clar_from > max_user_id
-                  || !userlist->user_map[clar_from]) {
-                err("contest %d clarlog %d invalid user_id %d",i,j,clar_from);
+            if (clar.from != 0) {
+              if (clar.from <= 0 || clar.from > max_user_id
+                  || !userlist->user_map[clar.from]) {
+                err("contest %d clarlog %d invalid user_id %d",i,j,clar.from);
               } else {
-                user_stat[clar_from].clar_num++;
-                user_stat[clar_from].clar_size += clar_size;
+                user_stat[clar.from].clar_num++;
+                user_stat[clar.from].clar_size += clar.size;
               }
             }
-            if (clar_to != 0) {
-              if (clar_to <= 0 || clar_to > max_user_id
-                  || !userlist->user_map[clar_to]) {
-                err("contest %d clarlog %d invalid user_id %d",i,j,clar_to);
+            if (clar.to != 0) {
+              if (clar.to <= 0 || clar.to > max_user_id
+                  || !userlist->user_map[clar.to]) {
+                err("contest %d clarlog %d invalid user_id %d",i,j,clar.to);
               } else {
-                user_stat[clar_to].clar_num++;
-                user_stat[clar_to].clar_size += clar_size;
+                user_stat[clar.to].clar_num++;
+                user_stat[clar.to].clar_size += clar.size;
               }
             }
           }
