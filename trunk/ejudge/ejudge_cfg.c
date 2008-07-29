@@ -99,6 +99,7 @@ enum
     AT_LOAD,
     AT_DEFAULT,
     AT_DISABLE_COOKIE_IP_CHECK,
+    AT_ENABLE_CONTEST_SELECT,
 
     AT__BARRIER,
     AT__DEFAULT,
@@ -175,6 +176,7 @@ static char const * const attr_map[] =
   "load",
   "default",
   "disable_cookie_ip_check",
+  "enable_contest_select",
   0,
   "_default",
 
@@ -449,6 +451,9 @@ ejudge_cfg_parse(char const *path)
       break;
     case AT_DISABLE_COOKIE_IP_CHECK:
       if (xml_attr_bool(a, &cfg->disable_cookie_ip_check) < 0) goto failed;
+      break;
+    case AT_ENABLE_CONTEST_SELECT:
+      if (xml_attr_bool(a, &cfg->enable_contest_select) < 0) goto failed;
       break;
     default:
       xml_err_attr_not_allowed(&cfg->b, a);

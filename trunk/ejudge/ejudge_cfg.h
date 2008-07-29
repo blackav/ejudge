@@ -51,6 +51,7 @@ struct ejudge_cfg
   int l10n;
   int serialization_key;
   int disable_cookie_ip_check;
+  int enable_contest_select;
 
   // these strings actually point into another strings in XML tree
   unsigned char *socket_path;

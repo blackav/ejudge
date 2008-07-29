@@ -36,7 +36,7 @@
 #define EJ_MAX_PROB_ID  999999         // [1 .. MAX]
 
 /* maximal number of simultaneously supported testers */
-#define EJ_MAX_TESTER  100             // [1 .. MAX]
+#define EJ_MAX_TESTER  999999          // [1 .. MAX]
 
 /* maximal number of tests */
 #define EJ_MAX_TEST_NUM 32766

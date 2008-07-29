@@ -546,7 +546,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
 
     case TR_A_SCORE:
       if (xml_attr_int(a, &x) < 0) return -1;
-      if (x < 0 || x > 100000) { /* FIXME: use ej_limits.h */
+      if (x < 0 || x > EJ_MAX_SCORE) {
         xml_err_attr_invalid(a);
         return -1;
       }
