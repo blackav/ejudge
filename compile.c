@@ -407,7 +407,7 @@ main(int argc, char *argv[])
   XCALLOC(argv_restart, argc + 1);
   argv_restart[j++] = argv[0];
 
-  if (argc == 1) goto print_usage;
+  //if (argc == 1) goto print_usage;
   code = 1;
 
   while (i < argc) {
@@ -442,6 +442,9 @@ main(int argc, char *argv[])
       ejudge_xml_path = argv[i++];
       argv_restart[j++] = "-x";
       argv_restart[j++] = ejudge_xml_path;
+    } else if (!strcmp(argv[i], "--help")) {
+      code = 0;
+      goto print_usage;
     } else break;
   }
   if (i < argc) {
@@ -536,17 +539,16 @@ main(int argc, char *argv[])
   return 0;
 
  print_usage:
-  printf("Usage: %s [ OPTS ] config-file\n", argv[0]);
+  printf("Usage: %s [ OPTS ] [config-file]\n", argv[0]);
   printf("  -k key - specify language key\n");
   printf("  -DDEF  - define a symbol for preprocessor\n");
-  /*
-    -i
-    -k
-    -D
-    -u
-    -g
-    -C
-   */
+  printf("  -D     - start in daemon mode\n");
+  printf("  -i     - initialize mode: create all dirs and exit\n");
+  printf("  -k KEY - specify a language filter key\n");
+  printf("  -u U   - start as used U (only as root)\n");
+  printf("  -g G   - start as group G (only as root)\n");
+  printf("  -C D   - change directory to D\n");
+  printf("  -x X   - specify a path to ejudge.xml file\n");
   return code;
 }
 
