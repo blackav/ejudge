@@ -1842,6 +1842,7 @@ ns_write_priv_clar(const serve_state_t cs,
 
   if (phr->role >= USER_ROLE_JUDGE && clar.from
       && opcaps_check(phr->caps, OPCAP_REPLY_MESSAGE) >= 0) {
+    fprintf(f, "<hr/>\n");
     html_start_form(f, 2, phr->self_url, phr->hidden_vars);
     html_hidden(f, "in_reply_to", "%d", clar_id);
     fprintf(f, "<p>%s\n", BUTTON(NEW_SRV_ACTION_CLAR_REPLY_READ_PROBLEM));
