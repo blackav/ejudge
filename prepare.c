@@ -2766,12 +2766,22 @@ set_defaults(serve_state_t state, int mode)
         err("language.%d.cmd must be set", i);
         return -1;
       }
-      /*
-      pathmake2(lang->cmd, g->script_dir, "/", "lang", "/", lang->cmd, NULL);
-      vinfo("language.%d.cmd is %s", i, lang->cmd);
-      */
-      pathmake2(lang->cmd, ejudge_config->compile_home_dir,
-                "/", "scripts", "/", lang->cmd, NULL);
+      if (!os_IsAbsolutePath(lang->cmd) && ejudge_config
+          && ejudge_config->compile_home_dir) {
+        pathmake2(lang->cmd, ejudge_config->compile_home_dir,
+                  "/", "scripts", "/", lang->cmd, NULL);
+      }
+      if (!os_IsAbsolutePath(lang->cmd) && ejudge_config
+                 && ejudge_config->contests_home_dir) {
+        snprintf(lang->cmd, sizeof(lang->cmd), "%s/compile/scripts",
+                 ejudge_config->contests_home_dir);
+      }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+      if (!os_IsAbsolutePath(lang->cmd)) {
+        snprintf(lang->cmd, sizeof(lang->cmd), "%s/compile/scripts",
+                 EJUDGE_CONTESTS_HOME_DIR);
+      }
+#endif /* EJUDGE_CONTESTS_HOME_DIR */
       vinfo("language.%d.cmd is %s", i, lang->cmd);      
       if (lang->compile_real_time_limit == -1) {
         lang->compile_real_time_limit = g->compile_real_time_limit;
