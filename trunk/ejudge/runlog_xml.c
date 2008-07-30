@@ -690,16 +690,16 @@ encode_file(
   unsigned long b64_len;
 
   if (!txt || !len) {
-    html_armor_extend(b2, 0);
+    html_armor_reserve(b2, 0);
     b2->buf[0] = 0;
     return b2->buf;
   }
 
   comp_exp_len = compressBound(len);
-  html_armor_extend(b1, comp_exp_len);
+  html_armor_reserve(b1, comp_exp_len);
   compress2(b1->buf, &comp_exp_len, txt, len, 9);
   b64_len = (comp_exp_len * 4) / 3 + 32;
-  html_armor_extend(b2, b64_len);
+  html_armor_reserve(b2, b64_len);
   b64_len = base64_encode(b1->buf, comp_exp_len, b2->buf);
   b2->buf[b64_len] = 0;
   return b2->buf;
