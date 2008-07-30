@@ -523,13 +523,30 @@ html_armor_init(struct html_armor_buffer *pb)
 }
 
 void
-html_armor_extend(struct html_armor_buffer *pb, size_t newsz)
+html_armor_reserve(struct html_armor_buffer *pb, size_t newsz)
 {
   if (newsz < pb->size) return;
   xfree(pb->buf);
   if (!pb->size) pb->size = 64;
   while (newsz >= pb->size) pb->size *= 2;
   pb->buf = (unsigned char*) xmalloc(pb->size);
+}
+
+void
+html_armor_extend(struct html_armor_buffer *pb, size_t newsz)
+{
+  size_t newalloc = pb->size;
+  unsigned char *newbuf = 0;
+
+  if (newsz < newalloc) return;
+  if (!newalloc) newalloc = 64;
+  while (newsz >= newalloc) newalloc *= 2;
+  newbuf = (unsigned char *) xmalloc(newalloc);
+  if (pb->size > 0) {
+    memcpy(newbuf, pb->buf, pb->size);
+  }
+  pb->buf = newbuf;
+  pb->size = newalloc;
 }
 
 const unsigned char *

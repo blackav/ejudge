@@ -214,12 +214,12 @@ charset_recode(
     snprintf(tmpbuf, sizeof(tmpbuf), "invalid conversion from %s to %s",
              ci->name, INTERNAL_CHARSET);
     tmplen = strlen(tmpbuf);
-    html_armor_extend(ab, tmplen);
+    html_armor_reserve(ab, tmplen);
     strcpy(ab->buf, tmpbuf);
     return ab->buf;
   }
 
-  html_armor_extend(ab, 63);
+  html_armor_reserve(ab, 63);
   inbuf = (char*) str;
   inbytesleft = strlen(str);
   outbuf = ab->buf;

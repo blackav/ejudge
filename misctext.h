@@ -3,7 +3,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,6 +36,7 @@ int html_armor_needed(const unsigned char *str, size_t *psz);
 
 #define HTML_ARMOR_INITIALIZER { 0, 0 }
 void html_armor_init(struct html_armor_buffer *pb);
+void html_armor_reserve(struct html_armor_buffer *pb, size_t newsz);
 void html_armor_extend(struct html_armor_buffer *pb, size_t newsz);
 const unsigned char *html_armor_buf(struct html_armor_buffer *pb,
                                     const unsigned char *s);
