@@ -4424,7 +4424,7 @@ do_loop(void)
     check_remove_queue();
 
     /* check whether we should generate dayly statistics */
-    serve_check_stat_generation(&serve_state, cur_contest, 0);
+    serve_check_stat_generation(&serve_state, cur_contest, 0, 0);
 
     /* check stop and start times */
     if (!serve_state.global->is_virtual) {
@@ -4601,7 +4601,7 @@ main(int argc, char *argv[])
   serve_build_compile_dirs(&serve_state);
   serve_build_run_dirs(&serve_state);
   i = do_loop();
-  serve_check_stat_generation(&serve_state, cur_contest, 1);
+  serve_check_stat_generation(&serve_state, cur_contest, 1, 0);
   serve_update_status_file(&serve_state, 1);
   team_extra_flush(serve_state.team_extra_state);
   if (i < 0) i = 1;

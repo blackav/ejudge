@@ -3454,8 +3454,12 @@ is_registered_today(const serve_state_t state, struct userlist_user *user,
 }
 
 void
-generate_daily_statistics(const serve_state_t state, FILE *f,
-                          time_t from_time, time_t to_time)
+generate_daily_statistics(
+        const serve_state_t state,
+        FILE *f,
+        time_t from_time,
+        time_t to_time,
+        int utf8_mode)
 {
   int u_max, u_tot;
   int *u_ind, *u_rev;
@@ -3490,6 +3494,7 @@ generate_daily_statistics(const serve_state_t state, FILE *f,
   int total_ce = 0;
   int total_reg = 0;
   int total_runs = 0;
+  int w, y;
 
   unsigned char *login, *name, probname[256], langname[256];
 
@@ -3731,7 +3736,9 @@ generate_daily_statistics(const serve_state_t state, FILE *f,
       u = u_ind[i];
       if (!(login = teamdb_get_login(state->teamdb_state, u))) login = "";
       if (!(name = teamdb_get_name(state->teamdb_state, u))) name = "";
-      fprintf(f, "  %-6d %-15.15s %-30.30s\n", u, login, name);
+      w = 30; y = 0;
+      if (utf8_mode) w = utf8_cnt(name, w, &y);
+      fprintf(f, "  %-6d %-15.15s %-*.*s\n", u, login, w + y, w, name);
     }
     fprintf(f, "\n");
   }
@@ -3788,7 +3795,10 @@ generate_daily_statistics(const serve_state_t state, FILE *f,
       p = p_ind[i];
       snprintf(probname, sizeof(probname), "%s: %s",
                state->probs[p]->short_name, state->probs[p]->long_name);
-      fprintf(f, "%-40.40s %-7d %-7d\n", probname, p_total[i], p_ok[i]);
+      w = 40; y = 0;
+      if (utf8_mode) w = utf8_cnt(probname, w, &y);
+      fprintf(f, "%-*.*s %-7d %-7d\n", w + y, w, probname, p_total[i],
+              p_ok[i]);
     }
     fprintf(f, "\n");
   }
@@ -3805,8 +3815,10 @@ generate_daily_statistics(const serve_state_t state, FILE *f,
       snprintf(langname, sizeof(langname), "%s - %s",
                state->langs[i]->short_name,
                state->langs[i]->long_name);
-      fprintf(f, "%-40.40s %-7d %-7d %-7d\n",
-              langname, l_total[i], l_ce[i], l_ok[i]);
+      w = 40; y = 0;
+      if (utf8_mode) w = utf8_cnt(langname, w, &y);
+      fprintf(f, "%-*.*s %-7d %-7d %-7d\n", w + y, w, langname, l_total[i],
+              l_ce[i], l_ok[i]);
     }
     fprintf(f, "\n");
   }
@@ -3838,8 +3850,10 @@ generate_daily_statistics(const serve_state_t state, FILE *f,
       if (!name) name = teamdb_get_login(state->teamdb_state, u);
       if (!name) name = "";
 
-      fprintf(f, "%-7d %-24.24s %-7d %-7d %-7d %d/%d/%d %d/%d/%d/%d/%d/%d\n",
-              u, name, u_total[j], u_ok[j], u_failed[j],
+      w = 24; y = 0;
+      if (utf8_mode) w = utf8_cnt(name, w, &y);
+      fprintf(f, "%-7d %-*.*s %-7d %-7d %-7d %d/%d/%d %d/%d/%d/%d/%d/%d\n",
+              u, w + y, w, name, u_total[j], u_ok[j], u_failed[j],
               u_cf[j], u_ce[j], u_ign[j],
               u_afterok[j], u_errors[j], u_trans[j],
               u_ac[j], u_disq[j], u_pend[j]);

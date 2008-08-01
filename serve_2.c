@@ -587,8 +587,12 @@ serve_get_email_sender(const struct contest_desc *cnts)
 }
 
 static void
-generate_statistics_email(serve_state_t state, const struct contest_desc *cnts,
-                          time_t from_time, time_t to_time)
+generate_statistics_email(
+        serve_state_t state,
+        const struct contest_desc *cnts,
+        time_t from_time,
+        time_t to_time,
+        int utf8_mode)
 {
   unsigned char esubj[1024];
   struct tm *ptm;
@@ -606,7 +610,7 @@ generate_statistics_email(serve_state_t state, const struct contest_desc *cnts,
            state->global->contest_id);
 
   eout = open_memstream(&etxt, &elen);
-  generate_daily_statistics(state, eout, from_time, to_time);
+  generate_daily_statistics(state, eout, from_time, to_time, utf8_mode);
   fclose(eout); eout = 0;
   if (!etxt || !*etxt) {
     xfree(etxt);
@@ -644,9 +648,11 @@ generate_statistics_email(serve_state_t state, const struct contest_desc *cnts,
 }
 
 void
-serve_check_stat_generation(serve_state_t state,
-                            const struct contest_desc *cnts,
-                            int force_flag)
+serve_check_stat_generation(
+        serve_state_t state,
+        const struct contest_desc *cnts,
+        int force_flag,
+        int utf8_mode)
 {
   struct tm *ptm;
   time_t thisday, nextday;
@@ -702,7 +708,7 @@ serve_check_stat_generation(serve_state_t state,
       state->stat_report_time = 0;
       return;
     }
-    generate_statistics_email(state, cnts, thisday, nextday);
+    generate_statistics_email(state, cnts, thisday, nextday, utf8_mode);
     thisday = nextday;
   }
 

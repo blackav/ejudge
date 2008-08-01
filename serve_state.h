@@ -248,7 +248,7 @@ int serve_create_symlinks(serve_state_t state);
 const unsigned char *serve_get_email_sender(const struct contest_desc *cnts);
 void serve_check_stat_generation(serve_state_t state,
                                  const struct contest_desc *cnts,
-                                 int force_flag);
+                                 int force_flag, int utf8_mode);
 
 int serve_state_load_contest(int contest_id,
                              struct userlist_clnt *ul_conn,

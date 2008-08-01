@@ -3,7 +3,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -250,7 +250,7 @@ int write_xml_team_testing_report(serve_state_t, FILE *f,
 int write_audit_log(const serve_state_t, FILE *f, int run_id);
 
 void generate_daily_statistics(const serve_state_t, FILE *f,
-                               time_t from_time, time_t to_time);
+                               time_t from_time, time_t to_time, int utf8_mode);
 
 void
 html_write_user_problems_summary(const serve_state_t state,
