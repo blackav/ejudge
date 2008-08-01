@@ -273,7 +273,7 @@ ns_unload_contest(int contest_id)
   contests_get(contest_id, &cnts);
 
   if (extra->serve_state) {
-    serve_check_stat_generation(extra->serve_state, cnts, 1);
+    serve_check_stat_generation(extra->serve_state, cnts, 1, utf8_mode);
     serve_update_status_file(extra->serve_state, 1);
     team_extra_flush(extra->serve_state->team_extra_state);
     extra->serve_state = serve_state_destroy(extra->serve_state, cnts, ul_conn);
