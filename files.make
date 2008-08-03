@@ -69,31 +69,6 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/set_passwd.c\
  userlist_clnt/team_cookie.c
 
-SERVE_CLNT_CFILES=\
- serve_clnt/do_pass_fd.c\
- serve_clnt/edit_run.c\
- serve_clnt/edit_user.c\
- serve_clnt/get_archive.c\
- serve_clnt/get_param.c\
- serve_clnt/import_xml_runs.c\
- serve_clnt/master_page.c\
- serve_clnt/message.c\
- serve_clnt/open.c\
- serve_clnt/pass_fd.c\
- serve_clnt/recv_packet.c\
- serve_clnt/rejudge_by_mask.c\
- serve_clnt/reset_filter.c\
- serve_clnt/send_packet.c\
- serve_clnt/show_item.c\
- serve_clnt/simple_cmd.c\
- serve_clnt/standings.c\
- serve_clnt/submit_clar.c\
- serve_clnt/submit_run.c\
- serve_clnt/submit_run_2.c\
- serve_clnt/team_page.c\
- serve_clnt/upload_report.c\
- serve_clnt/view.c
-
 SUPER_CLNT_CFILES=\
  super_clnt/control.c\
  super_clnt/create_contest.c\
@@ -310,7 +285,6 @@ CFILES=\
  unix/full_archive.c\
  win32/full_archive.c\
  ${COMMON_CFILES}\
- ${SERVE_CLNT_CFILES}\
  ${SUPER_CLNT_CFILES}\
  ${USERLIST_CLNT_CFILES}\
  ${NEW_SERVER_CLNT_CFILES}
@@ -372,7 +346,6 @@ HFILES=\
  run_packet.h\
  run_packet_priv.h\
  server_framework.h\
- serve_clnt.h\
  serve_state.h\
  sformat.h\
  shellcfg_parse.h\

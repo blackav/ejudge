@@ -3855,12 +3855,10 @@ generate_install_script(FILE *f)
   gen_cmd_run(f, "%s/compile -u %s -g %s -C \"%s\" -i conf/compile.cfg",
               EJUDGE_SERVER_BIN_PATH, config_system_uid, config_system_gid,
               config_compile_home_dir);
-  /*
   fprintf(f, "# Do probe run of the contest server to create dirs\n");
   gen_cmd_run(f, "%s -u %s -g %s -C \"%s\" -i conf/serve.cfg",
               config_ejudge_serve_path, config_system_uid,
               config_system_gid, config_contest1_home_dir);
-  */
   fprintf(f, "# Create necessary files for `new-server'\n");
   gen_cmd_run(f, "%s/new-server -u %s -g %s -C \"%s\" --create",
               EJUDGE_SERVER_BIN_PATH, config_system_uid,
