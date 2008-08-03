@@ -3214,7 +3214,8 @@ do_preview_menu(void)
   script_in_dirs[1] = 0;
   snprintf(script_dir, sizeof(script_dir), "%s/lang",
            tmp_work_dir);
-  lang_configure_screen(script_dir, script_in_dirs, 0, 0, 0, preview_header);
+  lang_configure_screen(script_dir, script_in_dirs, 0,
+                        tmp_work_dir, 0, 0, preview_header);
 
   while (1) {
     mvwprintw(stdscr, 0, 0, "Ejudge %s configurator > File preview",
@@ -3883,7 +3884,8 @@ preview_install_script(void)
   script_in_dirs[0] = script_in_dir0;
   script_in_dirs[1] = 0;
   snprintf(script_dir, sizeof(script_dir), "%s/lang", tmp_work_dir);
-  lang_configure_screen(script_dir, script_in_dirs, 0, 0, 0, header);
+  lang_configure_screen(script_dir, script_in_dirs, 0,
+                        tmp_work_dir, 0, 0, header);
 
   /*
   snprintf(script_dir, sizeof(script_dir), "%s/lang",
@@ -3920,7 +3922,8 @@ save_install_script(void)
   script_in_dirs[0] = script_in_dir0;
   script_in_dirs[1] = 0;
   snprintf(script_dir, sizeof(script_dir), "%s/lang", tmp_work_dir);
-  lang_configure_screen(script_dir, script_in_dirs, 0, 0, 0, header);
+  lang_configure_screen(script_dir, script_in_dirs, 0, tmp_work_dir,
+                        0, 0, header);
 
   if (check_install_script_validity() < 0) return;
 
@@ -4024,7 +4027,7 @@ do_main_menu(void)
       script_in_dirs[0] = script_in_dir0;
       script_in_dirs[1] = 0;
       snprintf(script_dir, sizeof(script_dir), "%s/lang", tmp_work_dir);
-      while (lang_config_menu(script_dir, script_in_dirs,
+      while (lang_config_menu(script_dir, script_in_dirs, tmp_work_dir,
                               header, utf8_mode, &cur_lang_item));
       break;
     case 4:
