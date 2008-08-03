@@ -540,7 +540,6 @@ create_tmp_dir(void)
   int serial = 0;
   int pid = getpid();
   const char *tmpdir = 0;
-  unsigned char lang_work_dir[PATH_MAX];
 
   tmpdir = getenv("TMPDIR");
   if (!tmpdir) tmpdir = getenv("TEMPDIR");
