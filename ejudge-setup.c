@@ -3714,7 +3714,7 @@ generate_install_script(FILE *f)
       fclose(ff); ff = 0; fclose(floc); floc = 0;
 
       fprintf(f, "cat << _EOF | %s\n", uudecode_path);
-      base64_encode_file(f, script_out_file, 0664, txt_ptr);
+      base64_encode_file(f, script_out_file, 0775, txt_ptr);
       fprintf(f, "_EOF\n");
       gen_check_retcode(f, script_out_file);
       gen_cmd_run(f, "chown %s:%s \"%s\"", config_system_uid, config_system_gid,
