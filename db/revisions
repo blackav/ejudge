@@ -3525,3 +3525,8 @@ new_server_html.c 4947 0 35804261
 serve_2.c 4947 0 7627177
 ejudge-setup.c 4952 0 10408461
 serve.c 4952 0 455318
+lang_config_vis.h 4954 0 192939
+ejudge-configure-compilers.c 4954 0 1690277
+ejudge-setup.c 4954 0 10416193
+lang_config_vis.c 4954 0 2326998
+ejudge-configure-compilers.c 4955 0 1686616
