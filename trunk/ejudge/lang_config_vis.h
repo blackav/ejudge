@@ -44,6 +44,7 @@ lang_configure_screen(
         const unsigned char *script_dir,
         const unsigned char * const * script_in_dirs,
         const unsigned char *config_dir,
+        const unsigned char *working_dir,
         unsigned char **keys,
         unsigned char **values,
         const unsigned char *header);
@@ -52,6 +53,7 @@ lang_configure_batch(
         const unsigned char *script_dir,
         const unsigned char * const * script_in_dirs,
         const unsigned char *config_dir,
+        const unsigned char *working_dir,
         unsigned char **keys,
         unsigned char **values,
         FILE *log_f);
@@ -59,6 +61,7 @@ int
 lang_config_menu(
         const unsigned char *script_dir,
         const unsigned char * const * script_in_dirs,
+        const unsigned char *working_dir,
         const unsigned char *header,
         int utf8_mode,
         int *p_cur_item);

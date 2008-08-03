@@ -528,6 +528,7 @@ reconfigure_language(
         const unsigned char *lang,
         const unsigned char *script_dir,
         const unsigned char *config_dir,
+        const unsigned char *working_dir,
         unsigned char **keys,
         unsigned char **values,
         FILE *log_f,
@@ -593,7 +594,9 @@ reconfigure_language(
     close(fd_out[1]); close(fd_out[0]);
     if (dup2(fd_err[1], 2) < 0) _exit(1);
     close(fd_err[1]); close(fd_err[0]);
-    // FIXME: chdir to somewhere
+    if (working_dir) {
+      if (chdir(working_dir) < 0) _exit(1);
+    }
     execl(fullpath, fullpath, "-v", "-r", p->config_arg, NULL);
     _exit(1);
   }
@@ -690,6 +693,7 @@ reconfigure_all_languages(
         const unsigned char *script_dir,
         const unsigned char * const *script_in_dirs,
         const unsigned char *config_dir,
+        const unsigned char *working_dir,
         unsigned char **keys,
         unsigned char **values,
         FILE *log_f,
@@ -711,7 +715,7 @@ reconfigure_all_languages(
     if (len <= 8) continue;
     if (strcmp(dd->d_name + len - 8, "-version") != 0) continue;
     snprintf(langbase, sizeof(langbase), "%.*s", len - 8, dd->d_name);
-    reconfigure_language(langbase, script_dir, config_dir, keys,
+    reconfigure_language(langbase, script_dir, config_dir, working_dir, keys,
                          values, log_f, win);
   }
   closedir(d); d = 0;
@@ -740,6 +744,7 @@ lang_configure_screen(
         const unsigned char *script_dir,
         const unsigned char * const * script_in_dirs,
         const unsigned char *config_dir,
+        const unsigned char *working_dir,
         unsigned char **keys,
         unsigned char **values,
         const unsigned char *header)
@@ -773,8 +778,8 @@ lang_configure_screen(
   update_panels();
   doupdate();
 
-  reconfigure_all_languages(script_dir, script_in_dirs,
-                            config_dir, keys, values, 0, in_win);
+  reconfigure_all_languages(script_dir, script_in_dirs, config_dir,
+                            working_dir, keys, values, 0, in_win);
   ncurses_print_help("Press any key");
   doupdate();
   c = getch();
@@ -790,12 +795,13 @@ lang_configure_batch(
         const unsigned char *script_dir,
         const unsigned char * const * script_in_dirs,
         const unsigned char *config_dir,
+        const unsigned char *working_dir,
         unsigned char **keys,
         unsigned char **values,
         FILE *log_f)
 {
-  reconfigure_all_languages(script_dir, script_in_dirs,
-                            config_dir, keys, values, log_f, 0);
+  reconfigure_all_languages(script_dir, script_in_dirs, config_dir,
+                            working_dir, keys, values, log_f, 0);
 }
 
 static int
@@ -810,6 +816,7 @@ int
 lang_config_menu(
         const unsigned char *script_dir,
         const unsigned char * const * script_in_dirs,
+        const unsigned char *working_dir,
         const unsigned char *header,
         int utf8_mode,
         int *p_cur_item)
@@ -829,7 +836,8 @@ lang_config_menu(
   int c, cmd, j;
   unsigned char lang_id_buf[32];
 
-  lang_configure_screen(script_dir, script_in_dirs, 0, 0, 0, header);
+  lang_configure_screen(script_dir, script_in_dirs, 0,
+                        working_dir, 0, 0, header);
   assign_lang_ids();
 
   for (pcfg = lang_first; pcfg; pcfg = pcfg->next) {
@@ -956,7 +964,8 @@ lang_config_menu(
       if (j < 0) continue;
       xfree(langs[i]->config_arg); langs[i]->config_arg = 0;
       if (buf[0]) langs[i]->config_arg = xstrdup(buf);
-      reconfigure_language(langs[i]->lang, script_dir, 0, 0, 0, 0, 0);
+      reconfigure_language(langs[i]->lang, script_dir, 0,
+                           working_dir, 0, 0, 0, 0);
       cur_item = i;
       ret_val = 1;
       break;
@@ -971,7 +980,8 @@ lang_config_menu(
       if (j < 0) continue;
       xfree(langs[i]->config_arg); langs[i]->config_arg = 0;
       if (buf[0]) langs[i]->config_arg = xstrdup(buf);
-      reconfigure_language(langs[i]->lang, script_dir, 0, 0, 0, 0, 0);
+      reconfigure_language(langs[i]->lang, script_dir, 0,
+                           working_dir, 0, 0, 0, 0);
       cur_item = i;
       ret_val = 1;
       break;
