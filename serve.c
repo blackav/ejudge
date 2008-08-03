@@ -81,7 +81,6 @@ int
 main(int argc, char *argv[])
 {
   path_t  cpp_opts = { 0 };
-  int     code = 0;
   int     p_flags = 0;
   int     i = 1;
   unsigned char *user = 0, *group = 0, *workdir = 0;
@@ -89,7 +88,6 @@ main(int argc, char *argv[])
   start_set_self_args(argc, argv);
 
   if (argc == 1) goto print_usage;
-  code = 1;
 
   while (i < argc) {
     if (!strncmp(argv[i], "-D", 2)) {
@@ -174,15 +172,14 @@ main(int argc, char *argv[])
   serve_state.current_time = time(0);
   serve_update_status_file(&serve_state, 1);
   team_extra_flush(serve_state.team_extra_state);
-  if (i < 0) i = 1;
-  return i;
+  return 0;
 
  print_usage:
   printf("Usage: %s [ OPTS ] config-file\n", argv[0]);
   printf("  -T     - print configuration and exit\n");
   printf("  -SSOCK - set a socket fd\n");
   printf("  -DDEF  - define a symbol for preprocessor\n");
-  return code;
+  return 0;
 }
 
 /*
