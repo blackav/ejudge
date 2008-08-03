@@ -3586,10 +3586,24 @@ set_defaults(serve_state_t state, int mode)
           vinfo("tester.%d.start_cmd inherited from tester.%s ('%s')",
                 i, sish, tp->start_cmd);        
         }
-        if (state->testers[i]->start_cmd[0]) {
-          pathmake2(state->testers[i]->start_cmd, g->script_dir, "/",
-                    "lang", "/", state->testers[i]->start_cmd, NULL);
+
+        if (!os_IsAbsolutePath(tp->start_cmd) && ejudge_config
+            && ejudge_config->compile_home_dir) {
+          pathmake2(tp->start_cmd, ejudge_config->compile_home_dir,
+                    "/", "scripts", "/", tp->start_cmd, NULL);
         }
+        if (!os_IsAbsolutePath(tp->start_cmd) && ejudge_config
+            && ejudge_config->contests_home_dir) {
+          snprintf(tp->start_cmd, sizeof(tp->start_cmd), "%s/compile/scripts",
+                   ejudge_config->contests_home_dir);
+        }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+        if (!os_IsAbsolutePath(tp->start_cmd)) {
+          snprintf(tp->start_cmd, sizeof(tp->start_cmd), "%s/compile/scripts",
+                   EJUDGE_CONTESTS_HOME_DIR);
+        }
+#endif
+
         if (!tp->prepare_cmd[0] && atp && atp->prepare_cmd[0]) {
           sformat_message(tp->prepare_cmd, PATH_MAX, atp->prepare_cmd,
                           g, state->probs[tp->problem], NULL,
@@ -4333,10 +4347,23 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
                     atp->start_cmd, state->global, prb, NULL, out, NULL,
                     0, 0, 0);
   }
-  if (out->start_cmd[0]) {
-    pathmake2(out->start_cmd, state->global->script_dir, "/", "lang", "/",
-              out->start_cmd, NULL);
+
+  if (!os_IsAbsolutePath(out->start_cmd) && ejudge_config
+      && ejudge_config->compile_home_dir) {
+    pathmake2(out->start_cmd, ejudge_config->compile_home_dir,
+              "/", "scripts", "/", out->start_cmd, NULL);
   }
+  if (!os_IsAbsolutePath(out->start_cmd) && ejudge_config
+      && ejudge_config->contests_home_dir) {
+    snprintf(out->start_cmd, sizeof(out->start_cmd), "%s/compile/scripts",
+             ejudge_config->contests_home_dir);
+  }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  if (!os_IsAbsolutePath(out->start_cmd)) {
+    snprintf(out->start_cmd, sizeof(out->start_cmd), "%s/compile/scripts",
+             EJUDGE_CONTESTS_HOME_DIR);
+  }
+#endif /* EJUDGE_CONTESTS_HOME_DIR */
 
   /* copy prepare_cmd */
   strcpy(out->prepare_cmd, tp->prepare_cmd);
