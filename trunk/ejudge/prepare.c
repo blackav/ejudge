@@ -3587,22 +3587,26 @@ set_defaults(serve_state_t state, int mode)
                 i, sish, tp->start_cmd);        
         }
 
-        if (!os_IsAbsolutePath(tp->start_cmd) && ejudge_config
-            && ejudge_config->compile_home_dir) {
-          pathmake2(tp->start_cmd, ejudge_config->compile_home_dir,
-                    "/", "scripts", "/", tp->start_cmd, NULL);
-        }
-        if (!os_IsAbsolutePath(tp->start_cmd) && ejudge_config
-            && ejudge_config->contests_home_dir) {
-          pathmake2(tp->start_cmd, ejudge_config->contests_home_dir,
-                    "/", "compile", "/", "scripts", "/", tp->start_cmd, NULL);
-        }
+        if (tp->start_cmd[0]) {
+          if (!os_IsAbsolutePath(tp->start_cmd) && ejudge_config
+              && ejudge_config->compile_home_dir) {
+            pathmake2(tp->start_cmd, ejudge_config->compile_home_dir,
+                      "/", "scripts", "/", tp->start_cmd, NULL);
+          }
+          if (!os_IsAbsolutePath(tp->start_cmd) && ejudge_config
+              && ejudge_config->contests_home_dir) {
+            pathmake2(tp->start_cmd, ejudge_config->contests_home_dir,
+                      "/", "compile", "/", "scripts", "/", tp->start_cmd,
+                      NULL);
+          }
 #if defined EJUDGE_CONTESTS_HOME_DIR
-        if (!os_IsAbsolutePath(tp->start_cmd)) {
-          pathmake2(tp->start_cmd, EJUDGE_CONTESTS_HOME_DIR,
-                    "/", "compile", "/", "scripts", "/", tp->start_cmd, NULL);
-        }
+          if (!os_IsAbsolutePath(tp->start_cmd)) {
+            pathmake2(tp->start_cmd, EJUDGE_CONTESTS_HOME_DIR,
+                      "/", "compile", "/", "scripts", "/", tp->start_cmd,
+                      NULL);
+          }
 #endif
+        }
 
         if (!tp->prepare_cmd[0] && atp && atp->prepare_cmd[0]) {
           sformat_message(tp->prepare_cmd, PATH_MAX, atp->prepare_cmd,
@@ -4348,22 +4352,24 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
                     0, 0, 0);
   }
 
-  if (!os_IsAbsolutePath(out->start_cmd) && ejudge_config
-      && ejudge_config->compile_home_dir) {
-    pathmake2(out->start_cmd, ejudge_config->compile_home_dir,
-              "/", "scripts", "/", out->start_cmd, NULL);
-  }
-  if (!os_IsAbsolutePath(out->start_cmd) && ejudge_config
-      && ejudge_config->contests_home_dir) {
-    pathmake2(out->start_cmd, ejudge_config->contests_home_dir,
-              "/", "compile", "/", "scripts", "/", out->start_cmd, NULL);
-  }
+  if (out->start_cmd[0]) {
+    if (!os_IsAbsolutePath(out->start_cmd) && ejudge_config
+        && ejudge_config->compile_home_dir) {
+      pathmake2(out->start_cmd, ejudge_config->compile_home_dir,
+                "/", "scripts", "/", out->start_cmd, NULL);
+    }
+    if (!os_IsAbsolutePath(out->start_cmd) && ejudge_config
+        && ejudge_config->contests_home_dir) {
+      pathmake2(out->start_cmd, ejudge_config->contests_home_dir,
+                "/", "compile", "/", "scripts", "/", out->start_cmd, NULL);
+    }
 #if defined EJUDGE_CONTESTS_HOME_DIR
-  if (!os_IsAbsolutePath(out->start_cmd)) {
-    pathmake2(out->start_cmd, EJUDGE_CONTESTS_HOME_DIR,
-              "/", "compile", "/", "scripts", "/", out->start_cmd, NULL);
-  }
+    if (!os_IsAbsolutePath(out->start_cmd)) {
+      pathmake2(out->start_cmd, EJUDGE_CONTESTS_HOME_DIR,
+                "/", "compile", "/", "scripts", "/", out->start_cmd, NULL);
+    }
 #endif /* EJUDGE_CONTESTS_HOME_DIR */
+  }
 
   /* copy prepare_cmd */
   strcpy(out->prepare_cmd, tp->prepare_cmd);
