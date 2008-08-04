@@ -88,7 +88,7 @@ open_charset_iconv(struct charset_info_s *ci)
 static int
 open_charset_iconv2(struct charset_info_s *ci)
 {
-  if ((ci->tr2 = iconv_open(INTERNAL_CHARSET, ci->name)) == (iconv_t) -1)
+  if ((ci->tr2 = iconv_open(ci->name, INTERNAL_CHARSET)) == (iconv_t) -1)
     return -1;
   return 0;
 }
