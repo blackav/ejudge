@@ -1245,7 +1245,7 @@ new_write_user_clars(const serve_state_t state, FILE *f, int uid,
     fprintf(f, "<td%s>%s</td>", cl,
             team_clar_flags(state, uid, i, clar.flags, clar.from, clar.to));
     fprintf(f, "<td%s>%s</td>", cl, dur_str);
-    fprintf(f, "<td%s>%zu</td>", cl, clar.size);
+    fprintf(f, "<td%s>%zu</td>", cl, (size_t) clar.size);
     if (!clar.from) {
       fprintf(f, "<td%s><b>%s</b></td>", cl, _("judges"));
     } else {
@@ -1344,7 +1344,7 @@ new_write_user_clar(const serve_state_t state, const struct contest_desc *cnts,
   if (format == 1) {
     fprintf(f, "Clar-Id: %d\n", cid);
     fprintf(f, "Date: %s\n", dur_str);
-    fprintf(f, "Size: %zu\n", clar.size);
+    fprintf(f, "Size: %zu\n", (size_t) clar.size);
     if (!clar.from) {
       fprintf(f, "From: judges\n");
     } else {
@@ -1367,7 +1367,7 @@ new_write_user_clar(const serve_state_t state, const struct contest_desc *cnts,
     fprintf(f, "<table border=\"0\">\n");
     fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Number"), cid);
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Time"), dur_str);
-    fprintf(f, "<tr><td>%s:</td><td>%zu</td></tr>\n", _("Size"), clar.size);
+    fprintf(f, "<tr><td>%s:</td><td>%zu</td></tr>\n", _("Size"), (size_t) clar.size);
     fprintf(f, "<tr><td>%s:</td>", _("Sender"));
     if (!clar.from) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));

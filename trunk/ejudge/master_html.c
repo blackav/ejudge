@@ -1157,7 +1157,7 @@ write_all_clars(const serve_state_t state, FILE *f, struct user_filter_info *u,
                                               0, 0));
     fprintf(f, "<td>%s</td>", durstr);
     fprintf(f, "<td>%s</td>", xml_unparse_ip(clar.a.ip));
-    fprintf(f, "<td>%zu</td>", clar.size);
+    fprintf(f, "<td>%zu</td>", (size_t) clar.size);
     if (!clar.from) {
       if (!clar.j_from)
         fprintf(f, "<td><b>%s</b></td>", _("judges"));
@@ -2368,7 +2368,7 @@ write_priv_clar(const serve_state_t state, FILE *f, int user_id, int priv_level,
   }
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("IP address"),
           xml_unparse_ip(clar.a.ip));
-  fprintf(f, "<tr><td>%s:</td><td>%zu</td></tr>\n", _("Size"), clar.size);
+  fprintf(f, "<tr><td>%s:</td><td>%zu</td></tr>\n", _("Size"), (size_t) clar.size);
 
   fprintf(f, "<tr><td>%s:</td>", _("Sender"));
   if (!clar.from) {
