@@ -106,7 +106,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(appeal_deadline, "s"),
   GLOBAL_PARAM(charset, "s"),
   GLOBAL_PARAM(contest_finish_time, "s"),
-  //GLOBAL_PARAM(standings_charset, "s"),
+  GLOBAL_PARAM(standings_charset, "s"),
 
   GLOBAL_PARAM(root_dir, "s"),
   GLOBAL_PARAM(conf_dir, "s"),

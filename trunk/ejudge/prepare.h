@@ -172,9 +172,7 @@ struct section_global_data
 
   /* charsets */
   puc_t charset[128];            /* html pages charset */
-  //struct nls_table *charset_ptr; /* internal charset */
-  //puc_t standings_charset[128];  /* charset for standings */
-  //struct nls_table *standings_charset_ptr;
+  puc_t standings_charset[128];  /* charset for standings */
 
   /* ====== CONFIGURATION FILES/DIRECTORIES SETUP ====== */
   path_t conf_dir;              /* configuration dir */

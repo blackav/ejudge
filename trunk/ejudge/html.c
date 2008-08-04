@@ -38,6 +38,7 @@
 #include "xml_utils.h"
 #include "testing_report_xml.h"
 #include "serve_state.h"
+#include "charsets.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -1742,17 +1743,20 @@ score_view_display(
 }
 
 void
-do_write_kirov_standings(const serve_state_t state,
-                         const struct contest_desc *cnts,
-                         FILE *f,
-                         const unsigned char *stand_dir,
-                         int client_flag, int only_table_flag,
-                         const unsigned char *header_str,
-                         unsigned char const *footer_str,
-                         int raw_flag,
-                         int accepting_mode,
-                         int force_fancy_style,
-                         time_t cur_time)
+do_write_kirov_standings(
+        const serve_state_t state,
+        const struct contest_desc *cnts,
+        FILE *f,
+        const unsigned char *stand_dir,
+        int client_flag,
+        int only_table_flag,
+        const unsigned char *header_str,
+        unsigned char const *footer_str,
+        int raw_flag,
+        int accepting_mode,
+        int force_fancy_style,
+        time_t cur_time,
+        int charset_id)
 {
   struct section_global_data *global = state->global;
   const struct section_problem_data *prob;
@@ -1809,6 +1813,8 @@ do_write_kirov_standings(const serve_state_t state,
   int sort_flag;
   struct sformat_extra_data fed;
   int last_col_ind = -1;
+  char *encode_txt = 0;
+  size_t encode_len = 0;
 
   if (client_flag) head_style = cnts->team_head_style;
   else head_style = "h2";
@@ -2394,7 +2400,11 @@ do_write_kirov_standings(const serve_state_t state,
                  current_page);
         snprintf(stand_tmp, sizeof(stand_path), "%s/in/%s.tmp", stand_dir, stand_name);
         snprintf(stand_path, sizeof(stand_path), "%s/dir/%s", stand_dir, stand_name);
-        if (!(f = sf_fopen(stand_tmp, "w"))) goto cleanup;
+        if (charset_id > 0) {
+          if (!(f = open_memstream(&encode_txt, &encode_len))) goto cleanup;
+        } else {
+          if (!(f = sf_fopen(stand_tmp, "w"))) goto cleanup;
+        }
       }
       if (!client_flag && !only_table_flag)
         write_standings_header(state, cnts, f, client_flag, 0, header_str, 0);
@@ -2730,7 +2740,15 @@ do_write_kirov_standings(const serve_state_t state,
           fputs("</body></html>", f);
         }
       }
-      if (current_page > 1) fclose(f);
+      if (current_page > 1) {
+        fclose(f);
+        if (charset_id > 0) {
+          encode_txt = charset_encode_heap(charset_id, encode_txt);
+          encode_len = strlen(encode_txt);
+          generic_write_file(encode_txt, encode_len, 0, NULL, stand_tmp, "");
+          xfree(encode_txt); encode_txt = 0; encode_len = 0;
+        }
+      }
       f = 0;
       if (current_page > 1) {
         rename(stand_tmp, stand_path);
@@ -2852,6 +2870,12 @@ do_write_kirov_standings(const serve_state_t state,
   }
   if (total_pages > 1) {
     fclose(f); f = 0;
+    if (charset_id > 0) {
+      encode_txt = charset_encode_heap(charset_id, encode_txt);
+      encode_len = strlen(encode_txt);
+      generic_write_file(encode_txt, encode_len, 0, NULL, stand_tmp, "");
+      xfree(encode_txt); encode_txt = 0; encode_len = 0;
+    }
     rename(stand_tmp, stand_path); // FIXME: handle errors
   }
 
@@ -4406,34 +4430,55 @@ do_write_standings(const serve_state_t state,
 }
 
 void
-write_standings(const serve_state_t state,
-                const struct contest_desc *cnts,
-                char const *stat_dir, char const *name, int users_on_page,
-                char const *header_str, char const *footer_str,
-                int accepting_mode, int force_fancy_style)
+write_standings(
+        const serve_state_t state,
+        const struct contest_desc *cnts,
+        char const *stat_dir,
+        char const *name,
+        int users_on_page,
+        char const *header_str,
+        char const *footer_str,
+        int accepting_mode,
+        int force_fancy_style,
+        int charset_id)
 {
   const struct section_global_data *global = state->global;
   char    tbuf[64];
   path_t  tpath;
   FILE   *f;
+  char *encode_txt = 0;
+  size_t encode_len = 0;
 
   sprintf(tbuf, "XXX_%lu%d", time(0), getpid());
   pathmake(tpath, stat_dir, "/", tbuf, 0);
-  if (!(f = sf_fopen(tpath, "w"))) return;
+  if (charset_id > 0) {
+    if (!(f = open_memstream(&encode_txt, &encode_len)))
+      return;
+  } else {
+    if (!(f = sf_fopen(tpath, "w")))
+      return;
+  }
   if (global->score_system_val == SCORE_KIROV
       || global->score_system_val == SCORE_OLYMPIAD)
     do_write_kirov_standings(state, cnts, f, stat_dir, 0, 0, header_str,
                              footer_str, 0, accepting_mode, force_fancy_style,
-                             0);
+                             0, charset_id);
   else if (global->score_system_val == SCORE_MOSCOW)
     do_write_moscow_standings(state, cnts, f, stat_dir, 0, 0, 0, header_str,
                               footer_str, 0, 0, force_fancy_style, 0);
   else
     do_write_standings(state, cnts, f, 0, 0, 0, header_str, footer_str, 0, 0,
                        force_fancy_style, 0);
-  fclose(f);
-  generic_copy_file(REMOVE, stat_dir, tbuf, "",
-                    SAFE, stat_dir, name, "");
+  if (charset_id > 0) {
+    fclose(f); f = 0; encode_len = 0;
+    encode_txt = charset_encode_heap(charset_id, encode_txt);
+    encode_len = strlen(encode_txt);
+    generic_write_file(encode_txt, encode_len, 0, stat_dir, tbuf, "");
+    xfree(encode_txt); encode_txt = 0; encode_len = 0;
+  } else {
+    fclose(f);
+  }
+  generic_copy_file(REMOVE, stat_dir, tbuf, "", SAFE, stat_dir, name, "");
   return;
 }
 

@@ -37,6 +37,7 @@
 #include "userlist.h"
 #include "sformat.h"
 #include "misctext.h"
+#include "charsets.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -58,7 +59,7 @@ serve_update_standings_file(serve_state_t state,
                             int force_flag)
 {
   time_t start_time, stop_time, duration;
-  int p = 0;
+  int p = 0, charset_id = 0;
 
   run_get_times(state->runlog_state, &start_time, 0, &duration, &stop_time, 0);
 
@@ -85,19 +86,20 @@ serve_update_standings_file(serve_state_t state,
                            state->global->board_fog_time,
                            state->global->board_unfog_time);
   }
+  charset_id = charset_get_id(state->global->standings_charset);
   l10n_setlocale(state->global->standings_locale_id);
   write_standings(state, cnts, state->global->status_dir,
                   state->global->standings_file_name,
                   state->global->users_on_page,
                   state->global->stand_header_txt,
                   state->global->stand_footer_txt,
-                  state->accepting_mode, 0);
+                  state->accepting_mode, 0, charset_id);
   if (state->global->stand2_file_name[0]) {
     write_standings(state, cnts, state->global->status_dir,
                     state->global->stand2_file_name, 0,
                     state->global->stand2_header_txt,
                     state->global->stand2_footer_txt,
-                    state->accepting_mode, 0);
+                    state->accepting_mode, 0, charset_id);
   }
   l10n_setlocale(0);
   if (state->global->is_virtual) return;

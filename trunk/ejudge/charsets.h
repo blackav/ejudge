@@ -41,7 +41,7 @@ charset_encode_heap(
         int id,
         unsigned char *str);
 unsigned char *
-charset_decode_to_heap(
+charset_encode_to_heap(
         int id,
         const unsigned char *str);
 
