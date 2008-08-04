@@ -27,7 +27,7 @@
 void write_standings(const serve_state_t,
                      const struct contest_desc *,
                      char const *, char const *,
-                     int, char const *, char const *, int, int);
+                     int, char const *, char const *, int, int, int);
 void write_public_log(const serve_state_t,
                       const struct contest_desc *,
                       char const *, char const *,
@@ -125,7 +125,8 @@ void do_write_kirov_standings(const serve_state_t,
                               int raw_flag,
                               int accepting_mode,
                               int force_fancy_style,
-                              time_t cur_time);
+                              time_t cur_time,
+                              int charset_id);
 
 void do_write_standings(const serve_state_t,
                         const struct contest_desc *cnts,
