@@ -543,7 +543,7 @@ clar_get_subject(
   // subject is in non-local charset, but not yet encoded
   if (state->charset_codes[id] > 0) {
     buf[0] = 0;
-    charset_recode_to_buf(state->charset_codes[id],
+    charset_decode_to_buf(state->charset_codes[id],
                           buf, sizeof (buf), state->clars.v[id].subj);
     state->subjects[id] = xstrdup(buf);
     return state->subjects[id];

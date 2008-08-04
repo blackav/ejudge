@@ -23,12 +23,26 @@ struct html_armor_buffer;
 
 int charset_get_id(const unsigned char *charset_str);
 
-const unsigned char *charset_recode_buf(int id, unsigned char *buf, size_t size);
-const unsigned char *charset_recode_to_buf(int id, unsigned char *buf, size_t size,
+const unsigned char *charset_decode_buf(int id, unsigned char *buf, size_t size);
+const unsigned char *charset_decode_to_buf(int id, unsigned char *buf, size_t size,
                                      const unsigned char *str);
-const unsigned char *charset_recode(int id, struct html_armor_buffer *ab,
+const unsigned char *charset_decode(int id, struct html_armor_buffer *ab,
                                     const unsigned char *str);
-unsigned char *charset_recode_heap(int id, unsigned char *str);
-unsigned char *charset_recode_to_heap(int id, const unsigned char *str);
+unsigned char *charset_decode_heap(int id, unsigned char *str);
+unsigned char *charset_decode_to_heap(int id, const unsigned char *str);
+
+const unsigned char *
+charset_encode(
+        int id,
+        struct html_armor_buffer *ab,
+        const unsigned char *str);
+unsigned char *
+charset_encode_heap(
+        int id,
+        unsigned char *str);
+unsigned char *
+charset_decode_to_heap(
+        int id,
+        const unsigned char *str);
 
 #endif /* __CHARSETS_H__ */
