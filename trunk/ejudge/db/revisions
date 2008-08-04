@@ -3545,3 +3545,12 @@ new_server_html.c 4973 0 35804263
 new_server_html_2.c 4973 0 14131719
 new_server_html_4.c 4973 0 4657521
 parsecfg.c 4973 0 3399092
+charsets.h 4975 0 132943
+html.h 4975 0 936614
+prepare.h 4975 0 3041574
+html.c 4975 0 15584317
+master_html.c 4975 0 10642083
+new_server_html.c 4975 0 35804504
+new_server_html_2.c 4975 0 14131836
+prepare.c 4975 0 14576051
+serve_2.c 4975 0 7638663
