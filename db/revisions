@@ -3538,3 +3538,10 @@ master_html.c 4963 0 10641832
 ejudge-setup.c 4965 0 10436288
 prepare.c 4967 0 14541259
 prepare.c 4970 0 14576148
+charsets.h 4973 0 132940
+charsets.c 4973 0 702590
+clarlog.c 4973 0 1379226
+new_server_html.c 4973 0 35804263
+new_server_html_2.c 4973 0 14131719
+new_server_html_4.c 4973 0 4657521
+parsecfg.c 4973 0 3399092
