@@ -1837,7 +1837,7 @@ ns_write_priv_clar(const serve_state_t cs,
             _("Cannot read message text!"));
   } else {
     charset_id = clar_get_charset_id(cs->clarlog_state, clar_id);
-    fprintf(f, "<pre>%s</pre>", ARMOR(charset_recode(charset_id, &rb, msg_txt)));
+    fprintf(f, "<pre>%s</pre>", ARMOR(charset_decode(charset_id, &rb, msg_txt)));
   }
 
   if (phr->role >= USER_ROLE_JUDGE && clar.from

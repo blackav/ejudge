@@ -650,7 +650,7 @@ cmd_clar_operation(
                           global->clar_archive_dir, msg_path, "") < 0)
       FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
     charset_id = clar_get_charset_id(cs->clarlog_state, clar_id);
-    recoded_txt = charset_recode(charset_id, &rb, msg_txt);
+    recoded_txt = charset_decode(charset_id, &rb, msg_txt);
     recoded_len = strlen(recoded_txt);
     if (fwrite(recoded_txt, 1, recoded_len, fout) != msg_len)
       FAIL(NEW_SRV_ERR_WRITE_ERROR);

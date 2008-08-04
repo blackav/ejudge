@@ -37,7 +37,8 @@
 struct charset_info_s
 {
   unsigned char *name;
-  iconv_t tr;
+  iconv_t tr;                   // external->internal conversion
+  iconv_t tr2;                  // internal->external conversion
 };
 
 static size_t charset_info_a, charset_info_u;
@@ -71,6 +72,7 @@ charset_get_id(const unsigned char *charset_str)
 
   charset_info[i].name = xstrdup(charset_str);
   charset_info[i].tr = (iconv_t) -2;
+  charset_info[i].tr2 = (iconv_t) -2;
   charset_info_u++;
   return i;
 }
@@ -83,8 +85,16 @@ open_charset_iconv(struct charset_info_s *ci)
   return 0;
 }
 
+static int
+open_charset_iconv2(struct charset_info_s *ci)
+{
+  if ((ci->tr2 = iconv_open(INTERNAL_CHARSET, ci->name)) == (iconv_t) -1)
+    return -1;
+  return 0;
+}
+
 const unsigned char *
-charset_recode_buf(
+charset_decode_buf(
         int id,
         unsigned char *buf,
         size_t size)
@@ -135,7 +145,7 @@ charset_recode_buf(
 }
 
 const unsigned char *
-charset_recode_to_buf(
+charset_decode_to_buf(
         int id,
         unsigned char *buf,
         size_t size,
@@ -191,33 +201,14 @@ charset_recode_to_buf(
   return buf;
 }
 
-const unsigned char *
-charset_recode(
-        int id,
+static const unsigned char *
+do_recode(
+        iconv_t tr,
         struct html_armor_buffer *ab,
         const unsigned char *str)
 {
-  struct charset_info_s *ci;
   size_t inbytesleft, outbytesleft, r, conv_size;
   char *inbuf, *outbuf;
-
-  ASSERT(ab);
-  ASSERT(str);
-
-  if (!id) return str;
-  ci = &charset_info[id];
-  if (ci->tr == (iconv_t) -2) open_charset_iconv(ci);
-  if (ci->tr == (iconv_t) -1) {
-    unsigned char tmpbuf[128];
-    size_t tmplen;
-
-    snprintf(tmpbuf, sizeof(tmpbuf), "invalid conversion from %s to %s",
-             ci->name, INTERNAL_CHARSET);
-    tmplen = strlen(tmpbuf);
-    html_armor_reserve(ab, tmplen);
-    strcpy(ab->buf, tmpbuf);
-    return ab->buf;
-  }
 
   html_armor_reserve(ab, 63);
   inbuf = (char*) str;
@@ -225,10 +216,10 @@ charset_recode(
   outbuf = ab->buf;
   outbytesleft = ab->size - 1;
 
-  iconv(ci->tr, NULL, NULL, NULL, NULL);
+  iconv(tr, NULL, NULL, NULL, NULL);
   while (inbytesleft) {
     errno = 0;
-    r = iconv(ci->tr, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
+    r = iconv(tr, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
     if (r == -1 && (errno == EILSEQ || errno == EINVAL)) {
       inbuf++; inbytesleft--;
       if (!outbytesleft) {
@@ -248,17 +239,39 @@ charset_recode(
   }
 
   ab->buf[ab->size - outbytesleft - 1] = 0;
-  /*
-  for (r = 0; ab->buf[r]; r++) {
-    fprintf(stderr, "<%02x>", ab->buf[r]);
-  }
-  fprintf(stderr, "\n");
-  */
   return ab->buf;
 }
 
+const unsigned char *
+charset_decode(
+        int id,
+        struct html_armor_buffer *ab,
+        const unsigned char *str)
+{
+  struct charset_info_s *ci;
+
+  ASSERT(ab);
+  ASSERT(str);
+
+  if (!id) return str;
+  ci = &charset_info[id];
+  if (ci->tr == (iconv_t) -2) open_charset_iconv(ci);
+  if (ci->tr == (iconv_t) -1) {
+    unsigned char tmpbuf[128];
+    size_t tmplen;
+
+    snprintf(tmpbuf, sizeof(tmpbuf), "invalid conversion from %s to %s",
+             ci->name, INTERNAL_CHARSET);
+    tmplen = strlen(tmpbuf);
+    html_armor_reserve(ab, tmplen);
+    strcpy(ab->buf, tmpbuf);
+    return ab->buf;
+  }
+  return do_recode(ci->tr, ab, str);
+}
+
 unsigned char *
-charset_recode_heap(
+charset_decode_heap(
         int id,
         unsigned char *str)
 {
@@ -266,14 +279,14 @@ charset_recode_heap(
   const unsigned char *str2;
 
   if (id <= 0) return str;
-  str2 = charset_recode(id, &rb, str);
+  str2 = charset_decode(id, &rb, str);
   if (str2 == (const unsigned char*) str) return str;
   xfree(str);
   return rb.buf;
 }
 
 unsigned char *
-charset_recode_to_heap(
+charset_decode_to_heap(
         int id,
         const unsigned char *str)
 {
@@ -281,7 +294,64 @@ charset_recode_to_heap(
   const unsigned char *str2;
 
   if (id <= 0) return xstrdup(str);
-  str2 = charset_recode(id, &rb, str);
+  str2 = charset_decode(id, &rb, str);
+  if (str2 == str) return xstrdup(str);
+  return rb.buf;
+}
+
+const unsigned char *
+charset_encode(
+        int id,
+        struct html_armor_buffer *ab,
+        const unsigned char *str)
+{
+  struct charset_info_s *ci;
+
+  ASSERT(ab);
+  ASSERT(str);
+
+  if (!id) return str;
+  ci = &charset_info[id];
+  if (ci->tr2 == (iconv_t) -2) open_charset_iconv2(ci);
+  if (ci->tr2 == (iconv_t) -1) {
+    unsigned char tmpbuf[128];
+    size_t tmplen;
+
+    snprintf(tmpbuf, sizeof(tmpbuf), "invalid conversion from %s to %s",
+             ci->name, INTERNAL_CHARSET);
+    tmplen = strlen(tmpbuf);
+    html_armor_reserve(ab, tmplen);
+    strcpy(ab->buf, tmpbuf);
+    return ab->buf;
+  }
+  return do_recode(ci->tr2, ab, str);
+}
+
+unsigned char *
+charset_encode_heap(
+        int id,
+        unsigned char *str)
+{
+  struct html_armor_buffer rb = HTML_ARMOR_INITIALIZER;
+  const unsigned char *str2;
+
+  if (id <= 0) return str;
+  str2 = charset_encode(id, &rb, str);
+  if (str2 == (const unsigned char*) str) return str;
+  xfree(str);
+  return rb.buf;
+}
+
+unsigned char *
+charset_encode_to_heap(
+        int id,
+        const unsigned char *str)
+{
+  struct html_armor_buffer rb = HTML_ARMOR_INITIALIZER;
+  const unsigned char *str2;
+
+  if (id <= 0) return xstrdup(str);
+  str2 = charset_encode(id, &rb, str);
   if (str2 == str) return xstrdup(str);
   return rb.buf;
 }

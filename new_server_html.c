@@ -2967,7 +2967,7 @@ priv_clar_reply(FILE *fout,
   }
 
   charset_id = clar_get_charset_id(cs->clarlog_state, in_reply_to);
-  recoded_txt = charset_recode(charset_id, &rb, orig_txt);
+  recoded_txt = charset_decode(charset_id, &rb, orig_txt);
   recoded_len = strlen(recoded_txt);
 
   l10n_setlocale(clar.locale_id);
