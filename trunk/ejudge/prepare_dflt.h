@@ -86,7 +86,7 @@
 #if defined EJUDGE_CHARSET
 #define DFLT_G_CHARSET            EJUDGE_CHARSET
 #else
-#define DFLT_G_CHARSET            "iso8859-1"
+#define DFLT_G_CHARSET            "utf-8"
 #endif /* EJUDGE_CHARSET */
 
 #define DFLT_G_STANDINGS_FILE_NAME "standings.html"

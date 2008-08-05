@@ -1999,6 +1999,46 @@ super_html_edit_global_parameters(FILE *f,
                              extra_args,
                              hidden_vars);
 
+    //GLOBAL_PARAM(standings_charset, "s"),
+    print_string_editing_row(f, "Stadings character set:",
+                             global->charset,
+                             SSERV_CMD_GLOB_CHANGE_STANDINGS_CHARSET,
+                             SSERV_CMD_GLOB_CLEAR_STANDINGS_CHARSET,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+
+    //GLOBAL_PARAM(stand2_charset, "s"),
+    if (sstate->enable_stand2 && global->stand2_file_name[0]) {
+      print_string_editing_row(f, "Aux. stadings character set:",
+                               global->charset,
+                               SSERV_CMD_GLOB_CHANGE_STAND2_CHARSET,
+                               SSERV_CMD_GLOB_CLEAR_STAND2_CHARSET,
+                               0,
+                               session_id,
+                               form_row_attrs[row ^= 1],
+                               self_url,
+                               extra_args,
+                               hidden_vars);
+    }
+
+    //GLOBAL_PARAM(plog_charset, "s"),
+    if (sstate->enable_plog && global->plog_file_name[0]) {
+      print_string_editing_row(f, "Submission log character set:",
+                               global->charset,
+                               SSERV_CMD_GLOB_CHANGE_PLOG_CHARSET,
+                               SSERV_CMD_GLOB_CLEAR_PLOG_CHARSET,
+                               0,
+                               session_id,
+                               form_row_attrs[row ^= 1],
+                               self_url,
+                               extra_args,
+                               hidden_vars);
+    }
+
     //GLOBAL_PARAM(team_download_time, "d"),
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Team archive download interval (HH:MM:SS):</td>",
@@ -2775,6 +2815,24 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CLEAR_CHARSET:
     GLOB_CLEAR_STRING(charset);
+
+  case SSERV_CMD_GLOB_CHANGE_STANDINGS_CHARSET:
+    GLOB_SET_STRING(standings_charset);
+
+  case SSERV_CMD_GLOB_CLEAR_STANDINGS_CHARSET:
+    GLOB_CLEAR_STRING(standings_charset);
+
+  case SSERV_CMD_GLOB_CHANGE_STAND2_CHARSET:
+    GLOB_SET_STRING(stand2_charset);
+
+  case SSERV_CMD_GLOB_CLEAR_STAND2_CHARSET:
+    GLOB_CLEAR_STRING(stand2_charset);
+
+  case SSERV_CMD_GLOB_CHANGE_PLOG_CHARSET:
+    GLOB_SET_STRING(plog_charset);
+
+  case SSERV_CMD_GLOB_CLEAR_PLOG_CHARSET:
+    GLOB_CLEAR_STRING(plog_charset);
 
   case SSERV_CMD_GLOB_CHANGE_TEAM_DOWNLOAD_TIME:
     p_int = &global->team_download_time;
