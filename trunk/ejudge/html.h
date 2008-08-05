@@ -31,7 +31,7 @@ void write_standings(const serve_state_t,
 void write_public_log(const serve_state_t,
                       const struct contest_desc *,
                       char const *, char const *,
-                      char const *, char const *);
+                      char const *, char const *, int);
 
 void new_write_user_runs(const serve_state_t, FILE *f, int uid,
                          unsigned int show_flags,

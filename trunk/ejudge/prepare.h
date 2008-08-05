@@ -173,6 +173,8 @@ struct section_global_data
   /* charsets */
   puc_t charset[128];            /* html pages charset */
   puc_t standings_charset[128];  /* charset for standings */
+  puc_t stand2_charset[128];     /* charset for second standings table */
+  puc_t plog_charset[128];       /* charset for submission log */
 
   /* ====== CONFIGURATION FILES/DIRECTORIES SETUP ====== */
   path_t conf_dir;              /* configuration dir */

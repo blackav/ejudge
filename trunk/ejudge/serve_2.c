@@ -95,6 +95,7 @@ serve_update_standings_file(serve_state_t state,
                   state->global->stand_footer_txt,
                   state->accepting_mode, 0, charset_id);
   if (state->global->stand2_file_name[0]) {
+    charset_id = charset_get_id(state->global->stand2_charset);
     write_standings(state, cnts, state->global->status_dir,
                     state->global->stand2_file_name, 0,
                     state->global->stand2_header_txt,
@@ -121,7 +122,7 @@ serve_update_public_log_file(serve_state_t state,
                              const struct contest_desc *cnts)
 {
   time_t start_time, stop_time, duration;
-  int p;
+  int p, charset_id = 0;
 
   if (!state->global->plog_update_time) return;
   if (state->current_time < state->last_update_public_log + state->global->plog_update_time) return;
@@ -143,11 +144,13 @@ serve_update_public_log_file(serve_state_t state,
     break;
   }
 
+  charset_id = charset_get_id(state->global->plog_charset);
   l10n_setlocale(state->global->standings_locale_id);
   write_public_log(state, cnts, state->global->status_dir,
                    state->global->plog_file_name,
                    state->global->plog_header_txt,
-                   state->global->plog_footer_txt);
+                   state->global->plog_footer_txt,
+                   charset_id);
   state->last_update_public_log = state->current_time;
   l10n_setlocale(0);
 }

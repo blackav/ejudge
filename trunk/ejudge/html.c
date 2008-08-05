@@ -3368,7 +3368,7 @@ do_write_moscow_standings(
       }
       fprintf(f, "%d;%d;\n", u_score[u], u_pen[u]);
     }
-    goto free_resorces;
+    goto free_resources;
   }
 
   users_per_page = u_tot;
@@ -3810,7 +3810,7 @@ do_write_moscow_standings(
     rename(stand_tmp, stand_path);
   }
 
- free_resorces:
+ free_resources:
   xfree(up_cf);
   xfree(up_trans);
   xfree(up_solved);
@@ -4662,21 +4662,36 @@ do_write_public_log(const serve_state_t state,
 }
 
 void
-write_public_log(const serve_state_t state,
-                 const struct contest_desc *cnts,
-                 char const *stat_dir,
-                 char const *name, char const *header_str,
-                 char const *footer_str)
+write_public_log(
+        const serve_state_t state,
+        const struct contest_desc *cnts,
+        char const *stat_dir,
+        char const *name,
+        char const *header_str,
+        char const *footer_str,
+        int charset_id)
 {
   char    tbuf[64];
   path_t  tpath;
-  FILE   *f;
+  FILE   *f = 0;
+  char *encode_txt = 0;
+  size_t encode_len = 0;
 
   sprintf(tbuf, "XXX_%lu%d", time(0), getpid());
   pathmake(tpath, stat_dir, "/", tbuf, 0);
-  if (!(f = sf_fopen(tpath, "w"))) return;
+  if (charset_id > 0) {
+    if (!(f = open_memstream(&encode_txt, &encode_len))) return;
+  } else {
+    if (!(f = sf_fopen(tpath, "w"))) return;
+  }
   do_write_public_log(state, cnts, f, header_str, footer_str);
-  fclose(f);
+  fclose(f); f = 0;
+  if (charset_id > 0) {
+    encode_txt = charset_encode_heap(charset_id, encode_txt);
+    encode_len = strlen(encode_txt);
+    generic_write_file(encode_txt, encode_len, 0, NULL, tpath, NULL);
+    xfree(encode_txt); encode_txt = 0; encode_len = 0;
+  }
   generic_copy_file(REMOVE, stat_dir, tbuf, "",
                     SAFE, stat_dir, name, "");
   return;
