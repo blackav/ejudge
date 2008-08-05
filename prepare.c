@@ -107,6 +107,8 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(charset, "s"),
   GLOBAL_PARAM(contest_finish_time, "s"),
   GLOBAL_PARAM(standings_charset, "s"),
+  GLOBAL_PARAM(stand2_charset, "s"),
+  GLOBAL_PARAM(plog_charset, "s"),
 
   GLOBAL_PARAM(root_dir, "s"),
   GLOBAL_PARAM(conf_dir, "s"),
@@ -2485,23 +2487,6 @@ set_defaults(serve_state_t state, int mode)
       snprintf(g->charset, sizeof(g->charset), "%s", DFLT_G_CHARSET);
       vinfo("global.charset set to %s", g->charset);
     }
-    /*
-    if (!(g->charset_ptr = nls_lookup_table(g->charset))) {
-      err("global.charset `%s' is invalid", g->charset);
-      return -1;
-    }
-    */
-    /*
-    if (!g->standings_charset[0]) {
-      snprintf(g->standings_charset, sizeof(g->standings_charset),
-               "%s", g->charset);
-      info("global.standings_charset set to %s", g->standings_charset);
-    }
-    if (!(g->standings_charset_ptr = nls_lookup_table(g->standings_charset))) {
-      err("global.standings_charset `%s' is invalid", g->standings_charset);
-      return -1;
-    }
-    */
     if (!g->standings_file_name[0]) {
       snprintf(g->standings_file_name,sizeof(g->standings_file_name),
                "%s", DFLT_G_STANDINGS_FILE_NAME);
