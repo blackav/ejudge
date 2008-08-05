@@ -2745,14 +2745,12 @@ do_write_kirov_standings(
         if (charset_id > 0) {
           encode_txt = charset_encode_heap(charset_id, encode_txt);
           encode_len = strlen(encode_txt);
-          generic_write_file(encode_txt, encode_len, 0, NULL, stand_tmp, "");
+          generic_write_file(encode_txt, encode_len, 0, NULL, stand_tmp, NULL);
           xfree(encode_txt); encode_txt = 0; encode_len = 0;
         }
-      }
-      f = 0;
-      if (current_page > 1) {
         rename(stand_tmp, stand_path);
       }
+      f = 0;
     }
   }
 
@@ -2873,7 +2871,7 @@ do_write_kirov_standings(
     if (charset_id > 0) {
       encode_txt = charset_encode_heap(charset_id, encode_txt);
       encode_len = strlen(encode_txt);
-      generic_write_file(encode_txt, encode_len, 0, NULL, stand_tmp, "");
+      generic_write_file(encode_txt, encode_len, 0, NULL, stand_tmp, NULL);
       xfree(encode_txt); encode_txt = 0; encode_len = 0;
     }
     rename(stand_tmp, stand_path); // FIXME: handle errors
@@ -2956,18 +2954,21 @@ write_moscow_page_table(const struct standings_style *pss,
 }
 
 void
-do_write_moscow_standings(const serve_state_t state,
-                          const struct contest_desc *cnts,
-                          FILE *f,
-                          const unsigned char *stand_dir,
-                          int client_flag, int only_table_flag,
-                          int user_id,
-                          const unsigned char *header_str,
-                          const unsigned char *footer_str,
-                          int raw_flag,
-                          const unsigned char *user_name,
-                          int force_fancy_style,
-                          time_t cur_time)
+do_write_moscow_standings(
+        const serve_state_t state,
+        const struct contest_desc *cnts,
+        FILE *f,
+        const unsigned char *stand_dir,
+        int client_flag,
+        int only_table_flag,
+        int user_id,
+        const unsigned char *header_str,
+        const unsigned char *footer_str,
+        int raw_flag,
+        const unsigned char *user_name,
+        int force_fancy_style,
+        time_t cur_time,
+        int charset_id)
 {
   struct section_global_data *global = state->global;
   const unsigned char *head_style;
@@ -3053,6 +3054,8 @@ do_write_moscow_standings(const serve_state_t state,
   struct standings_style ss;
   const struct section_problem_data *prob;
   struct sformat_extra_data fed;
+  char *encode_txt = 0;
+  size_t encode_len = 0;
   
   if (client_flag) head_style = cnts->team_head_style;
   else head_style = "h2";
@@ -3455,7 +3458,11 @@ do_write_moscow_standings(const serve_state_t state,
                  stand_dir, pgrefs[current_page - 1]);
         snprintf(stand_path, sizeof(stand_path), "%s/dir/%s", stand_dir,
                  pgrefs[current_page - 1]);
-        if (!(f = sf_fopen(stand_tmp, "w"))) return;
+        if (charset_id > 0) {
+          if (!(f = open_memstream(&encode_txt, &encode_len))) return;
+        } else {
+          if (!(f = sf_fopen(stand_tmp, "w"))) return;
+        }
       }
       if (!client_flag && only_table_flag)
         write_standings_header(state, cnts, f, client_flag, user_id, header_str,
@@ -3708,11 +3715,17 @@ do_write_moscow_standings(const serve_state_t state,
           fputs("</body></html>", f);
         }
       }
-      if (current_page > 1) fclose(f);
-      f = 0;
       if (current_page > 1) {
+        fclose(f);
+        if (charset_id > 0) {
+          encode_txt = charset_encode_heap(charset_id, encode_txt);
+          encode_len = strlen(encode_txt);
+          generic_write_file(encode_txt, encode_len, 0, NULL, stand_tmp, NULL);
+          xfree(encode_txt); encode_txt = 0; encode_len = 0;
+        }
         rename(stand_tmp, stand_path);
       }
+      f = 0;
     }
   }
 
@@ -3788,6 +3801,12 @@ do_write_moscow_standings(const serve_state_t state,
   }
   if (total_pages > 1) {
     fclose(f); f = 0;
+    if (charset_id > 0) {
+      encode_txt = charset_encode_heap(charset_id, encode_txt);
+      encode_len = strlen(encode_txt);
+      generic_write_file(encode_txt, encode_len, 0, NULL, stand_tmp, NULL);
+      xfree(encode_txt); encode_txt = 0; encode_len = 0;
+    }
     rename(stand_tmp, stand_path);
   }
 
@@ -4465,7 +4484,8 @@ write_standings(
                              0, charset_id);
   else if (global->score_system_val == SCORE_MOSCOW)
     do_write_moscow_standings(state, cnts, f, stat_dir, 0, 0, 0, header_str,
-                              footer_str, 0, 0, force_fancy_style, 0);
+                              footer_str, 0, 0, force_fancy_style, 0,
+                              charset_id);
   else
     do_write_standings(state, cnts, f, 0, 0, 0, header_str, footer_str, 0, 0,
                        force_fancy_style, 0);
@@ -4473,7 +4493,7 @@ write_standings(
     fclose(f); f = 0; encode_len = 0;
     encode_txt = charset_encode_heap(charset_id, encode_txt);
     encode_len = strlen(encode_txt);
-    generic_write_file(encode_txt, encode_len, 0, stat_dir, tbuf, "");
+    generic_write_file(encode_txt, encode_len, 0, stat_dir, tbuf, NULL);
     xfree(encode_txt); encode_txt = 0; encode_len = 0;
   } else {
     fclose(f);

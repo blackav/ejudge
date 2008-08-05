@@ -10302,7 +10302,7 @@ unpriv_view_standings(FILE *fout,
     do_write_kirov_standings(cs, cnts, fout, 0, 1, 1, 0, 0, 0, 0, 1, cur_time, 0);
   } else if (global->score_system_val == SCORE_MOSCOW) {
     do_write_moscow_standings(cs, cnts, fout, 0, 1, 1, phr->user_id,
-                              0, 0, 0, 0, 1, cur_time);
+                              0, 0, 0, 0, 1, cur_time, 0);
   }
 
  done:
