@@ -578,6 +578,16 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   unparse_bool(f, "enable_l10n", global->enable_l10n);
   if (global->charset[0] && strcmp(global->charset, DFLT_G_CHARSET))
     fprintf(f, "charset = \"%s\"\n", c_armor(&sbuf, global->charset));
+  if (global->standings_charset[0])
+    fprintf(f, "standings_charset = \"%s\"\n",
+            c_armor(&sbuf, global->standings_charset));
+  if (global->stand2_charset[0])
+    fprintf(f, "stand2_charset = \"%s\"\n",
+            c_armor(&sbuf, global->stand2_charset));
+  if (global->plog_charset[0])
+    fprintf(f, "plog_charset = \"%s\"\n",
+            c_armor(&sbuf, global->plog_charset));
+
   if (global->team_download_time != DFLT_G_TEAM_DOWNLOAD_TIME)
     fprintf(f, "team_download_time = %d\n", global->team_download_time);
   if (global->cpu_bogomips > 0)
