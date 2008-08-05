@@ -152,7 +152,8 @@ void do_write_moscow_standings(const serve_state_t,
                                int raw_flag,
                                const unsigned char *user_name,
                                int force_fancy_style,
-                               time_t cur_time);
+                               time_t cur_time,
+                               int charset_id);
 
 int write_priv_source(const serve_state_t, FILE *f, int user_id, int priv_level,
                       ej_cookie_t sid,
