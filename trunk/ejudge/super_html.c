@@ -50,6 +50,8 @@
 
 #define MAX_LOG_VIEW_SIZE (8 * 1024 * 1024)
 
+#define ARMOR(s)  html_armor_buf(&ab, s)
+
 static void
 html_submit_button(FILE *f,
                    int action,
@@ -1842,24 +1844,100 @@ super_html_contest_footer_menu(FILE *f,
   fprintf(f, "</td></tr></table></form>\n");
 }
 
+static int
+super_html_edited_cnts_dialog(
+        FILE *out_f,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        ej_ip_t ip_address,
+        struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args,
+        const struct contest_desc *new_cnts)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  ASSERT(sstate->edited_cnts);
+
+  fprintf(out_f, "<h2>Another contest opened for editing</h2>\n");
+  fprintf(out_f, "<p>You have already opened another contest (");
+  fprintf(out_f, "%d", sstate->edited_cnts->id);
+  if (sstate->edited_cnts->name) {
+    fprintf(out_f, ", %s", ARMOR(sstate->edited_cnts->name));
+  }
+  fprintf(out_f, ") for editing. Editing of several contests "
+          "at a time is not supported. You may either continue "
+          "suspended editing of contest ");
+  fprintf(out_f, "%d", sstate->edited_cnts->id);
+  fprintf(out_f, " or cancel that editing and ");
+  if (!new_cnts) {
+    fprintf(out_f, " create a new contest");
+  } else {
+    fprintf(out_f, " start editing of contest ");
+    fprintf(out_f, "%d", new_cnts->id);
+    if (new_cnts->name) {
+      fprintf(out_f, " (%s)", ARMOR(new_cnts->name));
+    }
+  }
+  fprintf(out_f, ".</p>\n");
+  fprintf(out_f, "<table border=\"0\">");
+
+  fprintf(out_f, "<tr><td>");
+  html_start_form(out_f, 1, self_url, hidden_vars);
+  html_hidden(out_f, "op", "%d", SSERV_OP_EDITED_CNTS_BACK);
+  html_submit_button(out_f, SSERV_CMD_HTTP_REQUEST, "Back");
+  fprintf(out_f, "</form>\n");
+  fprintf(out_f, "</td><td>Return to the main page</td></tr>");
+
+  fprintf(out_f, "<tr><td>");
+  html_start_form(out_f, 1, self_url, hidden_vars);
+  html_hidden(out_f, "op", "%d", SSERV_OP_EDITED_CNTS_CONTINUE);
+  html_submit_button(out_f, SSERV_CMD_HTTP_REQUEST, "Continue");
+  fprintf(out_f, "</form>\n");
+  fprintf(out_f, "</td><td>Continue suspended editing</td></tr>");
+
+  fprintf(out_f, "<tr><td>");
+  html_start_form(out_f, 1, self_url, hidden_vars);
+  html_hidden(out_f, "op", "%d", SSERV_OP_EDITED_CNTS_START_NEW);
+  html_submit_button(out_f, SSERV_CMD_HTTP_REQUEST, "Start new");
+  fprintf(out_f, "</form>\n");
+  fprintf(out_f, "</td><td>Start new editing</td></tr>");
+
+  fprintf(out_f, "</table>\n");
+
+  html_armor_free(&ab);
+  return 0;
+}
+
 int
-super_html_create_contest(FILE *f,
-                          int priv_level,
-                          int user_id,
-                          const unsigned char *login,
-                          ej_cookie_t session_id,
-                          ej_ip_t ip_address,
-                          struct ejudge_cfg *config,
-                          struct sid_state *sstate,
-                          const unsigned char *self_url,
-                          const unsigned char *hidden_vars,
-                          const unsigned char *extra_args)
+super_html_create_contest(
+        FILE *f,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        ej_ip_t ip_address,
+        struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   int contest_max_id = 0;
   unsigned char *contests_map = 0;
   int recomm_id = 1, cnts_id;
   const struct contest_desc *cnts = 0;
   unsigned char *cnts_name = 0;
+
+  if (sstate->edited_cnts)
+    return super_html_edited_cnts_dialog(f, priv_level, user_id, login,
+                                         session_id, ip_address, config,
+                                         sstate, self_url, hidden_vars,
+                                         extra_args, NULL);
 
   contest_max_id = contests_get_list(&contests_map);
   if (contest_max_id > 0) recomm_id = contest_max_id;
