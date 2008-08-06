@@ -1907,9 +1907,11 @@ cmd_main_page(struct client_state *p, int len,
     if ((r = contests_get(pkt->contest_id, &cnts)) < 0 || !cnts) {
       return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
     }
+    /*
     if (sstate->edited_cnts) {
       return send_reply(p, -SSERV_ERR_CONTEST_EDITED);
     }
+    */
     break;
   case SSERV_CMD_CHECK_TESTS:
     if ((r = contests_get(pkt->contest_id, &cnts)) < 0 || !cnts) {
@@ -2102,6 +2104,20 @@ cmd_main_page(struct client_state *p, int len,
                                      self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_EDIT_CONTEST_XML:
+    if (sstate->edited_cnts && sstate->edited_cnts->id == cnts->id) {
+      r = super_html_edit_contest_page(f, p->priv_level, p->user_id, p->login,
+                                       p->cookie, p->ip, config, sstate,
+                                       self_url_ptr, hidden_vars_ptr,
+                                       extra_args_ptr);
+      break;
+    }
+    if (sstate->edited_cnts) {
+      r = super_html_edited_cnts_dialog(f, p->priv_level, p->user_id, p->login,
+                                        p->cookie, p->ip, config, sstate,
+                                        self_url_ptr, hidden_vars_ptr,
+                                        extra_args_ptr, cnts);
+      break;
+    }
     if ((r = contests_load(pkt->contest_id, &rw_cnts)) < 0 || !rw_cnts) {
       return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
     }
