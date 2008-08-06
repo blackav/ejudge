@@ -247,7 +247,7 @@ refresh_page(
   buf[0] = 0;
   if (format && *format) {
     va_start(args, format);
-    snprintf(buf, sizeof(buf), format, args);
+    vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
   }
 
