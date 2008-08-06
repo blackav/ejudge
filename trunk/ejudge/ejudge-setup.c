@@ -1498,11 +1498,11 @@ initialize_setting_var(int idx)
     break;
   case SET_LINE_SERVER_NAME:
     snprintf(config_server_name, sizeof(config_server_name),
-             "Novyi server turnirov");
+             "Ejudge contest server at %s", system_hostname);
     break;
   case SET_LINE_SERVER_NAME_EN:
     snprintf(config_server_name_en, sizeof(config_server_name_en),
-             "New contest server");
+             "Ejudge contest server at %s", system_hostname);
     break;
   case SET_LINE_SERVER_MAIN_URL:
     if (system_domainname[0]) {
@@ -1537,7 +1537,7 @@ initialize_setting_var(int idx)
     break;
   case SET_LINE_WORKDISK_SIZE:
     snprintf(config_workdisk_size, sizeof(config_workdisk_size),
-             "%d", 32);
+             "%d", 64);
     break;
   default:
     SWERR(("initialize_setting_var: unhandled idx == %d", idx));
@@ -3325,9 +3325,11 @@ check_install_script_validity(void)
 }
 
 static void
-generate_dir_creation(FILE *f, strarray_t *pcr,
-                      int not_last, /* for files */
-                      const unsigned char *in_path)
+generate_dir_creation(
+        FILE *f,
+        strarray_t *pcr,
+        int not_last, /* for files */
+        const unsigned char *in_path)
 {
   unsigned char path[PATH_MAX];
   int i;
@@ -3338,10 +3340,12 @@ generate_dir_creation(FILE *f, strarray_t *pcr,
     snprintf(path, sizeof(path), "%s", in_path);
   }
   os_normalize_path(path);
-  for (i = 0; i < pcr->u; i++)
-    if (!strcmp(pcr->v[i], path))
-      break;
-  if (i < pcr->u) return;
+  if (pcr) {
+    for (i = 0; i < pcr->u; i++)
+      if (!strcmp(pcr->v[i], path))
+        break;
+    if (i < pcr->u) return;
+  }
 
   fprintf(f, "install -d -m 02775 -g \"%s\" -o \"%s\" \"%s\"\n",
           config_system_gid, config_system_uid, path);
@@ -3352,8 +3356,10 @@ generate_dir_creation(FILE *f, strarray_t *pcr,
           "  exit 1\n"
           "fi\n\n", path);
 
-  xexpand(pcr);
-  pcr->v[pcr->u++] = xstrdup(path);
+  if (pcr) {
+    xexpand(pcr);
+    pcr->v[pcr->u++] = xstrdup(path);
+  }
 }
 
 static void
@@ -3543,7 +3549,7 @@ generate_install_script(FILE *f)
     fprintf(f, "# create the working dir (if loopback is not mounted)\n");
     snprintf(workdir_path, sizeof(workdir_path),
              "%s/work", config_workdisk_mount_dir);
-    generate_dir_creation(f, &created_dirs, 0, workdir_path);
+    generate_dir_creation(f, NULL, 0, workdir_path);
     fprintf(f, "# create the working disk\n");
     gen_cmd_run(f, "dd if=/dev/zero of=\"%s\" bs=1M count=%s",
                 config_workdisk_image_path, config_workdisk_size);
