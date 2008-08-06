@@ -1844,7 +1844,7 @@ super_html_contest_footer_menu(FILE *f,
   fprintf(f, "</td></tr></table></form>\n");
 }
 
-static int
+int
 super_html_edited_cnts_dialog(
         FILE *out_f,
         int priv_level,
@@ -1860,9 +1860,11 @@ super_html_edited_cnts_dialog(
         const struct contest_desc *new_cnts)
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int contest_id = 0;
 
   ASSERT(sstate->edited_cnts);
 
+  if (new_cnts) contest_id = new_cnts->id;
   fprintf(out_f, "<h2>Another contest opened for editing</h2>\n");
   fprintf(out_f, "<p>You have already opened another contest (");
   fprintf(out_f, "%d", sstate->edited_cnts->id);
@@ -1903,6 +1905,8 @@ super_html_edited_cnts_dialog(
   fprintf(out_f, "<tr><td>");
   html_start_form(out_f, 1, self_url, hidden_vars);
   html_hidden(out_f, "op", "%d", SSERV_OP_EDITED_CNTS_START_NEW);
+  if (contest_id > 0)
+    html_hidden(out_f, "contest_id", "%d", contest_id);
   html_submit_button(out_f, SSERV_CMD_HTTP_REQUEST, "Start new");
   fprintf(out_f, "</form>\n");
   fprintf(out_f, "</td><td>Start new editing</td></tr>");

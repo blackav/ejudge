@@ -183,6 +183,12 @@ struct super_http_request_info
   struct sid_state *ss;
 
   int opcode;
+
+  // the URL
+  int ssl_flag;
+  const unsigned char *self_url; // points into stack buffer
+
+  unsigned long long session_id;
 };
 
 void super_serve_clear_edited_contest(struct sid_state *sstate);
