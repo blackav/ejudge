@@ -1909,7 +1909,7 @@ super_html_edited_cnts_dialog(
     html_hidden(out_f, "contest_id", "%d", contest_id);
   html_submit_button(out_f, SSERV_CMD_HTTP_REQUEST, "Start new");
   fprintf(out_f, "</form>\n");
-  fprintf(out_f, "</td><td>Start new editing</td></tr>");
+  fprintf(out_f, "</td><td>Start new editing <font color=\"red\">All changes to the old contest will be lost!</font></td></tr>");
 
   fprintf(out_f, "</table>\n");
 
