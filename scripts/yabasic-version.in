@@ -77,7 +77,7 @@ else
   YABASICPATH="/usr/bin/yabasic"
 fi
 
-if [ x"${YABASICPATH}" = x -o x"${YABASICPATH}" = xfalse ]
+if [ x"${YABASICPATH}" = x -o x"${YABASICPATH}" = x/bin/false ]
 then
   echo "This language is not supported." >&2
   exit 1

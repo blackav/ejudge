@@ -75,7 +75,7 @@ else
   RUBYPATH="/usr/bin/ruby"
 fi
 
-if [ x"${RUBYPATH}" = x -o x"${RUBYPATH}" = xfalse ]
+if [ x"${RUBYPATH}" = x -o x"${RUBYPATH}" = x/bin/false ]
 then
   echo "This language is not supported." >&2
   exit 1

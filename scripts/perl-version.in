@@ -75,7 +75,7 @@ else
   PERLPATH="/usr/bin/perl"
 fi
 
-if [ x"${PERLPATH}" = x -o x"${PERLPATH}" = xfalse ]
+if [ x"${PERLPATH}" = x -o x"${PERLPATH}" = x/bin/false ]
 then
   echo "This language is not supported." >&2
   exit 1
