@@ -1,3 +1,7 @@
+2008-06-30 (r4912) Alexander Chernov  <cher@ejudge.ru>
+
+	* master.c, register.c, serve.c, serve-cmd.c, team.c: removed.
+
 2008-03-16 (r4805) Alexander Chernov  <cher@ejudge.ru>
 
 	* yabasic-version.in, mzscheme-version.in, g++-version.in, perl.in, gcj.in, python-version.in, g77.in, mcs-version.in, mbas-version.in, fpc.in, dcc-version.in, Makefile.in, txt.in, gfortran.in, javac.in, perl-version.in, gcj-version.in, g77-version.in, fpc-version.in, gcc.in, txt-version.in, gfortran-version.in, javac-version.in, gpc.in, gprolog.in, mzscheme.in, yabasic.in, g++.in, gcc-version.in, python.in, mcs.in, mbas.in, dcc.in, gpc-version.in, gprolog-version.in, runmono.in, lang-config.sh.in:
