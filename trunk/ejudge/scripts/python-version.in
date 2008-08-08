@@ -75,7 +75,7 @@ else
   PYTHONPATH="/usr/bin/python"
 fi
 
-if [ x"${PYTHONPATH}" = x -o x"${PYTHONPATH}" = xfalse ]
+if [ x"${PYTHONPATH}" = x -o x"${PYTHONPATH}" = x/bin/false ]
 then
   echo "This language is not supported." >&2
   exit 1

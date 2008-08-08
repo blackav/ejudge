@@ -78,7 +78,7 @@ else
   PHPPATH="/usr/bin/php"
 fi
 
-if [ x"${PHPPATH}" = x -o x"${PHPPATH}" = xfalse ]
+if [ x"${PHPPATH}" = x -o x"${PHPPATH}" = x/bin/false ]
 then
   echo "This language is not supported." >&2
   exit 1

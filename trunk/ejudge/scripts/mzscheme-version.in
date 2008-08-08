@@ -76,7 +76,7 @@ else
   MZSCHEMEPATH="/usr/bin/mzscheme"
 fi
 
-if [ x"${MZSCHEMEPATH}" = x -o x"${MZSCHEMEPATH}" = xfalse ]
+if [ x"${MZSCHEMEPATH}" = x -o x"${MZSCHEMEPATH}" = x/bin/false ]
 then
   echo "This language is not supported." >&2
   exit 1
