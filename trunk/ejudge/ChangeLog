@@ -1,3 +1,440 @@
+2008-08-06 (r4983) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html.h:
+	(super_html_edited_cnts_dialog) new function prototype.
+
+	* super-serve.h:
+	(struct http_request_info) new fields `ssl_flag', `self_url',
+	  `session_id' are added.
+
+	* super-serve.c:
+	(cmd_main_page) attempt to edit already edited contest just continues
+	  the editing;
+	  attempt to edit a contest when another contest is edited displays
+	  reasonable dialog.
+
+	* super_html.c:
+	(super_html_edited_cnts_dialog) case when existing contest is being
+	  opened while another is already opened is supported.
+	
+
+	* super_html_4.c:
+	<stdlib.h> is included;
+	<stdarg.h> is included;
+	(refresh_page) new function;
+	(cmd_edited_cnts_back) new function;
+	(cmd_edited_cnts_continue) new function;
+	(cmd_edited_cnts_start_new) new function;
+	(super_html_http_request) self_url and session_id are parsed.
+
+2008-08-05 (r4981) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare_dflt.h:
+	default charset is utf-8.
+
+	* super_proto.h:
+	editing of `standings_charset', `stand2_charset', `plog_charset'
+	  is supported.
+
+	* prepare_out.c:
+	(prepare_unparse_global) `standings_charset', `stand2_charset',
+	  `plog_charset' are unparsed.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of `standings_charset', `stand2_charset', `plog_charset'
+	  is supported.
+
+2008-08-05 (r4980) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h:
+	(write_public_log) `charset_id' parameter is added.
+
+	* prepare.h:
+	(struct section_global_data) new fields `stand2_charset' and
+	  `plog_charset' are added.
+
+	* html.c:
+	(write_public_log) `charset_id' parameter is added;
+	  arbitrary output charset is supported.
+
+	* prepare.c:
+	global variables `stand2_charset' and `plog_charset' are added.
+
+	* serve_2.c:
+	(serve_update_standings_file) `stand2_charset' is supported;
+	(serve_update_public_log_file) `plog_charset' is supported.
+
+2008-08-05 (r4979) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h:
+	(do_write_moscow_standings) `charset_id' parameter is added.
+
+	* html.c:
+	(do_write_moscow_standings) `charset_id' parameter is added;
+	  arbitrary output charset support is implemented;
+	(write_standings)
+	  calls of `do_write_moscow_standings' are updated.
+
+	* master_html.c, new_server_html.c, new_server_html_2.c:
+	calls of `do_write_moscow_standings' are updated.
+
+2008-08-04 (r4975) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h:
+	(write_standings) `charset_id' parameter is added;
+	(do_write_kirov_standings) `charset_id' parameter is added.
+
+	* prepare.h:
+	`standings_charset' is enabled again.
+
+	* html.c:
+	"charsets.h" are included;
+	(do_write_kirov_standings) `charset_id' parameter is added;
+	(write_standings) `charset_id' parameter is added.
+
+	* new_server_html.c:
+	(unpriv_view_standings) calls of `do_write_kirov_standings' updated.
+
+	* new_server_html_2.c:
+	(ns_write_priv_standings) call of `do_write_kirov_standings' updated.
+
+	* master_html.c:
+	(write_priv_standings) call of `do_write_kirov_standings' is updated;
+	(write_raw_standings) the same.
+
+	* prepare.c:
+	`standings_charset' is enabled again.
+
+	* serve_2.c:
+	"charsets.h" are included;
+	(serve_update_standings_file) `standings_charset' is supported;
+	  calls of `write_standings' are updated.
+
+2008-08-04 (r4973) Alexander Chernov  <cher@ejudge.ru>
+
+	* charsets.h:
+	(*_recode*) functions are renamed to *_decode;
+	(charset_encode) new function;
+	(charset_encode_heap) new function;
+	(charset_encode_to_heap) new function.
+
+	* charsets.c:
+	(*_recode*) functions are renamed to *_decode;
+	(charset_encode) new function;
+	(charset_encode_heap) new function;
+	(charset_encode_to_heap) new function.
+
+	* clarlog.c:
+	(clar_get_subject) _recode_ renamed to _decode_.
+
+	* new_server_html.c:
+	(priv_clar_reply) _recode_ renamed to _decode_.
+
+	* new_server_html_2.c:
+	(ns_write_priv_clar) _recode_ renamed to _decode_.
+
+	* new_server_html_4.c:
+	(cmd_clar_operation) _recode_ renamed to _decode_.
+
+	* parsecfg.c:
+	(copy_param) _recode_ renamed to _decode_.
+
+2008-08-03 (r4959) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	(set_defaults) `start_cmd' default path is changed;
+	(prepare_tester_refinement) `start_cmd' default path is changed.
+
+2008-08-03 (r4954) Alexander Chernov  <cher@ejudge.ru>
+
+	* lang_config_vis.h:
+	(lang_configure_screen) `working_dir' parameter is added;
+	(lang_configure_batch) `working_dir' parameter is added;
+	(lang_config_menu) `working_dir' parameter is added.
+
+	* ejudge-configure-compilers.c:
+	<errno.h> is included;
+	(create_tmp_dir) new function to create a temp dir;
+	(main) temp dir is created and then removed.
+
+	* ejudge-setup.c:
+	temporary directory path is passed to `lang_configure_screen'.
+
+	* lang_config_vis.c:
+	(reconfigure_language) `working_dir' parameter is added;
+	  the current directory changed to working_dir;
+	(reconfigure_all_languages) `working_dir' parameter is added;
+	(lang_configure_screen) `working_dir' parameter is added;
+	(lang_configure_batch) `working_dir' parameter is added;
+	(lang_config_menu) `working_dir' parameter is added.
+
+2008-08-03 (r4952) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	rule for building libserve_clnt.a is removed.
+
+	* files.make:
+	serve_clnt is removed.
+
+	* ejudge-setup.c:
+	(generate_install_script) `serve' probe run is restored.
+
+	* serve.c:
+	removed most of stuff, only "initializing" mode support remains.
+
+2008-08-03 (r4951) dk
+
+	* ejudge-setup.c:
+	Fixed bug with wrong file modes of language scripts
+
+2008-08-01 (r4947) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h: copyright notice is updated;
+	(generate_daily_statistics) `utf8_mode' parameter is added.
+
+	* serve_state.h:
+	(serve_check_stat_generation) `utf8_mode' parameter is added.
+
+	* master_html.c:
+	(generate_daily_statistics) `utf8_mode' parameter is added;
+	UTF8 support is added.
+
+	* new_server_html.c:
+	(ns_unload_contest) `utf8_mode' parameter is added.
+
+	* serve.c:
+	(do_loop) call of `serve_check_stat_generation' is updated;
+	(main) the same as above.
+
+	* serve_2.c:
+	(generate_statistics_email) `utf8_mode' parameter is added;
+	(serve_check_stat_generation) `utf8_mode' parameter is added.
+
+2008-07-30 (r4941) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.h: copyright notice is updated;
+	(html_armor_reserve) prototype is added.
+
+	* charsets.c:
+	(charset_recode) `html_armor_reserve' is used in two cases instead
+	  of `html_armor_extend'.
+
+	* misctext.c:
+	(html_armor_reserve) this function does not preserve the buffer
+	  contents;
+	(html_armor_extend) this function preserve the buffer contents.
+
+	* runlog_xml.c:
+	(encode_file) `html_armor_reserve' is used instead of
+	  `html_armor_extend'.
+
+2008-07-29 (r4935) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile.c:
+	"ejudge_cfg.h" is included;
+	(main) "-x" option is supported to specify path of ejudge.xml;
+	"ejudge.xml" is loaded;
+	path to compile.cfg is no longer necessary, a default is used.
+
+2008-07-29 (r4933) Alexander Chernov  <cher@ejudge.ru>
+
+	* clarlog.h:
+	"ej_types.h" is included;
+	(clar_add_record) removed;
+	(clar_get_record) removed;
+	(clar_get_user_usage) renamed from `clar_get_team_usage'.
+
+	* clarlog.c:
+	(clar_add_record) removed;
+	(clar_get_record) removed;
+	(clar_get_user_usage) renamed from `clar_get_team_usage'.
+
+	* clean-users.c: copyright notice is updated;
+	(main) `clar_get_record_new' is used instead of `clar_get_record'.
+
+	* html.c, master_html.c, serve.c:
+	`clar_get_record_new' is used instead of `clar_get_record';
+	`clar_add_record_new' is used instead of `clar_add_record';
+	`clar_get_user_usage' is used instead of `clar_get_team_usage'.
+
+	* new_server_html_2.c:
+	`clar_get_user_usage' is used instead of `clar_get_team_usage'.
+
+	* serve_2.c:
+	(serve_check_clar_quota) `clar_get_user_usage' used instead of
+	  `clar_get_team_usage'.
+
+2008-07-29 (r4931) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	`new-client' program is now installed as `register', `team', `judge',
+	and `master' program as well.
+
+	* ej_limits.h:
+	`EJ_MAX_TESTER' limit is increased to 100000.
+
+	* ejudge_cfg.h:
+	(struct ejudge_cfg) new field `enable_contest_select' is added.
+
+	* contests.c:
+	"managed" is now an alias of "new_managed" attributed.
+
+	* ejudge_cfg.c:
+	added support for "enable_contest_select" attribute.
+
+	* new_server_html.c:
+	(unprivileged_entry_point) the list of available contests is displayed
+	for clients without contest_id if `enable_contest_select' attribute
+	is set;
+	(ns_handle_http_request) CGI-names `master', `judge', `register'
+	are supported.
+
+	* super_html.c:
+	(super_html_edit_contest_page) editing of `managed' attribute is
+	commented out.
+
+	* testing_report_xml.c:
+	(parse_testing_report) `EJ_MAX_SCORE' constant is used.
+
+2008-07-12 (r4923) Alexander Chernov  <cher@ejudge.ru>
+
+	* lang_config_vis.h:
+	(lang_configure_screen) `in_dirs' parameter is added;
+	(lang_configure_batch) `in_dirs' parameter is added;
+	(lang_config_menu) `in_dirs' parameter is added.
+
+	* ejudge-configure-compilers.c:
+	(visual_setup) compilation script templates are searched
+	  in several dirs.
+
+	* ejudge-setup.c:
+	"fileutl.h" is included;
+	(do_preview_menu) script templates are searched in the
+	  ejudge system script dir;
+	(generate_install_script) compilation scripts are included into
+	  the install script;
+	(preview_install_script) call of `lang_configure_screen'
+	  is updated;
+	(save_install_script) the same;
+	(do_main_menu) call of `lang_config_menu' is updated;
+	(create_tmp_dir) new function;
+	(main) temporary directory is created.
+
+	* lang_config_vis.c:
+	(parse_lang_id_file) a default version of id file is loaded
+	  from ${prefix}/libexec/ejudge/lang/lang_ids.cfg;
+	(update_language_script) `in_dirs' parameter is added;
+	(reconfigure_all_languages) `in_dirs' parameter is added;
+	(lang_configure_screen) `in_dirs' parameter is added;
+	(lang_configure_batch) `in_dirs' parameter is added;
+	(lang_config_menu) `in_dirs' parameter is added.
+
+	* prepare.c:
+	(set_defaults) the compilation scripts are started from
+	  ${compile_home_dir}/scripts.
+
+	* runlog.c:
+	(run_add_record) constants from "ej_limits.h" are used.
+
+2008-07-04 (r4919) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_limits.h:
+	limit on the number of languages and the number of problems is
+	increased to 999999.
+
+	* serve_state.h:
+	(struct serve_state) arrays `langs', `probs', and `testers' are now
+	  dynamic. Their size is calculated in `collect_sections'.
+
+	* prepare.c:
+	(collect_sections) arrays of languages, problems, and testers now
+	have flexible sizes.
+
+	* serve_state.c:
+	(serve_state_destroy) arrays of langs, probs, and testers are freed.
+
+2008-07-04 (r4917) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_state.h:
+	(struct serve_state) `abstr_probs' and `abstr_testers' are
+	  now variable-sized arrays.
+
+	* prepare.c:
+	(collect_sections) limitation on the number of abstract problems
+	  and abstract testers is removed.
+
+	* serve_state.c:
+	(serve_state_destroy) `abstr_probs' and `abstr_testers' are freed.
+
+2008-07-03 (r4915) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_limits.h:
+	USEC_MAX, NSEC_MAX are added.
+
+	* contests.c:
+	"ej_limits.h" is included;
+	constants from "ej_limits.h" are used instead of literal values.
+
+	* contest_tmpl.c, lang_config_vis.c, serve-control.c: copyright notice is updated;
+	"ej_limits.h" is included;
+	constants from "ej_limits.h" are used instead of literal values.
+
+	* compile_packet_1.c, compile_packet_4.c, compile_packet_5.c, new_server_html.c, runlog.c, super_html.c, super_html_3.c:
+	constants from "ej_limits.h" are used instead of literal values.
+
+2008-07-03 (r4913) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_4.c:
+	(smd_submit_run) run_id is reported to the client.
+
+2008-06-30 (r4912) Alexander Chernov  <cher@ejudge.ru>
+
+	* master.c, register.c, serve.c, serve-cmd.c, team.c: removed.
+
+2008-06-25 (r4910) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_byteorder.h: initial revision.
+
+	* ej_limits.h: copyright notice is updated;
+	limits from `compile_packet_priv.h' and `run_packet_priv.h'
+	  are moved here.
+
+	* compile_packet_priv.h, run_packet_priv.h: copyright notice is updated;
+	conversion and alignment macros are moved to `ej_byteorder.h';
+	limit macros are moved to `ej_limits.h'.
+
+	* compile_packet_1.c, compile_packet_2.c, compile_packet_4.c, compile_packet_5.c, run_packet_1.c, run_packet_2.c, run_packet_4.c, run_packet_5.c, run_packet_7.c: copyright notice is updated;
+	"ej_byteorder.h" is included;
+	limits from `ej_limits.h' are used instead of hardcoded constants;
+	error handling is reimplemented.
+
+	* testing_report_xml.c:
+	limits from `ej_limits.h' are used instead of hardcoded constants.
+
+2008-04-29 (r4906) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_4.c:
+	(do_dump_master_runs) rewritten.
+
+2008-04-29 (r4904) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server-cmd.c:
+	some commands are renamed.
+
+	* new_server_html_4.c:
+	(do_dump_master_runs) fixes.
+
+2008-04-28 (r4902) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.c: copyright notice is updated;
+	(duration_str) trailing space is removed.
+
+2008-04-18 (r4899) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	(prepare_parse_variant_map) variant number mismatch is handled
+	  gracefully.
+
 2008-04-11 (r4887) Alexander Chernov  <cher@ejudge.ru>
 
 	* l10n.c:
