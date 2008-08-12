@@ -1,3 +1,68 @@
+2008-08-12 (r4995) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h:
+	(new_write_user_clar) removed;
+	(new_write_user_source_view) removed;
+	(write_user_run_status) removed;
+	(new_write_user_report_view) removed;
+	(write_team_page) removed;
+	(write_master_page) removed;
+	(write_priv_standings) removed;
+	(write_priv_all_runs) removed;
+	(write_priv_source) removed;
+	(write_new_run_form) removed;
+	(write_priv_report) removed;
+	(write_priv_clar) removed;
+	(write_priv_users) removed;
+	(write_priv_user) removed;
+	(write_virtual_standings) removed;
+	(write_raw_standings) removed;
+	(write_raw_source) removed;
+	(write_raw_report) removed;
+	(write_tests) removed;
+	(write_audit_log) removed;
+	(html_write_user_problems_summary) removed.
+
+	* html.c:
+	(html_write_user_problems_summary) removed;
+	(new_write_user_clar) removed;
+	(new_write_user_source_view) removed;
+	(write_user_run_status) removed;
+	(new_write_user_report_view) removed;
+	(print_nav_buttons) removed;
+	(time_to_str) removed;
+	(write_team_page) removed;
+	(write_virtual_standings) removed.
+
+	* master_html.c:
+	(print_nav_buttons) removed;
+	(parse_error_func) removed;
+	(print_raw_record) removed;
+	(write_priv_all_runs) removed;
+	(write_all_clars) removed;
+	(write_master_page) removed;
+	(write_priv_standings) removed;
+	(write_priv_source) removed;
+	(write_new_run_form) removed;
+	(write_priv_report) removed;
+	(write_priv_clar) removed;
+	(write_priv_users) removed;
+	(write_priv_user) removed;
+	(write_raw_standings) removed;
+	(write_raw_source) removed;
+	(write_raw_report) removed;
+	(write_tests) removed;
+	(write_audit_log) removed.
+
+2008-08-12 (r4994) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_3.c:
+	(load_cs_languages) new script directory layout is supported;
+	(get_compiler_path) `config' parameter is added;
+	  computation of script_dir is fixed;
+	(recompile_checker) `config' parameter is added;
+	  calls of `get_compiler_path' are updated.
+
 2008-08-06 (r4983) Alexander Chernov  <cher@ejudge.ru>
 
 	* super_html.h:
