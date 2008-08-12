@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-06-26 22:47+0400\n"
+"POT-Creation-Date: 2008-08-12 18:39+0400\n"
 "PO-Revision-Date: 2008-03-22 07:29+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -119,10 +119,6 @@ msgstr "<font color=\"red\">Отказано</font>"
 #, c-format
 msgid "<h3>Warning %d: issued: %s, issued by: %s (%d), issued from: %s</h3>"
 msgstr "<h3>Предупреждение %d: выдано: %s, пользователем: %s (%d), с: %s</h3>"
-
-#, c-format
-msgid "<hr/><big><b>You have %d unread message(s)!</b></big>\n"
-msgstr "<hr/><big><b>Непрочитанных сообщений: %d!</b></big>\n"
 
 #, c-format
 msgid "<i>Command line is too long</i>\n"
@@ -261,16 +257,6 @@ msgstr ""
 "d&amp;action=%d\">упрощённая процедура регистрации</a>. Учтите, однако, что "
 "на использование учётных записей, созданных по упрощённой процедуре, "
 "наложены некоторые ограничения.</p>\n"
-
-#, c-format
-msgid ""
-"<p%s><b>Note,</b> if downloads are allowed, you may download your runs once "
-"per %d minutes. The archive is in <tt>.tar.gz</tt> (<tt>.tgz</tt>) format.</"
-"p>\n"
-msgstr ""
-"<p%s><b>Обратите внимание,</b> что если загрузка пользовательских посылок "
-"разрешена, вы можете делать это не чаще, чем один раз в %d минут. Архив "
-"посылок имеет формат <tt>.tar.gz</tt> (<tt>.tgz</tt>).</p>\n"
 
 #, c-format
 msgid "<p%s><b>Remember or write down the password!</b></p>"
@@ -488,9 +474,6 @@ msgstr "Добавить"
 msgid "Add new run"
 msgstr "Добавить новую посылку"
 
-msgid "Add new run form"
-msgstr "Форма добавления новой посылки"
-
 msgid "Add new runs in CSV format"
 msgstr "Добавить новые записи в CSV-формате"
 
@@ -540,9 +523,6 @@ msgstr "Руководители"
 msgid "All clars"
 msgstr "Все сообщения"
 
-msgid "All problems"
-msgstr "Все задачи"
-
 msgid "Allow viewing full protocol"
 msgstr "Разрешить просмотр полного протокола"
 
@@ -575,18 +555,6 @@ msgstr "Ответ не задан"
 
 msgid "Answer text"
 msgstr "Текст ответа"
-
-msgid "Answer: NO"
-msgstr "Ответ: НЕТ"
-
-msgid "Answer: No comments"
-msgstr "Ответ: Без комментариев"
-
-msgid "Answer: Read the problem"
-msgstr "Ответ: См. условие задачи"
-
-msgid "Answer: YES"
-msgstr "Ответ: ДА"
 
 msgid "Appeals are disabled"
 msgstr "Апелляции отключены"
@@ -938,9 +906,6 @@ msgstr "Время начала турнира"
 msgid "Contest status"
 msgstr "Состояние турнира"
 
-msgid "Contest stop time"
-msgstr "Время окончания турнира"
-
 msgid "Contest time"
 msgstr "Продолжительность турнира"
 
@@ -1087,9 +1052,6 @@ msgstr "Загрузить посылки"
 msgid "Download selected runs"
 msgstr "Загрузить выбранные посылки"
 
-msgid "Download your submits"
-msgstr "Загрузить свои посылки"
-
 msgid "Dump runs in CSV format"
 msgstr "Вывести базу посылок в CSV-формате"
 
@@ -1182,9 +1144,6 @@ msgstr "Примеры"
 
 msgid "Exit code"
 msgstr "Код завершения"
-
-msgid "Expected stop time"
-msgstr "Ожидаемое время окончания турнира"
 
 msgid "Export runs in XML external format"
 msgstr "Сохранить журнал посылок во внешнем XML-формате"
@@ -1584,9 +1543,6 @@ msgstr "Пустой столбец %d игнорируется\n"
 msgid "Ignoring unsupported column %d (%s)\n"
 msgstr "Неподдерживаемый столбец %d (%s) игнорируется\n"
 
-msgid "Import and merge XML runs log"
-msgstr "Импорт и слияние XML-посылок"
-
 msgid "Import results for existing runs"
 msgstr "Импортировать результаты существующих посылок"
 
@@ -1908,9 +1864,6 @@ msgstr "Войти"
 msgid "Log in to edit registration data"
 msgstr "Войти и редактировать регистрационные данные"
 
-msgid "Log out"
-msgstr "Выйти из системы"
-
 msgid "Login"
 msgstr "Login"
 
@@ -2179,15 +2132,6 @@ msgstr "Предупреждений нет"
 
 msgid "No."
 msgstr "Нет."
-
-msgid "No. of clars"
-msgstr "Число вопросов"
-
-msgid "No. of runs"
-msgstr "Число попыток"
-
-msgid "No. of warns"
-msgstr "Число предупреждений"
 
 msgid "Not a virtual contest"
 msgstr "Не виртуальный турнир"
@@ -2599,9 +2543,6 @@ msgstr "Только чтение?"
 msgid "Real time (sec)"
 msgstr "Астр. время (с)"
 
-msgid "Received"
-msgstr "Получено"
-
 msgid "Recover forgot password"
 msgstr "Восстановить забытый пароль"
 
@@ -2685,9 +2626,6 @@ msgstr "Пересудить задачу!"
 
 msgid "Rejudge runs"
 msgstr "Пересудить"
-
-msgid "Rejudge!"
-msgstr "Пересудить!"
 
 msgid "Reload config files"
 msgstr "Перезагрузить конфигурационные файлы"
@@ -2899,20 +2837,11 @@ msgstr "Отправить сообщение судьям"
 msgid "Send a message to judges"
 msgstr "Отправить сообщение судьям"
 
-msgid "Send a submission"
-msgstr "Отправить решение"
-
 msgid "Send an appeal"
 msgstr "Отправить аппеляцию"
 
 msgid "Send clarification"
 msgstr "Отправить сообщение"
-
-msgid "Send to all"
-msgstr "Разослать всем"
-
-msgid "Send to sender"
-msgstr "Ответить только отправителю"
 
 msgid "Send!"
 msgstr "Отправить!"
@@ -2975,9 +2904,6 @@ msgstr "Установить флаг законченности проверки"
 msgid "Set judging mode"
 msgstr "Включить режим проверки"
 
-msgid "Set status"
-msgstr "Установить статус"
-
 msgid "Set the BANNED flag for the selected users"
 msgstr "Установить флаг ЗАБЛОКИРОВАННОСТИ для отмеченных пользователей"
 
@@ -3016,12 +2942,6 @@ msgstr "Сигнал"
 
 msgid "Size"
 msgstr "Размер"
-
-msgid "Size of clars"
-msgstr "Размер вопросов"
-
-msgid "Size of runs"
-msgstr "Размер попыток"
 
 msgid "Solved"
 msgstr "Решено"
@@ -3399,7 +3319,6 @@ msgstr "Неизвестная ошибка %d.\n"
 msgid "Unknown: %d"
 msgstr "Unknown: %d"
 
-#, c-format
 msgid "Unlimited"
 msgstr "Не ограничена"
 
@@ -3587,9 +3506,6 @@ msgstr "Сданный ответ"
 msgid "View team report"
 msgstr "Просмотреть пользовательский протокол"
 
-msgid "View teams"
-msgstr "Посмотреть команды"
-
 msgid "View the problem statement and send a submission"
 msgstr "Посмотреть условие задачи и отправить решение"
 
@@ -3632,26 +3548,14 @@ msgstr "Просмотр настроек"
 msgid "Viewing user report"
 msgstr "Просмотр пользовательского протокола"
 
-msgid "Virtual contest is finished"
-msgstr "Виртуальный турнир завершён"
-
-msgid "Virtual contest is in progress"
-msgstr "Виртуальный турнир идёт"
-
 msgid "Virtual contest is not started"
 msgstr "Виртуальный турнир не начат"
-
-msgid "Virtual standings"
-msgstr "Виртуальное положение участников"
 
 msgid "Virtual start"
 msgstr "Начало виртуального турнира"
 
 msgid "Virtual stop"
 msgstr "Окончание виртуального турнира"
-
-msgid "Warning"
-msgstr "Предупреждение"
 
 msgid "Warning explanation for the user (mandatory)"
 msgstr "Объяснение для участника (обязательно)"
@@ -3762,14 +3666,8 @@ msgstr "неверный идентификатор пользователя"
 msgid "cannot connect to the server"
 msgstr "нет связи с сервером"
 
-msgid "change"
-msgstr "изменить"
-
 msgid "clarification requests are disabled"
 msgstr "сообщения отключены"
-
-msgid "clear"
-msgstr "очистить"
 
 msgid "clients suspended"
 msgstr "клиенты приостановлены"
@@ -4038,9 +3936,6 @@ msgstr "этот пользователь не может участвовать в этом турнире"
 msgid "this user is not registered for this contest"
 msgstr "этот пользователь не зарегистрирован на данный турнир"
 
-msgid "total"
-msgstr "всего"
-
 msgid "transitive user contest sharing"
 msgstr "транзитивное разделение пользователей турнира"
 
@@ -4079,3 +3974,105 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
+
+#~ msgid "Import and merge XML runs log"
+#~ msgstr "Импорт и слияние XML-посылок"
+
+#~ msgid "Log out"
+#~ msgstr "Выйти из системы"
+
+#~ msgid "Rejudge!"
+#~ msgstr "Пересудить!"
+
+#~ msgid "Send a submission"
+#~ msgstr "Отправить решение"
+
+#~ msgid "View teams"
+#~ msgstr "Посмотреть команды"
+
+#~ msgid "change"
+#~ msgstr "изменить"
+
+#~ msgid "clear"
+#~ msgstr "очистить"
+
+#~ msgid "Add new run form"
+#~ msgstr "Форма добавления новой посылки"
+
+#~ msgid "Answer: NO"
+#~ msgstr "Ответ: НЕТ"
+
+#~ msgid "Answer: No comments"
+#~ msgstr "Ответ: Без комментариев"
+
+#~ msgid "Answer: Read the problem"
+#~ msgstr "Ответ: См. условие задачи"
+
+#~ msgid "Answer: YES"
+#~ msgstr "Ответ: ДА"
+
+#~ msgid "No. of clars"
+#~ msgstr "Число вопросов"
+
+#~ msgid "No. of runs"
+#~ msgstr "Число попыток"
+
+#~ msgid "No. of warns"
+#~ msgstr "Число предупреждений"
+
+#~ msgid "Send to all"
+#~ msgstr "Разослать всем"
+
+#~ msgid "Send to sender"
+#~ msgstr "Ответить только отправителю"
+
+#~ msgid "Set status"
+#~ msgstr "Установить статус"
+
+#~ msgid "Size of clars"
+#~ msgstr "Размер вопросов"
+
+#~ msgid "Size of runs"
+#~ msgstr "Размер попыток"
+
+#~ msgid "<hr/><big><b>You have %d unread message(s)!</b></big>\n"
+#~ msgstr "<hr/><big><b>Непрочитанных сообщений: %d!</b></big>\n"
+
+#~ msgid ""
+#~ "<p%s><b>Note,</b> if downloads are allowed, you may download your runs "
+#~ "once per %d minutes. The archive is in <tt>.tar.gz</tt> (<tt>.tgz</tt>) "
+#~ "format.</p>\n"
+#~ msgstr ""
+#~ "<p%s><b>Обратите внимание,</b> что если загрузка пользовательских посылок "
+#~ "разрешена, вы можете делать это не чаще, чем один раз в %d минут. Архив "
+#~ "посылок имеет формат <tt>.tar.gz</tt> (<tt>.tgz</tt>).</p>\n"
+
+#~ msgid "All problems"
+#~ msgstr "Все задачи"
+
+#~ msgid "Contest stop time"
+#~ msgstr "Время окончания турнира"
+
+#~ msgid "Download your submits"
+#~ msgstr "Загрузить свои посылки"
+
+#~ msgid "Expected stop time"
+#~ msgstr "Ожидаемое время окончания турнира"
+
+#~ msgid "Received"
+#~ msgstr "Получено"
+
+#~ msgid "Virtual contest is finished"
+#~ msgstr "Виртуальный турнир завершён"
+
+#~ msgid "Virtual contest is in progress"
+#~ msgstr "Виртуальный турнир идёт"
+
+#~ msgid "Virtual standings"
+#~ msgstr "Виртуальное положение участников"
+
+#~ msgid "Warning"
+#~ msgstr "Предупреждение"
+
+#~ msgid "total"
+#~ msgstr "всего"
