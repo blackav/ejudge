@@ -3023,6 +3023,7 @@ load_cs_languages(const struct ejudge_cfg *config,
     sstate->cs_langs[lp->id] = lp;
   }
 
+  /*
   script_dir[0] = 0;
   if (config->script_dir) {
     snprintf(script_dir, sizeof(script_dir), "%s", config->script_dir);
@@ -3032,12 +3033,28 @@ load_cs_languages(const struct ejudge_cfg *config,
     snprintf(script_dir, sizeof(script_dir), "%s", EJUDGE_SCRIPT_DIR);
   }
 #endif
+  */
+  script_dir[0] = 0;
+  if (config->compile_home_dir) {
+    snprintf(script_dir, sizeof(script_dir), "%s/scripts",
+             config->compile_home_dir);
+  }
+  if (!script_dir[0] && config->contests_home_dir) {
+    snprintf(script_dir, sizeof(script_dir), "%s/compile/scripts",
+             config->contests_home_dir);
+  }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  if (!script_dir[0]) {
+    snprintf(script_dir, sizeof(script_dir), "%s/compile/scripts",
+             EJUDGE_CONTESTS_HOME_DIR);
+  }
+#endif
 
   if (*script_dir) {
     // detect actual language versions
     for (cur_lang = 1; cur_lang < sstate->cs_lang_total; cur_lang++) {
       if (!(lp = sstate->cs_langs[cur_lang])) continue;
-      snprintf(cmdpath, sizeof(cmdpath), "%s/lang/%s-version", script_dir,
+      snprintf(cmdpath, sizeof(cmdpath), "%s/%s-version", script_dir,
                lp->cmd);
       /*
       if (!check_version_flag && sstate->?) {
@@ -3045,7 +3062,7 @@ load_cs_languages(const struct ejudge_cfg *config,
                  script_dir, lp->cmd);
       } else {
       */
-      snprintf(cmdline, sizeof(cmdline), "\"%s/lang/%s-version\" -f",
+      snprintf(cmdline, sizeof(cmdline), "\"%s/%s-version\" -f",
                script_dir, lp->cmd);
         //}
       if (access(cmdpath, X_OK) >= 0) {
@@ -7584,21 +7601,44 @@ static unsigned char *gcc_path = 0;
 static unsigned char *gpp_path = 0;
 
 static unsigned char *
-get_compiler_path(const unsigned char *short_name, unsigned char *old_path)
+get_compiler_path(
+        const struct ejudge_cfg *config,
+        const unsigned char *short_name,
+        unsigned char *old_path)
 {
   unsigned char *s = 0;
+  path_t script_path;
   path_t cmd;
 
   if (old_path) return old_path;
 
-  snprintf(cmd, sizeof(cmd), "%s/lang/%s-version -p",
-           EJUDGE_SCRIPT_DIR, short_name);
+  script_path[0] = 0;
+  if (config->compile_home_dir) {
+    snprintf(script_path, sizeof(script_path), "%s/scripts",
+             config->compile_home_dir);
+  }
+  if (!script_path[0] && config->contests_home_dir) {
+    snprintf(script_path, sizeof(script_path), "%s/compile/scripts",
+             config->contests_home_dir);
+  }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  if (!script_path[0] && config->contests_home_dir) {
+    snprintf(script_path, sizeof(script_path), "%s/compile/scripts",
+             EJUDGE_CONTESTS_HOME_DIR);
+  }
+#endif
+
+  snprintf(cmd, sizeof(cmd), "\"%s/%s-version\" -p",
+           script_path, short_name);
   if (!(s = read_process_output(cmd, 0, 0, 0))) s = xstrdup("");
   return s;
 } 
 
 static int
-recompile_checker(FILE *f, const unsigned char *checker_path)
+recompile_checker(
+        const struct ejudge_cfg *config,
+        FILE *f,
+        const unsigned char *checker_path)
 {
   struct stat stbuf1, stbuf2;
   path_t checker_src;
@@ -7671,7 +7711,7 @@ recompile_checker(FILE *f, const unsigned char *checker_path)
 
   switch (lang_ind) {
   case CHECKER_LANG_PAS:
-    fpc_path = get_compiler_path("fpc", fpc_path);
+    fpc_path = get_compiler_path(config, "fpc", fpc_path);
     if (!*fpc_path) {
       fprintf(f, "Error: Free Pascal support is not configured\n");
       return -1;
@@ -7680,7 +7720,7 @@ recompile_checker(FILE *f, const unsigned char *checker_path)
              fpc_path, EJUDGE_PREFIX_DIR, filename2);
     break;
   case CHECKER_LANG_DPR:
-    dcc_path = get_compiler_path("dcc", dcc_path);
+    dcc_path = get_compiler_path(config, "dcc", dcc_path);
     if (!*dcc_path) {
       fprintf(f, "Error: Delphi (Kylix) support is not configured\n");
       return -1;
@@ -7689,7 +7729,7 @@ recompile_checker(FILE *f, const unsigned char *checker_path)
              dcc_path, EJUDGE_PREFIX_DIR, filename2);
     break;
   case CHECKER_LANG_C:
-    gcc_path = get_compiler_path("gcc", gcc_path);
+    gcc_path = get_compiler_path(config, "gcc", gcc_path);
     if (!*gcc_path) {
       fprintf(f, "Error: GNU C support is not configured\n");
       return -1;
@@ -7697,7 +7737,7 @@ recompile_checker(FILE *f, const unsigned char *checker_path)
     snprintf(cmd, sizeof(cmd), "%s -std=gnu99 -O2 -Wall -I%s/include/ejudge -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gcc_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
     break;
   case CHECKER_LANG_CPP:
-    gpp_path = get_compiler_path("g++", gpp_path);
+    gpp_path = get_compiler_path(config, "g++", gpp_path);
     if (!*gpp_path) {
       fprintf(f, "Error: GNU C++ support is not configured\n");
       return -1;
@@ -8097,12 +8137,14 @@ super_html_check_tests(FILE *f,
 
     if (!tmp_prob.standard_checker[0]) {
       if (prob->variant_num <= 0) {
-        if (recompile_checker(flog, checker_path) < 0) goto check_failed;
+        if (recompile_checker(config, flog, checker_path) < 0)
+          goto check_failed;
       } else {
         for (variant = 1; variant <= prob->variant_num; variant++) {
           snprintf(v_checker_path, sizeof(v_checker_path), "%s-%d",
                    checker_path, variant);
-          if (recompile_checker(flog, v_checker_path) < 0) goto check_failed;
+          if (recompile_checker(config, flog, v_checker_path) < 0)
+            goto check_failed;
         }
       }
     }
