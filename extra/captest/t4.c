@@ -26,24 +26,7 @@
 #include <stdlib.h>
 #include <sys/utsname.h>
 
-static int get_linux_version(void)
-{
-  struct utsname ub;
-  int minor = 0, major = 0, rev = 0;
-
-  if (uname(&ub) < 0) {
-    fprintf(stderr, "failed: uname() error: %s\n", strerror(errno));
-    return -1;
-  }
-  if (strcmp(ub.sysname, "Linux")) return 0;
-  if (sscanf(ub.release, "%d.%d.%d", &major, &minor, &rev) != 3) return 0;
-  if (major < 2 || minor < 0 || rev < 0) return 0;
-  if (major == 2 && minor < 4) return 0;
-  if (minor > 999) minor = 999;
-  if (rev > 999) rev = 999;
-  return (major * 1000 + minor) * 1000 + rev;
-}
-static int linux_version = -1;
+#include "get_version.c"
 
 void recur(int depth)
 {
