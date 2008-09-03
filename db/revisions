@@ -3597,3 +3597,10 @@ userlist.c 5001 0 4946871
 userlist_check.c 5001 0 1078681
 userlist_xml.c 5001 0 4690565
 plugins/mysql-userlist/uldb_mysql.c 5000 0 6285514
+userlist_xml.c 5003 0 4703354
+userlist.h 5004 0 1567805
+new_server_html_2.c 5004 0 14138542
+new_server_html_5.c 5004 0 9073963
+uldb_plugin_xml.c 5004 0 6386310
+userlist.c 5004 0 4944753
+userlist_xml.c 5004 0 4648636
