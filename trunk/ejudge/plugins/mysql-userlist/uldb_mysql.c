@@ -24,6 +24,7 @@
 #include "ejudge_cfg.h"
 #include "pathutl.h"
 #include "userlist.h"
+#include "list_ops.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -216,6 +217,13 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   int (*check_user_reg_data)(void *, int, int);
   // move a particular member to a different role
   int (*move_member)(void *, int, int, int, int, time_t, int *);
+  // change the team_login flag of the cookie
+  int (*set_cookie_team_login)(void *, const struct userlist_cookie *, int);
+  // get the login, basic contest-specific user info, registration
+  // and member information
+  int (*get_user_info_6)(void *, int, int, const struct userlist_user **, const struct userlist_user_info **, const struct userlist_contest **, const struct userlist_members **);
+  // get the login, basic contest-specific user info, and member info
+  int (*get_user_info_7)(void *, int, int, const struct userlist_user **, const struct userlist_user_info **, const struct userlist_members **);
   */
 };
 
@@ -240,6 +248,9 @@ enum { USERS_POOL_SIZE = 1024 };
 
 // the size of the user info pool
 enum { USER_INFO_POOL_SIZE = 1024 };
+
+// the size of the member pool
+enum { MEMBERS_POOL_SIZE = 1024 };
 
 struct cntsregs_container;
 struct cntsregs_user;
@@ -266,6 +277,17 @@ struct user_info_cache
   int size, count;
   struct user_info_user *user_map;
   struct user_info_container *first, *last;
+};
+
+struct members_container;
+struct members_user;
+
+struct members_cache
+{
+  int size;                     /* size of the user map */
+  int count;                    /* the total count of entries in cache */
+  struct members_user *user_map;
+  struct members_container *first, *last;
 };
 
 struct uldb_mysql_state
@@ -303,6 +325,9 @@ struct uldb_mysql_state
 
   // user_info caching
   struct user_info_cache user_infos;
+
+  // members cache
+  struct members_cache members;
 };
 
 struct user_id_iterator
@@ -2601,6 +2626,116 @@ get_user_info_2_func(
   // if not exist, insert a record
 
   abort();
+}
+
+/*
+struct members_cache
+{
+  int size;
+  int count;
+  struct members_user *user_map;
+  struct members_container *first, *last;
+};
+*/
+
+struct members_container
+{
+  struct xml_tree b;
+  int user_id;
+  int contest_id;
+  struct userlist_members *mm;
+  struct members_container *prev, *next;
+  // sublist of containers with the same user_id
+  struct members_container *prev_user, *next_user;
+};
+struct members_user
+{
+  struct members_container *first_user, *last_user;
+  int min_id, max_id;           // [min_id, max_id) for contest
+};
+
+static struct userlist_members *
+allocate_members_on_pool(
+        struct uldb_mysql_state *state,
+        int user_id,
+        int contest_id)
+  __attribute__((unused));
+
+static struct userlist_members *
+allocate_members_on_pool(
+        struct uldb_mysql_state *state,
+        int user_id,
+        int contest_id)
+{
+  struct members_cache *cache = &state->members;
+  struct members_user *usr;
+  struct members_container *pp, *qq;
+
+  ASSERT(user_id > 0);
+  ASSERT(contest_id >= 0);
+
+  if (user_id >= cache->size) {
+    // extend the cache index
+    int new_size = cache->size;
+    struct members_user *new_map = 0;
+
+    if (!new_size) new_size = 128;
+    while (new_size < user_id) new_size *= 2;
+    XCALLOC(new_map, new_size);
+    if (cache->size > 0)
+      memcpy(new_map, cache->user_map, sizeof(new_map[0]) * cache->size);
+    cache->size = new_size;
+    xfree(cache->user_map);
+    cache->user_map = new_map;
+  }
+  usr = &cache->user_map[user_id];
+
+  pp = 0;
+  if (contest_id >= usr->min_id && contest_id < usr->max_id) {
+    for (pp = usr->first_user; pp; pp = pp->next_user) {
+      ASSERT(pp->user_id == user_id);
+      if (pp->contest_id == contest_id)
+        break;
+    }
+  }
+
+  // found in cache
+  if (pp) {
+    // erase the current data???
+    userlist_elem_free_data(&pp->mm->b);
+    pp->mm->b.tag = USERLIST_T_MEMBERS;
+    // move to front in the member list
+    MOVE_TO_FRONT(pp, cache->first, cache->last, prev, next);
+    // move to front in the user list
+    MOVE_TO_FRONT(pp, usr->first_user, usr->last_user, prev_user, next_user);
+    return pp->mm;
+  }
+
+  if (cache->count == MEMBERS_POOL_SIZE) {
+    pp = cache->last;
+    UNLINK_FROM_LIST(pp, cache->first, cache->last, prev, next);
+    ASSERT(pp->user_id > 0 && pp->user_id < cache->size);
+    usr = &cache->user_map[user_id];
+    ASSERT(usr->first_user);
+    ASSERT(usr->last_user);
+    UNLINK_FROM_LIST(pp, usr->first_user, usr->last_user, prev_user, next_user);
+    CALCULATE_RANGE(usr->min_id, usr->max_id, usr->first_user, contest_id, next_user, qq);
+    userlist_free(&pp->mm->b);
+    pp->mm = 0;
+    xfree(pp);
+    cache->count--;
+  }
+
+  XCALLOC(pp, 1);
+  pp->mm = (struct userlist_members*) userlist_node_alloc(USERLIST_T_MEMBERS);
+  pp->mm->b.tag = USERLIST_T_MEMBERS;
+  pp->user_id = user_id;
+  pp->contest_id = contest_id;
+  cache->count++;
+  UPDATE_RANGE(usr->min_id, usr->max_id, usr->first_user, contest_id);
+  LINK_FIRST(pp, cache->first, cache->last, prev, next);
+  LINK_FIRST(pp, usr->first_user, usr->last_user, prev_user, next_user);
+  return pp->mm;
 }
 
 /*

@@ -325,6 +325,7 @@ HFILES=\
  job_packet.h\
  l10n.h\
  lang_config_vis.h\
+ list_ops.h\
  mime_type.h\
  mischtml.h\
  misctext.h\
