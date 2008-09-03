@@ -2228,7 +2228,7 @@ ns_write_exam_info(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct teamdb_export td;
   unsigned char cl[128];
-  struct userlist_new_members *mm = 0;
+  struct userlist_members *mm = 0;
   struct userlist_member *m = 0;
 
   snprintf(cl, sizeof(cl), " class=\"b1\"");

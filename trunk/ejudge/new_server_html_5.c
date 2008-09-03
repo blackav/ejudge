@@ -1288,7 +1288,7 @@ main_page_view_info(
   int tab_count, err_count, role_err_count[CONTEST_LAST_MEMBER + 1];
   int rr, mm, mmbound, main_area_span;
   const struct userlist_member *m;
-  const struct userlist_new_members *mmm = 0;
+  const struct userlist_members *mmm = 0;
 
   u = phr->session_extra->user_info;
 

@@ -173,12 +173,7 @@ static size_t const elem_sizes[USERLIST_LAST_TAG] =
   [USERLIST_T_MEMBER] = sizeof(struct userlist_member),
   [USERLIST_T_COOKIE] = sizeof(struct userlist_cookie),
   [USERLIST_T_CONTEST] = sizeof(struct userlist_contest),
-  [USERLIST_T_MEMBERS] = sizeof(struct userlist_new_members),
-  [USERLIST_T_CONTESTANTS] = sizeof(struct userlist_members),
-  [USERLIST_T_RESERVES] = sizeof(struct userlist_members),
-  [USERLIST_T_COACHES] = sizeof(struct userlist_members),
-  [USERLIST_T_ADVISORS] = sizeof(struct userlist_members),
-  [USERLIST_T_GUESTS] = sizeof(struct userlist_members),
+  [USERLIST_T_MEMBERS] = sizeof(struct userlist_members),
   [USERLIST_T_CNTSINFO] = sizeof(struct userlist_cntsinfo),
 };
 
@@ -276,18 +271,8 @@ elem_free(struct xml_tree *t)
     break;
   case USERLIST_T_MEMBERS:
     {
-      struct userlist_new_members *p = (struct userlist_new_members*) t;
-      xfree(p->m);
-    }
-    break;
-  case USERLIST_T_CONTESTANTS:
-  case USERLIST_T_RESERVES:
-  case USERLIST_T_COACHES:
-  case USERLIST_T_ADVISORS:
-  case USERLIST_T_GUESTS:
-    {
       struct userlist_members *p = (struct userlist_members*) t;
-      xfree(p->members);
+      xfree(p->m);
     }
     break;
   case USERLIST_T_CNTSINFO:
@@ -647,11 +632,10 @@ parse_members(
         struct userlist_user_info *ui)
 {
   struct xml_tree *t;
-  struct userlist_members *mbs = (struct userlist_members*) q;
   struct userlist_member *mb;
   struct xml_tree *p, *saved_next, *saved_next_2;
   struct xml_attr *a;
-  struct userlist_new_members *mmm;
+  struct userlist_members *mmm;
   unsigned char **p_str;
   time_t *p_time;
   int role;
@@ -659,10 +643,10 @@ parse_members(
   if (q->tag < USERLIST_T_CONTESTANTS || q->tag > USERLIST_T_GUESTS)
     return xml_err_elem_not_allowed(q);
   role = q->tag - USERLIST_T_CONTESTANTS;
-  if (mbs->b.first) return xml_err_attrs(q);
-  xfree(mbs->b.text); mbs->b.text = 0;
+  if (q->first) return xml_err_attrs(q);
+  xfree(q->text); q->text = 0;
 
-  for (t = mbs->b.first_down; t; t = saved_next_2) {
+  for (t = q->first_down; t; t = saved_next_2) {
     saved_next_2 = t->right;
 
     if (t->tag != USERLIST_T_MEMBER) return xml_err_elem_not_allowed(t);
@@ -672,7 +656,7 @@ parse_members(
     mb->team_role = role;
 
     if (!ui->new_members) {
-      mmm=(struct userlist_new_members*)userlist_node_alloc(USERLIST_T_MEMBERS);
+      mmm=(struct userlist_members*)userlist_node_alloc(USERLIST_T_MEMBERS);
       ui->new_members = mmm;
       xml_link_node_last(link_node, &mmm->b);
     }
@@ -1532,7 +1516,7 @@ unparse_member(const struct userlist_member *p, FILE *f)
   fprintf(f, "      </%s>\n", elem_map[USERLIST_T_MEMBER]);
 }
 static void
-unparse_members(const struct userlist_new_members *p, FILE *f)
+unparse_members(const struct userlist_members *p, FILE *f)
 {
   int i, j, cnt;
   struct userlist_member *m;
