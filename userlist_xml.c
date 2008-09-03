@@ -655,12 +655,12 @@ parse_members(
     mb->grade = -1;
     mb->team_role = role;
 
-    if (!ui->new_members) {
+    if (!ui->members) {
       mmm=(struct userlist_members*)userlist_node_alloc(USERLIST_T_MEMBERS);
-      ui->new_members = mmm;
+      ui->members = mmm;
       xml_link_node_last(link_node, &mmm->b);
     }
-    mmm = ui->new_members;
+    mmm = ui->members;
 
     if (mmm->u == mmm->a) {
       if (!mmm->a) mmm->a = 4;
@@ -1681,7 +1681,7 @@ unparse_cntsinfo(const struct userlist_cntsinfo *p, FILE *f)
                             p->i.team_passwd, attr_str, sp1);
   }
 
-  unparse_members(p->i.new_members, f);
+  unparse_members(p->i.members, f);
 
   fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CNTSINFO]);
 }
@@ -1863,14 +1863,14 @@ userlist_real_unparse_user(
   */
 
   if (mode == USERLIST_MODE_STAND && (flags & USERLIST_FORCE_FIRST_MEMBER)
-      && (m = userlist_members_get_first(ui->new_members))) {
+      && (m = userlist_members_get_first(ui->members))) {
     fprintf(f, "    <%s>\n", elem_map[USERLIST_T_CONTESTANTS]);
     unparse_member(m, f);
     fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CONTESTANTS]);
   }
 
   if (mode != USERLIST_MODE_STAND) {
-    unparse_members(ui->new_members, f);
+    unparse_members(ui->members, f);
   }
 
   if (contest_id < 0 && p->cntsinfo) {

@@ -1497,7 +1497,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
   // count how much menu items we need
   tot_items = field_order_size;
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
-    if ((role_cnt = userlist_members_count(u->i.new_members, role)) <= 0)
+    if ((role_cnt = userlist_members_count(u->i.members, role)) <= 0)
       continue;
     tot_items += 1 + (USERLIST_NM_LAST - USERLIST_NM_FIRST + 1) * role_cnt;
   }
@@ -1523,7 +1523,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
     user_menu_string(u, field_order[i], descs[j++]);
   }
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
-    if ((role_cnt = userlist_members_count(u->i.new_members, role)) <= 0)
+    if ((role_cnt = userlist_members_count(u->i.members, role)) <= 0)
       continue;
     info[j].role = role;
     info[j].pers = -1;
@@ -1531,7 +1531,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
     snprintf(descs[j++], 78, "*%s*", member_string_pl[role]);
 
     for (pers = 0; pers < role_cnt; pers++) {
-      if (!(m = (struct userlist_member*) userlist_members_get_nth(u->i.new_members, role, pers)))
+      if (!(m = (struct userlist_member*) userlist_members_get_nth(u->i.members, role, pers)))
         continue;
 
       info[j].role = role;
@@ -1921,7 +1921,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         }
       }
       if (info[cur_i].role >= 0) {
-        if (!(m = (struct userlist_member*) userlist_members_get_nth(u->i.new_members, info[cur_i].role,
+        if (!(m = (struct userlist_member*) userlist_members_get_nth(u->i.members, info[cur_i].role,
                                            info[cur_i].pers)))
           goto menu_continue;
         if (info[cur_i].field < -1) goto menu_continue;
@@ -2154,7 +2154,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
       if (info[cur_i].role >= 0) {
         if (info[cur_i].role >= CONTEST_LAST_MEMBER) goto menu_continue;
         if (info[cur_i].pers < 0 ||
-            info[cur_i].pers >= userlist_members_count(u->i.new_members, role))
+            info[cur_i].pers >= userlist_members_count(u->i.members, role))
           goto menu_continue;
         if (info[cur_i].field < 0
             || info[cur_i].field > USERLIST_NM_LAST)
@@ -2345,10 +2345,10 @@ user_match(struct userlist_user *u, int kind)
       int role_cnt = 0;
 
       for (role = 0; role < USERLIST_MB_LAST; role++) {
-        if ((role_cnt = userlist_members_count(u->i.new_members, role)) <= 0)
+        if ((role_cnt = userlist_members_count(u->i.members, role)) <= 0)
           continue;
         for (memb = 0; memb < role_cnt; memb++) {
-          if (!(pm = userlist_members_get_nth(u->i.new_members, role, memb)))
+          if (!(pm = userlist_members_get_nth(u->i.members, role, memb)))
             continue;
 
           if (user_regmatch(pm->firstname)) return 1;

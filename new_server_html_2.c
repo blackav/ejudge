@@ -2259,7 +2259,7 @@ ns_write_exam_info(
     }
     fprintf(fout, "<td%s>%s</td>", cl, "&nbsp;"); /* FIXME: print flags */
 
-    if (td.user && (mm = td.user->i.new_members) && mm->u > 0) {
+    if (td.user && (mm = td.user->i.members) && mm->u > 0) {
       for (j = 0; j < mm->u; j++)
         if ((m = mm->m[j]) && m->team_role == USERLIST_MB_CONTESTANT) {
           break;

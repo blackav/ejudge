@@ -645,6 +645,8 @@ link_client_state(struct client_state *p)
 #define default_copy_user_info(a, b, c, d, e, f) uldb_default->iface->copy_user_info(uldb_default->data, a, b, c, d, e, f)
 #define default_check_user_reg_data(a, b) uldb_default->iface->check_user_reg_data(uldb_default->data, a, b)
 #define default_move_member(a, b, c, d, e, f) uldb_default->iface->move_member(uldb_default->data, a, b, c, d, e, f)
+#define default_get_user_info_6(a, b, c, d, e, f) uldb_default->iface->get_user_info_6(uldb_default->data, a, b, c, d, e, f)
+#define default_get_user_info_7(a, b, c, d, e) uldb_default->iface->get_user_info_7(uldb_default->data, a, b, c, d, e)
 
 static void
 update_all_user_contests(int user_id)
@@ -4670,8 +4672,9 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
   int role, pers, role_cnt;
   const struct userlist_member *m;
   const struct contest_member *cm;
+  const struct userlist_members *mm;
 
-  if (default_get_user_info_3(user_id, contest_id, &u, &ui, &c) < 0 || !c) {
+  if (default_get_user_info_6(user_id, contest_id, &u, &ui, &c, &mm)<0 || !c) {
     fprintf(f, "<%s>%s</%s>\n",
             d->users_head_style,
             _("Information is not available"),
@@ -4812,13 +4815,13 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
     if (d && !d->members[role]) continue;
     if (d && d->members[role] && d->members[role]->max_count <= 0)
       continue;
-    if (!(role_cnt = userlist_members_count(ui->new_members, role)))
+    if (!(role_cnt = userlist_members_count(mm, role)))
       continue;
     fprintf(f, "<h3>%s</h3>\n", gettext(member_string_pl[role]));
     for (pers = 0; pers < role_cnt; pers++) {
       if (d && d->members[role] && pers >= d->members[role]->max_count)
         break;
-      if (!(m = userlist_members_get_nth(ui->new_members, role, pers)))
+      if (!(m = userlist_members_get_nth(mm, role, pers)))
         continue;
       fprintf(f, "<h3>%s %d</h3>\n", gettext(member_string[role]),
               pers + 1);
@@ -5119,6 +5122,7 @@ do_dump_database(FILE *f, int contest_id, const struct contest_desc *d,
   const struct userlist_user *u;
   const struct userlist_contest *c;
   const struct userlist_member *m;
+  const struct userlist_members *mm;
   unsigned char *notset = 0, *banstr = 0, *invstr = 0, *statstr = 0;
   int role, pers, pers_tot, role_cnt;
   const struct userlist_user_info *ui;
@@ -5136,6 +5140,7 @@ do_dump_database(FILE *f, int contest_id, const struct contest_desc *d,
     u = (const struct userlist_user*) iter->get(iter);
     ui = userlist_get_user_info(u, contest_id);
     c = userlist_get_user_contest(u, contest_id);
+    mm = ui->members;
 
     switch (c->status) {
     case USERLIST_REG_OK:       statstr = "OK";       break;
@@ -5153,13 +5158,13 @@ do_dump_database(FILE *f, int contest_id, const struct contest_desc *d,
 
     pers_tot = 0;
     for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
-      if ((role_cnt = userlist_members_count(ui->new_members, role)) <= 0)
+      if ((role_cnt = userlist_members_count(mm, role)) <= 0)
         continue;
       for (pers = 0; pers < role_cnt; pers++) {
         unsigned char nbuf[32] = { 0 };
         unsigned char *lptr = nbuf;
 
-        if (!(m = userlist_members_get_nth(ui->new_members, role, pers)))
+        if (!(m = userlist_members_get_nth(mm, role, pers)))
           continue;
         if (role == CONTEST_M_CONTESTANT || role == CONTEST_M_RESERVE) {
           snprintf(nbuf, sizeof(nbuf), "%d", m->grade);
@@ -7432,6 +7437,7 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
   const struct contest_member *cm;
   int role, pers, pers_tot, need_members = 0, i, role_cnt;
   const struct userlist_user_info *ui;
+  const struct userlist_members *mm;
   ptr_iterator_t iter;
   FILE *gen_f = 0;
   char *gen_text = 0;
@@ -7495,6 +7501,7 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
     u = (const struct userlist_user*) iter->get(iter);
     ui = userlist_get_user_info(u, contest_id);
     c = userlist_get_user_contest(u, contest_id);
+    mm = ui->members;
 
     gen_f = open_memstream(&gen_text, &gen_size);
     fprintf(gen_f, "%d;%s;%s;%s", u->id, u->login, ui->name, u->email);
@@ -7531,11 +7538,11 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
 
     pers_tot = 0;
     for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
-      if ((role_cnt = userlist_members_count(ui->new_members, role)) <= 0)
+      if ((role_cnt = userlist_members_count(mm, role)) <= 0)
         continue;
       if (!(cm = cnts->members[role])) continue;
       for (pers = 0; pers < role_cnt; pers++) {
-        if (!(m = userlist_members_get_nth(ui->new_members, role, pers)))
+        if (!(m = userlist_members_get_nth(mm, role, pers)))
           continue;
         if (pers >= cm->max_count) continue;
         pers_tot++;
@@ -7687,6 +7694,7 @@ cmd_edit_field_seq(
   const struct contest_desc *cnts = 0;
   const struct userlist_user_info *ui = 0;
   const struct userlist_member *m = 0;
+  const struct userlist_members *mm = 0;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet is too small: %d < %zu", pkt_len, sizeof(*data));
@@ -7782,7 +7790,7 @@ cmd_edit_field_seq(
     return;
   if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
 
-  if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0) {
+  if (default_get_user_info_7(data->user_id, data->contest_id, &u, &ui, &mm)<0){
     err("%s -> invalid user", logbuf);
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
@@ -7835,7 +7843,7 @@ cmd_edit_field_seq(
     if (deleted_ids[i] >= USERLIST_NM_FIRST
         && deleted_ids[i] < USERLIST_NM_LAST
         && cnts->personal) {
-      if ((m = userlist_members_get_first(ui->new_members))) {
+      if ((m = userlist_members_get_first(mm))) {
         if ((r = default_clear_member_field(data->user_id, data->contest_id,
                                             m->serial, deleted_ids[i],
                                             cur_time, &f)) < 0)
@@ -7860,14 +7868,14 @@ cmd_edit_field_seq(
     if (edited_ids[i] >= USERLIST_NM_FIRST
         && edited_ids[i] < USERLIST_NM_LAST
         && cnts->personal) {
-      if (userlist_members_count(ui->new_members, CONTEST_M_CONTESTANT) <= 0) {
+      if (userlist_members_count(mm, CONTEST_M_CONTESTANT) <= 0) {
         if ((r = default_new_member(data->user_id, data->contest_id,
                                     CONTEST_M_CONTESTANT, cur_time, &f)) < 0)
           goto cannot_change;
         cloned_flag |= f;
         default_get_user_info_2(data->user_id, data->contest_id, &u, &ui);
       }
-      m = userlist_members_get_first(ui->new_members);
+      m = userlist_members_get_first(mm);
       ASSERT(m);
       if ((r = default_set_user_member_field(data->user_id, data->contest_id,
                                              m->serial, edited_ids[i],
@@ -8046,6 +8054,7 @@ cmd_import_csv_users(
   const struct userlist_user_info *ui;
   const struct userlist_contest *c;
   const struct userlist_member *m;
+  const struct userlist_members *mm;
   int retval = ULS_TEXT_DATA_FAILURE;
   struct userlist_pk_xml_data *out = 0;
   size_t out_size = 0;
@@ -8188,9 +8197,9 @@ cmd_import_csv_users(
   for (i = 1; i < csv->u; i++) {
     user_id = user_ids[i];
     u = 0; ui = 0;
-    if (default_get_user_info_2(user_id, data->contest_id, &u, &ui) < 0)
+    if (default_get_user_info_7(user_id, data->contest_id, &u, &ui, &mm) < 0)
       abort();
-    if (need_member && (!ui || !userlist_members_get_first(ui->new_members))) {
+    if (need_member && (!ui || !userlist_members_get_first(mm))) {
       if (default_new_member(user_id, data->contest_id, CONTEST_M_CONTESTANT,
                              cur_time, &cloned_flag) < 0) {
         fprintf(log_f, "Cannot create a new member for user `%s'\n", u->login);
@@ -8202,7 +8211,7 @@ cmd_import_csv_users(
       m = 0; u =0; ui = 0;
       if (default_get_user_info_2(user_id, data->contest_id, &u, &ui) < 0)
         abort();
-      if (ui) m = userlist_members_get_first(ui->new_members);
+      if (ui) m = userlist_members_get_first(mm);
       ASSERT(m);
     }
     for (j = 0; j < csv->v[i].u; j++) {

@@ -669,7 +669,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           pf++;
 
           if (!user_data
-              || !(pp = userlist_members_get_nth(ui->new_members, idx, nmemb))) {
+              || !(pp = userlist_members_get_nth(ui->members, idx, nmemb))) {
             papp = "";
             break;
           }
