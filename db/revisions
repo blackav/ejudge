@@ -3604,3 +3604,16 @@ new_server_html_5.c 5004 0 9073963
 uldb_plugin_xml.c 5004 0 6386310
 userlist.c 5004 0 4944753
 userlist_xml.c 5004 0 4648636
+uldb_plugin.h 5006 0 704887
+userlist.h 5006 0 1540762
+edit-userlist.c 5006 0 9893450
+userlist-server.c 5006 0 22448047
+new_server_html_2.c 5006 0 14138119
+new_server_html_5.c 5006 0 9070503
+reports.c 5006 0 8858767
+sformat.c 5006 0 1809454
+uldb_plugin_xml.c 5006 0 7123712
+userlist.c 5006 0 4419316
+userlist_check.c 5006 0 1074619
+userlist_xml.c 5006 0 4646088
+plugins/mysql-userlist/uldb_mysql.c 5006 0 6284678
