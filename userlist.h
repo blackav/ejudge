@@ -367,18 +367,7 @@ struct userlist_member
   time_t last_access_time;
 };
 
-/* deprecated */
 struct userlist_members
-{
-  struct xml_tree b;
-
-  int team_role;
-  int total;
-  int allocd;
-  struct userlist_member **members;
-};
-
-struct userlist_new_members
 {
   struct xml_tree b;
 
@@ -459,8 +448,7 @@ struct userlist_user_info
   unsigned char *field7;
   unsigned char *field8;
   unsigned char *field9;
-  //struct userlist_members *members[USERLIST_MB_LAST];
-  struct userlist_new_members *new_members;
+  struct userlist_members *new_members;
 
   time_t create_time;
   time_t last_login_time;
@@ -721,12 +709,12 @@ userlist_count_info_errors(
 
 void userlist_elem_free_data(struct xml_tree *t);
 
-int userlist_members_count(const struct userlist_new_members *mmm, int role);
+int userlist_members_count(const struct userlist_members *mmm, int role);
 const struct userlist_member *
-userlist_members_get_first(const struct userlist_new_members *mmm);
+userlist_members_get_first(const struct userlist_members *mmm);
 const struct userlist_member *
 userlist_members_get_nth(
-        const struct userlist_new_members *mmm,
+        const struct userlist_members *mmm,
         int role,
         int n);
 

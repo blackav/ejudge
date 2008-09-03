@@ -1592,7 +1592,7 @@ userlist_clone_user_info(
 {
   struct xml_tree *p;
   struct userlist_cntsinfo *ci;
-  struct userlist_new_members *mm;
+  struct userlist_members *mm;
   int i, j, r;
   const struct contest_desc *cnts = 0;
   int role_max[USERLIST_MB_LAST];
@@ -1684,7 +1684,7 @@ userlist_clone_user_info(
     members_total += role_max[i];
 
   if (members_total > 0) {
-    mm = (struct userlist_new_members*)userlist_node_alloc(USERLIST_T_MEMBERS);
+    mm = (struct userlist_members*)userlist_node_alloc(USERLIST_T_MEMBERS);
     xml_link_node_last(&ci->b, &mm->b);
     ci->i.new_members = mm;
     j = 4;
@@ -1973,7 +1973,7 @@ userlist_str_to_user_field_code(const unsigned char *str)
 }
 
 int
-userlist_members_count(const struct userlist_new_members *mmm, int role)
+userlist_members_count(const struct userlist_members *mmm, int role)
 {
   const struct userlist_member *m;
   int j, cnt;
@@ -1986,7 +1986,7 @@ userlist_members_count(const struct userlist_new_members *mmm, int role)
 }
 
 const struct userlist_member *
-userlist_members_get_first(const struct userlist_new_members *mmm)
+userlist_members_get_first(const struct userlist_members *mmm)
 {
   const struct userlist_member *m;
   int j;
@@ -2000,7 +2000,7 @@ userlist_members_get_first(const struct userlist_new_members *mmm)
 
 const struct userlist_member *
 userlist_members_get_nth(
-        const struct userlist_new_members *mmm,
+        const struct userlist_members *mmm,
         int role,
         int n)
 {
