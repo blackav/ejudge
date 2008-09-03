@@ -1361,7 +1361,7 @@ user_menu_string(struct userlist_user *u, int f, unsigned char *out)
   }
 }
 static void
-member_menu_string(struct userlist_member *m, int f, unsigned char *out)
+member_menu_string(const struct userlist_member *m, int f, unsigned char *out)
 {
   unsigned char buf[128];
   int w = 60, y = 0;
@@ -1472,7 +1472,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
   PANEL *in_pan, *out_pan;
   WINDOW *in_win, *out_win;
   unsigned char current_level[512];
-  int c, cmd;
+  int c, cmd, role_cnt;
   int cur_i, cur_line;
   unsigned char edit_buf[512];
   unsigned char edit_header[512];
@@ -1497,8 +1497,9 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
   // count how much menu items we need
   tot_items = field_order_size;
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
-    if (!u->i.members[role] || !u->i.members[role]->total) continue;
-    tot_items += 1 + (USERLIST_NM_LAST - USERLIST_NM_FIRST + 1) * u->i.members[role]->total;
+    if ((role_cnt = userlist_members_count(u->i.new_members, role)) <= 0)
+      continue;
+    tot_items += 1 + (USERLIST_NM_LAST - USERLIST_NM_FIRST + 1) * role_cnt;
   }
   if ((r = userlist_user_count_contests(u)) > 0) {
     tot_items += r + 1;
@@ -1522,14 +1523,16 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
     user_menu_string(u, field_order[i], descs[j++]);
   }
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
-    if (!u->i.members[role] || !u->i.members[role]->total) continue;
+    if ((role_cnt = userlist_members_count(u->i.new_members, role)) <= 0)
+      continue;
     info[j].role = role;
     info[j].pers = -1;
     info[j].field = 0;
     snprintf(descs[j++], 78, "*%s*", member_string_pl[role]);
 
-    for (pers = 0; pers < u->i.members[role]->total; pers++) {
-      if (!(m = u->i.members[role]->members[pers])) continue;
+    for (pers = 0; pers < role_cnt; pers++) {
+      if (!(m = (struct userlist_member*) userlist_members_get_nth(u->i.new_members, role, pers)))
+        continue;
 
       info[j].role = role;
       info[j].pers = pers;
@@ -1918,10 +1921,9 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         }
       }
       if (info[cur_i].role >= 0) {
-        if (info[cur_i].pers < 0) goto menu_continue;
-        if (info[cur_i].pers >= u->i.members[info[cur_i].role]->total)
+        if (!(m = (struct userlist_member*) userlist_members_get_nth(u->i.new_members, info[cur_i].role,
+                                           info[cur_i].pers)))
           goto menu_continue;
-        m = u->i.members[info[cur_i].role]->members[info[cur_i].pers];
         if (info[cur_i].field < -1) goto menu_continue;
         if (info[cur_i].field > USERLIST_NM_LAST) goto menu_continue;
         if (info[cur_i].field == -1) {
@@ -2152,7 +2154,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
       if (info[cur_i].role >= 0) {
         if (info[cur_i].role >= CONTEST_LAST_MEMBER) goto menu_continue;
         if (info[cur_i].pers < 0 ||
-            info[cur_i].pers >= u->i.members[info[cur_i].role]->total)
+            info[cur_i].pers >= userlist_members_count(u->i.new_members, role))
           goto menu_continue;
         if (info[cur_i].field < 0
             || info[cur_i].field > USERLIST_NM_LAST)
@@ -2339,13 +2341,15 @@ user_match(struct userlist_user *u, int kind)
 
     {
       int role, memb;
-      struct userlist_member *pm;
+      const struct userlist_member *pm;
+      int role_cnt = 0;
 
       for (role = 0; role < USERLIST_MB_LAST; role++) {
-        if (!u->i.members[role]) continue;
-        for (memb = 0; memb < u->i.members[role]->total; memb++) {
-          pm = u->i.members[role]->members[memb];
-          if (!pm) continue;
+        if ((role_cnt = userlist_members_count(u->i.new_members, role)) <= 0)
+          continue;
+        for (memb = 0; memb < role_cnt; memb++) {
+          if (!(pm = userlist_members_get_nth(u->i.new_members, role, memb)))
+            continue;
 
           if (user_regmatch(pm->firstname)) return 1;
           if (user_regmatch(pm->firstname_en)) return 1;

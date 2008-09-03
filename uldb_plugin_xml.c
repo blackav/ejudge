@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1361,9 +1361,8 @@ remove_member_func(void *data, int user_id, int contest_id,
   struct userlist_user *u;
   struct userlist_user_info *ui;
   struct userlist_cntsinfo *ci;
-  struct userlist_members *mm;
   struct userlist_member *m;
-  int i, role, num = -1;
+  int i, num = -1;
 
   if (user_id <= 0 || user_id >= ul->user_map_size
       || !(u = ul->user_map[user_id])) {
@@ -1385,24 +1384,30 @@ remove_member_func(void *data, int user_id, int contest_id,
    */
 
   // find a member by serial
-  for (role = 0; role < USERLIST_MB_LAST; role++) {
-    if (!(mm = ui->members[role])) continue;
-    for (num = 0; num < mm->total; num++) {
-      m = mm->members[num];
-      if (m->serial == serial || m->copied_from == serial) break;
-    }
-    if (num < mm->total) break;
+  if (!ui->new_members) return -1;
+  for (num = 0; num < ui->new_members->u; num++) {
+    if (!(m = ui->new_members->m[num])) continue;
+    if (m->serial == serial || m->copied_from == serial) break;
   }
-  if (role == USERLIST_MB_LAST) return -1;
+  if (num >= ui->new_members->u) return -1;
 
+  /*
   if (role < 0 || role >= USERLIST_MB_LAST) return -1;
   if (!(mm = ui->members[role])) return -1;
   if (num < 0 || num >= mm->total) return -1;
   m = mm->members[num];
   if (m->serial != serial && m->copied_from != serial) return -1;
+  */
 
   xml_unlink_node(&m->b);
   userlist_free(&m->b);
+  for (i = num + 1; i < ui->new_members->u; ++i)
+    ui->new_members->m[i - 1] = ui->new_members->m[i];
+  if (--ui->new_members->u) {
+    xml_unlink_node(&ui->new_members->b);
+    ui->new_members = 0;
+  }
+  /*
   for (i = num + 1; i < mm->total; i++)
     mm->members[i - 1] = mm->members[i];
   mm->total--;
@@ -1411,6 +1416,7 @@ remove_member_func(void *data, int user_id, int contest_id,
     ui->members[role] = 0;
     userlist_free(&mm->b);
   }
+  */
 
   // clean copied_from
   /*
@@ -1905,7 +1911,7 @@ new_member_func(void *data, int user_id, int contest_id, int role,
   struct userlist_cntsinfo *ci;
   struct userlist_user_info *ui;
   struct userlist_member *m;
-  struct userlist_members *mm;
+  struct userlist_new_members *mm;
   struct xml_tree *link_node;
 
   if (user_id <= 0 || user_id >= ul->user_map_size
@@ -1925,26 +1931,34 @@ new_member_func(void *data, int user_id, int contest_id, int role,
   }
   ui = userlist_get_user_info_nc(u, contest_id);
 
+  /*
   if (!ui->members[role]) {
     mm = (struct userlist_members*) userlist_node_alloc(USERLIST_T_CONTESTANTS + role);
-    mm->role = role;
+    mm->team_role = role;
     xml_link_node_last(link_node, &mm->b);
     ui->members[role] = mm;
   }
   mm = ui->members[role];
+  */
+  if (!ui->new_members) {
+    mm = (struct userlist_new_members*) userlist_node_alloc(USERLIST_T_MEMBERS);
+    xml_link_node_last(link_node, &mm->b);
+    ui->new_members = mm;
+  }
 
   m = (struct userlist_member*) userlist_node_alloc(USERLIST_T_MEMBER);
+  m->team_role = role;
   m->serial = ul->member_serial++;
   m->create_time = m->last_change_time = cur_time;
   m->grade = -1;
   xml_link_node_last(&mm->b, &m->b);
 
-  if (mm->total >= mm->allocd) {
-    if (!mm->allocd) mm->allocd = 2;
-    mm->allocd *= 2;
-    XREALLOC(mm->members, mm->allocd);
+  if (mm->u >= mm->a) {
+    if (!mm->a) mm->a = 2;
+    mm->a *= 2;
+    XREALLOC(mm->m, mm->a);
   }
-  mm->members[mm->total++] = m;
+  mm->m[mm->u++] = m;
 
   state->dirty = 1;
   state->flush_interval /= 2;
@@ -2054,9 +2068,8 @@ change_member_role_func(void *data, int user_id, int contest_id, int serial,
   struct userlist_cntsinfo *ci;
   struct userlist_user_info *ui;
   struct userlist_member *m;
-  struct userlist_members *mm, *old_mm;
   struct xml_tree *link_node;
-  int old_role = 0, old_num = 0, i;
+  int old_role = 0, old_num = 0;
 
   if (user_id <= 0 || user_id >= ul->user_map_size
       || !(u = ul->user_map[user_id])) {
@@ -2079,10 +2092,14 @@ change_member_role_func(void *data, int user_id, int contest_id, int serial,
     link_node = &u->b;
   }
   ui = userlist_get_user_info_nc(u, contest_id);
+  if (!(m = (struct userlist_member*) userlist_members_get_nth(ui->new_members, old_role, old_num)))
+    return -1;
+  m->team_role = new_role;
 
+  /*
   if (!ui->members[new_role]) {
     mm = (struct userlist_members*) userlist_node_alloc(USERLIST_T_CONTESTANTS + new_role);
-    mm->role = new_role;
+    mm->team_role = new_role;
     xml_link_node_last(link_node, &mm->b);
     ui->members[new_role] = mm;
   }
@@ -2092,6 +2109,7 @@ change_member_role_func(void *data, int user_id, int contest_id, int serial,
   old_mm = ui->members[old_role];
   ASSERT(old_mm);
   m = userlist_get_member_nc(ui, serial, 0, 0);
+  m->team_role = new_role;
   ASSERT(m);
   ASSERT(m->b.up == &old_mm->b);
   ASSERT(old_num < old_mm->total && old_mm->members[old_num] == m);
@@ -2108,6 +2126,7 @@ change_member_role_func(void *data, int user_id, int contest_id, int serial,
     XREALLOC(mm->members, mm->allocd);
   }
   mm->members[mm->total++] = m;
+  */
 
   state->dirty = 1;
   state->flush_interval /= 2;
@@ -2117,14 +2136,8 @@ change_member_role_func(void *data, int user_id, int contest_id, int serial,
 static int
 count_members(const struct userlist_user_info *ui)
 {
-  int count = 0, role;
-  struct userlist_members *mm;
-
-  for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
-    if (!(mm = ui->members[role])) continue;
-    count += mm->total;
-  }
-  return count;
+  if (!ui->new_members) return 0;
+  return ui->new_members->u;
 }
 
 static int
@@ -2158,7 +2171,6 @@ set_user_xml_func(void *data,
   struct userlist_cntsinfo *ci;
   struct userlist_user_info *ui;
   int nrole, nnum, orole, onum;
-  struct userlist_members *nmm, *omm;
   struct userlist_member *nm, *om, *oom;
   struct userlist_member **handled_members;
   int handled_members_count, handled_members_size;
@@ -2264,10 +2276,10 @@ set_user_xml_func(void *data,
 
   // create new members and move the existing ones
   for (nrole = 0; nrole < CONTEST_LAST_MEMBER; nrole++) {
-    if (!(nmm = new_u->i.members[nrole])) continue;
-    for (nnum = 0; nnum < nmm->total; nnum++) {
-      nm = nmm->members[nnum];
-      ASSERT(nm);
+    if (!new_u->i.new_members || new_u->i.new_members->u <= 0) continue;
+    for (nnum = 0; nnum < new_u->i.new_members->u; nnum++) {
+      if (!(nm = new_u->i.new_members->m[nnum])) continue;
+      if (nm->team_role != nrole) continue;
       if (nm->serial <= 0) {
         // create new member
         new_serial = new_member_func(data, user_id, contest_id, nrole,
@@ -2303,17 +2315,17 @@ set_user_xml_func(void *data,
   // check the members for removal
   while (1) {
     for (orole = 0; orole < CONTEST_LAST_MEMBER; orole++) {
-      if (!(omm = ui->members[orole])) continue;
-      for (onum = 0; onum < omm->total; onum++) {
-        om = omm->members[onum];
-        ASSERT(om);
+      if (!(ui->new_members)) continue;
+      for (onum = 0; onum < ui->new_members->u; onum++) {
+        if (!(om = ui->new_members->m[onum])) continue;
+        if (om->team_role != orole) continue;
         ASSERT(om->serial > 0);
         for (i = 0; i < handled_members_count; i++)
           if (handled_members[i] == om)
             break;
         if (i >= handled_members_count) break;
       }
-      if (onum < omm->total) break;
+      if (onum < ui->new_members->u) break;
     }
     if (orole >= CONTEST_LAST_MEMBER) break;
     // remove `om'
@@ -2327,10 +2339,10 @@ set_user_xml_func(void *data,
   }
 
   for (nrole = 0, i = 0; nrole < CONTEST_LAST_MEMBER; nrole++) {
-    if (!(nmm = new_u->i.members[nrole])) continue;
-    for (nnum = 0; nnum < nmm->total; nnum++) {
-      nm = nmm->members[nnum];
-      ASSERT(nm);
+    if (!new_u->i.new_members) continue;
+    for (nnum = 0; nnum < new_u->i.new_members->u; nnum++) {
+      if (!(nm = new_u->i.new_members->m[nnum])) continue;
+      if (nm->team_role != nrole) continue;
       ASSERT(nm->serial > 0);
       ASSERT(i < handled_members_count);
       om = handled_members[i++];
@@ -2496,11 +2508,14 @@ copy_user_info_func(
   struct userlist_user *u;
   const struct userlist_user_info *ui_from = 0;
   struct userlist_user_info *ui_to;
-  int i, j, k;
+  int i, j, k, r;
   unsigned char **p_str_from, **p_str_to;
-  struct userlist_members *mm;
-  struct userlist_member *m;
+  struct userlist_new_members *mm;
+  struct userlist_member *m = 0, *om = 0;
   struct userlist_cntsinfo *ci;
+  int role_max[USERLIST_MB_LAST];
+  int role_cur[USERLIST_MB_LAST];
+  int members_total;
 
   if (user_id <= 0 || user_id >= ul->user_map_size
       || !(u = ul->user_map[user_id])) {
@@ -2551,43 +2566,62 @@ copy_user_info_func(
   /*
     free the existing member info
    */
-  for (i = 0; i < USERLIST_MB_LAST; i++) {
-    if (!(mm = ui_to->members[i])) continue;
-    for (j = 0; j < mm->total; j++) {
-      if (!(m = mm->members[j])) continue;
+  if (ui_to->new_members) {
+    for (i = 0; i < ui_to->new_members->u; i++) {
+      if (!(m = ui_to->new_members->m[i])) continue;
       xml_unlink_node(&m->b);
       userlist_free(&m->b);
-      mm->members[j] = 0;
+      ui_to->new_members->m[i] = 0;
     }
-    xml_unlink_node(&mm->b);
-    userlist_free(&mm->b);
-    ui_to->members[i] = 0;
+    xml_unlink_node(&ui_to->new_members->b);
+    userlist_free(&ui_to->new_members->b);
+    ui_to->new_members = 0;
   }
 
   /*
     copy the member info
    */
-  for (i = 0; i < USERLIST_MB_LAST; i++) {
-    if (cnts && (!cnts->members[i] || !cnts->members[i]->max_count)) continue;
-    if (!ui_from->members[i] || !ui_from->members[i]->total) continue;
-    k = ui_from->members[i]->total;
-    if (cnts && k > cnts->members[i]->max_count)
-      k = cnts->members[i]->max_count;
-    mm = (struct userlist_members*) userlist_node_alloc(USERLIST_T_CONTESTANTS + i);
-    ui_to->members[i] = mm;
-    xml_link_node_last(&ci->b, &mm->b);
-    mm->role = ui_from->members[i]->role;
-    mm->total = ui_from->members[i]->total;
-    j = 4;
-    while (j < mm->total) j *= 2;
-    mm->allocd = j;
-    XCALLOC(mm->members, j);
+  memset(role_max, 0, sizeof(role_max));
+  memset(role_cur, 0, sizeof(role_cur));
+  if (ui_from->new_members) {
+    for (i = 0; i < ui_from->new_members->u; i++) {
+      if (!(m = ui_from->new_members->m[i])) continue;
+      ASSERT(m->team_role >= 0 && m->team_role < USERLIST_MB_LAST);
+      role_max[m->team_role]++;
+    }
+  }
+  if (cnts) {
+    for (i = 0; i < USERLIST_MB_LAST; i++) {
+      if (!cnts->members[i]) {
+        role_max[i] = 0;
+      } else if (cnts->members[i]->max_count < role_max[i]) {
+        role_max[i] = cnts->members[i]->max_count;
+      }
+    }
+  }
+  for (i = 0, members_total = 0; i < USERLIST_MB_LAST; i++)
+    members_total += role_max[i];
 
-    for (j = 0; j < k; j++) {
-      if (!ui_from->members[i]->members[j]) continue;
-      mm->members[j] = userlist_clone_member(ui_from->members[i]->members[j],
-                                             &ul->member_serial, cur_time);
-      xml_link_node_last(&mm->b, &mm->members[i]->b);
+  if (members_total > 0) {
+    mm = (struct userlist_new_members*)userlist_node_alloc(USERLIST_T_MEMBERS);
+    xml_link_node_last(&ci->b, &mm->b);
+    ui_to->new_members = mm;
+    j = 4;
+    while (j < members_total) j *= 2;
+    mm->a = j;
+    XCALLOC(mm->m, j);
+  }
+
+  if (ui_from->new_members) {
+    for (i = 0; i < ui_from->new_members->u; i++) {
+      if (!(om = ui_from->new_members->m[i])) continue;
+      r = om->team_role;
+      if (r < 0 || r >= USERLIST_MB_LAST || role_cur[r] >= role_max[r])
+        continue;
+
+      mm->m[mm->u] = userlist_clone_member(ui_from->new_members->m[i], &ul->member_serial, cur_time);
+      xml_link_node_last(&mm->b, &mm->m[mm->u]->b);
+      mm->u++;
     }
   }
 
@@ -2654,9 +2688,9 @@ move_member_func(
   struct userlist_user *u;
   struct userlist_user_info *ui;
   struct userlist_cntsinfo *ci;
-  struct userlist_members *mm;
+  struct userlist_new_members *mm;
   struct userlist_member *m;
-  int i, role, num = -1;
+  int role, num = -1;
   struct xml_tree *link_node = 0;
 
   if (user_id <= 0 || user_id >= ul->user_map_size
@@ -2681,60 +2715,16 @@ move_member_func(
    */
 
   // find a member by serial
-  for (role = 0; role < USERLIST_MB_LAST; role++) {
-    if (!(mm = ui->members[role])) continue;
-    for (num = 0; num < mm->total; num++) {
-      m = mm->members[num];
-      if (m->serial == serial || m->copied_from == serial) break;
-    }
-    if (num < mm->total) break;
+  if (!(mm = ui->new_members)) return -1;
+  for (num = 0; num < mm->u; num++) {
+    if (!(m = mm->m[num])) continue;
+    if (m->serial == serial || m->copied_from == serial) break;
   }
-  if (role == USERLIST_MB_LAST) return -1;
+  if (num >= mm->u) return -1;
 
-  if (role < 0 || role >= USERLIST_MB_LAST) return -1;
-  if (!(mm = ui->members[role])) return -1;
-  if (num < 0 || num >= mm->total) return -1;
-  m = mm->members[num];
-  if (m->serial != serial && m->copied_from != serial) return -1;
   if (role == new_role) return 0;
   if (new_role < 0 || new_role >= CONTEST_LAST_MEMBER) return -1;
-
-  xml_unlink_node(&m->b);
-  for (i = num + 1; i < mm->total; i++)
-    mm->members[i - 1] = mm->members[i];
-  mm->total--;
-  if (!mm->total) {
-    xml_unlink_node(&mm->b);
-    ui->members[role] = 0;
-    userlist_free(&mm->b);
-  }
-
-  if (!ui->members[new_role]) {
-    mm = (struct userlist_members*) userlist_node_alloc(USERLIST_T_CONTESTANTS + new_role);
-    mm->role = new_role;
-    xml_link_node_last(link_node, &mm->b);
-    ui->members[new_role] = mm;
-  }
-  mm = ui->members[new_role];
-  xml_link_node_last(&mm->b, &m->b);
-
-  if (mm->total >= mm->allocd) {
-    if (!mm->allocd) mm->allocd = 2;
-    mm->allocd *= 2;
-    XREALLOC(mm->members, mm->allocd);
-  }
-  mm->members[mm->total++] = m;
-
-  // clean copied_from
-  /*
-  for (role = 0; role < USERLIST_MB_LAST; role++) {
-    if (!(mm = ui->members[role])) continue;
-    for (num = 0; num < mm->total; num++) {
-      m = mm->members[num];
-      m->copied_from = 0;
-    }
-  }
-  */
+  m->team_role = new_role;
 
   ui->last_change_time = cur_time;
   state->dirty = 1;

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -373,9 +373,7 @@ user_report_generate(
     goto cleanup;
   }
   u = tdb.user;
-  if (u && u->i.members[CONTEST_M_CONTESTANT]
-      && u->i.members[CONTEST_M_CONTESTANT]->total > 0)
-    m = u->i.members[CONTEST_M_CONTESTANT]->members[0];
+  if (u) m = userlist_members_get_first(u->i.new_members);
 
   XALLOCA(run_ids, cs->max_prob + 1);
   memset(run_ids, -1, sizeof(run_ids[0]) * (cs->max_prob + 1));
@@ -977,9 +975,7 @@ full_user_report_generate(
     goto cleanup;
   }
   u = tdb.user;
-  if (u && u->i.members[CONTEST_M_CONTESTANT]
-      && u->i.members[CONTEST_M_CONTESTANT]->total > 0)
-    m = u->i.members[CONTEST_M_CONTESTANT]->members[0];
+  if (u) m = userlist_members_get_first(u->i.new_members);
 
   XALLOCA(run_ids, cs->max_prob + 1);
   memset(run_ids, -1, sizeof(run_ids[0]) * (cs->max_prob + 1));
@@ -2178,9 +2174,7 @@ ns_olympiad_final_user_report(
     goto cleanup;
   }
   u = tdb.user;
-  if (u && u->i.members[CONTEST_M_CONTESTANT]
-      && u->i.members[CONTEST_M_CONTESTANT]->total > 0)
-    m = u->i.members[CONTEST_M_CONTESTANT]->members[0];
+  if (u) m = userlist_members_get_first(u->i.new_members);
 
   XALLOCA(run_ids, cs->max_prob + 1);
   memset(run_ids, -1, sizeof(run_ids[0]) * (cs->max_prob + 1));

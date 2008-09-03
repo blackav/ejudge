@@ -4,7 +4,7 @@
 #ifndef __USERLIST_H__
 #define __USERLIST_H__
 
-/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -106,6 +106,7 @@ enum
     USERLIST_T_OCCUPATION,
     USERLIST_T_OCCUPATION_EN,
     USERLIST_T_DISCIPLINE,
+    USERLIST_T_MEMBERS,
     USERLIST_T_CONTESTANTS,
     USERLIST_T_RESERVES,
     USERLIST_T_COACHES,
@@ -328,6 +329,7 @@ struct userlist_member
 {
   struct xml_tree b;
 
+  int team_role;
   int serial;
   int copied_from;
   int status;
@@ -365,14 +367,23 @@ struct userlist_member
   time_t last_access_time;
 };
 
+/* deprecated */
 struct userlist_members
 {
   struct xml_tree b;
 
-  int role;
+  int team_role;
   int total;
   int allocd;
   struct userlist_member **members;
+};
+
+struct userlist_new_members
+{
+  struct xml_tree b;
+
+  int a, u; /* allocated, used */
+  struct userlist_member **m;
 };
 
 struct userlist_cookie
@@ -448,7 +459,8 @@ struct userlist_user_info
   unsigned char *field7;
   unsigned char *field8;
   unsigned char *field9;
-  struct userlist_members *members[USERLIST_MB_LAST];
+  //struct userlist_members *members[USERLIST_MB_LAST];
+  struct userlist_new_members *new_members;
 
   time_t create_time;
   time_t last_login_time;
@@ -708,5 +720,14 @@ userlist_count_info_errors(
         int role_err_count[]);
 
 void userlist_elem_free_data(struct xml_tree *t);
+
+int userlist_members_count(const struct userlist_new_members *mmm, int role);
+const struct userlist_member *
+userlist_members_get_first(const struct userlist_new_members *mmm);
+const struct userlist_member *
+userlist_members_get_nth(
+        const struct userlist_new_members *mmm,
+        int role,
+        int n);
 
 #endif /* __USERLIST_H__ */
