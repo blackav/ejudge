@@ -793,8 +793,7 @@ insert_contest_info(struct uldb_mysql_state *state,
   char *cmdstr = 0;
   size_t cmdlen = 0;
   FILE *fcmd;
-  int role, i;
-  struct userlist_members *membs;
+  int role, i, role_cnt;
   struct userlist_member *mm;
 
   if (!info->filled && !force_fill) return 0;
@@ -870,9 +869,11 @@ insert_contest_info(struct uldb_mysql_state *state,
   xfree(cmdstr); cmdstr = 0; cmdlen = 0;
 
   for (role = 0; role < USERLIST_MB_LAST; role++) {
-    if (!(membs = info->members[role])) continue;
-    for (i = 0; i < membs->total; i++) {
-      if (!(mm = membs->members[i])) continue;
+    if ((role_cnt = userlist_members_count(info->new_members, role)) <= 0)
+      continue;
+    for (i = 0; i < role_cnt; i++) {
+      if (!(mm = (struct userlist_member*) userlist_members_get_nth(info->new_members, role, i)))
+        continue;
       if (insert_member_info(state, user_id, contest_id, role, mm) < 0)
         goto fail;
     }
