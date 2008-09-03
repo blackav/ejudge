@@ -1280,7 +1280,7 @@ main_page_view_info(
 {
   unsigned char ub[1024];
   unsigned char bb[1024];
-  int i, ff, nr;
+  int i, ff, nr, j;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct userlist_user *u = 0;
   const unsigned char *s, *hh = 0, *cc = 0, *legend;
@@ -1288,6 +1288,7 @@ main_page_view_info(
   int tab_count, err_count, role_err_count[CONTEST_LAST_MEMBER + 1];
   int rr, mm, mmbound, main_area_span;
   const struct userlist_member *m;
+  const struct userlist_new_members *mmm = 0;
 
   u = phr->session_extra->user_info;
 
@@ -1380,8 +1381,7 @@ main_page_view_info(
     }
     if (cnts->personal && cnts->members[(rr = CONTEST_M_CONTESTANT)]
         && cnts->members[rr]->max_count > 0) {
-      if (u->i.members[rr] && u->i.members[rr]->total > 0
-          && (m = u->i.members[rr]->members[0])) {
+      if ((m = userlist_members_get_first(u->i.new_members))) {
         for (i = 0; (ff = member_fields_order_1[i]); i++) {
           if (!cnts->members[rr]->fields[ff]) continue;
           userlist_get_member_field_str(fbuf, sizeof(fbuf), m,
@@ -1425,8 +1425,7 @@ main_page_view_info(
     }
     if (cnts->personal && cnts->members[(rr = CONTEST_M_CONTESTANT)]
         && cnts->members[rr]->max_count > 0) {
-      if (u->i.members[rr] && u->i.members[rr]->total > 0
-          && (m = u->i.members[rr]->members[0])) {
+      if ((m = userlist_members_get_first(u->i.new_members))) {
         for (i = 0; (ff = member_fields_order_2[i]); i++) {
           if (!cnts->members[rr]->fields[ff]) continue;
           userlist_get_member_field_str(fbuf, sizeof(fbuf), m,
@@ -1462,7 +1461,12 @@ main_page_view_info(
       fprintf(fout, "<h2><font color=\"red\">%s</font></h2>\n", gettext(no_role_allowed_str[rr]));
     } else {
       mmbound = 0;
-      if (u->i.members[rr]) mmbound = u->i.members[rr]->total;
+      // count the total of the specified role
+      if ((mmm = u->i.new_members) && mmm->u > 0) {
+        for (j = 0; j < mmm->u; j++)
+          if ((m = mmm->m[j]) && m->team_role == rr)
+            mmbound++;
+      }
 
       fprintf(fout, "<h2>%s", gettext(tab_labels[rr + 1]));
       if (!u->read_only && !u->i.cnts_read_only
@@ -1507,13 +1511,13 @@ main_page_view_info(
             && role_move_direction[rr]
             && (nr = role_move_dir_code[rr]) >= 0
             && cnts->members[nr] && cnts->members[nr]->max_count
-            && (!u->i.members[nr]
-                || u->i.members[nr]->total <= cnts->members[nr]->max_count)) {
+            && userlist_members_count(u->i.new_members, nr) <= cnts->members[nr]->max_count) {
           fprintf(fout, " [%s%s</a>]",
                   ns_aref(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_MOVE_MEMBER, "role=%d&amp;member=%d", rr, mm), gettext(role_move_direction[rr]));
         }
         fprintf(fout, "</h3>\n");
-        if (!(m = u->i.members[rr]->members[mm])) continue;
+        if (!(m = userlist_members_get_nth(u->i.new_members, rr, mm)))
+          continue;
         fprintf(fout, "<table class=\"b0\">\n");
 
         for (i = 0; (ff = member_fields_order[i]); i++) {
@@ -1821,9 +1825,7 @@ edit_general_form(
   // for personal contest put the member form here
   if (cnts->personal && cnts->members[(rr = CONTEST_M_CONTESTANT)]
       && cnts->members[rr]->max_count > 0) {
-    m = 0;
-    if (u->i.members[rr] && u->i.members[rr]->total > 0)
-      m = u->i.members[rr]->members[0];
+    m = userlist_members_get_first(u->i.new_members);
     edit_member_form(fout, phr, cnts, m, rr, 0, 1, "m", member_fields_order_1);
   }
 
@@ -1888,9 +1890,7 @@ edit_general_form(
   // for personal contest put the member form here
   if (cnts->personal && cnts->members[(rr = CONTEST_M_CONTESTANT)]
       && cnts->members[rr]->max_count > 0) {
-    m = 0;
-    if (u->i.members[rr] && u->i.members[rr]->total > 0)
-      m = u->i.members[rr]->members[0];
+    m = userlist_members_get_first(u->i.new_members);
     edit_member_form(fout, phr, cnts, m, rr, 0, 1, "m", member_fields_order_2);
   }
 
@@ -2227,9 +2227,8 @@ edit_page(
     if (ns_cgi_param_int(phr, "member", &member) < 0) goto redirect_back;
     if (role < 0 || role >= CONTEST_M_GUEST) goto redirect_back;
     if (!cnts->members[role]) goto redirect_back;
-    if (!u->i.members[role]) goto redirect_back;
-    if (member < 0 || member >= u->i.members[role]->total) goto redirect_back;
-    if (!(m = u->i.members[role]->members[member])) goto redirect_back;
+    if (!(m = userlist_members_get_nth(u->i.new_members, role, member)))
+      goto redirect_back;
   } else if (phr->action == NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE) {
   } else {
     goto redirect_back;
@@ -2616,13 +2615,10 @@ submit_member_editing(
   }
 
   if (ns_cgi_param_int(phr, "member", &member) < 0
-      || member < 0 || !u || !u->i.members[role]
-      || member >= u->i.members[role]->total
-      || !u->i.members[role]->members[member]
-      || u->read_only || u->i.cnts_read_only)
+      || !u || u->read_only || u->i.cnts_read_only
+      || !(m = userlist_members_get_nth(u->i.new_members, role, member)))
     goto done;
 
-  m = u->i.members[role]->members[member];
   log_f = open_memstream(&log_t, &log_z);
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
@@ -2848,9 +2844,9 @@ add_member(
     return;
   }
 
-  if (u && u->i.members[role]
-      && u->i.members[role]->total >= cnts->members[role]->max_count
-      && (u->read_only || u->i.cnts_read_only))
+  if (u && (u->read_only || u->i.cnts_read_only))
+    goto done;
+  if (u && userlist_members_count(u->i.new_members, role) >= cnts->members[role]->max_count)
     goto done;
 
   log_f = open_memstream(&log_t, &log_z);
@@ -2913,15 +2909,15 @@ remove_member(
     return;
   }
 
-  // member
-  if (cnts->disable_member_delete
-      || ns_cgi_param_int(phr, "member", &member) < 0 || member < 0
-      || !u || !u->i.members[role] || member >= u->i.members[role]->total
-      || !u->i.members[role]->members[member]
-      || u->read_only || u->i.cnts_read_only)
+  if (!u || u->read_only || u->i.cnts_read_only
+      || cnts->disable_member_delete)
     goto done;
 
-  m = u->i.members[role]->members[member];
+  // member
+  if (ns_cgi_param_int(phr, "member", &member) < 0 || member < 0
+      || !(m = userlist_members_get_nth(u->i.new_members, role, member)))
+    goto done;
+
   log_f = open_memstream(&log_t, &log_z);
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
@@ -2983,12 +2979,12 @@ move_member(
   }
 
   // member
-  if (ns_cgi_param_int(phr, "member", &member) < 0 || member < 0
-      || !u || !u->i.members[role] || member >= u->i.members[role]->total
-      || !u->i.members[role]->members[member]
-      || u->read_only || u->i.cnts_read_only) {
+  if (!u || u->read_only || u->i.cnts_read_only)
     goto done;
-  }
+  if (ns_cgi_param_int(phr, "member", &member) < 0)
+    goto done;
+  if (!userlist_members_get_nth(u->i.new_members, role, member))
+    goto done;
 
   switch (role) {
   case CONTEST_M_CONTESTANT:
@@ -3009,11 +3005,10 @@ move_member(
 
   if (!cnts->members[new_role] || cnts->members[new_role]->max_count <= 0)
     goto done;
-  if (u && u->i.members[new_role]
-      && u->i.members[new_role]->total > cnts->members[new_role]->max_count)
+  if (userlist_members_count(u->i.new_members, new_role) > cnts->members[new_role]->max_count)
     goto done;
 
-  m = u->i.members[role]->members[member];
+  m = userlist_members_get_nth(u->i.new_members, role, member);
   log_f = open_memstream(&log_t, &log_z);
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -76,6 +76,7 @@ static char const * const elem_map[] =
   "occupation",
   "occupation_en",
   "discipline",
+  "members",
   "contestants",
   "reserves",
   "coaches",
@@ -270,6 +271,12 @@ elem_free(struct xml_tree *t)
       xfree(p->facshort);
       xfree(p->facshort_en);
       xfree(p->phone);
+    }
+    break;
+  case USERLIST_T_MEMBERS:
+    {
+      struct userlist_new_members *p = (struct userlist_new_members*) t;
+      xfree(p->m);
     }
     break;
   case USERLIST_T_CONTESTANTS:
@@ -632,35 +639,52 @@ static const size_t date_member_offsets[USERLIST_LAST_TAG] =
 };
 
 static int
-parse_members(char const *path, struct xml_tree *q,
-              struct userlist_members **pmemb)
+parse_members(
+        char const *path,
+        struct xml_tree *q,
+        struct xml_tree *link_node,
+        struct userlist_user_info *ui)
 {
   struct xml_tree *t;
   struct userlist_members *mbs = (struct userlist_members*) q;
   struct userlist_member *mb;
   struct xml_tree *p, *saved_next;
   struct xml_attr *a;
+  struct userlist_new_members *mmm;
   unsigned char **p_str;
   time_t *p_time;
-  int role, i;
+  int role;
 
   if (q->tag < USERLIST_T_CONTESTANTS || q->tag > USERLIST_T_GUESTS)
     return xml_err_elem_not_allowed(q);
   role = q->tag - USERLIST_T_CONTESTANTS;
-  if (pmemb[role]) return xml_err_elem_redefined(q);
-  pmemb[role] = mbs;
-  mbs->role = role;
-
   if (mbs->b.first) return xml_err_attrs(q);
   xfree(mbs->b.text); mbs->b.text = 0;
 
-  for (t = mbs->b.first_down; t; t = t->right) {
-    if (t->tag != USERLIST_T_MEMBER)
-      return xml_err_elem_not_allowed(t);
-    mbs->total++;
+  for (t = mbs->b.first_down; t; t = saved_next) {
+    saved_next = t->right;
+
+    if (t->tag != USERLIST_T_MEMBER) return xml_err_elem_not_allowed(t);
     mb = (struct userlist_member*) t;
     xfree(t->text); t->text = 0;
     mb->grade = -1;
+    mb->team_role = role;
+
+    if (!ui->new_members) {
+      mmm=(struct userlist_new_members*)userlist_node_alloc(USERLIST_T_MEMBERS);
+      ui->new_members = mmm;
+      xml_link_node_last(link_node, &mmm->b);
+    }
+    mmm = ui->new_members;
+
+    if (mmm->u == mmm->a) {
+      if (!mmm->a) mmm->a = 4;
+      else mmm->a *= 2;
+      XREALLOC(mmm->m, mmm->a);
+    }
+    mmm->m[mmm->u++] = mb;
+    xml_unlink_node(t);
+    xml_link_node_last(&mmm->b, t);
 
     for (a = t->first; a; a = a->next) {
       switch (a->tag) {
@@ -668,6 +692,12 @@ parse_members(char const *path, struct xml_tree *q,
         if (xml_attr_int(a, &mb->serial) < 0)
           return xml_err_attr_invalid(a);
         if (mb->serial <= 0) return xml_err_attr_invalid(a);
+        break;
+      case USERLIST_A_ROLE:
+        if (xml_attr_int(a, &mb->team_role) < 0)
+          return xml_err_attr_invalid(a);
+        if (mb->team_role < 0 || mb->team_role >= USERLIST_MB_LAST)
+          return xml_err_attr_invalid(a);
         break;
       case USERLIST_A_COPIED_FROM:
         if (xml_attr_int(a, &mb->copied_from) < 0)
@@ -750,15 +780,6 @@ parse_members(char const *path, struct xml_tree *q,
     }
   }
 
-  mbs->allocd = 8;
-  while (mbs->allocd < mbs->total) {
-    mbs->allocd *= 2;
-  }
-  mbs->members = (struct userlist_member**) xcalloc(mbs->allocd,
-                                                    sizeof(mbs->members[0]));
-  for (t = mbs->b.first_down, i = 0; t; t = t->right, i++) {
-    mbs->members[i] = (struct userlist_member*) t;
-  }
   return 0;
 }
 static int
@@ -969,7 +990,7 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
     case USERLIST_T_COACHES:
     case USERLIST_T_ADVISORS:
     case USERLIST_T_GUESTS:
-      if (parse_members(path, p, ui->i.members) < 0) return -1;
+      if (parse_members(path, p, &ui->b, &ui->i) < 0) return -1;
       ui->i.filled = 1;
       break;
     case USERLIST_T_INSTNUM:
@@ -1174,7 +1195,7 @@ do_parse_user(char const *path, struct userlist_user *usr)
     case USERLIST_T_COACHES:
     case USERLIST_T_ADVISORS:
     case USERLIST_T_GUESTS:
-      if (parse_members(path, t, usr->i.members) < 0) return -1;
+      if (parse_members(path, t, &usr->b, &usr->i) < 0) return -1;
       usr->i.filled = 1;
       break;
     case USERLIST_T_CNTSINFOS:
@@ -1506,18 +1527,22 @@ unparse_member(const struct userlist_member *p, FILE *f)
   fprintf(f, "      </%s>\n", elem_map[USERLIST_T_MEMBER]);
 }
 static void
-unparse_members(const struct userlist_members **p, FILE *f)
+unparse_members(const struct userlist_new_members *p, FILE *f)
 {
-  int i, j;
+  int i, j, cnt;
+  struct userlist_member *m;
 
   if (!p) return;
   for (i = 0; i < USERLIST_MB_LAST; i++) {
-    if (!p[i]) continue;
-    fprintf(f, "    <%s>\n", elem_map[USERLIST_T_CONTESTANTS + i]);
-    for (j = 0; j < p[i]->total; j++) {
-      unparse_member((struct userlist_member*) p[i]->members[j], f);
+    cnt = 0;
+    for (j = 0; j < p->u; ++j) {
+      if (!(m = p->m[j])) continue;
+      if (m->team_role != i) continue;
+      if (!cnt) fprintf(f, "    <%s>\n", elem_map[USERLIST_T_CONTESTANTS + i]);
+      cnt++;
+      unparse_member(p->m[j], f);
     }
-    fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CONTESTANTS + i]);
+    if (cnt > 0) fprintf(f,"    </%s>\n", elem_map[USERLIST_T_CONTESTANTS + i]);
   }
 }
 static void
@@ -1667,7 +1692,7 @@ unparse_cntsinfo(const struct userlist_cntsinfo *p, FILE *f)
                             p->i.team_passwd, attr_str, sp1);
   }
 
-  unparse_members((const struct userlist_members**) p->i.members, f);
+  unparse_members(p->i.new_members, f);
 
   fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CNTSINFO]);
 }
@@ -1736,7 +1761,6 @@ userlist_real_unparse_user(
   unsigned char attr_str[128];
   int i, cnt;
   const struct userlist_user_info *ui;
-  const struct userlist_members *mm;
   const struct userlist_member *m;
   unsigned char **p_str;
 
@@ -1850,15 +1874,14 @@ userlist_real_unparse_user(
   */
 
   if (mode == USERLIST_MODE_STAND && (flags & USERLIST_FORCE_FIRST_MEMBER)
-      && (mm = ui->members[USERLIST_MB_CONTESTANT])
-      && mm->total > 0 && mm->members && (m = mm->members[0])) {
+      && (m = userlist_members_get_first(ui->new_members))) {
     fprintf(f, "    <%s>\n", elem_map[USERLIST_T_CONTESTANTS]);
     unparse_member(m, f);
     fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CONTESTANTS]);
   }
 
   if (mode != USERLIST_MODE_STAND) {
-    unparse_members((const struct userlist_members**)ui->members, f);
+    unparse_members(ui->new_members, f);
   }
 
   if (contest_id < 0 && p->cntsinfo) {

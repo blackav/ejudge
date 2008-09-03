@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2001-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -599,8 +599,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
         pf++;
 
         if (*pf == 'M') {
-          struct userlist_members *pm = 0;
-          struct userlist_member *pp = 0;
+          const struct userlist_member *pp = 0;
           int idx = -1, n, nmemb;
           /*
            * UMp - participant
@@ -669,11 +668,8 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           if (is_invalid) break;
           pf++;
 
-          if (!user_data || !(pm = ui->members[idx])) {
-            papp = "";
-            break;
-          }
-          if (nmemb < 0 || nmemb >= pm->total || !(pp = pm->members[nmemb])) {
+          if (!user_data
+              || !(pp = userlist_members_get_nth(ui->new_members, idx, nmemb))) {
             papp = "";
             break;
           }

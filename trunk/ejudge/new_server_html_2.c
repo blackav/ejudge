@@ -2224,11 +2224,11 @@ ns_write_exam_info(
         struct contest_extra *extra)
 {
   const serve_state_t cs = extra->serve_state;
-  int i, max_user_id, serial = 1;
+  int i, j, max_user_id, serial = 1;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct teamdb_export td;
   unsigned char cl[128];
-  struct userlist_members *mm = 0;
+  struct userlist_new_members *mm = 0;
   struct userlist_member *m = 0;
 
   snprintf(cl, sizeof(cl), " class=\"b1\"");
@@ -2259,9 +2259,14 @@ ns_write_exam_info(
     }
     fprintf(fout, "<td%s>%s</td>", cl, "&nbsp;"); /* FIXME: print flags */
 
-    if (td.user && (mm = td.user->i.members[USERLIST_MB_CONTESTANT])
-        && mm->total > 0)
-      m = mm->members[0];
+    if (td.user && (mm = td.user->i.new_members) && mm->u > 0) {
+      for (j = 0; j < mm->u; j++)
+        if ((m = mm->m[j]) && m->team_role == USERLIST_MB_CONTESTANT) {
+          break;
+        } else {
+          m = 0;
+        }
+    }
 
     if (m && m->firstname) {
       fprintf(fout, "<td%s>%s</td>", cl, ARMOR(m->firstname));

@@ -185,8 +185,10 @@ userlist_count_info_errors(
 {
   int err_count = 0, ff;
   unsigned char fbuf[1024];
-  int rr, mm, mmbound;
+  int rr, i, allow_no_contestant;
   const struct userlist_member *m;
+  int role_cnt[USERLIST_MB_LAST];
+  int role_cur[USERLIST_MB_LAST];
 
   memset(role_err_count, 0, sizeof(role_err_count[0]) * (CONTEST_LAST_MEMBER + 1));
   for (ff = CONTEST_FIRST_FIELD; ff < CONTEST_LAST_FIELD; ff++) {
@@ -204,42 +206,58 @@ userlist_count_info_errors(
       }
     }
   }
+  // personal contest exception
+  allow_no_contestant = 0;
+  if (cnts->personal && cnts->members[(rr = CONTEST_M_CONTESTANT)]
+      && cnts->members[rr]->max_count == 1) {
+    for (ff = CONTEST_MF_FIRSTNAME; ff < CONTEST_LAST_MEMBER_FIELD; ff++) {
+      if (!cnts->members[rr]->fields[ff]) continue;
+      if (cnts->members[rr]->fields[ff]->mandatory) break;
+    }
+    if (ff == CONTEST_LAST_MEMBER_FIELD) allow_no_contestant = 1;
+  }
+
+  // count sum
+  memset(role_cnt, 0, sizeof(role_cnt));
+  if (ui->new_members) {
+    for (i = 0; i < ui->new_members->u; i++) {
+      m = ui->new_members->m[i];
+      ASSERT(m);
+      ASSERT(m->team_role >= 0 && m->team_role < USERLIST_MB_LAST);
+      role_cnt[m->team_role]++;
+    }
+  }
+
   for (rr = CONTEST_M_CONTESTANT; rr < CONTEST_LAST_MEMBER; rr++) {
     if (cnts->personal && rr == CONTEST_M_RESERVE) continue;
     if (!cnts->members[rr] || cnts->members[rr]->max_count <= 0) continue;
-    if (cnts->personal && rr == CONTEST_M_CONTESTANT
-        && cnts->members[rr]->max_count == 1) {
-      // if there are no mandatory fields, contestant is allowed to
-      // have no member info
-      for (ff = CONTEST_MF_FIRSTNAME; ff < CONTEST_LAST_MEMBER_FIELD; ff++) {
-        if (!cnts->members[rr]->fields[ff]) continue;
-        if (cnts->members[rr]->fields[ff]->mandatory) break;
-      }
-      if (ff == CONTEST_LAST_MEMBER_FIELD &&
-          (!ui->members[rr] || !ui->members[rr]->total)) continue;
-    }
-    mmbound = 0;
-    if (ui->members[rr]) mmbound = ui->members[rr]->total;
-    if (mmbound < cnts->members[rr]->min_count) {
+    if (rr == CONTEST_M_CONTESTANT && allow_no_contestant && !role_cnt[rr])
+      continue;
+    if (role_cnt[rr] < cnts->members[rr]->min_count) {
       role_err_count[rr + 1]++;
       err_count++;
     }
     // temporary hack
-    if (cnts->personal && mmbound > 1) mmbound = 1;
-    if (mmbound > cnts->members[rr]->max_count) {
+    if (cnts->personal && rr == CONTEST_M_CONTESTANT && role_cnt[rr] > 1)
+      role_cnt[rr] = 1;
+    if (role_cnt[rr] > cnts->members[rr]->max_count) {
       role_err_count[rr + 1]++;
       err_count++;
     }
     /*
-    if (cnts->members[rr]->max_count < mmbound)
-      mmbound = cnts->members[rr]->max_count;
+    if (cnts->members[rr]->max_count < role_cnt[rr])
+      role_cnt[rr] = cnts->members[rr]->max_count;
     */
-    for (mm = 0; mm < mmbound; mm++) {
-      if (!(m = ui->members[rr]->members[mm])) {
-        role_err_count[rr + 1]++;
-        err_count++;
-        continue;
-      }
+  }
+
+  memset(role_cur, 0, sizeof(role_cur));
+  if (ui->new_members) {
+    for (i = 0; i < ui->new_members->u; i++) {
+      m = ui->new_members->m[i];
+      rr = m->team_role;
+      if (role_cur[rr] >= role_cnt[rr]) continue;
+      role_cur[rr]++;
+
       for (ff = CONTEST_MF_FIRSTNAME; ff < CONTEST_LAST_MEMBER_FIELD; ff++) {
         if (!cnts->members[rr]->fields[ff]) continue;
         if (userlist_is_empty_member_field(m, userlist_member_field_ids[ff])
@@ -255,8 +273,9 @@ userlist_count_info_errors(
           }
         }
       }
+
     }
   }
-
+  
   return err_count;
 }
