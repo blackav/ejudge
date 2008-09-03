@@ -173,6 +173,7 @@ static size_t const elem_sizes[USERLIST_LAST_TAG] =
   [USERLIST_T_MEMBER] = sizeof(struct userlist_member),
   [USERLIST_T_COOKIE] = sizeof(struct userlist_cookie),
   [USERLIST_T_CONTEST] = sizeof(struct userlist_contest),
+  [USERLIST_T_MEMBERS] = sizeof(struct userlist_new_members),
   [USERLIST_T_CONTESTANTS] = sizeof(struct userlist_members),
   [USERLIST_T_RESERVES] = sizeof(struct userlist_members),
   [USERLIST_T_COACHES] = sizeof(struct userlist_members),
@@ -648,7 +649,7 @@ parse_members(
   struct xml_tree *t;
   struct userlist_members *mbs = (struct userlist_members*) q;
   struct userlist_member *mb;
-  struct xml_tree *p, *saved_next;
+  struct xml_tree *p, *saved_next, *saved_next_2;
   struct xml_attr *a;
   struct userlist_new_members *mmm;
   unsigned char **p_str;
@@ -661,8 +662,8 @@ parse_members(
   if (mbs->b.first) return xml_err_attrs(q);
   xfree(mbs->b.text); mbs->b.text = 0;
 
-  for (t = mbs->b.first_down; t; t = saved_next) {
-    saved_next = t->right;
+  for (t = mbs->b.first_down; t; t = saved_next_2) {
+    saved_next_2 = t->right;
 
     if (t->tag != USERLIST_T_MEMBER) return xml_err_elem_not_allowed(t);
     mb = (struct userlist_member*) t;
@@ -998,6 +999,8 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
         return -1;
       if (ui->i.instnum < 0) return xml_err_elem_invalid(p);
       break;
+    case USERLIST_T_MEMBERS:
+      break;
     default:
       return xml_err_elem_not_allowed(p);
     }
@@ -1205,6 +1208,8 @@ do_parse_user(char const *path, struct userlist_user *usr)
       if (xml_parse_int(path,t->line,t->column,t->text,&usr->i.instnum) < 0)
         return -1;
       if (usr->i.instnum < 0) return xml_err_elem_invalid(t);
+      break;
+    case USERLIST_T_MEMBERS:
       break;
     default:
       return xml_err_elem_not_allowed(t);
