@@ -373,7 +373,7 @@ user_report_generate(
     goto cleanup;
   }
   u = tdb.user;
-  if (u) m = userlist_members_get_first(u->i.new_members);
+  if (u) m = userlist_members_get_first(u->i.members);
 
   XALLOCA(run_ids, cs->max_prob + 1);
   memset(run_ids, -1, sizeof(run_ids[0]) * (cs->max_prob + 1));
@@ -975,7 +975,7 @@ full_user_report_generate(
     goto cleanup;
   }
   u = tdb.user;
-  if (u) m = userlist_members_get_first(u->i.new_members);
+  if (u) m = userlist_members_get_first(u->i.members);
 
   XALLOCA(run_ids, cs->max_prob + 1);
   memset(run_ids, -1, sizeof(run_ids[0]) * (cs->max_prob + 1));
@@ -2174,7 +2174,7 @@ ns_olympiad_final_user_report(
     goto cleanup;
   }
   u = tdb.user;
-  if (u) m = userlist_members_get_first(u->i.new_members);
+  if (u) m = userlist_members_get_first(u->i.members);
 
   XALLOCA(run_ids, cs->max_prob + 1);
   memset(run_ids, -1, sizeof(run_ids[0]) * (cs->max_prob + 1));

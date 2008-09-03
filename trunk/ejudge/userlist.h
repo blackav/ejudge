@@ -448,7 +448,7 @@ struct userlist_user_info
   unsigned char *field7;
   unsigned char *field8;
   unsigned char *field9;
-  struct userlist_members *new_members;
+  struct userlist_members *members;
 
   time_t create_time;
   time_t last_login_time;
@@ -656,16 +656,6 @@ int userlist_cookie_hash_del(struct userlist_list *, const struct userlist_cooki
 
 void userlist_expand_cntsinfo(struct userlist_user *u, int contest_id);
 
-struct userlist_member *
-userlist_clone_member(struct userlist_member *src,
-                      int *p_serial,
-                      time_t current_time);
-struct userlist_cntsinfo *
-userlist_clone_user_info(struct userlist_user *u,
-                         int contest_id,
-                         int *p_serial,
-                         time_t current_time,
-                         int *p_cloned_flag);
 struct userlist_cntsinfo *
 userlist_new_cntsinfo(struct userlist_user *u, int contest_id,
                       time_t current_time);
@@ -676,8 +666,8 @@ userlist_get_user_info_nc(struct userlist_user *u, int contest_id);
 const struct userlist_contest *
 userlist_get_user_contest(const struct userlist_user *u, int contest_id);
 struct userlist_member *
-userlist_get_member_nc(struct userlist_user_info *, int, int *, int *);
-void userlist_clear_copied_from(struct userlist_user_info *ui);
+userlist_get_member_nc(struct userlist_members *, int, int *, int *);
+void userlist_clear_copied_from(struct userlist_members *mm);
 
 void userlist_write_xml_header(FILE *f);
 void userlist_write_xml_footer(FILE *f);
@@ -705,6 +695,7 @@ userlist_count_info_errors(
         const struct contest_desc *cnts,
         const struct userlist_user *u,
         const struct userlist_user_info *ui,
+        const struct userlist_members *mm,
         int role_err_count[]);
 
 void userlist_elem_free_data(struct xml_tree *t);

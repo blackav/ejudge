@@ -1518,201 +1518,6 @@ userlist_expand_cntsinfo(struct userlist_user *u, int contest_id)
   u->cntsinfo = new_arr;
 }
 
-/*
- * if the source string is NULL, also NULL is returned, as opposed
- * to the `xstrdup', which returns "" in case of NULL.
- */
-static unsigned char *
-copy_field(const unsigned char *s)
-{
-  if (!s) return 0;
-  return xstrdup(s);
-}
-
-struct userlist_member *
-userlist_clone_member(struct userlist_member *src, int *p_serial,
-                      time_t current_time)
-{
-  struct userlist_member *dst;
-
-  if (!src) return 0;
-  ASSERT(src->b.tag == USERLIST_T_MEMBER);
-
-  dst = (struct userlist_member*) userlist_node_alloc(USERLIST_T_MEMBER);
-
-  dst->serial = (*p_serial)++;
-  dst->team_role = src->team_role;
-  dst->copied_from = src->serial;
-  dst->status = src->status;
-  dst->gender = src->gender;
-  dst->grade = src->grade;
-
-  dst->firstname = copy_field(src->firstname);
-  dst->firstname_en = copy_field(src->firstname_en);
-  dst->middlename = copy_field(src->middlename);
-  dst->middlename_en = copy_field(src->middlename_en);
-  dst->surname = copy_field(src->surname);
-  dst->surname_en = copy_field(src->surname_en);
-  dst->group = copy_field(src->group);
-  dst->group_en = copy_field(src->group_en);
-  dst->email = copy_field(src->email);
-  dst->homepage = copy_field(src->homepage);
-  dst->phone = copy_field(src->phone);
-  dst->occupation = copy_field(src->occupation);
-  dst->occupation_en = copy_field(src->occupation_en);
-  dst->discipline = copy_field(src->discipline);
-  dst->inst = copy_field(src->inst);
-  dst->inst_en = copy_field(src->inst_en);
-  dst->instshort = copy_field(src->instshort);
-  dst->instshort_en = copy_field(src->instshort_en);
-  dst->fac = copy_field(src->fac);
-  dst->fac_en = copy_field(src->fac_en);
-  dst->facshort = copy_field(src->facshort);
-  dst->facshort_en = copy_field(src->facshort_en);
-
-  dst->birth_date = src->birth_date;
-  dst->entry_date = src->entry_date;
-  dst->graduation_date = src->graduation_date;
-
-  dst->create_time = current_time;
-  dst->last_change_time = current_time;
-  dst->last_access_time = 0;
-  src->last_access_time = current_time;
-
-  return dst;
-}
-
-struct userlist_cntsinfo *
-userlist_clone_user_info(
-        struct userlist_user *u,
-        int contest_id,
-        int *p_serial,
-        time_t current_time,
-        int *p_cloned_flag)
-{
-  struct xml_tree *p;
-  struct userlist_cntsinfo *ci;
-  struct userlist_members *mm;
-  int i, j, r;
-  const struct contest_desc *cnts = 0;
-  int role_max[USERLIST_MB_LAST];
-  int role_cur[USERLIST_MB_LAST];
-  int members_total = 0;
-  struct userlist_member *om;
-
-  if (p_cloned_flag) *p_cloned_flag = 0;
-  if (contest_id <= 0 || contest_id > EJ_MAX_CONTEST_ID) return 0;
-  if (!u) return 0;
-  if (u->cntsinfo && contest_id < u->cntsinfo_a && u->cntsinfo[contest_id])
-    return u->cntsinfo[contest_id];
-
-  // ok, needs clone
-  // 1. find <cntsinfos> element in the list of childs
-  for (p = u->b.first_down; p && p->tag != USERLIST_T_CNTSINFOS; p = p->right);
-  if (!p) {
-    // <cntsinfos> not found, create a new one
-    p = userlist_node_alloc(USERLIST_T_CNTSINFOS);
-    xml_link_node_last(&u->b, p);
-  }
-
-  ci = (struct userlist_cntsinfo*) userlist_node_alloc(USERLIST_T_CNTSINFO);
-  xml_link_node_last(p, &ci->b);
-
-  ci->contest_id = contest_id;
-
-  // NOTE: should we reset the cnts_read_only flag?
-  ci->i.cnts_read_only = u->i.cnts_read_only;
-  ci->i.instnum = u->i.instnum;
-
-  ci->i.name = xstrdup(u->i.name);
-
-  ci->i.inst = copy_field(u->i.inst);
-  ci->i.inst_en = copy_field(u->i.inst_en);
-  ci->i.instshort = copy_field(u->i.instshort);
-  ci->i.instshort_en = copy_field(u->i.instshort_en);
-  ci->i.fac = copy_field(u->i.fac);
-  ci->i.fac_en = copy_field(u->i.fac_en);
-  ci->i.facshort = copy_field(u->i.facshort);
-  ci->i.facshort_en = copy_field(u->i.facshort_en);
-  ci->i.homepage = copy_field(u->i.homepage);
-  ci->i.city = copy_field(u->i.city);
-  ci->i.city_en = copy_field(u->i.city_en);
-  ci->i.country = copy_field(u->i.country);
-  ci->i.country_en = copy_field(u->i.country_en);
-  ci->i.region = copy_field(u->i.region);
-  ci->i.area = copy_field(u->i.area);
-  ci->i.location = copy_field(u->i.location);
-  ci->i.spelling = copy_field(u->i.spelling);
-  ci->i.printer_name = copy_field(u->i.printer_name);
-  ci->i.exam_id = copy_field(u->i.exam_id);
-  ci->i.exam_cypher = copy_field(u->i.exam_cypher);
-  ci->i.languages = copy_field(u->i.languages);
-  ci->i.phone = copy_field(u->i.phone);
-
-  ci->i.create_time = current_time;
-  ci->i.last_change_time = u->i.last_change_time;
-  ci->i.last_access_time = 0;
-  ci->i.last_pwdchange_time = u->i.last_pwdchange_time;
-  u->i.last_access_time = current_time;
-
-  if (u->i.team_passwd) {
-    ci->i.team_passwd = xstrdup(u->i.team_passwd);
-    ci->i.team_passwd_method = u->i.team_passwd_method;
-  }
-
-  if (contests_get(contest_id, &cnts) < 0) cnts = 0;
-  memset(role_max, 0, sizeof(role_max));
-  memset(role_cur, 0, sizeof(role_cur));
-
-  if (u->i.new_members) {
-    for (i = 0; i < u->i.new_members->u; i++) {
-      if (!(om = u->i.new_members->m[i])) continue;
-      ASSERT(om->team_role >= 0 && om->team_role < USERLIST_MB_LAST);
-      role_max[om->team_role]++;
-    }
-  }
-  if (cnts) {
-    for (i = 0; i < USERLIST_MB_LAST; i++) {
-      if (!cnts->members[i]) {
-        role_max[i] = 0;
-      } else if (cnts->members[i]->max_count < role_max[i]) {
-        role_max[i] = cnts->members[i]->max_count;
-      }
-    }
-  }
-  for (i = 0, members_total = 0; i < USERLIST_MB_LAST; i++)
-    members_total += role_max[i];
-
-  if (members_total > 0) {
-    mm = (struct userlist_members*)userlist_node_alloc(USERLIST_T_MEMBERS);
-    xml_link_node_last(&ci->b, &mm->b);
-    ci->i.new_members = mm;
-    j = 4;
-    while (j < members_total) j *= 2;
-    mm->a = j;
-    XCALLOC(mm->m, j);
-  }
-
-  if (u->i.new_members) {
-    for (i = 0; i < u->i.new_members->u; i++) {
-      if (!(om = u->i.new_members->m[i])) continue;
-      r = om->team_role;
-      if (r < 0 || r >= USERLIST_MB_LAST || role_cur[r] >= role_max[r])
-        continue;
-
-      mm->m[mm->u] = userlist_clone_member(u->i.new_members->m[i], p_serial, current_time);
-      xml_link_node_last(&mm->b, &mm->m[mm->u]->b);
-      mm->u++;
-    }
-  }
-
-  userlist_expand_cntsinfo(u, contest_id);
-  u->cntsinfo[contest_id] = ci;
-
-  if (p_cloned_flag) *p_cloned_flag = 1;
-  return ci;
-}
-
 struct userlist_cntsinfo *
 userlist_new_cntsinfo(struct userlist_user *u, int contest_id,
                       time_t current_time)
@@ -1785,17 +1590,19 @@ userlist_get_user_contest(const struct userlist_user *u, int contest_id)
 }
 
 struct userlist_member *
-userlist_get_member_nc(struct userlist_user_info *ui, int serial,
-                       int *p_role, int *p_num)
+userlist_get_member_nc(
+        struct userlist_members *mm,
+        int serial,
+        int *p_role,
+        int *p_num)
 {
   int i, j;
   struct userlist_member *m;
 
-  if (!ui) return 0;
   if (serial <= 0) return 0;
-  if (!ui->new_members) return 0;
-  for (i = 0; i < ui->new_members->u; i++) {
-    if (!(m = ui->new_members->m[i])) continue;
+  if (!mm) return 0;
+  for (i = 0; i < mm->u; i++) {
+    if (!(m = mm->m[i])) continue;
     if (m->serial == serial || m->copied_from == serial) {
       if (p_role) *p_role = i;
       if (p_num) *p_num = j;
@@ -1806,14 +1613,14 @@ userlist_get_member_nc(struct userlist_user_info *ui, int serial,
 }
 
 void
-userlist_clear_copied_from(struct userlist_user_info *ui)
+userlist_clear_copied_from(struct userlist_members *mm)
 {
   int i;
   struct userlist_member *m;
 
-  if (!ui || !ui->new_members) return;
-  for (i = 0; i < ui->new_members->u; i++)
-    if ((m = ui->new_members->m[i]))
+  if (!mm) return;
+  for (i = 0; i < mm->u; i++)
+    if ((m = mm->m[i]))
       m->copied_from = 0;
 }
 

@@ -30,6 +30,7 @@ struct userlist_cookie;
 struct userlist_user_info;
 struct userlist_contest;
 struct contest_desc;
+struct userlist_members;
 
 /* version of the plugin interface structure */
 #define ULDB_PLUGIN_IFACE_VERSION 1
@@ -173,6 +174,11 @@ struct uldb_plugin_iface
   int (*move_member)(void *, int, int, int, int, time_t, int *);
   // change the team_login flag of the cookie
   int (*set_cookie_team_login)(void *, const struct userlist_cookie *, int);
+  // get the login, basic contest-specific user info, registration
+  // and member information
+  int (*get_user_info_6)(void *, int, int, const struct userlist_user **, const struct userlist_user_info **, const struct userlist_contest **, const struct userlist_members **);
+  // get the login, basic contest-specific user info, and member info
+  int (*get_user_info_7)(void *, int, int, const struct userlist_user **, const struct userlist_user_info **, const struct userlist_members **);
 };
 
 /* default plugin: compiled into userlist-server */

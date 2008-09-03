@@ -181,6 +181,7 @@ userlist_count_info_errors(
         const struct contest_desc *cnts,
         const struct userlist_user *u,
         const struct userlist_user_info *ui,
+        const struct userlist_members *mm,
         int role_err_count[])
 {
   int err_count = 0, ff;
@@ -219,9 +220,9 @@ userlist_count_info_errors(
 
   // count sum
   memset(role_cnt, 0, sizeof(role_cnt));
-  if (ui->new_members) {
-    for (i = 0; i < ui->new_members->u; i++) {
-      m = ui->new_members->m[i];
+  if (mm) {
+    for (i = 0; i < mm->u; i++) {
+      m = mm->m[i];
       ASSERT(m);
       ASSERT(m->team_role >= 0 && m->team_role < USERLIST_MB_LAST);
       role_cnt[m->team_role]++;
@@ -251,9 +252,9 @@ userlist_count_info_errors(
   }
 
   memset(role_cur, 0, sizeof(role_cur));
-  if (ui->new_members) {
-    for (i = 0; i < ui->new_members->u; i++) {
-      m = ui->new_members->m[i];
+  if (mm) {
+    for (i = 0; i < mm->u; i++) {
+      m = mm->m[i];
       rr = m->team_role;
       if (role_cur[rr] >= role_cnt[rr]) continue;
       role_cur[rr]++;
