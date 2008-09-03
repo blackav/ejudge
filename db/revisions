@@ -3617,3 +3617,5 @@ userlist.c 5006 0 4419316
 userlist_check.c 5006 0 1074619
 userlist_xml.c 5006 0 4646088
 plugins/mysql-userlist/uldb_mysql.c 5006 0 6284678
+list_ops.h 5008 0 211136
+plugins/mysql-userlist/uldb_mysql.c 5008 0 6627068
