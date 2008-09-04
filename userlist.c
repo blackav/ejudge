@@ -1823,6 +1823,25 @@ userlist_members_get_nth(
   return NULL;
 }
 
+void
+userlist_members_reserve(struct userlist_members *mm, int n)
+{
+  int new_a = 0;
+  struct userlist_member **m;
+
+  ASSERT(mm);
+  ASSERT(n >= 0);
+
+  if (n <= mm->a) return;
+  if (!(new_a = mm->a)) new_a = 4;
+  while (new_a < n) new_a *= 2;
+  XCALLOC(m, new_a);
+  if (mm->u > 0) memcpy(m, mm->m, mm->u * sizeof(m[0]));
+  xfree(mm->m);
+  mm->m = m;
+  mm->a = new_a;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

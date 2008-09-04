@@ -4988,6 +4988,7 @@ do_list_users(FILE *f, int contest_id, const struct contest_desc *d,
     fprintf(f, "<p%s>%s</p>\n",
             d->users_par_style, _("No users registered for this contest"));
     l10n_setlocale(0);
+    iter->destroy(iter);
     return;
   }
 
@@ -5113,6 +5114,7 @@ do_list_users(FILE *f, int contest_id, const struct contest_desc *d,
   l10n_setlocale(0);
   format_s = free_table_spec(format_n, format_s);
   legend_s = free_table_spec(legend_n, legend_s);
+  iter->destroy(iter);
 }
 
 static void

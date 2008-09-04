@@ -62,6 +62,9 @@
 /* maximal mime_type value */
 #define EJ_MAX_MIME_TYPE 32767
 
+/* maximal grade number */
+#define EJ_MAX_GRADE 100000
+
 /* maximal directory depth in base32-encoding */
 #define EJ_MAX_32DIGITS 4
 
