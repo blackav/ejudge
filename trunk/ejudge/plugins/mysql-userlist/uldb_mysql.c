@@ -1213,6 +1213,75 @@ handle_parse_spec(struct uldb_mysql_state *state,
   return 0;
 }
 
+static void
+handle_unparse_spec(
+        struct uldb_mysql_state *state,
+        FILE *fout,
+        int spec_num,
+        const struct mysql_parse_spec *specs,
+        const void *data,
+        ...)
+{
+  int i, val;
+  va_list args;
+  const unsigned char *sep = "";
+  const unsigned char *str;
+  unsigned char **p_str;
+  const time_t *p_time;
+  const int *p_int;
+
+  va_start(args, data);
+  for (i = 0; i < spec_num; ++i) {
+    switch (specs[i].format) {
+    case 0: break;
+    case 'd':
+      p_int = XPDEREF(int, data, specs[i].offset);
+      val = *p_int;
+      fprintf(fout, "%s%d", sep, val);
+      break;
+
+    case 'D':
+      val = va_arg(args, int);
+      fprintf(fout, "%s%d", sep, val);
+      break;
+
+    case 'b':
+      p_int = XPDEREF(int, data, specs[i].offset);
+      val = *p_int;
+      if (val) val = 1;
+      fprintf(fout, "%s%d", sep, val);
+      break;
+
+    case 'B':
+      val = va_arg(args, int);
+      if (val) val = 1;
+      fprintf(fout, "%s%d", sep, val);
+      break;
+
+    case 's':
+      p_str = XPDEREF(unsigned char *, data, specs[i].offset);
+      write_escaped_string(fout, state, sep, *p_str);
+      break;
+
+    case 'S':
+      str = va_arg(args, const unsigned char *);
+      write_escaped_string(fout, state, sep, str);
+      break;
+
+    case 't':
+      p_time = XPDEREF(time_t, data, specs[i].offset);
+      write_timestamp(fout, state, sep, *p_time);
+      break;
+
+    default:
+      err("unhandled format %d", specs[i].format);
+      abort();
+    }
+    sep = ", ";
+  }
+  va_end(args);
+}
+
 /* logins - > struct userlist_user specification */
 #define USER_OFFSET(f) XOFFSET(struct userlist_user, f)
 static struct mysql_parse_spec logins_spec[16] =
@@ -2736,6 +2805,230 @@ allocate_members_on_pool(
   LINK_FIRST(pp, cache->first, cache->last, prev, next);
   LINK_FIRST(pp, usr->first_user, usr->last_user, prev_user, next_user);
   return pp->mm;
+}
+
+#define MEMBER_WIDTH 34
+#define MEMBER_OFFSET(f) XOFFSET(struct userlist_member, f)
+static struct mysql_parse_spec member_spec[MEMBER_WIDTH] =
+{
+  //[0]    serial INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  { 0, 'd', "serial", MEMBER_OFFSET(serial), 0 },
+  //[1]    user_id INT UNSIGNED NOT NULL,
+  { 0, 'D', "user_id", 0, 0 },
+  //[2]    contest_id INT UNSIGNED NOT NULL,
+  { 0, 'D', "contest_id", 0, 0 },
+  //[3]    role_id TINYINT NOT NULL,
+  { 0, 'd', "role_id", MEMBER_OFFSET(team_role), 0 },
+  //[4]    createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  { 1, 't', "createtime", MEMBER_OFFSET(create_time), 0 },
+  //[5]    changetime TIMESTAMP DEFAULT 0,
+  { 1, 't', "changetime", MEMBER_OFFSET(last_change_time), 0 },
+  //[6]    firstname VARCHAR(512),
+  { 1, 's', "firstname", MEMBER_OFFSET(firstname), 0 },
+  //[7]    firstname_en VARCHAR(512),
+  { 1, 's', "firstname_en", MEMBER_OFFSET(firstname_en), 0 },
+  //[8]    middlename VARCHAR(512),
+  { 1, 's', "middlename", MEMBER_OFFSET(middlename), 0 },
+  //[9]    middlename_en VARCHAR(512),
+  { 1, 's', "middlename_en", MEMBER_OFFSET(middlename_en), 0 },
+  //[10]   surname VARCHAR(512),
+  { 1, 's', "surname", MEMBER_OFFSET(surname), 0 },
+  //[11]   surname_en VARCHAR(512),
+  { 1, 's', "surname_en", MEMBER_OFFSET(surname_en), 0 },
+  //[12]   status TINYINT NOT NULL,
+  { 0, 'd', "status", MEMBER_OFFSET(status), 0 },
+  //[13]   gender TINYINT NOT NULL,
+  { 0, 'd', "gender", MEMBER_OFFSET(gender), 0 },
+  //[14]   grade TINYINT NOT NULL,
+  { 0, 'd', "grade", MEMBER_OFFSET(grade), 0 },
+  //[15]   grp VARCHAR(512),
+  { 1, 's', "grp", MEMBER_OFFSET(group), 0 },
+  //[16]   grp_en VARCHAR(512),
+  { 1, 's', "group_en", MEMBER_OFFSET(group_en), 0 },
+  //[17]   occupation VARCHAR(512),
+  { 1, 's', "occupation", MEMBER_OFFSET(occupation), 0 },
+  //[18]   occupation_en VARCHAR(512),
+  { 1, 's', "occupation_en", MEMBER_OFFSET(occupation_en), 0 },
+  //[19]   discipline VARCHAR(512),
+  { 1, 's', "discipline", MEMBER_OFFSET(discipline), 0 },
+  //[20]   email VARCHAR(512),
+  { 1, 's', "email", MEMBER_OFFSET(email), 0 },
+  //[21]   homepage VARCHAR(512),
+  { 1, 's', "homepage", MEMBER_OFFSET(homepage), 0 },
+  //[22]   phone VARCHAR(512),
+  { 1, 's', "phone", MEMBER_OFFSET(phone), 0 },
+  //[23]   inst VARCHAR(512),
+  { 1, 's', "inst", MEMBER_OFFSET(inst), 0 },
+  //[24]   inst_en VARCHAR(512),
+  { 1, 's', "inst_en", MEMBER_OFFSET(inst_en), 0 },
+  //[25]   instshort VARCHAR(512),
+  { 1, 's', "instshort", MEMBER_OFFSET(instshort), 0 },
+  //[26]   instshort_en VARCHAR(512),
+  { 1, 's', "instshort_en", MEMBER_OFFSET(instshort_en), 0 },
+  //[27]   fac VARCHAR(512),
+  { 1, 's', "fac", MEMBER_OFFSET(fac), 0 },
+  //[28]   fac_en VARCHAR(512),
+  { 1, 's', "fac_en", MEMBER_OFFSET(fac_en), 0 },
+  //[29]   facshort VARCHAR(512),
+  { 1, 's', "facshort", MEMBER_OFFSET(facshort), 0 },
+  //[30]   facshort_en VARCHAR(512),
+  { 1, 's', "facshort_en", MEMBER_OFFSET(facshort_en), 0 },
+  //[31]   birth_date DATE DEFAULT NULL,
+  { 1, 't', "birth_date", MEMBER_OFFSET(birth_date), 0 },
+  //[32]   entry_date DATE DEFAULT NULL,
+  { 1, 't', "entry_date", MEMBER_OFFSET(entry_date), 0 },
+  //[33]   graduation_date DATE DEFAULT NULL,
+  { 1, 't', "graduation_date", MEMBER_OFFSET(graduation_date), 0 },
+};
+
+/*
+struct userlist_member
+{
+  struct xml_tree b;
+
+  int team_role;
+  int serial;
+  int copied_from;
+  int status;
+  int gender;
+  int grade;
+  unsigned char *firstname;
+  unsigned char *firstname_en;
+  unsigned char *middlename;
+  unsigned char *middlename_en;
+  unsigned char *surname;
+  unsigned char *surname_en;
+  unsigned char *group;
+  unsigned char *group_en;
+  unsigned char *email;
+  unsigned char *homepage;
+  unsigned char *occupation;
+  unsigned char *occupation_en;
+  unsigned char *discipline;
+  unsigned char *inst;
+  unsigned char *inst_en;
+  unsigned char *instshort;
+  unsigned char *instshort_en;
+  unsigned char *fac;
+  unsigned char *fac_en;
+  unsigned char *facshort;
+  unsigned char *facshort_en;
+  unsigned char *phone;
+
+  time_t birth_date;
+  time_t entry_date;
+  time_t graduation_date;
+
+  time_t create_time;
+  time_t last_change_time;
+  time_t last_access_time;
+};
+*/
+
+#define FAIL(s, ...) do { snprintf(errbuf, sizeof(errbuf), s, ## __VA_ARGS__); goto fail; } while (0)
+
+static int
+parse_member(struct uldb_mysql_state *state, struct userlist_member *m)
+  __attribute__((unused));
+
+static int
+parse_member(struct uldb_mysql_state *state, struct userlist_member *m)
+{
+  int user_id = 0, contest_id = -1;
+  char errbuf[1024];
+
+  if (handle_parse_spec(state, MEMBER_WIDTH, member_spec, m,
+                        &user_id, &contest_id) < 0)
+    return -1;
+  if (m->serial <= 0) FAIL("serial <= 0");
+  if (user_id <= 0) FAIL("user_id <= 0");
+  if (contest_id < 0) FAIL("contest_id <= 0");
+  if (m->team_role<USERLIST_MB_CONTESTANT || m->team_role>=USERLIST_MB_LAST)
+    FAIL("team_role out of range");
+  if (m->status < 0 || m->status >= USERLIST_ST_LAST)
+    FAIL("status is out of range");
+  if (m->gender < 0 || m->gender >= USERLIST_SX_LAST)
+    FAIL("gender is out of range");
+  if (m->grade < 0 || m->grade > EJ_MAX_GRADE)
+    FAIL("grade is out of range");
+  return 0;
+
+ fail:
+  return -1;
+}
+
+static int
+fetch_members(
+        struct uldb_mysql_state *state,
+        int user_id,
+        int contest_id,
+        struct userlist_members **p_mm)
+  __attribute__((unused));
+
+static int
+fetch_members(
+        struct uldb_mysql_state *state,
+        int user_id,
+        int contest_id,
+        struct userlist_members **p_mm)
+{
+  unsigned char cmdbuf[1024];
+  int cmdlen = sizeof(cmdbuf);
+  struct userlist_members *mm = 0;
+  struct userlist_member *m;
+  int i;
+
+  cmdlen = snprintf(cmdbuf, cmdlen, "SELECT * FROM %sparticipants WHERE user_id = %d AND contest_id = %d", state->table_prefix, user_id, contest_id);
+  if (mysql_real_query(state->conn, cmdbuf, cmdlen))
+    db_error_fail(state);
+  if ((state->field_count = mysql_field_count(state->conn)) != MEMBER_WIDTH)
+    db_wrong_field_count_fail(state, MEMBER_WIDTH);
+  if (!(state->res = mysql_store_result(state->conn)))
+    db_error_fail(state);
+  state->row_count = mysql_num_rows(state->res);
+  if (state->row_count <= 0) {
+    *p_mm = 0;
+    return 0;
+  }
+
+  mm = allocate_members_on_pool(state, user_id, contest_id);
+  userlist_members_reserve(mm, state->row_count);
+  for (i = 0; i < state->row_count; i++) {
+    if (!(state->row = mysql_fetch_row(state->res)))
+      db_no_data_fail();
+    state->lengths = mysql_fetch_lengths(state->res);
+    m = (struct userlist_member*) userlist_node_alloc(USERLIST_T_MEMBER);
+    m->b.tag = USERLIST_T_MEMBER;
+    xml_link_node_last(&mm->b, &m->b);
+    mm->m[mm->u++] = m;
+    if (parse_member(state, m) < 0) goto fail;
+  }
+
+  return 0;
+
+ fail:
+  return -1;
+}
+
+static void
+unparse_member(
+        struct uldb_mysql_state *state,
+        FILE *fout,
+        int user_id,
+        int contest_id,
+        const struct userlist_member *m)
+  __attribute__((unused));
+
+static void
+unparse_member(
+        struct uldb_mysql_state *state,
+        FILE *fout,
+        int user_id,
+        int contest_id,
+        const struct userlist_member *m)
+{
+  handle_unparse_spec(state, fout, MEMBER_WIDTH, member_spec, m,
+                      user_id, contest_id);
 }
 
 /*

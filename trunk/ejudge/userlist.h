@@ -708,5 +708,6 @@ userlist_members_get_nth(
         const struct userlist_members *mmm,
         int role,
         int n);
+void userlist_members_reserve(struct userlist_members *mm, int n);
 
 #endif /* __USERLIST_H__ */
