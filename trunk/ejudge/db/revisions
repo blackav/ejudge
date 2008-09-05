@@ -3624,3 +3624,10 @@ userlist.h 5010 0 1547244
 userlist-server.c 5010 0 22452044
 userlist.c 5010 0 4447147
 plugins/mysql-userlist/uldb_mysql.c 5010 0 7295927
+userlist.h 5012 0 1552063
+master_html.c 5012 0 2914454
+new_server_html.c 5012 0 35806091
+new_server_html_2.c 5012 0 14139587
+uldb_plugin_xml.c 5012 0 7124440
+userlist_xml.c 5012 0 4649138
+plugins/mysql-userlist/uldb_mysql.c 5012 0 7332401
