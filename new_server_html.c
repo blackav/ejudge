@@ -4430,8 +4430,8 @@ priv_view_users_page(FILE *fout,
     } else {
       fprintf(fout, "<td%s>&nbsp;</td>", cl);
     }
-    if (uc->date > 0) {
-      fprintf(fout, "<td%s>%s</td>", cl, xml_unparse_date(uc->date));
+    if (uc->create_time > 0) {
+      fprintf(fout, "<td%s>%s</td>", cl, xml_unparse_date(uc->create_time));
     } else {
       fprintf(fout, "<td%s>&nbsp;</td>", cl);
     }

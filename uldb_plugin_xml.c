@@ -1368,7 +1368,7 @@ register_contest_func(void *data,
   xml_link_node_last(u->contests, &c->b);
   c->id = contest_id;
   c->status = status;
-  c->date = cur_time;
+  c->create_time = cur_time;
 
   state->dirty = 1;
   state->flush_interval /= 2;

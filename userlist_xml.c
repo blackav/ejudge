@@ -824,7 +824,8 @@ parse_contest(char const *path, struct xml_tree *t,
         if (tmp) reg->flags |= USERLIST_UC_DISQUALIFIED;
         break;
       case USERLIST_A_DATE:
-        if (xml_parse_date(path, a->line, a->column, a->text, &reg->date) < 0)
+        if (xml_parse_date(path, a->line, a->column, a->text,
+                           &reg->create_time) < 0)
           return -1;
         break;
       default:
@@ -1601,9 +1602,9 @@ userlist_unparse_contest(const struct userlist_contest *cc, FILE *f,
   if ((cc->flags & USERLIST_UC_DISQUALIFIED)) {
     fprintf(f, " %s=\"yes\"", attr_map[USERLIST_A_DISQUALIFIED]);
   }
-  if (cc->date) {
+  if (cc->create_time) {
     fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_DATE],
-            xml_unparse_date(cc->date));
+            xml_unparse_date(cc->create_time));
   }
   fprintf(f, "/>\n");
 }
