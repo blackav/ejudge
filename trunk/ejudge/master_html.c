@@ -793,8 +793,8 @@ is_registered_today(const serve_state_t state, struct userlist_user *user,
   uc = (struct userlist_contest*) user->contests->first_down;
   while (uc) {
     if (uc->id == state->global->contest_id
-        && uc->date >= from_time
-        && uc->date < to_time)
+        && uc->create_time >= from_time
+        && uc->create_time < to_time)
       return 1;
     uc = (struct userlist_contest*) uc->b.right;
   }

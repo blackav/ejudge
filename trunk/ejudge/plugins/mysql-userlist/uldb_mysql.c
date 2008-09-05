@@ -234,7 +234,9 @@ enum { CNTSREGS_WIDTH = 10 };
 // the number of columns in `logins' table
 enum { LOGINS_WIDTH = 16 };
 // the number of columns in `users' table
-enum { USER_INFO_WIDTH = 44 };
+enum { USER_INFO_WIDTH = 45 };
+// the number of columns in `members' table
+enum { MEMBER_WIDTH = 34 };
 
 // the size of the cookies pool, must be power of 2
 enum { COOKIES_POOL_SIZE = 1024 };
@@ -755,7 +757,7 @@ insert_member_info(struct uldb_mysql_state *state,
     goto fail;
   }
 
-  fprintf(fcmd, "INSERT INTO %sparticipants VALUES ( ", state->table_prefix);
+  fprintf(fcmd, "INSERT INTO %smembers VALUES ( ", state->table_prefix);
   if (memb->serial <= 0) {
     fprintf(fcmd, "DEFAULT");
   } else {
@@ -932,7 +934,7 @@ insert_contest(struct uldb_mysql_state *state, int user_id,
   fprintf(fcmd, ", %d", !!(c->flags & USERLIST_UC_LOCKED));
   fprintf(fcmd, ", %d", !!(c->flags & USERLIST_UC_INCOMPLETE));
   fprintf(fcmd, ", %d", !!(c->flags & USERLIST_UC_DISQUALIFIED));
-  write_timestamp(fcmd, state, ", ", c->date);
+  write_timestamp(fcmd, state, ", ", c->create_time);
   fprintf(fcmd, ", 0");         /* changetime not available */
   fprintf(fcmd, " )");
   fclose(fcmd); fcmd = 0;
@@ -1195,6 +1197,7 @@ handle_parse_spec(struct uldb_mysql_state *state,
       tt.tm_sec = d_sec;
       tt.tm_isdst = -1;
       if ((t = mktime(&tt)) == (time_t) -1) goto invalid_format;
+      if (t < 0) t = 0;
       p_time = XPDEREF(time_t, data, specs[i].offset);
       *p_time = t;
       break;
@@ -1282,27 +1285,10 @@ handle_unparse_spec(
   va_end(args);
 }
 
-/* logins - > struct userlist_user specification */
-#define USER_OFFSET(f) XOFFSET(struct userlist_user, f)
-static struct mysql_parse_spec logins_spec[16] =
-{
-  { 0, 'd', "id", USER_OFFSET(id) },
-  { 0, 's', "login", USER_OFFSET(login) },
-  { 1, 's', "email", USER_OFFSET(email) },
-  { 0, 'D', "pwdmethod", 0 },
-  { 0, 0, "password", 0 },
-  { 0, 'b', "privileged", USER_OFFSET(is_privileged) },
-  { 0, 'b', "invisible", USER_OFFSET(is_invisible) },
-  { 0, 'b', "banned", USER_OFFSET(is_banned) },
-  { 0, 'b', "locked", USER_OFFSET(is_locked) },
-  { 0, 'b', "readonly", USER_OFFSET(read_only) },
-  { 0, 'b', "neverclean", USER_OFFSET(never_clean) },
-  { 0, 'b', "simplereg", USER_OFFSET(simple_registration) },
-  { 0, 't', "regtime", USER_OFFSET(registration_time) },
-  { 0, 't', "logintime", USER_OFFSET(last_login_time) },
-  { 0, 't', "pwdtime", USER_OFFSET(last_pwdchange_time) },
-  { 0, 't', "changetime", USER_OFFSET(last_change_time) },
-};
+static int
+parse_login(
+        struct uldb_mysql_state *state,
+        struct userlist_user *u);
 
 static int
 get_full_func(void *data, int user_id, const struct userlist_user **p_user)
@@ -1350,8 +1336,7 @@ get_full_func(void *data, int user_id, const struct userlist_user **p_user)
   u = (struct userlist_user*) userlist_node_alloc(USERLIST_T_USER);
   u->b.tag = USERLIST_T_USER;
 
-  if (handle_parse_spec(state, 16, logins_spec, u, &passwd_method) < 0)
-    goto invalid_format;
+  if (parse_login(state, u) < 0) goto invalid_format;
 
   // post-parse checks
   if (u->id <= 0) goto invalid_format;
@@ -1598,7 +1583,7 @@ remove_user_func(void *data, int user_id)
   int cmdlen;
 
   cmdlen = sizeof(cmd);
-  cmdlen = snprintf(cmd, cmdlen, "DELETE FROM %scookies WHERE user_id = %d; DELETE FROM %scntsregs WHERE user_id = %d; DELETE FROM %sparticipants WHERE user_id = %d; DELETE FROM %susers WHERE user_id = %d; DELETE FROM %slogins WHERE user_id = %d;", state->table_prefix, user_id, state->table_prefix, user_id, state->table_prefix, user_id, state->table_prefix, user_id, state->table_prefix, user_id);
+  cmdlen = snprintf(cmd, cmdlen, "DELETE FROM %scookies WHERE user_id = %d; DELETE FROM %scntsregs WHERE user_id = %d; DELETE FROM %smembers WHERE user_id = %d; DELETE FROM %susers WHERE user_id = %d; DELETE FROM %slogins WHERE user_id = %d;", state->table_prefix, user_id, state->table_prefix, user_id, state->table_prefix, user_id, state->table_prefix, user_id, state->table_prefix, user_id);
   mysql_real_query(state->conn, cmd, cmdlen);
   return 0;
 }
@@ -1683,20 +1668,36 @@ allocate_cookie_on_pool(
   return c;
 }
 
-  /*
-[0]       (cookie BIGINT UNSIGNED NOT NULL PRIMARY KEY,
-[1]       user_id INT NOT NULL,
-[2]       contest_id INT UNSIGNED NOT NULL,
-[3]       priv_level TINYINT NOT NULL DEFAULT 0,
-[4]       role_id TINYINT NOT NULL DEFAULT 0,
-[5]       ip_version TINYINT NOT NULL DEFAULT 4,
-[6]       locale_id TINYINT NOT NULL DEFAULT 0,
-[7]       recovery TINYINT NOT NULL DEFAULT 0,
-[8]       team_login TINYINT NOT NULL DEFAULT 0,
-[9]       ip VARCHAR(64) NOT NULL,
-[10]      ssl_flag TINYINT NOT NULL DEFAULT 0,
-[11]      expire DATETIME NOT NULL)
-   */
+#define COOKIE_OFFSET(f) XOFFSET(struct userlist_cookie, f)
+static struct mysql_parse_spec cookie_spec[COOKIES_WIDTH] __attribute__((unused));
+static struct mysql_parse_spec cookie_spec[COOKIES_WIDTH] =
+{
+  //[0]       cookie BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+  { 0, 'q', "cookie", COOKIE_OFFSET(cookie), 0 },
+  //[1]       user_id INT NOT NULL,
+  { 0, 'd', "user_id", COOKIE_OFFSET(user_id), 0 },
+  //[2]       contest_id INT UNSIGNED NOT NULL,
+  { 0, 'd', "contest_id", COOKIE_OFFSET(contest_id), 0 },
+  //[3]       priv_level TINYINT NOT NULL DEFAULT 0,
+  { 0, 'd', "priv_level", COOKIE_OFFSET(priv_level), 0 },
+  //[4]       role_id TINYINT NOT NULL DEFAULT 0,
+  { 0, 'd', "role_id", COOKIE_OFFSET(role), 0 },
+  //[5]       ip_version TINYINT NOT NULL DEFAULT 4,
+  { 0, 'D', "ip_version", 0, 0 },
+  //[6]       locale_id TINYINT NOT NULL DEFAULT 0,
+  { 0, 'd', "locale_id", COOKIE_OFFSET(locale_id), 0 },
+  //[7]       recovery TINYINT NOT NULL DEFAULT 0,
+  { 0, 'b', "recovery", COOKIE_OFFSET(recovery), 0 },
+  //[8]       team_login TINYINT NOT NULL DEFAULT 0,
+  { 0, 'b', "team_login", COOKIE_OFFSET(team_login), 0 },
+  //[9]       ip VARCHAR(64) NOT NULL,
+  { 0, 'S', "ip", 0, 0 },
+  //[10]      ssl_flag TINYINT NOT NULL DEFAULT 0,
+  { 0, 'b', "ssl_flag", COOKIE_OFFSET(ssl), 0 },
+  //[11]      expire DATETIME NOT NULL)
+  { 0, 't', "expire", COOKIE_OFFSET(expire), 0 },
+};
+
 static int
 parse_cookie_row(struct uldb_mysql_state *state,
                  struct userlist_cookie *c)
@@ -1881,36 +1882,33 @@ remove_expired_cookies_func(
   return 0;
 }
 
-/*
-[0]    (user_id INT UNSIGNED NOT NULL,
-[1]    contest_id INT UNSIGNED NOT NULL,
-[2]    status TINYINT NOT NULL DEFAULT 0,
-[3]    banned TINYINT NOT NULL DEFAULT 0,
-[4]    invisible TINYINT NOT NULL DEFAULT 0,
-[5]    locked TINYINT NOT NULL DEFAULT 0,
-[6]    incomplete TINYINT NOT NULL DEFAULT 0,
-[7]    disqualified TINYINT NOT NULL DEFAULT 0,
-[8]    createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-[9]    changetime TIMESTAMP DEFAULT 0,
-       );
-*/
 #define CONTEST_OFFSET(f) XOFFSET(struct userlist_contest, f)
 static struct mysql_parse_spec cntsregs_spec[CNTSREGS_WIDTH] =
 {
-  { 0, 'D', "user_id", 0 },
-  { 0, 'd', "contest_id", CONTEST_OFFSET(id) },
-  { 0, 'd', "status", CONTEST_OFFSET(status) },
-  { 0, 'B', "banned", 0 },
-  { 0, 'B', "invisible", 0 },
-  { 0, 'B', "locked", 0 },
-  { 0, 'B', "incomplete", 0 },
-  { 0, 'B', "disqualified", 0 },
-  { 0, 't', "date", CONTEST_OFFSET(date) },
-  { 1, 0, "cntsregs", 0 },
+  //[0]    (user_id INT UNSIGNED NOT NULL,
+  { 0, 'D', "user_id", 0, 0 },
+  //[1]    contest_id INT UNSIGNED NOT NULL,
+  { 0, 'd', "contest_id", CONTEST_OFFSET(id), 0 },
+  //[2]    status TINYINT NOT NULL DEFAULT 0,
+  { 0, 'd', "status", CONTEST_OFFSET(status), 0 },
+  //[3]    banned TINYINT NOT NULL DEFAULT 0,
+  { 0, 'B', "banned", 0, 0 },
+  //[4]    invisible TINYINT NOT NULL DEFAULT 0,
+  { 0, 'B', "invisible", 0, 0 },
+  //[5]    locked TINYINT NOT NULL DEFAULT 0,
+  { 0, 'B', "locked", 0, 0 },
+  //[6]    incomplete TINYINT NOT NULL DEFAULT 0,
+  { 0, 'B', "incomplete", 0, 0 },
+  //[7]    disqualified TINYINT NOT NULL DEFAULT 0,
+  { 0, 'B', "disqualified", 0, 0 },
+  //[8]    createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  { 0, 't', "createtime", CONTEST_OFFSET(create_time), 0 },
+  //[9]    changetime TIMESTAMP DEFAULT 0,
+  { 0, 't', "changetime", CONTEST_OFFSET(last_change_time), 0 },
 };
 
 static int
-parse_cntsregs_row(
+parse_cntsreg(
         struct uldb_mysql_state *state,
         struct userlist_contest *c)
 {
@@ -1923,8 +1921,7 @@ parse_cntsregs_row(
                         &is_locked, &is_incomplete, &is_disqualified) < 0)
     goto fail;
   if (user_id <= 0 || c->id <= 0
-      || c->status < 0 || c->status >= USERLIST_REG_LAST
-      || c->date < 0)
+      || c->status < 0 || c->status >= USERLIST_REG_LAST)
     db_inv_value_fail();
   if (is_banned) flags |= USERLIST_UC_BANNED;
   if (is_invisible) flags |= USERLIST_UC_INVISIBLE;
@@ -1932,6 +1929,7 @@ parse_cntsregs_row(
   if (is_incomplete) flags |= USERLIST_UC_INCOMPLETE;
   if (is_disqualified) flags |= USERLIST_UC_DISQUALIFIED;
   c->flags = flags;
+  return 0;
 
  fail:
   return -1;
@@ -2082,7 +2080,7 @@ user_contest_iterator_get_func(ptr_iterator_t data)
   if (one_row_request(state, cmd, cmdlen, COOKIES_WIDTH) < 0) return 0;
   c = allocate_cntsregs_on_pool(state, iter->user_id, iter->ids[iter->cur_i]);
   if (!c) return 0;
-  if (parse_cntsregs_row(state, c) < 0) return 0;
+  if (parse_cntsreg(state, c) < 0) return 0;
   return (void*) c;
 }
 static void
@@ -2222,7 +2220,7 @@ allocate_users_on_pool(
 
   if (user_id <= 0) return 0;
   // user_id is ridiculously big?
-  if (user_id >= 1000000000) return 0;
+  if (user_id > EJ_MAX_USER_ID) return 0;
 
   if (user_id < uc->map_size && (u = uc->map[user_id])) {
     userlist_elem_free_data(&u->b);
@@ -2283,64 +2281,90 @@ allocate_users_on_pool(
   return u;
 }
 
-/*
-[0]   (user_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-[1]    login VARCHAR(64) NOT NULL UNIQUE KEY COLLATE utf8_bin,
-[2]    email VARCHAR(128),
-[3]    pwdmethod TINYINT NOT NULL DEFAULT 0,
-[4]    password VARCHAR(64),
-[5]    privileged TINYINT NOT NULL DEFAULT 0,
-[6]    invisible TINYINT NOT NULL DEFAULT 0,
-[7]    banned TINYINT NOT NULL DEFAULT 0,
-[8]    locked TINYINT NOT NULL DEFAULT 0,
-[9]    readonly TINYINT NOT NULL DEFAULT 0,
-[10]   neverclean TINYINT NOT NULL DEFAULT 0,
-[11]   simplereg TINYINT NOT NULL DEFAULT 0,
-[12]   regtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-[13]   logintime TIMESTAMP DEFAULT NULL,
-[14]   pwdtime TIMESTAMP DEFAULT NULL,
-[15]   changetime TIMESTAMP DEFAULT NULL
-       );
-*/
 #define LOGINS_OFFSET(f) XOFFSET(struct userlist_user, f)
-static struct mysql_parse_spec logins2_spec[LOGINS_WIDTH] =
+static struct mysql_parse_spec logins_spec[LOGINS_WIDTH] =
 {
+  //[0]    user_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   { 0, 'd', "user_id", LOGINS_OFFSET(id) },
+  //[1]    login VARCHAR(64) NOT NULL UNIQUE KEY
   { 0, 's', "login", LOGINS_OFFSET(login) },
+  //[2]    email VARCHAR(128),
   { 1, 's', "email", LOGINS_OFFSET(email) },
+  //[3]    pwdmethod TINYINT NOT NULL DEFAULT 0,
   { 0, 'd', "pwdmethod", LOGINS_OFFSET(passwd_method) },
+  //[4]    password VARCHAR(64),
   { 1, 's', "password", LOGINS_OFFSET(passwd) },
+  //[5]    privileged TINYINT NOT NULL DEFAULT 0,
   { 0, 'b', "privileged", LOGINS_OFFSET(is_privileged) },
+  //[6]    invisible TINYINT NOT NULL DEFAULT 0,
   { 0, 'b', "invisible", LOGINS_OFFSET(is_invisible) },
+  //[7]    banned TINYINT NOT NULL DEFAULT 0,
   { 0, 'b', "banned", LOGINS_OFFSET(is_banned) },
+  //[8]    locked TINYINT NOT NULL DEFAULT 0,
   { 0, 'b', "locked", LOGINS_OFFSET(is_locked) },
+  //[9]    readonly TINYINT NOT NULL DEFAULT 0,
   { 0, 'b', "readonly", LOGINS_OFFSET(read_only) },
+  //[10]   neverclean TINYINT NOT NULL DEFAULT 0,
   { 0, 'b', "neverclean", LOGINS_OFFSET(never_clean) },
+  //[11]   simplereg TINYINT NOT NULL DEFAULT 0,
   { 0, 'b', "simplereg", LOGINS_OFFSET(simple_registration) },
+  //[12]   regtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   { 1, 't', "regtime", LOGINS_OFFSET(registration_time) },
+  //[13]   logintime TIMESTAMP DEFAULT NULL,
   { 1, 't', "logintime", LOGINS_OFFSET(last_login_time) },
+  //[14]   pwdtime TIMESTAMP DEFAULT NULL,
   { 1, 't', "pwdtime", LOGINS_OFFSET(last_pwdchange_time) },
+  //[15]   changetime TIMESTAMP DEFAULT NULL
   { 1, 't', "changetime", LOGINS_OFFSET(last_change_time) },
 };
 
 static int
-parse_users_row(
+parse_login(
         struct uldb_mysql_state *state,
         struct userlist_user *u)
 {
-  if (handle_parse_spec(state, LOGINS_WIDTH, logins2_spec, u) < 0)
+  if (handle_parse_spec(state, LOGINS_WIDTH, logins_spec, u) < 0)
     goto fail;
   if (u->id <= 0) goto fail;
   if (u->passwd_method < USERLIST_PWD_PLAIN
-      || u->passwd_method > USERLIST_PWD_SHA1)
+      || u->passwd_method > USERLIST_PWD_LAST)
     goto fail;
-  if (u->registration_time < 0) u->registration_time = 0;
-  if (u->last_login_time < 0) u->last_login_time = 0;
-  if (u->last_pwdchange_time < 0) u->last_pwdchange_time = 0;
-  if (u->last_change_time < 0) u->last_change_time = 0;
+  if (!u->login || !*u->login) goto fail;
   return 0;
 
-    fail:
+ fail:
+  return -1;
+}
+
+static int
+fetch_login(
+        struct uldb_mysql_state *state,
+        int user_id,
+        const struct userlist_user **p_user)
+  __attribute__((unused));
+
+static int
+fetch_login(
+        struct uldb_mysql_state *state,
+        int user_id,
+        const struct userlist_user **p_user)
+{
+  unsigned char cmd[1024];
+  int cmdlen = sizeof(cmd);
+  struct userlist_user *u = 0;
+
+  if (user_id <= 0) goto fail;
+
+  cmdlen = snprintf(cmd, cmdlen, "SELECT * FROM %slogins WHERE user_id = %d ;",
+                    state->table_prefix, user_id);
+  if (one_row_request(state, cmd, cmdlen, LOGINS_WIDTH) < 0) goto fail;
+  if (!(u = allocate_users_on_pool(state, user_id))) goto fail;
+  if (parse_login(state, u) < 0) goto fail;
+  if (p_user) *p_user = u;
+  return 1;
+
+ fail:
+  if (p_user) *p_user = 0;
   return -1;
 }
 
@@ -2361,23 +2385,16 @@ get_user_info_1_func(
                     state->table_prefix, user_id);
   if (one_row_request(state, cmd, cmdlen, LOGINS_WIDTH) < 0) return 0;
   if (!(u = allocate_users_on_pool(state, user_id))) return 0;
-  if (parse_users_row(state, u) < 0) return 0;
+  if (parse_login(state, u) < 0) return 0;
   if (p_user) *p_user = u;
   return 1;
 
  fail:
+  // free resources
   if (p_user) *p_user = 0;
   return -1;
 }
 
-/*
-struct user_info_cache
-{
-  int size, count;
-  struct user_info_user *user_map;
-  struct user_info_container *first, *last;
-};
-*/
 struct user_info_container
 {
   struct xml_tree b;
@@ -2526,156 +2543,173 @@ allocate_user_info_on_pool(
   return &pp->ui->i;
 }
 
-/*
-[0]	user_id INT UNSIGNED NOT NULL,
-[1]	contest_id INT UNSIGNED NOT NULL,
-[2]	cnts_read_only TINYINT NOT NULL DEFAULT 0,
-[3]	instnum INT,
-[4]	username VARCHAR(512),
-[5]	pwdmethod TINYINT NOT NULL DEFAULT 0,
-[6]	password VARCHAR(64),
-[7]	pwdtime TIMESTAMP DEFAULT 0,
-[8]	createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-[9]	changetime TIMESTAMP DEFAULT 0,
-[10]	inst VARCHAR(512),
-[11]	inst_en VARCHAR (512),
-[12]	instshort VARCHAR (512),
-[13]	instshort_en VARCHAR (512),
-[14]	fac VARCHAR(512),
-[15]	fac_en VARCHAR (512),
-[16]	facshort VARCHAR (512),
-[17]	facshort_en VARCHAR (512),
-[18]	homepage VARCHAR (512),
-[19]	phone VARCHAR (512),
-[20]	city VARCHAR (512),
-[21]	city_en VARCHAR (512),
-[22]	region VARCHAR (512),
-[23]	area VARCHAR (512),
-[24]	zip VARCHAR (512),
-[25]	street VARCHAR (512),
-[26]	country VARCHAR (512),
-[27]	country_en VARCHAR (512),
-[28]	location VARCHAR (512),
-[29]	spelling VARCHAR (512),
-[30]	printer VARCHAR (512),
-[31]	languages VARCHAR (512),
-[32]	exam_id VARCHAR (512),
-[33]	exam_cypher VARCHAR (512),
-[34]	field0 VARCHAR(512),
-[35]	field1 VARCHAR(512),
-[36]	field2 VARCHAR(512),
-[37]	field3 VARCHAR(512),
-[38]	field4 VARCHAR(512),
-[39]	field5 VARCHAR(512),
-[40]	field6 VARCHAR(512),
-[41]	field7 VARCHAR(512),
-[42]	field8 VARCHAR(512),
-[43]	field9 VARCHAR(512),
-*/
-
- /*
 #define USER_INFO_OFFSET(f) XOFFSET(struct userlist_user_info, f)
 static struct mysql_parse_spec user_info_spec[USER_INFO_WIDTH] =
 {
-  { 0, 'D', "user_id", 0 },     // read into the variable, not structure
-  { 0, 'D', "contest_id", 0 },  // the same
-  { 0, 'b', "cnts_read_only", USER_INFO_OFFSET(cnts_read_only) },
-  { 1, 's', "name", USER_INFO_OFFSET(name) },
-  { 0, 'D', "team_passwd_method", 0 }, // read into the variable
-  { 1, 'S', "team_passwd", 0 },        // read into the variable
-  { 1, 's', "inst", USER_INFO_OFFSET(inst) },
-  { 1, 's', "inst_en", USER_INFO_OFFSET(inst_en) },
-  { 1, 's', "instshort", USER_INFO_OFFSET(instshort) },
-  { 1, 's', "instshort_en", USER_INFO_OFFSET(instshort_en) },
-  { 1, 's', "fac", USER_INFO_OFFSET(fac) },
-  { 1, 's', "fac_en", USER_INFO_OFFSET(fac_en) },
-  { 1, 's', "facshort", USER_INFO_OFFSET(facshort) },
-  { 1, 's', "facshort_en", USER_INFO_OFFSET(facshort_en) },
-  { 1, 's', "homepage", USER_INFO_OFFSET(homepage) },
-  { 1, 's', "city", USER_INFO_OFFSET(city) },
-  { 1, 's', "city_en", USER_INFO_OFFSET(city_en) },
-  { 1, 's', "country", USER_INFO_OFFSET(country) },
-  { 1, 's', "country_en", USER_INFO_OFFSET(country_en) },
-  { 1, 's', "region", USER_INFO_OFFSET(region) },
-  { 1, 's', "area", USER_INFO_OFFSET(area) },
-  { 1, 's', "zip", USER_INFO_OFFSET(zip) },
-  { 1, 's', "street", USER_INFO_OFFSET(street) },
-  { 1, 's', "location", USER_INFO_OFFSET(location) },
-  { 1, 's', "spelling", USER_INFO_OFFSET(spelling) },
-  { 1, 's', "printer_name", USER_INFO_OFFSET(printer_name) },
-  { 1, 's', "exam_id", USER_INFO_OFFSET(exam_id) },
-  { 1, 's', "exam_cypher", USER_INFO_OFFSET(exam_cypher) },
-  { 1, 's', "languages", USER_INFO_OFFSET(languages) },
-  { 1, 's', "phone", USER_INFO_OFFSET(phone) },
-  { 1, 's', "field0", USER_INFO_OFFSET(field0) },
-  { 1, 's', "field1", USER_INFO_OFFSET(field1) },
-  { 1, 's', "field2", USER_INFO_OFFSET(field2) },
-  { 1, 's', "field3", USER_INFO_OFFSET(field3) },
-  { 1, 's', "field4", USER_INFO_OFFSET(field4) },
-  { 1, 's', "field5", USER_INFO_OFFSET(field5) },
-  { 1, 's', "field6", USER_INFO_OFFSET(field6) },
-  { 1, 's', "field7", USER_INFO_OFFSET(field7) },
-  { 1, 's', "field8", USER_INFO_OFFSET(field8) },
-  { 1, 's', "field9", USER_INFO_OFFSET(field9) },
+  //[0]    user_id INT UNSIGNED NOT NULL,
+  { 0, 'D', "user_id", 0, 0 },
+  //[1]    contest_id INT UNSIGNED NOT NULL,
+  { 0, 'D', "contest_id", 0, 0 },
+  //[2]    cnts_read_only TINYINT NOT NULL DEFAULT 0,
+  { 0, 'b', "cnts_read_only", USER_INFO_OFFSET(cnts_read_only), 0 },
+  //[3]    instnum INT,
+  { 0, 'd', "instnum", USER_INFO_OFFSET(instnum), 0 },
+  //[4]    username VARCHAR(512),
+  { 1, 's', "username", USER_INFO_OFFSET(name), 0 },
+  //[5]    pwdmethod TINYINT NOT NULL DEFAULT 0,
+  { 0, 'd', "pwdmethod", USER_INFO_OFFSET(team_passwd_method), 0 },
+  //[6]    password VARCHAR(64),
+  { 1, 's', "password", USER_INFO_OFFSET(team_passwd), 0 },
+  //[7]    pwdtime TIMESTAMP DEFAULT NULL,
+  { 1, 't', "pwdtime", USER_INFO_OFFSET(last_pwdchange_time), 0 },
+  //[8]    createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  { 1, 't', "createtime", USER_INFO_OFFSET(create_time), 0 },
+  //[9]    changetime TIMESTAMP DEFAULT NULL,
+  { 1, 't', "changetime", USER_INFO_OFFSET(last_change_time), 0 },
+  //[10]   logintime TIMESTAMP DEFAULT NULL,
+  { 1, 't', "logintime", USER_INFO_OFFSET(last_login_time), 0 },
+  //[11]   inst VARCHAR(512),
+  { 1, 's', "inst", USER_INFO_OFFSET(inst), 0 },
+  //[12]   inst_en VARCHAR (512),
+  { 1, 's', "inst_en", USER_INFO_OFFSET(inst_en), 0 },
+  //[13]   instshort VARCHAR (512),
+  { 1, 's', "instshort", USER_INFO_OFFSET(instshort), 0 },
+  //[14]   instshort_en VARCHAR (512),
+  { 1, 's', "instshort_en", USER_INFO_OFFSET(instshort_en), 0 },
+  //[15]   fac VARCHAR(512),
+  { 1, 's', "fac", USER_INFO_OFFSET(fac), 0 },
+  //[16]   fac_en VARCHAR (512),
+  { 1, 's', "fac_en", USER_INFO_OFFSET(fac_en), 0 },
+  //[17]   facshort VARCHAR (512),
+  { 1, 's', "facshort", USER_INFO_OFFSET(facshort), 0 },
+  //[18]   facshort_en VARCHAR (512),
+  { 1, 's', "facshort_en", USER_INFO_OFFSET(facshort_en), 0 },
+  //[19]   homepage VARCHAR (512),
+  { 1, 's', "homepage", USER_INFO_OFFSET(homepage), 0 },
+  //[20]   phone VARCHAR (512),
+  { 1, 's', "phone", USER_INFO_OFFSET(phone), 0 },
+  //[21]   city VARCHAR (512),
+  { 1, 's', "city", USER_INFO_OFFSET(city), 0 },
+  //[22]   city_en VARCHAR (512),
+  { 1, 's', "city_en", USER_INFO_OFFSET(city_en), 0 },
+  //[23]   region VARCHAR (512),
+  { 1, 's', "region", USER_INFO_OFFSET(region), 0 },
+  //[24]   area VARCHAR (512),
+  { 1, 's', "area", USER_INFO_OFFSET(area), 0 },
+  //[25]   zip VARCHAR (512),
+  { 1, 's', "zip", USER_INFO_OFFSET(zip), 0 },
+  //[26]   street VARCHAR (512),
+  { 1, 's', "street", USER_INFO_OFFSET(street), 0 },
+  //[27]   country VARCHAR (512),
+  { 1, 's', "country", USER_INFO_OFFSET(country), 0 },
+  //[28]   country_en VARCHAR (512),
+  { 1, 's', "country_en", USER_INFO_OFFSET(country_en), 0 },
+  //[29]   location VARCHAR (512),
+  { 1, 's', "location", USER_INFO_OFFSET(location), 0 },
+  //[30]   spelling VARCHAR (512),
+  { 1, 's', "spelling", USER_INFO_OFFSET(spelling), 0 },
+  //[31]   printer VARCHAR (512),
+  { 1, 's', "printer", USER_INFO_OFFSET(printer_name), 0 },
+  //[32]   languages VARCHAR (512),
+  { 1, 's', "languages", USER_INFO_OFFSET(languages), 0 },
+  //[33]   exam_id VARCHAR (512),
+  { 1, 's', "exam_id", USER_INFO_OFFSET(exam_id), 0 },
+  //[34]   exam_cypher VARCHAR (512),
+  { 1, 's', "exam_cypher", USER_INFO_OFFSET(exam_cypher), 0 },
+  //[35]   field0 VARCHAR(512),
+  { 1, 's', "field0", USER_INFO_OFFSET(field0), 0 },
+  //[36]   field1 VARCHAR(512),
+  { 1, 's', "field1", USER_INFO_OFFSET(field1), 0 },
+  //[37]   field2 VARCHAR(512),
+  { 1, 's', "field2", USER_INFO_OFFSET(field2), 0 },
+  //[38]   field3 VARCHAR(512),
+  { 1, 's', "field3", USER_INFO_OFFSET(field3), 0 },
+  //[39]   field4 VARCHAR(512),
+  { 1, 's', "field4", USER_INFO_OFFSET(field4), 0 },
+  //[40]   field5 VARCHAR(512),
+  { 1, 's', "field5", USER_INFO_OFFSET(field5), 0 },
+  //[41]   field6 VARCHAR(512),
+  { 1, 's', "field6", USER_INFO_OFFSET(field6), 0 },
+  //[42]   field7 VARCHAR(512),
+  { 1, 's', "field7", USER_INFO_OFFSET(field7), 0 },
+  //[43]   field8 VARCHAR(512),
+  { 1, 's', "field8", USER_INFO_OFFSET(field8), 0 },
+  //[44]   field9 VARCHAR(512),
+  { 1, 's', "field9", USER_INFO_OFFSET(field9), 0 },
 };
- */
 
- /*
-struct userlist_user_info
+#define FAIL(s, ...) do { snprintf(errbuf, sizeof(errbuf), s, ## __VA_ARGS__); goto fail; } while (0)
+
+static int
+parse_user_info(struct uldb_mysql_state *state, struct userlist_user_info *ui)
 {
-  int cnts_read_only;
-  int filled;
+  int user_id = 0, contest_id = -1;
+  char errbuf[1024];
 
-  unsigned char *name;
-  int instnum;
+  if (handle_parse_spec(state, USER_INFO_WIDTH, user_info_spec, ui,
+                        &user_id, &contest_id) < 0)
+    goto fail;
+  if (user_id <= 0) FAIL("user_id <= 0");
+  if (contest_id < 0) FAIL("contest_id < 0");
+  if (ui->instnum < 0) FAIL("instnum < 0");
+  if (ui->team_passwd_method < 0 || ui->team_passwd_method >= USERLIST_PWD_LAST)
+    FAIL("pwdmethod is out of range");
+  return 0;
 
-  // team password
-  int team_passwd_method;
-  unsigned char *team_passwd;
+ fail:
+  return -1;
+}
 
-  unsigned char *inst;
-  unsigned char *inst_en;
-  unsigned char *instshort;
-  unsigned char *instshort_en;
-  unsigned char *fac;
-  unsigned char *fac_en;
-  unsigned char *facshort;
-  unsigned char *facshort_en;
-  unsigned char *homepage;
-  unsigned char *city;
-  unsigned char *city_en;
-  unsigned char *country;
-  unsigned char *country_en;
-  unsigned char *region;
-  unsigned char *area;
-  unsigned char *zip;
-  unsigned char *street;
-  unsigned char *location;
-  unsigned char *spelling;
-  unsigned char *printer_name;
-  unsigned char *exam_id;
-  unsigned char *exam_cypher;
-  unsigned char *languages;
-  unsigned char *phone;
-  unsigned char *field0;
-  unsigned char *field1;
-  unsigned char *field2;
-  unsigned char *field3;
-  unsigned char *field4;
-  unsigned char *field5;
-  unsigned char *field6;
-  unsigned char *field7;
-  unsigned char *field8;
-  unsigned char *field9;
-  struct userlist_members *members[USERLIST_MB_LAST];
+static int
+fetch_user_info(
+        struct uldb_mysql_state *state,
+        int user_id,
+        int contest_id,
+        struct userlist_user_info **p_ui)
+  __attribute__((unused));
 
-  time_t create_time;
-  time_t last_login_time;
-  time_t last_change_time;
-  time_t last_access_time;
-  time_t last_pwdchange_time;
-};
-  */
+static int
+fetch_user_info(
+        struct uldb_mysql_state *state,
+        int user_id,
+        int contest_id,
+        struct userlist_user_info **p_ui)
+{
+  unsigned char cmdbuf[1024];
+  int cmdlen = sizeof(cmdbuf);
+  struct userlist_user_info *ui = 0;
+
+  cmdlen = snprintf(cmdbuf, cmdlen, "SELECT * FROM %susers WHERE user_id = %d AND contest_id = %d", state->table_prefix, user_id, contest_id);
+  if (mysql_real_query(state->conn, cmdbuf, cmdlen))
+    db_error_fail(state);
+  if ((state->field_count = mysql_field_count(state->conn)) != USER_INFO_WIDTH)
+    db_wrong_field_count_fail(state, USER_INFO_WIDTH);
+  if (!(state->res = mysql_store_result(state->conn)))
+    db_error_fail(state);
+  state->row_count = mysql_num_rows(state->res);
+  if (state->row_count < 0) goto fail;
+  if (!state->row_count) {
+    *p_ui = 0;
+    return 0;
+  }
+  if (state->row_count > 1) {
+    err("fetch_user_info: too many rows in result");
+    goto fail;
+  }
+
+  ui = allocate_user_info_on_pool(state, user_id, contest_id);
+  if (!(state->row = mysql_fetch_row(state->res)))
+    db_no_data_fail();
+  state->lengths = mysql_fetch_lengths(state->res);
+  if (parse_user_info(state, ui) < 0) goto fail;
+
+  *p_ui = ui;
+  return 0;
+
+ fail:
+  // FIXME: release the resources
+  return -1;
+}
 
 static int
 get_user_info_2_func(
@@ -2696,16 +2730,6 @@ get_user_info_2_func(
 
   abort();
 }
-
-/*
-struct members_cache
-{
-  int size;
-  int count;
-  struct members_user *user_map;
-  struct members_container *first, *last;
-};
-*/
 
 struct members_container
 {
@@ -2807,7 +2831,6 @@ allocate_members_on_pool(
   return pp->mm;
 }
 
-#define MEMBER_WIDTH 34
 #define MEMBER_OFFSET(f) XOFFSET(struct userlist_member, f)
 static struct mysql_parse_spec member_spec[MEMBER_WIDTH] =
 {
@@ -2881,56 +2904,6 @@ static struct mysql_parse_spec member_spec[MEMBER_WIDTH] =
   { 1, 't', "graduation_date", MEMBER_OFFSET(graduation_date), 0 },
 };
 
-/*
-struct userlist_member
-{
-  struct xml_tree b;
-
-  int team_role;
-  int serial;
-  int copied_from;
-  int status;
-  int gender;
-  int grade;
-  unsigned char *firstname;
-  unsigned char *firstname_en;
-  unsigned char *middlename;
-  unsigned char *middlename_en;
-  unsigned char *surname;
-  unsigned char *surname_en;
-  unsigned char *group;
-  unsigned char *group_en;
-  unsigned char *email;
-  unsigned char *homepage;
-  unsigned char *occupation;
-  unsigned char *occupation_en;
-  unsigned char *discipline;
-  unsigned char *inst;
-  unsigned char *inst_en;
-  unsigned char *instshort;
-  unsigned char *instshort_en;
-  unsigned char *fac;
-  unsigned char *fac_en;
-  unsigned char *facshort;
-  unsigned char *facshort_en;
-  unsigned char *phone;
-
-  time_t birth_date;
-  time_t entry_date;
-  time_t graduation_date;
-
-  time_t create_time;
-  time_t last_change_time;
-  time_t last_access_time;
-};
-*/
-
-#define FAIL(s, ...) do { snprintf(errbuf, sizeof(errbuf), s, ## __VA_ARGS__); goto fail; } while (0)
-
-static int
-parse_member(struct uldb_mysql_state *state, struct userlist_member *m)
-  __attribute__((unused));
-
 static int
 parse_member(struct uldb_mysql_state *state, struct userlist_member *m)
 {
@@ -2978,7 +2951,7 @@ fetch_members(
   struct userlist_member *m;
   int i;
 
-  cmdlen = snprintf(cmdbuf, cmdlen, "SELECT * FROM %sparticipants WHERE user_id = %d AND contest_id = %d", state->table_prefix, user_id, contest_id);
+  cmdlen = snprintf(cmdbuf, cmdlen, "SELECT * FROM %smembers WHERE user_id = %d AND contest_id = %d", state->table_prefix, user_id, contest_id);
   if (mysql_real_query(state->conn, cmdbuf, cmdlen))
     db_error_fail(state);
   if ((state->field_count = mysql_field_count(state->conn)) != MEMBER_WIDTH)

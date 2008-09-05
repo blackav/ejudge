@@ -2372,8 +2372,8 @@ ns_user_info_page(FILE *fout, FILE *log_f,
           _("User Name"), s, nbsp2);
 
   // contest registration time
-  if (uc && uc->date > 0) {
-    s = xml_unparse_date(uc->date);
+  if (uc && uc->create_time > 0) {
+    s = xml_unparse_date(uc->create_time);
   } else {
     s = "&nbsp;";
   }

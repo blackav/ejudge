@@ -28,7 +28,9 @@ enum
   {
     USERLIST_PWD_PLAIN,
     USERLIST_PWD_BASE64,
-    USERLIST_PWD_SHA1
+    USERLIST_PWD_SHA1,
+
+    USERLIST_PWD_LAST,
   };
 
 enum
@@ -399,7 +401,8 @@ struct userlist_contest
   int id;
   int status;
   unsigned int flags;
-  time_t date;
+  time_t create_time;
+  time_t last_change_time;
 };
 
 struct userlist_user_info
