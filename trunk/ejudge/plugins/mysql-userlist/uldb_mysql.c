@@ -227,17 +227,6 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   */
 };
 
-// the number of columns in `cookies' table
-enum { COOKIES_WIDTH = 12 };
-// the number of columns in `cntsregs' table
-enum { CNTSREGS_WIDTH = 10 };
-// the number of columns in `logins' table
-enum { LOGINS_WIDTH = 16 };
-// the number of columns in `users' table
-enum { USER_INFO_WIDTH = 45 };
-// the number of columns in `members' table
-enum { MEMBER_WIDTH = 34 };
-
 // the size of the cookies pool, must be power of 2
 enum { COOKIES_POOL_SIZE = 1024 };
 enum { COOKIES_MAX_HASH_SIZE = 600 };
@@ -254,6 +243,13 @@ enum { USER_INFO_POOL_SIZE = 1024 };
 // the size of the member pool
 enum { MEMBERS_POOL_SIZE = 1024 };
 
+struct cookies_cache
+{
+  struct userlist_cookie *hash[COOKIES_POOL_SIZE];
+  struct xml_tree *first, *last;
+  int count;
+};
+
 struct cntsregs_container;
 struct cntsregs_user;
 
@@ -266,9 +262,9 @@ struct cntsregs_cache
 
 struct users_cache
 {
-  int map_size, count;
+  int size, count;
   struct xml_tree *first, *last;
-  struct userlist_user **map;
+  struct userlist_user **user_map;
 };
 
 struct user_info_container;
@@ -314,18 +310,16 @@ struct uldb_mysql_state
   int row_count;
   int field_count;
 
-  // cookies caching
-  struct userlist_cookie *cookie_hash[COOKIES_POOL_SIZE];
-  struct xml_tree *cookie_first, *cookie_last;
-  int cookie_count;
+  // cookies cache
+  struct cookies_cache cookies;
 
-  // cntsregs caching
+  // cntsregs cache
   struct cntsregs_cache cntsregs;
 
-  // users caching
+  // users cache
   struct users_cache users;
 
-  // user_info caching
+  // user_info cache
   struct user_info_cache user_infos;
 
   // members cache
@@ -351,6 +345,8 @@ struct user_contest_iterator
   int id_num;
   int cur_i;
 };
+
+#include "protos.inc.c"
 
 static int
 db_error(struct uldb_mysql_state *state)
@@ -403,47 +399,6 @@ parse_int(const unsigned char *str, int *p_val)
   val = strtol(str, &eptr, 10);
   if (*eptr || errno) return -1;
   *p_val = val;
-  return 0;
-}
-
-static int
-parse_ullong(const unsigned char *str, unsigned long long *p_val)
-{
-  char *eptr;
-  unsigned long long val;
-
-  if (!str) return -1;
-  errno = 0;
-  val = strtoull(str, &eptr, 10);
-  if (*eptr || errno) return -1;
-  *p_val = val;
-  return 0;
-}
-
-static int
-parse_datetime(const unsigned char *str, time_t *p_val)
-{
-  int year, month, day, hour, min, sec, n;
-  time_t t;
-  struct tm tt;
-
-  memset(&tt, 0, sizeof(tt));
-  tt.tm_isdst = -1;
-  if (!str) return -1;
-
-  if (sscanf(str, "%d/%d/%d %d:%d:%d%n", &year, &month, &day, &hour,
-             &min, &sec, &n) == 6 && !str[n]) return -1;
-  if (year < 1900 || year > 2100 || month < 1 || month > 12
-      || day < 1 || day > 31 || hour < 0 || hour >= 24
-      || min < 0 || min >= 60 || sec < 0 || sec >= 60) return -1;
-  tt.tm_sec = sec;
-  tt.tm_min = min;
-  tt.tm_hour = hour;
-  tt.tm_mday = day;
-  tt.tm_mon = month - 1;
-  tt.tm_year = year - 1900;
-  if ((t = mktime(&tt)) == (time_t) -1) return -1;
-  if (p_val) *p_val = t;
   return 0;
 }
 
@@ -1108,6 +1063,9 @@ handle_parse_spec(struct uldb_mysql_state *state,
   time_t t;
   time_t *p_time;
   char *eptr;
+  unsigned long long uq;
+  unsigned long long *p_uq;
+  ej_ip_t *p_ip;
 
   if (state->field_count != spec_num) {
     err("wrong field_count (%d instead of %d). invalid table format?",
@@ -1132,6 +1090,15 @@ handle_parse_spec(struct uldb_mysql_state *state,
   for (i = 0; i < spec_num; i++) {
     switch (specs[i].format) {
     case 0: break;
+    case 'q':
+      errno = 0;
+      eptr = 0;
+      uq = strtoull(state->row[i], &eptr, 10);
+      if (errno || *eptr) goto invalid_format;
+      p_uq = XPDEREF(unsigned long long, data, specs[i].offset);
+      *p_uq = uq;
+      break;
+      
     case 'd':
       errno = 0;
       eptr = 0;
@@ -1201,6 +1168,10 @@ handle_parse_spec(struct uldb_mysql_state *state,
       p_time = XPDEREF(time_t, data, specs[i].offset);
       *p_time = t;
       break;
+    case 'i':
+      p_ip = XPDEREF(ej_ip_t, data, specs[i].offset);
+      if (xml_parse_ip(0, 0, 0, state->row[i], p_ip) < 0) goto invalid_format;
+      break;
 
     default:
       err("unhandled format %d", specs[i].format);
@@ -1232,11 +1203,20 @@ handle_unparse_spec(
   unsigned char **p_str;
   const time_t *p_time;
   const int *p_int;
+  const unsigned long long *p_uq;
+  unsigned long long uq;
+  ej_ip_t *p_ip;
 
   va_start(args, data);
   for (i = 0; i < spec_num; ++i) {
     switch (specs[i].format) {
     case 0: break;
+    case 'q':
+      p_uq = XPDEREF(unsigned long long, data, specs[i].offset);
+      uq = *p_uq;
+      fprintf(fout, "%s%llu", sep, uq);
+      break;
+
     case 'd':
       p_int = XPDEREF(int, data, specs[i].offset);
       val = *p_int;
@@ -1276,6 +1256,11 @@ handle_unparse_spec(
       write_timestamp(fout, state, sep, *p_time);
       break;
 
+    case 'i':
+      p_ip = XPDEREF(ej_ip_t, data, specs[i].offset);
+      fprintf(fout, "%s%s", sep, xml_unparse_ip(*p_ip));
+      break;
+
     default:
       err("unhandled format %d", specs[i].format);
       abort();
@@ -1284,6 +1269,14 @@ handle_unparse_spec(
   }
   va_end(args);
 }
+
+#include "tables.inc.c"
+
+#include "cookies.inc.c"
+#include "cntsregs.inc.c"
+#include "logins.inc.c"
+#include "user_infos.inc.c"
+#include "members.inc.c"
 
 static int
 parse_login(
@@ -1588,170 +1581,6 @@ remove_user_func(void *data, int user_id)
   return 0;
 }
 
-static struct userlist_cookie *
-allocate_cookie_on_pool(
-        struct uldb_mysql_state *state,
-        unsigned long long val)
-{
-  int i, j, h;
-  struct userlist_cookie *c, **v;
-
-  h = val & (COOKIES_POOL_SIZE - 1);
-  while ((c = state->cookie_hash[h]) && c->cookie != val)
-    h = (h + 1) & (COOKIES_POOL_SIZE - 1);
-  if ((c = state->cookie_hash[h]) && c->cookie == val) {
-    userlist_elem_free_data(&c->b);
-    c->cookie = val;
-    // move the cookie c to the front
-    if (&c->b != state->cookie_first) {
-      c->b.left->right = c->b.right->left;
-      if (&c->b == state->cookie_last)
-        state->cookie_last = c->b.left;
-      else
-        c->b.right->left = c->b.left->right;
-      c->b.right = state->cookie_first;
-      c->b.left = 0;
-      state->cookie_first->left = &c->b;
-      state->cookie_first = &c->b;
-    }
-    return c;
-  }
-
-  if (state->cookie_count > COOKIES_MAX_HASH_SIZE) {
-    // remove the least used cookie
-    c = (struct userlist_cookie*) state->cookie_last;
-    h = c->cookie & (COOKIES_POOL_SIZE - 1);
-    i = 0;
-    while (state->cookie_hash[h]) {
-      h = (h + 1) & (COOKIES_POOL_SIZE - 1);
-      i++;
-    }
-    XALLOCAZ(v, i + 1);
-    j = 0;
-    h = c->cookie & (COOKIES_POOL_SIZE - 1);
-    while (state->cookie_hash[h]) {
-      if (state->cookie_hash[h] != c) {
-        v[j++] = state->cookie_hash[h];
-      }
-      state->cookie_hash[h] = 0;
-      h = (h + 1) & (COOKIES_POOL_SIZE - 1);
-    }
-    // rehash the collected pointers
-    for (i = 0; i < j; i++) {
-      h = v[i]->cookie & (COOKIES_POOL_SIZE - 1);
-      while (state->cookie_hash[h])
-        h = (h + 1) & (COOKIES_POOL_SIZE - 1);
-      state->cookie_hash[h] = v[i];
-    }
-    // remove c from the tail of the list
-    c->b.left->right = 0;
-    state->cookie_last = c->b.left;
-    userlist_elem_free_data(&c->b);
-    state->cookie_count--;
-    xfree(c);
-  }
-
-  // allocate new entry
-  c = (struct userlist_cookie*) userlist_node_alloc(USERLIST_T_COOKIES);
-  c->cookie = val;
-  state->cookie_count++;
-  if (state->cookie_first)
-    state->cookie_first->left = &c->b;
-  else
-    state->cookie_last = &c->b;
-  c->b.right = state->cookie_first;
-  state->cookie_first = &c->b;
-  h = val & (COOKIES_POOL_SIZE - 1);
-  while (state->cookie_hash[h])
-    h = (h + 1) & (COOKIES_POOL_SIZE - 1);
-  state->cookie_hash[h] = c;
-  return c;
-}
-
-#define COOKIE_OFFSET(f) XOFFSET(struct userlist_cookie, f)
-static struct mysql_parse_spec cookie_spec[COOKIES_WIDTH] __attribute__((unused));
-static struct mysql_parse_spec cookie_spec[COOKIES_WIDTH] =
-{
-  //[0]       cookie BIGINT UNSIGNED NOT NULL PRIMARY KEY,
-  { 0, 'q', "cookie", COOKIE_OFFSET(cookie), 0 },
-  //[1]       user_id INT NOT NULL,
-  { 0, 'd', "user_id", COOKIE_OFFSET(user_id), 0 },
-  //[2]       contest_id INT UNSIGNED NOT NULL,
-  { 0, 'd', "contest_id", COOKIE_OFFSET(contest_id), 0 },
-  //[3]       priv_level TINYINT NOT NULL DEFAULT 0,
-  { 0, 'd', "priv_level", COOKIE_OFFSET(priv_level), 0 },
-  //[4]       role_id TINYINT NOT NULL DEFAULT 0,
-  { 0, 'd', "role_id", COOKIE_OFFSET(role), 0 },
-  //[5]       ip_version TINYINT NOT NULL DEFAULT 4,
-  { 0, 'D', "ip_version", 0, 0 },
-  //[6]       locale_id TINYINT NOT NULL DEFAULT 0,
-  { 0, 'd', "locale_id", COOKIE_OFFSET(locale_id), 0 },
-  //[7]       recovery TINYINT NOT NULL DEFAULT 0,
-  { 0, 'b', "recovery", COOKIE_OFFSET(recovery), 0 },
-  //[8]       team_login TINYINT NOT NULL DEFAULT 0,
-  { 0, 'b', "team_login", COOKIE_OFFSET(team_login), 0 },
-  //[9]       ip VARCHAR(64) NOT NULL,
-  { 0, 'S', "ip", 0, 0 },
-  //[10]      ssl_flag TINYINT NOT NULL DEFAULT 0,
-  { 0, 'b', "ssl_flag", COOKIE_OFFSET(ssl), 0 },
-  //[11]      expire DATETIME NOT NULL)
-  { 0, 't', "expire", COOKIE_OFFSET(expire), 0 },
-};
-
-static int
-parse_cookie_row(struct uldb_mysql_state *state,
-                 struct userlist_cookie *c)
-{
-  // [0]  cookie
-  if (!state->lengths[0] || parse_ullong(state->row[0], &c->cookie) < 0
-      || !c->cookie)
-    db_inv_value_fail();
-  // [1]  user_id
-  if (!state->lengths[1] || parse_int(state->row[1], &c->user_id) < 0
-      || c->user_id <= 0)
-    db_inv_value_fail();
-  // [2]  contest_id
-  if (!state->lengths[2] || parse_int(state->row[2], &c->contest_id) < 0
-      || c->contest_id <= 0)
-    db_inv_value_fail();
-  // [3]  priv_level
-  if (!state->lengths[3] || parse_int(state->row[3], &c->priv_level) < 0
-      || c->priv_level < 0 || c->priv_level > PRIV_LEVEL_ADMIN)
-    db_inv_value_fail();
-  // [4]  role_id
-  if (!state->lengths[4] || parse_int(state->row[4], &c->role) < 0
-      || c->role < 0)
-    db_inv_value_fail();
-  // [5]  ip_version (ignored for now)
-  // [6]  locale_id
-  if (!state->lengths[6] || parse_int(state->row[6], &c->locale_id) < 0)
-    db_inv_value_fail();
-  if (c->locale_id < 0) c->locale_id = 0;
-  // [7]  recovery
-  if (!state->lengths[7] || parse_int(state->row[7], &c->recovery) < 0
-      || c->recovery < 0 || c->recovery > 1)
-    db_inv_value_fail();
-  // [8]  team_login
-  if (!state->lengths[8] || parse_int(state->row[8], &c->team_login) < 0
-      || c->team_login < 0 || c->team_login > 1)
-    db_inv_value_fail();
-  // [9]  ip
-  if (!state->lengths[9] || xml_parse_ip(0, 0, 0, state->row[9], &c->ip) < 0)
-    db_inv_value_fail();
-  // [10] ssl_flag
-  if (!state->lengths[10] || parse_int(state->row[10], &c->ssl) < 0
-      || c->ssl < 0 || c->ssl > 1)
-    db_inv_value_fail();
-  // [11] expire
-  if (!state->lengths[11] || parse_datetime(state->row[11], &c->expire) < 0)
-    db_inv_value_fail();
-
-  return 0;
-
- fail:
-  return -1;
-}
-
 static int
 get_cookie_func(
         void *data,
@@ -1759,21 +1588,11 @@ get_cookie_func(
         const struct userlist_cookie **p_cookie)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
-  unsigned char cmd[1024];
-  int cmdlen;
   struct userlist_cookie *c;
 
-  cmdlen = sizeof(cmd);
-  cmdlen = snprintf(cmd, cmdlen, "SELECT * FROM %scookies WHERE cookie = %llu ;",
-                    state->table_prefix, value);
-  if (one_row_request(state, cmd, cmdlen, COOKIES_WIDTH) < 0) goto fail;
-  c = allocate_cookie_on_pool(state, value);
-  if (parse_cookie_row(state, c) < 0) goto fail;
+  if (fetch_cookie(state, value, &c) <= 0) return -1;
   if (p_cookie) *p_cookie = c;
   return 0;
-
- fail:
-  return -1;
 }
 
 static int
@@ -1816,9 +1635,9 @@ new_cookie_func(
   cmdlen = sizeof(cmd);
   cmdlen = snprintf(cmd, cmdlen, "SELECT * FROM %scookies WHERE cookie = %llu ;",
                     state->table_prefix, cookie);
-  if (one_row_request(state, cmd, cmdlen, COOKIES_WIDTH) < 0) goto fail;
+  if (one_row_request(state, cmd, cmdlen, COOKIE_WIDTH) < 0) goto fail;
   c = allocate_cookie_on_pool(state, cookie);
-  if (parse_cookie_row(state, c) < 0) goto fail;
+  if (parse_cookie(state, c) < 0) goto fail;
   if (p_cookie) *p_cookie = c;
   return 0;
 
@@ -1882,184 +1701,6 @@ remove_expired_cookies_func(
   return 0;
 }
 
-#define CONTEST_OFFSET(f) XOFFSET(struct userlist_contest, f)
-static struct mysql_parse_spec cntsregs_spec[CNTSREGS_WIDTH] =
-{
-  //[0]    (user_id INT UNSIGNED NOT NULL,
-  { 0, 'D', "user_id", 0, 0 },
-  //[1]    contest_id INT UNSIGNED NOT NULL,
-  { 0, 'd', "contest_id", CONTEST_OFFSET(id), 0 },
-  //[2]    status TINYINT NOT NULL DEFAULT 0,
-  { 0, 'd', "status", CONTEST_OFFSET(status), 0 },
-  //[3]    banned TINYINT NOT NULL DEFAULT 0,
-  { 0, 'B', "banned", 0, 0 },
-  //[4]    invisible TINYINT NOT NULL DEFAULT 0,
-  { 0, 'B', "invisible", 0, 0 },
-  //[5]    locked TINYINT NOT NULL DEFAULT 0,
-  { 0, 'B', "locked", 0, 0 },
-  //[6]    incomplete TINYINT NOT NULL DEFAULT 0,
-  { 0, 'B', "incomplete", 0, 0 },
-  //[7]    disqualified TINYINT NOT NULL DEFAULT 0,
-  { 0, 'B', "disqualified", 0, 0 },
-  //[8]    createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  { 0, 't', "createtime", CONTEST_OFFSET(create_time), 0 },
-  //[9]    changetime TIMESTAMP DEFAULT 0,
-  { 0, 't', "changetime", CONTEST_OFFSET(last_change_time), 0 },
-};
-
-static int
-parse_cntsreg(
-        struct uldb_mysql_state *state,
-        struct userlist_contest *c)
-{
-  int user_id = 0, is_banned = 0, is_invisible = 0, is_locked = 0;
-  int is_incomplete = 0, is_disqualified = 0;
-  int flags = 0;
-
-  if (handle_parse_spec(state, CNTSREGS_WIDTH, cntsregs_spec, c,
-                        &user_id, &is_banned, &is_invisible,
-                        &is_locked, &is_incomplete, &is_disqualified) < 0)
-    goto fail;
-  if (user_id <= 0 || c->id <= 0
-      || c->status < 0 || c->status >= USERLIST_REG_LAST)
-    db_inv_value_fail();
-  if (is_banned) flags |= USERLIST_UC_BANNED;
-  if (is_invisible) flags |= USERLIST_UC_INVISIBLE;
-  if (is_locked) flags |= USERLIST_UC_LOCKED;
-  if (is_incomplete) flags |= USERLIST_UC_INCOMPLETE;
-  if (is_disqualified) flags |= USERLIST_UC_DISQUALIFIED;
-  c->flags = flags;
-  return 0;
-
- fail:
-  return -1;
-}
-
-struct cntsregs_container
-{
-  struct xml_tree b;
-  int user_id;
-  int contest_id;
-  struct userlist_contest *c;
-  struct cntsregs_container *next, *prev;
-  struct cntsregs_container *next_user, *prev_user;
-};
-struct cntsregs_user
-{
-  struct cntsregs_container *first_user, *last_user;
-  int min_id, max_id;           // [min_id, max_id)
-};
-
-static struct userlist_contest *
-allocate_cntsregs_on_pool(
-        struct uldb_mysql_state *state,
-        int user_id,
-        int contest_id)
-{
-  struct cntsregs_cache *cc = &state->cntsregs;
-  struct cntsregs_user *cu;
-  struct cntsregs_container *co;
-  struct userlist_contest *c;
-  int new_size = 0;
-  struct cntsregs_user *new_ptr = 0;
-
-  if (user_id <= 0 || contest_id <= 0) return 0;
-  if (user_id < cc->size && cc->user_map && (cu = &cc->user_map[user_id])
-      && contest_id >= cu->min_id && contest_id < cu->max_id) {
-    for (co = cu->first_user; co; co = co->next_user)
-      if (co->contest_id == contest_id)
-        break;
-    if (co) {
-      c = co->c;
-      userlist_elem_free_data(&c->b);
-      c->id = contest_id;
-      // move to the front of the united list
-      if (co != cc->first) {
-        if (co->next) co->next->prev = co->prev;
-        else cc->last = co->prev;
-        co->prev->next = co->next;
-        co->next = cc->first;
-        co->next->prev = co;
-        cc->first = co;
-      }
-      // move to the front of the user list
-      if (co != cu->first_user) {
-        if (co->next_user) co->next_user->prev_user = co->prev_user;
-        else cu->last_user = co->prev_user;
-        co->prev_user->next_user = co->prev_user;
-        co->next_user = cu->first_user;
-        co->next_user->prev_user = co;
-        cu->first_user = co;
-      }
-      return c;
-    }
-  }
-
-  if (cc->count >= CNTSREGS_POOL_SIZE) {
-    // detach the least user entry
-    co = cc->last;
-    cu = &cc->user_map[co->user_id];
-    if (cu->first_user == co) {
-      memset(cu, 0, sizeof(*cu));
-    } else {
-      ASSERT(cu->last_user == co);
-      co->prev_user->next_user = 0;
-      cu->last_user = co->prev_user;
-    }
-    co->prev->next = 0;
-    cc->last = co->prev;
-    c = co->c;
-    userlist_elem_free_data(&c->b);
-    xfree(c);
-    memset(co, 0, sizeof(*co));
-    xfree(co);
-    cc->count--;
-    cu->min_id = cu->max_id = 0;
-    for (co = cu->first_user; co; co = co->next_user) {
-      if (co->user_id < cu->min_id) cu->min_id = co->user_id;
-      if (co->user_id >= cu->max_id) cu->max_id = co->user_id + 1;
-    }
-  }
-
-  // allocate new entry
-  c = (struct userlist_contest*) userlist_node_alloc(USERLIST_T_CONTEST);
-  XCALLOC(co, 1);
-  co->user_id = user_id;
-  co->contest_id = contest_id;
-  co->c = c;
-  cc->count++;
-  if (!cc->first) {
-    cc->first = cc->last = co;
-  } else {
-    co->prev = cc->last;
-    co->prev->next = co;
-    cc->last = co;
-  }
-  if (cc->size <= user_id) {
-    if (!(new_size = cc->size)) new_size = 128;
-    while (new_size <= user_id) new_size *= 2;
-    XCALLOC(new_ptr, new_size);
-    if (cc->size)
-      memcpy(new_ptr, cc->user_map, cc->size * sizeof(cc->user_map[0]));
-    xfree(cc->user_map);
-    cc->user_map = new_ptr;
-    cc->size = new_size;
-  }
-  cu = &cc->user_map[user_id];
-  if (!cu->first_user) {
-    cu->first_user = cu->last_user = co;
-    cu->min_id = user_id;
-    cu->max_id = user_id + 1;
-  } else {
-    co->prev_user = cu->last_user;
-    co->prev_user->next_user = co;
-    cu->last_user = co;
-    if (user_id < cu->min_id) cu->min_id = user_id;
-    if (user_id >= cu->max_id) cu->max_id = user_id + 1;
-  }
-  return c;
-}
-
 static int
 user_contest_iterator_has_next_func(ptr_iterator_t data)
 {
@@ -2077,8 +1718,8 @@ user_contest_iterator_get_func(ptr_iterator_t data)
 
   if (iter->cur_i >= iter->id_num) return 0;
   cmdlen = snprintf(cmd, cmdlen, "SELECT * FROM %scntsregs WHERE user_id = %d AND contest_id = %d ;", state->table_prefix, iter->user_id, iter->ids[iter->cur_i]);
-  if (one_row_request(state, cmd, cmdlen, COOKIES_WIDTH) < 0) return 0;
-  c = allocate_cntsregs_on_pool(state, iter->user_id, iter->ids[iter->cur_i]);
+  if (one_row_request(state, cmd, cmdlen, COOKIE_WIDTH) < 0) return 0;
+  c = allocate_cntsreg_on_pool(state, iter->user_id, iter->ids[iter->cur_i]);
   if (!c) return 0;
   if (parse_cntsreg(state, c) < 0) return 0;
   return (void*) c;
@@ -2210,164 +1851,6 @@ remove_expired_users_func(
   return -1;
 }
 
-static struct userlist_user *
-allocate_users_on_pool(
-        struct uldb_mysql_state *state,
-        int user_id)
-{
-  struct users_cache *uc = &state->users;
-  struct userlist_user *u;
-
-  if (user_id <= 0) return 0;
-  // user_id is ridiculously big?
-  if (user_id > EJ_MAX_USER_ID) return 0;
-
-  if (user_id < uc->map_size && (u = uc->map[user_id])) {
-    userlist_elem_free_data(&u->b);
-    u->id = user_id;
-    u->b.tag = USERLIST_T_USER;
-    if (&u->b == uc->first) return u;
-    // detach u
-    u->b.left->right = u->b.right;
-    if (&u->b == uc->last)
-      uc->last = u->b.left;
-    else
-      u->b.right->left = u->b.left;
-    u->b.left = u->b.right = 0;
-    // reattach u to the first element
-    u->b.right = uc->first;
-    uc->first->left = &u->b;
-    uc->first = &u->b;
-    return u;
-  }
-
-  if (uc->count == USERS_POOL_SIZE) {
-    // free the least used element
-    u = (struct userlist_user*) uc->last;
-    uc->map[u->id] = 0;
-    u->b.left->right = 0;
-    uc->last = u->b.left;
-    u->b.left = u->b.right = 0;
-    userlist_elem_free_data(&u->b);
-    memset(u, 0, sizeof(*u));
-    xfree(u);
-    uc->count--;
-  }
-
-  u = (struct userlist_user*) userlist_node_alloc(USERLIST_T_USER);
-  u->id = user_id;
-  if (!uc->first) {
-    uc->first = uc->last = &u->b;
-  } else {
-    u->b.right = uc->first;
-    uc->first->left = &u->b;
-    uc->first = &u->b;
-  }
-  if (user_id >= uc->map_size) {
-    int new_map_size = uc->map_size;
-    struct userlist_user **new_map;
-
-    if (!new_map_size) new_map_size = 1024;
-    while (user_id >= new_map_size) new_map_size *= 2;
-    XCALLOC(new_map, new_map_size);
-    if (uc->map_size > 0)
-      memcpy(new_map, uc->map, uc->map_size * sizeof(uc->map[0]));
-    xfree(uc->map);
-    uc->map_size = new_map_size;
-    uc->map = new_map;
-  }
-  uc->map[user_id] = u;
-  uc->count++;
-  return u;
-}
-
-#define LOGINS_OFFSET(f) XOFFSET(struct userlist_user, f)
-static struct mysql_parse_spec logins_spec[LOGINS_WIDTH] =
-{
-  //[0]    user_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  { 0, 'd', "user_id", LOGINS_OFFSET(id) },
-  //[1]    login VARCHAR(64) NOT NULL UNIQUE KEY
-  { 0, 's', "login", LOGINS_OFFSET(login) },
-  //[2]    email VARCHAR(128),
-  { 1, 's', "email", LOGINS_OFFSET(email) },
-  //[3]    pwdmethod TINYINT NOT NULL DEFAULT 0,
-  { 0, 'd', "pwdmethod", LOGINS_OFFSET(passwd_method) },
-  //[4]    password VARCHAR(64),
-  { 1, 's', "password", LOGINS_OFFSET(passwd) },
-  //[5]    privileged TINYINT NOT NULL DEFAULT 0,
-  { 0, 'b', "privileged", LOGINS_OFFSET(is_privileged) },
-  //[6]    invisible TINYINT NOT NULL DEFAULT 0,
-  { 0, 'b', "invisible", LOGINS_OFFSET(is_invisible) },
-  //[7]    banned TINYINT NOT NULL DEFAULT 0,
-  { 0, 'b', "banned", LOGINS_OFFSET(is_banned) },
-  //[8]    locked TINYINT NOT NULL DEFAULT 0,
-  { 0, 'b', "locked", LOGINS_OFFSET(is_locked) },
-  //[9]    readonly TINYINT NOT NULL DEFAULT 0,
-  { 0, 'b', "readonly", LOGINS_OFFSET(read_only) },
-  //[10]   neverclean TINYINT NOT NULL DEFAULT 0,
-  { 0, 'b', "neverclean", LOGINS_OFFSET(never_clean) },
-  //[11]   simplereg TINYINT NOT NULL DEFAULT 0,
-  { 0, 'b', "simplereg", LOGINS_OFFSET(simple_registration) },
-  //[12]   regtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  { 1, 't', "regtime", LOGINS_OFFSET(registration_time) },
-  //[13]   logintime TIMESTAMP DEFAULT NULL,
-  { 1, 't', "logintime", LOGINS_OFFSET(last_login_time) },
-  //[14]   pwdtime TIMESTAMP DEFAULT NULL,
-  { 1, 't', "pwdtime", LOGINS_OFFSET(last_pwdchange_time) },
-  //[15]   changetime TIMESTAMP DEFAULT NULL
-  { 1, 't', "changetime", LOGINS_OFFSET(last_change_time) },
-};
-
-static int
-parse_login(
-        struct uldb_mysql_state *state,
-        struct userlist_user *u)
-{
-  if (handle_parse_spec(state, LOGINS_WIDTH, logins_spec, u) < 0)
-    goto fail;
-  if (u->id <= 0) goto fail;
-  if (u->passwd_method < USERLIST_PWD_PLAIN
-      || u->passwd_method > USERLIST_PWD_LAST)
-    goto fail;
-  if (!u->login || !*u->login) goto fail;
-  return 0;
-
- fail:
-  return -1;
-}
-
-static int
-fetch_login(
-        struct uldb_mysql_state *state,
-        int user_id,
-        const struct userlist_user **p_user)
-  __attribute__((unused));
-
-static int
-fetch_login(
-        struct uldb_mysql_state *state,
-        int user_id,
-        const struct userlist_user **p_user)
-{
-  unsigned char cmd[1024];
-  int cmdlen = sizeof(cmd);
-  struct userlist_user *u = 0;
-
-  if (user_id <= 0) goto fail;
-
-  cmdlen = snprintf(cmd, cmdlen, "SELECT * FROM %slogins WHERE user_id = %d ;",
-                    state->table_prefix, user_id);
-  if (one_row_request(state, cmd, cmdlen, LOGINS_WIDTH) < 0) goto fail;
-  if (!(u = allocate_users_on_pool(state, user_id))) goto fail;
-  if (parse_login(state, u) < 0) goto fail;
-  if (p_user) *p_user = u;
-  return 1;
-
- fail:
-  if (p_user) *p_user = 0;
-  return -1;
-}
-
 static int
 get_user_info_1_func(
         void *data,
@@ -2383,8 +1866,8 @@ get_user_info_1_func(
 
   cmdlen = snprintf(cmd, cmdlen, "SELECT * FROM %slogins WHERE user_id = %d ;",
                     state->table_prefix, user_id);
-  if (one_row_request(state, cmd, cmdlen, LOGINS_WIDTH) < 0) return 0;
-  if (!(u = allocate_users_on_pool(state, user_id))) return 0;
+  if (one_row_request(state, cmd, cmdlen, LOGIN_WIDTH) < 0) return 0;
+  if (!(u = allocate_login_on_pool(state, user_id))) return 0;
   if (parse_login(state, u) < 0) return 0;
   if (p_user) *p_user = u;
   return 1;
@@ -2392,322 +1875,6 @@ get_user_info_1_func(
  fail:
   // free resources
   if (p_user) *p_user = 0;
-  return -1;
-}
-
-struct user_info_container
-{
-  struct xml_tree b;
-  int user_id;
-  int contest_id;
-  struct userlist_cntsinfo *ui;
-  struct user_info_container *next, *prev;
-  struct user_info_container *next_user, *prev_user;
-};
-struct user_info_user
-{
-  struct user_info_container *first_user, *last_user;
-  int min_id, max_id;           // [min_id, max_id) - contest_id
-};
-
-static struct userlist_user_info *
-allocate_user_info_on_pool(
-        struct uldb_mysql_state *state,
-        int user_id,
-        int contest_id)
-{
-  struct user_info_cache *ic = &state->user_infos;
-  struct user_info_user *uiu;
-  struct user_info_container *pp = 0, *qq = 0;
-
-  if (user_id >= ic->size) {
-    int new_size = ic->size;
-    struct user_info_user *new_map = 0;
-
-    if (!new_size) new_size = 128;
-    while (user_id >= new_size) new_size *= 2;
-
-    XCALLOC(new_map, new_size);
-    if (ic->size > 0) {
-      memcpy(new_map, ic->user_map, ic->size * sizeof(new_map[0]));
-    }
-    xfree(ic->user_map);
-    ic->user_map = new_map;
-    ic->size = new_size;
-  }
-  uiu = &ic->user_map[user_id];
-
-  if (contest_id >= uiu->min_id && contest_id < uiu->max_id) {
-    for (pp = uiu->first_user; pp; pp = pp->next_user)
-      if (pp->contest_id == contest_id)
-        break;
-  }
-  if (pp) {
-    userlist_elem_free_data(&pp->ui->b);
-    pp->ui->b.tag = USERLIST_T_CNTSINFO;
-    // move the element to the head of list
-    if (pp != ic->first) {
-      if (pp->next) {
-        pp->next->prev = pp->prev;
-      } else {
-        ic->last = pp->prev;
-      }
-      pp->prev->next = pp->next;
-      pp->prev = 0;
-      pp->next = ic->first;
-      ic->first = pp;
-    }
-    // also move the element to the head of the user list
-    if (pp != uiu->first_user) {
-      if (pp->next_user) {
-        pp->next_user->prev_user = pp->prev_user;
-      } else {
-        uiu->last_user = pp->prev_user;
-      }
-      pp->prev_user->next_user = pp->next_user;
-      pp->prev_user = 0;
-      pp->next_user = uiu->first_user;
-      uiu->first_user= pp;
-    }
-    return &pp->ui->i;
-  }
-
-  if (ic->count == USER_INFO_POOL_SIZE) {
-    // remove the least used entry from the list
-    pp = ic->last;
-    ic->last = pp->prev;
-    ic->last->next = 0;
-    pp->prev = 0;
-    // also remove the entry from user list
-    ASSERT(pp->user_id > 0 && pp->user_id < ic->size);
-    uiu = &ic->user_map[pp->user_id];
-    ASSERT(uiu);
-    if (pp == uiu->first_user) {
-      uiu->first_user = pp->next_user;
-    } else {
-      pp->prev_user->next_user = pp->next_user;
-    }
-    if (pp == uiu->last_user) {
-      uiu->last_user = pp->prev_user;
-    } else {
-      pp->next_user->prev_user = pp->prev_user;
-    }
-    pp->prev_user = 0;
-    pp->next_user = 0;
-    userlist_free(&pp->ui->b);
-    pp->ui = 0;
-    xfree(pp);
-    ic->count--;
-    // recalculate [min_id, max_id)
-    if (pp->contest_id == uiu->min_id || pp->contest_id + 1 == uiu->max_id) {
-      uiu->min_id = uiu->max_id = 0;
-      if (uiu->first_user) {
-        uiu->min_id = uiu->first_user->contest_id;
-        uiu->max_id = uiu->first_user->contest_id + 1;
-      }
-      for (qq = uiu->first_user; qq; qq = qq->next_user) {
-        if (qq->contest_id < uiu->min_id) uiu->min_id = qq->contest_id;
-        if (qq->contest_id >= uiu->max_id) uiu->max_id = qq->contest_id + 1;
-      }
-    }
-  }
-
-  XCALLOC(pp, 1);
-  pp->ui = (struct userlist_cntsinfo*) userlist_node_alloc(USERLIST_T_CNTSINFO);
-  pp->ui->b.tag = USERLIST_T_CNTSINFO;
-  pp->user_id = user_id;
-  pp->contest_id = contest_id;
-
-  pp->next = ic->first;
-  if (ic->first) {
-    pp->next->prev = pp;
-  } else {
-    ic->last = pp;
-  }
-  ic->first = pp;
-
-  if (!uiu->first_user) {
-    ASSERT(!uiu->last_user);
-    uiu->first_user = uiu->last_user = pp;
-    uiu->min_id = pp->contest_id;
-    uiu->max_id = pp->contest_id + 1;
-  } else {
-    ASSERT(uiu->last_user);
-    pp->next_user = uiu->first_user;
-    pp->next_user->prev_user = pp;
-    uiu->first_user = pp;
-    if (pp->contest_id < uiu->min_id) uiu->min_id = pp->contest_id;
-    if (pp->contest_id >= uiu->max_id) uiu->max_id = pp->contest_id + 1;
-  }
-
-  return &pp->ui->i;
-}
-
-#define USER_INFO_OFFSET(f) XOFFSET(struct userlist_user_info, f)
-static struct mysql_parse_spec user_info_spec[USER_INFO_WIDTH] =
-{
-  //[0]    user_id INT UNSIGNED NOT NULL,
-  { 0, 'D', "user_id", 0, 0 },
-  //[1]    contest_id INT UNSIGNED NOT NULL,
-  { 0, 'D', "contest_id", 0, 0 },
-  //[2]    cnts_read_only TINYINT NOT NULL DEFAULT 0,
-  { 0, 'b', "cnts_read_only", USER_INFO_OFFSET(cnts_read_only), 0 },
-  //[3]    instnum INT,
-  { 0, 'd', "instnum", USER_INFO_OFFSET(instnum), 0 },
-  //[4]    username VARCHAR(512),
-  { 1, 's', "username", USER_INFO_OFFSET(name), 0 },
-  //[5]    pwdmethod TINYINT NOT NULL DEFAULT 0,
-  { 0, 'd', "pwdmethod", USER_INFO_OFFSET(team_passwd_method), 0 },
-  //[6]    password VARCHAR(64),
-  { 1, 's', "password", USER_INFO_OFFSET(team_passwd), 0 },
-  //[7]    pwdtime TIMESTAMP DEFAULT NULL,
-  { 1, 't', "pwdtime", USER_INFO_OFFSET(last_pwdchange_time), 0 },
-  //[8]    createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  { 1, 't', "createtime", USER_INFO_OFFSET(create_time), 0 },
-  //[9]    changetime TIMESTAMP DEFAULT NULL,
-  { 1, 't', "changetime", USER_INFO_OFFSET(last_change_time), 0 },
-  //[10]   logintime TIMESTAMP DEFAULT NULL,
-  { 1, 't', "logintime", USER_INFO_OFFSET(last_login_time), 0 },
-  //[11]   inst VARCHAR(512),
-  { 1, 's', "inst", USER_INFO_OFFSET(inst), 0 },
-  //[12]   inst_en VARCHAR (512),
-  { 1, 's', "inst_en", USER_INFO_OFFSET(inst_en), 0 },
-  //[13]   instshort VARCHAR (512),
-  { 1, 's', "instshort", USER_INFO_OFFSET(instshort), 0 },
-  //[14]   instshort_en VARCHAR (512),
-  { 1, 's', "instshort_en", USER_INFO_OFFSET(instshort_en), 0 },
-  //[15]   fac VARCHAR(512),
-  { 1, 's', "fac", USER_INFO_OFFSET(fac), 0 },
-  //[16]   fac_en VARCHAR (512),
-  { 1, 's', "fac_en", USER_INFO_OFFSET(fac_en), 0 },
-  //[17]   facshort VARCHAR (512),
-  { 1, 's', "facshort", USER_INFO_OFFSET(facshort), 0 },
-  //[18]   facshort_en VARCHAR (512),
-  { 1, 's', "facshort_en", USER_INFO_OFFSET(facshort_en), 0 },
-  //[19]   homepage VARCHAR (512),
-  { 1, 's', "homepage", USER_INFO_OFFSET(homepage), 0 },
-  //[20]   phone VARCHAR (512),
-  { 1, 's', "phone", USER_INFO_OFFSET(phone), 0 },
-  //[21]   city VARCHAR (512),
-  { 1, 's', "city", USER_INFO_OFFSET(city), 0 },
-  //[22]   city_en VARCHAR (512),
-  { 1, 's', "city_en", USER_INFO_OFFSET(city_en), 0 },
-  //[23]   region VARCHAR (512),
-  { 1, 's', "region", USER_INFO_OFFSET(region), 0 },
-  //[24]   area VARCHAR (512),
-  { 1, 's', "area", USER_INFO_OFFSET(area), 0 },
-  //[25]   zip VARCHAR (512),
-  { 1, 's', "zip", USER_INFO_OFFSET(zip), 0 },
-  //[26]   street VARCHAR (512),
-  { 1, 's', "street", USER_INFO_OFFSET(street), 0 },
-  //[27]   country VARCHAR (512),
-  { 1, 's', "country", USER_INFO_OFFSET(country), 0 },
-  //[28]   country_en VARCHAR (512),
-  { 1, 's', "country_en", USER_INFO_OFFSET(country_en), 0 },
-  //[29]   location VARCHAR (512),
-  { 1, 's', "location", USER_INFO_OFFSET(location), 0 },
-  //[30]   spelling VARCHAR (512),
-  { 1, 's', "spelling", USER_INFO_OFFSET(spelling), 0 },
-  //[31]   printer VARCHAR (512),
-  { 1, 's', "printer", USER_INFO_OFFSET(printer_name), 0 },
-  //[32]   languages VARCHAR (512),
-  { 1, 's', "languages", USER_INFO_OFFSET(languages), 0 },
-  //[33]   exam_id VARCHAR (512),
-  { 1, 's', "exam_id", USER_INFO_OFFSET(exam_id), 0 },
-  //[34]   exam_cypher VARCHAR (512),
-  { 1, 's', "exam_cypher", USER_INFO_OFFSET(exam_cypher), 0 },
-  //[35]   field0 VARCHAR(512),
-  { 1, 's', "field0", USER_INFO_OFFSET(field0), 0 },
-  //[36]   field1 VARCHAR(512),
-  { 1, 's', "field1", USER_INFO_OFFSET(field1), 0 },
-  //[37]   field2 VARCHAR(512),
-  { 1, 's', "field2", USER_INFO_OFFSET(field2), 0 },
-  //[38]   field3 VARCHAR(512),
-  { 1, 's', "field3", USER_INFO_OFFSET(field3), 0 },
-  //[39]   field4 VARCHAR(512),
-  { 1, 's', "field4", USER_INFO_OFFSET(field4), 0 },
-  //[40]   field5 VARCHAR(512),
-  { 1, 's', "field5", USER_INFO_OFFSET(field5), 0 },
-  //[41]   field6 VARCHAR(512),
-  { 1, 's', "field6", USER_INFO_OFFSET(field6), 0 },
-  //[42]   field7 VARCHAR(512),
-  { 1, 's', "field7", USER_INFO_OFFSET(field7), 0 },
-  //[43]   field8 VARCHAR(512),
-  { 1, 's', "field8", USER_INFO_OFFSET(field8), 0 },
-  //[44]   field9 VARCHAR(512),
-  { 1, 's', "field9", USER_INFO_OFFSET(field9), 0 },
-};
-
-#define FAIL(s, ...) do { snprintf(errbuf, sizeof(errbuf), s, ## __VA_ARGS__); goto fail; } while (0)
-
-static int
-parse_user_info(struct uldb_mysql_state *state, struct userlist_user_info *ui)
-{
-  int user_id = 0, contest_id = -1;
-  char errbuf[1024];
-
-  if (handle_parse_spec(state, USER_INFO_WIDTH, user_info_spec, ui,
-                        &user_id, &contest_id) < 0)
-    goto fail;
-  if (user_id <= 0) FAIL("user_id <= 0");
-  if (contest_id < 0) FAIL("contest_id < 0");
-  if (ui->instnum < 0) FAIL("instnum < 0");
-  if (ui->team_passwd_method < 0 || ui->team_passwd_method >= USERLIST_PWD_LAST)
-    FAIL("pwdmethod is out of range");
-  return 0;
-
- fail:
-  return -1;
-}
-
-static int
-fetch_user_info(
-        struct uldb_mysql_state *state,
-        int user_id,
-        int contest_id,
-        struct userlist_user_info **p_ui)
-  __attribute__((unused));
-
-static int
-fetch_user_info(
-        struct uldb_mysql_state *state,
-        int user_id,
-        int contest_id,
-        struct userlist_user_info **p_ui)
-{
-  unsigned char cmdbuf[1024];
-  int cmdlen = sizeof(cmdbuf);
-  struct userlist_user_info *ui = 0;
-
-  cmdlen = snprintf(cmdbuf, cmdlen, "SELECT * FROM %susers WHERE user_id = %d AND contest_id = %d", state->table_prefix, user_id, contest_id);
-  if (mysql_real_query(state->conn, cmdbuf, cmdlen))
-    db_error_fail(state);
-  if ((state->field_count = mysql_field_count(state->conn)) != USER_INFO_WIDTH)
-    db_wrong_field_count_fail(state, USER_INFO_WIDTH);
-  if (!(state->res = mysql_store_result(state->conn)))
-    db_error_fail(state);
-  state->row_count = mysql_num_rows(state->res);
-  if (state->row_count < 0) goto fail;
-  if (!state->row_count) {
-    *p_ui = 0;
-    return 0;
-  }
-  if (state->row_count > 1) {
-    err("fetch_user_info: too many rows in result");
-    goto fail;
-  }
-
-  ui = allocate_user_info_on_pool(state, user_id, contest_id);
-  if (!(state->row = mysql_fetch_row(state->res)))
-    db_no_data_fail();
-  state->lengths = mysql_fetch_lengths(state->res);
-  if (parse_user_info(state, ui) < 0) goto fail;
-
-  *p_ui = ui;
-  return 0;
-
- fail:
-  // FIXME: release the resources
   return -1;
 }
 
@@ -2729,279 +1896,6 @@ get_user_info_2_func(
   // if not exist, insert a record
 
   abort();
-}
-
-struct members_container
-{
-  struct xml_tree b;
-  int user_id;
-  int contest_id;
-  struct userlist_members *mm;
-  struct members_container *prev, *next;
-  // sublist of containers with the same user_id
-  struct members_container *prev_user, *next_user;
-};
-struct members_user
-{
-  struct members_container *first_user, *last_user;
-  int min_id, max_id;           // [min_id, max_id) for contest
-};
-
-static struct userlist_members *
-allocate_members_on_pool(
-        struct uldb_mysql_state *state,
-        int user_id,
-        int contest_id)
-  __attribute__((unused));
-
-static struct userlist_members *
-allocate_members_on_pool(
-        struct uldb_mysql_state *state,
-        int user_id,
-        int contest_id)
-{
-  struct members_cache *cache = &state->members;
-  struct members_user *usr;
-  struct members_container *pp, *qq;
-
-  ASSERT(user_id > 0);
-  ASSERT(contest_id >= 0);
-
-  if (user_id >= cache->size) {
-    // extend the cache index
-    int new_size = cache->size;
-    struct members_user *new_map = 0;
-
-    if (!new_size) new_size = 128;
-    while (new_size < user_id) new_size *= 2;
-    XCALLOC(new_map, new_size);
-    if (cache->size > 0)
-      memcpy(new_map, cache->user_map, sizeof(new_map[0]) * cache->size);
-    cache->size = new_size;
-    xfree(cache->user_map);
-    cache->user_map = new_map;
-  }
-  usr = &cache->user_map[user_id];
-
-  pp = 0;
-  if (contest_id >= usr->min_id && contest_id < usr->max_id) {
-    for (pp = usr->first_user; pp; pp = pp->next_user) {
-      ASSERT(pp->user_id == user_id);
-      if (pp->contest_id == contest_id)
-        break;
-    }
-  }
-
-  // found in cache
-  if (pp) {
-    // erase the current data???
-    userlist_elem_free_data(&pp->mm->b);
-    pp->mm->b.tag = USERLIST_T_MEMBERS;
-    // move to front in the member list
-    MOVE_TO_FRONT(pp, cache->first, cache->last, prev, next);
-    // move to front in the user list
-    MOVE_TO_FRONT(pp, usr->first_user, usr->last_user, prev_user, next_user);
-    return pp->mm;
-  }
-
-  if (cache->count == MEMBERS_POOL_SIZE) {
-    pp = cache->last;
-    UNLINK_FROM_LIST(pp, cache->first, cache->last, prev, next);
-    ASSERT(pp->user_id > 0 && pp->user_id < cache->size);
-    usr = &cache->user_map[user_id];
-    ASSERT(usr->first_user);
-    ASSERT(usr->last_user);
-    UNLINK_FROM_LIST(pp, usr->first_user, usr->last_user, prev_user, next_user);
-    CALCULATE_RANGE(usr->min_id, usr->max_id, usr->first_user, contest_id, next_user, qq);
-    userlist_free(&pp->mm->b);
-    pp->mm = 0;
-    xfree(pp);
-    cache->count--;
-  }
-
-  XCALLOC(pp, 1);
-  pp->mm = (struct userlist_members*) userlist_node_alloc(USERLIST_T_MEMBERS);
-  pp->mm->b.tag = USERLIST_T_MEMBERS;
-  pp->user_id = user_id;
-  pp->contest_id = contest_id;
-  cache->count++;
-  UPDATE_RANGE(usr->min_id, usr->max_id, usr->first_user, contest_id);
-  LINK_FIRST(pp, cache->first, cache->last, prev, next);
-  LINK_FIRST(pp, usr->first_user, usr->last_user, prev_user, next_user);
-  return pp->mm;
-}
-
-#define MEMBER_OFFSET(f) XOFFSET(struct userlist_member, f)
-static struct mysql_parse_spec member_spec[MEMBER_WIDTH] =
-{
-  //[0]    serial INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  { 0, 'd', "serial", MEMBER_OFFSET(serial), 0 },
-  //[1]    user_id INT UNSIGNED NOT NULL,
-  { 0, 'D', "user_id", 0, 0 },
-  //[2]    contest_id INT UNSIGNED NOT NULL,
-  { 0, 'D', "contest_id", 0, 0 },
-  //[3]    role_id TINYINT NOT NULL,
-  { 0, 'd', "role_id", MEMBER_OFFSET(team_role), 0 },
-  //[4]    createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  { 1, 't', "createtime", MEMBER_OFFSET(create_time), 0 },
-  //[5]    changetime TIMESTAMP DEFAULT 0,
-  { 1, 't', "changetime", MEMBER_OFFSET(last_change_time), 0 },
-  //[6]    firstname VARCHAR(512),
-  { 1, 's', "firstname", MEMBER_OFFSET(firstname), 0 },
-  //[7]    firstname_en VARCHAR(512),
-  { 1, 's', "firstname_en", MEMBER_OFFSET(firstname_en), 0 },
-  //[8]    middlename VARCHAR(512),
-  { 1, 's', "middlename", MEMBER_OFFSET(middlename), 0 },
-  //[9]    middlename_en VARCHAR(512),
-  { 1, 's', "middlename_en", MEMBER_OFFSET(middlename_en), 0 },
-  //[10]   surname VARCHAR(512),
-  { 1, 's', "surname", MEMBER_OFFSET(surname), 0 },
-  //[11]   surname_en VARCHAR(512),
-  { 1, 's', "surname_en", MEMBER_OFFSET(surname_en), 0 },
-  //[12]   status TINYINT NOT NULL,
-  { 0, 'd', "status", MEMBER_OFFSET(status), 0 },
-  //[13]   gender TINYINT NOT NULL,
-  { 0, 'd', "gender", MEMBER_OFFSET(gender), 0 },
-  //[14]   grade TINYINT NOT NULL,
-  { 0, 'd', "grade", MEMBER_OFFSET(grade), 0 },
-  //[15]   grp VARCHAR(512),
-  { 1, 's', "grp", MEMBER_OFFSET(group), 0 },
-  //[16]   grp_en VARCHAR(512),
-  { 1, 's', "group_en", MEMBER_OFFSET(group_en), 0 },
-  //[17]   occupation VARCHAR(512),
-  { 1, 's', "occupation", MEMBER_OFFSET(occupation), 0 },
-  //[18]   occupation_en VARCHAR(512),
-  { 1, 's', "occupation_en", MEMBER_OFFSET(occupation_en), 0 },
-  //[19]   discipline VARCHAR(512),
-  { 1, 's', "discipline", MEMBER_OFFSET(discipline), 0 },
-  //[20]   email VARCHAR(512),
-  { 1, 's', "email", MEMBER_OFFSET(email), 0 },
-  //[21]   homepage VARCHAR(512),
-  { 1, 's', "homepage", MEMBER_OFFSET(homepage), 0 },
-  //[22]   phone VARCHAR(512),
-  { 1, 's', "phone", MEMBER_OFFSET(phone), 0 },
-  //[23]   inst VARCHAR(512),
-  { 1, 's', "inst", MEMBER_OFFSET(inst), 0 },
-  //[24]   inst_en VARCHAR(512),
-  { 1, 's', "inst_en", MEMBER_OFFSET(inst_en), 0 },
-  //[25]   instshort VARCHAR(512),
-  { 1, 's', "instshort", MEMBER_OFFSET(instshort), 0 },
-  //[26]   instshort_en VARCHAR(512),
-  { 1, 's', "instshort_en", MEMBER_OFFSET(instshort_en), 0 },
-  //[27]   fac VARCHAR(512),
-  { 1, 's', "fac", MEMBER_OFFSET(fac), 0 },
-  //[28]   fac_en VARCHAR(512),
-  { 1, 's', "fac_en", MEMBER_OFFSET(fac_en), 0 },
-  //[29]   facshort VARCHAR(512),
-  { 1, 's', "facshort", MEMBER_OFFSET(facshort), 0 },
-  //[30]   facshort_en VARCHAR(512),
-  { 1, 's', "facshort_en", MEMBER_OFFSET(facshort_en), 0 },
-  //[31]   birth_date DATE DEFAULT NULL,
-  { 1, 't', "birth_date", MEMBER_OFFSET(birth_date), 0 },
-  //[32]   entry_date DATE DEFAULT NULL,
-  { 1, 't', "entry_date", MEMBER_OFFSET(entry_date), 0 },
-  //[33]   graduation_date DATE DEFAULT NULL,
-  { 1, 't', "graduation_date", MEMBER_OFFSET(graduation_date), 0 },
-};
-
-static int
-parse_member(struct uldb_mysql_state *state, struct userlist_member *m)
-{
-  int user_id = 0, contest_id = -1;
-  char errbuf[1024];
-
-  if (handle_parse_spec(state, MEMBER_WIDTH, member_spec, m,
-                        &user_id, &contest_id) < 0)
-    return -1;
-  if (m->serial <= 0) FAIL("serial <= 0");
-  if (user_id <= 0) FAIL("user_id <= 0");
-  if (contest_id < 0) FAIL("contest_id <= 0");
-  if (m->team_role<USERLIST_MB_CONTESTANT || m->team_role>=USERLIST_MB_LAST)
-    FAIL("team_role out of range");
-  if (m->status < 0 || m->status >= USERLIST_ST_LAST)
-    FAIL("status is out of range");
-  if (m->gender < 0 || m->gender >= USERLIST_SX_LAST)
-    FAIL("gender is out of range");
-  if (m->grade < 0 || m->grade > EJ_MAX_GRADE)
-    FAIL("grade is out of range");
-  return 0;
-
- fail:
-  return -1;
-}
-
-static int
-fetch_members(
-        struct uldb_mysql_state *state,
-        int user_id,
-        int contest_id,
-        struct userlist_members **p_mm)
-  __attribute__((unused));
-
-static int
-fetch_members(
-        struct uldb_mysql_state *state,
-        int user_id,
-        int contest_id,
-        struct userlist_members **p_mm)
-{
-  unsigned char cmdbuf[1024];
-  int cmdlen = sizeof(cmdbuf);
-  struct userlist_members *mm = 0;
-  struct userlist_member *m;
-  int i;
-
-  cmdlen = snprintf(cmdbuf, cmdlen, "SELECT * FROM %smembers WHERE user_id = %d AND contest_id = %d", state->table_prefix, user_id, contest_id);
-  if (mysql_real_query(state->conn, cmdbuf, cmdlen))
-    db_error_fail(state);
-  if ((state->field_count = mysql_field_count(state->conn)) != MEMBER_WIDTH)
-    db_wrong_field_count_fail(state, MEMBER_WIDTH);
-  if (!(state->res = mysql_store_result(state->conn)))
-    db_error_fail(state);
-  state->row_count = mysql_num_rows(state->res);
-  if (state->row_count <= 0) {
-    *p_mm = 0;
-    return 0;
-  }
-
-  mm = allocate_members_on_pool(state, user_id, contest_id);
-  userlist_members_reserve(mm, state->row_count);
-  for (i = 0; i < state->row_count; i++) {
-    if (!(state->row = mysql_fetch_row(state->res)))
-      db_no_data_fail();
-    state->lengths = mysql_fetch_lengths(state->res);
-    m = (struct userlist_member*) userlist_node_alloc(USERLIST_T_MEMBER);
-    m->b.tag = USERLIST_T_MEMBER;
-    xml_link_node_last(&mm->b, &m->b);
-    mm->m[mm->u++] = m;
-    if (parse_member(state, m) < 0) goto fail;
-  }
-
-  return 0;
-
- fail:
-  return -1;
-}
-
-static void
-unparse_member(
-        struct uldb_mysql_state *state,
-        FILE *fout,
-        int user_id,
-        int contest_id,
-        const struct userlist_member *m)
-  __attribute__((unused));
-
-static void
-unparse_member(
-        struct uldb_mysql_state *state,
-        FILE *fout,
-        int user_id,
-        int contest_id,
-        const struct userlist_member *m)
-{
-  handle_unparse_spec(state, fout, MEMBER_WIDTH, member_spec, m,
-                      user_id, contest_id);
 }
 
 /*
