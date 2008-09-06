@@ -43,7 +43,7 @@ static int open_func(void *data);
 static int close_func(void *data);
 static int check_func(void *data);
 static int create_func(void *data);
-static int insert_func(void *data, const struct userlist_user *user);
+static int insert_func(void *data, const struct userlist_user *user, int *p_member_serial);
 static int get_full_func(void *data, int user_id,
                          const struct userlist_user **user);
 static int_iterator_t get_user_id_iterator_func(void *data);
@@ -224,6 +224,8 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   int (*get_user_info_6)(void *, int, int, const struct userlist_user **, const struct userlist_user_info **, const struct userlist_contest **, const struct userlist_members **);
   // get the login, basic contest-specific user info, and member info
   int (*get_user_info_7)(void *, int, int, const struct userlist_user **, const struct userlist_user_info **, const struct userlist_members **);
+  // get the member serial number
+  int (*get_member_serial)(void *);
   */
 };
 
@@ -883,14 +885,7 @@ insert_contest(struct uldb_mysql_state *state, int user_id,
   }
 
   fprintf(fcmd, "INSERT INTO %scntsregs VALUES ( ", state->table_prefix);
-  fprintf(fcmd, "%d, %d, %d", user_id, c->id, c->status);
-  fprintf(fcmd, ", %d", !!(c->flags & USERLIST_UC_BANNED));
-  fprintf(fcmd, ", %d", !!(c->flags & USERLIST_UC_INVISIBLE));
-  fprintf(fcmd, ", %d", !!(c->flags & USERLIST_UC_LOCKED));
-  fprintf(fcmd, ", %d", !!(c->flags & USERLIST_UC_INCOMPLETE));
-  fprintf(fcmd, ", %d", !!(c->flags & USERLIST_UC_DISQUALIFIED));
-  write_timestamp(fcmd, state, ", ", c->create_time);
-  fprintf(fcmd, ", 0");         /* changetime not available */
+  unparse_cntsreg(state, fcmd, user_id, c);
   fprintf(fcmd, " )");
   fclose(fcmd); fcmd = 0;
 
@@ -922,13 +917,7 @@ insert_cookie(struct uldb_mysql_state *state, int user_id,
   }
 
   fprintf(fcmd, "INSERT INTO %scookies VALUES ( ", state->table_prefix);
-  fprintf(fcmd, "%llu, %d, %d, %d, %d, %d, %d, %d, %d",
-          c->cookie, user_id, c->contest_id,
-          c->priv_level, c->role, 4 /*c->ipversion*/, c->locale_id,
-          c->recovery, c->team_login);
-  fprintf(fcmd, ", '%s'", xml_unparse_ip(c->ip));
-  fprintf(fcmd, ", %d", c->ssl);
-  write_timestamp(fcmd, state, ", ", c->expire);
+  unparse_cookie(state, fcmd, c);
   fprintf(fcmd, " )");
   fclose(fcmd); fcmd = 0;
 
@@ -947,67 +936,38 @@ insert_cookie(struct uldb_mysql_state *state, int user_id,
 }
 
 static int
-insert_func(void *data, const struct userlist_user *user)
+insert_func(void *data, const struct userlist_user *user, int *p_member_serial)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
-  char *cmdstr = 0;
+  char *cmdbuf = 0;
   size_t cmdlen = 0;
   FILE *fcmd;
   int contest_id;
   struct userlist_cntsinfo *cntsinfo;
   struct xml_tree *p;
 
-  if (!(fcmd = open_memstream(&cmdstr, &cmdlen))) {
+  if (!(fcmd = open_memstream(&cmdbuf, &cmdlen))) {
     err("open_memstream failed: %s", os_ErrorMsg());
     goto fail;
   }
 
   fprintf(fcmd, "INSERT INTO %slogins VALUES ( ", state->table_prefix);
-
-  // id
-  fprintf(fcmd, "%d", user->id);
-  // login
-  if (!user->login || !*user->login) {
-    err("login is empty");
-    goto fail;
-  }
-  write_escaped_string(fcmd, state, ", ", user->login);
-  // email
-  write_escaped_string(fcmd, state, ", ", user->email);
-  // pwdmethod: 0 - plain, 1 - base64 (not used), 2 - sha1
-  // register_passwd
-  if (user->passwd) {
-    fprintf(fcmd, ", %d", user->passwd_method);
-    write_escaped_string(fcmd, state, ", ", user->passwd);
-  } else {
-    fprintf(fcmd, ", 0, NULL");
-  }
-  fprintf(fcmd, ", %d", user->is_privileged);
-  fprintf(fcmd, ", %d", user->is_invisible);
-  fprintf(fcmd, ", %d", user->is_banned);
-  fprintf(fcmd, ", %d", user->is_locked);
-  fprintf(fcmd, ", %d", user->read_only);
-  fprintf(fcmd, ", %d", user->never_clean);
-  fprintf(fcmd, ", %d", user->simple_registration);
-  write_timestamp(fcmd, state, ", ", user->registration_time);
-  write_timestamp(fcmd, state, ", ", user->last_login_time);
-  write_timestamp(fcmd, state, ", ", user->last_pwdchange_time);
-  write_timestamp(fcmd, state, ", ", user->last_change_time);
-
-  /* unhandled fields
-  time_t last_minor_change_time;
-  time_t last_access_time;
-  */
-
-  fprintf(fcmd, " )");
+  unparse_login(state, fcmd, user);
+  fprintf(fcmd, " );");
   fclose(fcmd); fcmd = 0;
 
-  fprintf(stderr, ">>%s\n", cmdstr);
+  fprintf(stderr, ">>%s\n", cmdbuf);
 
-  if (mysql_real_query(state->conn, cmdstr, cmdlen))
+  if (mysql_real_query(state->conn, cmdbuf, cmdlen))
     db_error_fail(state);
 
-  xfree(cmdstr); cmdstr = 0; cmdlen = 0;
+  xfree(cmdbuf); cmdbuf = 0; cmdlen = 0;
+
+  /*
+TODO: insert contest_id == 0, if i.filled
+if !i.filled, insert only present user_info records, else
+need cloning...
+   */
 
   if (insert_contest_info(state, user->id, 0, user->i.filled, &user->i) < 0)
     goto fail;
@@ -1036,7 +996,7 @@ insert_func(void *data, const struct userlist_user *user)
 
  fail:
   if (fcmd) fclose(fcmd);
-  xfree(cmdstr);
+  xfree(cmdbuf);
   return -1;
 }
 
@@ -1277,11 +1237,6 @@ handle_unparse_spec(
 #include "logins.inc.c"
 #include "user_infos.inc.c"
 #include "members.inc.c"
-
-static int
-parse_login(
-        struct uldb_mysql_state *state,
-        struct userlist_user *u);
 
 static int
 get_full_func(void *data, int user_id, const struct userlist_user **p_user)

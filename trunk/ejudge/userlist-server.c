@@ -7851,7 +7851,7 @@ cmd_edit_field_seq(
                                             cur_time, &f)) < 0)
           goto cannot_change;
         cloned_flag |= f;
-        default_get_user_info_2(data->user_id, data->contest_id, &u, &ui);
+        default_get_user_info_7(data->user_id, data->contest_id, &u, &ui, &mm);
       }
     } else if (deleted_ids[i] >= USERLIST_NC_FIRST
                && deleted_ids[i] < USERLIST_NC_LAST) {
@@ -7875,7 +7875,7 @@ cmd_edit_field_seq(
                                     CONTEST_M_CONTESTANT, cur_time, &f)) < 0)
           goto cannot_change;
         cloned_flag |= f;
-        default_get_user_info_2(data->user_id, data->contest_id, &u, &ui);
+        default_get_user_info_7(data->user_id, data->contest_id, &u, &ui, &mm);
       }
       m = userlist_members_get_first(mm);
       ASSERT(m);
@@ -7884,7 +7884,7 @@ cmd_edit_field_seq(
                                              edited_strs[i], cur_time, &f)) < 0)
         goto cannot_change;
       cloned_flag |= f;
-      default_get_user_info_2(data->user_id, data->contest_id, &u, &ui);
+      default_get_user_info_7(data->user_id, data->contest_id, &u, &ui, &mm);
     } else if (edited_ids[i] >= USERLIST_NC_FIRST
                && edited_ids[i] < USERLIST_NC_LAST) {
       if ((r = default_set_user_info_field(data->user_id, data->contest_id,
@@ -9002,6 +9002,7 @@ convert_database(const unsigned char *from_name, const unsigned char *to_name)
   int r, user_id;
   int_iterator_t ui;
   const struct userlist_user *u;
+  int member_serial = 0;
 
   if (!from_plugin) {
     err("plugin %s does not exist or is not loaded", from_name);
@@ -9030,6 +9031,12 @@ convert_database(const unsigned char *from_name, const unsigned char *to_name)
     return 1;
   }
 
+  if (!from_plugin->iface->get_member_serial) {
+    err("`get_member_serial' is not implemented in plugin %s", from_name);
+    return 1;
+  }
+  member_serial = from_plugin->iface->get_member_serial(from_plugin->data);
+
   // prepare the destination plugin
   if (to_plugin->iface->open(to_plugin->data) < 0) {
     err("plugin %s failed to open its connection", to_plugin->iface->b.name);
@@ -9049,7 +9056,7 @@ convert_database(const unsigned char *from_name, const unsigned char *to_name)
     r = from_plugin->iface->get_user_full(from_plugin->data, user_id, &u);
     ASSERT(r == 1);
 
-    r = to_plugin->iface->insert(to_plugin->data, u);
+    r = to_plugin->iface->insert(to_plugin->data, u, &member_serial);
     if (r < 0) break;
   }
   ui->destroy(ui);
