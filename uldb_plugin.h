@@ -4,7 +4,7 @@
 #ifndef __ULDB_PLUGIN_H__
 #define __ULDB_PLUGIN_H__
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -53,7 +53,7 @@ struct uldb_plugin_iface
   // create a new database
   int (*create)(void*);
   // insert a whole user record
-  int (*insert)(void *, const struct userlist_user *);
+  int (*insert)(void *, const struct userlist_user *, int *);
   // get the full user info (may be expensive!)
   int (*get_user_full)(void *, int, const struct userlist_user **);
   // get the user_id iterator
@@ -179,6 +179,8 @@ struct uldb_plugin_iface
   int (*get_user_info_6)(void *, int, int, const struct userlist_user **, const struct userlist_user_info **, const struct userlist_contest **, const struct userlist_members **);
   // get the login, basic contest-specific user info, and member info
   int (*get_user_info_7)(void *, int, int, const struct userlist_user **, const struct userlist_user_info **, const struct userlist_members **);
+  // get the member serial number
+  int (*get_member_serial)(void *);
 };
 
 /* default plugin: compiled into userlist-server */

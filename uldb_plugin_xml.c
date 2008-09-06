@@ -121,6 +121,7 @@ static int get_user_info_7_func(void *, int, int,
                                 const struct userlist_user **,
                                 const struct userlist_user_info **,
                                 const struct userlist_members **);
+static int get_member_serial(void *);
 
 struct uldb_plugin_iface uldb_plugin_xml =
 {
@@ -194,6 +195,7 @@ struct uldb_plugin_iface uldb_plugin_xml =
   set_cookie_team_login_func,
   get_user_info_6_func,
   get_user_info_7_func,
+  get_member_serial,
 };
 
 struct uldb_xml_state
@@ -3022,6 +3024,14 @@ userlist_clone_user_info(
 
   if (p_cloned_flag) *p_cloned_flag = 1;
   return ci;
+}
+
+static int
+get_member_serial(void *data)
+{
+  struct uldb_xml_state *state = (struct uldb_xml_state*) data;
+  struct userlist_list *ul = state->userlist;
+  return ul->member_serial;
 }
 
 /*

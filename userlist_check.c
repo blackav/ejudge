@@ -258,6 +258,7 @@ userlist_count_info_errors(
       rr = m->team_role;
       if (role_cur[rr] >= role_cnt[rr]) continue;
       role_cur[rr]++;
+      if (!cnts->members[rr] || cnts->members[rr]->max_count <= 0) continue;
 
       for (ff = CONTEST_MF_FIRSTNAME; ff < CONTEST_LAST_MEMBER_FIELD; ff++) {
         if (!cnts->members[rr]->fields[ff]) continue;
