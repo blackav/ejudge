@@ -1292,7 +1292,7 @@ main_page_view_info(
   const struct userlist_members *mmm = 0;
 
   u = phr->session_extra->user_info;
-  if (u) ui = u->cnts0;
+  if (u) ui = userlist_get_cnts0(u);
   if (ui) mmm = ui->members;
 
   if (phr->action < NEW_SRV_ACTION_REG_VIEW_GENERAL
@@ -1612,7 +1612,7 @@ main_page(
   const unsigned char *status_info;
   const unsigned char *status_info_2;
   const unsigned char *title = "", *n = 0;
-  const struct userlist_user *u = 0;
+  struct userlist_user *u = 0;
   const struct userlist_user_info *ui = 0;
 
   l10n_setlocale(phr->locale_id);
@@ -1749,7 +1749,7 @@ main_page(
   }
 
   u = phr->session_extra->user_info;
-  if (u) ui = u->cnts0;
+  if (u) ui = userlist_get_cnts0(u);
   if (u->read_only || (ui && ui->cnts_read_only)) {
     fprintf(fout, "/ <b>%s</b>", _("READ-ONLY"));
   }
@@ -2219,7 +2219,7 @@ edit_page(
 {
   const unsigned char *status_style;
   const unsigned char *status_info;
-  const struct userlist_user *u = phr->session_extra->user_info;
+  struct userlist_user *u = phr->session_extra->user_info;
   int role = 0, member = 0;
   const struct userlist_member *m = 0;
   const unsigned char *s = 0, *n = 0;
@@ -2227,10 +2227,9 @@ edit_page(
   struct userlist_user_info *ui;
 
   // check that we are allowed to edit something
-  if (!u || !u->cnts0 || u->read_only || u->cnts0->cnts_read_only) {
-    goto redirect_back;
-  }
-  ui = u->cnts0;
+  if (!u || u->read_only) goto redirect_back;
+  if (ui && ui->cnts_read_only) goto redirect_back;
+  ui = userlist_get_cnts0(u);
   if (phr->action == NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE) {
     if (ns_cgi_param_int(phr, "role", &role) < 0) goto redirect_back;
     if (ns_cgi_param_int(phr, "member", &member) < 0) goto redirect_back;
@@ -2836,7 +2835,7 @@ add_member(
   char *log_t = 0;
   size_t log_z = 0;
   int r, role = 0;
-  const struct userlist_user *u = phr->session_extra->user_info;
+  struct userlist_user *u = phr->session_extra->user_info;
 
   if (cnts->personal) {
     // they kidding us...
@@ -2853,6 +2852,7 @@ add_member(
     return;
   }
 
+  userlist_get_cnts0(u);
   if (u && (u->read_only || (u->cnts0 && u->cnts0->cnts_read_only)))
     goto done;
   if (u && u->cnts0 && userlist_members_count(u->cnts0->members, role) >= cnts->members[role]->max_count)
