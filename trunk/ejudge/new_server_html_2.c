@@ -2126,8 +2126,10 @@ ns_write_passwords(FILE *fout, FILE *log_f,
     if (td.flags) continue;
     if (!td.user) continue;
     if (phr->action == NEW_SRV_ACTION_VIEW_CNTS_PWDS) {
-      if (td.user->i.team_passwd_method != USERLIST_PWD_PLAIN) continue;
-      s = td.user->i.team_passwd;
+      if (!td.user->cnts0
+          || td.user->cnts0->team_passwd_method != USERLIST_PWD_PLAIN)
+        continue;
+      s = td.user->cnts0->team_passwd;
     } else {
       if (td.user->passwd_method != USERLIST_PWD_PLAIN) continue;
       s = td.user->passwd;
@@ -2145,8 +2147,8 @@ ns_write_passwords(FILE *fout, FILE *log_f,
     } else {
       fprintf(fout, "<td%s><i>%s</i></td>", cl, _("Not set"));
     }
-    if (td.user->i.location) {
-      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(td.user->i.location));
+    if (td.user->cnts0 && td.user->cnts0->location) {
+      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(td.user->cnts0->location));
     } else {
       fprintf(fout, "<td%s><i>%s</i></td>", cl, _("Not set"));
     }
@@ -2230,6 +2232,7 @@ ns_write_exam_info(
   unsigned char cl[128];
   struct userlist_members *mm = 0;
   struct userlist_member *m = 0;
+  struct userlist_user_info *ui = 0;
 
   snprintf(cl, sizeof(cl), " class=\"b1\"");
 
@@ -2250,6 +2253,7 @@ ns_write_exam_info(
     //if (td.flags) continue;
     if (!td.user) continue;
 
+    ui = td.user->cnts0;
     fprintf(fout, "<tr><td%s>%d</td><td%s>%d</td><td%s><tt>%s</tt></td>",
             cl, serial++, cl, i, cl, ARMOR(td.login));
     if (td.name && *td.name) {
@@ -2259,7 +2263,7 @@ ns_write_exam_info(
     }
     fprintf(fout, "<td%s>%s</td>", cl, "&nbsp;"); /* FIXME: print flags */
 
-    if (td.user && (mm = td.user->i.members) && mm->u > 0) {
+    if (ui && (mm = ui->members) && mm->u > 0) {
       for (j = 0; j < mm->u; j++)
         if ((m = mm->m[j]) && m->team_role == USERLIST_MB_CONTESTANT) {
           break;
@@ -2279,18 +2283,18 @@ ns_write_exam_info(
       fprintf(fout, "<td%s><i>&nbsp;</i></td>", cl);
     }
 
-    if (td.user->i.location) {
-      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(td.user->i.location));
+    if (ui && ui->location) {
+      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(ui->location));
     } else {
       fprintf(fout, "<td%s><i>&nbsp;</i></td>", cl);
     }
-    if (td.user->i.exam_id) {
-      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(td.user->i.exam_id));
+    if (ui && ui->exam_id) {
+      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(ui->exam_id));
     } else {
       fprintf(fout, "<td%s><i>&nbsp;</i></td>", cl);
     }
-    if (td.user->i.exam_cypher) {
-      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(td.user->i.exam_cypher));
+    if (ui->exam_cypher) {
+      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(ui->exam_cypher));
     } else {
       fprintf(fout, "<td%s><i>&nbsp;</i></td>", cl);
     }
@@ -2324,6 +2328,7 @@ ns_user_info_page(FILE *fout, FILE *log_f,
   const struct userlist_contest *uc = 0;
   unsigned char bb[1024], hbuf[1024];
   int allowed_edit = 0, needed_cap = 0, init_value, i;
+  struct userlist_user_info *ui = 0;
 
   teamdb_export_team(cs->teamdb_state, view_user_id, &u_info);
   u_extra = team_extra_get_entry(cs->team_extra_state, view_user_id);
@@ -2333,6 +2338,7 @@ ns_user_info_page(FILE *fout, FILE *log_f,
   flags = teamdb_get_flags(cs->teamdb_state, view_user_id);
   u = u_info.user;
   if (u) uc = userlist_get_user_contest(u, phr->contest_id);
+  if (u) ui = u->cnts0;
 
   fprintf(fout, "<ul>\n");
   fprintf(fout, "<li>%s%s</a></li>\n",
@@ -2380,8 +2386,8 @@ ns_user_info_page(FILE *fout, FILE *log_f,
   fprintf(fout, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
           _("Registration time"), s, nbsp2);
   // last login time
-  if (u && u->i.last_login_time > 0) {
-    s = xml_unparse_date(u->i.last_login_time);
+  if (ui && ui->last_login_time > 0) {
+    s = xml_unparse_date(ui->last_login_time);
   } else {
     s = "&nbsp;";
   }
@@ -2404,12 +2410,12 @@ ns_user_info_page(FILE *fout, FILE *log_f,
   // contest password (if enabled and available)
     if (!cnts->disable_team_password) {
       bb[0] = 0;
-      if (u && !u->i.team_passwd) {
+      if (ui && !ui->team_passwd) {
         snprintf(bb, sizeof(bb), "<i>%s</i>", _("Not set"));
-      } else if (u && u->i.team_passwd_method != USERLIST_PWD_PLAIN) {
+      } else if (ui && ui->team_passwd_method != USERLIST_PWD_PLAIN) {
         snprintf(bb, sizeof(bb), "<i>%s</i>", _("Changed by user"));
-      } else if (u) {
-        snprintf(bb, sizeof(bb), "<tt>%s</tt>", ARMOR(u->i.team_passwd));
+      } else if (ui) {
+        snprintf(bb, sizeof(bb), "<tt>%s</tt>", ARMOR(ui->team_passwd));
       }
       if (bb[0]) {
         fprintf(fout, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",

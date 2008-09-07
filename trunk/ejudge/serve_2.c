@@ -1038,6 +1038,7 @@ serve_run_request(serve_state_t state,
   struct teamdb_export te;
   void *run_pkt_out = 0;
   size_t run_pkt_out_size = 0;
+  struct userlist_user_info *ui = 0;
 
   if (prob_id <= 0 || prob_id > state->max_prob 
       || !(prob = state->probs[prob_id])) {
@@ -1196,12 +1197,14 @@ serve_run_request(serve_state_t state,
    * characters in spellings nor about spelling length
    */
   teamdb_export_team(state->teamdb_state, user_id, &te);
-  if (te.user && te.user->i.spelling && te.user->i.spelling[0]) {
-    run_pkt->user_spelling = te.user->i.spelling;
+  ui = 0;
+  if (te.user) ui = te.user->cnts0;
+  if (ui && ui->spelling && ui->spelling[0]) {
+    run_pkt->user_spelling = ui->spelling;
   }
-  if (!run_pkt->user_spelling && te.user && te.user->i.name
-      && te.user->i.name[0]) {
-    run_pkt->user_spelling = te.user->i.name;
+  if (!run_pkt->user_spelling && ui && ui->name
+      && ui->name[0]) {
+    run_pkt->user_spelling = ui->name;
   }
   if (!run_pkt->user_spelling && te.login && te.user->login
       && te.user->login[0]) {

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -389,12 +389,15 @@ teamdb_lookup_name(teamdb_state_t state, char const *name)
 {
   int i;
   const unsigned char *v;
+  const struct userlist_user *u = 0;
 
   if (teamdb_refresh(state) < 0) return -1;
   if (!state->participants) return -1;
   for (i = 0; i < state->total_participants; i++) {
-    ASSERT(state->participants[i]);
-    v = state->participants[i]->i.name;
+    u = state->participants[i];
+    ASSERT(u);
+    v = 0;
+    if (u->cnts0) v = u->cnts0->name;
     if (!v || !*v) v = state->participants[i]->login;
     ASSERT(v);
     if (!strcmp(v, name))
@@ -408,12 +411,14 @@ teamdb_lookup_cypher(teamdb_state_t state, char const *cypher)
 {
   int i;
   const struct userlist_user *u;
+  const struct userlist_user_info *ui;
 
   if (teamdb_refresh(state) < 0) return -1;
   if (!state->participants) return -1;
   for (i = 0; i < state->total_participants; i++) {
     if (!(u = state->participants[i])) continue;
-    if (u->i.exam_cypher && !strcmp(u->i.exam_cypher, cypher))
+    if (!(ui = u->cnts0)) continue;
+    if (ui->exam_cypher && !strcmp(ui->exam_cypher, cypher))
       return u->id;
   }
   return -1;
@@ -437,13 +442,15 @@ char *
 teamdb_get_name(teamdb_state_t state, int teamid)
 {
   unsigned char *name = 0;
+  const struct userlist_user_info *ui = 0;
 
   if (teamdb_refresh(state) < 0) return 0;
   if (!teamdb_lookup_client(state, teamid)) {
     err("teamdb_get_login: bad id: %d", teamid);
     return 0;
   }
-  name = state->users->user_map[teamid]->i.name;
+  ui = state->users->user_map[teamid]->cnts0;
+  if (ui) name = ui->name;
   if (!name) name = "";
   return name;
 }
@@ -452,13 +459,15 @@ const unsigned char *
 teamdb_get_name_2(teamdb_state_t state, int teamid)
 {
   unsigned char *name = 0;
+  const struct userlist_user_info *ui = 0;
 
   if (teamdb_refresh(state) < 0) return 0;
   if (!teamdb_lookup_client(state, teamid)) {
     err("teamdb_get_login: bad id: %d", teamid);
     return 0;
   }
-  name = state->users->user_map[teamid]->i.name;
+  ui = state->users->user_map[teamid]->cnts0;
+  if (ui) name = ui->name;
   if (!name || !*name) name = state->users->user_map[teamid]->login;
   return name;
 }
@@ -466,12 +475,15 @@ teamdb_get_name_2(teamdb_state_t state, int teamid)
 const unsigned char *
 teamdb_get_cypher(teamdb_state_t state, int user_id)
 {
+  const struct userlist_user_info *ui = 0;
+
   if (teamdb_refresh(state) < 0) return 0;
   if (!teamdb_lookup_client(state, user_id)) {
     err("teamdb_get_login: bad id: %d", user_id);
     return 0;
   }
-  return state->users->user_map[user_id]->i.exam_cypher;
+  if (!(ui = state->users->user_map[user_id]->cnts0)) return 0;
+  return ui->exam_cypher;
 }
 
 int
@@ -533,7 +545,7 @@ int
 teamdb_export_team(teamdb_state_t state, int tid, struct teamdb_export *pdata)
 {
   struct userlist_user *uu;
-  unsigned char *u_login, *u_name;
+  unsigned char *u_login, *u_name = 0;
   int u_flags;
 
   if (teamdb_refresh(state) < 0) return -1;
@@ -545,7 +557,7 @@ teamdb_export_team(teamdb_state_t state, int tid, struct teamdb_export *pdata)
   uu = state->users->user_map[tid];
   u_login = uu->login;
   if (!u_login) u_login = "";
-  u_name = uu->i.name;
+  if (uu->cnts0) u_name = uu->cnts0->name;
   if (!u_name) u_name = "";
   u_flags = state->u_contests[tid]->flags;
 

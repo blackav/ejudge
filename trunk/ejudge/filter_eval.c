@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -425,7 +425,7 @@ do_eval(struct filter_env *env,
       user_id = env->rentries[r1.v.i].user_id;
       u = 0; s = 0;
       if (user_id > 0) u = teamdb_get_userlist(env->teamdb_state, user_id);
-      if (u) s = u->i.exam_cypher;
+      if (u && u->cnts0) s = u->cnts0->exam_cypher;
       res->v.s = envdup(env, s);
       break;
     case TOK_MISSINGSOURCE:
@@ -662,7 +662,7 @@ do_eval(struct filter_env *env,
     user_id = env->cur->user_id;
     u = 0; s = 0;
     if (user_id > 0) u = teamdb_get_userlist(env->teamdb_state, user_id);
-    if (u) s = u->i.exam_cypher;
+    if (u && u->cnts0) s = u->cnts0->exam_cypher;
     res->v.s = envdup(env, s);
     break;
   case TOK_CURMISSINGSOURCE:

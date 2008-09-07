@@ -8222,6 +8222,7 @@ super_html_update_variant_map(FILE *flog, int contest_id,
   struct variant_map *vmap = 0;
   int *tvec = 0, *new_map, *new_rev_map;
   struct userlist_user *user;
+  struct userlist_user_info *ui;
   unsigned char header_buf[1024];
 
   if (!cnts->root_dir && !cnts->root_dir[0]) {
@@ -8383,19 +8384,20 @@ super_html_update_variant_map(FILE *flog, int contest_id,
   // find registered users, which are not in the variant map
   for (uid = 1; uid < users->user_map_size; uid++) {
     if (!(user = users->user_map[uid])) continue;
+    ui = user->cnts0;
     if (!user->login || !user->login[0]) continue;
     for (i = 0; i < vmap->u; i++)
       if (!strcmp(user->login, vmap->v[i].login))
         break;
     if (i < vmap->u) {
       vmap->v[i].user_id = uid;
-      if (vmap->v[i].name && user->i.name) {
-        if (strcmp(vmap->v[i].name, user->i.name)) {
+      if (vmap->v[i].name && ui && ui->name) {
+        if (strcmp(vmap->v[i].name, ui->name)) {
           xfree(vmap->v[i].name);
-          vmap->v[i].name = xstrdup(user->i.name);
+          vmap->v[i].name = xstrdup(ui->name);
         }
-      } else if (user->i.name) {
-        vmap->v[i].name = xstrdup(user->i.name);
+      } else if (ui->name) {
+        vmap->v[i].name = xstrdup(ui->name);
       } else {
         xfree(vmap->v[i].name);
         vmap->v[i].name = 0;
@@ -8413,7 +8415,7 @@ super_html_update_variant_map(FILE *flog, int contest_id,
     vmap->v[vmap->u].user_id = uid;
     vmap->v[vmap->u].var_num = vmap->prob_rev_map_size;
     vmap->v[vmap->u].name = 0;
-    if (user->i.name) vmap->v[vmap->u].name = xstrdup(user->i.name);
+    if (ui && ui->name) vmap->v[vmap->u].name = xstrdup(ui->name);
     XCALLOC(vmap->v[vmap->u].variants, vmap->prob_rev_map_size);
     vmap->u++;
   }

@@ -1503,7 +1503,7 @@ void
 userlist_expand_cntsinfo(struct userlist_user *u, int contest_id)
 {
   int new_size;
-  struct userlist_cntsinfo **new_arr;
+  struct userlist_user_info **new_arr;
 
   if (contest_id < u->cntsinfo_a) return;
 
@@ -1518,12 +1518,12 @@ userlist_expand_cntsinfo(struct userlist_user *u, int contest_id)
   u->cntsinfo = new_arr;
 }
 
-struct userlist_cntsinfo *
+struct userlist_user_info *
 userlist_new_cntsinfo(struct userlist_user *u, int contest_id,
                       time_t current_time)
 {
   struct xml_tree *p;
-  struct userlist_cntsinfo *ci;
+  struct userlist_user_info *ui;
 
   ASSERT(contest_id > 0 && contest_id <= EJ_MAX_CONTEST_ID);
   ASSERT(u);
@@ -1540,17 +1540,17 @@ userlist_new_cntsinfo(struct userlist_user *u, int contest_id,
     xml_link_node_last(&u->b, p);
   }
 
-  ci = (struct userlist_cntsinfo*) userlist_node_alloc(USERLIST_T_CNTSINFO);
-  xml_link_node_last(p, &ci->b);
+  ui = (struct userlist_user_info*) userlist_node_alloc(USERLIST_T_CNTSINFO);
+  xml_link_node_last(p, &ui->b);
   userlist_expand_cntsinfo(u, contest_id);
-  u->cntsinfo[contest_id] = ci;
+  u->cntsinfo[contest_id] = ui;
 
-  ci->contest_id = contest_id;
-  ci->i.instnum = -1;
-  ci->i.create_time = current_time;
-  ci->i.last_change_time = current_time;
+  ui->contest_id = contest_id;
+  ui->instnum = -1;
+  ui->create_time = current_time;
+  ui->last_change_time = current_time;
 
-  return ci;
+  return ui;
 }
 
 const struct userlist_user_info *
@@ -1560,8 +1560,8 @@ userlist_get_user_info(const struct userlist_user *u, int contest_id)
 
   if (contest_id > 0 && contest_id < u->cntsinfo_a
       && u->cntsinfo[contest_id])
-    return &u->cntsinfo[contest_id]->i;
-  return &u->i;
+    return u->cntsinfo[contest_id];
+  return u->cnts0;
 }
 
 struct userlist_user_info *
@@ -1571,8 +1571,8 @@ userlist_get_user_info_nc(struct userlist_user *u, int contest_id)
 
   if (contest_id > 0 && contest_id < u->cntsinfo_a
       && u->cntsinfo[contest_id])
-    return &u->cntsinfo[contest_id]->i;
-  return &u->i;
+    return u->cntsinfo[contest_id];
+  return u->cnts0;
 }
 
 const struct userlist_contest *
@@ -1840,6 +1840,17 @@ userlist_members_reserve(struct userlist_members *mm, int n)
   xfree(mm->m);
   mm->m = m;
   mm->a = new_a;
+}
+
+struct userlist_user_info *
+userlist_get_cnts0(struct userlist_user *u)
+{
+  ASSERT(u);
+  if (u->cnts0) return u->cnts0;
+  u->cnts0 = (struct userlist_user_info*) userlist_node_alloc(USERLIST_T_CNTSINFO);
+  u->cnts0->instnum = -1;
+  xml_link_node_last(&u->b, &u->cnts0->b);
+  return u->cnts0;
 }
 
 /*
