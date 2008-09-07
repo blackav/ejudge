@@ -1956,6 +1956,7 @@ cmd_recover_password_2(struct client_state *p,
   unsigned char *mail_args[7];
   int login_len, name_len, passwd_len, packet_len;
   unsigned char *s;
+  const unsigned char *name = 0;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -1995,6 +1996,8 @@ cmd_recover_password_2(struct client_state *p,
   }
 
   default_get_user_info_3(cookie->user_id, data->contest_id, &u, &ui, &c);
+  if (ui) name = ui->name;
+  if (!name) name = "";
 
   if (!c) {
     err("%s -> not registered", logbuf);
@@ -2036,7 +2039,7 @@ cmd_recover_password_2(struct client_state *p,
           "E-mail:   %s\n"
           "Name:     %s\n"
           "Password: %s\n\n",
-          u->id, u->login, u->email, ui->name, passwd_buf);
+          u->id, u->login, u->email, name, passwd_buf);
   fprintf(msg_f,
           _("Regards,\n"
             "The ejudge contest administration system (www.ejudge.ru)\n"));
@@ -2080,7 +2083,7 @@ cmd_recover_password_2(struct client_state *p,
   }
 
   login_len = strlen(u->login);
-  name_len = strlen(ui->name);
+  name_len = strlen(name);
   passwd_len = strlen(passwd_buf);
   packet_len = sizeof(*out);
   packet_len += login_len + name_len + passwd_len;
@@ -2093,7 +2096,7 @@ cmd_recover_password_2(struct client_state *p,
   out->name_len = name_len;
   out->passwd_len = passwd_len;
   strcpy(s, u->login); s += login_len + 1;
-  strcpy(s, ui->name); s += name_len + 1;
+  strcpy(s, name); s += name_len + 1;
   strcpy(s, passwd_buf);
   enqueue_reply_to_client(p, packet_len, out);
   info("%s -> OK", logbuf);
@@ -2128,7 +2131,7 @@ cmd_login(struct client_state *p,
   int ans_len, act_pkt_len;
   char * login;
   char * password;
-  char * name;
+  char * name_ptr;
   const struct userlist_cookie * cookie;
   struct passwd_internal pwdint;
   ej_tsc_t tsc1, tsc2;
@@ -2136,6 +2139,7 @@ cmd_login(struct client_state *p,
   const struct userlist_user_info *ui;
   int user_id, orig_contest_id;
   const struct contest_desc *cnts = 0;
+  const unsigned char *name = 0;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet is too small: %d", pkt_len);
@@ -2196,6 +2200,8 @@ cmd_login(struct client_state *p,
   default_get_user_info_2(user_id, data->contest_id, &u, &ui);
   rdtscll(tsc2);
   tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  if (ui) name = ui->name;
+  if (!name) name = "";
 
   if (!u->passwd) {
     err("%s -> EMPTY PASSWORD", logbuf);
@@ -2210,7 +2216,7 @@ cmd_login(struct client_state *p,
 
   //Login and password correct
   ans_len = sizeof(struct userlist_pk_login_ok)
-    + strlen(ui->name) + strlen(u->login);
+    + strlen(name) + strlen(u->login);
   answer = alloca(ans_len);
   memset(answer, 0, ans_len);
 
@@ -2227,10 +2233,10 @@ cmd_login(struct client_state *p,
   answer->user_id = u->id;
   answer->contest_id = orig_contest_id;
   answer->login_len = strlen(u->login);
-  name = answer->data + answer->login_len + 1;
-  answer->name_len = strlen(ui->name);
+  name_ptr = answer->data + answer->login_len + 1;
+  answer->name_len = strlen(name);
   strcpy(answer->data, u->login);
-  strcpy(name, ui->name);
+  strcpy(name_ptr, name);
   enqueue_reply_to_client(p,ans_len,answer);
 
   default_touch_login_time(user_id, 0, cur_time);
@@ -2253,7 +2259,7 @@ cmd_check_user(
   int ans_len, act_pkt_len;
   char * login;
   char * password;
-  char * name;
+  char * name_ptr;
   const struct userlist_cookie * cookie;
   struct passwd_internal pwdint;
   ej_tsc_t tsc1, tsc2;
@@ -2261,6 +2267,7 @@ cmd_check_user(
   const struct userlist_user_info *ui;
   int user_id, orig_contest_id;
   const struct contest_desc *cnts = 0;
+  const unsigned char *name = 0;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet is too small: %d", pkt_len);
@@ -2303,6 +2310,8 @@ cmd_check_user(
   default_get_user_info_2(user_id, data->contest_id, &u, &ui);
   rdtscll(tsc2);
   tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  if (ui) name = ui->name;
+  if (!name) name = "";
 
   orig_contest_id = data->contest_id;
   if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
@@ -2335,7 +2344,7 @@ cmd_check_user(
 
   //Login and password correct
   ans_len = sizeof(struct userlist_pk_login_ok)
-    + strlen(ui->name) + strlen(u->login);
+    + strlen(name) + strlen(u->login);
   answer = alloca(ans_len);
   memset(answer, 0, ans_len);
 
@@ -2352,10 +2361,10 @@ cmd_check_user(
   answer->user_id = u->id;
   answer->contest_id = orig_contest_id;
   answer->login_len = strlen(u->login);
-  name = answer->data + answer->login_len + 1;
-  answer->name_len = strlen(ui->name);
+  name_ptr = answer->data + answer->login_len + 1;
+  answer->name_len = strlen(name);
   strcpy(answer->data, u->login);
-  strcpy(name, ui->name);
+  strcpy(name_ptr, name);
   enqueue_reply_to_client(p,ans_len,answer);
 
   default_touch_login_time(user_id, 0, cur_time);
@@ -2379,6 +2388,7 @@ cmd_team_login(struct client_state *p, int pkt_len,
   const struct userlist_user_info *ui;
   int user_id;
   int orig_contest_id;
+  const unsigned char *name = 0;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet length is too small: %d", pkt_len);
@@ -2436,6 +2446,8 @@ cmd_team_login(struct client_state *p, int pkt_len,
   default_get_user_info_3(user_id, data->contest_id, &u, &ui, &c);
   rdtscll(tsc2);
   tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  if (ui) name = ui->name;
+  if (!name) name = "";
 
   if (cnts->disable_team_password) {
     if (!u->passwd) {
@@ -2478,7 +2490,7 @@ cmd_team_login(struct client_state *p, int pkt_len,
   }
 
   login_len = strlen(u->login);
-  name_len = strlen(ui->name);
+  name_len = strlen(name);
   out_size = sizeof(*out) + login_len + name_len;
   out = alloca(out_size);
   memset(out, 0, out_size);
@@ -2503,7 +2515,7 @@ cmd_team_login(struct client_state *p, int pkt_len,
   out->login_len = login_len;
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
-  strcpy(name_ptr, ui->name);
+  strcpy(name_ptr, name);
   
   p->user_id = u->id;
   p->contest_id = orig_contest_id;
@@ -2537,6 +2549,7 @@ cmd_team_check_user(struct client_state *p, int pkt_len,
   unsigned char logbuf[1024];
   const struct userlist_user_info *ui;
   int user_id, orig_contest_id = 0;
+  const unsigned char *name = 0;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet length is too small: %d", pkt_len);
@@ -2594,6 +2607,8 @@ cmd_team_check_user(struct client_state *p, int pkt_len,
   default_get_user_info_3(user_id, data->contest_id, &u, &ui, &c);
   rdtscll(tsc2);
   tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  if (ui) name = ui->name;
+  if (!name) name = "";
 
   if (cnts->disable_team_password) {
     if (!u->passwd) {
@@ -2636,7 +2651,7 @@ cmd_team_check_user(struct client_state *p, int pkt_len,
   }
 
   login_len = strlen(u->login);
-  name_len = strlen(ui->name);
+  name_len = strlen(name);
   out_size = sizeof(*out) + login_len + name_len;
   out = alloca(out_size);
   memset(out, 0, out_size);
@@ -2661,7 +2676,7 @@ cmd_team_check_user(struct client_state *p, int pkt_len,
   out->login_len = login_len;
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
-  strcpy(name_ptr, ui->name);
+  strcpy(name_ptr, name);
   
   enqueue_reply_to_client(p, out_size, out);
   default_touch_login_time(user_id, data->contest_id, cur_time);
@@ -3062,6 +3077,7 @@ cmd_check_cookie(struct client_state *p,
   const struct userlist_user_info *ui;
   const struct contest_desc *cnts = 0;
   int orig_contest_id = 0;
+  unsigned char *name = 0;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -3111,6 +3127,8 @@ cmd_check_cookie(struct client_state *p,
   }
 
   default_get_user_info_2(cookie->user_id, data->contest_id, &u, &ui);
+  if (ui) name = ui->name;
+  if (!name) name = "";
 
   if (orig_contest_id != cookie->contest_id) {
     err("%s -> contest_id mismatch", logbuf);
@@ -3139,7 +3157,7 @@ cmd_check_cookie(struct client_state *p,
   }
 
   anslen = sizeof(struct userlist_pk_login_ok)
-    + strlen(ui->name) + 1 + strlen(u->login) + 1;
+    + strlen(name) + 1 + strlen(u->login) + 1;
   answer = alloca(anslen);
   memset(answer, 0, anslen);
   default_set_cookie_contest(cookie, orig_contest_id);
@@ -3150,10 +3168,10 @@ cmd_check_cookie(struct client_state *p,
   answer->contest_id = cookie->contest_id;
   answer->login_len = strlen(u->login);
   name_beg = answer->data + answer->login_len + 1;
-  answer->name_len = strlen(ui->name);
+  answer->name_len = strlen(name);
   answer->cookie = cookie->cookie;
   strcpy(answer->data, u->login);
-  strcpy(name_beg, ui->name);
+  strcpy(name_beg, name);
   enqueue_reply_to_client(p,anslen,answer);
   if (!daemon_mode) {
     info("%s -> OK, %d, %s, %llu us", logbuf, u->id, u->login, tsc2);
@@ -3183,6 +3201,7 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   unsigned char logbuf[1024];
   const struct userlist_user_info *ui;
   int orig_contest_id = 0;
+  const unsigned char *name = 0;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -3220,6 +3239,8 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
 
   default_get_user_info_3(cookie->user_id, data->contest_id, &u, &ui, &c);
+  if (ui) name = ui->name;
+  if (!name) name = "";
 
   if (config->disable_cookie_ip_check <= 0) {
     if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
@@ -3278,7 +3299,7 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   }
 
   login_len = strlen(u->login);
-  name_len = strlen(ui->name);
+  name_len = strlen(name);
   out_size = sizeof(*out) + login_len + name_len + 2;
   out = alloca(out_size);
   memset(out, 0, out_size);
@@ -3292,7 +3313,7 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   out->login_len = login_len;
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
-  strcpy(name_ptr, ui->name);
+  strcpy(name_ptr, name);
   
   p->user_id = u->id;
   p->contest_id = orig_contest_id;
@@ -4688,6 +4709,7 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
   const struct userlist_member *m;
   const struct contest_member *cm;
   const struct userlist_members *mm;
+  const unsigned char *name = 0;
 
   if (default_get_user_info_6(user_id, contest_id, &u, &ui, &c, &mm)<0 || !c) {
     fprintf(f, "<%s>%s</%s>\n",
@@ -4697,12 +4719,15 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
     return;
   }
 
+  if (ui) name = ui->name;
+  if (!name) name = "";
+
   l10n_setlocale(locale_id);
   notset = _("<i>Not set</i>");
 
   fprintf(f, "<%s>%s: %s</%s>\n",
           d->users_head_style,
-          _("Detailed information for user (team)"), ui->name,
+          _("Detailed information for user (team)"), name,
           d->users_head_style);
   fprintf(f, "<h3>%s</h3>\n", _("General information"));
   fprintf(f, "<table>\n");
@@ -4719,7 +4744,7 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
             _("E-mail"), d->users_verb_style, u->email, u->email);
   }
   fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
-          d->users_verb_style, _("Name"), d->users_verb_style, ui->name);
+          d->users_verb_style, _("Name"), d->users_verb_style, name);
   if (!d || d->fields[CONTEST_F_HOMEPAGE]) {
     if (!ui->homepage) {
       snprintf(buf, sizeof(buf), "%s", notset);
@@ -5553,7 +5578,7 @@ cmd_admin_process(struct client_state *p, int pkt_len,
   unsigned char logbuf[1024];
   const struct userlist_user *u = 0;
   const struct userlist_user_info *ui;
-  unsigned char *login, *name, *login_ptr, *name_ptr;
+  unsigned char *login, *name = 0, *login_ptr, *name_ptr;
   size_t login_len, name_len, out_len;
   struct userlist_pk_uid_2 *out;
   int user_id;
@@ -5601,7 +5626,7 @@ cmd_admin_process(struct client_state *p, int pkt_len,
   default_get_user_info_2(user_id, 0, &u, &ui);
   login = u->login;
   if (!login) login = "";
-  name = ui->name;
+  if (ui) name = ui->name;
   if (!name || !*name) name = u->login;
   login_len = strlen(login);
   name_len = strlen(name);
@@ -6700,7 +6725,7 @@ cmd_get_uid_by_pid_2(struct client_state *p, int pkt_len,
 
   login = u->login;
   if (!login) login = "";
-  name = ui->name;
+  if (ui) name = ui->name;
   if (!name || !*name) name = u->login;
   login_len = strlen(login);
   name_len = strlen(name);
@@ -6947,6 +6972,7 @@ cmd_lookup_user(struct client_state *p,
   const struct userlist_user_info *ui;
   int user_id;
   const struct contest_desc *cnts = 0;
+  const unsigned char *name = 0;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet length is too small: %d, must be >= %zu",
@@ -6990,9 +7016,12 @@ cmd_lookup_user(struct client_state *p,
     return;
   }
 
+  if (ui) name = ui->name;
+  if (!name) name = "";
+
   login_len = strlen(u->login);
   name_len = 0;
-  if (ui->name) name_len = strlen(ui->name);
+  name_len = strlen(name);
   out_size = sizeof(*out) + login_len + name_len;
   out = (struct userlist_pk_login_ok*) alloca(out_size);
   memset(out, 0, out_size);
@@ -7004,7 +7033,7 @@ cmd_lookup_user(struct client_state *p,
   out->login_len = login_len;
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
-  strcpy(name_ptr, ui->name);
+  strcpy(name_ptr, name);
   enqueue_reply_to_client(p, out_size, out);
 }
 
@@ -7020,6 +7049,7 @@ cmd_lookup_user_id(struct client_state *p,
   const struct userlist_user *u = 0;
   const struct userlist_user_info *ui;
   const struct contest_desc *cnts = 0;
+  const unsigned char *name = 0;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("packet length is too small: %d, must be >= %zu",
@@ -7044,9 +7074,12 @@ cmd_lookup_user_id(struct client_state *p,
     return;
   }
 
+  if (ui) name = ui->name;
+  if (!name) name = "";
+
   login_len = strlen(u->login);
   name_len = 0;
-  if (ui->name) name_len = strlen(ui->name);
+  name_len = strlen(name);
   out_size = sizeof(*out) + login_len + name_len;
   out = (struct userlist_pk_login_ok*) alloca(out_size);
   memset(out, 0, out_size);
@@ -7058,7 +7091,7 @@ cmd_lookup_user_id(struct client_state *p,
   out->login_len = login_len;
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
-  strcpy(name_ptr, ui->name);
+  strcpy(name_ptr, name);
   enqueue_reply_to_client(p, out_size, out);
 }
 
@@ -7169,7 +7202,7 @@ cmd_get_cookie(struct client_state *p,
       return;
     }
     default_set_cookie_team_login(cookie, 1);
-    user_name = ui->name;
+    if (ui) user_name = ui->name;
     break;
   case ULS_PRIV_GET_COOKIE:
     if (cookie->priv_level <= 0 && cookie->role <= 0) {
