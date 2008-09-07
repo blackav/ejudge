@@ -1326,7 +1326,8 @@ get_user_field(unsigned char *buf, size_t size,
   if (field >= USERLIST_NN_FIRST && field < USERLIST_NN_LAST) {
     return userlist_get_user_field_str(buf, size, u, field, convert_null);
   } else if (field >= USERLIST_NC_FIRST && field < USERLIST_NC_LAST) {
-    return userlist_get_user_info_field_str(buf,size,&u->i,field,convert_null);
+    if (!u->cnts0) return snprintf(buf, size, "%s", "");
+    return userlist_get_user_info_field_str(buf,size,u->cnts0,field,convert_null);
   } else {
     abort();
   }
@@ -1335,10 +1336,12 @@ get_user_field(unsigned char *buf, size_t size,
 static int
 set_user_field(struct userlist_user *u, int field, const unsigned char *value)
 {
+  struct userlist_user_info *ui = 0;
   if (field >= USERLIST_NN_FIRST && field < USERLIST_NN_LAST) {
     return userlist_set_user_field_str(u, field, value);
   } else if (field >= USERLIST_NC_FIRST && field < USERLIST_NC_LAST) {
-    return userlist_set_user_info_field_str(&u->i, field, value);
+    ui = userlist_get_cnts0(u);
+    return userlist_set_user_info_field_str(ui, field, value);
   } else {
     abort();
   }
@@ -1467,6 +1470,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
   struct userlist_member *m = 0;
   struct userlist_contest *reg;
   struct userlist_cookie *cookie;
+  struct userlist_user_info *ui;
   ITEM **items;
   MENU *menu;
   PANEL *in_pan, *out_pan;
@@ -1490,16 +1494,19 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
     vis_err("XML parse error");
     return -1;
   }
+  ui = u->cnts0;
 
   snprintf(current_level, COLS + 1, "%s->%s %d, %s %d", upper, "User", u->id,
            "Contest", contest_id);
 
   // count how much menu items we need
   tot_items = field_order_size;
-  for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
-    if ((role_cnt = userlist_members_count(u->i.members, role)) <= 0)
-      continue;
-    tot_items += 1 + (USERLIST_NM_LAST - USERLIST_NM_FIRST + 1) * role_cnt;
+  if (ui && ui->members) {
+    for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
+      if ((role_cnt = userlist_members_count(ui->members, role)) <= 0)
+        continue;
+      tot_items += 1 + (USERLIST_NM_LAST - USERLIST_NM_FIRST + 1) * role_cnt;
+    }
   }
   if ((r = userlist_user_count_contests(u)) > 0) {
     tot_items += r + 1;
@@ -1523,7 +1530,8 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
     user_menu_string(u, field_order[i], descs[j++]);
   }
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
-    if ((role_cnt = userlist_members_count(u->i.members, role)) <= 0)
+    if (!ui || !ui->members) continue;
+    if ((role_cnt = userlist_members_count(ui->members, role)) <= 0)
       continue;
     info[j].role = role;
     info[j].pers = -1;
@@ -1531,7 +1539,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
     snprintf(descs[j++], 78, "*%s*", member_string_pl[role]);
 
     for (pers = 0; pers < role_cnt; pers++) {
-      if (!(m = (struct userlist_member*) userlist_members_get_nth(u->i.members, role, pers)))
+      if (!(m = (struct userlist_member*) userlist_members_get_nth(ui->members, role, pers)))
         continue;
 
       info[j].role = role;
@@ -1921,7 +1929,8 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         }
       }
       if (info[cur_i].role >= 0) {
-        if (!(m = (struct userlist_member*) userlist_members_get_nth(u->i.members, info[cur_i].role,
+        if (!ui) goto menu_continue;
+        if (!(m = (struct userlist_member*) userlist_members_get_nth(ui->members, info[cur_i].role,
                                            info[cur_i].pers)))
           goto menu_continue;
         if (info[cur_i].field < -1) goto menu_continue;
@@ -2153,8 +2162,9 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
       }
       if (info[cur_i].role >= 0) {
         if (info[cur_i].role >= CONTEST_LAST_MEMBER) goto menu_continue;
+        if (!ui) goto menu_continue;
         if (info[cur_i].pers < 0 ||
-            info[cur_i].pers >= userlist_members_count(u->i.members, role))
+            info[cur_i].pers >= userlist_members_count(ui->members, role))
           goto menu_continue;
         if (info[cur_i].field < 0
             || info[cur_i].field > USERLIST_NM_LAST)
@@ -2303,7 +2313,10 @@ user_regmatch(char const *str)
 static int
 user_match(struct userlist_user *u, int kind)
 {
+  struct userlist_user_info *ui;
+
   if (!u) return 0;
+  ui = u->cnts0;
 
   switch (kind) {
   case SRCH_REGEX_LOGIN_FORWARD:
@@ -2312,43 +2325,44 @@ user_match(struct userlist_user *u, int kind)
 
   case SRCH_REGEX_NAME_FORWARD:
   case SRCH_REGEX_NAME_BACKWARD:
-    return user_regmatch(u->i.name);
+    if (!ui) return 0;
+    return user_regmatch(ui->name);
 
   case SRCH_REGEX_TEXT_FORWARD:
   case SRCH_REGEX_TEXT_BACKWARD:
     if (user_regmatch(u->login)) return 1;
-    if (user_regmatch(u->i.name)) return 1;
     if (user_regmatch(u->email)) return 1;
-    if (user_regmatch(u->i.inst)) return 1;
-    if (user_regmatch(u->i.inst_en)) return 1;
-    if (user_regmatch(u->i.instshort)) return 1;
-    if (user_regmatch(u->i.instshort_en)) return 1;
-    if (user_regmatch(u->i.fac)) return 1;
-    if (user_regmatch(u->i.fac_en)) return 1;
-    if (user_regmatch(u->i.facshort)) return 1;
-    if (user_regmatch(u->i.facshort_en)) return 1;
-    if (user_regmatch(u->i.homepage)) return 1;
-    if (user_regmatch(u->i.phone)) return 1;
-    if (user_regmatch(u->i.city)) return 1;
-    if (user_regmatch(u->i.city_en)) return 1;
-    if (user_regmatch(u->i.country)) return 1;
-    if (user_regmatch(u->i.country_en)) return 1;
-    if (user_regmatch(u->i.region)) return 1;
-    if (user_regmatch(u->i.area)) return 1;
-    if (user_regmatch(u->i.location)) return 1;
-    if (user_regmatch(u->i.spelling)) return 1;
-    if (user_regmatch(u->i.languages)) return 1;
-
+    if (!ui) return 0;
+    if (user_regmatch(ui->name)) return 1;
+    if (user_regmatch(ui->inst)) return 1;
+    if (user_regmatch(ui->inst_en)) return 1;
+    if (user_regmatch(ui->instshort)) return 1;
+    if (user_regmatch(ui->instshort_en)) return 1;
+    if (user_regmatch(ui->fac)) return 1;
+    if (user_regmatch(ui->fac_en)) return 1;
+    if (user_regmatch(ui->facshort)) return 1;
+    if (user_regmatch(ui->facshort_en)) return 1;
+    if (user_regmatch(ui->homepage)) return 1;
+    if (user_regmatch(ui->phone)) return 1;
+    if (user_regmatch(ui->city)) return 1;
+    if (user_regmatch(ui->city_en)) return 1;
+    if (user_regmatch(ui->country)) return 1;
+    if (user_regmatch(ui->country_en)) return 1;
+    if (user_regmatch(ui->region)) return 1;
+    if (user_regmatch(ui->area)) return 1;
+    if (user_regmatch(ui->location)) return 1;
+    if (user_regmatch(ui->spelling)) return 1;
+    if (user_regmatch(ui->languages)) return 1;
     {
       int role, memb;
       const struct userlist_member *pm;
       int role_cnt = 0;
 
       for (role = 0; role < USERLIST_MB_LAST; role++) {
-        if ((role_cnt = userlist_members_count(u->i.members, role)) <= 0)
+        if ((role_cnt = userlist_members_count(ui->members, role)) <= 0)
           continue;
         for (memb = 0; memb < role_cnt; memb++) {
-          if (!(pm = userlist_members_get_nth(u->i.members, role, memb)))
+          if (!(pm = userlist_members_get_nth(ui->members, role, memb)))
             continue;
 
           if (user_regmatch(pm->firstname)) return 1;
@@ -2453,6 +2467,7 @@ registered_users_sort_func(void const *p1, void const *p2)
 {
   struct userlist_user const **x1 = (struct userlist_user const **) p1;
   struct userlist_user const **x2 = (struct userlist_user const **) p2;
+  const unsigned char *name1 = 0, *name2 = 0;
 
   switch (registered_users_sort_flag) {
   case PART_SORT_ID:
@@ -2464,9 +2479,17 @@ registered_users_sort_func(void const *p1, void const *p2)
   case PART_SORT_LOGIN_REV:
     return strcoll(x2[0]->login, x1[0]->login);
   case PART_SORT_NAME:
-    return strcoll(x1[0]->i.name, x2[0]->i.name);
+    if (x1[0]->cnts0) name1 = x1[0]->cnts0->name;
+    if (!name1) name1 = "";
+    if (x2[0]->cnts0) name2 = x2[0]->cnts0->name;
+    if (!name2) name2 = "";
+    return strcoll(name1, name2);
   case PART_SORT_NAME_REV:
-    return strcoll(x2[0]->i.name, x1[0]->i.name);
+    if (x1[0]->cnts0) name1 = x1[0]->cnts0->name;
+    if (!name1) name1 = "";
+    if (x2[0]->cnts0) name2 = x2[0]->cnts0->name;
+    if (!name2) name2 = "";
+    return strcoll(name2, name1);
   case 0:
   default:
     return x1 - x2;
@@ -2539,12 +2562,16 @@ generate_reg_user_item(unsigned char *buf, size_t size, int i,
 {
   int buflen;
   int w = 36, y = 0;
+  const unsigned char *name = 0;
+
+  if (uu[i]->cnts0) name = uu[i]->cnts0->name;
+  if (!name) name = "";
 
   // 77 - 6 - 16 - 10 - 6 = 77 - 38 = 39
-  if (utf8_mode) w = utf8_cnt(uu[i]->i.name, 36, &y);
+  if (utf8_mode) w = utf8_cnt(name, 36, &y);
   buflen = snprintf(buf, size, "%c%6d  %-16.16s  %-*.*s %c%c%c%c%c %-7.7s",
                     mask[i]?'!':' ',
-                    uu[i]->id, uu[i]->login, w + y, w, uu[i]->i.name,
+                    uu[i]->id, uu[i]->login, w + y, w, name,
                     (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
                     (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
                     (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
@@ -3669,6 +3696,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   int retval = -1;
   int first_row;
   int loc_start_item;
+  const unsigned char *name;
 
   snprintf(current_level, sizeof(current_level),
            "%s->%s", upper, "User list");
@@ -3741,11 +3769,15 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   descs = alloca(nusers * sizeof(descs[0]));
   memset(descs, 0, nusers * sizeof(descs[0]));
   for (i = 0; i < nusers; i++) {
+    name = 0;
+    if (uu[i]->cnts0) name = uu[i]->cnts0->name;
+    if (!name) name = "";
+
     w = 50; y = 0;
-    if (utf8_mode) w = utf8_cnt(uu[i]->i.name, w, &y);
+    if (utf8_mode) w = utf8_cnt(name, w, &y);
     len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
                    g_sel_users.mask[i]?"!":" ",
-                   uu[i]->id, uu[i]->login, w + y, w, uu[i]->i.name);
+                   uu[i]->id, uu[i]->login, w + y, w, name);
     descs[i] = alloca(len + 16);
     strcpy(descs[i], buf);
   }
@@ -4022,11 +4054,14 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
         g_sel_users.mask[i] = 1;
         g_sel_users.total_selected++;
       }
+      name = 0;
+      if (uu[i]->cnts0) name = uu[i]->cnts0->name;
+      if (!name) name = "";
       w = 50; y = 0;
-      if (utf8_mode) w = utf8_cnt(uu[i]->i.name, w, &y);
+      if (utf8_mode) w = utf8_cnt(name, w, &y);
       len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
                      g_sel_users.mask[i]?"!":" ",
-                     uu[i]->id, uu[i]->login, w + y, w, uu[i]->i.name);
+                     uu[i]->id, uu[i]->login, w + y, w, name);
       strcpy(descs[i], buf);
       menu_driver(menu, REQ_DOWN_ITEM);
       goto menu_continue;
@@ -4075,11 +4110,14 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
             goto menu_continue;
           }
           g_sel_users.mask[j] = 0;
+          name = 0;
+          if (uu[i]->cnts0) name = uu[i]->cnts0->name;
+          if (!name) name = "";
           w = 50; y = 0;
-          if (utf8_mode) w = utf8_cnt(uu[i]->i.name, w, &y);
+          if (utf8_mode) w = utf8_cnt(name, w, &y);
           len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
                          g_sel_users.mask[j]?"!":" ",
-                         uu[j]->id, uu[j]->login, w + y, w, uu[j]->i.name);
+                         uu[j]->id, uu[j]->login, w + y, w, name);
           strcpy(descs[j], buf);
         }
         memset(g_sel_users.mask, 0, g_sel_users.allocated);
@@ -4117,11 +4155,14 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
             }
           }
           g_sel_users.mask[j] = 0;
+          name = 0;
+          if (uu[i]->cnts0) name = uu[i]->cnts0->name;
+          if (!name) name = "";
           w = 50; y = 0;
-          if (utf8_mode) w = utf8_cnt(uu[i]->i.name, w, &y);
+          if (utf8_mode) w = utf8_cnt(name, w, &y);
           len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
                          g_sel_users.mask[j]?"!":" ",
-                         uu[j]->id, uu[j]->login, w + y, w, uu[j]->i.name);
+                         uu[j]->id, uu[j]->login, w + y, w, name);
           strcpy(descs[j], buf);
         }
         memset(g_sel_users.mask, 0, g_sel_users.allocated);

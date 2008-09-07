@@ -90,6 +90,7 @@ main(int argc, char **argv)
   unsigned char reply_buf[128], *reply;
   size_t reply_len;
   struct clar_entry_v1 clar;
+  const unsigned char *name = 0;
 
   /*
   if (argc == 1) {
@@ -376,9 +377,11 @@ main(int argc, char **argv)
 
     reply = 0;
     while (!force_flag) {
-      printf("Remove user %d,%s,%s? ", i,
-             userlist->user_map[i]->login,
-             userlist->user_map[i]->i.name);
+      name = 0;
+      if (userlist->user_map[i]->cnts0)
+        name = userlist->user_map[i]->cnts0->name;
+      if (!name) name = "";
+      printf("Remove user %d,%s,%s? ", i, userlist->user_map[i]->login, name);
       if (!fgets(reply_buf, sizeof(reply_buf), stdin)) {
         err("cannot read input from the standard input");
         return 1;

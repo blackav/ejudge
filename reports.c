@@ -363,6 +363,7 @@ user_report_generate(
   time_t start_time, stop_time;
   unsigned char *psrc;
   const struct userlist_user *u = 0;
+  const struct userlist_user_info *ui = 0;
   const struct userlist_member *m = 0;
   const unsigned char *s;
 
@@ -373,7 +374,8 @@ user_report_generate(
     goto cleanup;
   }
   u = tdb.user;
-  if (u) m = userlist_members_get_first(u->i.members);
+  if (u) ui = u->cnts0;
+  if (ui) m = userlist_members_get_first(ui->members);
 
   XALLOCA(run_ids, cs->max_prob + 1);
   memset(run_ids, -1, sizeof(run_ids[0]) * (cs->max_prob + 1));
@@ -543,10 +545,10 @@ user_report_generate(
   } else {
     fprintf(fout, "%s: & %s\\\\\n", _("Name"), TARMOR(tdb.name));
   }
-  if (u && u->i.exam_id)
-    fprintf(fout, "%s: & %s\\\\\n", _("Exam Id"), TARMOR(u->i.exam_id));
-  if (u && u->i.location)
-    fprintf(fout, "%s: & %s\\\\\n", _("Location"), TARMOR(u->i.location));
+  if (ui && ui->exam_id)
+    fprintf(fout, "%s: & %s\\\\\n", _("Exam Id"), TARMOR(ui->exam_id));
+  if (ui && ui->location)
+    fprintf(fout, "%s: & %s\\\\\n", _("Location"), TARMOR(ui->location));
 
   if (start_time > 0) {
     fprintf(fout, "%s: & %s\\\\\n", _("Exam start time"),
@@ -957,6 +959,7 @@ full_user_report_generate(
   time_t start_time, stop_time;
   unsigned char *psrc;
   const struct userlist_user *u = 0;
+  const struct userlist_user_info *ui = 0;
   const struct userlist_member *m = 0;
   const unsigned char *s;
   int need_variant = 0;
@@ -975,7 +978,8 @@ full_user_report_generate(
     goto cleanup;
   }
   u = tdb.user;
-  if (u) m = userlist_members_get_first(u->i.members);
+  if (u) ui = u->cnts0;
+  if (ui) m = userlist_members_get_first(ui->members);
 
   XALLOCA(run_ids, cs->max_prob + 1);
   memset(run_ids, -1, sizeof(run_ids[0]) * (cs->max_prob + 1));
@@ -1110,13 +1114,13 @@ full_user_report_generate(
   }
 
   if (use_cypher) {
-    if (u && u->i.exam_cypher)
-      snprintf(sf_extra_buf, sizeof(sf_extra_buf), "%s", u->i.exam_cypher);
+    if (ui && ui->exam_cypher)
+      snprintf(sf_extra_buf, sizeof(sf_extra_buf), "%s", ui->exam_cypher);
   } else {
-    if (u && u->i.exam_id) {
+    if (ui && ui->exam_id) {
       snprintf(sf_extra_buf, sizeof(sf_extra_buf), "%s, %s",
                teamdb_get_name_2(cs->teamdb_state, user_id),
-               u->i.exam_id);
+               ui->exam_id);
     } else {
       snprintf(sf_extra_buf, sizeof(sf_extra_buf), "%s",
                teamdb_get_name_2(cs->teamdb_state, user_id));
@@ -1141,8 +1145,8 @@ full_user_report_generate(
   }
 
   fprintf(fout, "\\noindent\\begin{tabular}{ll}\n");
-  if (use_cypher && u && u->i.exam_cypher) {
-    fprintf(fout, "%s: & %s\\\\\n", _("Cypher"), TARMOR(u->i.exam_cypher));
+  if (use_cypher && ui && ui->exam_cypher) {
+    fprintf(fout, "%s: & %s\\\\\n", _("Cypher"), TARMOR(ui->exam_cypher));
   } else {
     fprintf(fout, "%s: & %s\\\\\n", _("Login"), TARMOR(tdb.login));
     s = 0;
@@ -1176,10 +1180,10 @@ full_user_report_generate(
     } else {
       fprintf(fout, "%s: & %s\\\\\n", _("Name"), TARMOR(tdb.name));
     }
-    if (u && u->i.exam_id)
-      fprintf(fout, "%s: & %s\\\\\n", _("Exam Id"), TARMOR(u->i.exam_id));
-    if (u && u->i.location)
-      fprintf(fout, "%s: & %s\\\\\n", _("Location"), TARMOR(u->i.location));
+    if (ui && ui->exam_id)
+      fprintf(fout, "%s: & %s\\\\\n", _("Exam Id"), TARMOR(ui->exam_id));
+    if (ui && ui->location)
+      fprintf(fout, "%s: & %s\\\\\n", _("Location"), TARMOR(ui->location));
 
     if (start_time > 0) {
       fprintf(fout, "%s: & %s\\\\\n", _("Exam start time"),
@@ -1972,7 +1976,8 @@ ns_print_user_exam_protocol(
   if (use_user_printer) {
     memset(&tdb, 0, sizeof(tdb));
     teamdb_export_team(cs->teamdb_state, user_id, &tdb);
-    if (tdb.user) printer_name = tdb.user->i.printer_name;
+    if (tdb.user && tdb.user->cnts0)
+      printer_name = tdb.user->cnts0->printer_name;
   }
 
   snprintf(tex_path, sizeof(tex_path), "%s/%06d.tex", global->print_work_dir,
@@ -2107,7 +2112,8 @@ ns_print_user_exam_protocols(
     if (use_user_printer) {
       memset(&tdb, 0, sizeof(tdb));
       teamdb_export_team(cs->teamdb_state, user_id, &tdb);
-      if (tdb.user) printer_name = tdb.user->i.printer_name;
+      if (tdb.user && tdb.user->cnts0)
+        printer_name = tdb.user->cnts0->printer_name;
     }
 
     snprintf(ps_path, sizeof(ps_path), "%s/%06d.ps",
@@ -2161,6 +2167,7 @@ ns_olympiad_final_user_report(
   time_t start_time, stop_time;
   unsigned char *psrc;
   const struct userlist_user *u = 0;
+  const struct userlist_user_info *ui = 0;
   const struct userlist_member *m = 0;
   const unsigned char *s;
   const unsigned char *td0 = "<td class=\"b0\">";
@@ -2174,7 +2181,8 @@ ns_olympiad_final_user_report(
     goto cleanup;
   }
   u = tdb.user;
-  if (u) m = userlist_members_get_first(u->i.members);
+  if (u) ui = u->cnts0;
+  if (ui) m = userlist_members_get_first(ui->members);
 
   XALLOCA(run_ids, cs->max_prob + 1);
   memset(run_ids, -1, sizeof(run_ids[0]) * (cs->max_prob + 1));
@@ -2343,12 +2351,12 @@ ns_olympiad_final_user_report(
     fprintf(fout, "<tr>%s%s:</td>%s%s</td></tr>\n",
             td0, _("Name"), td0, ARMOR(tdb.name));
   }
-  if (u && u->i.exam_id)
+  if (ui && ui->exam_id)
     fprintf(fout, "<tr>%s%s:</td>%s%s</td></tr>\n",
-            td0, _("Exam Id"), td0, ARMOR(u->i.exam_id));
-  if (u && u->i.location)
+            td0, _("Exam Id"), td0, ARMOR(ui->exam_id));
+  if (ui && ui->location)
     fprintf(fout, "<tr>%s%s:</td>%s%s</td></tr>\n",
-            td0, _("Location"), td0, ARMOR(u->i.location));
+            td0, _("Location"), td0, ARMOR(ui->location));
 
   if (start_time > 0) {
     fprintf(fout, "<tr>%s%s:</td>%s%s</td></tr>\n",
@@ -2941,6 +2949,7 @@ problem_report_generate(
   path_t eps_path;
   path_t ierr_path;
   const unsigned char *img_suffix = 0;
+  const struct userlist_user_info *ui = 0;
 
   if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id])) {
     fprintf(log_f, "Invalind prob_id %d\n", prob_id);
@@ -2969,23 +2978,24 @@ problem_report_generate(
       if (teamdb_lookup(cs->teamdb_state, i) <= 0) continue;
       if (teamdb_export_team(cs->teamdb_state, i, &tdb) < 0) continue;
       u_flags[i] = tdb.flags;
-      if (tdb.user && tdb.user->i.exam_cypher)
-        user_str[i] = xstrdup(tdb.user->i.exam_cypher);
+      if (tdb.user && tdb.user->cnts0 && tdb.user->cnts0->exam_cypher)
+        user_str[i] = xstrdup(tdb.user->cnts0->exam_cypher);
     }
   } else {
     for (i = 1; i < user_num; i++) {
       if (teamdb_lookup(cs->teamdb_state, i) <= 0) continue;
       if (teamdb_export_team(cs->teamdb_state, i, &tdb) < 0) continue;
+      ui = 0;
+      if (tdb.user) ui = tdb.user->cnts0;
       u_flags[i] = tdb.flags;
-      if (tdb.user) {
+      if (ui) {
         bigbuf[0] = 0;
-        if (tdb.user->i.name[0] && tdb.user->i.exam_id) {
-          snprintf(bigbuf, sizeof(bigbuf), "%s (%s)", tdb.user->i.name,
-                   tdb.user->i.exam_id);
-        } else if (tdb.user->i.exam_id) {
-          snprintf(bigbuf, sizeof(bigbuf), "%s", tdb.user->i.exam_id);
-        } else if (tdb.user->i.name) {
-          snprintf(bigbuf, sizeof(bigbuf), "%s", tdb.user->i.name);
+        if (ui->name[0] && ui->exam_id) {
+          snprintf(bigbuf, sizeof(bigbuf), "%s (%s)", ui->name, ui->exam_id);
+        } else if (ui->exam_id) {
+          snprintf(bigbuf, sizeof(bigbuf), "%s", ui->exam_id);
+        } else if (ui->name) {
+          snprintf(bigbuf, sizeof(bigbuf), "%s", ui->name);
         }
         if (bigbuf[0]) user_str[i] = xstrdup(bigbuf);
       }

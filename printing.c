@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -94,8 +94,8 @@ print_banner_page(const serve_state_t state,
   }
   fprintf(f, "Language:         %s\n",
           (state->langs[info.lang_id])?((char*)state->langs[info.lang_id]->short_name):"");
-  if (teaminfo.user && teaminfo.user->i.location) {
-    fprintf(f, "Location:         %s\n", teaminfo.user->i.location);
+  if (teaminfo.user && teaminfo.user->cnts0 && teaminfo.user->cnts0->location) {
+    fprintf(f, "Location:         %s\n", teaminfo.user->cnts0->location);
   }
   fprintf(f, "Status:           %s\n", run_status_str(info.status, 0, 0, 0, 0));
   fclose(f);
@@ -127,6 +127,7 @@ do_print_run(const serve_state_t state, int run_id,
   int errcode = -SRV_ERR_SYSTEM_ERROR;
   struct teamdb_export teaminfo;
   const unsigned char *printer_name = 0, *user_name = 0, *location = 0;
+  const struct userlist_user_info *ui = 0;
 
   if (run_id < 0 || run_id >= run_get_total(state->runlog_state)) {
     errcode = -SRV_ERR_BAD_RUN_ID;
@@ -156,9 +157,11 @@ do_print_run(const serve_state_t state, int run_id,
 
   if (teamdb_export_team(state->teamdb_state, info.user_id, &teaminfo) < 0)
     return -1;
+  if (teaminfo.user) ui = teaminfo.user->cnts0;
+
   if (!is_privileged) {
-    if (teaminfo.user && teaminfo.user->i.printer_name)
-      printer_name = teaminfo.user->i.printer_name;
+    if (ui && ui->printer_name)
+      printer_name = ui->printer_name;
   }
 
   if (global->disable_banner_page <= 0) {
@@ -175,8 +178,8 @@ do_print_run(const serve_state_t state, int run_id,
     user_name = teamdb_get_name_2(state->teamdb_state, info.user_id);
     if (!user_name) user_name = "";
     location = "";
-    if (teaminfo.user && teaminfo.user->i.location)
-      location = teaminfo.user->i.location;
+    if (ui && ui->location)
+      location = ui->location;
     program_path = (unsigned char*) alloca(strlen(global->print_work_dir) + 64 + strlen(user_name) + strlen(location));
     sprintf(program_path, "%s/%06d_%s_%s%s", global->print_work_dir, run_id,
             user_name, location, sfx);

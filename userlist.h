@@ -407,8 +407,10 @@ struct userlist_contest
 
 struct userlist_user_info
 {
+  struct xml_tree b;
+
+  int contest_id;
   int cnts_read_only;
-  int filled;
 
   unsigned char *name;
   int instnum;
@@ -460,14 +462,6 @@ struct userlist_user_info
   time_t last_pwdchange_time;
 };
 
-struct userlist_cntsinfo
-{
-  struct xml_tree b;
-
-  int contest_id;
-  struct userlist_user_info i;
-};
-
 struct userlist_user
 {
   struct xml_tree b;
@@ -507,13 +501,13 @@ struct userlist_user
 
   /* the contest-specific information */
   int cntsinfo_a;
-  struct userlist_cntsinfo **cntsinfo;
+  struct userlist_user_info **cntsinfo;
 
   /* the default (legacy) values for contest-specific fields */
   /* also these fields are returned when contest_id is provided for
    * user requests
    */
-  struct userlist_user_info i;
+  struct userlist_user_info *cnts0;
 };
 
 struct userlist_list
@@ -659,7 +653,7 @@ int userlist_cookie_hash_del(struct userlist_list *, const struct userlist_cooki
 
 void userlist_expand_cntsinfo(struct userlist_user *u, int contest_id);
 
-struct userlist_cntsinfo *
+struct userlist_user_info *
 userlist_new_cntsinfo(struct userlist_user *u, int contest_id,
                       time_t current_time);
 const struct userlist_user_info *
@@ -712,5 +706,7 @@ userlist_members_get_nth(
         int role,
         int n);
 void userlist_members_reserve(struct userlist_members *mm, int n);
+
+struct userlist_user_info *userlist_get_cnts0(struct userlist_user *u);
 
 #endif /* __USERLIST_H__ */

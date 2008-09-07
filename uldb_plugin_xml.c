@@ -121,7 +121,8 @@ static int get_user_info_7_func(void *, int, int,
                                 const struct userlist_user **,
                                 const struct userlist_user_info **,
                                 const struct userlist_members **);
-static int get_member_serial(void *);
+static int get_member_serial_func(void *);
+static int set_member_serial_func(void *, int);
 
 struct uldb_plugin_iface uldb_plugin_xml =
 {
@@ -195,7 +196,8 @@ struct uldb_plugin_iface uldb_plugin_xml =
   set_cookie_team_login_func,
   get_user_info_6_func,
   get_user_info_7_func,
-  get_member_serial,
+  get_member_serial_func,
+  set_member_serial_func
 };
 
 struct uldb_xml_state
@@ -250,7 +252,7 @@ struct info_list_iterator
   int user_id;
 };
 
-static struct userlist_cntsinfo *
+static struct userlist_user_info *
 userlist_clone_user_info(
         struct userlist_user *u,
         int contest_id,
@@ -584,7 +586,6 @@ new_user_func(void *data,
   }
 
   u = (struct userlist_user*) userlist_node_alloc(USERLIST_T_USER);
-  u->i.instnum = -1;
   xml_link_node_last(&ul->b, &u->b);
 
   for (i = 1; i < ul->user_map_size && ul->user_map[i]; i++);
@@ -603,7 +604,6 @@ new_user_func(void *data,
   if (email) u->email = xstrdup(email);
   u->login_hash = userlist_login_hash(login);
   u->simple_registration = simple_reg_flag;
-  u->i.name = xstrdup("");
 
   if (reg_passwd) {
     u->passwd = xstrdup(reg_passwd);
@@ -957,7 +957,7 @@ touch_login_time_func(void *data, int user_id, int contest_id, time_t cur_time)
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
   struct userlist_list *ul = state->userlist;
   struct userlist_user *u;
-  struct userlist_cntsinfo *ci;
+  struct userlist_user_info *ui;
 
   if (user_id <= 0 || user_id >= ul->user_map_size
       || !(u = ul->user_map[user_id])) {
@@ -966,9 +966,9 @@ touch_login_time_func(void *data, int user_id, int contest_id, time_t cur_time)
   if (cur_time <= 0) cur_time = time(0);
   u->last_login_time = cur_time;
   if (contest_id > 0) {
-    ci = userlist_clone_user_info(u, contest_id, &ul->member_serial, cur_time,
+    ui = userlist_clone_user_info(u, contest_id, &ul->member_serial, cur_time,
                                   0);
-    if (ci) ci->i.last_login_time = cur_time;
+    if (ui) ui->last_login_time = cur_time;
   }
   state->dirty = 1;
   return 0;
@@ -1309,7 +1309,6 @@ set_team_passwd_func(void *data, int user_id, int contest_id,
   struct userlist_list *ul = state->userlist;
   struct userlist_user *u;
   struct userlist_user_info *ui;
-  struct userlist_cntsinfo *ci;
 
   if (user_id <= 0 || user_id >= ul->user_map_size
       || !(u = ul->user_map[user_id])) {
@@ -1318,11 +1317,10 @@ set_team_passwd_func(void *data, int user_id, int contest_id,
   if (cur_time <= 0) cur_time = time(0);
 
   if (contest_id > 0) {
-    ci = userlist_clone_user_info(u, contest_id, &ul->member_serial, cur_time,
+    ui = userlist_clone_user_info(u, contest_id, &ul->member_serial, cur_time,
                                   p_cloned_flag);
-    ui = &ci->i;
   } else {
-    ui = &u->i;
+    ui = userlist_get_cnts0(u);
   }
 
   xfree(ui->team_passwd);
@@ -1387,7 +1385,6 @@ remove_member_func(void *data, int user_id, int contest_id,
   struct userlist_list *ul = state->userlist;
   struct userlist_user *u;
   struct userlist_user_info *ui;
-  struct userlist_cntsinfo *ci;
   struct userlist_member *m;
   int i, num = -1;
 
@@ -1398,11 +1395,10 @@ remove_member_func(void *data, int user_id, int contest_id,
   if (cur_time <= 0) cur_time = time(0);
 
   if (contest_id > 0) {
-    ci = userlist_clone_user_info(u, contest_id, &ul->member_serial, cur_time,
+    ui = userlist_clone_user_info(u, contest_id, &ul->member_serial, cur_time,
                                   p_cloned_flag);
-    ui = &ci->i;
   } else {
-    ui = &u->i;
+    ui = userlist_get_cnts0(u);
   }
 
   /*
@@ -1476,7 +1472,7 @@ is_read_only_func(void *data, int user_id, int contest_id)
   }
   if (u->read_only) return 1;
   ui = userlist_get_user_info(u, contest_id);
-  if (ui->cnts_read_only) return 1;
+  if (ui && ui->cnts_read_only) return 1;
   return 0;
 }
 
@@ -1569,7 +1565,6 @@ clear_team_passwd_func(void *data, int user_id, int contest_id,
   struct userlist_list *ul = state->userlist;
   struct userlist_user *u;
   struct userlist_user_info *ui;
-  struct userlist_cntsinfo *ci;
   time_t cur_time = time(0);
 
   if (user_id <= 0 || user_id >= ul->user_map_size
@@ -1578,11 +1573,10 @@ clear_team_passwd_func(void *data, int user_id, int contest_id,
   }
 
   if (contest_id > 0) {
-    ci = userlist_clone_user_info(u, contest_id, &ul->member_serial, cur_time,
+    ui = userlist_clone_user_info(u, contest_id, &ul->member_serial, cur_time,
                                   p_cloned_flag);
-    ui = &ci->i;
   } else {
-    ui = &u->i;
+    ui = userlist_get_cnts0(u);
   }
 
   xfree(ui->team_passwd); ui->team_passwd = 0;
@@ -1682,7 +1676,7 @@ remove_user_contest_info_func(void *data, int user_id, int contest_id)
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
   struct userlist_list *ul = state->userlist;
   struct userlist_user *u;
-  struct userlist_cntsinfo *uc;
+  struct userlist_user_info *uc;
 
   if (user_id <= 0 || user_id >= ul->user_map_size
       || !(u = ul->user_map[user_id])) {
@@ -1734,7 +1728,6 @@ clear_user_info_field_func(void *data, int user_id, int contest_id,
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
   struct userlist_list *ul = state->userlist;
   struct userlist_user *u;
-  struct userlist_cntsinfo *ci;
   struct userlist_user_info *ui;
   int r;
 
@@ -1745,11 +1738,12 @@ clear_user_info_field_func(void *data, int user_id, int contest_id,
   if (cur_time <= 0) cur_time = time(0);
 
   ui = userlist_get_user_info_nc(u, contest_id);
+  if (!ui) return 0;
   if (userlist_is_empty_user_info_field(ui, field_id)) return 0;
 
   if (contest_id > 0) {
-    if (!(ci = userlist_clone_user_info(u, contest_id, &ul->member_serial,
-                                        cur_time, p_cloned_flag)))
+    if (!(userlist_clone_user_info(u, contest_id, &ul->member_serial,
+                                   cur_time, p_cloned_flag)))
       return -1;
     ui = userlist_get_user_info_nc(u, contest_id);
   }
@@ -1771,7 +1765,6 @@ clear_user_member_field_func(void *data, int user_id, int contest_id,
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
   struct userlist_list *ul = state->userlist;
   struct userlist_user *u;
-  struct userlist_cntsinfo *ci;
   struct userlist_user_info *ui;
   struct userlist_member *m;
   int r;
@@ -1783,12 +1776,13 @@ clear_user_member_field_func(void *data, int user_id, int contest_id,
   if (cur_time <= 0) cur_time = time(0);
 
   ui = userlist_get_user_info_nc(u, contest_id);
+  if (!ui) return -1;
   if (!(m = userlist_get_member_nc(ui->members, serial, 0, 0))) return -1;
   if (userlist_is_empty_member_field(m, field_id)) return 0;
 
   if (contest_id > 0) {
-    if (!(ci = userlist_clone_user_info(u, contest_id, &ul->member_serial,
-                                        cur_time, p_cloned_flag)))
+    if (!(userlist_clone_user_info(u, contest_id, &ul->member_serial,
+                                   cur_time, p_cloned_flag)))
       return -1;
     ui = userlist_get_user_info_nc(u, contest_id);
     m = userlist_get_member_nc(ui->members, serial, 0, 0);
@@ -1856,7 +1850,6 @@ set_user_info_field_func(void *data,
   struct userlist_list *ul = state->userlist;
   struct userlist_user *u;
   struct userlist_user_info *ui;
-  struct userlist_cntsinfo *ci;
   int r;
 
   if (user_id <= 0 || user_id >= ul->user_map_size
@@ -1865,12 +1858,13 @@ set_user_info_field_func(void *data,
   }
   if (cur_time <= 0) cur_time = time(0);
 
+  if (!contest_id) ui = userlist_get_cnts0(u);
   if (!(ui = userlist_get_user_info_nc(u, contest_id))) return -1;
   if (userlist_is_equal_user_info_field(ui, field_id, value)) return 0;
 
   if (contest_id > 0) {
-    if (!(ci = userlist_clone_user_info(u, contest_id, &ul->member_serial,
-                                        cur_time, p_cloned_flag)))
+    if (!(userlist_clone_user_info(u, contest_id, &ul->member_serial,
+                                   cur_time, p_cloned_flag)))
       return -1;
     ui = userlist_get_user_info_nc(u, contest_id);
   }
@@ -1897,7 +1891,6 @@ set_user_member_field_func(void *data,
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
   struct userlist_list *ul = state->userlist;
   struct userlist_user *u;
-  struct userlist_cntsinfo *ci;
   struct userlist_user_info *ui;
   struct userlist_member *m;
   int r;
@@ -1908,13 +1901,14 @@ set_user_member_field_func(void *data,
   }
   if (cur_time <= 0) cur_time = time(0);
 
-  ui = userlist_get_user_info_nc(u, contest_id);
+  if (!contest_id) ui = userlist_get_cnts0(u);
+  if (!(ui = userlist_get_user_info_nc(u, contest_id))) return -1;
   if (!(m = userlist_get_member_nc(ui->members, serial, 0, 0))) return -1;
   if (userlist_is_equal_member_field(m, field_id, value)) return 0;
 
   if (contest_id > 0) {
-    if (!(ci = userlist_clone_user_info(u, contest_id, &ul->member_serial,
-                                        cur_time, p_cloned_flag)))
+    if (!(userlist_clone_user_info(u, contest_id, &ul->member_serial,
+                                   cur_time, p_cloned_flag)))
       return -1;
     ui = userlist_get_user_info_nc(u, contest_id);
     m = userlist_get_member_nc(ui->members, serial, 0, 0);
@@ -1935,7 +1929,7 @@ new_member_func(void *data, int user_id, int contest_id, int role,
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
   struct userlist_list *ul = state->userlist;
   struct userlist_user *u;
-  struct userlist_cntsinfo *ci;
+  struct userlist_user_info *ci;
   struct userlist_user_info *ui;
   struct userlist_member *m;
   struct userlist_members *mm;
@@ -1954,9 +1948,11 @@ new_member_func(void *data, int user_id, int contest_id, int role,
     if (!ci) return -1;
     link_node = &ci->b;
   } else {
+    ui = userlist_get_cnts0(u);
     link_node = &u->b;
   }
   ui = userlist_get_user_info_nc(u, contest_id);
+  ASSERT(ui);
 
   /*
   if (!ui->members[role]) {
@@ -2092,7 +2088,7 @@ change_member_role_func(void *data, int user_id, int contest_id, int serial,
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
   struct userlist_list *ul = state->userlist;
   struct userlist_user *u;
-  struct userlist_cntsinfo *ci;
+  struct userlist_user_info *ci;
   struct userlist_user_info *ui;
   struct userlist_member *m;
   struct xml_tree *link_node;
@@ -2195,13 +2191,13 @@ set_user_xml_func(void *data,
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
   struct userlist_list *ul = state->userlist;
   struct userlist_user *u;
-  struct userlist_cntsinfo *ci;
   struct userlist_user_info *ui;
   int nrole, nnum, orole, onum;
   struct userlist_member *nm, *om, *oom;
   struct userlist_member **handled_members;
   int handled_members_count, handled_members_size;
   int new_serial, i;
+  struct userlist_user_info *new_ui;
 
   if (user_id <= 0 || user_id >= ul->user_map_size
       || !(u = ul->user_map[user_id])) {
@@ -2215,97 +2211,106 @@ set_user_xml_func(void *data,
   }
 
   if (contest_id > 0) {
-    ci = userlist_clone_user_info(u, contest_id, &ul->member_serial, cur_time,
-                                  p_cloned_flag);
-    if (!ci) return -1;
+    if (!userlist_clone_user_info(u, contest_id, &ul->member_serial, cur_time,
+                                  p_cloned_flag))
+      return -1;
+  } else {
+    userlist_get_cnts0(u);
   }
   if (!(ui = userlist_get_user_info_nc(u, contest_id))) return -1;
 
   // set fields from new_u->i to ui
   // update the user's fields
-  if (needs_name_update(ui->name, new_u->i.name)) {
+  new_ui = new_u->cnts0;
+  if (!new_ui) {
+    state->dirty = 1;
+    state->flush_interval /= 2;
+    return 1;
+  }
+
+  if (needs_name_update(ui->name, new_ui->name)) {
     xfree(ui->name);
-    ui->name = xstrdup(new_u->i.name);
+    ui->name = xstrdup(new_ui->name);
   }
-  if (needs_update(ui->homepage, new_u->i.homepage)) {
+  if (needs_update(ui->homepage, new_ui->homepage)) {
     xfree(ui->homepage);
-    ui->homepage = xstrdup(new_u->i.homepage);
+    ui->homepage = xstrdup(new_ui->homepage);
   }
-  if (needs_update(ui->phone, new_u->i.phone)) {
+  if (needs_update(ui->phone, new_ui->phone)) {
     xfree(ui->phone);
-    ui->phone = xstrdup(new_u->i.phone);
+    ui->phone = xstrdup(new_ui->phone);
   }
-  if (needs_update(ui->inst, new_u->i.inst)) {
+  if (needs_update(ui->inst, new_ui->inst)) {
     xfree(ui->inst);
-    ui->inst = xstrdup(new_u->i.inst);
+    ui->inst = xstrdup(new_ui->inst);
   }
-  if (needs_update(ui->inst_en, new_u->i.inst_en)) {
+  if (needs_update(ui->inst_en, new_ui->inst_en)) {
     xfree(ui->inst_en);
-    ui->inst_en = xstrdup(new_u->i.inst_en);
+    ui->inst_en = xstrdup(new_ui->inst_en);
   }
-  if (needs_update(ui->instshort, new_u->i.instshort)) {
+  if (needs_update(ui->instshort, new_ui->instshort)) {
     xfree(ui->instshort);
-    ui->instshort = xstrdup(new_u->i.instshort);
+    ui->instshort = xstrdup(new_ui->instshort);
   }
-  if (needs_update(ui->instshort_en, new_u->i.instshort_en)) {
+  if (needs_update(ui->instshort_en, new_ui->instshort_en)) {
     xfree(ui->instshort_en);
-    ui->instshort_en = xstrdup(new_u->i.instshort_en);
+    ui->instshort_en = xstrdup(new_ui->instshort_en);
   }
-  if (needs_update(ui->fac, new_u->i.fac)) {
+  if (needs_update(ui->fac, new_ui->fac)) {
     xfree(ui->fac);
-    ui->fac = xstrdup(new_u->i.fac);
+    ui->fac = xstrdup(new_ui->fac);
   }
-  if (needs_update(ui->fac_en, new_u->i.fac_en)) {
+  if (needs_update(ui->fac_en, new_ui->fac_en)) {
     xfree(ui->fac_en);
-    ui->fac_en = xstrdup(new_u->i.fac_en);
+    ui->fac_en = xstrdup(new_ui->fac_en);
   }
-  if (needs_update(ui->facshort, new_u->i.facshort)) {
+  if (needs_update(ui->facshort, new_ui->facshort)) {
     xfree(ui->facshort);
-    ui->facshort = xstrdup(new_u->i.facshort);
+    ui->facshort = xstrdup(new_ui->facshort);
   }
-  if (needs_update(ui->facshort_en, new_u->i.facshort_en)) {
+  if (needs_update(ui->facshort_en, new_ui->facshort_en)) {
     xfree(ui->facshort_en);
-    ui->facshort_en = xstrdup(new_u->i.facshort_en);
+    ui->facshort_en = xstrdup(new_ui->facshort_en);
   }
-  if (needs_update(ui->city, new_u->i.city)) {
+  if (needs_update(ui->city, new_ui->city)) {
     xfree(ui->city);
-    ui->city = xstrdup(new_u->i.city);
+    ui->city = xstrdup(new_ui->city);
   }
-  if (needs_update(ui->city_en, new_u->i.city_en)) {
+  if (needs_update(ui->city_en, new_ui->city_en)) {
     xfree(ui->city_en);
-    ui->city_en = xstrdup(new_u->i.city_en);
+    ui->city_en = xstrdup(new_ui->city_en);
   }
-  if (needs_update(ui->country, new_u->i.country)) {
+  if (needs_update(ui->country, new_ui->country)) {
     xfree(ui->country);
-    ui->country = xstrdup(new_u->i.country);
+    ui->country = xstrdup(new_ui->country);
   }
-  if (needs_update(ui->country_en, new_u->i.country_en)) {
+  if (needs_update(ui->country_en, new_ui->country_en)) {
     xfree(ui->country_en);
-    ui->country_en = xstrdup(new_u->i.country_en);
+    ui->country_en = xstrdup(new_ui->country_en);
   }
-  if (needs_update(ui->region, new_u->i.region)) {
+  if (needs_update(ui->region, new_ui->region)) {
     xfree(ui->region);
-    ui->region = xstrdup(new_u->i.region);
+    ui->region = xstrdup(new_ui->region);
   }
-  if (needs_update(ui->area, new_u->i.area)) {
+  if (needs_update(ui->area, new_ui->area)) {
     xfree(ui->area);
-    ui->area = xstrdup(new_u->i.area);
+    ui->area = xstrdup(new_ui->area);
   }
-  if (needs_update(ui->languages, new_u->i.languages)) {
+  if (needs_update(ui->languages, new_ui->languages)) {
     xfree(ui->languages);
-    ui->languages = xstrdup(new_u->i.languages);
+    ui->languages = xstrdup(new_ui->languages);
   }
 
   /* change members */
-  handled_members_size = count_members(ui) + count_members(&new_u->i) + 8;
+  handled_members_size = count_members(ui) + count_members(new_ui) + 8;
   XALLOCAZ(handled_members, handled_members_size);
   handled_members_count = 0;
 
   // create new members and move the existing ones
   for (nrole = 0; nrole < CONTEST_LAST_MEMBER; nrole++) {
-    if (!new_u->i.members || new_u->i.members->u <= 0) continue;
-    for (nnum = 0; nnum < new_u->i.members->u; nnum++) {
-      if (!(nm = new_u->i.members->m[nnum])) continue;
+    if (!new_ui->members || new_ui->members->u <= 0) continue;
+    for (nnum = 0; nnum < new_ui->members->u; nnum++) {
+      if (!(nm = new_ui->members->m[nnum])) continue;
       if (nm->team_role != nrole) continue;
       if (nm->serial <= 0) {
         // create new member
@@ -2366,9 +2371,9 @@ set_user_xml_func(void *data,
   }
 
   for (nrole = 0, i = 0; nrole < CONTEST_LAST_MEMBER; nrole++) {
-    if (!new_u->i.members) continue;
-    for (nnum = 0; nnum < new_u->i.members->u; nnum++) {
-      if (!(nm = new_u->i.members->m[nnum])) continue;
+    if (!new_ui->members) continue;
+    for (nnum = 0; nnum < new_ui->members->u; nnum++) {
+      if (!(nm = new_ui->members->m[nnum])) continue;
       if (nm->team_role != nrole) continue;
       ASSERT(nm->serial > 0);
       ASSERT(i < handled_members_count);
@@ -2539,7 +2544,7 @@ copy_user_info_func(
   unsigned char **p_str_from, **p_str_to;
   struct userlist_members *mm;
   struct userlist_member *m = 0, *om = 0;
-  struct userlist_cntsinfo *ci;
+  struct userlist_user_info *ci;
   int role_max[USERLIST_MB_LAST];
   int role_cur[USERLIST_MB_LAST];
   int members_total;
@@ -2556,6 +2561,7 @@ copy_user_info_func(
     return -1;
 
   // the destination
+  if (!to_cnts) userlist_get_cnts0(u);
   if (!(ci = userlist_clone_user_info(u, to_cnts, &ul->member_serial,
                                       cur_time, 0)))
     return -1;
@@ -2714,7 +2720,6 @@ move_member_func(
   struct userlist_list *ul = state->userlist;
   struct userlist_user *u;
   struct userlist_user_info *ui;
-  struct userlist_cntsinfo *ci;
   struct userlist_members *mm;
   struct userlist_member *m;
   int role, num = -1;
@@ -2727,13 +2732,12 @@ move_member_func(
   if (cur_time <= 0) cur_time = time(0);
 
   if (contest_id > 0) {
-    ci = userlist_clone_user_info(u, contest_id, &ul->member_serial, cur_time,
+    ui = userlist_clone_user_info(u, contest_id, &ul->member_serial, cur_time,
                                   p_cloned_flag);
-    ui = &ci->i;
-    link_node = &ci->b;
+    link_node = &ui->b;
   } else {
-    ui = &u->i;
-    link_node = &u->b;
+    ui = userlist_get_cnts0(u);
+    link_node = &ui->b;
   }
 
   /*
@@ -2895,7 +2899,7 @@ userlist_clone_member(
   return dst;
 }
 
-static struct userlist_cntsinfo *
+static struct userlist_user_info *
 userlist_clone_user_info(
         struct userlist_user *u,
         int contest_id,
@@ -2904,7 +2908,7 @@ userlist_clone_user_info(
         int *p_cloned_flag)
 {
   struct xml_tree *p;
-  struct userlist_cntsinfo *ci;
+  struct userlist_user_info *ci;
   struct userlist_members *mm;
   int i, j, r;
   const struct contest_desc *cnts = 0;
@@ -2912,6 +2916,7 @@ userlist_clone_user_info(
   int role_cur[USERLIST_MB_LAST];
   int members_total = 0;
   struct userlist_member *om;
+  struct userlist_user_info *ui = 0;
 
   if (p_cloned_flag) *p_cloned_flag = 0;
   if (contest_id <= 0 || contest_id > EJ_MAX_CONTEST_ID) return 0;
@@ -2928,58 +2933,64 @@ userlist_clone_user_info(
     xml_link_node_last(&u->b, p);
   }
 
-  ci = (struct userlist_cntsinfo*) userlist_node_alloc(USERLIST_T_CNTSINFO);
+  ci = (struct userlist_user_info*) userlist_node_alloc(USERLIST_T_CNTSINFO);
   xml_link_node_last(p, &ci->b);
-
   ci->contest_id = contest_id;
+  ci->instnum = -1;
+  if (!(ui = u->cnts0)) {
+    userlist_expand_cntsinfo(u, contest_id);
+    u->cntsinfo[contest_id] = ci;
+    if (p_cloned_flag) *p_cloned_flag = 1;
+    return ci;
+  }
 
   // NOTE: should we reset the cnts_read_only flag?
-  ci->i.cnts_read_only = u->i.cnts_read_only;
-  ci->i.instnum = u->i.instnum;
+  ci->cnts_read_only = ui->cnts_read_only;
+  ci->instnum = ui->instnum;
 
-  ci->i.name = xstrdup(u->i.name);
+  ci->name = xstrdup(ui->name);
 
-  ci->i.inst = copy_field(u->i.inst);
-  ci->i.inst_en = copy_field(u->i.inst_en);
-  ci->i.instshort = copy_field(u->i.instshort);
-  ci->i.instshort_en = copy_field(u->i.instshort_en);
-  ci->i.fac = copy_field(u->i.fac);
-  ci->i.fac_en = copy_field(u->i.fac_en);
-  ci->i.facshort = copy_field(u->i.facshort);
-  ci->i.facshort_en = copy_field(u->i.facshort_en);
-  ci->i.homepage = copy_field(u->i.homepage);
-  ci->i.city = copy_field(u->i.city);
-  ci->i.city_en = copy_field(u->i.city_en);
-  ci->i.country = copy_field(u->i.country);
-  ci->i.country_en = copy_field(u->i.country_en);
-  ci->i.region = copy_field(u->i.region);
-  ci->i.area = copy_field(u->i.area);
-  ci->i.location = copy_field(u->i.location);
-  ci->i.spelling = copy_field(u->i.spelling);
-  ci->i.printer_name = copy_field(u->i.printer_name);
-  ci->i.exam_id = copy_field(u->i.exam_id);
-  ci->i.exam_cypher = copy_field(u->i.exam_cypher);
-  ci->i.languages = copy_field(u->i.languages);
-  ci->i.phone = copy_field(u->i.phone);
+  ci->inst = copy_field(ui->inst);
+  ci->inst_en = copy_field(ui->inst_en);
+  ci->instshort = copy_field(ui->instshort);
+  ci->instshort_en = copy_field(ui->instshort_en);
+  ci->fac = copy_field(ui->fac);
+  ci->fac_en = copy_field(ui->fac_en);
+  ci->facshort = copy_field(ui->facshort);
+  ci->facshort_en = copy_field(ui->facshort_en);
+  ci->homepage = copy_field(ui->homepage);
+  ci->city = copy_field(ui->city);
+  ci->city_en = copy_field(ui->city_en);
+  ci->country = copy_field(ui->country);
+  ci->country_en = copy_field(ui->country_en);
+  ci->region = copy_field(ui->region);
+  ci->area = copy_field(ui->area);
+  ci->location = copy_field(ui->location);
+  ci->spelling = copy_field(ui->spelling);
+  ci->printer_name = copy_field(ui->printer_name);
+  ci->exam_id = copy_field(ui->exam_id);
+  ci->exam_cypher = copy_field(ui->exam_cypher);
+  ci->languages = copy_field(ui->languages);
+  ci->phone = copy_field(ui->phone);
 
-  ci->i.create_time = current_time;
-  ci->i.last_change_time = u->i.last_change_time;
-  ci->i.last_access_time = 0;
-  ci->i.last_pwdchange_time = u->i.last_pwdchange_time;
-  u->i.last_access_time = current_time;
+  ci->create_time = current_time;
+  ci->last_change_time = ui->last_change_time;
+  ci->last_access_time = 0;
+  ci->last_pwdchange_time = ui->last_pwdchange_time;
+  ui->last_access_time = current_time;
 
-  if (u->i.team_passwd) {
-    ci->i.team_passwd = xstrdup(u->i.team_passwd);
-    ci->i.team_passwd_method = u->i.team_passwd_method;
+  if (ui->team_passwd) {
+    ci->team_passwd = xstrdup(ui->team_passwd);
+    ci->team_passwd_method = ui->team_passwd_method;
   }
 
   if (contests_get(contest_id, &cnts) < 0) cnts = 0;
   memset(role_max, 0, sizeof(role_max));
   memset(role_cur, 0, sizeof(role_cur));
 
-  if (u->i.members) {
-    for (i = 0; i < u->i.members->u; i++) {
-      if (!(om = u->i.members->m[i])) continue;
+  if (ui->members) {
+    for (i = 0; i < ui->members->u; i++) {
+      if (!(om = ui->members->m[i])) continue;
       ASSERT(om->team_role >= 0 && om->team_role < USERLIST_MB_LAST);
       role_max[om->team_role]++;
     }
@@ -2999,21 +3010,21 @@ userlist_clone_user_info(
   if (members_total > 0) {
     mm = (struct userlist_members*)userlist_node_alloc(USERLIST_T_MEMBERS);
     xml_link_node_last(&ci->b, &mm->b);
-    ci->i.members = mm;
+    ci->members = mm;
     j = 4;
     while (j < members_total) j *= 2;
     mm->a = j;
     XCALLOC(mm->m, j);
   }
 
-  if (u->i.members) {
-    for (i = 0; i < u->i.members->u; i++) {
-      if (!(om = u->i.members->m[i])) continue;
+  if (ui->members) {
+    for (i = 0; i < ui->members->u; i++) {
+      if (!(om = ui->members->m[i])) continue;
       r = om->team_role;
       if (r < 0 || r >= USERLIST_MB_LAST || role_cur[r] >= role_max[r])
         continue;
 
-      mm->m[mm->u] = userlist_clone_member(u->i.members->m[i], p_serial, current_time);
+      mm->m[mm->u] = userlist_clone_member(ui->members->m[i], p_serial, current_time);
       xml_link_node_last(&mm->b, &mm->m[mm->u]->b);
       mm->u++;
     }
@@ -3027,11 +3038,23 @@ userlist_clone_user_info(
 }
 
 static int
-get_member_serial(void *data)
+get_member_serial_func(void *data)
 {
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
   struct userlist_list *ul = state->userlist;
   return ul->member_serial;
+}
+
+static int
+set_member_serial_func(void *data, int new_serial)
+{
+  struct uldb_xml_state *state = (struct uldb_xml_state*) data;
+  struct userlist_list *ul = state->userlist;
+  if (ul->member_serial > new_serial) return -1;
+  if (ul->member_serial == new_serial) return 0;
+  ul->member_serial = new_serial;
+  state->dirty = 1;
+  return 1;
 }
 
 /*

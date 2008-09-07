@@ -4407,8 +4407,8 @@ priv_view_users_page(FILE *fout,
     } else {
       fprintf(fout, "<td%s>%s</td>", cl, ARMOR(u->login));
     }
-    if (u->i.name && *u->i.name) {
-      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(u->i.name));
+    if (u->cnts0 && u->cnts0->name && *u->cnts0->name) {
+      fprintf(fout, "<td%s>%s</td>", cl, ARMOR(u->cnts0->name));
     } else {
       fprintf(fout, "<td%s>&nbsp;</td>", cl);
     }
@@ -4435,9 +4435,9 @@ priv_view_users_page(FILE *fout,
     } else {
       fprintf(fout, "<td%s>&nbsp;</td>", cl);
     }
-    if (u->i.last_login_time > 0) {
+    if (u->cnts0 && u->cnts0->last_login_time > 0) {
       fprintf(fout, "<td%s>%s</td>", cl,
-              xml_unparse_date(u->i.last_login_time));
+              xml_unparse_date(u->cnts0->last_login_time));
     } else {
       fprintf(fout, "<td%s>&nbsp;</td>", cl);
     }

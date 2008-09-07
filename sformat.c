@@ -176,16 +176,19 @@ sformat_message(char *buf, size_t maxsize, char const *format,
   char   *psbuf;
   size_t  sbufsize = 16;
   const struct userlist_user_info *ui = 0;
+  const struct userlist_user_info *tui = 0;
 
   if (user_data) {
     if (cnts_data && cnts_data->id > 0
         && cnts_data->id < user_data->cntsinfo_a
         && user_data->cntsinfo[cnts_data->id]) {
-      ui = &user_data->cntsinfo[cnts_data->id]->i;
+      ui = user_data->cntsinfo[cnts_data->id];
     } else {
-      ui = &user_data->i;
+      ui = user_data->cnts0;
     }
   }
+
+  if (team_data && team_data->user) tui = team_data->user->cnts0;
 
   if (maxsize == (size_t) -1) {
     mptr = (char*) xcalloc(16, 1);
@@ -472,88 +475,71 @@ sformat_message(char *buf, size_t maxsize, char const *format,
             break;
           case 'c':
             papp = "";
-            if (team_data->user && team_data->user->i.city)
-              papp = team_data->user->i.city;
+            if (tui && tui->city) papp = tui->city;
             break;
           case 'C':
             papp = "";
-            if (team_data->user && team_data->user->i.city_en)
-              papp = team_data->user->i.city_en;
+            if (tui && tui->city_en) papp = tui->city_en;
             break;
           case 'o':
             papp = "";
-            if (team_data->user && team_data->user->i.country)
-              papp = team_data->user->i.country;
+            if (tui && tui->country) papp = tui->country;
             break;
           case 'O':
             papp = "";
-            if (team_data->user && team_data->user->i.country_en)
-              papp = team_data->user->i.country_en;
+            if (tui && tui->country_en) papp = tui->country_en;
             break;
           case 'r':
             papp = "";
-            if (team_data->user && team_data->user->i.region)
-              papp = team_data->user->i.region;
+            if (tui && tui->region) papp = tui->region;
             break;
           case 't':
             papp = "";
-            if (team_data->user && team_data->user->i.instshort)
-              papp = team_data->user->i.instshort;
+            if (tui && tui->instshort) papp = tui->instshort;
             break;
           case 'T':
             papp = "";
-            if (team_data->user && team_data->user->i.instshort_en)
-              papp = team_data->user->i.instshort_en;
+            if (tui && tui->instshort_en) papp = tui->instshort_en;
             break;
           case 'u':
             papp = "";
-            if (team_data->user && team_data->user->i.inst)
-              papp = team_data->user->i.inst;
+            if (tui && tui->inst) papp = tui->inst;
             break;
           case 'U':
             papp = "";
-            if (team_data->user && team_data->user->i.inst_en)
-              papp = team_data->user->i.inst_en;
+            if (tui && tui->inst_en) papp = tui->inst_en;
             break;
           case 'f':
             papp = "";
-            if (team_data->user && team_data->user->i.facshort)
-              papp = team_data->user->i.facshort;
+            if (tui && tui->facshort) papp = tui->facshort;
             break;
           case 'F':
             papp = "";
-            if (team_data->user && team_data->user->i.facshort_en)
-              papp = team_data->user->i.facshort_en;
+            if (tui && tui->facshort_en) papp = tui->facshort_en;
             break;
           case 'd':
             papp = "";
-            if (team_data->user && team_data->user->i.fac)
-              papp = team_data->user->i.fac;
+            if (tui && tui->fac) papp = tui->fac;
             break;
           case 'D':
             papp = "";
-            if (team_data->user && team_data->user->i.fac_en)
-              papp = team_data->user->i.fac_en;
+            if (tui && tui->fac_en) papp = tui->fac_en;
             break;
           case 'L':
             papp = "";
-            if (team_data->user && team_data->user->i.location)
-              papp = team_data->user->i.location;
+            if (tui && tui->location) papp = tui->location;
             break;
           case 'p':
             papp = "";
-            if (team_data->user && team_data->user->i.printer_name)
-              papp = team_data->user->i.printer_name;
+            if (tui && tui->printer_name) papp = tui->printer_name;
             break;
           case 'y':
             papp = "";
-            if (team_data->user && team_data->user->i.exam_id)
-              papp = team_data->user->i.exam_id;
+            if (tui && tui->exam_id) papp = tui->exam_id;
             break;
           case 'Y':
             papp = "";
-            if (team_data->user && team_data->user->i.exam_cypher)
-              papp = team_data->user->i.exam_cypher;
+            if (tui && tui->exam_cypher) papp = tui->exam_cypher;
             break;
           case '1':
             papp = "";

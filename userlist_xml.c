@@ -174,7 +174,7 @@ static size_t const elem_sizes[USERLIST_LAST_TAG] =
   [USERLIST_T_COOKIE] = sizeof(struct userlist_cookie),
   [USERLIST_T_CONTEST] = sizeof(struct userlist_contest),
   [USERLIST_T_MEMBERS] = sizeof(struct userlist_members),
-  [USERLIST_T_CNTSINFO] = sizeof(struct userlist_cntsinfo),
+  [USERLIST_T_CNTSINFO] = sizeof(struct userlist_user_info),
 };
 
 struct xml_tree *
@@ -202,42 +202,6 @@ elem_free(struct xml_tree *t)
       xfree(p->login);
       xfree(p->email);
       xfree(p->passwd);
-      xfree(p->i.name);
-      xfree(p->i.team_passwd);
-      xfree(p->i.inst);
-      xfree(p->i.inst_en);
-      xfree(p->i.instshort);
-      xfree(p->i.instshort_en);
-      xfree(p->i.fac);
-      xfree(p->i.fac_en);
-      xfree(p->i.facshort);
-      xfree(p->i.facshort_en);
-      xfree(p->i.homepage);
-      xfree(p->i.city);
-      xfree(p->i.city_en);
-      xfree(p->i.country);
-      xfree(p->i.country_en);
-      xfree(p->i.region);
-      xfree(p->i.area);
-      xfree(p->i.zip);
-      xfree(p->i.street);
-      xfree(p->i.location);
-      xfree(p->i.spelling);
-      xfree(p->i.printer_name);
-      xfree(p->i.exam_id);
-      xfree(p->i.exam_cypher);
-      xfree(p->i.languages);
-      xfree(p->i.phone);
-      xfree(p->i.field0);
-      xfree(p->i.field1);
-      xfree(p->i.field2);
-      xfree(p->i.field3);
-      xfree(p->i.field4);
-      xfree(p->i.field5);
-      xfree(p->i.field6);
-      xfree(p->i.field7);
-      xfree(p->i.field8);
-      xfree(p->i.field9);
       xfree(p->extra1);
       xfree(p->cntsinfo);
     }
@@ -277,43 +241,43 @@ elem_free(struct xml_tree *t)
     break;
   case USERLIST_T_CNTSINFO:
     {
-      struct userlist_cntsinfo *p = (struct userlist_cntsinfo*) t;
-      xfree(p->i.name);
-      xfree(p->i.team_passwd);
-      xfree(p->i.inst);
-      xfree(p->i.inst_en);
-      xfree(p->i.instshort);
-      xfree(p->i.instshort_en);
-      xfree(p->i.fac);
-      xfree(p->i.fac_en);
-      xfree(p->i.facshort);
-      xfree(p->i.facshort_en);
-      xfree(p->i.homepage);
-      xfree(p->i.city);
-      xfree(p->i.city_en);
-      xfree(p->i.country);
-      xfree(p->i.country_en);
-      xfree(p->i.region);
-      xfree(p->i.area);
-      xfree(p->i.zip);
-      xfree(p->i.street);
-      xfree(p->i.location);
-      xfree(p->i.spelling);
-      xfree(p->i.printer_name);
-      xfree(p->i.exam_id);
-      xfree(p->i.exam_cypher);
-      xfree(p->i.languages);
-      xfree(p->i.phone);
-      xfree(p->i.field0);
-      xfree(p->i.field1);
-      xfree(p->i.field2);
-      xfree(p->i.field3);
-      xfree(p->i.field4);
-      xfree(p->i.field5);
-      xfree(p->i.field6);
-      xfree(p->i.field7);
-      xfree(p->i.field8);
-      xfree(p->i.field9);
+      struct userlist_user_info *p = (struct userlist_user_info*) t;
+      xfree(p->name);
+      xfree(p->team_passwd);
+      xfree(p->inst);
+      xfree(p->inst_en);
+      xfree(p->instshort);
+      xfree(p->instshort_en);
+      xfree(p->fac);
+      xfree(p->fac_en);
+      xfree(p->facshort);
+      xfree(p->facshort_en);
+      xfree(p->homepage);
+      xfree(p->city);
+      xfree(p->city_en);
+      xfree(p->country);
+      xfree(p->country_en);
+      xfree(p->region);
+      xfree(p->area);
+      xfree(p->zip);
+      xfree(p->street);
+      xfree(p->location);
+      xfree(p->spelling);
+      xfree(p->printer_name);
+      xfree(p->exam_id);
+      xfree(p->exam_cypher);
+      xfree(p->languages);
+      xfree(p->phone);
+      xfree(p->field0);
+      xfree(p->field1);
+      xfree(p->field2);
+      xfree(p->field3);
+      xfree(p->field4);
+      xfree(p->field5);
+      xfree(p->field6);
+      xfree(p->field7);
+      xfree(p->field8);
+      xfree(p->field9);
     }
     break;
   }
@@ -887,7 +851,7 @@ static int
 parse_cntsinfo(const char *path, struct xml_tree *node,
                struct userlist_user *usr)
 {
-  struct userlist_cntsinfo *ui;
+  struct userlist_user_info *ui;
   struct xml_attr *a;
   struct xml_tree *p, *saved_next;
   time_t *pt;
@@ -895,7 +859,7 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
 
   ASSERT(node);
   ASSERT(node->tag == USERLIST_T_CNTSINFO);
-  ui = (struct userlist_cntsinfo*) node;
+  ui = (struct userlist_user_info*) node;
 
   if (xml_empty_text(node) < 0) return -1;
 
@@ -913,33 +877,27 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
       }
       break;
     case USERLIST_A_CNTS_READ_ONLY:
-      if (xml_attr_bool(a, &ui->i.cnts_read_only) < 0) return -1;
-      ui->i.filled = 1;
+      if (xml_attr_bool(a, &ui->cnts_read_only) < 0) return -1;
       break;
     case USERLIST_A_LAST_CHANGE:
     case USERLIST_A_LAST_INFO_CHANGE:
-      pt = &ui->i.last_change_time;
-      ui->i.filled = 1;
+      pt = &ui->last_change_time;
     parse_date_attr:
       if (xml_attr_date(a, pt) < 0) return -1;
       break;
     case USERLIST_A_LAST_ACCESS:
-      pt = &ui->i.last_access_time;
-      ui->i.filled = 1;
+      pt = &ui->last_access_time;
       goto parse_date_attr;
     case USERLIST_A_LAST_PWDCHANGE:
     case USERLIST_A_LAST_INFO_PWDCHANGE:
-      pt = &ui->i.last_pwdchange_time;
-      ui->i.filled = 1;
+      pt = &ui->last_pwdchange_time;
       goto parse_date_attr;
     case USERLIST_A_INFO_CREATE:
     case USERLIST_A_CREATE:
-      pt = &ui->i.create_time;
-      ui->i.filled = 1;
+      pt = &ui->create_time;
       goto parse_date_attr;
     case USERLIST_A_CNTS_LAST_LOGIN:
-      pt = &ui->i.last_login_time;
-      ui->i.filled = 1;
+      pt = &ui->last_login_time;
       goto parse_date_attr;
     default:
       return xml_err_attr_not_allowed(node, a);
@@ -949,16 +907,15 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
 
   if (ui->contest_id <= 0)
     return xml_err_attr_undefined(node, USERLIST_A_CONTEST_ID);
-  ui->i.instnum = -1;
+  ui->instnum = -1;
 
   /* parse elements */
   for (p = node->first_down; p; p = saved_next) {
     saved_next = p->right;
 
     if (leaf_info_offsets[p->tag] > 0) {
-      p_str = XPDEREF(unsigned char *, &ui->i, leaf_info_offsets[p->tag]);
+      p_str = XPDEREF(unsigned char *, ui, leaf_info_offsets[p->tag]);
       if (xml_leaf_elem(p, p_str, 1, 1) < 0) return -1;
-      ui->i.filled = 1;
       xml_unlink_node(p);
       userlist_free(p);
       continue;
@@ -966,23 +923,21 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
 
     switch(p->tag) {
     case USERLIST_T_TEAM_PASSWORD:
-      if (ui->i.team_passwd) return xml_err_elem_redefined(p);
-      if (parse_passwd(p, &ui->i.team_passwd, &ui->i.team_passwd_method) < 0)
+      if (ui->team_passwd) return xml_err_elem_redefined(p);
+      if (parse_passwd(p, &ui->team_passwd, &ui->team_passwd_method) < 0)
         return -1;
-      ui->i.filled = 1;
       break;
     case USERLIST_T_CONTESTANTS:
     case USERLIST_T_RESERVES:
     case USERLIST_T_COACHES:
     case USERLIST_T_ADVISORS:
     case USERLIST_T_GUESTS:
-      if (parse_members(path, p, &ui->b, &ui->i) < 0) return -1;
-      ui->i.filled = 1;
+      if (parse_members(path, p, &ui->b, ui) < 0) return -1;
       break;
     case USERLIST_T_INSTNUM:
-      if (xml_parse_int(path, p->line, p->column, p->text, &ui->i.instnum) < 0)
+      if (xml_parse_int(path, p->line, p->column, p->text, &ui->instnum) < 0)
         return -1;
-      if (ui->i.instnum < 0) return xml_err_elem_invalid(p);
+      if (ui->instnum < 0) return xml_err_elem_invalid(p);
       break;
     case USERLIST_T_MEMBERS:
       break;
@@ -991,7 +946,7 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
     }
   }
 
-  if (!ui->i.name) ui->i.name = xstrdup("");
+  if (!ui->name) ui->name = xstrdup("");
 
   userlist_expand_cntsinfo(usr, ui->contest_id);
   usr->cntsinfo[ui->contest_id] = ui;
@@ -1026,6 +981,7 @@ do_parse_user(char const *path, struct userlist_user *usr)
   struct xml_attr *a;
   struct xml_tree *t, *saved_next;
   unsigned char **p_str;
+  struct userlist_user_info *ui;
 
   xfree(usr->b.text); usr->b.text = 0;
 
@@ -1047,8 +1003,9 @@ do_parse_user(char const *path, struct userlist_user *usr)
                      &usr->last_login_time) < 0) return -1;
       break;
     case USERLIST_A_CNTS_LAST_LOGIN:
+      ui = userlist_get_cnts0(usr);
       if (xml_parse_date(path, a->line, a->column, a->text,
-                     &usr->i.last_login_time) < 0) return -1;
+                     &ui->last_login_time) < 0) return -1;
       break;
     case USERLIST_A_LAST_ACCESS:
       if (xml_parse_date(path, a->line, a->column, a->text,
@@ -1059,24 +1016,27 @@ do_parse_user(char const *path, struct userlist_user *usr)
                      &usr->last_change_time) < 0) return -1;
       break;
     case USERLIST_A_LAST_INFO_CHANGE:
+      ui = userlist_get_cnts0(usr);
       if (xml_parse_date(path, a->line, a->column, a->text,
-                     &usr->i.last_change_time) < 0) return -1;
+                     &ui->last_change_time) < 0) return -1;
       break;
     case USERLIST_A_LAST_PWDCHANGE:
       if (xml_parse_date(path, a->line, a->column, a->text,
                      &usr->last_pwdchange_time) < 0) return -1;
       break;
     case USERLIST_A_LAST_INFO_PWDCHANGE:
+      ui = userlist_get_cnts0(usr);
       if (xml_parse_date(path, a->line, a->column, a->text,
-                     &usr->i.last_pwdchange_time) < 0) return -1;
+                     &ui->last_pwdchange_time) < 0) return -1;
       break;
     case USERLIST_A_LAST_MINOR_CHANGE:
       if (xml_parse_date(path, a->line, a->column, a->text,
                      &usr->last_minor_change_time) < 0) return -1;
       break;
     case USERLIST_A_INFO_CREATE:
+      ui = userlist_get_cnts0(usr);
       if (xml_parse_date(path, a->line, a->column, a->text,
-                         &usr->i.create_time) < 0) return -1;
+                         &ui->create_time) < 0) return -1;
       break;
     case USERLIST_A_PRIVILEGED:
       if (xml_attr_bool(a, &usr->is_privileged) < 0) return -1;
@@ -1097,8 +1057,8 @@ do_parse_user(char const *path, struct userlist_user *usr)
       if (xml_attr_bool(a, &usr->read_only) < 0) return -1;
       break;
     case USERLIST_A_CNTS_READ_ONLY:
-      if (xml_attr_bool(a, &usr->i.cnts_read_only) < 0) return -1;
-      usr->i.filled = 1;
+      ui = userlist_get_cnts0(usr);
+      if (xml_attr_bool(a, &ui->cnts_read_only) < 0) return -1;
       break;
     case USERLIST_A_NEVER_CLEAN:
       if (xml_attr_bool(a, &usr->never_clean) < 0) return -1;
@@ -1113,15 +1073,15 @@ do_parse_user(char const *path, struct userlist_user *usr)
   userlist_free_attrs(&usr->b);
   if (usr->id == -1)
     return xml_err_attr_undefined(&usr->b, USERLIST_A_ID);
-  usr->i.instnum = -1;
+  if (usr->cnts0) usr->cnts0->instnum = -1;
 
   for (t = usr->b.first_down; t; t = saved_next) {
     saved_next = t->right;
 
     if (leaf_info_offsets[t->tag] > 0) {
-      p_str = XPDEREF(unsigned char *, &usr->i, leaf_info_offsets[t->tag]);
+      ui = userlist_get_cnts0(usr);
+      p_str = XPDEREF(unsigned char *, ui, leaf_info_offsets[t->tag]);
       if (xml_leaf_elem(t, p_str, 1, 1) < 0) return -1;
-      usr->i.filled = 1;
       xml_unlink_node(t);
       userlist_free(t);
       continue;
@@ -1147,10 +1107,10 @@ do_parse_user(char const *path, struct userlist_user *usr)
         return -1;
       break;
     case USERLIST_T_TEAM_PASSWORD:
-      if (usr->i.team_passwd) return xml_err_elem_redefined(t);
-      if (parse_passwd(t, &usr->i.team_passwd, &usr->i.team_passwd_method) < 0)
+      ui = userlist_get_cnts0(usr);
+      if (ui->team_passwd) return xml_err_elem_redefined(t);
+      if (parse_passwd(t, &ui->team_passwd, &ui->team_passwd_method) < 0)
         return -1;
-      usr->i.filled = 1;
       break;
     case USERLIST_T_EMAIL:
       if (usr->email) return xml_err_elem_redefined(t);
@@ -1183,18 +1143,21 @@ do_parse_user(char const *path, struct userlist_user *usr)
     case USERLIST_T_COACHES:
     case USERLIST_T_ADVISORS:
     case USERLIST_T_GUESTS:
-      if (parse_members(path, t, &usr->b, &usr->i) < 0) return -1;
-      usr->i.filled = 1;
+      ui = userlist_get_cnts0(usr);
+      if (parse_members(path, t, &usr->b, ui) < 0) return -1;
       break;
     case USERLIST_T_CNTSINFOS:
       if (parse_cntsinfos(path, t, usr) < 0) return -1;
       break;
     case USERLIST_T_INSTNUM:
-      if (xml_parse_int(path,t->line,t->column,t->text,&usr->i.instnum) < 0)
+      ui = userlist_get_cnts0(usr);
+      if (xml_parse_int(path,t->line,t->column,t->text,&ui->instnum) < 0)
         return -1;
-      if (usr->i.instnum < 0) return xml_err_elem_invalid(t);
+      if (ui->instnum < 0) return xml_err_elem_invalid(t);
       break;
     case USERLIST_T_MEMBERS:
+      break;
+    case USERLIST_T_CNTSINFO:
       break;
     default:
       return xml_err_elem_not_allowed(t);
@@ -1206,8 +1169,8 @@ do_parse_user(char const *path, struct userlist_user *usr)
   if (!usr->passwd)
     return xml_err_elem_undefined(&usr->b, USERLIST_T_PASSWORD);
   */
-  if (!usr->i.name)
-    usr->i.name = xstrdup("");
+  if (usr->cnts0 && !usr->cnts0->name)
+    usr->cnts0->name = xstrdup("");
   return 0;
 }
 
@@ -1625,7 +1588,7 @@ unparse_contests(const struct xml_tree *p, FILE *f, int mode, int contest_id)
 }
 
 static void
-unparse_cntsinfo(const struct userlist_cntsinfo *p, FILE *f)
+unparse_cntsinfo(const struct userlist_user_info *p, FILE *f)
 {
   unsigned char attr_str[256];
   const unsigned char *sp1 = "      ";
@@ -1636,53 +1599,53 @@ unparse_cntsinfo(const struct userlist_cntsinfo *p, FILE *f)
   fprintf(f, "    <%s %s=\"%d\"",
           elem_map[USERLIST_T_CNTSINFO], attr_map[USERLIST_A_CONTEST_ID],
           p->contest_id);
-  if (p->i.cnts_read_only) {
+  if (p->cnts_read_only) {
     fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_CNTS_READ_ONLY],
-            xml_unparse_bool(p->i.cnts_read_only));
+            xml_unparse_bool(p->cnts_read_only));
   }
-  if (p->i.create_time > 0) {
+  if (p->create_time > 0) {
     fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_INFO_CREATE],
-            xml_unparse_date(p->i.create_time));
+            xml_unparse_date(p->create_time));
   }
-  if (p->i.last_login_time > 0) {
+  if (p->last_login_time > 0) {
     fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_CNTS_LAST_LOGIN],
-            xml_unparse_date(p->i.last_login_time));
+            xml_unparse_date(p->last_login_time));
   }
-  if (p->i.last_change_time > 0) {
+  if (p->last_change_time > 0) {
     fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_LAST_INFO_CHANGE],
-            xml_unparse_date(p->i.last_change_time));
+            xml_unparse_date(p->last_change_time));
   }
-  if (p->i.last_access_time > 0) {
+  if (p->last_access_time > 0) {
     fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_LAST_ACCESS],
-            xml_unparse_date(p->i.last_access_time));
+            xml_unparse_date(p->last_access_time));
   }
-  if (p->i.last_pwdchange_time > 0) {
+  if (p->last_pwdchange_time > 0) {
     fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_LAST_INFO_PWDCHANGE],
-            xml_unparse_date(p->i.last_pwdchange_time));
+            xml_unparse_date(p->last_pwdchange_time));
   }
   fprintf(f, ">\n");
 
-  if (p->i.instnum >= 0) {
+  if (p->instnum >= 0) {
     fprintf(f, "%s<%s>%d</%s>\n", sp1, elem_map[USERLIST_T_INSTNUM],
-            p->i.instnum, elem_map[USERLIST_T_INSTNUM]);
+            p->instnum, elem_map[USERLIST_T_INSTNUM]);
   }
 
   for (i = 1; i < USERLIST_LAST_TAG; i++) {
     if (leaf_info_offsets[i] > 0) {
-      p_str = XPDEREF(unsigned char *, &p->i, leaf_info_offsets[i]);
+      p_str = XPDEREF(unsigned char *, p, leaf_info_offsets[i]);
       xml_unparse_text(f, elem_map[i], *p_str, sp1);
     }
   }
 
-  if (p->i.team_passwd) {
+  if (p->team_passwd) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
              attr_map[USERLIST_A_METHOD],
-             unparse_passwd_method(p->i.team_passwd_method));
+             unparse_passwd_method(p->team_passwd_method));
     unparse_attributed_elem(f, USERLIST_T_TEAM_PASSWORD,
-                            p->i.team_passwd, attr_str, sp1);
+                            p->team_passwd, attr_str, sp1);
   }
 
-  unparse_members(p->i.members, f);
+  unparse_members(p->members, f);
 
   fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CNTSINFO]);
 }
@@ -1699,9 +1662,9 @@ userlist_unparse_user_short(const struct userlist_user *p, FILE *f,
 
   if (p->cntsinfo && contest_id > 0 && contest_id < p->cntsinfo_a
       && p->cntsinfo[contest_id]) {
-    ui = &p->cntsinfo[contest_id]->i;
+    ui = p->cntsinfo[contest_id];
   } else {
-    ui = &p->i;
+    ui = p->cnts0;
   }
 
   if (contest_id) {
@@ -1714,13 +1677,13 @@ userlist_unparse_user_short(const struct userlist_user *p, FILE *f,
   }
   fprintf(f, "  <%s %s=\"%d\"", elem_map[USERLIST_T_USER],
           attr_map[USERLIST_A_ID], p->id);
-  if (ui->last_login_time > 0) {
+  if (ui && ui->last_login_time > 0) {
     fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_CNTS_LAST_LOGIN],
             xml_unparse_date(ui->last_login_time));
   }
   fprintf(f, ">");
   xml_unparse_text(f, elem_map[USERLIST_T_LOGIN], p->login, "    ");
-  if (ui->name && *ui->name) {
+  if (ui && ui->name && *ui->name) {
     xml_unparse_text(f, elem_map[USERLIST_T_NAME], ui->name, "    ");
   }
   xml_unparse_text(f, elem_map[USERLIST_T_EMAIL], p->email, "    ");
@@ -1758,9 +1721,9 @@ userlist_real_unparse_user(
 
   if (contest_id > 0 && p->cntsinfo && contest_id < p->cntsinfo_a
       && p->cntsinfo[contest_id]) {
-    ui = &p->cntsinfo[contest_id]->i;
+    ui = p->cntsinfo[contest_id];
   } else {
-    ui = &p->i;
+    ui = p->cnts0;
   }
 
   fprintf(f, "  <%s %s=\"%d\"", elem_map[USERLIST_T_USER],
@@ -1778,7 +1741,7 @@ userlist_real_unparse_user(
 
     /* cnts_read_only is contest-specific */
   }
-  unparse_bool_attr(f, USERLIST_A_CNTS_READ_ONLY, ui->cnts_read_only);
+  if (ui) unparse_bool_attr(f, USERLIST_A_CNTS_READ_ONLY, ui->cnts_read_only);
   if (mode == USERLIST_MODE_ALL) {
     unparse_date_attr(f, USERLIST_A_REGISTERED, p->registration_time);
     unparse_date_attr(f, USERLIST_A_LAST_LOGIN, p->last_login_time);
@@ -1787,16 +1750,20 @@ userlist_real_unparse_user(
     unparse_date_attr(f, USERLIST_A_LAST_CHANGE, p->last_change_time);
     unparse_date_attr(f, USERLIST_A_LAST_PWDCHANGE, p->last_pwdchange_time);
 
+    if (ui) {
     /* last_access_time is contest-specific */
-    unparse_date_attr(f, USERLIST_A_LAST_ACCESS, ui->last_access_time);
+      unparse_date_attr(f, USERLIST_A_LAST_ACCESS, ui->last_access_time);
     /* last_change_time is contest-specific */
-    unparse_date_attr(f, USERLIST_A_INFO_CREATE, ui->create_time);
-    unparse_date_attr(f, USERLIST_A_LAST_INFO_CHANGE, ui->last_change_time);
+      unparse_date_attr(f, USERLIST_A_INFO_CREATE, ui->create_time);
+      unparse_date_attr(f, USERLIST_A_LAST_INFO_CHANGE, ui->last_change_time);
     /* last_pwdchange_time is contest-specific */
-    unparse_date_attr(f, USERLIST_A_LAST_INFO_PWDCHANGE, ui->last_pwdchange_time);
+      unparse_date_attr(f, USERLIST_A_LAST_INFO_PWDCHANGE, ui->last_pwdchange_time);
+    }
   }
   if (mode == USERLIST_MODE_ALL || mode == USERLIST_MODE_STAND) {
-    unparse_date_attr(f, USERLIST_A_CNTS_LAST_LOGIN, ui->last_login_time);
+    if (ui) {
+      unparse_date_attr(f, USERLIST_A_CNTS_LAST_LOGIN, ui->last_login_time);
+    }
   }
   fputs(">\n", f);
 
@@ -1812,7 +1779,7 @@ userlist_real_unparse_user(
              unparse_passwd_method(p->passwd_method));
     unparse_attributed_elem(f, USERLIST_T_PASSWORD, p->passwd,attr_str, "    ");
   }
-  if (ui->team_passwd && (flags & USERLIST_SHOW_CNTS_PASSWD)
+  if (ui && ui->team_passwd && (flags & USERLIST_SHOW_CNTS_PASSWD)
       && (mode == USERLIST_MODE_ALL || mode == USERLIST_MODE_STAND)) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
              attr_map[USERLIST_A_METHOD],
@@ -1820,7 +1787,7 @@ userlist_real_unparse_user(
     unparse_attributed_elem(f, USERLIST_T_TEAM_PASSWORD,
                             ui->team_passwd, attr_str, "    ");
   }
-  if (ui->name && *ui->name) {
+  if (ui && ui->name && *ui->name) {
     xml_unparse_text(f, elem_map[USERLIST_T_NAME], ui->name, "    ");
   }
   if (p->email) { // && mode != USERLIST_MODE_STAND) {
@@ -1833,15 +1800,17 @@ userlist_real_unparse_user(
   }
   unparse_contests(p->contests, f, USERLIST_MODE_STAND, contest_id);
 
-  if (ui->instnum >= 0) {
+  if (ui && ui->instnum >= 0) {
     fprintf(f, "    <%s>%d</%s>\n", elem_map[USERLIST_T_INSTNUM],
             ui->instnum, elem_map[USERLIST_T_INSTNUM]);
   }
 
-  for (i = 1; i < USERLIST_LAST_TAG; i++) {
-    if (i != USERLIST_T_NAME && leaf_info_offsets[i] > 0) {
-      p_str = XPDEREF(unsigned char *, ui, leaf_info_offsets[i]);
-      xml_unparse_text(f, elem_map[i], *p_str, "    ");
+  if (ui) {
+    for (i = 1; i < USERLIST_LAST_TAG; i++) {
+      if (i != USERLIST_T_NAME && leaf_info_offsets[i] > 0) {
+        p_str = XPDEREF(unsigned char *, ui, leaf_info_offsets[i]);
+        xml_unparse_text(f, elem_map[i], *p_str, "    ");
+      }
     }
   }
 
@@ -1863,15 +1832,17 @@ userlist_real_unparse_user(
   }
   */
 
-  if (mode == USERLIST_MODE_STAND && (flags & USERLIST_FORCE_FIRST_MEMBER)
-      && (m = userlist_members_get_first(ui->members))) {
-    fprintf(f, "    <%s>\n", elem_map[USERLIST_T_CONTESTANTS]);
-    unparse_member(m, f);
-    fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CONTESTANTS]);
-  }
+  if (ui) {
+    if (mode == USERLIST_MODE_STAND && (flags & USERLIST_FORCE_FIRST_MEMBER)
+        && (m = userlist_members_get_first(ui->members))) {
+      fprintf(f, "    <%s>\n", elem_map[USERLIST_T_CONTESTANTS]);
+      unparse_member(m, f);
+      fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CONTESTANTS]);
+    }
 
-  if (mode != USERLIST_MODE_STAND) {
-    unparse_members(ui->members, f);
+    if (mode != USERLIST_MODE_STAND) {
+      unparse_members(ui->members, f);
+    }
   }
 
   if (contest_id < 0 && p->cntsinfo) {

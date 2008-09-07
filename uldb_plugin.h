@@ -181,6 +181,8 @@ struct uldb_plugin_iface
   int (*get_user_info_7)(void *, int, int, const struct userlist_user **, const struct userlist_user_info **, const struct userlist_members **);
   // get the member serial number
   int (*get_member_serial)(void *);
+  // set the member serial number
+  int (*set_member_serial)(void *, int);
 };
 
 /* default plugin: compiled into userlist-server */
