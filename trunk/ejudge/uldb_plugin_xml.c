@@ -2699,7 +2699,7 @@ check_user_reg_data_func(void *data, int user_id, int contest_id)
     state->flush_interval /= 2;
     return 1;
   } else if (nerr > 0 && !(c->flags & USERLIST_UC_INCOMPLETE)
-             && !ui->cnts_read_only) {
+             && (!ui || !ui->cnts_read_only)) {
     cm = (struct userlist_contest*) c;
     cm->flags |= USERLIST_UC_INCOMPLETE;
     state->dirty = 1;
