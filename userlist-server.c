@@ -7853,7 +7853,7 @@ cmd_edit_field_seq(
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
   }
-  if (u->read_only || ui->cnts_read_only) {
+  if (u->read_only || (ui && ui->cnts_read_only)) {
     err("%s -> read-only user", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -8245,7 +8245,7 @@ cmd_import_csv_users(
       fprintf(log_f, "User `%s' is not a regular user\n", csv->v[i].v[j]);
       goto cleanup;
     }
-    if (u->read_only || ui->cnts_read_only) {
+    if (u->read_only || (ui && ui->cnts_read_only)) {
       fprintf(log_f, "User `%s' is read-only\n", u->login);
       goto cleanup;
     }
