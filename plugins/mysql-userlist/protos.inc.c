@@ -55,7 +55,7 @@ static int
 fetch_login(
         struct uldb_mysql_state *state,
         int user_id,
-        const struct userlist_user **p_user)
+        struct userlist_user **p_user)
   __attribute__((unused));
 static void
 unparse_login(

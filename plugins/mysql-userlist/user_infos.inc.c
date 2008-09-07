@@ -22,7 +22,7 @@ struct user_info_container
   struct xml_tree b;
   int user_id;
   int contest_id;
-  struct userlist_cntsinfo *ui;
+  struct userlist_user_info *ui;
   struct user_info_container *next, *prev;
   struct user_info_container *next_user, *prev_user;
 };
@@ -92,7 +92,7 @@ allocate_user_info_on_pool(
 
     MOVE_TO_FRONT(pp, ic->first, ic->last, prev, next);
     MOVE_TO_FRONT(pp, uiu->first_user, uiu->last_user, prev_user, next_user);
-    return &pp->ui->i;
+    return pp->ui;
   }
 
   if (ic->count == USER_INFO_POOL_SIZE) {
@@ -100,7 +100,7 @@ allocate_user_info_on_pool(
   }
 
   XCALLOC(pp, 1);
-  pp->ui = (struct userlist_cntsinfo*) userlist_node_alloc(USERLIST_T_CNTSINFO);
+  pp->ui = (struct userlist_user_info*)userlist_node_alloc(USERLIST_T_CNTSINFO);
   pp->ui->b.tag = USERLIST_T_CNTSINFO;
   pp->user_id = user_id;
   pp->contest_id = contest_id;
@@ -108,7 +108,7 @@ allocate_user_info_on_pool(
   UPDATE_RANGE(uiu->min_id, uiu->max_id, uiu->first_user, contest_id);
   LINK_FIRST(pp, ic->first, ic->last, prev, next);
   LINK_FIRST(pp, uiu->first_user, uiu->last_user, prev_user, next_user);
-  return &pp->ui->i;
+  return pp->ui;
 }
 
 static void

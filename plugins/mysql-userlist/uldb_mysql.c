@@ -44,8 +44,6 @@ static int close_func(void *data);
 static int check_func(void *data);
 static int create_func(void *data);
 static int insert_func(void *data, const struct userlist_user *user, int *p_member_serial);
-static int get_full_func(void *data, int user_id,
-                         const struct userlist_user **user);
 static int_iterator_t get_user_id_iterator_func(void *data);
 static int get_user_by_login_func(void *data, const unsigned char *login);
 static void sync_func(void *);
@@ -81,6 +79,51 @@ static int get_user_info_2_func(
         int contest_id,
         const struct userlist_user **p_u,
         const struct userlist_user_info **p_ui);
+static int
+touch_login_time_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        time_t cur_time);
+static int
+get_user_info_3_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        const struct userlist_user **p_user,
+        const struct userlist_user_info **p_info,
+        const struct userlist_contest **p_contest);
+static int
+set_cookie_contest_func(
+        void *data,
+        const struct userlist_cookie *c,
+        int contest_id);
+static int
+set_cookie_locale_func(
+        void *data,
+        const struct userlist_cookie *c,
+        int locale_id);
+static int
+set_cookie_priv_level_func(
+        void *data,
+        const struct userlist_cookie *c,
+        int priv_level);
+static int
+get_user_info_4_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        const struct userlist_user **p_user);
+static int
+get_user_info_5_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        const struct userlist_user **p_user);
+static ptr_iterator_t
+get_brief_list_iterator_func(
+        void *data,
+        int contest_id);
 
 /* plugin entry point */
 struct uldb_plugin_iface plugin_uldb_mysql =
@@ -108,7 +151,7 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   // insert a whole user record; used only during the database conversion
   insert_func,
   // get the whole user record; used only during the database conversion
-  get_full_func,
+  NULL,                         /* not implemented yet */
   // get the user_id iterator
   get_user_id_iterator_func,
   // get the user_id by login
@@ -141,27 +184,27 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   get_user_info_1_func,
   // get the login user info
   get_user_info_2_func,
-
-  /*
   // set the login time
-  int (*touch_login_time)(void *, int, int, time_t);
+  touch_login_time_func,
   // get the login, basic contest-specific user info, and registration
-  int (*get_user_info_3)(void *, int, int, const struct userlist_user **, const struct userlist_user_info **, const struct userlist_contest **);
+  get_user_info_3_func,
   // change the contest_id for the cookie
-  int (*set_cookie_contest)(void *, const struct userlist_cookie *, int);
+  set_cookie_contest_func,
   // change the locale of the cookie
-  int (*set_cookie_locale)(void *, const struct userlist_cookie *, int);
+  set_cookie_locale_func,
   // change the privilege level of the cookie
-  int (*set_cookie_priv_level)(void *, const struct userlist_cookie *, int);
+  set_cookie_priv_level_func,
   // get the login, basic contest-specific user info, and registration
   // merged into one structure for further retrieval by unparse
-  int (*get_user_info_4)(void *, int, int, const struct userlist_user **);
+  get_user_info_4_func,
   // get the all the information about a user for privileged
   // get user information
-  int (*get_user_info_5)(void *, int, int, const struct userlist_user **);
+  get_user_info_5_func,
   // get an iterator for extracting brief user info (general or contest)
   // iterator iterates over all users
-  ptr_iterator_t (*get_brief_list_iterator)(void *, int);
+  get_brief_list_iterator_func,
+
+  /*
   // get an iterator for standings XML userlist
   ptr_iterator_t (*get_standings_list_iterator)(void *, int);
   // check, that user exists (0 - yes, -1 - no)
@@ -226,6 +269,8 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   int (*get_user_info_7)(void *, int, int, const struct userlist_user **, const struct userlist_user_info **, const struct userlist_members **);
   // get the member serial number
   int (*get_member_serial)(void *);
+  // set the member serial number
+  int (*set_member_serial)(void *, int);
   */
 };
 
@@ -671,6 +716,7 @@ write_escaped_string(FILE *f, struct uldb_mysql_state *state,
   size_t len1, len2;
   unsigned char *str2;
 
+  if (!pfx) pfx = "";
   if (!str) {
     fprintf(f, "%sNULL", pfx);
     return;
@@ -689,6 +735,7 @@ write_timestamp(FILE *f, struct uldb_mysql_state *state,
 {
   struct tm *ptm;
 
+  if (pfx) pfx = "";
   if (time <= 0) {
     fprintf(f, "%sDEFAULT", pfx);
     return;
@@ -862,7 +909,7 @@ insert_func(void *data, const struct userlist_user *user, int *p_member_serial)
   size_t cmdlen = 0;
   FILE *fcmd;
   int contest_id;
-  struct userlist_cntsinfo *cntsinfo;
+  struct userlist_user_info *cntsinfo;
   struct xml_tree *p;
   unsigned char *contest_set = 0;
   int max_contest_id;
@@ -899,22 +946,22 @@ insert_func(void *data, const struct userlist_user *user, int *p_member_serial)
     }
   }
 
-  if (!user->i.filled) {
+  if (!user->cnts0) {
     for (contest_id = 1; contest_id < user->cntsinfo_a; contest_id++) {
       if (!(cntsinfo = user->cntsinfo[contest_id])) continue;
-      if (insert_contest_info(state, user->id, contest_id, &cntsinfo->i, 0) < 0)
+      if (insert_contest_info(state, user->id, contest_id, cntsinfo, 0) < 0)
         goto fail;
     }
     return 0;
   }
 
   // insert the existing contest info
-  if (insert_contest_info(state, user->id, 0, &user->i, 0) < 0)
+  if (insert_contest_info(state, user->id, 0, user->cnts0, 0) < 0)
     goto fail;
 
   for (contest_id = 1; contest_id < user->cntsinfo_a; contest_id++) {
     if (!(cntsinfo = user->cntsinfo[contest_id])) continue;
-    if (insert_contest_info(state, user->id, contest_id, &cntsinfo->i, 0) < 0)
+    if (insert_contest_info(state, user->id, contest_id, cntsinfo, 0) < 0)
       goto fail;
   }
 
@@ -945,7 +992,7 @@ insert_func(void *data, const struct userlist_user *user, int *p_member_serial)
   // now in contest_set we've got the contests need cloning
   for (contest_id = 1; contest_id <= max_contest_id; contest_id++) {
     if (!contest_set[contest_id]) continue;
-    if (insert_contest_info(state, user->id, contest_id, &user->i,
+    if (insert_contest_info(state, user->id, contest_id, user->cnts0,
                             p_member_serial) < 0)
       goto fail;
   }
@@ -1187,7 +1234,7 @@ handle_unparse_spec(
 
     case 'i':
       p_ip = XPDEREF(ej_ip_t, data, specs[i].offset);
-      fprintf(fout, "%s%s", sep, xml_unparse_ip(*p_ip));
+      fprintf(fout, "%s'%s'", sep, xml_unparse_ip(*p_ip));
       break;
 
     default:
@@ -1206,73 +1253,6 @@ handle_unparse_spec(
 #include "logins.inc.c"
 #include "user_infos.inc.c"
 #include "members.inc.c"
-
-static int
-get_full_func(void *data, int user_id, const struct userlist_user **p_user)
-{
-  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
-  unsigned char cmdstr[512];
-  int cmdlen;
-  struct userlist_user *u = 0;
-  int passwd_method;
-
-  // fetch main user info
-  cmdlen = snprintf(cmdstr, sizeof(cmdstr),
-                    "SELECT * FROM %slogins WHERE user_id = %d",
-                    state->table_prefix, user_id);
-
-  if (mysql_real_query(state->conn, cmdstr, cmdlen))
-    db_error_fail(state);
-
-  if((state->field_count = mysql_field_count(state->conn)) != 16) {
-    err("wrong database format: field_count == %d, must be 16",
-        state->field_count);
-    goto fail;
-  }
-  if (!(state->res = mysql_store_result(state->conn)))
-    db_error_fail(state);
-  if (!(state->row_count = mysql_num_rows(state->res))) {
-    // no such user
-    if (p_user) *p_user = 0;
-    return 0;
-  }
-  if (state->row_count > 1) {
-    err("wrong database format: row_count == %d", state->row_count);
-    return -1;
-  }
-  if (!(state->row = mysql_fetch_row(state->res))) {
-    err("wrong database format: no data");
-    return -1;
-  }
-  state->lengths = mysql_fetch_lengths(state->res);
-
-  if (!p_user) {
-    return 1;
-  }
-
-  u = (struct userlist_user*) userlist_node_alloc(USERLIST_T_USER);
-  u->b.tag = USERLIST_T_USER;
-
-  if (parse_login(state, u) < 0) goto invalid_format;
-
-  // post-parse checks
-  if (u->id <= 0) goto invalid_format;
-  if (!u->login) goto invalid_format;
-  if (state->row[4]) {
-    u->passwd_method = passwd_method;
-    u->passwd = xstrdup(state->row[4]);
-  }
-
-  return 0;
-
- invalid_format:
-  err("invalid table data");
-  goto fail;
-
- fail:
-  userlist_free(&u->b);
-  return -1;
-}
 
 static int
 close_func(void *data)
@@ -1451,44 +1431,48 @@ new_user_func(
         int simple_reg_flag)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
-  unsigned char *login_arm, *email_arm = "NULL", *passwd_arm = "NULL", *cmd;
-  size_t login_len, email_len = 0, passwd_len = 0, cmdlen;
   int val;
+  struct userlist_user user;
+  FILE *cmd_f = 0;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
 
   if (!login || !*login) return -1;
-  login_len = strlen(login);
-  login_arm = (unsigned char *) alloca(login_len * 2 + 1);
-  mysql_real_escape_string(state->conn, login_arm, login, login_len);
 
-  if (email) {
-    email_len = strlen(email);
-    email_arm = (unsigned char*) alloca(email_len * 2 + 1);
-    mysql_real_escape_string(state->conn, email_arm, email, email_len);
-  }
+  memset(&user, 0, sizeof(user));
 
-  if (passwd) {
-    passwd_len = strlen(passwd);
-    passwd_arm = (unsigned char*) alloca(passwd_len * 2 + 1);
-    mysql_real_escape_string(state->conn, passwd_arm, passwd, passwd_len);
-  }
+  user.id = -1;
+  user.login = (char*) login;
+  user.email = (char*) email;
+  user.passwd = (char*) passwd;
+  user.simple_registration = !!simple_reg_flag;
 
-  simple_reg_flag = !!simple_reg_flag;
-
-  cmdlen = 512 + login_len + email_len + passwd_len;
-  cmd = (unsigned char*) alloca(cmdlen);
-  cmdlen = snprintf(cmd, cmdlen, "INSERT into %slogins VALUES ( DEFAULT, '%s', '%s', 0, '%s', 0, 0, 0, 0, 0, 0, %d, DEFAULT, NULL, NULL, NULL ) ;", state->table_prefix, login_arm, email_arm, passwd_arm, simple_reg_flag);
-  if (mysql_real_query(state->conn, cmd, cmdlen))
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "INSERT into %slogins VALUES ( ", state->table_prefix);
+  unparse_login(state, cmd_f, &user);
+  fprintf(cmd_f, " );");
+  fclose(cmd_f); cmd_f = 0;
+  if (mysql_real_query(state->conn, cmd_t, cmd_z))
     db_error_fail(state);
-  cmdlen = 512 + login_len + email_len + passwd_len;
-  cmdlen = snprintf(cmd, cmdlen, "SELECT user_id FROM %slogins WHERE login = '%s' ;", state->table_prefix, login_arm);
-  if (one_row_request(state, cmd, cmdlen, 1) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "SELECT user_id FROM %slogins WHERE login = '",
+          state->table_prefix);
+  write_escaped_string(cmd_f, state, 0, login);
+  fclose(cmd_f); cmd_f = 0;
+  if (one_row_request(state, cmd_t, cmd_z, 1) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   if (!state->lengths[0])
     db_inv_value_fail();
   if (parse_int(state->row[0], &val) < 0 || val <= 0)
     db_inv_value_fail();
+  
   return val;
 
  fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
   return -1;
 }
 
@@ -1542,17 +1526,25 @@ new_cookie_func(
   unsigned char cmd[1024];
   int cmdlen;
   struct userlist_cookie *c;
+  struct userlist_cookie newc;
+
+  memset(&newc, 0, sizeof(newc));
+  newc.user_id = user_id;
+  newc.ip = ip;
+  newc.ssl = ssl_flag;
+  newc.cookie = cookie;
+  newc.expire = expire;
+  newc.contest_id = contest_id;
+  newc.locale_id = locale_id;
+  newc.priv_level = priv_level;
+  newc.role = role;
+  newc.recovery = recovery;
+  newc.team_login = team_login;
 
   fcmd = open_memstream(&ftxt, &flen);
   fprintf(fcmd, "INSERT INTO %scookies VALUES ( ", state->table_prefix);
-  fprintf(fcmd, "%llu, %d, %d, %d, %d, %d, %d, %d, %d",
-          cookie, user_id, contest_id,
-          priv_level, role, 4 /*c->ipversion*/, locale_id,
-          recovery, team_login);
-  fprintf(fcmd, ", '%s'", xml_unparse_ip(ip));
-  fprintf(fcmd, ", %d", ssl_flag);
-  write_timestamp(fcmd, state, ", ", expire);
-  fprintf(fcmd, " )");
+  unparse_cookie(state, fcmd, &newc);
+  fprintf(fcmd, " ) ;");
   fclose(fcmd); fcmd = 0;
   if (mysql_real_query(state->conn, ftxt, flen))
     db_error_fail(state);
@@ -1811,15 +1803,278 @@ get_user_info_2_func(
         const struct userlist_user_info **p_ui)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
-  struct userlist_user_info *ii;
+  struct userlist_user *u = 0;
+  struct userlist_user_info *ui = 0;
 
-  ii = allocate_user_info_on_pool(state, user_id, contest_id);
+  if (fetch_login(state, user_id, &u) < 0) return -1;
+  if (fetch_user_info(state, user_id, contest_id, &ui) < 0) return -1;
+  *p_u = u;
+  *p_ui = ui;
+  return 0;
+}
 
-  // lookup table for the specified user_id
-  // lookup table for the specified user_id, contest_id
-  // if not exist, insert a record
+static int
+touch_login_time_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        time_t cur_time)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  if (cur_time <= 0) cur_time = time(0);
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "UPDATE %susers SET logintime = ", state->table_prefix);
+  write_timestamp(cmd_f, state, 0, cur_time);
+  fprintf(cmd_f, " WHERE user_id = %d AND contest_id = %d ;",
+          user_id, contest_id);
+  fclose(cmd_f); cmd_f = 0;
+  if (mysql_real_query(state->conn, cmd_t, cmd_z))
+    db_error_fail(state);
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  if (cmd_t) xfree(cmd_t);
+  return -1;
+}
+
+static int
+get_user_info_3_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        const struct userlist_user **p_user,
+        const struct userlist_user_info **p_info,
+        const struct userlist_contest **p_contest)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  struct userlist_user *u = 0;
+  struct userlist_user_info *ui = 0;
+  struct userlist_contest *cc = 0;
+
+  if (fetch_login(state, user_id, &u) < 0) return -1;
+  if (fetch_user_info(state, user_id, contest_id, &ui) < 0) return -1;
+  if (fetch_cntsreg(state, user_id, contest_id, &cc) < 0) return -1;
+  *p_user = u;
+  *p_info = ui;
+  *p_contest = cc;
+  return 0;
+}
+
+static int
+set_cookie_contest_func(
+        void *data,
+        const struct userlist_cookie *c,
+        int contest_id)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "UPDATE %scookies SET contest_id = %d WHERE cookie = %llu ;",
+          state->table_prefix, contest_id, c->cookie);
+  fclose(cmd_f); cmd_f = 0;
+  if (mysql_real_query(state->conn, cmd_t, cmd_z))
+    db_error_fail(state);
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  if (cmd_t) xfree(cmd_t);
+  return -1;
+}
+
+static int
+set_cookie_locale_func(
+        void *data,
+        const struct userlist_cookie *c,
+        int locale_id)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "UPDATE %scookies SET locale_id = %d WHERE cookie = %llu ;",
+          state->table_prefix, locale_id, c->cookie);
+  fclose(cmd_f); cmd_f = 0;
+  if (mysql_real_query(state->conn, cmd_t, cmd_z))
+    db_error_fail(state);
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  if (cmd_t) xfree(cmd_t);
+  return -1;
+}
+
+static int
+set_cookie_priv_level_func(
+        void *data,
+        const struct userlist_cookie *c,
+        int priv_level)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "UPDATE %scookies SET priv_level = %d WHERE cookie = %llu ;",
+          state->table_prefix, priv_level, c->cookie);
+  fclose(cmd_f); cmd_f = 0;
+  if (mysql_real_query(state->conn, cmd_t, cmd_z))
+    db_error_fail(state);
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  if (cmd_t) xfree(cmd_t);
+  return -1;
+}
+
+static int
+get_user_info_4_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        const struct userlist_user **p_user)
+{
+  //struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
 
   abort();
+}
+
+static int
+get_user_info_5_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        const struct userlist_user **p_user)
+{
+  //struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+
+  abort();
+}
+
+struct brief_list_iterator
+{
+  struct ptr_iterator b;
+  struct uldb_mysql_state *state;
+  int contest_id;
+  int cur_ind;
+  int *user_ids;
+  int total_ids;
+};
+
+static int
+brief_list_iterator_has_next_func(ptr_iterator_t data)
+{
+  struct brief_list_iterator *iter = (struct brief_list_iterator *) data;
+  return (iter->cur_ind < iter->total_ids);
+}
+static const void*
+brief_list_iterator_get_func(ptr_iterator_t data)
+{
+  struct brief_list_iterator *iter = (struct brief_list_iterator *) data;
+  //struct uldb_mysql_state *state = iter->state;
+  //struct userlist_user *u = 0;
+  //struct userlist_user_info *ui = 0;
+  //struct userlist_contest *uc = 0;
+
+  if (iter->cur_ind >= iter->total_ids) return 0;
+
+  // FIXME
+  return 0;
+}
+static void
+brief_list_iterator_next_func(ptr_iterator_t data)
+{
+  struct brief_list_iterator *iter = (struct brief_list_iterator *) data;
+  if (iter->cur_ind < iter->total_ids) iter++;
+}
+static void
+brief_list_iterator_destroy_func(ptr_iterator_t data)
+{
+  struct brief_list_iterator *iter = (struct brief_list_iterator *) data;
+  xfree(iter->user_ids);
+  xfree(iter);
+}
+
+static struct ptr_iterator brief_list_iterator_funcs =
+{
+  brief_list_iterator_has_next_func,
+  brief_list_iterator_get_func,
+  brief_list_iterator_next_func,
+  brief_list_iterator_destroy_func,
+};
+
+static ptr_iterator_t
+get_brief_list_iterator_func(
+        void *data,
+        int contest_id)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  struct brief_list_iterator *iter = 0;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+  int i, val;
+
+  XCALLOC(iter, 1);
+  iter->b = brief_list_iterator_funcs;
+  iter->state = state;
+  iter->contest_id = contest_id;
+  iter->cur_ind = 0;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  if (contest_id <= 0) {
+    fprintf(cmd_f, "SELECT user_id FROM %slogins WHERE 1 ORDER BY user_id ;",
+            state->table_prefix);
+  } else {
+    fprintf(cmd_f, "SELECT user_id FROM %scntsregs WHERE contest_id = %d ORDER BY user_id ;", state->table_prefix, contest_id);
+  }
+  fclose(cmd_f); cmd_f = 0;
+
+  if((state->field_count = mysql_field_count(state->conn)) != 1)
+    db_wrong_field_count_fail(state, 1);
+  if (!(state->res = mysql_store_result(state->conn)))
+    db_error_fail(state);
+  state->row_count = mysql_num_rows(state->res);
+  iter->total_ids = state->row_count;
+
+  if (iter->total_ids > 0) {
+    XCALLOC(iter->user_ids, iter->total_ids);
+    for (i = 0; i < iter->total_ids; i++) {
+      if (!(state->row = mysql_fetch_row(state->res)))
+        db_no_data_fail();
+      state->lengths = mysql_fetch_lengths(state->res);
+      if (!state->lengths[0])
+        db_inv_value_fail();
+      if (parse_int(state->row[0], &val) < 0 || val <= 0)
+        db_inv_value_fail();
+      iter->user_ids[i] = val;
+    }
+  }
+  
+  return (ptr_iterator_t) iter;
+
+ fail:
+  if (iter) xfree(iter->user_ids);
+  xfree(iter);
+  return 0;
 }
 
 /*

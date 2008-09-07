@@ -1,14 +1,14 @@
 CREATE TABLE %sconfig
-       (config_key VARCHAR(64) NOT NULL PRIMARY KEY,
+       (config_key VARCHAR(64) NOT NULL PRIMARY KEY COLLATE utf8_bin,
        config_val VARCHAR(64)
        );
 
 CREATE TABLE %slogins
        (user_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-       login VARCHAR(64) NOT NULL UNIQUE KEY,
+       login VARCHAR(64) NOT NULL UNIQUE KEY COLLATE utf8_bin,
        email VARCHAR(128),
        pwdmethod TINYINT NOT NULL DEFAULT 0,
-       password VARCHAR(64),
+       password VARCHAR(128),
        privileged TINYINT NOT NULL DEFAULT 0,
        invisible TINYINT NOT NULL DEFAULT 0,
        banned TINYINT NOT NULL DEFAULT 0,
@@ -60,11 +60,11 @@ CREATE TABLE %susers
        instnum INT,
        username VARCHAR(512),
        pwdmethod TINYINT NOT NULL DEFAULT 0,
-       password VARCHAR(64),
-       pwdtime TIMESTAMP DEFAULT NULL,
+       password VARCHAR(128),
+       pwdtime TIMESTAMP DEFAULT 0,
        createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-       changetime TIMESTAMP DEFAULT NULL,
-       logintime TIMESTAMP DEFAULT NULL,
+       changetime TIMESTAMP DEFAULT 0,
+       logintime TIMESTAMP DEFAULT 0,
        inst VARCHAR(512),
        inst_en VARCHAR (512),
        instshort VARCHAR (512),
@@ -103,7 +103,7 @@ CREATE TABLE %susers
        FOREIGN KEY (user_id) REFERENCES logins (id)
        );
 
-CREATE TABLE %sparticipants
+CREATE TABLE %smembers
        (
        serial INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
        user_id INT UNSIGNED NOT NULL,
@@ -143,3 +143,5 @@ CREATE TABLE %sparticipants
        );
 
 INSERT INTO %sconfig VALUES ('version', '1');
+
+INSERT INTO %sconfig VALUES ('current_member', '1');
