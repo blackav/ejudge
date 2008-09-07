@@ -701,13 +701,22 @@ write_timestamp(FILE *f, struct uldb_mysql_state *state,
 }
 
 static int
-insert_member_info(struct uldb_mysql_state *state,
-                   int user_id, int contest_id, int role,
-                   const struct userlist_member *memb)
+insert_member_info(
+        struct uldb_mysql_state *state,
+        int user_id,
+        int contest_id,
+        const struct userlist_member *memb,
+        int *p_serial)
 {
   char *cmdstr = 0;
   size_t cmdlen = 0;
   FILE *fcmd;
+  struct userlist_member newm;
+
+  if (p_serial) {
+    memcpy(&newm, memb, sizeof(newm));
+    newm.serial = (*p_serial)++;
+  }
 
   if (!(fcmd = open_memstream(&cmdstr, &cmdlen))) {
     err("open_memstream failed: %s", os_ErrorMsg());
@@ -715,43 +724,11 @@ insert_member_info(struct uldb_mysql_state *state,
   }
 
   fprintf(fcmd, "INSERT INTO %smembers VALUES ( ", state->table_prefix);
-  if (memb->serial <= 0) {
-    fprintf(fcmd, "DEFAULT");
+  if (p_serial) {
+    unparse_member(state, fcmd, user_id, contest_id, &newm);
   } else {
-    fprintf(fcmd, "%d", memb->serial);
+    unparse_member(state, fcmd, user_id, contest_id, memb);
   }
-  //fprintf(fcmd, ", %d", memb->copied_from);
-  fprintf(fcmd, ", %d, %d, %d", user_id, contest_id, role);
-  write_timestamp(fcmd, state, ", ", memb->create_time);
-  write_timestamp(fcmd, state, ", ", memb->last_change_time);
-  write_escaped_string(fcmd, state, ", ", memb->firstname);
-  write_escaped_string(fcmd, state, ", ", memb->firstname_en);
-  write_escaped_string(fcmd, state, ", ", memb->middlename);
-  write_escaped_string(fcmd, state, ", ", memb->middlename_en);
-  write_escaped_string(fcmd, state, ", ", memb->surname);
-  write_escaped_string(fcmd, state, ", ", memb->surname_en);
-  fprintf(fcmd, ", %d", memb->status);
-  fprintf(fcmd, ", %d", memb->gender);
-  fprintf(fcmd, ", %d", memb->grade);
-  write_escaped_string(fcmd, state, ", ", memb->group);
-  write_escaped_string(fcmd, state, ", ", memb->group_en);
-  write_escaped_string(fcmd, state, ", ", memb->occupation);
-  write_escaped_string(fcmd, state, ", ", memb->occupation_en);
-  write_escaped_string(fcmd, state, ", ", memb->discipline);
-  write_escaped_string(fcmd, state, ", ", memb->email);
-  write_escaped_string(fcmd, state, ", ", memb->homepage);
-  write_escaped_string(fcmd, state, ", ", memb->phone);
-  write_escaped_string(fcmd, state, ", ", memb->inst);
-  write_escaped_string(fcmd, state, ", ", memb->inst_en);
-  write_escaped_string(fcmd, state, ", ", memb->instshort);
-  write_escaped_string(fcmd, state, ", ", memb->instshort_en);
-  write_escaped_string(fcmd, state, ", ", memb->fac);
-  write_escaped_string(fcmd, state, ", ", memb->fac_en);
-  write_escaped_string(fcmd, state, ", ", memb->facshort);
-  write_escaped_string(fcmd, state, ", ", memb->facshort_en);
-  write_timestamp(fcmd, state, ", ", memb->birth_date);
-  write_timestamp(fcmd, state, ", ", memb->entry_date);
-  write_timestamp(fcmd, state, ", ", memb->graduation_date);
   fprintf(fcmd, " )");
   fclose(fcmd); fcmd = 0;
 
@@ -770,17 +747,17 @@ insert_member_info(struct uldb_mysql_state *state,
 }
 
 static int
-insert_contest_info(struct uldb_mysql_state *state, 
-                    int user_id, int contest_id, int force_fill,
-                    const struct userlist_user_info *info)
+insert_contest_info(
+        struct uldb_mysql_state *state,
+        int user_id,
+        int contest_id,
+        const struct userlist_user_info *info,
+        int *p_serial)
 {
   char *cmdstr = 0;
   size_t cmdlen = 0;
   FILE *fcmd;
-  int role, i, role_cnt;
-  struct userlist_member *mm;
-
-  if (!info->filled && !force_fill) return 0;
+  int i;
 
   if (!(fcmd = open_memstream(&cmdstr, &cmdlen))) {
     err("open_memstream failed: %s", os_ErrorMsg());
@@ -788,60 +765,7 @@ insert_contest_info(struct uldb_mysql_state *state,
   }
 
   fprintf(fcmd, "INSERT INTO %susers VALUES ( ", state->table_prefix);
-  fprintf(fcmd, "%d, %d", user_id, contest_id);
-
-  fprintf(fcmd, ", %d", info->cnts_read_only);
-  if (info->instnum >= 0) {
-    fprintf(fcmd, ", %d", info->instnum);
-  } else {
-    fprintf(fcmd, ", NULL");
-  }
-  write_escaped_string(fcmd, state, ", ", info->name);
-  // pwdmethod: 0 - plain, 1 - base64 (not used), 2 - sha1
-  // team_passwd
-  if (info->team_passwd) {
-    fprintf(fcmd, ", %d", info->team_passwd_method);
-    write_escaped_string(fcmd, state, ", ", info->team_passwd);
-    write_timestamp(fcmd, state, ", ", info->last_pwdchange_time);
-  } else {
-    fprintf(fcmd, ", 0, NULL, 0");
-  }
-  write_timestamp(fcmd, state, ", ", info->create_time);
-  write_timestamp(fcmd, state, ", ", info->last_change_time);
-  write_escaped_string(fcmd, state, ", ", info->inst);
-  write_escaped_string(fcmd, state, ", ", info->inst_en);
-  write_escaped_string(fcmd, state, ", ", info->instshort);
-  write_escaped_string(fcmd, state, ", ", info->instshort_en);
-  write_escaped_string(fcmd, state, ", ", info->fac);
-  write_escaped_string(fcmd, state, ", ", info->fac_en);
-  write_escaped_string(fcmd, state, ", ", info->facshort);
-  write_escaped_string(fcmd, state, ", ", info->facshort_en);
-  write_escaped_string(fcmd, state, ", ", info->homepage);
-  write_escaped_string(fcmd, state, ", ", info->phone);
-  write_escaped_string(fcmd, state, ", ", info->city);
-  write_escaped_string(fcmd, state, ", ", info->city_en);
-  write_escaped_string(fcmd, state, ", ", info->region);
-  write_escaped_string(fcmd, state, ", ", info->area);
-  write_escaped_string(fcmd, state, ", ", info->zip);
-  write_escaped_string(fcmd, state, ", ", info->street);
-  write_escaped_string(fcmd, state, ", ", info->country);
-  write_escaped_string(fcmd, state, ", ", info->country_en);
-  write_escaped_string(fcmd, state, ", ", info->location);
-  write_escaped_string(fcmd, state, ", ", info->spelling);
-  write_escaped_string(fcmd, state, ", ", info->printer_name);
-  write_escaped_string(fcmd, state, ", ", info->languages);
-  write_escaped_string(fcmd, state, ", ", info->exam_id);
-  write_escaped_string(fcmd, state, ", ", info->exam_cypher);
-  write_escaped_string(fcmd, state, ", ", info->field0);
-  write_escaped_string(fcmd, state, ", ", info->field1);
-  write_escaped_string(fcmd, state, ", ", info->field2);
-  write_escaped_string(fcmd, state, ", ", info->field3);
-  write_escaped_string(fcmd, state, ", ", info->field4);
-  write_escaped_string(fcmd, state, ", ", info->field5);
-  write_escaped_string(fcmd, state, ", ", info->field6);
-  write_escaped_string(fcmd, state, ", ", info->field7);
-  write_escaped_string(fcmd, state, ", ", info->field8);
-  write_escaped_string(fcmd, state, ", ", info->field9);
+  unparse_user_info(state, fcmd, user_id, contest_id, info);
   fprintf(fcmd, " )");
   fclose(fcmd); fcmd = 0;
 
@@ -852,16 +776,11 @@ insert_contest_info(struct uldb_mysql_state *state,
 
   xfree(cmdstr); cmdstr = 0; cmdlen = 0;
 
-  for (role = 0; role < USERLIST_MB_LAST; role++) {
-    if ((role_cnt = userlist_members_count(info->members, role)) <= 0)
-      continue;
-    for (i = 0; i < role_cnt; i++) {
-      if (!(mm = (struct userlist_member*) userlist_members_get_nth(info->members, role, i)))
-        continue;
-      if (insert_member_info(state, user_id, contest_id, role, mm) < 0)
-        goto fail;
-    }
-  }
+  if (!info->members) return 0;
+  for (i = 0; i < info->members->u; i++)
+    if (insert_member_info(state, user_id, contest_id,
+                           info->members->m[i], p_serial) < 0)
+      goto fail;
 
   return 0;
 
@@ -945,6 +864,9 @@ insert_func(void *data, const struct userlist_user *user, int *p_member_serial)
   int contest_id;
   struct userlist_cntsinfo *cntsinfo;
   struct xml_tree *p;
+  unsigned char *contest_set = 0;
+  int max_contest_id;
+  struct userlist_contest *uc;
 
   if (!(fcmd = open_memstream(&cmdbuf, &cmdlen))) {
     err("open_memstream failed: %s", os_ErrorMsg());
@@ -963,21 +885,6 @@ insert_func(void *data, const struct userlist_user *user, int *p_member_serial)
 
   xfree(cmdbuf); cmdbuf = 0; cmdlen = 0;
 
-  /*
-TODO: insert contest_id == 0, if i.filled
-if !i.filled, insert only present user_info records, else
-need cloning...
-   */
-
-  if (insert_contest_info(state, user->id, 0, user->i.filled, &user->i) < 0)
-    goto fail;
-
-  for (contest_id = 1; contest_id < user->cntsinfo_a; contest_id++) {
-    if (!(cntsinfo = user->cntsinfo[contest_id])) continue;
-    if (insert_contest_info(state, user->id, contest_id, 1, &cntsinfo->i) < 0)
-      goto fail;
-  }
-
   if (user->cookies) {
     for (p = user->cookies->first_down; p; p = p->right) {
       if (insert_cookie(state, user->id, (struct userlist_cookie*) p) < 0)
@@ -990,6 +897,57 @@ need cloning...
       if (insert_contest(state, user->id, (struct userlist_contest*) p) < 0)
         goto fail;
     }
+  }
+
+  if (!user->i.filled) {
+    for (contest_id = 1; contest_id < user->cntsinfo_a; contest_id++) {
+      if (!(cntsinfo = user->cntsinfo[contest_id])) continue;
+      if (insert_contest_info(state, user->id, contest_id, &cntsinfo->i, 0) < 0)
+        goto fail;
+    }
+    return 0;
+  }
+
+  // insert the existing contest info
+  if (insert_contest_info(state, user->id, 0, &user->i, 0) < 0)
+    goto fail;
+
+  for (contest_id = 1; contest_id < user->cntsinfo_a; contest_id++) {
+    if (!(cntsinfo = user->cntsinfo[contest_id])) continue;
+    if (insert_contest_info(state, user->id, contest_id, &cntsinfo->i, 0) < 0)
+      goto fail;
+  }
+
+  // collect the contests for which the user is registered
+  max_contest_id = 0;
+  if (user->contests) {
+    for (p = user->contests->first_down; p; p = p->right) {
+      uc = (struct userlist_contest*) p;
+      if (uc->id > max_contest_id) max_contest_id = uc->id;
+    }
+  }
+  if (!max_contest_id) return 0;
+
+  XALLOCAZ(contest_set, max_contest_id + 1);
+  for (p = user->contests->first_down; p; p = p->right) {
+    uc = (struct userlist_contest*) p;
+    if (uc->id > 0 && uc->id <= max_contest_id)
+      contest_set[uc->id] = 1;
+  }
+  
+  for (contest_id = 1;
+       contest_id < user->cntsinfo_a && contest_id <= max_contest_id;
+       contest_id++) {
+    if (!(cntsinfo = user->cntsinfo[contest_id])) continue;
+    contest_set[contest_id] = 0;
+  }
+
+  // now in contest_set we've got the contests need cloning
+  for (contest_id = 1; contest_id <= max_contest_id; contest_id++) {
+    if (!contest_set[contest_id]) continue;
+    if (insert_contest_info(state, user->id, contest_id, &user->i,
+                            p_member_serial) < 0)
+      goto fail;
   }
 
   return 0;
@@ -1060,6 +1018,7 @@ handle_parse_spec(struct uldb_mysql_state *state,
       break;
       
     case 'd':
+    case 'e':
       errno = 0;
       eptr = 0;
       x = strtol(state->row[i], &eptr, 10);
@@ -1175,6 +1134,16 @@ handle_unparse_spec(
       p_uq = XPDEREF(unsigned long long, data, specs[i].offset);
       uq = *p_uq;
       fprintf(fout, "%s%llu", sep, uq);
+      break;
+
+    case 'e':
+      p_int = XPDEREF(int, data, specs[i].offset);
+      val = *p_int;
+      if (val == -1) {
+        fprintf(fout, "%sDEFAULT", sep);
+      } else {
+        fprintf(fout, "%s%d", sep, val);
+      }
       break;
 
     case 'd':
