@@ -1859,7 +1859,7 @@ set_user_info_field_func(void *data,
   if (cur_time <= 0) cur_time = time(0);
 
   if (!contest_id) ui = userlist_get_cnts0(u);
-  if (!(ui = userlist_get_user_info_nc(u, contest_id))) return -1;
+  ui = userlist_get_user_info_nc(u, contest_id);
   if (userlist_is_equal_user_info_field(ui, field_id, value)) return 0;
 
   if (contest_id > 0) {
