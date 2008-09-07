@@ -2228,8 +2228,8 @@ edit_page(
 
   // check that we are allowed to edit something
   if (!u || u->read_only) goto redirect_back;
-  if (ui && ui->cnts_read_only) goto redirect_back;
   ui = userlist_get_cnts0(u);
+  if (ui && ui->cnts_read_only) goto redirect_back;
   if (phr->action == NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE) {
     if (ns_cgi_param_int(phr, "role", &role) < 0) goto redirect_back;
     if (ns_cgi_param_int(phr, "member", &member) < 0) goto redirect_back;
