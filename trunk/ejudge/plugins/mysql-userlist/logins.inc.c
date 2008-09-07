@@ -123,7 +123,7 @@ static int
 fetch_login(
         struct uldb_mysql_state *state,
         int user_id,
-        const struct userlist_user **p_user)
+        struct userlist_user **p_user)
 {
   unsigned char cmdbuf[1024];
   int cmdlen = sizeof(cmdbuf);

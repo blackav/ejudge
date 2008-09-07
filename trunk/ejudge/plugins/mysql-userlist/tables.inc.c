@@ -82,7 +82,7 @@ enum { LOGIN_WIDTH = 16 };
 static struct mysql_parse_spec login_spec[LOGIN_WIDTH] =
 {
   //[0]    user_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  { 0, 'd', "user_id", LOGIN_OFFSET(id) },
+  { 0, 'e', "user_id", LOGIN_OFFSET(id) },
   //[1]    login VARCHAR(64) NOT NULL UNIQUE KEY
   { 0, 's', "login", LOGIN_OFFSET(login) },
   //[2]    email VARCHAR(128),
