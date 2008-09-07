@@ -638,7 +638,7 @@ userlist_is_empty_user_info_field(const struct userlist_user_info *ui,
   const unsigned char **p_str;
   const time_t *p_time;
 
-  ASSERT(ui);
+  if (!ui) return 1;
   ASSERT(field_id >= USERLIST_NC_FIRST && field_id < USERLIST_NC_LAST);
 
   switch (user_info_field_types[field_id]) {
@@ -669,47 +669,58 @@ userlist_is_equal_user_info_field(const struct userlist_user_info *ui,
                                   int field_id,
                                   const unsigned char *value)
 {
-  const int *p_int;
-  const unsigned char **p_str;
-  const time_t *p_time;
   unsigned char buf[64];
+  int v_int;
+  const unsigned char *v_str;
+  time_t v_time;
 
-  ASSERT(ui);
   ASSERT(field_id >= USERLIST_NC_FIRST && field_id < USERLIST_NC_LAST);
 
   switch (user_info_field_types[field_id]) {
   case USERLIST_NC_CNTS_READ_ONLY:
-    p_int = (const int*) userlist_get_user_info_field_ptr(ui, field_id);
-    if (!value && !*p_int) return 1;
+    v_int = 0;
+    if (ui) v_int = *(int*) userlist_get_user_info_field_ptr(ui, field_id);
+    if (!value && !v_int) return 1;
     if (!value) return 0;
-    snprintf(buf, sizeof(buf), "%d", *p_int);
+    snprintf(buf, sizeof(buf), "%d", v_int);
     return (strcmp(buf, value) == 0);
   case USERLIST_NC_NAME:
-    p_str=(const unsigned char**)userlist_get_user_info_field_ptr(ui, field_id);
-    if ((!value || !*value) && (!*p_str || !**p_str)) return 1;
-    if ((!value || !*value) || (!*p_str || !**p_str)) return 0;
-    return (strcmp(*p_str, value) == 0);
+    v_str = 0;
+    if (ui) {
+      v_str=*(const unsigned char**)userlist_get_user_info_field_ptr(ui, field_id);
+    }
+    if ((!value || !*value) && (!v_str || !*v_str)) return 1;
+    if ((!value || !*value) || (!v_str || !*v_str)) return 0;
+    return (strcmp(v_str, value) == 0);
   case USERLIST_NC_TEAM_PASSWD:
-    if (!value && !ui->team_passwd) return 1;
-    if (!value || !ui->team_passwd) return 0;
+    v_str = 0;
+    if (ui) v_str = ui->team_passwd;
+    if (!value && !v_str) return 1;
+    if (!value || !v_str) return 0;
+    if (!ui) return 0;
     if (ui->team_passwd_method != USERLIST_PWD_PLAIN) return 0;
-    return (strcmp(ui->team_passwd, value) == 0);
+    return (strcmp(v_str, value) == 0);
   case USERLIST_NC_INST:
-    p_str=(const unsigned char**)userlist_get_user_info_field_ptr(ui, field_id);
-    if (!value && !*p_str) return 1;
-    if (!value || !*p_str) return 0;
-    return (strcmp(*p_str, value) == 0);
+    v_str = 0;
+    if (ui) {
+      v_str=*(const unsigned char**)userlist_get_user_info_field_ptr(ui, field_id);
+    }
+    if (!value && !v_str) return 1;
+    if (!value || !v_str) return 0;
+    return (strcmp(v_str, value) == 0);
   case USERLIST_NC_INSTNUM:
-    p_int = (const int*) userlist_get_user_info_field_ptr(ui, field_id);
-    if (!value && *p_int < 0) return 1;
-    if (!value || *p_int < 0) return 0;
-    snprintf(buf, sizeof(buf), "%d", *p_int);
+    v_int = -1;
+    if (ui) v_int = *(int*) userlist_get_user_info_field_ptr(ui, field_id);
+    if (!value && v_int < 0) return 1;
+    if (!value || v_int < 0) return 0;
+    snprintf(buf, sizeof(buf), "%d", v_int);
     return (strcmp(buf, value) == 0);
   case USERLIST_NC_CREATE_TIME:
-    p_time = (const time_t*) userlist_get_user_info_field_ptr(ui, field_id);
-    if (!value && !*p_time) return 1;
+    v_time = 0;
+    if (ui) v_time = *(time_t*) userlist_get_user_info_field_ptr(ui, field_id);
+    if (!value && !v_time) return 1;
     if (!value) return 0;
-    return (strcmp(xml_unparse_date(*p_time), value) == 0);
+    return (strcmp(xml_unparse_date(v_time), value) == 0);
   default:
     abort();
   }
@@ -721,47 +732,53 @@ userlist_get_user_info_field_str(unsigned char *buf, size_t len,
                                  int field_id,
                                  int convert_null)
 {
-  const int *p_int;
-  const unsigned char **p_str;
-  const time_t *p_time;
-  const unsigned char *s;
+  int v_int;
+  const unsigned char *v_str;
+  time_t v_time;
 
-  ASSERT(ui);
   ASSERT(field_id >= USERLIST_NC_FIRST && field_id < USERLIST_NC_LAST);
 
   switch (user_info_field_types[field_id]) {
   case USERLIST_NC_CNTS_READ_ONLY:
-    p_int = (const int*) userlist_get_user_info_field_ptr(ui, field_id);
-    if (convert_null) return snprintf(buf, len, "%s", xml_unparse_bool(*p_int));
-    return snprintf(buf, len, "%d", *p_int);
+    v_int = 0;
+    if (ui) v_int = *(int*) userlist_get_user_info_field_ptr(ui, field_id);
+    if (convert_null) return snprintf(buf, len, "%s", xml_unparse_bool(v_int));
+    return snprintf(buf, len, "%d", v_int);
   case USERLIST_NC_NAME:
-    p_str=(const unsigned char**)userlist_get_user_info_field_ptr(ui, field_id);
-    s = *p_str;
-    if (!s) s = "";
-    return snprintf(buf, len, "%s", s);
+    v_str = 0;
+    if (ui) {
+      v_str=*(const unsigned char**)userlist_get_user_info_field_ptr(ui,field_id);
+    }
+    if (!v_str) v_str = "";
+    return snprintf(buf, len, "%s", v_str);
   case USERLIST_NC_TEAM_PASSWD:
-    s = ui->team_passwd;
-    if (!s) {
-      if (convert_null) s = "<NULL>";
-      else s = "";
+    v_str = 0;
+    if (ui) v_str = ui->team_passwd;
+    if (!v_str) {
+      if (convert_null) v_str = "<NULL>";
+      else v_str = "";
     }
-    return snprintf(buf, len, "%s", s);
+    return snprintf(buf, len, "%s", v_str);
   case USERLIST_NC_INST:
-    p_str=(const unsigned char**)userlist_get_user_info_field_ptr(ui, field_id);
-    s = *p_str;
-    if (!s) {
-      if (convert_null) s = "<NULL>";
-      else s = "";
+    v_str = 0;
+    if (ui) {
+      v_str=*(const unsigned char**)userlist_get_user_info_field_ptr(ui, field_id);
     }
-    return snprintf(buf, len, "%s", s);
+    if (!v_str) {
+      if (convert_null) v_str = "<NULL>";
+      else v_str = "";
+    }
+    return snprintf(buf, len, "%s", v_str);
   case USERLIST_NC_INSTNUM:
-    p_int = (const int*) userlist_get_user_info_field_ptr(ui, field_id);
-    if (convert_null && *p_int < 0) return snprintf(buf, len, "<Not set>");
-    if (*p_int < 0) return snprintf(buf, len, "%s", "");
-    return snprintf(buf, len, "%d", *p_int);
+    v_int = -1;
+    if (ui) v_int = *(int*) userlist_get_user_info_field_ptr(ui, field_id);
+    if (convert_null && v_int < 0) return snprintf(buf, len, "<Not set>");
+    if (v_int < 0) return snprintf(buf, len, "%s", "");
+    return snprintf(buf, len, "%d", v_int);
   case USERLIST_NC_CREATE_TIME:
-    p_time = (const time_t*) userlist_get_user_info_field_ptr(ui, field_id);
-    return snprintf(buf, len, "%s", userlist_unparse_date(*p_time, convert_null));    
+    v_time = 0;
+    if (ui) v_time = *(time_t*) userlist_get_user_info_field_ptr(ui, field_id);
+    return snprintf(buf,len,"%s",userlist_unparse_date(v_time,convert_null));
   default:
     abort();
   }
