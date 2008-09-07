@@ -2159,6 +2159,7 @@ change_member_role_func(void *data, int user_id, int contest_id, int serial,
 static int
 count_members(const struct userlist_user_info *ui)
 {
+  if (!ui) return 0;
   if (!ui->members) return 0;
   return ui->members->u;
 }
@@ -2675,18 +2676,20 @@ check_user_reg_data_func(void *data, int user_id, int contest_id)
   const struct contest_desc *cnts = 0;
   int memb_errs[CONTEST_LAST_MEMBER + 1];
   int nerr;
+  const struct userlist_members *mm = 0;
 
   if (contests_get(contest_id, &cnts) < 0 || !cnts)
     return -1;
 
   if (get_user_info_3_func(data, user_id, contest_id, &u, &ui, &c) < 0)
     return -1;
+  if (ui) mm = ui->members;
 
   if (!c || (c->status != USERLIST_REG_OK && c->status != USERLIST_REG_PENDING))
     return -1;
 
-  nerr = userlist_count_info_errors(cnts, u, ui, ui->members, memb_errs);
-  if (ui->name && *ui->name && check_str(ui->name, name_accept_chars))
+  nerr = userlist_count_info_errors(cnts, u, ui, mm, memb_errs);
+  if (ui && ui->name && *ui->name && check_str(ui->name, name_accept_chars))
     nerr++;
 
   if (!nerr && (c->flags & USERLIST_UC_INCOMPLETE)) {
@@ -2948,8 +2951,7 @@ userlist_clone_user_info(
   ci->cnts_read_only = ui->cnts_read_only;
   ci->instnum = ui->instnum;
 
-  ci->name = xstrdup(ui->name);
-
+  ci->name = copy_field(ui->name);
   ci->inst = copy_field(ui->inst);
   ci->inst_en = copy_field(ui->inst_en);
   ci->instshort = copy_field(ui->instshort);
