@@ -194,7 +194,12 @@ userlist_count_info_errors(
   memset(role_err_count, 0, sizeof(role_err_count[0]) * (CONTEST_LAST_MEMBER + 1));
   for (ff = CONTEST_FIRST_FIELD; ff < CONTEST_LAST_FIELD; ff++) {
     if (!cnts->fields[ff]) continue;
-    if (userlist_is_empty_user_info_field(ui, userlist_contest_field_ids[ff])
+    if (!ui) {
+      if (cnts->fields[ff]->mandatory) {
+        role_err_count[0]++;
+        err_count++;
+      }
+    } else if (userlist_is_empty_user_info_field(ui, userlist_contest_field_ids[ff])
         && cnts->fields[ff]->mandatory) {
       role_err_count[0]++;
       err_count++;
