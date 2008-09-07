@@ -5,7 +5,7 @@ CREATE TABLE %sconfig
 
 CREATE TABLE %slogins
        (user_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-       login VARCHAR(64) NOT NULL UNIQUE KEY COLLATE utf8_bin,
+       login VARCHAR(64) NOT NULL UNIQUE KEY,
        email VARCHAR(128),
        pwdmethod TINYINT NOT NULL DEFAULT 0,
        password VARCHAR(64),
@@ -17,9 +17,9 @@ CREATE TABLE %slogins
        neverclean TINYINT NOT NULL DEFAULT 0,
        simplereg TINYINT NOT NULL DEFAULT 0,
        regtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-       logintime TIMESTAMP DEFAULT NULL,
-       pwdtime TIMESTAMP DEFAULT NULL,
-       changetime TIMESTAMP DEFAULT NULL
+       logintime TIMESTAMP DEFAULT 0,
+       pwdtime TIMESTAMP DEFAULT 0,
+       changetime TIMESTAMP DEFAULT 0
        );
 
 CREATE TABLE %scookies
