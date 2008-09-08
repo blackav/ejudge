@@ -1775,9 +1775,8 @@ clear_user_member_field_func(void *data, int user_id, int contest_id,
   }
   if (cur_time <= 0) cur_time = time(0);
 
-  ui = userlist_get_user_info_nc(u, contest_id);
-  if (!ui) return -1;
-  if (!(m = userlist_get_member_nc(ui->members, serial, 0, 0))) return -1;
+  if (!(ui = userlist_get_user_info_nc(u, contest_id))) return 0;
+  if (!(m = userlist_get_member_nc(ui->members, serial, 0, 0))) return 0;
   if (userlist_is_empty_member_field(m, field_id)) return 0;
 
   if (contest_id > 0) {
