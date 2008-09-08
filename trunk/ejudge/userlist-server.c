@@ -7859,7 +7859,7 @@ cmd_edit_field_seq(
     return;
   }
 
-  if (p->user_id != data->contest_id) {
+  if (p->user_id != data->user_id) {
     capbit = OPCAP_EDIT_USER;
     if (is_privileged_cnts_user(u, cnts) >= 0) capbit = OPCAP_PRIV_EDIT_USER;
     if (is_dbcnts_capable(p, cnts, capbit, logbuf) < 0) return;
