@@ -124,6 +124,103 @@ static ptr_iterator_t
 get_brief_list_iterator_func(
         void *data,
         int contest_id);
+static ptr_iterator_t
+get_standings_list_iterator_func(
+        void *data,
+        int contest_id);
+static int
+check_user_func(
+        void *data,
+        int user_id);
+static int
+set_reg_passwd_func(
+        void *data,
+        int user_id,
+        int method,
+        const unsigned char *password,
+        time_t cur_time);
+static int
+set_team_passwd_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        int method,
+        const unsigned char *password,
+        time_t cur_time,
+        int *p_cloned_flag);
+static int
+register_contest_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        int status,
+        time_t cur_time,
+        const struct userlist_contest **p_c);
+static int
+remove_member_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        int serial,
+        time_t cur_time,
+        int *p_cloned_flag);
+static int
+is_read_only_func(
+        void *data,
+        int user_id,
+        int contest_id);
+static ptr_iterator_t
+get_info_list_iterator_func(
+        void *data,
+        int contest_id,
+        unsigned flag_mask);
+static int
+clear_team_passwd_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        int *p_cloned_flag);
+static int
+remove_registration_func(
+        void *data,
+        int user_id,
+        int contest_id);
+static int
+set_reg_status_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        int status);
+static int
+set_reg_flags_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        int cmd,
+        unsigned int value);
+static int
+remove_user_contest_info_func(
+        void *data,
+        int user_id,
+        int contest_id);
+static int
+clear_user_field_func(
+        void *data,
+        int user_id,
+        int field_id,
+        time_t cur_time);
+static int
+clear_user_field_func(
+        void *data,
+        int user_id,
+        int field_id,
+        time_t cur_time);
+
+static void
+unlock_user_func(
+        void *data,
+        const struct userlist_user *c_u)
+  __attribute__((unused));
 
 /* plugin entry point */
 struct uldb_plugin_iface plugin_uldb_mysql =
@@ -203,38 +300,38 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   // get an iterator for extracting brief user info (general or contest)
   // iterator iterates over all users
   get_brief_list_iterator_func,
-
-  /*
   // get an iterator for standings XML userlist
-  ptr_iterator_t (*get_standings_list_iterator)(void *, int);
+  get_standings_list_iterator_func,
   // check, that user exists (0 - yes, -1 - no)
-  int (*check_user)(void *, int);
+  check_user_func,
   // set the registration password
-  int (*set_reg_passwd)(void *, int, int, const unsigned char *, time_t);
+  set_reg_passwd_func,
   // set the team password
-  int (*set_team_passwd)(void *, int, int, int, const unsigned char *, time_t, int *);
+  set_team_passwd_func,
   // register a user for contest
-  int (*register_contest)(void *, int, int, int, time_t, const struct userlist_contest**);
+  register_contest_func,
   // remove a particular member from a user
-  int (*remove_member)(void *, int, int, int, time_t, int *);
+  remove_member_func,
   // check if the user is read-only
-  int (*is_read_only)(void *, int, int);
+  is_read_only_func,
   // get the user iterator for HTML user info requests
   // userlist_user, userlist_user_info, userlist_member, userlist_contest
   // fields are filled up
-  ptr_iterator_t (*get_info_list_iterator)(void *, int, unsigned int);
+  get_info_list_iterator_func,
   // clear the team password
-  int (*clear_team_passwd)(void *, int, int, int *);
+  clear_team_passwd_func,
   // remove a contest registration
-  int (*remove_registration)(void *, int, int);
+  remove_registration_func,
   // set the registration status
-  int (*set_reg_status)(void *, int, int, int);
+  set_reg_status_func,
   // set the registration flags
-  int (*set_reg_flags)(void *, int, int, int, unsigned int);
+  set_reg_flags_func,
   // remove user contest-specific info
-  int (*remove_user_contest_info)(void *, int, int);
+  remove_user_contest_info_func,
   // clear the main user info field
-  int (*clear_user_field)(void *, int, int, time_t);
+  clear_user_field_func,
+
+  /*
   // clear the user_info field
   int (*clear_user_info_field)(void *, int, int, int, time_t, int *);
   // clear the member field
@@ -271,6 +368,8 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   int (*get_member_serial)(void *);
   // set the member serial number
   int (*set_member_serial)(void *, int);
+  // unlock the complete user information structure
+  void (*unlock_user)(void *, const struct userlist_user *);
   */
 };
 
@@ -290,10 +389,12 @@ enum { USER_INFO_POOL_SIZE = 1024 };
 // the size of the member pool
 enum { MEMBERS_POOL_SIZE = 1024 };
 
+struct cookies_container;
+
 struct cookies_cache
 {
-  struct userlist_cookie *hash[COOKIES_POOL_SIZE];
-  struct xml_tree *first, *last;
+  struct cookies_container *hash[COOKIES_POOL_SIZE];
+  struct cookies_container *first, *last;
   int count;
 };
 
@@ -339,6 +440,8 @@ struct uldb_mysql_state
 {
   // configuration settings
   int port;
+  int show_queries;
+  int nocache;
 
   unsigned char *user;
   unsigned char *password;
@@ -449,12 +552,157 @@ parse_int(const unsigned char *str, int *p_val)
   return 0;
 }
 
+static int
+my_simple_query(
+        struct uldb_mysql_state *state,
+        const unsigned char *cmd,
+        int cmdlen)
+{
+  if (state->show_queries) {
+    fprintf(stderr, "mysql: %s\n", cmd);
+  }
+  if (mysql_real_query(state->conn, cmd, cmdlen)) db_error_fail(state);
+  return 0;
+
+ fail:
+  return -1;
+}
+
+static int
+my_query(
+        struct uldb_mysql_state *state,
+        const unsigned char *cmd,
+        int cmdlen,
+        int colnum)
+{
+  if (state->show_queries) {
+    fprintf(stderr, "mysql: %s\n", cmd);
+  }
+  if (mysql_real_query(state->conn, cmd, cmdlen)) db_error_fail(state);
+  if((state->field_count = mysql_field_count(state->conn)) != colnum)
+    db_wrong_field_count_fail(state, colnum);
+  if (!(state->res = mysql_store_result(state->conn))) db_error_fail(state);
+  if ((state->row_count = mysql_num_rows(state->res)) < 0) goto fail;
+  return state->row_count;
+
+ fail:
+  return -1;
+}
+
+static int
+my_query_one_row(
+        struct uldb_mysql_state *state,
+        const unsigned char *cmd,
+        int cmdlen,
+        int colnum)
+{
+  int i;
+
+  if (state->show_queries) {
+    fprintf(stderr, "mysql: %s\n", cmd);
+  }
+  if (mysql_real_query(state->conn, cmd, cmdlen))
+    db_error_fail(state);
+  if((state->field_count = mysql_field_count(state->conn)) != colnum)
+    db_wrong_field_count_fail(state, colnum);
+  if (!(state->res = mysql_store_result(state->conn)))
+    db_error_fail(state);
+  if ((state->row_count = mysql_num_rows(state->res)) != 1)
+    goto fail;
+    //db_wrong_row_count_fail(state, 1);
+  if (!(state->row = mysql_fetch_row(state->res)))
+    db_no_data_fail();
+  state->lengths = mysql_fetch_lengths(state->res);
+  // extra check...
+  for (i = 0; i < state->field_count; i++)
+    if (state->row[i] && strlen(state->row[i]) != state->lengths[i])
+      db_inv_value_fail();
+  return 0;
+
+ fail:
+  return -1;
+}
+
+static int
+my_row(struct uldb_mysql_state *state)
+{
+  int i;
+
+  if (!(state->row = mysql_fetch_row(state->res)))
+    db_no_data_fail();
+  state->lengths = mysql_fetch_lengths(state->res);
+
+  // extra check...
+  for (i = 0; i < state->field_count; i++)
+    if (state->row[i] && strlen(state->row[i]) != state->lengths[i])
+      db_inv_value_fail();
+  return 0;
+
+ fail:
+  return -1;
+}
+
+static int
+my_int_val(struct uldb_mysql_state *state, int *p_int, int min_val)
+{
+  if (my_row(state) < 0) goto fail;
+  if (!state->lengths[0]) db_inv_value_fail();
+  if (parse_int(state->row[0], p_int) < 0 || *p_int < min_val)
+    db_inv_value_fail();
+  return 0;
+
+ fail:
+  return -1;
+}
+
+static void
+userlist_attach_user_info(
+        struct userlist_user *u,
+        struct userlist_user_info *ui)
+{
+  if (!u || !ui) return;
+
+  if (ui->contest_id <= 0) {
+    u->cnts0 = ui;
+  } else {
+    userlist_expand_cntsinfo(u, ui->contest_id);
+    u->cntsinfo[ui->contest_id] = ui;
+  }
+}
+
+static void
+userlist_attach_cntsreg(
+        struct userlist_user *u,
+        struct userlist_contest *c)
+{
+  if (!u->contests) {
+    u->contests = userlist_node_alloc(USERLIST_T_CONTESTS);
+  }
+  xml_link_node_last(u->contests, &c->b);
+}
+
+static void
+userlist_attach_cookie(struct userlist_user *u, struct userlist_cookie *c)
+  __attribute__((unused));
+static void
+userlist_attach_cookie(
+        struct userlist_user *u,
+        struct userlist_cookie *c)
+{
+  if (!u->cookies) {
+    u->cookies = userlist_node_alloc(USERLIST_T_COOKIES);
+  }
+  xml_link_node_last(u->cookies, &c->b);
+}
+
 static void*
 init_func(const struct ejudge_cfg *config)
 {
   struct uldb_mysql_state *state;
 
   XCALLOC(state, 1);
+  state->show_queries = 1;
+  state->nocache = 1;
   return (void*) state;
 }
 
@@ -555,9 +803,7 @@ open_func(void *data)
   if (state->charset) {
     cmdlen = snprintf(cmdbuf, sizeof(cmdbuf), "SET NAMES '%s' ;\n",
                       state->charset);
-    fprintf(stderr, ">%s\n", cmdbuf);
-    if (mysql_real_query(state->conn, cmdbuf, cmdlen))
-      return db_error(state);
+    if (my_simple_query(state, cmdbuf, cmdlen) < 0) return -1;
   }
 
   return 0;
@@ -576,9 +822,7 @@ check_func(void *data)
   cmdlen = snprintf(cmdbuf, sizeof(cmdbuf),
                     "SELECT config_val FROM %sconfig WHERE config_key = 'version'",
                     state->table_prefix);
-  fprintf(stderr, ">%s\n", cmdbuf);
-  if (mysql_real_query(state->conn, cmdbuf, cmdlen)) {
-    db_error(state);
+  if (my_simple_query(state, cmdbuf, cmdlen) < 0) {
     err("probably the database is not created. use --convert or --create");
     return 0;
   }
@@ -645,8 +889,7 @@ create_func(void *data)
     } else {
       cmdlen = snprintf(cmdbuf, sizeof(cmdbuf), "ALTER DATABASE %s DEFAULT CHARACTER SET '%s' ;\n", state->database, state->charset);
     }
-    if (mysql_real_query(state->conn, cmdbuf, cmdlen))
-      db_error_fail(state);
+    if (my_simple_query(state, cmdbuf, cmdlen) < 0) goto fail;
   }
 
   if (state->schema_path) {
@@ -686,11 +929,7 @@ create_func(void *data)
     bufsize = cmdlen * 2 + strlen(state->table_prefix) * 2 + 1;
     buf = (unsigned char*) xmalloc(bufsize);
     buflen = snprintf(buf, bufsize, cmdstr, state->table_prefix);
-
-    fprintf(stderr, ">>%s\n", buf);
-
-    if (mysql_real_query(state->conn, buf, buflen))
-      db_error_fail(state);
+    if (my_simple_query(state, buf, buflen) < 0) goto fail;
 
     xfree(buf); buf = 0; bufsize = buflen = 0;
     xfree(cmdstr); cmdstr = 0; cmdlen = 0;
@@ -755,9 +994,9 @@ insert_member_info(
         const struct userlist_member *memb,
         int *p_serial)
 {
-  char *cmdstr = 0;
-  size_t cmdlen = 0;
-  FILE *fcmd;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
   struct userlist_member newm;
 
   if (p_serial) {
@@ -765,31 +1004,28 @@ insert_member_info(
     newm.serial = (*p_serial)++;
   }
 
-  if (!(fcmd = open_memstream(&cmdstr, &cmdlen))) {
+  if (!(cmd_f = open_memstream(&cmd_t, &cmd_z))) {
     err("open_memstream failed: %s", os_ErrorMsg());
     goto fail;
   }
 
-  fprintf(fcmd, "INSERT INTO %smembers VALUES ( ", state->table_prefix);
+  fprintf(cmd_f, "INSERT INTO %smembers VALUES ( ", state->table_prefix);
   if (p_serial) {
-    unparse_member(state, fcmd, user_id, contest_id, &newm);
+    unparse_member(state, cmd_f, user_id, contest_id, &newm);
   } else {
-    unparse_member(state, fcmd, user_id, contest_id, memb);
+    unparse_member(state, cmd_f, user_id, contest_id, memb);
   }
-  fprintf(fcmd, " )");
-  fclose(fcmd); fcmd = 0;
+  fprintf(cmd_f, " )");
+  fclose(cmd_f); cmd_f = 0;
 
-  fprintf(stderr, ">>%s\n", cmdstr);
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
 
-  if (mysql_real_query(state->conn, cmdstr, cmdlen))
-    db_error_fail(state);
-
-  xfree(cmdstr); cmdstr = 0; cmdlen = 0;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   return 0;
 
  fail:
-  if (fcmd) fclose(fcmd);
-  xfree(cmdstr);
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
   return -1;
 }
 
@@ -801,27 +1037,24 @@ insert_contest_info(
         const struct userlist_user_info *info,
         int *p_serial)
 {
-  char *cmdstr = 0;
-  size_t cmdlen = 0;
-  FILE *fcmd;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
   int i;
 
-  if (!(fcmd = open_memstream(&cmdstr, &cmdlen))) {
+  if (!(cmd_f = open_memstream(&cmd_t, &cmd_z))) {
     err("open_memstream failed: %s", os_ErrorMsg());
     goto fail;
   }
 
-  fprintf(fcmd, "INSERT INTO %susers VALUES ( ", state->table_prefix);
-  unparse_user_info(state, fcmd, user_id, contest_id, info);
-  fprintf(fcmd, " )");
-  fclose(fcmd); fcmd = 0;
+  fprintf(cmd_f, "INSERT INTO %susers VALUES ( ", state->table_prefix);
+  unparse_user_info(state, cmd_f, user_id, contest_id, info);
+  fprintf(cmd_f, " )");
+  fclose(cmd_f); cmd_f = 0;
 
-  fprintf(stderr, ">>%s\n", cmdstr);
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
 
-  if (mysql_real_query(state->conn, cmdstr, cmdlen))
-    db_error_fail(state);
-
-  xfree(cmdstr); cmdstr = 0; cmdlen = 0;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
 
   if (!info->members) return 0;
   for (i = 0; i < info->members->u; i++)
@@ -832,8 +1065,8 @@ insert_contest_info(
   return 0;
 
  fail:
-  if (fcmd) fclose(fcmd);
-  xfree(cmdstr);
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
   return -1;
 }
 
@@ -841,31 +1074,28 @@ static int
 insert_contest(struct uldb_mysql_state *state, int user_id, 
                struct userlist_contest *c)
 {
-  char *cmdstr = 0;
-  size_t cmdlen = 0;
-  FILE *fcmd;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
 
-  if (!(fcmd = open_memstream(&cmdstr, &cmdlen))) {
+  if (!(cmd_f = open_memstream(&cmd_t, &cmd_z))) {
     err("open_memstream failed: %s", os_ErrorMsg());
     goto fail;
   }
 
-  fprintf(fcmd, "INSERT INTO %scntsregs VALUES ( ", state->table_prefix);
-  unparse_cntsreg(state, fcmd, user_id, c);
-  fprintf(fcmd, " )");
-  fclose(fcmd); fcmd = 0;
+  fprintf(cmd_f, "INSERT INTO %scntsregs VALUES ( ", state->table_prefix);
+  unparse_cntsreg(state, cmd_f, user_id, c);
+  fprintf(cmd_f, " )");
+  fclose(cmd_f); cmd_f = 0;
 
-  fprintf(stderr, ">>%s\n", cmdstr);
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
 
-  if (mysql_real_query(state->conn, cmdstr, cmdlen))
-    db_error_fail(state);
-
-  xfree(cmdstr); cmdstr = 0; cmdlen = 0;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   return 0;
 
  fail:
-  if (fcmd) fclose(fcmd);
-  xfree(cmdstr);
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
   return -1;
 }
 
@@ -873,31 +1103,28 @@ static int
 insert_cookie(struct uldb_mysql_state *state, int user_id, 
               struct userlist_cookie *c)
 {
-  char *cmdstr = 0;
-  size_t cmdlen = 0;
-  FILE *fcmd;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
 
-  if (!(fcmd = open_memstream(&cmdstr, &cmdlen))) {
+  if (!(cmd_f = open_memstream(&cmd_t, &cmd_z))) {
     err("open_memstream failed: %s", os_ErrorMsg());
     goto fail;
   }
 
-  fprintf(fcmd, "INSERT INTO %scookies VALUES ( ", state->table_prefix);
-  unparse_cookie(state, fcmd, c);
-  fprintf(fcmd, " )");
-  fclose(fcmd); fcmd = 0;
+  fprintf(cmd_f, "INSERT INTO %scookies VALUES ( ", state->table_prefix);
+  unparse_cookie(state, cmd_f, c);
+  fprintf(cmd_f, " )");
+  fclose(cmd_f); cmd_f = 0;
 
-  fprintf(stderr, ">>%s\n", cmdstr);
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
 
-  if (mysql_real_query(state->conn, cmdstr, cmdlen))
-    db_error_fail(state);
-
-  xfree(cmdstr); cmdstr = 0; cmdlen = 0;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   return 0;
 
  fail:
-  if (fcmd) fclose(fcmd);
-  xfree(cmdstr);
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
   return -1;
 }
 
@@ -905,9 +1132,9 @@ static int
 insert_func(void *data, const struct userlist_user *user, int *p_member_serial)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
-  char *cmdbuf = 0;
-  size_t cmdlen = 0;
-  FILE *fcmd;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
   int contest_id;
   struct userlist_user_info *cntsinfo;
   struct xml_tree *p;
@@ -915,22 +1142,19 @@ insert_func(void *data, const struct userlist_user *user, int *p_member_serial)
   int max_contest_id;
   struct userlist_contest *uc;
 
-  if (!(fcmd = open_memstream(&cmdbuf, &cmdlen))) {
+  if (!(cmd_f = open_memstream(&cmd_t, &cmd_z))) {
     err("open_memstream failed: %s", os_ErrorMsg());
     goto fail;
   }
 
-  fprintf(fcmd, "INSERT INTO %slogins VALUES ( ", state->table_prefix);
-  unparse_login(state, fcmd, user);
-  fprintf(fcmd, " );");
-  fclose(fcmd); fcmd = 0;
+  fprintf(cmd_f, "INSERT INTO %slogins VALUES ( ", state->table_prefix);
+  unparse_login(state, cmd_f, user);
+  fprintf(cmd_f, " );");
+  fclose(cmd_f); cmd_f = 0;
 
-  fprintf(stderr, ">>%s\n", cmdbuf);
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
 
-  if (mysql_real_query(state->conn, cmdbuf, cmdlen))
-    db_error_fail(state);
-
-  xfree(cmdbuf); cmdbuf = 0; cmdlen = 0;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
 
   if (user->cookies) {
     for (p = user->cookies->first_down; p; p = p->right) {
@@ -1000,8 +1224,8 @@ insert_func(void *data, const struct userlist_user *user, int *p_member_serial)
   return 0;
 
  fail:
-  if (fcmd) fclose(fcmd);
-  xfree(cmdbuf);
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
   return -1;
 }
 
@@ -1302,7 +1526,7 @@ get_user_id_iterator_func(void *data)
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct user_id_iterator *iter;
   unsigned char cmd[1024];
-  int cmdlen, i, val;
+  int cmdlen, i;
 
   XCALLOC(iter, 1);
   iter->b = user_id_iterator_funcs;
@@ -1310,27 +1534,13 @@ get_user_id_iterator_func(void *data)
   cmdlen = snprintf(cmd, sizeof(cmd),
                     "SELECT user_id FROM %slogins WHERE 1 ;",
                     state->table_prefix);
-  if (mysql_real_query(state->conn, cmd, cmdlen))
-    db_error_fail(state);
-
-  if((state->field_count = mysql_field_count(state->conn)) != 1)
-    db_wrong_field_count_fail(state, 1);
-  if (!(state->res = mysql_store_result(state->conn)))
-    db_error_fail(state);
-  state->row_count = mysql_num_rows(state->res);
+  if (my_query(state, cmd, cmdlen, 1) < 0) goto fail;
   iter->id_num = state->row_count;
 
   if (iter->id_num > 0) {
     XCALLOC(iter->ids, iter->id_num);
     for (i = 0; i < iter->id_num; i++) {
-      if (!(state->row = mysql_fetch_row(state->res)))
-        db_no_data_fail();
-      state->lengths = mysql_fetch_lengths(state->res);
-      if (!state->lengths[0])
-        db_inv_value_fail();
-      if (parse_int(state->row[0], &val) < 0 || val <= 0)
-        db_inv_value_fail();
-      iter->ids[i] = val;
+      if (my_int_val(state, &iter->ids[i], 1) < 0) goto fail;
     }
   }
   return (int_iterator_t) iter;
@@ -1339,31 +1549,6 @@ get_user_id_iterator_func(void *data)
   xfree(iter->ids);
   xfree(iter);
   return 0;
-}
-
-static int
-one_row_request(
-        struct uldb_mysql_state *state,
-        const unsigned char *cmd,
-        int cmdlen,
-        int colnum)
-{
-  if (mysql_real_query(state->conn, cmd, cmdlen))
-    db_error_fail(state);
-  if((state->field_count = mysql_field_count(state->conn)) != colnum)
-    db_wrong_field_count_fail(state, colnum);
-  if (!(state->res = mysql_store_result(state->conn)))
-    db_error_fail(state);
-  if ((state->row_count = mysql_num_rows(state->res)) != 1)
-    goto fail;
-    //db_wrong_row_count_fail(state, 1);
-  if (!(state->row = mysql_fetch_row(state->res)))
-    db_no_data_fail();
-  state->lengths = mysql_fetch_lengths(state->res);
-  return 0;
-
- fail:
-  return -1;
 }
 
 static int
@@ -1382,7 +1567,7 @@ get_user_by_login_func(void *data, const unsigned char *login)
   cmdlen = snprintf(cmd, cmdlen,
                     "SELECT user_id FROM %slogins WHERE login = '%s' ; ",
                     state->table_prefix, esc_str);
-  if (one_row_request(state, cmd, cmdlen, 1) < 0) goto fail;
+  if (my_query_one_row(state, cmd, cmdlen, 1) < 0) goto fail;
   if (!state->lengths[0])
     db_inv_value_fail();
   if (parse_int(state->row[0], &val) < 0 || val <= 0)
@@ -1413,7 +1598,7 @@ get_login_func(void *data, int user_id)
   cmdlen = snprintf(cmd, sizeof(cmd),
                     "SELECT login FROM %slogins WHERE user_id = %d ; ",
                     state->table_prefix, user_id);
-  if (one_row_request(state, cmd, cmdlen, 1) < 0) goto fail;
+  if (my_query_one_row(state, cmd, cmdlen, 1) < 0) goto fail;
   if (!(state->row = mysql_fetch_row(state->res)))
     db_inv_value_fail();
   return xstrdup(state->row[0]);
@@ -1452,8 +1637,7 @@ new_user_func(
   unparse_login(state, cmd_f, &user);
   fprintf(cmd_f, " );");
   fclose(cmd_f); cmd_f = 0;
-  if (mysql_real_query(state->conn, cmd_t, cmd_z))
-    db_error_fail(state);
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
@@ -1461,7 +1645,7 @@ new_user_func(
           state->table_prefix);
   write_escaped_string(cmd_f, state, 0, login);
   fclose(cmd_f); cmd_f = 0;
-  if (one_row_request(state, cmd_t, cmd_z, 1) < 0) goto fail;
+  if (my_query_one_row(state, cmd_t, cmd_z, 1) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   if (!state->lengths[0])
     db_inv_value_fail();
@@ -1485,7 +1669,8 @@ remove_user_func(void *data, int user_id)
 
   cmdlen = sizeof(cmd);
   cmdlen = snprintf(cmd, cmdlen, "DELETE FROM %scookies WHERE user_id = %d; DELETE FROM %scntsregs WHERE user_id = %d; DELETE FROM %smembers WHERE user_id = %d; DELETE FROM %susers WHERE user_id = %d; DELETE FROM %slogins WHERE user_id = %d;", state->table_prefix, user_id, state->table_prefix, user_id, state->table_prefix, user_id, state->table_prefix, user_id, state->table_prefix, user_id);
-  mysql_real_query(state->conn, cmd, cmdlen);
+  if (my_simple_query(state, cmd, cmdlen) < 0) return -1;
+  // FIXME: update local cache
   return 0;
 }
 
@@ -1520,11 +1705,9 @@ new_cookie_func(
         const struct userlist_cookie **p_cookie)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
-  FILE *fcmd = 0;
-  char *ftxt = 0;
-  size_t flen = 0;
-  unsigned char cmd[1024];
-  int cmdlen;
+  FILE *cmd_f = 0;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
   struct userlist_cookie *c;
   struct userlist_cookie newc;
 
@@ -1541,25 +1724,19 @@ new_cookie_func(
   newc.recovery = recovery;
   newc.team_login = team_login;
 
-  fcmd = open_memstream(&ftxt, &flen);
-  fprintf(fcmd, "INSERT INTO %scookies VALUES ( ", state->table_prefix);
-  unparse_cookie(state, fcmd, &newc);
-  fprintf(fcmd, " ) ;");
-  fclose(fcmd); fcmd = 0;
-  if (mysql_real_query(state->conn, ftxt, flen))
-    db_error_fail(state);
-  cmdlen = sizeof(cmd);
-  cmdlen = snprintf(cmd, cmdlen, "SELECT * FROM %scookies WHERE cookie = %llu ;",
-                    state->table_prefix, cookie);
-  if (one_row_request(state, cmd, cmdlen, COOKIE_WIDTH) < 0) goto fail;
-  c = allocate_cookie_on_pool(state, cookie);
-  if (parse_cookie(state, c) < 0) goto fail;
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "INSERT INTO %scookies VALUES ( ", state->table_prefix);
+  unparse_cookie(state, cmd_f, &newc);
+  fprintf(cmd_f, " ) ;");
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  if (fetch_cookie(state, cookie, &c) < 0) goto fail;
   if (p_cookie) *p_cookie = c;
   return 0;
 
  fail:
-  if (fcmd) fclose(fcmd);
-  xfree(ftxt);
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
   return -1;
 }
 
@@ -1576,7 +1753,8 @@ remove_cookie_func(
 
   cmdlen = sizeof(cmd);
   cmdlen = snprintf(cmd, cmdlen, "DELETE FROM %scookies WHERE cookie = %llu;", state->table_prefix, c->cookie);
-  mysql_real_query(state->conn, cmd, cmdlen);
+  if (my_simple_query(state, cmd, cmdlen) < 0) return -1;
+  // FIXME: update local cache
   return 0;
 }
 
@@ -1591,7 +1769,8 @@ remove_user_cookies_func(
 
   cmdlen = sizeof(cmd);
   cmdlen = snprintf(cmd, cmdlen, "DELETE FROM %scookies WHERE user_id = %d;", state->table_prefix, user_id);
-  mysql_real_query(state->conn, cmd, cmdlen);
+  if (my_simple_query(state, cmd, cmdlen) < 0) return -1;
+  // FIXME: update local cache
   return 0;
 }
 
@@ -1601,20 +1780,26 @@ remove_expired_cookies_func(
         time_t cur_time)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
-  FILE *fcmd = 0;
-  char *tcmd = 0;
-  size_t lcmd = 0;
+  FILE *cmd_f = 0;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
 
   if (cur_time <= 0) cur_time = time(0);
 
-  fcmd = open_memstream(&tcmd, &lcmd);
-  fprintf(fcmd, "DELETE FROM %scookies WHERE expire >= ",
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "DELETE FROM %scookies WHERE expire >= ",
           state->table_prefix);
-  write_timestamp(fcmd, state, "", cur_time);
-  fclose(fcmd); fcmd = 0;
-  mysql_real_query(state->conn, tcmd, lcmd);
-  xfree(tcmd);
+  write_timestamp(cmd_f, state, "", cur_time);
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t);
+  // FIXME: update local cache
   return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
 }
 
 static int
@@ -1634,7 +1819,7 @@ user_contest_iterator_get_func(ptr_iterator_t data)
 
   if (iter->cur_i >= iter->id_num) return 0;
   cmdlen = snprintf(cmd, cmdlen, "SELECT * FROM %scntsregs WHERE user_id = %d AND contest_id = %d ;", state->table_prefix, iter->user_id, iter->ids[iter->cur_i]);
-  if (one_row_request(state, cmd, cmdlen, COOKIE_WIDTH) < 0) return 0;
+  if (my_query_one_row(state, cmd, cmdlen, COOKIE_WIDTH) < 0) return 0;
   c = allocate_cntsreg_on_pool(state, iter->user_id, iter->ids[iter->cur_i]);
   if (!c) return 0;
   if (parse_cntsreg(state, c) < 0) return 0;
@@ -1668,7 +1853,7 @@ get_user_contest_iterator_func(
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct user_contest_iterator *iter = 0;
-  int cmdlen, i, val;
+  int cmdlen, i;
   unsigned char cmd[1024];
 
   XCALLOC(iter, 1);
@@ -1680,27 +1865,13 @@ get_user_contest_iterator_func(
   cmdlen = snprintf(cmd, cmdlen,
                     "SELECT contest_id FROM %scntsregs WHERE user_id = %d ;",
                     state->table_prefix, user_id);
-  if (mysql_real_query(state->conn, cmd, cmdlen))
-    db_error_fail(state);
-
-  if((state->field_count = mysql_field_count(state->conn)) != 1)
-    db_wrong_field_count_fail(state, 1);
-  if (!(state->res = mysql_store_result(state->conn)))
-    db_error_fail(state);
-  state->row_count = mysql_num_rows(state->res);
+  if (my_query(state, cmd, cmdlen, 1) < 0) goto fail;
   iter->id_num = state->row_count;
 
   if (iter->id_num > 0) {
     XCALLOC(iter->ids, iter->id_num);
     for (i = 0; i < iter->id_num; i++) {
-      if (!(state->row = mysql_fetch_row(state->res)))
-        db_no_data_fail();
-      state->lengths = mysql_fetch_lengths(state->res);
-      if (!state->lengths[0])
-        db_inv_value_fail();
-      if (parse_int(state->row[0], &val) < 0 || val <= 0)
-        db_inv_value_fail();
-      iter->ids[i] = val;
+      if (my_int_val(state, &iter->ids[i], 1) < 0) goto fail;
     }
   }
   return (ptr_iterator_t) iter;
@@ -1717,52 +1888,40 @@ remove_expired_users_func(
         time_t min_reg_time)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
-  char *q_txt = 0;
-  size_t q_len = 0;
-  FILE *q_f = 0;
-  int *ids = 0, i, val, count;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+  int *ids = 0, i, count;
 
   if (min_reg_time <= 0) min_reg_time = time(0) - 24 * 60 * 60;
 
-  q_f = open_memstream(&q_txt, &q_len);
-  fprintf(q_f, "SELECT user_id FROM %slogins WHERE regtime < ", 
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "SELECT user_id FROM %slogins WHERE regtime < ", 
           state->table_prefix);
-  write_timestamp(q_f, state, "", min_reg_time);
-  fprintf(q_f, " AND (logintime = NULL OR logintime = 0) ;");
-  fclose(q_f); q_f = 0;
+  write_timestamp(cmd_f, state, "", min_reg_time);
+  fprintf(cmd_f, " AND (logintime = NULL OR logintime = 0) ;");
+  fclose(cmd_f); cmd_f = 0;
 
-  if (mysql_real_query(state->conn, q_txt, q_len))
-    db_error_fail(state);
-
-  if((state->field_count = mysql_field_count(state->conn)) != 1)
-    db_wrong_field_count_fail(state, 1);
-  if (!(state->res = mysql_store_result(state->conn)))
-    db_error_fail(state);
-  count = state->row_count = mysql_num_rows(state->res);
+  if (my_query(state, cmd_t, cmd_z, 1) < 0) goto fail;
+  count = state->row_count;
   if (!count) return 0;
 
   // save the result set into the temp array
   XCALLOC(ids, count);
   for (i = 0; i < count; i++) {
-    if (!(state->row = mysql_fetch_row(state->res)))
-      db_no_data_fail();
-    state->lengths = mysql_fetch_lengths(state->res);
-    if (!state->lengths[0])
-      db_inv_value_fail();
-    if (parse_int(state->row[0], &val) < 0 || val <= 0)
-      db_inv_value_fail();
-    ids[i] = val;
+    if (my_int_val(state, &ids[i], 1) < 0) goto fail;
   }
 
   for (i = 0; i < count; i++) {
     remove_user_func(data, ids[i]);
   }
 
+  xfree(ids);
   return 0;
 
  fail:
-  if (q_f) fclose(q_f);
-  xfree(q_txt);
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
   xfree(ids);
   return -1;
 }
@@ -1774,22 +1933,17 @@ get_user_info_1_func(
         const struct userlist_user **p_user)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
-  unsigned char cmd[1024];
-  int cmdlen = sizeof(cmd);
   struct userlist_user *u = 0;
 
   if (user_id <= 0) goto fail;
 
-  cmdlen = snprintf(cmd, cmdlen, "SELECT * FROM %slogins WHERE user_id = %d ;",
-                    state->table_prefix, user_id);
-  if (one_row_request(state, cmd, cmdlen, LOGIN_WIDTH) < 0) return 0;
-  if (!(u = allocate_login_on_pool(state, user_id))) return 0;
-  if (parse_login(state, u) < 0) return 0;
+  if (p_user) *p_user = 0;
+  if (fetch_login(state, user_id, &u) < 0) goto fail;
   if (p_user) *p_user = u;
   return 1;
 
  fail:
-  // free resources
+  remove_login_from_pool(state, user_id);
   if (p_user) *p_user = 0;
   return -1;
 }
@@ -1833,14 +1987,13 @@ touch_login_time_func(
   fprintf(cmd_f, " WHERE user_id = %d AND contest_id = %d ;",
           user_id, contest_id);
   fclose(cmd_f); cmd_f = 0;
-  if (mysql_real_query(state->conn, cmd_t, cmd_z))
-    db_error_fail(state);
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   return 0;
 
  fail:
   if (cmd_f) fclose(cmd_f);
-  if (cmd_t) xfree(cmd_t);
+  xfree(cmd_t);
   return -1;
 }
 
@@ -1882,8 +2035,7 @@ set_cookie_contest_func(
   fprintf(cmd_f, "UPDATE %scookies SET contest_id = %d WHERE cookie = %llu ;",
           state->table_prefix, contest_id, c->cookie);
   fclose(cmd_f); cmd_f = 0;
-  if (mysql_real_query(state->conn, cmd_t, cmd_z))
-    db_error_fail(state);
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   return 0;
 
@@ -1908,8 +2060,7 @@ set_cookie_locale_func(
   fprintf(cmd_f, "UPDATE %scookies SET locale_id = %d WHERE cookie = %llu ;",
           state->table_prefix, locale_id, c->cookie);
   fclose(cmd_f); cmd_f = 0;
-  if (mysql_real_query(state->conn, cmd_t, cmd_z))
-    db_error_fail(state);
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   return 0;
 
@@ -1934,8 +2085,7 @@ set_cookie_priv_level_func(
   fprintf(cmd_f, "UPDATE %scookies SET priv_level = %d WHERE cookie = %llu ;",
           state->table_prefix, priv_level, c->cookie);
   fclose(cmd_f); cmd_f = 0;
-  if (mysql_real_query(state->conn, cmd_t, cmd_z))
-    db_error_fail(state);
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   return 0;
 
@@ -1989,15 +2139,24 @@ static const void*
 brief_list_iterator_get_func(ptr_iterator_t data)
 {
   struct brief_list_iterator *iter = (struct brief_list_iterator *) data;
-  //struct uldb_mysql_state *state = iter->state;
-  //struct userlist_user *u = 0;
-  //struct userlist_user_info *ui = 0;
-  //struct userlist_contest *uc = 0;
+  struct uldb_mysql_state *state = iter->state;
+  int user_id, contest_id;
+  struct userlist_user *u = 0;
+  struct userlist_user_info *ui = 0;
+  struct userlist_contest *uc = 0;
 
   if (iter->cur_ind >= iter->total_ids) return 0;
 
-  // FIXME
-  return 0;
+  user_id = iter->user_ids[iter->cur_ind];
+  contest_id = iter->contest_id;
+  if (fetch_login(state, user_id, &u) < 0) return 0;
+  if (fetch_user_info(state, user_id, contest_id, &ui) < 0) return 0;
+  if (fetch_cntsreg(state, user_id, contest_id, &uc) < 0) return 0;
+
+  userlist_attach_user_info(u, ui);
+  userlist_attach_cntsreg(u, uc);
+
+  return u;
 }
 static void
 brief_list_iterator_next_func(ptr_iterator_t data)
@@ -2075,6 +2234,778 @@ get_brief_list_iterator_func(
   if (iter) xfree(iter->user_ids);
   xfree(iter);
   return 0;
+}
+
+struct standings_list_iterator
+{
+  struct ptr_iterator b;
+  struct uldb_mysql_state *state;
+  int contest_id;
+  int cur_ind;
+  int *user_ids;
+  int total_ids;
+};
+
+static int
+standings_list_iterator_has_next_func(ptr_iterator_t data)
+{
+  struct standings_list_iterator *iter = (struct standings_list_iterator *)data;
+  return (iter->cur_ind < iter->total_ids);
+}
+static const void*
+standings_list_iterator_get_func(ptr_iterator_t data)
+{
+  struct standings_list_iterator *iter = (struct standings_list_iterator *)data;
+  struct uldb_mysql_state *state = iter->state;
+  int user_id, contest_id;
+  struct userlist_user *u = 0;
+  struct userlist_user_info *ui = 0;
+  struct userlist_contest *uc = 0;
+  struct userlist_members *mm = 0;
+
+  if (iter->cur_ind >= iter->total_ids) return 0;
+
+  user_id = iter->user_ids[iter->cur_ind];
+  contest_id = iter->contest_id;
+  if (fetch_login(state, user_id, &u) < 0) return 0;
+  if (fetch_user_info(state, user_id, contest_id, &ui) < 0) return 0;
+  if (fetch_cntsreg(state, user_id, contest_id, &uc) < 0) return 0;
+  if (fetch_member(state, user_id, contest_id, &mm) < 0) return 0;
+
+  if (ui) ui->members = mm;
+  userlist_attach_user_info(u, ui);
+  userlist_attach_cntsreg(u, uc);
+
+  return u;
+}
+static void
+standings_list_iterator_next_func(ptr_iterator_t data)
+{
+  struct standings_list_iterator *iter = (struct standings_list_iterator *)data;
+  if (iter->cur_ind < iter->total_ids) iter++;
+}
+static void
+standings_list_iterator_destroy_func(ptr_iterator_t data)
+{
+  struct standings_list_iterator *iter = (struct standings_list_iterator *)data;
+  xfree(iter->user_ids);
+  xfree(iter);
+}
+
+static struct ptr_iterator standings_list_iterator_funcs =
+{
+  standings_list_iterator_has_next_func,
+  standings_list_iterator_get_func,
+  standings_list_iterator_next_func,
+  standings_list_iterator_destroy_func,
+};
+
+static ptr_iterator_t
+get_standings_list_iterator_func(
+        void *data,
+        int contest_id)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  struct standings_list_iterator *iter = 0;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+  int i, val;
+
+  if (contest_id <= 0) return 0;
+
+  XCALLOC(iter, 1);
+  iter->b = standings_list_iterator_funcs;
+  iter->state = state;
+  iter->contest_id = contest_id;
+  iter->cur_ind = 0;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  if (contest_id <= 0) {
+    fprintf(cmd_f, "SELECT user_id FROM %slogins WHERE 1 ORDER BY user_id ;",
+            state->table_prefix);
+  } else {
+    fprintf(cmd_f, "SELECT user_id FROM %scntsregs WHERE contest_id = %d ORDER BY user_id ;", state->table_prefix, contest_id);
+  }
+  fclose(cmd_f); cmd_f = 0;
+
+  if((state->field_count = mysql_field_count(state->conn)) != 1)
+    db_wrong_field_count_fail(state, 1);
+  if (!(state->res = mysql_store_result(state->conn)))
+    db_error_fail(state);
+  state->row_count = mysql_num_rows(state->res);
+  iter->total_ids = state->row_count;
+
+  if (iter->total_ids > 0) {
+    XCALLOC(iter->user_ids, iter->total_ids);
+    for (i = 0; i < iter->total_ids; i++) {
+      if (!(state->row = mysql_fetch_row(state->res)))
+        db_no_data_fail();
+      state->lengths = mysql_fetch_lengths(state->res);
+      if (!state->lengths[0])
+        db_inv_value_fail();
+      if (parse_int(state->row[0], &val) < 0 || val <= 0)
+        db_inv_value_fail();
+      iter->user_ids[i] = val;
+    }
+  }
+  
+  return (ptr_iterator_t) iter;
+
+ fail:
+  if (iter) xfree(iter->user_ids);
+  xfree(iter);
+  return 0;
+}
+
+static int
+check_user_func(
+        void *data,
+        int user_id)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  unsigned char cmdbuf[1024];
+  int cmdlen = sizeof(cmdbuf);
+
+  cmdlen = snprintf(cmdbuf, cmdlen, "SELECT user_id FROM %slogins WHERE user_id = %d ;", state->table_prefix, user_id);
+  if (my_query(state, cmdbuf, cmdlen, 1) < 0) return -1;
+  if (state->row_count <= 0) return -1;
+  return 0;
+}
+
+static int
+set_reg_passwd_func(
+        void *data,
+        int user_id,
+        int method,
+        const unsigned char *password,
+        time_t cur_time)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  if (cur_time <= 0) cur_time = time(0);
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "UPDATE %slogins SET pwdmethod = %d, password = ",
+          state->table_prefix, method);
+  write_escaped_string(cmd_f, state, 0, password);
+  fprintf(cmd_f, ", pwdtime = ");
+  write_timestamp(cmd_f, state, 0, cur_time);
+  fprintf(cmd_f, " WHERE user_id = %d ;", user_id);
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+static int
+set_team_passwd_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        int method,
+        const unsigned char *password,
+        time_t cur_time,
+        int *p_cloned_flag)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  if (cur_time <= 0) cur_time = time(0);
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "UPDATE %susers SET pwdmethod = %d, password = ",
+          state->table_prefix, method);
+  write_escaped_string(cmd_f, state, 0, password);
+  fprintf(cmd_f, ", pwdtime = ");
+  write_timestamp(cmd_f, state, 0, cur_time);
+  fprintf(cmd_f, " WHERE user_id = %d AND contest_id = %d;",
+          user_id, contest_id);
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  if (p_cloned_flag) *p_cloned_flag = 0;
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+static int
+register_contest_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        int status,
+        time_t cur_time,
+        const struct userlist_contest **p_c)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+  struct userlist_contest new_uc;
+  struct userlist_contest *c = 0;
+  int r;
+
+  if (user_id <= 0 || contest_id <= 0) return -1;
+  if (cur_time <= 0) cur_time = time(0);
+
+  if ((r = fetch_cntsreg(state, user_id, contest_id, &c)) < 0) goto fail;
+  if (r > 0) return 0;
+
+  memset(&new_uc, 0, sizeof(new_uc));
+  new_uc.id = contest_id;
+  new_uc.status = status;
+  new_uc.create_time = cur_time;
+  new_uc.last_change_time = cur_time;
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "INSERT INTO %scntsregs VALUES (", state->table_prefix);
+  unparse_cntsreg(state, cmd_f, user_id, &new_uc);
+  fprintf(cmd_f, " );");
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0;
+
+  if (fetch_cntsreg(state, user_id, contest_id, &c) < 0) goto fail;
+  if (p_c) *p_c = c;
+  return 1;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+static int
+remove_member_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        int serial,
+        time_t cur_time,
+        int *p_cloned_flag)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "DELETE FROM %smembers WHERE user_id = %d AND contest_id = %d AND serial = %d ;", state->table_prefix, user_id, contest_id, serial);
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  remove_member_from_pool(state, user_id, contest_id);
+  if (p_cloned_flag) *p_cloned_flag = 0;
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+static int
+is_read_only_func(
+        void *data,
+        int user_id,
+        int contest_id)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  struct userlist_user *u = 0;
+  struct userlist_user_info *ui = 0;
+
+  if (fetch_login(state, user_id, &u) < 0) return -1;
+  if (u->read_only) return 1;
+  if (fetch_user_info(state, user_id, contest_id, &ui) < 0) return -1;
+  if (ui->cnts_read_only) return 1;
+  return 0;
+}
+
+struct info_list_iterator
+{
+  struct ptr_iterator b;
+  struct uldb_mysql_state *state;
+  int contest_id;
+  int cur_ind;
+  int *user_ids;
+  int total_ids;
+};
+
+static int
+info_list_iterator_has_next_func(ptr_iterator_t data)
+{
+  struct info_list_iterator *iter = (struct info_list_iterator *) data;
+  return (iter->cur_ind < iter->total_ids);
+}
+static const void*
+info_list_iterator_get_func(ptr_iterator_t data)
+{
+  struct info_list_iterator *iter = (struct info_list_iterator *) data;
+  struct uldb_mysql_state *state = iter->state;
+  int user_id, contest_id;
+  struct userlist_user *u = 0;
+  struct userlist_user_info *ui = 0;
+  struct userlist_contest *uc = 0;
+  struct userlist_members *mm = 0;
+
+  if (iter->cur_ind >= iter->total_ids) return 0;
+
+  user_id = iter->user_ids[iter->cur_ind];
+  contest_id = iter->contest_id;
+  if (fetch_login(state, user_id, &u) < 0) return 0;
+  if (fetch_user_info(state, user_id, contest_id, &ui) < 0) return 0;
+  if (fetch_cntsreg(state, user_id, contest_id, &uc) < 0) return 0;
+  if (fetch_member(state, user_id, contest_id, &mm) < 0) return 0;
+
+  userlist_attach_user_info(u, ui);
+  userlist_attach_cntsreg(u, uc);
+  if (ui) ui->members = mm;
+
+  return u;
+}
+static void
+info_list_iterator_next_func(ptr_iterator_t data)
+{
+  struct info_list_iterator *iter = (struct info_list_iterator *) data;
+  if (iter->cur_ind < iter->total_ids) iter++;
+}
+static void
+info_list_iterator_destroy_func(ptr_iterator_t data)
+{
+  struct info_list_iterator *iter = (struct info_list_iterator *) data;
+  xfree(iter->user_ids);
+  xfree(iter);
+}
+
+static struct ptr_iterator info_list_iterator_funcs =
+{
+  info_list_iterator_has_next_func,
+  info_list_iterator_get_func,
+  info_list_iterator_next_func,
+  info_list_iterator_destroy_func,
+};
+
+static ptr_iterator_t
+get_info_list_iterator_func(
+        void *data,
+        int contest_id,
+        unsigned flag_mask)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  struct info_list_iterator *iter = 0;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+  int i, val;
+
+  ASSERT(contest_id > 0);
+  flag_mask &= USERLIST_UC_ALL;
+
+  XCALLOC(iter, 1);
+  iter->b = info_list_iterator_funcs;
+  iter->state = state;
+  iter->contest_id = contest_id;
+  iter->cur_ind = 0;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "SELECT user_id FROM %scntsregs WHERE contest_id = %d ", state->table_prefix, contest_id);
+  if (!flag_mask) {
+    fprintf(cmd_f, " AND banned = 0 AND invisible = 0 AND locked = 0 AND incomplete = 0 AND disqualified = 0 ");
+  } else if (flag_mask != USERLIST_UC_ALL) {
+    fprintf(cmd_f, " AND ((banned = 0 AND invisible = 0 AND locked = 0 AND incomplete = 0 AND disqualified = 0) ");
+    if ((flag_mask & USERLIST_UC_BANNED))
+      fprintf(cmd_f, " OR banned = 1 ");
+    if ((flag_mask & USERLIST_UC_INVISIBLE))
+      fprintf(cmd_f, " OR invisible = 1 ");
+    if ((flag_mask & USERLIST_UC_LOCKED))
+      fprintf(cmd_f, " OR locked = 1 ");
+    if ((flag_mask & USERLIST_UC_INCOMPLETE))
+      fprintf(cmd_f, " OR incomplete = 1 ");
+    if ((flag_mask & USERLIST_UC_DISQUALIFIED))
+      fprintf(cmd_f, " OR disqualified = 1 ");
+    fprintf(cmd_f, ") ");
+  }
+  fprintf(cmd_f, " ORDER BY user_id ;");
+  fclose(cmd_f); cmd_f = 0;
+
+  if((state->field_count = mysql_field_count(state->conn)) != 1)
+    db_wrong_field_count_fail(state, 1);
+  if (!(state->res = mysql_store_result(state->conn)))
+    db_error_fail(state);
+  state->row_count = mysql_num_rows(state->res);
+  iter->total_ids = state->row_count;
+
+  if (iter->total_ids > 0) {
+    XCALLOC(iter->user_ids, iter->total_ids);
+    for (i = 0; i < iter->total_ids; i++) {
+      if (!(state->row = mysql_fetch_row(state->res)))
+        db_no_data_fail();
+      state->lengths = mysql_fetch_lengths(state->res);
+      if (!state->lengths[0])
+        db_inv_value_fail();
+      if (parse_int(state->row[0], &val) < 0 || val <= 0)
+        db_inv_value_fail();
+      iter->user_ids[i] = val;
+    }
+  }
+  
+  return (ptr_iterator_t) iter;
+
+ fail:
+  if (iter) xfree(iter->user_ids);
+  xfree(iter);
+  return 0;
+}
+
+static int
+clear_team_passwd_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        int *p_cloned_flag)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "UPDATE %susers SET password = NULL, pwdmethod = 0 WHERE user_id = %d AND contest_id = %d ;", state->table_prefix, user_id, contest_id);
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  if (p_cloned_flag) *p_cloned_flag = 0;
+  remove_user_info_from_pool(state, user_id, contest_id);
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+static int
+remove_registration_func(
+        void *data,
+        int user_id,
+        int contest_id)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "DELETE FROM %scntsregs WHERE user_id = %d AND contest_id = %d ;", state->table_prefix, user_id, contest_id);
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  remove_cntsreg_from_pool(state, user_id, contest_id);
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+static int
+set_reg_status_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        int status)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  ASSERT(user_id > 0);
+  ASSERT(contest_id > 0);
+  ASSERT(status >= 0 && status < USERLIST_REG_LAST);
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "UPDATE %scntsregs SET status = %d WHERE user_id = %d AND contest_id = %d ;", state->table_prefix, status, user_id, contest_id);
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  remove_cntsreg_from_pool(state, user_id, contest_id);
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+static int
+set_reg_flags_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        int cmd,
+        unsigned int value)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+  const unsigned char *sep = " ";
+
+  ASSERT(user_id > 0);
+  ASSERT(contest_id > 0);
+  ASSERT(cmd >= 0 && cmd <= 3);
+  value &= USERLIST_UC_ALL;
+
+  if (!cmd || !value) return 0;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "UPDATE %scntsregs SET ", state->table_prefix);
+  switch (cmd) {
+  case 1:                       /* set */
+    if ((value & USERLIST_UC_INVISIBLE)) {
+      fprintf(cmd_f, "%sinvisible = 1", sep);
+      sep = ", ";
+    }
+    if ((value & USERLIST_UC_BANNED)) {
+      fprintf(cmd_f, "%sbanned = 1", sep);
+      sep = ", ";
+    }
+    if ((value & USERLIST_UC_LOCKED)) {
+      fprintf(cmd_f, "%slocked = 1", sep);
+      sep = ", ";
+    }
+    if ((value & USERLIST_UC_INCOMPLETE)) {
+      fprintf(cmd_f, "%sincomplete = 1", sep);
+      sep = ", ";
+    }
+    if ((value & USERLIST_UC_DISQUALIFIED)) {
+      fprintf(cmd_f, "%sdisqualified = 1", sep);
+      sep = ", ";
+    }
+    break;
+  case 2:                       /* clear */
+    if ((value & USERLIST_UC_INVISIBLE)) {
+      fprintf(cmd_f, "%sinvisible = 0", sep);
+      sep = ", ";
+    }
+    if ((value & USERLIST_UC_BANNED)) {
+      fprintf(cmd_f, "%sbanned = 0", sep);
+      sep = ", ";
+    }
+    if ((value & USERLIST_UC_LOCKED)) {
+      fprintf(cmd_f, "%slocked = 0", sep);
+      sep = ", ";
+    }
+    if ((value & USERLIST_UC_INCOMPLETE)) {
+      fprintf(cmd_f, "%sincomplete = 0", sep);
+      sep = ", ";
+    }
+    if ((value & USERLIST_UC_DISQUALIFIED)) {
+      fprintf(cmd_f, "%sdisqualified = 0", sep);
+      sep = ", ";
+    }
+    break;
+  case 3:                       /* flip */
+    if ((value & USERLIST_UC_INVISIBLE)) {
+      fprintf(cmd_f, "%sinvisible = 1 - invisible", sep);
+      sep = ", ";
+    }
+    if ((value & USERLIST_UC_BANNED)) {
+      fprintf(cmd_f, "%sbanned = 1 - banned", sep);
+      sep = ", ";
+    }
+    if ((value & USERLIST_UC_LOCKED)) {
+      fprintf(cmd_f, "%slocked = 1 - locked", sep);
+      sep = ", ";
+    }
+    if ((value & USERLIST_UC_INCOMPLETE)) {
+      fprintf(cmd_f, "%sincomplete = 1 - incomplete", sep);
+      sep = ", ";
+    }
+    if ((value & USERLIST_UC_DISQUALIFIED)) {
+      fprintf(cmd_f, "%sdisqualified = 1 - disqualified", sep);
+      sep = ", ";
+    }
+    break;
+  default:
+    abort();
+  }
+  fprintf(cmd_f, " WHERE user_id = %d AND contest_id = %d ;",
+          user_id, contest_id);
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  remove_cntsreg_from_pool(state, user_id, contest_id);
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+static int
+remove_user_contest_info_func(
+        void *data,
+        int user_id,
+        int contest_id)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  ASSERT(user_id > 0);
+  ASSERT(contest_id >= 0);
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "DELETE FROM %susers WHERE user_id = %d AND contest_id = %d ;",
+          state->table_prefix, user_id, contest_id);
+  fprintf(cmd_f, "DELETE FROM %smembers WHERE user_id = %d AND contest_id = %d ;",
+          state->table_prefix, user_id, contest_id);
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  remove_user_info_from_pool(state, user_id, contest_id);
+  remove_member_from_pool(state, user_id, contest_id);
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+#include "fields.inc.c"
+
+static int
+clear_user_field_func(
+        void *data,
+        int user_id,
+        int field_id,
+        time_t cur_time)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+  const unsigned char *sep = ", ";
+  const unsigned char *tsvarname = "changetime";
+
+  ASSERT(user_id > 0);
+  ASSERT(field_id >= USERLIST_NN_FIRST && field_id < USERLIST_NN_LAST);
+
+  if (!fields[field_id].sql_name) return -1;
+
+  if (cur_time <= 0) cur_time = time(0);
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "UPDATE %slogins SET ", state->table_prefix);
+  switch (field_id) {
+  case USERLIST_NN_IS_PRIVILEGED:
+    fprintf(cmd_f, "%s = 0", fields[field_id].sql_name);
+    break;
+  case USERLIST_NN_SHOW_LOGIN:
+    fclose(cmd_f);
+    xfree(cmd_t);
+    return 0;
+  case USERLIST_NN_LOGIN:
+    goto fail;
+  case USERLIST_NN_EMAIL:
+    fprintf(cmd_f, "%s = NULL", fields[field_id].sql_name);
+    break;
+  case USERLIST_NN_PASSWD:
+    fprintf(cmd_f, "password = NULL, pwdmethod = 0");
+    break;
+  case USERLIST_NN_REGISTRATION_TIME:
+    fprintf(cmd_f, "%s = 0", fields[field_id].sql_name);
+    break;
+  case USERLIST_NN_LAST_CHANGE_TIME:
+    sep = "";
+    break;
+  case USERLIST_NN_LAST_PWDCHANGE_TIME:
+    sep = "";
+    tsvarname = "pwdtime";
+    break;
+  default:
+    abort();
+  }
+  fprintf(cmd_f, "%s%s = ", sep, tsvarname);
+  write_timestamp(cmd_f, state, 0, cur_time);
+  fprintf(cmd_f, " WHERE user_id = %d ;", user_id);
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  remove_login_from_pool(state, user_id);
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+static void
+unlock_user_func(
+        void *data,
+        const struct userlist_user *c_u)
+{
+  int i;
+  struct userlist_user *u = (struct userlist_user*) c_u;
+  struct xml_tree *p, *q;
+  struct userlist_user_info *ui = 0;
+
+  if (!c_u) return;
+
+  // detach all existing user_infos
+  for (i = 0; i < u->cntsinfo_a; i++) {
+    if (!(ui = u->cntsinfo[i])) continue;
+    ui->members = 0;
+    u->cntsinfo[i] = 0;
+  }
+  xfree(u->cntsinfo);
+  u->cntsinfo = 0;
+  u->cntsinfo_a = 0;
+  u->cnts0 = 0;
+
+  // detach all existing cntsregs
+  if (u->contests) {
+    for (p = u->contests->first_down; p; p = q) {
+      q = p->right;
+      p->left = p->right = 0;
+    }
+    u->contests->first_down = 0;
+    u->contests->last_down = 0;
+    userlist_free(u->contests);
+    u->contests = 0;
+  }
+
+  // detach the cookies
+  if (u->cookies) {
+    for (p = u->cookies->first_down; p; p = q) {
+      q = p->right;
+      p->left = p->right = 0;
+    }
+    u->cookies->first_down = 0;
+    u->cookies->last_down = 0;
+    userlist_free(u->cookies);
+    u->cookies = 0;
+  }
 }
 
 /*

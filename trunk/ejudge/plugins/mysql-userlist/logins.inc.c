@@ -58,11 +58,11 @@ allocate_login_on_pool(
   }
 
   if ((u = uc->user_map[user_id])) {
-    // FIXME: preserve the old value???
-    // or introduce 'nocache' option???
     u_xml = (struct xml_tree*) u;
-    userlist_elem_free_data(u_xml);
-    u->id = user_id;
+    if (state->nocache) {
+      userlist_elem_free_data(u_xml);
+      u->id = user_id;
+    }
 
     MOVE_TO_FRONT(u_xml, uc->first, uc->last, left, right);
     return u;
@@ -134,8 +134,7 @@ fetch_login(
 
   cmdlen = snprintf(cmdbuf, cmdlen, "SELECT * FROM %slogins WHERE user_id = %d ;",
                     state->table_prefix, user_id);
-  if (mysql_real_query(state->conn, cmdbuf, cmdlen))
-    db_error_fail(state);
+  if (my_simple_query(state, cmdbuf, cmdlen) < 0) goto fail;
   state->field_count = mysql_field_count(state->conn);
   if (state->field_count != LOGIN_WIDTH)
     db_wrong_field_count_fail(state, LOGIN_WIDTH);

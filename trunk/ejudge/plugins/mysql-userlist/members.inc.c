@@ -94,9 +94,9 @@ allocate_member_on_pool(
 
   // found in cache
   if (pp) {
-    // FIXME: preserve the old value???
-    // or introduce 'nocache' option???
-    userlist_elem_free_data(&pp->mm->b);
+    if (state->nocache) {
+      userlist_elem_free_data(&pp->mm->b);
+    }
 
     MOVE_TO_FRONT(pp, cache->first, cache->last, prev, next);
     MOVE_TO_FRONT(pp, usr->first_user, usr->last_user, prev_user, next_user);
@@ -181,8 +181,7 @@ fetch_member(
   int i;
 
   cmdlen = snprintf(cmdbuf, cmdlen, "SELECT * FROM %smembers WHERE user_id = %d AND contest_id = %d", state->table_prefix, user_id, contest_id);
-  if (mysql_real_query(state->conn, cmdbuf, cmdlen))
-    db_error_fail(state);
+  if (my_simple_query(state, cmdbuf, cmdlen) < 0) goto fail;
   if ((state->field_count = mysql_field_count(state->conn)) != MEMBER_WIDTH)
     db_wrong_field_count_fail(state, MEMBER_WIDTH);
   if (!(state->res = mysql_store_result(state->conn)))
