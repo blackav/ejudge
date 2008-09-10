@@ -545,6 +545,7 @@ html_armor_extend(struct html_armor_buffer *pb, size_t newsz)
   if (pb->size > 0) {
     memcpy(newbuf, pb->buf, pb->size);
   }
+  xfree(pb->buf);
   pb->buf = newbuf;
   pb->size = newalloc;
 }
