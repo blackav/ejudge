@@ -269,73 +269,6 @@ static char const * const member_gender_string[] =
 #define FIRST_CONTEST(u) ((struct userlist_contest*)(u)->contests->first_down)
 #define NEXT_CONTEST(c)  ((struct userlist_contest*)(c)->b.right)
 
-/* commands recheck status
-   cmd_register_new,                            OK
-   cmd_login,                                   OK
-   cmd_check_cookie,                            OK
-   cmd_do_logout,                               OK
-   cmd_get_user_info,                           OK
-   cmd_set_user_info,                           OK
-   cmd_set_passwd,                              OK
-   cmd_get_user_contests,                       OK
-   cmd_register_contest,                        OK
-   cmd_delete_member,                           OK
-   cmd_pass_fd,                                 OK
-   cmd_list_users,                              OK
-   cmd_map_contest,                             OK
-   cmd_admin_process,                           OK
-   cmd_generate_team_passwords,                 OK
-   cmd_team_login,                              OK
-   cmd_team_check_cookie,                       OK
-   cmd_get_contest_name,                        OK
-   cmd_team_set_passwd,                         OK
-   cmd_list_all_users,                          OK
-   cmd_edit_registration,                       OK
-   cmd_edit_field,                              OK
-   cmd_delete_field,                            OK
-   cmd_get_uid_by_pid,                          OK
-   cmd_priv_login,                              OK
-   cmd_priv_check_cookie,                       OK
-   cmd_dump_database,                           OK
-   cmd_priv_get_user_info,                      OK
-   cmd_priv_register_contest,                   OK
-   cmd_generate_register_passwords,             OK
-   cmd_clear_team_passwords,                    OK
-   cmd_list_standings_users,                    OK
-   cmd_get_uid_by_pid_2,                        OK
-   cmd_is_valid_cookie,                         OK
-   cmd_dump_whole_database,                     OK
-   cmd_user_op,                                 OK
-   cmd_lookup_user,                             OK
-   cmd_register_new_2,                          OK
-   cmd_delete_user,                             OK
-   cmd_delete_cookie,                           OK
-   cmd_delete_user_info,                        OK
-   cmd_create_user,                             OK
-   cmd_create_member,                           OK
-   cmd_priv_delete_member,                      OK
-   cmd_priv_check_user,                         OK
-   cmd_get_cookie,                              OK
-   cmd_lookup_user_id,                          OK
-   cmd_team_check_user,                         OK
-   cmd_observer_cmd,                            OK
-   cmd_set_cookie,                              OK
-   cmd_priv_set_passwd,                         OK
-   cmd_generate_team_passwords_2,               OK
-   cmd_generate_register_passwords_2,           OK
-   cmd_get_database,                            OK
-   cmd_copy_user_info,                          OK
-   cmd_recover_password_1,                      OK
-   cmd_recover_password_2,                      OK
-   cmd_control_server,                          OK
-   cmd_priv_cookie_login,                       OK
-   cmd_check_user,                              OK
-   cmd_register_contest_2,                      OK
-   cmd_edit_field_seq,                          OK
-   cmd_move_member,                             OK
-   cmd_import_csv_users,                        OK
-*/
-
 static struct contest_extra *
 attach_contest_extra(int id, const struct contest_desc *cnts)
 {
@@ -647,6 +580,7 @@ link_client_state(struct client_state *p)
 #define default_move_member(a, b, c, d, e, f) uldb_default->iface->move_member(uldb_default->data, a, b, c, d, e, f)
 #define default_get_user_info_6(a, b, c, d, e, f) uldb_default->iface->get_user_info_6(uldb_default->data, a, b, c, d, e, f)
 #define default_get_user_info_7(a, b, c, d, e) uldb_default->iface->get_user_info_7(uldb_default->data, a, b, c, d, e)
+#define default_unlock_user(a) uldb_default->iface->unlock_user(uldb_default->data, a)
 
 static void
 update_all_user_contests(int user_id)
@@ -3929,6 +3863,7 @@ cmd_list_all_users(struct client_state *p,
        iter->next(iter)) {
     u = (const struct userlist_user*) iter->get(iter);
     userlist_unparse_user_short(u, f, data->contest_id);
+    default_unlock_user(u);
   }
   userlist_write_xml_footer(f);
   iter->destroy(iter);
@@ -4009,6 +3944,8 @@ cmd_list_standings_users(struct client_state *p,
 
     userlist_real_unparse_user(u, f, USERLIST_MODE_STAND, data->contest_id,
                                subflags);
+
+    default_unlock_user(u);
   }
   userlist_write_xml_footer(f);
   iter->destroy(iter);
@@ -5673,6 +5610,7 @@ do_generate_passwd(int contest_id, FILE *log)
     // or disqualified users
     if ((c->flags & USERLIST_UC_ALL)) continue;
 
+    default_unlock_user(u);
     default_remove_user_cookies(u->id);
     memset(buf, 0, sizeof(buf));
     generate_random_password(8, buf);
@@ -5788,6 +5726,7 @@ cmd_generate_register_passwords_2(struct client_state *p, int pkt_len,
     // also do not change password for invisible, banned or locked users
     if ((c->flags & USERLIST_UC_ALL)) continue;
 
+    default_unlock_user(u);
     default_remove_user_cookies(u->id);
     memset(buf, 0, sizeof(buf));
     generate_random_password(8, buf);
@@ -5835,6 +5774,7 @@ cmd_generate_team_passwords_2(struct client_state *p, int pkt_len,
     // also do not change password for invisible, banned or locked users
     if ((c->flags & USERLIST_UC_ALL)) continue;
 
+    default_unlock_user(u);
     default_remove_user_cookies(u->id);
     memset(buf, 0, sizeof(buf));
     generate_random_password(8, buf);
@@ -5870,6 +5810,7 @@ do_generate_team_passwd(int contest_id, FILE *log)
     // also do not change password for invisible, banned or locked users
     if ((c->flags & USERLIST_UC_ALL)) continue;
 
+    default_unlock_user(u);
     default_remove_user_cookies(u->id);
     memset(buf, 0, sizeof(buf));
     generate_random_password(8, buf);
@@ -5957,6 +5898,7 @@ do_clear_team_passwords(int contest_id)
     // also do not change password for invisible, banned or locked users
     if ((c->flags & USERLIST_UC_ALL)) continue;
 
+    default_unlock_user(u);
     default_clear_team_passwd(u->id, contest_id, NULL);
     default_remove_user_cookies(u->id);
   }

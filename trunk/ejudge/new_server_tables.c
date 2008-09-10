@@ -51,6 +51,7 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1] = __("Regenerate registration passwords!"),
   [NEW_SRV_ACTION_RELOAD_SERVER] = __("Reload config files"),
   [NEW_SRV_ACTION_PRIV_SUBMIT_CLAR] = __("Send clarification"),
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT] = __("Send run comment"),
   [NEW_SRV_ACTION_CHANGE_PASSWORD] = __("Change password"),
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = __("Switch language"),
   [NEW_SRV_ACTION_RESET_FILTER] = __("Reset filter"),

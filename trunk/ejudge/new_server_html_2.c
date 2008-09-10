@@ -973,6 +973,11 @@ ns_write_priv_source(const serve_state_t state,
   const unsigned char *ss;
   const struct section_global_data *global = state->global;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *run_charset = 0;
+  int charset_id = 0;
+
+  if (ns_cgi_param(phr, "run_charset", &ss) > 0 && ss && *ss)
+    run_charset = ss;
 
   if (run_id < 0 || run_id >= run_get_total(state->runlog_state)) {
     ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
@@ -1479,6 +1484,15 @@ ns_write_priv_source(const serve_state_t state,
           html_input_text(bt, sizeof(bt), "run_id2", 10, "%s", filtbuf1),
           BUTTON(NEW_SRV_ACTION_COMPARE_RUNS));
 
+  html_start_form(f, 0, phr->self_url, phr->hidden_vars);
+  html_hidden(f, "run_id", "%d", run_id);
+  fprintf(f, "<p>%s: ", _("Charset"));
+  charset_html_select(f, "run_charset", run_charset);
+  fprintf(f, "%s</p>",
+          ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_VIEW_SOURCE,
+                           _("Change")));
+  fprintf(f, "</form>\n");
+
   if (global->enable_report_upload) {
     html_start_form(f, 2, phr->self_url, phr->hidden_vars);
     html_hidden(f, "run_id", "%d", run_id);
@@ -1518,6 +1532,13 @@ ns_write_priv_source(const serve_state_t state,
     if (src_flags < 0 || generic_read_file(&src_text, 0, &src_len, src_flags, 0, src_path, "") < 0) {
       fprintf(f, "<big><font color=\"red\">Cannot read source text!</font></big>\n");
     } else {
+      if (run_charset && (charset_id = charset_get_id(run_charset)) > 0) {
+        unsigned char *newsrc = charset_decode_to_heap(charset_id, src_text);
+        xfree(src_text);
+        src_text = newsrc;
+        src_len = strlen(src_text);
+      }
+
       numb_txt = "";
       if ((numb_len = text_numbered_memlen(src_text, src_len))) {
         numb_txt = alloca(numb_len + 1);
@@ -1530,8 +1551,18 @@ ns_write_priv_source(const serve_state_t state,
       html_text[html_len] = 0;
       fprintf(f, "<pre>%s</pre>", html_text);
       xfree(src_text);
+      fprintf(f, "<hr/>\n");
+
+      fprintf(f, "<h2>%s</h2>\n", _("Send a message about this run"));
+      html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+      html_hidden(f, "run_id", "%d", run_id);
+      fprintf(f,
+              "<p><textarea name=\"msg_text\" rows=\"20\" cols=\"60\">"
+              "</textarea></p>"
+              "<p>%s</p>\n",
+              BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT));
+      fprintf(f, "</form>\n");
     }
-    fprintf(f, "<hr>\n");
     /*
     print_nav_buttons(state, f, run_id, sid, self_url, hidden_vars, extra_args,
                       _("Main page"), 0, 0, 0, _("Refresh"), _("View report"),

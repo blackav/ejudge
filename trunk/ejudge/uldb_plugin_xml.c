@@ -123,6 +123,7 @@ static int get_user_info_7_func(void *, int, int,
                                 const struct userlist_members **);
 static int get_member_serial_func(void *);
 static int set_member_serial_func(void *, int);
+static void unlock_user_func(void *data, const struct userlist_user *u) {}
 
 struct uldb_plugin_iface uldb_plugin_xml =
 {
@@ -197,7 +198,8 @@ struct uldb_plugin_iface uldb_plugin_xml =
   get_user_info_6_func,
   get_user_info_7_func,
   get_member_serial_func,
-  set_member_serial_func
+  set_member_serial_func,
+  unlock_user_func,
 };
 
 struct uldb_xml_state

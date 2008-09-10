@@ -183,6 +183,8 @@ struct uldb_plugin_iface
   int (*get_member_serial)(void *);
   // set the member serial number
   int (*set_member_serial)(void *, int);
+  // unlock the complete user information structure
+  void (*unlock_user)(void *, const struct userlist_user *);
 };
 
 /* default plugin: compiled into userlist-server */

@@ -22,10 +22,6 @@
 #include <time.h>
 #include <stdlib.h>
 
-#define CLAR_MAX_SUBJ_LEN     24
-#define CLAR_MAX_SUBJ_TXT_LEN 18
-#define CLAR_MAX_IP_LEN       15
-
 enum
   {
     CLAR_LOG_READONLY = 1,
