@@ -3668,3 +3668,16 @@ userlist-server.c 5037 0 22600341
 uldb_plugin_xml.c 5039 0 7206725
 userlist-server.c 5041 0 22600017
 uldb_plugin_xml.c 5041 0 7206351
+charsets.h 5044 0 142532
+clarlog.h 5044 0 253481
+new-server.h 5044 0 2064090
+uldb_plugin.h 5044 0 727772
+userlist-server.c 5044 0 22426862
+charsets.c 5044 0 751334
+clarlog.c 5044 0 1374207
+new_server_html.c 5044 0 36032313
+new_server_html_2.c 5044 0 14239674
+new_server_tables.c 5044 0 1113571
+uldb_plugin_xml.c 5044 0 7215376
+plugins/mysql-userlist/uldb_mysql.c 5043 0 6547476
+misctext.c 5045 0 1940893
