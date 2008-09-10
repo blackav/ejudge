@@ -57,17 +57,19 @@ charset_get_id(const unsigned char *charset_str)
     if (!strcasecmp(charset_info[i].name, charset_str))
       break;
   if (i < charset_info_u) return i;
-  if (!charset_info_a) {
-    charset_info_a = 16;
-    XCALLOC(charset_info, charset_info_a);
-  } else {
-    size_t new_charset_info_a = charset_info_a * 2;
-    struct charset_info_s *new_charset_info = 0;
-    XCALLOC(new_charset_info, new_charset_info_a);
-    memcpy(new_charset_info, charset_info, charset_info_a * sizeof(new_charset_info[0]));
-    xfree(charset_info);
-    charset_info = new_charset_info;
-    charset_info_a = new_charset_info_a;
+  if (charset_info_u == charset_info_a) {
+    if (!charset_info_a) {
+      charset_info_a = 16;
+      XCALLOC(charset_info, charset_info_a);
+    } else {
+      size_t new_charset_info_a = charset_info_a * 2;
+      struct charset_info_s *new_charset_info = 0;
+      XCALLOC(new_charset_info, new_charset_info_a);
+      memcpy(new_charset_info, charset_info, charset_info_a * sizeof(new_charset_info[0]));
+      xfree(charset_info);
+      charset_info = new_charset_info;
+      charset_info_a = new_charset_info_a;
+    }
   }
 
   charset_info[i].name = xstrdup(charset_str);
