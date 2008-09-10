@@ -37,190 +37,7 @@
 #include <ctype.h>
 #include <errno.h>
 
-static void *init_func(const struct ejudge_cfg *);
-static int parse_func(void *, const struct ejudge_cfg *,struct xml_tree *);
-static int open_func(void *data);
-static int close_func(void *data);
-static int check_func(void *data);
-static int create_func(void *data);
-static int insert_func(void *data, const struct userlist_user *user, int *p_member_serial);
-static int_iterator_t get_user_id_iterator_func(void *data);
-static int get_user_by_login_func(void *data, const unsigned char *login);
-static void sync_func(void *);
-static void forced_sync_func(void *);
-static unsigned char *get_login_func(void *data, int user_id);
-static int new_user_func(void *data, const unsigned char *login,
-                         const unsigned char *email,
-                         const unsigned char *passwd,
-                         int simple_reg_flag);
-static int remove_user_func(void *data, int user_id);
-static int get_cookie_func(void *data,
-                           ej_cookie_t value,
-                           const struct userlist_cookie **p_cookie);
-static int new_cookie_func(void *, int user_id,
-                           ej_ip_t ip, int ssl_flag,
-                           ej_cookie_t cookie, time_t,
-                           int contest_id,
-                           int locale_id,
-                           int priv_level,
-                           int role, int recovery, int team_login,
-                           const struct userlist_cookie **);
-static int remove_cookie_func(void *data,
-                              const struct userlist_cookie *c);
-static int remove_user_cookies_func(void *data, int user_id);
-static int remove_expired_cookies_func(void *data, time_t cur_time);
-static ptr_iterator_t get_user_contest_iterator_func(void *data, int user_id);
-static int remove_expired_users_func(void *data, time_t min_reg_time);
-static int get_user_info_1_func(void *data, int user_id,
-                                const struct userlist_user **p_user);
-static int get_user_info_2_func(
-        void *data,
-        int user_id,
-        int contest_id,
-        const struct userlist_user **p_u,
-        const struct userlist_user_info **p_ui);
-static int
-touch_login_time_func(
-        void *data,
-        int user_id,
-        int contest_id,
-        time_t cur_time);
-static int
-get_user_info_3_func(
-        void *data,
-        int user_id,
-        int contest_id,
-        const struct userlist_user **p_user,
-        const struct userlist_user_info **p_info,
-        const struct userlist_contest **p_contest);
-static int
-set_cookie_contest_func(
-        void *data,
-        const struct userlist_cookie *c,
-        int contest_id);
-static int
-set_cookie_locale_func(
-        void *data,
-        const struct userlist_cookie *c,
-        int locale_id);
-static int
-set_cookie_priv_level_func(
-        void *data,
-        const struct userlist_cookie *c,
-        int priv_level);
-static int
-get_user_info_4_func(
-        void *data,
-        int user_id,
-        int contest_id,
-        const struct userlist_user **p_user);
-static int
-get_user_info_5_func(
-        void *data,
-        int user_id,
-        int contest_id,
-        const struct userlist_user **p_user);
-static ptr_iterator_t
-get_brief_list_iterator_func(
-        void *data,
-        int contest_id);
-static ptr_iterator_t
-get_standings_list_iterator_func(
-        void *data,
-        int contest_id);
-static int
-check_user_func(
-        void *data,
-        int user_id);
-static int
-set_reg_passwd_func(
-        void *data,
-        int user_id,
-        int method,
-        const unsigned char *password,
-        time_t cur_time);
-static int
-set_team_passwd_func(
-        void *data,
-        int user_id,
-        int contest_id,
-        int method,
-        const unsigned char *password,
-        time_t cur_time,
-        int *p_cloned_flag);
-static int
-register_contest_func(
-        void *data,
-        int user_id,
-        int contest_id,
-        int status,
-        time_t cur_time,
-        const struct userlist_contest **p_c);
-static int
-remove_member_func(
-        void *data,
-        int user_id,
-        int contest_id,
-        int serial,
-        time_t cur_time,
-        int *p_cloned_flag);
-static int
-is_read_only_func(
-        void *data,
-        int user_id,
-        int contest_id);
-static ptr_iterator_t
-get_info_list_iterator_func(
-        void *data,
-        int contest_id,
-        unsigned flag_mask);
-static int
-clear_team_passwd_func(
-        void *data,
-        int user_id,
-        int contest_id,
-        int *p_cloned_flag);
-static int
-remove_registration_func(
-        void *data,
-        int user_id,
-        int contest_id);
-static int
-set_reg_status_func(
-        void *data,
-        int user_id,
-        int contest_id,
-        int status);
-static int
-set_reg_flags_func(
-        void *data,
-        int user_id,
-        int contest_id,
-        int cmd,
-        unsigned int value);
-static int
-remove_user_contest_info_func(
-        void *data,
-        int user_id,
-        int contest_id);
-static int
-clear_user_field_func(
-        void *data,
-        int user_id,
-        int field_id,
-        time_t cur_time);
-static int
-clear_user_field_func(
-        void *data,
-        int user_id,
-        int field_id,
-        time_t cur_time);
-
-static void
-unlock_user_func(
-        void *data,
-        const struct userlist_user *c_u)
-  __attribute__((unused));
+#include "methods.inc.c"
 
 /* plugin entry point */
 struct uldb_plugin_iface plugin_uldb_mysql =
@@ -330,20 +147,20 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   remove_user_contest_info_func,
   // clear the main user info field
   clear_user_field_func,
+  // clear the user_info field
+  clear_user_info_field_func,
+  // clear the member field
+  clear_user_member_field_func,
+  // set the main user info field
+  set_user_field_func,
+  // set the user contest-specific info field
+  set_user_info_field_func,
+  // set the user member field
+  set_user_member_field_func,
+  // create new member
+  new_member_func,
 
   /*
-  // clear the user_info field
-  int (*clear_user_info_field)(void *, int, int, int, time_t, int *);
-  // clear the member field
-  int (*clear_user_member_field)(void *, int, int, int, int, time_t, int *);
-  // set the main user info field
-  int (*set_user_field)(void *, int, int, const unsigned char *, time_t);
-  // set the user contest-specific info field
-  int (*set_user_info_field)(void *, int, int, int, const unsigned char *, time_t, int *);
-  // set the user member field
-  int (*set_user_member_field)(void *, int, int, int, int, const unsigned char *, time_t, int *);
-  // create new member
-  int (*new_member)(void *, int, int, int, time_t, int *);
   // maintenance operations
   int (*maintenance)(void *, time_t);
   // change the role of the existing member
@@ -984,6 +801,26 @@ write_timestamp(FILE *f, struct uldb_mysql_state *state,
   fprintf(f, "%s'%04d-%02d-%02d %02d:%02d:%02d'",
           pfx, ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
           ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
+}
+
+static void
+write_date(
+        FILE *f,
+        struct uldb_mysql_state *state,
+        const unsigned char *pfx,
+        time_t time)
+{
+  struct tm *ptm;
+
+  if (pfx) pfx = "";
+  if (time <= 0) {
+    fprintf(f, "%sDEFAULT", pfx);
+    return;
+  }
+
+  ptm = localtime(&time);
+  fprintf(f, "%s'%04d-%02d-%02d'",
+          pfx, ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday);
 }
 
 static int
@@ -2921,9 +2758,8 @@ clear_user_field_func(
     fprintf(cmd_f, "%s = 0", fields[field_id].sql_name);
     break;
   case USERLIST_NN_SHOW_LOGIN:
-    fclose(cmd_f);
-    xfree(cmd_t);
-    return 0;
+    sep = "";
+    break;
   case USERLIST_NN_LOGIN:
     goto fail;
   case USERLIST_NN_EMAIL:
@@ -2958,6 +2794,416 @@ clear_user_field_func(
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
   return -1;
+}
+
+static int
+clear_user_info_field_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        int field_id,
+        time_t cur_time,
+        int *p_cloned_flag)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+  const unsigned char *sep = ", ";
+  const unsigned char *tsvarname = "changetime";
+
+  ASSERT(user_id > 0);
+  ASSERT(contest_id >= 0);
+  ASSERT(field_id >= USERLIST_NC_FIRST && field_id < USERLIST_NC_LAST);
+  if (!fields[field_id].sql_name) return -1;
+  if (cur_time <= 0) cur_time = time(0);
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "UPDATE %susers SET ", state->table_prefix);
+  switch (field_id) {
+  case USERLIST_NC_CNTS_READ_ONLY:
+    fprintf(cmd_f, "%s = 0", fields[field_id].sql_name);
+    break;
+  case USERLIST_NC_NAME:
+    fprintf(cmd_f, "%s = NULL", fields[field_id].sql_name);
+    break;
+  case USERLIST_NC_TEAM_PASSWD:
+    fprintf(cmd_f, "password = NULL, pwdmethod = 0");
+    break;
+  case USERLIST_NC_INSTNUM:
+    fprintf(cmd_f, "%s = -1", fields[field_id].sql_name);
+    break;
+  case USERLIST_NC_INST:
+    fprintf(cmd_f, "%s = NULL", fields[field_id].sql_name);
+    break;
+  case USERLIST_NC_CREATE_TIME:
+    fprintf(cmd_f, "%s = 0", fields[field_id].sql_name);
+    break;
+  case USERLIST_NC_LAST_CHANGE_TIME:
+    sep = "";
+    break;
+  case USERLIST_NC_LAST_PWDCHANGE_TIME:
+    sep = "";
+    tsvarname = "pwdtime";
+    break;
+  default:
+    abort();
+  }
+  fprintf(cmd_f, "%s%s = ", sep, tsvarname);
+  write_timestamp(cmd_f, state, 0, cur_time);
+  fprintf(cmd_f, " WHERE user_id = %d AND contest_id = %d;",
+          user_id, contest_id);
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  remove_user_info_from_pool(state, user_id, contest_id);
+  if (p_cloned_flag) *p_cloned_flag = 0;
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+static int
+clear_user_member_field_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        int serial,
+        int field_id,
+        time_t cur_time,
+        int *p_cloned_flag)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+  const unsigned char *sep = ", ";
+
+  ASSERT(user_id > 0);
+  ASSERT(contest_id >= 0);
+  ASSERT(serial > 0);
+  ASSERT(field_id >= USERLIST_NM_FIRST && field_id < USERLIST_NM_LAST);
+  if (!fields[field_id].sql_name) return -1;
+  if (cur_time <= 0) cur_time = time(0);
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "UPDATE %smembers SET ", state->table_prefix);
+  switch (field_id) {
+  case USERLIST_NM_STATUS:
+    fprintf(cmd_f, "%s = 0", fields[field_id].sql_name);
+    break;
+  case USERLIST_NM_GENDER:
+    fprintf(cmd_f, "%s = 0", fields[field_id].sql_name);
+    break;
+  case USERLIST_NM_GRADE:
+    fprintf(cmd_f, "%s = 0", fields[field_id].sql_name);
+    break;
+  case USERLIST_NM_FIRSTNAME:
+    fprintf(cmd_f, "%s = NULL", fields[field_id].sql_name);
+    break;
+  case USERLIST_NM_CREATE_TIME:
+    fprintf(cmd_f, "%s = 0", fields[field_id].sql_name);
+    break;
+  case USERLIST_NM_LAST_CHANGE_TIME:
+    sep = "";
+    break;
+  case USERLIST_NM_BIRTH_DATE:
+    fprintf(cmd_f, "%s = 0", fields[field_id].sql_name);
+    break;
+  default:
+    abort();
+  }
+  fprintf(cmd_f, "%s%s = ", sep, "changetime");
+  write_timestamp(cmd_f, state, 0, cur_time);
+  fprintf(cmd_f, " WHERE serial = %d ;", serial);
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  remove_member_from_pool(state, user_id, contest_id);
+  if (p_cloned_flag) *p_cloned_flag = 0;
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+static int
+set_user_field_func(
+        void *data,
+        int user_id,
+        int field_id,
+        const unsigned char *value,
+        time_t cur_time)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+  const unsigned char *sep = ", ";
+  const unsigned char *tsvarname = "changetime";
+  struct userlist_user arena;
+  void *p_field;
+  int v_int;
+  time_t v_time;
+
+  ASSERT(user_id > 0);
+  ASSERT(field_id >= USERLIST_NN_FIRST && field_id < USERLIST_NN_LAST);
+  if (!fields[field_id].sql_name) return -1;
+  if (cur_time <= 0) cur_time = time(0);
+  memset(&arena, 0, sizeof(arena));
+  arena.b.tag = USERLIST_T_USER;
+  if (!(p_field = userlist_get_user_field_ptr(&arena, field_id))) goto fail;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "UPDATE %slogins SET ", state->table_prefix);
+  switch (field_id) {
+  case USERLIST_NN_IS_PRIVILEGED:
+    if (userlist_set_user_field_str(&arena, field_id, value) < 0) goto fail;
+    v_int = *(int*) p_field;
+    fprintf(cmd_f, "%s = %d", fields[field_id].sql_name, v_int);
+    break;
+  case USERLIST_NN_SHOW_LOGIN:
+    sep = "";
+    break;
+  case USERLIST_NN_LOGIN:
+    if (!value) goto fail;
+    if ((v_int = get_user_by_login_func(data, value)) > 0
+        && v_int != user_id)
+      goto fail;
+    fprintf(cmd_f, "%s = ", fields[field_id].sql_name);
+    write_escaped_string(cmd_f, state, 0, value);
+    break;
+  case USERLIST_NN_EMAIL:
+    fprintf(cmd_f, "%s = ", fields[field_id].sql_name);
+    write_escaped_string(cmd_f, state, 0, value);
+    break;
+  case USERLIST_NN_PASSWD:
+    write_escaped_string(cmd_f, state, "password = ", value);
+    fprintf(cmd_f, ", pwdmethod = 0");
+    tsvarname = "pwdtime";
+    break;
+  case USERLIST_NN_REGISTRATION_TIME:
+    if (userlist_set_user_field_str(&arena, field_id, value) < 0) goto fail;
+    v_time = *(time_t*) p_field;
+    fprintf(cmd_f, "%s = ", fields[field_id].sql_name);
+    write_timestamp(cmd_f, state, 0, v_time);
+    break;
+  case USERLIST_NN_LAST_CHANGE_TIME:
+    sep = "";
+    break;
+  case USERLIST_NN_LAST_PWDCHANGE_TIME:
+    sep = "";
+    tsvarname = "pwdtime";
+    break;
+  default:
+    abort();
+  }
+  fprintf(cmd_f, "%s%s = ", sep, tsvarname);
+  write_timestamp(cmd_f, state, 0, cur_time);
+  fprintf(cmd_f, " WHERE user_id = %d ;", user_id);
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  remove_login_from_pool(state, user_id);
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+static int
+set_user_info_field_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        int field_id,
+        const unsigned char *value,
+        time_t cur_time,
+        int *p_cloned_flag)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+  const unsigned char *sep = ", ";
+  const unsigned char *tsvarname = "changetime";
+  struct userlist_user_info arena;
+  void *p_field;
+  int v_int;
+  time_t v_time;
+
+  ASSERT(user_id > 0);
+  ASSERT(contest_id >= 0);
+  ASSERT(field_id >= USERLIST_NC_FIRST && field_id < USERLIST_NC_LAST);
+  if (!fields[field_id].sql_name) return -1;
+  if (cur_time <= 0) cur_time = time(0);
+  memset(&arena, 0, sizeof(arena));
+  arena.b.tag = USERLIST_T_CNTSINFO;
+  if (!(p_field = userlist_get_user_info_field_ptr(&arena, field_id)))
+    goto fail;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "UPDATE %susers SET ", state->table_prefix);
+  switch (field_id) {
+  case USERLIST_NC_CNTS_READ_ONLY:
+    if (userlist_set_user_info_field_str(&arena, field_id, value) < 0)
+      goto fail;
+    v_int = *(int*) p_field;
+    fprintf(cmd_f, "%s = %d", fields[field_id].sql_name, v_int);
+    break;
+  case USERLIST_NC_NAME:
+    fprintf(cmd_f, "%s = ", fields[field_id].sql_name);
+    write_escaped_string(cmd_f, state, 0, value);
+    break;
+  case USERLIST_NC_TEAM_PASSWD:
+    write_escaped_string(cmd_f, state, "password = ", value);
+    fprintf(cmd_f, ", pwdmethod = 0");
+    tsvarname = "pwdtime";
+    break;
+  case USERLIST_NC_INSTNUM:
+    if (userlist_set_user_info_field_str(&arena, field_id, value) < 0)
+      goto fail;
+    v_int = *(int*) p_field;
+    fprintf(cmd_f, "%s = %d", fields[field_id].sql_name, v_int);
+    break;
+  case USERLIST_NC_INST:
+    fprintf(cmd_f, "%s = ", fields[field_id].sql_name);
+    write_escaped_string(cmd_f, state, 0, value);
+    break;
+  case USERLIST_NC_CREATE_TIME:
+    if (userlist_set_user_info_field_str(&arena, field_id, value) < 0)
+      goto fail;
+    v_time = *(time_t*) p_field;
+    fprintf(cmd_f, "%s = ", fields[field_id].sql_name);
+    write_timestamp(cmd_f, state, 0, v_time);
+    break;
+  case USERLIST_NC_LAST_CHANGE_TIME:
+    sep = "";
+    break;
+  case USERLIST_NC_LAST_PWDCHANGE_TIME:
+    sep = "";
+    tsvarname = "pwdtime";
+    break;
+  default:
+    abort();
+  }
+  fprintf(cmd_f, "%s%s = ", sep, tsvarname);
+  write_timestamp(cmd_f, state, 0, cur_time);
+  fprintf(cmd_f, " WHERE user_id = %d AND contest_id = %d;",
+          user_id, contest_id);
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  remove_user_info_from_pool(state, user_id, contest_id);
+  if (p_cloned_flag) *p_cloned_flag = 0;
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+static int
+set_user_member_field_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        int serial,
+        int field_id,
+        const unsigned char *value,
+        time_t cur_time,
+        int *p_cloned_flag)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+  const unsigned char *sep = ", ";
+  struct userlist_member arena;
+  void *p_field;
+  int v_int;
+  time_t v_time;
+
+  ASSERT(user_id > 0);
+  ASSERT(contest_id >= 0);
+  ASSERT(serial > 0);
+  ASSERT(field_id >= USERLIST_NM_FIRST && field_id < USERLIST_NM_LAST);
+  if (!fields[field_id].sql_name) return -1;
+  if (cur_time <= 0) cur_time = time(0);
+  memset(&arena, 0, sizeof(arena));
+  arena.b.tag = USERLIST_T_CNTSINFO;
+  if (!(p_field = userlist_get_member_field_ptr(&arena, field_id)))
+    goto fail;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "UPDATE %smembers SET ", state->table_prefix);
+  switch (field_id) {
+  case USERLIST_NM_STATUS:
+  case USERLIST_NM_GENDER:
+  case USERLIST_NM_GRADE:
+    if (userlist_set_member_field_str(&arena, field_id, value) < 0)
+      goto fail;
+    v_int = *(int*) p_field;
+    fprintf(cmd_f, "%s = %d", fields[field_id].sql_name, v_int);
+    break;
+  case USERLIST_NM_FIRSTNAME:
+    fprintf(cmd_f, "%s = ", fields[field_id].sql_name);
+    write_escaped_string(cmd_f, state, 0, value);
+    break;
+  case USERLIST_NM_CREATE_TIME:
+    if (userlist_set_member_field_str(&arena, field_id, value) < 0)
+      goto fail;
+    v_time = *(time_t*) p_field;
+    fprintf(cmd_f, "%s = ", fields[field_id].sql_name);
+    write_timestamp(cmd_f, state, 0, v_time);
+    break;
+  case USERLIST_NM_LAST_CHANGE_TIME:
+    sep = "";
+    break;
+  case USERLIST_NM_BIRTH_DATE:
+    if (userlist_set_member_field_str(&arena, field_id, value) < 0)
+      goto fail;
+    v_time = *(time_t*) p_field;
+    fprintf(cmd_f, "%s = ", fields[field_id].sql_name);
+    write_date(cmd_f, state, 0, v_time);
+    break;
+  default:
+    abort();
+  }
+  fprintf(cmd_f, "%s%s = ", sep, "changetime");
+  write_timestamp(cmd_f, state, 0, cur_time);
+  fprintf(cmd_f, " WHERE serial = %d ;", serial);
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  remove_member_from_pool(state, user_id, contest_id);
+  if (p_cloned_flag) *p_cloned_flag = 0;
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+static int
+new_member_func(
+        void *data,
+        int user_id,
+        int contest_id,
+        int role,
+        time_t cur_time,
+        int *p_cloned_flag)
+{
+  abort();
 }
 
 static void
