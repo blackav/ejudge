@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-08-12 18:39+0400\n"
-"PO-Revision-Date: 2008-03-22 07:29+0300\n"
+"POT-Creation-Date: 2008-09-09 22:11+0400\n"
+"PO-Revision-Date: 2008-09-10 08:46+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -682,6 +682,9 @@ msgstr "Изменение флагов пользователя %d в турнире %d не удалось: %s"
 #, c-format
 msgid "Changing status of user %d in contest %d failed: %s"
 msgstr "Изменение статуса пользователя %d в турнире %d не удалось: %s"
+
+msgid "Charset"
+msgstr "Кодировка"
 
 msgid "Check failed"
 msgstr "Ошибка проверяющей системы"
@@ -2834,6 +2837,9 @@ msgstr "Выбрать вариант"
 msgid "Send a message"
 msgstr "Отправить сообщение судьям"
 
+msgid "Send a message about this run"
+msgstr "Отправить комментарий к программе"
+
 msgid "Send a message to judges"
 msgstr "Отправить сообщение судьям"
 
@@ -2842,6 +2848,9 @@ msgstr "Отправить аппеляцию"
 
 msgid "Send clarification"
 msgstr "Отправить сообщение"
+
+msgid "Send run comment"
+msgstr "Отправить комментарий к программе"
 
 msgid "Send!"
 msgstr "Отправить!"
@@ -3773,6 +3782,9 @@ msgstr "неверный номер теста"
 
 msgid "invalid user_id"
 msgstr "неверный идентификатор пользователя"
+
+msgid "is commented"
+msgstr "прокомментирован"
 
 msgid "judged"
 msgstr "решения проверены"
