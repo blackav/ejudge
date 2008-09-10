@@ -465,19 +465,17 @@ clar_add_record_new(
   if (!subj) subj = "";
   subj_len = strlen(subj);
   if (subj_len >= CLAR_ENTRY_SUBJ_SIZE) {
-    memcpy(subj2, subj, CLAR_ENTRY_SUBJ_SIZE - 4);
+    memcpy(subj2, subj, CLAR_ENTRY_SUBJ_SIZE);
+    j = CLAR_ENTRY_SUBJ_SIZE - 4;
     if (utf8_mode) {
-      j = CLAR_ENTRY_SUBJ_SIZE - 4;
       while (j >= 0 && subj2[j] >= 0x80 && subj2[j] <= 0xbf) j--;
       if (j < 0) j = 0;
-    } else {
-      j = CLAR_ENTRY_SUBJ_SIZE - 4;
     }
     subj2[j++] = '.';
     subj2[j++] = '.';
     subj2[j++] = '.';
     subj2[j++] = 0;
-    memcpy(pc->subj, subj2, CLAR_ENTRY_SUBJ_SIZE);
+    strcpy(pc->subj, subj2);
   } else {
     strcpy(pc->subj, subj);
   }

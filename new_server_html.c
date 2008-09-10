@@ -2871,6 +2871,90 @@ priv_submit_clar(FILE *fout,
 }
 
 static int
+parse_run_id(FILE *fout, struct http_request_info *phr,
+             const struct contest_desc *cnts,
+             struct contest_extra *extra, int *p_run_id, struct run_entry *pe);
+
+static int
+priv_submit_run_comment(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  int run_id = 0, clar_id = 0;
+  struct run_entry re;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *text = 0;
+  const unsigned char *errmsg = 0;
+  size_t text_len, subj_len, text3_len;
+  unsigned char *text2 = 0, *text3 = 0;
+  unsigned char subj2[1024];
+  struct timeval precise_time;
+  path_t clar_file;
+
+  if (parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0) return -1;
+  if (re.user_id && !teamdb_lookup(cs->teamdb_state, re.user_id)) {
+    ns_error(log_f, NEW_SRV_ERR_USER_ID_NONEXISTANT, re.user_id);
+    goto cleanup;
+  }
+  if (ns_cgi_param(phr, "msg_text", &text) < 0) {
+    errmsg = "msg_text is binary";
+    goto invalid_param;
+  }
+  if (!text) text = "";
+  text_len = strlen(text);
+  if (text_len > 128 * 1024 * 1024) {
+    ns_error(log_f, NEW_SRV_ERR_MESSAGE_TOO_LONG, text_len);
+    goto cleanup;
+  }
+  text2 = alloca(text_len + 1);
+  memcpy(text2, text, text_len + 1);
+  while (text_len > 0 && isspace(text2[text_len - 1])) text2[--text_len] = 0;
+  if (!text_len) {
+    ns_error(log_f, NEW_SRV_ERR_MESSAGE_EMPTY);
+    goto cleanup;
+  }
+
+  snprintf(subj2, sizeof(subj2), "%d %s", run_id, _("is commented"));
+  subj_len = strlen(subj2);
+
+  text3 = alloca(subj_len + text_len + 32);
+  text3_len = sprintf(text3, "Subject: %s\n\n%s\n", subj2, text2);
+
+  gettimeofday(&precise_time, 0);
+  if ((clar_id = clar_add_record_new(cs->clarlog_state,
+                                     precise_time.tv_sec,
+                                     precise_time.tv_usec * 1000,
+                                     text3_len,
+                                     phr->ip, phr->ssl_flag,
+                                     0, re.user_id, 0, phr->user_id,
+                                     0, phr->locale_id, 0, 0,
+                                     utf8_mode, NULL, subj2)) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
+    goto cleanup;
+  }
+
+  sprintf(clar_file, "%06d", clar_id);
+  if (generic_write_file(text3, text3_len, 0,
+                         global->clar_archive_dir, clar_file, "") < 0) {
+    ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
+    goto cleanup;
+  }
+
+ cleanup:
+  html_armor_free(&ab);
+  return 0;
+
+ invalid_param:
+  ns_html_err_inv_param(fout, phr, 0, errmsg);
+  return -1;
+}
+
+static int
 priv_clar_reply(FILE *fout,
                 FILE *log_f,
                 struct http_request_info *phr,
@@ -6282,6 +6366,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = priv_change_language,
   [NEW_SRV_ACTION_SUBMIT_RUN] = priv_submit_run,
   [NEW_SRV_ACTION_PRIV_SUBMIT_CLAR] = priv_submit_clar,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT] = priv_submit_run_comment,
   [NEW_SRV_ACTION_CLAR_REPLY] = priv_clar_reply,
   [NEW_SRV_ACTION_CLAR_REPLY_ALL] = priv_clar_reply,
   [NEW_SRV_ACTION_CLAR_REPLY_READ_PROBLEM] = priv_clar_reply,
@@ -7629,6 +7714,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = priv_generic_operation,
   [NEW_SRV_ACTION_SUBMIT_RUN] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_CLAR] = priv_generic_operation,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT] = priv_generic_operation,
   [NEW_SRV_ACTION_CLAR_REPLY] = priv_generic_operation,
   [NEW_SRV_ACTION_CLAR_REPLY_ALL] = priv_generic_operation,
   [NEW_SRV_ACTION_CLAR_REPLY_READ_PROBLEM] = priv_generic_operation,

@@ -356,6 +356,33 @@ charset_encode_to_heap(
   return rb.buf;
 }
 
+static const unsigned char * const valid_charsets[] =
+{
+  "utf-8", "koi8-r", "cp1251", "cp866", 0
+};
+
+void
+charset_html_select(
+	FILE *f,
+        const unsigned char *varname,
+        const unsigned char *varvalue)
+{
+  int i;
+  const unsigned char *s;
+
+  if (!varname) varname = "charset";
+  if (!varvalue) varvalue = "";
+
+  fprintf(f, "<select name=\"%s\">", varname);
+  fprintf(f, "<option></option>");
+  for (i = 0; valid_charsets[i]; i++) {
+    s = "";
+    if (!strcmp(valid_charsets[i], varvalue)) s = " selected=\"1\"";
+    fprintf(f, "<option%s>%s</option>", s, valid_charsets[i]);
+  }
+  fprintf(f, "</select>");
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

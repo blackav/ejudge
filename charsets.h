@@ -44,5 +44,10 @@ unsigned char *
 charset_encode_to_heap(
         int id,
         const unsigned char *str);
+void
+charset_html_select(
+	FILE *fout,
+        const unsigned char *varname,
+        const unsigned char *varvalue);
 
 #endif /* __CHARSETS_H__ */
