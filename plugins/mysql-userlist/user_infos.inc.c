@@ -86,9 +86,9 @@ allocate_user_info_on_pool(
         break;
   }
   if (pp) {
-    // FIXME: preserve the old value???
-    // or introduce 'nocache' option???
-    userlist_elem_free_data(&pp->ui->b);
+    if (state->nocache) {
+      userlist_elem_free_data(&pp->ui->b);
+    }
 
     MOVE_TO_FRONT(pp, ic->first, ic->last, prev, next);
     MOVE_TO_FRONT(pp, uiu->first_user, uiu->last_user, prev_user, next_user);
@@ -175,8 +175,7 @@ fetch_user_info(
   struct userlist_user_info *ui = 0;
 
   cmdlen = snprintf(cmdbuf, cmdlen, "SELECT * FROM %susers WHERE user_id = %d AND contest_id = %d", state->table_prefix, user_id, contest_id);
-  if (mysql_real_query(state->conn, cmdbuf, cmdlen))
-    db_error_fail(state);
+  if (my_simple_query(state, cmdbuf, cmdlen) < 0) goto fail;
   if ((state->field_count = mysql_field_count(state->conn)) != USER_INFO_WIDTH)
     db_wrong_field_count_fail(state, USER_INFO_WIDTH);
   if (!(state->res = mysql_store_result(state->conn)))

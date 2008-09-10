@@ -88,10 +88,10 @@ allocate_cntsreg_on_pool(
   }
 
   if (co) {
-    // FIXME: preserve the old value???
-    // or introduce 'nocache' option???
-    userlist_elem_free_data(&co->c->b);
-    co->c->id = contest_id;
+    if (state->nocache) {
+      userlist_elem_free_data(&co->c->b);
+      co->c->id = contest_id;
+    }
 
     MOVE_TO_FRONT(co, cc->first, cc->last, prev, next);
     MOVE_TO_FRONT(co, cu->first_user, cu->last_user, prev_user, next_user);
@@ -197,8 +197,7 @@ fetch_cntsreg(
 
   *p_c = 0;
   cmdlen = snprintf(cmdbuf, cmdlen, "SELECT * FROM %scntsregs WHERE user_id = %d AND contest_id = %d ;", state->table_prefix, user_id, contest_id);
-  if (mysql_real_query(state->conn, cmdbuf, cmdlen))
-    db_error_fail(state);
+  if (my_simple_query(state, cmdbuf, cmdlen) < 0) goto fail;
   state->field_count = mysql_field_count(state->conn);
   if (state->field_count != CNTSREG_WIDTH)
     db_wrong_field_count_fail(state, CNTSREG_WIDTH);

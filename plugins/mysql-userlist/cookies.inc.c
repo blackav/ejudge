@@ -15,18 +15,24 @@
  * GNU General Public License for more details.
  */
 
+struct cookies_container
+{
+  struct cookies_container *prev, *next;
+  struct userlist_cookie *cookie;
+  unsigned long long value;
+};
+
 static void
 do_remove_cookie_from_pool(
         struct cookies_cache *cache,
-        struct userlist_cookie *c)
+        struct cookies_container *cntr)
 {
-  struct userlist_cookie **v;
+  struct cookies_container **v;
   int i, j, h;
-  struct xml_tree *xml_c = (struct xml_tree*) c;
 
-  if (!cache || !c) return;
+  if (!cache || !cntr) return;
 
-  h = c->cookie & (COOKIES_POOL_SIZE - 1);
+  h = cntr->value & (COOKIES_POOL_SIZE - 1);
   i = 0;
   while (cache->hash[h]) {
     h = (h + 1) & (COOKIES_POOL_SIZE - 1);
@@ -34,9 +40,9 @@ do_remove_cookie_from_pool(
   }
   XALLOCAZ(v, i + 1);
   j = 0;
-  h = c->cookie & (COOKIES_POOL_SIZE - 1);
+  h = cntr->value & (COOKIES_POOL_SIZE - 1);
   while (cache->hash[h]) {
-    if (cache->hash[h] != c) {
+    if (cache->hash[h] != cntr) {
       v[j++] = cache->hash[h];
     }
     cache->hash[h] = 0;
@@ -44,14 +50,15 @@ do_remove_cookie_from_pool(
   }
   // rehash the collected pointers
   for (i = 0; i < j; i++) {
-    h = v[i]->cookie & (COOKIES_POOL_SIZE - 1);
+    h = v[i]->value & (COOKIES_POOL_SIZE - 1);
     while (cache->hash[h])
       h = (h + 1) & (COOKIES_POOL_SIZE - 1);
     cache->hash[h] = v[i];
   }
   // remove c from the tail of the list
-  UNLINK_FROM_LIST(xml_c, cache->first, cache->last, left, right);
-  userlist_free(xml_c);
+  UNLINK_FROM_LIST(cntr, cache->first, cache->last, prev, next);
+  userlist_free(&cntr->cookie->b); cntr->cookie = 0;
+  xfree(cntr);
   cache->count--;
 }
 
@@ -61,39 +68,41 @@ allocate_cookie_on_pool(
         unsigned long long val)
 {
   int h;
+  struct cookies_container *cntr;
   struct userlist_cookie *c;
   struct cookies_cache *cache = &state->cookies;
-  struct xml_tree *xml_c;
 
   h = val & (COOKIES_POOL_SIZE - 1);
-  while ((c = cache->hash[h]) && c->cookie != val)
+  while ((cntr = cache->hash[h]) && cntr->value != val)
     h = (h + 1) & (COOKIES_POOL_SIZE - 1);
-  if ((c = cache->hash[h]) && c->cookie == val) {
-    // FIXME: preserve the old value???
-    // or introduce 'nocache' option???
-    userlist_elem_free_data(&c->b);
-    c->cookie = val;
+  if ((cntr = cache->hash[h]) && cntr->value == val) {
+    if (state->nocache) {
+      c = cntr->cookie;
+      ASSERT(c);
+      userlist_elem_free_data(&c->b);
+      c->cookie = val;
+    }
 
-    // move the cookie c to the front
-    xml_c = &c->b;
-    MOVE_TO_FRONT(xml_c, cache->first, cache->last, left, right);
+    MOVE_TO_FRONT(cntr, cache->first, cache->last, prev, next);
     return c;
   }
 
   if (cache->count > COOKIES_MAX_HASH_SIZE) {
-    do_remove_cookie_from_pool(cache, (struct userlist_cookie*) cache->last);
+    do_remove_cookie_from_pool(cache, cache->last);
   }
 
   // allocate new entry
-  xml_c = userlist_node_alloc(USERLIST_T_COOKIE);
-  c = (struct userlist_cookie*) xml_c;
+  XCALLOC(cntr, 1);
+  c = (struct userlist_cookie*)userlist_node_alloc(USERLIST_T_COOKIE);
+  cntr->cookie = c;
   c->cookie = val;
+  cntr->value = val;
   cache->count++;
-  LINK_FIRST(xml_c, cache->first, cache->last, left, right);
+  LINK_FIRST(cntr, cache->first, cache->last, prev, next);
   h = val & (COOKIES_POOL_SIZE - 1);
   while (cache->hash[h])
     h = (h + 1) & (COOKIES_POOL_SIZE - 1);
-  cache->hash[h] = c;
+  cache->hash[h] = cntr;
   return c;
 }
 
@@ -103,17 +112,17 @@ remove_cookie_from_pool(
         unsigned long long val)
 {
   int h;
-  struct userlist_cookie *c;
+  struct cookies_container *cntr;
   struct cookies_cache *cache = &state->cookies;
 
   if (!state || !val) return;
 
   h = val & (COOKIES_POOL_SIZE - 1);
-  while ((c = cache->hash[h]) && c->cookie != val)
+  while ((cntr = cache->hash[h]) && cntr->value != val)
     h = (h + 1) & (COOKIES_POOL_SIZE - 1);
-  if (!(c = cache->hash[h])) return;
-  if (c->cookie != val) return;
-  do_remove_cookie_from_pool(cache, c);
+  if (!(cntr = cache->hash[h])) return;
+  if (cntr->value != val) return;
+  do_remove_cookie_from_pool(cache, cntr);
 }
 
 static int
@@ -153,8 +162,7 @@ fetch_cookie(
   cmdlen = snprintf(cmdbuf, cmdlen,
                     "SELECT * FROM %scookies WHERE cookie = %llu ;",
                     state->table_prefix, val);
-  if (mysql_real_query(state->conn, cmdbuf, cmdlen))
-    db_error_fail(state);
+  if (my_simple_query(state, cmdbuf, cmdlen) < 0) goto fail;
   state->field_count = mysql_field_count(state->conn);
   if (state->field_count != COOKIE_WIDTH)
     db_wrong_field_count_fail(state, COOKIE_WIDTH);
