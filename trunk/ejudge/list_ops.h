@@ -45,6 +45,7 @@
       elem->prev_field->next_field = elem->next_field; \
       elem->prev_field = NULL; \
       elem->next_field = first; \
+      first->prev_field = elem; \
       first = elem; \
     } \
   } while (0)

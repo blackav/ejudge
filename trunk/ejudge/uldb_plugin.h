@@ -161,8 +161,6 @@ struct uldb_plugin_iface
   int (*new_member)(void *, int, int, int, time_t, int *);
   // maintenance operations
   int (*maintenance)(void *, time_t);
-  // change the role of the existing member
-  int (*change_member_role)(void *, int, int, int, int, time_t, int *);
   // set the user fields by its XML
   int (*set_user_xml)(void *, int, int, struct userlist_user *,
                       time_t, int *);
