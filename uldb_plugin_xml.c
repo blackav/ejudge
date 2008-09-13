@@ -105,7 +105,6 @@ static int set_user_info_field_func(void *, int, int, int, const unsigned char *
 static int set_user_member_field_func(void *, int, int, int, int, const unsigned char *, time_t, int *);
 static int new_member_func(void *, int, int, int, time_t, int *);
 static int maintenance_func(void *, time_t);
-static int change_member_role_func(void *, int, int, int, int, time_t, int *);
 static int set_user_xml_func(void *, int, int, struct userlist_user *,
                              time_t, int *);
 static int copy_user_info_func(void *, int, int, int, int, time_t,
@@ -189,7 +188,6 @@ struct uldb_plugin_iface uldb_plugin_xml =
   set_user_member_field_func,
   new_member_func,
   maintenance_func,
-  change_member_role_func,
   set_user_xml_func,
   copy_user_info_func,
   check_user_reg_data_func,
@@ -2083,81 +2081,6 @@ maintenance_func(void *data, time_t cur_time)
 }
 
 static int
-change_member_role_func(void *data, int user_id, int contest_id, int serial,
-                        int new_role, time_t cur_time, int *p_cloned_flag)
-{
-  struct uldb_xml_state *state = (struct uldb_xml_state*) data;
-  struct userlist_list *ul = state->userlist;
-  struct userlist_user *u;
-  struct userlist_user_info *ci;
-  struct userlist_user_info *ui;
-  struct userlist_member *m;
-  struct xml_tree *link_node;
-  int old_role = 0, old_num = 0;
-
-  if (user_id <= 0 || user_id >= ul->user_map_size
-      || !(u = ul->user_map[user_id])) {
-    return -1;
-  }
-  if (cur_time <= 0) cur_time = time(0);
-  ASSERT(new_role >= 0 && new_role < CONTEST_LAST_MEMBER);
-
-  if (!(ui = userlist_get_user_info_nc(u, contest_id))) return -1;
-  if (!(m = userlist_get_member_nc(ui->members, serial, &old_role, &old_num)))
-    return -1;
-  if (old_role == new_role) return 0;
-
-  if (contest_id > 0) {
-    ci = userlist_clone_user_info(u, contest_id, &ul->member_serial, cur_time,
-                                  p_cloned_flag);
-    if (!ci) return -1;
-    link_node = &ci->b;
-  } else {
-    link_node = &u->b;
-  }
-  ui = userlist_get_user_info_nc(u, contest_id);
-  if (!(m = (struct userlist_member*) userlist_members_get_nth(ui->members, old_role, old_num)))
-    return -1;
-  m->team_role = new_role;
-
-  /*
-  if (!ui->members[new_role]) {
-    mm = (struct userlist_members*) userlist_node_alloc(USERLIST_T_CONTESTANTS + new_role);
-    mm->team_role = new_role;
-    xml_link_node_last(link_node, &mm->b);
-    ui->members[new_role] = mm;
-  }
-  mm = ui->members[new_role];
-
-  // remove member from the old location
-  old_mm = ui->members[old_role];
-  ASSERT(old_mm);
-  m = userlist_get_member_nc(ui, serial, 0, 0);
-  m->team_role = new_role;
-  ASSERT(m);
-  ASSERT(m->b.up == &old_mm->b);
-  ASSERT(old_num < old_mm->total && old_mm->members[old_num] == m);
-  xml_unlink_node(&m->b);
-  for (i = old_num + 1; i < old_mm->total; i++)
-    old_mm->members[i - 1] = old_mm->members[i];
-  old_mm->total--;
-  old_mm->members[old_mm->total] = 0;
-
-  // insert member to the new location
-  if (mm->total >= mm->allocd) {
-    if (!mm->allocd) mm->allocd = 2;
-    mm->allocd *= 2;
-    XREALLOC(mm->members, mm->allocd);
-  }
-  mm->members[mm->total++] = m;
-  */
-
-  state->dirty = 1;
-  state->flush_interval /= 2;
-  return 1;
-}
-
-static int
 count_members(const struct userlist_user_info *ui)
 {
   if (!ui) return 0;
@@ -2336,8 +2259,8 @@ set_user_xml_func(void *data,
         return -1;
       }
       if (orole != nrole) {
-        if (change_member_role_func(data, user_id, contest_id, om->serial,
-                                    nrole, cur_time, 0) < 0) return -1;
+        if (move_member_func(data, user_id, contest_id, om->serial,
+                             nrole, cur_time, 0) < 0) return -1;
         oom = userlist_get_member_nc(ui->members, nm->serial, &orole, &onum);
         ASSERT(oom == om);
         ASSERT(orole == nrole);
@@ -2584,7 +2507,7 @@ copy_user_info_func(
     p_str_to = (unsigned char**) userlist_get_user_info_field_ptr(ui_to, j);
     xfree(*p_str_to); *p_str_to = 0;
     if (cnts && !cnts->fields[k]) continue;
-    p_str_from = (unsigned char**) userlist_get_user_info_field_ptr(ui_to, j);
+    p_str_from = (unsigned char**) userlist_get_user_info_field_ptr(ui_from,j);
     if (!*p_str_from) continue;
     *p_str_to = xstrdup(*p_str_from);
   }

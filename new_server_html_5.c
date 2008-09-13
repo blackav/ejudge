@@ -753,8 +753,9 @@ cmd_login(
 {
   const unsigned char *login = 0;
   const unsigned char *password = 0;
-  int r;
+  int r, i;
   unsigned char urlbuf[1024], bb[1024];
+  int need_regform = 0;
 
   if (ns_cgi_param(phr, "login", &login) <= 0)
     return ns_html_err_inv_param(fout, phr, 0, "login is invalid");
@@ -798,10 +799,18 @@ cmd_login(
     }
   }
 
+  if (!cnts->disable_name) need_regform = 1;
+  if (!cnts->disable_team_password) need_regform = 1;
+  for (i = CONTEST_FIRST_FIELD; i < CONTEST_LAST_FIELD; i++)
+    if (cnts->fields[i])
+      need_regform = 1;
+  for (i = 0; i < CONTEST_LAST_MEMBER; i++)
+    if (cnts->members[i] && cnts->members[i]->max_count > 0)
+      need_regform = 1;
+
   // if there is no editable fields and autoregister flag is set,
   // then register immediately for the contest and redirect there
-  if (cnts->force_registration && cnts->disable_name
-      && cnts->autoregister && cnts->disable_team_password) {
+  if (cnts->force_registration && cnts->autoregister && !need_regform) {
     r = userlist_clnt_register_contest(ul_conn, ULS_REGISTER_CONTEST_2,
                                        phr->user_id, phr->contest_id,
                                        phr->ip, phr->ssl_flag);
@@ -1812,23 +1821,25 @@ edit_general_form(
   html_hidden(fout, "SID", "%llx", phr->session_id);
   fprintf(fout, "<table class=\"b0\">");
 
-  bb[0] = 0;
-  if (cnts->user_name_comment)
-    snprintf(bb, sizeof(bb), "%s", cnts->user_name_comment);
-  fprintf(fout, "<tr><td class=\"b0\"><b>%s</b>%s:</td>",
-          cnts->personal?_("User name (for standings)"):_("Team name"), bb);
-  bb[0] = 0;
-  if (ui && ui->name) snprintf(bb, sizeof(bb), "%s", ui->name);
-  comment = 0;
-  if (check_str(bb, name_accept_chars) < 0) {
-    comment = __("contains invalid characters");
+  if (!cnts->disable_name) {
+    bb[0] = 0;
+    if (cnts->user_name_comment)
+      snprintf(bb, sizeof(bb), "%s", cnts->user_name_comment);
+    fprintf(fout, "<tr><td class=\"b0\"><b>%s</b>%s:</td>",
+            cnts->personal?_("User name (for standings)"):_("Team name"), bb);
+    bb[0] = 0;
+    if (ui && ui->name) snprintf(bb, sizeof(bb), "%s", ui->name);
+    comment = 0;
+    if (check_str(bb, name_accept_chars) < 0) {
+      comment = __("contains invalid characters");
+    }
+    fprintf(fout, "<td class=\"b0\">%s</td>",
+            html_input_text(bb, sizeof(bb), "name", 64, ARMOR(bb)));
+
+    if (!comment) comment = "&nbsp;";
+    fprintf(fout, "<td class=\"b0\"><font color=\"red\"><i>%s</i></font></td>", comment);
+    fprintf(fout, "</tr>\n");
   }
-  fprintf(fout, "<td class=\"b0\">%s</td>",
-          html_input_text(bb, sizeof(bb), "name", 64, ARMOR(bb)));
-  
-  if (!comment) comment = "&nbsp;";
-  fprintf(fout, "<td class=\"b0\"><font color=\"red\"><i>%s</i></font></td>", comment);
-  fprintf(fout, "</tr>\n");
 
   // for personal contest put the member form here
   if (ui && cnts->personal && cnts->members[(rr = CONTEST_M_CONTESTANT)]

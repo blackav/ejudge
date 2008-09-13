@@ -674,6 +674,8 @@ void userlist_write_contests_xml_footer(FILE *f);
 int userlist_map_userlist_to_contest_field(int uf);
 int userlist_str_to_user_field_code(const unsigned char *str);
 
+int userlist_member_map_userlist_to_contest_field(int uf);
+
 /* valid character sets */
 extern const unsigned char login_accept_chars[257];
 extern const unsigned char email_accept_chars[257];

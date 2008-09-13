@@ -573,7 +573,6 @@ link_client_state(struct client_state *p)
 #define default_set_user_info_field(a, b, c, d, e, f) uldb_default->iface->set_user_info_field(uldb_default->data, a, b, c, d, e, f)
 #define default_set_user_member_field(a, b, c, d, e, f, g) uldb_default->iface->set_user_member_field(uldb_default->data, a, b, c, d, e, f, g)
 #define default_new_member(a, b, c, d, e) uldb_default->iface->new_member(uldb_default->data, a, b, c, d, e)
-#define default_change_member_rol(a, b, c, d, e, f) uldb_default->iface->change_member_role(uldb_default->data, a, b, c, d, e, f)
 #define default_set_user_xml(a, b, c, d, e) uldb_default->iface->set_user_xml(uldb_default->data, a, b, c, d, e)
 #define default_copy_user_info(a, b, c, d, e, f) uldb_default->iface->copy_user_info(uldb_default->data, a, b, c, d, e, f)
 #define default_check_user_reg_data(a, b) uldb_default->iface->check_user_reg_data(uldb_default->data, a, b)
@@ -3742,6 +3741,7 @@ cmd_get_user_info(struct client_state *p,
   }
   userlist_unparse_user(u, f, USERLIST_MODE_USER, data->contest_id, 0);
   fclose(f);
+  default_unlock_user(u);
 
   ASSERT(xml_size == strlen(xml_ptr));
   out_size = sizeof(*out) + xml_size + 1;
@@ -3813,6 +3813,7 @@ cmd_priv_get_user_info(struct client_state *p,
   }
   userlist_unparse_user(u, f, USERLIST_MODE_ALL, data->contest_id, flags);
   fclose(f);
+  default_unlock_user(u);
 
   ASSERT(xml_size == strlen(xml_ptr));
   out_size = sizeof(*out) + xml_size + 1;
@@ -5560,7 +5561,11 @@ cmd_admin_process(struct client_state *p, int pkt_len,
   snprintf(logbuf, sizeof(logbuf), "ADMIN_PROCESS: %d, %d, %d",
            p->peer_pid, p->peer_uid, p->user_id);
 
-  default_get_user_info_2(user_id, 0, &u, &ui);
+  if (default_get_user_info_2(user_id, 0, &u, &ui) < 0) {
+    err("%s -> local user does not exist", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
   login = u->login;
   if (!login) login = "";
   if (ui) name = ui->name;
@@ -8898,7 +8903,7 @@ cleanup_clients(void)
 }
 
 static int
-load_plugins(void)
+load_plugins(const unsigned char *plugin_dir)
 {
   struct ejudge_plugin_iface *base_iface = 0;
   struct uldb_plugin_iface *uldb_iface = 0;
@@ -8906,7 +8911,8 @@ load_plugins(void)
   struct ejudge_plugin *plg;
   void *plugin_data = 0;
 
-  plugin_set_directory(config->plugin_dir);
+  if (!plugin_dir) plugin_dir = config->plugin_dir;
+  plugin_set_directory(plugin_dir);
 
   //ejudge_cfg_unparse_plugins(config, stdout);
 
@@ -9083,7 +9089,7 @@ main(int argc, char *argv[])
   unsigned char *from_plugin = 0, *to_plugin = 0;
   int convert_flag = 0;
   int create_flag = 0;
-  const unsigned char *user = 0, *group = 0, *workdir = 0;
+  const unsigned char *user = 0, *group = 0, *workdir = 0, *plugin_dir = 0;
   char **argv_restart = 0;
 
   start_set_self_args(argc, argv);
@@ -9105,6 +9111,10 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[cur_arg], "--to-plugin")) {
       if (cur_arg + 1 >= argc) arg_expected(argv[0]);
       to_plugin = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "--plugin-dir")) {
+      if (cur_arg + 1 >= argc) arg_expected(argv[0]);
+      plugin_dir = argv[cur_arg + 1];
       cur_arg += 2;
     } else if (!strcmp(argv[cur_arg], "--convert")) {
       convert_flag = 1;
@@ -9170,7 +9180,7 @@ main(int argc, char *argv[])
   if (random_init() < 0) return 1;
   l10n_prepare(config->l10n, config->l10n_dir);
 
-  if (load_plugins() != 0) return 1;
+  if (load_plugins(plugin_dir) != 0) return 1;
 
   if (convert_flag) {
     return convert_database(from_plugin, to_plugin);
