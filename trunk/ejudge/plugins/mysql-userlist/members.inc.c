@@ -55,6 +55,33 @@ do_remove_member_from_pool(
 }
 
 static struct userlist_members *
+get_member_from_pool(
+        struct uldb_mysql_state *state,
+        int user_id,
+        int contest_id)
+{
+  struct members_cache *cache = &state->members;
+  struct members_user *usr;
+  struct members_container *pp;
+
+  ASSERT(user_id > 0);
+  ASSERT(contest_id >= 0);
+
+  if (user_id >= cache->size) return 0;
+  usr = &cache->user_map[user_id];
+
+  if (contest_id < usr->min_id || contest_id >= usr->max_id) return 0;
+  for (pp = usr->first_user; pp; pp = pp->next_user) {
+    if (pp->contest_id == contest_id)
+      break;
+  }
+  if (!pp) return 0;
+  MOVE_TO_FRONT(pp, cache->first, cache->last, prev, next);
+  MOVE_TO_FRONT(pp, usr->first_user, usr->last_user, prev_user, next_user);
+  return pp->mm;
+}
+
+static struct userlist_members *
 allocate_member_on_pool(
         struct uldb_mysql_state *state,
         int user_id,
@@ -94,9 +121,7 @@ allocate_member_on_pool(
 
   // found in cache
   if (pp) {
-    if (state->nocache) {
-      userlist_elem_free_data(&pp->mm->b);
-    }
+    userlist_elem_free_data(&pp->mm->b);
 
     MOVE_TO_FRONT(pp, cache->first, cache->last, prev, next);
     MOVE_TO_FRONT(pp, usr->first_user, usr->last_user, prev_user, next_user);
@@ -141,6 +166,23 @@ remove_member_from_pool(
   do_remove_member_from_pool(cache, pp);
 }
 
+static void
+remove_member_from_pool_by_uid(
+        struct uldb_mysql_state *state,
+        int user_id)
+{
+  struct members_cache *cache = &state->members;
+  struct members_container *pp, *qq;
+
+  ASSERT(user_id > 0);
+
+  if (user_id >= cache->size) return;
+  for (pp = cache->user_map[user_id].first_user; pp; pp = qq) {
+    qq = pp->next_user;
+    do_remove_member_from_pool(cache, pp);
+  }
+}
+
 static int
 parse_member(struct uldb_mysql_state *state, struct userlist_member *m)
 {
@@ -159,11 +201,12 @@ parse_member(struct uldb_mysql_state *state, struct userlist_member *m)
     FAIL("status is out of range");
   if (m->gender < 0 || m->gender >= USERLIST_SX_LAST)
     FAIL("gender is out of range");
-  if (m->grade < 0 || m->grade > EJ_MAX_GRADE)
+  if (m->grade < -1 || m->grade > EJ_MAX_GRADE)
     FAIL("grade is out of range");
   return 0;
 
  fail:
+  fprintf(stderr, "parse_member: %s\n", errbuf);
   return -1;
 }
 
@@ -175,12 +218,21 @@ fetch_member(
         struct userlist_members **p_mm)
 {
   unsigned char cmdbuf[1024];
-  int cmdlen = sizeof(cmdbuf);
+  int cmdlen;
   struct userlist_members *mm = 0;
   struct userlist_member *m;
   int i;
 
-  cmdlen = snprintf(cmdbuf, cmdlen, "SELECT * FROM %smembers WHERE user_id = %d AND contest_id = %d", state->table_prefix, user_id, contest_id);
+  *p_mm = 0;
+  if ((mm = get_member_from_pool(state, user_id, contest_id))) {
+    *p_mm = mm;
+    return 1;
+  }
+
+  snprintf(cmdbuf, sizeof(cmdbuf),
+           "SELECT * FROM %smembers WHERE user_id = %d AND contest_id = %d ;",
+           state->table_prefix, user_id, contest_id);
+  cmdlen = strlen(cmdbuf);
   if (my_simple_query(state, cmdbuf, cmdlen) < 0) goto fail;
   if ((state->field_count = mysql_field_count(state->conn)) != MEMBER_WIDTH)
     db_wrong_field_count_fail(state, MEMBER_WIDTH);
@@ -204,6 +256,7 @@ fetch_member(
     mm->m[mm->u++] = m;
     if (parse_member(state, m) < 0) goto fail;
   }
+  if (p_mm) *p_mm = mm;
   return 1;
 
  fail:

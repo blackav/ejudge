@@ -23,7 +23,7 @@ CREATE TABLE %slogins
        );
 
 CREATE TABLE %scookies
-       (cookie BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+       (cookie VARCHAR(32) NOT NULL PRIMARY KEY,
        user_id INT NOT NULL,
        contest_id INT UNSIGNED NOT NULL,
        priv_level TINYINT NOT NULL DEFAULT 0,

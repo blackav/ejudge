@@ -15,6 +15,11 @@
  * GNU General Public License for more details.
  */
 
+static struct userlist_cookie *
+get_cookie_from_pool(
+        struct uldb_mysql_state *state,
+        unsigned long long val)
+  __attribute__((unused));
 static int
 fetch_cookie(
         struct uldb_mysql_state *state,
@@ -30,7 +35,21 @@ static void
 remove_cookie_from_pool(
         struct uldb_mysql_state *state,
         unsigned long long val);
+static void
+remove_cookie_from_pool_by_uid(
+        struct uldb_mysql_state *state,
+        int user_id);
+static void
+remove_cookie_from_pool_by_expire(
+        struct uldb_mysql_state *state,
+        time_t expire);
 
+static struct userlist_contest *
+get_cntsreg_from_pool(
+        struct uldb_mysql_state *state,
+        int user_id,
+        int contest_id)
+  __attribute__((unused));
 static int
 fetch_cntsreg(
         struct uldb_mysql_state *state,
@@ -50,7 +69,16 @@ remove_cntsreg_from_pool(
         struct uldb_mysql_state *state,
         int user_id,
         int contest_id);
+static void
+remove_cntsreg_from_pool_by_uid(
+        struct uldb_mysql_state *state,
+        int user_id);
 
+static struct userlist_user *
+get_login_from_pool(
+        struct uldb_mysql_state *state,
+        int user_id)
+  __attribute__((unused));
 static int
 fetch_login(
         struct uldb_mysql_state *state,
@@ -69,6 +97,12 @@ remove_login_from_pool(
         int user_id)
   __attribute__((unused));
 
+static struct userlist_user_info *
+get_user_info_from_pool(
+        struct uldb_mysql_state *state,
+        int user_id,
+        int contest_id)
+  __attribute__((unused));
 static int
 fetch_user_info(
         struct uldb_mysql_state *state,
@@ -89,7 +123,17 @@ remove_user_info_from_pool(
         struct uldb_mysql_state *state,
         int user_id,
         int contest_id);
+static void
+remove_user_info_from_pool_by_uid(
+        struct uldb_mysql_state *state,
+        int user_id);
 
+static struct userlist_members *
+get_member_from_pool(
+        struct uldb_mysql_state *state,
+        int user_id,
+        int contest_id)
+  __attribute__((unused));
 static int
 fetch_member(
         struct uldb_mysql_state *state,
@@ -110,6 +154,10 @@ remove_member_from_pool(
         struct uldb_mysql_state *state,
         int user_id,
         int contest_id);
+static void
+remove_member_from_pool_by_uid(
+        struct uldb_mysql_state *state,
+        int user_id);
 
 /*
  * Local variables:

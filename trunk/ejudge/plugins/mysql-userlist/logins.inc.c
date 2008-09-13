@@ -32,13 +32,29 @@ do_remove_login_from_pool(
 }
 
 static struct userlist_user *
-allocate_login_on_pool(
+get_login_from_pool(
         struct uldb_mysql_state *state,
         int user_id)
 {
   struct users_cache *uc = &state->users;
   struct userlist_user *u;
   struct xml_tree *u_xml;
+
+  if (user_id <= 0 || user_id >= uc->size) return 0;
+  if (!(u = uc->user_map[user_id])) return 0;
+  u_xml = (struct xml_tree*) u;
+  MOVE_TO_FRONT(u_xml, uc->first, uc->last, left, right);
+  return u;
+}
+
+static struct userlist_user *
+allocate_login_on_pool(
+        struct uldb_mysql_state *state,
+        int user_id)
+{
+  struct users_cache *uc = &state->users;
+  struct userlist_user *u;
+  struct xml_tree *u_xml, *l, *r;
 
   if (user_id <= 0) return 0;
   if (user_id > EJ_MAX_USER_ID) return 0;
@@ -59,10 +75,12 @@ allocate_login_on_pool(
 
   if ((u = uc->user_map[user_id])) {
     u_xml = (struct xml_tree*) u;
-    if (state->nocache) {
-      userlist_elem_free_data(u_xml);
-      u->id = user_id;
-    }
+    l = u_xml->left;
+    r = u_xml->right;
+    userlist_elem_free_data(u_xml);
+    u->id = user_id;
+    u_xml->left = l;
+    u_xml->right = r;
 
     MOVE_TO_FRONT(u_xml, uc->first, uc->last, left, right);
     return u;
@@ -126,14 +144,21 @@ fetch_login(
         struct userlist_user **p_user)
 {
   unsigned char cmdbuf[1024];
-  int cmdlen = sizeof(cmdbuf);
+  int cmdlen;
   struct userlist_user *u = 0;
 
   *p_user = 0;
   if (user_id <= 0) goto fail;
 
-  cmdlen = snprintf(cmdbuf, cmdlen, "SELECT * FROM %slogins WHERE user_id = %d ;",
-                    state->table_prefix, user_id);
+  if ((u = get_login_from_pool(state, user_id))) {
+    *p_user = u;
+    return 1;
+  }
+
+  snprintf(cmdbuf, sizeof(cmdbuf),
+           "SELECT * FROM %slogins WHERE user_id = %d ;",
+           state->table_prefix, user_id);
+  cmdlen = strlen(cmdbuf);
   if (my_simple_query(state, cmdbuf, cmdlen) < 0) goto fail;
   state->field_count = mysql_field_count(state->conn);
   if (state->field_count != LOGIN_WIDTH)
@@ -143,7 +168,7 @@ fetch_login(
   state->row_count = mysql_num_rows(state->res);
   if (state->row_count < 0) db_error_fail(state);
   if (!state->row_count) return 0;
-  if (state->row_count > 0) goto fail;
+  if (state->row_count > 1) goto fail;
   if (!(state->row = mysql_fetch_row(state->res)))
     db_no_data_fail();
   state->lengths = mysql_fetch_lengths(state->res);

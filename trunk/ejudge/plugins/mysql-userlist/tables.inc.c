@@ -282,11 +282,11 @@ static struct mysql_parse_spec member_spec[MEMBER_WIDTH] =
   //[30]   facshort_en VARCHAR(512),
   { 1, 's', "facshort_en", MEMBER_OFFSET(facshort_en), 0 },
   //[31]   birth_date DATE DEFAULT NULL,
-  { 1, 't', "birth_date", MEMBER_OFFSET(birth_date), 0 },
+  { 1, 'a', "birth_date", MEMBER_OFFSET(birth_date), 0 },
   //[32]   entry_date DATE DEFAULT NULL,
-  { 1, 't', "entry_date", MEMBER_OFFSET(entry_date), 0 },
+  { 1, 'a', "entry_date", MEMBER_OFFSET(entry_date), 0 },
   //[33]   graduation_date DATE DEFAULT NULL,
-  { 1, 't', "graduation_date", MEMBER_OFFSET(graduation_date), 0 },
+  { 1, 'a', "graduation_date", MEMBER_OFFSET(graduation_date), 0 },
 };
 
 /*
