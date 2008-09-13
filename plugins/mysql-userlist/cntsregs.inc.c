@@ -52,6 +52,32 @@ do_remove_cntsreg_from_pool(
 }
 
 static struct userlist_contest *
+get_cntsreg_from_pool(
+        struct uldb_mysql_state *state,
+        int user_id,
+        int contest_id)
+{
+  struct cntsregs_cache *cc = &state->cntsregs;
+  struct cntsregs_user *cu;
+  struct cntsregs_container *co;
+
+  ASSERT(user_id > 0);
+  ASSERT(contest_id >= 0);
+
+  if (user_id >= cc->size) return 0;
+  cu = &cc->user_map[user_id];
+
+  if (contest_id < cu->min_id || contest_id >= cu->max_id) return 0;
+  for (co = cu->first_user; co; co = co->next_user)
+    if (co->contest_id == contest_id)
+      break;
+  if (!co) return 0;
+  MOVE_TO_FRONT(co, cc->first, cc->last, prev, next);
+  MOVE_TO_FRONT(co, cu->first_user, cu->last_user, prev_user, next_user);
+  return co->c;
+}
+
+static struct userlist_contest *
 allocate_cntsreg_on_pool(
         struct uldb_mysql_state *state,
         int user_id,
@@ -63,7 +89,7 @@ allocate_cntsreg_on_pool(
   struct userlist_contest *c;
 
   ASSERT(user_id > 0);
-  ASSERT(contest_id > 0);
+  ASSERT(contest_id >= 0);
 
   if (user_id >= cc->size) {
     int new_size = cc->size;
@@ -88,10 +114,8 @@ allocate_cntsreg_on_pool(
   }
 
   if (co) {
-    if (state->nocache) {
-      userlist_elem_free_data(&co->c->b);
-      co->c->id = contest_id;
-    }
+    userlist_elem_free_data(&co->c->b);
+    co->c->id = contest_id;
 
     MOVE_TO_FRONT(co, cc->first, cc->last, prev, next);
     MOVE_TO_FRONT(co, cu->first_user, cu->last_user, prev_user, next_user);
@@ -134,6 +158,23 @@ remove_cntsreg_from_pool(
     if (co->contest_id == contest_id)
       break;
   do_remove_cntsreg_from_pool(cc, co);
+}
+
+static void
+remove_cntsreg_from_pool_by_uid(
+        struct uldb_mysql_state *state,
+        int user_id)
+{
+  struct cntsregs_cache *cc = &state->cntsregs;
+  struct cntsregs_user *cu;
+  struct cntsregs_container *co, *cq;
+
+  if (user_id <= 0 || user_id >= cc->size) return;
+  cu = &cc->user_map[user_id];
+  for (co = cu->first_user; co; co = cq) {
+    cq = co->next_user;
+    do_remove_cntsreg_from_pool(cc, co);
+  }
 }
 
 static int
@@ -192,11 +233,17 @@ fetch_cntsreg(
         struct userlist_contest **p_c)
 {
   unsigned char cmdbuf[1024];
-  int cmdlen = sizeof(cmdbuf);
+  int cmdlen;
   struct userlist_contest *c = 0;
 
   *p_c = 0;
-  cmdlen = snprintf(cmdbuf, cmdlen, "SELECT * FROM %scntsregs WHERE user_id = %d AND contest_id = %d ;", state->table_prefix, user_id, contest_id);
+  if ((c = get_cntsreg_from_pool(state, user_id, contest_id))) {
+    *p_c = c;
+    return 1;
+  }
+
+  snprintf(cmdbuf, sizeof(cmdbuf), "SELECT * FROM %scntsregs WHERE user_id = %d AND contest_id = %d ;", state->table_prefix, user_id, contest_id);
+  cmdlen = strlen(cmdbuf);
   if (my_simple_query(state, cmdbuf, cmdlen) < 0) goto fail;
   state->field_count = mysql_field_count(state->conn);
   if (state->field_count != CNTSREG_WIDTH)
@@ -206,7 +253,7 @@ fetch_cntsreg(
   state->row_count = mysql_num_rows(state->res);
   if (state->row_count < 0) db_error_fail(state);
   if (!state->row_count) return 0;
-  if (state->row_count > 0) goto fail;
+  if (state->row_count > 1) goto fail;
   if (!(state->row = mysql_fetch_row(state->res)))
     db_no_data_fail();
   state->lengths = mysql_fetch_lengths(state->res);

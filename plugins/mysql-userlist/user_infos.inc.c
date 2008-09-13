@@ -54,6 +54,32 @@ do_remove_user_info_from_pool(
 }
 
 static struct userlist_user_info *
+get_user_info_from_pool(
+        struct uldb_mysql_state *state,
+        int user_id,
+        int contest_id)
+{
+  struct user_info_cache *ic = &state->user_infos;
+  struct user_info_user *uiu;
+  struct user_info_container *pp = 0;
+
+  ASSERT(user_id > 0);
+  ASSERT(contest_id >= 0);
+
+  if (user_id >= ic->size) return 0;
+  uiu = &ic->user_map[user_id];
+
+  if (contest_id < uiu->min_id || contest_id >= uiu->max_id) return 0;
+  for (pp = uiu->first_user; pp; pp = pp->next_user)
+    if (pp->contest_id == contest_id)
+      break;
+  if (!pp) return 0;
+  MOVE_TO_FRONT(pp, ic->first, ic->last, prev, next);
+  MOVE_TO_FRONT(pp, uiu->first_user, uiu->last_user, prev_user, next_user);
+  return pp->ui;
+}
+
+static struct userlist_user_info *
 allocate_user_info_on_pool(
         struct uldb_mysql_state *state,
         int user_id,
@@ -86,9 +112,7 @@ allocate_user_info_on_pool(
         break;
   }
   if (pp) {
-    if (state->nocache) {
-      userlist_elem_free_data(&pp->ui->b);
-    }
+    userlist_elem_free_data(&pp->ui->b);
 
     MOVE_TO_FRONT(pp, ic->first, ic->last, prev, next);
     MOVE_TO_FRONT(pp, uiu->first_user, uiu->last_user, prev_user, next_user);
@@ -131,6 +155,21 @@ remove_user_info_from_pool(
   do_remove_user_info_from_pool(ic, pp);
 }
 
+static void
+remove_user_info_from_pool_by_uid(
+        struct uldb_mysql_state *state,
+        int user_id)
+{
+  struct user_info_cache *ic = &state->user_infos;
+  struct user_info_container *pp = 0, *qq;
+
+  if (user_id <= 0 || user_id >= ic->size) return;
+  for (pp = ic->user_map[user_id].first_user; pp; pp = qq) {
+    qq = pp->next_user;
+    do_remove_user_info_from_pool(ic, pp);
+  }
+}
+
 static int
 parse_user_info(struct uldb_mysql_state *state, struct userlist_user_info *ui)
 {
@@ -138,11 +177,12 @@ parse_user_info(struct uldb_mysql_state *state, struct userlist_user_info *ui)
   char errbuf[1024];
 
   if (handle_parse_spec(state, USER_INFO_WIDTH, user_info_spec, ui,
-                        &user_id, &contest_id) < 0)
+                        &user_id, &contest_id) < 0) {
     goto fail;
+  }
   if (user_id <= 0) FAIL("user_id <= 0");
   if (contest_id < 0) FAIL("contest_id < 0");
-  if (ui->instnum < 0) FAIL("instnum < 0");
+  if (ui->instnum < -1) FAIL("instnum < -1");
   if (ui->team_passwd_method < 0 || ui->team_passwd_method >= USERLIST_PWD_LAST)
     FAIL("pwdmethod is out of range");
   return 0;
@@ -171,10 +211,22 @@ fetch_user_info(
         struct userlist_user_info **p_ui)
 {
   unsigned char cmdbuf[1024];
-  int cmdlen = sizeof(cmdbuf);
+  int cmdlen;
   struct userlist_user_info *ui = 0;
 
-  cmdlen = snprintf(cmdbuf, cmdlen, "SELECT * FROM %susers WHERE user_id = %d AND contest_id = %d", state->table_prefix, user_id, contest_id);
+  ASSERT(user_id > 0);
+  ASSERT(contest_id >= 0);
+
+  *p_ui = 0;
+  if ((ui = get_user_info_from_pool(state, user_id, contest_id))) {
+    *p_ui = ui;
+    return 1;
+  }
+
+  snprintf(cmdbuf, sizeof(cmdbuf),
+           "SELECT * FROM %susers WHERE user_id = %d AND contest_id = %d ;",
+           state->table_prefix, user_id, contest_id);
+  cmdlen = strlen(cmdbuf);
   if (my_simple_query(state, cmdbuf, cmdlen) < 0) goto fail;
   if ((state->field_count = mysql_field_count(state->conn)) != USER_INFO_WIDTH)
     db_wrong_field_count_fail(state, USER_INFO_WIDTH);

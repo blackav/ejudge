@@ -63,6 +63,25 @@ do_remove_cookie_from_pool(
 }
 
 static struct userlist_cookie *
+get_cookie_from_pool(
+        struct uldb_mysql_state *state,
+        unsigned long long val)
+{
+  int h;
+  struct cookies_container *cntr;
+  struct cookies_cache *cache = &state->cookies;
+
+  h = val & (COOKIES_POOL_SIZE - 1);
+  while ((cntr = cache->hash[h]) && cntr->value != val)
+    h = (h + 1) & (COOKIES_POOL_SIZE - 1);
+  if ((cntr = cache->hash[h]) && cntr->value == val) {
+    MOVE_TO_FRONT(cntr, cache->first, cache->last, prev, next);
+    return cntr->cookie;
+  }
+  return 0;
+}
+
+static struct userlist_cookie *
 allocate_cookie_on_pool(
         struct uldb_mysql_state *state,
         unsigned long long val)
@@ -76,12 +95,10 @@ allocate_cookie_on_pool(
   while ((cntr = cache->hash[h]) && cntr->value != val)
     h = (h + 1) & (COOKIES_POOL_SIZE - 1);
   if ((cntr = cache->hash[h]) && cntr->value == val) {
-    if (state->nocache) {
-      c = cntr->cookie;
-      ASSERT(c);
-      userlist_elem_free_data(&c->b);
-      c->cookie = val;
-    }
+    c = cntr->cookie;
+    ASSERT(c);
+    userlist_elem_free_data(&c->b);
+    c->cookie = val;
 
     MOVE_TO_FRONT(cntr, cache->first, cache->last, prev, next);
     return c;
@@ -125,6 +142,32 @@ remove_cookie_from_pool(
   do_remove_cookie_from_pool(cache, cntr);
 }
 
+static void
+remove_cookie_from_pool_by_uid(
+        struct uldb_mysql_state *state,
+        int user_id)
+{
+  struct cookies_container *p, *q;
+  for (p = state->cookies.first; p; p = q) {
+    q = p->next;
+    if (p->cookie && p->cookie->user_id == user_id)
+      do_remove_cookie_from_pool(&state->cookies, p);
+  }
+}
+
+static void
+remove_cookie_from_pool_by_expire(
+        struct uldb_mysql_state *state,
+        time_t expire)
+{
+  struct cookies_container *p, *q;
+  for (p = state->cookies.first; p; p = q) {
+    q = p->next;
+    if (p->cookie && p->cookie->expire < expire)
+      do_remove_cookie_from_pool(&state->cookies, p);
+  }
+}
+
 static int
 parse_cookie(
         struct uldb_mysql_state *state,
@@ -155,13 +198,14 @@ fetch_cookie(
         struct userlist_cookie **p_c)
 {
   unsigned char cmdbuf[1024];
-  int cmdlen = sizeof(cmdbuf);
+  int cmdlen;
   struct userlist_cookie *c = 0;
 
   if (p_c) *p_c = 0;
-  cmdlen = snprintf(cmdbuf, cmdlen,
-                    "SELECT * FROM %scookies WHERE cookie = %llu ;",
-                    state->table_prefix, val);
+  snprintf(cmdbuf, sizeof(cmdbuf),
+           "SELECT * FROM %scookies WHERE cookie = '%016llx' ;",
+           state->table_prefix, val);
+  cmdlen = strlen(cmdbuf);
   if (my_simple_query(state, cmdbuf, cmdlen) < 0) goto fail;
   state->field_count = mysql_field_count(state->conn);
   if (state->field_count != COOKIE_WIDTH)
@@ -171,7 +215,7 @@ fetch_cookie(
   state->row_count = mysql_num_rows(state->res);
   if (state->row_count < 0) db_error_fail(state);
   if (!state->row_count) return 0;
-  if (state->row_count > 0) goto fail;
+  if (state->row_count > 1) goto fail;
   if (!(state->row = mysql_fetch_row(state->res)))
     db_no_data_fail();
   state->lengths = mysql_fetch_lengths(state->res);
