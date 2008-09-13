@@ -2164,7 +2164,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         if (info[cur_i].role >= CONTEST_LAST_MEMBER) goto menu_continue;
         if (!ui) goto menu_continue;
         if (info[cur_i].pers < 0 ||
-            info[cur_i].pers >= userlist_members_count(ui->members, role))
+            info[cur_i].pers >= userlist_members_count(ui->members, info[cur_i].role))
           goto menu_continue;
         if (info[cur_i].field < 0
             || info[cur_i].field > USERLIST_NM_LAST)
