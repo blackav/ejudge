@@ -3519,7 +3519,9 @@ new_member_func(
   snprintf(cmdbuf, sizeof(cmdbuf), "SELECT config_val FROM %sconfig WHERE config_key = 'current_member' ;", state->table_prefix);
   cmdlen = strlen(cmdbuf);
   if (my_query_one_row(state, cmdbuf, cmdlen, 1) < 0) goto fail;
-  if (my_int_val(state, &current_member, 1) < 0) goto fail;
+  if (!state->row[0]) goto fail;
+  if (parse_int(state->row[0], &current_member) < 0) goto fail;
+  if (current_member < 1) goto fail;
   arena.team_role = role;
   arena.serial = current_member;
   arena.create_time = cur_time;
