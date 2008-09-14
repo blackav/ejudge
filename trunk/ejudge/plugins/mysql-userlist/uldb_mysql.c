@@ -2325,7 +2325,7 @@ get_brief_list_iterator_func(
              "SELECT * FROM %slogins WHERE 1 ORDER BY user_id ;",
              state->table_prefix);
     cmdlen = strlen(cmdbuf);
-    if (my_query(state, cmd_t, cmd_z, LOGIN_WIDTH) < 0) goto fail;
+    if (my_query(state, cmdbuf, cmdlen, LOGIN_WIDTH) < 0) goto fail;
     iter->total_ids = state->row_count;
     if (!iter->total_ids) {
       my_free_res(state);
@@ -2350,7 +2350,7 @@ get_brief_list_iterator_func(
              "SELECT * FROM %susers WHERE contest_id = 0 ORDER BY user_id ;",
              state->table_prefix);
     cmdlen = strlen(cmdbuf);
-    if (my_query(state, cmd_t, cmd_z, USER_INFO_WIDTH) < 0) goto fail;
+    if (my_query(state, cmdbuf, cmdlen, USER_INFO_WIDTH) < 0) goto fail;
     j = 0;
     for (i = 0; i < state->row_count; i++) {
       if (!(state->row = mysql_fetch_row(state->res)))

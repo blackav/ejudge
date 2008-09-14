@@ -3868,7 +3868,7 @@ cmd_list_all_users(struct client_state *p,
     }
   }
   userlist_write_xml_footer(f);
-  iter->destroy(iter);
+  if (iter) iter->destroy(iter);
   fclose(f);
   ASSERT(xml_size == strlen(xml_ptr));
   out_size = sizeof(*out) + xml_size + 1;
