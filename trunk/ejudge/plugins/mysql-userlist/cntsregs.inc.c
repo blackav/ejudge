@@ -64,6 +64,7 @@ get_cntsreg_from_pool(
   ASSERT(user_id > 0);
   ASSERT(contest_id >= 0);
 
+  if (!contest_id) return 0;
   if (user_id >= cc->size) return 0;
   cu = &cc->user_map[user_id];
 
@@ -186,7 +187,8 @@ parse_cntsreg(
   int is_incomplete = 0, is_disqualified = 0;
   int flags = 0;
 
-  if (handle_parse_spec(state, CNTSREG_WIDTH, cntsreg_spec, c,
+  if (handle_parse_spec(state->field_count, state->row, state->lengths,
+                        CNTSREG_WIDTH, cntsreg_spec, c,
                         &user_id, &is_banned, &is_invisible,
                         &is_locked, &is_incomplete, &is_disqualified) < 0)
     goto fail;
@@ -237,6 +239,7 @@ fetch_cntsreg(
   struct userlist_contest *c = 0;
 
   *p_c = 0;
+  if (!contest_id) return 0;
   if ((c = get_cntsreg_from_pool(state, user_id, contest_id))) {
     *p_c = c;
     return 1;

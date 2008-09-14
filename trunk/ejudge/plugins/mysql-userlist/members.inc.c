@@ -189,7 +189,8 @@ parse_member(struct uldb_mysql_state *state, struct userlist_member *m)
   int user_id = 0, contest_id = -1;
   char errbuf[1024];
 
-  if (handle_parse_spec(state, MEMBER_WIDTH, member_spec, m,
+  if (handle_parse_spec(state->field_count, state->row, state->lengths,
+                        MEMBER_WIDTH, member_spec, m,
                         &user_id, &contest_id) < 0)
     return -1;
   if (m->serial <= 0) FAIL("serial <= 0");

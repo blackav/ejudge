@@ -171,12 +171,17 @@ remove_user_info_from_pool_by_uid(
 }
 
 static int
-parse_user_info(struct uldb_mysql_state *state, struct userlist_user_info *ui)
+parse_user_info(
+        int field_count,
+        char **row,
+        unsigned long *lengths,
+        struct userlist_user_info *ui)
 {
   int user_id = 0, contest_id = -1;
   char errbuf[1024];
 
-  if (handle_parse_spec(state, USER_INFO_WIDTH, user_info_spec, ui,
+  if (handle_parse_spec(field_count, row, lengths,
+                        USER_INFO_WIDTH, user_info_spec, ui,
                         &user_id, &contest_id) < 0) {
     goto fail;
   }
@@ -247,7 +252,8 @@ fetch_user_info(
   if (!(state->row = mysql_fetch_row(state->res)))
     db_no_data_fail();
   state->lengths = mysql_fetch_lengths(state->res);
-  if (parse_user_info(state, ui) < 0) goto fail;
+  if (parse_user_info(state->field_count, state->row, state->lengths, ui) < 0)
+    goto fail;
 
   *p_ui = ui;
   return 1;

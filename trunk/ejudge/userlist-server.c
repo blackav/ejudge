@@ -3859,12 +3859,13 @@ cmd_list_all_users(struct client_state *p,
 
   f = open_memstream(&xml_ptr, &xml_size);
   userlist_write_xml_header(f);
-  for (iter = default_get_brief_list_iterator(data->contest_id);
-       iter->has_next(iter);
-       iter->next(iter)) {
-    u = (const struct userlist_user*) iter->get(iter);
-    userlist_unparse_user_short(u, f, data->contest_id);
-    default_unlock_user(u);
+  iter = default_get_brief_list_iterator(data->contest_id);
+  if (iter) {
+    for (; iter->has_next(iter); iter->next(iter)) {
+      u = (const struct userlist_user*) iter->get(iter);
+      userlist_unparse_user_short(u, f, data->contest_id);
+      default_unlock_user(u);
+    }
   }
   userlist_write_xml_footer(f);
   iter->destroy(iter);
