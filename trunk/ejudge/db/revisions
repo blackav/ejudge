@@ -3692,3 +3692,5 @@ uldb_plugin_xml.c 5050 0 7017167
 userlist.c 5050 0 4613139
 plugins/mysql-userlist/uldb_mysql.c 5049 0 8359082
 edit-userlist.c 5051 0 9978163
+userlist-server.c 5053 0 22452140
+plugins/mysql-userlist/uldb_mysql.c 5053 0 8657515
