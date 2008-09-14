@@ -112,10 +112,12 @@ remove_login_from_pool(
 
 static int
 parse_login(
-        struct uldb_mysql_state *state,
+        int field_count,
+        char **row,
+        unsigned long *lengths,
         struct userlist_user *u)
 {
-  if (handle_parse_spec(state, LOGIN_WIDTH, login_spec, u) < 0)
+  if (handle_parse_spec(field_count,row,lengths,LOGIN_WIDTH,login_spec,u) < 0)
     goto fail;
   if (u->id <= 0) goto fail;
   if (u->passwd_method < USERLIST_PWD_PLAIN
@@ -173,7 +175,8 @@ fetch_login(
     db_no_data_fail();
   state->lengths = mysql_fetch_lengths(state->res);
   if (!(u = allocate_login_on_pool(state, user_id))) goto fail;
-  if (parse_login(state, u) < 0) goto fail;
+  if (parse_login(state->field_count,state->row,state->lengths,u) < 0)
+    goto fail;
   *p_user = u;
   return 1;
 

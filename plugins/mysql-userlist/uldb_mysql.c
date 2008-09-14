@@ -290,6 +290,13 @@ struct uldb_mysql_state
   struct members_cache members;
 };
 
+struct saved_row
+{
+  int field_count;
+  unsigned long *lengths;
+  char **row;
+};
+
 struct user_id_iterator
 {
   struct int_iterator b;
@@ -1095,10 +1102,13 @@ struct mysql_parse_spec
 };
 
 static int
-handle_parse_spec(struct uldb_mysql_state *state,
-                  int spec_num,
-                  const struct mysql_parse_spec *specs,
-                  void *data, ...)
+handle_parse_spec(
+        int field_count,
+        char **row,
+        unsigned long *lengths,
+        int spec_num,
+        const struct mysql_parse_spec *specs,
+        void *data, ...)
 {
   int i, x, n, d_year, d_mon, d_day, d_hour, d_min, d_sec;
   va_list args;
@@ -1112,19 +1122,19 @@ handle_parse_spec(struct uldb_mysql_state *state,
   unsigned long long *p_uq;
   ej_ip_t *p_ip;
 
-  if (state->field_count != spec_num) {
+  if (field_count != spec_num) {
     err("wrong field_count (%d instead of %d). invalid table format?",
-        state->field_count, spec_num);
+        field_count, spec_num);
     return -1;
   }
 
   // check non-null and binary data
   for (i = 0; i < spec_num; i++) {
-    if (!specs[i].null_allowed && !state->row[i]) {
+    if (!specs[i].null_allowed && !row[i]) {
       err("column %d (%s) cannot be NULL", i, specs[i].name);
       return -1;
     }
-    if (state->row[i] && strlen(state->row[i]) != state->lengths[i]) {
+    if (row[i] && strlen(row[i]) != lengths[i]) {
       err("column %d (%s) cannot be binary", i, specs[i].name);
       return -1;
     }
@@ -1138,7 +1148,7 @@ handle_parse_spec(struct uldb_mysql_state *state,
     case 'q':
       errno = 0;
       eptr = 0;
-      uq = strtoull(state->row[i], &eptr, 16);
+      uq = strtoull(row[i], &eptr, 16);
       if (errno || *eptr) goto invalid_format;
       p_uq = XPDEREF(unsigned long long, data, specs[i].offset);
       *p_uq = uq;
@@ -1148,7 +1158,7 @@ handle_parse_spec(struct uldb_mysql_state *state,
     case 'e':
       errno = 0;
       eptr = 0;
-      x = strtol(state->row[i], &eptr, 10);
+      x = strtol(row[i], &eptr, 10);
       if (errno || *eptr) goto invalid_format;
       p_int = XPDEREF(int, data, specs[i].offset);
       *p_int = x;
@@ -1156,20 +1166,20 @@ handle_parse_spec(struct uldb_mysql_state *state,
     case 'D':
       errno = 0;
       eptr = 0;
-      x = strtol(state->row[i], &eptr, 10);
+      x = strtol(row[i], &eptr, 10);
       if (errno || *eptr) goto invalid_format;
       p_int = va_arg(args, int*);
       *p_int = x;
       break;
     case 'b':
-      if (sscanf(state->row[i], "%d%n", &x, &n) != 1 || state->row[i][n])
+      if (sscanf(row[i], "%d%n", &x, &n) != 1 || row[i][n])
         goto invalid_format;
       if (x != 0 && x != 1) goto invalid_format;
       p_int = XPDEREF(int, data, specs[i].offset);
       *p_int = x;
       break;
     case 'B':
-      if (sscanf(state->row[i], "%d%n", &x, &n) != 1 || state->row[i][n])
+      if (sscanf(row[i], "%d%n", &x, &n) != 1 || row[i][n])
         goto invalid_format;
       if (x != 0 && x != 1) goto invalid_format;
       p_int = va_arg(args, int*);
@@ -1177,37 +1187,37 @@ handle_parse_spec(struct uldb_mysql_state *state,
       break;
     case 's':
       p_str = XPDEREF(unsigned char *, data, specs[i].offset);
-      if (state->row[i]) {
-        *p_str = xstrdup(state->row[i]);
+      if (row[i]) {
+        *p_str = xstrdup(row[i]);
       } else {
         *p_str = 0;
       }
       break;
     case 'S':
       p_str = va_arg(args, unsigned char **);
-      if (state->row[i]) {
-        *p_str = xstrdup(state->row[i]);
+      if (row[i]) {
+        *p_str = xstrdup(row[i]);
       } else {
         *p_str = 0;
       }
       break;
     case 't':
-      if (!state->row[i]) {
+      if (!row[i]) {
         p_time = XPDEREF(time_t, data, specs[i].offset);
         *p_time = 0;
         break;
       }
       // special handling for '0' case
-      if (sscanf(state->row[i], "%d%n", &x, &n) == 1 && !state->row[i][n]
+      if (sscanf(row[i], "%d%n", &x, &n) == 1 && !row[i][n]
           && !x) {
         p_time = XPDEREF(time_t, data, specs[i].offset);
         *p_time = 0;
         break;
       }
       // 'YYYY-MM-DD hh:mm:ss'
-      if (sscanf(state->row[i], "%d-%d-%d %d:%d:%d%n",
+      if (sscanf(row[i], "%d-%d-%d %d:%d:%d%n",
                  &d_year, &d_mon, &d_day, &d_hour, &d_min, &d_sec, &n) != 6
-          || state->row[i][n])
+          || row[i][n])
         goto invalid_format;
       if (!d_year && !d_mon && !d_day && !d_hour && !d_min && !d_sec) {
         p_time = XPDEREF(time_t, data, specs[i].offset);
@@ -1228,21 +1238,21 @@ handle_parse_spec(struct uldb_mysql_state *state,
       *p_time = t;
       break;
     case 'a':
-      if (!state->row[i]) {
+      if (!row[i]) {
         p_time = XPDEREF(time_t, data, specs[i].offset);
         *p_time = 0;
         break;
       }
       // special handling for '0' case
-      if (sscanf(state->row[i], "%d%n", &x, &n) == 1 && !state->row[i][n]
+      if (sscanf(row[i], "%d%n", &x, &n) == 1 && !row[i][n]
           && !x) {
         p_time = XPDEREF(time_t, data, specs[i].offset);
         *p_time = 0;
         break;
       }
       // 'YYYY-MM-DD hh:mm:ss'
-      if (sscanf(state->row[i], "%d-%d-%d%n", &d_year, &d_mon, &d_day, &n) != 3
-          || state->row[i][n])
+      if (sscanf(row[i], "%d-%d-%d%n", &d_year, &d_mon, &d_day, &n) != 3
+          || row[i][n])
         goto invalid_format;
       if (!d_year && !d_mon && !d_day && !d_hour && !d_min && !d_sec) {
         p_time = XPDEREF(time_t, data, specs[i].offset);
@@ -1262,7 +1272,7 @@ handle_parse_spec(struct uldb_mysql_state *state,
       break;
     case 'i':
       p_ip = XPDEREF(ej_ip_t, data, specs[i].offset);
-      if (xml_parse_ip(0, 0, 0, state->row[i], p_ip) < 0) goto invalid_format;
+      if (xml_parse_ip(0, 0, 0, row[i], p_ip) < 0) goto invalid_format;
       break;
 
     default:
@@ -2111,6 +2121,47 @@ get_user_info_5_func(
   return -1;
 }
 
+static void
+free_saved_row(struct saved_row *r)
+{
+  int i;
+
+  if (!r) return;
+  for (i = 0; i < r->field_count; i++) {
+    xfree(r->row[i]);
+    r->row[i] = 0;
+  }
+  xfree(r->lengths);
+  xfree(r->row);
+  memset(r, 0, sizeof(*r));
+}
+
+static void
+copy_saved_row(struct uldb_mysql_state *state, struct saved_row *r)
+{
+  int i;
+
+  r->field_count = state->field_count;
+  if (r->field_count <= 0) return;
+  XCALLOC(r->lengths, r->field_count);
+  XCALLOC(r->row, r->field_count);
+  memcpy(r->lengths, state->lengths, sizeof(r->lengths[0]) * r->field_count);
+  for (i = 0; i < r->field_count; i++) {
+    if (!state->row[i])
+      r->row[i] = 0;
+    else
+      r->row[i] = xstrdup(state->row[i]);
+  }
+}
+
+struct brief_list_row
+{
+  int user_id;
+  struct saved_row login_row;
+  struct saved_row user_info_row;
+  //struct saved_row cntsreg_row;
+};
+
 struct brief_list_iterator
 {
   struct ptr_iterator b;
@@ -2119,12 +2170,15 @@ struct brief_list_iterator
   int cur_ind;
   int *user_ids;
   int total_ids;
+  struct brief_list_row *rows;
 };
 
 static int
 brief_list_iterator_has_next_func(ptr_iterator_t data)
 {
   struct brief_list_iterator *iter = (struct brief_list_iterator *) data;
+
+  if (!iter) return 0;
   return (iter->cur_ind < iter->total_ids);
 }
 static const void*
@@ -2136,8 +2190,32 @@ brief_list_iterator_get_func(ptr_iterator_t data)
   struct userlist_user *u = 0;
   struct userlist_user_info *ui = 0;
   struct userlist_contest *uc = 0;
+  struct saved_row *rr;
 
+  if (!iter) return 0;
   if (iter->cur_ind >= iter->total_ids) return 0;
+
+  if (iter->rows) {
+    ASSERT(!iter->contest_id);
+    if (!(u = get_login_from_pool(state, user_id))) {
+      u = allocate_login_on_pool(state, user_id);
+      rr = &iter->rows[iter->cur_ind].login_row;
+      if (u && parse_login(rr->field_count, rr->row, rr->lengths, u) < 0) {
+        remove_login_from_pool(state, user_id);
+        u = 0;
+      }
+    }
+    if (!(ui = get_user_info_from_pool(state, user_id, iter->contest_id))) {
+      ui = allocate_user_info_on_pool(state, user_id, iter->contest_id);
+      rr = &iter->rows[iter->cur_ind].user_info_row;
+      if (ui && parse_user_info(rr->field_count,rr->row,rr->lengths,ui) < 0) {
+        remove_user_info_from_pool(state, user_id, iter->contest_id);
+        ui = 0;
+      }
+    }
+    userlist_attach_user_info(u, ui);
+    return u;
+  }
 
   user_id = iter->user_ids[iter->cur_ind];
   contest_id = iter->contest_id;
@@ -2160,6 +2238,16 @@ static void
 brief_list_iterator_destroy_func(ptr_iterator_t data)
 {
   struct brief_list_iterator *iter = (struct brief_list_iterator *) data;
+  int i;
+
+  if (!iter) return;
+  if (iter->rows) {
+    for (i = 0; i < iter->total_ids; i++) {
+      free_saved_row(&iter->rows[i].login_row);
+      free_saved_row(&iter->rows[i].user_info_row);
+    }
+    xfree(iter->rows);
+  }
   xfree(iter->user_ids);
   xfree(iter);
 }
@@ -2182,13 +2270,60 @@ get_brief_list_iterator_func(
   char *cmd_t = 0;
   size_t cmd_z = 0;
   FILE *cmd_f = 0;
-  int i, val;
+  int i, val, j;
+  unsigned char cmdbuf[1024];
+  size_t cmdlen;
 
   XCALLOC(iter, 1);
   iter->b = brief_list_iterator_funcs;
   iter->state = state;
   iter->contest_id = contest_id;
   iter->cur_ind = 0;
+
+  if (!contest_id) {
+    snprintf(cmdbuf, sizeof(cmdbuf),
+             "SELECT * FROM %slogins WHERE 1 ORDER BY user_id ;",
+             state->table_prefix);
+    cmdlen = strlen(cmdbuf);
+    if (my_query(state, cmd_t, cmd_z, LOGIN_WIDTH) < 0) goto fail;
+    iter->total_ids = state->row_count;
+    if (!iter->total_ids) return (ptr_iterator_t) iter;
+
+    XCALLOC(iter->rows, iter->total_ids);
+    for (i = 0; i < iter->total_ids; i++) {
+      if (!(state->row = mysql_fetch_row(state->res)))
+        db_no_data_fail();
+      state->lengths = mysql_fetch_lengths(state->res);
+      if (!state->lengths[0])
+        db_inv_value_fail();
+      if (parse_int(state->row[0], &val) < 0 || val <= 0)
+        db_inv_value_fail();
+      iter->rows[i].user_id = val;
+      copy_saved_row(state, &iter->rows[i].login_row);
+    }
+
+    snprintf(cmdbuf, sizeof(cmdbuf),
+             "SELECT * FROM %susers WHERE contest_id = 0 ORDER BY user_id ;",
+             state->table_prefix);
+    cmdlen = strlen(cmdbuf);
+    if (my_query(state, cmd_t, cmd_z, USER_INFO_WIDTH) < 0) goto fail;
+    j = 0;
+    for (i = 0; i < state->row_count; i++) {
+      if (!(state->row = mysql_fetch_row(state->res)))
+        db_no_data_fail();
+      state->lengths = mysql_fetch_lengths(state->res);
+      if (!state->lengths[0])
+        db_inv_value_fail();
+      if (parse_int(state->row[0], &val) < 0 || val <= 0)
+        db_inv_value_fail();
+      while (j < iter->total_ids && iter->rows[j].user_id < val) j++;
+      if (j < iter->total_ids && iter->rows[j].user_id == val) {
+        copy_saved_row(state, &iter->rows[j].user_info_row);
+      }
+    }
+
+    return (ptr_iterator_t) iter;
+  }
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   if (contest_id <= 0) {
@@ -2218,6 +2353,13 @@ get_brief_list_iterator_func(
   return (ptr_iterator_t) iter;
 
  fail:
+  if (iter && iter->rows) {
+    for (i = 0; i < iter->total_ids; i++) {
+      free_saved_row(&iter->rows[i].login_row);
+      free_saved_row(&iter->rows[i].user_info_row);
+    }
+    xfree(iter->rows);
+  }
   if (iter) xfree(iter->user_ids);
   xfree(iter);
   return 0;

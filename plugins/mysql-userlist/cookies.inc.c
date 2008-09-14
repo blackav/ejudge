@@ -175,7 +175,8 @@ parse_cookie(
 {
   int ip_version = 0;
 
-  if (handle_parse_spec(state, COOKIE_WIDTH, cookie_spec, c, &ip_version) < 0)
+  if (handle_parse_spec(state->field_count, state->row, state->lengths,
+                        COOKIE_WIDTH, cookie_spec, c, &ip_version) < 0)
     goto fail;
   if (!c->cookie) db_inv_value_fail();
   if (c->user_id <= 0) db_inv_value_fail();
