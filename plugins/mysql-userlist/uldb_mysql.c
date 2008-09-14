@@ -373,6 +373,13 @@ parse_int(const unsigned char *str, int *p_val)
   return 0;
 }
 
+static void
+my_free_res(struct uldb_mysql_state *state)
+{
+  if (state->res) mysql_free_result(state->res);
+  state->res = 0;
+}
+
 static int
 my_simple_query(
         struct uldb_mysql_state *state,
@@ -430,8 +437,7 @@ my_query(
   return state->row_count;
 
  fail:
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return -1;
 }
 
@@ -466,8 +472,7 @@ my_query_one_row(
   return 0;
 
  fail:
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return -1;
 }
 
@@ -487,8 +492,7 @@ my_row(struct uldb_mysql_state *state)
   return 0;
 
  fail:
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return -1;
 }
 
@@ -502,8 +506,7 @@ my_int_val(struct uldb_mysql_state *state, int *p_int, int min_val)
   return 0;
 
  fail:
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return -1;
 }
 
@@ -713,7 +716,7 @@ check_func(void *data)
   }
 
   // the current version is OK, no upgrade necessary
-  mysql_free_result(state->res);
+  my_free_res(state);
   return 1;
 }
 
@@ -1468,13 +1471,11 @@ get_user_id_iterator_func(void *data)
       if (my_int_val(state, &iter->ids[i], 1) < 0) goto fail;
     }
   }
-  mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return (int_iterator_t) iter;
 
  fail:
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   xfree(iter->ids);
   xfree(iter);
   return 0;
@@ -1501,13 +1502,11 @@ get_user_by_login_func(void *data, const unsigned char *login)
     db_inv_value_fail();
   if (parse_int(state->row[0], &val) < 0 || val <= 0)
     db_inv_value_fail();
-  mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return val;
 
  fail:
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
   return -1;
@@ -1545,13 +1544,11 @@ get_login_func(void *data, int user_id)
   cmdlen = strlen(cmdbuf);
   if (my_query_one_row(state, cmdbuf, cmdlen, 1) < 0) goto fail;
   res = xstrdup(state->row[0]);
-  mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return res;
 
  fail:
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return 0;
 }
 
@@ -1599,13 +1596,11 @@ new_user_func(
     db_inv_value_fail();
   if (parse_int(state->row[0], &val) < 0 || val <= 0)
     db_inv_value_fail();
-  mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return val;
 
  fail:
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
   return -1;
@@ -1664,17 +1659,14 @@ is_unique_cookie(
   cmdlen = strlen(cmdbuf);
   if (my_query(state, cmdbuf, cmdlen, 1) < 0) return -1;
   if (state->row_count < 0) {
-    mysql_free_result(state->res);
-    state->res = 0;
+    my_free_res(state);
     return -1;
   }
   if (state->row_count > 0) {
-    mysql_free_result(state->res);
-    state->res = 0;
+    my_free_res(state);
     return 0;
   }
-  mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return 1;
 }
 
@@ -1823,13 +1815,11 @@ user_contest_iterator_get_func(ptr_iterator_t data)
   c = allocate_cntsreg_on_pool(state, iter->user_id, iter->ids[iter->cur_i]);
   if (!c) goto fail;
   if (parse_cntsreg(state, c) < 0) goto fail;
-  mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return (void*) c;
 
  fail:
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return 0;
 }
 static void
@@ -1881,13 +1871,11 @@ get_user_contest_iterator_func(
       if (my_int_val(state, &iter->ids[i], 1) < 0) goto fail;
     }
   }
-  mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return (ptr_iterator_t) iter;
 
  fail:
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   xfree(iter->ids);
   xfree(iter);
   return 0;
@@ -1927,14 +1915,12 @@ remove_expired_users_func(
     remove_user_func(data, ids[i]);
   }
 
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   xfree(ids);
   return 0;
 
  fail:
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
   xfree(ids);
@@ -2142,8 +2128,7 @@ get_user_info_5_func(
       if (errno || *eptr) goto fail;
     }
   }
-  mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
 
   snprintf(cmdbuf, sizeof(cmdbuf), "SELECT contest_id FROM %scntsregs WHERE user_id = %d ;", state->table_prefix, user_id);
   cmdlen = strlen(cmdbuf);
@@ -2155,8 +2140,7 @@ get_user_info_5_func(
       if (my_int_val(state, &cntsregs[i], 0) < 0) goto fail;
     }
   }
-  mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
 
   for (i = 0; i < cookie_count; i++) {
     if (fetch_cookie(state, cookies[i], &cc) < 0) goto fail;
@@ -2172,8 +2156,7 @@ get_user_info_5_func(
   return 0;
 
  fail:
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   if (u) unlock_user_func(state, u);
   return -1;
 }
@@ -2345,8 +2328,7 @@ get_brief_list_iterator_func(
     if (my_query(state, cmd_t, cmd_z, LOGIN_WIDTH) < 0) goto fail;
     iter->total_ids = state->row_count;
     if (!iter->total_ids) {
-      mysql_free_result(state->res);
-      state->res = 0;
+      my_free_res(state);
       return (ptr_iterator_t) iter;
     }
 
@@ -2363,8 +2345,7 @@ get_brief_list_iterator_func(
       copy_saved_row(state, &iter->rows[i].login_row);
     }
 
-    mysql_free_result(state->res);
-    state->res = 0;
+    my_free_res(state);
     snprintf(cmdbuf, sizeof(cmdbuf),
              "SELECT * FROM %susers WHERE contest_id = 0 ORDER BY user_id ;",
              state->table_prefix);
@@ -2385,8 +2366,7 @@ get_brief_list_iterator_func(
       }
     }
 
-    mysql_free_result(state->res);
-    state->res = 0;
+    my_free_res(state);
     return (ptr_iterator_t) iter;
   }
 
@@ -2415,8 +2395,7 @@ get_brief_list_iterator_func(
     }
   }
   
-  mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return (ptr_iterator_t) iter;
 
  fail:
@@ -2429,8 +2408,7 @@ get_brief_list_iterator_func(
   }
   if (iter) xfree(iter->user_ids);
   xfree(iter);
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return 0;
 }
 
@@ -2544,13 +2522,11 @@ get_standings_list_iterator_func(
     }
   }
 
-  mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return (ptr_iterator_t) iter;
 
  fail:
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   if (iter) xfree(iter->user_ids);
   xfree(iter);
   return 0;
@@ -2572,17 +2548,14 @@ check_user_func(
   snprintf(cmdbuf, sizeof(cmdbuf), "SELECT user_id FROM %slogins WHERE user_id = %d ;", state->table_prefix, user_id);
   cmdlen = strlen(cmdbuf);
   if (my_query(state, cmdbuf, cmdlen, 1) < 0) {
-    if (state->res) mysql_free_result(state->res);
-    state->res = 0;
+    my_free_res(state);
     return -1;
   }
   if (state->row_count <= 0) {
-    if (state->res) mysql_free_result(state->res);
-    state->res = 0;
+    my_free_res(state);
     return -1;
   }
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return 0;
 }
 
@@ -2859,13 +2832,11 @@ get_info_list_iterator_func(
     }
   }
   
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return (ptr_iterator_t) iter;
 
  fail:
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   if (iter) xfree(iter->user_ids);
   xfree(iter);
   return 0;
@@ -3555,8 +3526,7 @@ new_member_func(
   arena.last_change_time = cur_time;
   if (insert_member_info(state, user_id, contest_id, &arena, 0) < 0) goto fail;
   current_member++;
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   if (my_simple_fquery(state, "UPDATE %sconfig SET config_val = '%d' WHERE config_key = 'current_member' ;", state->table_prefix, current_member) < 0) goto fail;
   remove_member_from_pool(state, user_id, contest_id);
   return current_member;
@@ -3750,8 +3720,7 @@ copy_user_info_func(
         if (my_query_one_row(state, cmdbuf, cmdlen, 1) < 0) goto fail;
         if (my_int_val(state, &current_member, 1) < 0) goto fail;
       }
-      if (state->res) mysql_free_result(state->res);
-      state->res = 0;
+      my_free_res(state);
 
       memset(&m_arena, 0, sizeof(m_arena));
       m_arena.serial = current_member++;
@@ -3867,15 +3836,13 @@ move_member_func(
   fclose(cmd_f); cmd_f = 0;
   if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   remove_member_from_pool(state, user_id, contest_id);
   if (p_cloned_flag) *p_cloned_flag = 0;
   return 0;
 
  fail:
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
   return -1;
@@ -3963,13 +3930,11 @@ get_member_serial_func(void *data)
   cmdlen = strlen(cmdbuf);
   if (my_query_one_row(state, cmdbuf, cmdlen, 1) < 0) goto fail;
   if (my_int_val(state, &current_member, 1) < 0) goto fail;
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return current_member;
 
  fail:
-  if (state->res) mysql_free_result(state->res);
-  state->res = 0;
+  my_free_res(state);
   return -1;
 }
 
