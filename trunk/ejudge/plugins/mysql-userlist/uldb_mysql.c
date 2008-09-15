@@ -2080,8 +2080,14 @@ get_user_info_4_func(
   struct userlist_contest *uc = 0;
 
   if (fetch_login(state, user_id, &u) < 0 || !u) return -1;
-  if (fetch_user_info(state, user_id, contest_id, &ui) < 0) return -1;
   if (fetch_member(state, user_id, contest_id, &mm) < 0) return -1;
+  if (mm) {
+    if (fetch_or_create_user_info(state, user_id, contest_id, &ui) < 0)
+      return -1;
+  } else {
+    if (fetch_user_info(state, user_id, contest_id, &ui) < 0)
+      return -1;
+  }
   if (fetch_cntsreg(state, user_id, contest_id, &uc) < 0) return -1;
   userlist_attach_user_info(u, ui);
   if (ui) ui->members = mm;
@@ -2114,8 +2120,14 @@ get_user_info_5_func(
   ASSERT(user_id > 0);
   ASSERT(contest_id >= 0);
   if (fetch_login(state, user_id, &u) < 0 || !u) return -1;
-  if (fetch_user_info(state, user_id, contest_id, &ui) < 0) return -1;
   if (fetch_member(state, user_id, contest_id, &mm) < 0) return -1;
+  if (mm) {
+    if (fetch_or_create_user_info(state, user_id, contest_id, &ui) < 0)
+      return -1;
+  } else {
+    if (fetch_user_info(state, user_id, contest_id, &ui) < 0)
+      return -1;
+  }
   userlist_attach_user_info(u, ui);
   if (ui) ui->members = mm;
 
@@ -2452,9 +2464,15 @@ m_standings_list_iterator_get_func(ptr_iterator_t data)
   user_id = iter->user_ids[iter->cur_ind];
   contest_id = iter->contest_id;
   if (fetch_login(state, user_id, &u) < 0) return 0;
-  if (fetch_user_info(state, user_id, contest_id, &ui) < 0) return 0;
-  if (fetch_cntsreg(state, user_id, contest_id, &uc) < 0) return 0;
   if (fetch_member(state, user_id, contest_id, &mm) < 0) return 0;
+  if (mm) {
+    if (fetch_or_create_user_info(state, user_id, contest_id, &ui) < 0)
+      return 0;
+  } else {
+    if (fetch_user_info(state, user_id, contest_id, &ui) < 0)
+      return 0;
+  }
+  if (fetch_cntsreg(state, user_id, contest_id, &uc) < 0) return 0;
 
   if (ui) ui->members = mm;
   userlist_attach_user_info(u, ui);
@@ -2750,9 +2768,15 @@ info_list_iterator_get_func(ptr_iterator_t data)
   user_id = iter->user_ids[iter->cur_ind];
   contest_id = iter->contest_id;
   if (fetch_login(state, user_id, &u) < 0) return 0;
-  if (fetch_user_info(state, user_id, contest_id, &ui) < 0) return 0;
-  if (fetch_cntsreg(state, user_id, contest_id, &uc) < 0) return 0;
   if (fetch_member(state, user_id, contest_id, &mm) < 0) return 0;
+  if (mm) {
+    if (fetch_or_create_user_info(state, user_id, contest_id, &ui) < 0)
+      return 0;
+  } else {
+    if (fetch_user_info(state, user_id, contest_id, &ui) < 0)
+      return 0;
+  }
+  if (fetch_cntsreg(state, user_id, contest_id, &uc) < 0) return 0;
 
   userlist_attach_user_info(u, ui);
   userlist_attach_cntsreg(u, uc);
