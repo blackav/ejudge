@@ -922,7 +922,7 @@ insert_contest_info(
   }
 
   fprintf(cmd_f, "INSERT INTO %susers VALUES ( ", state->table_prefix);
-  unparse_user_info(state, cmd_f, user_id, contest_id, info);
+  unparse_user_info(state, cmd_f, user_id, info);
   fprintf(cmd_f, " ) ;");
   fclose(cmd_f); cmd_f = 0;
 

@@ -177,16 +177,16 @@ parse_user_info(
         unsigned long *lengths,
         struct userlist_user_info *ui)
 {
-  int user_id = 0, contest_id = -1;
+  int user_id = 0;
   char errbuf[1024];
 
   if (handle_parse_spec(field_count, row, lengths,
                         USER_INFO_WIDTH, user_info_spec, ui,
-                        &user_id, &contest_id) < 0) {
+                        &user_id) < 0) {
     goto fail;
   }
   if (user_id <= 0) FAIL("user_id <= 0");
-  if (contest_id < 0) FAIL("contest_id < 0");
+  if (ui->contest_id < 0) FAIL("contest_id < 0");
   if (ui->instnum < -1) FAIL("instnum < -1");
   if (ui->team_passwd_method < 0 || ui->team_passwd_method >= USERLIST_PWD_LAST)
     FAIL("pwdmethod is out of range");
@@ -201,11 +201,10 @@ unparse_user_info(
         struct uldb_mysql_state *state,
         FILE *fout,
         int user_id,
-        int contest_id,
         const struct userlist_user_info *ui)
 {
   handle_unparse_spec(state, fout, USER_INFO_WIDTH, user_info_spec, ui,
-                      user_id, contest_id);
+                      user_id);
 }
 
 static int
@@ -282,7 +281,7 @@ fetch_or_create_user_info(
 
   if (fetch_user_info(state, user_id, contest_id, &ui) < 0) goto fail;
   if (ui) {
-    if (*p_ui) *p_ui = ui;
+    if (p_ui) *p_ui = ui;
     return 1;
   }
 
@@ -294,14 +293,14 @@ fetch_or_create_user_info(
   arena.last_change_time = cur_time;
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %susers VALUES ( ", state->table_prefix);
-  unparse_user_info(state, cmd_f, user_id, contest_id, &arena);
+  unparse_user_info(state, cmd_f, user_id, &arena);
   fprintf(cmd_f, " ) ;");
   fclose(cmd_f); cmd_f = 0;
   if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   if (fetch_user_info(state, user_id, contest_id, &ui) < 0) goto fail;
   ASSERT(ui);
-  if (*p_ui) *p_ui = ui;
+  if (p_ui) *p_ui = ui;
   return 1;
 
  fail:

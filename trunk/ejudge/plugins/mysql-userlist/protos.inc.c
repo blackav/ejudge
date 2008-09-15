@@ -115,7 +115,6 @@ unparse_user_info(
         struct uldb_mysql_state *state,
         FILE *fout,
         int user_id,
-        int contest_id,
         const struct userlist_user_info *ui)
   __attribute__((unused));
 static void

@@ -124,7 +124,7 @@ static struct mysql_parse_spec user_info_spec[USER_INFO_WIDTH] =
   //[0]    user_id INT UNSIGNED NOT NULL,
   { 0, 'D', "user_id", 0, 0 },
   //[1]    contest_id INT UNSIGNED NOT NULL,
-  { 0, 'D', "contest_id", 0, 0 },
+  { 0, 'd', "contest_id", USER_INFO_OFFSET(contest_id), 0 },
   //[2]    cnts_read_only TINYINT NOT NULL DEFAULT 0,
   { 0, 'b', "cnts_read_only", USER_INFO_OFFSET(cnts_read_only), 0 },
   //[3]    instnum INT,
