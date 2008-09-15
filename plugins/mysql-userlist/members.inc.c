@@ -224,9 +224,9 @@ fetch_member(
   struct userlist_member *m;
   int i;
 
-  *p_mm = 0;
+  if (p_mm) *p_mm = 0;
   if ((mm = get_member_from_pool(state, user_id, contest_id))) {
-    *p_mm = mm;
+    if (p_mm) *p_mm = mm;
     return 1;
   }
 
@@ -241,7 +241,8 @@ fetch_member(
     db_error_fail(state);
   state->row_count = mysql_num_rows(state->res);
   if (state->row_count <= 0) {
-    *p_mm = 0;
+    my_free_res(state);
+    if (p_mm) *p_mm = 0;
     return 0;
   }
 
@@ -257,10 +258,12 @@ fetch_member(
     mm->m[mm->u++] = m;
     if (parse_member(state, m) < 0) goto fail;
   }
+  my_free_res(state);
   if (p_mm) *p_mm = mm;
   return 1;
 
  fail:
+  my_free_res(state);
   remove_member_from_pool(state, user_id, contest_id);
   return -1;
 }

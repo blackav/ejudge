@@ -849,7 +849,7 @@ write_date(
 {
   struct tm *ptm;
 
-  if (pfx) pfx = "";
+  if (!pfx) pfx = "";
   if (time <= 0) {
     fprintf(f, "%sDEFAULT", pfx);
     return;
@@ -1265,7 +1265,7 @@ handle_parse_spec(
       if (sscanf(row[i], "%d-%d-%d%n", &d_year, &d_mon, &d_day, &n) != 3
           || row[i][n])
         goto invalid_format;
-      if (!d_year && !d_mon && !d_day && !d_hour && !d_min && !d_sec) {
+      if (!d_year && !d_mon && !d_day) {
         p_time = XPDEREF(time_t, data, specs[i].offset);
         *p_time = 0;
         break;
@@ -1724,6 +1724,7 @@ new_cookie_func(
   fprintf(cmd_f, " ) ;");
   fclose(cmd_f); cmd_f = 0;
   if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0;
   if (fetch_cookie(state, cookie, &c) < 0) goto fail;
   if (p_cookie) *p_cookie = c;
   return 0;
@@ -1902,20 +1903,24 @@ remove_expired_users_func(
   fclose(cmd_f); cmd_f = 0;
 
   if (my_query(state, cmd_t, cmd_z, 1) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0;
   count = state->row_count;
-  if (!count) return 0;
+  if (!count) {
+    my_free_res(state);
+    return 0;
+  }
 
   // save the result set into the temp array
   XCALLOC(ids, count);
   for (i = 0; i < count; i++) {
     if (my_int_val(state, &ids[i], 1) < 0) goto fail;
   }
+  my_free_res(state);
 
   for (i = 0; i < count; i++) {
     remove_user_func(data, ids[i]);
   }
 
-  my_free_res(state);
   xfree(ids);
   return 0;
 
@@ -2237,6 +2242,7 @@ brief_list_iterator_get_func(ptr_iterator_t data)
 
   if (iter->rows) {
     ASSERT(!iter->contest_id);
+    user_id = iter->rows[iter->cur_ind].user_id;
     if (!(u = get_login_from_pool(state, user_id))) {
       u = allocate_login_on_pool(state, user_id);
       rr = &iter->rows[iter->cur_ind].login_row;
@@ -2246,11 +2252,13 @@ brief_list_iterator_get_func(ptr_iterator_t data)
       }
     }
     if (!(ui = get_user_info_from_pool(state, user_id, iter->contest_id))) {
-      ui = allocate_user_info_on_pool(state, user_id, iter->contest_id);
       rr = &iter->rows[iter->cur_ind].user_info_row;
-      if (ui && parse_user_info(rr->field_count,rr->row,rr->lengths,ui) < 0) {
-        remove_user_info_from_pool(state, user_id, iter->contest_id);
-        ui = 0;
+      if (rr->field_count == USER_INFO_WIDTH) {
+        ui = allocate_user_info_on_pool(state, user_id, iter->contest_id);
+        if (ui && parse_user_info(rr->field_count,rr->row,rr->lengths,ui) < 0) {
+          remove_user_info_from_pool(state, user_id, iter->contest_id);
+          ui = 0;
+        }
       }
     }
     userlist_attach_user_info(u, ui);
@@ -2506,6 +2514,7 @@ get_standings_list_iterator_func(
   fclose(cmd_f); cmd_f = 0;
 
   if (my_query(state, cmd_t, cmd_z, 1) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0;
   iter->total_ids = state->row_count;
 
   if (iter->total_ids > 0) {

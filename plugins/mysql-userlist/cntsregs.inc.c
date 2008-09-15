@@ -255,17 +255,22 @@ fetch_cntsreg(
     db_error_fail(state);
   state->row_count = mysql_num_rows(state->res);
   if (state->row_count < 0) db_error_fail(state);
-  if (!state->row_count) return 0;
+  if (!state->row_count) {
+    my_free_res(state);
+    return 0;
+  }
   if (state->row_count > 1) goto fail;
   if (!(state->row = mysql_fetch_row(state->res)))
     db_no_data_fail();
   state->lengths = mysql_fetch_lengths(state->res);
   if (!(c = allocate_cntsreg_on_pool(state, user_id, contest_id))) goto fail;
   if (parse_cntsreg(state, c) < 0) goto fail;
+  my_free_res(state);
   *p_c = c;
   return 1;
 
  fail:
+  my_free_res(state);
   remove_cntsreg_from_pool(state, user_id, contest_id);
   return -1;
 }

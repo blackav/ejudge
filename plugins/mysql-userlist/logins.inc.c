@@ -169,7 +169,10 @@ fetch_login(
     db_error_fail(state);
   state->row_count = mysql_num_rows(state->res);
   if (state->row_count < 0) db_error_fail(state);
-  if (!state->row_count) return 0;
+  if (!state->row_count) {
+    my_free_res(state);
+    return 0;
+  }
   if (state->row_count > 1) goto fail;
   if (!(state->row = mysql_fetch_row(state->res)))
     db_no_data_fail();
@@ -177,10 +180,12 @@ fetch_login(
   if (!(u = allocate_login_on_pool(state, user_id))) goto fail;
   if (parse_login(state->field_count,state->row,state->lengths,u) < 0)
     goto fail;
+  my_free_res(state);
   *p_user = u;
   return 1;
 
  fail:
+  my_free_res(state);
   remove_login_from_pool(state, user_id);
   return -1;
 }
