@@ -3701,3 +3701,4 @@ plugins/mysql-userlist/uldb_mysql.c 5059 0 8761752
 plugins/mysql-userlist/uldb_mysql.c 5061 0 8767879
 plugins/mysql-userlist/uldb_mysql.c 5063 0 8782871
 plugins/mysql-userlist/uldb_mysql.c 5065 0 8819818
+plugins/mysql-userlist/uldb_mysql.c 5067 0 8818678
