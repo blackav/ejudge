@@ -240,6 +240,7 @@ fetch_user_info(
   state->row_count = mysql_num_rows(state->res);
   if (state->row_count < 0) goto fail;
   if (!state->row_count) {
+    my_free_res(state);
     *p_ui = 0;
     return 0;
   }
@@ -255,10 +256,12 @@ fetch_user_info(
   if (parse_user_info(state->field_count, state->row, state->lengths, ui) < 0)
     goto fail;
 
+  my_free_res(state);
   *p_ui = ui;
   return 1;
 
  fail:
+  my_free_res(state);
   remove_user_info_from_pool(state, user_id, contest_id);
   return -1;
 }
