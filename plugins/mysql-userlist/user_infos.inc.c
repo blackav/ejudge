@@ -222,9 +222,9 @@ fetch_user_info(
   ASSERT(user_id > 0);
   ASSERT(contest_id >= 0);
 
-  *p_ui = 0;
+  if (p_ui) *p_ui = 0;
   if ((ui = get_user_info_from_pool(state, user_id, contest_id))) {
-    *p_ui = ui;
+    if (p_ui) *p_ui = ui;
     return 1;
   }
 
@@ -241,7 +241,7 @@ fetch_user_info(
   if (state->row_count < 0) goto fail;
   if (!state->row_count) {
     my_free_res(state);
-    *p_ui = 0;
+    if (p_ui) *p_ui = 0;
     return 0;
   }
   if (state->row_count > 1) {
@@ -257,12 +257,57 @@ fetch_user_info(
     goto fail;
 
   my_free_res(state);
-  *p_ui = ui;
+  if (p_ui) *p_ui = ui;
   return 1;
 
  fail:
   my_free_res(state);
   remove_user_info_from_pool(state, user_id, contest_id);
+  return -1;
+}
+
+static int
+fetch_or_create_user_info(
+        struct uldb_mysql_state *state,
+        int user_id,
+        int contest_id,
+        struct userlist_user_info **p_ui)
+{
+  struct userlist_user_info *ui = 0;
+  struct userlist_user_info arena;
+  time_t cur_time;
+  FILE *cmd_f = 0;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+
+  if (fetch_user_info(state, user_id, contest_id, &ui) < 0) goto fail;
+  if (ui) {
+    if (*p_ui) *p_ui = ui;
+    return 1;
+  }
+
+  cur_time = time(0);
+  memset(&arena, 0, sizeof(arena));
+  arena.contest_id = contest_id;
+  arena.instnum = -1;
+  arena.create_time = cur_time;
+  arena.last_change_time = cur_time;
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "INSERT INTO %susers VALUES ( ", state->table_prefix);
+  unparse_user_info(state, cmd_f, user_id, contest_id, &arena);
+  fprintf(cmd_f, " ) ;");
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  if (fetch_user_info(state, user_id, contest_id, &ui) < 0) goto fail;
+  ASSERT(ui);
+  if (*p_ui) *p_ui = ui;
+  return 1;
+
+ fail:
+  remove_user_info_from_pool(state, user_id, contest_id);
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
   return -1;
 }
 
