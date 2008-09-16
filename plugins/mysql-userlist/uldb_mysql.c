@@ -1780,6 +1780,7 @@ remove_expired_cookies_func(
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "DELETE FROM %scookies WHERE expire < ", state->table_prefix);
   write_timestamp(cmd_f, state, "", cur_time);
+  fprintf(cmd_f, " ;");
   fclose(cmd_f); cmd_f = 0;
   if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t);
@@ -2112,8 +2113,8 @@ get_user_info_5_func(
   unsigned char cmdbuf[1024];
   size_t cmdlen;
   int cookie_count = 0, reg_count = 0;
-  unsigned long long *cookies;
-  int *cntsregs;
+  unsigned long long *cookies = 0;
+  int *cntsregs = 0;
   int i;
   char *eptr;
 
@@ -2219,6 +2220,14 @@ struct brief_list_row
   //struct saved_row cntsreg_row;
 };
 
+struct brief_list_full_row
+{
+  int user_id;
+  struct saved_row login_row;
+  struct saved_row user_info_row;
+  struct saved_row cntsreg_row;
+};
+
 struct brief_list_iterator
 {
   struct ptr_iterator b;
@@ -2228,6 +2237,7 @@ struct brief_list_iterator
   int *user_ids;
   int total_ids;
   struct brief_list_row *rows;
+  struct brief_list_full_row *fulls;
 };
 
 static int
@@ -2308,6 +2318,14 @@ brief_list_iterator_destroy_func(ptr_iterator_t data)
     }
     xfree(iter->rows);
   }
+  if (iter->fulls) {
+    for (i = 0; i < iter->total_ids; i++) {
+      free_saved_row(&iter->fulls[i].login_row);
+      free_saved_row(&iter->fulls[i].user_info_row);
+      free_saved_row(&iter->fulls[i].cntsreg_row);
+    }
+    xfree(iter->fulls);
+  }
   xfree(iter->user_ids);
   xfree(iter);
 }
@@ -2327,9 +2345,11 @@ get_brief_list_iterator_func(
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct brief_list_iterator *iter = 0;
+#if 0
   char *cmd_t = 0;
   size_t cmd_z = 0;
   FILE *cmd_f = 0;
+#endif
   int i, val, j;
   unsigned char cmdbuf[1024];
   size_t cmdlen;
@@ -2390,6 +2410,78 @@ get_brief_list_iterator_func(
     return (ptr_iterator_t) iter;
   }
 
+  //////////////////////////
+  snprintf(cmdbuf, sizeof(cmdbuf),
+           "SELECT %slogins.* FROM %slogins, %scntsregs WHERE %slogins.user_id = %scntsregs.user_id AND %scntsregs.contest_id = %d ORDER BY %slogins.user_id ;",
+           state->table_prefix, state->table_prefix, state->table_prefix,
+           state->table_prefix, state->table_prefix, state->table_prefix,
+           contest_id, state->table_prefix);
+  cmdlen = strlen(cmdbuf);
+  if (my_query(state, cmdbuf, cmdlen, LOGIN_WIDTH) < 0) goto fail;
+  iter->total_ids = state->row_count;
+  if (!iter->total_ids) {
+    my_free_res(state);
+    return (ptr_iterator_t) iter;
+  }
+  XCALLOC(iter->fulls, iter->total_ids);
+  for (i = 0; i < iter->total_ids; i++) {
+    if (!(state->row = mysql_fetch_row(state->res)))
+      db_no_data_fail();
+    state->lengths = mysql_fetch_lengths(state->res);
+    if (!state->lengths[0])
+      db_inv_value_fail();
+    if (parse_int(state->row[0], &val) < 0 || val <= 0)
+      db_inv_value_fail();
+    iter->fulls[i].user_id = val;
+    copy_saved_row(state, &iter->fulls[i].login_row);
+  }
+  my_free_res(state);
+
+  snprintf(cmdbuf, sizeof(cmdbuf),
+           "SELECT * FROM %susers WHERE contest_id = %d ORDER BY user_id ;",
+           state->table_prefix, contest_id);
+  cmdlen = strlen(cmdbuf);
+  if (my_query(state, cmdbuf, cmdlen, USER_INFO_WIDTH) < 0) goto fail;
+  j = 0;
+  for (i = 0; i < state->row_count; i++) {
+    if (!(state->row = mysql_fetch_row(state->res)))
+      db_no_data_fail();
+    state->lengths = mysql_fetch_lengths(state->res);
+    if (!state->lengths[0])
+      db_inv_value_fail();
+    if (parse_int(state->row[0], &val) < 0 || val <= 0)
+      db_inv_value_fail();
+    while (j < iter->total_ids && iter->fulls[j].user_id < val) j++;
+    if (j < iter->total_ids && iter->fulls[j].user_id == val) {
+      copy_saved_row(state, &iter->fulls[j].user_info_row);
+    }
+  }
+  my_free_res(state);
+
+  snprintf(cmdbuf, sizeof(cmdbuf),
+           "SELECT * FROM %scntsregs WHERE contest_id = %d ORDER BY user_id ;",
+           state->table_prefix, contest_id);
+  cmdlen = strlen(cmdbuf);
+  if (my_query(state, cmdbuf, cmdlen, CNTSREG_WIDTH) < 0) goto fail;
+  j = 0;
+  for (i = 0; i < state->row_count; i++) {
+    if (!(state->row = mysql_fetch_row(state->res)))
+      db_no_data_fail();
+    state->lengths = mysql_fetch_lengths(state->res);
+    if (!state->lengths[0])
+      db_inv_value_fail();
+    if (parse_int(state->row[0], &val) < 0 || val <= 0)
+      db_inv_value_fail();
+    while (j < iter->total_ids && iter->fulls[j].user_id < val) j++;
+    if (j < iter->total_ids && iter->fulls[j].user_id == val) {
+      copy_saved_row(state, &iter->fulls[j].cntsreg_row);
+    }
+  }
+  my_free_res(state);
+
+  return (ptr_iterator_t) iter;
+
+#if 0
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   if (contest_id <= 0) {
     fprintf(cmd_f, "SELECT user_id FROM %slogins WHERE 1 ORDER BY user_id ;",
@@ -2417,16 +2509,27 @@ get_brief_list_iterator_func(
   
   my_free_res(state);
   return (ptr_iterator_t) iter;
+#endif
 
  fail:
-  if (iter && iter->rows) {
-    for (i = 0; i < iter->total_ids; i++) {
-      free_saved_row(&iter->rows[i].login_row);
-      free_saved_row(&iter->rows[i].user_info_row);
+  if (iter) {
+    if (iter->rows) {
+      for (i = 0; i < iter->total_ids; i++) {
+        free_saved_row(&iter->rows[i].login_row);
+        free_saved_row(&iter->rows[i].user_info_row);
+      }
+      xfree(iter->rows);
     }
-    xfree(iter->rows);
+    if (iter->fulls) {
+      for (i = 0; i < iter->total_ids; i++) {
+        free_saved_row(&iter->fulls[i].login_row);
+        free_saved_row(&iter->fulls[i].user_info_row);
+        free_saved_row(&iter->fulls[i].cntsreg_row);
+      }
+      xfree(iter->fulls);
+    }
+    xfree(iter->user_ids);
   }
-  if (iter) xfree(iter->user_ids);
   xfree(iter);
   my_free_res(state);
   return 0;
@@ -2611,9 +2714,11 @@ set_reg_passwd_func(
   fclose(cmd_f); cmd_f = 0;
   if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  remove_login_from_pool(state, user_id);
   return 0;
 
  fail:
+  remove_login_from_pool(state, user_id);
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
   return -1;
@@ -2647,10 +2752,12 @@ set_team_passwd_func(
   fclose(cmd_f); cmd_f = 0;
   if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  remove_user_info_from_pool(state, user_id, contest_id);
   if (p_cloned_flag) *p_cloned_flag = 0;
   return 0;
 
  fail:
+  remove_user_info_from_pool(state, user_id, contest_id);
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
   return -1;
@@ -3557,6 +3664,7 @@ new_member_func(
   if (current_member < 1) goto fail;
   arena.team_role = role;
   arena.serial = current_member;
+  arena.grade = -1;
   arena.create_time = cur_time;
   arena.last_change_time = cur_time;
   if (insert_member_info(state, user_id, contest_id, &arena, 0) < 0) goto fail;

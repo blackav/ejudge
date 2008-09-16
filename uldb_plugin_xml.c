@@ -1967,6 +1967,7 @@ new_member_func(void *data, int user_id, int contest_id, int role,
     xml_link_node_last(link_node, &mm->b);
     ui->members = mm;
   }
+  mm = ui->members;
 
   m = (struct userlist_member*) userlist_node_alloc(USERLIST_T_MEMBER);
   m->team_role = role;
@@ -2467,7 +2468,7 @@ copy_user_info_func(
   struct userlist_user_info *ui_to;
   int i, j, k, r;
   unsigned char **p_str_from, **p_str_to;
-  struct userlist_members *mm;
+  struct userlist_members *mm = 0;
   struct userlist_member *m = 0, *om = 0;
   struct userlist_user_info *ci;
   int role_max[USERLIST_MB_LAST];
@@ -2649,7 +2650,7 @@ move_member_func(
   struct userlist_user_info *ui;
   struct userlist_members *mm;
   struct userlist_member *m;
-  int role, num = -1;
+  int role = 0, num = -1;
   struct xml_tree *link_node = 0;
 
   if (user_id <= 0 || user_id >= ul->user_map_size
@@ -2676,6 +2677,7 @@ move_member_func(
   if (!(mm = ui->members)) return -1;
   for (num = 0; num < mm->u; num++) {
     if (!(m = mm->m[num])) continue;
+    role = m->team_role;
     if (m->serial == serial || m->copied_from == serial) break;
   }
   if (num >= mm->u) return -1;
@@ -2836,7 +2838,7 @@ userlist_clone_user_info(
 {
   struct xml_tree *p;
   struct userlist_user_info *ci;
-  struct userlist_members *mm;
+  struct userlist_members *mm = 0;
   int i, j, r;
   const struct contest_desc *cnts = 0;
   int role_max[USERLIST_MB_LAST];
