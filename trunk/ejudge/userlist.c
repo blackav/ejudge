@@ -1613,18 +1613,22 @@ userlist_get_member_nc(
         int *p_role,
         int *p_num)
 {
-  int i, j;
+  int i;
   struct userlist_member *m;
+  int role_num[USERLIST_MB_LAST];
 
+  memset(role_num, 0, sizeof(role_num));
   if (serial <= 0) return 0;
   if (!mm) return 0;
   for (i = 0; i < mm->u; i++) {
     if (!(m = mm->m[i])) continue;
+    ASSERT(m->team_role >= 0 && m->team_role < USERLIST_MB_LAST);
     if (m->serial == serial || m->copied_from == serial) {
-      if (p_role) *p_role = i;
-      if (p_num) *p_num = j;
+      if (p_role) *p_role = m->team_role;
+      if (p_num) *p_num = role_num[m->team_role];
       return m;
     }
+    role_num[m->team_role]++;
   }
   return 0;
 }
