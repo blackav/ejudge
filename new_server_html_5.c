@@ -469,7 +469,7 @@ create_autoassigned_account_page(
     if (!cnts->simple_registration || cnts->send_passwd_email) {
       fprintf(fout, "<p%s>%s</p>", par_style,
               _("You should receive an e-mail message "
-                "with a password to the system. Use this password for the first"
+                "with a login and a password to the system. Use this password for the first"
                 " log in. After the first login you will be able to change the password."));
 
       fprintf(fout, "<p%s>%s</p>", par_style,

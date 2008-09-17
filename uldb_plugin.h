@@ -183,6 +183,8 @@ struct uldb_plugin_iface
   int (*set_member_serial)(void *, int);
   // unlock the complete user information structure
   void (*unlock_user)(void *, const struct userlist_user *);
+  // get the contest registration information
+  const struct userlist_contest * (*get_contest_reg)(void *, int, int);
 };
 
 /* default plugin: compiled into userlist-server */

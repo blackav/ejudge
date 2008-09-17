@@ -75,7 +75,7 @@ charset_get_id(const unsigned char *charset_str)
   charset_info[i].name = xstrdup(charset_str);
   charset_info[i].tr = (iconv_t) -2;
   charset_info[i].tr2 = (iconv_t) -2;
-  charset_info_u++;
+  charset_info_u = i + 1;
   return i;
 }
 

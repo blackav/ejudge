@@ -123,6 +123,7 @@ static int get_user_info_7_func(void *, int, int,
 static int get_member_serial_func(void *);
 static int set_member_serial_func(void *, int);
 static void unlock_user_func(void *data, const struct userlist_user *u) {}
+static const struct userlist_contest *get_contest_reg_func(void *, int, int);
 
 struct uldb_plugin_iface uldb_plugin_xml =
 {
@@ -198,6 +199,7 @@ struct uldb_plugin_iface uldb_plugin_xml =
   get_member_serial_func,
   set_member_serial_func,
   unlock_user_func,
+  get_contest_reg_func,
 };
 
 struct uldb_xml_state
@@ -2983,6 +2985,30 @@ set_member_serial_func(void *data, int new_serial)
   ul->member_serial = new_serial;
   state->dirty = 1;
   return 1;
+}
+
+static const struct userlist_contest *
+get_contest_reg_func(
+        void *data,
+        int user_id,
+        int contest_id)
+{
+  struct uldb_xml_state *state = (struct uldb_xml_state*) data;
+  struct userlist_list *ul = state->userlist;
+  struct userlist_user *u;
+  struct xml_tree *p;
+  struct userlist_contest *uc;
+
+  if (user_id <= 0 || user_id >= ul->user_map_size
+      || !(u = ul->user_map[user_id]))
+    return 0;
+  if (contest_id <= 0) return 0;
+  if (!u->contests) return 0;
+  for (p = u->contests->first_down; p; p = p->right) {
+    uc = (struct userlist_contest*) p;
+    if (uc->id == contest_id) return uc;
+  }
+  return 0;
 }
 
 /*

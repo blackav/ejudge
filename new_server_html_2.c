@@ -2324,7 +2324,7 @@ ns_write_exam_info(
     } else {
       fprintf(fout, "<td%s><i>&nbsp;</i></td>", cl);
     }
-    if (ui->exam_cypher) {
+    if (ui && ui->exam_cypher) {
       fprintf(fout, "<td%s>%s</td>", cl, ARMOR(ui->exam_cypher));
     } else {
       fprintf(fout, "<td%s><i>&nbsp;</i></td>", cl);
