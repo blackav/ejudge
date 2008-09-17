@@ -2574,7 +2574,7 @@ standings_list_iterator_get_func(ptr_iterator_t data)
 {
   struct standings_list_iterator *iter = (struct standings_list_iterator *)data;
   struct uldb_mysql_state *state = iter->state;
-  int user_id, contest_id, i;
+  int user_id, i;
   struct userlist_user *u = 0;
   struct userlist_user_info *ui = 0;
   struct userlist_contest *uc = 0;
@@ -2625,7 +2625,7 @@ standings_list_iterator_get_func(ptr_iterator_t data)
                          iter->memb_rows + iter->cur_memb,
                          iter->memb_rows + i);
     iter->cur_memb = i;
-    if (mm && !ui && fetch_or_create_user_info(state,user_id,contest_id,&ui)<0)
+    if (mm && !ui && fetch_or_create_user_info(state,user_id,iter->contest_id,&ui)<0)
       return 0;
   }
 
@@ -2993,7 +2993,7 @@ info_list_iterator_get_func(ptr_iterator_t data)
 {
   struct info_list_iterator *iter = (struct info_list_iterator *) data;
   struct uldb_mysql_state *state = iter->state;
-  int user_id, contest_id, i;
+  int user_id, i;
   struct userlist_user *u = 0;
   struct userlist_user_info *ui = 0;
   struct userlist_contest *uc = 0;
@@ -3044,7 +3044,7 @@ info_list_iterator_get_func(ptr_iterator_t data)
                          iter->memb_rows + iter->cur_memb,
                          iter->memb_rows + i);
     iter->cur_memb = i;
-    if (mm && !ui && fetch_or_create_user_info(state,user_id,contest_id,&ui)<0)
+    if (mm && !ui && fetch_or_create_user_info(state,user_id,iter->contest_id,&ui)<0)
       return 0;
   }
 
