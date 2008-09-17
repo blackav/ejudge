@@ -580,6 +580,7 @@ link_client_state(struct client_state *p)
 #define default_get_user_info_6(a, b, c, d, e, f) uldb_default->iface->get_user_info_6(uldb_default->data, a, b, c, d, e, f)
 #define default_get_user_info_7(a, b, c, d, e) uldb_default->iface->get_user_info_7(uldb_default->data, a, b, c, d, e)
 #define default_unlock_user(a) uldb_default->iface->unlock_user(uldb_default->data, a)
+#define default_get_contest_reg(a, b) uldb_default->iface->get_contest_reg(uldb_default->data, a, b)
 
 static void
 update_all_user_contests(int user_id)
@@ -2457,7 +2458,7 @@ cmd_team_login(struct client_state *p, int pkt_len,
   p->ssl = data->ssl;
   p->cookie = out->cookie;
   enqueue_reply_to_client(p, out_size, out);
-  default_touch_login_time(user_id, orig_contest_id, cur_time);
+  default_touch_login_time(user_id, data->contest_id, cur_time);
   if (daemon_mode) {
     info("%s -> OK, %d, %llx", logbuf, u->id, out->cookie);
   } else {
@@ -4463,7 +4464,8 @@ cmd_register_contest_2(struct client_state *p, int pkt_len,
   }
 
   default_check_user_reg_data(data->user_id, data->contest_id);
-  if (r->status == USERLIST_REG_OK) {
+  r = default_get_contest_reg(data->user_id, data->contest_id);
+  if (r && r->status == USERLIST_REG_OK) {
     update_userlist_table(data->contest_id);
   }
   info("%s -> OK", logbuf);
@@ -4649,6 +4651,7 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
   const struct contest_member *cm;
   const struct userlist_members *mm;
   const unsigned char *name = 0;
+  struct userlist_user_info ui_empty;
 
   if (default_get_user_info_6(user_id, contest_id, &u, &ui, &c, &mm)<0 || !c) {
     fprintf(f, "<%s>%s</%s>\n",
@@ -4658,7 +4661,12 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
     return;
   }
 
-  if (ui) name = ui->name;
+  if (!ui) {
+    memset(&ui_empty, 0, sizeof(ui_empty));
+    ui = &ui_empty;
+  }
+
+  name = ui->name;
   if (!name) name = "";
 
   l10n_setlocale(locale_id);
@@ -4962,12 +4970,14 @@ do_list_users(FILE *f, int contest_id, const struct contest_desc *d,
 
   l10n_setlocale(locale_id);
   iter = default_get_info_list_iterator(contest_id,
-                                        USERLIST_UC_LOCKED|USERLIST_UC_BANNED);
-  if (!iter->has_next(iter)) {
+                                        USERLIST_UC_LOCKED
+                                        | USERLIST_UC_BANNED
+                                        | USERLIST_UC_DISQUALIFIED);
+  if (!iter || !iter->has_next(iter)) {
     fprintf(f, "<p%s>%s</p>\n",
             d->users_par_style, _("No users registered for this contest"));
     l10n_setlocale(0);
-    iter->destroy(iter);
+    if (iter) iter->destroy(iter);
     return;
   }
 
@@ -7163,6 +7173,12 @@ cmd_get_cookie(struct client_state *p,
   }
   if (!user_name) user_name = "";
 
+  if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie) {
+    err("%s -> no such cookie", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+
   login_len = strlen(u->login);
   name_len = strlen(user_name);
   out_size = sizeof(*out) + login_len + name_len;
@@ -7612,6 +7628,7 @@ cmd_get_database(struct client_state *p, int pkt_len,
   memcpy(out->data, db_text, db_size + 1);
   enqueue_reply_to_client(p, out_size, out);
   info("%s -> ok, %zu", logbuf, out_size);
+  xfree(db_text);
 }
 
 static int
