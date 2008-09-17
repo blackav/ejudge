@@ -494,6 +494,10 @@ create_autoassigned_account_page(
 
   fprintf(fout, "<p%s>&nbsp;</p>\n", par_style);
 
+  watched_file_update(&extra->reg_welcome, cnts->reg_welcome_file, cur_time);
+  if (extra->reg_welcome.text && extra->reg_welcome.text[0])
+    fprintf(fout, "%s", extra->reg_welcome.text);
+
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);
@@ -638,6 +642,10 @@ create_account_page(
           par_style, phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REG_LOGIN_PAGE);
 
   fprintf(fout, "<p%s>&nbsp;</p>\n", par_style);
+
+  watched_file_update(&extra->reg_welcome, cnts->reg_welcome_file, cur_time);
+  if (extra->reg_welcome.text && extra->reg_welcome.text[0])
+    fprintf(fout, "%s", extra->reg_welcome.text);
 
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);

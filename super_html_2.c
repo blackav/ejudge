@@ -91,6 +91,7 @@ super_html_clear_variable(struct sid_state *sstate, int cmd)
   case SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER: p_str = &cnts->priv_footer_file; break;
   case SSERV_CMD_CNTS_CLEAR_COPYRIGHT: p_str = &cnts->copyright_file; break;
   case SSERV_CMD_CNTS_CLEAR_WELCOME: p_str = &cnts->welcome_file; break;
+  case SSERV_CMD_CNTS_CLEAR_REG_WELCOME: p_str = &cnts->reg_welcome_file; break;
   case SSERV_CMD_CNTS_CLEAR_USERS_HEAD_STYLE: p_str = &cnts->users_head_style; break;
   case SSERV_CMD_CNTS_CLEAR_USERS_PAR_STYLE: p_str = &cnts->users_par_style; break;
   case SSERV_CMD_CNTS_CLEAR_USERS_TABLE_STYLE: p_str = &cnts->users_table_style; break;
@@ -165,6 +166,9 @@ super_html_clear_variable(struct sid_state *sstate, int cmd)
     break;
   case SSERV_CMD_CNTS_CLEAR_WELCOME_TEXT:
     p_str = &sstate->welcome_text;
+    break;
+  case SSERV_CMD_CNTS_CLEAR_REG_WELCOME_TEXT:
+    p_str = &sstate->reg_welcome_text;
     break;
   case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT:
     p_str = &sstate->register_email_text;
@@ -435,6 +439,9 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   case SSERV_CMD_CNTS_CHANGE_WELCOME:
     p_str = &cnts->welcome_file;
     break;
+  case SSERV_CMD_CNTS_CHANGE_REG_WELCOME:
+    p_str = &cnts->reg_welcome_file;
+    break;
   case SSERV_CMD_CNTS_CHANGE_USERS_HEAD_STYLE:
     p_str = &cnts->users_head_style;
     break;
@@ -577,6 +584,9 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     break;
   case SSERV_CMD_CNTS_SAVE_WELCOME:
     p_str_d2u = &sstate->welcome_text;
+    break;
+  case SSERV_CMD_CNTS_SAVE_REG_WELCOME:
+    p_str_d2u = &sstate->reg_welcome_text;
     break;
   case SSERV_CMD_CNTS_SAVE_REGISTER_EMAIL_FILE:
     p_str_d2u = &sstate->register_email_text;
@@ -1144,6 +1154,8 @@ super_html_commit_contest(FILE *f,
   path_t copyright_path_2 = { 0 };
   path_t welcome_path = { 0 };
   path_t welcome_path_2 = { 0 };
+  path_t reg_welcome_path = { 0 };
+  path_t reg_welcome_path_2 = { 0 };
   path_t register_email_path = { 0 };
   path_t register_email_path_2 = { 0 };
   path_t contest_start_cmd_path = { 0 };
@@ -1164,7 +1176,7 @@ super_html_commit_contest(FILE *f,
   path_t vmap_path_2 = { 0 };
 
   int uhf, uff, rhf, rff, thf, tff, ref;
-  int csf = 0, shf = 0, sff = 0, s2hf = 0, s2ff = 0, phf = 0, pff = 0, sf = 0, vmf = 0, cpf = 0, ihf = 0, iff = 0, tsf = 0, cwf = 0, t1f = 0, t2f = 0, t3f = 0;
+  int csf = 0, shf = 0, sff = 0, s2hf = 0, s2ff = 0, phf = 0, pff = 0, sf = 0, vmf = 0, cpf = 0, ihf = 0, iff = 0, tsf = 0, cwf = 0, crwf = 0, t1f = 0, t2f = 0, t3f = 0;
 
   path_t diff_cmdline;
   unsigned char *diff_str = 0, *vcs_str = 0;
@@ -1396,6 +1408,13 @@ super_html_commit_contest(FILE *f,
                             welcome_path, welcome_path_2)) < 0)
     goto failed;
 
+  /* Save the reg_welcome_file as temporary file */
+  if ((crwf = save_conf_file(flog, "registration welcome file",
+                             cnts->reg_welcome_file, sstate->reg_welcome_text,
+                             conf_path,
+                             reg_welcome_path, reg_welcome_path_2)) < 0)
+    goto failed;
+
   /* Save the register_email_file as temporary file */
   if ((ref = save_conf_file(flog, "registration e-mail template",
                             cnts->register_email_file, sstate->register_email_text,
@@ -1577,6 +1596,7 @@ super_html_commit_contest(FILE *f,
   rename_files(flog, iff, priv_footer_path, priv_footer_path_2);
   rename_files(flog, cpf, copyright_path, copyright_path_2);
   rename_files(flog, cwf, welcome_path, welcome_path_2);
+  rename_files(flog, crwf, reg_welcome_path, reg_welcome_path_2);
   rename_files(flog, ref, register_email_path, register_email_path_2);
   rename_files(flog, csf, contest_start_cmd_path, contest_start_cmd_path_2);
   if (csf) chmod(contest_start_cmd_path, 0775);
@@ -1710,6 +1730,7 @@ super_html_commit_contest(FILE *f,
   if (priv_footer_path_2[0]) unlink(priv_footer_path_2);
   if (copyright_path_2[0]) unlink(copyright_path_2);
   if (welcome_path_2[0]) unlink(welcome_path_2);
+  if (reg_welcome_path_2[0]) unlink(reg_welcome_path_2);
   if (register_email_path_2[0]) unlink(register_email_path_2);
   if (contest_start_cmd_path_2[0]) unlink(contest_start_cmd_path_2);
   if (stand_header_path_2[0]) unlink(stand_header_path_2);

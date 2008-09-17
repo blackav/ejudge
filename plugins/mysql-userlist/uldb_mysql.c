@@ -2107,6 +2107,9 @@ get_user_info_4_func(
   if (fetch_cntsreg(state, user_id, contest_id, &uc) < 0) return -1;
   userlist_attach_user_info(u, ui);
   if (ui) ui->members = mm;
+  if (u->contests) {
+    u->contests->first_down = u->contests->last_down = 0;
+  }
   userlist_attach_cntsreg(u, uc);
   if (p_user) *p_user = u;
   return 0;
@@ -2175,11 +2178,17 @@ get_user_info_5_func(
   }
   my_free_res(state);
 
+  if (u->cookies) {
+    u->cookies->first_down = u->cookies->last_down = 0;
+  }
   for (i = 0; i < cookie_count; i++) {
     if (fetch_cookie(state, cookies[i], &cc) < 0) goto fail;
     userlist_attach_cookie(u, cc);
   }
 
+  if (u->contests) {
+    u->contests->first_down = u->contests->last_down = 0;
+  }
   for (i = 0; i < reg_count; i++) {
     if (fetch_cntsreg(state, user_id, cntsregs[i], &uc) < 0) goto fail;
     userlist_attach_cntsreg(u, uc);
@@ -2331,6 +2340,9 @@ brief_list_iterator_get_func(ptr_iterator_t data)
       }
     }
     userlist_attach_user_info(u, ui);
+    if (u->contests) {
+      u->contests->first_down = u->contests->last_down = 0;
+    }
     userlist_attach_cntsreg(u, uc);
     return u;
   }
@@ -2631,6 +2643,9 @@ standings_list_iterator_get_func(ptr_iterator_t data)
 
   if (ui) ui->members = mm;
   userlist_attach_user_info(u, ui);
+  if (u->contests) {
+    u->contests->first_down = u->contests->last_down = 0;
+  }
   userlist_attach_cntsreg(u, uc);
   return u;
 }
@@ -3050,6 +3065,9 @@ info_list_iterator_get_func(ptr_iterator_t data)
 
   if (ui) ui->members = mm;
   userlist_attach_user_info(u, ui);
+  if (u->contests) {
+    u->contests->first_down = u->contests->last_down = 0;
+  }
   userlist_attach_cntsreg(u, uc);
   return u;
 }

@@ -289,6 +289,7 @@ ns_unload_contest(int contest_id)
   watched_file_clear(&extra->priv_footer);
   watched_file_clear(&extra->copyright);
   watched_file_clear(&extra->welcome);
+  watched_file_clear(&extra->reg_welcome);
 
   for (i = 0; i < USER_ROLE_LAST; i++) {
     xfree(extra->user_access[i].v);

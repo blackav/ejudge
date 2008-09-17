@@ -102,6 +102,7 @@ enum
     CONTEST_FILE_GROUP,
     CONTEST_DEFAULT_LOCALE,
     CONTEST_WELCOME_FILE,
+    CONTEST_REG_WELCOME_FILE,    
     CONTEST_SLAVE_RULES,
     CONTEST_RUN_MANAGED_ON,
     CONTEST_USER_CONTEST,
@@ -350,6 +351,7 @@ struct contest_desc
   unsigned char *file_group;
   unsigned char *default_locale;
   unsigned char *welcome_file;
+  unsigned char *reg_welcome_file;
 
   struct xml_tree *slave_rules;
 

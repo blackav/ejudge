@@ -130,6 +130,7 @@ static char const * const elem_map[] =
   "file_group",
   "default_locale",
   "welcome_file",
+  "reg_welcome_file",
   "slave_rules",
   "run_managed_on",
   "user_contest",
@@ -258,6 +259,7 @@ node_free(struct xml_tree *t)
       xfree(cnts->file_group);
       xfree(cnts->default_locale);
       xfree(cnts->welcome_file);
+      xfree(cnts->reg_welcome_file);
       xfree(cnts->user_contest);
     }
     break;
@@ -695,6 +697,7 @@ static const size_t contest_final_offsets[CONTEST_LAST_TAG] =
   [CONTEST_FILE_GROUP] = CONTEST_DESC_OFFSET(file_group),
   [CONTEST_DEFAULT_LOCALE] = CONTEST_DESC_OFFSET(default_locale),
   [CONTEST_WELCOME_FILE] = CONTEST_DESC_OFFSET(welcome_file),
+  [CONTEST_REG_WELCOME_FILE] = CONTEST_DESC_OFFSET(reg_welcome_file),
   [CONTEST_USER_CONTEST] = CONTEST_DESC_OFFSET(user_contest),
 };
 
@@ -964,6 +967,7 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
     process_conf_file_path(cnts, &cnts->priv_header_file);
     process_conf_file_path(cnts, &cnts->priv_footer_file);
     process_conf_file_path(cnts, &cnts->welcome_file);
+    process_conf_file_path(cnts, &cnts->reg_welcome_file);
 
     if (!cnts->users_head_style) {
       cnts->users_head_style = xstrdup("h2");
@@ -1775,6 +1779,7 @@ contests_unparse(FILE *f,
   unparse_text(f, CONTEST_PRIV_HEADER_FILE, cnts->priv_header_file);
   unparse_text(f, CONTEST_PRIV_FOOTER_FILE, cnts->priv_footer_file);
   unparse_text(f, CONTEST_WELCOME_FILE, cnts->welcome_file);
+  unparse_text(f, CONTEST_REG_WELCOME_FILE, cnts->reg_welcome_file);
 
   unparse_text(f, CONTEST_USERS_HEAD_STYLE, cnts->users_head_style);
   unparse_text(f, CONTEST_USERS_PAR_STYLE, cnts->users_par_style);
