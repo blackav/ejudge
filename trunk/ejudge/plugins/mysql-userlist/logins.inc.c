@@ -27,6 +27,13 @@ do_remove_login_from_pool(
 
   uc->user_map[u->id] = 0;
   UNLINK_FROM_LIST(u_xml, uc->first, uc->last, left, right);
+  // don't even try to free nested cntsregs and cookies
+  if (u->contests) {
+    u->contests->first_down = u->contests->last_down = 0;
+  }
+  if (u->cookies) {
+    u->cookies->first_down = u->cookies->last_down = 0;
+  }
   userlist_free(u_xml);
   uc->count--;
 }
@@ -74,6 +81,13 @@ allocate_login_on_pool(
   }
 
   if ((u = uc->user_map[user_id])) {
+    // don't even try to free nested cntsregs and cookies
+    if (u->contests) {
+      u->contests->first_down = u->contests->last_down = 0;
+    }
+    if (u->cookies) {
+      u->cookies->first_down = u->cookies->last_down = 0;
+    }
     u_xml = (struct xml_tree*) u;
     l = u_xml->left;
     r = u_xml->right;

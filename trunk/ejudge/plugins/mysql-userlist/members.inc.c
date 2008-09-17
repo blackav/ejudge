@@ -184,14 +184,17 @@ remove_member_from_pool_by_uid(
 }
 
 static int
-parse_member(struct uldb_mysql_state *state, struct userlist_member *m)
+parse_member(
+        int field_count,
+        char **row,
+        unsigned long *lengths,
+        struct userlist_member *m)
 {
   int user_id = 0, contest_id = -1;
   char errbuf[1024];
 
-  if (handle_parse_spec(state->field_count, state->row, state->lengths,
-                        MEMBER_WIDTH, member_spec, m,
-                        &user_id, &contest_id) < 0)
+  if (handle_parse_spec(field_count, row, lengths, MEMBER_WIDTH, member_spec,
+                        m, &user_id, &contest_id) < 0)
     return -1;
   if (m->serial <= 0) FAIL("serial <= 0");
   if (user_id <= 0) FAIL("user_id <= 0");
@@ -253,10 +256,10 @@ fetch_member(
       db_no_data_fail();
     state->lengths = mysql_fetch_lengths(state->res);
     m = (struct userlist_member*) userlist_node_alloc(USERLIST_T_MEMBER);
-    m->b.tag = USERLIST_T_MEMBER;
     xml_link_node_last(&mm->b, &m->b);
     mm->m[mm->u++] = m;
-    if (parse_member(state, m) < 0) goto fail;
+    if (parse_member(state->field_count, state->row, state->lengths, m) < 0)
+      goto fail;
   }
   my_free_res(state);
   if (p_mm) *p_mm = mm;

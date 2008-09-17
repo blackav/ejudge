@@ -365,6 +365,11 @@ unlock_user_func(
         void *data,
         const struct userlist_user *c_u)
   __attribute__((unused));
+static const struct userlist_contest *
+get_contest_reg_func(
+        void *data,
+        int user_id,
+        int contest_id);
 
 /*
  * Local variables:

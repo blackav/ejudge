@@ -180,14 +180,16 @@ remove_cntsreg_from_pool_by_uid(
 
 static int
 parse_cntsreg(
-        struct uldb_mysql_state *state,
+        int field_count,
+        char **row,
+        unsigned long *lengths,
         struct userlist_contest *c)
 {
   int user_id = 0, is_banned = 0, is_invisible = 0, is_locked = 0;
   int is_incomplete = 0, is_disqualified = 0;
   int flags = 0;
 
-  if (handle_parse_spec(state->field_count, state->row, state->lengths,
+  if (handle_parse_spec(field_count, row, lengths,
                         CNTSREG_WIDTH, cntsreg_spec, c,
                         &user_id, &is_banned, &is_invisible,
                         &is_locked, &is_incomplete, &is_disqualified) < 0)
@@ -264,7 +266,8 @@ fetch_cntsreg(
     db_no_data_fail();
   state->lengths = mysql_fetch_lengths(state->res);
   if (!(c = allocate_cntsreg_on_pool(state, user_id, contest_id))) goto fail;
-  if (parse_cntsreg(state, c) < 0) goto fail;
+  if (parse_cntsreg(state->field_count,state->row,state->lengths, c) < 0)
+    goto fail;
   my_free_res(state);
   *p_c = c;
   return 1;
