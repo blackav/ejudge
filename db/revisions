@@ -3713,3 +3713,15 @@ new_server_html_5.c 5074 0 9136833
 uldb_plugin_xml.c 5074 0 7084062
 plugins/mysql-userlist/uldb_mysql.c 5073 0 10000344
 plugins/mysql-userlist/uldb_mysql.c 5076 0 9999161
+contests.h 5078 0 958328
+new-server.h 5078 0 2067384
+super_proto.h 5078 0 2026732
+super-serve.h 5078 0 430741
+serve-control.c 5078 0 8799452
+super-serve.c 5078 0 13304757
+contests.c 5078 0 4911696
+new_server_html.c 5078 0 36036254
+new_server_html_5.c 5078 0 9170555
+super_html.c 5078 0 11845108
+super_html_2.c 5078 0 5059712
+plugins/mysql-userlist/uldb_mysql.c 5078 0 10039962
