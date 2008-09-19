@@ -228,7 +228,8 @@ fetch_member(
   int i;
 
   if (p_mm) *p_mm = 0;
-  if ((mm = get_member_from_pool(state, user_id, contest_id))) {
+  if (state->cache_queries
+      && (mm = get_member_from_pool(state, user_id, contest_id))) {
     if (p_mm) *p_mm = mm;
     return 1;
   }
