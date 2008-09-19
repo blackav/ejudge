@@ -242,7 +242,8 @@ fetch_cntsreg(
 
   *p_c = 0;
   if (!contest_id) return 0;
-  if ((c = get_cntsreg_from_pool(state, user_id, contest_id))) {
+  if (state->cache_queries
+      && (c = get_cntsreg_from_pool(state, user_id, contest_id))) {
     *p_c = c;
     return 1;
   }

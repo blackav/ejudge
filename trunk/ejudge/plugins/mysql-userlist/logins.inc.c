@@ -166,7 +166,7 @@ fetch_login(
   *p_user = 0;
   if (user_id <= 0) goto fail;
 
-  if ((u = get_login_from_pool(state, user_id))) {
+  if (state->cache_queries && (u = get_login_from_pool(state, user_id))) {
     *p_user = u;
     return 1;
   }

@@ -222,7 +222,8 @@ fetch_user_info(
   ASSERT(contest_id >= 0);
 
   if (p_ui) *p_ui = 0;
-  if ((ui = get_user_info_from_pool(state, user_id, contest_id))) {
+  if (state->cache_queries
+      && (ui = get_user_info_from_pool(state, user_id, contest_id))) {
     if (p_ui) *p_ui = ui;
     return 1;
   }

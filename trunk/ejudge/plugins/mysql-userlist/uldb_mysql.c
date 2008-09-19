@@ -257,7 +257,7 @@ struct uldb_mysql_state
   // configuration settings
   int port;
   int show_queries;
-  int nocache;
+  int cache_queries;
 
   unsigned char *user;
   unsigned char *password;
@@ -275,6 +275,10 @@ struct uldb_mysql_state
   unsigned long *lengths;
   int row_count;
   int field_count;
+
+  // for user lock debugging
+  int locked_user_id;
+  const unsigned char *locked_func;
 
   // cookies cache
   struct cookies_cache cookies;
@@ -562,7 +566,7 @@ init_func(const struct ejudge_cfg *config)
 
   XCALLOC(state, 1);
   state->show_queries = 1;
-  state->nocache = 0;
+  state->cache_queries = 1;
   return (void*) state;
 }
 
@@ -579,6 +583,7 @@ parse_func(void *data, const struct ejudge_cfg *config, struct xml_tree *tree)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct xml_tree *p;
+  struct xml_attr *a;
   int i;
   const unsigned char *cs = 0;
 
@@ -586,7 +591,17 @@ parse_func(void *data, const struct ejudge_cfg *config, struct xml_tree *tree)
   ASSERT(!strcmp(tree->name[0], "config"));
 
   if (xml_empty_text(tree) < 0) return -1;
-  if (tree->first) return xml_err_attrs(tree);
+
+  for (a = tree->first; a; a = a->next) {
+    ASSERT(a->tag == xml_err_spec->default_attr);
+    if (!strcmp(a->name[0], "show_queries")) {
+      if (xml_attr_bool(a, &state->show_queries) < 0) return -1;
+    } else if (!strcmp(a->name[0], "cache_queries")) {
+      if (xml_attr_bool(a, &state->cache_queries) < 0) return -1;
+    } else {
+      return xml_err_attr_not_allowed(p, a);
+    }
+  }
 
   for (p = tree->first_down; p; p = p->right) {
     ASSERT(p->tag == xml_err_spec->default_elem);
@@ -1533,7 +1548,7 @@ get_login_func(void *data, int user_id)
   int r;
   unsigned char *res = 0;
 
-  if (!state->nocache) {
+  if (state->cache_queries) {
     r = fetch_login(state, user_id, &u);
     if (r < 0) return 0;
     if (r > 0 && u) return xstrdup(u->login);
@@ -1637,7 +1652,7 @@ get_cookie_func(
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct userlist_cookie *c;
 
-  if (!state->nocache && (c = get_cookie_from_pool(state, value))) {
+  if (state->cache_queries && (c = get_cookie_from_pool(state, value))) {
     *p_cookie = c;
     return 0;
   }
@@ -1810,6 +1825,12 @@ user_contest_iterator_get_func(ptr_iterator_t data)
   struct userlist_contest *c = 0;
 
   if (iter->cur_i >= iter->id_num) return 0;
+
+  if (state->cache_queries
+      && (c=get_cntsreg_from_pool(state,iter->user_id,iter->ids[iter->cur_i]))){
+    return (void*) c;
+  }
+
   snprintf(cmdbuf, sizeof(cmdbuf),
            "SELECT * FROM %scntsregs WHERE user_id = %d AND contest_id = %d ;",
            state->table_prefix, iter->user_id, iter->ids[iter->cur_i]);
@@ -1944,7 +1965,7 @@ get_user_info_1_func(
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct userlist_user *u = 0;
 
-  if (user_id <= 0) goto fail;
+  ASSERT(user_id > 0);
 
   if (p_user) *p_user = 0;
   if (fetch_login(state, user_id, &u) < 0) goto fail;
@@ -1968,6 +1989,9 @@ get_user_info_2_func(
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct userlist_user *u = 0;
   struct userlist_user_info *ui = 0;
+
+  ASSERT(user_id > 0);
+  ASSERT(contest_id >= 0);
 
   if (fetch_login(state, user_id, &u) < 0) return -1;
   if (fetch_user_info(state, user_id, contest_id, &ui) < 0) return -1;
@@ -1998,6 +2022,7 @@ touch_login_time_func(
   fclose(cmd_f); cmd_f = 0;
   if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  remove_login_from_pool(state, user_id);
 
   if (contest_id > 0) {
     fetch_or_create_user_info(state, user_id, contest_id, &ui);
@@ -2009,6 +2034,7 @@ touch_login_time_func(
     fclose(cmd_f); cmd_f = 0;
     if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
     xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+    remove_user_info_from_pool(state, user_id, contest_id);
   }
 
   return 0;
@@ -2110,6 +2136,12 @@ get_user_info_4_func(
   if (u->contests) {
     u->contests->first_down = u->contests->last_down = 0;
   }
+  if (state->locked_user_id > 0) {
+    err("user %d was not properly unlocked after %s",
+        state->locked_user_id, state->locked_func);
+  }
+  state->locked_user_id = user_id;
+  state->locked_func = "get_user_info_4_func";
   userlist_attach_cntsreg(u, uc);
   if (p_user) *p_user = u;
   return 0;
@@ -2195,6 +2227,12 @@ get_user_info_5_func(
   }
 
   if (p_user) *p_user = u;
+  if (state->locked_user_id > 0) {
+    err("user %d was not properly unlocked after %s",
+        state->locked_user_id, state->locked_func);
+  }
+  state->locked_user_id = user_id;
+  state->locked_func = "get_user_info_5_func";
   return 0;
 
  fail:
@@ -2306,6 +2344,12 @@ brief_list_iterator_get_func(ptr_iterator_t data)
       }
     }
     userlist_attach_user_info(u, ui);
+    if (state->locked_user_id > 0) {
+      err("user %d was not properly unlocked after %s",
+          state->locked_user_id, state->locked_func);
+    }
+    state->locked_user_id = user_id;
+    state->locked_func = __FUNCTION__;
     return u;
   }
 
@@ -2344,6 +2388,12 @@ brief_list_iterator_get_func(ptr_iterator_t data)
       u->contests->first_down = u->contests->last_down = 0;
     }
     userlist_attach_cntsreg(u, uc);
+    if (state->locked_user_id > 0) {
+      err("user %d was not properly unlocked after %s",
+          state->locked_user_id, state->locked_func);
+    }
+    state->locked_user_id = user_id;
+    state->locked_func = __FUNCTION__;
     return u;
   }
 
@@ -2647,6 +2697,12 @@ standings_list_iterator_get_func(ptr_iterator_t data)
     u->contests->first_down = u->contests->last_down = 0;
   }
   userlist_attach_cntsreg(u, uc);
+  if (state->locked_user_id > 0) {
+    err("user %d was not properly unlocked after %s",
+        state->locked_user_id, state->locked_func);
+  }
+  state->locked_user_id = user_id;
+  state->locked_func = __FUNCTION__;
   return u;
 }
 static void
@@ -2812,7 +2868,7 @@ check_user_func(
   int cmdlen;
   struct userlist_user *u = 0;
 
-  if (!state->nocache && (u = get_login_from_pool(state, user_id)))
+  if (state->cache_queries && (u = get_login_from_pool(state, user_id)))
     return 0;
 
   snprintf(cmdbuf, sizeof(cmdbuf), "SELECT user_id FROM %slogins WHERE user_id = %d ;", state->table_prefix, user_id);
@@ -3069,6 +3125,12 @@ info_list_iterator_get_func(ptr_iterator_t data)
     u->contests->first_down = u->contests->last_down = 0;
   }
   userlist_attach_cntsreg(u, uc);
+  if (state->locked_user_id > 0) {
+    err("user %d was not properly unlocked after %s",
+        state->locked_user_id, state->locked_func);
+  }
+  state->locked_user_id = user_id;
+  state->locked_func = __FUNCTION__;
   return u;
 }
 static void
@@ -4270,7 +4332,7 @@ set_cookie_team_login_func(
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
 
-  if (!state->nocache && c->team_login == team_login) return 0;
+  if (state->cache_queries && c->team_login == team_login) return 0;
 
   ASSERT(team_login >= 0 && team_login <= 1);
   if (my_simple_fquery(state, "UPDATE %scookies SET team_login = %d WHERE cookie = '%016llx' ;", state->table_prefix, team_login, c->cookie) < 0) return -1;
@@ -4304,6 +4366,12 @@ get_user_info_6_func(
   if (p_contest) *p_contest = c;
   if (p_members) *p_members = mm;
 
+  if (state->locked_user_id > 0) {
+    err("user %d was not properly unlocked after %s",
+        state->locked_user_id, state->locked_func);
+  }
+  state->locked_user_id = user_id;
+  state->locked_func = __FUNCTION__;
   return 0;
 }
 
@@ -4329,6 +4397,12 @@ get_user_info_7_func(
   if (p_info) *p_info = ui;
   if (p_members) *p_members = mm;
 
+  if (state->locked_user_id > 0) {
+    err("user %d was not properly unlocked after %s",
+        state->locked_user_id, state->locked_func);
+  }
+  state->locked_user_id = user_id;
+  state->locked_func = __FUNCTION__;
   return 0;
 }
 
@@ -4366,6 +4440,7 @@ unlock_user_func(
         void *data,
         const struct userlist_user *c_u)
 {
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   int i;
   struct userlist_user *u = (struct userlist_user*) c_u;
   struct xml_tree *p, *q;
@@ -4409,6 +4484,8 @@ unlock_user_func(
     userlist_free(u->cookies);
     u->cookies = 0;
   }
+  state->locked_user_id = 0;
+  state->locked_func = 0;
 }
 
 static const struct userlist_contest *
