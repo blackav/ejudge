@@ -1351,7 +1351,11 @@ cmd_register_new_2(struct client_state *p,
     unsigned char *url_str = 0;
     unsigned char *mail_args[7];
 
-    default_get_user_info_1(user_id, &u);
+    if (default_get_user_info_1(user_id, &u) < 0 || !u) {
+      send_reply(p, -ULS_ERR_DB_ERROR);
+      err("%s -> database error", logbuf);
+      return;
+    }
 
     // prepare the file path for the email template
     memset(&sformat_data, 0, sizeof(sformat_data));
@@ -1582,7 +1586,11 @@ cmd_register_new(struct client_state *p,
 
   generate_random_password(8, passwd_buf);
   user_id = default_new_user(login, email, passwd_buf, 0);
-  default_get_user_info_1(user_id, &u);
+  if (default_get_user_info_1(user_id, &u) < 0 || !u) {
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    err("%s -> database error", logbuf);
+    return;
+  }
 
   // prepare the file path for the email template
   memset(&sformat_data, 0, sizeof(sformat_data));
@@ -1766,7 +1774,11 @@ cmd_recover_password_1(struct client_state *p,
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  default_get_user_info_3(user_id, data->contest_id, &u, &ui, &c);
+  if (default_get_user_info_3(user_id,data->contest_id,&u,&ui,&c) < 0 || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
 
   if (!c) {
     err("%s -> not registered", logbuf);
@@ -1929,8 +1941,14 @@ cmd_recover_password_2(struct client_state *p,
     return;
   }
 
-  default_get_user_info_3(cookie->user_id, data->contest_id, &u, &ui, &c);
+  if (default_get_user_info_3(cookie->user_id,data->contest_id,&u,&ui,&c)<0
+      || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
   if (ui) name = ui->name;
+  if (!name || !*name) name = u->login;
   if (!name) name = "";
 
   if (!c) {
@@ -2131,10 +2149,15 @@ cmd_login(struct client_state *p,
     err("%s -> WRONG USER", logbuf);
     return;
   }
-  default_get_user_info_2(user_id, data->contest_id, &u, &ui);
+  if (default_get_user_info_2(user_id, data->contest_id, &u, &ui) < 0 || !u) {
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    err("%s -> database error", logbuf);
+    return;
+  }
   rdtscll(tsc2);
   tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
   if (ui) name = ui->name;
+  if (!name || !*name) name = u->login;
   if (!name) name = "";
 
   if (!u->passwd) {
@@ -2241,10 +2264,15 @@ cmd_check_user(
     err("%s -> WRONG USER", logbuf);
     return;
   }
-  default_get_user_info_2(user_id, data->contest_id, &u, &ui);
+  if (default_get_user_info_2(user_id, data->contest_id, &u, &ui) < 0 || !u) {
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    err("%s -> database error", logbuf);
+    return;
+  }
   rdtscll(tsc2);
   tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
   if (ui) name = ui->name;
+  if (!name || !*name) name = u->login;
   if (!name) name = "";
 
   orig_contest_id = data->contest_id;
@@ -2377,10 +2405,16 @@ cmd_team_login(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
   }
-  default_get_user_info_3(user_id, data->contest_id, &u, &ui, &c);
+  if (default_get_user_info_3(user_id, data->contest_id, &u, &ui, &c) < 0
+      || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
   rdtscll(tsc2);
   tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
   if (ui) name = ui->name;
+  if (!name || !*name) name = u->login;
   if (!name) name = "";
 
   if (cnts->disable_team_password) {
@@ -2538,10 +2572,16 @@ cmd_team_check_user(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
   }
-  default_get_user_info_3(user_id, data->contest_id, &u, &ui, &c);
+  if (default_get_user_info_3(user_id, data->contest_id, &u, &ui, &c) < 0
+      || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
   rdtscll(tsc2);
   tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
   if (ui) name = ui->name;
+  if (!name || !*name) name = u->login;
   if (!name) name = "";
 
   if (cnts->disable_team_password) {
@@ -2715,7 +2755,12 @@ cmd_priv_login(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
   }
-  default_get_user_info_3(user_id, data->contest_id, &u, &ui, &c);
+  if (default_get_user_info_3(user_id, data->contest_id, &u, &ui, &c) < 0
+      || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
   rdtscll(tsc2);
   tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
 
@@ -2785,7 +2830,8 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   }
 
   login_len = strlen(u->login);
-  if (u && u->cnts0) name = u->cnts0->name;
+  if (ui) name = ui->name;
+  if (!name || !*name) name = u->login;
   if (!name) name = "";
   name_len = strlen(name);
   out_size = sizeof(*out) + login_len + name_len;
@@ -2927,7 +2973,12 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
   }
-  default_get_user_info_3(user_id, data->contest_id, &u, &ui, &c);
+  if (default_get_user_info_3(user_id, data->contest_id, &u, &ui, &c) < 0
+      || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
   rdtscll(tsc2);
   tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
 
@@ -2952,7 +3003,8 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
   else if (data->role == USER_ROLE_ADMIN) capbit = OPCAP_MASTER_LOGIN;
   if (capbit > 0 && is_cnts_capable(p, cnts, capbit, logbuf) < 0) return;
 
-  if (u && u->cnts0) name = u->cnts0->name;
+  if (ui) name = ui->name;
+  if (!name || !*name) name = u->login;
   if (!name) name = "";
 
   login_len = strlen(u->login);
@@ -3060,8 +3112,14 @@ cmd_check_cookie(struct client_state *p,
     return;
   }
 
-  default_get_user_info_2(cookie->user_id, data->contest_id, &u, &ui);
+  if (default_get_user_info_2(cookie->user_id, data->contest_id, &u, &ui) < 0
+      || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
   if (ui) name = ui->name;
+  if (!name || !*name) name = u->login;
   if (!name) name = "";
 
   if (orig_contest_id != cookie->contest_id) {
@@ -3172,8 +3230,14 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   orig_contest_id = data->contest_id;
   if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
 
-  default_get_user_info_3(cookie->user_id, data->contest_id, &u, &ui, &c);
+  if (default_get_user_info_3(cookie->user_id,data->contest_id,&u,&ui,&c) < 0
+      || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
   if (ui) name = ui->name;
+  if (!name || !*name) name = u->login;
   if (!name) name = "";
 
   if (config->disable_cookie_ip_check <= 0) {
@@ -3341,7 +3405,12 @@ cmd_priv_check_cookie(struct client_state *p,
     return;
   }
 
-  default_get_user_info_3(cookie->user_id, data->contest_id, &u, &ui, &c);
+  if (default_get_user_info_3(cookie->user_id,data->contest_id,&u,&ui,&c) < 0
+      || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
 
   if (config->disable_cookie_ip_check <= 0) {
     if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
@@ -3397,7 +3466,8 @@ cmd_priv_check_cookie(struct client_state *p,
     return;
   }
 
-  if (u && u->cnts0) name = u->cnts0->name;
+  if (ui) name = ui->name;
+  if (!name || !*name) name = u->login;
   if (!name) name = "";
 
   login_len = strlen(u->login);
@@ -3494,7 +3564,12 @@ cmd_priv_cookie_login(struct client_state *p,
   rdtscll(tsc2);
   tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
 
-  default_get_user_info_3(cookie->user_id, data->contest_id, &u, &ui, &c);
+  if (default_get_user_info_3(cookie->user_id,data->contest_id,&u,&ui,&c) < 0
+      || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
 
   if (config->disable_cookie_ip_check <= 0) {
     if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
@@ -3571,7 +3646,8 @@ cmd_priv_cookie_login(struct client_state *p,
     return;
   }
 
-  if (u && u->cnts0) name = u->cnts0->name;
+  if (ui) name = ui->name;
+  if (!name || !*name) name = u->login;
   if (!name) name = "";
 
   /* everything is ok, create new cookie */
@@ -3729,7 +3805,7 @@ cmd_get_user_info(struct client_state *p,
     if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   }
 
-  if (default_get_user_info_4(p->user_id, data->contest_id, &u) < 0) {
+  if (default_get_user_info_4(p->user_id, data->contest_id, &u) < 0 || !u) {
     err("%s -> invalid user id", logbuf);
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
@@ -3787,7 +3863,7 @@ cmd_priv_get_user_info(struct client_state *p,
     if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   }
 
-  if (default_get_user_info_5(data->user_id, data->contest_id, &u) < 0) {
+  if (default_get_user_info_5(data->user_id, data->contest_id, &u) < 0 || !u) {
     err("%s -> invalid user id", logbuf);
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
@@ -4174,7 +4250,7 @@ cmd_set_passwd(struct client_state *p, int pkt_len,
     }
   }
 
-  if (default_get_user_info_1(data->user_id, &u) < 0) {
+  if (default_get_user_info_1(data->user_id, &u) < 0 || !u) {
     err("%s -> invalid user", logbuf);
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
@@ -4296,7 +4372,12 @@ cmd_team_set_passwd(struct client_state *p, int pkt_len,
     return;
   }
 
-  default_get_user_info_3(data->user_id, data->contest_id, &u, &ui, &c);
+  if (default_get_user_info_3(data->user_id, data->contest_id, &u, &ui, &c) < 0
+      || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
   if (!c || c->status != USERLIST_REG_OK) {
     err("%s -> not registered", logbuf);
     send_reply(p, -ULS_ERR_NOT_REGISTERED);
@@ -4417,7 +4498,7 @@ cmd_register_contest_2(struct client_state *p, int pkt_len,
   if (is_judge(p, logbuf) < 0) return;
   if (full_get_contest(p, logbuf, &data->contest_id, &c) < 0) return;
 
-  if (default_get_user_info_1(data->user_id, &u) < 0) {
+  if (default_get_user_info_1(data->user_id, &u) < 0 || !u) {
     err("%s -> invalid user_id", logbuf);
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
@@ -4495,7 +4576,7 @@ cmd_priv_register_contest(struct client_state *p, int pkt_len,
   if (is_judge(p, logbuf) < 0) return;
   if (full_get_contest(p, logbuf, &data->contest_id, &c) < 0) return;
 
-  if (default_get_user_info_1(data->user_id, &u) < 0) {
+  if (default_get_user_info_1(data->user_id, &u) < 0 || !u) {
     err("%s -> invalid user_id", logbuf);
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
@@ -4653,7 +4734,8 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
   const unsigned char *name = 0;
   struct userlist_user_info ui_empty;
 
-  if (default_get_user_info_6(user_id, contest_id, &u, &ui, &c, &mm)<0 || !c) {
+  if (default_get_user_info_6(user_id, contest_id, &u, &ui, &c, &mm) < 0
+      || !u || !c) {
     fprintf(f, "<%s>%s</%s>\n",
             d->users_head_style,
             _("Information is not available"),
@@ -4667,6 +4749,7 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
   }
 
   name = ui->name;
+  if (!name || !*name) name = u->login;
   if (!name) name = "";
 
   l10n_setlocale(locale_id);
@@ -5572,7 +5655,7 @@ cmd_admin_process(struct client_state *p, int pkt_len,
   snprintf(logbuf, sizeof(logbuf), "ADMIN_PROCESS: %d, %d, %d",
            p->peer_pid, p->peer_uid, p->user_id);
 
-  if (default_get_user_info_2(user_id, 0, &u, &ui) < 0) {
+  if (default_get_user_info_2(user_id, 0, &u, &ui) < 0 || !u) {
     err("%s -> local user does not exist", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -6008,7 +6091,8 @@ cmd_edit_registration(struct client_state *p, int pkt_len,
   if (is_judge(p, logbuf) < 0) return;
   if (full_get_contest(p, logbuf, &data->contest_id, &c) < 0) return;
 
-  if (default_get_user_info_3(data->user_id, data->contest_id, &u, 0, &uc)<0){
+  if (default_get_user_info_3(data->user_id, data->contest_id, &u, 0, &uc) < 0
+      || !u){
     err("%s -> invalid user", logbuf);
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
@@ -6083,7 +6167,11 @@ cmd_delete_user(struct client_state *p, int pkt_len,
     return;
   }
 
-  default_get_user_info_1(data->user_id, &u);
+  if (default_get_user_info_1(data->user_id, &u) < 0 || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
 
   if (is_privileged_user(u) >= 0) {
     if (is_db_capable(p, OPCAP_PRIV_DELETE_USER, logbuf) < 0) return;
@@ -6125,7 +6213,11 @@ cmd_priv_delete_member(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
   }
-  default_get_user_info_1(data->user_id, &u);
+  if (default_get_user_info_1(data->user_id, &u) < 0 || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
 
   if (data->user_id != p->user_id) {
     bit = OPCAP_EDIT_USER;
@@ -6172,7 +6264,11 @@ cmd_delete_cookie(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
   }
-  default_get_user_info_1(data->user_id, &u);
+  if (default_get_user_info_1(data->user_id, &u) < 0 || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
 
   if (is_privileged_user(u) >= 0) {
     if (is_db_capable(p, OPCAP_PRIV_EDIT_USER, logbuf) < 0) return;
@@ -6225,7 +6321,11 @@ cmd_delete_user_info(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
   }
-  default_get_user_info_1(data->user_id, &u);
+  if (default_get_user_info_1(data->user_id, &u) < 0 || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
 
   capbit = OPCAP_EDIT_USER;
   if (is_privileged_cnts_user(u, cnts) >= 0) capbit = OPCAP_PRIV_EDIT_USER;
@@ -6266,7 +6366,11 @@ cmd_delete_field(struct client_state *p, int pkt_len,
     if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   }
 
-  default_get_user_info_1(data->user_id, &u);
+  if (default_get_user_info_1(data->user_id, &u) < 0 || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
 
   /*
   if (check_editing_caps(p->user_id, data->user_id, u, data->contest_id) < 0) {
@@ -6382,7 +6486,7 @@ cmd_edit_field(struct client_state *p, int pkt_len,
     if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   }
 
-  if (default_get_user_info_1(data->user_id, &u) < 0) {
+  if (default_get_user_info_1(data->user_id, &u) < 0 || !u) {
     err("%s -> invalid user", logbuf);
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
@@ -6556,7 +6660,7 @@ cmd_create_member(struct client_state *p, int pkt_len,
       return;
   }
 
-  if (default_get_user_info_1(data->user_id, &u) < 0) {
+  if (default_get_user_info_1(data->user_id, &u) < 0 || !u) {
     err("%s -> invalid user", logbuf);
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
@@ -6675,7 +6779,7 @@ cmd_get_uid_by_pid_2(struct client_state *p, int pkt_len,
     return;
   }
 
-  if (default_get_user_info_2(q->user_id, data->contest_id, &u, &ui) < 0) {
+  if (default_get_user_info_2(q->user_id, data->contest_id, &u, &ui)<0 || !u){
     CONN_ERR("invalid login");
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
@@ -6755,7 +6859,7 @@ cmd_user_op(struct client_state *p,
     if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   }
 
-  if (default_get_user_info_1(data->user_id, &u) < 0) goto invalid_user;
+  if (default_get_user_info_1(data->user_id, &u) < 0 || !u) goto invalid_user;
 
   /*
   if (check_editing_caps(p->user_id, data->user_id, u, data->contest_id) < 0) {
@@ -6787,7 +6891,8 @@ cmd_user_op(struct client_state *p,
       }
       if (is_dbcnts_capable(p, cnts, OPCAP_GET_USER, logbuf) < 0) return;
     }
-    if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0)
+    if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0
+        || !u)
       goto invalid_user;
     if (!ui || !ui->team_passwd) goto empty_password;
     default_set_reg_passwd(data->user_id, ui->team_passwd_method,
@@ -6831,7 +6936,8 @@ cmd_user_op(struct client_state *p,
       }
       if (is_dbcnts_capable(p, cnts, OPCAP_GET_USER, logbuf) < 0) return;
     }
-    if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0)
+    if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0
+        || !u)
       goto invalid_user;
     if (!ui->team_passwd) break;
     default_set_reg_passwd(data->user_id, ui->team_passwd_method,
@@ -6884,7 +6990,7 @@ cmd_copy_user_info(struct client_state *p, int pkt_len,
   if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   if (full_get_contest(p, logbuf, &data->serial, &cnts2) < 0) return;
 
-  if (default_get_user_info_1(data->user_id, &u) < 0) goto invalid_user;
+  if (default_get_user_info_1(data->user_id, &u) < 0 || !u) goto invalid_user;
 
   // GET_USER for reading + {PRIV_}EDIT_PASSWD for password reading
   // {PRIV_}EDIT_USER + {PRIV_}EDIT_PASSWD 
@@ -6975,6 +7081,7 @@ cmd_lookup_user(struct client_state *p,
   }
 
   if (ui) name = ui->name;
+  if (!name || !*name) name = u->login;
   if (!name) name = "";
 
   login_len = strlen(u->login);
@@ -7033,6 +7140,7 @@ cmd_lookup_user_id(struct client_state *p,
   }
 
   if (ui) name = ui->name;
+  if (!name || !*name) name = u->login;
   if (!name) name = "";
 
   login_len = strlen(u->login);
@@ -7104,7 +7212,12 @@ cmd_get_cookie(struct client_state *p,
     if (full_get_contest(p, logbuf, &new_contest_id, &cnts) < 0) return;
   }
 
-  default_get_user_info_3(cookie->user_id, new_contest_id, &u, &ui, &c);
+  if (default_get_user_info_3(cookie->user_id, new_contest_id, &u, &ui, &c) < 0
+      || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
 
   if (config->disable_cookie_ip_check <= 0) {
     if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
@@ -7168,9 +7281,10 @@ cmd_get_cookie(struct client_state *p,
       send_reply(p, -ULS_ERR_NO_COOKIE);
       return;
     }
-    if (u && u->cnts0) user_name = u->cnts0->name;
+    if (ui) user_name = ui->name;
     break;
   }
+  if (!user_name) user_name = u->login;
   if (!user_name) user_name = "";
 
   if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie) {
@@ -7361,7 +7475,7 @@ cmd_priv_set_passwd(struct client_state *p, int pkt_len,
 
   switch (data->request_id) {
   case ULS_PRIV_SET_REG_PASSWD:
-    if (default_get_user_info_1(data->user_id, &u) < 0) {
+    if (default_get_user_info_1(data->user_id, &u) < 0 || !u) {
       err("%s -> invalid user", logbuf);
       send_reply(p, -ULS_ERR_BAD_UID);
       return;
@@ -7401,7 +7515,8 @@ cmd_priv_set_passwd(struct client_state *p, int pkt_len,
       }
     }
 
-    if (default_get_user_info_3(data->user_id,data->contest_id,&u,&ui,&c) < 0) {
+    if (default_get_user_info_3(data->user_id,data->contest_id,&u,&ui,&c) < 0
+        || !u) {
       err("%s -> invalid user", logbuf);
       send_reply(p, -ULS_ERR_BAD_UID);
       return;
@@ -7432,7 +7547,7 @@ cmd_priv_set_passwd(struct client_state *p, int pkt_len,
       return;
     }
 
-    default_set_team_passwd(u->id, data->contest_id, USERLIST_PWD_SHA1,
+    default_set_team_passwd(data->user_id, data->contest_id, USERLIST_PWD_SHA1,
                             newint.pwds[USERLIST_PWD_SHA1], cur_time,
                             &cloned_flag);
     if (cloned_flag) reply_code = ULS_CLONED;
@@ -7442,7 +7557,7 @@ cmd_priv_set_passwd(struct client_state *p, int pkt_len,
     abort();
   }
 
-  default_remove_user_cookies(u->id);
+  default_remove_user_cookies(data->user_id);
   send_reply(p, reply_code);
   info("%s -> OK, %d", logbuf, cloned_flag);
 }
@@ -7813,7 +7928,8 @@ cmd_edit_field_seq(
     return;
   if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
 
-  if (default_get_user_info_7(data->user_id, data->contest_id, &u, &ui, &mm)<0){
+  if (default_get_user_info_7(data->user_id, data->contest_id, &u, &ui, &mm)<0
+      || !u){
     err("%s -> invalid user", logbuf);
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
@@ -7964,7 +8080,11 @@ cmd_move_member(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
   }
-  default_get_user_info_1(data->user_id, &u);
+  if (default_get_user_info_1(data->user_id, &u) < 0 || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
 
   if (data->user_id != p->user_id) {
     bit = OPCAP_EDIT_USER;
@@ -8197,7 +8317,8 @@ cmd_import_csv_users(
 
     // check contest registration
     c = 0;
-    if (default_get_user_info_3(user_id, data->contest_id, &u, &ui, &c) < 0) {
+    if (default_get_user_info_3(user_id, data->contest_id, &u, &ui, &c) < 0
+        || !u) {
       fprintf(log_f, "Database error\n");
       goto cleanup;
     }
@@ -8220,7 +8341,8 @@ cmd_import_csv_users(
   for (i = 1; i < csv->u; i++) {
     user_id = user_ids[i];
     u = 0; ui = 0;
-    if (default_get_user_info_7(user_id, data->contest_id, &u, &ui, &mm) < 0)
+    if (default_get_user_info_7(user_id, data->contest_id, &u, &ui, &mm) < 0
+        || !u)
       abort();
     if (need_member && (!ui || !userlist_members_get_first(mm))) {
       if (default_new_member(user_id, data->contest_id, CONTEST_M_CONTESTANT,
@@ -8232,7 +8354,7 @@ cmd_import_csv_users(
     m = 0;
     if (need_member) {
       m = 0; u =0; ui = 0;
-      if (default_get_user_info_2(user_id, data->contest_id, &u, &ui) < 0)
+      if (default_get_user_info_2(user_id, data->contest_id, &u, &ui)<0 || !u)
         abort();
       if (ui) m = userlist_members_get_first(mm);
       ASSERT(m);
@@ -8283,67 +8405,67 @@ cmd_import_csv_users(
 
 static void (*cmd_table[])() =
 {
-  [ULS_REGISTER_NEW]            cmd_register_new,
-  [ULS_DO_LOGIN]                cmd_login,
-  [ULS_CHECK_COOKIE]            cmd_check_cookie,
-  [ULS_DO_LOGOUT]               cmd_do_logout,
-  [ULS_GET_USER_INFO]           cmd_get_user_info,
-  [ULS_SET_USER_INFO]           cmd_set_user_info,
-  [ULS_SET_PASSWD]              cmd_set_passwd,
-  [ULS_GET_USER_CONTESTS]       cmd_get_user_contests,
-  [ULS_REGISTER_CONTEST]        cmd_register_contest,
-  [ULS_DELETE_MEMBER]           cmd_delete_member,
-  [ULS_PASS_FD]                 cmd_pass_fd,
-  [ULS_LIST_USERS]              cmd_list_users,
-  [ULS_MAP_CONTEST]             cmd_map_contest,
-  [ULS_ADMIN_PROCESS]           cmd_admin_process,
-  [ULS_GENERATE_TEAM_PASSWORDS] cmd_generate_team_passwords,
-  [ULS_TEAM_LOGIN]              cmd_team_login,
-  [ULS_TEAM_CHECK_COOKIE]       cmd_team_check_cookie,
-  [ULS_GET_CONTEST_NAME]        cmd_get_contest_name,
-  [ULS_TEAM_SET_PASSWD]         cmd_team_set_passwd,
-  [ULS_LIST_ALL_USERS]          cmd_list_all_users,
-  [ULS_EDIT_REGISTRATION]       cmd_edit_registration,
-  [ULS_EDIT_FIELD]              cmd_edit_field,
-  [ULS_DELETE_FIELD]            cmd_delete_field,
-  [ULS_ADD_FIELD]               0,
-  [ULS_GET_UID_BY_PID]          cmd_get_uid_by_pid,
-  [ULS_PRIV_LOGIN]              cmd_priv_login,
-  [ULS_PRIV_CHECK_COOKIE]       cmd_priv_check_cookie,
-  [ULS_DUMP_DATABASE]           cmd_dump_database,
-  [ULS_PRIV_GET_USER_INFO]      cmd_priv_get_user_info,
-  [ULS_PRIV_REGISTER_CONTEST]   cmd_priv_register_contest,
-  [ULS_GENERATE_PASSWORDS]      cmd_generate_register_passwords,
-  [ULS_CLEAR_TEAM_PASSWORDS]    cmd_clear_team_passwords,
-  [ULS_LIST_STANDINGS_USERS]    cmd_list_standings_users,
-  [ULS_GET_UID_BY_PID_2]        cmd_get_uid_by_pid_2,
-  [ULS_IS_VALID_COOKIE]         cmd_is_valid_cookie,
-  [ULS_DUMP_WHOLE_DATABASE]     cmd_dump_whole_database,
-  [ULS_RANDOM_PASSWD]           cmd_user_op,
-  [ULS_RANDOM_TEAM_PASSWD]      cmd_user_op,
-  [ULS_COPY_TO_TEAM]            cmd_user_op,
-  [ULS_COPY_TO_REGISTER]        cmd_user_op,
-  [ULS_FIX_PASSWORD]            cmd_user_op,
-  [ULS_LOOKUP_USER]             cmd_lookup_user,
-  [ULS_REGISTER_NEW_2]          cmd_register_new_2,
-  [ULS_DELETE_USER]             cmd_delete_user,
-  [ULS_DELETE_COOKIE]           cmd_delete_cookie,
-  [ULS_DELETE_USER_INFO]        cmd_delete_user_info,
-  [ULS_CREATE_USER]             cmd_create_user,
-  [ULS_CREATE_MEMBER]           cmd_create_member,
-  [ULS_PRIV_DELETE_MEMBER]      cmd_priv_delete_member,
-  [ULS_PRIV_CHECK_USER]         cmd_priv_check_user,
-  [ULS_PRIV_GET_COOKIE]         cmd_get_cookie,
-  [ULS_LOOKUP_USER_ID]          cmd_lookup_user_id,
+  [ULS_REGISTER_NEW] =          cmd_register_new,
+  [ULS_DO_LOGIN] =              cmd_login,
+  [ULS_CHECK_COOKIE] =          cmd_check_cookie,
+  [ULS_DO_LOGOUT] =             cmd_do_logout,
+  [ULS_GET_USER_INFO] =         cmd_get_user_info,
+  [ULS_SET_USER_INFO] =         cmd_set_user_info,
+  [ULS_SET_PASSWD] =            cmd_set_passwd,
+  [ULS_GET_USER_CONTESTS] =     cmd_get_user_contests,
+  [ULS_REGISTER_CONTEST] =      cmd_register_contest,
+  [ULS_DELETE_MEMBER] =         cmd_delete_member,
+  [ULS_PASS_FD] =               cmd_pass_fd,
+  [ULS_LIST_USERS] =            cmd_list_users,
+  [ULS_MAP_CONTEST] =           cmd_map_contest,
+  [ULS_ADMIN_PROCESS] =         cmd_admin_process,
+  [ULS_GENERATE_TEAM_PASSWORDS]=cmd_generate_team_passwords,
+  [ULS_TEAM_LOGIN] =            cmd_team_login,
+  [ULS_TEAM_CHECK_COOKIE] =     cmd_team_check_cookie,
+  [ULS_GET_CONTEST_NAME] =      cmd_get_contest_name,
+  [ULS_TEAM_SET_PASSWD] =       cmd_team_set_passwd,
+  [ULS_LIST_ALL_USERS] =        cmd_list_all_users,
+  [ULS_EDIT_REGISTRATION] =     cmd_edit_registration,
+  [ULS_EDIT_FIELD] =            cmd_edit_field,
+  [ULS_DELETE_FIELD] =          cmd_delete_field,
+  [ULS_ADD_FIELD] =             0,
+  [ULS_GET_UID_BY_PID] =        cmd_get_uid_by_pid,
+  [ULS_PRIV_LOGIN] =            cmd_priv_login,
+  [ULS_PRIV_CHECK_COOKIE] =     cmd_priv_check_cookie,
+  [ULS_DUMP_DATABASE] =         cmd_dump_database,
+  [ULS_PRIV_GET_USER_INFO] =    cmd_priv_get_user_info,
+  [ULS_PRIV_REGISTER_CONTEST] = cmd_priv_register_contest,
+  [ULS_GENERATE_PASSWORDS] =    cmd_generate_register_passwords,
+  [ULS_CLEAR_TEAM_PASSWORDS] =  cmd_clear_team_passwords,
+  [ULS_LIST_STANDINGS_USERS] =  cmd_list_standings_users,
+  [ULS_GET_UID_BY_PID_2] =      cmd_get_uid_by_pid_2,
+  [ULS_IS_VALID_COOKIE] =       cmd_is_valid_cookie,
+  [ULS_DUMP_WHOLE_DATABASE] =   cmd_dump_whole_database,
+  [ULS_RANDOM_PASSWD] =         cmd_user_op,
+  [ULS_RANDOM_TEAM_PASSWD] =    cmd_user_op,
+  [ULS_COPY_TO_TEAM] =          cmd_user_op,
+  [ULS_COPY_TO_REGISTER] =      cmd_user_op,
+  [ULS_FIX_PASSWORD] =          cmd_user_op,
+  [ULS_LOOKUP_USER] =           cmd_lookup_user,
+  [ULS_REGISTER_NEW_2] =        cmd_register_new_2,
+  [ULS_DELETE_USER] =           cmd_delete_user,
+  [ULS_DELETE_COOKIE] =         cmd_delete_cookie,
+  [ULS_DELETE_USER_INFO] =      cmd_delete_user_info,
+  [ULS_CREATE_USER] =           cmd_create_user,
+  [ULS_CREATE_MEMBER] =         cmd_create_member,
+  [ULS_PRIV_DELETE_MEMBER] =    cmd_priv_delete_member,
+  [ULS_PRIV_CHECK_USER] =       cmd_priv_check_user,
+  [ULS_PRIV_GET_COOKIE] =       cmd_get_cookie,
+  [ULS_LOOKUP_USER_ID] =        cmd_lookup_user_id,
   [ULS_TEAM_CHECK_USER] =       cmd_team_check_user,
   [ULS_TEAM_GET_COOKIE] =       cmd_get_cookie,
-  [ULS_ADD_NOTIFY]              cmd_observer_cmd,
-  [ULS_DEL_NOTIFY]              cmd_observer_cmd,
-  [ULS_SET_COOKIE_LOCALE]       cmd_set_cookie,
-  [ULS_PRIV_SET_REG_PASSWD]     cmd_priv_set_passwd,
-  [ULS_PRIV_SET_TEAM_PASSWD]    cmd_priv_set_passwd,
-  [ULS_GENERATE_TEAM_PASSWORDS_2] cmd_generate_team_passwords_2,
-  [ULS_GENERATE_PASSWORDS_2]    cmd_generate_register_passwords_2,
+  [ULS_ADD_NOTIFY] =            cmd_observer_cmd,
+  [ULS_DEL_NOTIFY] =            cmd_observer_cmd,
+  [ULS_SET_COOKIE_LOCALE] =     cmd_set_cookie,
+  [ULS_PRIV_SET_REG_PASSWD] =   cmd_priv_set_passwd,
+  [ULS_PRIV_SET_TEAM_PASSWD] =  cmd_priv_set_passwd,
+  [ULS_GENERATE_TEAM_PASSWORDS_2]=cmd_generate_team_passwords_2,
+  [ULS_GENERATE_PASSWORDS_2] =  cmd_generate_register_passwords_2,
   [ULS_GET_DATABASE] =          cmd_get_database,
   [ULS_COPY_USER_INFO] =        cmd_copy_user_info,
   [ULS_RECOVER_PASSWORD_1] =    cmd_recover_password_1,
