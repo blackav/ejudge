@@ -767,6 +767,7 @@ gzip_copy_file(int sfd, int sf, int dfd, int df)
   /* (sf & CONVERT) do dos->unix conversion sfd - DOS file, dfd - UNIX file */
   /* (df & CONVERT) vice versa */
 
+  memset(buf, 0, sizeof(buf));
   if ((sf & GZIP)) {
     if (!(gz_src = gzdopen(sfd, "rb"))) {
       saved_errno = errno;
