@@ -58,6 +58,7 @@ static unsigned char const * const error_map[] =
   _("invalid field"),
   _("transitive user contest sharing"),
   _("unspecified error"),
+  _("database error"),
 
   0
 };

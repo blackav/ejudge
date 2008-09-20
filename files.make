@@ -159,8 +159,10 @@ COMMON_CFILES=\
  protocol.c\
  random.c\
  reports.c\
+ rldb_plugin_file.c\
  runlog.c\
  runlog_import.c\
+ runlog_static.c\
  runlog_xml.c\
  run_packet_1.c\
  run_packet_2.c\
@@ -343,6 +345,7 @@ HFILES=\
  problem_xml.h\
  protocol.h\
  random.h\
+ rldb_plugin.h\
  runlog.h\
  run_packet.h\
  run_packet_priv.h\
