@@ -17,6 +17,11 @@
 
 #include "rldb_plugin.h"
 
+static void *
+init_func(const struct ejudge_cfg*);
+static int
+close_func(void *);
+
 struct rldb_plugin_iface rldb_plugin_xml =
 {
   {
@@ -31,6 +36,18 @@ struct rldb_plugin_iface rldb_plugin_xml =
   init_func,
   close_func,
 };
+
+static void *
+init_func(const struct ejudge_cfg *config)
+{
+  return 0;
+}
+
+static int
+close_func(void *data)
+{
+  return 0;
+}
 
 /*
  * Local variables:
