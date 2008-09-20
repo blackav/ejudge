@@ -21,6 +21,7 @@
 #include "ejudge_plugin.h"
 #include "ej_types.h"
 #include "iterators.h"
+#include "ejudge_cfg.h"
 
 /* version of the plugin interface structure */
 #define RLDB_PLUGIN_IFACE_VERSION 1
