@@ -121,7 +121,8 @@ allocate_member_on_pool(
 
   // found in cache
   if (pp) {
-    userlist_elem_free_data(&pp->mm->b);
+    userlist_free(&pp->mm->b);
+    pp->mm = (struct userlist_members*) userlist_node_alloc(USERLIST_T_MEMBERS);
 
     MOVE_TO_FRONT(pp, cache->first, cache->last, prev, next);
     MOVE_TO_FRONT(pp, usr->first_user, usr->last_user, prev_user, next_user);
@@ -134,7 +135,6 @@ allocate_member_on_pool(
 
   XCALLOC(pp, 1);
   pp->mm = (struct userlist_members*) userlist_node_alloc(USERLIST_T_MEMBERS);
-  pp->mm->b.tag = USERLIST_T_MEMBERS;
   pp->user_id = user_id;
   pp->contest_id = contest_id;
   cache->count++;
