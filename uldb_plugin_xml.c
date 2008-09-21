@@ -200,6 +200,12 @@ struct uldb_plugin_iface uldb_plugin_xml =
   set_member_serial_func,
   unlock_user_func,
   get_contest_reg_func,
+  // drop the cache
+  0,
+  // disable caching
+  0,
+  // enable caching
+  0,
 };
 
 struct uldb_xml_state

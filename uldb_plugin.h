@@ -185,6 +185,12 @@ struct uldb_plugin_iface
   void (*unlock_user)(void *, const struct userlist_user *);
   // get the contest registration information
   const struct userlist_contest * (*get_contest_reg)(void *, int, int);
+  // drop the cache
+  void (*drop_cache)(void *);
+  // disable caching
+  void (*disable_cache)(void *);
+  // enable caching
+  void (*enable_cache)(void *);
 };
 
 /* default plugin: compiled into userlist-server */
