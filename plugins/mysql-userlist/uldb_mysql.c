@@ -2147,7 +2147,7 @@ get_user_info_4_func(
         state->locked_user_id, state->locked_func);
   }
   state->locked_user_id = user_id;
-  state->locked_func = "get_user_info_4_func";
+  state->locked_func = __FUNCTION__;
   userlist_attach_cntsreg(u, uc);
   if (p_user) *p_user = u;
   return 0;
@@ -2238,7 +2238,7 @@ get_user_info_5_func(
         state->locked_user_id, state->locked_func);
   }
   state->locked_user_id = user_id;
-  state->locked_func = "get_user_info_5_func";
+  state->locked_func = __FUNCTION__;
   return 0;
 
  fail:
@@ -4353,12 +4353,6 @@ get_user_info_6_func(
   if (p_contest) *p_contest = c;
   if (p_members) *p_members = mm;
 
-  if (state->locked_user_id > 0) {
-    err("user %d was not properly unlocked after %s",
-        state->locked_user_id, state->locked_func);
-  }
-  state->locked_user_id = user_id;
-  state->locked_func = __FUNCTION__;
   return 0;
 }
 
@@ -4384,12 +4378,6 @@ get_user_info_7_func(
   if (p_info) *p_info = ui;
   if (p_members) *p_members = mm;
 
-  if (state->locked_user_id > 0) {
-    err("user %d was not properly unlocked after %s",
-        state->locked_user_id, state->locked_func);
-  }
-  state->locked_user_id = user_id;
-  state->locked_func = __FUNCTION__;
   return 0;
 }
 

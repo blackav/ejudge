@@ -5042,8 +5042,6 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
           d->name, gettext(status_str_map[c->status]));
   fprintf(f, "</table>\n");
 
-  default_unlock_user(u);
-
   l10n_setlocale(0);
 }
 
