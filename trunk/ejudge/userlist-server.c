@@ -2206,12 +2206,12 @@ cmd_login(struct client_state *p,
   enqueue_reply_to_client(p,ans_len,answer);
 
   default_touch_login_time(user_id, 0, cur_time);
-  p->user_id = u->id;
+  p->user_id = user_id;
   p->contest_id = orig_contest_id;
   p->ip = data->origin_ip;
   p->ssl = data->ssl;
   p->cookie = answer->cookie;
-  info("%s -> OK, %d, %llx", logbuf, u->id, answer->cookie);
+  info("%s -> OK, %d, %llx", logbuf, user_id, answer->cookie);
 }
 
 static void
@@ -2339,7 +2339,7 @@ cmd_check_user(
   enqueue_reply_to_client(p,ans_len,answer);
 
   default_touch_login_time(user_id, 0, cur_time);
-  info("%s -> OK, %d, %llx", logbuf, u->id, answer->cookie);
+  info("%s -> OK, %d, %llx", logbuf, user_id, answer->cookie);
 }
 
 static void
@@ -2503,10 +2503,10 @@ cmd_team_login(struct client_state *p, int pkt_len,
   enqueue_reply_to_client(p, out_size, out);
   default_touch_login_time(user_id, data->contest_id, cur_time);
   if (daemon_mode) {
-    info("%s -> OK, %d, %llx", logbuf, u->id, out->cookie);
+    info("%s -> OK, %d, %llx", logbuf, user_id, out->cookie);
   } else {
     info("%s -> %d,%s,%llx, time = %llu us",
-         logbuf, u->id, u->login,out->cookie,tsc2);
+         logbuf, user_id, login_ptr, out->cookie, tsc2);
   }
 }
 
@@ -2664,10 +2664,10 @@ cmd_team_check_user(struct client_state *p, int pkt_len,
   enqueue_reply_to_client(p, out_size, out);
   default_touch_login_time(user_id, data->contest_id, cur_time);
   if (daemon_mode) {
-    info("%s -> OK, %d, %llx", logbuf, u->id, out->cookie);
+    info("%s -> OK, %d, %llx", logbuf, user_id, out->cookie);
   } else {
     info("%s -> %d,%s,%llx, time = %llu us",
-         logbuf, u->id, u->login,out->cookie,tsc2);
+         logbuf, user_id, login_ptr, out->cookie, tsc2);
   }
 }
 
@@ -2877,12 +2877,12 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   p->ip = data->origin_ip;
   p->ssl = data->ssl;
   enqueue_reply_to_client(p, out_size, out);
-  default_touch_login_time(u->id, 0, cur_time);
+  default_touch_login_time(p->user_id, 0, cur_time);
   if (daemon_mode) {
-    info("%s -> OK, %d, %llx", logbuf, u->id, out->cookie);
+    info("%s -> OK, %d, %llx", logbuf, p->user_id, out->cookie);
   } else {
     info("%s -> %d,%s,%llx, time = %llu us", logbuf,
-         u->id, u->login,out->cookie, tsc2);
+         p->user_id, login_ptr, out->cookie, tsc2);
   }
 }
 
@@ -3047,12 +3047,12 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
   strcpy(name_ptr, name);
   
   enqueue_reply_to_client(p, out_size, out);
-  default_touch_login_time(u->id, 0, cur_time);
+  default_touch_login_time(out->user_id, 0, cur_time);
   if (daemon_mode) {
-    info("%s -> OK, %d, %llx", logbuf, u->id, out->cookie);
+    info("%s -> OK, %d, %llx", logbuf, out->user_id, out->cookie);
   } else {
     info("%s -> %d,%s,%llx, time = %llu us", logbuf,
-         u->id, u->login,out->cookie, tsc2);
+         out->user_id, login_ptr, out->cookie, tsc2);
   }
 }
 
@@ -3697,12 +3697,12 @@ cmd_priv_cookie_login(struct client_state *p,
   */
 
   enqueue_reply_to_client(p, out_size, out);
-  default_touch_login_time(u->id, 0, cur_time);
+  default_touch_login_time(out->user_id, 0, cur_time);
   if (daemon_mode) {
-    info("%s -> OK, %d, %llx", logbuf, u->id, out->cookie);
+    info("%s -> OK, %d, %llx", logbuf, out->user_id, out->cookie);
   } else {
     info("%s -> %d,%s,%llx, time = %llu us", logbuf,
-         u->id, u->login, out->cookie, tsc2);
+         out->user_id, login_ptr, out->cookie, tsc2);
   }
 }
 
@@ -5034,6 +5034,8 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
   fprintf(f, "<tr><td>%s</td><td>%s</td></tr>\n",
           d->name, gettext(status_str_map[c->status]));
   fprintf(f, "</table>\n");
+
+  default_unlock_user(u);
 
   l10n_setlocale(0);
 }
