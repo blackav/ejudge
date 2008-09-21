@@ -143,5 +143,3 @@ CREATE TABLE %smembers
        );
 
 INSERT INTO %sconfig VALUES ('version', '1');
-
-INSERT INTO %sconfig VALUES ('current_member', '1');
