@@ -5204,6 +5204,7 @@ do_list_users(FILE *f, int contest_id, const struct contest_desc *d,
     fprintf(f, "<td%s>%s</td>", d->users_table_style,
             gettext(status_str_map[c->status]));
     fprintf(f, "</tr>\n");
+    default_unlock_user(u);
   }
   fprintf(f, "</table>\n");
   l10n_setlocale(0);
@@ -5340,6 +5341,7 @@ do_dump_database(FILE *f, int contest_id, const struct contest_desc *d,
               statstr, invstr, banstr,
               "", "", "", "", "", "", "");
     }
+    default_unlock_user(u);
   }
   return;
 }
@@ -5382,7 +5384,8 @@ do_dump_whole_database(FILE *f, int contest_id, struct contest_desc *d,
             (ui && ui->location)?ui->location:notset,
             (ui && ui->printer_name)?ui->printer_name:notset,
             (ui && ui->languages)?ui->languages:notset);
-    }
+    default_unlock_user(u);
+  }
 }
 
 static void
@@ -7215,6 +7218,7 @@ cmd_get_cookie(struct client_state *p,
            "GET_COOKIE: %s, %d, %llx",
            xml_unparse_ip(data->origin_ip), data->ssl, data->cookie);
   */
+  logbuf[0] = 0;
 
   if (is_admin(p, logbuf) < 0) return;
   if (is_db_capable(p, OPCAP_LIST_USERS, logbuf)) return;
@@ -7706,6 +7710,7 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
     }
     xfree(gen_text); gen_text = 0;
     gen_size = 0;
+    default_unlock_user(u);
   }
 }
 
