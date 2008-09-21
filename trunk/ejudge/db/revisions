@@ -3738,3 +3738,7 @@ rldb_plugin_file.c 5084 0 98163
 userlist-server.c 5086 0 22748051
 plugins/mysql-userlist/uldb_mysql.c 5086 0 10264254
 userlist-server.c 5088 0 22760127
+uldb_plugin.h 5092 0 740962
+userlist-server.c 5092 0 22817191
+uldb_plugin_xml.c 5092 0 7089316
+plugins/mysql-userlist/uldb_mysql.c 5091 0 10234250
