@@ -279,6 +279,17 @@ fetch_cntsreg(
   return -1;
 }
 
+static void
+drop_cntsreg_cache(struct uldb_mysql_state *state)
+{
+  struct cntsregs_container *p, *q;
+
+  for (p = state->cntsregs.first; p; p = q) {
+    q = p->next;
+    do_remove_cntsreg_from_pool(&state->cntsregs, p);
+  }
+}
+
 /*
  * Local variables:
  *  compile-command: "make -C ../.."

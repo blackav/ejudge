@@ -204,6 +204,15 @@ fetch_login(
   return -1;
 }
 
+static void
+drop_login_cache(struct uldb_mysql_state *state)
+{
+  int i;
+
+  for (i = 1; i < state->users.size; i++)
+    do_remove_login_from_pool(&state->users, state->users.user_map[i]);
+}
+
 /*
  * Local variables:
  *  compile-command: "make -C ../.."

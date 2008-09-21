@@ -370,6 +370,9 @@ get_contest_reg_func(
         void *data,
         int user_id,
         int contest_id);
+static void drop_cache_func(void *data);
+static void disable_cache_func(void *data);
+static void enable_cache_func(void *data);
 
 /*
  * Local variables:

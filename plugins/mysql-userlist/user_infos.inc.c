@@ -313,6 +313,17 @@ fetch_or_create_user_info(
 
 #undef FAIL
 
+static void
+drop_user_info_cache(struct uldb_mysql_state *state)
+{
+  struct user_info_container *p, *q;
+
+  for (p = state->user_infos.first; p; p = q) {
+    q = p->next;
+    do_remove_user_info_from_pool(&state->user_infos, p);
+  }
+}
+
 /*
  * Local variables:
  *  compile-command: "make -C ../.."
