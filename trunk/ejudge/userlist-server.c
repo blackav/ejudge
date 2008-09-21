@@ -193,6 +193,9 @@ static time_t cookie_check_interval;
 static time_t user_check_interval;
 static int interrupt_signaled;
 static int restart_signaled;
+static int usr1_signaled;
+static int usr2_signaled;
+static int winch_signaled;
 static int daemon_mode = 0;
 static int forced_mode = 0;
 
@@ -597,17 +600,6 @@ update_all_user_contests(int user_id)
 }
 
 static void
-force_check_dirty(int s)
-{
-  default_sync();
-}
-static void
-force_flush(int s)
-{
-  default_forced_sync();
-}
-
-static void
 generate_random_password(int size, unsigned char *buf)
 {
   int rand_bytes;
@@ -824,6 +816,21 @@ restart_signal(int s)
 {
   interrupt_signaled = 1;
   restart_signaled = 1;
+}
+static void
+usr1_signal(int s)
+{
+  usr1_signaled = 1;
+}
+static void
+usr2_signal(int s)
+{
+  usr2_signaled = 1;
+}
+static void
+winch_signal(int s)
+{
+  winch_signaled = 1;
 }
 
 static void
@@ -8556,8 +8563,9 @@ do_work(void)
   signal(SIGINT, interrupt_signal);
   signal(SIGTERM, interrupt_signal);
   signal(SIGHUP, restart_signal);
-  signal(SIGUSR1, force_flush);
-  signal(SIGUSR2, force_check_dirty);
+  signal(SIGUSR1, usr1_signal);
+  signal(SIGUSR2, usr2_signal);
+  signal(SIGWINCH, winch_signal);
 
   if ((listen_socket = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
     err("socket() failed: %s", os_ErrorMsg());
@@ -8637,6 +8645,24 @@ do_work(void)
 
     if (interrupt_signaled) {
       graceful_exit();
+    }
+
+    if (usr1_signaled) {
+      default_forced_sync();
+      if (uldb_default->iface->disable_cache)
+        (*uldb_default->iface->disable_cache)(uldb_default->data);
+      usr1_signaled = 0;
+    }
+    if (usr2_signaled) {
+      default_sync();
+      if (uldb_default->iface->drop_cache)
+        (*uldb_default->iface->drop_cache)(uldb_default->data);
+      usr2_signaled = 0;
+    }
+    if (winch_signaled) {
+      if (uldb_default->iface->enable_cache)
+        (*uldb_default->iface->enable_cache)(uldb_default->data);
+      winch_signaled = 0;
     }
 
     // disconnect idle clients
