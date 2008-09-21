@@ -7177,6 +7177,8 @@ cmd_lookup_user_id(struct client_state *p,
   enqueue_reply_to_client(p, out_size, out);
 }
 
+#define FAIL(code,str) do { errmsg = (str); errcode = -(code); goto fail; } while (0)
+
 static void
 cmd_get_cookie(struct client_state *p,
                int pkt_len,
@@ -7195,31 +7197,34 @@ cmd_get_cookie(struct client_state *p,
   unsigned char logbuf[1024];
   unsigned char *user_name = 0;
   int new_contest_id = 0;
+  const unsigned char *errmsg = 0;
+  int errcode = 0;
+  int cookie_contest_id;
+  int cookie_locale_id;
+  int cookie_priv_level;
+  int cookie_role;
+  int cookie_team_login;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
     return;
   }
 
+  /*
   snprintf(logbuf, sizeof(logbuf),
            "GET_COOKIE: %s, %d, %llx",
            xml_unparse_ip(data->origin_ip), data->ssl, data->cookie);
+  */
 
   if (is_admin(p, logbuf) < 0) return;
   if (is_db_capable(p, OPCAP_LIST_USERS, logbuf)) return;
 
-  if (!data->origin_ip) {
-    err("%s -> origin_ip is not set", logbuf);
-    send_reply(p, -ULS_ERR_NO_COOKIE);
-    return;
-  }
+  if (!data->origin_ip)
+    FAIL(ULS_ERR_NO_COOKIE, "origin_ip is not set");
 
   rdtscll(tsc1);
-  if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie) {
-    err("%s -> no such cookie", logbuf);
-    send_reply(p, -ULS_ERR_NO_COOKIE);
-    return;
-  }
+  if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie)
+    FAIL(ULS_ERR_NO_COOKIE, "no such cookie");
   rdtscll(tsc2);
   tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
 
@@ -7228,86 +7233,60 @@ cmd_get_cookie(struct client_state *p,
     if (full_get_contest(p, logbuf, &new_contest_id, &cnts) < 0) return;
   }
 
+  cookie_contest_id = cookie->contest_id;
+  cookie_locale_id = cookie->locale_id;
+  cookie_priv_level = cookie->priv_level;
+  cookie_role = cookie->role;
+  cookie_team_login = cookie->team_login;
+
   if (default_get_user_info_3(cookie->user_id, new_contest_id, &u, &ui, &c) < 0
-      || !u) {
-    err("%s -> database error", logbuf);
-    send_reply(p, -ULS_ERR_DB_ERROR);
-    return;
-  }
+      || !u)
+    FAIL(ULS_ERR_DB_ERROR, "database error");
 
   if (config->disable_cookie_ip_check <= 0) {
-    if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl) {
-      err("%s -> IP address mismatch", logbuf);
-      send_reply(p, -ULS_ERR_NO_COOKIE);
-      return;
-    }
+    if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl)
+      FAIL(ULS_ERR_NO_COOKIE, "IP address mismatch");
   }
-  if (current_time > cookie->expire) {
-    err("%s -> cookie expired", logbuf);
-    send_reply(p, -ULS_ERR_NO_COOKIE);
-    return;
-  }
+  if (current_time > cookie->expire)
+    FAIL(ULS_ERR_NO_COOKIE, "cookie expired");
   switch (data->request_id) {
   case ULS_GET_COOKIE:
-    if (cnts && !cnts->disable_team_password && cookie->team_login) {
-      err("%s -> participation cookie", logbuf);
-      send_reply(p, -ULS_ERR_NO_COOKIE);
-      return;
-    }
-    if (cookie->priv_level > 0 || cookie->role > 0) {
-      err("%s -> invalid role", logbuf);
-      send_reply(p, -ULS_ERR_NO_COOKIE);
-      return;
-    }
+    if (cnts && !cnts->disable_team_password && cookie->team_login)
+      FAIL(ULS_ERR_NO_COOKIE, "participation cookie");
+    if (cookie->priv_level > 0 || cookie->role > 0)
+      FAIL(ULS_ERR_NO_COOKIE, "invalid role");
     default_set_cookie_team_login(cookie, 0);
+    cookie_team_login = 0;
     break;
   case ULS_TEAM_GET_COOKIE:
-    if (!cnts) {
-      err("%s -> no contest", logbuf);
-      send_reply(p, -ULS_ERR_NO_COOKIE);
-      return;
-    }
-    if (cookie->priv_level > 0 || cookie->role > 0) {
-      err("%s -> invalid role", logbuf);
-      send_reply(p, -ULS_ERR_NO_COOKIE);
-      return;
-    }
-    if (!cnts->disable_team_password && !cookie->team_login) {
-      err("%s -> registration cookie", logbuf);
-      send_reply(p, -ULS_ERR_NO_COOKIE);
-      return;
-    }
+    if (!cnts)
+      FAIL(ULS_ERR_NO_COOKIE, "no contest");
+    if (cookie->priv_level > 0 || cookie->role > 0)
+      FAIL(ULS_ERR_NO_COOKIE, "invalid role");
+    if (!cnts->disable_team_password && !cookie->team_login)
+      FAIL(ULS_ERR_NO_COOKIE, "registration cookie");
     if (!c || c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
-        || (c->flags & USERLIST_UC_LOCKED)) {
-      err("%s -> NOT ALLOWED", logbuf);
-      send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
-      return;
-    }
-    if ((c->flags & USERLIST_UC_INCOMPLETE)) {
-      err("%s -> INCOMPLETE REGISTRATION", logbuf);
-      send_reply(p, -ULS_ERR_INCOMPLETE_REG);
-      return;
-    }
+        || (c->flags & USERLIST_UC_LOCKED))
+      FAIL(ULS_ERR_CANNOT_PARTICIPATE, "NOT ALLOWED");
+    if ((c->flags & USERLIST_UC_INCOMPLETE))
+      FAIL(ULS_ERR_INCOMPLETE_REG, "INCOMPLETE REGISTRATION");
     default_set_cookie_team_login(cookie, 1);
+    cookie_team_login = 1;
     if (ui) user_name = ui->name;
     break;
   case ULS_PRIV_GET_COOKIE:
-    if (cookie->priv_level <= 0 && cookie->role <= 0) {
-      err("%s -> invalid privilege level", logbuf);
-      send_reply(p, -ULS_ERR_NO_COOKIE);
-      return;
-    }
+    if (cookie->priv_level <= 0 && cookie->role <= 0)
+      FAIL(ULS_ERR_NO_COOKIE, "invalid privilege level");
     if (ui) user_name = ui->name;
     break;
   }
   if (!user_name) user_name = u->login;
   if (!user_name) user_name = "";
 
-  if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie) {
-    err("%s -> no such cookie", logbuf);
-    send_reply(p, -ULS_ERR_NO_COOKIE);
-    return;
-  }
+  /*
+  if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie)
+    FAIL(ULS_ERR_NO_COOKIE, "no such cookie");
+  */
 
   login_len = strlen(u->login);
   name_len = strlen(user_name);
@@ -7316,16 +7295,16 @@ cmd_get_cookie(struct client_state *p,
   memset(out, 0, out_size);
   login_ptr = out->data;
   name_ptr = login_ptr + login_len + 1;
-  out->cookie = cookie->cookie;
+  out->cookie = data->cookie;
   out->reply_id = ULS_LOGIN_COOKIE;
   out->user_id = u->id;
-  out->contest_id = cookie->contest_id;
-  out->locale_id = cookie->locale_id;
+  out->contest_id = cookie_contest_id;
+  out->locale_id = cookie_locale_id;
   out->login_len = login_len;
   out->name_len = name_len;
-  out->priv_level = cookie->priv_level;
-  out->role = cookie->role;
-  out->team_login = cookie->team_login;
+  out->priv_level = cookie_priv_level;
+  out->role = cookie_role;
+  out->team_login = cookie_team_login;
   out->reg_status = -1;
   if (c) {
     out->reg_status = c->status;
@@ -7336,10 +7315,20 @@ cmd_get_cookie(struct client_state *p,
   
   enqueue_reply_to_client(p, out_size, out);
 
+  /*
   if (!daemon_mode) {
     CONN_INFO("%s -> OK, %d, %s, %d, %llu us", logbuf, u->id, u->login,
               out->contest_id, tsc2);
   }
+  */
+  return;
+
+ fail:
+  if (!errmsg) errmsg = "unspecified error";
+  err("GET_COOKIE: %s, %d, %llx -> %s",
+      xml_unparse_ip(data->origin_ip), data->ssl, data->cookie, errmsg);
+  if (errcode >= 0) errcode = -ULS_ERR_NO_COOKIE;
+  send_reply(p, errcode);
 }
 
 static void
