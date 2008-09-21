@@ -244,6 +244,17 @@ unparse_cookie(
   handle_unparse_spec(state, fout, COOKIE_WIDTH, cookie_spec, c, 4);
 }
 
+static void
+drop_cookie_cache(struct uldb_mysql_state *state)
+{
+  struct cookies_container *p, *q;
+
+  for (p = state->cookies.first; p; p = q) {
+    q = p->next;
+    do_remove_cookie_from_pool(&state->cookies, p);
+  }
+}
+
 /*
  * Local variables:
  *  compile-command: "make -C ../.."

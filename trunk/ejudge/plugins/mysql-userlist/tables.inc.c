@@ -220,7 +220,7 @@ enum { MEMBER_WIDTH = 34 };
 static struct mysql_parse_spec member_spec[MEMBER_WIDTH] =
 {
   //[0]    serial INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  { 0, 'd', "serial", MEMBER_OFFSET(serial), 0 },
+  { 0, 'e', "serial", MEMBER_OFFSET(serial), 0 },
   //[1]    user_id INT UNSIGNED NOT NULL,
   { 0, 'D', "user_id", 0, 0 },
   //[2]    contest_id INT UNSIGNED NOT NULL,

@@ -187,6 +187,12 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   unlock_user_func,
   // get the user contest registration info
   get_contest_reg_func,
+  // drop the cache
+  drop_cache_func,
+  // disable caching
+  disable_cache_func,
+  // enable caching
+  enable_cache_func,
 };
 
 // the size of the cookies pool, must be power of 2
@@ -3979,9 +3985,7 @@ new_member_func(
         int *p_cloned_flag)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
-  unsigned char cmdbuf[1024];
-  size_t cmdlen;
-  int current_member = 0;
+  int current_member = -1;
   struct userlist_member arena;
 
   ASSERT(user_id > 0);
@@ -3990,21 +3994,18 @@ new_member_func(
   if (cur_time <= 0) cur_time = time(0);
   memset(&arena, 0, sizeof(arena));
 
-  snprintf(cmdbuf, sizeof(cmdbuf), "SELECT config_val FROM %sconfig WHERE config_key = 'current_member' ;", state->table_prefix);
-  cmdlen = strlen(cmdbuf);
-  if (my_query_one_row(state, cmdbuf, cmdlen, 1) < 0) goto fail;
-  if (!state->row[0]) goto fail;
-  if (parse_int(state->row[0], &current_member) < 0) goto fail;
-  if (current_member < 1) goto fail;
   arena.team_role = role;
-  arena.serial = current_member;
+  arena.serial = -1;
   arena.grade = -1;
   arena.create_time = cur_time;
   arena.last_change_time = cur_time;
   if (insert_member_info(state, user_id, contest_id, &arena, 0) < 0) goto fail;
-  current_member++;
-  my_free_res(state);
-  if (my_simple_fquery(state, "UPDATE %sconfig SET config_val = '%d' WHERE config_key = 'current_member' ;", state->table_prefix, current_member) < 0) goto fail;
+  if (!(state->res = mysql_store_result(state->conn))
+      && !mysql_field_count(state->conn)
+      && mysql_insert_id(state->conn)) {
+    current_member = mysql_insert_id(state->conn);
+  }
+  info("new member serial = %d", current_member);
   remove_member_from_pool(state, user_id, contest_id);
   return current_member;
   
@@ -4105,8 +4106,6 @@ copy_user_info_func(
         const struct contest_desc *cnts)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
-  unsigned char cmdbuf[1024];
-  size_t cmdlen;
   struct userlist_user_info *ui = 0;
   struct userlist_members *mm = 0;
   struct userlist_member *m;
@@ -4117,7 +4116,6 @@ copy_user_info_func(
   int m_max[USERLIST_MB_LAST];
   int m_cur[USERLIST_MB_LAST];
   const struct contest_member *cm;
-  int current_member = 0;
 
   ASSERT(user_id > 0);
   ASSERT(from_cnts >= 0);
@@ -4191,16 +4189,8 @@ copy_user_info_func(
         ASSERT(cm);
       }
 
-      if (current_member <= 0) {
-        snprintf(cmdbuf, sizeof(cmdbuf), "SELECT config_val FROM %sconfig WHERE config_key = 'current_member' ;", state->table_prefix);
-        cmdlen = strlen(cmdbuf);
-        if (my_query_one_row(state, cmdbuf, cmdlen, 1) < 0) goto fail;
-        if (my_int_val(state, &current_member, 1) < 0) goto fail;
-      }
-      my_free_res(state);
-
       memset(&m_arena, 0, sizeof(m_arena));
-      m_arena.serial = current_member++;
+      m_arena.serial = -1;
       m_arena.team_role = m->team_role;
       if (!cm || cm->fields[CONTEST_MF_STATUS])
         m_arena.status = m->status;
@@ -4228,10 +4218,6 @@ copy_user_info_func(
         goto fail;
       memset(&m_arena, 0, sizeof(m_arena));
     }
-  }
-
-  if (current_member > 0) {
-    if (my_simple_fquery(state, "UPDATE %sconfig SET config_val = '%d' WHERE config_key = 'current_member' ;", state->table_prefix, current_member) < 0) goto fail;
   }
 
   remove_user_info_from_pool(state, user_id, to_cnts);
@@ -4415,7 +4401,7 @@ get_member_serial_func(void *data)
   unsigned char cmdbuf[1024];
   int current_member = -1;
 
-  snprintf(cmdbuf, sizeof(cmdbuf), "SELECT config_val FROM %sconfig WHERE config_key = 'current_member' ;", state->table_prefix);
+  snprintf(cmdbuf, sizeof(cmdbuf), "SELECT MAX(serial) FROM %smembers WHERE 1 ;", state->table_prefix);
   cmdlen = strlen(cmdbuf);
   if (my_query_one_row(state, cmdbuf, cmdlen, 1) < 0) goto fail;
   if (my_int_val(state, &current_member, 1) < 0) goto fail;
@@ -4430,10 +4416,9 @@ get_member_serial_func(void *data)
 static int
 set_member_serial_func(void *data, int new_serial)
 {
-  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  //struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
 
-  if (my_simple_fquery(state, "UPDATE %sconfig SET config_val = '%d' WHERE config_key = 'current_member' ;", state->table_prefix, new_serial) < 0) return -1;
-  return 0;
+  return -1;
 }
 
 static void
@@ -4501,6 +4486,38 @@ get_contest_reg_func(
 
   if (fetch_cntsreg(state, user_id, contest_id, &uc) < 0) return 0;
   return uc;
+}
+
+static void
+drop_cache_func(void *data)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+
+  drop_login_cache(state);
+  drop_user_info_cache(state);
+  drop_members_cache(state);
+  drop_cookie_cache(state);
+  drop_cntsreg_cache(state);
+  info("MySQL query cache is dropped");
+}
+
+static void
+disable_cache_func(void *data)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+
+  drop_cache_func(data);
+  state->cache_queries = 0;
+  info("MySQL query caching is disabled");
+}
+
+static void
+enable_cache_func(void *data)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+
+  state->cache_queries = 1;
+  info("MySQL query caching is enabled");
 }
 
 /*

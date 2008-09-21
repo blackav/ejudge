@@ -286,6 +286,17 @@ unparse_member(
 
 #undef FAIL
 
+static void
+drop_members_cache(struct uldb_mysql_state *state)
+{
+  struct members_container *p, *q;
+
+  for (p = state->members.first; p; p = q) {
+    q = p->next;
+    do_remove_member_from_pool(&state->members, p);
+  }
+}
+
 /*
  * Local variables:
  *  compile-command: "make -C ../.."
