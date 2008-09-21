@@ -3115,7 +3115,8 @@ info_list_iterator_get_func(ptr_iterator_t data)
                          iter->memb_rows + iter->cur_memb,
                          iter->memb_rows + i);
     iter->cur_memb = i;
-    if (mm && !ui && fetch_or_create_user_info(state,user_id,iter->contest_id,&ui)<0)
+    if (mm && !ui
+        && fetch_or_create_user_info(state,user_id,iter->contest_id,&ui)<0)
       return 0;
   }
 
@@ -4451,7 +4452,8 @@ unlock_user_func(
   // detach all existing user_infos
   for (i = 0; i < u->cntsinfo_a; i++) {
     if (!(ui = u->cntsinfo[i])) continue;
-    ui->members = 0;
+    // FIXME: unsafe :(
+    //ui->members = 0;
     u->cntsinfo[i] = 0;
   }
   xfree(u->cntsinfo);

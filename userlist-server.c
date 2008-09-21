@@ -1903,6 +1903,9 @@ cmd_recover_password_2(struct client_state *p,
   int login_len, name_len, passwd_len, packet_len;
   unsigned char *s;
   const unsigned char *name = 0;
+  int user_id = 0;
+  unsigned char *login = 0;
+  unsigned char *email = 0;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -1974,10 +1977,14 @@ cmd_recover_password_2(struct client_state *p,
     return;
   }
 
+  user_id = u->id;
+  login = xstrdup(u->login);
+  email = xstrdup(u->email);
+
   // generate new password
   generate_random_password(8, passwd_buf);
-  default_remove_user_cookies(u->id);
-  default_set_reg_passwd(u->id, USERLIST_PWD_PLAIN, passwd_buf, cur_time);
+  default_remove_user_cookies(user_id);
+  default_set_reg_passwd(user_id, USERLIST_PWD_PLAIN, passwd_buf, cur_time);
 
   // generate a e-mail message
   msg_f = open_memstream(&msg_text, &msg_size);
@@ -1991,13 +1998,13 @@ cmd_recover_password_2(struct client_state *p,
           "E-mail:   %s\n"
           "Name:     %s\n"
           "Password: %s\n\n",
-          u->id, u->login, u->email, name, passwd_buf);
+          user_id, login, email, name, passwd_buf);
   fprintf(msg_f,
           _("Regards,\n"
             "The ejudge contest administration system (www.ejudge.ru)\n"));
   fclose(msg_f); msg_f = 0;
 
-  if (send_email_message(u->email,
+  if (send_email_message(email,
                          originator_email,
                          NULL,
                          _("Password regeneration successful"),
@@ -2016,7 +2023,7 @@ cmd_recover_password_2(struct client_state *p,
               "\n"
               "User `%s' (email %s) completed password regeneration\n"
               "in contest %d from IP %s\n\n"),
-            u->login, u->email, data->contest_id,
+            login, email, data->contest_id,
             xml_unparse_ip(data->origin_ip));
     fprintf(msg_f,
             _("Regards,\n"
@@ -2034,7 +2041,7 @@ cmd_recover_password_2(struct client_state *p,
     xfree(msg_text); msg_text = 0;
   }
 
-  login_len = strlen(u->login);
+  login_len = strlen(login);
   name_len = strlen(name);
   passwd_len = strlen(passwd_buf);
   packet_len = sizeof(*out);
@@ -2043,15 +2050,17 @@ cmd_recover_password_2(struct client_state *p,
   memset(out, 0, packet_len);
   s = out->data;
   out->reply_id = ULS_NEW_PASSWORD;
-  out->user_id = u->id;
+  out->user_id = user_id;
   out->login_len = login_len;
   out->name_len = name_len;
   out->passwd_len = passwd_len;
-  strcpy(s, u->login); s += login_len + 1;
+  strcpy(s, login); s += login_len + 1;
   strcpy(s, name); s += name_len + 1;
   strcpy(s, passwd_buf);
   enqueue_reply_to_client(p, packet_len, out);
   info("%s -> OK", logbuf);
+  xfree(login);
+  xfree(email);
 }
 
 static void
@@ -3939,7 +3948,7 @@ cmd_list_all_users(struct client_state *p,
   iter = default_get_brief_list_iterator(data->contest_id);
   if (iter) {
     for (; iter->has_next(iter); iter->next(iter)) {
-      u = (const struct userlist_user*) iter->get(iter);
+      if (!(u = (const struct userlist_user*) iter->get(iter))) continue;
       userlist_unparse_user_short(u, f, data->contest_id);
       default_unlock_user(u);
     }
