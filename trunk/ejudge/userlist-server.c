@@ -2612,7 +2612,7 @@ cmd_team_check_user(struct client_state *p, int pkt_len,
       return;
     }
   } else {
-    if (!ui->team_passwd) {
+    if (!ui || !ui->team_passwd) {
       err("%s -> EMPTY PASSWORD", logbuf);
       send_reply(p, -ULS_ERR_INVALID_PASSWORD);
       return;
@@ -7640,9 +7640,10 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
   }
   fprintf(f, "\n");
 
-  for (iter = default_get_info_list_iterator(contest_id, USERLIST_UC_ALL);
-       iter->has_next(iter);
-       iter->next(iter)) {
+  if (!(iter = default_get_info_list_iterator(contest_id, USERLIST_UC_ALL)))
+    return;
+
+  for (; iter->has_next(iter); iter->next(iter)) {
     u = (const struct userlist_user*) iter->get(iter);
     ui = userlist_get_user_info(u, contest_id);
     c = userlist_get_user_contest(u, contest_id);
@@ -7712,6 +7713,7 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
     gen_size = 0;
     default_unlock_user(u);
   }
+  iter->destroy(iter);
 }
 
 static void
