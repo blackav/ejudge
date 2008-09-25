@@ -609,7 +609,7 @@ cmd_clar_operation(
     FAIL(NEW_SRV_ERR_INV_CLAR_ID);
   if (parse_int(s, &clar_id) < 0 || clar_id < 0)
     FAIL(NEW_SRV_ERR_INV_CLAR_ID);
-  if (clar_get_record_new(cs->clarlog_state, clar_id, &ce) < 0)
+  if (clar_get_record(cs->clarlog_state, clar_id, &ce) < 0)
     FAIL(NEW_SRV_ERR_INV_CLAR_ID);
 
   /* permission check */

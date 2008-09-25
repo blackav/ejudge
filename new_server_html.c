@@ -2839,14 +2839,14 @@ priv_submit_clar(FILE *fout,
   text3_len = sprintf(text3, "Subject: %s\n\n%s\n", subj2, text2);
 
   gettimeofday(&precise_time, 0);
-  if ((clar_id = clar_add_record_new(cs->clarlog_state,
-                                     precise_time.tv_sec,
-                                     precise_time.tv_usec * 1000,
-                                     text3_len,
-                                     phr->ip, phr->ssl_flag,
-                                     0, user_id, 0, phr->user_id,
-                                     hide_flag, phr->locale_id, 0, 0,
-                                     utf8_mode, NULL, subj2)) < 0) {
+  if ((clar_id = clar_add_record(cs->clarlog_state,
+                                 precise_time.tv_sec,
+                                 precise_time.tv_usec * 1000,
+                                 text3_len,
+                                 phr->ip, phr->ssl_flag,
+                                 0, user_id, 0, phr->user_id,
+                                 hide_flag, phr->locale_id, 0, 0,
+                                 utf8_mode, NULL, subj2)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto cleanup;
   }
@@ -2927,14 +2927,14 @@ priv_submit_run_comment(
   text3_len = sprintf(text3, "Subject: %s\n\n%s\n", subj2, text2);
 
   gettimeofday(&precise_time, 0);
-  if ((clar_id = clar_add_record_new(cs->clarlog_state,
-                                     precise_time.tv_sec,
-                                     precise_time.tv_usec * 1000,
-                                     text3_len,
-                                     phr->ip, phr->ssl_flag,
-                                     0, re.user_id, 0, phr->user_id,
-                                     0, phr->locale_id, 0, 0,
-                                     utf8_mode, NULL, subj2)) < 0) {
+  if ((clar_id = clar_add_record(cs->clarlog_state,
+                                 precise_time.tv_sec,
+                                 precise_time.tv_usec * 1000,
+                                 text3_len,
+                                 phr->ip, phr->ssl_flag,
+                                 0, re.user_id, 0, phr->user_id,
+                                 0, phr->locale_id, 0, 0,
+                                 utf8_mode, NULL, subj2)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto cleanup;
   }
@@ -3003,7 +3003,7 @@ priv_clar_reply(FILE *fout,
     goto cleanup;
   }
 
-  if (clar_get_record_new(cs->clarlog_state, in_reply_to, &clar) < 0) {
+  if (clar_get_record(cs->clarlog_state, in_reply_to, &clar) < 0) {
     ns_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
     goto cleanup;
   }
@@ -3071,16 +3071,16 @@ priv_clar_reply(FILE *fout,
   if (phr->action == NEW_SRV_ACTION_CLAR_REPLY_ALL) from_id = 0;
 
   gettimeofday(&precise_time, 0);
-  clar_id = clar_add_record_new(cs->clarlog_state,
-                                precise_time.tv_sec,
-                                precise_time.tv_usec * 1000,
-                                msg_len,
-                                phr->ip, phr->ssl_flag,
-                                0, from_id, 0, phr->user_id, 0,
-                                clar.locale_id, in_reply_to + 1, 0,
-                                utf8_mode, NULL,
-                                clar_get_subject(cs->clarlog_state,
-                                                 in_reply_to));
+  clar_id = clar_add_record(cs->clarlog_state,
+                            precise_time.tv_sec,
+                            precise_time.tv_usec * 1000,
+                            msg_len,
+                            phr->ip, phr->ssl_flag,
+                            0, from_id, 0, phr->user_id, 0,
+                            clar.locale_id, in_reply_to + 1, 0,
+                            utf8_mode, NULL,
+                            clar_get_subject(cs->clarlog_state,
+                                             in_reply_to));
 
   if (clar_id < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
@@ -9436,14 +9436,14 @@ unpriv_submit_clar(FILE *fout,
   }
 
   gettimeofday(&precise_time, 0);
-  if ((clar_id = clar_add_record_new(cs->clarlog_state,
-                                     precise_time.tv_sec,
-                                     precise_time.tv_usec * 1000,
-                                     text3_len,
-                                     phr->ip, phr->ssl_flag,
-                                     phr->user_id, 0, 0, 0, 0,
-                                     phr->locale_id, 0, 0,
-                                     utf8_mode, NULL, subj3)) < 0) {
+  if ((clar_id = clar_add_record(cs->clarlog_state,
+                                 precise_time.tv_sec,
+                                 precise_time.tv_usec * 1000,
+                                 text3_len,
+                                 phr->ip, phr->ssl_flag,
+                                 phr->user_id, 0, 0, 0, 0,
+                                 phr->locale_id, 0, 0,
+                                 utf8_mode, NULL, subj3)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto done;
   }
@@ -9580,14 +9580,14 @@ unpriv_submit_appeal(FILE *fout,
   }
 
   gettimeofday(&precise_time, 0);
-  if ((clar_id = clar_add_record_new(cs->clarlog_state,
-                                     precise_time.tv_sec,
-                                     precise_time.tv_usec * 1000,
-                                     text3_len,
-                                     phr->ip, phr->ssl_flag,
-                                     phr->user_id, 0, 0, 0, 0,
-                                     phr->locale_id, 0, 1,
-                                     utf8_mode, NULL, subj3)) < 0) {
+  if ((clar_id = clar_add_record(cs->clarlog_state,
+                                 precise_time.tv_sec,
+                                 precise_time.tv_usec * 1000,
+                                 text3_len,
+                                 phr->ip, phr->ssl_flag,
+                                 phr->user_id, 0, 0, 0, 0,
+                                 phr->locale_id, 0, 1,
+                                 utf8_mode, NULL, subj3)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto done;
   }
@@ -10187,7 +10187,7 @@ unpriv_view_clar(FILE *fout,
     goto done;
   }
   if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
-      || clar_get_record_new(cs->clarlog_state, clar_id, &ce) < 0) {
+      || clar_get_record(cs->clarlog_state, clar_id, &ce) < 0) {
     ns_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
     goto done;
   }

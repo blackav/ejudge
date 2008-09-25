@@ -62,7 +62,7 @@ struct clar_entry_v1
 clarlog_state_t clar_init(void);
 clarlog_state_t clar_destroy(clarlog_state_t state);
 int clar_open(clarlog_state_t state, char const *path, int flags);
-int clar_add_record_new(
+int clar_add_record(
         clarlog_state_t state,
         time_t         time,
         int            nsec,
@@ -86,9 +86,9 @@ int clar_set_charset(
         int id,
         const unsigned char *charset);
 int clar_get_total(clarlog_state_t state);
-int clar_get_record_new(clarlog_state_t state,
-                        int clar_id,
-                        struct clar_entry_v1 *pclar);
+int clar_get_record(clarlog_state_t state,
+                    int clar_id,
+                    struct clar_entry_v1 *pclar);
 int clar_get_charset_id(clarlog_state_t state,
                         int clar_id);
 const unsigned char *clar_get_subject(clarlog_state_t state, int clar_id);
