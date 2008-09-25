@@ -408,7 +408,7 @@ clar_flush_entry(clarlog_state_t state, int num)
 }
 
 int
-clar_add_record_new(
+clar_add_record(
         clarlog_state_t state,
         time_t         time,
         int            nsec,
@@ -485,7 +485,7 @@ clar_add_record_new(
 }
 
 int
-clar_get_record_new(
+clar_get_record(
         clarlog_state_t state,
         int clar_id,
         struct clar_entry_v1 *pclar)

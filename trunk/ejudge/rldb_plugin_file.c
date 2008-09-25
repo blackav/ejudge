@@ -16,11 +16,12 @@
  */
 
 #include "rldb_plugin.h"
+#include "ejudge_cfg.h"
 
-static void *
+static struct rldb_plugin_data *
 init_func(const struct ejudge_cfg*);
 static int
-close_func(void *);
+close_func(struct rldb_plugin_data *);
 
 struct rldb_plugin_iface rldb_plugin_xml =
 {
@@ -37,14 +38,14 @@ struct rldb_plugin_iface rldb_plugin_xml =
   close_func,
 };
 
-static void *
+static struct rldb_plugin_data *
 init_func(const struct ejudge_cfg *config)
 {
   return 0;
 }
 
 static int
-close_func(void *data)
+close_func(struct rldb_plugin_data *data)
 {
   return 0;
 }

@@ -26,15 +26,22 @@
 /* version of the plugin interface structure */
 #define RLDB_PLUGIN_IFACE_VERSION 1
 
+struct rldb_plugin_data;
+struct rldb_plugin_cnts;
+
 struct rldb_plugin_iface
 {
   struct ejudge_plugin_iface b;
   int rldb_version;
 
   // initialize the plugin
-  void *(*init)(const struct ejudge_cfg*);
+  struct rldb_plugin_data *(*init)(const struct ejudge_cfg*);
   // close the database flushing all the data, if necessary
-  int (*close)(void *);
+  int (*finish)(struct rldb_plugin_data *);
+  // open a contest
+  struct rldb_plugin_cnts *(*open)(struct rldb_plugin_data *, int);
+  // close a contest
+  struct rldb_plugin_cnts *(*close)(struct rldb_plugin_cnts *);
 };
 
 /* default plugin: compiled into new-server */

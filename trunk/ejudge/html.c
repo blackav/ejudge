@@ -609,7 +609,7 @@ serve_count_unread_clars(const serve_state_t state, int user_id,
   struct clar_entry_v1 clar;
 
   for (i = clar_get_total(state->clarlog_state) - 1; i >= 0; i--) {
-    if (clar_get_record_new(state->clarlog_state, i, &clar) < 0)
+    if (clar_get_record(state->clarlog_state, i, &clar) < 0)
       continue;
     if (clar.to > 0 && clar.to != user_id) continue;
     if (!clar.to && clar.from > 0) continue;
@@ -667,7 +667,7 @@ new_write_user_clars(const serve_state_t state, FILE *f, int uid,
   for (showed = 0, i = clar_get_total(state->clarlog_state) - 1;
        showed < clars_to_show && i >= 0;
        i--) {
-    if (clar_get_record_new(state->clarlog_state, i, &clar) < 0)
+    if (clar_get_record(state->clarlog_state, i, &clar) < 0)
       continue;
     if (clar.from > 0 && clar.from != uid) continue;
     if (clar.to > 0 && clar.to != uid) continue;
