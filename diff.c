@@ -152,6 +152,7 @@ compare_runs(const serve_state_t state, FILE *fout, int run_id1, int run_id2)
     goto cleanup;
   }
 
+  xfree(diff_txt);
   unlink(tmpfile1);
   unlink(tmpfile2);
   unlink(tmpfile3);
