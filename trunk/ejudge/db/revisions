@@ -3769,3 +3769,4 @@ plugins/mysql-userlist/uldb_mysql.c 5105 0 10451733
 diff.c 5108 0 427350
 cldb_plugin.h 5110 0 127643
 cldb_plugin_file.c 5110 0 107851
+plugins/mysql-userlist/uldb_mysql.c 5112 0 10451802
