@@ -98,6 +98,7 @@ COMMON_CFILES=\
  cgi.c\
  charsets.c\
  clarlog.c\
+ cldb_plugin_file.c\
  clntutil.c\
  compile_packet_1.c\
  compile_packet_2.c\
@@ -297,6 +298,7 @@ HFILES=\
  cgi.h\
  charsets.h\
  clarlog.h\
+ cldb_plugin.h\
  client_actions.h\
  clntutil.h\
  compile_packet.h\

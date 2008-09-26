@@ -162,7 +162,7 @@ main(int argc, char *argv[])
     err("invalid score system for virtual contest");
     return 1;
   }
-  serve_state.clarlog_state = clar_init();
+  serve_state.clarlog_state = clar_init(0, 0, 0);
   if (clar_open(serve_state.clarlog_state, serve_state.global->clar_log_file,
                 0) < 0) return 1;
   serve_load_status_file(&serve_state);

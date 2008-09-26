@@ -59,7 +59,11 @@ struct clar_entry_v1
   unsigned char subj[CLAR_ENTRY_SUBJ_SIZE];
 };                              /* 128 */
 
-clarlog_state_t clar_init(void);
+struct ejudge_cfg;
+struct contest_desc;
+struct section_global_data;
+
+clarlog_state_t clar_init(const struct ejudge_cfg *config, const struct contest_desc *cnts, const struct section_global_data *global);
 clarlog_state_t clar_destroy(clarlog_state_t state);
 int clar_open(clarlog_state_t state, char const *path, int flags);
 int clar_add_record(

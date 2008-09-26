@@ -191,6 +191,8 @@ struct uldb_plugin_iface
   void (*disable_cache)(void *);
   // enable caching
   void (*enable_cache)(void *);
+  // pick up a new login by a template
+  int (*try_new_login)(void *, unsigned char *, size_t, const char *, int, int);
 };
 
 /* default plugin: compiled into userlist-server */

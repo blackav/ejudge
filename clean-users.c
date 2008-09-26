@@ -140,7 +140,7 @@ main(int argc, char **argv)
   userlist = userlist_parse(config->db_path);
   if (!userlist) return 1;
 
-  clarlog_state = clar_init();
+  clarlog_state = clar_init(0, 0, 0);
   runlog_state = run_init(0);// FIXME: need to pass teamdb_state
 
   user_total = 0;

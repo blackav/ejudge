@@ -305,7 +305,10 @@ read_clar_file(clarlog_state_t state, off_t length)
 }
 
 clarlog_state_t
-clar_init(void)
+clar_init(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global)
 {
   clarlog_state_t p;
 
