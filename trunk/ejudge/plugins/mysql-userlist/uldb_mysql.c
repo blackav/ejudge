@@ -4075,7 +4075,7 @@ maintenance_func(
   total_uids = state->row_count;
   XCALLOC(uids, total_uids + 1);
   uids[0] = 0;
-  for (i = 0; i < total_uids; i++) {
+  for (i = 1; i <= total_uids; i++) {
     if (my_int_val(state, &uids[i], 1) < 0)
       goto fail;
     ASSERT(uids[i] > uids[i - 1]);
