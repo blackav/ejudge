@@ -4641,6 +4641,7 @@ try_new_login_func(
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   if (state->row_count <= 0) {
     snprintf(buf, bufsize, format, serial);
+    my_free_res(state);
     return serial;
   }
   total_logins = state->row_count;
