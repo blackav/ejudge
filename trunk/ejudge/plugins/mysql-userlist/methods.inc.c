@@ -373,6 +373,14 @@ get_contest_reg_func(
 static void drop_cache_func(void *data);
 static void disable_cache_func(void *data);
 static void enable_cache_func(void *data);
+static int
+try_new_login_func(
+        void *data,
+        unsigned char *buf,
+        size_t bufsize,
+        const char *format,
+        int serial,
+        int serial_step);
 
 /*
  * Local variables:
