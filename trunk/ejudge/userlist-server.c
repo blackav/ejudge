@@ -1563,7 +1563,7 @@ cmd_register_new(struct client_state *p,
       serial_step = 1;
     }
     if (uldb_default->iface->try_new_login) {
-      serial_step += serial_step;
+      serial += serial_step;
       if (default_try_new_login(login_buf, sizeof(login_buf), cnts->login_template, serial, serial_step) < 0) {
         send_reply(p, -ULS_ERR_DB_ERROR);
         err("%s -> database error", logbuf);
