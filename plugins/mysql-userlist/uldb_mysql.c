@@ -193,6 +193,8 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   disable_cache_func,
   // enable caching
   enable_cache_func,
+  // try new login
+  try_new_login_func,
 };
 
 // the size of the cookies pool, must be power of 2
@@ -210,6 +212,9 @@ enum { USER_INFO_POOL_SIZE = 1024 };
 
 // the size of the member pool
 enum { MEMBERS_POOL_SIZE = 1024 };
+
+// the maintenance interval
+enum { MAINT_INTERVAL = 10 * 60 };
 
 struct cookies_container;
 
@@ -300,6 +305,13 @@ struct uldb_mysql_state
 
   // members cache
   struct members_cache members;
+
+  time_t last_maint_time;
+  time_t maint_interval;
+
+  int total_unused_ids;
+  int cur_unused_id;
+  int *unused_ids;
 };
 
 struct saved_row
@@ -452,6 +464,30 @@ my_query(
   my_free_res(state);
   return -1;
 }
+static int
+my_fquery(
+        struct uldb_mysql_state *state,
+        int colnum,
+        const char *format,
+        ...)
+  __attribute__((format(printf, 3, 4)));
+static int
+my_fquery(
+        struct uldb_mysql_state *state,
+        int colnum,
+        const char *format,
+        ...)
+{
+  unsigned char cmdbuf[1024];
+  size_t cmdlen;
+  va_list args;
+
+  va_start(args, format);
+  vsnprintf(cmdbuf, sizeof(cmdbuf), format, args);
+  va_end(args);
+  cmdlen = strlen(cmdbuf);
+  return my_query(state, cmdbuf, cmdlen, colnum);
+}
 
 static int
 my_query_one_row(
@@ -573,6 +609,7 @@ init_func(const struct ejudge_cfg *config)
   XCALLOC(state, 1);
   state->show_queries = 1;
   state->cache_queries = 1;
+  state->maint_interval = MAINT_INTERVAL;
   return (void*) state;
 }
 
@@ -1475,16 +1512,14 @@ get_user_id_iterator_func(void *data)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct user_id_iterator *iter;
-  unsigned char cmdbuf[1024];
-  int cmdlen, i;
+  int i;
 
   XCALLOC(iter, 1);
   iter->b = user_id_iterator_funcs;
 
-  snprintf(cmdbuf, sizeof(cmdbuf), "SELECT user_id FROM %slogins WHERE 1 ;",
-           state->table_prefix);
-  cmdlen = strlen(cmdbuf);
-  if (my_query(state, cmdbuf, cmdlen, 1) < 0) goto fail;
+  if (my_fquery(state, 1, "SELECT user_id FROM %slogins WHERE 1 ;",
+                state->table_prefix) < 0)
+    goto fail;
   iter->id_num = state->row_count;
 
   if (iter->id_num > 0) {
@@ -1583,7 +1618,7 @@ new_user_func(
         int simple_reg_flag)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
-  int val;
+  int val, inserted_flag = 0;
   struct userlist_user user;
   FILE *cmd_f = 0;
   char *cmd_t = 0;
@@ -1591,21 +1626,42 @@ new_user_func(
 
   if (!login || !*login) return -1;
 
-  memset(&user, 0, sizeof(user));
+  if (state->total_unused_ids > 0
+      && state->cur_unused_id < state->total_unused_ids) {
+    memset(&user, 0, sizeof(user));
+    user.id = state->unused_ids[state->cur_unused_id++];
+    user.login = (char*) login;
+    user.email = (char*) email;
+    user.passwd = (char*) passwd;
+    user.simple_registration = !!simple_reg_flag;
 
-  user.id = -1;
-  user.login = (char*) login;
-  user.email = (char*) email;
-  user.passwd = (char*) passwd;
-  user.simple_registration = !!simple_reg_flag;
+    cmd_f = open_memstream(&cmd_t, &cmd_z);
+    fprintf(cmd_f, "INSERT into %slogins VALUES ( ", state->table_prefix);
+    unparse_login(state, cmd_f, &user);
+    fprintf(cmd_f, " );");
+    fclose(cmd_f); cmd_f = 0;
+    if (my_simple_query(state, cmd_t, cmd_z) >= 0) {
+      xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+      inserted_flag = 1;
+    }
+  }
 
-  cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "INSERT into %slogins VALUES ( ", state->table_prefix);
-  unparse_login(state, cmd_f, &user);
-  fprintf(cmd_f, " );");
-  fclose(cmd_f); cmd_f = 0;
-  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
-  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  if (!inserted_flag) {
+    memset(&user, 0, sizeof(user));
+    user.id = -1;
+    user.login = (char*) login;
+    user.email = (char*) email;
+    user.passwd = (char*) passwd;
+    user.simple_registration = !!simple_reg_flag;
+
+    cmd_f = open_memstream(&cmd_t, &cmd_z);
+    fprintf(cmd_f, "INSERT into %slogins VALUES ( ", state->table_prefix);
+    unparse_login(state, cmd_f, &user);
+    fprintf(cmd_f, " );");
+    fclose(cmd_f); cmd_f = 0;
+    if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+    xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  }
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "SELECT user_id FROM %slogins WHERE login = ",
@@ -1673,13 +1729,11 @@ is_unique_cookie(
         struct uldb_mysql_state *state,
         unsigned long long value)
 {
-  unsigned char cmdbuf[1024];
-  size_t cmdlen;
-
   if (!value) return 0;
-  snprintf(cmdbuf, sizeof(cmdbuf), "SELECT user_id FROM %scookies WHERE cookie = '%016llx' ;", state->table_prefix, value);
-  cmdlen = strlen(cmdbuf);
-  if (my_query(state, cmdbuf, cmdlen, 1) < 0) return -1;
+  if (my_fquery(state, 1,
+                "SELECT user_id FROM %scookies WHERE cookie = '%016llx' ;",
+                state->table_prefix, value) < 0)
+    return -1;
   if (state->row_count < 0) {
     my_free_res(state);
     return -1;
@@ -1881,19 +1935,17 @@ get_user_contest_iterator_func(
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct user_contest_iterator *iter = 0;
-  int cmdlen, i;
-  unsigned char cmdbuf[1024];
+  int i;
 
   XCALLOC(iter, 1);
   iter->b = user_contest_iterator_funcs;
   iter->state = state;
   iter->user_id = user_id;
 
-  snprintf(cmdbuf, sizeof(cmdbuf),
-           "SELECT contest_id FROM %scntsregs WHERE user_id = %d ;",
-           state->table_prefix, user_id);
-  cmdlen = strlen(cmdbuf);
-  if (my_query(state, cmdbuf, cmdlen, 1) < 0) goto fail;
+  if (my_fquery(state, 1,
+                "SELECT contest_id FROM %scntsregs WHERE user_id = %d ;",
+                state->table_prefix, user_id) < 0)
+    goto fail;
   iter->id_num = state->row_count;
 
   if (iter->id_num > 0) {
@@ -2166,8 +2218,6 @@ get_user_info_5_func(
   struct userlist_members *mm = 0;
   struct userlist_contest *uc = 0;
   struct userlist_cookie *cc = 0;
-  unsigned char cmdbuf[1024];
-  size_t cmdlen;
   int cookie_count = 0, reg_count = 0;
   unsigned long long *cookies = 0;
   int *cntsregs = 0;
@@ -2188,9 +2238,10 @@ get_user_info_5_func(
   userlist_attach_user_info(u, ui);
   if (ui) ui->members = mm;
 
-  snprintf(cmdbuf, sizeof(cmdbuf), "SELECT cookie FROM %scookies WHERE user_id = %d ;", state->table_prefix, user_id);
-  cmdlen = strlen(cmdbuf);
-  if (my_query(state, cmdbuf, cmdlen, 1) < 0) return -1;
+  if (my_fquery(state, 1,
+                "SELECT cookie FROM %scookies WHERE user_id = %d ;",
+                state->table_prefix, user_id) < 0)
+    return -1;
   if (state->row_count > 0) {
     cookie_count = state->row_count;
     XALLOCAZ(cookies, cookie_count);
@@ -2204,9 +2255,10 @@ get_user_info_5_func(
   }
   my_free_res(state);
 
-  snprintf(cmdbuf, sizeof(cmdbuf), "SELECT contest_id FROM %scntsregs WHERE user_id = %d ;", state->table_prefix, user_id);
-  cmdlen = strlen(cmdbuf);
-  if (my_query(state, cmdbuf, cmdlen, 1) < 0) goto fail;;
+  if (my_fquery(state, 1,
+                "SELECT contest_id FROM %scntsregs WHERE user_id = %d ;",
+                state->table_prefix, user_id) < 0)
+    goto fail;
   if (state->row_count > 0) {
     reg_count = state->row_count;
     XALLOCAZ(cntsregs, reg_count);
@@ -2452,8 +2504,6 @@ get_brief_list_iterator_func(
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct brief_list_iterator *iter = 0;
   int i, val, j;
-  unsigned char cmdbuf[1024];
-  size_t cmdlen;
 
   XCALLOC(iter, 1);
   iter->b = brief_list_iterator_funcs;
@@ -2462,11 +2512,10 @@ get_brief_list_iterator_func(
   iter->cur_ind = 0;
 
   if (!contest_id) {
-    snprintf(cmdbuf, sizeof(cmdbuf),
-             "SELECT * FROM %slogins WHERE 1 ORDER BY user_id ;",
-             state->table_prefix);
-    cmdlen = strlen(cmdbuf);
-    if (my_query(state, cmdbuf, cmdlen, LOGIN_WIDTH) < 0) goto fail;
+    if (my_fquery(state, LOGIN_WIDTH,
+                  "SELECT * FROM %slogins WHERE 1 ORDER BY user_id ;",
+                  state->table_prefix) < 0)
+      goto fail;
     iter->total_ids = state->row_count;
     if (!iter->total_ids) {
       my_free_res(state);
@@ -2487,11 +2536,10 @@ get_brief_list_iterator_func(
     }
 
     my_free_res(state);
-    snprintf(cmdbuf, sizeof(cmdbuf),
-             "SELECT * FROM %susers WHERE contest_id = 0 ORDER BY user_id ;",
-             state->table_prefix);
-    cmdlen = strlen(cmdbuf);
-    if (my_query(state, cmdbuf, cmdlen, USER_INFO_WIDTH) < 0) goto fail;
+    if (my_fquery(state, USER_INFO_WIDTH,
+                  "SELECT * FROM %susers WHERE contest_id = 0 ORDER BY user_id ;",
+                  state->table_prefix) < 0)
+      goto fail;
     j = 0;
     for (i = 0; i < state->row_count; i++) {
       if (!(state->row = mysql_fetch_row(state->res)))
@@ -2511,13 +2559,13 @@ get_brief_list_iterator_func(
     return (ptr_iterator_t) iter;
   }
 
-  snprintf(cmdbuf, sizeof(cmdbuf),
-           "SELECT %slogins.* FROM %slogins, %scntsregs WHERE %slogins.user_id = %scntsregs.user_id AND %scntsregs.contest_id = %d ORDER BY %slogins.user_id ;",
-           state->table_prefix, state->table_prefix, state->table_prefix,
-           state->table_prefix, state->table_prefix, state->table_prefix,
-           contest_id, state->table_prefix);
-  cmdlen = strlen(cmdbuf);
-  if (my_query(state, cmdbuf, cmdlen, LOGIN_WIDTH) < 0) goto fail;
+  if (my_fquery(state, LOGIN_WIDTH,
+                "SELECT %slogins.* FROM %slogins, %scntsregs WHERE %slogins.user_id = %scntsregs.user_id AND %scntsregs.contest_id = %d ORDER BY %slogins.user_id ;",
+                state->table_prefix, state->table_prefix, state->table_prefix,
+                state->table_prefix, state->table_prefix, state->table_prefix,
+                contest_id, state->table_prefix) < 0)
+    goto fail;
+
   iter->total_ids = state->row_count;
   if (!iter->total_ids) {
     my_free_res(state);
@@ -2537,11 +2585,10 @@ get_brief_list_iterator_func(
   }
   my_free_res(state);
 
-  snprintf(cmdbuf, sizeof(cmdbuf),
-           "SELECT * FROM %susers WHERE contest_id = %d ORDER BY user_id ;",
-           state->table_prefix, contest_id);
-  cmdlen = strlen(cmdbuf);
-  if (my_query(state, cmdbuf, cmdlen, USER_INFO_WIDTH) < 0) goto fail;
+  if (my_fquery(state, USER_INFO_WIDTH,
+                "SELECT * FROM %susers WHERE contest_id = %d ORDER BY user_id ;",
+                state->table_prefix, contest_id) < 0)
+    goto fail;
   j = 0;
   for (i = 0; i < state->row_count; i++) {
     if (!(state->row = mysql_fetch_row(state->res)))
@@ -2558,11 +2605,10 @@ get_brief_list_iterator_func(
   }
   my_free_res(state);
 
-  snprintf(cmdbuf, sizeof(cmdbuf),
-           "SELECT * FROM %scntsregs WHERE contest_id = %d ORDER BY user_id ;",
-           state->table_prefix, contest_id);
-  cmdlen = strlen(cmdbuf);
-  if (my_query(state, cmdbuf, cmdlen, CNTSREG_WIDTH) < 0) goto fail;
+  if (my_fquery(state, CNTSREG_WIDTH,
+                "SELECT * FROM %scntsregs WHERE contest_id = %d ORDER BY user_id ;",
+                state->table_prefix, contest_id) < 0)
+    goto fail;
   j = 0;
   for (i = 0; i < state->row_count; i++) {
     if (!(state->row = mysql_fetch_row(state->res)))
@@ -2757,8 +2803,6 @@ get_standings_list_iterator_func(
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct standings_list_iterator *iter = 0;
   int i, j, val;
-  unsigned char cmdbuf[1024];
-  size_t cmdlen;
 
   ASSERT(contest_id > 0);
 
@@ -2769,13 +2813,12 @@ get_standings_list_iterator_func(
   iter->cur_ind = 0;
   iter->cur_memb = 0;
 
-  snprintf(cmdbuf, sizeof(cmdbuf),
-           "SELECT %slogins.* FROM %slogins, %scntsregs WHERE %slogins.user_id = %scntsregs.user_id AND %scntsregs.contest_id = %d ORDER BY %slogins.user_id ;",
-           state->table_prefix, state->table_prefix, state->table_prefix,
-           state->table_prefix, state->table_prefix, state->table_prefix,
-           contest_id, state->table_prefix);
-  cmdlen = strlen(cmdbuf);
-  if (my_query(state, cmdbuf, cmdlen, LOGIN_WIDTH) < 0) goto fail;
+  if (my_fquery(state, LOGIN_WIDTH,
+                "SELECT %slogins.* FROM %slogins, %scntsregs WHERE %slogins.user_id = %scntsregs.user_id AND %scntsregs.contest_id = %d ORDER BY %slogins.user_id ;",
+                state->table_prefix, state->table_prefix, state->table_prefix,
+                state->table_prefix, state->table_prefix, state->table_prefix,
+                contest_id, state->table_prefix) < 0)
+    goto fail;
   iter->total_ids = state->row_count;
   if (!iter->total_ids) {
     my_free_res(state);
@@ -2795,11 +2838,10 @@ get_standings_list_iterator_func(
   }
   my_free_res(state);
 
-  snprintf(cmdbuf, sizeof(cmdbuf),
-           "SELECT * FROM %susers WHERE contest_id = %d ORDER BY user_id ;",
-           state->table_prefix, contest_id);
-  cmdlen = strlen(cmdbuf);
-  if (my_query(state, cmdbuf, cmdlen, USER_INFO_WIDTH) < 0) goto fail;
+  if (my_fquery(state, USER_INFO_WIDTH,
+                "SELECT * FROM %susers WHERE contest_id = %d ORDER BY user_id ;",
+                state->table_prefix, contest_id) < 0)
+    goto fail;
   j = 0;
   for (i = 0; i < state->row_count; i++) {
     if (!(state->row = mysql_fetch_row(state->res)))
@@ -2816,11 +2858,10 @@ get_standings_list_iterator_func(
   }
   my_free_res(state);
 
-  snprintf(cmdbuf, sizeof(cmdbuf),
-           "SELECT * FROM %scntsregs WHERE contest_id = %d ORDER BY user_id ;",
-           state->table_prefix, contest_id);
-  cmdlen = strlen(cmdbuf);
-  if (my_query(state, cmdbuf, cmdlen, CNTSREG_WIDTH) < 0) goto fail;
+  if (my_fquery(state, CNTSREG_WIDTH,
+                "SELECT * FROM %scntsregs WHERE contest_id = %d ORDER BY user_id ;",
+                state->table_prefix, contest_id) < 0)
+    goto fail;
   j = 0;
   for (i = 0; i < state->row_count; i++) {
     if (!(state->row = mysql_fetch_row(state->res)))
@@ -2837,11 +2878,10 @@ get_standings_list_iterator_func(
   }
   my_free_res(state);
 
-  snprintf(cmdbuf, sizeof(cmdbuf),
-           "SELECT * FROM %smembers WHERE contest_id = %d ORDER BY user_id ;",
-           state->table_prefix, contest_id);
-  cmdlen = strlen(cmdbuf);
-  if (my_query(state, cmdbuf, cmdlen, MEMBER_WIDTH) < 0) goto fail;
+  if (my_fquery(state, MEMBER_WIDTH,
+                "SELECT * FROM %smembers WHERE contest_id = %d ORDER BY user_id ;",
+                state->table_prefix, contest_id) < 0)
+    goto fail;
   iter->total_membs = state->row_count;
   if (iter->total_membs > 0) {
     XCALLOC(iter->memb_rows, iter->total_membs);
@@ -2870,16 +2910,12 @@ check_user_func(
         int user_id)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
-  unsigned char cmdbuf[1024];
-  int cmdlen;
   struct userlist_user *u = 0;
 
   if (state->cache_queries && (u = get_login_from_pool(state, user_id)))
     return 0;
 
-  snprintf(cmdbuf, sizeof(cmdbuf), "SELECT user_id FROM %slogins WHERE user_id = %d ;", state->table_prefix, user_id);
-  cmdlen = strlen(cmdbuf);
-  if (my_query(state, cmdbuf, cmdlen, 1) < 0) {
+  if (my_fquery(state, 1, "SELECT user_id FROM %slogins WHERE user_id = %d ;", state->table_prefix, user_id) < 0) {
     my_free_res(state);
     return -1;
   }
@@ -3190,8 +3226,6 @@ get_info_list_iterator_func(
   size_t cmd_z = 0;
   FILE *cmd_f = 0;
   int i, val, j;
-  unsigned char cmdbuf[1024];
-  size_t cmdlen;
 
   ASSERT(contest_id > 0);
   flag_mask &= USERLIST_UC_ALL;
@@ -3243,11 +3277,10 @@ get_info_list_iterator_func(
   }
   my_free_res(state);
 
-  snprintf(cmdbuf, sizeof(cmdbuf),
-           "SELECT * FROM %susers WHERE contest_id = %d ORDER BY user_id ;",
-           state->table_prefix, contest_id);
-  cmdlen = strlen(cmdbuf);
-  if (my_query(state, cmdbuf, cmdlen, USER_INFO_WIDTH) < 0) goto fail;
+  if (my_fquery(state, USER_INFO_WIDTH,
+                "SELECT * FROM %susers WHERE contest_id = %d ORDER BY user_id ;",
+                state->table_prefix, contest_id) < 0)
+    goto fail;
   j = 0;
   for (i = 0; i < state->row_count; i++) {
     if (!(state->row = mysql_fetch_row(state->res)))
@@ -3264,11 +3297,10 @@ get_info_list_iterator_func(
   }
   my_free_res(state);
 
-  snprintf(cmdbuf, sizeof(cmdbuf),
-           "SELECT * FROM %scntsregs WHERE contest_id = %d ORDER BY user_id ;",
-           state->table_prefix, contest_id);
-  cmdlen = strlen(cmdbuf);
-  if (my_query(state, cmdbuf, cmdlen, CNTSREG_WIDTH) < 0) goto fail;
+  if (my_fquery(state, CNTSREG_WIDTH,
+                "SELECT * FROM %scntsregs WHERE contest_id = %d ORDER BY user_id ;",
+                state->table_prefix, contest_id) < 0)
+    goto fail;
   j = 0;
   for (i = 0; i < state->row_count; i++) {
     if (!(state->row = mysql_fetch_row(state->res)))
@@ -3285,11 +3317,10 @@ get_info_list_iterator_func(
   }
   my_free_res(state);
 
-  snprintf(cmdbuf, sizeof(cmdbuf),
-           "SELECT * FROM %smembers WHERE contest_id = %d ORDER BY user_id ;",
-           state->table_prefix, contest_id);
-  cmdlen = strlen(cmdbuf);
-  if (my_query(state, cmdbuf, cmdlen, MEMBER_WIDTH) < 0) goto fail;
+  if (my_fquery(state, MEMBER_WIDTH,
+                "SELECT * FROM %smembers WHERE contest_id = %d ORDER BY user_id ;",
+                state->table_prefix, contest_id) < 0)
+    goto fail;
   iter->total_membs = state->row_count;
   if (iter->total_membs > 0) {
     XCALLOC(iter->memb_rows, iter->total_membs);
@@ -4018,7 +4049,57 @@ maintenance_func(
         void *data,
         time_t cur_time)
 {
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  int total_uids = 0;
+  int *uids = 0;
+  int i, j, k;
+
+  if (cur_time <= 0) cur_time = time(0);
+  if (cur_time <= state->last_maint_time + state->maint_interval) return 0;
+
+  if (state->total_unused_ids > 0
+      && state->cur_unused_id < state->total_unused_ids)
+    return 0;
+
+  state->last_maint_time = cur_time;
+
+  xfree(state->unused_ids); state->unused_ids = 0;
+  state->total_unused_ids = 0;
+  state->cur_unused_id = 0;
+
+  if (my_fquery(state, 1, "SELECT user_id FROM %slogins WHERE 1 ORDER BY user_id ;", state->table_prefix) < 0)
+    goto fail;
+  if (state->row_count <= 0) return 0;
+
+  state->total_unused_ids = 0;
+  total_uids = state->row_count;
+  XCALLOC(uids, total_uids + 1);
+  uids[0] = 0;
+  for (i = 0; i < total_uids; i++) {
+    if (my_int_val(state, &uids[i], 1) < 0)
+      goto fail;
+    ASSERT(uids[i] > uids[i - 1]);
+    state->total_unused_ids += (uids[i] - uids[i - 1] - 1);
+  }
+  my_free_res(state);
+
+  if (!state->total_unused_ids) goto done;
+  XCALLOC(state->unused_ids, state->total_unused_ids);
+  for (i = 1, k = 0; i <= total_uids; i++) {
+    for (j = uids[i - 1] + 1; j < uids[i]; j++)
+      state->unused_ids[k++] = j;
+  }
+  ASSERT(k == state->total_unused_ids);
+  info("%d unused user_ids detected", state->total_unused_ids);
+
+ done:
+  xfree(uids);
+  my_free_res(state);
   return 0;
+
+ fail:
+  xfree(uids);
+  return -1;
 }
 
 static int
@@ -4506,6 +4587,94 @@ enable_cache_func(void *data)
 
   state->cache_queries = 1;
   info("MySQL query caching is enabled");
+}
+
+static void
+convert_to_pattern(unsigned char *out, const unsigned char *in)
+{
+  unsigned char *pout = out;
+  const unsigned char *pin = in;
+  while (*pin) {
+    if (*pin != '%') {
+      *pout++ = *pin++;
+      continue;
+    }
+    *pout++ = *pin++;
+    while (*pin && *pin != 'd' && *pin != 'u' && *pin != 'x' && *pin != 'X'
+           && *pin != 'o')
+      pin++;
+    if (*pin) pin++;
+  }
+  *pout = 0;
+}
+
+static int
+try_new_login_func(
+        void *data,
+        unsigned char *buf,
+        size_t bufsize,
+        const char *format,
+        int serial,
+        int serial_step)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  size_t flen;
+  unsigned char *patt;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+  int total_logins = 0, i;
+  unsigned char **logins = 0;
+
+  ASSERT(serial >= 0);
+
+  flen = strlen(format);
+  patt = (unsigned char *) alloca(flen + 10);
+  convert_to_pattern(patt, format);
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "SELECT login FROM %slogins WHERE login LIKE(",
+          state->table_prefix);
+  write_escaped_string(cmd_f, state, 0, patt);
+  fprintf(cmd_f, ") ;");
+  fclose(cmd_f); cmd_f = 0;
+  if (my_query(state, cmd_t, cmd_z, 1) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  if (state->row_count <= 0) {
+    snprintf(buf, bufsize, format, serial);
+    return serial;
+  }
+  total_logins = state->row_count;
+  XCALLOC(logins, total_logins);
+  for (i = 0; i < total_logins; i++) {
+    if (my_row(state) < 0) goto fail;
+    logins[i] = xstrdup(state->row[0]);
+  }
+  my_free_res(state);
+
+  serial -= serial_step;
+  do {
+    serial += serial_step;
+    snprintf(buf, bufsize, format, serial);
+    for (i = 0; i < total_logins; i++)
+      if (!strcmp(buf, logins[i]))
+        break;
+  } while (i < total_logins);
+
+  for (i = 0; i < total_logins; i++)
+    xfree(logins[i]);
+  xfree(logins);
+  return serial;
+
+ fail:
+  if (logins) {
+    for (i = 0; i < total_logins; i++)
+      xfree(logins[i]);
+  }
+  xfree(logins);
+  my_free_res(state);
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
 }
 
 /*
