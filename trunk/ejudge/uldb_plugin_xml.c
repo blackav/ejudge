@@ -206,6 +206,8 @@ struct uldb_plugin_iface uldb_plugin_xml =
   0,
   // enable caching
   0,
+  // pick up a new login
+  0,
 };
 
 struct uldb_xml_state

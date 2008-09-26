@@ -44,7 +44,7 @@ serve_state_init(void)
   serve_state_t state;
 
   XCALLOC(state, 1);
-  state->clarlog_state = clar_init();
+  state->clarlog_state = clar_init(0, 0, 0);
   state->teamdb_state = teamdb_init();
   state->team_extra_state = team_extra_init();
   state->runlog_state = run_init(state->teamdb_state);

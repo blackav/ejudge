@@ -584,6 +584,7 @@ link_client_state(struct client_state *p)
 #define default_get_user_info_7(a, b, c, d, e) uldb_default->iface->get_user_info_7(uldb_default->data, a, b, c, d, e)
 #define default_unlock_user(a) uldb_default->iface->unlock_user(uldb_default->data, a)
 #define default_get_contest_reg(a, b) uldb_default->iface->get_contest_reg(uldb_default->data, a, b)
+#define default_try_new_login(a, b, c, d, e) uldb_default->iface->try_new_login(uldb_default->data, a, b, c, d, e)
 
 static void
 update_all_user_contests(int user_id)
@@ -1304,10 +1305,19 @@ cmd_register_new_2(struct client_state *p,
       serial = 0;
       serial_step = 1;
     }
-    while (1) {
+    if (uldb_default->iface->try_new_login) {
       serial += serial_step;
-      snprintf(login_buf, sizeof(login_buf), cnts->login_template, serial);
-      if ((user_id = default_get_user_by_login(login_buf)) < 0) break;
+      if (default_try_new_login(login_buf, sizeof(login_buf), cnts->login_template, serial, serial_step) < 0) {
+        send_reply(p, -ULS_ERR_DB_ERROR);
+        err("%s -> database error", logbuf);
+        return;
+      }
+    } else {
+      while (1) {
+        serial += serial_step;
+        snprintf(login_buf, sizeof(login_buf), cnts->login_template, serial);
+        if ((user_id = default_get_user_by_login(login_buf)) < 0) break;
+      }
     }
     login = login_buf;
   } else if (!login || !*login) {
@@ -1552,10 +1562,19 @@ cmd_register_new(struct client_state *p,
       serial = 0;
       serial_step = 1;
     }
-    while (1) {
-      serial += serial_step;
-      snprintf(login_buf, sizeof(login_buf), cnts->login_template, serial);
-      if ((user_id = default_get_user_by_login(login_buf)) < 0) break;
+    if (uldb_default->iface->try_new_login) {
+      serial_step += serial_step;
+      if (default_try_new_login(login_buf, sizeof(login_buf), cnts->login_template, serial, serial_step) < 0) {
+        send_reply(p, -ULS_ERR_DB_ERROR);
+        err("%s -> database error", logbuf);
+        return;
+      }
+    } else {
+      while (1) {
+        serial += serial_step;
+        snprintf(login_buf, sizeof(login_buf), cnts->login_template, serial);
+        if ((user_id = default_get_user_by_login(login_buf)) < 0) break;
+      }
     }
     login = login_buf;
   }
@@ -6617,14 +6636,23 @@ cmd_create_user(struct client_state *p, int pkt_len,
     }
     login_ptr = data->data;
   } else {
-    do {
-      serial++;
-      if (!serial) {
-        snprintf(buf, sizeof(buf), "New_login");
-      } else {
-        snprintf(buf, sizeof(buf), "New_login_%d", serial);
+    if (uldb_default->iface->try_new_login) {
+      serial = 0;
+      if (default_try_new_login(buf, sizeof(buf), "New_login_%d", serial, 1) < 0) {
+        err("%s -> database error", logbuf);
+        send_reply(p, -ULS_ERR_DB_ERROR);
+        return;
       }
-    } while (default_get_user_by_login(buf) >= 0);
+    } else {
+      do {
+        serial++;
+        if (!serial) {
+          snprintf(buf, sizeof(buf), "New_login");
+        } else {
+          snprintf(buf, sizeof(buf), "New_login_%d", serial);
+        }
+      } while (default_get_user_by_login(buf) >= 0);
+    }
     login_ptr = buf;
   }
 
