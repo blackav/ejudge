@@ -493,7 +493,8 @@ teamdb_get_flags(teamdb_state_t state, int id)
 
   if (teamdb_refresh(state) < 0) return TEAM_BANNED;
   if (!teamdb_lookup_client(state, id)) {
-    err("teamdb_get_flags: bad team id %d", id);
+    err("teamdb_get_flags: bad team id %d (contest_id %d)", id,
+        state->contest_id);
     return TEAM_BANNED;
   }
   ASSERT(state->u_contests[id]);
