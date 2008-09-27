@@ -9201,7 +9201,8 @@ unpriv_submit_run(FILE *fout,
   if (prob->type_val == PROB_TYPE_STANDARD) {
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
-        || lang->disable_auto_testing || lang->disable_testing) {
+        || lang->disable_auto_testing || lang->disable_testing
+        || cs->testing_suspended) {
       run_change_status(cs->runlog_state, run_id, RUN_PENDING, 0, -1, 0);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"
