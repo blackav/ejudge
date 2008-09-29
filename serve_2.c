@@ -662,6 +662,7 @@ serve_check_stat_generation(
   struct tm *ptm;
   time_t thisday, nextday;
 
+  if (!cnts) return;
   if (!force_flag && state->stat_last_check_time > 0
       && state->stat_last_check_time + 600 > state->current_time)
     return;
@@ -858,14 +859,48 @@ serve_packet_name(int run_id, int prio, unsigned char buf[])
   // time_t component - 4 byte
   // nanosec component - 4 byte
 
+  // EJ_SERVE_PACKET_NAME_SIZE == 13
+  // total packet name bits: 60 (12 * 5)
+
+  //OLD:
+  // 6666555555555544444444443333333333222222222211111111110000000000
+  // 3210987654321098765432109876543210987654321098765432109876543210
+  //     ==P==
+  //          =====run_id====
+  //                         ======pid======
+  //                                        ===========time==========
+
+  /*
   num = (getpid() & 0x7fffLLU) << 25LLU;
   num |= (run_id & 0x7fffLLU) << 40LLU;
   gettimeofday(&ts, 0);
   num |= (ts.tv_sec ^ ts.tv_usec) & 0x1ffffff;
   b32_number(num, buf);
-  if (prio < -16) prio = -16;
-  if (prio > 15) prio = 15;
-  buf[0] = b32_digits[prio + 16];
+  prio += 16;
+  if (prio < 0) prio = 0;
+  if (prio > 31) prio = 31;
+  buf[0] = b32_digits[prio];
+  */
+
+  //NEW:
+  // 6666555555555544444444443333333333222222222211111111110000000000
+  // 3210987654321098765432109876543210987654321098765432109876543210
+  //     ==P==
+  //          =====run_id=========
+  //                              =======time=========
+  //                                                  ======usec=====
+
+  prio += 16;
+  if (prio < 0) prio = 0;
+  if (prio > 31) prio = 31;
+  gettimeofday(&ts, 0);
+
+  num = prio;
+  num <<= 55;
+  num |= (run_id & 0xfffffLLU) << 35;
+  num |= (ts.tv_sec & 0xfffffLLU) << 15;
+  num |= (ts.tv_usec & 0x7fffLLU);
+  b32_number(num, buf);
 }
 
 int

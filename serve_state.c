@@ -66,7 +66,7 @@ serve_state_destroy(serve_state_t state,
     if (state->saved_testing_suspended != state->testing_suspended) {
       state->testing_suspended = state->saved_testing_suspended;
       serve_update_status_file(state, 1);
-      if (!state->testing_suspended)
+      if (!state->testing_suspended && cnts)
         serve_judge_suspended(cnts, state, 0, 0, 0);
     }
     if (state->destroy_callback) (*state->destroy_callback)(state);
