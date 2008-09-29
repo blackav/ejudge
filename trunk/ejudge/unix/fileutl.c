@@ -249,7 +249,13 @@ scan_dir(char const *partial_path, char *found_item, size_t fi_size)
     if (prio < -16) prio = -16;
     if (prio > 15) prio = 15;
     prio += 16;
-    if (items[prio]) continue;
+
+    if (items[prio]) {
+      if (strcmp(items[prio], de->d_name) <= 0) continue;
+      items[prio] = (unsigned char*) alloca(strlen(de->d_name) + 1);
+      strcpy(items[prio], de->d_name);
+      continue;
+    }
 
     items[prio] = (unsigned char*) alloca(strlen(de->d_name) + 1);
     strcpy(items[prio], de->d_name);
