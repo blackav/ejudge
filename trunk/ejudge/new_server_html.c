@@ -2377,6 +2377,9 @@ priv_submit_run(FILE *fout,
   struct timeval precise_time;
   path_t run_path;
   struct problem_plugin_iface *plg = 0;
+  int skip_mime_type_test = 0;
+  const unsigned char *text_form_text = 0;
+  size_t text_form_size = 0;
 
   if (ns_cgi_param_int(phr, "problem", &prob_id) < 0) {
     errmsg = "problem is not set or binary";
@@ -2449,7 +2452,27 @@ priv_submit_run(FILE *fout,
   /* get the submission text */
   switch (prob->type_val) {
   case PROB_TYPE_STANDARD:      // "file"
+    if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)) {
+      errmsg = "\"file\" parameter is not set";
+      goto invalid_param;
+    }
+    break;
   case PROB_TYPE_OUTPUT_ONLY:
+    if (prob->enable_text_form > 0) {
+      int r1 = ns_cgi_param_bin(phr, "file", &run_text, &run_size);
+      int r2 = ns_cgi_param_bin(phr, "text_form", &text_form_text,
+                                &text_form_size);
+      if (!r1 && !r2) {
+        errmsg = "neither \"file\" nor \"text\" parameters are set";
+        goto invalid_param;
+      }
+    } else {
+      if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)) {
+        errmsg = "\"file\" parameter is not set";
+        goto invalid_param;
+      }
+    }
+    break;
   case PROB_TYPE_TEXT_ANSWER:
   case PROB_TYPE_SHORT_ANSWER:
   case PROB_TYPE_SELECT_ONE:
@@ -2521,6 +2544,19 @@ priv_submit_run(FILE *fout,
   case PROB_TYPE_OUTPUT_ONLY:
     if (!prob->binary_input && strlen(run_text) != run_size)
       goto binary_submission;
+    if (prob->enable_text_form > 0 && text_form_text
+        && strlen(text_form_text) != text_form_size)
+      goto binary_submission;
+    if (prob->enable_text_form) {
+      if (!run_size) {
+        run_text = text_form_text; text_form_text = 0;
+        run_size = text_form_size; text_form_size = 0;
+        skip_mime_type_test = 1;
+      } else {
+        text_form_text = 0;
+        text_form_size = 0;
+      }
+    }
     break;
 
   case PROB_TYPE_TEXT_ANSWER:
@@ -2564,6 +2600,9 @@ priv_submit_run(FILE *fout,
         goto cleanup;
       }
     }
+  } else if (skip_mime_type_test) {
+    mime_type = 0;
+    mime_type_str = mime_type_get_type(mime_type);
   } else {
     // guess the content-type and check it against the list
     if ((mime_type = mime_type_guess(global->diff_work_dir,
