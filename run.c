@@ -247,8 +247,10 @@ static unsigned char *
 prepare_checker_comment(const unsigned char *str)
 {
   size_t len = strlen(str);
-  unsigned char *wstr = alloca(len + 1), *p;
+  unsigned char *wstr = 0, *p;
+  unsigned char *cmt = 0;
 
+  wstr = (unsigned char*) xmalloc(len + 1);
   strcpy(wstr, str);
   for (p = wstr; *p; p++)
     if (*p < ' ') *p = ' ';
@@ -280,7 +282,9 @@ prepare_checker_comment(const unsigned char *str)
     }
   }
 
-  return html_armor_string_dup(wstr);
+  cmt = html_armor_string_dup(wstr);
+  xfree(wstr);
+  return cmt;
 }
 
 static const char * const scoring_system_strs[] =

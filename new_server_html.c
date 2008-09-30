@@ -15,90 +15,6 @@
  * GNU General Public License for more details.
  */
 
-/*
- * Command reimplementation status:
-    SRV_CMD_GET_ARCHIVE,                OK
-    SRV_CMD_SHOW_CLAR,                  OK
-    SRV_CMD_SHOW_SOURCE,                OK
-    SRV_CMD_SHOW_REPORT,                OK
-    SRV_CMD_SUBMIT_RUN,                 OK
-    SRV_CMD_SUBMIT_CLAR,                OK
-    SRV_CMD_TEAM_PAGE,                  OK
-    SRV_CMD_MASTER_PAGE,                OK
-    SRV_CMD_PRIV_STANDINGS,             OK
-    SRV_CMD_VIEW_CLAR,                  OK
-    SRV_CMD_VIEW_SOURCE,                OK
-    SRV_CMD_VIEW_REPORT,                OK
-    SRV_CMD_VIEW_USERS,                 OK
-    SRV_CMD_PRIV_MSG,                   OK
-    SRV_CMD_PRIV_REPLY,                 OK
-    SRV_CMD_SUSPEND,                    OK
-    SRV_CMD_RESUME,                     OK
-    SRV_CMD_UPDATE_STAND,               OK
-    SRV_CMD_RESET,                      OK
-    SRV_CMD_START,                      OK
-    SRV_CMD_STOP,                       OK
-    SRV_CMD_REJUDGE_ALL,                OK
-    SRV_CMD_REJUDGE_PROBLEM,            OK
-    SRV_CMD_SCHEDULE,                   OK
-    SRV_CMD_DURATION,                   OK
-    SRV_CMD_EDIT_RUN,                   OK
-    SRV_CMD_VIRTUAL_START,              OK
-    SRV_CMD_VIRTUAL_STOP,               OK
-    SRV_CMD_VIRTUAL_STANDINGS,          OK
-    SRV_CMD_RESET_FILTER,               OK
-    SRV_CMD_CLEAR_RUN,                  OK
-    SRV_CMD_SQUEEZE_RUNS,               OK
-    SRV_CMD_DUMP_RUNS,                  OK
-    SRV_CMD_DUMP_STANDINGS,
-    SRV_CMD_SET_JUDGING_MODE,           OK
-    SRV_CMD_CONTINUE,                   OK
-    SRV_CMD_WRITE_XML_RUNS,             OK
-    SRV_CMD_IMPORT_XML_RUNS,            OK
-    SRV_CMD_QUIT,                       OK
-    SRV_CMD_EXPORT_XML_RUNS,            OK
-    SRV_CMD_PRIV_SUBMIT_RUN,            OK
-    SRV_CMD_TEST_SUSPEND,               OK
-    SRV_CMD_TEST_RESUME,                OK
-    SRV_CMD_JUDGE_SUSPENDED,            OK
-    SRV_CMD_SET_ACCEPTING_MODE,         OK
-    SRV_CMD_PRIV_PRINT_RUN,             OK
-    SRV_CMD_PRINT_RUN,                  OK
-    SRV_CMD_PRIV_DOWNLOAD_RUN,          OK
-    SRV_CMD_PRINT_SUSPEND,              OK
-    SRV_CMD_PRINT_RESUME,               OK
-    SRV_CMD_COMPARE_RUNS,               OK
-    SRV_CMD_UPLOAD_REPORT,
-    SRV_CMD_REJUDGE_BY_MASK,            OK
-    SRV_CMD_NEW_RUN_FORM,               OK
-    SRV_CMD_NEW_RUN,                    OK
-    SRV_CMD_VIEW_TEAM,                  OK
-    SRV_CMD_SET_TEAM_STATUS,            OK
-    SRV_CMD_ISSUE_WARNING,              OK
-    SRV_CMD_SOFT_UPDATE_STAND,          OK
-    SRV_CMD_PRIV_DOWNLOAD_REPORT,       OK
-    SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT,
-    SRV_CMD_DUMP_MASTER_RUNS,           OK
-    SRV_CMD_RESET_CLAR_FILTER,          OK
-    SRV_CMD_HAS_TRANSIENT_RUNS,         OK
-    SRV_CMD_GET_TEST_SUSPEND,
-    SRV_CMD_VIEW_TEST_INPUT,            OK
-    SRV_CMD_VIEW_TEST_OUTPUT,           OK
-    SRV_CMD_VIEW_TEST_ANSWER,           OK
-    SRV_CMD_VIEW_TEST_ERROR,            OK
-    SRV_CMD_VIEW_TEST_CHECKER,          OK
-    SRV_CMD_VIEW_TEST_INFO,             OK
-    SRV_CMD_VIEW_AUDIT_LOG,             OK
-    SRV_CMD_DUMP_PROBLEMS,              OK
-    SRV_CMD_GET_CONTEST_TYPE,           OK
-    SRV_CMD_SUBMIT_RUN_2,               OK
-    SRV_CMD_FULL_REJUDGE_BY_MASK,       OK
-    SRV_CMD_DUMP_SOURCE,                OK
-    SRV_CMD_DUMP_CLAR,                  OK
-    SRV_CMD_RUN_STATUS,                 OK
-    SRV_CMD_DUMP_SOURCE_2,              OK
-*/
-
 #include "config.h"
 #include "ej_types.h"
 #include "ej_limits.h"
@@ -2680,7 +2596,7 @@ priv_submit_run(FILE *fout,
                       "  Testing disabled for this problem or language\n",
                       run_id);
     } else {
-      if (serve_compile_request(cs, run_text, run_size, run_id,
+      if (serve_compile_request(cs, run_text, run_size, run_id, phr->user_id,
                                 lang->compile_id, phr->locale_id, 0,
                                 lang->src_sfx,
                                 lang->compiler_env, -1, 0, prob, lang) < 0) {
@@ -5821,6 +5737,42 @@ priv_assign_cyphers_2(
 }
 
 static int
+priv_set_priorities(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  //const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob;
+  int retval = 0;
+  int prob_id, prio;
+  unsigned char varname[64];
+
+  if (phr->role != USER_ROLE_ADMIN)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  for (prob_id = 1;
+       prob_id <= cs->max_prob && prob_id < EJ_SERVE_STATE_TOTAL_PROBS;
+       ++prob_id) {
+    if (!(prob = cs->probs[prob_id])) continue;
+    snprintf(varname, sizeof(varname), "prio_%d", prob_id);
+    prio = 0;
+    if (ns_cgi_param_int(phr, varname, &prio) < 0) continue;
+    if (prio < -16) prio = -16;
+    if (prio > 15) prio = 15;
+    cs->prob_prio[prob_id] = prio;
+  }
+
+ cleanup:
+  return retval;
+}
+
+static int
 priv_view_passwords(FILE *fout,
                     FILE *log_f,
                     struct http_request_info *phr,
@@ -5900,6 +5852,31 @@ priv_view_exam_info(
             phr->name_arm, phr->contest_id, extra->contest_arm,
             _("Examination information"));
   ns_write_exam_info(fout, log_f, phr, cnts, extra);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  return retval;
+}
+
+static int
+priv_priority_form(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+
+  if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
+            phr->name_arm, phr->contest_id, extra->contest_arm,
+            _("Judging priorities"));
+  ns_write_judging_priorities(fout, log_f, phr, cnts, extra);
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
@@ -6460,6 +6437,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS] = priv_user_toggle_flags,
   [NEW_SRV_ACTION_FORCE_START_VIRTUAL] = priv_force_start_virtual,
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_2] = priv_assign_cyphers_2,
+  [NEW_SRV_ACTION_SET_PRIORITIES] = priv_set_priorities,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -6516,6 +6494,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = priv_print_problem_exam_protocol,
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_1] = priv_assign_cyphers_1,
   [NEW_SRV_ACTION_VIEW_EXAM_INFO] = priv_view_exam_info,
+  [NEW_SRV_ACTION_PRIO_FORM] = priv_priority_form,
 };
 
 static void
@@ -7862,6 +7841,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_EXAM_INFO] = priv_generic_page,
   [NEW_SRV_ACTION_PRIV_SUBMIT_PAGE] = priv_submit_page,
   [NEW_SRV_ACTION_GET_FILE] = priv_get_file,
+  [NEW_SRV_ACTION_PRIO_FORM] = priv_generic_page,
+  [NEW_SRV_ACTION_SET_PRIORITIES] = priv_generic_operation,
 };
 
 static void
@@ -9250,7 +9231,7 @@ unpriv_submit_run(FILE *fout,
                       "  Testing disabled for this problem or language\n",
                       run_id);
     } else {
-      if (serve_compile_request(cs, run_text, run_size, run_id,
+      if (serve_compile_request(cs, run_text, run_size, run_id, phr->user_id,
                                 lang->compile_id, phr->locale_id, 0,
                                 lang->src_sfx,
                                 lang->compiler_env, -1, 0, prob, lang) < 0) {

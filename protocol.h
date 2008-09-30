@@ -4,7 +4,7 @@
 #ifndef __PROTOCOL_H__
 #define __PROTOCOL_H__
 
-/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,9 @@ struct prot_serve_status_v1
   unsigned char olympiad_judging_mode;
   unsigned char continuation_enabled;
 };
+
+// number of problems with dynamic priority stored in serve_status structure
+#define EJ_SERVE_STATUS_TOTAL_PROBS 28
 
 #define PROT_SERVE_STATUS_MAGIC_V2 (0xe739aa03)
 struct prot_serve_status_v2
@@ -88,7 +91,10 @@ struct prot_serve_status_v2
   ej_time64_t   max_online_time;
   int           max_online_count;
 
-  unsigned char _pad[44];
+  // priority adjustments for problems
+  signed char   prob_prio[EJ_SERVE_STATUS_TOTAL_PROBS];
+
+  unsigned char _pad[16];
 };
 
 #define PROT_SERVE_PACKET_MAGIC (0xe342)

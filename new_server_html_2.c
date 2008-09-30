@@ -606,16 +606,23 @@ ns_write_priv_all_runs(FILE *f,
     fprintf(f, "</form>\n");
   }
 
-  if (phr->role == USER_ROLE_ADMIN && global->enable_runlog_merge) {
+  if (phr->role == USER_ROLE_ADMIN
+      && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) {
+    fprintf(f, "<table><tr><td>%s%s</a></td></td></table>\n",
+            ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_PRIO_FORM, 0),
+            _("Change judging priorities"));
+  }
+
     /*
+  if (phr->role == USER_ROLE_ADMIN && global->enable_runlog_merge) {
     html_start_form(f, 2, self_url, hidden_vars);
     fprintf(f, "<table border=\"0\"><tr><td>%s: </td>\n",
             _("Import and merge XML runs log"));
     fprintf(f, "<td><input type=\"file\" name=\"file\"/></td>\n");
     fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td>", ACTION_MERGE_RUNS, _("Send!"));
     fprintf(f, "</tr></table></form>\n");
-    */
   }
+    */
 
   if (opcaps_check(phr->caps, OPCAP_DUMP_RUNS) >= 0) {
     html_start_form(f, 1, phr->self_url, phr->hidden_vars);
@@ -2695,6 +2702,88 @@ ns_user_info_page(FILE *fout, FILE *log_f,
     fprintf(fout, "</tr></table>\n");
     fprintf(fout, "</form>\n");
   }
+
+  html_armor_free(&ab);
+  return 0;
+}
+
+static int
+fix_prio(int val)
+{
+  if (val < -16) val = -16;
+  if (val > 15) val = 15;
+  return val;
+}
+
+int
+ns_write_judging_priorities(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob;
+  const unsigned char *cl = " class=\"b1\"";
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int glob_prio, prob_prio, static_prio, local_prio, total_prio;
+  int prob_id;
+  unsigned char varname[64];
+  unsigned char bb[1024];
+
+  glob_prio = fix_prio(global->priority_adjustment);
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+  fprintf(fout, "<table%s>\n", cl);
+  fprintf(fout, "<tr>"
+          "<th%s>Id</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "</tr>\n",
+          cl, cl, _("Short name"), cl, _("Long name"),
+          cl, _("Contest priority"), cl, _("Problem priority"),
+          cl, _("Static priority"), cl, _("Priority adjustment"),
+          cl, _("Total priority"));
+  for (prob_id = 1;
+       prob_id <= cs->max_prob && prob_id < EJ_SERVE_STATE_TOTAL_PROBS;
+       ++prob_id) {
+    if (!(prob = cs->probs[prob_id])) continue;
+    prob_prio = fix_prio(prob->priority_adjustment);
+    static_prio = fix_prio(glob_prio + prob_prio);
+    local_prio = fix_prio(cs->prob_prio[prob_id]);
+    total_prio = fix_prio(static_prio + local_prio);
+    fprintf(fout, "<tr>");
+    fprintf(fout, "<td%s>%d</td>", cl, prob_id);
+    fprintf(fout, "<td%s>%s</td>", cl, ARMOR(prob->short_name));
+    fprintf(fout, "<td%s>%s</td>", cl, ARMOR(prob->long_name));
+    fprintf(fout, "<td%s>%d</td><td%s>%d</td><td%s>%d</td>",
+            cl, glob_prio, cl, prob_prio, cl, static_prio);
+    snprintf(varname, sizeof(varname), "prio_%d", prob_id);
+    html_input_text(bb, sizeof(bb), varname, 4, "%d", local_prio);
+    fprintf(fout, "<td%s>%s</td>", cl, bb);
+    fprintf(fout, "<td%s>%d</td>", cl, total_prio);
+    fprintf(fout, "</tr>\n");
+  }
+  fprintf(fout, "</table>\n");
+
+  cl = " class=\"b0\"";
+  fprintf(fout, "<table%s><tr>", cl);
+  fprintf(fout, "<td%s>%s%s</a></td>",
+          cl, ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
+          _("Main page"));
+  fprintf(fout, "<td%s>%s</td>",
+          cl, BUTTON(NEW_SRV_ACTION_SET_PRIORITIES));
+  fprintf(fout, "</tr></table>\n");
+  fprintf(fout, "</form>\n");
+
+  fprintf(fout, "<br/><p>%s</p></br>\n",
+          _("Priority value must be in range [-16, 15]. The less the priority value, the more the judging priority."));
 
   html_armor_free(&ab);
   return 0;

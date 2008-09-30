@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-19 12:25+0400\n"
-"PO-Revision-Date: 2008-09-20 00:21+0400\n"
+"POT-Creation-Date: 2008-09-30 17:05+0400\n"
+"PO-Revision-Date: 2008-09-30 21:17+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -657,6 +657,9 @@ msgstr "Сменить язык"
 msgid "Change duration"
 msgstr "Изменить длительность"
 
+msgid "Change judging priorities"
+msgstr "Изменить приоритет проверки"
+
 msgid "Change language"
 msgstr "Сменить язык"
 
@@ -896,6 +899,9 @@ msgstr "Турнирные пароли"
 
 msgid "Contest passwords are disabled"
 msgstr "Турнирные пароли отключены"
+
+msgid "Contest priority"
+msgstr "Приоритет турнира"
 
 msgid "Contest registrations"
 msgstr "Регистрация на турниры"
@@ -1793,6 +1799,9 @@ msgstr "Комментарий для судей"
 msgid "Judge's report"
 msgstr "Судейский протокол"
 
+msgid "Judging priorities"
+msgstr "Приоритет проверки"
+
 msgid "Jul"
 msgstr "Июль"
 
@@ -2442,6 +2451,14 @@ msgstr "Превышена квота печати (%d страниц)"
 msgid "Printing user protocol"
 msgstr "Печать экзаменационного протокола участника"
 
+msgid "Priority adjustment"
+msgstr "Поправка приоритета"
+
+msgid ""
+"Priority value must be in range [-16, 15]. The less the priority value, the "
+"more the judging priority."
+msgstr "Значение приоритета должно находиться в интервале [-16, 15]. Чем меньше значение приоритета, тем выше приоритет."
+
 msgid "Privileged users page"
 msgstr "Список привилегированных пользователей"
 
@@ -2461,6 +2478,9 @@ msgstr "Срок окончания сдачи"
 #, c-format
 msgid "Problem is empty in row %d\n"
 msgstr "В строке %d не определено имя задачи\n"
+
+msgid "Problem priority"
+msgstr "Приоритет задачи"
 
 msgid "Problem statements"
 msgstr "Условия задач"
@@ -2913,6 +2933,9 @@ msgstr "Установить флаг законченности проверки"
 msgid "Set judging mode"
 msgstr "Включить режим проверки"
 
+msgid "Set priorities"
+msgstr "Установить приоритеты"
+
 msgid "Set the BANNED flag for the selected users"
 msgstr "Установить флаг ЗАБЛОКИРОВАННОСТИ для отмеченных пользователей"
 
@@ -3002,6 +3025,9 @@ msgstr "Начать виртуальный турнир"
 
 msgid "Statements"
 msgstr "Условия"
+
+msgid "Static priority"
+msgstr "Статический приоритет"
 
 msgid "Status"
 msgstr "Статус"
@@ -3274,6 +3300,9 @@ msgstr "Всего"
 
 msgid "Total messages"
 msgstr "Всего сообщений"
+
+msgid "Total priority"
+msgstr "Суммарный приоритет"
 
 msgid "Total score"
 msgstr "Суммарный балл"
