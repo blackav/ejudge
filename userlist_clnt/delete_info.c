@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,8 +18,12 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_delete_info(struct userlist_clnt *clnt, int cmd,
-                          int user_id, int contest_id, int serial)
+userlist_clnt_delete_info(
+        struct userlist_clnt *clnt,
+        int cmd,
+        int user_id,
+        int contest_id,
+        int serial)
 {
   struct userlist_pk_delete_info *out = 0;
   struct userlist_packet *in = 0;
@@ -28,7 +32,7 @@ userlist_clnt_delete_info(struct userlist_clnt *clnt, int cmd,
 
   out_size = sizeof(*out);
   out = alloca(out_size);
-  if (!out) return -ULS_ERR_OUT_OF_MEM;
+  memset(out, 0, sizeof(*out));
   out->request_id = cmd;
   out->user_id = user_id;
   out->contest_id = contest_id;
