@@ -350,6 +350,10 @@ enum
   NEW_SRV_ACTION_REG_REGISTER,
   NEW_SRV_ACTION_REG_DATA_EDIT,
 
+  // more master stuff
+  NEW_SRV_ACTION_PRIO_FORM,
+  NEW_SRV_ACTION_SET_PRIORITIES,
+
   NEW_SRV_ACTION_LAST,
 };
 
@@ -605,6 +609,13 @@ ns_user_info_page(FILE *fout, FILE *log_f,
                   const struct contest_desc *cnts,
                   struct contest_extra *extra,
                   int view_user_id);
+int
+ns_write_judging_priorities(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra);
 int
 ns_new_run_form(FILE *fout, FILE *log_f,
                 struct http_request_info *phr,

@@ -113,6 +113,8 @@ struct serve_event_queue
   time_t real_time;             /* the actual event time */
 };
 
+#define EJ_SERVE_STATE_TOTAL_PROBS 28
+
 struct serve_state
 {
   unsigned char *config_path;
@@ -203,6 +205,9 @@ struct serve_state
   int client_id;
   unsigned char *pending_xml_import;
   void (*destroy_callback)(struct serve_state *cs);
+
+  // problem priorities
+  signed char prob_prio[EJ_SERVE_STATE_TOTAL_PROBS];
 };
 typedef struct serve_state *serve_state_t;
 
@@ -273,7 +278,7 @@ void serve_packet_name(int run_id, int prio, unsigned char buf[]);
 
 int serve_compile_request(serve_state_t state,
                           unsigned char const *str, int len,
-                          int run_id, int lang_id, int locale_id,
+                          int run_id, int user_id, int lang_id, int locale_id,
                           int output_only,
                           unsigned char const *sfx,
                           char **compiler_env,

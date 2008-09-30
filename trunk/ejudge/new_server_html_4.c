@@ -997,7 +997,7 @@ cmd_submit_run(
                       "  Testing disabled for this problem or language\n",
                       run_id);
     } else {
-      if (serve_compile_request(cs, run_text, run_size, run_id,
+      if (serve_compile_request(cs, run_text, run_size, run_id, phr->user_id,
                                 lang->compile_id, phr->locale_id, 0,
                                 lang->src_sfx,
                                 lang->compiler_env, -1, 0, prob, lang) < 0)

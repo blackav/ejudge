@@ -168,6 +168,7 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL] = __("Print the exam full cyphered protocols"),
   [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = __("Print problem protocol"),
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_2] = __("Assign random cyphers"),
+  [NEW_SRV_ACTION_SET_PRIORITIES] = __("Set priorities"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =
@@ -211,6 +212,7 @@ const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_RUN_SCORE] = NEW_SRV_ACTION_VIEW_SOURCE,
   [NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ] = NEW_SRV_ACTION_VIEW_SOURCE,
   [NEW_SRV_ACTION_CHANGE_RUN_PAGES] = NEW_SRV_ACTION_VIEW_SOURCE,
+  [NEW_SRV_ACTION_SET_PRIORITIES] = NEW_SRV_ACTION_PRIO_FORM,
 };
 
 /* previous state (return in case of error) */

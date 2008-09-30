@@ -282,6 +282,8 @@ serve_update_status_file(serve_state_t state, int force_flag)
   status.max_online_time = state->max_online_time;
   status.max_online_count = state->max_online_count;
 
+  memcpy(status.prob_prio, state->prob_prio, sizeof(status.prob_prio));
+
   generic_write_file((char*) &status, sizeof(status), SAFE,
                      state->global->status_dir, "status", "");
   state->last_update_status_file = state->current_time;
@@ -344,6 +346,8 @@ serve_load_status_file(serve_state_t state)
 
   state->max_online_time = status.max_online_time;
   state->max_online_count = status.max_online_count;
+
+  memcpy(state->prob_prio, status.prob_prio, sizeof(state->prob_prio));
 }
 
 int
@@ -904,15 +908,21 @@ serve_packet_name(int run_id, int prio, unsigned char buf[])
 }
 
 int
-serve_compile_request(serve_state_t state,
-                      unsigned char const *str, int len,
-                      int run_id, int lang_id, int locale_id, int output_only,
-                      unsigned char const *sfx,
-                      char **compiler_env,
-                      int accepting_mode,
-                      int priority_adjustment,
-                      const struct section_problem_data *prob,
-                      const struct section_language_data *lang)
+serve_compile_request(
+        serve_state_t state,
+        unsigned char const *str,
+        int len,
+        int run_id,
+        int user_id,
+        int lang_id,
+        int locale_id,
+        int output_only,
+        unsigned char const *sfx,
+        char **compiler_env,
+        int accepting_mode,
+        int priority_adjustment,
+        const struct section_problem_data *prob,
+        const struct section_language_data *lang)
 {
   struct compile_run_extra rx;
   struct compile_request_packet cp;
@@ -927,6 +937,7 @@ serve_compile_request(serve_state_t state,
   size_t src_header_size = 0, src_footer_size = 0, src_size = 0;
   unsigned char *src_out_text = 0;
   size_t src_out_size = 0;
+  int prio = 0;
 
   if (prob->source_header[0]) {
     sformat_message(tmp_path, sizeof(tmp_path), prob->source_header,
@@ -977,8 +988,16 @@ serve_compile_request(serve_state_t state,
     goto failed;
   }
 
+  prio = 0;
+  if (lang) prio += lang->priority_adjustment;
+  if (prob) prio += prob->priority_adjustment;
+  prio += find_user_priority_adjustment(state, user_id);
+  prio += priority_adjustment;
+  if (prob && prob->id < EJ_SERVE_STATE_TOTAL_PROBS)
+    prio += state->prob_prio[prob->id];
+
   if (!sfx) sfx = "";
-  serve_packet_name(run_id, 0, pkt_name);
+  serve_packet_name(run_id, prio, pkt_name);
 
   if (src_header_size > 0 || src_footer_size > 0) {
     if (len < 0) {
@@ -1122,6 +1141,8 @@ serve_run_request(serve_state_t state,
   prio += find_user_priority_adjustment(state, user_id);
   prio += state->testers[cn]->priority_adjustment;
   prio += priority_adjustment;
+  if (prob_id < EJ_SERVE_STATE_TOTAL_PROBS)
+    prio += state->prob_prio[prob_id];
   
   if (judge_id < 0) judge_id = state->compile_request_id++;
   if (accepting_mode < 0) {
@@ -2104,7 +2125,7 @@ serve_rejudge_run(
     accepting_mode = 0;
   }
 
-  serve_compile_request(state, 0, -1, run_id,
+  serve_compile_request(state, 0, -1, run_id, re.user_id,
                         state->langs[re.lang_id]->compile_id, re.locale_id,
                         (prob->type_val > 0),
                         state->langs[re.lang_id]->src_sfx,

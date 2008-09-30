@@ -8587,7 +8587,7 @@ do_work(void)
   signal(SIGHUP, restart_signal);
   signal(SIGUSR1, usr1_signal);
   signal(SIGUSR2, usr2_signal);
-  signal(SIGWINCH, winch_signal);
+  signal(SIGURG, winch_signal);
 
   if ((listen_socket = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
     err("socket() failed: %s", os_ErrorMsg());
