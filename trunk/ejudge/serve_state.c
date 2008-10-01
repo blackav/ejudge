@@ -44,7 +44,7 @@ serve_state_init(void)
   serve_state_t state;
 
   XCALLOC(state, 1);
-  state->clarlog_state = clar_init(0, 0, 0);
+  state->clarlog_state = clar_init();
   state->teamdb_state = teamdb_init();
   state->team_extra_state = team_extra_init();
   state->runlog_state = run_init(state->teamdb_state);
@@ -196,11 +196,13 @@ serve_set_upsolving_mode(serve_state_t state)
 }
 
 int
-serve_state_load_contest(int contest_id,
-                         struct userlist_clnt *ul_conn,
-                         struct teamdb_db_callbacks *teamdb_callbacks,
-                         serve_state_t *p_state,
-                         const struct contest_desc **p_cnts)
+serve_state_load_contest(
+        const struct ejudge_cfg *config,
+        int contest_id,
+        struct userlist_clnt *ul_conn,
+        struct teamdb_db_callbacks *teamdb_callbacks,
+        serve_state_t *p_state,
+        const struct contest_desc **p_cnts)
 {
   serve_state_t state = 0;
   const struct contest_desc *cnts = 0;
@@ -301,7 +303,7 @@ serve_state_load_contest(int contest_id,
     state->runlog_state = run_init(state->teamdb_state);
   }
 
-  if (clar_open(state->clarlog_state, state->global->clar_log_file, 0) < 0)
+  if (clar_open(state->clarlog_state, config, cnts, state->global, 0) < 0)
     goto failure;
   serve_load_status_file(state);
   serve_set_upsolving_mode(state);

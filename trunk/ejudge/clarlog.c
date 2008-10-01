@@ -19,6 +19,8 @@
 #include "ej_types.h"
 
 #include "clarlog.h"
+#include "cldb_plugin.h"
+#include "clarlog_state.h"
 
 #include "teamdb.h"
 #include "base64.h"
@@ -28,6 +30,7 @@
 #include "errlog.h"
 #include "xml_utils.h"
 #include "charsets.h"
+#include "prepare.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -48,272 +51,25 @@
 #define INTERNAL_CHARSET "utf-8"
 #endif
 
-#define CLAR_RECORD_SIZE 79
-#define SUBJ_STRING_SIZE 24
-#define IP_STRING_SIZE   15
-
-static const char signature_v1[] = "eJudge clar log";
-
-/* new clarification log header */
-struct clar_header_v1
+/* plugin information */
+struct cldb_loaded_plugin
 {
-  unsigned char signature[16];  /* "eJudge clar log" */
-  unsigned char version;        /* file version */
-  unsigned char endianness;     /* 0 - little, 1 - big endian */
-  unsigned char _pad[110];
+  struct cldb_plugin_iface *iface;
+  struct cldb_plugin_data *data;
 };
 
-/* new version of the clarification log */
-struct clar_array
-{
-  int                   a, u;
-  struct clar_entry_v1 *v;
-};
-
-struct clarlog_state
-{
-  struct clar_header_v1 header;
-  struct clar_array clars;
-  int clar_fd;
-
-  size_t allocd;
-  unsigned char **subjects;
-  int *charset_codes;
-};
+enum { CLDB_PLUGIN_MAX_NUM = 16 };
+static int cldb_plugins_num;
+static struct cldb_loaded_plugin cldb_plugins[CLDB_PLUGIN_MAX_NUM];
 
 #define ERR_R(t, args...) do { do_err_r(__FUNCTION__, t , ##args); return -1; } while (0)
 
-static int
-clar_read_record_v0(clarlog_state_t state, char *buf, int size)
-{
-  int rsz, i;
-
-  if ((rsz = sf_read(state->clar_fd, buf, size, "clar")) < 0) return rsz;
-  if (rsz != size) ERR_R("short read: %d", rsz);
-
-  for (i = 0; i < size - 1; i++) {
-    if (buf[i] >= 0 && buf[i] < ' ') break;
-  }
-  if (i < size - 1) ERR_R("bad characters in record");
-  if (buf[size - 1] != '\n') ERR_R("record improperly terminated");
-  return 0;
-}
-
-static int
-clar_read_entry(clarlog_state_t state, int n)
-{
-  char buf[CLAR_RECORD_SIZE + 16];
-  char b2[CLAR_RECORD_SIZE + 16];
-  char b3[CLAR_RECORD_SIZE + 16];
-  int  k, r;
-
-  int r_time;
-  unsigned int r_size;
-  ej_ip_t r_ip;
-
-  memset(buf, 0, sizeof(buf));
-  memset(&state->clars.v[n], 0, sizeof(state->clars.v[0]));
-  if (clar_read_record_v0(state, buf, CLAR_RECORD_SIZE) < 0) return -1;
-
-  r = sscanf(buf, "%d %d %u %d %d %d %s %s %n",
-             &state->clars.v[n].id, &r_time, &r_size,
-             &state->clars.v[n].from,
-             &state->clars.v[n].to, &state->clars.v[n].flags,
-             b2, b3, &k);
-  if (r != 8) ERR_R("[%d]: sscanf returned %d", n, r);
-  if (buf[k] != 0) ERR_R("[%d]: excess data", n);
-
-  /* do sanity checking */
-  state->clars.v[n].size = r_size;
-  state->clars.v[n].time = r_time;
-  if (state->clars.v[n].id != n) ERR_R("[%d]: bad id: %d", n,
-                                       state->clars.v[n].id);
-  if (state->clars.v[n].size == 0 || state->clars.v[n].size >= 10000)
-    ERR_R("[%d]: bad size: %d", n, state->clars.v[n].size);
-  // FIXME: how to check consistency?
-  /*
-  if (clars.v[n].from && !teamdb_lookup(clars.v[n].from))
-    ERR_R("[%d]: bad from: %d", n, clars.v[n].from);
-  if (clars.v[n].to && !teamdb_lookup(clars.v[n].to))
-    ERR_R("[%d]: bad to: %d", n, clars.v[n].to);
-  */
-  if (state->clars.v[n].flags < 0 || state->clars.v[n].flags > 255)
-    ERR_R("[%d]: bad flags: %d", n, state->clars.v[n].flags);
-  if (strlen(b2) > IP_STRING_SIZE) ERR_R("[%d]: ip is too long", n);
-  if (strlen(b3) > SUBJ_STRING_SIZE) ERR_R("[%d]: subj is too long", n);
-  if (xml_parse_ip(0, n + 1, 0, b2, &r_ip) < 0) ERR_R("[%d]: ip is invalid", n);
-  state->clars.v[n].a.ip = r_ip;
-  base64_decode_str(b3, state->clars.v[n].subj, 0);
-  return 0;
-}
-
-static int
-create_new_clar_log(clarlog_state_t state, int flags)
-{
-  int wsz;
-
-  memset(&state->header, 0, sizeof(state->header));
-  strncpy(state->header.signature, signature_v1,
-          sizeof(state->header.signature));
-  state->header.version = 1;
-
-  if (state->clars.v) {
-    xfree(state->clars.v);
-    state->clars.v = 0;
-    state->clars.u = state->clars.a = 0;
-  }
-  state->clars.a = 128;
-  XCALLOC(state->clars.v, state->clars.a);
-
-  if (flags == CLAR_LOG_READONLY) return 0;
-
-  if (ftruncate(state->clar_fd, 0) < 0) {
-    err("clar_log: ftruncate() failed: %s", os_ErrorMsg());
-    return -1;
-  }
-  if (sf_lseek(state->clar_fd, 0, SEEK_SET, "clar") == (off_t) -1)
-    return -1;
-  wsz = write(state->clar_fd, &state->header, sizeof(state->header));
-  if (wsz <= 0) {
-    err("clar_log: write() failed: %s", os_ErrorMsg());
-    return -1;
-  }
-  if (wsz != sizeof(state->header)) {
-    err("clar_log: short write: %d instead of %zu", wsz, sizeof(state->header));
-    return -1;
-  }
-  return 0;
-}
-
-static int
-write_all_clarlog(clarlog_state_t state)
-{
-  int wsz, bsz;
-  const unsigned char *buf;
-
-  if (sf_lseek(state->clar_fd, 0, SEEK_SET, "clar_write") < 0) return -1;
-
-  if ((wsz = sf_write(state->clar_fd, &state->header, sizeof(state->header),
-                      "clar_write")) < 0)
-    return -1;
-  if (wsz != sizeof(state->header)) {
-    err("clar_write: short write: %d", wsz);
-    return -1;
-  }
-
-  buf = (const unsigned char*) state->clars.v;
-  bsz = sizeof(state->clars.v[0]) * state->clars.u;
-  while (bsz > 0) {
-    if ((wsz = sf_write(state->clar_fd, buf, bsz, "clar_write")) <= 0)
-      return -1;
-    buf += wsz;
-    bsz -= wsz;
-  }
-  return 0;
-}
-
-static int
-convert_log_from_version_0(
-        clarlog_state_t state,
-        int flags,
-        off_t length,
-        const unsigned char *path)
-{
-  path_t v0_path;
-  int i;
-
-  if (length % CLAR_RECORD_SIZE != 0) {
-    err("invalid size %d of clar file (version 0)", (int) length);
-    return -1;
-  }
-
-  state->clars.u = length / CLAR_RECORD_SIZE;
-  state->clars.a = 128;
-  while (state->clars.u > state->clars.a) state->clars.a *= 2;
-  XCALLOC(state->clars.v, state->clars.a);
-  for (i = 0; i < state->clars.u; i++) {
-    if (clar_read_entry(state, i) < 0) return -1;
-  }
-
-  info("clar log version 0 successfully read");
-
-  memset(&state->header, 0, sizeof(state->header));
-  strncpy(state->header.signature, signature_v1,
-          sizeof(state->header.signature));
-  state->header.version = 1;
-
-  if (flags == CLAR_LOG_READONLY) return 0;
-
-  close(state->clar_fd); state->clar_fd = -1;
-  snprintf(v0_path, sizeof(v0_path), "%s.v0", path);
-  if (rename(path, v0_path) < 0) {
-    err("rename() failed: %s", os_ErrorMsg());
-    return -1;
-  }
-
-  if ((state->clar_fd = sf_open(path, O_RDWR|O_CREAT|O_TRUNC, 0666)) < 0)
-    return -1;
-
-  return write_all_clarlog(state);
-}
-
-static int
-read_clar_file_header(clarlog_state_t state, off_t length)
-{
-  int rsz = 0;
-
-  if (length < sizeof(struct clar_header_v1)) return 0;
-  if ((length - sizeof(struct clar_header_v1))
-      % sizeof(struct clar_entry_v1) != 0) return 0;
-  if (sf_lseek(state->clar_fd, 0, SEEK_SET, "clar_open") < 0) return -1;
-  if ((rsz = sf_read(state->clar_fd, &state->header, sizeof(state->header),
-                     "clar_open")) < 0)
-    return -1;
-  if (rsz != sizeof(state->header)) return -1;
-  if (strcmp(state->header.signature, signature_v1)) return 0;
-  if (state->header.endianness > 1) return 0;
-  return state->header.version;
-}
-
-static int
-read_clar_file(clarlog_state_t state, off_t length)
-{
-  unsigned char *buf;
-  int bsz, rsz;
-
-  state->clars.u = (length - sizeof(struct clar_header_v1))
-    / sizeof(struct clar_entry_v1);
-  state->clars.a = 128;
-  while (state->clars.a < state->clars.u) state->clars.a *= 2;
-  XCALLOC(state->clars.v, state->clars.a);
-
-  if (sf_lseek(state->clar_fd, sizeof(struct clar_header_v1), SEEK_SET,
-               "clar_read")<0)
-    return -1;
-
-  buf = (unsigned char*) state->clars.v;
-  bsz = sizeof(state->clars.v[0]) * state->clars.u;
-  while (bsz > 0) {
-    if ((rsz = sf_read(state->clar_fd, buf, bsz, "clar_read")) < 0) return -1;
-    if (!rsz) {
-      err("clar_read: unexpected EOF");
-      return -1;
-    }
-    bsz -= rsz; buf += rsz;
-  }
-  return 0;
-}
-
 clarlog_state_t
-clar_init(
-        const struct ejudge_cfg *config,
-        const struct contest_desc *cnts,
-        const struct section_global_data *global)
+clar_init(void)
 {
   clarlog_state_t p;
 
   XCALLOC(p, 1);
-  p->clar_fd = -1;
   return p;
 }
 
@@ -324,89 +80,118 @@ clar_destroy(clarlog_state_t state)
 
   if (!state) return 0;
   xfree(state->clars.v);
-  if (state->clar_fd >= 0) close(state->clar_fd);
   for (i = 0; i < state->allocd; i++)
     xfree(state->subjects[i]);
   xfree(state->subjects);
   xfree(state->charset_codes);
+  if (state->iface) state->iface->close(state->cnts);
   memset(state, 0, sizeof(*state));
   xfree(state);
   return 0;
 }
 
-static int clar_flush_entry(clarlog_state_t state, int num);
-
 int
-clar_open(clarlog_state_t state, char const *path, int flags)
+clar_open(
+        clarlog_state_t state,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        int flags)
 {
-  int version, r, i, f;
-  struct stat stb;
+  int i;
+  const struct xml_tree *p;
+  const struct ejudge_plugin *plg;
+  struct ejudge_plugin_iface *base_iface = 0;
+  struct cldb_plugin_iface *cldb_iface = 0;
+  struct cldb_plugin_data *plugin_data = 0;
 
-  info("clar_open: opening database %s", path);
-  if (state->clars.v) {
-    xfree(state->clars.v);
-    state->clars.v = 0;
-    state->clars.u = state->clars.a = 0;
-  }
-  if (state->clar_fd >= 0) {
-    close(state->clar_fd); state->clar_fd = -1;
-  }
-  if (flags == CLAR_LOG_READONLY) {
-    if ((state->clar_fd = sf_open(path, O_RDONLY, 0)) < 0) return -1;
-  } else {
-    if ((state->clar_fd = sf_open(path, O_RDWR | O_CREAT, 0666)) < 0) return -1;
-  }
-
-  if (fstat(state->clar_fd, &stb) < 0) {
-    err("fstat() failed: %s", os_ErrorMsg());
-    close(state->clar_fd); state->clar_fd = -1;
-    return -1;
-  }
-  if (!stb.st_size) {
-    return create_new_clar_log(state, flags);
-  }
-  if ((version = read_clar_file_header(state, stb.st_size)) < 0)
-    return -1;
-  if (!version) {
-    return convert_log_from_version_0(state, flags, stb.st_size, path);
-  }
-  if (version > 1) {
-    err("clar_log: cannot handle clar log file of version %d", version);
-    return -1;
-  }
-  r = read_clar_file(state, stb.st_size);
-  // fix a bug
-  for (i = 0; i < state->clars.u; i++) {
-    f = 0;
-    if (state->clars.v[i].from == -1) {
-      state->clars.v[i].from = 0;
-      f = 1;
+  if (!cldb_plugins_num) {
+    cldb_plugins[0].iface = &cldb_plugin_file;
+    if (!(cldb_plugins[0].data = cldb_plugin_file.init(config))
+        || cldb_plugin_file.prepare(cldb_plugins[0].data, config, 0) < 0) {
+      err("cannot initialize `file' clarlog plugin");
+      return -1;
     }
-    if (state->clars.v[i].to == -1) {
-      state->clars.v[i].to = 0;
-      f = 1;
-    }
-    if (f) {
-      clar_flush_entry(state, i);
-      info("clar_log: entry %d fixed", i);
-    }
+    cldb_plugins_num++;
   }
-  return r;
-}
 
-static int
-clar_flush_entry(clarlog_state_t state, int num)
-{
-  int wsz;
+  if (!global || !global->clardb_plugin[0]
+      || !strcmp(global->clardb_plugin, "file")) {
+    state->iface = cldb_plugins[0].iface;
+    state->data = cldb_plugins[0].data;
 
-  if (sf_lseek(state->clar_fd,
-               sizeof(struct clar_entry_v1) * num
-               + sizeof(struct clar_header_v1),
-               SEEK_SET, "clar_flush_entry") < 0)
+    if (!(state->cnts = state->iface->open(state->data, state, config, cnts,
+                                           global, flags)))
+      return -1;
+    return 0;
+  }
+
+  // look up the table of loaded plugins
+  for (i = 1; i < cldb_plugins_num; i++) {
+    if (!strcmp(cldb_plugins[i].iface->b.name, global->clardb_plugin))
+      break;
+  }
+  if (i < cldb_plugins_num) {
+    state->iface = cldb_plugins[i].iface;
+    state->data = cldb_plugins[i].data;
+    if (!(state->cnts = state->iface->open(state->data, state, config, cnts,
+                                           global, flags)))
+      return -1;
+    return 0;
+  }
+
+  if (!config) {
+    err("cannot load any plugin");
     return -1;
+  }
 
-  if ((wsz = sf_write(state->clar_fd, &state->clars.v[num], sizeof(state->clars.v[0]), "clar_flush_entry")) < 0) return -1;
-  if (wsz != sizeof(state->clars.v[0])) ERR_R("short write: %d", wsz);
+  // find an appropriate plugin
+  for (p = config->plugin_list; p; p = p->right) {
+    plg = (const struct ejudge_plugin*) p;
+    if (plg->load_flag && !strcmp(plg->type, "cldb")
+        && !strcmp(plg->name, global->clardb_plugin))
+      break;
+  }
+  if (!p) {
+    err("clarlog plugin `%s' is not registered", global->clardb_plugin);
+    return -1;
+  }
+  if (cldb_plugins_num == CLDB_PLUGIN_MAX_NUM) {
+    err("too many clarlog plugins already loaded");
+    return -1;
+  }
+  plugin_set_directory(config->plugin_dir);
+  if (!(base_iface = plugin_load(plg->path, plg->type, plg->name))) {
+    err("cannot load plugin `%s'", plg->name);
+    return 1;
+  }
+  cldb_iface = (struct cldb_plugin_iface*) base_iface;
+  if (base_iface->size != sizeof(*cldb_iface)) {
+    err("plugin `%s' size mismatch", plg->name);
+    return -1;
+  }
+  if (cldb_iface->cldb_version != CLDB_PLUGIN_IFACE_VERSION) {
+    err("plugin `%s' version mismatch", plg->name);
+    return -1;
+  }
+  if (!(plugin_data = cldb_iface->init(config))) {
+    err("plugin `%s' initialization failed", plg->name);
+    return -1;
+  }
+  if (cldb_iface->prepare(plugin_data, config, plg->data) < 0) {
+    err("plugin %s failed to parse its configuration", plg->name);
+    return -1;
+  }
+
+  cldb_plugins[cldb_plugins_num].iface = cldb_iface;
+  cldb_plugins[cldb_plugins_num].data = plugin_data;
+  cldb_plugins_num++;
+
+  state->iface = cldb_iface;
+  state->data = plugin_data;
+  if (!(state->cnts = state->iface->open(state->data, state, config, cnts,
+                                         global, flags)))
+    return -1;
   return 0;
 }
 
@@ -483,7 +268,7 @@ clar_add_record(
     strcpy(pc->subj, subj);
   }
 
-  if (clar_flush_entry(state, i) < 0) return -1;
+  if (state->iface->add_entry(state->cnts, i) < 0) return -1;
   return i;
 }
 
@@ -578,7 +363,7 @@ clar_update_flags(
   if (flags < 0 || flags > 255) ERR_R("bad flags: %d", flags);
 
   state->clars.v[id].flags = flags;
-  if (clar_flush_entry(state, id) < 0) return -1;
+  if (state->iface->set_flags(state->cnts, id) < 0) return -1;
   return 0;
 }
 
@@ -593,7 +378,7 @@ clar_set_charset(
     ERR_R("id mismatch: %d, %d", id, state->clars.v[id].id);
   snprintf(state->clars.v[id].charset, sizeof(state->clars.v[id].charset),
            "%s", charset);
-  if (clar_flush_entry(state, id) < 0) return -1;
+  if (state->iface->set_charset(state->cnts, id) < 0) return -1;
   return 0;
 }
 
@@ -650,17 +435,20 @@ clar_flags_html(
 void
 clar_reset(clarlog_state_t state)
 {
-  create_new_clar_log(state, 0);
+  if (!state->iface->create_new) {
+    err("`reset' operation is not supported for this clarlog");
+    return;
+  }
+  state->iface->create_new(state->cnts);
 }
 
 void
 clar_clear_variables(clarlog_state_t state)
 {
+  abort();
   if (state->clars.v) xfree(state->clars.v);
   state->clars.v = 0;
   state->clars.u = state->clars.a = 0;
-  if (state->clar_fd >= 0) close(state->clar_fd);
-  state->clar_fd = -1;
 }
 
 /*

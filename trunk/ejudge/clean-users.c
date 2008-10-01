@@ -140,7 +140,7 @@ main(int argc, char **argv)
   userlist = userlist_parse(config->db_path);
   if (!userlist) return 1;
 
-  clarlog_state = clar_init(0, 0, 0);
+  clarlog_state = clar_init();
   runlog_state = run_init(0);// FIXME: need to pass teamdb_state
 
   user_total = 0;
@@ -272,7 +272,7 @@ main(int argc, char **argv)
       xfree(run_entries);
     }
 
-    if (clar_open(clarlog_state, clarlog_path, CLAR_LOG_READONLY) < 0) {
+    if (clar_open(clarlog_state, config, cnts, NULL, CLAR_LOG_READONLY) < 0) {
       err("contest %d cannot open clarlog '%s'", i, clarlog_path);
     } else {
       // clarlog opened OK

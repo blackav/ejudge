@@ -63,9 +63,14 @@ struct ejudge_cfg;
 struct contest_desc;
 struct section_global_data;
 
-clarlog_state_t clar_init(const struct ejudge_cfg *config, const struct contest_desc *cnts, const struct section_global_data *global);
+clarlog_state_t clar_init(void);
 clarlog_state_t clar_destroy(clarlog_state_t state);
-int clar_open(clarlog_state_t state, char const *path, int flags);
+int clar_open(
+        clarlog_state_t state,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        int flags);
 int clar_add_record(
         clarlog_state_t state,
         time_t         time,

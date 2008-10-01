@@ -43,7 +43,7 @@ struct uldb_plugin_iface
   // initialize the plugin
   void *(*init)(const struct ejudge_cfg*);
   // parse the configuration settings
-  int (*parse)(void *, const struct ejudge_cfg *, struct xml_tree *);
+  int (*prepare)(void *, const struct ejudge_cfg *, struct xml_tree *);
   // open the database
   int (*open)(void *);
   // close the database flushing all the data, if necessary

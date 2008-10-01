@@ -40,7 +40,7 @@
 #define DEFAULT_BACKUP_INTERVAL (24*60*60)
 
 static void *init_func(const struct ejudge_cfg *);
-static int parse_func(void *, const struct ejudge_cfg *,struct xml_tree *);
+static int prepare_func(void *, const struct ejudge_cfg *,struct xml_tree *);
 static int open_func(void *);
 static int close_func(void *);
 static int check_func(void *);
@@ -137,7 +137,7 @@ struct uldb_plugin_iface uldb_plugin_xml =
   ULDB_PLUGIN_IFACE_VERSION,
 
   init_func,
-  parse_func,
+  prepare_func,
   open_func,
   close_func,
   check_func,
@@ -285,7 +285,7 @@ init_func(const struct ejudge_cfg *ej_cfg)
 }
 
 static int
-parse_func(void *data, const struct ejudge_cfg *ej_cfg,struct xml_tree *t)
+prepare_func(void *data, const struct ejudge_cfg *ej_cfg,struct xml_tree *t)
 {
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
 

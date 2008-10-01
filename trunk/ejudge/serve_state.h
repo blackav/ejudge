@@ -255,11 +255,14 @@ void serve_check_stat_generation(serve_state_t state,
                                  const struct contest_desc *cnts,
                                  int force_flag, int utf8_mode);
 
-int serve_state_load_contest(int contest_id,
-                             struct userlist_clnt *ul_conn,
-                             struct teamdb_db_callbacks *teamdb_callbacks,
-                             serve_state_t *p_state,
-                             const struct contest_desc **p_cnts);
+struct ejudge_cfg;
+int serve_state_load_contest(
+        const struct ejudge_cfg *,
+        int contest_id,
+        struct userlist_clnt *ul_conn,
+        struct teamdb_db_callbacks *teamdb_callbacks,
+        serve_state_t *p_state,
+        const struct contest_desc **p_cnts);
 
 int serve_count_unread_clars(const serve_state_t state, int user_id,
                              time_t start_time);

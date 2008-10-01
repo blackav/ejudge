@@ -133,6 +133,10 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(description_file, "s"),
   GLOBAL_PARAM(contest_plugin_file, "s"),
 
+  GLOBAL_PARAM(clardb_plugin, "s"),
+  GLOBAL_PARAM(rundb_plugin, "s"),
+  GLOBAL_PARAM(xuser_plugin, "s"),
+
   GLOBAL_PARAM(var_dir, "s"),
 
   GLOBAL_PARAM(contest_id, "d"),

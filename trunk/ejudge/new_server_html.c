@@ -7965,7 +7965,7 @@ privileged_entry_point(
   callbacks.list_all_users = ns_list_all_users_callback;
 
   // invoke the contest
-  if (serve_state_load_contest(phr->contest_id,
+  if (serve_state_load_contest(config, phr->contest_id,
                                ul_conn,
                                &callbacks,
                                &extra->serve_state, 0) < 0) {
@@ -12932,7 +12932,7 @@ unprivileged_entry_point(
   callbacks.list_all_users = ns_list_all_users_callback;
 
   // invoke the contest
-  if (serve_state_load_contest(phr->contest_id,
+  if (serve_state_load_contest(config, phr->contest_id,
                                ul_conn,
                                &callbacks,
                                &extra->serve_state, 0) < 0) {
