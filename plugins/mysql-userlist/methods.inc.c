@@ -18,7 +18,7 @@
 static void *
 init_func(const struct ejudge_cfg *);
 static int
-parse_func(
+prepare_func(
         void *,
         const struct ejudge_cfg *,
         struct xml_tree *);
