@@ -4680,7 +4680,7 @@ try_new_login_func(
 
 /*
  * Local variables:
- *  compile-command: "make -C ../.."
+ *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "MYSQL")
  * End:
  */
