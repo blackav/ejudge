@@ -806,10 +806,10 @@ create_func(void *data)
 
   if (state->schema_path) {
     snprintf(schema_path, sizeof(schema_path),
-             "%s/mysql-create.sql", state->schema_path);
+             "%s/create-userdb.sql", state->schema_path);
   } else {
     snprintf(schema_path, sizeof(schema_path),
-             "%s/share/ejudge/mysql-create.sql", EJUDGE_PREFIX_DIR);
+             "%s/share/ejudge/mysql/create-userdb.sql",EJUDGE_PREFIX_DIR);
   }
 
   if (!(fin = fopen(schema_path, "r"))) {
