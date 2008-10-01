@@ -40,6 +40,7 @@
 #include "job_packet.h"
 #include "serve_state.h"
 #include "startstop.h"
+#include "ejudge_cfg.h"
 
 #include "misctext.h"
 #include "base64.h"
@@ -76,6 +77,8 @@ static struct serve_state serve_state;
 static const struct contest_desc *cur_contest = 0;
 static int forced_mode = 0;
 static int initialize_mode = 0;
+static const unsigned char *ejudge_xml_path = 0;
+static struct ejudge_cfg *config = 0;
 
 int
 main(int argc, char *argv[])
@@ -129,6 +132,18 @@ main(int argc, char *argv[])
 
   if (start_prepare(user, group, workdir) < 0) return 1;
 
+#if defined EJUDGE_XML_PATH
+  if (!ejudge_xml_path) ejudge_xml_path = EJUDGE_XML_PATH;
+#endif /* EJUDGE_XML_PATH */
+  if (!ejudge_xml_path) {
+    err("configuration file is not specified");
+    return 1;
+  }
+
+  config = ejudge_cfg_parse(ejudge_xml_path);
+  if (!config) return 1;
+  if (contests_set_directory(config->contests_dir) < 0) return 1;
+
   // initialize the current time to avoid some asserts
   serve_state.current_time = time(0);
 
@@ -162,9 +177,10 @@ main(int argc, char *argv[])
     err("invalid score system for virtual contest");
     return 1;
   }
-  serve_state.clarlog_state = clar_init(0, 0, 0);
-  if (clar_open(serve_state.clarlog_state, serve_state.global->clar_log_file,
-                0) < 0) return 1;
+  serve_state.clarlog_state = clar_init();
+  if (clar_open(serve_state.clarlog_state,
+                config, cur_contest, serve_state.global, 0) < 0)
+    return 1;
   serve_load_status_file(&serve_state);
   serve_build_compile_dirs(&serve_state);
   serve_build_run_dirs(&serve_state);

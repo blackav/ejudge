@@ -298,6 +298,7 @@ HFILES=\
  cgi.h\
  charsets.h\
  clarlog.h\
+ clarlog_state.h\
  cldb_plugin.h\
  client_actions.h\
  clntutil.h\

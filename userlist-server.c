@@ -9122,7 +9122,7 @@ load_plugins(const unsigned char *plugin_dir)
     err("cannot initialize XML database plugin");
     return -1;
   }
-  if (uldb_plugin_xml.parse(plugin_data, config, 0) < 0) {
+  if (uldb_plugin_xml.prepare(plugin_data, config, 0) < 0) {
     err("cannot initialize XML database plugin");
     return -1;
   }
@@ -9158,7 +9158,7 @@ load_plugins(const unsigned char *plugin_dir)
       err("plugin initialization failed");
       return 1;
     }
-    if (uldb_iface->parse(plugin_data, config, plg->data) < 0) {
+    if (uldb_iface->prepare(plugin_data, config, plg->data) < 0) {
       err("plugin failed to parse its configuration");
       return 1;
     }

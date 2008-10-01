@@ -202,6 +202,10 @@ struct section_global_data
   puc_t info_pat[32];
   puc_t tgz_pat[32];
 
+  puc_t clardb_plugin[32];
+  puc_t rundb_plugin[32];
+  puc_t xuser_plugin[32];       /* team_extra plugin */
+
   /* ====== VARIABLE FILES/DIRECTORIES SETUP ====== */
   path_t var_dir;               /* variable files dir */
 
