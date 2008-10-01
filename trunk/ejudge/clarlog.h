@@ -115,6 +115,13 @@ char *clar_flags_html(
         char *buf,
         int len);
 void clar_reset(clarlog_state_t state);
-void clar_clear_variables(clarlog_state_t state);
+int clar_get_text(clarlog_state_t state, int clar_id,
+                  unsigned char **p_txt, size_t *p_size);
+int
+clar_add_text(
+        clarlog_state_t state,
+        int clar_id,
+        unsigned char *text,
+        size_t size);
 
 #endif /* __CLARLOG_H__ */

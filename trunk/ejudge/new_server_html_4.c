@@ -598,12 +598,8 @@ cmd_clar_operation(
   const unsigned char *s = 0;
   int clar_id = -1;
   struct clar_entry_v1 ce;
-  path_t msg_path;
-  char *msg_txt = 0;
-  const unsigned char *recoded_txt = 0;
-  size_t msg_len = 0, recoded_len = 0;
-  int charset_id;
-  struct html_armor_buffer rb = HTML_ARMOR_INITIALIZER;
+  unsigned char *msg_txt = 0;
+  size_t msg_len = 0;
 
   if (ns_cgi_param(phr, "clar_id", &s) <= 0)
     FAIL(NEW_SRV_ERR_INV_CLAR_ID);
@@ -645,20 +641,15 @@ cmd_clar_operation(
 
   switch (phr->action) {
   case NEW_SRV_ACTION_DUMP_CLAR:
-    snprintf(msg_path, sizeof(msg_path), "%06d", clar_id);
-    if (generic_read_file(&msg_txt, 0, &msg_len, 0,
-                          global->clar_archive_dir, msg_path, "") < 0)
+    if (clar_get_text(cs->clarlog_state, clar_id, &msg_txt, &msg_len) < 0)
       FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
-    charset_id = clar_get_charset_id(cs->clarlog_state, clar_id);
-    recoded_txt = charset_decode(charset_id, &rb, msg_txt);
-    recoded_len = strlen(recoded_txt);
-    if (fwrite(recoded_txt, 1, recoded_len, fout) != msg_len)
+    if (fwrite(msg_txt, 1, msg_len, fout) != msg_len)
       FAIL(NEW_SRV_ERR_WRITE_ERROR);
+    xfree(msg_txt); msg_txt = 0;
     break;
   }
 
  cleanup:
-  html_armor_free(&rb);
   xfree(msg_txt);
   return retval;
 }

@@ -1782,18 +1782,16 @@ ns_write_priv_clar(const serve_state_t cs,
                    struct contest_extra *extra,
                    int clar_id)
 {
-  const struct section_global_data *global = cs->global;
+  //const struct section_global_data *global = cs->global;
   struct clar_entry_v1 clar;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct html_armor_buffer rb = HTML_ARMOR_INITIALIZER;
   time_t start_time;
-  path_t name_buf;
-  char *msg_txt = 0;
+  unsigned char *msg_txt = 0;
   size_t msg_len = 0;
   unsigned char bb[1024];
   unsigned char b1[1024], b2[1024];
   const unsigned char *clar_subj = 0;
-  int charset_id;
 
   if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
       || clar_get_record(cs->clarlog_state, clar_id, &clar) < 0) {
@@ -1868,14 +1866,12 @@ ns_write_priv_clar(const serve_state_t cs,
   */
   fprintf(f, "<hr>\n");
 
-  snprintf(name_buf, sizeof(name_buf), "%06d", clar_id);
-  if (generic_read_file(&msg_txt, 0, &msg_len, 0,
-                        global->clar_archive_dir, name_buf, "") < 0) {
+  if (clar_get_text(cs->clarlog_state, clar_id, &msg_txt, &msg_len) < 0) {
     fprintf(f, "<big><font color=\"red\">%s</font></big>\n",
             _("Cannot read message text!"));
   } else {
-    charset_id = clar_get_charset_id(cs->clarlog_state, clar_id);
-    fprintf(f, "<pre>%s</pre>", ARMOR(charset_decode(charset_id, &rb, msg_txt)));
+    fprintf(f, "<pre>%s</pre>", msg_txt);
+    xfree(msg_txt); msg_txt = 0;
   }
 
   if (phr->role >= USER_ROLE_JUDGE && clar.from

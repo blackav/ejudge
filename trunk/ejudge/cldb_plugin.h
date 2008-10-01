@@ -55,13 +55,17 @@ struct cldb_plugin_iface
   // close a contest
   struct cldb_plugin_cnts *(*close)(struct cldb_plugin_cnts *);
   // create a new clarlog erasing the old contents
-  int (*create_new)(struct cldb_plugin_cnts *);
+  int (*reset)(struct cldb_plugin_cnts *);
   // add a new entry
   int (*add_entry)(struct cldb_plugin_cnts *, int);
   // update entry flags
   int (*set_flags)(struct cldb_plugin_cnts *, int);
   // update entry charset
   int (*set_charset)(struct cldb_plugin_cnts *, int);
+  // get the message text as is
+  int (*get_raw_text)(struct cldb_plugin_cnts *, int, unsigned char **,size_t*);
+  // add the message text
+  int (*add_text)(struct cldb_plugin_cnts *, int, unsigned char *, size_t);
 };
 
 /* default plugin: compiled into new-server */

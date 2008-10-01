@@ -2481,8 +2481,6 @@ serve_reset_contest(serve_state_t state)
   clar_reset(state->clarlog_state);
 
   /* clear all submissions and clarifications */
-  if (state->global->clar_archive_dir[0])
-    clear_directory(state->global->clar_archive_dir);
   if (state->global->xml_report_archive_dir[0])
     clear_directory(state->global->xml_report_archive_dir);
   if (state->global->report_archive_dir[0])

@@ -314,7 +314,7 @@ main(int argc, char **argv)
         }
       }
 
-      clar_clear_variables(clarlog_state);
+      //clar_clear_variables(clarlog_state);
     }
   }
 
