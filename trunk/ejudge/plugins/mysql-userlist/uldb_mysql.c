@@ -55,7 +55,7 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   // initialize the plugin
   init_func,
   // parse the configuration settings
-  parse_func,
+  prepare_func,
   // open the database
   open_func,
   // close the database flushing all the data, if necessary
@@ -622,7 +622,10 @@ static const unsigned char *charset_mappings[][2] =
 };
 
 static int
-parse_func(void *data, const struct ejudge_cfg *config, struct xml_tree *tree)
+prepare_func(
+        void *data,
+        const struct ejudge_cfg *config,
+        struct xml_tree *tree)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct xml_tree *p;
