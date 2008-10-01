@@ -2680,7 +2680,7 @@ priv_submit_clar(FILE *fout,
                  struct contest_extra *extra)
 {
   const serve_state_t cs = extra->serve_state;
-  const struct section_global_data *global = cs->global;
+  //const struct section_global_data *global = cs->global;
   int n, user_id = -1, hide_flag = 0, clar_id;
   const unsigned char *s;
   struct html_armor_buffer ab;
@@ -2688,7 +2688,6 @@ priv_submit_clar(FILE *fout,
   const unsigned char *subject = 0, *text = 0;
   size_t subj_len, text_len, text3_len;
   unsigned char *subj2, *text2, *text3;
-  path_t clar_file;
   struct timeval precise_time;
   int msg_dest_id_empty = 0, msg_dest_login_empty = 0;
 
@@ -2806,9 +2805,7 @@ priv_submit_clar(FILE *fout,
     goto cleanup;
   }
 
-  sprintf(clar_file, "%06d", clar_id);
-  if (generic_write_file(text3, text3_len, 0,
-                         global->clar_archive_dir, clar_file, "") < 0) {
+  if (clar_add_text(cs->clarlog_state, clar_id, text3, text3_len) < 0) {
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
     goto cleanup;
   }
@@ -2840,7 +2837,7 @@ priv_submit_run_comment(
         struct contest_extra *extra)
 {
   const serve_state_t cs = extra->serve_state;
-  const struct section_global_data *global = cs->global;
+  //const struct section_global_data *global = cs->global;
   int run_id = 0, clar_id = 0;
   struct run_entry re;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
@@ -2850,7 +2847,6 @@ priv_submit_run_comment(
   unsigned char *text2 = 0, *text3 = 0;
   unsigned char subj2[1024];
   struct timeval precise_time;
-  path_t clar_file;
 
   if (parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0) return -1;
   if (re.user_id && !teamdb_lookup(cs->teamdb_state, re.user_id)) {
@@ -2894,9 +2890,7 @@ priv_submit_run_comment(
     goto cleanup;
   }
 
-  sprintf(clar_file, "%06d", clar_id);
-  if (generic_write_file(text3, text3_len, 0,
-                         global->clar_archive_dir, clar_file, "") < 0) {
+  if (clar_add_text(cs->clarlog_state, clar_id, text3, text3_len) < 0) {
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
     goto cleanup;
   }
@@ -2918,23 +2912,18 @@ priv_clar_reply(FILE *fout,
                 struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
-  const struct section_global_data *global = cs->global;
+  //const struct section_global_data *global = cs->global;
   const unsigned char *errmsg;
   const unsigned char *s, *reply_txt;
   int in_reply_to, n, clar_id, from_id;
   struct clar_entry_v1 clar;
   unsigned char *reply_txt_2;
   size_t reply_len;
-  path_t orig_clar_name, clar_name;
-  char *orig_txt = 0;
-  size_t orig_txt_len = 0;
+  unsigned char *orig_txt = 0;
+  size_t orig_len = 0;
   unsigned char *new_subj, *quoted, *msg;
   size_t new_subj_len, quoted_len, msg_len;
   struct timeval precise_time;
-  struct html_armor_buffer rb = HTML_ARMOR_INITIALIZER;
-  int charset_id;
-  const unsigned char *recoded_txt;
-  size_t recoded_len;
 
   // reply, in_reply_to
   if (ns_cgi_param(phr, "in_reply_to", &s) <= 0
@@ -2999,25 +2988,19 @@ priv_clar_reply(FILE *fout,
     goto cleanup;
   }
 
-  snprintf(orig_clar_name, sizeof(orig_clar_name), "%06d", in_reply_to);
-  if (generic_read_file(&orig_txt, 0, &orig_txt_len, 0,
-                        global->clar_archive_dir, orig_clar_name, "") < 0) {
+  if (clar_get_text(cs->clarlog_state, in_reply_to, &orig_txt, &orig_len) < 0) {
     ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
     goto cleanup;
   }
 
-  charset_id = clar_get_charset_id(cs->clarlog_state, in_reply_to);
-  recoded_txt = charset_decode(charset_id, &rb, orig_txt);
-  recoded_len = strlen(recoded_txt);
-
   l10n_setlocale(clar.locale_id);
-  new_subj = alloca(recoded_len + 64);
-  new_subj_len = message_reply_subj(recoded_txt, new_subj);
+  new_subj = alloca(orig_len + 64);
+  new_subj_len = message_reply_subj(orig_txt, new_subj);
   l10n_setlocale(0);
 
-  quoted_len = message_quoted_size(recoded_txt);
+  quoted_len = message_quoted_size(orig_txt);
   quoted = alloca(quoted_len + 16);
-  message_quote(recoded_txt, quoted);
+  message_quote(orig_txt, quoted);
 
   msg = alloca(reply_len + quoted_len + new_subj_len + 64);
   msg_len = sprintf(msg, "%s%s\n%s\n", new_subj, quoted, reply_txt_2);
@@ -3042,9 +3025,7 @@ priv_clar_reply(FILE *fout,
     goto cleanup;
   }
 
-  snprintf(clar_name, sizeof(clar_name), "%06d", clar_id);
-  if (generic_write_file(msg, msg_len, 0, global->clar_archive_dir,
-                         clar_name, "") < 0) {
+  if (clar_add_text(cs->clarlog_state, clar_id, msg, msg_len) < 0) {
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
     goto cleanup;
   }
@@ -3053,11 +3034,9 @@ priv_clar_reply(FILE *fout,
 
  cleanup:
   xfree(orig_txt);
-  html_armor_free(&rb);
   return 0;
 
  invalid_param:
-  html_armor_free(&rb);
   ns_html_err_inv_param(fout, phr, 0, errmsg);
   return -1;
 }
@@ -9366,7 +9345,6 @@ unpriv_submit_clar(FILE *fout,
   unsigned char *subj2, *text2, *subj3, *text3;
   struct timeval precise_time;
   int clar_id;
-  unsigned char clar_file[32];
 
   // parameters: prob_id, subject, text,  
 
@@ -9469,9 +9447,7 @@ unpriv_submit_clar(FILE *fout,
     goto done;
   }
 
-  sprintf(clar_file, "%06d", clar_id);
-  if (generic_write_file(text3, text3_len, 0,
-                         global->clar_archive_dir, clar_file, "") < 0) {
+  if (clar_add_text(cs->clarlog_state, clar_id, text3, text3_len) < 0) {
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
     goto done;
   }
@@ -9511,7 +9487,6 @@ unpriv_submit_appeal(FILE *fout,
   unsigned char *text2, *subj3, *text3;
   struct timeval precise_time;
   int clar_id, test;
-  unsigned char clar_file[32];
 
   // parameters: prob_id, subject, text,  
 
@@ -9613,9 +9588,7 @@ unpriv_submit_appeal(FILE *fout,
     goto done;
   }
 
-  sprintf(clar_file, "%06d", clar_id);
-  if (generic_write_file(text3, text3_len, 0,
-                         global->clar_archive_dir, clar_file, "") < 0) {
+  if (clar_add_text(cs->clarlog_state, clar_id, text3, text_len) < 0) {
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
     goto done;
   }
@@ -10186,8 +10159,7 @@ unpriv_view_clar(FILE *fout,
   size_t log_len = 0, clar_size = 0, html_subj_len, html_text_len;
   struct clar_entry_v1 ce;
   time_t start_time, clar_time, stop_time;
-  unsigned char clar_file_name[128];
-  char *clar_text = 0;
+  unsigned char *clar_text = 0;
   unsigned char *html_subj, *html_text;
   unsigned char dur_str[64];
   const unsigned char *clar_subj = 0;
@@ -10234,9 +10206,7 @@ unpriv_view_clar(FILE *fout,
     team_extra_set_clar_status(cs->team_extra_state, phr->user_id, clar_id);
   }
 
-  sprintf(clar_file_name, "%06d", clar_id);
-  if (generic_read_file(&clar_text, 0, &clar_size, 0,
-                        global->clar_archive_dir, clar_file_name, "") < 0) {
+  if (clar_get_text(cs->clarlog_state, clar_id, &clar_text, &clar_size) < 0) {
     ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
     goto done;
   }

@@ -435,20 +435,52 @@ clar_flags_html(
 void
 clar_reset(clarlog_state_t state)
 {
-  if (!state->iface->create_new) {
+  if (!state->iface->reset) {
     err("`reset' operation is not supported for this clarlog");
     return;
   }
-  state->iface->create_new(state->cnts);
+  state->iface->reset(state->cnts);
 }
 
-void
-clar_clear_variables(clarlog_state_t state)
+int
+clar_get_text(
+        clarlog_state_t state,
+        int clar_id,
+        unsigned char **p_text,
+        size_t *p_size)
 {
-  abort();
-  if (state->clars.v) xfree(state->clars.v);
-  state->clars.v = 0;
-  state->clars.u = state->clars.a = 0;
+  unsigned char *raw_text = 0;
+  size_t raw_size = 0;
+  int charset_id;
+
+  ASSERT(state);
+  if (clar_id < 0 || clar_id >= state->clars.u) ERR_R("bad id: %d", clar_id);
+  if (state->clars.v[clar_id].id != clar_id)
+    ERR_R("id mismatch: %d, %d", clar_id, state->clars.v[clar_id].id);
+
+  if (state->iface->get_raw_text(state->cnts, clar_id, &raw_text, &raw_size)<0)
+    return -1;
+  if (!(charset_id = clar_get_charset_id(state, clar_id))) {
+    *p_text = raw_text;
+    *p_size = raw_size;
+    return 0;
+  }
+  raw_text = charset_decode_heap(charset_id, raw_text);
+  raw_size = strlen(raw_text);
+
+  *p_text = raw_text;
+  *p_size = raw_size;
+  return 0;
+}
+
+int
+clar_add_text(
+        clarlog_state_t state,
+        int clar_id,
+        unsigned char *text,
+        size_t size)
+{
+  return state->iface->add_text(state->cnts, clar_id, text, size);
 }
 
 /*

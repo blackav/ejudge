@@ -26,6 +26,7 @@
 #include "unix/unix_fileutl.h"
 #include "xml_utils.h"
 #include "base64.h"
+#include "fileutl.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -47,6 +48,7 @@ struct cldb_file_cnts
   struct cldb_file_state *plugin_state;
   struct clarlog_state *cl_state;
   int clar_fd;
+  unsigned char *clar_archive_dir;
 };
 
 static int do_flush_entry(struct cldb_file_cnts *cs, int num);
@@ -71,13 +73,22 @@ open_func(
 static struct cldb_plugin_cnts *
 close_func(struct cldb_plugin_cnts *cdata);
 static int
-create_new_func(struct cldb_plugin_cnts *cdata);
+reset_func(struct cldb_plugin_cnts *cdata);
 static int
 add_entry_func(struct cldb_plugin_cnts *cdata, int num);
 static int
 set_flags_func(struct cldb_plugin_cnts *cdata, int num);
 static int
 set_charset_func(struct cldb_plugin_cnts *cdata, int num);
+static int
+get_raw_text_func(struct cldb_plugin_cnts *cdata, int clar_id,
+                  unsigned char **p_text, size_t *p_size);
+static int
+add_text_func(
+        struct cldb_plugin_cnts *cdata,
+        int clar_id,
+        unsigned char *text,
+        size_t size);
 
 struct cldb_plugin_iface cldb_plugin_file =
 {
@@ -95,10 +106,12 @@ struct cldb_plugin_iface cldb_plugin_file =
   prepare_func,
   open_func,
   close_func,
-  create_new_func,
+  reset_func,
   add_entry_func,
   set_flags_func,
   set_charset_func,
+  get_raw_text_func,
+  add_text_func,
 };
 
 static struct cldb_plugin_data *
@@ -454,6 +467,8 @@ open_func(
   state->nref++;
   cs->cl_state = cl_state;
   cs->clar_fd = -1;
+  if (global && global->clar_archive_dir[0])
+    cs->clar_archive_dir = xstrdup(global->clar_archive_dir);
 
   clarlog_path[0] = 0;
   if (global && global->clar_log_file[0]) {
@@ -483,15 +498,17 @@ close_func(struct cldb_plugin_cnts *cdata)
 
   if (cs->plugin_state) cs->plugin_state->nref--;
   if (cs->clar_fd >= 0) close(cs->clar_fd);
+  xfree(cs->clar_archive_dir);
   xfree(cs);
   return 0;
 }
 
 static int
-create_new_func(struct cldb_plugin_cnts *cdata)
+reset_func(struct cldb_plugin_cnts *cdata)
 {
   struct cldb_file_cnts *cs = (struct cldb_file_cnts*) cdata;
   create_new_clar_log(cs, 0);
+  if (cs->clar_archive_dir) clear_directory(cs->clar_archive_dir);
   return 0;
 }
 
@@ -534,6 +551,44 @@ set_charset_func(struct cldb_plugin_cnts *cdata, int num)
   struct cldb_file_cnts *cs = (struct cldb_file_cnts*) cdata;
   return do_flush_entry(cs, num);
 }
+
+static int
+get_raw_text_func(
+        struct cldb_plugin_cnts *cdata,
+        int clar_id,
+        unsigned char **p_text,
+        size_t *p_size)
+{
+  struct cldb_file_cnts *cs = (struct cldb_file_cnts*) cdata;
+  char **p = (char**) p_text;
+  unsigned char name_buf[64];
+
+  if (!cs->clar_archive_dir) {
+    err("clar_archive_dir is undefined");
+    return -1;
+  }
+  snprintf(name_buf, sizeof(name_buf), "%06d", clar_id);
+  return generic_read_file(p, 0, p_size, 0, cs->clar_archive_dir, name_buf, "");
+}
+
+static int
+add_text_func(
+        struct cldb_plugin_cnts *cdata,
+        int clar_id,
+        unsigned char *text,
+        size_t size)
+{
+  struct cldb_file_cnts *cs = (struct cldb_file_cnts*) cdata;
+  unsigned char name_buf[64];
+
+  if (!cs->clar_archive_dir) {
+    err("clar_archive_dir is undefined");
+    return -1;
+  }
+  snprintf(name_buf, sizeof(name_buf), "%06d", clar_id);
+  return generic_write_file(text, size, 0, cs->clar_archive_dir, name_buf, "");
+}
+
 
 /*
  * Local variables:
