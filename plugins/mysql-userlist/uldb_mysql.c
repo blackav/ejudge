@@ -720,7 +720,7 @@ open_func(void *data)
     return db_error(state);
 
   if (state->charset) {
-    if (my_simple_fquery(state, "SET NAMES '%s' ;\n", state->charset) < 0)
+    if (my_simple_fquery(state, "SET NAMES '%s' ;", state->charset) < 0)
       return -1;
   }
 
