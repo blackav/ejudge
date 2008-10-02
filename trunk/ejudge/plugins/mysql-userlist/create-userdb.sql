@@ -35,7 +35,7 @@ CREATE TABLE %scookies
        ip VARCHAR(64) NOT NULL,
        ssl_flag TINYINT NOT NULL DEFAULT 0,
        expire DATETIME NOT NULL,
-       FOREIGN KEY (user_id) REFERENCES logins (id)
+       FOREIGN KEY (user_id) REFERENCES logins (user_id)
        );
 
 CREATE TABLE %scntsregs
@@ -50,7 +50,7 @@ CREATE TABLE %scntsregs
        createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
        changetime TIMESTAMP DEFAULT 0,
        PRIMARY KEY (user_id, contest_id),
-       FOREIGN KEY (user_id) REFERENCES logins (id)
+       FOREIGN KEY (user_id) REFERENCES logins (user_id)
        );
 
 CREATE TABLE %susers
@@ -100,7 +100,7 @@ CREATE TABLE %susers
        field8 VARCHAR(512),
        field9 VARCHAR(512),
        PRIMARY KEY (user_id, contest_id),
-       FOREIGN KEY (user_id) REFERENCES logins (id)
+       FOREIGN KEY (user_id) REFERENCES logins (user_id)
        );
 
 CREATE TABLE %smembers
@@ -139,7 +139,7 @@ CREATE TABLE %smembers
        birth_date DATE DEFAULT NULL,
        entry_date DATE DEFAULT NULL,
        graduation_date DATE DEFAULT NULL,
-       FOREIGN KEY (user_id) REFERENCES logins (id)
+       FOREIGN KEY (user_id) REFERENCES logins (user_id)
        );
 
 INSERT INTO %sconfig VALUES ('version', '1');
