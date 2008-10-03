@@ -3852,3 +3852,7 @@ serve-control.c 5149 0 8850737
 super-serve.c 5149 0 13352526
 prepare_out.c 5149 0 6558227
 super_html_3.c 5149 0 23836673
+new_server_proto.h 5152 0 480978
+new-server-cmd.c 5152 0 2291820
+new_server_html_4.c 5152 0 4710517
+new_server_proto.c 5152 0 1037135
