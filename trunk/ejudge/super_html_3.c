@@ -2068,6 +2068,40 @@ super_html_edit_global_parameters(FILE *f,
     html_submit_button(f, SSERV_CMD_GLOB_CHANGE_CPU_BOGOMIPS, "Change");
     html_submit_button(f, SSERV_CMD_GLOB_DETECT_CPU_BOGOMIPS, "Detect");
     fprintf(f, "</td></tr></form>\n");
+
+    //GLOBAL_PARAM(clardb_plugin, "s"),
+    print_string_editing_row(f, "ClarDB storage engine:",
+                             global->clardb_plugin,
+                             SSERV_CMD_GLOB_CHANGE_CLARDB_PLUGIN,
+                             SSERV_CMD_GLOB_CLEAR_CLARDB_PLUGIN,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+    //GLOBAL_PARAM(rundb_plugin, "s"),
+    print_string_editing_row(f, "RunDB storage engine:",
+                             global->rundb_plugin,
+                             SSERV_CMD_GLOB_CHANGE_RUNDB_PLUGIN,
+                             SSERV_CMD_GLOB_CLEAR_RUNDB_PLUGIN,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+    //GLOBAL_PARAM(xuser_plugin, "s"),
+    print_string_editing_row(f, "XuserDB storage engine:",
+                             global->xuser_plugin,
+                             SSERV_CMD_GLOB_CHANGE_XUSER_PLUGIN,
+                             SSERV_CMD_GLOB_CLEAR_XUSER_PLUGIN,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
   }
 
   if (global->unhandled_vars) {
@@ -2961,6 +2995,24 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     sarray_free(global->stand_page_col_attr);
     global->stand_page_col_attr = 0;
     return 0;
+
+  case SSERV_CMD_GLOB_CHANGE_CLARDB_PLUGIN:
+    GLOB_SET_STRING(clardb_plugin);
+
+  case SSERV_CMD_GLOB_CLEAR_CLARDB_PLUGIN:
+    GLOB_CLEAR_STRING(clardb_plugin);
+
+  case SSERV_CMD_GLOB_CHANGE_RUNDB_PLUGIN:
+    GLOB_SET_STRING(rundb_plugin);
+
+  case SSERV_CMD_GLOB_CLEAR_RUNDB_PLUGIN:
+    GLOB_CLEAR_STRING(rundb_plugin);
+
+  case SSERV_CMD_GLOB_CHANGE_XUSER_PLUGIN:
+    GLOB_SET_STRING(xuser_plugin);
+
+  case SSERV_CMD_GLOB_CLEAR_XUSER_PLUGIN:
+    GLOB_CLEAR_STRING(xuser_plugin);
 
   default:
     abort();

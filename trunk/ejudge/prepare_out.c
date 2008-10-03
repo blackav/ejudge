@@ -594,6 +594,15 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     fprintf(f, "cpu_bogomips = %d\n", global->cpu_bogomips);
   if (global->variant_map_file[0] && need_variant_map)
     fprintf(f, "variant_map_file = \"%s\"\n", c_armor(&sbuf, global->variant_map_file));
+  if (global->clardb_plugin[0] && strcmp(global->clardb_plugin, "file"))
+    fprintf(f, "clardb_plugin = \"%s\"\n",
+            c_armor(&sbuf, global->clardb_plugin));
+  if (global->rundb_plugin[0] && strcmp(global->rundb_plugin, "file"))
+    fprintf(f, "rundb_plugin = \"%s\"\n",
+            c_armor(&sbuf, global->rundb_plugin));
+  if (global->xuser_plugin[0] && strcmp(global->xuser_plugin, "file"))
+    fprintf(f, "xuser_plugin = \"%s\"\n",
+            c_armor(&sbuf, global->xuser_plugin));
   fprintf(f, "\n");
 
   if (global->unhandled_vars) fprintf(f, "%s\n", global->unhandled_vars);
