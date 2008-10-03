@@ -701,6 +701,21 @@ prepare_schedule(
   put_cgi_param_f("action", "%d", action);
 }
 
+static void
+prepare_force_start_virtual(
+        const unsigned char *cmd,
+        int argc,
+        char *argv[],
+        int role,
+        int action)
+{
+  parse_session_id(&argc, argv);
+  if (argc != 1)
+    startup_error("invalid number of arguments for `%s'", cmd);
+  put_cgi_param("user_id_2", argv[0]);
+  put_cgi_param_f("action", "%d", action);
+}
+
 struct command_handler
 {
   const char *cmd;
@@ -760,6 +775,7 @@ static const struct command_handler handler_table[] =
   { "clear-testing-finished", prepare_simple, 0, 0, NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG },
   { "rejudge-all", prepare_simple, 0, 0, NEW_SRV_ACTION_REJUDGE_ALL_2 },
   { "schedule", prepare_schedule, 0, 0, NEW_SRV_ACTION_SCHEDULE },
+  { "force-start-virtual", prepare_force_start_virtual, 0, 0, NEW_SRV_ACTION_FORCE_START_VIRTUAL },
 
   { 0, 0 },
 };

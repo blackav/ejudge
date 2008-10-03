@@ -1632,6 +1632,40 @@ cmd_dump_master_runs(
   return retval;
 }
 
+static int
+cmd_force_start_virtual(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  int retval = 0;
+  int user_id_2 = 0;
+  int run_id;
+  struct timeval tt;
+
+  if (phr->role != USER_ROLE_ADMIN
+      || opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (!global->is_virtual)
+    FAIL(NEW_SRV_ERR_NOT_VIRTUAL);
+  if (ns_cgi_param_int(phr, "user_id_2", &user_id_2) < 0)
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+  if (!teamdb_lookup(cs->teamdb_state, user_id_2))
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+
+  gettimeofday(&tt, 0);
+  run_id = run_virtual_start(cs->runlog_state, user_id_2,
+                             tt.tv_sec, 0, 0, tt.tv_usec * 1000);
+  if (run_id < 0) FAIL(NEW_SRV_ERR_VIRTUAL_START_FAILED);
+  serve_move_files_to_insert_run(cs, run_id);
+
+ cleanup:
+  return retval;
+}
+
 typedef int (*cmd_handler_t)(FILE *, struct http_request_info *,
                              const struct contest_desc *,
                              struct contest_extra *);
@@ -1672,6 +1706,7 @@ static cmd_handler_t cmd_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG] = cmd_operation,
   [NEW_SRV_ACTION_REJUDGE_ALL_2] = cmd_operation,
   [NEW_SRV_ACTION_SCHEDULE] = cmd_operation,
+  [NEW_SRV_ACTION_FORCE_START_VIRTUAL] = cmd_force_start_virtual,
 };
 
 int
