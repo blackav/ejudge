@@ -184,7 +184,7 @@ prepare_func(
   if (xml_empty_text_c(tree) < 0) return -1;
 
   for (a = tree->first; a; a = a->next) {
-    ASSERT(a->tag == xml_err_spec->default_attr);
+    ASSERT(a->tag == spec->default_attr);
     if (!strcmp(a->name[0], "show_queries")) {
       if (xml_attr_bool(a, &state->show_queries) < 0) return -1;
     } else {
@@ -193,7 +193,7 @@ prepare_func(
   }
 
   for (p = tree->first_down; p; p = p->right) {
-    ASSERT(p->tag == xml_err_spec->default_elem);
+    ASSERT(p->tag == spec->default_elem);
     if (!strcmp(p->name[0], "user")) {
       if (xml_leaf_elem(p, &state->user, 1, 0) < 0) return -1;
     } else if (!strcmp(p->name[0], "password")) {
@@ -210,7 +210,7 @@ prepare_func(
       if (p->first) return xml_err_attrs(p);
       if (p->first_down) return xml_err_nested_elems(p);
       if (state->port > 0) return xml_err_elem_redefined(p);
-      if (xml_parse_int(xml_err_path, p->line, p->column, p->text,
+      if (xml_parse_int("", p->line, p->column, p->text,
                         &state->port) < 0) return -1;
     } else if (!strcmp(p->name[0], "charset")) {
       if (xml_leaf_elem(p, &state->charset, 1, 0) < 0) return -1;
@@ -306,7 +306,7 @@ static const char create_clars_query[] =
 "        locale_id INT NOT NULL DEFAULT 0,"
 "        in_reply_to INT NOT NULL DEFAULT 0,"
 "        clar_charset VARCHAR(64),"
-"        subj VARCHAR(64) CHARACTER SET latin1 COLLATE latin1_bin"
+"        subj VARBINARY(64),"
 "        PRIMARY KEY (clar_id, contest_id)"
 "        );";
 
@@ -331,7 +331,7 @@ static const char create_texts_query[] =
 "CREATE TABLE %sclartexts("
 "        clar_id INT UNSIGNED NOT NULL,"
 "        contest_id INT UNSIGNED NOT NULL,"
-"        clar_text TEXT NOT NULL CHARACTER SET latin1 COLLATE latin1_bin"
+"        clar_text VARBINARY(4096),"
 "        PRIMARY KEY (clar_id, contest_id)"
 "        );";
 
@@ -400,13 +400,15 @@ expand_clar_array(struct clar_array *arr, int clar_id)
 {
   int new_a;
   struct clar_entry_v1 *new_v;
+  int i;
 
   if (clar_id < arr->a) return;
   new_a = arr->a;
-  if (!new_a) new_a = 16;
+  if (!new_a) new_a = 128;
   while (clar_id >= new_a) new_a *= 2;
   XCALLOC(new_v, new_a);
-  if (arr->a > 0) memcpy(new_v, arr->v, sizeof(new_v[0]) * new_a);
+  if (arr->a > 0) memcpy(new_v, arr->v, sizeof(new_v[0]) * arr->a);
+  for (i = arr->a; i < new_a; new_v[i++].id = -1);
   xfree(arr->v);
   arr->a = new_a;
   arr->v = new_v;
@@ -521,6 +523,7 @@ open_func(
     xfree(cl.clar_charset); cl.clar_charset = 0;
     xfree(cl.subj); cl.subj = 0;
   }
+  my_free_res(state);
 
   return (struct cldb_plugin_cnts*) cs;
 
@@ -550,11 +553,13 @@ reset_func(struct cldb_plugin_cnts *cdata)
   struct cldb_mysql_cnts *cs = (struct cldb_mysql_cnts*) cdata;
   struct clarlog_state *cl = cs->cl_state;
   struct cldb_mysql_state *state = cs->plugin_state;
+  int i;
 
   cl->clars.u = 0;
   xfree(cl->clars.v);
-  cl->clars.a = 16;
+  cl->clars.a = 128;
   XCALLOC(cl->clars.v, cl->clars.a);
+  for (i = 0; i < cl->clars.a; cl->clars.v[i++].id = -1);
 
   my_simple_fquery(state, "DELETE FROM %sclars WHERE contest_id = %d ;",
                    state->table_prefix, cs->contest_id);
@@ -682,8 +687,10 @@ get_raw_text_func(
         clar_id, cs->contest_id);
     goto fail;
   }
-  *p_text = xstrdup(state->row[0]);
   *p_size = state->lengths[0];
+  *p_text = xmalloc(state->lengths[0] + 1);
+  memcpy(*p_text, state->row[0], state->lengths[0]);
+  (*p_text)[*p_size] = 0;
   my_free_res(state);
   return 0;
 
