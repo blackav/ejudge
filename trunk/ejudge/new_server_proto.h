@@ -4,7 +4,7 @@
 #ifndef __NEW_SERVER_PROTO_H__
 #define __NEW_SERVER_PROTO_H__
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -195,6 +195,7 @@ enum
   NEW_SRV_ERR_UL_CONNECT_FAILED,
   NEW_SRV_ERR_PLUGIN_NOT_AVAIL,
   NEW_SRV_ERR_INV_FILE_NAME,
+  NEW_SRV_ERR_VIRTUAL_START_FAILED,
 
   NEW_SRV_ERR_LAST,
 };
