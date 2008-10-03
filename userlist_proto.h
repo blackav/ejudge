@@ -4,7 +4,7 @@
 #ifndef __USERLIST_PROTO_H__
 #define __USERLIST_PROTO_H__
 
-/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -98,6 +98,7 @@ enum
     ULS_EDIT_FIELD_SEQ,
     ULS_MOVE_MEMBER,
     ULS_IMPORT_CSV_USERS,
+    ULS_FETCH_COOKIE,
 
     ULS_LAST_CMD
   };

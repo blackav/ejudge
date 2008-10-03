@@ -7311,6 +7311,8 @@ cmd_get_cookie(struct client_state *p,
       FAIL(ULS_ERR_NO_COOKIE, "invalid privilege level");
     if (ui) user_name = ui->name;
     break;
+  case ULS_FETCH_COOKIE:
+    break;
   }
   if (!user_name) user_name = u->login;
   if (!user_name) user_name = "";
@@ -8519,6 +8521,7 @@ static void (*cmd_table[])() =
   [ULS_EDIT_FIELD_SEQ] =        cmd_edit_field_seq,
   [ULS_MOVE_MEMBER] =           cmd_move_member,
   [ULS_IMPORT_CSV_USERS] =      cmd_import_csv_users,
+  [ULS_FETCH_COOKIE] =          cmd_get_cookie,
 
   [ULS_LAST_CMD] 0
 };
