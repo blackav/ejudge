@@ -2948,7 +2948,7 @@ priv_clar_reply(FILE *fout,
   }
 
   if (clar_get_record(cs->clarlog_state, in_reply_to, &clar) < 0
-      || !clar.id) {
+      || clar.id < 0) {
     ns_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
     goto cleanup;
   }
@@ -10182,7 +10182,7 @@ unpriv_view_clar(FILE *fout,
   }
   if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
       || clar_get_record(cs->clarlog_state, clar_id, &ce) < 0
-      || !ce.id) {
+      || ce.id < 0) {
     ns_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
     goto done;
   }

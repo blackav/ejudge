@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -47,7 +47,7 @@ struct plugin_arr
   struct plugin_info **v;
 };
 
-static const unsigned char *plugin_dir;
+static unsigned char *plugin_dir;
 static struct plugin_arr plugins;
 
 int
@@ -68,6 +68,7 @@ plugin_set_directory(const unsigned char *dir)
     return -1;
   }
 
+  if (plugin_dir) xfree(plugin_dir);
   plugin_dir = xstrdup(dir);
   return 0;
 }

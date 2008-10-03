@@ -611,7 +611,7 @@ serve_count_unread_clars(const serve_state_t state, int user_id,
   for (i = clar_get_total(state->clarlog_state) - 1; i >= 0; i--) {
     if (clar_get_record(state->clarlog_state, i, &clar) < 0)
       continue;
-    if (!clar.id) continue;
+    if (clar.id < 0) continue;
     if (clar.to > 0 && clar.to != user_id) continue;
     if (!clar.to && clar.from > 0) continue;
     if (start_time <= 0 && clar.hide_flag) continue;
@@ -670,7 +670,7 @@ new_write_user_clars(const serve_state_t state, FILE *f, int uid,
        i--) {
     if (clar_get_record(state->clarlog_state, i, &clar) < 0)
       continue;
-    if (!clar.id) continue;
+    if (clar.id < 0) continue;
     if (clar.from > 0 && clar.from != uid) continue;
     if (clar.to > 0 && clar.to != uid) continue;
     if (start_time <= 0 && clar.hide_flag) continue;

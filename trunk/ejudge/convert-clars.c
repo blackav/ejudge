@@ -23,6 +23,7 @@
 #include "ejudge_cfg.h"
 #include "contests.h"
 #include "clarlog.h"
+#include "xml_utils.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -58,7 +59,7 @@ die(const char *format, ...)
   vsnprintf(buf, sizeof(buf), format, args);
   va_end(args);
 
-  fprintf(stderr, "%s: %s\n  Use --help option for help.\n", program_name,
+  fprintf(stderr, "%s: %s\n", program_name,
           buf);
   exit(1);
 }
@@ -84,6 +85,20 @@ write_version(void)
 {
   printf("%s %s, compiled %s\n", program_name, compile_version, compile_date);
   exit(0);
+}
+
+/* force linking of certain functions that may be needed by plugins */
+void *force_link_1;
+void *force_link_2;
+void *force_link_3;
+void *force_link_4;
+void
+force_link(void)
+{
+  force_link_1 = xml_attr_bool;
+  force_link_2 = xml_err_elem_undefined_s;
+  force_link_3 = xml_parse_int;
+  force_link_4 = xml_unparse_ip;
 }
 
 int
@@ -170,7 +185,7 @@ main(int argc, char *argv[])
   total_clars = clar_get_total(src_clarlog);
   for (clar_id = 0; clar_id < total_clars; clar_id++) {
     if (clar_get_record(src_clarlog, clar_id, &clar) < 0) continue;
-    if (!clar.id) continue;
+    if (clar.id < 0) continue;
     clar_put_record(dst_clarlog, clar_id, &clar);
     if (clar_get_raw_text(src_clarlog, clar_id, &text, &size) < 0) continue;
     clar_add_text(dst_clarlog, clar_id, text, size);
