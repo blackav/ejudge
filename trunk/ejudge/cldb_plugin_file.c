@@ -54,14 +54,14 @@ struct cldb_file_cnts
 static int do_flush_entry(struct cldb_file_cnts *cs, int num);
 
 static struct cldb_plugin_data *
-init_func(const struct ejudge_cfg*);
+init_func(void);
 static int
 finish_func(struct cldb_plugin_data *);
 static int
 prepare_func(
         struct cldb_plugin_data *,
-        const struct ejudge_cfg *,
-        const struct xml_tree*);
+        struct ejudge_cfg *,
+        struct xml_tree*);
 static struct cldb_plugin_cnts *
 open_func(
         struct cldb_plugin_data *cdata,
@@ -87,7 +87,7 @@ static int
 add_text_func(
         struct cldb_plugin_cnts *cdata,
         int clar_id,
-        unsigned char *text,
+        const unsigned char *text,
         size_t size);
 
 struct cldb_plugin_iface cldb_plugin_file =
@@ -115,7 +115,7 @@ struct cldb_plugin_iface cldb_plugin_file =
 };
 
 static struct cldb_plugin_data *
-init_func(const struct ejudge_cfg *config)
+init_func(void)
 {
   struct cldb_file_state *state = 0;
   XCALLOC(state, 1);
@@ -133,8 +133,8 @@ finish_func(struct cldb_plugin_data *data)
 static int
 prepare_func(
         struct cldb_plugin_data *data,
-        const struct ejudge_cfg *config,
-        const struct xml_tree *plugin_config)
+        struct ejudge_cfg *config,
+        struct xml_tree *plugin_config)
 {
   return 0;
 }
@@ -469,6 +469,11 @@ open_func(
   cs->clar_fd = -1;
   if (global && global->clar_archive_dir[0])
     cs->clar_archive_dir = xstrdup(global->clar_archive_dir);
+  if (!cs->clar_archive_dir && cnts && cnts->root_dir) {
+    snprintf(clarlog_path, sizeof(clarlog_path),
+             "%s/var/archive/clars", cnts->root_dir);
+    cs->clar_archive_dir = xstrdup(clarlog_path);
+  }
 
   clarlog_path[0] = 0;
   if (global && global->clar_log_file[0]) {
@@ -575,7 +580,7 @@ static int
 add_text_func(
         struct cldb_plugin_cnts *cdata,
         int clar_id,
-        unsigned char *text,
+        const unsigned char *text,
         size_t size)
 {
   struct cldb_file_cnts *cs = (struct cldb_file_cnts*) cdata;

@@ -4,7 +4,7 @@
 #ifndef __XML_UTILS_H__
 #define __XML_UTILS_H__
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -78,8 +78,9 @@ int xml_leaf_elem(struct xml_tree *tree, /* ->text may be modified */
                   unsigned char **value_addr,
                   int move_flag, int empty_allowed_flag);
 int xml_empty_text(struct xml_tree *tree);
+int xml_empty_text_c(const struct xml_tree *tree);
 
-int xml_attr_bool(struct xml_attr *attr, int *value_ptr);
+int xml_attr_bool(const struct xml_attr *attr, int *value_ptr);
 int xml_attr_bool_byte(struct xml_attr *attr, unsigned char *value_ptr);
 int xml_attr_int(struct xml_attr *attr, int *value_ptr);
 int xml_attr_date(struct xml_attr *attr, time_t *value_ptr);

@@ -197,7 +197,7 @@ serve_set_upsolving_mode(serve_state_t state)
 
 int
 serve_state_load_contest(
-        const struct ejudge_cfg *config,
+        struct ejudge_cfg *config,
         int contest_id,
         struct userlist_clnt *ul_conn,
         struct teamdb_db_callbacks *teamdb_callbacks,
@@ -303,7 +303,7 @@ serve_state_load_contest(
     state->runlog_state = run_init(state->teamdb_state);
   }
 
-  if (clar_open(state->clarlog_state, config, cnts, state->global, 0) < 0)
+  if (clar_open(state->clarlog_state, config, cnts, state->global, 0, 0) < 0)
     goto failure;
   serve_load_status_file(state);
   serve_set_upsolving_mode(state);

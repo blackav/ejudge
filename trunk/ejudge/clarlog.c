@@ -93,9 +93,10 @@ clar_destroy(clarlog_state_t state)
 int
 clar_open(
         clarlog_state_t state,
-        const struct ejudge_cfg *config,
+        struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
+        const unsigned char *plugin_name,
         int flags)
 {
   int i;
@@ -107,7 +108,7 @@ clar_open(
 
   if (!cldb_plugins_num) {
     cldb_plugins[0].iface = &cldb_plugin_file;
-    if (!(cldb_plugins[0].data = cldb_plugin_file.init(config))
+    if (!(cldb_plugins[0].data = cldb_plugin_file.init())
         || cldb_plugin_file.prepare(cldb_plugins[0].data, config, 0) < 0) {
       err("cannot initialize `file' clarlog plugin");
       return -1;
@@ -115,8 +116,13 @@ clar_open(
     cldb_plugins_num++;
   }
 
-  if (!global || !global->clardb_plugin[0]
-      || !strcmp(global->clardb_plugin, "file")) {
+  if (!plugin_name) {
+    // use the default plugin
+    if (global) plugin_name = global->clardb_plugin;
+  }
+  if (!plugin_name) plugin_name = "";
+
+  if (!plugin_name[0] || !strcmp(plugin_name, "file")) {
     state->iface = cldb_plugins[0].iface;
     state->data = cldb_plugins[0].data;
 
@@ -128,7 +134,7 @@ clar_open(
 
   // look up the table of loaded plugins
   for (i = 1; i < cldb_plugins_num; i++) {
-    if (!strcmp(cldb_plugins[i].iface->b.name, global->clardb_plugin))
+    if (!strcmp(cldb_plugins[i].iface->b.name, plugin_name))
       break;
   }
   if (i < cldb_plugins_num) {
@@ -149,11 +155,11 @@ clar_open(
   for (p = config->plugin_list; p; p = p->right) {
     plg = (const struct ejudge_plugin*) p;
     if (plg->load_flag && !strcmp(plg->type, "cldb")
-        && !strcmp(plg->name, global->clardb_plugin))
+        && !strcmp(plg->name, plugin_name))
       break;
   }
   if (!p) {
-    err("clarlog plugin `%s' is not registered", global->clardb_plugin);
+    err("clarlog plugin `%s' is not registered", plugin_name);
     return -1;
   }
   if (cldb_plugins_num == CLDB_PLUGIN_MAX_NUM) {
@@ -174,7 +180,7 @@ clar_open(
     err("plugin `%s' version mismatch", plg->name);
     return -1;
   }
-  if (!(plugin_data = cldb_iface->init(config))) {
+  if (!(plugin_data = cldb_iface->init())) {
     err("plugin `%s' initialization failed", plg->name);
     return -1;
   }
@@ -273,13 +279,42 @@ clar_add_record(
 }
 
 int
+clar_put_record(
+        clarlog_state_t state,
+        int clar_id,
+        const struct clar_entry_v1 *pclar)
+{
+  if (clar_id < 0) ERR_R("bad id: %d", clar_id);
+  if (!pclar || !pclar->id) ERR_R("bad pclar");
+  if (clar_id >= state->clars.u) {
+    int new_a = state->clars.a;
+    struct clar_entry_v1 *new_v;
+
+    if (!new_a) new_a = 128;
+    while (clar_id >= new_a) new_a *= 2;
+    XCALLOC(new_v, new_a);
+    if (state->clars.u) memcpy(new_v, state->clars.v, sizeof(new_v[0])*new_a);
+    xfree(state->clars.v);
+    state->clars.v = new_v;
+    state->clars.a = new_a;
+    if (clar_id >= state->clars.u) state->clars.u = clar_id + 1;
+  }
+  if (state->clars.v[clar_id].id) ERR_R("clar %d already used", clar_id);
+  memcpy(&state->clars.v[clar_id], pclar, sizeof(state->clars.v[clar_id]));
+  state->clars.v[clar_id].id = clar_id;
+
+  if (state->iface->add_entry(state->cnts, clar_id) < 0) return -1;
+  return clar_id;
+}
+
+int
 clar_get_record(
         clarlog_state_t state,
         int clar_id,
         struct clar_entry_v1 *pclar)
 {
   if (clar_id < 0 || clar_id >= state->clars.u) ERR_R("bad id: %d", clar_id);
-  if (state->clars.v[clar_id].id != clar_id)
+  if (state->clars.v[clar_id].id && state->clars.v[clar_id].id != clar_id)
     ERR_R("id mismatch: %d, %d", clar_id, state->clars.v[clar_id].id);
   memcpy(pclar, &state->clars.v[clar_id], sizeof(*pclar));
   return 0;
@@ -358,6 +393,7 @@ clar_update_flags(
         int flags)
 {
   if (id < 0 || id >= state->clars.u) ERR_R("bad id: %d", id);
+  if (!state->clars.v[id].id) return 0;
   if (state->clars.v[id].id != id)
     ERR_R("id mismatch: %d, %d", id, state->clars.v[id].id);
   if (flags < 0 || flags > 255) ERR_R("bad flags: %d", flags);
@@ -374,6 +410,7 @@ clar_set_charset(
         const unsigned char *charset)
 {
   if (id < 0 || id >= state->clars.u) ERR_R("bad id: %d", id);
+  if (!state->clars.v[id].id) return 0;
   if (state->clars.v[id].id != id)
     ERR_R("id mismatch: %d, %d", id, state->clars.v[id].id);
   snprintf(state->clars.v[id].charset, sizeof(state->clars.v[id].charset),
@@ -435,11 +472,21 @@ clar_flags_html(
 void
 clar_reset(clarlog_state_t state)
 {
+  int i;
+
   if (!state->iface->reset) {
     err("`reset' operation is not supported for this clarlog");
     return;
   }
   state->iface->reset(state->cnts);
+
+  for (i = 0; i < state->allocd; i++)
+    xfree(state->subjects[i]);
+  xfree(state->subjects);
+  xfree(state->charset_codes);
+  state->allocd = 0;
+  state->subjects = 0;
+  state->charset_codes = 0;
 }
 
 int
@@ -455,6 +502,11 @@ clar_get_text(
 
   ASSERT(state);
   if (clar_id < 0 || clar_id >= state->clars.u) ERR_R("bad id: %d", clar_id);
+  if (!state->clars.v[clar_id].id) {
+    *p_text = xstrdup("");
+    *p_size = 0;
+    return 0;
+  }
   if (state->clars.v[clar_id].id != clar_id)
     ERR_R("id mismatch: %d, %d", clar_id, state->clars.v[clar_id].id);
 
@@ -471,6 +523,26 @@ clar_get_text(
   *p_text = raw_text;
   *p_size = raw_size;
   return 0;
+}
+
+int
+clar_get_raw_text(
+        clarlog_state_t state,
+        int clar_id,
+        unsigned char **p_text,
+        size_t *p_size)
+{
+  ASSERT(state);
+  if (clar_id < 0 || clar_id >= state->clars.u) ERR_R("bad id: %d", clar_id);
+  if (!state->clars.v[clar_id].id) {
+    *p_text = xstrdup("");
+    *p_size = 0;
+    return 0;
+  }
+  if (state->clars.v[clar_id].id != clar_id)
+    ERR_R("id mismatch: %d, %d", clar_id, state->clars.v[clar_id].id);
+
+  return state->iface->get_raw_text(state->cnts, clar_id, p_text, p_size);
 }
 
 int

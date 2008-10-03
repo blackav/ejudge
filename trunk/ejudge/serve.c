@@ -179,7 +179,7 @@ main(int argc, char *argv[])
   }
   serve_state.clarlog_state = clar_init();
   if (clar_open(serve_state.clarlog_state,
-                config, cur_contest, serve_state.global, 0) < 0)
+                config, cur_contest, serve_state.global, 0, 0) < 0)
     return 1;
   serve_load_status_file(&serve_state);
   serve_build_compile_dirs(&serve_state);

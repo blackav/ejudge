@@ -101,5 +101,6 @@ struct ejudge_cfg *ejudge_cfg_parse(char const *);
 struct ejudge_cfg *ejudge_cfg_free(struct ejudge_cfg *);
 void ejudge_cfg_unparse(struct ejudge_cfg *, FILE *);
 void ejudge_cfg_unparse_plugins(struct ejudge_cfg *cfg, FILE *f);
+const struct xml_parse_spec *ejudge_cfg_get_spec(void);
 
 #endif /* __EJUDGE_CFG_H__ */

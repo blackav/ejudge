@@ -1068,6 +1068,7 @@ generate_daily_statistics(
   clar_total = clar_get_total(state->clarlog_state);
   for (i = 0; i < clar_total; i++) {
     if (clar_get_record(state->clarlog_state, i, &clar) < 0) continue;
+    if (!clar.id) continue;
     clar_time = clar.time;
     if (clar_time >= to_time) break;
     if (clar_time < from_time) continue;

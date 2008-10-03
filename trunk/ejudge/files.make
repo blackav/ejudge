@@ -247,6 +247,7 @@ CFILES=\
  collect-emails.c\
  compile.c\
  compile-control.c\
+ convert-clars.c\
  edit-userlist.c\
  ejudge-configure-compilers.c\
  ejudge-control.c\

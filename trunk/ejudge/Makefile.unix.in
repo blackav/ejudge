@@ -125,7 +125,7 @@ SS_OBJECTS = ${SS_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 SSC_CFILES = super-serve-control.c version.c
 SSC_OBJECTS = ${SSC_CFILES:.c=.o} libcommon.a libsuper_clnt.a
 
-CU_CFILES = clean-users.c version.c
+CU_CFILES = convert-clars.c version.c
 CU_OBJECTS = ${CU_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 
 SU_CFILES = slice-userlist.c version.c
@@ -159,7 +159,7 @@ NSC_CFILES=new-server-control.c version.c
 NSC_OBJECTS=$(NSC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a
 
 BINTARGETS = job-server-cmd edit-userlist ejudge-setup ejudge-configure-compilers ejudge-control execute new-server-cmd
-SERVERBINTARGETS = compile compile-control run serve userlist-server userlist-server-control job-server job-server-control super-serve super-serve-control collect-emails slice-userlist new-server new-server-control uudecode
+SERVERBINTARGETS = compile compile-control run serve userlist-server userlist-server-control job-server job-server-control super-serve super-serve-control collect-emails slice-userlist new-server new-server-control uudecode convert-clars
 CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
 TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} style/actions.js
 STYLEFILES = style/actions.js style/logo.gif style/priv.css style/unpriv.css style/unpriv.js style/filter_expr.html
@@ -255,7 +255,7 @@ super-serve: ${SS_OBJECTS}
 super-serve-control: ${SSC_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
-clean-users: ${CU_OBJECTS}
+convert-clars: ${CU_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
 
 collect-emails: ${CE_OBJECTS}
