@@ -1,4 +1,4 @@
-CREATE TABLE %sconfig
+CREATE TABLE %sconfig IF NOT EXISTS
        (config_key VARCHAR(64) NOT NULL PRIMARY KEY COLLATE utf8_bin,
        config_val VARCHAR(64)
        );
