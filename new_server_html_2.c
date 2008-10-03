@@ -819,7 +819,7 @@ ns_write_all_clars(FILE *f,
     i = list_idx[j];
 
     if (clar_get_record(cs->clarlog_state, i, &clar) < 0) continue;
-    if (!clar.id) continue;
+    if (clar.id < 0) continue;
     if (mode_clar != 1 && (clar.from <= 0 || clar.flags >= 2)) continue; 
 
     clar_subj = clar_get_subject(cs->clarlog_state, i);
@@ -1796,7 +1796,7 @@ ns_write_priv_clar(const serve_state_t cs,
 
   if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
       || clar_get_record(cs->clarlog_state, clar_id, &clar) < 0
-      || !clar.id) {
+      || clar.id < 0) {
     ns_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
     goto done;
   }

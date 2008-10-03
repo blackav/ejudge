@@ -224,6 +224,7 @@ create_new_clar_log(
 {
   struct clarlog_state *cl_state = cs->cl_state;
   int wsz;
+  int i;
 
   memset(&cl_state->header, 0, sizeof(cl_state->header));
   strncpy(cl_state->header.signature, signature_v1,
@@ -237,6 +238,7 @@ create_new_clar_log(
   }
   cl_state->clars.a = 128;
   XCALLOC(cl_state->clars.v, cl_state->clars.a);
+  for (i = 0; i < cl_state->clars.a; cl_state->clars.v[i++].id = -1);
 
   if (flags == CLAR_LOG_READONLY) return 0;
 
@@ -307,6 +309,7 @@ convert_log_from_version_0(
   cl_state->clars.a = 128;
   while (cl_state->clars.u > cl_state->clars.a) cl_state->clars.a *= 2;
   XCALLOC(cl_state->clars.v, cl_state->clars.a);
+  for (i = 0; i < cl_state->clars.a; cl_state->clars.v[i++].id = -1);
   for (i = 0; i < cl_state->clars.u; i++) {
     if (clar_read_entry(cs, i) < 0) return -1;
   }
@@ -361,13 +364,14 @@ read_clar_file(
 {
   struct clarlog_state *cl_state = cs->cl_state;
   unsigned char *buf;
-  int bsz, rsz;
+  int bsz, rsz, i;
 
   cl_state->clars.u = (length - sizeof(struct clar_header_v1))
     / sizeof(struct clar_entry_v1);
   cl_state->clars.a = 128;
   while (cl_state->clars.a < cl_state->clars.u) cl_state->clars.a *= 2;
   XCALLOC(cl_state->clars.v, cl_state->clars.a);
+  for (i = 0; i < cl_state->clars.a; cl_state->clars.v[i++].id = -1);
 
   if (sf_lseek(cs->clar_fd, sizeof(struct clar_header_v1), SEEK_SET,
                "clar_read")<0)

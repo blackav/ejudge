@@ -256,7 +256,7 @@ super-serve-control: ${SSC_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 convert-clars: ${CU_OBJECTS}
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
+	${LD} ${LDFLAGS} -rdynamic $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
 
 collect-emails: ${CE_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}

@@ -169,7 +169,7 @@ clar_open(
   plugin_set_directory(config->plugin_dir);
   if (!(base_iface = plugin_load(plg->path, plg->type, plg->name))) {
     err("cannot load plugin `%s'", plg->name);
-    return 1;
+    return -1;
   }
   cldb_iface = (struct cldb_plugin_iface*) base_iface;
   if (base_iface->size != sizeof(*cldb_iface)) {
@@ -227,9 +227,23 @@ clar_add_record(
   struct clar_entry_v1 *pc;
 
   if (state->clars.u >= state->clars.a) {
+    int new_a = state->clars.a;
+    struct clar_entry_v1 *new_v = 0;
+
+    if (!new_a) new_a = 128;
+    while (state->clars.u >= new_a) new_a *= 2;
+    XCALLOC(new_v, new_a);
+    if (state->clars.a)
+      memcpy(new_v, state->clars.v, state->clars.a * sizeof(new_v[0]));
+    for (i = state->clars.a; i < new_a; state->clars.v[i++].id = -1);
+    xfree(state->clars.v);
+    state->clars.v = new_v;
+    state->clars.a = new_a;
+    /*
     if (!(state->clars.a *= 2)) state->clars.a = 128;
     state->clars.v = xrealloc(state->clars.v, state->clars.a * sizeof(state->clars.v[0]));
     info("clar_add_record: array extended: %d", state->clars.a);
+    */
   }
   i = state->clars.u++;
   pc = &state->clars.v[i];
@@ -285,21 +299,24 @@ clar_put_record(
         const struct clar_entry_v1 *pclar)
 {
   if (clar_id < 0) ERR_R("bad id: %d", clar_id);
-  if (!pclar || !pclar->id) ERR_R("bad pclar");
+  if (!pclar || pclar->id < 0) ERR_R("bad pclar");
   if (clar_id >= state->clars.u) {
     int new_a = state->clars.a;
     struct clar_entry_v1 *new_v;
+    int i;
 
     if (!new_a) new_a = 128;
     while (clar_id >= new_a) new_a *= 2;
     XCALLOC(new_v, new_a);
-    if (state->clars.u) memcpy(new_v, state->clars.v, sizeof(new_v[0])*new_a);
+    if (state->clars.a) memcpy(new_v, state->clars.v,
+                               sizeof(new_v[0]) * state->clars.a);
+    for (i = state->clars.a; i < new_a; new_v[i++].id = -1);
     xfree(state->clars.v);
     state->clars.v = new_v;
     state->clars.a = new_a;
     if (clar_id >= state->clars.u) state->clars.u = clar_id + 1;
   }
-  if (state->clars.v[clar_id].id) ERR_R("clar %d already used", clar_id);
+  if (state->clars.v[clar_id].id >= 0) ERR_R("clar %d already used", clar_id);
   memcpy(&state->clars.v[clar_id], pclar, sizeof(state->clars.v[clar_id]));
   state->clars.v[clar_id].id = clar_id;
 
@@ -314,7 +331,7 @@ clar_get_record(
         struct clar_entry_v1 *pclar)
 {
   if (clar_id < 0 || clar_id >= state->clars.u) ERR_R("bad id: %d", clar_id);
-  if (state->clars.v[clar_id].id && state->clars.v[clar_id].id != clar_id)
+  if (state->clars.v[clar_id].id >= 0 && state->clars.v[clar_id].id != clar_id)
     ERR_R("id mismatch: %d, %d", clar_id, state->clars.v[clar_id].id);
   memcpy(pclar, &state->clars.v[clar_id], sizeof(*pclar));
   return 0;
@@ -393,7 +410,7 @@ clar_update_flags(
         int flags)
 {
   if (id < 0 || id >= state->clars.u) ERR_R("bad id: %d", id);
-  if (!state->clars.v[id].id) return 0;
+  if (state->clars.v[id].id < 0) return 0;
   if (state->clars.v[id].id != id)
     ERR_R("id mismatch: %d, %d", id, state->clars.v[id].id);
   if (flags < 0 || flags > 255) ERR_R("bad flags: %d", flags);
@@ -410,7 +427,7 @@ clar_set_charset(
         const unsigned char *charset)
 {
   if (id < 0 || id >= state->clars.u) ERR_R("bad id: %d", id);
-  if (!state->clars.v[id].id) return 0;
+  if (state->clars.v[id].id < 0) return 0;
   if (state->clars.v[id].id != id)
     ERR_R("id mismatch: %d, %d", id, state->clars.v[id].id);
   snprintf(state->clars.v[id].charset, sizeof(state->clars.v[id].charset),
@@ -502,7 +519,7 @@ clar_get_text(
 
   ASSERT(state);
   if (clar_id < 0 || clar_id >= state->clars.u) ERR_R("bad id: %d", clar_id);
-  if (!state->clars.v[clar_id].id) {
+  if (state->clars.v[clar_id].id < 0) {
     *p_text = xstrdup("");
     *p_size = 0;
     return 0;
@@ -534,7 +551,7 @@ clar_get_raw_text(
 {
   ASSERT(state);
   if (clar_id < 0 || clar_id >= state->clars.u) ERR_R("bad id: %d", clar_id);
-  if (!state->clars.v[clar_id].id) {
+  if (state->clars.v[clar_id].id < 0) {
     *p_text = xstrdup("");
     *p_size = 0;
     return 0;
