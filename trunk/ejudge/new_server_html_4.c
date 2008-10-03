@@ -1689,7 +1689,7 @@ new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
 
-  if ((r = userlist_clnt_get_cookie(ul_conn, ULS_PRIV_GET_COOKIE,
+  if ((r = userlist_clnt_get_cookie(ul_conn, ULS_FETCH_COOKIE,
                                     phr->ip, phr->ssl_flag,
                                     phr->session_id,
                                     &phr->user_id, &phr->contest_id,
