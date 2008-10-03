@@ -39,12 +39,12 @@ struct cldb_plugin_iface
   int cldb_version;
 
   // initialize the plugin
-  struct cldb_plugin_data *(*init)(const struct ejudge_cfg*);
+  struct cldb_plugin_data *(*init)(void);
   // close the database flushing all the data, if necessary
   int (*finish)(struct cldb_plugin_data *);
   // parse the plugin arguments
-  int (*prepare)(struct cldb_plugin_data *, const struct ejudge_cfg *,
-                 const struct xml_tree*);
+  int (*prepare)(struct cldb_plugin_data *, struct ejudge_cfg *,
+                 struct xml_tree*);
   // open a contest
   struct cldb_plugin_cnts *(*open)(struct cldb_plugin_data *,
                                    struct clarlog_state *,
@@ -65,7 +65,7 @@ struct cldb_plugin_iface
   // get the message text as is
   int (*get_raw_text)(struct cldb_plugin_cnts *, int, unsigned char **,size_t*);
   // add the message text
-  int (*add_text)(struct cldb_plugin_cnts *, int, unsigned char *, size_t);
+  int (*add_text)(struct cldb_plugin_cnts *, int, const unsigned char *,size_t);
 };
 
 /* default plugin: compiled into new-server */

@@ -211,6 +211,12 @@ static struct xml_parse_spec ejudge_config_parse_spec =
   .verbatim_flags = verbatim_flags,
 };
 
+const struct xml_parse_spec *
+ejudge_cfg_get_spec(void)
+{
+  return &ejudge_config_parse_spec;
+}
+
 static struct xml_tree *
 parse_user_map(char const *path, struct xml_tree *p)
 {

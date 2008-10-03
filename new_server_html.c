@@ -2947,7 +2947,8 @@ priv_clar_reply(FILE *fout,
     goto cleanup;
   }
 
-  if (clar_get_record(cs->clarlog_state, in_reply_to, &clar) < 0) {
+  if (clar_get_record(cs->clarlog_state, in_reply_to, &clar) < 0
+      || !clar.id) {
     ns_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
     goto cleanup;
   }
@@ -10180,7 +10181,8 @@ unpriv_view_clar(FILE *fout,
     goto done;
   }
   if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
-      || clar_get_record(cs->clarlog_state, clar_id, &ce) < 0) {
+      || clar_get_record(cs->clarlog_state, clar_id, &ce) < 0
+      || !ce.id) {
     ns_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
     goto done;
   }
@@ -10793,6 +10795,7 @@ unpriv_page_header(FILE *fout,
             teamdb_export_team(cs->teamdb_state, phr->user_id, &tdb);
             memset(&fe, 0, sizeof(fe));
             fe.locale_id = phr->locale_id;
+            fe.sid = phr->session_id;
             sformat_message(stand_url_buf, sizeof(stand_url_buf),
                             cnts->standings_url, global, 0, 0, 0, &tdb,
                             tdb.user, cnts, &fe);

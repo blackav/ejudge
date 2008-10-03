@@ -257,7 +257,7 @@ void serve_check_stat_generation(serve_state_t state,
 
 struct ejudge_cfg;
 int serve_state_load_contest(
-        const struct ejudge_cfg *,
+        struct ejudge_cfg *,
         int contest_id,
         struct userlist_clnt *ul_conn,
         struct teamdb_db_callbacks *teamdb_callbacks,

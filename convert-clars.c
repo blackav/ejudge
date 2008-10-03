@@ -1,0 +1,180 @@
+/* -*- mode: c -*- */
+/* $Id$ */
+
+/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+
+/*
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+#include "config.h"
+#include "ej_types.h"
+#include "ej_limits.h"
+#include "version.h"
+
+#include "ejudge_cfg.h"
+#include "contests.h"
+#include "clarlog.h"
+
+#include <reuse/osdeps.h>
+#include <reuse/xalloc.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <string.h>
+#include <errno.h>
+
+static const unsigned char *program_name = "";
+static const unsigned char *ejudge_xml_path = 0;
+static const unsigned char *src_plugin_name = 0;
+static const unsigned char *dst_plugin_name = 0;
+
+static int contest_id = 0;
+
+static struct ejudge_cfg *config = 0;
+static const struct contest_desc *cnts = 0;
+static clarlog_state_t src_clarlog = 0;
+static clarlog_state_t dst_clarlog = 0;
+
+static void
+die(const char *format, ...)
+  __attribute__((format(printf, 1, 2), noreturn));
+static void
+die(const char *format, ...)
+{
+  va_list args;
+  char buf[1024];
+
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+
+  fprintf(stderr, "%s: %s\n  Use --help option for help.\n", program_name,
+          buf);
+  exit(1);
+}
+
+static void write_help(void) __attribute__((noreturn));
+static void
+write_help(void)
+{
+  printf("%s: clarification database converter\n"
+         "Usage: %s [OPTIONS] CNTS-ID SRC-PLUGIN DST-PLUGIN\n"
+         "  OPTIONS:\n"
+         "    --help    write this message and exit\n"
+         "    --version report version and exit\n"
+         "    -f CFG    specify the ejudge configuration file\n"
+         /*"  COMMAND:\n"*/
+         /*"    status    report the new-server status\n"*/,
+         program_name, program_name);
+  exit(0);
+}
+static void write_version(void) __attribute__((noreturn));
+static void
+write_version(void)
+{
+  printf("%s %s, compiled %s\n", program_name, compile_version, compile_date);
+  exit(0);
+}
+
+int
+main(int argc, char *argv[])
+{
+  int i = 1;
+  char *eptr = 0;
+  int total_clars, clar_id;
+  struct clar_entry_v1 clar;
+  unsigned char *text = 0;
+  size_t size = 0;
+
+  program_name = os_GetBasename(argv[0]);
+
+  if (argc <= 1) die("not enough parameters");
+
+  if (!strcmp(argv[1], "--help")) {
+    write_help();
+  } else if (!strcmp(argv[1], "--version")) {
+    write_version();
+  }
+
+  i = 1;
+  while (i < argc) {
+    if (!strcmp(argv[i], "-f")) {
+      if (i + 1 >= argc) die("argument expected for `-f'");
+      ejudge_xml_path = argv[i + 1];
+      i += 2;
+    } else if (!strcmp(argv[i], "--")) {
+      i++;
+      break;
+    } else if (argv[i][0] == '-') {
+      die("invalid option `%s'", argv[i]);
+    } else {
+      break;
+    }
+  }
+
+#if defined EJUDGE_XML_PATH
+  if (!ejudge_xml_path) ejudge_xml_path = EJUDGE_XML_PATH;
+#endif /* EJUDGE_XML_PATH */
+  if (!ejudge_xml_path) die("ejudge.xml path is not specified");
+  if (!(config = ejudge_cfg_parse(ejudge_xml_path))) return 1;
+  if (!config->contests_dir) die("<contests_dir> tag is not set!");
+  if (contests_set_directory(config->contests_dir) < 0)
+    die("contests directory is invalid");
+
+  if (i >= argc) die("contest-id is expected");
+  if (!argv[i][0]) die("contest-id is not specified");
+  errno = 0;
+  contest_id = strtol(argv[i], &eptr, 10);
+  if (*eptr || errno || contest_id <= 0 || contest_id > EJ_MAX_CONTEST_ID)
+    die("contest-id is invalid");
+  i++;
+
+  if (i >= argc) die("source plugin name is expected");
+  src_plugin_name = argv[i];
+  i++;
+
+  if (i >= argc) die("destination plugin name is expected");
+  dst_plugin_name = argv[i];
+  i++;
+
+  if (i < argc) die("extra parameters");
+  if (!src_plugin_name || !*src_plugin_name) src_plugin_name = "file";
+  if (!dst_plugin_name || !*dst_plugin_name) dst_plugin_name = "file";
+
+  if (!strcmp(src_plugin_name, dst_plugin_name))
+    die("plugins are the same");
+
+  if (contests_get(contest_id, &cnts) < 0 || !cnts)
+    die("cannot load contest %d", contest_id);
+
+  if (!(src_clarlog = clar_init()))
+    die("cannot open the source clarlog");
+  if (!(dst_clarlog = clar_init()))
+    die("cannot open the destination clarlog");
+
+  if (clar_open(src_clarlog, config, cnts, 0, src_plugin_name, 0) < 0)
+    die("cannot open the source clarlog");
+  if (clar_open(dst_clarlog, config, cnts, 0, dst_plugin_name, 0) < 0)
+    die("cannot open the destination clarlog");
+
+  total_clars = clar_get_total(src_clarlog);
+  for (clar_id = 0; clar_id < total_clars; clar_id++) {
+    if (clar_get_record(src_clarlog, clar_id, &clar) < 0) continue;
+    if (!clar.id) continue;
+    clar_put_record(dst_clarlog, clar_id, &clar);
+    if (clar_get_raw_text(src_clarlog, clar_id, &text, &size) < 0) continue;
+    clar_add_text(dst_clarlog, clar_id, text, size);
+    xfree(text); text = 0; size = 0;
+  }
+  return 0;
+}

@@ -67,9 +67,10 @@ clarlog_state_t clar_init(void);
 clarlog_state_t clar_destroy(clarlog_state_t state);
 int clar_open(
         clarlog_state_t state,
-        const struct ejudge_cfg *config,
+        struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
+        const unsigned char *plugin_name,
         int flags);
 int clar_add_record(
         clarlog_state_t state,
@@ -98,6 +99,9 @@ int clar_get_total(clarlog_state_t state);
 int clar_get_record(clarlog_state_t state,
                     int clar_id,
                     struct clar_entry_v1 *pclar);
+int clar_put_record(clarlog_state_t state,
+                    int clar_id,
+                    const struct clar_entry_v1 *pclar);
 int clar_get_charset_id(clarlog_state_t state,
                         int clar_id);
 const unsigned char *clar_get_subject(clarlog_state_t state, int clar_id);
@@ -115,8 +119,16 @@ char *clar_flags_html(
         char *buf,
         int len);
 void clar_reset(clarlog_state_t state);
-int clar_get_text(clarlog_state_t state, int clar_id,
-                  unsigned char **p_txt, size_t *p_size);
+int clar_get_text(
+        clarlog_state_t state,
+        int clar_id,
+        unsigned char **p_txt,
+        size_t *p_size);
+int clar_get_raw_text(
+        clarlog_state_t state,
+        int clar_id,
+        unsigned char **p_txt,
+        size_t *p_size);
 int
 clar_add_text(
         clarlog_state_t state,

@@ -272,7 +272,7 @@ main(int argc, char **argv)
       xfree(run_entries);
     }
 
-    if (clar_open(clarlog_state, config, cnts, NULL, CLAR_LOG_READONLY) < 0) {
+    if (clar_open(clarlog_state, config, cnts, NULL,0,CLAR_LOG_READONLY) < 0) {
       err("contest %d cannot open clarlog '%s'", i, clarlog_path);
     } else {
       // clarlog opened OK
@@ -282,6 +282,8 @@ main(int argc, char **argv)
       for (j = 0; j < total_clars; j++) {
         if (clar_get_record(clarlog_state, j, &clar) < 0) {
           err("contest %d failed to read clar %d", i, j);
+        } else if (!clar.id) {
+          info("contest %d clar %d is empty", i, j);
         } else {
           if (clar.from != 0 && clar.from == clar.to) {
             if (clar.from <= 0 || clar.from > max_user_id
