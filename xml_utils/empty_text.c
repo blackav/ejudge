@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -40,6 +40,24 @@ xml_empty_text(struct xml_tree *tree)
   }
   xfree(tree->text);
   tree->text = 0;
+  return 0;
+}
+
+int
+xml_empty_text_c(const struct xml_tree *tree)
+{
+  unsigned char *p;
+
+  if (!tree->text) return 0;
+  for (p = tree->text; *p && isspace(*p); p++);
+  if (*p) {
+    if (xml_err_spec && xml_err_spec->elem_map) {
+      xml_err(tree, "text is not allowed in <%s>", xml_err_get_elem_name(tree));
+    } else {
+      xml_err(tree, "text is not allowed");
+    }
+    return -1;
+  }
   return 0;
 }
 
