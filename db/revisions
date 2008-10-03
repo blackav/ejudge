@@ -3837,3 +3837,11 @@ new_server_html_2.c 5142 0 14465794
 serve_state.c 5142 0 1120206
 xml_utils/attr_bool.c 5143 0 108012
 xml_utils/empty_text.c 5143 0 136120
+convert-clars.c 5146 0 455057
+clarlog.c 5146 0 1205253
+cldb_plugin_file.c 5146 0 1326275
+html.c 5146 0 12204077
+master_html.c 5146 0 2916280
+new_server_html.c 5146 0 36012371
+new_server_html_2.c 5146 0 14466065
+plugin.c 5146 0 334423
