@@ -40,7 +40,6 @@ struct clar_array
 
 struct clarlog_state
 {
-  struct clar_header_v1 header;
   struct clar_array clars;
 
   size_t allocd;

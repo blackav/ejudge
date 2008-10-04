@@ -88,18 +88,45 @@ write_version(void)
 }
 
 /* force linking of certain functions that may be needed by plugins */
-void *force_link_1;
-void *force_link_2;
-void *force_link_3;
-void *force_link_4;
-void
-force_link(void)
+void *forced_link_table[] =
 {
-  force_link_1 = xml_attr_bool;
-  force_link_2 = xml_err_elem_undefined_s;
-  force_link_3 = xml_parse_int;
-  force_link_4 = xml_unparse_ip;
-}
+  xml_parse_ip,
+  xml_parse_date,
+  xml_parse_int,
+  xml_parse_ip_mask,
+  xml_parse_bool,
+  xml_unparse_text,
+  xml_unparse_bool,
+  xml_unparse_ip,
+  xml_unparse_date,
+  xml_unparse_ip_mask,
+  xml_err_get_elem_name,
+  xml_err_get_attr_name,
+  xml_err,
+  xml_err_a,
+  xml_err_attrs,
+  xml_err_nested_elems,
+  xml_err_attr_not_allowed,
+  xml_err_elem_not_allowed,
+  xml_err_elem_redefined,
+  xml_err_top_level,
+  xml_err_top_level_s,
+  xml_err_attr_invalid,
+  xml_err_elem_undefined,
+  xml_err_elem_undefined_s,
+  xml_err_attr_undefined,
+  xml_err_attr_undefined_s,
+  xml_err_elem_invalid,
+  xml_err_elem_empty,
+  xml_leaf_elem,
+  xml_empty_text,
+  xml_empty_text_c,
+  xml_attr_bool,
+  xml_attr_bool_byte,
+  xml_attr_int,
+  xml_attr_date,
+  xml_elem_ip_mask,
+};
 
 int
 main(int argc, char *argv[])
