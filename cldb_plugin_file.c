@@ -49,6 +49,7 @@ struct cldb_file_cnts
   struct clarlog_state *cl_state;
   int clar_fd;
   unsigned char *clar_archive_dir;
+  struct clar_header_v1 header;
 };
 
 static int do_flush_entry(struct cldb_file_cnts *cs, int num);
@@ -226,10 +227,9 @@ create_new_clar_log(
   int wsz;
   int i;
 
-  memset(&cl_state->header, 0, sizeof(cl_state->header));
-  strncpy(cl_state->header.signature, signature_v1,
-          sizeof(cl_state->header.signature));
-  cl_state->header.version = 1;
+  memset(&cs->header, 0, sizeof(cs->header));
+  strncpy(cs->header.signature, signature_v1, sizeof(cs->header.signature));
+  cs->header.version = 1;
 
   if (cl_state->clars.v) {
     xfree(cl_state->clars.v);
@@ -248,14 +248,13 @@ create_new_clar_log(
   }
   if (sf_lseek(cs->clar_fd, 0, SEEK_SET, "clar") == (off_t) -1)
     return -1;
-  wsz = write(cs->clar_fd, &cl_state->header, sizeof(cl_state->header));
+  wsz = write(cs->clar_fd, &cs->header, sizeof(cs->header));
   if (wsz <= 0) {
     err("clar_log: write() failed: %s", os_ErrorMsg());
     return -1;
   }
-  if (wsz != sizeof(cl_state->header)) {
-    err("clar_log: short write: %d instead of %zu", wsz,
-        sizeof(cl_state->header));
+  if (wsz != sizeof(cs->header)) {
+    err("clar_log: short write: %d instead of %zu", wsz, sizeof(cs->header));
     return -1;
   }
   return 0;
@@ -270,10 +269,10 @@ write_all_clarlog(struct cldb_file_cnts *cs)
 
   if (sf_lseek(cs->clar_fd, 0, SEEK_SET, "clar_write") < 0) return -1;
 
-  if ((wsz = sf_write(cs->clar_fd, &cl_state->header, sizeof(cl_state->header),
+  if ((wsz = sf_write(cs->clar_fd, &cs->header, sizeof(cs->header),
                       "clar_write")) < 0)
     return -1;
-  if (wsz != sizeof(cl_state->header)) {
+  if (wsz != sizeof(cs->header)) {
     err("clar_write: short write: %d", wsz);
     return -1;
   }
@@ -316,10 +315,9 @@ convert_log_from_version_0(
 
   info("clar log version 0 successfully read");
 
-  memset(&cl_state->header, 0, sizeof(cl_state->header));
-  strncpy(cl_state->header.signature, signature_v1,
-          sizeof(cl_state->header.signature));
-  cl_state->header.version = 1;
+  memset(&cs->header, 0, sizeof(cs->header));
+  strncpy(cs->header.signature, signature_v1, sizeof(cs->header.signature));
+  cs->header.version = 1;
 
   if (flags == CLAR_LOG_READONLY) return 0;
 
@@ -341,20 +339,19 @@ read_clar_file_header(
         struct cldb_file_cnts *cs,
         off_t length)
 {
-  struct clarlog_state *cl_state = cs->cl_state;
   int rsz = 0;
 
   if (length < sizeof(struct clar_header_v1)) return 0;
   if ((length - sizeof(struct clar_header_v1))
       % sizeof(struct clar_entry_v1) != 0) return 0;
   if (sf_lseek(cs->clar_fd, 0, SEEK_SET, "clar_open") < 0) return -1;
-  if ((rsz = sf_read(cs->clar_fd, &cl_state->header, sizeof(cl_state->header),
+  if ((rsz = sf_read(cs->clar_fd, &cs->header, sizeof(cs->header),
                      "clar_open")) < 0)
     return -1;
-  if (rsz != sizeof(cl_state->header)) return -1;
-  if (strcmp(cl_state->header.signature, signature_v1)) return 0;
-  if (cl_state->header.endianness > 1) return 0;
-  return cl_state->header.version;
+  if (rsz != sizeof(cs->header)) return -1;
+  if (strcmp(cs->header.signature, signature_v1)) return 0;
+  if (cs->header.endianness > 1) return 0;
+  return cs->header.version;
 }
 
 static int

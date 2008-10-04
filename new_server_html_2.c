@@ -983,6 +983,7 @@ ns_write_priv_source(const serve_state_t state,
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *run_charset = 0;
   int charset_id = 0;
+  const unsigned char *cl = 0;
 
   if (ns_cgi_param(phr, "run_charset", &ss) > 0 && ss && *ss)
     run_charset = ss;
@@ -1566,9 +1567,14 @@ ns_write_priv_source(const serve_state_t state,
       html_hidden(f, "run_id", "%d", run_id);
       fprintf(f,
               "<p><textarea name=\"msg_text\" rows=\"20\" cols=\"60\">"
-              "</textarea></p>"
-              "<p>%s</p>\n",
+              "</textarea></p>");
+      cl = " class=\"b0\"";
+      fprintf(f, "<table%s><tr>", cl);
+      fprintf(f, "<td%s>%s</td>", cl,
               BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT));
+      fprintf(f, "<td%s>%s</td>", cl,
+              BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE));
+      fprintf(f, "</tr></table>\n");
       fprintf(f, "</form>\n");
     }
     /*

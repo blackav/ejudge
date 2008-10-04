@@ -9253,15 +9253,12 @@ convert_database(const unsigned char *from_name, const unsigned char *to_name)
     return 1;
   }
 
-  fprintf(stderr, "1\n");
-
   // enumerate users
   for (ui = from_plugin->iface->get_user_id_iterator(from_plugin->data);
        ui->has_next(ui);
        ui->next(ui)) {
     user_id = ui->get(ui);
 
-    fprintf(stderr, ">>%d\n", user_id);
     r = from_plugin->iface->get_user_full(from_plugin->data, user_id, &u);
     ASSERT(r == 1);
 
@@ -9269,7 +9266,6 @@ convert_database(const unsigned char *from_name, const unsigned char *to_name)
     if (r < 0) break;
   }
   ui->destroy(ui);
-  fprintf(stderr, "2\n");
 
   return 0;
 }

@@ -2895,6 +2895,10 @@ priv_submit_run_comment(
     goto cleanup;
   }
 
+  if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE) {
+    run_change_status(cs->runlog_state, run_id, RUN_IGNORED, 0, -1, 0);
+  }
+
  cleanup:
   html_armor_free(&ab);
   return 0;
@@ -6418,6 +6422,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_FORCE_START_VIRTUAL] = priv_force_start_virtual,
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_2] = priv_assign_cyphers_2,
   [NEW_SRV_ACTION_SET_PRIORITIES] = priv_set_priorities,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE]=priv_submit_run_comment,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -7823,6 +7828,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GET_FILE] = priv_get_file,
   [NEW_SRV_ACTION_PRIO_FORM] = priv_generic_page,
   [NEW_SRV_ACTION_SET_PRIORITIES] = priv_generic_operation,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE] = priv_generic_operation,
 };
 
 static void
