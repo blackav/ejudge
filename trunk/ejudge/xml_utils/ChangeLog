@@ -1,3 +1,11 @@
+2008-10-03 (r5143) Alexander Chernov  <cher@ejudge.ru>
+
+	* empty_text.c: copyright notice is updated;
+	(xml_empty_text_c) new function.
+
+	* attr_bool.c: copyright notice is updated;
+	  `attr' parameter is a const pointer.
+
 2007-11-20 (r4520) Alexander Chernov  <cher@ejudge.ru>
 
 	* parse_ip.c: copyright notice is updated;

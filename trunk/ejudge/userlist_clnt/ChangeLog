@@ -1,3 +1,8 @@
+2008-09-30 (r5123) Alexander Chernov  <cher@ejudge.ru>
+
+	* delete_info.c: copyright notice is updated;
+	(userlist_clnt_delete_info) uninitialized memory read is fixed.
+
 2007-12-08 (r4578) Alexander Chernov  <cher@ejudge.ru>
 
 	* priv_login.c:

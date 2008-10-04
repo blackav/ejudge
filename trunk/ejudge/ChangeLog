@@ -1,3 +1,472 @@
+2008-10-04 (r5156) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	new_server_html.c:
+	(priv_view_passwords) JUDGE role and EDIT_PASSWD capability is
+	  required to view passwords;
+	(priv_main_page) the same.
+
+2008-10-04 (r5154) Alexander Chernov  <cher@ejudge.ru>
+
+	* clarlog_state.h:
+	(struct clar_array) `header' field is removed.
+
+	* new-server.h:
+	`NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE' is added.
+
+	* cldb_plugin_file.c:
+	(struct cldb_file_cnts) `header' field is added.
+
+	* convert-clars.c:
+	list of functions which are forcely linked into the program is extended.
+
+	* new_server_html.c:
+	(priv_submit_run_comment)
+	  `NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE' is supported.
+
+	* new_server_html_2.c:
+	(ns_write_priv_source) "Send comment and ignore run" button is added.
+
+	* new_server_tables.c:
+	text for "Send comment and ignore run" is added.
+
+	* userlist-server.c:
+	some debugging output is removed.
+
+2008-10-03 (r5152) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_proto.h: copyright notice is updated;
+	`NEW_SRV_ERR_VIRTUAL_START_FAILED' is added.
+
+	* new-server-cmd.c:
+	(prepare_force_start_virtual) new function;
+	"force-start-virtual" command is handled.
+
+	* new_server_html_4.c:
+	(cmd_force_start_virtual) new function;
+	`NEW_SRV_ACTION_FORCE_START_VIRTUAL' is handled.
+
+	* new_server_proto.c:
+	error message for `NEW_SRV_ERR_VIRTUAL_START_FAILED' is added.
+
+2008-10-03 (r5149) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	editing of the new global configuration variables `clardb_plugin',
+	  `rundb_plugin', `xuser_plugin' is supported.
+
+	* prepare_out.c:
+	new global configuration variables `clardb_plugin', `rundb_plugin',
+	  `xuser_plugin' are supported.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of the new global configuration variables `clardb_plugin',
+	  `rundb_plugin', `xuser_plugin' is supported.
+
+2008-10-03 (r5148) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist_proto.h: copyright notice is updated;
+	`ULS_FETCH_COOKIE' request is added.
+
+	* new_server_html_4.c:
+	(new_server_cmd_handler) `ULS_FETCH_COOKIE' request is used
+	  instead of `ULS_PRIV_GET_COOKIE'.
+
+	* userlist-server.c:
+	(cmd_get_cookie) `ULS_FETCH_COOKIE' request is handled.
+
+2008-10-03 (r5146) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	-rdynamic added to `convert-clars' compilation options.
+
+	* clarlog.c:
+	(clar_open) error reporting code is fixed;
+	(clar_add_record) `id' field of newly allocated entries is set to -1;
+	(clar_put_record) id == -1 means empty clar record;
+	  `id' field of newly allocated entries is set to -1.
+
+	* cldb_plugin_file.c:
+	id == -1 means empty clar record.
+
+	* convert-clars.c:
+	"xml_utils.h" is included;
+	some functions are forced to be linked;
+	(main) id == -1 means empty clar record.
+
+	* html.c, master_html.c, new_server_html.c, new_server_html_2.c:
+	id == -1 means empty clar record.
+
+	* plugin.c: copyright notice is added;
+	(plugin_set_directory) minor memory leak is fixed.
+
+2008-10-03 (r5142) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`convert-clars.c' is added.
+
+	* Makefile.unix.in:
+	`convert-clars' is compiled instead of `clean-users'.
+
+	* clarlog.h:
+	(clar_open) `config' parameter is not a const pointer;
+	  `plugin_name' parameter is added;
+	(clar_put_record) new function prototype;
+	(clar_get_raw_text) new function prototype.
+
+	* cldb_plugin.h:
+	(cldb_plugin_iface::init) no parameters are accepted;
+	(cldb_plugin_iface::prepare) `config' is not a const pointer;
+	(cldb_plugin_iface::add_text) `text' is a const pointer.
+
+	* ejudge_cfg.h:
+	(ejudge_cfg_get_spec) new function prototype.
+
+	* serve_state.h:
+	(serve_state_load_contest) `config' is not a const pointer.
+
+	* xml_utils.h: copyright notice is updated;
+	(xml_empty_text_c) new function prototype;
+	(xml_attr_bool) `attr' is a const pointer.
+
+	* clarlog.c:
+	(clar_open) `config' parameter is not a const pointer;
+	  `plugin_name' parameter is added;
+	(clar_put_record) new function;
+	(clar_get_record) empty records are supported;
+	(clar_update_flags) empty records are supported;
+	(clar_set_charset) empty records are supported;
+	(clar_reset) `subjects' array is freed;
+	(clar_get_text) empty records are supported;
+	(clar_get_raw_text) new function.
+
+	* cldb_plugin_file.c:
+	(init_func) no parameters are accepted;
+	(prepare_func) `config', `tree' are not const pointers;
+	(add_text_func) `text' is a const pointer;
+	(open_func) `clar_archive_dir' path is built by `cnts' information,
+	  if `global' is not available.
+
+	* clean-users.c:
+	(main) call of `clar_open' is updated;
+	  empty clar records are ignored.
+
+	* convert-clars.c:
+	initial revision.
+
+	* ejudge_cfg.c:
+	(ejudge_cfg_get_spec) new function.
+
+	* html.c:
+	(serve_count_unread_clars) empty clar records are handled;
+	(new_write_user_clars) the same.
+
+	* master_html.c:
+	(generate_daily_statistics) empty clar records are handled.
+
+	* new_server_html.c:
+	(priv_clar_reply) empty clar records are handled;
+	(unpriv_view_clar) the same;
+	(unpriv_page_header) the session id is passed to standings_url
+	  generation.
+
+	* new_server_html_2.c:
+	(ns_write_all_clars) empty clar records are ignored;
+	(ns_write_priv_clar) the same.
+
+	* serve.c:
+	(main) call of `clar_open' is updated.
+
+	* serve_state.c:
+	(serve_state_load_contest) `config' is not a const pointer;
+	  call of `clar_open' is updated.
+
+2008-10-01 (r5138) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	`clean-users' is excluded from compilation.
+
+	* clarlog.h:
+	(clar_clear_variables) removed;
+	(clar_get_text) new function prototype;
+	(clar_add_text) new function prototype.
+
+	* cldb_plugin.h:
+	(struct cldb_plugin_iface) `create_new' is renamed to `reset';
+	  `get_raw_text' method is added;
+	  `add_text' method is added.
+
+	* clarlog.c:
+	(clar_reset) `create_new' method is renamed to `reset'.
+	(clar_clear_variables) removed;
+	(clar_get_text) new function;
+	(clar_add_text) new function.
+
+	* cldb_plugin_file.c:
+	"fileutl.h" is included;
+	(struct cldb_file_cnts) `clar_archive_dir' field is added;
+	(reset_func) renamed from `create_new_func';
+	(get_raw_text_func) new function;
+	(add_text_func) new function.
+
+	* clean-users.c:
+	(main) call of `clar_clear_variables' is commented out.
+
+	* new_server_html.c:
+	(priv_submit_clar) `clar_add_text' is used;
+	(priv_submit_run_comment) `clar_add_text' is used;
+	(priv_clar_reply) `clar_get_text', `clar_add_text' are used;
+	(unpriv_submit_clar) `clar_add_text' is used;
+	(unpriv_submit_appeal) `clar_add_text' is used;
+	(unpriv_view_clar) `clar_get_text' is used.
+
+	* new_server_html_2.c:
+	(ns_write_priv_clar) `clar_get_text' is used.
+
+	* new_server_html_4.c:
+	(cmd_clar_operation) `clar_get_text' is used.
+
+	* serve_2.c:
+	(serve_reset_contest) cleaning of `clar_archive_dir' is removed.
+
+2008-10-01 (r5136) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`clarlog_state.h' is added.
+
+	* Makefile.unix.in:
+	-ldl added to `clean-users' libraries.
+
+	* clarlog.h:
+	(clar_init) original prototype (void) is restored;
+	(clar_open) new arguments to support plugins.
+
+	* clarlog_state.h:
+	initial revision.
+
+	* cldb_plugin.h:
+	implemented.
+
+	* prepare.h:
+	(struct section_global_data) new fields: `clardb_plugin',
+	  `rundb_plugin', `xuser_plugin'.
+
+	* serve_state.h:
+	(serve_state_load_contest) `config' parameter is added.
+
+	* uldb_plugin.h:
+	`parse' method is renamed to `prepare'.
+
+	* clarlog.c:
+	"cldb_plugin.h", "clarlog_state.h", "prepare.h" are included;
+	plugin architecture is implemented;
+	all file-related stuff moved to `cldb_plugin_file.c'.
+
+	* cldb_plugin_file.c:
+	implemented.
+
+	* clean-users.c:
+	(main) reverted original use of `clar_init';
+	  updated use of `clar_open'.
+
+	* new_server_html.c:
+	(privileged_entry_point) use of `serve_state_load_contest' is updated;
+	(unprivileged_entry_point) the same.
+
+	* new_server_html_4.c:
+	(new_server_cmd_handler) use of `serve_state_load_contest' is updated.
+
+	* prepare.c:
+	new global configuration variables: `clardb_plugin',
+	  `rundb_plugin', `xuser_plugin'.
+
+	* serve.c:
+	"ejudge_cfg.h" is included;
+	(main) ejudge XML configuration file is loaded;
+	  original use of `clar_init' is restored;
+	  use of `clar_open' is updated.
+
+	* serve_state.c:
+	(serve_state_init) original use of `clar_init' is restored;
+	(serve_state_load_contest) `config' parameter is added;
+	  `config' parameter is passed to `clar_open'.
+
+	* uldb_plugin_xml.c:
+	`parse' method is renamed to `prepare'.
+
+	* userlist-server.c:
+	(load_plugins) `parse' method is renamed to `prepare'.
+
+2008-10-01 (r5131) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure, Makefile.unix.in:
+	plugins/mysql-clardb, plugins/mysql-rundb directories added.
+
+2008-10-01 (r5130) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	`mysql-rundb', `mysql-clardb' plugin directories are added.
+
+2008-09-29 (r5121) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(priv_submit_run) text submits are handled properly.
+
+	* serve_2.c:
+	(serve_check_stat_generation) NULL pointer cnts is handled;
+	(serve_packet_name) packet name generation scheme is changed.
+
+	* serve_state.c:
+	(serve_state_destroy) NULL pointer cnts is handled.
+
+2008-09-26 (r5106) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`cldb_plugin_file.c', `cldb_plugin.h' are added.
+
+	* clarlog.h:
+	(clar_init) new parameters are added.
+
+	* uldb_plugin.h:
+	`try_new_login' method is added.
+
+	* clarlog.c:
+	(clar_init) new parameters are added.
+
+	* clean-users.c, serve_state.c:
+	call of `clar_init' is updated.
+
+	* uldb_plugin_xml.c:
+	added NULL to place of `try_new_login' method pointer.
+
+	* userlist-server.c:
+	(cmd_register_new_2) `try_new_login' method is used, if exists;
+	(cmd_register_new) the same;
+	(cmd_create_user) the same.
+
+2008-09-20 (r5083) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	rldb_plugin.h, rldb_plugin_file.c, runlog_static.c is added.
+
+	* userlist_proto.h:
+	new error code `ULS_ERR_DB_ERROR'.
+
+	* runlog.c:
+	(run_status_str) moved to runlog_static.c;
+	(run_is_failed_attempt) the same;
+	(run_is_valid_test_status) the same;
+	(run_is_team_report_available) the same;
+	(run_is_report_available) the same;
+	(run_str_short_to_status) the same;
+	(run_is_valid_status) the same;
+	(run_is_valid_user_status) the same;
+	(run_is_source_available) the same.
+
+	* userlist_proto.c:
+	new error message.
+
+	* userlist-server.c:
+	default_get_user_info_? can fail with an error;
+	user login is used if user name is not set.
+
+2008-09-20 (r5082) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog_static.c, rldb_plugin_file.c, rldb_plugin.h:
+	initial revision
+
+2008-09-10 (r5044) Alexander Chernov  <cher@ejudge.ru>
+
+	* charsets.h:
+	(charset_html_select) new function prototype.
+
+	* clarlog.h:
+	unused defines are removed.
+
+	* new-server.h:
+	NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT is added.
+
+	* charsets.c:
+	(charset_html_select) new function.
+
+	* clarlog.c:
+	(clar_add_record_new) utf-8 fixes.
+
+	* new_server_html.c:
+	(priv_submit_run_comment) new function;
+	run comments are supported.
+
+	* new_server_html_2.c:
+	(ns_write_priv_source) viewing run in different charsets is supported;
+	run commenting is supported.
+
+	* uldb_plugin_xml.c:
+	(unlock_user_func) new function is added.
+
+	* userlist-server.c:
+	`default_unlock_user' is used.
+
+2008-09-07 (r5021) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_plugin.h:
+	new method `set_member_serial'.
+
+	* userlist.h:
+	(struct userlist_user_info) new fields `b', `contest_id';
+	  field `filled' is removed.
+	(struct userlist_cntsinfo) removed;
+	(struct userlist_user) `i' field is replaced with `cnts0' field.
+
+	* clean-users.c, edit-userlist.c, new_server_html.c, new_server_html_2.c, new_server_html_5.c, reports.c, serve_2.c, sformat.c, super_html_3.c, teamdb.c, userlist.c, userlist-server.c, userlist_xml.c, uldb_plugin_xml.c:
+	new structure of the default userlist_user_info in userlist_user.
+
+	* filter_eval.c, printing.c: copyright notice is updated;
+	new structure of the default userlist_user_info in userlist_user
+	  is supported.
+
+2008-09-04 (r5010) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_limits.h:
+	definition of EJ_MAX_GRADE added.
+
+	* userlist.h:
+	(userlist_members_reserve) new function prototype.
+
+	* userlist.c:
+	(userlist_members_reserve) new function.
+
+	* userlist-server.c:
+	(do_list_users) a minor memory leak is fixed.
+
+2008-09-03 (r5001) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist.h: copyright notice is updated;
+	(struct userlist_member) `team_role' field is added;
+	(struct userlist_members) `team_role' field is added;
+	(struct userlist_new_members) new structure;
+	(struct userlist_user_info) `members' field is removed, `new_members'
+	  is added;
+	(userlist_members_count) new function prototype;
+	(userlist_members_get_first) new function prototype;
+	(userlist_members_get_nth) new function prototype.
+
+	* edit-userlist.c, new_server_html_5.c, userlist-server.c, userlist_check.c, new_server_html_2.c:
+	function interface is used to access the members instead of
+	direct access to fields.
+
+	* reports.c, sformat.c: copyright notice is updated;
+	function interface is used to access the members instead of
+	direct access to fields.
+
+	* userlist.c: copyright notice is updated;
+	new members layout is supported.
+	(userlist_members_count) new function;
+	(userlist_members_get_first) new function;
+	(userlist_members_get_nth) new function.
+
+	* userlist_xml.c, uldb_plugin_xml.c:
+	new member layout is supported.
+
 2008-08-12 (r4995) Alexander Chernov  <cher@ejudge.ru>
 
 	* html.h:
