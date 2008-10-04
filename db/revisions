@@ -3856,3 +3856,11 @@ new_server_proto.h 5152 0 480978
 new-server-cmd.c 5152 0 2291820
 new_server_html_4.c 5152 0 4710517
 new_server_proto.c 5152 0 1037135
+clarlog_state.h 5154 0 120563
+new-server.h 5154 0 2093190
+convert-clars.c 5154 0 505547
+userlist-server.c 5154 0 22919106
+cldb_plugin_file.c 5154 0 1309348
+new_server_html.c 5154 0 36037585
+new_server_html_2.c 5154 0 14484561
+new_server_tables.c 5154 0 1130403
