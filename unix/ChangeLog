@@ -1,3 +1,9 @@
+2008-09-29 (r5120) Alexander Chernov  <cher@ejudge.ru>
+
+	* fileutl.c:
+	(scan_dir) the lexicographically least file name is picked up
+	  instead of the first.
+
 2008-03-05 (r4744) Alexander Chernov  <cher@ejudge.ru>
 
 	* fileutl.c: copyright notice is updated;

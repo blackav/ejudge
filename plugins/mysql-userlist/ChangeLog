@@ -1,3 +1,28 @@
+2008-09-26 (r5105) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c:
+	try_new_login_func is added.
+
+	* uldb_mysql.c:
+	(my_fquery) new function;
+	(maintenance_func) implemented;
+	(convert_to_pattern) new function;
+	(try_new_login_func) new function.
+
+2008-09-04 (r5010) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_limits.h:
+	definition of EJ_MAX_GRADE added.
+
+	* userlist.h:
+	(userlist_members_reserve) new function prototype.
+
+	* userlist.c:
+	(userlist_members_reserve) new function.
+
+	* userlist-server.c:
+	(do_list_users) a minor memory leak is fixed.
+
 2007-07-28 (r4239) Alexander Chernov  <cher@ejudge.ru>
 
 	* empty.make: copyright year is updated;
