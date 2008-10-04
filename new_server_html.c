@@ -5766,10 +5766,9 @@ priv_view_passwords(FILE *fout,
   int retval = 0;
   const unsigned char *s = 0;
 
-  /*
-  if (opcaps_check(phr->caps, OPCAP_GENERATE_TEAM_PASSWORDS) < 0)
+  if (phr->role < USER_ROLE_JUDGE
+      || opcaps_check(phr->caps, OPCAP_EDIT_PASSWD) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-  */
   if (phr->action == NEW_SRV_ACTION_VIEW_CNTS_PWDS
       && cnts->disable_team_password)
     FAIL(NEW_SRV_ERR_TEAM_PWD_DISABLED);
@@ -7088,13 +7087,16 @@ priv_main_page(FILE *fout,
   fprintf(fout, "<li>%s%s</a></li>\n",
           ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_STANDINGS, 0),
           _("View standings"));
-  fprintf(fout, "<li>%s%s</a></li>\n",
-          ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_REG_PWDS, 0),
-          _("View registration passwords"));
-  if (!cnts->disable_team_password) {
+  if (phr->role >= USER_ROLE_JUDGE
+      && opcaps_check(phr->caps, OPCAP_EDIT_PASSWD) >= 0) {
     fprintf(fout, "<li>%s%s</a></li>\n",
-            ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_CNTS_PWDS, 0),
-            _("View contest passwords"));
+            ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_REG_PWDS, 0),
+            _("View registration passwords"));
+    if (!cnts->disable_team_password) {
+      fprintf(fout, "<li>%s%s</a></li>\n",
+              ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_CNTS_PWDS,0),
+              _("View contest passwords"));
+    }
   }
   if (phr->role >= USER_ROLE_JUDGE
       && opcaps_check(phr->caps, OPCAP_DUMP_USERS) >= 0) {
