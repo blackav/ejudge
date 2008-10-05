@@ -97,7 +97,7 @@ allocate_cntsreg_on_pool(
     struct cntsregs_user *new_map = 0;
 
     if (!new_size) new_size = 128;
-    while (new_size < user_id) new_size *= 2;
+    while (new_size <= user_id) new_size *= 2;
     XCALLOC(new_map, new_size);
     if (cc->size > 0)
       memcpy(new_map, cc->user_map, sizeof(new_map[0]) * cc->size);
