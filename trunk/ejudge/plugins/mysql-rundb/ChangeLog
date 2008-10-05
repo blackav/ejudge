@@ -1,0 +1,10 @@
+2008-10-01 (r5133) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c:
+	initial revision
+
+2008-10-01 (r5129) Alexander Chernov  <cher@ejudge.ru>
+
+	* main.make, Makefile.in, empty.make:
+	initial revision
+
