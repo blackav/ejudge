@@ -13306,11 +13306,11 @@ ns_handle_http_request(struct server_framework_state *state,
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse action");
   } else if (r > 0) {
     if (sscanf(s, "%d%n", &phr->action, &n) != 1 || s[n] || phr->action <= 0) {
-      for (r = 0; r < NEW_SRV_CMD_LAST; ++r)
+      for (r = 0; r < NEW_SRV_ACTION_LAST; ++r)
         if (symbolic_action_table[r]
             && !strcasecmp(symbolic_action_table[r], s))
           break;
-      if (r == NEW_SRV_CMD_LAST)
+      if (r == NEW_SRV_ACTION_LAST)
         return ns_html_err_inv_param(fout, phr, 0, "cannot parse action");
       phr->action = r;
     }
