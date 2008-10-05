@@ -100,7 +100,7 @@ allocate_member_on_pool(
     struct members_user *new_map = 0;
 
     if (!new_size) new_size = 128;
-    while (new_size < user_id) new_size *= 2;
+    while (new_size <= user_id) new_size *= 2;
     XCALLOC(new_map, new_size);
     if (cache->size > 0)
       memcpy(new_map, cache->user_map, sizeof(new_map[0]) * cache->size);
