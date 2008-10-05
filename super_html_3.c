@@ -4738,6 +4738,23 @@ super_html_print_problem(FILE *f,
                                session_id, form_row_attrs[row ^= 1],
                                self_url, extra_args, prob_hidden_vars);
 
+    //PROBLEM_PARAM(disable_security, "d"),
+    extra_msg = "Undefined";
+    tmp_prob.disable_security = prob->disable_security;
+    if (!prob->abstract) {
+      prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_SECURITY,
+                             &tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+               tmp_prob.disable_security?"Yes":"No");
+      extra_msg = msg_buf;
+    }
+    print_boolean_3_select_row(f, "Disable submissions after OK:",
+                               prob->disable_security,
+                               SSERV_CMD_PROB_CHANGE_DISABLE_SECURITY,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+
     //PROBLEM_PARAM(disable_testing, "d"),
     extra_msg = "Undefined";
     tmp_prob.disable_testing = prob->disable_testing;
@@ -5969,6 +5986,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_DISABLE_SUBMIT_AFTER_OK:
     p_int = &prob->disable_submit_after_ok;
+    goto handle_boolean_2;
+
+  case SSERV_CMD_PROB_CHANGE_DISABLE_SECURITY:
+    p_int = &prob->disable_security;
     goto handle_boolean_2;
 
   case SSERV_CMD_PROB_CHANGE_DISABLE_TESTING:
