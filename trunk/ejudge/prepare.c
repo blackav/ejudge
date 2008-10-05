@@ -349,6 +349,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(disable_tab, "d"),
   PROBLEM_PARAM(restricted_statement, "d"),
   PROBLEM_PARAM(disable_submit_after_ok, "d"),
+  PROBLEM_PARAM(disable_security, "d"),
   PROBLEM_PARAM(enable_compilation, "d"),
   PROBLEM_PARAM(skip_testing, "d"),
   PROBLEM_PARAM(variable_full_score, "d"),
@@ -718,6 +719,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->disable_tab = -1;
   p->restricted_statement = -1;
   p->disable_submit_after_ok = -1;
+  p->disable_security = -1;
   p->enable_compilation = -1;
   p->skip_testing = -1;
   p->test_score = -1;
@@ -2908,6 +2910,8 @@ set_defaults(serve_state_t state, int mode)
     prepare_set_prob_value(PREPARE_FIELD_PROB_ENABLE_COMPILATION,
                            prob, aprob, g);
     prepare_set_prob_value(PREPARE_FIELD_PROB_SKIP_TESTING,
+                           prob, aprob, g);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_SECURITY,
                            prob, aprob, g);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_FULL_SCORE,
@@ -5124,6 +5128,13 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->disable_submit_after_ok = global->disable_submit_after_ok;
     if (out->disable_submit_after_ok < 0)
       out->disable_submit_after_ok = 0;
+    break;
+
+  case PREPARE_FIELD_PROB_DISABLE_SECURITY:
+    if (out->disable_security < 0 && abstr)
+      out->disable_security = abstr->disable_security;
+    if (out->disable_security < 0)
+      out->disable_security = 0;
     break;
 
   case PREPARE_FIELD_PROB_DISABLE_TESTING:

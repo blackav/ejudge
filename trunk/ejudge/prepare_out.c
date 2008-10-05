@@ -1271,6 +1271,8 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     unparse_bool(f, "restricted_statement", prob->restricted_statement);
   if (prob->disable_submit_after_ok >= 0)
     unparse_bool(f, "disable_submit_after_ok", prob->disable_submit_after_ok);
+  if (prob->disable_security >= 0)
+    unparse_bool(f, "disable_security", prob->disable_security);
   if (prob->disable_testing >= 0)
     unparse_bool(f, "disable_testing", prob->disable_testing);
   if (prob->enable_compilation >= 0)

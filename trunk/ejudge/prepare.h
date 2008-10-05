@@ -479,6 +479,7 @@ struct section_problem_data
   int    enable_text_form;      /* still enable text form in output-only prb. */
   int    stand_ignore_score;    /* ignore the score in total calculation */
   int    stand_last_column;     /* show column after totals */
+  int    disable_security;      /* disable security for this problem */
   puc_t super[32];              /* superproblem's short_name */
   puc_t short_name[32];         /* short problem name, eg A, B, ... */
   puc_t long_name[256];         /* long problem name */
@@ -728,6 +729,7 @@ enum
   PREPARE_FIELD_PROB_DISABLE_TAB,
   PREPARE_FIELD_PROB_RESTRICTED_STATEMENT,
   PREPARE_FIELD_PROB_DISABLE_SUBMIT_AFTER_OK,
+  PREPARE_FIELD_PROB_DISABLE_SECURITY,
   PREPARE_FIELD_PROB_DISABLE_TESTING,
   PREPARE_FIELD_PROB_DISABLE_AUTO_TESTING,
   PREPARE_FIELD_PROB_ENABLE_COMPILATION,
