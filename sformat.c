@@ -654,7 +654,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           if (is_invalid) break;
           pf++;
 
-          if (!user_data
+          if (!user_data || !ui
               || !(pp = userlist_members_get_nth(ui->members, idx, nmemb))) {
             papp = "";
             break;
@@ -723,7 +723,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           int_format_value = user_data->id;
           break;
         case 'n':
-          papp = ui->name;
+          if (ui) papp = ui->name;
           if (!papp) papp = "";
           break;
         case 'l':
@@ -739,29 +739,29 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           if (!papp) papp = "";
           break;
         case 'Z':
-          papp = ui->team_passwd;
+          if (ui) papp = ui->team_passwd;
           if (!papp) papp = "";
           break;
-        case 'c': papp = ui->city; break;
-        case 'C': papp = ui->city_en; break;
-        case 'o': papp = ui->country; break;
-        case 'O': papp = ui->country_en; break;
-        case 'r': papp = ui->region; break;
-        case 't': papp = ui->instshort; break;
-        case 'T': papp = ui->instshort_en; break;
-        case 'u': papp = ui->inst; break;
-        case 'U': papp = ui->inst_en; break;
-        case 'f': papp = ui->facshort; break;
-        case 'F': papp = ui->facshort_en; break;
-        case 'd': papp = ui->fac; break;
-        case 'D': papp = ui->fac_en; break;
-        case 'L': papp = ui->location; break;
-        case 'p': papp = ui->printer_name; break;
-        case 'y': papp = ui->exam_id; break;
-        case 'Y': papp = ui->exam_cypher; break;
-        case 'h': papp = ui->homepage; break;
-        case 'H': papp = ui->phone; break;
-        case 'P': papp = ui->languages; break;
+        case 'c': if (ui) papp = ui->city; break;
+        case 'C': if (ui) papp = ui->city_en; break;
+        case 'o': if (ui) papp = ui->country; break;
+        case 'O': if (ui) papp = ui->country_en; break;
+        case 'r': if (ui) papp = ui->region; break;
+        case 't': if (ui) papp = ui->instshort; break;
+        case 'T': if (ui) papp = ui->instshort_en; break;
+        case 'u': if (ui) papp = ui->inst; break;
+        case 'U': if (ui) papp = ui->inst_en; break;
+        case 'f': if (ui) papp = ui->facshort; break;
+        case 'F': if (ui) papp = ui->facshort_en; break;
+        case 'd': if (ui) papp = ui->fac; break;
+        case 'D': if (ui) papp = ui->fac_en; break;
+        case 'L': if (ui) papp = ui->location; break;
+        case 'p': if (ui) papp = ui->printer_name; break;
+        case 'y': if (ui) papp = ui->exam_id; break;
+        case 'Y': if (ui) papp = ui->exam_cypher; break;
+        case 'h': if (ui) papp = ui->homepage; break;
+        case 'H': if (ui) papp = ui->phone; break;
+        case 'P': if (ui) papp = ui->languages; break;
         default:
           abort();
         }

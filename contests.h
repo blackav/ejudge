@@ -390,6 +390,7 @@ enum
 
 int contests_set_directory(unsigned char const *);
 int contests_make_path(unsigned char *buf, size_t sz, int num);
+int contests_get_list(const int **p_list);
 int contests_get_set(const unsigned char **);
 int contests_get(int, const struct contest_desc **);
 int contests_load(int number, struct contest_desc **p_cnts);

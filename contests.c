@@ -1354,6 +1354,87 @@ int_sort_func(const void *p1, const void *p2)
 }
 
 int
+contests_get_list(const int **p_list)
+{
+  DIR *d = 0;
+  struct dirent *dd = 0;
+  int i, j;
+  struct stat bbb;
+  unsigned char c_path[1024];
+  time_t cur_time = time(0);
+
+  if (p_list) *p_list = 0;
+  if (cur_time <= gl_state.last_check_time) {
+    if (p_list) *p_list = gl_state.ids;
+    return gl_state.u;
+  }
+  gl_state.last_check_time = cur_time;
+  if (stat(contests_dir, &bbb) < 0) return -CONTEST_ERR_BAD_DIR;
+  if (!S_ISDIR(bbb.st_mode)) return -CONTEST_ERR_BAD_DIR;
+  if (bbb.st_mtime <= gl_state.last_update_time) {
+    if (p_list) *p_list = gl_state.ids;
+    return gl_state.u;
+  }
+  gl_state.last_update_time = cur_time;
+
+  // we don't check specifically for "." or ".."
+  if (!(d = opendir(contests_dir))) return -CONTEST_ERR_BAD_DIR;
+  gl_state.u = 0;
+  gl_state.max_num = 0;
+  while ((dd = readdir(d))) {
+    if (sscanf(dd->d_name, "%d", &j) != 1 || j <= 0) continue;
+    snprintf(c_path, sizeof(c_path), "%06d.xml", j);
+    if (strcmp(c_path, dd->d_name)) continue;
+    snprintf(c_path, sizeof(c_path), "%s/%06d.xml", contests_dir, j);
+    if (access(c_path, R_OK) < 0) continue;
+    //if (stat(c_path, &bbb) < 0) continue;
+    //if (!S_ISREG(bbb.st_mode)) continue;
+
+    if (gl_state.u == gl_state.a) {
+      if (!gl_state.a) gl_state.a = 64;
+      gl_state.a *= 2;
+      XREALLOC(gl_state.ids, gl_state.a);
+    }
+    gl_state.ids[gl_state.u++] = j;
+    if (j > gl_state.max_num) gl_state.max_num = j;
+  }
+  closedir(d);
+  if (!gl_state.max_num) return 0;
+
+  if (gl_state.max_num < 1000) {
+    unsigned char *tmp_map = alloca(gl_state.max_num + 1);
+    memset(tmp_map, 0, gl_state.max_num + 1);
+    for (i = 0; i < gl_state.u; i++) {
+      ASSERT(gl_state.ids[i] > 0 && gl_state.ids[i] <= gl_state.max_num);
+      tmp_map[gl_state.ids[i]] = 1;
+    }
+    j = 0;
+    for (i = 0; i <= gl_state.max_num; i++)
+      if (tmp_map[i])
+        gl_state.ids[j++] = i;
+    ASSERT(j == gl_state.u);
+  } else {
+    qsort(gl_state.ids, gl_state.u, sizeof(gl_state.ids[0]), int_sort_func);
+  }
+
+  if (gl_state.max_num >= gl_state.map_a) {
+    if (!gl_state.map_a) gl_state.map_a = 32;
+    while (gl_state.max_num >= gl_state.map_a) gl_state.map_a *= 2;
+    xfree(gl_state.map);
+    XCALLOC(gl_state.map, gl_state.map_a);
+  } else {
+    memset(gl_state.map, 0, gl_state.map_a);
+  }
+
+  for (i = 0; i < gl_state.u; i++) {
+    ASSERT(gl_state.ids[i] > 0 && gl_state.ids[i] <= gl_state.max_num);
+    gl_state.map[gl_state.ids[i]] = 1;
+  }
+  if (p_list) *p_list = gl_state.ids;
+  return gl_state.u;
+}
+
+int
 contests_get_set(const unsigned char **p_map)
 {
   DIR *d = 0;
