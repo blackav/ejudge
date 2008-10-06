@@ -85,7 +85,7 @@
 
 enum { CONTEST_EXPIRE_TIME = 300 };
 static struct contest_extra **extras = 0;
-static size_t extra_a = 0;
+static size_t extra_a = 0, extra_u = 0;
 
 static void unprivileged_page_login(FILE *fout,
                                     struct http_request_info *phr,
@@ -108,24 +108,74 @@ get_register_url(
 struct contest_extra *
 ns_get_contest_extra(int contest_id)
 {
-  size_t new_extra_a = 0;
-  struct contest_extra **new_extras = 0, *p;
+  struct contest_extra *p;
+  size_t i, j, k;
 
   ASSERT(contest_id > 0 && contest_id <= EJ_MAX_CONTEST_ID);
 
-  if (contest_id >= extra_a) {
-    if (!(new_extra_a = extra_a)) new_extra_a = 8;
-    while (contest_id >= new_extra_a) new_extra_a *= 2;
-    XCALLOC(new_extras, new_extra_a);
-    if (extra_a > 0) memcpy(new_extras, extras, extra_a * sizeof(extras[0]));
-    xfree(extras);
-    extra_a = new_extra_a;
-    extras = new_extras;
-  }
-  if (!(p = extras[contest_id])) {
+  if (!extra_u) {
+    if (!extra_a) {
+      extra_a = 16;
+      XCALLOC(extras, extra_a);
+    }
     XCALLOC(p, 1);
-    extras[contest_id] = p;
+    extras[extra_u++] = p;
+    p->contest_id = contest_id;
+    p->last_access_time = time(0);
+    return p;
   }
+
+  if (contest_id > extras[extra_u - 1]->contest_id) {
+    if (extra_u == extra_a) {
+      extra_a *= 2;
+      XREALLOC(extras, extra_a);
+    }
+    XCALLOC(p, 1);
+    extras[extra_u++] = p;
+    p->contest_id = contest_id;
+    p->last_access_time = time(0);
+    return p;
+  }
+
+  i = 0; j = extra_u;
+  while (i < j) {
+    k = (i + j) / 2;
+    if ((p = extras[k])->contest_id == contest_id) {
+      p->last_access_time = time(0);
+      return p;
+    }
+    if (p->contest_id < contest_id) {
+      i = k + 1;
+    } else {
+      j = k;
+    }
+  }
+  ASSERT(j < extra_u);
+  ASSERT(extras[j]->contest_id > contest_id);
+  if (!j) {
+    if (extra_u == extra_a) {
+      extra_a *= 2;
+      XREALLOC(extras, extra_a);
+    }
+    memmove(&extras[j + 1], &extras[j], extra_u * sizeof(extras[0]));
+    extra_u++;
+    XCALLOC(p, 1);
+    extras[j] = p;
+    p->contest_id = contest_id;
+    p->last_access_time = time(0);
+    return p;
+  }
+  ASSERT(i > 0);
+  ASSERT(extras[i]->contest_id < contest_id);
+  if (extra_u == extra_a) {
+    extra_a *= 2;
+    XREALLOC(extras, extra_a);
+  }
+  memmove(&extras[j + 1], &extras[j], (extra_u - j) * sizeof(extras[0]));
+  extra_u++;
+  XCALLOC(p, 1);
+  extras[j] = p;
+  p->contest_id = contest_id;
   p->last_access_time = time(0);
   return p;
 }
@@ -133,9 +183,26 @@ ns_get_contest_extra(int contest_id)
 static struct contest_extra *
 try_contest_extra(int contest_id)
 {
+  struct contest_extra *p;
+  size_t i, j, k;
+
   if (contest_id <= 0 || contest_id > EJ_MAX_CONTEST_ID) return 0;
-  if (contest_id >= extra_a) return 0;
-  return extras[contest_id];
+  if (!extra_u) return 0;
+  if (contest_id < extras[0]->contest_id) return 0;
+  if (contest_id > extras[extra_u - 1]->contest_id) return 0;
+  i = 0; j = extra_u;
+  while (i < j) {
+    k = (i + j) / 2;
+    if ((p = extras[k])->contest_id == contest_id) {
+      return p;
+    }
+    if (p->contest_id < contest_id) {
+      i = k + 1;
+    } else {
+      j = k;
+    }
+  }
+  return 0;
 }
 
 void
@@ -176,15 +243,16 @@ ns_client_destroy_callback(struct client_state *p)
   cs->destroy_callback = 0;
 }
 
-void
-ns_unload_contest(int contest_id)
+static void
+do_unload_contest(int idx)
 {
   struct contest_extra *extra;
   const struct contest_desc *cnts = 0;
-  int i;
+  int i, contest_id;
 
-  if (contest_id <= 0 || contest_id >= extra_a) return;
-  if (!(extra = extras[contest_id])) return;
+  ASSERT(idx >= 0 && idx < extra_u);
+  extra = extras[idx];
+  contest_id = extra->contest_id;
 
   contests_get(contest_id, &cnts);
 
@@ -214,7 +282,38 @@ ns_unload_contest(int contest_id)
 
   memset(extra, 0, sizeof(*extra));
   xfree(extra);
-  extras[contest_id] = 0;
+  extras[idx] = 0;
+}
+
+void
+ns_unload_contest(int contest_id)
+{
+  struct contest_extra *extra = 0;
+  int i, j, k = 0;
+
+  if (contest_id <= 0 || contest_id > EJ_MAX_CONTEST_ID) return;
+  if (!extra_u) return;
+  if (contest_id < extras[0]->contest_id) return;
+  if (contest_id > extras[extra_u - 1]->contest_id) return;
+  i = 0; j = extra_u;
+  while (i < j) {
+    k = (i + j) / 2;
+    if ((extra = extras[k])->contest_id == contest_id) {
+      break;
+    }
+    if (extra->contest_id < contest_id) {
+      i = k + 1;
+    } else {
+      j = k;
+    }
+  }
+  if (i >= j) return;
+
+  do_unload_contest(k);
+  if (k < extra_u - 1)
+    memmove(&extras[k], &extras[k + 1], (extra_u-k-1)*sizeof(extras[0]));
+  extra_u--;
+  extras[extra_u] = 0;
 
   info("contest %d is unloaded", contest_id);
 }
@@ -224,24 +323,29 @@ ns_unload_contests(void)
 {
   int i;
 
-  for (i = 1; i < extra_a; i++)
-    if (extras[i])
-      ns_unload_contest(i);
+  for (i = 0; i < extra_u; i++)
+    do_unload_contest(i);
+  extra_u = 0;
 }
 
 void
 ns_unload_expired_contests(time_t cur_time)
 {
-  int i;
+  int i, j;
 
   if (cur_time <= 0) cur_time = time(0);
 
-  for (i = 1; i < extra_a; i++)
+  for (i = 0, j = 0; i < extra_u; i++)
     if (extras[i]
         && extras[i]->last_access_time + CONTEST_EXPIRE_TIME < cur_time
         && (!extras[i]->serve_state
-            || !extras[i]->serve_state->pending_xml_import))
-      ns_unload_contest(i);
+            || !extras[i]->serve_state->pending_xml_import)) {
+      do_unload_contest(i);
+    } else {
+      extras[j++] = extras[i];
+      extras[i] = 0;
+    }
+  extra_u = j;
 }
 
 static void
@@ -295,11 +399,13 @@ ns_loop_callback(struct server_framework_state *state)
   struct contest_extra *e;
   serve_state_t cs;
   const struct contest_desc *cnts;
-  int contest_id, i, r;
+  int contest_id, i, r, eind;
   path_t packetname;
 
-  for (contest_id = 1; contest_id < extra_a; contest_id++) {
-    if (!(e = extras[contest_id])) continue;
+  for (eind = 0; eind < extra_u; eind++) {
+    e = extras[eind];
+    ASSERT(e);
+    contest_id = e->contest_id;
     if (!(cs = e->serve_state)) continue;
     if (contests_get(contest_id, &cnts) < 0 || !cnts) continue;
 
@@ -347,10 +453,12 @@ ns_post_select_callback(struct server_framework_state *state)
   struct contest_extra *e;
   serve_state_t cs;
   const struct contest_desc *cnts;
-  int contest_id;
+  int contest_id, eind;
 
-  for (contest_id = 1; contest_id < extra_a; contest_id++) {
-    if (!(e = extras[contest_id])) continue;
+  for (eind = 0; eind < extra_u; eind++) {
+    e = extras[eind];
+    ASSERT(e);
+    contest_id = e->contest_id;
     if (!(cs = e->serve_state)) continue;
     if (contests_get(contest_id, &cnts) < 0 || !cnts) continue;
 
@@ -530,7 +638,7 @@ int
 ns_open_ul_connection(struct server_framework_state *state)
 {
   struct server_framework_watch w;
-  int r, contest_id;
+  int r, contest_id, eind;
   struct contest_extra *e;
 
   if (ul_conn) return 0;
@@ -557,8 +665,11 @@ ns_open_ul_connection(struct server_framework_state *state)
   userlist_clnt_set_notification_callback(ul_conn, ul_notification_callback, 0);
 
   // add notifications for all the active contests
-  for (contest_id = 1; contest_id < extra_a; contest_id++) {
-    if (!(e = extras[contest_id]) || !e->serve_state) continue;
+  for (eind = 0; eind < extra_u; eind++) {
+    e = extras[eind];
+    ASSERT(e);
+    contest_id = e->contest_id;
+    if (!e->serve_state) continue;
     if ((r = userlist_clnt_notify(ul_conn, ULS_ADD_NOTIFY, contest_id)) < 0) {
       err("open_connection: cannot add notification: %s",
           userlist_strerror(-r));
