@@ -90,16 +90,16 @@ add_to_set(const unsigned char *str, int *pa, unsigned char **ps)
 static void
 process_keywords(void)
 {
-  int contest_size, i, r;
-  const unsigned char *contests;
+  int contest_num, i, r, j;
+  const int *contests;
   const struct contest_desc *cnts = 0;
 
-  contest_size = contests_get_set(&contests);
-  if (contest_size <= 0 || !contests)
+  contest_num = contests_get_list(&contests);
+  if (contest_num <= 0 || !contests)
     fatal("no contests");
 
-  for (i = 1; i < contest_size; i++) {
-    if (!contests[i]) continue;
+  for (j = 0; j < contest_num; j++) {
+    i = contests[j];
     cnts = 0;
     if ((r = contests_get(i, &cnts)) < 0 || !cnts) {
       fatal("cannot load contest %d: %s", i, contests_strerror(-r));

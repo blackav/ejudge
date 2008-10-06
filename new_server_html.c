@@ -299,9 +299,9 @@ ns_loop_callback(struct server_framework_state *state)
   path_t packetname;
 
   for (contest_id = 1; contest_id < extra_a; contest_id++) {
-    if (contests_get(contest_id, &cnts) < 0 || !cnts) continue;
     if (!(e = extras[contest_id])) continue;
     if (!(cs = e->serve_state)) continue;
+    if (contests_get(contest_id, &cnts) < 0 || !cnts) continue;
 
     e->serve_state->current_time = cur_time;
     ns_check_contest_events(e->serve_state, cnts);
@@ -350,9 +350,9 @@ ns_post_select_callback(struct server_framework_state *state)
   int contest_id;
 
   for (contest_id = 1; contest_id < extra_a; contest_id++) {
-    if (contests_get(contest_id, &cnts) < 0 || !cnts) continue;
     if (!(e = extras[contest_id])) continue;
     if (!(cs = e->serve_state)) continue;
+    if (contests_get(contest_id, &cnts) < 0 || !cnts) continue;
 
     e->serve_state->current_time = cur_time;
     ns_check_contest_events(e->serve_state, cnts);
