@@ -12690,12 +12690,12 @@ static void
 anon_select_contest_page(FILE *fout, struct http_request_info *phr)
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  const unsigned char *cntslist = 0;
+  const int *cntslist = 0;
   int cntsnum = 0;
   const unsigned char *cl;
   const struct contest_desc *cnts;
   time_t curtime = time(0);
-  int row = 0, i, orig_locale_id;
+  int row = 0, i, orig_locale_id, j;
   const unsigned char *s;
   const unsigned char *login = 0;
   unsigned char bb[1024];
@@ -12731,12 +12731,13 @@ anon_select_contest_page(FILE *fout, struct http_request_info *phr)
 
   fprintf(fout, "<h2>%s</h2>\n", _("Select one of available contests"));
 
-  cntsnum = contests_get_set(&cntslist);
+  cntsnum = contests_get_list(&cntslist);
   cl = " class=\"b1\"";
   fprintf(fout, "<table%s><tr>"
           "<td%s>N</td><td%s>%s</td></tr>\n",
           cl, cl, cl, _("Contest name"));
-  for (i = 1; i < cntsnum; i++) {
+  for (j = 0; j < cntsnum; j++) {
+    i = cntslist[j];
     cnts = 0;
     if (contests_get(i, &cnts) < 0 || !cnts) continue;
     if (cnts->closed) continue;
