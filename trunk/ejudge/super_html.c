@@ -419,11 +419,10 @@ super_html_main_page(FILE *f,
     if (!contests_map[contest_id]) {
       if (priv_level < PRIV_LEVEL_ADMIN) continue;
 
+      if (!(extra = get_existing_contest_extra(contest_id))) continue;
+      if (!extra->serve_used && !extra->run_used) continue;
       cnts = 0;
       errcode = contests_get(contest_id, &cnts);
-      extra = get_existing_contest_extra(contest_id);
-      if (!extra) continue;
-      if (!extra->serve_used && !extra->run_used) continue;
 
       fprintf(f, "<tr>");
       fprintf(f, "<td>%d</td>", contest_id);
@@ -1930,9 +1929,9 @@ super_html_create_contest(
         const unsigned char *hidden_vars,
         const unsigned char *extra_args)
 {
-  int contest_max_id = 0;
-  const unsigned char *contests_map = 0;
-  int recomm_id = 1, cnts_id;
+  int contest_num;
+  const int *contests = 0;
+  int recomm_id = 1, cnts_id, j;
   const struct contest_desc *cnts = 0;
   unsigned char *cnts_name = 0;
 
@@ -1942,8 +1941,8 @@ super_html_create_contest(
                                          sstate, self_url, hidden_vars,
                                          extra_args, NULL);
 
-  contest_max_id = contests_get_set(&contests_map);
-  if (contest_max_id > 0) recomm_id = contest_max_id;
+  contest_num = contests_get_list(&contests);
+  if (contest_num > 0) recomm_id = contests[contest_num - 1] + 1;
 
   html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<h2>Contest number</h2>\n");
@@ -1957,8 +1956,8 @@ super_html_create_contest(
           "<tr><td><input type=\"radio\" name=\"templ_mode\" value=\"0\" checked=\"yes\"/></td><td>From scratch</td><td>&nbsp;</td></tr>\n"
           "<tr><td><input type=\"radio\" name=\"templ_mode\" value=\"1\"/></td><td>Use existing contest:</td><td><select name=\"templ_id\">\n");
 
-  for (cnts_id = 1; cnts_id < contest_max_id; cnts_id++) {
-    if (!contests_map[cnts_id]) continue;
+  for (j = 0; j < contest_num; j++) {
+    cnts_id = contests[j];
     if (contests_get(cnts_id, &cnts) < 0) continue;
     cnts_name = html_armor_string_dup(cnts->name);
     fprintf(f, "<option value=\"%d\">%d - %s</option>", cnts_id, cnts_id, cnts_name);
@@ -3242,8 +3241,8 @@ super_html_edit_access_rules(FILE *f,
   int default_is_allow = 0, i;
   unsigned char num_str[128];
   unsigned char hbuf[1024];
-  const unsigned char *contests_map = 0;
-  int contest_max_id, cnts_id;
+  const int *contests = 0;
+  int contest_num, cnts_id, j;
   const struct contest_desc *tmp_cnts = 0;
   unsigned char *cnts_name = 0;
   int row = 1;
@@ -3338,15 +3337,15 @@ super_html_edit_access_rules(FILE *f,
   fprintf(f, "</td></tr></form>\n");
   fprintf(f, "</table>\n");
 
-  contest_max_id = contests_get_set(&contests_map);
+  contest_num = contests_get_list(&contests);
   fprintf(f, "<p><table border=\"0\">\n");
   html_start_form(f, 1, self_url, hidden_vars);
   html_hidden_var(f, "acc_mode", acc_mode);
   fprintf(f, "<tr><td>Copy access rules from:</td><td>");
   fprintf(f, "<select name=\"templ_id\">\n");
   fprintf(f, "<option value=\"0\">Current contest</option>\n");
-  for (cnts_id = 1; cnts_id < contest_max_id; cnts_id++) {
-    if (!contests_map[cnts_id]) continue;
+  for (j = 0; j < contest_num; j++) {
+    cnts_id = contests[j];
     if (contests_get(cnts_id, &tmp_cnts) < 0) continue;
     cnts_name = html_armor_string_dup(tmp_cnts->name);
     fprintf(f, "<option value=\"%d\">%d - %s</option>", cnts_id, cnts_id, cnts_name);
@@ -3364,7 +3363,7 @@ super_html_edit_access_rules(FILE *f,
   html_submit_button(f, SSERV_CMD_CNTS_COPY_ACCESS, "Copy");
   fprintf(f, "</td></tr></form>");
   fprintf(f, "</table>\n");
-  contests_map = 0;
+  contests = 0;
 
   fprintf(f, "<table border=\"0\"><tr><td>%sTo the top</a></td>",
           html_hyperref(hbuf,sizeof(hbuf),session_id,self_url,extra_args, 0));
@@ -4160,8 +4159,8 @@ super_html_create_contest_2(FILE *f,
                             const unsigned char *hidden_vars,
                             const unsigned char *extra_args)
 {
-  const unsigned char *contests_map = 0;
-  int contests_num;
+  const int *contests = 0;
+  int contest_num, i;
   int errcode = 0;
   const struct contest_desc *templ_cnts = 0;
 
@@ -4170,26 +4169,30 @@ super_html_create_contest_2(FILE *f,
     goto cleanup;
   }
 
-  contests_num = contests_get_set(&contests_map);
-  if (contests_num < 0 || !contests_num) {
+  contest_num = contests_get_list(&contests);
+  if (contest_num < 0 || !contests) {
     errcode = -SSERV_ERR_SYSTEM_ERROR;
     goto cleanup;
   }
   if (!num_mode) {
-    contest_id = contests_num;
-    if (!contest_id) contest_id = 1;
+    contest_id = 1;
+    if (contest_num > 0) contest_id = contests[contest_num - 1] + 1;
   } else {
     if (contest_id <= 0 || contest_id > EJ_MAX_CONTEST_ID) {
       errcode = -SSERV_ERR_INVALID_CONTEST;
       goto cleanup;
     }
-    if (contest_id < contests_num && contests_map[contest_id]) {
+    // FIXME: bsearch would be better
+    // creating a new contest is a rare operation, though
+    for (i = 0; i < contest_num && contests[i] != contest_id; i++);
+    if (i < contest_num) {
       errcode = -SSERV_ERR_CONTEST_ALREADY_USED;
       goto cleanup;
     }
   }
   if (templ_mode) {
-    if (templ_id <= 0 || templ_id >= contests_num || !contests_map[templ_id]) {
+    for (i = 0; i < contest_num && contests[i] != templ_id; i++);
+    if (i >= contest_num) {
       errcode = -SSERV_ERR_INVALID_CONTEST;
       goto cleanup;
     }

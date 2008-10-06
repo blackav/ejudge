@@ -265,7 +265,7 @@ delete_contest_extra(int contest_id)
 struct contest_extra *
 get_existing_contest_extra(int num)
 {
-  ASSERT(num > 0 && num < 1000000);
+  ASSERT(num > 0 && num <= EJ_MAX_CONTEST_ID);
   if (num >= extra_a) return 0;
   return extras[num];
 }
@@ -1035,16 +1035,16 @@ install_dnotify_handler(void)
 static void
 acquire_resources(void)
 {
-  const unsigned char *contest_map = 0;
-  int contest_max_ind = 0, errcode, i;
+  const int *contests = 0;
+  int contest_num, errcode, i, j;
   const struct contest_desc *cnts;
 
   info("scanning available contests...");
-  contest_max_ind = contests_get_set(&contest_map);
-  if (contest_max_ind <= 0 || !contest_map) return;
+  contest_num = contests_get_list(&contests);
+  if (contest_num <= 0 || !contests) return;
 
-  for (i = 1; i < contest_max_ind; i++) {
-    if (!contest_map[i]) continue;
+  for (j = 0; j < contest_num; j++) {
+    i = contests[j];
     if ((errcode = contests_get(i, &cnts)) < 0) {
       err("cannot load contest %d: %s", i, contests_strerror(-errcode));
       continue;
