@@ -300,7 +300,7 @@ super_html_main_page(FILE *f,
                      const unsigned char *hidden_vars,
                      const unsigned char *extra_args)
 {
-  unsigned char *contests_map = 0;
+  const unsigned char *contests_map = 0;
   int contest_max_id, contest_id, errcode;
   unsigned char *html_name;
   const struct contest_desc *cnts;
@@ -396,7 +396,7 @@ super_html_main_page(FILE *f,
   fprintf(f, "<table border=\"0\"><tr><td>%sRefresh</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, 0));
 
   // display information about known contests
-  contest_max_id = contests_get_list(&contests_map);
+  contest_max_id = contests_get_set(&contests_map);
   if (contest_max_id <= 0 || !contests_map) {
     fprintf(f, "<h2>No contests available</h2>\n");
     return 0;
@@ -686,7 +686,6 @@ super_html_main_page(FILE *f,
   }
   fprintf(f, "</table>\n");
 
-  xfree(contests_map);
   return 0;
 }
 
@@ -1932,7 +1931,7 @@ super_html_create_contest(
         const unsigned char *extra_args)
 {
   int contest_max_id = 0;
-  unsigned char *contests_map = 0;
+  const unsigned char *contests_map = 0;
   int recomm_id = 1, cnts_id;
   const struct contest_desc *cnts = 0;
   unsigned char *cnts_name = 0;
@@ -1943,7 +1942,7 @@ super_html_create_contest(
                                          sstate, self_url, hidden_vars,
                                          extra_args, NULL);
 
-  contest_max_id = contests_get_list(&contests_map);
+  contest_max_id = contests_get_set(&contests_map);
   if (contest_max_id > 0) recomm_id = contest_max_id;
 
   html_start_form(f, 1, self_url, hidden_vars);
@@ -1972,7 +1971,6 @@ super_html_create_contest(
   html_submit_button(f, SSERV_CMD_CREATE_CONTEST_2, "Create contest!");
   fprintf(f, "</form>\n");
 
-  xfree(contests_map);
   return 0;
 }
 
@@ -3244,7 +3242,7 @@ super_html_edit_access_rules(FILE *f,
   int default_is_allow = 0, i;
   unsigned char num_str[128];
   unsigned char hbuf[1024];
-  unsigned char *contests_map = 0;
+  const unsigned char *contests_map = 0;
   int contest_max_id, cnts_id;
   const struct contest_desc *tmp_cnts = 0;
   unsigned char *cnts_name = 0;
@@ -3340,7 +3338,7 @@ super_html_edit_access_rules(FILE *f,
   fprintf(f, "</td></tr></form>\n");
   fprintf(f, "</table>\n");
 
-  contest_max_id = contests_get_list(&contests_map);
+  contest_max_id = contests_get_set(&contests_map);
   fprintf(f, "<p><table border=\"0\">\n");
   html_start_form(f, 1, self_url, hidden_vars);
   html_hidden_var(f, "acc_mode", acc_mode);
@@ -3366,7 +3364,7 @@ super_html_edit_access_rules(FILE *f,
   html_submit_button(f, SSERV_CMD_CNTS_COPY_ACCESS, "Copy");
   fprintf(f, "</td></tr></form>");
   fprintf(f, "</table>\n");
-  xfree(contests_map); contests_map = 0;
+  contests_map = 0;
 
   fprintf(f, "<table border=\"0\"><tr><td>%sTo the top</a></td>",
           html_hyperref(hbuf,sizeof(hbuf),session_id,self_url,extra_args, 0));
@@ -4162,7 +4160,7 @@ super_html_create_contest_2(FILE *f,
                             const unsigned char *hidden_vars,
                             const unsigned char *extra_args)
 {
-  unsigned char *contests_map = 0;
+  const unsigned char *contests_map = 0;
   int contests_num;
   int errcode = 0;
   const struct contest_desc *templ_cnts = 0;
@@ -4172,7 +4170,7 @@ super_html_create_contest_2(FILE *f,
     goto cleanup;
   }
 
-  contests_num = contests_get_list(&contests_map);
+  contests_num = contests_get_set(&contests_map);
   if (contests_num < 0 || !contests_num) {
     errcode = -SSERV_ERR_SYSTEM_ERROR;
     goto cleanup;
@@ -4218,13 +4216,11 @@ super_html_create_contest_2(FILE *f,
                                              ss_login);
   }
 
-  xfree(contests_map);
   return super_html_edit_contest_page(f, priv_level, user_id, login,
                                       session_id, ip_address, config, sstate,
                                       self_url, hidden_vars, extra_args);
 
  cleanup:
-  xfree(contests_map);
   return errcode;
 }
 

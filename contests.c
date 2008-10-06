@@ -1330,49 +1330,108 @@ contests_set_directory(unsigned char const *dir)
   return 0;
 }
 
+struct get_list_state
+{
+  time_t last_check_time;
+  time_t last_update_time;
+  int max_num;
+  int u;
+  int a;
+  int *ids;
+  unsigned char *map;
+  int map_a;
+};
+static struct get_list_state gl_state;
+
+static int
+int_sort_func(const void *p1, const void *p2)
+{
+  int i1 = *(const int*) p1;
+  int i2 = *(const int*) p2;
+  if (i1 < i2) return -1;
+  if (i1 > i2) return 1;
+  return 0;
+}
+
 int
-contests_get_list(unsigned char **p_map)
+contests_get_set(const unsigned char **p_map)
 {
   DIR *d = 0;
   struct dirent *dd = 0;
-  int entries_num = -1, i, j;
-  unsigned char *flags = 0;
+  int i, j;
   struct stat bbb;
   unsigned char c_path[1024];
+  time_t cur_time = time(0);
+
+  if (p_map) *p_map = 0;
+  if (cur_time <= gl_state.last_check_time) {
+    if (p_map) *p_map = gl_state.map;
+    return gl_state.max_num + 1;
+  }
+  gl_state.last_check_time = cur_time;
+  if (stat(contests_dir, &bbb) < 0) return -CONTEST_ERR_BAD_DIR;
+  if (!S_ISDIR(bbb.st_mode)) return -CONTEST_ERR_BAD_DIR;
+  if (bbb.st_mtime <= gl_state.last_update_time) {
+    if (p_map) *p_map = gl_state.map;
+    return gl_state.max_num + 1;
+  }
+  gl_state.last_update_time = cur_time;
 
   // we don't check specifically for "." or ".."
   if (!(d = opendir(contests_dir))) return -CONTEST_ERR_BAD_DIR;
+  gl_state.u = 0;
+  gl_state.max_num = 0;
   while ((dd = readdir(d))) {
-    if (sscanf(dd->d_name, "%d", &j) == 1) {
-      snprintf(c_path, sizeof(c_path), "%06d.xml", j);
-      if (!strcmp(c_path, dd->d_name) && j > entries_num) entries_num = j;
+    if (sscanf(dd->d_name, "%d", &j) != 1 || j <= 0) continue;
+    snprintf(c_path, sizeof(c_path), "%06d.xml", j);
+    if (strcmp(c_path, dd->d_name)) continue;
+    snprintf(c_path, sizeof(c_path), "%s/%06d.xml", contests_dir, j);
+    if (access(c_path, R_OK) < 0) continue;
+    //if (stat(c_path, &bbb) < 0) continue;
+    //if (!S_ISREG(bbb.st_mode)) continue;
+
+    if (gl_state.u == gl_state.a) {
+      if (!gl_state.a) gl_state.a = 64;
+      gl_state.a *= 2;
+      XREALLOC(gl_state.ids, gl_state.a);
     }
+    gl_state.ids[gl_state.u++] = j;
+    if (j > gl_state.max_num) gl_state.max_num = j;
   }
   closedir(d);
-  if (entries_num < 0) {
-    *p_map = 0;
-    return 0;
+  if (!gl_state.max_num) return 0;
+
+  if (gl_state.max_num < 1000) {
+    unsigned char *tmp_map = alloca(gl_state.max_num + 1);
+    memset(tmp_map, 0, gl_state.max_num + 1);
+    for (i = 0; i < gl_state.u; i++) {
+      ASSERT(gl_state.ids[i] > 0 && gl_state.ids[i] <= gl_state.max_num);
+      tmp_map[gl_state.ids[i]] = 1;
+    }
+    j = 0;
+    for (i = 0; i <= gl_state.max_num; i++)
+      if (tmp_map[i])
+        gl_state.ids[j++] = i;
+    ASSERT(j == gl_state.u);
+  } else {
+    qsort(gl_state.ids, gl_state.u, sizeof(gl_state.ids[0]), int_sort_func);
   }
 
-  flags = (unsigned char *) alloca(entries_num + 1);
-  memset(flags, 0, entries_num + 1);
-
-  for (i = 1; i <= entries_num; i++) {
-    contests_make_path(c_path, sizeof(c_path), i);
-    if (stat(c_path, &bbb) < 0) continue;
-    if (access(c_path, R_OK) < 0) continue;
-    if (!S_ISREG(bbb.st_mode)) continue;
-    // FIXME: check the owner of the file?
-    flags[i] = 1;
+  if (gl_state.max_num >= gl_state.map_a) {
+    if (!gl_state.map_a) gl_state.map_a = 32;
+    while (gl_state.max_num >= gl_state.map_a) gl_state.map_a *= 2;
+    xfree(gl_state.map);
+    XCALLOC(gl_state.map, gl_state.map_a);
+  } else {
+    memset(gl_state.map, 0, gl_state.map_a);
   }
 
-  while (entries_num >= 0 && !flags[entries_num]) entries_num--;
-  if (!p_map) return entries_num + 1;
-  *p_map = 0;
-  if (entries_num < 0) return 0;
-  *p_map = (unsigned char *) xmalloc(entries_num + 1);
-  memcpy(*p_map, flags, entries_num + 1);
-  return entries_num + 1;
+  for (i = 0; i < gl_state.u; i++) {
+    ASSERT(gl_state.ids[i] > 0 && gl_state.ids[i] <= gl_state.max_num);
+    gl_state.map[gl_state.ids[i]] = 1;
+  }
+  if (p_map) *p_map = gl_state.map;
+  return gl_state.max_num + 1;
 }
 
 int
