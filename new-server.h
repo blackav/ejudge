@@ -380,6 +380,8 @@ struct last_access_idx
 
 struct contest_extra
 {
+  int contest_id;
+
   struct watched_file header;
   struct watched_file menu_1;
   struct watched_file menu_2;
