@@ -3432,7 +3432,7 @@ display_contests_menu(unsigned char *upper, int only_choose)
   unsigned char current_level[512];
   int sel_num, r;
   int retval = -1;
-  unsigned char *cnts_set = 0;
+  const unsigned char *cnts_set = 0;
   int cnts_set_card;
   int *cntsi;
   unsigned char **cnts_names = 0,*s;
@@ -3442,7 +3442,7 @@ display_contests_menu(unsigned char *upper, int only_choose)
            "%s->%s", upper, "Contest list");
 
   // request the set of the existing contests
-  cnts_set_card = contests_get_list(&cnts_set);
+  cnts_set_card = contests_get_set(&cnts_set);
 
   /* update the selected mask array */
   if (cnts_set_card > sel_cnts.allocated) {

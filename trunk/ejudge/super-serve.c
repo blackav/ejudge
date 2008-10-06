@@ -1035,12 +1035,12 @@ install_dnotify_handler(void)
 static void
 acquire_resources(void)
 {
-  unsigned char *contest_map = 0;
+  const unsigned char *contest_map = 0;
   int contest_max_ind = 0, errcode, i;
   const struct contest_desc *cnts;
 
   info("scanning available contests...");
-  contest_max_ind = contests_get_list(&contest_map);
+  contest_max_ind = contests_get_set(&contest_map);
   if (contest_max_ind <= 0 || !contest_map) return;
 
   for (i = 1; i < contest_max_ind; i++) {
@@ -1055,7 +1055,6 @@ acquire_resources(void)
   install_dnotify_handler();
 
   info("scanning available contests done");
-  xfree(contest_map);
 }
 
 static void

@@ -91,10 +91,10 @@ static void
 process_keywords(void)
 {
   int contest_size, i, r;
-  unsigned char *contests;
+  const unsigned char *contests;
   const struct contest_desc *cnts = 0;
 
-  contest_size = contests_get_list(&contests);
+  contest_size = contests_get_set(&contests);
   if (contest_size <= 0 || !contests)
     fatal("no contests");
 
