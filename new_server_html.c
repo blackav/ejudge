@@ -166,7 +166,7 @@ ns_get_contest_extra(int contest_id)
     return p;
   }
   ASSERT(i > 0);
-  ASSERT(extras[i]->contest_id < contest_id);
+  ASSERT(extras[i - 1]->contest_id < contest_id);
   if (extra_u == extra_a) {
     extra_a *= 2;
     XREALLOC(extras, extra_a);
@@ -343,7 +343,7 @@ ns_unload_expired_contests(time_t cur_time)
       do_unload_contest(i);
     } else {
       extras[j++] = extras[i];
-      extras[i] = 0;
+      //extras[i] = 0;
     }
   extra_u = j;
 }
