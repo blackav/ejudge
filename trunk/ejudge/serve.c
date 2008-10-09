@@ -169,7 +169,8 @@ main(int argc, char *argv[])
       return 1;
   }
   serve_state.runlog_state = run_init(serve_state.teamdb_state);
-  if (run_open(serve_state.runlog_state, serve_state.global->run_log_file, 0,
+  if (run_open(serve_state.runlog_state,
+               config, cur_contest, serve_state.global, 0, 0,
                serve_state.global->contest_time,
                serve_state.global->contest_finish_time_d) < 0) return 1;
   if (serve_state.global->is_virtual

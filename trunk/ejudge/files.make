@@ -351,6 +351,7 @@ HFILES=\
  random.h\
  rldb_plugin.h\
  runlog.h\
+ runlog_state.h\
  run_packet.h\
  run_packet_priv.h\
  server_framework.h\

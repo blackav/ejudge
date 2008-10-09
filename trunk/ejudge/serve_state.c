@@ -295,7 +295,7 @@ serve_state_load_contest(
   }
 
   while (1) {
-    if (run_open(state->runlog_state, state->global->run_log_file, 0,
+    if (run_open(state->runlog_state, config, cnts, state->global, 0, 0,
                  state->global->contest_time,
                  state->global->contest_finish_time_d) < 0) goto failure;
     if (!serve_collect_virtual_stop_events(state)) break;

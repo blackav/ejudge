@@ -22,15 +22,6 @@ struct cldb_plugin_iface;
 struct cldb_plugin_data;
 struct cldb_plugin_cnts;
 
-/* new clarification log header */
-struct clar_header_v1
-{
-  unsigned char signature[16];  /* "eJudge clar log" */
-  unsigned char version;        /* file version */
-  unsigned char endianness;     /* 0 - little, 1 - big endian */
-  unsigned char _pad[110];
-};
-
 /* new version of the clarification log */
 struct clar_array
 {
