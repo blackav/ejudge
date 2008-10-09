@@ -61,6 +61,9 @@ enum
 
 enum { RUN_LOG_CREATE = 1, RUN_LOG_READONLY = 2 };
 
+struct ejudge_cfg;
+struct contest_desc;
+struct section_global_data;
 struct teamdb_state;
 struct runlog_state;
 typedef struct runlog_state *runlog_state_t;
@@ -68,8 +71,16 @@ typedef struct runlog_state *runlog_state_t;
 runlog_state_t run_init(struct teamdb_state *);
 runlog_state_t run_destroy(runlog_state_t);
 
-int run_open(runlog_state_t state, const char *path, int flags,
-             time_t init_duration, time_t init_finish_time);
+int
+run_open(
+        runlog_state_t state,
+        struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        const unsigned char *plugin_name,
+        int flags,
+        time_t init_duration,
+        time_t init_finish_time);
 int run_add_record(runlog_state_t state,
                    time_t         timestamp,
                    int            nsec,
@@ -237,7 +248,6 @@ int run_get_virtual_info(runlog_state_t state, int user_id,
 
 int run_clear_entry(runlog_state_t, int run_id);
 int run_squeeze_log(runlog_state_t);
-void run_clear_variables(runlog_state_t);
 int run_has_transient_user_runs(runlog_state_t state, int user_id);
 
 int run_forced_clear_entry(runlog_state_t, int run_id);
@@ -272,7 +282,7 @@ int run_backup(runlog_state_t, const unsigned char *path);
 int run_set_runlog(runlog_state_t, int total_entries,
                    struct run_entry *entries);
 
-int runlog_check(FILE *, struct run_header *, size_t, struct run_entry *);
+int runlog_check(FILE *, const struct run_header *, size_t, const struct run_entry *);
 
 int run_get_pages(runlog_state_t, int run_id);
 int run_set_pages(runlog_state_t, int run_id, int pages);

@@ -38,6 +38,15 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+/* new clarification log header */
+struct clar_header_v1
+{
+  unsigned char signature[16];  /* "eJudge clar log" */
+  unsigned char version;        /* file version */
+  unsigned char endianness;     /* 0 - little, 1 - big endian */
+  unsigned char _pad[110];
+};
+
 struct cldb_file_state
 {
   int nref;
