@@ -17,6 +17,9 @@
 
 static int
 parse_int(const unsigned char *str, int *p_val)
+  __attribute__((unused));
+static int
+parse_int(const unsigned char *str, int *p_val)
 {
   char *eptr;
   int val;
@@ -102,6 +105,15 @@ struct mysql_parse_spec
   int (*handle_func)();
 };
 
+static int
+handle_parse_spec(
+        int field_count,
+        char **row,
+        unsigned long *lengths,
+        int spec_num,
+        const struct mysql_parse_spec *specs,
+        void *data, ...)
+  __attribute__((unused));
 static int
 handle_parse_spec(
         int field_count,
@@ -290,6 +302,15 @@ handle_parse_spec(
   return 0;
 }
 
+static void
+handle_unparse_spec(
+        struct rldb_mysql_state *state,
+        FILE *fout,
+        int spec_num,
+        const struct mysql_parse_spec *specs,
+        const void *data,
+        ...)
+  __attribute__((unused));
 static void
 handle_unparse_spec(
         struct rldb_mysql_state *state,
