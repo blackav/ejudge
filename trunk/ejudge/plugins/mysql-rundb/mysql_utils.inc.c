@@ -57,6 +57,12 @@ my_simple_query(
         struct rldb_mysql_state *state,
         const unsigned char *cmd,
         int cmdlen)
+  __attribute__((unused));
+static int
+my_simple_query(
+        struct rldb_mysql_state *state,
+        const unsigned char *cmd,
+        int cmdlen)
 {
   if (state->show_queries) {
     fprintf(stderr, "mysql: %s\n", cmd);
@@ -73,7 +79,7 @@ my_simple_fquery(
         struct rldb_mysql_state *state,
         const char *format,
         ...)
-  __attribute__((format(printf, 2, 3)));
+  __attribute__((format(printf, 2, 3), unused));
 static int
 my_simple_fquery(
         struct rldb_mysql_state *state,
@@ -118,7 +124,7 @@ my_fquery(
         int colnum,
         const char *format,
         ...)
-  __attribute__((format(printf, 3, 4)));
+  __attribute__((format(printf, 3, 4), unused));
 static int
 my_fquery(
         struct rldb_mysql_state *state,
@@ -137,6 +143,9 @@ my_fquery(
   return my_query(state, cmdbuf, cmdlen, colnum);
 }
 
+static int
+my_row(struct rldb_mysql_state *state)
+  __attribute__((unused));
 static int
 my_row(struct rldb_mysql_state *state)
 {
