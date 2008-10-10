@@ -6274,7 +6274,7 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ:
-    if (sarray_parse(param2, &tmp_env) < 0)
+    if (sarray_parse_2(param2, &tmp_env) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
     sarray_free(prob->lang_time_adj);
     prob->lang_time_adj = tmp_env;
@@ -6286,7 +6286,7 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ_MILLIS:
-    if (sarray_parse(param2, &tmp_env) < 0)
+    if (sarray_parse_2(param2, &tmp_env) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
     sarray_free(prob->lang_time_adj_millis);
     prob->lang_time_adj_millis = tmp_env;
@@ -6298,7 +6298,7 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_DISABLE_LANGUAGE:
-    if (sarray_parse(param2, &tmp_env) < 0)
+    if (sarray_parse_2(param2, &tmp_env) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
     sarray_free(prob->disable_language);
     prob->disable_language = tmp_env;
@@ -6310,7 +6310,7 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_ENABLE_LANGUAGE:
-    if (sarray_parse(param2, &tmp_env) < 0)
+    if (sarray_parse_2(param2, &tmp_env) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
     sarray_free(prob->enable_language);
     prob->enable_language = tmp_env;
@@ -6322,7 +6322,7 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_REQUIRE:
-    if (sarray_parse(param2, &tmp_env) < 0)
+    if (sarray_parse_2(param2, &tmp_env) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
     sarray_free(prob->require);
     prob->require = tmp_env;
