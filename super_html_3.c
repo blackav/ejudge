@@ -5372,7 +5372,7 @@ super_html_print_problem(FILE *f,
       checker_env = xstrdup("");
     } else {
       extra_msg = "";
-      checker_env = sarray_unparse(prob->lang_time_adj);
+      checker_env = sarray_unparse_2(prob->lang_time_adj);
     }
     print_string_editing_row_3(f, "Language-based time-limit adjustment:", checker_env,
                                SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ,
@@ -5390,7 +5390,7 @@ super_html_print_problem(FILE *f,
       checker_env = xstrdup("");
     } else {
       extra_msg = "";
-      checker_env = sarray_unparse(prob->lang_time_adj_millis);
+      checker_env = sarray_unparse_2(prob->lang_time_adj_millis);
     }
     print_string_editing_row_3(f, "Language-based time-limit adjustment (ms):",
                                checker_env,
