@@ -203,6 +203,8 @@ prepare_func(
   return 0;
 }
 
+#include "tables.inc.c"
+
 /*
  * Local variables:
  *  compile-command: "make"
