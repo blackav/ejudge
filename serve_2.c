@@ -2933,7 +2933,7 @@ serve_ignore_by_mask(serve_state_t state,
     if (re.status == new_status) continue;
 
     re.status = new_status;
-    if (run_set_entry(state->runlog_state, r, RUN_ENTRY_STATUS, &re) >= 0) {
+    if (run_set_entry(state->runlog_state, r, RE_STATUS, &re) >= 0) {
       archive_remove(state, global->xml_report_archive_dir, r, 0);
       archive_remove(state, global->report_archive_dir, r, 0);
       if (global->team_enable_rep_view) {

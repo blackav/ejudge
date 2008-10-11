@@ -44,12 +44,16 @@ struct rldb_plugin_iface;
 struct rldb_plugin_data;
 struct rldb_plugin_cnts;
 
+#if !defined RUNS_ACCESS
+#define RUNS_ACCESS const
+#endif /* RUNS_ACCESS */
+
 struct runlog_state
 {
-  struct run_header  head;
-  struct run_entry  *runs;
-  int                run_u;
-  int                run_a;
+  RUNS_ACCESS struct run_header  head;
+  RUNS_ACCESS struct run_entry  *runs;
+  RUNS_ACCESS int                run_u;
+  RUNS_ACCESS int                run_a;
   teamdb_state_t     teamdb_state;
   int ut_size;
   struct user_entry **ut_table;

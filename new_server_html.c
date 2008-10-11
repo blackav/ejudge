@@ -3349,19 +3349,19 @@ priv_edit_run(FILE *fout, FILE *log_f,
   case NEW_SRV_ACTION_CHANGE_RUN_USER_LOGIN:
     if ((ne.user_id = teamdb_lookup_login(cs->teamdb_state, param_str)) <= 0)
       FAIL(NEW_SRV_ERR_INV_USER_LOGIN);
-    ne_mask = RUN_ENTRY_USER;
+    ne_mask = RE_USER_ID;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_USER_ID:
     if (teamdb_lookup(cs->teamdb_state, param_int) <= 0)
       FAIL(NEW_SRV_ERR_INV_USER_ID);
     ne.user_id = param_int;
-    ne_mask = RUN_ENTRY_USER;
+    ne_mask = RE_USER_ID;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_PROB_ID:
     if (param_int <= 0 || param_int > cs->max_prob || !cs->probs[param_int])
       FAIL(NEW_SRV_ERR_INV_PROB_ID);
     ne.prob_id = param_int;
-    ne_mask = RUN_ENTRY_PROB;
+    ne_mask = RE_PROB_ID;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_VARIANT:
     if (re.prob_id <= 0 || re.prob_id > cs->max_prob
@@ -3377,13 +3377,13 @@ priv_edit_run(FILE *fout, FILE *log_f,
         FAIL(NEW_SRV_ERR_VARIANT_UNASSIGNED);
     }
     ne.variant = param_int;
-    ne_mask = RUN_ENTRY_VARIANT;
+    ne_mask = RE_VARIANT;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_LANG_ID:
     if (param_int <= 0 || param_int > cs->max_lang || !cs->langs[param_int])
       FAIL(NEW_SRV_ERR_INV_LANG_ID);
     ne.lang_id = param_int;
-    ne_mask = RUN_ENTRY_LANG;
+    ne_mask = RE_LANG_ID;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_TEST:
     if (param_int < -1 || param_int >= 100000)
@@ -3392,7 +3392,7 @@ priv_edit_run(FILE *fout, FILE *log_f,
         || global->score_system_val == SCORE_OLYMPIAD)
       param_int++;
     ne.test = param_int;
-    ne_mask = RUN_ENTRY_TEST;
+    ne_mask = RE_TEST;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_SCORE:
     /*
@@ -3406,7 +3406,7 @@ priv_edit_run(FILE *fout, FILE *log_f,
     if (param_int < 0 || param_int > prob->full_score)
       FAIL(NEW_SRV_ERR_INV_SCORE);
     ne.score = param_int;
-    ne_mask = RUN_ENTRY_SCORE;
+    ne_mask = RE_SCORE;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ:
     if (global->score_system_val != SCORE_KIROV
@@ -3415,29 +3415,29 @@ priv_edit_run(FILE *fout, FILE *log_f,
     if (param_int <= -100000 || param_int >= 100000)
       FAIL(NEW_SRV_ERR_INV_SCORE_ADJ);
     ne.score_adj = param_int;
-    ne_mask = RUN_ENTRY_SCORE_ADJ;
+    ne_mask = RE_SCORE_ADJ;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_PAGES:
     if (param_int < 0 || param_int >= 100000)
       FAIL(NEW_SRV_ERR_INV_PAGES);
     ne.pages = param_int;
-    ne_mask = RUN_ENTRY_PAGES;
+    ne_mask = RE_PAGES;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_IS_IMPORTED:
     ne.is_imported = param_bool;
-    ne_mask = RUN_ENTRY_IMPORTED;
+    ne_mask = RE_IS_IMPORTED;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN:
     ne.is_hidden = param_bool;
-    ne_mask = RUN_ENTRY_HIDDEN;
+    ne_mask = RE_IS_HIDDEN;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_IS_EXAMINABLE:
     ne.is_examinable = param_bool;
-    ne_mask = RUN_ENTRY_EXAMINABLE;
+    ne_mask = RE_IS_EXAMINABLE;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY:
     ne.is_readonly = param_bool;
-    ne_mask = RUN_ENTRY_READONLY;
+    ne_mask = RE_IS_READONLY;
     break;
   }
 
@@ -3491,7 +3491,7 @@ priv_change_status(FILE *fout,
   }
   memset(&new_run, 0, sizeof(new_run));
   new_run.status = status;
-  flags = RUN_ENTRY_STATUS;
+  flags = RE_STATUS;
   if (run_set_entry(cs->runlog_state, run_id, flags, &new_run) < 0) {
     ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
@@ -3876,7 +3876,7 @@ priv_new_run(FILE *fout,
         || is_imported < 0 || is_imported > 1)
       FAIL(NEW_SRV_ERR_INV_PARAM);
     re.is_imported = is_imported;
-    re_flags |= RUN_ENTRY_IMPORTED;
+    re_flags |= RE_IS_IMPORTED;
   }
   if (ns_cgi_param(phr, "is_hidden", &s) > 0 && *s) {
     if (sscanf(s, "%d%n", &is_hidden, &n) != 1 || s[n]
@@ -3888,7 +3888,7 @@ priv_new_run(FILE *fout,
         || is_readonly < 0 || is_readonly > 1)
       FAIL(NEW_SRV_ERR_INV_PARAM);
     re.is_readonly = is_readonly;
-    re_flags |= RUN_ENTRY_READONLY;
+    re_flags |= RE_IS_READONLY;
   }
   if (ns_cgi_param(phr, "status", &s) > 0 && *s) {
     if (sscanf(s, "%d%n", &status, &n) != 1 || s[n]
@@ -3896,21 +3896,21 @@ priv_new_run(FILE *fout,
         || !serve_is_valid_status(cs, status, 1))
       FAIL(NEW_SRV_ERR_INV_STATUS);
     re.status = status;
-    re_flags |= RUN_ENTRY_STATUS;
+    re_flags |= RE_STATUS;
   }
   if (ns_cgi_param(phr, "tests", &s) > 0 && *s) {
     if (sscanf(s, "%d%n", &tests, &n) != 1 || s[n]
         || tests < -1 || tests > 100000)
       FAIL(NEW_SRV_ERR_INV_TEST);
     re.test = tests;
-    re_flags |= RUN_ENTRY_TEST;
+    re_flags |= RE_TEST;
   }
   if (ns_cgi_param(phr, "score", &s) > 0 && *s) {
     if (sscanf(s, "%d%n", &score, &n) != 1 || s[n]
         || score < 0 || score > 100000)
       FAIL(NEW_SRV_ERR_INV_PARAM);
     re.score = score;
-    re_flags |= RUN_ENTRY_SCORE;
+    re_flags |= RE_SCORE;
   }
 
   if (!lang) lang_id = 0;
@@ -12656,9 +12656,7 @@ unpriv_xml_update_answer(
   nv.test = 0;
   nv.score = -1;
   run_set_entry(cs->runlog_state, run_id,
-                RUN_ENTRY_SIZE | RUN_ENTRY_SHA1 | RUN_ENTRY_STATUS
-                | RUN_ENTRY_TEST | RUN_ENTRY_SCORE,
-                &nv);
+                RE_SIZE | RE_SHA1 | RE_STATUS | RE_TEST | RE_SCORE, &nv);
 
   serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                   "Command: submit\n"

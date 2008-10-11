@@ -127,8 +127,6 @@ run_destroy(runlog_state_t state)
 
   if (!state) return 0;
 
-  xfree(state->runs); state->runs = 0;
-  state->run_a = state->run_u = 0;
   for (i = 0; i < state->ut_size; i++) {
     if (!(ue = state->ut_table[i])) continue;
     xfree(ue);
@@ -318,6 +316,8 @@ run_add_record(
   int i;
   struct user_entry *ue;
   time_t stop_time;
+  struct run_entry re;
+  int flags = 0;
 
   if (timestamp <= 0) {
     err("run_add_record: invalid timestamp %ld", timestamp);
@@ -403,23 +403,28 @@ run_add_record(
 
   if ((i = state->iface->get_insert_run_id(state->cnts,timestamp,team,nsec))<0)
     return -1;
-  state->runs[i].size = size;
-  state->runs[i].locale_id = locale_id;
-  state->runs[i].user_id = team;
-  state->runs[i].lang_id = language;
-  state->runs[i].prob_id = problem;
-  state->runs[i].status = 99;
-  state->runs[i].test = 0;
-  state->runs[i].score = -1;
-  state->runs[i].a.ip = ip;
-  state->runs[i].ssl_flag = ssl_flag;
-  state->runs[i].variant = variant;
-  state->runs[i].is_hidden = is_hidden;
-  state->runs[i].mime_type = mime_type;
+
+  memset(&re, 0, sizeof(re));
+  re.size = size;
+  re.locale_id = locale_id;
+  re.user_id = team;
+  re.lang_id = language;
+  re.prob_id = problem;
+  re.status = 99;
+  re.test = 0;
+  re.score = -1;
+  re.a.ip = ip;
+  re.ipv6_flag = 0;
+  re.ssl_flag = ssl_flag;
+  re.variant = variant;
+  re.is_hidden = is_hidden;
+  re.mime_type = mime_type;
+  flags = RE_SIZE | RE_LOCALE_ID | RE_USER_ID | RE_LANG_ID | RE_PROB_ID | RE_STATUS | RE_TEST | RE_SCORE | RE_IP | RE_SSL_FLAG | RE_VARIANT | RE_IS_HIDDEN | RE_MIME_TYPE;
   if (sha1) {
-    memcpy(state->runs[i].sha1, sha1, sizeof(state->runs[i].sha1));
+    memcpy(re.sha1, sha1, sizeof(state->runs[i].sha1));
+    flags |= RE_SHA1;
   }
-  if (state->iface->add_entry(state->cnts, i) < 0) return -1;
+  if (state->iface->add_entry(state->cnts, i, &re, flags) < 0) return -1;
   return i;
 }
 
@@ -756,7 +761,7 @@ int
 run_check_duplicate(runlog_state_t state, int run_id)
 {
   int i;
-  struct run_entry *p, *q;
+  const struct run_entry *p, *q;
 
   if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
   p = &state->runs[run_id];
@@ -901,7 +906,7 @@ run_set_entry(
         unsigned int mask,
         const struct run_entry *in)
 {
-  struct run_entry *out;
+  const struct run_entry *out;
   struct run_entry te;
   int f = 0;
   struct user_entry *ue = 0;
@@ -929,86 +934,78 @@ run_set_entry(
     return -1;
   }
 
-  if (out->is_readonly && mask != RUN_ENTRY_READONLY) {
+  if (out->is_readonly && mask != RE_IS_READONLY) {
     err("run_set_entry: %d: this entry is read-only", run_id);
     return -1;
   }
 
   /* blindly update all fields */
   memcpy(&te, out, sizeof(te));
-  if ((mask & RUN_ENTRY_STATUS) && te.status != in->status) {
+  if ((mask & RE_STATUS) && te.status != in->status) {
     te.status = in->status;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_TIME) && te.time != in->time) {
-    te.time = in->time;
-    f = 1;
-  }
-  if ((mask & RUN_ENTRY_NSEC) && te.nsec != in->nsec) {
-    te.nsec = in->nsec;
-    f = 1;
-  }
-  if ((mask & RUN_ENTRY_SIZE) && te.size != in->size) {
+  if ((mask & RE_SIZE) && te.size != in->size) {
     te.size = in->size;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_IP) && te.a.ip != in->a.ip) {
+  if ((mask & RE_IP) && te.a.ip != in->a.ip) {
     te.a.ip = in->a.ip;
     f = 1;
   }
-  if ((mask&RUN_ENTRY_SHA1) && memcmp(te.sha1,in->sha1,sizeof(te.sha1))) {
+  if ((mask & RE_SHA1) && memcmp(te.sha1,in->sha1,sizeof(te.sha1))) {
     memcpy(te.sha1, in->sha1, sizeof(te.sha1));
     f = 1;
   }
-  if ((mask & RUN_ENTRY_USER) && te.user_id != in->user_id) {
+  if ((mask & RE_USER_ID) && te.user_id != in->user_id) {
     te.user_id = in->user_id;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_PROB) && te.prob_id != in->prob_id) {
+  if ((mask & RE_PROB_ID) && te.prob_id != in->prob_id) {
     te.prob_id = in->prob_id;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_LANG) && te.lang_id != in->lang_id) {
+  if ((mask & RE_LANG_ID) && te.lang_id != in->lang_id) {
     te.lang_id = in->lang_id;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_LOCALE) && te.locale_id != in->locale_id) {
+  if ((mask & RE_LOCALE_ID) && te.locale_id != in->locale_id) {
     te.locale_id = in->locale_id;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_TEST) && te.test != in->test) {
+  if ((mask & RE_TEST) && te.test != in->test) {
     te.test = in->test;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_SCORE) && te.score != in->score) {
+  if ((mask & RE_SCORE) && te.score != in->score) {
     te.score = in->score;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_IMPORTED) && te.is_imported != in->is_imported) {
+  if ((mask & RE_IS_IMPORTED) && te.is_imported != in->is_imported) {
     te.is_imported = in->is_imported;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_VARIANT) && te.variant != in->variant) {
+  if ((mask & RE_VARIANT) && te.variant != in->variant) {
     te.variant = in->variant;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_HIDDEN) && te.is_hidden != in->is_hidden) {
+  if ((mask & RE_IS_HIDDEN) && te.is_hidden != in->is_hidden) {
     te.is_hidden = in->is_hidden;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_READONLY) && te.is_readonly != in->is_readonly) {
+  if ((mask & RE_IS_READONLY) && te.is_readonly != in->is_readonly) {
     te.is_readonly = in->is_readonly;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_PAGES) && te.pages != in->pages) {
+  if ((mask & RE_PAGES) && te.pages != in->pages) {
     te.pages = in->pages;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_SCORE_ADJ) && te.score_adj != in->score_adj) {
+  if ((mask & RE_SCORE_ADJ) && te.score_adj != in->score_adj) {
     te.score_adj = in->score_adj;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_EXAMINABLE) && te.is_examinable != in->is_examinable) {
+  if ((mask & RE_IS_EXAMINABLE) && te.is_examinable != in->is_examinable) {
     te.is_examinable = in->is_examinable;
     f = 1;
   }
@@ -1183,6 +1180,7 @@ run_virtual_start(
 {
   struct user_entry *pvt = get_user_entry(state, user_id);
   int i;
+  struct run_entry re;
 
   if (!state->head.start_time) {
     err("run_virtual_start: the contest is not started");
@@ -1207,13 +1205,16 @@ run_virtual_start(
   }
   if ((i = state->iface->get_insert_run_id(state->cnts, t, user_id, nsec)) < 0)
     return -1;
-  state->runs[i].user_id = user_id;
-  state->runs[i].a.ip = ip;
-  state->runs[i].ssl_flag = ssl_flag;
-  state->runs[i].status = RUN_VIRTUAL_START;
+
+  memset(&re, 0, sizeof(re));
+  re.user_id = user_id;
+  re.a.ip = ip;
+  re.ipv6_flag = 0;
+  re.ssl_flag = ssl_flag;
+  re.status = RUN_VIRTUAL_START;
   pvt->start_time = t;
   pvt->status = V_VIRTUAL_USER;
-  return state->iface->add_entry(state->cnts, i);
+  return state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS);
 }
 
 int
@@ -1228,6 +1229,7 @@ run_virtual_stop(
   struct user_entry *pvt = get_user_entry(state, user_id);
   int i;
   time_t exp_stop_time = 0;
+  struct run_entry re;
 
   if (!state->head.start_time) {
     err("run_virtual_stop: the contest is not started");
@@ -1255,12 +1257,14 @@ run_virtual_stop(
 
   if ((i = state->iface->get_insert_run_id(state->cnts, t, user_id, nsec)) < 0)
     return -1;
-  state->runs[i].user_id = user_id;
-  state->runs[i].a.ip = ip;
-  state->runs[i].ssl_flag = ssl_flag;
-  state->runs[i].status = RUN_VIRTUAL_STOP;
+  memset(&re, 0, sizeof(re));
+  re.user_id = user_id;
+  re.a.ip = ip;
+  re.ipv6_flag = 0;
+  re.ssl_flag = ssl_flag;
+  re.status = RUN_VIRTUAL_START;
   pvt->stop_time = t;
-  return state->iface->add_entry(state->cnts, i);
+  return state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS);
 }
 
 int
@@ -1280,9 +1284,6 @@ run_clear_entry(runlog_state_t state, int run_id)
   if (state->runs[run_id].is_readonly) ERR_R("run %d is readonly", run_id);
   switch (state->runs[run_id].status) {
   case RUN_EMPTY:
-    memset(&state->runs[run_id], 0, sizeof(state->runs[run_id]));
-    state->runs[run_id].status = RUN_EMPTY;
-    state->runs[run_id].run_id = run_id;
     break;
   case RUN_VIRTUAL_STOP:
     /* VSTOP events can safely be cleared */ 
@@ -1933,7 +1934,7 @@ run_count_examinable_runs(
         int *p_assigned)
 {
   int count = 0, i, assigned_count = 0, j;
-  struct run_entry *p;
+  const struct run_entry *p;
 
   ASSERT(exam_num >= 1 && exam_num <= 3);
 

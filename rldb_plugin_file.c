@@ -19,6 +19,8 @@
 #include "ejudge_cfg.h"
 #include "runlog.h"
 #include "teamdb.h"
+
+#define RUNS_ACCESS 
 #include "runlog_state.h"
 
 #include "pathutl.h"
@@ -95,7 +97,11 @@ get_insert_run_id(
         int uid,
         int nsec);
 static int
-add_entry_func(struct rldb_plugin_cnts *cdata, int i);
+add_entry_func(
+        struct rldb_plugin_cnts *cdata,
+        int i,
+        const struct run_entry *re,
+        int flags);
 static int
 undo_add_entry_func(
         struct rldb_plugin_cnts *cdata,
@@ -820,7 +826,14 @@ static struct rldb_plugin_cnts *
 close_func(struct rldb_plugin_cnts *cdata)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
+  struct runlog_state *rls = cs->rl_state;
 
+  if (!cs) return 0;
+  rls = cs->rl_state;
+  if (rls) {
+    xfree(rls->runs); rls->runs = 0;
+    rls->run_a = rls->run_u = 0;
+  }
   if (cs->plugin_state) cs->plugin_state->nref--;
   if (cs->run_fd >= 0) close(cs->run_fd);
   xfree(cs->runlog_path);
@@ -1067,9 +1080,87 @@ do_flush_entry(struct rldb_file_cnts *cs, int num)
 }
 
 static int
-add_entry_func(struct rldb_plugin_cnts *cdata, int run_id)
+add_entry_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        const struct run_entry *re,
+        int flags)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
+  struct runlog_state *rls = cs->rl_state;
+  struct run_entry *de;
+
+  ASSERT(run_id >= 0 && run_id < rls->run_a);
+  de = &rls->runs[run_id];
+
+  if ((flags & RE_SIZE)) {
+    de->size = re->size;
+  }
+  if ((flags & RE_IP)) {
+    de->a = re->a;
+    de->ipv6_flag = re->ipv6_flag;
+  }
+  if ((flags & RE_SHA1)) {
+    memcpy(de->sha1, re->sha1, sizeof(de->sha1));
+  }
+  if ((flags & RE_USER_ID)) {
+    de->user_id = re->user_id;
+  }
+  if ((flags & RE_PROB_ID)) {
+    de->prob_id = re->prob_id;
+  }
+  if ((flags & RE_LANG_ID)) {
+    de->lang_id = re->lang_id;
+  }
+  if ((flags & RE_LOCALE_ID)) {
+    de->locale_id = re->locale_id;
+  }
+  if ((flags & RE_STATUS)) {
+    de->status = re->status;
+  }
+  if ((flags & RE_TEST)) {
+    de->test = re->test;
+  }
+  if ((flags & RE_SCORE)) {
+    de->score = re->score;
+  }
+  if ((flags & RE_IS_IMPORTED)) {
+    de->is_imported = re->is_imported;
+  }
+  if ((flags & RE_VARIANT)) {
+    de->variant = re->variant;
+  }
+  if ((flags & RE_IS_HIDDEN)) {
+    de->is_hidden = re->is_hidden;
+  }
+  if ((flags & RE_IS_READONLY)) {
+    de->is_readonly = re->is_readonly;
+  }
+  if ((flags & RE_PAGES)) {
+    de->pages = re->pages;
+  }
+  if ((flags & RE_SCORE_ADJ)) {
+    de->score_adj = re->score_adj;
+  }
+  if ((flags & RE_IS_EXAMINABLE)) {
+    de->is_examinable = re->is_examinable;
+  }
+  if ((flags & RE_JUDGE_ID)) {
+    de->judge_id = re->judge_id;
+  }
+  if ((flags & RE_SSL_FLAG)) {
+    de->ssl_flag = re->ssl_flag;
+  }
+  if ((flags & RE_MIME_TYPE)) {
+    de->mime_type = re->mime_type;
+  }
+  if ((flags & RE_EXAMINERS)) {
+    memcpy(de->examiners, re->examiners, sizeof(de->examiners));
+  }
+  if ((flags & RE_EXAM_SCORE)) {
+    memcpy(de->exam_score, re->exam_score, sizeof(de->exam_score));
+  }
+
   return do_flush_entry(cs, run_id);
 }
 

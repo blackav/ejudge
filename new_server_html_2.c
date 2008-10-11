@@ -3526,8 +3526,7 @@ ns_upload_csv_runs(
       fprintf(log_f, _("Cannot write run row %d\n"), row);
       goto cleanup;
     }
-    run_set_entry(cs->runlog_state, run_id,
-                  RUN_ENTRY_STATUS | RUN_ENTRY_TEST | RUN_ENTRY_SCORE,
+    run_set_entry(cs->runlog_state, run_id, RE_STATUS | RE_TEST | RE_SCORE,
                   &runs[row]);
 
     serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
@@ -3804,8 +3803,7 @@ ns_upload_csv_results(
   for (row = 1; row < csv->u; row++) {
     if (runs[row].run_id == -1) continue;
     run_set_entry(cs->runlog_state, runs[row].run_id,
-                  RUN_ENTRY_STATUS | RUN_ENTRY_TEST | RUN_ENTRY_SCORE,
-                  &runs[row]);
+                  RE_STATUS | RE_TEST | RE_SCORE, &runs[row]);
   }
 
   /*

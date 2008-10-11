@@ -235,7 +235,7 @@ clar_add_record(
     XCALLOC(new_v, new_a);
     if (state->clars.a)
       memcpy(new_v, state->clars.v, state->clars.a * sizeof(new_v[0]));
-    for (i = state->clars.a; i < new_a; state->clars.v[i++].id = -1);
+    for (i = state->clars.a; i < new_a; new_v[i++].id = -1);
     xfree(state->clars.v);
     state->clars.v = new_v;
     state->clars.a = new_a;

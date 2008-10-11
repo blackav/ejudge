@@ -71,7 +71,8 @@ struct rldb_plugin_iface
   int (*get_insert_run_id)(struct rldb_plugin_cnts *,
                            time_t t, int uid, int nsec);
   // write a new run to the database
-  int (*add_entry)(struct rldb_plugin_cnts *, int i);
+  int (*add_entry)(struct rldb_plugin_cnts *, int i,
+                   const struct run_entry *, int);
   // undo the last append
   int (*undo_add_entry)(struct rldb_plugin_cnts *, int run_id);
   // change the status

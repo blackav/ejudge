@@ -518,7 +518,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
       if (r) {
         update_flag++;
       }
-      run_set_entry(runlog_state, i, RUN_ENTRY_ALL, pa);
+      run_set_entry(runlog_state, i, RE_ALL, pa);
     }
     fprintf(flog, "%d entries updated\n", update_flag);
     goto done;
