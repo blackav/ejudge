@@ -209,6 +209,8 @@ main(int argc, char *argv[])
     die("cannot open the destination runlog");
 
   run_get_header(src_runlog, &rh);
+  if (run_put_header(dst_runlog, &rh) < 0)
+    die("failed to insert the header");
 
   total_runs = run_get_total(src_runlog);
   for (run_id = 0; run_id < total_runs; run_id++) {
