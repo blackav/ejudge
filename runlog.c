@@ -177,8 +177,10 @@ run_open(
   struct rldb_plugin_iface *rldb_iface = 0;
   struct rldb_plugin_data *plugin_data = 0;
 
-  teamdb_register_update_hook(state->teamdb_state, teamdb_update_callback,
-                              state);
+  if (state->teamdb_state) {
+    teamdb_register_update_hook(state->teamdb_state, teamdb_update_callback,
+                                state);
+  }
 
   if (!rldb_plugins_num) {
     rldb_plugins[0].iface = &rldb_plugin_file;
@@ -1108,7 +1110,7 @@ run_set_entry(
   if (!f) return 0;
 
   if (!te.is_hidden && !ue->status) ue->status = V_REAL_USER;
-  return state->iface->set_entry(state->cnts, run_id, &te);
+  return state->iface->set_entry(state->cnts, run_id, &te, mask);
 }
 
 static struct user_entry *
@@ -1325,14 +1327,14 @@ run_forced_clear_entry(runlog_state_t state, int run_id)
 }
 
 int
-run_forced_set_hidden(runlog_state_t state, int run_id)
+run_set_hidden(runlog_state_t state, int run_id)
 {
   if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
   return state->iface->set_hidden(state->cnts, run_id, 1);
 }
 
 int
-run_forced_set_judge_id(runlog_state_t state, int run_id, int judge_id)
+run_set_judge_id(runlog_state_t state, int run_id, int judge_id)
 {
   if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
   if (judge_id < 0 || judge_id > EJ_MAX_JUDGE_ID)
@@ -1889,6 +1891,8 @@ update_user_flags(runlog_state_t state)
   int size = 0;
   int *map = 0;
 
+  if (!state->teamdb_state) return 0;
+
   if (state->user_flags.nuser >= 0) return 0;
   if (teamdb_get_user_status_map(state->teamdb_state, &size, &map) < 0)
     return -1;
@@ -1952,6 +1956,22 @@ run_count_examinable_runs(
   }
   if (p_assigned) *p_assigned = assigned_count;
   return count;
+}
+
+int
+run_put_entry(
+        runlog_state_t state,
+        const struct run_entry *re)
+{
+  return state->iface->put_entry(state->cnts, re);
+}
+
+int
+run_put_header(
+        runlog_state_t state,
+        const struct run_header *rh)
+{
+  return state->iface->put_header(state->cnts, rh);
 }
 
 /*

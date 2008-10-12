@@ -27,6 +27,7 @@ struct ejudge_cfg;
 struct contest_desc;
 struct section_global_data;
 struct runlog_state;
+struct run_header;
 struct run_entry;
 
 /* version of the plugin interface structure */
@@ -87,7 +88,7 @@ struct rldb_plugin_iface
   // stop the contest
   int (*stop)(struct rldb_plugin_cnts *, time_t);
   // set the duration
-  int (*set_duration)(struct rldb_plugin_cnts *, time_t);
+  int (*set_duration)(struct rldb_plugin_cnts *, int);
   // set the scheduled start time
   int (*schedule)(struct rldb_plugin_cnts *, time_t);
   // set the finish time
@@ -115,9 +116,14 @@ struct rldb_plugin_iface
   // set the entry
   int (*set_entry)(struct rldb_plugin_cnts *,
                    int run_id,
-                   const struct run_entry *in);
+                   const struct run_entry *in,
+                   int flags);
   // remove the EMPTY records
   int (*squeeze)(struct rldb_plugin_cnts *);
+  // insert the whole record
+  int (*put_entry)(struct rldb_plugin_cnts *, const struct run_entry *);
+  // insert the whole header
+  int (*put_header)(struct rldb_plugin_cnts *, const struct run_header *);
 };
 
 /* default plugin: compiled into new-server */

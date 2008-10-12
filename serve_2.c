@@ -2665,7 +2665,7 @@ serve_collect_virtual_stop_events(serve_state_t cs)
         // run after virtual stop
         if (!pe->is_hidden) {
           err("run %d: run after virtual stop, made hidden!", i);
-          run_forced_set_hidden(cs->runlog_state, i);
+          run_set_hidden(cs->runlog_state, i);
           need_reload = 1;
         }
       } else if (!*pt) {
@@ -2675,7 +2675,7 @@ serve_collect_virtual_stop_events(serve_state_t cs)
         // virtual run overrun
         if (!pe->is_hidden) {
           err("run %d: virtual time run overrun, made hidden!", i);
-          run_forced_set_hidden(cs->runlog_state, i);
+          run_set_hidden(cs->runlog_state, i);
           need_reload = 1;
         }
       } else {
@@ -2855,7 +2855,7 @@ serve_judge_virtual_olympiad(
     if (latest_runs[i] >= 0)
       serve_rejudge_run(cnts, cs, latest_runs[i], user_id, 0, 0, 1, 10);
   }
-  run_forced_set_judge_id(cs->runlog_state, vstart_id, 1);
+  run_set_judge_id(cs->runlog_state, vstart_id, 1);
 }
 
 void
