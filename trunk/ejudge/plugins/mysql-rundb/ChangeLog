@@ -1,3 +1,13 @@
+2008-10-10 (r5182) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c, tables.inc.c:
+	initial revision
+
+2008-10-09 (r5181) Alexander Chernov  <cher@ejudge.ru>
+
+	* mysql_values.inc.c, mysql_utils.inc.c:
+	initial revision
+
 2008-10-01 (r5133) Alexander Chernov  <cher@ejudge.ru>
 
 	* rldb_mysql.c:
