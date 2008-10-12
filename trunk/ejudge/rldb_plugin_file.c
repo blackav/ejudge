@@ -654,7 +654,7 @@ read_runlog(
   struct runlog_state *rls = cs->rl_state;
   off_t filesize;
   int rem;
-  int r, i;
+  int i;
 
   info("reading runs log (binary)");
 
@@ -699,7 +699,6 @@ read_runlog(
     if (do_read(cs->run_fd, rls->runs, sizeof(rls->runs[0]) * rls->run_u) < 0)
       return -1;
   }
-  if (r > 0) runlog_flush(rls);
 
   if (init_finish_time > 0 && rls->head.finish_time != init_finish_time) {
     rls->head.finish_time = init_finish_time;
