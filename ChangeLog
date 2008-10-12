@@ -1,3 +1,181 @@
+2008-10-12 (r5193) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	compilation of `convert-clars' is added.
+
+	* files.make:
+	`convert-runs.c' is added.
+
+	* rldb_plugin.h:
+	(rldb_plugin_iface::set_duration) `duration' is int, not time_t;
+	(rldb_plugin_iface::set_entry) `flags' parameter is added;
+	(rldb_plugin_iface::put_entry) new method;
+	(rldb_plugin_iface::put_header) new method.
+
+	* runlog.h:
+	(run_set_hidden) renamed from `run_forced_set_hidden';
+	(run_set_judge_id) renamed from `run_forced_set_judge_id';
+	(run_put_entry) new function prototype
+	(run_put_header) new function prototype.
+
+	* convert-runs.c: initial revision.
+
+	* rldb_plugin_file.c:
+	(set_duration_func) `duration' parameter is int;
+	(set_entry_func) `flags' parameter is added.
+
+	* runlog.c:
+	(run_open) teamdb_state == NULL is supported;
+	(run_set_entry) call of `iface->set_entry' is updated;
+	(run_set_hidden) renamed from `run_forced_set_hidden';
+	(run_set_judge_id) renamed from `run_forced_set_judge_id';
+	(update_user_flags) teamdb_state == NULL is supported;
+	(run_put_entry) new function;
+	(run_put_header) new function.
+
+	* serve_2.c:
+	(serve_collect_virtual_stop_events)
+	  `run_set_hidden' renamed from `run_forced_set_hidden';
+	(serve_judge_virtual_olympiad)
+	  `run_set_judge_id' renamed from `run_forced_set_judge_id'.
+
+2008-10-11 (r5190) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_plugin.h:
+	(rldb_plugin_iface::add_entry) run_entry and flags arguments are added.
+
+	* runlog.h:
+	`RUN_ENTRY_*' are renamed to `RE_*'.
+
+	* runlog_state.h:
+	`runs' array is read-only by default.
+
+	* clarlog.c:
+	(clar_add_record) a bug is fixed.
+
+	* new_server_html.c, new_server_html_2.c, runlog_import.c, serve_2.c:
+	`RUN_ENTRY_*' are renamed to `RE_*'.
+
+	* rldb_plugin_file.c:
+	(add_entry_func) new parameters are added;
+	(close_func) `runs' array is freed.
+
+	* runlog.c:
+	`RUN_ENTRY_*' are renamed to `RE_*';
+	the runs array is strictly read-only.
+
+2008-10-09 (r5179) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_plugin.h:
+	implemented.
+
+	* runlog.h:
+	(run_open) function prototype is changed;
+	(runlog_check) arguments are now const pointers.
+
+	* runlog_state.h:
+	initial revision.
+
+	* cldb_plugin_file.h:
+	(struct clar_header_v1) moved here from `plugin_state.h'.
+
+	* rldb_plugin_file.c:
+	implemented.
+
+	* runlog.c:
+	the file read/write stuff is moved to `rldb_plugin_file.c'.
+
+	* serve.c:
+	(main) use of `run_open' is changed.
+
+	* serve_state.c:
+	(serve_state_load_contest) call of `run_open' is updated.
+
+2008-10-06 (r5175) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(struct contest_extra) `contest_id' field is added.
+
+	* new_server_html.c:
+	contest extra information storage is changed: instead of direct
+	  indexing by contest_id, a sorted array of extras is stored,
+	  looked up by a binary search.
+
+2008-10-06 (r5174) Alexander Chernov  <cher@ejudge.ru>
+
+	* collect-emails.c:
+	(add_to_set) `contests_get_list' is used instead of
+	  `contests_get_set'.
+
+	* new_server_html.c:
+	minor contest lookup optimizations.
+
+	* super_html.c:
+	(super_html_main_page) contest lookup optimizations;
+	(super_html_create_contest) `contests_get_list' is used instead of
+	  `contests_get_set';
+	(super_html_edit_access_rules) the same;
+	(super_html_create_contest_2) the same.
+
+	* super-serve.c:
+	(install_dnotify_handler) `contests_get_list' is used instead of
+	  `contests_get_set'.
+
+2008-10-06 (r5172) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	(contests_get_list) new function prototype.
+
+	* contests.c:
+	(contests_get_list) new function.
+
+	* new_server_html.c, new_server_html_5.c:
+	(anon_select_contest_page) `contests_get_list' is used instead of
+	  `contests_get_set'.
+
+	* sformat.c:
+	(sformat_message) NULL pointer checks added.
+
+2008-10-06 (r5170) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	(contests_get_set) renamed from `contests_get_list'.
+
+	* contests.c:
+	(contests_get_set) renamed from `contests_get_list';
+	  directory lookup results are cached.
+
+	* collect-emails.c, edit-userlist.c, new_server_html.c, new_server_html_5.c, super_html.c, super-serve.c:
+	(anon_select_contest_page) `contests_get_list' is renamed to
+	  `contests_get_set'.
+
+2008-10-05 (r5164) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(ns_handle_http_request) symbolic action names are supported.
+
+2008-10-05 (r5162) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_2.c:
+	(serve_run_request) `disable_security' problem configuration variable is supported.
+
+2008-10-05 (r5161) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) `disable_security' field is added.
+
+	* super_proto.h:
+	editing of `disable_security' problem configuration variable is supported.
+
+	* prepare.c:
+	`disable_security' problem configuration variable is handled.
+
+	* prepare_out.c:
+	(prepare_unparse_prob) `disable_security' problem configuration variable is handled.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of `disable_security' problem configuration variable is supported.
+
 2008-10-04 (r5156) Alexander Chernov  <cher@ejudge.ru>
 
 	* new_server_html.c:
