@@ -903,7 +903,11 @@ generate_update_entry_clause(
     sep = comma;
   }
   if ((flags & RE_MIME_TYPE)) {
-    fprintf(f, "%smime_type = '%s'", sep, mime_type_get_type(re->mime_type));
+    if (re->mime_type > 0) {
+      fprintf(f, "%smime_type = '%s'", sep, mime_type_get_type(re->mime_type));
+    } else {
+      fprintf(f, "%smime_type = NULL", sep);
+    }
     sep = comma;
   }
   if ((flags & RE_EXAMINERS)) {
