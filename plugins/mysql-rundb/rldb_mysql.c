@@ -167,7 +167,6 @@ prepare_func(
         struct xml_tree *tree)
 {
   struct rldb_mysql_state *state = (struct rldb_mysql_state*) data;
-  const struct xml_parse_spec *spec = ejudge_cfg_get_spec();
   const struct xml_attr *a = 0;
   struct xml_tree *p = 0;
   const unsigned char *cs = 0;
@@ -1399,6 +1398,7 @@ set_entry_func(
   ASSERT(run_id >= 0 && run_id < rls->run_u);
   ASSERT(rls->runs[run_id].status != RUN_EMPTY);
 
+  (void) rls;
   return do_update_entry(cs, run_id, in, flags);
 }
 

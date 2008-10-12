@@ -172,7 +172,6 @@ prepare_func(
         struct xml_tree *tree)
 {
   struct cldb_mysql_state *state = (struct cldb_mysql_state*) data;
-  const struct xml_parse_spec *spec = ejudge_cfg_get_spec();
   const struct xml_attr *a = 0;
   struct xml_tree *p = 0;
   const unsigned char *cs = 0;

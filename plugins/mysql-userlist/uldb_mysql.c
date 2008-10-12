@@ -645,7 +645,7 @@ prepare_func(
     } else if (!strcmp(a->name[0], "cache_queries")) {
       if (xml_attr_bool(a, &state->cache_queries) < 0) return -1;
     } else {
-      return xml_err_attr_not_allowed(p, a);
+      return xml_err_attr_not_allowed(tree, a);
     }
   }
 
