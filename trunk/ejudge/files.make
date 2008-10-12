@@ -248,6 +248,7 @@ CFILES=\
  compile.c\
  compile-control.c\
  convert-clars.c\
+ convert-runs.c\
  edit-userlist.c\
  ejudge-configure-compilers.c\
  ejudge-control.c\
