@@ -206,8 +206,11 @@ run_open(
                                            global, flags,
                                            init_duration, init_finish_time)))
       return -1;
-    runlog_check(0, &state->head, state->run_u, state->runs);
-    build_indices(state);
+    if (!(flags & RUN_LOG_NOINDEX)) {
+      if (runlog_check(0, &state->head, state->run_u, state->runs) < 0)
+        return -1;
+      build_indices(state);
+    }
     return 0;
   }
 
@@ -223,8 +226,11 @@ run_open(
                                            global, flags,
                                            init_duration, init_finish_time)))
       return -1;
-    runlog_check(0, &state->head, state->run_u, state->runs);
-    build_indices(state);
+    if (!(flags & RUN_LOG_NOINDEX)) {
+      if (runlog_check(0, &state->head, state->run_u, state->runs) < 0)
+        return -1;
+      build_indices(state);
+    }
     return 0;
   }
 
@@ -281,8 +287,11 @@ run_open(
                                          global, flags,
                                          init_duration, init_finish_time)))
     return -1;
-  runlog_check(0, &state->head, state->run_u, state->runs);
-  build_indices(state);
+  if (!(flags & RUN_LOG_NOINDEX)) {
+    if (runlog_check(0, &state->head, state->run_u, state->runs) < 0)
+      return -1;
+    build_indices(state);
+  }
   return 0;
 }
 
@@ -1264,7 +1273,7 @@ run_virtual_stop(
   re.a.ip = ip;
   re.ipv6_flag = 0;
   re.ssl_flag = ssl_flag;
-  re.status = RUN_VIRTUAL_START;
+  re.status = RUN_VIRTUAL_STOP;
   pvt->stop_time = t;
   return state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS);
 }
