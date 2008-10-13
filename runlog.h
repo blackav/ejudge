@@ -59,7 +59,7 @@ enum
   RUN_LAST             = 99,
 };
 
-enum { RUN_LOG_CREATE = 1, RUN_LOG_READONLY = 2 };
+enum { RUN_LOG_CREATE = 1, RUN_LOG_READONLY = 2, RUN_LOG_NOINDEX = 4 };
 
 struct ejudge_cfg;
 struct contest_desc;
