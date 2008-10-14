@@ -1,0 +1,62 @@
+# -*- Makefile -*-
+# $Id$
+# @configure_input@
+
+# Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2 of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+bindir=@bindir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+includedir=@includedir@
+libdir=@libdir@
+libexecdir=@libexecdir@
+cgibindir=@cgibindir@
+serverbindir=@ac_cv_ejudge_server_bin_path_m@
+
+CGI_PROG_SUFFIX=@ac_cv_cgi_suffix@
+STATIC=@ac_cv_static@
+NO_KERNEL=@ac_cv_no_kernel@
+ENABLE_NLS=@ac_cv_nls@
+ARCH=@ac_cv_ejudge_arch@
+EXESFX=@ac_cv_exe_suffix@
+
+XGETTEXT=@XGETTEXT@
+MSGMERGE=@MSGMERGE@
+MSGFMT=@MSGFMT@
+CHARSET=@CHARSET_UPPERCASE@
+
+WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@
+WERROR=@ac_cv_werror_flag@
+
+CC = gcc
+CFLAGS = -g -Wall -Werror $(WPTRSIGN) $(WERROR)
+
+PYTHONMODDIR=${libexecdir}/ejudge/python
+PYTHONMODULE=streamiomodule.so
+
+PYTHONFLAGS = $(shell /usr/bin/python-config --includes)
+CBUILDFLAGS = -fPIC -DPIC -I .. -DPYTHON
+
+all : $(PYTHONMODULE)
+
+streamiomodule.so : streamiomodule.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $(PYTHONFLAGS) $(CBUILDFLAGS) -shared $^ -o $@
+
+install :
+	install -d "${DESTDIR}${PYTHONMODDIR}"
+	install -m 0755 $(PYTHONMODULE) "${DESTDIR}${PYTHONMODDIR}"
+
+clean :
+	-rm -f *.so *.o
