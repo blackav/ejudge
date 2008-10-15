@@ -238,9 +238,10 @@ parse_multipart(char const *charset)
 
   cl = getenv("CONTENT_LENGTH");
   if (!cl || sscanf(cl, "%d%n", &content_length, &n) != 1 || cl[n]) {
-    err("parse_multipart: cannot parse CONTENT_LENGTH");
-    bad_request(charset);
-    exit(0);
+    //err("parse_multipart: cannot parse CONTENT_LENGTH");
+    //bad_request(charset);
+    //exit(0);
+    return 0;
   }
   if (content_length > MAX_CONTENT_LENGTH) {
     request_too_large(charset);
