@@ -2001,7 +2001,7 @@ super_html_edit_global_parameters(FILE *f,
 
     //GLOBAL_PARAM(standings_charset, "s"),
     print_string_editing_row(f, "Stadings character set:",
-                             global->charset,
+                             global->standings_charset,
                              SSERV_CMD_GLOB_CHANGE_STANDINGS_CHARSET,
                              SSERV_CMD_GLOB_CLEAR_STANDINGS_CHARSET,
                              0,
