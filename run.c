@@ -1083,6 +1083,9 @@ run_tests(struct section_tester_data *tst,
         for (jj = 0; tst->start_env[jj]; jj++) {
           if (!strcmp(tst->start_env[jj], "EJUDGE_PREFIX_DIR")) {
             task_PutEnv(tsk, ejudge_prefix_dir_env);
+          } else if (!strchr(tst->start_env[jj], '=')) {
+            const unsigned char *envval = getenv(tst->start_env[jj]);
+            if (envval) task_PutEnv(tsk, envval);
           } else {
             task_PutEnv(tsk, tst->start_env[jj]);
           }

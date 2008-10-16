@@ -1503,7 +1503,9 @@ generate_abstract_tester(
             "kill_signal = KILL\n"
             "memory_limit_type = \"default\"\n"
             "secure_exec_type = \"static\"\n"
-            "clear_env\n",
+            "clear_env\n"
+            "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
+            "start_env = \"HOME\"\n",
             arch_abstract_names[arch], supported_archs[arch]);
     /*
     if (max_vm_size != -1L)
@@ -1531,7 +1533,9 @@ generate_abstract_tester(
             "kill_signal = KILL\n"
             "memory_limit_type = \"default\"\n"
             "secure_exec_type = \"dll\"\n"
-            "clear_env\n",
+            "clear_env\n"
+            "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
+            "start_env = \"HOME\"\n",
             arch_abstract_names[arch], supported_archs[arch]);
     /*
     if (max_vm_size != -1L)
