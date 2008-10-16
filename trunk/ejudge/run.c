@@ -1085,7 +1085,12 @@ run_tests(struct section_tester_data *tst,
             task_PutEnv(tsk, ejudge_prefix_dir_env);
           } else if (!strchr(tst->start_env[jj], '=')) {
             const unsigned char *envval = getenv(tst->start_env[jj]);
-            if (envval) task_PutEnv(tsk, envval);
+            if (envval) {
+              unsigned char env_buf[1024];
+              snprintf(env_buf, sizeof(env_buf), "%s=%s", tst->start_env[jj],
+                       envval);
+              task_PutEnv(tsk, envval);
+            }
           } else {
             task_PutEnv(tsk, tst->start_env[jj]);
           }
