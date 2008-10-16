@@ -1089,7 +1089,7 @@ run_tests(struct section_tester_data *tst,
               unsigned char env_buf[1024];
               snprintf(env_buf, sizeof(env_buf), "%s=%s", tst->start_env[jj],
                        envval);
-              task_PutEnv(tsk, envval);
+              task_PutEnv(tsk, env_buf);
             }
           } else {
             task_PutEnv(tsk, tst->start_env[jj]);
