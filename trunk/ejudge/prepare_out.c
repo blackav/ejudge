@@ -1698,11 +1698,14 @@ generate_concrete_tester(FILE *f, int arch,
 
   case ARCH_JAVA:
   case ARCH_JAVA14:
+    fprintf(f, "start_env = \"EJUDGE_JAVA_POLICY=fileio.policy\"\n");
+    /*
     if (use_files) {
       fprintf(f, "start_env = \"EJUDGE_JAVA_POLICY=fileio.policy\"\n");
     } else {
       fprintf(f, "start_env = \"EJUDGE_JAVA_POLICY=default.policy\"\n");
     }
+    */
     /*
     if (max_vm_size != -1L && max_stack_size != -1L) {
       fprintf(f, "start_env = \"EJUDGE_JAVA_FLAGS=-Xmx%s -Xss%s\"\n",
