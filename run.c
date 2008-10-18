@@ -1270,9 +1270,12 @@ run_tests(struct section_tester_data *tst,
           break;
         case SEXEC_TYPE_JAVA:
           if (req_pkt->secure_run) {
+            task_PutEnv(tsk, "EJUDGE_JAVA_POLICY=fileio.policy");
+            /*
             if (!prb->use_stdin || !prb->use_stdout) {
               task_PutEnv(tsk, "EJUDGE_JAVA_POLICY=fileio.policy");
             }
+            */
           } else {
             task_PutEnv(tsk, "EJUDGE_JAVA_POLICY=none");
           }
