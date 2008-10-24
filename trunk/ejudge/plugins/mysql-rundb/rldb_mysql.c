@@ -1054,7 +1054,7 @@ add_entry_func(
   ASSERT(run_id >= 0 && run_id < rls->run_u);
   de = &rls->runs[run_id];
 
-  ASSERT(de->run_id = run_id);
+  ASSERT(de->run_id == run_id);
   ASSERT(de->status == RUN_EMPTY);
   ASSERT(de->time > 0);
 
