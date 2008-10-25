@@ -70,8 +70,8 @@
       min_var = value; \
       max_var = value + 1; \
     } else { \
-      if (min_var < value) min_var = value; \
-      if (max_var >= value) max_var = value + 1; \
+      if (value < min_var) min_var = value; \
+      if (value >= max_var) max_var = value + 1; \
     } \
   } while (0)
 
