@@ -5738,14 +5738,23 @@ do_generate_passwd(int contest_id, FILE *log)
        iter->next(iter)) {
     u = (const struct userlist_user*) iter->get(iter);
     ui = userlist_get_user_info(u, contest_id);
-    if (!(c = userlist_get_user_contest(u, contest_id))) continue;
+    if (!(c = userlist_get_user_contest(u, contest_id))) {
+      default_unlock_user(u);
+      continue;
+    }
 
     // do not change password for privileged users
-    if (is_privileged_user(u) >= 0) continue;
+    if (is_privileged_user(u) >= 0) {
+      default_unlock_user(u);
+      continue;
+    }
 
     // also do not change password for invisible, banned, locked
     // or disqualified users
-    if ((c->flags & USERLIST_UC_ALL)) continue;
+    if ((c->flags & USERLIST_UC_ALL)) {
+      default_unlock_user(u);
+      continue;
+    }
 
     default_unlock_user(u);
     default_remove_user_cookies(u->id);
@@ -5855,13 +5864,22 @@ cmd_generate_register_passwords_2(struct client_state *p, int pkt_len,
        iter->has_next(iter);
        iter->next(iter)) {
     u = (const struct userlist_user*) iter->get(iter);
-    if (!(c = userlist_get_user_contest(u, data->contest_id))) continue;
+    if (!(c = userlist_get_user_contest(u, data->contest_id))) {
+      default_unlock_user(u);
+      continue;
+    }
 
     // do not change password for privileged users
-    if (is_privileged_user(u) >= 0) continue;
+    if (is_privileged_user(u) >= 0) {
+      default_unlock_user(u);
+      continue;
+    }
 
     // also do not change password for invisible, banned or locked users
-    if ((c->flags & USERLIST_UC_ALL)) continue;
+    if ((c->flags & USERLIST_UC_ALL)) {
+      default_unlock_user(u);
+      continue;
+    }
 
     default_unlock_user(u);
     default_remove_user_cookies(u->id);
@@ -5903,13 +5921,22 @@ cmd_generate_team_passwords_2(struct client_state *p, int pkt_len,
        iter->has_next(iter);
        iter->next(iter)) {
     u = (const struct userlist_user*) iter->get(iter);
-    if (!(c = userlist_get_user_contest(u, data->contest_id))) continue;
+    if (!(c = userlist_get_user_contest(u, data->contest_id))) {
+      default_unlock_user(u);
+      continue;
+    }
 
     // do not change password for privileged users
-    if (is_privileged_user(u) >= 0) continue;
+    if (is_privileged_user(u) >= 0) {
+      default_unlock_user(u);
+      continue;
+    }
 
     // also do not change password for invisible, banned or locked users
-    if ((c->flags & USERLIST_UC_ALL)) continue;
+    if ((c->flags & USERLIST_UC_ALL)) {
+      default_unlock_user(u);
+      continue;
+    }
 
     default_unlock_user(u);
     default_remove_user_cookies(u->id);
@@ -5939,13 +5966,22 @@ do_generate_team_passwd(int contest_id, FILE *log)
        iter->next(iter)) {
     u = (const struct userlist_user*) iter->get(iter);
     ui = userlist_get_user_info(u, contest_id);
-    if (!(c = userlist_get_user_contest(u, contest_id))) continue;
+    if (!(c = userlist_get_user_contest(u, contest_id))) {
+      default_unlock_user(u);
+      continue;
+    }
 
     // do not change password for privileged users
-    if (is_privileged_user(u) >= 0) continue;
+    if (is_privileged_user(u) >= 0) {
+      default_unlock_user(u);
+      continue;
+    }
 
     // also do not change password for invisible, banned or locked users
-    if ((c->flags & USERLIST_UC_ALL)) continue;
+    if ((c->flags & USERLIST_UC_ALL)) {
+      default_unlock_user(u);
+      continue;
+    }
 
     default_unlock_user(u);
     default_remove_user_cookies(u->id);
@@ -6027,13 +6063,22 @@ do_clear_team_passwords(int contest_id)
        iter->has_next(iter);
        iter->next(iter)) {
     u = (const struct userlist_user*) iter->get(iter);
-    if (!(c = userlist_get_user_contest(u, contest_id))) continue;
+    if (!(c = userlist_get_user_contest(u, contest_id))) {
+      default_unlock_user(u);
+      continue;
+    }
 
     // do not change password for privileged users
-    if (is_privileged_user(u) >= 0) continue;
+    if (is_privileged_user(u) >= 0) {
+      default_unlock_user(u);
+      continue;
+    }
 
     // also do not change password for invisible, banned or locked users
-    if ((c->flags & USERLIST_UC_ALL)) continue;
+    if ((c->flags & USERLIST_UC_ALL)) {
+      default_unlock_user(u);
+      continue;
+    }
 
     default_unlock_user(u);
     default_clear_team_passwd(u->id, contest_id, NULL);
