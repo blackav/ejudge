@@ -4,7 +4,7 @@
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
-function common_config()
+function common_config
 {
   echo 'long_name="Mono C#"'
   echo 'src_sfx=".cs"'
@@ -13,7 +13,7 @@ function common_config()
   echo 'insecure=1'
 }
 
-function failure()
+function failure
 {
   rm -f conftest*
   echo 'version='

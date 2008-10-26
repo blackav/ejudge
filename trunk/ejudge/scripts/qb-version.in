@@ -7,7 +7,7 @@ contests_home_dir="@contests_home_dir@"
 local_dir="@local_dir@"
 LANG_CONFIG_DIR="@lang_config_dir@"
 
-function common_config()
+function common_config
 {
   echo 'long_name="Microsoft Quick Basic"'
   echo 'src_sfx=".bas"'
@@ -15,7 +15,7 @@ function common_config()
   echo 'arch="dos"'
 }
 
-function failure()
+function failure
 {
   rm -f conftest*
   echo 'version='

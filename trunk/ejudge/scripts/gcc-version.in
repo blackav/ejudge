@@ -19,13 +19,13 @@
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
-function common_config()
+function common_config
 {
   echo 'long_name="GNU C"'
   echo 'src_sfx=".c"'
 }
 
-function failure()
+function failure
 {
   rm -f conftest*
   echo 'version='
