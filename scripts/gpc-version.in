@@ -4,13 +4,13 @@
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
-function common_config()
+function common_config
 {
   echo 'long_name="GNU Pascal"'
   echo 'src_sfx=".pas"'
 }
 
-function failure()
+function failure
 {
   rm -f conftest*
   echo 'version='

@@ -4,7 +4,7 @@
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
-function common_config()
+function common_config
 {
   echo 'long_name="Java JDK"'
   echo 'src_sfx=".java"'
@@ -12,7 +12,7 @@ function common_config()
   echo 'arch="java"'
 }
 
-function failure()
+function failure
 {
   rm -f conftest*
   echo 'version='

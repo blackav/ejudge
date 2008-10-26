@@ -4,14 +4,14 @@
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
-function common_config()
+function common_config
 {
   echo 'long_name="Python"'
   echo 'src_sfx=".py"'
   echo 'arch="linux-shared"'
 }
 
-function failure()
+function failure
 {
   rm -f conftest*
   echo 'version='
