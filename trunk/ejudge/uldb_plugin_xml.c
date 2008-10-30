@@ -124,6 +124,7 @@ static int get_member_serial_func(void *);
 static int set_member_serial_func(void *, int);
 static void unlock_user_func(void *data, const struct userlist_user *u) {}
 static const struct userlist_contest *get_contest_reg_func(void *, int, int);
+static int set_simple_reg_func(void *, int, int, time_t);
 
 struct uldb_plugin_iface uldb_plugin_xml =
 {
@@ -208,6 +209,8 @@ struct uldb_plugin_iface uldb_plugin_xml =
   0,
   // pick up a new login
   0,
+  // set the simple_registration flag
+  set_simple_reg_func,
 };
 
 struct uldb_xml_state
@@ -3016,6 +3019,31 @@ get_contest_reg_func(
     uc = (struct userlist_contest*) p;
     if (uc->id == contest_id) return uc;
   }
+  return 0;
+}
+
+static int
+set_simple_reg_func(
+        void *data,
+        int user_id,
+        int value,
+        time_t cur_time)
+{
+  struct uldb_xml_state *state = (struct uldb_xml_state*) data;
+  struct userlist_list *ul = state->userlist;
+  struct userlist_user *u;
+
+  if (user_id <= 0 || user_id >= ul->user_map_size
+      || !(u = ul->user_map[user_id])) {
+    return -1;
+  }
+
+  value = !!value;
+  u->simple_registration = value;
+  if (cur_time <= 0) cur_time = time(0);
+  u->last_change_time = cur_time;
+  state->dirty = 1;
+  state->flush_interval /= 2;
   return 0;
 }
 

@@ -343,16 +343,18 @@ void userlist_clnt_set_notification_callback(struct userlist_clnt *clnt,
                                              void *user_data);
 
 int
-userlist_clnt_recover_passwd_2(struct userlist_clnt *clnt,
-                               int cmd,
-                               ej_ip_t ip,
-                               int ssl_flag,
-                               int contest_id,
-                               ej_cookie_t cookie,
-                               int *p_user_id,
-                               unsigned char **p_login,
-                               unsigned char **p_name,
-                               unsigned char **p_passwd);
+userlist_clnt_recover_passwd_2(
+        struct userlist_clnt *clnt,
+        int cmd,
+        ej_ip_t ip,
+        int ssl_flag,
+        int contest_id,
+        ej_cookie_t cookie,
+        int *p_user_id,
+        int *p_regstatus,
+        unsigned char **p_login,
+        unsigned char **p_name,
+        unsigned char **p_passwd);
 
 int userlist_clnt_control(struct userlist_clnt *clnt, int cmd);
 

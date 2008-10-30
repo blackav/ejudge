@@ -158,6 +158,7 @@ enum
     ULS_ERR_TRANSITIVE_SHARING,
     ULS_ERR_UNSPECIFIED_ERROR,
     ULS_ERR_DB_ERROR,
+    ULS_ERR_SIMPLE_REGISTERED,
 
     ULS_ERR_LAST
   };
@@ -426,6 +427,7 @@ struct userlist_pk_new_password
 {
   short       reply_id;
   int         user_id;
+  int         regstatus;
   int         login_len;
   int         name_len;
   int         passwd_len;

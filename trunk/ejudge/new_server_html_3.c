@@ -299,6 +299,93 @@ ns_html_err_no_perm(FILE *fout,
 }
 
 void
+ns_html_err_simple_registered(
+        FILE *fout,
+        struct http_request_info *phr,
+        int priv_mode,
+        const char *format, ...)
+{
+  const struct contest_desc *cnts = 0;
+  struct contest_extra *extra = 0;
+  const unsigned char *header = 0, *footer = 0, *separator = 0;
+  const unsigned char *copyright = 0;
+  time_t cur_time = time(0);
+  unsigned char buf[1024];
+  unsigned char hbuf[1024];
+  int blen;
+  va_list args;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+  err("%d: simple_registered user: %s", phr->id, buf);
+
+  if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
+  if (cnts) extra = ns_get_contest_extra(phr->contest_id);
+  if (extra && !priv_mode) {
+    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+    watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
+    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
+    watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
+    header = extra->header.text;
+    separator = extra->separator.text;
+    footer = extra->footer.text;
+    copyright = extra->copyright.text;
+  } else if (extra && priv_mode) {
+    watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
+    watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
+    header = extra->priv_header.text;
+    footer = extra->priv_footer.text;
+  }
+  if (!priv_mode) {
+    if (!header || !footer) {
+      header = ns_fancy_header;
+      separator = ns_fancy_separator;
+      if (copyright) footer = ns_fancy_footer_2;
+      else footer = ns_fancy_footer;
+    }
+  } else {
+    if (!header || !footer) {
+      header = ns_fancy_priv_header;
+      separator = ns_fancy_priv_separator;
+      footer = ns_fancy_priv_footer;
+    }    
+  }
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, _("Cannot participate"));
+  if (separator && *separator) {
+    fprintf(fout, "%s", ns_fancy_empty_status);
+    fprintf(fout, "%s", separator);
+  }
+  fprintf(fout, "<p>%s</p>\n",
+          _("You cannot participate in this contest. Your account was created using the simple registration procedure, i.e. your e-mail address was not verified. This contest requires e-mail verification, so your account cannot be accepted."));
+
+  if (cnts->enable_forgot_password) {
+    if (cnts->team_url) {
+      snprintf(buf, sizeof(buf), "%s", cnts->team_url);
+    } else {
+      snprintf(hbuf, sizeof(hbuf), "%s", phr->self_url);
+      blen = strlen(hbuf);
+      while (blen > 0 && hbuf[blen - 1] != '/') blen--;
+      hbuf[blen] = 0;
+      snprintf(buf, sizeof(buf), "%snew-client", hbuf);
+    }
+    snprintf(hbuf, sizeof(hbuf),
+             "%s?contest_id=%d&amp;locale_id=%d&amp;action=%d",
+             buf, phr->contest_id, phr->locale_id,
+             NEW_SRV_ACTION_FORGOT_PASSWORD_1);
+
+    fprintf(fout,
+            _("<p>To validate your e-mail and enable your participation in this contest you may use the <a href=\"%s\">password restoration</a> service.</p>\n"), hbuf);
+  }
+
+  ns_footer(fout, footer, copyright, phr->locale_id);
+  l10n_setlocale(0);
+  html_armor_free(&ab);
+}
+
+void
 ns_html_err_inv_param(FILE *fout,
                       struct http_request_info *phr,
                       int priv_mode,
