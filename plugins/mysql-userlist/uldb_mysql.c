@@ -195,6 +195,8 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   enable_cache_func,
   // try new login
   try_new_login_func,
+  // set the simple_registration flag
+  set_simple_reg_func,
 };
 
 // the size of the cookies pool, must be power of 2
@@ -4676,6 +4678,39 @@ try_new_login_func(
   }
   xfree(logins);
   my_free_res(state);
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+static int
+set_simple_reg_func(
+        void *data,
+        int user_id,
+        int value,
+        time_t cur_time)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  if (cur_time <= 0) cur_time = time(0);
+  value = !!value;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "UPDATE %slogins SET simplereg = %d, changetime = ",
+          state->table_prefix, value);
+  write_timestamp(cmd_f, state, 0, cur_time);
+  fprintf(cmd_f, " WHERE user_id = %d ;", user_id);
+  fclose(cmd_f); cmd_f = 0;
+  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  remove_login_from_pool(state, user_id);
+  return 0;
+
+ fail:
+  remove_login_from_pool(state, user_id);
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
   return -1;

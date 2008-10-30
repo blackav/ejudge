@@ -381,6 +381,12 @@ try_new_login_func(
         const char *format,
         int serial,
         int serial_step);
+static int
+set_simple_reg_func(
+        void *data,
+        int user_id,
+        int value,
+        time_t cur_time);
 
 /*
  * Local variables:
