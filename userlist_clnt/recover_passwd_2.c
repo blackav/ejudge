@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,16 +18,18 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_recover_passwd_2(struct userlist_clnt *clnt,
-                               int cmd,
-                               ej_ip_t ip,
-                               int ssl_flag,
-                               int contest_id,
-                               ej_cookie_t cookie,
-                               int *p_user_id,
-                               unsigned char **p_login,
-                               unsigned char **p_name,
-                               unsigned char **p_passwd)
+userlist_clnt_recover_passwd_2(
+        struct userlist_clnt *clnt,
+        int cmd,
+        ej_ip_t ip,
+        int ssl_flag,
+        int contest_id,
+        ej_cookie_t cookie,
+        int *p_user_id,
+        int *p_regstatus,
+        unsigned char **p_login,
+        unsigned char **p_name,
+        unsigned char **p_passwd)
 {
   struct userlist_pk_check_cookie *out;
   void *in1 = 0;
@@ -72,6 +74,7 @@ userlist_clnt_recover_passwd_2(struct userlist_clnt *clnt,
   if (packet_len != in_size) goto protocol_error;
 
   if (p_user_id) *p_user_id = in->user_id;
+  if (p_regstatus) *p_regstatus = in->regstatus;
   if (p_login) *p_login = xstrdup(login_ptr);
   if (p_name) *p_name = xstrdup(name_ptr);
   if (p_passwd) *p_passwd = xstrdup(passwd_ptr);
