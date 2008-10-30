@@ -801,6 +801,8 @@ cmd_login(
                                  userlist_strerror(-r));
     case ULS_ERR_DISCONNECT:
       return ns_html_err_ul_server_down(fout, phr, 0, 0);
+    case ULS_ERR_SIMPLE_REGISTERED:
+      return ns_html_err_simple_registered(fout, phr, 0, "simple registered");
     default:
       return ns_html_err_internal_error(fout, phr, 0, "user_login failed: %s",
                                         userlist_strerror(-r));

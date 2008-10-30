@@ -193,6 +193,8 @@ struct uldb_plugin_iface
   void (*enable_cache)(void *);
   // pick up a new login by a template
   int (*try_new_login)(void *, unsigned char *, size_t, const char *, int, int);
+  // set the simple_registration flag
+  int (*set_simple_reg)(void *, int, int, time_t);
 };
 
 /* default plugin: compiled into userlist-server */

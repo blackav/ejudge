@@ -585,6 +585,7 @@ link_client_state(struct client_state *p)
 #define default_unlock_user(a) uldb_default->iface->unlock_user(uldb_default->data, a)
 #define default_get_contest_reg(a, b) uldb_default->iface->get_contest_reg(uldb_default->data, a, b)
 #define default_try_new_login(a, b, c, d, e) uldb_default->iface->try_new_login(uldb_default->data, a, b, c, d, e)
+#define default_set_simple_reg(a, b, c) uldb_default->iface->set_simple_reg(uldb_default->data, a, b, c)
 
 static void
 update_all_user_contests(int user_id)
@@ -1806,15 +1807,24 @@ cmd_recover_password_1(struct client_state *p,
     return;
   }
 
-  if (!c) {
-    err("%s -> not registered", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
-  if (c->status != USERLIST_REG_OK || c->flags != 0) {
-    err("%s -> not ordinary user", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
+  if (u->simple_registration && !c && cnts->disable_team_password
+      && cnts->autoregister) {
+    if (cnts->closed) {
+      err("%s -> contest closed", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
+  } else {
+    if (!c) {
+      err("%s -> not registered", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
+    if (c->status != USERLIST_REG_OK || c->flags != 0) {
+      err("%s -> not ordinary user", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
   }
   if (!u || !u->email || !strchr(u->email, '@')) {
     err("%s -> invalid e-mail", logbuf);
@@ -1929,7 +1939,7 @@ cmd_recover_password_2(struct client_state *p,
   int login_len, name_len, passwd_len, packet_len;
   unsigned char *s;
   const unsigned char *name = 0;
-  int user_id = 0;
+  int user_id = 0, regstatus = -1;
   unsigned char *login = 0;
   unsigned char *email = 0;
 
@@ -1980,15 +1990,25 @@ cmd_recover_password_2(struct client_state *p,
   if (!name || !*name) name = u->login;
   if (!name) name = "";
 
-  if (!c) {
-    err("%s -> not registered", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
-  if (c->status != USERLIST_REG_OK || c->flags != 0) {
-    err("%s -> not ordinary user", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
+  if (u->simple_registration && !c && cnts->disable_team_password
+      && cnts->autoregister) {
+    if (cnts->closed) {
+      err("%s -> contest closed", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
+  } else {
+    if (!c) {
+      err("%s -> not registered", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
+    if (c->status != USERLIST_REG_OK || c->flags != 0) {
+      err("%s -> not ordinary user", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
+    regstatus = c->status;
   }
   if (!u || !u->email || !strchr(u->email, '@')) {
     err("%s -> invalid e-mail", logbuf);
@@ -2011,6 +2031,7 @@ cmd_recover_password_2(struct client_state *p,
   generate_random_password(8, passwd_buf);
   default_remove_user_cookies(user_id);
   default_set_reg_passwd(user_id, USERLIST_PWD_PLAIN, passwd_buf, cur_time);
+  default_set_simple_reg(user_id, 0, cur_time);
 
   // generate a e-mail message
   msg_f = open_memstream(&msg_text, &msg_size);
@@ -2077,6 +2098,7 @@ cmd_recover_password_2(struct client_state *p,
   s = out->data;
   out->reply_id = ULS_NEW_PASSWORD;
   out->user_id = user_id;
+  out->regstatus = regstatus;
   out->login_len = login_len;
   out->name_len = name_len;
   out->passwd_len = passwd_len;
@@ -2335,7 +2357,7 @@ cmd_check_user(
   }
   if (u->simple_registration && !cnts->simple_registration) {
     err("%s -> user is simple_registered, but the contest is not", logbuf);
-    send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
+    send_reply(p, -ULS_ERR_SIMPLE_REGISTERED);
     return;
   }
 
