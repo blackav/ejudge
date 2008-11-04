@@ -170,6 +170,8 @@ static char const * const attr_map[] =
   "disable_locale_change",
   "personal",
   "allow_reg_data_edit",
+  "enable_password_recovery",
+  "disable_member_delete",
 
   0
 };
@@ -610,9 +612,9 @@ parse_client_flags(unsigned char const *path, struct contest_desc *cnts,
     p = s;
 
     if (!strcmp(str3, "IGNORE_TIME_SKEW")) {
-      cnts->client_ignore_time_skew = 1;
+      /* DO NOTHING: compatibility with previous versions */
     } else if (!strcmp(str3, "DISABLE_TEAM")) {
-      cnts->client_disable_team = 1;
+      /* DO NOTHING: compatibility with previous versions */
     } else if (!strcmp(str3, "DISABLE_MEMBER_DELETE")) {
       cnts->disable_member_delete = 1;
     } else {
@@ -715,8 +717,8 @@ static const size_t contest_bool_attr_offsets[CONTEST_LAST_ATTR] =
 {
   [CONTEST_A_AUTOREGISTER] = CONTEST_DESC_OFFSET(autoregister),
   [CONTEST_A_DISABLE_TEAM_PASSWORD] =CONTEST_DESC_OFFSET(disable_team_password),
-  [CONTEST_A_MANAGED] = CONTEST_DESC_OFFSET(new_managed),
-  [CONTEST_A_NEW_MANAGED] = CONTEST_DESC_OFFSET(new_managed),
+  [CONTEST_A_MANAGED] = CONTEST_DESC_OFFSET(managed),
+  [CONTEST_A_NEW_MANAGED] = CONTEST_DESC_OFFSET(managed),
   [CONTEST_A_CLEAN_USERS] = CONTEST_DESC_OFFSET(clean_users),
   [CONTEST_A_RUN_MANAGED] = CONTEST_DESC_OFFSET(run_managed),
   [CONTEST_A_CLOSED] = CONTEST_DESC_OFFSET(closed),
@@ -726,12 +728,14 @@ static const size_t contest_bool_attr_offsets[CONTEST_LAST_ATTR] =
   [CONTEST_A_ASSIGN_LOGINS] = CONTEST_DESC_OFFSET(assign_logins),
   [CONTEST_A_FORCE_REGISTRATION] = CONTEST_DESC_OFFSET(force_registration),
   [CONTEST_A_DISABLE_NAME] = CONTEST_DESC_OFFSET(disable_name),
-  [CONTEST_A_ENABLE_FORGOT_PASSWORD] = CONTEST_DESC_OFFSET(enable_forgot_password),
+  [CONTEST_A_ENABLE_FORGOT_PASSWORD] = CONTEST_DESC_OFFSET(enable_password_recovery),
   [CONTEST_A_EXAM_MODE] = CONTEST_DESC_OFFSET(exam_mode),
   [CONTEST_A_DISABLE_PASSWORD_CHANGE] = CONTEST_DESC_OFFSET(disable_password_change),
   [CONTEST_A_DISABLE_LOCALE_CHANGE] = CONTEST_DESC_OFFSET(disable_locale_change),
   [CONTEST_A_PERSONAL] = CONTEST_DESC_OFFSET(personal),
   [CONTEST_A_ALLOW_REG_DATA_EDIT] = CONTEST_DESC_OFFSET(allow_reg_data_edit),
+  [CONTEST_A_ENABLE_PASSWORD_RECOVERY] = CONTEST_DESC_OFFSET(enable_password_recovery),
+  [CONTEST_A_DISABLE_MEMBER_DELETE] = CONTEST_DESC_OFFSET(disable_member_delete),
 };
 
 static void
@@ -1004,7 +1008,7 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
   /* personal contests do not have "reserve" and have only one participant */
   fix_personal_contest(cnts);
 
-  cnts->default_locale_val = l10n_parse_locale(cnts->default_locale);
+  cnts->default_locale_num = l10n_parse_locale(cnts->default_locale);
 
   return 0;
 }
@@ -1115,14 +1119,12 @@ contests_merge(struct contest_desc *pold, struct contest_desc *pnew)
   pnew->slave_rules = 0;
 
   pold->reg_deadline = pnew->reg_deadline;
-  pold->client_ignore_time_skew = pnew->client_ignore_time_skew;
-  pold->client_disable_team = pnew->client_disable_team;
   pold->disable_member_delete = pnew->disable_member_delete;
   pold->last_check_time = pnew->last_check_time;
   pold->last_file_time = pnew->last_file_time;
   pold->user_contest_num = pnew->user_contest_num;
 
-  pold->default_locale_val = l10n_parse_locale(pold->default_locale);
+  pold->default_locale_num = l10n_parse_locale(pold->default_locale);
 }
 
 int
@@ -1664,9 +1666,9 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
     fprintf(f, "\n         %s=\"%s\"",
             attr_map[CONTEST_A_DISABLE_NAME], "yes");
   }
-  if (cnts->enable_forgot_password) {
+  if (cnts->enable_password_recovery) {
     fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_ENABLE_FORGOT_PASSWORD], "yes");
+            attr_map[CONTEST_A_ENABLE_PASSWORD_RECOVERY], "yes");
   }
   if (cnts->exam_mode) {
     fprintf(f, "\n         %s=\"%s\"",
@@ -1688,6 +1690,10 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
     fprintf(f, "\n         %s=\"%s\"",
             attr_map[CONTEST_A_ALLOW_REG_DATA_EDIT], "yes");
   }
+  if (cnts->disable_member_delete) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attr_map[CONTEST_A_DISABLE_MEMBER_DELETE], "yes");
+  }
 
   if (cnts->closed) {
     fprintf(f, "\n         %s=\"%s\"",
@@ -1700,10 +1706,6 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
   if (cnts->managed) {
     fprintf(f, "\n         %s=\"%s\"",
             attr_map[CONTEST_A_MANAGED], "yes");
-  }
-  if (cnts->new_managed) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_NEW_MANAGED], "yes");
   }
   if (cnts->run_managed) {
     fprintf(f, "\n         %s=\"%s\"",
@@ -1952,16 +1954,6 @@ contests_unparse(FILE *f,
   unparse_text(f, CONTEST_CLAR_NOTIFY_EMAIL, cnts->clar_notify_email);
   unparse_text(f, CONTEST_DAILY_STAT_EMAIL, cnts->daily_stat_email);
 
-  if (cnts->client_ignore_time_skew || cnts->client_disable_team) {
-    fprintf(f, "  <%s>\n", elem_map[CONTEST_CLIENT_FLAGS]);
-    if (cnts->client_ignore_time_skew)
-      fprintf(f, "    IGNORE_TIME_SKEW,\n");
-    if (cnts->client_disable_team)
-      fprintf(f, "    DISABLE_TEAM,\n");
-    if (cnts->disable_member_delete)
-      fprintf(f, "    DISABLE_MEMBER_DELETE,\n");
-    fprintf(f, "  </%s>\n", elem_map[CONTEST_CLIENT_FLAGS]);
-  }
   if (cnts->slave_rules) {
     fprintf(f, "  <%s>\n", elem_map[CONTEST_SLAVE_RULES]);
     for (p = cnts->slave_rules->first_down; p; p = p->right) {
@@ -2153,6 +2145,145 @@ contests_unparse_and_save(
   }
   if (p_diff_txt) *p_diff_txt = diff_txt;
   return 0;
+}
+
+void
+contests_get_path_in_conf_dir(
+        unsigned char *buf,
+        size_t size,
+        const struct contest_desc *cnts,
+        const unsigned char *file)
+{
+  path_t home_dir;
+  path_t root_dir;
+  path_t conf_dir;
+
+  if (os_IsAbsolutePath(file)) {
+    snprintf(buf, size, "%s", file);
+    return;
+  }
+
+  if (cnts && cnts->conf_dir && os_IsAbsolutePath(cnts->conf_dir)) {
+    snprintf(buf, size, "%s/%s", cnts->conf_dir, file);
+    return;
+  }
+
+  if (cnts && cnts->root_dir && os_IsAbsolutePath(cnts->root_dir)) {
+    snprintf(root_dir, sizeof(root_dir), "%s", cnts->root_dir);
+  } else {
+    home_dir[0] = 0;
+#if defined CONTESTS_HOME_DIR
+    snprintf(home_dir, sizeof(home_dir), "%s", CONTESTS_HOME_DIR);
+#endif
+    if (!home_dir[0]) {
+      snprintf(home_dir, sizeof(home_dir), "%s", "/home/judges");
+    }
+    if (cnts->root_dir) {
+      snprintf(root_dir, sizeof(root_dir), "%s/%s", home_dir, cnts->root_dir);
+    } else {
+      snprintf(root_dir, sizeof(root_dir), "%s/%06d", home_dir, cnts->id);
+    }
+  }
+
+  if (cnts && cnts->conf_dir) {
+    snprintf(conf_dir, sizeof(conf_dir), "%s/%s", root_dir, cnts->conf_dir);
+  } else {
+    snprintf(conf_dir, sizeof(conf_dir), "%s/conf", root_dir);
+  }
+  snprintf(buf, size, "%s/%s", conf_dir, file);
+}
+
+static const unsigned char *const form_field_names[] =
+{
+  [CONTEST_F_HOMEPAGE] = "Home page",
+  [CONTEST_F_PHONE] = "Phone",
+  [CONTEST_F_INST] = "Institution",
+  [CONTEST_F_INST_EN] = "Institution (English)",
+  [CONTEST_F_INSTSHORT] = "Institution, short",
+  [CONTEST_F_INSTSHORT_EN] = "Institution, short (English)",
+  [CONTEST_F_INSTNUM] = "Institution number",
+  [CONTEST_F_FAC] = "Faculty",
+  [CONTEST_F_FAC_EN] = "Faculty (English)",
+  [CONTEST_F_FACSHORT] = "Faculty, short",
+  [CONTEST_F_FACSHORT_EN] = "Faculty, short (English)",
+  [CONTEST_F_CITY] = "City",
+  [CONTEST_F_CITY_EN] = "City (English)",
+  [CONTEST_F_COUNTRY] = "Country",
+  [CONTEST_F_COUNTRY_EN] = "Country (English)",
+  [CONTEST_F_REGION] = "Region",
+  [CONTEST_F_AREA] = "Area",
+  [CONTEST_F_ZIP] = "Zip code",
+  [CONTEST_F_STREET] = "Street address",
+  [CONTEST_F_LANGUAGES] = "Programming Languages",
+  [CONTEST_F_FIELD0] = "Field 0",
+  [CONTEST_F_FIELD1] = "Field 1",
+  [CONTEST_F_FIELD2] = "Field 2",
+  [CONTEST_F_FIELD3] = "Field 3",
+  [CONTEST_F_FIELD4] = "Field 4",
+  [CONTEST_F_FIELD5] = "Field 5",
+  [CONTEST_F_FIELD6] = "Field 6",
+  [CONTEST_F_FIELD7] = "Field 7",
+  [CONTEST_F_FIELD8] = "Field 8",
+  [CONTEST_F_FIELD9] = "Field 9",
+};
+const unsigned char *
+contests_get_form_field_name(int ff)
+{
+  ASSERT(ff > 0 && ff < CONTEST_LAST_FIELD);
+  return form_field_names[ff];
+}
+
+static const unsigned char *const member_field_names[] =
+{
+  [CONTEST_MF_FIRSTNAME] = "First Name",
+  [CONTEST_MF_FIRSTNAME_EN] = "First Name (English)",
+  [CONTEST_MF_MIDDLENAME] = "Middle Name",
+  [CONTEST_MF_MIDDLENAME_EN] = "Middle Name (English)",
+  [CONTEST_MF_SURNAME] = "Surname",
+  [CONTEST_MF_SURNAME_EN] = "Surname (English)",
+  [CONTEST_MF_STATUS] = "Status",
+  [CONTEST_MF_GENDER] = "Gender",
+  [CONTEST_MF_GRADE] = "Grade",
+  [CONTEST_MF_GROUP] = "Group",
+  [CONTEST_MF_GROUP_EN] = "Group (English)",
+  [CONTEST_MF_EMAIL] = "E-mail",
+  [CONTEST_MF_HOMEPAGE] = "Homepage",
+  [CONTEST_MF_PHONE] = "Phone",
+  [CONTEST_MF_INST] = "Institution",
+  [CONTEST_MF_INST_EN] = "Institution (English)",
+  [CONTEST_MF_INSTSHORT] = "Institution, short",
+  [CONTEST_MF_INSTSHORT_EN] = "Institution, short (English)",
+  [CONTEST_MF_FAC] = "Faculty",
+  [CONTEST_MF_FAC_EN] = "Faculty (English)",
+  [CONTEST_MF_FACSHORT] = "Faculty, short",
+  [CONTEST_MF_FACSHORT_EN] = "Faculty, short (English)",
+  [CONTEST_MF_OCCUPATION] = "Occupation",
+  [CONTEST_MF_OCCUPATION_EN] = "Occupation (English)",
+  [CONTEST_MF_DISCIPLINE] = "Discipline",
+  [CONTEST_MF_BIRTH_DATE] = "Birth date",
+  [CONTEST_MF_ENTRY_DATE] = "Entry date",
+  [CONTEST_MF_GRADUATION_DATE] = "Graduation date",
+};
+const unsigned char *
+contests_get_member_field_name(int ff)
+{
+  ASSERT(ff > 0 && ff < CONTEST_LAST_MEMBER_FIELD);
+  return member_field_names[ff];
+}
+
+static const unsigned char *const member_names[] =
+{
+  [CONTEST_M_CONTESTANT] = "Contestant",
+  [CONTEST_M_RESERVE] = "Reserve",
+  [CONTEST_M_COACH] = "Coach",
+  [CONTEST_M_ADVISOR] = "Advisor",
+  [CONTEST_M_GUEST] = "Guest",
+};
+const unsigned char *
+contests_get_member_name(int ff)
+{
+  ASSERT(ff >= 0 && ff < CONTEST_LAST_MEMBER);
+  return member_names[ff];
 }
 
 /*

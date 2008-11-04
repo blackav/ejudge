@@ -361,7 +361,7 @@ ns_html_err_simple_registered(
   fprintf(fout, "<p>%s</p>\n",
           _("You cannot participate in this contest. Your account was created using the simple registration procedure, i.e. your e-mail address was not verified. This contest requires e-mail verification, so your account cannot be accepted."));
 
-  if (cnts->enable_forgot_password) {
+  if (cnts->enable_password_recovery) {
     if (cnts->team_url) {
       snprintf(buf, sizeof(buf), "%s", cnts->team_url);
     } else {

@@ -18,6 +18,7 @@
  */
 
 #include "ej_types.h"
+#include "opcaps.h"
 
 #include <stdio.h>
 
@@ -406,5 +407,20 @@ super_html_http_request(
         char **p_out_t,
         size_t *p_out_z,
         struct super_http_request_info *hr);
+
+struct contest_access;
+unsigned char *
+super_html_unparse_access(const struct contest_access *acc);
+struct contest_access *
+super_html_copy_contest_access(const struct contest_access *p);
+void
+super_html_print_caps_table(
+        FILE *out_f,
+        opcap_t caps,
+        const unsigned char *table_opts,
+        const unsigned char *td_opts);
+void
+html_numeric_select(FILE *f, const unsigned char *param,
+                    int val, int min_val, int max_val);
 
 #endif /* __SUPER_HTML_H__ */

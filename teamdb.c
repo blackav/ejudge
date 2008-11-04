@@ -353,7 +353,7 @@ teamdb_open_client(teamdb_state_t state, unsigned char const *socket_path,
   return 0;
 }
 
-inline int
+/*inline*/ int
 teamdb_lookup_client(teamdb_state_t state, int teamno)
 {
   if (!state->users || teamno <= 0 || teamno >= state->users->user_map_size

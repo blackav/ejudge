@@ -160,8 +160,8 @@ anon_select_contest_page(FILE *fout, struct http_request_info *phr)
     fprintf(fout, "<tr%s><td%s>%d</td>", form_row_attrs[(row++) & 1], cl, i);
     fprintf(fout, "<td%s><a href=\"%s?contest_id=%d", cl, phr->self_url, i);
 
-    if (orig_locale_id >= 0 && cnts->default_locale_val >= 0
-        && orig_locale_id != cnts->default_locale_val) {
+    if (orig_locale_id >= 0 && cnts->default_locale_num >= 0
+        && orig_locale_id != cnts->default_locale_num) {
       fprintf(fout, "&amp;locale_id=%d", phr->locale_id);
     }
 
@@ -264,7 +264,7 @@ login_page(
   fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, s);
   item_cnt++;
 
-  if (cnts->enable_forgot_password && cnts->disable_team_password
+  if (cnts->enable_password_recovery && cnts->disable_team_password
       && !cnts->simple_registration && !created_mode) {
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", client_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_FORGOT_PASSWORD_1, _("Recover forgot password"));
     item_cnt++;
@@ -880,7 +880,7 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
     return anon_select_contest_page(fout, phr);
   }
 
-  if (phr->locale_id < 0) phr->locale_id = cnts->default_locale_val;
+  if (phr->locale_id < 0) phr->locale_id = cnts->default_locale_num;
   if (phr->locale_id < 0) phr->locale_id = 0;
 
   // check permissions
@@ -1702,7 +1702,7 @@ main_page(
   if (phr->reg_status == USERLIST_REG_OK
       && !(phr->reg_flags &~USERLIST_UC_INVISIBLE)
       && contests_check_team_ip_2(cnts, phr->ip, phr->ssl_flag)
-      && !cnts->closed && !cnts->client_disable_team) {
+      && !cnts->closed) {
     // "participate" link
     get_client_url(bb, sizeof(bb), cnts, phr->self_url);
     if (cnts->disable_team_password) {

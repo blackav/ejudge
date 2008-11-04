@@ -79,7 +79,7 @@ cmd_login(
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) || !cnts)
     FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
-  if (!cnts->new_managed)
+  if (!cnts->managed)
     FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
   if (ns_cgi_param(phr, "role", &role_str) <= 0)
     FAIL(NEW_SRV_ERR_INV_ROLE);
@@ -90,7 +90,7 @@ cmd_login(
 
   switch (phr->role) {
   case USER_ROLE_CONTESTANT:
-    if (cnts->closed || cnts->client_disable_team) 
+    if (cnts->closed) 
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -1742,7 +1742,7 @@ new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
 
   if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
     return -NEW_SRV_ERR_INV_CONTEST_ID;
-  if (!cnts->new_managed)
+  if (!cnts->managed)
     return -NEW_SRV_ERR_INV_CONTEST_ID;
   extra = ns_get_contest_extra(phr->contest_id);
   ASSERT(extra);
@@ -1773,7 +1773,7 @@ new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
         || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0)
       return -NEW_SRV_ERR_PERMISSION_DENIED;
   } else if (phr->role == USER_ROLE_CONTESTANT) {
-    if (cnts->closed || cnts->client_disable_team)
+    if (cnts->closed)
       return -NEW_SRV_ERR_PERMISSION_DENIED;
   } else {
     // user privileges checked locally

@@ -25,6 +25,15 @@
 #include <stdlib.h>
 #include <time.h>
 
+#ifndef META_ATTRIB
+#if defined __RCC__
+#undef __attribute__
+#define META_ATTRIB(x) __attribute__(x)
+#else
+#define META_ATTRIB(x)
+#endif /* __RCC__ */
+#endif /* META_ATTRIB */
+
 enum
   {
     CONTEST_CONTESTS = 1,
@@ -141,6 +150,8 @@ enum
     CONTEST_A_DISABLE_LOCALE_CHANGE,
     CONTEST_A_PERSONAL,
     CONTEST_A_ALLOW_REG_DATA_EDIT,
+    CONTEST_A_ENABLE_PASSWORD_RECOVERY,
+    CONTEST_A_DISABLE_MEMBER_DELETE,
 
     CONTEST_LAST_ATTR
   };
@@ -257,31 +268,30 @@ struct contest_member
 
 struct contest_desc
 {
-  struct xml_tree b;
+  struct xml_tree b META_ATTRIB((meta_hidden));
   int id;
-  unsigned char autoregister;
-  unsigned char disable_team_password;
-  unsigned char managed;
-  unsigned char new_managed;
-  unsigned char run_managed;
-  unsigned char clean_users;
-  unsigned char closed;
-  unsigned char invisible;
-  unsigned char simple_registration;
-  unsigned char send_passwd_email;
-  unsigned char assign_logins;
-  unsigned char force_registration;
-  unsigned char disable_name;
-  unsigned char enable_forgot_password;
-  unsigned char exam_mode;
-  unsigned char disable_password_change;
-  unsigned char disable_locale_change;
-  unsigned char personal;
-  unsigned char allow_reg_data_edit;
-
-  int user_contest_num;
+  ejbytebool_t autoregister;
+  ejbytebool_t disable_team_password;
+  ejbytebool_t managed;
+  ejbytebool_t run_managed;
+  ejbytebool_t clean_users;
+  ejbytebool_t closed;
+  ejbytebool_t invisible;
+  ejbytebool_t simple_registration;
+  ejbytebool_t send_passwd_email;
+  ejbytebool_t assign_logins;
+  ejbytebool_t force_registration;
+  ejbytebool_t disable_name;
+  ejbytebool_t enable_password_recovery;
+  ejbytebool_t exam_mode;
+  ejbytebool_t disable_password_change;
+  ejbytebool_t disable_locale_change;
+  ejbytebool_t personal;
+  ejbytebool_t allow_reg_data_edit;
+  ejbytebool_t disable_member_delete;
 
   time_t         reg_deadline;
+
   unsigned char *name;
   unsigned char *name_en;
   unsigned char *main_url;
@@ -355,14 +365,11 @@ struct contest_desc
 
   struct xml_tree *slave_rules;
 
-  unsigned char client_ignore_time_skew;
-  unsigned char client_disable_team;
-  unsigned char disable_member_delete;
+  int user_contest_num;
+  int default_locale_num;
 
-  int default_locale_val;
-
-  time_t last_check_time;
-  time_t last_file_time;
+  time_t last_check_time META_ATTRIB((meta_hidden));
+  time_t last_file_time META_ATTRIB((meta_hidden));
 };
 
 struct contest_list
@@ -434,6 +441,17 @@ int contests_unparse_and_save(struct contest_desc *cnts,
                               unsigned char *(*diff_func)(const unsigned char *,
                                                           const unsigned char *),
                               unsigned char **p_diff_txt);
+
+void
+contests_get_path_in_conf_dir(
+        unsigned char *buf,
+        size_t size,
+        const struct contest_desc *cnts,
+        const unsigned char *file);
+
+const unsigned char *contests_get_form_field_name(int ff);
+const unsigned char *contests_get_member_field_name(int ff);
+const unsigned char *contests_get_member_name(int ff);
 
 /* This is INTENTIONALLY not an `extern' variable */
 struct ejudge_cfg;

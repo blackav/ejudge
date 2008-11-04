@@ -64,6 +64,15 @@ enum
   OPCAP_LAST
 };
 
+enum
+{
+  OPCAP_PREDEF_NO_PERMS = 1,
+  OPCAP_PREDEF_OBSERVER,
+  OPCAP_PREDEF_JUDGE,
+  OPCAP_PREDEF_MASTER,
+  OPCAP_PREDEF_LAST,
+};
+
 typedef unsigned long long opcap_t;
 
 struct opcap_list_item
@@ -101,5 +110,8 @@ unsigned char *opcaps_unparse(int left_margin, int max_width, opcap_t cap);
 
 int opcaps_is_contest_cap(int cap);
 const unsigned char *opcaps_get_name(int cap);
+
+int opcaps_is_predef_caps(opcap_t cap);
+opcap_t opcaps_get_predef_caps(int id);
 
 #endif /* __OPCAPS_H__ */

@@ -135,6 +135,7 @@ COMMON_CFILES=\
  lang_config.c\
  lang_config_vis.c\
  master_html.c\
+ meta_generic.c\
  mime_type.c\
  misctext.c\
  new_server_html.c\
@@ -333,6 +334,7 @@ HFILES=\
  l10n.h\
  lang_config_vis.h\
  list_ops.h\
+ meta_generic.h\
  mime_type.h\
  mischtml.h\
  misctext.h\

@@ -849,7 +849,7 @@ main(int argc, char *argv[])
   command = argv[i++];
 
   // if the contest is not new-managed, invoke serve-cmd
-  if (!cnts->new_managed) invoke_serve_cmd(argc, argv);
+  if (!cnts->managed) invoke_serve_cmd(argc, argv);
 
 #if defined EJUDGE_NEW_SERVER_SOCKET
   if (!socket_path) socket_path = EJUDGE_NEW_SERVER_SOCKET;
