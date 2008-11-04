@@ -285,3 +285,124 @@ TD.st_warns {font-size: 11px; border: solid; border-width: 1px; border-color: #0
 
 TH.st_status {font-size: 11px; border: solid; border-width: 1px; border-color: #000000; margin: 1px; font-weight: 600;}
 TD.st_status {font-size: 11px; border: solid; border-width: 1px; border-color: #000000; margin: 1px; }
+
+/* tabs */
+
+#tabs ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+}
+    
+#tabs li {
+        float: left;
+        border: 1px solid #bbb;
+        border-bottom-width: 0;
+        margin: 0;
+}
+    
+#tabs a {
+        text-decoration: none;
+        display: block;
+        background: #eee;
+        padding: 0.24em 1em;
+        color: #00c;
+        width: 10em;
+        text-align: center;
+}
+	
+#tabs a:hover {
+        background: #ddf;
+}
+	
+#tabs #selected {
+        border-color: black;
+}
+	
+#tabs #selected a {
+        position: relative;
+        top: 1px;
+        background: white;
+        color: black;
+        font-weight: bold;
+}
+	
+#cnts_edit_content {
+	border: 1px solid black;
+        clear: both;
+        padding: 0 1em;
+}
+
+table.cnts_edit {
+        border: none;
+        border-collapse: collapse;
+        margin: 0;
+        padding: 0;
+}
+
+td.cnts_edit_head {
+	font-size: 12pt;
+        font-family: "Sans-Serif";
+        font-weight: bold;
+        text-align: center;
+        height: 30px;
+        border: none;
+        border-collapse: collapse;
+        margin: 0;
+        padding: 0;
+}
+
+td.cnts_edit_legend {
+	font-size: 12pt;
+        font-family: "Sans-Serif";
+        text-align: left;
+        height: 30px;
+        border: none;
+        border-collapse: collapse;
+        margin: 0;
+        padding: 0;
+}
+
+td.cnts_edit_data {
+        border: none;
+        border-collapse: collapse;
+        margin: 0;
+        padding: 0;
+}
+
+div.cnts_edit_data {
+	font-size: 12pt;
+        font-family: "Sans-Serif";
+        /* height: 30px; */
+}
+
+div.cnts_edit_inlined {
+        display: inline;
+	font-size: 12pt;
+        font-family: "Sans-Serif";
+        height: 30px;
+        overflow: hidden;
+}
+
+td.cnts_edit_clear {
+        border: none;
+        border-collapse: collapse;
+        margin: 0;
+        padding: 0;
+}
+
+pre.ip_summary {
+	font-size: 10pt;
+}
+
+th.cnts_edit_legend {
+	font-size: 12pt;
+        font-family: "Sans-Serif";
+        font-weight: bold;
+        text-align: center;
+        height: 30px;
+        border: none;
+        border-collapse: collapse;
+        margin: 0;
+        padding: 0;
+}
