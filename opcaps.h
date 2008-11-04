@@ -26,8 +26,6 @@ enum
   OPCAP_JUDGE_LOGIN = 1,
   OPCAP_SUBMIT_RUN = 2,
   OPCAP_MAP_CONTEST = 3,
-  //OPCAP_LIST_CONTEST_USERS = 4,
-  //OPCAP_LIST_ALL_USERS = 5,
   OPCAP_LIST_USERS = 4,
   OPCAP_PRIV_EDIT_REG = 5,
   OPCAP_CREATE_USER = 6,
@@ -36,7 +34,6 @@ enum
   OPCAP_DELETE_USER = 9,
   OPCAP_PRIV_EDIT_USER = 10,
   OPCAP_PRIV_DELETE_USER = 11,
-  //OPCAP_GENERATE_TEAM_PASSWORDS = 12,
   OPCAP_EDIT_CONTEST = 12,
   OPCAP_CREATE_REG = 13,
   OPCAP_EDIT_REG = 14,
@@ -108,7 +105,6 @@ int opcaps_parse(unsigned char const *str, opcap_t *pcap);
 
 unsigned char *opcaps_unparse(int left_margin, int max_width, opcap_t cap);
 
-int opcaps_is_contest_cap(int cap);
 const unsigned char *opcaps_get_name(int cap);
 
 int opcaps_is_predef_caps(opcap_t cap);
