@@ -27,6 +27,7 @@ then
 fi
 
 echo "#! ${PYTHONPATH} -W ignore ${EJUDGE_FLAGS}" > $2
+echo "# coding: latin1" >> $2
 echo >> $2
 cat $1 >> $2
 chmod +x $2
