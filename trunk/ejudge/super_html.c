@@ -3358,7 +3358,6 @@ super_html_print_caps_table(
 
   fprintf(out_f, "<table%s>\n", table_opts);
   for (i = 0; i < OPCAP_LAST; i++) {
-    if (!opcaps_is_contest_cap(i)) continue;
     s = "";
     if (opcaps_check(caps, i) >= 0) s = " checked=\"yes\"";
 
