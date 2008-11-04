@@ -3976,3 +3976,6 @@ super_html.c 5239 0 11712067
 super_html_2.c 5239 0 5040808
 super_html_4.c 5237 0 7396904
 teamdb.c 5239 0 1604919
+opcaps.h 5242 0 206078
+opcaps.c 5242 0 682942
+super_html.c 5242 0 11708195
