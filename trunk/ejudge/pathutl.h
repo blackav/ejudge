@@ -45,7 +45,7 @@ extern int   pathmake3(char *, ...);
 
 extern char *chop(char *);
 
-#ifdef __GNUC__
+#ifdef  __GNUC__XXXX
 extern inline char *
 pathcpy(char *dst, char const *src)
 {

@@ -78,7 +78,7 @@ contest_tmpl_new(int contest_id,
   cnts = (struct contest_desc*) contests_new_node(CONTEST_CONTEST);
   cnts->id = contest_id;
   cnts->clean_users = 1;
-  cnts->new_managed = 1;
+  cnts->managed = 1;
   cnts->run_managed = 1;
   cnts->disable_team_password = 1;
   if (url_base[0]) {
@@ -129,7 +129,6 @@ contest_tmpl_new(int contest_id,
     xml_link_node_last(t, &cap->b);
   }
 
-  cnts->client_ignore_time_skew = 1;
   return cnts;
 }
 

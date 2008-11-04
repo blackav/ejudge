@@ -1789,7 +1789,7 @@ cmd_recover_password_1(struct client_state *p,
   }
   originator_email = get_email_sender(cnts);
 
-  if (!cnts->enable_forgot_password
+  if (!cnts->enable_password_recovery
       || (cnts->simple_registration && !cnts->send_passwd_email)) {
     err("%s -> password recovery disabled", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
@@ -1957,7 +1957,7 @@ cmd_recover_password_2(struct client_state *p,
     return;
   }
   originator_email = get_email_sender(cnts);
-  if (!cnts->enable_forgot_password
+  if (!cnts->enable_password_recovery
       || (cnts->simple_registration && !cnts->send_passwd_email)) {
     err("%s -> password recovery disabled", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
@@ -2450,7 +2450,7 @@ cmd_team_login(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_IP_NOT_ALLOWED);
     return;
   }
-  if (cnts->client_disable_team || cnts->closed) {
+  if (cnts->closed) {
     err("%s -> team logins are disabled", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -2617,7 +2617,7 @@ cmd_team_check_user(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_IP_NOT_ALLOWED);
     return;
   }
-  if (cnts->client_disable_team || cnts->closed) {
+  if (cnts->closed) {
     err("%s -> team logins are disabled", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;

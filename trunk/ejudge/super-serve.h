@@ -19,7 +19,18 @@
 
 #include "ej_types.h"
 
+#include "opcaps.h"
+
 #include <time.h>
+
+#ifndef META_ATTRIB
+#if defined __RCC__
+#undef __attribute__
+#define META_ATTRIB(x) __attribute__(x)
+#else
+#define META_ATTRIB(x)
+#endif /* __RCC__ */
+#endif /* META_ATTRIB */
 
 struct contest_extra
 {
@@ -80,14 +91,15 @@ struct sid_state
   time_t init_time;
   unsigned long flags;
   struct contest_desc *edited_cnts;
-  int advanced_view;
-  int show_html_attrs;
-  int show_html_headers;
-  int show_paths;
-  int show_access_rules;
-  int show_permissions;
-  int show_form_fields;
-  int show_notifications;
+
+  ejintbool_t advanced_view;
+  ejintbool_t show_html_attrs;
+  ejintbool_t show_html_headers;
+  ejintbool_t show_paths;
+  ejintbool_t show_access_rules;
+  ejintbool_t show_permissions;
+  ejintbool_t show_form_fields;
+  ejintbool_t show_notifications;
 
   unsigned char *users_header_text;
   unsigned char *users_footer_text;
@@ -105,6 +117,23 @@ struct sid_state
   unsigned char *copyright_text;
   unsigned char *welcome_text;
   unsigned char *reg_welcome_text;
+
+  ejintbool_t users_header_loaded;
+  ejintbool_t users_footer_loaded;
+  ejintbool_t register_header_loaded;
+  ejintbool_t register_footer_loaded;
+  ejintbool_t team_header_loaded;
+  ejintbool_t team_menu_1_loaded;
+  ejintbool_t team_menu_2_loaded;
+  ejintbool_t team_menu_3_loaded;
+  ejintbool_t team_separator_loaded;
+  ejintbool_t team_footer_loaded;
+  ejintbool_t priv_header_loaded;
+  ejintbool_t priv_footer_loaded;
+  ejintbool_t register_email_loaded;
+  ejintbool_t copyright_loaded;
+  ejintbool_t welcome_loaded;
+  ejintbool_t reg_welcome_loaded;
 
   unsigned char *serve_parse_errors;
 
@@ -134,17 +163,17 @@ struct sid_state
   int tester_total;
   struct section_tester_data **testers;
 
-  int show_global_1;
-  int show_global_2;
-  int show_global_3;
-  int show_global_4;
-  int show_global_5;
-  int show_global_6;
-  int show_global_7;
-  int enable_stand2;
-  int enable_plog;
-  int enable_extra_col;
-  int disable_compilation_server;
+  ejintbool_t show_global_1;
+  ejintbool_t show_global_2;
+  ejintbool_t show_global_3;
+  ejintbool_t show_global_4;
+  ejintbool_t show_global_5;
+  ejintbool_t show_global_6;
+  ejintbool_t show_global_7;
+  ejintbool_t enable_stand2;
+  ejintbool_t enable_plog;
+  ejintbool_t enable_extra_col;
+  ejintbool_t disable_compilation_server;
 
   int cs_langs_loaded;
   int cs_lang_total;
@@ -186,10 +215,26 @@ struct super_http_request_info
   int opcode;
 
   // the URL
+  ej_ip_t ip;
   int ssl_flag;
   const unsigned char *self_url; // points into stack buffer
+  const unsigned char *script_name; // points into stack buffer
 
   unsigned long long session_id;
+
+  // authentification info
+  int user_id;
+  int priv_level;
+  opcap_t caps;
+  unsigned char *login;
+  unsigned char *name;
+  unsigned char *html_login;
+  unsigned char *html_name;
+
+  int contest_id;
+
+  // should we use json for reply?
+  int json_reply;
 };
 
 void super_serve_clear_edited_contest(struct sid_state *sstate);

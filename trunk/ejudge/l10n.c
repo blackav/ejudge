@@ -129,6 +129,34 @@ l10n_html_locale_select(FILE *fout, int locale_id)
 #endif
 }
 
+void
+l10n_html_locale_select_2(
+        FILE *out_f,
+        const unsigned char *id,
+        const unsigned char *cl,
+        const unsigned char *name,
+        const unsigned char *onchange,
+        int locale_id)
+{
+  const unsigned char *ss = 0;
+  int i;
+
+  if (locale_id < 0 || locale_id > 1) locale_id = 0;
+  fprintf(out_f, "<select");
+  if (id) fprintf(out_f, " id=\"%s\"", id);
+  if (cl) fprintf(out_f, " class=\"%s\"", cl);
+  if (name) fprintf(out_f, " name=\"%s\"", name);
+  if (onchange) fprintf(out_f, " onChange='%s'", onchange);
+  fprintf(out_f, ">");
+  for (i = 0; locales[i]; i++) {
+    ss = "";
+    if (i == locale_id) ss = " selected=\"selected\"";
+    fprintf(out_f, "<option value=\"%d\"%s>%s</option>",
+            i, ss, gettext(locales[i]));
+  }
+  fprintf(out_f, "</select>\n");
+}
+
 static struct locale_names 
 {
   const char * const name;
@@ -156,6 +184,18 @@ l10n_parse_locale(const unsigned char *locale_str)
     if (!strcasecmp(locale_str, locale_names[i].name))
       return locale_names[i].value;
   return -1;
+}
+
+const unsigned char * const locale_name_strs[] =
+{
+  "English", "Russian",
+};
+const unsigned char *
+l10n_unparse_locale(int n)
+{
+  if (n < 0 || n >= sizeof(locale_name_strs) / sizeof(locale_name_strs[0]))
+    return 0;
+  return locale_name_strs[n];
 }
 
 /*

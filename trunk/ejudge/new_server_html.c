@@ -1076,7 +1076,7 @@ privileged_page_cookie_login(FILE *fout,
 
   if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts)
     return ns_html_err_inv_param(fout, phr, 1, "invalid contest_id");
-  if (!cnts->new_managed)
+  if (!cnts->managed)
     return ns_html_err_inv_param(fout, phr, 1, "contest is not managed");
   if (!phr->role) {
     phr->role = USER_ROLE_OBSERVER;
@@ -1171,7 +1171,7 @@ privileged_page_login(FILE *fout,
     return ns_html_err_inv_param(fout, phr, 1, "cannot parse password");
   if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts)
     return ns_html_err_inv_param(fout, phr, 1, "invalid contest_id");
-  if (!cnts->new_managed)
+  if (!cnts->managed)
     return ns_html_err_inv_param(fout, phr, 1, "contest is not managed");
 
   if (!phr->role) {
@@ -6014,7 +6014,7 @@ priv_print_user_exam_protocol(
     use_user_printer = 1;
   }
 
-  if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
+  if (cnts->default_locale_num > 0) locale_id = cnts->default_locale_num;
   if (locale_id > 0) l10n_setlocale(locale_id);
   ff = open_memstream(&log_text, &log_size);
   r = ns_print_user_exam_protocol(cnts, cs, ff, user_id, locale_id,
@@ -6110,7 +6110,7 @@ priv_print_users_exam_protocol(
     use_user_printer = 1;
   }
 
-  if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
+  if (cnts->default_locale_num > 0) locale_id = cnts->default_locale_num;
   if (locale_id > 0) l10n_setlocale(locale_id);
   ff = open_memstream(&log_text, &log_size);
   if (cs->contest_plugin && cs->contest_plugin->print_user_reports) {
@@ -6182,7 +6182,7 @@ priv_print_problem_exam_protocol(
   if (prob_id <= 0 || prob_id > cs->max_prob || !cs->probs[prob_id])
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
 
-  if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
+  if (cnts->default_locale_num > 0) locale_id = cnts->default_locale_num;
   if (locale_id > 0) l10n_setlocale(locale_id);
   ff = open_memstream(&log_text, &log_size);
   r = ns_print_prob_exam_protocol(cnts, cs, ff, prob_id, locale_id, 1);
@@ -7988,7 +7988,7 @@ privileged_entry_point(
   if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
     return ns_html_err_no_perm(fout, phr, 1, "invalid contest_id %d",
                                phr->contest_id);
-  if (!cnts->new_managed)
+  if (!cnts->managed)
     return ns_html_err_inv_param(fout, phr, 1, "contest is not managed");
   extra = ns_get_contest_extra(phr->contest_id);
   ASSERT(extra);
@@ -8215,22 +8215,18 @@ unpriv_page_forgot_password_1(FILE *fout, struct http_request_info *phr,
   if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
     return ns_html_err_service_not_available(fout, phr, 0,
                                              "contest_id is invalid");
-  if (orig_locale_id < 0 && cnts->default_locale_val >= 0)
-    phr->locale_id = cnts->default_locale_val;
+  if (orig_locale_id < 0 && cnts->default_locale_num >= 0)
+    phr->locale_id = cnts->default_locale_num;
   if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
     return ns_html_err_service_not_available(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   if (cnts->closed)
     return ns_html_err_service_not_available(fout, phr, 0,
                                              "contest %d is closed", cnts->id);
-  if (!cnts->new_managed)
+  if (!cnts->managed)
     return ns_html_err_service_not_available(fout, phr, 0,
                                              "contest %d is not managed",
                                              cnts->id);
-  if (cnts->client_disable_team)
-    return ns_html_err_service_not_available(fout, phr, 0,
-                                             "contest %d user is disabled",
-                                             cnts->id);
-  if (!cnts->enable_forgot_password
+  if (!cnts->enable_password_recovery
       || (cnts->simple_registration && !cnts->send_passwd_email))
     return ns_html_err_service_not_available(fout, phr, 0,
                                              "contest %d password recovery disabled",
@@ -8303,22 +8299,18 @@ unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr,
 
   if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
     return ns_html_err_service_not_available(fout, phr, 0, "contest_id is invalid");
-  if (orig_locale_id < 0 && cnts->default_locale_val >= 0)
-    phr->locale_id = cnts->default_locale_val;
+  if (orig_locale_id < 0 && cnts->default_locale_num >= 0)
+    phr->locale_id = cnts->default_locale_num;
   if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
     return ns_html_err_service_not_available(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   if (cnts->closed)
     return ns_html_err_service_not_available(fout, phr, 0,
                                              "contest %d is closed", cnts->id);
-  if (!cnts->new_managed)
+  if (!cnts->managed)
     return ns_html_err_service_not_available(fout, phr, 0,
                                              "contest %d is not managed",
                                              cnts->id);
-  if (cnts->client_disable_team)
-    return ns_html_err_service_not_available(fout, phr, 0,
-                                             "contest %d user is disabled",
-                                             cnts->id);
-  if (!cnts->enable_forgot_password
+  if (!cnts->enable_password_recovery
       || (cnts->simple_registration && !cnts->send_passwd_email))
     return ns_html_err_service_not_available(fout, phr, 0,
                                              "contest %d password recovery disabled",
@@ -8413,22 +8405,18 @@ unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr,
 
   if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
     return ns_html_err_service_not_available(fout, phr, 0, "contest_id is invalid");
-  if (orig_locale_id < 0 || cnts->default_locale_val >= 0)
-    phr->locale_id = cnts->default_locale_val;
+  if (orig_locale_id < 0 || cnts->default_locale_num >= 0)
+    phr->locale_id = cnts->default_locale_num;
   if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
     return ns_html_err_service_not_available(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   if (cnts->closed)
     return ns_html_err_service_not_available(fout, phr, 0,
                                              "contest %d is closed", cnts->id);
-  if (!cnts->new_managed)
+  if (!cnts->managed)
     return ns_html_err_service_not_available(fout, phr, 0,
                                              "contest %d is not managed",
                                              cnts->id);
-  if (cnts->client_disable_team)
-    return ns_html_err_service_not_available(fout, phr, 0,
-                                             "contest %d user is disabled",
-                                             cnts->id);
-  if (!cnts->enable_forgot_password
+  if (!cnts->enable_password_recovery
       || (cnts->simple_registration && !cnts->send_passwd_email))
     return ns_html_err_service_not_available(fout, phr, 0,
                                              "contest %d password recovery disabled",
@@ -8542,20 +8530,16 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
 
   if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
     return ns_html_err_service_not_available(fout, phr, 0, "contest_id is invalid");
-  if (orig_locale_id < 0 && cnts->default_locale_val >= 0)
-    phr->locale_id = cnts->default_locale_val;
+  if (orig_locale_id < 0 && cnts->default_locale_num >= 0)
+    phr->locale_id = cnts->default_locale_num;
   if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
     return ns_html_err_service_not_available(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   if (cnts->closed)
     return ns_html_err_service_not_available(fout, phr, 0,
                                              "contest %d is closed", cnts->id);
-  if (!cnts->new_managed)
+  if (!cnts->managed)
     return ns_html_err_service_not_available(fout, phr, 0,
                                              "contest %d is not managed",
-                                             cnts->id);
-  if (cnts->client_disable_team)
-    return ns_html_err_service_not_available(fout, phr, 0,
-                                             "contest %d user is disabled",
                                              cnts->id);
 
   extra = ns_get_contest_extra(phr->contest_id);
@@ -8654,7 +8638,7 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
     vis_flag++;
   }
 
-  if (cnts && cnts->enable_forgot_password && cnts->disable_team_password) {
+  if (cnts && cnts->enable_password_recovery && cnts->disable_team_password) {
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_FORGOT_PASSWORD_1, _("Forgot password?"));
     vis_flag++;
   }
@@ -8696,8 +8680,8 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr,
 
   if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts)
     return ns_html_err_inv_param(fout, phr, 0, "invalid contest_id");
-  if (orig_locale_id < 0 && cnts->default_locale_val >= 0)
-    phr->locale_id = cnts->default_locale_val;
+  if (orig_locale_id < 0 && cnts->default_locale_num >= 0)
+    phr->locale_id = cnts->default_locale_num;
 
   phr->login = xstrdup(login);
   if ((r = ns_cgi_param(phr, "password", &password)) <= 0)
@@ -8707,13 +8691,9 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr,
   if (cnts->closed)
     return ns_html_err_service_not_available(fout, phr, 0,
                                              "contest %d is closed", cnts->id);
-  if (!cnts->new_managed)
+  if (!cnts->managed)
     return ns_html_err_service_not_available(fout, phr, 0,
                                              "contest %d is not managed",
-                                             cnts->id);
-  if (cnts->client_disable_team)
-    return ns_html_err_service_not_available(fout, phr, 0,
-                                             "contest %d user is disabled",
                                              cnts->id);
 
   if (ns_open_ul_connection(phr->fw_state) < 0)
@@ -8745,7 +8725,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr,
   }
 
   ns_get_session(phr->session_id, 0);
-  ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+  ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, "lt=1");
 }
 
 static void
@@ -9762,7 +9742,7 @@ virtual_stop_callback(
   if (global->enable_auto_print_protocol <= 0) return;
 
   // Note, that all printing errors are ignored... 
-  if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
+  if (cnts->default_locale_num > 0) locale_id = cnts->default_locale_num;
   if (locale_id > 0) l10n_setlocale(locale_id);
   tmpf = open_memstream(&tmps, &tmpz);
   ns_print_user_exam_protocol(cnts, cs, tmpf, p->user_id, locale_id, 1, 0, 0);
@@ -9869,7 +9849,7 @@ unpriv_command(FILE *fout,
       int locale_id = 0;
 
       /* Note, that all printing errors are ignored... */
-      if (cnts->default_locale_val > 0) locale_id = cnts->default_locale_val;
+      if (cnts->default_locale_num > 0) locale_id = cnts->default_locale_num;
       if (locale_id > 0) l10n_setlocale(locale_id);
       tmpf = open_memstream(&tmps, &tmpz);
       ns_print_user_exam_protocol(cnts, cs, tmpf, phr->user_id, locale_id, 1,
@@ -12873,8 +12853,8 @@ anon_select_contest_page(FILE *fout, struct http_request_info *phr)
     fprintf(fout, "<tr%s><td%s>%d</td>", form_row_attrs[(row++) & 1], cl, i);
     fprintf(fout, "<td%s><a href=\"%s?contest_id=%d", cl, phr->self_url, i);
 
-    if (orig_locale_id >= 0 && cnts->default_locale_val >= 0
-        && orig_locale_id != cnts->default_locale_val) {
+    if (orig_locale_id >= 0 && cnts->default_locale_num >= 0
+        && orig_locale_id != cnts->default_locale_num) {
       fprintf(fout, "&amp;locale_id=%d", phr->locale_id);
     }
 
@@ -12934,6 +12914,7 @@ unprivileged_entry_point(
   struct last_access_info *pp;
   int online_users = 0;
   serve_state_t cs = 0;
+  const unsigned char *s = 0;
 
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_1)
     return unpriv_page_forgot_password_1(fout, phr, orig_locale_id);
@@ -12959,8 +12940,8 @@ unprivileged_entry_point(
                                     &phr->user_id, &phr->contest_id,
                                     &phr->locale_id, 0, &phr->role, 0, 0, 0,
                                     &phr->login, &phr->name)) < 0) {
-    if (r < 0 && orig_locale_id < 0 && cnts && cnts->default_locale_val >= 0) {
-      phr->locale_id = cnts->default_locale_val;
+    if (r < 0 && orig_locale_id < 0 && cnts && cnts->default_locale_num >= 0) {
+      phr->locale_id = cnts->default_locale_num;
     }
     switch (-r) {
     case ULS_ERR_NO_COOKIE:
@@ -12992,13 +12973,9 @@ unprivileged_entry_point(
   if (cnts->closed)
     return ns_html_err_service_not_available(fout, phr, 0,
                                              "contest %d is closed", cnts->id);
-  if (!cnts->new_managed)
+  if (!cnts->managed)
     return ns_html_err_service_not_available(fout, phr, 0,
                                              "contest %d is not managed",
-                                             cnts->id);
-  if (cnts->client_disable_team)
-    return ns_html_err_service_not_available(fout, phr, 0,
-                                             "contest %d user is disabled",
                                              cnts->id);
 
   watched_file_update(&extra->header, cnts->team_header_file, cur_time);
@@ -13100,6 +13077,12 @@ unprivileged_entry_point(
 
   if ((teamdb_get_flags(cs->teamdb_state, phr->user_id) & TEAM_DISQUALIFIED))
     return ns_html_err_disqualified(fout, phr, cnts, extra);
+
+  /* FIXME: redirect just logged in user to an appropriate page */
+  if (ns_cgi_param(phr, "lt", &s) > 0) {
+    // contest is not started: no nothing
+    // contest finished, not olympiad, standings enabled -> standings
+  }
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && user_actions_table[phr->action]) {

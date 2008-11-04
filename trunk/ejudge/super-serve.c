@@ -2663,7 +2663,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CHANGE_ASSIGN_LOGINS:
   case SSERV_CMD_CNTS_CHANGE_FORCE_REGISTRATION:
   case SSERV_CMD_CNTS_CHANGE_DISABLE_NAME:
-  case SSERV_CMD_CNTS_CHANGE_ENABLE_FORGOT_PASSWORD:
+  case SSERV_CMD_CNTS_CHANGE_ENABLE_PASSWORD_RECOVERY:
   case SSERV_CMD_CNTS_CHANGE_EXAM_MODE:
   case SSERV_CMD_CNTS_CHANGE_DISABLE_PASSWORD_CHANGE:
   case SSERV_CMD_CNTS_CHANGE_DISABLE_LOCALE_CHANGE:
@@ -2671,13 +2671,10 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CHANGE_ALLOW_REG_DATA_EDIT:
   case SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL:
   case SSERV_CMD_CNTS_CHANGE_MANAGED:
-  case SSERV_CMD_CNTS_CHANGE_NEW_MANAGED:
   case SSERV_CMD_CNTS_CHANGE_RUN_MANAGED:
   case SSERV_CMD_CNTS_CHANGE_CLEAN_USERS:
   case SSERV_CMD_CNTS_CHANGE_CLOSED:
   case SSERV_CMD_CNTS_CHANGE_INVISIBLE:
-  case SSERV_CMD_CNTS_CHANGE_TIME_SKEW:
-  case SSERV_CMD_CNTS_CHANGE_TEAM_LOGIN:
   case SSERV_CMD_CNTS_CHANGE_MEMBER_DELETE:
   case SSERV_CMD_CNTS_CHANGE_DEADLINE:
   case SSERV_CMD_CNTS_CHANGE_USERS_HEADER:
@@ -3344,15 +3341,6 @@ cmd_http_request(
     bptr += param_sizes[i] + 1;
   }
 
-  hr.arg_num = pkt->arg_num;
-  hr.args = args;
-  hr.env_num = pkt->env_num;
-  hr.envs = envs;
-  hr.param_num = pkt->param_num;
-  hr.param_names = param_names;
-  hr.param_sizes = my_param_sizes;
-  hr.params = params;
-
   if ((r = get_peer_local_user(p)) < 0) {
     send_reply(p, r);
     return;
@@ -3362,6 +3350,24 @@ cmd_http_request(
     err("cmd_main_page: two file descriptors expected");
     return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
   }
+
+  hr.arg_num = pkt->arg_num;
+  hr.args = args;
+  hr.env_num = pkt->env_num;
+  hr.envs = envs;
+  hr.param_num = pkt->param_num;
+  hr.param_names = param_names;
+  hr.param_sizes = my_param_sizes;
+  hr.params = params;
+
+  hr.user_id = p->user_id;
+  hr.priv_level = p->priv_level;
+  hr.login = p->login;
+  hr.name = p->name;
+  hr.html_login = p->html_login;
+  hr.html_name = p->html_name;
+  hr.ip = p->ip;
+  hr.ssl_flag = p->ssl;
 
   hr.ss = sid_state_get(p->cookie);
 
@@ -3529,7 +3535,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_ASSIGN_LOGINS] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_FORCE_REGISTRATION] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_DISABLE_NAME] = { cmd_set_value },
-  [SSERV_CMD_CNTS_CHANGE_ENABLE_FORGOT_PASSWORD] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_ENABLE_PASSWORD_RECOVERY] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_EXAM_MODE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_DISABLE_PASSWORD_CHANGE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_DISABLE_LOCALE_CHANGE] = { cmd_set_value },
@@ -3537,13 +3543,10 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_ALLOW_REG_DATA_EDIT] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_MANAGED] = { cmd_set_value },
-  [SSERV_CMD_CNTS_CHANGE_NEW_MANAGED] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_RUN_MANAGED] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_CLEAN_USERS] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_CLOSED] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_INVISIBLE] = { cmd_set_value },
-  [SSERV_CMD_CNTS_CHANGE_TIME_SKEW] = { cmd_set_value },
-  [SSERV_CMD_CNTS_CHANGE_TEAM_LOGIN] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_MEMBER_DELETE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_DEADLINE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_USERS_HEADER] = { cmd_set_value },

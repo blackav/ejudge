@@ -68,7 +68,7 @@ endif
 CEXTRAFLAGS=
 LDEXTRAFLAGS=
 EXTRALIBS=
-CCOMPFLAGS=-D_GNU_SOURCE
+CCOMPFLAGS=-D_GNU_SOURCE -std=gnu99
 LDCOMPFLAGS=
 EXESFX=
 else
@@ -82,6 +82,8 @@ CC=gcc
 LD=gcc
 EXPAT_LIB=-lexpat
 REUSE_LIB=-lreuse
+
+META_CC = ../new-c/bin/rcc
 
 C_CFILES=compile.c version.c
 C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a
@@ -165,7 +167,7 @@ BINTARGETS = job-server-cmd edit-userlist ejudge-setup ejudge-configure-compiler
 SERVERBINTARGETS = compile compile-control run serve userlist-server userlist-server-control job-server job-server-control super-serve super-serve-control collect-emails slice-userlist new-server new-server-control uudecode convert-clars convert-runs
 CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
 TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} style/actions.js
-STYLEFILES = style/actions.js style/logo.gif style/priv.css style/unpriv.css style/unpriv.js style/filter_expr.html
+STYLEFILES = style/actions.js style/logo.gif style/priv.css style/unpriv.css style/priv.js style/unpriv.js style/filter_expr.html
 
 all: local_all subdirs_all mo
 local_all: $(TARGETS) ejudge-config style/actions.js
@@ -404,7 +406,7 @@ endif
 locale/ru_RU.${CHARSET}/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.${CHARSET}.po ru_all
 	${MSGFMT} -o $@ -c $<
 
-libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o $(ARCH)/fileutl.o $(ARCH)/cr_serialize.o $(ARCH)/interrupt.o $(ARCH)/curtime.o $(ARCH)/timestamp.o $(ARCH)/ej_process.o $(ARCH)/cpu.o $(ARCH)/full_archive.o
+libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o contests_meta.o super-serve_meta.o $(ARCH)/fileutl.o $(ARCH)/cr_serialize.o $(ARCH)/interrupt.o $(ARCH)/curtime.o $(ARCH)/timestamp.o $(ARCH)/ej_process.o $(ARCH)/cpu.o $(ARCH)/full_archive.o
 	ar rcv $@ $^
 
 libsuper_clnt.a : $(SUPER_CLNT_CFILES:.c=.o)
@@ -416,7 +418,7 @@ libuserlist_clnt.a: $(USERLIST_CLNT_CFILES:.c=.o)
 libnew_server_clnt.a: $(NEW_SERVER_CLNT_CFILES:.c=.o)
 	ar rcv $@ $^
 
-deps.make: cdeps ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c 
+deps.make: cdeps ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c contests_meta.c contests_meta.h super-serve_meta.c super-serve_meta.h
 	./cdeps ${CFILES} filter_expr.c filter_scan.c > deps.make
 
 tags : ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c 
@@ -427,6 +429,12 @@ filter_expr.c filter_expr.h : filter_expr.y
 
 filter_scan.c : filter_scan.lex
 	flex -p -s -L -8 -B -o$@ -Pfilter_expr_ $<
+
+contests_meta.c contests_meta.h : contests.h
+	$(META_CC) $(REUSE_INCL_OPT) contests.h -o contests.out --force-h --meta --meta-struct contest_desc --meta-enum-prefix CNTS --meta-func-prefix contest_desc --meta-timestamp
+
+super-serve_meta.c super-serve_meta.h : super-serve.h
+	$(META_CC) $(REUSE_INCL_OPT) super-serve.h -o super-serve.out --force-h --meta --meta-struct sid_state --meta-enum-prefix SSSS --meta-func-prefix ss_sid_state --meta-timestamp
 
 style/actions.js : make-js-actions
 	./make-js-actions > style/actions.js

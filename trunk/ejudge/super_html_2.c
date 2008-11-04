@@ -251,8 +251,8 @@ get_contest_access_by_num(const struct contest_desc *cnts, int num)
   }
 }
 
-static struct contest_access *
-copy_contest_access(struct contest_access *p)
+struct contest_access *
+super_html_copy_contest_access(const struct contest_access *p)
 {
   struct contest_access *q;
   struct contest_ip *pp, *qq;
@@ -346,8 +346,8 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   case SSERV_CMD_CNTS_CHANGE_DISABLE_NAME:
     p_bool = &cnts->disable_name;
     break;
-  case SSERV_CMD_CNTS_CHANGE_ENABLE_FORGOT_PASSWORD:
-    p_bool = &cnts->enable_forgot_password;
+  case SSERV_CMD_CNTS_CHANGE_ENABLE_PASSWORD_RECOVERY:
+    p_bool = &cnts->enable_password_recovery;
     break;
   case SSERV_CMD_CNTS_CHANGE_EXAM_MODE:
     p_bool = &cnts->exam_mode;
@@ -370,9 +370,6 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   case SSERV_CMD_CNTS_CHANGE_MANAGED:
     p_bool = &cnts->managed;
     break;
-  case SSERV_CMD_CNTS_CHANGE_NEW_MANAGED:
-    p_bool = &cnts->new_managed;
-    break;
   case SSERV_CMD_CNTS_CHANGE_RUN_MANAGED:
     p_bool = &cnts->run_managed;
     break;
@@ -384,12 +381,6 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     break;
   case SSERV_CMD_CNTS_CHANGE_INVISIBLE:
     p_bool = &cnts->invisible;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_TIME_SKEW:
-    p_bool = &cnts->client_ignore_time_skew;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_TEAM_LOGIN:
-    p_bool = &cnts->client_disable_team;
     break;
   case SSERV_CMD_CNTS_CHANGE_MEMBER_DELETE:
     p_bool = &cnts->disable_member_delete;
@@ -692,7 +683,7 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     if (*p_access == *p_src_access) return 0;
     xml_unlink_node(&(*p_access)->b);
     contests_free_2(&(*p_access)->b);
-    *p_access = copy_contest_access(*p_src_access);
+    *p_access = super_html_copy_contest_access(*p_src_access);
     xml_link_node_last(&cnts->b, &(*p_access)->b);
     return 0;
 

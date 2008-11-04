@@ -101,7 +101,7 @@ html_edit_text_form(FILE *f,
   xfree(s);
 }
 
-static void
+void
 html_numeric_select(FILE *f, const unsigned char *param,
                     int val, int min_val, int max_val)
 {
@@ -133,7 +133,7 @@ static int
 get_serve_management_status(const struct contest_desc *cnts,
                             struct contest_extra *extra)
 {
-  if (cnts->new_managed) {
+  if (cnts->managed) {
     return MNG_STAT_NEW_MANAGED;
   } else if (!cnts->managed && (!extra || !extra->serve_used)) {
     return MNG_STAT_NOT_MANAGED;
@@ -557,7 +557,7 @@ super_html_main_page(FILE *f,
 
     // report serve mastering status
     if (priv_level >= PRIV_LEVEL_ADMIN) {
-      if (cnts->new_managed) {
+      if (cnts->managed) {
         fprintf(f, "<td><font color=\"green\"><i>New server</i></font></td>\n");
       } else if (!cnts->managed && (!extra || !extra->serve_used)) {
         fprintf(f, "<td><i>Not managed</i></td>\n");
@@ -634,7 +634,7 @@ super_html_main_page(FILE *f,
     // report judge URL
     if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
         && contests_check_judge_ip_2(cnts, ip_address, ssl)) {
-      if (cnts->new_managed) {
+      if (cnts->managed) {
         fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Judge</a></td>\n",
                 new_judge_url, session_id, contest_id);
       } else {
@@ -647,7 +647,7 @@ super_html_main_page(FILE *f,
     // report master URL
     if (opcaps_check(caps, OPCAP_MASTER_LOGIN) >= 0 && master_url[0]
         && contests_check_master_ip_2(cnts, ip_address, ssl)) {
-      if (cnts->new_managed) {
+      if (cnts->managed) {
         fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Master</a></td>\n",
                 new_master_url, session_id, contest_id);
       } else {
@@ -659,7 +659,7 @@ super_html_main_page(FILE *f,
     }
     // report user URL
     if (client_url[0] && contests_check_team_ip_2(cnts, ip_address, ssl)) {
-      if (cnts->new_managed) {
+      if (cnts->managed) {
         fprintf(f, "<td><a href=\"%s?contest_id=%d\" target=\"_blank\">User</a></td>\n",
                 new_client_url, contest_id);
       } else {
@@ -831,7 +831,7 @@ super_html_contest_page(FILE *f,
   // report judge URL
   if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
       && contests_check_judge_ip_2(cnts, ip_address, ssl)) {
-    if (cnts->new_managed) {
+    if (cnts->managed) {
       fprintf(f, "<tr><td>Judge CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Judge</a></td></tr>\n",
               new_judge_url, session_id, contest_id);
     } else {
@@ -843,7 +843,7 @@ super_html_contest_page(FILE *f,
   // report master URL
   if (opcaps_check(caps, OPCAP_MASTER_LOGIN) >= 0 && master_url[0]
       && contests_check_master_ip_2(cnts, ip_address, ssl)) {
-    if (cnts->new_managed) {
+    if (cnts->managed) {
       fprintf(f, "<tr><td>Master CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Master</a></td></tr>\n",
               new_master_url, session_id, contest_id);
     } else {
@@ -854,7 +854,7 @@ super_html_contest_page(FILE *f,
 
   // report user URL
   if (client_url[0] && contests_check_team_ip_2(cnts, ip_address, ssl)) {
-    if (cnts->new_managed) {
+    if (cnts->managed) {
       fprintf(f, "<tr><td>Client CGI program</td><td><a href=\"%s?contest_id=%d\" target=\"_blank\">Client</a></td></tr>\n",
               new_client_url, contest_id);
     } else {
@@ -1198,6 +1198,11 @@ super_html_contest_page(FILE *f,
                           "contest_id=%d&action=%d", contest_id,
                           SSERV_CMD_EDIT_CONTEST_XML));
     refcount++;
+    fprintf(f, "&nbsp;%sNew edit (experimental)</a>",
+            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                          "contest_id=%d&action=%d&op=%d",
+                          contest_id, SSERV_CMD_HTTP_REQUEST,
+                          SSERV_OP_EDIT_CONTEST_PAGE));
   }
   if (!refcount) fprintf(f, "&nbsp;");
   fprintf(f, "</td>");
@@ -1222,6 +1227,11 @@ super_html_contest_page(FILE *f,
                           "contest_id=%d&action=%d", contest_id,
                           SSERV_CMD_EDIT_CONTEST_XML));
     refcount++;
+    fprintf(f, "&nbsp;%sNew edit (experimental)</a>",
+            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                          "contest_id=%d&action=%d&op=%d",
+                          contest_id, SSERV_CMD_HTTP_REQUEST,
+                          SSERV_OP_EDIT_CONTEST_PAGE));
   }
   if (!refcount) fprintf(f, "&nbsp;");
   fprintf(f, "</td>");
@@ -2001,6 +2011,34 @@ print_string_editing_row(FILE *f,
   fprintf(f, "</td></tr></form>\n");
 }
 
+unsigned char *
+super_html_unparse_access(const struct contest_access *acc)
+{
+  char *acc_txt = 0;
+  size_t acc_len = 0;
+  FILE *af = 0;
+  const struct contest_ip *p;
+  unsigned char ssl_str[64];
+
+  af = open_memstream(&acc_txt, &acc_len);
+  if (!acc) {
+    fprintf(af, "default deny\n");
+  } else {
+    for (p = (const struct contest_ip*) acc->b.first_down;
+         p; p = (const struct contest_ip*) p->b.right) {
+      ssl_str[0] = 0;
+      if (p->ssl >= 0)
+        snprintf(ssl_str, sizeof(ssl_str), " %s", p->ssl?"(SSL)":"(No SSL)");
+      fprintf(af, "%s%s %s\n",
+              xml_unparse_ip_mask(p->addr, p->mask), ssl_str,
+              p->allow?"allow":"deny");
+    }
+    fprintf(af, "default %s\n", acc->default_is_allow?"allow":"deny");
+  }
+  fclose(af); af = 0;
+  return acc_txt;
+}
+
 static void
 print_access_summary(FILE *f, struct contest_access *acc,
                      const unsigned char *title,
@@ -2011,30 +2049,9 @@ print_access_summary(FILE *f, struct contest_access *acc,
                      const unsigned char *extra_args)
 {
   char *acc_txt = 0;
-  size_t acc_len = 0;
   unsigned char hbuf[1024];
-  FILE *af;
-  struct contest_ip *p;
-  unsigned char ssl_str[64];
 
-  af = open_memstream(&acc_txt, &acc_len);
-  ASSERT(af);
-  if (!acc) {
-    fprintf(af, "default deny\n");
-  } else {
-    for (p = (struct contest_ip*) acc->b.first_down;
-         p; p = (struct contest_ip*) p->b.right) {
-      ssl_str[0] = 0;
-      if (p->ssl >= 0)
-        snprintf(ssl_str, sizeof(ssl_str), " %s", p->ssl?"(SSL)":"(No SSL)");
-      fprintf(af, "%s%s %s\n",
-              xml_unparse_ip_mask(p->addr, p->mask), ssl_str,
-              p->allow?"allow":"deny");
-    }
-    fprintf(af, "default %s\n", acc->default_is_allow?"allow":"deny");
-  }
-  fclose(af);
-
+  acc_txt = super_html_unparse_access(acc);
   fprintf(f, "<tr valign=\"top\"%s><td>%s</td><td><pre>%s</pre></td><td>%sEdit</a></td></tr>", row_attr, title, acc_txt, html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d", edit_action));
   xfree(acc_txt);
 }
@@ -2080,72 +2097,6 @@ print_permissions(FILE *f, struct contest_desc *cnts,
   fprintf(f, "</td></tr></form>");
 }
 
-static const unsigned char *const form_field_names[] =
-{
-  [CONTEST_F_HOMEPAGE] = "Home page",
-  [CONTEST_F_PHONE] = "Phone",
-  [CONTEST_F_INST] = "Institution",
-  [CONTEST_F_INST_EN] = "Institution (English)",
-  [CONTEST_F_INSTSHORT] = "Institution, short",
-  [CONTEST_F_INSTSHORT_EN] = "Institution, short (English)",
-  [CONTEST_F_INSTNUM] = "Institution number",
-  [CONTEST_F_FAC] = "Faculty",
-  [CONTEST_F_FAC_EN] = "Faculty (English)",
-  [CONTEST_F_FACSHORT] = "Faculty, short",
-  [CONTEST_F_FACSHORT_EN] = "Faculty, short (English)",
-  [CONTEST_F_CITY] = "City",
-  [CONTEST_F_CITY_EN] = "City (English)",
-  [CONTEST_F_COUNTRY] = "Country",
-  [CONTEST_F_COUNTRY_EN] = "Country (English)",
-  [CONTEST_F_REGION] = "Region",
-  [CONTEST_F_AREA] = "Area",
-  [CONTEST_F_ZIP] = "Zip code",
-  [CONTEST_F_STREET] = "Street address",
-  [CONTEST_F_LANGUAGES] = "Programming Languages",
-  [CONTEST_F_FIELD0] = "Field 0",
-  [CONTEST_F_FIELD1] = "Field 1",
-  [CONTEST_F_FIELD2] = "Field 2",
-  [CONTEST_F_FIELD3] = "Field 3",
-  [CONTEST_F_FIELD4] = "Field 4",
-  [CONTEST_F_FIELD5] = "Field 5",
-  [CONTEST_F_FIELD6] = "Field 6",
-  [CONTEST_F_FIELD7] = "Field 7",
-  [CONTEST_F_FIELD8] = "Field 8",
-  [CONTEST_F_FIELD9] = "Field 9",
-};
-
-static const unsigned char *const member_field_names[] =
-{
-  [CONTEST_MF_FIRSTNAME] = "First Name",
-  [CONTEST_MF_FIRSTNAME_EN] = "First Name (English)",
-  [CONTEST_MF_MIDDLENAME] = "Middle Name",
-  [CONTEST_MF_MIDDLENAME_EN] = "Middle Name (English)",
-  [CONTEST_MF_SURNAME] = "Surname",
-  [CONTEST_MF_SURNAME_EN] = "Surname (English)",
-  [CONTEST_MF_STATUS] = "Status",
-  [CONTEST_MF_GENDER] = "Gender",
-  [CONTEST_MF_GRADE] = "Grade",
-  [CONTEST_MF_GROUP] = "Group",
-  [CONTEST_MF_GROUP_EN] = "Group (English)",
-  [CONTEST_MF_EMAIL] = "E-mail",
-  [CONTEST_MF_HOMEPAGE] = "Homepage",
-  [CONTEST_MF_PHONE] = "Phone",
-  [CONTEST_MF_INST] = "Institution",
-  [CONTEST_MF_INST_EN] = "Institution (English)",
-  [CONTEST_MF_INSTSHORT] = "Institution, short",
-  [CONTEST_MF_INSTSHORT_EN] = "Institution, short (English)",
-  [CONTEST_MF_FAC] = "Faculty",
-  [CONTEST_MF_FAC_EN] = "Faculty (English)",
-  [CONTEST_MF_FACSHORT] = "Faculty, short",
-  [CONTEST_MF_FACSHORT_EN] = "Faculty, short (English)",
-  [CONTEST_MF_OCCUPATION] = "Occupation",
-  [CONTEST_MF_OCCUPATION_EN] = "Occupation (English)",
-  [CONTEST_MF_DISCIPLINE] = "Discipline",
-  [CONTEST_MF_BIRTH_DATE] = "Birth date",
-  [CONTEST_MF_ENTRY_DATE] = "Entry date",
-  [CONTEST_MF_GRADUATION_DATE] = "Graduation date",
-};
-
 static void
 print_form_fields_2(FILE *f, struct contest_member *memb,
                     const unsigned char *title,
@@ -2175,7 +2126,7 @@ print_form_fields_2(FILE *f, struct contest_member *memb,
     fprintf(af, "initial count = %d\n", memb->init_count);
     for (i = 1; i < CONTEST_LAST_MEMBER_FIELD; i++) {
       if (!descs[i]) continue;
-      fprintf(af, "\"%s\" %s\n", member_field_names[i],
+      fprintf(af, "\"%s\" %s\n", contests_get_member_field_name(i),
               descs[i]->mandatory?"mandatory":"optional");
     }
   }
@@ -2207,7 +2158,7 @@ print_form_fields_3(FILE *f, struct contest_field **descs,
   if (descs) {
     for (i = 1; i < CONTEST_LAST_FIELD; i++) {
       if (!descs[i]) continue;
-      fprintf(af, "\"%s\" %s\n", form_field_names[i],
+      fprintf(af, "\"%s\" %s\n", contests_get_form_field_name(i),
               descs[i]->mandatory?"mandatory":"optional");
     }
   }
@@ -2509,9 +2460,9 @@ super_html_edit_contest_page(FILE *f,
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Manage the contest server?</td><td>",
             form_row_attrs[row ^= 1]);
-    html_boolean_select(f, cnts->new_managed, "param", 0, 0);
+    html_boolean_select(f, cnts->managed, "param", 0, 0);
     fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_NEW_MANAGED, "Change");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_MANAGED, "Change");
     fprintf(f, "</td></tr></form>\n");
     //}
 
@@ -2548,25 +2499,6 @@ super_html_edit_contest_page(FILE *f,
     html_boolean_select(f, cnts->invisible, "param", 0, 0);
     fprintf(f, "</td><td>");
     html_submit_button(f, SSERV_CMD_CNTS_CHANGE_INVISIBLE, "Change");
-    fprintf(f, "</td></tr></form>\n");
-  }
-
-  if (sstate->advanced_view) {
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Allow time desync between `team' and `serve'?</td><td>", form_row_attrs[row ^= 1]);
-    html_boolean_select(f, cnts->client_ignore_time_skew, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_TIME_SKEW, "Change");
-    fprintf(f, "</td></tr></form>\n");
-  }
-
-  if (sstate->advanced_view) {
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Disallow team login?</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, cnts->client_disable_team, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_TEAM_LOGIN, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 
@@ -2614,9 +2546,9 @@ super_html_edit_contest_page(FILE *f,
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Enable password restoration?</td><td>",
             form_row_attrs[row ^= 1]);
-    html_boolean_select(f, cnts->enable_forgot_password, "param", 0, 0);
+    html_boolean_select(f, cnts->enable_password_recovery, "param", 0, 0);
     fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_ENABLE_FORGOT_PASSWORD, "Change");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_ENABLE_PASSWORD_RECOVERY, "Change");
     fprintf(f, "</td></tr></form>\n");
   }
 
@@ -3411,6 +3343,38 @@ static const char * contest_cap_descs[] =
   [OPCAP_RESTART] = "Restart the server programs",
 };
 
+void
+super_html_print_caps_table(
+        FILE *out_f,
+        opcap_t caps,
+        const unsigned char *table_opts,
+        const unsigned char *td_opts)
+{
+  int i, row = 1;
+  const unsigned char *s;
+
+  if (!table_opts) table_opts = "";
+  if (!td_opts) td_opts = "";
+
+  fprintf(out_f, "<table%s>\n", table_opts);
+  for (i = 0; i < OPCAP_LAST; i++) {
+    if (!opcaps_is_contest_cap(i)) continue;
+    s = "";
+    if (opcaps_check(caps, i) >= 0) s = " checked=\"yes\"";
+
+    fprintf(out_f,
+            "<tr%s>"
+            "<td%s>%d</td>"
+            "<td%s><input type=\"checkbox\" name=\"cap_%d\"%s /></td>"
+            "<td%s><tt>%s</tt></td>"
+            "<td%s>%s</td>"
+            "</tr>\n",
+            form_row_attrs[row ^= 1], td_opts, i, td_opts, i, s,
+            td_opts, opcaps_get_name(i), td_opts, contest_cap_descs[i]);
+  }
+  fprintf(out_f, "</table>");
+}
+
 int
 super_html_edit_permission(FILE *f,
                            int priv_level,
@@ -3429,7 +3393,6 @@ super_html_edit_permission(FILE *f,
   int i;
   struct opcap_list_item *p;
   unsigned char hbuf[1024];
-  int row = 1;
 
   if (!cnts) {
     fprintf(f, "<h2>No current contest!</h2>\n"
@@ -3451,17 +3414,7 @@ super_html_edit_permission(FILE *f,
   html_start_form(f, 1, self_url, hidden_vars);
   snprintf(hbuf, sizeof(hbuf), "%d", num);
   html_hidden_var(f, "num", hbuf);
-  fprintf(f, "<table border=\"0\">\n");
-  for (i = 0; i < OPCAP_LAST; i++) {
-    if (!opcaps_is_contest_cap(i)) continue;
-    fprintf(f, "<tr%s><td>%d</td><td><input type=\"checkbox\" name=\"cap_%d\"",
-            form_row_attrs[row ^= 1], i, i);
-    if (opcaps_check(p->caps, i) >= 0) fprintf(f, " checked=\"yes\"");
-    fprintf(f, "/></td><td><tt>%s</tt></td><td>%s</td></tr>\n",
-            opcaps_get_name(i), contest_cap_descs[i]);
-  }
-  fprintf(f, "</table>");
-
+  super_html_print_caps_table(f, p->caps, " border=\"0\"", 0);
   fprintf(f, "<table border=\"0\"><tr><td>%sTo the top</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
   fprintf(f, "<td>%sForget changes</a></td><td>",
@@ -3523,7 +3476,7 @@ super_html_edit_form_fields(FILE *f,
   struct contest_desc *cnts = sstate->edited_cnts;
   unsigned char hbuf[1024];
   int first_index, last_index, allow_setting_minmax, commit_action, val, i;
-  const unsigned char * const *field_names;
+  const unsigned char *(*field_names_func)(int ff);
   struct contest_member *memb = 0;
   struct contest_field **fields = 0;
   unsigned char *desc_txt;
@@ -3540,7 +3493,7 @@ super_html_edit_form_fields(FILE *f,
   case SSERV_CMD_CNTS_EDIT_FORM_FIELDS:
     first_index = 1;
     last_index = CONTEST_LAST_FIELD;
-    field_names = form_field_names;
+    field_names_func = contests_get_form_field_name;
     allow_setting_minmax = 0;
     fields = cnts->fields;
     desc_txt = "Basic fields";
@@ -3549,7 +3502,7 @@ super_html_edit_form_fields(FILE *f,
   case SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS:
     first_index = 1;
     last_index = CONTEST_LAST_MEMBER_FIELD;
-    field_names = member_field_names;
+    field_names_func = contests_get_member_field_name;
     allow_setting_minmax = 1;
     memb = cnts->members[CONTEST_M_CONTESTANT];
     if (memb) fields = memb->fields;
@@ -3559,7 +3512,7 @@ super_html_edit_form_fields(FILE *f,
   case SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS:
     first_index = 1;
     last_index = CONTEST_LAST_MEMBER_FIELD;
-    field_names = member_field_names;
+    field_names_func = contests_get_member_field_name;
     allow_setting_minmax = 1;
     memb = cnts->members[CONTEST_M_RESERVE];
     if (memb) fields = memb->fields;
@@ -3569,7 +3522,7 @@ super_html_edit_form_fields(FILE *f,
   case SSERV_CMD_CNTS_EDIT_COACH_FIELDS:
     first_index = 1;
     last_index = CONTEST_LAST_MEMBER_FIELD;
-    field_names = member_field_names;
+    field_names_func = contests_get_member_field_name;
     allow_setting_minmax = 1;
     memb = cnts->members[CONTEST_M_COACH];
     if (memb) fields = memb->fields;
@@ -3579,7 +3532,7 @@ super_html_edit_form_fields(FILE *f,
   case SSERV_CMD_CNTS_EDIT_ADVISOR_FIELDS:
     first_index = 1;
     last_index = CONTEST_LAST_MEMBER_FIELD;
-    field_names = member_field_names;
+    field_names_func = contests_get_member_field_name;
     allow_setting_minmax = 1;
     memb = cnts->members[CONTEST_M_ADVISOR];
     if (memb) fields = memb->fields;
@@ -3589,7 +3542,7 @@ super_html_edit_form_fields(FILE *f,
   case SSERV_CMD_CNTS_EDIT_GUEST_FIELDS:
     first_index = 1;
     last_index = CONTEST_LAST_MEMBER_FIELD;
-    field_names = member_field_names;
+    field_names_func = contests_get_member_field_name;
     allow_setting_minmax = 1;
     memb = cnts->members[CONTEST_M_GUEST];
     if (memb) fields = memb->fields;
@@ -3628,7 +3581,7 @@ super_html_edit_form_fields(FILE *f,
       val = 1;
       if (fields[i]->mandatory) val = 2;
     }
-    print_field_row_select(f, i, field_names[i], val, form_row_attrs[row ^= 1]);
+    print_field_row_select(f, i, (*field_names_func)(i), val, form_row_attrs[row ^= 1]);
   }
   fprintf(f, "</table>");
 
@@ -3642,7 +3595,7 @@ super_html_edit_form_fields(FILE *f,
   return 0;
 }
 
-static const unsigned char template_help_1[] =
+const unsigned char super_html_template_help_1[] =
 "<table border=\"1\">\n"
 "<tr><td><tt>%L</tt></td><td>The locale number (0 - English, 1 - Russian)</td></tr>\n"
 "<tr><td><tt>%C</tt></td><td>The page character set</td></tr>\n"
@@ -3651,19 +3604,19 @@ static const unsigned char template_help_1[] =
 "<tr><td><tt>%R</tt></td><td>The ejudge copyright notice</td></tr>\n"
 "<tr><td><tt>%%</tt></td><td>The percent sign <tt>%</tt></td></tr>\n"
 "</table>\n";
-static const unsigned char template_help_2[] =
+const unsigned char super_html_template_help_2[] =
 "<table border=\"1\">\n"
-"<tr><td><tt>%Ui</tt></td>The user identifier<td></td></tr>\n"
-"<tr><td><tt>%Un</tt></td>The user name<td></td></tr>\n"
-"<tr><td><tt>%Ul</tt></td>The user login<td></td></tr>\n"
-"<tr><td><tt>%Ue</tt></td>The user e-mail<td></td></tr>\n"
-"<tr><td><tt>%Uz</tt></td>The user registration password<td></td></tr>\n"
-"<tr><td><tt>%UZ</tt></td>The user team password<td></td></tr>\n"
-"<tr><td><tt>%Vl</tt></td>The locale number (0 - English, 1 - Russian)<td></td></tr>\n"
-"<tr><td><tt>%Vu</tt></td>The `register' CGI-program URL<td></td></tr>\n"
+"<tr><td><tt>%Ui</tt></td><td>The user identifier</td></tr>\n"
+"<tr><td><tt>%Un</tt></td><td>The user name</td></tr>\n"
+"<tr><td><tt>%Ul</tt></td><td>The user login</td></tr>\n"
+"<tr><td><tt>%Ue</tt></td><td>The user e-mail</td></tr>\n"
+"<tr><td><tt>%Uz</tt></td><td>The user registration password</td></tr>\n"
+"<tr><td><tt>%UZ</tt></td><td>The user team password</td></tr>\n"
+"<tr><td><tt>%Vl</tt></td><td>The locale number (0 - English, 1 - Russian)</td></tr>\n"
+"<tr><td><tt>%Vu</tt></td><td>The `register' CGI-program URL</td></tr>\n"
 "<tr><td><tt>%%</tt></td><td>The percent sign <tt>%</tt></td></tr>\n"
 "</table>\n";
-static const unsigned char template_help_3[] = "";
+const unsigned char super_html_template_help_3[] = "";
 
 int
 super_html_edit_template_file(FILE *f,
@@ -3706,7 +3659,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD_TEXT;
     clear_action = SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
-    help_txt = template_help_3;
+    help_txt = super_html_template_help_3;
     break;
 
   case SSERV_CMD_GLOB_EDIT_STAND_HEADER_FILE:
@@ -3721,7 +3674,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_GLOB_CLEAR_STAND_HEADER_TEXT;
     clear_action = SSERV_CMD_GLOB_CLEAR_STAND_HEADER_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_GLOB_EDIT_STAND_FOOTER_FILE:
     if (!global) {
@@ -3735,7 +3688,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_GLOB_CLEAR_STAND_FOOTER_TEXT;
     clear_action = SSERV_CMD_GLOB_CLEAR_STAND_FOOTER_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_GLOB_EDIT_STAND2_HEADER_FILE:
     if (!global) {
@@ -3749,7 +3702,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_GLOB_CLEAR_STAND2_HEADER_TEXT;
     clear_action = SSERV_CMD_GLOB_CLEAR_STAND2_HEADER_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_GLOB_EDIT_STAND2_FOOTER_FILE:
     if (!global) {
@@ -3763,7 +3716,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_GLOB_CLEAR_STAND2_FOOTER_TEXT;
     clear_action = SSERV_CMD_GLOB_CLEAR_STAND2_FOOTER_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_GLOB_EDIT_PLOG_HEADER_FILE:
     if (!global) {
@@ -3777,7 +3730,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_GLOB_CLEAR_PLOG_HEADER_TEXT;
     clear_action = SSERV_CMD_GLOB_CLEAR_PLOG_HEADER_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_GLOB_EDIT_PLOG_FOOTER_FILE:
     if (!global) {
@@ -3791,7 +3744,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_GLOB_CLEAR_PLOG_FOOTER_TEXT;
     clear_action = SSERV_CMD_GLOB_CLEAR_PLOG_FOOTER_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
 
   case SSERV_CMD_CNTS_EDIT_USERS_HEADER:
@@ -3806,7 +3759,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_CNTS_CLEAR_USERS_HEADER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_USERS_HEADER_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_USERS_FOOTER:
     if (!cnts) {
@@ -3820,7 +3773,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_CNTS_CLEAR_USERS_FOOTER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_USERS_FOOTER_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_REGISTER_HEADER:
     if (!cnts) {
@@ -3834,7 +3787,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_REGISTER_FOOTER:
     if (!cnts) {
@@ -3848,7 +3801,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_TEAM_HEADER:
     if (!cnts) {
@@ -3862,7 +3815,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_HEADER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_HEADER_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_TEAM_MENU_1:
     if (!cnts) {
@@ -3876,7 +3829,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_1_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_1_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_TEAM_MENU_2:
     if (!cnts) {
@@ -3890,7 +3843,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_2_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_2_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_TEAM_MENU_3:
     if (!cnts) {
@@ -3904,7 +3857,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_3_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_3_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_TEAM_SEPARATOR:
     if (!cnts) {
@@ -3918,7 +3871,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_SEPARATOR_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_SEPARATOR_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_TEAM_FOOTER:
     if (!cnts) {
@@ -3932,7 +3885,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_PRIV_HEADER:
     if (!cnts) {
@@ -3946,7 +3899,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_CNTS_CLEAR_PRIV_HEADER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_PRIV_HEADER_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_PRIV_FOOTER:
     if (!cnts) {
@@ -3960,7 +3913,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_COPYRIGHT:
     if (!cnts) {
@@ -3974,7 +3927,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_CNTS_CLEAR_COPYRIGHT_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_COPYRIGHT_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_WELCOME:
     if (!cnts) {
@@ -3988,7 +3941,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_CNTS_CLEAR_WELCOME_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_WELCOME_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_REG_WELCOME:
     if (!cnts) {
@@ -4002,7 +3955,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_CNTS_CLEAR_REG_WELCOME_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_REG_WELCOME_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = template_help_1;
+    help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE:
     if (!cnts) {
@@ -4016,7 +3969,7 @@ super_html_edit_template_file(FILE *f,
     reread_action = SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = template_help_2;
+    help_txt = super_html_template_help_2;
     break;
   default:
     abort();

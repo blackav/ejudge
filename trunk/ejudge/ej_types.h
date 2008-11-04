@@ -3,7 +3,7 @@
 #ifndef __EJ_TYPES_H__
 #define __EJ_TYPES_H__
 
-/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,9 @@ typedef ruint32_t ej_size_t;     /* size_t as stored in files */
 typedef ruint32_t ej_ip_t;       /* IP address as stored in files */
 typedef unsigned long long ej_cookie_t;   /* cookie */
 typedef unsigned long long ej_tsc_t; /* timestamp counter type */
+
+typedef unsigned char ejbytebool_t;
+typedef int ejintbool_t;
 
 /* privilege level */
 enum priv_level
