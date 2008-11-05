@@ -1679,7 +1679,7 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
 
   flist = (const int[]) {
     CONTEST_A_AUTOREGISTER, CONTEST_A_DISABLE_TEAM_PASSWORD,
-    CONTEST_A_CLEAN_USERS, CONTEST_A_SIMPLE_REGISTRATION,
+    CONTEST_A_SIMPLE_REGISTRATION,
     CONTEST_A_SEND_PASSWD_EMAIL, CONTEST_A_ASSIGN_LOGINS,
     CONTEST_A_FORCE_REGISTRATION, CONTEST_A_DISABLE_NAME,
     CONTEST_A_ENABLE_PASSWORD_RECOVERY, CONTEST_A_EXAM_MODE,
@@ -1693,6 +1693,10 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
     j = attr_to_contest_desc_map[flist[i]];
     if (*(const unsigned char*) contest_desc_get_ptr(cnts, j))
       fprintf(f, "\n         %s=\"%s\"", attr_map[flist[i]], "yes");
+  }
+  if (!cnts->clean_users) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attr_map[CONTEST_A_CLEAN_USERS], "no");
   }
 
   fprintf(f, ">");
