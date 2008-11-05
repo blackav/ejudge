@@ -1011,7 +1011,7 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
       0 };
     for (i = 0; flist[i]; ++i) {
       process_conf_file_path(cnts,
-                             (unsigned char**)contest_desc_get_ptr_nc(cnts, i));
+                             (unsigned char**)contest_desc_get_ptr_nc(cnts, flist[i]));
     }
 
     if (!cnts->users_head_style) {
@@ -1690,7 +1690,7 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
     0
   };
   for (i = 0; flist[i]; ++i) {
-    j = attr_to_contest_desc_map[i];
+    j = attr_to_contest_desc_map[flist[i]];
     if (*(const unsigned char*) contest_desc_get_ptr(cnts, j))
       fprintf(f, "\n         %s=\"%s\"", attr_map[i], "yes");
   }
@@ -1799,7 +1799,7 @@ unparse_texts(
         const int *flist)
 {
   for (int i = 0; flist[i]; ++i)
-    unparse_text(f, flist[i], *(const unsigned char **) contest_desc_get_ptr(cnts, tag_to_contest_desc_map[i]));
+    unparse_text(f, flist[i], *(const unsigned char **) contest_desc_get_ptr(cnts, tag_to_contest_desc_map[flist[i]]));
 }
 
 void
