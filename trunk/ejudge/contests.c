@@ -1692,7 +1692,7 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
   for (i = 0; flist[i]; ++i) {
     j = attr_to_contest_desc_map[flist[i]];
     if (*(const unsigned char*) contest_desc_get_ptr(cnts, j))
-      fprintf(f, "\n         %s=\"%s\"", attr_map[i], "yes");
+      fprintf(f, "\n         %s=\"%s\"", attr_map[flist[i]], "yes");
   }
 
   fprintf(f, ">");
