@@ -3305,18 +3305,21 @@ super_html_edit_access_rules(FILE *f,
 
   return 0;
 }
-
 static const char * contest_cap_descs[] =
 {
   [OPCAP_MASTER_LOGIN] = "Use the `master' CGI-program",
   [OPCAP_JUDGE_LOGIN] = "Use the `judge' CGI-program",
   [OPCAP_SUBMIT_RUN] = "Submit a run from the `master' or `judge' programs",
-  [OPCAP_MAP_CONTEST] = "Start the `serve' from the command line",
-  [OPCAP_LIST_USERS] = "List all the participating users (incl. invisible, banned)",
+  [OPCAP_MAP_CONTEST] = "Start the programs from the command line",
+  [OPCAP_LIST_USERS] = "List the participating users (incl. invisible, banned)",
+  [OPCAP_PRIV_EDIT_REG] = "Change the registration status for privileged users",
+  [OPCAP_CREATE_USER] = "Create users in the database",
   [OPCAP_GET_USER] = "View the user details for the participating users",
   [OPCAP_EDIT_USER] = "Edit the user details for the non-privileged participating users",
+  [OPCAP_DELETE_USER] = "Delete non-privileged users from the database",
   [OPCAP_PRIV_EDIT_USER] = "Edit the user details for the privileged participating users",
-  //  [OPCAP_GENERATE_TEAM_PASSWORDS] = "Generate random `team' passwords for non-privileged users",
+  [OPCAP_PRIV_DELETE_USER] = "Delete privileged users from the database",
+  [OPCAP_EDIT_CONTEST] = "Edit the contest settings using `serve-control'",
   [OPCAP_CREATE_REG] = "Register non-privileged users for the contest",
   [OPCAP_EDIT_REG] = "Change the registration status for non-privileged users",
   [OPCAP_DELETE_REG] = "Delete registration for non-privileged users",
@@ -3336,8 +3339,6 @@ static const char * contest_cap_descs[] =
   [OPCAP_CONTROL_CONTEST] = "Perform contest administration (start/stop, etc)",
   [OPCAP_IMPORT_XML_RUNS] = "Import and merge the XML run database",
   [OPCAP_PRINT_RUN] = "Print any run without quota restrictions",
-  [OPCAP_EDIT_CONTEST] = "Edit the contest settings using `serve-control'",
-  [OPCAP_PRIV_EDIT_REG] = "Change the registration status for privileged users",
   [OPCAP_EDIT_PASSWD] = "View and edit passwords for regular users",
   [OPCAP_PRIV_EDIT_PASSWD] = "View and edit passwords for privileged users",
   [OPCAP_RESTART] = "Restart the server programs",

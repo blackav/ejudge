@@ -28,6 +28,7 @@
 #include "xml_utils.h"
 #include "l10n.h"
 #include "ejudge_cfg.h"
+#include "contests_meta.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -51,6 +52,100 @@
 #endif
 
 #define CONTEST_CHECK_TIME 5
+
+static const int tag_to_contest_desc_map[CONTEST_LAST_TAG] =
+{
+  [CONTEST_REGISTER_ACCESS] = CNTS_register_access,
+  [CONTEST_USERS_ACCESS] = CNTS_users_access,
+  [CONTEST_MASTER_ACCESS] = CNTS_master_access,
+  [CONTEST_JUDGE_ACCESS] = CNTS_judge_access,
+  [CONTEST_TEAM_ACCESS] = CNTS_team_access,
+  [CONTEST_SERVE_CONTROL_ACCESS] = CNTS_serve_control_access,
+  [CONTEST_NAME] = CNTS_name,
+  [CONTEST_NAME_EN] = CNTS_name_en,
+  [CONTEST_MAIN_URL] = CNTS_main_url,
+  [CONTEST_KEYWORDS] = CNTS_keywords,
+  [CONTEST_USERS_HEADER_FILE] = CNTS_users_header_file,
+  [CONTEST_USERS_FOOTER_FILE] = CNTS_users_footer_file,
+  [CONTEST_REGISTER_EMAIL] = CNTS_register_email,
+  [CONTEST_REGISTER_URL] = CNTS_register_url,
+  [CONTEST_LOGIN_TEMPLATE] = CNTS_login_template,
+  [CONTEST_TEAM_URL] = CNTS_team_url,
+  [CONTEST_REGISTRATION_DEADLINE] = CNTS_reg_deadline,
+  [CONTEST_ROOT_DIR] = CNTS_root_dir,
+  [CONTEST_STANDINGS_URL] = CNTS_standings_url,
+  [CONTEST_PROBLEMS_URL] = CNTS_problems_url,
+  [CONTEST_SERVE_USER] = CNTS_serve_user,
+  [CONTEST_SERVE_GROUP] = CNTS_serve_group,
+  [CONTEST_REGISTER_HEADER_FILE] = CNTS_register_header_file,
+  [CONTEST_REGISTER_FOOTER_FILE] = CNTS_register_footer_file,
+  [CONTEST_TEAM_HEADER_FILE] = CNTS_team_header_file,
+  [CONTEST_TEAM_MENU_1_FILE] = CNTS_team_menu_1_file,
+  [CONTEST_TEAM_MENU_2_FILE] = CNTS_team_menu_2_file,
+  [CONTEST_TEAM_MENU_3_FILE] = CNTS_team_menu_3_file,
+  [CONTEST_TEAM_SEPARATOR_FILE] = CNTS_team_separator_file,
+  [CONTEST_TEAM_FOOTER_FILE] = CNTS_team_footer_file,
+  [CONTEST_COPYRIGHT_FILE] = CNTS_copyright_file,
+  [CONTEST_USERS_HEAD_STYLE] = CNTS_users_head_style,
+  [CONTEST_USERS_PAR_STYLE] = CNTS_users_par_style,
+  [CONTEST_USERS_TABLE_STYLE] = CNTS_users_table_style,
+  [CONTEST_USERS_VERB_STYLE] = CNTS_users_verb_style,
+  [CONTEST_USERS_TABLE_FORMAT] = CNTS_users_table_format,
+  [CONTEST_USERS_TABLE_FORMAT_EN] = CNTS_users_table_format_en,
+  [CONTEST_USERS_TABLE_LEGEND] = CNTS_users_table_legend,
+  [CONTEST_USERS_TABLE_LEGEND_EN] = CNTS_users_table_legend_en,
+  [CONTEST_REGISTER_HEAD_STYLE] = CNTS_register_head_style,
+  [CONTEST_REGISTER_PAR_STYLE] = CNTS_register_par_style,
+  [CONTEST_REGISTER_TABLE_STYLE] = CNTS_register_table_style,
+  [CONTEST_TEAM_HEAD_STYLE] = CNTS_team_head_style,
+  [CONTEST_TEAM_PAR_STYLE] = CNTS_team_par_style,
+  [CONTEST_CONF_DIR] = CNTS_conf_dir,
+  [CONTEST_RUN_USER] = CNTS_run_user,
+  [CONTEST_RUN_GROUP] = CNTS_run_group,
+  [CONTEST_REGISTER_EMAIL_FILE] = CNTS_register_email_file,
+  [CONTEST_USER_NAME_COMMENT] = CNTS_user_name_comment,
+  [CONTEST_ALLOWED_LANGUAGES] = CNTS_allowed_languages,
+  [CONTEST_CF_NOTIFY_EMAIL] = CNTS_cf_notify_email,
+  [CONTEST_CLAR_NOTIFY_EMAIL] = CNTS_clar_notify_email,
+  [CONTEST_DAILY_STAT_EMAIL] = CNTS_daily_stat_email,
+  [CONTEST_PRIV_HEADER_FILE] = CNTS_priv_header_file,
+  [CONTEST_PRIV_FOOTER_FILE] = CNTS_priv_footer_file,
+  [CONTEST_ALLOWED_REGIONS] = CNTS_allowed_regions,
+  [CONTEST_LOGIN_TEMPLATE_OPTIONS] = CNTS_login_template_options,
+  [CONTEST_DIR_MODE] = CNTS_dir_mode,
+  [CONTEST_DIR_GROUP] = CNTS_dir_group,
+  [CONTEST_FILE_MODE] = CNTS_file_mode,
+  [CONTEST_FILE_GROUP] = CNTS_file_group,
+  [CONTEST_DEFAULT_LOCALE] = CNTS_default_locale,
+  [CONTEST_WELCOME_FILE] = CNTS_welcome_file,
+  [CONTEST_REG_WELCOME_FILE] = CNTS_reg_welcome_file,
+  [CONTEST_USER_CONTEST] = CNTS_user_contest,
+};
+static const int attr_to_contest_desc_map[CONTEST_LAST_ATTR] =
+{
+  [CONTEST_A_ID] = CNTS_id,
+  [CONTEST_A_AUTOREGISTER] = CNTS_autoregister,
+  [CONTEST_A_DISABLE_TEAM_PASSWORD] = CNTS_disable_team_password,
+  [CONTEST_A_MANAGED] = CNTS_managed,
+  [CONTEST_A_NEW_MANAGED] = CNTS_managed,
+  [CONTEST_A_CLEAN_USERS] = CNTS_clean_users,
+  [CONTEST_A_RUN_MANAGED] = CNTS_run_managed,
+  [CONTEST_A_CLOSED] = CNTS_closed,
+  [CONTEST_A_INVISIBLE] = CNTS_invisible,
+  [CONTEST_A_SIMPLE_REGISTRATION] = CNTS_simple_registration,
+  [CONTEST_A_SEND_PASSWD_EMAIL] = CNTS_send_passwd_email,
+  [CONTEST_A_ASSIGN_LOGINS] = CNTS_assign_logins,
+  [CONTEST_A_FORCE_REGISTRATION] = CNTS_force_registration,
+  [CONTEST_A_DISABLE_NAME] = CNTS_disable_name,
+  [CONTEST_A_ENABLE_FORGOT_PASSWORD] = CNTS_enable_password_recovery,
+  [CONTEST_A_EXAM_MODE] = CNTS_exam_mode,
+  [CONTEST_A_DISABLE_PASSWORD_CHANGE] = CNTS_disable_password_change,
+  [CONTEST_A_DISABLE_LOCALE_CHANGE] = CNTS_disable_locale_change,
+  [CONTEST_A_PERSONAL] = CNTS_personal,
+  [CONTEST_A_ALLOW_REG_DATA_EDIT] = CNTS_allow_reg_data_edit,
+  [CONTEST_A_ENABLE_PASSWORD_RECOVERY] = CNTS_enable_password_recovery,
+  [CONTEST_A_DISABLE_MEMBER_DELETE] = CNTS_disable_member_delete,
+};
 
 static char const * const elem_map[] =
 {
@@ -198,6 +293,8 @@ static size_t const elem_sizes[CONTEST_LAST_TAG] =
 static void
 node_free(struct xml_tree *t)
 {
+  int i;
+
   switch (t->tag) {
   case CONTEST_CONTESTS:
     xfree(((struct contest_list *) t)->id_map);
@@ -205,64 +302,12 @@ node_free(struct xml_tree *t)
   case CONTEST_CONTEST:
     {
       struct contest_desc *cnts = (struct contest_desc*) t;
-      xfree(cnts->name);
-      xfree(cnts->name_en);
-      xfree(cnts->main_url);
-      xfree(cnts->keywords);
-      xfree(cnts->users_header_file);
-      xfree(cnts->users_footer_file);
-      xfree(cnts->register_header_file);
-      xfree(cnts->register_footer_file);
-      xfree(cnts->team_header_file);
-      xfree(cnts->team_menu_1_file);
-      xfree(cnts->team_menu_2_file);
-      xfree(cnts->team_menu_3_file);
-      xfree(cnts->team_separator_file);
-      xfree(cnts->team_footer_file);
-      xfree(cnts->copyright_file);
-      xfree(cnts->register_email);
-      xfree(cnts->register_url);
-      xfree(cnts->login_template);
-      xfree(cnts->login_template_options);
-      xfree(cnts->team_url);
-      xfree(cnts->root_dir);
-      xfree(cnts->conf_dir);
-      xfree(cnts->standings_url);
-      xfree(cnts->problems_url);
-      xfree(cnts->serve_user);
-      xfree(cnts->serve_group);
-      xfree(cnts->run_user);
-      xfree(cnts->run_group);
-      xfree(cnts->register_email_file);
-      xfree(cnts->users_head_style);
-      xfree(cnts->users_par_style);
-      xfree(cnts->users_table_style);
-      xfree(cnts->users_verb_style);
-      xfree(cnts->users_table_format);
-      xfree(cnts->users_table_format_en);
-      xfree(cnts->users_table_legend);
-      xfree(cnts->users_table_legend_en);
-      xfree(cnts->register_head_style);
-      xfree(cnts->register_par_style);
-      xfree(cnts->register_table_style);
-      xfree(cnts->team_head_style);
-      xfree(cnts->team_par_style);
-      xfree(cnts->user_name_comment);
-      xfree(cnts->allowed_languages);
-      xfree(cnts->allowed_regions);
-      xfree(cnts->cf_notify_email);
-      xfree(cnts->clar_notify_email);
-      xfree(cnts->daily_stat_email);
-      xfree(cnts->priv_header_file);
-      xfree(cnts->priv_footer_file);
-      xfree(cnts->dir_mode);
-      xfree(cnts->dir_group);
-      xfree(cnts->file_mode);
-      xfree(cnts->file_group);
-      xfree(cnts->default_locale);
-      xfree(cnts->welcome_file);
-      xfree(cnts->reg_welcome_file);
-      xfree(cnts->user_contest);
+      // free everything of type 's'
+      for (i = 1; i < CNTS_LAST_FIELD; ++i) {
+        if (contest_desc_get_type(i) != 's') continue;
+        unsigned char **p = (unsigned char **) contest_desc_get_ptr_nc(cnts, i);
+        xfree(*p); *p = 0;
+      }
     }
     break;
   case CONTEST_CAP:
@@ -639,103 +684,101 @@ process_conf_file_path(struct contest_desc *cnts, unsigned char **pstr)
   *pstr = str;
 }
 
-#define CONTEST_DESC_OFFSET(f) XOFFSET(struct contest_desc, f)
-
-static const size_t contest_final_offsets[CONTEST_LAST_TAG] =
+static const unsigned char contest_final_set[CONTEST_LAST_TAG] =
 {
-  [CONTEST_NAME] = CONTEST_DESC_OFFSET(name),
-  [CONTEST_NAME_EN] = CONTEST_DESC_OFFSET(name_en),
-  [CONTEST_MAIN_URL] = CONTEST_DESC_OFFSET(main_url),
-  [CONTEST_KEYWORDS] = CONTEST_DESC_OFFSET(keywords),
-  [CONTEST_USERS_HEADER_FILE] = CONTEST_DESC_OFFSET(users_header_file),
-  [CONTEST_USERS_FOOTER_FILE] = CONTEST_DESC_OFFSET(users_footer_file),
-  [CONTEST_REGISTER_EMAIL] = CONTEST_DESC_OFFSET(register_email),
-  [CONTEST_REGISTER_URL] = CONTEST_DESC_OFFSET(register_url),
-  [CONTEST_LOGIN_TEMPLATE] = CONTEST_DESC_OFFSET(login_template),
-  [CONTEST_LOGIN_TEMPLATE_OPTIONS]=CONTEST_DESC_OFFSET(login_template_options),
-  [CONTEST_TEAM_URL] = CONTEST_DESC_OFFSET(team_url),
-  [CONTEST_ROOT_DIR] = CONTEST_DESC_OFFSET(root_dir),
-  [CONTEST_STANDINGS_URL] = CONTEST_DESC_OFFSET(standings_url),
-  [CONTEST_PROBLEMS_URL] = CONTEST_DESC_OFFSET(problems_url),
-  [CONTEST_SERVE_USER] = CONTEST_DESC_OFFSET(serve_user),
-  [CONTEST_SERVE_GROUP] = CONTEST_DESC_OFFSET(serve_group),
-  [CONTEST_REGISTER_HEADER_FILE] = CONTEST_DESC_OFFSET(register_header_file),
-  [CONTEST_REGISTER_FOOTER_FILE] = CONTEST_DESC_OFFSET(register_footer_file),
-  [CONTEST_TEAM_HEADER_FILE] = CONTEST_DESC_OFFSET(team_header_file),
-  [CONTEST_TEAM_MENU_1_FILE] = CONTEST_DESC_OFFSET(team_menu_1_file),
-  [CONTEST_TEAM_MENU_2_FILE] = CONTEST_DESC_OFFSET(team_menu_2_file),
-  [CONTEST_TEAM_MENU_3_FILE] = CONTEST_DESC_OFFSET(team_menu_3_file),
-  [CONTEST_TEAM_SEPARATOR_FILE] = CONTEST_DESC_OFFSET(team_separator_file),
-  [CONTEST_TEAM_FOOTER_FILE] = CONTEST_DESC_OFFSET(team_footer_file),
-  [CONTEST_COPYRIGHT_FILE] = CONTEST_DESC_OFFSET(copyright_file),
-  [CONTEST_USERS_HEAD_STYLE] = CONTEST_DESC_OFFSET(users_head_style),
-  [CONTEST_USERS_PAR_STYLE] = CONTEST_DESC_OFFSET(users_par_style),
-  [CONTEST_USERS_TABLE_STYLE] = CONTEST_DESC_OFFSET(users_table_style),
-  [CONTEST_USERS_VERB_STYLE] = CONTEST_DESC_OFFSET(users_verb_style),
-  [CONTEST_USERS_TABLE_FORMAT] = CONTEST_DESC_OFFSET(users_table_format),
-  [CONTEST_USERS_TABLE_FORMAT_EN] = CONTEST_DESC_OFFSET(users_table_format_en),
-  [CONTEST_USERS_TABLE_LEGEND] = CONTEST_DESC_OFFSET(users_table_legend),
-  [CONTEST_USERS_TABLE_LEGEND_EN] = CONTEST_DESC_OFFSET(users_table_legend_en),
-  [CONTEST_REGISTER_HEAD_STYLE] = CONTEST_DESC_OFFSET(register_head_style),
-  [CONTEST_REGISTER_PAR_STYLE] = CONTEST_DESC_OFFSET(register_par_style),
-  [CONTEST_REGISTER_TABLE_STYLE] = CONTEST_DESC_OFFSET(register_table_style),
-  [CONTEST_TEAM_HEAD_STYLE] = CONTEST_DESC_OFFSET(team_head_style),
-  [CONTEST_TEAM_PAR_STYLE] = CONTEST_DESC_OFFSET(team_par_style),
-  [CONTEST_CONF_DIR] = CONTEST_DESC_OFFSET(conf_dir),
-  [CONTEST_RUN_USER] = CONTEST_DESC_OFFSET(run_user),
-  [CONTEST_RUN_GROUP] = CONTEST_DESC_OFFSET(run_group),
-  [CONTEST_REGISTER_EMAIL_FILE] = CONTEST_DESC_OFFSET(register_email_file),
-  [CONTEST_USER_NAME_COMMENT] = CONTEST_DESC_OFFSET(user_name_comment),
-  [CONTEST_ALLOWED_LANGUAGES] = CONTEST_DESC_OFFSET(allowed_languages),
-  [CONTEST_ALLOWED_REGIONS] = CONTEST_DESC_OFFSET(allowed_regions),
-  [CONTEST_CF_NOTIFY_EMAIL] = CONTEST_DESC_OFFSET(cf_notify_email),
-  [CONTEST_CLAR_NOTIFY_EMAIL] = CONTEST_DESC_OFFSET(clar_notify_email),
-  [CONTEST_DAILY_STAT_EMAIL] = CONTEST_DESC_OFFSET(daily_stat_email),
-  [CONTEST_PRIV_HEADER_FILE] = CONTEST_DESC_OFFSET(priv_header_file),
-  [CONTEST_PRIV_FOOTER_FILE] = CONTEST_DESC_OFFSET(priv_footer_file),
-  [CONTEST_DIR_MODE] = CONTEST_DESC_OFFSET(dir_mode),
-  [CONTEST_DIR_GROUP] = CONTEST_DESC_OFFSET(dir_group),
-  [CONTEST_FILE_MODE] = CONTEST_DESC_OFFSET(file_mode),
-  [CONTEST_FILE_GROUP] = CONTEST_DESC_OFFSET(file_group),
-  [CONTEST_DEFAULT_LOCALE] = CONTEST_DESC_OFFSET(default_locale),
-  [CONTEST_WELCOME_FILE] = CONTEST_DESC_OFFSET(welcome_file),
-  [CONTEST_REG_WELCOME_FILE] = CONTEST_DESC_OFFSET(reg_welcome_file),
-  [CONTEST_USER_CONTEST] = CONTEST_DESC_OFFSET(user_contest),
+  [CONTEST_NAME] = 1,
+  [CONTEST_NAME_EN] = 1,
+  [CONTEST_MAIN_URL] = 1,
+  [CONTEST_KEYWORDS] = 1,
+  [CONTEST_USERS_HEADER_FILE] = 1,
+  [CONTEST_USERS_FOOTER_FILE] = 1,
+  [CONTEST_REGISTER_EMAIL] = 1,
+  [CONTEST_REGISTER_URL] = 1,
+  [CONTEST_LOGIN_TEMPLATE] = 1,
+  [CONTEST_LOGIN_TEMPLATE_OPTIONS] = 1,
+  [CONTEST_TEAM_URL] = 1,
+  [CONTEST_ROOT_DIR] = 1,
+  [CONTEST_STANDINGS_URL] = 1,
+  [CONTEST_PROBLEMS_URL] = 1,
+  [CONTEST_SERVE_USER] = 1,
+  [CONTEST_SERVE_GROUP] = 1,
+  [CONTEST_REGISTER_HEADER_FILE] = 1,
+  [CONTEST_REGISTER_FOOTER_FILE] = 1,
+  [CONTEST_TEAM_HEADER_FILE] = 1,
+  [CONTEST_TEAM_MENU_1_FILE] = 1,
+  [CONTEST_TEAM_MENU_2_FILE] = 1,
+  [CONTEST_TEAM_MENU_3_FILE] = 1,
+  [CONTEST_TEAM_SEPARATOR_FILE] = 1,
+  [CONTEST_TEAM_FOOTER_FILE] = 1,
+  [CONTEST_COPYRIGHT_FILE] = 1,
+  [CONTEST_USERS_HEAD_STYLE] = 1,
+  [CONTEST_USERS_PAR_STYLE] = 1,
+  [CONTEST_USERS_TABLE_STYLE] = 1,
+  [CONTEST_USERS_VERB_STYLE] = 1,
+  [CONTEST_USERS_TABLE_FORMAT] = 1,
+  [CONTEST_USERS_TABLE_FORMAT_EN] = 1,
+  [CONTEST_USERS_TABLE_LEGEND] = 1,
+  [CONTEST_USERS_TABLE_LEGEND_EN] = 1,
+  [CONTEST_REGISTER_HEAD_STYLE] = 1,
+  [CONTEST_REGISTER_PAR_STYLE] = 1,
+  [CONTEST_REGISTER_TABLE_STYLE] = 1,
+  [CONTEST_TEAM_HEAD_STYLE] = 1,
+  [CONTEST_TEAM_PAR_STYLE] = 1,
+  [CONTEST_CONF_DIR] = 1,
+  [CONTEST_RUN_USER] = 1,
+  [CONTEST_RUN_GROUP] = 1,
+  [CONTEST_REGISTER_EMAIL_FILE] = 1,
+  [CONTEST_USER_NAME_COMMENT] = 1,
+  [CONTEST_ALLOWED_LANGUAGES] = 1,
+  [CONTEST_ALLOWED_REGIONS] = 1,
+  [CONTEST_CF_NOTIFY_EMAIL] = 1,
+  [CONTEST_CLAR_NOTIFY_EMAIL] = 1,
+  [CONTEST_DAILY_STAT_EMAIL] = 1,
+  [CONTEST_PRIV_HEADER_FILE] = 1,
+  [CONTEST_PRIV_FOOTER_FILE] = 1,
+  [CONTEST_DIR_MODE] = 1,
+  [CONTEST_DIR_GROUP] = 1,
+  [CONTEST_FILE_MODE] = 1,
+  [CONTEST_FILE_GROUP] = 1,
+  [CONTEST_DEFAULT_LOCALE] = 1,
+  [CONTEST_WELCOME_FILE] = 1,
+  [CONTEST_REG_WELCOME_FILE] = 1,
+  [CONTEST_USER_CONTEST] = 1,
 };
 
-static const size_t contest_access_offsets[CONTEST_LAST_TAG] =
+static const unsigned char contest_access_set[CONTEST_LAST_TAG] =
 {
-  [CONTEST_REGISTER_ACCESS] = CONTEST_DESC_OFFSET(register_access),
-  [CONTEST_USERS_ACCESS] = CONTEST_DESC_OFFSET(users_access),
-  [CONTEST_MASTER_ACCESS] = CONTEST_DESC_OFFSET(master_access),
-  [CONTEST_JUDGE_ACCESS] = CONTEST_DESC_OFFSET(judge_access),
-  [CONTEST_TEAM_ACCESS] = CONTEST_DESC_OFFSET(team_access),
-  [CONTEST_SERVE_CONTROL_ACCESS] = CONTEST_DESC_OFFSET(serve_control_access),
+  [CONTEST_REGISTER_ACCESS] = 1,
+  [CONTEST_USERS_ACCESS] = 1,
+  [CONTEST_MASTER_ACCESS] = 1,
+  [CONTEST_JUDGE_ACCESS] = 1,
+  [CONTEST_TEAM_ACCESS] = 1,
+  [CONTEST_SERVE_CONTROL_ACCESS] = 1,
 };
 
-static const size_t contest_bool_attr_offsets[CONTEST_LAST_ATTR] =
+static const unsigned char contest_bool_attr_set[CONTEST_LAST_ATTR] =
 {
-  [CONTEST_A_AUTOREGISTER] = CONTEST_DESC_OFFSET(autoregister),
-  [CONTEST_A_DISABLE_TEAM_PASSWORD] =CONTEST_DESC_OFFSET(disable_team_password),
-  [CONTEST_A_MANAGED] = CONTEST_DESC_OFFSET(managed),
-  [CONTEST_A_NEW_MANAGED] = CONTEST_DESC_OFFSET(managed),
-  [CONTEST_A_CLEAN_USERS] = CONTEST_DESC_OFFSET(clean_users),
-  [CONTEST_A_RUN_MANAGED] = CONTEST_DESC_OFFSET(run_managed),
-  [CONTEST_A_CLOSED] = CONTEST_DESC_OFFSET(closed),
-  [CONTEST_A_INVISIBLE] = CONTEST_DESC_OFFSET(invisible),
-  [CONTEST_A_SIMPLE_REGISTRATION] = CONTEST_DESC_OFFSET(simple_registration),
-  [CONTEST_A_SEND_PASSWD_EMAIL] = CONTEST_DESC_OFFSET(send_passwd_email),
-  [CONTEST_A_ASSIGN_LOGINS] = CONTEST_DESC_OFFSET(assign_logins),
-  [CONTEST_A_FORCE_REGISTRATION] = CONTEST_DESC_OFFSET(force_registration),
-  [CONTEST_A_DISABLE_NAME] = CONTEST_DESC_OFFSET(disable_name),
-  [CONTEST_A_ENABLE_FORGOT_PASSWORD] = CONTEST_DESC_OFFSET(enable_password_recovery),
-  [CONTEST_A_EXAM_MODE] = CONTEST_DESC_OFFSET(exam_mode),
-  [CONTEST_A_DISABLE_PASSWORD_CHANGE] = CONTEST_DESC_OFFSET(disable_password_change),
-  [CONTEST_A_DISABLE_LOCALE_CHANGE] = CONTEST_DESC_OFFSET(disable_locale_change),
-  [CONTEST_A_PERSONAL] = CONTEST_DESC_OFFSET(personal),
-  [CONTEST_A_ALLOW_REG_DATA_EDIT] = CONTEST_DESC_OFFSET(allow_reg_data_edit),
-  [CONTEST_A_ENABLE_PASSWORD_RECOVERY] = CONTEST_DESC_OFFSET(enable_password_recovery),
-  [CONTEST_A_DISABLE_MEMBER_DELETE] = CONTEST_DESC_OFFSET(disable_member_delete),
+  [CONTEST_A_AUTOREGISTER] = 1,
+  [CONTEST_A_DISABLE_TEAM_PASSWORD] = 1,
+  [CONTEST_A_MANAGED] = 1,
+  [CONTEST_A_NEW_MANAGED] = 1,
+  [CONTEST_A_CLEAN_USERS] = 1,
+  [CONTEST_A_RUN_MANAGED] = 1,
+  [CONTEST_A_CLOSED] = 1,
+  [CONTEST_A_INVISIBLE] = 1,
+  [CONTEST_A_SIMPLE_REGISTRATION] = 1,
+  [CONTEST_A_SEND_PASSWD_EMAIL] = 1,
+  [CONTEST_A_ASSIGN_LOGINS] = 1,
+  [CONTEST_A_FORCE_REGISTRATION] = 1,
+  [CONTEST_A_DISABLE_NAME] = 1,
+  [CONTEST_A_ENABLE_FORGOT_PASSWORD] = 1,
+  [CONTEST_A_EXAM_MODE] = 1,
+  [CONTEST_A_DISABLE_PASSWORD_CHANGE] = 1,
+  [CONTEST_A_DISABLE_LOCALE_CHANGE] = 1,
+  [CONTEST_A_PERSONAL] = 1,
+  [CONTEST_A_ALLOW_REG_DATA_EDIT] = 1,
+  [CONTEST_A_ENABLE_PASSWORD_RECOVERY] = 1,
+  [CONTEST_A_DISABLE_MEMBER_DELETE] = 1,
 };
 
 static void
@@ -769,20 +812,21 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
 {
   struct xml_attr *a;
   struct xml_tree *t;
-  int x, n, mb_id;
+  int x, n, mb_id, i;
   unsigned char *reg_deadline_str = 0;
   struct contest_access **pacc;
   unsigned char pathbuf[PATH_MAX];
   unsigned char *p_field;
   unsigned char **p_str;
   char *eptr;
+  const int *flist;
 
   cnts->clean_users = 1;
 
   for (a = cnts->b.first; a; a = a->next) {
-    if (contest_bool_attr_offsets[a->tag] > 0) {
+    if (contest_bool_attr_set[a->tag] > 0) {
       // boolean fields
-      p_field = XPDEREF(unsigned char, cnts, contest_bool_attr_offsets[a->tag]);
+      p_field = (unsigned char*) contest_desc_get_ptr_nc(cnts, attr_to_contest_desc_map[a->tag]);
       if (xml_attr_bool_byte(a, p_field) < 0) return -1;
       continue;
     }
@@ -802,13 +846,13 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
   if (!cnts->id) return xml_err_attr_undefined(&cnts->b, CONTEST_A_ID);
 
   for (t = cnts->b.first_down; t; t = t->right) {
-    if (contest_final_offsets[t->tag] > 0) {
-      p_str = XPDEREF(unsigned char *, cnts, contest_final_offsets[t->tag]);
+    if (contest_final_set[t->tag] > 0) {
+      p_str = (unsigned char**) contest_desc_get_ptr_nc(cnts, tag_to_contest_desc_map[t->tag]);
       if (xml_leaf_elem(t, p_str, 1, 0) < 0) return -1;
       continue;
     }
-    if (contest_access_offsets[t->tag] > 0) {
-      pacc=XPDEREF(struct contest_access*,cnts,contest_access_offsets[t->tag]);
+    if (contest_access_set[t->tag] > 0) {
+      pacc = (struct contest_access**) contest_desc_get_ptr_nc(cnts, tag_to_contest_desc_map[t->tag]);
       if (*pacc) return xml_err_elem_redefined(t);
       *pacc = (struct contest_access*) t;
       if (parse_access(*pacc, path) < 0) return -1;
@@ -956,22 +1000,19 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
       return -1;
     }
 
-    process_conf_file_path(cnts, &cnts->register_header_file);
-    process_conf_file_path(cnts, &cnts->register_footer_file);
-    process_conf_file_path(cnts, &cnts->users_header_file);
-    process_conf_file_path(cnts, &cnts->users_footer_file);
-    process_conf_file_path(cnts, &cnts->team_header_file);
-    process_conf_file_path(cnts, &cnts->team_menu_1_file);
-    process_conf_file_path(cnts, &cnts->team_menu_2_file);
-    process_conf_file_path(cnts, &cnts->team_menu_3_file);
-    process_conf_file_path(cnts, &cnts->team_separator_file);
-    process_conf_file_path(cnts, &cnts->team_footer_file);
-    process_conf_file_path(cnts, &cnts->copyright_file);
-    process_conf_file_path(cnts, &cnts->register_email_file);
-    process_conf_file_path(cnts, &cnts->priv_header_file);
-    process_conf_file_path(cnts, &cnts->priv_footer_file);
-    process_conf_file_path(cnts, &cnts->welcome_file);
-    process_conf_file_path(cnts, &cnts->reg_welcome_file);
+    flist = (const int[]) {
+      CNTS_register_header_file, CNTS_register_footer_file,
+      CNTS_users_header_file, CNTS_users_footer_file,
+      CNTS_team_header_file, CNTS_team_menu_1_file, CNTS_team_menu_2_file,
+      CNTS_team_menu_3_file, CNTS_team_separator_file, CNTS_team_footer_file,
+      CNTS_copyright_file, CNTS_register_email_file,
+      CNTS_priv_header_file, CNTS_priv_footer_file,
+      CNTS_welcome_file, CNTS_reg_welcome_file,
+      0 };
+    for (i = 0; flist[i]; ++i) {
+      process_conf_file_path(cnts,
+                             (unsigned char**)contest_desc_get_ptr_nc(cnts, i));
+    }
 
     if (!cnts->users_head_style) {
       cnts->users_head_style = xstrdup("h2");
@@ -1055,17 +1096,15 @@ contests_merge(struct contest_desc *pold, struct contest_desc *pnew)
 
   // copy offsetted fields
   for (i = 0; i < CONTEST_LAST_TAG; i++) {
-    if (contest_final_offsets[i]) {
-      p_str_old = XPDEREF(unsigned char *, pold, contest_final_offsets[i]);
-      p_str_new = XPDEREF(unsigned char *, pnew, contest_final_offsets[i]);
+    if (contest_final_set[i]) {
+      p_str_old = (unsigned char**) contest_desc_get_ptr_nc(pold, tag_to_contest_desc_map[i]);
+      p_str_new = (unsigned char**) contest_desc_get_ptr_nc(pnew, tag_to_contest_desc_map[i]);
       xfree(*p_str_old);
       *p_str_old = *p_str_new;
       *p_str_new = 0;
-    } else if (contest_access_offsets[i]) {
-      p_acc_old = XPDEREF(struct contest_access*, pold, 
-                          contest_access_offsets[i]);
-      p_acc_new = XPDEREF(struct contest_access*, pnew, 
-                          contest_access_offsets[i]);
+    } else if (contest_access_set[i]) {
+      p_acc_old = (struct contest_access**) contest_desc_get_ptr_nc(pold, tag_to_contest_desc_map[i]);
+      p_acc_new = (struct contest_access**) contest_desc_get_ptr_nc(pnew, tag_to_contest_desc_map[i]);
       p = &(*p_acc_new)->b;
       if (p) {
         xml_unlink_node(p);
@@ -1076,9 +1115,9 @@ contests_merge(struct contest_desc *pold, struct contest_desc *pnew)
     }
   }
   for (i = 0; i < CONTEST_LAST_ATTR; i++) {
-    if (contest_bool_attr_offsets[i]) {
-      p_b_old = XPDEREF(unsigned char, pold, contest_bool_attr_offsets[i]);
-      p_b_new = XPDEREF(unsigned char, pnew, contest_bool_attr_offsets[i]);
+    if (contest_bool_attr_set[i]) {
+      p_b_old = (unsigned char*) contest_desc_get_ptr_nc(pold, attr_to_contest_desc_map[i]);
+      p_b_new = (unsigned char*) contest_desc_get_ptr_nc(pnew, attr_to_contest_desc_map[i]);
       *p_b_old = *p_b_new;
     }
   }
@@ -1631,86 +1670,31 @@ contests_strerror(int e)
 void
 contests_write_header(FILE *f, const struct contest_desc *cnts)
 {
+  const int *flist;
+  int i, j;
+
   fprintf(f,
           "<%s %s=\"%d\"", elem_map[CONTEST_CONTEST],
           attr_map[CONTEST_A_ID], cnts->id);
-  if (cnts->autoregister) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_AUTOREGISTER], "yes");
-  }
-  if (cnts->disable_team_password) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_DISABLE_TEAM_PASSWORD], "yes");
-  }
-  if (!cnts->clean_users) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_CLEAN_USERS], "no");
-  }
-  if (cnts->simple_registration) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_SIMPLE_REGISTRATION], "yes");
-  }
-  if (cnts->send_passwd_email) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_SEND_PASSWD_EMAIL], "yes");
-  }
-  if (cnts->assign_logins) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_ASSIGN_LOGINS], "yes");
-  }
-  if (cnts->force_registration) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_FORCE_REGISTRATION], "yes");
-  }
-  if (cnts->disable_name) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_DISABLE_NAME], "yes");
-  }
-  if (cnts->enable_password_recovery) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_ENABLE_PASSWORD_RECOVERY], "yes");
-  }
-  if (cnts->exam_mode) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_EXAM_MODE], "yes");
-  }
-  if (cnts->disable_password_change) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_DISABLE_PASSWORD_CHANGE], "yes");
-  }
-  if (cnts->disable_locale_change) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_DISABLE_LOCALE_CHANGE], "yes");
-  }
-  if (cnts->personal) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_PERSONAL], "yes");
-  }
-  if (cnts->allow_reg_data_edit) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_ALLOW_REG_DATA_EDIT], "yes");
-  }
-  if (cnts->disable_member_delete) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_DISABLE_MEMBER_DELETE], "yes");
+
+  flist = (const int[]) {
+    CONTEST_A_AUTOREGISTER, CONTEST_A_DISABLE_TEAM_PASSWORD,
+    CONTEST_A_CLEAN_USERS, CONTEST_A_SIMPLE_REGISTRATION,
+    CONTEST_A_SEND_PASSWD_EMAIL, CONTEST_A_ASSIGN_LOGINS,
+    CONTEST_A_FORCE_REGISTRATION, CONTEST_A_DISABLE_NAME,
+    CONTEST_A_ENABLE_PASSWORD_RECOVERY, CONTEST_A_EXAM_MODE,
+    CONTEST_A_DISABLE_PASSWORD_CHANGE, CONTEST_A_DISABLE_LOCALE_CHANGE,
+    CONTEST_A_PERSONAL, CONTEST_A_ALLOW_REG_DATA_EDIT,
+    CONTEST_A_DISABLE_MEMBER_DELETE, CONTEST_A_CLOSED, CONTEST_A_INVISIBLE,
+    CONTEST_A_MANAGED, CONTEST_A_RUN_MANAGED,
+    0
+  };
+  for (i = 0; flist[i]; ++i) {
+    j = attr_to_contest_desc_map[i];
+    if (*(const unsigned char*) contest_desc_get_ptr(cnts, j))
+      fprintf(f, "\n         %s=\"%s\"", attr_map[i], "yes");
   }
 
-  if (cnts->closed) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_CLOSED], "yes");
-  }
-  if (cnts->invisible) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_INVISIBLE], "yes");
-  }
-  if (cnts->managed) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_MANAGED], "yes");
-  }
-  if (cnts->run_managed) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_RUN_MANAGED], "yes");
-  }
   fprintf(f, ">");
 }
 
@@ -1808,6 +1792,16 @@ unparse_text(FILE *f, int tag, const unsigned char *txt)
   fprintf(f, "  <%s>%s</%s>\n", elem_map[tag], txt, elem_map[tag]);
 }
 
+static void
+unparse_texts(
+        FILE *f,
+        const struct contest_desc *cnts,
+        const int *flist)
+{
+  for (int i = 0; flist[i]; ++i)
+    unparse_text(f, flist[i], *(const unsigned char **) contest_desc_get_ptr(cnts, tag_to_contest_desc_map[i]));
+}
+
 void
 contests_unparse(FILE *f,
                  const struct contest_desc *cnts)
@@ -1821,11 +1815,11 @@ contests_unparse(FILE *f,
   contests_write_header(f, cnts);
   fprintf(f, "\n");
 
-  unparse_text(f, CONTEST_NAME, cnts->name);
-  unparse_text(f, CONTEST_NAME_EN, cnts->name_en);
-  unparse_text(f, CONTEST_DEFAULT_LOCALE, cnts->default_locale);
-  unparse_text(f, CONTEST_MAIN_URL, cnts->main_url);
-  unparse_text(f, CONTEST_KEYWORDS, cnts->keywords);
+  unparse_texts(f, cnts, (const int[]) {
+    CONTEST_NAME, CONTEST_NAME_EN, CONTEST_DEFAULT_LOCALE, CONTEST_MAIN_URL,
+    CONTEST_KEYWORDS,
+    0
+  });
 
   // avoid generating root_dir and conf_dir if their values are default
   skip_elem = 0;
@@ -1867,21 +1861,17 @@ contests_unparse(FILE *f,
             xml_unparse_date(cnts->reg_deadline),
             elem_map[CONTEST_REGISTRATION_DEADLINE]);
   }
-  unparse_text(f, CONTEST_REGISTER_EMAIL, cnts->register_email);
-  unparse_text(f, CONTEST_REGISTER_URL, cnts->register_url);
-  unparse_text(f, CONTEST_TEAM_URL, cnts->team_url);
-  unparse_text(f, CONTEST_STANDINGS_URL, cnts->standings_url);
-  unparse_text(f, CONTEST_PROBLEMS_URL, cnts->problems_url);
-  unparse_text(f, CONTEST_REGISTER_EMAIL_FILE, cnts->register_email_file);
-  unparse_text(f, CONTEST_LOGIN_TEMPLATE, cnts->login_template);
-  unparse_text(f, CONTEST_LOGIN_TEMPLATE_OPTIONS, cnts->login_template_options);
 
-  unparse_access(f, cnts->register_access, CONTEST_REGISTER_ACCESS);
-  unparse_access(f, cnts->users_access, CONTEST_USERS_ACCESS);
-  unparse_access(f, cnts->master_access, CONTEST_MASTER_ACCESS);
-  unparse_access(f, cnts->judge_access, CONTEST_JUDGE_ACCESS);
-  unparse_access(f, cnts->team_access, CONTEST_TEAM_ACCESS);
-  unparse_access(f, cnts->serve_control_access, CONTEST_SERVE_CONTROL_ACCESS);
+  unparse_texts(f, cnts, (const int[]) {
+    CONTEST_REGISTER_EMAIL, CONTEST_REGISTER_URL, CONTEST_TEAM_URL,
+    CONTEST_STANDINGS_URL, CONTEST_PROBLEMS_URL, CONTEST_REGISTER_EMAIL_FILE,
+    CONTEST_LOGIN_TEMPLATE, CONTEST_LOGIN_TEMPLATE_OPTIONS,
+    0,
+  });
+
+  for (i = CONTEST_REGISTER_ACCESS; i <= CONTEST_SERVE_CONTROL_ACCESS; ++i) {
+    unparse_access(f, *(const struct contest_access**) contest_desc_get_ptr(cnts, tag_to_contest_desc_map[i]), i);
+  }
 
   if (cnts->caps_node) {
     fprintf(f, "  <%s>\n", elem_map[CONTEST_CAPS]);
@@ -1901,58 +1891,39 @@ contests_unparse(FILE *f,
     unparse_field(f, cnts->fields[i], i, field_map, "  ");
   }
 
-  unparse_fields(f, cnts->members[CONTEST_M_CONTESTANT], CONTEST_CONTESTANTS);
-  unparse_fields(f, cnts->members[CONTEST_M_RESERVE], CONTEST_RESERVES);
-  unparse_fields(f, cnts->members[CONTEST_M_COACH], CONTEST_COACHES);
-  unparse_fields(f, cnts->members[CONTEST_M_ADVISOR], CONTEST_ADVISORS);
-  unparse_fields(f, cnts->members[CONTEST_M_GUEST], CONTEST_GUESTS);
+  for (i = CONTEST_M_CONTESTANT; i <= CONTEST_M_GUEST; ++i) {
+    unparse_fields(f, cnts->members[i], CONTEST_CONTESTANTS + i);
+  }
 
-  unparse_text(f, CONTEST_USERS_HEADER_FILE, cnts->users_header_file);
-  unparse_text(f, CONTEST_USERS_FOOTER_FILE, cnts->users_footer_file);
-  unparse_text(f, CONTEST_REGISTER_HEADER_FILE, cnts->register_header_file);
-  unparse_text(f, CONTEST_REGISTER_FOOTER_FILE, cnts->register_footer_file);
-  unparse_text(f, CONTEST_TEAM_HEADER_FILE, cnts->team_header_file);
-  unparse_text(f, CONTEST_TEAM_MENU_1_FILE, cnts->team_menu_1_file);
-  unparse_text(f, CONTEST_TEAM_MENU_2_FILE, cnts->team_menu_2_file);
-  unparse_text(f, CONTEST_TEAM_MENU_3_FILE, cnts->team_menu_3_file);
-  unparse_text(f, CONTEST_TEAM_SEPARATOR_FILE, cnts->team_separator_file);
-  unparse_text(f, CONTEST_TEAM_FOOTER_FILE, cnts->team_footer_file);
-  unparse_text(f, CONTEST_COPYRIGHT_FILE, cnts->copyright_file);
-  unparse_text(f, CONTEST_PRIV_HEADER_FILE, cnts->priv_header_file);
-  unparse_text(f, CONTEST_PRIV_FOOTER_FILE, cnts->priv_footer_file);
-  unparse_text(f, CONTEST_WELCOME_FILE, cnts->welcome_file);
-  unparse_text(f, CONTEST_REG_WELCOME_FILE, cnts->reg_welcome_file);
+  unparse_texts(f, cnts, (const int[]) {
+    CONTEST_USERS_HEADER_FILE, CONTEST_USERS_FOOTER_FILE,
+    CONTEST_REGISTER_HEADER_FILE, CONTEST_REGISTER_FOOTER_FILE,
+    CONTEST_TEAM_HEADER_FILE, CONTEST_TEAM_MENU_1_FILE,
+    CONTEST_TEAM_MENU_2_FILE, CONTEST_TEAM_MENU_3_FILE,
+    CONTEST_TEAM_SEPARATOR_FILE, CONTEST_TEAM_FOOTER_FILE,
+    CONTEST_COPYRIGHT_FILE, CONTEST_PRIV_HEADER_FILE, CONTEST_PRIV_FOOTER_FILE,
+    CONTEST_WELCOME_FILE, CONTEST_REG_WELCOME_FILE,
 
-  unparse_text(f, CONTEST_USERS_HEAD_STYLE, cnts->users_head_style);
-  unparse_text(f, CONTEST_USERS_PAR_STYLE, cnts->users_par_style);
-  unparse_text(f, CONTEST_USERS_TABLE_STYLE, cnts->users_table_style);
-  unparse_text(f, CONTEST_USERS_VERB_STYLE, cnts->users_verb_style);
-  unparse_text(f, CONTEST_USERS_TABLE_FORMAT, cnts->users_table_format);
-  unparse_text(f, CONTEST_USERS_TABLE_FORMAT_EN, cnts->users_table_format_en);
-  unparse_text(f, CONTEST_USERS_TABLE_LEGEND, cnts->users_table_legend);
-  unparse_text(f, CONTEST_USERS_TABLE_LEGEND_EN, cnts->users_table_legend_en);
-  unparse_text(f, CONTEST_REGISTER_HEAD_STYLE, cnts->register_head_style);
-  unparse_text(f, CONTEST_REGISTER_PAR_STYLE, cnts->register_par_style);
-  unparse_text(f, CONTEST_REGISTER_TABLE_STYLE, cnts->register_table_style);
-  unparse_text(f, CONTEST_TEAM_HEAD_STYLE, cnts->team_head_style);
-  unparse_text(f, CONTEST_TEAM_PAR_STYLE, cnts->team_par_style);
+    CONTEST_USERS_HEAD_STYLE, CONTEST_USERS_PAR_STYLE,
+    CONTEST_USERS_TABLE_STYLE, CONTEST_USERS_VERB_STYLE,
+    CONTEST_USERS_TABLE_FORMAT, CONTEST_USERS_TABLE_FORMAT_EN,
+    CONTEST_USERS_TABLE_LEGEND, CONTEST_USERS_TABLE_LEGEND_EN,
+    CONTEST_REGISTER_HEAD_STYLE, CONTEST_REGISTER_PAR_STYLE,
+    CONTEST_REGISTER_TABLE_STYLE, CONTEST_TEAM_HEAD_STYLE,
+    CONTEST_TEAM_PAR_STYLE,
 
-  unparse_text(f, CONTEST_SERVE_USER, cnts->serve_user);
-  unparse_text(f, CONTEST_SERVE_GROUP, cnts->serve_group);
-  unparse_text(f, CONTEST_RUN_USER, cnts->run_user);
-  unparse_text(f, CONTEST_RUN_GROUP, cnts->run_group);
+    CONTEST_SERVE_USER, CONTEST_SERVE_GROUP,
+    CONTEST_RUN_USER, CONTEST_RUN_GROUP,
 
-  unparse_text(f, CONTEST_DIR_MODE, cnts->dir_mode);
-  unparse_text(f, CONTEST_DIR_GROUP, cnts->dir_group);
-  unparse_text(f, CONTEST_FILE_MODE, cnts->file_mode);
-  unparse_text(f, CONTEST_FILE_GROUP, cnts->file_group);
+    CONTEST_DIR_MODE, CONTEST_DIR_GROUP,
+    CONTEST_FILE_MODE, CONTEST_FILE_GROUP,
 
-  unparse_text(f, CONTEST_USER_NAME_COMMENT, cnts->user_name_comment);
-  unparse_text(f, CONTEST_ALLOWED_LANGUAGES, cnts->allowed_languages);
-  unparse_text(f, CONTEST_ALLOWED_REGIONS, cnts->allowed_regions);
-  unparse_text(f, CONTEST_CF_NOTIFY_EMAIL, cnts->cf_notify_email);
-  unparse_text(f, CONTEST_CLAR_NOTIFY_EMAIL, cnts->clar_notify_email);
-  unparse_text(f, CONTEST_DAILY_STAT_EMAIL, cnts->daily_stat_email);
+    CONTEST_USER_NAME_COMMENT, CONTEST_ALLOWED_LANGUAGES,
+    CONTEST_ALLOWED_REGIONS, CONTEST_CF_NOTIFY_EMAIL,
+    CONTEST_CLAR_NOTIFY_EMAIL, CONTEST_DAILY_STAT_EMAIL,
+
+    0,
+  });
 
   if (cnts->slave_rules) {
     fprintf(f, "  <%s>\n", elem_map[CONTEST_SLAVE_RULES]);
