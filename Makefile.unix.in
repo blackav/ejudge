@@ -179,6 +179,7 @@ subdirs_all:
 	$(MAKE) -C extra DESTDIR="${DESTDIR}" all
 	$(MAKE) -C checkers DESTDIR="${DESTDIR}" all
 	$(MAKE) -C scripts DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/mysql-common DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" all
@@ -220,6 +221,7 @@ install: local_install
 	$(MAKE) -C scripts DESTDIR="${DESTDIR}" install
 	$(MAKE) -C checkers DESTDIR="${DESTDIR}" install
 	$(MAKE) -C extra DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/mysql-common DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" install
@@ -316,6 +318,7 @@ clean: subdir_clean local_clean
 subdir_clean:
 	$(MAKE) -C extra clean
 	$(MAKE) -C checkers clean
+	$(MAKE) -C plugins/mysql-common DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" clean
@@ -329,6 +332,7 @@ subdir_distclean :
 	$(MAKE) -C extra/captest distclean
 	$(MAKE) -C checkers distclean
 	$(MAKE) -C scripts distclean
+	$(MAKE) -C plugins/mysql-common DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" distclean
@@ -371,7 +375,7 @@ prjutils/cdeps.o: prjutils/cdeps.c
 log: mkChangeLog2
 	L=`./mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ./mkChangeLog2 --user-map=AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/ --strip-prefix=/trunk/ejudge/ --ignore-subdirs
 	for i in win32 unix userlist_clnt checkers extra scripts super_clnt xml_utils new_server_clnt; do cd $$i; L=`../mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ../mkChangeLog2 --user-map=../AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/$$i/ --strip-prefix=/trunk/ejudge/$$i/; cd ..; done
-	for i in plugins/mysql-userlist plugins/mysql-clardb plugins/mysql-rundb; do cd $$i; L=`../../mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ../../mkChangeLog2 --user-map=../../AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/$$i/ --strip-prefix=/trunk/ejudge/$$i/; cd ../..; done
+	for i in plugins/mysql-common plugins/mysql-userlist plugins/mysql-clardb plugins/mysql-rundb; do cd $$i; L=`../../mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ../../mkChangeLog2 --user-map=../../AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/$$i/ --strip-prefix=/trunk/ejudge/$$i/; cd ../..; done
 
 # localization stuff
 ifdef ENABLE_NLS
