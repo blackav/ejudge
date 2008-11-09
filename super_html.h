@@ -261,12 +261,13 @@ super_html_edited_cnts_dialog(
         const unsigned char *login,
         ej_cookie_t session_id,
         ej_ip_t ip_address,
-        struct ejudge_cfg *config,
+        const struct ejudge_cfg *config,
         struct sid_state *sstate,
         const unsigned char *self_url,
         const unsigned char *hidden_vars,
         const unsigned char *extra_args,
-        const struct contest_desc *new_cnts);
+        const struct contest_desc *new_cnts,
+        int new_edit_mode);
 
 int super_html_open_contest(struct contest_desc *cnts, int user_id,
                             const unsigned char *user_login, ej_ip_t ip);

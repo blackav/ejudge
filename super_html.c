@@ -393,6 +393,15 @@ super_html_main_page(FILE *f,
   }
   fprintf(f, "</tr></table>\n");
 
+  fprintf(f, "<table border=\"0\"><tr><td>%sCreate new contest (New interface)</a></td>", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_CREATE_NEW_CONTEST_PAGE));
+  if (sstate->edited_cnts) {
+    fprintf(f, "<td>%sEdit current contest (New interface)</a></td>",
+            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                          "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST,
+                          SSERV_OP_EDIT_CONTEST_PAGE_2));
+  }
+  fprintf(f, "</tr></table>\n");
+
   fprintf(f, "<table border=\"0\"><tr><td>%sRefresh</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, 0));
 
   // display information about known contests
@@ -1860,12 +1869,13 @@ super_html_edited_cnts_dialog(
         const unsigned char *login,
         ej_cookie_t session_id,
         ej_ip_t ip_address,
-        struct ejudge_cfg *config,
+        const struct ejudge_cfg *config,
         struct sid_state *sstate,
         const unsigned char *self_url,
         const unsigned char *hidden_vars,
         const unsigned char *extra_args,
-        const struct contest_desc *new_cnts)
+        const struct contest_desc *new_cnts,
+        int new_edit_mode)
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int contest_id = 0;
@@ -1906,6 +1916,7 @@ super_html_edited_cnts_dialog(
   fprintf(out_f, "<tr><td>");
   html_start_form(out_f, 1, self_url, hidden_vars);
   html_hidden(out_f, "op", "%d", SSERV_OP_EDITED_CNTS_CONTINUE);
+  if (new_edit_mode) html_hidden(out_f, "new_edit", "1");
   html_submit_button(out_f, SSERV_CMD_HTTP_REQUEST, "Continue");
   fprintf(out_f, "</form>\n");
   fprintf(out_f, "</td><td>Continue suspended editing</td></tr>");
@@ -1913,6 +1924,7 @@ super_html_edited_cnts_dialog(
   fprintf(out_f, "<tr><td>");
   html_start_form(out_f, 1, self_url, hidden_vars);
   html_hidden(out_f, "op", "%d", SSERV_OP_EDITED_CNTS_START_NEW);
+  if (new_edit_mode) html_hidden(out_f, "new_edit", "1");
   if (contest_id > 0)
     html_hidden(out_f, "contest_id", "%d", contest_id);
   html_submit_button(out_f, SSERV_CMD_HTTP_REQUEST, "Start new");
@@ -1949,7 +1961,7 @@ super_html_create_contest(
     return super_html_edited_cnts_dialog(f, priv_level, user_id, login,
                                          session_id, ip_address, config,
                                          sstate, self_url, hidden_vars,
-                                         extra_args, NULL);
+                                         extra_args, NULL, 0);
 
   contest_num = contests_get_list(&contests);
   if (contest_num > 0) recomm_id = contests[contest_num - 1] + 1;
@@ -2064,12 +2076,12 @@ print_permissions(FILE *f, struct contest_desc *cnts,
                   const unsigned char *hidden_vars,
                   const unsigned char *extra_args)
 {
-  struct opcap_list_item *p = cnts->capabilities.first;
+  struct opcap_list_item *p;
   unsigned char *s;
   unsigned char href[1024];
   int i, r = 0;
 
-  for (i = 0; p; p = (struct opcap_list_item*) p->b.right, i++) {
+  for (i = 0, p = CNTS_FIRST_PERM(cnts); p; ++i, p = CNTS_NEXT_PERM_NC(p)) {
     snprintf(href, sizeof(href), "%d", i);
     html_start_form(f, 1, self_url, hidden_vars);
     html_hidden_var(f, "num", href);
@@ -3401,9 +3413,8 @@ super_html_edit_permission(FILE *f,
     return 0;
   }
 
-  for (i = 0, p = cnts->capabilities.first;
-       i < num && p;
-       i++, p = (struct opcap_list_item*) p->b.right);
+  for (i = 0, p = CNTS_FIRST_PERM(cnts); i < num && p;
+       ++i, p = CNTS_NEXT_PERM_NC(p));
   if (i != num || !p || !p->login) {
     return -SSERV_ERR_INVALID_PARAMETER;
   }

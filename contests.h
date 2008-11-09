@@ -453,6 +453,87 @@ const unsigned char *contests_get_form_field_name(int ff);
 const unsigned char *contests_get_member_field_name(int ff);
 const unsigned char *contests_get_member_name(int ff);
 
+int contests_remove_nth_permission(struct contest_desc *cnts, int n);
+int contests_add_permission(
+        struct contest_desc *cnts,
+        const unsigned char *login,
+        opcap_t caps);
+void contests_copy_permissions(
+        struct contest_desc *cdst,
+        const struct contest_desc *csrc);
+int
+contests_set_permission(
+        struct contest_desc *cnts,
+        int num,
+        opcap_t caps);
+
+void
+contests_set_default(
+        struct contest_desc *cnts,
+        struct contest_access **p_acc,
+        int tag,
+        int default_allow);
+void
+contests_add_ip(
+        struct contest_desc *cnts,
+        struct contest_access **p_acc,
+        int tag,
+        ej_ip_t addr,
+        ej_ip_t mask,
+        int ssl_flag,
+        int default_allow);
+struct contest_ip *
+contests_get_ip_rule_nc(
+        struct contest_access *acc,
+        int n);
+int
+contests_delete_ip_rule(
+        struct contest_access **p_acc,
+        int n);
+int
+contests_forward_ip_rule(
+        struct contest_access **p_acc,
+        int n);
+int
+contests_backward_ip_rule(
+        struct contest_access **p_acc,
+        int n);
+
+int
+contests_set_general_field(
+        struct contest_desc *cnts,
+        int field_id,
+        int opt_val,
+        const unsigned char *legend);
+
+void
+contests_delete_member_fields(
+        struct contest_desc *cnts,
+        int m_id);
+void
+contests_set_member_field(
+        struct contest_desc *cnts,
+        int m_id,
+        int field_id,
+        int opt_val,
+        const unsigned char *legend);
+void
+contests_set_member_counts(
+        struct contest_desc *cnts,
+        int m_id,
+        int min_count,
+        int max_count,
+        int init_count);
+
+#define CNTS_FIRST_PERM(c)   ((c)->capabilities.first)
+#define CNTS_NEXT_PERM_NC(p) ((struct opcap_list_item*) (p)->b.right)
+#define CNTS_NEXT_PERM(p)    ((const struct opcap_list_item*) (p)->b.right)
+
+#define CNTS_FIRST_IP(a) ((const struct contest_ip*) (a)->b.first_down)
+#define CNTS_NEXT_IP(p)  ((const struct contest_ip*) (p)->b.right)
+#define CNTS_FIRST_IP_NC(a) ((struct contest_ip*) (a)->b.first_down)
+#define CNTS_NEXT_IP_NC(p)  ((struct contest_ip*) (p)->b.right)
+
 /* This is INTENTIONALLY not an `extern' variable */
 struct ejudge_cfg;
 struct ejudge_cfg *ejudge_config;

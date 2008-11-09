@@ -4720,7 +4720,7 @@ priv_view_priv_users_page(FILE *fout,
     struct priv_user_info **v;
   };
   struct ptrarray_t users;
-  struct opcap_list_item *op;
+  const struct opcap_list_item *op;
   int user_id, i;
   unsigned char *name = 0, *login = 0;
   struct priv_user_info *pp;
@@ -4740,8 +4740,7 @@ priv_view_priv_users_page(FILE *fout,
   }
 
   // collect all information about allowed MASTER and JUDGE logins
-  for (op = cnts->capabilities.first; op;
-       op = (struct opcap_list_item*) op->b.right) {
+  for (op = CNTS_FIRST_PERM(cnts); op; op = CNTS_NEXT_PERM(op)) {
     role_mask = 0;
     if (opcaps_check(op->caps, OPCAP_MASTER_LOGIN) >= 0) {
       role_mask |= (1 << USER_ROLE_ADMIN);
