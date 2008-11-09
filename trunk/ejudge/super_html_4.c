@@ -31,6 +31,10 @@
 #include "charsets.h"
 #include "fileutl.h"
 #include "xml_utils.h"
+#include "userlist.h"
+#include "ejudge_cfg.h"
+#include "mischtml.h"
+#include "prepare.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -54,9 +58,11 @@ enum
   S_ERR_INTERNAL,
   S_ERR_ALREADY_EDITED,
   S_ERR_NO_EDITED_CNTS,
-  S_ERR_INVALID_FIELD_ID,
+  S_ERR_INV_FIELD_ID,
   S_ERR_NOT_IMPLEMENTED,
-  S_ERR_INVALID_VALUE,
+  S_ERR_INV_VALUE,
+  S_ERR_CONTEST_ALREADY_EXISTS,
+  S_ERR_CONTEST_ALREADY_EDITED,
 
   S_ERR_LAST
 };
@@ -465,7 +471,14 @@ cmd_edited_cnts_continue(
         FILE *out_f,
         struct super_http_request_info *phr)
 {
-  refresh_page(out_f, phr, "action=%d", SSERV_CMD_EDIT_CURRENT_CONTEST);
+  int new_edit = -1;
+
+  if (ss_cgi_param_int(phr, "new_edit", &new_edit) >= 0 && new_edit == 1) {
+    refresh_page(out_f, phr, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST,
+                 SSERV_OP_EDIT_CONTEST_PAGE_2);
+  } else {
+    refresh_page(out_f, phr, "action=%d", SSERV_CMD_EDIT_CURRENT_CONTEST);
+  }
   return 0;
 }
 
@@ -476,15 +489,28 @@ cmd_edited_cnts_start_new(
         struct super_http_request_info *phr)
 {
   int contest_id = 0;
+  int new_edit = -1;
 
+  ss_cgi_param_int_opt(phr, "new_edit", &new_edit, 0);
   if (ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0) < 0
       || contest_id < 0) contest_id = 0;
   super_serve_clear_edited_contest(phr->ss);
-  if (!contest_id) {
-    refresh_page(out_f, phr, "action=%d", SSERV_CMD_CREATE_CONTEST);
+  if (new_edit == 1) {
+    if (!contest_id) {
+      refresh_page(out_f, phr, "action=%d&op=%d",
+                   SSERV_CMD_HTTP_REQUEST, SSERV_OP_CREATE_NEW_CONTEST_PAGE);
+    } else {
+      refresh_page(out_f, phr, "action=%d&op=%d&contest_id=%d",
+                   SSERV_CMD_HTTP_REQUEST, SSERV_OP_EDIT_CONTEST_PAGE,
+                   contest_id);
+    }
   } else {
-    refresh_page(out_f, phr, "action=%d&contest_id=%d",
-                 SSERV_CMD_EDIT_CONTEST_XML, contest_id);
+    if (!contest_id) {
+      refresh_page(out_f, phr, "action=%d", SSERV_CMD_CREATE_CONTEST);
+    } else {
+      refresh_page(out_f, phr, "action=%d&contest_id=%d",
+                   SSERV_CMD_EDIT_CONTEST_XML, contest_id);
+    }
   }
 
   return 0;
@@ -852,7 +878,7 @@ separator_row(
   fprintf(out_f, "<td class=\"cnts_edit_head\" colspan=\"%d\">%s</td>",
           colspan, text);
   if (p_detail_flag) {
-    snprintf(bbuf, sizeof(bbuf), "toggleButton(%d, %d, %d)",
+    snprintf(bbuf, sizeof(bbuf), "ssFieldRequest(%d, %d, %d)",
              SSERV_OP_TOGGLE_CONTEST_XML_VISIBILITY,
              field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
     fprintf(out_f, "<td class=\"cnts_edit_head\">");
@@ -990,8 +1016,8 @@ contest_xml_page(
     if (ce->type == 130) {
       if (!phr->ss->show_permissions) continue;
 
-      perms = ecnts->capabilities.first;
-      for (j = 0; perms; perms = (struct opcap_list_item*) perms->b.right,j++) {
+      for (perms = CNTS_FIRST_PERM(ecnts), j = 0; perms;
+           perms = CNTS_NEXT_PERM_NC(perms), ++j) {
         fprintf(out_f, "<tr%s>", form_row_attrs[row ^= 1]);
         fprintf(out_f, "<td valign=\"top\" class=\"cnts_edit_legend\">%s</td>",
                 ARMOR(perms->login));
@@ -1008,7 +1034,9 @@ contest_xml_page(
         dojo_button(out_f, 0, "edit_page-16x16", "Edit permissions",
                     "ssLoad2(%d, %d)", SSERV_OP_EDIT_PERMISSIONS_PAGE, j);
         dojo_button(out_f, 0, "delete-16x16", "Delete permissions",
-                    "alert(\"Delete permissions\")");
+                    "ssFieldRequest(%d, %d, %d)",
+                    SSERV_OP_DELETE_PRIV_USER, j,
+                    SSERV_OP_EDIT_CONTEST_PAGE_2);
         fprintf(out_f, "</td>");
         fprintf(out_f, "</tr>\n");
       }
@@ -1032,7 +1060,7 @@ contest_xml_page(
     fprintf(out_f, "<td valign=\"top\" class=\"cnts_edit_legend\">%s:</td>", ce->legend);
     fprintf(out_f, "<td valign=\"middle\" class=\"cnts_edit_data\" width=\"600px\">");
     if (ce->is_editable && ce->dojo_inline_edit) {
-      fprintf(out_f, "<div class=\"cnts_edit_data\" dojoType=\"dijit.InlineEditBox\" onChange=\"editField(%d, %d, %d, arguments[0])\" autoSave=\"true\" title=\"%s\">",
+      fprintf(out_f, "<div class=\"cnts_edit_data\" dojoType=\"dijit.InlineEditBox\" onChange=\"ssEditField(%d, %d, %d, arguments[0])\" autoSave=\"true\" title=\"%s\">",
               SSERV_OP_EDIT_CONTEST_XML_FIELD,
               ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2,
               ce->hint);
@@ -1063,7 +1091,7 @@ contest_xml_page(
           break;
         }
         ss_html_int_select(out_f, 0, 0, 0,
-                           eprintf(jbuf, sizeof(jbuf), "editField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_OP_EDIT_CONTEST_XML_FIELD, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2),
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_OP_EDIT_CONTEST_XML_FIELD, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2),
                            !!*y_ptr,
                            2, (const char *[]) { "No", "Yes" });
       }
@@ -1129,7 +1157,7 @@ contest_xml_page(
         if (*y_ptr) locale_code = l10n_parse_locale(y_ptr);
         if (locale_code >= 0) is_empty = 0;
 
-        l10n_html_locale_select_2(out_f, 0, 0, 0, eprintf(jbuf, sizeof(jbuf), "editField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_OP_EDIT_CONTEST_XML_FIELD, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2), locale_code);
+        l10n_html_locale_select_2(out_f, 0, 0, 0, eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_OP_EDIT_CONTEST_XML_FIELD, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2), locale_code);
       }
       break;
     case 129:
@@ -1137,7 +1165,7 @@ contest_xml_page(
         int reg_mode = *(unsigned char*) v_ptr;
 
         ss_html_int_select(out_f, 0, 0, 0,
-                           eprintf(jbuf, sizeof(jbuf), "editField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_OP_EDIT_CONTEST_XML_FIELD, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2),
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_OP_EDIT_CONTEST_XML_FIELD, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2),
                            !!reg_mode,
                            2, (const char *[]) { "Moderated registration", "Free registration" });
       }
@@ -1158,7 +1186,7 @@ contest_xml_page(
                     SSERV_OP_CONTEST_XML_FIELD_EDIT_PAGE, ce->field_id);
         }
         dojo_button(out_f, 0, "delete-16x16", "Clear variable",
-                    "clearField(%d, %d, %d)",
+                    "ssFieldRequest(%d, %d, %d)",
                     SSERV_OP_CLEAR_CONTEST_XML_FIELD,
                     ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
       }
@@ -1175,12 +1203,12 @@ contest_xml_page(
   fprintf(out_f, "</table>\n");
   fprintf(out_f, "</div>\n");
 
-  dojo_button(out_f, "1", "home-32x32", "To the top level (postpone editing)",
+  dojo_button(out_f, "1", "home-32x32", "To the Top",
               "ssTopLevel()");
   dojo_button(out_f, "2", "accept-32x32", "Save Changes",
-              "alert(\"Clicked SaveChanges\")");
-  dojo_button(out_f, "3", "cancel-32x32", "Cancel Editing",
-              "alert(\"Clicked CancelEditing\")");
+              "ssCommitContest(%d)", SSERV_CMD_CNTS_COMMIT);
+  dojo_button(out_f, "3", "cancel-32x32", "Forget Changes",
+              "ssForgetContest(%d)", SSERV_OP_FORGET_CONTEST);
 
   write_html_footer(out_f);
   html_armor_free(&ab);
@@ -1197,6 +1225,8 @@ cmd_edit_contest_page(
   int contest_id = 0;
   const struct contest_desc *cnts = 0;
   struct contest_desc *rw_cnts = 0;
+  unsigned char buf[1024];
+  const struct sid_state *other_ss;
 
   if (ss_cgi_param_int(phr, "contest_id", &contest_id) < 0
       || contest_id <= 0 || contest_id > EJ_MAX_CONTEST_ID)
@@ -1215,33 +1245,48 @@ cmd_edit_contest_page(
     return contest_xml_page(log_f, out_f, phr);
   }
 
-  if (phr->ss->edited_cnts)
-    FAIL(S_ERR_ALREADY_EDITED);
+  if (phr->ss->edited_cnts) {
+    snprintf(buf, sizeof(buf), "serve-control: %s, another contest is edited",
+             phr->html_name);
+    write_html_header(out_f, phr, buf, 1, 0);
+    fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+    snprintf(buf, sizeof(buf),
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\" />",
+             phr->session_id);
+    super_html_edited_cnts_dialog(out_f,
+                                  phr->priv_level, phr->user_id, phr->login,
+                                  phr->session_id, phr->ip, phr->config,
+                                  phr->ss, phr->self_url, buf,
+                                  "", cnts, 1);
+
+    write_html_footer(out_f);
+    return 0;
+  }
+
+  if ((other_ss = super_serve_sid_state_get_cnts_editor(contest_id))) {
+    // FIXME: also report the login and name of the other editor
+    snprintf(buf, sizeof(buf),
+             "serve-control: %s, contest %d is already edited",
+             phr->html_name, contest_id);
+    write_html_header(out_f, phr, buf, 1, 0);
+    fprintf(out_f, "<h1>%s</h1>\n", buf);
+    fprintf(out_f, "<p>Contest %d is already edited in session %016llx.</p>",
+            contest_id, other_ss->sid);
+    fprintf(out_f, "<p>%sMain page</a></p>\n",
+            html_hyperref(buf, sizeof(buf), phr->session_id,
+                          phr->self_url, "", 0));
+    write_html_footer(out_f);
+    return 0;
+  }
 
   if (contests_load(contest_id, &rw_cnts) < 0 || !rw_cnts)
     FAIL(S_ERR_INV_CONTEST);
   phr->ss->edited_cnts = rw_cnts;
+  super_html_load_serve_cfg(rw_cnts, phr->config, phr->ss);
 
-  // enough for now
   return contest_xml_page(log_f, out_f, phr);
 
-  /*
-    if (sstate->edited_cnts) {
-      r = super_html_edited_cnts_dialog(f, p->priv_level, p->user_id, p->login,
-                                        p->cookie, p->ip, config, sstate,
-                                        self_url_ptr, hidden_vars_ptr,
-                                        extra_args_ptr, cnts);
-      break;
-    }
-    if ((r = contests_load(pkt->contest_id, &rw_cnts)) < 0 || !rw_cnts) {
-      return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
-    }
-    sstate->edited_cnts = rw_cnts;
-    super_html_load_serve_cfg(rw_cnts, config, sstate);
-    r = super_html_edit_contest_page(f, p->priv_level, p->user_id, p->login,
-                                     p->cookie, p->ip, config, sstate,
-                                     self_url_ptr, hidden_vars_ptr, extra_args_ptr);
-  */
  cleanup:
   return retval;
 }
@@ -1319,25 +1364,17 @@ cmd_clear_contest_xml_field(
 
   phr->json_reply = 1;
 
-  if (phr->priv_level != PRIV_LEVEL_ADMIN)
-    FAIL(S_ERR_PERM_DENIED);
-  /*
-  if (opcaps_find(&cnts->capabilities, phr->login, &phr->caps) < 0)
-    FAIL(S_ERR_PERM_DENIED);
-  if (opcaps_check(phr->caps, OPCAP_EDIT_CONTEST) < 0)
-    FAIL(S_ERR_PERM_DENIED);
-  */
   if (!phr->ss->edited_cnts)
     FAIL(S_ERR_NO_EDITED_CNTS);
   if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD)
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
   if (!(f_ptr = contest_desc_get_ptr_nc(phr->ss->edited_cnts, f_id)))
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
   if (!(f_type = contest_desc_get_type(f_id)))
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
   if (f_id == CNTS_user_contest_num || f_id == CNTS_default_locale_num)
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
 
   switch (f_type) {
   case 'b':
@@ -1366,7 +1403,7 @@ cmd_clear_contest_xml_field(
     }
     break;
   default:
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
   }
 
   // special cases
@@ -1389,8 +1426,7 @@ cmd_clear_contest_xml_field(
     *i_ptr = 0;
   }
 
-  write_json_header(out_f);
-  fprintf(out_f, "{ \"status\": 1 }");
+  retval = 1;
 
  cleanup:
   return retval;
@@ -1448,28 +1484,20 @@ cmd_edit_contest_xml_field(
 
   phr->json_reply = 1;
 
-  if (phr->priv_level != PRIV_LEVEL_ADMIN)
-    FAIL(S_ERR_PERM_DENIED);
-  /*
-  if (opcaps_find(&cnts->capabilities, phr->login, &phr->caps) < 0)
-    FAIL(S_ERR_PERM_DENIED);
-  if (opcaps_check(phr->caps, OPCAP_EDIT_CONTEST) < 0)
-    FAIL(S_ERR_PERM_DENIED);
-  */
   if (!phr->ss->edited_cnts)
     FAIL(S_ERR_NO_EDITED_CNTS);
   ecnts = phr->ss->edited_cnts;
   if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD)
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
   if (!(f_ptr = contest_desc_get_ptr_nc(ecnts, f_id)))
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
   if (!(f_type = contest_desc_get_type(f_id)))
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
   if (f_id == CNTS_user_contest_num || f_id == CNTS_default_locale_num)
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
   if (ss_cgi_param(phr, "value", &valstr) <= 0 || !valstr)
-    FAIL(S_ERR_INVALID_VALUE);
+    FAIL(S_ERR_INV_VALUE);
 
   // value is in utf-8, translate it to the local charset
   utf8_id = charset_get_id("utf-8");
@@ -1479,12 +1507,12 @@ cmd_edit_contest_xml_field(
     // must end in '.html' or '.shtml'
     // must not contain / or start with .
     if (strchr(valstr, '/')) 
-      FAIL(S_ERR_INVALID_VALUE);
+      FAIL(S_ERR_INV_VALUE);
     if (valstr[0] == '.')
-      FAIL(S_ERR_INVALID_VALUE);
+      FAIL(S_ERR_INV_VALUE);
     if (!ends_with(valstr, ".html") && !ends_with(valstr, ".shtml")
         && !ends_with(valstr, ".txt"))
-      FAIL(S_ERR_INVALID_VALUE);
+      FAIL(S_ERR_INV_VALUE);
   }
 
   switch (f_type) {
@@ -1495,8 +1523,8 @@ cmd_edit_contest_xml_field(
 
       if (sscanf(valstr, "%d%n", &newval, &n) != 1 || valstr[n]
           || newval < 0 || newval > 1)
-        FAIL(S_ERR_INVALID_VALUE);
-      if (*p_bool == newval) goto done;
+        FAIL(S_ERR_INV_VALUE);
+      if (*p_bool == newval) goto cleanup;
       *p_bool = newval;
       switch (f_id) {
       case CNTS_autoregister:
@@ -1518,30 +1546,30 @@ cmd_edit_contest_xml_field(
       if (f_id == CNTS_user_contest) {
         if (sscanf(valstr, "%d%n", &newval, &n) != 1 || valstr[n]
             || newval < 0)
-          FAIL(S_ERR_INVALID_VALUE);
+          FAIL(S_ERR_INV_VALUE);
         if (!newval) {
           xfree(ecnts->user_contest);
           ecnts->user_contest = 0;
           ecnts->user_contest_num = 0;
           retval = 1;
-          goto done;
+          goto cleanup;
         }
         if (ecnts->id == newval)
-          FAIL(S_ERR_INVALID_VALUE);
+          FAIL(S_ERR_INV_VALUE);
         if (contests_get(newval, &cnts) < 0 || !cnts)
-          FAIL(S_ERR_INVALID_VALUE);
+          FAIL(S_ERR_INV_VALUE);
         if (cnts->user_contest_num > 0)
-          FAIL(S_ERR_INVALID_VALUE);
+          FAIL(S_ERR_INV_VALUE);
       }
       if (f_id == CNTS_default_locale) {
         if ((newval = l10n_parse_locale(valstr)) < 0)
-          FAIL(S_ERR_INVALID_VALUE);
+          FAIL(S_ERR_INV_VALUE);
       }
 
       if (!*p_str) {
         retval = 1;
       } else {
-        if (!strcmp(*p_str, valstr)) goto done;
+        if (!strcmp(*p_str, valstr)) goto cleanup;
         xfree(*p_str);
         *p_str = 0;
       }
@@ -1595,7 +1623,7 @@ cmd_edit_contest_xml_field(
 
       if (ss_cgi_param_int(phr, "subfield_id", &subf_id) < 0
           || subf_id < 1 || subf_id > 2)
-        FAIL(S_ERR_INVALID_FIELD_ID);
+        FAIL(S_ERR_INV_FIELD_ID);
 
       // 1 means time, 2 means date
       switch (subf_id) {
@@ -1607,7 +1635,7 @@ cmd_edit_contest_xml_field(
           time_t t_val;
           struct tm *ptm;
 
-          if (v_len > 1024) FAIL(S_ERR_INVALID_VALUE);
+          if (v_len > 1024) FAIL(S_ERR_INV_VALUE);
           v_val = (unsigned char*) alloca(v_len + 1);
           strcpy(v_val, valstr);
           if (v_len > 0 && isspace(v_val[v_len - 1])) --v_len;
@@ -1618,18 +1646,18 @@ cmd_edit_contest_xml_field(
           } else if (sscanf(v_val, "%d%n", &h, &n) == 1 && !v_val[n]) {
             m = s = 0;
           } else {
-            FAIL(S_ERR_INVALID_VALUE);
+            FAIL(S_ERR_INV_VALUE);
           }
-          if (h < 0 || h >= 24) FAIL(S_ERR_INVALID_VALUE);
-          if (m < 0 || m >= 60) FAIL(S_ERR_INVALID_VALUE);
-          if (s < 0 || s >= 60) FAIL(S_ERR_INVALID_VALUE);
+          if (h < 0 || h >= 24) FAIL(S_ERR_INV_VALUE);
+          if (m < 0 || m >= 60) FAIL(S_ERR_INV_VALUE);
+          if (s < 0 || s >= 60) FAIL(S_ERR_INV_VALUE);
           t_val = *p_time;
           if (t_val <= 0) t_val = time(0);
           ptm = localtime(&t_val);
           ptm->tm_hour = h;
           ptm->tm_min = m;
           ptm->tm_sec = s;
-          if ((t_val = mktime(ptm)) <= 0) FAIL(S_ERR_INVALID_VALUE);
+          if ((t_val = mktime(ptm)) <= 0) FAIL(S_ERR_INV_VALUE);
           *p_time = t_val;
           retval = 1;
         }
@@ -1642,17 +1670,17 @@ cmd_edit_contest_xml_field(
           time_t t_val;
 
           v_len = strlen(valstr);
-          if (v_len > 1024) FAIL(S_ERR_INVALID_VALUE);
+          if (v_len > 1024) FAIL(S_ERR_INV_VALUE);
           v_val = (unsigned char*) alloca(v_len + 1);
           strcpy(v_val, valstr);
           if (v_len > 0 && isspace(v_val[v_len - 1])) --v_len;
           v_val[v_len] = 0;
 
           if (sscanf(v_val, "%d/%d/%d%n", &y, &m, &d, &n) != 3 || v_val[n])
-            FAIL(S_ERR_INVALID_VALUE);
-          if (y < 1970 || y > 2030) FAIL(S_ERR_INVALID_VALUE);
-          if (m < 1 || m > 12) FAIL(S_ERR_INVALID_VALUE);
-          if (d < 1 || d > 31) FAIL(S_ERR_INVALID_VALUE);
+            FAIL(S_ERR_INV_VALUE);
+          if (y < 1970 || y > 2030) FAIL(S_ERR_INV_VALUE);
+          if (m < 1 || m > 12) FAIL(S_ERR_INV_VALUE);
+          if (d < 1 || d > 31) FAIL(S_ERR_INV_VALUE);
           t_val = *p_time;
           if (t_val <= 0) {
             memset(&btm, 0, sizeof(btm));
@@ -1664,23 +1692,19 @@ cmd_edit_contest_xml_field(
           btm.tm_year = y - 1900;
           btm.tm_mon = m - 1;
           btm.tm_mday = d;
-          if ((t_val = mktime(&btm)) <= 0) FAIL(S_ERR_INVALID_VALUE);
+          if ((t_val = mktime(&btm)) <= 0) FAIL(S_ERR_INV_VALUE);
           *p_time = t_val;
           retval = 1;
         }
         break;
       default:
-        FAIL(S_ERR_INVALID_FIELD_ID);
+        FAIL(S_ERR_INV_FIELD_ID);
       }
     }
     break;
   default:
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
   }
-
- done:
-  write_json_header(out_f);
-  fprintf(out_f, "{ \"status\": %d }", retval);
 
  cleanup:
   html_armor_free(&vb);
@@ -1711,27 +1735,18 @@ cmd_toggle_contest_xml_vis(
 
   phr->json_reply = 1;
 
-  if (phr->priv_level != PRIV_LEVEL_ADMIN)
-    FAIL(S_ERR_PERM_DENIED);
-  /*
-  if (opcaps_find(&cnts->capabilities, phr->login, &phr->caps) < 0)
-    FAIL(S_ERR_PERM_DENIED);
-  if (opcaps_check(phr->caps, OPCAP_EDIT_CONTEST) < 0)
-    FAIL(S_ERR_PERM_DENIED);
-  */
   if (!phr->ss->edited_cnts)
     FAIL(S_ERR_NO_EDITED_CNTS);
   ecnts = phr->ss->edited_cnts;
   if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= SSSS_LAST_FIELD
       || !valid_ss_visibilities[f_id])
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
   p_int = ss_sid_state_get_ptr_nc(phr->ss, f_id);
   if (*p_int) *p_int = 0;
   else *p_int = 1;
 
-  write_json_header(out_f);
-  fprintf(out_f, "{ \"status\": 1 }");
+  retval = 1;
 
  cleanup:
   return retval;
@@ -1788,7 +1803,7 @@ cmd_edit_contest_xml_file(
   if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD
       || !(ss_id = cnts_text_edit_map[f_id]))
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
 
   v_ptr = (unsigned char **) contest_desc_get_ptr_nc(ecnts, f_id);
   t_ptr = (unsigned char **) ss_sid_state_get_ptr_nc(phr->ss, ss_id);
@@ -1887,7 +1902,7 @@ cmd_clear_file_contest_xml(
   if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD
       || !(f_id2 = cnts_text_edit_map[f_id]))
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
 
   p_str = (unsigned char**) ss_sid_state_get_ptr_nc(phr->ss, f_id2);
   xfree(*p_str); *p_str = 0;
@@ -1898,8 +1913,7 @@ cmd_clear_file_contest_xml(
     *p_int = 0;
   }
 
-  write_json_header(out_f);
-  fprintf(out_f, "{ \"status\": 1 }");
+  retval = 1;
 
  cleanup:
   return retval;
@@ -1924,11 +1938,11 @@ cmd_save_file_contest_xml(
     FAIL(S_ERR_NO_EDITED_CNTS);
   if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD)
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
   if (!(f_id2 = cnts_text_edit_map[f_id]))
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
   if (ss_cgi_param(phr, "param", &valstr) <= 0 || !valstr)
-    FAIL(S_ERR_INVALID_VALUE);
+    FAIL(S_ERR_INV_VALUE);
 
   // value is in utf-8, translate it to the local charset
   utf8_id = charset_get_id("utf-8");
@@ -1937,9 +1951,6 @@ cmd_save_file_contest_xml(
   xfree(*p_str);
   *p_str = xstrdup(valstr);
   retval = 1;
-
-  write_json_header(out_f);
-  fprintf(out_f, "{ \"status\": %d }", retval);
 
  cleanup:
   html_armor_free(&vb);
@@ -1954,6 +1965,16 @@ const unsigned char access_field_set[CNTS_LAST_FIELD] =
   [CNTS_judge_access] = 1,
   [CNTS_team_access] = 1,
   [CNTS_serve_control_access] = 1,
+};
+
+const int access_field_tag[CNTS_LAST_FIELD] =
+{
+  [CNTS_register_access] = CONTEST_REGISTER_ACCESS,
+  [CNTS_users_access] = CONTEST_USERS_ACCESS,
+  [CNTS_master_access] = CONTEST_MASTER_ACCESS,
+  [CNTS_judge_access] = CONTEST_JUDGE_ACCESS,
+  [CNTS_team_access] = CONTEST_TEAM_ACCESS,
+  [CNTS_serve_control_access] = CONTEST_SERVE_CONTROL_ACCESS,
 };
 
 static int
@@ -1977,7 +1998,7 @@ cmd_contest_xml_access_edit_page(
   if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD
       || !(access_field_set[f_id]))
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
   acc = *(const struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
 
   snprintf(buf, sizeof(buf), "serve-control: %s, contest %d, editing %s",
@@ -2005,14 +2026,16 @@ cmd_contest_xml_access_edit_page(
       fprintf(out_f, "<tr%s>", form_row_attrs[row ^= 1]);
       fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"100px\">%d</td>", i);
       fprintf(out_f, "<td class=\"cnts_edit_data\" width=\"200px\">");
-      fprintf(out_f, "<div class=\"cnts_edit_data\" dojoType=\"dijit.InlineEditBox\" onChange=\"alert(arguments[0])\" autoSave=\"true\" title=\"%s\">",
+      fprintf(out_f, "<div class=\"cnts_edit_data\" dojoType=\"dijit.InlineEditBox\" onChange=\"ssEditField3(%d, %d, %d, %d, arguments[0])\" autoSave=\"true\" title=\"%s\">",
+              SSERV_OP_SET_RULE_IP, f_id, i,
+              SSERV_OP_CONTEST_XML_FIELD_EDIT_PAGE,
               "IP address");
       fprintf(out_f, "%s", xml_unparse_ip_mask(p->addr, p->mask));
       fprintf(out_f, "</div></td>");
 
       fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"100px\">");
       ss_html_select(out_f, 0, 0, 0,
-                     eprintf(jbuf, sizeof(jbuf), "alert(this.options[this.selectedIndex].value)"),
+                     eprintf(jbuf, sizeof(jbuf), "ssEditField3(%d, %d, %d, %d, this.options[this.selectedIndex].value)", SSERV_OP_SET_RULE_SSL, f_id, i, SSERV_OP_CONTEST_XML_FIELD_EDIT_PAGE),
                      eprintf(vbuf, sizeof(vbuf), "%d", p->ssl),
                      3,
                      (const char*[]) { "-1", "0", "1" },
@@ -2021,17 +2044,27 @@ cmd_contest_xml_access_edit_page(
 
       fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"100px\">");
       ss_html_int_select(out_f, 0, 0, 0,
-                         eprintf(jbuf, sizeof(jbuf), "alert(this.options[this.selectedIndex].value)"),
+                         eprintf(jbuf, sizeof(jbuf), "ssEditField3(%d, %d, %d, %d, this.options[this.selectedIndex].value)", SSERV_OP_SET_RULE_ACCESS, f_id, i, SSERV_OP_CONTEST_XML_FIELD_EDIT_PAGE),
                          !!p->allow, 2,
                          (const char*[]) { "Deny", "Allow" });
       fprintf(out_f, "</td>");
       fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"150px\">");
-      dojo_button(out_f, 0, "back-16x16", "Move Up",
-                  "alert(\"Move Up\")");
-      dojo_button(out_f, 0, "next-16x16", "Move Down",
-                  "alert(\"Move Down\")");
-      dojo_button(out_f, 0, "delete-16x16", "Move Down",
-                  "alert(\"Remove Rule\")");
+      if (p->b.left) {
+        dojo_button(out_f, 0, "back-16x16", "Move Up",
+                    "ssFieldCmd3(%d, %d, %d, %d)",
+                    SSERV_OP_FORWARD_RULE, f_id, i,
+                    SSERV_OP_CONTEST_XML_FIELD_EDIT_PAGE);
+      }
+      if (p->b.right) {
+        dojo_button(out_f, 0, "next-16x16", "Move Down",
+                    "ssFieldCmd3(%d, %d, %d, %d)",
+                    SSERV_OP_BACKWARD_RULE, f_id, i,
+                    SSERV_OP_CONTEST_XML_FIELD_EDIT_PAGE);
+      }
+      dojo_button(out_f, 0, "delete-16x16", "Delete Rule",
+                  "ssFieldCmd3(%d, %d, %d, %d)",
+                  SSERV_OP_DELETE_RULE, f_id, i,
+                  SSERV_OP_CONTEST_XML_FIELD_EDIT_PAGE);
       fprintf(out_f, "</td>");
       fprintf(out_f, "</tr>\n");
     }
@@ -2040,13 +2073,14 @@ cmd_contest_xml_access_edit_page(
   fprintf(out_f, "<tr%s><td class=\"cnts_edit_legend\" colspan=\"5\" style=\"text-align: center;\"><b>Add a new rule</b></td></tr>\n", head_row_attr);
 
   fprintf(out_f, "<tr%s>", form_row_attrs[0]);
+  fprintf(out_f, "<form id=\"NewIPForm\">\n");
+  fprintf(out_f, "<input id=\"HiddenMask\" type=\"hidden\" name=\"ip_mask\" value=\"\" />\n");
   fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"100px\">&nbsp;</td>");
   fprintf(out_f, "<td class=\"cnts_edit_data\" width=\"200px\">");
-  fprintf(out_f, "<div class=\"cnts_edit_data\" dojoType=\"dijit.InlineEditBox\" onChange=\"alert(arguments[0])\" autoSave=\"true\" title=\"%s\"></div></td>",
-          "IP address");
+  fprintf(out_f, "<div id=\"NewIPText\" class=\"cnts_edit_data\" dojoType=\"dijit.InlineEditBox\" onChange=\"ssSetHiddenMask('HiddenMask', %d, arguments[0])\" autoSave=\"true\" title=\"%s\"></div></td>",
+          SSERV_OP_CHECK_IP_MASK, "IP address");
   fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"100px\">");
-  ss_html_select(out_f, 0, 0, 0,
-                 eprintf(jbuf, sizeof(jbuf), "alert(this.options[this.selectedIndex].value)"),
+  ss_html_select(out_f, 0, 0, "ssl_flag", 0,
                  eprintf(vbuf, sizeof(vbuf), "%d", -1),
                  3,
                  (const char*[]) { "-1", "0", "1" },
@@ -2054,15 +2088,16 @@ cmd_contest_xml_access_edit_page(
   fprintf(out_f, "</td>");
 
   fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"100px\">");
-  ss_html_int_select(out_f, 0, 0, 0,
-                     eprintf(jbuf, sizeof(jbuf), "alert(this.options[this.selectedIndex].value)"),
+  ss_html_int_select(out_f, 0, 0, "default_allow", 0,
                      1, 2,
                      (const char*[]) { "Deny", "Allow" });
   fprintf(out_f, "</td>");
   fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"150px\">");
-  dojo_button(out_f, 0, "add-16x16", "Move Up",
-              "alert(\"Move Up\")");
+  dojo_button(out_f, 0, "add-16x16", "Add",
+              "ssFormOp3(\"NewIPForm\", %d, %d, %d)",
+              SSERV_OP_ADD_IP, f_id, SSERV_OP_CONTEST_XML_FIELD_EDIT_PAGE);
   fprintf(out_f, "</td>");
+  fprintf(out_f, "</form>");
   fprintf(out_f, "</tr>\n");
 
   fprintf(out_f, "<tr%s><td class=\"cnts_edit_legend\" colspan=\"5\" style=\"text-align: center;\"><b>Default access</b></td></tr>\n", head_row_attr);
@@ -2074,7 +2109,7 @@ cmd_contest_xml_access_edit_page(
 
   fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"100px\">");
   ss_html_int_select(out_f, 0, 0, 0,
-                     eprintf(jbuf, sizeof(jbuf), "alert(this.options[this.selectedIndex].value)"),
+                     eprintf(jbuf, sizeof(jbuf), "ssSetValue2(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_OP_SET_DEFAULT_ACCESS, f_id, SSERV_OP_CONTEST_XML_FIELD_EDIT_PAGE),
                      1, 2,
                      (const char*[]) { "Deny", "Allow" });
   fprintf(out_f, "</td>");
@@ -2086,8 +2121,8 @@ cmd_contest_xml_access_edit_page(
 
   fprintf(out_f, "<br/>\n");
 
-  dojo_button(out_f, 0, "accept-32x32", "OK", "alert(\"OK\")");
-  dojo_button(out_f, 0, "cancel-32x32", "Cancel", "alert(\"Cancel\")");
+  dojo_button(out_f, 0, "back-32x32", "Back", "ssLoad1(%d)",
+              SSERV_OP_EDIT_CONTEST_PAGE_2);
   dojo_button(out_f, 0, "promotion-32x32", "Copy",
               "ssLoad2(%d, %d)", SSERV_OP_COPY_ACCESS_RULES_PAGE, f_id);
 
@@ -2133,9 +2168,9 @@ cmd_contest_xml_field_edit_page(
 
   if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD)
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
   if (!contest_xml_field_edit_cmd[f_id])
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
   return (*contest_xml_field_edit_cmd[f_id])(log_f, out_f, phr);
 
  cleanup:
@@ -2160,7 +2195,7 @@ cmd_copy_access_rules_page(
   if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD
       || !access_field_set[f_id])
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
   if (!(ecnts = phr->ss->edited_cnts))
     FAIL(S_ERR_NO_EDITED_CNTS);
 
@@ -2194,8 +2229,12 @@ cmd_copy_access_rules_page(
 
   fprintf(out_f, "<br/>\n");
 
-  dojo_button(out_f, 0, "accept-32x32", "OK", "alert(\"OK\")");
-  dojo_button(out_f, 0, "cancel-32x32", "Cancel", "alert(\"Cancel\")");
+  dojo_button(out_f, 0, "accept-32x32", "OK",
+              "ssFormOp3(\"copyForm\", %d, %d, %d)",
+              SSERV_OP_COPY_ACCESS_RULES, f_id,
+              SSERV_OP_CONTEST_XML_FIELD_EDIT_PAGE);
+  dojo_button(out_f, 0, "cancel-32x32", "Cancel",
+              "ssLoad2(%d, %d)", SSERV_OP_CONTEST_XML_FIELD_EDIT_PAGE, f_id);
 
   write_html_footer(out_f);
 
@@ -2276,7 +2315,7 @@ cmd_copy_all_access_rules(
   if (ss_cgi_param_int(phr, "contest_id_2", &contest_id_2) < 0
       || contest_id_2 <= 0)
     FAIL(S_ERR_INV_CONTEST);
-  if (contest_id_2 == ecnts->id) goto done;
+  if (contest_id_2 == ecnts->id) goto cleanup;
   if (contests_get(contest_id_2, &cnts) < 0 || !cnts)
     FAIL(S_ERR_INV_CONTEST);
 
@@ -2291,10 +2330,6 @@ cmd_copy_all_access_rules(
     *p_dst_access = super_html_copy_contest_access(*p_src_access);
     xml_link_node_last(&ecnts->b, &(*p_dst_access)->b);
   }
-
- done:
-  write_json_header(out_f);
-  fprintf(out_f, "{ \"status\": %d }", retval);
 
  cleanup:
     return retval;
@@ -2317,11 +2352,14 @@ cmd_copy_all_priv_users_page(
   if (!(ecnts = phr->ss->edited_cnts))
     FAIL(S_ERR_NO_EDITED_CNTS);
 
-  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d, copy user privilege from another contest",
+  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d, privilege operations",
            phr->html_name, ecnts->id);
   write_html_header(out_f, phr, buf, 1, 0);
   fprintf(out_f, "<h1>%s</h1>\n", buf);
   fprintf(out_f, "<br/>\n");
+
+  fprintf(out_f, "<h2>%s</h2><br/>",
+          "Copy user privileges from another contest");
 
   fprintf(out_f, "<form id=\"copyForm\">\n");
   fprintf(out_f, "<p><select name=\"contest_id_2\">");
@@ -2347,9 +2385,8 @@ cmd_copy_all_priv_users_page(
 
   fprintf(out_f, "<br/><hr/>\n");
 
-  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d, add a new privileged user",
-           phr->html_name, ecnts->id);
-  fprintf(out_f, "<h1>%s</h1>\n", buf);
+  fprintf(out_f, "<h2>%s</h2><br/>",
+          "Add a new privileged user");
 
   fprintf(out_f, "<br/>\n");
 
@@ -2358,10 +2395,10 @@ cmd_copy_all_priv_users_page(
   fprintf(out_f, "<tr><td>User Login:</td><td><input type=\"text\" name=\"login\" /></td></tr>\n");
   fprintf(out_f, "<tr><td>Permissions:</td><td>"
           "<select name=\"perms\">"
-          "<option value=\"0\"></option>"
-          "<option value=\"1\">Observer</option>"
-          "<option value=\"2\">Judge</option>"
-          "<option value=\"3\">Full control</option>"
+          "<option value=\"1\"></option>"
+          "<option value=\"2\">Observer</option>"
+          "<option value=\"3\">Judge</option>"
+          "<option value=\"4\">Full control</option>"
           "</select></td></tr>\n");
   fprintf(out_f, "</table>\n");
   fprintf(out_f, "</form>\n");
@@ -2397,12 +2434,11 @@ cmd_edit_permissions_page(
 
   if (!(ecnts = phr->ss->edited_cnts)) FAIL(S_ERR_NO_EDITED_CNTS);
   if (ss_cgi_param_int(phr, "field_id", &field_id) < 0 || field_id < 0)
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
 
-  perms = ecnts->capabilities.first;
-  for (j = 0; perms && j != field_id;
-       perms = (struct opcap_list_item*) perms->b.right, j++);
-  if (!perms || j != field_id) FAIL(S_ERR_INVALID_FIELD_ID);
+  for (perms = CNTS_FIRST_PERM(ecnts), j = 0; perms && j != field_id;
+       perms = CNTS_NEXT_PERM_NC(perms), ++j);
+  if (!perms || j != field_id) FAIL(S_ERR_INV_FIELD_ID);
 
   snprintf(buf, sizeof(buf),
            "serve-control: %s, contest %d, edit user privileges for user %s",
@@ -2412,8 +2448,11 @@ cmd_edit_permissions_page(
 
   fprintf(out_f, "<br/><h2>Typical permissions</h2><br/>\n");
 
-  ss_html_int_select(out_f, 0, 0, 0,
-                     "alert(this.options[this.selectedIndex].value)",
+  snprintf(buf, sizeof(buf),
+           "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)",
+           SSERV_OP_SET_PREDEF_PRIV, field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
+
+  ss_html_int_select(out_f, 0, 0, 0, buf,
                      opcaps_is_predef_caps(perms->caps),
                      5, predef_caps_names);
 
@@ -2425,7 +2464,9 @@ cmd_edit_permissions_page(
   fprintf(out_f, "</form>\n");
   fprintf(out_f, "<br/>\n");
 
-  dojo_button(out_f, 0, "accept-32x32", "OK", "alert(\"OK\")");
+  dojo_button(out_f, 0, "accept-32x32", "OK",
+              "ssFormOp2(\"capsList\", %d, %d, %d)",
+              SSERV_OP_SET_PRIV, field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
   dojo_button(out_f, 0, "cancel-32x32", "Cancel", "ssLoad1(%d)",
               SSERV_OP_EDIT_CONTEST_PAGE_2);
   
@@ -2486,7 +2527,9 @@ cmd_edit_general_fields_page(
   fprintf(out_f, "</table>\n");
   fprintf(out_f, "</form>\n");
   fprintf(out_f, "<br/>\n");
-  dojo_button(out_f, 0, "accept-32x32", "OK", "alert(\"OK\")");
+  dojo_button(out_f, 0, "accept-32x32", "OK", 
+              "ssFormOp1(\"fieldList\", %d, %d)",
+              SSERV_OP_EDIT_GENERAL_FIELDS, SSERV_OP_EDIT_CONTEST_PAGE_2);
   dojo_button(out_f, 0, "cancel-32x32", "Cancel", "ssLoad1(%d)",
               SSERV_OP_EDIT_CONTEST_PAGE_2);
   fprintf(out_f, "<br/>\n");
@@ -2514,7 +2557,7 @@ cmd_edit_member_fields_page(
   if (!(ecnts = phr->ss->edited_cnts)) FAIL(S_ERR_NO_EDITED_CNTS);
   if (ss_cgi_param_int(phr, "field_id", &memb_id) < 0
       || memb_id < 0 || memb_id >= CONTEST_LAST_MEMBER)
-    FAIL(S_ERR_INVALID_FIELD_ID);
+    FAIL(S_ERR_INV_FIELD_ID);
   memb = ecnts->members[memb_id];
 
   snprintf(buf, sizeof(buf),
@@ -2575,7 +2618,10 @@ cmd_edit_member_fields_page(
   fprintf(out_f, "</table>\n");
   fprintf(out_f, "</form>\n");
   fprintf(out_f, "<br/>\n");
-  dojo_button(out_f, 0, "accept-32x32", "OK", "alert(\"OK\")");
+  dojo_button(out_f, 0, "accept-32x32", "OK",
+              "ssFormOp2(\"fieldList\", %d, %d, %d)",
+              SSERV_OP_EDIT_MEMBER_FIELDS, memb_id,
+              SSERV_OP_EDIT_CONTEST_PAGE_2);
   dojo_button(out_f, 0, "cancel-32x32", "Cancel", "ssLoad1(%d)",
               SSERV_OP_EDIT_CONTEST_PAGE_2);
   fprintf(out_f, "<br/>\n");
@@ -2584,6 +2630,722 @@ cmd_edit_member_fields_page(
  cleanup:
   html_armor_free(&ab);
   return retval;
+}
+
+static int
+cmd_op_delete_priv_user(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct contest_desc *ecnts;
+  int user_num = -1;
+
+  phr->json_reply = 1;
+
+  if (!(ecnts = phr->ss->edited_cnts))
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "field_id", &user_num) < 0 || user_num < 0)
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (contests_remove_nth_permission(ecnts, user_num) < 0)
+    FAIL(S_ERR_INV_FIELD_ID);
+  retval = 1;
+
+ cleanup:
+  return retval;
+}
+
+static int
+cmd_op_add_priv_user(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct contest_desc *ecnts;
+  const unsigned char *login = 0;
+  int perms_id = -1;
+  opcap_t caps;
+
+  phr->json_reply = 1;
+
+  if (!(ecnts = phr->ss->edited_cnts))
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param(phr, "login", &login) <= 0 || !login)
+    FAIL(S_ERR_INV_VALUE);
+  if (!*login || check_str(login, login_accept_chars) < 0)
+    FAIL(S_ERR_INV_VALUE);
+  if (ss_cgi_param_int(phr, "perms", &perms_id) < 0
+      || perms_id <= 0 || perms_id >= OPCAP_PREDEF_LAST)
+    FAIL(S_ERR_INV_VALUE);
+
+  caps = opcaps_get_predef_caps(perms_id);
+  contests_add_permission(ecnts, login, caps);
+  retval = 1;
+
+ cleanup:
+  return retval;
+}
+
+static int
+cmd_op_copy_all_priv_users(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct contest_desc *ecnts;
+  int contest_id_2 = -1;
+  const struct contest_desc *cnts = 0;
+
+  phr->json_reply = 1;
+
+  if (!(ecnts = phr->ss->edited_cnts))
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "contest_id_2", &contest_id_2) < 0
+      || contest_id_2 < 0)
+    FAIL(S_ERR_INV_CONTEST);
+
+  if (contest_id_2 != ecnts->id) {
+    if (contests_get(contest_id_2, &cnts) < 0 || !cnts)
+      FAIL(S_ERR_INV_CONTEST);
+    contests_copy_permissions(ecnts, cnts);
+  }
+  retval = 1;
+
+ cleanup:
+  return retval;
+}
+
+static int
+cmd_op_set_predef_priv(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct contest_desc *ecnts;
+  int user_num = -1;
+  int perms_id = -1;
+  opcap_t caps;
+
+  phr->json_reply = 1;
+
+  if (!(ecnts = phr->ss->edited_cnts))
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "field_id", &user_num) < 0 || user_num < 0)
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (ss_cgi_param_int(phr, "value", &perms_id) < 0)
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (perms_id < 0 || perms_id >= OPCAP_PREDEF_LAST)
+    FAIL(S_ERR_INV_VALUE);
+  if (perms_id > 0) {
+    caps = opcaps_get_predef_caps(perms_id);
+    if (contests_set_permission(ecnts, user_num, caps) < 0)
+      FAIL(S_ERR_INV_FIELD_ID);
+  }
+  retval = 1;
+
+ cleanup:
+  return retval;
+}
+
+static int
+cmd_op_set_priv(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int user_num = -1;
+  struct contest_desc *ecnts = 0;
+  int i;
+  opcap_t caps = 0;
+  unsigned char capname[64];
+  const unsigned char *s;
+
+  phr->json_reply = 1;
+
+  if (!(ecnts = phr->ss->edited_cnts))
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "field_id", &user_num) < 0 || user_num < 0)
+    FAIL(S_ERR_INV_FIELD_ID);
+
+  for (i = 0; i < OPCAP_LAST; ++i) {
+    snprintf(capname, sizeof(capname), "cap_%d", i);
+    if (ss_cgi_param(phr, capname, &s) > 0)
+      caps |= 1ULL << i;
+  }
+  if (contests_set_permission(ecnts, user_num, caps) < 0)
+    FAIL(S_ERR_INV_FIELD_ID);
+  retval = 1;
+
+ cleanup:
+  return retval;
+}
+
+static int
+cmd_op_set_default_access(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct contest_desc *ecnts;
+  int f_id = -1;
+  struct contest_access **p_acc;
+  int val = -1;
+
+  phr->json_reply = 1;
+
+  if (!(ecnts = phr->ss->edited_cnts))
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
+      || !(access_field_set[f_id]))
+    FAIL(S_ERR_INV_FIELD_ID);
+  p_acc = (struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
+  if (ss_cgi_param_int(phr, "value", &val) < 0
+      || val < 0 || val > 1)
+    FAIL(S_ERR_INV_VALUE);
+  contests_set_default(ecnts, p_acc, access_field_tag[f_id], val);
+  retval = 0;
+
+ cleanup:
+  return retval;
+}
+
+static int
+cmd_op_check_ip_mask(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  const unsigned char *value = 0;
+  ej_ip_t addr, mask;
+
+  phr->json_reply = 1;
+
+  if (ss_cgi_param(phr, "value", &value) <= 0 || !value)
+    FAIL(S_ERR_INV_VALUE);
+  if (xml_parse_ip_mask(0, 0, 0, value, &addr, &mask) < 0)
+    FAIL(S_ERR_INV_VALUE);
+  retval = 0;
+
+ cleanup:
+  return retval;
+}
+
+static int
+cmd_op_add_ip(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct contest_desc *ecnts;
+  const unsigned char *mask_str = 0;
+  int ssl_flag = -2;
+  int default_allow = -1;
+  struct contest_access **p_acc;
+  int f_id;
+  ej_ip_t addr, mask;
+
+  phr->json_reply = 1;
+
+  if (!(ecnts = phr->ss->edited_cnts))
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
+      || !(access_field_set[f_id]))
+    FAIL(S_ERR_INV_FIELD_ID);
+  p_acc = (struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
+  if (ss_cgi_param(phr, "ip_mask", &mask_str) <= 0)
+    FAIL(S_ERR_INV_VALUE);
+  if (xml_parse_ip_mask(0, 0, 0, mask_str, &addr, &mask) < 0)
+    FAIL(S_ERR_INV_VALUE);
+  if (ss_cgi_param_int(phr, "ssl_flag", &ssl_flag) < 0
+      || ssl_flag < -1 || ssl_flag > 1)
+    FAIL(S_ERR_INV_VALUE);
+  if (ss_cgi_param_int(phr, "default_allow", &default_allow) < 0
+      || default_allow < 0 || default_allow > 1)
+    FAIL(S_ERR_INV_VALUE);
+  contests_add_ip(ecnts, p_acc, access_field_tag[f_id],
+                  addr, mask, ssl_flag, default_allow);
+  retval = 1;
+
+ cleanup:
+  return retval;
+}
+
+static int
+cmd_op_set_rule_access(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct contest_desc *ecnts;
+  int allow = -1;
+  struct contest_access *acc;
+  struct contest_ip *p;
+  int f_id, subf_id;
+
+  phr->json_reply = 1;
+
+  if (!(ecnts = phr->ss->edited_cnts))
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
+      || !(access_field_set[f_id]))
+    FAIL(S_ERR_INV_FIELD_ID);
+  acc = *(struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
+  if (ss_cgi_param_int(phr, "subfield_id", &subf_id) < 0 || subf_id < 0)
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (ss_cgi_param_int(phr, "value", &allow) < 0 || allow < 0 || allow > 1)
+    FAIL(S_ERR_INV_VALUE);
+  if (!(p = contests_get_ip_rule_nc(acc, subf_id)))
+    FAIL(S_ERR_INV_FIELD_ID);
+  p->allow = allow;
+  retval = 0;
+
+ cleanup:
+  return retval;
+}
+
+static int
+cmd_op_set_rule_ssl(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct contest_desc *ecnts;
+  int ssl = -2;
+  struct contest_access *acc;
+  struct contest_ip *p;
+  int f_id, subf_id;
+
+  phr->json_reply = 1;
+
+  if (!(ecnts = phr->ss->edited_cnts))
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
+      || !(access_field_set[f_id]))
+    FAIL(S_ERR_INV_FIELD_ID);
+  acc = *(struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
+  if (ss_cgi_param_int(phr, "subfield_id", &subf_id) < 0 || subf_id < 0)
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (ss_cgi_param_int(phr, "value", &ssl) < 0 || ssl < -1 || ssl > 1)
+    FAIL(S_ERR_INV_VALUE);
+  if (!(p = contests_get_ip_rule_nc(acc, subf_id)))
+    FAIL(S_ERR_INV_FIELD_ID);
+  p->ssl = ssl;
+  retval = 0;
+
+ cleanup:
+  return retval;
+}
+
+static int
+cmd_op_set_rule_ip(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct contest_desc *ecnts;
+  struct contest_access *acc;
+  struct contest_ip *p;
+  int f_id, subf_id;
+  const unsigned char *mask_str = 0;
+  ej_ip_t addr = 0, mask = 0;
+
+  phr->json_reply = 1;
+
+  if (!(ecnts = phr->ss->edited_cnts))
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
+      || !(access_field_set[f_id]))
+    FAIL(S_ERR_INV_FIELD_ID);
+  acc = *(struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
+  if (ss_cgi_param_int(phr, "subfield_id", &subf_id) < 0 || subf_id < 0)
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (ss_cgi_param(phr, "value", &mask_str) <= 0)
+    FAIL(S_ERR_INV_VALUE);
+  if (xml_parse_ip_mask(0, 0, 0, mask_str, &addr, &mask) < 0)
+    FAIL(S_ERR_INV_VALUE);
+  if (!(p = contests_get_ip_rule_nc(acc, subf_id)))
+    FAIL(S_ERR_INV_FIELD_ID);
+  p->addr = addr;
+  p->mask = mask;
+  retval = 0;
+
+ cleanup:
+  return retval;
+}
+
+static int
+cmd_op_rule_cmd(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int f_id = -1, subf_id = -1;
+  struct contest_desc *ecnts;
+  struct contest_access **p_acc;
+  int (*contest_func)(struct contest_access **, int);
+  static int (*contest_funcs[])(struct contest_access **, int) =
+  {
+    [SSERV_OP_DELETE_RULE - SSERV_OP_DELETE_RULE] = contests_delete_ip_rule,
+    [SSERV_OP_FORWARD_RULE - SSERV_OP_DELETE_RULE] = contests_forward_ip_rule,
+    [SSERV_OP_BACKWARD_RULE - SSERV_OP_DELETE_RULE] = contests_backward_ip_rule,
+  };
+
+  phr->json_reply = 1;
+
+  if (phr->opcode < SSERV_OP_DELETE_RULE
+      || phr->opcode > SSERV_OP_BACKWARD_RULE)
+    FAIL(S_ERR_INV_OPER);
+  if (!(contest_func = contest_funcs[phr->opcode - SSERV_OP_DELETE_RULE]))
+    FAIL(S_ERR_INV_OPER);
+
+  if (!(ecnts = phr->ss->edited_cnts))
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
+      || !(access_field_set[f_id]))
+    FAIL(S_ERR_INV_FIELD_ID);
+  p_acc = (struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
+  if (ss_cgi_param_int(phr, "subfield_id", &subf_id) < 0 || subf_id < 0)
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (contest_func(p_acc, subf_id) < 0)
+    FAIL(S_ERR_INV_FIELD_ID);
+  retval = 1;
+
+ cleanup:
+  return retval;
+}
+
+static int
+cmd_op_copy_access_rules(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct contest_desc *ecnts = 0;
+  const struct contest_desc *cnts = 0;
+  int f_id = -1, f_id_2 = -1, contest_id_2 = -1;
+  struct contest_access **p_acc;
+  const struct contest_access *acc_2;
+
+  phr->json_reply = 1;
+
+  if (!(ecnts = phr->ss->edited_cnts))
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
+      || !(access_field_set[f_id]))
+    FAIL(S_ERR_INV_FIELD_ID);
+  p_acc = (struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
+  if (ss_cgi_param_int(phr, "contest_id_2", &contest_id_2) < 0
+      || contest_id_2 <= 0)
+    FAIL(S_ERR_INV_VALUE);
+  if (contests_get(contest_id_2, &cnts) < 0 || !cnts)
+    FAIL(S_ERR_INV_VALUE);
+  if (ss_cgi_param_int(phr, "field_id_2", &f_id_2) < 0
+      || f_id_2 <= 0 || f_id_2 >= CNTS_LAST_FIELD
+      || !(access_field_set[f_id_2]))
+    FAIL(S_ERR_INV_VALUE);
+  acc_2 = *(const struct contest_access**) contest_desc_get_ptr(cnts, f_id_2);
+
+  if (*p_acc == acc_2) return 0;
+  xml_unlink_node(&(*p_acc)->b);
+  contests_free_2(&(*p_acc)->b);
+  *p_acc = super_html_copy_contest_access(acc_2);
+  xml_link_node_last(&ecnts->b, &(*p_acc)->b);
+  retval = 1;
+
+ cleanup:
+  return retval;
+}
+
+static int
+cmd_op_edit_general_fields(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int ff, opt_val, slen;
+  struct contest_desc *ecnts;
+  unsigned char vbuf[64];
+  const unsigned char *s;
+  unsigned char *ss;
+
+  phr->json_reply = 1;
+
+  if (!(ecnts = phr->ss->edited_cnts))
+    FAIL(S_ERR_NO_EDITED_CNTS);
+
+  for (ff = 1; ff < CONTEST_LAST_FIELD; ++ff) {
+    snprintf(vbuf, sizeof(vbuf), "field_%d", ff);
+    if (ss_cgi_param_int(phr, vbuf, &opt_val) < 0
+        || opt_val < 0 || opt_val > 2)
+      FAIL(S_ERR_INV_VALUE);
+    snprintf(vbuf, sizeof(vbuf), "legend_%d", ff);
+    s = 0;
+    if (ss_cgi_param(phr, vbuf, &s) < 0)
+      FAIL(S_ERR_INV_VALUE);
+    ss = 0;
+    if (s) {
+      slen = strlen(s);
+      ss = (unsigned char*) alloca(slen + 1);
+      strcpy(ss, s);
+      while (slen > 0 && isspace(ss[slen - 1])) --slen;
+      ss[slen] = 0;
+      if (!*ss) ss = 0;
+    }
+    contests_set_general_field(ecnts, ff, opt_val, ss);
+  }
+  retval = 1;
+
+ cleanup:
+  return retval;
+}
+
+static int
+cmd_op_edit_member_fields(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int opt_vals[CONTEST_LAST_MEMBER_FIELD];
+  unsigned char *legends[CONTEST_LAST_MEMBER_FIELD];
+  struct contest_desc *ecnts;
+  int m_id = -1, init_count = -1, max_count = -1, min_count = -1;
+  int ff, slen, opt_val, has_fields = 0;
+  unsigned char vbuf[64];
+  const unsigned char *s = 0;
+  unsigned char *ss = 0;
+
+  memset(opt_vals, 0, sizeof(opt_vals));
+  memset(legends, 0, sizeof(legends));
+
+  phr->json_reply = 1;
+
+  if (!(ecnts = phr->ss->edited_cnts))
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "field_id", &m_id) < 0
+      || m_id < 0 || m_id >= CONTEST_LAST_MEMBER)
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (ss_cgi_param_int(phr, "init_count", &init_count) < 0
+      || init_count < 0 || init_count > 5)
+    FAIL(S_ERR_INV_VALUE);
+  if (ss_cgi_param_int(phr, "min_count", &min_count) < 0
+      || min_count < 0 || min_count > 5)
+    FAIL(S_ERR_INV_VALUE);
+  if (ss_cgi_param_int(phr, "max_count", &max_count) < 0
+      || max_count < 0 || max_count > 5)
+    FAIL(S_ERR_INV_VALUE);
+  for (ff = 1; ff < CONTEST_LAST_MEMBER_FIELD; ++ff) {
+    snprintf(vbuf, sizeof(vbuf), "field_%d", ff);
+    if (ss_cgi_param_int(phr, vbuf, &opt_val) < 0
+        || opt_val < 0 || opt_val > 2)
+      FAIL(S_ERR_INV_VALUE);
+    opt_vals[ff] = opt_val;
+    if (opt_val) has_fields = 1;
+    snprintf(vbuf, sizeof(vbuf), "legend_%d", ff);
+    s = 0;
+    if (ss_cgi_param(phr, vbuf, &s) < 0)
+      FAIL(S_ERR_INV_VALUE);
+    ss = 0;
+    if (s) {
+      slen = strlen(s);
+      ss = (unsigned char*) alloca(slen + 1);
+      strcpy(ss, s);
+      while (slen > 0 && isspace(ss[slen - 1])) --slen;
+      ss[slen] = 0;
+      if (!*ss) ss = 0;
+    }
+    legends[ff] = ss;
+  }
+
+  if (!has_fields && !min_count && !max_count && !init_count) {
+    retval = 1;
+    contests_delete_member_fields(ecnts, m_id);
+    goto cleanup;
+  }
+
+  contests_set_member_counts(ecnts, m_id, min_count, max_count, init_count);
+  for (ff = 1; ff < CONTEST_LAST_MEMBER_FIELD; ++ff) {
+    contests_set_member_field(ecnts, m_id, ff, opt_vals[ff], legends[ff]);
+  }
+  retval = 1;
+
+ cleanup:
+  return retval;
+}
+
+static int
+cmd_op_create_new_contest_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  unsigned char buf[1024];
+  int contest_num = 0, recomm_id = 1, j, cnts_id;
+  const int *contests = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const struct contest_desc *cnts = 0;
+
+  if (phr->ss->edited_cnts) {
+    snprintf(buf, sizeof(buf), "serve-control: %s, another contest is edited",
+             phr->html_name);
+    write_html_header(out_f, phr, buf, 1, 0);
+    fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+    snprintf(buf, sizeof(buf),
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\" />",
+             phr->session_id);
+    super_html_edited_cnts_dialog(out_f,
+                                  phr->priv_level, phr->user_id, phr->login,
+                                  phr->session_id, phr->ip, phr->config,
+                                  phr->ss, phr->self_url, buf,
+                                  "", NULL, 1);
+
+    write_html_footer(out_f);
+    return 0;
+  }
+
+  if (phr->priv_level != PRIV_LEVEL_ADMIN)
+    FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_find(&phr->config->capabilities, phr->login, &phr->caps) < 0)
+    FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(phr->caps, OPCAP_EDIT_CONTEST) < 0)
+    FAIL(S_ERR_PERM_DENIED);
+
+  contest_num = contests_get_list(&contests);
+  if (contest_num > 0) recomm_id = contests[contest_num - 1] + 1;
+  j = super_serve_sid_state_get_max_edited_cnts();
+  if (j >= recomm_id) recomm_id = j + 1;
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, create a new contest",
+           phr->html_name);
+  write_html_header(out_f, phr, buf, 1, 0);
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "op", "%d", SSERV_OP_CREATE_NEW_CONTEST);
+
+  fprintf(out_f, "<table border=\"0\">");
+  fprintf(out_f, "<tr><td>Contest number:</td><td>%s</td></tr>\n",
+          html_input_text(buf, sizeof(buf), "contest_id", 20, "%d", recomm_id));
+  fprintf(out_f, "<tr><td>Contest template:</td><td>");
+  fprintf(out_f, "<select name=\"templ_id\">"
+          "<option value=\"0\">From scratch</option>");
+  for (j = 0; j < contest_num; j++) {
+    cnts_id = contests[j];
+    if (contests_get(cnts_id, &cnts) < 0) continue;
+    fprintf(out_f, "<option value=\"%d\">%d - %s</option>", cnts_id, cnts_id,
+            ARMOR(cnts->name));
+  }
+  fprintf(out_f, "</select></td></tr>\n");
+  fprintf(out_f, "<tr><td>&nbsp;</td><td>");
+  fprintf(out_f, "<input type=\"submit\" value=\"%s\"/>", "Create contest!");
+  fprintf(out_f, "</td></tr>\n");
+  fprintf(out_f, "</table></form>\n");
+  write_html_footer(out_f);
+
+ cleanup:
+  html_armor_free(&ab);
+  return retval;
+}
+
+static int
+cmd_op_create_new_contest(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = -1;
+  int templ_id = -1;
+  int contest_num, i;
+  const int *contests = 0;
+  const struct contest_desc *templ_cnts = 0;
+
+  if (phr->ss->edited_cnts)
+    FAIL(S_ERR_CONTEST_EDITED);
+  if (phr->priv_level != PRIV_LEVEL_ADMIN)
+    FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_find(&phr->config->capabilities, phr->login, &phr->caps) < 0)
+    FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(phr->caps, OPCAP_EDIT_CONTEST) < 0)
+    FAIL(S_ERR_PERM_DENIED);
+  if (ss_cgi_param_int(phr, "contest_id", &contest_id) < 0
+      || contest_id < 0 || contest_id > EJ_MAX_CONTEST_ID)
+    FAIL(S_ERR_INV_VALUE);
+  if (ss_cgi_param_int(phr, "templ_id", &templ_id) < 0 || templ_id < 0)
+    FAIL(S_ERR_INV_VALUE);
+
+  contest_num = contests_get_list(&contests);
+  if (contest_num < 0 || !contests)
+    FAIL(S_ERR_INTERNAL);
+
+  if (!contest_id) {
+    contest_id = contests[contest_num - 1] + 1;
+    i = super_serve_sid_state_get_max_edited_cnts();
+    if (i >= contest_id) contest_id = i + 1;
+  }
+  for (i = 0; i < contest_num && contests[i] != contest_id; i++);
+  if (i < contest_num)
+    FAIL(S_ERR_CONTEST_ALREADY_EXISTS);
+  if (super_serve_sid_state_get_cnts_editor(contest_id))
+    FAIL(S_ERR_CONTEST_ALREADY_EDITED);
+  if (templ_id > 0) {
+    for (i = 0; i < contest_num && contests[i] != templ_id; i++);
+    if (i < contest_num)
+      FAIL(S_ERR_INV_CONTEST);
+    if (contests_get(templ_id, &templ_cnts) < 0 || !templ_cnts)
+      FAIL(S_ERR_INV_CONTEST);
+  }
+
+  if (!templ_cnts) {
+    phr->ss->edited_cnts = contest_tmpl_new(contest_id, phr->login, phr->self_url, phr->system_login, phr->config);
+    phr->ss->global = prepare_new_global_section(contest_id, phr->ss->edited_cnts->root_dir, phr->config);
+  } else {
+    super_html_load_serve_cfg(templ_cnts, phr->config, phr->ss);
+    super_html_fix_serve(phr->ss, templ_id, contest_id);
+    phr->ss->edited_cnts = contest_tmpl_clone(phr->ss, contest_id, templ_id, phr->login, phr->system_login);
+  }
+
+  refresh_page(out_f, phr, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST,
+               SSERV_OP_EDIT_CONTEST_PAGE_2);
+
+ cleanup:
+  return retval;
+}
+
+static int
+cmd_op_forget_contest(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  phr->json_reply = 1;
+  super_serve_clear_edited_contest(phr->ss);
+  return 1;
 }
 
 static handler_func_t op_handlers[SSERV_OP_LAST] =
@@ -2608,6 +3370,26 @@ static handler_func_t op_handlers[SSERV_OP_LAST] =
   [SSERV_OP_EDIT_PERMISSIONS_PAGE] = cmd_edit_permissions_page,
   [SSERV_OP_EDIT_GENERAL_FIELDS_PAGE] = cmd_edit_general_fields_page,
   [SSERV_OP_EDIT_MEMBER_FIELDS_PAGE] = cmd_edit_member_fields_page,
+  [SSERV_OP_DELETE_PRIV_USER] = cmd_op_delete_priv_user,
+  [SSERV_OP_ADD_PRIV_USER] = cmd_op_add_priv_user,
+  [SSERV_OP_COPY_ALL_PRIV_USERS] = cmd_op_copy_all_priv_users,
+  [SSERV_OP_SET_PREDEF_PRIV] = cmd_op_set_predef_priv,
+  [SSERV_OP_SET_PRIV] = cmd_op_set_priv,
+  [SSERV_OP_SET_DEFAULT_ACCESS] = cmd_op_set_default_access,
+  [SSERV_OP_CHECK_IP_MASK] = cmd_op_check_ip_mask,
+  [SSERV_OP_ADD_IP] = cmd_op_add_ip,
+  [SSERV_OP_SET_RULE_ACCESS] = cmd_op_set_rule_access,
+  [SSERV_OP_SET_RULE_SSL] = cmd_op_set_rule_ssl,
+  [SSERV_OP_SET_RULE_IP] = cmd_op_set_rule_ip,
+  [SSERV_OP_DELETE_RULE] = cmd_op_rule_cmd,
+  [SSERV_OP_FORWARD_RULE] = cmd_op_rule_cmd,
+  [SSERV_OP_BACKWARD_RULE] = cmd_op_rule_cmd,
+  [SSERV_OP_COPY_ACCESS_RULES] = cmd_op_copy_access_rules,
+  [SSERV_OP_EDIT_GENERAL_FIELDS] = cmd_op_edit_general_fields,
+  [SSERV_OP_EDIT_MEMBER_FIELDS] = cmd_op_edit_member_fields,
+  [SSERV_OP_CREATE_NEW_CONTEST_PAGE] = cmd_op_create_new_contest_page,
+  [SSERV_OP_CREATE_NEW_CONTEST] = cmd_op_create_new_contest,
+  [SSERV_OP_FORGET_CONTEST] = cmd_op_forget_contest,
 };
 
 static int
@@ -2638,9 +3420,11 @@ static unsigned char const * const error_messages[] =
   [S_ERR_INTERNAL] = "Internal error",
   [S_ERR_ALREADY_EDITED] = "Contest is already edited",
   [S_ERR_NO_EDITED_CNTS] = "No contest is edited",
-  [S_ERR_INVALID_FIELD_ID] = "Invalid field ID",
+  [S_ERR_INV_FIELD_ID] = "Invalid field ID",
   [S_ERR_NOT_IMPLEMENTED] = "Not implemented yet",
-  [S_ERR_INVALID_VALUE] = "Invalid value",
+  [S_ERR_INV_VALUE] = "Invalid value",
+  [S_ERR_CONTEST_ALREADY_EXISTS] = "Contest with this ID already exists",
+  [S_ERR_CONTEST_ALREADY_EDITED] = "Contest is edited by another person",
 };
 
 void
@@ -2719,8 +3503,7 @@ super_html_http_request(
     out_f = open_memstream(&out_t, &out_z);
     if (phr->json_reply) {
       write_json_header(out_f);
-      fprintf(out_f, "{ \"status\": %d, \"text\": \"%s\" }",
-              -S_ERR_EMPTY_REPLY, error_messages[S_ERR_EMPTY_REPLY]);
+      fprintf(out_f, "{ \"status\": %d }", r);
     } else {
       write_html_header(out_f, phr, "Empty output", 0, 0);
       fprintf(out_f, "<h1>Empty output</h1>\n");

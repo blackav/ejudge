@@ -1750,6 +1750,28 @@ sid_state_cleanup(void)
     }
   } while (p);
 }
+int
+super_serve_sid_state_get_max_edited_cnts(void)
+{
+  struct sid_state *p;
+  int max_cnts_id = 0;
+
+  for (p = sid_state_first; p; p = p->next) {
+    if (p->edited_cnts && p->edited_cnts->id > max_cnts_id)
+      max_cnts_id = p->edited_cnts->id;
+  }
+  return max_cnts_id;
+}
+const struct sid_state*
+super_serve_sid_state_get_cnts_editor(int contest_id)
+{
+  struct sid_state *p;
+
+  for (p = sid_state_first; p; p = p->next)
+    if (p->edited_cnts && p->edited_cnts->id == contest_id)
+      return p;
+  return 0;
+}
 
 void
 super_serve_clear_edited_contest(struct sid_state *p)
@@ -2116,7 +2138,7 @@ cmd_main_page(struct client_state *p, int len,
       r = super_html_edited_cnts_dialog(f, p->priv_level, p->user_id, p->login,
                                         p->cookie, p->ip, config, sstate,
                                         self_url_ptr, hidden_vars_ptr,
-                                        extra_args_ptr, cnts);
+                                        extra_args_ptr, cnts, 0);
       break;
     }
     if ((r = contests_load(pkt->contest_id, &rw_cnts)) < 0 || !rw_cnts) {
@@ -3368,8 +3390,10 @@ cmd_http_request(
   hr.html_name = p->html_name;
   hr.ip = p->ip;
   hr.ssl_flag = p->ssl;
+  hr.system_login = userlist_login;
 
   hr.ss = sid_state_get(p->cookie);
+  hr.config = config;
 
   super_html_http_request(&out_t, &out_z, &hr);
 

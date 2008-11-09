@@ -202,40 +202,6 @@ get_nth_child(struct xml_tree *t, int n)
   return p;
 }
 
-static void
-swap_tree_nodes(struct xml_tree *first)
-{
-  struct xml_tree *second;
-  struct xml_tree *top;
-  struct xml_tree *before_first;
-  struct xml_tree *after_second;
-
-  ASSERT(first);
-  second = first->right;
-  ASSERT(second);
-  ASSERT(second->left == first);
-  top = first->up;
-  ASSERT(top == second->up);
-  before_first = first->left;
-  after_second = second->right;
-  first->left = second;
-  first->right = after_second;
-  second->left = before_first;
-  second->right = first;
-  if (!before_first) {
-    ASSERT(top->first_down == first);
-    top->first_down = second;
-  } else {
-    before_first->right = second;
-  }
-  if (!after_second) {
-    ASSERT(top->last_down == second);
-    top->last_down = first;
-  } else {
-    after_second->left = first;
-  }
-}
-
 static struct contest_access **
 get_contest_access_by_num(const struct contest_desc *cnts, int num)
 {
@@ -297,13 +263,12 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   time_t *p_date = 0;
   int v, n, memb_ind;
   struct contest_desc *cnts = sstate->edited_cnts;
-  struct contest_access **p_access = 0, *new_acc, **p_src_access = 0;
+  struct contest_access **p_access = 0, **p_src_access = 0;
   unsigned int ip_addr, ip_mask;
   struct contest_ip *new_ip;
   struct opcap_list_item *cap_node;
-  struct contest_field *fld_node;
-  struct contest_member *memb;
   const struct contest_desc *src_cnts = 0;
+  const unsigned char *s = 0;
 
   if (!cnts) {
     return -SSERV_ERR_CONTEST_NOT_EDITED;
@@ -587,24 +552,7 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     if (!(p_access = get_contest_access_by_num(cnts, param1)))
       return -SSERV_ERR_INVALID_PARAMETER;
     if (param3 < 0 || param3 > 1) return -SSERV_ERR_INVALID_PARAMETER;
-    if (!param3) {
-      // setting access to deny
-      if (!*p_access) return 0;
-      (*p_access)->default_is_allow = 0;
-      if (!(*p_access)->b.first_down) {
-        xml_unlink_node(&(*p_access)->b);
-        contests_free_2(&(*p_access)->b);
-        *p_access = 0;
-      }
-    } else {
-      // setting access to allow
-      if (!*p_access) {
-        new_acc = (struct contest_access*)contests_new_node(access_tags_map[param1]);
-        xml_link_node_last(&cnts->b, &new_acc->b);
-        *p_access = new_acc;
-      }
-      (*p_access)->default_is_allow = 1;
-    }
+    contests_set_default(cnts, p_access, access_tags_map[param1], param3);
     return 0;
   case SSERV_CMD_CNTS_ADD_RULE:
     if (!(p_access = get_contest_access_by_num(cnts, param1)))
@@ -612,17 +560,8 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     if (param3 < 0 || param3 > 1) return -SSERV_ERR_INVALID_PARAMETER;
     if (xml_parse_ip_mask(0, -1, 0, param2, &ip_addr, &ip_mask) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
-    if (!*p_access) {
-      new_acc = (struct contest_access*) contests_new_node(access_tags_map[param1]);
-      xml_link_node_last(&cnts->b, &new_acc->b);
-      *p_access = new_acc;
-    }
-    new_ip = (struct contest_ip*) contests_new_node(CONTEST_IP);
-    new_ip->addr = ip_addr;
-    new_ip->mask = ip_mask;
-    new_ip->allow = param3;
-    new_ip->ssl = param5;
-    xml_link_node_last(&(*p_access)->b, &new_ip->b);
+    contests_add_ip(cnts, p_access, access_tags_map[param1],
+                    ip_addr, ip_mask, param5, param3);
     return 0;
   case SSERV_CMD_CNTS_CHANGE_RULE:
     if (!(p_access = get_contest_access_by_num(cnts, param1)))
@@ -636,31 +575,20 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   case SSERV_CMD_CNTS_DELETE_RULE:
     if (!(p_access = get_contest_access_by_num(cnts, param1)))
       return -SSERV_ERR_INVALID_PARAMETER;
-    if (!(new_ip = (struct contest_ip*) get_nth_child(&(*p_access)->b, param4)))
+    if (contests_delete_ip_rule(p_access, param4) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
-    xml_unlink_node(&new_ip->b);
-    contests_free_2(&new_ip->b);
-    if (!(*p_access)->b.first_down && !(*p_access)->default_is_allow) {
-      xml_unlink_node(&(*p_access)->b);
-      contests_free_2(&(*p_access)->b);
-      *p_access = 0;
-    }
     return 0;
   case SSERV_CMD_CNTS_UP_RULE:
     if (!(p_access = get_contest_access_by_num(cnts, param1)))
       return -SSERV_ERR_INVALID_PARAMETER;
-    if (!(new_ip = (struct contest_ip*) get_nth_child(&(*p_access)->b, param4)))
+    if (contests_forward_ip_rule(p_access, param4) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
-    if (!new_ip->b.left) return -SSERV_ERR_INVALID_PARAMETER;
-    swap_tree_nodes(new_ip->b.left);
     return 0;
   case SSERV_CMD_CNTS_DOWN_RULE:
     if (!(p_access = get_contest_access_by_num(cnts, param1)))
       return -SSERV_ERR_INVALID_PARAMETER;
-    if (!(new_ip = (struct contest_ip*) get_nth_child(&(*p_access)->b, param4)))
+    if (contests_backward_ip_rule(p_access, param4) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
-    if (!new_ip->b.right) return -SSERV_ERR_INVALID_PARAMETER;
-    swap_tree_nodes(&new_ip->b);
     return 0;
 
   case SSERV_CMD_CNTS_COPY_ACCESS:
@@ -688,34 +616,15 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     return 0;
 
   case SSERV_CMD_CNTS_DELETE_PERMISSION:
-    if (!(cap_node = (struct opcap_list_item*) get_nth_child(cnts->caps_node, param1)))
+    if (contests_remove_nth_permission(cnts, param1) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
-    xml_unlink_node(&cap_node->b);
-    contests_free_2(&cap_node->b);
-    cnts->capabilities.first = (struct opcap_list_item*) cnts->caps_node->first_down;
-    if (!cnts->capabilities.first) {
-      xml_unlink_node(cnts->caps_node);
-      contests_free_2(cnts->caps_node);
-      cnts->caps_node = 0;
-    }
     return 0;
 
   case SSERV_CMD_CNTS_ADD_PERMISSION:
     if (!param2 || !*param2) return -SSERV_ERR_INVALID_PARAMETER;
     if (check_str(param2, login_accept_chars) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
-    for (cap_node = cnts->capabilities.first; cap_node;
-         cap_node = (typeof(cap_node)) cap_node->b.right)
-      if (!strcmp(cap_node->login, param2))
-        return -SSERV_ERR_DUPLICATED_LOGIN;
-    if (!cnts->caps_node) {
-      cnts->caps_node = contests_new_node(CONTEST_CAPS);
-      xml_link_node_last(&cnts->b, cnts->caps_node);
-    }
-    cap_node = (typeof(cap_node)) contests_new_node(CONTEST_CAP);
-    if (!cnts->capabilities.first) cnts->capabilities.first = cap_node;
-    cap_node->login = xstrdup(param2);
-    xml_link_node_last(cnts->caps_node, &cap_node->b);
+    contests_add_permission(cnts, param2, 0);
     return 0;
 
   case SSERV_CMD_CNTS_SAVE_PERMISSIONS:
@@ -743,22 +652,9 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
       if (param2[n] < '0' || param2[n] > '2')
         return -SSERV_ERR_INVALID_PARAMETER;
     for (n = 1; n < CONTEST_LAST_FIELD; n++) {
-      if (param2[n] == '0') {
-        if (cnts->fields[n]) {
-          xml_unlink_node(&cnts->fields[n]->b);
-          contests_free_2(&cnts->fields[n]->b);
-          cnts->fields[n] = 0;
-        }
-      } else {
-        if (!cnts->fields[n]) {
-          fld_node = (typeof(fld_node)) contests_new_node(CONTEST_FIELD);
-          fld_node->id = n;
-          cnts->fields[n] = fld_node;
-          xml_link_node_last(&cnts->b, &fld_node->b);
-        }
-        cnts->fields[n]->mandatory = 0;
-        if (param2[n] == '2') cnts->fields[n]->mandatory = 1;
-      }
+      s = 0;
+      if (cnts->fields[n]) s = cnts->fields[n]->legend;
+      contests_set_general_field(cnts, n, param2[n] - '0', s);
     }
     return 0;
 
@@ -772,7 +668,6 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     // param3 - min_count
     // param4 - max_count
     memb_ind = cmd - SSERV_CMD_CNTS_SAVE_CONTESTANT_FIELDS;
-    memb = cnts->members[memb_ind];
 
     if (param1 < 0 || param1 > 5) return -SSERV_ERR_INVALID_PARAMETER;
     if (param3 < 0 || param3 > 5) return -SSERV_ERR_INVALID_PARAMETER;
@@ -793,49 +688,18 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
         if (param2[n] != '0')
           break;
       if (n == CONTEST_LAST_MEMBER_FIELD) {
-        // completely remove this member
-        if (memb) {
-          for (n = 1; n < CONTEST_LAST_MEMBER_FIELD; n++)
-            if (memb->fields[n]) {
-              xml_unlink_node(&memb->fields[n]->b);
-              contests_free_2(&memb->fields[n]->b);
-              memb->fields[n] = 0;
-            }
-          xml_unlink_node(&memb->b);
-          contests_free_2(&memb->b);
-          cnts->members[memb_ind] = 0;
-        }
+        contests_delete_member_fields(cnts, memb_ind);
         return 0;
       }
     }
 
-    if (!memb) {
-      memb = (typeof(memb)) contests_new_node(CONTEST_CONTESTANTS + memb_ind);
-      xml_link_node_last(&cnts->b, &memb->b);
-      cnts->members[memb_ind] = memb;
-    }
-
-    memb->min_count = param3;
-    memb->max_count = param4;
-    memb->init_count = param1;
+    contests_set_member_counts(cnts, memb_ind, param3, param4, param1);
 
     for (n = 1; n < CONTEST_LAST_MEMBER_FIELD; n++) {
-      if (param2[n] == '0') {
-        if (memb->fields[n]) {
-          xml_unlink_node(&memb->fields[n]->b);
-          contests_free_2(&memb->fields[n]->b);
-          memb->fields[n] = 0;
-        }
-      } else {
-        if (!memb->fields[n]) {
-          fld_node = (typeof(fld_node)) contests_new_node(CONTEST_FIELD);
-          fld_node->id = n;
-          memb->fields[n] = fld_node;
-          xml_link_node_last(&memb->b, &fld_node->b);
-        }
-        memb->fields[n]->mandatory = 0;
-        if (param2[n] == '2') memb->fields[n]->mandatory = 1;
-      }
+      s = 0;
+      if (cnts->members[memb_ind] && cnts->members[memb_ind]->fields[n])
+        s = cnts->members[memb_ind]->fields[n]->legend;
+      contests_set_member_field(cnts, memb_ind, n, param2[n] - '0', s);
     }
     return 0;
 

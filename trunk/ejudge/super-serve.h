@@ -210,6 +210,7 @@ struct super_http_request_info
   const size_t *param_sizes;
   const unsigned char **params;
 
+  const struct ejudge_cfg *config;
   struct sid_state *ss;
 
   int opcode;
@@ -219,6 +220,7 @@ struct super_http_request_info
   int ssl_flag;
   const unsigned char *self_url; // points into stack buffer
   const unsigned char *script_name; // points into stack buffer
+  const unsigned char *system_login;
 
   unsigned long long session_id;
 
@@ -241,5 +243,8 @@ void super_serve_clear_edited_contest(struct sid_state *sstate);
 int super_serve_start_serve_test_mode(const struct contest_desc *cnts,
                                       unsigned char **p_log,
                                       int pass_socket);
+
+int super_serve_sid_state_get_max_edited_cnts(void);
+const struct sid_state* super_serve_sid_state_get_cnts_editor(int contest_id);
 
 #endif /* __SUPER_SERVE_H__ */
