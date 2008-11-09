@@ -12,7 +12,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-function doFieldRequest(op, field_id, next_op)
+function ssFieldRequest(op, field_id, next_op)
 {
   dojo.xhrPost({
       url: script_name,
@@ -62,12 +62,7 @@ function doFieldRequestWithField(op, field_id, next_op)
   });
 }
 
-function clearField(op, field_id, next_op)
-{
-  doFieldRequest(op, field_id, next_op);
-}
-
-function editField(op, field_id, next_op, value)
+function ssEditField(op, field_id, next_op, value)
 {
   dojo.xhrPost({
       url: script_name,
@@ -120,9 +115,31 @@ function editField2(op, field_id, subfield_id, next_op, value)
   });
 }
 
-function toggleButton(op, field_id, next_op)
+function ssEditField3(op, field_id, subfield_id, next_op, value)
 {
-  doFieldRequest(op, field_id, next_op);
+  dojo.xhrPost({
+      url: script_name,
+      content: {
+        "SID": SID,
+        "action": SSERV_CMD_HTTP_REQUEST,
+        "op": op,
+        "field_id": field_id,
+        "subfield_id": subfield_id,
+        "value": value
+      },
+      handleAs: "json",
+      error: function(data, ioargs) {
+        alert("Request failed: " + data);
+      },
+      load: function(data, ioargs) {
+        if (data.status < 0) {
+          alert("Operation failed: " + data.text);
+        } else if (data.status > 0) {
+          // reload this page
+          document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + next_op + "&field_id=" + field_id;
+        }
+      }
+  });
 }
 
 function editFileSave(form_id, op, field_id, next_op)
@@ -194,7 +211,162 @@ function ssFormOp1(form_id, op, next_op)
   });
 }
 
+function ssFormOp2(form_id, op, field_id, next_op)
+{
+  dojo.xhrPost({
+      url: script_name,
+      content: {
+        "SID": SID,
+        "action": SSERV_CMD_HTTP_REQUEST,
+        "op": op,
+        "field_id": field_id
+      },
+      form : form_id,
+      handleAs: "json",
+      error: function(data, ioargs) {
+        alert("Request failed: " + data);
+      },
+      load: function(data, ioargs) {
+        if (data.status < 0) {
+          alert("Operation failed: " + data.text);
+        } else if (data.status > 0) {
+          document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + next_op;
+        }
+      }
+  });
+}
+
 function ssTopLevel()
 {
   document.location.href = script_name + "?SID=" + SID;
+}
+
+function ssSetValue2(op, field_id, next_op, value)
+{
+  dojo.xhrPost({
+      url: script_name,
+      content: {
+        "SID": SID,
+        "action": SSERV_CMD_HTTP_REQUEST,
+        "op": op,
+        "field_id": field_id,
+        "value": value
+      },
+      handleAs: "json",
+      error: function(data, ioargs) {
+        alert("Request failed: " + data);
+      },
+      load: function(data, ioargs) {
+        if (data.status < 0) {
+          alert("Operation failed: " + data.text);
+        } else if (data.status > 0) {
+          // reload this page
+          document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + next_op + "&field_id=" + field_id;
+        }
+      }
+  });
+}
+
+function ssSetHiddenMask(hidden_id, op, value)
+{
+  dojo.xhrPost({
+      url: script_name,
+      content: {
+        "SID": SID,
+        "action": SSERV_CMD_HTTP_REQUEST,
+        "op": op,
+        "value": value
+      },
+      handleAs: "json",
+      error: function(data, ioargs) {
+        alert("Request failed: " + data);
+      },
+      load: function(data, ioargs) {
+        if (data.status < 0) {
+          alert("Operation failed: " + data.text);
+        } else {
+          dojo.byId(hidden_id).value = value;
+        }
+      }
+  });
+}
+
+function ssFormOp3(form_id, op, field_id, next_op)
+{
+  dojo.xhrPost({
+      url: script_name,
+      content: {
+        "SID": SID,
+        "action": SSERV_CMD_HTTP_REQUEST,
+        "op": op,
+        "field_id": field_id
+      },
+      form : form_id,
+      handleAs: "json",
+      error: function(data, ioargs) {
+        alert("Request failed: " + data);
+      },
+      load: function(data, ioargs) {
+        if (data.status < 0) {
+          alert("Operation failed: " + data.text);
+        } else if (data.status > 0) {
+          document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + next_op + "&field_id=" + field_id;
+        }
+      }
+  });
+}
+
+function ssFieldCmd3(op, field_id, subfield_id, next_op)
+{
+  dojo.xhrPost({
+      url: script_name,
+      content: {
+        "SID": SID,
+        "action": SSERV_CMD_HTTP_REQUEST,
+        "op": op,
+        "field_id": field_id,
+        "subfield_id": subfield_id
+      },
+      handleAs: "json",
+      error: function(data, ioargs) {
+        alert("Request failed: " + data);
+      },
+      load: function(data, ioargs) {
+        if (data.status < 0) {
+          alert("Operation failed: " + data.text);
+        } else {
+          // reload this page
+          document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + next_op + "&field_id=" + field_id;
+        }
+      }
+  });
+}
+
+function ssForgetContest(op)
+{
+  dojo.xhrPost({
+      url: script_name,
+      content: {
+        "SID": SID,
+        "action": SSERV_CMD_HTTP_REQUEST,
+        "op": op,
+      },
+      handleAs: "json",
+      error: function(data, ioargs) {
+        alert("Request failed: " + data);
+      },
+      load: function(data, ioargs) {
+        if (data.status < 0) {
+          alert("Operation failed: " + data.text);
+        } else {
+          // reload this page
+          document.location.href = script_name + "?SID=" + SID;
+        }
+      }
+  });
+}
+
+function ssCommitContest(action)
+{
+  document.location.href = script_name + "?SID=" + SID + "&action=" + action;
 }
