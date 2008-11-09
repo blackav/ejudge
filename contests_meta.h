@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/11/04 21:02:56
+// Generated 2008/11/09 20:14:35
 
 #ifndef __CONTESTS_META_H__
 #define __CONTESTS_META_H__
