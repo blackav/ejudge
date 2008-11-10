@@ -718,6 +718,25 @@ ejudge_cfg_unparse_plugins(struct ejudge_cfg *cfg, FILE *f)
   fprintf(f, "</%s>\n", elem_map[TG_PLUGINS]);
 }
 
+struct xml_tree *
+ejudge_cfg_get_plugin_config(
+        struct ejudge_cfg *cfg,
+        const unsigned char *type,
+        const unsigned char *name)
+{
+  struct xml_tree *p;
+  struct ejudge_plugin *plg;
+
+  if (!cfg || !cfg->plugin_list) return NULL;
+
+  for (p = cfg->plugin_list; p; p = p->right) {
+    plg = (struct ejudge_plugin*) p;
+    if (!strcmp(type, plg->type) && !strcmp(name, plg->name))
+      return plg->data;
+  }
+  return NULL;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

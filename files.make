@@ -100,6 +100,7 @@ COMMON_CFILES=\
  clarlog.c\
  cldb_plugin_file.c\
  clntutil.c\
+ common_plugin.c\
  compile_packet_1.c\
  compile_packet_2.c\
  compile_packet_3.c\
@@ -305,6 +306,7 @@ HFILES=\
  cldb_plugin.h\
  client_actions.h\
  clntutil.h\
+ common_plugin.h\
  compile_packet.h\
  compile_packet_priv.h\
  contests.h\

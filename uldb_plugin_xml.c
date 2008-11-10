@@ -39,8 +39,9 @@
 #define DEFAULT_FLUSH_INTERVAL 600
 #define DEFAULT_BACKUP_INTERVAL (24*60*60)
 
-static void *init_func(const struct ejudge_cfg *);
-static int prepare_func(void *, const struct ejudge_cfg *,struct xml_tree *);
+static void *init_func(void);
+static int finish_func(void *);
+static int prepare_func(void *, struct ejudge_cfg *,struct xml_tree *);
 static int open_func(void *);
 static int close_func(void *);
 static int check_func(void *);
@@ -138,6 +139,7 @@ struct uldb_plugin_iface uldb_plugin_xml =
   ULDB_PLUGIN_IFACE_VERSION,
 
   init_func,
+  finish_func,
   prepare_func,
   open_func,
   close_func,
@@ -279,7 +281,7 @@ userlist_clone_member(
         time_t current_time);
 
 static void *
-init_func(const struct ejudge_cfg *ej_cfg)
+init_func(void)
 {
   struct uldb_xml_state *state;
 
@@ -288,7 +290,13 @@ init_func(const struct ejudge_cfg *ej_cfg)
 }
 
 static int
-prepare_func(void *data, const struct ejudge_cfg *ej_cfg,struct xml_tree *t)
+finish_func(void *data)
+{
+  return 0;
+}
+
+static int
+prepare_func(void *data, struct ejudge_cfg *ej_cfg,struct xml_tree *t)
 {
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
 

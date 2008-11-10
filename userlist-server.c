@@ -9188,7 +9188,7 @@ load_plugins(const unsigned char *plugin_dir)
   // XML plugin always loaded
   uldb_plugins_num = 0;
   uldb_plugins[uldb_plugins_num].iface = &uldb_plugin_xml;
-  if (!(plugin_data = uldb_plugin_xml.init(config))) {
+  if (!(plugin_data = uldb_plugin_xml.init())) {
     err("cannot initialize XML database plugin");
     return -1;
   }
@@ -9224,7 +9224,7 @@ load_plugins(const unsigned char *plugin_dir)
       err("plugin version mismatch");
       return 1;
     }
-    if (!(plugin_data = uldb_iface->init(config))) {
+    if (!(plugin_data = uldb_iface->init())) {
       err("plugin initialization failed");
       return 1;
     }
