@@ -27,6 +27,7 @@
 #include "list_ops.h"
 #include "misctext.h"
 #include "random.h"
+#include "../mysql-common/common_mysql.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -319,6 +320,10 @@ struct uldb_mysql_state
   int total_unused_ids;
   int cur_unused_id;
   int *unused_ids;
+
+  // mysql access
+  struct common_mysql_iface *miface;
+  struct common_mysql_state *mdata;
 };
 
 struct saved_row
@@ -645,6 +650,15 @@ prepare_func(
   struct xml_attr *a;
   int i;
   const unsigned char *cs = 0;
+  const struct common_loaded_plugin *mplg;
+
+  // load common_mysql plugin
+  if (!(mplg = plugin_load_external(0, "common", "mysql", config))) {
+    err("cannot load common_mysql plugin");
+    return -1;
+  }
+  state->miface = (struct common_mysql_iface*) mplg->iface;
+  state->mdata = (struct common_mysql_state*) mplg->data;
 
   ASSERT(tree->tag == xml_err_spec->default_elem);
   ASSERT(!strcmp(tree->name[0], "config"));
