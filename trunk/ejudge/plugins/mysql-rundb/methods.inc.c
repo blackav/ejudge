@@ -15,15 +15,15 @@
  * GNU General Public License for more details.
  */
 
-static struct rldb_plugin_data *
+static struct common_plugin_data *
 init_func(void);
 
 static int
-finish_func(struct rldb_plugin_data *data);
+finish_func(struct common_plugin_data *data);
 
 static int
 prepare_func(
-        struct rldb_plugin_data *data,
+        struct common_plugin_data *data,
         struct ejudge_cfg *config,
         struct xml_tree *tree);
 
