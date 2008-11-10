@@ -57,6 +57,10 @@ struct cldb_mysql_state
   unsigned long *lengths;
   int row_count;
   int field_count;
+
+  // mysql access
+  struct common_mysql_iface *miface;
+  struct common_mysql_state *mdata;
 };
 
 struct cldb_mysql_cnts
@@ -180,6 +184,15 @@ prepare_func(
   struct xml_tree *p = 0;
   const unsigned char *cs = 0;
   int i;
+  const struct common_loaded_plugin *mplg;
+
+  // load common_mysql plugin
+  if (!(mplg = plugin_load_external(0, "common", "mysql", config))) {
+    err("cannot load common_mysql plugin");
+    return -1;
+  }
+  state->miface = (struct common_mysql_iface*) mplg->iface;
+  state->mdata = (struct common_mysql_state*) mplg->data;
 
   (void) spec;
   ASSERT(tree->tag == spec->default_elem);
