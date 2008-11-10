@@ -4002,3 +4002,13 @@ common_plugin.c 5260 0 365596
 ejudge_cfg.c 5260 0 1455312
 uldb_plugin_xml.c 5260 0 7151473
 plugins/mysql-userlist/uldb_mysql.c 5259 0 10533158
+cldb_plugin.h 5265 0 209984
+rldb_plugin.h 5265 0 377520
+uldb_plugin.h 5265 0 762938
+userlist-server.c 5265 0 23017750
+clarlog.c 5265 0 1215764
+cldb_plugin_file.c 5265 0 1335401
+rldb_plugin_file.c 5265 0 2980781
+runlog.c 5265 0 4290892
+uldb_plugin_xml.c 5265 0 7171548
+plugins/mysql-userlist/uldb_mysql.c 5263 0 10545366
