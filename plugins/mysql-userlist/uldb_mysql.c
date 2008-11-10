@@ -54,6 +54,8 @@ struct uldb_plugin_iface plugin_uldb_mysql =
 
   // initialize the plugin
   init_func,
+  // clean-up the plugin
+  finish_func,
   // parse the configuration settings
   prepare_func,
   // open the database
@@ -603,8 +605,14 @@ userlist_attach_cookie(
   xml_link_node_last(u->cookies, &c->b);
 }
 
+static int
+finish_func(void *data)
+{
+  return 0;
+}
+
 static void*
-init_func(const struct ejudge_cfg *config)
+init_func(void)
 {
   struct uldb_mysql_state *state;
 
@@ -626,7 +634,7 @@ static const unsigned char *charset_mappings[][2] =
 static int
 prepare_func(
         void *data,
-        const struct ejudge_cfg *config,
+        struct ejudge_cfg *config,
         struct xml_tree *tree)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;

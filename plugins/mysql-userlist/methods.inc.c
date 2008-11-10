@@ -16,11 +16,13 @@
  */
 
 static void *
-init_func(const struct ejudge_cfg *);
+init_func(void);
+static int
+finish_func(void *);
 static int
 prepare_func(
         void *,
-        const struct ejudge_cfg *,
+        struct ejudge_cfg *,
         struct xml_tree *);
 static int
 open_func(void *data);
