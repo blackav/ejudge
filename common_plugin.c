@@ -144,6 +144,19 @@ plugin_load_external(
   return &plugins[plugins_num++];
 }
 
+const struct common_loaded_plugin *
+plugin_get(
+        const unsigned char *type,
+        const unsigned char *name)
+{
+  int i;
+
+  for (i = 0; i < plugins_num; ++i)
+    if (!strcmp(plugins[i].type, type) && !strcmp(plugins[i].name, name))
+      return &plugins[i];
+  return NULL;
+}
+
 /*
  * Local variables:
  *  compile-command: "make -C ../.."

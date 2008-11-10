@@ -51,17 +51,6 @@
 #define INTERNAL_CHARSET "utf-8"
 #endif
 
-/* plugin information */
-struct cldb_loaded_plugin
-{
-  struct cldb_plugin_iface *iface;
-  struct cldb_plugin_data *data;
-};
-
-enum { CLDB_PLUGIN_MAX_NUM = 16 };
-static int cldb_plugins_num;
-static struct cldb_loaded_plugin cldb_plugins[CLDB_PLUGIN_MAX_NUM];
-
 #define ERR_R(t, args...) do { do_err_r(__FUNCTION__, t , ##args); return -1; } while (0)
 
 clarlog_state_t
@@ -99,21 +88,13 @@ clar_open(
         const unsigned char *plugin_name,
         int flags)
 {
-  int i;
   const struct xml_tree *p;
   const struct ejudge_plugin *plg;
-  struct ejudge_plugin_iface *base_iface = 0;
-  struct cldb_plugin_iface *cldb_iface = 0;
-  struct cldb_plugin_data *plugin_data = 0;
+  const struct common_loaded_plugin *loaded_plugin;
 
-  if (!cldb_plugins_num) {
-    cldb_plugins[0].iface = &cldb_plugin_file;
-    if (!(cldb_plugins[0].data = (struct cldb_plugin_data*) cldb_plugin_file.b.init())
-        || cldb_plugin_file.b.prepare((struct common_plugin_data*) cldb_plugins[0].data, config, 0) < 0) {
-      err("cannot initialize `file' clarlog plugin");
-      return -1;
-    }
-    cldb_plugins_num++;
+  if (!plugin_register_builtin(&cldb_plugin_file.b, config)) {
+    err("cannot register default plugin");
+    return -1;
   }
 
   if (!plugin_name) {
@@ -123,8 +104,12 @@ clar_open(
   if (!plugin_name) plugin_name = "";
 
   if (!plugin_name[0] || !strcmp(plugin_name, "file")) {
-    state->iface = cldb_plugins[0].iface;
-    state->data = cldb_plugins[0].data;
+    if (!(loaded_plugin = plugin_get("cldb", "file"))) {
+      err("cannot load default plugin");
+      return -1;
+    }
+    state->iface = (struct cldb_plugin_iface*) loaded_plugin->iface;
+    state->data = (struct cldb_plugin_data*) loaded_plugin->data;
 
     if (!(state->cnts = state->iface->open(state->data, state, config, cnts,
                                            global, flags)))
@@ -133,17 +118,13 @@ clar_open(
   }
 
   // look up the table of loaded plugins
-  for (i = 1; i < cldb_plugins_num; i++) {
-    if (!strcmp(cldb_plugins[i].iface->b.b.name, plugin_name))
-      break;
-  }
-  if (i < cldb_plugins_num) {
-    state->iface = cldb_plugins[i].iface;
-    state->data = cldb_plugins[i].data;
+  if ((loaded_plugin = plugin_get("cldb", plugin_name))) {
+    state->iface = (struct cldb_plugin_iface*) loaded_plugin->iface;
+    state->data = (struct cldb_plugin_data*) loaded_plugin->data;
+
     if (!(state->cnts = state->iface->open(state->data, state, config, cnts,
                                            global, flags)))
       return -1;
-    return 0;
   }
 
   if (!config) {
@@ -162,39 +143,16 @@ clar_open(
     err("clarlog plugin `%s' is not registered", plugin_name);
     return -1;
   }
-  if (cldb_plugins_num == CLDB_PLUGIN_MAX_NUM) {
-    err("too many clarlog plugins already loaded");
-    return -1;
-  }
-  plugin_set_directory(config->plugin_dir);
-  if (!(base_iface = plugin_load(plg->path, plg->type, plg->name))) {
-    err("cannot load plugin `%s'", plg->name);
-    return -1;
-  }
-  cldb_iface = (struct cldb_plugin_iface*) base_iface;
-  if (base_iface->size != sizeof(*cldb_iface)) {
-    err("plugin `%s' size mismatch", plg->name);
-    return -1;
-  }
-  if (cldb_iface->cldb_version != CLDB_PLUGIN_IFACE_VERSION) {
-    err("plugin `%s' version mismatch", plg->name);
-    return -1;
-  }
-  if (!(plugin_data = (struct cldb_plugin_data*) cldb_iface->b.init())) {
-    err("plugin `%s' initialization failed", plg->name);
-    return -1;
-  }
-  if (cldb_iface->b.prepare((struct common_plugin_data*) plugin_data, config, plg->data) < 0) {
-    err("plugin %s failed to parse its configuration", plg->name);
+
+  loaded_plugin = plugin_load_external(plg->path, plg->type, plg->name, config);
+  if (!loaded_plugin) {
+    err("cannot load plugin %s, %s", plg->type, plg->name);
     return -1;
   }
 
-  cldb_plugins[cldb_plugins_num].iface = cldb_iface;
-  cldb_plugins[cldb_plugins_num].data = plugin_data;
-  cldb_plugins_num++;
+  state->iface = (struct cldb_plugin_iface*) loaded_plugin->iface;
+  state->data = (struct cldb_plugin_data*) loaded_plugin->data;
 
-  state->iface = cldb_iface;
-  state->data = plugin_data;
   if (!(state->cnts = state->iface->open(state->data, state, config, cnts,
                                          global, flags)))
     return -1;

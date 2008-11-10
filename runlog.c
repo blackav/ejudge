@@ -49,17 +49,6 @@
 #define _(x) x
 #endif
 
-/* plugin information */
-struct rldb_loaded_plugin
-{
-  struct rldb_plugin_iface *iface;
-  struct rldb_plugin_data *data;
-};
-
-enum { RLDB_PLUGIN_MAX_NUM = 16 };
-static int rldb_plugins_num;
-static struct rldb_loaded_plugin rldb_plugins[RLDB_PLUGIN_MAX_NUM];
-
 #define ERR_R(t, args...) do { do_err_r(__FUNCTION__ , t , ##args); return -1; } while (0)
 #define ERR_C(t, args...) do { do_err_r(__FUNCTION__ , t , ##args); goto _cleanup; } while (0)
 
@@ -170,26 +159,18 @@ run_open(
         time_t init_duration,
         time_t init_finish_time)
 {
-  int i;
   const struct xml_tree *p;
   const struct ejudge_plugin *plg;
-  struct ejudge_plugin_iface *base_iface = 0;
-  struct rldb_plugin_iface *rldb_iface = 0;
-  struct rldb_plugin_data *plugin_data = 0;
+  const struct common_loaded_plugin *loaded_plugin;
 
   if (state->teamdb_state) {
     teamdb_register_update_hook(state->teamdb_state, teamdb_update_callback,
                                 state);
   }
 
-  if (!rldb_plugins_num) {
-    rldb_plugins[0].iface = &rldb_plugin_file;
-    if (!(rldb_plugins[0].data = (struct rldb_plugin_data*) rldb_plugin_file.b.init())
-        || rldb_plugin_file.b.prepare((struct common_plugin_data*) rldb_plugins[0].data, config, 0) < 0) {
-      err("cannot initialize `file' runlog plugin");
-      return -1;
-    }
-    rldb_plugins_num++;
+  if (!plugin_register_builtin(&rldb_plugin_file.b, config)) {
+    err("cannot register default plugin");
+    return -1;
   }
 
   if (!plugin_name) {
@@ -199,8 +180,12 @@ run_open(
   if (!plugin_name) plugin_name = "";
 
   if (!plugin_name[0] || !strcmp(plugin_name, "file")) {
-    state->iface = rldb_plugins[0].iface;
-    state->data = rldb_plugins[0].data;
+    if (!(loaded_plugin = plugin_get("rldb", "file"))) {
+      err("cannot load default plugin");
+      return -1;
+    }
+    state->iface = (struct rldb_plugin_iface*) loaded_plugin->iface;
+    state->data = (struct rldb_plugin_data*) loaded_plugin->data;
 
     if (!(state->cnts = state->iface->open(state->data, state, config, cnts,
                                            global, flags,
@@ -215,13 +200,10 @@ run_open(
   }
 
   // look up the table of loaded plugins
-  for (i = 1; i < rldb_plugins_num; i++) {
-    if (!strcmp(rldb_plugins[i].iface->b.b.name, plugin_name))
-      break;
-  }
-  if (i < rldb_plugins_num) {
-    state->iface = rldb_plugins[i].iface;
-    state->data = rldb_plugins[i].data;
+  if ((loaded_plugin = plugin_get("rldb", plugin_name))) {
+    state->iface = (struct rldb_plugin_iface*) loaded_plugin->iface;
+    state->data = (struct rldb_plugin_data*) loaded_plugin->data;
+
     if (!(state->cnts = state->iface->open(state->data, state, config, cnts,
                                            global, flags,
                                            init_duration, init_finish_time)))
@@ -250,39 +232,16 @@ run_open(
     err("runlog plugin `%s' is not registered", plugin_name);
     return -1;
   }
-  if (rldb_plugins_num == RLDB_PLUGIN_MAX_NUM) {
-    err("too many runlog plugins already loaded");
-    return -1;
-  }
-  plugin_set_directory(config->plugin_dir);
-  if (!(base_iface = plugin_load(plg->path, plg->type, plg->name))) {
-    err("cannot load plugin `%s'", plg->name);
-    return -1;
-  }
-  rldb_iface = (struct rldb_plugin_iface*) base_iface;
-  if (base_iface->size != sizeof(*rldb_iface)) {
-    err("plugin `%s' size mismatch", plg->name);
-    return -1;
-  }
-  if (rldb_iface->rldb_version != RLDB_PLUGIN_IFACE_VERSION) {
-    err("plugin `%s' version mismatch", plg->name);
-    return -1;
-  }
-  if (!(plugin_data = (struct rldb_plugin_data*) rldb_iface->b.init())) {
-    err("plugin `%s' initialization failed", plg->name);
-    return -1;
-  }
-  if (rldb_iface->b.prepare((struct common_plugin_data*)plugin_data, config, plg->data) < 0) {
-    err("plugin %s failed to parse its configuration", plg->name);
+
+  loaded_plugin = plugin_load_external(plg->path, plg->type, plg->name, config);
+  if (!loaded_plugin) {
+    err("cannot load plugin %s, %s", plg->type, plg->name);
     return -1;
   }
 
-  rldb_plugins[rldb_plugins_num].iface = rldb_iface;
-  rldb_plugins[rldb_plugins_num].data = plugin_data;
-  rldb_plugins_num++;
+  state->iface = (struct rldb_plugin_iface*) loaded_plugin->iface;
+  state->data = (struct rldb_plugin_data*) loaded_plugin->data;
 
-  state->iface = rldb_iface;
-  state->data = plugin_data;
   if (!(state->cnts = state->iface->open(state->data, state, config, cnts,
                                          global, flags,
                                          init_duration, init_finish_time)))

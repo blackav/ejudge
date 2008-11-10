@@ -202,17 +202,7 @@ static int forced_mode = 0;
 static int server_start_time = 0;
 static int server_finish_time = 0;
 
-// plugin information
-struct uldb_loaded_plugin
-{
-  struct uldb_plugin_iface *iface;
-  void *data;
-};
-
-enum { ULDB_PLUGIN_MAX_NUM = 16 };
-static int uldb_plugins_num;
-static struct uldb_loaded_plugin uldb_plugins[ULDB_PLUGIN_MAX_NUM];
-static struct uldb_loaded_plugin *uldb_default = 0;
+static const struct common_loaded_plugin *uldb_default = 0;
 
 /* the map from system uids into the local uids */
 static int *system_uid_map;
@@ -529,63 +519,65 @@ link_client_state(struct client_state *p)
   }
 }
 
+#define dflt_iface ((struct uldb_plugin_iface*)(uldb_default->iface))
+
 // methods for accessing the default userlist database backend
-#define default_get_user_full(a, b) uldb_default->iface->get_user_full(uldb_default->data, a, b)
-#define default_get_user_id_iterator() uldb_default->iface->get_user_id_iterator(uldb_default->data)
-#define default_get_user_by_login(a) uldb_default->iface->get_user_by_login(uldb_default->data, a)
-#define default_sync() uldb_default->iface->sync(uldb_default->data)
-#define default_forced_sync() uldb_default->iface->forced_sync(uldb_default->data)
-#define default_get_login(a) uldb_default->iface->get_login(uldb_default->data, a)
-#define default_new_user(a,b,c,d) uldb_default->iface->new_user(uldb_default->data, a, b, c, d)
-#define default_remove_user(a) uldb_default->iface->remove_user(uldb_default->data, a)
-#define default_get_cookie(a, b) uldb_default->iface->get_cookie(uldb_default->data, a, b)
-#define default_new_cookie(a, b, c, d, e, f, g, h, i, j, k, l) uldb_default->iface->new_cookie(uldb_default->data, a, b, c, d, e, f, g, h, i, j, k, l)
-#define default_remove_cookie(a) uldb_default->iface->remove_cookie(uldb_default->data, a)
-#define default_remove_user_cookies(a) uldb_default->iface->remove_user_cookies(uldb_default->data, a)
-#define default_remove_expired_cookies(a) uldb_default->iface->remove_expired_cookies(uldb_default->data, a)
-#define default_get_user_contest_iterator(a) uldb_default->iface->get_user_contest_iterator(uldb_default->data, a)
-#define default_remove_expired_users(a) uldb_default->iface->remove_expired_users(uldb_default->data, a)
-#define default_get_user_info_1(a, b) uldb_default->iface->get_user_info_1(uldb_default->data, a, b)
-#define default_get_user_info_2(a, b, c, d) uldb_default->iface->get_user_info_2(uldb_default->data, a, b, c, d)
-#define default_touch_login_time(a, b, c) uldb_default->iface->touch_login_time(uldb_default->data, a, b, c)
-#define default_get_user_info_3(a, b, c, d, e) uldb_default->iface->get_user_info_3(uldb_default->data, a, b, c, d, e)
-#define default_set_cookie_contest(a, b) uldb_default->iface->set_cookie_contest(uldb_default->data, a, b)
-#define default_set_cookie_locale(a, b) uldb_default->iface->set_cookie_locale(uldb_default->data, a, b)
-#define default_set_cookie_priv_level(a, b) uldb_default->iface->set_cookie_priv_level(uldb_default->data, a, b)
-#define default_set_cookie_team_login(a, b) uldb_default->iface->set_cookie_team_login(uldb_default->data, a, b)
-#define default_get_user_info_4(a, b, c) uldb_default->iface->get_user_info_4(uldb_default->data, a, b, c)
-#define default_get_user_info_5(a, b, c) uldb_default->iface->get_user_info_5(uldb_default->data, a, b, c)
-#define default_get_brief_list_iterator(a) uldb_default->iface->get_brief_list_iterator(uldb_default->data, a)
-#define default_get_standings_list_iterator(a) uldb_default->iface->get_standings_list_iterator(uldb_default->data, a)
-#define default_check_user(a) uldb_default->iface->check_user(uldb_default->data, a)
-#define default_set_reg_passwd(a, b, c, d) uldb_default->iface->set_reg_passwd(uldb_default->data, a, b, c, d)
-#define default_set_team_passwd(a, b, c, d, e, f) uldb_default->iface->set_team_passwd(uldb_default->data, a, b, c, d, e, f)
-#define default_register_contest(a, b, c, d, e) uldb_default->iface->register_contest(uldb_default->data, a, b, c, d, e)
-#define default_remove_member(a, b, c, d, e) uldb_default->iface->remove_member(uldb_default->data, a, b, c, d, e)
-#define default_is_read_only(a, b) uldb_default->iface->is_read_only(uldb_default->data, a, b)
-#define default_get_info_list_iterator(a, b) uldb_default->iface->get_info_list_iterator(uldb_default->data, a, b)
-#define default_clear_team_passwd(a, b, c) uldb_default->iface->clear_team_passwd(uldb_default->data, a, b, c)
-#define default_remove_registration(a, b) uldb_default->iface->remove_registration(uldb_default->data, a, b)
-#define default_set_reg_status(a, b, c) uldb_default->iface->set_reg_status(uldb_default->data, a, b, c)
-#define default_set_reg_flags(a, b, c, d) uldb_default->iface->set_reg_flags(uldb_default->data, a, b, c, d)
-#define default_remove_user_contest_info(a, b) uldb_default->iface->remove_user_contest_info(uldb_default->data, a, b)
-#define default_clear_user_field(a, b, c) uldb_default->iface->clear_user_field(uldb_default->data, a, b, c)
-#define default_clear_user_info_field(a, b, c, d, e) uldb_default->iface->clear_user_info_field(uldb_default->data, a, b, c, d, e)
-#define default_clear_member_field(a, b, c, d, e, f) uldb_default->iface->clear_user_member_field(uldb_default->data, a, b, c, d, e, f)
-#define default_set_user_field(a, b, c, d) uldb_default->iface->set_user_field(uldb_default->data, a, b, c, d)
-#define default_set_user_info_field(a, b, c, d, e, f) uldb_default->iface->set_user_info_field(uldb_default->data, a, b, c, d, e, f)
-#define default_set_user_member_field(a, b, c, d, e, f, g) uldb_default->iface->set_user_member_field(uldb_default->data, a, b, c, d, e, f, g)
-#define default_new_member(a, b, c, d, e) uldb_default->iface->new_member(uldb_default->data, a, b, c, d, e)
-#define default_set_user_xml(a, b, c, d, e) uldb_default->iface->set_user_xml(uldb_default->data, a, b, c, d, e)
-#define default_copy_user_info(a, b, c, d, e, f) uldb_default->iface->copy_user_info(uldb_default->data, a, b, c, d, e, f)
-#define default_check_user_reg_data(a, b) uldb_default->iface->check_user_reg_data(uldb_default->data, a, b)
-#define default_move_member(a, b, c, d, e, f) uldb_default->iface->move_member(uldb_default->data, a, b, c, d, e, f)
-#define default_get_user_info_6(a, b, c, d, e, f) uldb_default->iface->get_user_info_6(uldb_default->data, a, b, c, d, e, f)
-#define default_get_user_info_7(a, b, c, d, e) uldb_default->iface->get_user_info_7(uldb_default->data, a, b, c, d, e)
-#define default_unlock_user(a) uldb_default->iface->unlock_user(uldb_default->data, a)
-#define default_get_contest_reg(a, b) uldb_default->iface->get_contest_reg(uldb_default->data, a, b)
-#define default_try_new_login(a, b, c, d, e) uldb_default->iface->try_new_login(uldb_default->data, a, b, c, d, e)
-#define default_set_simple_reg(a, b, c) uldb_default->iface->set_simple_reg(uldb_default->data, a, b, c)
+#define default_get_user_full(a, b) dflt_iface->get_user_full(uldb_default->data, a, b)
+#define default_get_user_id_iterator() dflt_iface->get_user_id_iterator(uldb_default->data)
+#define default_get_user_by_login(a) dflt_iface->get_user_by_login(uldb_default->data, a)
+#define default_sync() dflt_iface->sync(uldb_default->data)
+#define default_forced_sync() dflt_iface->forced_sync(uldb_default->data)
+#define default_get_login(a) dflt_iface->get_login(uldb_default->data, a)
+#define default_new_user(a,b,c,d) dflt_iface->new_user(uldb_default->data, a, b, c, d)
+#define default_remove_user(a) dflt_iface->remove_user(uldb_default->data, a)
+#define default_get_cookie(a, b) dflt_iface->get_cookie(uldb_default->data, a, b)
+#define default_new_cookie(a, b, c, d, e, f, g, h, i, j, k, l) dflt_iface->new_cookie(uldb_default->data, a, b, c, d, e, f, g, h, i, j, k, l)
+#define default_remove_cookie(a) dflt_iface->remove_cookie(uldb_default->data, a)
+#define default_remove_user_cookies(a) dflt_iface->remove_user_cookies(uldb_default->data, a)
+#define default_remove_expired_cookies(a) dflt_iface->remove_expired_cookies(uldb_default->data, a)
+#define default_get_user_contest_iterator(a) dflt_iface->get_user_contest_iterator(uldb_default->data, a)
+#define default_remove_expired_users(a) dflt_iface->remove_expired_users(uldb_default->data, a)
+#define default_get_user_info_1(a, b) dflt_iface->get_user_info_1(uldb_default->data, a, b)
+#define default_get_user_info_2(a, b, c, d) dflt_iface->get_user_info_2(uldb_default->data, a, b, c, d)
+#define default_touch_login_time(a, b, c) dflt_iface->touch_login_time(uldb_default->data, a, b, c)
+#define default_get_user_info_3(a, b, c, d, e) dflt_iface->get_user_info_3(uldb_default->data, a, b, c, d, e)
+#define default_set_cookie_contest(a, b) dflt_iface->set_cookie_contest(uldb_default->data, a, b)
+#define default_set_cookie_locale(a, b) dflt_iface->set_cookie_locale(uldb_default->data, a, b)
+#define default_set_cookie_priv_level(a, b) dflt_iface->set_cookie_priv_level(uldb_default->data, a, b)
+#define default_set_cookie_team_login(a, b) dflt_iface->set_cookie_team_login(uldb_default->data, a, b)
+#define default_get_user_info_4(a, b, c) dflt_iface->get_user_info_4(uldb_default->data, a, b, c)
+#define default_get_user_info_5(a, b, c) dflt_iface->get_user_info_5(uldb_default->data, a, b, c)
+#define default_get_brief_list_iterator(a) dflt_iface->get_brief_list_iterator(uldb_default->data, a)
+#define default_get_standings_list_iterator(a) dflt_iface->get_standings_list_iterator(uldb_default->data, a)
+#define default_check_user(a) dflt_iface->check_user(uldb_default->data, a)
+#define default_set_reg_passwd(a, b, c, d) dflt_iface->set_reg_passwd(uldb_default->data, a, b, c, d)
+#define default_set_team_passwd(a, b, c, d, e, f) dflt_iface->set_team_passwd(uldb_default->data, a, b, c, d, e, f)
+#define default_register_contest(a, b, c, d, e) dflt_iface->register_contest(uldb_default->data, a, b, c, d, e)
+#define default_remove_member(a, b, c, d, e) dflt_iface->remove_member(uldb_default->data, a, b, c, d, e)
+#define default_is_read_only(a, b) dflt_iface->is_read_only(uldb_default->data, a, b)
+#define default_get_info_list_iterator(a, b) dflt_iface->get_info_list_iterator(uldb_default->data, a, b)
+#define default_clear_team_passwd(a, b, c) dflt_iface->clear_team_passwd(uldb_default->data, a, b, c)
+#define default_remove_registration(a, b) dflt_iface->remove_registration(uldb_default->data, a, b)
+#define default_set_reg_status(a, b, c) dflt_iface->set_reg_status(uldb_default->data, a, b, c)
+#define default_set_reg_flags(a, b, c, d) dflt_iface->set_reg_flags(uldb_default->data, a, b, c, d)
+#define default_remove_user_contest_info(a, b) dflt_iface->remove_user_contest_info(uldb_default->data, a, b)
+#define default_clear_user_field(a, b, c) dflt_iface->clear_user_field(uldb_default->data, a, b, c)
+#define default_clear_user_info_field(a, b, c, d, e) dflt_iface->clear_user_info_field(uldb_default->data, a, b, c, d, e)
+#define default_clear_member_field(a, b, c, d, e, f) dflt_iface->clear_user_member_field(uldb_default->data, a, b, c, d, e, f)
+#define default_set_user_field(a, b, c, d) dflt_iface->set_user_field(uldb_default->data, a, b, c, d)
+#define default_set_user_info_field(a, b, c, d, e, f) dflt_iface->set_user_info_field(uldb_default->data, a, b, c, d, e, f)
+#define default_set_user_member_field(a, b, c, d, e, f, g) dflt_iface->set_user_member_field(uldb_default->data, a, b, c, d, e, f, g)
+#define default_new_member(a, b, c, d, e) dflt_iface->new_member(uldb_default->data, a, b, c, d, e)
+#define default_set_user_xml(a, b, c, d, e) dflt_iface->set_user_xml(uldb_default->data, a, b, c, d, e)
+#define default_copy_user_info(a, b, c, d, e, f) dflt_iface->copy_user_info(uldb_default->data, a, b, c, d, e, f)
+#define default_check_user_reg_data(a, b) dflt_iface->check_user_reg_data(uldb_default->data, a, b)
+#define default_move_member(a, b, c, d, e, f) dflt_iface->move_member(uldb_default->data, a, b, c, d, e, f)
+#define default_get_user_info_6(a, b, c, d, e, f) dflt_iface->get_user_info_6(uldb_default->data, a, b, c, d, e, f)
+#define default_get_user_info_7(a, b, c, d, e) dflt_iface->get_user_info_7(uldb_default->data, a, b, c, d, e)
+#define default_unlock_user(a) dflt_iface->unlock_user(uldb_default->data, a)
+#define default_get_contest_reg(a, b) dflt_iface->get_contest_reg(uldb_default->data, a, b)
+#define default_try_new_login(a, b, c, d, e) dflt_iface->try_new_login(uldb_default->data, a, b, c, d, e)
+#define default_set_simple_reg(a, b, c) dflt_iface->set_simple_reg(uldb_default->data, a, b, c)
 
 static void
 update_all_user_contests(int user_id)
@@ -801,7 +793,7 @@ graceful_exit(void)
   if (listen_socket >= 0) close(listen_socket);
   cleanup_clients();
   random_cleanup();
-  uldb_default->iface->close(uldb_default->data);
+  dflt_iface->close(uldb_default->data);
   server_finish_time = time(0);
   report_uptime(server_start_time, server_finish_time);
 
@@ -1306,7 +1298,7 @@ cmd_register_new_2(struct client_state *p,
       serial = 0;
       serial_step = 1;
     }
-    if (uldb_default->iface->try_new_login) {
+    if (dflt_iface->try_new_login) {
       serial += serial_step;
       if (default_try_new_login(login_buf, sizeof(login_buf), cnts->login_template, serial, serial_step) < 0) {
         send_reply(p, -ULS_ERR_DB_ERROR);
@@ -1563,7 +1555,7 @@ cmd_register_new(struct client_state *p,
       serial = 0;
       serial_step = 1;
     }
-    if (uldb_default->iface->try_new_login) {
+    if (dflt_iface->try_new_login) {
       serial += serial_step;
       if (default_try_new_login(login_buf, sizeof(login_buf), cnts->login_template, serial, serial_step) < 0) {
         send_reply(p, -ULS_ERR_DB_ERROR);
@@ -6703,7 +6695,7 @@ cmd_create_user(struct client_state *p, int pkt_len,
     }
     login_ptr = data->data;
   } else {
-    if (uldb_default->iface->try_new_login) {
+    if (dflt_iface->try_new_login) {
       serial = 0;
       if (default_try_new_login(buf, sizeof(buf), "New_login_%d", serial, 1) < 0) {
         err("%s -> database error", logbuf);
@@ -8730,10 +8722,10 @@ do_work(void)
     }
 
     if (interrupt_signaled) {
-      uldb_default->iface->sync(uldb_default->data);
+      dflt_iface->sync(uldb_default->data);
     }
 
-    uldb_default->iface->maintenance(uldb_default->data, cur_time);
+    dflt_iface->maintenance(uldb_default->data, cur_time);
 
     if (interrupt_signaled) {
       graceful_exit();
@@ -8741,19 +8733,19 @@ do_work(void)
 
     if (usr1_signaled) {
       default_forced_sync();
-      if (uldb_default->iface->disable_cache)
-        (*uldb_default->iface->disable_cache)(uldb_default->data);
+      if (dflt_iface->disable_cache)
+        (*dflt_iface->disable_cache)(uldb_default->data);
       usr1_signaled = 0;
     }
     if (usr2_signaled) {
       default_sync();
-      if (uldb_default->iface->drop_cache)
-        (*uldb_default->iface->drop_cache)(uldb_default->data);
+      if (dflt_iface->drop_cache)
+        (*dflt_iface->drop_cache)(uldb_default->data);
       usr2_signaled = 0;
     }
     if (winch_signaled) {
-      if (uldb_default->iface->enable_cache)
-        (*uldb_default->iface->enable_cache)(uldb_default->data);
+      if (dflt_iface->enable_cache)
+        (*dflt_iface->enable_cache)(uldb_default->data);
       winch_signaled = 0;
     }
 
@@ -9174,30 +9166,18 @@ cleanup_clients(void)
 static int
 load_plugins(const unsigned char *plugin_dir)
 {
-  struct ejudge_plugin_iface *base_iface = 0;
-  struct uldb_plugin_iface *uldb_iface = 0;
   struct xml_tree *p;
   struct ejudge_plugin *plg;
-  void *plugin_data = 0;
+  const struct common_loaded_plugin *iface = 0;
 
   if (!plugin_dir) plugin_dir = config->plugin_dir;
   plugin_set_directory(plugin_dir);
 
   //ejudge_cfg_unparse_plugins(config, stdout);
-
-  // XML plugin always loaded
-  uldb_plugins_num = 0;
-  uldb_plugins[uldb_plugins_num].iface = &uldb_plugin_xml;
-  if (!(plugin_data = uldb_plugin_xml.b.init())) {
-    err("cannot initialize XML database plugin");
-    return -1;
+  if (!plugin_register_builtin(&uldb_plugin_xml.b, config)) {
+    err("cannot load XML plugin");
+    return 1;
   }
-  if (uldb_plugin_xml.b.prepare(plugin_data, config, 0) < 0) {
-    err("cannot initialize XML database plugin");
-    return -1;
-  }
-  uldb_plugins[uldb_plugins_num].data = plugin_data;
-  uldb_plugins_num++;
 
   // load other userdb plugins
   for (p = config->plugin_list; p; p = p->right) {
@@ -9206,72 +9186,33 @@ load_plugins(const unsigned char *plugin_dir)
     if (!plg->load_flag) continue;
     if (strcmp(plg->type, "uldb") != 0) continue;
 
-    if (uldb_plugins_num == ULDB_PLUGIN_MAX_NUM) {
-      err("too many userlist database plugins");
+    if (!(iface = plugin_load_external(plg->path,plg->type,plg->name,config))) {
+      err("cannot load plugin %s, %s", plg->type, plg->name);
       return 1;
     }
-
-    if (!(base_iface = plugin_load(plg->path, plg->type, plg->name))) {
-      err("cannot load plugin");
-      return 1;
-    }
-    uldb_iface = (struct uldb_plugin_iface*) base_iface;
-    if (uldb_iface->b.b.size != sizeof(*uldb_iface)) {
-      err("plugin size mismatch");
-      return 1;
-    }
-    if (uldb_iface->uldb_version != ULDB_PLUGIN_IFACE_VERSION) {
-      err("plugin version mismatch");
-      return 1;
-    }
-    if (!(plugin_data = uldb_iface->b.init())) {
-      err("plugin initialization failed");
-      return 1;
-    }
-    if (uldb_iface->b.prepare(plugin_data, config, plg->data) < 0) {
-      err("plugin failed to parse its configuration");
-      return 1;
-    }
-
-    uldb_plugins[uldb_plugins_num].iface = uldb_iface;
-    uldb_plugins[uldb_plugins_num].data = plugin_data;
 
     if (plg->default_flag) {
       if (uldb_default) {
         err("more than one plugin is defined as default");
         return 1;
       }
-      uldb_default = &uldb_plugins[uldb_plugins_num];
+      uldb_default = iface;
     }
-
-    uldb_plugins_num++;
   }
 
   if (!uldb_default) {
     info("using XML as the userlist database");
-    uldb_default = &uldb_plugins[0];
+    uldb_default = plugin_get("uldb", "xml");
   }
 
-  return 0;
-}
-
-static struct uldb_loaded_plugin *
-find_uldb_plugin(const unsigned char *name)
-{
-  int i;
-
-  if (!name) return uldb_default;
-  for (i = 0; i < uldb_plugins_num; i++)
-    if (!strcmp(uldb_plugins[i].iface->b.b.name, name))
-      return &uldb_plugins[i];
   return 0;
 }
 
 static int
 convert_database(const unsigned char *from_name, const unsigned char *to_name)
 {
-  struct uldb_loaded_plugin *from_plugin = find_uldb_plugin(from_name);
-  struct uldb_loaded_plugin *to_plugin = find_uldb_plugin(to_name);
+  const struct common_loaded_plugin *from_plugin = plugin_get("uldb",from_name);
+  const struct common_loaded_plugin *to_plugin = plugin_get("uldb", to_name);
   int r, user_id;
   int_iterator_t ui;
   const struct userlist_user *u;
@@ -9291,11 +9232,11 @@ convert_database(const unsigned char *from_name, const unsigned char *to_name)
   }
 
   // prepare the source plugin
-  if (from_plugin->iface->open(from_plugin->data) < 0) {
+  if (((struct uldb_plugin_iface*)from_plugin->iface)->open(from_plugin->data) < 0) {
     err("plugin %s failed to open its connection", from_name);
     return 1;
   }
-  if ((r = from_plugin->iface->check(from_plugin->data)) < 0) {
+  if ((r = ((struct uldb_plugin_iface*)from_plugin->iface)->check(from_plugin->data)) < 0) {
     err("plugin %s failed to check its data", from_name);
     return 1;
   }
@@ -9304,32 +9245,32 @@ convert_database(const unsigned char *from_name, const unsigned char *to_name)
     return 1;
   }
 
-  if (!from_plugin->iface->get_member_serial) {
+  if (!((struct uldb_plugin_iface *)from_plugin->iface)->get_member_serial) {
     err("`get_member_serial' is not implemented in plugin %s", from_name);
     return 1;
   }
-  member_serial = from_plugin->iface->get_member_serial(from_plugin->data);
+  member_serial = ((struct uldb_plugin_iface *)from_plugin->iface)->get_member_serial(from_plugin->data);
 
   // prepare the destination plugin
-  if (to_plugin->iface->open(to_plugin->data) < 0) {
-    err("plugin %s failed to open its connection", to_plugin->iface->b.b.name);
+  if (((struct uldb_plugin_iface*)to_plugin->iface)->open(to_plugin->data) < 0) {
+    err("plugin %s failed to open its connection", to_plugin->iface->b.name);
     return 1;
   }
-  if (to_plugin->iface->create(to_plugin->data) < 0) {
-    err("plugin %s failed to create a new database",to_plugin->iface->b.b.name);
+  if (((struct uldb_plugin_iface*)to_plugin->iface)->create(to_plugin->data) < 0) {
+    err("plugin %s failed to create a new database",to_plugin->iface->b.name);
     return 1;
   }
 
   // enumerate users
-  for (ui = from_plugin->iface->get_user_id_iterator(from_plugin->data);
+  for (ui = ((struct uldb_plugin_iface*)from_plugin->iface)->get_user_id_iterator(from_plugin->data);
        ui->has_next(ui);
        ui->next(ui)) {
     user_id = ui->get(ui);
 
-    r = from_plugin->iface->get_user_full(from_plugin->data, user_id, &u);
+    r = ((struct uldb_plugin_iface*)from_plugin->iface)->get_user_full(from_plugin->data, user_id, &u);
     ASSERT(r == 1);
 
-    r = to_plugin->iface->insert(to_plugin->data, u, &member_serial);
+    r = ((struct uldb_plugin_iface*)to_plugin->iface)->insert(to_plugin->data, u, &member_serial);
     if (r < 0) break;
   }
   ui->destroy(ui);
@@ -9452,24 +9393,24 @@ main(int argc, char *argv[])
   }
 
   // initialize the default plugin
-  if (uldb_default->iface->open(uldb_default->data) < 0) {
+  if (((struct uldb_plugin_iface*)uldb_default->iface)->open(uldb_default->data) < 0) {
     err("default plugin failed to open its connection");
     return 1;
   }
 
   if (create_flag) {
-    if (uldb_default->iface->create(uldb_default->data) < 0) {
+    if (dflt_iface->create(uldb_default->data) < 0) {
       err("database creation failed");
       return 1;
     }
-    if (uldb_default->iface->close(uldb_default->data) < 0) {
+    if (dflt_iface->close(uldb_default->data) < 0) {
       err("database closing failed");
       return 1;
     }
     return 0;
   }
 
-  if (uldb_default->iface->check(uldb_default->data) <= 0) {
+  if (dflt_iface->check(uldb_default->data) <= 0) {
     err("default plugin failed to check its data");
     return 1;
   }
