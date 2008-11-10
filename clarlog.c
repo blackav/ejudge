@@ -108,8 +108,8 @@ clar_open(
 
   if (!cldb_plugins_num) {
     cldb_plugins[0].iface = &cldb_plugin_file;
-    if (!(cldb_plugins[0].data = cldb_plugin_file.init())
-        || cldb_plugin_file.prepare(cldb_plugins[0].data, config, 0) < 0) {
+    if (!(cldb_plugins[0].data = (struct cldb_plugin_data*) cldb_plugin_file.b.init())
+        || cldb_plugin_file.b.prepare((struct common_plugin_data*) cldb_plugins[0].data, config, 0) < 0) {
       err("cannot initialize `file' clarlog plugin");
       return -1;
     }
@@ -134,7 +134,7 @@ clar_open(
 
   // look up the table of loaded plugins
   for (i = 1; i < cldb_plugins_num; i++) {
-    if (!strcmp(cldb_plugins[i].iface->b.name, plugin_name))
+    if (!strcmp(cldb_plugins[i].iface->b.b.name, plugin_name))
       break;
   }
   if (i < cldb_plugins_num) {
@@ -180,11 +180,11 @@ clar_open(
     err("plugin `%s' version mismatch", plg->name);
     return -1;
   }
-  if (!(plugin_data = cldb_iface->init())) {
+  if (!(plugin_data = (struct cldb_plugin_data*) cldb_iface->b.init())) {
     err("plugin `%s' initialization failed", plg->name);
     return -1;
   }
-  if (cldb_iface->prepare(plugin_data, config, plg->data) < 0) {
+  if (cldb_iface->b.prepare((struct common_plugin_data*) plugin_data, config, plg->data) < 0) {
     err("plugin %s failed to parse its configuration", plg->name);
     return -1;
   }

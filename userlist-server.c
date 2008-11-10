@@ -9188,11 +9188,11 @@ load_plugins(const unsigned char *plugin_dir)
   // XML plugin always loaded
   uldb_plugins_num = 0;
   uldb_plugins[uldb_plugins_num].iface = &uldb_plugin_xml;
-  if (!(plugin_data = uldb_plugin_xml.init())) {
+  if (!(plugin_data = uldb_plugin_xml.b.init())) {
     err("cannot initialize XML database plugin");
     return -1;
   }
-  if (uldb_plugin_xml.prepare(plugin_data, config, 0) < 0) {
+  if (uldb_plugin_xml.b.prepare(plugin_data, config, 0) < 0) {
     err("cannot initialize XML database plugin");
     return -1;
   }
@@ -9216,7 +9216,7 @@ load_plugins(const unsigned char *plugin_dir)
       return 1;
     }
     uldb_iface = (struct uldb_plugin_iface*) base_iface;
-    if (uldb_iface->b.size != sizeof(*uldb_iface)) {
+    if (uldb_iface->b.b.size != sizeof(*uldb_iface)) {
       err("plugin size mismatch");
       return 1;
     }
@@ -9224,11 +9224,11 @@ load_plugins(const unsigned char *plugin_dir)
       err("plugin version mismatch");
       return 1;
     }
-    if (!(plugin_data = uldb_iface->init())) {
+    if (!(plugin_data = uldb_iface->b.init())) {
       err("plugin initialization failed");
       return 1;
     }
-    if (uldb_iface->prepare(plugin_data, config, plg->data) < 0) {
+    if (uldb_iface->b.prepare(plugin_data, config, plg->data) < 0) {
       err("plugin failed to parse its configuration");
       return 1;
     }
@@ -9262,7 +9262,7 @@ find_uldb_plugin(const unsigned char *name)
 
   if (!name) return uldb_default;
   for (i = 0; i < uldb_plugins_num; i++)
-    if (!strcmp(uldb_plugins[i].iface->b.name, name))
+    if (!strcmp(uldb_plugins[i].iface->b.b.name, name))
       return &uldb_plugins[i];
   return 0;
 }
@@ -9312,11 +9312,11 @@ convert_database(const unsigned char *from_name, const unsigned char *to_name)
 
   // prepare the destination plugin
   if (to_plugin->iface->open(to_plugin->data) < 0) {
-    err("plugin %s failed to open its connection", to_plugin->iface->b.name);
+    err("plugin %s failed to open its connection", to_plugin->iface->b.b.name);
     return 1;
   }
   if (to_plugin->iface->create(to_plugin->data) < 0) {
-    err("plugin %s failed to create a new database", to_plugin->iface->b.name);
+    err("plugin %s failed to create a new database",to_plugin->iface->b.b.name);
     return 1;
   }
 
