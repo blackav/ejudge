@@ -59,5 +59,9 @@ plugin_load_external(
         const unsigned char *type,
         const unsigned char *name,
         struct ejudge_cfg *config);
+const struct common_loaded_plugin *
+plugin_get(
+        const unsigned char *type,
+        const unsigned char *name);
 
 #endif /* __COMMON_PLUGIN_H__ */
