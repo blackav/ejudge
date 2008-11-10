@@ -15,13 +15,13 @@
  * GNU General Public License for more details.
  */
 
-static void *
+static struct common_plugin_data *
 init_func(void);
 static int
-finish_func(void *);
+finish_func(struct common_plugin_data *);
 static int
 prepare_func(
-        void *,
+        struct common_plugin_data *,
         struct ejudge_cfg *,
         struct xml_tree *);
 static int
