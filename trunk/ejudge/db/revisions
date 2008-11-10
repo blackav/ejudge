@@ -4012,3 +4012,9 @@ rldb_plugin_file.c 5265 0 2980781
 runlog.c 5265 0 4290892
 uldb_plugin_xml.c 5265 0 7171548
 plugins/mysql-userlist/uldb_mysql.c 5263 0 10545366
+common_plugin.h 5271 0 158374
+userlist-server.c 5271 0 22852095
+clarlog.c 5271 0 1109372
+common_plugin.c 5271 0 388567
+runlog.c 5271 0 4185095
+plugins/mysql-userlist/uldb_mysql.c 5269 0 10585327
