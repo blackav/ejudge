@@ -3994,3 +3994,11 @@ new_server_html.c 5253 0 37152295
 super_html.c 5253 0 11768654
 super_html_2.c 5253 0 4703780
 super_html_4.c 5253 0 9216861
+common_plugin.h 5260 0 148294
+ejudge_cfg.h 5260 0 261856
+uldb_plugin.h 5260 0 760154
+userlist-server.c 5260 0 23016627
+common_plugin.c 5260 0 365596
+ejudge_cfg.c 5260 0 1455312
+uldb_plugin_xml.c 5260 0 7151473
+plugins/mysql-userlist/uldb_mysql.c 5259 0 10533158
