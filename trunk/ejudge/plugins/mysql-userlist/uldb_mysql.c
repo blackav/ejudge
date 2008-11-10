@@ -45,19 +45,22 @@
 struct uldb_plugin_iface plugin_uldb_mysql =
 {
   {
-    sizeof (struct uldb_plugin_iface),
-    EJUDGE_PLUGIN_IFACE_VERSION,
-    "uldb",
-    "mysql",
+    {
+      sizeof (struct uldb_plugin_iface),
+      EJUDGE_PLUGIN_IFACE_VERSION,
+      "uldb",
+      "mysql",
+    },
+    COMMON_PLUGIN_IFACE_VERSION,
+    // initialize the plugin
+    init_func,
+    // clean-up the plugin
+    finish_func,
+    // parse the configuration settings
+    prepare_func,
   },
   ULDB_PLUGIN_IFACE_VERSION,
 
-  // initialize the plugin
-  init_func,
-  // clean-up the plugin
-  finish_func,
-  // parse the configuration settings
-  prepare_func,
   // open the database
   open_func,
   // close the database flushing all the data, if necessary
@@ -606,12 +609,12 @@ userlist_attach_cookie(
 }
 
 static int
-finish_func(void *data)
+finish_func(struct common_plugin_data *data)
 {
   return 0;
 }
 
-static void*
+static struct common_plugin_data*
 init_func(void)
 {
   struct uldb_mysql_state *state;
@@ -620,7 +623,7 @@ init_func(void)
   state->show_queries = 1;
   state->cache_queries = 1;
   state->maint_interval = MAINT_INTERVAL;
-  return (void*) state;
+  return (struct common_plugin_data*) state;
 }
 
 static const unsigned char *charset_mappings[][2] =
@@ -633,7 +636,7 @@ static const unsigned char *charset_mappings[][2] =
 
 static int
 prepare_func(
-        void *data,
+        struct common_plugin_data *data,
         struct ejudge_cfg *config,
         struct xml_tree *tree)
 {
