@@ -78,16 +78,19 @@ struct rldb_mysql_cnts
 struct rldb_plugin_iface plugin_rldb_mysql =
 {
   {
-    sizeof (struct rldb_plugin_iface),
-    EJUDGE_PLUGIN_IFACE_VERSION,
-    "rldb",
-    "mysql",
+    {
+      sizeof (struct rldb_plugin_iface),
+      EJUDGE_PLUGIN_IFACE_VERSION,
+      "rldb",
+      "mysql",
+    },
+    COMMON_PLUGIN_IFACE_VERSION,
+    init_func,
+    finish_func,
+    prepare_func,
   },
   RLDB_PLUGIN_IFACE_VERSION,
 
-  init_func,
-  finish_func,
-  prepare_func,
   open_func,
   close_func,
   reset_func,
@@ -118,17 +121,17 @@ struct rldb_plugin_iface plugin_rldb_mysql =
 #include "mysql_utils.inc.c"
 #include "mysql_values.inc.c"
 
-static struct rldb_plugin_data *
+static struct common_plugin_data *
 init_func(void)
 {
   struct rldb_mysql_state *state = 0;
   XCALLOC(state, 1);
   state->show_queries = 1;
-  return (struct rldb_plugin_data*) state;
+  return (struct common_plugin_data*) state;
 }
 
 static int
-finish_func(struct rldb_plugin_data *data)
+finish_func(struct common_plugin_data *data)
 {
   struct rldb_mysql_state *state = (struct rldb_mysql_state*) data;
 
@@ -162,7 +165,7 @@ static const unsigned char *charset_mappings[][2] =
 
 static int
 prepare_func(
-        struct rldb_plugin_data *data,
+        struct common_plugin_data *data,
         struct ejudge_cfg *config,
         struct xml_tree *tree)
 {
