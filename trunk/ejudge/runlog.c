@@ -184,8 +184,8 @@ run_open(
 
   if (!rldb_plugins_num) {
     rldb_plugins[0].iface = &rldb_plugin_file;
-    if (!(rldb_plugins[0].data = rldb_plugin_file.init())
-        || rldb_plugin_file.prepare(rldb_plugins[0].data, config, 0) < 0) {
+    if (!(rldb_plugins[0].data = (struct rldb_plugin_data*) rldb_plugin_file.b.init())
+        || rldb_plugin_file.b.prepare((struct common_plugin_data*) rldb_plugins[0].data, config, 0) < 0) {
       err("cannot initialize `file' runlog plugin");
       return -1;
     }
@@ -216,7 +216,7 @@ run_open(
 
   // look up the table of loaded plugins
   for (i = 1; i < rldb_plugins_num; i++) {
-    if (!strcmp(rldb_plugins[i].iface->b.name, plugin_name))
+    if (!strcmp(rldb_plugins[i].iface->b.b.name, plugin_name))
       break;
   }
   if (i < rldb_plugins_num) {
@@ -268,11 +268,11 @@ run_open(
     err("plugin `%s' version mismatch", plg->name);
     return -1;
   }
-  if (!(plugin_data = rldb_iface->init())) {
+  if (!(plugin_data = (struct rldb_plugin_data*) rldb_iface->b.init())) {
     err("plugin `%s' initialization failed", plg->name);
     return -1;
   }
-  if (rldb_iface->prepare(plugin_data, config, plg->data) < 0) {
+  if (rldb_iface->b.prepare((struct common_plugin_data*)plugin_data, config, plg->data) < 0) {
     err("plugin %s failed to parse its configuration", plg->name);
     return -1;
   }

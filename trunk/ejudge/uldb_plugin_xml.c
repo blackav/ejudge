@@ -39,9 +39,12 @@
 #define DEFAULT_FLUSH_INTERVAL 600
 #define DEFAULT_BACKUP_INTERVAL (24*60*60)
 
-static void *init_func(void);
-static int finish_func(void *);
-static int prepare_func(void *, struct ejudge_cfg *,struct xml_tree *);
+static struct common_plugin_data *init_func(void);
+static int finish_func(struct common_plugin_data *);
+static int prepare_func(
+        struct common_plugin_data *,
+        struct ejudge_cfg *,
+        struct xml_tree *);
 static int open_func(void *);
 static int close_func(void *);
 static int check_func(void *);
@@ -130,17 +133,19 @@ static int set_simple_reg_func(void *, int, int, time_t);
 struct uldb_plugin_iface uldb_plugin_xml =
 {
   {
-    sizeof (struct uldb_plugin_iface),
-    EJUDGE_PLUGIN_IFACE_VERSION,
-    "uldb",
-    "xml",
+    {
+      sizeof (struct uldb_plugin_iface),
+      EJUDGE_PLUGIN_IFACE_VERSION,
+      "uldb",
+      "xml",
+    },
+    COMMON_PLUGIN_IFACE_VERSION,
+    init_func,
+    finish_func,
+    prepare_func,
   },
-
   ULDB_PLUGIN_IFACE_VERSION,
 
-  init_func,
-  finish_func,
-  prepare_func,
   open_func,
   close_func,
   check_func,
@@ -280,23 +285,26 @@ userlist_clone_member(
         int *p_serial,
         time_t current_time);
 
-static void *
+static struct common_plugin_data *
 init_func(void)
 {
   struct uldb_xml_state *state;
 
   XCALLOC(state, 1);
-  return (void*) state;
+  return (struct common_plugin_data*) state;
 }
 
 static int
-finish_func(void *data)
+finish_func(struct common_plugin_data *data)
 {
   return 0;
 }
 
 static int
-prepare_func(void *data, struct ejudge_cfg *ej_cfg,struct xml_tree *t)
+prepare_func(
+        struct common_plugin_data *data,
+        struct ejudge_cfg *ej_cfg,
+        struct xml_tree *t)
 {
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
 

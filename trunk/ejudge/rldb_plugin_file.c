@@ -55,13 +55,13 @@ struct rldb_file_cnts
   unsigned char *runlog_path;
 };
 
-static struct rldb_plugin_data *
+static struct common_plugin_data *
 init_func(void);
 static int
-finish_func(struct rldb_plugin_data *);
+finish_func(struct common_plugin_data *);
 static int
 prepare_func(
-        struct rldb_plugin_data *data,
+        struct common_plugin_data *data,
         struct ejudge_cfg *config,
         struct xml_tree *plugin_config);
 static struct rldb_plugin_cnts *
@@ -172,17 +172,19 @@ squeeze_func(struct rldb_plugin_cnts *cdata);
 struct rldb_plugin_iface rldb_plugin_file =
 {
   {
-    sizeof (struct rldb_plugin_iface),
-    EJUDGE_PLUGIN_IFACE_VERSION,
-    "rldb",
-    "file",
+    {
+      sizeof (struct rldb_plugin_iface),
+      EJUDGE_PLUGIN_IFACE_VERSION,
+      "rldb",
+      "file",
+    },
+    COMMON_PLUGIN_IFACE_VERSION,
+    init_func,
+    finish_func,
+    prepare_func,
   },
-
   RLDB_PLUGIN_IFACE_VERSION,
 
-  init_func,
-  finish_func,
-  prepare_func,
   open_func,
   close_func,
   reset_func,
@@ -208,16 +210,16 @@ struct rldb_plugin_iface rldb_plugin_file =
   squeeze_func,
 };
 
-static struct rldb_plugin_data *
+static struct common_plugin_data *
 init_func(void)
 {
   struct rldb_file_state *state = 0;
   XCALLOC(state, 1);
-  return (struct rldb_plugin_data *) state;
+  return (struct common_plugin_data *) state;
 }
 
 static int
-finish_func(struct rldb_plugin_data *data)
+finish_func(struct common_plugin_data *data)
 {
   struct rldb_file_state *state = (struct rldb_file_state*) data;
   xfree(state);
@@ -226,7 +228,7 @@ finish_func(struct rldb_plugin_data *data)
 
 static int
 prepare_func(
-        struct rldb_plugin_data *data,
+        struct common_plugin_data *data,
         struct ejudge_cfg *config,
         struct xml_tree *plugin_config)
 {

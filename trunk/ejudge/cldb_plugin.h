@@ -19,6 +19,7 @@
  */
 
 #include "ejudge_plugin.h"
+#include "common_plugin.h"
 #include "ej_types.h"
 #include "iterators.h"
 #include "ejudge_cfg.h"
@@ -35,9 +36,10 @@ struct cldb_plugin_cnts;
 
 struct cldb_plugin_iface
 {
-  struct ejudge_plugin_iface b;
+  struct common_plugin_iface b;
   int cldb_version;
 
+  /*
   // initialize the plugin
   struct cldb_plugin_data *(*init)(void);
   // close the database flushing all the data, if necessary
@@ -45,6 +47,7 @@ struct cldb_plugin_iface
   // parse the plugin arguments
   int (*prepare)(struct cldb_plugin_data *, struct ejudge_cfg *,
                  struct xml_tree*);
+  */
   // open a contest
   struct cldb_plugin_cnts *(*open)(struct cldb_plugin_data *,
                                    struct clarlog_state *,

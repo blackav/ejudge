@@ -63,13 +63,13 @@ struct cldb_file_cnts
 
 static int do_flush_entry(struct cldb_file_cnts *cs, int num);
 
-static struct cldb_plugin_data *
+static struct common_plugin_data *
 init_func(void);
 static int
-finish_func(struct cldb_plugin_data *);
+finish_func(struct common_plugin_data *);
 static int
 prepare_func(
-        struct cldb_plugin_data *,
+        struct common_plugin_data *,
         struct ejudge_cfg *,
         struct xml_tree*);
 static struct cldb_plugin_cnts *
@@ -103,17 +103,19 @@ add_text_func(
 struct cldb_plugin_iface cldb_plugin_file =
 {
   {
-    sizeof (struct cldb_plugin_iface),
-    EJUDGE_PLUGIN_IFACE_VERSION,
-    "cldb",
-    "file",
+    {
+      sizeof (struct cldb_plugin_iface),
+      EJUDGE_PLUGIN_IFACE_VERSION,
+      "cldb",
+      "file",
+    },
+    COMMON_PLUGIN_IFACE_VERSION,
+    init_func,
+    finish_func,
+    prepare_func,
   },
-
   CLDB_PLUGIN_IFACE_VERSION,
 
-  init_func,
-  finish_func,
-  prepare_func,
   open_func,
   close_func,
   reset_func,
@@ -124,16 +126,16 @@ struct cldb_plugin_iface cldb_plugin_file =
   add_text_func,
 };
 
-static struct cldb_plugin_data *
+static struct common_plugin_data *
 init_func(void)
 {
   struct cldb_file_state *state = 0;
   XCALLOC(state, 1);
-  return (struct cldb_plugin_data*) state;
+  return (struct common_plugin_data*) state;
 }
 
 static int
-finish_func(struct cldb_plugin_data *data)
+finish_func(struct common_plugin_data *data)
 {
   struct cldb_file_state *state = (struct cldb_file_state*) data;
   xfree(state);
@@ -142,7 +144,7 @@ finish_func(struct cldb_plugin_data *data)
 
 static int
 prepare_func(
-        struct cldb_plugin_data *data,
+        struct common_plugin_data *data,
         struct ejudge_cfg *config,
         struct xml_tree *plugin_config)
 {
