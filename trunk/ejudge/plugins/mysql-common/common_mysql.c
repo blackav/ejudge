@@ -177,6 +177,7 @@ init_func(void)
 {
   struct common_mysql_state *state = 0;
   XCALLOC(state, 1);
+  state->i = &plugin_common_mysql;
   state->show_queries = 1;
   return (struct common_plugin_data*) state;
 }
@@ -241,7 +242,7 @@ parse_passwd_file(
   state->password = xstrdup(bpwd);
 
   // debug
-  fprintf(stderr, "login: %s\npassword: %s\n", state->user, state->password);
+  //fprintf(stderr, "login: %s\npassword: %s\n", state->user, state->password);
   return 0;
 
  cleanup:
