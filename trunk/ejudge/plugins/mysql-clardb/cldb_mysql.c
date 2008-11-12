@@ -20,6 +20,7 @@
 #include "cldb_plugin.h"
 #include "clarlog.h"
 #include "clarlog_state.h"
+#include "../mysql-common/common_mysql.h"
 
 #include "xml_utils.h"
 #include "errlog.h"
@@ -38,29 +39,9 @@ struct cldb_mysql_state
 {
   int nref;
 
-  // configuration settings
-  int port;
-  int show_queries;
-
-  unsigned char *user;
-  unsigned char *password;
-  unsigned char *database;
-  unsigned char *host;
-  unsigned char *socket;
-  unsigned char *table_prefix;
-  unsigned char *charset;
-
-  // MYSQL connection
-  MYSQL *conn;
-  MYSQL_RES *res;
-  MYSQL_ROW row;
-  unsigned long *lengths;
-  int row_count;
-  int field_count;
-
   // mysql access
-  struct common_mysql_iface *miface;
-  struct common_mysql_state *mdata;
+  struct common_mysql_iface *mi;
+  struct common_mysql_state *md;
 };
 
 struct cldb_mysql_cnts
@@ -127,15 +108,11 @@ struct cldb_plugin_iface plugin_cldb_mysql =
   add_text_func,
 };
 
-#include "mysql_utils.inc.c"
-#include "mysql_values.inc.c"
-
 static struct common_plugin_data *
 init_func(void)
 {
   struct cldb_mysql_state *state = 0;
   XCALLOC(state, 1);
-  state->show_queries = 1;
   return (struct common_plugin_data*) state;
 }
 
@@ -149,28 +126,10 @@ finish_func(struct common_plugin_data *data)
     return -1;
   }
 
-  my_free_res(state);
-  if (state->conn) mysql_close(state->conn);
-  xfree(state->user);
-  xfree(state->password);
-  xfree(state->database);
-  xfree(state->host);
-  xfree(state->socket);
-  xfree(state->table_prefix);
-  xfree(state->charset);
-
   memset(state, 0, sizeof(*state));
   xfree(state);
   return 0;
 }
-
-static const unsigned char *charset_mappings[][2] =
-{
-  { "utf-8", "utf8" },
-  { "koi8-r", "koi8r" },
-
-  { 0, 0 },
-};
 
 static int
 prepare_func(
@@ -179,11 +138,6 @@ prepare_func(
         struct xml_tree *tree)
 {
   struct cldb_mysql_state *state = (struct cldb_mysql_state*) data;
-  const struct xml_parse_spec *spec = ejudge_cfg_get_spec();
-  const struct xml_attr *a = 0;
-  struct xml_tree *p = 0;
-  const unsigned char *cs = 0;
-  int i;
   const struct common_loaded_plugin *mplg;
 
   // load common_mysql plugin
@@ -191,68 +145,8 @@ prepare_func(
     err("cannot load common_mysql plugin");
     return -1;
   }
-  state->miface = (struct common_mysql_iface*) mplg->iface;
-  state->mdata = (struct common_mysql_state*) mplg->data;
-
-  (void) spec;
-  ASSERT(tree->tag == spec->default_elem);
-  ASSERT(!strcmp(tree->name[0], "config"));
-
-  if (xml_empty_text_c(tree) < 0) return -1;
-
-  for (a = tree->first; a; a = a->next) {
-    ASSERT(a->tag == spec->default_attr);
-    if (!strcmp(a->name[0], "show_queries")) {
-      if (xml_attr_bool(a, &state->show_queries) < 0) return -1;
-    } else {
-      return xml_err_attr_not_allowed(p, a);
-    }
-  }
-
-  for (p = tree->first_down; p; p = p->right) {
-    ASSERT(p->tag == spec->default_elem);
-    if (!strcmp(p->name[0], "user")) {
-      if (xml_leaf_elem(p, &state->user, 1, 0) < 0) return -1;
-    } else if (!strcmp(p->name[0], "password")) {
-      if (xml_leaf_elem(p, &state->password, 1, 0) < 0) return -1;
-    } else if (!strcmp(p->name[0], "database")) {
-      if (xml_leaf_elem(p, &state->database, 1, 0) < 0) return -1;
-    } else if (!strcmp(p->name[0], "host")) {
-      if (xml_leaf_elem(p, &state->host, 1, 0) < 0) return -1;
-    } else if (!strcmp(p->name[0], "socket")) {
-      if (xml_leaf_elem(p, &state->socket, 1, 0) < 0) return -1;
-    } else if (!strcmp(p->name[0], "table_prefix")) {
-      if (xml_leaf_elem(p, &state->table_prefix, 1, 0) < 0) return -1;
-    } else if (!strcmp(p->name[0], "port")) {
-      if (p->first) return xml_err_attrs(p);
-      if (p->first_down) return xml_err_nested_elems(p);
-      if (state->port > 0) return xml_err_elem_redefined(p);
-      if (xml_parse_int("", p->line, p->column, p->text,
-                        &state->port) < 0) return -1;
-    } else if (!strcmp(p->name[0], "charset")) {
-      if (xml_leaf_elem(p, &state->charset, 1, 0) < 0) return -1;
-    } else {
-      return xml_err_elem_not_allowed(p);
-    }
-  }
-
-  if (!state->user) return xml_err_elem_undefined_s(tree, "user");
-  if (!state->password) return xml_err_elem_undefined_s(tree, "password");
-  if (!state->database) return xml_err_elem_undefined_s(tree, "database");
-  if (!state->table_prefix) state->table_prefix = xstrdup("");
-  if (!state->charset) {
-    if (config) cs = config->charset;
-#if defined EJUDGE_CHARSET
-    if (!cs) cs = EJUDGE_CHARSET;
-#endif /* EJUDGE_CHARSET */
-    // remap charset, since mysql has different charset names
-    if (cs) {
-      for (i = 0; charset_mappings[i][0]; i++) {
-        if (!strcasecmp(charset_mappings[i][0], cs))
-          state->charset = xstrdup(charset_mappings[i][1]);
-      }
-    }
-  }
+  state->mi = (struct common_mysql_iface*) mplg->iface;
+  state->md = (struct common_mysql_state*) mplg->data;
 
   return 0;
 }
@@ -282,7 +176,7 @@ struct clar_entry_internal
 enum { CLARS_ROW_WIDTH = 18 };
 
 #define CLARS_OFFSET(f) XOFFSET(struct clar_entry_internal, f)
-static const struct mysql_parse_spec clars_spec[CLARS_ROW_WIDTH] =
+static const struct common_mysql_parse_spec clars_spec[CLARS_ROW_WIDTH] =
 {
   { 0, 'd', "clar_id", CLARS_OFFSET(clar_id), 0 },
   { 0, 'd', "contest_id", CLARS_OFFSET(contest_id), 0 },
@@ -337,7 +231,7 @@ struct clartext_entry_internal
 enum { CLARTEXTS_ROW_WIDTH = 3 };
 
 #define CLARTEXTS_OFFSET(f) XOFFSET(struct clartext_entry_internal, f)
-static const struct mysql_parse_spec clartexts_spec[CLARTEXTS_ROW_WIDTH] =
+static const struct common_mysql_parse_spec clartexts_spec[CLARTEXTS_ROW_WIDTH]=
 {
   { 0, 'd', "clar_id", CLARTEXTS_OFFSET(clar_id), 0 },
   { 0, 'd', "contest_id", CLARTEXTS_OFFSET(contest_id), 0 },
@@ -355,13 +249,13 @@ static const char create_texts_query[] =
 static int
 do_create(struct cldb_mysql_state *state)
 {
-  my_free_res(state);
-  if (my_simple_fquery(state, create_clars_query, state->table_prefix) < 0)
-    db_error_fail(state);
-  if (my_simple_fquery(state, create_texts_query, state->table_prefix) < 0)
-    db_error_fail(state);
-  if (my_simple_fquery(state, "INSERT INTO %sconfig VALUES ('clar_version', '1') ;", state->table_prefix) < 0)
-    db_error_fail(state);
+  state->mi->free_res(state->md);
+  if (state->mi->simple_fquery(state->md, create_clars_query, state->md->table_prefix) < 0)
+    db_error_fail(state->md);
+  if (state->mi->simple_fquery(state->md, create_texts_query, state->md->table_prefix) < 0)
+    db_error_fail(state->md);
+  if (state->mi->simple_fquery(state->md, "INSERT INTO %sconfig VALUES ('clar_version', '1') ;", state->md->table_prefix) < 0)
+    db_error_fail(state->md);
   return 0;
 
  fail:
@@ -373,34 +267,23 @@ do_open(struct cldb_mysql_state *state)
 {
   int clar_version = 0;
 
-  if (state->conn) return 0;
-
-  if (!(state->conn = mysql_init(0))) {
-    err("mysql_init failed");
+  if (state->mi->connect(state->md) < 0)
     return -1;
-  }
-  if (!mysql_real_connect(state->conn,
-                          state->host, state->user, state->password,
-                          state->database, state->port, state->socket, 0))
-    return db_error(state);
-  if (state->charset) {
-    if (my_simple_fquery(state, "SET NAMES '%s' ;", state->charset) < 0)
-      return -1;
-  }
 
-  if (my_fquery(state, 1, "SELECT config_val FROM %sconfig WHERE config_key = 'clar_version' ;", state->table_prefix) < 0) {
+  if (state->mi->fquery(state->md, 1, "SELECT config_val FROM %sconfig WHERE config_key = 'clar_version' ;", state->md->table_prefix) < 0) {
     err("probably the database is not created, please, create it");
     return -1;
   }
-  if (state->row_count > 1) {
+  if (state->md->row_count > 1) {
     err("clar_version key is not unique");
     return -1;
   }
-  if (!state->row_count) return do_create(state);
-  if (my_row(state) < 0) db_error_fail(state);
-  if (!state->row[0] || parse_int(state->row[0], &clar_version) < 0)
-    db_inv_value_fail("config_val");
-  my_free_res(state);
+  if (!state->md->row_count) return do_create(state);
+  if (state->mi->next_row(state->md) < 0) db_error_fail(state->md);
+  if (!state->md->row[0]
+      || state->mi->parse_int(state->md, state->md->row[0], &clar_version) < 0)
+    db_error_inv_value_fail(state->md, "config_val");
+  state->mi->free_res(state->md);
   if (clar_version != 1) {
     err("clar_version == %d is not supported", clar_version);
     goto fail;
@@ -408,7 +291,7 @@ do_open(struct cldb_mysql_state *state)
   return 0;
 
  fail:
-  my_free_res(state);
+  state->mi->free_res(state->md);
   return -1;
 }
 
@@ -474,29 +357,30 @@ open_func(
   }
   if (do_open(state) < 0) goto fail;
 
-  if (my_fquery(state, CLARS_ROW_WIDTH,
+  if (state->mi->fquery(state->md, CLARS_ROW_WIDTH,
                 "SELECT * FROM %sclars WHERE contest_id = %d ORDER BY clar_id;",
-                state->table_prefix, cs->contest_id) < 0)
-    db_error_fail(state);
-  for (i = 0; i < state->row_count; i++) {
-    if (my_row(state) < 0) goto fail;
+                state->md->table_prefix, cs->contest_id) < 0)
+    db_error_fail(state->md);
+  for (i = 0; i < state->md->row_count; i++) {
+    if (state->mi->next_row(state->md) < 0) goto fail;
     memset(&cl, 0, sizeof(cl));
-    if (handle_parse_spec(state->field_count, state->row, state->lengths,
-                          CLARS_ROW_WIDTH, clars_spec, &cl) < 0)
+    if (state->mi->parse_spec(state->md, state->md->field_count, state->md->row,
+                              state->md->lengths, CLARS_ROW_WIDTH,
+                              clars_spec, &cl) < 0)
       goto fail;
-    if (cl.clar_id < 0) db_inv_value_fail("clar_id");
-    if (cl.contest_id != cs->contest_id) db_inv_value_fail("contest_id");
-    if (cl.size < 0 || cl.size >= 65536) db_inv_value_fail("size");
-    if (cl.create_time <= 0) db_inv_value_fail("create_time");
-    if (cl.nsec < 0 || cl.nsec >= 1000000000) db_inv_value_fail("nsec");
-    if (cl.user_from < 0) db_inv_value_fail("user_from");
-    if (cl.user_to < 0) db_inv_value_fail("user_to");
-    if (cl.j_from < 0) db_inv_value_fail("j_from");
-    if (cl.flags < 0 || cl.flags > 2) db_inv_value_fail("flags");
-    if (cl.ip_version != 4) db_inv_value_fail("ip_version");
-    if (cl.locale_id < 0 || cl.locale_id > 255) db_inv_value_fail("locale_id");
-    if (cl.in_reply_to < 0) db_inv_value_fail("in_reply_to");
-    if (!is_valid_charset(cl.clar_charset)) db_inv_value_fail("clar_charset");
+    if (cl.clar_id < 0) db_error_inv_value_fail(state->md, "clar_id");
+    if (cl.contest_id != cs->contest_id) db_error_inv_value_fail(state->md, "contest_id");
+    if (cl.size < 0 || cl.size >= 65536) db_error_inv_value_fail(state->md, "size");
+    if (cl.create_time <= 0) db_error_inv_value_fail(state->md, "create_time");
+    if (cl.nsec < 0 || cl.nsec >= 1000000000) db_error_inv_value_fail(state->md, "nsec");
+    if (cl.user_from < 0) db_error_inv_value_fail(state->md, "user_from");
+    if (cl.user_to < 0) db_error_inv_value_fail(state->md, "user_to");
+    if (cl.j_from < 0) db_error_inv_value_fail(state->md, "j_from");
+    if (cl.flags < 0 || cl.flags > 2) db_error_inv_value_fail(state->md, "flags");
+    if (cl.ip_version != 4) db_error_inv_value_fail(state->md, "ip_version");
+    if (cl.locale_id < 0 || cl.locale_id > 255) db_error_inv_value_fail(state->md, "locale_id");
+    if (cl.in_reply_to < 0) db_error_inv_value_fail(state->md, "in_reply_to");
+    if (!is_valid_charset(cl.clar_charset)) db_error_inv_value_fail(state->md, "clar_charset");
     memset(subj2, 0, sizeof(subj2));
     subj_len = 0;
     if (cl.subj) subj_len = strlen(cl.subj);
@@ -540,14 +424,14 @@ open_func(
     xfree(cl.clar_charset); cl.clar_charset = 0;
     xfree(cl.subj); cl.subj = 0;
   }
-  my_free_res(state);
+  state->mi->free_res(state->md);
 
   return (struct cldb_plugin_cnts*) cs;
 
  fail:
   xfree(cl.clar_charset);
   xfree(cl.subj);
-  my_free_res(state);
+  state->mi->free_res(state->md);
   close_func((struct cldb_plugin_cnts*) cs);
   return 0;
 }
@@ -578,10 +462,10 @@ reset_func(struct cldb_plugin_cnts *cdata)
   XCALLOC(cl->clars.v, cl->clars.a);
   for (i = 0; i < cl->clars.a; cl->clars.v[i++].id = -1);
 
-  my_simple_fquery(state, "DELETE FROM %sclars WHERE contest_id = %d ;",
-                   state->table_prefix, cs->contest_id);
-  my_simple_fquery(state, "DELETE FROM %sclartexts WHERE contest_id = %d ;",
-                   state->table_prefix, cs->contest_id);
+  state->mi->simple_fquery(state->md, "DELETE FROM %sclars WHERE contest_id = %d ;",
+                   state->md->table_prefix, cs->contest_id);
+  state->mi->simple_fquery(state->md, "DELETE FROM %sclartexts WHERE contest_id = %d ;",
+                   state->md->table_prefix, cs->contest_id);
   return 0;
 }
 
@@ -622,11 +506,11 @@ add_entry_func(struct cldb_plugin_cnts *cdata, int clar_id)
   cc.subj = ce->subj;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "INSERT INTO %sclars VALUES ( ", state->table_prefix);
-  handle_unparse_spec(state, cmd_f, CLARS_ROW_WIDTH, clars_spec, &cc);
+  fprintf(cmd_f, "INSERT INTO %sclars VALUES ( ", state->md->table_prefix);
+  state->mi->unparse_spec(state->md, cmd_f, CLARS_ROW_WIDTH, clars_spec, &cc);
   fprintf(cmd_f, " ) ;");
   fclose(cmd_f); cmd_f = 0;
-  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0;
   return 0;
 
@@ -647,7 +531,7 @@ set_flags_func(struct cldb_plugin_cnts *cdata, int clar_id)
   if (clar_id < 0 || clar_id >= cl->clars.u) return -1;
   ce = &cl->clars.v[clar_id];
   if (ce->id != clar_id) return -1;
-  return my_simple_fquery(state, "UPDATE %sclars SET flags = %d WHERE clar_id = %d AND contest_id = %d ;", state->table_prefix, ce->flags, clar_id, cs->contest_id);
+  return state->mi->simple_fquery(state->md, "UPDATE %sclars SET flags = %d WHERE clar_id = %d AND contest_id = %d ;", state->md->table_prefix, ce->flags, clar_id, cs->contest_id);
 }
 
 static int
@@ -666,12 +550,12 @@ set_charset_func(struct cldb_plugin_cnts *cdata, int clar_id)
   if (ce->id != clar_id) return -1;
   if (!is_valid_charset(ce->charset)) return -1;
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "UPDATE %sclars SET clar_charset = ", state->table_prefix);
-  write_escaped_string(cmd_f, state, 0, ce->charset);
+  fprintf(cmd_f, "UPDATE %sclars SET clar_charset = ", state->md->table_prefix);
+  state->mi->write_escaped_string(state->md, cmd_f, 0, ce->charset);
   fprintf(cmd_f, " WHERE clar_id = %d AND contest_id = %d ;",
           clar_id, cs->contest_id);
   fclose(cmd_f); cmd_f = 0;
-  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0;
   return 0;
 
@@ -691,28 +575,28 @@ get_raw_text_func(
   struct cldb_mysql_cnts *cs = (struct cldb_mysql_cnts*) cdata;
   struct cldb_mysql_state *state = cs->plugin_state;
 
-  if (my_fquery(state, 1, "SELECT clar_text FROM %sclartexts WHERE clar_id = %d AND contest_id = %d ;", state->table_prefix, clar_id, cs->contest_id) < 0)
+  if (state->mi->fquery(state->md, 1, "SELECT clar_text FROM %sclartexts WHERE clar_id = %d AND contest_id = %d ;", state->md->table_prefix, clar_id, cs->contest_id) < 0)
     return -1;
-  if (state->row_count <= 0) {
+  if (state->md->row_count <= 0) {
     *p_text = xstrdup("");
     *p_size = 0;
     return 0;
   }
-  if (my_row(state) < 0) goto fail;
-  if (strlen(state->row[0]) != state->lengths[0]) {
+  if (state->mi->next_row(state->md) < 0) goto fail;
+  if (strlen(state->md->row[0]) != state->md->lengths[0]) {
     err("clar text is binary: clar_id = %d, contest_id = %d",
         clar_id, cs->contest_id);
     goto fail;
   }
-  *p_size = state->lengths[0];
-  *p_text = xmalloc(state->lengths[0] + 1);
-  memcpy(*p_text, state->row[0], state->lengths[0]);
+  *p_size = state->md->lengths[0];
+  *p_text = xmalloc(state->md->lengths[0] + 1);
+  memcpy(*p_text, state->md->row[0], state->md->lengths[0]);
   (*p_text)[*p_size] = 0;
-  my_free_res(state);
+  state->mi->free_res(state->md);
   return 0;
 
  fail:
-  my_free_res(state);
+  state->mi->free_res(state->md);
   return -1;
 }
 
@@ -745,11 +629,11 @@ add_text_func(
   ct.contest_id = cs->contest_id;
   ct.clar_text = (unsigned char*) text;
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "INSERT INTO %sclartexts VALUES ( ", state->table_prefix);
-  handle_unparse_spec(state, cmd_f, CLARTEXTS_ROW_WIDTH, clartexts_spec, &ct);
+  fprintf(cmd_f, "INSERT INTO %sclartexts VALUES ( ", state->md->table_prefix);
+  state->mi->unparse_spec(state->md, cmd_f, CLARTEXTS_ROW_WIDTH, clartexts_spec, &ct);
   fprintf(cmd_f, " ) ;");
   fclose(cmd_f); cmd_f = 0;
-  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0;
   return 0;
 
