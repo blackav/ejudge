@@ -151,15 +151,18 @@ prepare_func(
 static int
 do_create(struct rldb_mysql_state *state)
 {
-  state->mi->free_res(state->md);
-  if (state->mi->simple_fquery(state->md, create_runheaders_query,
-                               state->md->table_prefix) < 0)
-    db_error_fail(state->md);
-  if (state->mi->simple_fquery(state->md, create_runs_query,
-                               state->md->table_prefix) < 0)
-    db_error_fail(state->md);
-  if (state->mi->simple_fquery(state->md, "INSERT INTO %sconfig VALUES ('run_version', '1') ;", state->md->table_prefix) < 0)
-    db_error_fail(state->md);
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+
+  mi->free_res(md);
+  if (mi->simple_fquery(md, create_runheaders_query, md->table_prefix) < 0)
+    db_error_fail(md);
+  if (mi->simple_fquery(md, create_runs_query, md->table_prefix) < 0)
+    db_error_fail(md);
+  if (mi->simple_fquery(md,
+                        "INSERT INTO %sconfig VALUES ('run_version', '1') ;",
+                        md->table_prefix) < 0)
+    db_error_fail(md);
   return 0;
 
  fail:
@@ -170,22 +173,24 @@ static int
 do_open(struct rldb_mysql_state *state)
 {
   int run_version = 0;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
 
-  if (state->mi->connect(state->md) < 0) return -1;
+  if (mi->connect(md) < 0) return -1;
 
-  if (state->mi->fquery(state->md, 1, "SELECT config_val FROM %sconfig WHERE config_key = 'run_version' ;", state->md->table_prefix) < 0) {
+  if (mi->fquery(md, 1, "SELECT config_val FROM %sconfig WHERE config_key = 'run_version' ;", md->table_prefix) < 0) {
     err("probably the database is not created, please, create it");
     return -1;
   }
-  if (state->md->row_count > 1) {
+  if (md->row_count > 1) {
     err("run_version key is not unique");
     return -1;
   }
-  if (!state->md->row_count) return do_create(state);
-  if (state->mi->next_row(state->md) < 0) db_error_fail(state->md);
-  if (!state->md->row[0] || state->mi->parse_int(state->md, state->md->row[0], &run_version) < 0)
-    db_error_inv_value_fail(state->md, "config_val");
-  state->mi->free_res(state->md);
+  if (!md->row_count) return do_create(state);
+  if (mi->next_row(state->md) < 0) db_error_fail(md);
+  if (!md->row[0] || mi->parse_int(md, md->row[0], &run_version) < 0)
+    db_error_inv_value_fail(md, "config_val");
+  mi->free_res(md);
   if (run_version != 1) {
     err("run_version == %d is not supported", run_version);
     goto fail;
@@ -193,7 +198,7 @@ do_open(struct rldb_mysql_state *state)
   return 0;
 
  fail:
-  state->mi->free_res(state->md);
+  mi->free_res(md);
   return -1;
 }
 
@@ -205,6 +210,8 @@ load_header(
         time_t init_finish_time)
 {
   struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
   struct runlog_state *rls = cs->rl_state;
   struct run_header_internal rh;
   struct timeval curtime;
@@ -213,14 +220,16 @@ load_header(
   FILE *cmd_f = 0;
 
   memset(&rh, 0, sizeof(rh));
-  if (state->mi->fquery(state->md, HEADERS_ROW_WIDTH, "SELECT * FROM %srunheaders WHERE contest_id = %d ; ", state->md->table_prefix, cs->contest_id) < 0)
+  if (mi->fquery(md, HEADERS_ROW_WIDTH,
+                 "SELECT * FROM %srunheaders WHERE contest_id = %d ; ",
+                 md->table_prefix, cs->contest_id) < 0)
     goto fail;
-  if (state->md->row_count > 1) {
-    err("rldb_mysql: load_header: row_count == %d", state->md->row_count);
+  if (md->row_count > 1) {
+    err("rldb_mysql: load_header: row_count == %d", md->row_count);
     goto fail;
   }
-  if (!state->md->row_count) {
-    state->mi->free_res(state->md);
+  if (!md->row_count) {
+    mi->free_res(md);
     gettimeofday(&curtime, 0);
     rh.contest_id = cs->contest_id;
     rh.duration = init_duration;
@@ -229,11 +238,11 @@ load_header(
     rh.last_change_nsec = curtime.tv_usec * 1000;
 
     cmd_f = open_memstream(&cmd_t, &cmd_z);
-    fprintf(cmd_f, "INSERT INTO %srunheaders VALUES ( ", state->md->table_prefix);
-    state->mi->unparse_spec(state->md, cmd_f, HEADERS_ROW_WIDTH, headers_spec, &rh);
+    fprintf(cmd_f, "INSERT INTO %srunheaders VALUES ( ", md->table_prefix);
+    mi->unparse_spec(md, cmd_f, HEADERS_ROW_WIDTH, headers_spec, &rh);
     fprintf(cmd_f, " ) ;");
     fclose(cmd_f); cmd_f = 0;
-    if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
+    if (mi->simple_query(md, cmd_t, cmd_z) < 0) goto fail;
     xfree(cmd_t); cmd_t = 0;
 
     memset(&rls->head, 0, sizeof(rls->head));
@@ -244,12 +253,11 @@ load_header(
     return 0;
   }
 
-  if (state->mi->next_row(state->md) < 0) goto fail;
-  if (state->mi->parse_spec(state->md, state->md->field_count, state->md->row,
-                            state->md->lengths, HEADERS_ROW_WIDTH,
-                            headers_spec, &rh) < 0)
+  if (mi->next_row(md) < 0) goto fail;
+  if (mi->parse_spec(md, md->field_count, md->row, md->lengths,
+                     HEADERS_ROW_WIDTH, headers_spec, &rh) < 0)
     goto fail;
-  state->mi->free_res(state->md);
+  mi->free_res(md);
 
   memset(&rls->head, 0, sizeof(rls->head));
   rls->head.version = 2;
@@ -267,7 +275,7 @@ load_header(
  fail:
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
-  state->mi->free_res(state->md);
+  mi->free_res(md);
   return -1;
 }
 
@@ -324,6 +332,8 @@ static int
 load_runs(struct rldb_mysql_cnts *cs)
 {
   struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
   struct runlog_state *rls = cs->rl_state;
   struct run_entry_internal ri;
   struct run_entry *re;
@@ -331,41 +341,42 @@ load_runs(struct rldb_mysql_cnts *cs)
   ruint32_t sha1[5];
 
   memset(&ri, 0, sizeof(ri));
-  if (state->mi->fquery(state->md, RUNS_ROW_WIDTH, "SELECT * FROM %sruns WHERE contest_id = %d ORDER BY run_id ;", state->md->table_prefix, cs->contest_id) < 0)
+  if (mi->fquery(md, RUNS_ROW_WIDTH,
+                 "SELECT * FROM %sruns WHERE contest_id=%d ORDER BY run_id ;",
+                 md->table_prefix, cs->contest_id) < 0)
     goto fail;
-  if (!state->md->row_count) {
-    state->mi->free_res(state->md);
+  if (!md->row_count) {
+    mi->free_res(md);
     return 0;
   }
-  for (i = 0; i < state->md->row_count; i++) {
-    if (state->mi->next_row(state->md) < 0) goto fail;
+  for (i = 0; i < md->row_count; i++) {
+    if (mi->next_row(md) < 0) goto fail;
     memset(&ri, 0, sizeof(ri));
     memset(sha1, 0, sizeof(sha1));
     mime_type = 0;
-    if (state->mi->parse_spec(state->md, state->md->field_count,
-                              state->md->row, state->md->lengths,
-                              RUNS_ROW_WIDTH, runs_spec, &ri) < 0)
+    if (mi->parse_spec(md, md->field_count, md->row, md->lengths,
+                       RUNS_ROW_WIDTH, runs_spec, &ri) < 0)
       goto fail;
-    if (ri.run_id < 0) db_error_inv_value_fail(state->md, "run_id");
-    if (ri.size < 0) db_error_inv_value_fail(state->md, "size");
+    if (ri.run_id < 0) db_error_inv_value_fail(md, "run_id");
+    if (ri.size < 0) db_error_inv_value_fail(md, "size");
     /* FIXME: check ordering on create_time/create_nsec */
     if (ri.create_nsec < 0 || ri.create_nsec > NSEC_MAX)
-      db_error_inv_value_fail(state->md, "create_nsec");
+      db_error_inv_value_fail(md, "create_nsec");
     if (!run_is_valid_status(ri.status))
-      db_error_inv_value_fail(state->md, "status");
+      db_error_inv_value_fail(md, "status");
     if (ri.status == RUN_EMPTY) {
       xfree(ri.hash); ri.hash = 0;
       xfree(ri.mime_type); ri.mime_type = 0;
       continue;
     }
-    if (ri.user_id <= 0) db_error_inv_value_fail(state->md, "user_id");
-    if (ri.prob_id < 0) db_error_inv_value_fail(state->md, "prob_id");
-    if (ri.lang_id < 0) db_error_inv_value_fail(state->md, "lang_id");
+    if (ri.user_id <= 0) db_error_inv_value_fail(md, "user_id");
+    if (ri.prob_id < 0) db_error_inv_value_fail(md, "prob_id");
+    if (ri.lang_id < 0) db_error_inv_value_fail(md, "lang_id");
     if (ri.hash && parse_sha1(ri.hash, sha1) < 0)
-      db_error_inv_value_fail(state->md, "hash");
-    if (ri.ip_version != 4) db_error_inv_value_fail(state->md, "ip_version");
+      db_error_inv_value_fail(md, "hash");
+    if (ri.ip_version != 4) db_error_inv_value_fail(md, "ip_version");
     if (ri.mime_type && (mime_type = mime_type_parse(ri.mime_type)) < 0)
-      db_error_inv_value_fail(state->md, "mime_type");
+      db_error_inv_value_fail(md, "mime_type");
     xfree(ri.hash); ri.hash = 0;
     xfree(ri.mime_type); ri.mime_type = 0;
 
@@ -408,7 +419,7 @@ load_runs(struct rldb_mysql_cnts *cs)
  fail:
   xfree(ri.hash);
   xfree(ri.mime_type);
-  state->mi->free_res(state->md);
+  mi->free_res(md);
   return -1;
 }
 
@@ -473,6 +484,8 @@ reset_func(
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
   struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
   struct runlog_state *rls = cs->rl_state;
   struct run_header_internal rh;
   int i;
@@ -493,12 +506,10 @@ reset_func(
   rls->head.duration = new_duration;
   rls->head.finish_time = new_finish_time;
 
-  state->mi->simple_fquery(state->md,
-                           "DELETE FROM %sruns WHERE contest_id = %d ;",
-                           state->md->table_prefix, cs->contest_id);
-  state->mi->simple_fquery(state->md,
-                           "DELETE FROM %srunheaders WHERE contest_id = %d ;",
-                           state->md->table_prefix, cs->contest_id);
+  mi->simple_fquery(md, "DELETE FROM %sruns WHERE contest_id = %d ;",
+                    md->table_prefix, cs->contest_id);
+  mi->simple_fquery(md, "DELETE FROM %srunheaders WHERE contest_id = %d ;",
+                    md->table_prefix, cs->contest_id);
 
   memset(&rh, 0, sizeof(rh));
   gettimeofday(&curtime, 0);
@@ -509,12 +520,11 @@ reset_func(
   rh.last_change_nsec = curtime.tv_usec * 1000;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "INSERT INTO %srunheaders VALUES ( ", state->md->table_prefix);
-  state->mi->unparse_spec(state->md, cmd_f, HEADERS_ROW_WIDTH, headers_spec,
-                          &rh);
+  fprintf(cmd_f, "INSERT INTO %srunheaders VALUES ( ", md->table_prefix);
+  mi->unparse_spec(md, cmd_f, HEADERS_ROW_WIDTH, headers_spec, &rh);
   fprintf(cmd_f, " ) ;");
   fclose(cmd_f); cmd_f = 0;
-  state->mi->simple_query(state->md, cmd_t, cmd_z);
+  mi->simple_query(md, cmd_t, cmd_z);
   xfree(cmd_t); cmd_t = 0;
 
   return 0;
@@ -659,6 +669,8 @@ get_insert_run_id(
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
   struct runlog_state *rls = cs->rl_state;
   struct run_entry_internal ri;
   struct run_entry *re;
@@ -679,7 +691,7 @@ get_insert_run_id(
     for (i = run_id + 1; i < rls->run_u; ++i)
       rls->runs[i].run_id = i;
     // FIXME: does it work???
-    if (state->mi->simple_fquery(state->md, "UPDATE %sruns SET run_id = run_id + 1 WHERE contest_id = %d AND run_id >= %d ;", state->md->table_prefix, cs->contest_id, run_id) < 0)
+    if (mi->simple_fquery(md, "UPDATE %sruns SET run_id = run_id + 1 WHERE contest_id = %d AND run_id >= %d ;", md->table_prefix, cs->contest_id, run_id) < 0)
       goto fail;
   }
   re = &rls->runs[run_id];
@@ -702,11 +714,11 @@ get_insert_run_id(
   ri.last_change_nsec = curtime.tv_usec * 1000;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", state->md->table_prefix);
-  state->mi->unparse_spec(state->md, cmd_f, RUNS_ROW_WIDTH, runs_spec, &ri);
+  fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", md->table_prefix);
+  mi->unparse_spec(md, cmd_f, RUNS_ROW_WIDTH, runs_spec, &ri);
   fprintf(cmd_f, " ) ;");
   fclose(cmd_f); cmd_f = 0;
-  if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
+  if (mi->simple_query(md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0;
   return run_id;
 
@@ -974,13 +986,15 @@ undo_add_entry_func(
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
   struct runlog_state *rls = cs->rl_state;
   struct run_entry *re;
 
   ASSERT(run_id >= 0 && run_id < rls->run_u);
   re = &rls->runs[run_id];
 
-  if (state->mi->simple_fquery(state->md, "DELETE FROM %sruns WHERE run_id = %d AND contest_id = %d ;", state->md->table_prefix, run_id, cs->contest_id) < 0)
+  if (mi->simple_fquery(md, "DELETE FROM %sruns WHERE run_id = %d AND contest_id = %d ;", md->table_prefix, run_id, cs->contest_id) < 0)
     return -1;
 
   memset(re, 0, sizeof(*re));
