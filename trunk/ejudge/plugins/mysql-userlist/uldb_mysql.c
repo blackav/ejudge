@@ -390,6 +390,8 @@ init_func(void)
   struct uldb_mysql_state *state;
 
   XCALLOC(state, 1);
+  state->cache_queries = 1;
+  state->maint_interval = MAINT_INTERVAL;
   return (struct common_plugin_data*) state;
 }
 
