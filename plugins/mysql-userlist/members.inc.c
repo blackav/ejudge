@@ -185,6 +185,7 @@ remove_member_from_pool_by_uid(
 
 static int
 parse_member(
+        struct uldb_mysql_state *state,
         int field_count,
         char **row,
         unsigned long *lengths,
@@ -193,8 +194,9 @@ parse_member(
   int user_id = 0, contest_id = -1;
   char errbuf[1024];
 
-  if (handle_parse_spec(field_count, row, lengths, MEMBER_WIDTH, member_spec,
-                        m, &user_id, &contest_id) < 0)
+  if (state->mi->parse_spec(state->md, field_count, row, lengths,
+                            MEMBER_WIDTH, member_spec,
+                            m, &user_id, &contest_id) < 0)
     return -1;
   if (m->serial <= 0) FAIL("serial <= 0");
   if (user_id <= 0) FAIL("user_id <= 0");
@@ -226,6 +228,8 @@ fetch_member(
   struct userlist_members *mm = 0;
   struct userlist_member *m;
   int i;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
 
   if (p_mm) *p_mm = 0;
   if (state->cache_queries
@@ -236,38 +240,38 @@ fetch_member(
 
   snprintf(cmdbuf, sizeof(cmdbuf),
            "SELECT * FROM %smembers WHERE user_id = %d AND contest_id = %d ;",
-           state->table_prefix, user_id, contest_id);
+           md->table_prefix, user_id, contest_id);
   cmdlen = strlen(cmdbuf);
-  if (my_simple_query(state, cmdbuf, cmdlen) < 0) goto fail;
-  if ((state->field_count = mysql_field_count(state->conn)) != MEMBER_WIDTH)
-    db_wrong_field_count_fail(state, MEMBER_WIDTH);
-  if (!(state->res = mysql_store_result(state->conn)))
-    db_error_fail(state);
-  state->row_count = mysql_num_rows(state->res);
-  if (state->row_count <= 0) {
-    my_free_res(state);
+  if (mi->simple_query(md, cmdbuf, cmdlen) < 0) goto fail;
+  if ((md->field_count = mysql_field_count(md->conn)) != MEMBER_WIDTH)
+    db_error_field_count_fail(md, MEMBER_WIDTH);
+  if (!(md->res = mysql_store_result(md->conn)))
+    db_error_fail(md);
+  md->row_count = mysql_num_rows(md->res);
+  if (md->row_count <= 0) {
+    mi->free_res(md);
     if (p_mm) *p_mm = 0;
     return 0;
   }
 
   mm = allocate_member_on_pool(state, user_id, contest_id);
-  userlist_members_reserve(mm, state->row_count);
-  for (i = 0; i < state->row_count; i++) {
-    if (!(state->row = mysql_fetch_row(state->res)))
-      db_no_data_fail();
-    state->lengths = mysql_fetch_lengths(state->res);
+  userlist_members_reserve(mm, md->row_count);
+  for (i = 0; i < md->row_count; i++) {
+    if (!(md->row = mysql_fetch_row(md->res)))
+      db_error_no_data_fail(md);
+    md->lengths = mysql_fetch_lengths(md->res);
     m = (struct userlist_member*) userlist_node_alloc(USERLIST_T_MEMBER);
     xml_link_node_last(&mm->b, &m->b);
     mm->m[mm->u++] = m;
-    if (parse_member(state->field_count, state->row, state->lengths, m) < 0)
+    if (parse_member(state, md->field_count, md->row, md->lengths, m) < 0)
       goto fail;
   }
-  my_free_res(state);
+  mi->free_res(md);
   if (p_mm) *p_mm = mm;
   return 1;
 
  fail:
-  my_free_res(state);
+  mi->free_res(md);
   remove_member_from_pool(state, user_id, contest_id);
   return -1;
 }
@@ -280,8 +284,8 @@ unparse_member(
         int contest_id,
         const struct userlist_member *m)
 {
-  handle_unparse_spec(state, fout, MEMBER_WIDTH, member_spec, m,
-                      user_id, contest_id);
+  state->mi->unparse_spec(state->md, fout, MEMBER_WIDTH, member_spec, m,
+                          user_id, contest_id);
 }
 
 #undef FAIL

@@ -172,6 +172,7 @@ remove_user_info_from_pool_by_uid(
 
 static int
 parse_user_info(
+        struct uldb_mysql_state *state,
         int field_count,
         char **row,
         unsigned long *lengths,
@@ -180,9 +181,9 @@ parse_user_info(
   int user_id = 0;
   char errbuf[1024];
 
-  if (handle_parse_spec(field_count, row, lengths,
-                        USER_INFO_WIDTH, user_info_spec, ui,
-                        &user_id) < 0) {
+  if (state->mi->parse_spec(state->md, field_count, row, lengths,
+                            USER_INFO_WIDTH, user_info_spec, ui,
+                            &user_id) < 0) {
     goto fail;
   }
   if (user_id <= 0) FAIL("user_id <= 0");
@@ -203,8 +204,8 @@ unparse_user_info(
         int user_id,
         const struct userlist_user_info *ui)
 {
-  handle_unparse_spec(state, fout, USER_INFO_WIDTH, user_info_spec, ui,
-                      user_id);
+  state->mi->unparse_spec(state->md, fout, USER_INFO_WIDTH, user_info_spec, ui,
+                          user_id);
 }
 
 static int
@@ -217,6 +218,8 @@ fetch_user_info(
   unsigned char cmdbuf[1024];
   int cmdlen;
   struct userlist_user_info *ui = 0;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
 
   ASSERT(user_id > 0);
   ASSERT(contest_id >= 0);
@@ -230,38 +233,38 @@ fetch_user_info(
 
   snprintf(cmdbuf, sizeof(cmdbuf),
            "SELECT * FROM %susers WHERE user_id = %d AND contest_id = %d ;",
-           state->table_prefix, user_id, contest_id);
+           md->table_prefix, user_id, contest_id);
   cmdlen = strlen(cmdbuf);
-  if (my_simple_query(state, cmdbuf, cmdlen) < 0) goto fail;
-  if ((state->field_count = mysql_field_count(state->conn)) != USER_INFO_WIDTH)
-    db_wrong_field_count_fail(state, USER_INFO_WIDTH);
-  if (!(state->res = mysql_store_result(state->conn)))
-    db_error_fail(state);
-  state->row_count = mysql_num_rows(state->res);
-  if (state->row_count < 0) goto fail;
-  if (!state->row_count) {
-    my_free_res(state);
+  if (mi->simple_query(md, cmdbuf, cmdlen) < 0) goto fail;
+  if ((md->field_count = mysql_field_count(md->conn)) != USER_INFO_WIDTH)
+    db_error_field_count_fail(md, USER_INFO_WIDTH);
+  if (!(md->res = mysql_store_result(md->conn)))
+    db_error_fail(md);
+  md->row_count = mysql_num_rows(md->res);
+  if (md->row_count < 0) goto fail;
+  if (!md->row_count) {
+    mi->free_res(md);
     if (p_ui) *p_ui = 0;
     return 0;
   }
-  if (state->row_count > 1) {
+  if (md->row_count > 1) {
     err("fetch_user_info: too many rows in result");
     goto fail;
   }
 
   ui = allocate_user_info_on_pool(state, user_id, contest_id);
-  if (!(state->row = mysql_fetch_row(state->res)))
-    db_no_data_fail();
-  state->lengths = mysql_fetch_lengths(state->res);
-  if (parse_user_info(state->field_count, state->row, state->lengths, ui) < 0)
+  if (!(md->row = mysql_fetch_row(md->res)))
+    db_error_no_data_fail(md);
+  md->lengths = mysql_fetch_lengths(md->res);
+  if (parse_user_info(state, md->field_count, md->row, md->lengths, ui) < 0)
     goto fail;
 
-  my_free_res(state);
+  mi->free_res(md);
   if (p_ui) *p_ui = ui;
   return 1;
 
  fail:
-  my_free_res(state);
+  mi->free_res(md);
   remove_user_info_from_pool(state, user_id, contest_id);
   return -1;
 }
@@ -279,6 +282,8 @@ fetch_or_create_user_info(
   FILE *cmd_f = 0;
   char *cmd_t = 0;
   size_t cmd_z = 0;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
 
   if (fetch_user_info(state, user_id, contest_id, &ui) < 0) goto fail;
   if (ui) {
@@ -293,11 +298,11 @@ fetch_or_create_user_info(
   arena.create_time = cur_time;
   arena.last_change_time = cur_time;
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "INSERT INTO %susers VALUES ( ", state->table_prefix);
+  fprintf(cmd_f, "INSERT INTO %susers VALUES ( ", md->table_prefix);
   unparse_user_info(state, cmd_f, user_id, &arena);
   fprintf(cmd_f, " ) ;");
   fclose(cmd_f); cmd_f = 0;
-  if (my_simple_query(state, cmd_t, cmd_z) < 0) goto fail;
+  if (mi->simple_query(md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   if (fetch_user_info(state, user_id, contest_id, &ui) < 0) goto fail;
   ASSERT(ui);

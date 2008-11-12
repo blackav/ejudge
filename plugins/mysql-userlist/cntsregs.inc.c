@@ -180,6 +180,7 @@ remove_cntsreg_from_pool_by_uid(
 
 static int
 parse_cntsreg(
+        struct uldb_mysql_state *state,
         int field_count,
         char **row,
         unsigned long *lengths,
@@ -189,14 +190,14 @@ parse_cntsreg(
   int is_incomplete = 0, is_disqualified = 0;
   int flags = 0;
 
-  if (handle_parse_spec(field_count, row, lengths,
+  if (state->mi->parse_spec(state->md, field_count, row, lengths,
                         CNTSREG_WIDTH, cntsreg_spec, c,
                         &user_id, &is_banned, &is_invisible,
                         &is_locked, &is_incomplete, &is_disqualified) < 0)
     goto fail;
   if (user_id <= 0 || c->id <= 0
       || c->status < 0 || c->status >= USERLIST_REG_LAST)
-    db_inv_value_fail();
+    db_error_inv_value_fail(state->md, "status");
   if (is_banned) flags |= USERLIST_UC_BANNED;
   if (is_invisible) flags |= USERLIST_UC_INVISIBLE;
   if (is_locked) flags |= USERLIST_UC_LOCKED;
@@ -224,7 +225,7 @@ unparse_cntsreg(
   if ((c->flags & USERLIST_UC_LOCKED)) is_locked = 1;
   if ((c->flags & USERLIST_UC_INCOMPLETE)) is_incomplete = 1;
   if ((c->flags & USERLIST_UC_DISQUALIFIED)) is_disqualified = 1;
-  handle_unparse_spec(state, fout, CNTSREG_WIDTH, cntsreg_spec, c,
+  state->mi->unparse_spec(state->md, fout, CNTSREG_WIDTH, cntsreg_spec, c,
                       user_id, is_banned, is_invisible,
                       is_locked, is_incomplete, is_disqualified);
 }
@@ -239,6 +240,8 @@ fetch_cntsreg(
   unsigned char cmdbuf[1024];
   int cmdlen;
   struct userlist_contest *c = 0;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
 
   *p_c = 0;
   if (!contest_id) return 0;
@@ -248,33 +251,33 @@ fetch_cntsreg(
     return 1;
   }
 
-  snprintf(cmdbuf, sizeof(cmdbuf), "SELECT * FROM %scntsregs WHERE user_id = %d AND contest_id = %d ;", state->table_prefix, user_id, contest_id);
+  snprintf(cmdbuf, sizeof(cmdbuf), "SELECT * FROM %scntsregs WHERE user_id = %d AND contest_id = %d ;", md->table_prefix, user_id, contest_id);
   cmdlen = strlen(cmdbuf);
-  if (my_simple_query(state, cmdbuf, cmdlen) < 0) goto fail;
-  state->field_count = mysql_field_count(state->conn);
-  if (state->field_count != CNTSREG_WIDTH)
-    db_wrong_field_count_fail(state, CNTSREG_WIDTH);
-  if (!(state->res = mysql_store_result(state->conn)))
-    db_error_fail(state);
-  state->row_count = mysql_num_rows(state->res);
-  if (state->row_count < 0) db_error_fail(state);
-  if (!state->row_count) {
-    my_free_res(state);
+  if (mi->simple_query(md, cmdbuf, cmdlen) < 0) goto fail;
+  md->field_count = mysql_field_count(md->conn);
+  if (md->field_count != CNTSREG_WIDTH)
+    db_error_field_count_fail(md, CNTSREG_WIDTH);
+  if (!(md->res = mysql_store_result(md->conn)))
+    db_error_fail(md);
+  md->row_count = mysql_num_rows(md->res);
+  if (md->row_count < 0) db_error_fail(md);
+  if (!md->row_count) {
+    mi->free_res(md);
     return 0;
   }
-  if (state->row_count > 1) goto fail;
-  if (!(state->row = mysql_fetch_row(state->res)))
-    db_no_data_fail();
-  state->lengths = mysql_fetch_lengths(state->res);
+  if (md->row_count > 1) goto fail;
+  if (!(md->row = mysql_fetch_row(md->res)))
+    db_error_no_data_fail(md);
+  md->lengths = mysql_fetch_lengths(md->res);
   if (!(c = allocate_cntsreg_on_pool(state, user_id, contest_id))) goto fail;
-  if (parse_cntsreg(state->field_count,state->row,state->lengths, c) < 0)
+  if (parse_cntsreg(state, md->field_count,md->row,md->lengths, c) < 0)
     goto fail;
-  my_free_res(state);
+  mi->free_res(md);
   *p_c = c;
   return 1;
 
  fail:
-  my_free_res(state);
+  mi->free_res(md);
   remove_cntsreg_from_pool(state, user_id, contest_id);
   return -1;
 }

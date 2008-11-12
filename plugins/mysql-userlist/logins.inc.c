@@ -126,12 +126,13 @@ remove_login_from_pool(
 
 static int
 parse_login(
+        struct uldb_mysql_state *state,
         int field_count,
         char **row,
         unsigned long *lengths,
         struct userlist_user *u)
 {
-  if (handle_parse_spec(field_count,row,lengths,LOGIN_WIDTH,login_spec,u) < 0)
+  if (state->mi->parse_spec(state->md, field_count,row,lengths,LOGIN_WIDTH,login_spec,u) < 0)
     goto fail;
   if (u->id <= 0) goto fail;
   if (u->passwd_method < USERLIST_PWD_PLAIN
@@ -150,7 +151,7 @@ unparse_login(
         FILE *fout,
         const struct userlist_user *u)
 {
-  handle_unparse_spec(state, fout, LOGIN_WIDTH, login_spec, u);
+  state->mi->unparse_spec(state->md, fout, LOGIN_WIDTH, login_spec, u);
 }
 
 static int
@@ -162,6 +163,8 @@ fetch_login(
   unsigned char cmdbuf[1024];
   int cmdlen;
   struct userlist_user *u = 0;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
 
   *p_user = 0;
   if (user_id <= 0) goto fail;
@@ -173,33 +176,33 @@ fetch_login(
 
   snprintf(cmdbuf, sizeof(cmdbuf),
            "SELECT * FROM %slogins WHERE user_id = %d ;",
-           state->table_prefix, user_id);
+           md->table_prefix, user_id);
   cmdlen = strlen(cmdbuf);
-  if (my_simple_query(state, cmdbuf, cmdlen) < 0) goto fail;
-  state->field_count = mysql_field_count(state->conn);
-  if (state->field_count != LOGIN_WIDTH)
-    db_wrong_field_count_fail(state, LOGIN_WIDTH);
-  if (!(state->res = mysql_store_result(state->conn)))
-    db_error_fail(state);
-  state->row_count = mysql_num_rows(state->res);
-  if (state->row_count < 0) db_error_fail(state);
-  if (!state->row_count) {
-    my_free_res(state);
+  if (mi->simple_query(md, cmdbuf, cmdlen) < 0) goto fail;
+  md->field_count = mysql_field_count(md->conn);
+  if (md->field_count != LOGIN_WIDTH)
+    db_error_field_count_fail(md, LOGIN_WIDTH);
+  if (!(md->res = mysql_store_result(md->conn)))
+    db_error_fail(md);
+  md->row_count = mysql_num_rows(md->res);
+  if (md->row_count < 0) db_error_fail(md);
+  if (!md->row_count) {
+    mi->free_res(md);
     return 0;
   }
-  if (state->row_count > 1) goto fail;
-  if (!(state->row = mysql_fetch_row(state->res)))
-    db_no_data_fail();
-  state->lengths = mysql_fetch_lengths(state->res);
+  if (md->row_count > 1) goto fail;
+  if (!(md->row = mysql_fetch_row(md->res)))
+    db_error_no_data_fail(md);
+  md->lengths = mysql_fetch_lengths(md->res);
   if (!(u = allocate_login_on_pool(state, user_id))) goto fail;
-  if (parse_login(state->field_count,state->row,state->lengths,u) < 0)
+  if (parse_login(state, md->field_count, md->row, md->lengths, u) < 0)
     goto fail;
-  my_free_res(state);
+  mi->free_res(md);
   *p_user = u;
   return 1;
 
  fail:
-  my_free_res(state);
+  mi->free_res(md);
   remove_login_from_pool(state, user_id);
   return -1;
 }
