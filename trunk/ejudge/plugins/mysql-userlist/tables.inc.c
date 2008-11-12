@@ -19,7 +19,7 @@
 enum { COOKIE_WIDTH = 12 };
 
 #define COOKIE_OFFSET(f) XOFFSET(struct userlist_cookie, f)
-static struct mysql_parse_spec cookie_spec[COOKIE_WIDTH] =
+static struct common_mysql_parse_spec cookie_spec[COOKIE_WIDTH] =
 {
   //[0]       cookie BIGINT UNSIGNED NOT NULL PRIMARY KEY,
   { 0, 'q', "cookie", COOKIE_OFFSET(cookie), 0 },
@@ -51,7 +51,7 @@ static struct mysql_parse_spec cookie_spec[COOKIE_WIDTH] =
 enum { CNTSREG_WIDTH = 10 };
 
 #define CONTEST_OFFSET(f) XOFFSET(struct userlist_contest, f)
-static struct mysql_parse_spec cntsreg_spec[CNTSREG_WIDTH] =
+static struct common_mysql_parse_spec cntsreg_spec[CNTSREG_WIDTH] =
 {
   //[0]    (user_id INT UNSIGNED NOT NULL,
   { 0, 'D', "user_id", 0, 0 },
@@ -79,7 +79,7 @@ static struct mysql_parse_spec cntsreg_spec[CNTSREG_WIDTH] =
 enum { LOGIN_WIDTH = 16 };
 
 #define LOGIN_OFFSET(f) XOFFSET(struct userlist_user, f)
-static struct mysql_parse_spec login_spec[LOGIN_WIDTH] =
+static struct common_mysql_parse_spec login_spec[LOGIN_WIDTH] =
 {
   //[0]    user_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   { 0, 'e', "user_id", LOGIN_OFFSET(id) },
@@ -119,7 +119,7 @@ static struct mysql_parse_spec login_spec[LOGIN_WIDTH] =
 enum { USER_INFO_WIDTH = 45 };
 
 #define USER_INFO_OFFSET(f) XOFFSET(struct userlist_user_info, f)
-static struct mysql_parse_spec user_info_spec[USER_INFO_WIDTH] =
+static struct common_mysql_parse_spec user_info_spec[USER_INFO_WIDTH] =
 {
   //[0]    user_id INT UNSIGNED NOT NULL,
   { 0, 'D', "user_id", 0, 0 },
@@ -217,7 +217,7 @@ static struct mysql_parse_spec user_info_spec[USER_INFO_WIDTH] =
 enum { MEMBER_WIDTH = 34 };
 
 #define MEMBER_OFFSET(f) XOFFSET(struct userlist_member, f)
-static struct mysql_parse_spec member_spec[MEMBER_WIDTH] =
+static struct common_mysql_parse_spec member_spec[MEMBER_WIDTH] =
 {
   //[0]    serial INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   { 0, 'e', "serial", MEMBER_OFFSET(serial), 0 },

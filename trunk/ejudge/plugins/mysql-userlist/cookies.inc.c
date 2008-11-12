@@ -174,17 +174,20 @@ parse_cookie(
         struct userlist_cookie *c)
 {
   int ip_version = 0;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
 
-  if (handle_parse_spec(state->field_count, state->row, state->lengths,
-                        COOKIE_WIDTH, cookie_spec, c, &ip_version) < 0)
+  if (mi->parse_spec(md, md->field_count, md->row,
+                            md->lengths, COOKIE_WIDTH, cookie_spec, c,
+                            &ip_version) < 0)
     goto fail;
-  if (!c->cookie) db_inv_value_fail();
-  if (c->user_id <= 0) db_inv_value_fail();
-  if (c->contest_id < 0) db_inv_value_fail();
+  if (!c->cookie) db_error_inv_value_fail(md, "cookie");
+  if (c->user_id <= 0) db_error_inv_value_fail(md, "user_id");
+  if (c->contest_id < 0) db_error_inv_value_fail(md, "contest_id");
   if (c->priv_level < 0 || c->priv_level > PRIV_LEVEL_ADMIN)
-    db_inv_value_fail();
-  if (c->role < 0) db_inv_value_fail();
-  if (ip_version != 4) db_inv_value_fail();
+    db_error_inv_value_fail(md, "priv_level");
+  if (c->role < 0) db_error_inv_value_fail(md, "role");
+  if (ip_version != 4) db_error_inv_value_fail(md, "ip_version");
   if (c->locale_id < 0) c->locale_id = 0;
   return 0;
 
@@ -201,36 +204,38 @@ fetch_cookie(
   unsigned char cmdbuf[1024];
   int cmdlen;
   struct userlist_cookie *c = 0;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
 
   if (p_c) *p_c = 0;
   snprintf(cmdbuf, sizeof(cmdbuf),
            "SELECT * FROM %scookies WHERE cookie = '%016llx' ;",
-           state->table_prefix, val);
+           md->table_prefix, val);
   cmdlen = strlen(cmdbuf);
-  if (my_simple_query(state, cmdbuf, cmdlen) < 0) goto fail;
-  state->field_count = mysql_field_count(state->conn);
-  if (state->field_count != COOKIE_WIDTH)
-    db_wrong_field_count_fail(state, COOKIE_WIDTH);
-  if (!(state->res = mysql_store_result(state->conn)))
-    db_error_fail(state);
-  state->row_count = mysql_num_rows(state->res);
-  if (state->row_count < 0) db_error_fail(state);
-  if (!state->row_count) {
-    my_free_res(state);
+  if (mi->simple_query(md, cmdbuf, cmdlen) < 0) goto fail;
+  md->field_count = mysql_field_count(md->conn);
+  if (md->field_count != COOKIE_WIDTH)
+    db_error_field_count_fail(md, COOKIE_WIDTH);
+  if (!(md->res = mysql_store_result(md->conn)))
+    db_error_fail(md);
+  md->row_count = mysql_num_rows(md->res);
+  if (md->row_count < 0) db_error_fail(md);
+  if (!md->row_count) {
+    mi->free_res(md);
     return 0;
   }
-  if (state->row_count > 1) goto fail;
-  if (!(state->row = mysql_fetch_row(state->res)))
-    db_no_data_fail();
-  state->lengths = mysql_fetch_lengths(state->res);
+  if (md->row_count > 1) goto fail;
+  if (!(md->row = mysql_fetch_row(md->res)))
+    db_error_no_data_fail(md);
+  md->lengths = mysql_fetch_lengths(md->res);
   if (!(c = allocate_cookie_on_pool(state, val))) goto fail;
   if (parse_cookie(state, c) < 0) goto fail;
-  my_free_res(state);
+  mi->free_res(md);
   if (p_c) *p_c = c;
   return 1;
 
  fail:
-  my_free_res(state);
+  mi->free_res(md);
   remove_cookie_from_pool(state, val);
   return -1;
 }
@@ -241,7 +246,7 @@ unparse_cookie(
         FILE *fout,
         const struct userlist_cookie *c)
 {
-  handle_unparse_spec(state, fout, COOKIE_WIDTH, cookie_spec, c, 4);
+  state->mi->unparse_spec(state->md, fout, COOKIE_WIDTH, cookie_spec, c, 4);
 }
 
 static void
