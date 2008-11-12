@@ -93,7 +93,7 @@ struct run_entry_internal
 enum { RUNS_ROW_WIDTH = 33 };
 
 #define RUNS_OFFSET(f) XOFFSET(struct run_entry_internal, f)
-static const struct mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
+static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
 {
   { 0, 'd', "run_id", RUNS_OFFSET(run_id), 0 },
   { 0, 'd', "contest_id", RUNS_OFFSET(contest_id), 0 },
@@ -177,7 +177,7 @@ struct run_header_internal
 enum { HEADERS_ROW_WIDTH = 11 };
 
 #define HEADERS_OFFSET(f) XOFFSET(struct run_header_internal, f)
-static const struct mysql_parse_spec headers_spec[RUNS_ROW_WIDTH] =
+static const struct common_mysql_parse_spec headers_spec[RUNS_ROW_WIDTH] =
 {
   { 0, 'd', "contest_id", HEADERS_OFFSET(contest_id), 0 },
   { 0, 't', "start_time", HEADERS_OFFSET(start_time), 0 },
