@@ -424,6 +424,7 @@ do_query(
   }
 
   // reconnected
+  info("reconnected to MySQL daemon");
   if (state->charset) {
     snprintf(buf, sizeof(buf), "SET NAMES '%s' ;", state->charset);
     buflen = strlen(buf);
