@@ -1199,7 +1199,7 @@ generate_daily_statistics(
 
       u = u_ind[j];
       name = teamdb_get_name(state->teamdb_state, u);
-      if (!name) name = teamdb_get_login(state->teamdb_state, u);
+      if (!name && !*name) name = teamdb_get_login(state->teamdb_state, u);
       if (!name) name = "";
 
       w = 24; y = 0;

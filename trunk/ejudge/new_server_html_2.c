@@ -2343,13 +2343,11 @@ ns_write_exam_info(
     }
     fprintf(fout, "<td%s>%s</td>", cl, "&nbsp;"); /* FIXME: print flags */
 
+    m = 0;
     if (ui && (mm = ui->members) && mm->u > 0) {
       for (j = 0; j < mm->u; j++)
-        if ((m = mm->m[j]) && m->team_role == USERLIST_MB_CONTESTANT) {
+        if ((m = mm->m[j]) && m->team_role == USERLIST_MB_CONTESTANT)
           break;
-        } else {
-          m = 0;
-        }
     }
 
     if (m && m->firstname) {

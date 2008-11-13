@@ -703,6 +703,15 @@ serve_check_stat_generation(
 
   if (state->current_time < state->stat_report_time) return;
 
+  // set the stat_report_time to the beginning of today
+  ptm = localtime(&state->current_time);
+  ptm->tm_hour = 0;
+  ptm->tm_min = 0;
+  ptm->tm_sec = 0;
+  ptm->tm_isdst = -1;
+  if ((thisday = mktime(ptm)) != (time_t) -1)
+    state->stat_report_time = thisday;
+
   // generate report for each day from stat_reported_before to stat_report_time
   thisday = state->stat_reported_before;
   while (thisday < state->stat_report_time) {
