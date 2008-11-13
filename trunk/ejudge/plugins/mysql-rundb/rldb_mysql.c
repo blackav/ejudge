@@ -536,8 +536,22 @@ set_runlog_func(
         int total_entries,
         struct run_entry *entries)
 {
-  SWERR(("not implemented"));
-  return -1;
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct runlog_state *rls = cs->rl_state;
+  int i;
+
+  // only work for empty runlog
+  if (rls->run_u > 0) {
+    err("rldb_mysql: set_runlog: runlog is not empty");
+    return -1;
+  }
+
+  // FIXME: handle errors
+  for (i = 0; i < total_entries; ++i) {
+    put_entry_func(cdata, &entries[i]);
+  }
+
+  return 0;
 }
 
 static int
@@ -1327,8 +1341,7 @@ set_entry_func(
 static int
 squeeze_func(struct rldb_plugin_cnts *cdata)
 {
-  SWERR(("not implemented"));
-
+  err("rldb_mysql: squeeze_func: not implemented");
   return -1;
 }
 
