@@ -619,13 +619,16 @@ html_reset_filter(serve_state_t state, int user_id, ej_cookie_t session_id)
 }
 
 void
-html_reset_clar_filter(serve_state_t state, int user_id, ej_cookie_t session_id)
+html_reset_clar_filter(
+        serve_state_t state,
+        int user_id,
+        ej_cookie_t session_id)
 {
   struct user_filter_info *u = user_filter_info_allocate(state, user_id, session_id);
 
   u->prev_mode_clar = 0;
-  u->prev_first_clar = 0;
-  u->prev_last_clar = 0;
+  u->prev_first_clar = -1;
+  u->prev_last_clar = -10;
 }
 
 
