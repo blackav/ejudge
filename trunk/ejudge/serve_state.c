@@ -360,6 +360,8 @@ user_filter_info_allocate(serve_state_t state, int user_id,
   }
   if (!p) {
     XCALLOC(p, 1);
+    p->prev_first_clar = -1;
+    p->prev_last_clar = -10;
     p->next = state->users[user_id]->first_filter;
     p->session_id = session_id;
     state->users[user_id]->first_filter = p;

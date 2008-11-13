@@ -7112,8 +7112,7 @@ priv_main_page(FILE *fout,
   unsigned char bb[1024];
   int action;
   long long tdiff;
-  int filter_first_run = 0, filter_last_run = 0, filter_first_clar = 0;
-  int filter_last_clar = 0, filter_mode_clar = 0;
+  int filter_first_run = 0, filter_last_run = 0, filter_mode_clar = 0;
   const unsigned char *filter_expr = 0;
   int i, x, y, n, variant = 0, need_examiners = 0, online_users = 0;
   const struct section_problem_data *prob = 0;
@@ -7124,6 +7123,8 @@ priv_main_page(FILE *fout,
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int skip_start_form = 0;
   struct last_access_info *pa;
+  const unsigned char *filter_first_clar_str = 0;
+  const unsigned char *filter_last_clar_str = 0;
 
   if (ns_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
   if (ns_cgi_param(phr, "filter_first_run", &s) > 0
@@ -7136,16 +7137,10 @@ priv_main_page(FILE *fout,
     filter_last_run = x;
     if (filter_last_run >= 0) filter_last_run++;
   }
-  if (ns_cgi_param(phr, "filter_first_clar", &s) > 0
-      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n]) {
-    filter_first_clar = x;
-    if (filter_first_clar >= 0) filter_first_clar++;
-  }
-  if (ns_cgi_param(phr, "filter_last_clar", &s) > 0
-      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n]) {
-    filter_last_clar = x;
-    if (filter_last_clar >= 0) filter_last_clar--;
-  }
+  if (ns_cgi_param(phr, "filter_first_clar", &s) > 0 && s)
+    filter_first_clar_str = s;
+  if (ns_cgi_param(phr, "filter_last_clar", &s) > 0 && s)
+    filter_last_clar_str = s;
   if (ns_cgi_param(phr, "filter_mode_clar", &s) > 0
       && sscanf(s, "%d%n", &x, &n) == 1 && !s[n] && x >= 1 && x <= 2)
     filter_mode_clar = x;
@@ -7692,7 +7687,7 @@ priv_main_page(FILE *fout,
   }
 
   ns_write_all_clars(fout, phr, cnts, extra, filter_mode_clar,
-                     filter_first_clar, filter_last_clar);
+                     filter_first_clar_str, filter_last_clar_str);
 
   fprintf(fout, "<hr><h2>%s</h2>", _("Compose a message to all participants"));
   html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
