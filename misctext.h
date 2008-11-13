@@ -142,4 +142,6 @@ ucs4_to_utf8_str(unsigned char *buf, size_t size, const int *in);
 
 unsigned char *get_nth_alternative(const unsigned char *txt, int n);
 
+unsigned char *chop2(unsigned char *str);
+
 #endif /* __MISCTEXT_H__ */

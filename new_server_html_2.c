@@ -696,19 +696,49 @@ ns_write_priv_all_runs(FILE *f,
   html_armor_free(&ab);
 }
 
+static int
+parse_clar_num(
+        const unsigned char *str,
+        int min_val,
+        int max_val,
+        int dflt_val)
+{
+  int slen;
+  unsigned char *buf;
+  int val;
+  char *eptr;
+
+  if (!str) return dflt_val;
+  slen = strlen(str);
+  buf = (unsigned char*) alloca(slen + 1);
+  memcpy(buf, str, slen + 1);
+  while (slen > 0 && isspace(buf[slen - 1])) --slen;
+  buf[slen] = 0;
+  if (!slen) return dflt_val;
+  errno = 0;
+  val = strtol(buf, &eptr, 10);
+  if (errno || *eptr) return dflt_val;
+  if (val < min_val || val > max_val) return dflt_val;
+  return val;
+}
+
 void
-ns_write_all_clars(FILE *f,
-                   struct http_request_info *phr,
-                   const struct contest_desc *cnts,
-                   struct contest_extra *extra,
-                   int mode_clar, int first_clar, int last_clar)
+ns_write_all_clars(
+        FILE *f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int mode_clar,
+        const unsigned char *first_clar_str,
+        const unsigned char *last_clar_str)
 {
   int total, i, j;
 
   int *list_idx;
   int list_tot;
 
-  unsigned char first_clar_str[64] = { 0 }, last_clar_str[64] = { 0 };
+  unsigned char first_clar_buf[64] = { 0 };
+  unsigned char last_clar_buf[64] = { 0 };
 
   time_t start, submit_time;
   unsigned char durstr[64];
@@ -716,6 +746,7 @@ ns_write_all_clars(FILE *f,
   unsigned char bbuf[1024];
   struct clar_entry_v1 clar;
   unsigned char cl[128];
+  int first_clar = -1, last_clar = -10, show_num;
 
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
@@ -730,8 +761,8 @@ ns_write_all_clars(FILE *f,
   start = run_get_start_time(cs->runlog_state);
   total = clar_get_total(cs->clarlog_state);
   if (!mode_clar) mode_clar = u->prev_mode_clar;
-  if (!first_clar) first_clar = u->prev_first_clar;
-  if (!last_clar) last_clar = u->prev_last_clar;
+  first_clar = parse_clar_num(first_clar_str,-total,total-1,u->prev_first_clar);
+  last_clar = parse_clar_num(last_clar_str, -total, total-1, u->prev_last_clar);
   if (!mode_clar) {
     mode_clar = 1;
     if (phr->role != USER_ROLE_ADMIN) mode_clar = 2;
@@ -742,17 +773,6 @@ ns_write_all_clars(FILE *f,
   show_astr_time = global->show_astr_time;
   if (global->is_virtual) show_astr_time = 1;
 
-  if (!first_clar && !last_clar) {
-    first_clar = -1;
-    last_clar = -10;
-  } else if (!first_clar) {
-    first_clar = -1;
-  } else if (!last_clar) {
-    last_clar = first_clar - 10 + 1;
-    if (first_clar > 0 && last_clar < 0) last_clar = 1;
-  }
-  if (first_clar > 0) first_clar--;
-  if (last_clar > 0) last_clar--;
   if (first_clar < 0) {
     first_clar = total + first_clar;
     if (first_clar < 0) first_clar = 0;
@@ -766,23 +786,41 @@ ns_write_all_clars(FILE *f,
   memset(list_idx, 0, (total + 1) * sizeof(list_idx[0]));
   list_tot = 0;
   if (first_clar <= last_clar) {
-    for (i = first_clar; i <= last_clar && i < total; i++)
-      list_idx[list_tot++] = i;
+    show_num = last_clar - first_clar + 1;
+    if (mode_clar == 1) {
+      // all clars in the ascending order
+      for (i = first_clar; i <= last_clar && i < total; i++)
+        list_idx[list_tot++] = i;
+    } else {
+      // unanswered clars in the ascending order
+      for (i = first_clar; i < total && list_tot < show_num; ++i)
+        if (clar_get_record(cs->clarlog_state, i, &clar) >= 0
+            && clar.id >= 0 && clar.from > 0 && clar.flags < 2)
+          list_idx[list_tot++] = i;
+    }
   } else {
-    for (i = first_clar; i >= last_clar; i--)
-      list_idx[list_tot++] = i;
+    show_num = first_clar - last_clar + 1;
+    if (mode_clar == 1) {
+      // all clars in the descending order
+      for (i = first_clar; i >= last_clar; i--)
+        list_idx[list_tot++] = i;
+    } else {
+      // unanswered clars in the descending order
+      for (i = first_clar; i >= 0 && list_tot < show_num; --i)
+        if (clar_get_record(cs->clarlog_state, i, &clar) >= 0
+            && clar.id >= 0 && clar.from > 0 && clar.flags < 2)
+          list_idx[list_tot++] = i;
+    }
   }
 
   fprintf(f, "<p><big>%s: %d, %s: %d</big></p>\n", _("Total messages"), total,
           _("Shown"), list_tot);
 
-  if (u->prev_first_clar) {
-    snprintf(first_clar_str, sizeof(first_clar_str), "%d",
-             (u->prev_first_clar > 0)?u->prev_first_clar-1:u->prev_first_clar);
+  if (u->prev_first_clar != -1) {
+    snprintf(first_clar_buf, sizeof(first_clar_buf), "%d", u->prev_first_clar);
   }
-  if (u->prev_last_clar) {
-    snprintf(last_clar_str, sizeof(last_clar_str), "%d",
-             (u->prev_last_clar > 0)?u->prev_last_clar - 1:u->prev_last_clar);
+  if (u->prev_last_clar != -10) {
+    snprintf(last_clar_buf, sizeof(last_clar_buf), "%d", u->prev_last_clar);
   }
 
   fprintf(f, "<p>");
@@ -795,8 +833,8 @@ ns_write_all_clars(FILE *f,
           _("All clars"),
           (mode_clar == 2) ? " selected=\"1\"" : "",
           _("Unanswered clars"));
-  fprintf(f, "%s: <input type=\"text\" name=\"filter_first_clar\" size=\"16\" value=\"%s\"/>", _("First clar"), first_clar_str);
-  fprintf(f, "%s: <input type=\"text\" name=\"filter_last_clar\" size=\"16\" value=\"%s\"/>", _("Last clar"), last_clar_str);
+  fprintf(f, "%s: <input type=\"text\" name=\"filter_first_clar\" size=\"16\" value=\"%s\"/>", _("First clar"), first_clar_buf);
+  fprintf(f, "%s: <input type=\"text\" name=\"filter_last_clar\" size=\"16\" value=\"%s\"/>", _("Last clar"), last_clar_buf);
   fprintf(f, "%s",
           ns_submit_button(bbuf, sizeof(bbuf), "filter_view_clars",
                            1, _("View")));

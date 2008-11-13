@@ -316,18 +316,6 @@ tex_armor_verbatim_2(unsigned char *str, int width)
   return str;
 }
 
-static unsigned char *
-chop2(unsigned char *str)
-{
-  size_t len;
-
-  if (!str) return 0;
-  len = strlen(str);
-  if (len > 0 && isspace(str[len - 1])) len--;
-  str[len] = 0;
-  return str;
-}
-
 #define TARMOR(s) tex_armor_buf(&ab, s)
 #define ARMOR(s) html_armor_buf(&ab, s)
 

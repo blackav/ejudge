@@ -538,11 +538,14 @@ ns_write_priv_all_runs(FILE *f,
                        int first_run, int last_run,
                        unsigned char const *filter_expr);
 void
-ns_write_all_clars(FILE *f,
-                   struct http_request_info *phr,
-                   const struct contest_desc *cnts,
-                   struct contest_extra *extra,
-                   int mode_clar, int first_clar, int last_clar);
+ns_write_all_clars(
+        FILE *f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int mode_clar,
+        const unsigned char *first_clar_str,
+        const unsigned char *last_clar_str);
 
 void ns_write_priv_source(const serve_state_t state,
                           FILE *f,

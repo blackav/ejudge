@@ -1213,6 +1213,16 @@ ucs4_to_utf8_str(unsigned char *buf, size_t size, const int *in)
   return buf;
 }
 
+unsigned char *
+chop2(unsigned char *str)
+{
+  if (!str) return 0;
+  int len = strlen(str);
+  while (len > 0 && isspace(str[len - 1])) --len;
+  str[len] = 0;
+  return str;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
