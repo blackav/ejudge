@@ -67,6 +67,7 @@ struct http_request_info
   const unsigned char **params;
 
   const unsigned char *self_url;
+  const unsigned char *script_name;
   int ssl_flag;
   ej_ip_t ip;
   ej_cookie_t session_id;
@@ -75,6 +76,7 @@ struct http_request_info
   int role;
   int action;
   int user_id;
+  int json_reply;
   int reg_status;
   int reg_flags;
   unsigned char *login;
@@ -295,7 +297,7 @@ enum
   NEW_SRV_ACTION_DUMP_MASTER_RUNS,
   NEW_SRV_ACTION_DUMP_REPORT,
   NEW_SRV_ACTION_FULL_UPLOAD_RUNLOG_XML,
-  NEW_SRV_ACTION_XML_USER_STATE,
+  NEW_SRV_ACTION_JSON_USER_STATE,
   NEW_SRV_ACTION_VIEW_STARTSTOP,
   NEW_SRV_ACTION_CLEAR_DISPLAYED_1,
   NEW_SRV_ACTION_CLEAR_DISPLAYED_2,

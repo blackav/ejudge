@@ -97,7 +97,7 @@ unpriv_page_header(FILE *fout,
                    struct contest_extra *extra,
                    time_t start_time, time_t stop_time);
 static void
-do_xml_user_state(FILE *fout, const serve_state_t cs, int user_id);
+do_json_user_state(FILE *fout, const serve_state_t cs, int user_id);
 static int
 get_register_url(
         unsigned char *buf,
@@ -6746,8 +6746,7 @@ write_alternatives_file(FILE *fout, int is_radio, const unsigned char *txt,
     if (is_radio) {
       jsbuf[0] = 0;
       if (prob_id > 0 && enable_js) {
-        snprintf(jsbuf, sizeof(jsbuf), " onclick=\"submitAnswer(%d,%d,%d)\"",
-                 prob_id, i + 1, next_prob_id);
+        snprintf(jsbuf, sizeof(jsbuf), " onclick=\"submitAnswer(%d,%d,%d,%d,%d)\"", NEW_SRV_ACTION_UPDATE_ANSWER, prob_id, i + 1, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT, next_prob_id);
       }
       s = "";
       if (last_answer == i + 1) s = " checked=\"1\"";
@@ -8088,9 +8087,9 @@ unpriv_load_html_style(struct http_request_info *phr,
   time_t cur_time = 0;
 #if defined CONF_ENABLE_AJAX && CONF_ENABLE_AJAX
   unsigned char bb[8196];
-  char *state_xml_txt = 0;
-  size_t state_xml_len = 0;
-  FILE *state_xml_f = 0;
+  char *state_json_txt = 0;
+  size_t state_json_len = 0;
+  FILE *state_json_f = 0;
 #endif
 
   extra = ns_get_contest_extra(phr->contest_id);
@@ -8127,27 +8126,28 @@ unpriv_load_html_style(struct http_request_info *phr,
   // js part
 #if defined CONF_ENABLE_AJAX && CONF_ENABLE_AJAX
   if (extra->serve_state && phr->user_id > 0) {
-    state_xml_f = open_memstream(&state_xml_txt, &state_xml_len);
-    do_xml_user_state(state_xml_f, extra->serve_state, phr->user_id);
-    fclose(state_xml_f); state_xml_f = 0;
+    state_json_f = open_memstream(&state_json_txt, &state_json_len);
+    do_json_user_state(state_json_f, extra->serve_state, phr->user_id);
+    fclose(state_json_f); state_json_f = 0;
   } else {
-    state_xml_txt = xstrdup("");
+    state_json_txt = xstrdup("");
   }
 
   snprintf(bb, sizeof(bb),
-           "<script type=\"text/javascript\" src=\"" CONF_STYLE_PREFIX "dojo.js\"></script>\n"
-           "<script type=\"text/javascript\" src=\"" CONF_STYLE_PREFIX "actions.js\"></script>\n"
+           "<script type=\"text/javascript\" src=\"" CONF_STYLE_PREFIX "dojo/dojo.js\" djConfig=\"isDebug: false, parseOnLoad: true, dojoIframeHistoryUrl:'" CONF_STYLE_PREFIX "dojo/resources/iframe_history.html'\"></script>\n"
            "<script type=\"text/javascript\" src=\"" CONF_STYLE_PREFIX "unpriv.js\"></script>\n"
            "<script type=\"text/javascript\">\n"
            "  var SID=\"%016llx\";\n"
+           "  var NEW_SRV_ACTION_JSON_USER_STATE=%d;\n"
+           "  var NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY=%d;\n"
            "  var self_url=\"%s\";\n"
-           "  dojo.require(\"dojo.event.*\");\n"
-           "  dojo.require(\"dojo.io.*\");\n"
-           "  dojo.require(\"dojo.xml.Parse\");\n"
-           "  var xmlStateStr = \"%s\";\n"
-           "</script>\n", phr->session_id, phr->self_url,
-           state_xml_txt);
-  xfree(state_xml_txt); state_xml_txt = 0;
+           "  var script_name=\"%s\";\n"
+           "  dojo.require(\"dojo.parser\");\n"
+           "  var jsonState = %s;\n"
+           "</script>\n", phr->session_id, NEW_SRV_ACTION_JSON_USER_STATE,
+           NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY,
+           phr->self_url, phr->script_name, state_json_txt);
+  xfree(state_json_txt); state_json_txt = 0;
   phr->script_part = xstrdup(bb);
   snprintf(bb, sizeof(bb), " onload=\"startClock()\"");
   phr->body_attr = xstrdup(bb);
@@ -11394,8 +11394,7 @@ unparse_answers(
     if (is_radio) {
       jsbuf[0] = 0;
       if (prob->id > 0 && enable_js) {
-        snprintf(jsbuf, sizeof(jsbuf), " onclick=\"submitAnswer(%d,%d,%d)\"",
-                 prob->id, i + 1, next_prob_id);
+        snprintf(jsbuf, sizeof(jsbuf), " onclick=\"submitAnswer(%d,%d,%d,%d,%d)\"", NEW_SRV_ACTION_UPDATE_ANSWER, prob->id, i + 1, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT, next_prob_id);
       }
       s = "";
       if (last_answer == i + 1) s = " checked=\"1\"";
@@ -11574,7 +11573,7 @@ unpriv_main_page(FILE *fout,
         if (global->problem_tab_size > 0)
           snprintf(wbuf, sizeof(wbuf), " width=\"%dpx\"",
                    global->problem_tab_size);
-        fprintf(fout, "<td class=\"%s\" onclick=\"displayProblemSubmitForm(%d)\"%s><div class=\"%s\">", hh, i, wbuf, cc);
+        fprintf(fout, "<td class=\"%s\" onclick=\"displayProblemSubmitForm(%d, %d)\"%s><div class=\"%s\">", hh, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT, i, wbuf, cc);
       //fprintf(fout, "<td class=\"%s\" style=\"background-color: %s\">", hh, cc);
       /*
       if (accepting_mode && accepted_flag[i]) {
@@ -12385,7 +12384,7 @@ unpriv_main_page(FILE *fout,
       if (global->problem_tab_size > 0)
         snprintf(wbuf, sizeof(wbuf), " width=\"%dpx\"",
                  global->problem_tab_size);
-      fprintf(fout, "<td class=\"%s\" onclick=\"displayProblemSubmitForm(%d)\"%s><div class=\"%s\">", hh, i, wbuf, cc);
+      fprintf(fout, "<td class=\"%s\" onclick=\"displayProblemSubmitForm(%d, %d)\"%s><div class=\"%s\">", hh, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT, i, wbuf, cc);
       /*
       if (accepting_mode && accepted_flag[i]) {
         fprintf(fout, "<s>");
@@ -12445,7 +12444,7 @@ unpriv_logout(FILE *fout,
 }
 
 static void
-do_xml_user_state(FILE *fout, const serve_state_t cs, int user_id)
+do_json_user_state(FILE *fout, const serve_state_t cs, int user_id)
 {
   const struct section_global_data *global = cs->global;
   struct tm *ptm;
@@ -12462,19 +12461,19 @@ do_xml_user_state(FILE *fout, const serve_state_t cs, int user_id)
   duration = run_get_duration(cs->runlog_state);
 
   ptm = localtime(&cs->current_time);
-  fprintf(fout, "<t>"
-          "<h>%02d</h>"
-          "<m>%02d</m>"
-          "<s>%02d</s>"
-          "<d>%02d</d>"
-          "<o>%02d</o>"
-          "<y>%d</y>",
+  fprintf(fout, "{"
+          " \"h\": %d,"
+          " \"m\": %d,"
+          " \"s\": %d,"
+          " \"d\": %d,"
+          " \"o\": %d,"
+          " \"y\": %d,",
           ptm->tm_hour, ptm->tm_min, ptm->tm_sec,
           ptm->tm_mday, ptm->tm_mon + 1, ptm->tm_year + 1900);
   if (start_time > 0 && stop_time <= 0 && duration > 0) {
     remaining = start_time + duration - cs->current_time;
     if (remaining < 0) remaining = 0;
-    fprintf(fout, "<r>%ld</r>", remaining);
+    fprintf(fout, " \"r\": %ld,", remaining);
   }
   if (run_has_transient_user_runs(cs->runlog_state, user_id) ||
       (global->score_system_val == SCORE_OLYMPIAD
@@ -12482,13 +12481,13 @@ do_xml_user_state(FILE *fout, const serve_state_t cs, int user_id)
        && stop_time > 0
        && global->disable_virtual_auto_judge <= 0
        && !is_judged_virtual_olympiad(cs, user_id))) {
-    fprintf(fout, "<x>1</x>");
+    fprintf(fout, " \"x\": 1,");
   }
-  fprintf(fout, "</t>");
+  fprintf(fout, " }");
 }
 
 static void
-unpriv_xml_user_state(
+unpriv_json_user_state(
         FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -12496,10 +12495,9 @@ unpriv_xml_user_state(
 {
   const serve_state_t cs = extra->serve_state;
 
-  fprintf(fout, "Content-type: text/xml\n"
-          "Cache-Control: no-cache\n\n");
-  fprintf(fout, "<?xml version=\"1.0\" encoding=\"%s\"?>", EJUDGE_CHARSET);
-  do_xml_user_state(fout, cs, phr->user_id);
+  fprintf(fout, "Content-type: text/plain; charset=%s\n"
+          "Cache-Control: no-cache\n\n", EJUDGE_CHARSET);
+  do_json_user_state(fout, cs, phr->user_id);
 }
 
 static void
@@ -12656,14 +12654,13 @@ unpriv_xml_update_answer(
 
 
  cleanup:
-  fprintf(fout, "Content-type: text/xml\n"
-          "Cache-Control: no-cache\n\n");
-  fprintf(fout, "<?xml version=\"1.0\" encoding=\"%s\"?>", EJUDGE_CHARSET);
+  fprintf(fout, "Content-type: text/plain; charset=%s\n"
+          "Cache-Control: no-cache\n\n", EJUDGE_CHARSET);
   if (!retval) {
-    fprintf(fout, "<r><s>%d</s></r>", retval);
+    fprintf(fout, "{ \"status\": %d }\n", retval);
   } else {
     l10n_setlocale(phr->locale_id);
-    fprintf(fout, "<r><s>%d</s><t>%s</t></r>", -retval,
+    fprintf(fout, "{ \"status\": %d, \"text\": \"%s\" }\n", -retval,
             ARMOR(ns_strerror_2(retval)));
     l10n_setlocale(0);
   }
@@ -12888,7 +12885,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_STANDINGS] = unpriv_view_standings,
   [NEW_SRV_ACTION_VIRTUAL_START] = unpriv_command,
   [NEW_SRV_ACTION_VIRTUAL_STOP] = unpriv_command,
-  [NEW_SRV_ACTION_XML_USER_STATE] = unpriv_xml_user_state,
+  [NEW_SRV_ACTION_JSON_USER_STATE] = unpriv_json_user_state,
   [NEW_SRV_ACTION_UPDATE_ANSWER] = unpriv_xml_update_answer,
   [NEW_SRV_ACTION_GET_FILE] = unpriv_get_file,
 };
@@ -13280,7 +13277,7 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_DUMP_MASTER_RUNS] = "DUMP_MASTER_RUNS",
   [NEW_SRV_ACTION_DUMP_REPORT] = "DUMP_REPORT",
   [NEW_SRV_ACTION_FULL_UPLOAD_RUNLOG_XML] = "FULL_UPLOAD_RUNLOG_XML",
-  [NEW_SRV_ACTION_XML_USER_STATE] = "XML_USER_STATE",
+  [NEW_SRV_ACTION_JSON_USER_STATE] = "JSON_USER_STATE",
   [NEW_SRV_ACTION_VIEW_STARTSTOP] = "VIEW_STARTSTOP",
   [NEW_SRV_ACTION_CLEAR_DISPLAYED_1] = "CLEAR_DISPLAYED_1",
   [NEW_SRV_ACTION_CLEAR_DISPLAYED_2] = "CLEAR_DISPLAYED_2",
@@ -13361,9 +13358,14 @@ ns_handle_http_request(struct server_framework_state *state,
   if (!(http_host = ns_getenv(phr, "HTTP_HOST"))) http_host = "localhost";
   if (!(script_name = ns_getenv(phr, "SCRIPT_NAME")))
     script_name = "/cgi-bin/new-client";
+  phr->script_name = script_name;
   snprintf(self_url, sizeof(self_url), "%s://%s%s", protocol,
            http_host, script_name);
   phr->self_url = self_url;
+
+  if (ns_cgi_param(phr, "json", &s) > 0) {
+    phr->json_reply = 1;
+  }
 
   // parse the client IP address
   if (!(remote_addr = ns_getenv(phr, "REMOTE_ADDR")))
