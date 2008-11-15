@@ -251,46 +251,18 @@ do_schedule(
         const struct contest_desc *cnts)
 {
   const unsigned char *s = 0;
-  int hour = 0, min = 0, sec = 0, year = 0, mon = 0, day = 0, n;
-  struct tm loc2;
-  struct tm *ploc;
-  time_t sloc, start_time, stop_time;
+  time_t sloc = 0, start_time, stop_time;
 
   if (ns_cgi_param(phr, "sched_time", &s) <= 0)
     return -NEW_SRV_ERR_INV_TIME_SPEC;
-  if (sscanf(s, "%d/%d/%d %d:%d:%d%n",
-             &year, &mon, &day, &hour, &min, &sec, &n) == 6 && !s[n]) {
-    memset(&loc2, 0, sizeof(loc2));
-    loc2.tm_isdst = -1;
-    loc2.tm_year = year - 1900;
-    loc2.tm_mon = mon - 1;
-    loc2.tm_mday = day;
-    loc2.tm_hour = hour;
-    loc2.tm_min = min;
-    loc2.tm_sec = sec;
-    ploc = &loc2;
-  } else if (sscanf(s, "%d:%d%n", &hour, &min, &n) == 2 && !s[n]) {
-    ploc = localtime(&cs->current_time);
-    ploc->tm_hour = hour;
-    ploc->tm_min = min;
-    ploc->tm_sec = 0;
-  } else if (sscanf(s, "%d%n", &hour, &n) == 1 && !s[n]) {
-    ploc = localtime(&cs->current_time);
-    ploc->tm_hour = hour;
-    ploc->tm_min = 0;
-    ploc->tm_sec = 0;
-  } else {
+  if (xml_parse_date(0, 0, 0, s, &sloc) < 0 || sloc < 0)
     return -NEW_SRV_ERR_INV_TIME_SPEC;
+
+  if (sloc > 0) {
+    run_get_times(cs->runlog_state, &start_time, 0, 0, &stop_time, 0);
+    if (stop_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_FINISHED;
+    if (start_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_STARTED;
   }
-
-  if ((sloc = mktime(ploc)) == (time_t) -1) {
-    return -NEW_SRV_ERR_INV_TIME_SPEC;
-  }
-
-  run_get_times(cs->runlog_state, &start_time, 0, 0, &stop_time, 0);
-
-  if (stop_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_FINISHED;
-  if (start_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_STARTED;
   run_sched_contest(cs->runlog_state, sloc);
   serve_update_standings_file(cs, cnts, 0);
   serve_update_status_file(cs, 1);

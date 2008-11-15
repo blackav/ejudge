@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 #include "filter_tree.h"
 #include "filter_expr.h"
 #include "runlog.h"
+#include "xml_utils.h"
 
 #include <reuse/MemPage.h>
 #include <reuse/xalloc.h>
@@ -1361,69 +1362,10 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
       break;
     case TOK_STRING_L:
       {
-        int l, y, m, d, h, mm, ss, n;
-        unsigned char *ty, *tm, *td, *th, *tmm, *ts, *s;
-        time_t tmp;
-        struct tm tt;
+        time_t tmp = 0;
 
-        s = p1->v.s;
-        l = strlen(s);
-        memset(&tt, 0, sizeof(tt));
-        tt.tm_isdst = -1;
-        ty = alloca(l + 10); memset(ty, 0, l + 10);
-        tm = alloca(l + 10); memset(tm, 0, l + 10);
-        td = alloca(l + 10); memset(td, 0, l + 10);
-        th = alloca(l + 10); memset(td, 0, l + 10);
-        tmm = alloca(l + 10); memset(tmm, 0, l + 10);
-        ts = alloca(l + 10); memset(ts, 0, l + 10);
-
-        if (strchr(s, '/')) {
-          if (sscanf(s, "%[^/] / %[^/] / %s %n", ty, tm, td, &n) != 3) {
-            return -FILTER_ERR_TIME_CVT;
-          }
-          s += n;
-          if ((n = str_to_int(ty, &y)) < 0) return n;
-          if ((n = str_to_int(tm, &m)) < 0) return n;
-          if ((n = str_to_int(td, &d)) < 0) return n;
-          if (y < 1900 || y > 2100) return -FILTER_ERR_TIME_CVT;
-          if (m < 1 || m > 12) return -FILTER_ERR_TIME_CVT;
-          if (d < 1 || d > 31) return -FILTER_ERR_TIME_CVT;
-          tt.tm_year = y - 1900;
-          tt.tm_mon = m - 1;
-          tt.tm_mday = d;
-        } else {
-          // current day, parse just time
-          tmp = time(0);
-          tt = *localtime(&tmp);
-          tt.tm_hour = 0;
-          tt.tm_min = 0;
-          tt.tm_sec = 0;
-        }
-
-        h = mm = ss = 0;
-        n = 0;
-        if (sscanf(s, "%[^:] : %[^:] : %[^:] %n", th, tmm, ts, &n) == 3
-            && !s[n]) {
-          if ((n = str_to_int(th, &h)) < 0) return n;
-          if ((n = str_to_int(tmm, &mm)) < 0) return n;
-          if ((n = str_to_int(ts, &ss)) < 0) return n;
-        } else if (sscanf(s, "%[^:] : %[^:] %n", th, tm, &n) == 2
-                   && !s[n]) {
-          if ((n = str_to_int(th, &h)) < 0) return n;
-          if ((n = str_to_int(tmm, &mm)) < 0) return n;
-        } else if (sscanf(s, "%s %n", th, &n) == 1 && !s[n]) {
-          if ((n = str_to_int(th, &h)) < 0) return n;
-        } else if (sscanf(s, " %n", &n) == 0 && !s[n]) {
-        } else {
+        if (xml_parse_date(0, 0, 0, p1->v.s, &tmp) < 0 || tmp <= 0)
           return -FILTER_ERR_TIME_CVT;
-        }
-        if (h < 0 || h > 23) return -FILTER_ERR_TIME_CVT;
-        if (mm < 0 || mm > 59) return -FILTER_ERR_TIME_CVT;
-        if (ss < 0 || ss > 60) return -FILTER_ERR_TIME_CVT;
-        tt.tm_hour = h;
-        tt.tm_min = mm;
-        tt.tm_sec = ss;
-        if ((tmp = mktime(&tt)) == (time_t) -1) return -FILTER_ERR_TIME_CVT;
         res->v.a = tmp;
       }
       break;
@@ -1592,7 +1534,7 @@ filter_tree_is_value_node(struct filter_tree *p)
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "tPageDesc")
