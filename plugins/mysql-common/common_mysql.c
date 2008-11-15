@@ -762,7 +762,7 @@ parse_spec_func(
         *p_time = 0;
         break;
       }
-      // 'YYYY-MM-DD hh:mm:ss'
+      // 'YYYY-MM-DD'
       if (sscanf(row[i], "%d-%d-%d%n", &d_year, &d_mon, &d_day, &n) != 3
           || row[i][n])
         goto invalid_format;
@@ -775,7 +775,7 @@ parse_spec_func(
       tt.tm_year = d_year - 1900;
       tt.tm_mon = d_mon - 1;
       tt.tm_mday = d_day;
-      tt.tm_hour = 12;
+      //tt.tm_hour = 12;
       tt.tm_isdst = -1;
       if ((t = mktime(&tt)) == (time_t) -1) goto invalid_format;
       if (t < 0) t = 0;
