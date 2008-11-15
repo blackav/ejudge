@@ -30,6 +30,7 @@
 #include "cpu.h"
 #include "errlog.h"
 #include "serve_state.h"
+#include "xml_utils.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -1172,44 +1173,7 @@ parse_testsets(char **set_in, int *p_total, struct testset_info **p_info)
 static int
 parse_date(const unsigned char *s, time_t *pd)
 {
-  int year, month, day, hour, min, sec, n;
-  time_t t;
-  struct tm tt;
-
-  if (!s) goto failed;
-
-  memset(&tt, 0, sizeof(tt));
-  tt.tm_isdst = -1;
-  while (1) {
-    year = month = day = hour = min = sec = 0;
-    if (sscanf(s, "%d/%d/%d %d:%d:%d %n", &year, &month, &day, &hour,
-               &min, &sec, &n) == 6 && !s[n]) break;
-    sec = 0;
-    if (sscanf(s, "%d/%d/%d %d:%d %n", &year, &month, &day, &hour, &min, &n)
-        == 5 && !s[n]) break;
-    min = sec = 0;
-    if (sscanf(s, "%d/%d/%d %d %n", &year, &month, &day, &hour, &n) == 4
-        && !s[n]) break;
-    hour = min = sec = 0;
-    if (sscanf(s, "%d/%d/%d %n", &year, &month, &day, &n) == 3 && !s[n]) break;
-    goto failed;
-  }
-
-  if (year < 1900 || year > 2100 || month < 1 || month > 12
-      || day < 1 || day > 31 || hour < 0 || hour >= 24
-      || min < 0 || min >= 60 || sec < 0 || sec >= 60) goto failed;
-  tt.tm_sec = sec;
-  tt.tm_min = min;
-  tt.tm_hour = hour;
-  tt.tm_mday = day;
-  tt.tm_mon = month - 1;
-  tt.tm_year = year - 1900;
-  if ((t = mktime(&tt)) == (time_t) -1) goto failed;
-  *pd = t;
-  return 0;
-
- failed:
-  return -1;
+  return xml_parse_date(0, 0, 0, s, pd);
 }
 
 static void

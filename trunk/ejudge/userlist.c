@@ -154,7 +154,7 @@ userlist_parse_date_2(const unsigned char *str, time_t *pd)
 
   memset(&tt, 0, sizeof(tt));
   tt.tm_isdst = -1;
-  tt.tm_hour = 12;
+  //tt.tm_hour = 12;
 
   if (!str) return -1;
   if (sscanf(str, "%d/%d/%d%n", &year, &month, &day, &n) != 3 || str[n])
