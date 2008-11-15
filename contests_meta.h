@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/11/15 16:09:57
+// Generated 2008/11/15 17:04:42
 
 #ifndef __CONTESTS_META_H__
 #define __CONTESTS_META_H__
@@ -29,7 +29,7 @@ enum
   CNTS_allow_reg_data_edit,
   CNTS_disable_member_delete,
   CNTS_reg_deadline,
-  CNTS_start_date,
+  CNTS_sched_time,
   CNTS_name,
   CNTS_name_en,
   CNTS_main_url,
