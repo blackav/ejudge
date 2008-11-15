@@ -772,6 +772,7 @@ static struct cnts_edit_info cnts_edit_info[] =
   { NS_CONTEST, CNTS_register_url, 's', 1, 1, 1, 1, 0, "URL to complete registration", "URL to complete registration", 0 },
   { NS_CONTEST, CNTS_register_email_file, 'e', 1, 1, 1, 1, 1, "Registration letter template file", "Registration letter template file", 0 },
   { 0, 0, '-', 0, 0, 0, 0, 0, "Participation Settings", 0, 0 },
+  { NS_CONTEST, CNTS_start_date, 't', 1, 1, 0, 1, 0, "Start date", "Contest start date", 0 },
   { NS_CONTEST, CNTS_team_url, 's', 1, 1, 1, 1, 0, "URL for the client CGI program", "URL for the client CGI program", 0 },
   { NS_CONTEST, CNTS_standings_url, 's', 1, 1, 1, 1, 0, "URL for the current standings", "URL for the current standings", 0 },
   { NS_CONTEST, CNTS_problems_url, 's', 1, 1, 1, 1, 0, "URL for the problemset", "URL for the problemset", 0 },

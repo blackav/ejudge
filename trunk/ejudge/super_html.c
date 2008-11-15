@@ -2355,6 +2355,15 @@ super_html_edit_contest_page(FILE *f,
   html_submit_button(f, SSERV_CMD_CNTS_CLEAR_DEADLINE, "Clear");
   fprintf(f, "</td></tr></form>\n");
 
+  html_start_form(f, 1, self_url, hidden_vars);
+  fprintf(f, "<tr%s><td>Contest start date:</td><td>",
+          form_row_attrs[row ^= 1]);
+  html_date_select(f, cnts->start_date);
+  fprintf(f, "</td><td>");
+  html_submit_button(f, SSERV_CMD_CNTS_CHANGE_START_DATE, "Change");
+  html_submit_button(f, SSERV_CMD_CNTS_CLEAR_START_DATE, "Clear");
+  fprintf(f, "</td></tr></form>\n");
+
   print_string_editing_row(f, "Registration email sender (From: field):",
                            cnts->register_email,
                            SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL,
