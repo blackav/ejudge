@@ -180,7 +180,6 @@ COMMON_CFILES=\
  serve_state.c\
  sformat.c\
  shellcfg_parse.c\
- startstop.c\
  stringset.c\
  super_html.c\
  super_html_2.c\
@@ -291,6 +290,8 @@ CFILES=\
  win32/timestamp.c\
  unix/full_archive.c\
  win32/full_archive.c\
+ unix/startstop.c\
+ win32/startstop.c\
  ${COMMON_CFILES}\
  ${SUPER_CLNT_CFILES}\
  ${USERLIST_CLNT_CFILES}\
