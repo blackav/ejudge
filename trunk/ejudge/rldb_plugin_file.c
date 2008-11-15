@@ -80,9 +80,9 @@ close_func(struct rldb_plugin_cnts *cdata);
 static int
 reset_func(
         struct rldb_plugin_cnts *cdata,
-        time_t new_duration,
-        time_t new_sched_time,
-        time_t new_finish_time);
+        time_t init_duration,
+        time_t init_sched_time,
+        time_t init_finish_time);
 static int
 set_runlog_func(
         struct rldb_plugin_cnts *cdata,
@@ -854,9 +854,9 @@ close_func(struct rldb_plugin_cnts *cdata)
 static int
 reset_func(
         struct rldb_plugin_cnts *cdata,
-        time_t new_duration,
-        time_t new_sched_time,
-        time_t new_finish_time)
+        time_t init_duration,
+        time_t init_sched_time,
+        time_t init_finish_time)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -871,9 +871,9 @@ reset_func(
 
   memset(&rls->head, 0, sizeof(rls->head));
   rls->head.version = 2;
-  rls->head.duration = new_duration;
-  rls->head.sched_time = new_sched_time;
-  rls->head.finish_time = new_finish_time;
+  rls->head.duration = init_duration;
+  rls->head.sched_time = init_sched_time;
+  rls->head.finish_time = init_finish_time;
 
   if (ftruncate(cs->run_fd, 0) < 0) {
     err("ftruncate failed: %s", os_ErrorMsg());
