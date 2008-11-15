@@ -123,7 +123,7 @@ function submitAnswer(action, probId, answer, next_action, nextProbId)
       content: {
         "SID": SID,
         "action": action,
-        "prob_id": prob_id,
+        "prob_id": probId,
         "json": 1,
         "file": answer,
       },
