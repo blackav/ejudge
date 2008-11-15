@@ -723,9 +723,9 @@ run_get_fog_period(
 int
 run_reset(
         runlog_state_t state,
-        time_t new_duration,
-        time_t new_sched_time,
-        time_t new_finish_time)
+        time_t init_duration,
+        time_t init_sched_time,
+        time_t init_finish_time)
 {
   int i;
 
@@ -735,8 +735,8 @@ run_reset(
   state->ut_table = 0;
   state->ut_size = 0;
 
-  return state->iface->reset(state->cnts, new_duration, new_sched_time,
-                             new_finish_time);
+  return state->iface->reset(state->cnts, init_duration, init_sched_time,
+                             init_finish_time);
 }
 
 int
