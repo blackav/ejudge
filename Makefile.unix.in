@@ -410,7 +410,7 @@ endif
 locale/ru_RU.${CHARSET}/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.${CHARSET}.po ru_all
 	${MSGFMT} -o $@ -c $<
 
-libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o contests_meta.o super-serve_meta.o $(ARCH)/fileutl.o $(ARCH)/cr_serialize.o $(ARCH)/interrupt.o $(ARCH)/curtime.o $(ARCH)/timestamp.o $(ARCH)/ej_process.o $(ARCH)/cpu.o $(ARCH)/full_archive.o
+libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o contests_meta.o super-serve_meta.o $(ARCH)/fileutl.o $(ARCH)/cr_serialize.o $(ARCH)/interrupt.o $(ARCH)/curtime.o $(ARCH)/timestamp.o $(ARCH)/ej_process.o $(ARCH)/cpu.o $(ARCH)/full_archive.o $(ARCH)/startstop.o
 	ar rcv $@ $^
 
 libsuper_clnt.a : $(SUPER_CLNT_CFILES:.c=.o)
