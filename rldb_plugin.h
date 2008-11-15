@@ -59,11 +59,12 @@ struct rldb_plugin_iface
                                    const struct section_global_data *,
                                    int flags,
                                    time_t,
+                                   time_t,
                                    time_t);
   // close a contest
   struct rldb_plugin_cnts *(*close)(struct rldb_plugin_cnts *);
   // clear the data
-  int (*reset)(struct rldb_plugin_cnts *, time_t, time_t);
+  int (*reset)(struct rldb_plugin_cnts *, time_t, time_t, time_t);
   // set the entire runlog
   int (*set_runlog)(struct rldb_plugin_cnts *cdata, int total_entries,
                     struct run_entry *entries);

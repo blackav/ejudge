@@ -73,6 +73,7 @@ open_func(
         const struct section_global_data *,
         int flags,
         time_t init_duration,
+        time_t init_sched_time,
         time_t init_finish_time);
 static struct rldb_plugin_cnts *
 close_func(struct rldb_plugin_cnts *cdata);
@@ -80,6 +81,7 @@ static int
 reset_func(
         struct rldb_plugin_cnts *cdata,
         time_t new_duration,
+        time_t new_sched_time,
         time_t new_finish_time);
 static int
 set_runlog_func(
@@ -651,6 +653,7 @@ static int
 read_runlog(
         struct rldb_file_cnts *cs,
         time_t init_duration,
+        time_t init_sched_time,
         time_t init_finish_time)
 {
   struct runlog_state *rls = cs->rl_state;
@@ -671,6 +674,7 @@ read_runlog(
     XMEMZERO(&rls->head, 1);
     rls->head.version = 2;
     rls->head.duration = init_duration;
+    rls->head.sched_time = init_sched_time;
     rls->head.finish_time = init_finish_time;
     rls->run_u = 0;
     run_flush_header(cs);
@@ -730,6 +734,7 @@ do_run_open(
         char const *path,
         int flags,
         time_t init_duration,
+        time_t init_sched_time,
         time_t init_finish_time)
 {
   struct runlog_state *rls = cs->rl_state;
@@ -773,7 +778,8 @@ do_run_open(
         return -1;
     }
   } else {
-    if (read_runlog(cs, init_duration, init_finish_time) < 0) return -1;
+    if (read_runlog(cs, init_duration, init_sched_time,
+                    init_finish_time) < 0) return -1;
   }
   return 0;
 }
@@ -787,6 +793,7 @@ open_func(
         const struct section_global_data *global,
         int flags,
         time_t init_duration,
+        time_t init_sched_time,
         time_t init_finish_time)
 {
   struct rldb_file_state *state = (struct rldb_file_state*) data;
@@ -814,7 +821,8 @@ open_func(
   }
   cs->runlog_path = xstrdup(runlog_path);
 
-  if (do_run_open(cs, runlog_path, flags, init_duration, init_finish_time) < 0)
+  if (do_run_open(cs, runlog_path, flags, init_duration,
+                  init_sched_time, init_finish_time) < 0)
     goto fail;
 
   return (struct rldb_plugin_cnts*) cs;
@@ -847,6 +855,7 @@ static int
 reset_func(
         struct rldb_plugin_cnts *cdata,
         time_t new_duration,
+        time_t new_sched_time,
         time_t new_finish_time)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
@@ -863,6 +872,7 @@ reset_func(
   memset(&rls->head, 0, sizeof(rls->head));
   rls->head.version = 2;
   rls->head.duration = new_duration;
+  rls->head.sched_time = new_sched_time;
   rls->head.finish_time = new_finish_time;
 
   if (ftruncate(cs->run_fd, 0) < 0) {

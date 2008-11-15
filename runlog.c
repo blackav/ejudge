@@ -157,6 +157,7 @@ run_open(
         const unsigned char *plugin_name,
         int flags,
         time_t init_duration,
+        time_t init_sched_time,
         time_t init_finish_time)
 {
   const struct xml_tree *p;
@@ -189,7 +190,9 @@ run_open(
 
     if (!(state->cnts = state->iface->open(state->data, state, config, cnts,
                                            global, flags,
-                                           init_duration, init_finish_time)))
+                                           init_duration,
+                                           init_sched_time,
+                                           init_finish_time)))
       return -1;
     if (!(flags & RUN_LOG_NOINDEX)) {
       if (runlog_check(0, &state->head, state->run_u, state->runs) < 0)
@@ -206,7 +209,9 @@ run_open(
 
     if (!(state->cnts = state->iface->open(state->data, state, config, cnts,
                                            global, flags,
-                                           init_duration, init_finish_time)))
+                                           init_duration,
+                                           init_sched_time,
+                                           init_finish_time)))
       return -1;
     if (!(flags & RUN_LOG_NOINDEX)) {
       if (runlog_check(0, &state->head, state->run_u, state->runs) < 0)
@@ -244,7 +249,9 @@ run_open(
 
   if (!(state->cnts = state->iface->open(state->data, state, config, cnts,
                                          global, flags,
-                                         init_duration, init_finish_time)))
+                                         init_duration,
+                                         init_sched_time,
+                                         init_finish_time)))
     return -1;
   if (!(flags & RUN_LOG_NOINDEX)) {
     if (runlog_check(0, &state->head, state->run_u, state->runs) < 0)
@@ -714,7 +721,11 @@ run_get_fog_period(
 }
 
 int
-run_reset(runlog_state_t state, time_t new_duration, time_t new_finish_time)
+run_reset(
+        runlog_state_t state,
+        time_t new_duration,
+        time_t new_sched_time,
+        time_t new_finish_time)
 {
   int i;
 
@@ -724,7 +735,8 @@ run_reset(runlog_state_t state, time_t new_duration, time_t new_finish_time)
   state->ut_table = 0;
   state->ut_size = 0;
 
-  return state->iface->reset(state->cnts, new_duration, new_finish_time);
+  return state->iface->reset(state->cnts, new_duration, new_sched_time,
+                             new_finish_time);
 }
 
 int

@@ -80,6 +80,7 @@ run_open(
         const unsigned char *plugin_name,
         int flags,
         time_t init_duration,
+        time_t init_sched_time,
         time_t init_finish_time);
 int run_add_record(runlog_state_t state,
                    time_t         timestamp,
@@ -124,7 +125,7 @@ int run_count_all_attempts(runlog_state_t state, int user_id, int prob_id);
 char *run_status_str(int, char *, int, int, int);
 
 int run_get_fog_period(runlog_state_t, time_t, int, int);
-int run_reset(runlog_state_t, time_t, time_t);
+int run_reset(runlog_state_t, time_t, time_t, time_t);
 int runlog_flush(runlog_state_t);
 
 int run_check_duplicate(runlog_state_t, int run_id);

@@ -72,7 +72,7 @@ static const int tag_to_contest_desc_map[CONTEST_LAST_TAG] =
   [CONTEST_LOGIN_TEMPLATE] = CNTS_login_template,
   [CONTEST_TEAM_URL] = CNTS_team_url,
   [CONTEST_REGISTRATION_DEADLINE] = CNTS_reg_deadline,
-  [CONTEST_START_DATE] = CNTS_start_date,
+  [CONTEST_SCHED_TIME] = CNTS_sched_time,
   [CONTEST_ROOT_DIR] = CNTS_root_dir,
   [CONTEST_STANDINGS_URL] = CNTS_standings_url,
   [CONTEST_PROBLEMS_URL] = CNTS_problems_url,
@@ -177,7 +177,7 @@ static char const * const elem_map[] =
   "login_template",
   "team_url",
   "registration_deadline",
-  "start_date",
+  "sched_time",
   "cap",
   "caps",
   "root_dir",
@@ -867,7 +867,7 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
       if (parse_client_flags(path, cnts, t) < 0) return -1;
       break;
     case CONTEST_REGISTRATION_DEADLINE:
-    case CONTEST_START_DATE:
+    case CONTEST_SCHED_TIME:
       if (handle_final_tag(path, t, &date_str) < 0) {
         xfree(date_str);
         return -1;
@@ -1161,7 +1161,7 @@ contests_merge(struct contest_desc *pold, struct contest_desc *pnew)
   pnew->slave_rules = 0;
 
   pold->reg_deadline = pnew->reg_deadline;
-  pold->start_date = pnew->start_date;
+  pold->sched_time = pnew->sched_time;
   pold->disable_member_delete = pnew->disable_member_delete;
   pold->last_check_time = pnew->last_check_time;
   pold->last_file_time = pnew->last_file_time;
@@ -1869,10 +1869,10 @@ contests_unparse(FILE *f,
             xml_unparse_date(cnts->reg_deadline),
             elem_map[CONTEST_REGISTRATION_DEADLINE]);
   }
-  if (cnts->start_date > 0) {
-    fprintf(f, "  <%s>%s</%s>\n", elem_map[CONTEST_START_DATE],
-            xml_unparse_date(cnts->start_date),
-            elem_map[CONTEST_START_DATE]);
+  if (cnts->sched_time > 0) {
+    fprintf(f, "  <%s>%s</%s>\n", elem_map[CONTEST_SCHED_TIME],
+            xml_unparse_date(cnts->sched_time),
+            elem_map[CONTEST_SCHED_TIME]);
   }
 
   unparse_texts(f, cnts, (const int[]) {
