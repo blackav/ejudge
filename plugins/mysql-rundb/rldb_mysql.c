@@ -207,6 +207,7 @@ load_header(
         struct rldb_mysql_cnts *cs,
         int flags,
         time_t init_duration,
+        time_t init_sched_time,
         time_t init_finish_time)
 {
   struct rldb_mysql_state *state = cs->plugin_state;
@@ -233,6 +234,7 @@ load_header(
     gettimeofday(&curtime, 0);
     rh.contest_id = cs->contest_id;
     rh.duration = init_duration;
+    rh.sched_time = init_sched_time;
     rh.finish_time = init_finish_time;
     rh.last_change_time = curtime.tv_sec;
     rh.last_change_nsec = curtime.tv_usec * 1000;
@@ -249,6 +251,7 @@ load_header(
     rls->head.version = 2;
     rls->head.byte_order = 0;
     rls->head.duration = init_duration;
+    rls->head.sched_time = init_sched_time;
     rls->head.finish_time = init_finish_time;
     return 0;
   }
@@ -432,6 +435,7 @@ open_func(
         const struct section_global_data *global,
         int flags,
         time_t init_duration,
+        time_t init_sched_time,
         time_t init_finish_time)
 {
   struct rldb_mysql_state *state = (struct rldb_mysql_state*) data;
@@ -451,7 +455,8 @@ open_func(
   }
 
   if (do_open(state) < 0) goto fail;
-  if ((r = load_header(cs, flags, init_duration, init_finish_time)) < 0)
+  if ((r = load_header(cs, flags, init_duration, init_sched_time,
+                       init_finish_time)) < 0)
     goto fail;
   if (!r) return (struct rldb_plugin_cnts*) cs;
   if (load_runs(cs) < 0) goto fail;
@@ -480,6 +485,7 @@ static int
 reset_func(
         struct rldb_plugin_cnts *cdata,
         time_t new_duration,
+        time_t new_sched_time,
         time_t new_finish_time)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
@@ -504,6 +510,7 @@ reset_func(
   memset(&rls->head, 0, sizeof(rls->head));
   rls->head.version = 2;
   rls->head.duration = new_duration;
+  rls->head.sched_time = new_sched_time;
   rls->head.finish_time = new_finish_time;
 
   mi->simple_fquery(md, "DELETE FROM %sruns WHERE contest_id = %d ;",
@@ -515,6 +522,7 @@ reset_func(
   gettimeofday(&curtime, 0);
   rh.contest_id = cs->contest_id;
   rh.duration = new_duration;
+  rh.sched_time = new_sched_time;
   rh.finish_time = new_finish_time;
   rh.last_change_time = curtime.tv_sec;
   rh.last_change_nsec = curtime.tv_usec * 1000;
