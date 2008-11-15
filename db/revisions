@@ -1427,7 +1427,6 @@ userlist-server.c 3664 0 20128260
 new_server_html.c 3664 0 22759758
 new_server_proto.c 3664 0 807317
 server_framework.c 3664 0 1756820
-startstop.c 3664 0 191824
 job-server.c 3604 0 1149258
 userlist_clnt.h 3670 0 898618
 compile-control.c 3670 0 72448
@@ -1511,8 +1510,6 @@ server_framework.c 3715 0 1762206
 prepare.c 3717 0 12885420
 startstop.h 3719 0 86081
 new-server.c 3719 0 1406884
-startstop.c 3719 0 196892
-startstop.c 3721 0 201448
 compile.c 3723 0 1007402
 job-server.c 3723 0 1299577
 super-serve.c 3723 0 11594175
@@ -1576,7 +1573,6 @@ ejudge_cfg.h 3771 0 238563
 new-client.c 3771 0 551199
 new-server.c 3771 0 1523694
 ejudge_cfg.c 3771 0 1371243
-startstop.c 3771 0 213678
 new-server.h 3773 0 1207466
 master_html.c 3773 0 10312398
 new_server_html.c 3773 0 24389405
@@ -2156,7 +2152,6 @@ userlist_xml.c 4073 0 4363409
 l10n.c 4076 0 257792
 copyright.c 4082 0 202348
 ejudge-setup.c 4085 0 9864930
-startstop.c 4085 0 247376
 new-server.h 4089 0 1777096
 runlog.h 4089 0 815059
 filter_eval.c 4089 0 1261928
@@ -2603,7 +2598,6 @@ new_server_html.c 4264 0 33113361
 new_server_html_5.c 4264 0 8413549
 prepare.c 4264 0 13662525
 problem_xml.c 4264 0 1302657
-startstop.c 4264 0 247723
 fileutl.h 4272 0 187445
 prepare.h 4272 0 2941666
 run_packet.h 4272 0 307276
@@ -3119,7 +3113,6 @@ run_packet_5.c 4599 0 291845
 send_job_packet.c 4599 0 195983
 server_framework.c 4599 0 1845906
 serve_2.c 4599 0 7602526
-startstop.c 4599 0 245799
 super_html_2.c 4599 0 4965373
 team_extra_xml.c 4599 0 780201
 testing_report_xml.c 4599 0 1359907
@@ -4044,3 +4037,12 @@ new_server_html_4.c 5304 0 4644960
 prepare.c 5304 0 14503671
 userlist.c 5304 0 4629931
 xml_utils/parse_date.c 5303 0 365656
+contests.h 5306 0 1186223
+super_proto.h 5306 0 2126200
+serve-control.c 5306 0 8851645
+super-serve.c 5306 0 13405726
+contests.c 5306 0 5998909
+new_server_proto.c 5306 0 1036673
+super_html.c 5306 0 11799655
+super_html_2.c 5306 0 4716134
+super_html_4.c 5306 0 9223687
