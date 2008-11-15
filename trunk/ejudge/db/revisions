@@ -4035,3 +4035,6 @@ master_html.c 5292 0 2917967
 new-server.h 5295 0 2118261
 make-js-actions.c 5295 0 38341
 new_server_html.c 5295 0 37179278
+unix/startstop.c 4599 0 247846
+unix/startstop.c 5298 0 247857
+win32/startstop.c 5299 0 102678
