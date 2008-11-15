@@ -36,6 +36,7 @@ open_func(
         const struct section_global_data *global,
         int flags,
         time_t init_duration,
+        time_t init_sched_time,
         time_t init_finish_time);
 
 static struct rldb_plugin_cnts *
@@ -45,6 +46,7 @@ static int
 reset_func(
         struct rldb_plugin_cnts *cdata,
         time_t new_duration,
+        time_t new_sched_time,
         time_t new_finish_time);
 
 static int
