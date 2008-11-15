@@ -71,8 +71,8 @@ super_html_clear_variable(struct sid_state *sstate, int cmd)
     cnts->reg_deadline = 0;
     return 0;
 
-  case SSERV_CMD_CNTS_CLEAR_START_DATE:
-    cnts->start_date = 0;
+  case SSERV_CMD_CNTS_CLEAR_SCHED_TIME:
+    cnts->sched_time = 0;
     return 0;
     
   case SSERV_CMD_CNTS_CLEAR_NAME: p_str = &cnts->name; break;
@@ -357,8 +357,8 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   case SSERV_CMD_CNTS_CHANGE_DEADLINE:
     p_date = &cnts->reg_deadline;
     break;
-  case SSERV_CMD_CNTS_CHANGE_START_DATE:
-    p_date = &cnts->start_date;
+  case SSERV_CMD_CNTS_CHANGE_SCHED_TIME:
+    p_date = &cnts->sched_time;
     break;
   case SSERV_CMD_CNTS_CHANGE_USERS_HEADER:
     p_str = &cnts->users_header_file;

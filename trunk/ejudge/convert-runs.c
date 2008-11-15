@@ -203,9 +203,9 @@ main(int argc, char *argv[])
   if (!(dst_runlog = run_init(0)))
     die("cannot open the destination runlog");
 
-  if (run_open(src_runlog, config, cnts, 0, src_plugin_name, RUN_LOG_NOINDEX, 0, 0) < 0)
+  if (run_open(src_runlog, config, cnts, 0, src_plugin_name, RUN_LOG_NOINDEX, 0, 0, 0) < 0)
     die("cannot open the source runlog");
-  if (run_open(dst_runlog, config, cnts, 0, dst_plugin_name, 0, 0, 0) < 0)
+  if (run_open(dst_runlog, config, cnts, 0, dst_plugin_name, 0, 0, 0, 0) < 0)
     die("cannot open the destination runlog");
 
   run_get_header(src_runlog, &rh);

@@ -2166,7 +2166,7 @@ priv_contest_operation(FILE *fout,
     break;
 
   case NEW_SRV_ACTION_RESET_2:
-    serve_reset_contest(cs);
+    serve_reset_contest(cnts, cs);
     extra->last_access_time = 0;
     serve_send_run_quit(cs);
     break;

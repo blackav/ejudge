@@ -2482,10 +2482,10 @@ serve_rejudge_all(
 }
 
 void
-serve_reset_contest(serve_state_t state)
+serve_reset_contest(const struct contest_desc *cnts, serve_state_t state)
 {
   run_reset(state->runlog_state, state->global->contest_time,
-            state->global->contest_finish_time_d);
+            cnts->sched_time, state->global->contest_finish_time_d);
   run_set_duration(state->runlog_state,
                    state->global->contest_time);
   clar_reset(state->clarlog_state);
