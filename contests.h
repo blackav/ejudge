@@ -62,6 +62,7 @@ enum
     CONTEST_LOGIN_TEMPLATE,
     CONTEST_TEAM_URL,
     CONTEST_REGISTRATION_DEADLINE,
+    CONTEST_START_DATE,
     CONTEST_CAP,
     CONTEST_CAPS,
     CONTEST_ROOT_DIR,
@@ -291,6 +292,7 @@ struct contest_desc
   ejbytebool_t disable_member_delete;
 
   time_t         reg_deadline;
+  time_t         start_date;
 
   unsigned char *name;
   unsigned char *name_en;
