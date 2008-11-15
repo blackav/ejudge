@@ -484,9 +484,9 @@ close_func(struct rldb_plugin_cnts *cdata)
 static int
 reset_func(
         struct rldb_plugin_cnts *cdata,
-        time_t new_duration,
-        time_t new_sched_time,
-        time_t new_finish_time)
+        time_t init_duration,
+        time_t init_sched_time,
+        time_t init_finish_time)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
   struct rldb_mysql_state *state = cs->plugin_state;
@@ -509,9 +509,9 @@ reset_func(
 
   memset(&rls->head, 0, sizeof(rls->head));
   rls->head.version = 2;
-  rls->head.duration = new_duration;
-  rls->head.sched_time = new_sched_time;
-  rls->head.finish_time = new_finish_time;
+  rls->head.duration = init_duration;
+  rls->head.sched_time = init_sched_time;
+  rls->head.finish_time = init_finish_time;
 
   mi->simple_fquery(md, "DELETE FROM %sruns WHERE contest_id = %d ;",
                     md->table_prefix, cs->contest_id);
@@ -521,9 +521,9 @@ reset_func(
   memset(&rh, 0, sizeof(rh));
   gettimeofday(&curtime, 0);
   rh.contest_id = cs->contest_id;
-  rh.duration = new_duration;
-  rh.sched_time = new_sched_time;
-  rh.finish_time = new_finish_time;
+  rh.duration = init_duration;
+  rh.sched_time = init_sched_time;
+  rh.finish_time = init_finish_time;
   rh.last_change_time = curtime.tv_sec;
   rh.last_change_nsec = curtime.tv_usec * 1000;
 
