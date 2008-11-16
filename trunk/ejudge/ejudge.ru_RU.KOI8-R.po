@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-11-15 16:10+0300\n"
-"PO-Revision-Date: 2008-11-15 16:11+0300\n"
+"POT-Creation-Date: 2008-11-16 11:54+0300\n"
+"PO-Revision-Date: 2008-11-16 12:03+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -929,6 +929,10 @@ msgstr "Состояние турнира"
 
 msgid "Contest time"
 msgstr "Продолжительность турнира"
+
+#, c-format
+msgid "Contest: %d (%s)\n"
+msgstr "Турнир: %d (%s)\n"
 
 msgid "Contestant"
 msgstr "Основной участник"
@@ -3679,6 +3683,22 @@ msgstr "Вы успешно зарегистрированы"
 msgid "You have no permissions to view this contest."
 msgstr "У Вас нет прав просматривать данный турнир."
 
+#, c-format
+msgid "You have received a message from judges\n"
+msgstr "Вы получили сообщение от судей\n"
+
+#, c-format
+msgid "You have received a message from judges in contest %d"
+msgstr "Вы получили сообщение от судей в турнире %d"
+
+#, c-format
+msgid "You have received a reply from judges\n"
+msgstr "Вы получили ответ от судей\n"
+
+#, c-format
+msgid "You have received a reply from judges in contest %d"
+msgstr "Вы получили ответ от судей в турнире %d"
+
 msgid ""
 "You should receive an e-mail message with a login and a password to the "
 "system. Use this password for the first log in. After the first login you "
@@ -3698,11 +3718,23 @@ msgstr ""
 "пароль для входа в систему. Этот пароль необходимо использовать для первого "
 "входа в систему, после чего его можно будет поменять."
 
+#, c-format
+msgid "You submit has been commented\n"
+msgstr "Ваша посылка была прокомментирована\n"
+
+#, c-format
+msgid "You submit has been commented and ignored\n"
+msgstr "Ваша посылка была прокомментирована и проигнорирована\n"
+
 msgid ""
 "Your request has caused an internal server error. Please, report it as a bug."
 msgstr ""
 "Ваш запрос вызвал внутреннюю ошибку сервера. Пожалуйста, сообщите об этом "
 "как об ошибке."
+
+#, c-format
+msgid "Your submit has been commented in contest %d"
+msgstr "Ваша посылка была прокомментирована в турнире %d"
 
 msgid "Zip code"
 msgstr "Почтовый индекс"
