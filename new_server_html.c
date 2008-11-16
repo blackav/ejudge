@@ -2757,14 +2757,15 @@ is_empty_string(const unsigned char *str)
 }
 
 static int
-priv_submit_clar(FILE *fout,
-                 FILE *log_f,
-                 struct http_request_info *phr,
-                 const struct contest_desc *cnts,
-                 struct contest_extra *extra)
+priv_submit_clar(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
 {
   const serve_state_t cs = extra->serve_state;
-  //const struct section_global_data *global = cs->global;
+  const struct section_global_data *global = cs->global;
   int n, user_id = -1, hide_flag = 0, clar_id;
   const unsigned char *s;
   struct html_armor_buffer ab;
@@ -2894,6 +2895,34 @@ priv_submit_clar(FILE *fout,
     goto cleanup;
   }
 
+  if (global->notify_clar_reply && user_id > 0) {
+    unsigned char nsubj[1024];
+    FILE *msg_f = 0;
+    char *msg_t = 0;
+    size_t msg_z = 0;
+
+    if (cnts->default_locale_num > 0)
+      l10n_setlocale(cnts->default_locale_num);
+    snprintf(nsubj, sizeof(nsubj),
+             _("You have received a message from judges in contest %d"),
+             cnts->id);
+    msg_f = open_memstream(&msg_t, &msg_z);
+    fprintf(msg_f, _("You have received a message from judges\n"));
+    fprintf(msg_f, _("Contest: %d (%s)\n"), cnts->id, cnts->name);
+    if (cnts->team_url) {
+      fprintf(msg_f, "URL: %s&login=%s\n", cnts->team_url,
+              teamdb_get_login(cs->teamdb_state, user_id));
+    }
+    fprintf(msg_f, "%s\n", text3);
+    fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
+    fclose(msg_f); msg_f = 0;
+    if (cnts->default_locale_num > 0) {
+      l10n_setlocale(cnts->default_locale_num);
+    }
+    serve_send_clar_reply_email(cnts, cs, user_id, nsubj, msg_t);
+    xfree(msg_t); msg_t = 0; msg_z = 0;
+  }
+
   /*
   serve_send_clar_notify_email(cs, cnts, phr->user_id, phr->name, subj3, text2);
   */
@@ -2921,7 +2950,7 @@ priv_submit_run_comment(
         struct contest_extra *extra)
 {
   const serve_state_t cs = extra->serve_state;
-  //const struct section_global_data *global = cs->global;
+  const struct section_global_data *global = cs->global;
   int run_id = 0, clar_id = 0;
   struct run_entry re;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
@@ -2983,6 +3012,39 @@ priv_submit_run_comment(
     run_change_status(cs->runlog_state, run_id, RUN_IGNORED, 0, -1, 0);
   }
 
+  if (global->notify_clar_reply) {
+    unsigned char nsubj[1024];
+    FILE *msg_f = 0;
+    char *msg_t = 0;
+    size_t msg_z = 0;
+
+    if (cnts->default_locale_num > 0)
+      l10n_setlocale(cnts->default_locale_num);
+    snprintf(nsubj, sizeof(nsubj),
+             _("Your submit has been commented in contest %d"),
+             cnts->id);
+    msg_f = open_memstream(&msg_t, &msg_z);
+    if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE) {
+      fprintf(msg_f, _("You submit has been commented and ignored\n"));
+    } else {
+      fprintf(msg_f, _("You submit has been commented\n"));
+    }
+    fprintf(msg_f, _("Contest: %d (%s)\n"), cnts->id, cnts->name);
+    fprintf(msg_f, "Run Id: %d\n", run_id);
+    if (cnts->team_url) {
+      fprintf(msg_f, "URL: %s&login=%s\n", cnts->team_url,
+              teamdb_get_login(cs->teamdb_state, re.user_id));
+    }
+    fprintf(msg_f, "%s\n", text3);
+    fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
+    fclose(msg_f); msg_f = 0;
+    if (cnts->default_locale_num > 0) {
+      l10n_setlocale(cnts->default_locale_num);
+    }
+    serve_send_clar_reply_email(cnts, cs, re.user_id, nsubj, msg_t);
+    xfree(msg_t); msg_t = 0; msg_z = 0;
+  }
+
  cleanup:
   html_armor_free(&ab);
   return 0;
@@ -2993,14 +3055,15 @@ priv_submit_run_comment(
 }
 
 static int
-priv_clar_reply(FILE *fout,
-                FILE *log_f,
-                struct http_request_info *phr,
-                const struct contest_desc *cnts,
-                struct contest_extra *extra)
+priv_clar_reply(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
-  //const struct section_global_data *global = cs->global;
+  const struct section_global_data *global = cs->global;
   const unsigned char *errmsg;
   const unsigned char *s, *reply_txt;
   int in_reply_to, n, clar_id, from_id;
@@ -3120,6 +3183,35 @@ priv_clar_reply(FILE *fout,
   }
 
   clar_update_flags(cs->clarlog_state, in_reply_to, 2);
+
+  if (global->notify_clar_reply) {
+    unsigned char nsubj[1024];
+    FILE *msg_f = 0;
+    char *msg_t = 0;
+    size_t msg_z = 0;
+
+    if (cnts->default_locale_num > 0)
+      l10n_setlocale(cnts->default_locale_num);
+    snprintf(nsubj, sizeof(nsubj),
+             _("You have received a reply from judges in contest %d"),
+             cnts->id);
+    msg_f = open_memstream(&msg_t, &msg_z);
+    fprintf(msg_f, _("You have received a reply from judges\n"));
+    fprintf(msg_f, _("Contest: %d (%s)\n"), cnts->id, cnts->name);
+    fprintf(msg_f, "Clar Id: %d\n", in_reply_to);
+    if (cnts->team_url) {
+      fprintf(msg_f, "URL: %s&login=%s\n", cnts->team_url,
+              teamdb_get_login(cs->teamdb_state, from_id));
+    }
+    fprintf(msg_f, "%s\n", msg);
+    fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
+    fclose(msg_f); msg_f = 0;
+    if (cnts->default_locale_num > 0) {
+      l10n_setlocale(cnts->default_locale_num);
+    }
+    serve_send_clar_reply_email(cnts, cs, from_id, nsubj, msg_t);
+    xfree(msg_t); msg_t = 0; msg_z = 0;
+  }
 
  cleanup:
   xfree(orig_txt);
