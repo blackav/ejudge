@@ -1382,6 +1382,35 @@ serve_send_check_failed_email(const struct contest_desc *cnts, int run_id)
   xfree(ftxt); ftxt = 0;
 }
 
+void
+serve_send_clar_reply_email(
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        int user_id,
+        const unsigned char *subject,
+        const unsigned char *text)
+{
+  const struct section_global_data *global = cs->global;
+  const struct userlist_user *u = 0;
+  const unsigned char *originator = 0;
+  const unsigned char *mail_args[7];
+
+  if (global->notify_clar_reply <= 0) return;
+  if (!(u = teamdb_get_userlist(cs->teamdb_state, user_id))) return;
+  if (!u->email || !strchr(u->email, '@')) return;
+
+  originator = serve_get_email_sender(cnts);
+
+  mail_args[0] = "mail";
+  mail_args[1] = "";
+  mail_args[2] = subject;
+  mail_args[3] = originator;
+  mail_args[4] = u->email;
+  mail_args[5] = text;
+  mail_args[6] = 0;
+  send_job_packet(NULL, (unsigned char**) mail_args, 0);
+}
+
 int
 serve_read_compile_packet(serve_state_t state,
                           const struct contest_desc *cnts,
