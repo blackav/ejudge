@@ -2683,7 +2683,7 @@ priv_submit_run(FILE *fout,
       if (serve_compile_request(cs, run_text, run_size, run_id, phr->user_id,
                                 lang->compile_id, phr->locale_id, 0,
                                 lang->src_sfx,
-                                lang->compiler_env, -1, 0, prob, lang) < 0) {
+                                lang->compiler_env, -1, 0, 0, prob, lang) < 0) {
         ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
         goto cleanup;
       }
@@ -2704,7 +2704,7 @@ priv_submit_run(FILE *fout,
                       run_id);
     } else {
       if (serve_run_request(cs, log_f, run_text, run_size, run_id,
-                            phr->user_id, prob_id, 0, variant, 0, -1, -1,
+                            phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
                             0, 0) < 0) {
         ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
         goto cleanup;
@@ -2728,7 +2728,7 @@ priv_submit_run(FILE *fout,
     } else {
       /* FIXME: check for XML problem */
       if (serve_run_request(cs, log_f, run_text, run_size, run_id,
-                            phr->user_id, prob_id, 0, variant, 0, -1, -1,
+                            phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
                             0, 0) < 0) {
         ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
         goto cleanup;
@@ -2919,7 +2919,7 @@ priv_submit_clar(
     if (cnts->default_locale_num > 0) {
       l10n_setlocale(cnts->default_locale_num);
     }
-    serve_send_clar_reply_email(cnts, cs, user_id, nsubj, msg_t);
+    serve_send_email_to_user(cnts, cs, user_id, nsubj, msg_t);
     xfree(msg_t); msg_t = 0; msg_z = 0;
   }
 
@@ -3041,7 +3041,7 @@ priv_submit_run_comment(
     if (cnts->default_locale_num > 0) {
       l10n_setlocale(cnts->default_locale_num);
     }
-    serve_send_clar_reply_email(cnts, cs, re.user_id, nsubj, msg_t);
+    serve_send_email_to_user(cnts, cs, re.user_id, nsubj, msg_t);
     xfree(msg_t); msg_t = 0; msg_z = 0;
   }
 
@@ -3209,7 +3209,7 @@ priv_clar_reply(
     if (cnts->default_locale_num > 0) {
       l10n_setlocale(cnts->default_locale_num);
     }
-    serve_send_clar_reply_email(cnts, cs, from_id, nsubj, msg_t);
+    serve_send_email_to_user(cnts, cs, from_id, nsubj, msg_t);
     xfree(msg_t); msg_t = 0; msg_z = 0;
   }
 
@@ -3560,6 +3560,13 @@ priv_change_status(FILE *fout,
   if (run_set_entry(cs->runlog_state, run_id, flags, &new_run) < 0) {
     ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
+  }
+
+  if (cs->global->notify_status_change) {
+    struct run_entry re;
+    if (run_get_entry(cs->runlog_state, run_id, &re) >= 0 && re.is_hidden)
+      serve_notify_user_run_status_change(cnts, cs, re.user_id, run_id,
+                                          status);
   }
 
  cleanup:
@@ -9389,7 +9396,7 @@ unpriv_submit_run(FILE *fout,
       if (serve_compile_request(cs, run_text, run_size, run_id, phr->user_id,
                                 lang->compile_id, phr->locale_id, 0,
                                 lang->src_sfx,
-                                lang->compiler_env, -1, 0, prob, lang) < 0) {
+                                lang->compiler_env, -1, 0, 1, prob, lang) < 0) {
         ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
         goto done;
       }
@@ -9410,7 +9417,7 @@ unpriv_submit_run(FILE *fout,
                       run_id);
     } else {
       if (serve_run_request(cs, log_f, run_text, run_size, run_id,
-                            phr->user_id, prob_id, 0, variant, 0, -1, -1,
+                            phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
                             0, 0) < 0) {
         ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
         goto done;
@@ -9453,7 +9460,7 @@ unpriv_submit_run(FILE *fout,
       }
 
       if (serve_run_request(cs, log_f, run_text, run_size, run_id,
-                            phr->user_id, prob_id, 0, variant, 0, -1, -1,
+                            phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
                             0, 0) < 0) {
         ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
         goto done;

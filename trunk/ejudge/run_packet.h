@@ -3,7 +3,7 @@
 #ifndef __RUN_PACKET_H__
 #define __RUN_PACKET_H__
 
-/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,7 @@ struct run_request_packet
   int memory_limit;             /* enable memory limit (if supported by reuse&kernel) */
   int secure_run;               /* enable secure run (if supported by reuse&kernel) */
   int security_violation;       /* enable security violation detection */
+  int notify_flag;              /* notify user when testing is completed */
   /* time when the compile request was queued by serve */
   int ts1;
   int ts1_us;
@@ -63,6 +64,7 @@ struct run_reply_packet
   int status;
   int failed_test;
   int score;
+  int notify_flag;
   /* time when the compile request was queued by serve */
   int ts1;
   int ts1_us;

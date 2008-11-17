@@ -36,8 +36,10 @@
 #define FAIL_IF(c) if (c)do { errcode = __LINE__; goto failed; } while (0)
 
 int
-run_request_packet_read(size_t in_size, const void *in_data,
-                        struct run_request_packet **p_out_data)
+run_request_packet_read(
+        size_t in_size,
+        const void *in_data,
+        struct run_request_packet **p_out_data)
 {
   struct run_request_packet *pout = 0;
   const struct run_request_bin_packet*pin=(const struct run_request_bin_packet*)in_data;
@@ -84,6 +86,7 @@ run_request_packet_read(size_t in_size, const void *in_data,
   if ((flags & FLAGS_MEMORY_LIMIT)) pout->memory_limit = 1;
   if ((flags & FLAGS_SECURE_RUN)) pout->secure_run = 1;
   if ((flags & FLAGS_SECURITY_VIOLATION)) pout->security_violation = 1;
+  if ((flags & FLAGS_NOTIFY)) pout->notify_flag = 1;
 
   pout->ts1 = cvt_bin_to_host_32(pin->ts1);
   pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);

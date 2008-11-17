@@ -36,8 +36,10 @@
 #define FAIL_IF(c) if (c)do { errcode = __LINE__; goto failed; } while (0)
 
 int
-run_request_packet_write(const struct run_request_packet *in_data,
-                         size_t *p_out_size, void **p_out_data)
+run_request_packet_write(
+        const struct run_request_packet *in_data,
+        size_t *p_out_size,
+        void **p_out_data)
 {
   size_t out_size = sizeof(struct run_request_bin_packet);
   struct run_request_bin_packet *out_data = 0;
@@ -82,6 +84,7 @@ run_request_packet_write(const struct run_request_packet *in_data,
   if (in_data->memory_limit) flags |= FLAGS_MEMORY_LIMIT;
   if (in_data->secure_run) flags |= FLAGS_SECURE_RUN;
   if (in_data->security_violation) flags |= FLAGS_SECURITY_VIOLATION;
+  if (in_data->notify_flag) flags |= FLAGS_NOTIFY;
   out_data->flags = cvt_host_to_bin_32(flags);
 
   /* copy timestamps without care */

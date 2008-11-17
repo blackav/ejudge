@@ -36,12 +36,14 @@
 #define FAIL_IF(c) if (c)do { errcode = __LINE__; goto failed; } while (0)
 
 int
-run_reply_packet_read(size_t in_size, const void *in_data,
-                      struct run_reply_packet **p_out_data)
+run_reply_packet_read(
+        size_t in_size,
+        const void *in_data,
+        struct run_reply_packet **p_out_data)
 {
   struct run_reply_packet *pout = 0;
   const struct run_reply_bin_packet *pin = (const struct run_reply_bin_packet*)in_data;
-  int errcode = 0, version;
+  int errcode = 0, version, flags;
   size_t packet_len;
 
   FAIL_IF(in_size != sizeof(*pin));
@@ -64,6 +66,9 @@ run_reply_packet_read(size_t in_size, const void *in_data,
   FAIL_IF(pout->failed_test < -1 || pout->failed_test > EJ_MAX_TEST_NUM);
   pout->score = cvt_bin_to_host_32(pin->score);
   FAIL_IF(pout->score < -1 || pout->score > EJ_MAX_SCORE);
+
+  flags = cvt_bin_to_host_32(pin->flags);
+  if ((flags & FLAGS_NOTIFY)) pout->notify_flag = 1;
 
   pout->ts1 = cvt_bin_to_host_32(pin->ts1);
   pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);
