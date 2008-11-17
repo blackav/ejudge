@@ -8495,7 +8495,7 @@ super_html_update_variant_map(FILE *flog, int contest_id,
           xfree(vmap->v[i].name);
           vmap->v[i].name = xstrdup(ui->name);
         }
-      } else if (ui->name) {
+      } else if (ui && ui->name) {
         vmap->v[i].name = xstrdup(ui->name);
       } else {
         xfree(vmap->v[i].name);
