@@ -4104,24 +4104,24 @@ super_html_print_problem(FILE *f,
                                self_url, extra_args, prob_hidden_vars);
   }
 
-  //PROBLEM_PARAM(statement_file, "s"),
+  //PROBLEM_PARAM(xml_file, "s"),
   extra_msg = 0;
-  if (prob->abstract && !prob->statement_file[0])extra_msg="<i>(Undefined)</i>";
+  if (prob->abstract && !prob->xml_file[0]) extra_msg="<i>(Undefined)</i>";
   if (!prob->abstract) {
-    prepare_set_prob_value(PREPARE_FIELD_PROB_STATEMENT_FILE,
+    prepare_set_prob_value(PREPARE_FIELD_PROB_XML_FILE,
                            &tmp_prob, sup_prob, sstate->global);
-    s = html_armor_string_dup(tmp_prob.statement_file);
-    if (!prob->statement_file[0])
+    s = html_armor_string_dup(tmp_prob.xml_file);
+    if (!prob->xml_file[0])
       snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
     else
       snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>", s);
     xfree(s);
     extra_msg = msg_buf;
   }
-  print_string_editing_row_2(f, "File with problem statement:",
-                             prob->statement_file,
-                             SSERV_CMD_PROB_CHANGE_STATEMENT_FILE,
-                             SSERV_CMD_PROB_CLEAR_STATEMENT_FILE,
+  print_string_editing_row_2(f, "XML File with problem statement:",
+                             prob->xml_file,
+                             SSERV_CMD_PROB_CHANGE_XML_FILE,
+                             SSERV_CMD_PROB_CLEAR_XML_FILE,
                              extra_msg,
                              session_id, form_row_attrs[row ^= 1],
                              self_url, extra_args, prob_hidden_vars);
@@ -4774,7 +4774,7 @@ super_html_print_problem(FILE *f,
                tmp_prob.disable_security?"Yes":"No");
       extra_msg = msg_buf;
     }
-    print_boolean_3_select_row(f, "Disable submissions after OK:",
+    print_boolean_3_select_row(f, "Disable security restrictions:",
                                prob->disable_security,
                                SSERV_CMD_PROB_CHANGE_DISABLE_SECURITY,
                                extra_msg,
@@ -6407,12 +6407,12 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
     p_int = &prob->variant_num;
     goto handle_int_1;
 
-  case SSERV_CMD_PROB_CHANGE_STATEMENT_FILE:
-    PROB_ASSIGN_STRING(statement_file);
+  case SSERV_CMD_PROB_CHANGE_XML_FILE:
+    PROB_ASSIGN_STRING(xml_file);
     return 0;
 
-  case SSERV_CMD_PROB_CLEAR_STATEMENT_FILE:
-    PROB_CLEAR_STRING(statement_file);
+  case SSERV_CMD_PROB_CLEAR_XML_FILE:
+    PROB_CLEAR_STRING(xml_file);
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_ALTERNATIVES_FILE:
