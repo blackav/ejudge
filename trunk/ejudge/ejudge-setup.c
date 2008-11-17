@@ -3619,11 +3619,11 @@ generate_install_script(FILE *f)
       generate_dir_creation(f, &created_dirs, 0, style_dir);
       snprintf(style_src_dir, sizeof(style_src_dir),
                "%s/share/ejudge/style", EJUDGE_PREFIX_DIR);
-      gen_cmd_run(f, "ln -sf \"%s/actions.js\" \"%sactions.js\"",
-                  style_src_dir, style_prefix);
       gen_cmd_run(f, "ln -sf \"%s/logo.gif\" \"%slogo.gif\"",
                   style_src_dir, style_prefix);
       gen_cmd_run(f, "ln -sf \"%s/priv.css\" \"%spriv.css\"",
+                  style_src_dir, style_prefix);
+      gen_cmd_run(f, "ln -sf \"%s/priv.js\" \"%spriv.js\"",
                   style_src_dir, style_prefix);
       gen_cmd_run(f, "ln -sf \"%s/unpriv.css\" \"%sunpriv.css\"",
                   style_src_dir, style_prefix);
