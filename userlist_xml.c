@@ -1114,7 +1114,6 @@ do_parse_user(char const *path, struct userlist_user *usr)
       break;
     case USERLIST_T_EMAIL:
       if (usr->email) return xml_err_elem_redefined(t);
-      if (!t->text || !*t->text) return xml_err_elem_empty(t);
       if (t->first_down) return xml_err_nested_elems(t);
       for (a = t->first; a; a = a->next) {
         if (a->tag != USERLIST_A_PUBLIC)
@@ -1122,6 +1121,7 @@ do_parse_user(char const *path, struct userlist_user *usr)
         if (xml_attr_bool(a, &usr->show_email) < 0) return -1;
       }
       usr->email = t->text; t->text = 0;
+      if (!usr->email) usr->email = xstrdup("");
       xml_unlink_node(t);
       userlist_free(t);
       break;

@@ -1068,8 +1068,8 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   if ((prob->abstract && prob->score_latest == 1)
       || (!prob->abstract && prob->score_latest >= 0))
     unparse_bool(f, "score_latest", prob->score_latest);
-  if (prob->statement_file[0])
-    fprintf(f, "statement_file = \"%s\"\n",c_armor(&sbuf,prob->statement_file));
+  if (prob->xml_file[0])
+    fprintf(f, "xml_file = \"%s\"\n", c_armor(&sbuf, prob->xml_file));
   if (prob->alternatives_file[0])
     fprintf(f, "alternatives_file = \"%s\"\n",
             c_armor(&sbuf, prob->alternatives_file));
@@ -1331,7 +1331,7 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   PROBLEM_PARAM(tgz_pat, "s"),
   PROBLEM_PARAM(personal_deadline, "x"),
   PROBLEM_PARAM(skip_testing, "d"),
-  PROBLEM_PARAM(xml_file, "s"),
+  PROBLEM_PARAM(statement_file, "s"),
   PROBLEM_PARAM(group_name, "s"),
 */
 void
@@ -1376,8 +1376,6 @@ prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
     if (prob->priority_adjustment || !prob->abstract)
       fprintf(f, "priority_adjustment = %d\n", prob->priority_adjustment);
   }
-  //PROBLEM_PARAM(xml_file, "s"),
-  do_str(f, &sbuf, "xml_file", prob->xml_file);
   //PROBLEM_PARAM(group_name, "s"),
   do_str(f, &sbuf, "group_name", prob->group_name);
   //PROBLEM_PARAM(spelling, "s"),
@@ -1391,6 +1389,8 @@ prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
   do_xstr(f, &sbuf, "date_penalty", prob->date_penalty);
   //PROBLEM_PARAM(personal_deadline, "x"),
   do_xstr(f, &sbuf, "personal_deadline", prob->personal_deadline);
+  //PROBLEM_PARAM(statement_file, "s"),
+  do_str(f, &sbuf, "statement_file", prob->statement_file);
   //PROBLEM_PARAM(alternative, "x"),
   do_xstr(f, &sbuf, "alternative", prob->alternative);
 
@@ -2018,9 +2018,9 @@ prob_instr(FILE *f, const unsigned char *root_dir,
   mkpath(conf_path, root_dir, conf_dir, "conf");
 
   fprintf(f, "Problem %s: %s\n", prob->short_name, prob->long_name);
-  prepare_set_prob_value(PREPARE_FIELD_PROB_STATEMENT_FILE, &tmp_prob, abstr,0);
-  if (prob->statement_file[0]) {
-    fprintf(f, "Problem statement: %s\n", prob->statement_file);
+  prepare_set_prob_value(PREPARE_FIELD_PROB_XML_FILE, &tmp_prob, abstr,0);
+  if (prob->xml_file[0]) {
+    fprintf(f, "Problem XML statement: %s\n", prob->xml_file);
   }
   prepare_set_prob_value(PREPARE_FIELD_PROB_ALTERNATIVES_FILE,
                          &tmp_prob, abstr,0);
