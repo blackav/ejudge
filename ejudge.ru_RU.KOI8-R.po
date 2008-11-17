@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-11-16 11:54+0300\n"
-"PO-Revision-Date: 2008-11-16 12:03+0300\n"
+"POT-Creation-Date: 2008-11-16 20:12+0300\n"
+"PO-Revision-Date: 2008-11-16 20:13+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -2090,6 +2090,10 @@ msgstr "Новые пароли не совпадают друг с другом"
 msgid "New result"
 msgstr "Новый вердикт"
 
+#, c-format
+msgid "New status: %s\n"
+msgstr "Новый статус: %s\n"
+
 msgid "New user account is created"
 msgstr "Новая учётная запись создана"
 
@@ -3055,6 +3059,14 @@ msgstr "Статус"
 #, c-format
 msgid "Status is empty in row %d\n"
 msgstr "Статус не задан в строке %d\n"
+
+#, c-format
+msgid "Status of your submit %d is changed in contest %d"
+msgstr "Статус Вашей посылки %d был изменен в турнире %d"
+
+#, c-format
+msgid "Status of your submit is changed\n"
+msgstr "Статус Вашей посылки был изменен\n"
 
 msgid "Stop"
 msgstr "Остановить"
