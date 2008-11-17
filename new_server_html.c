@@ -3562,9 +3562,9 @@ priv_change_status(FILE *fout,
     goto cleanup;
   }
 
-  if (cs->global->notify_status_change) {
+  if (cs->global->notify_status_change > 0) {
     struct run_entry re;
-    if (run_get_entry(cs->runlog_state, run_id, &re) >= 0 && re.is_hidden)
+    if (run_get_entry(cs->runlog_state, run_id, &re) >= 0 && !re.is_hidden)
       serve_notify_user_run_status_change(cnts, cs, re.user_id, run_id,
                                           status);
   }

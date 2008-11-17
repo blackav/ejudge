@@ -1515,6 +1515,8 @@ serve_read_compile_packet(serve_state_t state,
     goto report_check_failed;
   }
 
+  fprintf(stderr, ">>notify: %d\n", comp_extra->notify_flag);
+
   if (comp_pkt->status == RUN_CHECK_FAILED
       || comp_pkt->status == RUN_COMPILE_ERR) {
     if ((report_size = generic_file_size(compile_report_dir, pname, "")) < 0) {
