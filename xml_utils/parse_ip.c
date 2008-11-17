@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,11 +19,15 @@
 #include "errlog.h"
 
 int
-xml_parse_ip(unsigned char const *path, int line, int column,
-             unsigned char const *s, ej_ip_t *pip)
+xml_parse_ip(
+        unsigned char const *path,
+        int line,
+        int column,
+        unsigned char const *s,
+        ej_ip_t *pip)
 {
-  unsigned int b1, b2, b3, b4;
-  int n;
+  unsigned int b1 = 0, b2 = 0, b3 = 0, b4 = 0;
+  int n = 0;
   unsigned long ip;
 
   if (!s || sscanf(s, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4

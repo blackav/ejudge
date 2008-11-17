@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,12 +21,16 @@
 #include <string.h>
 
 int
-xml_parse_ip_mask(const unsigned char *path, int line, int column,
-                  const unsigned char *s,
-                  ej_ip_t *p_addr, ej_ip_t *p_mask)
+xml_parse_ip_mask(
+        const unsigned char *path,
+        int line,
+        int column,
+        const unsigned char *s,
+        ej_ip_t *p_addr,
+        ej_ip_t *p_mask)
 {
-  int n;
-  unsigned int b1, b2, b3, b4, b5;
+  int n = 0;
+  unsigned int b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0;
 
   if (!s) goto failed;
   if (!strcmp(s, "0")) {
