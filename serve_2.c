@@ -51,6 +51,14 @@
 #include <pwd.h>
 #include <sys/time.h>
 
+#if CONF_HAS_LIBINTL - 0 == 1
+#include <libintl.h>
+#define _(x) gettext(x)
+#else
+#define _(x) x
+#endif
+#define __(x) x
+
 #define ARMOR(s)  html_armor_buf(&ab, s)
 
 void
@@ -930,6 +938,7 @@ serve_compile_request(
         char **compiler_env,
         int accepting_mode,
         int priority_adjustment,
+        int notify_flag,
         const struct section_problem_data *prob,
         const struct section_language_data *lang)
 {
@@ -991,6 +1000,7 @@ serve_compile_request(
   memset(&rx, 0, sizeof(rx));
   rx.accepting_mode = accepting_mode;
   rx.priority_adjustment = priority_adjustment;
+  rx.notify_flag = notify_flag;
 
   if (compile_request_packet_write(&cp, &pkt_len, &pkt_buf) < 0) {
     // FIXME: need reasonable recovery?
@@ -1073,20 +1083,22 @@ serve_compile_request(
 }
 
 int
-serve_run_request(serve_state_t state,
-                  FILE *errf,
-                  const unsigned char *run_text,
-                  size_t run_size,
-                  int run_id,
-                  int user_id,
-                  int prob_id,
-                  int lang_id,
-                  int variant,
-                  int priority_adjustment,
-                  int judge_id,
-                  int accepting_mode,
-                  const unsigned char *compile_report_dir,
-                  const struct compile_reply_packet *comp_pkt)
+serve_run_request(
+        serve_state_t state,
+        FILE *errf,
+        const unsigned char *run_text,
+        size_t run_size,
+        int run_id,
+        int user_id,
+        int prob_id,
+        int lang_id,
+        int variant,
+        int priority_adjustment,
+        int judge_id,
+        int accepting_mode,
+        int notify_flag,
+        const unsigned char *compile_report_dir,
+        const struct compile_reply_packet *comp_pkt)
 {
   int cn;
   struct section_problem_data *prob;
@@ -1383,19 +1395,17 @@ serve_send_check_failed_email(const struct contest_desc *cnts, int run_id)
 }
 
 void
-serve_send_clar_reply_email(
+serve_send_email_to_user(
         const struct contest_desc *cnts,
         const serve_state_t cs,
         int user_id,
         const unsigned char *subject,
         const unsigned char *text)
 {
-  const struct section_global_data *global = cs->global;
   const struct userlist_user *u = 0;
   const unsigned char *originator = 0;
   const unsigned char *mail_args[7];
 
-  if (global->notify_clar_reply <= 0) return;
   if (!(u = teamdb_get_userlist(cs->teamdb_state, user_id))) return;
   if (!u->email || !strchr(u->email, '@')) return;
 
@@ -1409,6 +1419,45 @@ serve_send_clar_reply_email(
   mail_args[5] = text;
   mail_args[6] = 0;
   send_job_packet(NULL, (unsigned char**) mail_args, 0);
+}
+
+void
+serve_notify_user_run_status_change(
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        int user_id,
+        int run_id,
+        int new_status)
+{
+  unsigned char nsubj[1024];
+  FILE *msg_f = 0;
+  char *msg_t = 0;
+  size_t msg_z = 0;
+
+  // FIXME: do not send a notification if the user is online?
+
+  if (cnts->default_locale_num > 0)
+    l10n_setlocale(cnts->default_locale_num);
+  snprintf(nsubj, sizeof(nsubj),
+           _("Status of your submit %d is changed in contest %d"),
+           run_id, cnts->id);
+  msg_f = open_memstream(&msg_t, &msg_z);
+  fprintf(msg_f, _("Status of your submit is changed\n"));
+  fprintf(msg_f, _("Contest: %d (%s)\n"), cnts->id, cnts->name);
+  fprintf(msg_f, "Run Id: %d\n", run_id);
+  fprintf(msg_f, _("New status: %s\n"),
+          run_status_str(new_status, 0, 0, 0, 0));
+  if (cnts->team_url) {
+    fprintf(msg_f, "URL: %s&login=%s\n", cnts->team_url,
+            teamdb_get_login(cs->teamdb_state, user_id));
+  }
+  fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
+  fclose(msg_f); msg_f = 0;
+  if (cnts->default_locale_num > 0) {
+    l10n_setlocale(cnts->default_locale_num);
+  }
+  serve_send_email_to_user(cnts, cs, user_id, nsubj, msg_t);
+  xfree(msg_t); msg_t = 0; msg_z = 0;
 }
 
 int
@@ -1457,6 +1506,13 @@ serve_read_compile_packet(serve_state_t state,
   if (re.status != RUN_COMPILING) {
     err("read_compile_packet: run %d is not compiling", comp_pkt->run_id);
     goto non_fatal_error;
+  }
+
+  comp_extra = (typeof(comp_extra)) comp_pkt->run_block;
+  if (!comp_extra || comp_pkt->run_block_len != sizeof(*comp_extra)
+      || comp_extra->accepting_mode < 0 || comp_extra->accepting_mode > 1) {
+    snprintf(errmsg, sizeof(errmsg), "invalid run block\n");
+    goto report_check_failed;
   }
 
   if (comp_pkt->status == RUN_CHECK_FAILED
@@ -1518,6 +1574,11 @@ serve_read_compile_packet(serve_state_t state,
       goto report_check_failed;
     }
     serve_update_standings_file(state, cnts, 0);
+    if (state->global->notify_status_change > 0 && !re.is_hidden
+        && comp_extra->notify_flag) {
+      serve_notify_user_run_status_change(cnts, state, re.user_id,
+                                          comp_pkt->run_id, RUN_COMPILE_ERR);
+    }
     goto success;
   }
 
@@ -1540,14 +1601,12 @@ serve_read_compile_packet(serve_state_t state,
     if (run_change_status(state->runlog_state, comp_pkt->run_id, RUN_ACCEPTED,
                           0, -1, comp_pkt->judge_id) < 0)
       goto non_fatal_error;
+    if (state->global->notify_status_change > 0 && !re.is_hidden
+        && comp_extra->notify_flag) {
+      serve_notify_user_run_status_change(cnts, state, re.user_id,
+                                          comp_pkt->run_id, RUN_ACCEPTED);
+    }
     goto success;
-  }
-
-  comp_extra = (typeof(comp_extra)) comp_pkt->run_block;
-  if (!comp_extra || comp_pkt->run_block_len != sizeof(*comp_extra)
-      || comp_extra->accepting_mode < 0 || comp_extra->accepting_mode > 1) {
-    snprintf(errmsg, sizeof(errmsg), "invalid run block\n");
-    goto report_check_failed;
   }
 
   if (run_change_status(state->runlog_state, comp_pkt->run_id, RUN_COMPILED,
@@ -1562,7 +1621,8 @@ serve_read_compile_packet(serve_state_t state,
                         re.prob_id, re.lang_id, 0,
                         comp_extra->priority_adjustment,
                         comp_pkt->judge_id, comp_extra->accepting_mode,
-                        compile_report_dir, comp_pkt) < 0) {
+                        comp_extra->notify_flag, compile_report_dir,
+                        comp_pkt) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
   }
@@ -1799,6 +1859,11 @@ serve_read_run_packet(serve_state_t state,
                         reply_pkt->status, reply_pkt->failed_test,
                         reply_pkt->score, 0) < 0) goto failed;
   serve_update_standings_file(state, cnts, 0);
+  if (state->global->notify_status_change > 0 && !re.is_hidden
+      && reply_pkt->notify_flag) {
+    serve_notify_user_run_status_change(cnts, state, re.user_id,
+                                        reply_pkt->run_id, reply_pkt->status);
+  }
   rep_size = generic_file_size(run_report_dir, pname, "");
   if (rep_size < 0) goto failed;
   rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
@@ -2066,6 +2131,13 @@ serve_judge_built_in_problem(
   run_change_status(state->runlog_state, run_id, glob_status, failed_test,
                     score, 0);
   serve_update_standings_file(state, cnts, 0);
+  /*
+  if (global->notify_status_change > 0 && !re.is_hidden
+      && comp_extra->notify_flag) {
+    serve_notify_user_run_status_change(cnts, state, re.user_id,
+                                        run_id, glob_status);
+  }
+  */
   rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
                                       global->xml_report_archive_dir,
                                       run_id, xml_len, 0);
@@ -2147,7 +2219,7 @@ serve_rejudge_run(
 
     serve_run_request(state, stderr, run_text, run_size, run_id,
                       re.user_id, re.prob_id, 0, 0, priority_adjustment,
-                      -1, accepting_mode, 0, 0);
+                      -1, accepting_mode, 1, 0, 0);
     xfree(run_text);
 
     serve_audit_log(state, run_id, user_id, ip, ssl_flag, "Command: Rejudge\n");
@@ -2169,7 +2241,7 @@ serve_rejudge_run(
                         (prob->type_val > 0),
                         state->langs[re.lang_id]->src_sfx,
                         state->langs[re.lang_id]->compiler_env,
-                        accepting_mode, priority_adjustment, prob, lang);
+                        accepting_mode, priority_adjustment, 1, prob, lang);
 
   serve_audit_log(state, run_id, user_id, ip, ssl_flag, "Command: Rejudge\n");
 }

@@ -2117,6 +2117,7 @@ do_loop(void)
     reply_pkt.judge_id = req_pkt->judge_id;
     reply_pkt.contest_id = req_pkt->contest_id;
     reply_pkt.run_id = req_pkt->run_id;
+    reply_pkt.notify_flag = req_pkt->notify_flag;
     reply_pkt.ts1 = req_pkt->ts1;
     reply_pkt.ts1_us = req_pkt->ts1_us;
     reply_pkt.ts2 = req_pkt->ts2;

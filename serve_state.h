@@ -216,6 +216,7 @@ struct compile_run_extra
 {
   int accepting_mode;
   int priority_adjustment;
+  int notify_flag;
 };
 
 serve_state_t serve_state_init(void);
@@ -279,33 +280,42 @@ void serve_audit_log(serve_state_t, int, int,
 
 void serve_packet_name(int run_id, int prio, unsigned char buf[]);
 
-int serve_compile_request(serve_state_t state,
-                          unsigned char const *str, int len,
-                          int run_id, int user_id, int lang_id, int locale_id,
-                          int output_only,
-                          unsigned char const *sfx,
-                          char **compiler_env,
-                          int accepting_mode,
-                          int priority_adjustment,
-                          const struct section_problem_data *prob,
-                          const struct section_language_data *lang);
+int
+serve_compile_request(
+        serve_state_t state,
+        unsigned char const *str,
+        int len,
+        int run_id,
+        int user_id,
+        int lang_id,
+        int locale_id,
+        int output_only,
+        unsigned char const *sfx,
+        char **compiler_env,
+        int accepting_mode,
+        int priority_adjustment,
+        int notify_flag,
+        const struct section_problem_data *prob,
+        const struct section_language_data *lang);
 
 struct compile_reply_packet;
 int
-serve_run_request(serve_state_t state,
-                  FILE *errf,
-                  const unsigned char *run_text,
-                  size_t run_size,
-                  int run_id,
-                  int user_id,
-                  int prob_id,
-                  int lang_id,
-                  int variant,
-                  int priority_adjustment,
-                  int judge_id,
-                  int accepting_mode,
-                  const unsigned char *compile_report_dir,
-                  const struct compile_reply_packet *comp_pkt);
+serve_run_request(
+        serve_state_t state,
+        FILE *errf,
+        const unsigned char *run_text,
+        size_t run_size,
+        int run_id,
+        int user_id,
+        int prob_id,
+        int lang_id,
+        int variant,
+        int priority_adjustment,
+        int judge_id,
+        int accepting_mode,
+        int notify_flag,
+        const unsigned char *compile_report_dir,
+        const struct compile_reply_packet *comp_pkt);
 
 int serve_is_valid_status(serve_state_t state, int status, int mode);
 
@@ -398,11 +408,19 @@ void serve_ignore_by_mask(serve_state_t state,
                           int mask_size, unsigned long *mask,
                           int new_status);
 void
-serve_send_clar_reply_email(
+serve_send_email_to_user(
         const struct contest_desc *cnts,
         const serve_state_t cs,
         int user_id,
         const unsigned char *subject,
         const unsigned char *text);
+
+void
+serve_notify_user_run_status_change(
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        int user_id,
+        int run_id,
+        int new_status);
 
 #endif /* __SERVE_STATE_H__ */

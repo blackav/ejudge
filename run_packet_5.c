@@ -36,12 +36,14 @@
 #define FAIL_IF(c) if (c)do { errcode = __LINE__; goto failed; } while (0)
 
 int
-run_reply_packet_write(const struct run_reply_packet *in_data,
-                       size_t *p_out_size, void **p_out_data)
+run_reply_packet_write(
+        const struct run_reply_packet *in_data,
+        size_t *p_out_size,
+        void **p_out_data)
 {
   struct run_reply_bin_packet *out_data = 0;
   size_t out_size = sizeof(*out_data);
-  int errcode = 0;
+  int errcode = 0, flags = 0;
 
   FAIL_IF(out_size < sizeof(*out_data) || out_size > EJ_MAX_RUN_PACKET_SIZE);
 
@@ -61,6 +63,9 @@ run_reply_packet_write(const struct run_reply_packet *in_data,
   out_data->failed_test = cvt_host_to_bin_32(in_data->failed_test);
   FAIL_IF(in_data->score < -1 || in_data->score > EJ_MAX_SCORE);
   out_data->score = cvt_host_to_bin_32(in_data->score);
+
+  if (in_data->notify_flag) flags |= FLAGS_NOTIFY;
+  out_data->flags = cvt_host_to_bin_32(flags);
 
   out_data->ts1 = cvt_host_to_bin_32(in_data->ts1);
   out_data->ts1_us = cvt_host_to_bin_32(in_data->ts1_us);

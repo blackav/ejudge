@@ -34,8 +34,9 @@ enum
   FLAGS_MEMORY_LIMIT         = 0x100,
   FLAGS_SECURE_RUN           = 0x200,
   FLAGS_SECURITY_VIOLATION   = 0x400,
+  FLAGS_NOTIFY               = 0x800,
 
-  FLAGS_ALL_MASK             = 0x7ff, /* scoring system incl. */
+  FLAGS_ALL_MASK             = 0xfff, /* scoring system incl. */
 };
 
 /* serve->run binary packet structure */
@@ -85,6 +86,7 @@ struct run_reply_bin_packet
   rint32_t  status;
   rint32_t  failed_test;
   rint32_t  score;
+  ruint32_t flags;
   rint32_t  ts1;
   rint32_t  ts1_us;
   rint32_t  ts2;
@@ -99,7 +101,7 @@ struct run_reply_bin_packet
   rint32_t  ts6_us;
   rint32_t  ts7;
   rint32_t  ts7_us;
-  unsigned char pad[40];        /* padding to 128 bytes */
+  unsigned char pad[36];        /* padding to 128 bytes */
 };
 
 #endif /* __RUN_PACKET_PRIV_H__ */
