@@ -5535,7 +5535,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       sformat_message(out->xml_file, sizeof(out->xml_file),
                       abstr->xml_file, 0, out, 0, 0, 0, 0, 0, 0);
     }
-    if (out->xml_file[0]) {
+    if (global && out->xml_file[0]) {
       path_add_dir(out->xml_file, global->statement_dir);
     }
     break;
