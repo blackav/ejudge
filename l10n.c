@@ -163,10 +163,12 @@ static struct locale_names
   int value;
 } locale_names[] =
 {
+  { "0", 0 },
   { "en", 0 },
   { "en_US", 0 },
   { "English", 0 },
 
+  { "1", 1 },
   { "ru", 1 },
   { "ru_RU", 1 },
   { "Russian", 1 },
