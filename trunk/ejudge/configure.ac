@@ -963,6 +963,8 @@ AC_SUBST(ac_cv_ncurses_suffix)
 AC_SUBST(ac_cv_local_dir)
 AC_SUBST(ac_cv_werror_flag)
 AC_SUBST(ac_cv_preserve_scripts)
+AC_SUBST(ac_cv_httpd_cgi_bin_dir)
+AC_SUBST(ac_cv_httpd_htdocs_dir)
 
 AC_SUBST(ac_cv_festival_home)
 AC_SUBST(ac_cv_libcap_link)
@@ -1062,9 +1064,9 @@ then
 fi
 
 AC_CONFIG_HEADERS([config.h])
-AC_OUTPUT(Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/mysql-common/Makefile plugins/mysql-userlist/Makefile plugins/mysql-clardb/Makefile plugins/mysql-rundb/Makefile python/Makefile python/streamio/Makefile)
+AC_OUTPUT(Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/mysql-common/Makefile plugins/mysql-userlist/Makefile plugins/mysql-clardb/Makefile plugins/mysql-rundb/Makefile python/Makefile python/streamio/Makefile style/ejudge-upgrade-web)
 
-chmod +x ejudge-config.v scripts/festival
+chmod +x ejudge-config.v scripts/festival style/ejudge-upgrade-web
 
 if [[ "x${ac_cv_has_libcap}" = x -a "${ac_cv_has_new_secure_exec}" = x ]]
 then
