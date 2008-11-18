@@ -33,6 +33,7 @@
 #include "serve_state.h"
 #include "random.h"
 #include "startstop.h"
+#include "super-serve_meta.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/osdeps.h>
@@ -366,6 +367,12 @@ prepare_serve_serving(const struct contest_desc *cnts,
 
   if (slave_mode) return;
   if (!cnts->managed && do_serve_manage <= 0) return;
+
+  // all contests are now new-managed, so the serve socket is not needed
+  snprintf(serve_socket_path, sizeof(serve_socket_path),
+           "%s/%s", extra->var_dir, "serve");
+  unlink(serve_socket_path);
+  return;
 
   // FIXME: add a possibility to define socket name
   snprintf(serve_socket_path, sizeof(serve_socket_path),
@@ -1681,7 +1688,11 @@ sid_state_find(ej_cookie_t sid)
   return p;
 }
 static struct sid_state*
-sid_state_add(ej_cookie_t sid)
+sid_state_add(
+        ej_cookie_t sid,
+        int user_id,
+        const unsigned char *user_login,
+        const unsigned char *user_name)
 {
   struct sid_state *n;
 
@@ -1690,6 +1701,9 @@ sid_state_add(ej_cookie_t sid)
   n->sid = sid;
   n->init_time = time(0);
   n->flags |= SID_STATE_SHOW_CLOSED;
+  n->user_id = user_id;
+  n->user_login = xstrdup(user_login);
+  n->user_name = xstrdup(user_name);
 
   if (!sid_state_last) {
     ASSERT(!sid_state_first);
@@ -1703,11 +1717,16 @@ sid_state_add(ej_cookie_t sid)
   return n;
 }
 static struct sid_state*
-sid_state_get(ej_cookie_t sid)
+sid_state_get(
+        ej_cookie_t sid,
+        int user_id,
+        const unsigned char *user_login,
+        const unsigned char *user_name)
 {
   struct sid_state *p;
 
-  if (!(p = sid_state_find(sid))) p = sid_state_add(sid);
+  if (!(p = sid_state_find(sid)))
+    p = sid_state_add(sid, user_id, user_login, user_name);
   return p;
 }
 static void
@@ -1766,6 +1785,16 @@ super_serve_sid_state_get_max_edited_cnts(void)
 }
 const struct sid_state*
 super_serve_sid_state_get_cnts_editor(int contest_id)
+{
+  struct sid_state *p;
+
+  for (p = sid_state_first; p; p = p->next)
+    if (p->edited_cnts && p->edited_cnts->id == contest_id)
+      return p;
+  return 0;
+}
+struct sid_state*
+super_serve_sid_state_get_cnts_editor_nc(int contest_id)
 {
   struct sid_state *p;
 
@@ -1858,6 +1887,88 @@ super_serve_clear_edited_contest(struct sid_state *p)
   xfree(p->compile_home_dir); p->compile_home_dir = 0;
 }
 
+void
+super_serve_move_edited_contest(struct sid_state *dst, struct sid_state *src)
+{
+  dst->edited_cnts = src->edited_cnts; src->edited_cnts = 0;
+
+  // ejintbool_t fields
+  static int ejintbool_fields[] =
+  {
+    SSSS_advanced_view, SSSS_show_html_attrs, SSSS_show_html_headers,
+    SSSS_show_paths, SSSS_show_access_rules, SSSS_show_permissions,
+    SSSS_show_form_fields, SSSS_show_notifications,
+    SSSS_users_header_loaded, SSSS_users_footer_loaded,
+    SSSS_register_header_loaded, SSSS_register_footer_loaded,
+    SSSS_team_header_loaded, SSSS_team_menu_1_loaded,
+    SSSS_team_menu_2_loaded, SSSS_team_menu_3_loaded,
+    SSSS_team_separator_loaded, SSSS_team_footer_loaded,
+    SSSS_priv_header_loaded, SSSS_priv_footer_loaded,
+    SSSS_register_email_loaded, SSSS_copyright_loaded,
+    SSSS_welcome_loaded, SSSS_reg_welcome_loaded,
+    SSSS_show_global_1, SSSS_show_global_2, SSSS_show_global_3,
+    SSSS_show_global_4, SSSS_show_global_5, SSSS_show_global_6,
+    SSSS_show_global_7, SSSS_enable_stand2, SSSS_enable_plog,
+    SSSS_enable_extra_col, SSSS_disable_compilation_server,
+    0,
+  };
+  for (int i = 0; ejintbool_fields[i]; ++i) {
+    int j = ejintbool_fields[i];
+    ejintbool_t *pdst = (ejintbool_t*) ss_sid_state_get_ptr_nc(dst, j);
+    ejintbool_t *psrc = (ejintbool_t*) ss_sid_state_get_ptr_nc(src, j);
+    *pdst = *psrc; *psrc = 0;
+  }
+
+  // string fields
+  static int string_fields[] =
+  {
+    SSSS_users_header_text, SSSS_users_footer_text,
+    SSSS_register_header_text, SSSS_register_footer_text,
+    SSSS_team_header_text, SSSS_team_menu_1_text, SSSS_team_menu_2_text,
+    SSSS_team_menu_3_text, SSSS_team_separator_text, SSSS_team_footer_text,
+    SSSS_priv_header_text, SSSS_priv_footer_text, SSSS_register_email_text,
+    SSSS_copyright_text, SSSS_welcome_text, SSSS_reg_welcome_text,
+    SSSS_serve_parse_errors, SSSS_contest_start_cmd_text,
+    SSSS_stand_header_text, SSSS_stand_footer_text,
+    SSSS_stand2_header_text, SSSS_stand2_footer_text,
+    SSSS_plog_header_text, SSSS_plog_footer_text,
+    SSSS_var_header_text, SSSS_var_footer_text, SSSS_compile_home_dir,
+    0,
+  };
+  for (int i = 0; string_fields[i]; ++i) {
+    int j = string_fields[i];
+    unsigned char **pdst = (unsigned char**) ss_sid_state_get_ptr_nc(dst, j);
+    unsigned char **psrc = (unsigned char**) ss_sid_state_get_ptr_nc(src, j);
+    *pdst = *psrc; *psrc = 0;
+  }
+
+  // other fields
+  dst->cfg = src->cfg; src->cfg = 0;
+  dst->global = src->global; src->global = 0;
+  dst->lang_a = src->lang_a; src->lang_a = 0;
+  dst->langs = src->langs; src->langs = 0;
+  dst->loc_cs_map = src->loc_cs_map; src->loc_cs_map = 0;
+  dst->cs_loc_map = src->cs_loc_map; src->cs_loc_map = 0;
+  dst->lang_opts = src->lang_opts; src->lang_opts = 0;
+  dst->lang_flags = src->lang_flags; src->lang_flags = 0;
+  dst->aprob_u = src->aprob_u; src->aprob_u = 0;
+  dst->aprob_a = src->aprob_a; src->aprob_a = 0;
+  dst->aprobs = src->aprobs; src->aprobs = 0;
+  dst->aprob_flags = src->aprob_flags; src->aprob_flags = 0;
+  dst->prob_a = src->prob_a; src->prob_a = 0;
+  dst->probs = src->probs; src->probs = 0;
+  dst->prob_flags = src->prob_flags; src->prob_flags = 0;
+  dst->atester_total = src->atester_total; src->atester_total = 0;
+  dst->atesters = src->atesters; src->atesters = 0;
+  dst->tester_total = src->tester_total; src->tester_total = 0;
+  dst->testers = src->testers; src->testers = 0;
+  dst->cs_langs_loaded = src->cs_langs_loaded; src->cs_langs_loaded = 0;
+  dst->cs_lang_total = src->cs_lang_total; src->cs_lang_total = 0;
+  dst->cs_cfg = src->cs_cfg; src->cs_cfg = 0;
+  dst->cs_langs = src->cs_langs; src->cs_langs = 0;
+  dst->cs_lang_names = src->cs_lang_names; src->cs_lang_names = 0;
+}
+
 static void
 cmd_main_page(struct client_state *p, int len,
               struct prot_super_pkt_main_page *pkt)
@@ -1874,6 +1985,7 @@ cmd_main_page(struct client_state *p, int len,
   const struct contest_desc *cnts = 0;
   struct contest_desc *rw_cnts = 0;
   struct sid_state *sstate = 0;
+  const struct sid_state *other_ss = 0;
 
   if (slave_mode) return error_slave_mode(p);
 
@@ -1907,7 +2019,7 @@ cmd_main_page(struct client_state *p, int len,
     return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
   }
 
-  sstate = sid_state_get(p->cookie);
+  sstate = sid_state_get(p->cookie, p->user_id, p->login, p->name);
 
   // extra incoming packet checks
   switch (pkt->b.id) {
@@ -2143,6 +2255,15 @@ cmd_main_page(struct client_state *p, int len,
                                         extra_args_ptr, cnts, 0);
       break;
     }
+    if ((other_ss = super_serve_sid_state_get_cnts_editor(cnts->id))) {
+      r = super_html_locked_cnts_dialog(f, p->priv_level, p->user_id, p->login,
+                                        p->cookie, p->ip, config, sstate,
+                                        self_url_ptr, hidden_vars_ptr,
+                                        extra_args_ptr, cnts->id,
+                                        other_ss, 0);
+      break;
+    }
+    
     if ((r = contests_load(pkt->contest_id, &rw_cnts)) < 0 || !rw_cnts) {
       return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
     }
@@ -2315,7 +2436,7 @@ cmd_create_contest(struct client_state *p, int len,
 
   // FIXME: check permissions
 
-  sstate = sid_state_get(p->cookie);
+  sstate = sid_state_get(p->cookie, p->user_id, p->login, p->name);
   if (!(f = open_memstream(&html_ptr, &html_len))) {
     err("%d: open_memstream failed", p->id);
     return send_reply(p, -SSERV_ERR_SYSTEM_ERROR);
@@ -2446,7 +2567,7 @@ cmd_simple_top_command(struct client_state *p, int len,
   if ((r = get_peer_local_user(p)) < 0) {
     return send_reply(p, r);
   }
-  sstate = sid_state_get(p->cookie);
+  sstate = sid_state_get(p->cookie, p->user_id, p->login, p->name);
 
   switch (pkt->b.id) {
   case SSERV_CMD_SHOW_HIDDEN:
@@ -2673,7 +2794,7 @@ cmd_set_value(struct client_state *p, int len,
   if ((r = get_peer_local_user(p)) < 0) {
     return send_reply(p, r);
   }
-  sstate = sid_state_get(p->cookie);
+  sstate = sid_state_get(p->cookie, p->user_id, p->login, p->name);
 
   switch (pkt->b.id) {
   case SSERV_CMD_CNTS_CHANGE_NAME:
@@ -3398,7 +3519,7 @@ cmd_http_request(
   hr.ssl_flag = p->ssl;
   hr.system_login = userlist_login;
 
-  hr.ss = sid_state_get(p->cookie);
+  hr.ss = sid_state_get(p->cookie, p->user_id, p->login, p->name);
   hr.config = config;
 
   super_html_http_request(&out_t, &out_z, &hr);

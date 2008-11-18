@@ -1862,6 +1862,81 @@ super_html_contest_footer_menu(FILE *f,
 }
 
 int
+super_html_locked_cnts_dialog(
+        FILE *out_f,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        ej_ip_t ip_address,
+        const struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args,
+        int contest_id,
+        const struct sid_state *other_ss,
+        int new_edit_mode)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  ASSERT(!sstate->edited_cnts);
+
+  if (other_ss->user_id != user_id) {
+    fprintf(out_f, "<p>Contest %d is already edited in session %016llx by user %s (%s). Please contact this user to release the lock.</p>",
+            contest_id, other_ss->sid,
+            other_ss->user_login, ARMOR(other_ss->user_name));
+
+    fprintf(out_f, "<table border=\"0\">");
+    fprintf(out_f, "<tr><td>");
+    html_start_form(out_f, 1, self_url, hidden_vars);
+    html_hidden(out_f, "op", "%d", SSERV_OP_EDITED_CNTS_BACK);
+    html_submit_button(out_f, SSERV_CMD_HTTP_REQUEST, "Back");
+    fprintf(out_f, "</form>\n");
+    fprintf(out_f, "</td><td>Return to the main page</td></tr>");
+    fprintf(out_f, "</table>\n");
+
+    html_armor_free(&ab);
+    return 0;
+  }
+
+  fprintf(out_f,
+          "<p>Contest %d is already edited by you in session %016llx.</p>",
+          contest_id, other_ss->sid);
+
+  fprintf(out_f, "<table border=\"0\">");
+  fprintf(out_f, "<tr><td>");
+  html_start_form(out_f, 1, self_url, hidden_vars);
+  html_hidden(out_f, "op", "%d", SSERV_OP_EDITED_CNTS_BACK);
+  html_submit_button(out_f, SSERV_CMD_HTTP_REQUEST, "Back");
+  fprintf(out_f, "</form>\n");
+  fprintf(out_f, "</td><td>Return to the main page</td></tr>");
+
+  fprintf(out_f, "<tr><td>");
+  html_start_form(out_f, 1, self_url, hidden_vars);
+  html_hidden(out_f, "op", "%d", SSERV_OP_LOCKED_CNTS_FORGET);
+  if (new_edit_mode) html_hidden(out_f, "new_edit", "1");
+  html_hidden(out_f, "contest_id", "%d", contest_id);
+  html_submit_button(out_f, SSERV_CMD_HTTP_REQUEST, "Forget editing");
+  fprintf(out_f, "</form>\n");
+  fprintf(out_f, "</td><td>Forget editing in that session and return to the top page<font color=\"red\">(All changes to the old contest will be lost)!</font></td></tr>");
+
+  fprintf(out_f, "<tr><td>");
+  html_start_form(out_f, 1, self_url, hidden_vars);
+  html_hidden(out_f, "op", "%d", SSERV_OP_LOCKED_CNTS_CONTINUE);
+  if (new_edit_mode) html_hidden(out_f, "new_edit", "1");
+  html_hidden(out_f, "contest_id", "%d", contest_id);
+  html_submit_button(out_f, SSERV_CMD_HTTP_REQUEST, "Continue here");
+  fprintf(out_f, "</form>\n");
+  fprintf(out_f, "</td><td>Continue editing in this session</font></td></tr>");
+
+  fprintf(out_f, "</table>\n");
+
+  html_armor_free(&ab);
+  return 0;
+}
+
+int
 super_html_edited_cnts_dialog(
         FILE *out_f,
         int priv_level,
@@ -4173,6 +4248,11 @@ super_html_create_contest_2(FILE *f,
       errcode = -SSERV_ERR_INVALID_CONTEST;
       goto cleanup;
     }
+  }
+
+  if (super_serve_sid_state_get_cnts_editor(contest_id)) {
+    errcode = -SSERV_ERR_CONTEST_ALREADY_USED;
+    goto cleanup;
   }
 
   // FIXME: touch the contest file
