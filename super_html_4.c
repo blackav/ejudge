@@ -1051,10 +1051,10 @@ contest_xml_page(
   // write tabs
   fprintf(out_f, "<div id=\"tabs\">\n");
   fprintf(out_f, "<ul>\n");
-  fprintf(out_f, "<li id=\"selected\"><a href=\"#\">General Settings</a></li>\n");
-  fprintf(out_f, "<li><a href=\"#\">Global Settings</a></li>\n");
-  fprintf(out_f, "<li><a href=\"#\">Language Settings</a></li>\n");
-  fprintf(out_f, "<li><a href=\"#\">Problem Settings</a></li>\n");
+  fprintf(out_f, "<li id=\"selected\">General Settings</li>\n");
+  fprintf(out_f, "<li>Global Settings</li>\n");
+  fprintf(out_f, "<li>Language Settings</li>\n");
+  fprintf(out_f, "<li>Problem Settings</li>\n");
   fprintf(out_f, "</ul>\n");
   fprintf(out_f, "</div>\n");
 
