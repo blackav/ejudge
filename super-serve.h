@@ -243,11 +243,14 @@ struct super_http_request_info
 };
 
 void super_serve_clear_edited_contest(struct sid_state *sstate);
+void super_serve_move_edited_contest(struct sid_state *dst,
+                                     struct sid_state *src);
 int super_serve_start_serve_test_mode(const struct contest_desc *cnts,
                                       unsigned char **p_log,
                                       int pass_socket);
 
 int super_serve_sid_state_get_max_edited_cnts(void);
 const struct sid_state* super_serve_sid_state_get_cnts_editor(int contest_id);
+struct sid_state* super_serve_sid_state_get_cnts_editor_nc(int contest_id);
 
 #endif /* __SUPER_SERVE_H__ */

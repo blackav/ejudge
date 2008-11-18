@@ -516,6 +516,69 @@ cmd_edited_cnts_start_new(
   return 0;
 }
 
+// forget the contest editing from the other session and return
+// to the main page
+// all errors are silently ignored
+static int
+cmd_locked_cnts_forget(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  struct sid_state *ss;
+  int contest_id = -1;
+
+  if (phr->ss->edited_cnts)
+    goto done;
+  if (ss_cgi_param_int(phr, "contest_id", &contest_id) < 0 || contest_id <= 0)
+    goto done;
+  if (!(ss = super_serve_sid_state_get_cnts_editor_nc(contest_id)))
+    goto done;
+  if (ss->user_id != phr->user_id)
+    goto done;
+  super_serve_clear_edited_contest(ss);
+
+ done:;
+  refresh_page(out_f, phr, NULL);
+  return 0;
+}
+
+// move the editing information to this session and continue editing
+// all errors are silently ignored
+static int
+cmd_locked_cnts_continue(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  struct sid_state *ss;
+  int contest_id = 0;
+  int new_edit = -1;
+
+  if (phr->ss->edited_cnts)
+    goto top_level;
+  if (ss_cgi_param_int(phr, "contest_id", &contest_id) < 0 || contest_id <= 0)
+    goto top_level;
+  if (!(ss = super_serve_sid_state_get_cnts_editor_nc(contest_id)))
+    goto top_level;
+  if (ss->user_id != phr->user_id)
+    goto top_level;
+
+  super_serve_move_edited_contest(phr->ss, ss);
+
+  if (ss_cgi_param_int(phr, "new_edit", &new_edit) >= 0 && new_edit == 1) {
+    refresh_page(out_f, phr, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST,
+                 SSERV_OP_EDIT_CONTEST_PAGE_2);
+  } else {
+    refresh_page(out_f, phr, "action=%d", SSERV_CMD_EDIT_CURRENT_CONTEST);
+  }
+  return 0;
+
+ top_level:;
+  refresh_page(out_f, phr, NULL);
+  return 0;
+}
+
 static const unsigned char head_row_attr[] =
   " bgcolor=\"#dddddd\"";
 static const unsigned char * const form_row_attrs[]=
@@ -1266,17 +1329,21 @@ cmd_edit_contest_page(
   }
 
   if ((other_ss = super_serve_sid_state_get_cnts_editor(contest_id))) {
-    // FIXME: also report the login and name of the other editor
     snprintf(buf, sizeof(buf),
-             "serve-control: %s, contest %d is already edited",
-             phr->html_name, contest_id);
+             "serve-control: %s, the contest is edited in another session",
+             phr->html_name);
     write_html_header(out_f, phr, buf, 1, 0);
     fprintf(out_f, "<h1>%s</h1>\n", buf);
-    fprintf(out_f, "<p>Contest %d is already edited in session %016llx.</p>",
-            contest_id, other_ss->sid);
-    fprintf(out_f, "<p>%sMain page</a></p>\n",
-            html_hyperref(buf, sizeof(buf), phr->session_id,
-                          phr->self_url, "", 0));
+
+    snprintf(buf, sizeof(buf),
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\" />",
+             phr->session_id);
+    super_html_locked_cnts_dialog(out_f,
+                                  phr->priv_level, phr->user_id, phr->login,
+                                  phr->session_id, phr->ip, phr->config,
+                                  phr->ss, phr->self_url, buf,
+                                  "", contest_id, other_ss, 1);
+
     write_html_footer(out_f);
     return 0;
   }
@@ -3355,6 +3422,8 @@ static handler_func_t op_handlers[SSERV_OP_LAST] =
   [SSERV_OP_EDITED_CNTS_BACK] = cmd_edited_cnts_back,
   [SSERV_OP_EDITED_CNTS_CONTINUE] = cmd_edited_cnts_continue,
   [SSERV_OP_EDITED_CNTS_START_NEW] = cmd_edited_cnts_start_new,
+  [SSERV_OP_LOCKED_CNTS_FORGET] = cmd_locked_cnts_forget,
+  [SSERV_OP_LOCKED_CNTS_CONTINUE] = cmd_locked_cnts_continue,
   [SSERV_OP_EDIT_CONTEST_PAGE] = cmd_edit_contest_page,
   [SSERV_OP_EDIT_CONTEST_PAGE_2] = cmd_edit_contest_page_2,
   [SSERV_OP_CLEAR_CONTEST_XML_FIELD] = cmd_clear_contest_xml_field,
