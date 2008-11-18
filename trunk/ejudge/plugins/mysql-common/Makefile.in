@@ -41,7 +41,7 @@ WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@
 WERROR=@ac_cv_werror_flag@
 
 ifdef RELEASE
-CDEBUGFLAGS=-O2 -s -Wall -DNDEBUG -DRELEASE ${WERROR}
+CDEBUGFLAGS=-O2 -Wall -DNDEBUG -DRELEASE ${WERROR}
 else
 CDEBUGFLAGS=-g -Wall ${WERROR}
 endif
