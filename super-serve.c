@@ -1714,6 +1714,8 @@ static void
 sid_state_clear(struct sid_state *p)
 {
   super_serve_clear_edited_contest(p);
+  xfree(p->user_login);
+  xfree(p->user_name);
   XMEMZERO(p, 1);
 }
 static struct sid_state*
