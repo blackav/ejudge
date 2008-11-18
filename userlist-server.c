@@ -9285,6 +9285,12 @@ arg_expected(const unsigned char *progname)
   exit(1);
 }
 
+void *
+forced_symbols[] =
+{
+  xml_err_elem_undefined_s
+};
+
 int
 main(int argc, char *argv[])
 {
@@ -9389,6 +9395,14 @@ main(int argc, char *argv[])
   if (load_plugins(plugin_dir) != 0) return 1;
 
   if (convert_flag) {
+    if (!from_plugin) {
+      err("--from-plugin is undefined");
+      return 1;
+    }
+    if (!to_plugin) {
+      err("--to-plugin is undefined");
+      return 1;
+    }
     return convert_database(from_plugin, to_plugin);
   }
 
