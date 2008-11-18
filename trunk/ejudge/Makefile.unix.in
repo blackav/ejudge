@@ -58,7 +58,7 @@ include files.make
 
 ifeq (${ARCH}, unix)
 ifdef RELEASE
-CDEBUGFLAGS=-O2 -s -Wall -DNDEBUG -DRELEASE ${WERROR}
+CDEBUGFLAGS=-O2 -Wall -DNDEBUG -DRELEASE ${WERROR}
 else
 CDEBUGFLAGS=-g -Wall ${WERROR}
 endif
@@ -245,10 +245,10 @@ serve-control${CGI_PROG_SUFFIX}: ${SC_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 userlist-server: ${UL_OBJECTS}
-	${LD} ${LDFLAGS} $^ -Wl,-E -o $@ ${LDLIBS} -ldl ${EXPAT_LIB}
+	${LD} ${LDFLAGS} $^ -rdynamic -o $@ ${LDLIBS} -ldl ${EXPAT_LIB}
 
 userlist-server-control: ${ULC_OBJECTS}
-	${LD} ${LDFLAGS} $^ -Wl,-E -o $@ ${LDLIBS} ${EXPAT_LIB}
+	${LD} ${LDFLAGS} $^ -rdynamic -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 job-server: ${JS_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
