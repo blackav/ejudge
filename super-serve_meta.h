@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/11/09 20:14:36
+// Generated 2008/11/18 08:33:17
 
 #ifndef __SUPER_SERVE_META_H__
 #define __SUPER_SERVE_META_H__
@@ -14,6 +14,9 @@ enum
   SSSS_init_time,
   SSSS_flags,
   SSSS_edited_cnts,
+  SSSS_user_id,
+  SSSS_user_login,
+  SSSS_user_name,
   SSSS_advanced_view,
   SSSS_show_html_attrs,
   SSSS_show_html_headers,

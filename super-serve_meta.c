@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/11/09 20:14:36
+// Generated 2008/11/18 08:33:17
 
 #include "super-serve_meta.h"
 #include "super-serve.h"
@@ -19,6 +19,9 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_init_time] = { SSSS_init_time, 't', XSIZE(struct sid_state, init_time), "init_time", XOFFSET(struct sid_state, init_time) },
   [SSSS_flags] = { SSSS_flags, '?', XSIZE(struct sid_state, flags), "flags", XOFFSET(struct sid_state, flags) },
   [SSSS_edited_cnts] = { SSSS_edited_cnts, '?', XSIZE(struct sid_state, edited_cnts), "edited_cnts", XOFFSET(struct sid_state, edited_cnts) },
+  [SSSS_user_id] = { SSSS_user_id, 'i', XSIZE(struct sid_state, user_id), "user_id", XOFFSET(struct sid_state, user_id) },
+  [SSSS_user_login] = { SSSS_user_login, 's', XSIZE(struct sid_state, user_login), "user_login", XOFFSET(struct sid_state, user_login) },
+  [SSSS_user_name] = { SSSS_user_name, 's', XSIZE(struct sid_state, user_name), "user_name", XOFFSET(struct sid_state, user_name) },
   [SSSS_advanced_view] = { SSSS_advanced_view, 'B', XSIZE(struct sid_state, advanced_view), "advanced_view", XOFFSET(struct sid_state, advanced_view) },
   [SSSS_show_html_attrs] = { SSSS_show_html_attrs, 'B', XSIZE(struct sid_state, show_html_attrs), "show_html_attrs", XOFFSET(struct sid_state, show_html_attrs) },
   [SSSS_show_html_headers] = { SSSS_show_html_headers, 'B', XSIZE(struct sid_state, show_html_headers), "show_html_headers", XOFFSET(struct sid_state, show_html_headers) },
