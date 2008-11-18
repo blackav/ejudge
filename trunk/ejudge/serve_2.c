@@ -1449,8 +1449,8 @@ serve_notify_user_run_status_change(
   fprintf(msg_f, _("New status: %s\n"),
           run_status_str(new_status, 0, 0, 0, 0));
   if (cnts->team_url) {
-    fprintf(msg_f, "URL: %s&login=%s\n", cnts->team_url,
-            teamdb_get_login(cs->teamdb_state, user_id));
+    fprintf(msg_f, "URL: %s?contest_id=%d&login=%s\n", cnts->team_url,
+            cnts->id, teamdb_get_login(cs->teamdb_state, user_id));
   }
   fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
   fclose(msg_f); msg_f = 0;

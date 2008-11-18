@@ -2910,8 +2910,8 @@ priv_submit_clar(
     fprintf(msg_f, _("You have received a message from judges\n"));
     fprintf(msg_f, _("Contest: %d (%s)\n"), cnts->id, cnts->name);
     if (cnts->team_url) {
-      fprintf(msg_f, "URL: %s&login=%s\n", cnts->team_url,
-              teamdb_get_login(cs->teamdb_state, user_id));
+      fprintf(msg_f, "URL: %s?contest_id=%d&login=%s\n", cnts->team_url,
+              cnts->id, teamdb_get_login(cs->teamdb_state, user_id));
     }
     fprintf(msg_f, "%s\n", text3);
     fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
@@ -3032,8 +3032,8 @@ priv_submit_run_comment(
     fprintf(msg_f, _("Contest: %d (%s)\n"), cnts->id, cnts->name);
     fprintf(msg_f, "Run Id: %d\n", run_id);
     if (cnts->team_url) {
-      fprintf(msg_f, "URL: %s&login=%s\n", cnts->team_url,
-              teamdb_get_login(cs->teamdb_state, re.user_id));
+      fprintf(msg_f, "URL: %s?contest_id=%d&login=%s\n", cnts->team_url,
+              cnts->id, teamdb_get_login(cs->teamdb_state, re.user_id));
     }
     fprintf(msg_f, "%s\n", text3);
     fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
@@ -3200,8 +3200,8 @@ priv_clar_reply(
     fprintf(msg_f, _("Contest: %d (%s)\n"), cnts->id, cnts->name);
     fprintf(msg_f, "Clar Id: %d\n", in_reply_to);
     if (cnts->team_url) {
-      fprintf(msg_f, "URL: %s&login=%s\n", cnts->team_url,
-              teamdb_get_login(cs->teamdb_state, from_id));
+      fprintf(msg_f, "URL: %s?contest_id=%d&login=%s\n", cnts->team_url,
+              cnts->id, teamdb_get_login(cs->teamdb_state, from_id));
     }
     fprintf(msg_f, "%s\n", msg);
     fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
