@@ -91,6 +91,9 @@ struct sid_state
   time_t init_time;
   unsigned long flags;
   struct contest_desc *edited_cnts;
+  int user_id;
+  unsigned char *user_login;
+  unsigned char *user_name;
 
   ejintbool_t advanced_view;
   ejintbool_t show_html_attrs;
