@@ -639,7 +639,14 @@ insert_contest_info(
   }
 
   fprintf(cmd_f, "INSERT INTO %susers VALUES ( ", state->md->table_prefix);
-  unparse_user_info(state, cmd_f, user_id, info);
+  if (contest_id >= 0 && info->contest_id != contest_id) {
+    struct userlist_user_info u_arena;
+    memcpy(&u_arena, info, sizeof(u_arena));
+    u_arena.contest_id = contest_id;
+    unparse_user_info(state, cmd_f, user_id, &u_arena);
+  } else {
+    unparse_user_info(state, cmd_f, user_id, info);
+  }
   fprintf(cmd_f, " ) ;");
   fclose(cmd_f); cmd_f = 0;
 
