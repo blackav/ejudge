@@ -1,0 +1,9 @@
+2008-11-15 (r5302) Alexander Chernov  <cher@ejudge.ru>
+
+	* common_mysql.c:
+	(parse_spec_func) the hour value is not set to 12 for date columns.
+
+2008-11-12 (r5280) Alexander Chernov  <cher@ejudge.ru>
+
+	* common_mysql.h, common_mysql.c: implemented.
+

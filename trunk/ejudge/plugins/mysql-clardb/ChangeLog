@@ -1,3 +1,29 @@
+2008-11-12 (r5278) Alexander Chernov  <cher@ejudge.ru>
+
+	* cldb_mysql.c: reformatted.
+
+2008-11-12 (r5276) Alexander Chernov  <cher@ejudge.ru>
+
+	* cldb_mysql.c:
+	plugin `common_mysql' is used.
+
+2008-11-12 (r5274) Alexander Chernov  <cher@ejudge.ru>
+
+	* mysql_values.inc.c, mysql_utils.inc.c: no longer used.
+
+2008-11-10 (r5267) Alexander Chernov  <cher@ejudge.ru>
+
+	* cldb_mysql.c:
+	(struct cldb_mysql_state*) `miface', `mdata' fields are added;
+	(prepare_func) `common_mysql' plugin is loaded.
+
+2008-11-10 (r5262) Alexander Chernov  <cher@ejudge.ru>
+
+	* cldb_mysql.c:
+	(plugin_cldb_mysql) initialization structure is changed;
+	(init_func) prototype is changed;
+	(finish_func) prototype is changed.
+
 2008-10-01 (r5132) Alexander Chernov  <cher@ejudge.ru>
 
 	* cldb_mysql.c:

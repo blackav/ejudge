@@ -1,3 +1,47 @@
+2008-11-12 (r5279) Alexander Chernov  <cher@ejudge.ru>
+
+	* cntsregs.inc.c, cookies.inc.c, logins.inc.c, members.inc.c, tables.inc.c, uldb_mysql.c, user_infos.inc.c:
+	`common_mysql' plugin is used.
+
+2008-11-10 (r5269) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_mysql.c:
+	(struct uldb_mysql_state) `miface', `mdata' fields are added;
+	(prepare_func) `common_mysql' plugin is loaded.
+
+2008-11-10 (r5263) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c:
+	(init_func) prototype is changed;
+	(finish_func) prototype is changed;
+	(prepare_func) prototype is changed.
+
+	* uldb_mysql.c:
+	(plugin_uldb_mysql) initialization structure is changed;
+	(init_func) prototype is changed;
+	(finish_func) prototype is changed;
+	(prepare_func) prototype is changed.
+
+2008-11-10 (r5259) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_mysql.c:
+	(init_func) parameter is removed;
+	(finish_func) new function is added;
+	(prepare_func) `const' removed from `config' parameter.
+
+	* methods.inc.c:
+	(init_func) parameter is removed;
+	(finish_func) new function is added;
+	(prepare_func) `const' removed from `config' parameter.
+
+2008-10-30 (r5230) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c:
+	(set_simple_reg_func) prototype is added.
+
+	* uldb_mysql.c:
+	(set_simple_reg_func) new function.
+
 2008-09-26 (r5105) Alexander Chernov  <cher@ejudge.ru>
 
 	* methods.inc.c:

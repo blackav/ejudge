@@ -1,3 +1,7 @@
+2008-11-15 (r5299) Alexander Chernov  <cher@ejudge.ru>
+
+	* startstop.c: initial revision.
+
 2006-09-08 (r3335) Alexander Chernov  <cher@ejudge.ru>
 
 	* cr_serialize.c: copyright notice is updated;

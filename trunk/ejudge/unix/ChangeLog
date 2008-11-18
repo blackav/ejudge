@@ -1,3 +1,7 @@
+2008-11-15 (r5298) Alexander Chernov  <cher@ejudge.ru>
+
+	* startstop.c: moved here from the top directory.
+
 2008-09-29 (r5120) Alexander Chernov  <cher@ejudge.ru>
 
 	* fileutl.c:

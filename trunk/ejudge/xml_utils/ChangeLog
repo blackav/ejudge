@@ -1,3 +1,14 @@
+2008-11-17 (r5328) Alexander Chernov  <cher@ejudge.ru>
+
+	* parse_ip.c, parse_ip_mask.c: copyright notice is improved;
+	  error checking is improved.
+
+2008-11-15 (r5303) Alexander Chernov  <cher@ejudge.ru>
+
+	* parse_date.c: copyright notice is updated;
+	<ctype.h>, <stdlib.h> are included;
+	(xml_parse_date) multiple different date formats are supported.
+
 2008-10-03 (r5143) Alexander Chernov  <cher@ejudge.ru>
 
 	* empty_text.c: copyright notice is updated;
