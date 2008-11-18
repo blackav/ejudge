@@ -1,3 +1,658 @@
+2008-11-18 (r5339) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(priv_submit_clar) URL generation is fixed;
+	(priv_submit_run_comment) the same;
+	(priv_clar_reply) the same.
+
+	* serve_2.c:
+	(serve_notify_user_run_status_change) URL generation is fixed.
+
+2008-11-18 (r5338) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html.h:
+	(super_html_locked_cnts_dialog) new function prototype.
+
+	* super_proto.h:
+	new actions are added.
+
+	* super-serve.h:
+	(super_serve_move_edited_contest) new function prototype;
+	(super_serve_sid_state_get_cnts_editor_nc) new function prototype.
+
+	* super_html.c:
+	(super_html_locked_cnts_dialog) new function;
+	(super_html_create_contest_2) checked if the new contest number
+	  is already used.
+
+	* super_html_4.c:
+	(cmd_locked_cnts_forget) new function;
+	(cmd_locked_cnts_continue) new function;
+	(cmd_edit_contest_page) `super_html_locked_cnts_dialog' is used.
+
+	* super-serve.c:
+	"super-serve_meta.h" is included;
+	(prepare_serve_serving) does nothing;
+	(sid_state_add) new parameters `user_id', `user_login', `user_name'
+	  are added;
+	(sid_state_get) new parameters `user_id', `user_login', `user_name'
+	  are added;
+	(super_serve_sid_state_get_cnts_editor_nc) new function;
+	(super_serve_move_edited_contest) new function;
+	(cmd_main_page) contest edited in another session situations are
+	  supported.
+
+2008-11-18 (r5336) Alexander Chernov  <cher@ejudge.ru>
+
+	* super-serve.h:
+	(struct sid_state) new fields `user_id', `user_login', `user_name'.
+
+	* super-serve.c:
+	(sid_state_clear) `user_login', `user_name' are freed.
+
+2008-11-17 (r5326) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	icons are installed;
+	ejudge-upgrade-web script is installed.
+
+	* ejudge-setup.c:
+	(generate_install_script) `priv.js' is symlinked, and `actions.js'
+	  is not.
+
+2008-11-17 (r5324) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	`ac_cv_httpd_cgi_bin_dir', `ac_cv_httpd_htdocs_dir' are exported;
+	style/ejudge-upgrade-web script is supported.
+
+2008-11-17 (r5321) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	`xml_file' editing is supported instead of `statement_file'.
+
+	* prepare_out.c:
+	(prepare_unparse_prob) `xml_file' variable is handled;
+	  `statement_file' variable is no longer handled.
+	(prepare_unparse_unhandled_prob) `xml_file' variable is no longer
+	  handled;
+	  `statement_file' variable is handled.
+	(prob_instr) `xml_file' is handled instead of `statement_file'.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	`xml_file' editing is supported instead of `statement_file'.
+
+	* userlist_xml.c:
+	(do_parse_user) empty e-mails are handled.
+
+2008-11-17 (r5315) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_packet.h: copyright notice is updated;
+	(struct run_request_packet) the `notify_flag' field is added;
+	(struct run_reply_packet) the `notify_flag' field is added.
+
+	* run_packet_priv.h:
+	FLAGS_NOTIFY is added;
+	(struct run_reply_bin_packet) `flags' field is added.
+
+	* run.c:
+	(do_loop) `notify_flag' copied from the input to the output packet.
+
+	* new_server_html.c:
+	calls of `serve_compile_request' and `serve_run_request' are updated;
+	`serve_send_clar_reply_email' renamed to `serve_send_email_to_user';
+	(priv_change_status) change status e-mail notifications are supported.
+
+	* new_server_html_4.c:
+	(cmd_submit_run) calls of `serve_compile_request' and
+	  `serve_run_request' are updated.
+
+	* run_packet_1.c, run_packet_2.c, run_packet_4.c, run_packet_5.c:
+	`notify_flag' is supported.
+
+	* serve_2.c:
+	<libintl.h> is included;
+	(serve_compile_request) the `notify_flag' parameter is added;
+	(serve_run_request) the `notify_flag' parameter is added;
+	(serve_send_email_to_user) renamed from `serve_send_clar_reply_email';
+	(serve_notify_user_run_status_change) new function;
+	(serve_read_compile_packet) status change notifications are supported;
+	(serve_read_run_packet) status change notifications are supported.
+
+	* serve_state.h:
+	(struct compile_run_extra) the `notify_flag' field is added;
+	(serve_compile_request) the `notify_flag' parameter is added;
+	(serve_run_request) the `notify_flag' parameter is added;
+	(serve_send_email_to_user) renamed from `serve_send_clar_reply_email';
+	(serve_notify_user_run_status_change) new function prototype.
+
+2008-11-16 (r5313) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) new fields `notify_clar_reply',
+	  `notify_status_change'.
+
+	* serve_state.h:
+	(serve_send_clar_reply_email) new function.
+
+	* super_proto.h:
+	editing of the `notify_clar_reply', `notify_status_change' global
+	configuration variables is supported.
+
+	* new_server_html.c:
+	(priv_submit_clar) user e-mail notification is supported;
+	(priv_submit_run_comment) the same;
+	(priv_clar_reply) the same.
+
+	* prepare.c, prepare_out.c:
+	new global variables `notify_clar_reply', `notify_status_change'
+	are supported.
+
+	* serve_2.c:
+	(serve_send_clar_reply_email) new function.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of the `notify_clar_reply', `notify_status_change' global
+	configuration variables is supported.
+
+2008-11-15 (r5311) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_plugin_file.c, runlog.c:
+	(reset) parameters are renamed:
+	  `new_duration' -> `init_duration',
+	  `new_sched_time' -> `init_sched_time',
+	  `new_finish_time' -> `init_finish_time'.
+
+2008-11-15 (r5309) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h, super_proto.h:
+	<start_date> is renamed to <sched_time>.
+
+	* rldb_plugin.h:
+	(rldb_plugin_iface::open) `init_sched_time' parameter is added;
+	(rldb_plugin_iface::reset) `new_sched_time' parameter is added.
+
+	* runlog.h:
+	(run_open) `init_sched_time' parameter is added;
+	(run_reset) `new_sched_time' parameter is added.
+
+	* serve_state.h:
+	(serve_reset_contest) `cnts' parameter is added.
+
+	* contests.c, serve-control.c, super_html.c, super_html_2.c, super_html_4.c, super-serve.c:
+	<start_date> is renamed to <sched_time>.
+
+	* convert-runs.c:
+	(main) calls of `run_open' are updated.
+
+	* new_server_html.c:
+	(priv_contest_operation) call of `serve_reset_contest' is updated.
+
+	* rldb_plugin_file.c:
+	(read_runlog) `init_sched_time' parameter is added;
+	  `init_sched_time' is written to empty runlog;
+	(do_run_open) `init_sched_time' parameter is added;
+	  call of `read_runlog' is updated;
+	(open_func) `init_sched_time' parameter is added;
+	  call of `do_run_open' is updated;
+	(reset_func) `new_sched_time' parameter is added.
+
+	* runlog.c:
+	(run_open) `init_sched_time' parameter is added;
+	  call of `iface->open' is updated;
+	(run_reset) `new_sched_time' parameter is added;
+	  call of `iface->reset' is updated.
+
+	* serve.c:
+	(main) call of `run_open' is updated.
+
+	* serve_2.c:
+	(serve_reset_contest) `cnts' parameter is added;
+	  call of `run_reset' is updated.
+
+	* serve_state.c:
+	(serve_state_load_contest) call of `run_open' is updated.
+
+2008-11-15 (r5306) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	support for <start_date> element is added.
+
+	* super_proto.h:
+	editing of <start_date> contest element is supported.
+
+	* contests.c:
+	support for <start_date> element is added.
+
+	* new_server_proto.c:
+	`printing error' message is changed.
+
+	* serve-control.c, super_html.c, super_html_2.c, super_html_4.c, super-serve.c:
+	editing of <start_date> element is supported.
+
+2008-11-15 (r5304) Alexander Chernov  <cher@ejudge.ru>
+
+	* filter_tree.c: copyright notice is updated;
+	"xml_utils.h" is included;
+	(filter_tree_eval_node) `xml_parse_date' is used.
+
+	* new_server_html.c, new_server_html_4.c:
+	(do_schedule) `xml_parse_date' is used;
+	  the contest start time is reset, if date 0 is specified.
+
+	* prepare.c:
+	"xml_utils.h" is included;
+	(parse_date) `xml_parse_date' is used.
+
+	* userlist.c:
+	(userlist_parse_date_2) the hour is not set to 12.
+
+2008-11-15 (r5300) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	$(ARCH)/startstop.o is added to the list of objects.
+
+	* files.make:
+	startstop.c is moved to `unix' subdirectory.
+
+	* startstop.c:
+	moved to `unix' subdirectory.
+
+2008-11-14 (r5295) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	style/actions.js is removed.
+
+	* new-server.h:
+	(struct http_request_info) new field `script_name';
+	  new field `json_reply';
+	NEW_SRV_ACTION_JSON_USER_STATE renamed from
+	NEW_SRV_ACTION_XML_USER_STATE.
+
+	* make-js-actions.c:
+	NEW_SRV_ACTION_JSON_USER_STATE renamed from
+	NEW_SRV_ACTION_XML_USER_STATE.
+
+	* new_server_html.c:
+	(unpriv_page_header) `do_xml_user_state' is renamed to
+	  `do_json_user_state';
+	(write_alternatives_file) updated to dojo-1.2;
+	(unpriv_load_html_style) updated to dojo-1.2;
+	(unparse_answers) updated to dojo-1.2;
+	(unpriv_main_page) updated to dojo-1.2;
+	(do_json_user_state) renamed from `do_xml_user_state';
+	(unpriv_json_user_state) renamed from `unpriv_xml_user_state';
+	(unpriv_xml_update_answer) updated to dojo-1.2 and json;
+	(ns_handle_http_request) `json_reply' is handled.
+
+2008-11-13 (r5289) Alexander Chernov  <cher@ejudge.ru>
+
+	* master_html.c:
+	(generate_daily_statistics) check for an empty name is improved.
+
+	* new_server_html_2.c:
+	(ns_write_exam_info) `m' variable is properly initialized.
+
+	* serve_2.c:
+	(serve_check_stat_generation) catching-up report generation
+	  is implemented.
+
+2008-11-13 (r5287) Alexander Chernov  <cher@ejudge.ru>
+
+	* master_html.c:
+	master_html.c:
+	(html_reset_clar_filter) filter parameters are properly reset.
+
+2008-11-13 (r5285) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.h:
+	(chop2) new function prototype.
+
+	* new-server.h:
+	(ns_write_all_clars) `first_clar', `last_clar' are strings and
+	  renamed to `first_clar_str', `last_clar_str'.
+
+	* misctext.c:
+	(chop2) new function.
+
+	* new_server_html.c:
+	(priv_main_page) clar filter parameters handling is improved.
+
+	* new_server_html_2.c:
+	(parse_clar_num) new static function;
+	(ns_write_all_clars) `first_clar', `last_clar' are strings and
+	  renamed to `first_clar_str', `last_clar_str';
+	  clar filter parameters handling is improved.
+
+	* reports.c:
+	(chop2) removed.
+
+	* serve_state.c:
+	(user_filter_info_allocate) clar filter parameters are initialized.
+
+2008-11-10 (r5271) Alexander Chernov  <cher@ejudge.ru>
+
+	* common_plugin.h:
+	(plugin_get) new function prototype.
+
+	* clarlog.c, runlog.c, userlist-server.c:
+	functions from common_plugin.c are used to keep the list of plugins.
+
+	* common_plugin.c:
+	(plugin_get) initial revision.
+
+2008-11-10 (r5265) Alexander Chernov  <cher@ejudge.ru>
+
+	* cldb_plugin.h:
+	"common_plugin.h" is included;
+	`struct common_plugin_iface' is now the basic type.
+
+	* rldb_plugin.h:
+	"common_plugin.h" is included;
+	`struct common_plugin_iface' is now the basic type.
+
+	* uldb_plugin.h:
+	"common_plugin.h" is included;
+	`struct common_plugin_iface' is now the basic type.
+
+	* clarlog.c:
+	(clar_open) new plugin interface is supported.
+
+	* cldb_plugin_xml.c:
+	(cldb_plugin_file) initialization is updated;
+	(init_func) prototype is changed;
+	(finish_func) prototype is changed;
+	(prepare_func) prototype is changed.
+
+	* rldb_plugin_xml.c:
+	(rldb_plugin_file) initialization is updated;
+	(init_func) prototype is changed;
+	(finish_func) prototype is changed;
+	(prepare_func) prototype is changed.
+
+	* runlog.c:
+	(run_open) new plugin interface is supported.
+
+	* uldb_plugin_xml.c:
+	(uldb_plugin_xml) initialization is updated;
+	(init_func) prototype is changed;
+	(finish_func) prototype is changed;
+	(prepare_func) prototype is changed.
+
+	* userlist-server.c:
+	(load_plugins) new plugin interface is supported;
+	(convert_database) new plugin interface is supported.
+
+2008-11-10 (r5260) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	common_plugin.[ch] are added.
+
+	* common_plugin.h:
+	initial revision.
+
+	* ejudge_cfg.h:
+	(ejudge_cfg_get_plugin_config) new function prototype.
+
+	* uldb_plugin.h:
+	(init) parameter is removed;
+	(finish) new method is added;
+	(prepare) `const' removed from `config' parameter.
+
+	* common_plugin.c:
+	initial revision.
+
+	* ejudge_cfg.c:
+	(ejudge_cfg_get_plugin_config) new function.
+
+	* uldb_plugin_xml.c:
+	(init_func) parameter is removed;
+	(finish_func) new function;
+	(prepare_func) `const' removed from `config' parameter.
+
+	* userlist-server.c:
+	(load_plugins) calls of `init' are updated.
+
+2008-11-09 (r5256) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	plugins/mysql-common directory is added.
+
+	* Makefile.unix.in:
+	plugins/mysql-common directory is added.
+
+2008-11-09 (r5253) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	(contests_remove_nth_permission) new function prototype;
+	(contests_add_permission) new function prototype;
+	(contests_copy_permissions) new function prototype;
+	(contests_set_permission) new function prototype;
+	(contests_set_default) new function prototype;
+	(contests_add_ip) new function prototype;
+	(contests_get_ip_rule_nc) new function prototype;
+	(contests_delete_ip_rule) new function prototype;
+	(swap_tree_nodes) new (static) function prototype;
+	(contests_forward_ip_rule) new function prototype;
+	(contests_backward_ip_rule) new function prototype;
+	(contests_set_general_field) new function prototype;
+	(contests_delete_member_fields) new function prototype;
+	(contests_set_member_counts) new function prototype;
+	(contests_set_member_field) new function prototype;
+	(CNTS_FIRST_PERM) new macro;
+	(CNTS_NEXT_PERM_NC) new macro;
+	(CNTS_NEXT_PERM) new macro;
+	(CNTS_FIRST_IP) new macro;
+	(CNTS_NEXT_IP) new macro;
+	(CNTS_FIRST_IP_NC) new macro;
+	(CNTS_NEXT_IP_NC) new macro.
+
+	* super_html.h:
+	(super_html_edited_cnts_dialog) `config' is now a `const' pointer;
+	  `new_edit_mode' parameter is added.
+
+	* super_proto.h:
+	many new SSERV_OP_* commands.
+
+	* super-serve.h:
+	(struct super_http_request_info) `config', `system_login' fields
+	  are added;
+	(super_serve_sid_state_get_max_edited_cnts) new function prototype;
+	(super_serve_sid_state_get_cnts_editor) new function prototype.
+
+	* contests.c:
+	(contests_remove_nth_permission) new function;
+	(contests_add_permission) new function;
+	(contests_copy_permissions) new function;
+	(contests_set_permission) new function;
+	(contests_set_default) new function;
+	(contests_add_ip) new function;
+	(contests_get_ip_rule_nc) new function;
+	(contests_delete_ip_rule) new function;
+	(swap_tree_nodes) new (static) function;
+	(contests_forward_ip_rule) new function;
+	(contests_backward_ip_rule) new function;
+	(contests_set_general_field) new function;
+	(contests_delete_member_fields) new function;
+	(contests_set_member_counts) new function;
+	(contests_set_member_field) new function.
+
+	* new_server_html.c:
+	(priv_view_users_page) contests permissions iterator is used.
+
+	* super_html.c:
+	(super_html_main_page) links to new contest creation interface
+	  are added;
+	(super_html_edited_cnts_dialog) `new_edit_mode' parameter is added;
+	(super_html_create_contest) call of the above function is updated;
+	(print_permissions) `CNTS_FIRST_PERM'/`CNTS_NEXT_PERM_NC' is used;
+	(super_html_edit_permission) the same.
+
+	* super_html_2.c:
+	(swap_tree_nodes) moved to `contests.c';
+	(super_html_set_contest_var) many code were moved into separate
+	  functions in `contests.c'.
+
+	* super_html_4.c:
+	contest.xml editing is completed.
+
+	* super-serve.c:
+	(super_serve_sid_state_get_max_edited_cnts) new function;
+	(super_serve_sid_state_get_cnts_editor) new function;
+	(cmd_main_page) call of `super_html_edited_cnts_dialog' is updated;
+	(cmd_http_request) `.system_login' and `.config' fields are filled.
+
+2008-11-05 (r5244) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.c:
+	"contests_meta.h" is included;
+	fields are iterated in many places.
+
+	* super_html.c:
+	capability table `contest_cap_descs' is fixed.
+
+2008-11-04 (r5242) Alexander Chernov  <cher@ejudge.ru>
+
+	* opcaps.h:
+	outdated stuff is removed;
+	(opcaps_is_contest_cap) function is removed.
+
+	* opcaps.c:
+	outdated stuff is removed;
+	(opcaps_is_contest_cap) function is removed;
+	(opcaps_parse) predefined capsets are supported;
+	(opcaps_unparse) predefined capsets are supported.
+
+	* super_html.c:
+	(super_html_print_caps_table) `opcaps_is_contest_cap' is removed.
+
+2008-11-04 (r5239) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	-std=gnu99 compilation flag is added;
+	metainformation generation rules are added.
+
+	* files.make:
+	meta_generic.[ch] are added.
+
+	* contests.h:
+	fields renamed:
+	  new_managed -> managed;
+	  default_locale_val -> default_locale_num;
+	  enable_forgot_password -> enable_password_recovery
+	fields removed:
+	  client_disable_team;
+	  client_ignore_time_skew;
+	`ejbytebool_t' is used instead of `unsigned char';
+	(contests_get_path_in_conf_dir) new function prototype;
+	(contests_get_form_field_name) new function prototype;
+	(contests_get_member_field_name) new function prototype;
+	(contests_get_member_name) new function prototype.
+
+	* ej_types.h: copyright notice is updated;
+	`ejbytebool_t', `ejintbool_t' types are added.
+
+	* l10n.h: copyright notice is updated;
+	(l10n_html_locale_select_2) new function prototype;
+	(l10n_unparse_locale) new function prototype.
+
+	* opcaps.h: enumeration for predefined capability sets is added;
+	(opcaps_is_predef_caps) new function prototype;
+	(opcaps_get_predef_caps) new function prototype.
+
+	* pathutl.h:
+	gnu99 compatibility fixes.
+
+	* super_html.h:
+	"opcaps.h" is included;
+	(super_html_unparse_access) new function prototype;
+	(super_html_copy_contest_access) new function prototype;
+	(super_html_print_caps_table) new function prototype;
+	(html_numeric_select) new function prototype.
+
+	* super_proto.h:
+	fixes for renamed contests fields;
+	new `SSERV_OP_*' constants are added.
+
+	* super-serve.h:
+	"opcaps.h" is included;
+	(struct sid_state) `ejintbool_t' is used instead of `int';
+	  `*_loaded' fields are added;
+	(struct super_http_request_info) new fields added.
+
+	* contests.c:
+	  "disable_member_delete" attribute is added;
+	  "enable_password_recovery" attribute is added;
+	(contests_get_path_in_conf_dir) new function;
+	(contests_get_form_field_name) new function;
+	(contests_get_member_field_name) new function;
+	(contests_get_member_name) new function.
+
+	* contest_tmpl.c, new_server_html.c, new_server_html_3.c, new_server_html_4.c, new_server_html_5.c, serve-control.c, super_html.c, super_html_2.c, super-serve.c, userlist-server.c:
+	changes according to renamed and removed contests fields.
+
+	* l10n.c:
+	(l10n_html_locale_select_2) new function;
+	(l10n_unparse_locale) new function.
+
+	* opcaps.c:
+	(opcaps_is_predef_caps) new function;
+	(opcaps_get_predef_caps) new function.
+
+	* teamdb.c:
+	(teamdb_lookup_client) gnu99 compatibility fixes.
+
+2008-11-04 (r5237) Alexander Chernov  <cher@ejudge.ru>
+
+	* meta_generic.h: initial revision.
+
+	* meta_generic.c: initial revision.
+
+	* super_html_4.c: lots of code for new contest editing is written.
+
+2008-10-30 (r5232) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(ns_html_err_simple_registered) new function prototype.
+
+	* uldb_plugin.h:
+	(struct uldb_plugin_iface) `set_simple_reg' method is added.
+
+	* userlist_clnt.h:
+	(userlist_clnt_recover_passwd_2) `p_regstatus' parameter is added.
+
+	* userlist_proto.h:
+	new error `ULS_ERR_SIMPLE_REGISTERED' is added;
+	(struct userlist_pk_new_password) `regstatus' field is added.
+
+	* new_server_html.c:
+	(unpriv_page_forgot_password_3)
+	  call of `userlist_clnt_recover_passwd_2' is updated;
+	  if the user is not registered for the contest, the submit button
+	  is works as login to `new-register' program.
+
+	* new_server_html_3.c:
+	(ns_html_err_simple_registered) new function.
+
+	* new_server_html_5.c:
+	(cmd_login) `simple_registered' error is displayed on occasion.
+
+	* uldb_plugin_xml.c:
+	(set_simple_reg_func) new function is implemented.
+
+	* userlist_proto.c: copyright notice is updated;
+	new error message is added.
+
+	* userlist-server.c:
+	(cmd_recover_password_1) unregistered user is allowed to recover
+	  its password if it is simple_registered;
+	(cmd_recover_password_2) the same;
+	  registration status is passed back to the client;
+	  `simple_registration' flag is cleared upon successful password
+	  recovery;
+	(cmd_check_user) `ULS_ERR_SIMPLE_REGISTERED' error code is returned
+	  where appropriate.
+
 2008-10-12 (r5193) Alexander Chernov  <cher@ejudge.ru>
 
 	* Makefile.unix.in:

@@ -1,3 +1,9 @@
+2008-10-30 (r5231) Alexander Chernov  <cher@ejudge.ru>
+
+	* recover_passwd_2.c: copyright notice is updated;
+	(userlist_clnt_recover_passwd_2) `p_regstatus' parameter
+	  is added.
+
 2008-09-30 (r5123) Alexander Chernov  <cher@ejudge.ru>
 
 	* delete_info.c: copyright notice is updated;

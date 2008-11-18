@@ -1,3 +1,62 @@
+2008-11-15 (r5310) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c, rldb_mysql.c:
+	(reset_func) parameters are renamed:
+	  `new_duration' -> `init_duration',
+	  `new_sched_time' -> `init_sched_time',
+	  `new_finish_time' -> `init_finish_time'.
+
+2008-11-15 (r5308) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c:
+	(open_func) `init_sched_time' parameter is added;
+	(reset_func) `init_sched_time' parameter is added.
+
+	* rldb_mysql.c:
+	(load_header) `init_sched_time' parameter is added;
+	  the `init_sched_time' is written to the header;
+	(open_func) `init_sched_time' parameter is added;
+	(reset_func) `new_sched_time' parameter is added;
+	  `new_sched_time' is written to the header.
+
+2008-11-13 (r5291) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c:
+	(set_runlog_func) basically implemented;
+	(squeeze_func) just error is returned.
+
+2008-11-12 (r5277) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c: reformatted.
+
+2008-11-12 (r5275) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c, tables.inc.c:
+	plugin `common_mysql' is used.
+
+2008-11-12 (r5273) Alexander Chernov  <cher@ejudge.ru>
+
+	* mysql_utils.inc.c, mysql_values.inc.c: no longer used.
+
+2008-11-10 (r5268) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c:
+	(struct rldb_mysql_state) `miface', `mdata' fields are added;
+	(prepare_func) `common_mysql' plugin is loaded.
+
+2008-11-10 (r5264) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c:
+	(init_func) prototype is changed;
+	(finish_func) prototype is changed;
+	(prepare_func) prototype is changed.
+
+	* rldb_mysql.c:
+	(plugin_rldb_mysql) initialization is changed;
+	(init_func) prototype is changed;
+	(finish_func) prototype is changed;
+	(prepare_func) prototype is changed.
+
 2008-10-10 (r5182) Alexander Chernov  <cher@ejudge.ru>
 
 	* methods.inc.c, tables.inc.c:
