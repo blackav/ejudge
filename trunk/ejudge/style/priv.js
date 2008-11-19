@@ -150,7 +150,7 @@ function editFileSave(form_id, op, field_id, next_op)
         "SID": SID,
         "action": SSERV_CMD_HTTP_REQUEST,
         "op": op,
-        "field_id": field_id,
+        "field_id": field_id
       },
       form : form_id,
       handleAs: "json",
@@ -194,7 +194,7 @@ function ssFormOp1(form_id, op, next_op)
       content: {
         "SID": SID,
         "action": SSERV_CMD_HTTP_REQUEST,
-        "op": op,
+        "op": op
       },
       form : form_id,
       handleAs: "json",
@@ -349,7 +349,7 @@ function ssForgetContest(op)
       content: {
         "SID": SID,
         "action": SSERV_CMD_HTTP_REQUEST,
-        "op": op,
+        "op": op
       },
       handleAs: "json",
       error: function(data, ioargs) {

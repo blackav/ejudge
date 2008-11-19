@@ -1,5 +1,17 @@
 // $Id$
 
+// Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru>
+
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
 var reloadTimer = null;
 var clockTimer = null;
 var pingTimer = null;
@@ -71,7 +83,6 @@ function reloadPage()
   window.location.reload();
 }
 
-//function which updates the clock state from server
 function updateTime()
 {
   if (reloadTimer != null) {
@@ -86,7 +97,7 @@ function updateTime()
       url: script_name,
       content: {
         "SID": SID,
-        "action": NEW_SRV_ACTION_JSON_USER_STATE,
+        "action": NEW_SRV_ACTION_JSON_USER_STATE
       },
       handleAs: "json",
       error: function(data, ioargs) {
@@ -102,7 +113,6 @@ function updateTime()
   });
 }
 
-//starting Clock
 function startClock()
 {
   clockTimer = window.setInterval(updateLocalTime, 1000);
@@ -125,7 +135,7 @@ function submitAnswer(action, probId, answer, next_action, nextProbId)
         "action": action,
         "prob_id": probId,
         "json": 1,
-        "file": answer,
+        "file": answer
       },
       handleAs: "json",
       error: function(data, ioargs) {
