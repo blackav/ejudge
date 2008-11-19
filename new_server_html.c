@@ -12539,13 +12539,13 @@ do_json_user_state(FILE *fout, const serve_state_t cs, int user_id)
           " \"s\": %d,"
           " \"d\": %d,"
           " \"o\": %d,"
-          " \"y\": %d,",
+          " \"y\": %d",
           ptm->tm_hour, ptm->tm_min, ptm->tm_sec,
           ptm->tm_mday, ptm->tm_mon + 1, ptm->tm_year + 1900);
   if (start_time > 0 && stop_time <= 0 && duration > 0) {
     remaining = start_time + duration - cs->current_time;
     if (remaining < 0) remaining = 0;
-    fprintf(fout, " \"r\": %ld,", remaining);
+    fprintf(fout, ", \"r\": %ld", remaining);
   }
   if (run_has_transient_user_runs(cs->runlog_state, user_id) ||
       (global->score_system_val == SCORE_OLYMPIAD
@@ -12553,7 +12553,7 @@ do_json_user_state(FILE *fout, const serve_state_t cs, int user_id)
        && stop_time > 0
        && global->disable_virtual_auto_judge <= 0
        && !is_judged_virtual_olympiad(cs, user_id))) {
-    fprintf(fout, " \"x\": 1,");
+    fprintf(fout, ", \"x\": 1");
   }
   fprintf(fout, " }");
 }
