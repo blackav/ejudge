@@ -28,6 +28,15 @@
 #include <stdio.h>
 #include <time.h>
 
+#ifndef META_ATTRIB
+#if defined __RCC__
+#undef __attribute__
+#define META_ATTRIB(x) __attribute__(x)
+#else
+#define META_ATTRIB(x)
+#endif /* __RCC__ */
+#endif /* META_ATTRIB */
+
 enum { PREPARE_SERVE, PREPARE_COMPILE, PREPARE_RUN };
 enum { PREPARE_QUIET = 1 };
 
@@ -90,343 +99,576 @@ struct user_adjustment_map;
 
 #define puc_t unsigned char
 
+/* sizeof(struct section_problem_data) == 346708 */
 struct section_global_data
 {
-  struct generic_section_config g;
+  struct generic_section_config g META_ATTRIB((meta_hidden));
 
-  int    sleep_time;            /* interval between directory polls (millis) */
-  int    serve_sleep_time;      /* poll interval for serve, if different */
-  int    contest_time;          /* contest time (in seconds) */
-  int    max_run_size;          /* max size of a run */
-  int    max_run_total;         /* max total of all runs for each team */
-  int    max_run_num;           /* max number of runs for each team */
-  int    max_clar_size;         /* max size of a clar */
-  int    max_clar_total;        /* max total of all clars for each team */
-  int    max_clar_num;          /* max number of clars for each team */
+  /** interval between directory polls (milliseconds) */
+  int sleep_time;
+  /** @deprecated{poll interval for serve, if different} */
+  int serve_sleep_time;
+  /** contest time (in seconds), 0 for unlimited contests */
+  int contest_time;
+  /** max size of a run in bytes */
+  ejintsize_t max_run_size;
+  /** max total size of all user's runs in bytes */
+  ejintsize_t max_run_total;
+  /** max number of runs for each user */
+  int max_run_num;
+  /** max size of a clar in bytes */
+  ejintsize_t max_clar_size;
+  /** max total size of all user's clars */
+  ejintsize_t max_clar_total;
+  /** max number of clars for each user */
+  int max_clar_num;
 
-  int    board_fog_time;        /* time before the end when the board
-                                 * is not updated */
-  int    board_unfog_time;      /* time after the end of the contest
-                                 * when the board is again updated */
-  int    autoupdate_standings;  /* update standings automatically? */
-  int    use_ac_not_ok;         /* use AC status for passing solutions */
-  int    inactivity_timeout;    /* timeout for slave case */
-  int    disable_auto_testing;  /* do not test automatically */
-  int    disable_testing;       /* do not test the submit at all */
-  int    enable_runlog_merge;   /* enable runlog merging */
-  int    secure_run;            /* run securely */
-  int    detect_violations;     /* detect security violations */
-  int    enable_memory_limit_error; /* enable support for memory limit detection */
+  /** time before the end of the contest when the board stops updating (s) */
+  int board_fog_time;
+  /** time after the end of the contest when the board is updated again (s) */
+  int board_unfog_time;
+  /** update standings automatically? (1 by default) */
+  ejintbool_t autoupdate_standings;
+  /** use AC status for solutions that pass all tests */
+  ejintbool_t use_ac_not_ok;
+  /** timeout for unloading contest from memory */
+  int inactivity_timeout;
+  /** do not test automatically */
+  ejintbool_t disable_auto_testing;
+  /** do not test submits at all */
+  ejintbool_t disable_testing;
+  /** enable runlog merging (dangerous!) */
+  ejintbool_t enable_runlog_merge;
+  /** run securely (kernel patch is needed) */
+  ejintbool_t secure_run;
+  /** detect security violations (only with secure_run) */
+  ejintbool_t detect_violations;
+  /** enable support for memory limit detection */
+  ejintbool_t enable_memory_limit_error;
 
-  puc_t  stand_ignore_after[256];
-  time_t stand_ignore_after_d; /* ignore submits after this time in standings */
+  /** do not show submits after this time in the standings */
+  puc_t stand_ignore_after[256];
+  /** the parsed `stand_ignore_after' */
+  time_t stand_ignore_after_d META_ATTRIB((meta_private));
 
-  puc_t  contest_finish_time[256];
-  time_t contest_finish_time_d;
+  /** the contest finish time (for unlimited contests) */
+  puc_t contest_finish_time[256];
+  /** the parsed `contest_finish_time' */
+  time_t contest_finish_time_d META_ATTRIB((meta_private));
 
-  puc_t  appeal_deadline[256];
-  time_t appeal_deadline_d;
+  /** the appelation deadline */
+  puc_t appeal_deadline[256];
+  /** the parsed `appeal_deadline' */
+  time_t appeal_deadline_d META_ATTRIB((meta_private));
 
-  int    fog_standings_updated; /* INTERNAL: updated at the moment of fog? */
-  int    start_standings_updated; /* INTERNAL: updated at the start */
-  int    unfog_standings_updated; /* INTERNAL: updated after the fog */
+  /** INTERNAL: updated at the moment of fog? */
+  int fog_standings_updated META_ATTRIB((meta_private));
+  /** INTERNAL: updated at the start */
+  int start_standings_updated META_ATTRIB((meta_private));
+  /** INTERNAL: updated after the fog */
+  int unfog_standings_updated META_ATTRIB((meta_private));
 
-  int    team_enable_src_view;  /* teams are allowed to view sources? */
-  int    team_enable_rep_view;  /* teams are allowed to view reports? */
-  int    team_enable_ce_view;   /* teams are allowed to view compile errs? */
-  int    team_show_judge_report;
-  int    disable_clars;         /* clarification requests disabled */
-  int    disable_team_clars;    /* team cannot compose a clarification */
-  int    disable_submit_after_ok; /* disable submits of an already accepted problem */
-  int    ignore_compile_errors; /* ignore CE result for score calculation */
-  int    enable_continue;       /* enable contest continuation after stop */
-  int    enable_report_upload;  /* enable manual upload of checking reports */
-  int    priority_adjustment;   /* priority adjustment for the contest */
-  int    ignore_success_time;   /* for ACM standings: do not count success time */
-  int    disable_failed_test_view; /* do not show the failed test number */
-  int    always_show_problems;  /* show "Problems" link before contest start */
-  int    disable_user_standings; /* disable built-in standings */
-  int    disable_language;       /* disable problem language column */
-  int    problem_navigation;     /* extended problem navigation */
-  int    problem_tab_size;
-  int    vertical_navigation;    /* align vertically */
-  int    disable_virtual_start;  /* disable user "virtual start" button */
-  int    disable_virtual_auto_judge;  /* disable auto-judging after virtual olympiad */
-  int    enable_auto_print_protocol;  /* print user examination protocols automatically */
-  int    notify_clar_reply;     /* send clar reply notification to users */
-  int    notify_status_change;  /* send status change notification to users */
+  /** participants are allowed to view sources? */
+  ejintbool_t team_enable_src_view;
+  /** participants are allowed to view reports? */
+  ejintbool_t team_enable_rep_view;
+  /** participants are allowed to view compile errors? */
+  ejintbool_t team_enable_ce_view;
+  /** the full testing protocol is available for participants */
+  ejintbool_t team_show_judge_report;
+  /** clarification requests are disabled completely */
+  ejintbool_t disable_clars;
+  /** participants are not allowed composing a clarification request */
+  ejintbool_t disable_team_clars;
+  /** disable submits of an already accepted problem */
+  ejintbool_t disable_submit_after_ok;
+  /** ignore compilation errors in score calculation */
+  ejintbool_t ignore_compile_errors;
+  /** enable contest continuation after stop */
+  ejintbool_t enable_continue;
+  /** enable manual upload of testing reports */
+  ejintbool_t enable_report_upload;
+  /** global priority adjustment for the contest */
+  int priority_adjustment;
+  /** for ACM standings: do not count success time */
+  ejintbool_t ignore_success_time;
+  /** do not show the failed test number to contestants */
+  ejintbool_t disable_failed_test_view;
+  /** show the "Problems" link before the contest start */
+  ejintbool_t always_show_problems;
+  /** disable the built-in contest standings */
+  ejintbool_t disable_user_standings;
+  /** do not show "language" column to contestants */
+  ejintbool_t disable_language;
+  /** extended tabbed problem navigation */
+  ejintbool_t problem_navigation;
+  /** the size of the problem tab */
+  int problem_tab_size;
+  /** display problem tabs vertically */
+  ejintbool_t vertical_navigation;
+  /** disable "virtual start" command for contestants */
+  ejintbool_t disable_virtual_start;
+  /** disable auto-judging after virtual olympiad is finished for a user */
+  ejintbool_t disable_virtual_auto_judge;
+  /** print user examination protocols automatically */
+  ejintbool_t enable_auto_print_protocol;
+  /** send clar reply notification to users */
+  ejintbool_t notify_clar_reply;
+  /** send status change notification to users */
+  ejintbool_t notify_status_change;
 
-  puc_t name[256];              /* name of the contest */
+  /** @deprecated{the name of the contest} */
+  puc_t name[256];
+  /** @deprecated{the contest root directory} */
   path_t root_dir;
-  path_t serve_socket;          /* serve's socket name */
+  /** @deprecated{the contest socket path} */
+  path_t serve_socket;
 
-  int    enable_l10n;           /* enable string translation? */
-  path_t l10n_dir;              /* localization message catalog */
-  puc_t  standings_locale[128];
-  int    standings_locale_id;
+  /** enable message translation? */
+  ejintbool_t enable_l10n;
+  /** message translation catalog */
+  path_t l10n_dir;
+  /** the language of the standings */
+  puc_t standings_locale[128];
+  /** parsed `standings_locale' */
+  int standings_locale_id META_ATTRIB((meta_private));
 
-  /* userlist-server support */
-  int    contest_id;
+  /** the contest number (mandatory) */
+  int contest_id;
+  /** the `userlist-server' socket path */
   path_t socket_path;
+  /** the contest XML directory */
   path_t contests_dir;
+  /** compiler configuration script dir */
+  path_t lang_config_dir;
 
-  path_t lang_config_dir;       /* compiler configuration scripts dir */
-
-  /* charsets */
-  puc_t charset[128];            /* html pages charset */
-  puc_t standings_charset[128];  /* charset for standings */
-  puc_t stand2_charset[128];     /* charset for second standings table */
-  puc_t plog_charset[128];       /* charset for submission log */
+  /** html charset */
+  puc_t charset[128];
+  /** charset for the standings */
+  puc_t standings_charset[128];
+  /** charset for the secondary standings */
+  puc_t stand2_charset[128];
+  /** charset for the submission log */
+  puc_t plog_charset[128];
 
   /* ====== CONFIGURATION FILES/DIRECTORIES SETUP ====== */
-  path_t conf_dir;              /* configuration dir */
+  /** configuration dir */
+  path_t conf_dir;
+  /** default location of the compile and run scripts */
+  path_t script_dir;
+  /** directory with the tests */
+  path_t test_dir;
+  /** directory with the correct answers */
+  path_t corr_dir;
+  /** directory with the test info files */
+  path_t info_dir;
+  /** directory with the working dir tgz archives */
+  path_t tgz_dir;
+  /** directory with the checkers */
+  path_t checker_dir;
+  /** directory with the problem statements */
+  path_t statement_dir;
+  /** directory with the contest and problem plugins */
+  path_t plugin_dir;
+  /** suffix of the test files */
+  puc_t test_sfx[32];
+  /** suffix of the files with correct answers */
+  puc_t corr_sfx[32];
+  /** suffix of the files with test info */
+  puc_t info_sfx[32];
+  /** suffix of the tgz archive files */
+  puc_t tgz_sfx[32];
+  /** path to the built-in checkers */
+  path_t ejudge_checkers_dir;
+  /** command to run when the contest starts */
+  path_t contest_start_cmd;
+  /** path to the HTML file with the contest description */
+  path_t description_file;
+  /** path to the contest plugin */
+  path_t contest_plugin_file;
 
-  path_t script_dir;            /* default location of compile
-                                 * and run scripts */
-  path_t test_dir;              /* common prefix dir for tests */
-  path_t corr_dir;              /* common prefix dir for correct answers */
-  path_t info_dir;              /* common prefix dir for test infos */
-  path_t tgz_dir;               /* common prefix dir for directory tests */
-  path_t checker_dir;           /* default location of checkers */
-  path_t statement_dir;         /* default location of inline prob. stat. */
-  path_t plugin_dir;            /* default location of plugins */
-  puc_t test_sfx[32];           /* default test files suffix */
-  puc_t corr_sfx[32];           /* default correct files suffix */
-  puc_t info_sfx[32];           /* default info files suffix */
-  puc_t tgz_sfx[32];            /* default tar files suffix */
-  path_t ejudge_checkers_dir;   /* path to the built-in checkers */
-  path_t contest_start_cmd;     /* command to run when contest starts */
-  path_t description_file;      /* contest description */
-  path_t contest_plugin_file;   /* contest plugin */
-
+  /** printf pattern for the files with tests */
   puc_t test_pat[32];
+  /** printf pattern for the files with correct answers */
   puc_t corr_pat[32];
+  /** printf pattern for the files with test information */
   puc_t info_pat[32];
+  /** printf pattern for the files with the working dir archive */
   puc_t tgz_pat[32];
 
+  /** the clarification base storage plugin (file, mysql) */
   puc_t clardb_plugin[32];
+  /** the run information base storage plugin (file, mysql) */
   puc_t rundb_plugin[32];
-  puc_t xuser_plugin[32];       /* team_extra plugin */
+  /** the extra user information storage plugin (file, mysql) */
+  puc_t xuser_plugin[32];
 
   /* ====== VARIABLE FILES/DIRECTORIES SETUP ====== */
-  path_t var_dir;               /* variable files dir */
+  /** root directory with working files, run sources/reports, etc */
+  path_t var_dir;
 
   /* --- server logging --- */
   //path_t log_file;              /* logger log file */
-  path_t run_log_file;          /* run log file */
-  path_t clar_log_file;         /* clar log file */
-  path_t archive_dir;           /* common directory for archives */
-  path_t clar_archive_dir;      /* clar archive directory */
-  path_t run_archive_dir;       /* run archive directory */
-  path_t report_archive_dir;    /* report archive directory */
-  path_t team_report_archive_dir; /* team report archive directory */
-  path_t xml_report_archive_dir;  /* new (XML-only) report archive directory */
-  path_t full_archive_dir;      /* full output archive directory */
-  path_t audit_log_dir;         /* directory for audit logs */
-  path_t team_extra_dir;        /* team extra information directory */
+  /** run database file (for file storage) */
+  path_t run_log_file;
+  /** clarification database file (for file storage) */
+  path_t clar_log_file;
+  /** root directory for archives */
+  path_t archive_dir;
+  /** clar archive directory */
+  path_t clar_archive_dir;
+  /** run source code archive directory */
+  path_t run_archive_dir;
+  /** @deprecated{report archive directory} */
+  path_t report_archive_dir;
+  /** @deprecated{team report archive directory} */
+  path_t team_report_archive_dir;
+  /** XML report archive directory */
+  path_t xml_report_archive_dir;
+  /** full output archive directory */
+  path_t full_archive_dir;
+  /** directory for audit logs */
+  path_t audit_log_dir;
+  /** team extra information directory */
+  path_t team_extra_dir;
 
   /* --- server status reporting --- */
-  path_t status_dir;            /* server status directory */
-  path_t work_dir;              /* subdir for working dirs */
-  path_t print_work_dir;        /* subdir for printing */
-  path_t diff_work_dir;         /* subdir for comparing */
+  /** server status directory */
+  path_t status_dir;
+  /** subdir for working dirs */
+  path_t work_dir;
+  /** subdir for printing */
+  path_t print_work_dir;
+  /** subdir for comparing */
+  path_t diff_work_dir;
 
+  /** path to the `a2ps' program (default is /usr/bin/a2ps) */
   path_t a2ps_path;
+  /** arguments for the `a2ps' program */
   char **a2ps_args;
+  /** path to the `lpr' program (default is /usr/bin/lpr) */
   path_t lpr_path;
+  /** arguments for the `lpr' program */
   char **lpr_args;
 
+  /** path to the `diff' program */
   path_t diff_path;
 
   /* --- server <-> compile interaction --- */
   /* global parameters are used by compile utility, whereas 
    * language-local parameters are used by serve */
-  path_t compile_dir;           /* common subdirectory */
-  path_t compile_queue_dir;     /* directory for serve->compile packets */
-  path_t compile_src_dir;       /* directory for source files */
+  /** the compile spool root dir */
+  path_t compile_dir;
+  /** the compile packets spool directory */
+  path_t compile_queue_dir;
+  /** the compile source files spool directory */
+  path_t compile_src_dir;
 
   /* these are used by serve */  
   /* var/compile prefix is implicit and cannot be changed! */
-  path_t compile_out_dir;       /* base directory for compile results */
-  path_t compile_status_dir;    /* compile->serve status dir */
-  path_t compile_report_dir;    /* compile->serve report dir */
+  /** base directory for compile results */
+  path_t compile_out_dir;
+  /** compile->serve status dir */
+  path_t compile_status_dir;
+  /** compile->serve report dir */
+  path_t compile_report_dir;
 
+  /** working directory for compilation */
   path_t compile_work_dir;
 
   /* --- serve <-> run interaction --- */
-  path_t run_dir;               /* common subdirectory */
-  path_t run_queue_dir;         /* common prefix dir for serve->run packets */
-  path_t run_exe_dir;           /* serve->run executables */
+  /** the run spool root directory */
+  path_t run_dir;
+  /** common prefix dir for serve->run packets */
+  path_t run_queue_dir;
+  /** serve->run executables */
+  path_t run_exe_dir;
 
-  path_t run_out_dir;           /* base directory for run results */
-  path_t run_status_dir;        /* run->serve status dir */
-  path_t run_report_dir;        /* run->serve report dir */
-  path_t run_team_report_dir;   /* run->serve team report dir */
-  path_t run_full_archive_dir;  /* run->serve full output archive dir */
+  /** base directory for run results */
+  path_t run_out_dir;
+  /** run->serve status dir */
+  path_t run_status_dir;
+  /** run->serve report dir */
+  path_t run_report_dir;
+  /** run->serve team report dir */
+  path_t run_team_report_dir;
+  /** run->serve full output archive dir */
+  path_t run_full_archive_dir;
 
-  path_t run_work_dir;          /* private run's temporary directory */
-  path_t run_check_dir;         /* working directory for checked programs */
+  /** private run's temporary directory */
+  path_t run_work_dir;
+  /** working directory for checked programs */
+  path_t run_check_dir;
 
-  path_t htdocs_dir;            /* httpd server html document root dir */
+  /** httpd server html document root dir */
+  path_t htdocs_dir;
 
-  /* scoring settings */
-  puc_t score_system[32];       /* scoring system */
-  int    score_system_val;      /* internal int value */
-  int    tests_to_accept;       /* how many tests to accept a submit */
-  int    is_virtual;            /* 1, if virtual contest */
-  int    prune_empty_users;     /* 1, if do not show empty users in stands */
-  puc_t  rounding_mode[32];     /* seconds rounding mode */
-  int    rounding_mode_val;     /* internal int value */
+  /** contest scoring system */
+  puc_t score_system[32];
+  /** parsed `score_system' */
+  int score_system_val META_ATTRIB((meta_private));
+  /** number of tests to accept a submit in olympiad contests */
+  int tests_to_accept;
+  /** 1, if virtual contest */
+  ejintbool_t is_virtual;
+  /** 1, if do not show empty users in stands */
+  ejintbool_t prune_empty_users;
+  /** seconds rounding mode */
+  puc_t  rounding_mode[32];
+  /** parsed `rounding_mode' */
+  int    rounding_mode_val META_ATTRIB((meta_private));
 
-  int    max_file_length;       /* maximal length of the file in reports */
-  int    max_line_length;       /* maximal length of line in reports */
-  int    max_cmd_length;        /* maximal length of command line in reports */
+  /** maximal length of the file in reports */
+  ejintsize_t max_file_length;
+  /** maximal length of line in reports */
+  ejintsize_t max_line_length;
+  /** maximal length of command line in reports */
+  ejintsize_t max_cmd_length;
 
-  path_t team_info_url;         /* the team info URL template */
-  path_t prob_info_url;         /* the problem info URL template */
-  puc_t standings_file_name[256]; /* public standings file name */
-  path_t stand_header_file;     /* file to use as standings header */
-  path_t stand_footer_file;     /* file to use as standings footer */
+  /** URL template for the user information link in the standings */
+  path_t team_info_url;
+  /** URL template for the problem link in the standings */
+  path_t prob_info_url;
+  /** public standings file name */
+  puc_t standings_file_name[256];
+  /** standings header file */
+  path_t stand_header_file;
+  /** standings footer file */
+  path_t stand_footer_file;
+  /** directory where to install a symlink to the standings file */
   path_t stand_symlink_dir;
-  int    users_on_page;         /* number of users on page */
+  /** number of users on page */
+  int    users_on_page;
   puc_t stand_file_name_2[256];
 
-  int stand_fancy_style;        /* fancy standings style */
-  puc_t stand_extra_format[256];/* extra standings info */
-  puc_t stand_extra_legend[256];/* extra standings info legend */
-  puc_t stand_extra_attr[256];  /* extra standings info attributes */
-  puc_t stand_table_attr[256];  /* standings table attributes */
-  puc_t stand_place_attr[256];  /* standings place column attributes */
-  puc_t stand_team_attr[256];   /* standings team column attributes */
-  puc_t stand_prob_attr[256];   /* standings problems column attributes */
-  puc_t stand_solved_attr[256]; /* standings solved column attributes */
-  puc_t stand_score_attr[256];  /* standings solved column attributes */
-  puc_t stand_penalty_attr[256];/* standings penalty column attributes */
-  puc_t stand_time_attr[256];   /* standings time attributes */
-  puc_t stand_self_row_attr[256];/* self-row attributes */
-  puc_t stand_r_row_attr[256];  /* standings real team row attributes */
-  puc_t stand_v_row_attr[256];  /* standings virtual team row attributes */
-  puc_t stand_u_row_attr[256];  /* standings unknown team row attributes */
-  puc_t stand_success_attr[256];/* last success attributes */
-  puc_t stand_fail_attr[256];   /* attributes for "Check failed" */
-  puc_t stand_trans_attr[256];  /* attributes for transient cells */
-  puc_t stand_disq_attr[256];   /* attributes for "Check failed" */
-  int stand_use_login;          /* use login instead of name */
-  int stand_show_ok_time;       /* whether show time */
-  int stand_show_att_num;       /* show number of attempts in Kirov standings */
-  int stand_sort_by_solved;     /* sort by solved problems first in Kirov standings */
+  /** enable fancy standings style */
+  ejintbool_t stand_fancy_style;
+  /** format for the extra column in the standings */
+  puc_t stand_extra_format[256];
+  /** legend for the extra column in the standings*/
+  puc_t stand_extra_legend[256];
+  /** HTML attribute for the extra column in the standings */
+  puc_t stand_extra_attr[256];
+  /** HTML attribute for the whole standings */
+  puc_t stand_table_attr[256];
+  /** HTML attribute for the `place' column in the standings */
+  puc_t stand_place_attr[256];
+  /** HTML attribute for the `user' column in the standings */
+  puc_t stand_team_attr[256];
+  /** HTML attribute for the problem columns in the standings */
+  puc_t stand_prob_attr[256];
+  /** HTML attribute for the `solved' column in the standings */
+  puc_t stand_solved_attr[256];
+  /** HTML attribute for the `score' column in the standings */
+  puc_t stand_score_attr[256];
+  /** HTML attribute for the `penalty' column in the standings */
+  puc_t stand_penalty_attr[256];
+  /** HTML attribute for time in problem cells */
+  puc_t stand_time_attr[256];
+  /** HTML attribute for rows corresponding to the current participant */
+  puc_t stand_self_row_attr[256];
+  /** HTML attribute for rows corresponding to the real participants */
+  puc_t stand_r_row_attr[256];
+  /** HTML attribute for rows corresponding to the virtual participants */
+  puc_t stand_v_row_attr[256];
+  /** HTML attribute for rows corresponding to the unknown participants */
+  puc_t stand_u_row_attr[256];
+  /** HTML attribute for "Last success" information */
+  puc_t stand_success_attr[256];
+  /** HTML attribute for cells with "Check failed" submits */
+  puc_t stand_fail_attr[256];
+  /** HTML attribute for cells with transient (being tested) submits */
+  puc_t stand_trans_attr[256];
+  /** HTML attribute for cells with disqualified submits */
+  puc_t stand_disq_attr[256];
+  /** show participant's login instead of name in the standings */
+  ejintbool_t stand_use_login;
+  /** show success time in the standings */
+  ejintbool_t stand_show_ok_time;
+  /** show number of attempts in Kirov standings */
+  ejintbool_t stand_show_att_num;
+  /** sort by the number of solved problems first in Kirov standings */
+  ejintbool_t stand_sort_by_solved;
+  /** HTML row attributes */
   char **stand_row_attr;
-  puc_t stand_page_table_attr[256]; /* attribute for the page table */
-  char **stand_page_row_attr;   /* attributes for the page table rows */
-  char **stand_page_col_attr;   /* attributes for the page table columns */
-  puc_t stand_page_cur_attr[256]; /* attribute for Page %d out of %d msg */
-  int stand_collate_name;       /* collate standings using user name */
-  int stand_enable_penalty;     /* calculate penalty for kirov & olympiad */
+  /** HTML attribute for the page navigation table in multi-page standings */
+  puc_t stand_page_table_attr[256];
+  /** HTML attribute for the page navigation rows in multi-page standings */
+  char **stand_page_row_attr;
+  /** HTML attribute for the page navigation columns */
+  char **stand_page_col_attr;
+  /** HTML attribute for "Page %d out of %d" */
+  puc_t stand_page_cur_attr[256];
+  /** collate standings using user name rather then login */
+  ejintbool_t stand_collate_name;
+  /** calculate penalty for kirov & olympiad */
+  ejintbool_t stand_enable_penalty;
 
-  unsigned char *stand_header_txt; /* actual header text */
-  unsigned char *stand_footer_txt; /* actual footer text */
+  /** actual standings header text */
+  unsigned char *stand_header_txt META_ATTRIB((meta_private));
+  /** actual standings footer text */
+  unsigned char *stand_footer_txt META_ATTRIB((meta_private));
 
-  // standings2 information
-  puc_t stand2_file_name[256];   /* must be set to standings 2 be activated */
+  /** name of the generated file with the secondary standings */
+  puc_t stand2_file_name[256];
+  /** secondary standings header file */
   path_t stand2_header_file;
+  /** secondary standings footer file */
   path_t stand2_footer_file;
-  unsigned char *stand2_header_txt;
-  unsigned char *stand2_footer_txt;
+  /** text of the secondary standings header */
+  unsigned char *stand2_header_txt META_ATTRIB((meta_private));
+  /** text of the secondary standings footer */
+  unsigned char *stand2_footer_txt META_ATTRIB((meta_private));
+  /** directory where to install a symlink to the secondary standings file */
   path_t stand2_symlink_dir;
 
-  // public log information
+  /** name of the generated file with the public submission log */
   puc_t plog_file_name[256];
+  /** public submission log header file */
   path_t plog_header_file;
+  /** public submission log footer file */
   path_t plog_footer_file;
-  unsigned char *plog_header_txt;
-  unsigned char *plog_footer_txt;
+  /** text of the public submission log header */
+  unsigned char *plog_header_txt META_ATTRIB((meta_private));
+  /** text of the public submission log footer */
+  unsigned char *plog_footer_txt META_ATTRIB((meta_private));
+  /** public submission log update interval */
   int plog_update_time;
+  /** directory where to install a symlink to the public log file */
   path_t plog_symlink_dir;
 
+  /** internal XML log update interval */
   int internal_xml_update_time;
+  /** external XML log update interval */
   int external_xml_update_time;
 
+  /** header file name for the user examination protocol */
   path_t user_exam_protocol_header_file;
+  /** footer file name for the user examination protocol */
   path_t user_exam_protocol_footer_file;
-  unsigned char *user_exam_protocol_header_txt;
-  unsigned char *user_exam_protocol_footer_txt;
+  /** header text for the user examination protocol */
+  unsigned char *user_exam_protocol_header_txt META_ATTRIB((meta_private));
+  /** footer text for the user examination protocol */
+  unsigned char *user_exam_protocol_footer_txt META_ATTRIB((meta_private));
+  /** header file name for the problem examination protocol */
   path_t prob_exam_protocol_header_file;
+  /** footer file name for the problem examination protocol */
   path_t prob_exam_protocol_footer_file;
-  unsigned char *prob_exam_protocol_header_txt;
-  unsigned char *prob_exam_protocol_footer_txt;
+  /** header text for the problem examination protocol */
+  unsigned char *prob_exam_protocol_header_txt META_ATTRIB((meta_private));
+  /** footer text for the problem examination protocol */
+  unsigned char *prob_exam_protocol_footer_txt META_ATTRIB((meta_private));
+  /** header file name for the full user examination protocol */
   path_t full_exam_protocol_header_file;
+  /** footer file name for the full user examination protocol */
   path_t full_exam_protocol_footer_file;
-  unsigned char *full_exam_protocol_header_txt;
-  unsigned char *full_exam_protocol_footer_txt;
+  /** header text for the full user examination protocol */
+  unsigned char *full_exam_protocol_header_txt META_ATTRIB((meta_private));
+  /** footer text for the full user examination protocol */
+  unsigned char *full_exam_protocol_footer_txt META_ATTRIB((meta_private));
 
-  // fun
-  int extended_sound;
-  int disable_sound;
+  /** use festival for voice notifications */
+  ejintbool_t extended_sound;
+  /** disable sound notifications */
+  ejintbool_t disable_sound;
+  /** path to a sound file player */
   path_t sound_player;
+  /** sound to be played in case of success */
   path_t accept_sound;
+  /** sound to be played in case of run-time error */
   path_t runtime_sound;
+  /** sound to be played in case of time-limit exceeded error */
   path_t timelimit_sound;
+  /** sound to be played in case of presentation error */
   path_t presentation_sound;
+  /** sound to be played in case of wrong answer */
   path_t wrong_sound;
+  /** sound to be played in case of check failed condition */
   path_t internal_sound;
+  /** sound to be played upon start of the contest */
   path_t start_sound;
 
-  int team_download_time;       /* how often team may download its solutions */
+  /** @deprecated{participant's archive download interval} */
+  int team_download_time;
 
-  int cr_serialization_key;     /* semaphore for compile/run serialization */
-  int show_astr_time;
-  int ignore_duplicated_runs;
-  int report_error_code;
-  int auto_short_problem_name;  /* automatically construct short name */
+  /** serializing semaphore Id */
+  int cr_serialization_key;
+  /** use wall time in all reports */
+  ejintbool_t show_astr_time;
+  /** do not allow submitting identical runs */
+  ejintbool_t ignore_duplicated_runs;
+  /** enable reporting the program exit code to participants */
+  ejintbool_t report_error_code;
+  /** construct short problem names automatically */
+  ejintbool_t auto_short_problem_name;
+  /** timeout for compilers */
   int compile_real_time_limit;
+  /** timeout for checkers */
   int checker_real_time_limit;
-  int show_deadline;       /* show deadlines in problem name? */
+  /** show problem deadlines to participants? */
+  ejintbool_t show_deadline;
 
-  int use_gzip;                 /* allow gzip on large files (uses zlib) */
-  int min_gzip_size;            /* minimal file size to gzip (4096) */
-  int use_dir_hierarchy;        /* create subdirs to increase speed */
-  int html_report;              /* whether generate master report in HTML */
-  int xml_report;               /* whether generate master report in XML */
-  int enable_full_archive;      /* enable storing the full output */
-  int cpu_bogomips;             /* CPU speed (BogoMIPS) */
-  int skip_full_testing;
-  int skip_accept_testing;
+  /** use gzip compression for large files */
+  ejintbool_t use_gzip;
+  /** minimal file size to be compressed (4096) */
+  ejintsize_t min_gzip_size;
+  /** store runs/reports/etc in a hierachical directory structure */
+  ejintbool_t use_dir_hierarchy;
+  /** @deprecated{generate reports in HTML} */
+  ejintbool_t html_report;
+  /** generate reports in XML */
+  ejintbool_t xml_report;
+  /** store the full output of the program being tested */
+  ejintbool_t enable_full_archive;
+  /** reference CPU speed (BogoMIPS) */
+  int cpu_bogomips;
+  ejintbool_t skip_full_testing;
+  ejintbool_t skip_accept_testing;
 
-  // variant support
+  /** path to the file with variant assignment */
   path_t variant_map_file;
+  /** parsed variant map */
   struct variant_map *variant_map;
 
-  // printing support
-  int enable_printing;
-  int disable_banner_page;
+  /** enable printing of submission by participants */
+  ejintbool_t enable_printing;
+  /** disable banner page on printouts */
+  ejintbool_t disable_banner_page;
+  /** printing quota (in pages) */
   int team_page_quota;
 
-  // user priority adjustments
+  /** per participant testing priority adjustment */
   char **user_priority_adjustments;
   struct user_adjustment_info *user_adjustment_info;
   struct user_adjustment_map *user_adjustment_map;
 
-  // contestant status support
+  /** number of different contestant statuses */
   int contestant_status_num;
+  /** names of contestant statuses */
   char **contestant_status_legend;
+  /** HTML attribute for standing rows for different contestant statuses */
   char **contestant_status_row_attr;
-  int stand_show_contestant_status;
-  int stand_show_warn_number;
+  /** show the contestant status column in the standings */
+  ejintbool_t stand_show_contestant_status;
+  /** show the warnings column in the standings */
+  ejintbool_t stand_show_warn_number;
+  /** HTML attribute for `contestant status' column of the standings */
   puc_t stand_contestant_status_attr[256];
+  /** HTML attribute for `warnings' column of the standings */
   puc_t stand_warn_number_attr[256];
 
-  // internal use: text with unhandled variables
-  unsigned char *unhandled_vars;
+  /** INTERNAL: text with unhandled variables */
+  unsigned char *unhandled_vars META_ATTRIB((meta_private));
 
-  // internal use: no problem defined long_name
-  int disable_prob_long_name;
-  // internal use: all problems are output-only
-  int disable_passed_tests;
+  /** INTERNAL: no problem defined long_name */
+  ejintbool_t disable_prob_long_name META_ATTRIB((meta_private));
+  /** INTERNAL: all problems are output-only */
+  ejintbool_t disable_passed_tests META_ATTRIB((meta_private));
 };
 
 struct section_problem_data
 {
-  struct generic_section_config g;
+  struct generic_section_config g META_ATTRIB((meta_hidden));
 
   int    id;                    /* problem identifier */
   int    tester_id;
@@ -574,7 +816,7 @@ struct section_problem_data
 
 struct section_language_data
 {
-  struct generic_section_config g;
+  struct generic_section_config g META_ATTRIB((meta_hidden));
 
   int    id;                    /* language id */
   int    compile_id;            /* language id for compilation */
@@ -610,7 +852,7 @@ struct section_language_data
 
 struct section_tester_data
 {
-  struct generic_section_config g;
+  struct generic_section_config g META_ATTRIB((meta_hidden));
 
   int    id;
   puc_t name[32];               /* tester name */
