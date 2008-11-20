@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/11/20 15:50:58
+// Generated 2008/11/20 23:28:02
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -400,7 +400,6 @@ enum
   SPROB_score_view,
   SPROB_score_view_score,
   SPROB_score_view_text,
-  SPROB_xml,
 
   SPROB_LAST_FIELD,
 };
