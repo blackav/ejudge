@@ -27,8 +27,10 @@ typedef ruint32_t ej_ip_t;       /* IP address as stored in files */
 typedef unsigned long long ej_cookie_t;   /* cookie */
 typedef unsigned long long ej_tsc_t; /* timestamp counter type */
 
+/* types for meta-info generator */
 typedef unsigned char ejbytebool_t;
 typedef int ejintbool_t;
+typedef int ejintsize_t;
 
 /* privilege level */
 enum priv_level

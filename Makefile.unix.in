@@ -413,7 +413,7 @@ endif
 locale/ru_RU.${CHARSET}/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.${CHARSET}.po ru_all
 	${MSGFMT} -o $@ -c $<
 
-libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o contests_meta.o super-serve_meta.o $(ARCH)/fileutl.o $(ARCH)/cr_serialize.o $(ARCH)/interrupt.o $(ARCH)/curtime.o $(ARCH)/timestamp.o $(ARCH)/ej_process.o $(ARCH)/cpu.o $(ARCH)/full_archive.o $(ARCH)/startstop.o
+libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o contests_meta.o super-serve_meta.o prepare_meta.o $(ARCH)/fileutl.o $(ARCH)/cr_serialize.o $(ARCH)/interrupt.o $(ARCH)/curtime.o $(ARCH)/timestamp.o $(ARCH)/ej_process.o $(ARCH)/cpu.o $(ARCH)/full_archive.o $(ARCH)/startstop.o
 	ar rcv $@ $^
 
 libsuper_clnt.a : $(SUPER_CLNT_CFILES:.c=.o)
@@ -425,7 +425,7 @@ libuserlist_clnt.a: $(USERLIST_CLNT_CFILES:.c=.o)
 libnew_server_clnt.a: $(NEW_SERVER_CLNT_CFILES:.c=.o)
 	ar rcv $@ $^
 
-deps.make: cdeps ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c contests_meta.c contests_meta.h super-serve_meta.c super-serve_meta.h
+deps.make: cdeps ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c contests_meta.c contests_meta.h super-serve_meta.c super-serve_meta.h prepare_meta.c prepare_meta.h
 	./cdeps ${CFILES} filter_expr.c filter_scan.c > deps.make
 
 tags : ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c 
@@ -442,6 +442,9 @@ contests_meta.c contests_meta.h : contests.h
 
 super-serve_meta.c super-serve_meta.h : super-serve.h
 	$(META_CC) $(REUSE_INCL_OPT) super-serve.h -o super-serve.out --force-h --meta --meta-struct sid_state --meta-enum-prefix SSSS --meta-func-prefix ss_sid_state --meta-timestamp
+
+prepare_meta.c prepare_meta.h : prepare.h
+	$(META_CC) $(REUSE_INCL_OPT) prepare.h -o prepare.out --force-h --meta --meta-struct section_global_data --meta-struct section_problem_data --meta-struct section_language_data --meta-struct section_tester_data --meta-enum-prefix SGLOB --meta-enum-prefix SPROB --meta-enum-prefix SLANG --meta-enum-prefix STESTER --meta-func-prefix global --meta-func-prefix prob --meta-func-prefix lang --meta-func-prefix tester --meta-timestamp
 
 style/actions.js : make-js-actions
 	./make-js-actions > style/actions.js

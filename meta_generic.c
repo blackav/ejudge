@@ -40,8 +40,7 @@ meta_build_automaton(const struct meta_info_item *item, int item_num)
   cmap[0] = 1;
   for (i = 0; i < item_num; ++i) {
     if (!item[i].tag) continue;
-    s = (const unsigned char*) item[i].name;
-    ASSERT(s);
+    if (!(s = (const unsigned char*) item[i].name)) continue;
     ASSERT(*s);
     for (; *s; ++s) {
       ASSERT(*s >= ' ' && *s < 127);
@@ -70,7 +69,7 @@ meta_build_automaton(const struct meta_info_item *item, int item_num)
 
   for (i = 0; i < item_num; ++i) {
     if (!item[i].tag) continue;
-    s = (const unsigned char*) item[i].name;
+    if (!(s = (const unsigned char*) item[i].name)) continue;
     cur_st = 1;
     for (; *s; ++s) {
       c = atm->remap[*s];
