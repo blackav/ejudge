@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,7 @@
 
 enum { MAX_ATTEMPT = 10 };
 
-struct section_global_data
+struct client_section_global_data
 {
   struct generic_section_config g;
 
@@ -54,7 +54,7 @@ struct section_global_data
 
 static void global_init_func(struct generic_section_config *gp);
 
-#define GLOBAL_OFFSET(x)   XOFFSET(struct section_global_data, x)
+#define GLOBAL_OFFSET(x)   XOFFSET(struct client_section_global_data, x)
 #define GLOBAL_PARAM(x, t) { #x, t, GLOBAL_OFFSET(x) }
 static struct config_parse_info section_global_params[] =
 {
@@ -67,13 +67,13 @@ static struct config_parse_info section_global_params[] =
 
 static struct config_section_info params[] =
 {
-  { "global" ,sizeof(struct section_global_data), section_global_params,
+  { "global" ,sizeof(struct client_section_global_data), section_global_params,
     0, global_init_func },
   { NULL, 0, NULL }
 };
 
 static struct generic_section_config *config;
-static struct section_global_data    *global;
+static struct client_section_global_data    *global;
 static unsigned char *client_charset = 0;
 static int ssl_flag = 0;
 static ej_ip_t client_ip;
@@ -81,7 +81,7 @@ static ej_ip_t client_ip;
 static void
 global_init_func(struct generic_section_config *gp)
 {
-  struct section_global_data *p = (struct section_global_data *) gp;
+  struct client_section_global_data *p = (struct client_section_global_data *) gp;
 
   p->enable_l10n = -1;
   p->connect_attempts = -1;
@@ -186,7 +186,7 @@ initialize(int argc, char *argv[])
       break;
   }
   if (!p) client_not_configured(0, "no global section", 0);
-  global = (struct section_global_data *) p;
+  global = (struct client_section_global_data *) p;
 
 #if defined EJUDGE_NEW_SERVER_SOCKET
   if (!global->new_server_socket[0]) {
