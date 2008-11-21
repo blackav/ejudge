@@ -19,6 +19,7 @@
 
 #include "prepare.h"
 #include "prepare_dflt.h"
+#include "prepare_meta.h"
 #include "xml_utils.h"
 #include "prepare_serve.h"
 #include "errlog.h"
@@ -1839,28 +1840,21 @@ prepare_unparse_testers(
       abstr = aprobs[j];
     }
     prepare_copy_problem(&tmp_prob, probs[i]);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TYPE,
+    prepare_set_prob_value(CNTSPROB_type_val, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_scoring_checker, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_manual_checking, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_examinator_num, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_check_presentation,
                            &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER,
-                           &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_MANUAL_CHECKING,
-                           &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_EXAMINATOR_NUM,
-                           &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_PRESENTATION,
-                           &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDIN,
-                           &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDOUT,
-                           &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT,
-                           &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_IGNORE_EXIT_CODE,
+    prepare_set_prob_value(CNTSPROB_use_stdin, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_use_stdout, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_binary_input, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_ignore_exit_code,
                            &tmp_prob, abstr, global);
     /*
-    prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_VM_SIZE,
+    prepare_set_prob_value(CNTSPROB_MAX_VM_SIZE,
                            &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_STACK_SIZE,
+    prepare_set_prob_value(CNTSPROB_MAX_STACK_SIZE,
                            &tmp_prob, abstr, global);
     */
     //vm_sizes[i] = tmp_prob.max_vm_size;
@@ -2018,22 +2012,21 @@ prob_instr(FILE *f, const unsigned char *root_dir,
   mkpath(conf_path, root_dir, conf_dir, "conf");
 
   fprintf(f, "Problem %s: %s\n", prob->short_name, prob->long_name);
-  prepare_set_prob_value(PREPARE_FIELD_PROB_XML_FILE, &tmp_prob, abstr,0);
+  prepare_set_prob_value(CNTSPROB_xml_file, &tmp_prob, abstr,0);
   if (prob->xml_file[0]) {
     fprintf(f, "Problem XML statement: %s\n", prob->xml_file);
   }
-  prepare_set_prob_value(PREPARE_FIELD_PROB_ALTERNATIVES_FILE,
-                         &tmp_prob, abstr,0);
+  prepare_set_prob_value(CNTSPROB_alternatives_file, &tmp_prob, abstr,0);
   if (prob->alternatives_file[0]) {
     fprintf(f, "Problem possible answers: %s\n", prob->alternatives_file);
   }
-  prepare_set_prob_value(PREPARE_FIELD_PROB_PLUGIN_FILE, &tmp_prob, abstr,0);
+  prepare_set_prob_value(CNTSPROB_plugin_file, &tmp_prob, abstr,0);
   if (prob->plugin_file[0]) {
     fprintf(f, "Problem plugin: %s\n", prob->plugin_file);
   }
   if (!prob->standard_checker[0]) {
     mkpath(checker_path, conf_path, global->checker_dir, DFLT_G_CHECKER_DIR);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_CMD, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_check_cmd, &tmp_prob, abstr, global);
     if (os_IsAbsolutePath(tmp_prob.check_cmd)) {
       fprintf(f, "Checker command: %s\n", tmp_prob.check_cmd);
     } else {
@@ -2043,8 +2036,7 @@ prob_instr(FILE *f, const unsigned char *root_dir,
   }
   if (prob->valuer_cmd) {
     mkpath(valuer_path, conf_path, global->checker_dir, DFLT_G_CHECKER_DIR);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_VALUER_CMD, &tmp_prob, abstr,
-                           global);
+    prepare_set_prob_value(CNTSPROB_valuer_cmd, &tmp_prob, abstr, global);
     if (os_IsAbsolutePath(tmp_prob.valuer_cmd)) {
       fprintf(f, "Valuer command: %s\n", tmp_prob.valuer_cmd);
     } else {
@@ -2054,43 +2046,43 @@ prob_instr(FILE *f, const unsigned char *root_dir,
   }
 
   mkpath(g_path, conf_path, global->test_dir, DFLT_G_TEST_DIR);
-  prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_DIR, &tmp_prob, abstr, 0);
+  prepare_set_prob_value(CNTSPROB_test_dir, &tmp_prob, abstr, 0);
   mkpath(l_path, g_path, tmp_prob.test_dir, "");
   fprintf(f, "Directory with tests: %s\n", l_path);
-  prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_SFX, &tmp_prob, abstr, global);
-  prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_PAT, &tmp_prob, abstr, global);
+  prepare_set_prob_value(CNTSPROB_test_sfx, &tmp_prob, abstr, global);
+  prepare_set_prob_value(CNTSPROB_test_pat, &tmp_prob, abstr, global);
   print_files(f, "Test file names", tmp_prob.test_sfx, tmp_prob.test_pat);
 
-  prepare_set_prob_value(PREPARE_FIELD_PROB_USE_CORR, &tmp_prob, abstr, global);
+  prepare_set_prob_value(CNTSPROB_use_corr, &tmp_prob, abstr, global);
   if (tmp_prob.use_corr) {
     mkpath(g_path, conf_path, global->corr_dir, DFLT_G_CORR_DIR);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_CORR_DIR, &tmp_prob, abstr, 0);
+    prepare_set_prob_value(CNTSPROB_corr_dir, &tmp_prob, abstr, 0);
     mkpath(l_path, g_path, tmp_prob.corr_dir, "");
     fprintf(f, "Directory with correct answers: %s\n", l_path);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_CORR_SFX, &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_CORR_PAT, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_corr_sfx, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_corr_pat, &tmp_prob, abstr, global);
     print_files(f, "Correct answer file names", tmp_prob.corr_sfx, tmp_prob.corr_pat);
   }
 
-  prepare_set_prob_value(PREPARE_FIELD_PROB_USE_INFO, &tmp_prob, abstr, global);
+  prepare_set_prob_value(CNTSPROB_use_info, &tmp_prob, abstr, global);
   if (tmp_prob.use_info) {
     mkpath(g_path, conf_path, global->info_dir, DFLT_G_INFO_DIR);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_INFO_DIR, &tmp_prob, abstr, 0);
+    prepare_set_prob_value(CNTSPROB_info_dir, &tmp_prob, abstr, 0);
     mkpath(l_path, g_path, tmp_prob.info_dir, "");
     fprintf(f, "Directory with test info files: %s\n", l_path);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_INFO_SFX, &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_INFO_PAT, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_info_sfx, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_info_pat, &tmp_prob, abstr, global);
     print_files(f, "Test info file names", tmp_prob.info_sfx, tmp_prob.info_pat);
   }
 
-  prepare_set_prob_value(PREPARE_FIELD_PROB_USE_TGZ, &tmp_prob, abstr, global);
+  prepare_set_prob_value(CNTSPROB_use_tgz, &tmp_prob, abstr, global);
   if (tmp_prob.use_tgz) {
     mkpath(g_path, conf_path, global->tgz_dir, DFLT_G_TGZ_DIR);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TGZ_DIR, &tmp_prob, abstr, 0);
+    prepare_set_prob_value(CNTSPROB_tgz_dir, &tmp_prob, abstr, 0);
     mkpath(l_path, g_path, tmp_prob.tgz_dir, "");
     fprintf(f, "Directory with test tgz files: %s\n", l_path);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TGZ_SFX, &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TGZ_PAT, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_tgz_sfx, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_tgz_pat, &tmp_prob, abstr, global);
     print_files(f, "Test tgz file names", tmp_prob.tgz_sfx, tmp_prob.tgz_pat);
   }
 
