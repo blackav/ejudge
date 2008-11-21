@@ -20,6 +20,7 @@
 #include "prepare.h"
 #include "varsubst.h"
 #include "version.h"
+#include "prepare_meta.h"
 
 #include "fileutl.h"
 #include "sformat.h"
@@ -2841,127 +2842,72 @@ set_defaults(serve_state_t state, int mode)
       }
     }
 
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TYPE,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_USE_AC_NOT_OK,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TEAM_ENABLE_REP_VIEW,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TEAM_ENABLE_CE_VIEW,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TEAM_SHOW_JUDGE_REPORT,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_IGNORE_COMPILE_ERRORS,
-                           prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_type_val, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_use_ac_not_ok, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_team_enable_rep_view, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_team_enable_ce_view, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_team_show_judge_report, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_ignore_compile_errors, prob, aprob, g);
 
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TESTS_TO_ACCEPT,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_ACCEPT_PARTIAL,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_MIN_TESTS_TO_ACCEPT,
-                           prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_tests_to_accept, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_accept_partial, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_min_tests_to_accept, prob, aprob, g);
 
-    prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_USER_SUBMIT,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_TAB,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_RESTRICTED_STATEMENT,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_SUBMIT_AFTER_OK,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_AUTO_TESTING,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_TESTING,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_ENABLE_COMPILATION,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_SKIP_TESTING,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_SECURITY,
-                           prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_disable_user_submit, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_disable_tab, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_restricted_statement, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_disable_submit_after_ok, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_disable_auto_testing, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_disable_testing, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_enable_compilation, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_skip_testing, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_disable_security, prob, aprob, g);
 
-    prepare_set_prob_value(PREPARE_FIELD_PROB_FULL_SCORE,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_VARIABLE_FULL_SCORE,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_SCORE,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_RUN_PENALTY,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_ACM_RUN_PENALTY,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_DISQUALIFIED_PENALTY,
-                           prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_full_score, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_variable_full_score, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_test_score, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_run_penalty, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_acm_run_penalty, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_disqualified_penalty, prob, aprob, g);
 
-    prepare_set_prob_value(PREPARE_FIELD_PROB_HIDDEN,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_ADVANCE_TO_NEXT,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_ENABLE_TEXT_FORM,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_STAND_IGNORE_SCORE,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_STAND_LAST_COLUMN,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_MANUAL_CHECKING,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_EXAMINATOR_NUM,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_PRESENTATION,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDIN,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDOUT,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_IGNORE_EXIT_CODE,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_OLYMPIAD_MODE,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_SCORE_LATEST,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT_MILLIS,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_REAL_TIME_LIMIT,
-                           prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_hidden, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_advance_to_next, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_enable_text_form, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_stand_ignore_score, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_stand_last_column, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_scoring_checker, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_manual_checking, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_examinator_num, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_check_presentation, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_use_stdin, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_use_stdout, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_binary_input, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_ignore_exit_code, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_olympiad_mode, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_score_latest, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_time_limit, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_time_limit_millis, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_real_time_limit, prob, aprob, g);
 
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_SFX,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_CORR_SFX,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_INFO_SFX,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TGZ_SFX,
-                           prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_test_sfx, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_corr_sfx, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_info_sfx, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_tgz_sfx, prob, aprob, g);
 
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_PAT,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_CORR_PAT,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_INFO_PAT,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TGZ_PAT,
-                           prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_test_pat, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_corr_pat, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_info_pat, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_tgz_pat, prob, aprob, g);
 
-    prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_CMD, prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_VALUER_CMD, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_check_cmd, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_valuer_cmd, prob, aprob, g);
 
-    prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_VM_SIZE,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_STACK_SIZE,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_DATA_SIZE,
-                           prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_max_vm_size, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_max_stack_size, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_max_data_size, prob, aprob, g);
 
-    prepare_set_prob_value(PREPARE_FIELD_PROB_SOURCE_HEADER,
-                           prob, aprob, g);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_SOURCE_FOOTER,
-                           prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_source_header, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_source_footer, prob, aprob, g);
 
     if (prob->priority_adjustment == -1000 && si != -1 &&
         aprob->priority_adjustment != -1000) {
@@ -3048,8 +2994,7 @@ set_defaults(serve_state_t state, int mode)
       }
 
       /* score bonus */
-      prepare_set_prob_value(PREPARE_FIELD_PROB_SCORE_BONUS,
-                             prob, aprob, g);
+      prepare_set_prob_value(CNTSPROB_score_bonus, prob, aprob, g);
       if (prob->score_bonus[0]) {
         if (parse_score_bonus(prob->score_bonus, &prob->score_bonus_total,
                               &prob->score_bonus_val) < 0) return -1;
@@ -3085,8 +3030,7 @@ set_defaults(serve_state_t state, int mode)
         path_add_dir(prob->plugin_file, g->plugin_dir);
       }
 
-      prepare_set_prob_value(PREPARE_FIELD_PROB_STAND_ATTR,
-                             prob, aprob, g);
+      prepare_set_prob_value(CNTSPROB_stand_attr, prob, aprob, g);
     }
 
     if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
@@ -3114,8 +3058,7 @@ set_defaults(serve_state_t state, int mode)
         vinfo("problem.%s.corr_dir is '%s'", ish, prob->corr_dir);
       }
 
-      prepare_set_prob_value(PREPARE_FIELD_PROB_USE_INFO,
-                             prob, aprob, g);
+      prepare_set_prob_value(CNTSPROB_use_info, prob, aprob, g);
 
       if (!prob->info_dir[0] && si != -1
           && prob->use_info && aprob->info_dir[0]) {
@@ -3192,11 +3135,9 @@ set_defaults(serve_state_t state, int mode)
         prob->variant_num = 0;
       }
 
-      prepare_set_prob_value(PREPARE_FIELD_PROB_USE_CORR,
-                             prob, aprob, g);
+      prepare_set_prob_value(CNTSPROB_use_corr, prob, aprob, g);
 
-      prepare_set_prob_value(PREPARE_FIELD_PROB_CHECKER_REAL_TIME_LIMIT,
-                             prob, aprob, g);
+      prepare_set_prob_value(CNTSPROB_checker_real_time_limit, prob, aprob, g);
     }
 
     if (prob->test_sets) {
@@ -4945,83 +4886,83 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
                        const struct section_global_data *global)
 {
   switch (field) {
-  case PREPARE_FIELD_PROB_TYPE:
+  case CNTSPROB_type_val:
     if (out->type_val == -1 && abstr) out->type_val = abstr->type_val;
     if (out->type_val == -1) out->type_val = 0;
     break;
 
-  case PREPARE_FIELD_PROB_SCORING_CHECKER:
+  case CNTSPROB_scoring_checker:
     if (out->scoring_checker == -1 && abstr)
       out->scoring_checker = abstr->scoring_checker;
     if (out->scoring_checker == -1) out->scoring_checker = 0;
     break;
 
-  case PREPARE_FIELD_PROB_MANUAL_CHECKING:
+  case CNTSPROB_manual_checking:
     if (out->manual_checking == -1 && abstr)
       out->manual_checking = abstr->manual_checking;
     if (out->manual_checking == -1) out->manual_checking = 0;
     break;
 
-  case PREPARE_FIELD_PROB_EXAMINATOR_NUM:
+  case CNTSPROB_examinator_num:
     if (out->examinator_num <= 0 && abstr)
       out->examinator_num = abstr->examinator_num;
     if (out->manual_checking <= 0) out->manual_checking = 0;
     break;
 
-  case PREPARE_FIELD_PROB_CHECK_PRESENTATION:
+  case CNTSPROB_check_presentation:
     if (out->check_presentation == -1 && abstr)
       out->check_presentation = abstr->check_presentation;
     if (out->check_presentation == -1) out->check_presentation = 0;
     break;
 
-  case PREPARE_FIELD_PROB_USE_STDIN:
+  case CNTSPROB_use_stdin:
     if (out->use_stdin == -1 && abstr) out->use_stdin = abstr->use_stdin;
     if (out->use_stdin == -1) out->use_stdin = 0;
     break;
 
-  case PREPARE_FIELD_PROB_USE_STDOUT:
+  case CNTSPROB_use_stdout:
     if (out->use_stdout == -1 && abstr) out->use_stdout = abstr->use_stdout;
     if (out->use_stdout == -1) out->use_stdout = 0;
     break;
 
-  case PREPARE_FIELD_PROB_BINARY_INPUT:
+  case CNTSPROB_binary_input:
     if (out->binary_input == -1 && abstr) out->binary_input = abstr->binary_input;
     if (out->binary_input == -1) out->binary_input = DFLT_P_BINARY_INPUT;
     break;
 
-  case PREPARE_FIELD_PROB_IGNORE_EXIT_CODE:
+  case CNTSPROB_ignore_exit_code:
     if (out->ignore_exit_code == -1 && abstr) out->ignore_exit_code = abstr->ignore_exit_code;
     if (out->ignore_exit_code == -1) out->ignore_exit_code = 0;
     break;
 
-  case PREPARE_FIELD_PROB_OLYMPIAD_MODE:
+  case CNTSPROB_olympiad_mode:
     if (out->olympiad_mode == -1 && abstr) out->olympiad_mode = abstr->olympiad_mode;
     if (out->olympiad_mode == -1) out->olympiad_mode = 0;
     break;
 
-  case PREPARE_FIELD_PROB_SCORE_LATEST:
+  case CNTSPROB_score_latest:
     if (out->score_latest == -1 && abstr) out->score_latest = abstr->score_latest;
     if (out->score_latest == -1) out->score_latest = 0;
     break;
 
-  case PREPARE_FIELD_PROB_TIME_LIMIT:
+  case CNTSPROB_time_limit:
     if (out->time_limit == -1 && abstr) out->time_limit = abstr->time_limit;
     if (out->time_limit == -1) out->time_limit = 0;
     break;
 
-  case PREPARE_FIELD_PROB_TIME_LIMIT_MILLIS:
+  case CNTSPROB_time_limit_millis:
     if (out->time_limit_millis == -1 && abstr)
       out->time_limit_millis = abstr->time_limit_millis;
     if (out->time_limit_millis == -1) out->time_limit_millis = 0;
     break;
 
-  case PREPARE_FIELD_PROB_REAL_TIME_LIMIT:
+  case CNTSPROB_real_time_limit:
     if (out->real_time_limit == -1 && abstr)
       out->real_time_limit = abstr->real_time_limit;
     if (out->real_time_limit == -1) out->real_time_limit = 0;
     break;
 
-  case PREPARE_FIELD_PROB_USE_AC_NOT_OK:
+  case CNTSPROB_use_ac_not_ok:
     if (out->use_ac_not_ok == -1 && abstr)
       out->use_ac_not_ok = abstr->use_ac_not_ok;
     if (out->use_ac_not_ok == -1 && global)
@@ -5030,7 +4971,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->use_ac_not_ok = 0;
     break;
 
-  case PREPARE_FIELD_PROB_TEAM_ENABLE_REP_VIEW:
+  case CNTSPROB_team_enable_rep_view:
     if (out->team_enable_rep_view == -1 && abstr)
       out->team_enable_rep_view = abstr->team_enable_rep_view;
     if (out->team_enable_rep_view == -1 && global)
@@ -5039,7 +4980,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->team_enable_rep_view = 0;
     break;
 
-  case PREPARE_FIELD_PROB_TEAM_ENABLE_CE_VIEW:
+  case CNTSPROB_team_enable_ce_view:
     if (out->team_enable_ce_view == -1 && abstr)
       out->team_enable_ce_view = abstr->team_enable_ce_view;
     if (out->team_enable_ce_view == -1 && global)
@@ -5048,7 +4989,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->team_enable_ce_view = 0;
     break;
 
-  case PREPARE_FIELD_PROB_TEAM_SHOW_JUDGE_REPORT:
+  case CNTSPROB_team_show_judge_report:
     if (out->team_show_judge_report == -1 && abstr)
       out->team_show_judge_report = abstr->team_show_judge_report;
     if (out->team_show_judge_report == -1 && global)
@@ -5057,7 +4998,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->team_show_judge_report = 0;
     break;
 
-  case PREPARE_FIELD_PROB_IGNORE_COMPILE_ERRORS:
+  case CNTSPROB_ignore_compile_errors:
     if (out->ignore_compile_errors == -1 && abstr)
       out->ignore_compile_errors = abstr->ignore_compile_errors;
     if (out->ignore_compile_errors == -1 && global)
@@ -5066,28 +5007,28 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->ignore_compile_errors = 0;
     break;
 
-  case PREPARE_FIELD_PROB_DISABLE_USER_SUBMIT:
+  case CNTSPROB_disable_user_submit:
     if (out->disable_user_submit == -1 && abstr)
       out->disable_user_submit = abstr->disable_user_submit;
     if (out->disable_user_submit == -1)
       out->disable_user_submit = 0;
     break;
 
-  case PREPARE_FIELD_PROB_DISABLE_TAB:
+  case CNTSPROB_disable_tab:
     if (out->disable_tab == -1 && abstr)
       out->disable_tab = abstr->disable_tab;
     if (out->disable_tab == -1)
       out->disable_tab = 0;
     break;
 
-  case PREPARE_FIELD_PROB_RESTRICTED_STATEMENT:
+  case CNTSPROB_restricted_statement:
     if (out->restricted_statement == -1 && abstr)
       out->restricted_statement = abstr->restricted_statement;
     if (out->restricted_statement == -1)
       out->restricted_statement = 0;
     break;
 
-  case PREPARE_FIELD_PROB_DISABLE_SUBMIT_AFTER_OK:
+  case CNTSPROB_disable_submit_after_ok:
     if (out->disable_submit_after_ok < 0 && abstr)
       out->disable_submit_after_ok = abstr->disable_submit_after_ok;
     if (out->disable_submit_after_ok < 0 && global)
@@ -5096,14 +5037,14 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->disable_submit_after_ok = 0;
     break;
 
-  case PREPARE_FIELD_PROB_DISABLE_SECURITY:
+  case CNTSPROB_disable_security:
     if (out->disable_security < 0 && abstr)
       out->disable_security = abstr->disable_security;
     if (out->disable_security < 0)
       out->disable_security = 0;
     break;
 
-  case PREPARE_FIELD_PROB_DISABLE_TESTING:
+  case CNTSPROB_disable_testing:
     if (out->disable_testing == -1 && abstr)
       out->disable_testing = abstr->disable_testing;
     if (out->disable_testing == -1 && global)
@@ -5112,7 +5053,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->disable_testing = 0;
     break;
 
-  case PREPARE_FIELD_PROB_DISABLE_AUTO_TESTING:
+  case CNTSPROB_disable_auto_testing:
     if (out->disable_auto_testing == -1 && abstr)
       out->disable_auto_testing = abstr->disable_auto_testing;
     if (out->disable_auto_testing == -1 && global)
@@ -5121,42 +5062,42 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->disable_auto_testing = 0;
     break;
 
-  case PREPARE_FIELD_PROB_ENABLE_COMPILATION:
+  case CNTSPROB_enable_compilation:
     if (out->enable_compilation == -1 && abstr)
       out->enable_compilation = abstr->enable_compilation;
     if (out->enable_compilation == -1)
       out->enable_compilation = 0;
     break;
 
-  case PREPARE_FIELD_PROB_SKIP_TESTING:
+  case CNTSPROB_skip_testing:
     if (out->skip_testing == -1 && abstr)
       out->skip_testing = abstr->skip_testing;
     if (out->skip_testing == -1)
       out->skip_testing = 0;
     break;
 
-  case PREPARE_FIELD_PROB_FULL_SCORE:
+  case CNTSPROB_full_score:
     if (out->full_score == -1 && abstr) out->full_score = abstr->full_score;
     if (out->full_score == -1) out->full_score = DFLT_P_FULL_SCORE;
     break;
 
-  case PREPARE_FIELD_PROB_TEST_SCORE:
+  case CNTSPROB_test_score:
     if (out->test_score == -1 && abstr) out->test_score = abstr->test_score;
     if (out->test_score == -1) out->test_score = DFLT_P_TEST_SCORE;
     break;
 
-  case PREPARE_FIELD_PROB_RUN_PENALTY:
+  case CNTSPROB_run_penalty:
     if (out->run_penalty == -1 && abstr) out->run_penalty = abstr->run_penalty;
     if (out->run_penalty == -1) out->run_penalty = DFLT_P_RUN_PENALTY;
     break;
 
-  case PREPARE_FIELD_PROB_ACM_RUN_PENALTY:
+  case CNTSPROB_acm_run_penalty:
     if (out->acm_run_penalty == -1 && abstr)
       out->acm_run_penalty = abstr->acm_run_penalty;
     if (out->acm_run_penalty == -1) out->acm_run_penalty = DFLT_P_ACM_RUN_PENALTY;
     break;
 
-  case PREPARE_FIELD_PROB_DISQUALIFIED_PENALTY:
+  case CNTSPROB_disqualified_penalty:
     if (out->disqualified_penalty == -1 && abstr)
       out->disqualified_penalty = abstr->disqualified_penalty;
     if (out->disqualified_penalty == -1)
@@ -5167,14 +5108,14 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->disqualified_penalty = DFLT_P_RUN_PENALTY;
     break;
 
-  case PREPARE_FIELD_PROB_VARIABLE_FULL_SCORE:
+  case CNTSPROB_variable_full_score:
     if (out->variable_full_score == -1 && abstr)
       out->variable_full_score = abstr->variable_full_score;
     if (out->variable_full_score == -1)
       out->variable_full_score = DFLT_P_VARIABLE_FULL_SCORE;
     break;
 
-  case PREPARE_FIELD_PROB_TESTS_TO_ACCEPT:
+  case CNTSPROB_tests_to_accept:
     if (out->tests_to_accept == -1 && abstr)
       out->tests_to_accept = abstr->tests_to_accept;
     if (out->tests_to_accept == -1 && global)
@@ -5183,54 +5124,54 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->tests_to_accept = DFLT_G_TESTS_TO_ACCEPT;
     break;
 
-  case PREPARE_FIELD_PROB_ACCEPT_PARTIAL:
+  case CNTSPROB_accept_partial:
     if (out->accept_partial == -1 && abstr)
       out->accept_partial = abstr->accept_partial;
     if (out->accept_partial == -1)
       out->accept_partial = 0;
     break;
 
-  case PREPARE_FIELD_PROB_MIN_TESTS_TO_ACCEPT:
+  case CNTSPROB_min_tests_to_accept:
     if (out->min_tests_to_accept < 0 && abstr)
       out->min_tests_to_accept = abstr->min_tests_to_accept;
     break;
 
-  case PREPARE_FIELD_PROB_HIDDEN:
+  case CNTSPROB_hidden:
     if (out->hidden == -1 && abstr)
       out->hidden = abstr->hidden;
     if (out->hidden == -1)
       out->hidden = 0;
     break;
 
-  case PREPARE_FIELD_PROB_ADVANCE_TO_NEXT:
+  case CNTSPROB_advance_to_next:
     if (out->advance_to_next == -1 && abstr)
       out->advance_to_next = abstr->advance_to_next;
     if (out->advance_to_next == -1)
       out->advance_to_next = 0;
     break;
 
-  case PREPARE_FIELD_PROB_ENABLE_TEXT_FORM:
+  case CNTSPROB_enable_text_form:
     if (out->enable_text_form == -1 && abstr)
       out->enable_text_form = abstr->enable_text_form;
     if (out->enable_text_form == -1)
       out->enable_text_form = 0;
     break;
 
-  case PREPARE_FIELD_PROB_STAND_IGNORE_SCORE:
+  case CNTSPROB_stand_ignore_score:
     if (out->stand_ignore_score == -1 && abstr)
       out->stand_ignore_score = abstr->stand_ignore_score;
     if (out->stand_ignore_score == -1)
       out->stand_ignore_score = 0;
     break;
 
-  case PREPARE_FIELD_PROB_STAND_LAST_COLUMN:
+  case CNTSPROB_stand_last_column:
     if (out->stand_last_column == -1 && abstr)
       out->stand_last_column = abstr->stand_last_column;
     if (out->stand_last_column == -1)
       out->stand_last_column = 0;
     break;
 
-  case PREPARE_FIELD_PROB_CHECKER_REAL_TIME_LIMIT:
+  case CNTSPROB_checker_real_time_limit:
     if (out->checker_real_time_limit == -1 && abstr)
       out->checker_real_time_limit = abstr->checker_real_time_limit;
     if (out->checker_real_time_limit == -1 && global)
@@ -5239,28 +5180,28 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->checker_real_time_limit = DFLT_G_CHECKER_REAL_TIME_LIMIT;
     break;
 
-  case PREPARE_FIELD_PROB_MAX_VM_SIZE:
+  case CNTSPROB_max_vm_size:
     if (out->max_vm_size == -1L && abstr)
       out->max_vm_size = abstr->max_vm_size;
     if (out->max_vm_size == -1L)
       out->max_vm_size = 0;
     break;
 
-  case PREPARE_FIELD_PROB_MAX_STACK_SIZE:
+  case CNTSPROB_max_stack_size:
     if (out->max_stack_size == -1L && abstr)
       out->max_stack_size = abstr->max_stack_size;
     if (out->max_stack_size == -1L)
       out->max_stack_size = 0;
     break;
 
-  case PREPARE_FIELD_PROB_MAX_DATA_SIZE:
+  case CNTSPROB_max_data_size:
     if (out->max_data_size == -1L && abstr)
       out->max_data_size = abstr->max_data_size;
     if (out->max_data_size == -1L)
       out->max_data_size = 0;
     break;
 
-  case PREPARE_FIELD_PROB_INPUT_FILE:
+  case CNTSPROB_input_file:
     if (!out->input_file[0] && abstr && abstr->input_file[0]) {
       sformat_message(out->input_file, PATH_MAX, abstr->input_file,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
@@ -5270,7 +5211,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_OUTPUT_FILE:
+  case CNTSPROB_output_file:
     if (!out->output_file[0] && abstr && abstr->output_file[0]) {
       sformat_message(out->output_file, PATH_MAX, abstr->output_file,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
@@ -5280,23 +5221,23 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_USE_CORR:
+  case CNTSPROB_use_corr:
     if (out->use_corr == -1 && abstr) out->use_corr = abstr->use_corr;
     if (out->use_corr == -1 && out->corr_dir[0]) out->use_corr = 1;
     if (out->use_corr == -1) out->use_corr = 0;
     break;
 
-  case PREPARE_FIELD_PROB_USE_INFO:
+  case CNTSPROB_use_info:
     if (out->use_info == -1 && abstr) out->use_info = abstr->use_info;
     if (out->use_info == -1) out->use_info = 0;
     break;
 
-  case PREPARE_FIELD_PROB_USE_TGZ:
+  case CNTSPROB_use_tgz:
     if (out->use_tgz == -1 && abstr) out->use_tgz = abstr->use_tgz;
     if (out->use_tgz == -1) out->use_tgz = 0;
     break;
 
-  case PREPARE_FIELD_PROB_TEST_DIR:
+  case CNTSPROB_test_dir:
     if (!out->test_dir[0] && abstr && abstr->test_dir[0]) {
       sformat_message(out->test_dir, PATH_MAX, abstr->test_dir,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
@@ -5309,7 +5250,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_CORR_DIR:
+  case CNTSPROB_corr_dir:
     if (!out->corr_dir[0] && abstr && abstr->corr_dir[0]) {
       sformat_message(out->corr_dir, PATH_MAX, abstr->corr_dir,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
@@ -5319,7 +5260,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_INFO_DIR:
+  case CNTSPROB_info_dir:
     if (!out->info_dir[0] && abstr && abstr->info_dir[0]) {
       sformat_message(out->info_dir, PATH_MAX, abstr->info_dir,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
@@ -5332,7 +5273,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_TGZ_DIR:
+  case CNTSPROB_tgz_dir:
     if (!out->tgz_dir[0] && abstr && abstr->tgz_dir[0]) {
       sformat_message(out->tgz_dir, PATH_MAX, abstr->tgz_dir,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
@@ -5345,7 +5286,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_TEST_SFX:
+  case CNTSPROB_test_sfx:
     if (out->test_sfx[0] == 1 && abstr && abstr->test_sfx[0] != 1) {
       strcpy(out->test_sfx, abstr->test_sfx);
     }
@@ -5357,7 +5298,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_CORR_SFX:
+  case CNTSPROB_corr_sfx:
     if (out->corr_sfx[0] == 1 && abstr && abstr->corr_sfx[0] != 1) {
       strcpy(out->corr_sfx, abstr->corr_sfx);
     }
@@ -5369,7 +5310,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_INFO_SFX:
+  case CNTSPROB_info_sfx:
     if (out->info_sfx[0] == 1 && abstr && abstr->info_sfx[0] != 1) {
       strcpy(out->info_sfx, abstr->info_sfx);
     }
@@ -5384,7 +5325,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_TGZ_SFX:
+  case CNTSPROB_tgz_sfx:
     if (out->tgz_sfx[0] == 1 && abstr && abstr->tgz_sfx[0] != 1) {
       strcpy(out->tgz_sfx, abstr->tgz_sfx);
     }
@@ -5399,7 +5340,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_TEST_PAT:
+  case CNTSPROB_test_pat:
     if (out->test_pat[0] == 1 && abstr && abstr->test_pat[0] != 1) {
       strcpy(out->test_pat, abstr->test_pat);
     }
@@ -5411,7 +5352,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_CORR_PAT:
+  case CNTSPROB_corr_pat:
     if (out->corr_pat[0] == 1 && abstr && abstr->corr_pat[0] != 1) {
       strcpy(out->corr_pat, abstr->corr_pat);
     }
@@ -5423,7 +5364,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_INFO_PAT:
+  case CNTSPROB_info_pat:
     if (out->info_pat[0] == 1 && abstr && abstr->info_pat[0] != 1) {
       strcpy(out->info_pat, abstr->info_pat);
     }
@@ -5435,7 +5376,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_TGZ_PAT:
+  case CNTSPROB_tgz_pat:
     if (out->tgz_pat[0] == 1 && abstr && abstr->tgz_pat[0] != 1) {
       strcpy(out->tgz_pat, abstr->tgz_pat);
     }
@@ -5447,7 +5388,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_SCORE_BONUS:
+  case CNTSPROB_score_bonus:
     if (!out->score_bonus[0] && abstr && abstr->score_bonus[0]) {
       strcpy(out->score_bonus, abstr->score_bonus);
     }
@@ -5459,7 +5400,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     */
     break;
 
-  case PREPARE_FIELD_PROB_CHECK_CMD:
+  case CNTSPROB_check_cmd:
     if (!out->check_cmd[0] && abstr && abstr->check_cmd[0]) {
       sformat_message(out->check_cmd, PATH_MAX, abstr->check_cmd,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
@@ -5471,7 +5412,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     */
     break;
 
-  case PREPARE_FIELD_PROB_VALUER_CMD:
+  case CNTSPROB_valuer_cmd:
     if (!out->valuer_cmd[0] && abstr && abstr->valuer_cmd[0]) {
       sformat_message(out->valuer_cmd, PATH_MAX, abstr->valuer_cmd,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
@@ -5481,7 +5422,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_STATEMENT_FILE:
+  case CNTSPROB_statement_file:
     if (!out->statement_file[0] && abstr && abstr->statement_file[0]) {
       sformat_message(out->statement_file, PATH_MAX, abstr->statement_file,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
@@ -5491,7 +5432,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_ALTERNATIVES_FILE:
+  case CNTSPROB_alternatives_file:
     if (!out->alternatives_file[0] && abstr && abstr->alternatives_file[0]) {
       sformat_message(out->alternatives_file,PATH_MAX, abstr->alternatives_file,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
@@ -5501,7 +5442,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_PLUGIN_FILE:
+  case CNTSPROB_plugin_file:
     if (!out->plugin_file[0] && abstr && abstr->plugin_file[0]) {
       sformat_message(out->plugin_file, PATH_MAX, abstr->plugin_file,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
@@ -5511,26 +5452,26 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
-  case PREPARE_FIELD_PROB_STAND_ATTR:
+  case CNTSPROB_stand_attr:
     if (!out->stand_attr[0] && abstr && abstr->stand_attr[0]) {
       snprintf(out->stand_attr, sizeof(out->stand_attr), "%s",
                abstr->stand_attr);
     }
     break;
 
-  case PREPARE_FIELD_PROB_SOURCE_HEADER:
+  case CNTSPROB_source_header:
     if (!out->source_header[0] && abstr && abstr->source_header[0]) {
       strcpy(out->source_header, abstr->source_header);
     }
     break;
 
-  case PREPARE_FIELD_PROB_SOURCE_FOOTER:
+  case CNTSPROB_source_footer:
     if (!out->source_footer[0] && abstr && abstr->source_footer[0]) {
       strcpy(out->source_footer, abstr->source_footer);
     }
     break;
 
-  case PREPARE_FIELD_PROB_XML_FILE:
+  case CNTSPROB_xml_file:
     if (!out->xml_file[0] && abstr && abstr->xml_file[0]) {
       sformat_message(out->xml_file, sizeof(out->xml_file),
                       abstr->xml_file, 0, out, 0, 0, 0, 0, 0, 0);

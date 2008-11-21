@@ -23,6 +23,7 @@
 #include "misctext.h"
 #include "mischtml.h"
 #include "prepare.h"
+#include "prepare_meta.h"
 #include "ejudge_cfg.h"
 #include "super_proto.h"
 #include "fileutl.h"
@@ -3907,8 +3908,8 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   problem_type_flag = prob->type_val;
   if (!prob->abstract) {
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TYPE,
-                           &tmp_prob, sup_prob, sstate->global);
+    prepare_set_prob_value(CNTSPROB_type_val, &tmp_prob, sup_prob,
+                           sstate->global);
     snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
              problem_unparse_type(tmp_prob.type_val));
     extra_msg = msg_buf;
@@ -3941,7 +3942,7 @@ super_html_print_problem(FILE *f,
       || (!prob->abstract && tmp_prob.type_val > 0)) {
     extra_msg = 0;
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_MANUAL_CHECKING,
+      prepare_set_prob_value(CNTSPROB_manual_checking,
                              &tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                tmp_prob.manual_checking?"Yes":"No");
@@ -3961,7 +3962,7 @@ super_html_print_problem(FILE *f,
     extra_msg = "";
 
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_EXAMINATOR_NUM,
+      prepare_set_prob_value(CNTSPROB_examinator_num,
                              &tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
                tmp_prob.examinator_num);
@@ -3993,7 +3994,7 @@ super_html_print_problem(FILE *f,
       || (!prob->abstract && tmp_prob.type_val > 0 && tmp_prob.manual_checking > 0)) {
     extra_msg = 0;
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_PRESENTATION,
+      prepare_set_prob_value(CNTSPROB_check_presentation,
                              &tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                tmp_prob.check_presentation?"Yes":"No");
@@ -4010,7 +4011,7 @@ super_html_print_problem(FILE *f,
   //PROBLEM_PARAM(use_stdin, "d"),
   extra_msg = 0;
   if (!prob->abstract) {
-    prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDIN,
+    prepare_set_prob_value(CNTSPROB_use_stdin,
                            &tmp_prob, sup_prob, sstate->global);
     snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob.use_stdin?"Yes":"No");
     extra_msg = msg_buf;
@@ -4028,7 +4029,7 @@ super_html_print_problem(FILE *f,
   if (prob->abstract && !prob->use_stdin) extra_msg = "";
   if (!prob->abstract && !tmp_prob.use_stdin) {
     extra_msg = "";
-    prepare_set_prob_value(PREPARE_FIELD_PROB_INPUT_FILE,
+    prepare_set_prob_value(CNTSPROB_input_file,
                            &tmp_prob, sup_prob, sstate->global);
     if (!prob->input_file[0]) {
       s = html_armor_string_dup(tmp_prob.input_file);
@@ -4050,7 +4051,7 @@ super_html_print_problem(FILE *f,
   //PROBLEM_PARAM(use_stdout, "d"),
   extra_msg = 0;
   if (!prob->abstract) {
-    prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDOUT,
+    prepare_set_prob_value(CNTSPROB_use_stdout,
                            &tmp_prob, sup_prob, sstate->global);
     snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob.use_stdout?"Yes":"No");
     extra_msg = msg_buf;
@@ -4068,7 +4069,7 @@ super_html_print_problem(FILE *f,
   if (prob->abstract && !prob->use_stdout) extra_msg = "";
   if (!prob->abstract && !tmp_prob.use_stdout) {
     extra_msg = "";
-    prepare_set_prob_value(PREPARE_FIELD_PROB_OUTPUT_FILE,
+    prepare_set_prob_value(CNTSPROB_output_file,
                            &tmp_prob, sup_prob, sstate->global);
     if (!prob->output_file[0]) {
       s = html_armor_string_dup(tmp_prob.output_file);
@@ -4091,7 +4092,7 @@ super_html_print_problem(FILE *f,
     //PROBLEM_PARAM(binary_input, "d"),
     extra_msg = 0;
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT,
+      prepare_set_prob_value(CNTSPROB_binary_input,
                              &tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                tmp_prob.binary_input?"Yes":"No");
@@ -4108,7 +4109,7 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   if (prob->abstract && !prob->xml_file[0]) extra_msg="<i>(Undefined)</i>";
   if (!prob->abstract) {
-    prepare_set_prob_value(PREPARE_FIELD_PROB_XML_FILE,
+    prepare_set_prob_value(CNTSPROB_xml_file,
                            &tmp_prob, sup_prob, sstate->global);
     s = html_armor_string_dup(tmp_prob.xml_file);
     if (!prob->xml_file[0])
@@ -4134,7 +4135,7 @@ super_html_print_problem(FILE *f,
     if (prob->abstract && !prob->alternatives_file[0])
       extra_msg="<i>(Undefined)</i>";
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_ALTERNATIVES_FILE,
+      prepare_set_prob_value(CNTSPROB_alternatives_file,
                              &tmp_prob, sup_prob, sstate->global);
       s = html_armor_string_dup(tmp_prob.alternatives_file);
       if (!prob->alternatives_file[0])
@@ -4157,7 +4158,7 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   if (prob->abstract && !prob->plugin_file[0])extra_msg="<i>(Undefined)</i>";
   if (!prob->abstract) {
-    prepare_set_prob_value(PREPARE_FIELD_PROB_PLUGIN_FILE,
+    prepare_set_prob_value(CNTSPROB_plugin_file,
                            &tmp_prob, sup_prob, sstate->global);
     s = html_armor_string_dup(tmp_prob.plugin_file);
     if (!prob->plugin_file[0])
@@ -4179,7 +4180,7 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   if (prob->abstract && !prob->test_dir[0]) extra_msg = "<i>(Undefined)</i>";
   if (!prob->abstract) {
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_DIR,
+    prepare_set_prob_value(CNTSPROB_test_dir,
                            &tmp_prob, sup_prob, sstate->global);
     s = html_armor_string_dup(tmp_prob.test_dir);
     if (!prob->test_dir[0])
@@ -4197,9 +4198,9 @@ super_html_print_problem(FILE *f,
                              self_url, extra_args, prob_hidden_vars);
 
   if (!prob->abstract) {
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_SFX,
+    prepare_set_prob_value(CNTSPROB_test_sfx,
                            &tmp_prob, sup_prob, sstate->global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_PAT,
+    prepare_set_prob_value(CNTSPROB_test_pat,
                            &tmp_prob, sup_prob, sstate->global);
   }
 
@@ -4249,7 +4250,7 @@ super_html_print_problem(FILE *f,
   //PROBLEM_PARAM(use_corr, "d"),
   extra_msg = 0;
   if (!prob->abstract) {
-    prepare_set_prob_value(PREPARE_FIELD_PROB_USE_CORR,
+    prepare_set_prob_value(CNTSPROB_use_corr,
                            &tmp_prob, sup_prob, sstate->global);
     snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob.use_corr?"Yes":"No");
     extra_msg = msg_buf;
@@ -4268,7 +4269,7 @@ super_html_print_problem(FILE *f,
     if (prob->abstract && !prob->corr_dir[0]) extra_msg = "<i>(Undefined)</i>";
   }
   if (!prob->abstract && tmp_prob.use_corr) {
-    prepare_set_prob_value(PREPARE_FIELD_PROB_CORR_DIR,
+    prepare_set_prob_value(CNTSPROB_corr_dir,
                            &tmp_prob, sup_prob, sstate->global);
     s = html_armor_string_dup(tmp_prob.corr_dir);
     if (!prob->corr_dir[0])
@@ -4289,9 +4290,9 @@ super_html_print_problem(FILE *f,
   }
 
   if (!prob->abstract) {
-    prepare_set_prob_value(PREPARE_FIELD_PROB_CORR_SFX,
+    prepare_set_prob_value(CNTSPROB_corr_sfx,
                            &tmp_prob, sup_prob, sstate->global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_CORR_PAT,
+    prepare_set_prob_value(CNTSPROB_corr_pat,
                            &tmp_prob, sup_prob, sstate->global);
   }
 
@@ -4343,7 +4344,7 @@ super_html_print_problem(FILE *f,
   //PROBLEM_PARAM(use_info, "d"),
   extra_msg = 0;
   if (!prob->abstract) {
-    prepare_set_prob_value(PREPARE_FIELD_PROB_USE_INFO,
+    prepare_set_prob_value(CNTSPROB_use_info,
                            &tmp_prob, sup_prob, sstate->global);
     snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob.use_info?"Yes":"No");
     extra_msg = msg_buf;
@@ -4362,7 +4363,7 @@ super_html_print_problem(FILE *f,
     if (prob->abstract && !prob->info_dir[0]) extra_msg = "<i>(Undefined)</i>";
   }
   if (!prob->abstract && tmp_prob.use_info) {
-    prepare_set_prob_value(PREPARE_FIELD_PROB_INFO_DIR,
+    prepare_set_prob_value(CNTSPROB_info_dir,
                            &tmp_prob, sup_prob, sstate->global);
     s = html_armor_string_dup(tmp_prob.info_dir);
     if (!prob->info_dir[0])
@@ -4383,9 +4384,9 @@ super_html_print_problem(FILE *f,
   }
 
   if (!prob->abstract) {
-    prepare_set_prob_value(PREPARE_FIELD_PROB_INFO_SFX,
+    prepare_set_prob_value(CNTSPROB_info_sfx,
                            &tmp_prob, sup_prob, sstate->global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_INFO_PAT,
+    prepare_set_prob_value(CNTSPROB_info_pat,
                            &tmp_prob, sup_prob, sstate->global);
   }
 
@@ -4441,7 +4442,7 @@ super_html_print_problem(FILE *f,
     else if (!prob->time_limit) extra_msg = "<i>(Unlimited)</i>";
   } else {
     if (prob->time_limit == -1) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT,
+      prepare_set_prob_value(CNTSPROB_time_limit,
                              &tmp_prob, sup_prob, sstate->global);
       if (!tmp_prob.time_limit)
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - Unlimited)</i>");
@@ -4466,7 +4467,7 @@ super_html_print_problem(FILE *f,
     else if (!prob->time_limit_millis) extra_msg = "<i>(Unlimited)</i>";
   } else {
     if (prob->time_limit_millis == -1) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT_MILLIS,
+      prepare_set_prob_value(CNTSPROB_time_limit_millis,
                              &tmp_prob, sup_prob, sstate->global);
       if (!tmp_prob.time_limit_millis)
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - Unlimited)</i>");
@@ -4491,7 +4492,7 @@ super_html_print_problem(FILE *f,
     else if (!prob->real_time_limit) extra_msg = "<i>(Unlimited)</i>";
   } else {
     if (prob->real_time_limit == -1) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_REAL_TIME_LIMIT,
+      prepare_set_prob_value(CNTSPROB_real_time_limit,
                              &tmp_prob, sup_prob, sstate->global);
       if (!tmp_prob.real_time_limit)
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - Unlimited)</i>");
@@ -4520,7 +4521,7 @@ super_html_print_problem(FILE *f,
       extra_msg = "<i>(OS Limit)</i>";
   } else {
     if (prob->max_vm_size == -1L) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_VM_SIZE,
+      prepare_set_prob_value(CNTSPROB_max_vm_size,
                              &tmp_prob, sup_prob, sstate->global);
       if (tmp_prob.max_vm_size == -1L || !tmp_prob.max_vm_size)
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
@@ -4557,7 +4558,7 @@ super_html_print_problem(FILE *f,
         extra_msg = "<i>(OS Limit)</i>";
     } else {
       if (prob->max_stack_size == -1L) {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_STACK_SIZE,
+        prepare_set_prob_value(CNTSPROB_max_stack_size,
                                &tmp_prob, sup_prob, sstate->global);
         if (tmp_prob.max_stack_size == -1L || !tmp_prob.max_stack_size)
           snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
@@ -4589,7 +4590,7 @@ super_html_print_problem(FILE *f,
       else if (!prob->checker_real_time_limit) extra_msg = "<i>(Unlimited)</i>";
     } else {
       if (prob->checker_real_time_limit == -1) {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_CHECKER_REAL_TIME_LIMIT,
+        prepare_set_prob_value(CNTSPROB_checker_real_time_limit,
                                &tmp_prob, sup_prob, sstate->global);
         if (!tmp_prob.checker_real_time_limit)
           snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - Unlimited)</i>");
@@ -4611,7 +4612,7 @@ super_html_print_problem(FILE *f,
     extra_msg = "Undefined";
     tmp_prob.use_ac_not_ok = prob->use_ac_not_ok;
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_USE_AC_NOT_OK,
+      prepare_set_prob_value(CNTSPROB_use_ac_not_ok,
                              &tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                tmp_prob.use_ac_not_ok?"Yes":"No");
@@ -4628,7 +4629,7 @@ super_html_print_problem(FILE *f,
     extra_msg = "Undefined";
     tmp_prob.team_enable_rep_view = prob->team_enable_rep_view;
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_TEAM_ENABLE_REP_VIEW,
+      prepare_set_prob_value(CNTSPROB_team_enable_rep_view,
                              &tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                tmp_prob.team_enable_rep_view?"Yes":"No");
@@ -4645,7 +4646,7 @@ super_html_print_problem(FILE *f,
       //PROBLEM_PARAM(team_enable_ce_view, "d"),
       extra_msg = "Undefined";
       if (!prob->abstract) {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_TEAM_ENABLE_CE_VIEW,
+        prepare_set_prob_value(CNTSPROB_team_enable_ce_view,
                                &tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                  tmp_prob.team_enable_ce_view?"Yes":"No");
@@ -4663,7 +4664,7 @@ super_html_print_problem(FILE *f,
       //PROBLEM_PARAM(team_show_judge_report, "d"),
       extra_msg = "Undefined";
       if (!prob->abstract) {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_TEAM_SHOW_JUDGE_REPORT,
+        prepare_set_prob_value(CNTSPROB_team_show_judge_report,
                                &tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                  tmp_prob.team_show_judge_report?"Yes":"No");
@@ -4681,7 +4682,7 @@ super_html_print_problem(FILE *f,
     extra_msg = "Undefined";
     tmp_prob.ignore_compile_errors = prob->ignore_compile_errors;
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_IGNORE_COMPILE_ERRORS,
+      prepare_set_prob_value(CNTSPROB_ignore_compile_errors,
                              &tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                tmp_prob.ignore_compile_errors?"Yes":"No");
@@ -4698,7 +4699,7 @@ super_html_print_problem(FILE *f,
     extra_msg = "Undefined";
     tmp_prob.disable_user_submit = prob->disable_user_submit;
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_USER_SUBMIT,
+      prepare_set_prob_value(CNTSPROB_disable_user_submit,
                              &tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                tmp_prob.disable_user_submit?"Yes":"No");
@@ -4716,7 +4717,7 @@ super_html_print_problem(FILE *f,
       extra_msg = "Undefined";
       tmp_prob.disable_tab = prob->disable_tab;
       if (!prob->abstract) {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_TAB,
+        prepare_set_prob_value(CNTSPROB_disable_tab,
                                &tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                  tmp_prob.disable_tab?"Yes":"No");
@@ -4734,7 +4735,7 @@ super_html_print_problem(FILE *f,
     extra_msg = "Undefined";
     tmp_prob.restricted_statement = prob->restricted_statement;
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_RESTRICTED_STATEMENT,
+      prepare_set_prob_value(CNTSPROB_restricted_statement,
                              &tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                tmp_prob.restricted_statement?"Yes":"No");
@@ -4751,7 +4752,7 @@ super_html_print_problem(FILE *f,
     extra_msg = "Undefined";
     tmp_prob.disable_submit_after_ok = prob->disable_submit_after_ok;
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_SUBMIT_AFTER_OK,
+      prepare_set_prob_value(CNTSPROB_disable_submit_after_ok,
                              &tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                tmp_prob.disable_submit_after_ok?"Yes":"No");
@@ -4768,7 +4769,7 @@ super_html_print_problem(FILE *f,
     extra_msg = "Undefined";
     tmp_prob.disable_security = prob->disable_security;
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_SECURITY,
+      prepare_set_prob_value(CNTSPROB_disable_security,
                              &tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                tmp_prob.disable_security?"Yes":"No");
@@ -4785,7 +4786,7 @@ super_html_print_problem(FILE *f,
     extra_msg = "Undefined";
     tmp_prob.disable_testing = prob->disable_testing;
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_TESTING,
+      prepare_set_prob_value(CNTSPROB_disable_testing,
                              &tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                tmp_prob.disable_testing?"Yes":"No");
@@ -4803,7 +4804,7 @@ super_html_print_problem(FILE *f,
       extra_msg = "Undefined";
       tmp_prob.disable_auto_testing = prob->disable_auto_testing;
       if (!prob->abstract) {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_AUTO_TESTING,
+        prepare_set_prob_value(CNTSPROB_disable_auto_testing,
                                &tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                  tmp_prob.disable_auto_testing?"Yes":"No");
@@ -4822,7 +4823,7 @@ super_html_print_problem(FILE *f,
       extra_msg = "Undefined";
       tmp_prob.enable_compilation = prob->enable_compilation;
       if (!prob->abstract) {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_ENABLE_COMPILATION,
+        prepare_set_prob_value(CNTSPROB_enable_compilation,
                                &tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                  tmp_prob.enable_compilation?"Yes":"No");
@@ -4841,7 +4842,7 @@ super_html_print_problem(FILE *f,
     //PROBLEM_PARAM(ignore_exit_code, "d"),
     extra_msg = 0;
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_IGNORE_EXIT_CODE,
+      prepare_set_prob_value(CNTSPROB_ignore_exit_code,
                              &tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                tmp_prob.ignore_exit_code?"Yes":"No");
@@ -4859,7 +4860,7 @@ super_html_print_problem(FILE *f,
     //PROBLEM_PARAM(olympiad_mode, "d"),
     extra_msg = 0;
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_OLYMPIAD_MODE,
+      prepare_set_prob_value(CNTSPROB_olympiad_mode,
                              &tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                tmp_prob.olympiad_mode?"Yes":"No");
@@ -4877,7 +4878,7 @@ super_html_print_problem(FILE *f,
     //PROBLEM_PARAM(score_latest, "d"),
     extra_msg = 0;
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_SCORE_LATEST,
+      prepare_set_prob_value(CNTSPROB_score_latest,
                              &tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                tmp_prob.score_latest?"Yes":"No");
@@ -4897,7 +4898,7 @@ super_html_print_problem(FILE *f,
       if (prob->abstract) {
         extra_msg = "<i>(Undefined)</i>";
       } else {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_FULL_SCORE,
+        prepare_set_prob_value(CNTSPROB_full_score,
                                &tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
                  tmp_prob.full_score);
@@ -4918,7 +4919,7 @@ super_html_print_problem(FILE *f,
       //PROBLEM_PARAM(variable_full_score, "d"),
       extra_msg = "Undefined";
       if (!prob->abstract) {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_VARIABLE_FULL_SCORE,
+        prepare_set_prob_value(CNTSPROB_variable_full_score,
                                &tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                  tmp_prob.variable_full_score?"Yes":"No");
@@ -4938,7 +4939,7 @@ super_html_print_problem(FILE *f,
       if (prob->abstract) {
         extra_msg = "<i>(Undefined)</i>";
       } else {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_SCORE,
+        prepare_set_prob_value(CNTSPROB_test_score,
                                &tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
                  tmp_prob.test_score);
@@ -4958,7 +4959,7 @@ super_html_print_problem(FILE *f,
         if (prob->abstract) {
           extra_msg = "<i>(Undefined)</i>";
         } else {
-          prepare_set_prob_value(PREPARE_FIELD_PROB_RUN_PENALTY,
+          prepare_set_prob_value(CNTSPROB_run_penalty,
                                  &tmp_prob, sup_prob, sstate->global);
           snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
                    tmp_prob.run_penalty);
@@ -4978,7 +4979,7 @@ super_html_print_problem(FILE *f,
       if (prob->abstract) {
         extra_msg = "<i>(Undefined)</i>";
       } else {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_DISQUALIFIED_PENALTY,
+        prepare_set_prob_value(CNTSPROB_disqualified_penalty,
                                &tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
                  tmp_prob.disqualified_penalty);
@@ -5009,7 +5010,7 @@ super_html_print_problem(FILE *f,
       if (prob->abstract) {
         extra_msg = "<i>(Undefined)</i>";
       } else {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_ACM_RUN_PENALTY,
+        prepare_set_prob_value(CNTSPROB_acm_run_penalty,
                                &tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
                  tmp_prob.acm_run_penalty);
@@ -5059,7 +5060,7 @@ super_html_print_problem(FILE *f,
   if (global && global->score_system_val == SCORE_KIROV) {
     if (prob->abstract && (show_adv || prob->score_bonus[0])) extra_msg = "";
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_SCORE_BONUS,
+      prepare_set_prob_value(CNTSPROB_score_bonus,
                              &tmp_prob, sup_prob, sstate->global);
       if (show_adv || tmp_prob.score_bonus[0]) {
         s = html_armor_string_dup(tmp_prob.score_bonus);
@@ -5085,7 +5086,7 @@ super_html_print_problem(FILE *f,
       if (prob->abstract) {
         extra_msg = "<i>(Undefined)</i>";
       } else {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_TESTS_TO_ACCEPT,
+        prepare_set_prob_value(CNTSPROB_tests_to_accept,
                                &tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
                  tmp_prob.tests_to_accept);
@@ -5104,7 +5105,7 @@ super_html_print_problem(FILE *f,
       //PROBLEM_PARAM(accept_partial, "d"),
       extra_msg = "Undefined";
       if (!prob->abstract) {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_ACCEPT_PARTIAL,
+        prepare_set_prob_value(CNTSPROB_accept_partial,
                                &tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                  tmp_prob.accept_partial?"Yes":"No");
@@ -5125,7 +5126,7 @@ super_html_print_problem(FILE *f,
         if (prob->abstract) {
           extra_msg = "<i>(Undefined)</i>";
         } else {
-          prepare_set_prob_value(PREPARE_FIELD_PROB_MIN_TESTS_TO_ACCEPT,
+          prepare_set_prob_value(CNTSPROB_min_tests_to_accept,
                                  &tmp_prob, sup_prob, sstate->global);
           if (tmp_prob.min_tests_to_accept < 0)
             tmp_prob.min_tests_to_accept = tmp_prob.tests_to_accept;
@@ -5148,7 +5149,7 @@ super_html_print_problem(FILE *f,
     //PROBLEM_PARAM(hidden, "d"),
       extra_msg = "Undefined";
       if (!prob->abstract) {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_HIDDEN,
+        prepare_set_prob_value(CNTSPROB_hidden,
                                &tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                  tmp_prob.hidden?"Yes":"No");
@@ -5177,7 +5178,7 @@ super_html_print_problem(FILE *f,
     //PROBLEM_PARAM(advance_to_next, "d"),
       extra_msg = "Undefined";
       if (!prob->abstract) {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_ADVANCE_TO_NEXT,
+        prepare_set_prob_value(CNTSPROB_advance_to_next,
                                &tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                  tmp_prob.advance_to_next?"Yes":"No");
@@ -5196,7 +5197,7 @@ super_html_print_problem(FILE *f,
     //PROBLEM_PARAM(enable_text_form, "d"),
       extra_msg = "Undefined";
       if (!prob->abstract) {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_ENABLE_TEXT_FORM,
+        prepare_set_prob_value(CNTSPROB_enable_text_form,
                                &tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                  tmp_prob.enable_text_form?"Yes":"No");
@@ -5216,7 +5217,7 @@ super_html_print_problem(FILE *f,
     if (prob->abstract && !prob->use_stdout) extra_msg = "";
     if (!prob->abstract && !tmp_prob.use_stdout) {
       extra_msg = "";
-      prepare_set_prob_value(PREPARE_FIELD_PROB_STAND_ATTR,
+      prepare_set_prob_value(CNTSPROB_stand_attr,
                              &tmp_prob, sup_prob, sstate->global);
       if (!prob->stand_attr[0]) {
         s = html_armor_string_dup(tmp_prob.stand_attr);
@@ -5244,7 +5245,7 @@ super_html_print_problem(FILE *f,
   if (prob->abstract) extra_msg = "";
   if (!prob->abstract && !prob->standard_checker[0]) {
     extra_msg = "";
-    prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_CMD,
+    prepare_set_prob_value(CNTSPROB_check_cmd,
                            &tmp_prob, sup_prob, sstate->global);
     s = html_armor_string_dup(tmp_prob.check_cmd);
     snprintf(msg_buf, sizeof(msg_buf), "<i>(%s\"%s\")</i>",
@@ -5282,7 +5283,7 @@ super_html_print_problem(FILE *f,
   if (show_adv) {
     extra_msg = 0;
     if (!prob->abstract) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER,
+      prepare_set_prob_value(CNTSPROB_scoring_checker,
                              &tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                tmp_prob.scoring_checker?"Yes":"No");
@@ -5302,7 +5303,7 @@ super_html_print_problem(FILE *f,
     if (prob->abstract) extra_msg = "";
     if (!prob->abstract && !prob->standard_checker[0]) {
       extra_msg = "";
-      prepare_set_prob_value(PREPARE_FIELD_PROB_VALUER_CMD,
+      prepare_set_prob_value(CNTSPROB_valuer_cmd,
                              &tmp_prob, sup_prob, sstate->global);
       s = html_armor_string_dup(tmp_prob.valuer_cmd);
       snprintf(msg_buf, sizeof(msg_buf), "<i>(%s\"%s\")</i>",
@@ -5359,7 +5360,7 @@ super_html_print_problem(FILE *f,
     //PROBLEM_PARAM(stand_ignore_score, "d"),
       extra_msg = "Undefined";
       if (!prob->abstract) {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_STAND_IGNORE_SCORE,
+        prepare_set_prob_value(CNTSPROB_stand_ignore_score,
                                &tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                  tmp_prob.stand_ignore_score?"Yes":"No");
@@ -5377,7 +5378,7 @@ super_html_print_problem(FILE *f,
     //PROBLEM_PARAM(stand_last_column, "d"),
       extra_msg = "Undefined";
       if (!prob->abstract) {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_STAND_LAST_COLUMN,
+        prepare_set_prob_value(CNTSPROB_stand_last_column,
                                &tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
                  tmp_prob.stand_last_column?"Yes":"No");
@@ -5534,7 +5535,7 @@ super_html_print_problem(FILE *f,
   if (show_adv) {
     //PROBLEM_PARAM(source_header, "s"),
     extra_msg = "";
-    prepare_set_prob_value(PREPARE_FIELD_PROB_SOURCE_HEADER,
+    prepare_set_prob_value(CNTSPROB_source_header,
                            &tmp_prob, sup_prob, sstate->global);
     if (!prob->source_header[0]) {
       s = html_armor_string_dup(tmp_prob.source_header);
@@ -5551,7 +5552,7 @@ super_html_print_problem(FILE *f,
 
     //PROBLEM_PARAM(source_footer, "s"),
     extra_msg = "";
-    prepare_set_prob_value(PREPARE_FIELD_PROB_SOURCE_FOOTER,
+    prepare_set_prob_value(CNTSPROB_source_footer,
                            &tmp_prob, sup_prob, sstate->global);
     if (!prob->source_footer[0]) {
       s = html_armor_string_dup(tmp_prob.source_footer);
@@ -8031,44 +8032,44 @@ super_html_check_tests(FILE *f,
     }
 
     prepare_copy_problem(&tmp_prob, prob);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TYPE, &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_XML_FILE,&tmp_prob,abstr, global);
+    prepare_set_prob_value(CNTSPROB_type_val, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_xml_file,&tmp_prob,abstr, global);
 
     if (tmp_prob.type_val == PROB_TYPE_SELECT_ONE && tmp_prob.xml_file[0]) {
       fprintf(flog, "Select-one XML-specified problem, skipping\n");
       continue;
     }
 
-    prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER, &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_MANUAL_CHECKING, &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_EXAMINATOR_NUM, &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_PRESENTATION, &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT, &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_IGNORE_EXIT_CODE, &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_VALUER_CMD, &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_DIR, &tmp_prob, abstr, 0);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_USE_CORR, &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_SFX, &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_PAT, &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_SCORE, &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_FULL_SCORE, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_scoring_checker, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_manual_checking, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_examinator_num, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_check_presentation, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_binary_input, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_ignore_exit_code, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_valuer_cmd, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_test_dir, &tmp_prob, abstr, 0);
+    prepare_set_prob_value(CNTSPROB_use_corr, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_test_sfx, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_test_pat, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_test_score, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_full_score, &tmp_prob, abstr, global);
     mkpath(test_path, g_test_path, tmp_prob.test_dir, "");
     if (tmp_prob.use_corr) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_CORR_DIR, &tmp_prob, abstr, 0);
-      prepare_set_prob_value(PREPARE_FIELD_PROB_CORR_SFX, &tmp_prob, abstr, global);
-      prepare_set_prob_value(PREPARE_FIELD_PROB_CORR_PAT, &tmp_prob, abstr, global);
+      prepare_set_prob_value(CNTSPROB_corr_dir, &tmp_prob, abstr, 0);
+      prepare_set_prob_value(CNTSPROB_corr_sfx, &tmp_prob, abstr, global);
+      prepare_set_prob_value(CNTSPROB_corr_pat, &tmp_prob, abstr, global);
       mkpath(corr_path, g_corr_path, tmp_prob.corr_dir, "");
     }
-    prepare_set_prob_value(PREPARE_FIELD_PROB_USE_INFO, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_use_info, &tmp_prob, abstr, global);
     if (tmp_prob.use_info) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_INFO_DIR, &tmp_prob, abstr, 0);
-      prepare_set_prob_value(PREPARE_FIELD_PROB_INFO_SFX, &tmp_prob, abstr, global);
-      prepare_set_prob_value(PREPARE_FIELD_PROB_INFO_PAT, &tmp_prob, abstr, global);
+      prepare_set_prob_value(CNTSPROB_info_dir, &tmp_prob, abstr, 0);
+      prepare_set_prob_value(CNTSPROB_info_sfx, &tmp_prob, abstr, global);
+      prepare_set_prob_value(CNTSPROB_info_pat, &tmp_prob, abstr, global);
       mkpath(info_path, g_info_path, tmp_prob.info_dir, "");
     }
     checker_path[0] = 0;
     if (!tmp_prob.standard_checker[0]) {
-      prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_CMD, &tmp_prob, abstr, 0);
+      prepare_set_prob_value(CNTSPROB_check_cmd, &tmp_prob, abstr, 0);
       mkpath(checker_path, g_checker_path, tmp_prob.check_cmd, "");
     }
 

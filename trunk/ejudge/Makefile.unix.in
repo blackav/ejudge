@@ -444,7 +444,7 @@ super-serve_meta.c super-serve_meta.h : super-serve.h
 	$(META_CC) $(REUSE_INCL_OPT) super-serve.h -o super-serve.out --force-h --meta --meta-struct sid_state --meta-enum-prefix SSSS --meta-func-prefix ss_sid_state --meta-timestamp
 
 prepare_meta.c prepare_meta.h : prepare.h
-	$(META_CC) $(REUSE_INCL_OPT) prepare.h -o prepare.out --force-h --meta --meta-struct section_global_data --meta-struct section_problem_data --meta-struct section_language_data --meta-struct section_tester_data --meta-enum-prefix SGLOB --meta-enum-prefix SPROB --meta-enum-prefix SLANG --meta-enum-prefix STESTER --meta-func-prefix global --meta-func-prefix prob --meta-func-prefix lang --meta-func-prefix tester --meta-timestamp
+	$(META_CC) $(REUSE_INCL_OPT) prepare.h -o prepare.out --force-h --meta --meta-struct section_global_data --meta-struct section_problem_data --meta-struct section_language_data --meta-struct section_tester_data --meta-enum-prefix CNTSGLOB --meta-enum-prefix CNTSPROB --meta-enum-prefix CNTSLANG --meta-enum-prefix CNTSTESTER --meta-func-prefix cntsglob --meta-func-prefix cntsprob --meta-func-prefix cntslang --meta-func-prefix cntstester --meta-timestamp
 
 style/actions.js : make-js-actions
 	./make-js-actions > style/actions.js
