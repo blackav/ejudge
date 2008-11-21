@@ -4565,6 +4565,8 @@ priv_view_users_page(FILE *fout,
   unsigned char b1[1024], b2[1024];
   int new_contest_id = cnts->id;
   const struct section_global_data *global = extra->serve_state->global;
+  int *run_counts = 0;
+  size_t *run_sizes = 0;
 
   if (cnts->user_contest_num > 0) new_contest_id = cnts->user_contest_num;
   if (ns_open_ul_connection(phr->fw_state) < 0)
@@ -4579,6 +4581,13 @@ priv_view_users_page(FILE *fout,
   if (!users)
     return ns_html_err_internal_error(fout, phr, 1, "XML parsing failed");
 
+  if (users->user_map_size > 0) {
+    XCALLOC(run_counts, users->user_map_size);
+    XCALLOC(run_sizes, users->user_map_size);
+    run_get_all_statistics(extra->serve_state->runlog_state,
+                           users->user_map_size, run_counts, run_sizes);
+  }
+
   if (opcaps_check(phr->caps, OPCAP_GET_USER) >= 0) details_allowed = 1;
 
   l10n_setlocale(phr->locale_id);
@@ -4591,7 +4600,7 @@ priv_view_users_page(FILE *fout,
   snprintf(cl, sizeof(cl), " class=\"b1\"");
 
   html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-  fprintf(fout, "<table%s><tr><th%s>NN</th><th%s>Id</th><th%s>Login</th><th%s>Name</th><th%s>Status</th><th%s>Flags</th><th%s>Reg. date</th><th%s>Login date</th><th%s>Select</th></tr>\n", cl, cl, cl, cl, cl, cl, cl, cl, cl, cl);
+  fprintf(fout, "<table%s><tr><th%s>NN</th><th%s>Id</th><th%s>Login</th><th%s>Name</th><th%s>Status</th><th%s>Flags</th><th%s>Reg. date</th><th%s>Login date</th><th%s>No. of submits</th><th%s>Size of submits</th><th%s>Select</th></tr>\n", cl, cl, cl, cl, cl, cl, cl, cl, cl, cl, cl, cl);
   for (uid = 1; uid < users->user_map_size; uid++) {
     if (!(u = users->user_map[uid])) continue;
     if (!(uc = userlist_get_user_contest(u, new_contest_id))) continue;
@@ -4647,6 +4656,12 @@ priv_view_users_page(FILE *fout,
               xml_unparse_date(u->cnts0->last_login_time));
     } else {
       fprintf(fout, "<td%s>&nbsp;</td>", cl);
+    }
+    if (run_counts[uid] > 0) {
+      fprintf(fout, "<td%s>%d</td><td%s>%zu</td>", cl, run_counts[uid],
+              cl, run_sizes[uid]);
+    } else {
+      fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td>", cl, cl);
     }
     fprintf(fout, "<td%s><input type=\"checkbox\" name=\"user_%d\"/></td>",
             cl, uid);
@@ -4758,6 +4773,8 @@ priv_view_users_page(FILE *fout,
 
   if (users) userlist_free(&users->b);
   html_armor_free(&ab);
+  xfree(run_counts);
+  xfree(run_sizes);
 }
 
 struct priv_user_info

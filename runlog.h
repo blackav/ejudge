@@ -315,4 +315,11 @@ int run_get_prev_successes(runlog_state_t, int run_id);
 int run_count_examinable_runs(runlog_state_t state, int prob_id,
                               int exam_num, int *p_assigned);
 
+void
+run_get_all_statistics(
+        runlog_state_t state,
+        size_t size,
+        int *counts,
+        size_t *sizes);
+
 #endif /* __RUNLOG_H__ */
