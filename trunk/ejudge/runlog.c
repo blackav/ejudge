@@ -1954,6 +1954,26 @@ run_put_header(
   return state->iface->put_header(state->cnts, rh);
 }
 
+void
+run_get_all_statistics(
+        runlog_state_t state,
+        size_t size,
+        int *counts,
+        size_t *sizes)
+{
+  int i;
+  const struct run_entry *p;
+
+  for (i = 0; i < state->run_u; i++) {
+    p = &state->runs[i];
+    if (p->status != RUN_EMPTY && p->user_id >= 1 && p->user_id < size) {
+      if (counts) counts[p->user_id]++;
+      if (sizes) sizes[p->user_id] += p->size;
+    }
+  }
+}
+
+
 /*
  * Local variables:
  *  compile-command: "make"
