@@ -370,3 +370,8 @@ function ssCommitContest(action)
 {
   document.location.href = script_name + "?SID=" + SID + "&action=" + action;
 }
+
+function ssEditPage(op, page)
+{
+  document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + op + "&page=" + page;
+}
