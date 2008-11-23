@@ -35,6 +35,8 @@
 #include "ejudge_cfg.h"
 #include "mischtml.h"
 #include "prepare.h"
+#include "prepare_meta.h"
+#include "meta_generic.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -638,9 +640,10 @@ enum
 {
   NS_CONTEST = 1,
   NS_SID_STATE,
+  NS_GLOBAL,
 };
 
-#define push(val) do { if (sp >= ST_SIZE) goto stack_overflow; st[sp++] = (val1); } while (0)
+#define push(val) do { if (sp >= ST_SIZE) goto stack_overflow; st[sp++] = (val); } while (0)
 #define pop(var) do { if (!sp) goto stack_undeflow; (var) = st[--sp]; } while (0)
 
 static int
@@ -691,10 +694,31 @@ eval_check_expr(
         f_type = ss_sid_state_get_type(f_id);
         if (!(f_ptr = ss_sid_state_get_ptr_nc(phr->ss, f_id)))
           goto invalid_field;
+      } else if (!strncmp(buf, "Global.", 7)) {
+        if (!(f_id = cntsglob_lookup_field(buf + 7)))
+          goto invalid_field;
+        f_type = cntsglob_get_type(f_id);
+        if (!(f_ptr = cntsglob_get_ptr_nc(phr->ss->global, f_id)))
+          goto invalid_field;
+      } else if (!strcmp(buf, "SCORE_ACM")) {
+        f_type = 0;
+        val2 = SCORE_ACM;
+      } else if (!strcmp(buf, "SCORE_KIROV")) {
+        f_type = 0;
+        val2 = SCORE_KIROV;
+      } else if (!strcmp(buf, "SCORE_OLYMPIAD")) {
+        f_type = 0;
+        val2 = SCORE_OLYMPIAD;
+      } else if (!strcmp(buf, "SCORE_MOSCOW")) {
+        f_type = 0;
+        val2 = SCORE_MOSCOW;
       } else goto invalid_field;
 
       val1 = 0;
       switch (f_type) {
+      case 0:
+        val1 = val2;
+        break;
       case 'b':
         if (*(unsigned char*) f_ptr) val1 = 1;
         break;
@@ -705,10 +729,12 @@ eval_check_expr(
         if (*(unsigned char **) f_ptr) val1 = 1;
         break;
       case 't':
-        if (*(time_t*) f_ptr) val1 = 1;
+        //if (*(time_t*) f_ptr) val1 = 1;
+        val1 = *(time_t*) f_ptr;
         break;
       case 'i':
-        if (*(int*) f_ptr) val1 = 1;
+        //if (*(int*) f_ptr) val1 = 1;
+        val1 = *(int*) f_ptr;
         break;
       default:
         fprintf(stderr, "eval_check_expr: invalid type\n");
@@ -733,9 +759,25 @@ eval_check_expr(
       continue;
     }
     switch (*p) {
-    case '!':
+    case '=':
+      if (p[1] != '=') {
+        fprintf(stderr, "eval_check_expr: invalid operation\n");
+        return -1;
+      }
+      p++;
+      pop(val2);
       pop(val1);
-      push(!val1);
+      push(val1 == val2);
+      break;
+    case '!':
+      if (p[1] == '=') {
+        pop(val2);
+        pop(val1);
+        push(val1 != val2);
+      } else {
+        pop(val1);
+        push(!val1);
+      }
       break;
     case '~':
       pop(val1);
@@ -773,6 +815,26 @@ eval_check_expr(
       pop(val2);
       pop(val1);
       push(val1 - val2);
+      break;
+    case '>':
+      pop(val2);
+      pop(val1);
+      if (p[1] == '=') {
+        p++;
+        push(val1 >= val2);
+      } else {
+        push(val1 > val2);
+      }
+      break;
+    case '<':
+      pop(val2);
+      pop(val1);
+      if (p[1] == '=') {
+        p++;
+        push(val1 <= val2);
+      } else {
+        push(val1 < val2);
+      }
       break;
     default:
       fprintf(stderr, "eval_check_expr: invalid operation <%c>\n", *p);
@@ -817,7 +879,7 @@ struct cnts_edit_info
   unsigned char *hint;
   unsigned char *guard_expr;
 };
-static struct cnts_edit_info cnts_edit_info[] =
+static const struct cnts_edit_info cnts_edit_info[] =
 {
   { 0, 0, '-', 0, 0, 0, 0, 0, "Basic Contest Settings", 0, 0 },
   { NS_CONTEST, CNTS_id, 'd', 0, 0, 0, 0, 0, "Contest ID", "Contest ID", 0 },
@@ -924,6 +986,91 @@ static struct cnts_edit_info cnts_edit_info[] =
   { NS_CONTEST, CNTS_file_group, 's', 1, 1, 1, 1, 0, "The files group", "Octal number", "SidState.show_paths" },
 
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+};
+
+/*
+  int is_editable;
+  int is_clearable;
+  int dojo_inline_edit;
+  int is_nullable;
+  int has_details;
+*/
+static const struct cnts_edit_info cnts_global_info[] =
+{
+  { NS_GLOBAL, CNTSGLOB_score_system, 132, 1, 0, 0, 0, 0, "Scoring system", "Scoring system", 0 },
+  { NS_GLOBAL, CNTSGLOB_contest_time, 'u', 1, 1, 1, 1, 0, "Contest duration (HH:MM)", "Contest duration (HH:MM)", 0 },
+  { NS_GLOBAL, CNTSGLOB_contest_finish_time_d, 't', 1, 1, 0, 1, 0, "Contest finish time", "Contest finish time", "Global.contest_time 0 <=" },
+  { NS_GLOBAL, CNTSGLOB_board_fog_time, 'u', 1, 1, 1, 1, 0, "Standings freeze time (HH:MM)", "Standings freeze time (before contest finish)", "Global.contest_time 0 >" },
+  { NS_GLOBAL, CNTSGLOB_board_unfog_time, 'u', 1, 1, 1, 1, 0, "Standings unfreeze time (HH:MM)", "Standings unfreeze time (after contest finish)", "Global.contest_time 0 > Global.board_fog_time 0 > &&" },
+  { NS_CONTEST, SSSS_disable_compilation_server, 133, 1, 0, 0, 0, 0, "Use the main compilation server", 0, 0 },
+  { NS_GLOBAL, CNTSGLOB_secure_run, 'Y', 1, 0, 0, 0, 0, "Run programs securely", "Run programs securely (needs kernel patch)", 0 },
+  { NS_GLOBAL, CNTSGLOB_enable_memory_limit_error, 'Y', 1, 0, 0, 0, 0, "Enable support for MemoryLimit error", "Enable support for MemoryLimit error (needs kernel patch)", 0 },
+  { NS_GLOBAL, CNTSGLOB_detect_violations, 'Y', 1, 0, 0, 0, 0, "Detect security violations", "Detect security violations (needs kernel patch)", 0 },
+  { NS_GLOBAL, CNTSGLOB_standings_locale, 134, 1, 1, 0, 1, 0, "Standings locale", 0, 0 },
+
+  { NS_SID_STATE, SSSS_show_global_1, '-', 1, 0, 0, 0, 0, "Contestant's capabilities", 0, 0 },
+  { NS_GLOBAL, CNTSGLOB_team_enable_src_view, 'Y', 1, 0, 0, 0, 0, "Contestants may view their source code", 0, "SidState.show_global_1" },
+  { NS_GLOBAL, CNTSGLOB_disable_failed_test_view, 'Y', 1, 0, 0, 0, 0, "The number of the failed test is not shown", 0, "SidState.show_global_1 Global.score_system_val SCORE_ACM == Global.score_system_val SCORE_MOSCOW == || &&" },
+  { NS_GLOBAL, CNTSGLOB_team_enable_rep_view, 'Y', 1, 0, 0, 0, 0, "Contestants may view testing protocols", 0, "SidState.show_global_1" },
+  { NS_GLOBAL, CNTSGLOB_team_enable_ce_view, 'Y', 1, 0, 0, 0, 0, "Contestants may view compilation errors", 0, "SidState.show_global_1 Global.team_enable_rep_view ! &&" },
+  { NS_GLOBAL, CNTSGLOB_team_show_judge_report, 'Y', 1, 0, 0, 0, 0, "Contestants may view FULL testing protocols", 0, "SidState.show_global_1 Global.team_enable_rep_view &&" },
+  { NS_GLOBAL, CNTSGLOB_report_error_code, 'Y', 1, 0, 0, 0, 0, "Contestants may view process exit codes", 0, "SidState.show_global_1 Global.team_enable_rep_view && Global.team_show_judge_report &&" },
+  { NS_GLOBAL, CNTSGLOB_disable_clars, 'Y', 1, 0, 0, 0, 0, "Clarification requests and messages from judges are disabled", 0, "SidState.show_global_1" },
+  { NS_GLOBAL, CNTSGLOB_disable_team_clars, 'Y', 1, 0, 0, 0, 0, "Clarification requests from contestants are disabled", 0, "SidState.show_global_1 Global.disable_clars ! &&" },
+  { NS_GLOBAL, CNTSGLOB_disable_submit_after_ok, 'Y', 1, 0, 0, 0, 0, "Disable submits to already solved problems", 0, "SidState.show_global_1" },
+  { NS_GLOBAL, CNTSGLOB_ignore_compile_errors, 'Y', 1, 0, 0, 0, 0, "Do not penalize compilation errors", 0, "SidState.show_global_1" },
+  { NS_GLOBAL, CNTSGLOB_ignore_duplicated_runs, 'Y', 1, 0, 0, 0, 0, "Do not allow duplicate submissions", 0, "SidState.show_global_1" },
+  { NS_GLOBAL, CNTSGLOB_show_deadline, 'Y', 1, 0, 0, 0, 0, "Show problem submit deadline", 0, "SidState.show_global_1" },
+  { NS_GLOBAL, CNTSGLOB_enable_printing, 'Y', 1, 0, 0, 0, 0, "Enable printing of submissions by contestants", 0, "SidState.show_global_1" },
+  { NS_GLOBAL, CNTSGLOB_disable_banner_page, 'Y', 1, 0, 0, 0, 0, "Disable banner page in printouts", 0, "SidState.show_global_1 Global.enable_printing &&" },
+  { NS_GLOBAL, CNTSGLOB_prune_empty_users, 'Y', 1, 0, 0, 0, 0, "Do not show contestants with no submits in the standings", 0, "SidState.show_global_1" },
+  { NS_GLOBAL, CNTSGLOB_enable_full_archive, 'Y', 1, 0, 0, 0, 0, "Store the full output in the archive", 0, "SidState.show_global_1" },
+  { NS_GLOBAL, CNTSGLOB_always_show_problems, 'Y', 1, 0, 0, 0, 0, "Problem statements are available before the contest start", 0, "SidState.show_global_1" },
+  { NS_GLOBAL, CNTSGLOB_disable_user_standings, 'Y', 1, 0, 0, 0, 0, "Disable standings on the contestant's client pages", 0, "SidState.show_global_1" },
+  { NS_GLOBAL, CNTSGLOB_disable_language, 'Y', 1, 0, 0, 0, 0, "Do not show the language column to contestants", 0, "SidState.show_global_1" },
+  { NS_GLOBAL, CNTSGLOB_problem_navigation, 'Y', 1, 0, 0, 0, 0, "Tabbed problem navigation", 0, "SidState.show_global_1" },
+  { NS_GLOBAL, CNTSGLOB_vertical_navigation, 'Y', 1, 0, 0, 0, 0, "Place problem tabs vertically", 0, "SidState.show_global_1 Global.problem_navigation &&" },
+  { NS_GLOBAL, CNTSGLOB_disable_virtual_start, 'Y', 1, 0, 0, 0, 0, "Disable virtual start button for contestants", 0, "SidState.show_global_1 Global.is_virtual &&" },
+  { NS_GLOBAL, CNTSGLOB_disable_virtual_auto_judge, 'Y', 1, 0, 0, 0, 0, "Disable auto-judging after virtual olympiad is over", 0, "SidState.show_global_1 Global.score_system_val SCORE_OLYMPIAD == && Global.is_virtual &&" },
+  { NS_GLOBAL, CNTSGLOB_enable_auto_print_protocol, 'Y', 1, 0, 0, 0, 0, "Enable automatic printing of olympiad protocols", 0, "SidState.show_global_1 Global.score_system_val SCORE_OLYMPIAD == &&" },
+  { NS_GLOBAL, CNTSGLOB_notify_clar_reply, 'Y', 1, 0, 0, 0, 0, "Enable e-mail clar notifications", 0, "SidState.show_global_1 Global.disable_clars ! &&" },
+  { NS_GLOBAL, CNTSGLOB_notify_status_change, 'Y', 1, 0, 0, 0, 0, "Enable e-mail status change notifications", 0, "SidState.show_global_1" },
+
+  { NS_SID_STATE, SSSS_show_global_2, '-', 1, 0, 0, 0, 0, "Files and directories", 0, 0 },
+  { NS_GLOBAL, CNTSGLOB_test_dir, 'S', 1, 1, 1, 1, 0, "Directory for tests", "Directory for tests (relative to the contest configuration directory)", "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_corr_dir, 'S', 1, 1, 1, 1, 0, "Directory for correct answers", "Directory for correct answers (relative to the contest configuration directory)", "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_info_dir, 'S', 1, 1, 1, 1, 0, "Directory for test information files", "Directory for test information files (relative to the contest configuration directory)", "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_tgz_dir, 'S', 1, 1, 1, 1, 0, "Directory for test working dir archives", "Directory for test working dir archives (relative to the contest configuration directory)", "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_checker_dir, 'S', 1, 1, 1, 1, 0, "Directory for checkers", "Directory for checkers (relative to the contest configuration directory)", "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_statement_dir, 'S', 1, 1, 1, 1, 0, "Directory for problem statements", "Directory for problem statements (relative to the contest configuration directory)", "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_plugin_dir, 'S', 1, 1, 1, 1, 0, "Directory for the problem plugins", "Directory for problem plugins (relative to the contest configuration directory)", "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_contest_start_cmd, 'S', 1, 1, 1, 1, 0, "The contest start script", 0, "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_description_file, 'S', 1, 1, 1, 1, 0, "The contest description file", 0, "SidState.show_global_2" },
+
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+};
+
+/**
+   A page descripting structure.
+ */
+struct edit_page_desc
+{
+  const unsigned char *label;
+  const struct cnts_edit_info *edit_descs;
+  const struct meta_methods *methods;
+  int edit_op;
+  int clear_op;
+};
+
+static const struct edit_page_desc edit_page_descs[] =
+{
+  { "General Settings", cnts_edit_info, &contest_desc_methods,
+    SSERV_OP_EDIT_CONTEST_XML_FIELD, SSERV_OP_CLEAR_CONTEST_XML_FIELD },
+  { "Global Settings", cnts_global_info, &cntsglob_methods,
+    SSERV_OP_EDIT_SERVE_GLOBAL_FIELD, SSERV_OP_CLEAR_SERVE_GLOBAL_FIELD },
+  { "Language Settings", 0, 0, 0, 0 },
+  { "Problem Settings", 0, 0, 0, 0 },
+  { 0, 0, 0, 0 },
 };
 
 static void
@@ -1035,12 +1182,22 @@ contest_xml_page(
   unsigned char buf[1024];
   unsigned char jbuf[1024];
   int is_empty;
-  int row = 1, i, j, k;
-  struct cnts_edit_info *ce;
+  int row = 1, i, j, k, page = 0;
+  const struct cnts_edit_info *ce;
   void *v_ptr;
   struct opcap_list_item *perms;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char *s = 0;
+  const unsigned char *ss = 0;
+  static const struct edit_page_desc *pg;
+  static const struct section_global_data *global = 0;
+  void *edit_ptr = 0;
+  const unsigned char *hint;
+
+  if (ss_cgi_param_int(phr, "page", &page) < 0 || page < 0 || page > 1)
+    page = phr->ss->edit_page;
+  phr->ss->edit_page = page;
+  pg = &edit_page_descs[page];
 
   snprintf(buf, sizeof(buf), "serve-control: %s, editing contest %d",
            phr->html_name, ecnts->id);
@@ -1051,18 +1208,33 @@ contest_xml_page(
   // write tabs
   fprintf(out_f, "<div id=\"tabs\">\n");
   fprintf(out_f, "<ul>\n");
-  fprintf(out_f, "<li id=\"selected\">General Settings</li>\n");
-  fprintf(out_f, "<li>Global Settings</li>\n");
-  fprintf(out_f, "<li>Language Settings</li>\n");
-  fprintf(out_f, "<li>Problem Settings</li>\n");
+  for (i = 0; i < 4; ++i) {
+    ss = "";
+    if (page == i) ss = " id=\"selected\"";
+    fprintf(out_f, "<li%s onClick='ssEditPage(%d,%d)'>%s</li>\n", ss,
+            SSERV_OP_EDIT_CONTEST_PAGE_2, i, edit_page_descs[i].label);
+  }
   fprintf(out_f, "</ul>\n");
   fprintf(out_f, "</div>\n");
+
+  switch (page) {
+  case 0:
+    edit_ptr = ecnts;
+    break;
+  case 1:
+    edit_ptr = phr->ss->global;
+    global = phr->ss->global;
+    break;
+  }
 
   // write the main content
   fprintf(out_f, "<div id=\"cnts_edit_content\">\n");
   fprintf(out_f, "<table class=\"cnts_edit\">\n");
 
-  for (i = 0, ce = cnts_edit_info; ce->type; ++i, ++ce) {
+  for (i = 0, ce = pg->edit_descs; ce->type; ++i, ++ce) {
+    hint = ce->hint;
+    if (!hint) hint = ce->legend;
+
     if (ce->type == '-') {
       if (ce->is_editable) {
         int *p_flag = 0;
@@ -1125,14 +1297,12 @@ contest_xml_page(
     fprintf(out_f, "<td valign=\"middle\" class=\"cnts_edit_data\" width=\"600px\">");
     if (ce->is_editable && ce->dojo_inline_edit) {
       fprintf(out_f, "<div class=\"cnts_edit_data\" dojoType=\"dijit.InlineEditBox\" onChange=\"ssEditField(%d, %d, %d, arguments[0])\" autoSave=\"true\" title=\"%s\">",
-              SSERV_OP_EDIT_CONTEST_XML_FIELD,
-              ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2,
-              ce->hint);
+              pg->edit_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2, hint);
     } else if (ce->type != 't') {
       fprintf(out_f, "<div class=\"cnts_edit_data\">");
     }
 
-    v_ptr = contest_desc_get_ptr_nc(ecnts, ce->field_id);
+    v_ptr = pg->methods->get_ptr_nc(edit_ptr, ce->field_id);
     switch (ce->type) {
     case 'd':
       {
@@ -1140,11 +1310,28 @@ contest_xml_page(
         fprintf(out_f, "%d", *d_ptr);
       }
       break;
+    case 'u':
+      {
+        int *d_ptr = (int*) v_ptr;
+        if (*d_ptr <= 0) {
+          fprintf(out_f, "0");
+        } else {
+          fprintf(out_f, "%d:%02d", *d_ptr / 60, *d_ptr % 60);
+        }
+      }
+      break;
     case 's': case 'e':
       {
         unsigned char **s_ptr = (unsigned char**) v_ptr;
         if (*s_ptr) fprintf(out_f, "%s", *s_ptr);
         if (!*s_ptr) is_empty = 1;
+      }
+      break;
+    case 'S':
+      {
+        unsigned char *s = (unsigned char *) v_ptr;
+        fprintf(out_f, "%s", s);
+        is_empty = 0;
       }
       break;
     case 'y':
@@ -1155,7 +1342,20 @@ contest_xml_page(
           break;
         }
         ss_html_int_select(out_f, 0, 0, 0,
-                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_OP_EDIT_CONTEST_XML_FIELD, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2),
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", pg->edit_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2),
+                           !!*y_ptr,
+                           2, (const char *[]) { "No", "Yes" });
+      }
+      break;
+    case 'Y':
+      {
+        ejintbool_t *y_ptr = (ejintbool_t*) v_ptr;
+        if (!ce->is_editable) {
+          fprintf(out_f, "%s", *y_ptr?"Yes":"No");
+          break;
+        }
+        ss_html_int_select(out_f, 0, 0, 0,
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", pg->edit_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2),
                            !!*y_ptr,
                            2, (const char *[]) { "No", "Yes" });
       }
@@ -1180,8 +1380,8 @@ contest_xml_page(
         }
 
         fprintf(out_f, "<div class=\"cnts_edit_inlined\">Time: </div><div class=\"cnts_edit_inlined\" dojoType=\"dijit.InlineEditBox\" onChange=\"editField2(%d, %d, %d, %d, arguments[0])\" autoSave=\"true\" title=\"Time (HH:MM:SS)\">%s</div>",
-                SSERV_OP_EDIT_CONTEST_XML_FIELD,
-                ce->field_id, 1, SSERV_OP_EDIT_CONTEST_PAGE_2, time_buf);
+                pg->edit_op, ce->field_id, 1, SSERV_OP_EDIT_CONTEST_PAGE_2,
+                time_buf);
 
         fprintf(out_f, "<div class=\"cnts_edit_inlined\">&nbsp;Day: </div><div class=\"cnts_edit_inlined\">");
         fprintf(out_f,
@@ -1193,9 +1393,8 @@ contest_xml_page(
                 " onChange=\"editField2(%d, %d, %d, %d, this.getDisplayedValue())\""
                 " promptMessage=\"yyyy/mm/dd\""
                 " invalidMessage=\"Invalid date. Use yyyy/mm/dd format.\" />",
-                date_buf,
-                SSERV_OP_EDIT_CONTEST_XML_FIELD,
-                ce->field_id, 2, SSERV_OP_EDIT_CONTEST_PAGE_2);
+                date_buf, pg->edit_op, ce->field_id, 2,
+                SSERV_OP_EDIT_CONTEST_PAGE_2);
         fprintf(out_f, "</div>");
       }
       break;
@@ -1234,6 +1433,45 @@ contest_xml_page(
                            2, (const char *[]) { "Moderated registration", "Free registration" });
       }
       break;
+    case 132:
+      {
+        int param = global->score_system_val;
+        if (global->is_virtual) {
+          if (global->score_system_val == SCORE_ACM) param = SCORE_TOTAL;
+          else param = SCORE_TOTAL + 1;
+        }
+
+        ss_html_int_select(out_f, 0, 0, 0,
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_OP_EDIT_SERVE_GLOBAL_FIELD, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2), param,
+                           6, (const char *[]) { "ACM", "Kirov", "Olympiad", "Moscow", "Virtual ACM", "Virtual Olympiad" });
+      }
+      break;
+    case 133:
+      {
+        int value = !phr->ss->disable_compilation_server;
+        if (!ce->is_editable) {
+          fprintf(out_f, "%s", value?"Yes":"No");
+          break;
+        }
+        ss_html_int_select(out_f, 0, 0, 0,
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_OP_EDIT_DISABLE_COMPILATION_SERVER, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2),
+                           value,
+                           2, (const char *[]) { "No", "Yes" });
+      }
+      break;
+    case 134:
+      {
+        unsigned char *y_ptr = (unsigned char*) v_ptr;
+        int locale_code = -1;
+
+        is_empty = 1;
+        if (!y_ptr) y_ptr = "";
+        if (*y_ptr) locale_code = l10n_parse_locale(y_ptr);
+        if (locale_code >= 0) is_empty = 0;
+
+        l10n_html_locale_select_2(out_f, 0, 0, 0, eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_OP_EDIT_SERVE_GLOBAL_FIELD, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2), locale_code);
+      }
+      break;
     default:
       abort();
     }
@@ -1251,8 +1489,7 @@ contest_xml_page(
         }
         dojo_button(out_f, 0, "delete-16x16", "Clear variable",
                     "ssFieldRequest(%d, %d, %d)",
-                    SSERV_OP_CLEAR_CONTEST_XML_FIELD,
-                    ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
+                    pg->clear_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
       }
     } else if (ce->has_details) {
       dojo_button(out_f, 0, "edit_page-16x16", "Edit contents",
@@ -1789,6 +2026,10 @@ static unsigned char valid_ss_visibilities[SSSS_LAST_FIELD] =
   [SSSS_show_permissions] = 1,
   [SSSS_show_form_fields] = 1,
   [SSSS_show_notifications] = 1,
+
+  // these are visibilities for global configuration page
+  [SSSS_show_global_1] = 1,
+  [SSSS_show_global_2] = 1,
 };
 
 static int

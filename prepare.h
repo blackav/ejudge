@@ -404,7 +404,7 @@ struct section_global_data
   /** contest scoring system */
   unsigned char score_system[32];
   /** parsed `score_system' */
-  int score_system_val META_ATTRIB((meta_private));
+  int score_system_val;
   /** number of tests to accept a submit in olympiad contests */
   int tests_to_accept;
   /** 1, if virtual contest */

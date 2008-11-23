@@ -94,6 +94,7 @@ struct sid_state
   int user_id;
   unsigned char *user_login;
   unsigned char *user_name;
+  int edit_page;
 
   ejintbool_t advanced_view;
   ejintbool_t show_html_attrs;
