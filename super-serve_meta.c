@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/11/18 13:33:23
+// Generated 2008/11/23 20:08:23
 
 #include "super-serve_meta.h"
 #include "super-serve.h"
@@ -22,6 +22,7 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_user_id] = { SSSS_user_id, 'i', XSIZE(struct sid_state, user_id), "user_id", XOFFSET(struct sid_state, user_id) },
   [SSSS_user_login] = { SSSS_user_login, 's', XSIZE(struct sid_state, user_login), "user_login", XOFFSET(struct sid_state, user_login) },
   [SSSS_user_name] = { SSSS_user_name, 's', XSIZE(struct sid_state, user_name), "user_name", XOFFSET(struct sid_state, user_name) },
+  [SSSS_edit_page] = { SSSS_edit_page, 'i', XSIZE(struct sid_state, edit_page), "edit_page", XOFFSET(struct sid_state, edit_page) },
   [SSSS_advanced_view] = { SSSS_advanced_view, 'B', XSIZE(struct sid_state, advanced_view), "advanced_view", XOFFSET(struct sid_state, advanced_view) },
   [SSSS_show_html_attrs] = { SSSS_show_html_attrs, 'B', XSIZE(struct sid_state, show_html_attrs), "show_html_attrs", XOFFSET(struct sid_state, show_html_attrs) },
   [SSSS_show_html_headers] = { SSSS_show_html_headers, 'B', XSIZE(struct sid_state, show_html_headers), "show_html_headers", XOFFSET(struct sid_state, show_html_headers) },
@@ -69,7 +70,7 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_langs] = { SSSS_langs, '?', XSIZE(struct sid_state, langs), "langs", XOFFSET(struct sid_state, langs) },
   [SSSS_loc_cs_map] = { SSSS_loc_cs_map, '?', XSIZE(struct sid_state, loc_cs_map), "loc_cs_map", XOFFSET(struct sid_state, loc_cs_map) },
   [SSSS_cs_loc_map] = { SSSS_cs_loc_map, '?', XSIZE(struct sid_state, cs_loc_map), "cs_loc_map", XOFFSET(struct sid_state, cs_loc_map) },
-  [SSSS_lang_opts] = { SSSS_lang_opts, '?', XSIZE(struct sid_state, lang_opts), "lang_opts", XOFFSET(struct sid_state, lang_opts) },
+  [SSSS_lang_opts] = { SSSS_lang_opts, 'x', XSIZE(struct sid_state, lang_opts), "lang_opts", XOFFSET(struct sid_state, lang_opts) },
   [SSSS_lang_flags] = { SSSS_lang_flags, '?', XSIZE(struct sid_state, lang_flags), "lang_flags", XOFFSET(struct sid_state, lang_flags) },
   [SSSS_aprob_u] = { SSSS_aprob_u, 'i', XSIZE(struct sid_state, aprob_u), "aprob_u", XOFFSET(struct sid_state, aprob_u) },
   [SSSS_aprob_a] = { SSSS_aprob_a, 'i', XSIZE(struct sid_state, aprob_a), "aprob_a", XOFFSET(struct sid_state, aprob_a) },
@@ -97,7 +98,7 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_cs_lang_total] = { SSSS_cs_lang_total, 'i', XSIZE(struct sid_state, cs_lang_total), "cs_lang_total", XOFFSET(struct sid_state, cs_lang_total) },
   [SSSS_cs_cfg] = { SSSS_cs_cfg, '?', XSIZE(struct sid_state, cs_cfg), "cs_cfg", XOFFSET(struct sid_state, cs_cfg) },
   [SSSS_cs_langs] = { SSSS_cs_langs, '?', XSIZE(struct sid_state, cs_langs), "cs_langs", XOFFSET(struct sid_state, cs_langs) },
-  [SSSS_cs_lang_names] = { SSSS_cs_lang_names, '?', XSIZE(struct sid_state, cs_lang_names), "cs_lang_names", XOFFSET(struct sid_state, cs_lang_names) },
+  [SSSS_cs_lang_names] = { SSSS_cs_lang_names, 'x', XSIZE(struct sid_state, cs_lang_names), "cs_lang_names", XOFFSET(struct sid_state, cs_lang_names) },
   [SSSS_contest_start_cmd_text] = { SSSS_contest_start_cmd_text, 's', XSIZE(struct sid_state, contest_start_cmd_text), "contest_start_cmd_text", XOFFSET(struct sid_state, contest_start_cmd_text) },
   [SSSS_stand_header_text] = { SSSS_stand_header_text, 's', XSIZE(struct sid_state, stand_header_text), "stand_header_text", XOFFSET(struct sid_state, stand_header_text) },
   [SSSS_stand_footer_text] = { SSSS_stand_footer_text, 's', XSIZE(struct sid_state, stand_footer_text), "stand_footer_text", XOFFSET(struct sid_state, stand_footer_text) },
@@ -147,4 +148,14 @@ int ss_sid_state_lookup_field(const char *name)
   if (!atm) atm = meta_build_automaton(meta_info_sid_state_data, SSSS_LAST_FIELD);
   return meta_lookup_string(atm, name);
 }
+
+const struct meta_methods ss_sid_state_methods =
+{
+  ss_sid_state_get_type,
+  ss_sid_state_get_size,
+  ss_sid_state_get_name,
+  (const void *(*)(const void *ptr, int tag))ss_sid_state_get_ptr,
+  (void *(*)(void *ptr, int tag))ss_sid_state_get_ptr_nc,
+  ss_sid_state_lookup_field,
+};
 

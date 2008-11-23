@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/11/21 14:30:19
+// Generated 2008/11/23 20:08:23
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -145,7 +145,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_run_check_dir] = { CNTSGLOB_run_check_dir, 'S', XSIZE(struct section_global_data, run_check_dir), "run_check_dir", XOFFSET(struct section_global_data, run_check_dir) },
   [CNTSGLOB_htdocs_dir] = { CNTSGLOB_htdocs_dir, 'S', XSIZE(struct section_global_data, htdocs_dir), "htdocs_dir", XOFFSET(struct section_global_data, htdocs_dir) },
   [CNTSGLOB_score_system] = { CNTSGLOB_score_system, 'S', XSIZE(struct section_global_data, score_system), "score_system", XOFFSET(struct section_global_data, score_system) },
-  [CNTSGLOB_score_system_val] = { CNTSGLOB_score_system_val, 'i', XSIZE(struct section_global_data, score_system_val), NULL, XOFFSET(struct section_global_data, score_system_val) },
+  [CNTSGLOB_score_system_val] = { CNTSGLOB_score_system_val, 'i', XSIZE(struct section_global_data, score_system_val), "score_system_val", XOFFSET(struct section_global_data, score_system_val) },
   [CNTSGLOB_tests_to_accept] = { CNTSGLOB_tests_to_accept, 'i', XSIZE(struct section_global_data, tests_to_accept), "tests_to_accept", XOFFSET(struct section_global_data, tests_to_accept) },
   [CNTSGLOB_is_virtual] = { CNTSGLOB_is_virtual, 'B', XSIZE(struct section_global_data, is_virtual), "is_virtual", XOFFSET(struct section_global_data, is_virtual) },
   [CNTSGLOB_prune_empty_users] = { CNTSGLOB_prune_empty_users, 'B', XSIZE(struct section_global_data, prune_empty_users), "prune_empty_users", XOFFSET(struct section_global_data, prune_empty_users) },
@@ -307,6 +307,16 @@ int cntsglob_lookup_field(const char *name)
   if (!atm) atm = meta_build_automaton(meta_info_section_global_data_data, CNTSGLOB_LAST_FIELD);
   return meta_lookup_string(atm, name);
 }
+
+const struct meta_methods cntsglob_methods =
+{
+  cntsglob_get_type,
+  cntsglob_get_size,
+  cntsglob_get_name,
+  (const void *(*)(const void *ptr, int tag))cntsglob_get_ptr,
+  (void *(*)(void *ptr, int tag))cntsglob_get_ptr_nc,
+  cntsglob_lookup_field,
+};
 
 static struct meta_info_item meta_info_section_problem_data_data[] =
 {
@@ -471,6 +481,16 @@ int cntsprob_lookup_field(const char *name)
   return meta_lookup_string(atm, name);
 }
 
+const struct meta_methods cntsprob_methods =
+{
+  cntsprob_get_type,
+  cntsprob_get_size,
+  cntsprob_get_name,
+  (const void *(*)(const void *ptr, int tag))cntsprob_get_ptr,
+  (void *(*)(void *ptr, int tag))cntsprob_get_ptr_nc,
+  cntsprob_lookup_field,
+};
+
 static struct meta_info_item meta_info_section_language_data_data[] =
 {
   [CNTSLANG_id] = { CNTSLANG_id, 'i', XSIZE(struct section_language_data, id), "id", XOFFSET(struct section_language_data, id) },
@@ -538,6 +558,16 @@ int cntslang_lookup_field(const char *name)
   if (!atm) atm = meta_build_automaton(meta_info_section_language_data_data, CNTSLANG_LAST_FIELD);
   return meta_lookup_string(atm, name);
 }
+
+const struct meta_methods cntslang_methods =
+{
+  cntslang_get_type,
+  cntslang_get_size,
+  cntslang_get_name,
+  (const void *(*)(const void *ptr, int tag))cntslang_get_ptr,
+  (void *(*)(void *ptr, int tag))cntslang_get_ptr_nc,
+  cntslang_lookup_field,
+};
 
 static struct meta_info_item meta_info_section_tester_data_data[] =
 {
@@ -625,4 +655,14 @@ int cntstester_lookup_field(const char *name)
   if (!atm) atm = meta_build_automaton(meta_info_section_tester_data_data, CNTSTESTER_LAST_FIELD);
   return meta_lookup_string(atm, name);
 }
+
+const struct meta_methods cntstester_methods =
+{
+  cntstester_get_type,
+  cntstester_get_size,
+  cntstester_get_name,
+  (const void *(*)(const void *ptr, int tag))cntstester_get_ptr,
+  (void *(*)(void *ptr, int tag))cntstester_get_ptr_nc,
+  cntstester_lookup_field,
+};
 

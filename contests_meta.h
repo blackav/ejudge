@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/11/15 17:04:42
+// Generated 2008/11/23 12:41:30
 
 #ifndef __CONTESTS_META_H__
 #define __CONTESTS_META_H__
@@ -113,5 +113,8 @@ const char *contest_desc_get_name(int tag);
 const void *contest_desc_get_ptr(const struct contest_desc *ptr, int tag);
 void *contest_desc_get_ptr_nc(struct contest_desc *ptr, int tag);
 int contest_desc_lookup_field(const char *name);
+
+struct meta_methods;
+extern const struct meta_methods contest_desc_methods;
 
 #endif
