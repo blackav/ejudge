@@ -48,4 +48,14 @@ meta_build_automaton(const struct meta_info_item *item, int num);
 int
 meta_lookup_string(const struct meta_automaton *atm, const char *str);
 
+struct meta_methods
+{
+  int (*get_type)(int tag);
+  size_t (*get_size)(int tag);
+  const char *(*get_name)(int tag);
+  const void *(*get_ptr)(const void *ptr, int tag);
+  void *(*get_ptr_nc)(void *ptr, int tag);
+  int (*lookup_field)(const char *name);
+};
+
 #endif /* __META_GENERIC_H__ */

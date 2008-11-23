@@ -1827,6 +1827,7 @@ super_serve_clear_edited_contest(struct sid_state *p)
   xfree(p->reg_welcome_text); p->reg_welcome_text = 0;
   xfree(p->register_email_text); p->register_email_text = 0;
 
+  p->edit_page = 0;
   p->advanced_view = 0;
   p->show_html_attrs = 0;
   p->show_html_headers = 0;
