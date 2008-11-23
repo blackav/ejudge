@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/11/15 17:04:42
+// Generated 2008/11/23 12:41:30
 
 #include "contests_meta.h"
 #include "contests.h"
@@ -145,4 +145,14 @@ int contest_desc_lookup_field(const char *name)
   if (!atm) atm = meta_build_automaton(meta_info_contest_desc_data, CNTS_LAST_FIELD);
   return meta_lookup_string(atm, name);
 }
+
+const struct meta_methods contest_desc_methods =
+{
+  contest_desc_get_type,
+  contest_desc_get_size,
+  contest_desc_get_name,
+  (const void *(*)(const void *ptr, int tag))contest_desc_get_ptr,
+  (void *(*)(void *ptr, int tag))contest_desc_get_ptr_nc,
+  contest_desc_lookup_field,
+};
 

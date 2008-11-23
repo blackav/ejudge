@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/11/18 13:33:23
+// Generated 2008/11/23 20:08:23
 
 #ifndef __SUPER_SERVE_META_H__
 #define __SUPER_SERVE_META_H__
@@ -17,6 +17,7 @@ enum
   SSSS_user_id,
   SSSS_user_login,
   SSSS_user_name,
+  SSSS_edit_page,
   SSSS_advanced_view,
   SSSS_show_html_attrs,
   SSSS_show_html_headers,
@@ -115,5 +116,8 @@ const char *ss_sid_state_get_name(int tag);
 const void *ss_sid_state_get_ptr(const struct sid_state *ptr, int tag);
 void *ss_sid_state_get_ptr_nc(struct sid_state *ptr, int tag);
 int ss_sid_state_lookup_field(const char *name);
+
+struct meta_methods;
+extern const struct meta_methods ss_sid_state_methods;
 
 #endif

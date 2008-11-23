@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/11/21 14:30:19
+// Generated 2008/11/23 20:08:23
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -276,6 +276,9 @@ const void *cntsglob_get_ptr(const struct section_global_data *ptr, int tag);
 void *cntsglob_get_ptr_nc(struct section_global_data *ptr, int tag);
 int cntsglob_lookup_field(const char *name);
 
+struct meta_methods;
+extern const struct meta_methods cntsglob_methods;
+
 
 enum
 {
@@ -413,6 +416,9 @@ const void *cntsprob_get_ptr(const struct section_problem_data *ptr, int tag);
 void *cntsprob_get_ptr_nc(struct section_problem_data *ptr, int tag);
 int cntsprob_lookup_field(const char *name);
 
+struct meta_methods;
+extern const struct meta_methods cntsprob_methods;
+
 
 enum
 {
@@ -454,6 +460,9 @@ const char *cntslang_get_name(int tag);
 const void *cntslang_get_ptr(const struct section_language_data *ptr, int tag);
 void *cntslang_get_ptr_nc(struct section_language_data *ptr, int tag);
 int cntslang_lookup_field(const char *name);
+
+struct meta_methods;
+extern const struct meta_methods cntslang_methods;
 
 
 enum
@@ -515,5 +524,8 @@ const char *cntstester_get_name(int tag);
 const void *cntstester_get_ptr(const struct section_tester_data *ptr, int tag);
 void *cntstester_get_ptr_nc(struct section_tester_data *ptr, int tag);
 int cntstester_lookup_field(const char *name);
+
+struct meta_methods;
+extern const struct meta_methods cntstester_methods;
 
 #endif
