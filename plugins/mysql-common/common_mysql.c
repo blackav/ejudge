@@ -481,7 +481,7 @@ query_func(
   if (state->show_queries) {
     fprintf(stderr, "mysql: %s\n", cmd);
   }
-  if (mysql_real_query(state->conn, cmd, cmdlen)) db_error_fail(state);
+  if (do_query(state->conn, cmd, cmdlen)) db_error_fail(state);
   if((state->field_count = mysql_field_count(state->conn)) != colnum)
     db_error_field_count_fail(state, colnum);
   if (!(state->res = mysql_store_result(state->conn))) db_error_fail(state);
@@ -523,7 +523,7 @@ query_one_row_func(
   if (state->show_queries) {
     fprintf(stderr, "mysql: %s\n", cmd);
   }
-  if (mysql_real_query(state->conn, cmd, cmdlen))
+  if (do_query(state->conn, cmd, cmdlen))
     db_error_fail(state);
   if((state->field_count = mysql_field_count(state->conn)) != colnum)
     db_error_field_count_fail(state, colnum);
