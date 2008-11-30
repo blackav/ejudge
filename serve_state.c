@@ -28,6 +28,17 @@
 #include "userlist_clnt.h"
 #include "ejudge_plugin.h"
 
+// these includes are for the structure sizes array
+#include "csv.h"
+#include "ejudge_cfg.h"
+#include "misctext.h"
+#include "new-server.h"
+#include "sformat.h"
+#include "testing_report_xml.h"
+#include "prepare.h"
+#include "prepare_serve.h"
+#include "userlist.h"
+
 #include <reuse/xalloc.h>
 #include <reuse/osdeps.h>
 #include <reuse/logger.h>
@@ -195,6 +206,72 @@ serve_set_upsolving_mode(serve_state_t state)
   }
 }
 
+static const size_t struct_sizes_array[] =
+{
+  sizeof(struct clar_entry_v1),
+  sizeof(struct compile_dir_item),
+  sizeof(struct compile_run_extra),
+  sizeof(struct contest_access),
+  sizeof(struct contest_desc),
+  sizeof(struct contest_field),
+  sizeof(struct contest_ip),
+  sizeof(struct contest_member),
+  sizeof(struct csv_file),
+  sizeof(struct csv_line),
+  sizeof(struct ejudge_cfg),
+  sizeof(struct ejudge_cfg_user_map),
+  sizeof(struct generic_section_config),
+  sizeof(struct html_armor_buffer),
+  sizeof(struct http_request_info),
+  sizeof(struct int_iterator),
+  sizeof(struct _opcaplist),
+  sizeof(struct opcap_list_item),
+  sizeof(struct penalty_info),
+  sizeof(struct pers_dead_info),
+  sizeof(struct problem_desc),
+  sizeof(struct problem_extra_info),
+  sizeof(struct problem_stmt),
+  sizeof(struct problem_time_limit),
+  sizeof(struct ptr_iterator),
+  sizeof(struct run_data),
+  sizeof(struct run_dir_item),
+  sizeof(struct run_entry),
+  sizeof(struct run_file),
+  sizeof(struct run_header),
+  sizeof(struct run_xml_helpers),
+  sizeof(struct section_global_data),
+  sizeof(struct section_language_data),
+  sizeof(struct section_problem_data),
+  sizeof(struct section_tester_data),
+  sizeof(struct serve_event_queue),
+  sizeof(struct serve_state),
+  sizeof(struct sformat_extra_data),
+  sizeof(struct teamdb_db_callbacks),
+  sizeof(struct teamdb_export),
+  sizeof(struct team_extra),
+  sizeof(struct team_warning),
+  sizeof(struct testing_report_test),
+  sizeof(struct testing_report_xml),
+  sizeof(struct testset_info),
+  sizeof(struct user_adjustment_info),
+  sizeof(struct user_adjustment_map),
+  sizeof(struct user_filter_info),
+  sizeof(struct userlist_contest),
+  sizeof(struct userlist_cookie),
+  sizeof(struct userlist_list),
+  sizeof(struct userlist_member),
+  sizeof(struct userlist_members),
+  sizeof(struct userlist_user),
+  sizeof(struct userlist_user_info),
+  sizeof(struct user_state_info),
+  sizeof(struct variant_map),
+  sizeof(struct variant_map_item),
+  sizeof(struct watched_file),
+  sizeof(struct xml_attr),
+  sizeof(struct xml_parse_spec),
+  sizeof(struct xml_tree),
+};
+
 int
 serve_state_load_contest(
         struct ejudge_cfg *config,
@@ -211,6 +288,7 @@ serve_state_load_contest(
   const unsigned char *conf_dir;
   struct stat stbuf;
   int i;
+  const size_t *sza;
   
 
   if (*p_state) return 0;
@@ -281,7 +359,27 @@ serve_state_load_contest(
   if (state->global->contest_plugin_file[0]) {
     state->contest_plugin = (struct contest_plugin_iface *) plugin_load(state->global->contest_plugin_file, "report", "");
     if (!state->contest_plugin) goto failure;
-    if (state->contest_plugin->contest_plugin_version != CONTEST_PLUGIN_IFACE_VERSION) goto failure;
+    if (state->contest_plugin->contest_plugin_version != CONTEST_PLUGIN_IFACE_VERSION) {
+      err("load_contest: contest %d plugin version mismatch", contest_id);
+      goto failure;
+    }
+    if (!(sza = state->contest_plugin->sizes_array)) {
+      err("load_contest: contest %d plugin sizes array is NULL", contest_id);
+      goto failure;
+    }
+    if (state->contest_plugin->sizes_array_size != sizeof(struct_sizes_array)) {
+      err("load_contest: contest %d plugin sizes array size mismatch: %zu instead of %zu",
+          contest_id, state->contest_plugin->sizes_array_size, sizeof(struct_sizes_array));
+      goto failure;
+    }
+    for (i = 0; i < sizeof(struct_sizes_array) / sizeof(struct_sizes_array[0]); ++i) {
+      if (sza[i] && sza[i] != struct_sizes_array[i]) {
+        err("load_contest: contest %d plugin sizes array element %d mismatch: %zu instead of %zu",
+            contest_id, i, sza[i], struct_sizes_array[i]);
+        goto failure;
+      }
+    }
+
     if (state->contest_plugin->init)
       state->contest_plugin_data = (*state->contest_plugin->init)();
   }

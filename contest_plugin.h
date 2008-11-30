@@ -4,7 +4,7 @@
 #ifndef __CONTEST_PLUGIN_H__
 #define __CONTEST_PLUGIN_H__
 
-/* Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,7 @@ struct ejudge_cfg;
 struct xml_tree;
 
 /* version of the plugin interface structure */
-#define CONTEST_PLUGIN_IFACE_VERSION 1
+#define CONTEST_PLUGIN_IFACE_VERSION 2
 
 struct http_request_info;
 struct contest_desc;
@@ -39,6 +39,9 @@ struct contest_plugin_iface
 {
   struct ejudge_plugin_iface b;
   int contest_plugin_version;
+
+  const size_t *sizes_array;
+  size_t sizes_array_size;
 
   void *(*init)(void);
   void (*finalize)(void *);
