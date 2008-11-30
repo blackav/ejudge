@@ -1221,7 +1221,7 @@ static const char * predef_caps_names[] =
 static void
 print_registration_fields(
         FILE *out_f,
-        struct contest_desc *ecnts,
+        const struct contest_desc *ecnts,
         struct super_http_request_info *phr)
 {
   int row = 1;
@@ -1274,64 +1274,24 @@ print_registration_fields(
   }
 }
 
-static int
-contest_xml_page(
+static void
+write_editing_rows(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct super_http_request_info *phr,
+        const struct edit_page_desc *pg,
+        const struct contest_desc *ecnts,
+        const struct section_global_data *global,
+        const void *edit_ptr)
 {
-  struct contest_desc *ecnts = phr->ss->edited_cnts;
-  unsigned char buf[1024];
-  unsigned char jbuf[1024];
-  int is_empty;
-  int row = 1, i, j, k, page = 0;
+  int i, row = 1, j, k, is_empty;
   const struct cnts_edit_info *ce;
-  void *v_ptr;
-  struct opcap_list_item *perms;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  unsigned char *s = 0;
-  const unsigned char *ss = 0;
-  static const struct edit_page_desc *pg;
-  static const struct section_global_data *global = 0;
-  void *edit_ptr = 0;
   const unsigned char *hint;
-
-  if (ss_cgi_param_int(phr, "page", &page) < 0 || page < 0 || page > 1)
-    page = phr->ss->edit_page;
-  phr->ss->edit_page = page;
-  pg = &edit_page_descs[page];
-
-  snprintf(buf, sizeof(buf), "serve-control: %s, editing contest %d",
-           phr->html_name, ecnts->id);
-  write_html_header(out_f, phr, buf, 1, 0);
-
-  fprintf(out_f, "<h1>%s</h1>\n", buf);
-
-  // write tabs
-  fprintf(out_f, "<div id=\"tabs\">\n");
-  fprintf(out_f, "<ul>\n");
-  for (i = 0; i < 4; ++i) {
-    ss = "";
-    if (page == i) ss = " id=\"selected\"";
-    fprintf(out_f, "<li%s onClick='ssEditPage(%d,%d)'>%s</li>\n", ss,
-            SSERV_OP_EDIT_CONTEST_PAGE_2, i, edit_page_descs[i].label);
-  }
-  fprintf(out_f, "</ul>\n");
-  fprintf(out_f, "</div>\n");
-
-  switch (page) {
-  case 0:
-    edit_ptr = ecnts;
-    break;
-  case 1:
-    edit_ptr = phr->ss->global;
-    global = phr->ss->global;
-    break;
-  }
-
-  // write the main content
-  fprintf(out_f, "<div id=\"cnts_edit_content\">\n");
-  fprintf(out_f, "<table class=\"cnts_edit\">\n");
+  const struct opcap_list_item *perms;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char *s;
+  const void *v_ptr;
+  unsigned char buf[1024], jbuf[1024];
 
   for (i = 0, ce = pg->edit_descs; ce->type; ++i, ++ce) {
     hint = ce->hint;
@@ -1359,7 +1319,7 @@ contest_xml_page(
       if (!phr->ss->show_permissions) continue;
 
       for (perms = CNTS_FIRST_PERM(ecnts), j = 0; perms;
-           perms = CNTS_NEXT_PERM_NC(perms), ++j) {
+           perms = CNTS_NEXT_PERM(perms), ++j) {
         fprintf(out_f, "<tr%s>", form_row_attrs[row ^= 1]);
         fprintf(out_f, "<td valign=\"top\" class=\"cnts_edit_legend\">%s</td>",
                 ARMOR(perms->login));
@@ -1412,7 +1372,7 @@ contest_xml_page(
       fprintf(out_f, "<div class=\"cnts_edit_data\">");
     }
 
-    v_ptr = pg->methods->get_ptr_nc(edit_ptr, ce->field_id);
+    v_ptr = pg->methods->get_ptr(edit_ptr, ce->field_id);
     switch (ce->type) {
     case 'd':
       {
@@ -1672,6 +1632,60 @@ contest_xml_page(
     fprintf(out_f, "<tr>\n");
   }
 
+  html_armor_free(&ab);
+}
+
+static int
+contest_xml_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  struct contest_desc *ecnts = phr->ss->edited_cnts;
+  unsigned char buf[1024];
+  int i, page = 0;
+  const unsigned char *ss = 0;
+  const struct edit_page_desc *pg;
+  const struct section_global_data *global = 0;
+  void *edit_ptr = 0;
+
+  if (ss_cgi_param_int(phr, "page", &page) < 0 || page < 0 || page > 1)
+    page = phr->ss->edit_page;
+  phr->ss->edit_page = page;
+  pg = &edit_page_descs[page];
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, editing contest %d",
+           phr->html_name, ecnts->id);
+  write_html_header(out_f, phr, buf, 1, 0);
+
+  fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
+
+  // write tabs
+  fprintf(out_f, "<div id=\"tabs\">\n");
+  fprintf(out_f, "<ul>\n");
+  for (i = 0; i < 4; ++i) {
+    ss = "";
+    if (page == i) ss = " id=\"selected\"";
+    fprintf(out_f, "<li%s onClick='ssEditPage(%d,%d)'>%s</li>\n", ss,
+            SSERV_OP_EDIT_CONTEST_PAGE_2, i, edit_page_descs[i].label);
+  }
+  fprintf(out_f, "</ul>\n");
+  fprintf(out_f, "</div>\n");
+
+  switch (page) {
+  case 0:
+    edit_ptr = ecnts;
+    break;
+  case 1:
+    edit_ptr = phr->ss->global;
+    global = phr->ss->global;
+    break;
+  }
+
+  // write the main content
+  fprintf(out_f, "<div id=\"cnts_edit_content\">\n");
+  fprintf(out_f, "<table class=\"cnts_edit\">\n");
+  write_editing_rows(out_f, log_f, phr, pg, ecnts, global, edit_ptr);
   fprintf(out_f, "</table>\n");
   fprintf(out_f, "</div>\n");
 
@@ -1683,7 +1697,6 @@ contest_xml_page(
               "ssForgetContest(%d)", SSERV_OP_FORGET_CONTEST);
 
   write_html_footer(out_f);
-  html_armor_free(&ab);
   return 0;
 }
 

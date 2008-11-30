@@ -690,6 +690,8 @@ load_problem_plugin(serve_state_t cs, int prob_id)
   struct problem_plugin_iface *iface;
   unsigned char plugin_name[1024];
   int len, i;
+  const unsigned char *f = __FUNCTION__;
+  const size_t *sza;
 
   if (prob_id <= 0 || prob_id > cs->max_prob) return;
   if (!(prob = cs->probs[prob_id])) return;
@@ -710,6 +712,27 @@ load_problem_plugin(serve_state_t cs, int prob_id)
   if (!iface) {
     extra->plugin_error = 1;
     return;
+  }
+
+  if (iface->problem_version != PROBLEM_PLUGIN_IFACE_VERSION) {
+    err("%s: plugin version mismatch", f);
+    return;
+  }
+  if (!(sza = iface->sizes_array)) {
+    err("%s: plugin sizes array is NULL", f);
+    return;
+  }
+  if (iface->sizes_array_size != serve_struct_sizes_array_size) {
+    err("%s: plugin sizes array size mismatch: %zu instead of %zu",
+        f, iface->sizes_array_size, serve_struct_sizes_array_size);
+    return;
+  }
+  for (i = 0; i < serve_struct_sizes_array_num; ++i) {
+    if (sza[i] && sza[i] != serve_struct_sizes_array[i]) {
+      err("%s: plugin sizes array element %d mismatch: %zu instead of %zu",
+          f, i, sza[i], serve_struct_sizes_array[i]);
+      return;
+    }
   }
 
   extra->plugin = iface;
