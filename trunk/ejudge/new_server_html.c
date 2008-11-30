@@ -1253,7 +1253,7 @@ priv_parse_user_id_range(
 
   if (ns_cgi_param_int_opt(phr, "first_user_id", &x, 0) < 0) goto done;
   if (ns_cgi_param_int_opt(phr, "last_user_id", &y, -1) < 0) goto done;
-  if (x <= 0 || y <= 0 || x > y || y - x > 10000) goto done;
+  if (x <= 0 || y <= 0 || x > y || y - x > 100000) goto done;
 
   first = x;
   last = y;
