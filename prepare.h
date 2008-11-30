@@ -656,7 +656,7 @@ struct section_global_data
   unsigned char stand_warn_number_attr[256];
 
   /** INTERNAL: text with unhandled variables */
-  unsigned char *unhandled_vars META_ATTRIB((meta_private));
+  unsigned char *unhandled_vars;
 
   /** INTERNAL: no problem defined long_name */
   ejintbool_t disable_prob_long_name META_ATTRIB((meta_private));
@@ -870,9 +870,9 @@ struct section_problem_data
   char **enable_language;
   char **require;
   /** environment variables for the problem checker */
-  char **checker_env;
+  ejenvlist_t checker_env;
   /** environment variables for the problem valuer */
-  char **valuer_env;
+  ejenvlist_t valuer_env;
   /** checker program */
   path_t check_cmd;
   /** valuer program */
@@ -972,7 +972,7 @@ struct section_language_data
   /** directory for executables/error logs */
   path_t compile_report_dir;
   /** environment to pass to the compiler */
-  char **compiler_env;
+  ejenvlist_t compiler_env;
 
   unsigned char *unhandled_vars META_ATTRIB((meta_private));
   /** disabled by configuration script */
@@ -1065,9 +1065,9 @@ struct section_tester_data
   path_t check_cmd;
 
   /** environment variables for start_cmd */
-  char **start_env;
+  ejenvlist_t start_env;
   /** environment variables for checker */
-  char **checker_env;
+  ejenvlist_t checker_env;
 
   /** internal: the standard checker is used */
   int standard_checker_used META_ATTRIB((meta_private));

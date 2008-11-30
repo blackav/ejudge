@@ -300,31 +300,6 @@ print_boolean_select_row(FILE *f,
   fprintf(f, "</td></tr></form>\n");
 }
 
-#define SIZE_G (1024 * 1024 * 1024)
-#define SIZE_M (1024 * 1024)
-#define SIZE_K (1024)
-
-static unsigned char*
-num_to_size(unsigned char *buf, size_t buf_size, int num)
-{
-  if (!num) snprintf(buf, buf_size, "0");
-  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%uG", num / SIZE_G);
-  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%uM", num / SIZE_M);
-  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%uK", num / SIZE_K);
-  else snprintf(buf, buf_size, "%u", num);
-  return buf;
-}
-static unsigned char*
-size_t_to_size(unsigned char *buf, size_t buf_size, size_t num)
-{
-  if (!num) snprintf(buf, buf_size, "0");
-  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%zuG", num / SIZE_G);
-  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%zuM", num / SIZE_M);
-  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%zuK", num / SIZE_K);
-  else snprintf(buf, buf_size, "%zu", num);
-  return buf;
-}
-
 /*
 Basic settings:
   GLOBAL_PARAM(contest_time, "d"),
@@ -1029,7 +1004,7 @@ super_html_edit_global_parameters(FILE *f,
   if (sstate->show_global_3) {
     //GLOBAL_PARAM(max_run_size, "d"),
     print_string_editing_row(f, "Maximum size of one submitted program:",
-                             num_to_size(hbuf, sizeof(hbuf), global->max_run_size),
+                             num_to_size_str(hbuf, sizeof(hbuf), global->max_run_size),
                              SSERV_CMD_GLOB_CHANGE_MAX_RUN_SIZE,
                              0,
                              0,
@@ -1041,7 +1016,7 @@ super_html_edit_global_parameters(FILE *f,
 
     //GLOBAL_PARAM(max_run_total, "d"),
     print_string_editing_row(f, "Maximum total size of all submitted programs:",
-                             num_to_size(hbuf, sizeof(hbuf), global->max_run_total),
+                             num_to_size_str(hbuf, sizeof(hbuf), global->max_run_total),
                              SSERV_CMD_GLOB_CHANGE_MAX_RUN_TOTAL,
                              0,
                              0,
@@ -1067,7 +1042,7 @@ super_html_edit_global_parameters(FILE *f,
     if (!global->disable_clars && !global->disable_team_clars) {
       //GLOBAL_PARAM(max_clar_size, "d"),
       print_string_editing_row(f, "Maximum size of one clarification request:",
-                               num_to_size(hbuf, sizeof(hbuf), global->max_clar_size),
+                               num_to_size_str(hbuf, sizeof(hbuf), global->max_clar_size),
                                SSERV_CMD_GLOB_CHANGE_MAX_CLAR_SIZE,
                                0,
                                0,
@@ -1079,7 +1054,7 @@ super_html_edit_global_parameters(FILE *f,
 
       //GLOBAL_PARAM(max_clar_total, "d"),
       print_string_editing_row(f, "Maximum total size of all clarification requests:",
-                               num_to_size(hbuf, sizeof(hbuf), global->max_clar_total),
+                               num_to_size_str(hbuf, sizeof(hbuf), global->max_clar_total),
                                SSERV_CMD_GLOB_CHANGE_MAX_CLAR_TOTAL,
                                0,
                                0,
@@ -1895,7 +1870,7 @@ super_html_edit_global_parameters(FILE *f,
 
     //GLOBAL_PARAM(max_file_length, "d"),
     print_string_editing_row(f, "Maximal file size to be included into testing protocol:",
-                             num_to_size(hbuf, sizeof(hbuf), global->max_file_length),
+                             num_to_size_str(hbuf, sizeof(hbuf), global->max_file_length),
                              SSERV_CMD_GLOB_CHANGE_MAX_FILE_LENGTH,
                              0,
                              0,
@@ -1907,7 +1882,7 @@ super_html_edit_global_parameters(FILE *f,
 
     //GLOBAL_PARAM(max_line_length, "d"),
     print_string_editing_row(f, "Maximal line length to be included into testing protocol:",
-                             num_to_size(hbuf, sizeof(hbuf), global->max_line_length),
+                             num_to_size_str(hbuf, sizeof(hbuf), global->max_line_length),
                              SSERV_CMD_GLOB_CHANGE_MAX_LINE_LENGTH,
                              0,
                              0,
@@ -2150,6 +2125,10 @@ super_html_edit_global_parameters(FILE *f,
 
 #define GLOB_SET_STRING(f) p_str = global->f; str_size = sizeof(global->f); goto handle_string
 #define GLOB_CLEAR_STRING(f) global->f[0] = 0; return 0
+
+#define SIZE_G (1024 * 1024 * 1024)
+#define SIZE_M (1024 * 1024)
+#define SIZE_K (1024)
 
 int
 super_html_global_param(struct sid_state *sstate, int cmd,
@@ -4527,14 +4506,14 @@ super_html_print_problem(FILE *f,
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
       else
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %s)</i>",
-                 size_t_to_size(num_buf, sizeof(num_buf), tmp_prob.max_vm_size));
+                 size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob.max_vm_size));
       extra_msg = msg_buf;
     } else if (!prob->max_vm_size) extra_msg = "<i>(OS Limit)</i>";
   }
   if (prob->max_vm_size == -1L) {
     snprintf(num_buf, sizeof(num_buf), "-1");
   } else {
-    size_t_to_size(num_buf, sizeof(num_buf), tmp_prob.max_vm_size);
+    size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob.max_vm_size);
   }
   if (!problem_type_flag) {
     html_start_form(f, 1, self_url, prob_hidden_vars);
@@ -4564,14 +4543,14 @@ super_html_print_problem(FILE *f,
           snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
         else
           snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %s)</i>",
-                   num_to_size(num_buf, sizeof(num_buf), tmp_prob.max_stack_size));
+                   num_to_size_str(num_buf, sizeof(num_buf), tmp_prob.max_stack_size));
         extra_msg = msg_buf;
       } else if (!prob->max_stack_size) extra_msg = "<i>(OS Limit)</i>";
     }
     if (prob->max_stack_size == -1L) {
       snprintf(num_buf, sizeof(num_buf), "-1");
     } else {
-      num_to_size(num_buf, sizeof(num_buf), tmp_prob.max_stack_size);
+      num_to_size_str(num_buf, sizeof(num_buf), tmp_prob.max_stack_size);
     }
     html_start_form(f, 1, self_url, prob_hidden_vars);
     fprintf(f, "<tr%s><td>%s</td><td>",
