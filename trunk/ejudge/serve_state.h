@@ -423,4 +423,8 @@ serve_notify_user_run_status_change(
         int run_id,
         int new_status);
 
+extern const size_t serve_struct_sizes_array[];
+extern const size_t serve_struct_sizes_array_size;
+extern const size_t serve_struct_sizes_array_num;
+
 #endif /* __SERVE_STATE_H__ */

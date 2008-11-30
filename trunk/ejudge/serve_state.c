@@ -206,7 +206,7 @@ serve_set_upsolving_mode(serve_state_t state)
   }
 }
 
-static const size_t struct_sizes_array[] =
+const size_t serve_struct_sizes_array[] =
 {
   sizeof(struct clar_entry_v1),
   sizeof(struct compile_dir_item),
@@ -271,6 +271,8 @@ static const size_t struct_sizes_array[] =
   sizeof(struct xml_parse_spec),
   sizeof(struct xml_tree),
 };
+const size_t serve_struct_sizes_array_size = sizeof(serve_struct_sizes_array);
+const size_t serve_struct_sizes_array_num = sizeof(serve_struct_sizes_array) / sizeof(serve_struct_sizes_array[0]);
 
 int
 serve_state_load_contest(
@@ -289,7 +291,8 @@ serve_state_load_contest(
   struct stat stbuf;
   int i;
   const size_t *sza;
-  
+  struct contest_plugin_iface *iface;
+  const unsigned char *f = __FUNCTION__;
 
   if (*p_state) return 0;
   if (contests_get(contest_id, &cnts) < 0 || !cnts) goto failure;
@@ -357,25 +360,27 @@ serve_state_load_contest(
 
   // load reporting plugin
   if (state->global->contest_plugin_file[0]) {
-    state->contest_plugin = (struct contest_plugin_iface *) plugin_load(state->global->contest_plugin_file, "report", "");
+    iface = (struct contest_plugin_iface *) plugin_load(state->global->contest_plugin_file, "report", "");
     if (!state->contest_plugin) goto failure;
-    if (state->contest_plugin->contest_plugin_version != CONTEST_PLUGIN_IFACE_VERSION) {
-      err("load_contest: contest %d plugin version mismatch", contest_id);
+    state->contest_plugin = iface;
+    if (iface->contest_plugin_version != CONTEST_PLUGIN_IFACE_VERSION) {
+      err("%s: contest %d plugin version mismatch", f, contest_id);
       goto failure;
     }
-    if (!(sza = state->contest_plugin->sizes_array)) {
-      err("load_contest: contest %d plugin sizes array is NULL", contest_id);
+    if (!(sza = iface->sizes_array)) {
+      err("%s: contest %d plugin sizes array is NULL", f, contest_id);
       goto failure;
     }
-    if (state->contest_plugin->sizes_array_size != sizeof(struct_sizes_array)) {
-      err("load_contest: contest %d plugin sizes array size mismatch: %zu instead of %zu",
-          contest_id, state->contest_plugin->sizes_array_size, sizeof(struct_sizes_array));
+    if (iface->sizes_array_size != sizeof(serve_struct_sizes_array_size)) {
+      err("%s: contest %d plugin sizes array size mismatch: %zu instead of %zu",
+          f, contest_id, iface->sizes_array_size,
+          serve_struct_sizes_array_size);
       goto failure;
     }
-    for (i = 0; i < sizeof(struct_sizes_array) / sizeof(struct_sizes_array[0]); ++i) {
-      if (sza[i] && sza[i] != struct_sizes_array[i]) {
-        err("load_contest: contest %d plugin sizes array element %d mismatch: %zu instead of %zu",
-            contest_id, i, sza[i], struct_sizes_array[i]);
+    for (i = 0; i < serve_struct_sizes_array_num; ++i) {
+      if (sza[i] && sza[i] != serve_struct_sizes_array[i]) {
+        err("%s: contest %d plugin sizes array element %d mismatch: %zu instead of %zu",
+            f, contest_id, i, sza[i], serve_struct_sizes_array[i]);
         goto failure;
       }
     }
