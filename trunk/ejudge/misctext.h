@@ -144,4 +144,22 @@ unsigned char *get_nth_alternative(const unsigned char *txt, int n);
 
 unsigned char *chop2(unsigned char *str);
 
+void
+split_to_lines(
+        const unsigned char *str,
+        char ***plns,
+        int ws_mode); // 0 - nothing, 1 - add space, 2 - remove space
+
+unsigned char*
+num_to_size_str(
+        unsigned char *buf,
+        size_t buf_size,
+        int num);
+
+unsigned char*
+size_t_to_size_str(
+        unsigned char *buf,
+        size_t buf_size,
+        size_t num);
+
 #endif /* __MISCTEXT_H__ */

@@ -31,6 +31,8 @@ typedef unsigned long long ej_tsc_t; /* timestamp counter type */
 typedef unsigned char ejbytebool_t;
 typedef int ejintbool_t;
 typedef int ejintsize_t;
+typedef char **ejstrlist_t;
+typedef char **ejenvlist_t;
 
 /* privilege level */
 enum priv_level

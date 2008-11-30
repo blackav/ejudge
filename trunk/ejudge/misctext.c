@@ -1223,10 +1223,91 @@ chop2(unsigned char *str)
   return str;
 }
 
+void
+split_to_lines(
+        const unsigned char *str,
+        char ***plns,
+        int ws_mode) // 0 - nothing, 1 - add space, 2 - remove space
+{
+  const unsigned char *s, *q, *r;
+  char **lns;
+  int lcnt, i;
+
+  if (!str || !*str) {
+    *plns = 0;
+    return;
+  }
+
+  // count lines
+  for (s = str, lcnt = 0; *s; ++s)
+    if (*s == '\n') lcnt++;
+  if (s[-1] != '\n') lcnt++;
+
+  XCALLOC(lns, lcnt + 1);
+  for (s = str, i = 0; *s; s = q, ++i) {
+    q = s;
+    while (*q && *q != '\n') ++q;
+    r = q;
+    if (*q == '\n') ++q;
+    // line is [s, q)
+    while (r > s && isspace(r[-1])) --r;
+    if (ws_mode == 2) {
+      while (s < r && isspace(*s)) ++s;
+    }
+    if (ws_mode == 1 && s < r && !isspace(*s)) {
+      lns[i] = (unsigned char *) xmalloc(r - s + 2);
+      lns[i][0] = ' ';
+      memcpy(lns[i] + 1, s, r - s);
+      lns[i][r - s + 1] = 0;
+    } else {
+      lns[i] = (unsigned char *) xmalloc(r - s + 1);
+      memcpy(lns[i], s, r - s);
+      lns[i][r - s] = 0;
+    }
+  }
+  while (i > 0 && !lns[i - 1][0]) {
+    --i;
+    xfree(lns[i]);
+    lns[i] = 0;
+  }
+  *plns = lns;
+}
+
+#define SIZE_G (1024 * 1024 * 1024)
+#define SIZE_M (1024 * 1024)
+#define SIZE_K (1024)
+
+unsigned char*
+num_to_size_str(
+        unsigned char *buf,
+        size_t buf_size,
+        int num)
+{
+  if (!num) snprintf(buf, buf_size, "0");
+  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%uG", num / SIZE_G);
+  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%uM", num / SIZE_M);
+  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%uK", num / SIZE_K);
+  else snprintf(buf, buf_size, "%u", num);
+  return buf;
+}
+
+unsigned char*
+size_t_to_size_str(
+        unsigned char *buf,
+        size_t buf_size,
+        size_t num)
+{
+  if (!num) snprintf(buf, buf_size, "0");
+  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%zuG", num / SIZE_G);
+  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%zuM", num / SIZE_M);
+  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%zuK", num / SIZE_K);
+  else snprintf(buf, buf_size, "%zu", num);
+  return buf;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
-
