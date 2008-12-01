@@ -79,8 +79,16 @@
 /* terminal controlling facilities */
 #undef HAVE_TERMIOS_H
 
+#undef HAVE_ICONV_H
+
 /* CAP_SYS_OPERATIONS bit */
 #undef HAVE_CAP_SYS_OPERATIONS
+
+/* non-standard functions */
+#undef HAVE_STRNLEN
+
+/* iconv needs `const' for its second argument */
+#undef CONF_ICONV_NEEDS_CONST
 
 /* new reuse features */
 #undef HAVE_TASK_SETMAXTIMEMILLIS
