@@ -144,6 +144,37 @@ then
 AC_CHECK_HEADERS([termios.h])
 fi
 
+AC_CHECK_HEADERS([iconv.h])
+
+AC_CHECK_FUNCS([strnlen])
+
+saved_CFLAGS="${CFLAGS}"
+CFLAGS="${CFLAGS} -Werror -Wall"
+AC_MSG_CHECKING([that iconv requires const qualifier])
+AC_RUN_IFELSE(
+[[
+#include <iconv.h>
+#include <stdio.h>
+int main(void)
+{
+  iconv_t cvt = iconv_open("iso8859-1", "utf-8");
+  const char str1[] = "123";
+  char str2[16];
+  size_t sz1 = 3, sz2 = 16, sz3;
+  const char *p1 = str1;
+  char *p2 = str2;
+  sz3 = iconv(cvt, &p1, &sz1, &p2, &sz2);
+  return 0;
+}
+]],[
+AC_MSG_RESULT([yes])
+ac_cv_iconv_needs_const=1
+],[
+AC_MSG_RESULT([no])
+ac_cv_iconv_needs_const=""
+])
+CFLAGS="${saved_CFLAGS}"
+
 dnl Expat checking stuff
 ac_cv_has_expat=1
 [[ x"${ac_cv_expat_root}" = xno ]] && ac_cv_has_expat=""
@@ -990,6 +1021,11 @@ fi
 if [[ x"${ac_cv_has_mysql}" = x1 ]]
 then
   AC_DEFINE(CONF_HAS_MYSQL,1)
+fi
+
+if [[ x"${ac_cv_iconv_needs_const}" = x1 ]]
+then
+  AC_DEFINE(CONF_ICONV_NEEDS_CONST,1)
 fi
 
 if [[ x"${ac_cv_ajax}" != xno -a x"${ac_cv_ajax}" != x ]]
