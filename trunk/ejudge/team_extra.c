@@ -30,6 +30,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
+
 #define MAX_USER_ID_32DIGITS 4
 #define BPE (CHAR_BIT * sizeof(((struct team_extra*)0)->clar_map[0]))
 
@@ -122,7 +126,7 @@ make_write_path(team_extra_state_t state, unsigned char *path, size_t size,
 {
   unsigned char b32[16];
   unsigned char *mpath = 0, *p;
-  struct stat sb;
+  //struct stat sb;
   int i;
 
   ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
@@ -135,11 +139,12 @@ make_write_path(team_extra_state_t state, unsigned char *path, size_t size,
     *p++ = '/';
     *p++ = b32[i];
     *p = 0;
-    if (mkdir(mpath, 0770) < 0) {
+    if (os_MakeDir(mpath, 0770) < 0) {
       if (errno != EEXIST) {
         err("team_extra: %s: mkdir failed: %s", mpath, os_ErrorMsg());
         return -1;
       }
+      /*
       if (lstat(mpath, &sb) < 0) {
         err("team_extra: %s: lstat failed: %s", mpath, os_ErrorMsg());
         return -1;
@@ -148,6 +153,7 @@ make_write_path(team_extra_state_t state, unsigned char *path, size_t size,
         err("team_extra: %s: is not a directory", mpath);
         return -1;
       }
+      */
     }
   }
 
@@ -177,11 +183,18 @@ get_entry(team_extra_state_t state, int user_id)
 {
   struct team_extra *te = state->team_map[user_id];
   path_t rpath;
-  struct stat sb;
+  //struct stat sb;
 
   if (te) return te;
 
   make_read_path(state, rpath, sizeof(rpath), user_id);
+  if (os_CheckAccess(rpath, REUSE_F_OK) < 0) {
+    XCALLOC(te, 1);
+    te->user_id = user_id;
+    state->team_map[user_id] = te;
+    return te;
+  }
+  /*    
   if (lstat(rpath, &sb) < 0) {
     XCALLOC(te, 1);
     te->user_id = user_id;
@@ -193,6 +206,7 @@ get_entry(team_extra_state_t state, int user_id)
     state->team_map[user_id] = (struct team_extra*) -1;
     return (struct team_extra*) -1;
   }
+  */
   if (team_extra_parse_xml(rpath, &te) < 0) {
     state->team_map[user_id] = (struct team_extra*) -1;
     return (struct team_extra*) -1;

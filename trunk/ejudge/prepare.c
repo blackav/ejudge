@@ -1661,12 +1661,14 @@ prepare_parse_variant_map(
   const struct section_problem_data *prob;
   int *newvar;
 
+#if HAVE_OPEN_MEMSTREAM - 0
   if (p_header_txt) {
     head_f = open_memstream(&head_t, &head_z);
   }
   if (p_footer_txt) {
     foot_f = open_memstream(&foot_t, &foot_z);
   }
+#endif
 
   XCALLOC(pmap, 1);
   pmap->a = 16;

@@ -28,9 +28,16 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <pwd.h>
 #include <limits.h>
 #include <ctype.h>
+
+#if HAVE_PWD_H
+#include <pwd.h>
+#endif
+
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
 
 enum
   {
@@ -245,6 +252,7 @@ parse_user_map(char const *path, struct xml_tree *p)
     for (a = q->first; a; a = a->next) {
       switch (a->tag) {
       case AT_SYSTEM_USER:
+#if HAVE_PWD_H
         {
           struct passwd *pwd;
 
@@ -257,6 +265,7 @@ parse_user_map(char const *path, struct xml_tree *p)
           //info("user %s uid is %d", a->text, pwd->pw_uid);
         }
         m->system_user_str = a->text; a->text = 0;
+#endif
         break;
       case AT_LOCAL_USER:
       case AT_EJUDGE_USER:

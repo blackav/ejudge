@@ -23,6 +23,8 @@
 #include "ej_types.h"
 #include "iterators.h"
 
+#include <time.h>
+
 struct xml_tree;
 struct xml_parse_spec;
 struct ejudge_cfg;
