@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -46,6 +46,18 @@ int
 interrupt_restart_requested(void)
 {
   return was_sighup;
+}
+
+void
+interrupt_flag_interrupt(void)
+{
+  was_interrupt = 1;
+}
+
+void
+interrupt_flag_sighup(void)
+{
+  was_sighup = 1;
 }
 
 void
