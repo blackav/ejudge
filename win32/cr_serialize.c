@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,31 +23,31 @@
 static HANDLE hMutex = 0;
 
 int
-cr_serialize_init(void)
+cr_serialize_init(const serve_state_t state)
 {
   char name[128];
 
-  if (!global->cr_serialization_key) return 0;
+  if (!state->global->cr_serialization_key) return 0;
   if (hMutex) return 0;
 
-  snprintf(name, sizeof(name), "ejudge_%d", global->cr_serialization_key);
+  snprintf(name, sizeof(name), "ejudge_%d", state->global->cr_serialization_key);
   hMutex = CreateMutex(NULL, FALSE, name);
   if (!hMutex) return -1;
   return 0;
 }
 
 int
-cr_serialize_lock(void)
+cr_serialize_lock(const serve_state_t state)
 {
-  if (!global->cr_serialization_key) return 0;
+  if (!state->global->cr_serialization_key) return 0;
   if (WaitForSingleObject(hMutex, INFINITE) == WAIT_FAILED) return -1;
   return 0;
 }
 
 int
-cr_serialize_unlock(void)
+cr_serialize_unlock(const serve_state_t state)
 {
-  if (!global->cr_serialization_key) return 0;
+  if (!state->global->cr_serialization_key) return 0;
   if (!ReleaseMutex(hMutex)) return -1;
   return 0;
 }

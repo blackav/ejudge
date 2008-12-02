@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 #include <windows.h>
 
 static volatile int was_interrupt = 0;
+static volatile int was_sighup = 0;
 
 static BOOL WINAPI
 interrupt_handler(DWORD dwCtrlType)
@@ -51,7 +52,13 @@ interrupt_get_status(void)
   return was_interrupt;
 }
 
-/**
+int
+interrupt_restart_requested(void)
+{
+  return was_sighup;
+}
+
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "BOOL" "WINAPI")

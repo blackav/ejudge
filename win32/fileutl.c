@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -18,6 +18,7 @@
 #include "fileutl.h"
 #include "pathutl.h"
 #include "errlog.h"
+#include "ej_limits.h"
 
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
@@ -85,8 +86,9 @@ struct q_dir_entry
 
 /* scans 'dir' directory and returns the filename found */
 int
-scan_dir(char const *partial_path, char *found_item)
+scan_dir(char const *partial_path, char *found_item, size_t fi_size)
 {
+  // TODO(GM) : implement size control
   path_t          full_path;
   path_t          dir_path;
   HANDLE          sh;
@@ -136,7 +138,7 @@ scan_dir(char const *partial_path, char *found_item)
       continue;
     }
 
-    if (strlen(result.cFileName) != SERVE_PACKET_NAME_SIZE - 1) {
+    if (strlen(result.cFileName) != EJ_SERVE_PACKET_NAME_SIZE - 1) {
       prio = 0;
     } else if (result.cFileName[0] >= '0' && result.cFileName[0] <= '9') {
       prio = -16 + (result.cFileName[0] - '0');
@@ -170,7 +172,8 @@ scan_dir(char const *partial_path, char *found_item)
   }
 
   if (got_quit) {
-    pathcpy(found_item, "QUIT");
+    // pathcpy(found_item, "QUIT");  (GM)
+    snprintf(found_item, fi_size, "%s", "QUIT");
     info("scan_dir: found QUIT packet");
     return 1;
   }
@@ -179,7 +182,8 @@ scan_dir(char const *partial_path, char *found_item)
 
   for (i = 0; i < 32; i++) {
     if (items[i]) {
-      pathcpy(found_item, items[i]);
+      // pathcpy(found_item, items[i]); (GM) 
+      snprintf(found_item, fi_size, "%s", items[i]);
       info("scan_dir: found '%s' (priority %d)", found_item, i - 16);
       return 1;
     }
