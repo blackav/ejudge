@@ -146,7 +146,7 @@ fi
 
 AC_CHECK_HEADERS([iconv.h])
 
-AC_CHECK_FUNCS([strnlen])
+AC_CHECK_FUNCS([strnlen open_memstream])
 
 saved_CFLAGS="${CFLAGS}"
 CFLAGS="${CFLAGS} -Werror -Wall"

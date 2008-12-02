@@ -87,6 +87,8 @@
 /* non-standard functions */
 #undef HAVE_STRNLEN
 
+#undef HAVE_OPEN_MEMSTREAM
+
 /* iconv needs `const' for its second argument */
 #undef CONF_ICONV_NEEDS_CONST
 
