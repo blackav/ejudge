@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,10 @@
 
 #include <stdlib.h>
 
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
+
 void
 xml_unparse_text(FILE *f, const unsigned char *tag_name,
                  unsigned char const *val,
@@ -37,7 +41,7 @@ xml_unparse_text(FILE *f, const unsigned char *tag_name,
   fprintf(f, "%s<%s>%s</%s>\n", ind, tag_name, val, tag_name);
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
