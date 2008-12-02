@@ -151,10 +151,10 @@ do_loop(void)
       req = compile_request_packet_free(req);
       switch (r) {
       case 1:
-        raise(SIGTERM);
+        interrupt_flag_interrupt();
         break;
       case 2:
-        raise(SIGHUP);
+        interrupt_flag_sighup();
         break;
       }
       continue;
@@ -287,6 +287,7 @@ do_loop(void)
 
     while (1) {
       if (ce_flag) {
+#if HAVE_TRUNCATE - 0
         // truncate log file at size 1MB
         if (stat(log_path, &stb) >= 0 && stb.st_size > MAX_LOG_SIZE) {
           truncate(log_path, MAX_LOG_SIZE);
@@ -295,6 +296,7 @@ do_loop(void)
             fclose(log_f); log_f = 0;
           }
         }
+#endif
         // append tail_message
         if (tail_message && (log_f = fopen(log_path, "a"))) {
           fprintf(log_f, "%s\n", tail_message);
@@ -496,6 +498,7 @@ main(int argc, char *argv[])
   if (prepare(&serve_state, compile_cfg_path, prepare_flags, PREPARE_COMPILE,
               cpp_opts, 0) < 0)
     return 1;
+#if HAVE_OPEN_MEMSTREAM - 0
   if (!(lang_log_f = open_memstream(&lang_log_t, &lang_log_z))) return 1;
   if (lang_config_configure(lang_log_f, serve_state.global->lang_config_dir,
                             serve_state.max_lang, serve_state.langs) < 0) {
@@ -504,11 +507,17 @@ main(int argc, char *argv[])
     return 1;
   }
   fclose(lang_log_f); lang_log_f = 0;
+#else
+  if (lang_config_configure(stderr, serve_state.global->lang_config_dir,
+                            serve_state.max_lang, serve_state.langs) < 0)
+    return 1;
+#endif /* HAVE_OPEN_MEMSTREAM */
   if (key && filter_languages(key) < 0) return 1;
   if (create_dirs(&serve_state, PREPARE_COMPILE) < 0) return 1;
   if (check_config() < 0) return 1;
   if (initialize_mode) return 0;
 
+#if HAVE_SETSID - 0
   if (daemon_mode) {
     // FIXME: make log file tunable?
     snprintf(log_path, sizeof(log_path), "%s/compile.log",
@@ -530,6 +539,7 @@ main(int argc, char *argv[])
 
     fprintf(stderr, "%s", lang_log_t);
   }
+#endif
 
   xfree(lang_log_t); lang_log_t = 0; lang_log_z = 0;
   if (do_loop() < 0) return 1;

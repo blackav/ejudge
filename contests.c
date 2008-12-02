@@ -53,7 +53,7 @@
 
 #define CONTEST_CHECK_TIME 5
 
-static const int tag_to_contest_desc_map[CONTEST_LAST_TAG] =
+const int contests_tag_to_meta_map[CONTEST_LAST_TAG] =
 {
   [CONTEST_REGISTER_ACCESS] = CNTS_register_access,
   [CONTEST_USERS_ACCESS] = CNTS_users_access,
@@ -122,7 +122,7 @@ static const int tag_to_contest_desc_map[CONTEST_LAST_TAG] =
   [CONTEST_REG_WELCOME_FILE] = CNTS_reg_welcome_file,
   [CONTEST_USER_CONTEST] = CNTS_user_contest,
 };
-static const int attr_to_contest_desc_map[CONTEST_LAST_ATTR] =
+const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
 {
   [CONTEST_A_ID] = CNTS_id,
   [CONTEST_A_AUTOREGISTER] = CNTS_autoregister,
@@ -148,7 +148,7 @@ static const int attr_to_contest_desc_map[CONTEST_LAST_ATTR] =
   [CONTEST_A_DISABLE_MEMBER_DELETE] = CNTS_disable_member_delete,
 };
 
-static char const * const elem_map[] =
+char const * const contests_elem_map[] =
 {
   0,
   "contests",
@@ -234,7 +234,7 @@ static char const * const elem_map[] =
 
   0
 };
-static char const * const attr_map[] =
+char const * const contests_attr_map[] =
 {
   0,
   "id",
@@ -329,8 +329,8 @@ node_free(struct xml_tree *t)
 
 static struct xml_parse_spec contests_parse_spec =
 {
-  .elem_map = elem_map,
-  .attr_map = attr_map,
+  .elem_map = contests_elem_map,
+  .attr_map = contests_attr_map,
   .elem_sizes = elem_sizes,
   .attr_sizes = NULL,
   .default_elem = 0,
@@ -341,7 +341,7 @@ static struct xml_parse_spec contests_parse_spec =
   .attr_free = NULL,
 };
 
-static char const * const field_map[] =
+char const * const contests_field_map[] =
 {
   0,
   "homepage",
@@ -378,7 +378,7 @@ static char const * const field_map[] =
   0
 };
 
-static char const * const member_field_map[] =
+char const * const contests_member_field_map[] =
 {
   0,
   "firstname",
@@ -526,8 +526,8 @@ parse_member(struct contest_member *mb, char const *path)
       switch (a->tag) {
       case CONTEST_A_ID:
         for (i = 1; i < CONTEST_LAST_MEMBER_FIELD; i++) {
-          if (!member_field_map[i]) continue;
-          if (!strcmp(a->text, member_field_map[i])) break;
+          if (!contests_member_field_map[i]) continue;
+          if (!strcmp(a->text, contests_member_field_map[i])) break;
         }
         if (i >= CONTEST_LAST_MEMBER_FIELD) {
           xml_err_a(a, "invalid field id \"%s\"", a->text);
@@ -562,22 +562,22 @@ handle_final_tag(char const *path, struct xml_tree *t, unsigned char **ps)
 {
   if (*ps) {
     err("%s:%d:%d: duplicated element <%s>",
-        path, t->line, t->column, elem_map[t->tag]);
+        path, t->line, t->column, contests_elem_map[t->tag]);
     return -1;
   }
   if (!t->text || !*t->text) {
     err("%s:%d:%d: empty element <%s>", path, t->line, t->column,
-        elem_map[t->tag]);
+        contests_elem_map[t->tag]);
     return -1;
   }
   if (t->first_down) {
     err("%s:%d:%d: element <%s> cannot contain nested elements",
-        path, t->line, t->column, elem_map[t->tag]);
+        path, t->line, t->column, contests_elem_map[t->tag]);
     return -1;
   }
   if (t->first) {
     err("%s:%d:%d: element <%s> cannot have attributes",
-        path, t->line, t->column, elem_map[t->tag]);
+        path, t->line, t->column, contests_elem_map[t->tag]);
     return -1;
   }
   *ps = t->text; t->text = 0;
@@ -827,7 +827,7 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
   for (a = cnts->b.first; a; a = a->next) {
     if (contest_bool_attr_set[a->tag] > 0) {
       // boolean fields
-      p_field = (unsigned char*) contest_desc_get_ptr_nc(cnts, attr_to_contest_desc_map[a->tag]);
+      p_field = (unsigned char*) contest_desc_get_ptr_nc(cnts, contests_attr_to_meta_map[a->tag]);
       if (xml_attr_bool_byte(a, p_field) < 0) return -1;
       continue;
     }
@@ -848,12 +848,12 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
 
   for (t = cnts->b.first_down; t; t = t->right) {
     if (contest_final_set[t->tag] > 0) {
-      p_str = (unsigned char**) contest_desc_get_ptr_nc(cnts, tag_to_contest_desc_map[t->tag]);
+      p_str = (unsigned char**) contest_desc_get_ptr_nc(cnts, contests_tag_to_meta_map[t->tag]);
       if (xml_leaf_elem(t, p_str, 1, 0) < 0) return -1;
       continue;
     }
     if (contest_access_set[t->tag] > 0) {
-      pacc = (struct contest_access**) contest_desc_get_ptr_nc(cnts, tag_to_contest_desc_map[t->tag]);
+      pacc = (struct contest_access**) contest_desc_get_ptr_nc(cnts, contests_tag_to_meta_map[t->tag]);
       if (*pacc) return xml_err_elem_redefined(t);
       *pacc = (struct contest_access*) t;
       if (parse_access(*pacc, path) < 0) return -1;
@@ -872,7 +872,7 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
         xfree(date_str);
         return -1;
       }
-      if (xml_parse_date(path, t->line, t->column, date_str, (time_t*) contest_desc_get_ptr_nc(cnts, tag_to_contest_desc_map[t->tag])) < 0) {
+      if (xml_parse_date(path, t->line, t->column, date_str, (time_t*) contest_desc_get_ptr_nc(cnts, contests_tag_to_meta_map[t->tag])) < 0) {
         xfree(date_str); date_str = 0;
         return -1;
       }
@@ -924,8 +924,8 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
           switch (a->tag) {
           case CONTEST_A_ID:
             for (i = 1; i < CONTEST_LAST_FIELD; i++) {
-              if (!field_map[i]) continue;
-              if (!strcmp(a->text, field_map[i])) break;
+              if (!contests_field_map[i]) continue;
+              if (!strcmp(a->text, contests_field_map[i])) break;
             }
             if (i >= CONTEST_LAST_FIELD) {
               xml_err_a(a, "invalid field id \"%s\"", a->text);
@@ -1100,14 +1100,14 @@ contests_merge(struct contest_desc *pold, struct contest_desc *pnew)
   // copy offsetted fields
   for (i = 0; i < CONTEST_LAST_TAG; i++) {
     if (contest_final_set[i]) {
-      p_str_old = (unsigned char**) contest_desc_get_ptr_nc(pold, tag_to_contest_desc_map[i]);
-      p_str_new = (unsigned char**) contest_desc_get_ptr_nc(pnew, tag_to_contest_desc_map[i]);
+      p_str_old = (unsigned char**) contest_desc_get_ptr_nc(pold, contests_tag_to_meta_map[i]);
+      p_str_new = (unsigned char**) contest_desc_get_ptr_nc(pnew, contests_tag_to_meta_map[i]);
       xfree(*p_str_old);
       *p_str_old = *p_str_new;
       *p_str_new = 0;
     } else if (contest_access_set[i]) {
-      p_acc_old = (struct contest_access**) contest_desc_get_ptr_nc(pold, tag_to_contest_desc_map[i]);
-      p_acc_new = (struct contest_access**) contest_desc_get_ptr_nc(pnew, tag_to_contest_desc_map[i]);
+      p_acc_old = (struct contest_access**) contest_desc_get_ptr_nc(pold, contests_tag_to_meta_map[i]);
+      p_acc_new = (struct contest_access**) contest_desc_get_ptr_nc(pnew, contests_tag_to_meta_map[i]);
       p = &(*p_acc_new)->b;
       if (p) {
         xml_unlink_node(p);
@@ -1119,8 +1119,8 @@ contests_merge(struct contest_desc *pold, struct contest_desc *pnew)
   }
   for (i = 0; i < CONTEST_LAST_ATTR; i++) {
     if (contest_bool_attr_set[i]) {
-      p_b_old = (unsigned char*) contest_desc_get_ptr_nc(pold, attr_to_contest_desc_map[i]);
-      p_b_new = (unsigned char*) contest_desc_get_ptr_nc(pnew, attr_to_contest_desc_map[i]);
+      p_b_old = (unsigned char*) contest_desc_get_ptr_nc(pold, contests_attr_to_meta_map[i]);
+      p_b_new = (unsigned char*) contest_desc_get_ptr_nc(pnew, contests_attr_to_meta_map[i]);
       *p_b_old = *p_b_new;
     }
   }
@@ -1338,7 +1338,7 @@ contests_set_unload_callback(void (*f)(const struct contest_desc *))
   unload_list = contests_set_callback(unload_list, f);
 }
 
-static unsigned char *contests_dir;
+unsigned char *contests_dir;
 static unsigned int contests_allocd;
 static struct contest_desc **contests_desc;
 
@@ -1672,465 +1672,6 @@ contests_strerror(int e)
 }
 
 void
-contests_write_header(FILE *f, const struct contest_desc *cnts)
-{
-  const int *flist;
-  int i, j;
-
-  fprintf(f,
-          "<%s %s=\"%d\"", elem_map[CONTEST_CONTEST],
-          attr_map[CONTEST_A_ID], cnts->id);
-
-  flist = (const int[]) {
-    CONTEST_A_AUTOREGISTER, CONTEST_A_DISABLE_TEAM_PASSWORD,
-    CONTEST_A_SIMPLE_REGISTRATION,
-    CONTEST_A_SEND_PASSWD_EMAIL, CONTEST_A_ASSIGN_LOGINS,
-    CONTEST_A_FORCE_REGISTRATION, CONTEST_A_DISABLE_NAME,
-    CONTEST_A_ENABLE_PASSWORD_RECOVERY, CONTEST_A_EXAM_MODE,
-    CONTEST_A_DISABLE_PASSWORD_CHANGE, CONTEST_A_DISABLE_LOCALE_CHANGE,
-    CONTEST_A_PERSONAL, CONTEST_A_ALLOW_REG_DATA_EDIT,
-    CONTEST_A_DISABLE_MEMBER_DELETE, CONTEST_A_CLOSED, CONTEST_A_INVISIBLE,
-    CONTEST_A_MANAGED, CONTEST_A_RUN_MANAGED,
-    0
-  };
-  for (i = 0; flist[i]; ++i) {
-    j = attr_to_contest_desc_map[flist[i]];
-    if (*(const unsigned char*) contest_desc_get_ptr(cnts, j))
-      fprintf(f, "\n         %s=\"%s\"", attr_map[flist[i]], "yes");
-  }
-  if (!cnts->clean_users) {
-    fprintf(f, "\n         %s=\"%s\"",
-            attr_map[CONTEST_A_CLEAN_USERS], "no");
-  }
-
-  fprintf(f, ">");
-}
-
-static void
-unparse_access(FILE *f, const struct contest_access *acc, int tag)
-{
-  struct contest_ip *ip;
-  unsigned char ssl_str[64];
-
-  if (!acc) return;
-  if (!acc->default_is_allow && !acc->b.first_down) return;
-  if (!acc->b.first_down) {
-    fprintf(f, "  <%s default=\"%s\"/>\n", elem_map[tag],
-            acc->default_is_allow?"allow":"deny");
-    return;
-  }
-  fprintf(f, "  <%s default=\"%s\">\n", elem_map[tag],
-          acc->default_is_allow?"allow":"deny");
-  for (ip = (typeof(ip)) acc->b.first_down; ip;
-       ip = (typeof(ip)) ip->b.right) {
-    ssl_str[0] = 0;
-    if (ip->ssl >= 0)
-      snprintf(ssl_str, sizeof(ssl_str), " %s=\"%s\"",
-               attr_map[CONTEST_A_SSL], ip->ssl?"yes":"no");
-    fprintf(f, "    <%s %s=\"%s\"%s>%s</%s>\n",
-            elem_map[CONTEST_IP], attr_map[CONTEST_A_ALLOW],
-            ip->allow?"yes":"no", ssl_str,
-            xml_unparse_ip_mask(ip->addr, ip->mask),
-            elem_map[CONTEST_IP]);
-  }
-  fprintf(f, "  </%s>\n", elem_map[tag]);
-}
-
-static void
-unparse_field(
-        FILE *f,
-        const struct contest_field *pf,
-        int id,
-        char const * const field_map[],
-        const unsigned char *indent)
-{
-  unsigned char *txt = 0, *arm_txt = 0;
-  size_t arm_sz = 0;
-
-  if (!pf) return;
-  txt = pf->legend;
-  if (txt && *txt && html_armor_needed(txt, &arm_sz)) {
-    arm_txt = (unsigned char*) alloca(arm_sz + 1);
-    html_armor_string(txt, arm_txt);
-    txt = arm_txt;
-  }
-  fprintf(f, "%s<%s %s=\"%s\" %s=\"%s\"",
-          indent, elem_map[CONTEST_FIELD], attr_map[CONTEST_A_ID],
-          field_map[id],
-          attr_map[CONTEST_A_MANDATORY],
-          pf->mandatory?"yes":"no");
-  if (txt && *txt) {
-    fprintf(f, ">%s</%s>\n", txt, elem_map[CONTEST_FIELD]);
-  } else {
-    fprintf(f, "/>\n");
-  }
-}
-
-static void
-unparse_fields(FILE *f, const struct contest_member *memb, int tag)
-{
-  int i;
-
-  if (!memb) return;
-  fprintf(f, "  <%s", elem_map[tag]);
-  if (memb->min_count >= 0)
-    fprintf(f, " %s=\"%d\"", attr_map[CONTEST_A_MIN], memb->min_count);
-  if (memb->max_count >= 0)
-    fprintf(f, " %s=\"%d\"", attr_map[CONTEST_A_MAX], memb->max_count);
-  if (memb->init_count >= 0)
-    fprintf(f, " %s=\"%d\"", attr_map[CONTEST_A_INITIAL], memb->init_count);
-  fprintf(f, ">\n");
-  for (i = 1; i < CONTEST_LAST_MEMBER_FIELD; i++)
-    unparse_field(f, memb->fields[i], i, member_field_map, "    ");
-  fprintf(f, "  </%s>\n", elem_map[tag]);
-}
-
-static void
-unparse_text(FILE *f, int tag, const unsigned char *txt)
-{
-  size_t arm_sz;
-  unsigned char *arm_txt;
-
-  if (!txt) return;
-  if (html_armor_needed(txt, &arm_sz)) {
-    arm_txt = (unsigned char*) alloca(arm_sz + 1);
-    html_armor_string(txt, arm_txt);
-    txt = arm_txt;
-  }
-  fprintf(f, "  <%s>%s</%s>\n", elem_map[tag], txt, elem_map[tag]);
-}
-
-static void
-unparse_texts(
-        FILE *f,
-        const struct contest_desc *cnts,
-        const int *flist)
-{
-  for (int i = 0; flist[i]; ++i)
-    unparse_text(f, flist[i], *(const unsigned char **) contest_desc_get_ptr(cnts, tag_to_contest_desc_map[flist[i]]));
-}
-
-void
-contests_unparse(FILE *f,
-                 const struct contest_desc *cnts)
-{
-  const struct opcap_list_item *cap;
-  unsigned char *s;
-  int i, len, skip_elem;
-  struct xml_tree *p;
-  path_t tmp1, tmp2;
-
-  contests_write_header(f, cnts);
-  fprintf(f, "\n");
-
-  unparse_texts(f, cnts, (const int[]) {
-    CONTEST_NAME, CONTEST_NAME_EN, CONTEST_DEFAULT_LOCALE, CONTEST_MAIN_URL,
-    CONTEST_KEYWORDS,
-    0
-  });
-
-  // avoid generating root_dir and conf_dir if their values are default
-  skip_elem = 0;
-  tmp1[0] = 0;
-  if (ejudge_config && ejudge_config->contests_home_dir) {
-    snprintf(tmp1, sizeof(tmp1), "%s", ejudge_config->contests_home_dir);
-  }
-#if defined EJUDGE_CONTESTS_HOME_DIR
-  if (!tmp1[0]) {
-    snprintf(tmp1, sizeof(tmp1), "%s", EJUDGE_CONTESTS_HOME_DIR);
-  }
-#endif
-  if (tmp1[0] && cnts->root_dir) {
-    len = strlen(tmp1);
-    snprintf(tmp2, sizeof(tmp2), "%s/%06d", tmp1, cnts->id);
-    if (!strcmp(tmp2, cnts->root_dir)) {
-      // do nothing, <root_dir> has the default value
-      skip_elem = 1;
-    } else if (!strncmp(tmp1, cnts->root_dir, len)
-               && cnts->root_dir[len] == '/') {
-      while (cnts->root_dir[len] == '/') len++;
-      unparse_text(f, CONTEST_ROOT_DIR, cnts->root_dir + len);
-      skip_elem = 1;
-    }
-  }
-  if (!skip_elem) unparse_text(f, CONTEST_ROOT_DIR, cnts->root_dir);
-
-  skip_elem = 0;
-  if (cnts->root_dir && cnts->conf_dir) {
-    snprintf(tmp1, sizeof(tmp1), "%s/conf", cnts->root_dir);
-    if (!strcmp(tmp1, cnts->conf_dir)) skip_elem = 1;
-  }
-  if (!skip_elem) unparse_text(f, CONTEST_CONF_DIR, cnts->conf_dir);
-
-  if (cnts->user_contest && cnts->user_contest[0])
-    unparse_text(f, CONTEST_USER_CONTEST, cnts->user_contest);
-  if (cnts->reg_deadline > 0) {
-    fprintf(f, "  <%s>%s</%s>\n", elem_map[CONTEST_REGISTRATION_DEADLINE],
-            xml_unparse_date(cnts->reg_deadline),
-            elem_map[CONTEST_REGISTRATION_DEADLINE]);
-  }
-  if (cnts->sched_time > 0) {
-    fprintf(f, "  <%s>%s</%s>\n", elem_map[CONTEST_SCHED_TIME],
-            xml_unparse_date(cnts->sched_time),
-            elem_map[CONTEST_SCHED_TIME]);
-  }
-
-  unparse_texts(f, cnts, (const int[]) {
-    CONTEST_REGISTER_EMAIL, CONTEST_REGISTER_URL, CONTEST_TEAM_URL,
-    CONTEST_STANDINGS_URL, CONTEST_PROBLEMS_URL, CONTEST_REGISTER_EMAIL_FILE,
-    CONTEST_LOGIN_TEMPLATE, CONTEST_LOGIN_TEMPLATE_OPTIONS,
-    0,
-  });
-
-  for (i = CONTEST_REGISTER_ACCESS; i <= CONTEST_SERVE_CONTROL_ACCESS; ++i) {
-    unparse_access(f, *(const struct contest_access**) contest_desc_get_ptr(cnts, tag_to_contest_desc_map[i]), i);
-  }
-
-  if (cnts->caps_node) {
-    fprintf(f, "  <%s>\n", elem_map[CONTEST_CAPS]);
-    for (cap = CNTS_FIRST_PERM(cnts); cap; cap = CNTS_NEXT_PERM(cap)) {
-      fprintf(f, "    <%s %s = \"%s\">\n",
-              elem_map[CONTEST_CAP], attr_map[CONTEST_A_LOGIN], cap->login);
-      s = opcaps_unparse(6, 60, cap->caps);
-      fprintf(f, "%s", s);
-      xfree(s);
-      fprintf(f, "    </%s>\n", elem_map[CONTEST_CAP]);
-    }
-    fprintf(f, "  </%s>\n", elem_map[CONTEST_CAPS]);
-  }
-
-  for (i = 1; i < CONTEST_LAST_FIELD; i++) {
-    unparse_field(f, cnts->fields[i], i, field_map, "  ");
-  }
-
-  for (i = CONTEST_M_CONTESTANT; i <= CONTEST_M_GUEST; ++i) {
-    unparse_fields(f, cnts->members[i], CONTEST_CONTESTANTS + i);
-  }
-
-  unparse_texts(f, cnts, (const int[]) {
-    CONTEST_USERS_HEADER_FILE, CONTEST_USERS_FOOTER_FILE,
-    CONTEST_REGISTER_HEADER_FILE, CONTEST_REGISTER_FOOTER_FILE,
-    CONTEST_TEAM_HEADER_FILE, CONTEST_TEAM_MENU_1_FILE,
-    CONTEST_TEAM_MENU_2_FILE, CONTEST_TEAM_MENU_3_FILE,
-    CONTEST_TEAM_SEPARATOR_FILE, CONTEST_TEAM_FOOTER_FILE,
-    CONTEST_COPYRIGHT_FILE, CONTEST_PRIV_HEADER_FILE, CONTEST_PRIV_FOOTER_FILE,
-    CONTEST_WELCOME_FILE, CONTEST_REG_WELCOME_FILE,
-
-    CONTEST_USERS_HEAD_STYLE, CONTEST_USERS_PAR_STYLE,
-    CONTEST_USERS_TABLE_STYLE, CONTEST_USERS_VERB_STYLE,
-    CONTEST_USERS_TABLE_FORMAT, CONTEST_USERS_TABLE_FORMAT_EN,
-    CONTEST_USERS_TABLE_LEGEND, CONTEST_USERS_TABLE_LEGEND_EN,
-    CONTEST_REGISTER_HEAD_STYLE, CONTEST_REGISTER_PAR_STYLE,
-    CONTEST_REGISTER_TABLE_STYLE, CONTEST_TEAM_HEAD_STYLE,
-    CONTEST_TEAM_PAR_STYLE,
-
-    CONTEST_SERVE_USER, CONTEST_SERVE_GROUP,
-    CONTEST_RUN_USER, CONTEST_RUN_GROUP,
-
-    CONTEST_DIR_MODE, CONTEST_DIR_GROUP,
-    CONTEST_FILE_MODE, CONTEST_FILE_GROUP,
-
-    CONTEST_USER_NAME_COMMENT, CONTEST_ALLOWED_LANGUAGES,
-    CONTEST_ALLOWED_REGIONS, CONTEST_CF_NOTIFY_EMAIL,
-    CONTEST_CLAR_NOTIFY_EMAIL, CONTEST_DAILY_STAT_EMAIL,
-
-    0,
-  });
-
-  if (cnts->slave_rules) {
-    fprintf(f, "  <%s>\n", elem_map[CONTEST_SLAVE_RULES]);
-    for (p = cnts->slave_rules->first_down; p; p = p->right) {
-      fprintf(f, "    <%s>%s</%s>\n",
-              elem_map[p->tag], p->text, elem_map[p->tag]);
-    }
-    fprintf(f, "  </%s>\n", elem_map[CONTEST_SLAVE_RULES]);
-  }
-  fprintf(f, "</%s>", elem_map[CONTEST_CONTEST]);
-}
-
-int
-contests_save_xml(struct contest_desc *cnts,
-                  const unsigned char *txt1,
-                  const unsigned char *txt2,
-                  const unsigned char *txt3)
-{
-  int serial = 1;
-  unsigned char tmp_path[1024];
-  unsigned char xml_path[1024];
-  int fd;
-  FILE *f;
-  struct stat xml_stat;
-
-  while (1) {
-    snprintf(tmp_path, sizeof(tmp_path), "%s/_contests_tmp_%d.xml",
-             contests_dir, serial++);
-    if ((fd = open(tmp_path, O_WRONLY| O_CREAT| O_TRUNC|O_EXCL, 0600)) >= 0)
-      break;
-    if (errno != EEXIST) return -CONTEST_ERR_FILE_CREATION_ERROR;
-  }
-  if (!(f = fdopen(fd, "w"))) {
-    close(fd);
-    unlink(tmp_path);
-    return -CONTEST_ERR_FILE_CREATION_ERROR;
-  }
-
-  fputs(txt1, f);
-  contests_write_header(f, cnts);
-  fputs(txt2, f);
-  fputs(txt3, f);
-  if (ferror(f)) {
-    fclose(f);
-    unlink(tmp_path);
-    return -CONTEST_ERR_IO_ERROR;
-  }
-  if (fclose(f) < 0) {
-    unlink(tmp_path);
-    return -CONTEST_ERR_IO_ERROR;
-  }
-
-  contests_make_path(xml_path, sizeof(xml_path), cnts->id);
-  if (stat(xml_path, &xml_stat) < 0) {
-    unlink(tmp_path);
-    return -CONTEST_ERR_NO_CONTEST;
-  }
-  if (!S_ISREG(xml_stat.st_mode)) {
-    unlink(tmp_path);
-    return -CONTEST_ERR_NO_CONTEST;
-  }
-
-  // try to change the owner, but ignore the error
-  chown(tmp_path, xml_stat.st_uid, -1);
-  // try to change the group and log errors
-  if (chown(tmp_path, -1, xml_stat.st_gid) < 0) {
-    err("contests_save_xml: chgrp failed: %s", os_ErrorMsg());
-  }
-  // try to change permissions and log errors
-  if (chmod(tmp_path, xml_stat.st_mode & 07777) < 0) {
-    err("contests_save_xml: chmod failed: %s", os_ErrorMsg());
-  }
-
-  if (rename(tmp_path, xml_path) < 0) {
-    err("contests_save_xml: rename failed: %s", os_ErrorMsg());
-    unlink(tmp_path);
-    return -CONTEST_ERR_FILE_CREATION_ERROR;
-  }
-  return 0;
-}
-
-int
-contests_unparse_and_save(
-        struct contest_desc *cnts,
-        const unsigned char *charset,
-        const unsigned char *header,
-        const unsigned char *footer,
-        const unsigned char *add_footer,
-        unsigned char *(*diff_func)(const unsigned char *,
-                                    const unsigned char *),
-        unsigned char **p_diff_txt)
-{
-  int serial = 1;
-  unsigned char tmp_path[1024];
-  unsigned char xml_path[1024];
-  int fd;
-  FILE *f;
-  struct stat xml_stat;
-  char *old_text = 0;
-  size_t old_size = 0;
-  char *new_text = 0;
-  size_t new_size = 0;
-  unsigned char *diff_txt = 0;
-
-  if (!charset || !*charset) charset = INTERNAL_CHARSET;
-
-  f = open_memstream(&new_text, &new_size);
-  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n", charset);
-  fputs(header, f);
-  contests_unparse(f, cnts);
-  fputs(footer, f);
-  fclose(f); f = 0;
-
-  contests_make_path(xml_path, sizeof(xml_path), cnts->id);
-
-  // read the previuos file and compare it with the new
-  if (generic_read_file(&old_text, 0, &old_size, 0, 0, xml_path, 0) >= 0
-      && new_size == old_size && memcmp(new_text, old_text, new_size) == 0) {
-    info("contest_save_xml: %d is not changed", cnts->id);
-    xfree(old_text);
-    xfree(new_text);
-    return 0;
-  }
-  xfree(old_text); old_text = 0;
-  old_size = 0;
-
-  while (1) {
-    snprintf(tmp_path, sizeof(tmp_path), "%s/_contests_tmp_%d.xml",
-             contests_dir, serial++);
-    if ((fd = open(tmp_path, O_WRONLY| O_CREAT| O_TRUNC|O_EXCL, 0600)) >= 0)
-      break;
-    if (errno != EEXIST) {
-      xfree(new_text);
-      return -CONTEST_ERR_FILE_CREATION_ERROR;
-    }
-  }
-  if (!(f = fdopen(fd, "w"))) {
-    close(fd);
-    xfree(new_text);
-    unlink(tmp_path);
-    return -CONTEST_ERR_FILE_CREATION_ERROR;
-  }
-
-  fwrite(new_text, 1, new_size, f);
-  xfree(new_text); new_text = 0;
-  new_size = 0;
-  fputs(add_footer, f);
-  if (ferror(f)) {
-    fclose(f);
-    unlink(tmp_path);
-    return -CONTEST_ERR_IO_ERROR;
-  }
-  if (fclose(f) < 0) {
-    unlink(tmp_path);
-    return -CONTEST_ERR_IO_ERROR;
-  }
-
-  if (diff_func && p_diff_txt) {
-    diff_txt = (*diff_func)(xml_path, tmp_path);
-  }
-
-  if (stat(xml_path, &xml_stat) >= 0) {
-    if (!S_ISREG(xml_stat.st_mode)) {
-      unlink(tmp_path);
-      xfree(diff_txt);
-      return -CONTEST_ERR_NO_CONTEST;
-    }
-
-    // try to change the owner, but ignore the error
-    chown(tmp_path, xml_stat.st_uid, -1);
-    // try to change the group and log errors
-    if (chown(tmp_path, -1, xml_stat.st_gid) < 0) {
-      err("contests_save_xml: chgrp failed: %s", os_ErrorMsg());
-    }
-    // try to change permissions and log errors
-    if (chmod(tmp_path, xml_stat.st_mode & 07777) < 0) {
-      err("contests_save_xml: chmod failed: %s", os_ErrorMsg());
-    }
-  } else {
-    if (chmod(tmp_path, 0664) < 0) {
-      err("contests_save_xml: chmod failed: %s", os_ErrorMsg());
-    }
-  }
-
-  if (rename(tmp_path, xml_path) < 0) {
-    err("contests_save_xml: rename failed: %s", os_ErrorMsg());
-    unlink(tmp_path);
-    xfree(diff_txt);
-    return -CONTEST_ERR_FILE_CREATION_ERROR;
-  }
-  if (p_diff_txt) *p_diff_txt = diff_txt;
-  return 0;
-}
-
-void
 contests_get_path_in_conf_dir(
         unsigned char *buf,
         size_t size,
@@ -2267,409 +1808,6 @@ contests_get_member_name(int ff)
 {
   ASSERT(ff >= 0 && ff < CONTEST_LAST_MEMBER);
   return member_names[ff];
-}
-
-int
-contests_remove_nth_permission(struct contest_desc *cnts, int n)
-{
-  struct opcap_list_item *perms;
-  int j;
-
-  for (j = 0, perms = CNTS_FIRST_PERM(cnts);
-       perms && n != j;
-       perms = CNTS_NEXT_PERM_NC(perms), ++j)
-  if (!perms || n != j) return -1;
-
-  xml_unlink_node(&perms->b);
-  contests_free_2(&perms->b);
-  cnts->capabilities.first=(struct opcap_list_item*)cnts->caps_node->first_down;
-  if (!cnts->capabilities.first) {
-    xml_unlink_node(cnts->caps_node);
-    contests_free_2(cnts->caps_node);
-    cnts->caps_node = 0;
-  }
-  return 0;
-}
-
-int
-contests_add_permission(
-        struct contest_desc *cnts,
-        const unsigned char *login,
-        opcap_t caps)
-{
-  struct opcap_list_item *cap_node;
-
-  for (cap_node = CNTS_FIRST_PERM(cnts); cap_node;
-       cap_node = CNTS_NEXT_PERM_NC(cap_node))
-    if (!strcmp(cap_node->login, login)) {
-      cap_node->caps |= caps;
-      return 0;
-    }
-
-  if (!cnts->caps_node) {
-    cnts->caps_node = contests_new_node(CONTEST_CAPS);
-    xml_link_node_last(&cnts->b, cnts->caps_node);
-  }
-  cap_node = (typeof(cap_node)) contests_new_node(CONTEST_CAP);
-  if (!cnts->capabilities.first) cnts->capabilities.first = cap_node;
-  cap_node->login = xstrdup(login);
-  cap_node->caps = caps;
-  xml_link_node_last(cnts->caps_node, &cap_node->b);
-  return 1;
-}
-
-void
-contests_copy_permissions(
-        struct contest_desc *cdst,
-        const struct contest_desc *csrc)
-{
-  struct opcap_list_item *dperms1, *dperms2;
-  const struct opcap_list_item *sperms;
-
-  if (!cdst || !csrc) return;
-
-  // remove all permissions from cdst
-  for (dperms1 = CNTS_FIRST_PERM(cdst); dperms1; dperms1 = dperms2) {
-    dperms2 = CNTS_NEXT_PERM_NC(dperms1);
-    xml_unlink_node(&dperms1->b);
-    contests_free_2(&dperms1->b);
-  }
-  if (cdst->caps_node) {
-    xml_unlink_node(cdst->caps_node);
-    contests_free_2(cdst->caps_node);
-  }
-  cdst->caps_node = 0;
-  cdst->capabilities.first = 0;
-
-  if (!csrc->capabilities.first) return;
-
-  // copy all permissions from csrc to cdst
-  cdst->caps_node = contests_new_node(CONTEST_CAPS);
-  xml_link_node_last(&cdst->b, cdst->caps_node);
-
-  for (sperms = CNTS_FIRST_PERM(csrc); sperms;
-       sperms = CNTS_NEXT_PERM(sperms)) {
-    dperms1 = (struct opcap_list_item *) contests_new_node(CONTEST_CAP);
-    if (!cdst->capabilities.first) cdst->capabilities.first = dperms1;
-    dperms1->login = xstrdup(sperms->login);
-    dperms1->caps = sperms->caps;
-    xml_link_node_last(cdst->caps_node, &dperms1->b);
-  }
-}
-
-int
-contests_set_permission(
-        struct contest_desc *cnts,
-        int num,
-        opcap_t caps)
-{
-  struct opcap_list_item *p;
-  int i;
-
-  for (i = 0, p = CNTS_FIRST_PERM(cnts); i != num && p;
-       ++i, p = CNTS_NEXT_PERM_NC(p));
-  if (i != num || !p) return -1;
-  p->caps = caps;
-  return 0;
-}
-
-void
-contests_set_default(
-        struct contest_desc *cnts,
-        struct contest_access **p_acc,
-        int tag,
-        int default_is_allow)
-{
-  struct contest_access *new_acc = 0;
-  
-  if (*p_acc && (*p_acc)->b.first_down) {
-    (*p_acc)->default_is_allow = !!default_is_allow;
-    return;
-  }
-  if (!default_is_allow) {
-    if (!*p_acc) return;
-    (*p_acc)->default_is_allow = 0;
-    if (!(*p_acc)->b.first_down) {
-      xml_unlink_node(&(*p_acc)->b);
-      contests_free_2(&(*p_acc)->b);
-      *p_acc = 0;
-    }
-    return;
-  }
-
-  if (!*p_acc) {
-    new_acc = (struct contest_access*) contests_new_node(tag);
-    xml_link_node_last(&cnts->b, &new_acc->b);
-    *p_acc = new_acc;
-  }
-  (*p_acc)->default_is_allow = default_is_allow;
-}
-void
-contests_add_ip(
-        struct contest_desc *cnts,
-        struct contest_access **p_acc,
-        int tag,
-        ej_ip_t addr,
-        ej_ip_t mask,
-        int ssl_flag,
-        int default_allow)
-{
-  struct contest_access *new_acc = 0;
-  struct contest_ip *new_ip;
-
-  if (!*p_acc) {
-    new_acc = (struct contest_access*) contests_new_node(tag);
-    xml_link_node_last(&cnts->b, &new_acc->b);
-    *p_acc = new_acc;
-  }
-  new_ip = (struct contest_ip*) contests_new_node(CONTEST_IP);
-  new_ip->addr = addr;
-  new_ip->mask = mask;
-  new_ip->allow = default_allow;
-  new_ip->ssl = ssl_flag;
-  xml_link_node_last(&(*p_acc)->b, &new_ip->b);
-}
-
-struct contest_ip *
-contests_get_ip_rule_nc(
-        struct contest_access *acc,
-        int n)
-{
-  struct contest_ip *p;
-  int i;
-
-  if (!acc) return 0;
-
-  for (i = 0, p = CNTS_FIRST_IP_NC(acc); p && i != n;
-       ++i, p = CNTS_NEXT_IP_NC(p));
-  if (p && i == n) return p;
-  return 0;
-}
-
-int
-contests_delete_ip_rule(
-        struct contest_access **p_acc,
-        int n)
-{
-  int i;
-  struct contest_ip *p;
-
-  if (!*p_acc) return -1;
-
-  for (i = 0, p = CNTS_FIRST_IP_NC(*p_acc); i != n && p;
-       ++i, p = CNTS_NEXT_IP_NC(p));
-  if (!p || i != n) return -1;
-
-  xml_unlink_node(&p->b);
-  contests_free_2(&p->b);
-  if (!CNTS_FIRST_IP(*p_acc) && !(*p_acc)->default_is_allow) {
-    xml_unlink_node(&(*p_acc)->b);
-    contests_free_2(&(*p_acc)->b);
-    *p_acc = 0;
-  }
-  return 0;
-}
-
-static void
-swap_tree_nodes(struct xml_tree *first)
-{
-  struct xml_tree *second;
-  struct xml_tree *top;
-  struct xml_tree *before_first;
-  struct xml_tree *after_second;
-
-  ASSERT(first);
-  second = first->right;
-  ASSERT(second);
-  ASSERT(second->left == first);
-  top = first->up;
-  ASSERT(top == second->up);
-  before_first = first->left;
-  after_second = second->right;
-  first->left = second;
-  first->right = after_second;
-  second->left = before_first;
-  second->right = first;
-  if (!before_first) {
-    ASSERT(top->first_down == first);
-    top->first_down = second;
-  } else {
-    before_first->right = second;
-  }
-  if (!after_second) {
-    ASSERT(top->last_down == second);
-    top->last_down = first;
-  } else {
-    after_second->left = first;
-  }
-}
-
-int
-contests_forward_ip_rule(
-        struct contest_access **p_acc,
-        int n)
-{
-  int i;
-  struct contest_ip *p;
-  struct contest_access *acc = *p_acc;
-
-  if (!acc) return -1;
-
-  for (i = 0, p = CNTS_FIRST_IP_NC(acc); i != n && p;
-       ++i, p = CNTS_NEXT_IP_NC(p));
-  if (!p || i != n) return -1;
-  if (!p->b.left) return -1;
-  swap_tree_nodes(p->b.left);
-  return 0;
-}
-
-int
-contests_backward_ip_rule(
-        struct contest_access **p_acc,
-        int n)
-{
-  int i;
-  struct contest_ip *p;
-  struct contest_access *acc = *p_acc;
-
-  if (!acc) return -1;
-
-  for (i = 0, p = CNTS_FIRST_IP_NC(acc); i != n && p;
-       ++i, p = CNTS_NEXT_IP_NC(p));
-  if (!p || i != n) return -1;
-  if (!p->b.right) return -1;
-  swap_tree_nodes(&p->b);
-  return 0;
-}
-
-int
-contests_set_general_field(
-        struct contest_desc *cnts,
-        int field_id,
-        int opt_val,
-        const unsigned char *legend)
-{
-  struct contest_field *p;
-
-  ASSERT(cnts);
-  ASSERT(field_id > 0 && field_id < CONTEST_LAST_FIELD);
-  ASSERT(opt_val >= 0 && opt_val <= 2);
-
-  if (!opt_val) {
-    if (cnts->fields[field_id]) {
-      xml_unlink_node(&cnts->fields[field_id]->b);
-      contests_free_2(&cnts->fields[field_id]->b);
-      cnts->fields[field_id] = 0;
-    }
-  } else {
-    if (!(p = cnts->fields[field_id])) {
-      p = (struct contest_field *) contests_new_node(CONTEST_FIELD);
-      p->id = field_id;
-      cnts->fields[field_id] = p;
-      xml_link_node_last(&cnts->b, &p->b);
-    }
-    p->mandatory = 0;
-    if (opt_val == 2) p->mandatory = 1;
-    if (!p->legend || p->legend != legend) {
-      xfree(p->legend); p->legend = 0;
-      if (legend) p->legend = xstrdup(legend);
-    }
-  }
-  return 0;
-}
-
-void
-contests_delete_member_fields(
-        struct contest_desc *cnts,
-        int m_id)
-{
-  struct contest_member *memb;
-  int ff;
-
-  ASSERT(cnts);
-  ASSERT(m_id >= 0 && m_id < CONTEST_LAST_MEMBER);
-
-  if (!(memb = cnts->members[m_id])) return;
-  for (ff = 0; ff < CONTEST_LAST_MEMBER_FIELD; ++ff)
-    if (memb->fields[ff]) {
-      xml_unlink_node(&memb->fields[ff]->b);
-      contests_free_2(&memb->fields[ff]->b);
-      memb->fields[ff] = 0;
-    }
-  xml_unlink_node(&memb->b);
-  contests_free_2(&memb->b);
-  cnts->members[m_id] = 0;
-}
-
-void
-contests_set_member_counts(
-        struct contest_desc *cnts,
-        int m_id,
-        int min_count,
-        int max_count,
-        int init_count)
-{
-  struct contest_member *memb;
-
-  ASSERT(cnts);
-  ASSERT(m_id >= 0 || m_id < CONTEST_LAST_MEMBER);
-  ASSERT(min_count >= 0 && min_count <= 5);
-  ASSERT(max_count >= 0 && max_count <= 5);
-  ASSERT(init_count >= 0 && init_count <= 5);
-  ASSERT(min_count <= max_count);
-
-  if (!(memb = cnts->members[m_id]) && !min_count && !max_count && !init_count)
-    return;
-  if (!memb) {
-    memb = (struct contest_member*) contests_new_node(CONTEST_CONTESTANTS+m_id);
-    xml_link_node_last(&cnts->b, &memb->b);
-    cnts->members[m_id] = memb;
-  }
-  memb->min_count = min_count;
-  memb->max_count = max_count;
-  memb->init_count = init_count;
-}
-
-void
-contests_set_member_field(
-        struct contest_desc *cnts,
-        int m_id,
-        int field_id,
-        int opt_val,
-        const unsigned char *legend)
-{
-  struct contest_member *memb;
-  struct contest_field *p;
-
-  ASSERT(cnts);
-  ASSERT(m_id >= 0 && m_id < CONTEST_LAST_MEMBER);
-  ASSERT(field_id > 0 && field_id < CONTEST_LAST_MEMBER_FIELD);
-
-  if (!(memb = cnts->members[m_id])) {
-    memb = (struct contest_member*) contests_new_node(CONTEST_CONTESTANTS+m_id);
-    xml_link_node_last(&cnts->b, &memb->b);
-    cnts->members[m_id] = memb;
-  }
-
-  if (!opt_val) {
-    if (!memb->fields[field_id]) return;
-    xml_unlink_node(&memb->fields[field_id]->b);
-    contests_free_2(&memb->fields[field_id]->b);
-    memb->fields[field_id] = 0;
-    return;
-  }
-  if (!(p = memb->fields[field_id])) {
-    p = (struct contest_field*) contests_new_node(CONTEST_FIELD);
-    p->id = field_id;
-    memb->fields[field_id] = p;
-    xml_link_node_last(&memb->b, &p->b);
-  }
-  p->mandatory = 0;
-  if (opt_val == 2) p->mandatory = 1;
-  if (!p->legend || p->legend != legend) {
-    xfree(p->legend); p->legend = 0;
-    if (legend) p->legend = xstrdup(legend);
-  }
 }
 
 /*

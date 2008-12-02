@@ -35,6 +35,10 @@
 #include <ctype.h>
 #include <errno.h>
 
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
+
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
 #endif

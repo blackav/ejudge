@@ -29,6 +29,7 @@
 #include "digest_io.h"
 #include "filehash.h"
 #include "serve_state.h"
+#include "startstop.h"
 
 #include "fileutl.h"
 #include "errlog.h"
@@ -79,9 +80,6 @@ static time_t last_activity_time;
 struct serve_state serve_state;
 static int restart_flag = 0;
 static int utf8_mode = 0;
-
-static path_t self_exe;
-static char **self_argv;
 
 struct testinfo
 {
@@ -2792,21 +2790,6 @@ check_config(void)
   return 0;
 }
 
-static void
-set_self_args(int argc, char *argv[])
-{
-  int n;
-
-  if ((n = readlink("/proc/self/exe", self_exe, sizeof(self_exe))) <= 0) {
-    fprintf(stderr, "%s: cannot access /proc/self/exe: %s\n",
-            argv[0], os_ErrorMsg());
-    snprintf(self_exe, sizeof(self_exe), "%s", argv[0]);
-  } else {
-    self_exe[n] = 0;
-  }
-  self_argv = argv;
-}
-
 int
 main(int argc, char *argv[])
 {
@@ -2815,7 +2798,7 @@ main(int argc, char *argv[])
   int   p_flags = 0, code = 0;
   path_t cpp_opts = { 0 };
 
-  set_self_args(argc, argv);
+  start_set_self_args(argc, argv);
 
   if (argc == 1) goto print_usage;
   code = 1;
@@ -2851,7 +2834,7 @@ main(int argc, char *argv[])
   if (check_config() < 0) return 1;
   if (do_loop() < 0) return 1;
   if (restart_flag) {
-    execv(self_exe, self_argv);
+    start_restart();
   }
   return 0;
 

@@ -108,6 +108,7 @@ COMMON_CFILES=\
  compile_packet_5.c\
  compile_packet_6.c\
  contests.c\
+ contests_2.c\
  contest_tmpl.c\
  copyright.c\
  csv.c\
@@ -149,6 +150,7 @@ COMMON_CFILES=\
  ncurses_utils.c\
  nsdb_plugin_files.c\
  opcaps.c\
+ opcaps_2.c\
  parsecfg.c\
  parsecfg_2.c\
  pathutl.c\

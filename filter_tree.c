@@ -29,6 +29,10 @@
 #include <errno.h>
 #include <limits.h>
 
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
+
 struct filter_tree_mem
 {
   tPageDesc *pages;

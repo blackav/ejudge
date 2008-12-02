@@ -28,6 +28,10 @@
 #include <errno.h>
 #include <iconv.h>
 
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
+
 #if defined EJUDGE_CHARSET
 #define INTERNAL_CHARSET EJUDGE_CHARSET
 #else
@@ -95,6 +99,12 @@ open_charset_iconv2(struct charset_info_s *ci)
   return 0;
 }
 
+#if CONF_ICONV_NEEDS_CONST - 0 == 1
+typedef const char *iconv_src_str_t;
+#else
+typedef char *iconv_src_str_t;
+#endif
+
 const unsigned char *
 charset_decode_buf(
         int id,
@@ -103,7 +113,8 @@ charset_decode_buf(
 {
   struct charset_info_s *ci;
   size_t inbytesleft, outbytesleft, r;
-  char *inbuf, *outbuf;
+  iconv_src_str_t inbuf;
+  char *outbuf;
   unsigned char *tmpbuf;
 
   ASSERT(buf);
@@ -121,8 +132,12 @@ charset_decode_buf(
   // FIXME: maybe there are cases when it is possible to recode
   // using the same buffer...
   tmpbuf = (unsigned char*) alloca(size);
-  inbuf = (char*) buf;
+  inbuf = (iconv_src_str_t) buf;
+#if HAVE_STRNLEN - 0 == 1
   inbytesleft = strnlen(buf, size);
+#else
+  inbytesleft = strlen(buf);
+#endif
   outbuf = (char*) tmpbuf;
   outbytesleft = size - 1;
 
@@ -155,7 +170,8 @@ charset_decode_to_buf(
 {
   struct charset_info_s *ci;
   size_t inbytesleft, outbytesleft, r;
-  char *inbuf, *outbuf;
+  iconv_src_str_t inbuf;
+  char *outbuf;
 
   ASSERT(buf);
   ASSERT(size > 0);
@@ -173,7 +189,7 @@ charset_decode_to_buf(
     return buf;
   }
 
-  inbuf = (char*) str;
+  inbuf = (iconv_src_str_t) str;
   inbytesleft = strlen(str);
   outbuf = buf;
   outbytesleft = size - 1;
@@ -210,10 +226,11 @@ do_recode(
         const unsigned char *str)
 {
   size_t inbytesleft, outbytesleft, r, conv_size;
-  char *inbuf, *outbuf;
+  iconv_src_str_t inbuf;
+  char *outbuf;
 
   html_armor_reserve(ab, 63);
-  inbuf = (char*) str;
+  inbuf = (iconv_src_str_t) str;
   inbytesleft = strlen(str);
   outbuf = ab->buf;
   outbytesleft = ab->size - 1;

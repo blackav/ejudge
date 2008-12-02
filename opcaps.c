@@ -26,7 +26,11 @@
 #include <stdlib.h>
 #include <errno.h>
 
-static const unsigned char * const cap_list [] =
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
+
+const unsigned char * const opcaps_cap_list [] =
 {
   [OPCAP_MASTER_LOGIN]            "MASTER_LOGIN",
   [OPCAP_JUDGE_LOGIN]             "JUDGE_LOGIN",
@@ -67,8 +71,8 @@ static const unsigned char * const cap_list [] =
   [OPCAP_LAST]                    0
 };
 
-static const opcap_t OPCAP_NO_PERMS = 0LL;
-static const opcap_t OPCAP_OBSERVER_PERMS =
+const opcap_t OPCAP_NO_PERMS = 0LL;
+const opcap_t OPCAP_OBSERVER_PERMS =
   (1ULL << OPCAP_JUDGE_LOGIN)
   | (1ULL << OPCAP_LIST_USERS)
   | (1ULL << OPCAP_GET_USER)
@@ -78,7 +82,7 @@ static const opcap_t OPCAP_OBSERVER_PERMS =
   | (1ULL << OPCAP_VIEW_SOURCE)
   | (1ULL << OPCAP_VIEW_REPORT)
   | (1ULL << OPCAP_VIEW_CLAR);
-static const opcap_t OPCAP_JUDGE_PERMS =
+const opcap_t OPCAP_JUDGE_PERMS =
   (1ULL << OPCAP_JUDGE_LOGIN)
   | (1ULL << OPCAP_SUBMIT_RUN)
   | (1ULL << OPCAP_LIST_USERS)
@@ -94,7 +98,7 @@ static const opcap_t OPCAP_JUDGE_PERMS =
   | (1ULL << OPCAP_NEW_MESSAGE)
   | (1ULL << OPCAP_REPLY_MESSAGE)
   | (1ULL << OPCAP_PRINT_RUN);
-static const opcap_t OPCAP_MASTER_PERMS =
+const opcap_t OPCAP_MASTER_PERMS =
   (1ULL << OPCAP_MASTER_LOGIN)
   | (1ULL << OPCAP_JUDGE_LOGIN)
   | (1ULL << OPCAP_SUBMIT_RUN)
@@ -221,9 +225,9 @@ opcaps_parse(unsigned char const *str, opcap_t *pcap)
             || !strcmp("LIST_ALL_USERS", str3)) {
           bit = OPCAP_LIST_USERS;
         } else {
-          for (bit = 0; cap_list[bit]; bit++)
-            if (!strcmp(cap_list[bit], str3)) break;
-          if (!cap_list[bit]) return -1;
+          for (bit = 0; opcaps_cap_list[bit]; bit++)
+            if (!strcmp(opcaps_cap_list[bit], str3)) break;
+          if (!opcaps_cap_list[bit]) return -1;
         }
         ASSERT(bit < OPCAP_LAST);
         lcap |= 1ULL << bit;
@@ -238,66 +242,11 @@ opcaps_parse(unsigned char const *str, opcap_t *pcap)
   return 0;
 }
 
-unsigned char *
-opcaps_unparse(int left_margin, int max_width, opcap_t cap)
-{
-  char *out_str = 0;
-  size_t out_len = 0;
-  int first_flag = 1;
-  int cur_pos = 0, i, j;
-  FILE *f;
-  const unsigned char *perm_set = 0;
-
-  // check, that capability set is a subset of predefined sets
-  if ((cap & OPCAP_MASTER_PERMS) == OPCAP_MASTER_PERMS) {
-    perm_set = "MASTER_SET";
-    cap &= ~OPCAP_MASTER_PERMS;
-  } else if ((cap & OPCAP_JUDGE_PERMS) == OPCAP_JUDGE_PERMS) {
-    perm_set = "JUDGE_SET";
-    cap &= ~OPCAP_JUDGE_PERMS;
-  } else if ((cap & OPCAP_OBSERVER_PERMS) == OPCAP_OBSERVER_PERMS) {
-    perm_set = "OBSERVER_SET";
-    cap &= ~OPCAP_OBSERVER_PERMS;
-  }
-
-  f = open_memstream(&out_str, &out_len);
-  if (perm_set) {
-    if (first_flag) {
-      first_flag = 0;
-      for (j = 0; j < left_margin; j++) putc(' ', f);
-      cur_pos = left_margin;
-    }
-    fprintf(f, "%s,", perm_set);
-    cur_pos += strlen(perm_set) + 1;
-    if (cur_pos >= max_width) {
-      fprintf(f, "\n");
-      first_flag = 1;
-    }
-  }
-  for (i = 0; i < OPCAP_LAST; i++) {
-    if (!(cap & (1ULL << i))) continue;
-    if (first_flag) {
-      first_flag = 0;
-      for (j = 0; j < left_margin; j++) putc(' ', f);
-      cur_pos = left_margin;
-    }
-    fprintf(f, "%s,", cap_list[i]);
-    cur_pos += strlen(cap_list[i]) + 1;
-    if (cur_pos >= max_width) {
-      fprintf(f, "\n");
-      first_flag = 1;
-    }
-  }
-  if (!first_flag) fprintf(f, "\n");
-  fclose(f);
-  return out_str;
-}
-
 const unsigned char *
 opcaps_get_name(int cap)
 {
   if (cap < 0 || cap >= OPCAP_LAST) return 0;
-  return cap_list[cap];
+  return opcaps_cap_list[cap];
 }
 
 

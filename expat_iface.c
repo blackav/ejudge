@@ -33,6 +33,10 @@
 #include <iconv.h>
 #include <errno.h>
 
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
+
 #ifndef EJUDGE_CHARSET
 #define EJUDGE_CHARSET EJ_INTERNAL_CHARSET
 #endif /* EJUDGE_CHARSET */

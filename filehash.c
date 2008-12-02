@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,10 @@
 
 #include <string.h>
 #include <stdio.h>
+
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
 
 #define SHA1_SIZE 20
 

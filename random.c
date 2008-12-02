@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -66,11 +66,11 @@ random_u16(void)
       n = read(urandom_fd, p, r);
       if (n < 0) {
         err("read from /dev/urandom failed: %s", os_ErrorMsg());
-        return (unsigned) random();
+        return (unsigned) rand();
       }
       if (!n) {
         err("EOF on /dev/urandom???");
-        return (unsigned) random();
+        return (unsigned) rand();
       }
       p += n;
       r -= n;
@@ -96,11 +96,11 @@ random_u32(void)
       n = read(urandom_fd, p, r);
       if (n < 0) {
         err("read from /dev/urandom failed: %s", os_ErrorMsg());
-        return (unsigned) random();
+        return (unsigned) rand();
       }
       if (!n) {
         err("EOF on /dev/urandom???");
-        return (unsigned) random();
+        return (unsigned) rand();
       }
       p += n;
       r -= n;
@@ -126,11 +126,11 @@ random_u64(void)
       n = read(urandom_fd, p, r);
       if (n < 0) {
         err("read from /dev/urandom failed: %s", os_ErrorMsg());
-        return (unsigned long long) random();
+        return (unsigned long long) rand();
       }
       if (!n) {
         err("EOF on /dev/urandom???");
-        return (unsigned long long) random();
+        return (unsigned long long) rand();
       }
       p += n;
       r -= n;
@@ -168,7 +168,7 @@ random_bytes(unsigned char *buf, int count)
 
  fail:
   for (; r; r--, p++)
-    *p = (unsigned char) random();
+    *p = (unsigned char) rand();
 }
 
 /*
