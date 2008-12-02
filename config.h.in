@@ -81,6 +81,8 @@
 
 #undef HAVE_ICONV_H
 
+#undef HAVE_PWD_H
+
 /* CAP_SYS_OPERATIONS bit */
 #undef HAVE_CAP_SYS_OPERATIONS
 
@@ -88,6 +90,10 @@
 #undef HAVE_STRNLEN
 
 #undef HAVE_OPEN_MEMSTREAM
+
+#undef HAVE_TRUNCATE
+
+#undef HAVE_SETSID
 
 /* iconv needs `const' for its second argument */
 #undef CONF_ICONV_NEEDS_CONST

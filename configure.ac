@@ -144,9 +144,9 @@ then
 AC_CHECK_HEADERS([termios.h])
 fi
 
-AC_CHECK_HEADERS([iconv.h])
+AC_CHECK_HEADERS([iconv.h pwd.h])
 
-AC_CHECK_FUNCS([strnlen open_memstream])
+AC_CHECK_FUNCS([strnlen open_memstream truncate setsid])
 
 saved_CFLAGS="${CFLAGS}"
 CFLAGS="${CFLAGS} -Werror -Wall"
