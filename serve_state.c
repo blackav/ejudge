@@ -361,7 +361,7 @@ serve_state_load_contest(
   // load reporting plugin
   if (state->global->contest_plugin_file[0]) {
     iface = (struct contest_plugin_iface *) plugin_load(state->global->contest_plugin_file, "report", "");
-    if (!state->contest_plugin) goto failure;
+    if (!iface) goto failure;
     state->contest_plugin = iface;
     if (iface->contest_plugin_version != CONTEST_PLUGIN_IFACE_VERSION) {
       err("%s: contest %d plugin version mismatch", f, contest_id);
