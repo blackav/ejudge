@@ -371,7 +371,7 @@ serve_state_load_contest(
       err("%s: contest %d plugin sizes array is NULL", f, contest_id);
       goto failure;
     }
-    if (iface->sizes_array_size != sizeof(serve_struct_sizes_array_size)) {
+    if (iface->sizes_array_size != serve_struct_sizes_array_size) {
       err("%s: contest %d plugin sizes array size mismatch: %zu instead of %zu",
           f, contest_id, iface->sizes_array_size,
           serve_struct_sizes_array_size);
