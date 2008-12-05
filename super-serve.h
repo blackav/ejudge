@@ -185,6 +185,9 @@ struct sid_state
   struct section_language_data **cs_langs;
   unsigned char **cs_lang_names;
 
+  const struct section_language_data *cur_lang;
+  const struct section_problem_data *cur_prob;
+
   unsigned char *contest_start_cmd_text;
   unsigned char *stand_header_text;
   unsigned char *stand_footer_text;

@@ -67,6 +67,8 @@ enum
   S_ERR_INV_VALUE,
   S_ERR_CONTEST_ALREADY_EXISTS,
   S_ERR_CONTEST_ALREADY_EDITED,
+  S_ERR_INV_LANG_ID,
+  S_ERR_INV_PROB_ID,
 
   S_ERR_LAST
 };
@@ -107,12 +109,6 @@ ss_cgi_param(
         const struct super_http_request_info *phr,
         const unsigned char *param,
         const unsigned char **p_value)
-  __attribute__((unused));
-static int
-ss_cgi_param(
-        const struct super_http_request_info *phr,
-        const unsigned char *param,
-        const unsigned char **p_value)
 {
   int i;
 
@@ -123,6 +119,39 @@ ss_cgi_param(
   if (i >= phr->param_num) return 0;
   if (strlen(phr->params[i]) != phr->param_sizes[i]) return -1;
   *p_value = phr->params[i];
+  return 1;
+}
+
+static int
+ss_cgi_param_utf8_str(
+        const struct super_http_request_info *phr,
+        const unsigned char *param,
+        struct html_armor_buffer *pab,
+        const unsigned char **p_value)
+{
+  int i, len, utf8_id;
+  const unsigned char *s;
+
+  if (!param) return -1;
+  for (i = 0; i < phr->param_num; i++)
+    if (!strcmp(phr->param_names[i], param))
+      break;
+  if (i >= phr->param_num) return 0;
+  if ((len = strlen(phr->params[i])) != phr->param_sizes[i]) return -1;
+  utf8_id = charset_get_id("utf-8");
+  s = charset_decode(utf8_id, pab, phr->params[i]);
+  len = strlen(s);
+  if (!len || !isspace(s[len - 1])) {
+    *p_value = s;
+    return 1;
+  }
+  if (s != pab->buf) {
+    html_armor_reserve(pab, len + 1);
+    strcpy(pab->buf, s);
+  }
+  while (len > 0 && isspace(pab->buf[len - 1])) --len;
+  pab->buf[len] = 0;
+  *p_value = pab->buf;
   return 1;
 }
 
@@ -178,12 +207,6 @@ ss_cgi_param_int(
         struct super_http_request_info *phr,
         const unsigned char *name,
         int *p_val)
-  __attribute__((unused));
-static int
-ss_cgi_param_int(
-        struct super_http_request_info *phr,
-        const unsigned char *name,
-        int *p_val)
 {
   const unsigned char *s = 0;
   char *eptr = 0;
@@ -197,13 +220,6 @@ ss_cgi_param_int(
   return 0;
 }
 
-static int
-ss_cgi_param_int_opt(
-        struct super_http_request_info *phr,
-        const unsigned char *name,
-        int *p_val,
-        int default_value)
-  __attribute__((unused));
 static int
 ss_cgi_param_int_opt(
         struct super_http_request_info *phr,
@@ -643,6 +659,7 @@ enum
   NS_CONTEST = 1,
   NS_SID_STATE,
   NS_GLOBAL,
+  NS_LANGUAGE,
 };
 
 #define push(val) do { if (sp >= ST_SIZE) goto stack_overflow; st[sp++] = (val); } while (0)
@@ -661,14 +678,15 @@ eval_check_expr(
   unsigned char *q;
   int len, f_id, f_type;
   const unsigned char *p;
-  void *f_ptr;
+  const void *f_ptr;
   char *eptr;
+  const unsigned char *func = __FUNCTION__;
 
   if (!str) return 0;
   len = strlen(str);
   if (!len) return 0;
   if (len >= 2048) {
-    fprintf(stderr, "eval_check_expr: expression is too long\n");
+    fprintf(stderr, "%s: expression is too long\n", func);
     return -1;
   }
   buf = (unsigned char*) alloca(len + 1);
@@ -688,19 +706,31 @@ eval_check_expr(
         if (!(f_id = contest_desc_lookup_field(buf + 8)))
           goto invalid_field;
         f_type = contest_desc_get_type(f_id);
-        if (!(f_ptr = contest_desc_get_ptr_nc(phr->ss->edited_cnts, f_id)))
+        if (!(f_ptr = contest_desc_get_ptr(phr->ss->edited_cnts, f_id)))
           goto invalid_field;
       } else if (!strncmp(buf, "SidState.", 9)) {
         if (!(f_id = ss_sid_state_lookup_field(buf + 9)))
           goto invalid_field;
         f_type = ss_sid_state_get_type(f_id);
-        if (!(f_ptr = ss_sid_state_get_ptr_nc(phr->ss, f_id)))
+        if (!(f_ptr = ss_sid_state_get_ptr(phr->ss, f_id)))
           goto invalid_field;
       } else if (!strncmp(buf, "Global.", 7)) {
         if (!(f_id = cntsglob_lookup_field(buf + 7)))
           goto invalid_field;
         f_type = cntsglob_get_type(f_id);
-        if (!(f_ptr = cntsglob_get_ptr_nc(phr->ss->global, f_id)))
+        if (!(f_ptr = cntsglob_get_ptr(phr->ss->global, f_id)))
+          goto invalid_field;
+      } else if (!strncmp(buf, "Language.", 9)) {
+        if (!(f_id = cntslang_lookup_field(buf + 9)))
+          goto invalid_field;
+        f_type = cntslang_get_type(f_id);
+        if (!(f_ptr = cntslang_get_ptr(phr->ss->cur_lang, f_id)))
+          goto invalid_field;
+      } else if (!strncmp(buf, "Problem.", 8)) {
+        if (!(f_id = cntsprob_lookup_field(buf + 8)))
+          goto invalid_field;
+        f_type = cntsprob_get_type(f_id);
+        if (!(f_ptr = cntsprob_get_ptr(phr->ss->cur_prob, f_id)))
           goto invalid_field;
       } else if (!strcmp(buf, "SCORE_ACM")) {
         f_type = 0;
@@ -739,7 +769,7 @@ eval_check_expr(
         val1 = *(int*) f_ptr;
         break;
       default:
-        fprintf(stderr, "eval_check_expr: invalid type\n");
+        fprintf(stderr, "%s: invalid type\n", func);
         return -1;
       }
       push(val1);
@@ -754,7 +784,7 @@ eval_check_expr(
       errno = 0; eptr = 0;
       val1 = strtol(buf, &eptr, 0);
       if (*eptr || errno) {
-        fprintf(stderr, "eval_check_expr: invalid value\n");
+        fprintf(stderr, "%s: invalid value\n", func);
         return -1;
       }
       push(val1);
@@ -763,7 +793,7 @@ eval_check_expr(
     switch (*p) {
     case '=':
       if (p[1] != '=') {
-        fprintf(stderr, "eval_check_expr: invalid operation\n");
+        fprintf(stderr, "%s: invalid operation\n", func);
         return -1;
       }
       p++;
@@ -839,31 +869,31 @@ eval_check_expr(
       }
       break;
     default:
-      fprintf(stderr, "eval_check_expr: invalid operation <%c>\n", *p);
+      fprintf(stderr, "%s: invalid operation <%c>\n", func, *p);
       return -1;
     }
     p++;
   }
   if (!sp) {
-    fprintf(stderr, "eval_check_expr: no expression\n");
+    fprintf(stderr, "%s: no expression\n", func);
     return -1;
   }
   if (sp > 1) {
-    fprintf(stderr, "eval_check_expr: incomplete expression\n");
+    fprintf(stderr, "%s: incomplete expression\n", func);
     return -1;
   }
   return st[0];
 
  stack_overflow:
-  fprintf(stderr, "eval_check_expr: stack overflow\n");
+  fprintf(stderr, "%s: stack overflow\n", func);
   return -1;
 
  stack_undeflow:
-  fprintf(stderr, "eval_check_expr: stack underflow\n");
+  fprintf(stderr, "%s: stack underflow\n", func);
   return -1;
 
  invalid_field:
-  fprintf(stderr, "eval_check_expr: invalid field %s\n", buf + 8);
+  fprintf(stderr, "%s: invalid field %s\n", func, buf);
   return -1;
 }
 
@@ -1152,6 +1182,37 @@ static const struct cnts_edit_info cnts_global_info[] =
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
 
+/*
+  int is_editable;
+  int is_clearable;
+  int dojo_inline_edit;
+  int is_nullable;
+  int has_details;
+*/
+static const struct cnts_edit_info cnts_language_info[] =
+{
+  { NS_LANGUAGE, CNTSLANG_id, 'd', 0, 0, 0, 0, 0, "Language ID", "Language ID", 0 },
+  { NS_LANGUAGE, CNTSLANG_compile_id, 'd', 0, 0, 0, 0, 0, "Compile ID", "Compile ID", 0 },
+  { NS_LANGUAGE, CNTSLANG_short_name, 'S', 0, 0, 0, 0, 0, "Short name", "Short name", 0 },
+  { NS_LANGUAGE, CNTSLANG_arch, 'S', 0, 0, 0, 0, 0, "Architecture", "Architecture", 0 },
+  { NS_LANGUAGE, CNTSLANG_src_sfx, 'S', 0, 0, 0, 0, 0, "Source suffix", "Source suffix", 0 },
+  { NS_LANGUAGE, CNTSLANG_exe_sfx, 'S', 0, 0, 0, 0, 0, "Executable suffix", "Executable suffix", 0 },
+
+  { NS_LANGUAGE, CNTSLANG_long_name, 'S', 1, 1, 1, 1, 0, "Long name", "Long name", 0 },
+  { NS_LANGUAGE, CNTSLANG_disabled, 'Y', 1, 0, 0, 0, 0, "Disable language", "Disable this language for participants", 0 },
+  { NS_LANGUAGE, CNTSLANG_insecure, 'Y', 1, 0, 0, 0, 0, "Language is insecure", "This language is insecure", 0 },
+  { NS_LANGUAGE, CNTSLANG_disable_testing, 'Y', 1, 0, 0, 0, 0, "Disable testing of submissions in this language", 0, 0 },
+  { NS_LANGUAGE, CNTSLANG_disable_auto_testing, 'Y', 1, 0, 0, 0, 0, "Disable automatic testing of submissions", 0, "Language.disable_testing !" },
+  { NS_LANGUAGE, CNTSLANG_binary, 'Y', 1, 0, 0, 0, 0, "Source files are binary", 0, 0 },
+  // content_type
+  { NS_SID_STATE, SSSS_lang_opts, 138, 1, 1, 1, 1, 0, "Compilation options", 0, 0 },
+  { NS_LANGUAGE, CNTSLANG_compiler_env, 'X', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_LANG_FIELD_DETAIL_PAGE, "Additional environment variables", 0, 0 },
+  { 0, 0, '-', 0, 0, 0, 0, 0, "Other parameters", 0, 0 },
+  { NS_LANGUAGE, CNTSLANG_unhandled_vars, 137, 0, 0, 0, 0, SSERV_OP_EDIT_SERVE_LANG_FIELD_DETAIL_PAGE, 0, 0, 0 },
+
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+};
+
 /**
    A page descripting structure.
  */
@@ -1170,7 +1231,8 @@ static const struct edit_page_desc edit_page_descs[] =
     SSERV_OP_EDIT_CONTEST_XML_FIELD, SSERV_OP_CLEAR_CONTEST_XML_FIELD },
   { "Global Settings", cnts_global_info, &cntsglob_methods,
     SSERV_OP_EDIT_SERVE_GLOBAL_FIELD, SSERV_OP_CLEAR_SERVE_GLOBAL_FIELD },
-  { "Language Settings", 0, 0, 0, 0 },
+  { "Language Settings", cnts_language_info, &cntslang_methods,
+    SSERV_OP_SET_SERVE_LANG_FIELD, SSERV_OP_CLEAR_SERVE_LANG_FIELD },
   { "Problem Settings", 0, 0, 0, 0 },
   { 0, 0, 0, 0 },
 };
@@ -1282,9 +1344,10 @@ write_editing_rows(
         const struct edit_page_desc *pg,
         const struct contest_desc *ecnts,
         const struct section_global_data *global,
-        const void *edit_ptr)
+        const void *edit_ptr,
+        int item_id)
 {
-  int i, row = 1, j, k, is_empty;
+  int i, row = 1, j, k, is_empty, edit_op, clear_op;
   const struct cnts_edit_info *ce;
   const unsigned char *hint;
   const struct opcap_list_item *perms;
@@ -1296,6 +1359,8 @@ write_editing_rows(
   for (i = 0, ce = pg->edit_descs; ce->type; ++i, ++ce) {
     hint = ce->hint;
     if (!hint) hint = ce->legend;
+    edit_op = pg->edit_op;
+    clear_op = pg->clear_op;
 
     if (ce->type == '-') {
       if (ce->guard_expr) {
@@ -1356,6 +1421,11 @@ write_editing_rows(
       if (!eval_check_expr(phr, ce->guard_expr)) continue;
     }
 
+    if (ce->type == 138) {
+      edit_op = SSERV_OP_SET_SID_STATE_LANG_FIELD;
+      clear_op = SSERV_OP_CLEAR_SID_STATE_LANG_FIELD;
+    }
+
     is_empty = 0;
 
     fprintf(out_f, "<tr%s>", form_row_attrs[row ^= 1]);
@@ -1366,13 +1436,24 @@ write_editing_rows(
       fprintf(out_f, "<td valign=\"top\" class=\"cnts_edit_data\" width=\"600px\">");
     }
     if (ce->is_editable && ce->dojo_inline_edit) {
-      fprintf(out_f, "<div class=\"cnts_edit_data\" dojoType=\"dijit.InlineEditBox\" onChange=\"ssEditField(%d, %d, %d, arguments[0])\" autoSave=\"true\" title=\"%s\">",
-              pg->edit_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2, hint);
+      if (item_id >= 0) {
+        snprintf(jbuf, sizeof(jbuf),
+                 "ssEditField4(%d, %d, %d, %d, arguments[0])",
+                 edit_op, item_id, ce->field_id,
+                 SSERV_OP_EDIT_CONTEST_PAGE_2);
+      } else {
+        snprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, arguments[0])",
+                 edit_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
+      }
+      fprintf(out_f, "<div class=\"cnts_edit_data\" dojoType=\"dijit.InlineEditBox\" onChange=\"%s\" autoSave=\"true\" title=\"%s\">", jbuf, hint);
     } else if (ce->type != 't') {
       fprintf(out_f, "<div class=\"cnts_edit_data\">");
     }
 
-    v_ptr = pg->methods->get_ptr(edit_ptr, ce->field_id);
+    v_ptr = 0;
+    if (ce->type != 135 && ce->type != 138)
+      v_ptr = pg->methods->get_ptr(edit_ptr, ce->field_id);
+
     switch (ce->type) {
     case 'd':
       {
@@ -1445,6 +1526,14 @@ write_editing_rows(
         xfree(ss);
       }
       break;
+    case 'X':
+      {
+        char **s = *(char ***) v_ptr;
+        unsigned char *ss = sarray_unparse(s);
+        fprintf(out_f, "%s", ss);
+        xfree(ss);
+      }
+      break;
     case 'y':
       {
         unsigned char *y_ptr = (unsigned char*) v_ptr;
@@ -1452,9 +1541,12 @@ write_editing_rows(
           fprintf(out_f, "%s", *y_ptr?"Yes":"No");
           break;
         }
-        ss_html_int_select(out_f, 0, 0, 0,
-                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", pg->edit_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2),
-                           !!*y_ptr,
+        if (item_id >= 0) {
+          snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
+        } else {
+          snprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", edit_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
+        }
+        ss_html_int_select(out_f, 0, 0, 0, jbuf, !!*y_ptr,
                            2, (const char *[]) { "No", "Yes" });
       }
       break;
@@ -1465,9 +1557,12 @@ write_editing_rows(
           fprintf(out_f, "%s", *y_ptr?"Yes":"No");
           break;
         }
-        ss_html_int_select(out_f, 0, 0, 0,
-                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", pg->edit_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2),
-                           !!*y_ptr,
+        if (item_id >= 0) {
+          snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
+        } else {
+          snprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", edit_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
+        }
+        ss_html_int_select(out_f, 0, 0, 0, jbuf, !!*y_ptr,
                            2, (const char *[]) { "No", "Yes" });
       }
       break;
@@ -1490,10 +1585,30 @@ write_editing_rows(
                    ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday);
         }
 
-        fprintf(out_f, "<div class=\"cnts_edit_inlined\">Time: </div><div class=\"cnts_edit_inlined\" dojoType=\"dijit.InlineEditBox\" onChange=\"editField2(%d, %d, %d, %d, arguments[0])\" autoSave=\"true\" title=\"Time (HH:MM:SS)\">%s</div>",
-                pg->edit_op, ce->field_id, 1, SSERV_OP_EDIT_CONTEST_PAGE_2,
-                time_buf);
+        if (item_id >= 0) {
+          snprintf(jbuf, sizeof(jbuf),
+                   "ssEditField5(%d, %d, %d, %d, %d, arguments[0])",
+                   edit_op, item_id, ce->field_id, 1,
+                   SSERV_OP_EDIT_CONTEST_PAGE_2);
+        } else {
+          snprintf(jbuf, sizeof(jbuf),
+                   "ssEditField2(%d, %d, %d, %d, arguments[0])",
+                   edit_op, ce->field_id, 1,
+                   SSERV_OP_EDIT_CONTEST_PAGE_2);
+        }
+        fprintf(out_f, "<div class=\"cnts_edit_inlined\">Time: </div><div class=\"cnts_edit_inlined\" dojoType=\"dijit.InlineEditBox\" onChange=\"%s\" autoSave=\"true\" title=\"Time (HH:MM:SS)\">%s</div>", jbuf, time_buf);
 
+        if (item_id >= 0) {
+          snprintf(jbuf, sizeof(jbuf),
+                   "ssEditField5(%d, %d, %d, %d, %d,this.getDisplayedValue())",
+                   edit_op, item_id, ce->field_id, 2,
+                   SSERV_OP_EDIT_CONTEST_PAGE_2);
+        } else {
+          snprintf(jbuf, sizeof(jbuf),
+                   "ssEditField2(%d, %d, %d, %d, this.getDisplayedValue())",
+                   edit_op, ce->field_id, 2,
+                   SSERV_OP_EDIT_CONTEST_PAGE_2);
+        }
         fprintf(out_f, "<div class=\"cnts_edit_inlined\">&nbsp;Day: </div><div class=\"cnts_edit_inlined\">");
         fprintf(out_f,
                 "<input type=\"text\" name=\"date\"%s"
@@ -1501,11 +1616,10 @@ write_editing_rows(
                 " dojoType=\"dijit.form.DateTextBox\""
                 " constraints=\"{datePattern: 'y/M/d', min:'1970-01-01', max:'2037-12-31'}\""
                 /*                " required=\"true\"" */
-                " onChange=\"editField2(%d, %d, %d, %d, this.getDisplayedValue())\""
+                " onChange=\"%s\""
                 " promptMessage=\"yyyy/mm/dd\""
                 " invalidMessage=\"Invalid date. Use yyyy/mm/dd format.\" />",
-                date_buf, pg->edit_op, ce->field_id, 2,
-                SSERV_OP_EDIT_CONTEST_PAGE_2);
+                date_buf, jbuf);
         fprintf(out_f, "</div>");
       }
       break;
@@ -1605,6 +1719,14 @@ write_editing_rows(
                            3, (const char *[]) { "Truncating up (ceil)", "Truncating down (floor)", "Rounding" });
       }
       break;
+    case 138:
+      // lang_opts
+      {
+        const unsigned char *s = phr->ss->lang_opts[item_id];
+        if (s) fprintf(out_f, "%s", s);
+        if (!s || !*s) is_empty = 1;
+      }
+      break;
     default:
       abort();
     }
@@ -1616,22 +1738,159 @@ write_editing_rows(
         fprintf(out_f, "<i>Not set</i>");
       } else {
         if (ce->has_details) {
-          dojo_button(out_f, 0, "edit_page-16x16", "Edit contents",
-                    "ssLoad2(%d, %d)", ce->has_details, ce->field_id);
+          if (item_id >= 0) {
+            snprintf(jbuf, sizeof(jbuf), "ssLoad3(%d, %d, %d)",
+                     ce->has_details, item_id, ce->field_id);
+          } else {
+            snprintf(jbuf, sizeof(jbuf), "ssLoad2(%d, %d)",
+                     ce->has_details, ce->field_id);
+          }
+          dojo_button(out_f, 0, "edit_page-16x16", "Edit contents","%s", jbuf);
         }
-        dojo_button(out_f, 0, "delete-16x16", "Clear variable",
-                    "ssFieldRequest(%d, %d, %d)",
-                    pg->clear_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
+        if (item_id >= 0) {
+          snprintf(jbuf, sizeof(jbuf), "ssFieldRequest2(%d, %d, %d, %d)",
+                   clear_op, item_id, ce->field_id,
+                   SSERV_OP_EDIT_CONTEST_PAGE_2);
+        } else {
+          snprintf(jbuf, sizeof(jbuf), "ssFieldRequest(%d, %d, %d)",
+                   clear_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
+
+        }
+        dojo_button(out_f, 0, "delete-16x16", "Clear variable", "%s", jbuf);
       }
     } else if (ce->has_details) {
-      dojo_button(out_f, 0, "edit_page-16x16", "Edit contents",
-                  "ssLoad2(%d, %d)", ce->has_details, ce->field_id);
+      if (item_id >= 0) {
+        snprintf(jbuf, sizeof(jbuf), "ssLoad3(%d, %d, %d)",
+                 ce->has_details, item_id, ce->field_id);
+      } else {
+        snprintf(jbuf, sizeof(jbuf), "ssLoad2(%d, %d)",
+                 ce->has_details, ce->field_id);
+      }
+      dojo_button(out_f, 0, "edit_page-16x16", "Edit contents", "%s", jbuf);
     }
     fprintf(out_f, "</td>");
 
     fprintf(out_f, "<tr>\n");
   }
 
+  html_armor_free(&ab);
+}
+
+static void
+write_languages_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int i;
+  const struct section_global_data *global = phr->ss->global;
+  const struct section_language_data *cs_lang, *lang;
+  const unsigned char *cs_name, *lang_name, *cmt, *td_attr;
+  unsigned char buf[1024];
+  const struct edit_page_desc *pg = &edit_page_descs[2];
+  const struct contest_desc *ecnts = phr->ss->edited_cnts;
+
+  if (phr->ss->serve_parse_errors) {
+    fprintf(out_f, "<h2><tt>serve.cfg</tt> cannot be edited</h2>\n"
+            "<font color=\"red\"><pre>%s</pre></font>\n",
+            ARMOR(phr->ss->serve_parse_errors));
+    goto cleanup;
+  }
+
+  if (phr->ss->disable_compilation_server) {
+    fprintf(out_f, "<h2>Compilation server is disabled</h2>\n");
+    goto cleanup;
+  }
+
+  if (!phr->ss->global) {
+    fprintf(out_f, "<h2><tt>serve.cfg</tt> is not existant</h2>\n");
+    goto cleanup;
+  }
+
+  if (!phr->ss->cs_langs_loaded) {
+    super_load_cs_languages(phr->config, phr->ss, 1);
+  }
+
+  if (!phr->ss->cs_langs) {
+    fprintf(out_f, "<h2>No compilation server is available</h2>\n");
+    goto cleanup;
+  }
+
+  for (i = 1; i < phr->ss->cs_lang_total; i++) {
+    if (!(cs_lang = phr->ss->cs_langs[i])) continue;
+    if (!(cs_name = phr->ss->cs_lang_names[i]) || !*cs_name) continue;
+    lang = 0;
+    if (phr->ss->cs_loc_map[i] > 0)
+      lang = phr->ss->langs[phr->ss->cs_loc_map[i]];
+    if (lang && lang->long_name[0]) {
+      lang_name = lang->long_name;
+      if (!phr->ss->cs_lang_names[i]) {
+        cmt = " <font color=\"magenta\">(No version script!)</font>";
+      } else if (!*phr->ss->cs_lang_names[i]) {
+        cmt = " <font color=\"red\">(Version script failed!)</font>";
+      } else {
+        snprintf(buf, sizeof(buf), " (%s)", phr->ss->cs_lang_names[i]);
+        cmt = buf;
+      }
+    } else if (!phr->ss->cs_lang_names[i]) {
+      cmt = " <font color=\"magenta\">(No version script!)</font>";
+      lang_name = cs_lang->long_name;
+    } else if (!*phr->ss->cs_lang_names[i]) {
+      cmt = " <font color=\"red\">(Version script failed!)</font>";
+      lang_name = cs_lang->long_name;
+    } else {
+      cmt = "";
+      lang_name = phr->ss->cs_lang_names[i];
+    }
+    td_attr = "";
+    if (lang && lang->insecure && global && global->secure_run > 0) {
+      td_attr = " bgcolor=\"#ffffdd\"";
+    } else if (lang) {
+      td_attr = " bgcolor=\"#ddffdd\"";
+    }
+
+    fprintf(out_f,
+            "<tr%s><td class=\"cnts_edit_head\" colspan=\"2\">%s %s</td>",
+            td_attr, ARMOR(lang_name), cmt);
+    fprintf(out_f, "<td class=\"cnts_edit_head\">");
+
+    if (lang) {
+      if (!phr->ss->lang_flags[lang->id]) {
+        dojo_button(out_f, 0, "zoom_in-16x16", "Show Detail",
+                    "ssSetValue3(%d, %d, %d, %d, 1)",
+                    SSERV_OP_SET_SID_STATE_LANG_FIELD, i,
+                    SSSS_lang_flags, SSERV_OP_EDIT_CONTEST_PAGE_2);
+      } else {
+        dojo_button(out_f, 0, "zoom_out-16x16", "Hide Detail",
+                    "ssSetValue3(%d, %d, %d, %d, 0)",
+                    SSERV_OP_SET_SID_STATE_LANG_FIELD, i,
+                    SSSS_lang_flags, SSERV_OP_EDIT_CONTEST_PAGE_2);
+      }
+      if (!phr->ss->loc_cs_map[lang->id]) {
+        dojo_button(out_f, 0, "delete-16x16", "Deactivate",
+                    "ssSetValue3(%d, %d, %d, %d, 0)",
+                    SSERV_OP_SET_SID_STATE_LANG_FIELD, i,
+                    SSSS_langs, SSERV_OP_EDIT_CONTEST_PAGE_2);
+      }
+    } else {
+      dojo_button(out_f, 0, "add-16x16", "Activate",
+                  "ssSetValue3(%d, %d, %d, %d, 1)",
+                  SSERV_OP_SET_SID_STATE_LANG_FIELD, i,
+                  SSSS_langs, SSERV_OP_EDIT_CONTEST_PAGE_2);
+    }
+
+    fprintf(out_f, "</td>");
+    fprintf(out_f, "</tr>\n");
+
+    if (!lang || !phr->ss->lang_flags[lang->id]) continue;
+    ASSERT(lang->compile_id == i);
+
+    phr->ss->cur_lang = lang;
+    write_editing_rows(log_f, out_f, phr, pg, ecnts, global, lang, lang->id);
+  }
+
+ cleanup:
   html_armor_free(&ab);
 }
 
@@ -1649,7 +1908,7 @@ contest_xml_page(
   const struct section_global_data *global = 0;
   void *edit_ptr = 0;
 
-  if (ss_cgi_param_int(phr, "page", &page) < 0 || page < 0 || page > 1)
+  if (ss_cgi_param_int(phr, "page", &page) < 0 || page < 0 || page > 2)
     page = phr->ss->edit_page;
   phr->ss->edit_page = page;
   pg = &edit_page_descs[page];
@@ -1685,9 +1944,22 @@ contest_xml_page(
   // write the main content
   fprintf(out_f, "<div id=\"cnts_edit_content\">\n");
   fprintf(out_f, "<table class=\"cnts_edit\">\n");
-  write_editing_rows(out_f, log_f, phr, pg, ecnts, global, edit_ptr);
+  switch (page) {
+  case 2:                       /* languages */
+    write_languages_page(log_f, out_f, phr);
+    break;
+  default:
+    write_editing_rows(log_f, out_f, phr, pg, ecnts, global, edit_ptr, -1);
+  }
   fprintf(out_f, "</table>\n");
   fprintf(out_f, "</div>\n");
+
+  if (page == 2) {
+    dojo_button(out_f, "100", "refresh-32x32", "Update versions",
+                "ssFieldRequest(%d, 0, %d)",
+                SSERV_OP_SERVE_LANG_UPDATE_VERSIONS,
+                SSERV_OP_EDIT_CONTEST_PAGE_2);
+  }
 
   dojo_button(out_f, "1", "home-32x32", "To the Top",
               "ssTopLevel()");
@@ -2471,7 +2743,6 @@ cmd_save_file_contest_xml(
   int retval = 0;
   int f_id = 0, f_id2 = 0;
   const unsigned char *valstr = 0;
-  int utf8_id = 0;
   struct html_armor_buffer vb = HTML_ARMOR_INITIALIZER;
   unsigned char **p_str;
 
@@ -2484,12 +2755,8 @@ cmd_save_file_contest_xml(
     FAIL(S_ERR_INV_FIELD_ID);
   if (!(f_id2 = cnts_text_edit_map[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);
-  if (ss_cgi_param(phr, "param", &valstr) <= 0 || !valstr)
+  if (ss_cgi_param_utf8_str(phr, "param", &vb, &valstr) <= 0 || !valstr)
     FAIL(S_ERR_INV_VALUE);
-
-  // value is in utf-8, translate it to the local charset
-  utf8_id = charset_get_id("utf-8");
-  valstr = charset_decode(utf8_id, &vb, valstr);
   p_str = (unsigned char**) ss_sid_state_get_ptr_nc(phr->ss, f_id2);
   xfree(*p_str);
   *p_str = xstrdup(valstr);
@@ -3626,11 +3893,11 @@ cmd_op_edit_general_fields(
         struct super_http_request_info *phr)
 {
   int retval = 0;
-  int ff, opt_val, slen;
+  int ff, opt_val;
   struct contest_desc *ecnts;
   unsigned char vbuf[64];
   const unsigned char *s;
-  unsigned char *ss;
+  struct html_armor_buffer vb = HTML_ARMOR_INITIALIZER;
 
   phr->json_reply = 1;
 
@@ -3643,23 +3910,14 @@ cmd_op_edit_general_fields(
         || opt_val < 0 || opt_val > 2)
       FAIL(S_ERR_INV_VALUE);
     snprintf(vbuf, sizeof(vbuf), "legend_%d", ff);
-    s = 0;
-    if (ss_cgi_param(phr, vbuf, &s) < 0)
+    if (ss_cgi_param_utf8_str(phr, vbuf, &vb, &s) < 0)
       FAIL(S_ERR_INV_VALUE);
-    ss = 0;
-    if (s) {
-      slen = strlen(s);
-      ss = (unsigned char*) alloca(slen + 1);
-      strcpy(ss, s);
-      while (slen > 0 && isspace(ss[slen - 1])) --slen;
-      ss[slen] = 0;
-      if (!*ss) ss = 0;
-    }
-    contests_set_general_field(ecnts, ff, opt_val, ss);
+    contests_set_general_field(ecnts, ff, opt_val, s);
   }
   retval = 1;
 
  cleanup:
+  html_armor_free(&vb);
   return retval;
 }
 
@@ -3671,13 +3929,13 @@ cmd_op_edit_member_fields(
 {
   int retval = 0;
   int opt_vals[CONTEST_LAST_MEMBER_FIELD];
-  unsigned char *legends[CONTEST_LAST_MEMBER_FIELD];
+  const unsigned char *legends[CONTEST_LAST_MEMBER_FIELD];
   struct contest_desc *ecnts;
   int m_id = -1, init_count = -1, max_count = -1, min_count = -1;
-  int ff, slen, opt_val, has_fields = 0;
+  int ff, opt_val, has_fields = 0;
   unsigned char vbuf[64];
   const unsigned char *s = 0;
-  unsigned char *ss = 0;
+  struct html_armor_buffer vb = HTML_ARMOR_INITIALIZER;
 
   memset(opt_vals, 0, sizeof(opt_vals));
   memset(legends, 0, sizeof(legends));
@@ -3706,19 +3964,9 @@ cmd_op_edit_member_fields(
     opt_vals[ff] = opt_val;
     if (opt_val) has_fields = 1;
     snprintf(vbuf, sizeof(vbuf), "legend_%d", ff);
-    s = 0;
-    if (ss_cgi_param(phr, vbuf, &s) < 0)
+    if (ss_cgi_param_utf8_str(phr, vbuf, &vb, &s) < 0)
       FAIL(S_ERR_INV_VALUE);
-    ss = 0;
-    if (s) {
-      slen = strlen(s);
-      ss = (unsigned char*) alloca(slen + 1);
-      strcpy(ss, s);
-      while (slen > 0 && isspace(ss[slen - 1])) --slen;
-      ss[slen] = 0;
-      if (!*ss) ss = 0;
-    }
-    legends[ff] = ss;
+    legends[ff] = s;
   }
 
   if (!has_fields && !min_count && !max_count && !init_count) {
@@ -3734,6 +3982,7 @@ cmd_op_edit_member_fields(
   retval = 1;
 
  cleanup:
+  html_armor_free(&vb);
   return retval;
 }
 
@@ -4020,7 +4269,6 @@ cmd_op_edit_serve_global_field(
   int vallen;
   int intval, n = 0, h = 0, m = 0, s = 0;
   char *eptr;
-  int utf8_id = 0;
   struct html_armor_buffer vb = HTML_ARMOR_INITIALIZER;
 
   phr->json_reply = 1;
@@ -4039,17 +4287,8 @@ cmd_op_edit_serve_global_field(
     FAIL(S_ERR_INV_FIELD_ID);
   if (!(f_type = cntsglob_get_type(f_id)))
     FAIL(S_ERR_INV_FIELD_ID);
-  if (ss_cgi_param(phr, "value", &valstr) <= 0 || !valstr)
+  if (ss_cgi_param_utf8_str(phr, "value", &vb, &valstr) <= 0 || !valstr)
     FAIL(S_ERR_INV_VALUE);
-  if ((vallen = strlen(valstr)) > 16383)
-    FAIL(S_ERR_INV_VALUE);
-  if (vallen > 0 && isspace(valstr[vallen - 1])) {
-    unsigned char *tmps = (unsigned char*) alloca(vallen + 1);
-    memcpy(tmps, valstr, vallen + 1);
-    while (vallen > 0 && isspace(tmps[vallen - 1])) --vallen;
-    tmps[vallen] = 0;
-    valstr = tmps;
-  }
   if (global_str_need_space[f_id] && vallen > 0 && !isspace(valstr[0])) {
     unsigned char *tmps = (unsigned char*) alloca(vallen + 2);
     tmps[0] = ' ';
@@ -4172,8 +4411,6 @@ cmd_op_edit_serve_global_field(
   case 'S':
     {
       size_t size = cntsglob_get_size(f_id);
-      utf8_id = charset_get_id("utf-8");
-      valstr = charset_decode(utf8_id, &vb, valstr);
       snprintf((unsigned char*) f_ptr, size, "%s", valstr);
     }
     break;
@@ -4221,8 +4458,6 @@ cmd_op_edit_serve_global_field(
       char **tmp_args = 0;
       char ***f_args = (char***) f_ptr;
 
-      utf8_id = charset_get_id("utf-8");
-      valstr = charset_decode(utf8_id, &vb, valstr);
       if (sarray_parse_2(valstr, &tmp_args) < 0) FAIL(S_ERR_INV_VALUE);
       sarray_free(*f_args);
       *f_args = tmp_args;
@@ -4558,18 +4793,6 @@ cmd_op_edit_serve_global_field_detail_page(
   return retval;
 }
 
-/*
-  [CNTSGLOB_a2ps_args] = 1,
-  [CNTSGLOB_lpr_args] = 1,
-  [CNTSGLOB_stand_row_attr] = 1,
-  [CNTSGLOB_stand_page_row_attr] = 1,
-  [CNTSGLOB_stand_page_col_attr] = 1,
-  [CNTSGLOB_user_priority_adjustments] = 1,
-  [CNTSGLOB_contestant_status_legend] = 1,
-  [CNTSGLOB_contestant_status_row_attr] = 1,
-  [CNTSGLOB_unhandled_vars] = 1,
-*/
-
 static int
 cmd_op_edit_serve_global_field_detail(
         FILE *log_f,
@@ -4644,6 +4867,429 @@ cmd_op_edit_serve_global_field_detail(
   return retval;
 }
 
+static int
+cmd_op_set_sid_state_lang_field(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int lang_id = 0, cs_lang_id = 0;
+  int f_id = 0;
+  int val = -1;
+  int new_id;
+  struct html_armor_buffer vb = HTML_ARMOR_INITIALIZER;
+  const unsigned char *sval = 0;
+
+  phr->json_reply = 1;
+
+  if (!phr->ss->edited_cnts || !phr->ss->global)
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0)
+    FAIL(S_ERR_INV_FIELD_ID);
+
+  switch (f_id) {
+  case SSSS_lang_flags:         // show/hide
+    // cs_lang_id is the compilation server language ID
+    if (ss_cgi_param_int(phr, "item_id", &cs_lang_id) < 0)
+      FAIL(S_ERR_INV_LANG_ID);
+    if (cs_lang_id <= 0 || cs_lang_id >= phr->ss->cs_lang_total
+        || !phr->ss->cs_langs[cs_lang_id])
+      FAIL(S_ERR_INV_LANG_ID);
+    new_id = phr->ss->cs_loc_map[cs_lang_id];
+    if (ss_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
+      FAIL(S_ERR_INV_VALUE);
+    phr->ss->lang_flags[new_id] = val;
+    break;
+
+  case SSSS_langs:              // activate/deactivate
+    // cs_lang_id is the compilation server language ID
+    if (ss_cgi_param_int(phr, "item_id", &cs_lang_id) < 0)
+      FAIL(S_ERR_INV_LANG_ID);
+    if (cs_lang_id <= 0 || cs_lang_id >= phr->ss->cs_lang_total
+        || !phr->ss->cs_langs[cs_lang_id])
+      FAIL(S_ERR_INV_LANG_ID);
+    if (ss_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
+      FAIL(S_ERR_INV_VALUE);
+    (val?super_html_lang_activate:super_html_lang_deactivate)(phr->ss, cs_lang_id);
+    break;
+
+  case SSSS_lang_opts:          // compiler options
+    if (ss_cgi_param_int(phr, "item_id", &lang_id) < 0)
+      FAIL(S_ERR_INV_LANG_ID);
+    if (lang_id <= 0 || lang_id >= phr->ss->lang_a
+        || !phr->ss->langs[lang_id])
+      FAIL(S_ERR_INV_LANG_ID);
+    if (ss_cgi_param_utf8_str(phr, "value", &vb, &sval) <= 0 || !sval)
+      FAIL(S_ERR_INV_VALUE);
+    xfree(phr->ss->lang_opts[lang_id]);
+    phr->ss->lang_opts[lang_id] = xstrdup(sval);
+    break;
+
+  default:
+    FAIL(S_ERR_INV_FIELD_ID);
+  }
+  retval = 1;
+
+ cleanup:
+  html_armor_free(&vb);
+  return retval;
+}
+
+static int
+cmd_op_clear_sid_state_lang_field(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int lang_id = 0;
+  int f_id = 0;
+
+  phr->json_reply = 1;
+
+  if (!phr->ss->edited_cnts || !phr->ss->langs)
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "item_id", &lang_id) < 0)
+    FAIL(S_ERR_INV_LANG_ID);
+  if (lang_id <= 0 || lang_id >= phr->ss->lang_a || !phr->ss->langs[lang_id])
+    FAIL(S_ERR_INV_LANG_ID);
+  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0)
+    FAIL(S_ERR_INV_FIELD_ID);
+  switch (f_id) {
+  case SSSS_lang_opts:
+    xfree(phr->ss->lang_opts[lang_id]);
+    phr->ss->lang_opts[lang_id] = 0;
+    break;
+  default:
+    FAIL(S_ERR_INV_FIELD_ID);
+  }
+  retval = 1;
+
+ cleanup:
+  return retval;
+}
+
+const unsigned char lang_editable_fields[CNTSLANG_LAST_FIELD] =
+{
+  [CNTSLANG_long_name] = 1,
+  [CNTSLANG_disabled] = 1,
+  [CNTSLANG_insecure] = 1,
+  [CNTSLANG_disable_testing] = 1,
+  [CNTSLANG_disable_auto_testing] = 1,
+  [CNTSLANG_binary] = 1,
+  [CNTSLANG_compiler_env] = 1,
+  [CNTSLANG_unhandled_vars] = 1,
+};
+
+static int
+cmd_op_set_serve_lang_field(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int lang_id = 0, f_id = 0, f_type;
+  void *f_ptr;
+  size_t f_size;
+  struct html_armor_buffer vb = HTML_ARMOR_INITIALIZER;
+  const unsigned char *valstr;
+
+  phr->json_reply = 1;
+
+  if (!phr->ss->edited_cnts || !phr->ss->langs)
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "item_id", &lang_id) < 0)
+    FAIL(S_ERR_INV_LANG_ID);
+  if (lang_id <= 0 || lang_id >= phr->ss->lang_a || !phr->ss->langs[lang_id])
+    FAIL(S_ERR_INV_LANG_ID);
+  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0)
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (!lang_editable_fields[f_id])
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (!(f_ptr = cntslang_get_ptr_nc(phr->ss->langs[lang_id], f_id)))
+    FAIL(S_ERR_INV_FIELD_ID);
+  f_type = cntslang_get_type(f_id);
+  f_size = cntslang_get_size(f_id);
+  switch (f_type) {
+  case 'B':
+    {
+      ejintbool_t *p_bool = (ejintbool_t*) f_ptr;
+      ejintbool_t val = -1;
+
+      if (ss_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
+        FAIL(S_ERR_INV_VALUE);
+      *p_bool = val;
+      if (f_id == CNTSLANG_disable_auto_testing) retval = 1;
+    }
+    break;
+  case 's':
+    {
+      unsigned char **p_str = (unsigned char **) f_ptr;
+
+      if (ss_cgi_param_utf8_str(phr, "value", &vb, &valstr) < 0)
+        FAIL(S_ERR_INV_VALUE);
+      xfree(*p_str); *p_str = 0;
+      if (valstr) *p_str = xstrdup(valstr);
+      retval = 1;
+    }
+    break;
+  case 'S':
+    {
+      unsigned char *str = (unsigned char *) f_ptr;
+
+      if (ss_cgi_param_utf8_str(phr, "value", &vb, &valstr) < 0)
+        FAIL(S_ERR_INV_VALUE);
+      str[0] = 0;
+      if (valstr) snprintf(str, f_size, "%s", valstr);
+    }
+    break;
+  case 'X':
+    {
+      char **tmp_args = 0;
+      char ***f_args = (char***) f_ptr;
+
+      if (ss_cgi_param_utf8_str(phr, "value", &vb, &valstr) < 0)
+        FAIL(S_ERR_INV_VALUE);
+      if (sarray_parse(valstr, &tmp_args) < 0) FAIL(S_ERR_INV_VALUE);
+      sarray_free(*f_args);
+      *f_args = tmp_args;
+      retval = 1;
+    }
+    break;
+  default:
+    FAIL(S_ERR_INV_FIELD_ID);
+  }
+
+ cleanup:
+  html_armor_free(&vb);
+  return retval;
+}
+
+static int
+cmd_op_clear_serve_lang_field(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int lang_id = 0, f_id = 0, f_type;
+  void *f_ptr;
+  size_t f_size;
+
+  phr->json_reply = 1;
+
+  if (!phr->ss->edited_cnts || !phr->ss->langs)
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "item_id", &lang_id) < 0)
+    FAIL(S_ERR_INV_LANG_ID);
+  if (lang_id <= 0 || lang_id >= phr->ss->lang_a || !phr->ss->langs[lang_id])
+    FAIL(S_ERR_INV_LANG_ID);
+  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0)
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (!lang_editable_fields[f_id])
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (!(f_ptr = cntslang_get_ptr_nc(phr->ss->langs[lang_id], f_id)))
+    FAIL(S_ERR_INV_FIELD_ID);
+  f_type = cntslang_get_type(f_id);
+  f_size = cntslang_get_size(f_id);
+  switch (f_type) {
+  case 'B':
+    *(ejintbool_t*) f_ptr = 0;
+    break;
+  case 's':
+    xfree(*(char**) f_ptr);
+    *(char**) f_ptr = 0;
+    break;
+  case 'S':
+    memset(f_ptr, 0, f_size);
+    break;
+  case 'X':
+    sarray_free(*(char***) f_ptr);
+    *(char***) f_ptr = 0;
+    break;
+  default:
+    FAIL(S_ERR_INV_FIELD_ID);
+  }
+  retval = 1;
+
+ cleanup:
+  return retval;
+}
+
+const unsigned char lang_editable_details[CNTSLANG_LAST_FIELD] =
+{
+  [CNTSLANG_compiler_env] = 1,
+  [CNTSLANG_unhandled_vars] = 1,
+};
+
+static int
+cmd_op_edit_serve_lang_field_detail_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  const struct contest_desc *ecnts;
+  int f_id, f_type, lang_id;
+  unsigned char buf[1024];
+  FILE *text_f = 0;
+  char *text_t = 0;
+  size_t text_z = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const void *f_ptr;
+
+  if (!phr->ss->edited_cnts || !phr->ss->langs)
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  ecnts = phr->ss->edited_cnts;
+  if (ss_cgi_param_int(phr, "item_id", &lang_id) < 0
+      || lang_id <= 0 || lang_id >= phr->ss->lang_a
+      || !phr->ss->langs[lang_id])
+    FAIL(S_ERR_INV_LANG_ID);
+  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+      || f_id <= 0 || f_id >= CNTSLANG_LAST_FIELD
+      || !(lang_editable_details[f_id]))
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (!(f_ptr = cntslang_get_ptr(phr->ss->langs[lang_id], f_id)))
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (!(f_type = cntslang_get_type(f_id)))
+    FAIL(S_ERR_INV_FIELD_ID);
+
+  text_f = open_memstream(&text_t, &text_z);
+  switch (f_type) {
+  case 's':
+    {
+      const unsigned char *s = *(const unsigned char**) f_ptr;
+      if (s) fprintf(text_f, "%s", s);
+    }
+    break;
+  case 'X':
+    {
+      const char *const * ss = *(const char *const **) f_ptr;
+      if (ss) {
+        for (int i = 0; ss[i]; ++i)
+          fprintf(text_f, "%s\n", ss[i]);
+      }
+    }
+    break;
+  default:
+    FAIL(S_ERR_INV_FIELD_ID);
+  }
+  fclose(text_f); text_f = 0;
+
+  snprintf(buf, sizeof(buf),
+           "serve-control: %s, contest %d, language %s, editing %s",
+           phr->html_name, ecnts->id, phr->ss->langs[lang_id]->short_name,
+           cntslang_get_name(f_id));
+  write_html_header(out_f, phr, buf, 1, 0);
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+  fprintf(out_f, "<br/>\n");
+
+  fprintf(out_f, "<form id=\"editBox\"><textarea dojoType=\"dijit.form.Textarea\" name=\"param\" rows=\"20\" cols=\"80\">%s</textarea></form>\n",
+          ARMOR(text_t));
+
+  fprintf(out_f, "<br/>\n");
+
+  dojo_button(out_f, 0, "accept-32x32", "OK",
+              "ssEditFileSave2(\"editBox\", %d, %d, %d, %d)",
+              SSERV_OP_EDIT_SERVE_LANG_FIELD_DETAIL, lang_id, f_id,
+              SSERV_OP_EDIT_CONTEST_PAGE_2);
+  dojo_button(out_f, 0, "cancel-32x32", "Cancel",
+              "ssLoad1(%d)",
+              SSERV_OP_EDIT_CONTEST_PAGE_2);
+
+  write_html_footer(out_f);
+
+ cleanup:
+  if (text_f) fclose(text_f);
+  xfree(text_t);
+  html_armor_free(&ab);
+  return retval;
+}
+
+static int
+cmd_op_edit_serve_lang_field_detail(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int f_id, f_type, lang_id;
+  void *f_ptr;
+  const unsigned char *valstr;
+  int vallen;
+  char **lns = 0;
+  unsigned char *filt_txt = 0;
+
+  phr->json_reply = 1;
+
+  if (!phr->ss->edited_cnts || !phr->ss->langs)
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "item_id", &lang_id) < 0
+      || lang_id <= 0 || lang_id >= phr->ss->lang_a
+      || !phr->ss->langs[lang_id])
+    FAIL(S_ERR_INV_LANG_ID);
+  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+      || f_id <= 0 || f_id >= CNTSLANG_LAST_FIELD
+      || !(lang_editable_details[f_id]))
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (!(f_ptr = cntslang_get_ptr_nc(phr->ss->langs[lang_id], f_id)))
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (!(f_type = cntslang_get_type(f_id)))
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (ss_cgi_param(phr, "param", &valstr) <= 0)
+    FAIL(S_ERR_INV_VALUE);
+  if ((vallen = strlen(valstr)) > 128 * 1024)
+    FAIL(S_ERR_INV_VALUE);
+  filt_txt = text_area_process_string(valstr, 0, 0);
+
+  switch (f_id) {
+  case CNTSLANG_compiler_env:
+    split_to_lines(filt_txt, &lns, 2);
+    sarray_free(*(char***) f_ptr);
+    *(char***) f_ptr = lns;
+    lns = 0;
+    break;
+
+  case CNTSLANG_unhandled_vars:
+    xfree(*(unsigned char**) f_ptr);
+    *(unsigned char**) f_ptr = 0;
+    if (filt_txt && *filt_txt) {
+      *(unsigned char**) f_ptr = filt_txt;
+      filt_txt = 0;
+    }
+    break;
+  default:
+    FAIL(S_ERR_INV_FIELD_ID);
+  }
+  retval = 1;
+
+ cleanup:
+  xfree(filt_txt);
+  sarray_free(lns);
+  return retval;
+}
+
+static int
+cmd_op_serve_lang_update_versions(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+
+  phr->json_reply = 1;
+
+  if (!phr->ss->edited_cnts || !phr->ss->langs)
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  super_html_update_versions(phr->ss);
+
+  retval = 1;
+
+ cleanup:
+  return retval;
+}
+
 static handler_func_t op_handlers[SSERV_OP_LAST] =
 {
   [SSERV_OP_VIEW_CNTS_DETAILS] = cmd_cnts_details,
@@ -4694,6 +5340,13 @@ static handler_func_t op_handlers[SSERV_OP_LAST] =
   [SSERV_OP_EDIT_SID_STATE_FIELD_NEGATED] = cmd_op_edit_sid_state_field_neg,
   [SSERV_OP_EDIT_SERVE_GLOBAL_FIELD_DETAIL_PAGE] = cmd_op_edit_serve_global_field_detail_page,
   [SSERV_OP_EDIT_SERVE_GLOBAL_FIELD_DETAIL] = cmd_op_edit_serve_global_field_detail,
+  [SSERV_OP_SET_SID_STATE_LANG_FIELD] = cmd_op_set_sid_state_lang_field,
+  [SSERV_OP_CLEAR_SID_STATE_LANG_FIELD] = cmd_op_clear_sid_state_lang_field,
+  [SSERV_OP_SET_SERVE_LANG_FIELD] = cmd_op_set_serve_lang_field,
+  [SSERV_OP_CLEAR_SERVE_LANG_FIELD] = cmd_op_clear_serve_lang_field,
+  [SSERV_OP_EDIT_SERVE_LANG_FIELD_DETAIL_PAGE] = cmd_op_edit_serve_lang_field_detail_page,
+  [SSERV_OP_EDIT_SERVE_LANG_FIELD_DETAIL] = cmd_op_edit_serve_lang_field_detail,
+  [SSERV_OP_SERVE_LANG_UPDATE_VERSIONS] = cmd_op_serve_lang_update_versions,
 };
 
 static int
@@ -4729,6 +5382,8 @@ static unsigned char const * const error_messages[] =
   [S_ERR_INV_VALUE] = "Invalid value",
   [S_ERR_CONTEST_ALREADY_EXISTS] = "Contest with this ID already exists",
   [S_ERR_CONTEST_ALREADY_EDITED] = "Contest is edited by another person",
+  [S_ERR_INV_LANG_ID] = "Invalid Lang ID",
+  [S_ERR_INV_PROB_ID] = "Invalid Prob ID",
 };
 
 void

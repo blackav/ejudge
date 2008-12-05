@@ -441,4 +441,18 @@ void
 html_numeric_select(FILE *f, const unsigned char *param,
                     int val, int min_val, int max_val);
 
+int
+super_load_cs_languages(
+        const struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        int check_version_flag);
+void
+super_html_lang_activate(
+        struct sid_state *sstate,
+        int cs_lang_id);
+void
+super_html_lang_deactivate(
+        struct sid_state *sstate,
+        int cs_lang_id);
+
 #endif /* __SUPER_HTML_H__ */

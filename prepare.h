@@ -904,7 +904,7 @@ struct section_problem_data
   size_t max_stack_size;
 
   /** these fields are for CGI editing of contest configuration files */
-  unsigned char *unhandled_vars META_ATTRIB((meta_private));
+  unsigned char *unhandled_vars;
 
   /** external score view */
   char **score_view;
@@ -974,7 +974,7 @@ struct section_language_data
   /** environment to pass to the compiler */
   ejenvlist_t compiler_env;
 
-  unsigned char *unhandled_vars META_ATTRIB((meta_private));
+  unsigned char *unhandled_vars;
   /** disabled by configuration script */
   int disabled_by_config META_ATTRIB((meta_private));
 };
