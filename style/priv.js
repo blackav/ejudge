@@ -37,6 +37,32 @@ function ssFieldRequest(op, field_id, next_op)
   });
 }
 
+function ssFieldRequest2(op, item_id, field_id, next_op)
+{
+  dojo.xhrPost({
+      url: script_name,
+      content: {
+        "SID": SID,
+        "action": SSERV_CMD_HTTP_REQUEST,
+        "op": op,
+        "item_id": item_id,
+        "field_id": field_id
+      },
+      handleAs: "json",
+      error: function(data, ioargs) {
+        alert("Request failed: " + data);
+      },
+      load: function(data, ioargs) {
+        if (data.status < 0) {
+          alert("Operation failed: " + data.text);
+        } else {
+          // reload this page
+          document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + next_op;
+        }
+      }
+  });
+}
+
 function doFieldRequestWithField(op, field_id, next_op)
 {
   dojo.xhrPost({
@@ -88,7 +114,7 @@ function ssEditField(op, field_id, next_op, value)
   });
 }
 
-function editField2(op, field_id, subfield_id, next_op, value)
+function ssEditField2(op, field_id, subfield_id, next_op, value)
 {
   dojo.xhrPost({
       url: script_name,
@@ -142,6 +168,61 @@ function ssEditField3(op, field_id, subfield_id, next_op, value)
   });
 }
 
+function ssEditField4(op, item_id, field_id, next_op, value)
+{
+  dojo.xhrPost({
+      url: script_name,
+      content: {
+        "SID": SID,
+        "action": SSERV_CMD_HTTP_REQUEST,
+        "op": op,
+        "item_id": item_id,
+        "field_id": field_id,
+        "value": value
+      },
+      handleAs: "json",
+      error: function(data, ioargs) {
+        alert("Request failed: " + data);
+      },
+      load: function(data, ioargs) {
+        if (data.status < 0) {
+          alert("Operation failed: " + data.text);
+        } else if (data.status > 0) {
+          // reload this page
+          document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + next_op;
+        }
+      }
+  });
+}
+
+function ssEditField5(op, item_id, field_id, subfield_id, next_op, value)
+{
+  dojo.xhrPost({
+      url: script_name,
+      content: {
+        "SID": SID,
+        "action": SSERV_CMD_HTTP_REQUEST,
+        "op": op,
+        "item_id": item_id,
+        "field_id": field_id,
+        "subfield_id": subfield_id,
+        "value": value
+      },
+      handleAs: "json",
+      error: function(data, ioargs) {
+        alert("Request failed: " + data);
+      },
+      load: function(data, ioargs) {
+        if (data.status < 0) {
+          alert("Operation failed: " + data.text);
+        } else if (data.status > 0) {
+          // reload this page
+          document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + next_op;
+        }
+      }
+  });
+}
+
 function editFileSave(form_id, op, field_id, next_op)
 {
   dojo.xhrPost({
@@ -150,6 +231,32 @@ function editFileSave(form_id, op, field_id, next_op)
         "SID": SID,
         "action": SSERV_CMD_HTTP_REQUEST,
         "op": op,
+        "field_id": field_id
+      },
+      form : form_id,
+      handleAs: "json",
+      error: function(data, ioargs) {
+        alert("Request failed: " + data);
+      },
+      load: function(data, ioargs) {
+        if (data.status < 0) {
+          alert("Operation failed: " + data.text);
+        } else if (data.status > 0) {
+          document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + next_op;
+        }
+      }
+  });
+}
+
+function ssEditFileSave2(form_id, op, item_id, field_id, next_op)
+{
+  dojo.xhrPost({
+      url: script_name,
+      content: {
+        "SID": SID,
+        "action": SSERV_CMD_HTTP_REQUEST,
+        "op": op,
+        "item_id": item_id,
         "field_id": field_id
       },
       form : form_id,
@@ -185,6 +292,11 @@ function ssLoad1(op)
 function ssLoad2(op, field_id)
 {
   document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + op + "&field_id=" + field_id;
+}
+
+function ssLoad3(op, item_id, field_id)
+{
+  document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + op + "&item_id=" + item_id + "&field_id=" + field_id;
 }
 
 function ssFormOp1(form_id, op, next_op)
@@ -262,6 +374,33 @@ function ssSetValue2(op, field_id, next_op, value)
         } else if (data.status > 0) {
           // reload this page
           document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + next_op + "&field_id=" + field_id;
+        }
+      }
+  });
+}
+
+function ssSetValue3(op, item_id, field_id, next_op, value)
+{
+  dojo.xhrPost({
+      url: script_name,
+      content: {
+        "SID": SID,
+        "action": SSERV_CMD_HTTP_REQUEST,
+        "op": op,
+        "item_id": item_id,
+        "field_id": field_id,
+        "value": value
+      },
+      handleAs: "json",
+      error: function(data, ioargs) {
+        alert("Request failed: " + data);
+      },
+      load: function(data, ioargs) {
+        if (data.status < 0) {
+          alert("Operation failed: " + data.text);
+        } else if (data.status > 0) {
+          // reload this page
+          document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + next_op;
         }
       }
   });
