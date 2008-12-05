@@ -3026,10 +3026,11 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   return 0;
 }
 
-static int
-load_cs_languages(const struct ejudge_cfg *config,
-                  struct sid_state *sstate,
-                  int check_version_flag)
+int
+super_load_cs_languages(
+        const struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        int check_version_flag)
 {
   path_t cs_conf_dir;
   struct generic_section_config *cfg = 0, *p;
@@ -3176,7 +3177,7 @@ super_html_edit_languages(FILE *f,
   }
 
   if (!sstate->cs_langs_loaded) {
-    load_cs_languages(config, sstate, 1);
+    super_load_cs_languages(config, sstate, 1);
   }
 
   if (!sstate->cs_langs) {
@@ -3386,13 +3387,133 @@ super_html_edit_languages(FILE *f,
   return 0;
 }
 
+void
+super_html_lang_activate(
+        struct sid_state *sstate,
+        int cs_lang_id)
+{
+  const struct section_language_data *cs_lang = 0;
+  struct section_language_data *lang;
+  int i, max_id, lang_id;
+
+  ASSERT(sstate);
+  if (cs_lang_id <= 0 || cs_lang_id >= sstate->cs_lang_total
+      || !(cs_lang = sstate->cs_langs[cs_lang_id]))
+    return;
+  if (sstate->cs_loc_map[cs_lang_id] > 0) return;
+
+  lang = prepare_alloc_language();
+  sstate->cfg = param_merge(&lang->g, sstate->cfg);
+
+  // find the maximum used lang_id
+  max_id = 0;
+  for (i = 1; i < sstate->lang_a; i++)
+    if (sstate->langs[i] && sstate->loc_cs_map[i] && i > max_id)
+      max_id = i;
+
+  if (cs_lang->id > max_id) {
+    lang->id = cs_lang->id;
+    lang->compile_id = cs_lang->id;
+  } else {
+    while (1) {
+      max_id++;
+      for (i = 1; i < sstate->lang_a; i++)
+        if (sstate->langs[i] && sstate->langs[i]->id == max_id)
+          break;
+      if (i < sstate->lang_a) continue;
+      for (i = 1; i < sstate->cs_lang_total; i++)
+        if (sstate->cs_langs[i] && sstate->cs_langs[i]->id == max_id)
+          break;
+      if (i == sstate->cs_lang_total)
+        break;
+    }
+    lang->id = max_id;
+    lang->compile_id = cs_lang->id;
+  }
+  lang_id = lang->id;
+
+  /* extend the language arrays */
+  if (lang_id >= sstate->lang_a) {
+    int new_lang_a = sstate->lang_a;
+    struct section_language_data **new_langs;
+    int *new_loc_cs_map;
+    unsigned char **new_lang_opts;
+    int *new_lang_flags;
+
+    if (!new_lang_a) new_lang_a = 4;
+    while (lang_id >= new_lang_a) new_lang_a *= 2;
+    XCALLOC(new_langs, new_lang_a);
+    XCALLOC(new_loc_cs_map, new_lang_a);
+    XCALLOC(new_lang_opts, new_lang_a);
+    XCALLOC(new_lang_flags, new_lang_a);
+    if (sstate->lang_a > 0) {
+      XMEMMOVE(new_langs, sstate->langs, sstate->lang_a);
+      XMEMMOVE(new_loc_cs_map, sstate->loc_cs_map, sstate->lang_a);
+      XMEMMOVE(new_lang_opts, sstate->lang_opts, sstate->lang_a);
+      XMEMMOVE(new_lang_flags, sstate->lang_flags, sstate->lang_a);
+    }
+    xfree(sstate->langs);
+    xfree(sstate->loc_cs_map);
+    xfree(sstate->lang_opts);
+    xfree(sstate->lang_flags);
+    sstate->lang_a = new_lang_a;
+    sstate->langs = new_langs;
+    sstate->loc_cs_map = new_loc_cs_map;
+    sstate->lang_opts = new_lang_opts;
+    sstate->lang_flags = new_lang_flags;
+  }
+  sstate->langs[lang_id] = lang;
+  sstate->lang_opts[lang_id] = 0;
+  sstate->lang_flags[lang_id] = 0;
+  sstate->cs_loc_map[lang->compile_id] = lang_id;
+
+  strcpy(lang->short_name, cs_lang->short_name);
+  if (sstate->cs_lang_names[cs_lang_id]
+      && *sstate->cs_lang_names[cs_lang_id]) {
+    snprintf(lang->long_name, sizeof(lang->long_name),
+             "%s", sstate->cs_lang_names[cs_lang_id]);
+  } else {
+    snprintf(lang->long_name, sizeof(lang->long_name),
+             "%s", cs_lang->long_name);
+  }
+  strcpy(lang->arch, cs_lang->arch);
+  strcpy(lang->src_sfx, cs_lang->src_sfx);
+  strcpy(lang->exe_sfx, cs_lang->exe_sfx);
+  lang->binary = cs_lang->binary;
+  lang->insecure = cs_lang->insecure;
+  strcpy(lang->content_type, cs_lang->content_type);
+}
+
+void
+super_html_lang_deactivate(
+        struct sid_state *sstate,
+        int cs_lang_id)
+{
+  struct section_language_data *lang = 0;
+  int lang_id;
+
+  ASSERT(sstate);
+  if (cs_lang_id <= 0 || cs_lang_id >= sstate->cs_lang_total
+      || !sstate->cs_langs[cs_lang_id])
+    return;
+  if ((lang_id = sstate->cs_loc_map[cs_lang_id]) <= 0) return;
+  if (lang_id >= sstate->lang_a || !(lang = sstate->langs[lang_id])) return;
+  if (sstate->loc_cs_map[lang_id]) return;
+
+  sstate->langs[lang_id] = 0;
+  xfree(sstate->lang_opts[lang_id]);
+  sstate->lang_opts[lang_id] = 0;
+  sstate->lang_flags[lang_id] = 0;
+  sstate->cs_loc_map[cs_lang_id] = 0;
+}
+
 int
 super_html_lang_cmd(struct sid_state *sstate, int cmd,
                     int lang_id, const unsigned char *param2,
                     int param3, int param4)
 {
   struct section_language_data *pl_old, *pl_new;
-  int val, n, max_id, i;
+  int val, n;
   int *p_int;
 
   if (!sstate->cs_langs) {
@@ -3420,97 +3541,11 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
     break;
 
   case SSERV_CMD_LANG_DEACTIVATE:
-    if (!pl_new) return 0;
-    if (sstate->loc_cs_map[pl_new->id]) return 0;
-    sstate->langs[pl_new->id] = 0;
-    xfree(sstate->lang_opts[pl_new->id]);
-    sstate->lang_opts[pl_new->id] = 0;
-    sstate->lang_flags[pl_new->id] = 0;
-    sstate->cs_loc_map[lang_id] = 0;
+    super_html_lang_deactivate(sstate, lang_id);
     break;
 
   case SSERV_CMD_LANG_ACTIVATE:
-    if (pl_new) return 0;
-
-    pl_new = prepare_alloc_language();
-    sstate->cfg = param_merge(&pl_new->g, sstate->cfg);
-
-    // find appropriate language ID
-    max_id = 0;
-    for (i = 1; i < sstate->lang_a; i++)
-      if (sstate->langs[i] && sstate->loc_cs_map[i]
-          && i > max_id)
-        max_id = i;
-    if (pl_old->id > max_id) {
-      pl_new->id = pl_old->id;
-      pl_new->compile_id = pl_old->id;
-    } else {
-      while (1) {
-        max_id++;
-        for (i = 1; i < sstate->lang_a; i++)
-          if (sstate->langs[i] && sstate->langs[i]->id == max_id)
-            break;
-        if (i < sstate->lang_a) continue;
-        for (i = 1; i < sstate->cs_lang_total; i++)
-          if (sstate->cs_langs[i] && sstate->cs_langs[i]->id == max_id)
-            break;
-        if (i == sstate->cs_lang_total)
-          break;
-      }
-      pl_new->id = max_id;
-      pl_new->compile_id = pl_old->id;
-    }
-
-    if (pl_new->id >= sstate->lang_a) {
-      int new_lang_a = sstate->lang_a;
-      // langs, loc_cs_map, lang_opts, lang_flags
-      struct section_language_data **new_langs;
-      int *new_loc_cs_map;
-      unsigned char **new_lang_opts;
-      int *new_lang_flags;
-
-      if (!new_lang_a) new_lang_a = 4;
-      while (pl_new->id >= new_lang_a) new_lang_a *= 2;
-      XCALLOC(new_langs, new_lang_a);
-      XCALLOC(new_loc_cs_map, new_lang_a);
-      XCALLOC(new_lang_opts, new_lang_a);
-      XCALLOC(new_lang_flags, new_lang_a);
-      if (sstate->lang_a > 0) {
-        XMEMMOVE(new_langs, sstate->langs, sstate->lang_a);
-        XMEMMOVE(new_loc_cs_map, sstate->loc_cs_map, sstate->lang_a);
-        XMEMMOVE(new_lang_opts, sstate->lang_opts, sstate->lang_a);
-        XMEMMOVE(new_lang_flags, sstate->lang_flags, sstate->lang_a);
-      }
-      xfree(sstate->langs);
-      xfree(sstate->loc_cs_map);
-      xfree(sstate->lang_opts);
-      xfree(sstate->lang_flags);
-      sstate->lang_a = new_lang_a;
-      sstate->langs = new_langs;
-      sstate->loc_cs_map = new_loc_cs_map;
-      sstate->lang_opts = new_lang_opts;
-      sstate->lang_flags = new_lang_flags;
-    }
-
-    sstate->langs[pl_new->id] = pl_new;
-    sstate->lang_opts[pl_new->id] = 0;
-    sstate->lang_flags[pl_new->id] = 0;
-    sstate->cs_loc_map[pl_new->compile_id] = pl_new->id;
-
-    strcpy(pl_new->short_name, pl_old->short_name);
-    if (sstate->cs_lang_names[lang_id] && *sstate->cs_lang_names[lang_id]) {
-      snprintf(pl_new->long_name, sizeof(pl_new->long_name),
-               "%s", sstate->cs_lang_names[lang_id]);
-    } else {
-      snprintf(pl_new->long_name, sizeof(pl_new->long_name),
-               "%s", pl_old->long_name);
-    }
-    strcpy(pl_new->arch, pl_old->arch);
-    strcpy(pl_new->src_sfx, pl_old->src_sfx);
-    strcpy(pl_new->exe_sfx, pl_old->exe_sfx);
-    pl_new->binary = pl_old->binary;
-    pl_new->insecure = pl_old->insecure;
-    strcpy(pl_new->content_type, pl_old->content_type);
+    super_html_lang_activate(sstate, lang_id);
     break;
 
   case SSERV_CMD_LANG_CHANGE_DISABLED:
@@ -6936,7 +6971,7 @@ super_html_read_serve(FILE *flog,
   }
 
   // load the compilation server state and establish correspondence
-  if (load_cs_languages(config, sstate, 0) < 0) {
+  if (super_load_cs_languages(config, sstate, 0) < 0) {
     fprintf(flog, "Failed to load compilation server configuration\n");
     return -1;
   }
