@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/11/30 09:40:55
+// Generated 2008/12/05 14:18:46
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -437,7 +437,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_max_vm_size] = { CNTSPROB_max_vm_size, '?', XSIZE(struct section_problem_data, max_vm_size), "max_vm_size", XOFFSET(struct section_problem_data, max_vm_size) },
   [CNTSPROB_max_data_size] = { CNTSPROB_max_data_size, '?', XSIZE(struct section_problem_data, max_data_size), "max_data_size", XOFFSET(struct section_problem_data, max_data_size) },
   [CNTSPROB_max_stack_size] = { CNTSPROB_max_stack_size, '?', XSIZE(struct section_problem_data, max_stack_size), "max_stack_size", XOFFSET(struct section_problem_data, max_stack_size) },
-  [CNTSPROB_unhandled_vars] = { CNTSPROB_unhandled_vars, 's', XSIZE(struct section_problem_data, unhandled_vars), NULL, XOFFSET(struct section_problem_data, unhandled_vars) },
+  [CNTSPROB_unhandled_vars] = { CNTSPROB_unhandled_vars, 's', XSIZE(struct section_problem_data, unhandled_vars), "unhandled_vars", XOFFSET(struct section_problem_data, unhandled_vars) },
   [CNTSPROB_score_view] = { CNTSPROB_score_view, 'x', XSIZE(struct section_problem_data, score_view), "score_view", XOFFSET(struct section_problem_data, score_view) },
   [CNTSPROB_score_view_score] = { CNTSPROB_score_view_score, '?', XSIZE(struct section_problem_data, score_view_score), NULL, XOFFSET(struct section_problem_data, score_view_score) },
   [CNTSPROB_score_view_text] = { CNTSPROB_score_view_text, 'x', XSIZE(struct section_problem_data, score_view_text), "score_view_text", XOFFSET(struct section_problem_data, score_view_text) },
@@ -517,7 +517,7 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_compile_status_dir] = { CNTSLANG_compile_status_dir, 'S', XSIZE(struct section_language_data, compile_status_dir), "compile_status_dir", XOFFSET(struct section_language_data, compile_status_dir) },
   [CNTSLANG_compile_report_dir] = { CNTSLANG_compile_report_dir, 'S', XSIZE(struct section_language_data, compile_report_dir), "compile_report_dir", XOFFSET(struct section_language_data, compile_report_dir) },
   [CNTSLANG_compiler_env] = { CNTSLANG_compiler_env, 'X', XSIZE(struct section_language_data, compiler_env), "compiler_env", XOFFSET(struct section_language_data, compiler_env) },
-  [CNTSLANG_unhandled_vars] = { CNTSLANG_unhandled_vars, 's', XSIZE(struct section_language_data, unhandled_vars), NULL, XOFFSET(struct section_language_data, unhandled_vars) },
+  [CNTSLANG_unhandled_vars] = { CNTSLANG_unhandled_vars, 's', XSIZE(struct section_language_data, unhandled_vars), "unhandled_vars", XOFFSET(struct section_language_data, unhandled_vars) },
   [CNTSLANG_disabled_by_config] = { CNTSLANG_disabled_by_config, 'i', XSIZE(struct section_language_data, disabled_by_config), NULL, XOFFSET(struct section_language_data, disabled_by_config) },
 };
 
