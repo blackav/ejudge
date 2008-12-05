@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/11/23 20:08:23
+// Generated 2008/12/05 14:18:46
 
 #include "super-serve_meta.h"
 #include "super-serve.h"
@@ -99,6 +99,8 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_cs_cfg] = { SSSS_cs_cfg, '?', XSIZE(struct sid_state, cs_cfg), "cs_cfg", XOFFSET(struct sid_state, cs_cfg) },
   [SSSS_cs_langs] = { SSSS_cs_langs, '?', XSIZE(struct sid_state, cs_langs), "cs_langs", XOFFSET(struct sid_state, cs_langs) },
   [SSSS_cs_lang_names] = { SSSS_cs_lang_names, 'x', XSIZE(struct sid_state, cs_lang_names), "cs_lang_names", XOFFSET(struct sid_state, cs_lang_names) },
+  [SSSS_cur_lang] = { SSSS_cur_lang, '?', XSIZE(struct sid_state, cur_lang), "cur_lang", XOFFSET(struct sid_state, cur_lang) },
+  [SSSS_cur_prob] = { SSSS_cur_prob, '?', XSIZE(struct sid_state, cur_prob), "cur_prob", XOFFSET(struct sid_state, cur_prob) },
   [SSSS_contest_start_cmd_text] = { SSSS_contest_start_cmd_text, 's', XSIZE(struct sid_state, contest_start_cmd_text), "contest_start_cmd_text", XOFFSET(struct sid_state, contest_start_cmd_text) },
   [SSSS_stand_header_text] = { SSSS_stand_header_text, 's', XSIZE(struct sid_state, stand_header_text), "stand_header_text", XOFFSET(struct sid_state, stand_header_text) },
   [SSSS_stand_footer_text] = { SSSS_stand_footer_text, 's', XSIZE(struct sid_state, stand_footer_text), "stand_footer_text", XOFFSET(struct sid_state, stand_footer_text) },
