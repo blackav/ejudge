@@ -41,6 +41,9 @@
  *  P - problem data
  *   Pi - problem id
  *   Ps - problem short name
+ *   Pl - problem long name
+ *   PS - problem standings name
+ *   PL - problem internal name
  *  L - language data
  *  T - tester data
  *  M - team data
@@ -314,10 +317,12 @@ sformat_message(char *buf, size_t maxsize, char const *format,
          * Pi - problem identifier
          * Ps - problem short name
          * Pl - problem long name
+         * PS - problem standings name
+         * PL - problem internal name
          */
         pf++;
         switch (*pf) {
-        case 'i': case 's': case 'l':
+        case 'i': case 's': case 'l': case 'S': case 'L':
           break;
         case 0:
           is_invalid = 1;
@@ -339,6 +344,12 @@ sformat_message(char *buf, size_t maxsize, char const *format,
             break;
           case 'l':
             papp = prob_data->long_name;
+            break;
+          case 'S':
+            papp = prob_data->stand_name;
+            break;
+          case 'L':
+            papp = prob_data->internal_name;
             break;
           default:
             abort();

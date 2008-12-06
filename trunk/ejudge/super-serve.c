@@ -2943,6 +2943,12 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CLEAR_SHORT_NAME:
   case SSERV_CMD_PROB_CHANGE_LONG_NAME:
   case SSERV_CMD_PROB_CLEAR_LONG_NAME:
+  case SSERV_CMD_PROB_CHANGE_STAND_NAME:
+  case SSERV_CMD_PROB_CLEAR_STAND_NAME:
+  case SSERV_CMD_PROB_CHANGE_STAND_COLUMN:
+  case SSERV_CMD_PROB_CLEAR_STAND_COLUMN:
+  case SSERV_CMD_PROB_CHANGE_INTERNAL_NAME:
+  case SSERV_CMD_PROB_CLEAR_INTERNAL_NAME:
   case SSERV_CMD_PROB_CHANGE_SUPER:
   case SSERV_CMD_PROB_CHANGE_TYPE:
   case SSERV_CMD_PROB_CHANGE_SCORING_CHECKER:
@@ -3843,6 +3849,12 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CLEAR_SHORT_NAME] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_LONG_NAME] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_LONG_NAME] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_STAND_NAME] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_STAND_NAME] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_STAND_COLUMN] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_STAND_COLUMN] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_INTERNAL_NAME] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_INTERNAL_NAME] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_SUPER] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TYPE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_SCORING_CHECKER] = { cmd_set_value },

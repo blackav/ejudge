@@ -3951,6 +3951,40 @@ super_html_print_problem(FILE *f,
   html_submit_button(f, SSERV_CMD_PROB_CHANGE_TYPE, "Change");
   fprintf(f, "</td></tr></form>\n");
 
+  //PROBLEM_PARAM(stand_name, "s")
+  if (!prob->abstract && show_adv) {
+    print_string_editing_row(f, "Title for the standings column:",
+                             prob->stand_name,
+                             SSERV_CMD_PROB_CHANGE_STAND_NAME,
+                             SSERV_CMD_PROB_CLEAR_STAND_NAME,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url, extra_args, prob_hidden_vars);
+  }
+  //PROBLEM_PARAM(stand_column, "s")
+  if (!prob->abstract && show_adv) {
+    print_string_editing_row(f, "Collate this problem with the specified one:",
+                             prob->stand_column,
+                             SSERV_CMD_PROB_CHANGE_STAND_COLUMN,
+                             SSERV_CMD_PROB_CLEAR_STAND_COLUMN,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url, extra_args, prob_hidden_vars);
+  }
+  //PROBLEM_PARAM(internal_name, "s")
+  if (!prob->abstract && show_adv) {
+    print_string_editing_row(f, "Internal name:",
+                             prob->internal_name,
+                             SSERV_CMD_PROB_CHANGE_INTERNAL_NAME,
+                             SSERV_CMD_PROB_CLEAR_INTERNAL_NAME,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url, extra_args, prob_hidden_vars);
+  }
+
   //PROBLEM_PARAM(manual_checking, "d")
   if ((prob->abstract && prob->type_val)
       || (!prob->abstract && tmp_prob.type_val > 0)) {
@@ -5889,6 +5923,30 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CLEAR_LONG_NAME:
     PROB_CLEAR_STRING(long_name);
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_STAND_NAME:
+    PROB_ASSIGN_STRING(stand_name);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_STAND_NAME:
+    PROB_CLEAR_STRING(stand_name);
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_STAND_COLUMN:
+    PROB_ASSIGN_STRING(stand_column);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_STAND_COLUMN:
+    PROB_CLEAR_STRING(stand_column);
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_INTERNAL_NAME:
+    PROB_ASSIGN_STRING(internal_name);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_INTERNAL_NAME:
+    PROB_CLEAR_STRING(internal_name);
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_SUPER:
