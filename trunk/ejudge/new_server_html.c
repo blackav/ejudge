@@ -6886,6 +6886,7 @@ unparse_answers(
         const struct contest_desc *cnts,
         struct contest_extra *extra,
         const struct section_problem_data *prob,
+        int variant,
         problem_xml_t px,
         const unsigned char *lang,
         int is_radio,
@@ -7095,7 +7096,7 @@ priv_submit_page(
       break;
     case PROB_TYPE_SELECT_ONE:
       if (px) {
-        unparse_answers(fout, phr, cnts, extra, prob,
+        unparse_answers(fout, phr, cnts, extra, prob, variant,
                         px, 0 /* lang */, 1 /* is_radio */,
                         -1, prob_id, 0 /* js_flag */, "b0");
       } else if (alternatives) {
@@ -11483,6 +11484,7 @@ unparse_answers(
         const struct contest_desc *cnts,
         struct contest_extra *extra,
         const struct section_problem_data *prob,
+        int variant,
         problem_xml_t px,
         const unsigned char *lang,
         int is_radio,
@@ -11495,6 +11497,25 @@ unparse_answers(
   unsigned char jsbuf[128];
   int l, i;
   const unsigned char *s;
+
+  unsigned char b1[1024];
+  unsigned char b2[1024];
+  unsigned char b3[1024];
+  unsigned char b4[1024];
+  unsigned char b5[1024];
+  unsigned char b6[1024];
+  unsigned char b7[1024];
+  const unsigned char *vars[8] = { "self", "prob", "get", "getfile", "input_file", "output_file", "variant", 0 };
+  const unsigned char *vals[8] = { b1, b2, b3, b4, b5, b6, b7, 0 };
+
+  snprintf(b1, sizeof(b1), "%s?SID=%016llx", phr->self_url, phr->session_id);
+  snprintf(b2, sizeof(b2), "&prob_id=%d", prob->id);
+  snprintf(b3, sizeof(b3), "&action=%d", NEW_SRV_ACTION_GET_FILE);
+  b7[0] = 0;
+  if (variant > 0) snprintf(b7, sizeof(b7), "&variant=%d", variant);
+  snprintf(b4, sizeof(b4), "%s%s%s%s&file", b1, b2, b3, b7);
+  snprintf(b5, sizeof(b5), "%s", prob->input_file);
+  snprintf(b6, sizeof(b6), "%s", prob->output_file);
 
   if (class_name && *class_name) {
     cl = (unsigned char *) alloca(strlen(class_name) + 32);
@@ -11511,11 +11532,11 @@ unparse_answers(
       s = "";
       if (last_answer == i + 1) s = " checked=\"1\"";
       fprintf(fout, "<tr><td%s>%d)</td><td%s><input type=\"radio\" name=\"file\" value=\"%d\"%s%s/></td><td%s>", cl, i + 1, cl, i + 1, s, jsbuf, cl);
-      problem_xml_unparse_node(fout, px->answers[i][l], 0, 0);
+      problem_xml_unparse_node(fout, px->answers[i][l], vars, vals);
       fprintf(fout, "</td></tr>\n");
     } else {
       fprintf(fout, "<tr><td%s>%d)</td><td%s><input type=\"checkbox\" name=\"ans_%d\"/></td><td%s>", cl, i + 1, cl, i + 1, cl);
-      problem_xml_unparse_node(fout, px->answers[i][l], 0, 0);
+      problem_xml_unparse_node(fout, px->answers[i][l], vars, vals);
       fprintf(fout, "</td></tr>\n");
     }
   }
@@ -12132,12 +12153,12 @@ unpriv_main_page(FILE *fout,
                 }
                 if (next_prob_id > cs->max_prob) next_prob_id = prob->id;
               }
-              unparse_answers(fout, phr, cnts, extra, prob,
+              unparse_answers(fout, phr, cnts, extra, prob, variant,
                               px, 0 /* lang */, 1 /* is_radio */,
                               last_answer, next_prob_id,
                               1 /* js_flag */, "b0");
             } else {
-              unparse_answers(fout, phr, cnts, extra, prob,
+              unparse_answers(fout, phr, cnts, extra, prob, variant,
                               px, 0 /* lang */, 1 /* is_radio */,
                               last_answer, next_prob_id,
                               0 /* js_flag */, "b0");
