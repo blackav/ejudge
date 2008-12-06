@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/12/05 14:18:46
+// Generated 2008/12/06 16:17:10
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -323,7 +323,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_id] = { CNTSPROB_id, 'i', XSIZE(struct section_problem_data, id), "id", XOFFSET(struct section_problem_data, id) },
   [CNTSPROB_tester_id] = { CNTSPROB_tester_id, 'i', XSIZE(struct section_problem_data, tester_id), "tester_id", XOFFSET(struct section_problem_data, tester_id) },
   [CNTSPROB_abstract] = { CNTSPROB_abstract, 'B', XSIZE(struct section_problem_data, abstract), "abstract", XOFFSET(struct section_problem_data, abstract) },
-  [CNTSPROB_type_val] = { CNTSPROB_type_val, 'i', XSIZE(struct section_problem_data, type_val), NULL, XOFFSET(struct section_problem_data, type_val) },
+  [CNTSPROB_type_val] = { CNTSPROB_type_val, 'i', XSIZE(struct section_problem_data, type_val), "type_val", XOFFSET(struct section_problem_data, type_val) },
   [CNTSPROB_manual_checking] = { CNTSPROB_manual_checking, 'B', XSIZE(struct section_problem_data, manual_checking), "manual_checking", XOFFSET(struct section_problem_data, manual_checking) },
   [CNTSPROB_examinator_num] = { CNTSPROB_examinator_num, 'i', XSIZE(struct section_problem_data, examinator_num), "examinator_num", XOFFSET(struct section_problem_data, examinator_num) },
   [CNTSPROB_check_presentation] = { CNTSPROB_check_presentation, 'B', XSIZE(struct section_problem_data, check_presentation), "check_presentation", XOFFSET(struct section_problem_data, check_presentation) },
@@ -377,7 +377,10 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_super] = { CNTSPROB_super, 'S', XSIZE(struct section_problem_data, super), "super", XOFFSET(struct section_problem_data, super) },
   [CNTSPROB_short_name] = { CNTSPROB_short_name, 'S', XSIZE(struct section_problem_data, short_name), "short_name", XOFFSET(struct section_problem_data, short_name) },
   [CNTSPROB_long_name] = { CNTSPROB_long_name, 'S', XSIZE(struct section_problem_data, long_name), "long_name", XOFFSET(struct section_problem_data, long_name) },
+  [CNTSPROB_stand_name] = { CNTSPROB_stand_name, 'S', XSIZE(struct section_problem_data, stand_name), "stand_name", XOFFSET(struct section_problem_data, stand_name) },
+  [CNTSPROB_stand_column] = { CNTSPROB_stand_column, 'S', XSIZE(struct section_problem_data, stand_column), "stand_column", XOFFSET(struct section_problem_data, stand_column) },
   [CNTSPROB_group_name] = { CNTSPROB_group_name, 'S', XSIZE(struct section_problem_data, group_name), "group_name", XOFFSET(struct section_problem_data, group_name) },
+  [CNTSPROB_internal_name] = { CNTSPROB_internal_name, 'S', XSIZE(struct section_problem_data, internal_name), "internal_name", XOFFSET(struct section_problem_data, internal_name) },
   [CNTSPROB_test_dir] = { CNTSPROB_test_dir, 'S', XSIZE(struct section_problem_data, test_dir), "test_dir", XOFFSET(struct section_problem_data, test_dir) },
   [CNTSPROB_test_sfx] = { CNTSPROB_test_sfx, 'S', XSIZE(struct section_problem_data, test_sfx), "test_sfx", XOFFSET(struct section_problem_data, test_sfx) },
   [CNTSPROB_corr_dir] = { CNTSPROB_corr_dir, 'S', XSIZE(struct section_problem_data, corr_dir), "corr_dir", XOFFSET(struct section_problem_data, corr_dir) },
