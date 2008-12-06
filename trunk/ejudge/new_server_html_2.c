@@ -5181,9 +5181,10 @@ ns_write_user_problems_summary(
             cl, _("Short name"), cl, _("Long name"));
   }
   fprintf(fout, "<th%s>%s</th>", cl, _("Status"));
-  if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode
-      && global->disable_passed_tests <= 0) {
-    fprintf(fout, "<th%s>%s</th>", cl, _("Tests passed"));
+  if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (global->disable_passed_tests <= 0) {
+      fprintf(fout, "<th%s>%s</th>", cl, _("Tests passed"));
+    }
   } else if ((global->score_system_val == SCORE_OLYMPIAD && !accepting_mode)
              || global->score_system_val == SCORE_KIROV) {
     if (global->disable_passed_tests <= 0) {
