@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/12/05 14:18:46
+// Generated 2008/12/06 16:17:10
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -339,7 +339,10 @@ enum
   CNTSPROB_super,
   CNTSPROB_short_name,
   CNTSPROB_long_name,
+  CNTSPROB_stand_name,
+  CNTSPROB_stand_column,
   CNTSPROB_group_name,
+  CNTSPROB_internal_name,
   CNTSPROB_test_dir,
   CNTSPROB_test_sfx,
   CNTSPROB_corr_dir,
