@@ -97,7 +97,7 @@ struct user_adjustment_info
 };
 struct user_adjustment_map;
 
-/* sizeof(struct section_problem_data) == 346708 */
+/* sizeof(struct section_global_data) == 346708 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -675,7 +675,7 @@ struct section_problem_data
   /** is this an abstract problem specification */
   ejintbool_t abstract;
   /** parsed `type' */
-  int type_val META_ATTRIB((meta_private));
+  int type_val;
   /** 1, if this problem is checked manually */
   ejintbool_t manual_checking;
   /** number of independent examinations */
@@ -782,8 +782,14 @@ struct section_problem_data
   unsigned char short_name[32];
   /** long name of the problem */
   unsigned char long_name[256];
+  /** name for the standings column */
+  unsigned char stand_name[32];
+  /** column to collate this problem */
+  unsigned char stand_column[32];
   /** group name of the problem */
   unsigned char group_name[64];
+  /** internal problem name */
+  unsigned char internal_name[32];
   /** directory with tests */
   path_t test_dir;
   /** test files suffix */

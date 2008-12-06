@@ -1263,10 +1263,21 @@ do_write_kirov_standings(
   for (i = 1, p_tot = 0; i < p_max; i++) {
     p_rev[i] = -1;
     if (!(prob = state->probs[i]) || prob->hidden) continue;
+    if (prob->stand_column[0]) continue;
     if (prob->t_start_date > 0 && cur_time < prob->t_start_date) continue;
     if (prob->stand_last_column > 0 && last_col_ind < 0) last_col_ind = p_tot;
     p_rev[i] = p_tot;
     p_ind[p_tot++] = i;
+  }
+  for (i = 1; i < p_max; i++) {
+    if (!(prob = state->probs[i]) || !prob->stand_column[0]) continue;
+    if (prob->t_start_date > 0 && cur_time < prob->t_start_date) continue;
+    for (j = 1; j < p_max; j++) {
+      if (!state->probs[j]) continue;
+      if (!strcmp(state->probs[j]->short_name, prob->stand_column)
+          || !strcmp(state->probs[j]->stand_name, prob->stand_column))
+        p_rev[i] = p_rev[j];
+    }
   }
 
   /* calculate the power of 2 not less than p_tot */
@@ -1474,6 +1485,16 @@ do_write_kirov_standings(
         last_submit_run = k;
         last_success_run = k;
       } else if (pe->status == RUN_PARTIAL) {
+        if (!full_sol[up_ind]) sol_att[up_ind]++;
+        score = calc_kirov_score(0, 0, pe, prob, att_num[up_ind],
+                                 disq_num[up_ind], RUN_TOO_MANY, 0, 0);
+        if (prob->score_latest > 0 || score > prob_score[up_ind]) {
+          prob_score[up_ind] = score;
+        }
+        att_num[up_ind]++;
+        if (!full_sol[up_ind]) tot_att[pind]++;
+        last_submit_run = k;
+      } else if (pe->status == RUN_WRONG_ANSWER_ERR && prob->type_val != 0) {
         if (!full_sol[up_ind]) sol_att[up_ind]++;
         score = calc_kirov_score(0, 0, pe, prob, att_num[up_ind],
                                  disq_num[up_ind], RUN_TOO_MANY, 0, 0);
@@ -1709,7 +1730,11 @@ do_write_kirov_standings(
                         NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_str);
       }
-      fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+      if (state->probs[p_ind[j]]->stand_name[0]) {
+        fprintf(f, "%s", state->probs[p_ind[j]]->stand_name);
+      } else {
+        fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+      }
       if (global->prob_info_url[0]) {
         fprintf(f, "</a>");
       }
@@ -1765,7 +1790,12 @@ do_write_kirov_standings(
                           NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", state->probs[runs[last_success_run].prob_id]->short_name);
+        j = runs[last_success_run].prob_id;
+        if (state->probs[j]->stand_name[0]) {
+          fprintf(f, "%s", state->probs[j]->stand_name);
+        } else {
+          fprintf(f, "%s", state->probs[j]->short_name);
+        }
         if (global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -1797,7 +1827,12 @@ do_write_kirov_standings(
                           NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", state->probs[runs[last_submit_run].prob_id]->short_name);
+        j = runs[last_submit_run].prob_id;
+        if (state->probs[j]->stand_name[0]) {
+          fprintf(f, "%s", state->probs[j]->stand_name);
+        } else {
+          fprintf(f, "%s", state->probs[j]->short_name);
+        }
         if (global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -1846,7 +1881,11 @@ do_write_kirov_standings(
                           NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+        if (state->probs[p_ind[j]]->stand_name[0]) {
+          fprintf(f, "%s", state->probs[p_ind[j]]->stand_name);
+        } else {
+          fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+        }
         if (global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -1871,7 +1910,11 @@ do_write_kirov_standings(
                             0, 0, 0);
             fprintf(f, "<a href=\"%s\">", dur_str);
           }
-          fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+          if (state->probs[p_ind[j]]->stand_name[0]) {
+            fprintf(f, "%s", state->probs[p_ind[j]]->stand_name);
+          } else {
+            fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+          }
           if (global->prob_info_url[0]) {
             fprintf(f, "</a>");
           }
@@ -2490,11 +2533,22 @@ do_write_moscow_standings(
   memset(p_rev, -1, p_max * sizeof(p_rev[0]));
   for (i = 1, p_tot = 0; i < p_max; i++) {
     if (!(prob = state->probs[i])) continue;
-    if (prob->hidden > 0) continue;
+    if (prob->hidden > 0 || prob->stand_column[0]) continue;
     if (prob->t_start_date > 0 && cur_time < prob->t_start_date) continue;
     p_rev[i] = p_tot;
     p_ind[p_tot] = i;
     p_tot++;
+  }
+  for (i = 1; i < p_max; i++) {
+    if (!(prob = state->probs[i])) continue;
+    if (!prob->stand_column[0]) continue;
+    if (prob->t_start_date > 0 && cur_time < prob->t_start_date) continue;
+    for (j = 1; j < p_max; j++) {
+      if (!state->probs[j]) continue;
+      if (!strcmp(prob->stand_column, state->probs[j]->short_name)
+          || !strcmp(prob->stand_column, state->probs[j]->stand_name))
+        p_rev[i] = p_rev[j];
+    }
   }
 
   /* calculate the power of 2 not less than p_tot */
@@ -2769,7 +2823,11 @@ do_write_moscow_standings(
                         NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", strbuf);
       }
-      fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+      if (state->probs[p_ind[j]]->stand_name[0]) {
+        fprintf(f, "%s", state->probs[p_ind[j]]->stand_name);
+      } else {
+        fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+      }
       if (global->prob_info_url[0])
         fprintf(f, "</a>");
       fprintf(f, "</th>");
@@ -2826,7 +2884,12 @@ do_write_moscow_standings(
                           NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", state->probs[runs[last_success_run].prob_id]->short_name);
+        j = runs[last_success_run].prob_id;
+        if (state->probs[j]->stand_name[0]) {
+          fprintf(f, "%s", state->probs[j]->stand_name);
+        } else {
+          fprintf(f, "%s", state->probs[j]->short_name);
+        }
         if (global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -2861,7 +2924,12 @@ do_write_moscow_standings(
                           NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", state->probs[runs[last_submit_run].prob_id]->short_name);
+        j = runs[last_submit_run].prob_id;
+        if (state->probs[j]->stand_name[0]) {
+          fprintf(f, "%s", state->probs[j]->stand_name);
+        } else {
+          fprintf(f, "%s", state->probs[j]->short_name);
+        }
         if (global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -2905,7 +2973,11 @@ do_write_moscow_standings(
                           NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+        if (state->probs[p_ind[j]]->stand_name[0]) {
+          fprintf(f, "%s", state->probs[p_ind[j]]->stand_name);
+        } else {
+          fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+        }
         if (global->prob_info_url[0])
           fprintf(f, "</a>");
         fprintf(f, "</th>");
@@ -3322,9 +3394,21 @@ do_write_standings(const serve_state_t state,
   for (i = 1, p_tot = 0; i < p_max; i++) {
     p_rev[i] = -1;
     if (!(prob = state->probs[i]) || prob->hidden) continue;
+    if (prob->stand_column[0]) continue;
     if (prob->t_start_date > 0 && cur_time < prob->t_start_date) continue;
     p_rev[i] = p_tot;
     p_ind[p_tot++] = i;
+  }
+  for (i = 1; i < p_max; i++) {
+    if (!(prob = state->probs[i])) continue;
+    if (!prob->stand_column[0]) continue;
+    if (prob->t_start_date > 0 && cur_time < prob->t_start_date) continue;
+    for (j = 1; j < p_max; j++) {
+      if (!state->probs[j]) continue;
+      if (!strcmp(prob->stand_column, state->probs[j]->short_name)
+          || !strcmp(prob->stand_column, state->probs[j]->stand_name))
+        p_rev[i] = p_rev[j];
+    }
   }
 
   /* calculate the power of 2 not less than p_tot */
@@ -3523,7 +3607,12 @@ do_write_standings(const serve_state_t state,
                         NULL, NULL, NULL, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_buf);
       }
-      fprintf(f, "%s", state->probs[runs[last_success_run].prob_id]->short_name);
+      j = runs[last_success_run].prob_id;
+      if (state->probs[j]->stand_name[0]) {
+        fprintf(f, "%s", state->probs[j]->stand_name);
+      } else {
+        fprintf(f, "%s", state->probs[j]->short_name);
+      }
       if (global->prob_info_url[0]) {
         fprintf(f, "</a>");
       }
@@ -3560,7 +3649,11 @@ do_write_standings(const serve_state_t state,
                         NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", url_str);
       }
-      fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+      if (state->probs[p_ind[j]]->stand_name[0]) {
+        fprintf(f, "%s", state->probs[p_ind[j]]->stand_name);
+      } else {
+        fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+      }
       if (global->prob_info_url[0]) {
         fprintf(f, "</a>");
       }
