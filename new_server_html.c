@@ -6040,6 +6040,56 @@ priv_view_online_users(
 }
 
 static int
+priv_view_user_ips(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+
+  if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
+            phr->name_arm, phr->contest_id, extra->contest_arm,
+            _("IP addresses for users"));
+  ns_write_user_ips(fout, log_f, phr, cnts, extra);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  return retval;
+}
+
+static int
+priv_view_ip_users(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+
+  if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
+            phr->name_arm, phr->contest_id, extra->contest_arm,
+            _("Users for IP addresses"));
+  ns_write_ip_users(fout, log_f, phr, cnts, extra);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  return retval;
+}
+
+static int
 priv_view_exam_info(
         FILE *fout,
         FILE *log_f,
@@ -6701,6 +6751,8 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_1] = priv_assign_cyphers_1,
   [NEW_SRV_ACTION_VIEW_EXAM_INFO] = priv_view_exam_info,
   [NEW_SRV_ACTION_PRIO_FORM] = priv_priority_form,
+  [NEW_SRV_ACTION_VIEW_USER_IPS] = priv_view_user_ips,
+  [NEW_SRV_ACTION_VIEW_IP_USERS] = priv_view_ip_users,
 };
 
 static void
@@ -7339,6 +7391,12 @@ priv_main_page(FILE *fout,
   fprintf(fout, "<li>%s%s</a></li>\n",
           ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_ASSIGN_CYPHERS_1, 0),
           _("Assign random cyphers"));
+  fprintf(fout, "<li>%s%s</a></li>\n",
+          ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_IP_USERS, 0),
+          _("View users for IP addresses"));
+  fprintf(fout, "<li>%s%s</a></li>\n",
+          ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USER_IPS, 0),
+          _("View IP addresses for users"));
   if (cnts->problems_url) {
     fprintf(fout, "<li><a href=\"%s\" target=_blank>%s</a>\n",
             cnts->problems_url, _("Problems"));
@@ -8048,6 +8106,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIO_FORM] = priv_generic_page,
   [NEW_SRV_ACTION_SET_PRIORITIES] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE] = priv_generic_operation,
+  [NEW_SRV_ACTION_VIEW_USER_IPS] = priv_generic_page,
+  [NEW_SRV_ACTION_VIEW_IP_USERS] = priv_generic_page,
 };
 
 static void
@@ -13465,6 +13525,8 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIO_FORM] = "PRIO_FORM",
   [NEW_SRV_ACTION_SET_PRIORITIES] = "SET_PRIORITIES",
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE] = "PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE",
+  [NEW_SRV_ACTION_VIEW_USER_IPS] = "VIEW_USER_IPS",
+  [NEW_SRV_ACTION_VIEW_IP_USERS] = "VIEW_IP_USERS",
 };
 
 void

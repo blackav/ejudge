@@ -2297,6 +2297,128 @@ ns_write_online_users(
   return 0;
 }
 
+struct user_ip_item
+{
+  int user_id;
+
+  int ip_u;
+  int ip_a;
+  ej_ip_t *ips;
+};
+
+int
+ns_write_user_ips(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  unsigned char cl[1024];
+  int total_runs, run_id, i, max_user_id, serial = 1, j;
+  struct run_entry re;
+  struct user_ip_item **uu = 0, *ui;
+  int u_a = 0;
+  struct teamdb_export td;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  snprintf(cl, sizeof(cl), " class=\"b1\"");
+
+  fprintf(fout, "<table%s>"
+          "<tr>"
+          "<th%s>NN</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "</tr>",
+          cl,
+          cl,
+          cl, _("User Id"),
+          cl, _("User login"),
+          cl, _("User name"),
+          cl, _("IP addresses"));
+
+  u_a = 1024;
+  XCALLOC(uu, u_a);
+
+  total_runs = run_get_total(cs->runlog_state);
+  for (run_id = 0; run_id < total_runs; ++run_id) {
+    run_get_entry(cs->runlog_state, run_id, &re);
+    if (!run_is_valid_status(re.status)) continue;
+    if (re.status == RUN_EMPTY) continue;
+    if (re.user_id <= 0 || re.user_id > EJ_MAX_USER_ID) continue;
+    if (!re.a.ip) continue;
+    if (re.user_id >= u_a) {
+      int new_a = u_a;
+      struct user_ip_item **new_u;
+
+      while (new_a <= re.user_id) new_a *= 2;
+      XCALLOC(new_u, new_a);
+      memcpy(new_u, uu, u_a * sizeof(new_u[0]));
+      xfree(uu);
+      uu = new_u;
+      u_a = new_a;
+    }
+    if (!uu[re.user_id]) {
+      XCALLOC(uu[re.user_id], 1);
+    }
+    ui = uu[re.user_id];
+    for (i = 0; i < ui->ip_u; ++i)
+      if (ui->ips[i] == re.a.ip)
+        break;
+    if (i < ui->ip_u) continue;
+    if (ui->ip_u >= ui->ip_a) {
+      if (!ui->ip_a) ui->ip_a = 8;
+      ui->ip_a *= 2;
+      XREALLOC(ui->ips, ui->ip_a);
+    }
+    ui->ips[ui->ip_u++] = re.a.ip;
+  }
+
+  max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
+  for (i = 1; i < u_a && i <= max_user_id; ++i) {
+    if (!(ui = uu[i])) continue;
+    if (!teamdb_lookup(cs->teamdb_state, i)) continue;
+    if (teamdb_export_team(cs->teamdb_state, i, &td) < 0) continue;
+
+    fprintf(fout, "<tr><td%s>%d</td><td%s>%d</td><td%s>%s</td>",
+            cl, serial++, cl, i, cl, ARMOR(td.login));
+    if (td.name && *td.name) {
+      fprintf(fout, "<td%s><tt>%s</tt></td>", cl, ARMOR(td.name));
+    } else {
+      fprintf(fout, "<td%s><i>%s</i></td>", cl, _("Not set"));
+    }
+    fprintf(fout, "<td%s>", cl);
+    for (j = 0; j < ui->ip_u; ++j) {
+      if (j > 0) fprintf(fout, " ");
+      fprintf(fout, "%s", xml_unparse_ip(ui->ips[j]));
+    }
+    fprintf(fout, "</td></tr>\n");
+  }
+
+  html_armor_free(&ab);
+  for (i = 0; i < u_a; ++i) {
+    if (!(ui = uu[i])) continue;
+    xfree(ui->ips);
+    xfree(ui);
+  }
+  xfree(uu);
+  return 0;
+}
+
+int
+ns_write_ip_users(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  return 0;
+}
+
 int
 ns_write_exam_info(
         FILE *fout,
