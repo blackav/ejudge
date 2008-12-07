@@ -356,6 +356,8 @@ enum
   NEW_SRV_ACTION_PRIO_FORM,
   NEW_SRV_ACTION_SET_PRIORITIES,
   NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE,
+  NEW_SRV_ACTION_VIEW_USER_IPS,
+  NEW_SRV_ACTION_VIEW_IP_USERS,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -829,6 +831,22 @@ ns_print_prob_exam_protocol(
         int prob_id,
         int locale_id,
         int use_exam_cypher);
+
+int
+ns_write_user_ips(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra);
+
+int
+ns_write_ip_users(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra);
 
 extern int utf8_mode;
 extern time_t server_start_time;
