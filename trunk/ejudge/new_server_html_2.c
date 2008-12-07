@@ -2408,6 +2408,13 @@ ns_write_user_ips(
   return 0;
 }
 
+struct ip_user_item
+{
+  ej_ip_t ip;
+  int uid_u, uid_a;
+  int *uids;
+};
+
 int
 ns_write_ip_users(
         FILE *fout,
@@ -2416,6 +2423,83 @@ ns_write_ip_users(
         const struct contest_desc *cnts,
         struct contest_extra *extra)
 {
+  unsigned char cl[1024];
+  int total_runs, run_id, i, j;
+  const serve_state_t cs = extra->serve_state;
+  struct run_entry re;
+  int ip_a = 0, ip_u = 0, serial = 1;
+  struct ip_user_item *ips = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct teamdb_export td;
+
+  total_runs = run_get_total(cs->runlog_state);
+  for (run_id = 0; run_id < total_runs; ++run_id) {
+    run_get_entry(cs->runlog_state, run_id, &re);
+    if (!run_is_valid_status(re.status)) continue;
+    if (re.status == RUN_EMPTY) continue;
+    if (re.user_id <= 0 || re.user_id > EJ_MAX_USER_ID) continue;
+    if (!re.a.ip) continue;
+    for (i = 0; i < ip_u; ++i) {
+      if (ips[i].ip == re.a.ip)
+        break;
+    }
+    if (i == ip_u) {
+      if (ip_u == ip_a) {
+        if (!ip_a) ip_a = 16;
+        ip_a *= 2;
+        XREALLOC(ips, ip_a);
+      }
+      memset(&ips[i], 0, sizeof(ips[i]));
+      ips[i].ip = re.a.ip;
+      ip_u++;
+    }
+    for (j = 0; j < ips[i].uid_u; ++j)
+      if (ips[i].uids[j] == re.user_id)
+        break;
+    if (j == ips[i].uid_u) {
+      if (ips[i].uid_u == ips[i].uid_a) {
+        if (!ips[i].uid_a) ips[i].uid_a = 16;
+        ips[i].uid_a *= 2;
+        XREALLOC(ips[i].uids, ips[i].uid_a);
+      }
+      ips[i].uids[j] = re.user_id;
+      ips[i].uid_u++;
+    }
+  }
+
+  snprintf(cl, sizeof(cl), " class=\"b1\"");
+
+  fprintf(fout, "<table%s>"
+          "<tr>"
+          "<th%s>NN</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "</tr>",
+          cl,
+          cl,
+          cl, _("IP address"),
+          cl, _("Users"));
+  for (i = 0; i < ip_u; ++i) {
+    fprintf(fout, "<tr><td%s>%d</td><td%s>%s</td><td%s>",
+            cl, serial++, cl, xml_unparse_ip(ips[i].ip), cl);
+    for (j = 0; j < ips[i].uid_u; ++j) {
+      if (!teamdb_lookup(cs->teamdb_state, ips[i].uids[j]))
+        continue;
+      if (teamdb_export_team(cs->teamdb_state, ips[i].uids[j], &td) < 0)
+        continue;
+      if (j > 0) fprintf(fout, " ");
+      fprintf(fout, "%s", ARMOR(td.login));
+      if (td.name && *td.name) {
+        fprintf(fout, "(%s)", ARMOR(td.name));
+      }
+    }
+    fprintf(fout, "</td></tr>\n");
+  }
+
+  for (i = 0; i < ip_u; ++i)
+    xfree(ips[i].uids);
+  xfree(ips);
+  html_armor_free(&ab);
   return 0;
 }
 
