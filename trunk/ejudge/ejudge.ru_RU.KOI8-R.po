@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-11-16 20:12+0300\n"
-"PO-Revision-Date: 2008-11-16 20:13+0300\n"
+"POT-Creation-Date: 2008-12-07 21:25+0300\n"
+"PO-Revision-Date: 2008-12-07 22:31+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1544,6 +1544,12 @@ msgstr "IP"
 
 msgid "IP address"
 msgstr "IP-адрес"
+
+msgid "IP addresses"
+msgstr "IP-адреса"
+
+msgid "IP addresses for users"
+msgstr "IP-адреса пользователей"
 
 msgid "IPC operation failed"
 msgstr "операция IPC завершилась с ошибкой"
@@ -3512,6 +3518,9 @@ msgstr "Пользовательский протокол"
 msgid "Userlist server is down"
 msgstr "Сервер базы пользователей недоступен"
 
+msgid "Users for IP addresses"
+msgstr "Пользователи IP-адресов"
+
 msgid "Users page"
 msgstr "Список участников"
 
@@ -3536,6 +3545,9 @@ msgstr "Вариант"
 
 msgid "View"
 msgstr "Просмотр"
+
+msgid "View IP addresses for users"
+msgstr "Посмотреть IP-адреса пользователей"
 
 msgid "View all"
 msgstr "Посмотреть всё"
@@ -3578,6 +3590,9 @@ msgstr "Просмотреть пользовательский протокол"
 
 msgid "View the problem statement and send a submission"
 msgstr "Посмотреть условие задачи и отправить решение"
+
+msgid "View users for IP addresses"
+msgstr "Просмотр пользователей по IP-адресам"
 
 msgid "View who is currently online"
 msgstr "Посмотреть подключившихся пользователей"
