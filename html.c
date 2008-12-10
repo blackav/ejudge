@@ -1095,8 +1095,8 @@ do_write_kirov_standings(
   time_t run_time;
 
   int  t_max, t_tot, p_max, p_tot, r_tot;
-  int *t_ind, *t_rev, *p_ind, *p_rev;
-  unsigned char *t_runs;
+  int *t_ind = 0, *t_rev = 0, *p_ind = 0, *p_rev = 0;
+  unsigned char *t_runs = 0;
 
   int i, k, j;
   int last_submit_run = -1;
@@ -1112,8 +1112,8 @@ do_write_kirov_standings(
   int *penalty = 0;
   int *cf_num = 0;
 
-  int  *tot_score, *tot_full, *succ_att, *tot_att, *tot_penalty;
-  int  *t_sort = 0, *t_sort2, *t_n1, *t_n2;
+  int  *tot_score = 0, *tot_full = 0, *succ_att = 0, *tot_att = 0, *tot_penalty = 0;
+  int  *t_sort = 0, *t_sort2 = 0, *t_n1 = 0, *t_n2 = 0;
   char dur_str[1024];
   unsigned char *head_style;
   struct teamdb_export u_info;
@@ -2250,6 +2250,26 @@ do_write_kirov_standings(
   }
 
  cleanup:
+  // xfree(t_runs):      currently on stack
+  // xfree(t_ind):       currently on stack
+  // xfree(t_rev):       currently on stack
+  // xfree(p_ind):       currently on stack
+  // xfree(p_rev):       currently on stack
+  // xfree(tot_score):   currently on stack
+  // xfree(tot_full):    currently on stack
+  // xfree(tot_penalty): currently on stack
+  // xfree(tot_att):     currently on stack
+  // xfree(succ_att):    currently on stack
+  // xfree(t_n1):        currently on stack
+  // xfree(t_n2):        currently on stack
+  // xfree(ind_full):    currently on stack
+  // xfree(ind_score):   currently on stack
+  // xfree(t_sort):      currently on stack
+  // xfree(t_sort2):     currently on stack
+  // xfree(pgrefs):      currently on stack
+  // xfree(pg_n1):       currently on stack
+  // xfree(pg_n2):       currently on stack
+
   xfree(prob_score);
   xfree(att_num);
   xfree(disq_num);
@@ -2361,27 +2381,27 @@ do_write_moscow_standings(
   const struct run_entry *runs; /* the pointer to the PRIMARY runs storage */
   int u_max;                    /* maximal user_id + 1 */
   int u_tot;                    /* total active users */
-  unsigned char *u_runs;        /* whether user submitted runs (on stack) */
-  int *u_ind;                   /* active user num -> user_id map */
-  int *u_rev;                   /* user_id -> active user num map */
+  unsigned char *u_runs = 0;    /* whether user submitted runs (on stack) */
+  int *u_ind = 0;               /* active user num -> user_id map */
+  int *u_rev = 0;               /* user_id -> active user num map */
   int p_max;                    /* maximal prob_id + 1 */
   int p_tot;                    /* total active problems */
-  int *p_ind;                   /* active problem num -> prob_id map */
-  int *p_rev;                   /* prob_id -> active problem num map */
+  int *p_ind = 0;               /* active problem num -> prob_id map */
+  int *p_rev = 0;               /* prob_id -> active problem num map */
   int row_sz;                   /* number of columns for two-dim. tables */
   int row_sh;                   /* shift count for two-dim. tables */
-  int *u_sort;                  /* sorted index to u_ind */
-  int *u_sort1;                 /* intermediate sorted index */
+  int *u_sort = 0;              /* sorted index to u_ind */
+  int *u_sort1 = 0;             /* intermediate sorted index */
   int *u_score = 0;             /* total score for a user */
   int *u_pen = 0;               /* total penalty for a user */
-  int *p_att;                   /* total attempts for a problem */
-  int *p_succ;                  /* full solutions for a problem */
-  int *pen_cnt;                 /* counters for all penalty values */
-  int *pen_st;                  /* starting position for all penalty values */
-  int *sc_cnt;                  /* counters for all score values */
-  int *sc_st;                   /* starting position for all score values */
-  int *u_n1;                    /* first place number */
-  int *u_n2;                    /* second place number */
+  int *p_att = 0;               /* total attempts for a problem */
+  int *p_succ = 0;              /* full solutions for a problem */
+  int *pen_cnt = 0;             /* counters for all penalty values */
+  int *pen_st = 0;              /* starting position for all penalty values */
+  int *sc_cnt = 0;              /* counters for all score values */
+  int *sc_st = 0;               /* starting position for all score values */
+  int *u_n1 = 0;                /* first place number */
+  int *u_n2 = 0;                /* second place number */
   int i, u, p, j, up_ind;       /* various index variables */
   int max_pen;                  /* maximal penalty for all users */
   int max_score;                /* maximal score for all users */
@@ -2698,8 +2718,10 @@ do_write_moscow_standings(
     if (u_pen[u] > max_pen)
       max_pen = u_pen[u];
   if (max_pen >= 0) {
-    XALLOCAZ(pen_cnt, max_pen + 1);
-    XALLOCAZ(pen_st, max_pen + 1);
+    XCALLOC(pen_cnt, max_pen + 1);
+    XCALLOC(pen_st, max_pen + 1);
+    //XALLOCAZ(pen_cnt, max_pen + 1);
+    //XALLOCAZ(pen_st, max_pen + 1);
     for (u = 0; u < u_tot; u++)
       pen_cnt[u_pen[u]]++;
     for (i = 1; i <= max_pen; i++)
@@ -3212,6 +3234,31 @@ do_write_moscow_standings(
   }
 
  free_resources:
+  // xfree(u_runs):  currently on stack
+  // xfree(u_ind):   currently on stack
+  // xfree(u_rev):   currently on stack
+  // xfree(u_sort):  currently on stack
+  // xfree(p_ind):   currently on stack
+  // xfree(p_rev):   currently on stack
+  // xfree(u_score): currently on stack
+  // xfree(u_pen):   currently on stack
+  // xfree(p_att):   currently on stack
+  // xfree(p_succ):  currently on stack
+  // xfree(u_sort1): currently on stack
+  // xfree(sc_cnt):  currently on stack
+  // xfree(sc_st):   currently on stack
+  // xfree(u_n1):    currently on stack
+  // xfree(u_n2):    currently on stack
+  // xfree(pgrefs):  currently on stack
+  // xfree(pg_n1):   currently on stack
+  // xfree(pg_n2):   currently on stack
+  // xfree(pg_sc1):  currently on stack
+  // xfree(pg_sc2):  currently on stack
+  // xfree(pg_pen1): currently on stack
+  // xfree(pg_pen2): currently on stack
+
+  xfree(pen_cnt);
+  xfree(pen_st);
   xfree(up_cf);
   xfree(up_trans);
   xfree(up_solved);
@@ -3226,35 +3273,38 @@ do_write_moscow_standings(
  * ACM-style standings
  */
 void
-do_write_standings(const serve_state_t state,
-                   const struct contest_desc *cnts,
-                   FILE *f,
-                   int client_flag, int only_table_flag,
-                   int user_id,
-                   const unsigned char *header_str,
-                   unsigned char const *footer_str, int raw_flag,
-                   const unsigned char *user_name,
-                   int force_fancy_style,
-                   time_t cur_time)
+do_write_standings(
+        const serve_state_t state,
+        const struct contest_desc *cnts,
+        FILE *f,
+        int client_flag,
+        int only_table_flag,
+        int user_id,
+        const unsigned char *header_str,
+        unsigned char const *footer_str,
+        int raw_flag,
+        const unsigned char *user_name,
+        int force_fancy_style,
+        time_t cur_time)
 {
   struct section_global_data *global = state->global;
   int      i, j, t;
 
-  int     *t_ind;
+  int     *t_ind = 0;
   int      t_max;
   int      t_tot;
-  int     *t_prob;
-  int     *t_pen;
-  int     *t_rev;
+  int     *t_prob = 0;
+  int     *t_pen = 0;
+  int     *t_rev = 0;
   int     *t_sort = 0;
-  int     *t_sort2;
-  int     *prob_cnt;
-  int     *pen_cnt;
+  int     *t_sort2 = 0;
+  int     *prob_cnt = 0;
+  int     *pen_cnt = 0;
   int      max_pen, max_solved;
-  int     *t_n1;
-  int     *t_n2;
-  int     *p_ind;
-  int     *p_rev;
+  int     *t_n1 = 0;
+  int     *t_n2 = 0;
+  int     *p_ind = 0;
+  int     *p_rev = 0;
   int      p_max;
   int      p_tot;
   int      r_tot, k;
@@ -3275,11 +3325,11 @@ do_write_standings(const serve_state_t state,
   unsigned char *head_style;
   struct teamdb_export ttt;      
   const struct run_entry *runs, *pe;
-  unsigned char *t_runs;
+  unsigned char *t_runs = 0;
   int last_success_run = -1;
   time_t last_success_time = 0;
   time_t last_success_start = 0;
-  int *tot_att, *succ_att;
+  int *tot_att = 0, *succ_att = 0;
   const struct team_extra *t_extra;
   unsigned char *r0_attr = "", *rT_attr = "";
   unsigned char *r_attrs[2][2] = {{"", ""}, {"", ""}};
@@ -3518,7 +3568,8 @@ do_write_standings(const serve_state_t state,
       if (t_pen[i] > max_pen) max_pen = t_pen[i];
     }
     XALLOCAZ(prob_cnt, max_solved + 1);
-    XALLOCAZ(pen_cnt, max_pen + 1);
+    //XALLOCAZ(pen_cnt, max_pen + 1);
+    XCALLOC(pen_cnt, max_pen + 1);
     for (i = 0; i < t_tot; i++) {
       prob_cnt[t_prob[i]]++;
       pen_cnt[t_pen[i]]++;
@@ -3863,6 +3914,22 @@ do_write_standings(const serve_state_t state,
     }
   }
 
+  // xfree(t_runs):   currently on stack
+  // xfree(t_ind):    currently on stack
+  // xfree(t_rev):    currently on stack
+  // xfree(t_prob):   currently on stack
+  // xfree(t_pen):    currently on stack
+  // xfree(t_n1):     currently on stack
+  // xfree(t_n2):     currently on stack
+  // xfree(p_ind):    currently on stack
+  // xfree(p_rev):    currently on stack
+  // xfree(succ_att): currently on stack
+  // xfree(tot_att):  currently on stack
+  // xfree(prob_cnt): currently on stack
+  // xfree(t_sort):   currently on stack
+  // xfree(t_sort2):  currently on stack
+
+  xfree(pen_cnt);
   xfree(calc);
   xfree(ok_time);
   xfree(trans_flag);
