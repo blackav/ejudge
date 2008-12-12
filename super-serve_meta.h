@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/12/05 14:18:46
+// Generated 2008/12/12 12:07:01
 
 #ifndef __SUPER_SERVE_META_H__
 #define __SUPER_SERVE_META_H__
@@ -96,6 +96,7 @@ enum
   SSSS_cs_lang_names,
   SSSS_cur_lang,
   SSSS_cur_prob,
+  SSSS_prob_show_adv,
   SSSS_contest_start_cmd_text,
   SSSS_stand_header_text,
   SSSS_stand_footer_text,
