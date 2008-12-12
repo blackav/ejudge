@@ -1064,7 +1064,7 @@ static const struct cnts_edit_info cnts_global_info[] =
 {
   { NS_GLOBAL, CNTSGLOB_score_system, 132, 1, 0, 0, 0, 0, "Scoring system", "Scoring system", 0 },
   { NS_GLOBAL, CNTSGLOB_contest_time, 'u', 1, 1, 1, 1, 0, "Contest duration (HH:MM)", "Contest duration (HH:MM)", 0 },
-  { NS_GLOBAL, CNTSGLOB_contest_finish_time_d, 't', 1, 1, 0, 1, 0, "Contest finish time", "Contest finish time", "Global.contest_time 0 <=" },
+  { NS_GLOBAL, CNTSGLOB_contest_finish_time, 't', 1, 1, 0, 1, 0, "Contest finish time", "Contest finish time", "Global.contest_time 0 <=" },
   { NS_GLOBAL, CNTSGLOB_board_fog_time, 'u', 1, 1, 1, 1, 0, "Standings freeze time (HH:MM)", "Standings freeze time (before contest finish)", "Global.contest_time 0 >" },
   { NS_GLOBAL, CNTSGLOB_board_unfog_time, 'u', 1, 1, 1, 1, 0, "Standings unfreeze time (HH:MM)", "Standings unfreeze time (after contest finish)", "Global.contest_time 0 > Global.board_fog_time 0 > &&" },
   { NS_SID_STATE, SSSS_disable_compilation_server, 133, 1, 0, 0, 0, 0, "Use the main compilation server", 0, 0 },
@@ -1129,7 +1129,7 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_stand_header_file, 'S', 1, 1, 1, 1, 0, "HTML header file for primary standings", 0, "SidState.show_global_4" },
   { NS_GLOBAL, CNTSGLOB_stand_footer_file, 'S', 1, 1, 1, 1, 0, "HTML footer file for primary standings", 0, "SidState.show_global_4" },
   { NS_GLOBAL, CNTSGLOB_stand_symlink_dir, 'S', 1, 1, 1, 1, 0, "Symlink directory for primary standings", 0, "SidState.show_global_4" },
-  { NS_GLOBAL, CNTSGLOB_stand_ignore_after_d, 't', 1, 1, 0, 1, 0, "Ignore submissions after", 0, "SidState.show_global_4" },
+  { NS_GLOBAL, CNTSGLOB_stand_ignore_after, 't', 1, 1, 0, 1, 0, "Ignore submissions after", 0, "SidState.show_global_4" },
   { NS_SID_STATE, SSSS_enable_stand2, 135, 1, 0, 0, 0, 0, "Enable secondary standings table", 0, "SidState.show_global_4" },
   { NS_GLOBAL, CNTSGLOB_stand2_file_name, 'S', 1, 1, 1, 1, 0, "Secondary standings file name", 0, "SidState.show_global_4 SidState.enable_stand2 &&" },
   { NS_GLOBAL, CNTSGLOB_stand2_header_file, 'S', 1, 1, 1, 1, 0, "HTML header file for secondary standings", 0, "SidState.show_global_4 SidState.enable_stand2 &&" },
@@ -1182,7 +1182,7 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_stand_page_col_attr, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_GLOBAL_FIELD_DETAIL_PAGE, "Page table column attributes", 0, "SidState.show_global_5 Global.users_on_page 0 > &&" },
 
   { NS_SID_STATE, SSSS_show_global_6, '-', 1, 0, 0, 0, 0, "Advanced settings", 0, 0 },
-  { NS_GLOBAL, CNTSGLOB_appeal_deadline_d, 't', 1, 1, 0, 0, 0, "Appeal deadline", 0, "SidState.show_global_6" },
+  { NS_GLOBAL, CNTSGLOB_appeal_deadline, 't', 1, 1, 0, 0, 0, "Appeal deadline", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_sleep_time, 'd', 1, 0, 1, 1, 0, "Directory poll interval (ms)", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_serve_sleep_time, 'd', 1, 0, 1, 1, 0, "Serve directory poll interval (ms)", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_autoupdate_standings, 'Y', 1, 0, 0, 0, 0, "Update standings automatically (except freeze time)", 0, "SidState.show_global_6" },
@@ -2507,9 +2507,7 @@ static int
 handle_time_t_editing(
 	struct super_http_request_info *phr,
         const unsigned char *valstr,
-        time_t *p_time,
-        unsigned char *buf,
-        size_t bufsize)
+        time_t *p_time)
 {
   int retval = 0;
   int subf_id = 0;
@@ -2553,7 +2551,6 @@ handle_time_t_editing(
       if ((t_val = mktime(ptm)) <= 0) FAIL(S_ERR_INV_VALUE);
       *p_time = t_val;
       retval = 1;
-      if (buf) snprintf(buf, bufsize, "%s", xml_unparse_date(t_val));
     }
     break;
   case 2:
@@ -2589,7 +2586,6 @@ handle_time_t_editing(
       if ((t_val = mktime(&btm)) <= 0) FAIL(S_ERR_INV_VALUE);
       *p_time = t_val;
       retval = 1;
-      if (buf) snprintf(buf, bufsize, "%s", xml_unparse_date(t_val));
     }
     break;
   default:
@@ -2781,7 +2777,7 @@ cmd_edit_contest_xml_field(
     }
     break;
   case 't':
-    retval = handle_time_t_editing(phr, valstr, (time_t*) f_ptr, 0, 0);
+    retval = handle_time_t_editing(phr, valstr, (time_t*) f_ptr);
     break;
   default:
     FAIL(S_ERR_INV_FIELD_ID);
@@ -4473,14 +4469,6 @@ global_str_need_space[CNTSGLOB_LAST_FIELD] =
   [CNTSGLOB_stand_page_cur_attr] = 1,
 };
 
-// FIXME: these field should be parsed earlier
-static const int global_edit_map[CNTSGLOB_LAST_FIELD] =
-{
-  [CNTSGLOB_stand_ignore_after_d] = CNTSGLOB_stand_ignore_after,
-  [CNTSGLOB_contest_finish_time_d] = CNTSGLOB_contest_finish_time,
-  [CNTSGLOB_appeal_deadline_d] = CNTSGLOB_appeal_deadline,
-};
-
 /* TODO list:
   { NS_GLOBAL, CNTSGLOB_unhandled_vars, 137, 0, 0, 0, 0, 0, 0, 0, "Global.unhandled_vars SidState.show_global_7 &&" },
  */
@@ -4669,18 +4657,7 @@ cmd_op_edit_serve_global_field(
     break;
 
   case 't':
-    {
-      int f_id2 = global_edit_map[f_id];
-      unsigned char *f_ptr2;
-      size_t f_size;
-
-      if (!f_id2) FAIL(S_ERR_INV_FIELD_ID);
-      if (!(f_ptr2 = (unsigned char*) cntsglob_get_ptr_nc(global, f_id2)))
-        FAIL(S_ERR_INV_FIELD_ID);
-      if (!(f_size = cntsglob_get_size(f_id2)))
-        FAIL(S_ERR_INV_FIELD_ID);
-      retval = handle_time_t_editing(phr,valstr,(time_t*) f_ptr,f_ptr2,f_size);
-    }
+    retval = handle_time_t_editing(phr, valstr, (time_t*) f_ptr);
     break;
 
   case 'S':

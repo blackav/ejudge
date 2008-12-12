@@ -1264,14 +1264,14 @@ do_write_kirov_standings(
     p_rev[i] = -1;
     if (!(prob = state->probs[i]) || prob->hidden) continue;
     if (prob->stand_column[0]) continue;
-    if (prob->t_start_date > 0 && cur_time < prob->t_start_date) continue;
+    if (prob->start_date > 0 && cur_time < prob->start_date) continue;
     if (prob->stand_last_column > 0 && last_col_ind < 0) last_col_ind = p_tot;
     p_rev[i] = p_tot;
     p_ind[p_tot++] = i;
   }
   for (i = 1; i < p_max; i++) {
     if (!(prob = state->probs[i]) || !prob->stand_column[0]) continue;
-    if (prob->t_start_date > 0 && cur_time < prob->t_start_date) continue;
+    if (prob->start_date > 0 && cur_time < prob->start_date) continue;
     for (j = 1; j < p_max; j++) {
       if (!state->probs[j]) continue;
       if (!strcmp(state->probs[j]->short_name, prob->stand_column)
@@ -1345,8 +1345,8 @@ do_write_kirov_standings(
       if (run_time < start_time) run_time = start_time;
       if (stop_time && run_time > stop_time) run_time = stop_time;
       if (run_time - start_time > cur_duration) continue;
-      if (global->stand_ignore_after_d > 0
-          && pe->time >= global->stand_ignore_after_d)
+      if (global->stand_ignore_after > 0
+          && pe->time >= global->stand_ignore_after)
         continue;
     }
 
@@ -2554,7 +2554,7 @@ do_write_moscow_standings(
   for (i = 1, p_tot = 0; i < p_max; i++) {
     if (!(prob = state->probs[i])) continue;
     if (prob->hidden > 0 || prob->stand_column[0]) continue;
-    if (prob->t_start_date > 0 && cur_time < prob->t_start_date) continue;
+    if (prob->start_date > 0 && cur_time < prob->start_date) continue;
     p_rev[i] = p_tot;
     p_ind[p_tot] = i;
     p_tot++;
@@ -2562,7 +2562,7 @@ do_write_moscow_standings(
   for (i = 1; i < p_max; i++) {
     if (!(prob = state->probs[i])) continue;
     if (!prob->stand_column[0]) continue;
-    if (prob->t_start_date > 0 && cur_time < prob->t_start_date) continue;
+    if (prob->start_date > 0 && cur_time < prob->start_date) continue;
     for (j = 1; j < p_max; j++) {
       if (!state->probs[j]) continue;
       if (!strcmp(prob->stand_column, state->probs[j]->short_name)
@@ -2639,8 +2639,8 @@ do_write_moscow_standings(
       if (run_time < start_time) run_time = start_time;
       udur = run_time - start_time;
       if (current_dur > 0 && udur > current_dur) continue;
-      if (global->stand_ignore_after_d > 0
-          && pe->time >= global->stand_ignore_after_d)
+      if (global->stand_ignore_after > 0
+          && pe->time >= global->stand_ignore_after)
         continue;
     } else {
       if (run_time < start_time) run_time = start_time;
@@ -3445,14 +3445,14 @@ do_write_standings(
     p_rev[i] = -1;
     if (!(prob = state->probs[i]) || prob->hidden) continue;
     if (prob->stand_column[0]) continue;
-    if (prob->t_start_date > 0 && cur_time < prob->t_start_date) continue;
+    if (prob->start_date > 0 && cur_time < prob->start_date) continue;
     p_rev[i] = p_tot;
     p_ind[p_tot++] = i;
   }
   for (i = 1; i < p_max; i++) {
     if (!(prob = state->probs[i])) continue;
     if (!prob->stand_column[0]) continue;
-    if (prob->t_start_date > 0 && cur_time < prob->t_start_date) continue;
+    if (prob->start_date > 0 && cur_time < prob->start_date) continue;
     for (j = 1; j < p_max; j++) {
       if (!state->probs[j]) continue;
       if (!strcmp(prob->stand_column, state->probs[j]->short_name)
@@ -3503,8 +3503,8 @@ do_write_standings(
       if (client_flag != 1 || user_id) {
         if (run_time < start_time) run_time = start_time;
         if (current_dur > 0 && run_time - start_time > current_dur) continue;
-        if (global->stand_ignore_after_d > 0
-            && pe->time >= global->stand_ignore_after_d)
+        if (global->stand_ignore_after > 0
+            && pe->time >= global->stand_ignore_after)
           continue;
       }
     }

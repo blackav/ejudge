@@ -825,7 +825,7 @@ cmd_submit_run(
       FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
     if (serve_check_user_quota(cs, phr->user_id, run_size) < 0)
       FAIL(NEW_SRV_ERR_RUN_QUOTA_EXCEEDED);
-    if (prob->t_start_date >= 0 && cs->current_time < prob->t_start_date)
+    if (prob->start_date >= 0 && cs->current_time < prob->start_date)
       FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
     if (prob->pd_total > 0) {
       login = teamdb_get_login(cs->teamdb_state, phr->user_id);
@@ -837,7 +837,7 @@ cmd_submit_run(
       }
     }
     // common problem deadline
-    if (user_deadline <= 0) user_deadline = prob->t_deadline;
+    if (user_deadline <= 0) user_deadline = prob->deadline;
     if (user_deadline > 0 && cs->current_time >= user_deadline)
       FAIL(NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
   }

@@ -6488,7 +6488,7 @@ unpriv_print_status(FILE *fout,
       fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
               _("Planned start time"), ctime(&sched_time));
     }
-    if (stop_time <= 0 && (duration > 0 || global->contest_finish_time_d <= 0)) {
+    if (stop_time <= 0 && (duration > 0 || global->contest_finish_time <= 0)) {
       if (duration > 0) {
         duration_str(0, duration, 0, duration_buf, 0);
       } else {
@@ -6502,9 +6502,9 @@ unpriv_print_status(FILE *fout,
       fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
               _("Scheduled end time"), ctime(&tmpt));
     } else if (start_time > 0 && stop_time <= 0 && duration <= 0
-               && global->contest_finish_time_d > 0) {
+               && global->contest_finish_time > 0) {
       fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
-              _("Scheduled end time"), ctime(&global->contest_finish_time_d));
+              _("Scheduled end time"), ctime(&global->contest_finish_time));
     } else if (stop_time) {
       fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
               _("End time"), ctime(&stop_time));
@@ -9303,7 +9303,7 @@ unpriv_submit_run(FILE *fout,
     goto done;
   }
   // problem submit start time
-  if (prob->t_start_date >= 0 && cs->current_time < prob->t_start_date) {
+  if (prob->start_date >= 0 && cs->current_time < prob->start_date) {
     ns_error(log_f, NEW_SRV_ERR_PROB_UNAVAILABLE);
     goto done;
   }
@@ -9318,7 +9318,7 @@ unpriv_submit_run(FILE *fout,
     }
   }
   // common problem deadline
-  if (user_deadline <= 0) user_deadline = prob->t_deadline;
+  if (user_deadline <= 0) user_deadline = prob->deadline;
   if (user_deadline > 0 && cs->current_time >= user_deadline) {
     ns_error(log_f, NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
     goto done;
@@ -9584,7 +9584,7 @@ unpriv_submit_run(FILE *fout,
       if (prob->advance_to_next > 0) {
         for (i++; i <= cs->max_prob; i++) {
           if (!(prob2 = cs->probs[i])) continue;
-          if (prob2->t_start_date > 0 && prob2->t_start_date > cs->current_time)
+          if (prob2->start_date > 0 && prob2->start_date > cs->current_time)
             continue;
           // FIXME: standard applicability checks
           break;
@@ -9815,11 +9815,11 @@ unpriv_submit_appeal(FILE *fout,
     ns_error(log_f, NEW_SRV_ERR_CONTEST_NOT_FINISHED);
     goto done;
   }
-  if (global->appeal_deadline_d <= 0) {
+  if (global->appeal_deadline <= 0) {
     ns_error(log_f, NEW_SRV_ERR_APPEALS_DISABLED);
     goto done;
   }
-  if (cs->current_time >= global->appeal_deadline_d) {
+  if (cs->current_time >= global->appeal_deadline) {
     ns_error(log_f, NEW_SRV_ERR_APPEALS_FINISHED);
     goto done;
   }
@@ -10038,7 +10038,7 @@ unpriv_command(FILE *fout,
         && global->problem_navigation) {
       for (i = 1; i <= cs->max_prob; i++) {
         if (!(prob = cs->probs[i])) continue;
-        if (prob->t_start_date > 0 && prob->t_start_date > cs->current_time)
+        if (prob->start_date > 0 && prob->start_date > cs->current_time)
           continue;
         // FIXME: standard applicability checks
         break;
@@ -10612,9 +10612,9 @@ unpriv_view_standings(FILE *fout,
   if (duration <= 0) {
     if (stop_time > 0 && cur_time >= stop_time)
       snprintf(comment, sizeof(comment), _(" [over]"));
-    else if (global->stand_ignore_after_d > 0
-             && cur_time >= global->stand_ignore_after_d) {
-      cur_time = global->stand_ignore_after_d;
+    else if (global->stand_ignore_after > 0
+             && cur_time >= global->stand_ignore_after) {
+      cur_time = global->stand_ignore_after;
       snprintf(comment, sizeof(comment), " [%s, frozen]",
                xml_unparse_date(cur_time));
     } else
@@ -10707,7 +10707,7 @@ is_problem_deadlined(serve_state_t cs,
       break;
     }
   }
-  if (!user_deadline) user_deadline = cs->probs[problem_id]->t_deadline;
+  if (!user_deadline) user_deadline = cs->probs[problem_id]->deadline;
   if (p_deadline) *p_deadline = user_deadline;
 
   if (!user_deadline) return 0;
@@ -10742,7 +10742,7 @@ html_problem_selection(serve_state_t cs,
     if (!(prob = cs->probs[i])) continue;
     if (!light_mode && prob->disable_submit_after_ok>0 && solved_flag[i])
       continue;
-    if (prob->t_start_date > 0 && cs->current_time < prob->t_start_date)
+    if (prob->start_date > 0 && cs->current_time < prob->start_date)
       continue;
     if (start_time <= 0) continue;
     //if (prob->disable_user_submit) continue;
@@ -10762,7 +10762,7 @@ html_problem_selection(serve_state_t cs,
         }
       }
       // if no user-specific deadline, try the problem deadline
-      if (!user_deadline) user_deadline = prob->t_deadline;
+      if (!user_deadline) user_deadline = prob->deadline;
       // if deadline is over, go to the next problem
       if (user_deadline && cs->current_time >= user_deadline) continue;
 
@@ -10837,7 +10837,7 @@ html_problem_selection_2(serve_state_t cs,
 
   for (i = 1; i <= cs->max_prob; i++) {
     if (!(prob = cs->probs[i])) continue;
-    if (prob->t_start_date > 0 && cs->current_time < prob->t_start_date)
+    if (prob->start_date > 0 && cs->current_time < prob->start_date)
       continue;
     if (start_time <= 0) continue;
 
@@ -10852,7 +10852,7 @@ html_problem_selection_2(serve_state_t cs,
       }
     }
     // if no user-specific deadline, try the problem deadline
-    if (!user_deadline) user_deadline = prob->t_deadline;
+    if (!user_deadline) user_deadline = prob->deadline;
     // if deadline is over, go to the next problem
     if (user_deadline && cs->current_time >= user_deadline) continue;
 
@@ -11092,8 +11092,8 @@ unpriv_page_header(FILE *fout,
           if (global->disable_clars) continue;
           if (start_time <= 0) continue;
           if (stop_time > 0
-              && (global->appeal_deadline_d <= 0
-                  || cs->current_time >= global->appeal_deadline_d))
+              && (global->appeal_deadline <= 0
+                  || cs->current_time >= global->appeal_deadline))
             continue;
           break;
         case NEW_SRV_ACTION_VIEW_CLARS:
@@ -11342,7 +11342,7 @@ get_problem_status(serve_state_t cs, int user_id,
     if (!(prob = cs->probs[prob_id])) continue;
 
     // the problem is completely disabled before its start_date
-    if (prob->t_start_date > 0 && prob->t_start_date > cs->current_time)
+    if (prob->start_date > 0 && prob->start_date > cs->current_time)
       continue;
 
     // the problem is completely disabled before requirements are met
@@ -11376,7 +11376,7 @@ get_problem_status(serve_state_t cs, int user_id,
           break;
         }
       }
-      if (user_deadline <= 0) user_deadline = prob->t_deadline;
+      if (user_deadline <= 0) user_deadline = prob->deadline;
       if (user_deadline > 0 && cs->current_time >= user_deadline)
         is_deadlined = 1;
     }
@@ -11927,7 +11927,7 @@ unpriv_main_page(FILE *fout,
       if (prob_id <= 0 || prob_id > cs->max_prob) continue;
       if (!(prob = cs->probs[prob_id])) continue;
       if (is_problem_deadlined(cs, prob_id, phr->login, 0)) continue;
-      if (prob->t_start_date > 0 && cs->current_time < prob->t_start_date)
+      if (prob->start_date > 0 && cs->current_time < prob->start_date)
         continue;
       if (prob->variant_num > 0
           && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
@@ -11969,8 +11969,8 @@ unpriv_main_page(FILE *fout,
     if (prob_id > 0 && !(prob = cs->probs[prob_id])) prob_id = 0;
     if (prob_id > 0 && is_problem_deadlined(cs, prob_id, phr->login, 0))
       prob_id = 0;
-    if (prob_id > 0 && prob->t_start_date > 0
-        && cs->current_time < prob->t_start_date)
+    if (prob_id > 0 && prob->start_date > 0
+        && cs->current_time < prob->start_date)
       prob_id = 0;
     //if (prob_id > 0 && prob->disable_user_submit > 0) prob_id = 0;
     if (prob_id > 0 && prob->variant_num > 0
@@ -11997,9 +11997,9 @@ unpriv_main_page(FILE *fout,
 
       dbuf[0] = 0;
       if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)
-          && prob->t_deadline > 0) {
+          && prob->deadline > 0) {
         snprintf(dbuf, sizeof(dbuf), "<h3>%s: %s</h3>",
-                 _("Problem deadline"), xml_unparse_date(prob->t_deadline));
+                 _("Problem deadline"), xml_unparse_date(prob->deadline));
       }
 
       bb[0] = 0;
@@ -12207,8 +12207,8 @@ unpriv_main_page(FILE *fout,
                 next_prob_id++;
                 for (; next_prob_id <= cs->max_prob; next_prob_id++) {
                   if (!(prob2 = cs->probs[next_prob_id])) continue;
-                  if (prob2->t_start_date > 0
-                      && prob2->t_start_date > cs->current_time) continue;
+                  if (prob2->start_date > 0
+                      && prob2->start_date > cs->current_time) continue;
                   break;
                 }
                 if (next_prob_id > cs->max_prob) next_prob_id = prob->id;
@@ -12230,8 +12230,8 @@ unpriv_main_page(FILE *fout,
                 next_prob_id++;
                 for (; next_prob_id <= cs->max_prob; next_prob_id++) {
                   if (!(prob2 = cs->probs[next_prob_id])) continue;
-                  if (prob2->t_start_date > 0
-                      && prob2->t_start_date > cs->current_time) continue;
+                  if (prob2->start_date > 0
+                      && prob2->start_date > cs->current_time) continue;
                   break;
                 }
                 if (next_prob_id > cs->max_prob) next_prob_id = prob->id;
@@ -12428,8 +12428,8 @@ unpriv_main_page(FILE *fout,
     }
     if (!global->disable_clars && !global->disable_team_clars
         && start_time > 0 && stop_time > 0
-        && global->appeal_deadline_d > 0
-        && cs->current_time < global->appeal_deadline_d) {
+        && global->appeal_deadline > 0
+        && cs->current_time < global->appeal_deadline) {
       fprintf(fout, "<%s>%s</%s>\n",
               cnts->team_head_style, _("Send an appeal"),
               cnts->team_head_style);
@@ -12762,7 +12762,7 @@ unpriv_xml_update_answer(
   if (serve_check_user_quota(cs, phr->user_id, run_size) < 0)
     FAIL(NEW_SRV_ERR_RUN_QUOTA_EXCEEDED);
   // problem submit start time
-  if (prob->t_start_date >= 0 && cs->current_time < prob->t_start_date)
+  if (prob->start_date >= 0 && cs->current_time < prob->start_date)
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
   // personal deadline
   if (prob->pd_total > 0) {
@@ -12775,7 +12775,7 @@ unpriv_xml_update_answer(
     }
   }
   // common problem deadline
-  if (user_deadline <= 0) user_deadline = prob->t_deadline;
+  if (user_deadline <= 0) user_deadline = prob->deadline;
   if (user_deadline > 0 && cs->current_time >= user_deadline)
     FAIL(NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
 
@@ -12901,7 +12901,7 @@ unpriv_get_file(
   if (stop_time > 0 && cs->current_time >= stop_time
       && prob->restricted_statement > 0)
     FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
-  if (prob->t_start_date > 0 && prob->t_start_date > cs->current_time)
+  if (prob->start_date > 0 && prob->start_date > cs->current_time)
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
       
   // personal deadline
@@ -12914,7 +12914,7 @@ unpriv_get_file(
       }
     }
   }
-  if (user_deadline <= 0) user_deadline = prob->t_deadline;
+  if (user_deadline <= 0) user_deadline = prob->deadline;
   if (user_deadline > 0 && cs->current_time >= user_deadline
       && prob->restricted_statement > 0)
     FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);

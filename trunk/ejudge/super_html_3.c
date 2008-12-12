@@ -523,11 +523,11 @@ super_html_edit_global_parameters(FILE *f,
   fprintf(f, "</td></tr></form>\n");
 
   if (!global->contest_time) {
-    //GLOBAL_PARAM(contest_finish_time, "s"),
+    //GLOBAL_PARAM(contest_finish_time, "t"),
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Contest end time:</td><td>",
             form_row_attrs[row ^= 1]);
-    html_date_select(f, global->contest_finish_time_d);
+    html_date_select(f, global->contest_finish_time);
     fprintf(f, "</td><td>");
     html_submit_button(f, SSERV_CMD_GLOB_CHANGE_CONTEST_FINISH_TIME, "Change");
     html_submit_button(f, SSERV_CMD_GLOB_CLEAR_CONTEST_FINISH_TIME, "Clear");
@@ -1192,11 +1192,11 @@ super_html_edit_global_parameters(FILE *f,
                              extra_args,
                              hidden_vars);
 
-    //GLOBAL_PARAM(stand_ignore_after, "s"),
+    //GLOBAL_PARAM(stand_ignore_after, "t"),
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Ignore submissions after:</td><td>",
             form_row_attrs[row ^= 1]);
-    html_date_select(f, global->stand_ignore_after_d);
+    html_date_select(f, global->stand_ignore_after);
     fprintf(f, "</td><td>");
     html_submit_button(f, SSERV_CMD_GLOB_CHANGE_STAND_IGNORE_AFTER, "Change");
     html_submit_button(f, SSERV_CMD_GLOB_CLEAR_STAND_IGNORE_AFTER, "Clear");
@@ -1807,11 +1807,11 @@ super_html_edit_global_parameters(FILE *f,
   fprintf(f, "</td></tr></form>");
 
   if (sstate->show_global_6) {
-    //GLOBAL_PARAM(appeal_deadline, "s"),
+    //GLOBAL_PARAM(appeal_deadline, "t"),
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Appeal deadline:</td><td>",
             form_row_attrs[row ^= 1]);
-    html_date_select(f, global->appeal_deadline_d);
+    html_date_select(f, global->appeal_deadline);
     fprintf(f, "</td><td>");
     html_submit_button(f, SSERV_CMD_GLOB_CHANGE_APPEAL_DEADLINE, "Change");
     html_submit_button(f, SSERV_CMD_GLOB_CLEAR_APPEAL_DEADLINE, "Clear");
@@ -2487,33 +2487,30 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     GLOB_CLEAR_STRING(stand_symlink_dir);
 
   case SSERV_CMD_GLOB_CHANGE_STAND_IGNORE_AFTER:
-    if (xml_parse_date("", 0, 0, param2, &global->stand_ignore_after_d) < 0)
+    if (xml_parse_date("", 0, 0, param2, &global->stand_ignore_after) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
     return 0;
 
   case SSERV_CMD_GLOB_CLEAR_STAND_IGNORE_AFTER:
-    global->stand_ignore_after_d = 0;
+    global->stand_ignore_after = 0;
     return 0;
 
   case SSERV_CMD_GLOB_CHANGE_APPEAL_DEADLINE:
-    if (xml_parse_date("", 0, 0, param2, &global->appeal_deadline_d) < 0)
+    if (xml_parse_date("", 0, 0, param2, &global->appeal_deadline) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
-    snprintf(global->appeal_deadline, sizeof(global->appeal_deadline),
-             "%s", xml_unparse_date(global->appeal_deadline_d));
     return 0;
 
   case SSERV_CMD_GLOB_CLEAR_APPEAL_DEADLINE:
-    global->appeal_deadline_d = 0;
-    global->appeal_deadline[0] = 0;
+    global->appeal_deadline = 0;
     return 0;
 
   case SSERV_CMD_GLOB_CHANGE_CONTEST_FINISH_TIME:
-    if (xml_parse_date("", 0, 0, param2, &global->contest_finish_time_d) < 0)
+    if (xml_parse_date("", 0, 0, param2, &global->contest_finish_time) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
     return 0;
 
   case SSERV_CMD_GLOB_CLEAR_CONTEST_FINISH_TIME:
-    global->contest_finish_time_d = 0;
+    global->contest_finish_time = 0;
     return 0;
 
   case SSERV_CMD_GLOB_CHANGE_ENABLE_STAND2:
@@ -3811,7 +3808,6 @@ super_html_print_problem(FILE *f,
   int flags, show_adv = 0, show_details = 0;;
   unsigned char num_buf[1024];
   struct section_global_data *global = sstate->global;
-  time_t tmp_date;
   unsigned char hbuf[1024];
   int row = 1, problem_type_flag = 0;
 
@@ -5554,26 +5550,23 @@ super_html_print_problem(FILE *f,
     fprintf(f, "</td></tr></form>\n");
   }
 
-  //PROBLEM_PARAM(start_date, "s"),
+  //PROBLEM_PARAM(start_date, "t"),
   if (!prob->abstract && show_adv && !global->contest_time) {
     html_start_form(f, 1, self_url, prob_hidden_vars);
-    if (!prob->start_date[0] || xml_parse_date(0,0,0,prob->start_date,&tmp_date) < 0)
-      tmp_date = 0;
     fprintf(f, "<tr%s><td>Accept start date:</td><td>",
             form_row_attrs[row ^= 1]);
-    html_date_select(f, tmp_date);
+    html_date_select(f, prob->start_date);
     fprintf(f, "</td><td>");
     html_submit_button(f, SSERV_CMD_PROB_CHANGE_START_DATE, "Change");
     html_submit_button(f, SSERV_CMD_PROB_CLEAR_START_DATE, "Clear");
     fprintf(f, "</td></tr></form>\n");
   }
-  //PROBLEM_PARAM(deadline, "s"),
+  //PROBLEM_PARAM(deadline, "t"),
   if (!prob->abstract && show_adv && !global->contest_time) {
     html_start_form(f, 1, self_url, prob_hidden_vars);
-    if (!prob->deadline[0] || xml_parse_date(0, 0, 0, prob->deadline, &tmp_date) < 0)
-      tmp_date = 0;
-    fprintf(f, "<tr%s><td>Accept deadline:</td><td>", form_row_attrs[row ^= 1]);
-    html_date_select(f, tmp_date);
+    fprintf(f, "<tr%s><td>Accept deadline:</td><td>",
+            form_row_attrs[row ^= 1]);
+    html_date_select(f, prob->deadline);
     fprintf(f, "</td><td>");
     html_submit_button(f, SSERV_CMD_PROB_CHANGE_DEADLINE, "Change");
     html_submit_button(f, SSERV_CMD_PROB_CLEAR_DEADLINE, "Clear");
@@ -5862,11 +5855,9 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   struct section_problem_data *prob;
   int i, n, val, mult;
   int *p_int;
-  time_t tmp_date;
-  unsigned char *p_str;
-  size_t str_size;
   char **tmp_env = 0;
   size_t *p_size, zval;
+  time_t *p_time;
 
   if (prob_id > 0) {
     if (prob_id >= sstate->prob_a || !sstate->probs[prob_id])
@@ -6457,23 +6448,22 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_START_DATE:
-    p_str = prob->start_date; str_size = sizeof(prob->start_date);
+    p_time = &prob->start_date;
   handle_date:;
-    if (xml_parse_date(0, 0, 0, param2, &tmp_date) < 0)
+    if (xml_parse_date(0, 0, 0, param2, p_time) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
-    snprintf(p_str, str_size, "%s", xml_unparse_date(tmp_date));
     return 0;
 
   case SSERV_CMD_PROB_CLEAR_START_DATE:
-    PROB_CLEAR_STRING(start_date);
+    prob->start_date = 0;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_DEADLINE:
-    p_str = prob->deadline; str_size = sizeof(prob->deadline);
+    p_time = &prob->deadline;
     goto handle_date;
 
   case SSERV_CMD_PROB_CLEAR_DEADLINE:
-    PROB_CLEAR_STRING(deadline);
+    prob->deadline = 0;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_VARIANT_NUM:
@@ -6965,16 +6955,6 @@ super_html_read_serve(FILE *flog,
     return -1;
   }
   */
-
-  if (global->stand_ignore_after[0]
-      && xml_parse_date("", 0, 0, global->stand_ignore_after,
-                        &global->stand_ignore_after_d) < 0)
-    return -1;
-
-  if (global->contest_finish_time[0]
-      && xml_parse_date("", 0, 0, global->contest_finish_time,
-                        &global->contest_finish_time_d) < 0)
-    return -1;
 
   prepare_set_global_defaults(global);
   if (global->stand2_file_name[0]) sstate->enable_stand2 = 1;
@@ -7550,7 +7530,7 @@ super_html_fix_serve(struct sid_state *sstate,
     xfree(s);
   }
 
-  global->stand_ignore_after_d = 0;
+  global->stand_ignore_after = 0;
 }
 
 static void

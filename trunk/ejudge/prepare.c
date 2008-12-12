@@ -106,10 +106,10 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(notify_clar_reply, "d"),
   GLOBAL_PARAM(notify_status_change, "d"),
 
-  GLOBAL_PARAM(stand_ignore_after, "s"),
-  GLOBAL_PARAM(appeal_deadline, "s"),
+  GLOBAL_PARAM(stand_ignore_after, "t"),
+  GLOBAL_PARAM(appeal_deadline, "t"),
   GLOBAL_PARAM(charset, "s"),
-  GLOBAL_PARAM(contest_finish_time, "s"),
+  GLOBAL_PARAM(contest_finish_time, "t"),
   GLOBAL_PARAM(standings_charset, "s"),
   GLOBAL_PARAM(stand2_charset, "s"),
   GLOBAL_PARAM(plog_charset, "s"),
@@ -392,8 +392,8 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(test_score_list, "s"),
   PROBLEM_PARAM(score_tests, "s"),
   PROBLEM_PARAM(test_sets, "x"),
-  PROBLEM_PARAM(deadline, "s"),
-  PROBLEM_PARAM(start_date, "s"),
+  PROBLEM_PARAM(deadline, "t"),
+  PROBLEM_PARAM(start_date, "t"),
   PROBLEM_PARAM(variant_num, "d"),
   PROBLEM_PARAM(date_penalty, "x"),
   PROBLEM_PARAM(disable_language, "x"),
@@ -2151,22 +2151,6 @@ set_defaults(serve_state_t state, int mode)
   }
 #endif
 
-  if (g->stand_ignore_after[0] &&
-      parse_date(g->stand_ignore_after, &g->stand_ignore_after_d) < 0) {
-    err("cannot parse stand_ignore_after parameter");
-    return -1;
-  }
-  if (g->appeal_deadline[0] &&
-      parse_date(g->appeal_deadline, &g->appeal_deadline_d) < 0) {
-    err("cannot parse appeal_deadline parameter");
-    return -1;
-  }
-  if (g->contest_finish_time[0] &&
-      parse_date(g->contest_finish_time, &g->contest_finish_time_d) < 0) {
-    err("cannot parse contest_finish_time parameter");
-    return -1;
-  }
-
 #define GLOBAL_INIT_NUM_FIELD(f,v) do { if (!g->f) { vinfo("global.%s set to %d", #f, v); g->f = v; } } while (0)
   /* limits (serve) */
   if (mode == PREPARE_SERVE) {
@@ -2933,13 +2917,6 @@ set_defaults(serve_state_t state, int mode)
     }
 
     if (mode == PREPARE_SERVE) {
-      if (prob->deadline[0]) {
-        if (parse_date(prob->deadline, &prob->t_deadline) < 0) {
-          err("invalid deadline specified for problem `%s'", prob->short_name);
-          return -1;
-        }
-        vinfo("problem.%s.deadline is %ld", ish, prob->t_deadline);
-      }
       if (prob->personal_deadline) {
         if (parse_personal_deadlines(prob->personal_deadline,
                                      &prob->pd_total, &prob->pd_infos) < 0) {
@@ -2948,13 +2925,6 @@ set_defaults(serve_state_t state, int mode)
       }
       if (prob->score_view) {
         if (parse_score_view(prob) < 0) return -1;
-      }
-      if (prob->start_date[0]) {
-        if (parse_date(prob->start_date, &prob->t_start_date) < 0) {
-          err("invalid start_date specified for problem `%s'",prob->short_name);
-          return -1;
-        }
-        vinfo("problem.%s.start_date is %ld", ish, prob->t_start_date);
       }
 
       if (parse_deadline_penalties(prob->date_penalty, &prob->dp_total,
@@ -5736,8 +5706,8 @@ static const struct section_problem_data prob_undef_values =
   .tgz_pat = { 1, 0 },
   .type = { 1, 0 },
   .test_sets = 0,
-  .deadline = { 1, 0 },
-  .start_date = { 1, 0 },
+  .deadline = -1,
+  .start_date = -1,
   .variant_num = -1,
   .date_penalty = 0,
   .disable_language = 0,
@@ -5848,8 +5818,8 @@ static const struct section_problem_data prob_default_values =
   .info_pat = "",
   .tgz_pat = "",
   .type = "",
-  .deadline = "",
-  .start_date = "",
+  .deadline = 0,
+  .start_date = 0,
   .variant_num = 0,
   .check_cmd = "",
   .valuer_cmd = "",
