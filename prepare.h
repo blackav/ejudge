@@ -145,19 +145,13 @@ struct section_global_data
   ejintbool_t enable_memory_limit_error;
 
   /** do not show submits after this time in the standings */
-  unsigned char stand_ignore_after[256];
-  /** the parsed `stand_ignore_after' */
-  time_t stand_ignore_after_d META_ATTRIB((meta_private));
+  time_t stand_ignore_after;
 
   /** the contest finish time (for unlimited contests) */
-  unsigned char contest_finish_time[256];
-  /** the parsed `contest_finish_time' */
-  time_t contest_finish_time_d META_ATTRIB((meta_private));
+  time_t contest_finish_time;
 
   /** the appelation deadline */
-  unsigned char appeal_deadline[256];
-  /** the parsed `appeal_deadline' */
-  time_t appeal_deadline_d META_ATTRIB((meta_private));
+  time_t appeal_deadline;
 
   /** INTERNAL: updated at the moment of fog? */
   int fog_standings_updated META_ATTRIB((meta_private));
@@ -857,13 +851,9 @@ struct section_problem_data
   struct testset_info *ts_infos META_ATTRIB((meta_private));
 
   /** deadline for sending this problem */
-  unsigned char deadline[64];
-  /** parsed `deadline' */
-  time_t t_deadline META_ATTRIB((meta_private));
+  time_t deadline;
   /** time for opening this problem for submission */
-  unsigned char start_date[64];
-  /** parsed `start_date' */
-  time_t t_start_date META_ATTRIB((meta_private));
+  time_t start_date;
   /** number of variants for this problem */
   int variant_num;
 

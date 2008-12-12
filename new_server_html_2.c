@@ -5410,7 +5410,7 @@ ns_write_user_problems_summary(
 
   for (prob_id = 1; prob_id <= cs->max_prob; prob_id++) {
     if (!(cur_prob = cs->probs[prob_id])) continue;
-    if (cur_prob->t_start_date && current_time < cur_prob->t_start_date)
+    if (cur_prob->start_date && current_time < cur_prob->start_date)
       continue;
     if (cur_prob->hidden > 0) continue;
     s = "";

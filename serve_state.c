@@ -191,7 +191,7 @@ serve_set_upsolving_mode(serve_state_t state)
   if (saved_stop_time <= 0) return;
 
   if (state->freeze_standings)
-    state->global->stand_ignore_after_d = saved_stop_time;
+    state->global->stand_ignore_after = saved_stop_time;
   if (state->disable_clars)
     state->global->disable_team_clars = 1;
   if (state->view_source)
@@ -400,7 +400,7 @@ serve_state_load_contest(
   while (1) {
     if (run_open(state->runlog_state, config, cnts, state->global, 0, 0,
                  state->global->contest_time, cnts->sched_time,
-                 state->global->contest_finish_time_d) < 0) goto failure;
+                 state->global->contest_finish_time) < 0) goto failure;
     if (!serve_collect_virtual_stop_events(state)) break;
     state->runlog_state = run_destroy(state->runlog_state);
     state->runlog_state = run_init(state->teamdb_state);

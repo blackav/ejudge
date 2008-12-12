@@ -17,6 +17,7 @@
 
 #include "parsecfg.h"
 #include "charsets.h"
+#include "xml_utils.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -1025,7 +1026,17 @@ copy_param(void *cfg, const struct config_parse_info *params,
     return -1;
   }
 
-  if (!strcmp(params[i].type, "z")) {
+  if (!strcmp(params[i].type, "t")) {
+    time_t v = -1, *ptr;
+    if (xml_parse_date(0, 0, 0, varvalue, &v) < 0) {
+      fprintf(stderr, "%d: date parameter expected for '%s'\n",
+              parsecfg_state.lineno - 1, varname);
+      return -1;
+    }
+    if (v < 0) v = 0;
+    ptr = (time_t*) ((char*) cfg + params[i].offset);
+    *ptr = v;
+  } else if (!strcmp(params[i].type, "z")) {
     int n, m;
     size_t v, *ptr;
 

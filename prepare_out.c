@@ -260,9 +260,9 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   fprintf(f, "\n");
 
   fprintf(f, "contest_time = %d\n", global->contest_time);
-  if (global->contest_finish_time_d > 0) {
+  if (global->contest_finish_time > 0) {
     fprintf(f, "contest_finish_time = \"%s\"\n",
-            xml_unparse_date(global->contest_finish_time_d));
+            xml_unparse_date(global->contest_finish_time));
   }
   ASSERT(global->score_system_val >= 0 && global->score_system_val < SCORE_TOTAL);
   fprintf(f, "score_system = %s\n", contest_types[global->score_system_val]);
@@ -340,8 +340,9 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "notify_clar_reply", global->notify_clar_reply);
   if (global->notify_status_change > 0)
     unparse_bool(f, "notify_status_change", global->notify_status_change);
-  if (global->appeal_deadline[0]) {
-    fprintf(f, "appeal_deadline = \"%s\"\n", global->appeal_deadline);
+  if (global->appeal_deadline > 0) {
+    fprintf(f, "appeal_deadline = \"%s\"\n",
+            xml_unparse_date(global->appeal_deadline));
   }
   fprintf(f, "\n");
 
@@ -407,9 +408,9 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   if (global->stand_symlink_dir[0])
     fprintf(f, "stand_symlink_dir = \"%s\"\n",
             c_armor(&sbuf, global->stand_symlink_dir));
-  if (global->stand_ignore_after_d > 0) {
+  if (global->stand_ignore_after > 0) {
     fprintf(f, "stand_ignore_after = \"%s\"\n",
-            xml_unparse_date(global->stand_ignore_after_d));
+            xml_unparse_date(global->stand_ignore_after));
   }
   if (global->ignore_success_time != DFLT_G_IGNORE_SUCCESS_TIME)
     unparse_bool(f, "ignore_success_time", global->ignore_success_time);
@@ -1302,10 +1303,10 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
       && ((prob->abstract && prob->stand_last_column) || !prob->abstract))
       unparse_bool(f, "stand_last_column", prob->stand_last_column);
 
-  if (!prob->abstract && prob->start_date[0])
-    fprintf(f, "start_date = \"%s\"\n", c_armor(&sbuf, prob->start_date));
-  if (!prob->abstract && prob->deadline[0])
-    fprintf(f, "deadline = \"%s\"\n", c_armor(&sbuf, prob->deadline));
+  if (!prob->abstract && prob->start_date > 0)
+    fprintf(f, "start_date = \"%s\"\n", xml_unparse_date(prob->start_date));
+  if (!prob->abstract && prob->deadline > 0)
+    fprintf(f, "deadline = \"%s\"\n", xml_unparse_date(prob->deadline));
   if (prob->stand_attr[0])
     fprintf(f, "stand_attr = \"%s\"\n", c_armor(&sbuf, prob->stand_attr));
   if (prob->source_header[0])
