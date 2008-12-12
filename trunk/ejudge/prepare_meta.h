@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/12/12 12:07:01
+// Generated 2008/12/12 15:08:21
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -29,11 +29,8 @@ enum
   CNTSGLOB_detect_violations,
   CNTSGLOB_enable_memory_limit_error,
   CNTSGLOB_stand_ignore_after,
-  CNTSGLOB_stand_ignore_after_d,
   CNTSGLOB_contest_finish_time,
-  CNTSGLOB_contest_finish_time_d,
   CNTSGLOB_appeal_deadline,
-  CNTSGLOB_appeal_deadline_d,
   CNTSGLOB_fog_standings_updated,
   CNTSGLOB_start_standings_updated,
   CNTSGLOB_unfog_standings_updated,
@@ -376,9 +373,7 @@ enum
   CNTSPROB_ts_total,
   CNTSPROB_ts_infos,
   CNTSPROB_deadline,
-  CNTSPROB_t_deadline,
   CNTSPROB_start_date,
-  CNTSPROB_t_start_date,
   CNTSPROB_variant_num,
   CNTSPROB_date_penalty,
   CNTSPROB_dp_total,
