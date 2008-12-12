@@ -3913,19 +3913,18 @@ super_html_print_problem(FILE *f,
   }
 
   //PROBLEM_PARAM(type, "s")
-  if (prob->type_val < -1 || prob->type_val >= PROB_TYPE_LAST)
-    prob->type_val = -1;
+  if (prob->type < -1 || prob->type >= PROB_TYPE_LAST)
+    prob->type = -1;
   extra_msg = 0;
-  problem_type_flag = prob->type_val;
+  problem_type_flag = prob->type;
   if (!prob->abstract) {
-    prepare_set_prob_value(CNTSPROB_type_val, &tmp_prob, sup_prob,
-                           sstate->global);
+    prepare_set_prob_value(CNTSPROB_type, &tmp_prob, sup_prob, sstate->global);
     snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-             problem_unparse_type(tmp_prob.type_val));
+             problem_unparse_type(tmp_prob.type));
     extra_msg = msg_buf;
-    problem_type_flag = tmp_prob.type_val;
+    problem_type_flag = tmp_prob.type;
   } else {
-    if (prob->type_val < 0) prob->type_val = 0;
+    if (prob->type < 0) prob->type = 0;
   }
   if (problem_type_flag < 0) problem_type_flag = 0;
   html_start_form(f, 1, self_url, prob_hidden_vars);
@@ -3934,12 +3933,12 @@ super_html_print_problem(FILE *f,
   fprintf(f, "<select name=\"param\">");
   if (!prob->abstract) {
     s = "";
-    if (prob->type_val < 0) s = " selected=\"1\"";
+    if (prob->type < 0) s = " selected=\"1\"";
     fprintf(f, "<option value=\"-1\"%s>Default</option>\n", s);
   }
   for (i = 0; i < PROB_TYPE_LAST; i++) {
     s = "";
-    if (prob->type_val == i) s = " selected=\"1\"";
+    if (prob->type == i) s = " selected=\"1\"";
     fprintf(f, "<option value=\"%d\"%s>%s</option>\n",
             i, s, problem_unparse_type(i));
   }
@@ -3982,8 +3981,8 @@ super_html_print_problem(FILE *f,
   }
 
   //PROBLEM_PARAM(manual_checking, "d")
-  if ((prob->abstract && prob->type_val)
-      || (!prob->abstract && tmp_prob.type_val > 0)) {
+  if ((prob->abstract && prob->type)
+      || (!prob->abstract && tmp_prob.type > 0)) {
     extra_msg = 0;
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_manual_checking,
@@ -4001,8 +4000,8 @@ super_html_print_problem(FILE *f,
   }
 
   //PROBLEM_PARAM(examinator_num, "d")
-  if ((prob->abstract && prob->type_val)
-      || (!prob->abstract && tmp_prob.type_val > 0)) {
+  if ((prob->abstract && prob->type)
+      || (!prob->abstract && tmp_prob.type > 0)) {
     extra_msg = "";
 
     if (!prob->abstract) {
@@ -4034,8 +4033,8 @@ super_html_print_problem(FILE *f,
   }
 
   //PROBLEM_PARAM(check_presentation, "d")
-  if ((prob->abstract && prob->type_val > 0 && prob->manual_checking > 0)
-      || (!prob->abstract && tmp_prob.type_val > 0 && tmp_prob.manual_checking > 0)) {
+  if ((prob->abstract && prob->type > 0 && prob->manual_checking > 0)
+      || (!prob->abstract && tmp_prob.type > 0 && tmp_prob.manual_checking > 0)) {
     extra_msg = 0;
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_check_presentation,
@@ -4172,8 +4171,8 @@ super_html_print_problem(FILE *f,
                              self_url, extra_args, prob_hidden_vars);
 
   //PROBLEM_PARAM(alternatives_file, "s"),
-  if (prob->abstract) i = prob->type_val;
-  else i = tmp_prob.type_val;
+  if (prob->abstract) i = prob->type;
+  else i = tmp_prob.type;
   if (i == PROB_TYPE_SELECT_MANY || i == PROB_TYPE_SELECT_ONE) {
     extra_msg = 0;
     if (prob->abstract && !prob->alternatives_file[0])
@@ -5237,7 +5236,7 @@ super_html_print_problem(FILE *f,
   }
 
   if (show_adv && sstate->global && sstate->global->problem_navigation
-      && prob->type_val == PROB_TYPE_OUTPUT_ONLY) {
+      && prob->type == PROB_TYPE_OUTPUT_ONLY) {
     //PROBLEM_PARAM(enable_text_form, "d"),
       extra_msg = "Undefined";
       if (!prob->abstract) {
@@ -5767,7 +5766,7 @@ super_html_prob_cmd(struct sid_state *sstate, int cmd,
     sstate->aprob_u++;
     snprintf(prob->short_name, sizeof(prob->short_name), "%s", param2);
     prob->abstract = 1;
-    prob->type_val = 0;
+    prob->type = 0;
     prob->manual_checking = 0;
     prob->examinator_num = 0;
     prob->check_presentation = 0;
@@ -5962,7 +5961,7 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
       return -SSERV_ERR_INVALID_PARAMETER;
     if (prob->abstract && val < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
-    prob->type_val = val;
+    prob->type = val;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_SCORING_CHECKER:
@@ -8084,10 +8083,10 @@ super_html_check_tests(FILE *f,
     }
 
     prepare_copy_problem(&tmp_prob, prob);
-    prepare_set_prob_value(CNTSPROB_type_val, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_type, &tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_xml_file,&tmp_prob,abstr, global);
 
-    if (tmp_prob.type_val == PROB_TYPE_SELECT_ONE && tmp_prob.xml_file[0]) {
+    if (tmp_prob.type == PROB_TYPE_SELECT_ONE && tmp_prob.xml_file[0]) {
       fprintf(flog, "Select-one XML-specified problem, skipping\n");
       continue;
     }
@@ -8168,7 +8167,7 @@ super_html_check_tests(FILE *f,
         fprintf(flog, "Error: no tests defined for the problem\n");
         goto check_failed;
       }
-      if (tmp_prob.type_val > 0 && total_tests != 1) {
+      if (tmp_prob.type > 0 && total_tests != 1) {
         fprintf(flog, "Error: output-only problem must have only one test\n");
         goto check_failed;
       }
@@ -8245,7 +8244,7 @@ super_html_check_tests(FILE *f,
           fprintf(flog, "Error: no tests defined for the problem\n");
           goto check_failed;
         }
-        if (tmp_prob.type_val > 0 && total_tests != 1) {
+        if (tmp_prob.type > 0 && total_tests != 1) {
           fprintf(flog, "Error: output-only problem must have only one test\n");
           goto check_failed;
         }

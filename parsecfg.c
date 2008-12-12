@@ -1026,7 +1026,14 @@ copy_param(void *cfg, const struct config_parse_info *params,
     return -1;
   }
 
-  if (!strcmp(params[i].type, "t")) {
+  if (!strcmp(params[i].type, "f")) {
+    void *ptr = (void*) ((char*) cfg + params[i].offset);
+    if (params[i].parse_func(varvalue, ptr, params[i].size) < 0) {
+      fprintf(stderr, "%d: invalid parameter value for '%s'\n",
+              parsecfg_state.lineno - 1, varname);
+      return -1;
+    }
+  } else if (!strcmp(params[i].type, "t")) {
     time_t v = -1, *ptr;
     if (xml_parse_date(0, 0, 0, varvalue, &v) < 0) {
       fprintf(stderr, "%d: date parameter expected for '%s'\n",

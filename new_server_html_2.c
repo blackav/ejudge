@@ -483,7 +483,7 @@ ns_write_priv_all_runs(FILE *f,
           && cs->probs[pe->prob_id]) {
         struct section_problem_data *cur_prob = cs->probs[pe->prob_id];
         int variant = 0;
-        prob_type = cur_prob->type_val;
+        prob_type = cur_prob->type;
         if (cur_prob->variant_num > 0) {
           variant = pe->variant;
           if (!variant) variant = find_variant(cs, pe->user_id, pe->prob_id, 0);
@@ -588,7 +588,7 @@ ns_write_priv_all_runs(FILE *f,
     for (i = 1; i <= cs->max_prob; i++) {
       if (!(prob = cs->probs[i])) continue;
       // check the problems that we ever can rejudge
-      if (prob->type_val > 0) {
+      if (prob->type > 0) {
         if (prob->manual_checking > 0 && prob->check_presentation <= 0)
           continue;
         if (prob->manual_checking <= 0 && prob->disable_testing > 0
@@ -1563,7 +1563,7 @@ ns_write_priv_source(const serve_state_t state,
   */
 
   fprintf(f, "<hr>\n");
-  if (prob && prob->type_val > 0 && info.mime_type > 0) {
+  if (prob && prob->type > 0 && info.mime_type > 0) {
     if(info.mime_type >= MIME_TYPE_IMAGE_FIRST
        && info.mime_type <= MIME_TYPE_IMAGE_LAST) {
       fprintf(f, "<p><img src=\"%s\" alt=\"submit image\"/></p>",
@@ -2126,7 +2126,7 @@ ns_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
     goto done;
   }
 
-  if (prb->type_val > 0) {
+  if (prb->type > 0) {
     ns_error(log_f, NEW_SRV_ERR_TEST_UNAVAILABLE);
     goto done;
   }
@@ -3597,7 +3597,7 @@ ns_upload_csv_runs(
     runs[row].prob_id = prob->id;
 
     lang = 0;
-    if (prob->type_val == PROB_TYPE_STANDARD) {
+    if (prob->type == PROB_TYPE_STANDARD) {
       if (col_ind[CSV_LANG] < 0) {
         fprintf(log_f, _("Language column is undefined\n"));
         goto cleanup;
@@ -4433,7 +4433,7 @@ get_source(
   FILE *tmp_f = 0;
 
   if (!prob) goto cleanup;
-  switch (prob->type_val) {
+  switch (prob->type) {
   case PROB_TYPE_STANDARD:
   case PROB_TYPE_OUTPUT_ONLY:
   case PROB_TYPE_TEXT_ANSWER:
@@ -4454,7 +4454,7 @@ get_source(
   s = src_txt;
   while (src_len > 0 && isspace(s[src_len])) src_len--;
   s[src_len] = 0;
-  if (prob->type_val == PROB_TYPE_SELECT_ONE) {
+  if (prob->type == PROB_TYPE_SELECT_ONE) {
     errno = 0;
     n = strtol(s, &eptr, 10);
     if (*eptr || errno) goto inv_answer_n;
@@ -4695,11 +4695,11 @@ ns_write_olympiads_user_runs(
   if (!cnts->exam_mode) fprintf(fout,"<th%s>%s</th>", cl, _("Size"));
   if (!filt_prob) fprintf(fout, "<th%s>%s</th>", cl, _("Problem"));
   if (global->disable_language <= 0
-      && (!filt_prob || filt_prob->type_val == PROB_TYPE_STANDARD))
+      && (!filt_prob || filt_prob->type == PROB_TYPE_STANDARD))
     fprintf(fout, "<th%s>%s</th>", cl, _("Programming language"));
   fprintf(fout, "<th%s>%s</th>", cl, _("Result"));
   if (global->disable_passed_tests <= 0
-      && (!filt_prob || filt_prob->type_val == PROB_TYPE_STANDARD))
+      && (!filt_prob || filt_prob->type == PROB_TYPE_STANDARD))
     fprintf(fout, "<th%s>%s</th>", cl, _("Tests passed"));
   if (!accepting_mode)
     fprintf(fout, "<th%s>%s</th>", cl, _("Score"));
@@ -4766,7 +4766,7 @@ ns_write_olympiads_user_runs(
     if (start_time > run_time) run_time = start_time;
     duration_str(global->show_astr_time, run_time, start_time, dur_str, 0);
 
-    if (prob && prob->type_val != PROB_TYPE_STANDARD) {
+    if (prob && prob->type != PROB_TYPE_STANDARD) {
       // there are check statuses that can never appear in output-only probs
       switch (re.status) {
       case RUN_COMPILE_ERR:
@@ -4790,7 +4790,7 @@ ns_write_olympiads_user_runs(
       case RUN_PARTIAL:
       case RUN_ACCEPTED:
         re.status = RUN_ACCEPTED;
-        if (prob && prob->type_val != PROB_TYPE_STANDARD) {
+        if (prob && prob->type != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         } else {
           //snprintf(tests_buf, sizeof(tests_buf), "%d", prob->tests_to_accept);
@@ -4812,7 +4812,7 @@ ns_write_olympiads_user_runs(
       case RUN_TIME_LIMIT_ERR:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
-        if (prob && prob->type_val != PROB_TYPE_STANDARD) {
+        if (prob && prob->type != PROB_TYPE_STANDARD) {
           // This is presentation error
           report_comment = ns_get_checker_comment(cs, i, 1);
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
@@ -4836,7 +4836,7 @@ ns_write_olympiads_user_runs(
     } else {
       switch (re.status) {
       case RUN_OK:
-        if (prob && prob->type_val != PROB_TYPE_STANDARD) {
+        if (prob && prob->type != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         } else {
           snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
@@ -4850,7 +4850,7 @@ ns_write_olympiads_user_runs(
         score_view_display(score_buf, sizeof(score_buf), prob, score);
         break;
       case RUN_PARTIAL:
-        if (prob && prob->type_val != PROB_TYPE_STANDARD) {
+        if (prob && prob->type != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         } else {
           snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
@@ -4879,7 +4879,7 @@ ns_write_olympiads_user_runs(
       case RUN_CHECK_FAILED:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
-        if (prob && prob->type_val != PROB_TYPE_STANDARD) {
+        if (prob && prob->type != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         } else {
           snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
@@ -4895,7 +4895,7 @@ ns_write_olympiads_user_runs(
     }
 
     run_status_str(re.status, stat_str, sizeof(stat_str),
-                   prob?prob->type_val:0, prob?prob->scoring_checker:0);
+                   prob?prob->type:0, prob?prob->scoring_checker:0);
 
     row_attr = "";
     if (run_latest) {
@@ -4920,11 +4920,11 @@ ns_write_olympiads_user_runs(
       fprintf(fout, "<td%s>%u</td>", cl, re.size);
     if (!filt_prob) fprintf(fout, "<td%s>%s</td>", cl, prob_name_ptr);
     if (global->disable_language <= 0
-        && (!filt_prob || filt_prob->type_val == PROB_TYPE_STANDARD))
+        && (!filt_prob || filt_prob->type == PROB_TYPE_STANDARD))
       fprintf(fout, "<td%s>%s</td>", cl, lang_name_ptr);
     fprintf(fout, "<td%s>%s</td>", cl, stat_str);
     if (global->disable_passed_tests <= 0
-        && (!filt_prob || filt_prob->type_val == PROB_TYPE_STANDARD))
+        && (!filt_prob || filt_prob->type == PROB_TYPE_STANDARD))
       fprintf(fout, "<td%s>%s</td>", cl, tests_buf);
     if (!accepting_mode)
       fprintf(fout, "<td%s>%s</td>", cl, score_buf);
@@ -5032,7 +5032,7 @@ ns_get_user_problems_summary(
     all_attempts[re.prob_id]++;
     if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       // OLYMPIAD contest in accepting mode
-      if (cur_prob->type_val != PROB_TYPE_STANDARD) {
+      if (cur_prob->type != PROB_TYPE_STANDARD) {
         switch (re.status) {
         case RUN_OK:
         case RUN_PARTIAL:
@@ -5461,11 +5461,11 @@ ns_write_user_problems_summary(
     if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       if (act_status == RUN_OK || act_status == RUN_PARTIAL
           || (act_status == RUN_WRONG_ANSWER_ERR
-              && cur_prob->type_val != PROB_TYPE_STANDARD))
+              && cur_prob->type != PROB_TYPE_STANDARD))
         act_status = RUN_ACCEPTED;
     }
     run_status_str(act_status, status_str, sizeof(status_str),
-                   cur_prob->type_val, cur_prob->scoring_checker);
+                   cur_prob->type, cur_prob->scoring_checker);
     fprintf(fout, "<td%s>%s</td>", cl, status_str);
 
     if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
@@ -5489,7 +5489,7 @@ ns_write_user_problems_summary(
       switch (re.status) {
       case RUN_OK:
       case RUN_PARTIAL:
-        if (cur_prob->type_val != PROB_TYPE_STANDARD) {
+        if (cur_prob->type != PROB_TYPE_STANDARD) {
           if (global->disable_passed_tests <= 0) {
             fprintf(fout, "<td%s>&nbsp;</td>", cl);
           }

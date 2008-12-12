@@ -217,7 +217,7 @@ write_html_run_status(const serve_state_t state, FILE *f,
   if (pe->prob_id > 0 && pe->prob_id <= state->max_prob)
     pr = state->probs[pe->prob_id];
   run_status_str(pe->status, status_str, sizeof(status_str),
-                 pr?pr->type_val:0, pr?pr->scoring_checker:0);
+                 pr?pr->type:0, pr?pr->scoring_checker:0);
   fprintf(f, "<td%s>%s</td>", cl, status_str);
 
   if (global->score_system_val == SCORE_KIROV
@@ -1494,7 +1494,7 @@ do_write_kirov_standings(
         att_num[up_ind]++;
         if (!full_sol[up_ind]) tot_att[pind]++;
         last_submit_run = k;
-      } else if (pe->status == RUN_WRONG_ANSWER_ERR && prob->type_val != 0) {
+      } else if (pe->status == RUN_WRONG_ANSWER_ERR && prob->type != 0) {
         if (!full_sol[up_ind]) sol_att[up_ind]++;
         score = calc_kirov_score(0, 0, pe, prob, att_num[up_ind],
                                  disq_num[up_ind], RUN_TOO_MANY, 0, 0);
@@ -4510,7 +4510,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
   }
 
-  if (prob->type_val > 0)
+  if (prob->type > 0)
     return write_xml_team_output_only_acc_report(f, txt, rid, re, prob,
                                                  action_vec, sid, self_url,
                                                  extra_args, table_class);

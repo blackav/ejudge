@@ -728,7 +728,7 @@ cmd_submit_run(
   }
 
   /* parse language */
-  if (prob->type_val == PROB_TYPE_STANDARD) {
+  if (prob->type == PROB_TYPE_STANDARD) {
     if (ns_cgi_param(phr, "lang", &s) <= 0)
       FAIL(NEW_SRV_ERR_INV_LANG_ID);
     for (i = 1; i <= cs->max_lang; i++)
@@ -746,7 +746,7 @@ cmd_submit_run(
   if (!run_size)
     FAIL(NEW_SRV_ERR_SUBMIT_EMPTY);
   // check for binaryness
-  switch (prob->type_val) {
+  switch (prob->type) {
   case PROB_TYPE_STANDARD:
     if (!lang->binary && strlen(run_text) != run_size) 
       FAIL(NEW_SRV_ERR_BINARY_FILE);
@@ -767,7 +767,7 @@ cmd_submit_run(
   }
 
   /* process special kind of answers */
-  switch (prob->type_val) {
+  switch (prob->type) {
   case PROB_TYPE_SELECT_ONE:
     run_text_2 = xstrdup(run_text);
     while (run_size > 0 && isspace(run_text_2[run_size - 1])) run_size--;
@@ -948,7 +948,7 @@ cmd_submit_run(
     FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
   }
 
-  if (prob->type_val == PROB_TYPE_STANDARD) {
+  if (prob->type == PROB_TYPE_STANDARD) {
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
         || lang->disable_auto_testing || lang->disable_testing) {

@@ -3,7 +3,7 @@
 #ifndef __PARSECFG_H__
 #define __PARSECFG_H__
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@ struct config_parse_info
   char          *type;
   unsigned long  offset;
   unsigned long  size;
+  int (*parse_func)(const unsigned char *str, void *ptr, size_t size);
 };
 
 struct config_section_info

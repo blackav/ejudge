@@ -383,15 +383,15 @@ user_report_generate(
         fprintf(log_f, "Invalid problem %d in run %d\n", re.prob_id, run_id);
         goto cleanup;
       }
-      if (prob->type_val == PROB_TYPE_OUTPUT_ONLY
-          || prob->type_val == PROB_TYPE_SELECT_MANY
-          || prob->type_val == PROB_TYPE_CUSTOM) {
+      if (prob->type == PROB_TYPE_OUTPUT_ONLY
+          || prob->type == PROB_TYPE_SELECT_MANY
+          || prob->type == PROB_TYPE_CUSTOM) {
         fprintf(log_f,"Problem type `%s' for problem %s is not yet supported\n",
-                problem_unparse_type(prob->type_val), prob->short_name);
+                problem_unparse_type(prob->type), prob->short_name);
         goto cleanup;
       }
       if (run_ids[re.prob_id] >= 0) continue;
-      if (prob->type_val != PROB_TYPE_STANDARD) {
+      if (prob->type != PROB_TYPE_STANDARD) {
         switch (re.status) {
         case RUN_OK:
         case RUN_WRONG_ANSWER_ERR:
@@ -447,7 +447,7 @@ user_report_generate(
       if (re.user_id != user_id) continue;
       prob = cs->probs[re.prob_id];
       if (run_ids[re.prob_id] >= 0) continue;
-      if (prob->type_val != PROB_TYPE_STANDARD) {
+      if (prob->type != PROB_TYPE_STANDARD) {
         switch (re.status) {
         case RUN_PRESENTATION_ERR:
           run_ids[re.prob_id] = run_id;
@@ -554,11 +554,11 @@ user_report_generate(
     if (f_id > cs->max_prob) break;
     l_id = f_id + 1;
     prob = cs->probs[f_id];
-    if (prob->type_val == PROB_TYPE_SHORT_ANSWER
-        || prob->type_val == PROB_TYPE_SELECT_ONE) {
-      for (; l_id <= cs->max_prob && (!cs->probs[l_id] || cs->probs[l_id]->type_val == prob->type_val); l_id++);
+    if (prob->type == PROB_TYPE_SHORT_ANSWER
+        || prob->type == PROB_TYPE_SELECT_ONE) {
+      for (; l_id <= cs->max_prob && (!cs->probs[l_id] || cs->probs[l_id]->type == prob->type); l_id++);
     }
-    switch (prob->type_val) {
+    switch (prob->type) {
     case PROB_TYPE_STANDARD:
       fprintf(fout, "\n\n\\vspace{0.5cm}\n\\noindent\\begin{tabular}{|p{2cm}|p{4cm}|p{3.5cm}|p{4.5cm}|}\n");
       fprintf(fout, "\\hline\n");
@@ -987,15 +987,15 @@ full_user_report_generate(
         fprintf(log_f, "Invalid problem %d in run %d\n", re.prob_id, run_id);
         goto cleanup;
       }
-      if (prob->type_val == PROB_TYPE_OUTPUT_ONLY
-          || prob->type_val == PROB_TYPE_SELECT_MANY
-          || prob->type_val == PROB_TYPE_CUSTOM) {
+      if (prob->type == PROB_TYPE_OUTPUT_ONLY
+          || prob->type == PROB_TYPE_SELECT_MANY
+          || prob->type == PROB_TYPE_CUSTOM) {
         fprintf(log_f,"Problem type `%s' for problem %s is not yet supported\n",
-                problem_unparse_type(prob->type_val), prob->short_name);
+                problem_unparse_type(prob->type), prob->short_name);
         goto cleanup;
       }
       if (run_ids[re.prob_id] >= 0) continue;
-      if (prob->type_val != PROB_TYPE_STANDARD) {
+      if (prob->type != PROB_TYPE_STANDARD) {
         switch (re.status) {
         case RUN_OK:
         case RUN_WRONG_ANSWER_ERR:
@@ -1051,7 +1051,7 @@ full_user_report_generate(
       if (re.user_id != user_id) continue;
       prob = cs->probs[re.prob_id];
       if (run_ids[re.prob_id] >= 0) continue;
-      if (prob->type_val != PROB_TYPE_STANDARD) {
+      if (prob->type != PROB_TYPE_STANDARD) {
         switch (re.status) {
         case RUN_PRESENTATION_ERR:
           run_ids[re.prob_id] = run_id;
@@ -1191,11 +1191,11 @@ full_user_report_generate(
     if (f_id > cs->max_prob) break;
     l_id = f_id + 1;
     prob = cs->probs[f_id];
-    if (prob->type_val == PROB_TYPE_SHORT_ANSWER
-        || prob->type_val == PROB_TYPE_SELECT_ONE) {
-      for (; l_id <= cs->max_prob && (!cs->probs[l_id] || cs->probs[l_id]->type_val == prob->type_val); l_id++);
+    if (prob->type == PROB_TYPE_SHORT_ANSWER
+        || prob->type == PROB_TYPE_SELECT_ONE) {
+      for (; l_id <= cs->max_prob && (!cs->probs[l_id] || cs->probs[l_id]->type == prob->type); l_id++);
     }
-    switch (prob->type_val) {
+    switch (prob->type) {
     case PROB_TYPE_STANDARD:
       prob = cs->probs[i = f_id];
       variant = 0;
@@ -2190,15 +2190,15 @@ ns_olympiad_final_user_report(
         fprintf(log_f, "Invalid problem %d in run %d\n", re.prob_id, run_id);
         goto cleanup;
       }
-      if (prob->type_val == PROB_TYPE_OUTPUT_ONLY
-          || prob->type_val == PROB_TYPE_SELECT_MANY
-          || prob->type_val == PROB_TYPE_CUSTOM) {
+      if (prob->type == PROB_TYPE_OUTPUT_ONLY
+          || prob->type == PROB_TYPE_SELECT_MANY
+          || prob->type == PROB_TYPE_CUSTOM) {
         fprintf(log_f,"Problem type `%s' for problem %s is not yet supported\n",
-                problem_unparse_type(prob->type_val), prob->short_name);
+                problem_unparse_type(prob->type), prob->short_name);
         goto cleanup;
       }
       if (run_ids[re.prob_id] >= 0) continue;
-      if (prob->type_val != PROB_TYPE_STANDARD) {
+      if (prob->type != PROB_TYPE_STANDARD) {
         switch (re.status) {
         case RUN_OK:
         case RUN_WRONG_ANSWER_ERR:
@@ -2254,7 +2254,7 @@ ns_olympiad_final_user_report(
       if (re.user_id != user_id) continue;
       prob = cs->probs[re.prob_id];
       if (run_ids[re.prob_id] >= 0) continue;
-      if (prob->type_val != PROB_TYPE_STANDARD) {
+      if (prob->type != PROB_TYPE_STANDARD) {
         switch (re.status) {
         case RUN_PRESENTATION_ERR:
           run_ids[re.prob_id] = run_id;
@@ -2362,11 +2362,11 @@ ns_olympiad_final_user_report(
     if (f_id > cs->max_prob) break;
     l_id = f_id + 1;
     prob = cs->probs[f_id];
-    if (prob->type_val == PROB_TYPE_SHORT_ANSWER
-        || prob->type_val == PROB_TYPE_SELECT_ONE) {
-      for (; l_id <= cs->max_prob && (!cs->probs[l_id] || cs->probs[l_id]->type_val == prob->type_val); l_id++);
+    if (prob->type == PROB_TYPE_SHORT_ANSWER
+        || prob->type == PROB_TYPE_SELECT_ONE) {
+      for (; l_id <= cs->max_prob && (!cs->probs[l_id] || cs->probs[l_id]->type == prob->type); l_id++);
     }
-    switch (prob->type_val) {
+    switch (prob->type) {
     case PROB_TYPE_STANDARD:
       fprintf(fout, "<br/><table class=\"b1\"><tr>%s%s</th>%s%s</th>%s%s</th>%s%s</th></tr>\n",
               th1, _("Problem"), th1, _("Language"), th1, _("Passed tests"),
@@ -3029,14 +3029,14 @@ problem_report_generate(
       fprintf(log_f, "User %d in run %d is banned, invisible, locked, or disqualified\n", user_id, run_id);
       continue;
     }
-    if (prob->type_val == PROB_TYPE_SELECT_MANY
-        || prob->type_val == PROB_TYPE_CUSTOM) {
+    if (prob->type == PROB_TYPE_SELECT_MANY
+        || prob->type == PROB_TYPE_CUSTOM) {
       fprintf(log_f,"Problem type `%s' for problem %s is not yet supported\n",
-              problem_unparse_type(prob->type_val), prob->short_name);
+              problem_unparse_type(prob->type), prob->short_name);
       goto cleanup;
     }
     if (run_ids[user_id] >= 0) continue;
-    if (prob->type_val != PROB_TYPE_STANDARD) {
+    if (prob->type != PROB_TYPE_STANDARD) {
       switch (re.status) {
       case RUN_OK:
       case RUN_WRONG_ANSWER_ERR:
@@ -3100,7 +3100,7 @@ problem_report_generate(
     }
 
     if (run_ids[user_id] >= 0) continue;
-    if (prob->type_val != PROB_TYPE_STANDARD) {
+    if (prob->type != PROB_TYPE_STANDARD) {
       switch (re.status) {
       case RUN_PRESENTATION_ERR:
         run_ids[user_id] = run_id;
@@ -3170,7 +3170,7 @@ problem_report_generate(
     fprintf(fout, "%s", bigbuf);
   }
 
-  switch (prob->type_val) {
+  switch (prob->type) {
   case PROB_TYPE_TEXT_ANSWER:
     for (i = 0; i < run_cnt; i++) {
       user_id = user_ind[i];

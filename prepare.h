@@ -668,8 +668,8 @@ struct section_problem_data
   int tester_id;
   /** is this an abstract problem specification */
   ejintbool_t abstract;
-  /** parsed `type' */
-  int type_val;
+  /** problem type */
+  int type;
   /** 1, if this problem is checked manually */
   ejintbool_t manual_checking;
   /** number of independent examinations */
@@ -835,8 +835,6 @@ struct section_problem_data
   unsigned char info_pat[32];
   /** printf pattern for the tgz archive pattern */
   unsigned char tgz_pat[32];
-  /** problem type */
-  unsigned char type[64];
 
   /** number of tests found */
   int ntests META_ATTRIB((meta_private));
