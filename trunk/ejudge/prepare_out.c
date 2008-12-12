@@ -1028,9 +1028,9 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     fprintf(f, "long_name = \"%s\"\n", c_armor(&sbuf, prob->long_name));
   }
 
-  if ((prob->abstract && prob->type_val > 0)
-      || (!prob->abstract && prob->type_val >= 0))
-    fprintf(f, "type = \"%s\"\n", problem_unparse_type(prob->type_val));
+  if ((prob->abstract && prob->type > 0)
+      || (!prob->abstract && prob->type >= 0))
+    fprintf(f, "type = \"%s\"\n", problem_unparse_type(prob->type));
   /*
   if ((prob->abstract && prob->output_only == 1)
       || (!prob->abstract && prob->output_only >= 0))
@@ -1841,7 +1841,7 @@ prepare_unparse_testers(
       abstr = aprobs[j];
     }
     prepare_copy_problem(&tmp_prob, probs[i]);
-    prepare_set_prob_value(CNTSPROB_type_val, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_type, &tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_scoring_checker, &tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_manual_checking, &tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_examinator_num, &tmp_prob, abstr, global);
@@ -1860,7 +1860,7 @@ prepare_unparse_testers(
     */
     //vm_sizes[i] = tmp_prob.max_vm_size;
     //stack_sizes[i] = tmp_prob.max_stack_size;
-    file_ios[i] = !tmp_prob.type_val && (!tmp_prob.use_stdin || !tmp_prob.use_stdout);
+    file_ios[i] = !tmp_prob.type && (!tmp_prob.use_stdin || !tmp_prob.use_stdout);
   }
 
   // collect memory and stack limits for the default tester

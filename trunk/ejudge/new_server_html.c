@@ -2457,7 +2457,7 @@ priv_submit_run(FILE *fout,
   }
   */
 
-  if (prob->type_val == PROB_TYPE_STANDARD) {
+  if (prob->type == PROB_TYPE_STANDARD) {
     if (ns_cgi_param(phr, "lang_id", &s) <= 0) {
       errmsg = "lang_id is not set or binary";
       goto invalid_param;
@@ -2473,7 +2473,7 @@ priv_submit_run(FILE *fout,
   }
 
   /* get the submission text */
-  switch (prob->type_val) {
+  switch (prob->type) {
   case PROB_TYPE_STANDARD:      // "file"
     if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)) {
       errmsg = "\"file\" parameter is not set";
@@ -2559,7 +2559,7 @@ priv_submit_run(FILE *fout,
     abort();
   }
 
-  switch (prob->type_val) {
+  switch (prob->type) {
   case PROB_TYPE_STANDARD:
     if (!lang->binary && strlen(run_text) != run_size) goto binary_submission;
     break;
@@ -2690,7 +2690,7 @@ priv_submit_run(FILE *fout,
     goto cleanup;
   }
 
-  if (prob->type_val == PROB_TYPE_STANDARD) {
+  if (prob->type == PROB_TYPE_STANDARD) {
     // automatically tested programs
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
@@ -3878,14 +3878,14 @@ priv_new_run(FILE *fout,
   }
 
   // check language, content-type, binariness and other stuff
-  if (prob->type_val == PROB_TYPE_STANDARD) {
+  if (prob->type == PROB_TYPE_STANDARD) {
     if (ns_cgi_param(phr, "language", &s) <= 0
         || sscanf(s, "%d%n", &lang_id, &n) != 1 || s[n]
         || lang_id <= 0 || lang_id > cs->max_lang
         || !(lang = cs->langs[lang_id]))
       FAIL(NEW_SRV_ERR_INV_LANG_ID);
   }
-  switch (prob->type_val) {
+  switch (prob->type) {
   case PROB_TYPE_STANDARD:      // "file"
   case PROB_TYPE_OUTPUT_ONLY:
   case PROB_TYPE_TEXT_ANSWER:
@@ -3899,7 +3899,7 @@ priv_new_run(FILE *fout,
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
   }
 
-  switch (prob->type_val) {
+  switch (prob->type) {
   case PROB_TYPE_STANDARD:
     if (!lang->binary && strlen(run_text) != run_size)
       FAIL(NEW_SRV_ERR_BINARY_FILE);
@@ -5100,7 +5100,7 @@ priv_download_source(FILE *fout,
   if (generic_read_file(&run_text, 0, &run_size, src_flags, 0, src_path, 0)<0)
     FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
 
-  if (prob->type_val > 0) {
+  if (prob->type > 0) {
     fprintf(fout, "Content-type: %s\n", mime_type_get_type(re.mime_type));
     if (!no_disp) {
       fprintf(fout, "Content-Disposition: attachment; filename=\"%06d%s\"\n",
@@ -7095,8 +7095,8 @@ priv_submit_page(
 
   /* update the alternatives */
   alternatives = 0;
-  if (prob && (prob->type_val == PROB_TYPE_SELECT_ONE
-               || prob->type_val == PROB_TYPE_SELECT_MANY)
+  if (prob && (prob->type == PROB_TYPE_SELECT_ONE
+               || prob->type == PROB_TYPE_SELECT_MANY)
       && prob->alternatives_file[0]) {
     if (prob->variant_num > 0 && variant > 0) {
       prepare_insert_variant_num(variant_stmt_file,
@@ -7115,7 +7115,7 @@ priv_submit_page(
   fprintf(fout, "<table%s>\n", cl);
 
   /* language selection */
-  if (!prob || !prob->type_val) {
+  if (!prob || !prob->type) {
     fprintf(fout, "<tr>");
     fprintf(fout, "<td%s>%s:</td>", cl, _("Language"));
     fprintf(fout, "<td%s><select name=\"lang_id\"><option value=\"\"></option>",
@@ -7130,10 +7130,10 @@ priv_submit_page(
   }
 
   /* solution/answer form */
-  if (!prob || !prob->type_val) {
+  if (!prob || !prob->type) {
     fprintf(fout, "<tr><td%s>%s</td><td%s><input type=\"file\" name=\"file\"/></td></tr>\n", cl, _("File"), cl);
    } else {
-    switch (prob->type_val) {
+    switch (prob->type) {
     case PROB_TYPE_OUTPUT_ONLY:
       if (prob->enable_text_form > 0) {
         fprintf(fout, "<tr><td colspan=\"2\"%s><textarea name=\"text_form\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n", cl);
@@ -7747,7 +7747,7 @@ priv_main_page(FILE *fout,
           fprintf(fout, "<big><font color=\"red\"><p>%s</p></font></big>\n",
                   _("The problem statement is not available"));
         } else {
-          if (prob->type_val == PROB_TYPE_CUSTOM) {
+          if (prob->type == PROB_TYPE_CUSTOM) {
             html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
             skip_start_form = 1;
           }
@@ -7755,8 +7755,8 @@ priv_main_page(FILE *fout,
         }
       }
       alternatives = 0;
-      if ((prob->type_val == PROB_TYPE_SELECT_ONE
-           || prob->type_val == PROB_TYPE_SELECT_MANY)
+      if ((prob->type == PROB_TYPE_SELECT_ONE
+           || prob->type == PROB_TYPE_SELECT_MANY)
           && prob->alternatives_file[0]) {
         if (variant > 0) {
           prepare_insert_variant_num(variant_stmt_file,
@@ -7781,7 +7781,7 @@ priv_main_page(FILE *fout,
         html_hidden(fout, "problem", "%d_%d", prob->id, variant);
       }
       fprintf(fout, "<table>\n");
-      if (!prob->type_val) {
+      if (!prob->type) {
         fprintf(fout, "<tr><td>%s:</td><td>", _("Language"));
         fprintf(fout, "<select name=\"lang_id\"><option value=\"\">\n");
         for (i = 1; i <= cs->max_lang; i++) {
@@ -7792,7 +7792,7 @@ priv_main_page(FILE *fout,
         fprintf(fout, "</select></td></tr>\n");
       }
 
-      switch (prob->type_val) {
+      switch (prob->type) {
       case PROB_TYPE_STANDARD:
       case PROB_TYPE_OUTPUT_ONLY:
         fprintf(fout, "<tr><td>%s</td><td><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
@@ -9122,7 +9122,7 @@ unpriv_submit_run(FILE *fout,
   }
 
   // "STANDARD" problems need programming language identifier
-  if (prob->type_val == PROB_TYPE_STANDARD) {
+  if (prob->type == PROB_TYPE_STANDARD) {
     if (ns_cgi_param(phr, "lang_id", &s) <= 0
         || sscanf(s, "%d%n", &lang_id, &n) != 1 || s[n]
         || lang_id <= 0 || lang_id > cs->max_lang
@@ -9132,7 +9132,7 @@ unpriv_submit_run(FILE *fout,
     }
   }
 
-  switch (prob->type_val) {
+  switch (prob->type) {
   case PROB_TYPE_STANDARD:      // "file"
     if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)) {
       ns_error(log_f, NEW_SRV_ERR_FILE_UNSPECIFIED);
@@ -9215,7 +9215,7 @@ unpriv_submit_run(FILE *fout,
     abort();
   }
 
-  switch (prob->type_val) {
+  switch (prob->type) {
   case PROB_TYPE_STANDARD:
     if (!lang->binary && strlen(run_text) != run_size) {
       ns_error(log_f, NEW_SRV_ERR_BINARY_FILE);
@@ -9426,7 +9426,7 @@ unpriv_submit_run(FILE *fout,
     }
   }
 
-  if (prob->type_val == PROB_TYPE_SELECT_ONE) {
+  if (prob->type == PROB_TYPE_SELECT_ONE) {
     // check that answer is valid
     tmp_run = (unsigned char*) alloca(run_size + 1);
     memcpy(tmp_run, run_text, run_size);
@@ -9481,7 +9481,7 @@ unpriv_submit_run(FILE *fout,
     goto done;
   }
 
-  if (prob->type_val == PROB_TYPE_STANDARD) {
+  if (prob->type == PROB_TYPE_STANDARD) {
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
         || lang->disable_auto_testing || lang->disable_testing
@@ -10122,7 +10122,7 @@ unpriv_view_source(FILE *fout,
     goto done;
   }
 
-  if (prob->type_val > 0) {
+  if (prob->type > 0) {
     fprintf(fout, "Content-type: %s\n", mime_type_get_type(re.mime_type));
     /*
     fprintf(fout, "Content-Disposition: attachment; filename=\"%06d%s\"\n",
@@ -10322,7 +10322,7 @@ unpriv_view_report(FILE *fout,
     goto done;
   }
 
-  if (accepting_mode && prob->type_val != PROB_TYPE_STANDARD) {
+  if (accepting_mode && prob->type != PROB_TYPE_STANDARD) {
     ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto done;
   }
@@ -10403,8 +10403,7 @@ unpriv_view_report(FILE *fout,
       write_xml_testing_report(fout, rep_start, phr->session_id,
                                phr->self_url, "", new_actions_vector,"b1","b0");
     } else {
-      write_xml_team_testing_report(cs, fout,
-                                    prob->type_val != PROB_TYPE_STANDARD,
+      write_xml_team_testing_report(cs, fout, prob->type != PROB_TYPE_STANDARD,
                                     rep_start, "b1");
     }
     break;
@@ -11453,7 +11452,7 @@ unparse_statement(
     fprintf(fout, "</h3>");
   }
 
-  if (prob->type_val == PROB_TYPE_STANDARD) {
+  if (prob->type == PROB_TYPE_STANDARD) {
     fprintf(fout, "<table class=\"b0\">\n");
     if (prob->use_stdin <= 0 && prob->input_file[0]) {
       write_row(fout, _("Input file name"), "<tt>%s</tt>",
@@ -11528,7 +11527,7 @@ unparse_statement(
     problem_xml_unparse_node(fout, pp->notes, vars, vals);
   }
 
-  if (prob->type_val == PROB_TYPE_SELECT_ONE) {
+  if (prob->type == PROB_TYPE_SELECT_ONE) {
     fprintf(fout, "<h3>%s</h3>", _("Choose an answer"));
   } else {
     fprintf(fout, "<h3>%s</h3>", _("Submit a solution"));
@@ -12082,7 +12081,7 @@ unpriv_main_page(FILE *fout,
           if (cnts->exam_mode) bb[0] = 0;
           fprintf(fout, "%s", bb);
           if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)
-              && prob->type_val == PROB_TYPE_CUSTOM) {
+              && prob->type == PROB_TYPE_CUSTOM) {
             html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
             skip_start_form = 1;
           }
@@ -12094,8 +12093,8 @@ unpriv_main_page(FILE *fout,
 
       if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)) {
         alternatives = 0;
-        if ((prob->type_val == PROB_TYPE_SELECT_ONE
-             || prob->type_val == PROB_TYPE_SELECT_MANY)
+        if ((prob->type == PROB_TYPE_SELECT_ONE
+             || prob->type == PROB_TYPE_SELECT_MANY)
             && prob->alternatives_file[0]) {
           if (variant > 0) {
             prepare_insert_variant_num(variant_stmt_file,
@@ -12117,7 +12116,7 @@ unpriv_main_page(FILE *fout,
         fprintf(fout, "<input type=\"hidden\" name=\"prob_id\" value=\"%d\"/>\n",
                 prob_id);
         fprintf(fout, "<table class=\"b0\">\n");
-        if (!prob->type_val) {
+        if (!prob->type) {
           for (i = 1; i <= cs->max_lang; i++) {
             if (!cs->langs[i] || cs->langs[i]->disabled
                 || (cs->langs[i]->insecure && global->secure_run)) continue;
@@ -12168,7 +12167,7 @@ unpriv_main_page(FILE *fout,
             fprintf(fout, "</select></td></tr>\n");
           }
         }
-        switch (prob->type_val) {
+        switch (prob->type) {
         case PROB_TYPE_STANDARD:
           fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
           break;
@@ -12263,9 +12262,9 @@ unpriv_main_page(FILE *fout,
           break;
         }
         if (cnts->exam_mode) {
-          if (prob->type_val != PROB_TYPE_SELECT_ONE) {
+          if (prob->type != PROB_TYPE_SELECT_ONE) {
             cc = "";
-            if (prob && (prob->type_val == PROB_TYPE_SELECT_MANY || prob->type_val == PROB_TYPE_SELECT_ONE)) cc = "<td class=\"b0\">&nbsp;</td>";
+            if (prob && (prob->type == PROB_TYPE_SELECT_MANY || prob->type == PROB_TYPE_SELECT_ONE)) cc = "<td class=\"b0\">&nbsp;</td>";
             fprintf(fout, "<tr>%s<td class=\"b0\">&nbsp;</td><td class=\"b0\">%s</td></tr></table></form>\n", cc,
                     ns_submit_button(bb, sizeof(bb), 0,
                                      NEW_SRV_ACTION_SUBMIT_RUN,
@@ -12282,7 +12281,7 @@ unpriv_main_page(FILE *fout,
 
       if (global->problem_navigation
           && !prob->disable_user_submit
-          && prob->type_val != PROB_TYPE_SELECT_ONE
+          && prob->type != PROB_TYPE_SELECT_ONE
           && all_attempts[prob->id]) {
         if (all_attempts[prob->id] <= 15) {
           fprintf(fout, "<%s>%s</%s>\n",
@@ -12727,7 +12726,7 @@ unpriv_xml_update_answer(
       || prob_id <= 0 || prob_id > cs->max_prob
       || !(prob = cs->probs[prob_id]))
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
-  if (prob->type_val != PROB_TYPE_SELECT_ONE)
+  if (prob->type != PROB_TYPE_SELECT_ONE)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size))
     FAIL(NEW_SRV_ERR_ANSWER_UNSPECIFIED);

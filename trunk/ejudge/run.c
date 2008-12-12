@@ -869,7 +869,7 @@ run_tests(struct section_tester_data *tst,
   cur_test = 1;
 
   /* at this point the executable is copied into the working dir */
-  if (!prb->type_val > 0 && tst->prepare_cmd[0]) {
+  if (!prb->type > 0 && tst->prepare_cmd[0]) {
     info("starting: %s %s", tst->prepare_cmd, new_name);
     tsk = task_New();
     task_AddArg(tsk, tst->prepare_cmd);
@@ -1007,7 +1007,7 @@ run_tests(struct section_tester_data *tst,
     pathmake(check_out_path, serve_state.global->run_work_dir, "/", "checkout", NULL);
     pathmake(score_out_path, serve_state.global->run_work_dir, "/", "scoreout", NULL);
 
-    if (prb->type_val > 0) {
+    if (prb->type > 0) {
       /* output-only problem */
       // copy exe_path -> output_path
       generic_copy_file(0, NULL, exe_path, "", 0, NULL, output_path, "");
@@ -2388,7 +2388,7 @@ check_config(void)
       continue;
     }
 
-    if (prb->type_val > 0) {
+    if (prb->type > 0) {
       // output-only problems have no input file
       if (prb->variant_num <= 0) {
         if (prb->use_corr) {

@@ -2182,7 +2182,7 @@ serve_rejudge_run(
     return;
   }
   if (prob->manual_checking > 0 || prob->disable_testing > 0) return;
-  if (prob->type_val > 0) {
+  if (prob->type > 0) {
     if (force_full_rejudge
         && state->global->score_system_val == SCORE_OLYMPIAD) {
       accepting_mode = 0;
@@ -2202,7 +2202,7 @@ serve_rejudge_run(
       px = prob->xml.p;
     }
 
-    if (prob->type_val == PROB_TYPE_SELECT_ONE && px && px->ans_num > 0) {
+    if (prob->type == PROB_TYPE_SELECT_ONE && px && px->ans_num > 0) {
       serve_judge_built_in_problem(state, cnts, run_id, 1 /* judge_id*/,
                                    variant, accepting_mode, &re, prob,
                                    px, user_id, ip, ssl_flag);
@@ -2239,7 +2239,7 @@ serve_rejudge_run(
 
   serve_compile_request(state, 0, -1, run_id, re.user_id,
                         state->langs[re.lang_id]->compile_id, re.locale_id,
-                        (prob->type_val > 0),
+                        (prob->type > 0),
                         state->langs[re.lang_id]->src_sfx,
                         state->langs[re.lang_id]->compiler_env,
                         accepting_mode, priority_adjustment, 1, prob, lang);
@@ -2367,7 +2367,7 @@ is_generally_rejudgable(const serve_state_t state,
   if (pe->prob_id <= 0 || pe->prob_id > state->max_prob
       || !(prob = state->probs[pe->prob_id])) return 0;
   if (prob->disable_testing) return 0;
-  if (prob->type_val == PROB_TYPE_STANDARD) {
+  if (prob->type == PROB_TYPE_STANDARD) {
     if (pe->lang_id <= 0 || pe->lang_id > state->max_lang
         || !(lang = state->langs[pe->lang_id])) return 0;
     if (lang->disable_testing) return 0;
@@ -2483,7 +2483,7 @@ serve_rejudge_problem(
     for (r = total_runs - 1; r >= 0; r--) {
       if (run_get_entry(state->runlog_state, r, &re) < 0) continue;
       if (!is_generally_rejudgable(state, &re, total_ids)) continue;
-      if (state->probs[re.prob_id]->type_val != PROB_TYPE_STANDARD) {
+      if (state->probs[re.prob_id]->type != PROB_TYPE_STANDARD) {
         if (!olympiad_output_only_rejudgeable_runs[re.status]) continue;
       } else {
         if (!olympiad_rejudgeable_runs[re.status]) continue;
@@ -2561,7 +2561,7 @@ serve_rejudge_all(
     for (r = total_runs - 1; r >= 0; r--) {
       if (run_get_entry(state->runlog_state, r, &re) < 0) continue;
       if (!is_generally_rejudgable(state, &re, total_ids)) continue;
-      if (state->probs[re.prob_id]->type_val != PROB_TYPE_STANDARD) {
+      if (state->probs[re.prob_id]->type != PROB_TYPE_STANDARD) {
         if (!olympiad_output_only_rejudgeable_runs[re.status]) continue;
       } else {
         if (!olympiad_rejudgeable_runs[re.status]) continue;
@@ -2956,7 +2956,7 @@ serve_judge_virtual_olympiad(
     if (!prob) continue;
     if (prob->disable_testing || prob->disable_auto_testing) continue;
     if (s != RUN_OK && s != RUN_PARTIAL && s != RUN_ACCEPTED
-        && (s != RUN_WRONG_ANSWER_ERR || prob->type_val == PROB_TYPE_STANDARD))
+        && (s != RUN_WRONG_ANSWER_ERR || prob->type == PROB_TYPE_STANDARD))
         continue;
     if (latest_runs[re.prob_id] < 0) latest_runs[re.prob_id] = run_id;
   }

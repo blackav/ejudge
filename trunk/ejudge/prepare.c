@@ -48,6 +48,9 @@
 #include <malloc.h>
 #endif
 
+static int
+do_problem_parse_type(const unsigned char *str, void *ptr, size_t size);
+
 #define XFSIZE(t, x) (sizeof(((t*) 0)->x))
 
 #define GLOBAL_OFFSET(x)   XOFFSET(struct section_global_data, x)
@@ -310,6 +313,7 @@ static const struct config_parse_info section_global_params[] =
 #define PROBLEM_OFFSET(x)   XOFFSET(struct section_problem_data, x)
 #define PROBLEM_SIZE(x)     XFSIZE(struct section_problem_data, x)
 #define PROBLEM_PARAM(x, t) { #x, t, PROBLEM_OFFSET(x), PROBLEM_SIZE(x) }
+#define PROBLEM_PARAM_2(x, f) { #x, "f", PROBLEM_OFFSET(x), PROBLEM_SIZE(x), f}
 #define PROBLEM_ALIAS(a, x, t) { #a, t, PROBLEM_OFFSET(x), PROBLEM_SIZE(x) }
 static const struct config_parse_info section_problem_params[] =
 {
@@ -367,10 +371,11 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(stand_last_column, "d"),
   PROBLEM_PARAM(score_multiplier, "d"),
   PROBLEM_PARAM(prev_runs_to_show, "d"),
-  PROBLEM_ALIAS(output_only, type_val, "d"),
+  PROBLEM_ALIAS(output_only, type, "d"),
   PROBLEM_PARAM(max_vm_size, "z"),
   PROBLEM_PARAM(max_stack_size, "z"),
   PROBLEM_PARAM(max_data_size, "z"),
+  PROBLEM_PARAM_2(type, do_problem_parse_type),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
@@ -416,7 +421,6 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(alternatives_file, "s"),
   PROBLEM_PARAM(plugin_file, "s"),
   PROBLEM_PARAM(xml_file, "s"),
-  PROBLEM_PARAM(type, "s"),
   PROBLEM_PARAM(alternative, "x"),
   PROBLEM_PARAM(stand_attr, "s"),
   PROBLEM_PARAM(source_header, "s"),
@@ -521,6 +525,15 @@ static const struct config_section_info params[] =
     0, tester_init_func, prepare_tester_free_func },
   { NULL, 0, NULL }
 };
+
+static int
+do_problem_parse_type(const unsigned char *str, void *ptr, size_t size)
+{
+  int val = problem_parse_type(str);
+  if (val < 0 || val >= PROB_TYPE_LAST) return -1;
+  *(int*) ptr = val;
+  return 0;
+}
 
 static int verbose_info_flag = 0;
 static void
@@ -687,7 +700,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
 {
   struct section_problem_data *p = (struct section_problem_data*) gp;
 
-  p->type_val = -1;
+  p->type = -1;
   p->scoring_checker = -1;
   p->manual_checking = -1;
   p->check_presentation = -1;
@@ -2769,13 +2782,6 @@ set_defaults(serve_state_t state, int mode)
       err("abstract problem %s cannot have a superproblem", ish);
       return -1;
     }
-    if (aprob->type[0]) {
-      aprob->type_val = problem_parse_type(aprob->type);
-      if (aprob->type_val < 0 || aprob->type_val >= PROB_TYPE_LAST) {
-        err("abstract problem %s has invalid type %s", ish, aprob->type);
-        return -1;
-      }
-    }
   }
 
   for (i = 1; i <= state->max_prob && mode != PREPARE_COMPILE; i++) {
@@ -2823,15 +2829,7 @@ set_defaults(serve_state_t state, int mode)
       if (!(prob->xml.p = problem_xml_parse(prob->xml_file))) return -1;
     }
 
-    if (prob->type[0]) {
-      prob->type_val = problem_parse_type(prob->type);
-      if (prob->type_val < 0 || prob->type_val > PROB_TYPE_LAST) {
-        err("problem %s type %s is invalid", prob->short_name, prob->type);
-        return -1;
-      }
-    }
-
-    prepare_set_prob_value(CNTSPROB_type_val, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_type, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_use_ac_not_ok, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_team_enable_rep_view, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_team_enable_ce_view, prob, aprob, g);
@@ -3529,7 +3527,7 @@ set_defaults(serve_state_t state, int mode)
   g->disable_passed_tests = 0;
   for (i = 1; i <= state->max_prob; i++) {
     if (!(prob = state->probs[i])) continue;
-    if (prob && prob->type_val == PROB_TYPE_STANDARD)
+    if (prob && prob->type == PROB_TYPE_STANDARD)
       break;
   }
   if (i > state->max_prob)
@@ -4429,13 +4427,7 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
 {
   if (!prob->abstract) return;
 
-  if (prob->type[0]) {
-    prob->type_val = problem_parse_type(prob->type);
-    if (prob->type_val < 0 || prob->type_val >= PROB_TYPE_LAST)
-      prob->type_val = -1;
-  }
-
-  if (prob->type_val < 0) prob->type_val = 0;
+  if (prob->type < 0) prob->type = 0;
   if (prob->scoring_checker < 0) prob->scoring_checker = 0;
   if (prob->scoring_checker < 0) prob->manual_checking = 0;
   if (prob->examinator_num < 0) prob->examinator_num = 0;
@@ -4525,12 +4517,6 @@ prepare_set_concr_problem_defaults(struct section_problem_data *prob,
                                    struct section_global_data *global)
 {
   if (prob->abstract) return;
-
-  if (prob->type[0]) {
-    prob->type_val = problem_parse_type(prob->type);
-    if (prob->type_val < 0 || prob->type_val >= PROB_TYPE_LAST)
-      prob->type_val = -1;
-  }
 }
 
 struct section_global_data *
@@ -4861,9 +4847,9 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
                        const struct section_global_data *global)
 {
   switch (field) {
-  case CNTSPROB_type_val:
-    if (out->type_val == -1 && abstr) out->type_val = abstr->type_val;
-    if (out->type_val == -1) out->type_val = 0;
+  case CNTSPROB_type:
+    if (out->type == -1 && abstr) out->type = abstr->type;
+    if (out->type == -1) out->type = 0;
     break;
 
   case CNTSPROB_scoring_checker:
@@ -5621,7 +5607,7 @@ static const struct section_problem_data prob_undef_values =
   .id = 0,
   .tester_id = 0,
   .abstract = 0,
-  .type_val = -1,
+  .type = -1,
   .manual_checking = -1,
   .examinator_num = -1,
   .check_presentation = -1,
@@ -5704,7 +5690,7 @@ static const struct section_problem_data prob_undef_values =
   .corr_pat = { 1, 0 },
   .info_pat = { 1, 0 },
   .tgz_pat = { 1, 0 },
-  .type = { 1, 0 },
+  .type = -1,
   .test_sets = 0,
   .deadline = -1,
   .start_date = -1,
@@ -5817,7 +5803,7 @@ static const struct section_problem_data prob_default_values =
   .corr_pat = "",
   .info_pat = "",
   .tgz_pat = "",
-  .type = "",
+  .type = 0,
   .deadline = 0,
   .start_date = 0,
   .variant_num = 0,
