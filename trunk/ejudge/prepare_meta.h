@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/12/12 15:08:21
+// Generated 2008/12/12 15:53:53
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -282,7 +282,7 @@ enum
   CNTSPROB_id = 1,
   CNTSPROB_tester_id,
   CNTSPROB_abstract,
-  CNTSPROB_type_val,
+  CNTSPROB_type,
   CNTSPROB_manual_checking,
   CNTSPROB_examinator_num,
   CNTSPROB_check_presentation,
@@ -365,7 +365,6 @@ enum
   CNTSPROB_corr_pat,
   CNTSPROB_info_pat,
   CNTSPROB_tgz_pat,
-  CNTSPROB_type,
   CNTSPROB_ntests,
   CNTSPROB_tscores,
   CNTSPROB_x_score_tests,
