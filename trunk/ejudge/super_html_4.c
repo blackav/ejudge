@@ -326,6 +326,38 @@ ss_html_int_select(
   fprintf(out_f, "</select>");
 }
 
+static void
+ss_html_int_select_undef(
+        FILE *out_f,
+        const unsigned char *id,
+        const unsigned char *class,
+        const unsigned char *name,
+        const unsigned char *onchange,
+        int is_undef,
+        int value,
+        int n,
+        const char **labels)
+{
+  int i;
+  const unsigned char *s = 0;
+
+  fprintf(out_f, "<select");
+  if (id) fprintf(out_f, " id=\"%s\"", id);
+  if (name) fprintf(out_f, " name=\"%s\"", name);
+  /* if (value) fprintf(out_f, " value=\"%s\"", value); */
+  if (onchange) fprintf(out_f, " onChange='%s'", onchange);
+  fprintf(out_f, ">");
+  s = "";
+  if (is_undef) s = " selected=\"1\"";
+  fprintf(out_f, "<option value=\"\"%s>%s</option>", s, "Undefined");
+  for (i = 0; i < n; ++i) {
+    s = "";
+    if (value == i) s = " selected=\"1\"";
+    fprintf(out_f, "<option value=\"%d\"%s>%s</option>", i, s, labels[i]);
+  }
+  fprintf(out_f, "</select>");
+}
+
 static const char fancy_priv_header[] =
 "Content-Type: %s; charset=%s\n"
 "Cache-Control: no-cache\n"
@@ -660,6 +692,7 @@ enum
   NS_SID_STATE,
   NS_GLOBAL,
   NS_LANGUAGE,
+  NS_PROBLEM,
 };
 
 #define push(val) do { if (sp >= ST_SIZE) goto stack_overflow; st[sp++] = (val); } while (0)
@@ -1213,6 +1246,18 @@ static const struct cnts_edit_info cnts_language_info[] =
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
 
+static const struct cnts_edit_info cnts_problem_info[] =
+{
+  { NS_PROBLEM, CNTSPROB_short_name, 'S', 1, 1, 1, 1, 0, "Short name", "Short name", 0 },
+  { NS_PROBLEM, CNTSPROB_long_name, 'S', 1, 1, 1, 1, 0, "Long name", "Long name", "Problem.abstract !" },
+  { NS_PROBLEM, CNTSPROB_super, 139, 0, 0, 0, 0, 0, "Base abstract problem", "Base abstract problem", "Problem.abstract !" },
+  { NS_PROBLEM, CNTSPROB_stand_name, 'S', 1, 1, 1, 1, 0, "Standings column title", "Standings column title", "Problem.abstract ! SidState.prob_show_adv &&" },
+  { NS_PROBLEM, CNTSPROB_stand_column, 140, 0, 0, 0, 0, 0, "Collate this problem with another one", "Collate this problem with another one", "Problem.abstract ! SidState.prob_show_adv &&" },
+  { NS_PROBLEM, CNTSPROB_internal_name, 'S', 1, 1, 1, 1, 0, "Internal name", "Internal name", "Problem.abstract ! SidState.prob_show_adv &&" },
+
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+};
+
 /**
    A page descripting structure.
  */
@@ -1223,6 +1268,7 @@ struct edit_page_desc
   const struct meta_methods *methods;
   int edit_op;
   int clear_op;
+  int (*is_undef_value)(const void *, int);
 };
 
 static const struct edit_page_desc edit_page_descs[] =
@@ -1233,7 +1279,10 @@ static const struct edit_page_desc edit_page_descs[] =
     SSERV_OP_EDIT_SERVE_GLOBAL_FIELD, SSERV_OP_CLEAR_SERVE_GLOBAL_FIELD },
   { "Language Settings", cnts_language_info, &cntslang_methods,
     SSERV_OP_SET_SERVE_LANG_FIELD, SSERV_OP_CLEAR_SERVE_LANG_FIELD },
-  { "Problem Settings", 0, 0, 0, 0 },
+  { "Problem Settings", cnts_problem_info, &cntsprob_methods,
+    SSERV_OP_SET_SERVE_PROB_FIELD, SSERV_OP_CLEAR_SERVE_PROB_FIELD,
+    cntsprob_is_undefined
+  },
   { 0, 0, 0, 0 },
 };
 
@@ -1345,9 +1394,12 @@ write_editing_rows(
         const struct contest_desc *ecnts,
         const struct section_global_data *global,
         const void *edit_ptr,
-        int item_id)
+        int item_id,
+        int need_dv_column,
+        int show_undef)
 {
-  int i, row = 1, j, k, is_empty, edit_op, clear_op;
+  int i, row = 1, j, k, is_empty, edit_op, clear_op, has_dv_column;
+  int is_undef;
   const struct cnts_edit_info *ce;
   const unsigned char *hint;
   const struct opcap_list_item *perms;
@@ -1361,6 +1413,8 @@ write_editing_rows(
     if (!hint) hint = ce->legend;
     edit_op = pg->edit_op;
     clear_op = pg->clear_op;
+    has_dv_column = 0;
+    is_undef = 0;
 
     if (ce->type == '-') {
       if (ce->guard_expr) {
@@ -1427,6 +1481,7 @@ write_editing_rows(
     }
 
     is_empty = 0;
+    if (show_undef) is_undef = pg->is_undef_value(edit_ptr, ce->field_id);
 
     fprintf(out_f, "<tr%s>", form_row_attrs[row ^= 1]);
     if (ce->type == 137) {
@@ -1456,13 +1511,13 @@ write_editing_rows(
 
     switch (ce->type) {
     case 'd':
-      {
+      if (!is_undef) {
         int *d_ptr = (int*) v_ptr;
         fprintf(out_f, "%d", *d_ptr);
       }
       break;
     case 'u':
-      {
+      if (!is_undef) {
         int *d_ptr = (int*) v_ptr;
         if (*d_ptr <= 0) {
           fprintf(out_f, "0");
@@ -1472,7 +1527,7 @@ write_editing_rows(
       }
       break;
     case 'U':
-      {
+      if (!is_undef) {
         int *d_ptr = (int*) v_ptr;
         int h, m, s;
         if (*d_ptr <= 0) {
@@ -1486,33 +1541,33 @@ write_editing_rows(
       }
       break;
     case 'z':
-      {
+      if (!is_undef) {
         ejintsize_t val = *(ejintsize_t*) v_ptr;
         fprintf(out_f, "%s", num_to_size_str(buf, sizeof(buf), val));
       }
       break;
     case 'Z':
-      {
+      if (!is_undef) {
         size_t val = *(size_t*) v_ptr;
         fprintf(out_f, "%s", size_t_to_size_str(buf, sizeof(buf), val));
       }
       break;
     case 137:
-      {
+      if (!is_undef) {
         unsigned char **s_ptr = (unsigned char**) v_ptr;
         if (*s_ptr) fprintf(out_f, "<pre>%s</pre>", ARMOR(*s_ptr));
         if (!*s_ptr) is_empty = 1;
       }
       break;
     case 's': case 'e':
-      {
+      if (!is_undef) {
         unsigned char **s_ptr = (unsigned char**) v_ptr;
         if (*s_ptr) fprintf(out_f, "%s", *s_ptr);
         if (!*s_ptr) is_empty = 1;
       }
       break;
     case 'S':
-      {
+      if (!is_undef) {
         unsigned char *s = (unsigned char *) v_ptr;
         fprintf(out_f, "%s", s);
         is_empty = 0;
@@ -1538,6 +1593,7 @@ write_editing_rows(
       {
         unsigned char *y_ptr = (unsigned char*) v_ptr;
         if (!ce->is_editable) {
+          if (is_undef) break;
           fprintf(out_f, "%s", *y_ptr?"Yes":"No");
           break;
         }
@@ -1546,8 +1602,13 @@ write_editing_rows(
         } else {
           snprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", edit_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
         }
-        ss_html_int_select(out_f, 0, 0, 0, jbuf, !!*y_ptr,
-                           2, (const char *[]) { "No", "Yes" });
+        if (show_undef) {
+          ss_html_int_select_undef(out_f, 0, 0, 0, jbuf, is_undef, !!*y_ptr,
+                             2, (const char *[]) { "No", "Yes" });
+        } else {
+          ss_html_int_select(out_f, 0, 0, 0, jbuf, !!*y_ptr,
+                             2, (const char *[]) { "No", "Yes" });
+        }
       }
       break;
     case 'Y':
@@ -1562,8 +1623,13 @@ write_editing_rows(
         } else {
           snprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", edit_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
         }
-        ss_html_int_select(out_f, 0, 0, 0, jbuf, !!*y_ptr,
-                           2, (const char *[]) { "No", "Yes" });
+        if (show_undef) {
+          ss_html_int_select_undef(out_f, 0, 0, 0, jbuf, is_undef, !!*y_ptr,
+                             2, (const char *[]) { "No", "Yes" });
+        } else {
+          ss_html_int_select(out_f, 0, 0, 0, jbuf, !!*y_ptr,
+                             2, (const char *[]) { "No", "Yes" });
+        }
       }
       break;
     case 't':
@@ -1577,7 +1643,7 @@ write_editing_rows(
         if (!tval) is_empty = 1;
         time_buf[0] = 0;
         date_buf[0] = 0;
-        if (tval) {
+        if (tval && !is_undef) {
           ptm = localtime(&tval);
           snprintf(time_buf, sizeof(time_buf), "%02d:%02d:%02d",
                    ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
@@ -1727,6 +1793,53 @@ write_editing_rows(
         if (!s || !*s) is_empty = 1;
       }
       break;
+    case 139:
+      // base problem dialog
+      {
+        const unsigned char *base_prob = (const unsigned char *) v_ptr;
+        const unsigned char *s;
+        const struct section_problem_data *ap;
+
+        snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
+        fprintf(out_f, "<select onChange='%s'>", jbuf);
+        fprintf(out_f, "<option></option>");
+        for (i = 0; i < phr->ss->aprob_u; ++i) {
+          if (!(ap = phr->ss->aprobs[i])) continue;
+          s = "";
+          if (!strcmp(ap->short_name, base_prob))
+            s = " selected=\"1\"";
+          fprintf(out_f, "<option%s>%s</option>", s, ARMOR(ap->short_name));
+        }
+        fprintf(out_f, "</select>");
+      }
+      break;
+    case 140:
+      // stand_column dialog
+      {
+        const unsigned char *st_prob = (const unsigned char *) v_ptr;
+        const unsigned char *s;
+        const struct section_problem_data *p;
+
+        snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
+        fprintf(out_f, "<select onChange='%s'>", jbuf);
+        fprintf(out_f, "<option></option>");
+        for (i = 0; i < phr->ss->prob_a; ++i) {
+          if (!(p = phr->ss->probs[i])) continue;
+          if (i == item_id) continue;
+          s = "";
+          if (!strcmp(p->short_name, st_prob))
+            s = " selected=\"1\"";
+          fprintf(out_f, "<option%s>%s</option>", s, ARMOR(p->short_name));
+          if (p->stand_name[0]) {
+            s = "";
+            if (!strcmp(p->stand_name, st_prob))
+              s = " selected=\"1\"";
+            fprintf(out_f, "<option%s>%s</option>", s, ARMOR(p->stand_name));
+          }
+        }
+        fprintf(out_f, "</select>");
+      }
+      break;
     default:
       abort();
     }
@@ -1769,6 +1882,15 @@ write_editing_rows(
       dojo_button(out_f, 0, "edit_page-16x16", "Edit contents", "%s", jbuf);
     }
     fprintf(out_f, "</td>");
+
+    if (need_dv_column && show_undef && is_undef) {
+      fprintf(out_f, "<td class=\"cnts_edit_legend\">(<i>%s</i>)</td>",
+              "Undefined");
+      has_dv_column = 1;
+    }
+    if (need_dv_column && !has_dv_column) {
+      fprintf(out_f, "<td class=\"cnts_edit_legend\">&nbsp;</td>");
+    }
 
     fprintf(out_f, "<tr>\n");
   }
@@ -1887,8 +2009,157 @@ write_languages_page(
     ASSERT(lang->compile_id == i);
 
     phr->ss->cur_lang = lang;
-    write_editing_rows(log_f, out_f, phr, pg, ecnts, global, lang, lang->id);
+    write_editing_rows(log_f, out_f, phr, pg, ecnts, global, lang, lang->id,
+                       0, 0);
   }
+
+ cleanup:
+  html_armor_free(&ab);
+}
+
+static void
+write_problem_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr,
+        int ind,
+        const struct section_problem_data *prob)
+{
+  int flags = 0;
+  struct sid_state *ss = phr->ss;
+  int show_details = 0;
+  int show_adv = 0;
+  int show_undef = 0;
+  int item_id;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const struct section_global_data *global = phr->ss->global;
+  const struct edit_page_desc *pg = &edit_page_descs[3];
+  const struct contest_desc *ecnts = phr->ss->edited_cnts;
+
+  if (!prob) return;
+
+  if (prob->abstract) {
+    flags = ss->aprob_flags[ind];
+    item_id = -ind - 1;
+    show_undef = 1;
+  } else {
+    flags = ss->prob_flags[ind];
+    item_id = ind;
+  }
+  if ((flags & SID_STATE_SHOW_HIDDEN)) show_details = 1;
+  if ((flags & SID_STATE_SHOW_CLOSED)) show_adv = 1;
+  ss->cur_prob = prob;
+  ss->prob_show_adv = show_adv;
+
+  fprintf(out_f,
+          "<tr%s><td class=\"cnts_edit_head\" colspan=\"2\">", head_row_attr);
+  if (prob->abstract) {
+    fprintf(out_f, "%s", ARMOR(prob->short_name));
+  } else {
+    if (!prob->short_name[0]) {
+      fprintf(out_f, "Problem %d", prob->id);
+    } else if (!prob->long_name[0]) {
+      fprintf(out_f, "%s", ARMOR(prob->short_name));
+    } else {
+      fprintf(out_f, "%s: ", ARMOR(prob->short_name));
+      fprintf(out_f, "%s", ARMOR(prob->long_name));
+    }
+  }
+  fprintf(out_f, "</td><td class=\"cnts_edit_head\">");
+  if (!show_details) {
+    dojo_button(out_f, 0, "zoom_in-16x16", "Show Problem",
+                "ssSetValue3(%d, %d, %d, %d, 1)",
+                SSERV_OP_SET_SID_STATE_PROB_FIELD, item_id,
+                SSSS_prob_flags, SSERV_OP_EDIT_CONTEST_PAGE_2);
+  } else {
+    dojo_button(out_f, 0, "zoom_out-16x16", "Hide Problem",
+                "ssSetValue3(%d, %d, %d, %d, 0)",
+                SSERV_OP_SET_SID_STATE_PROB_FIELD, item_id,
+                SSSS_prob_flags, SSERV_OP_EDIT_CONTEST_PAGE_2);
+  }
+  dojo_button(out_f, 0, "delete-16x16", "Delete Problem",
+              "ssFieldRequest2(%d, %d, %d, 0)",
+              SSERV_OP_DELETE_PROB, item_id,
+              SSERV_OP_EDIT_CONTEST_PAGE_2);
+  fprintf(out_f, "</td><td class=\"cnts_edit_head\">&nbsp;</td></tr>\n");
+  if (!show_details) goto cleanup;
+
+  fprintf(out_f, "<tr%s><td class=\"cnts_edit_legend\">%s</td><td class=\"cnts_edit_legend\" width=\"600px\">%d</td><td class=\"cnts_edit_clear\">",
+          form_row_attrs[1], "Id", prob->id);
+  if (!show_adv) {
+    dojo_button(out_f, 0, "zoom_in-16x16", "Show Extra Info",
+                "ssSetValue3(%d, %d, %d, %d, 1)",
+                SSERV_OP_SET_SID_STATE_PROB_FIELD, item_id,
+                SSSS_cur_prob, SSERV_OP_EDIT_CONTEST_PAGE_2);
+  } else {
+    dojo_button(out_f, 0, "zoom_out-16x16", "Hide Extra Info",
+                "ssSetValue3(%d, %d, %d, %d, 0)",
+                SSERV_OP_SET_SID_STATE_PROB_FIELD, item_id,
+                SSSS_cur_prob, SSERV_OP_EDIT_CONTEST_PAGE_2);
+  }
+  fprintf(out_f, "</td><td class=\"cnts_edit_legend\">&nbsp;</td></tr>\n");
+
+  write_editing_rows(log_f, out_f, phr, pg, ecnts, global, prob, item_id, 1,
+                     show_undef);
+
+ cleanup:
+  html_armor_free(&ab);
+}
+
+static void
+write_problems_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int i;
+
+  if (phr->ss->serve_parse_errors) {
+    fprintf(out_f, "<h2><tt>serve.cfg</tt> cannot be edited</h2>\n"
+            "<font color=\"red\"><pre>%s</pre></font>\n",
+            ARMOR(phr->ss->serve_parse_errors));
+    goto cleanup;
+  }
+
+  if (!phr->ss->global) {
+    fprintf(out_f, "<h2><tt>serve.cfg</tt> is not existant</h2>\n");
+    goto cleanup;
+  }
+
+  fprintf(out_f,
+          "<tr%s><td class=\"cnts_edit_head\" colspan=\"4\">%s</td></tr>\n",
+          head_row_attr, "Abstract problems");
+  for (i = 0; i < phr->ss->aprob_u; ++i) {
+    write_problem_page(log_f, out_f, phr, i, phr->ss->aprobs[i]);
+  }
+  fprintf(out_f,
+          "<tr%s><td class=\"cnts_edit_head\" colspan=\"4\">%s</td></tr>\n",
+          head_row_attr, "Create a new abstract problem");
+  fprintf(out_f, "<form id=\"createAbstrProb\"><tr%s><td class=\"cnts_edit_legend\">%s:</td><td class=\"cnts_edit_data\" width=\"600px\">", form_row_attrs[0], "Name");
+  fprintf(out_f, "<input type=\"text\" name=\"prob_name\" />");
+  fprintf(out_f, "</td><td class=\"cnts_edit_clear\">");
+  dojo_button(out_f, 0, "add-16x16", "Create",
+              "ssFormOp1(\"createAbstrProb\", %d, %d)",
+              SSERV_OP_CREATE_ABSTR_PROB, SSERV_OP_EDIT_CONTEST_PAGE_2);
+  fprintf(out_f, "</td><td class=\"cnts_edit_legend\">&nbsp;</td></tr>\n");
+
+  fprintf(out_f,
+          "<tr%s><td class=\"cnts_edit_head\" colspan=\"4\">%s</td></tr>\n",
+          head_row_attr, "Concrete problems");
+  for (i = 0; i < phr->ss->prob_a; ++i) {
+    write_problem_page(log_f, out_f, phr, i, phr->ss->probs[i]);
+  }
+  fprintf(out_f,
+          "<tr%s><td class=\"cnts_edit_head\" colspan=\"4\">%s</td></tr>\n",
+          head_row_attr, "Create a new concrete problem");
+  fprintf(out_f, "<form id=\"createConcrProb\"><tr%s><td class=\"cnts_edit_legend\">%s:</td><td class=\"cnts_edit_data\" width=\"600px\">", form_row_attrs[0], "Id (optional)");
+  fprintf(out_f, "<input type=\"text\" name=\"prob_id\" />");
+  fprintf(out_f, "</td><td class=\"cnts_edit_clear\">");
+  dojo_button(out_f, 0, "add-16x16", "Create",
+              "ssFormOp1(\"createAbstrProb\", %d, %d)",
+              SSERV_OP_CREATE_CONCRETE_PROB, SSERV_OP_EDIT_CONTEST_PAGE_2);
+  fprintf(out_f, "</td><td class=\"cnts_edit_legend\">&nbsp;</td></tr>\n");
 
  cleanup:
   html_armor_free(&ab);
@@ -1908,7 +2179,7 @@ contest_xml_page(
   const struct section_global_data *global = 0;
   void *edit_ptr = 0;
 
-  if (ss_cgi_param_int(phr, "page", &page) < 0 || page < 0 || page > 2)
+  if (ss_cgi_param_int(phr, "page", &page) < 0 || page < 0 || page > 3)
     page = phr->ss->edit_page;
   phr->ss->edit_page = page;
   pg = &edit_page_descs[page];
@@ -1948,8 +2219,12 @@ contest_xml_page(
   case 2:                       /* languages */
     write_languages_page(log_f, out_f, phr);
     break;
+  case 3:
+    write_problems_page(log_f, out_f, phr);
+    break;
   default:
-    write_editing_rows(log_f, out_f, phr, pg, ecnts, global, edit_ptr, -1);
+    write_editing_rows(log_f, out_f, phr, pg, ecnts, global, edit_ptr, -1, 0,
+                       0);
   }
   fprintf(out_f, "</table>\n");
   fprintf(out_f, "</div>\n");
@@ -5290,6 +5565,62 @@ cmd_op_serve_lang_update_versions(
   return retval;
 }
 
+static int
+cmd_op_set_sid_state_prob_field(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int f_id = -1, prob_id = 0, value = -1;
+  int *p_flags = 0;
+
+  phr->json_reply = 1;
+
+  if (!phr->ss->edited_cnts || !phr->ss->global)
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  if (ss_cgi_param_int(phr, "item_id", &prob_id) < 0)
+    FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id < 0) {
+    prob_id = -prob_id - 1;
+    if (prob_id >= phr->ss->aprob_u) FAIL(S_ERR_INV_PROB_ID);
+    if (!phr->ss->aprobs[prob_id]) FAIL(S_ERR_INV_PROB_ID);
+    p_flags = &phr->ss->aprob_flags[prob_id];
+  } else {
+    if (prob_id <= 0 || prob_id >= phr->ss->prob_a) FAIL(S_ERR_INV_PROB_ID);
+    if (!phr->ss->probs[prob_id]) FAIL(S_ERR_INV_PROB_ID);
+    p_flags = &phr->ss->prob_flags[prob_id];
+  }
+  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0)
+    FAIL(S_ERR_INV_FIELD_ID);
+  if (ss_cgi_param_int(phr, "value", &value) < 0 || value < 0 || value > 1)
+    FAIL(S_ERR_INV_VALUE);
+
+  switch (f_id) {
+  case SSSS_prob_flags:         /* view details */
+    if (value) {
+      *p_flags |= SID_STATE_SHOW_HIDDEN;
+    } else {
+      *p_flags &= ~SID_STATE_SHOW_HIDDEN;
+    }
+    break;
+  case SSSS_cur_prob:           /* view advanced details */
+    if (value) {
+      *p_flags |= SID_STATE_SHOW_CLOSED;
+    } else {
+      *p_flags &= ~SID_STATE_SHOW_CLOSED;
+    }
+    break;
+  default:
+    FAIL(S_ERR_INV_FIELD_ID);
+  }
+
+  retval = 1;
+
+ cleanup:
+  return retval;
+}
+
 static handler_func_t op_handlers[SSERV_OP_LAST] =
 {
   [SSERV_OP_VIEW_CNTS_DETAILS] = cmd_cnts_details,
@@ -5347,6 +5678,10 @@ static handler_func_t op_handlers[SSERV_OP_LAST] =
   [SSERV_OP_EDIT_SERVE_LANG_FIELD_DETAIL_PAGE] = cmd_op_edit_serve_lang_field_detail_page,
   [SSERV_OP_EDIT_SERVE_LANG_FIELD_DETAIL] = cmd_op_edit_serve_lang_field_detail,
   [SSERV_OP_SERVE_LANG_UPDATE_VERSIONS] = cmd_op_serve_lang_update_versions,
+  [SSERV_OP_CREATE_ABSTR_PROB] = 0,
+  [SSERV_OP_CREATE_CONCRETE_PROB] = 0,
+  [SSERV_OP_DELETE_PROB] = 0,
+  [SSERV_OP_SET_SID_STATE_PROB_FIELD] = cmd_op_set_sid_state_prob_field,
 };
 
 static int

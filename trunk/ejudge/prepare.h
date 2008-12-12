@@ -1208,4 +1208,9 @@ lang_config_configure(
         int max_lang,
         struct section_language_data **langs);
 
+int
+cntsprob_is_undefined(
+        const void *prob,
+        int f_id);
+
 #endif /* __PREPARE_H__ */
