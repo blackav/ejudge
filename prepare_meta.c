@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/12/12 12:07:01
+// Generated 2008/12/12 15:08:21
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -33,12 +33,9 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_secure_run] = { CNTSGLOB_secure_run, 'B', XSIZE(struct section_global_data, secure_run), "secure_run", XOFFSET(struct section_global_data, secure_run) },
   [CNTSGLOB_detect_violations] = { CNTSGLOB_detect_violations, 'B', XSIZE(struct section_global_data, detect_violations), "detect_violations", XOFFSET(struct section_global_data, detect_violations) },
   [CNTSGLOB_enable_memory_limit_error] = { CNTSGLOB_enable_memory_limit_error, 'B', XSIZE(struct section_global_data, enable_memory_limit_error), "enable_memory_limit_error", XOFFSET(struct section_global_data, enable_memory_limit_error) },
-  [CNTSGLOB_stand_ignore_after] = { CNTSGLOB_stand_ignore_after, 'S', XSIZE(struct section_global_data, stand_ignore_after), "stand_ignore_after", XOFFSET(struct section_global_data, stand_ignore_after) },
-  [CNTSGLOB_stand_ignore_after_d] = { CNTSGLOB_stand_ignore_after_d, 't', XSIZE(struct section_global_data, stand_ignore_after_d), NULL, XOFFSET(struct section_global_data, stand_ignore_after_d) },
-  [CNTSGLOB_contest_finish_time] = { CNTSGLOB_contest_finish_time, 'S', XSIZE(struct section_global_data, contest_finish_time), "contest_finish_time", XOFFSET(struct section_global_data, contest_finish_time) },
-  [CNTSGLOB_contest_finish_time_d] = { CNTSGLOB_contest_finish_time_d, 't', XSIZE(struct section_global_data, contest_finish_time_d), NULL, XOFFSET(struct section_global_data, contest_finish_time_d) },
-  [CNTSGLOB_appeal_deadline] = { CNTSGLOB_appeal_deadline, 'S', XSIZE(struct section_global_data, appeal_deadline), "appeal_deadline", XOFFSET(struct section_global_data, appeal_deadline) },
-  [CNTSGLOB_appeal_deadline_d] = { CNTSGLOB_appeal_deadline_d, 't', XSIZE(struct section_global_data, appeal_deadline_d), NULL, XOFFSET(struct section_global_data, appeal_deadline_d) },
+  [CNTSGLOB_stand_ignore_after] = { CNTSGLOB_stand_ignore_after, 't', XSIZE(struct section_global_data, stand_ignore_after), "stand_ignore_after", XOFFSET(struct section_global_data, stand_ignore_after) },
+  [CNTSGLOB_contest_finish_time] = { CNTSGLOB_contest_finish_time, 't', XSIZE(struct section_global_data, contest_finish_time), "contest_finish_time", XOFFSET(struct section_global_data, contest_finish_time) },
+  [CNTSGLOB_appeal_deadline] = { CNTSGLOB_appeal_deadline, 't', XSIZE(struct section_global_data, appeal_deadline), "appeal_deadline", XOFFSET(struct section_global_data, appeal_deadline) },
   [CNTSGLOB_fog_standings_updated] = { CNTSGLOB_fog_standings_updated, 'i', XSIZE(struct section_global_data, fog_standings_updated), NULL, XOFFSET(struct section_global_data, fog_standings_updated) },
   [CNTSGLOB_start_standings_updated] = { CNTSGLOB_start_standings_updated, 'i', XSIZE(struct section_global_data, start_standings_updated), NULL, XOFFSET(struct section_global_data, start_standings_updated) },
   [CNTSGLOB_unfog_standings_updated] = { CNTSGLOB_unfog_standings_updated, 'i', XSIZE(struct section_global_data, unfog_standings_updated), NULL, XOFFSET(struct section_global_data, unfog_standings_updated) },
@@ -413,10 +410,8 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_test_sets] = { CNTSPROB_test_sets, 'x', XSIZE(struct section_problem_data, test_sets), "test_sets", XOFFSET(struct section_problem_data, test_sets) },
   [CNTSPROB_ts_total] = { CNTSPROB_ts_total, 'i', XSIZE(struct section_problem_data, ts_total), NULL, XOFFSET(struct section_problem_data, ts_total) },
   [CNTSPROB_ts_infos] = { CNTSPROB_ts_infos, '?', XSIZE(struct section_problem_data, ts_infos), NULL, XOFFSET(struct section_problem_data, ts_infos) },
-  [CNTSPROB_deadline] = { CNTSPROB_deadline, 'S', XSIZE(struct section_problem_data, deadline), "deadline", XOFFSET(struct section_problem_data, deadline) },
-  [CNTSPROB_t_deadline] = { CNTSPROB_t_deadline, 't', XSIZE(struct section_problem_data, t_deadline), NULL, XOFFSET(struct section_problem_data, t_deadline) },
-  [CNTSPROB_start_date] = { CNTSPROB_start_date, 'S', XSIZE(struct section_problem_data, start_date), "start_date", XOFFSET(struct section_problem_data, start_date) },
-  [CNTSPROB_t_start_date] = { CNTSPROB_t_start_date, 't', XSIZE(struct section_problem_data, t_start_date), NULL, XOFFSET(struct section_problem_data, t_start_date) },
+  [CNTSPROB_deadline] = { CNTSPROB_deadline, 't', XSIZE(struct section_problem_data, deadline), "deadline", XOFFSET(struct section_problem_data, deadline) },
+  [CNTSPROB_start_date] = { CNTSPROB_start_date, 't', XSIZE(struct section_problem_data, start_date), "start_date", XOFFSET(struct section_problem_data, start_date) },
   [CNTSPROB_variant_num] = { CNTSPROB_variant_num, 'i', XSIZE(struct section_problem_data, variant_num), "variant_num", XOFFSET(struct section_problem_data, variant_num) },
   [CNTSPROB_date_penalty] = { CNTSPROB_date_penalty, 'x', XSIZE(struct section_problem_data, date_penalty), "date_penalty", XOFFSET(struct section_problem_data, date_penalty) },
   [CNTSPROB_dp_total] = { CNTSPROB_dp_total, 'i', XSIZE(struct section_problem_data, dp_total), NULL, XOFFSET(struct section_problem_data, dp_total) },
