@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/12/12 15:08:21
+// Generated 2008/12/12 15:53:53
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -320,7 +320,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_id] = { CNTSPROB_id, 'i', XSIZE(struct section_problem_data, id), "id", XOFFSET(struct section_problem_data, id) },
   [CNTSPROB_tester_id] = { CNTSPROB_tester_id, 'i', XSIZE(struct section_problem_data, tester_id), "tester_id", XOFFSET(struct section_problem_data, tester_id) },
   [CNTSPROB_abstract] = { CNTSPROB_abstract, 'B', XSIZE(struct section_problem_data, abstract), "abstract", XOFFSET(struct section_problem_data, abstract) },
-  [CNTSPROB_type_val] = { CNTSPROB_type_val, 'i', XSIZE(struct section_problem_data, type_val), "type_val", XOFFSET(struct section_problem_data, type_val) },
+  [CNTSPROB_type] = { CNTSPROB_type, 'i', XSIZE(struct section_problem_data, type), "type", XOFFSET(struct section_problem_data, type) },
   [CNTSPROB_manual_checking] = { CNTSPROB_manual_checking, 'B', XSIZE(struct section_problem_data, manual_checking), "manual_checking", XOFFSET(struct section_problem_data, manual_checking) },
   [CNTSPROB_examinator_num] = { CNTSPROB_examinator_num, 'i', XSIZE(struct section_problem_data, examinator_num), "examinator_num", XOFFSET(struct section_problem_data, examinator_num) },
   [CNTSPROB_check_presentation] = { CNTSPROB_check_presentation, 'B', XSIZE(struct section_problem_data, check_presentation), "check_presentation", XOFFSET(struct section_problem_data, check_presentation) },
@@ -403,7 +403,6 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_corr_pat] = { CNTSPROB_corr_pat, 'S', XSIZE(struct section_problem_data, corr_pat), "corr_pat", XOFFSET(struct section_problem_data, corr_pat) },
   [CNTSPROB_info_pat] = { CNTSPROB_info_pat, 'S', XSIZE(struct section_problem_data, info_pat), "info_pat", XOFFSET(struct section_problem_data, info_pat) },
   [CNTSPROB_tgz_pat] = { CNTSPROB_tgz_pat, 'S', XSIZE(struct section_problem_data, tgz_pat), "tgz_pat", XOFFSET(struct section_problem_data, tgz_pat) },
-  [CNTSPROB_type] = { CNTSPROB_type, 'S', XSIZE(struct section_problem_data, type), "type", XOFFSET(struct section_problem_data, type) },
   [CNTSPROB_ntests] = { CNTSPROB_ntests, 'i', XSIZE(struct section_problem_data, ntests), NULL, XOFFSET(struct section_problem_data, ntests) },
   [CNTSPROB_tscores] = { CNTSPROB_tscores, '?', XSIZE(struct section_problem_data, tscores), NULL, XOFFSET(struct section_problem_data, tscores) },
   [CNTSPROB_x_score_tests] = { CNTSPROB_x_score_tests, '?', XSIZE(struct section_problem_data, x_score_tests), NULL, XOFFSET(struct section_problem_data, x_score_tests) },
