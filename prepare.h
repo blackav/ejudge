@@ -1201,4 +1201,11 @@ cntsprob_is_undefined(
         const void *prob,
         int f_id);
 
+void
+cntsprob_copy_and_set_default(
+        struct section_problem_data *dp,
+        const struct section_problem_data *sp,
+        const struct section_problem_data *ap,
+        const struct section_global_data *gp);
+
 #endif /* __PREPARE_H__ */
