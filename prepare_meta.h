@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/12/12 15:53:53
+// Generated 2008/12/14 13:15:35
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -137,12 +137,10 @@ enum
   CNTSGLOB_run_check_dir,
   CNTSGLOB_htdocs_dir,
   CNTSGLOB_score_system,
-  CNTSGLOB_score_system_val,
   CNTSGLOB_tests_to_accept,
   CNTSGLOB_is_virtual,
   CNTSGLOB_prune_empty_users,
   CNTSGLOB_rounding_mode,
-  CNTSGLOB_rounding_mode_val,
   CNTSGLOB_max_file_length,
   CNTSGLOB_max_line_length,
   CNTSGLOB_max_cmd_length,

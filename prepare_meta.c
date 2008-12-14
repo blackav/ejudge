@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/12/12 15:53:53
+// Generated 2008/12/14 13:15:35
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -141,13 +141,11 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_run_work_dir] = { CNTSGLOB_run_work_dir, 'S', XSIZE(struct section_global_data, run_work_dir), "run_work_dir", XOFFSET(struct section_global_data, run_work_dir) },
   [CNTSGLOB_run_check_dir] = { CNTSGLOB_run_check_dir, 'S', XSIZE(struct section_global_data, run_check_dir), "run_check_dir", XOFFSET(struct section_global_data, run_check_dir) },
   [CNTSGLOB_htdocs_dir] = { CNTSGLOB_htdocs_dir, 'S', XSIZE(struct section_global_data, htdocs_dir), "htdocs_dir", XOFFSET(struct section_global_data, htdocs_dir) },
-  [CNTSGLOB_score_system] = { CNTSGLOB_score_system, 'S', XSIZE(struct section_global_data, score_system), "score_system", XOFFSET(struct section_global_data, score_system) },
-  [CNTSGLOB_score_system_val] = { CNTSGLOB_score_system_val, 'i', XSIZE(struct section_global_data, score_system_val), "score_system_val", XOFFSET(struct section_global_data, score_system_val) },
+  [CNTSGLOB_score_system] = { CNTSGLOB_score_system, 'i', XSIZE(struct section_global_data, score_system), "score_system", XOFFSET(struct section_global_data, score_system) },
   [CNTSGLOB_tests_to_accept] = { CNTSGLOB_tests_to_accept, 'i', XSIZE(struct section_global_data, tests_to_accept), "tests_to_accept", XOFFSET(struct section_global_data, tests_to_accept) },
   [CNTSGLOB_is_virtual] = { CNTSGLOB_is_virtual, 'B', XSIZE(struct section_global_data, is_virtual), "is_virtual", XOFFSET(struct section_global_data, is_virtual) },
   [CNTSGLOB_prune_empty_users] = { CNTSGLOB_prune_empty_users, 'B', XSIZE(struct section_global_data, prune_empty_users), "prune_empty_users", XOFFSET(struct section_global_data, prune_empty_users) },
-  [CNTSGLOB_rounding_mode] = { CNTSGLOB_rounding_mode, 'S', XSIZE(struct section_global_data, rounding_mode), "rounding_mode", XOFFSET(struct section_global_data, rounding_mode) },
-  [CNTSGLOB_rounding_mode_val] = { CNTSGLOB_rounding_mode_val, 'i', XSIZE(struct section_global_data, rounding_mode_val), NULL, XOFFSET(struct section_global_data, rounding_mode_val) },
+  [CNTSGLOB_rounding_mode] = { CNTSGLOB_rounding_mode, 'i', XSIZE(struct section_global_data, rounding_mode), "rounding_mode", XOFFSET(struct section_global_data, rounding_mode) },
   [CNTSGLOB_max_file_length] = { CNTSGLOB_max_file_length, 'z', XSIZE(struct section_global_data, max_file_length), "max_file_length", XOFFSET(struct section_global_data, max_file_length) },
   [CNTSGLOB_max_line_length] = { CNTSGLOB_max_line_length, 'z', XSIZE(struct section_global_data, max_line_length), "max_line_length", XOFFSET(struct section_global_data, max_line_length) },
   [CNTSGLOB_max_cmd_length] = { CNTSGLOB_max_cmd_length, 'z', XSIZE(struct section_global_data, max_cmd_length), "max_cmd_length", XOFFSET(struct section_global_data, max_cmd_length) },
