@@ -2648,7 +2648,7 @@ check_config(void)
     }
 
     ASSERT(prb->test_score >= 0);
-    if (serve_state.global->score_system_val == SCORE_MOSCOW) {
+    if (serve_state.global->score_system == SCORE_MOSCOW) {
       if (prb->full_score <= 0) {
         err("problem %s: problem full_score is not set", prb->short_name);
         return -1;
@@ -2669,7 +2669,7 @@ check_config(void)
           return -1;
         }
       }
-    } else if (prb->test_score >= 0 && serve_state.global->score_system_val != SCORE_ACM) {
+    } else if (prb->test_score >= 0 && serve_state.global->score_system != SCORE_ACM) {
       int score_summ = 0;
 
       prb->ntests = n1;

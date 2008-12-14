@@ -1189,7 +1189,7 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_serve_sleep_time, 'd', 1, 0, 1, 1, 0, "Serve directory poll interval (ms)", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_autoupdate_standings, 'Y', 1, 0, 0, 0, 0, "Update standings automatically (except freeze time)", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_use_ac_not_ok, 'Y', 1, 0, 0, 0, 0, "Use AC status instead of OK", 0, "SidState.show_global_6" },
-  { NS_GLOBAL, CNTSGLOB_rounding_mode_val, 136, 1, 0, 0, 0, 0, "Seconds to minutes rounding mode", 0, "SidState.show_global_6" },
+  { NS_GLOBAL, CNTSGLOB_rounding_mode, 136, 1, 0, 0, 0, 0, "Seconds to minutes rounding mode", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_max_file_length, 'z', 1, 1, 1, 1, 0, "Maximum file size to include into testing protocols", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_max_line_length, 'z', 1, 1, 1, 1, 0, "Maximum line length to include into testing protocols", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_inactivity_timeout, 'd', 1, 1, 1, 1, 0, "Inactivity timeout for `run'", 0, "SidState.show_global_6" },
@@ -1826,9 +1826,9 @@ write_editing_rows(
       break;
     case 132:
       {
-        int param = global->score_system_val;
+        int param = global->score_system;
         if (global->is_virtual) {
-          if (global->score_system_val == SCORE_ACM) param = SCORE_TOTAL;
+          if (global->score_system == SCORE_ACM) param = SCORE_TOTAL;
           else param = SCORE_TOTAL + 1;
         }
 
@@ -1879,7 +1879,7 @@ write_editing_rows(
       break;
     case 136:
       {
-        int param = global->rounding_mode_val;
+        int param = global->rounding_mode;
         ss_html_int_select(out_f, 0, 0, 0,
                            eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_OP_EDIT_SERVE_GLOBAL_FIELD, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2), param,
                            3, (const char *[]) { "Truncating up (ceil)", "Truncating down (floor)", "Rounding" });
@@ -4688,10 +4688,8 @@ cmd_op_edit_serve_global_field(
     if (errno || *eptr) FAIL(S_ERR_INV_VALUE);
     if (intval < 0 || intval >= 6) FAIL(S_ERR_INV_VALUE);
     static int score_system_to_int[6] = { SCORE_ACM, SCORE_KIROV, SCORE_OLYMPIAD, SCORE_MOSCOW, SCORE_ACM, SCORE_OLYMPIAD };
-    static const char * const score_system_to_str[6] = { "acm", "kirov", "olympiad", "moscow", "acm", "olympiad" };
     static int score_system_to_vir[6] = { 0, 0, 0, 0, 1, 1 };
-    strcpy(global->score_system, score_system_to_str[intval]);
-    global->score_system_val = score_system_to_int[intval];
+    global->score_system = score_system_to_int[intval];
     global->is_virtual = score_system_to_vir[intval];
     retval = 1;
     goto cleanup;
@@ -4723,21 +4721,13 @@ cmd_op_edit_serve_global_field(
     }
     goto cleanup;
 
-  case CNTSGLOB_rounding_mode_val:
+  case CNTSGLOB_rounding_mode:
     {
       if (!vallen) FAIL(S_ERR_INV_VALUE);
       errno = 0;
       intval = strtol(valstr, &eptr, 10);
       if (errno || *eptr || intval < 0 || intval > 2) FAIL(S_ERR_INV_VALUE);
-      global->rounding_mode_val = intval;
-      static const unsigned char * const rounding_modes[] =
-      {
-        "ceil",
-        "floor",
-        "round",
-      };
-      snprintf(global->rounding_mode, sizeof(global->rounding_mode),
-               "%s", rounding_modes[intval]);
+      global->rounding_mode = intval;
     }
     goto cleanup;
 
@@ -4907,8 +4897,7 @@ cmd_op_clear_serve_global_field(
   // individual field editing
   switch (f_id) {
   case CNTSGLOB_score_system:
-    strcpy(global->score_system, "acm");
-    global->score_system_val = SCORE_ACM;
+    global->score_system = SCORE_ACM;
     global->is_virtual = 0;
     retval = 1;
     goto cleanup;
@@ -4924,9 +4913,8 @@ cmd_op_clear_serve_global_field(
     global->standings_locale_id = 0;
     retval = 1;
     goto cleanup;
-  case CNTSGLOB_rounding_mode_val:
-    global->rounding_mode[0] = 0;
-    global->rounding_mode_val = 0;
+  case CNTSGLOB_rounding_mode:
+    global->rounding_mode = 0;
     retval = 1;
     goto cleanup;
   case CNTSGLOB_cpu_bogomips:

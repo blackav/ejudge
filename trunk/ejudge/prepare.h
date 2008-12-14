@@ -396,9 +396,7 @@ struct section_global_data
   path_t htdocs_dir;
 
   /** contest scoring system */
-  unsigned char score_system[32];
-  /** parsed `score_system' */
-  int score_system_val;
+  int score_system;
   /** number of tests to accept a submit in olympiad contests */
   int tests_to_accept;
   /** 1, if virtual contest */
@@ -406,9 +404,7 @@ struct section_global_data
   /** 1, if do not show empty users in stands */
   ejintbool_t prune_empty_users;
   /** seconds rounding mode */
-  unsigned char  rounding_mode[32];
-  /** parsed `rounding_mode' */
-  int    rounding_mode_val META_ATTRIB((meta_private));
+  int rounding_mode;
 
   /** maximal length of the file in reports */
   ejintsize_t max_file_length;

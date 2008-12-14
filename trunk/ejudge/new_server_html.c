@@ -2153,19 +2153,19 @@ priv_contest_operation(FILE *fout,
     break;
 
   case NEW_SRV_ACTION_SET_JUDGING_MODE:
-    if (global->score_system_val != SCORE_OLYMPIAD) break;
+    if (global->score_system != SCORE_OLYMPIAD) break;
     cs->accepting_mode = 0;
     serve_update_status_file(cs, 1);
     break;
 
   case NEW_SRV_ACTION_SET_ACCEPTING_MODE:
-    if (global->score_system_val != SCORE_OLYMPIAD) break;
+    if (global->score_system != SCORE_OLYMPIAD) break;
     cs->accepting_mode = 1;
     serve_update_status_file(cs, 1);
     break;
 
   case NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG:
-    if (global->score_system_val != SCORE_OLYMPIAD) break;
+    if (global->score_system != SCORE_OLYMPIAD) break;
     if ((!global->is_virtual && cs->accepting_mode)
         ||(global->is_virtual && global->disable_virtual_auto_judge <= 0))
       break;
@@ -2174,7 +2174,7 @@ priv_contest_operation(FILE *fout,
     break;
 
   case NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG:
-    if (global->score_system_val != SCORE_OLYMPIAD) break;
+    if (global->score_system != SCORE_OLYMPIAD) break;
     cs->testing_finished = 0;
     serve_update_status_file(cs, 1);
     break;
@@ -3476,16 +3476,16 @@ priv_edit_run(FILE *fout, FILE *log_f,
   case NEW_SRV_ACTION_CHANGE_RUN_TEST:
     if (param_int < -1 || param_int >= 100000)
       FAIL(NEW_SRV_ERR_INV_TEST);
-    if (global->score_system_val == SCORE_KIROV
-        || global->score_system_val == SCORE_OLYMPIAD)
+    if (global->score_system == SCORE_KIROV
+        || global->score_system == SCORE_OLYMPIAD)
       param_int++;
     ne.test = param_int;
     ne_mask = RE_TEST;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_SCORE:
     /*
-    if (global->score_system_val == SCORE_ACM
-        || (global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode))
+    if (global->score_system == SCORE_ACM
+        || (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode))
       FAIL(NEW_SRV_ERR_INV_PARAM);
     */
     if (re.prob_id <= 0 || re.prob_id > cs->max_prob
@@ -3497,8 +3497,8 @@ priv_edit_run(FILE *fout, FILE *log_f,
     ne_mask = RE_SCORE;
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ:
-    if (global->score_system_val != SCORE_KIROV
-        && (global->score_system_val != SCORE_OLYMPIAD || cs->accepting_mode))
+    if (global->score_system != SCORE_KIROV
+        && (global->score_system != SCORE_OLYMPIAD || cs->accepting_mode))
       FAIL(NEW_SRV_ERR_INV_PARAM);
     if (param_int <= -100000 || param_int >= 100000)
       FAIL(NEW_SRV_ERR_INV_SCORE_ADJ);
@@ -3737,7 +3737,7 @@ priv_rejudge_displayed(FILE *fout,
   if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-  if (global->score_system_val == SCORE_OLYMPIAD
+  if (global->score_system == SCORE_OLYMPIAD
       && cs->accepting_mode
       && phr->action == NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_2) {
     force_full = 1;
@@ -6445,7 +6445,7 @@ unpriv_print_status(FILE *fout,
     }
 
     if (start_time > 0) {
-      if (global->score_system_val == SCORE_OLYMPIAD && !global->is_virtual) {
+      if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
         if (cs->accepting_mode)
           s = _("Participants' solutions are being accepted");
         else if (!cs->testing_finished)
@@ -7434,7 +7434,7 @@ priv_main_page(FILE *fout,
   }
   fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
 
-  if (global->score_system_val == SCORE_OLYMPIAD && !global->is_virtual) {
+  if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
     if (cs->accepting_mode)
       s = _("Participants' solutions are being accepted");
     else if (!cs->testing_finished)
@@ -7586,12 +7586,12 @@ priv_main_page(FILE *fout,
       if (cs->printing_suspended) action = NEW_SRV_ACTION_PRINT_RESUME;
       fprintf(fout, "%s\n", BUTTON(action));
     }
-    if (global->score_system_val == SCORE_OLYMPIAD && !global->is_virtual) {
+    if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
       action = NEW_SRV_ACTION_SET_JUDGING_MODE;
       if (!cs->accepting_mode) action = NEW_SRV_ACTION_SET_ACCEPTING_MODE;
       fprintf(fout, "%s\n", BUTTON(action));
     }
-    if (global->score_system_val == SCORE_OLYMPIAD
+    if (global->score_system == SCORE_OLYMPIAD
         && ((!global->is_virtual && !cs->accepting_mode)
             || (global->is_virtual && global->disable_virtual_auto_judge >0))) {
       action = NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG;
@@ -9398,7 +9398,7 @@ unpriv_submit_run(FILE *fout,
   }
 
   if (prob->disable_submit_after_ok
-      && global->score_system_val != SCORE_OLYMPIAD && !cs->accepting_mode) {
+      && global->score_system != SCORE_OLYMPIAD && !cs->accepting_mode) {
     XALLOCAZ(acc_probs, cs->max_prob + 1);
     run_get_accepted_set(cs->runlog_state, phr->user_id,
                          cs->accepting_mode, cs->max_prob, acc_probs);
@@ -9443,7 +9443,7 @@ unpriv_submit_run(FILE *fout,
 
     // add this run and if we're in olympiad accepting mode mark
     // as accepted
-    if (global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode)
+    if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode)
       accept_immediately = 1;
   }
 
@@ -10001,7 +10001,7 @@ unpriv_command(FILE *fout,
       goto done;
     }
     serve_move_files_to_insert_run(cs, run_id);
-    if (global->score_system_val == SCORE_OLYMPIAD && global->is_virtual > 0) {
+    if (global->score_system == SCORE_OLYMPIAD && global->is_virtual > 0) {
       serve_event_remove_matching(cs, 0, 0, phr->user_id);
       if (global->disable_virtual_auto_judge <= 0) {
         serve_event_add(cs, precise_time.tv_sec + 1,
@@ -10273,7 +10273,7 @@ unpriv_view_report(FILE *fout,
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
                                           cs->current_time);
-    if (global->score_system_val == SCORE_OLYMPIAD) {
+    if (global->score_system == SCORE_OLYMPIAD) {
       if (global->disable_virtual_auto_judge <= 0 && stop_time <= 0)
         accepting_mode = 1;
       else if (global->disable_virtual_auto_judge > 0
@@ -10394,7 +10394,7 @@ unpriv_view_report(FILE *fout,
     fprintf(fout, "%s", rep_start);
     break;
   case CONTENT_TYPE_XML:
-    if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
       write_xml_team_accepting_report(fout, rep_start, run_id, &re, prob,
                                       new_actions_vector,
                                       phr->session_id, cnts->exam_mode,
@@ -10652,17 +10652,17 @@ unpriv_view_standings(FILE *fout,
   if (global->is_virtual) {
     do_write_standings(cs, cnts, fout, 1, 1, phr->user_id, 0, 0, 0, 0, 1,
                        cur_time);
-  } else if (global->score_system_val == SCORE_ACM) {
+  } else if (global->score_system == SCORE_ACM) {
     do_write_standings(cs, cnts, fout, 1, 1, phr->user_id, 0, 0, 0, 0, 1,
                        cur_time);
-  } else if (global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode) {
+  } else if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode) {
     fprintf(fout, _("<p>Information is not available.</p>"));
-  } else if (global->score_system_val == SCORE_OLYMPIAD) {
+  } else if (global->score_system == SCORE_OLYMPIAD) {
     //fprintf(fout, _("<p>Information is not available.</p>"));
     do_write_kirov_standings(cs, cnts, fout, 0, 1, 1, 0, 0, 0, 0, 1, cur_time, 0);
-  } else if (global->score_system_val == SCORE_KIROV) {
+  } else if (global->score_system == SCORE_KIROV) {
     do_write_kirov_standings(cs, cnts, fout, 0, 1, 1, 0, 0, 0, 0, 1, cur_time, 0);
-  } else if (global->score_system_val == SCORE_MOSCOW) {
+  } else if (global->score_system == SCORE_MOSCOW) {
     do_write_moscow_standings(cs, cnts, fout, 0, 1, 1, phr->user_id,
                               0, 0, 0, 0, 1, cur_time, 0);
   }
@@ -11071,7 +11071,7 @@ unpriv_page_header(FILE *fout,
         case NEW_SRV_ACTION_STANDINGS:
           if (start_time <= 0) continue;
           if (global->disable_user_standings > 0) continue;
-          //if (global->score_system_val == SCORE_OLYMPIAD) continue;
+          //if (global->score_system == SCORE_OLYMPIAD) continue;
           if (cnts->standings_url) {
             memset(&tdb, 0, sizeof(tdb));
             teamdb_export_team(cs->teamdb_state, phr->user_id, &tdb);
@@ -11170,7 +11170,7 @@ unpriv_page_header(FILE *fout,
       fprintf(fout, " / <b>%s</b>", s);
 
       if (start_time > 0) {
-        if (global->score_system_val == SCORE_OLYMPIAD && !global->is_virtual) {
+        if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
           if (cs->accepting_mode)
             s = _("accepting");
           else if (!cs->testing_finished)
@@ -11831,7 +11831,7 @@ unpriv_main_page(FILE *fout,
   }
 
   if (start_time && phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
-    if (cnts->exam_mode && global->score_system_val == SCORE_OLYMPIAD
+    if (cnts->exam_mode && global->score_system == SCORE_OLYMPIAD
         && global->is_virtual && stop_time > 0
         && global->disable_virtual_auto_judge > 0
         && !cs->testing_finished) {
@@ -11869,7 +11869,7 @@ unpriv_main_page(FILE *fout,
           xfree(ff_txt); ff_txt = 0; ff_len = 0;
         }
       }
-    } else if (cnts->exam_mode && global->score_system_val == SCORE_OLYMPIAD
+    } else if (cnts->exam_mode && global->score_system == SCORE_OLYMPIAD
                && global->is_virtual && stop_time > 0
                && (run_has_transient_user_runs(cs->runlog_state, phr->user_id)
                    || (global->disable_virtual_auto_judge <= 0
@@ -11883,7 +11883,7 @@ unpriv_main_page(FILE *fout,
               cnts->team_head_style,
               _("Problem status summary"),
               cnts->team_head_style);
-      if (global->score_system_val == SCORE_OLYMPIAD
+      if (global->score_system == SCORE_OLYMPIAD
           && global->is_virtual
           && cs->testing_finished)
         accepting_mode = 0;
@@ -12304,7 +12304,7 @@ unpriv_main_page(FILE *fout,
           (*cs->contest_plugin->generate_html_user_runs)(cs->contest_plugin_data, ur_file, fout, cnts, cs, phr, phr->user_id, prob_id, all_runs, "b1");
           fclose(ur_file); ur_file = 0;
           xfree(ur_text); ur_text = 0;
-        } else if (global->score_system_val == SCORE_OLYMPIAD) {
+        } else if (global->score_system == SCORE_OLYMPIAD) {
           ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
                                        prob_id, "b1");
         } else {
@@ -12390,7 +12390,7 @@ unpriv_main_page(FILE *fout,
       (*cs->contest_plugin->generate_html_user_runs)(cs->contest_plugin_data, ur_file, fout, cnts, cs, phr, phr->user_id, 0, all_runs, "b1");
       fclose(ur_file); ur_file = 0;
       xfree(ur_text); ur_text = 0;
-    } else if (global->score_system_val == SCORE_OLYMPIAD) {
+    } else if (global->score_system == SCORE_OLYMPIAD) {
       ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
                                    0, "b1");
     } else {
@@ -12668,7 +12668,7 @@ do_json_user_state(FILE *fout, const serve_state_t cs, int user_id)
     fprintf(fout, ", \"r\": %ld", remaining);
   }
   if (run_has_transient_user_runs(cs->runlog_state, user_id) ||
-      (global->score_system_val == SCORE_OLYMPIAD
+      (global->score_system == SCORE_OLYMPIAD
        && global->is_virtual
        && stop_time > 0
        && global->disable_virtual_auto_judge <= 0
@@ -12718,7 +12718,7 @@ unpriv_xml_update_answer(
   path_t run_path;
   struct run_entry nv;
 
-  if (global->score_system_val != SCORE_OLYMPIAD
+  if (global->score_system != SCORE_OLYMPIAD
       || !cs->accepting_mode) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
   if (ns_cgi_param(phr, "prob_id", &s) <= 0

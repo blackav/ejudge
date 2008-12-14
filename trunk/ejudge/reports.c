@@ -355,7 +355,7 @@ user_report_generate(
   const struct userlist_member *m = 0;
   const unsigned char *s;
 
-  if (global->score_system_val != SCORE_OLYMPIAD) return -1;
+  if (global->score_system != SCORE_OLYMPIAD) return -1;
 
   if (teamdb_export_team(cs->teamdb_state, user_id, &tdb) < 0) {
     fprintf(log_f, "Invalid user %d\n", user_id);
@@ -959,7 +959,7 @@ full_user_report_generate(
   sf_extra.str1 = sf_extra_buf;
   sf_extra_buf[0] = 0;
 
-  if (global->score_system_val != SCORE_OLYMPIAD) return -1;
+  if (global->score_system != SCORE_OLYMPIAD) return -1;
 
   if (teamdb_export_team(cs->teamdb_state, user_id, &tdb) < 0) {
     fprintf(log_f, "Invalid user %d\n", user_id);
@@ -2162,7 +2162,7 @@ ns_olympiad_final_user_report(
   const unsigned char *td1 = "<td class=\"b1\">";
   const unsigned char *th1 = "<th class=\"b1\">";
 
-  if (global->score_system_val != SCORE_OLYMPIAD) return -1;
+  if (global->score_system != SCORE_OLYMPIAD) return -1;
 
   if (teamdb_export_team(cs->teamdb_state, user_id, &tdb) < 0) {
     fprintf(log_f, "Invalid user %d\n", user_id);

@@ -536,15 +536,15 @@ super_html_edit_global_parameters(FILE *f,
 
   //GLOBAL_PARAM(score_system, "s"),
   //GLOBAL_PARAM(virtual, "d"),
-  ASSERT(global->score_system_val >= SCORE_ACM && global->score_system_val < SCORE_TOTAL);
+  ASSERT(global->score_system >= SCORE_ACM && global->score_system < SCORE_TOTAL);
   if (global->is_virtual) {
-    ASSERT(global->score_system_val == SCORE_ACM || global->score_system_val == SCORE_OLYMPIAD);
+    ASSERT(global->score_system == SCORE_ACM || global->score_system == SCORE_OLYMPIAD);
   }
   html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>Scoring system:</td><td>", form_row_attrs[row ^= 1]);
-  param = global->score_system_val;
+  param = global->score_system;
   if (global->is_virtual) {
-    if (global->score_system_val == SCORE_ACM) param = SCORE_TOTAL;
+    if (global->score_system == SCORE_ACM) param = SCORE_TOTAL;
     else param = SCORE_TOTAL + 1;
   }
   html_select(f, param, "param", contest_types);
@@ -641,8 +641,8 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td></tr></form>\n");
 
     //GLOBAL_PARAM(disable_failed_test_view, "d"),
-    if (global->score_system_val == SCORE_ACM
-        || global->score_system_val == SCORE_MOSCOW) {
+    if (global->score_system == SCORE_ACM
+        || global->score_system == SCORE_MOSCOW) {
       html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Participants cannot view failed test number:</td><td>", form_row_attrs[row ^= 1]);
       html_boolean_select(f, global->disable_failed_test_view, "param", 0, 0);
@@ -839,7 +839,7 @@ super_html_edit_global_parameters(FILE *f,
     }
 
     //GLOBAL_PARAM(disable_virtual_auto_judge, "d"),
-    if (global->score_system_val == SCORE_OLYMPIAD) {
+    if (global->score_system == SCORE_OLYMPIAD) {
       html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Disable auto-judging after virtual olympiad:</td><td>",
               form_row_attrs[row ^= 1]);
@@ -850,7 +850,7 @@ super_html_edit_global_parameters(FILE *f,
     }
 
     //GLOBAL_PARAM(enable_auto_print_protocol, "d"),
-    if (global->score_system_val == SCORE_OLYMPIAD) {
+    if (global->score_system == SCORE_OLYMPIAD) {
       html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Enable automatic protocol printing:</td><td>",
               form_row_attrs[row ^= 1]);
@@ -1466,8 +1466,8 @@ super_html_edit_global_parameters(FILE *f,
                              extra_args,
                              hidden_vars);
 
-    if (global->score_system_val == SCORE_KIROV
-        || global->score_system_val == SCORE_OLYMPIAD) {
+    if (global->score_system == SCORE_KIROV
+        || global->score_system == SCORE_OLYMPIAD) {
       //GLOBAL_PARAM(stand_score_attr, "s"),
       print_string_editing_row(f, "HTML attributes for the \"Score\" column:",
                                global->stand_score_attr,
@@ -1481,8 +1481,8 @@ super_html_edit_global_parameters(FILE *f,
                                hidden_vars);
     }
 
-    if (global->score_system_val == SCORE_ACM
-        || global->score_system_val == SCORE_MOSCOW) {
+    if (global->score_system == SCORE_ACM
+        || global->score_system == SCORE_MOSCOW) {
       //GLOBAL_PARAM(stand_penalty_attr, "s"),
       print_string_editing_row(f, "HTML attributes for the \"Penalty\" column:",
                                global->stand_penalty_attr,
@@ -1515,8 +1515,8 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td></tr></form>\n");
 
     //GLOBAL_PARAM(stand_show_att_num, "d"),
-    if (global->score_system_val == SCORE_KIROV
-        || global->score_system_val == SCORE_OLYMPIAD) {
+    if (global->score_system == SCORE_KIROV
+        || global->score_system == SCORE_OLYMPIAD) {
       html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Show number of attempts in standings:</td><td>",
               form_row_attrs[row ^= 1]);
@@ -1527,8 +1527,8 @@ super_html_edit_global_parameters(FILE *f,
     }
 
     //GLOBAL_PARAM(stand_sort_by_solved, "d"),
-    if (global->score_system_val == SCORE_KIROV
-        || global->score_system_val == SCORE_OLYMPIAD) {
+    if (global->score_system == SCORE_KIROV
+        || global->score_system == SCORE_OLYMPIAD) {
       html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Sort participants by the solved problems first:</td><td>", form_row_attrs[row ^= 1]);
       html_boolean_select(f, global->stand_sort_by_solved, "param", 0, 0);
@@ -1538,8 +1538,8 @@ super_html_edit_global_parameters(FILE *f,
     }
 
     //GLOBAL_PARAM(stand_collate_name, "d"),
-    if (global->score_system_val == SCORE_KIROV
-        || global->score_system_val == SCORE_OLYMPIAD) {
+    if (global->score_system == SCORE_KIROV
+        || global->score_system == SCORE_OLYMPIAD) {
       html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Collate standings on user name:</td><td>",
               form_row_attrs[row ^= 1]);
@@ -1550,8 +1550,8 @@ super_html_edit_global_parameters(FILE *f,
     }
 
     //GLOBAL_PARAM(stand_enable_penalty, "d"),
-    if (global->score_system_val == SCORE_KIROV
-        || global->score_system_val == SCORE_OLYMPIAD) {
+    if (global->score_system == SCORE_KIROV
+        || global->score_system == SCORE_OLYMPIAD) {
       html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Enable time penalties:</td><td>",
               form_row_attrs[row ^= 1]);
@@ -1562,8 +1562,8 @@ super_html_edit_global_parameters(FILE *f,
     }
 
     //GLOBAL_PARAM(ignore_success_time, "d"),
-    if (global->score_system_val == SCORE_ACM
-        || global->score_system_val == SCORE_MOSCOW) {
+    if (global->score_system == SCORE_ACM
+        || global->score_system == SCORE_MOSCOW) {
       html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Ignore success time in penalty calculation:</td><td>", form_row_attrs[row ^= 1]);
       html_boolean_select(f, global->ignore_success_time, "param", 0, 0);
@@ -1863,7 +1863,7 @@ super_html_edit_global_parameters(FILE *f,
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Seconds to minutes rounding mode:</td><td>",
             form_row_attrs[row ^= 1]);
-    html_select(f, global->rounding_mode_val, "param", rounding_modes);
+    html_select(f, global->rounding_mode, "param", rounding_modes);
     fprintf(f, "</td><td>");
     html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ROUNDING_MODE, "Change");
     fprintf(f, "</td></tr></form>\n");
@@ -2175,11 +2175,11 @@ super_html_global_param(struct sid_state *sstate, int cmd,
         || val < 0 || val > SCORE_TOTAL + 2)
       return -SSERV_ERR_INVALID_PARAMETER;
     if (val < SCORE_TOTAL) {
-      global->score_system_val = val;
+      global->score_system = val;
       global->is_virtual = 0;
     } else {
-      if (val == SCORE_TOTAL) global->score_system_val = SCORE_ACM;
-      else global->score_system_val = SCORE_OLYMPIAD;
+      if (val == SCORE_TOTAL) global->score_system = SCORE_ACM;
+      else global->score_system = SCORE_OLYMPIAD;
       global->is_virtual = 1;
     }
     return 0;
@@ -2782,7 +2782,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_GLOB_CHANGE_ROUNDING_MODE:
     if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n]
         || val < 0 || val > 2) return -SSERV_ERR_INVALID_PARAMETER;
-    global->rounding_mode_val = val;
+    global->rounding_mode = val;
     return 0;
 
   case SSERV_CMD_GLOB_CHANGE_MAX_FILE_LENGTH:
@@ -4898,7 +4898,7 @@ super_html_print_problem(FILE *f,
                                self_url, extra_args, prob_hidden_vars);
   }
 
-  if (sstate->global && sstate->global->score_system_val == SCORE_KIROV
+  if (sstate->global && sstate->global->score_system == SCORE_KIROV
       && show_adv) {
     //PROBLEM_PARAM(olympiad_mode, "d"),
     extra_msg = 0;
@@ -4916,7 +4916,7 @@ super_html_print_problem(FILE *f,
                                self_url, extra_args, prob_hidden_vars);
   }
 
-  if (sstate->global && sstate->global->score_system_val == SCORE_KIROV
+  if (sstate->global && sstate->global->score_system == SCORE_KIROV
       && show_adv) {
     //PROBLEM_PARAM(score_latest, "d"),
     extra_msg = 0;
@@ -4934,7 +4934,7 @@ super_html_print_problem(FILE *f,
                                self_url, extra_args, prob_hidden_vars);
   }
 
-  if (sstate->global && sstate->global->score_system_val != SCORE_ACM) {
+  if (sstate->global && sstate->global->score_system != SCORE_ACM) {
     //PROBLEM_PARAM(full_score, "d"),
     extra_msg = "";
     if (prob->full_score == -1) {
@@ -4956,8 +4956,8 @@ super_html_print_problem(FILE *f,
   }
 
   if (sstate->global &&
-      (sstate->global->score_system_val == SCORE_KIROV
-       || sstate->global->score_system_val == SCORE_OLYMPIAD)) {
+      (sstate->global->score_system == SCORE_KIROV
+       || sstate->global->score_system == SCORE_OLYMPIAD)) {
     if (show_adv) {
       //PROBLEM_PARAM(variable_full_score, "d"),
       extra_msg = "Undefined";
@@ -4995,7 +4995,7 @@ super_html_print_problem(FILE *f,
                           session_id, form_row_attrs[row ^= 1],
                           self_url, extra_args, prob_hidden_vars);
 
-    if (sstate->global->score_system_val == SCORE_KIROV) {
+    if (sstate->global->score_system == SCORE_KIROV) {
       //PROBLEM_PARAM(run_penalty, "d"),
       extra_msg = "";
       if (prob->run_penalty == -1) {
@@ -5044,8 +5044,8 @@ super_html_print_problem(FILE *f,
                              self_url, extra_args, prob_hidden_vars);
   }
 
-  if ((sstate->global->score_system_val == SCORE_ACM
-       || sstate->global->score_system_val == SCORE_MOSCOW)
+  if ((sstate->global->score_system == SCORE_ACM
+       || sstate->global->score_system == SCORE_MOSCOW)
       && show_adv) {
     //PROBLEM_PARAM(acm_run_penalty, "d"),
     extra_msg = "";
@@ -5067,7 +5067,7 @@ super_html_print_problem(FILE *f,
                           self_url, extra_args, prob_hidden_vars);
   }
 
-  if (sstate->global && sstate->global->score_system_val == SCORE_MOSCOW) {
+  if (sstate->global && sstate->global->score_system == SCORE_MOSCOW) {
     //PROBLEM_PARAM(score_tests, "s"),
     print_string_editing_row(f, "Tests for problem scores:", prob->score_tests,
                              SSERV_CMD_PROB_CHANGE_SCORE_TESTS,
@@ -5078,8 +5078,8 @@ super_html_print_problem(FILE *f,
   }
 
   if (sstate->global
-      && (sstate->global->score_system_val == SCORE_KIROV
-          || sstate->global->score_system_val == SCORE_OLYMPIAD)
+      && (sstate->global->score_system == SCORE_KIROV
+          || sstate->global->score_system == SCORE_OLYMPIAD)
       && !prob->abstract
       && show_adv) {
     if (!prob->test_sets || !prob->test_sets[0]) {
@@ -5100,7 +5100,7 @@ super_html_print_problem(FILE *f,
 
   //PROBLEM_PARAM(score_bonus, "s"),
   extra_msg = 0;
-  if (global && global->score_system_val == SCORE_KIROV) {
+  if (global && global->score_system == SCORE_KIROV) {
     if (prob->abstract && (show_adv || prob->score_bonus[0])) extra_msg = "";
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_score_bonus,
@@ -5122,7 +5122,7 @@ super_html_print_problem(FILE *f,
                                session_id, form_row_attrs[row ^= 1],
                                self_url, extra_args, prob_hidden_vars);
 
-  if (sstate->global && sstate->global->score_system_val == SCORE_OLYMPIAD) {
+  if (sstate->global && sstate->global->score_system == SCORE_OLYMPIAD) {
     //PROBLEM_PARAM(tests_to_accept, "d"),
     extra_msg = "";
     if (prob->tests_to_accept == -1) {
@@ -6569,11 +6569,11 @@ unparse_serve_cfg(FILE *f,
   }
 
   for (i = 0; i < sstate->aprob_u; i++)
-    prepare_unparse_prob(f, sstate->aprobs[i], global, global->score_system_val);
+    prepare_unparse_prob(f, sstate->aprobs[i], global, global->score_system);
 
   for (i = 0; i < sstate->prob_a; i++) {
     if (!sstate->probs[i]) continue;
-    prepare_unparse_prob(f, sstate->probs[i], global, global->score_system_val);
+    prepare_unparse_prob(f, sstate->probs[i], global, global->score_system);
   }
 
   prepare_unparse_testers(f, global->secure_run,
@@ -8300,8 +8300,8 @@ super_html_check_tests(FILE *f,
       }
     }
 
-    if (global->score_system_val != SCORE_ACM
-        && global->score_system_val != SCORE_MOSCOW) {
+    if (global->score_system != SCORE_ACM
+        && global->score_system != SCORE_MOSCOW) {
       if (check_test_score(flog, total_tests, tmp_prob.test_score,
                            tmp_prob.full_score, tmp_prob.test_score_list) < 0)
         goto check_failed;
