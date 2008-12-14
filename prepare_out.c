@@ -264,8 +264,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     fprintf(f, "contest_finish_time = \"%s\"\n",
             xml_unparse_date(global->contest_finish_time));
   }
-  ASSERT(global->score_system_val >= 0 && global->score_system_val < SCORE_TOTAL);
-  fprintf(f, "score_system = %s\n", contest_types[global->score_system_val]);
+  ASSERT(global->score_system >= 0 && global->score_system < SCORE_TOTAL);
+  fprintf(f, "score_system = %s\n", contest_types[global->score_system]);
   if (global->is_virtual)
     fprintf(f, "virtual\n");
   if (global->board_fog_time != DFLT_G_BOARD_FOG_TIME)
@@ -552,9 +552,9 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   if (global->inactivity_timeout
       && global->inactivity_timeout != DFLT_G_INACTIVITY_TIMEOUT)
     fprintf(f, "inactivity_timeout = %d\n", global->inactivity_timeout);
-  ASSERT(global->rounding_mode_val >= 0 && global->rounding_mode_val <= 2);
-  if (global->rounding_mode_val)
-    fprintf(f, "rounding_mode = %s\n", rounding_modes[global->rounding_mode_val]);
+  ASSERT(global->rounding_mode >= 0 && global->rounding_mode <= 2);
+  if (global->rounding_mode)
+    fprintf(f, "rounding_mode = %s\n", rounding_modes[global->rounding_mode]);
   if (global->max_file_length && global->max_file_length != DFLT_G_MAX_FILE_LENGTH)
     fprintf(f, "max_file_length = %s\n",
             num_to_size(nbuf, sizeof(nbuf), global->max_file_length));
@@ -1004,7 +1004,7 @@ prepare_check_forbidden_lang(FILE *f, const struct section_language_data *lang)
 void
 prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
                      const struct section_global_data *global,
-                     int score_system_val)
+                     int score_system)
 {
   struct str_buf sbuf = { 0, 0};
   unsigned char size_buf[256];
@@ -1170,7 +1170,7 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     fprintf(f, "max_data_size = %s\n",
             size_t_to_size(size_buf, sizeof(size_buf), prob->max_data_size));
 
-  if (score_system_val == SCORE_KIROV || score_system_val == SCORE_OLYMPIAD) {
+  if (score_system == SCORE_KIROV || score_system == SCORE_OLYMPIAD) {
     if (prob->full_score >= 0) {
       if ((prob->abstract && prob->full_score != DFLT_P_FULL_SCORE)
           || !prob->abstract)
@@ -1202,14 +1202,14 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     if (prob->score_bonus[0])
       fprintf(f, "score_bonus = \"%s\"\n", c_armor(&sbuf, prob->score_bonus));
   }
-  if (score_system_val == SCORE_MOSCOW || score_system_val == SCORE_ACM) {
+  if (score_system == SCORE_MOSCOW || score_system == SCORE_ACM) {
     if (prob->acm_run_penalty >= 0) {
       if ((prob->abstract && prob->acm_run_penalty != DFLT_P_ACM_RUN_PENALTY)
           || !prob->abstract)
         fprintf(f, "acm_run_penalty = %d\n", prob->acm_run_penalty);
     }
   }
-  if (score_system_val == SCORE_MOSCOW) {
+  if (score_system == SCORE_MOSCOW) {
     if (prob->full_score >= 0) {
       if ((prob->abstract && prob->full_score != DFLT_P_FULL_SCORE)
           || !prob->abstract)
@@ -1218,7 +1218,7 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     if (prob->score_tests[0])
       fprintf(f, "score_tests = \"%s\"\n", c_armor(&sbuf, prob->score_tests));
   }
-  if (score_system_val == SCORE_OLYMPIAD) {
+  if (score_system == SCORE_OLYMPIAD) {
     if (prob->tests_to_accept >= 0) {
       if ((prob->abstract
            && ((global->tests_to_accept >= 0

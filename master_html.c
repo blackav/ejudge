@@ -159,15 +159,15 @@ write_change_status_dialog(const serve_state_t state,
   }
 
   // various sets of valid run statuses
-  if (state->global->score_system_val == SCORE_KIROV) {
+  if (state->global->score_system == SCORE_KIROV) {
     if (disable_rejudge_flag) cur_status_list = kirov_no_rejudge_status_list;
     else cur_status_list = kirov_status_list;
-  } else if (state->global->score_system_val == SCORE_OLYMPIAD
+  } else if (state->global->score_system == SCORE_OLYMPIAD
              && state->accepting_mode) {
     // OLYMPIAD in accepting mode
     if (disable_rejudge_flag) cur_status_list = olymp_accepting_no_rejudge_status_list;
     else cur_status_list = olymp_accepting_status_list;
-  } else if (state->global->score_system_val == SCORE_OLYMPIAD) {
+  } else if (state->global->score_system == SCORE_OLYMPIAD) {
     // OLYMPIAD in judging mode
     if (disable_rejudge_flag) cur_status_list = olymp_judging_no_rejudge_status_list;
     cur_status_list = olymp_judging_status_list;

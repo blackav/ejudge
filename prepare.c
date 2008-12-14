@@ -50,12 +50,17 @@
 
 static int
 do_problem_parse_type(const unsigned char *str, void *ptr, size_t size);
+static int
+global_parse_score_system(const unsigned char *str, void *ptr, size_t size);
+static int
+global_parse_rounding_mode(const unsigned char *str, void *ptr, size_t size);
 
 #define XFSIZE(t, x) (sizeof(((t*) 0)->x))
 
 #define GLOBAL_OFFSET(x)   XOFFSET(struct section_global_data, x)
 #define GLOBAL_SIZE(x)     XFSIZE(struct section_global_data, x)
 #define GLOBAL_PARAM(x, t) { #x, t, GLOBAL_OFFSET(x), GLOBAL_SIZE(x) }
+#define GLOBAL_PARAM_2(x, f) { #x, "f", GLOBAL_OFFSET(x), GLOBAL_SIZE(x), f}
 #define GLOBAL_ALIAS(a, x, t) { #a, t, GLOBAL_OFFSET(x), GLOBAL_SIZE(x) }
 static const struct config_parse_info section_global_params[] =
 {
@@ -181,8 +186,8 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(run_work_dir, "s"),
   GLOBAL_PARAM(run_check_dir, "s"),
 
-  GLOBAL_PARAM(score_system, "s"),
-  GLOBAL_PARAM(rounding_mode, "s"),
+  GLOBAL_PARAM_2(score_system, global_parse_score_system),
+  GLOBAL_PARAM_2(rounding_mode, global_parse_rounding_mode),
   GLOBAL_PARAM(is_virtual, "d"),
   GLOBAL_ALIAS(virtual, is_virtual, "d"),
 
@@ -527,10 +532,63 @@ static const struct config_section_info params[] =
 };
 
 static int
-do_problem_parse_type(const unsigned char *str, void *ptr, size_t size)
+do_problem_parse_type(
+        const unsigned char *str,
+        void *ptr,
+        size_t size)
 {
   int val = problem_parse_type(str);
   if (val < 0 || val >= PROB_TYPE_LAST) return -1;
+  *(int*) ptr = val;
+  return 0;
+}
+
+static int
+global_parse_score_system(
+        const unsigned char *str,
+        void *ptr,
+        size_t size)
+{
+  int val = -1;
+
+  if (!str || !str[0]) {
+    val = SCORE_ACM;
+  } else if (!strcasecmp(str, "acm")) {
+    val = SCORE_ACM;
+  } else if (!strcasecmp(str, "kirov")) {
+    val = SCORE_KIROV;
+  } else if (!strcasecmp(str, "olympiad")) {
+    val = SCORE_OLYMPIAD;
+  } else if (!strcasecmp(str, "moscow")) {
+    val = SCORE_MOSCOW;
+  } else {
+    return -1;
+  }
+
+  *(int*) ptr = val;
+  return 0;
+}
+
+static int
+global_parse_rounding_mode(
+        const unsigned char *str,
+        void *ptr,
+        size_t size)
+{
+  int val = -1;
+
+  if (!str || !str[0]) {
+    val = SEC_CEIL;
+  } else if (!strcmp(str, "ceil")) {
+    val = SEC_CEIL;
+  } else if (!strcmp(str, "floor")) {
+    val = SEC_FLOOR;
+  } else if (!strcmp(str, "round")) {
+    val = SEC_ROUND;
+  } else {
+    return -1;
+  }
+
   *(int*) ptr = val;
   return 0;
 }
@@ -2396,40 +2454,6 @@ set_defaults(serve_state_t state, int mode)
     }
 #endif
     GLOBAL_INIT_FIELD(run_check_dir, DFLT_G_RUN_CHECK_DIR, work_dir);
-  }
-
-  /* score_system must be either "acm", either "kirov"
-   * "acm" is the default
-   */
-  if (!g->score_system[0]) {
-    g->score_system_val = SCORE_ACM;
-  } else if (!strcasecmp(g->score_system, "acm")) {
-    g->score_system_val = SCORE_ACM;
-  } else if (!strcasecmp(g->score_system, "kirov")) {
-    g->score_system_val = SCORE_KIROV;
-  } else if (!strcasecmp(g->score_system, "olympiad")) {
-    g->score_system_val = SCORE_OLYMPIAD;
-  } else if (!strcasecmp(g->score_system, "moscow")) {
-    g->score_system_val = SCORE_MOSCOW;
-  } else {
-    err("Invalid scoring system: %s", g->score_system);
-    return -1;
-  }
-
-  /*
-   * Seconds rounding mode.
-   */
-  if (!g->rounding_mode[0]) {
-    g->rounding_mode_val = SEC_CEIL;
-  } else if (!strcmp(g->rounding_mode, "ceil")) {
-    g->rounding_mode_val = SEC_CEIL;
-  } else if (!strcmp(g->rounding_mode, "floor")) {
-    g->rounding_mode_val = SEC_FLOOR;
-  } else if (!strcmp(g->rounding_mode, "round")) {
-    g->rounding_mode_val = SEC_ROUND;
-  } else {
-    err("Invalid rounding mode: %s", g->rounding_mode);
-    return -1;
   }
 
   if (g->enable_continue == -1) g->enable_continue = DFLT_G_ENABLE_CONTINUE;
@@ -4344,32 +4368,6 @@ prepare_set_global_defaults(struct section_global_data *g)
   if (!g->plugin_dir[0])
     snprintf(g->plugin_dir, sizeof(g->plugin_dir), "%s", DFLT_G_PLUGIN_DIR);
 
-  if (!g->score_system[0]) {
-    g->score_system_val = SCORE_ACM;
-  } else if (!strcmp(g->score_system, "acm")) {
-    g->score_system_val = SCORE_ACM;
-  } else if (!strcmp(g->score_system, "kirov")) {
-    g->score_system_val = SCORE_KIROV;
-  } else if (!strcmp(g->score_system, "olympiad")) {
-    g->score_system_val = SCORE_OLYMPIAD;
-  } else if (!strcmp(g->score_system, "moscow")) {
-    g->score_system_val = SCORE_MOSCOW;
-  } else {
-    g->score_system_val = SCORE_ACM;
-  }
-
-  if (!g->rounding_mode[0]) {
-    g->rounding_mode_val = SEC_CEIL;
-  } else if (!strcmp(g->rounding_mode, "ceil")) {
-    g->rounding_mode_val = SEC_CEIL;
-  } else if (!strcmp(g->rounding_mode, "floor")) {
-    g->rounding_mode_val = SEC_FLOOR;
-  } else if (!strcmp(g->rounding_mode, "round")) {
-    g->rounding_mode_val = SEC_ROUND;
-  } else {
-    g->rounding_mode_val = SEC_CEIL;
-  }
-
   if (!g->standings_file_name[0]) {
     snprintf(g->standings_file_name, sizeof(g->standings_file_name),
              "%s", DFLT_G_STANDINGS_FILE_NAME);
@@ -4527,8 +4525,8 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
 
   global = prepare_alloc_global();
 
-  global->score_system_val = SCORE_ACM;
-  global->rounding_mode_val = SEC_FLOOR;
+  global->score_system = SCORE_ACM;
+  global->rounding_mode = SEC_FLOOR;
   global->is_virtual = 0;
 
   global->contest_id = contest_id;

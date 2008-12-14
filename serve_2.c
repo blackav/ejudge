@@ -247,7 +247,7 @@ serve_update_status_file(serve_state_t state, int force_flag)
   status.total_clars = clar_get_total(state->clarlog_state);
   status.clars_disabled = state->global->disable_clars;
   status.team_clars_disabled = state->global->disable_team_clars;
-  status.score_system = state->global->score_system_val;
+  status.score_system = state->global->score_system;
   status.clients_suspended = state->clients_suspended;
   status.testing_suspended = state->testing_suspended;
   status.download_interval = state->global->team_download_time / 60;
@@ -307,7 +307,7 @@ serve_load_status_file(serve_state_t state)
 
   if (generic_read_file(&ptr, 0, &stat_len, 0, state->global->status_dir,
                         "dir/status", "") < 0) {
-    if (state->global->score_system_val == SCORE_OLYMPIAD)
+    if (state->global->score_system == SCORE_OLYMPIAD)
       state->accepting_mode = 1;
     return;
   }
@@ -315,7 +315,7 @@ serve_load_status_file(serve_state_t state)
     info("load_status_file: length %zu does not match %zu",
          stat_len, sizeof(status));
     xfree(ptr);
-    if (state->global->score_system_val == SCORE_OLYMPIAD)
+    if (state->global->score_system == SCORE_OLYMPIAD)
       state->accepting_mode = 1;
     return;
   }
@@ -323,7 +323,7 @@ serve_load_status_file(serve_state_t state)
   xfree(ptr);
   if (status.magic != PROT_SERVE_STATUS_MAGIC_V2) {
     info("load_status_file: bad magic value");
-    if (state->global->score_system_val == SCORE_OLYMPIAD)
+    if (state->global->score_system == SCORE_OLYMPIAD)
       state->accepting_mode = 1;
     return;
   }
@@ -333,7 +333,7 @@ serve_load_status_file(serve_state_t state)
   state->testing_suspended = status.testing_suspended;
   info("load_status_file: testing_suspended = %d", state->testing_suspended);
   state->accepting_mode = status.accepting_mode;
-  if (state->global->score_system_val == SCORE_OLYMPIAD
+  if (state->global->score_system == SCORE_OLYMPIAD
       && state->global->is_virtual) {
     state->accepting_mode = 1;
   }
@@ -1167,7 +1167,7 @@ serve_run_request(
   
   if (judge_id < 0) judge_id = state->compile_request_id++;
   if (accepting_mode < 0) {
-    if (state->global->score_system_val == SCORE_OLYMPIAD
+    if (state->global->score_system == SCORE_OLYMPIAD
         && state->global->is_virtual > 0) {
       accepting_mode = 1;
     } else {
@@ -1202,7 +1202,7 @@ serve_run_request(
   run_pkt->run_id = run_id;
   run_pkt->problem_id = prob->tester_id;
   run_pkt->accepting_mode = accepting_mode;
-  run_pkt->scoring_system = state->global->score_system_val;
+  run_pkt->scoring_system = state->global->score_system;
   run_pkt->variant = variant;
   run_pkt->accept_partial = prob->accept_partial;
   run_pkt->user_id = user_id;
@@ -1660,7 +1660,7 @@ serve_read_compile_packet(serve_state_t state,
 int
 serve_is_valid_status(serve_state_t state, int status, int mode)
 {
-  if (state->global->score_system_val == SCORE_OLYMPIAD) {
+  if (state->global->score_system == SCORE_OLYMPIAD) {
     switch (status) {
     case RUN_OK:
     case RUN_PARTIAL:
@@ -1684,7 +1684,7 @@ serve_is_valid_status(serve_state_t state, int status, int mode)
     default:
       return 0;
     }
-  } else if (state->global->score_system_val == SCORE_KIROV) {
+  } else if (state->global->score_system == SCORE_KIROV) {
     switch (status) {
     case RUN_OK:
     case RUN_PARTIAL:
@@ -1813,11 +1813,11 @@ serve_read_run_packet(serve_state_t state,
   if (!serve_is_valid_status(state, reply_pkt->status, 2))
     goto bad_packet_error;
 
-  if (state->global->score_system_val == SCORE_OLYMPIAD) {
+  if (state->global->score_system == SCORE_OLYMPIAD) {
     if (re.prob_id < 1 || re.prob_id > state->max_prob
         || !state->probs[re.prob_id])
       goto bad_packet_error;
-  } else if (state->global->score_system_val == SCORE_KIROV) {
+  } else if (state->global->score_system == SCORE_KIROV) {
     /*
     if (status != RUN_PARTIAL && status != RUN_OK
         && status != RUN_CHECK_FAILED) goto bad_packet_error;
@@ -1839,7 +1839,7 @@ serve_read_run_packet(serve_state_t state,
       if (score < 0) score = 0;
     }
     */
-  } else if (state->global->score_system_val == SCORE_MOSCOW) {
+  } else if (state->global->score_system == SCORE_MOSCOW) {
     if (re.prob_id < 1 || re.prob_id > state->max_prob
         || !state->probs[re.prob_id])
       goto bad_packet_error;
@@ -2051,8 +2051,8 @@ serve_judge_built_in_problem(
 
  done:
   glob_status = status;
-  if (global->score_system_val == SCORE_OLYMPIAD
-      || global->score_system_val == SCORE_KIROV) {
+  if (global->score_system == SCORE_OLYMPIAD
+      || global->score_system == SCORE_KIROV) {
     if (glob_status != RUN_OK && glob_status != RUN_CHECK_FAILED)
       glob_status = RUN_PARTIAL;
   }
@@ -2062,25 +2062,25 @@ serve_judge_built_in_problem(
   run_status_to_str_short(buf1, sizeof(buf1), glob_status);
   fprintf(f, "<testing-report run-id=\"%d\" judge-id=\"%d\" status=\"%s\" scoring=\"%s\" archive-available=\"no\" run-tests=\"1\" correct-available=\"no\" info-available=\"no\"",
           run_id, judge_id, buf1,
-          unparse_scoring_system(buf2, sizeof(buf2), global->score_system_val));
+          unparse_scoring_system(buf2, sizeof(buf2), global->score_system));
   if (variant > 0) {
     fprintf(f, " variant=\"%d\"", variant);
   }
-  if (global->score_system_val == SCORE_OLYMPIAD) {
+  if (global->score_system == SCORE_OLYMPIAD) {
     fprintf(f, " accepting-mode=\"%s\"", accepting_mode?"yes":"no");
   }
-  if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode
+  if (global->score_system == SCORE_OLYMPIAD && accepting_mode
       && status != RUN_ACCEPTED) {
     fprintf(f, " failed-test=\"1\"");
-  } else if (global->score_system_val == SCORE_ACM && status != RUN_OK) {
+  } else if (global->score_system == SCORE_ACM && status != RUN_OK) {
     fprintf(f, " failed-test=\"1\"");
-  } else if (global->score_system_val == SCORE_OLYMPIAD && !accepting_mode) {
+  } else if (global->score_system == SCORE_OLYMPIAD && !accepting_mode) {
     fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"",
             passed_tests, score, prob->full_score);
-  } else if (global->score_system_val == SCORE_KIROV) {
+  } else if (global->score_system == SCORE_KIROV) {
     fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"",
             passed_tests, score, prob->full_score);
-  } else if (global->score_system_val == SCORE_MOSCOW) {
+  } else if (global->score_system == SCORE_MOSCOW) {
     if (status != RUN_OK) {
       fprintf(f, " failed-test=\"1\"");
     }
@@ -2094,9 +2094,9 @@ serve_judge_built_in_problem(
   fprintf(f, " exit-code=\"0\"");
   fprintf(f, " time=\"0\"");
   fprintf(f, " real-time=\"0\"");
-  if (global->score_system_val == SCORE_OLYMPIAD && !accepting_mode) {
+  if (global->score_system == SCORE_OLYMPIAD && !accepting_mode) {
     fprintf(f, " nominal-score=\"%d\" score=\"%d\"", prob->full_score, score);
-  } else if (global->score_system_val == SCORE_KIROV) {
+  } else if (global->score_system == SCORE_KIROV) {
     fprintf(f, " nominal-score=\"%d\" score=\"%d\"", prob->full_score, score);
   }
   if (msgbuf[0]) {
@@ -2184,7 +2184,7 @@ serve_rejudge_run(
   if (prob->manual_checking > 0 || prob->disable_testing > 0) return;
   if (prob->type > 0) {
     if (force_full_rejudge
-        && state->global->score_system_val == SCORE_OLYMPIAD) {
+        && state->global->score_system == SCORE_OLYMPIAD) {
       accepting_mode = 0;
     }
 
@@ -2233,7 +2233,7 @@ serve_rejudge_run(
     return;
   }
 
-  if (force_full_rejudge && state->global->score_system_val == SCORE_OLYMPIAD) {
+  if (force_full_rejudge && state->global->score_system == SCORE_OLYMPIAD) {
     accepting_mode = 0;
   }
 
@@ -2406,7 +2406,7 @@ serve_rejudge_by_mask(
   }
 
   /*
-  if (state->global->score_system_val == SCORE_OLYMPIAD
+  if (state->global->score_system == SCORE_OLYMPIAD
       && !state->accepting_mode) {
     // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
     // considering only the last run for the given problem and
@@ -2471,7 +2471,7 @@ serve_rejudge_problem(
       || state->probs[prob_id]->disable_testing) return;
   total_runs = run_get_total(state->runlog_state);
 
-  if (state->global->score_system_val == SCORE_OLYMPIAD
+  if (state->global->score_system == SCORE_OLYMPIAD
       && !state->accepting_mode) {
     // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
     // considering only the last run for the given participant
@@ -2519,7 +2519,7 @@ serve_judge_suspended(
 
   total_runs = run_get_total(state->runlog_state);
 
-  if (state->global->score_system_val == SCORE_OLYMPIAD
+  if (state->global->score_system == SCORE_OLYMPIAD
       && !state->accepting_mode)
     return;
 
@@ -2546,7 +2546,7 @@ serve_rejudge_all(
 
   total_runs = run_get_total(state->runlog_state);
 
-  if (state->global->score_system_val == SCORE_OLYMPIAD
+  if (state->global->score_system == SCORE_OLYMPIAD
       && !state->accepting_mode) {
     // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
     // considering only the last run for the given problem and
@@ -2852,7 +2852,7 @@ handle_virtual_stop_event(
   }
   info("inserted virtual stop as run %d", run_id);
   serve_move_files_to_insert_run(cs, run_id);
-  if (cs->global->score_system_val == SCORE_OLYMPIAD
+  if (cs->global->score_system == SCORE_OLYMPIAD
       && cs->global->is_virtual && cs->global->disable_virtual_auto_judge<= 0) {
     serve_event_add(cs, p->time + 1, SERVE_EVENT_JUDGE_OLYMPIAD, p->user_id, 0);
   }
@@ -2869,7 +2869,7 @@ handle_judge_olympiad_event(
   int count;
   struct run_entry rs, re;
 
-  if (cs->global->score_system_val != SCORE_OLYMPIAD
+  if (cs->global->score_system != SCORE_OLYMPIAD
       || !cs->global->is_virtual) goto done;
   count = run_get_virtual_info(cs->runlog_state, p->user_id, &rs, &re);
   if (count < 0) {
@@ -2928,8 +2928,7 @@ serve_judge_virtual_olympiad(
   int *latest_runs, s, i;
   int vstart_id;
 
-  if (global->score_system_val != SCORE_OLYMPIAD
-      || !global->is_virtual) return;
+  if (global->score_system != SCORE_OLYMPIAD || !global->is_virtual) return;
   if (user_id <= 0) return;
   if (run_get_virtual_start_entry(cs->runlog_state, user_id, &re) < 0) return;
   if (re.judge_id > 0) return;

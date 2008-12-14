@@ -354,17 +354,17 @@ cmd_operation(
     serve_update_status_file(cs, 1);
     break;
   case NEW_SRV_ACTION_SET_JUDGING_MODE:
-    if (global->score_system_val != SCORE_OLYMPIAD) break;
+    if (global->score_system != SCORE_OLYMPIAD) break;
     cs->accepting_mode = 0;
     serve_update_status_file(cs, 1);
     break;
   case NEW_SRV_ACTION_SET_ACCEPTING_MODE:
-    if (global->score_system_val != SCORE_OLYMPIAD) break;
+    if (global->score_system != SCORE_OLYMPIAD) break;
     cs->accepting_mode = 1;
     serve_update_status_file(cs, 1);
     break;
   case NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG:
-    if (global->score_system_val != SCORE_OLYMPIAD) break;
+    if (global->score_system != SCORE_OLYMPIAD) break;
     if ((!global->is_virtual && cs->accepting_mode)
         ||(global->is_virtual && global->disable_virtual_auto_judge <= 0))
       break;
@@ -372,7 +372,7 @@ cmd_operation(
     serve_update_status_file(cs, 1);
     break;
   case NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG:
-    if (global->score_system_val != SCORE_OLYMPIAD) break;
+    if (global->score_system != SCORE_OLYMPIAD) break;
     cs->testing_finished = 0;
     serve_update_status_file(cs, 1);
     break;
@@ -420,11 +420,11 @@ cmd_operation_2(
     fprintf(fout, "%s", cnts->name);
     break;
   case NEW_SRV_ACTION_GET_CONTEST_TYPE:
-    if (global->score_system_val < 0
-        || global->score_system_val >= SCORE_TOTAL)
+    if (global->score_system < 0
+        || global->score_system >= SCORE_TOTAL)
       FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
-    if (global->is_virtual) s = virtual_contest_types[global->score_system_val];
-    else s = contest_types[global->score_system_val];
+    if (global->is_virtual) s = virtual_contest_types[global->score_system];
+    else s = contest_types[global->score_system];
     if (!s) FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
     fprintf(fout, "%s", s);
     break;
@@ -894,7 +894,7 @@ cmd_submit_run(
       FAIL(NEW_SRV_ERR_DUPLICATE_SUBMIT);
 
     if (prob->disable_submit_after_ok
-        && global->score_system_val != SCORE_OLYMPIAD && !cs->accepting_mode) {
+        && global->score_system != SCORE_OLYMPIAD && !cs->accepting_mode) {
       XALLOCAZ(acc_probs, cs->max_prob + 1);
       run_get_accepted_set(cs->runlog_state, phr->user_id,
                            cs->accepting_mode, cs->max_prob, acc_probs);
@@ -1455,14 +1455,14 @@ do_dump_master_runs(
       csv_rec[F_SOURCE_SUFFIX] = mime_type_get_suffix(pe->mime_type);
     }
 
-    if (global->score_system_val == SCORE_ACM) {
+    if (global->score_system == SCORE_ACM) {
       if (has_failed_test_num[pe->status]) {
         snprintf(failed_test_buf, sizeof(failed_test_buf), "%d", pe->test);
         csv_rec[F_FAILED_TEST] = failed_test_buf;
       }
       write_csv_record(fout, F_TOTAL_FIELDS, csv_rec);
       continue;
-    } else if (global->score_system_val == SCORE_MOSCOW) {
+    } else if (global->score_system == SCORE_MOSCOW) {
       if (has_failed_test_num[pe->status]) {
         snprintf(failed_test_buf, sizeof(failed_test_buf), "%d", pe->test);
         csv_rec[F_FAILED_TEST] = failed_test_buf;
@@ -1472,7 +1472,7 @@ do_dump_master_runs(
       csv_rec[F_BASE_SCORE] = score_buf;
       write_csv_record(fout, F_TOTAL_FIELDS, csv_rec);
       continue;
-    } else if (global->score_system_val == SCORE_OLYMPIAD) {
+    } else if (global->score_system == SCORE_OLYMPIAD) {
       if (has_failed_test_num[pe->status]) {
         snprintf(failed_test_buf, sizeof(failed_test_buf), "%d", pe->test);
         csv_rec[F_FAILED_TEST] = failed_test_buf;
@@ -1488,7 +1488,7 @@ do_dump_master_runs(
       }
       write_csv_record(fout, F_TOTAL_FIELDS, csv_rec);
       continue;
-    } else if (global->score_system_val == SCORE_KIROV) {
+    } else if (global->score_system == SCORE_KIROV) {
       if (!has_kirov_score[pe->status]) {
         write_csv_record(fout, F_TOTAL_FIELDS, csv_rec);
         continue;
@@ -1515,7 +1515,7 @@ do_dump_master_runs(
       }
 
       attempts = 0; disq_attempts = 0;
-      if (global->score_system_val == SCORE_KIROV && !pe->is_hidden) {
+      if (global->score_system == SCORE_KIROV && !pe->is_hidden) {
         run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts,
                          global->ignore_compile_errors);
       }

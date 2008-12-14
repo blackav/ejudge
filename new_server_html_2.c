@@ -301,7 +301,7 @@ ns_write_priv_all_runs(FILE *f,
   }
 
   if (!u->error_msgs) {
-    switch (global->score_system_val) {
+    switch (global->score_system) {
     case SCORE_ACM:
       str1 = _("Failed test");
       break;
@@ -369,9 +369,9 @@ ns_write_priv_all_runs(FILE *f,
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         fprintf(f, "<td%s><b>%s</b></td>", cl, statstr);
         fprintf(f, "<td%s>&nbsp;</td>", cl);
-        if (global->score_system_val == SCORE_KIROV
-            || global->score_system_val == SCORE_OLYMPIAD
-            || global->score_system_val == SCORE_MOSCOW) {
+        if (global->score_system == SCORE_KIROV
+            || global->score_system == SCORE_OLYMPIAD
+            || global->score_system == SCORE_MOSCOW) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         fprintf(f, "<td%s>&nbsp;</td>", cl);
@@ -410,9 +410,9 @@ ns_write_priv_all_runs(FILE *f,
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         fprintf(f, "<td%s><b>%s</b></td>", cl, statstr);
         fprintf(f, "<td%s>&nbsp;</td>", cl);
-        if (global->score_system_val == SCORE_KIROV
-            || global->score_system_val == SCORE_OLYMPIAD
-            || global->score_system_val == SCORE_MOSCOW) {
+        if (global->score_system == SCORE_KIROV
+            || global->score_system == SCORE_OLYMPIAD
+            || global->score_system == SCORE_MOSCOW) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         fprintf(f, "<td%s>&nbsp;</td>", cl);
@@ -430,7 +430,7 @@ ns_write_priv_all_runs(FILE *f,
       }
 
       prev_successes = RUN_TOO_MANY;
-      if (global->score_system_val == SCORE_KIROV && pe->status == RUN_OK
+      if (global->score_system == SCORE_KIROV && pe->status == RUN_OK
           && pe->prob_id > 0 && pe->prob_id <= cs->max_prob && !pe->is_hidden
           && cs->probs[pe->prob_id]
           && cs->probs[pe->prob_id]->score_bonus_total > 0) {
@@ -439,7 +439,7 @@ ns_write_priv_all_runs(FILE *f,
       }
 
       attempts = 0; disq_attempts = 0;
-      if (global->score_system_val == SCORE_KIROV && !pe->is_hidden) {
+      if (global->score_system == SCORE_KIROV && !pe->is_hidden) {
         run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts,
                          cs->probs[pe->prob_id]->ignore_compile_errors);
       }
@@ -565,7 +565,7 @@ ns_write_priv_all_runs(FILE *f,
     fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_REJUDGE_DISPLAYED_1));
     fprintf(f, "</form></td><td>\n");
 
-    if (global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode) {
+    if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode) {
       html_start_form(f, 1, phr->self_url, phr->hidden_vars);
       html_hidden(f, "run_mask_size", "%d", displayed_size);
       fprintf(f, "<input type=\"hidden\" name=\"run_mask\" value=\"");
@@ -1348,8 +1348,8 @@ ns_write_priv_source(const serve_state_t state,
     fprintf(f, "%s</tr>\n", nbsp);
   }
 
-  if (global->score_system_val == SCORE_KIROV
-      || global->score_system_val == SCORE_OLYMPIAD) {
+  if (global->score_system == SCORE_KIROV
+      || global->score_system == SCORE_OLYMPIAD) {
     // test (number of tests passed)
     if (info.test <= 0) {
       snprintf(bb, sizeof(bb), "N/A");
@@ -1403,7 +1403,7 @@ ns_write_priv_source(const serve_state_t state,
     } else {
       fprintf(f, "%s</tr>\n", nbsp);
     }
-  } else if (global->score_system_val == SCORE_MOSCOW) {
+  } else if (global->score_system == SCORE_MOSCOW) {
     // the first failed test
     if (info.test <= 0) {
       snprintf(bb, sizeof(bb), "N/A");
@@ -3093,13 +3093,13 @@ ns_new_run_form(FILE *fout, FILE *log_f,
   write_change_status_dialog(cs, fout, 0, 0, 0);
   fprintf(fout, "</tr>\n");
 
-  if (global->score_system_val == SCORE_KIROV
-      || global->score_system_val == SCORE_OLYMPIAD) {
+  if (global->score_system == SCORE_KIROV
+      || global->score_system == SCORE_OLYMPIAD) {
     fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Tests passed"),
             html_input_text(bb, sizeof(bb), "tests", 10, 0));
     fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Score gained"),
             html_input_text(bb, sizeof(bb), "score", 10, 0));
-  } else if (global->score_system_val == SCORE_MOSCOW) {
+  } else if (global->score_system == SCORE_MOSCOW) {
     fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Failed test"),
             html_input_text(bb, sizeof(bb), "tests", 10, 0));
     fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Score gained"),
@@ -3128,10 +3128,10 @@ ns_write_priv_standings(const serve_state_t state,
 {
   //write_standings_header(state, cnts, f, 1, 0, 0, 0);
 
-  if (state->global->score_system_val == SCORE_KIROV
-      || state->global->score_system_val == SCORE_OLYMPIAD)
+  if (state->global->score_system == SCORE_KIROV
+      || state->global->score_system == SCORE_OLYMPIAD)
     do_write_kirov_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0 /*accepting_mode*/, 1, 0, 0);
-  else if (state->global->score_system_val == SCORE_MOSCOW)
+  else if (state->global->score_system == SCORE_MOSCOW)
     do_write_moscow_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0);
   else
     do_write_standings(state, cnts, f, 1, 0, 0, 0, 0, 0, 0, 1, 0);
@@ -4345,7 +4345,7 @@ ns_write_user_run_status(
     start_time = run_get_start_time(cs->runlog_state);
   }
 
-  if (cs->global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode) {
+  if (cs->global->score_system == SCORE_OLYMPIAD && cs->accepting_mode) {
     if (re.status == RUN_OK || re.status == RUN_PARTIAL)
       re.status = RUN_ACCEPTED;
   }
@@ -4354,12 +4354,12 @@ ns_write_user_run_status(
     cur_prob = cs->probs[re.prob_id];
 
   attempts = 0; disq_attempts = 0;
-  if (cs->global->score_system_val == SCORE_KIROV && !re.is_hidden)
+  if (cs->global->score_system == SCORE_KIROV && !re.is_hidden)
     run_get_attempts(cs->runlog_state, run_id, &attempts, &disq_attempts,
                      cur_prob->ignore_compile_errors);
 
   prev_successes = RUN_TOO_MANY;
-  if (cs->global->score_system_val == SCORE_KIROV
+  if (cs->global->score_system == SCORE_KIROV
       && re.status == RUN_OK
       && !re.is_hidden
       && cur_prob && cur_prob->score_bonus_total > 0) {
@@ -4662,7 +4662,7 @@ ns_write_olympiads_user_runs(
   if (prob_id > 0 && prob_id <= cs->max_prob)
     filt_prob = cs->probs[prob_id];
 
-  ASSERT(global->score_system_val == SCORE_OLYMPIAD);
+  ASSERT(global->score_system == SCORE_OLYMPIAD);
   if (global->is_virtual) {
     if (run_get_virtual_start_entry(cs->runlog_state, phr->user_id, &re) < 0) {
       accepting_mode = 0;
@@ -5030,7 +5030,7 @@ ns_get_user_problems_summary(
     }
 
     all_attempts[re.prob_id]++;
-    if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
       // OLYMPIAD contest in accepting mode
       if (cur_prob->type != PROB_TYPE_STANDARD) {
         switch (re.status) {
@@ -5113,7 +5113,7 @@ ns_get_user_problems_summary(
           abort();
         }
       }
-    } else if (global->score_system_val == SCORE_OLYMPIAD) {
+    } else if (global->score_system == SCORE_OLYMPIAD) {
       // OLYMPIAD contest in judging mode
       //if (solved_flag[re.prob_id]) continue;
 
@@ -5162,7 +5162,7 @@ ns_get_user_problems_summary(
       default:
         abort();
       }
-    } else if (global->score_system_val == SCORE_KIROV) {
+    } else if (global->score_system == SCORE_KIROV) {
       // KIROV contest
       if (solved_flag[re.prob_id]) continue;
 
@@ -5230,7 +5230,7 @@ ns_get_user_problems_summary(
       default:
         abort();
       }
-    } else if (global->score_system_val == SCORE_MOSCOW) {
+    } else if (global->score_system == SCORE_MOSCOW) {
       if (solved_flag[re.prob_id]) continue;
 
       switch (re.status) {
@@ -5387,17 +5387,17 @@ ns_write_user_problems_summary(
             cl, _("Short name"), cl, _("Long name"));
   }
   fprintf(fout, "<th%s>%s</th>", cl, _("Status"));
-  if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+  if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
     if (global->disable_passed_tests <= 0) {
       fprintf(fout, "<th%s>%s</th>", cl, _("Tests passed"));
     }
-  } else if ((global->score_system_val == SCORE_OLYMPIAD && !accepting_mode)
-             || global->score_system_val == SCORE_KIROV) {
+  } else if ((global->score_system == SCORE_OLYMPIAD && !accepting_mode)
+             || global->score_system == SCORE_KIROV) {
     if (global->disable_passed_tests <= 0) {
       fprintf(fout, "<th%s>%s</th>", cl, _("Tests passed"));
     }
     fprintf(fout, "<th%s>%s</th>", cl, _("Score"));
-  } else if (global->score_system_val == SCORE_MOSCOW) {
+  } else if (global->score_system == SCORE_MOSCOW) {
     fprintf(fout, "<th%s>%s</th>", cl, _("Failed test"));
     fprintf(fout, "<th%s>%s</th>", cl, _("Score"));
   } else {
@@ -5435,10 +5435,10 @@ ns_write_user_problems_summary(
         fprintf(fout, "<td%s>%s</td>", cl, ARMOR(cur_prob->long_name));
     }
     if (best_run[prob_id] < 0) {
-      if (global->score_system_val == SCORE_KIROV
-          || (global->score_system_val == SCORE_OLYMPIAD
+      if (global->score_system == SCORE_KIROV
+          || (global->score_system == SCORE_OLYMPIAD
               && !accepting_mode)
-          || global->score_system_val == SCORE_MOSCOW) {
+          || global->score_system == SCORE_MOSCOW) {
         fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td>", cl, cl);
         if (global->disable_passed_tests <= 0)
           fprintf(fout, "<td%s>&nbsp;</td>", cl);
@@ -5458,7 +5458,7 @@ ns_write_user_problems_summary(
 
     run_get_entry(cs->runlog_state, best_run[prob_id], &re);
     act_status = re.status;
-    if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
       if (act_status == RUN_OK || act_status == RUN_PARTIAL
           || (act_status == RUN_WRONG_ANSWER_ERR
               && cur_prob->type != PROB_TYPE_STANDARD))
@@ -5468,7 +5468,7 @@ ns_write_user_problems_summary(
                    cur_prob->type, cur_prob->scoring_checker);
     fprintf(fout, "<td%s>%s</td>", cl, status_str);
 
-    if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
       if (global->disable_passed_tests <= 0) {
         switch (act_status) {
         case RUN_RUN_TIME_ERR:
@@ -5484,7 +5484,7 @@ ns_write_user_problems_summary(
           break;
         }
       }
-    } else if (global->score_system_val == SCORE_OLYMPIAD) {
+    } else if (global->score_system == SCORE_OLYMPIAD) {
       total_score += best_score[prob_id];
       switch (re.status) {
       case RUN_OK:
@@ -5510,7 +5510,7 @@ ns_write_user_problems_summary(
         fprintf(fout, "<td%s>&nbsp;</td>", cl);
         break;
       }
-    } else if (global->score_system_val == SCORE_KIROV) {
+    } else if (global->score_system == SCORE_KIROV) {
       total_score += best_score[prob_id];
       switch (re.status) {
       case RUN_OK:
@@ -5524,7 +5524,7 @@ ns_write_user_problems_summary(
         fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td>", cl, cl);
         break;
       }
-    } else if (global->score_system_val == SCORE_MOSCOW) {
+    } else if (global->score_system == SCORE_MOSCOW) {
       total_score += best_score[prob_id];
       switch (re.status) {
       case RUN_OK:
@@ -5576,9 +5576,9 @@ ns_write_user_problems_summary(
 
   fprintf(fout, "</table>\n");
 
-  if ((global->score_system_val == SCORE_OLYMPIAD && !accepting_mode)
-      || global->score_system_val == SCORE_KIROV
-      || global->score_system_val == SCORE_MOSCOW) {
+  if ((global->score_system == SCORE_OLYMPIAD && !accepting_mode)
+      || global->score_system == SCORE_KIROV
+      || global->score_system == SCORE_MOSCOW) {
     fprintf(fout, "<p><big>%s: %d</big></p>\n", _("Total score"), total_score);
   }
 

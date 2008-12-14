@@ -341,7 +341,7 @@ serve_state_load_contest(
   if (create_dirs(state, PREPARE_SERVE) < 0) goto failure;
 
   /* find olympiad_mode problems in KIROV contests */
-  if (state->global->score_system_val == SCORE_KIROV) {
+  if (state->global->score_system == SCORE_KIROV) {
     for (i = 1; i <= state->max_prob; i++) {
       if (!(prob = state->probs[i])) continue;
       if (prob->olympiad_mode > 0) state->has_olympiad_mode = 1;
@@ -390,8 +390,8 @@ serve_state_load_contest(
   }
 
   if (state->global->is_virtual) {
-    if (state->global->score_system_val != SCORE_ACM
-        && state->global->score_system_val != SCORE_OLYMPIAD) {
+    if (state->global->score_system != SCORE_ACM
+        && state->global->score_system != SCORE_OLYMPIAD) {
       err("invalid score system for virtual contest");
       goto failure;
     }
