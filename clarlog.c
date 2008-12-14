@@ -125,6 +125,7 @@ clar_open(
     if (!(state->cnts = state->iface->open(state->data, state, config, cnts,
                                            global, flags)))
       return -1;
+    return 0;
   }
 
   if (!config) {
