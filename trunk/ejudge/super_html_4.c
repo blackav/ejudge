@@ -785,10 +785,12 @@ eval_check_expr(
         val1 = val2;
         break;
       case 'b':
-        if (*(unsigned char*) f_ptr) val1 = 1;
+        //if (*(unsigned char*) f_ptr) val1 = 1;
+        val1 = *(unsigned char*) f_ptr;
         break;
       case 'B':
-        if (*(int*) f_ptr) val1 = 1;
+        //if (*(int*) f_ptr) val1 = 1;
+        val1 = *(int*) f_ptr;
         break;
       case 's':
         if (*(unsigned char **) f_ptr) val1 = 1;
@@ -1248,12 +1250,74 @@ static const struct cnts_edit_info cnts_language_info[] =
 
 static const struct cnts_edit_info cnts_problem_info[] =
 {
-  { NS_PROBLEM, CNTSPROB_short_name, 'S', 1, 1, 1, 1, 0, "Short name", "Short name", 0 },
-  { NS_PROBLEM, CNTSPROB_long_name, 'S', 1, 1, 1, 1, 0, "Long name", "Long name", "Problem.abstract !" },
-  { NS_PROBLEM, CNTSPROB_super, 139, 0, 0, 0, 0, 0, "Base abstract problem", "Base abstract problem", "Problem.abstract !" },
-  { NS_PROBLEM, CNTSPROB_stand_name, 'S', 1, 1, 1, 1, 0, "Standings column title", "Standings column title", "Problem.abstract ! SidState.prob_show_adv &&" },
-  { NS_PROBLEM, CNTSPROB_stand_column, 140, 0, 0, 0, 0, 0, "Collate this problem with another one", "Collate this problem with another one", "Problem.abstract ! SidState.prob_show_adv &&" },
-  { NS_PROBLEM, CNTSPROB_internal_name, 'S', 1, 1, 1, 1, 0, "Internal name", "Internal name", "Problem.abstract ! SidState.prob_show_adv &&" },
+  { NS_PROBLEM, CNTSPROB_short_name, 'S', 1, 1, 1, 1, 0, "Short name", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_long_name, 'S', 1, 1, 1, 1, 0, "Long name", 0, "Problem.abstract !" },
+  { NS_PROBLEM, CNTSPROB_super, 139, 0, 0, 0, 0, 0, "Base abstract problem", 0, "Problem.abstract !" },
+  { NS_PROBLEM, CNTSPROB_stand_name, 'S', 1, 1, 1, 1, 0, "Standings column title", 0, "Problem.abstract ! SidState.prob_show_adv &&" },
+  { NS_PROBLEM, CNTSPROB_stand_column, 140, 0, 0, 0, 0, 0, "Collate this problem with another one", 0, "Problem.abstract ! SidState.prob_show_adv &&" },
+  { NS_PROBLEM, CNTSPROB_internal_name, 'S', 1, 1, 1, 1, 0, "Internal name", 0, "Problem.abstract ! SidState.prob_show_adv &&" },
+  { NS_PROBLEM, CNTSPROB_type, 141, 1, 0, 0, 0, 0, "Problem type", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_manual_checking, 'Y', 1, 0, 0, 0, 0, "Check problem manually", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_examinator_num, 'd', 1, 1, 1, 1, 0, "Number of examinators", 0, "Problem.manual_checking 0 >" },
+  { NS_PROBLEM, CNTSPROB_check_presentation, 'Y', 1, 0, 0, 0, 0, "Check the format of answers", 0, "Problem.manual_checking 0 >" },
+  { NS_PROBLEM, CNTSPROB_use_stdin, 'Y', 1, 0, 0, 0, 0, "Read the data from the stdin", 0, "Problem.manual_checking !" },
+  { NS_PROBLEM, CNTSPROB_input_file, 'S', 1, 1, 1, 1, 0, "Name of the input file", 0, "Problem.manual_checking !" },
+  { NS_PROBLEM, CNTSPROB_use_stdout, 'Y', 1, 0, 0, 0, 0, "Write output to the stdin", 0, "Problem.manual_checking !" },
+  { NS_PROBLEM, CNTSPROB_output_file, 'S', 1, 1, 1, 1, 0, "Name of the output file", 0, "Problem.manual_checking !" },
+  { NS_PROBLEM, CNTSPROB_binary_input, 'Y', 1, 0, 0, 0, 0, "Input data in binary", 0, "Problem.manual_checking ! SidState.prob_show_adv &&" },
+  { NS_PROBLEM, CNTSPROB_xml_file, 'S', 1, 1, 1, 1, 0, "Name of XML file with problem statement", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_plugin_file, 'S', 1, 1, 1, 1, 0, "Problem plugin file", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_test_dir, 'S', 1, 1, 1, 1, 0, "Directory with tests", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_test_sfx, 'S', 1, 1, 1, 1, 0, "Suffix of test files", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_test_pat, 'S', 1, 1, 1, 1, 0, "Pattern of test files", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_use_corr, 'Y', 1, 0, 0, 0, 0, "Use answer files", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_corr_dir, 'S', 1, 1, 1, 1, 0, "Directory with answers", 0, "Problem.use_corr 0 >" },
+  { NS_PROBLEM, CNTSPROB_corr_sfx, 'S', 1, 1, 1, 1, 0, "Suffix of answer files", 0, "Problem.use_corr 0 >" },
+  { NS_PROBLEM, CNTSPROB_corr_pat, 'S', 1, 1, 1, 1, 0, "Pattern of answer files", 0, "Problem.use_corr 0 > SidState.prob_show_adv &&" },
+  { NS_PROBLEM, CNTSPROB_use_info, 'Y', 1, 0, 0, 0, 0, "Use test info files", 0, 0, },
+  { NS_PROBLEM, CNTSPROB_info_dir, 'S', 1, 1, 1, 1, 0, "Directory with test info files", 0, "Problem.use_info 0 >" },
+  { NS_PROBLEM, CNTSPROB_info_sfx, 'S', 1, 1, 1, 1, 0, "Suffix of test info files", 0, "Problem.use_info 0 >" },
+  { NS_PROBLEM, CNTSPROB_info_pat, 'S', 1, 1, 1, 1, 0, "Pattern of test info files", 0, "Problem.use_info 0 > SidState.prob_show_adv &&" },
+  { NS_PROBLEM, CNTSPROB_use_tgz, 'Y', 1, 0, 0, 0, 0, "Use tgz files", 0, "Problem.manual_checking !" },
+  { NS_PROBLEM, CNTSPROB_tgz_dir, 'S', 1, 1, 1, 1, 0, "Directory with tgz files", 0, "Problem.use_tgz 0 >" },
+  { NS_PROBLEM, CNTSPROB_tgz_sfx, 'S', 1, 1, 1, 1, 0, "Suffix of tgz files", 0, "Problem.manual_checking ! Problem.use_tgz 0 > &&" },
+  { NS_PROBLEM, CNTSPROB_tgz_pat, 'S', 1, 1, 1, 1, 0, "Pattern of tgz files", 0, "Problem.manual_checking ! Problem.use_tgz 0 > SidState.prob_show_adv && &&" },
+  { NS_PROBLEM, CNTSPROB_time_limit, 'd', 1, 1, 1, 1, 0, "CPU time limit (s)", 0, "Problem.manual_checking ! Problem.time_limit_millis 0 <= &&" },
+  { NS_PROBLEM, CNTSPROB_time_limit_millis, 'd', 1, 1, 1, 1, 0, "CPU time limit (ms)", 0, "Problem.manual_checking ! SidState.prob_show_adv Problem.time_limit_millis 0 > || &&" },
+  { NS_PROBLEM, CNTSPROB_real_time_limit, 'd', 1, 1, 1, 1, 0, "Real time limit (s)", 0, "Problem.manual_checking !" },
+  { NS_PROBLEM, CNTSPROB_max_vm_size, 'Z', 1, 1, 1, 1, 0, "Maximum VM size", 0, "Problem.manual_checking !" },
+  { NS_PROBLEM, CNTSPROB_max_stack_size, 'Z', 1, 1, 1, 1, 0, "Maximum stack size", 0, "Problem.manual_checking !" },
+  { NS_PROBLEM, CNTSPROB_checker_real_time_limit, 'd', 1, 1, 1, 1, 0, "Checker real time limit (s)", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_use_ac_not_ok, 'Y', 1, 0, 0, 0, 0, "Use AC status instead of OK", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_team_enable_rep_view, 'Y', 1, 0, 0, 0, 0, "Contestants may view testing protocols", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_team_enable_ce_view, 'Y', 1, 0, 0, 0, 0, "Contestants may view compilation errors", 0, "Problem.team_enable_rep_view !" },
+  { NS_PROBLEM, CNTSPROB_team_show_judge_report, 'Y', 1, 0, 0, 0, 0, "Contestants may view FULL testing protocols", 0, "Problem.team_enable_rep_view 0 >" },
+  { NS_PROBLEM, CNTSPROB_ignore_compile_errors, 'Y', 1, 0, 0, 0, 0, "Ignore compile errors", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_disable_user_submit, 'Y', 1, 0, 0, 0, 0, "Disable user submissions", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_disable_tab, 'Y', 1, 0, 0, 0, 0, "Disable navigation tab", 0, "Global.problem_navigation SidState.prob_show_adv &&" },
+  { NS_PROBLEM, CNTSPROB_restricted_statement, 'Y', 1, 0, 0, 0, 0, "Restricted problem statement", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_disable_submit_after_ok, 'Y', 1, 0, 0, 0, 0, "Disable submissions after OK", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_disable_security, 'Y', 1, 0, 0, 0, 0, "Disable security restrictions", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_disable_testing, 'Y', 1, 0, 0, 0, 0, "Disable testing of submissions", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_disable_auto_testing, 'Y', 1, 0, 0, 0, 0, "Disable automatic testing of submissions", 0, "Problem.disable_testing 0 <=" },
+  { NS_PROBLEM, CNTSPROB_enable_compilation, 'Y', 1, 0, 0, 0, 0, "Compile submissions to mark AC", 0, "Problem.disable_testing 0 <= Problem.disable_auto_testing 0 > &&" },
+  { NS_PROBLEM, CNTSPROB_ignore_exit_code, 'Y', 1, 0, 0, 0, 0, "Ignore process exit code", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_olympiad_mode, 'Y', 1, 0, 0, 0, 0, "Use Olympiad mode", 0, "SidState.prob_show_adv Global.score_system_val SCORE_KIROV == &&" },
+  { NS_PROBLEM, CNTSPROB_score_latest, 'Y', 1, 0, 0, 0, 0, "Score the latest submit", 0, "SidState.prob_show_adv Global.score_system_val SCORE_KIROV == &&" },
+  { NS_PROBLEM, CNTSPROB_full_score, 'd', 1, 1, 1, 1, 0, "Full problem score", 0, "Global.score_system_val SCORE_ACM !=" },
+  { NS_PROBLEM, CNTSPROB_variable_full_score, 'Y', 1, 0, 0, 0, 0, "Allow variable full score", 0, "SidState.prob_show_adv Global.score_system_val SCORE_KIROV == Global.score_system_val SCORE_OLYMPIAD == || &&" },
+  { NS_PROBLEM, CNTSPROB_test_score, 'd', 1, 1, 1, 1, 0, "Score for one passed test", 0, "Global.score_system_val SCORE_KIROV == Global.score_system_val SCORE_OLYMPIAD == ||" },
+  { NS_PROBLEM, CNTSPROB_run_penalty, 'd', 1, 1, 1, 1, 0, "Penalty for a failed submit", 0, "Global.score_system_val SCORE_KIROV ==" },
+  { NS_PROBLEM, CNTSPROB_disqualified_penalty, 'd', 1, 1, 1, 1, 0, "Penalty for a disqualified submit", 0, "Global.score_system_val SCORE_KIROV ==" },
+  { NS_PROBLEM, CNTSPROB_test_score_list, 's', 1, 1, 1, 1, 0, "Test scores for tests", 0, "Global.score_system_val SCORE_KIROV == Global.score_system_val SCORE_OLYMPIAD == ||" },
+  { NS_PROBLEM, CNTSPROB_acm_run_penalty, 'd', 1, 1, 1, 1, 0, "Penalty for a submit", 0, "SidState.prob_show_adv Global.score_system_val SCORE_ACM == Global.score_system_val SCORE_MOSCOW == || &&" },
+  { NS_PROBLEM, CNTSPROB_score_tests, 's', 1, 1, 1, 1, 0, "Tests for problem scoring", 0, "Global.score_system_val SCORE_MOSCOW ==" },
+  { NS_PROBLEM, CNTSPROB_test_sets, 'x', 1, 1, 1, 1, 0, "Specially scored test sets", 0, "SidState.prob_show_adv Global.score_system_val SCORE_KIROV == Global.score_system_val SCORE_OLYMPIAD == || &&" },
+  { NS_PROBLEM, CNTSPROB_score_bonus, 's', 1, 1, 1, 1, 0, "Additional score bonus", 0, "Global.score_system_val SCORE_KIROV ==" },
+  { NS_PROBLEM, CNTSPROB_tests_to_accept, 'd', 1, 1, 1, 1, 0, "Number of accept tests", 0, "Global.score_system_val SCORE_OLYMPIAD ==" },
+  { NS_PROBLEM, CNTSPROB_accept_partial, 'Y', 1, 0, 0, 0, 0, "Accept submits, which do not pass accept tests", 0, "SidState.prob_show_adv Global.score_system_val SCORE_OLYMPIAD == &&" },
+  { NS_PROBLEM, CNTSPROB_min_tests_to_accept, 'd', 1, 1, 1, 1, 0, "Minimum number of tests to accept", 0, "SidState.prob_show_adv Global.score_system_val SCORE_OLYMPIAD == &&" },
+  { NS_PROBLEM, CNTSPROB_hidden, 'Y', 1, 0, 0, 0, 0, "Do not show problem in standings", 0, "SidState.prob_show_adv" },
 
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
@@ -1396,7 +1460,7 @@ write_editing_rows(
         const void *edit_ptr,
         int item_id,
         int need_dv_column,
-        int show_undef)
+        const void *dflt_ptr)
 {
   int i, row = 1, j, k, is_empty, edit_op, clear_op, has_dv_column;
   int is_undef;
@@ -1405,8 +1469,9 @@ write_editing_rows(
   const struct opcap_list_item *perms;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char *s;
-  const void *v_ptr;
+  const void *v_ptr, *u_ptr = 0;
   unsigned char buf[1024], jbuf[1024];
+  unsigned char dflt_str[1024];
 
   for (i = 0, ce = pg->edit_descs; ce->type; ++i, ++ce) {
     hint = ce->hint;
@@ -1415,6 +1480,7 @@ write_editing_rows(
     clear_op = pg->clear_op;
     has_dv_column = 0;
     is_undef = 0;
+    dflt_str[0] = 0;
 
     if (ce->type == '-') {
       if (ce->guard_expr) {
@@ -1481,7 +1547,9 @@ write_editing_rows(
     }
 
     is_empty = 0;
-    if (show_undef) is_undef = pg->is_undef_value(edit_ptr, ce->field_id);
+    if (dflt_ptr && (is_undef = pg->is_undef_value(edit_ptr, ce->field_id))) {
+      u_ptr = pg->methods->get_ptr(dflt_ptr, ce->field_id);
+    }
 
     fprintf(out_f, "<tr%s>", form_row_attrs[row ^= 1]);
     if (ce->type == 137) {
@@ -1514,6 +1582,8 @@ write_editing_rows(
       if (!is_undef) {
         int *d_ptr = (int*) v_ptr;
         fprintf(out_f, "%d", *d_ptr);
+      } else if (dflt_ptr) {
+        snprintf(dflt_str, sizeof(dflt_str), "%d", *(int*) u_ptr);
       }
       break;
     case 'u':
@@ -1523,6 +1593,14 @@ write_editing_rows(
           fprintf(out_f, "0");
         } else {
           fprintf(out_f, "%d:%02d", *d_ptr / 60, *d_ptr % 60);
+        }
+      } else if (dflt_ptr) {
+        int *d_ptr = (int*) v_ptr;
+        if (*d_ptr <= 0) {
+          snprintf(dflt_str, sizeof(dflt_str), "0");
+        } else {
+          snprintf(dflt_str, sizeof(dflt_str),
+                   "%d:%02d", *d_ptr / 60, *d_ptr % 60);
         }
       }
       break;
@@ -1544,12 +1622,20 @@ write_editing_rows(
       if (!is_undef) {
         ejintsize_t val = *(ejintsize_t*) v_ptr;
         fprintf(out_f, "%s", num_to_size_str(buf, sizeof(buf), val));
+      } else {
+        ejintsize_t val = *(ejintsize_t*) u_ptr;
+        snprintf(dflt_str, sizeof(dflt_str), "%s",
+                 num_to_size_str(buf, sizeof(buf), val));
       }
       break;
     case 'Z':
       if (!is_undef) {
         size_t val = *(size_t*) v_ptr;
         fprintf(out_f, "%s", size_t_to_size_str(buf, sizeof(buf), val));
+      } else {
+        size_t val = *(size_t*) u_ptr;
+        snprintf(dflt_str, sizeof(dflt_str), "%s",
+                 size_t_to_size_str(buf, sizeof(buf), val));
       }
       break;
     case 137:
@@ -1571,6 +1657,9 @@ write_editing_rows(
         unsigned char *s = (unsigned char *) v_ptr;
         fprintf(out_f, "%s", s);
         is_empty = 0;
+      } else {
+        unsigned char *s = (unsigned char *) u_ptr;
+        snprintf(dflt_str, sizeof(dflt_str), "%s", s);
       }
       break;
     case 'x':
@@ -1602,8 +1691,8 @@ write_editing_rows(
         } else {
           snprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", edit_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
         }
-        if (show_undef) {
-          ss_html_int_select_undef(out_f, 0, 0, 0, jbuf, is_undef, !!*y_ptr,
+        if (dflt_ptr) {
+          ss_html_int_select_undef(out_f, 0, 0, 0, jbuf, is_undef, *y_ptr,
                              2, (const char *[]) { "No", "Yes" });
         } else {
           ss_html_int_select(out_f, 0, 0, 0, jbuf, !!*y_ptr,
@@ -1623,12 +1712,16 @@ write_editing_rows(
         } else {
           snprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", edit_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
         }
-        if (show_undef) {
-          ss_html_int_select_undef(out_f, 0, 0, 0, jbuf, is_undef, !!*y_ptr,
+        if (dflt_ptr) {
+          ss_html_int_select_undef(out_f, 0, 0, 0, jbuf, is_undef, *y_ptr,
                              2, (const char *[]) { "No", "Yes" });
         } else {
           ss_html_int_select(out_f, 0, 0, 0, jbuf, !!*y_ptr,
                              2, (const char *[]) { "No", "Yes" });
+        }
+        if (dflt_ptr && is_undef) {
+          int val = *(ejintbool_t*) u_ptr;
+          snprintf(dflt_str, sizeof(dflt_str), "%s", val?"Yes":"No");
         }
       }
       break;
@@ -1687,6 +1780,13 @@ write_editing_rows(
                 " invalidMessage=\"Invalid date. Use yyyy/mm/dd format.\" />",
                 date_buf, jbuf);
         fprintf(out_f, "</div>");
+
+        if (dflt_ptr && is_undef) {
+          time_t val = *(time_t *) u_ptr;
+          if (val > 0) {
+            snprintf(dflt_str, sizeof(dflt_str), "%s", xml_unparse_date(val));
+          }
+        }
       }
       break;
 
@@ -1840,6 +1940,24 @@ write_editing_rows(
         fprintf(out_f, "</select>");
       }
       break;
+    case 141:
+      {
+        int prob_type = *(int*) v_ptr;
+        const unsigned char *s = "";
+
+        snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
+        fprintf(out_f, "<select onChange='%s'>", jbuf);
+        if (prob_type == -1) s = " selected=\"1\"";
+        fprintf(out_f, "<option value=\"-1\"%s>Undefined</option>", s);
+        for (i = 0; i < PROB_TYPE_LAST; i++) {
+          s = "";
+          if (prob_type == i) s = " selected=\"1\"";
+          fprintf(out_f, "<option value=\"%d\"%s>%s</option>\n",
+                  i, s, problem_unparse_type(i));
+        }
+        fprintf(out_f, "</select>");
+      }
+      break;
     default:
       abort();
     }
@@ -1883,9 +2001,9 @@ write_editing_rows(
     }
     fprintf(out_f, "</td>");
 
-    if (need_dv_column && show_undef && is_undef) {
+    if (need_dv_column && dflt_str[0]) {
       fprintf(out_f, "<td class=\"cnts_edit_legend\">(<i>%s</i>)</td>",
-              "Undefined");
+              dflt_str);
       has_dv_column = 1;
     }
     if (need_dv_column && !has_dv_column) {
@@ -2035,6 +2153,7 @@ write_problem_page(
   const struct section_global_data *global = phr->ss->global;
   const struct edit_page_desc *pg = &edit_page_descs[3];
   const struct contest_desc *ecnts = phr->ss->edited_cnts;
+  struct section_problem_data tmp_prob;
 
   if (!prob) return;
 
@@ -2048,7 +2167,8 @@ write_problem_page(
   }
   if ((flags & SID_STATE_SHOW_HIDDEN)) show_details = 1;
   if ((flags & SID_STATE_SHOW_CLOSED)) show_adv = 1;
-  ss->cur_prob = prob;
+  cntsprob_copy_and_set_default(&tmp_prob, prob, 0, 0);
+  ss->cur_prob = &tmp_prob;
   ss->prob_show_adv = show_adv;
 
   fprintf(out_f,
@@ -2100,7 +2220,7 @@ write_problem_page(
   fprintf(out_f, "</td><td class=\"cnts_edit_legend\">&nbsp;</td></tr>\n");
 
   write_editing_rows(log_f, out_f, phr, pg, ecnts, global, prob, item_id, 1,
-                     show_undef);
+                     &tmp_prob);
 
  cleanup:
   html_armor_free(&ab);
