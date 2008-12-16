@@ -442,6 +442,8 @@ prepare_run_serving(const struct contest_desc *cnts,
           break;
       }
       if (!p) return;
+    } else {
+      return;
     }
   } else if (master_mode) {
     return;
