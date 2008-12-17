@@ -455,4 +455,88 @@ super_html_lang_deactivate(
         struct sid_state *sstate,
         int cs_lang_id);
 
+struct std_checker_info
+{
+  unsigned char *name;
+  unsigned char *desc;
+};
+
+/* operation error codes */
+enum
+{
+  S_ERR_EMPTY_REPLY = 2,
+  S_ERR_INV_OPER,
+  S_ERR_CONTEST_EDITED,
+  S_ERR_INV_SID,
+  S_ERR_INV_CONTEST,
+  S_ERR_PERM_DENIED,
+  S_ERR_INTERNAL,
+  S_ERR_ALREADY_EDITED,
+  S_ERR_NO_EDITED_CNTS,
+  S_ERR_INV_FIELD_ID,
+  S_ERR_NOT_IMPLEMENTED,
+  S_ERR_INV_VALUE,
+  S_ERR_CONTEST_ALREADY_EXISTS,
+  S_ERR_CONTEST_ALREADY_EDITED,
+  S_ERR_INV_LANG_ID,
+  S_ERR_INV_PROB_ID,
+  S_ERR_INV_PACKAGE,
+  S_ERR_ITEM_EXISTS,
+  S_ERR_OPERATION_FAILED,
+
+  S_ERR_LAST
+};
+
+int
+ss_cgi_param(
+        const struct super_http_request_info *phr,
+        const unsigned char *param,
+        const unsigned char **p_value);
+
+void
+ss_write_html_header(
+        FILE *out_f,
+        struct super_http_request_info *phr,
+        const unsigned char *title,
+        int use_dojo,
+        const unsigned char *body_class);
+void
+ss_write_html_footer(FILE *out_f);
+
+void
+ss_dojo_button(
+        FILE *out_f,
+        const unsigned char *id,
+        const unsigned char *icon,
+        const unsigned char *alt,
+        const char *onclick,
+        ...)
+  __attribute__((format(printf, 5, 6)));
+
+int
+super_serve_op_browse_problem_packages(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr);
+int
+super_serve_op_package_operation(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr);
+int
+super_serve_op_edit_problem(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr);
+
+int
+super_html_add_problem(
+        struct sid_state *sstate,
+        int prob_id);
+
+int
+super_html_add_abstract_problem(
+        struct sid_state *sstate,
+        const unsigned char *short_name);
+
 #endif /* __SUPER_HTML_H__ */

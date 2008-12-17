@@ -6120,40 +6120,46 @@ cntsprob_copy_and_set_default(
     case 'i':
       {
         int *d_int = (int*) d_ptr;
-        int u_int = *(int*) u_ptr;
         *d_int = *(const int*) s_ptr;
-        if (a_ptr && *d_int == u_int)
-          *d_int = *(const int*) a_ptr;
-        if (g_ptr && *d_int == u_int)
-          *d_int = *(const int*) g_ptr;
-        if (is_inh && *d_int == u_int)
-          *d_int = *(const int*) i_ptr;
+        if (is_inh) {
+          int u_int = *(int*) u_ptr;
+          if (a_ptr && *d_int == u_int)
+            *d_int = *(const int*) a_ptr;
+          if (g_ptr && *d_int == u_int)
+            *d_int = *(const int*) g_ptr;
+          if (is_inh && *d_int == u_int)
+            *d_int = *(const int*) i_ptr;
+        }
       }
       break;
     case 'B':
       {
         ejintbool_t *d_bool = (ejintbool_t*) d_ptr;
-        ejintbool_t u_bool = *(ejintbool_t*) u_ptr;
         *d_bool = *(const ejintbool_t*) s_ptr;
-        if (a_ptr && *d_bool == u_bool)
-          *d_bool = *(const ejintbool_t*) a_ptr;
-        if (g_ptr && *d_bool == u_bool)
-          *d_bool = *(const ejintbool_t*) g_ptr;
-        if (is_inh && *d_bool == u_bool)
-          *d_bool = *(const ejintbool_t*) i_ptr;
+        if (is_inh) {
+          ejintbool_t u_bool = *(ejintbool_t*) u_ptr;
+          if (a_ptr && *d_bool == u_bool)
+            *d_bool = *(const ejintbool_t*) a_ptr;
+          if (g_ptr && *d_bool == u_bool)
+            *d_bool = *(const ejintbool_t*) g_ptr;
+          if (is_inh && *d_bool == u_bool)
+            *d_bool = *(const ejintbool_t*) i_ptr;
+        }
       }
       break;
     case 'S':
       {
         unsigned char *d_str = (unsigned char *) d_ptr;
-        const unsigned char *u_str = (const unsigned char *) u_ptr;
         snprintf(d_str, f_size, "%s", (const unsigned char*) s_ptr);
-        if (a_ptr && !strcmp(d_str, u_str))
-          snprintf(d_str, f_size, "%s", (const unsigned char *) a_ptr);
-        if (g_ptr && !strcmp(d_str, u_str))
-          snprintf(d_str, f_size, "%s", (const unsigned char *) g_ptr);
-        if (is_inh && !strcmp(d_str, u_str))
-          snprintf(d_str, f_size, "%s", (const unsigned char*) i_ptr);
+        if (is_inh) {
+          const unsigned char *u_str = (const unsigned char *) u_ptr;
+          if (a_ptr && !strcmp(d_str, u_str))
+            snprintf(d_str, f_size, "%s", (const unsigned char *) a_ptr);
+          if (g_ptr && !strcmp(d_str, u_str))
+            snprintf(d_str, f_size, "%s", (const unsigned char *) g_ptr);
+          if (is_inh && !strcmp(d_str, u_str))
+            snprintf(d_str, f_size, "%s", (const unsigned char*) i_ptr);
+        }
         if (prob_format_set[f_id]) {
           sformat_message(tmp_buf, sizeof(tmp_buf), d_str,
                           gp, dp, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -6168,40 +6174,46 @@ cntsprob_copy_and_set_default(
     case 't':
       {
         time_t *d_time = (time_t*) d_ptr;
-        time_t u_time = *(const time_t*) u_ptr;
         *d_time = *(const time_t*) s_ptr;
-        if (a_ptr && *d_time == u_time)
-          *d_time = *(const time_t*) a_ptr;
-        if (g_ptr && *d_time == u_time)
-          *d_time = *(const time_t*) g_ptr;
-        if (is_inh && *d_time == u_time)
-          *d_time = *(const time_t*) i_ptr;
+        if (is_inh) {
+          time_t u_time = *(const time_t*) u_ptr;
+          if (a_ptr && *d_time == u_time)
+            *d_time = *(const time_t*) a_ptr;
+          if (g_ptr && *d_time == u_time)
+            *d_time = *(const time_t*) g_ptr;
+          if (is_inh && *d_time == u_time)
+            *d_time = *(const time_t*) i_ptr;
+        }
       }
       break;
     case 'z':
       {
         ejintsize_t *d_size = (ejintsize_t*) d_ptr;
-        ejintsize_t u_size = *(const ejintsize_t*) u_ptr;
         *d_size = *(const ejintsize_t*) s_ptr;
-        if (a_ptr && *d_size == u_size)
-          *d_size = *(const ejintsize_t*) a_ptr;
-        if (g_ptr && *d_size == u_size)
-          *d_size = *(const ejintsize_t*) g_ptr;
-        if (is_inh && *d_size == u_size)
-          *d_size = *(const ejintsize_t*) i_ptr;
+        if (is_inh) {
+          ejintsize_t u_size = *(const ejintsize_t*) u_ptr;
+          if (a_ptr && *d_size == u_size)
+            *d_size = *(const ejintsize_t*) a_ptr;
+          if (g_ptr && *d_size == u_size)
+            *d_size = *(const ejintsize_t*) g_ptr;
+          if (is_inh && *d_size == u_size)
+            *d_size = *(const ejintsize_t*) i_ptr;
+        }
       }
       break;
     case 'Z':
       {
         size_t *d_size = (size_t*) d_ptr;
-        size_t u_size = *(const size_t*) u_ptr;
         *d_size = *(const size_t*) s_ptr;
-        if (a_ptr && *d_size == u_size)
-          *d_size = *(const size_t*) a_ptr;
-        if (g_ptr && *d_size == u_size)
-          *d_size = *(const size_t*) g_ptr;
-        if (is_inh && *d_size == u_size)
-          *d_size = *(const size_t*) i_ptr;
+        if (is_inh) {
+          size_t u_size = *(const size_t*) u_ptr;
+          if (a_ptr && *d_size == u_size)
+            *d_size = *(const size_t*) a_ptr;
+          if (g_ptr && *d_size == u_size)
+            *d_size = *(const size_t*) g_ptr;
+          if (is_inh && *d_size == u_size)
+            *d_size = *(const size_t*) i_ptr;
+        }
       }
       break;
     default:
@@ -6278,6 +6290,76 @@ cntsprob_copy_and_set_default(
     }
     break;
     */
+}
+
+void
+cntsprob_clear_field(
+        struct section_problem_data *dp,
+        int f_id)
+{
+  const struct section_problem_data *sp = 0;
+  void *d_ptr;
+  const void *s_ptr;
+  int f_type;
+  size_t f_size;
+
+  if (!dp) return;
+  if (f_id <= 0 || f_id >= CNTSPROB_LAST_FIELD) return;
+  if (f_id == CNTSPROB_id) return;
+  if (!prob_settable_set[f_id]) return;
+  sp = &prob_default_values;
+  if (prob_inheritable_set[f_id]) {
+    sp = &prob_undef_values;
+  }
+
+  if (!(d_ptr = cntsprob_get_ptr_nc(dp, f_id))) return;
+  if (!(s_ptr = cntsprob_get_ptr(sp, f_id))) return;
+  f_type = cntsprob_get_type(f_id);
+  f_size = cntsprob_get_size(f_id);
+
+  // 'i', 'B', 'S', 'x', 't', 'X', 'Z', 'z'
+  switch (f_type) {
+  case 'i':
+    *(int *) d_ptr = *(const int*) s_ptr;
+    break;
+  case 'B':
+    *(ejintbool_t*) d_ptr = *(const ejintbool_t*) s_ptr;
+    break;
+  case 'S':
+    memset(d_ptr, 0, f_size);
+    strcpy((char*) d_ptr, (const char*) s_ptr);
+    break;
+  case 't':
+    *(time_t*) d_ptr = *(const time_t*) s_ptr;
+    break;
+  case 'X':
+  case 'x':
+    sarray_free(*(char***) d_ptr);
+    *(char***) d_ptr = 0;
+    break;
+  case 'Z':
+    *(size_t*) d_ptr = *(const size_t*) s_ptr;
+    break;
+  case 'z':
+    *(ejintsize_t*) d_ptr = *(const ejintsize_t*) s_ptr;
+    break;
+  default:
+    abort();
+  }
+}
+
+int
+cntsprob_is_settable_field(int f_id)
+{
+  if (f_id <= 0 || f_id >= CNTSPROB_LAST_FIELD) return 0;
+  return prob_settable_set[f_id];
+}
+
+int
+cntsprob_is_inheritable_field(int f_id)
+{
+  if (f_id <= 0 || f_id >= CNTSPROB_LAST_FIELD) return 0;
+  return prob_inheritable_set[f_id];
 }
 
 /*
