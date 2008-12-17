@@ -514,3 +514,39 @@ function ssEditPage(op, page)
 {
   document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + op + "&page=" + page;
 }
+
+function ssPackage(op, pkg)
+{
+  document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + op + "&package=" + pkg;
+}
+
+function ssPackageOp(op, next_op, pkg, item)
+{
+  dojo.xhrPost({
+      url: script_name,
+      content: {
+        "SID": SID,
+        "action": SSERV_CMD_HTTP_REQUEST,
+        "op": op,
+        "package": pkg,
+        "item": item
+      },
+      handleAs: "json",
+      error: function(data, ioargs) {
+        alert("Request failed: " + data);
+      },
+      load: function(data, ioargs) {
+        if (data.status < 0) {
+          alert("Operation failed: " + data.text);
+        } else if (data.status > 0) {
+          // reload this page
+          document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + next_op + "&package=" + pkg;
+        }
+      }
+  });
+}
+
+function ssEditProblem(op, pkg, name)
+{
+  document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + op + "&package=" + pkg + "&name=" + name;
+}
