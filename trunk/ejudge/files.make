@@ -187,6 +187,7 @@ COMMON_CFILES=\
  super_html_2.c\
  super_html_3.c\
  super_html_4.c\
+ super_html_5.c\
  super_proto.c\
  sha.c\
  teamdb.c\

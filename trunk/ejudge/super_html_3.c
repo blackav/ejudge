@@ -3664,12 +3664,7 @@ print_boolean_3_select_row(FILE *f,
   fprintf(f, "</td></tr></form>\n");
 }
 
-struct std_checker_info
-{
-  unsigned char *name;
-  unsigned char *desc;
-};
-static struct std_checker_info std_checkers[] =
+struct std_checker_info super_html_std_checkers[] =
 {
   { "", "" },
   { "cmp_file", "compare two files (trailing whitespace ignored)" },
@@ -3710,14 +3705,14 @@ print_std_checker_row(FILE *f,
   html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>%s</td><td>", row_attr, "Standard checker:");
   fprintf(f, "<select name=\"param\">");
-  for (i = 0; std_checkers[i].name; i++) {
+  for (i = 0; super_html_std_checkers[i].name; i++) {
     s = "";
-    if (!strcmp(prob->standard_checker, std_checkers[i].name)) {
+    if (!strcmp(prob->standard_checker, super_html_std_checkers[i].name)) {
       s = " selected=\"1\"";
       was_match = 1;
     }
     fprintf(f, "<option value=\"%s\"%s>%s</option>",
-            std_checkers[i].name, s, std_checkers[i].desc);
+            super_html_std_checkers[i].name,s,super_html_std_checkers[i].desc);
   }
   if (!was_match) {
     s = html_armor_string_dup(prob->standard_checker);
@@ -5689,112 +5684,140 @@ super_html_edit_problems(FILE *f,
 }
 
 int
+super_html_add_problem(
+        struct sid_state *sstate,
+        int prob_id)
+{
+  int i, x;
+  struct section_problem_data *prob = 0;
+
+  if (prob_id < 0 || prob_id > EJ_MAX_PROB_ID)
+    return -1;
+
+  if (!prob_id) {
+    for (i = 1; i < sstate->prob_a; i++)
+      if (!sstate->probs[i])
+        break;
+    prob_id = i;
+  }
+
+  if (prob_id >= sstate->prob_a) {
+    int new_prob_a = sstate->prob_a;
+    struct section_problem_data **new_probs;
+    int *new_flags;
+
+    if (!new_prob_a) new_prob_a = 16;
+    while (prob_id >= new_prob_a) new_prob_a *= 2;
+    XCALLOC(new_probs, new_prob_a);
+    XCALLOC(new_flags, new_prob_a);
+    if (sstate->prob_a) {
+      XMEMMOVE(new_probs, sstate->probs, sstate->prob_a);
+      XMEMMOVE(new_flags, sstate->prob_flags, sstate->prob_a);
+    }
+    xfree(sstate->probs);
+    xfree(sstate->prob_flags);
+    sstate->probs = new_probs;
+    sstate->prob_flags = new_flags;
+    sstate->prob_a = new_prob_a;
+  }
+ 
+  if (sstate->probs[prob_id])
+    return -SSERV_ERR_DUPLICATED_PROBLEM;
+
+  prob = prepare_alloc_problem();
+  prepare_problem_init_func(&prob->g);
+  sstate->cfg = param_merge(&prob->g, sstate->cfg);
+  sstate->probs[prob_id] = prob;
+  prob->id = prob_id;
+  sstate->prob_flags[prob_id] = 0;
+
+  for (x = prob_id - 1, i = 0; x; x /= 26, ++i) {
+    prob->short_name[i] = 'A' + x % 26;
+  }
+  prob->short_name[i] = 0;
+  if (sstate->aprob_u == 1)
+    snprintf(prob->super, sizeof(prob->super), "%s",
+             sstate->aprobs[0]->short_name);
+  prob->variant_num = 0;
+  return 0;
+}
+
+int
+super_html_add_abstract_problem(
+        struct sid_state *sstate,
+        const unsigned char *short_name)
+{
+  struct section_problem_data *prob = 0;
+  int i;
+
+  if (!short_name || !*short_name) return -1;
+  if (check_str(short_name, login_accept_chars) < 0) return -1;
+  for (i = 0; i < sstate->prob_a; i++)
+    if (sstate->probs[i] && !strcmp(sstate->probs[i]->short_name, short_name))
+      break;
+  if (i < sstate->prob_a) return -1;
+  for (i = 0; i < sstate->aprob_u; i++)
+    if (!strcmp(sstate->aprobs[i]->short_name, short_name))
+      break;
+  if (i < sstate->aprob_u) return -1;
+  if (i == sstate->aprob_a) {
+    if (!sstate->aprob_a) sstate->aprob_a = 4;
+    sstate->aprob_a *= 2;
+    XREALLOC(sstate->aprobs, sstate->aprob_a);
+    XREALLOC(sstate->aprob_flags, sstate->aprob_a);
+  }
+  prob = prepare_alloc_problem();
+  prepare_problem_init_func(&prob->g);
+  sstate->cfg = param_merge(&prob->g, sstate->cfg);
+  sstate->aprobs[i] = prob;
+  sstate->aprob_flags[i] = 0;
+  sstate->aprob_u++;
+  snprintf(prob->short_name, sizeof(prob->short_name), "%s", short_name);
+  prob->abstract = 1;
+  prob->type = 0;
+  prob->manual_checking = 0;
+  prob->examinator_num = 0;
+  prob->check_presentation = 0;
+  prob->scoring_checker = 0;
+  prob->use_stdin = 1;
+  prob->use_stdout = 1;
+  prob->binary_input = DFLT_P_BINARY_INPUT;
+  prob->ignore_exit_code = 0;
+  prob->olympiad_mode = 0;
+  prob->score_latest = 0;
+  prob->time_limit = 1;
+  prob->time_limit_millis = 0;
+  prob->real_time_limit = 5;
+  snprintf(prob->test_dir, sizeof(prob->test_sfx), "%s", "%Ps");
+  snprintf(prob->test_sfx, sizeof(prob->test_sfx), "%s", ".dat");
+  prob->use_corr = 1;
+  snprintf(prob->corr_dir, sizeof(prob->corr_dir), "%s", "%Ps");
+  snprintf(prob->corr_sfx, sizeof(prob->corr_sfx), "%s", ".ans");
+  prob->use_info = 0;
+  snprintf(prob->info_dir, sizeof(prob->info_dir), "%s", "%Ps");
+  snprintf(prob->info_sfx, sizeof(prob->info_sfx), "%s", ".inf");
+  prob->use_tgz = 0;
+  snprintf(prob->tgz_dir, sizeof(prob->tgz_dir), "%s", "%Ps");
+  snprintf(prob->tgz_sfx, sizeof(prob->tgz_sfx), "%s", ".tgz");
+  snprintf(prob->check_cmd, sizeof(prob->check_cmd), "%s", "check_%Ps");
+  prob->max_vm_size = 64 * SIZE_M;
+  prob->variant_num = 0;
+  return 0;
+}
+
+int
 super_html_prob_cmd(struct sid_state *sstate, int cmd,
                     int prob_id, const unsigned char *param2,
                     int param3, int param4)
 {
-  int i;
-  struct section_problem_data *prob;
   int new_val_1, new_val_2;
 
   switch (cmd) {
   case SSERV_CMD_PROB_ADD:
-    if (prob_id < 0 || prob_id > EJ_MAX_PROB_ID)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    if (!prob_id) {
-      for (i = 1; i < sstate->prob_a; i++)
-        if (!sstate->probs[i])
-          break;
-      prob_id = i;
-    }
-
-    if (prob_id >= sstate->prob_a) {
-      int new_prob_a = sstate->prob_a;
-      struct section_problem_data **new_probs;
-      int *new_flags;
-
-      if (!new_prob_a) new_prob_a = 16;
-      while (prob_id >= new_prob_a) new_prob_a *= 2;
-      XCALLOC(new_probs, new_prob_a);
-      XCALLOC(new_flags, new_prob_a);
-      if (sstate->prob_a) {
-        XMEMMOVE(new_probs, sstate->probs, sstate->prob_a);
-        XMEMMOVE(new_flags, sstate->prob_flags, sstate->prob_a);
-      }
-      xfree(sstate->probs);
-      xfree(sstate->prob_flags);
-      sstate->probs = new_probs;
-      sstate->prob_flags = new_flags;
-      sstate->prob_a = new_prob_a;
-    }
- 
-    if (sstate->probs[prob_id])
-      return -SSERV_ERR_DUPLICATED_PROBLEM;
-
-    prob = prepare_alloc_problem();
-    prepare_problem_init_func(&prob->g);
-    sstate->cfg = param_merge(&prob->g, sstate->cfg);
-    sstate->probs[prob_id] = prob;
-    prob->id = prob_id;
-    sstate->prob_flags[prob_id] = 0;
-    snprintf(prob->short_name, sizeof(prob->short_name), "%c", '@' + prob->id);
-    if (sstate->aprob_u == 1)
-      snprintf(prob->super, sizeof(prob->super), "%s", sstate->aprobs[0]->short_name);
-    prob->variant_num = 0;
-    return 0;
+    return super_html_add_problem(sstate, prob_id);
 
   case SSERV_CMD_PROB_ADD_ABSTRACT:
-    if (!param2 || !*param2) return -SSERV_ERR_INVALID_PARAMETER;
-    if (check_str(param2, login_accept_chars) < 0)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    for (i = 0; i < sstate->aprob_u; i++)
-      if (!strcmp(sstate->aprobs[i]->short_name, param2))
-        break;
-    if (i < sstate->aprob_u)
-      return -SSERV_ERR_DUPLICATED_PROBLEM;
-    if (i == sstate->aprob_a) {
-      if (!sstate->aprob_a) sstate->aprob_a = 4;
-      sstate->aprob_a *= 2;
-      XREALLOC(sstate->aprobs, sstate->aprob_a);
-      XREALLOC(sstate->aprob_flags, sstate->aprob_a);
-    }
-    prob = prepare_alloc_problem();
-    prepare_problem_init_func(&prob->g);
-    sstate->cfg = param_merge(&prob->g, sstate->cfg);
-    sstate->aprobs[i] = prob;
-    sstate->aprob_flags[i] = 0;
-    sstate->aprob_u++;
-    snprintf(prob->short_name, sizeof(prob->short_name), "%s", param2);
-    prob->abstract = 1;
-    prob->type = 0;
-    prob->manual_checking = 0;
-    prob->examinator_num = 0;
-    prob->check_presentation = 0;
-    prob->scoring_checker = 0;
-    prob->use_stdin = 1;
-    prob->use_stdout = 1;
-    prob->binary_input = DFLT_P_BINARY_INPUT;
-    prob->ignore_exit_code = 0;
-    prob->olympiad_mode = 0;
-    prob->score_latest = 0;
-    prob->time_limit = 5;
-    prob->time_limit_millis = 0;
-    prob->real_time_limit = 30;
-    snprintf(prob->test_dir, sizeof(prob->test_sfx), "%s", "%Ps");
-    snprintf(prob->test_sfx, sizeof(prob->test_sfx), "%s", ".dat");
-    prob->use_corr = 1;
-    snprintf(prob->corr_dir, sizeof(prob->corr_dir), "%s", "%Ps");
-    snprintf(prob->corr_sfx, sizeof(prob->corr_sfx), "%s", ".ans");
-    prob->use_info = 0;
-    snprintf(prob->info_dir, sizeof(prob->info_dir), "%s", "%Ps");
-    snprintf(prob->info_sfx, sizeof(prob->info_sfx), "%s", ".inf");
-    prob->use_tgz = 0;
-    snprintf(prob->tgz_dir, sizeof(prob->tgz_dir), "%s", "%Ps");
-    snprintf(prob->tgz_sfx, sizeof(prob->tgz_sfx), "%s", ".tgz");
-    snprintf(prob->check_cmd, sizeof(prob->check_cmd), "%s", "check_%Ps");
-    prob->max_vm_size = 64 * SIZE_M;
-    prob->variant_num = 0;
-    return 0;
+    return super_html_add_abstract_problem(sstate, param2);
 
   case SSERV_CMD_PROB_SHOW_DETAILS:
     new_val_1 = SID_STATE_SHOW_HIDDEN;

@@ -1204,4 +1204,15 @@ cntsprob_copy_and_set_default(
         const struct section_problem_data *ap,
         const struct section_global_data *gp);
 
+void
+cntsprob_clear_field(
+        struct section_problem_data *dp,
+        int f_id);
+
+int
+cntsprob_is_settable_field(int f_id);
+
+int
+cntsprob_is_inheritable_field(int f_id);
+
 #endif /* __PREPARE_H__ */
