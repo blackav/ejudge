@@ -13650,7 +13650,7 @@ ns_handle_http_request(struct server_framework_state *state,
     // FIXME: temporary hack
     phr->locale_id = orig_locale_id;
     ns_register_pages(fout, phr);
-  } else if (!strcmp(last_name, "new-server-cmd")) {
+  } else if (!strcmp(last_name, "ejudge-contests-cmd")) {
     phr->protocol_reply = new_server_cmd_handler(fout, phr);
   } else
     unprivileged_entry_point(fout, phr, orig_locale_id);

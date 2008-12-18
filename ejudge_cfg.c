@@ -589,16 +589,15 @@ ejudge_cfg_parse(char const *path)
     cfg->compile_log = xstrdup(pathbuf);
   }
 
+  // ignore the defined value
 #if defined EJUDGE_SERVE_PATH
-  if (!cfg->serve_path) {
-    cfg->serve_path = xstrdup(EJUDGE_SERVE_PATH);
-  }
+  xfree(cfg->serve_path);
+  cfg->serve_path = xstrdup(EJUDGE_SERVE_PATH);
 #endif /* EJUDGE_SERVE_PATH */
 
 #if defined EJUDGE_RUN_PATH
-  if (!cfg->run_path) {
-    cfg->run_path = xstrdup(EJUDGE_RUN_PATH);
-  }
+  xfree(cfg->run_path);
+  cfg->run_path = xstrdup(EJUDGE_RUN_PATH);
 #endif /* EJUDGE_RUN_PATH */
 
   if (!cfg->plugin_dir && cfg->script_dir) {
