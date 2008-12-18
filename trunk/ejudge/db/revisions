@@ -4254,3 +4254,17 @@ super_html.c 5423 0 12057933
 super_html_3.c 5423 0 24025919
 super_html_4.c 5423 0 18008718
 super_html_5.c 5424 0 795297
+compile-control.c 5430 0 610248
+ejudge-control.c 5430 0 849946
+ejudge-setup.c 5430 0 10441773
+job-server.c 5430 0 1304348
+job-server-control.c 5430 0 349227
+new-server.c 5430 0 1776285
+new-server-cmd.c 5430 0 2287121
+new-server-control.c 5430 0 337857
+super-serve.c 5430 0 13912611
+super-serve-control.c 5430 0 308298
+userlist-server.c 5430 0 22868743
+userlist-server-control.c 5430 0 304680
+ejudge_cfg.c 5428 0 1466708
+new_server_html.c 5428 0 37724983
