@@ -40,7 +40,7 @@
 #include <sys/time.h>
 
 /*
- * usage: compile-control COMMAND CONFIG
+ * usage: ej-compile-control COMMAND CONFIG
  *   COMMAND is one of `stop', `restart', `status'
  */
 
@@ -83,15 +83,15 @@ static void write_help(void) __attribute__((noreturn));
 static void
 write_help(void)
 {
-  printf("%s: compile control utility\n"
+  printf("%s: ej-compile control utility\n"
          "Usage: %s [OPTIONS] COMMAND [EJUDGE-XML-PATH]\n"
          "  OPTIONS:\n"
          "    --help    write message and exit\n"
          "    --version report version and exit\n"
          "  COMMAND:\n"
-         "    stop      stop the compile\n"
-         "    restart   restart the compile\n"
-         /*"    status    report the compile status\n"*/,
+         "    stop      stop the ej-compile\n"
+         "    restart   restart the ej-compile\n"
+         /*"    status    report the ej-compile status\n"*/,
          program_name, program_name);
   exit(0);
 }
@@ -249,12 +249,12 @@ main(int argc, char *argv[])
     if (access(pkt_path, F_OK) < 0) break;
     if (tot_wait >= 5000000) {
       unlink(pkt_path);
-      op_error("compile seems to not running");
+      op_error("ej-compile seems to not running");
     }
   }
 
   /* FIXME: reimplement it normally */
-  snprintf(cmdstr, sizeof(cmdstr), "killall -%s compile", signame);
+  snprintf(cmdstr, sizeof(cmdstr), "killall -%s ej-compile", signame);
   if (system(cmdstr) < 0)
     op_error("killall failed");
 #if 0

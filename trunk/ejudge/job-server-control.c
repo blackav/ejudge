@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,7 +33,7 @@
 #include <unistd.h>
 
 /*
- * usage: job-server-control COMMAND CONFIG
+ * usage: ej-jobs-control COMMAND CONFIG
  *   COMMAND is one of `stop', `restart', `status'
  */
 
@@ -76,15 +76,15 @@ static void write_help(void) __attribute__((noreturn));
 static void
 write_help(void)
 {
-  printf("%s: job-server control utility\n"
+  printf("%s: ej-jobs control utility\n"
          "Usage: %s [OPTIONS] COMMAND [EJUDGE-XML-PATH]\n"
          "  OPTIONS:\n"
          "    --help    write message and exit\n"
          "    --version report version and exit\n"
          "  COMMAND:\n"
-         "    stop      stop the job-server\n"
-         "    restart   restart the job-server\n"
-         /*"    status    report the job-server status\n"*/,
+         "    stop      stop the ej-jobs\n"
+         "    restart   restart the ej-jobs\n"
+         /*"    status    report the rj-jobs status\n"*/,
          program_name, program_name);
   exit(0);
 }
@@ -156,7 +156,7 @@ main(int argc, char *argv[])
     if (access(pkt_path, F_OK) < 0) break;
     if (tot_wait >= 5000000) {
       unlink(pkt_path);
-      op_error("job-server seems to not running");
+      op_error("ej-jobs seems to not running");
     }
   }
 

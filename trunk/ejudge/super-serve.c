@@ -4978,7 +4978,7 @@ main(int argc, char **argv)
 
   if (start_prepare(user, group, workdir) < 0) return 1;
 
-  info("super-serve %s, compiled %s", compile_version, compile_date);
+  info("ej-super-server %s, compiled %s", compile_version, compile_date);
   if (slave_mode) info("slave mode enabled");
 
   config = ejudge_cfg_parse(ejudge_xml_path);

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@
 #include <ctype.h>
 
 /*
- * usage: new-server-control COMMAND CONFIG
+ * usage: ej-contests-control COMMAND CONFIG
  *   COMMAND is one of `stop', `restart', `status'
  */
 
@@ -77,15 +77,15 @@ static void write_help(void) __attribute__((noreturn));
 static void
 write_help(void)
 {
-  printf("%s: new-server control utility\n"
+  printf("%s: ej-contests control utility\n"
          "Usage: %s [OPTIONS] COMMAND [EJUDGE-XML-PATH]\n"
          "  OPTIONS:\n"
          "    --help    write message and exit\n"
          "    --version report version and exit\n"
          "  COMMAND:\n"
-         "    stop      stop the new-server\n"
-         "    restart   restart the new-server\n"
-         /*"    status    report the new-server status\n"*/,
+         "    stop      stop the ej-contests\n"
+         "    restart   restart the ej-contests\n"
+         /*"    status    report the ej-contests status\n"*/,
          program_name, program_name);
   exit(0);
 }
@@ -150,7 +150,7 @@ main(int argc, char *argv[])
   }
 
   r = new_server_clnt_open(config->new_server_socket, &conn);
-  if (r == -NEW_SRV_ERR_CONNECT_FAILED) op_error("new-server is not running");
+  if (r == -NEW_SRV_ERR_CONNECT_FAILED) op_error("ej-contests is not running");
   if (r < 0) op_error("%s", ns_strerror(-r));
 
   r = new_server_clnt_control(conn, cmd);

@@ -712,7 +712,7 @@ main(int argc, char *argv[])
 #endif
   setup_log_file();
 
-  info("new-server %s, compiled %s", compile_version, compile_date);
+  info("ej-contests %s, compiled %s", compile_version, compile_date);
 
   params.socket_path = config->new_server_socket;
   params.log_path = config->new_server_log;

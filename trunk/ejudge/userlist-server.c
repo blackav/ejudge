@@ -9374,7 +9374,7 @@ main(int argc, char *argv[])
 
   if (start_prepare(user, group, workdir) < 0) return 1;
 
-  info("userlist-server %s, compiled %s", compile_version, compile_date);
+  info("ej-users %s, compiled %s", compile_version, compile_date);
 
   if (tsc_init() < 0) return 1;
   program_name = argv[0];

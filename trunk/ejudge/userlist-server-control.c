@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@
 #include <ctype.h>
 
 /*
- * usage: userlist-server-control COMMAND CONFIG
+ * usage: ej-users-control COMMAND CONFIG
  *   COMMAND is one of `stop', `restart', `status'
  */
 
@@ -75,15 +75,15 @@ static void write_help(void) __attribute__((noreturn));
 static void
 write_help(void)
 {
-  printf("%s: userlist-server control utility\n"
+  printf("%s: ej-users control utility\n"
          "Usage: %s [OPTIONS] COMMAND [EJUDGE-XML-PATH]\n"
          "  OPTIONS:\n"
          "    --help    write message and exit\n"
          "    --version report version and exit\n"
          "  COMMAND:\n"
-         "    stop      stop the userlist-server\n"
-         "    restart   restart the userlist-server\n"
-         /*"    status    report the userlist-server status\n"*/,
+         "    stop      stop the ej-users\n"
+         "    restart   restart the ej-users\n"
+         /*"    status    report the ej-users status\n"*/,
          program_name, program_name);
   exit(0);
 }
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
   }
 
   if (!(userlist_clnt = userlist_clnt_open(config->socket_path)))
-    op_error("userlist-server is not running");
+    op_error("ej-users is not running");
   r = userlist_clnt_control(userlist_clnt, cmd);
   if (r < 0) op_error("%s", userlist_strerror(-r));
 
