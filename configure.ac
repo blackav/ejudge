@@ -874,8 +874,8 @@ else
   ac_cv_ejudge_server_bin_path="${actual_prefix}/bin"
   ac_cv_ejudge_server_bin_path_m="${bindir}"
 fi
-ac_cv_ejudge_serve_path="${ac_cv_ejudge_server_bin_path}/serve"
-ac_cv_ejudge_run_path="${ac_cv_ejudge_server_bin_path}/run"
+ac_cv_ejudge_serve_path="${ac_cv_ejudge_server_bin_path}/ej-serve"
+ac_cv_ejudge_run_path="${ac_cv_ejudge_server_bin_path}/ej-run"
 ac_cv_ejudge_script_dir="${libexecdir}/ejudge"
 ac_cv_ejudge_script_dir_expanded="${actual_libexecdir}/ejudge"
 if [[ x"${cgibindir}" = x'${libexecdir}/ejudge/cgi-bin' ]]
