@@ -4268,3 +4268,15 @@ userlist-server.c 5430 0 22868743
 userlist-server-control.c 5430 0 304680
 ejudge_cfg.c 5428 0 1466708
 new_server_html.c 5428 0 37724983
+startstop.h 5434 0 98156
+compile.c 5434 0 1347929
+compile-control.c 5434 0 650435
+job-server.c 5434 0 1315615
+job-server-control.c 5434 0 394728
+new-server.c 5434 0 1793168
+new-server-control.c 5434 0 385499
+super-serve.c 5434 0 13928555
+super-serve-control.c 5434 0 357092
+userlist-server.c 5434 0 22883169
+userlist-server-control.c 5434 0 350997
+unix/startstop.c 5433 0 375907
