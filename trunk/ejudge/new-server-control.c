@@ -23,6 +23,7 @@
 #include "new_server_proto.h"
 #include "new_server_clnt.h"
 #include "new_server_proto.h"
+#include "startstop.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -106,6 +107,9 @@ main(int argc, char *argv[])
   struct ejudge_cfg *config = 0;
   int cmd = 0;
   new_server_conn_t conn = 0;
+  int pid;
+  int signum = 0;
+  const unsigned char *signame = "";
 
   program_name = os_GetBasename(argv[0]);
   if (argc < 2) startup_error("not enough parameters");
@@ -143,10 +147,25 @@ main(int argc, char *argv[])
 
   if (!strcmp(command, "stop")) {
     cmd = NEW_SRV_CMD_STOP;
+    signum = START_STOP;
+    signame = "TERM";
   } else if (!strcmp(command, "restart")) {
     cmd = NEW_SRV_CMD_RESTART;
+    signum = START_RESTART;
+    signame = "HUP";
   } else {
     startup_error("invalid command");
+  }
+
+  if (!(pid = start_find_process("ej-contests", 0))) {
+    op_error("ej-contests is not running");
+  } else if (pid > 0) {
+    // FIXME: also analyze the uid
+    fprintf(stderr, "%s: ej-contests is running as pid %d\n",
+            program_name, pid);
+    fprintf(stderr, "%s: sending it the %s signal\n", program_name, signame);
+    if (start_kill(pid, signum) < 0) op_error("failed: %s", os_ErrorMsg());
+    return 0;
   }
 
   r = new_server_clnt_open(config->new_server_socket, &conn);
