@@ -22,6 +22,7 @@
 #include "ejudge_cfg.h"
 #include "super_proto.h"
 #include "super_clnt.h"
+#include "startstop.h"
 
 #include <reuse/osdeps.h>
 
@@ -104,6 +105,9 @@ main(int argc, char *argv[])
   struct ejudge_cfg *config = 0;
   int cmd = 0;
   int super_serve_fd = -1;
+  int signum = 0;
+  const unsigned char *signame = "";
+  int pid;
 
   program_name = os_GetBasename(argv[0]);
   if (argc < 2) startup_error("not enough parameters");
@@ -134,10 +138,25 @@ main(int argc, char *argv[])
 
   if (!strcmp(command, "stop")) {
     cmd = SSERV_CMD_STOP;
+    signum = START_STOP;
+    signame = "TERM";
   } else if (!strcmp(command, "restart")) {
     cmd = SSERV_CMD_RESTART;
+    signum = START_RESTART;
+    signame = "HUP";
   } else {
     startup_error("invalid command");
+  }
+
+  if (!(pid = start_find_process("ej-super-server", 0))) {
+    op_error("ej-super-server is not running");
+  } else if (pid > 0) {
+    // FIXME: also analyze the uid
+    fprintf(stderr, "%s: ej-super-server is running as pid %d\n",
+            program_name, pid);
+    fprintf(stderr, "%s: sending it the %s signal\n", program_name, signame);
+    if (start_kill(pid, signum) < 0) op_error("failed: %s", os_ErrorMsg());
+    return 0;
   }
 
   if ((super_serve_fd = super_clnt_open(config->super_serve_socket)) < 0)

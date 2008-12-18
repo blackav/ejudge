@@ -22,6 +22,7 @@
 #include "ejudge_cfg.h"
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
+#include "startstop.h"
 
 #include <reuse/osdeps.h>
 
@@ -104,6 +105,9 @@ main(int argc, char *argv[])
   struct ejudge_cfg *config = 0;
   userlist_clnt_t userlist_clnt = 0;
   int cmd = 0;
+  const unsigned char *signame = "";
+  int signum = 0;
+  int pid;
 
   program_name = os_GetBasename(argv[0]);
   if (argc < 2) startup_error("not enough parameters");
@@ -134,10 +138,24 @@ main(int argc, char *argv[])
 
   if (!strcmp(command, "stop")) {
     cmd = ULS_STOP;
+    signame = "TERM";
+    signum = START_STOP;
   } else if (!strcmp(command, "restart")) {
     cmd = ULS_RESTART;
+    signame = "HUP";
+    signum = START_RESTART;
   } else {
     startup_error("invalid command");
+  }
+
+  if (!(pid = start_find_process("ej-users", 0))) {
+    op_error("ej-users is not running");
+  } else if (pid > 0) {
+    // FIXME: also analyze the uid
+    fprintf(stderr, "%s: ej-users is running as pid %d\n", program_name, pid);
+    fprintf(stderr, "%s: sending it the %s signal\n", program_name, signame);
+    if (start_kill(pid, signum) < 0) op_error("failed: %s", os_ErrorMsg());
+    return 0;
   }
 
   if (!(userlist_clnt = userlist_clnt_open(config->socket_path)))

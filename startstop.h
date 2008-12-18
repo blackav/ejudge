@@ -4,7 +4,7 @@
 #ifndef __STARTSTOP_H__
 #define __STARTSTOP_H__
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,12 @@
  * GNU General Public License for more details.
  */
 
+enum
+{
+  START_RESTART = 1,
+  START_STOP,
+};
+
 void start_set_self_args(int argc, char *argv[]);
 void start_set_args(char *argv[]);
 int start_switch_user(const unsigned char *user, const unsigned char *group);
@@ -25,5 +31,10 @@ int start_switch_user(const unsigned char *user, const unsigned char *group);
 int start_prepare(const unsigned char *user, const unsigned char *group,
                   const unsigned char *workdir);
 void start_restart(void);
+
+int
+start_find_process(const unsigned char *name, int *p_uid);
+
+int start_kill(int pid, int op);
 
 #endif /* __STARTSTOP_H__ */

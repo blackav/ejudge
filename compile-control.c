@@ -25,6 +25,7 @@
 #include "prepare.h"
 #include "compile_packet.h"
 #include "fileutl.h"
+#include "startstop.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/logger.h>
@@ -161,7 +162,7 @@ main(int argc, char *argv[])
   const unsigned char *compile_home_dir = 0;
   path_t config_path_buf;
   path_t  cpp_opts = {0};
-  int cmd = 0;
+  int cmd = 0, signum = 0, pid;
   struct compile_request_packet cp;
   void *pkt_buf = 0;
   size_t pkt_len = 0;
@@ -222,11 +223,23 @@ main(int argc, char *argv[])
   if (!strcmp(command, "stop")) {
     cmd = 1;
     signame = "TERM";
+    signum = START_STOP;
   } else if (!strcmp(command, "restart")) {
     cmd = 2;
     signame = "HUP";
+    signum = START_RESTART;
   } else {
     startup_error("invalid command");
+  }
+
+  if (!(pid = start_find_process("ej-compile", 0))) {
+    op_error("ej-compile is not running");
+  } else if (pid > 0) {
+    // FIXME: also analyze the uid
+    fprintf(stderr, "%s: ej-compile is running as pid %d\n", program_name, pid);
+    fprintf(stderr, "%s: sending it the %s signal\n", program_name, signame);
+    if (start_kill(pid, signum) < 0) op_error("failed: %s", os_ErrorMsg());
+    return 0;
   }
 
   /* check, that compile is running */

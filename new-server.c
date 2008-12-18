@@ -635,6 +635,7 @@ main(int argc, char *argv[])
   const unsigned char *user = 0, *group = 0, *workdir = 0;
   int restart_flag = 0;
   char **argv_restart = 0;
+  int pid;
 
   time(&server_start_time);
   start_set_self_args(argc, argv);
@@ -679,6 +680,13 @@ main(int argc, char *argv[])
   if (i != argc) startup_error("invalid number of parameters");
   argv_restart[j] = 0;
   start_set_args(argv_restart);
+
+  if (!(pid = start_find_process("ej-contests", 0))) {
+    params.force_socket_flag = 1;
+  } else if (pid > 0) {
+    fprintf(stderr, "%s: is already running as pid %d\n", argv[0], pid);
+    return 1;
+  }
 
   if (start_prepare(user, group, workdir) < 0) return 1;
 

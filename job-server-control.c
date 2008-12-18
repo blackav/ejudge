@@ -21,6 +21,7 @@
 
 #include "ejudge_cfg.h"
 #include "job_packet.h"
+#include "startstop.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/logger.h>
@@ -107,6 +108,8 @@ main(int argc, char *argv[])
   unsigned char *check_args[2] = { "nop", 0 };
   unsigned char *pkt_path = 0;
   int tot_wait = 0, cur_wait = 0;
+  const unsigned char *signame = "";
+  int signum = 0, pid;
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
@@ -138,10 +141,24 @@ main(int argc, char *argv[])
 
   if (!strcmp(command, "stop")) {
     job_args[0] = "stop";
+    signame = "TERM";
+    signum = START_STOP;
   } else if (!strcmp(command, "restart")) {
     job_args[0] = "restart";
+    signame = "HUP";
+    signum = START_RESTART;
   } else {
     startup_error("invalid command");
+  }
+
+  if (!(pid = start_find_process("ej-jobs", 0))) {
+    op_error("ej-jobs is not running");
+  } else if (pid > 0) {
+    // FIXME: also analyze the uid
+    fprintf(stderr, "%s: ej-jobs is running as pid %d\n", program_name, pid);
+    fprintf(stderr, "%s: sending it the %s signal\n", program_name, signame);
+    if (start_kill(pid, signum) < 0) op_error("failed: %s", os_ErrorMsg());
+    return 0;
   }
 
   // check, that job-server is running
