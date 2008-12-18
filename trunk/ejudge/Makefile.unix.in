@@ -163,8 +163,8 @@ NSM_OBJECTS = $(NSM_CFILES:.c=.o) libcommon.a libnew_server_clnt.a libuserlist_c
 NSC_CFILES=new-server-control.c version.c
 NSC_OBJECTS=$(NSC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a
 
-BINTARGETS = job-server-cmd edit-userlist ejudge-setup ejudge-configure-compilers ejudge-control execute new-server-cmd
-SERVERBINTARGETS = compile compile-control run serve userlist-server userlist-server-control job-server job-server-control super-serve super-serve-control collect-emails slice-userlist new-server new-server-control uudecode convert-clars convert-runs
+BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd
+SERVERBINTARGETS = ej-compile ej-compile-control ej-run ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs
 CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
 TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS}
 STYLEFILES = style/logo.gif style/priv.css style/unpriv.css style/priv.js style/unpriv.js style/filter_expr.html
@@ -189,10 +189,10 @@ extra_progs:
 checker_lib:
 	$(MAKE) -C checkers DESTDIR="${DESTDIR}" all
 
-install_userlist_server: userlist-server
-	install -m 0755 userlist-server "${DESTDIR}${bindir}"
-install_new_server: new-server
-	install -m 0755 new-server "${DESTDIR}${bindir}"
+install_ej_users: ej-users
+	install -m 0755 ej-users "${DESTDIR}${serverbindir}"
+install_ej_contests: ej-contests
+	install -m 0755 ej-contests "${DESTDIR}${serverbindir}"
 
 local_install: ${TARGETS} ejudge-config po mo
 	install -d "${DESTDIR}${bindir}"
@@ -229,46 +229,46 @@ install: local_install
 	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" install
 
-compile$(EXESFX) : $(C_OBJECTS)
+ej-compile$(EXESFX) : $(C_OBJECTS)
 	$(LD) $(LDFLAGS) $(C_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
-compile-control : $(CC_OBJECTS)
+ej-compile-control : $(CC_OBJECTS)
 	$(LD) $(LDFLAGS) $(CC_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
-run${EXESFX} : $(RUN_OBJECTS)
+ej-run${EXESFX} : $(RUN_OBJECTS)
 	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
-serve : $(SERVE_OBJECTS)
+ej-serve : $(SERVE_OBJECTS)
 	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB}
 
 serve-control${CGI_PROG_SUFFIX}: ${SC_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
-userlist-server: ${UL_OBJECTS}
+ej-users: ${UL_OBJECTS}
 	${LD} ${LDFLAGS} $^ -rdynamic -o $@ ${LDLIBS} -ldl ${EXPAT_LIB}
 
-userlist-server-control: ${ULC_OBJECTS}
+ej-users-control: ${ULC_OBJECTS}
 	${LD} ${LDFLAGS} $^ -rdynamic -o $@ ${LDLIBS} ${EXPAT_LIB}
 
-job-server: ${JS_OBJECTS}
+ej-jobs: ${JS_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
-job-server-control: ${JSC_OBJECTS}
+ej-jobs-control: ${JSC_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
-job-server-cmd: ${JP_OBJECTS}
+ejudge-jobs-cmd: ${JP_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
-super-serve: ${SS_OBJECTS}
+ej-super-server: ${SS_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
-super-serve-control: ${SSC_OBJECTS}
+ej-super-server-control: ${SSC_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
-convert-clars: ${CU_OBJECTS}
+ej-convert-clars: ${CU_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
 
-convert-runs: ${CR_OBJECTS}
+ej-convert-runs: ${CR_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
 
 collect-emails: ${CE_OBJECTS}
@@ -280,7 +280,7 @@ slice-userlist: ${SU_OBJECTS}
 users${CGI_PROG_SUFFIX}: ${US_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
-edit-userlist: $(ED_OBJECTS)
+ejudge-edit-users: $(ED_OBJECTS)
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu${NCURSES_SUFFIX} -lpanel${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX}
 
 ejudge-setup: ${ST_OBJECTS}
@@ -292,19 +292,19 @@ ejudge-configure-compilers: ${ECC_OBJECTS}
 ejudge-control: ${EC_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
-execute : ${EX_OBJECTS}
+ejudge-execute : ${EX_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 new-client${CGI_PROG_SUFFIX} : $(NC_OBJECTS)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
 
-new-server : $(NS_OBJECTS)
+ej-contests : $(NS_OBJECTS)
 	$(LD) $(LDFLAGS) -rdynamic $(NS_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB}
 
-new-server-cmd : $(NSM_OBJECTS)
+ejudge-contests-cmd : $(NSM_OBJECTS)
 	$(LD) $(LDFLAGS) $(NSM_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
-new-server-control : $(NSC_OBJECTS)
+ej-contests-control : $(NSC_OBJECTS)
 	$(LD) $(LDFLAGS) $(NSC_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 make-js-actions : make-js-actions.o
