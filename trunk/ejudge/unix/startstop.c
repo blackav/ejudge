@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -31,6 +31,9 @@
 #include <pwd.h>
 #include <grp.h>
 #include <signal.h>
+#include <dirent.h>
+#include <errno.h>
+#include <string.h>
 
 static path_t self_exe;
 static char **self_argv;
@@ -118,3 +121,71 @@ start_set_args(char *argv[])
   self_argv = argv;
   self_argv[0] = self_exe;
 }
+
+int
+start_find_process(const unsigned char *name, int *p_uid)
+{
+  DIR *d = 0;
+  struct dirent *dd;
+  char *eptr;
+  int pid, nlen, mypid, dlen;
+  path_t fpath, xpath, dpath;
+  long llen;
+  int retval = -1;
+
+  nlen = strlen(name);
+  mypid = getpid();
+
+  snprintf(dpath, sizeof(dpath), "%s (deleted)", name);
+  dlen = strlen(dpath);
+
+  if (!(d = opendir("/proc"))) goto cleanup;
+  retval = 0;
+  while ((dd = readdir(d))) {
+    eptr = 0; errno = 0;
+    pid = strtol(dd->d_name, &eptr, 10);
+    if (errno || *eptr || eptr == dd->d_name || pid <= 0 || pid == mypid)
+      continue;
+    snprintf(fpath, sizeof(fpath), "/proc/%d/exe", pid);
+    xpath[0] = 0;
+    llen = readlink(fpath, xpath, sizeof(xpath));
+    if (llen <= 0 || llen >= sizeof(xpath)) continue;
+    xpath[llen] = 0;
+    if (llen < nlen + 1) continue;
+    if (xpath[llen - nlen - 1] == '/' && !strcmp(xpath + llen - nlen, name)) {
+      retval = pid;
+      // FIXME: get the actual uid
+      if (p_uid) *p_uid = getuid();
+      goto cleanup;
+    }
+    if (xpath[llen - dlen - 1] == '/' && !strcmp(xpath + llen - dlen, dpath)) {
+      retval = pid;
+      // FIXME: get the actual uid
+      if (p_uid) *p_uid = getuid();
+      goto cleanup;
+    }
+  }
+  closedir(d); d = 0;
+
+ cleanup:
+  if (d) closedir(d);
+  return retval;
+}
+
+int
+start_kill(int pid, int op)
+{
+  int signum = 0;
+  switch (op) {
+  case START_RESTART: signum = SIGHUP; break;
+  case START_STOP: signum = SIGTERM; break;
+  }
+  return kill(pid, signum);
+}
+
+/*
+ * Local variables:
+ *  compile-command: "make -C .."
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
+ * End:
+ */
