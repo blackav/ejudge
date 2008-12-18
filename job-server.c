@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -650,7 +650,7 @@ main(int argc, char *argv[])
 
   if (start_prepare(user, group, workdir) < 0) return 1;
 
-  info("job-server %s, compiled %s", compile_version, compile_date);
+  info("ej-jobs %s, compiled %s", compile_version, compile_date);
 
   config = ejudge_cfg_parse(ejudge_xml_path);
   if (!config) return 1;

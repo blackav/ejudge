@@ -79,9 +79,9 @@ write_help(void)
          "    -u USER   specify the user to run under\n"
          "    -g GROUP  specify the group to run under\n"
          "    -f        forced start mode\n"
-         "    -s        slave mode (compile and super-serve)\n"
+         "    -s        slave mode (ej-compile and ej-super-server)\n"
          "    -r        serve all contests in run mode\n"
-         "    -m        master mode (all except compile)\n"
+         "    -m        master mode (all except ej-compile)\n"
          "  COMMAND:\n"
          "    start     start the ejudge daemons\n"
          "    stop      stop the ejudge daemons\n"
@@ -139,9 +139,9 @@ command_start(
   workdir = EJUDGE_CONTESTS_HOME_DIR;
 #endif
 
-  // start userlist-server
+  // start ej-users
   if (!slave_mode) {
-    snprintf(path, sizeof(path), "%s/userlist-server", EJUDGE_SERVER_BIN_PATH);
+    snprintf(path, sizeof(path), "%s/ej-users", EJUDGE_SERVER_BIN_PATH);
     tsk = task_New();
     task_AddArg(tsk, path);
     task_AddArg(tsk, "-D");
@@ -169,8 +169,8 @@ command_start(
     userlist_server_started = 1;
   }
 
-  // start super-serve
-  snprintf(path, sizeof(path), "%s/super-serve", EJUDGE_SERVER_BIN_PATH);
+  // start ej-super-server
+  snprintf(path, sizeof(path), "%s/ej-super-server", EJUDGE_SERVER_BIN_PATH);
   tsk = task_New();
   task_AddArg(tsk, path);
   task_AddArg(tsk, "-D");
@@ -208,7 +208,7 @@ command_start(
 
   // start compile
   if (!master_mode) {
-    snprintf(path, sizeof(path), "%s/compile", EJUDGE_SERVER_BIN_PATH);
+    snprintf(path, sizeof(path), "%s/ej-compile", EJUDGE_SERVER_BIN_PATH);
     tsk = task_New();
     task_AddArg(tsk, path);
     task_AddArg(tsk, "-D");
@@ -236,7 +236,7 @@ command_start(
 
   // start job-server
   if (!slave_mode) {
-    snprintf(path, sizeof(path), "%s/job-server", EJUDGE_SERVER_BIN_PATH);
+    snprintf(path, sizeof(path), "%s/ej-jobs", EJUDGE_SERVER_BIN_PATH);
     tsk = task_New();
     task_AddArg(tsk, path);
     task_AddArg(tsk, "-D");
@@ -261,9 +261,9 @@ command_start(
     job_server_started = 1;
   }
 
-  // start new-server
+  // start ej-contests
   if (!slave_mode) {
-    snprintf(path, sizeof(path), "%s/new-server", EJUDGE_SERVER_BIN_PATH);
+    snprintf(path, sizeof(path), "%s/ej-contests", EJUDGE_SERVER_BIN_PATH);
     tsk = task_New();
     task_AddArg(tsk, path);
     task_AddArg(tsk, "-D");
@@ -297,19 +297,19 @@ command_start(
   task_Delete(tsk); tsk = 0;
 
   if (userlist_server_started) {
-    invoke_stopper("userlist-server", ejudge_xml_path);
+    invoke_stopper("ej-users", ejudge_xml_path);
   }
   if (super_serve_started) {
-    invoke_stopper("super-serve", ejudge_xml_path);
+    invoke_stopper("ej-super-server", ejudge_xml_path);
   }
   if (compile_started) {
-    invoke_stopper("compile", ejudge_xml_path);
+    invoke_stopper("ej-compile", ejudge_xml_path);
   }
   if (job_server_started) {
-    invoke_stopper("job-server", ejudge_xml_path);
+    invoke_stopper("ej-jobs", ejudge_xml_path);
   }
   if (new_server_started) {
-    invoke_stopper("new-server", ejudge_xml_path);
+    invoke_stopper("ej-contests", ejudge_xml_path);
   }
 
   return -1;
@@ -323,15 +323,15 @@ command_stop(
         int master_mode)
 {
   if (!slave_mode) {
-    invoke_stopper("new-server", ejudge_xml_path);
+    invoke_stopper("ej-contests", ejudge_xml_path);
   }
   if (!master_mode) {
-    invoke_stopper("compile", ejudge_xml_path);
+    invoke_stopper("ej-compile", ejudge_xml_path);
   }
-  invoke_stopper("super-serve", ejudge_xml_path);
+  invoke_stopper("ej-super-server", ejudge_xml_path);
   if (!slave_mode) {
-    invoke_stopper("userlist-server", ejudge_xml_path);
-    invoke_stopper("job-server", ejudge_xml_path);
+    invoke_stopper("ej-users", ejudge_xml_path);
+    invoke_stopper("ej-jobs", ejudge_xml_path);
   }
 
   return 0;

@@ -79,14 +79,13 @@ static void write_help(void) __attribute__((noreturn));
 static void
 write_help(void)
 {
-  printf("%s: new-server command line client\n"
+  printf("%s: ej-contests command line client\n"
          "Usage: %s [OPTIONS] CNTS-ID COMMAND CMD-ARGS\n"
          "  OPTIONS:\n"
          "    --help    write message and exit\n"
          "    --version report version and exit\n"
          "    -f CFG    specify the ejudge configuration file\n"
-         "  COMMAND:\n"
-         /*"    status    report the new-server status\n"*/,
+         "  COMMAND:\n",
          program_name, program_name);
   exit(0);
 }
@@ -262,7 +261,7 @@ create_cgi_environ(void)
   /* create CGI environment:
    *   HTTP_HOST
    *   REMOTE_ADDR
-   *   SCRIPT_FILENAME - cannot be forged, always new-server-cmd
+   *   SCRIPT_FILENAME - cannot be forged, always ej-contests-cmd
    *   SCRIPT_NAME
    *   SSL_PROTOCOL
    */

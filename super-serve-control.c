@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@
 #include <ctype.h>
 
 /*
- * usage: super-serve-control COMMAND CONFIG
+ * usage: ej-super-server-control COMMAND CONFIG
  *   COMMAND is one of `stop', `restart', `status'
  */
 
@@ -75,15 +75,15 @@ static void write_help(void) __attribute__((noreturn));
 static void
 write_help(void)
 {
-  printf("%s: super-serve control utility\n"
+  printf("%s: ej-super-server control utility\n"
          "Usage: %s [OPTIONS] COMMAND [EJUDGE-XML-PATH]\n"
          "  OPTIONS:\n"
          "    --help    write message and exit\n"
          "    --version report version and exit\n"
          "  COMMAND:\n"
-         "    stop      stop the super-serve\n"
-         "    restart   restart the super-serve\n"
-         /*"    status    report the super-serve status\n"*/,
+         "    stop      stop the ej-super-server\n"
+         "    restart   restart the ej-super-server\n"
+         /*"    status    report the ej-super-server status\n"*/,
          program_name, program_name);
   exit(0);
 }
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
   }
 
   if ((super_serve_fd = super_clnt_open(config->super_serve_socket)) < 0)
-    op_error("super-serve is not running");
+    op_error("ej-super-server is not running");
   r = super_clnt_control(super_serve_fd, cmd);
   if (r < 0) op_error("%s", super_proto_strerror(-r));
 
