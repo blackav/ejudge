@@ -1245,6 +1245,9 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   if (prob->valuer_cmd[0])
     fprintf(f, "valuer_cmd = \"%s\"\n", c_armor(&sbuf, prob->valuer_cmd));
   do_xstr(f, &sbuf, "valuer_env", prob->valuer_env);
+  if (prob->interactor_cmd[0])
+    fprintf(f,"interactor_cmd = \"%s\"\n",c_armor(&sbuf, prob->interactor_cmd));
+  do_xstr(f, &sbuf, "interactor_env", prob->interactor_env);
   do_xstr(f, &sbuf, "lang_time_adj", prob->lang_time_adj);
   do_xstr(f, &sbuf, "lang_time_adj_millis", prob->lang_time_adj_millis);
   do_xstr(f, &sbuf, "test_sets", prob->test_sets);
@@ -2005,6 +2008,7 @@ prob_instr(FILE *f, const unsigned char *root_dir,
   struct section_problem_data tmp_prob;
   path_t checker_path;
   path_t valuer_path;
+  path_t interactor_path;
   path_t conf_path;
   path_t g_path;
   path_t l_path;
@@ -2043,6 +2047,16 @@ prob_instr(FILE *f, const unsigned char *root_dir,
     } else {
       fprintf(f, "Valuer directory: %s\n", valuer_path);
       fprintf(f, "Valuer file name: %s\n", tmp_prob.valuer_cmd);
+    }
+  }
+  if (prob->interactor_cmd) {
+    mkpath(interactor_path, conf_path, global->checker_dir, DFLT_G_CHECKER_DIR);
+    prepare_set_prob_value(CNTSPROB_interactor_cmd, &tmp_prob, abstr, global);
+    if (os_IsAbsolutePath(tmp_prob.interactor_cmd)) {
+      fprintf(f, "Interactor command: %s\n", tmp_prob.interactor_cmd);
+    } else {
+      fprintf(f, "Interactor directory: %s\n", interactor_path);
+      fprintf(f, "Interactor file name: %s\n", tmp_prob.interactor_cmd);
     }
   }
 
