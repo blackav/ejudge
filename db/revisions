@@ -4280,3 +4280,6 @@ super-serve-control.c 5434 0 357092
 userlist-server.c 5434 0 22883169
 userlist-server-control.c 5434 0 350997
 unix/startstop.c 5433 0 375907
+new-server-control.c 5436 0 383306
+super-serve-control.c 5436 0 354899
+userlist-server-control.c 5436 0 348804
