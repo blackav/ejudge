@@ -1345,7 +1345,7 @@ static const struct cnts_edit_info cnts_problem_info[] =
   { NS_PROBLEM, CNTSPROB_enable_text_form, 'Y', 1, 0, 0, 0, 0, "Enable text input form", 0, "SidState.prob_show_adv Global.problem_navigation && Problem.type 1 == &&" },
   { NS_PROBLEM, CNTSPROB_stand_attr, 'S', 1, 1, 1, 1, 0, "Standings attributes", 0, 0 },
   { NS_PROBLEM, CNTSPROB_standard_checker, 142, 1, 0, 0, 0, 0, "Standard checker", 0, 0 },
-  { NS_PROBLEM, CNTSPROB_check_cmd, 'S', 1, 1, 1, 1, 0, "Checker", 0, "Problem.standard_checker" },
+  { NS_PROBLEM, CNTSPROB_check_cmd, 'S', 1, 1, 1, 1, 0, "Checker", 0, 0 /*"Problem.standard_checker"*/ },
   { NS_PROBLEM, CNTSPROB_checker_env, 'X', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Checker environment", 0, 0 },
   { NS_PROBLEM, CNTSPROB_scoring_checker, 'Y', 1, 0, 0, 0, 0, "Checker calculates score", 0, 0 },
   { NS_PROBLEM, CNTSPROB_valuer_cmd, 'S', 1, 1, 1, 1, 0, "Valuer", 0, 0 },
@@ -1608,7 +1608,7 @@ write_editing_rows(
       fprintf(out_f, "<td valign=\"top\" class=\"cnts_edit_data\" width=\"600px\">");
     }
     if (ce->is_editable && ce->dojo_inline_edit) {
-      if (item_id >= 0) {
+      if (item_id) {
         snprintf(jbuf, sizeof(jbuf),
                  "ssEditField4(%d, %d, %d, %d, arguments[0])",
                  edit_op, item_id, ce->field_id,
@@ -1735,7 +1735,7 @@ write_editing_rows(
           fprintf(out_f, "%s", *y_ptr?"Yes":"No");
           break;
         }
-        if (item_id >= 0) {
+        if (item_id) {
           snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
         } else {
           snprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", edit_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
@@ -1756,7 +1756,7 @@ write_editing_rows(
           fprintf(out_f, "%s", *y_ptr?"Yes":"No");
           break;
         }
-        if (item_id >= 0) {
+        if (item_id) {
           snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
         } else {
           snprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", edit_op, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2);
@@ -1793,7 +1793,7 @@ write_editing_rows(
                    ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday);
         }
 
-        if (item_id >= 0) {
+        if (item_id) {
           snprintf(jbuf, sizeof(jbuf),
                    "ssEditField5(%d, %d, %d, %d, %d, arguments[0])",
                    edit_op, item_id, ce->field_id, 1,
@@ -1806,7 +1806,7 @@ write_editing_rows(
         }
         fprintf(out_f, "<div class=\"cnts_edit_inlined\">Time: </div><div class=\"cnts_edit_inlined\" dojoType=\"dijit.InlineEditBox\" onChange=\"%s\" autoSave=\"true\" title=\"Time (HH:MM:SS)\">%s</div>", jbuf, time_buf);
 
-        if (item_id >= 0) {
+        if (item_id) {
           snprintf(jbuf, sizeof(jbuf),
                    "ssEditField5(%d, %d, %d, %d, %d,this.getDisplayedValue())",
                    edit_op, item_id, ce->field_id, 2,
@@ -2050,7 +2050,7 @@ write_editing_rows(
         fprintf(out_f, "<i>Not set</i>");
       } else {
         if (ce->has_details) {
-          if (item_id >= 0) {
+          if (item_id) {
             snprintf(jbuf, sizeof(jbuf), "ssLoad3(%d, %d, %d)",
                      ce->has_details, item_id, ce->field_id);
           } else {
@@ -2059,7 +2059,7 @@ write_editing_rows(
           }
           ss_dojo_button(out_f, 0, "edit_page-16x16", "Edit contents","%s", jbuf);
         }
-        if (item_id >= 0) {
+        if (item_id) {
           snprintf(jbuf, sizeof(jbuf), "ssFieldRequest2(%d, %d, %d, %d)",
                    clear_op, item_id, ce->field_id,
                    SSERV_OP_EDIT_CONTEST_PAGE_2);
@@ -2071,7 +2071,7 @@ write_editing_rows(
         ss_dojo_button(out_f, 0, "delete-16x16", "Clear variable", "%s", jbuf);
       }
     } else if (ce->has_details) {
-      if (item_id >= 0) {
+      if (item_id) {
         snprintf(jbuf, sizeof(jbuf), "ssLoad3(%d, %d, %d)",
                  ce->has_details, item_id, ce->field_id);
       } else {
@@ -2285,7 +2285,7 @@ write_problem_page(
                 SSSS_prob_flags, SSERV_OP_EDIT_CONTEST_PAGE_2);
   }
   ss_dojo_button(out_f, 0, "delete-16x16", "Delete Problem",
-              "ssFieldRequest2(%d, %d, %d, 0)",
+              "ssFieldRequest2(%d, %d, 0, %d)",
               SSERV_OP_DELETE_PROB, item_id,
               SSERV_OP_EDIT_CONTEST_PAGE_2);
   fprintf(out_f, "</td><td class=\"cnts_edit_head\">&nbsp;</td></tr>\n");
@@ -5871,6 +5871,149 @@ cmd_op_set_sid_state_prob_field(
   return retval;
 }
 
+static const unsigned char prob_reloadable_set[CNTSPROB_LAST_FIELD] =
+{
+  [CNTSPROB_scoring_checker] = 0,
+  [CNTSPROB_manual_checking] = 1,  
+  [CNTSPROB_examinator_num] = 0,
+  [CNTSPROB_check_presentation] = 1,
+  [CNTSPROB_use_stdin] = 0,
+  [CNTSPROB_use_stdout] = 0,
+  [CNTSPROB_binary_input] = 0,
+  [CNTSPROB_ignore_exit_code] = 0,
+  [CNTSPROB_olympiad_mode] = 1,
+  [CNTSPROB_score_latest] = 0,
+  [CNTSPROB_time_limit] = 1,
+  [CNTSPROB_time_limit_millis] = 1,
+  [CNTSPROB_real_time_limit] = 1,
+  [CNTSPROB_use_ac_not_ok] = 0,
+  [CNTSPROB_team_enable_rep_view] = 1,
+  [CNTSPROB_team_enable_ce_view] = 1,
+  [CNTSPROB_team_show_judge_report] = 1,
+  [CNTSPROB_ignore_compile_errors] = 0,
+  [CNTSPROB_full_score] = 0,
+  [CNTSPROB_test_score] = 0,
+  [CNTSPROB_run_penalty] = 0,
+  [CNTSPROB_acm_run_penalty] = 0,
+  [CNTSPROB_disqualified_penalty] = 0,
+  [CNTSPROB_ignore_penalty] = 0,
+  [CNTSPROB_use_corr] = 1,
+  [CNTSPROB_use_info] = 1,
+  [CNTSPROB_use_tgz] = 1,
+  [CNTSPROB_tests_to_accept] = 0,
+  [CNTSPROB_accept_partial] = 0,
+  [CNTSPROB_min_tests_to_accept] = 0,
+  [CNTSPROB_checker_real_time_limit] = 0,
+  [CNTSPROB_disable_auto_testing] = 1,
+  [CNTSPROB_disable_testing] = 1,
+  [CNTSPROB_disable_user_submit] = 1,
+  [CNTSPROB_disable_tab] = 1,
+  [CNTSPROB_restricted_statement] = 1,
+  [CNTSPROB_disable_submit_after_ok] = 1,
+  [CNTSPROB_disable_security] = 1,
+  [CNTSPROB_enable_compilation] = 1,
+  [CNTSPROB_skip_testing] = 1,
+  [CNTSPROB_variable_full_score] = 1,
+  [CNTSPROB_hidden] = 1,
+  [CNTSPROB_priority_adjustment] = 0,
+  [CNTSPROB_spelling] = 0,
+  [CNTSPROB_stand_hide_time] = 0,
+  [CNTSPROB_advance_to_next] = 0,
+  [CNTSPROB_enable_text_form] = 0,
+  [CNTSPROB_stand_ignore_score] = 0,
+  [CNTSPROB_stand_last_column] = 0,
+  [CNTSPROB_score_multiplier] = 0,
+  [CNTSPROB_prev_runs_to_show] = 0,
+  [CNTSPROB_max_vm_size] = 0,
+  [CNTSPROB_max_stack_size] = 0,
+  [CNTSPROB_max_data_size] = 0,
+  [CNTSPROB_super] = 1,
+  [CNTSPROB_short_name] = 1,
+  [CNTSPROB_long_name] = 1,
+  [CNTSPROB_group_name] = 0,
+  [CNTSPROB_stand_name] = 0,
+  [CNTSPROB_stand_column] = 0,
+  [CNTSPROB_internal_name] = 1,
+  [CNTSPROB_test_dir] = 1,
+  [CNTSPROB_test_sfx] = 1,
+  [CNTSPROB_corr_dir] = 1,
+  [CNTSPROB_corr_sfx] = 1,
+  [CNTSPROB_info_dir] = 1,
+  [CNTSPROB_info_sfx] = 1,
+  [CNTSPROB_tgz_dir] = 1,
+  [CNTSPROB_tgz_sfx] = 1,
+  [CNTSPROB_input_file] = 0,
+  [CNTSPROB_output_file] = 0,
+  [CNTSPROB_test_score_list] = 0,
+  [CNTSPROB_score_tests] = 0,
+  [CNTSPROB_test_sets] = 0,
+  [CNTSPROB_deadline] = 0,
+  [CNTSPROB_start_date] = 0,
+  [CNTSPROB_variant_num] = 1,
+  [CNTSPROB_date_penalty] = 0,
+  [CNTSPROB_disable_language] = 0,
+  [CNTSPROB_enable_language] = 0,
+  [CNTSPROB_require] = 0,
+  [CNTSPROB_standard_checker] = 1,
+  [CNTSPROB_checker_env] = 0,
+  [CNTSPROB_valuer_env] = 0,
+  [CNTSPROB_lang_time_adj] = 0,
+  [CNTSPROB_lang_time_adj_millis] = 0,
+  [CNTSPROB_check_cmd] = 0,
+  [CNTSPROB_valuer_cmd] = 0,
+  [CNTSPROB_test_pat] = 1,
+  [CNTSPROB_corr_pat] = 1,
+  [CNTSPROB_info_pat] = 1,
+  [CNTSPROB_tgz_pat] = 1,
+  [CNTSPROB_personal_deadline] = 0,
+  [CNTSPROB_score_bonus] = 0,
+  [CNTSPROB_statement_file] = 1,
+  [CNTSPROB_alternatives_file] = 0,
+  [CNTSPROB_plugin_file] = 1,
+  [CNTSPROB_xml_file] = 1,
+  [CNTSPROB_type] = 1,
+  [CNTSPROB_alternative] = 0,
+  [CNTSPROB_stand_attr] = 0,
+  [CNTSPROB_source_header] = 0,
+  [CNTSPROB_source_footer] = 0,
+  [CNTSPROB_score_view] = 0,
+};
+
+static int prob_int_field_min[CNTSPROB_LAST_FIELD] =
+{
+  [CNTSPROB_examinator_num] = 0,
+  [CNTSPROB_time_limit] = 0,
+  [CNTSPROB_time_limit_millis] = 0,
+  [CNTSPROB_real_time_limit] = 0,
+  [CNTSPROB_checker_real_time_limit] = 0,
+  [CNTSPROB_full_score] = 0,
+  [CNTSPROB_test_score] = 0,
+  [CNTSPROB_run_penalty] = 0,
+  [CNTSPROB_disqualified_penalty] = 0,
+  [CNTSPROB_acm_run_penalty] = 0,
+  [CNTSPROB_tests_to_accept] = 0,
+  [CNTSPROB_min_tests_to_accept] = 0,
+  [CNTSPROB_variant_num] = 0,
+};
+
+static int prob_int_field_max[CNTSPROB_LAST_FIELD] =
+{
+  [CNTSPROB_type] = PROB_TYPE_LAST - 1,
+  [CNTSPROB_examinator_num] = 3,
+  [CNTSPROB_time_limit] = 2000000000,
+  [CNTSPROB_time_limit_millis] = 2000000000,
+  [CNTSPROB_real_time_limit] = 2000000000,
+  [CNTSPROB_checker_real_time_limit] = 2000000000,
+  [CNTSPROB_full_score] = 2000000000,
+  [CNTSPROB_test_score] = 2000000000,
+  [CNTSPROB_run_penalty] = 2000000000,
+  [CNTSPROB_disqualified_penalty] = 2000000000,
+  [CNTSPROB_acm_run_penalty] = 2000000000,
+  [CNTSPROB_tests_to_accept] = 2000000000,
+  [CNTSPROB_min_tests_to_accept] = 2000000000,
+  [CNTSPROB_variant_num] = 255,
+};
+
 static int
 cmd_op_set_serve_prob_field(
         FILE *log_f,
@@ -5878,8 +6021,9 @@ cmd_op_set_serve_prob_field(
         struct super_http_request_info *phr)
 {
   int retval = 0;
-  int prob_id = 0, f_id = 0, is_inh, f_type;
+  int prob_id = 0, f_id = 0, is_inh, f_type, i, was_undef, is_undef;
   struct section_problem_data *prob = 0;
+  const struct section_problem_data *p2 = 0;
   const unsigned char *valstr = 0;
   size_t vallen, f_size;
   void *f_ptr;
@@ -5903,8 +6047,12 @@ cmd_op_set_serve_prob_field(
   if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTSPROB_LAST_FIELD)
     FAIL(S_ERR_INV_FIELD_ID);
-  if (f_id == CNTSPROB_id || !cntsprob_is_settable_field(f_id))
+  if (f_id == CNTSPROB_id 
+      || f_id == CNTSPROB_tester_id
+      || f_id == CNTSPROB_abstract
+      || !cntsprob_is_settable_field(f_id))
     FAIL(S_ERR_INV_FIELD_ID);
+  was_undef = cntsprob_is_undefined(prob, f_id);
   if (!(f_ptr = cntsprob_get_ptr_nc(prob, f_id))) FAIL(S_ERR_INV_FIELD_ID);
   f_type = cntsprob_get_type(f_id);
   f_size = cntsprob_get_size(f_id);
@@ -5922,7 +6070,8 @@ cmd_op_set_serve_prob_field(
       char *eptr = 0;
       int val = strtol(valstr, &eptr, 10);
       if (errno || *eptr || (char*) valstr == eptr) FAIL(S_ERR_INV_VALUE);
-      if (val < 0) FAIL(S_ERR_INV_VALUE);
+      if (val < prob_int_field_min[f_id] || val > prob_int_field_max[f_id])
+        FAIL(S_ERR_INV_VALUE);
       * (int*) f_ptr = val;
     }
     break;
@@ -5930,8 +6079,11 @@ cmd_op_set_serve_prob_field(
     errno = 0;
     {
       char *eptr = 0;
-      ejintbool_t val = strtol(valstr, &eptr, 10);
-      if (errno || *eptr || (char*) valstr == eptr) FAIL(S_ERR_INV_VALUE);
+      ejintbool_t val = -1;
+      if (valstr && *valstr) {
+        val = strtol(valstr, &eptr, 10);
+        if (errno || *eptr || (char*) valstr == eptr) FAIL(S_ERR_INV_VALUE);
+      }
       if (val < -is_inh || val > 1) FAIL(S_ERR_INV_VALUE);
       * (ejintbool_t*) f_ptr = val;
       retval = 1;
@@ -5940,8 +6092,32 @@ cmd_op_set_serve_prob_field(
   case 'S':
     if (ss_cgi_param_utf8_str(phr, "value", &vb, &valstr) <= 0 || !valstr)
       FAIL(S_ERR_INV_VALUE);
+    switch (f_id) {
+    case CNTSPROB_short_name:
+      if (check_str(valstr, login_accept_chars) < 0)
+        FAIL(S_ERR_INV_VALUE);
+      for (i = 0; i < phr->ss->aprob_u; ++i)
+        if ((p2 = phr->ss->aprobs[i]) && p2 != prob
+            && !strcmp(valstr, p2->short_name))
+          FAIL(S_ERR_INV_VALUE);
+      for (i = 0; i < phr->ss->prob_a; ++i)
+        if ((p2 = phr->ss->probs[i]) && p2 != prob
+            && !strcmp(valstr, p2->short_name))
+          FAIL(S_ERR_INV_VALUE);
+      break;
+    case CNTSPROB_super:
+      if (prob->abstract) FAIL(S_ERR_INV_VALUE);
+      for (i = 0; i < phr->ss->aprob_u; ++i)
+        if ((p2 = phr->ss->aprobs[i]) && !strcmp(valstr, p2->short_name))
+          break;
+      if (i >= phr->ss->aprob_u) FAIL(S_ERR_INV_VALUE);
+      break;
+      //case CNTSPROB_internal_name:
+    case CNTSPROB_standard_checker:
+      if (!strcmp(valstr, "__undefined__")) valstr = "\1";
+      break;
+    }
     snprintf((unsigned char*) f_ptr, f_size, "%s", valstr);
-    retval = 1;
     break;
   case 't':
     retval = handle_time_t_editing(phr, valstr, (time_t*) f_ptr);
@@ -5989,6 +6165,9 @@ cmd_op_set_serve_prob_field(
   default:
     FAIL(S_ERR_INV_FIELD_ID);
   }
+
+  is_undef = cntsprob_is_undefined(prob, f_id);
+  retval = prob_reloadable_set[f_id] || is_undef || was_undef;
 
  cleanup:
   return retval;

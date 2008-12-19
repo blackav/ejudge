@@ -5851,9 +5851,9 @@ static const struct section_problem_data prob_undef_values =
   .alternative = 0,
   .personal_deadline = 0,
   .score_bonus = { 1, 0 },
-  .max_vm_size = (size_t) -2,
-  .max_data_size = (size_t) -2,
-  .max_stack_size = (size_t) -2,
+  .max_vm_size = (size_t) -1,
+  .max_data_size = (size_t) -1,
+  .max_stack_size = (size_t) -1,
   .score_view = 0,
 };
 
