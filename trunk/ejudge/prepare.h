@@ -863,10 +863,14 @@ struct section_problem_data
   ejenvlist_t checker_env;
   /** environment variables for the problem valuer */
   ejenvlist_t valuer_env;
+  /** environment variables for the problem interactor */
+  ejenvlist_t interactor_env;
   /** checker program */
   path_t check_cmd;
   /** valuer program */
   path_t valuer_cmd;
+  /** interactor program */
+  path_t interactor_cmd;
   /** time limit adjustments depending on language */
   char **lang_time_adj;
   /** time limit milliseconds adjustments depending on language (priority over lang_time_adj) */
