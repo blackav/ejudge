@@ -151,12 +151,13 @@ main(int argc, char *argv[])
   if (!(pid = start_find_process("ej-super-server", 0))) {
     op_error("ej-super-server is not running");
   } else if (pid > 0) {
-    // FIXME: also analyze the uid
+    /*
     fprintf(stderr, "%s: ej-super-server is running as pid %d\n",
             program_name, pid);
     fprintf(stderr, "%s: sending it the %s signal\n", program_name, signame);
     if (start_kill(pid, signum) < 0) op_error("failed: %s", os_ErrorMsg());
     return 0;
+    */
   }
 
   if ((super_serve_fd = super_clnt_open(config->super_serve_socket)) < 0)

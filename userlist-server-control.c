@@ -151,11 +151,12 @@ main(int argc, char *argv[])
   if (!(pid = start_find_process("ej-users", 0))) {
     op_error("ej-users is not running");
   } else if (pid > 0) {
-    // FIXME: also analyze the uid
+    /*
     fprintf(stderr, "%s: ej-users is running as pid %d\n", program_name, pid);
     fprintf(stderr, "%s: sending it the %s signal\n", program_name, signame);
     if (start_kill(pid, signum) < 0) op_error("failed: %s", os_ErrorMsg());
     return 0;
+    */
   }
 
   if (!(userlist_clnt = userlist_clnt_open(config->socket_path)))

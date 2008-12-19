@@ -160,12 +160,13 @@ main(int argc, char *argv[])
   if (!(pid = start_find_process("ej-contests", 0))) {
     op_error("ej-contests is not running");
   } else if (pid > 0) {
-    // FIXME: also analyze the uid
+    /*
     fprintf(stderr, "%s: ej-contests is running as pid %d\n",
             program_name, pid);
     fprintf(stderr, "%s: sending it the %s signal\n", program_name, signame);
     if (start_kill(pid, signum) < 0) op_error("failed: %s", os_ErrorMsg());
     return 0;
+    */
   }
 
   r = new_server_clnt_open(config->new_server_socket, &conn);
