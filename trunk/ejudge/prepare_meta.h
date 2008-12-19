@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/12/18 00:15:50
+// Generated 2008/12/19 13:29:43
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -380,8 +380,10 @@ enum
   CNTSPROB_require,
   CNTSPROB_checker_env,
   CNTSPROB_valuer_env,
+  CNTSPROB_interactor_env,
   CNTSPROB_check_cmd,
   CNTSPROB_valuer_cmd,
+  CNTSPROB_interactor_cmd,
   CNTSPROB_lang_time_adj,
   CNTSPROB_lang_time_adj_millis,
   CNTSPROB_alternative,
