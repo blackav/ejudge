@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-12-07 23:30+0300\n"
+"POT-Creation-Date: 2008-12-19 13:57+0300\n"
 "PO-Revision-Date: 2008-12-07 23:56+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -1573,9 +1573,6 @@ msgstr "Пустой столбец %d игнорируется\n"
 #, c-format
 msgid "Ignoring unsupported column %d (%s)\n"
 msgstr "Неподдерживаемый столбец %d (%s) игнорируется\n"
-
-msgid "Import results for existing runs"
-msgstr "Импортировать результаты существующих посылок"
 
 msgid "Imported?"
 msgstr "Импортирована?"
