@@ -7368,6 +7368,9 @@ cmd_get_cookie(struct client_state *p,
       FAIL(ULS_ERR_CANNOT_PARTICIPATE, "NOT ALLOWED");
     if ((c->flags & USERLIST_UC_INCOMPLETE))
       FAIL(ULS_ERR_INCOMPLETE_REG, "INCOMPLETE REGISTRATION");
+    if (!cookie->team_login) {
+      default_touch_login_time(cookie->user_id, cookie_contest_id, 0);
+    }
     default_set_cookie_team_login(cookie, 1);
     cookie_team_login = 1;
     if (ui) user_name = ui->name;
