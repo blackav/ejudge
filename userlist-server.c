@@ -3201,8 +3201,6 @@ cmd_check_cookie(struct client_state *p,
     + strlen(name) + 1 + strlen(u->login) + 1;
   answer = alloca(anslen);
   memset(answer, 0, anslen);
-  default_set_cookie_contest(cookie, orig_contest_id);
-  default_set_cookie_team_login(cookie, 0);
   answer->locale_id = cookie->locale_id;
   answer->reply_id = ULS_LOGIN_COOKIE;
   answer->user_id = u->id;
@@ -3213,7 +3211,9 @@ cmd_check_cookie(struct client_state *p,
   answer->cookie = cookie->cookie;
   strcpy(answer->data, u->login);
   strcpy(name_beg, name);
-  enqueue_reply_to_client(p,anslen,answer);
+  default_set_cookie_contest(cookie, orig_contest_id);
+  default_set_cookie_team_login(cookie, 0);
+  enqueue_reply_to_client(p, anslen, answer);
   if (!daemon_mode) {
     info("%s -> OK, %d, %s, %llu us", logbuf, u->id, u->login, tsc2);
   }
@@ -3227,8 +3227,10 @@ cmd_check_cookie(struct client_state *p,
 }
 
 static void
-cmd_team_check_cookie(struct client_state *p, int pkt_len,
-                      struct userlist_pk_check_cookie * data)
+cmd_team_check_cookie(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_check_cookie * data)
 {
   const struct contest_desc *cnts = 0;
   const struct userlist_user *u = 0;
@@ -3243,6 +3245,7 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   const struct userlist_user_info *ui;
   int orig_contest_id = 0;
   const unsigned char *name = 0;
+  int locale_id;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -3327,6 +3330,10 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
+  locale_id = cookie->locale_id;
+  if (!cookie->team_login) {
+    default_touch_login_time(cookie->user_id, orig_contest_id, current_time);
+  }
   default_set_cookie_team_login(cookie, 1);
   if (!c) {
     err("%s -> NOT REGISTERED", logbuf);
@@ -3352,11 +3359,11 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   memset(out, 0, out_size);
   login_ptr = out->data;
   name_ptr = login_ptr + login_len + 1;
-  out->cookie = cookie->cookie;
+  out->cookie = data->cookie;
   out->reply_id = ULS_LOGIN_COOKIE;
   out->user_id = u->id;
-  out->contest_id = cookie->contest_id;
-  out->locale_id = cookie->locale_id;
+  out->contest_id = orig_contest_id;
+  out->locale_id = locale_id;
   out->login_len = login_len;
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
