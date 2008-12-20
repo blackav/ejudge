@@ -279,7 +279,7 @@ run_add_record(
         time_t         timestamp,
         int            nsec,
         size_t         size,
-        ruint32_t      sha1[5],
+        const ruint32_t sha1[5],
         ruint32_t      ip,
         int            ssl_flag,
         int            locale_id,

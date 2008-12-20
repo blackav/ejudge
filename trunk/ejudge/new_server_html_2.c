@@ -3427,6 +3427,62 @@ ns_download_runs(
   xfree(file_name_str);
 }
 
+static int
+do_add_row(
+        struct http_request_info *phr,
+        const serve_state_t cs,
+        FILE *log_f,
+        int row,
+        const struct run_entry *re,
+        size_t run_size,
+        const unsigned char *run_text)
+{
+  struct timeval precise_time;
+  int run_id;
+  int arch_flags = 0;
+  path_t run_path;
+
+  gettimeofday(&precise_time, 0);
+  run_id = run_add_record(cs->runlog_state, 
+                          precise_time.tv_sec, precise_time.tv_usec * 1000,
+                          run_size, re->sha1,
+                          phr->ip, phr->ssl_flag, phr->locale_id,
+                          re->user_id, re->prob_id, re->lang_id,
+                          re->variant, re->is_hidden, re->mime_type);
+  if (run_id < 0) {
+    fprintf(log_f, _("Failed to add row %d to runlog\n"), row);
+    return -1;
+  }
+  serve_move_files_to_insert_run(cs, run_id);
+  arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
+                                       cs->global->run_archive_dir, run_id,
+                                       run_size, 0);
+  if (arch_flags < 0) {
+    run_undo_add_record(cs->runlog_state, run_id);
+    fprintf(log_f, _("Cannot allocate space to store run row %d\n"), row);
+    return -1;
+  }
+  if (archive_dir_prepare(cs, cs->global->run_archive_dir, run_id, 0, 0) < 0) {
+    run_undo_add_record(cs->runlog_state, run_id);
+    fprintf(log_f, _("Cannot allocate space to store run row %d\n"), row);
+    return -1;
+  }
+  if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
+    run_undo_add_record(cs->runlog_state, run_id);
+    fprintf(log_f, _("Cannot write run row %d\n"), row);
+    return -1;
+  }
+  run_set_entry(cs->runlog_state, run_id, RE_STATUS | RE_TEST | RE_SCORE, re);
+
+  serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                  "Command: new_run\n"
+                  "Status: %s\n"
+                  "Run-id: %d\n",
+                  run_status_str(re->status, 0, 0, 0, 0),
+                  run_id);
+  return run_id;
+}
+
 enum
 {
   CSV_RUNID,
@@ -3471,7 +3527,6 @@ ns_upload_csv_runs(
   int col_ind[CSV_LAST];
   struct run_entry *runs = 0;
   struct csv_line *rr;
-  const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob;
   const struct section_language_data *lang;
   const unsigned char *run_text = "";
@@ -3481,9 +3536,6 @@ ns_upload_csv_runs(
   char **lang_list = 0;
   char *eptr;
   int run_id;
-  struct timeval precise_time;
-  int arch_flags;
-  path_t run_path;
   const unsigned char *s;
 
   memset(col_ind, -1, sizeof(col_ind));
@@ -3734,49 +3786,8 @@ ns_upload_csv_runs(
   }
 
   for (row = 1; row < csv->u; row++) {
-    gettimeofday(&precise_time, 0);
-    run_id = run_add_record(cs->runlog_state, 
-                            precise_time.tv_sec, precise_time.tv_usec * 1000,
-                            run_size, runs[row].sha1,
-                            phr->ip, phr->ssl_flag, phr->locale_id,
-                            runs[row].user_id,
-                            runs[row].prob_id,
-                            runs[row].lang_id,
-                            runs[row].variant,
-                            runs[row].is_hidden,
-                            runs[row].mime_type);
-    if (run_id < 0) {
-      fprintf(log_f, _("Failed to add row %d to runlog\n"), row);
-      goto cleanup;
-    }
-    serve_move_files_to_insert_run(cs, run_id);
-    arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
-                                         global->run_archive_dir, run_id,
-                                         run_size, 0);
-    if (arch_flags < 0) {
-      run_undo_add_record(cs->runlog_state, run_id);
-      fprintf(log_f, _("Cannot allocate space to store run row %d\n"), row);
-      goto cleanup;
-    }
-    if (archive_dir_prepare(cs, global->run_archive_dir, run_id, 0, 0) < 0) {
-      run_undo_add_record(cs->runlog_state, run_id);
-      fprintf(log_f, _("Cannot allocate space to store run row %d\n"), row);
-      goto cleanup;
-    }
-    if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
-      run_undo_add_record(cs->runlog_state, run_id);
-      fprintf(log_f, _("Cannot write run row %d\n"), row);
-      goto cleanup;
-    }
-    run_set_entry(cs->runlog_state, run_id, RE_STATUS | RE_TEST | RE_SCORE,
-                  &runs[row]);
-
-    serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                    "Command: new_run\n"
-                    "Status: %s\n"
-                    "Run-id: %d\n",
-                    run_status_str(runs[row].status, 0, 0, 0, 0),
-                    run_id);
+    run_id = do_add_row(phr, cs, log_f, row, &runs[row], run_size, run_text);
+    if (run_id < 0) goto cleanup;
   }
 
   retval = 0;
@@ -3790,8 +3801,10 @@ ns_upload_csv_runs(
 int
 ns_upload_csv_results(
         struct http_request_info *phr,
-        const serve_state_t cs, FILE *log_f,
-        const unsigned char *csv_text)
+        const serve_state_t cs,
+        FILE *log_f,
+        const unsigned char *csv_text,
+        int add_flag)
 {
   int retval = -1;
   int col_ind[CSV_LAST];
@@ -3803,7 +3816,11 @@ ns_upload_csv_results(
   const unsigned char *cyph;
   const struct section_problem_data *prob = 0;
   char *eptr;
+  size_t run_size = 0;
+  const unsigned char *run_text = "";
+  ruint32_t sha1[5];
 
+  sha_buffer(run_text, run_size, sha1);
   memset(col_ind, -1, sizeof(col_ind));
   if (!(csv = csv_parse(csv_text, log_f, ';'))) goto cleanup;
   if (csv->u <= 1) {
@@ -3900,8 +3917,21 @@ ns_upload_csv_results(
           if (!run_is_source_available(te.status)) continue;
           if (pe->user_id == te.user_id && pe->prob_id == te.prob_id) break;
         }
-        if (run_id < 0) {
-          fprintf(log_f, _("No entry for %d/%s\n"), pe->user_id, prob->short_name);
+        // FIXME: add new run if add_flag is set
+        if (run_id < 0 && add_flag) {
+          pe->run_id = -1;
+          pe->size = run_size;
+          memcpy(pe->sha1, sha1, sizeof(pe->sha1));
+          pe->a.ip = phr->ip;
+          pe->ssl_flag = phr->ssl_flag;
+          pe->locale_id = phr->locale_id;
+          pe->lang_id = 0;
+          pe->variant = 0;
+          pe->is_hidden = 0;
+          pe->mime_type = 0;
+        } else if (run_id < 0) {
+          fprintf(log_f, _("No entry for %d/%s\n"), pe->user_id,
+                  prob->short_name);
           pe->run_id = -1;
           continue;
         }
@@ -3923,7 +3953,19 @@ ns_upload_csv_results(
           if (!run_is_source_available(te.status)) continue;
           if (!strcmp(s, teamdb_get_login(cs->teamdb_state, te.user_id)) && pe->prob_id == te.prob_id) break;
         }
-        if (run_id < 0) {
+        // FIXME: add new run if add_flag is set
+        if (run_id < 0 && add_flag) {
+          pe->run_id = -1;
+          pe->size = run_size;
+          memcpy(pe->sha1, sha1, sizeof(pe->sha1));
+          pe->a.ip = phr->ip;
+          pe->ssl_flag = phr->ssl_flag;
+          pe->locale_id = phr->locale_id;
+          pe->lang_id = 0;
+          pe->variant = 0;
+          pe->is_hidden = 0;
+          pe->mime_type = 0;
+        } else if (run_id < 0) {
           fprintf(log_f, _("No entry for %s/%s\n"), s, prob->short_name);
           pe->run_id = -1;
           continue;
@@ -3938,7 +3980,7 @@ ns_upload_csv_results(
           fprintf(log_f, _("Invalid name `%s' in row %d\n"), s, row);
           goto cleanup;
         }
-        pe->user_id = x;
+        pe->user_id  = x;
 
         // find the latest ACCEPTED run by name/prob_id pair
         for (run_id = run_get_total(cs->runlog_state) - 1; run_id >= 0; run_id--) {
@@ -3946,7 +3988,19 @@ ns_upload_csv_results(
           if (!run_is_source_available(te.status)) continue;
           if (!strcmp(s, teamdb_get_name_2(cs->teamdb_state, te.user_id)) && pe->prob_id == te.prob_id) break;
         }
-        if (run_id < 0) {
+        // FIXME: add new run if add_flag is set
+        if (run_id < 0 && add_flag) {
+          pe->run_id = -1;
+          pe->size = run_size;
+          memcpy(pe->sha1, sha1, sizeof(pe->sha1));
+          pe->a.ip = phr->ip;
+          pe->ssl_flag = phr->ssl_flag;
+          pe->locale_id = phr->locale_id;
+          pe->lang_id = 0;
+          pe->variant = 0;
+          pe->is_hidden = 0;
+          pe->mime_type = 0;
+        } else if (run_id < 0) {
           fprintf(log_f, _("No entry for %s/%s\n"), s, prob->short_name);
           pe->run_id = -1;
           continue;
@@ -3971,7 +4025,19 @@ ns_upload_csv_results(
             continue;
           if (!strcmp(s, cyph) && pe->prob_id == te.prob_id) break;
         }
-        if (run_id < 0) {
+        // FIXME: add new run if add_flag is set
+        if (run_id < 0 && add_flag) {
+          pe->run_id = -1;
+          pe->size = run_size;
+          memcpy(pe->sha1, sha1, sizeof(pe->sha1));
+          pe->a.ip = phr->ip;
+          pe->ssl_flag = phr->ssl_flag;
+          pe->locale_id = phr->locale_id;
+          pe->lang_id = 0;
+          pe->variant = 0;
+          pe->is_hidden = 0;
+          pe->mime_type = 0;
+        } else if (run_id < 0) {
           fprintf(log_f, _("No entry for %s/%s\n"), s, prob->short_name);
           pe->run_id = -1;
           continue;
@@ -4043,275 +4109,13 @@ ns_upload_csv_results(
   }
 
   for (row = 1; row < csv->u; row++) {
-    if (runs[row].run_id == -1) continue;
+    if (runs[row].run_id == -1) {
+      if (!add_flag) continue;
+      do_add_row(phr, cs, log_f, row, &runs[row], run_size, run_text);
+    }
     run_set_entry(cs->runlog_state, runs[row].run_id,
                   RE_STATUS | RE_TEST | RE_SCORE, &runs[row]);
   }
-
-  /*
-  const struct section_global_data *global = cs->global;
-  const struct section_problem_data *prob;
-  const struct section_language_data *lang;
-  const unsigned char *run_text = "";
-  size_t run_size = 0;
-  int mime_type = 0;
-  const unsigned char *mime_type_str = 0;
-  char **lang_list = 0;
-  char *eptr;
-  int run_id;
-  struct timeval precise_time;
-  int arch_flags;
-  path_t run_path;
-  const unsigned char *s;
-
-
-  // check every row
-  XCALLOC(runs, csv->u);
-  for (row = 1; row < csv->u; row++) {
-    rr = &csv->v[row];
-
-    // we need either user_id, user_login, or user_name
-    if (col_ind[CSV_UID] >= 0) {
-      if (!(s = rr->v[col_ind[CSV_UID]]) || !*s) {
-        fprintf(log_f, _("UId is empty in row %d\n"), row);
-        goto cleanup;
-      }
-      if (sscanf(s, "%d%n", &x, &n) != 1 || s[n]
-          || teamdb_lookup(cs->teamdb_state, x) < 0) {
-        fprintf(log_f, _("Invalid UId %s in row %d\n"), s, row);
-        goto cleanup;
-      }
-    } else if (col_ind[CSV_LOGIN] >= 0) {
-      if (!(s = rr->v[col_ind[CSV_LOGIN]]) || !*s) {
-        fprintf(log_f, _("Login is empty in row %d\n"), row);
-        goto cleanup;
-      }
-      if ((x = teamdb_lookup_login(cs->teamdb_state, s)) <= 0){
-        fprintf(log_f, _("Invalid login `%s' in row %d\n"),
-                rr->v[col_ind[CSV_LOGIN]], row);
-        goto cleanup;
-      }
-      runs[row].user_id = x;
-    } else if (col_ind[CSV_NAME] >= 0) {
-      if (!(s = rr->v[col_ind[CSV_NAME]]) || !*s) {
-        fprintf(log_f, _("Name is empty in row %d\n"), row);
-        goto cleanup;
-      }
-      if ((x = teamdb_lookup_name(cs->teamdb_state, s)) <= 0){
-        fprintf(log_f, _("Invalid name `%s' in row %d\n"),
-                rr->v[col_ind[CSV_NAME]], row);
-        goto cleanup;
-      }
-      runs[row].user_id = x;
-    } else {
-      fprintf(log_f, _("Neither user_id, login, nor name are specified\n"));
-      goto cleanup;
-    }
-
-    if (col_ind[CSV_PROB] < 0) {
-      fprintf(log_f, _("Problem column is undefined\n"));
-      goto cleanup;
-    }
-    if (!(s = rr->v[col_ind[CSV_PROB]]) || !*s) {
-      fprintf(log_f, _("Problem is empty in row %d\n"), row);
-      goto cleanup;
-    }
-    prob = 0;
-    for (x = 1; x <= cs->max_prob; x++)
-      if (cs->probs[x] && !strcmp(s, cs->probs[x]->short_name)) {
-        prob = cs->probs[x];
-        break;
-      }
-    if (!prob) {
-      fprintf(log_f, _("Invalid problem `%s' in row %d\n"), s, row);
-      goto cleanup;
-    }
-    runs[row].prob_id = prob->id;
-
-    lang = 0;
-    if (prob->type_val == PROB_TYPE_STANDARD) {
-      if (col_ind[CSV_LANG] < 0) {
-        fprintf(log_f, _("Language column is undefined\n"));
-        goto cleanup;
-      }
-      if (!(s = rr->v[col_ind[CSV_LANG]]) || !*s) {
-        fprintf(log_f, _("Language is empty in row %d\n"), row);
-        goto cleanup;
-      }
-      for (x = 1; x <= cs->max_lang; x++)
-        if (cs->langs[x] && !strcmp(s, cs->langs[x]->short_name)) {
-          lang = cs->langs[x];
-          break;
-        }
-      if (!lang) {
-        fprintf(log_f, _("Invalid language `%s' in row %d\n"), s, row);
-        goto cleanup;
-      }
-      runs[row].lang_id = lang->id;
-
-      if (lang->disabled) {
-        fprintf(log_f, _("Language %s is disabled in row %d\n"),
-                lang->short_name, row);
-        goto cleanup;
-      }
-
-      if (prob->enable_language) {
-        lang_list = prob->enable_language;
-        for (i = 0; lang_list[i]; i++)
-          if (!strcmp(lang_list[i], lang->short_name))
-            break;
-        if (!lang_list[i]) {
-          fprintf(log_f, _("Language %s is not enabled for problem %s in row %d\n"),
-                  lang->short_name, prob->short_name, row);
-          goto cleanup;
-        }
-      } else if (prob->disable_language) {
-        lang_list = prob->disable_language;
-        for (i = 0; lang_list[i]; i++)
-          if (!strcmp(lang_list[i], lang->short_name))
-            break;
-        if (lang_list[i]) {
-          fprintf(log_f, _("Language %s is disabled for problem %s in row %d\n"),
-                  lang->short_name, prob->short_name, row);
-          goto cleanup;
-        }
-      }
-    } else {
-      mime_type = MIME_TYPE_TEXT;
-      mime_type_str = mime_type_get_type(mime_type);
-      runs[row].mime_type = mime_type;
-
-      if (prob->enable_language) {
-        lang_list = prob->enable_language;
-        for (i = 0; lang_list[i]; i++)
-          if (!strcmp(lang_list[i], mime_type_str))
-            break;
-        if (!lang_list[i]) {
-          fprintf(log_f, _("Content type %s is not enabled for problem %s in row %d\n"),
-                  mime_type_str, prob->short_name, row);
-          goto cleanup;
-        }
-      } else if (prob->disable_language) {
-        lang_list = prob->disable_language;
-        for (i = 0; lang_list[i]; i++)
-          if (!strcmp(lang_list[i], mime_type_str))
-            break;
-        if (lang_list[i]) {
-          fprintf(log_f, _("Content type %s is disabled for problem %s in row %d\n"),
-                  mime_type_str, prob->short_name, row);
-          goto cleanup;
-        }
-      }
-    }
-    sha_buffer(run_text, run_size, runs[row].sha1);
-
-    if (col_ind[CSV_TESTS] >= 0) {
-      if (!(s = rr->v[col_ind[CSV_TESTS]]) || !*s) {
-        fprintf(log_f, _("Tests is empty in row %d\n"), row);
-        goto cleanup;
-      }
-      errno = 0;
-      x = strtol(s, &eptr, 10);
-      if (errno || *eptr || x < -1 || x > 100000) {
-        fprintf(log_f, _("Tests value `%s' is invalid in row %d\n"), s, row);
-        goto cleanup;
-      }
-      runs[row].test = x;
-    } else {
-      runs[row].test = 1;
-    }
-
-    if (col_ind[CSV_SCORE] < 0) {
-      fprintf(log_f, _("Score column is undefined\n"));
-      goto cleanup;
-    }
-    if (!(s = rr->v[col_ind[CSV_SCORE]]) || !*s) {
-      fprintf(log_f, _("Score is empty in row %d\n"), row);
-      goto cleanup;
-    }
-    errno = 0;
-    x = strtol(s, &eptr, 10);
-    if (errno || *eptr || x < -1 || x > 100000) {
-      fprintf(log_f, _("Score value `%s' is invalid in row %d\n"), s, row);
-      goto cleanup;
-    }
-    runs[row].score = x;
-
-    if (col_ind[CSV_STATUS] >= 0) {
-      if (!(s = rr->v[col_ind[CSV_STATUS]]) || !*s) {
-        fprintf(log_f, _("Status is empty in row %d\n"), row);
-        goto cleanup;
-      }
-      if (run_str_short_to_status(s, &x) < 0) {
-        fprintf(log_f, _("Invalid status `%s' in row %d\n"), s, row);
-        goto cleanup;
-      }
-      if (x < 0 || x > RUN_MAX_STATUS) {
-        fprintf(log_f, _("Invalid status `%s' (%d) in row %d\n"),
-                rr->v[col_ind[CSV_STATUS]], x, row);
-        goto cleanup;
-      }
-      runs[row].status = x;
-    } else {
-      if (runs[row].score >= prob->full_score)
-        runs[row].status = RUN_OK;
-      else
-        runs[row].status = RUN_PARTIAL;
-    }
-
-    fprintf(log_f,
-            "%d: user %d, problem %d, language %d, status %d, tests %d, score %d\n",
-            row, runs[row].user_id, runs[row].prob_id, runs[row].lang_id,
-            runs[row].status, runs[row].test, runs[row].score);
-  }
-
-  for (row = 1; row < csv->u; row++) {
-    gettimeofday(&precise_time, 0);
-    run_id = run_add_record(cs->runlog_state, 
-                            precise_time.tv_sec, precise_time.tv_usec * 1000,
-                            run_size, runs[row].sha1,
-                            phr->ip, phr->ssl_flag, phr->locale_id,
-                            runs[row].user_id,
-                            runs[row].prob_id,
-                            runs[row].lang_id,
-                            runs[row].variant,
-                            runs[row].is_hidden,
-                            runs[row].mime_type);
-    if (run_id < 0) {
-      fprintf(log_f, _("Failed to add row %d to runlog\n"), row);
-      goto cleanup;
-    }
-    serve_move_files_to_insert_run(cs, run_id);
-    arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
-                                         global->run_archive_dir, run_id,
-                                         run_size, 0);
-    if (arch_flags < 0) {
-      run_undo_add_record(cs->runlog_state, run_id);
-      fprintf(log_f, _("Cannot allocate space to store run row %d\n"), row);
-      goto cleanup;
-    }
-    if (archive_dir_prepare(cs, global->run_archive_dir, run_id, 0, 0) < 0) {
-      run_undo_add_record(cs->runlog_state, run_id);
-      fprintf(log_f, _("Cannot allocate space to store run row %d\n"), row);
-      goto cleanup;
-    }
-    if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
-      run_undo_add_record(cs->runlog_state, run_id);
-      fprintf(log_f, _("Cannot write run row %d\n"), row);
-      goto cleanup;
-    }
-    run_set_entry(cs->runlog_state, run_id,
-                  RUN_ENTRY_STATUS | RUN_ENTRY_TEST | RUN_ENTRY_SCORE,
-                  &runs[row]);
-
-    serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                    "Command: new_run\n"
-                    "Status: %s\n"
-                    "Run-id: %d\n",
-                    run_status_str(runs[row].status, 0, 0, 0),
-                    run_id);
-  }
-  */
 
   retval = 0;
 
