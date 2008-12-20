@@ -5257,7 +5257,15 @@ priv_upload_runlog_csv_1(
   html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
 
   fprintf(fout, "<table>");
+  /*
   fprintf(fout, "<tr><td>%s</td><td><input type=\"checkbox\" name=\"results_only\"/></td></tr>\n", _("Import results for existing runs"));
+  */
+  fprintf(fout, "<tr><td><input type=\"radio\" name=\"import_mode\" value=\"0\" checked=\"yes\" /></td><td>%s</td></tr>\n",
+          "Create new submits, fail if a submit already exists");
+  fprintf(fout, "<tr><td><input type=\"radio\" name=\"import_mode\" value=\"1\"  /></td><td>%s</td></tr>\n",
+          "Modify existing submits, fail if a submit does not exist");
+  fprintf(fout, "<tr><td><input type=\"radio\" name=\"import_mode\" value=\"2\"  /></td><td>%s</td></tr>\n",
+          "Create non-existent submits and modify existent submits");
   fprintf(fout, "<tr><td>%s</td><td><input type=\"file\" name=\"file\"/></td></tr>\n",
           _("File"));
   fprintf(fout, "<tr><td>&nbsp;</td><td>%s</td></tr></table>\n",
@@ -5282,11 +5290,12 @@ priv_upload_runlog_csv_2(
   const serve_state_t cs = extra->serve_state;
   int retval = 0, r;
   unsigned char bb[1024];
-  const unsigned char *s = 0, *p, *ro_flag = 0;
+  const unsigned char *s = 0, *p;
   char *log_text = 0;
   size_t log_size = 0;
   FILE *ff = 0;
   unsigned char *ss = 0;
+  int import_mode = -1;
 
   if (opcaps_check(phr->caps, OPCAP_IMPORT_XML_RUNS) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
@@ -5299,11 +5308,27 @@ priv_upload_runlog_csv_2(
   for (p = s; *p && isspace(*p); p++);
   if (!*p) FAIL(NEW_SRV_ERR_FILE_EMPTY);
 
+  // import_mode:
+  //  0 - new submits
+  //  1 - existing submits
+  //  2 - both
+  if (ns_cgi_param_int(phr, "import_mode", &import_mode) < 0
+      || import_mode < 0 || import_mode > 2)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+
   ff = open_memstream(&log_text, &log_size);
-  if (ns_cgi_param(phr, "results_only", &ro_flag) > 0) {
-    r = ns_upload_csv_results(phr, cs, ff, s);
-  } else {
+  switch (import_mode) {
+  case 0:
     r = ns_upload_csv_runs(phr, cs, ff, s);
+    break;
+  case 1:
+    r = ns_upload_csv_results(phr, cs, ff, s, 0);
+    break;
+  case 2:
+    r = ns_upload_csv_results(phr, cs, ff, s, 1);
+    break;
+  default:
+    FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   fclose(ff); ff = 0;
 
