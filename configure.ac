@@ -702,7 +702,27 @@ fi
 dnl Check new reuse features
 if [[ x"${ac_cv_has_reuse}" = x1 ]]
 then
-  AC_CHECK_FUNCS([task_SetMaxTimeMillis task_GetRealTime task_IsMemoryLimit task_EnableMemoryLimitError task_EnableSecureExec task_SetQuietFlag task_GetErrorMessage task_EnableAllSignals task_fPrintArgs task_IsSecurityViolation task_EnableSecurityViolationError])
+  AC_CHECK_FUNCS([task_SetMaxTimeMillis task_GetRealTime task_IsMemoryLimit task_EnableMemoryLimitError task_EnableSecureExec task_SetQuietFlag task_GetErrorMessage task_EnableAllSignals task_fPrintArgs task_IsSecurityViolation task_EnableSecurityViolationError task_GetPid])
+fi
+
+ac_cv_have_task_append=
+if [[ x"${ac_cv_has_reuse}" = x1 ]]
+then
+  AC_MSG_CHECKING([TSK_APPEND flag])
+  AC_RUN_IFELSE([[
+#include <reuse/version.h>
+#include <reuse/exec.h>
+int main()
+{
+  int x = TSK_APPEND;
+  return 0;
+}
+]],[
+AC_MSG_RESULT([yes])
+ac_cv_have_task_append=1
+],[
+AC_MSG_RESULT([no])
+])
 fi
 
 ac_cv_version_detected=
@@ -716,7 +736,7 @@ then
 int main()
 {
   const char *p = reuse_compile_version;
-  int major, minor, patch, build = 0, n;
+  int major, minor, patch, build = 0, n, svnver = 0;
   if (sscanf(p, "%d.%dpre%d #%d%n", &major, &minor, &patch, &build, &n) == 4
       && !p[n]) {
     patch = 0;
@@ -727,6 +747,10 @@ int main()
              && !p[n]) {
   } else if (sscanf(p, "%d.%d.%d%n", &major, &minor, &patch, &n) == 3
              && !p[n]) {
+  } else if (sscanf(p, "%d.%d.%d+ (SVN r%d)%n", &major, &minor, &patch,
+                    &svnver, &n) == 4) {
+  } else if (sscanf(p, "%d.%d.%d+ (SVN r%d) #%d%n", &major, &minor, &patch,
+                    &svnver, &build, &n) == 4) {
   } else {
     return 1;
   }
@@ -1031,6 +1055,11 @@ fi
 if [[ x"${ac_cv_ajax}" != xno -a x"${ac_cv_ajax}" != x ]]
 then
   AC_DEFINE(CONF_ENABLE_AJAX,1)
+fi
+
+if [[ x"${ac_cv_have_task_append}" != xno -a x"${ac_cv_have_task_append}" != x ]]
+then
+  AC_DEFINE(HAVE_TASK_APPEND,1)
 fi
 
 if [[ x"${ac_cv_has_libcap}" != x ]]
