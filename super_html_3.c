@@ -5772,8 +5772,13 @@ super_html_add_problem(
   prob->id = prob_id;
   sstate->prob_flags[prob_id] = 0;
 
-  for (x = prob_id - 1, i = 0; x; x /= 26, ++i) {
-    prob->short_name[i] = 'A' + x % 26;
+  if (prob_id == 1) {
+    prob->short_name[0] = 'A';
+    i = 1;
+  } else {
+    for (x = prob_id - 1, i = 0; x; x /= 26, ++i) {
+      prob->short_name[i] = 'A' + x % 26;
+    }
   }
   prob->short_name[i] = 0;
   if (sstate->aprob_u == 1)

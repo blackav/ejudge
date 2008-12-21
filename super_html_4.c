@@ -4587,7 +4587,7 @@ cmd_op_create_new_contest(
     FAIL(S_ERR_CONTEST_ALREADY_EDITED);
   if (templ_id > 0) {
     for (i = 0; i < contest_num && contests[i] != templ_id; i++);
-    if (i < contest_num)
+    if (i >= contest_num)
       FAIL(S_ERR_INV_CONTEST);
     if (contests_get(templ_id, &templ_cnts) < 0 || !templ_cnts)
       FAIL(S_ERR_INV_CONTEST);
