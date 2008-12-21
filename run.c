@@ -1438,7 +1438,7 @@ run_tests(struct section_tester_data *tst,
       }
 #endif
 
-      task_Wait(tsk_int);
+      if (tsk_int) task_Wait(tsk_int);
       //task_Delete(tsk_int); tsk_int = 0;
     } /* if (!prb->output_only) */
 
