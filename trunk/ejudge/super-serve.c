@@ -4363,7 +4363,11 @@ do_loop(void)
 {
   int fd_max, i, socket_fd, n, errcode, status, pid, tmp_fd, j;
   fd_set rset, wset;
+#if HAVE_PSELECT - 0 == 1
+  struct timespec timeout2;
+#else
   struct timeval timeout;
+#endif
   sigset_t block_mask, work_mask;
   struct sockaddr_un in_addr;
   int in_addr_len;
@@ -4435,6 +4439,8 @@ do_loop(void)
         sid_state_last_check_time = current_time;
       }
 
+      if (hup_flag || term_flag) break;
+
       fd_max = -1;
       FD_ZERO(&rset);
       FD_ZERO(&wset);
@@ -4484,6 +4490,15 @@ do_loop(void)
         }
       }
 
+#if HAVE_PSELECT - 0 == 1
+      if (!sigchld_flag && !hup_flag && !term_flag && !dnotify_flag) {
+        timeout2.tv_sec = 10;
+        timeout2.tv_nsec = 0;
+        errno = 0;
+        n = pselect(fd_max + 1, &rset, &wset, 0, &timeout2, &work_mask);
+        errcode = errno;
+      }
+#else
       // set a reasonable timeout in case of race condition
       timeout.tv_sec = 10;
       timeout.tv_usec = 0;
@@ -4498,6 +4513,7 @@ do_loop(void)
       sigprocmask(SIG_SETMASK, &block_mask, 0);
       errno = errcode;
       // end of race condition prone code
+#endif
 
       if (n < 0 && errno != EINTR) {
         err("unexpected select error: %s", os_ErrorMsg());
