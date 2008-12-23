@@ -146,7 +146,7 @@ fi
 
 AC_CHECK_HEADERS([iconv.h pwd.h])
 
-AC_CHECK_FUNCS([strnlen open_memstream truncate setsid])
+AC_CHECK_FUNCS([strnlen open_memstream truncate setsid pselect])
 
 saved_CFLAGS="${CFLAGS}"
 CFLAGS="${CFLAGS} -Werror -Wall"
