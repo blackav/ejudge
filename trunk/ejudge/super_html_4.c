@@ -750,6 +750,7 @@ eval_check_expr(
         *q++ = *p++;
       *q = 0;
 
+      val2 = 0;
       if (!strncmp(buf, "Contest.", 8)) {
         if (!(f_id = contest_desc_lookup_field(buf + 8)))
           goto invalid_field;
@@ -4761,6 +4762,7 @@ cmd_op_edit_serve_global_field(
     FAIL(S_ERR_INV_FIELD_ID);
   if (ss_cgi_param_utf8_str(phr, "value", &vb, &valstr) <= 0 || !valstr)
     FAIL(S_ERR_INV_VALUE);
+  vallen = strlen(valstr);
   if (global_str_need_space[f_id] && vallen > 0 && !isspace(valstr[0])) {
     unsigned char *tmps = (unsigned char*) alloca(vallen + 2);
     tmps[0] = ' ';
