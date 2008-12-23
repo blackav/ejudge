@@ -95,6 +95,8 @@
 
 #undef HAVE_SETSID
 
+#undef HAVE_PSELECT
+
 /* iconv needs `const' for its second argument */
 #undef CONF_ICONV_NEEDS_CONST
 
