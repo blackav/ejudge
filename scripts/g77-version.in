@@ -4,14 +4,12 @@
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
-function common_config
-{
+common_config() {
   echo 'long_name="GNU Fortran 77"'
   echo 'src_sfx=".for"'
 }
 
-function failure
-{
+failure() {
   rm -f conftest*
   echo 'version='
   echo 'arg="'"${arg}"'"'
