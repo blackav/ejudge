@@ -7,16 +7,14 @@ contests_home_dir="@contests_home_dir@"
 local_dir="@local_dir@"
 LANG_CONFIG_DIR="@lang_config_dir@"
 
-function common_config
-{
+common_config() {
   echo 'long_name="Borland C++"'
   echo 'src_sfx=".cpp"'
   echo 'exe_sfx=".exe"'
   echo 'arch="dos"'
 }
 
-function failure
-{
+failure() {
   rm -f conftest*
   echo 'version='
   echo 'arg="'"${arg}"'"'

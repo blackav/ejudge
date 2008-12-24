@@ -22,21 +22,19 @@ cgi_suffix="@ac_cv_cgi_suffix@"
 dojoarchive="dojo-release-1.2.2.tar.gz"
 site="http://www.ejudge.ru/download"
 
-function write_help
-{
+write_help() {
     echo "ejudge-upgrade-web: ejudge web upgrade utility"
     echo "Copyright (c) 2008 Alexander Chernov <cher@ejudge.ru>"
     echo "usage: ejudge-upgrade-web [HTDOCROOT] [CGIBINDIR] [DOJOPATH/SAVEDIR]"
     exit 0
 }
 
-function die
-{
+die() {
     echo "ejudge-upgrade-web:" "$@" 2>&1
     exit 1
 }
 
-function checked_sln
+checked_sln() {
 {
     if ! ln -sf "$1" "$2"
     then

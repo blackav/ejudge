@@ -4,16 +4,14 @@
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
-function common_config
-{
+common_config() {
   echo 'long_name="GNU Java"'
   echo 'src_sfx=".java"'
   echo 'arch="linux-shared"'
   echo 'insecure=1'
 }
 
-function failure
-{
+failure() {
   rm -f conftest*
   echo 'version='
   echo 'arg="'"${arg}"'"'
