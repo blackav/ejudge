@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,7 @@
 #include "new_server_clnt/new_server_clnt_priv.h"
 #include "new_server_proto.h"
 #include "errlog.h"
+#include "sock_op.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/osdeps.h>
@@ -33,14 +34,7 @@ new_server_clnt_open(const unsigned char *socketpath, new_server_conn_t *p_conn)
 {
   int fd = -1;
   int max_path_buf;
-  int val;
   struct sockaddr_un addr;
-  int ret;
-  struct ucred *pcred;
-  struct msghdr msg;
-  unsigned char msgbuf[512];
-  struct cmsghdr *pmsg;
-  struct iovec send_vec[1];
   int code = -1;
   new_server_conn_t new_conn = 0;
 
@@ -61,9 +55,7 @@ new_server_clnt_open(const unsigned char *socketpath, new_server_conn_t *p_conn)
     goto failure;
   }
 
-  val = 1;
-  if (setsockopt(fd, SOL_SOCKET, SO_PASSCRED, &val, sizeof(val)) < 0) {
-    err("new_server_clnt_open: setsockopt() failed: %s", os_ErrorMsg());
+  if (sock_op_enable_creds(fd) < 0) {
     code = -NEW_SRV_ERR_SYSTEM_ERROR;
     goto failure;
   }
@@ -77,34 +69,11 @@ new_server_clnt_open(const unsigned char *socketpath, new_server_conn_t *p_conn)
     goto failure;
   }
 
-  memset(&msg, 0, sizeof(msg));
-  msg.msg_control = msgbuf;
-  msg.msg_controllen = sizeof(msgbuf);
-  pmsg = CMSG_FIRSTHDR(&msg);
-  pcred = (struct ucred*) CMSG_DATA(pmsg);
-  pcred->pid = getpid();
-  pcred->uid = getuid();
-  pcred->gid = getgid();
-  pmsg->cmsg_level = SOL_SOCKET;
-  pmsg->cmsg_type = SCM_CREDENTIALS;
-  pmsg->cmsg_len = CMSG_LEN(sizeof(*pcred));
-  msg.msg_controllen = CMSG_SPACE(sizeof(*pcred));
-  send_vec[0].iov_base = &val;
-  send_vec[0].iov_len = 4;
-  msg.msg_iov = send_vec;
-  msg.msg_iovlen = 1;
-  val = 0;
-  ret = sendmsg(fd, &msg, 0);
-  if (ret < 0) {
-    err("new_server_clnt_open: sendmsg() failed: %s", os_ErrorMsg());
+  if (sock_op_put_creds(fd) < 0) {
     code = -NEW_SRV_ERR_WRITE_ERROR;
     goto failure;
   }
-  if (ret != 4) {
-    err("new_server_clnt_open: sendmsg() short write: %d bytes", ret);
-    code = -NEW_SRV_ERR_WRITE_ERROR;
-    goto failure;
-  }
+
 
   XCALLOC(new_conn, 1);
   new_conn->fd = fd;
