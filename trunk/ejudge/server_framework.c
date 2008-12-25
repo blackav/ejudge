@@ -21,6 +21,7 @@
 #include "errlog.h"
 #include "server_framework.h"
 #include "new_server_proto.h"
+#include "sock_op.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -259,64 +260,12 @@ remove_pending_watches(struct server_framework_state *state)
 static void
 read_from_control_connection(struct client_state *p)
 {
-  struct msghdr msg;
-  unsigned char msgbuf[512];
-  struct cmsghdr *pmsg;
-  struct ucred *pcred;
-  struct iovec recv_vec[1];
-  int val, r, *fds, n;
+  int r, n;
 
   switch (p->state) {
   case STATE_READ_CREDS:
-    // 4 zero bytes and credentials
-    memset(&msg, 0, sizeof(msg));
-    msg.msg_flags = 0;
-    msg.msg_control = msgbuf;
-    msg.msg_controllen = sizeof(msgbuf);
-    recv_vec[0].iov_base = &val;
-    recv_vec[0].iov_len = 4;
-    msg.msg_iov = recv_vec;
-    msg.msg_iovlen = 1;
-    val = -1;
-
-    if ((r = recvmsg(p->fd, &msg, 0)) < 0) {
-      err("%d: recvmsg failed: %s", p->id, os_ErrorMsg());
-      p->state = STATE_DISCONNECT;
-      return;
-    }
-    if (r != 4) {
-      err("%d: read %d bytes instead of 4", p->id, r);
-      p->state = STATE_DISCONNECT;
-      return;
-    }
-    if (val != 0) {
-      err("%d: expected 4 zero bytes", p->id);
-      p->state = STATE_DISCONNECT;
-      return;
-    }
-    if ((msg.msg_flags & MSG_CTRUNC)) {
-      err("%d: protocol error: control buffer too small", p->id);
-      p->state = STATE_DISCONNECT;
-      return;
-    }
-    pmsg = CMSG_FIRSTHDR(&msg);
-    if (!pmsg) {
-      err("%d: empty control data", p->id);
-      p->state = STATE_DISCONNECT;
-      return;
-    }
-    if (pmsg->cmsg_level != SOL_SOCKET || pmsg->cmsg_type != SCM_CREDENTIALS
-        || pmsg->cmsg_len != CMSG_LEN(sizeof(*pcred))) {
-      err("%d: protocol error: unexpected control data", p->id);
-      p->state = STATE_DISCONNECT;
-      return;
-    }
-    pcred = (struct ucred*) CMSG_DATA(pmsg);
-    p->peer_pid = pcred->pid;
-    p->peer_uid = pcred->uid;
-    p->peer_gid = pcred->gid;
-    if (CMSG_NXTHDR(&msg, pmsg)) {
-      err("%d: protocol error: unexpected control data", p->id);
+    if (sock_op_get_creds(p->fd, p->id, &p->peer_pid, &p->peer_uid,
+                          &p->peer_gid) < 0) {
       p->state = STATE_DISCONNECT;
       return;
     }
@@ -325,72 +274,10 @@ read_from_control_connection(struct client_state *p)
     break;
 
   case STATE_READ_FDS:
-    // we expect 4 zero bytes and 1 or 2 file descriptors
-    memset(&msg, 0, sizeof(msg));
-    msg.msg_flags = 0;
-    msg.msg_control = msgbuf;
-    msg.msg_controllen = sizeof(msgbuf);
-    recv_vec[0].iov_base = &val;
-    recv_vec[0].iov_len = 4;
-    msg.msg_iov = recv_vec;
-    msg.msg_iovlen = 1;
-    val = -1;
-
-    if ((r = recvmsg(p->fd, &msg, 0)) < 0) {
-      err("%d: recvmsg failed: %s", p->id, os_ErrorMsg());
+    if (sock_op_get_fds(p->fd, p->id, p->client_fds) < 0) {
       p->state = STATE_DISCONNECT;
       return;
     }
-    if (r != 4) {
-      err("%d: read %d bytes instead of 4", p->id, r);
-      p->state = STATE_DISCONNECT;
-      return;
-    }
-    if (val != 0) {
-      err("%d: expected 4 zero bytes", p->id);
-      p->state = STATE_DISCONNECT;
-      return;
-     }
-    if ((msg.msg_flags & MSG_CTRUNC)) {
-      err("%d: protocol error: control buffer too small", p->id);
-      p->state = STATE_DISCONNECT;
-      return;
-    }
-
-    pmsg = CMSG_FIRSTHDR(&msg);
-    while (1) {
-      if (!pmsg) break;
-      if (pmsg->cmsg_level == SOL_SOCKET && pmsg->cmsg_type == SCM_RIGHTS)
-        break;
-      pmsg = CMSG_NXTHDR(&msg, pmsg);
-    }
-    if (!pmsg) {
-      err("%d: empty control data", p->id);
-      p->state = STATE_DISCONNECT;
-      return;
-    }
-
-    fds = (int*) CMSG_DATA(pmsg);
-    if (pmsg->cmsg_len == CMSG_LEN(2 * sizeof(int))) {
-      info("%d: received 2 file descriptors: %d, %d", p->id, fds[0], fds[1]);
-      p->client_fds[0] = fds[0];
-      p->client_fds[1] = fds[1];
-    } else if (pmsg->cmsg_len == CMSG_LEN(1 * sizeof(int))) {
-      info("%d: received 1 file descriptor: %d", p->id, fds[0]);
-      p->client_fds[0] = fds[0];
-      p->client_fds[1] = -1;
-    } else {
-      err("%d: invalid number of file descriptors passed", p->id);
-      p->state = STATE_DISCONNECT;
-      return;
-    }
-
-    if (CMSG_NXTHDR(&msg, pmsg)) {
-      err("%d: protocol error: unexpected control data", p->id);
-      p->state = STATE_DISCONNECT;
-      return;
-    }
-
     p->state = STATE_READ_LEN;
     break;
 
@@ -498,7 +385,7 @@ static void
 accept_new_connection(struct server_framework_state *state)
 {
   struct sockaddr_un addr;
-  int fd, addrlen, val;
+  int fd, addrlen;
 
   memset(&addr, 0, sizeof(addr));
   addrlen = sizeof(addr);
@@ -507,9 +394,7 @@ accept_new_connection(struct server_framework_state *state)
     return;
   }
 
-  val = 1;
-  if (setsockopt(fd, SOL_SOCKET, SO_PASSCRED, &val, sizeof(val)) < 0) {
-    err("setsockopt() failed: %s", os_ErrorMsg());
+  if (sock_op_enable_creds(fd) < 0) {
     close(fd);
     return;
   }
