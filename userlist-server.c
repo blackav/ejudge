@@ -40,6 +40,7 @@
 #include "random.h"
 #include "startstop.h"
 #include "csv.h"
+#include "sock_op.h"
 
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
@@ -8832,10 +8833,7 @@ do_work(void)
         q->client_fds[0] = -1;
         q->client_fds[1] = -1;
 
-        val = 1;
-        if (setsockopt(new_fd, SOL_SOCKET, SO_PASSCRED,
-                       &val, sizeof(val)) < 0) {
-          err("%d: setsockopt() failed: %s", q->id, os_ErrorMsg());
+        if (sock_op_enable_creds(new_fd) < 0) {
           disconnect_client(q);
         } else {
           if (!daemon_mode)
@@ -8893,65 +8891,8 @@ do_work(void)
 
       p->processed = 1;
       if (p->state == STATE_READ_CREDS) {
-        struct msghdr msg;
-        unsigned char msgbuf[512];
-        struct cmsghdr *pmsg;
-        struct ucred *pcred;
-        struct iovec recv_vec[1];
-        int val;
-
-        // we expect 4 zero bytes and credentials
-        memset(&msg, 0, sizeof(msg));
-        msg.msg_flags = 0;
-        msg.msg_control = msgbuf;
-        msg.msg_controllen = sizeof(msgbuf);
-        recv_vec[0].iov_base = &val;
-        recv_vec[0].iov_len = 4;
-        msg.msg_iov = recv_vec;
-        msg.msg_iovlen = 1;
-        val = -1;
-        r = recvmsg(p->fd, &msg, 0);
-        if (r < 0) {
-          err("%d: recvmsg failed: %s", p->id, os_ErrorMsg());
-          disconnect_client(p);
-          continue;
-        }
-        if (r != 4) {
-          err("%d: read %d bytes instead of 4", p->id, r);
-          disconnect_client(p);
-          continue;
-        }
-        if (val != 0) {
-          err("%d: expected 4 zero bytes", p->id);
-          disconnect_client(p);
-          continue;
-        }
-        if ((msg.msg_flags & MSG_CTRUNC)) {
-          err("%d: protocol error: control buffer too small", p->id);
-          disconnect_client(p);
-          continue;
-        }
-
-        pmsg = CMSG_FIRSTHDR(&msg);
-        if (!pmsg) {
-          err("%d: empty control data", p->id);
-          disconnect_client(p);
-          continue;
-        }
-        /* cmsg_len, cmsg_level, cmsg_type */
-        if (pmsg->cmsg_level != SOL_SOCKET
-            || pmsg->cmsg_type != SCM_CREDENTIALS
-            || pmsg->cmsg_len != CMSG_LEN(sizeof(*pcred))) {
-          err("%d: protocol error: unexpected control data", p->id);
-          disconnect_client(p);
-          continue;
-        }
-        pcred = (struct ucred*) CMSG_DATA(pmsg);
-        p->peer_pid = pcred->pid;
-        p->peer_uid = pcred->uid;
-        p->peer_gid = pcred->gid;
-        if (CMSG_NXTHDR(&msg, pmsg)) {
-          err("%d: protocol error: unexpected control data", p->id);
+        if (sock_op_get_creds(p->fd, p->id, &p->peer_pid, &p->peer_uid,
+                              &p->peer_gid) < 0) {
           disconnect_client(p);
           continue;
         }
@@ -8963,79 +8904,10 @@ do_work(void)
         p->state = STATE_READ_DATA;
         continue;
       } else if (p->state == STATE_READ_FDS) {
-        struct msghdr msg;
-        unsigned char msgbuf[512];
-        struct cmsghdr *pmsg;
-        struct iovec recv_vec[1];
-        int *fds;
-        int val;
-
-        // we expect 4 zero bytes and 1 or 2 file descriptors
-        memset(&msg, 0, sizeof(msg));
-        msg.msg_flags = 0;
-        msg.msg_control = msgbuf;
-        msg.msg_controllen = sizeof(msgbuf);
-        recv_vec[0].iov_base = &val;
-        recv_vec[0].iov_len = 4;
-        msg.msg_iov = recv_vec;
-        msg.msg_iovlen = 1;
-        val = -1;
-        r = recvmsg(p->fd, &msg, 0);
-        if (r < 0) {
-          err("%d: recvmsg failed: %s", p->id, os_ErrorMsg());
+        if (sock_op_get_fds(p->fd, p->id, p->client_fds) < 0) {
           disconnect_client(p);
           continue;
         }
-        if (r != 4) {
-          err("%d: read %d bytes instead of 4", p->id, r);
-          disconnect_client(p);
-          continue;
-        }
-        if (val != 0) {
-          err("%d: expected 4 zero bytes", p->id);
-          disconnect_client(p);
-          continue;
-        }
-        if ((msg.msg_flags & MSG_CTRUNC)) {
-          err("%d: protocol error: control buffer too small", p->id);
-          disconnect_client(p);
-          continue;
-        }
-
-        /*
-         * actually, the first control message could be credentials
-         * so we need to skip it
-         */
-        pmsg = CMSG_FIRSTHDR(&msg);
-        while (1) {
-          if (!pmsg) break;
-          if (pmsg->cmsg_level == SOL_SOCKET
-              && pmsg->cmsg_type == SCM_RIGHTS) break;
-          pmsg = CMSG_NXTHDR(&msg, pmsg);
-        }
-        if (!pmsg) {
-          err("%d: empty control data", p->id);
-          disconnect_client(p);
-          continue;
-        }
-        fds = (int*) CMSG_DATA(pmsg);
-        if (pmsg->cmsg_len == CMSG_LEN(2 * sizeof(int))) {
-          if (!daemon_mode)
-            info("%d: received 2 file descriptors: %d, %d",
-                 p->id, fds[0], fds[1]);
-          p->client_fds[0] = fds[0];
-          p->client_fds[1] = fds[1];
-        } else if (pmsg->cmsg_len == CMSG_LEN(1 * sizeof(int))) {
-          if (!daemon_mode)
-            info("%d: received 1 file descriptor: %d", p->id, fds[0]);
-          p->client_fds[0] = fds[0];
-          p->client_fds[1] = -1;
-        } else {
-          err("%d: invalid number of file descriptors passed", p->id);
-          disconnect_client(p);
-          continue;
-        }
-
         p->state = STATE_READ_DATA;
         continue;
       }

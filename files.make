@@ -293,6 +293,16 @@ CFILES=\
  win32/timestamp.c\
  unix/full_archive.c\
  win32/full_archive.c\
+ unix/sock_op_enable_creds.c\
+ win32/sock_op_enable_creds.c\
+ unix/sock_op_get_creds.c\
+ win32/sock_op_get_creds.c\
+ unix/sock_op_get_fds.c\
+ win32/sock_op_get_fds.c\
+ unix/sock_op_put_fds.c\
+ win32/sock_op_put_fds.c\
+ unix/sock_op_put_creds.c\
+ win32/sock_op_put_creds.c\
  unix/startstop.c\
  win32/startstop.c\
  ${COMMON_CFILES}\
@@ -367,6 +377,7 @@ HFILES=\
  serve_state.h\
  sformat.h\
  shellcfg_parse.h\
+ sock_op.h\
  startstop.h\
  stringset.h\
  super_clnt.h\
