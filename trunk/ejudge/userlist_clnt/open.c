@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,7 @@
 #include "userlist_clnt/private.h"
 
 #include "errlog.h"
+#include "sock_op.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -31,14 +32,7 @@ userlist_clnt_open(char const *socketpath)
   int fd = -1;
   struct userlist_clnt *clnt = 0;
   int max_path_buf = 100;
-  int val;
   struct sockaddr_un addr;
-  int ret;
-  struct ucred *pcred;
-  struct msghdr msg;
-  unsigned char msgbuf[512];
-  struct cmsghdr *pmsg;
-  struct iovec send_vec[1];
 
 #if !defined PYTHON
   signal(SIGPIPE, SIG_IGN);
@@ -61,12 +55,9 @@ userlist_clnt_open(char const *socketpath)
     goto failure;
   }
 
-  val = 1;
-  if (setsockopt(fd, SOL_SOCKET, SO_PASSCRED, &val, sizeof(val)) < 0) {
+  if (sock_op_enable_creds(fd) < 0) {
 #if defined PYTHON
     PyErr_SetFromErrno(PyExc_IOError);
-#else
-    err("setsockopt() failed: %s", os_ErrorMsg());
 #endif
     goto failure;
   }
@@ -83,38 +74,9 @@ userlist_clnt_open(char const *socketpath)
     goto failure;
   }
 
-  memset(&msg, 0, sizeof(msg));
-  memset(msgbuf, 0, sizeof(msgbuf));
-  msg.msg_control = msgbuf;
-  msg.msg_controllen = sizeof(msgbuf);
-  pmsg = CMSG_FIRSTHDR(&msg);
-  pcred = (struct ucred*) CMSG_DATA(pmsg);
-  pcred->pid = getpid();
-  pcred->uid = getuid();
-  pcred->gid = getgid();
-  pmsg->cmsg_level = SOL_SOCKET;
-  pmsg->cmsg_type = SCM_CREDENTIALS;
-  pmsg->cmsg_len = CMSG_LEN(sizeof(*pcred));
-  msg.msg_controllen = CMSG_SPACE(sizeof(*pcred));
-  send_vec[0].iov_base = &val;
-  send_vec[0].iov_len = 4;
-  msg.msg_iov = send_vec;
-  msg.msg_iovlen = 1;
-  val = 0;
-  ret = sendmsg(fd, &msg, 0);
-  if (ret < 0) {
+  if (sock_op_put_creds(fd) < 0) {
 #if defined PYTHON
-    PyErr_SetFromErrno(PyExc_IOError);
-#else
-    err("sendmsg() failed: %s", os_ErrorMsg());
-#endif
-    goto failure;
-  }
-  if (ret != 4) {
-#if defined PYTHON
-    PyErr_SetString(PyExc_IOError, "short write");
-#else
-    err("sendmsg() short write: %d bytes", ret);
+    PyErr_SetString(PyExc_IOError, "sock_op_put_creds");
 #endif
     goto failure;
   }
