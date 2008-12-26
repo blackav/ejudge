@@ -193,6 +193,25 @@ ac_cv_have_so_passcred=1
 AC_MSG_RESULT([no])
 ])
 
+ac_cv_have_siocing=
+AC_MSG_CHECKING([SIOCINQ flag])
+AC_RUN_IFELSE([[
+#include <sys/ioctl.h>
+#include <linux/sockios.h>
+int main()
+{
+  int sz = 0;
+
+  ioctl(0, SIOCINQ, &sz);
+  return 0;
+}
+]],[
+AC_MSG_RESULT([yes])
+ac_cv_have_siocing=1
+],[
+AC_MSG_RESULT([no])
+])
+
 dnl Expat checking stuff
 ac_cv_has_expat=1
 [[ x"${ac_cv_expat_root}" = xno ]] && ac_cv_has_expat=""

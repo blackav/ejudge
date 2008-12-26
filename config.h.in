@@ -102,6 +102,8 @@
 
 #undef HAVE_SO_PASSCRED
 
+#undef HAVE_SIOCINQ
+
 /* new reuse features */
 #undef HAVE_TASK_SETMAXTIMEMILLIS
 #undef HAVE_TASK_GETREALTIME
