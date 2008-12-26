@@ -1039,7 +1039,7 @@ install_dnotify_handler(void)
     }
     */
 
-#if HAVE_F_NOTIFY - 0 == 0
+#if HAVE_F_NOTIFY - 0 == 1
     fcntl(cur->run_dir_fd, F_SETSIG, SIGRTMIN);
     fcntl(cur->run_dir_fd, F_NOTIFY, DN_CREATE | DN_DELETE | DN_RENAME | DN_MULTISHOT);
 #endif
