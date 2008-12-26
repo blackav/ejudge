@@ -21,7 +21,9 @@
 #include "errlog.h"
 
 #include <sys/ioctl.h>
+#ifdef __linux__
 #include <linux/sockios.h>
+#endif
 
 int
 userlist_clnt_bytes_available(struct userlist_clnt *clnt)
