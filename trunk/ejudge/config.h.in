@@ -91,6 +91,8 @@
 
 #undef HAVE_OPEN_MEMSTREAM
 
+#undef HAVE_FMEMOPEN
+
 #undef HAVE_TRUNCATE
 
 #undef HAVE_SETSID
