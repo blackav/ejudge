@@ -146,7 +146,7 @@ fi
 
 AC_CHECK_HEADERS([iconv.h pwd.h])
 
-AC_CHECK_FUNCS([strnlen open_memstream truncate setsid pselect])
+AC_CHECK_FUNCS([strnlen open_memstream truncate setsid pselect ferror_unlocked fgets_unlocked])
 
 saved_CFLAGS="${CFLAGS}"
 CFLAGS="${CFLAGS} -Werror -Wall"
@@ -208,6 +208,29 @@ int main()
 ]],[
 AC_MSG_RESULT([yes])
 ac_cv_have_siocing=1
+],[
+AC_MSG_RESULT([no])
+])
+
+ac_cv_have_f_notify=
+AC_MSG_CHECKING([F_NOTIFY flag])
+AC_RUN_IFELSE([[
+#define _GNU_SOURCE
+#include <unistd.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <time.h>
+int main()
+{
+  fcntl(0, F_SETSIG, SIGRTMIN);
+  fcntl(0, F_NOTIFY, DN_CREATE | DN_DELETE | DN_RENAME | DN_MULTISHOT);
+  return 0;
+}
+]],[
+AC_MSG_RESULT([yes])
+ac_cv_have_f_notify=1
 ],[
 AC_MSG_RESULT([no])
 ])
@@ -318,6 +341,10 @@ then
   AC_MSG_FAILURE([zlib is too old or unusable, please update zlib])
 fi
 
+AC_CHECK_LIB([iconv],[iconv],[ac_cv_has_lib_iconv=-liconv],[ac_cv_has_lib_iconv=])
+
+AC_CHECK_LIB([intl],[gettext],[ac_cv_has_lib_intl=-lintl],[ac_cv_has_lib_intl=])
+
 dnl check ncurses library
 AC_CHECK_HEADER([ncurses.h],[ac_cv_has_ncurses=1],[ac_cv_has_ncurses=0])
 if [[ x"${ac_cv_has_ncurses}" != x1 ]]
@@ -326,7 +353,6 @@ then
 fi
 
 dnl Libcap checking stuff
-
 ac_cv_has_libcap=1
 if [[ x"${ac_cv_libcap_root}" = xno ]]
 then
@@ -1057,6 +1083,8 @@ AC_SUBST(ac_cv_werror_flag)
 AC_SUBST(ac_cv_preserve_scripts)
 AC_SUBST(ac_cv_httpd_cgi_bin_dir)
 AC_SUBST(ac_cv_httpd_htdocs_dir)
+AC_SUBST(ac_cv_lib_iconv)
+AC_SUBST(ac_cv_lib_intl)
 
 AC_SUBST(ac_cv_festival_home)
 AC_SUBST(ac_cv_libcap_link)
@@ -1107,6 +1135,11 @@ fi
 if [[ x"${ac_cv_have_siocing}" != xno -a x"${ac_cv_have_siocing}" != x ]]
 then
   AC_DEFINE(HAVE_SIOCINQ,1)
+fi
+
+if [[ x"${ac_cv_have_f_notify}" != xno -a x"${ac_cv_have_f_notify}" != x ]]
+then
+  AC_DEFINE(HAVE_F_NOTIFY,1)
 fi
 
 if [[ x"${ac_cv_has_libcap}" != x ]]

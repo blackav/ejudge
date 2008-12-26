@@ -97,12 +97,18 @@
 
 #undef HAVE_PSELECT
 
+#undef HAVE_FERROR_UNLOCKED
+
+#undef HAVE_FGETS_UNLOCKED
+
 /* iconv needs `const' for its second argument */
 #undef CONF_ICONV_NEEDS_CONST
 
 #undef HAVE_SO_PASSCRED
 
 #undef HAVE_SIOCINQ
+
+#undef HAVE_F_NOTIFY
 
 /* new reuse features */
 #undef HAVE_TASK_SETMAXTIMEMILLIS
