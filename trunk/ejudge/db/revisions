@@ -4340,3 +4340,5 @@ userlist_clnt/bytes_available.c 5484 0 101785
 super-serve.c 5488 0 13747280
 super-serve.c 5490 0 13747279
 super-serve.c 5492 0 13751823
+unix/fmemopen.c 5497 0 72571
+win32/fmemopen.c 5498 0 72576
