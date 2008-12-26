@@ -175,6 +175,24 @@ ac_cv_iconv_needs_const=""
 ])
 CFLAGS="${saved_CFLAGS}"
 
+ac_cv_have_so_passcred=
+AC_MSG_CHECKING([SO_PASSCRED flag])
+AC_RUN_IFELSE([[
+#include <sys/types.h>
+#include <sys/socket.h>
+int main()
+{
+  int val = 1;
+  setsockopt(0, SOL_SOCKET, SO_PASSCRED, &val, sizeof(val));
+  return 0;
+}
+]],[
+AC_MSG_RESULT([yes])
+ac_cv_have_so_passcred=1
+],[
+AC_MSG_RESULT([no])
+])
+
 dnl Expat checking stuff
 ac_cv_has_expat=1
 [[ x"${ac_cv_expat_root}" = xno ]] && ac_cv_has_expat=""
@@ -1060,6 +1078,11 @@ fi
 if [[ x"${ac_cv_have_task_append}" != xno -a x"${ac_cv_have_task_append}" != x ]]
 then
   AC_DEFINE(HAVE_TASK_APPEND,1)
+fi
+
+if [[ x"${ac_cv_have_so_passcred}" != xno -a x"${ac_cv_have_so_passcred}" != x ]]
+then
+  AC_DEFINE(HAVE_SO_PASSCRED,1)
 fi
 
 if [[ x"${ac_cv_has_libcap}" != x ]]
