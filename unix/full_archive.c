@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -147,8 +147,8 @@ full_archive_append_file(full_archive_t af,
   cur_head->raw_size = file_size;
   cur_head->size = comp_size;
 
-  if (lseek64(af->fd, af->cur_size, SEEK_SET) < 0) {
-    err("full_archive_append_file: lseek64 failed: %s", os_ErrorMsg());
+  if (lseek(af->fd, af->cur_size, SEEK_SET) < 0) {
+    err("full_archive_append_file: lseek failed: %s", os_ErrorMsg());
     goto failure;
   }
 
@@ -350,7 +350,7 @@ full_archive_find_file(full_archive_t af,
   return -1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
