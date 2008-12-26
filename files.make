@@ -289,6 +289,8 @@ CFILES=\
  win32/interrupt.c\
  unix/curtime.c\
  win32/curtime.c\
+ unix/open_memstream.c\
+ win32/open_memstream.c\
  unix/timestamp.c\
  win32/timestamp.c\
  unix/full_archive.c\
