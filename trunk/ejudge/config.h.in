@@ -100,6 +100,8 @@
 /* iconv needs `const' for its second argument */
 #undef CONF_ICONV_NEEDS_CONST
 
+#undef HAVE_SO_PASSCRED
+
 /* new reuse features */
 #undef HAVE_TASK_SETMAXTIMEMILLIS
 #undef HAVE_TASK_GETREALTIME
