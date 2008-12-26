@@ -343,6 +343,8 @@ fi
 
 AC_CHECK_LIB([iconv],[iconv],[ac_cv_has_lib_iconv=-liconv],[ac_cv_has_lib_iconv=])
 
+AC_CHECK_LIB([iconv],[libiconv],[ac_cv_has_lib_libiconv=-liconv],[ac_cv_has_lib_libiconv=])
+
 AC_CHECK_LIB([intl],[gettext],[ac_cv_has_lib_intl=-lintl],[ac_cv_has_lib_intl=])
 
 dnl check ncurses library
@@ -1083,8 +1085,9 @@ AC_SUBST(ac_cv_werror_flag)
 AC_SUBST(ac_cv_preserve_scripts)
 AC_SUBST(ac_cv_httpd_cgi_bin_dir)
 AC_SUBST(ac_cv_httpd_htdocs_dir)
-AC_SUBST(ac_cv_lib_iconv)
-AC_SUBST(ac_cv_lib_intl)
+AC_SUBST(ac_cv_has_lib_iconv)
+AC_SUBST(ac_cv_has_lib_libiconv)
+AC_SUBST(ac_cv_has_lib_intl)
 
 AC_SUBST(ac_cv_festival_home)
 AC_SUBST(ac_cv_libcap_link)
