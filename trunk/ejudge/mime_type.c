@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "mime_type.h"
 #include "pathutl.h"
 #include "errlog.h"
@@ -25,6 +27,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+
+#if HAVE_FGETS_UNLOCKED - 0 == 0
+#define fgets_unlocked(a,b,c) fgets(a,b,c)
+#endif
 
 struct mime_type_info
 {

@@ -31,6 +31,8 @@ NO_KERNEL=@ac_cv_no_kernel@
 ENABLE_NLS=@ac_cv_nls@
 ARCH=@ac_cv_ejudge_arch@
 EXESFX=@ac_cv_exe_suffix@
+LIBICONV=@ac_cv_lib_iconv@
+LIBINTL=@ac_cv_lib_intl@
 
 XGETTEXT=@XGETTEXT@
 MSGMERGE=@MSGMERGE@
@@ -75,7 +77,7 @@ else
 $(error "unsupported configuration")
 endif
 
-LDLIBS=${EXTRALIBS} -lreuse -lz -lm
+LDLIBS=${EXTRALIBS} -lreuse -lz $(LIBINTL) $(LIBICONV) -lm
 CFLAGS=-I. ${REUSE_INCL_OPT} ${EXPAT_INCL_OPT} ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CEXTRAFLAGS} ${WPTRSIGN}
 LDFLAGS=${REUSE_LIB_OPT} ${EXPAT_LIB_OPT} ${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
 CC=gcc
