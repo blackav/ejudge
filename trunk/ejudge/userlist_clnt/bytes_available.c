@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "userlist_clnt/private.h"
 #include "errlog.h"
 
@@ -24,14 +26,19 @@
 int
 userlist_clnt_bytes_available(struct userlist_clnt *clnt)
 {
+#if HAVE_SIOCINQ - 0 == 1
   int sz = 0;
 
   if (ioctl(clnt->fd, SIOCINQ, &sz) < 0) {
-    err("userlist_clnt_has_data: ioctl failed: %s", os_ErrorMsg());
+    err("%s: ioctl failed: %s", __FUNCTION__, os_ErrorMsg());
     return -ULS_ERR_READ_ERROR;
   } else {
     return sz;
   }
+#else
+  err("%s: not implemented", __FUNCTION__);
+  return -1;
+#endif
 }
 
 /*
