@@ -163,6 +163,7 @@ prepare_directory_notify(void)
     err("cannot open directory `%s'", job_server_dir_path);
     return -1;
   }
+#if HAVE_F_NOTIFY - 0 == 1
   if (fcntl(job_server_dir_fd, F_SETSIG, SIGRTMIN) < 0) {
     err("fcntl failed on `%s'", job_server_dir_path);
     return -1;
@@ -172,6 +173,7 @@ prepare_directory_notify(void)
     err("fcntl failed on `%s'", job_server_dir_path);
     return -1;
   }
+#endif
 
   return 0;
 }
