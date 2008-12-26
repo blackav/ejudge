@@ -4329,3 +4329,7 @@ new_server_clnt/pass_fd.c 5467 0 126505
 unix/sock_op_enable_creds.c 5473 0 98163
 unix/sock_op_get_creds.c 5473 0 203971
 unix/sock_op_put_creds.c 5473 0 157612
+unix/open_memstream.c 5478 0 73195
+win32/open_memstream.c 5479 0 73194
+unix/full_archive.c 5478 0 697735
+userlist_clnt/bytes_available.c 5480 0 99702
