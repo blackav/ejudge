@@ -15,6 +15,8 @@
  * Lesser General Public License for more details.
  */
 
+#include "config.h"
+
 #include "fileutl.h"
 #include "unix/unix_fileutl.h"
 #include "pathutl.h"
@@ -34,6 +36,10 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <zlib.h>
+
+#if HAVE_FERROR_UNLOCKED - 0 == 0
+#define ferror_unlocked(x) ferror(x)
+#endif
 
 void
 get_uniq_prefix(char *prefix)
