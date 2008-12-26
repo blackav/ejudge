@@ -4455,6 +4455,7 @@ do_loop(void)
                 err("contest %d run unknown termination status", i);
               }
 
+#if HAVE_F_NOTIFY - 0 == 1
               if (fcntl(cur->run_dir_fd, F_SETSIG, SIGRTMIN) < 0) {
                 err("fcntl(...,F_SETSIG,...) failed: %s", os_ErrorMsg());
                 cur->run_used = 0;
@@ -4468,6 +4469,8 @@ do_loop(void)
                 close(cur->run_dir_fd);
                 cur->run_dir_fd = -1;
               }
+#endif
+
               cur->dnotify_flag = 0;
               if (get_number_of_files(cur->run_queue_dir) > 0) {
                 cur->dnotify_flag = 1;
@@ -4511,7 +4514,9 @@ do_loop(void)
           }
           if (pid > 0) {
             info("contest %d new run process %d", cur->id, pid);
+#if HAVE_F_NOTIFY - 0 == 1
             fcntl(cur->run_dir_fd, F_NOTIFY, 0);
+#endif
             cur->run_pid = pid;
             continue;
           }
