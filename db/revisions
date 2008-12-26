@@ -4326,3 +4326,6 @@ userlist_clnt/do_pass_fd.c 5466 0 104933
 userlist_clnt/open.c 5466 0 195617
 new_server_clnt/open.c 5467 0 197131
 new_server_clnt/pass_fd.c 5467 0 126505
+unix/sock_op_enable_creds.c 5473 0 98163
+unix/sock_op_get_creds.c 5473 0 203971
+unix/sock_op_put_creds.c 5473 0 157612
