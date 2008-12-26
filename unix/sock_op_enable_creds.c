@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "sock_op.h"
 
 #include "errlog.h"
@@ -29,11 +31,13 @@
 int
 sock_op_enable_creds(int sock_fd)
 {
+#if HAVE_SO_PASSCRED - 0 == 1
   int val = 1;
   if (setsockopt(sock_fd, SOL_SOCKET, SO_PASSCRED, &val, sizeof(val)) < 0) {
     err("%s: setsockopt() failed: %s", __FUNCTION__, os_ErrorMsg());
     return -1;
   }
+#endif
   return 0;
 }
 

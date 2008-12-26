@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "sock_op.h"
 
 #include "errlog.h"
@@ -34,6 +36,7 @@ sock_op_get_creds(
         int *p_uid,
         int *p_gid)
 {
+#if HAVE_SO_PASSCRED
   struct msghdr msg;
   unsigned char msgbuf[512];
   struct cmsghdr *pmsg;
@@ -84,6 +87,11 @@ sock_op_get_creds(
     err("%d: protocol error: unexpected control data", conn_id);
     return -1;
   }
+#else
+  if (p_pid) *p_pid = getpid();
+  if (p_uid) *p_uid = getuid();
+  if (p_gid) *p_gid = getgid();
+#endif
   return 0;
 }
 
