@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "sock_op.h"
 #include "errlog.h"
 
@@ -29,6 +31,7 @@
 int
 sock_op_put_creds(int sock_fd)
 {
+#if HAVE_SO_PASSCRED
   int val, ret;
   struct ucred *pcred;
   struct msghdr msg;
@@ -62,6 +65,7 @@ sock_op_put_creds(int sock_fd)
     err("%s: sendmsg() short write: %d bytes", __FUNCTION__, ret);
     return -1;
   }
+#endif
   return 0;
 }
 
