@@ -63,12 +63,12 @@ static const char cright_years_z[] =
 #include <string.h>
 #include <limits.h>
 #include <libgen.h>
-#include <error.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <getopt.h>
+#include <stdarg.h>
 
 /*=====================================================================\
 | uudecode [FILE ...]                                                  |
@@ -109,6 +109,24 @@ static void usage __P ((int))
 /* The name this program was run with. */
 const char *program_name;
 
+static void
+myerr(int unused, int errcode, const char *format, ...)
+{
+  va_list args;
+  char buf[1024];
+
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+
+  if (errcode > 0) {
+    fprintf(stderr, "%s: %s failed: %s\n", program_name, buf,
+            strerror(errcode));
+  } else {
+    fprintf(stderr, "%s: %s\n", program_name, buf);
+  }
+}
+
 /* Single character decode.  */
 #define DEC(Char) (((Char) - ' ') & 077)
 
@@ -118,7 +136,7 @@ const char *program_name;
 
 #define TRY_PUTCHAR(c) do { \
                          if (putchar (c) == EOF) { \
-                           error (0, 0, "%s: Write error", outname); \
+                           myerr (0, 0, "%s: Write error", outname); \
                            return 1; \
                          } \
                        } while (0)
@@ -136,7 +154,7 @@ read_stduu (inname, outname)
 
       if (fgets ((char *) buf, sizeof(buf), stdin) == NULL)
         {
-          error (0, 0, "%s: Short file", inname);
+          myerr (0, 0, "%s: Short file", inname);
           return 1;
         }
       p = buf;
@@ -172,7 +190,7 @@ read_stduu (inname, outname)
       return 0;
   } while (0);
 
-  error (0, 0, "%s: No `end' line", inname);
+  myerr (0, 0, "%s: No `end' line", inname);
   return 1;
 }
 
@@ -224,7 +242,7 @@ read_base64 (inname, outname)
 
       if (fgets (buf, sizeof(buf), stdin) == NULL)
         {
-          error (0, 0, "%s: Short file", inname);
+          myerr (0, 0, "%s: Short file", inname);
           return 1;
         }
       p = (unsigned char *) buf;
@@ -233,7 +251,7 @@ read_base64 (inname, outname)
         break;
       if (last_data != 0)
         {
-          error (0, 0, "%s: data following `=' padding character", inname);
+          myerr (0, 0, "%s: data following `=' padding character", inname);
           return 1;
         }
 
@@ -257,7 +275,7 @@ read_base64 (inname, outname)
           while ((b64_tab[*p] & '\100') != 0)
             if (*p == '\n' || *p++ == '=')
               {
-                error (0, 0, "%s: illegal line", inname);
+                myerr (0, 0, "%s: illegal line", inname);
                 return 1;
               }
           c2 = b64_tab[*p++];
@@ -265,7 +283,7 @@ read_base64 (inname, outname)
           while (b64_tab[*p] == '\177')
             if (*p++ == '\n')
               {
-                error (0, 0, "%s: illegal line", inname);
+                myerr (0, 0, "%s: illegal line", inname);
                 return 1;
               }
           if (*p == '=')
@@ -279,7 +297,7 @@ read_base64 (inname, outname)
           while (b64_tab[*p] == '\177')
             if (*p++ == '\n')
               {
-                error (0, 0, "%s: illegal line", inname);
+                myerr (0, 0, "%s: illegal line", inname);
                 return 1;
               }
           TRY_PUTCHAR (c1 << 2 | c2 >> 4);
@@ -319,7 +337,7 @@ decode (inname, forced_outname)
     {
       if (fgets (buf, sizeof (buf), stdin) == NULL)
         {
-          error (0, 0, "%s: No `begin' line", inname);
+          myerr (0, 0, "%s: No `begin' line", inname);
           return 1;
         }
 
@@ -351,14 +369,14 @@ decode (inname, forced_outname)
             ++p;
           if (*p == '\0')
             {
-              error (0, 0, "%s: Illegal ~user", inname);
+              myerr (0, 0, "%s: Illegal ~user", inname);
               return 1;
             }
           *p++ = '\0';
           pw = getpwnam (buf + 1);
           if (pw == NULL)
             {
-              error (0, 0, "%s: No user `%s'", inname, buf + 1);
+              myerr (0, 0, "%s: No user `%s'", inname, buf + 1);
               return 1;
             }
           n = strlen (pw->pw_dir);
@@ -382,17 +400,17 @@ decode (inname, forced_outname)
         {
           if (lstat(outname, &attr) == -1)
             {
-              error (0, errno, "cannot access %s", outname);
+              myerr (0, errno, "cannot access %s", outname);
               return 1;
             }
           if (S_ISFIFO(attr.st_mode))
             {
-              error (0, errno, "denied writing FIFO (%s)", outname);
+              myerr (0, errno, "denied writing FIFO (%s)", outname);
               return 1;
             }
           if (S_ISLNK(attr.st_mode))
             {
-              error (0, errno, "not following symlink (%s)", outname);
+              myerr (0, errno, "not following symlink (%s)", outname);
               return 1;
             }
         }
@@ -400,13 +418,13 @@ decode (inname, forced_outname)
       fp = freopen (outname, "wb", stdout);
       if (fp != stdout)
         {
-          error (0, errno, "freopen of %s", outname);
+          myerr (0, errno, "freopen of %s", outname);
           return 1;
         }
 
       if (UU_CHMOD(outname, fileno (fp), mode) != 0)
         {
-          error (0, errno, "chmod of %s", outname);
+          myerr (0, errno, "chmod of %s", outname);
           return 1;
         }
     }
@@ -422,7 +440,7 @@ decode (inname, forced_outname)
 
   if (rval == 0 && (ferror(stdout) || fflush(stdout) != 0))
     {
-      error (0, 0, "%s: Write error", outname);
+      myerr (0, 0, "%s: Write error", outname);
       return 1;
     }
 
@@ -509,7 +527,7 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
             }
           else
             {
-              error (0, errno, "%s", argv[optind]);
+              myerr (0, errno, "%s", argv[optind]);
               exit_status = EXIT_FAILURE;
             }
           optind++;
