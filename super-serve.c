@@ -321,6 +321,7 @@ static volatile int dnotify_flag = 0;
 static void
 dnotify_handler(int signo, siginfo_t *si, void *data)
 {
+#if HAVE_F_NOTIFY - 0 == 1
   int i;
 
   if (si->si_fd < 0) return;
@@ -332,6 +333,7 @@ dnotify_handler(int signo, siginfo_t *si, void *data)
       dnotify_flag = 1;
     }      
   }
+#endif
 }
 
 /* for error reporting purposes */
@@ -1037,8 +1039,10 @@ install_dnotify_handler(void)
     }
     */
 
+#if HAVE_F_NOTIFY - 0 == 0
     fcntl(cur->run_dir_fd, F_SETSIG, SIGRTMIN);
     fcntl(cur->run_dir_fd, F_NOTIFY, DN_CREATE | DN_DELETE | DN_RENAME | DN_MULTISHOT);
+#endif
   }
 }
 
@@ -4294,6 +4298,7 @@ do_loop(void)
       ASSERT(cur->run_dir_fd >= 0);
       ASSERT(cur->run_pid <= 0);
       // should never fail
+#if HAVE_F_NOTIFY - 0 == 1
       if (fcntl(cur->run_dir_fd, F_SETSIG, SIGRTMIN) < 0) {
         err("fcntl(...,F_SETSIG,...) failed: %s", os_ErrorMsg());
         cur->run_used = 0;
@@ -4309,6 +4314,7 @@ do_loop(void)
         cur->run_dir_fd = -1;
         continue;
       }
+#endif
 
       if (get_number_of_files(cur->run_queue_dir) > 0) {
         dnotify_flag = 1;
