@@ -1104,6 +1104,11 @@ then
   AC_DEFINE(HAVE_SO_PASSCRED,1)
 fi
 
+if [[ x"${ac_cv_have_siocing}" != xno -a x"${ac_cv_have_siocing}" != x ]]
+then
+  AC_DEFINE(HAVE_SIOCINQ,1)
+fi
+
 if [[ x"${ac_cv_has_libcap}" != x ]]
 then
   AC_DEFINE(HAVE_CAP_SYS_OPERATIONS, 1)
