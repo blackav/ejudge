@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005, 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,7 @@
 int
 checker_eq_long_double(long double v1, long double v2, long double eps)
 {
-#if defined __MINGW32__
+#if defined __MINGW32__ || defined __CYGWIN__
   unsigned int *r1, *r2;
   int e1, e2, e, s1, s2;
   unsigned long long m1, m2;
