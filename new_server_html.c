@@ -3543,16 +3543,18 @@ priv_edit_run(FILE *fout, FILE *log_f,
  * NEW_SRV_ACTION_CHANGE_RUN_STATUS:
  */
 static int
-priv_change_status(FILE *fout,
-                   FILE *log_f,
-                   struct http_request_info *phr,
-                   const struct contest_desc *cnts,
-                   struct contest_extra *extra)
+priv_change_status(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
   const unsigned char *errmsg = 0, *s;
   int run_id, n, status, flags;
-  struct run_entry new_run;
+  struct run_entry new_run, re;
+  const struct section_problem_data *prob = 0;
 
   // run_id, status
   if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
@@ -3578,17 +3580,31 @@ priv_change_status(FILE *fout,
     ns_error(log_f, NEW_SRV_ERR_INV_STATUS);
     goto cleanup;
   }
+
+  if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  if (re.prob_id <= 0 || re.prob_id > cs->max_prob
+      || !(prob = cs->probs[re.prob_id])) {
+    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+
   memset(&new_run, 0, sizeof(new_run));
   new_run.status = status;
   flags = RE_STATUS;
+  if (status == RUN_OK && prob->variable_full_score <= 0) {
+    new_run.score = prob->full_score;
+    flags |= RE_SCORE;
+  }
   if (run_set_entry(cs->runlog_state, run_id, flags, &new_run) < 0) {
     ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
   }
 
   if (cs->global->notify_status_change > 0) {
-    struct run_entry re;
-    if (run_get_entry(cs->runlog_state, run_id, &re) >= 0 && !re.is_hidden)
+    if (!re.is_hidden)
       serve_notify_user_run_status_change(cnts, cs, re.user_id, run_id,
                                           status);
   }
