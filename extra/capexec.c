@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,10 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
+
+#ifdef __linux__
 #include <sys/ptrace.h>
+#endif
 
 #if defined HAVE_CAP_SYS_OPERATIONS && HAVE_CAP_SYS_OPERATIONS > 0
 #include <sys/capability.h>
@@ -49,6 +52,7 @@ extern char **environ;
 
 int main(int argc, char *argv[])
 {
+#ifdef __linux__
 #if defined HAVE_CAP_SYS_OPERATIONS && HAVE_CAP_SYS_OPERATIONS > 0
   cap_t old_caps, new_caps;
   int   setcaps[] = { CAP_SYS_OPERATIONS };
@@ -88,6 +92,7 @@ int main(int argc, char *argv[])
 
   execve(argv[1], argv + 1, environ);
   perror("capexec: execve");
+#endif
 
   /* 6 exit code means that check is failed */
   return 6;

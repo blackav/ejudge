@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,10 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
+
+#ifdef __linux__
 #include <sys/ptrace.h>
+#endif
 
 #if defined HAVE_CAP_SYS_OPERATIONS && HAVE_CAP_SYS_OPERATIONS > 0
 #include <sys/capability.h>
@@ -36,6 +39,7 @@ static void init(void) __attribute__((constructor));
 static void
 init(void)
 {
+#ifdef __linux__
 #if defined HAVE_CAP_SYS_OPERATIONS && HAVE_CAP_SYS_OPERATIONS > 0
   cap_t old_caps, new_caps;
   int   setcaps[] = { CAP_SYS_OPERATIONS, CAP_SYS_ONE_EXEC };
@@ -67,6 +71,7 @@ init(void)
             "capexec: CAP_SYS_OPERATIONS is not supported on this system\n");
     _exit(6);
   }
+#endif
 }
 
 /*
