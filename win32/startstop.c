@@ -52,3 +52,9 @@ start_set_args(char *argv[])
 {
   SWERR(("not implemented"));
 }
+
+int
+start_find_process(const unsigned char *name, int *p_uid)
+{
+  SWERR(("not implemented"));
+}

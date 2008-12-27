@@ -30,6 +30,18 @@ interrupt_handler(DWORD dwCtrlType)
 }
 
 void
+interrupt_flag_interrupt(void)
+{
+  was_interrupt = 1;
+}
+
+void
+interrupt_flag_sighup(void)
+{
+  was_sighup = 1;
+}
+
+void
 interrupt_init(void)
 {
 }
