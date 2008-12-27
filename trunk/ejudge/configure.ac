@@ -136,7 +136,7 @@ case "${target}" in
   *)
     ac_cv_ejudge_arch=unix
     ac_cv_exe_suffix=
-    reuse_binmode=" --binmode"
+    reuse_binmode=""
     AC_MSG_RESULT([unix])
     ;;
 esac
