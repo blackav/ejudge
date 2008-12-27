@@ -22,6 +22,7 @@
 #include "lang_config_vis.h"
 #include "ncurses_utils.h"
 #include "pathutl.h"
+#include "compat.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>

@@ -28,6 +28,7 @@
 #include <reuse/logger.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/fcntl.h>

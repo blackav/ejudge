@@ -65,6 +65,12 @@ struct parser_data
   iconv_t conv_hnd;
 };
 
+#if CONF_ICONV_NEEDS_CONST - 0 == 1
+typedef const char *iconv_src_str_t;
+#else
+typedef char *iconv_src_str_t;
+#endif
+
 /*
  * returns:
  *  0 - 6   - ok (the sequence length is returned)
@@ -173,7 +179,7 @@ convert_utf8_to_local(iconv_t hnd,
                       const unsigned char *inbuf, size_t inlen,
                       unsigned char *outbuf, size_t outlen)
 {
-  char *p_inbuf = (char*) inbuf;
+  iconv_src_str_t p_inbuf = (iconv_src_str_t) inbuf;
   char *p_outbuf = outbuf;
   size_t loc_inlen = inlen, loc_outlen = outlen, convlen;
   int stat;
@@ -266,7 +272,8 @@ encoding_hnd(void *data, const XML_Char *name, XML_Encoding *info)
   int i;
   iconv_t conv_hnd;
   unsigned char in_buf[16], out_buf[16];
-  char *p_in_buf, *p_out_buf;
+  iconv_src_str_t p_in_buf;
+  char *p_out_buf;
   size_t in_size, out_size, conv_size;
 
   if ((conv_hnd = iconv_open("utf-16le", name)) == (iconv_t) -1)
@@ -280,7 +287,7 @@ encoding_hnd(void *data, const XML_Char *name, XML_Encoding *info)
   /* FIXME: this supports only one byte encodings */
   for (i = 0; i < 256; i++) {
     in_size = 1;
-    p_in_buf = in_buf;
+    p_in_buf = (iconv_src_str_t) in_buf;
     in_buf[0] = i;
     out_size = sizeof(out_buf);
     p_out_buf = out_buf;

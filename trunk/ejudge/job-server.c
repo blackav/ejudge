@@ -24,6 +24,7 @@
 #include "pathutl.h"
 #include "fileutl.h"
 #include "startstop.h"
+#include "compat.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>

@@ -35,6 +35,7 @@
 #include "startstop.h"
 #include "super-serve_meta.h"
 #include "sock_op.h"
+#include "compat.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/osdeps.h>
@@ -121,7 +122,7 @@ static int self_uid;
 static int self_gid;
 static int self_group_num;
 static int self_group_max;
-static int *self_groups;
+static gid_t *self_groups;
 
 static int extra_a;
 static struct contest_extra **extras;
@@ -501,7 +502,7 @@ check_user_identity(const unsigned char *prog_name,
   }
   if (ppwd && self_uid != 0 && ppwd->pw_uid != self_uid) {
     startup_err("cannot change user id from %d to %d",
-                self_uid, ppwd->pw_uid);
+                self_uid, (int) ppwd->pw_uid);
     return -1;
   }
   if (ppwd && uid_ptr) *uid_ptr = ppwd->pw_uid;
@@ -519,7 +520,7 @@ check_user_identity(const unsigned char *prog_name,
         break;
     if (i >= self_group_num) {
       startup_err("cannot change group id from %d to %d",
-                  self_uid, pgrp->gr_gid);
+                  self_uid, (int) pgrp->gr_gid);
       return -1;
     }
   }

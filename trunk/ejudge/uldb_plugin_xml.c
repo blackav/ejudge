@@ -23,6 +23,7 @@
 #include "random.h"
 #include "misctext.h"
 #include "ej_limits.h"
+#include "compat.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/osdeps.h>

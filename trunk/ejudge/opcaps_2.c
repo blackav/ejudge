@@ -16,6 +16,7 @@
  */
 
 #include "opcaps.h"
+#include "compat.h"
 
 #include <string.h>
 

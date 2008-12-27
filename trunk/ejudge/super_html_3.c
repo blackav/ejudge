@@ -37,6 +37,7 @@
 #include "prepare_serve.h"
 #include "errlog.h"
 #include "random.h"
+#include "compat.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>

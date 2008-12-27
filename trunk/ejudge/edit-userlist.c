@@ -26,6 +26,7 @@
 #include "xml_utils.h"
 #include "misctext.h"
 #include "ncurses_utils.h"
+#include "compat.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/logger.h>

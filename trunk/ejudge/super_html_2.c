@@ -37,6 +37,7 @@
 #include "userlist.h"
 #include "ej_process.h"
 #include "vcs.h"
+#include "compat.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>

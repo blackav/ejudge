@@ -41,6 +41,7 @@
 #include "startstop.h"
 #include "csv.h"
 #include "sock_op.h"
+#include "compat.h"
 
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
@@ -5657,7 +5658,7 @@ cmd_map_contest(struct client_state *p, int pkt_len,
   out->shm_key = ex->shm_key;
   enqueue_reply_to_client(p, out_size, out);
   update_userlist_table(data->contest_id);
-  info("%s -> OK, %d", logbuf, ex->shm_key);
+  info("%s -> OK, %d", logbuf, (int) ex->shm_key);
 }
 
 // just assigns the connection user_id by the system user_id

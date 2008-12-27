@@ -1734,7 +1734,9 @@ prepare_parse_variant_map(
   const unsigned char * const pvm = "parse_variant_map";
   FILE *head_f = 0, *foot_f = 0;
   char *head_t = 0, *foot_t = 0;
+#if HAVE_OPEN_MEMSTREAM - 0
   size_t head_z = 0, foot_z = 0;
+#endif
   const struct section_problem_data *prob;
   int *newvar;
 

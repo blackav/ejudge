@@ -33,6 +33,7 @@
 #include "xml_utils.h"
 #include "prepare.h"
 #include "vcs.h"
+#include "compat.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>

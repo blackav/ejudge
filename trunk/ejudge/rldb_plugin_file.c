@@ -371,7 +371,7 @@ read_runlog_version_0(struct rldb_file_cnts *cs)
     return -1;
   if (sf_lseek(cs->run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
 
-  info("runs file size: %lu", filesize);
+  info("runs file size: %lu", (unsigned long) filesize);
   if (filesize == 0) {
     /* runs file is empty */
     XMEMZERO(&rls->head, 1);
@@ -668,7 +668,7 @@ read_runlog(
     return -1;
   if (sf_lseek(cs->run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
 
-  info("runs file size: %ld", filesize);
+  info("runs file size: %lu", (unsigned long) filesize);
   if (filesize == 0) {
     /* runs file is empty */
     XMEMZERO(&rls->head, 1);
