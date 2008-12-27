@@ -17,6 +17,10 @@
 
 #include "config.h"
 
+#ifdef __MINGW32__
+#undef HAVE_PWD_H
+#endif
+
 #include "ejudge_cfg.h"
 #include "expat_iface.h"
 #include "errlog.h"

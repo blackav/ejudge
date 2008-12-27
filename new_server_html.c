@@ -52,6 +52,7 @@
 #include "printing.h"
 #include "sformat.h"
 #include "charsets.h"
+#include "compat.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>

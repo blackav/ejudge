@@ -30,6 +30,7 @@
 #include "userlist_proto.h"
 #include "super_clnt.h"
 #include "super_proto.h"
+#include "compat.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>

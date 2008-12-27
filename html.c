@@ -39,6 +39,7 @@
 #include "testing_report_xml.h"
 #include "serve_state.h"
 #include "charsets.h"
+#include "compat.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>

@@ -138,6 +138,7 @@ open_connection(struct old_db_state *old_db, int contest_id)
 {
   int r;
   time_t cur_time;
+  int *p_int = 0;
 
   if (old_db->server_conn) return 0;
   cur_time = time(0);
@@ -152,8 +153,9 @@ open_connection(struct old_db_state *old_db, int contest_id)
         userlist_strerror(-r));
     return -1;
   }
+  p_int = (int*) &old_db->shm_key;
   if ((r = userlist_clnt_map_contest(old_db->server_conn, contest_id,
-                                     0, &old_db->shm_key)) < 0) {
+                                     0, p_int)) < 0) {
     err("teamdb_open_client: cannot map contest: %s", userlist_strerror(-r));
     return -1;
   }

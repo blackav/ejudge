@@ -38,6 +38,7 @@
 #include "sformat.h"
 #include "misctext.h"
 #include "charsets.h"
+#include "compat.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>

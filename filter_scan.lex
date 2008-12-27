@@ -28,6 +28,10 @@
 #include <errno.h>
 #include <stdarg.h>
 
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
+
 static int input() __attribute__((unused));
 
 extern int filter_expr_nerrs;

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
 #include "vcs.h"
 #include "pathutl.h"
 #include "ej_process.h"
+#include "compat.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/logger.h>
@@ -204,7 +205,7 @@ vcs_add_dir(const unsigned char *path, unsigned char **p_log_txt)
   return vcs_do_action(path, p_log_txt, vcs_add_dir_funcs);
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")

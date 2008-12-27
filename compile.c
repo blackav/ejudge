@@ -398,12 +398,15 @@ main(int argc, char *argv[])
   path_t  log_path;
   int log_fd = -1, pid = -1;
   char **argv_restart = 0;
-  FILE *lang_log_f = 0;
-  char *lang_log_t = 0;
-  size_t lang_log_z = 0;
   unsigned char *ejudge_xml_path = 0;
   unsigned char *compile_cfg_path = 0;
   path_t compile_cfg_buf = { 0 };
+
+#if HAVE_OPEN_MEMSTREAM
+  FILE *lang_log_f = 0;
+  char *lang_log_t = 0;
+  size_t lang_log_z = 0;
+#endif
 
   start_set_self_args(argc, argv);
   XCALLOC(argv_restart, argc + 1);
@@ -542,11 +545,16 @@ main(int argc, char *argv[])
     if (pid > 0) _exit(0);
     if (setsid() < 0) return 1;
 
+#if HAVE_OPEN_MEMSTREAM - 0 == 1
     fprintf(stderr, "%s", lang_log_t);
+#endif
   }
 #endif
 
+#if HAVE_OPEN_MEMSTREAM - 0 == 1
   xfree(lang_log_t); lang_log_t = 0; lang_log_z = 0;
+#endif
+
   if (do_loop() < 0) return 1;
 
   if (interrupt_restart_requested()) start_restart();

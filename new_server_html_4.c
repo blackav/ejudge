@@ -39,6 +39,7 @@
 #include "filter_eval.h"
 #include "xml_utils.h"
 #include "charsets.h"
+#include "compat.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>

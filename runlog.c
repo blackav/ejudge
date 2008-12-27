@@ -1065,11 +1065,11 @@ run_set_entry(
     err("run_set_entry: %d: test %d is invalid", run_id, te.test);
     return -1;
   }
-  if (IS_INVALID_BOOL(te.is_imported)) {
+  if (IS_INVALID_BOOL_2(te.is_imported)) {
     err("run_set_entry: %d: is_imported %d is invalid", run_id,te.is_imported);
     return -1;
   }
-  if (IS_INVALID_BOOL(te.is_hidden)) {
+  if (IS_INVALID_BOOL_2(te.is_hidden)) {
     err("run_set_entry: %d: is_hidden %d is invalid", run_id, te.is_hidden);
     return -1;
   }
@@ -1078,7 +1078,7 @@ run_set_entry(
         run_id);
     return -1;
   }
-  if (IS_INVALID_BOOL(te.is_readonly)) {
+  if (IS_INVALID_BOOL_2(te.is_readonly)) {
     err("run_set_entry: %d: is_readonly %d is invalid", run_id,te.is_readonly);
     return -1;
   }
@@ -1586,12 +1586,12 @@ runlog_check(
       nerr++;
       continue;
     }
-    if (IS_INVALID_BOOL(e->is_imported)) {
+    if (IS_INVALID_BOOL_2(e->is_imported)) {
       check_msg(1,ferr, "Run %d is_imported %d is invalid", i, e->is_imported);
       nerr++;
       continue;
     }
-    if (IS_INVALID_BOOL(e->is_readonly)) {
+    if (IS_INVALID_BOOL_2(e->is_readonly)) {
       check_msg(1,ferr, "Run %d is_readonly %d is invalid",i,e->is_readonly);
       nerr++;
       continue;

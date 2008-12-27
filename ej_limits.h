@@ -119,5 +119,6 @@
 #define NSEC_MAX 999999999
 
 #define IS_INVALID_BOOL(v) ((v) < 0 || (v) > 1)
+#define IS_INVALID_BOOL_2(v) ((v) > 1)
 
 #endif /* __EJ_LIMITS_H__ */
