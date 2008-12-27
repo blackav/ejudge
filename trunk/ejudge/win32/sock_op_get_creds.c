@@ -17,18 +17,12 @@
 
 #include "sock_op.h"
 
-#include "errlog.h"
-
-#include <reuse/osdeps.h>
-
-#include <string.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 
 int
 sock_op_get_creds(
         int sock_fd,
+        int conn_id,
         int *p_pid,
         int *p_uid,
         int *p_gid)

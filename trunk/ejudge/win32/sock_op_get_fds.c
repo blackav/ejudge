@@ -17,10 +17,7 @@
 
 #include "sock_op.h"
 
-#include <string.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 
 int
 sock_op_get_fds(
@@ -28,6 +25,7 @@ sock_op_get_fds(
         int fds_num,
         int *fds)
 {
+  abort();
 }
 
 /*

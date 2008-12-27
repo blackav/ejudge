@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include <stdlib.h>
+
 int
 sock_op_put_fds(
 	int sock_fd,
