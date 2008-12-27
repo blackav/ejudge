@@ -130,11 +130,13 @@ case "${target}" in
     ac_cv_exe_suffix=.exe
     CFLAGS="${CFLAGS} -mno-cygwin"
     LDFLAGS="${LDFLAGS} -mno-cygwin"
+    reuse_binmode=" --binmode"
     AC_MSG_RESULT([win32])
     ;;
   *)
     ac_cv_ejudge_arch=unix
     ac_cv_exe_suffix=
+    reuse_binmode=" --binmode"
     AC_MSG_RESULT([unix])
     ;;
 esac
@@ -693,14 +695,14 @@ then
   then
     AC_MSG_ERROR([You must specify the reuse directory using --with-reuse])
   fi
-  ac_cv_reuse_include_opt=`"${REUSE_CONF_SCRIPT}" --cflags`
-  ac_cv_reuse_lib_opt=`"${REUSE_CONF_SCRIPT}" --ldflags`
+  ac_cv_reuse_include_opt=`"${REUSE_CONF_SCRIPT}" ${reuse_binmode} --cflags`
+  ac_cv_reuse_lib_opt=`"${REUSE_CONF_SCRIPT}" ${reuse_binmode} --ldflags`
 else
   if [[ -x "${ac_cv_reuse_root}/bin/reuse-config" ]]
   then
     REUSE_CONF_SCRIPT="${ac_cv_reuse_root}/bin/reuse-config"
-    [[ x"${ac_cv_reuse_include_dir}" = x -o x"${ac_cv_reuse_include_dir}" = xyes -o x"${ac_cv_reuse_include_dir}" = xno ]] && ac_cv_reuse_include_opt=`"${REUSE_CONF_SCRIPT}" --cflags`
-    [[ x"${ac_cv_reuse_lib_dir}" = x -o x"${ac_cv_reuse_lib_dir}" = xyes -o x"${ac_cv_reuse_lib_dir}" = xno ]] && ac_cv_reuse_lib_opt=`"${REUSE_CONF_SCRIPT}" --ldflags`
+    [[ x"${ac_cv_reuse_include_dir}" = x -o x"${ac_cv_reuse_include_dir}" = xyes -o x"${ac_cv_reuse_include_dir}" = xno ]] && ac_cv_reuse_include_opt=`"${REUSE_CONF_SCRIPT}" ${reuse_binmode} --cflags`
+    [[ x"${ac_cv_reuse_lib_dir}" = x -o x"${ac_cv_reuse_lib_dir}" = xyes -o x"${ac_cv_reuse_lib_dir}" = xno ]] && ac_cv_reuse_lib_opt=`"${REUSE_CONF_SCRIPT}" ${reuse_binmode} --ldflags`
   else
     [[ x"${ac_cv_reuse_include_dir}" = x -o x"${ac_cv_reuse_include_dir}" = xyes -o x"${ac_cv_reuse_include_dir}" = xno ]] && ac_cv_reuse_include_dir="${ac_cv_reuse_root}/include"
     [[ x"${ac_cv_reuse_lib_dir}" = x -o x"${ac_cv_reuse_lib_dir}" = xyes -o x"${ac_cv_reuse_lib_dir}" = xno ]] && ac_cv_reuse_lib_dir="${ac_cv_reuse_root}/lib"
