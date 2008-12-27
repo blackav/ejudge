@@ -148,8 +148,10 @@ AC_CHECK_HEADERS([iconv.h pwd.h])
 
 AC_CHECK_FUNCS([strnlen open_memstream fmemopen truncate setsid pselect ferror_unlocked fgets_unlocked])
 
+AC_CHECK_LIB([iconv],[libiconv],[ac_cv_has_lib_libiconv=-liconv],[ac_cv_has_lib_libiconv=])
+
 saved_CFLAGS="${CFLAGS}"
-CFLAGS="${CFLAGS} -Werror -Wall"
+CFLAGS="${CFLAGS} -Werror -Wall ${ac_cv_has_lib_libiconv}"
 AC_MSG_CHECKING([that iconv requires const qualifier])
 AC_RUN_IFELSE(
 [[
@@ -340,8 +342,6 @@ if [[ x"${ac_cv_has_zlib}" != x1 ]]
 then
   AC_MSG_FAILURE([zlib is too old or unusable, please update zlib])
 fi
-
-AC_CHECK_LIB([iconv],[iconv],[ac_cv_has_lib_iconv=-liconv],[ac_cv_has_lib_iconv=])
 
 AC_CHECK_LIB([iconv],[libiconv],[ac_cv_has_lib_libiconv=-liconv],[ac_cv_has_lib_libiconv=])
 
