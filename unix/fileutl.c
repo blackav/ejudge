@@ -1333,8 +1333,10 @@ sf_lseek(int fd, off_t offset, int whence, char const *str)
     case SEEK_END: s = "SEEK_END"; break;
     }
 
-    if (str) err("%s: lseek(%d,%ld,%s) failed: %s", str, fd, offset, s, os_ErrorMsg());
-    else err("lseek(%d,%ld,%s) failed: %s", fd, offset, s, os_ErrorMsg());
+    if (str) err("%s: lseek(%d,%ld,%s) failed: %s", str, fd, (long) offset, s,
+                 os_ErrorMsg());
+    else err("lseek(%d,%ld,%s) failed: %s", fd, (long) offset, s,
+             os_ErrorMsg());
     return r;
   }
 }

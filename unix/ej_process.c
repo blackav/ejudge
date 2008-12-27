@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  */
 
 #include "ej_process.h"
+#include "compat.h"
 
 #include <reuse/xalloc.h>
 
@@ -84,7 +85,7 @@ read_process_output(const unsigned char *cmd,
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
