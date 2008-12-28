@@ -35,7 +35,6 @@ die() {
 }
 
 checked_sln() {
-{
     if ! ln -sf "$1" "$2"
     then
         die "cannot symlink $1 to $2"
