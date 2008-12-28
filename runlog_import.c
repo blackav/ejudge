@@ -35,6 +35,11 @@ rename_archive_files(const serve_state_t state, FILE *flog, int num, int *map)
 {
   int i;
 
+  fprintf(flog, "Rename map:\n");
+  for (i = 0; i < num; i++) {
+    fprintf(flog, " %d -> %d\n", i, map[i]);
+  }
+
   for (i = 0; i < num; i++) {
     if (map[i] < 0) continue;
     if (map[i] == i) continue;
@@ -325,6 +330,18 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
   }
   fprintf(flog, "Scanning new entries done successfully\n");
 
+  fprintf(flog, "Imported source information\n");
+  for (i = 0; i < in_entries_num; i++) {
+    if (in_data[i].source.data && in_data[i].audit.data) {
+      fprintf(flog, " %d: src=%zu, audit=%zu\n", i,
+              in_data[i].source.size, in_data[i].audit.size);
+    } else if (in_data[i].source.data) {
+      fprintf(flog, " %d: src=%zu\n", i, in_data[i].source.size);
+    } else if (in_data[i].audit.data) {
+      fprintf(flog, " %d: audit=%zu\n", i, in_data[i].audit.size);
+    }
+  }  
+
   /* all maps are initialized with -1 */
   /* maps original run entries to the new entries */
   cur_new_map = (int*) alloca(cur_entries_num * sizeof(cur_new_map[0]));
@@ -379,6 +396,10 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
       if (in_entries[k].nsec != cur_entries[i].nsec) break;
       if (new_cur_map[k] >= 0) continue;
       if (cur_entries[i].user_id != in_entries[k].user_id) continue;
+      if (in_entries[k].status == cur_entries[i].status
+          && in_entries[k].status == RUN_VIRTUAL_START
+          && in_entries[k].status == RUN_VIRTUAL_STOP)
+        break;
       if (cur_entries[i].prob_id != in_entries[k].prob_id) continue;
       if (cur_entries[i].lang_id != in_entries[k].lang_id) continue;
       break;
@@ -630,7 +651,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
           memcpy(&out_entries[cur_out], &in_entries[min_j],
                  sizeof(out_entries[0]));
           out_entries[cur_out].run_id = cur_out;
-          out_entries[cur_out].is_imported = 1;
+          if (!in_data[min_j].source.data) out_entries[cur_out].is_imported = 1;
           new_merged_map[min_j] = cur_out;
           in_used_flag[min_j] = 1;
           cur_merged_map[min_i] = cur_out;
@@ -686,6 +707,15 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
   }
   ASSERT(cur_out == out_entries_num);
   fprintf(flog, "Runlog successfully merged\n");
+
+  fprintf(flog, "Cur_merged_map:\n");
+  for (i = 0; i < cur_entries_num; i++) {
+    fprintf(flog, " %d -> %d\n", i, cur_merged_map[i]);
+  }
+  fprintf(flog, "New_merged_map:\n");
+  for (j = 0; j < in_entries_num; j++) {
+    fprintf(flog, " %d -> %d\n", j, new_merged_map[j]);
+  }
 
   fprintf(flog, "Performing sanity check on the resulting log\n");
   if (runlog_check(flog, &cur_header, out_entries_num, out_entries) < 0)
