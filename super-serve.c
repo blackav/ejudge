@@ -4251,7 +4251,7 @@ contest_mngmt_cmd(const struct contest_desc *cnts,
 static int
 do_loop(void)
 {
-  int fd_max, i, socket_fd, n, errcode, status, pid, tmp_fd, j;
+  int fd_max, i, socket_fd, n, status, pid, tmp_fd, j;
   fd_set rset, wset;
 #if HAVE_PSELECT - 0 == 1
   struct timespec timeout2;
@@ -4382,30 +4382,32 @@ do_loop(void)
         }
       }
 
-#if HAVE_PSELECT - 0 == 1
+      errno = 0;
+      n = 0;
       if (!sigchld_flag && !hup_flag && !term_flag && !dnotify_flag) {
+#if HAVE_PSELECT - 0 == 1
         timeout2.tv_sec = 10;
         timeout2.tv_nsec = 0;
-        errno = 0;
         n = pselect(fd_max + 1, &rset, &wset, 0, &timeout2, &work_mask);
-        errcode = errno;
-      }
 #else
-      // set a reasonable timeout in case of race condition
-      timeout.tv_sec = 10;
-      timeout.tv_usec = 0;
+        int errcode;
 
-      // here's a potential race condition :-(
-      // it cannot be handled properly until Linux
-      // has the proper psignal implementation
-      sigprocmask(SIG_SETMASK, &work_mask, 0);
-      errno = 0;
-      n = select(fd_max + 1, &rset, &wset, 0, &timeout);
-      errcode = errno;
-      sigprocmask(SIG_SETMASK, &block_mask, 0);
-      errno = errcode;
-      // end of race condition prone code
+        // set a reasonable timeout in case of race condition
+        timeout.tv_sec = 10;
+        timeout.tv_usec = 0;
+
+        // here's a potential race condition :-(
+        // it cannot be handled properly until Linux
+        // has the proper psignal implementation
+        sigprocmask(SIG_SETMASK, &work_mask, 0);
+        errno = 0;
+        n = select(fd_max + 1, &rset, &wset, 0, &timeout);
+        errcode = errno;
+        sigprocmask(SIG_SETMASK, &block_mask, 0);
+        errno = errcode;
+        // end of race condition prone code
 #endif
+      }
 
       if (n < 0 && errno != EINTR) {
         err("unexpected select error: %s", os_ErrorMsg());
