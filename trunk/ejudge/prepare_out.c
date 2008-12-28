@@ -164,7 +164,7 @@ size_t_to_size(unsigned char *buf, size_t buf_size, size_t num)
 static void
 do_str(FILE *f, struct str_buf *pb, const unsigned char *name, const unsigned char *val)
 {
-  if (!val || !*val) return;
+  if (!val || !*val || val[0] == 1) return;
   fprintf(f, "%s = \"%s\"\n", name, c_armor(pb, val));
 }
 
