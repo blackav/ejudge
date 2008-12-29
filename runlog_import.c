@@ -423,6 +423,8 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
     ASSERT(j >= 0 && j < in_entries_num);
     pa = &cur_entries[i];
     pb = &in_entries[j];
+    if (pa->status == RUN_VIRTUAL_START || pa->status == RUN_VIRTUAL_STOP)
+      continue;
     if (!pa->is_imported && !pb->is_imported) {
       if (!both_auth_warn_printed) {
         fprintf(flog, "Both runs are authoritative!\n");
@@ -499,6 +501,8 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
       if ((j = cur_new_map[i]) == -1) continue;
       pb = &in_entries[j];
       if (pb->is_imported) continue;
+      if (pa->status == RUN_VIRTUAL_START || pa->status == RUN_VIRTUAL_STOP)
+        continue;
       /* size, ip, sha1, score, locale_id, status, test */
       r = 0;
       if (pa->size != pb->size) {
@@ -608,6 +612,9 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
       continue;
     }
 
+    ASSERT(cur_entries[i].time == in_entries[j].time);
+    ASSERT(cur_entries[i].nsec == in_entries[j].nsec);
+
     /* order the entries with the same timestamp */
     /* detect entries with the same timestamp */
     for (i2 = i; i2 < cur_entries_num; i2++) {
@@ -615,11 +622,13 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
       if (cur_entries[i2].time != cur_entries[i].time
           || cur_entries[i2].nsec != cur_entries[i].nsec) break;
     }
+    // [i, i2) is the range in the current runlog
     for (j2 = j; j2 < in_entries_num; j2++) {
       if (in_entries[j2].status == RUN_EMPTY) continue;
       if (in_entries[j2].time != in_entries[j].time
           || in_entries[j2].nsec != in_entries[j].nsec) break;
     }
+    // [j, j2) is the range in the imported runlog
     while (1) {
       min_team_id = INT_MAX, min_i = -1, min_j = -1;
       for (i3 = i; i3 < i2; i3++) {
@@ -651,7 +660,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
           memcpy(&out_entries[cur_out], &in_entries[min_j],
                  sizeof(out_entries[0]));
           out_entries[cur_out].run_id = cur_out;
-          if (!in_data[min_j].source.data) out_entries[cur_out].is_imported = 1;
+          if (!in_data[min_j].source.data) out_entries[cur_out].is_imported= 1;
           new_merged_map[min_j] = cur_out;
           in_used_flag[min_j] = 1;
           cur_merged_map[min_i] = cur_out;
@@ -700,8 +709,11 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
     ASSERT(new_cur_map[j] == -1);
     memcpy(&out_entries[cur_out], &in_entries[j], sizeof(out_entries[0]));
     out_entries[cur_out].run_id = cur_out;
-    if (!in_data[j].source.data) out_entries[cur_out].is_imported = 1;
-    else out_entries[cur_out].status = RUN_PENDING;
+    if (out_entries[cur_out].status != RUN_VIRTUAL_START
+        && out_entries[cur_out].status != RUN_VIRTUAL_STOP) {
+      if (!in_data[j].source.data) out_entries[cur_out].is_imported = 1;
+      else out_entries[cur_out].status = RUN_PENDING;
+    }
     new_merged_map[j] = cur_out;
     cur_out++;
   }
