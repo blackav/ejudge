@@ -1,3 +1,9 @@
+2008-11-27 (r5365) Alexander Chernov  <cher@ejudge.ru>
+
+	* common_mysql.c:
+	(query_func) `do_query' is used to support reconnect;
+	(query_one_row_func) the same.
+
 2008-11-15 (r5302) Alexander Chernov  <cher@ejudge.ru>
 
 	* common_mysql.c:

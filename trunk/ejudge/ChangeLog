@@ -1,3 +1,658 @@
+2008-12-29 (r5529) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog_import.c:
+	(runlog_import_xml) more debugging output is added.
+
+2008-12-27 (r5519) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(priv_change_status) full score is set if run is RUN_OK.
+
+2008-12-27 (r5503) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`compat.h' is added.
+
+	* compat.h: initial revision.
+
+2008-12-26 (r5499) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	fmemopen.c is added.
+
+	* files.make:
+	fmemopen.c is added.
+
+2008-12-26 (r5495) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	check for fmemopen is added.
+
+	* config.h.in:
+	`HAVE_FMEMOPEN' is added.
+
+2008-12-26 (r5494) Alexander Chernov  <cher@ejudge.ru>
+
+	* uudecode.c:
+	`myerr' function implementation instead of `error'.
+
+2008-12-26 (r5486) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	LIBINTL, LIBICONV are added;
+
+	* job-server.c:
+	(prepare_directory_notify) conditional compilation for F_NOTIFY
+	  is added.
+
+	* mime_type.c: copyright notice is updated;
+	"config.h" is included;
+	check for `ferror_unlocked' is added.
+
+2008-12-26 (r5483) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	checks for ferror_unlocked, fgets_unlocked are added;
+	check for F_NOTIFY is added;
+	checks for -liconv, -lintl are added.
+
+	* config.h.in:
+	`HAVE_FERROR_UNLOCKED', `HAVE_FGETS_UNLOCKED', `HAVE_F_NOTIFY'
+	are added.
+
+2008-12-26 (r5481) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	`open_memstream.c' is added.
+
+	* files.make:
+	`open_memstream.c' is added.
+
+2008-12-26 (r5475) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	check for SIOCINQ flag is added.
+
+	* config.h.in:
+	HAVE_SIOCINQ is added.
+
+2008-12-26 (r5471) Alexander Chernov  <cher@ejudge.ru>
+
+	* config.h.in:
+	HAVE_SO_PASSCRED is added.
+
+2008-12-26 (r5470) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	check for SO_PASSCRED flag is added.
+
+2008-12-25 (r5468) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	libplatform.a library is added.
+
+	* files.make:
+	new files are added: sock_op.h, unix/sock_op_*.c, win32/sock_op_*.c.
+
+	* server_framework.c:
+	"sock_op.h" is included;
+	(read_from_control_connection) `sock_op_get_creds', `sock_op_get_fds'
+	  are used;
+	(accept_new_connection) `sock_op_enable_creds' is used.
+
+	* super-serve.c:
+	"sock_op.h" is included;
+	(accept_new_control_connection) `sock_op_enable_creds' is used;
+	(read_from_control_connection) `sock_op_get_creds', `sock_op_get_fds'
+	  are used.
+
+	* userlist-server.c:
+	"sock_op.h" is included;
+	(do_work) `sock_op_enable_creds', `sock_op_get_creds',
+	  `sock_op_get_fds' are used.
+
+2008-12-25 (r5464) Alexander Chernov  <cher@ejudge.ru>
+
+	* sock_op.h:
+	initial revision
+
+2008-12-23 (r5459) Alexander Chernov  <cher@ejudge.ru>
+
+	* super-serve.c:
+	(do_loop) `STOP' command is handled much faster;
+	  `pselect' system call is used.
+
+2008-12-21 (r5451) Alexander Chernov  <cher@ejudge.ru>
+
+	* run.c:
+	(setup_environment) new function;
+	(run_tests) interactive problems are supported.
+
+2008-12-21 (r5449) Alexander Chernov  <cher@ejudge.ru>
+
+	* config.h.in:
+	`HAVE_TASK_GETPID', `HAVE_TASK_APPEND' are added.
+
+2008-12-21 (r5448) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	checks for task_GetPid, TSK_APPEND are added;
+	check for reuse version is improved.
+
+2008-12-20 (r5444) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist-server.c:
+	(cmd_check_cookie) cookie fixes;
+	(cmd_team_check_user) last_login_time is updated on cookie login.
+
+2008-12-20 (r5442) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(ns_upload_csv_results) `add_flag' parameter is added.
+
+	* runlog.h:
+	(run_add_record) `sha1' parameter is `const'.
+
+	* new_server_html.c:
+	(priv_upload_runlog_csv_1) three upload modes are implemented;
+	(priv_upload_runlog_csv_2) three upload modes are implemented.
+
+	* new_server_html_2.c:
+	(do_add_row) new function moved out of `ns_upload_csv_runs';
+	(ns_upload_csv_runs) refactored;
+	(ns_upload_csv_results) `add_flag' parameter is added and handled.
+
+	* runlog.c:
+	(run_add_record) `sha1' parameter is `const'.
+
+2008-12-19 (r5440) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) new fields `interactor_cmd',
+	  `interactor_env' are added.
+
+	* super_proto.h:
+	editing of `interactor_cmd', `interactor_env' is supported.
+
+	* prepare.c, prepare_out.c:
+	`interactor_cmd', `interactor_env' problem configuration vars are
+	added.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super-serve.c:
+	editing of `interactor_cmd', `interactor_env' is supported.
+
+2008-12-18 (r5434) Alexander Chernov  <cher@ejudge.ru>
+
+	* startstop.h: copyright notice is updated;
+	stopping and restarting enumeration is added;
+	(start_find_process) prototype is added;
+	(start_kill) prototype is added.
+
+	* compile.c, job-server.c, new-server.c, super-serve.c, userlist-server.c:
+	(main) the server process is never started, if another process
+	  is already running.
+
+	* compile-control.c, job-server-control.c, new-server-control.c, super-serve-control.c, userlist-server-control.c:
+	"startstop.h" is included;
+	(main) the server process discovery is improved.
+
+2008-12-18 (r5430) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile-control.c, ejudge-control.c, ejudge-setup.c, job-server.c, job-server-control.c, new-server.c, new-server-cmd.c, new-server-control.c, super-serve.c, super-serve-control.c, userlist-server.c, userlist-server-control.c :
+	programs are renamed:
+	  `userlist-server' -> `ej-users';
+	  `super-serve' -> `ej-super-server';
+	  `compile' -> `ej-compile';
+	  `job-server' -> `ej-jobs-server';
+	  `new-server' -> `ej-contests'.
+
+2008-12-18 (r5429) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	files are renamed:
+	  `compile' -> `ej-compile';
+	  `compile-control' -> `ej-compile-control';
+	  `run' -> `ej-run';
+	  `serve' -> `ej-serve';
+	  `userlist-server' -> `ej-users';
+	  `userlist-server-control' -> `ej-users-control';
+	  `job-server' -> `ej-jobs';
+	  `job-server-control' -> `ej-jobs-control';
+	  `job-server-cmd' -> `ejudge-jobs-cmd';
+	  `super-serve' -> `ej-super-server';
+	  `super-serve-control' -> `ej-super-server-control';
+	  `convert-clars' -> `ej-convert-clars';
+	  `convert-runs' -> `ej-convert-runs';
+	  `edit-userlist' -> `ejudge-edit-users';
+	  `execute' -> `ejudge-execute';
+	  `new-server' -> `ej-contests';
+	  `new-server-cmd' -> `ejudge-contests-cmd';
+	  `new-server-control' -> `ej-contests-control';
+	`collect-emails', `slice-userlist' are no longer compiled.
+
+2008-12-18 (r5428) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge_cfg.c:
+	(ejudge_cfg_parse) values of `serve_path' and `run_path' are ignored
+	  and always replaced with the default.
+
+	* new_server_html.c:
+	(ns_handle_http_request) client program is renamed:
+	  `new-server-cmd' -> `ejudge-contests-cmd'.
+
+2008-12-18 (r5426) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	files renamed:
+	  `serve' -> `ej-serve';
+	  `runs' -> `ej-runs'.
+
+2008-12-17 (r5424) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_5.c:
+	initial revision
+
+2008-12-17 (r5423) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`super_html_5.c' is added.
+
+	* prepare.h:
+	(cntsprob_clear_field) new function prototype;
+	(cntsprob_is_settable_field) new function prototype;
+	(cntsprob_is_inheritable_field) new function prototype.
+
+	* super_html.h:
+	(ss_cgi_param) prototype is added;
+	(ss_write_html_header) prototype is added;
+	(ss_write_html_footer) prototype is added;
+	(ss_dojo_button) prototype is added;
+	(super_serve_op_browse_problem_packages) prototype is added;
+	(super_serve_op_package_operation) prototype is added;
+	(super_serve_op_edit_problem) prototype is added;
+	(super_html_add_problem) prototype is added;
+	(super_html_add_abstract_problem) prototype is added.
+
+	* super_proto.h:
+	new operations are added.
+
+	* prepare.c:
+	(cntsprob_copy_and_set_default) fixed;
+	(cntsprob_clear_field) new function;
+	(cntsprob_is_settable_field) new function;
+	(cntsprob_is_inheritable_field) new function.
+
+	* super_html.c:
+	(super_html_main_page) link to problem editor is added.
+
+	* super_html_3.c:
+	`std_checkers' -> `super_html_std_checkers';
+	(super_html_add_problem) moved out of `super_html_prob_cmd';
+	(super_html_add_abstract_problem) moved out of `super_html_prob_cmd'.
+
+	* super_html_4.c:
+	progress...
+
+2008-12-14 (r5414) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	  `score_system_val' -> `score_system';
+	  `rounding_mode_val' -> `rounding_mode'.
+
+	* html.c, master_html.c, new_server_html.c, new_server_html_2.c, new_server_html_4.c, prepare.c, prepare_out.c, serve.c, serve_2.c, serve_state.c, super_html_3.c, super_html_4.c, reports.c, run.c:
+	global configuration variables are renamed:
+	  `score_system_val' -> `score_system';
+	  `rounding_mode_val' -> `rounding_mode'.
+
+2008-12-12 (r5411) Alexander Chernov  <cher@ejudge.ru>
+
+	* parsecfg.h: copyright notice is updated;
+	(struct config_parse_info) `parse_func' field is added.
+
+	* prepare.h:
+	(struct section_problem_data) `type_val' -> `type'.
+
+	* html.c, new_server_html.c, new_server_html_2.c, new_server_html_4.c, prepare.c, prepare_out.c, reports.c, run.c, serve_2.c, super_html_3.c:
+	struct section_problem_data field is renamed:
+	  type_val -> type.
+
+	* parsecfg.c:
+	(copy_param) "f" parse specification is supported.
+
+2008-12-12 (r5409) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) fields are renamed:
+	  contest_finish_time_d -> contest_finish_time;
+	  stand_ignore_after_d -> stand_ignore_after;
+	  appeal_deadline_d -> appeal_deadline;
+	(struct section_problem_data) fields are renamed:
+	  t_start_date -> start_date;
+	  t_deadline -> deadline.
+
+	* html.c, new_server_html.c, new_server_html_2.c, new_server_html_4.c, prepare.c, prepare_out.c, serve.c, serve_2.c, serve_state.c, super_html_3.c, super_html_4.c:
+	fields are renamed:
+	  contest_finish_time_d -> contest_finish_time;
+	  stand_ignore_after_d -> stand_ignore_after;
+	  appeal_deadline_d -> appeal_deadline;
+	  t_start_date -> start_date;
+	  t_deadline -> deadline.
+
+	* parsecfg.c:
+	"xml_utils.h" is included;
+	(copy_param) "t" type specifier is supported.
+
+2008-12-12 (r5407) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(cntsprob_is_undefined) new function prototype.
+
+	* super_proto.h:
+	new operations are added.
+
+	* super-serve.h:
+	(struct sid_state) `prob_show_adv' field is added.
+
+	* prepare.c:
+	(cntsprob_is_undefined) new function.
+
+	* super_html_4.c: in progress...
+
+2008-12-10 (r5406) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.c:
+	large tables are allocated on heap in standings functions.
+
+2008-12-07 (r5404) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_2.c:
+	(ns_write_ip_users) implemented.
+
+2008-12-07 (r5402) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	new requests `VIEW_USER_IPS', `VIEW_IP_USERS' are added;
+	(ns_write_user_ips) new function prototype;
+	(ns_write_ip_users) new function prototype.
+
+	* new_server_html.c:
+	(priv_view_user_ips) new function;
+	(priv_view_ip_users) new function;
+	(priv_main_page) IP addresses statistics page links are added;
+	`VIEW_USER_IPS', `VIEW_IP_USERS' requests are handled.
+
+	* new_server_html_2.c:
+	(ns_write_user_ips) new function;
+	(ns_write_ip_users) new function (not yet implemented).
+
+2008-12-06 (r5400) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	editing of the new problem configuration variables
+	  `stand_name', `stand_column', `internal_name' is supported.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of the new problem configuration variables
+	  `stand_name', `stand_column', `internal_name' is supported.
+
+	* sformat.c:
+	(sformat_message) format conversions `PS', `PL' for
+	  `stand_name' and `internal_name' problem configuration
+	  variables are added.
+
+2008-12-06 (r5398) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_2.c:
+	(ns_write_user_problems_summary) bug in olympiad accepting mode
+	  summary display is fixed.
+
+2008-12-06 (r5396) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	variable substitution is added for XML answers.
+
+2008-12-06 (r5394) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h:
+	(struct section_problem_data) new fields `stand_name', `stand_column',
+	  `internal_name' are added.
+
+	* html.c:
+	`stand_name', `stand_column' problem configuration variables
+	are supported.
+
+	* prepare.c:
+	`stand_name', `stand_column', `internal_name' problem configuration
+	variables are added.
+
+2008-12-05 (r5392) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) `unhandled_vars' is not private;
+	(struct section_language_data) `unhandled_vars' is not private.
+
+	* super_html.h:
+	(super_load_cs_languages) new function prototype;
+	(super_html_lang_activate) new function prototype;
+	(super_html_lang_deactivate) new function prototype.
+
+	* super_proto.h:
+	operations for language editing are added.
+
+	* super-serve.h:
+	(struct sid_state) `cur_lang', `cur_prob' fields are added.
+
+	* super_html_3.c:
+	(super_load_cs_languages) renamed from `load_cs_languages';
+	(super_html_lang_activate) function is outlined from
+	  `super_html_lang_cmd';
+	(super_html_lang_deactivate) the same.
+
+	* super_html_4.c:
+	language editing is implemented.
+
+2008-12-02 (r5384) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.win32.in: copyright notice is updated;
+	WIN32_CFILES, WIN32_RUNFILES are added;
+	use of `revinfo' is updated.
+
+	* files.make:
+	contests_2.c, opcaps_2.c are added.
+
+	* interrupt.h: copyright notice is updated;
+	(interrupt_flag_interrupt) new function prototype;
+	(interrupt_flag_sighup) new function prototype.
+
+	* uldb_plugin.h:
+	<time.h> is included.
+
+	* charsets.c:
+	<malloc.h> is included on MinGW;
+	(charset_decode_buf) two variants of `iconv' are supported: the linux
+	  (char ** as the second arg), and the MinGW (const char** as the
+	  second arg).
+
+	* compile.c:
+	Win32 portability fixes.
+
+	* contests.c:
+	functions, which change the `contest_desc' structure are moved to
+	  `contests_2.c'.
+
+	* contests_2.c: initial revision.
+
+	* ejudge_cfg.c:
+	conditional inclusion of <pwd.h>;
+	<malloc.h> included on MinGW;
+	(parse_user_map) user mapping is skipped, if <pwd.h> is missing.
+
+	* filehash.c: copyright notice is updated;
+	<malloc.h> is included on MinGW.
+
+	* expat_iface.c, filter_tree.c, userlist.c, userlist_xml.c:
+	<malloc.h> is included on MinGW.
+
+	* opcaps.c:
+	<malloc.h> is included on MinGW;
+	(opcaps_unparse) moved to `opcaps_2.c'.
+
+	* opcaps_2.c: initial revision.
+
+	* prepare.c:
+	(prepare_parse_variant_map) `open_memstream' is used only if
+	  exists on the platform.
+
+	* random.c: copyright notice is updated;
+	`rand()' is used instead of `random()'.
+
+	* run.c:
+	"startstop.h" is included;
+	(set_self_args) removed;
+	(main) `start_set_self_args' is used instead of `set_self_args';
+	  `start_restart' is used.
+
+	* team_extra.c:
+	<malloc.h> is included on MinGW;
+	various portability fixes.
+
+2008-12-02 (r5379) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac, config.h.in:
+	check for pwd.h is added;
+	checks for truncate, setsid are added.
+
+2008-12-02 (r5377) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	check for `open_memstream' is added.
+
+	* config.h.in:
+	`HAVE_OPEN_MEMSTREAM' is added.
+
+2008-12-01 (r5375) Alexander Chernov  <cher@ejudge.ru>
+
+	* config.h.in:
+	HAVE_ICONV_H, HAVE_STRNLEN, CONF_ICONV_NEEDS_CONST are added.
+
+2008-12-01 (r5374) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	checks for iconv.h, strnlen are added;
+	check for `const' argument of iconv is added.
+
+2008-11-30 (r5372) Alexander Chernov  <cher@ejudge.ru>
+
+	* problem_plugin.h: copyright notice is updated;
+	problem plugin version number is increased to 2;
+	(struct problem_plugin_iface) new fields `sizes_array',
+	  `sizes_array_size'.
+
+	* serve_state.h:
+	new exported variables (constants): `serve_struct_sizes_array',
+	  `serve_struct_sizes_array_size', `serve_struct_sizes_array_num'.
+
+	* new_server_html.c:
+	(load_problem_plugin) structure sizes checking is implemented.
+
+2008-11-30 (r5370) Alexander Chernov  <cher@ejudge.ru>
+
+	* contest_plugin.h: copyright notice is updated;
+	plugin interface version number is increased to 2;
+	(struct contest_plugin_iface) new fields `sizes_array',
+	  `sizes_array_size' are added.
+
+	* serve_state.c:
+	(serve_state_load_contest) structure sizes check is performed upon
+	  loading a contest plugin.
+
+2008-11-30 (r5367) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_types.h:
+	new types `ejstrlist_t' and `ejenvlist_t' are added.
+
+	* misctext.h:
+	(split_to_lines) new function prototype;
+	(num_to_size_str) new function prototype;
+	(size_t_to_size_str) new function prototype.
+
+	* prepare.h:
+	(struct section_global_data) `unhandled_vars' is not marked as
+	  meta_private;
+	(struct section_problem_data) the types of `checker_env' and
+	  `valuer_env' fields are changed;
+	(struct section_language_data) the type of `compiler_env' is
+	  changed;
+	(struct section_tester_data) the types of `start_env', `checker_env'
+	  are changed.
+
+	* super_proto.h: new operations are added.
+
+	* misctext.c:
+	(split_to_lines) new function;
+	(num_to_size_str) function moved here from `super_html_3.c';
+	(size_t_to_size_str) function moved here from `super_html_3.c'.
+
+	* super_html_3.c:
+	(num_to_size) moved to `misctext.c' as `num_to_size_str';
+	(size_t_to_size) moved to `misctext.c' as `size_t_to_size_str'.
+
+	* super_html_4.c: progress...
+
+2008-11-23 (r5363) Alexander Chernov  <cher@ejudge.ru>
+
+	* meta_generic.h:
+	(struct meta_methods) new structure to collect all access functions
+	  in one place.
+
+	* prepare.h:
+	(struct section_global_data) `score_system_val' is not marked as
+	  `meta_private'.
+
+	* super_proto.h:
+	new operations for new contest edit are added.
+
+	* super-serve.h:
+	(struct sid_state) `edit_page' field is added.
+
+	* super_html_4.c: in progress...
+
+	* super-serve.c:
+	(super_serve_clear_edited_contest) `edit_page' is cleared.
+
+2008-11-21 (r5360) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog.h:
+	(run_get_all_statistics) new function prototype.
+
+	* new_server_html.c:
+	(priv_view_users_page) the number of user's submits and the total size
+	  of user's submits is displayed for each user.
+
+	* runlog.c:
+	(run_get_all_statistics) new function.
+
+2008-11-20 (r5354) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-client.c: copyright notice is updated;
+	(struct client_section_global_data) renamed from
+	  `struct section_global_data'.
+
+2008-11-20 (r5352) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	rules for `prepare_meta.[ch]' are added.
+
+	* ej_types.h:
+	`ejintsize_t' type is added.
+
+	* prepare.h:
+	metageneration-related changes;
+	doxygen comments are added for `struct section_global_data'.
+
+	* meta_generic.c:
+	(meta_build_automaton) NULL name is allowed and skipped.
+
 2008-11-18 (r5339) Alexander Chernov  <cher@ejudge.ru>
 
 	* new_server_html.c:

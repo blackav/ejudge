@@ -1,3 +1,8 @@
+2008-12-24 (r5461) Alexander Chernov  <cher@ejudge.ru>
+
+	* mzscheme-version.in, yabasic-version.in, g++-version.in, bpp-version.in, python-version.in, ruby-version.in, mcs-version.in, gfortran-version.in, javac-version.in, tpc-version.in, bcc-version.in, php-version.in, vbnc-version.in, dcc-version.in, gcc-version.in, qb-version.in, perl-version.in, gcj-version.in, g77-version.in, fpc-version.in, gpc-version.in, gprolog-version.in:
+	better /bin/sh compitibility
+
 2008-11-04 (r5236) Alexander Chernov  <cher@ejudge.ru>
 
 	* javac.in, runjava.in: JAVA_HOME setting is avoided.

@@ -1,3 +1,20 @@
+2008-12-26 (r5480) Alexander Chernov  <cher@ejudge.ru>
+
+	* bytes_available.c: copyright notice is updated;
+	(userlist_clnt_bytes_available) conditional compilation
+	  for SIOCINQ is implemented.
+
+2008-12-25 (r5466) Alexander Chernov  <cher@ejudge.ru>
+
+	* do_pass_fd.c: copyright notice is updated;
+	"sock_op.h" is included;
+	(userlist_clnt_do_pass_fd) `sock_op_put_fds' is used.
+
+	* open.c: copyright notice is updated;
+	"sock_op.h" is included;
+	(userlist_clnt_open) `sock_op_enable_creds', `sock_op_put_creds'
+	  are used.
+
 2008-10-30 (r5231) Alexander Chernov  <cher@ejudge.ru>
 
 	* recover_passwd_2.c: copyright notice is updated;
