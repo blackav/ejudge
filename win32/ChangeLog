@@ -1,3 +1,32 @@
+2008-12-26 (r5498) Alexander Chernov  <cher@ejudge.ru>
+
+	* fmemopen.c:
+	initial revision
+
+2008-12-26 (r5479) Alexander Chernov  <cher@ejudge.ru>
+
+	* open_memstream.c:
+	initial revision
+
+2008-12-25 (r5462) Alexander Chernov  <cher@ejudge.ru>
+
+	* sock_op_get_fds.c, sock_op_get_creds.c, sock_op_put_fds.c, sock_op_enable_creds.c, sock_op_put_creds.c:
+	initial revision
+
+2008-12-02 (r5381) Alexander Chernov  <cher@ejudge.ru>
+
+	* cr_serialize.c: copyright notice is updated;
+	(cr_serialize_init) synced with the unix interface;
+	(cr_serialize_lock) synced with the unix interface;
+	(cr_serialize_unlock) synced with the unix interface.
+
+	* fileutl.c: copyright notice is updated;
+	"ej_limits.h" is included;
+	(scan_dir) synced with the unix interface.
+
+	* interrupt.c: copyright notice is updated;
+	(interrupt_restart_requested) new function.
+
 2008-11-15 (r5299) Alexander Chernov  <cher@ejudge.ru>
 
 	* startstop.c: initial revision.

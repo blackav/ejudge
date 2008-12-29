@@ -1,3 +1,8 @@
+2008-12-02 (r5382) Alexander Chernov  <cher@ejudge.ru>
+
+	* unparse_text.c: copyright notice is updated;
+	<malloc.h> is included under MinGW.
+
 2008-11-17 (r5328) Alexander Chernov  <cher@ejudge.ru>
 
 	* parse_ip.c, parse_ip_mask.c: copyright notice is improved;

@@ -1,3 +1,14 @@
+2008-12-25 (r5467) Alexander Chernov  <cher@ejudge.ru>
+
+	* open.c: copyright notice is updated;
+	"sock_op.h" is included;
+	(new_server_clnt_open) `sock_op_enable_creds', `sock_op_put_creds'
+	  are used.
+
+	* pass_fd.c: copyright notice is updated;
+	"sock_op.h" is included;
+	(new_server_clnt_pass_fd) `sock_op_put_fds' is used.
+
 2006-11-26 (r3712) Alexander Chernov  <cher@ejudge.ru>
 
 	* http_request.c:
