@@ -2125,7 +2125,7 @@ super_html_unparse_access(const struct contest_access *acc)
     }
     fprintf(af, "default %s\n", acc->default_is_allow?"allow":"deny");
   }
-  fclose(af); af = 0;
+  close_memstream(af); af = 0;
   return acc_txt;
 }
 
@@ -2220,7 +2220,7 @@ print_form_fields_2(FILE *f, struct contest_member *memb,
               descs[i]->mandatory?"mandatory":"optional");
     }
   }
-  fclose(af);
+  close_memstream(af); af = 0;
 
   fprintf(f, "<tr valign=\"top\"%s><td>%s</td><td><font size=\"-1\"><pre>%s</pre></font></td><td>%sEdit</a></td></tr>\n", row_attr, title, out_txt,
           html_hyperref(href, sizeof(href), session_id, self_url, extra_args,
@@ -2252,7 +2252,7 @@ print_form_fields_3(FILE *f, struct contest_field **descs,
               descs[i]->mandatory?"mandatory":"optional");
     }
   }
-  fclose(af);
+  close_memstream(af); af = 0;
 
   fprintf(f, "<tr valign=\"top\"%s><td>%s</td><td><font size=\"-1\"><pre>%s</pre></font></td><td>%sEdit</a></td></tr>\n", row_attr, title, out_txt,
           html_hyperref(href, sizeof(href), session_id, self_url, extra_args,
@@ -4178,15 +4178,15 @@ super_html_load_serve_cfg(const struct contest_desc *cnts,
 
   if (access(serve_cfg_path, R_OK) < 0) {
     fprintf(flog, "file %s does not exist or is not readable\n", serve_cfg_path);
-    fclose(flog); flog = 0;
+    close_memstream(flog); flog = 0;
     sstate->serve_parse_errors = flog_txt;
     flog_txt = 0; flog_len = 0;
   } else if (super_html_read_serve(flog, serve_cfg_path, config, cnts, sstate) < 0) {
-    fclose(flog); flog = 0;
+    close_memstream(flog); flog = 0;
     sstate->serve_parse_errors = flog_txt;
     flog_txt = 0; flog_len = 0;
   } else {
-    fclose(flog); flog = 0;
+    close_memstream(flog); flog = 0;
     xfree(flog_txt); flog_txt = 0;
     flog_len = 0;
   }

@@ -3292,7 +3292,7 @@ do_preview_menu(void)
       generate_users_xml(f, "users");
       break;
     }
-    fclose(f); f = 0;
+    close_memstream(f); f = 0;
     //fprintf(stderr, "%s\n", txt_ptr);
     ncurses_view_text(preview_header, txt_ptr);
     free(txt_ptr); txt_ptr = 0; txt_len = 0;
@@ -3640,7 +3640,7 @@ generate_install_script(FILE *f)
           "else\n", config_ejudge_xml_path, config_ejudge_xml_path);
   floc = open_memstream(&txt_ptr, &txt_len);
   generate_ejudge_xml(floc);
-  fclose(floc); floc = 0;
+  close_memstream(floc); floc = 0;
   snprintf(fpath, sizeof(fpath), "%s", config_ejudge_xml_path);
   fprintf(f, "# copy ejudge.xml to its location\n");
   fprintf(f, "cat << _EOF | %s\n", uudecode_path);
@@ -3659,7 +3659,7 @@ generate_install_script(FILE *f)
           "else\n", config_userlist_xml_path, config_userlist_xml_path);
   floc = open_memstream(&txt_ptr, &txt_len);
   generate_userlist_xml(floc);
-  fclose(floc); floc = 0;
+  close_memstream(floc); floc = 0;
   snprintf(fpath, sizeof(fpath), "%s", config_userlist_xml_path);
   fprintf(f, "# copy userlist.xml to its location\n");
   fprintf(f, "cat << _EOF | %s\n", uudecode_path);
@@ -3678,7 +3678,7 @@ generate_install_script(FILE *f)
           "else\n", config_ejudge_contests_dir, config_ejudge_contests_dir);
   floc = open_memstream(&txt_ptr, &txt_len);
   generate_contest_xml(floc);
-  fclose(floc); floc = 0;
+  close_memstream(floc); floc = 0;
   snprintf(fpath, sizeof(fpath), "%s/000001.xml", config_ejudge_contests_dir);
   fprintf(f, "# copy 000001.xml to its location\n");
   fprintf(f, "cat << _EOF | %s\n", uudecode_path);
@@ -3697,7 +3697,7 @@ generate_install_script(FILE *f)
           "else\n", compile_cfg_path, compile_cfg_path);
   floc = open_memstream(&txt_ptr, &txt_len);
   generate_compile_cfg(floc);
-  fclose(floc); floc = 0;
+  close_memstream(floc); floc = 0;
   fprintf(f, "# copy compile.cfg to its location\n");
   fprintf(f, "cat << _EOF | %s\n", uudecode_path);
   base64_encode_file(f, compile_cfg_path, 0664, txt_ptr);
@@ -3723,7 +3723,7 @@ generate_install_script(FILE *f)
       if (!(ff = fopen(script_file, "r"))) continue;
       floc = open_memstream(&txt_ptr, &txt_len);
       while ((c = getc(ff)) != EOF) putc(c, floc);
-      fclose(ff); ff = 0; fclose(floc); floc = 0;
+      fclose(ff); ff = 0; close_memstream(floc); floc = 0;
 
       fprintf(f, "cat << _EOF | %s\n", uudecode_path);
       base64_encode_file(f, script_out_file, 0775, txt_ptr);
@@ -3743,7 +3743,7 @@ generate_install_script(FILE *f)
           "else\n", serve_cfg_path, serve_cfg_path);
   floc = open_memstream(&txt_ptr, &txt_len);
   generate_serve_cfg(floc);
-  fclose(floc); floc = 0;
+  close_memstream(floc); floc = 0;
   fprintf(f, "# copy serve.cfg to its location\n");
   fprintf(f, "cat << _EOF | %s\n", uudecode_path);
   base64_encode_file(f, serve_cfg_path, 0664, txt_ptr);
@@ -3758,7 +3758,7 @@ generate_install_script(FILE *f)
     // master.cfg, judge.cfg, team.cfg
     floc = open_memstream(&txt_ptr, &txt_len);
     generate_master_cfg(floc);
-    fclose(floc); floc = 0;
+    close_memstream(floc); floc = 0;
     snprintf(fpath, sizeof(fpath),"%s/master.cfg",config_full_cgi_data_dir);
     fprintf(f, "if [ -f \"%s\" ]\n"
             "then\n"
@@ -3803,7 +3803,7 @@ generate_install_script(FILE *f)
     // register.xml
     floc = open_memstream(&txt_ptr, &txt_len);
     generate_users_xml(floc, "register");
-    fclose(floc); floc = 0;
+    close_memstream(floc); floc = 0;
     snprintf(fpath, sizeof(fpath),"%s/register.xml",config_full_cgi_data_dir);
     fprintf(f, "if [ -f \"%s\" ]\n"
             "then\n"
@@ -3822,7 +3822,7 @@ generate_install_script(FILE *f)
     // users.xml
     floc = open_memstream(&txt_ptr, &txt_len);
     generate_users_xml(floc, "users");
-    fclose(floc); floc = 0;
+    close_memstream(floc); floc = 0;
     snprintf(fpath, sizeof(fpath),"%s/users.xml",config_full_cgi_data_dir);
     fprintf(f, "if [ -f \"%s\" ]\n"
             "then\n"
@@ -3908,7 +3908,7 @@ preview_install_script(void)
 
   f = open_memstream(&txt_ptr, &txt_len);
   generate_install_script(f);
-  fclose(f); f = 0;
+  close_memstream(f); f = 0;
   ncurses_view_text("Setup script preview", txt_ptr);
   free(txt_ptr); txt_ptr = 0; txt_len = 0;
 }
@@ -3940,7 +3940,7 @@ save_install_script(void)
 
   f = open_memstream(&txt_ptr, &txt_len);
   generate_install_script(f);
-  fclose(f); f = 0;
+  close_memstream(f); f = 0;
 
   snprintf(filepath, sizeof(filepath), "ejudge-install.sh");
   j = ncurses_edit_string(LINES/2, COLS, "Setup script name",

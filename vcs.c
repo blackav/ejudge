@@ -78,7 +78,7 @@ execute_commands(const unsigned char *dir,
     fprintf(fout, "%s\n", s);
     xfree(s);
   }
-  fclose(fout);
+  close_memstream(fout); fout = 0;
   if (p_log_txt) *p_log_txt = fout_txt;
   else xfree(fout_txt);
   return 1;

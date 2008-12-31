@@ -778,7 +778,7 @@ cmd_submit_run(
     xfree(run_text_2); run_text_2 = 0;
     ans_f = open_memstream(&run_text_2, &run_size_2);
     fprintf(ans_f, "%d\n", i);
-    fclose(ans_f); ans_f = 0;
+    close_memstream(ans_f); ans_f = 0;
     run_text = run_text_2;
     run_size = run_size_2;
     break;
@@ -803,7 +803,7 @@ cmd_submit_run(
         n++;
       }
     if (n > 0) putc_unlocked('\n', ans_f);
-    fclose(ans_f); ans_f = 0;
+    close_memstream(ans_f); ans_f = 0;
     run_text = run_text_2;
     run_size = run_size_2;
     break;

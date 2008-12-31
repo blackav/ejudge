@@ -114,7 +114,7 @@ is_file_changed(
   mem_f = open_memstream(&mem_t, &mem_z);
   while (fgets(buf, sizeof(buf), f))
     fputs(buf, mem_f);
-  fclose(mem_f); mem_f = 0;
+  close_memstream(mem_f); mem_f = 0;
   fclose(f); f = 0;
 
   if (mem_z != size || memcmp(mem_t, text, size)) retval = 1;
@@ -159,12 +159,12 @@ is_file_changed_no_cmt(
   if (r1 || r2) goto cleanup;
 
   fclose(f1); f1 = 0;
-  fclose(f2); f2 = 0;
+  fmemclose(f2); f2 = 0;
   retval = 0;
 
  cleanup:;
   if (f1) fclose(f1);
-  if (f2) fclose(f2);
+  if (f2) fmemclose(f2);
   return retval;
 }
 
@@ -227,7 +227,7 @@ save_compile_cfg(FILE  *log_f, WINDOW *out_win)
 
   cfg_f = open_memstream(&cfg_t, &cfg_z);
   generate_compile_cfg(cfg_f);
-  fclose(cfg_f); cfg_f = 0;
+  close_memstream(cfg_f); cfg_f = 0;
 
   snprintf(cfg_path, sizeof(cfg_path), "%s/conf/compile.cfg",
            config->compile_home_dir);
@@ -377,7 +377,7 @@ get_compiler_info(const unsigned char *lang, unsigned char *buf, size_t size)
   while (fgets(tmpbuf, sizeof(tmpbuf), pf))
     fputs(tmpbuf, log_f);
   pclose(pf); pf = 0;
-  fclose(log_f); log_f = 0;
+  close_memstream(log_f); log_f = 0;
   snprintf(buf, size, "%.*s", (int) log_z, log_t);
   xfree(log_t); log_t = 0;
   log_z = strlen(buf);

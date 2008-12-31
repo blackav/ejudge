@@ -70,7 +70,7 @@ sarray_unparse(char **a)
       }
     }
   }
-  fclose(out);
+  close_memstream(out); out = 0;
   return out_txt;
 }
 
@@ -110,6 +110,6 @@ sarray_unparse_2(char **a)
       }
     }
   }
-  fclose(out);
+  close_memstream(out); out = 0;
   return out_txt;
 }

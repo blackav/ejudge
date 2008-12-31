@@ -676,7 +676,7 @@ super_serve_start_serve_test_mode(const struct contest_desc *cnts,
   if (pfd[0] >= 0) close(pfd[0]);
   if (pfd[1] >= 0) close(pfd[1]);
 
-  fclose(flog);
+  close_memstream(flog); flog = 0;
   if (p_log) {
     *p_log = flog_txt;
   } else {
@@ -994,7 +994,7 @@ acquire_contest_resources(const struct contest_desc *cnts,
 
  done:
   ;
-  fclose(error_log);
+  close_memstream(error_log); error_log = 0;
   xfree(extra->messages); extra->messages = 0;
   // avoid logs with only whitespace characters
   if (error_log_txt) {
@@ -2274,7 +2274,7 @@ cmd_main_page(struct client_state *p, int len,
     return;
   }
 
-  fclose(f);
+  close_memstream(f); f = 0;
   if (!html_ptr) html_ptr = xstrdup("");
   q = client_state_new_autoclose(p, html_ptr, html_len);
 
@@ -2355,7 +2355,7 @@ cmd_create_contest(struct client_state *p, int len,
     return;
   }
 
-  fclose(f);
+  close_memstream(f); f = 0;
   if (!html_ptr) html_ptr = xstrdup("");
   q = client_state_new_autoclose(p, html_ptr, html_len);
 

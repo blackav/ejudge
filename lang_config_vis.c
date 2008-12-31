@@ -205,11 +205,11 @@ parse_lang_id_file(
   }
   if (!(log_f = open_memstream(&log_t, &log_z))) goto cleanup;
   if (!(cfg = shellconfig_parse(log_f, in_f, id_file))) {
-    fclose(log_f); log_f = 0;
+    close_memstream(log_f); log_f = 0;
     log_printf(err_f, win, "%s", log_t);
     goto cleanup;
   }
-  fclose(log_f); log_f = 0;
+  close_memstream(log_f); log_f = 0;
   xfree(log_t); log_t = 0; log_z = 0;
   fclose(in_f); in_f = 0;
 
@@ -404,7 +404,7 @@ update_language_script(
   if (!(in_f = open_memstream(&in_t, &in_z))) goto cleanup;
   while (fgets(buf, sizeof(buf), f))
     fputs(buf, in_f);
-  fclose(in_f); in_f = 0;
+  close_memstream(in_f); in_f = 0;
   fclose(f); f = 0;
 
   // substitute stuff
@@ -415,7 +415,7 @@ update_language_script(
     if (!(out_f = open_memstream(&out_t, &out_z))) goto cleanup;
     while (fgets(buf, sizeof(buf), f))
       fputs(buf, out_f);
-    fclose(out_f); out_f = 0;
+    close_memstream(out_f); out_f = 0;
     fclose(f); f = 0;
     if (!strcmp(out_t, in_t)) {
       // no difference, but update the modtime
@@ -516,7 +516,7 @@ update_language_scripts(
     }
     closedir(d); d = 0;
   }
-  fclose(upd_f); upd_f = 0;
+  close_memstream(upd_f); upd_f = 0;
   if (upd_t && *upd_t) log_printf(log_f, win, "Scripts updated:%s\n", upd_t);
   xfree(upd_t); upd_t = 0; upd_z = 0;
   for (i = 0; i < scr_u; i++)
@@ -568,7 +568,7 @@ reconfigure_language(
         }
         fclose(cfg_f); cfg_f = 0;
       }
-      fclose(out_f); out_f = 0;
+      close_memstream(out_f); out_f = 0;
       xfree(out_t); out_t = 0; out_z = 0;
     }
   }
@@ -649,7 +649,7 @@ reconfigure_language(
   }
 
   wait(&status);
-  fclose(out_f); out_f = 0;
+  close_memstream(out_f); out_f = 0;
   if (strlen(out_t) != out_z) goto remove_language;
   p->cfg_txt = out_t; out_t = 0;
   p->cfg_len = out_z;
@@ -658,8 +658,8 @@ reconfigure_language(
   if (!(out_f = open_memstream(&out_t, &out_z))) goto remove_language;
   if (!(cfg_f = fmemopen(p->cfg_txt, p->cfg_len, "r"))) goto remove_language;
   if (!(p->cfg = shellconfig_parse(out_f, cfg_f, ""))) goto cleanup;
-  fclose(cfg_f); cfg_f = 0;
-  fclose(out_f); out_f = 0;
+  fmemclose(cfg_f); cfg_f = 0;
+  close_memstream(out_f); out_f = 0;
   xfree(out_t); out_t = 0; out_z = 0;
   if ((j = shellconfig_find_by_prefix(p->cfg, "short_name", 10)) < 0) {
     p->short_name = xstrdup(lang);
@@ -679,7 +679,7 @@ reconfigure_language(
   goto cleanup;
 
  cleanup:
-  if (cfg_f) fclose(cfg_f);
+  if (cfg_f) fmemclose(cfg_f);
   if (out_f) fclose(out_f);
   if (out_t) xfree(out_t);
   if (fd_out[0] >= 0) close(fd_out[0]);

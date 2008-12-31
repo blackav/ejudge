@@ -384,7 +384,7 @@ cmd_http_request(struct server_framework_state *state,
   // ok, generate HTML
   out_f = open_memstream(&out_txt, &out_size);
   ns_handle_http_request(state, p, out_f, &hr);
-  fclose(out_f); out_f = 0;
+  close_memstream(out_f); out_f = 0;
 
   // no reply now
   if (hr.no_reply) goto cleanup;
@@ -407,7 +407,7 @@ cmd_http_request(struct server_framework_state *state,
     }
     out_f = open_memstream(&out_txt, &out_size);
     ns_html_err_internal_error(out_f, &hr, 0, "empty output generated");
-    fclose(out_f); out_f = 0;
+    close_memstream(out_f); out_f = 0;
     xfree(out_txt); out_txt = 0;
   }
 

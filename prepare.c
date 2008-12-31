@@ -32,6 +32,7 @@
 #include "errlog.h"
 #include "serve_state.h"
 #include "xml_utils.h"
+#include "compat.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -1863,7 +1864,7 @@ prepare_parse_variant_map(
   }
   
   if (head_f) {
-    fclose(head_f);
+    close_memstream(head_f);
     head_f = 0;
   }
   if (p_header_txt) {
@@ -1873,7 +1874,7 @@ prepare_parse_variant_map(
   xfree(head_t); head_t = 0;
 
   if (foot_f) {
-    fclose(foot_f);
+    close_memstream(foot_f);
     foot_f = 0;
   }
   if (p_footer_txt) {

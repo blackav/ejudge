@@ -17,10 +17,10 @@
  * GNU General Public License for more details.
  */
 
+#include <stdio.h>
+
 #ifndef __linux__
 #include "config.h"
-
-#include <stdio.h>
 
 #if HAVE_FMEMOPEN - 0 == 0
 FILE *fmemopen(void *buf, size_t size, const char *mode);
@@ -31,5 +31,8 @@ FILE *open_memstream(char **ptr, size_t *sizeloc);
 #endif
 
 #endif
+
+void close_memstream(FILE *f);
+void fmemclose(FILE *f);
 
 #endif /* __COMPAT_H__ */

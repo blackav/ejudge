@@ -433,7 +433,7 @@ contests_unparse_and_save(
   fputs(header, f);
   contests_unparse(f, cnts);
   fputs(footer, f);
-  fclose(f); f = 0;
+  close_memstream(f); f = 0;
 
   contests_make_path(xml_path, sizeof(xml_path), cnts->id);
 

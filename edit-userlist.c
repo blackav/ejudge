@@ -3364,13 +3364,13 @@ display_registered_users(unsigned char const *upper,
       putc(0, csv_f);
       if (!feof(csv_in) && ferror(csv_in)) {
         vis_err("Read error from `%s'", csv_path);
-        fclose(csv_f);
+        close_memstream(csv_f); csv_f = 0;
         fclose(csv_in);
         xfree(csv_txt);
         continue;
       }
       fclose(csv_in); csv_in = 0;
-      fclose(csv_f); csv_f = 0;
+      close_memstream(csv_f); csv_f = 0;
       if (strlen(csv_txt) + 1 != csv_z) {
         vis_err("The file `%s' is binary", csv_path);
         xfree(csv_txt);

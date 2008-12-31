@@ -791,7 +791,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
   fprintf(flog, "Merge complete\n");
 
  done:
-  fclose(flog);
+  close_memstream(flog); flog = 0;
   if (!flog_text) flog_text = xstrdup("");
   if (flags) {
     // no html formatting... dumb however, may avoid flog buf at all...
