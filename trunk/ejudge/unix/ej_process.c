@@ -63,7 +63,7 @@ read_process_output(const unsigned char *cmd,
   while ((c = getc(fin)) != EOF) putc(c, fout);
   waitpid(pid, &status, 0);
   fclose(fin);
-  fclose(fout);
+  close_memstream(fout); fout = 0;
   c = 1;
   if (WIFEXITED(status) && (WEXITSTATUS(status) & 0xff) <= max_ok_code) c = 0;
 
@@ -80,7 +80,7 @@ read_process_output(const unsigned char *cmd,
   if (pfd[0] >= 0) close(pfd[0]);
   if (pfd[1] >= 0) close(pfd[1]);
   if (fin) pclose(fin);
-  if (fout) fclose(fout);
+  if (fout) close_memstream(fout);
   xfree(out_txt);
   return 0;
 }
