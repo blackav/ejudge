@@ -23,7 +23,18 @@
 FILE *
 fmemopen(void *buf, size_t size, const char *mode)
 {
-  return 0;
+  abort();
+}
+void
+fmemclose(FILE *f)
+{
+  abort();
+}
+#else
+void
+fmemclose(FILE *f)
+{
+  abort();
 }
 #endif
 
