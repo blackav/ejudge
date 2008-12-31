@@ -629,7 +629,7 @@ generate_statistics_email(
 
   eout = open_memstream(&etxt, &elen);
   generate_daily_statistics(state, eout, from_time, to_time, utf8_mode);
-  fclose(eout); eout = 0;
+  close_memstream(eout); eout = 0;
   if (!etxt || !*etxt) {
     xfree(etxt);
     return;
@@ -650,7 +650,7 @@ generate_statistics_email(
           state->global->contest_id, cnts->name,
           tm1.tm_year + 1900, tm1.tm_mon + 1, tm1.tm_mday,
           etxt);
-  fclose(fout); fout = 0;
+  close_memstream(fout); fout = 0;
 
   originator = serve_get_email_sender(cnts);
   mail_args[0] = "mail";
@@ -1350,7 +1350,7 @@ serve_send_clar_notify_email(serve_state_t state,
           "Regards,\n"
           "the ejudge contest management system\n",
           cnts->id, cnts->name, user_id, user_name, subject, text);
-  fclose(fmsg); fmsg = 0;
+  close_memstream(fmsg); fmsg = 0;
   mail_args[0] = "mail";
   mail_args[1] = "";
   mail_args[2] = esubj;
@@ -1384,7 +1384,7 @@ serve_send_check_failed_email(const struct contest_desc *cnts, int run_id)
           "Regards,\n"
           "the ejudge contest management system\n",
           cnts->id, cnts->name, run_id);
-  fclose(fmsg); fmsg = 0;
+  close_memstream(fmsg); fmsg = 0;
   mail_args[0] = "mail";
   mail_args[1] = "";
   mail_args[2] = esubj;
@@ -1454,7 +1454,7 @@ serve_notify_user_run_status_change(
             cnts->id, teamdb_get_login(cs->teamdb_state, user_id));
   }
   fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
-  fclose(msg_f); msg_f = 0;
+  close_memstream(msg_f); msg_f = 0;
   if (cnts->default_locale_num > 0) {
     l10n_setlocale(cnts->default_locale_num);
   }
@@ -1946,7 +1946,7 @@ serve_read_run_packet(serve_state_t state,
                      reply_pkt->ts7, reply_pkt->ts7_us,
                      ts8, ts8_us));
   fprintf(f, "\n");
-  fclose(f);
+  close_memstream(f); f = 0;
   serve_audit_log(state, reply_pkt->run_id, 0, 0, 0, "%s", audit_text);
   xfree(audit_text); audit_text = 0;
   run_reply_packet_free(reply_pkt);
@@ -2119,7 +2119,7 @@ serve_judge_built_in_problem(
   fprintf(f, "    </test>\n");
   fprintf(f, "  </tests>\n");
   fprintf(f, "</testing-report>\n");
-  fclose(f); f = 0;
+  close_memstream(f); f = 0;
 
   serve_audit_log(state, run_id, user_id, ip, ssl_flag,
                   "Command: submit\n"

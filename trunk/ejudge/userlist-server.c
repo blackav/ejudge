@@ -1869,7 +1869,7 @@ cmd_recover_password_1(struct client_state *p,
   fprintf(msg_f,
           _("Regards,\n"
             "The ejudge contest administration system (www.ejudge.ru)\n"));
-  fclose(msg_f); msg_f = 0;
+  close_memstream(msg_f); msg_f = 0;
 
   if (send_email_message(u->email,
                          originator_email,
@@ -1894,7 +1894,7 @@ cmd_recover_password_1(struct client_state *p,
     fprintf(msg_f,
             _("Regards,\n"
               "The ejudge contest administration system (www.ejudge.ru)\n"));
-    fclose(msg_f); msg_f = 0;
+    close_memstream(msg_f); msg_f = 0;
 
     mail_args[0] = "mail";
     mail_args[1] = "";
@@ -2043,7 +2043,7 @@ cmd_recover_password_2(struct client_state *p,
   fprintf(msg_f,
           _("Regards,\n"
             "The ejudge contest administration system (www.ejudge.ru)\n"));
-  fclose(msg_f); msg_f = 0;
+  close_memstream(msg_f); msg_f = 0;
 
   if (send_email_message(email,
                          originator_email,
@@ -2069,7 +2069,7 @@ cmd_recover_password_2(struct client_state *p,
     fprintf(msg_f,
             _("Regards,\n"
               "The ejudge contest administration system (www.ejudge.ru)\n"));
-    fclose(msg_f); msg_f = 0;
+    close_memstream(msg_f); msg_f = 0;
 
     mail_args[0] = "mail";
     mail_args[1] = "";
@@ -3875,7 +3875,7 @@ cmd_get_user_info(struct client_state *p,
     return;
   }
   userlist_unparse_user(u, f, USERLIST_MODE_USER, data->contest_id, 0);
-  fclose(f);
+  close_memstream(f); f = 0;
   default_unlock_user(u);
 
   ASSERT(xml_size == strlen(xml_ptr));
@@ -3947,7 +3947,7 @@ cmd_priv_get_user_info(struct client_state *p,
     return;
   }
   userlist_unparse_user(u, f, USERLIST_MODE_ALL, data->contest_id, flags);
-  fclose(f);
+  close_memstream(f); f = 0;
   default_unlock_user(u);
 
   ASSERT(xml_size == strlen(xml_ptr));
@@ -4004,7 +4004,7 @@ cmd_list_all_users(struct client_state *p,
   }
   userlist_write_xml_footer(f);
   if (iter) iter->destroy(iter);
-  fclose(f);
+  close_memstream(f); f = 0;
   ASSERT(xml_size == strlen(xml_ptr));
   out_size = sizeof(*out) + xml_size + 1;
   out = alloca(out_size);
@@ -4086,7 +4086,7 @@ cmd_list_standings_users(struct client_state *p,
   }
   userlist_write_xml_footer(f);
   iter->destroy(iter);
-  fclose(f);
+  close_memstream(f); f = 0;
   ASSERT(xml_size == strlen(xml_ptr));
   out_size = sizeof(*out) + xml_size + 1;
   out = alloca(out_size);
@@ -4154,7 +4154,7 @@ cmd_get_user_contests(struct client_state *p,
   }
   userlist_write_contests_xml_footer(f);
   iter->destroy(iter);
-  fclose(f);
+  close_memstream(f); f = 0;
 
   ASSERT(xml_size == strlen(xml_ptr));
   out_size = sizeof(*out) + xml_size + 1;
@@ -5493,7 +5493,7 @@ cmd_list_users(struct client_state *p, int pkt_len,
     do_list_users(f, data->contest_id, cnts, data->locale_id,
                   data->user_id, data->flags, url_ptr, srch_ptr);
   }
-  fclose(f);
+  close_memstream(f); f = 0;
 
   q = (struct client_state*) xcalloc(1, sizeof(*q));
   q->client_fds[0] = -1;
@@ -5546,7 +5546,7 @@ cmd_dump_database(struct client_state *p, int pkt_len,
     return;
   }
   do_dump_database(f, data->contest_id, cnts, data->html_flag);
-  fclose(f);
+  close_memstream(f); f = 0;
 
   q = (struct client_state*) xcalloc(1, sizeof(*q));
   q->client_fds[0] = -1;
@@ -5598,7 +5598,7 @@ cmd_dump_whole_database(struct client_state *p, int pkt_len,
     return;
   }
   do_dump_whole_database(f, data->contest_id, cnts, data->html_flag);
-  fclose(f);
+  close_memstream(f); f = 0;
 
   q = (struct client_state*) xcalloc(1, sizeof(*q));
   q->client_fds[0] = -1;
@@ -5833,7 +5833,7 @@ cmd_generate_register_passwords(struct client_state *p, int pkt_len,
     return;
   }
   do_generate_passwd(data->contest_id, f);
-  fclose(f);
+  close_memstream(f); f = 0;
 
   q = (struct client_state*) xcalloc(1, sizeof(*q));
   q->client_fds[0] = -1;
@@ -6055,7 +6055,7 @@ cmd_generate_team_passwords(struct client_state *p, int pkt_len,
     return;
   }
   do_generate_team_passwd(data->contest_id, f);
-  fclose(f);
+  close_memstream(f); f = 0;
 
   q = (struct client_state*) xcalloc(1, sizeof(*q));
   q->client_fds[0] = -1;
@@ -7782,7 +7782,7 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
                                        ui, userlist_contest_field_ids[i], 0);
       fprintf(gen_f, ";%s", vbuf);
     }
-    fclose(gen_f); gen_f = 0;
+    close_memstream(gen_f); gen_f = 0;
 
     pers_tot = 0;
     for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
@@ -7846,7 +7846,7 @@ cmd_get_database(struct client_state *p, int pkt_len,
     return;
   }
   do_get_database(f, data->contest_id, cnts);
-  fclose(f); f = 0;
+  close_memstream(f); f = 0;
 
   out_size = sizeof(*out) + db_size;
   out = (struct userlist_pk_xml_data*) alloca(out_size);
@@ -8498,11 +8498,11 @@ cmd_import_csv_users(
   }
 
   fprintf(log_f, "Operation completed successfully\n");
-  fclose(log_f); log_f = 0;
+  close_memstream(log_f); log_f = 0;
   retval = ULS_TEXT_DATA;
 
  cleanup:
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   log_f = 0;
 
   out_size = sizeof(*out) + log_len;

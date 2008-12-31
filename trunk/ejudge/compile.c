@@ -35,6 +35,7 @@
 #include "serve_state.h"
 #include "startstop.h"
 #include "ejudge_cfg.h"
+#include "compat.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -514,7 +515,7 @@ main(int argc, char *argv[])
     fprintf(stderr, "%s", lang_log_t);
     return 1;
   }
-  fclose(lang_log_f); lang_log_f = 0;
+  close_memstream(lang_log_f); lang_log_f = 0;
 #else
   if (lang_config_configure(stderr, serve_state.global->lang_config_dir,
                             serve_state.max_lang, serve_state.langs) < 0)

@@ -1,6 +1,6 @@
 /* $Id$ */
 
-/* Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2008 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -97,7 +97,7 @@ parse_form_func(
   if (r == -2) goto invalid_characters;
   if (r < 0) goto fail;
 
-  fclose(fout);
+  close_memstream(fout);
   return (unsigned char*) out_s;
 
  invalid_characters:
@@ -105,7 +105,7 @@ parse_form_func(
   goto fail;
 
  fail:
-  if (fout) fclose(fout);
+  if (fout) close_memstream(fout);
   xfree(out_s);
   return 0;
 }

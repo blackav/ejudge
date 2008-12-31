@@ -389,7 +389,7 @@ run_process(char * const *args, const char *stdin_buf)
   if (inp[1]) {
     close(inp[1]); inp[1] = -1;
   }
-  fclose(in); in = 0;
+  close_memstream(in); in = 0;
   waitpid(pid, &pstat, 0);
   if (WIFEXITED(pstat)) {
     if (!(retval = WEXITSTATUS(pstat))) {
@@ -463,7 +463,7 @@ handle_mail_packet(int uid, int argc, char **argv)
           "\n"
           "%s\n",
           date_buf, charset, argv[4], argv[3], argv[2], argv[5]);
-  fclose(f); f = 0;
+  close_memstream(f); f = 0;
   if (strstr(config->email_program, "sendmail")) {
     prc_args[0] = config->email_program;
     prc_args[1] = "-B8BITMIME";

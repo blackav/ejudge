@@ -2039,11 +2039,7 @@ do_backup(struct uldb_xml_state *state, time_t cur_time)
     failed_function = "userlist_unparse";
     goto cleanup;
   }
-  if (fclose(f) < 0) {
-    failed_function = "fclose";
-    goto cleanup;
-  }
-  f = 0;
+  close_memstream(f); f = 0;
 
   buf = alloca(strlen(state->db_path) + 64);
   if (!buf) {

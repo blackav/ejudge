@@ -1292,7 +1292,7 @@ action_variant_param(int cmd, int next_state)
       goto invalid_parameter;
     fprintf(param_f, " %d", r);
   }
-  fclose(param_f);
+  close_memstream(param_f); param_f = 0;
   while (param_len > 0 && isspace(param_txt[param_len - 1])) param_txt[--param_len]=0;
 
   open_super_server();

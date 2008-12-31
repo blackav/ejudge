@@ -1108,12 +1108,13 @@ super_html_commit_contest(FILE *f,
                                         sstate->probs,
                                         &sstate->var_header_text,
                                         &sstate->var_footer_text) < 0) {
-        fclose(flog); flog = 0;
+        close_memstream(flog); flog = 0;
         xfree(flog_txt); flog_txt = 0; flog_size = 0;
         return super_html_report_error(f, session_id, self_url, extra_args,
                                        "Cannot update the variant map");
       }
-      fclose(flog); xfree(flog_txt); flog_txt = 0; flog_size = 0; flog = 0;
+      close_memstream(flog); flog = 0;
+      xfree(flog_txt); flog_txt = 0; flog_size = 0;
     }
     if (need_variant_map && !sstate->global->variant_map)
       return super_html_report_error(f, session_id, self_url, extra_args,
@@ -1326,7 +1327,7 @@ super_html_commit_contest(FILE *f,
       vmap_f = open_memstream(&vmap_txt, &vmap_size);
       prepare_unparse_variants(vmap_f, global->variant_map,
                                sstate->var_header_text, sstate->var_footer_text);
-      fclose(vmap_f); vmap_f = 0;
+      close_memstream(vmap_f); vmap_f = 0;
       if ((vmf = save_conf_file(flog, "variant map file",
                                 global->variant_map_file, vmap_txt,
                                 conf_path,
@@ -1541,7 +1542,7 @@ super_html_commit_contest(FILE *f,
     xfree(serve_buf);
   }
 
-  fclose(flog);
+  close_memstream(flog); flog = 0;
   xfree(xml_header);
   xfree(xml_footer);
 
@@ -1558,7 +1559,7 @@ super_html_commit_contest(FILE *f,
     prepare_further_instructions(flog, cnts->root_dir, cnts->conf_dir,
                                  global, sstate->aprob_u, sstate->aprobs,
                                  sstate->prob_a, sstate->probs);
-    fclose(flog);
+    close_memstream(flog); flog = 0;
     s = html_armor_string_dup(flog_txt);
     fprintf(f, "<h2>Further instructions</h2><p><pre>%s</pre>\n", s);
     xfree(s);
@@ -1575,8 +1576,8 @@ super_html_commit_contest(FILE *f,
  failed:
   xfree(xml_header);
   xfree(xml_footer);
-  fclose(flog);
-  if (vmap_f) fclose(vmap_f);
+  if (flog) close_memstream(flog);
+  if (vmap_f) close_memstream(vmap_f);
   xfree(vmap_txt);
 
   if (users_header_path_2[0]) unlink(users_header_path_2);

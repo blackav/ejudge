@@ -371,7 +371,7 @@ handle_pending_xml_import(const struct contest_desc *cnts, serve_state_t cs)
 
   fout = open_memstream(&out_text, &out_size);
   runlog_import_xml(cs, cs->runlog_state, fout, 1, cs->pending_xml_import);
-  fclose(fout); fout = 0;
+  close_memstream(fout); fout = 0;
   if (out_size > 0) {
     ns_new_autoclose(p, out_text, out_size);
     out_text = 0;
@@ -2337,7 +2337,7 @@ priv_change_password(FILE *fout,
   }
 
  done:;
-  fclose(log_f); log_f = 0;
+  close_memstream(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
     url_armor_string(login_buf, sizeof(login_buf), phr->login);
     snprintf(url, sizeof(url),
@@ -2939,7 +2939,7 @@ priv_submit_clar(
     }
     fprintf(msg_f, "%s\n", text3);
     fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
-    fclose(msg_f); msg_f = 0;
+    close_memstream(msg_f); msg_f = 0;
     if (cnts->default_locale_num > 0) {
       l10n_setlocale(cnts->default_locale_num);
     }
@@ -3061,7 +3061,7 @@ priv_submit_run_comment(
     }
     fprintf(msg_f, "%s\n", text3);
     fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
-    fclose(msg_f); msg_f = 0;
+    close_memstream(msg_f); msg_f = 0;
     if (cnts->default_locale_num > 0) {
       l10n_setlocale(cnts->default_locale_num);
     }
@@ -3229,7 +3229,7 @@ priv_clar_reply(
     }
     fprintf(msg_f, "%s\n", msg);
     fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
-    fclose(msg_f); msg_f = 0;
+    close_memstream(msg_f); msg_f = 0;
     if (cnts->default_locale_num > 0) {
       l10n_setlocale(cnts->default_locale_num);
     }
@@ -5347,7 +5347,7 @@ priv_upload_runlog_csv_2(
   default:
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  fclose(ff); ff = 0;
+  close_memstream(ff); ff = 0;
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
@@ -5446,7 +5446,7 @@ priv_upload_runlog_xml_2(
 
   ff = open_memstream(&log_text, &log_size);
   runlog_import_xml(cs, cs->runlog_state, ff, 1, s);
-  fclose(ff); ff = 0;
+  close_memstream(ff); ff = 0;
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
@@ -5933,8 +5933,7 @@ priv_assign_cyphers_2(
     fprintf(msg_f, "%s;%s%d\n", user_logins[i], prefix,
             mult * user_cyphers[i] + shift);
   }
-  fclose(msg_f); msg_f = 0;
-
+  close_memstream(msg_f); msg_f = 0;
 
   if (ns_open_ul_connection(phr->fw_state) < 0)
     FAIL(NEW_SRV_ERR_TRY_AGAIN);
@@ -6222,7 +6221,7 @@ priv_print_user_exam_protocol(
   ff = open_memstream(&log_text, &log_size);
   r = ns_print_user_exam_protocol(cnts, cs, ff, user_id, locale_id,
                                   use_user_printer, full_report, use_cypher);
-  fclose(ff); ff = 0;
+  close_memstream(ff); ff = 0;
   if (locale_id > 0) l10n_setlocale(0);
 
   l10n_setlocale(phr->locale_id);
@@ -6324,7 +6323,7 @@ priv_print_users_exam_protocol(
     r = ns_print_user_exam_protocols(cnts, cs, ff, uset.u, uset.v, locale_id,
                                      use_user_printer, full_report, use_cypher);
   }
-  fclose(ff); ff = 0;
+  close_memstream(ff); ff = 0;
   if (locale_id > 0) l10n_setlocale(0);
 
   l10n_setlocale(phr->locale_id);
@@ -6389,7 +6388,7 @@ priv_print_problem_exam_protocol(
   if (locale_id > 0) l10n_setlocale(locale_id);
   ff = open_memstream(&log_text, &log_size);
   r = ns_print_prob_exam_protocol(cnts, cs, ff, prob_id, locale_id, 1);
-  fclose(ff); ff = 0;
+  close_memstream(ff); ff = 0;
   if (locale_id > 0) l10n_setlocale(0);
 
   l10n_setlocale(phr->locale_id);
@@ -6812,7 +6811,7 @@ priv_generic_operation(FILE *fout,
 
   r = priv_actions_table_2[phr->action](fout, log_f, phr, cnts, extra);
   if (r == -1) {
-    fclose(log_f);
+    close_memstream(log_f);
     xfree(log_txt);
     return;
   }
@@ -6824,7 +6823,7 @@ priv_generic_operation(FILE *fout,
   if (!r) r = ns_priv_next_state[phr->action];
   if (!rr) rr = ns_priv_prev_state[phr->action];
 
-  fclose(log_f);
+  close_memstream(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
     /*
     if (r == NEW_SRV_ACTION_VIEW_SOURCE) {
@@ -6855,7 +6854,7 @@ priv_generic_page(FILE *fout,
 
   r = priv_actions_table_2[phr->action](fout, log_f, phr, cnts, extra);
   if (r == -1) {
-    fclose(log_f);
+    close_memstream(log_f);
     xfree(log_txt);
     return;
   }
@@ -6865,7 +6864,7 @@ priv_generic_page(FILE *fout,
   }
   if (!r) r = ns_priv_prev_state[phr->action];
 
-  fclose(log_f);
+  close_memstream(log_f); log_f = 0;
   if (log_txt && *log_txt) {
     html_error_status_page(fout, phr, cnts, extra, log_txt, r, 0);
   }
@@ -7232,7 +7231,7 @@ priv_submit_page(
 
 cleanup:
   html_armor_free(&ab);
-  fclose(log_f); log_f = 0;
+  close_memstream(log_f); log_f = 0;
   if (log_t && *log_t) {
     html_error_status_page(fout, phr, cnts, extra, log_t, 0, 0);
   }
@@ -8343,7 +8342,7 @@ unpriv_load_html_style(struct http_request_info *phr,
   if (extra->serve_state && phr->user_id > 0) {
     state_json_f = open_memstream(&state_json_txt, &state_json_len);
     do_json_user_state(state_json_f, extra->serve_state, phr->user_id);
-    fclose(state_json_f); state_json_f = 0;
+    close_memstream(state_json_f); state_json_f = 0;
   } else {
     state_json_txt = xstrdup("");
   }
@@ -8558,7 +8557,7 @@ unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr,
       fprintf(log_f, gettext(userlist_strerror(-r)));
     }
 
-    fclose(log_f); log_f = 0;
+    close_memstream(log_f); log_f = 0;
 
     l10n_setlocale(phr->locale_id);
     ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
@@ -8656,7 +8655,7 @@ unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr,
       fprintf(log_f, gettext(userlist_strerror(-r)));
     }
 
-    fclose(log_f); log_f = 0;
+    close_memstream(log_f); log_f = 0;
 
     l10n_setlocale(phr->locale_id);
     ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
@@ -8970,7 +8969,7 @@ unpriv_change_language(FILE *fout,
   }
 
   //done:
-  fclose(log_f); log_f = 0;
+  close_memstream(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
     ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
   } else {
@@ -8979,7 +8978,7 @@ unpriv_change_language(FILE *fout,
   }
 
  cleanup:
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   xfree(log_txt);
 }
 
@@ -9034,7 +9033,7 @@ unpriv_change_password(FILE *fout,
   }
 
  done:;
-  fclose(log_f); log_f = 0;
+  close_memstream(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
     url_armor_string(login_buf, sizeof(login_buf), phr->login);
     snprintf(url, sizeof(url),
@@ -9048,7 +9047,7 @@ unpriv_change_password(FILE *fout,
   }
 
  cleanup:;
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   xfree(log_txt);
 }
 
@@ -9090,7 +9089,7 @@ unpriv_print_run(FILE *fout,
   if ((n = team_print_run(cs, run_id, phr->user_id)) < 0) {
     switch (-n) {
     case SRV_ERR_PAGES_QUOTA:
-      ns_error(log_f, NEW_SRV_ERR_ALREADY_PRINTED, cs->global->team_page_quota);
+      ns_error(log_f,NEW_SRV_ERR_ALREADY_PRINTED, cs->global->team_page_quota);
       goto done;
     default:
       ns_error(log_f, NEW_SRV_ERR_PRINTING_FAILED, -n, protocol_strerror(-n));
@@ -9104,7 +9103,7 @@ unpriv_print_run(FILE *fout,
                   "  %d pages printed\n", n);
 
  done:
-  fclose(log_f); log_f = 0;
+  close_memstream(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
     ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
   } else {
@@ -9113,7 +9112,7 @@ unpriv_print_run(FILE *fout,
   }
 
  cleanup:;
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   xfree(log_txt);
 }
 
@@ -9618,7 +9617,7 @@ unpriv_submit_run(FILE *fout,
 
  done:;
   l10n_setlocale(0);
-  fclose(log_f); log_f = 0;
+  close_memstream(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
     i = 0;
     if (global->problem_navigation) {
@@ -9781,7 +9780,7 @@ unpriv_submit_clar(FILE *fout,
   serve_send_clar_notify_email(cs, cnts, phr->user_id, phr->name, subj3, text2);
 
  done:;
-  fclose(log_f); log_f = 0;
+  close_memstream(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
     ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_CLARS, 0);
   } else {
@@ -9790,7 +9789,7 @@ unpriv_submit_clar(FILE *fout,
   }
 
   //cleanup:;
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   xfree(log_txt);
 }
 
@@ -9922,7 +9921,7 @@ unpriv_submit_appeal(FILE *fout,
   serve_send_clar_notify_email(cs, cnts, phr->user_id, phr->name, subj3, text2);
 
  done:;
-  fclose(log_f); log_f = 0;
+  close_memstream(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
     ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_CLARS, 0);
   } else {
@@ -9931,7 +9930,7 @@ unpriv_submit_appeal(FILE *fout,
   }
 
   //cleanup:;
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   xfree(log_txt);
 }
 
@@ -9955,7 +9954,7 @@ virtual_stop_callback(
   if (locale_id > 0) l10n_setlocale(locale_id);
   tmpf = open_memstream(&tmps, &tmpz);
   ns_print_user_exam_protocol(cnts, cs, tmpf, p->user_id, locale_id, 1, 0, 0);
-  fclose(tmpf); tmpf = 0;
+  close_memstream(tmpf); tmpf = 0;
   xfree(tmps); tmps = 0; tmpz = 0;
   if (locale_id > 0) l10n_setlocale(0);
 }
@@ -10073,7 +10072,7 @@ unpriv_command(FILE *fout,
 
  done:;
   l10n_setlocale(0);
-  fclose(log_f); log_f = 0;
+  close_memstream(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
     i = 0;
     if (phr->action == NEW_SRV_ACTION_VIRTUAL_START
@@ -10102,7 +10101,7 @@ unpriv_command(FILE *fout,
   }
 
   //cleanup:;
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   xfree(log_txt);
 }
 
@@ -10193,14 +10192,14 @@ unpriv_view_source(FILE *fout,
   fwrite(run_text, 1, run_size, fout);
 
  done:;
-  fclose(log_f); log_f = 0;
+  close_memstream(log_f); log_f = 0;
   if (log_txt && *log_txt) {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE, 0);
   }
 
  cleanup:
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   xfree(log_txt);
   xfree(run_text);
 }
@@ -10268,14 +10267,14 @@ unpriv_view_test(FILE *fout,
   ns_write_tests(cs, fout, log_f, phr->action, run_id, test_num);
 
  done:;
-  fclose(log_f); log_f = 0;
+  close_memstream(log_f); log_f = 0;
   if (log_txt && *log_txt) {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE, 0);
   }
 
  cleanup:
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   xfree(log_txt);
 }
 
@@ -10457,14 +10456,14 @@ unpriv_view_report(FILE *fout,
   l10n_setlocale(0);
 
  done:;
-  fclose(log_f); log_f = 0;
+  close_memstream(log_f); log_f = 0;
   if (log_txt && *log_txt) {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE, 0);
   }
 
  cleanup:
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   xfree(log_txt);
   xfree(rep_text);
 }
@@ -10591,13 +10590,13 @@ unpriv_view_clar(FILE *fout,
   l10n_setlocale(0);
 
  done:;
-  fclose(log_f); log_f = 0;
+  close_memstream(log_f); log_f = 0;
   if (log_txt && *log_txt) {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE, 0);
   }
 
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   xfree(log_txt);
   xfree(clar_text);
 }
@@ -11888,10 +11887,10 @@ unpriv_main_page(FILE *fout,
                 cnts->team_head_style,
                 _("Problem status summary"),
                 cnts->team_head_style, _("Error"), -rr);
-        fclose(fl); fl = 0; xfree(fl_txt); fl_txt = 0; fl_len = 0;
-        fclose(ff); ff = 0; xfree(ff_txt); ff_txt = 0; ff_len = 0;
+        close_memstream(fl); fl = 0; xfree(fl_txt); fl_txt = 0; fl_len = 0;
+        close_memstream(ff); ff = 0; xfree(ff_txt); ff_txt = 0; ff_len = 0;
       } else {
-        fclose(fl); fl = 0;
+        close_memstream(fl); fl = 0;
         if (fl_txt && *fl_txt) {
           fprintf(fout,
                   "<%s>%s</%s>\n<pre><font color=\"red\">%s</font></pre>\n",
@@ -11899,9 +11898,9 @@ unpriv_main_page(FILE *fout,
                   _("Problem status summary"),
                   cnts->team_head_style, ARMOR(fl_txt));
           xfree(fl_txt); fl_txt = 0; fl_len = 0;
-          fclose(ff); ff = 0; xfree(ff_txt); ff_txt = 0; ff_len = 0;
+          close_memstream(ff); ff = 0; xfree(ff_txt); ff_txt = 0; ff_len = 0;
         } else {
-          fclose(ff); ff = 0; 
+          close_memstream(ff); ff = 0; 
           fprintf(fout,
                   "<%s>%s</%s>\n%s\n",
                   cnts->team_head_style,
@@ -11936,7 +11935,7 @@ unpriv_main_page(FILE *fout,
         size_t us_size = 0;
         FILE *us_file = open_memstream(&us_text, &us_size);
         (*cs->contest_plugin->generate_html_user_problems_summary)(cs->contest_plugin_data, us_file, fout, cnts, cs, phr->user_id, accepting_mode, "b1", solved_flag, accepted_flag, pending_flag, trans_flag, best_run, attempts, disqualified, best_score, prev_successes);
-        fclose(us_file); us_file = 0;
+        close_memstream(us_file); us_file = 0;
         xfree(us_text); us_text = 0;
       } else {
         ns_write_user_problems_summary(cnts, cs, fout, phr->user_id,
@@ -12344,7 +12343,7 @@ unpriv_main_page(FILE *fout,
           size_t ur_size = 0;
           FILE *ur_file = open_memstream(&ur_text, &ur_size);
           (*cs->contest_plugin->generate_html_user_runs)(cs->contest_plugin_data, ur_file, fout, cnts, cs, phr, phr->user_id, prob_id, all_runs, "b1");
-          fclose(ur_file); ur_file = 0;
+          close_memstream(ur_file); ur_file = 0;
           xfree(ur_text); ur_text = 0;
         } else if (global->score_system == SCORE_OLYMPIAD) {
           ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
@@ -12430,7 +12429,7 @@ unpriv_main_page(FILE *fout,
       size_t ur_size = 0;
       FILE *ur_file = open_memstream(&ur_text, &ur_size);
       (*cs->contest_plugin->generate_html_user_runs)(cs->contest_plugin_data, ur_file, fout, cnts, cs, phr, phr->user_id, 0, all_runs, "b1");
-      fclose(ur_file); ur_file = 0;
+      close_memstream(ur_file); ur_file = 0;
       xfree(ur_text); ur_text = 0;
     } else if (global->score_system == SCORE_OLYMPIAD) {
       ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,

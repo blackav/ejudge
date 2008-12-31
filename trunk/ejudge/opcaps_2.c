@@ -76,7 +76,7 @@ opcaps_unparse(int left_margin, int max_width, opcap_t cap)
     }
   }
   if (!first_flag) fprintf(f, "\n");
-  fclose(f);
+  close_memstream(f);
   return out_str;
 }
 

@@ -6707,7 +6707,7 @@ super_html_serve_unparse_and_save(
   fputs(header, f);
   unparse_serve_cfg(f, config, sstate);
   fputs(footer, f);
-  fclose(f); f = 0;
+  close_memstream(f); f = 0;
 
   if (generic_read_file(&old_text, 0, &old_size, 0, 0, path, 0) >= 0
       && new_size == old_size && memcmp(new_text, old_text, new_size) == 0) {
@@ -6755,7 +6755,7 @@ super_html_view_new_serve_cfg(FILE *f,
 
   tmpf = open_memstream(&out_text, &out_size);
   unparse_serve_cfg(tmpf, config, sstate);
-  fclose(tmpf); tmpf = 0;
+  close_memstream(tmpf); tmpf = 0;
   s = html_armor_string_dup(out_text);
   fprintf(f, "<pre>%s</pre>\n", s);
   xfree(s); s = 0;
@@ -7052,7 +7052,7 @@ super_html_read_serve(FILE *flog,
 
   fuh = open_memstream(&fuh_text, &fuh_size);
   prepare_unparse_unhandled_global(fuh, global);
-  fclose(fuh);
+  close_memstream(fuh); fuh = 0;
   if (fuh_text && *fuh_text) {
     global->unhandled_vars = fuh_text;
   } else {
@@ -7120,7 +7120,7 @@ super_html_read_serve(FILE *flog,
 
     fuh = open_memstream(&fuh_text, &fuh_size);
     prepare_unparse_unhandled_lang(fuh, lang);
-    fclose(fuh);
+    close_memstream(fuh); fuh = 0;
     if (fuh_text && *fuh_text) {
       lang->unhandled_vars = fuh_text;
     } else {
@@ -7184,7 +7184,7 @@ super_html_read_serve(FILE *flog,
 
       fuh = open_memstream(&fuh_text, &fuh_size);
       prepare_unparse_unhandled_prob(fuh, prob, global);
-      fclose(fuh);
+      close_memstream(fuh); fuh = 0;
       if (fuh_text && *fuh_text) {
         prob->unhandled_vars = fuh_text;
       } else {
@@ -7245,7 +7245,7 @@ super_html_read_serve(FILE *flog,
 
       fuh = open_memstream(&fuh_text, &fuh_size);
       prepare_unparse_unhandled_prob(fuh, prob, global);
-      fclose(fuh);
+      close_memstream(fuh); fuh = 0;
       if (fuh_text && *fuh_text) {
         prob->unhandled_vars = fuh_text;
       } else {
@@ -8399,7 +8399,7 @@ super_html_check_tests(FILE *f,
     }
   }
 
-  fclose(flog);
+  close_memstream(flog); flog = 0;
   s = html_armor_string_dup(flog_txt);
   fprintf(f, "<h2>Contest is set up OK</h2>\n");
   fprintf(f, "<p><pre><font>%s</font></pre></p>\n", s);
@@ -8739,7 +8739,7 @@ super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
   if (cmd == SSERV_CMD_PROB_EDIT_VARIANTS_2) {
     if (!(vmap = global->variant_map) || vmap->prob_map_size != sstate->prob_a
         || vmap->prob_rev_map_size <= 0) {
-      fclose(log_file);
+      close_memstream(log_file); log_file = 0;
       xfree(log_txt);
       super_html_contest_page_menu(f, session_id, sstate, -1, self_url,
                                    hidden_vars, extra_args);
@@ -8752,7 +8752,7 @@ super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
                                       sstate->prob_a, sstate->probs,
                                       &sstate->var_header_text,
                                       &sstate->var_footer_text) < 0){
-      fclose(log_file); log_file = 0;
+      close_memstream(log_file); log_file = 0;
 
       super_html_contest_page_menu(f, session_id, sstate, -1, self_url,
                                    hidden_vars, extra_args);
@@ -8766,7 +8766,7 @@ super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
   super_html_contest_page_menu(f, session_id, sstate, -1, self_url, hidden_vars,
                                extra_args);
 
-  fclose(log_file); log_file = 0;
+  close_memstream(log_file); log_file = 0;
 
   fprintf(f, "<h2>Variant map</h2>\n");
 

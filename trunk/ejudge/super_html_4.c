@@ -5199,7 +5199,7 @@ cmd_op_edit_serve_global_field_detail_page(
   default:
     FAIL(S_ERR_INV_FIELD_ID);
   }
-  fclose(text_f); text_f = 0;
+  close_memstream(text_f); text_f = 0;
 
   snprintf(buf, sizeof(buf), "serve-control: %s, contest %d, editing %s",
            phr->html_name, ecnts->id, cntsglob_get_name(f_id));
@@ -5611,7 +5611,7 @@ cmd_op_edit_serve_lang_field_detail_page(
   default:
     FAIL(S_ERR_INV_FIELD_ID);
   }
-  fclose(text_f); text_f = 0;
+  close_memstream(text_f); text_f = 0;
 
   snprintf(buf, sizeof(buf),
            "serve-control: %s, contest %d, language %s, editing %s",
@@ -6292,7 +6292,7 @@ cmd_op_edit_serve_prob_field_detail_page(
   default:
     FAIL(S_ERR_INV_FIELD_ID);
   }
-  fclose(text_f); text_f = 0;
+  close_memstream(text_f); text_f = 0;
 
   snprintf(buf, sizeof(buf),
            "serve-control: %s, contest %d, problem %s, editing %s",
@@ -6560,8 +6560,8 @@ super_html_http_request(
     out_f = open_memstream(&out_t, &out_z);
     log_f = open_memstream(&log_t, &log_z);
     r = do_http_request(log_f, out_f, phr);
-    fclose(out_f); out_f = 0;
-    fclose(log_f); log_f = 0;
+    close_memstream(out_f); out_f = 0;
+    close_memstream(log_f); log_f = 0;
   }
 
   if (r < 0) {
@@ -6583,7 +6583,7 @@ super_html_http_request(
               ARMOR(log_t));
       write_html_footer(out_f);
     }
-    fclose(out_f); out_f = 0;
+    close_memstream(out_f); out_f = 0;
   }
   xfree(log_t); log_t = 0; log_z = 0;
 
@@ -6599,7 +6599,7 @@ super_html_http_request(
       fprintf(out_f, "<p>The output page is empty!</p>\n");
       write_html_footer(out_f);
     }
-    fclose(out_f); out_f = 0;
+    close_memstream(out_f); out_f = 0;
   }
 
   /*

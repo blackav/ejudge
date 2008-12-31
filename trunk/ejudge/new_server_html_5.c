@@ -2447,7 +2447,7 @@ assemble_programming_languages(
       fputs(allowed_languages[i], f);
     }
   }
-  fclose(f); f = 0;
+  close_memstream(f); f = 0;
 
   snprintf(buf, size, "%s", t);
   allowed_list_free(allowed_languages, allowed_languages_u);
@@ -2691,7 +2691,7 @@ submit_member_editing(
   phr->session_extra->user_info = 0;
 
  done:;
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   log_f = 0;
 
   if (log_t && *log_t) {
@@ -2832,7 +2832,7 @@ submit_general_editing(
   phr->session_extra->user_info = 0;
 
  done:;
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   log_f = 0;
 
   if (log_t && *log_t) {
@@ -2898,7 +2898,7 @@ add_member(
   phr->session_extra->user_info = 0;
 
  done:;
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   log_f = 0;
 
   if (log_t && *log_t) {
@@ -2967,7 +2967,7 @@ remove_member(
   phr->session_extra->user_info = 0;
 
  done:;
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   log_f = 0;
 
   if (log_t && *log_t) {
@@ -3059,7 +3059,7 @@ move_member(
   phr->session_extra->user_info = 0;
 
  done:;
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   log_f = 0;
 
   if (log_t && *log_t) {
@@ -3147,7 +3147,7 @@ change_password(
   }
 
  done:;
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   log_f = 0;
 
   if (log_t && *log_t) {
@@ -3193,7 +3193,7 @@ register_for_contest(
   }
 
  done:;
-  if (log_f) fclose(log_f);
+  if (log_f) close_memstream(log_f);
   log_f = 0;
 
   if (log_t && *log_t) {
