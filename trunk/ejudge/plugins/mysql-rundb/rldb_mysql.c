@@ -31,6 +31,7 @@
 #include "prepare.h"
 #include "mime_type.h"
 #include "misctext.h"
+#include "compat.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -243,7 +244,7 @@ load_header(
     fprintf(cmd_f, "INSERT INTO %srunheaders VALUES ( ", md->table_prefix);
     mi->unparse_spec(md, cmd_f, HEADERS_ROW_WIDTH, headers_spec, &rh);
     fprintf(cmd_f, " ) ;");
-    fclose(cmd_f); cmd_f = 0;
+    close_memstream(cmd_f); cmd_f = 0;
     if (mi->simple_query(md, cmd_t, cmd_z) < 0) goto fail;
     xfree(cmd_t); cmd_t = 0;
 
@@ -537,7 +538,7 @@ reset_func(
   fprintf(cmd_f, "INSERT INTO %srunheaders VALUES ( ", md->table_prefix);
   mi->unparse_spec(md, cmd_f, HEADERS_ROW_WIDTH, headers_spec, &rh);
   fprintf(cmd_f, " ) ;");
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   mi->simple_query(md, cmd_t, cmd_z);
   xfree(cmd_t); cmd_t = 0;
 
@@ -745,7 +746,7 @@ get_insert_run_id(
   fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", md->table_prefix);
   mi->unparse_spec(md, cmd_f, RUNS_ROW_WIDTH, runs_spec, &ri);
   fprintf(cmd_f, " ) ;");
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (mi->simple_query(md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0;
   return run_id;
@@ -974,7 +975,7 @@ do_update_entry(
   generate_update_entry_clause(state, cmd_f, re, flags);
   fprintf(cmd_f, " WHERE contest_id = %d AND run_id = %d ;",
           cs->contest_id, run_id);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   update_entry(de, re, flags);
@@ -1159,7 +1160,7 @@ do_update_header(
   fprintf(cmd_f, "UPDATE %srunheaders SET ", state->md->table_prefix);
   generate_update_header_clause(state, cmd_f, rh, flags);
   fprintf(cmd_f, " WHERE contest_id = %d ;", cs->contest_id);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   update_header(&rls->head, rh, flags);
@@ -1428,7 +1429,7 @@ put_entry_func(
   fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", state->md->table_prefix);
   state->mi->unparse_spec(state->md, cmd_f, RUNS_ROW_WIDTH, runs_spec, &ri);
   fprintf(cmd_f, " ) ;");
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0;
 
