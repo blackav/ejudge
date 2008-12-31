@@ -26,6 +26,7 @@
 #include "errlog.h"
 #include "contests.h"
 #include "prepare.h"
+#include "compat.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -521,7 +522,7 @@ add_entry_func(struct cldb_plugin_cnts *cdata, int clar_id)
   fprintf(cmd_f, "INSERT INTO %sclars VALUES ( ", md->table_prefix);
   mi->unparse_spec(md, cmd_f, CLARS_ROW_WIDTH, clars_spec, &cc);
   fprintf(cmd_f, " ) ;");
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (mi->simple_query(md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0;
   return 0;
@@ -570,7 +571,7 @@ set_charset_func(struct cldb_plugin_cnts *cdata, int clar_id)
   mi->write_escaped_string(md, cmd_f, 0, ce->charset);
   fprintf(cmd_f, " WHERE clar_id = %d AND contest_id = %d ;",
           clar_id, cs->contest_id);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (mi->simple_query(md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0;
   return 0;
@@ -652,7 +653,7 @@ add_text_func(
   fprintf(cmd_f, "INSERT INTO %sclartexts VALUES ( ", md->table_prefix);
   mi->unparse_spec(md, cmd_f, CLARTEXTS_ROW_WIDTH, clartexts_spec, &ct);
   fprintf(cmd_f, " ) ;");
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (mi->simple_query(md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0;
   return 0;
