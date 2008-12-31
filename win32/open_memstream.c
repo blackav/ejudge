@@ -23,7 +23,18 @@
 FILE *
 open_memstream(char **ptr, size_t *sizeloc)
 {
-  return 0;
+  abort();
+}
+void
+close_memstream(FILE *f)
+{
+  abort();
+}
+#else
+void
+close_memstream(FILE *f)
+{
+  fclose(f);
 }
 #endif
 
