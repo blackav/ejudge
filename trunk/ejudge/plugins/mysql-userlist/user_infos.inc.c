@@ -301,7 +301,7 @@ fetch_or_create_user_info(
   fprintf(cmd_f, "INSERT INTO %susers VALUES ( ", md->table_prefix);
   unparse_user_info(state, cmd_f, user_id, &arena);
   fprintf(cmd_f, " ) ;");
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (mi->simple_query(md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   if (fetch_user_info(state, user_id, contest_id, &ui) < 0) goto fail;
