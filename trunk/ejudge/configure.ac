@@ -354,10 +354,10 @@ AC_CHECK_LIB([intl],[gettext],[ac_cv_has_lib_intl=-lintl],[ac_cv_has_lib_intl=])
 
 dnl check ncurses library
 AC_CHECK_HEADER([ncurses.h],[ac_cv_has_ncurses=1],[ac_cv_has_ncurses=0])
-if [[ x"${ac_cv_has_ncurses}" != x1 ]]
-then
-  AC_MSG_FAILURE([ncurses.h is missing, please install ncurses development package])
-fi
+#if [[ x"${ac_cv_has_ncurses}" != x1 ]]
+#then
+#  AC_MSG_FAILURE([ncurses.h is missing, please install ncurses development package])
+#fi
 
 dnl Libcap checking stuff
 ac_cv_has_libcap=1
