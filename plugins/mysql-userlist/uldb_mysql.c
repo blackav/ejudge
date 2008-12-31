@@ -28,6 +28,7 @@
 #include "misctext.h"
 #include "random.h"
 #include "../mysql-common/common_mysql.h"
+#include "compat.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -549,7 +550,7 @@ create_func(void *data)
       putc(c, fstr);
       c = getc(fin);
     }
-    fclose(fstr); fstr = 0;
+    close_memstream(fstr); fstr = 0;
     while (cmdlen > 0 && isspace(cmdstr[cmdlen - 1])) cmdstr[--cmdlen] = 0;
     if (!cmdlen) {
       err("empty command");
@@ -607,7 +608,7 @@ insert_member_info(
     unparse_member(state, cmd_f, user_id, contest_id, memb);
   }
   fprintf(cmd_f, " ) ;");
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
 
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
 
@@ -648,7 +649,7 @@ insert_contest_info(
     unparse_user_info(state, cmd_f, user_id, info);
   }
   fprintf(cmd_f, " ) ;");
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
 
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
 
@@ -684,7 +685,7 @@ insert_contest(struct uldb_mysql_state *state, int user_id,
   fprintf(cmd_f, "INSERT INTO %scntsregs VALUES ( ", state->md->table_prefix);
   unparse_cntsreg(state, cmd_f, user_id, c);
   fprintf(cmd_f, " ) ;");
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
 
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
 
@@ -713,7 +714,7 @@ insert_cookie(struct uldb_mysql_state *state, int user_id,
   fprintf(cmd_f, "INSERT INTO %scookies VALUES ( ", state->md->table_prefix);
   unparse_cookie(state, cmd_f, c);
   fprintf(cmd_f, " ) ;");
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
 
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
 
@@ -748,7 +749,7 @@ insert_func(void *data, const struct userlist_user *user, int *p_member_serial)
   fprintf(cmd_f, "INSERT INTO %slogins VALUES ( ", state->md->table_prefix);
   unparse_login(state, cmd_f, user);
   fprintf(cmd_f, " );");
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
 
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
 
@@ -922,7 +923,7 @@ get_user_by_login_func(void *data, const unsigned char *login)
           state->md->table_prefix);
   state->mi->write_escaped_string(state->md, cmd_f, 0, login);
   fprintf(cmd_f, " ;");
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->query_one_row(state->md, cmd_t, cmd_z, 1) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0;
   if (!state->md->lengths[0])
@@ -1009,7 +1010,7 @@ new_user_func(
     fprintf(cmd_f, "INSERT into %slogins VALUES ( ", state->md->table_prefix);
     unparse_login(state, cmd_f, &user);
     fprintf(cmd_f, " );");
-    fclose(cmd_f); cmd_f = 0;
+    close_memstream(cmd_f); cmd_f = 0;
     if (state->mi->simple_query(state->md, cmd_t, cmd_z) >= 0) {
       xfree(cmd_t); cmd_t = 0; cmd_z = 0;
       inserted_flag = 1;
@@ -1028,7 +1029,7 @@ new_user_func(
     fprintf(cmd_f, "INSERT into %slogins VALUES ( ", state->md->table_prefix);
     unparse_login(state, cmd_f, &user);
     fprintf(cmd_f, " );");
-    fclose(cmd_f); cmd_f = 0;
+    close_memstream(cmd_f); cmd_f = 0;
     if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
     xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   }
@@ -1037,7 +1038,7 @@ new_user_func(
   fprintf(cmd_f, "SELECT user_id FROM %slogins WHERE login = ",
           state->md->table_prefix);
   state->mi->write_escaped_string(state->md, cmd_f, 0, login);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->query_one_row(state->md, cmd_t, cmd_z, 1) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   if (!state->md->lengths[0])
@@ -1168,7 +1169,7 @@ new_cookie_func(
   fprintf(cmd_f, "INSERT INTO %scookies VALUES ( ", state->md->table_prefix);
   unparse_cookie(state, cmd_f, &newc);
   fprintf(cmd_f, " ) ;");
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0;
   if (fetch_cookie(state, cookie, &c) < 0) goto fail;
@@ -1227,7 +1228,7 @@ remove_expired_cookies_func(
   fprintf(cmd_f, "DELETE FROM %scookies WHERE expire < ", state->md->table_prefix);
   state->mi->write_timestamp(state->md, cmd_f, "", cur_time);
   fprintf(cmd_f, " ;");
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t);
   remove_cookie_from_pool_by_expire(state, cur_time);
@@ -1352,7 +1353,7 @@ remove_expired_users_func(
           state->md->table_prefix);
   state->mi->write_timestamp(state->md, cmd_f, "", min_reg_time);
   fprintf(cmd_f, " AND (logintime = NULL OR logintime = 0) ;");
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
 
   if (state->mi->query(state->md, cmd_t, cmd_z, 1) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0;
@@ -1447,7 +1448,7 @@ touch_login_time_func(
   fprintf(cmd_f, "UPDATE %slogins SET logintime = ", state->md->table_prefix);
   state->mi->write_timestamp(state->md, cmd_f, 0, cur_time);
   fprintf(cmd_f, " WHERE user_id = %d ;", user_id);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   remove_login_from_pool(state, user_id);
@@ -1459,7 +1460,7 @@ touch_login_time_func(
     state->mi->write_timestamp(state->md, cmd_f, 0, cur_time);
     fprintf(cmd_f, " WHERE user_id = %d AND contest_id = %d ;",
             user_id, contest_id);
-    fclose(cmd_f); cmd_f = 0;
+    close_memstream(cmd_f); cmd_f = 0;
     if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
     xfree(cmd_t); cmd_t = 0; cmd_z = 0;
     remove_user_info_from_pool(state, user_id, contest_id);
@@ -2319,7 +2320,7 @@ set_reg_passwd_func(
   fprintf(cmd_f, ", pwdtime = ");
   state->mi->write_timestamp(state->md, cmd_f, 0, cur_time);
   fprintf(cmd_f, " WHERE user_id = %d ;", user_id);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   remove_login_from_pool(state, user_id);
@@ -2357,7 +2358,7 @@ set_team_passwd_func(
   state->mi->write_timestamp(state->md, cmd_f, 0, cur_time);
   fprintf(cmd_f, " WHERE user_id = %d AND contest_id = %d;",
           user_id, contest_id);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   remove_user_info_from_pool(state, user_id, contest_id);
@@ -2403,7 +2404,7 @@ register_contest_func(
   fprintf(cmd_f, "INSERT INTO %scntsregs VALUES (", state->md->table_prefix);
   unparse_cntsreg(state, cmd_f, user_id, &new_uc);
   fprintf(cmd_f, " );");
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0;
 
@@ -2625,7 +2626,7 @@ get_info_list_iterator_func(
     fprintf(cmd_f, ") ");
   }
   fprintf(cmd_f, "ORDER BY %slogins.user_id ; ", state->md->table_prefix);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->query(state->md, cmd_t, cmd_z, LOGIN_WIDTH) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   iter->total_ids = state->md->row_count;
@@ -2856,7 +2857,7 @@ set_reg_flags_func(
   }
   fprintf(cmd_f, " WHERE user_id = %d AND contest_id = %d ;",
           user_id, contest_id);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   remove_cntsreg_from_pool(state, user_id, contest_id);
@@ -2887,7 +2888,7 @@ remove_user_contest_info_func(
           state->md->table_prefix, user_id, contest_id);
   fprintf(cmd_f, "DELETE FROM %smembers WHERE user_id = %d AND contest_id = %d ;",
           state->md->table_prefix, user_id, contest_id);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   remove_user_info_from_pool(state, user_id, contest_id);
@@ -2956,7 +2957,7 @@ clear_user_field_func(
   fprintf(cmd_f, "%s%s = ", sep, tsvarname);
   state->mi->write_timestamp(state->md, cmd_f, 0, cur_time);
   fprintf(cmd_f, " WHERE user_id = %d ;", user_id);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   remove_login_from_pool(state, user_id);
@@ -3025,7 +3026,7 @@ clear_user_info_field_func(
   state->mi->write_timestamp(state->md, cmd_f, 0, cur_time);
   fprintf(cmd_f, " WHERE user_id = %d AND contest_id = %d;",
           user_id, contest_id);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   remove_user_info_from_pool(state, user_id, contest_id);
@@ -3091,7 +3092,7 @@ clear_user_member_field_func(
   fprintf(cmd_f, "%s%s = ", sep, "changetime");
   state->mi->write_timestamp(state->md, cmd_f, 0, cur_time);
   fprintf(cmd_f, " WHERE serial = %d ;", serial);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   remove_member_from_pool(state, user_id, contest_id);
@@ -3178,7 +3179,7 @@ set_user_field_func(
   fprintf(cmd_f, "%s%s = ", sep, tsvarname);
   state->mi->write_timestamp(state->md, cmd_f, 0, cur_time);
   fprintf(cmd_f, " WHERE user_id = %d ;", user_id);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   remove_login_from_pool(state, user_id);
@@ -3275,7 +3276,7 @@ set_user_info_field_func(
   state->mi->write_timestamp(state->md, cmd_f, 0, cur_time);
   fprintf(cmd_f, " WHERE user_id = %d AND contest_id = %d;",
           user_id, contest_id);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   remove_user_info_from_pool(state, user_id, contest_id);
@@ -3363,7 +3364,7 @@ set_user_member_field_func(
   fprintf(cmd_f, "%s%s = ", sep, "changetime");
   state->mi->write_timestamp(state->md, cmd_f, 0, cur_time);
   fprintf(cmd_f, " WHERE serial = %d ;", serial);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   remove_member_from_pool(state, user_id, contest_id);
@@ -3747,7 +3748,7 @@ move_member_func(
           state->md->table_prefix, new_role);
   state->mi->write_timestamp(state->md, cmd_f, 0, cur_time);
   fprintf(cmd_f, " WHERE serial = %d ; ", serial);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   state->mi->free_res(state->md);
@@ -4006,7 +4007,7 @@ try_new_login_func(
           state->md->table_prefix);
   state->mi->write_escaped_string(state->md, cmd_f, 0, patt);
   fprintf(cmd_f, ") ;");
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->query(state->md, cmd_t, cmd_z, 1) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   if (state->md->row_count <= 0) {
@@ -4068,7 +4069,7 @@ set_simple_reg_func(
           state->md->table_prefix, value);
   state->mi->write_timestamp(state->md, cmd_f, 0, cur_time);
   fprintf(cmd_f, " WHERE user_id = %d ;", user_id);
-  fclose(cmd_f); cmd_f = 0;
+  close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   remove_login_from_pool(state, user_id);
