@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -10487,6 +10487,7 @@ unpriv_view_clar(FILE *fout,
   unsigned char *html_subj, *html_text;
   unsigned char dur_str[64];
   const unsigned char *clar_subj = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if ((n = ns_cgi_param(phr, "clar_id", &s)) <= 0)
     return ns_html_err_inv_param(fout, phr, 0, "clar_id is binary or not set");
@@ -10569,7 +10570,7 @@ unpriv_view_clar(FILE *fout,
   if (!ce.from) {
     fprintf(fout, "<td class=\"b0\"><b>%s</b></td>", _("judges"));
   } else {
-    fprintf(fout, "<td class=\"b0\">%s</td>", teamdb_get_name(cs->teamdb_state, ce.from));
+    fprintf(fout, "<td class=\"b0\">%s</td>", ARMOR(teamdb_get_name(cs->teamdb_state, ce.from)));
   }
   fprintf(fout, "</tr>\n<tr><td class=\"b0\">%s:</td>", _("To"));
   if (!ce.to && !ce.from) {
@@ -10577,7 +10578,7 @@ unpriv_view_clar(FILE *fout,
   } else if (!ce.to) {
     fprintf(fout, "<td class=\"b0\"><b>%s</b></td>", _("judges"));
   } else {
-    fprintf(fout, "<td class=\"b0\">%s</td>", teamdb_get_name(cs->teamdb_state, ce.to));
+    fprintf(fout, "<td class=\"b0\">%s</td>", ARMOR(teamdb_get_name(cs->teamdb_state, ce.to)));
   }
   fprintf(fout, "</tr>\n");
   fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>", _("Subject"), html_subj);
@@ -10599,6 +10600,7 @@ unpriv_view_clar(FILE *fout,
   if (log_f) close_memstream(log_f);
   xfree(log_txt);
   xfree(clar_text);
+  html_armor_free(&ab);
 }
 
 static void

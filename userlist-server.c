@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3248,6 +3248,9 @@ cmd_team_check_cookie(
   int orig_contest_id = 0;
   const unsigned char *name = 0;
   int locale_id;
+  const unsigned char *user_login = 0;
+  int user_id = 0;
+  int need_touch_login_time = 0;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -3290,6 +3293,8 @@ cmd_team_check_cookie(
     send_reply(p, -ULS_ERR_DB_ERROR);
     return;
   }
+  user_login = u->login;
+  user_id = u->id;
   if (ui) name = ui->name;
   if (!name || !*name) name = u->login;
   if (!name) name = "";
@@ -3334,7 +3339,7 @@ cmd_team_check_cookie(
   }
   locale_id = cookie->locale_id;
   if (!cookie->team_login) {
-    default_touch_login_time(cookie->user_id, orig_contest_id, current_time);
+    need_touch_login_time = 1;
   }
   default_set_cookie_team_login(cookie, 1);
   if (!c) {
@@ -3354,7 +3359,7 @@ cmd_team_check_cookie(
     return;
   }
 
-  login_len = strlen(u->login);
+  login_len = strlen(user_login);
   name_len = strlen(name);
   out_size = sizeof(*out) + login_len + name_len + 2;
   out = alloca(out_size);
@@ -3363,15 +3368,15 @@ cmd_team_check_cookie(
   name_ptr = login_ptr + login_len + 1;
   out->cookie = data->cookie;
   out->reply_id = ULS_LOGIN_COOKIE;
-  out->user_id = u->id;
+  out->user_id = user_id;
   out->contest_id = orig_contest_id;
   out->locale_id = locale_id;
   out->login_len = login_len;
   out->name_len = name_len;
-  strcpy(login_ptr, u->login);
+  strcpy(login_ptr, user_login);
   strcpy(name_ptr, name);
   
-  p->user_id = u->id;
+  p->user_id = user_id;
   p->contest_id = orig_contest_id;
   p->cnts_login = 1;
   p->ip = data->origin_ip;
@@ -3379,7 +3384,10 @@ cmd_team_check_cookie(
   p->cookie = data->cookie;
   enqueue_reply_to_client(p, out_size, out);
   if (!daemon_mode) {
-    CONN_INFO("%s -> ok, %d, %s, %llu us", logbuf, u->id, u->login, tsc2);
+    CONN_INFO("%s -> ok, %d, %s, %llu us", logbuf, user_id, user_login, tsc2);
+  }
+  if (need_touch_login_time) {
+    default_touch_login_time(cookie->user_id, orig_contest_id, current_time);
   }
 }
 
@@ -3746,13 +3754,13 @@ cmd_priv_cookie_login(struct client_state *p,
   */
 
   enqueue_reply_to_client(p, out_size, out);
-  default_touch_login_time(out->user_id, 0, cur_time);
   if (daemon_mode) {
     info("%s -> OK, %d, %llx", logbuf, out->user_id, out->cookie);
   } else {
     info("%s -> %d,%s,%llx, time = %llu us", logbuf,
          out->user_id, login_ptr, out->cookie, tsc2);
   }
+  default_touch_login_time(out->user_id, 0, cur_time);
 }
 
 static void
@@ -7294,7 +7302,7 @@ cmd_get_cookie(struct client_state *p,
   time_t current_time = time(0);
   ej_tsc_t tsc1, tsc2;
   unsigned char logbuf[1024];
-  unsigned char *user_name = 0;
+  unsigned char *user_name = 0, *user_login = 0;
   int new_contest_id = 0;
   const unsigned char *errmsg = 0;
   int errcode = 0;
@@ -7303,6 +7311,8 @@ cmd_get_cookie(struct client_state *p,
   int cookie_priv_level;
   int cookie_role;
   int cookie_team_login;
+  int user_id = 0;
+  int need_touch_login_time = 0;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -7342,6 +7352,8 @@ cmd_get_cookie(struct client_state *p,
   if (default_get_user_info_3(cookie->user_id, new_contest_id, &u, &ui, &c) < 0
       || !u)
     FAIL(ULS_ERR_DB_ERROR, "database error");
+  user_login = u->login;
+  user_id = cookie->user_id;
 
   if (config->disable_cookie_ip_check <= 0) {
     if (cookie->ip != data->origin_ip || cookie->ssl != data->ssl)
@@ -7370,12 +7382,12 @@ cmd_get_cookie(struct client_state *p,
       FAIL(ULS_ERR_CANNOT_PARTICIPATE, "NOT ALLOWED");
     if ((c->flags & USERLIST_UC_INCOMPLETE))
       FAIL(ULS_ERR_INCOMPLETE_REG, "INCOMPLETE REGISTRATION");
+    if (ui) user_name = ui->name;
     if (!cookie->team_login) {
-      default_touch_login_time(cookie->user_id, cookie_contest_id, 0);
+      need_touch_login_time = 1;
     }
     default_set_cookie_team_login(cookie, 1);
     cookie_team_login = 1;
-    if (ui) user_name = ui->name;
     break;
   case ULS_PRIV_GET_COOKIE:
     if (cookie->priv_level <= 0 && cookie->role <= 0)
@@ -7385,7 +7397,7 @@ cmd_get_cookie(struct client_state *p,
   case ULS_FETCH_COOKIE:
     break;
   }
-  if (!user_name) user_name = u->login;
+  if (!user_name) user_name = user_login;
   if (!user_name) user_name = "";
 
   /*
@@ -7393,7 +7405,7 @@ cmd_get_cookie(struct client_state *p,
     FAIL(ULS_ERR_NO_COOKIE, "no such cookie");
   */
 
-  login_len = strlen(u->login);
+  login_len = strlen(user_login);
   name_len = strlen(user_name);
   out_size = sizeof(*out) + login_len + name_len;
   out = alloca(out_size);
@@ -7402,7 +7414,7 @@ cmd_get_cookie(struct client_state *p,
   name_ptr = login_ptr + login_len + 1;
   out->cookie = data->cookie;
   out->reply_id = ULS_LOGIN_COOKIE;
-  out->user_id = u->id;
+  out->user_id = user_id;
   out->contest_id = cookie_contest_id;
   out->locale_id = cookie_locale_id;
   out->login_len = login_len;
@@ -7415,17 +7427,20 @@ cmd_get_cookie(struct client_state *p,
     out->reg_status = c->status;
     out->reg_flags = c->flags;
   }
-  strcpy(login_ptr, u->login);
+  strcpy(login_ptr, user_login);
   strcpy(name_ptr, user_name);
   
   enqueue_reply_to_client(p, out_size, out);
 
   /*
   if (!daemon_mode) {
-    CONN_INFO("%s -> OK, %d, %s, %d, %llu us", logbuf, u->id, u->login,
+    CONN_INFO("%s -> OK, %d, %s, %d, %llu us", logbuf, user_id, user_login,
               out->contest_id, tsc2);
   }
   */
+  if (need_touch_login_time) {
+    default_touch_login_time(user_id, cookie_contest_id, 0);
+  }
   return;
 
  fail:

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -405,7 +405,7 @@ ns_write_priv_all_runs(FILE *f,
         fprintf(f, "<td%s><a href=\"%s\">%s</a></td>", cl,
                 ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USER_INFO,
                        "user_id=%d", pe->user_id),
-                teamdb_get_name_2(cs->teamdb_state, pe->user_id));
+                ARMOR(teamdb_get_name_2(cs->teamdb_state, pe->user_id)));
 
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         fprintf(f, "<td%s>&nbsp;</td>", cl);
@@ -477,8 +477,8 @@ ns_write_priv_all_runs(FILE *f,
       fprintf(f, "<td%s>%u</td>", cl, pe->size);
       fprintf(f, "<td%s>%s</td>", cl, xml_unparse_ip(pe->a.ip));
       fprintf(f, "<td%s>%d</td>", cl, pe->user_id);
-      fprintf(f, "<td%s>%s</td>", cl, teamdb_get_name_2(cs->teamdb_state,
-                                                        pe->user_id));
+      fprintf(f, "<td%s>%s</td>", cl,
+              ARMOR(teamdb_get_name_2(cs->teamdb_state, pe->user_id)));
       prob_type = 0;
       if (pe->prob_id > 0 && pe->prob_id <= cs->max_prob
           && cs->probs[pe->prob_id]) {
@@ -885,10 +885,10 @@ ns_write_all_clars(
         fprintf(f, "<td%s><b>%s</b></td>", cl, _("judges"));
       else
         fprintf(f, "<td%s><b>%s</b> (%s)</td>", cl, _("judges"),
-                teamdb_get_name_2(cs->teamdb_state, clar.j_from));
+                ARMOR(teamdb_get_name_2(cs->teamdb_state, clar.j_from)));
     } else {
       fprintf(f, "<td%s>%s</td>", cl,
-              teamdb_get_name_2(cs->teamdb_state, clar.from));
+              ARMOR(teamdb_get_name_2(cs->teamdb_state, clar.from)));
     }
     if (!clar.to && !clar.from) {
       fprintf(f, "<td%s><b>%s</b></td>", cl, _("all"));
@@ -896,7 +896,7 @@ ns_write_all_clars(
       fprintf(f, "<td%s><b>%s</b></td>", cl, _("judges"));
     } else {
       fprintf(f, "<td%s>%s</td>", cl,
-              teamdb_get_name_2(cs->teamdb_state, clar.to));
+              ARMOR(teamdb_get_name_2(cs->teamdb_state, clar.to)));
     }
     fprintf(f, "<td%s>%s</td>", cl, ARMOR(clar_subj));
     fprintf(f, "<td%s><a href=\"%s\">%s</a></td>", cl,
