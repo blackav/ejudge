@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1145,6 +1145,7 @@ do_write_kirov_standings(
   int last_col_ind = -1;
   char *encode_txt = 0;
   size_t encode_len = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if (client_flag) head_style = cnts->team_head_style;
   else head_style = "h2";
@@ -1779,7 +1780,7 @@ do_write_kirov_standings(
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", stand_get_name(state, runs[last_success_run].user_id));
+        fprintf(f, "%s", ARMOR(stand_get_name(state, runs[last_success_run].user_id)));
         if (global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -1816,7 +1817,7 @@ do_write_kirov_standings(
                           NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", stand_get_name(state, runs[last_submit_run].user_id));
+        fprintf(f, "%s", ARMOR(stand_get_name(state, runs[last_submit_run].user_id)));
         if (global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -1964,7 +1965,7 @@ do_write_kirov_standings(
                       NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
       fprintf(f, "<a href=\"%s\">", dur_str);
     }
-    fprintf(f, "%s", stand_get_name(state, t_ind[t]));
+    fprintf(f, "%s", ARMOR(stand_get_name(state, t_ind[t])));
     if (global->team_info_url[0]) {
       fprintf(f, "</a>");
     }
@@ -2280,6 +2281,7 @@ do_write_kirov_standings(
   xfree(trans_num);
   xfree(cf_num);
   xfree(penalty);
+  html_armor_free(&ab);
 }
 
 static int
@@ -2449,6 +2451,7 @@ do_write_moscow_standings(
   struct sformat_extra_data fed;
   char *encode_txt = 0;
   size_t encode_len = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   
   if (client_flag) head_style = cnts->team_head_style;
   else head_style = "h2";
@@ -2895,7 +2898,7 @@ do_write_moscow_standings(
                           NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", stand_get_name(state, runs[last_success_run].user_id));
+        fprintf(f, "%s", ARMOR(stand_get_name(state, runs[last_success_run].user_id)));
         if (global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -2935,7 +2938,7 @@ do_write_moscow_standings(
                           NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", stand_get_name(state, runs[last_submit_run].user_id));
+        fprintf(f, "%s", ARMOR(stand_get_name(state, runs[last_submit_run].user_id)));
         if (global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -3045,7 +3048,7 @@ do_write_moscow_standings(
                       NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
       fprintf(f, "<a href=\"%s\">", strbuf);
     }
-    fprintf(f, "%s", stand_get_name(state, u_ind[u]));
+    fprintf(f, "%s", ARMOR(stand_get_name(state, u_ind[u])));
     if (global->team_info_url[0]) {
       fprintf(f, "</a>");
     }
@@ -3268,6 +3271,7 @@ do_write_moscow_standings(
   xfree(up_totatt);
   xfree(up_time);
   xfree(up_pen);
+  html_armor_free(&ab);
 }
 
 /*
@@ -3343,6 +3347,7 @@ do_write_standings(
   unsigned char *trans_flag = 0;
   unsigned char *disq_flag = 0;
   unsigned char *cf_flag = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if (cur_time <= 0) cur_time = time(0);
   if (!only_table_flag) {
@@ -3648,7 +3653,7 @@ do_write_standings(
                         NULL, NULL, NULL, NULL, &ttt, ttt.user, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_buf);      
       }
-      fprintf(f, "%s", stand_get_name(state, runs[last_success_run].user_id));
+      fprintf(f, "%s", ARMOR(stand_get_name(state, runs[last_success_run].user_id)));
       if (global->team_info_url[0]) {
         fprintf(f, "</a>");
       }
@@ -3768,7 +3773,7 @@ do_write_standings(
                         NULL, NULL, NULL, NULL, &ttt, ttt.user, 0, 0);
         fprintf(f, "<a href=\"%s\">", url_str);      
       }
-      fprintf(f, "%s", stand_get_name(state, t_ind[t]));
+      fprintf(f, "%s", ARMOR(stand_get_name(state, t_ind[t])));
       if (global->team_info_url[0]) {
         fprintf(f, "</a>");
       }
@@ -3936,6 +3941,7 @@ do_write_standings(
   xfree(trans_flag);
   xfree(disq_flag);
   xfree(cf_flag);
+  html_armor_free(&ab);
 }
 
 void
@@ -4117,8 +4123,8 @@ do_write_public_log(const serve_state_t state,
     fputs("<tr>", f);
     fprintf(f, "<td>%d</td>", i);
     fprintf(f, "<td>%s</td>", durstr);
-    fprintf(f, "<td>%s</td>", teamdb_get_name_2(state->teamdb_state,
-                                                pe->user_id));
+    fprintf(f, "<td>%s</td>",
+            ARMOR(teamdb_get_name_2(state->teamdb_state, pe->user_id)));
     if (state->probs[pe->prob_id]) {
       if (state->probs[pe->prob_id]->variant_num > 0) {
         int variant = pe->variant;
