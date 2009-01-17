@@ -5229,7 +5229,7 @@ ns_write_user_problems_summary(
     } else {
       fprintf(fout, "<td%s>", cl);
       if (global->prob_info_url[0]) {
-        sformat_message(url_buf, sizeof(url_buf), global->prob_info_url,
+        sformat_message(url_buf, sizeof(url_buf), 0, global->prob_info_url,
                         NULL, cur_prob, NULL, NULL, NULL, 0, 0, 0);
         fprintf(fout, "<a href=\"%s\" target=\"_blank\">", url_buf);
       }

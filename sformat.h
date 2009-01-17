@@ -3,7 +3,7 @@
 #ifndef __SFORMAT_H__
 #define __SFORMAT_H__
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -38,7 +38,7 @@ struct sformat_extra_data
   int variant;
 };
 
-int sformat_message(char *, size_t, char const *,
+int sformat_message(char *, size_t, int, char const *,
                     const struct section_global_data *glob_data,
                     const struct section_problem_data *prob_data,
                     const struct section_language_data *lang_data,
