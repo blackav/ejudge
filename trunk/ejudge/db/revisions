@@ -4430,3 +4430,17 @@ super_html_4.c 5538 0 18516960
 uldb_plugin_xml.c 5538 0 7169341
 vcs.c 5538 0 428549
 plugins/mysql-userlist/uldb_mysql.c 5534 0 9680401
+userlist-server.c 5542 0 22668029
+html.c 5542 0 12680646
+new_server_html.c 5542 0 37884142
+new_server_html_2.c 5542 0 14420302
+sformat.h 5543 0 138016
+userlist-server.c 5543 0 22704099
+copyright.c 5543 0 202352
+html.c 5543 0 12684107
+new_server_html.c 5543 0 37884363
+new_server_html_2.c 5543 0 14420442
+prepare.c 5543 0 16562156
+reports.c 5543 0 8851435
+serve_2.c 5543 0 8032485
+sformat.c 5543 0 1812689
