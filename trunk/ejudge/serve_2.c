@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -959,7 +959,7 @@ serve_compile_request(
   int prio = 0;
 
   if (prob->source_header[0]) {
-    sformat_message(tmp_path, sizeof(tmp_path), prob->source_header,
+    sformat_message(tmp_path, sizeof(tmp_path), 0, prob->source_header,
                     global, prob, lang, 0, 0, 0, 0, 0);
     if (os_IsAbsolutePath(tmp_path))
       snprintf(tmp_path_2, sizeof(tmp_path_2), "%s", tmp_path);
@@ -971,7 +971,7 @@ serve_compile_request(
       goto failed;
   }
   if (prob->source_footer[0]) {
-    sformat_message(tmp_path, sizeof(tmp_path), prob->source_footer,
+    sformat_message(tmp_path, sizeof(tmp_path), 0, prob->source_footer,
                     global, prob, lang, 0, 0, 0, 0, 0);
     if (os_IsAbsolutePath(tmp_path))
       snprintf(tmp_path_2, sizeof(tmp_path_2), "%s", tmp_path);

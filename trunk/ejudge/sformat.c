@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2001-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,7 @@
 #include "prepare.h"
 #include "teamdb.h"
 #include "userlist.h"
+#include "misctext.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/number_io.h>
@@ -34,6 +35,8 @@
 #if defined __GNUC__ && defined __MINGW32__
 #include <malloc.h>
 #endif
+
+#define ARMOR(s)  html_armor_buf(&ab, (s))
 
 /**
  * Valid format conversions as follows:
@@ -138,15 +141,19 @@
  */
 
 int
-sformat_message(char *buf, size_t maxsize, char const *format,
-                const struct section_global_data *glob_data,
-                const struct section_problem_data *prob_data,
-                const struct section_language_data *lang_data,
-                const struct section_tester_data *tester_data,
-                const struct teamdb_export *team_data,
-                const struct userlist_user *user_data,
-                const struct contest_desc *cnts_data,
-                const struct sformat_extra_data *extra_data)
+sformat_message(
+        char *buf,
+        size_t maxsize,
+        int html_escape_flag,
+        char const *format,
+        const struct section_global_data *glob_data,
+        const struct section_problem_data *prob_data,
+        const struct section_language_data *lang_data,
+        const struct section_tester_data *tester_data,
+        const struct teamdb_export *team_data,
+        const struct userlist_user *user_data,
+        const struct contest_desc *cnts_data,
+        const struct sformat_extra_data *extra_data)
 {
   char const *pf = format;
   char const *specstart = 0;
@@ -180,6 +187,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
   size_t  sbufsize = 16;
   const struct userlist_user_info *ui = 0;
   const struct userlist_user_info *tui = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if (user_data) {
     if (cnts_data && cnts_data->id > 0
@@ -560,6 +568,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           default:
             abort();
           }
+          if (html_escape_flag && papp) papp = ARMOR(papp);
           pf++;
         }
         break;
@@ -707,6 +716,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
             abort();
           }
           if (!need_int_format && !papp) papp = "";
+          if (html_escape_flag && papp) papp = ARMOR(papp);
           break;
         }
 
@@ -778,6 +788,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
         }
         pf++;
         if (!int_format_value && !papp) papp = "";
+        if (html_escape_flag && papp) papp = ARMOR(papp);
         break;
       case 'C':
         pf++;
@@ -1025,6 +1036,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
   } else if (maxsize != 0) {
     *out = 0;
   }
+  html_armor_free(&ab);
   return used;
 }
 

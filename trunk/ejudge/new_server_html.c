@@ -80,7 +80,7 @@
 #define CONF_STYLE_PREFIX "/ejudge/"
 #endif
 
-#define ARMOR(s)  html_armor_buf(&ab, s)
+#define ARMOR(s)  html_armor_buf(&ab, (s))
 #define URLARMOR(s)  url_armor_buf(&ab, s)
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 
@@ -11121,7 +11121,7 @@ unpriv_page_header(FILE *fout,
             memset(&fe, 0, sizeof(fe));
             fe.locale_id = phr->locale_id;
             fe.sid = phr->session_id;
-            sformat_message(stand_url_buf, sizeof(stand_url_buf),
+            sformat_message(stand_url_buf, sizeof(stand_url_buf), 0,
                             cnts->standings_url, global, 0, 0, 0, &tdb,
                             tdb.user, cnts, &fe);
             forced_url = stand_url_buf;

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2843,7 +2843,7 @@ set_defaults(serve_state_t state, int mode)
 
     /* parse XML here */
     if (!prob->xml_file[0] && si != -1 && aprob->xml_file[0]) {
-      sformat_message(prob->xml_file, sizeof(prob->xml_file),
+      sformat_message(prob->xml_file, sizeof(prob->xml_file), 0,
                       aprob->xml_file, 0, prob, 0, 0, 0, 0, 0, 0);
     }
     if (prob->xml_file[0]) {
@@ -3024,7 +3024,7 @@ set_defaults(serve_state_t state, int mode)
     if (mode == PREPARE_SERVE) {
       if (!prob->statement_file[0] && si != -1
           && aprob->statement_file[0]) {
-        sformat_message(prob->statement_file, PATH_MAX, aprob->statement_file,
+        sformat_message(prob->statement_file, PATH_MAX,0,aprob->statement_file,
                         NULL, prob, NULL, NULL, NULL, 0, 0, 0);
       }
       if (prob->statement_file[0]) {
@@ -3033,7 +3033,7 @@ set_defaults(serve_state_t state, int mode)
 
       if (!prob->alternatives_file[0] && si != -1
           && aprob->alternatives_file[0]) {
-        sformat_message(prob->alternatives_file, PATH_MAX,
+        sformat_message(prob->alternatives_file, PATH_MAX, 0,
                         aprob->alternatives_file,
                         NULL, prob, NULL, NULL, NULL, 0, 0, 0);
       }
@@ -3043,7 +3043,7 @@ set_defaults(serve_state_t state, int mode)
 
       if (!prob->plugin_file[0] && si != -1
           && aprob->plugin_file[0]) {
-        sformat_message(prob->plugin_file, PATH_MAX, aprob->plugin_file,
+        sformat_message(prob->plugin_file, PATH_MAX, 0, aprob->plugin_file,
                         NULL, prob, NULL, NULL, NULL, 0, 0, 0);
       }
       if (prob->plugin_file[0]) {
@@ -3055,7 +3055,7 @@ set_defaults(serve_state_t state, int mode)
 
     if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
       if (!prob->test_dir[0] && si != -1 && aprob->test_dir[0]) {
-        sformat_message(prob->test_dir, PATH_MAX, aprob->test_dir,
+        sformat_message(prob->test_dir, PATH_MAX, 0, aprob->test_dir,
                         NULL, prob, NULL, NULL, NULL, 0, 0, 0);
         vinfo("problem.%s.test_dir taken from problem.%s ('%s')",
              ish, sish, prob->test_dir);
@@ -3068,7 +3068,7 @@ set_defaults(serve_state_t state, int mode)
       vinfo("problem.%s.test_dir is '%s'", ish, prob->test_dir);
 
       if (!prob->corr_dir[0] && si != -1 && aprob->corr_dir[0]) {
-        sformat_message(prob->corr_dir, PATH_MAX, aprob->corr_dir,
+        sformat_message(prob->corr_dir, PATH_MAX, 0, aprob->corr_dir,
                         NULL, prob, NULL, NULL, NULL, 0, 0, 0);
         vinfo("problem.%s.corr_dir taken from problem.%s ('%s')",
              ish, sish, prob->corr_dir);
@@ -3082,7 +3082,7 @@ set_defaults(serve_state_t state, int mode)
 
       if (!prob->info_dir[0] && si != -1
           && prob->use_info && aprob->info_dir[0]) {
-        sformat_message(prob->info_dir, PATH_MAX, aprob->info_dir,
+        sformat_message(prob->info_dir, PATH_MAX, 0, aprob->info_dir,
                         NULL, prob, NULL, NULL, NULL, 0, 0, 0);
         vinfo("problem.%s.info_dir taken from problem.%s ('%s')",
              ish, sish, prob->info_dir);
@@ -3106,7 +3106,7 @@ set_defaults(serve_state_t state, int mode)
       }
 
       if (!prob->tgz_dir[0] && si != -1 && prob->use_tgz && aprob->tgz_dir[0]) {
-        sformat_message(prob->tgz_dir, PATH_MAX, aprob->tgz_dir,
+        sformat_message(prob->tgz_dir, PATH_MAX, 0, aprob->tgz_dir,
                         NULL, prob, NULL, NULL, NULL, 0, 0, 0);
         vinfo("problem.%s.tgz_dir taken from problem.%s ('%s')",
              ish, sish, prob->tgz_dir);
@@ -3124,7 +3124,7 @@ set_defaults(serve_state_t state, int mode)
 
     if (mode == PREPARE_RUN) {
       if (!prob->input_file[0] && si != -1 && aprob->input_file[0]) {
-        sformat_message(prob->input_file, PATH_MAX, aprob->input_file,
+        sformat_message(prob->input_file, PATH_MAX, 0, aprob->input_file,
                         NULL, prob, NULL, NULL, NULL, 0, 0, 0);
         vinfo("problem.%s.input_file inherited from problem.%s ('%s')",
              ish, sish, prob->input_file);
@@ -3135,7 +3135,7 @@ set_defaults(serve_state_t state, int mode)
                  "%s", DFLT_P_INPUT_FILE);
       }
       if (!prob->output_file[0] && si != -1 && aprob->output_file[0]) {
-        sformat_message(prob->output_file, PATH_MAX, aprob->output_file,
+        sformat_message(prob->output_file, PATH_MAX, 0, aprob->output_file,
                         NULL, prob, NULL, NULL, NULL, 0, 0, 0);
         vinfo("problem.%s.output_file inherited from problem.%s ('%s')",
              ish, sish, prob->output_file);
@@ -3247,7 +3247,7 @@ set_defaults(serve_state_t state, int mode)
 
       if (mode == PREPARE_RUN) {
         if (!tp->check_dir[0] && atp && atp->check_dir[0]) {
-          sformat_message(tp->check_dir, PATH_MAX, atp->check_dir,
+          sformat_message(tp->check_dir, PATH_MAX, 0, atp->check_dir,
                           g, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
         }
@@ -3264,7 +3264,7 @@ set_defaults(serve_state_t state, int mode)
 
       if (mode == PREPARE_SERVE) {
         if (!tp->run_dir[0] && atp && atp->run_dir[0]) {
-          sformat_message(tp->run_dir, PATH_MAX, atp->run_dir,
+          sformat_message(tp->run_dir, PATH_MAX, 0, atp->run_dir,
                           g, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
           vinfo("tester.%d.run_dir inherited from tester.%s ('%s')",
@@ -3431,7 +3431,7 @@ set_defaults(serve_state_t state, int mode)
         tp->ignore_stderr = 0;
       }
       if (!tp->errorcode_file[0] && atp && atp->errorcode_file) {
-        sformat_message(tp->errorcode_file, PATH_MAX, atp->errorcode_file,
+        sformat_message(tp->errorcode_file, PATH_MAX, 0, atp->errorcode_file,
                         g, state->probs[tp->problem], NULL,
                         tp, NULL, 0, 0, 0);
         vinfo("tester.%d.errorcode_file inherited from tester.%s ('%s')",
@@ -3467,7 +3467,7 @@ set_defaults(serve_state_t state, int mode)
 
       if (mode == PREPARE_RUN) {
         if (!tp->error_file[0] && atp && atp->error_file[0]) {
-          sformat_message(tp->error_file, PATH_MAX, atp->error_file,
+          sformat_message(tp->error_file, PATH_MAX, 0, atp->error_file,
                           g, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
           vinfo("tester.%d.error_file inherited from tester.%s ('%s')",
@@ -3485,7 +3485,7 @@ set_defaults(serve_state_t state, int mode)
           tp->standard_checker_used = 1;
         }
         if (!tp->check_cmd[0] && atp && atp->check_cmd[0]) {
-          sformat_message(tp->check_cmd, PATH_MAX, atp->check_cmd,
+          sformat_message(tp->check_cmd, PATH_MAX, 0, atp->check_cmd,
                           g, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
           vinfo("tester.%d.check_cmd inherited from tester.%s ('%s')",
@@ -3501,7 +3501,7 @@ set_defaults(serve_state_t state, int mode)
         pathmake2(state->testers[i]->check_cmd, g->checker_dir, "/",
                   state->testers[i]->check_cmd, NULL);
         if (!tp->start_cmd[0] && atp && atp->start_cmd[0]) {
-          sformat_message(tp->start_cmd, PATH_MAX, atp->start_cmd,
+          sformat_message(tp->start_cmd, PATH_MAX, 0, atp->start_cmd,
                           g, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
           vinfo("tester.%d.start_cmd inherited from tester.%s ('%s')",
@@ -3532,7 +3532,7 @@ set_defaults(serve_state_t state, int mode)
         }
 
         if (!tp->prepare_cmd[0] && atp && atp->prepare_cmd[0]) {
-          sformat_message(tp->prepare_cmd, PATH_MAX, atp->prepare_cmd,
+          sformat_message(tp->prepare_cmd, PATH_MAX, 0, atp->prepare_cmd,
                           g, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
           vinfo("tester.%d.prepare_cmd inherited from tester.%s ('%s')",
@@ -4024,7 +4024,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   /* copy check_dir */
   strcpy(out->check_dir, tp->check_dir);
   if (!out->check_dir[0] && atp && atp->check_dir[0]) {
-    sformat_message(out->check_dir, sizeof(out->check_dir),
+    sformat_message(out->check_dir, sizeof(out->check_dir), 0,
                     atp->check_dir, state->global,
                     prb, NULL, out, NULL, 0, 0, 0);
   }
@@ -4219,7 +4219,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   /* copy errorcode_file */
   strcpy(out->errorcode_file, tp->errorcode_file);
   if (!out->errorcode_file[0] && atp && atp->errorcode_file[0]) {
-    sformat_message(out->errorcode_file, sizeof(out->errorcode_file),
+    sformat_message(out->errorcode_file, sizeof(out->errorcode_file), 0,
                     atp->errorcode_file, state->global, prb, NULL,
                     out, NULL, 0, 0, 0);
   }
@@ -4227,7 +4227,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   /* copy error_file */
   strcpy(out->error_file, tp->error_file);
   if (!out->error_file[0] && atp && atp->error_file[0]) {
-    sformat_message(out->error_file, sizeof(out->error_file),
+    sformat_message(out->error_file, sizeof(out->error_file), 0,
                     atp->error_file, state-> global, prb, NULL, out,
                     NULL, 0, 0, 0);
   }
@@ -4245,7 +4245,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   } else {
     strcpy(out->check_cmd, tp->check_cmd);
     if (!out->check_cmd[0] && atp && atp->check_cmd[0]) {
-      sformat_message(out->check_cmd, sizeof(out->check_cmd),
+      sformat_message(out->check_cmd, sizeof(out->check_cmd), 0,
                       atp->check_cmd, state->global, prb, NULL, out,
                       NULL, 0, 0, 0);
     }
@@ -4271,7 +4271,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   /* copy start_cmd */
   strcpy(out->start_cmd, tp->start_cmd);
   if (!out->start_cmd[0] && atp && atp->start_cmd[0]) {
-    sformat_message(out->start_cmd, sizeof(out->start_cmd),
+    sformat_message(out->start_cmd, sizeof(out->start_cmd), 0,
                     atp->start_cmd, state->global, prb, NULL, out, NULL,
                     0, 0, 0);
   }
@@ -4302,7 +4302,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   /* copy prepare_cmd */
   strcpy(out->prepare_cmd, tp->prepare_cmd);
   if (!out->prepare_cmd[0] && atp && atp->prepare_cmd[0]) {
-    sformat_message(out->prepare_cmd, sizeof(out->prepare_cmd),
+    sformat_message(out->prepare_cmd, sizeof(out->prepare_cmd), 0,
                     atp->prepare_cmd, state->global, prb, NULL, out,
                     NULL, 0, 0, 0);
   }
@@ -5181,7 +5181,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
 
   case CNTSPROB_input_file:
     if (!out->input_file[0] && abstr && abstr->input_file[0]) {
-      sformat_message(out->input_file, PATH_MAX, abstr->input_file,
+      sformat_message(out->input_file, PATH_MAX, 0, abstr->input_file,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
     if (!out->input_file[0]) {
@@ -5191,7 +5191,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
 
   case CNTSPROB_output_file:
     if (!out->output_file[0] && abstr && abstr->output_file[0]) {
-      sformat_message(out->output_file, PATH_MAX, abstr->output_file,
+      sformat_message(out->output_file, PATH_MAX, 0, abstr->output_file,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
     if (!out->output_file[0]) {
@@ -5217,7 +5217,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
 
   case CNTSPROB_test_dir:
     if (!out->test_dir[0] && abstr && abstr->test_dir[0]) {
-      sformat_message(out->test_dir, PATH_MAX, abstr->test_dir,
+      sformat_message(out->test_dir, PATH_MAX, 0, abstr->test_dir,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
     if (!out->test_dir[0]) {
@@ -5230,7 +5230,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
 
   case CNTSPROB_corr_dir:
     if (!out->corr_dir[0] && abstr && abstr->corr_dir[0]) {
-      sformat_message(out->corr_dir, PATH_MAX, abstr->corr_dir,
+      sformat_message(out->corr_dir, PATH_MAX, 0, abstr->corr_dir,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
     if (global && out->corr_dir[0]) {
@@ -5240,7 +5240,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
 
   case CNTSPROB_info_dir:
     if (!out->info_dir[0] && abstr && abstr->info_dir[0]) {
-      sformat_message(out->info_dir, PATH_MAX, abstr->info_dir,
+      sformat_message(out->info_dir, PATH_MAX, 0, abstr->info_dir,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
     if (!out->info_dir[0]) {
@@ -5253,7 +5253,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
 
   case CNTSPROB_tgz_dir:
     if (!out->tgz_dir[0] && abstr && abstr->tgz_dir[0]) {
-      sformat_message(out->tgz_dir, PATH_MAX, abstr->tgz_dir,
+      sformat_message(out->tgz_dir, PATH_MAX, 0, abstr->tgz_dir,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
     if (!out->tgz_dir[0]) {
@@ -5380,7 +5380,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
 
   case CNTSPROB_check_cmd:
     if (!out->check_cmd[0] && abstr && abstr->check_cmd[0]) {
-      sformat_message(out->check_cmd, PATH_MAX, abstr->check_cmd,
+      sformat_message(out->check_cmd, PATH_MAX, 0, abstr->check_cmd,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
     /*
@@ -5392,7 +5392,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
 
   case CNTSPROB_valuer_cmd:
     if (!out->valuer_cmd[0] && abstr && abstr->valuer_cmd[0]) {
-      sformat_message(out->valuer_cmd, PATH_MAX, abstr->valuer_cmd,
+      sformat_message(out->valuer_cmd, PATH_MAX, 0, abstr->valuer_cmd,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
     if (global && out->valuer_cmd[0]) {
@@ -5402,7 +5402,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
 
   case CNTSPROB_interactor_cmd:
     if (!out->interactor_cmd[0] && abstr && abstr->interactor_cmd[0]) {
-      sformat_message(out->interactor_cmd, PATH_MAX, abstr->interactor_cmd,
+      sformat_message(out->interactor_cmd, PATH_MAX, 0, abstr->interactor_cmd,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
     if (global && out->interactor_cmd[0]) {
@@ -5413,7 +5413,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
 
   case CNTSPROB_statement_file:
     if (!out->statement_file[0] && abstr && abstr->statement_file[0]) {
-      sformat_message(out->statement_file, PATH_MAX, abstr->statement_file,
+      sformat_message(out->statement_file, PATH_MAX, 0, abstr->statement_file,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
     if (global && out->statement_file[0]) {
@@ -5423,7 +5423,8 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
 
   case CNTSPROB_alternatives_file:
     if (!out->alternatives_file[0] && abstr && abstr->alternatives_file[0]) {
-      sformat_message(out->alternatives_file,PATH_MAX, abstr->alternatives_file,
+      sformat_message(out->alternatives_file, PATH_MAX, 0,
+                      abstr->alternatives_file,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
     if (global && out->alternatives_file[0]) {
@@ -5433,7 +5434,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
 
   case CNTSPROB_plugin_file:
     if (!out->plugin_file[0] && abstr && abstr->plugin_file[0]) {
-      sformat_message(out->plugin_file, PATH_MAX, abstr->plugin_file,
+      sformat_message(out->plugin_file, PATH_MAX, 0, abstr->plugin_file,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
     if (global && out->plugin_file[0]) {
@@ -5462,7 +5463,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
 
   case CNTSPROB_xml_file:
     if (!out->xml_file[0] && abstr && abstr->xml_file[0]) {
-      sformat_message(out->xml_file, sizeof(out->xml_file),
+      sformat_message(out->xml_file, sizeof(out->xml_file), 0,
                       abstr->xml_file, 0, out, 0, 0, 0, 0, 0, 0);
     }
     if (global && out->xml_file[0]) {
@@ -6205,7 +6206,7 @@ cntsprob_copy_and_set_default(
             snprintf(d_str, f_size, "%s", (const unsigned char*) i_ptr);
         }
         if (prob_format_set[f_id]) {
-          sformat_message(tmp_buf, sizeof(tmp_buf), d_str,
+          sformat_message(tmp_buf, sizeof(tmp_buf), 0, d_str,
                           gp, dp, NULL, NULL, NULL, NULL, NULL, NULL);
           snprintf(d_str, f_size, "%s", tmp_buf);
         }

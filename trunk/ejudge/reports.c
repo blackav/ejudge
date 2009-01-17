@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -485,7 +485,7 @@ user_report_generate(
 
   if (global->user_exam_protocol_header_file[0]
       && global->user_exam_protocol_header_txt) {
-    sformat_message(bigbuf, sizeof(bigbuf),
+    sformat_message(bigbuf, sizeof(bigbuf), 0,
                     global->user_exam_protocol_header_txt,
                     global, 0, 0, 0, &tdb, tdb.user, cnts, 0);
     fprintf(fout, "%s", bigbuf);
@@ -895,7 +895,7 @@ user_report_generate(
 
   if (global->user_exam_protocol_footer_file[0]
       && global->user_exam_protocol_footer_txt) {
-    sformat_message(bigbuf, sizeof(bigbuf),
+    sformat_message(bigbuf, sizeof(bigbuf), 0,
                     global->user_exam_protocol_footer_txt,
                     global, 0, 0, 0, &tdb, tdb.user, cnts, 0);
     fprintf(fout, "%s", bigbuf);
@@ -1117,7 +1117,7 @@ full_user_report_generate(
 
   if (global->full_exam_protocol_header_file[0]
       && global->full_exam_protocol_header_txt) {
-    sformat_message(bigbuf, sizeof(bigbuf),
+    sformat_message(bigbuf, sizeof(bigbuf), 0,
                     global->full_exam_protocol_header_txt,
                     global, 0, 0, 0, &tdb, tdb.user, cnts, &sf_extra);
     fprintf(fout, "%s", bigbuf);
@@ -1577,7 +1577,7 @@ full_user_report_generate(
 
   if (global->full_exam_protocol_footer_file[0]
       && global->full_exam_protocol_footer_txt) {
-    sformat_message(bigbuf, sizeof(bigbuf),
+    sformat_message(bigbuf, sizeof(bigbuf), 0,
                     global->full_exam_protocol_footer_txt,
                     global, 0, 0, 0, &tdb, tdb.user, cnts, 0);
     fprintf(fout, "%s", bigbuf);
@@ -3164,7 +3164,7 @@ problem_report_generate(
 
   if (global->prob_exam_protocol_header_file[0]
       && global->prob_exam_protocol_header_txt) {
-    sformat_message(bigbuf, sizeof(bigbuf),
+    sformat_message(bigbuf, sizeof(bigbuf), 0,
                     global->prob_exam_protocol_header_txt,
                     global, 0, 0, 0, 0, 0, cnts, 0);
     fprintf(fout, "%s", bigbuf);
@@ -3469,7 +3469,7 @@ problem_report_generate(
 
   if (global->prob_exam_protocol_footer_file[0]
       && global->prob_exam_protocol_footer_txt) {
-    sformat_message(bigbuf, sizeof(bigbuf),
+    sformat_message(bigbuf, sizeof(bigbuf), 0,
                     global->prob_exam_protocol_footer_txt,
                     global, 0, 0, 0, 0, 0, cnts, 0);
     fprintf(fout, "%s", bigbuf);
