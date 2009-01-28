@@ -4644,7 +4644,7 @@ ns_write_olympiads_user_runs(
         if (prob && prob->type != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         } else {
-          snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
+          snprintf(tests_buf, sizeof(tests_buf), "%d", re.test - 1);
           report_allowed = 1;
         }
         if (prob && !latest_flag[prob->id]) run_latest = 1;
@@ -4658,7 +4658,7 @@ ns_write_olympiads_user_runs(
         if (prob && prob->type != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         } else {
-          snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
+          snprintf(tests_buf, sizeof(tests_buf), "%d", re.test - 1);
         }
         report_allowed = 1;
         if (prob && !latest_flag[prob->id]) run_latest = 1;
@@ -4675,7 +4675,14 @@ ns_write_olympiads_user_runs(
 
       case RUN_ACCEPTED:
         if (prob && !latest_flag[prob->id]) run_latest = 1;
-        // FALLTHROUGH
+        if (prob && prob->type != PROB_TYPE_STANDARD) {
+          snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
+        } else {
+          snprintf(tests_buf, sizeof(tests_buf), "%d", re.test - 1);
+        }
+        report_allowed = 1;
+        snprintf(score_buf, sizeof(score_buf), "&nbsp;");
+        break;
 
       case RUN_RUN_TIME_ERR:
       case RUN_TIME_LIMIT_ERR:
