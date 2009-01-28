@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1060,6 +1060,8 @@ run_tests(struct section_tester_data *tst,
       // copy exe_path -> output_path
       generic_copy_file(0, NULL, exe_path, "", 0, NULL, output_path, "");
     } else {
+#ifndef __WIN32__
+      // will not support interactive problems for now...
       /* run the interactor */
       if (var_interactor_cmd) {
         // the input file is opened from the test directory
@@ -1104,6 +1106,7 @@ run_tests(struct section_tester_data *tst,
           goto done_this_test;
         }
       }
+#endif
 
       /* run the tested program */
       tsk = task_New();
