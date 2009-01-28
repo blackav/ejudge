@@ -4445,3 +4445,8 @@ reports.c 5543 0 8851435
 serve_2.c 5543 0 8032485
 sformat.c 5543 0 1812689
 new_server_html_2.c 5545 0 14442477
+run.c 5548 0 7576046
+unix/fmemopen.c 5547 0 227469
+win32/fmemopen.c 5546 0 228540
+unix/open_memstream.c 5547 0 252705
+win32/open_memstream.c 5546 0 252728
