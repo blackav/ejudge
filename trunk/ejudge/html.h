@@ -3,7 +3,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -123,7 +123,7 @@ void write_html_run_status(const serve_state_t, FILE *f,
                            int disq_attempts, int prev_successes,
                            const unsigned char *td_class);
 
-int write_xml_testing_report(FILE *f, unsigned char const *txt,
+int write_xml_testing_report(FILE *f, int user_mode, unsigned char const *txt,
                              ej_cookie_t sid,
                              unsigned char const *self_url,
                              unsigned char const *extra_args,

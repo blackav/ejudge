@@ -4,7 +4,7 @@
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -153,6 +153,8 @@ enum
     CONTEST_A_ALLOW_REG_DATA_EDIT,
     CONTEST_A_ENABLE_PASSWORD_RECOVERY,
     CONTEST_A_DISABLE_MEMBER_DELETE,
+    CONTEST_A_SEPARATOR,
+    CONTEST_A_OPTIONS,
 
     CONTEST_LAST_ATTR
   };
@@ -241,6 +243,8 @@ struct contest_field
   int mandatory;
   int id;
   unsigned char *legend;
+  unsigned char *separator;
+  unsigned char *options;
 };
 
 struct contest_ip

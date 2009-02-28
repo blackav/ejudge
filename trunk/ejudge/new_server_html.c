@@ -4585,10 +4585,11 @@ priv_unassign_examiner(
 }
 
 static void
-priv_view_users_page(FILE *fout,
-                     struct http_request_info *phr,
-                     const struct contest_desc *cnts,
-                     struct contest_extra *extra)
+priv_view_users_page(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
 {
   int r;
   unsigned char *xml_text = 0;
@@ -4640,7 +4641,11 @@ priv_view_users_page(FILE *fout,
   snprintf(cl, sizeof(cl), " class=\"b1\"");
 
   html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-  fprintf(fout, "<table%s><tr><th%s>NN</th><th%s>Id</th><th%s>Login</th><th%s>Name</th><th%s>Status</th><th%s>Flags</th><th%s>Reg. date</th><th%s>Login date</th><th%s>No. of submits</th><th%s>Size of submits</th><th%s>Select</th></tr>\n", cl, cl, cl, cl, cl, cl, cl, cl, cl, cl, cl, cl);
+  fprintf(fout, "<table%s><tr><th%s>NN</th><th%s>Id</th><th%s>Login</th><th%s>Name</th><th%s>Status</th><th%s>Flags</th><th%s>Reg. date</th><th%s>Login date</th><th%s>No. of submits</th><th%s>Size of submits</th>", cl, cl, cl, cl, cl, cl, cl, cl, cl, cl, cl);
+  if (global->memoize_user_results > 0) {
+    fprintf(fout, "<th%s>Score</th>", cl);
+  }
+  fprintf(fout, "<th%s>Select</th></tr>\n", cl);
   for (uid = 1; uid < users->user_map_size; uid++) {
     if (!(u = users->user_map[uid])) continue;
     if (!(uc = userlist_get_user_contest(u, new_contest_id))) continue;
@@ -4702,6 +4707,10 @@ priv_view_users_page(FILE *fout,
               cl, run_sizes[uid]);
     } else {
       fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td>", cl, cl);
+    }
+    if (global->memoize_user_results > 0) {
+      fprintf(fout, "<td%s>%d</td>", cl, 
+              serve_get_user_result_score(extra->serve_state, uid));
     }
     fprintf(fout, "<td%s><input type=\"checkbox\" name=\"user_%d\"/></td>",
             cl, uid);
@@ -10441,7 +10450,7 @@ unpriv_view_report(FILE *fout,
                                       phr->session_id, cnts->exam_mode,
                                       phr->self_url, "", "b1");
     } else if (prob->team_show_judge_report) {
-      write_xml_testing_report(fout, rep_start, phr->session_id,
+      write_xml_testing_report(fout, 1, rep_start, phr->session_id,
                                phr->self_url, "", new_actions_vector,"b1","b0");
     } else {
       write_xml_team_testing_report(cs, fout, prob->type != PROB_TYPE_STANDARD,

@@ -114,6 +114,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(enable_auto_print_protocol, "d"),
   GLOBAL_PARAM(notify_clar_reply, "d"),
   GLOBAL_PARAM(notify_status_change, "d"),
+  GLOBAL_PARAM(memoize_user_results, "d"),
 
   GLOBAL_PARAM(stand_ignore_after, "t"),
   GLOBAL_PARAM(appeal_deadline, "t"),

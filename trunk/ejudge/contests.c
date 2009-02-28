@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -269,6 +269,8 @@ char const * const contests_attr_map[] =
   "allow_reg_data_edit",
   "enable_password_recovery",
   "disable_member_delete",
+  "separator",
+  "options",
 
   0
 };
@@ -322,6 +324,8 @@ node_free(struct xml_tree *t)
     {
       struct contest_field *ff = (struct contest_field*) t;
       xfree(ff->legend);
+      xfree(ff->separator);
+      xfree(ff->options);
     }
     break;
   }
@@ -945,6 +949,12 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
             }
             if (xml_attr_bool(a, &pf->mandatory) < 0) return -1;
             if (a->tag == CONTEST_A_OPTIONAL) pf->mandatory = !pf->mandatory;
+            break;
+          case CONTEST_A_SEPARATOR:
+            pf->separator = a->text; a->text = 0;
+            break;
+          case CONTEST_A_OPTIONS:
+            pf->options = a->text; a->text = 0;
             break;
           default:
             return xml_err_attr_not_allowed(t, a);

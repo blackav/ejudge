@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -188,13 +188,16 @@ write_change_status_dialog(const serve_state_t state,
 #define BITS_PER_LONG (8*sizeof(unsigned long)) 
 
 int
-write_xml_testing_report(FILE *f, unsigned char const *txt,
-                         ej_cookie_t sid,
-                         unsigned char const *self_url,
-                         unsigned char const *extra_args,
-                         const int *actions_vector,
-                         const unsigned char *class1,
-                         const unsigned char *class2)
+write_xml_testing_report(
+        FILE *f,
+        int user_mode,
+        unsigned char const *txt,
+        ej_cookie_t sid,
+        unsigned char const *self_url,
+        unsigned char const *extra_args,
+        const int *actions_vector,
+        const unsigned char *class1,
+        const unsigned char *class2)
 {
   testing_report_xml_t r = 0;
   unsigned char *s = 0;
@@ -304,11 +307,17 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
     }
   }
 
-  if (max_cpu_time_tl > 0) {
+  if (r->time_limit_ms > 0 && max_cpu_time_tl) {
+    fprintf(f, "<big>Max. CPU time: &gt;%d.%03d (time-limit exceeded)<br><br></big>\n", r->time_limit_ms / 1000, r->time_limit_ms % 1000);
+  } else if (max_cpu_time_tl > 0) {
     fprintf(f, "<big>Max. CPU time: %d.%03d (time-limit exceeded)<br><br></big>\n", max_cpu_time / 1000, max_cpu_time % 1000);
   } else if (!max_cpu_time_tl) {
     fprintf(f, "<big>Max. CPU time: %d.%03d<br><br></big>\n",
             max_cpu_time / 1000, max_cpu_time % 1000);
+  }
+
+  if (r->host && !user_mode) {
+    fprintf(f, "<big>Tested on host: %s</big>\n", r->host);
   }
 
   if (r->comment) {
@@ -350,13 +359,25 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
     }
     fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n", cl1,
             font_color, run_status_str(t->status, 0, 0, 0, 0));
-    fprintf(f, "<td%s>%d.%03d</td>", cl1, t->time / 1000, t->time % 1000);
-    if (t->real_time > 0) {
-      fprintf(f, "<td%s>%d.%03d</td>", cl1,
-              t->real_time / 1000, t->real_time % 1000);
-    } else {
+    if (user_mode && t->status == RUN_TIME_LIMIT_ERR) {
+      // tell lies about the running time in case of time limit :)
+      if (r->time_limit_ms > 0) {
+        fprintf(f, "<td%s>&gt;%d.%03d</td>", cl1,
+                r->time_limit_ms / 1000, r->time_limit_ms % 1000);
+      } else {
+        fprintf(f, "<td%s>N/A</td>", cl1);
+      }
       fprintf(f, "<td%s>N/A</td>", cl1);
+    } else {
+      fprintf(f, "<td%s>%d.%03d</td>", cl1, t->time / 1000, t->time % 1000);
+      if (t->real_time > 0) {
+        fprintf(f, "<td%s>%d.%03d</td>", cl1,
+                t->real_time / 1000, t->real_time % 1000);
+      } else {
+        fprintf(f, "<td%s>N/A</td>", cl1);
+      }
     }
+
     // extra information
     fprintf(f, "<td%s>", cl1);
     switch (t->status) {
