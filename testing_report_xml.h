@@ -3,7 +3,7 @@
 #ifndef __TESTING_REPORT_XML_H__
 #define __TESTING_REPORT_XML_H__
 
-/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -67,10 +67,13 @@ typedef struct testing_report_xml
   int tests_passed;
   int score;
   int max_score;
+  int time_limit_ms;
+  int real_time_limit_ms;
   unsigned char *comment;       /* additional testing comment */
   unsigned char *valuer_comment;
   unsigned char *valuer_judge_comment;
   unsigned char *valuer_errors;
+  unsigned char *host;
 
   struct testing_report_test **tests;
 } *testing_report_xml_t;

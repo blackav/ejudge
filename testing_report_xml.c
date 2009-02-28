@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,11 +35,12 @@
 #endif /* EJUDGE_CHARSET */
 
 /*
-<testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"]>
+<testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"] [time_limit_ms="T" real_time_limit_ms="T">
   <comment>T</comment>
   <valuer_comment>T</valuer_comment>
   <valuer_judge_comment>T</valuer_judge_comment>
   <valuer_errors>T</valuer_errors>
+  <host>T</host>
   <tests>
     <test num="N" status="O" [exit-code="N"] [term-signal="N"] time="N" real-time="N" [nominal-score="N" score="N"] [comment="S"] [team-comment="S"] [checker-comment="S"] output-available="B" stderr-available="B" checker-output-available="B" args-too-long="B" [input-digest="X"] [correct-digest="X"]>
        [<args>T</args>]
@@ -69,6 +70,7 @@ enum
   TR_T_VALUER_COMMENT,
   TR_T_VALUER_JUDGE_COMMENT,
   TR_T_VALUER_ERRORS,
+  TR_T_HOST,
 
   TR_T_LAST_TAG,
 };
@@ -104,6 +106,8 @@ enum
   TR_A_INPUT_DIGEST,
   TR_A_CORRECT_DIGEST,
   TR_A_INFO_DIGEST,
+  TR_A_TIME_LIMIT_MS,
+  TR_A_REAL_TIME_LIMIT_MS,
 
   TR_A_LAST_ATTR,
 };
@@ -123,6 +127,7 @@ static const char * const elem_map[] =
   [TR_T_VALUER_COMMENT] = "valuer_comment",
   [TR_T_VALUER_JUDGE_COMMENT] = "valuer_judge_comment",
   [TR_T_VALUER_ERRORS] = "valuer_errors",
+  [TR_T_HOST] = "host",
 
   [TR_T_LAST_TAG] = 0,
 };
@@ -158,6 +163,8 @@ static const char * const attr_map[] =
   [TR_A_INPUT_DIGEST] = "input-digest",
   [TR_A_CORRECT_DIGEST] = "correct-digest",
   [TR_A_INFO_DIGEST] = "info-digest",
+  [TR_A_TIME_LIMIT_MS] = "time-limit-ms",
+  [TR_A_REAL_TIME_LIMIT_MS] = "real-time-limit-ms",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -443,6 +450,8 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
   r->tests_passed = -1;
   r->score = -1;
   r->max_score = -1;
+  r->time_limit_ms = -1;
+  r->real_time_limit_ms = -1;
 
   for (a = t->first; a; a = a->next) {
     switch (a->tag) {
@@ -564,6 +573,16 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       a_max_score = a;
       break;
 
+    case TR_A_TIME_LIMIT_MS:
+      if (xml_attr_int(a, &x) < 0) return -1;
+      r->time_limit_ms = x;
+      break;
+
+    case TR_A_REAL_TIME_LIMIT_MS:
+      if (xml_attr_int(a, &x) < 0) return -1;
+      r->real_time_limit_ms = x;
+      break;
+
     default:
       xml_err_attr_not_allowed(t, a);
       return -1;
@@ -659,6 +678,9 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
     case TR_T_VALUER_ERRORS:
       if (xml_leaf_elem(t2, &r->valuer_errors, 1, 1) < 0) return -1;
       break;
+    case TR_T_HOST:
+      if (xml_leaf_elem(t2, &r->host, 1, 1) < 0) return -1;
+      break;
     case TR_T_TESTS:
       if (was_tests) {
         xml_err(t2, "duplicated element <tests>");
@@ -736,6 +758,7 @@ testing_report_free(testing_report_xml_t r)
   xfree(r->valuer_comment); r->valuer_comment = 0;
   xfree(r->valuer_judge_comment); r->valuer_judge_comment = 0;
   xfree(r->valuer_errors); r->valuer_errors = 0;
+  xfree(r->host); r->host = 0;
 
   xfree(r);
   return 0;

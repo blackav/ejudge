@@ -1,7 +1,7 @@
 /* -*- mode: fundamental; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -156,6 +156,8 @@ static void *filter_expr_user_data;
 %token TOK_CURMISSINGSOURCE "curmissingsource"
 %token TOK_JUDGE_ID "judge_id"
 %token TOK_CURJUDGE_ID "curjudge_id"
+%token TOK_TOTAL_SCORE "total_score"
+%token TOK_CURTOTAL_SCORE "curtotal_score"
 %token TOK_INT       "int"
 %token TOK_STRING    "string"
 %token TOK_BOOL      "bool"
@@ -342,6 +344,7 @@ exprA :
 | "judge_id" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "judge_id" { $1->kind = TOK_CURJUDGE_ID; $$ = $1; }
 | "curjudge_id" { $$ = $1; }
+| "total_score" { $1->kind = TOK_CURTOTAL_SCORE; $$ = $1; }
 | "cypher" { $1->kind = TOK_CURCYPHER; $$ = $1; }
 | "cypher" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curcypher" { $$ = $1; }

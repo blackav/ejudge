@@ -3,7 +3,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -82,6 +82,7 @@ unsigned char *unparse_sha1(const void *shabuf);
 
 void allowed_list_parse(
         const unsigned char *str,
+        int separator,
         unsigned char ***pv,
         size_t *pu);
 unsigned char ** allowed_list_free(
@@ -89,6 +90,7 @@ unsigned char ** allowed_list_free(
         size_t u);
 void allowed_list_map(
         const unsigned char *user_langs,
+        int separator,
         unsigned char **pv,
         size_t pu,
         int **pmap);

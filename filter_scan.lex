@@ -1,7 +1,7 @@
 /* -*- mode: fundamental -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -162,6 +162,7 @@ lett    [A-Za-z_]
 "curmissingsource" { TT(TOK_CURMISSINGSOURCE, FILTER_TYPE_BOOL); }
 "judge_id" { TT(TOK_JUDGE_ID, FILTER_TYPE_INT); }
 "curjudge_id" { TT(TOK_CURJUDGE_ID, FILTER_TYPE_INT); }
+"total_score" { TT(TOK_TOTAL_SCORE, FILTER_TYPE_INT); }
 
 "int" { TT(TOK_INT, FILTER_TYPE_INT); }
 "string" { TT(TOK_STRING, FILTER_TYPE_STRING); }

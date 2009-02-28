@@ -3,7 +3,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -208,6 +208,8 @@ struct section_global_data
   ejintbool_t notify_clar_reply;
   /** send status change notification to users */
   ejintbool_t notify_status_change;
+  /** memoize the user results for use in filter expressions */
+  ejintbool_t memoize_user_results;
 
   /** @deprecated the name of the contest */
   unsigned char name[256];

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,6 +25,7 @@
 void
 allowed_list_parse(
         const unsigned char *str,
+        int separator,
         unsigned char ***pv,
         size_t *pu)
 {
@@ -35,12 +36,13 @@ allowed_list_parse(
   unsigned char **v = 0;
   size_t u = 0;
 
+  if (separator <= 0) separator = ',';
   *pv = 0;
   *pu = 0;
   if (!str) return;
 
   for (s = str; *s; s++)
-    if (*s == ',')
+    if (*s == separator)
       u++;
   u++;
 
@@ -48,12 +50,12 @@ allowed_list_parse(
   s = str;
   for (i = 0; i < u && *s;) {
     while (*s && isspace(*s)) s++;
-    if (*s == ',') {
+    if (*s == separator) {
       s++;
       continue;
     }
     if (!*s) break;
-    q = strchr(s, ',');
+    q = strchr(s, separator);
     if (!q) q = s + strlen(s);
     v[i] = p = xmemdup(s, q - s);
     sz = strlen(p);
@@ -89,6 +91,7 @@ allowed_list_free(unsigned char **pv, size_t u)
 void
 allowed_list_map(
         const unsigned char *user_langs,
+        int separator,
         unsigned char **pv,
         size_t pu,
         int **pmap)
@@ -103,7 +106,7 @@ allowed_list_map(
   XCALLOC(map, pu);
   *pmap = map;
 
-  allowed_list_parse(user_langs, &langs, &langs_u);
+  allowed_list_parse(user_langs, separator, &langs, &langs_u);
   if (!langs || !langs_u) return;
   for (i = 0; i < pu; i++) {
     for (j = 0; j < langs_u; j++)

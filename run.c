@@ -305,16 +305,21 @@ unparse_scoring_system(unsigned char *buf, size_t size, int val)
 #define ARMOR(s)  html_armor_buf(&ab, s)
 
 static int
-generate_xml_report(struct run_request_packet *req_pkt,
-                    struct run_reply_packet *reply_pkt,
-                    const unsigned char *report_path,
-                    int variant, int scores, int max_score,
-                    int correct_available_flag,
-                    int info_available_flag,
-                    const unsigned char *additional_comment,
-                    const unsigned char *valuer_comment,
-                    const unsigned char *valuer_judge_comment,
-                    const unsigned char *valuer_errors)
+generate_xml_report(
+        struct run_request_packet *req_pkt,
+        struct run_reply_packet *reply_pkt,
+        const unsigned char *report_path,
+        int variant,
+        int scores,
+        int max_score,
+        int correct_available_flag,
+        int info_available_flag,
+        int report_time_limit_ms,
+        int report_real_time_limit_ms,
+        const unsigned char *additional_comment,
+        const unsigned char *valuer_comment,
+        const unsigned char *valuer_judge_comment,
+        const unsigned char *valuer_errors)
 {
   FILE *f = 0;
   unsigned char buf1[32], buf2[32], buf3[128];
@@ -364,6 +369,12 @@ generate_xml_report(struct run_request_packet *req_pkt,
     }
     fprintf(f, " score=\"%d\" max-score=\"%d\"", reply_pkt->score, max_score);
   }
+  if (report_time_limit_ms > 0) {
+    fprintf(f, " time-limit-ms=\"%d\"", report_time_limit_ms);
+  }
+  if (report_real_time_limit_ms > 0) {
+    fprintf(f, " real-time-limit-ms=\"%d\"", report_real_time_limit_ms);
+  }
   fprintf(f, " >\n");
 
   if (additional_comment) {
@@ -380,6 +391,9 @@ generate_xml_report(struct run_request_packet *req_pkt,
   if (valuer_errors) {
     fprintf(f, "  <valuer_errors>%s</valuer_errors>\n",
             ARMOR(valuer_errors));
+  }
+  if ((msg = os_NodeName())) {
+    fprintf(f, "  <host>%s</host>\n", msg);
   }
 
   fprintf(f, "  <tests>\n");
@@ -844,6 +858,8 @@ run_tests(struct section_tester_data *tst,
   char *valuer_comment = 0;
   char *valuer_judge_comment = 0;
   char *valuer_errors = 0;
+  int report_time_limit_ms = -1;
+  int report_real_time_limit_ms = -1;
 
   int pfd1[2], pfd2[2];
   tpTask tsk_int = 0;
@@ -1213,8 +1229,14 @@ run_tests(struct section_tester_data *tst,
           task_SetMaxTime(tsk, time_limit_value / 1000);
         }
       }
+      if (time_limit_value > 0 && report_time_limit_ms < 0) {
+        report_time_limit_ms = time_limit_value;
+      }
 
-      if (prb->real_time_limit>0) task_SetMaxRealTime(tsk,prb->real_time_limit);
+      if (prb->real_time_limit>0)task_SetMaxRealTime(tsk,prb->real_time_limit);
+      if (report_real_time_limit_ms < 0 && prb->real_time_limit > 0) {
+        report_real_time_limit_ms = prb->real_time_limit * 1000;
+      }
       if (tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
       if (tst->no_core_dump) task_DisableCoreDump(tsk);
       if (tst->memory_limit_type_val < 0) {
@@ -2063,6 +2085,7 @@ run_tests(struct section_tester_data *tst,
   generate_xml_report(req_pkt, reply_pkt, report_path, cur_variant,
                       score, prb->full_score,
                       (prb->use_corr && prb->corr_dir[0]), prb->use_info,
+                      report_time_limit_ms, report_real_time_limit_ms,
                       additional_comment, valuer_comment,
                       valuer_judge_comment, valuer_errors);
 

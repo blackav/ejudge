@@ -1654,6 +1654,14 @@ do_write_kirov_standings(
     }
   }
 
+  /* memoize the results */
+  if (!accepting_mode && global->memoize_user_results) {
+    for (i = 0; i < t_tot; ++i) {
+      int t = t_sort[i]; // indexed user
+      serve_store_user_result(state, t_ind[t], tot_score[t]);
+    }
+  }
+
   if (raw_flag) {
     /* print table contents */
     for (i = 0; i < t_tot; i++) {
@@ -4205,7 +4213,6 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
   struct testing_report_test *t;
   unsigned char *font_color = 0, *s;
   int need_comment = 0, need_info = 0, is_kirov = 0, i;
-  int disp_time;
   unsigned char cl[128] = { 0 };
 
   if (table_class && *table_class) {
@@ -4296,9 +4303,9 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
 
   fprintf(f,
           "<table%s>"
-          "<tr><th%s>N</th><th%s>%s</th><th%s>%s</th><th%s>%s</th>",
-          cl, cl, cl, _("Result"), cl, _("Time (sec)"),
-          cl, _("Real time (sec)"));
+          "<tr><th%s>N</th><th%s>%s</th><th%s>%s</th>",
+          cl, cl, cl, _("Result"), cl, _("Time (sec)")/*,
+          cl, _("Real time (sec)")*/);
   if (need_info) {
     fprintf(f, "<th%s>%s</th>", cl, _("Extra info"));
   }
@@ -4321,7 +4328,13 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
     }
     fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
             cl, font_color, run_status_str(t->status, 0, 0, output_only, 0));
-    fprintf(f, "<td%s>%d.%03d</td>", cl, t->time / 1000, t->time % 1000);
+    if (t->status == RUN_TIME_LIMIT_ERR && r->time_limit_ms > 0) {
+      fprintf(f, "<td%s>&gt;%d.%03d</td>", cl,
+              r->time_limit_ms / 1000, r->time_limit_ms % 1000);
+    } else {
+      fprintf(f, "<td%s>%d.%03d</td>", cl, t->time / 1000, t->time % 1000);
+    }
+    /*
     if (t->real_time > 0) {
       disp_time = t->real_time;
       if (disp_time < t->time) disp_time = t->time;
@@ -4329,6 +4342,7 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
     } else {
       fprintf(f, "<td%s>N/A</td>", cl);
     }
+    */
     if (need_info) {
       fprintf(f, "<td%s>", cl);
       if (t->status == RUN_RUN_TIME_ERR && global->report_error_code) {
@@ -4559,8 +4573,8 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
   fprintf(f, "<table%s><tr><th%s>N</th>", cl, cl);
   fprintf(f, "<th%s>%s</th>", cl, _("Result"));
   if (!exam_mode)
-    fprintf(f, "<th%s>%s</th><th%s>%s</th>", cl, _("Time (sec)"),
-            cl, _("Real time (sec)"));
+    fprintf(f, "<th%s>%s</th>", cl, _("Time (sec)")/*,
+            cl, _("Real time (sec)")*/);
   fprintf(f, "<th%s>%s</th>", cl, _("Extra info"));
   if (need_comment) {
     fprintf(f, "<th%s>%s</th>", cl, _("Comment"));
@@ -4579,13 +4593,20 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
     fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
             cl, font_color, run_status_str(t->status, 0, 0, 0, 0));
     if (!exam_mode) {
-      fprintf(f, "<td%s>%d.%03d</td>", cl, t->time / 1000, t->time % 1000);
+      if (t->status == RUN_TIME_LIMIT_ERR && r->time_limit_ms > 0) {
+        fprintf(f, "<td%s>&gt;%d.%03d</td>", cl,
+                r->time_limit_ms / 1000, r->time_limit_ms % 1000);
+      } else {
+        fprintf(f, "<td%s>%d.%03d</td>", cl, t->time / 1000, t->time % 1000);
+      }
+      /*
       if (t->real_time > 0) {
         fprintf(f, "<td%s>%d.%03d</td>",
                 cl, t->real_time / 1000, t->real_time % 1000);
       } else {
         fprintf(f, "<td%s>N/A</td>", cl);
       }
+      */
     }
     // extra information
     fprintf(f, "<td%s>", cl);

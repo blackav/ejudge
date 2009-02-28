@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1820,11 +1820,11 @@ edit_general_form(
   if (u) ui = u->cnts0;
 
   if (cnts->fields[CONTEST_F_LANGUAGES]) {
-    allowed_list_parse(cnts->allowed_languages,
+    allowed_list_parse(cnts->allowed_languages, 0,
                        &allowed_languages, &allowed_languages_u);
   }
   if (cnts->fields[CONTEST_F_REGION]) {
-    allowed_list_parse(cnts->allowed_regions,
+    allowed_list_parse(cnts->allowed_regions, 0,
                        &allowed_regions, &allowed_regions_u);
   }
 
@@ -1882,8 +1882,28 @@ edit_general_form(
       comment = _("contains invalid characters");
     }
 
-    if (ff == CONTEST_F_LANGUAGES && allowed_languages_u > 0) {
-      allowed_list_map(bb, allowed_languages, allowed_languages_u,
+    if (cnts->fields[ff]->options) {
+      int separator = 0;
+      if (cnts->fields[ff]->separator)
+        separator = cnts->fields[ff]->separator[0];
+      if (separator <= 0) separator = ',';
+      unsigned char **options = 0;
+      size_t options_u = 0;
+      allowed_list_parse(cnts->fields[ff]->options, separator,
+                         &options, &options_u);
+
+      fprintf(fout, "<td class=\"b0\"><select name=\"param_%d\"><option></option>", ff);
+      for (j = 0; j < options_u; j++) {
+        s = "";
+        if (!strcmp(bb, options[j]))
+          s = " selected=\"yes\"";
+        fprintf(fout, "<option%s>%s</option>", s, ARMOR(options[j]));
+      }
+      fprintf(fout, "</select></td>\n");
+
+      allowed_list_free(options, options_u);
+    } else if (ff == CONTEST_F_LANGUAGES && allowed_languages_u > 0) {
+      allowed_list_map(bb, 0, allowed_languages, allowed_languages_u,
                        &user_lang_map);
 
       fprintf(fout, "<td class=\"b0\"><table class=\"b0\">\n");
@@ -2435,7 +2455,7 @@ assemble_programming_languages(
   size_t z = 0;
   const unsigned char *s = 0;
 
-  allowed_list_parse(cnts_allowed_languages,
+  allowed_list_parse(cnts_allowed_languages, 0,
                      &allowed_languages, &allowed_languages_u);
   f = open_memstream(&t, &z);
 

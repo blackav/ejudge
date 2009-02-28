@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -165,6 +165,8 @@ serve_state_destroy(serve_state_t state,
   xfree(state->langs);
   xfree(state->probs);
   xfree(state->testers);
+
+  xfree(state->user_results);
 
   memset(state, 0, sizeof(*state));
   xfree(state);
@@ -560,6 +562,42 @@ serve_event_remove_matching(serve_state_t state, time_t time,
     count++;
   }
   return count;
+}
+
+void
+serve_store_user_result(
+        serve_state_t state,
+        int user_id,
+        int score)
+{
+  if (!state) return;
+  if (user_id <= 0 || user_id > EJ_MAX_USER_ID) return;
+
+  if (user_id >= state->user_result_a) {
+    int new_size = state->user_result_a;
+    if (!new_size) new_size = 128;
+    while (user_id >= new_size) new_size *= 2;
+    struct serve_user_results *new_results = 0;
+    XCALLOC(new_results, new_size);
+    if (state->user_result_a > 0) {
+      memcpy(new_results, state->user_results,
+             state->user_result_a * sizeof(new_results[0]));
+    }
+    xfree(state->user_results);
+    state->user_results = new_results;
+    state->user_result_a = new_size;
+  }
+
+  state->user_results[user_id].total_score = score;
+}
+
+int
+serve_get_user_result_score(
+        serve_state_t state,
+        int user_id)
+{
+  if (!state || user_id <= 0 || user_id >= state->user_result_a) return 0;
+  return state->user_results[user_id].total_score;
 }
 
 /*

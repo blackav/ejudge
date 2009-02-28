@@ -3,7 +3,7 @@
 #ifndef __SERVE_STATE_H__
 #define __SERVE_STATE_H__
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -113,6 +113,12 @@ struct serve_event_queue
   time_t real_time;             /* the actual event time */
 };
 
+/** memoized user results for use in filter expressions */
+struct serve_user_results
+{
+  int total_score;
+};
+
 #define EJ_SERVE_STATE_TOTAL_PROBS 28
 
 struct serve_state
@@ -208,6 +214,10 @@ struct serve_state
 
   // problem priorities
   signed char prob_prio[EJ_SERVE_STATE_TOTAL_PROBS];
+
+  // memoized user results
+  int user_result_a; // allocated size
+  struct serve_user_results *user_results;
 };
 typedef struct serve_state *serve_state_t;
 
@@ -422,6 +432,16 @@ serve_notify_user_run_status_change(
         int user_id,
         int run_id,
         int new_status);
+
+void
+serve_store_user_result(
+        serve_state_t state,
+        int user_id,
+        int score);
+int
+serve_get_user_result_score(
+        serve_state_t state,
+        int user_id);
 
 extern const size_t serve_struct_sizes_array[];
 extern const size_t serve_struct_sizes_array_size;
