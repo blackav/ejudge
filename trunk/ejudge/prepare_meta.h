@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/12/19 13:29:43
+// Generated 2009/02/28 20:50:25
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -58,6 +58,7 @@ enum
   CNTSGLOB_enable_auto_print_protocol,
   CNTSGLOB_notify_clar_reply,
   CNTSGLOB_notify_status_change,
+  CNTSGLOB_memoize_user_results,
   CNTSGLOB_name,
   CNTSGLOB_root_dir,
   CNTSGLOB_serve_socket,
