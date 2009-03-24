@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1221,6 +1221,7 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_disable_auto_testing, 'Y', 1, 0, 0, 0, 0, "Disable automatic testing of submissions", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_cr_serialization_key, 'd', 1, 1, 1, 1, 0, "Serialization semaphore for `compile' and `run'", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_show_astr_time, 'Y', 1, 0, 0, 0, 0, "Use astronomic time", 0, "SidState.show_global_6" },
+  { NS_GLOBAL, CNTSGLOB_memoize_user_results, 'Y', 1, 0, 0, 0, 0, "Memoize user results", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_enable_continue, 'Y', 1, 0, 0, 0, 0, "Enable contest continuation", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_enable_report_upload, 'Y', 1, 0, 0, 0, 0, "Enable testing protocol upload", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_enable_runlog_merge, 'Y', 1, 0, 0, 0, 0, "Enable run database merging", 0, "SidState.show_global_6" },

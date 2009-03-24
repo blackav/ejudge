@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1946,6 +1946,14 @@ super_html_edit_global_parameters(FILE *f,
     html_submit_button(f, SSERV_CMD_GLOB_CHANGE_SHOW_ASTR_TIME, "Change");
     fprintf(f, "</td></tr></form>\n");
 
+    //GLOBAL_PARAM(memoize_user_results, "d"),
+    html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Memoize user results:</td><td>", form_row_attrs[row ^= 1]);
+    html_boolean_select(f, global->memoize_user_results, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_MEMOIZE_USER_RESULTS, "Change");
+    fprintf(f, "</td></tr></form>\n");
+
     //GLOBAL_PARAM(enable_continue, "d"),
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Enable contest continuation:</td><td>",
@@ -2812,6 +2820,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_SHOW_ASTR_TIME:
     p_int = &global->show_astr_time;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_MEMOIZE_USER_RESULTS:
+    p_int = &global->memoize_user_results;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_ENABLE_CONTINUE:
