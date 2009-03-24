@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2007-2009 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -49,7 +49,7 @@ CC = gcc
 CFLAGS = -g -Wall -Werror $(WPTRSIGN) $(WERROR)
 
 PYTHONFLAGS = $(shell /usr/bin/python-config --includes)
-CBUILDFLAGS = -fPIC -DPIC -I .. -DPYTHON
+CBUILDFLAGS = -fPIC -DPIC -I .. -DPYTHON -D_GNU_SOURCE
 
 include files.make
 
