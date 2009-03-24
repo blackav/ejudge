@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2007-2009 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -52,5 +52,8 @@ USERLIST_CLNT_MODULES = \
  ../userlist_clnt/set_passwd.c\
  ../userlist_clnt/team_cookie.c\
  ../userlist_proto.c\
- ../xml_utils/parse_ip.c
+ ../xml_utils/parse_ip.c\
+ ../unix/sock_op_enable_creds.c\
+ ../unix/sock_op_put_creds.c\
+ ../unix/sock_op_put_fds.c
 
