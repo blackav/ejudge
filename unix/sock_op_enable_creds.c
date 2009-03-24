@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,11 @@
 
 #include "errlog.h"
 
+#if defined PYTHON
+#include <Python.h>
+#else
 #include <reuse/osdeps.h>
+#endif
 
 #include <string.h>
 #include <stdlib.h>
@@ -34,8 +38,13 @@ sock_op_enable_creds(int sock_fd)
 #if HAVE_SO_PASSCRED - 0 == 1
   int val = 1;
   if (setsockopt(sock_fd, SOL_SOCKET, SO_PASSCRED, &val, sizeof(val)) < 0) {
+#if defined PYTHON
+    PyErr_SetString(PyExc_ValueError, "setsockopt() failed");
+    return -1;
+#else
     err("%s: setsockopt() failed: %s", __FUNCTION__, os_ErrorMsg());
     return -1;
+#endif
   }
 #endif
   return 0;

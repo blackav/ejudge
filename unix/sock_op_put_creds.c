@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,11 @@
 #include "sock_op.h"
 #include "errlog.h"
 
+#if defined PYTHON
+#include <Python.h>
+#else
 #include <reuse/osdeps.h>
+#endif
 
 #include <string.h>
 #include <stdlib.h>
@@ -58,12 +62,22 @@ sock_op_put_creds(int sock_fd)
   val = 0;
   ret = sendmsg(sock_fd, &msg, 0);
   if (ret < 0) {
+#if defined PYTHON
+    PyErr_SetString(PyExc_ValueError, "sendmsg() failed");
+    return -1;
+#else
     err("%s: sendmsg() failed: %s", __FUNCTION__, os_ErrorMsg());
     return -1;
+#endif
   }
   if (ret != 4) {
+#if defined PYTHON
+    PyErr_SetString(PyExc_ValueError, "short write");
+    return -1;
+#else
     err("%s: sendmsg() short write: %d bytes", __FUNCTION__, ret);
     return -1;
+#endif
   }
 #endif
   return 0;
