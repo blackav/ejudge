@@ -6980,7 +6980,8 @@ unparse_statement(
         const struct section_problem_data *prob,
         int variant,
         problem_xml_t px,
-        const unsigned char *bb);
+        const unsigned char *bb,
+        int is_submittable);
 static void
 unparse_answers(
         FILE *fout,
@@ -7120,7 +7121,7 @@ priv_submit_page(
     px = prob->xml.p;
   }
   if (px && px->stmts) {
-    unparse_statement(fout, phr, cnts, extra, prob, variant, px, NULL);
+    unparse_statement(fout, phr, cnts, extra, prob, variant, px, NULL, 1);
   }
 
   if (!px && prob && prob->statement_file[0]) {
@@ -11471,7 +11472,8 @@ unparse_statement(
         const struct section_problem_data *prob,
         int variant,
         problem_xml_t px,
-        const unsigned char *bb)
+        const unsigned char *bb,
+        int is_submittable)
 {
   struct problem_stmt *pp = 0;
   struct xml_tree *p, *q;
@@ -11579,10 +11581,12 @@ unparse_statement(
     problem_xml_unparse_node(fout, pp->notes, vars, vals);
   }
 
-  if (prob->type == PROB_TYPE_SELECT_ONE) {
-    fprintf(fout, "<h3>%s</h3>", _("Choose an answer"));
-  } else {
-    fprintf(fout, "<h3>%s</h3>", _("Submit a solution"));
+  if (is_submittable) {
+    if (prob->type == PROB_TYPE_SELECT_ONE) {
+      fprintf(fout, "<h3>%s</h3>", _("Choose an answer"));
+    } else {
+      fprintf(fout, "<h3>%s</h3>", _("Submit a solution"));
+    }
   }
 
   html_armor_free(&ab);
@@ -12112,7 +12116,8 @@ unpriv_main_page(FILE *fout,
 
       /* put problem statement */
       if (px && px->stmts) {
-        unparse_statement(fout, phr, cnts, extra, prob, 0, px, bb);
+        unparse_statement(fout, phr, cnts, extra, prob, 0, px, bb,
+                          prob_status[prob_id] & PROB_STATUS_SUBMITTABLE);
       } else if (prob->statement_file[0]
           && (prob_status[prob_id] & PROB_STATUS_VIEWABLE)) {
         if (variant > 0) {
@@ -12332,7 +12337,7 @@ unpriv_main_page(FILE *fout,
       } /* prob->disable_user_submit <= 0 */
 
       if (global->problem_navigation
-          && !prob->disable_user_submit
+          //&& !prob->disable_user_submit
           && prob->type != PROB_TYPE_SELECT_ONE
           && all_attempts[prob->id]) {
         if (all_attempts[prob->id] <= 15) {

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3130,6 +3130,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_GLOB_CHANGE_DISABLE_TESTING:
   case SSERV_CMD_GLOB_CHANGE_CR_SERIALIZATION_KEY:
   case SSERV_CMD_GLOB_CHANGE_SHOW_ASTR_TIME:
+  case SSERV_CMD_GLOB_CHANGE_MEMOIZE_USER_RESULTS:
   case SSERV_CMD_GLOB_CHANGE_ENABLE_CONTINUE:
   case SSERV_CMD_GLOB_CHANGE_ENABLE_REPORT_UPLOAD:
   case SSERV_CMD_GLOB_CHANGE_ENABLE_RUNLOG_MERGE:
@@ -4042,6 +4043,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_DISABLE_TESTING] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_CR_SERIALIZATION_KEY] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_SHOW_ASTR_TIME] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_MEMOIZE_USER_RESULTS] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_ENABLE_CONTINUE] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_ENABLE_REPORT_UPLOAD] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_ENABLE_RUNLOG_MERGE] = { cmd_set_value },

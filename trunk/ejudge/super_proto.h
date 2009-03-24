@@ -4,7 +4,7 @@
 #ifndef __SUPER_PROTO_H__
 #define __SUPER_PROTO_H__
 
-/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -495,6 +495,7 @@ enum
   SSERV_CMD_GLOB_CHANGE_DISABLE_TESTING,
   SSERV_CMD_GLOB_CHANGE_CR_SERIALIZATION_KEY,
   SSERV_CMD_GLOB_CHANGE_SHOW_ASTR_TIME,
+  SSERV_CMD_GLOB_CHANGE_MEMOIZE_USER_RESULTS,
   SSERV_CMD_GLOB_CHANGE_ENABLE_CONTINUE,
   SSERV_CMD_GLOB_CHANGE_ENABLE_REPORT_UPLOAD,
   SSERV_CMD_GLOB_CHANGE_ENABLE_RUNLOG_MERGE,
