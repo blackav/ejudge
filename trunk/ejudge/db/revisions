@@ -4470,3 +4470,11 @@ serve_state.c 5551 0 1516643
 testing_report_xml.c 5551 0 1427701
 filter_expr.y 5551 0 2405363
 filter_scan.lex 5551 0 751289
+super_proto.h 5555 0 2235539
+serve-control.c 5555 0 8967213
+super-serve.c 5555 0 13759482
+unix/sock_op_enable_creds.c 5554 0 111624
+unix/sock_op_put_creds.c 5554 0 178976
+new_server_html.c 5555 0 37916976
+super_html_3.c 5555 0 24259240
+super_html_4.c 5555 0 18526765
