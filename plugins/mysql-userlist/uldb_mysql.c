@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3634,12 +3634,12 @@ copy_user_info_func(
     for (cur_memb = 0; cur_memb < mm->u; cur_memb++) {
       m = mm->m[cur_memb];
       if (m_cur[m->team_role] >= m_max[m->team_role]) continue;
-      m_cur[m->team_role]++;
       cm = 0;
       if (cnts) {
         cm = cnts->members[cur_memb];
-        ASSERT(cm);
+        if (!cm) continue;
       }
+      m_cur[m->team_role]++;
 
       memset(&m_arena, 0, sizeof(m_arena));
       m_arena.serial = -1;
