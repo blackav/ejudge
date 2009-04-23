@@ -4478,3 +4478,4 @@ unix/sock_op_put_creds.c 5554 0 178976
 new_server_html.c 5555 0 37916976
 super_html_3.c 5555 0 24259240
 super_html_4.c 5555 0 18526765
+plugins/mysql-userlist/uldb_mysql.c 5557 0 9681118
