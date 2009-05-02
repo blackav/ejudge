@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -170,6 +170,7 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_2] = __("Assign random cyphers"),
   [NEW_SRV_ACTION_SET_PRIORITIES] = __("Set priorities"),
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE] = __("Send run comment and ignore run"),
+  [NEW_SRV_ACTION_CHANGE_FINISH_TIME] = __("Change"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =

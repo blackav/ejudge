@@ -2042,6 +2042,42 @@ do_change_duration(FILE *log_f,
   return;
 }
 
+static void
+do_change_finish_time(
+        FILE *log_f,
+        struct http_request_info *phr,
+        serve_state_t cs,
+        const struct contest_desc *cnts)
+{
+  const unsigned char *s = 0;
+  time_t ft = 0, start_time = 0, stop_time = 0;
+
+  if (ns_cgi_param(phr, "finish_time", &s) <= 0) {
+    ns_error(log_f, NEW_SRV_ERR_INV_TIME_SPEC);
+    return;
+  }
+  if (!is_empty_string(s)) {
+    if (xml_parse_date(0, 0, 0, s, &ft) < 0 || ft < 0) {
+      ns_error(log_f, NEW_SRV_ERR_INV_TIME_SPEC);
+      return;
+    }
+    if (ft < cs->current_time) {
+      ns_error(log_f, NEW_SRV_ERR_INV_TIME_SPEC);
+      return;
+    }
+  }
+
+  run_get_times(cs->runlog_state, &start_time, 0, 0, &stop_time, 0);
+  if (stop_time > 0) {
+    ns_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
+    return;
+  }
+
+  run_set_finish_time(cs->runlog_state, ft);
+  serve_update_standings_file(cs, cnts, 0);
+  serve_update_status_file(cs, 1);
+}
+
 static int
 priv_contest_operation(FILE *fout,
                        FILE *log_f,
@@ -2119,6 +2155,10 @@ priv_contest_operation(FILE *fout,
 
   case NEW_SRV_ACTION_CHANGE_DURATION:
     do_change_duration(log_f, phr, cs, cnts);
+    break;
+
+  case NEW_SRV_ACTION_CHANGE_FINISH_TIME:
+    do_change_finish_time(log_f, phr, cs, cnts);
     break;
 
   case NEW_SRV_ACTION_SUSPEND:
@@ -2770,14 +2810,6 @@ priv_submit_run(FILE *fout,
  invalid_param:
   ns_html_err_inv_param(fout, phr, 0, errmsg);
   return -1;
-}
-
-static int
-is_empty_string(const unsigned char *str)
-{
-  if (!str) return 1;
-  while (*str && isspace(*str)) str++;
-  return !*str;
 }
 
 static int
@@ -6433,13 +6465,17 @@ priv_print_problem_exam_protocol(
 }
 
 static void
-unpriv_print_status(FILE *fout,
-                    struct http_request_info *phr,
-                    const struct contest_desc *cnts,
-                    struct contest_extra *extra,
-                    time_t start_time, time_t stop_time, time_t duration,
-                    time_t sched_time,
-                    time_t fog_start_time)
+unpriv_print_status(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t start_time,
+        time_t stop_time,
+        time_t duration,
+        time_t sched_time,
+        time_t fog_start_time,
+        time_t finish_time)
 {
   const serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
@@ -6538,7 +6574,7 @@ unpriv_print_status(FILE *fout,
       fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
               _("Planned start time"), ctime(&sched_time));
     }
-    if (stop_time <= 0 && (duration > 0 || global->contest_finish_time <= 0)) {
+    if (stop_time <= 0 && (duration > 0 || finish_time <= 0)) {
       if (duration > 0) {
         duration_str(0, duration, 0, duration_buf, 0);
       } else {
@@ -6552,9 +6588,9 @@ unpriv_print_status(FILE *fout,
       fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
               _("Scheduled end time"), ctime(&tmpt));
     } else if (start_time > 0 && stop_time <= 0 && duration <= 0
-               && global->contest_finish_time > 0) {
+               && finish_time > 0) {
       fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
-              _("Scheduled end time"), ctime(&global->contest_finish_time));
+              _("Scheduled end time"), ctime(&finish_time));
     } else if (stop_time) {
       fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
               _("End time"), ctime(&stop_time));
@@ -6672,6 +6708,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CONTINUE_CONTEST] = priv_contest_operation,
   [NEW_SRV_ACTION_SCHEDULE] = priv_contest_operation,
   [NEW_SRV_ACTION_CHANGE_DURATION] = priv_contest_operation,
+  [NEW_SRV_ACTION_CHANGE_FINISH_TIME] = priv_contest_operation,
   [NEW_SRV_ACTION_SUSPEND] = priv_contest_operation,
   [NEW_SRV_ACTION_RESUME] = priv_contest_operation,
   [NEW_SRV_ACTION_TEST_SUSPEND] = priv_contest_operation,
@@ -7577,6 +7614,16 @@ priv_main_page(FILE *fout,
       } else {
         fprintf(fout, "<td>&nbsp;</td><td>&nbsp;</td></tr>\n");
       }
+
+      if (duration <= 0 && (stop_time <= 0 || global->enable_continue)
+          && !global->is_virtual) {
+        fprintf(fout,
+                "<tr><td>%s:</td><td>&nbsp;</td>"
+                "<td><input type=\"text\" name=\"finish_time\" size=\"16\" /></td>"
+                "<td>%s</td></tr>\n",
+                _("Finish time"),
+                BUTTON(NEW_SRV_ACTION_CHANGE_FINISH_TIME));
+      }
     }
 
     if (!global->is_virtual) {
@@ -7586,8 +7633,13 @@ priv_main_page(FILE *fout,
                 _("Scheduled end time"), ctime(&tmpt));
       } else if (start_time > 0 && stop_time <= 0 && duration <= 0
                  && finish_time > 0) {
-        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td>\n",
                 _("Scheduled end time"), ctime(&finish_time));
+        fprintf(fout,
+                "<td><input type=\"text\" name=\"finish_time\" size=\"16\" /></td>"
+                "<td>%s</td></tr>\n",
+                BUTTON(NEW_SRV_ACTION_CHANGE_FINISH_TIME));
+        fprintf(fout, "</tr>\n");
       } else if (stop_time) {
         fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
                 _("End time"), ctime(&stop_time));
@@ -8026,6 +8078,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CONTINUE_CONTEST] = priv_generic_operation,
   [NEW_SRV_ACTION_SCHEDULE] = priv_generic_operation,
   [NEW_SRV_ACTION_CHANGE_DURATION] = priv_generic_operation,
+  [NEW_SRV_ACTION_CHANGE_FINISH_TIME] = priv_generic_operation,
   [NEW_SRV_ACTION_SUSPEND] = priv_generic_operation,
   [NEW_SRV_ACTION_RESUME] = priv_generic_operation,
   [NEW_SRV_ACTION_TEST_SUSPEND] = priv_generic_operation,
@@ -10702,7 +10755,9 @@ unpriv_view_standings(FILE *fout,
           cnts->team_head_style, _("Standings"), comment,
           cnts->team_head_style);
 
-  if (global->is_virtual) {
+  if (global->disable_user_standings > 0) {
+    fprintf(fout, _("<p>Information is not available.</p>"));
+  } else if (global->is_virtual) {
     do_write_standings(cs, cnts, fout, 1, 1, phr->user_id, 0, 0, 0, 0, 1,
                        cur_time);
   } else if (global->score_system == SCORE_ACM) {
@@ -11679,6 +11734,7 @@ unpriv_main_page(FILE *fout,
   struct section_global_data *global = cs->global;
   //long long tdiff;
   time_t start_time, stop_time, duration, sched_time, fog_start_time = 0;
+  time_t finish_time = 0;
   const unsigned char *s;
   int all_runs = 0, all_clars = 0;
   unsigned char *solved_flag = 0;
@@ -11751,7 +11807,7 @@ unpriv_main_page(FILE *fout,
     stop_time = run_get_stop_time(cs->runlog_state);
     accepting_mode = cs->accepting_mode;
   }
-  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, 0);
+  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, &finish_time);
   if (duration > 0 && start_time && !stop_time && global->board_fog_time > 0)
     fog_start_time = start_time + duration - global->board_fog_time;
   if (fog_start_time < 0) fog_start_time = 0;
@@ -11850,7 +11906,7 @@ unpriv_main_page(FILE *fout,
   if (phr->action == NEW_SRV_ACTION_MAIN_PAGE) {
     unpriv_print_status(fout, phr, cnts, extra,
                         start_time, stop_time, duration, sched_time,
-                        fog_start_time);
+                        fog_start_time, finish_time);
   }
 
   if (phr->action == NEW_SRV_ACTION_VIEW_STARTSTOP) {
@@ -13583,6 +13639,7 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE] = "PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE",
   [NEW_SRV_ACTION_VIEW_USER_IPS] = "VIEW_USER_IPS",
   [NEW_SRV_ACTION_VIEW_IP_USERS] = "VIEW_IP_USERS",
+  [NEW_SRV_ACTION_CHANGE_FINISH_TIME] = "CHANGE_FINISH_TIME",
 };
 
 void
