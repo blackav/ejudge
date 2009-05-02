@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -170,11 +170,12 @@ struct clar_entry_internal
   ej_ip_t ip;
   int locale_id;
   int in_reply_to;
+  int run_id;
   unsigned char *clar_charset;
   unsigned char *subj;
 };
 
-enum { CLARS_ROW_WIDTH = 18 };
+enum { CLARS_ROW_WIDTH = 19 };
 
 #define CLARS_OFFSET(f) XOFFSET(struct clar_entry_internal, f)
 static const struct common_mysql_parse_spec clars_spec[CLARS_ROW_WIDTH] =
@@ -195,6 +196,7 @@ static const struct common_mysql_parse_spec clars_spec[CLARS_ROW_WIDTH] =
   { 0, 'i', "ip", CLARS_OFFSET(ip), 0 },
   { 0, 'd', "locale_id", CLARS_OFFSET(locale_id), 0 },
   { 0, 'd', "in_reply_to", CLARS_OFFSET(in_reply_to), 0 },
+  { 0, 'd', "run_id", CLARS_OFFSET(run_id), 0 },
   { 0, 's', "clar_charset", CLARS_OFFSET(clar_charset), 0 },
   { 0, 's', "subj", CLARS_OFFSET(subj), 0 },
 };
@@ -217,6 +219,7 @@ static const char create_clars_query[] =
 "        ip VARCHAR(64) NOT NULL,"
 "        locale_id INT NOT NULL DEFAULT 0,"
 "        in_reply_to INT NOT NULL DEFAULT 0,"
+"        run_id INT NOT NULL DEFAULT 0,"
 "        clar_charset VARCHAR(64),"
 "        subj VARBINARY(64),"
 "        PRIMARY KEY (clar_id, contest_id)"
@@ -258,7 +261,7 @@ do_create(struct cldb_mysql_state *state)
     db_error_fail(md);
   if (mi->simple_fquery(md, create_texts_query, md->table_prefix) < 0)
     db_error_fail(md);
-  if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('clar_version', '1') ;", md->table_prefix) < 0)
+  if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('clar_version', '2') ;", md->table_prefix) < 0)
     db_error_fail(md);
   return 0;
 
@@ -289,7 +292,13 @@ do_open(struct cldb_mysql_state *state)
   if (!md->row[0] || mi->parse_int(md, md->row[0], &clar_version) < 0)
     db_error_inv_value_fail(md, "config_val");
   mi->free_res(md);
-  if (clar_version != 1) {
+
+  if (clar_version == 1) {
+    if (mi->simple_fquery(md, "ALTER TABLE %sclars ADD COLUMN run_id INT NOT NULL DEFAULT 0 AFTER in_reply_to", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '2' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
+      return -1;
+  } else if (clar_version != 2) {
     err("clar_version == %d is not supported", clar_version);
     goto fail;
   }
@@ -389,6 +398,7 @@ open_func(
     if (cl.locale_id < 0 || cl.locale_id > 255)
       db_error_inv_value_fail(md, "locale_id");
     if (cl.in_reply_to < 0) db_error_inv_value_fail(md, "in_reply_to");
+    if (cl.run_id < 0) db_error_inv_value_fail(md, "run_id");
     if (!is_valid_charset(cl.clar_charset)) db_error_inv_value_fail(md, "clar_charset");
     memset(subj2, 0, sizeof(subj2));
     subj_len = 0;
@@ -426,6 +436,7 @@ open_func(
     ce->a.ip = cl.ip;
     ce->locale_id = cl.locale_id;
     ce->in_reply_to = cl.in_reply_to;
+    ce->run_id = cl.run_id;
     strcpy(ce->charset, cl.clar_charset);
     strcpy(ce->subj, subj2);
     if (cl.clar_id >= cl_state->clars.u) cl_state->clars.u = cl.clar_id + 1;
@@ -515,6 +526,7 @@ add_entry_func(struct cldb_plugin_cnts *cdata, int clar_id)
   cc.ip = ce->a.ip;
   cc.locale_id = ce->locale_id;
   cc.in_reply_to = ce->in_reply_to;
+  cc.run_id = ce->run_id;
   cc.clar_charset = ce->charset;
   cc.subj = ce->subj;
 
