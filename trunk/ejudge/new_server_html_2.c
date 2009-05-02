@@ -1576,23 +1576,6 @@ ns_write_priv_source(const serve_state_t state,
     }
   } else if (lang && lang->binary) {
     fprintf(f, "<p>The submission is binary and thus is not shown.</p>\n");
-
-    fprintf(f, "<h2>%s</h2>\n", _("Send a message about this run"));
-    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
-    html_hidden(f, "run_id", "%d", run_id);
-    fprintf(f,
-            "<p><textarea name=\"msg_text\" rows=\"20\" cols=\"60\">"
-            "</textarea></p>");
-    cl = " class=\"b0\"";
-    fprintf(f, "<table%s><tr>", cl);
-    fprintf(f, "<td%s>%s</td>", cl,
-            BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT));
-    fprintf(f, "<td%s>%s</td>", cl,
-            BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE));
-    fprintf(f, "<td%s>%s</td>", cl,
-            BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK));
-    fprintf(f, "</tr></table>\n");
-    fprintf(f, "</form>\n");
   } else if (!info.is_imported) {
     if (src_flags < 0 || generic_read_file(&src_text, 0, &src_len, src_flags, 0, src_path, "") < 0) {
       fprintf(f, "<big><font color=\"red\">Cannot read source text!</font></big>\n");
@@ -1617,23 +1600,6 @@ ns_write_priv_source(const serve_state_t state,
       fprintf(f, "<pre>%s</pre>", html_text);
       xfree(src_text);
       fprintf(f, "<hr/>\n");
-
-      fprintf(f, "<h2>%s</h2>\n", _("Send a message about this run"));
-      html_start_form(f, 1, phr->self_url, phr->hidden_vars);
-      html_hidden(f, "run_id", "%d", run_id);
-      fprintf(f,
-              "<p><textarea name=\"msg_text\" rows=\"20\" cols=\"60\">"
-              "</textarea></p>");
-      cl = " class=\"b0\"";
-      fprintf(f, "<table%s><tr>", cl);
-      fprintf(f, "<td%s>%s</td>", cl,
-              BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT));
-      fprintf(f, "<td%s>%s</td>", cl,
-              BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE));
-      fprintf(f, "<td%s>%s</td>", cl,
-              BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK));
-      fprintf(f, "</tr></table>\n");
-      fprintf(f, "</form>\n");
     }
     /*
     print_nav_buttons(state, f, run_id, sid, self_url, hidden_vars, extra_args,
@@ -1641,6 +1607,23 @@ ns_write_priv_source(const serve_state_t state,
                       _("View team report"));
     */
   }
+
+  fprintf(f, "<h2>%s</h2>\n", _("Send a message about this run"));
+  html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+  html_hidden(f, "run_id", "%d", run_id);
+  fprintf(f, "<p><textarea name=\"msg_text\" rows=\"20\" cols=\"60\">"
+          "</textarea></p>");
+  cl = " class=\"b0\"";
+  fprintf(f, "<table%s><tr>", cl);
+  fprintf(f, "<td%s>%s</td>", cl,
+          BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT));
+  fprintf(f, "<td%s>%s</td>", cl,
+          BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE));
+  fprintf(f, "<td%s>%s</td>", cl,
+          BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK));
+  fprintf(f, "</tr></table>\n");
+  fprintf(f, "</form>\n");
+
   html_armor_free(&ab);
 }
 

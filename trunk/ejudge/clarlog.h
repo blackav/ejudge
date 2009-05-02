@@ -3,7 +3,7 @@
 #ifndef __CLARLOG_H__
 #define __CLARLOG_H__
 
-/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -54,7 +54,8 @@ struct clar_entry_v1
   unsigned short locale_id;     /* 2 */
   unsigned char _pad2[2];       /* 2 */
   int in_reply_to;              /* 4 */ /* 1 means in clar_id 0! */
-  unsigned char _pad3[16];
+  int run_id;                   /* 4 */ /* 1 means run_id 0! */
+  unsigned char _pad3[12];
   unsigned char charset[CLAR_ENTRY_CHARSET_SIZE];
   unsigned char subj[CLAR_ENTRY_SUBJ_SIZE];
 };                              /* 128 */
@@ -74,20 +75,21 @@ int clar_open(
         int flags);
 int clar_add_record(
         clarlog_state_t state,
-        time_t         time,
-        int            nsec,
-        size_t         size,
-        ej_ip_t        ip,
-        int            ssl_flag,
-        int            from,
-        int            to,
-        int            flags,
-        int            j_from,
-        int            hide_flag,
-        int            locale_id,
-        int            in_reply_to,
-        int            appeal_flag,
-        int            utf8_mode,
+        time_t          time,
+        int             nsec,
+        size_t          size,
+        ej_ip_t         ip,
+        int             ssl_flag,
+        int             from,
+        int             to,
+        int             flags,
+        int             j_from,
+        int             hide_flag,
+        int             locale_id,
+        int             in_reply_to,
+        int             run_id,
+        int             appeal_flag,
+        int             utf8_mode,
         const unsigned char *charset,
         const unsigned char *subj);
 int clar_update_flags(clarlog_state_t state, int id, int flags);
