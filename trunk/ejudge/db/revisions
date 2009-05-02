@@ -4485,3 +4485,8 @@ misctext.c 5559 0 2107997
 new_server_html.c 5559 0 38053494
 new_server_tables.c 5559 0 1134331
 super_html_4.c 5559 0 18536079
+file_perms.h 5563 0 77556
+unix/file_perms.c 5562 0 137920
+win32/file_perms.c 5561 0 77919
+super_html_2.c 5564 0 4850029
+super_html_3.c 5564 0 24325595
