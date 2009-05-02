@@ -1052,7 +1052,7 @@ static const struct cnts_edit_info cnts_edit_info[] =
   { NS_CONTEST, CNTS_daily_stat_email, 's', 1, 1, 1, 1, 0, "e-mail for daily statistics", "e-mail for daily statistics", "SidState.show_notifications" },
 
   { NS_SID_STATE, SSSS_advanced_view, '-', 1, 0, 0, 0, 0, "Advanced Contest Settings", 0, 0 },
-  // FIXME: add share users with contest item
+  { NS_CONTEST, CNTS_user_contest, 's',  1, 1, 1, 1, 0, "Contest number to share users from", "Contest number to share users from", "SidState.advanced_view" },
   { NS_CONTEST, CNTS_simple_registration, 'y', 1, 0, 0, 0, 0, "Enable simple registration", "Do not validate e-mail during registration (not recommended)", "SidState.advanced_view" },
   { NS_CONTEST, CNTS_send_passwd_email, 'y', 1, 0, 0, 0, 0, "Send e-mail with password anyway", "Send e-mail with password", "SidState.advanced_view Contest.simple_registration &&" },
   { NS_CONTEST, CNTS_assign_logins, 'y', 1, 0, 0, 0, 0, "Auto assign logins", "Generate logins for users automatically", "SidState.advanced_view" },
