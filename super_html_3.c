@@ -38,6 +38,7 @@
 #include "errlog.h"
 #include "random.h"
 #include "compat.h"
+#include "file_perms.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -7648,8 +7649,16 @@ mkpath(unsigned char *out, const unsigned char *d, const unsigned char *n,
 }
 
 static int
-check_test_file(FILE *flog, int n, const unsigned char *path, const unsigned char *pat,
-                const unsigned char *sfx, int q_flag, int bin_flag)
+check_test_file(
+        FILE *flog,
+        int n,
+        const unsigned char *path,
+        const unsigned char *pat,
+        const unsigned char *sfx,
+        int q_flag,
+        int bin_flag,
+        int file_group,
+        int file_mode)
 {
   path_t name;
   path_t name2;
@@ -7720,7 +7729,7 @@ check_test_file(FILE *flog, int n, const unsigned char *path, const unsigned cha
       return -1;
     }
     if (test_len != strlen(test_txt)) {
-      fprintf(flog, "Error: file %s contains zero bytes\n", full);
+      fprintf(flog, "Error: file %s contains NUL (\\0) bytes\n", full);
       xfree(test_txt);
       return -1;
     }
@@ -7752,6 +7761,7 @@ check_test_file(FILE *flog, int n, const unsigned char *path, const unsigned cha
       return -1;
     }
     fprintf(flog, "Info: file %s successfully written\n", full);
+    file_perms_set(flog, full, file_group, file_mode);
   }
 
   xfree(out_txt);
@@ -8135,6 +8145,7 @@ super_html_check_tests(FILE *f,
   struct stat stbuf;
   int total_tests = 0, v_total_tests = 0;
   unsigned char hbuf[1024];
+  int file_group, file_mode, dir_group, dir_mode;
 
   if (sstate->serve_parse_errors) {
     fprintf(f, "<h2>The tests cannot be checked</h2>\n");
@@ -8153,6 +8164,11 @@ super_html_check_tests(FILE *f,
 
   cnts = sstate->edited_cnts;
   global = sstate->global;
+
+  file_group = file_perms_parse_group(cnts->file_group);
+  file_mode = file_perms_parse_mode(cnts->file_mode);
+  dir_group = file_perms_parse_group(cnts->dir_group);
+  dir_mode = file_perms_parse_mode(cnts->dir_mode);
 
   mkpath(conf_path, cnts->root_dir, cnts->conf_dir, DFLT_G_CONF_DIR);
   mkpath(g_test_path, conf_path, global->test_dir, DFLT_G_TEST_DIR);
@@ -8260,7 +8276,9 @@ super_html_check_tests(FILE *f,
 
       total_tests = 1;
       while (1) {
-        k = check_test_file(flog, total_tests, test_path, tmp_prob.test_pat, tmp_prob.test_sfx, 1, tmp_prob.binary_input);
+        k = check_test_file(flog, total_tests, test_path,
+                            tmp_prob.test_pat, tmp_prob.test_sfx, 1, tmp_prob.binary_input,
+                            file_group, file_mode);
         if (k < 0) goto check_failed;
         if (!k) break;
         total_tests++;
@@ -8280,23 +8298,26 @@ super_html_check_tests(FILE *f,
       for (j = 1; j <= total_tests; j++) {
         if (tmp_prob.use_corr
             && check_test_file(flog, j, corr_path, tmp_prob.corr_pat,
-                               tmp_prob.corr_sfx, 0, tmp_prob.binary_input) <= 0)
+                               tmp_prob.corr_sfx, 0, tmp_prob.binary_input,
+                               file_group, file_mode) <= 0)
           goto check_failed;
         if (tmp_prob.use_info
             && check_test_file(flog, j, info_path, tmp_prob.info_pat,
-                               tmp_prob.info_sfx, 0, 0) <= 0)
+                               tmp_prob.info_sfx, 0, 0, file_group, file_mode) <= 0)
           goto check_failed;
       }
       if (tmp_prob.use_corr
           && check_test_file(flog, j, corr_path, tmp_prob.corr_pat,
-                             tmp_prob.corr_sfx, 1, tmp_prob.binary_input) != 0) {
+                             tmp_prob.corr_sfx, 1, tmp_prob.binary_input,
+                             file_group, file_mode) != 0) {
         fprintf(flog, "Error: there is answer file for test %d, but no data file\n",
                 j);
         goto check_failed;
       }
       if (tmp_prob.use_info
           && check_test_file(flog, j, info_path, tmp_prob.info_pat,
-                             tmp_prob.info_sfx, 1, 0) != 0) {
+                             tmp_prob.info_sfx, 1, 0,
+                             file_group, file_mode) != 0) {
         fprintf(flog, "Error: there is test info file for test %d, but no data file\n",
                 j);
         goto check_failed;
@@ -8337,7 +8358,9 @@ super_html_check_tests(FILE *f,
 
         total_tests = 1;
         while (1) {
-          k = check_test_file(flog, total_tests, v_test_path, tmp_prob.test_pat, tmp_prob.test_sfx, 1, tmp_prob.binary_input);
+          k = check_test_file(flog, total_tests, v_test_path,
+                              tmp_prob.test_pat, tmp_prob.test_sfx, 1, tmp_prob.binary_input,
+                              file_group, file_mode);
           if (k < 0) goto check_failed;
           if (!k) break;
           total_tests++;
@@ -8365,23 +8388,25 @@ super_html_check_tests(FILE *f,
         for (j = 1; j <= total_tests; j++) {
           if (tmp_prob.use_corr
               && check_test_file(flog, j, v_corr_path, tmp_prob.corr_pat,
-                                 tmp_prob.corr_sfx, 0, tmp_prob.binary_input) <= 0)
+                                 tmp_prob.corr_sfx, 0, tmp_prob.binary_input,
+                                 file_group, file_mode) <= 0)
             goto check_failed;
           if (tmp_prob.use_info
               && check_test_file(flog, j, v_info_path, tmp_prob.info_pat,
-                                 tmp_prob.info_sfx, 0, 0) <= 0)
+                                 tmp_prob.info_sfx, 0, 0, file_group, file_mode) <= 0)
             goto check_failed;
         }
         if (tmp_prob.use_corr
             && check_test_file(flog, j, v_corr_path, tmp_prob.corr_pat,
-                               tmp_prob.corr_sfx, 1, tmp_prob.binary_input) != 0) {
+                               tmp_prob.corr_sfx, 1, tmp_prob.binary_input,
+                               file_group, file_mode) != 0) {
           fprintf(flog, "Error: there is answer file for test %d, but no data file, variant %d\n",
                   j, variant);
           goto check_failed;
         }
         if (tmp_prob.use_info
             && check_test_file(flog, j, v_info_path, tmp_prob.info_pat,
-                               tmp_prob.info_sfx, 1, 0) != 0) {
+                               tmp_prob.info_sfx, 1, 0, file_group, file_mode) != 0) {
           fprintf(flog, "Error: there is test info file for test %d, but no data file, variant %d\n",
                   j, variant);
           goto check_failed;

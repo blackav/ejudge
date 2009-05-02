@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2009 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -279,6 +279,8 @@ CFILES=\
  users.c\
  unix/cpu.c\
  win32/cpu.c\
+ unix/file_perms.c\
+ win32/file_perms.c\
  unix/fileutl.c\
  win32/fileutl.c\
  unix/cr_serialize.c\
@@ -344,6 +346,7 @@ HFILES=\
  errlog.h\
  expat_iface.h\
  filehash.h\
+ file_perms.h\
  fileutl.h\
  filter_eval.h\
  filter_tree.h\
