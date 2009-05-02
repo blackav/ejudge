@@ -4479,3 +4479,9 @@ new_server_html.c 5555 0 37916976
 super_html_3.c 5555 0 24259240
 super_html_4.c 5555 0 18526765
 plugins/mysql-userlist/uldb_mysql.c 5557 0 9681118
+misctext.h 5559 0 506774
+new-server.h 5559 0 2156091
+misctext.c 5559 0 2107997
+new_server_html.c 5559 0 38053494
+new_server_tables.c 5559 0 1134331
+super_html_4.c 5559 0 18536079
