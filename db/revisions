@@ -4490,3 +4490,7 @@ unix/file_perms.c 5562 0 137920
 win32/file_perms.c 5561 0 77919
 super_html_2.c 5564 0 4850029
 super_html_3.c 5564 0 24325595
+new-server.h 5566 0 2159850
+new_server_html.c 5566 0 38114505
+new_server_html_2.c 5566 0 14502154
+new_server_tables.c 5566 0 1141190
