@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -163,20 +163,21 @@ clar_open(
 int
 clar_add_record(
         clarlog_state_t state,
-        time_t         time,
-        int            nsec,
-        size_t         size,
-        ej_ip_t        ip,
-        int            ssl_flag,
-        int            from,
-        int            to,
-        int            flags,
-        int            j_from,
-        int            hide_flag,
-        int            locale_id,
-        int            in_reply_to,
-        int            appeal_flag,
-        int            utf8_mode,
+        time_t          time,
+        int             nsec,
+        size_t          size,
+        ej_ip_t         ip,
+        int             ssl_flag,
+        int             from,
+        int             to,
+        int             flags,
+        int             j_from,
+        int             hide_flag,
+        int             locale_id,
+        int             in_reply_to,
+        int             run_id,
+        int             appeal_flag,
+        int             utf8_mode,
         const unsigned char *charset,
         const unsigned char *subj)
 {
@@ -221,6 +222,7 @@ clar_add_record(
   pc->ssl_flag = ssl_flag;
   pc->locale_id = locale_id;
   pc->in_reply_to = in_reply_to;
+  pc->run_id = run_id;
   pc->appeal_flag = appeal_flag;
 
   if (!charset) charset = INTERNAL_CHARSET;
