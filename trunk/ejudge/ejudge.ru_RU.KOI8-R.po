@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-02 08:25+0400\n"
-"PO-Revision-Date: 2009-05-02 12:25+0400\n"
+"POT-Creation-Date: 2009-05-02 21:56+0400\n"
+"PO-Revision-Date: 2009-05-02 22:45+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -2899,6 +2899,9 @@ msgstr "Отправить сообщение"
 msgid "Send run comment"
 msgstr "Отправить комментарий к программе"
 
+msgid "Send run comment and OK run"
+msgstr "Отправить комментарий к программе и принять посылку"
+
 msgid "Send run comment and ignore run"
 msgstr "Отправить комментарий к программе и игнорировать посылку"
 
@@ -3751,6 +3754,10 @@ msgstr ""
 #, c-format
 msgid "You submit has been commented\n"
 msgstr "Ваша посылка была прокомментирована\n"
+
+#, c-format
+msgid "You submit has been commented and accepted\n"
+msgstr "Ваша посылка была прокомментирована и принята\n"
 
 #, c-format
 msgid "You submit has been commented and ignored\n"
