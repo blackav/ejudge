@@ -1,0 +1,74 @@
+/* -*- mode: c -*- */
+/* $Id$ */
+
+/* Copyright (C) 2009 Alexander Chernov <cher@ejudge.ru> */
+
+/*
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+#include "file_perms.h"
+#include "misctext.h"
+
+#include <reuse/osdeps.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <grp.h>
+#include <unistd.h>
+
+int
+file_perms_parse_mode(const unsigned char *mode)
+{
+  char *eptr = 0;
+  int m = 0;
+
+  if (!mode) return -1;
+  if (is_empty_string(mode)) return -1;
+  m = strtol(mode, &eptr, 8);
+  if (!is_empty_string(eptr)) return -1;
+  m &= 07777;
+  return m;
+}
+
+int
+file_perms_parse_group(const unsigned char *group)
+{
+  struct group *g = 0;
+
+  if (!group) return -1;
+  if (is_empty_string(group)) return -1;
+  if (!(g = getgrnam(group))) return -1;
+  return g->gr_gid;
+}
+
+int
+file_perms_set(FILE *flog, const unsigned char *path, int group, int mode)
+{
+  if (group > 0) {
+    if (chown(path, -1, group) < 0) {
+      fprintf(flog, "chown: %s: %s\n", path, os_ErrorMsg());
+    }
+  }
+  if (mode > 0) {
+    if (chmod(path, mode) < 0) {
+      fprintf(flog, "chmod: %s: %s\n", path, os_ErrorMsg());
+    }
+  }
+  return 0;
+}
+
+/*
+ * Local variables:
+ *  compile-command: "make -C .."
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
+ * End:
+ */
