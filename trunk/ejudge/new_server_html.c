@@ -3066,6 +3066,12 @@ priv_submit_run_comment(
 
   if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE) {
     run_change_status(cs->runlog_state, run_id, RUN_IGNORED, 0, -1, 0);
+  } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK) {
+    struct section_problem_data *prob = 0;
+    int full_score = 0;
+    if (re.prob_id > 0 && re.prob_id <= cs->max_prob) prob = cs->probs[re.prob_id];
+    if (prob) full_score = prob->full_score;
+    run_change_status(cs->runlog_state, run_id, RUN_OK, full_score, re.test, 0);
   }
 
   if (global->notify_clar_reply) {
@@ -3082,6 +3088,8 @@ priv_submit_run_comment(
     msg_f = open_memstream(&msg_t, &msg_z);
     if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE) {
       fprintf(msg_f, _("You submit has been commented and ignored\n"));
+    } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK) {
+      fprintf(msg_f, _("You submit has been commented and accepted\n"));
     } else {
       fprintf(msg_f, _("You submit has been commented\n"));
     }
@@ -6780,7 +6788,8 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_FORCE_START_VIRTUAL] = priv_force_start_virtual,
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_2] = priv_assign_cyphers_2,
   [NEW_SRV_ACTION_SET_PRIORITIES] = priv_set_priorities,
-  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE]=priv_submit_run_comment,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE] = priv_submit_run_comment,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = priv_submit_run_comment,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -8210,6 +8219,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIO_FORM] = priv_generic_page,
   [NEW_SRV_ACTION_SET_PRIORITIES] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE] = priv_generic_operation,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = priv_generic_operation,
   [NEW_SRV_ACTION_VIEW_USER_IPS] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_IP_USERS] = priv_generic_page,
 };
@@ -13640,6 +13650,7 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_USER_IPS] = "VIEW_USER_IPS",
   [NEW_SRV_ACTION_VIEW_IP_USERS] = "VIEW_IP_USERS",
   [NEW_SRV_ACTION_CHANGE_FINISH_TIME] = "CHANGE_FINISH_TIME",
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = "PRIV_SUBMIT_RUN_COMMENT_AND_OK",
 };
 
 void
