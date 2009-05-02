@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,7 @@
 #include "ej_process.h"
 #include "vcs.h"
 #include "compat.h"
+#include "file_perms.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -861,7 +862,13 @@ get_contest_header_and_footer(const unsigned char *path,
 }
 
 static void
-rename_files(FILE *flog, int flag, unsigned char *to, unsigned char *from)
+rename_files(
+        FILE *flog,
+        int flag,
+        const unsigned char *to,
+        const unsigned char *from,
+        int group,
+        int mode)
 {
   if (!flag) return;
   if (!from || !*from || !to || !*to) return;
@@ -871,6 +878,7 @@ rename_files(FILE *flog, int flag, unsigned char *to, unsigned char *from)
   } else {
     fprintf(flog, "renamed %s to %s\n", from, to);
   }
+  file_perms_set(flog, to, group, mode);
 }
 
 static unsigned char *
@@ -1049,6 +1057,7 @@ super_html_commit_contest(FILE *f,
   size_t vmap_size = 0;
   FILE *vmap_f = 0;
   struct opcap_list_item *capp;
+  int dir_mode = -1, dir_group = -1, file_mode = -1, file_group = -1; 
 
   if (!cnts) {
     return super_html_report_error(f, session_id, self_url, extra_args,
@@ -1122,6 +1131,12 @@ super_html_commit_contest(FILE *f,
   }
   // FIXME: what else we should validate
 
+  // cnts->dir_mode, cnts->dir_group, cnts->file_mode, cnts->file_group
+  dir_mode = file_perms_parse_mode(cnts->dir_mode);
+  dir_group = file_perms_parse_group(cnts->dir_group);
+  file_mode = file_perms_parse_mode(cnts->file_mode);
+  file_group = file_perms_parse_group(cnts->file_group);
+
   if (!cnts->conf_dir) {
     snprintf(conf_path, sizeof(conf_path), "%s/%s", cnts->root_dir, "conf");
   } else if (!os_IsAbsolutePath(cnts->conf_dir)) {
@@ -1148,6 +1163,7 @@ super_html_commit_contest(FILE *f,
       goto failed;
     }
     fprintf(flog, "contest root directory `%s' is created\n", cnts->root_dir);
+    file_perms_set(flog, cnts->root_dir, dir_group, dir_mode);
     if (vcs_add_dir(cnts->root_dir, &vcs_str) > 0) {
       fprintf(flog, "Version control:\n%s\n", vcs_str);
       xfree(vcs_str); vcs_str = 0;
@@ -1168,12 +1184,15 @@ super_html_commit_contest(FILE *f,
       fprintf(flog, "error: %s\n", os_GetErrorString(-errcode));
       goto failed;
     }
+    file_perms_set(flog, conf_path, dir_group, dir_mode);
     fprintf(flog, "contest configuration directory `%s' is created\n", conf_path);
     if (vcs_add_dir(conf_path, &vcs_str) > 0) {
       fprintf(flog, "Version control:\n%s\n", vcs_str);
       xfree(vcs_str); vcs_str = 0;
     }
   }
+
+  /* FIXME: create statement, test, checker directories, etc... */
 
   /* Save the users_header_file as temporary file */
   if ((uhf = save_conf_file(flog, "`users' HTML header file",
@@ -1446,32 +1465,33 @@ super_html_commit_contest(FILE *f,
         
 
   /* 12. Rename files */
-  rename_files(flog, uhf, users_header_path, users_header_path_2);
-  rename_files(flog, uff, users_footer_path, users_footer_path_2);
-  rename_files(flog, rhf, register_header_path, register_header_path_2);
-  rename_files(flog, rff, register_footer_path, register_footer_path_2);
-  rename_files(flog, thf, team_header_path, team_header_path_2);
-  rename_files(flog, t1f, team_menu_1_path, team_menu_1_path_2);
-  rename_files(flog, t2f, team_menu_2_path, team_menu_2_path_2);
-  rename_files(flog, t3f, team_menu_3_path, team_menu_3_path_2);
-  rename_files(flog, tsf, team_separator_path, team_separator_path_2);
-  rename_files(flog, tff, team_footer_path, team_footer_path_2);
-  rename_files(flog, ihf, priv_header_path, priv_header_path_2);
-  rename_files(flog, iff, priv_footer_path, priv_footer_path_2);
-  rename_files(flog, cpf, copyright_path, copyright_path_2);
-  rename_files(flog, cwf, welcome_path, welcome_path_2);
-  rename_files(flog, crwf, reg_welcome_path, reg_welcome_path_2);
-  rename_files(flog, ref, register_email_path, register_email_path_2);
-  rename_files(flog, csf, contest_start_cmd_path, contest_start_cmd_path_2);
+  rename_files(flog, uhf, users_header_path, users_header_path_2, file_group, file_mode);
+  rename_files(flog, uff, users_footer_path, users_footer_path_2, file_group, file_mode);
+  rename_files(flog, rhf, register_header_path, register_header_path_2, file_group, file_mode);
+  rename_files(flog, rff, register_footer_path, register_footer_path_2, file_group, file_mode);
+  rename_files(flog, thf, team_header_path, team_header_path_2, file_group, file_mode);
+  
+  rename_files(flog, t1f, team_menu_1_path, team_menu_1_path_2, file_group, file_mode);
+  rename_files(flog, t2f, team_menu_2_path, team_menu_2_path_2, file_group, file_mode);
+  rename_files(flog, t3f, team_menu_3_path, team_menu_3_path_2, file_group, file_mode);
+  rename_files(flog, tsf, team_separator_path, team_separator_path_2, file_group, file_mode);
+  rename_files(flog, tff, team_footer_path, team_footer_path_2, file_group, file_mode);
+  rename_files(flog, ihf, priv_header_path, priv_header_path_2, file_group, file_mode);
+  rename_files(flog, iff, priv_footer_path, priv_footer_path_2, file_group, file_mode);
+  rename_files(flog, cpf, copyright_path, copyright_path_2, file_group, file_mode);
+  rename_files(flog, cwf, welcome_path, welcome_path_2, file_group, file_mode);
+  rename_files(flog, crwf, reg_welcome_path, reg_welcome_path_2, file_group, file_mode);
+  rename_files(flog, ref, register_email_path, register_email_path_2, file_group, file_mode);
+  rename_files(flog, csf, contest_start_cmd_path,contest_start_cmd_path_2,file_group,file_mode);
   if (csf) chmod(contest_start_cmd_path, 0775);
-  rename_files(flog, shf, stand_header_path, stand_header_path_2);
-  rename_files(flog, sff, stand_footer_path, stand_footer_path_2);
-  rename_files(flog, s2hf, stand2_header_path, stand2_header_path_2);
-  rename_files(flog, s2ff, stand2_footer_path, stand2_footer_path_2);
-  rename_files(flog, phf, plog_header_path, plog_header_path_2);
-  rename_files(flog, pff, plog_footer_path, plog_footer_path_2);
-  rename_files(flog, vmf, vmap_path, vmap_path_2);
-  rename_files(flog, sf, serve_path, serve_path_2);
+  rename_files(flog, shf, stand_header_path, stand_header_path_2, file_group, file_mode);
+  rename_files(flog, sff, stand_footer_path, stand_footer_path_2, file_group, file_mode);
+  rename_files(flog, s2hf, stand2_header_path, stand2_header_path_2, file_group, file_mode);
+  rename_files(flog, s2ff, stand2_footer_path, stand2_footer_path_2, file_group, file_mode);
+  rename_files(flog, phf, plog_header_path, plog_header_path_2, file_group, file_mode);
+  rename_files(flog, pff, plog_footer_path, plog_footer_path_2, file_group, file_mode);
+  rename_files(flog, vmf, vmap_path, vmap_path_2, file_group, file_mode);
+  rename_files(flog, sf, serve_path, serve_path_2, file_group, file_mode);
 
   if (vmf > 0) {
     if (vmap_vcs_add_flag && vcs_add(vmap_path, &vcs_str) > 0) {
@@ -1482,6 +1502,7 @@ super_html_commit_contest(FILE *f,
       fprintf(flog, "Version control:\n%s\n", vcs_str);
     }
     xfree(vcs_str); vcs_str = 0;
+    file_perms_set(flog, vmap_path, file_group, file_mode);
   }
 
   if (sf > 0) {
@@ -1493,6 +1514,7 @@ super_html_commit_contest(FILE *f,
       fprintf(flog, "Version control:\n%s\n", vcs_str);
     }
     xfree(vcs_str); vcs_str = 0;
+    file_perms_set(flog, serve_path, file_group, file_mode);
   }
 
   // FIXME: register and make invisible all the privileged users
