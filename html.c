@@ -546,7 +546,8 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
     if (global->team_enable_rep_view) {
       fprintf(f, "<td%s>", cl);
       if (re.status == RUN_CHECK_FAILED || re.status == RUN_IGNORED
-          || re.status == RUN_PENDING || re.status > RUN_MAX_STATUS) {
+          || re.status == RUN_PENDING || re.status > RUN_MAX_STATUS
+          || (cur_prob && !cur_prob->team_enable_rep_view)) {
         fprintf(f, "N/A");
       } else {
         if (action_view_report > 0) {
