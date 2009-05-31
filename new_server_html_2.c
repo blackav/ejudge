@@ -3142,7 +3142,9 @@ ns_write_priv_standings(const serve_state_t state,
 
 void
 ns_download_runs(
-        const serve_state_t cs, FILE *fout, FILE *log_f,
+        const serve_state_t cs,
+        FILE *fout,
+        FILE *log_f,
         int run_selection,
         int dir_struct,
         int file_name_mask,
@@ -3399,7 +3401,7 @@ ns_download_runs(
     _exit(1);
   }
 
-  while ((p = waitpid(pid, &status, 0)) != p);
+  while ((p = waitpid(pid, &status, 0)) != pid);
   if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
     ns_error(log_f, NEW_SRV_ERR_TAR_FAILED);
     goto cleanup;
