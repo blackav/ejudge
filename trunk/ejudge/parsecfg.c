@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1047,12 +1047,21 @@ copy_param(void *cfg, const struct config_parse_info *params,
     int n, m;
     size_t v, *ptr;
 
+#ifdef __WIN32__
+    if (sscanf(varvalue, "%d%n", &v, &n) != 1
+        || !(m = num_suffix(varvalue + n))) {
+      fprintf(stderr, "%d: size parameter expected for '%s'\n",
+              parsecfg_state.lineno - 1, varname);
+      return -1;
+    }
+#else
     if (sscanf(varvalue, "%zu%n", &v, &n) != 1
         || !(m = num_suffix(varvalue + n))) {
       fprintf(stderr, "%d: size parameter expected for '%s'\n",
               parsecfg_state.lineno - 1, varname);
       return -1;
     }
+#endif /* __WIN32__ */
     // FIXME: check for overflow 
     v *= m;
     ptr = (size_t*) ((char*) cfg + params[i].offset);
