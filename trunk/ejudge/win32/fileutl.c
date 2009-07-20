@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -102,6 +102,8 @@ scan_dir(char const *partial_path, char *found_item, size_t fi_size)
     if (!strcmp(partial_path, ign[i].dir))
       break;
   if (i < ign_u) cur_ign = &ign[i];
+
+  memset(items, 0, sizeof(items));
 
   if (cur_ign && cur_ign->u > 0) {
     XALLOCAZ(del_map, cur_ign->u);
@@ -532,7 +534,7 @@ do_read_file(char **pbuf, size_t maxsz, size_t *prsz, char const *path)
     }
     *p = 0;
   } else {
-    char *mem = xmalloc(16);
+    char *mem = xmalloc(256);
     int   mem_a = 256;
     int   size = 0;
 

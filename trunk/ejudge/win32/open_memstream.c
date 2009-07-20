@@ -19,13 +19,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <process.h>
+#include <io.h>
 
-#ifndef HAVE_OPEN_MEMSTREAM
+#ifndef HAVE_OPEN_MEMSTREAM /* win32 version */
 
 static void
 addONode(int o_stream_number, FILE *file, char **buf, size_t *length);
 static void delONode(FILE *file);
 static int get_o_stream_number(void);
+static void setODirName(char *str);
+static void setOFileName(char *str, int stream_number);
 
 struct oListNode
 {
@@ -84,7 +89,8 @@ static void delONode(FILE *file)
       abort();
     fread(*(todel->buf), 1, *(todel->length), file);
 
-    sprintf(file_name,"o_stream_%d",todel->o_stream_number);
+    fclose(file);
+    setOFileName(file_name,todel->o_stream_number);
     if(-1 == remove(file_name))
       abort();
 
@@ -106,6 +112,18 @@ static int get_o_stream_number(void)
   return o_stream_number;
 }
 
+static void setODirName(char *str)
+{
+  sprintf(str, "ostr_job_%d", _getpid());
+}
+ 
+static void setOFileName(char *str, int stream_number)
+{
+  setODirName(str);
+  char fname[30];
+  sprintf(fname,"/o_stream_%d",stream_number);
+  strcat(str,fname);
+}
 
 FILE *
 open_memstream(char **ptr, size_t *sizeloc)
@@ -114,8 +132,13 @@ open_memstream(char **ptr, size_t *sizeloc)
   char file_name[30];
   int o_stream_number;
   
+  if(oList == NULL){
+    setODirName(file_name);
+    mkdir(file_name);
+  }
+
   o_stream_number = get_o_stream_number();
-  sprintf(file_name,"o_stream_%d",o_stream_number);
+  setOFileName(file_name,o_stream_number);
   f = fopen(file_name,"w+");
   
   if(!f)
@@ -130,8 +153,13 @@ open_memstream(char **ptr, size_t *sizeloc)
 void
 close_memstream(FILE *f)
 {
+  char file_name[30];
   delONode(f);
-  fclose(f);
+
+  if(oList == NULL){
+    setODirName(file_name);
+    rmdir(file_name);
+  }
 }
 
 #else
