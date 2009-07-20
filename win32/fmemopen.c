@@ -19,12 +19,17 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <process.h>
+#include <io.h>
 
 #ifndef HAVE_FMEMOPEN
 
 static void addINode(int i_stream_number, FILE *file);
 static void delINode(FILE *file);
 static int get_i_stream_number(void);
+static void setIDirName(char *str);
+static void setIFileName(char *str, int stream_number);
 
 struct iListNode
 {
@@ -66,8 +71,10 @@ delINode(FILE *file)
   if(todel == NULL){ //not found
     // WARNING: (("Trying to close a simple FILE* with fmemclose()"));
   } else {
-    sprintf(file_name,"i_stream_%d",todel->i_stream_number);
-    remove(file_name);
+    fclose(file);
+    setIFileName(file_name,todel->i_stream_number);
+    if(-1 == remove(file_name))
+      abort();
       
     (*pcur) = todel->pnext;
     free(todel);
@@ -87,6 +94,21 @@ get_i_stream_number(void)
   return i_stream_number;
 }
 
+static void
+setIDirName(char *str)
+{
+  sprintf(str, "istr_job_%d", _getpid());
+}
+
+static void
+setIFileName(char *str, int stream_number)
+{
+  setIDirName(str);
+  char fname[30];
+  sprintf(fname,"/i_stream_%d",stream_number);
+  strcat(str,fname);
+}
+
 FILE *
 fmemopen(void *buf, size_t size, const char *mode)
 {
@@ -94,8 +116,13 @@ fmemopen(void *buf, size_t size, const char *mode)
   char file_name[30];
   int i_stream_number;
   
+  if (iList == NULL) {
+    setIDirName(file_name);
+    mkdir(file_name);
+  }
+
   i_stream_number = get_i_stream_number();
-  sprintf(file_name,"i_stream_%d",i_stream_number);
+  setIFileName(file_name,i_stream_number);
   f = fopen(file_name,"w+");
   
   if(!f)
@@ -120,8 +147,12 @@ fmemopen(void *buf, size_t size, const char *mode)
 void
 fmemclose(FILE *f)
 {
+  char dir_name[30];
   delINode(f);
-  fclose(f);
+  if(iList == NULL){
+    setIDirName(dir_name);
+    rmdir(dir_name);
+  }
 }
 
 #else

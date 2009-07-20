@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#define STARTSTOP_DEBUG 0
+
 #include "config.h"
 #include "ej_types.h"
 #include "version.h"
@@ -22,39 +24,58 @@
 
 #include <reuse/logger.h>
 
+#if STARTSTOP_DEBUG - 0
+#include <stdio.h>
+#endif /* STARTSTOP_DEBUG - 0 */
+ 
 void
 start_set_self_args(int argc, char *argv[])
 {
-  SWERR(("not implemented"));
+#if STARTSTOP_DEBUG - 0
+  printf("win32/startstop.c: start_set_self_args\n");
+#endif /* STARTSTOP_DEBUG - 0 */
 }
 
 int
 start_switch_user(const unsigned char *user, const unsigned char *group)
 {
-  SWERR(("not implemented"));
+#if STARTSTOP_DEBUG - 0
+  printf("win32/startstop.c: start_switch_user\n");
+#endif /* STARTSTOP_DEBUG - 0 */
+  return 0;
 }
 
 int
 start_prepare(const unsigned char *user, const unsigned char *group,
               const unsigned char *workdir)
 {
-  SWERR(("not implemented"));
+#if STARTSTOP_DEBUG - 0
+  printf("win32/startstop.c: start_prepare\n");
+#endif /* STARTSTOP_DEBUG - 0 */
+  return 0;
 }
 
 void
 start_restart(void)
 {
-  SWERR(("not implemented"));
+#if STARTSTOP_DEBUG - 0
+  printf("win32/startstop.c: start_restart\n");
+#endif /* STARTSTOP_DEBUG - 0 */
 }
 
 void
 start_set_args(char *argv[])
 {
-  SWERR(("not implemented"));
+#if STARTSTOP_DEBUG - 0
+  printf("win32/startstop.c: start_set_args\n");
+#endif /* STARTSTOP_DEBUG - 0 */
 }
 
 int
 start_find_process(const unsigned char *name, int *p_uid)
 {
-  SWERR(("not implemented"));
+#if STARTSTOP_DEBUG - 0
+  printf("win32/startstop.c: start_find_process\n");
+#endif /* STARTSTOP_DEBUG - 0 */
+  return 0;
 }
