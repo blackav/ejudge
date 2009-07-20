@@ -3750,6 +3750,10 @@ create_dirs(serve_state_t state, int mode)
   int i;
   struct section_global_data *g = state->global;
 
+#ifdef __WIN32__
+  path_t bufstr;
+#endif /* __WIN32__ */
+
   if (mode == PREPARE_SERVE) {
     if (g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
     if (make_dir(g->var_dir, 0) < 0) return -1;
@@ -3805,6 +3809,16 @@ create_dirs(serve_state_t state, int mode)
   } else if (mode == PREPARE_COMPILE) {
     if (g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
     if (make_dir(g->var_dir, 0) < 0) return -1;
+
+#ifdef __WIN32__
+    /* Win program incorrectly parses dir names. Add leading slashes manually*/
+    sprintf(bufstr, "/%s", g->compile_dir);
+    strcpy(g->compile_dir, bufstr);
+    sprintf(bufstr, "/%s", g->compile_queue_dir);
+    strcpy(g->compile_queue_dir, bufstr);
+    sprintf(bufstr, "/%s", g->compile_src_dir);
+    strcpy(g->compile_src_dir, bufstr);
+#endif /* __WIN32__ */
 
     /* COMPILE reads its commands from here */
     if (make_dir(g->compile_dir, 0) < 0) return -1;

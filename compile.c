@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -88,7 +88,9 @@ do_loop(void)
   void *rpl_pkt = 0;
   size_t rpl_size = 0;
   const unsigned char *tail_message = 0;
+#if HAVE_TRUNCATE - 0
   struct stat stb;
+#endif /* HAVE_TRUNCATE */
   FILE *log_f = 0;
 
   if (cr_serialize_init(&serve_state) < 0) return -1;
@@ -222,6 +224,15 @@ do_loop(void)
       ce_flag = 0;
       rpl.status = RUN_OK;
     } else {
+#ifdef __WIN32__
+      info("Starting: %s %s %s", serve_state.langs[req->lang_id]->cmd,
+           src_path, exe_path);
+      tsk = task_New();
+      task_AddArg(tsk, serve_state.langs[req->lang_id]->cmd);
+      task_AddArg(tsk, src_path);
+      task_AddArg(tsk, exe_path);
+      task_SetPathAsArg0(tsk);
+#else
       info("Starting: %s %s %s", serve_state.langs[req->lang_id]->cmd,
            src_name, exe_name);
       tsk = task_New();
@@ -229,6 +240,8 @@ do_loop(void)
       task_AddArg(tsk, src_name);
       task_AddArg(tsk, exe_name);
       task_SetPathAsArg0(tsk);
+#endif
+
       if (req->env_num > 0) {
         for (i = 0; i < req->env_num; i++)
           task_PutEnv(tsk, req->env_vars[i]);
@@ -243,7 +256,7 @@ do_loop(void)
       }
 #if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
       task_EnableAllSignals(tsk);
-#endif
+#endif /* HAVE_TASK_ENABLEALLSIGNALS */
       if (cr_serialize_lock(&serve_state) < 0) {
         // FIXME: propose reasonable recovery?
         return -1;
@@ -396,18 +409,23 @@ main(int argc, char *argv[])
   int     code = 0;
   int     prepare_flags = 0;
   unsigned char *user = 0, *group = 0, *workdir = 0;
+
+#if HAVE_SETSID - 0
   path_t  log_path;
-  int log_fd = -1, pid = -1;
+  int log_fd = -1;
+#endif /* HAVE_SETSID */
+
+  int pid = -1;
   char **argv_restart = 0;
   unsigned char *ejudge_xml_path = 0;
   unsigned char *compile_cfg_path = 0;
   path_t compile_cfg_buf = { 0 };
 
-#if HAVE_OPEN_MEMSTREAM
+#if HAVE_OPEN_MEMSTREAM - 0
   FILE *lang_log_f = 0;
   char *lang_log_t = 0;
   size_t lang_log_z = 0;
-#endif
+#endif /* HAVE_OPEN_MEMSTREAM */
 
   start_set_self_args(argc, argv);
   XCALLOC(argv_restart, argc + 1);
@@ -480,6 +498,31 @@ main(int argc, char *argv[])
     return 1;
   }
 
+#ifdef __WIN32__
+  if (!compile_cfg_path && ejudge_config->compile_home_dir) {
+    snprintf(compile_cfg_buf, sizeof(compile_cfg_buf),
+             "%s/conf/win32_compile.cfg", ejudge_config->compile_home_dir);
+    compile_cfg_path = compile_cfg_buf;
+  }
+  if (!compile_cfg_path && ejudge_config->contests_home_dir) {
+    snprintf(compile_cfg_buf, sizeof(compile_cfg_buf),
+             "%s/compile/conf/win32_compile.cfg",
+             ejudge_config->contests_home_dir);
+    compile_cfg_path = compile_cfg_buf;
+  }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  if (!compile_cfg_path) {
+    snprintf(compile_cfg_buf, sizeof(compile_cfg_buf),
+             "%s/compile/conf/win32_compile.cfg", EJUDGE_CONTESTS_HOME_DIR);
+    compile_cfg_path = compile_cfg_buf;
+  }
+#endif /* EJUDGE_CONTESTS_HOME_DIR */
+
+  if (!compile_cfg_path) {
+    fprintf(stderr, "%s: win32_compile.cfg is not specified\n", argv[0]);
+    return 1;
+  }
+#else
   if (!compile_cfg_path && ejudge_config->compile_home_dir) {
     snprintf(compile_cfg_buf, sizeof(compile_cfg_buf),
              "%s/conf/compile.cfg", ejudge_config->compile_home_dir);
@@ -501,6 +544,7 @@ main(int argc, char *argv[])
     fprintf(stderr, "%s: compile.cfg is not specified\n", argv[0]);
     return 1;
   }
+#endif /* __WIN32__ */
 
   if (start_prepare(user, group, workdir) < 0) return 1;
 
@@ -548,13 +592,13 @@ main(int argc, char *argv[])
 
 #if HAVE_OPEN_MEMSTREAM - 0 == 1
     fprintf(stderr, "%s", lang_log_t);
-#endif
+#endif /* HAVE_OPEN_MEMSTREAM */
   }
-#endif
+#endif /* HAVE_SETSID */
 
 #if HAVE_OPEN_MEMSTREAM - 0 == 1
   xfree(lang_log_t); lang_log_t = 0; lang_log_z = 0;
-#endif
+#endif /* HAVE_OPEN_MEMSTREAM */
 
   if (do_loop() < 0) return 1;
 

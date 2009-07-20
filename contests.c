@@ -1710,7 +1710,12 @@ contests_get_path_in_conf_dir(
     snprintf(home_dir, sizeof(home_dir), "%s", CONTESTS_HOME_DIR);
 #endif
     if (!home_dir[0]) {
+#ifdef __WIN32__
+      /* INSERT YOUR SERVER'S SAMBA ADDRESS HERE ------\/-----------------*/
+      snprintf(home_dir, sizeof(home_dir), "%s", "//192.168.244.130/judges");
+#else
       snprintf(home_dir, sizeof(home_dir), "%s", "/home/judges");
+#endif /* __WIN32__ */
     }
     if (cnts->root_dir) {
       snprintf(root_dir, sizeof(root_dir), "%s/%s", home_dir, cnts->root_dir);
