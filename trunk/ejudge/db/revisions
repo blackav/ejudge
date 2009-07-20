@@ -4503,3 +4503,13 @@ new_server_html_2.c 5569 0 14447599
 html.c 5571 0 12733716
 new_server_html_2.c 5573 0 14448277
 runlog_import.c 5573 0 2222008
+compile.c 5577 0 1476481
+win32/fileutl.c 5575 0 1491304
+win32/fmemopen.c 5575 0 276173
+win32/open_memstream.c 5575 0 300858
+win32/startstop.c 5575 0 157634
+contests.c 5577 0 4177995
+errlog.c 5577 0 113646
+parsecfg.c 5577 0 3470594
+prepare.c 5577 0 16601782
+xml_utils/parse_date.c 5576 0 367999
