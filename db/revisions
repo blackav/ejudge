@@ -4513,3 +4513,17 @@ errlog.c 5577 0 113646
 parsecfg.c 5577 0 3470594
 prepare.c 5577 0 16601782
 xml_utils/parse_date.c 5576 0 367999
+misctext.h 5579 0 523215
+new-server.h 5579 0 2181851
+serve_state.h 5579 0 1145892
+filter_eval.c 5579 0 1532011
+filter_tree.c 5579 0 3079166
+master_html.c 5579 0 2971790
+misctext.c 5579 0 2240454
+new_server_html.c 5579 0 38349491
+new_server_html_2.c 5579 0 14489149
+new_server_html_4.c 5579 0 4657589
+new_server_tables.c 5579 0 1152399
+testing_report_xml.c 5579 0 1429016
+filter_expr.y 5579 0 2445100
+filter_scan.lex 5579 0 752923
