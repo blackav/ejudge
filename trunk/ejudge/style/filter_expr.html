@@ -13,6 +13,7 @@
     <h2>Содержание</h2>
 <ol>
 <li><a href="#datatypes">Типы данных</a></li>
+<li><a href="#statuses">Статусы посылок</a></li>
 <li><a href="#conversions">Преобразования типов</a></li>
 <li><a href="#primitives">Примитивы доступа к базе посылок</a></li>
 <li><a href="#otherprimitives">Другие примитивы</a></li>
@@ -111,6 +112,93 @@ CGI-программах <tt>new-judge</tt> или <tt>new-master</tt> выражение фильтра
 представления IP-адресов. Литералов адресного типа не
 существует.
 </ul>
+
+<h2>Статусы посылок</h2>
+
+<a name="statuses" />
+
+<table>
+  <tr>
+    <td><tt>OK</tt></td>
+    <td>OK</td>
+  </tr>
+  <tr>
+    <td><tt>CE</tt></td>
+    <td>Compilation error</td>
+  </tr>
+  <tr>
+    <td><tt>RT</tt></td>
+    <td>Run-time error</td>
+  </tr>
+  <tr>
+    <td><tt>PE</tt></td>
+    <td>Presentation error</td>
+  </tr>
+  <tr>
+    <td><tt>WA</tt></td>
+    <td>Wrong answer</td>
+  </tr>
+  <tr>
+    <td><tt>CF</tt></td>
+    <td>Check failed (internal error)</td>
+  </tr>
+  <tr>
+    <td><tt>PT</tt></td>
+    <td>Partial solution</td>
+  </tr>
+  <tr>
+    <td><tt>AC</tt></td>
+    <td>Accepted</td>
+  </tr>
+  <tr>
+    <td><tt>IG</tt></td>
+    <td>Ignored</td>
+  </tr>
+  <tr>
+    <td><tt>DQ</tt></td>
+    <td>Disqualified</td>
+  </tr>
+  <tr>
+    <td><tt>PD</tt></td>
+    <td>Pending</td>
+  </tr>
+  <tr>
+    <td><tt>ML</tt></td>
+    <td>Memory-limit error</td>
+  </tr>
+  <tr>
+    <td><tt>SE</tt></td>
+    <td>Security violation</td>
+  </tr>
+  <tr>
+    <td><tt>RU</tt></td>
+    <td>Running (in testing queue or being tested)</td>
+  </tr>
+  <tr>
+    <td><tt>CD</tt></td>
+    <td>Compiled (but not yet running)</td>
+  </tr>
+  <tr>
+    <td><tt>CG</tt></td>
+    <td>Compiling (in compile queue or being compiled)</td>
+  </tr>
+  <tr>
+    <td><tt>AV</tt></td>
+    <td>Available for testing</td>
+  </tr>
+  <tr>
+    <td><tt>EM</tt></td>
+    <td>Empty record</td>
+  </tr>
+  <tr>
+    <td><tt>VS</tt></td>
+    <td>Virtual start</td>
+  </tr>
+  <tr>
+    <td><tt>VT</tt></td>
+    <td>Virtual stop</td>
+  </tr>
+</table>
 
 <h2>Преобразования типов</h2>
 
@@ -630,7 +718,7 @@ p
 Операции сдвига <tt>&lt;&lt;</tt> и <tt>&gt;&gt;</tt>. Читаются слева направо.
 </li>
 <li>
-Операции отношений <tt>==</tt>, <tt>!=</tt>, <tt>&lt;</tt>, <tt>&gt;</tt>, <tt>&lt;=</tt>, <tt>&gt;=</tt>. Читаются слева направо.</li>
+Операции отношений <tt>==</tt>, <tt>!=</tt>, <tt>&lt;</tt>, <tt>&gt;</tt>, <tt>&lt;=</tt>, <tt>&gt;=</tt>, <tt>~=</tt>. Читаются слева направо.</li>
 <li>
 Операция побитового &laquo;и&raquo; <tt>&amp;</tt>. Читается слева направо.</li>
 <li>
@@ -874,6 +962,13 @@ p
 должны иметь один и тот же тип данных. Результат операции имеет
 тип <tt>bool</tt>.
 </p>
+
+<h3>Сопоставление с регулярным выражением <tt>~=</tt></h3>
+
+<p>
+Данная операция применима к двум строкам. Первая строка проверяется
+на соответствие регулярному выражению, записанному во второй строке.
+</p> 
 
 <h3>Побитовые операции <tt>^</tt>, <tt>&amp;</tt>, <tt>|</tt></h3>
 
