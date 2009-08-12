@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-02 21:56+0400\n"
-"PO-Revision-Date: 2009-05-02 22:45+0400\n"
+"POT-Creation-Date: 2009-08-12 16:26+0400\n"
+"PO-Revision-Date: 2009-08-12 21:14+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1829,6 +1829,12 @@ msgstr "Июль"
 
 msgid "Jun"
 msgstr "Июнь"
+
+msgid "Just OK the run"
+msgstr "Просто пометить посылку OK"
+
+msgid "Just ignore the run"
+msgstr "Просто проигнорировать посылку"
 
 msgid "Language"
 msgstr "Язык"
