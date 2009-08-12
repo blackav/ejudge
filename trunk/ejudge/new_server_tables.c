@@ -172,6 +172,8 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE] = __("Send run comment and ignore run"),
   [NEW_SRV_ACTION_CHANGE_FINISH_TIME] = __("Change"),
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = __("Send run comment and OK run"),
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = __("Just ignore the run"),
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = __("Just OK the run"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =

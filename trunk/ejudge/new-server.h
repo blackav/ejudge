@@ -360,6 +360,8 @@ enum
   NEW_SRV_ACTION_VIEW_IP_USERS,
   NEW_SRV_ACTION_CHANGE_FINISH_TIME,
   NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK,
+  NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE,
+  NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -541,7 +543,7 @@ ns_write_priv_all_runs(FILE *f,
                        struct http_request_info *phr,
                        const struct contest_desc *cnts,
                        struct contest_extra *extra,
-                       int first_run, int last_run,
+                       int first_run_set, int first_run, int last_run_set, int last_run,
                        unsigned char const *filter_expr);
 void
 ns_write_all_clars(
@@ -729,7 +731,12 @@ int ns_cgi_param_bin(const struct http_request_info *phr,
 int ns_cgi_param_int( struct http_request_info *phr,
                       const unsigned char *name,
                       int *p_val);
-
+int
+ns_cgi_param_int_opt_2(
+        struct http_request_info *phr,
+        const unsigned char *name,
+        int *p_val,
+        int *p_set_flag);
 
 struct server_framework_state;
 int ns_open_ul_connection(struct server_framework_state *state);

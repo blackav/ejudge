@@ -87,12 +87,16 @@ parse_error_func(void *data, unsigned char const *format, ...)
 }
 
 void
-ns_write_priv_all_runs(FILE *f,
-                       struct http_request_info *phr,
-                       const struct contest_desc *cnts,
-                       struct contest_extra *extra,
-                       int first_run, int last_run,
-                       unsigned char const *filter_expr)
+ns_write_priv_all_runs(
+        FILE *f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int first_run_set,
+        int first_run,
+        int last_run_set,
+        int last_run,
+        unsigned char const *filter_expr)
 {
   struct user_filter_info *u = 0;
   struct filter_env env;
@@ -216,33 +220,44 @@ ns_write_priv_all_runs(FILE *f,
     memset(list_idx, 0, (env.rtotal + 1) * sizeof(list_idx[0]));
     list_tot = 0;
 
-    if (!first_run) first_run = u->prev_first_run;
-    if (!last_run) last_run = u->prev_last_run;
+    if (!first_run_set) {
+      first_run_set = u->prev_first_run_set;
+      first_run = u->prev_first_run;
+    }
+    if (!last_run_set) {
+      last_run_set = u->prev_last_run_set;
+      last_run = u->prev_last_run;
+    }
+    u->prev_first_run_set = first_run_set;
     u->prev_first_run = first_run;
+    u->prev_last_run_set = last_run_set;
     u->prev_last_run = last_run;
 
-    if (!first_run && !last_run) {
+    if (!first_run_set && !last_run_set) {
       // last 20 in the reverse order
       first_run = -1;
       last_run = -20;
-    } else if (!first_run) {
+    } else if (!first_run_set) {
       // from the last in the reverse order
       first_run = -1;
-    } else if (!last_run) {
+    } else if (!last_run_set) {
       // 20 in the reverse order
       last_run = first_run - 20 + 1;
-      if (first_run > 0 && last_run <= 0) {
-        last_run = 1;
-      }
+      if (first_run >= 0 && last_run < 0) last_run = 0;
     }
-    if (first_run > 0) first_run--;
-    if (last_run > 0) last_run--;
-    if (first_run >= match_tot) first_run = match_tot;
+
+    if (first_run >= match_tot) {
+      first_run = match_tot - 1;
+      if (first_run < 0) first_run = 0;
+    }
     if (first_run < 0) {
       first_run = match_tot + first_run;
       if (first_run < 0) first_run = 0;
     }
-    if (last_run >= match_tot) last_run = match_tot;
+    if (last_run >= match_tot) {
+      last_run = match_tot - 1;
+      if (last_run < 0) last_run = 0;
+    }
     if (last_run < 0) {
       last_run = match_tot + last_run;
       if (last_run < 0) last_run = 0;
@@ -275,13 +290,11 @@ ns_write_priv_all_runs(FILE *f,
     fe_html = "";
     fe_html_len = 0;
   }
-  if (u->prev_first_run) {
-    snprintf(first_run_str, sizeof(first_run_str), "%d",
-             (u->prev_first_run>0)?u->prev_first_run - 1:u->prev_first_run);
+  if (u->prev_first_run_set) {
+    snprintf(first_run_str, sizeof(first_run_str), "%d", u->prev_first_run);
   }
-  if (u->prev_last_run) {
-    snprintf(last_run_str, sizeof(last_run_str), "%d",
-             (u->prev_last_run > 0)?u->prev_last_run - 1:u->prev_last_run);
+  if (u->prev_last_run_set) {
+    snprintf(last_run_str, sizeof(last_run_str), "%d", u->prev_last_run);
   }
   html_start_form(f, 0, phr->self_url, phr->hidden_vars);
   fprintf(f, "<p>%s: <input type=\"text\" name=\"filter_expr\" size=\"32\" maxlength=\"1024\" value=\"%s\"/>", _("Filter expression"), fe_html);
@@ -1001,9 +1014,9 @@ ns_write_priv_source(const serve_state_t state,
   int i;
   path_t src_path;
   struct run_entry info;
-  char *src_text = 0, *html_text;
-  unsigned char *numb_txt;
-  size_t src_len, html_len, numb_len;
+  char *src_text = 0; //, *html_text;
+  //unsigned char *numb_txt;
+  size_t src_len; //, html_len, numb_len;
   time_t start_time;
   int variant, src_flags;
   unsigned char const *nbsp = "<td>&nbsp;</td><td>&nbsp;</td>";
@@ -1587,6 +1600,11 @@ ns_write_priv_source(const serve_state_t state,
         src_len = strlen(src_text);
       }
 
+      fprintf(f, "<table class=\"b0\">");
+      text_table_number_lines(f, src_text, src_len, 0, " class=\"b0\"");
+      fprintf(f, "</table><br/><hr/>");
+
+      /*
       numb_txt = "";
       if ((numb_len = text_numbered_memlen(src_text, src_len))) {
         numb_txt = alloca(numb_len + 1);
@@ -1600,6 +1618,7 @@ ns_write_priv_source(const serve_state_t state,
       fprintf(f, "<pre>%s</pre>", html_text);
       xfree(src_text);
       fprintf(f, "<hr/>\n");
+      */
     }
     /*
     print_nav_buttons(state, f, run_id, sid, self_url, hidden_vars, extra_args,
@@ -1621,6 +1640,10 @@ ns_write_priv_source(const serve_state_t state,
           BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE));
   fprintf(f, "<td%s>%s</td>", cl,
           BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK));
+  fprintf(f, "<td%s>%s</td>", cl,
+          BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE));
+  fprintf(f, "<td%s>%s</td>", cl,
+          BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK));
   fprintf(f, "</tr></table>\n");
   fprintf(f, "</form>\n");
 

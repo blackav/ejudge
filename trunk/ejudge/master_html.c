@@ -628,7 +628,9 @@ html_reset_filter(serve_state_t state, int user_id, ej_cookie_t session_id)
 {
   struct user_filter_info *u = user_filter_info_allocate(state, user_id, session_id);
 
+  u->prev_first_run_set = 0;
   u->prev_first_run = 0;
+  u->prev_last_run_set = 0;
   u->prev_last_run = 0;
   xfree(u->prev_filter_expr); u->prev_filter_expr = 0;
   xfree(u->error_msgs); u->error_msgs = 0;

@@ -62,6 +62,7 @@ static tree_t do_un_plus(tree_t, tree_t);
 static tree_t do_logop(tree_t, tree_t, tree_t);
 static tree_t do_equality(tree_t, tree_t, tree_t);
 static tree_t do_relation(tree_t, tree_t, tree_t);
+static tree_t do_regexp(tree_t, tree_t, tree_t);
 static tree_t do_multiply(tree_t, tree_t, tree_t);
 static tree_t do_divmod(tree_t, tree_t, tree_t);
 static tree_t do_bitop(tree_t, tree_t, tree_t);
@@ -91,6 +92,7 @@ static void *filter_expr_user_data;
 %token TOK_GE        ">="
 %token TOK_ASL       "<<"
 %token TOK_ASR       ">>"
+%token TOK_REGEXP    "~="
 %token TOK_ID        "id"
 %token TOK_TIME      "time"
 %token TOK_CURTIME   "curtime"
@@ -119,7 +121,7 @@ static void *filter_expr_user_data;
 %token TOK_TEST      "test"
 %token TOK_CURTEST   "curtest"
 %token TOK_NOW       "now"
-%token TOK_START     "begin"
+%token TOK_START     "start"
 %token TOK_FINISH    "finish"
 %token TOK_TOTAL     "total"
 %token TOK_IMPORTED  "imported"
@@ -217,6 +219,7 @@ expr5 :
 | expr5 "<=" expr6 { $$ = do_relation($2, $1, $3); }
 | expr5 '>'  expr6 { $$ = do_relation($2, $1, $3); }
 | expr5 ">=" expr6 { $$ = do_relation($2, $1, $3); }
+| expr6 "~=" expr6 { $$ = do_regexp($2, $1, $3); }
 ;
 
 expr6 :
@@ -648,6 +651,24 @@ do_equality(tree_t op, tree_t p1, tree_t p2)
     r = filter_tree_eval_node(filter_expr_tree_mem, op->kind, res, p1, p2);
     if (r < 0) (*filter_expr_parse_err)(filter_expr_user_data, "%s", filter_strerror(-r));
     return res;
+  }
+
+  op->type = FILTER_TYPE_BOOL;
+  op->v.t[0] = p1;
+  op->v.t[1] = p2;
+  return op;
+}
+
+static tree_t
+do_regexp(tree_t op, tree_t p1, tree_t p2)
+{
+  ASSERT(op);
+  ASSERT(p1);
+  ASSERT(p2);
+
+  if (p1->type != FILTER_TYPE_STRING || p2->type != FILTER_TYPE_STRING) {
+    (*filter_expr_parse_err)(filter_expr_user_data, "operation ~= is undefined for this type");
+    return MKBOOL(0);
   }
 
   op->type = FILTER_TYPE_BOOL;

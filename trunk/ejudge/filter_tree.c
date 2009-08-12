@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,14 +28,27 @@
 
 #include <errno.h>
 #include <limits.h>
+#include <sys/types.h>
+#include <regex.h>
 
 #if defined __GNUC__ && defined __MINGW32__
 #include <malloc.h>
 #endif
 
+struct filter_tree_regexp
+{
+  unsigned char *str;
+  regex_t re;
+  int status;
+};
+
 struct filter_tree_mem
 {
   tPageDesc *pages;
+
+  // regexp cache
+  size_t re_a, re_u;
+  struct filter_tree_regexp *re_v;
 };
 
 struct filter_tree_mem *
@@ -52,6 +65,12 @@ struct filter_tree_mem *
 filter_tree_delete(struct filter_tree_mem *mem)
 {
   if (!mem) return 0;
+
+  for (size_t re_i = 0; re_i < mem->re_u; ++re_i) {
+    xfree(mem->re_v[re_i].str);
+    regfree(&mem->re_v[re_i].re);
+  }
+  xfree(mem->re_v); mem->re_v = 0; mem->re_a = 0; mem->re_u = 0;
 
   /*
   filter_tree_stats(mem, stderr);
@@ -277,6 +296,46 @@ filter_tree_new_ip(struct filter_tree_mem *mem, ej_ip_t val)
   p->type = FILTER_TYPE_IP;
   p->v.p = val;
   return p;
+}
+
+int
+filter_tree_regexp_match(
+        struct filter_tree_mem *mem,
+        const unsigned char *str,
+        const unsigned char *regexp)
+{
+  ASSERT(mem);
+
+  if (!regexp || !str) return 0;
+
+  size_t re_i;
+  for (re_i = 0; re_i < mem->re_u; ++re_i)
+    if (!strcmp(mem->re_v[re_i].str, regexp))
+      break;
+
+  if (re_i == mem->re_u) {
+    if (mem->re_u == mem->re_a) {
+      if (!mem->re_a) {
+        mem->re_a = 8;
+        XCALLOC(mem->re_v, mem->re_a);
+      } else {
+        size_t na = mem->re_a * 2;
+        struct filter_tree_regexp *nv;
+        XCALLOC(nv, na);
+        memcpy(nv, mem->re_v, mem->re_a * sizeof(nv[0]));
+        mem->re_a = na;
+        mem->re_v = nv;
+      }
+    }
+
+    mem->re_v[re_i].str = xstrdup(regexp);
+    mem->re_v[re_i].status = regcomp(&mem->re_v[re_i].re, regexp, REG_EXTENDED | REG_NOSUB);
+    mem->re_u++;
+  }
+
+  if (mem->re_v[re_i].status != 0) return 0;
+  if (regexec(&mem->re_v[re_i].re, str, 0, 0, 0) != 0) return 0;
+  return 1;
 }
 
 #define _(x) x
@@ -1021,6 +1080,16 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
     case TOK_SIZE_L:   res->v.b = (p1->v.z >= p2->v.z); break;
     default:
       SWERR(("unhandled node %d", p1->kind));
+    }
+    break;
+
+  case TOK_REGEXP:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    if (p1->type != FILTER_TYPE_STRING || p2->type != FILTER_TYPE_STRING) {
+      res->v.b = 0;
+    } else {
+      res->v.b = filter_tree_regexp_match(mem, p1->v.s, p2->v.s);
     }
     break;
 
