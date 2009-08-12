@@ -149,7 +149,7 @@ ECC_CFILES = ejudge-configure-compilers.c version.c
 ECC_OBJECTS = ${ECC_CFILES:.c=.o} libcommon.a libplatform.a
 
 EC_CFILES = ejudge-control.c version.c
-EC_OBJECTS = ${EC_CFILES:.c=.o} libcommon.a
+EC_OBJECTS = ${EC_CFILES:.c=.o} libcommon.a libplatform.a
 
 EX_CFILES = execute.c version.c
 EX_OBJECTS = ${EX_CFILES:.c=.o}

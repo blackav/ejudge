@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1189,7 +1189,10 @@ do_dump_master_runs(
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra,
-        int first_run, int last_run,
+        int first_run_set,
+        int first_run,
+        int last_run_set,
+        int last_run,
         unsigned char const *filter_expr)
 {
   struct user_filter_info *u = 0;
@@ -1296,33 +1299,44 @@ do_dump_master_runs(
   memset(list_idx, 0, (env.rtotal + 1) * sizeof(list_idx[0]));
   list_tot = 0;
 
-  if (!first_run) first_run = u->prev_first_run;
-  if (!last_run) last_run = u->prev_last_run;
+  if (!first_run_set) {
+    first_run_set = u->prev_first_run_set;
+    first_run = u->prev_first_run;
+  }
+  if (!last_run_set) {
+    last_run_set = u->prev_last_run_set;
+    last_run = u->prev_last_run;
+  }
+  u->prev_first_run_set = first_run_set;
   u->prev_first_run = first_run;
+  u->prev_last_run_set = last_run_set;
   u->prev_last_run = last_run;
 
-  if (!first_run && !last_run) {
+  if (!first_run_set && !last_run_set) {
     // last 20 in the reverse order
     first_run = -1;
     last_run = -20;
-  } else if (!first_run) {
+  } else if (!first_run_set) {
     // from the last in the reverse order
     first_run = -1;
-  } else if (!last_run) {
+  } else if (!last_run_set) {
     // 20 in the reverse order
     last_run = first_run - 20 + 1;
-    if (first_run > 0 && last_run <= 0) {
-      last_run = 1;
-    }
+    if (first_run >= 0 && last_run < 0) last_run = 0;
   }
-  if (first_run > 0) first_run--;
-  if (last_run > 0) last_run--;
-  if (first_run >= match_tot) first_run = match_tot;
+
+  if (first_run >= match_tot) {
+    first_run = match_tot - 1;
+    if (first_run < 0) first_run = 0;
+  }
   if (first_run < 0) {
     first_run = match_tot + first_run;
     if (first_run < 0) first_run = 0;
   }
-  if (last_run >= match_tot) last_run = match_tot;
+  if (last_run >= match_tot) {
+    last_run = match_tot - 1;
+    if (last_run < 0) last_run = 0;
+  }
   if (last_run < 0) {
     last_run = match_tot + last_run;
     if (last_run < 0) last_run = 0;
@@ -1574,8 +1588,8 @@ cmd_dump_master_runs(
         const struct contest_desc *cnts,
         struct contest_extra *extra)
 {
-  int retval = 0, first_run = 0, last_run = 0, r;
-  const unsigned char *filter_expr = 0, *s = 0;
+  int retval = 0, first_run_set = 0, first_run = 0, last_run_set = 0, last_run = 0;
+  const unsigned char *filter_expr = 0;
 
   if (phr->role != USER_ROLE_ADMIN && phr->role != USER_ROLE_JUDGE)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -1583,23 +1597,15 @@ cmd_dump_master_runs(
   if (ns_cgi_param(phr, "filter_expr", &filter_expr) < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
   if (!filter_expr) filter_expr = "";
-  if ((r = ns_cgi_param(phr, "first_run", &s)) < 0)
+
+  if (ns_cgi_param_int_opt_2(phr, "first_run", &first_run, &first_run_set) < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
-  if (r > 0 && *s) {
-    if (parse_int(s, &first_run) < 0)
-      FAIL(NEW_SRV_ERR_INV_PARAM);
-    if (first_run >= 0) first_run++;
-  }
-  if ((r = ns_cgi_param(phr, "last_run", &s)) < 0)
+
+  if (ns_cgi_param_int_opt_2(phr, "last_run", &last_run, &last_run_set) < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
-  if (r > 0 && *s) {
-    if (parse_int(s, &last_run) < 0)
-      FAIL(NEW_SRV_ERR_INV_PARAM);
-    if (last_run >= 0) last_run++;
-  }
 
   retval = do_dump_master_runs(fout, phr, cnts, extra,
-                               first_run, last_run, filter_expr);
+                               first_run_set, first_run, last_run_set, last_run, filter_expr);
 
  cleanup:
   return retval;

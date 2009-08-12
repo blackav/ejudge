@@ -17,6 +17,7 @@
  * GNU General Public License for more details.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -164,5 +165,13 @@ size_t_to_size_str(
         unsigned char *buf,
         size_t buf_size,
         size_t num);
+
+void
+text_table_number_lines(
+        FILE *out_f,
+        const unsigned char *intxt,
+        size_t insize,
+        const unsigned char *tr_attr,
+        const unsigned char *td_attr);
 
 #endif /* __MISCTEXT_H__ */

@@ -17,6 +17,7 @@
 
 #include "misctext.h"
 #include "base64.h"
+#include "compat.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -186,6 +187,27 @@ int
 html_armor_string(char const *str, char *out)
 {
   return html_armor_text(str, strlen(str), out);
+}
+
+void
+html_armor_to_file_nbsp(FILE *out, char const *str, int size)
+{
+  unsigned char const *p = (unsigned char const *) str;
+  unsigned char const *t;
+  int i = size;
+
+  for (; i > 0; p++, i--) {
+    if (*p == ' ') {
+      fputs("&nbsp;", out);
+    } else if (*p == '\t') {
+      // FIXME: this is wrong, yet works for leading tabulations!
+      fputs("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", out);
+    } else if (!(t = armored_html_translate_table[*p])) {
+      putc(*p, out);
+    } else {
+      fputs(t, out);
+    }
+  }
 }
 
 unsigned char *
@@ -477,6 +499,53 @@ text_number_lines(const unsigned char *intxt, size_t insize,
     }
   }
   *s = 0;
+}
+
+void
+text_table_number_lines(
+        FILE *out_f,
+        const unsigned char *intxt,
+        size_t insize,
+        const unsigned char *tr_attr,
+        const unsigned char *td_attr)
+{
+  int beg = 0, cur, end;
+  int line = 1, lines;
+
+  if (!tr_attr) tr_attr = "";
+  if (!td_attr) td_attr = "";
+
+  for (cur = 0, lines = 0; cur < insize; ++cur)
+    if (intxt[cur] == '\n') ++lines;
+  if (insize > 0 && intxt[insize - 1] != '\n') ++lines;
+
+  fprintf(out_f, "<tr%s><td valign=\"top\"%s><pre>", tr_attr, td_attr);
+  for (line = 0; line < lines; ++line)
+    fprintf(out_f, "[%zu]\n", line + 1);
+  fprintf(out_f, "</pre></td><td valign=\"top\"%s><pre>", td_attr);
+
+  for (cur = 0; cur < insize; ++cur) {
+    if (intxt[cur] != '\n') continue;
+
+    end = cur - 1;
+    while (end >= beg && isspace(intxt[end])) --end;
+    ++end;
+    // [beg, end)
+    html_armor_to_file_nbsp(out_f, intxt + beg, end - beg);
+    putc('\n', out_f);
+
+    beg = cur + 1;
+  }
+  if (beg != cur) {
+    end = cur;
+    while (end >= beg && isspace(intxt[end])) --end;
+    ++end;
+
+    // [beg, end)
+    html_armor_to_file_nbsp(out_f, intxt + beg, end - beg);
+    putc('\n', out_f);
+  }
+  fprintf(out_f, "</pre></td></tr>");
 }
 
 static const char content_text_html[] = "content-type: text/html\n\n";

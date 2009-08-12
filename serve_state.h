@@ -45,7 +45,9 @@ struct user_filter_info
   struct user_filter_info *next;
 
   ej_cookie_t session_id;
+  int prev_first_run_set;
   int prev_first_run;
+  int prev_last_run_set;
   int prev_last_run;
   int prev_first_clar;
   int prev_last_clar;

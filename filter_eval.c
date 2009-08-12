@@ -172,6 +172,7 @@ do_eval(struct filter_env *env,
   case TOK_GE:
   case TOK_ASL:
   case TOK_ASR:
+  case TOK_REGEXP:
     if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
     if ((c = do_eval(env, t->v.t[1], &r2)) < 0) return c;
     return filter_tree_eval_node(env->mem, t->kind, res, &r1, &r2);

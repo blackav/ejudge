@@ -537,11 +537,16 @@ ns_cgi_param_int(
         const unsigned char *name,
         int *p_val)
 {
-  const unsigned char *s = 0;
+  const unsigned char *s = 0, *p = 0;
   char *eptr = 0;
   int x;
 
   if (ns_cgi_param(phr, name, &s) <= 0) return -1;
+
+  p = s;
+  while (*p && isspace(*p)) p++;
+  if (!*p) return -1;
+
   errno = 0;
   x = strtol(s, &eptr, 10);
   if (errno || *eptr) return -1;
@@ -576,6 +581,39 @@ ns_cgi_param_int_opt(
   if (p_val) *p_val = x;
   return 0;
 }
+
+int
+ns_cgi_param_int_opt_2(
+        struct http_request_info *phr,
+        const unsigned char *name,
+        int *p_val,
+        int *p_set_flag)
+{
+  const unsigned char *s = 0, *p;
+  char *eptr = 0;
+  int x;
+
+  ASSERT(p_val);
+  ASSERT(p_set_flag);
+
+  *p_val = 0;
+  *p_set_flag = 0;
+
+  if (!(x = ns_cgi_param(phr, name, &s))) return 0;
+  else if (x < 0) return -1;
+
+  p = s;
+  while (*p && isspace(*p)) p++;
+  if (!*p) return 0;
+
+  errno = 0;
+  x = strtol(s, &eptr, 10);
+  if (errno || *eptr) return -1;
+  *p_val = x;
+  *p_set_flag = 1;
+  return 0;
+}
+
 static void
 close_ul_connection(struct server_framework_state *state)
 {
@@ -3618,6 +3656,75 @@ priv_change_status(
   }
   if (!serve_is_valid_status(cs, status, 1)) {
     ns_error(log_f, NEW_SRV_ERR_INV_STATUS);
+    goto cleanup;
+  }
+
+  if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  if (re.prob_id <= 0 || re.prob_id > cs->max_prob
+      || !(prob = cs->probs[re.prob_id])) {
+    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+
+  memset(&new_run, 0, sizeof(new_run));
+  new_run.status = status;
+  flags = RE_STATUS;
+  if (status == RUN_OK && prob->variable_full_score <= 0) {
+    new_run.score = prob->full_score;
+    flags |= RE_SCORE;
+  }
+  if (run_set_entry(cs->runlog_state, run_id, flags, &new_run) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
+    goto cleanup;
+  }
+
+  if (cs->global->notify_status_change > 0) {
+    if (!re.is_hidden)
+      serve_notify_user_run_status_change(cnts, cs, re.user_id, run_id,
+                                          status);
+  }
+
+ cleanup:
+  return 0;
+
+ invalid_param:
+  ns_html_err_inv_param(fout, phr, 0, errmsg);
+ failure:
+  return -1;
+}
+
+static int
+priv_simple_change_status(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const unsigned char *errmsg = 0;
+  int run_id, status, flags;
+  struct run_entry new_run, re;
+  const struct section_problem_data *prob = 0;
+
+  if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
+
+  if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE) {
+    status = RUN_IGNORED;
+  } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK) {
+    status = RUN_OK;
+  } else {
+    errmsg = "invalid status";
+    goto invalid_param;
+  }
+
+  if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0
+      && ((status != RUN_REJUDGE && status != RUN_FULL_REJUDGE)
+          || opcaps_check(phr->caps, OPCAP_REJUDGE_RUN))) {
+    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto cleanup;
   }
 
@@ -6790,6 +6897,8 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SET_PRIORITIES] = priv_set_priorities,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE] = priv_submit_run_comment,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = priv_submit_run_comment,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = priv_simple_change_status,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = priv_simple_change_status,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -7374,6 +7483,7 @@ priv_main_page(FILE *fout,
   int action;
   long long tdiff;
   int filter_first_run = 0, filter_last_run = 0, filter_mode_clar = 0;
+  int filter_first_run_set = 0, filter_last_run_set = 0;
   const unsigned char *filter_expr = 0;
   int i, x, y, n, variant = 0, need_examiners = 0, online_users = 0;
   const struct section_problem_data *prob = 0;
@@ -7388,16 +7498,10 @@ priv_main_page(FILE *fout,
   const unsigned char *filter_last_clar_str = 0;
 
   if (ns_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
-  if (ns_cgi_param(phr, "filter_first_run", &s) > 0
-      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n]) {
-    filter_first_run = x;
-    if (filter_first_run >= 0) filter_first_run++;
-  }
-  if (ns_cgi_param(phr, "filter_last_run", &s) > 0
-      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n]) {
-    filter_last_run = x;
-    if (filter_last_run >= 0) filter_last_run++;
-  }
+
+  ns_cgi_param_int_opt_2(phr, "filter_first_run", &filter_first_run, &filter_first_run_set);
+  ns_cgi_param_int_opt_2(phr, "filter_last_run", &filter_last_run, &filter_last_run_set);
+
   if (ns_cgi_param(phr, "filter_first_clar", &s) > 0 && s)
     filter_first_clar_str = s;
   if (ns_cgi_param(phr, "filter_last_clar", &s) > 0 && s)
@@ -7791,7 +7895,8 @@ priv_main_page(FILE *fout,
   }
 
   ns_write_priv_all_runs(fout, phr, cnts, extra,
-                         filter_first_run, filter_last_run,
+                         filter_first_run_set, filter_first_run,
+                         filter_last_run_set, filter_last_run,
                          filter_expr);
 
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) >= 0) {
@@ -8222,6 +8327,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = priv_generic_operation,
   [NEW_SRV_ACTION_VIEW_USER_IPS] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_IP_USERS] = priv_generic_page,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = priv_generic_operation,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = priv_generic_operation,
 };
 
 static void
@@ -13651,6 +13758,8 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_IP_USERS] = "VIEW_IP_USERS",
   [NEW_SRV_ACTION_CHANGE_FINISH_TIME] = "CHANGE_FINISH_TIME",
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = "PRIV_SUBMIT_RUN_COMMENT_AND_OK",
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = "PRIV_SUBMIT_RUN_JUST_IGNORE",
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = "PRIV_SUBMIT_RUN_JUST_OK",
 };
 
 void

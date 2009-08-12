@@ -72,6 +72,7 @@ lett    [A-Za-z_]
 ">=" { T(TOK_GE); }
 "<<" { T(TOK_ASL); }
 ">>" { T(TOK_ASR); }
+"~=" { T(TOK_REGEXP); }
 
 "^" |
 "|" |

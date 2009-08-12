@@ -263,6 +263,7 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       break;
     case TR_A_EXIT_CODE:
       if (xml_attr_int(a, &x) < 0) goto failure;
+      if (x < 0) x = 255;
       if (x < 0 || x > 255) {
         xml_err_attr_invalid(a);
         goto failure;
