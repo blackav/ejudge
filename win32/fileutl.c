@@ -416,11 +416,28 @@ do_rename(char const *src, char const *dst)
 static int
 do_unlink(char const *src)
 {
+  int i;
+  int res;
+
   if (!DeleteFile(src)) {
-    write_log(0, LOG_ERR, "do_unlink: DeleteFile(%s) failed: %s",
+    write_log(0, LOG_ERR, "do_unlink: DeleteFile_0(%s) failed: %s",
               src, os_ErrorMsg());
-    return -1;
+
+    // try three more times
+    for (i = 0; i < 3; i++) {
+      if((res = DeleteFile(src)))
+        break;
+
+      write_log(0, LOG_ERR, "do_unlink: DeleteFile_%d(%s) failed: %s",
+                i, src, os_ErrorMsg());
+    }
+
+    if (!res) {
+      write_log(0, LOG_ERR, "do_unlink: DeleteFile(%s) failed completely", src);
+      return -1;
+    }
   }
+
   return 0;
 }
 
@@ -510,7 +527,7 @@ do_read_file(char **pbuf, size_t maxsz, size_t *prsz, char const *path)
   char *p;
   int   c;
 
-  if (!(s = fopen(path, "r"))) {
+  if (!(s = fopen(path, "rb"))) {
     write_log(0, LOG_ERR, "do_read_file: fopen(%s,r) failed: %s",
               path, os_ErrorMsg());
     return -1;
@@ -536,8 +553,8 @@ do_read_file(char **pbuf, size_t maxsz, size_t *prsz, char const *path)
   } else {
     char *mem = xmalloc(256);
     int   mem_a = 256;
-    int   size = 0;
 
+    size = 0;
     while ((c = getc(s)) != EOF) {
       if (size >= mem_a) {
         mem_a *= 2;
