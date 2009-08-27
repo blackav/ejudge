@@ -88,7 +88,6 @@ WIN32_COMMON_CFILES=\
  xml_utils/parse_ip.c\
  xml_utils/parse_ip_mask.c\
  xml_utils/unparse_bool.c\
- xml_utils/unparse_date.c
  xml_utils/unparse_date.c\
  xml_utils/unparse_ip.c\
  xml_utils/unparse_ip_mask.c\
