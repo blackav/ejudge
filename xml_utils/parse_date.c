@@ -24,11 +24,15 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
+
 // supported formats
 // 2008/11/15 10:05:34 (default)
 // 10:05:34 2008/11/15
 // 15-11-2008 10:05:34
-// and their variations (missed year, time, min, sec, etc)
+// and their variations (missing year, time, min, sec, etc)
 // no space is allowed in date and time part
 
 enum { MIN_YEAR = 1900, MAX_YEAR = 2100 };
