@@ -24,6 +24,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
+
 void
 vverr(char const *msg, va_list args)
 {
