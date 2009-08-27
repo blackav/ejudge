@@ -1182,6 +1182,7 @@ privileged_page_cookie_login(FILE *fout,
     case ULS_ERR_NO_PERMS:
     case ULS_ERR_NOT_REGISTERED:
     case ULS_ERR_CANNOT_PARTICIPATE:
+    case ULS_ERR_NO_COOKIE:
       return ns_html_err_no_perm(fout, phr, 1, "priv_login failed: %s",
                                  userlist_strerror(-r));
     case ULS_ERR_DISCONNECT:
@@ -1273,6 +1274,7 @@ privileged_page_login(FILE *fout,
     case ULS_ERR_NO_PERMS:
     case ULS_ERR_NOT_REGISTERED:
     case ULS_ERR_CANNOT_PARTICIPATE:
+    case ULS_ERR_NO_COOKIE:
       return ns_html_err_no_perm(fout, phr, 1, "priv_login failed: %s",
                                  userlist_strerror(-r));
     case ULS_ERR_DISCONNECT:

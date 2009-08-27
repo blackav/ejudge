@@ -45,6 +45,10 @@
 #include <limits.h>
 #include <errno.h>
 
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
+
 #if defined EJUDGE_CHARSET
 #define INTERNAL_CHARSET EJUDGE_CHARSET
 #else

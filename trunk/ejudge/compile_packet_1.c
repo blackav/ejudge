@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,10 @@
 
 #include <stdlib.h>
 #include <string.h>
+
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
 
 #define FAIL_IF(c) if (c)do { errcode = __LINE__; goto failed; } while (0)
 
