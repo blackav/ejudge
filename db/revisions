@@ -4527,3 +4527,11 @@ new_server_tables.c 5579 0 1152399
 testing_report_xml.c 5579 0 1429016
 filter_expr.y 5579 0 2445100
 filter_scan.lex 5579 0 752923
+win32/fileutl.c 5583 0 1515778
+win32/ej_process.c 5583 0 81543
+compile_packet_1.c 5584 0 454756
+contests.c 5584 0 4183769
+errlog.c 5584 0 119420
+new_server_html.c 5584 0 38353491
+runlog.c 5584 0 4244395
+xml_utils/parse_date.c 5582 0 373887
