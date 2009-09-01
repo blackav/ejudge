@@ -8347,6 +8347,7 @@ cmd_import_csv_users(
   struct userlist_pk_xml_data *out = 0;
   size_t out_size = 0;
   int cloned_flag = 0;
+  int member_serial = 0;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet is too small: %d < %zu", pkt_len, sizeof(*data));
@@ -8495,6 +8496,10 @@ cmd_import_csv_users(
         fprintf(log_f, "Cannot create a new member for user `%s'\n", u->login);
         goto cleanup;
       }
+
+      if (default_get_user_info_7(user_id, data->contest_id, &u, &ui, &mm) < 0
+          || !u)
+        abort();
     }
     m = 0;
     if (need_member) {
@@ -8503,6 +8508,7 @@ cmd_import_csv_users(
         abort();
       if (ui) m = userlist_members_get_first(mm);
       ASSERT(m);
+      member_serial = m->serial;
     }
     for (j = 0; j < csv->v[i].u; j++) {
       if ((f = field_ind[j]) < 0 || f == USERLIST_NN_LOGIN) continue;
@@ -8520,7 +8526,7 @@ cmd_import_csv_users(
         }
       } else if (f >= USERLIST_NM_FIRST && f < USERLIST_NM_LAST) {
         if (default_set_user_member_field(user_id, data->contest_id,
-                                          m->serial, f, csv->v[i].v[j],
+                                          member_serial, f, csv->v[i].v[j],
                                           cur_time, &cloned_flag) < 0) {
           fprintf(log_f, "Failed to update user `%s'\n", u->login);
           goto cleanup;
@@ -8536,6 +8542,7 @@ cmd_import_csv_users(
  cleanup:
   if (log_f) close_memstream(log_f);
   log_f = 0;
+  csv_free(csv);
 
   out_size = sizeof(*out) + log_len;
   out = (struct userlist_pk_xml_data*) alloca(out_size);
