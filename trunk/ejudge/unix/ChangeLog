@@ -1,3 +1,32 @@
+2009-05-02 (r5562) Alexander Chernov  <cher@ejudge.ru>
+
+	* file_perms.c:
+	initial revision
+
+2009-03-24 (r5554) Alexander Chernov  <cher@ejudge.ru>
+
+	* sock_op_enable_creds.c, sock_op_put_creds.c:
+	  copyright notice is updated;
+	  python module support is added.
+
+2009-01-28 (r5547) Alexander Chernov  <cher@ejudge.ru>
+
+	* fmemopen.c, open_memstream.c: copyright notice is added.
+	file-based implementation of missing functions is added.
+
+2008-12-31 (r5537) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_process.c:
+	`close_memstream' is used to close memory streams
+	opened with `open_memstream'.
+	
+
+	* fmemopen.c:
+	(fmemclose) new function is added.
+
+	* open_memstream.c:
+	(close_memstream) new function is added.
+
 2008-12-26 (r5497) Alexander Chernov  <cher@ejudge.ru>
 
 	* fmemopen.c:

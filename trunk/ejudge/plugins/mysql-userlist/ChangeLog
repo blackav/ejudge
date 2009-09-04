@@ -1,3 +1,14 @@
+2009-04-03 (r5557) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_mysql.c: copyright notice is updated;
+	(copy_user_info_func) NULL pointer assertion fixed.
+
+2008-12-31 (r5534) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_mysql.c, user_info.inc.c:
+	`close_memstream' is used to close the memory streams opened
+	with `open_memstream'.
+
 2008-11-12 (r5279) Alexander Chernov  <cher@ejudge.ru>
 
 	* cntsregs.inc.c, cookies.inc.c, logins.inc.c, members.inc.c, tables.inc.c, uldb_mysql.c, user_infos.inc.c:

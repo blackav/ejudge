@@ -1,3 +1,18 @@
+2009-05-02 (r5568) Alexander Chernov  <cher@ejudge.ru>
+
+	* cldb_mysql.c: copyright notice is updated;
+	(struct clar_entry_internal) `run_id' field is added;
+	(do_create) the clar_version is upgraded to 2;
+	(do_open) upgrade from version 1 to version 2 is added;
+	(open_func) `run_id' is filled;
+	(add_entry_func) `run_id' is filled.
+
+2008-12-31 (r5535) Alexander Chernov  <cher@ejudge.ru>
+
+	* cldb_mysql.c:
+	`close_memstream' is used to close the memory streams
+	opened with `open_memstream'.
+
 2008-11-12 (r5278) Alexander Chernov  <cher@ejudge.ru>
 
 	* cldb_mysql.c: reformatted.
