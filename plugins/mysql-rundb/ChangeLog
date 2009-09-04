@@ -1,3 +1,9 @@
+2008-12-31 (r5533) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c:
+	`close_memstream' is used to close the memory streams opened
+	with `open_memstream'.
+
 2008-11-15 (r5310) Alexander Chernov  <cher@ejudge.ru>
 
 	* methods.inc.c, rldb_mysql.c:

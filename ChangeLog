@@ -1,3 +1,364 @@
+2009-09-01 (r5586) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist-server.c:
+	(cmd_import_csv_file) bugs fixes.
+
+2009-08-27 (r5584) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile_packet_1.c:
+	win32 compilation fixes.
+
+	* contests.c:
+	win32 compilation fixes.
+
+	* errlog.c:
+	win32 compilation fixes.
+
+	* new_server_html.c:
+	`NO_COOKIE' error is not reported as internal error;
+
+	* runlog.c:
+	win32 compilation fixes.
+
+2009-08-12 (r5579) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	libplatform.a is linked to ejudge-control.
+
+	* misctext.h:
+	<stdio.h> is included;
+	(text_table_number_lines) new function prototype.
+
+	* new-server.h:
+	new commands: PRIV_SUBMIT_RUN_JUST_IGNORE, PRIV_SUBMIT_RUN_JUST_OK;
+	(ns_write_priv_all_runs) new parameters `first_run_set', `last_run_set' are added;
+	(ns_cgi_param_int_opt_2) new function prototype.
+
+	* serve_state.h:
+	(struct user_filter_info) new fields `prev_first_run_set', `prev_last_run_set'.
+
+	* filter_eval.c:
+	(do_eval) REGEXP (~=) binary operation is supported.
+
+	* filter_expr.y:
+	"~=" operation is supported;
+	handling of "start" token is fixed;
+	(do_regexp) new function.
+
+	* filter_scan.lex:
+	"~=" operation is supported.
+
+	* filter_tree.c: copyright notice is updated;
+	regular expression matching is implemented;
+	(filter_tree_delete) regular expressions are cleaned up;
+	(filter_tree_regexp_match) new function to match regular expressions;
+	(filter_tree_eval_node) REGEXP (~=) operation is supported.
+
+	* master_html.c:
+	(html_reset_filter) `prev_first_run_set', `prev_last_run_set' fields are cleared.
+
+	* misctext.c:
+	"compat.h" is included;
+	(html_armor_to_file_nbsp) new function is implemented;
+	(text_table_number_lines) new function is implemented.
+
+	* new_server_html.c:
+	(ns_cgi_param_int) check for empty parameter string is improved;
+	(ns_cgi_param_int_opt_2) new function;
+	(priv_simple_change_status) new function to handle JUST_OK and JUST_IGNORE commands;
+	(priv_main_page) filter parameter handling is improved;
+	  call of `ns_write_priv_all_runs' is updated.
+
+	* new_server_html_2.c:
+	(ns_write_priv_all_runs) new parameters `first_run_set', `last_run_set' are added;
+	  run range display is improved.
+	(ns_write_priv_source) the source code displaying is improved;
+	  JUST_IGNORE and JUST_OK buttons are added.
+
+	* new_server_html_4.c: copyright notice is updated;
+	(do_dump_master_runs) new parameters `first_run_set', `last_run_set' are added;
+	  run range handling is improved;
+	(cmd_dump_master_runs) parameter handling is improved.
+
+	* new_server_tables.c: buttons for JUST_IGNORE and JUST_OK are added.
+
+	* testing_report_xml.c:
+	(parse_test) "exit-code" attribute with negative values is accepted.
+
+2009-07-20 (r5577) Alexander Chernov  <cher@ejudge.ru>
+
+	* errlog.c, parsecfg.c, prepare.c, Makefile.win32.in, contests.c, compile.c:
+	win32 compilation fixes.
+
+2009-05-31 (r5573) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_2.c:
+	(ns_download_runs) bad condition is fixed (gcc 4.4.0 warning).
+
+	* runlog_import.c: copyright notice is updated;
+	(runlog_import_xml) bad condition is fixed (gcc 4.4.0 warning).
+
+2009-05-04 (r5571) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.c:
+	(new_write_user_runs) problem-specific `team_enable_rep_view' variable
+	  is considered.
+
+2009-05-02 (r5569) Alexander Chernov  <cher@ejudge.ru>
+
+	* clarlog.h: copyright notice is updated;
+	(struct clar_entry_v1) `run_id' field is added;
+	(clar_add_record) `run_id' parameter is added.
+
+	* clarlog.c: copyright notice is updated;
+	(clar_add_record) `run_id' parameter is added.
+
+	* convert-clars.c, convert-runs.c: copyright notice is updated;
+	"compat.h" is included;
+	`close_memstream' is forced to link into the executable.
+
+	* new_server_html.c:
+	calls of `clar_add_record' are updated.
+
+	* new_server_html_2.c:
+	(ns_write_priv_source) run comment sending form is moved to
+	  its proper place.
+
+2009-05-02 (r5566) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	 `SUBMIT_RUN_COMMENT_AND_OK' command is added.
+
+	* new_server_html.c:
+	(priv_submit_run_comment) `SUBMIT_RUN_COMMENT_AND_OK' command is supported.
+
+	* new_server_html_2.c:
+	(ns_write_priv_source) binary runs may also be commented;
+	  `SUBMIT_RUN_COMMENT_AND_OK' command is supported.
+
+	* new_server_tables.c:
+	`SUBMIT_RUN_COMMENT_AND_OK' command is supported.
+
+2009-05-02 (r5564) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in: copyright notice is updated;
+	file_perms.o is added.
+
+	* files.make: copyright notice is updated;
+	file_perms.[ch] module is added.
+
+	* super_html_2.c: copyright notice is updated;
+	"file_perms.h" is included;
+	(rename_files) parameters `group', `mode' are added;
+	  file permissions are changed to those defined by `group' and `mode';
+	(super_html_commit_contest) `file_group', `file_mode', `dir_group', `dir_mode'
+	  contest parameters are supported.
+
+	* super_html_3.c:
+	"file_perms.h" is included;
+	(check_test_file) `file_group', `file_mode' parameters are added;
+	(super_html_check_tests) `file_group', `file_mode', `dir_group', `dir_mode'
+	  contest parameters are supported.
+
+2009-05-02 (r5559) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.h:
+	(is_empty_string) new function prototype.
+
+	* new-server.h: copyright notice is updated;
+	`CHANGE_FINISH_TIME' command is added.
+
+	* new_server_html.c:
+	(do_change_finish_time) new function;
+	(priv_contest_operation) `CHANGE_FINISH_TIME' command is handled;
+	(is_empty_string) moved to `misctext.[ch]';
+	(unpriv_print_status) `finish_time' parameter is added;
+	(priv_main_page) finish_time changing is supported;
+	(unpriv_view_standings) no standings are shown if disabled in the
+	  config file.
+
+	* new_server_tables.c: copyright notice is updated;
+	`CHANGE_FINISH_TIME' is handled.
+
+	* misctext.c: copyright notice is updated;
+	(is_empty_string) moved from `new_server_html.c'.
+
+	* super_html_4.c:
+	editing of `user_contest' is supported.
+
+2009-03-24 (r5555) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h: copyright notice is updated;
+	editing of `memoize_user_results' global variable is supported.
+
+	* new_server_html.c:
+	(unparse_statement) `is_submittable' parameter is added;
+	  the statement output is slightly altered if the problem is not
+	  submittable.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super-serve.c: copyright notice is updated;
+	editing of `memoize_user_results' global variable is supported.
+
+2009-02-28 (r5551) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h: copyright notice is updated;
+	(struct contest_field) `separator', `options' fields are added.
+
+	* html.h: copyright notice is updated;
+	(write_xml_testing_report) `user_mode' parameter is added.
+
+	* misctext.h: copyright notice is updated;
+	(allowed_list_parse) `separator' parameter is added;
+	(allowed_list_map) `separator' parameter is added.
+
+	* prepare.h: copyright notice is updated;
+	(struct section_global_data) `memoize_user_results' field is added.
+
+	* serve_state.h: copyright notice is updated;
+	(struct serve_user_results) new structure to memoize the user results;
+	(struct serve_state) new fields `user_result_a', `user_results'
+	  are added;
+	(serve_store_user_result) new function prototype;
+	(serve_get_user_result_score) new function prototype.
+
+	* testing_report_xml.h: copyright notice is updated;
+	(struct testing_report_xml) `time_limit_ms', `real_time_limit_ms',
+	  `host' fields added.
+
+	* allowed_list.c: copyright notice is updated;
+	(allowed_list_parse) `separator' parameter is added;
+	  arbitrary field separator is supported;
+	(allowed_list_map) `separator' parameter is added and passed to
+	  `allowed_list_parse'.
+
+	* contests.c: copyright notice is updated;
+	  "separator" and "options" attributes are supported for
+	  <field> element.
+
+	* filter_eval.c: copyright notice is updated;
+	`total_score' token is evaluated.
+
+	* filter_expr.y: copyright notice is updated;
+	`total_score' expression is parsed.
+
+	* filter_scan.lex: copyright notice is updated;
+	`total_score' token is handled.
+
+	* html.c:
+	(do_write_kirov_standings) the user result is memoized if
+	  `memoize_user_results' mode is enabled;
+	(write_xml_team_testing_report) the timings above the time limits
+	  are reported better;
+	(write_xml_team_accepting_report) the same.
+
+	* master_html.c: copyright notice is updated;
+	(write_xml_testing_report) `user_mode' parameter is added;
+	  the timings above the time limit are reported differently
+	  in the user mode.
+
+	* new_server_html.c:
+	(priv_view_users_page) the user score is reported in
+	  `memoize_user_results' mode.
+
+	* new_server_html_2.c:
+	(ns_write_priv_report) call of `write_xml_testing_report'
+	  is updated.
+
+	* new_server_html_5.c: copyright notice is updated;
+	(edit_general_form) "options", "separator" attributes are handled
+	  for any field.
+
+	* prepare.c:
+	`memoize_user_results' global configuration variable is added.
+
+	* serve_state.c: copyright notice is updated;
+	memoized user results are supported;
+	(serve_store_user_result) new function;
+	(serve_get_user_result_score) new function.
+
+	* run.c:
+	(generate_xml_report) parameters `report_time_limit_ms',
+	  `report_real_time_limit_ms' are added.
+	  time limits are put to report;
+	  the host name is also put to report;
+	(run_tests) the time limit and real time limit are reported to
+	  the server.
+
+	* testing_report_xml.c: copyright notice is updated;
+	  <host> element and "time-limit-ms" and "real-time-limit-ms"
+	  attributes are supported.
+
+2009-01-28 (r5548) Alexander Chernov  <cher@ejudge.ru>
+
+	* run.c: copyright notice is updated;
+	(run_tests) `pipe' is commented for win32.
+
+2009-01-28 (r5545) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_2.c:
+	(ns_write_olympiads_user_runs) number of passed test display
+	  is fixed.
+
+2009-01-17 (r5543) Alexander Chernov  <cher@ejudge.ru>
+
+	* sformat.h: copyright notice is updated;
+	(sformat_message) `html_escape_flag' parameter is added.
+
+	* copyright.c: copyright notice is updated.
+
+	* html.c, new_server_html.c, new_server_html_2.c:
+	calls of `sformat_message' are updated.
+
+	* prepare.c, reports.c, serve_2.c: copyright notice is updated;
+	calls of `sformat_message' are updated.
+
+	* sformat.c: copyright notice is updated;
+	"misctext.h" is included;
+	(sformat_message) `html_escape_flag' parameter is added;
+	  html escaping is added.
+
+	* userlist-server.c:
+	calls of `sformat_message' are updated;
+	(list_user_info) user-provided data is properly html-escaped;
+	(do_list_users) the same.
+
+2009-01-12 (r5542) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.c: copyright notice is updated;
+	(do_write_kirov_standings) the user name is properly armored;
+	(do_write_moscow_standings) the same;
+	(do_write_standings) the same;
+	(do_write_public_log) the same.
+
+	* new_server_html.c: copyright notice is updated;
+	(unpriv_view_clar) the user name is propery armored.
+
+	* new_server_html_2.c: copyright notice is updated;
+	(ns_write_priv_all_runs) the user name is propery armored;
+	(ns_write_all_clars) the same.
+
+	* userlist-server.c: copyright notice is updated;
+	(cmd_team_check_cookie) access to outdated structure bug is fixed;
+	(cmd_priv_cookie_login) the same;
+	(cmd_get_cookie) the same.
+
+2008-12-31 (r5540) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	missing ncurses is not fatal.
+
+2008-12-31 (r5538) Alexander Chernov  <cher@ejudge.ru>
+
+	* compat.h:
+	(close_memstream) new function prototype is added;
+	(fmemclose) new function prototype is added.
+
+	* compile.c, contests_2.c, edit-userlist.c, ejudge-configure-compilers.c, ejudge-setup.c, job-server.c, lang_config_vis.c, new-server.c, new_server_html.c, new_server_html_2.c, new_server_html_4.c, new_server_html_5.c, opcaps_2.c, parsecfg_2.c, prepare.c, problem_plugin_impl.h, runlog_import.c, serve_2.c, serve-control.c, super_html.c, super_html_2.c, super_html_3.c, super_html_4.c, super-serve.c, uldb_plugin_xml.c, userlist-server.c, vcs.c:
+	`close_memstream' is used to close memory streams opened
+	with `open_memstream';
+	`fmemclose' is used to close memory streams opened with
+	`fmemopen'.
+
 2008-12-29 (r5529) Alexander Chernov  <cher@ejudge.ru>
 
 	* runlog_import.c:

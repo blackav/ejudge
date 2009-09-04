@@ -1,3 +1,13 @@
+2009-08-27 (r5582) Alexander Chernov  <cher@ejudge.ru>
+
+	* parse_date.c:
+	win32 compilation fixes.
+
+2009-07-20 (r5576) Alexander Chernov  <cher@ejudge.ru>
+
+	* parse_date.c:
+	win32 compilation fixes.
+
 2008-12-02 (r5382) Alexander Chernov  <cher@ejudge.ru>
 
 	* unparse_text.c: copyright notice is updated;
