@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -175,6 +175,7 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_PLUGIN_NOT_AVAIL] = __("No plugin is available for problem"),
   [NEW_SRV_ERR_INV_FILE_NAME] = __("Invalid file name"),
   [NEW_SRV_ERR_VIRTUAL_START_FAILED] = __("Virtual start failed"),
+  [NEW_SRV_ERR_INV_CHAR] = __("Invalid character"),
 };
 
 const unsigned char *

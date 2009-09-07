@@ -760,6 +760,8 @@ struct section_problem_data
   int prev_runs_to_show;
   /** automatically advance to the next problem in navigation mode */
   ejintbool_t advance_to_next;
+  /** disable any control characters except \r, \n in the source code */
+  ejintbool_t disable_ctrl_chars;
   /** enable text area form for output-only problems */
   ejintbool_t enable_text_form;
   /** ignore the score in total score calculation */

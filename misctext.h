@@ -174,4 +174,7 @@ text_table_number_lines(
         const unsigned char *tr_attr,
         const unsigned char *td_attr);
 
+int
+has_control_characters(const unsigned char *str);
+
 #endif /* __MISCTEXT_H__ */

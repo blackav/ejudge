@@ -2643,6 +2643,7 @@ priv_submit_run(FILE *fout,
   switch (prob->type) {
   case PROB_TYPE_STANDARD:
     if (!lang->binary && strlen(run_text) != run_size) goto binary_submission;
+    if (prob->disable_ctrl_chars > 0 && has_control_characters(run_text)) goto invalid_characters;
     break;
 
   case PROB_TYPE_OUTPUT_ONLY:
@@ -2675,6 +2676,10 @@ priv_submit_run(FILE *fout,
 
   binary_submission:
     errmsg = "binary submission";
+    goto invalid_param;
+
+  invalid_characters:
+    errmsg = "invalid characters";
     goto invalid_param;
   }
 
@@ -4069,6 +4074,8 @@ priv_new_run(FILE *fout,
   case PROB_TYPE_STANDARD:
     if (!lang->binary && strlen(run_text) != run_size)
       FAIL(NEW_SRV_ERR_BINARY_FILE);
+    if (prob->disable_ctrl_chars > 0 && has_control_characters(run_text))
+      FAIL(NEW_SRV_ERR_INV_CHAR);
     break;
 
   case PROB_TYPE_OUTPUT_ONLY:
@@ -9446,6 +9453,10 @@ unpriv_submit_run(FILE *fout,
     }
     if (!run_size) {
       ns_error(log_f, NEW_SRV_ERR_SUBMIT_EMPTY);
+      goto done;
+    }
+    if (prob->disable_ctrl_chars > 0 && has_control_characters(run_text)) {
+      ns_error(log_f, NEW_SRV_ERR_INV_CHAR);
       goto done;
     }
     break;

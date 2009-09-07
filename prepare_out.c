@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1296,6 +1296,9 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   if (prob->advance_to_next >= 0
       && ((prob->abstract && prob->advance_to_next) || !prob->abstract))
       unparse_bool(f, "advance_to_next", prob->advance_to_next);
+  if (prob->disable_ctrl_chars >= 0
+      && ((prob->abstract && prob->disable_ctrl_chars) || !prob->abstract))
+      unparse_bool(f, "disable_ctrl_chars", prob->disable_ctrl_chars);
   if (prob->enable_text_form >= 0
       && ((prob->abstract && prob->enable_text_form) || !prob->abstract))
       unparse_bool(f, "enable_text_form", prob->enable_text_form);
