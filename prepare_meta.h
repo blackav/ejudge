@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2009/02/28 20:50:25
+// Generated 2009/09/07 09:05:01
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -328,6 +328,7 @@ enum
   CNTSPROB_score_multiplier,
   CNTSPROB_prev_runs_to_show,
   CNTSPROB_advance_to_next,
+  CNTSPROB_disable_ctrl_chars,
   CNTSPROB_enable_text_form,
   CNTSPROB_stand_ignore_score,
   CNTSPROB_stand_last_column,
