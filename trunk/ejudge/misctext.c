@@ -1382,6 +1382,16 @@ size_t_to_size_str(
   return buf;
 }
 
+int
+has_control_characters(const unsigned char *str)
+{
+  for (; *str; ++str) {
+    if (*str == 127) return 1;
+    if (*str < ' ' && *str != '\n' && *str != '\r') return 1;
+  }
+  return 0;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
