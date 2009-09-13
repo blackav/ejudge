@@ -3,7 +3,7 @@
 #ifndef __MISCHTML_H__
 #define __MISCHTML_H__
 
-/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,11 @@ unsigned char *html_hyperref(unsigned char *buf, size_t size,
 void html_start_form(FILE *f, int mode,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars);
+
+void html_start_form_id(FILE *f, int mode,
+                        unsigned char const *self_url,
+                        unsigned char const *id,
+                        unsigned char const *hidden_vars);
 
 void html_date_select(FILE *f, time_t t);
 

@@ -519,10 +519,10 @@ text_table_number_lines(
     if (intxt[cur] == '\n') ++lines;
   if (insize > 0 && intxt[insize - 1] != '\n') ++lines;
 
-  fprintf(out_f, "<tr%s><td valign=\"top\"%s><pre>", tr_attr, td_attr);
+  fprintf(out_f, "<tr%s><td valign=\"top\"%s>", tr_attr, td_attr);
   for (line = 0; line < lines; ++line)
-    fprintf(out_f, "[%zu]\n", line + 1);
-  fprintf(out_f, "</pre></td><td valign=\"top\"%s><pre>", td_attr);
+    fprintf(out_f, "<span onclick=\"markLine(%zu)\"><tt>[%zu]</tt></span><br/>\n", line + 1, line + 1);
+  fprintf(out_f, "</td><td valign=\"top\"%s>", td_attr);
 
   for (cur = 0; cur < insize; ++cur) {
     if (intxt[cur] != '\n') continue;
@@ -531,21 +531,23 @@ text_table_number_lines(
     while (end >= beg && isspace(intxt[end])) --end;
     ++end;
     // [beg, end)
+    fprintf(out_f, "<span><tt>");
     html_armor_to_file_nbsp(out_f, intxt + beg, end - beg);
-    putc('\n', out_f);
+    fprintf(out_f, "</tt></span><br/>\n");
 
     beg = cur + 1;
   }
   if (beg != cur) {
-    end = cur;
+    end = cur - 1;
     while (end >= beg && isspace(intxt[end])) --end;
     ++end;
 
     // [beg, end)
+    fprintf(out_f, "<span><tt>");
     html_armor_to_file_nbsp(out_f, intxt + beg, end - beg);
-    putc('\n', out_f);
+    fprintf(out_f, "</tt></span></br>\n");
   }
-  fprintf(out_f, "</pre></td></tr>");
+  fprintf(out_f, "</td></tr>");
 }
 
 static const char content_text_html[] = "content-type: text/html\n\n";

@@ -1628,9 +1628,18 @@ ns_write_priv_source(const serve_state_t state,
   }
 
   fprintf(f, "<h2>%s</h2>\n", _("Send a message about this run"));
-  html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+  html_start_form_id(f, 1, phr->self_url, "run_comment", phr->hidden_vars);
   html_hidden(f, "run_id", "%d", run_id);
-  fprintf(f, "<p><textarea name=\"msg_text\" rows=\"20\" cols=\"60\">"
+  fprintf(f, "<table%s><tr>", cl);
+  fprintf(f, "<td%s>%s</td>", cl,
+          BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE));
+  fprintf(f, "<td%s>%s</td>", cl,
+          BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK));
+  fprintf(f, "</tr></table><br/>\n");
+  fprintf(f, "<table%s><tr>", cl);
+  fprintf(f, "<td><input type=\"button\" onclick=\"formatViolation()\" value=\"%s\" /></td>", _("Formatting rules violation"));
+  fprintf(f, "</tr></table>\n");
+  fprintf(f, "<p><textarea id=\"msg_text\" name=\"msg_text\" rows=\"20\" cols=\"60\">"
           "</textarea></p>");
   cl = " class=\"b0\"";
   fprintf(f, "<table%s><tr>", cl);
@@ -1640,10 +1649,6 @@ ns_write_priv_source(const serve_state_t state,
           BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE));
   fprintf(f, "<td%s>%s</td>", cl,
           BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK));
-  fprintf(f, "<td%s>%s</td>", cl,
-          BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE));
-  fprintf(f, "<td%s>%s</td>", cl,
-          BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK));
   fprintf(f, "</tr></table>\n");
   fprintf(f, "</form>\n");
 
@@ -1942,7 +1947,7 @@ ns_write_priv_clar(const serve_state_t cs,
     fprintf(f, "<big><font color=\"red\">%s</font></big>\n",
             _("Cannot read message text!"));
   } else {
-    fprintf(f, "<pre>%s</pre>", msg_txt);
+    fprintf(f, "<pre>%s</pre>", ARMOR(msg_txt));
     xfree(msg_txt); msg_txt = 0;
   }
 
