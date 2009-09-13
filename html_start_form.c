@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,6 +27,18 @@ static const unsigned char * const form_methods[] =
   "form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=",
   "form method=\"post\" enctype=\"multipart/form-data\" action=",
 };
+
+void
+html_start_form_id(
+        FILE *f, int mode,
+        unsigned char const *self_url,
+        unsigned char const *id,
+        unsigned char const *hidden_vars)
+{
+  ASSERT(mode >= 0 && mode <= 2);
+  fprintf(f, "<%s\"%s\" id=\"%s\">%s",
+          form_methods[mode], self_url, id, hidden_vars);
+}
 
 void
 html_start_form(FILE *f, int mode,

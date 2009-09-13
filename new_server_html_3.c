@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -61,6 +61,7 @@ const unsigned char ns_fancy_priv_header[] =
 "<html><head>\n<meta http-equiv=\"Content-type\" content=\"text/html; charset=%C\">\n"
 "<link rel=\"stylesheet\" href=\"" CONF_STYLE_PREFIX "priv.css\" type=\"text/css\">\n"
   //"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\">\n"
+"<script type=\"text/javascript\" charset=\"UTF-8\" src=\"" CONF_STYLE_PREFIX "priv.js\"></script>\n"
 "<title>%H</title></head>\n"
 "<body>"
 "<h1>%H</h1>\n";
