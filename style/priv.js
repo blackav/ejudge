@@ -1,6 +1,7 @@
+/* -*- mode: java; coding: utf-8 -*- */
 // $Id$
 
-// Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru>
+// Copyright (C) 2008-2009 Alexander Chernov <cher@ejudge.ru>
 
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -549,4 +550,22 @@ function ssPackageOp(op, next_op, pkg, item)
 function ssEditProblem(op, pkg, name)
 {
   document.location.href = script_name + "?SID=" + SID + "&action=" + SSERV_CMD_HTTP_REQUEST + "&op=" + op + "&package=" + pkg + "&name=" + name;
+}
+
+function markLine(line)
+{
+  var obj = document.forms["run_comment"].elements["msg_text"];
+  if (obj != null) {
+    if (obj.value.length != 0 && obj.value.charAt(obj.value.length - 1) != '\n') obj.value += '\n';
+  }
+  obj.value += "Строка " + line + "\n";
+}
+
+function formatViolation()
+{
+  var obj = document.forms["run_comment"].elements["msg_text"];
+  if (obj != null) {
+    if (obj.value.length != 0 && obj.value.charAt(obj.value.length - 1) != '\n') obj.value += '\n';
+  }
+  obj.value += "Нарушение правил оформления программ\n";
 }
