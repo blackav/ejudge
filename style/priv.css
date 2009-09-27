@@ -230,6 +230,10 @@ table.b1 /* table for problem summary and logs */
 {
         border-style: none;
         border-collapse: collapse;
+        border: solid;
+        border-width: 1px;
+        border-color: #000000;
+        margin: 1px;
 }
 
 td.b1 /* for summary tables */
