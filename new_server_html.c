@@ -5726,6 +5726,7 @@ priv_download_runs_confirmation(
   l10n_setlocale(0);
 
  cleanup:
+  xfree(mask);
   return retval;
 
  invalid_param:

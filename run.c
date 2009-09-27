@@ -1485,7 +1485,10 @@ run_tests(struct section_tester_data *tst,
       filehash_get(test_src, tests[cur_test].input_digest);
       tests[cur_test].has_input_digest = 1;
     } else {
-      file_size = generic_file_size(0, test_src, 0);
+      // ignore file if binary_input
+      file_size = -1;
+      if (prb->binary_input <= 0)
+        file_size = generic_file_size(0, test_src, 0);
       if (file_size >= 0) {
         tests[cur_test].input_size = file_size;
         if (serve_state.global->max_file_length > 0
@@ -1495,7 +1498,9 @@ run_tests(struct section_tester_data *tst,
         }
       }
     }
-    file_size = generic_file_size(0, output_path, 0);
+    file_size = -1;
+    if (prb->binary_input <= 0)
+      file_size = generic_file_size(0, output_path, 0);
     if (file_size >= 0) {
       tests[cur_test].output_size = file_size;
       if (serve_state.global->max_file_length > 0 && !req_pkt->full_archive
@@ -1711,7 +1716,9 @@ run_tests(struct section_tester_data *tst,
         filehash_get(corr_path, tests[cur_test].correct_digest);
         tests[cur_test].has_correct_digest = 1;
       } else {
-        file_size = generic_file_size(0, corr_path, 0);
+        file_size = -1;
+        if (prb->binary_input <= 0)
+          file_size = generic_file_size(0, corr_path, 0);
         if (file_size >= 0) {
           tests[cur_test].correct_size = file_size;
           if (serve_state.global->max_file_length > 0
