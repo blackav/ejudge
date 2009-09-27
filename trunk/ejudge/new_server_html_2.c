@@ -1604,6 +1604,7 @@ ns_write_priv_source(const serve_state_t state,
       text_table_number_lines(f, src_text, src_len, 0, " class=\"b0\"");
       fprintf(f, "</table><br/><hr/>");
 
+      xfree(src_text); src_text = 0;
       /*
       numb_txt = "";
       if ((numb_len = text_numbered_memlen(src_text, src_len))) {
