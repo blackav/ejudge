@@ -2229,7 +2229,7 @@ priv_contest_operation(FILE *fout,
 
   case NEW_SRV_ACTION_PRINT_RESUME:
     if (!global->enable_printing) break;
-    cs->printing_suspended = 1;
+    cs->printing_suspended = 0;
     serve_update_status_file(cs, 1);
     break;
 

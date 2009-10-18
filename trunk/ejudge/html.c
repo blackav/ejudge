@@ -200,10 +200,16 @@ calc_kirov_score(unsigned char *outbuf,
 }
 
 void
-write_html_run_status(const serve_state_t state, FILE *f,
-                      const struct run_entry *pe,
-                      int priv_level, int attempts, int disq_attempts,
-                      int prev_successes, const unsigned char *td_class)
+write_html_run_status(
+        const serve_state_t state,
+        FILE *f,
+        const struct run_entry *pe,
+        int priv_level,
+        int attempts,
+        int disq_attempts,
+        int prev_successes,
+        const unsigned char *td_class,
+        int disable_failed)
 {
   const struct section_global_data *global = state->global;
   unsigned char status_str[128], score_str[128];
@@ -256,11 +262,15 @@ write_html_run_status(const serve_state_t state, FILE *f,
   }
 
   if (global->score_system == SCORE_ACM) {
-    if (pe->status == RUN_OK || pe->status == RUN_ACCEPTED || pe->test <= 0
-        || global->disable_failed_test_view > 0) {
-      fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
+    if (!disable_failed) {
+      if (pe->status == RUN_OK || pe->status == RUN_ACCEPTED || pe->test <= 0
+          || global->disable_failed_test_view > 0) {
+        fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
+      } else {
+        fprintf(f, "<td%s>%d</td>", cl, pe->test);
+      }
     } else {
-      fprintf(f, "<td%s>%d</td>", cl, pe->test);
+      fprintf(f, "<td%s>&nbsp;</td>", cl);
     }
     return;
   }
@@ -519,7 +529,7 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
     fprintf(f, "<td%s>%s</td>", cl, lang_str);
 
     write_html_run_status(state, f, &re, 0, attempts, disq_attempts,
-                          prev_successes, table_class);
+                          prev_successes, table_class, 0);
 
     if (global->team_enable_src_view) {
       fprintf(f, "<td%s>", cl);
@@ -4154,7 +4164,7 @@ do_write_public_log(const serve_state_t state,
     else fprintf(f, "<td>??? - %d</td>", pe->lang_id);
 
     write_html_run_status(state, f, pe, 0, attempts, disq_attempts,
-                          prev_successes, 0);
+                          prev_successes, 0, 1);
 
     fputs("</tr>\n", f);
   }

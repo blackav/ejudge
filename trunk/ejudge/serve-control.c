@@ -714,8 +714,6 @@ authentificate(void)
   user_password = cgi_param("password");
   if (!user_login || !user_password) display_login_page();
 
-  fprintf(stderr, "%s, %s\n", user_login, user_password);
-
   open_userlist_server();
   r = userlist_clnt_priv_login(userlist_conn, ULS_PRIV_LOGIN, user_ip, ssl_flag,
                                0, /* contest_id */
