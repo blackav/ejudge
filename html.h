@@ -121,7 +121,7 @@ void write_html_run_status(const serve_state_t, FILE *f,
                            const struct run_entry *pe,
                            int priv_level, int attempts,
                            int disq_attempts, int prev_successes,
-                           const unsigned char *td_class);
+                           const unsigned char *td_class, int disable_failed);
 
 int write_xml_testing_report(FILE *f, int user_mode, unsigned char const *txt,
                              ej_cookie_t sid,

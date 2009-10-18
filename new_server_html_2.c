@@ -525,7 +525,7 @@ ns_write_priv_all_runs(
       }
       run_status_str(pe->status, statstr, sizeof(statstr), prob_type, 0);
       write_html_run_status(cs, f, pe, 1, attempts, disq_attempts,
-                            prev_successes, "b1");
+                            prev_successes, "b1", 0);
       if (phr->role == USER_ROLE_ADMIN) {
         write_change_status_dialog(cs, f, "status", pe->is_imported, "b1");
         fprintf(f, "<td%s>%s</td>", cl, BUTTON(NEW_SRV_ACTION_CHANGE_STATUS));
