@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -133,6 +133,8 @@ static unsigned char config_server_main_url[256];
 static unsigned char config_serialization_key[64];
 static unsigned char config_system_uid[256];
 static unsigned char config_system_gid[256];
+static unsigned char config_default_clardb_plugin[256];
+static unsigned char config_default_rundb_plugin[256];
 
 static int system_uid;
 static int system_gid;
@@ -215,6 +217,8 @@ enum
   SET_LINE_SER_KEY,
   SET_LINE_SYSTEM_UID,
   SET_LINE_SYSTEM_GID,
+  SET_LINE_DEFAULT_CLARDB_PLUGIN,
+  SET_LINE_DEFAULT_RUNDB_PLUGIN,
   SET_LINE_WORKDISK_FLAG,
   SET_LINE_WORKDISK_SIZE,
   SET_LINE_INSTALL_FLAG,
@@ -1438,6 +1442,14 @@ static const struct path_edit_item set_edit_items[] =
   {
     "System gid", 0, config_system_gid, sizeof(config_system_gid),
   },
+  [SET_LINE_DEFAULT_CLARDB_PLUGIN] =
+  {
+    "Default CLARDB plugin", 0, config_default_clardb_plugin, sizeof(config_default_clardb_plugin),
+  },
+  [SET_LINE_DEFAULT_RUNDB_PLUGIN] =
+  {
+    "Default RUNDB plugin", 0, config_default_rundb_plugin, sizeof(config_default_rundb_plugin),
+  },
   [SET_LINE_WORKDISK_FLAG] =
   {
     "Create workdisk?", 0, config_workdisk_flag, sizeof(config_workdisk_flag),
@@ -1528,6 +1540,22 @@ initialize_setting_var(int idx)
     snprintf(config_system_gid, sizeof(config_system_gid), "%s",
              system_group);
     break;
+  case SET_LINE_DEFAULT_CLARDB_PLUGIN:
+#if CONF_HAS_MYSQL - 0 == 1
+    snprintf(config_default_clardb_plugin, sizeof(config_default_clardb_plugin), "%s",
+             "mysql");
+#else
+    config_default_clardb_plugin[0] = 0;
+#endif
+    break;
+  case SET_LINE_DEFAULT_RUNDB_PLUGIN:
+#if CONF_HAS_MYSQL - 0 == 1
+    snprintf(config_default_rundb_plugin, sizeof(config_default_rundb_plugin), "%s",
+             "mysql");
+#else
+    config_default_rundb_plugin[0] = 0;
+#endif
+    break;
   case SET_LINE_WORKDISK_FLAG:
     snprintf(config_workdisk_flag, sizeof(config_workdisk_flag),
              "%s", "yes");
@@ -1562,6 +1590,8 @@ is_valid_setting_var(int idx)
   case SET_LINE_WORKDISK_FLAG:
   case SET_LINE_WORKDISK_SIZE:
   case SET_LINE_INSTALL_FLAG:
+  case SET_LINE_DEFAULT_CLARDB_PLUGIN:
+  case SET_LINE_DEFAULT_RUNDB_PLUGIN:
     return 1;
   case SET_LINE_CHARSET:
   case SET_LINE_REG_EMAIL:
@@ -1636,6 +1666,8 @@ do_settings_menu(int *p_cur_item)
     case SET_LINE_SERVER_NAME:
     case SET_LINE_SERVER_NAME_EN:
     case SET_LINE_SERVER_MAIN_URL:
+    case SET_LINE_DEFAULT_CLARDB_PLUGIN:
+    case SET_LINE_DEFAULT_RUNDB_PLUGIN:
     case SET_LINE_SYSTEM_UID:
     case SET_LINE_SYSTEM_GID:
     case SET_LINE_WORKDISK_FLAG:
@@ -3077,6 +3109,15 @@ generate_ejudge_xml(FILE *f)
           "  </caps>\n", config_login);
 
   fprintf(f, "\n");
+
+  if (config_default_clardb_plugin[0]) {
+    fprintf(f, "  <default_clardb_plugin>%s</default_clardb_plugin>\n",
+            config_default_clardb_plugin);
+  }
+  if (config_default_rundb_plugin[0]) {
+    fprintf(f, "  <default_clardb_plugin>%s</default_clardb_plugin>\n",
+            config_default_rundb_plugin);
+  }
 
   // plugin configurations
   snprintf(tmppath, sizeof(tmppath), "%s", config_ejudge_conf_dir);

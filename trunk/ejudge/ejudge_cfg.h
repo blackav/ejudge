@@ -4,7 +4,7 @@
 #ifndef __EJUDGE_CFG_H__
 #define __EJUDGE_CFG_H__ 1
 
-/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -89,6 +89,8 @@ struct ejudge_cfg
   unsigned char *job_server_work;
   unsigned char *new_server_socket;
   unsigned char *new_server_log;
+  unsigned char *default_clardb_plugin;
+  unsigned char *default_rundb_plugin;
   struct xml_tree *user_map;
   struct xml_tree *compile_servers;
 

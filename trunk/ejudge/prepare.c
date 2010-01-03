@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2290,6 +2290,17 @@ set_defaults(serve_state_t state, int mode)
   if (!os_IsAbsolutePath(g->root_dir)) {
     err("global.root_dir must be absolute directory!");
     return -1;
+  }
+
+  if (!g->clardb_plugin[0] && ejudge_config->default_clardb_plugin
+      && ejudge_config->default_clardb_plugin[0]) {
+    snprintf(g->clardb_plugin, sizeof(g->clardb_plugin), "%s",
+             ejudge_config->default_clardb_plugin);
+  }
+  if (!g->rundb_plugin[0] && ejudge_config->default_rundb_plugin
+      && ejudge_config->default_rundb_plugin[0]) {
+    snprintf(g->rundb_plugin, sizeof(g->rundb_plugin), "%s",
+             ejudge_config->default_rundb_plugin);
   }
 
   if (!g->conf_dir[0]) {
