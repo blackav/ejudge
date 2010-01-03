@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -90,6 +90,8 @@ enum
     TG_COMPILE_SERVERS,
     TG_NEW_SERVER_SOCKET,
     TG_NEW_SERVER_LOG,
+    TG_DEFAULT_CLARDB_PLUGIN,
+    TG_DEFAULT_RUNDB_PLUGIN,
 
     TG__BARRIER,
     TG__DEFAULT,
@@ -166,6 +168,8 @@ static char const * const elem_map[] =
   "compile_servers",
   "new_server_socket",
   "new_server_log",
+  "default_clardb_plugin",
+  "default_rundb_plugin",
   0,
   "_default",
 
@@ -436,6 +440,8 @@ static const size_t cfg_final_offsets[TG_LAST_TAG] =
   [TG_JOB_SERVER_WORK] = CONFIG_OFFSET(job_server_work),
   [TG_NEW_SERVER_SOCKET] = CONFIG_OFFSET(new_server_socket),
   [TG_NEW_SERVER_LOG] = CONFIG_OFFSET(new_server_log),
+  [TG_DEFAULT_CLARDB_PLUGIN] = CONFIG_OFFSET(default_clardb_plugin),
+  [TG_DEFAULT_RUNDB_PLUGIN] = CONFIG_OFFSET(default_rundb_plugin),
 };
 
 struct ejudge_cfg *
