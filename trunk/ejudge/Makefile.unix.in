@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -136,6 +136,9 @@ CU_OBJECTS = ${CU_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a
 CR_CFILES = convert-runs.c version.c
 CR_OBJECTS = ${CR_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a
 
+FIX_DB_CFILES = fix-db.c version.c
+FIX_DB_OBJECTS = ${FIX_DB_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a
+
 SU_CFILES = slice-userlist.c version.c
 SU_OBJECTS = ${SU_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 
@@ -167,7 +170,7 @@ NSC_CFILES=new-server-control.c version.c
 NSC_OBJECTS=$(NSC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a libplatform.a
 
 BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd
-SERVERBINTARGETS = ej-compile ej-compile-control ej-run ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs
+SERVERBINTARGETS = ej-compile ej-compile-control ej-run ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db
 CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
 TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS}
 STYLEFILES = style/logo.gif style/priv.css style/unpriv.css style/priv.js style/unpriv.js style/filter_expr.html
@@ -272,6 +275,9 @@ ej-convert-clars: ${CU_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
 
 ej-convert-runs: ${CR_OBJECTS}
+	${LD} ${LDFLAGS} -rdynamic $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
+
+ej-fix-db: ${FIX_DB_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
 
 collect-emails: ${CE_OBJECTS}
