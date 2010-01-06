@@ -4,7 +4,7 @@
 #ifndef __COMMON_MYSQL_H__
 #define __COMMON_MYSQL_H__
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,9 +21,12 @@
 #include "ejudge_plugin.h"
 #include "common_plugin.h"
 
-#include <mysql.h>
-
 struct common_mysql_iface;
+struct common_mysql_state;
+
+#ifndef EJUDGE_SKIP_MYSQL
+
+#include <mysql.h>
 
 struct common_mysql_state
 {
@@ -52,6 +55,8 @@ struct common_mysql_state
   int row_count;
   int field_count;
 };
+
+#endif /* EJUDGE_SKIP_MYSQL */
 
 struct common_mysql_parse_spec
 {
