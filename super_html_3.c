@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3398,6 +3398,37 @@ super_html_edit_languages(FILE *f,
   return 0;
 }
 
+static int
+super_html_find_lang_id(
+        struct sid_state *sstate,
+        const struct section_language_data *cs_lang)
+{
+  int i, max_cs_lang_id;
+
+  /* out of currently activated languages */
+  if (cs_lang->id >= sstate->lang_a) {
+    return cs_lang->id;
+  }
+  /* not an activated slot */
+  if (!sstate->langs[cs_lang->id]) {
+    return cs_lang->id;
+  }
+  /* we cannot use the same id for compilation and contest server */
+  max_cs_lang_id = 0;
+  for (i = 1; i < sstate->cs_lang_total; ++i) {
+    if (sstate->cs_langs[i]) {
+      max_cs_lang_id = i;
+    }
+  }
+  /* max_cs_lang_id is the max of lang_ids of compile server */
+  /* consider 30 to be safe interval */
+  i = max_cs_lang_id + 30;
+  while (i < sstate->lang_a && sstate->langs[i] && sstate->loc_cs_map[i]) {
+    ++i;
+  }
+  return i;
+}
+
 void
 super_html_lang_activate(
         struct sid_state *sstate,
@@ -3405,18 +3436,25 @@ super_html_lang_activate(
 {
   const struct section_language_data *cs_lang = 0;
   struct section_language_data *lang;
-  int i, max_id, lang_id;
+  int lang_id;
 
   ASSERT(sstate);
   if (cs_lang_id <= 0 || cs_lang_id >= sstate->cs_lang_total
       || !(cs_lang = sstate->cs_langs[cs_lang_id]))
     return;
+
+  /* already activated */
   if (sstate->cs_loc_map[cs_lang_id] > 0) return;
 
+  /* create language structure */
   lang = prepare_alloc_language();
   sstate->cfg = param_merge(&lang->g, sstate->cfg);
 
-  // find the maximum used lang_id
+  lang_id = super_html_find_lang_id(sstate, cs_lang);
+  if (lang_id <= 0) return;
+  lang->id = lang_id;
+  lang->compile_id = lang_id;
+  /*
   max_id = 0;
   for (i = 1; i < sstate->lang_a; i++)
     if (sstate->langs[i] && sstate->loc_cs_map[i] && i > max_id)
@@ -3442,6 +3480,7 @@ super_html_lang_activate(
     lang->compile_id = cs_lang->id;
   }
   lang_id = lang->id;
+  */
 
   /* extend the language arrays */
   if (lang_id >= sstate->lang_a) {
