@@ -4563,3 +4563,8 @@ html.c 5598 0 12742585
 new_server_html.c 5598 0 38390815
 new_server_html_2.c 5598 0 14517335
 csv.c 5600 0 180423
+ejudge_cfg.h 5603 0 269197
+ejudge-setup.c 5603 0 10571260
+ejudge_cfg.c 5603 0 1489774
+prepare.c 5603 0 16694235
+super_html_3.c 5605 0 24475482
