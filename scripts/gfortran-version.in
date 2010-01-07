@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2008 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2008-2010 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
@@ -44,7 +44,7 @@ then
   version=`"${GFORTRANRUN}" --version | grep "GCC" | gawk '{ print $(NF); }'` || failure
   [ "${version}" != x ] || failure
   echo "        END" > conftest.for
-  "${GFORTRANRUN}" -static -s conftest.for -o conftest 2>/dev/null >/dev/null || failure
+  "${GFORTRANRUN}" -static conftest.for -o conftest 2>/dev/null >/dev/null || failure
   [ -x conftest ] || failure
   ./conftest > /dev/null 2>/dev/null || failure
 
