@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -60,7 +60,7 @@ compile_reply_packet_read(size_t in_size, const void *in_data,
   FAIL_IF(pout->run_id < 0 || pout->run_id > EJ_MAX_RUN_ID);
   // OK, COMPILE_ERR, CHECK_FAILED are allowed
   pout->status = cvt_bin_to_host_32(pin->status);
-  FAIL_IF(pout->status != RUN_OK && pout->status != RUN_COMPILE_ERR && pout->status != RUN_CHECK_FAILED);
+  FAIL_IF(pout->status != RUN_OK && pout->status != RUN_COMPILE_ERR && pout->status != RUN_CHECK_FAILED && pout->status != RUN_STYLE_ERR);
   pout->ts1 = cvt_bin_to_host_32(pin->ts1);
   pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);
   FAIL_IF(pout->ts1_us < 0 || pout->ts1_us > USEC_MAX);

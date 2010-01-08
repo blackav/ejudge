@@ -3,7 +3,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -40,7 +40,8 @@ enum
   RUN_PENDING          = 11,
   RUN_MEM_LIMIT_ERR    = 12,
   RUN_SECURITY_ERR     = 13,    /* not used currently */
-  RUN_MAX_STATUS       = 13,
+  RUN_STYLE_ERR        = 14,
+  RUN_MAX_STATUS       = 14,
 
   RUN_PSEUDO_FIRST     = 20,
   RUN_VIRTUAL_START    = 20,
