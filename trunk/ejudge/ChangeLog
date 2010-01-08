@@ -1,3 +1,105 @@
+2010-01-06 (r5605) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in: copyright notice is updated;
+	rule for ej-fix-db program is added.
+
+	* fix-db.c: initial revision.
+
+	* super_html_3.c: copyright notice is updated;
+	(super_html_find_lang_id) new function to allocate a suitable
+	id for an activated language;
+	(super_html_lang_activate) id allocation algorithm is changed.
+
+2010-01-03 (r5603) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge_cfg.h: copyright notice is updated;
+	new elements <default_clardb_plugin>, <default_rundb_plugin>
+	are supported.
+
+	* ejudge_cfg.c: copyright notice is updated;
+	new elements <default_clardb_plugin>, <default_rundb_plugin>
+	are supported.
+
+	* ejudge-setup.c: copyright notice is updated;
+	setting of <default_clardb_plugin>, <default_rundb_plugin>
+	is supported.
+
+	* prepare.c: copyright notice is updated;
+	(set_defaults) `clardb_plugin', `rundb_plugin' default values
+	are taken from ejudge.xml elements.
+
+2009-11-25 (r5600) Alexander Chernov  <cher@ejudge.ru>
+
+	* csv.c:
+	(csv_parse) empty first field is supported.
+
+2009-09-27 (r5596) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(priv_download_runs_confirmation) memory leak is fixed.
+
+	* new_server_html_2.c:
+	(ns_write_priv_source) memory leak is fixed.
+
+	* run.c:
+	(run_tests) input and output are not saved, if binary.
+
+2009-09-13 (r5593) Alexander Chernov  <cher@ejudge.ru>
+
+	* mischtml.h: copyright notice is updated;
+	(html_start_form_id) new function prototype.
+
+	* html_start_form.c: copyright notice is updated;
+	(html_start_form_id) new function is implemented.
+
+	* misctext.c:
+	(text_table_number_lines) program output is rearranged.
+
+	* new_server_html_2.c:
+	(ns_write_priv_source) source code commenting controls are
+	  rearranged;
+	(ns_write_priv_clar) the user message is properly escaped.
+
+	* new_server_html_3.c: copyright notice is updated;
+	priv.js is included in the priveleged header.
+
+2009-09-07 (r5590) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.h:
+	(has_control_characters) new function prototype.
+
+	* new_server_proto.h:
+	NEW_SRV_ERR_INV_CHAR error code is added.
+
+	* prepare.h:
+	(struct section_problem_data) `disable_ctrl_chars' field is added.
+
+	* super_proto.h:
+	editing of the `disable_ctrl_chars' problem configuration variable
+	  is supported.
+
+	* misctext.c:
+	(has_control_characters) new function.
+
+	* new_server_html.c:
+	(priv_submit_run) `disable_ctrl_chars' problem configuration variable
+	  is supported;
+	(unpriv_submit_run) the same.
+
+	* new_server_proto.c: copyright notice is updated;
+	NEW_SRV_ERR_INV_CHAR error code is supported.
+
+	* prepare.c:
+	`disable_ctrl_chars' problem configuration variable is supported.
+
+	* prepare_out.c: copyright notice is updated;
+	(prepare_unparse_prob) `disable_ctrl_chars' problem configuration
+	  variable is supported.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super-serve.c:
+	editing of the `disable_ctrl_chars' problem configuration variable
+	  is supported.
+
 2009-09-01 (r5586) Alexander Chernov  <cher@ejudge.ru>
 
 	* userlist-server.c:

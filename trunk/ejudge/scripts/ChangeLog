@@ -1,3 +1,10 @@
+2010-01-07 (r5608) Alexander Chernov  <cher@ejudge.ru>
+
+	* gfortran.in, gcj.in, g77.in, gfortran-version.in, g77-version.in, gpc.in, g++.in, gcc.in:
+	copyright notice is updated;
+	`-s' option is removed as stripping does not work
+	for static executables.
+
 2008-12-24 (r5461) Alexander Chernov  <cher@ejudge.ru>
 
 	* mzscheme-version.in, yabasic-version.in, g++-version.in, bpp-version.in, python-version.in, ruby-version.in, mcs-version.in, gfortran-version.in, javac-version.in, tpc-version.in, bcc-version.in, php-version.in, vbnc-version.in, dcc-version.in, gcc-version.in, qb-version.in, perl-version.in, gcj-version.in, g77-version.in, fpc-version.in, gpc-version.in, gprolog-version.in:

@@ -1,3 +1,11 @@
+2010-01-03 (r5602) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.in: copyright notice is updated;
+	new test `t8' is added.
+
+	* t8.c: initial revision
+	new test for kernel-based time-limit detection.
+
 2008-02-17 (r4678) Alexander Chernov  <cher@ejudge.ru>
 
 	* bccemu.c, bpcemu2.c, bppemu.c, dosrun3.c, qbemu.c: copyright notice is updated;
