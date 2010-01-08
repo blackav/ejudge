@@ -258,6 +258,7 @@ CFILES=\
  ejudge-control.c\
  ejudge-setup.c\
  execute.c\
+ fix-db.c\
  job-server.c\
  job-server-control.c\
  job-server-cmd.c\
