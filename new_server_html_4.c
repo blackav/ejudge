@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1114,6 +1114,7 @@ static const unsigned char has_kirov_score[RUN_LAST + 1] =
   [RUN_COMPILE_ERR]      = 1,
   [RUN_PARTIAL]          = 1,
   [RUN_ACCEPTED]         = 1,
+  [RUN_STYLE_ERR]        = 1,
 };
 
 // field codes

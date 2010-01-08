@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -428,6 +428,7 @@ user_report_generate(
         case RUN_DISQUALIFIED:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
+        case RUN_STYLE_ERR:
           break;
 
         default:
@@ -469,6 +470,7 @@ user_report_generate(
         case RUN_WRONG_ANSWER_ERR:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
+        case RUN_STYLE_ERR:
           run_ids[re.prob_id] = run_id;
           break;
 
@@ -1032,6 +1034,7 @@ full_user_report_generate(
         case RUN_DISQUALIFIED:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
+        case RUN_STYLE_ERR:
           break;
 
         default:
@@ -1073,6 +1076,7 @@ full_user_report_generate(
         case RUN_WRONG_ANSWER_ERR:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
+        case RUN_STYLE_ERR:
           run_ids[re.prob_id] = run_id;
           break;
 
@@ -2235,6 +2239,7 @@ ns_olympiad_final_user_report(
         case RUN_DISQUALIFIED:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
+        case RUN_STYLE_ERR:
           break;
 
         default:
@@ -2276,6 +2281,7 @@ ns_olympiad_final_user_report(
         case RUN_WRONG_ANSWER_ERR:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
+        case RUN_STYLE_ERR:
           run_ids[re.prob_id] = run_id;
           break;
 
@@ -3073,6 +3079,7 @@ problem_report_generate(
       case RUN_DISQUALIFIED:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
+      case RUN_STYLE_ERR:
         break;
 
       default:
@@ -3122,6 +3129,7 @@ problem_report_generate(
       case RUN_WRONG_ANSWER_ERR:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
+      case RUN_STYLE_ERR:
         run_ids[user_id] = run_id;
         break;
 

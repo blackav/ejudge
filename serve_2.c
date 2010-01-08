@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1518,7 +1518,8 @@ serve_read_compile_packet(serve_state_t state,
   }
 
   if (comp_pkt->status == RUN_CHECK_FAILED
-      || comp_pkt->status == RUN_COMPILE_ERR) {
+      || comp_pkt->status == RUN_COMPILE_ERR
+      || comp_pkt->status == RUN_STYLE_ERR) {
     if ((report_size = generic_file_size(compile_report_dir, pname, "")) < 0) {
       err("read_compile_packet: cannot get report file size");
       snprintf(errmsg, sizeof(errmsg), "cannot get size of %s/%s\n",
@@ -1557,10 +1558,11 @@ serve_read_compile_packet(serve_state_t state,
     goto success;
   }
 
-  if (comp_pkt->status == RUN_COMPILE_ERR) {
+  if (comp_pkt->status == RUN_COMPILE_ERR
+      || comp_pkt->status == RUN_STYLE_ERR) {
     /* if status change fails, we cannot do reasonable recovery */
     if (run_change_status(state->runlog_state, comp_pkt->run_id,
-                          RUN_COMPILE_ERR, 0, -1, 0) < 0)
+                          comp_pkt->status, 0, -1, 0) < 0)
       goto non_fatal_error;
 
     if (archive_dir_prepare(state, state->global->xml_report_archive_dir,
@@ -1579,7 +1581,7 @@ serve_read_compile_packet(serve_state_t state,
     if (state->global->notify_status_change > 0 && !re.is_hidden
         && comp_extra->notify_flag) {
       serve_notify_user_run_status_change(cnts, state, re.user_id,
-                                          comp_pkt->run_id, RUN_COMPILE_ERR);
+                                          comp_pkt->run_id, comp_pkt->status);
     }
     goto success;
   }
@@ -1675,6 +1677,7 @@ serve_is_valid_status(serve_state_t state, int status, int mode)
     case RUN_SECURITY_ERR:
       return 1;
     case RUN_COMPILE_ERR:
+    case RUN_STYLE_ERR:
     case RUN_FULL_REJUDGE:
     case RUN_REJUDGE:
     case RUN_IGNORED:
@@ -1693,6 +1696,7 @@ serve_is_valid_status(serve_state_t state, int status, int mode)
     case RUN_ACCEPTED:
       return 1;
     case RUN_COMPILE_ERR:
+    case RUN_STYLE_ERR:
     case RUN_REJUDGE:
     case RUN_IGNORED:
     case RUN_DISQUALIFIED:
@@ -1715,6 +1719,7 @@ serve_is_valid_status(serve_state_t state, int status, int mode)
     case RUN_SECURITY_ERR:
       return 1;
     case RUN_COMPILE_ERR:
+    case RUN_STYLE_ERR:
     case RUN_REJUDGE:
     case RUN_IGNORED:
     case RUN_DISQUALIFIED:
@@ -2293,6 +2298,7 @@ static unsigned char olympiad_rejudgeable_runs[RUN_LAST + 1] =
   [RUN_PENDING]          = 0,
   [RUN_MEM_LIMIT_ERR]    = 0,
   [RUN_SECURITY_ERR]     = 0,
+  [RUN_STYLE_ERR]        = 0,
   [RUN_VIRTUAL_START]    = 0,
   [RUN_VIRTUAL_STOP]     = 0,
   [RUN_EMPTY]            = 0,
@@ -2318,6 +2324,7 @@ static unsigned char olympiad_output_only_rejudgeable_runs[RUN_LAST + 1] =
   [RUN_PENDING]          = 0,
   [RUN_MEM_LIMIT_ERR]    = 0,
   [RUN_SECURITY_ERR]     = 0,
+  [RUN_STYLE_ERR]        = 0,
   [RUN_VIRTUAL_START]    = 0,
   [RUN_VIRTUAL_STOP]     = 0,
   [RUN_EMPTY]            = 0,
@@ -2343,6 +2350,7 @@ static unsigned char generally_rejudgable_runs[RUN_LAST + 1] =
   [RUN_PENDING]          = 1,
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
+  [RUN_STYLE_ERR]        = 1,
   [RUN_VIRTUAL_START]    = 0,
   [RUN_VIRTUAL_STOP]     = 0,
   [RUN_EMPTY]            = 0,

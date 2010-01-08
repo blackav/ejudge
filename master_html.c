@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -81,6 +81,7 @@ static const unsigned char * const change_status_strings[RUN_LAST + 1] =
   [RUN_DISQUALIFIED]     = "Disqualify",
   [RUN_MEM_LIMIT_ERR]    = "Mem. limit exceeded",
   [RUN_SECURITY_ERR]     = "Security violation",
+  [RUN_STYLE_ERR]        = "Coding style violation",
   [RUN_PENDING]          = "Mark as PENDING",
   [RUN_FULL_REJUDGE]     = "FULL Rejudge",
   [RUN_REJUDGE]          = "Rejudge",
@@ -88,13 +89,13 @@ static const unsigned char * const change_status_strings[RUN_LAST + 1] =
 static const int kirov_no_rejudge_status_list[] =
 {
   RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
-  RUN_OK, RUN_COMPILE_ERR, RUN_PARTIAL, RUN_ACCEPTED,
+  RUN_OK, RUN_COMPILE_ERR, RUN_PARTIAL, RUN_ACCEPTED, RUN_STYLE_ERR,
   -1,
 };
 static const int kirov_status_list[] =
 {
   RUN_REJUDGE, RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
-  RUN_OK, RUN_COMPILE_ERR, RUN_PARTIAL, RUN_ACCEPTED,
+  RUN_OK, RUN_COMPILE_ERR, RUN_PARTIAL, RUN_ACCEPTED, RUN_STYLE_ERR,
   -1,
 };
 static const int olymp_accepting_no_rejudge_status_list[] =
@@ -102,6 +103,7 @@ static const int olymp_accepting_no_rejudge_status_list[] =
   RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING, RUN_ACCEPTED,
   RUN_OK, RUN_PARTIAL, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR, RUN_TIME_LIMIT_ERR,
   RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR, RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR,
+  RUN_STYLE_ERR,
   -1,
 };
 static const int olymp_accepting_status_list[] =
@@ -109,7 +111,7 @@ static const int olymp_accepting_status_list[] =
   RUN_REJUDGE, RUN_FULL_REJUDGE, RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
   RUN_ACCEPTED, RUN_OK, RUN_PARTIAL, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR,
   RUN_TIME_LIMIT_ERR, RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR,
-  RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR,
+  RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_STYLE_ERR,
   -1,
 };
 static const int olymp_judging_no_rejudge_status_list[] =
@@ -117,7 +119,7 @@ static const int olymp_judging_no_rejudge_status_list[] =
   RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
   RUN_OK, RUN_PARTIAL,  RUN_ACCEPTED, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR,
   RUN_TIME_LIMIT_ERR, RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR,
-  RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR,
+  RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_STYLE_ERR,
   -1,
 };
 static const int olymp_judging_status_list[] =
@@ -125,7 +127,7 @@ static const int olymp_judging_status_list[] =
   RUN_REJUDGE, RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
   RUN_OK,  RUN_PARTIAL, RUN_ACCEPTED, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR,
   RUN_TIME_LIMIT_ERR, RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR,
-  RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR,
+  RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_STYLE_ERR,
   -1,
 };
 static const int acm_no_rejudge_status_list[] =
@@ -133,6 +135,7 @@ static const int acm_no_rejudge_status_list[] =
   RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
   RUN_OK, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR, RUN_TIME_LIMIT_ERR,
   RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR, RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_ACCEPTED,
+  RUN_STYLE_ERR,
   -1,
 };
 static const int acm_status_list[] =
@@ -140,6 +143,7 @@ static const int acm_status_list[] =
   RUN_REJUDGE, RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
   RUN_OK, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR, RUN_TIME_LIMIT_ERR,
   RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR, RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_ACCEPTED,
+  RUN_STYLE_ERR,
   -1,
 };
 
@@ -1033,6 +1037,7 @@ generate_daily_statistics(
       break;
 
     case RUN_COMPILE_ERR:
+    case RUN_STYLE_ERR:
       total_ce++;
       u_ce[u]++;
       u_total[u]++;

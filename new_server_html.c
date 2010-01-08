@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -10550,6 +10550,7 @@ unpriv_view_report(FILE *fout,
   case RUN_ACCEPTED:
   case RUN_MEM_LIMIT_ERR:
   case RUN_SECURITY_ERR:
+  case RUN_STYLE_ERR:
     // these statuses have viewable reports
     break;
   default:
@@ -10563,7 +10564,8 @@ unpriv_view_report(FILE *fout,
   }
 
   if (!prob->team_enable_rep_view
-      && (!prob->team_enable_ce_view || re.status != RUN_COMPILE_ERR)) {
+      && (!prob->team_enable_ce_view
+          || (re.status != RUN_COMPILE_ERR && re.status != RUN_STYLE_ERR))) {
     ns_error(log_f, NEW_SRV_ERR_REPORT_VIEW_DISABLED);
     goto done;
   }
@@ -10576,12 +10578,14 @@ unpriv_view_report(FILE *fout,
       goto done;
     }
     content_type = get_content_type(rep_text, &rep_start);
-    if (content_type != CONTENT_TYPE_XML && re.status != RUN_COMPILE_ERR) {
+    if (content_type != CONTENT_TYPE_XML
+        && re.status != RUN_COMPILE_ERR && re.status != RUN_STYLE_ERR) {
       ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
       goto done;
     }
   } else {
-    if (prob->team_enable_ce_view && re.status == RUN_COMPILE_ERR)
+    if (prob->team_enable_ce_view
+        && (re.status == RUN_COMPILE_ERR || re.status == RUN_STYLE_ERR))
       arch_dir = global->report_archive_dir;
     else if (prob->team_show_judge_report)
       arch_dir = global->report_archive_dir;

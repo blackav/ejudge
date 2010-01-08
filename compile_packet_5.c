@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -46,7 +46,7 @@ compile_reply_packet_write(const struct compile_reply_packet *in_data,
   FAIL_IF(in_data->judge_id < 0 || in_data->judge_id > EJ_MAX_JUDGE_ID);
   FAIL_IF(in_data->contest_id <= 0 || in_data->contest_id > EJ_MAX_CONTEST_ID);
   FAIL_IF(in_data->run_id < 0 || in_data->run_id > EJ_MAX_RUN_ID);
-  FAIL_IF(in_data->status != RUN_OK && in_data->status != RUN_COMPILE_ERR && in_data->status != RUN_CHECK_FAILED);
+  FAIL_IF(in_data->status != RUN_OK && in_data->status != RUN_COMPILE_ERR && in_data->status != RUN_CHECK_FAILED && in_data->status != RUN_STYLE_ERR);
   FAIL_IF(in_data->ts1_us < 0 || in_data->ts1_us > USEC_MAX);
   FAIL_IF(in_data->ts2_us < 0 || in_data->ts2_us > USEC_MAX);
   FAIL_IF(in_data->ts3_us < 0 || in_data->ts3_us > USEC_MAX);
