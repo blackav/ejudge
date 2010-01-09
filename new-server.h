@@ -4,7 +4,7 @@
 #ifndef __NEW_SERVER_H__
 #define __NEW_SERVER_H__
 
-/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -362,6 +362,7 @@ enum
   NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK,
   NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE,
   NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK,
+  NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR,
 
   NEW_SRV_ACTION_LAST,
 };

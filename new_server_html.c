@@ -3043,6 +3043,82 @@ parse_run_id(FILE *fout, struct http_request_info *phr,
              struct contest_extra *extra, int *p_run_id, struct run_entry *pe);
 
 static int
+priv_set_run_style_error_status(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  int run_id = 0, rep_flags;
+  struct run_entry re;
+  const unsigned char *text = 0;
+  unsigned char *text2 = 0;
+  size_t text_len, text2_len;
+  unsigned char errmsg[1024];
+  unsigned char rep_path[PATH_MAX];
+
+  errmsg[0] = 0;
+  if (parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0) return -1;
+  if (re.user_id && !teamdb_lookup(cs->teamdb_state, re.user_id)) {
+    ns_error(log_f, NEW_SRV_ERR_USER_ID_NONEXISTANT, re.user_id);
+    goto cleanup;
+  }
+  if (ns_cgi_param(phr, "msg_text", &text) < 0) {
+    snprintf(errmsg, sizeof(errmsg), "%s", "msg_text is binary");
+    goto invalid_param;
+  }
+  if (!text) text = "";
+  text_len = strlen(text);
+  if (text_len > 128 * 1024) {
+    ns_error(log_f, NEW_SRV_ERR_MESSAGE_TOO_LONG, text_len);
+    goto cleanup;
+  }
+  text2 = text_area_process_string(text, 0, 0);
+  text2_len = strlen(text2);
+
+  rep_flags = archive_make_write_path(cs, rep_path, sizeof(rep_path),
+                                      global->xml_report_archive_dir,
+                                      run_id, text2_len, 0);
+  if (rep_flags < 0) {
+    snprintf(errmsg, sizeof(errmsg),
+             "archive_make_write_path: %s, %d, %zu failed\n",
+             global->xml_report_archive_dir, run_id,
+             text2_len);
+    goto invalid_param;
+  }
+  if (archive_dir_prepare(cs, global->xml_report_archive_dir,
+                          run_id, 0, 0) < 0) {
+    snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
+             global->xml_report_archive_dir, run_id);
+    goto invalid_param;
+  }
+  if (generic_write_file(text2, text2_len, rep_flags, 0, rep_path, "") < 0) {
+    snprintf(errmsg, sizeof(errmsg), "generic_write_file: %s, %d, %zu failed\n",
+             global->xml_report_archive_dir, run_id, text2_len);
+    goto invalid_param;
+  }
+  if (run_change_status(cs->runlog_state, run_id,
+                        RUN_STYLE_ERR, 0, -1, 0) < 0)
+    goto invalid_param;
+  if (global->notify_status_change > 0 && !re.is_hidden) {
+    serve_notify_user_run_status_change(cnts, cs, re.user_id,
+                                        run_id, RUN_STYLE_ERR);
+  }
+
+ cleanup:
+  xfree(text2);
+  return 0;
+
+ invalid_param:
+  xfree(text2);
+  ns_html_err_inv_param(fout, phr, 0, errmsg);
+  return -1;
+}
+
+static int
 priv_submit_run_comment(
         FILE *fout,
         FILE *log_f,
@@ -3073,7 +3149,7 @@ priv_submit_run_comment(
   }
   if (!text) text = "";
   text_len = strlen(text);
-  if (text_len > 128 * 1024 * 1024) {
+  if (text_len > 128 * 1024) {
     ns_error(log_f, NEW_SRV_ERR_MESSAGE_TOO_LONG, text_len);
     goto cleanup;
   }
@@ -6909,6 +6985,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = priv_submit_run_comment,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = priv_simple_change_status,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = priv_simple_change_status,
+  [NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR] = priv_set_run_style_error_status,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -8339,6 +8416,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_IP_USERS] = priv_generic_page,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = priv_generic_operation,
+  [NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR] = priv_generic_operation,
 };
 
 static void
@@ -13778,6 +13856,7 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = "PRIV_SUBMIT_RUN_COMMENT_AND_OK",
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = "PRIV_SUBMIT_RUN_JUST_IGNORE",
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = "PRIV_SUBMIT_RUN_JUST_OK",
+  [NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR] = "PRIV_SET_RUN_STYLE_ERR",
 };
 
 void

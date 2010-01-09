@@ -1650,6 +1650,8 @@ ns_write_priv_source(const serve_state_t state,
           BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE));
   fprintf(f, "<td%s>%s</td>", cl,
           BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK));
+  fprintf(f, "<td%s>%s</td>", cl,
+          BUTTON(NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR));
   fprintf(f, "</tr></table>\n");
   fprintf(f, "</form>\n");
 
