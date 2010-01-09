@@ -459,6 +459,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(exe_sfx, "s"),
   LANGUAGE_PARAM(cmd, "s"),
   LANGUAGE_PARAM(content_type, "s"),
+  LANGUAGE_PARAM(style_checker_cmd, "s"),
 
   LANGUAGE_PARAM(disable_auto_testing, "d"),
   LANGUAGE_PARAM(disable_testing, "d"),
@@ -2335,9 +2336,7 @@ set_defaults(serve_state_t state, int mode)
     GLOBAL_INIT_FIELD(tgz_dir, DFLT_G_TGZ_DIR, conf_dir);
   }
 
-  if (mode == PREPARE_RUN) {
-    GLOBAL_INIT_FIELD(checker_dir, DFLT_G_CHECKER_DIR, conf_dir);
-  }
+  GLOBAL_INIT_FIELD(checker_dir, DFLT_G_CHECKER_DIR, conf_dir);
   GLOBAL_INIT_FIELD(statement_dir, DFLT_G_STATEMENT_DIR, conf_dir);
   GLOBAL_INIT_FIELD(plugin_dir, DFLT_G_PLUGIN_DIR, conf_dir);
   if (mode == PREPARE_SERVE && g->description_file[0]) {
@@ -2759,6 +2758,11 @@ set_defaults(serve_state_t state, int mode)
         vinfo("language.%d.compile_report_dir is %s", i,
               lang->compile_report_dir);
       }
+    }
+
+    if (lang->style_checker_cmd[0]) {
+      pathmake2(lang->style_checker_cmd, g->checker_dir,
+                "/", lang->style_checker_cmd, NULL);
     }
 
     if (!lang->src_sfx[0]) {
