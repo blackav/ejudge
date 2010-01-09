@@ -4,7 +4,7 @@
 #ifndef __SUPER_PROTO_H__
 #define __SUPER_PROTO_H__
 
-/* Copyright (C) 2004-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -544,6 +544,8 @@ enum
   SSERV_CMD_LANG_CLEAR_CONTENT_TYPE,
   SSERV_CMD_LANG_CHANGE_OPTS,
   SSERV_CMD_LANG_CLEAR_OPTS,
+  SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_CMD,
+  SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_CMD,
 
   SSERV_CMD_PROB_DELETE,
   SSERV_CMD_PROB_CHANGE_SHORT_NAME,

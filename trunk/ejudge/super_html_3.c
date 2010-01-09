@@ -3358,6 +3358,15 @@ super_html_edit_languages(FILE *f,
                                self_url, extra_args, lang_hidden_vars);
     }
 
+    //LANGUAGE_PARAM(style_checker_cmd, "s"),
+    print_string_editing_row(f, "Style checker command:", lang->style_checker_cmd,
+                               SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_CMD,
+                               SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_CMD,
+                               0,
+                               session_id, 
+                               form_row_attrs[row ^= 1],
+                               self_url, extra_args, lang_hidden_vars);
+
     // additional compilation options
     buf[0] = 0;
     if (sstate->lang_opts[lang->id])
@@ -3623,6 +3632,11 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
     snprintf(pl_new->content_type, sizeof(pl_new->content_type), "%s", param2);
     break;
 
+  case SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_CMD:
+    if (!pl_new) return 0;
+    snprintf(pl_new->style_checker_cmd, sizeof(pl_new->style_checker_cmd), "%s", param2);
+    break;
+
   case SSERV_CMD_LANG_CLEAR_LONG_NAME:
     if (!pl_new) return 0;
     pl_new->long_name[0] = 0;
@@ -3631,6 +3645,11 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
   case SSERV_CMD_LANG_CLEAR_CONTENT_TYPE:
     if (!pl_new) return 0;
     pl_new->content_type[0] = 0;
+    break;
+
+  case SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_CMD:
+    if (!pl_new) return 0;
+    pl_new->style_checker_cmd[0] = 0;
     break;
 
   case SSERV_CMD_LANG_CHANGE_DISABLE_AUTO_TESTING:

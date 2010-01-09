@@ -997,6 +997,9 @@ serve_compile_request(
   cp.run_block = &rx;
   cp.env_num = -1;
   cp.env_vars = (unsigned char**) compiler_env;
+  if (lang->style_checker_cmd[0]) {
+    cp.style_checker = (unsigned char*) lang->style_checker_cmd;
+  }
 
   memset(&rx, 0, sizeof(rx));
   rx.accepting_mode = accepting_mode;

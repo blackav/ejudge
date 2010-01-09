@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1683,6 +1683,8 @@ static const int next_action_map[SSERV_CMD_LAST] =
   [SSERV_CMD_LANG_CHANGE_BINARY] = SSERV_CMD_EDIT_CURRENT_LANG,
   [SSERV_CMD_LANG_CHANGE_OPTS] = SSERV_CMD_EDIT_CURRENT_LANG,
   [SSERV_CMD_LANG_CLEAR_OPTS] = SSERV_CMD_EDIT_CURRENT_LANG,
+  [SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_CMD] = SSERV_CMD_EDIT_CURRENT_LANG,
+  [SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_CMD] = SSERV_CMD_EDIT_CURRENT_LANG,
 
   [SSERV_CMD_PROB_ADD] = SSERV_CMD_EDIT_CURRENT_PROB,
   [SSERV_CMD_PROB_ADD_ABSTRACT] = SSERV_CMD_EDIT_CURRENT_PROB,
@@ -2438,6 +2440,8 @@ main(int argc, char *argv[])
   case SSERV_CMD_LANG_CHANGE_BINARY:
   case SSERV_CMD_LANG_CHANGE_OPTS:
   case SSERV_CMD_LANG_CLEAR_OPTS:
+  case SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_CMD:
+  case SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_CMD:
     action_lang_cmd(client_action, next_action_map[client_action]);
     break;
 

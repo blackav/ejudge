@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2816,6 +2816,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_LANG_CLEAR_CONTENT_TYPE:
   case SSERV_CMD_LANG_CHANGE_OPTS:
   case SSERV_CMD_LANG_CLEAR_OPTS:
+  case SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_CMD:
+  case SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_CMD:
     r = super_html_lang_cmd(sstate, pkt->b.id, pkt->param1, param2_ptr,
                             pkt->param3, pkt->param4);
     break;
@@ -3733,6 +3735,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_LANG_CHANGE_BINARY] = { cmd_set_value },
   [SSERV_CMD_LANG_CHANGE_OPTS] = { cmd_set_value },
   [SSERV_CMD_LANG_CLEAR_OPTS] = { cmd_set_value },
+  [SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_CMD] = { cmd_set_value },
+  [SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_CMD] = { cmd_set_value },
 
   [SSERV_CMD_EDIT_CURRENT_PROB] = { cmd_main_page },
   [SSERV_CMD_PROB_ADD] = { cmd_set_value },
