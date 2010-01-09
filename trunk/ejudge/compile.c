@@ -226,11 +226,6 @@ do_loop(void)
       ce_flag = 0;
       rpl.status = RUN_OK;
     } else {
-      if (cr_serialize_lock(&serve_state) < 0) {
-        // FIXME: propose reasonable recovery?
-        return -1;
-      }
-
       if (req->style_checker) {
         /* run style checker */
         info("Starting: %s %s", req->style_checker, src_path);
@@ -291,6 +286,12 @@ do_loop(void)
 #if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
         task_EnableAllSignals(tsk);
 #endif /* HAVE_TASK_ENABLEALLSIGNALS */
+
+        if (cr_serialize_lock(&serve_state) < 0) {
+          // FIXME: propose reasonable recovery?
+          return -1;
+        }
+
         task_Start(tsk);
         task_Wait(tsk);
         if (cr_serialize_unlock(&serve_state) < 0) {
