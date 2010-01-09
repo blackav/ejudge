@@ -3,7 +3,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -951,6 +951,8 @@ struct section_language_data
   unsigned char content_type[256];
   /** compile command */
   path_t cmd;
+  /** style checker */
+  path_t style_checker_cmd;
 
   /** do not test this language automatically */
   ejintbool_t disable_auto_testing;
