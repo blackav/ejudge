@@ -2293,13 +2293,15 @@ set_defaults(serve_state_t state, int mode)
     return -1;
   }
 
-  if (!g->clardb_plugin[0] && ejudge_config->default_clardb_plugin
-      && ejudge_config && ejudge_config->default_clardb_plugin[0]) {
+  if (!g->clardb_plugin[0] && ejudge_config
+      && ejudge_config->default_clardb_plugin
+      && ejudge_config->default_clardb_plugin[0]) {
     snprintf(g->clardb_plugin, sizeof(g->clardb_plugin), "%s",
              ejudge_config->default_clardb_plugin);
   }
-  if (!g->rundb_plugin[0] && ejudge_config->default_rundb_plugin
-      && ejudge_config && ejudge_config->default_rundb_plugin[0]) {
+  if (!g->rundb_plugin[0] && ejudge_config
+      && ejudge_config->default_rundb_plugin
+      && ejudge_config->default_rundb_plugin[0]) {
     snprintf(g->rundb_plugin, sizeof(g->rundb_plugin), "%s",
              ejudge_config->default_rundb_plugin);
   }
