@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #if defined __GNUC__ && defined __MINGW32__
 #include <malloc.h>
@@ -41,15 +42,17 @@
 #define FAIL_IF(c) if (c)do { errcode = __LINE__; goto failed; } while (0)
 
 int
-compile_request_packet_read(const serve_state_t state,
-                            size_t in_size, const void *in_data,
-                            struct compile_request_packet **p_out_data)
+compile_request_packet_read(
+        const serve_state_t state,
+        size_t in_size, const void *in_data,
+        struct compile_request_packet **p_out_data)
 {
   const struct compile_request_bin_packet *pin = in_data;
   const unsigned char *pin_ptr, *end_ptr;
   struct compile_request_packet *pout = 0;
   int pkt_size, pkt_version, errcode = 0, i;
   rint32_t *str_lens;
+  int style_checker_len = 0;
 
   FAIL_IF(in_size < sizeof(struct compile_request_bin_packet));
   pkt_size = cvt_bin_to_host_32(pin->packet_len);
@@ -58,7 +61,7 @@ compile_request_packet_read(const serve_state_t state,
   /* unaligned packet size */
   FAIL_IF((pkt_size & 0xf));
   pkt_version = cvt_bin_to_host_32(pin->version);
-  FAIL_IF(pkt_version != 1);
+  FAIL_IF(pkt_version != EJ_COMPILE_PACKET_VERSION);
   XCALLOC(pout, 1);
   pout->judge_id = cvt_bin_to_host_32(pin->judge_id);
   FAIL_IF(pout->judge_id < 0 || pout->judge_id > EJ_MAX_JUDGE_ID);
@@ -85,6 +88,17 @@ compile_request_packet_read(const serve_state_t state,
   pin_ptr = (const unsigned char*) in_data + sizeof(*pin);
   // set up the packet end pointer
   end_ptr = (const unsigned char*) in_data + pkt_size;
+
+  pout->style_checker = 0;
+  style_checker_len = cvt_bin_to_host_32(pin->style_checker_len);
+  FAIL_IF(style_checker_len < 0 || style_checker_len > PATH_MAX);
+  FAIL_IF(pin_ptr + style_checker_len > end_ptr);
+  if (style_checker_len > 0) {
+    pout->style_checker = (unsigned char*) xmalloc(style_checker_len + 1);
+    memcpy(pout->style_checker, pin_ptr, style_checker_len);
+    pout->style_checker[style_checker_len] = 0;
+    pin_ptr += pkt_bin_align(style_checker_len);
+  }
 
   pout->run_block_len = cvt_bin_to_host_32(pin->run_block_len);
   FAIL_IF(pout->run_block_len < 0 || pout->run_block_len > EJ_MAX_COMPILE_RUN_BLOCK_LEN);

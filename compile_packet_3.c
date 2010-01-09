@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,7 @@ compile_request_packet_free(struct compile_request_packet *in_data)
 
   if (!in_data) return 0;
   if (in_data->run_block_len > 0) xfree(in_data->run_block);
+  xfree(in_data->style_checker);
   if (in_data->env_num > 0 && in_data->env_vars) {
     for (i = 0; i < in_data->env_num; i++) {
       xfree(in_data->env_vars[i]);
@@ -47,7 +48,7 @@ compile_request_packet_free(struct compile_request_packet *in_data)
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

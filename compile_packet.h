@@ -3,7 +3,7 @@
 #ifndef __COMPILE_PACKET_H__
 #define __COMPILE_PACKET_H__
 
-/* Copyright (C) 2005,2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -31,6 +31,7 @@ struct compile_request_packet
   int output_only;
   int ts1;
   int ts1_us;
+  unsigned char *style_checker;
   int run_block_len;
   void *run_block;
   int env_num;
