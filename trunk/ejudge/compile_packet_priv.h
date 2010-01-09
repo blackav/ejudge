@@ -3,7 +3,7 @@
 #ifndef __COMPILE_PACKET_PRIV_H__
 #define __COMPILE_PACKET_PRIV_H__
 
-/* Copyright (C) 2005-2008 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2010 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,8 @@
 
 #include <reuse/integral.h>
 
+#define EJ_COMPILE_PACKET_VERSION 2
+
 /* various private data structures and constants for compile packets */
 
 /* serve->compile binary packet structure */
@@ -26,7 +28,7 @@
 struct compile_request_bin_packet
 {
   rint32_t packet_len;          /* the overall packet length */
-  rint32_t version;             /* the packet version (1) */
+  rint32_t version;             /* the packet version (2) */
   rint32_t judge_id;            /* judgement serial number, 16 bits used */
   rint32_t contest_id;          /* the contest id [1..999999] */
   rint32_t run_id;              /* the run id [0..999999] */
@@ -35,9 +37,11 @@ struct compile_request_bin_packet
   rint32_t output_only;         /* the problem is output only */
   rint32_t ts1;                 /* the time, when comp. request was queued */
   rint32_t ts1_us;              /* the microsecond component */
+  rint32_t style_checker_len;   /* the length of the style checker command */
   rint32_t run_block_len;       /* the length of the run block */
   rint32_t env_num;             /* the number of env. variables */
-  unsigned char pad[16];        /* padding to 64 boundary */
+  unsigned char pad[12];        /* padding to 64 boundary */
+  /* style checker command (aligned to 16 byte boundary) */
   /* run_block (aligned to 16 byte boundary) */
   /* env variable length array (aligned to 16-byte address boundary) */
   /* env variable strings (aligned to 16-byte boundary) */

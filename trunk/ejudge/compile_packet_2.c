@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,17 +32,25 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #define FAIL_IF(c) if (c)do { errcode = __LINE__; goto failed; } while (0)
 
 int
-compile_request_packet_write(const struct compile_request_packet *in_data,
-                             size_t *p_out_size, void **p_out_data)
+compile_request_packet_write(
+        const struct compile_request_packet *in_data,
+        size_t *p_out_size,
+        void **p_out_data)
 {
   int errcode, i, out_size, env_num;
   rint32_t *str_lens, *str_lens_out;
   struct compile_request_bin_packet *out_data = 0;
   unsigned char *out_ptr;
+  int style_checker_len = 0;
+
+  if (in_data->style_checker) {
+    style_checker_len = strlen(in_data->style_checker);
+  }
 
   FAIL_IF(in_data->judge_id < 0 || in_data->judge_id > EJ_MAX_JUDGE_ID);
   FAIL_IF(in_data->contest_id < 0 || in_data->contest_id > EJ_MAX_CONTEST_ID);
@@ -51,6 +59,7 @@ compile_request_packet_write(const struct compile_request_packet *in_data,
   FAIL_IF(in_data->locale_id < 0 || in_data->locale_id > EJ_MAX_LOCALE_ID);
   FAIL_IF(in_data->output_only < 0 || in_data->output_only > 1);
   FAIL_IF(in_data->ts1_us < 0 || in_data->ts1_us > USEC_MAX);
+  FAIL_IF(style_checker_len < 0 || style_checker_len > PATH_MAX);
   FAIL_IF(in_data->run_block_len < 0 || in_data->run_block_len > EJ_MAX_COMPILE_RUN_BLOCK_LEN);
   env_num = in_data->env_num;
   if (env_num == -1) {
@@ -70,6 +79,9 @@ compile_request_packet_write(const struct compile_request_packet *in_data,
   }
 
   out_size = sizeof(*out_data);
+  if (style_checker_len > 0) {
+    out_size += pkt_bin_align(style_checker_len);
+  }
   out_size += pkt_bin_align(in_data->run_block_len);
   out_size += pkt_bin_align(env_num * sizeof(rint32_t));
   for (i = 0; i < env_num; i++) {
@@ -82,7 +94,7 @@ compile_request_packet_write(const struct compile_request_packet *in_data,
   out_ptr = (unsigned char *) out_data + sizeof(*out_data);
 
   out_data->packet_len = cvt_host_to_bin_32(out_size);
-  out_data->version = cvt_host_to_bin_32(1);
+  out_data->version = cvt_host_to_bin_32(EJ_COMPILE_PACKET_VERSION);
   out_data->judge_id = cvt_host_to_bin_32(in_data->judge_id);
   out_data->contest_id = cvt_host_to_bin_32(in_data->contest_id);
   out_data->run_id = cvt_host_to_bin_32(in_data->run_id);
@@ -91,8 +103,14 @@ compile_request_packet_write(const struct compile_request_packet *in_data,
   out_data->output_only = cvt_host_to_bin_32(in_data->output_only);
   out_data->ts1 = cvt_host_to_bin_32(in_data->ts1);
   out_data->ts1_us = cvt_host_to_bin_32(in_data->ts1_us);
+  out_data->style_checker_len = cvt_host_to_bin_32(style_checker_len);
   out_data->run_block_len = cvt_host_to_bin_32(in_data->run_block_len);
   out_data->env_num = cvt_host_to_bin_32(env_num);
+  if (style_checker_len > 0) {
+    memcpy(out_ptr, in_data->style_checker, style_checker_len);
+    out_ptr += style_checker_len;
+    pkt_bin_align_addr(out_ptr, out_data);
+  }
   if (in_data->run_block_len) {
     memcpy(out_ptr, in_data->run_block, in_data->run_block_len);
     out_ptr += in_data->run_block_len;
