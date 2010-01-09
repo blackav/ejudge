@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2009/09/07 09:05:01
+// Generated 2010/01/09 17:32:03
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -507,6 +507,7 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_exe_sfx] = { CNTSLANG_exe_sfx, 'S', XSIZE(struct section_language_data, exe_sfx), "exe_sfx", XOFFSET(struct section_language_data, exe_sfx) },
   [CNTSLANG_content_type] = { CNTSLANG_content_type, 'S', XSIZE(struct section_language_data, content_type), "content_type", XOFFSET(struct section_language_data, content_type) },
   [CNTSLANG_cmd] = { CNTSLANG_cmd, 'S', XSIZE(struct section_language_data, cmd), "cmd", XOFFSET(struct section_language_data, cmd) },
+  [CNTSLANG_style_checker_cmd] = { CNTSLANG_style_checker_cmd, 'S', XSIZE(struct section_language_data, style_checker_cmd), "style_checker_cmd", XOFFSET(struct section_language_data, style_checker_cmd) },
   [CNTSLANG_disable_auto_testing] = { CNTSLANG_disable_auto_testing, 'B', XSIZE(struct section_language_data, disable_auto_testing), "disable_auto_testing", XOFFSET(struct section_language_data, disable_auto_testing) },
   [CNTSLANG_disable_testing] = { CNTSLANG_disable_testing, 'B', XSIZE(struct section_language_data, disable_testing), "disable_testing", XOFFSET(struct section_language_data, disable_testing) },
   [CNTSLANG_compile_dir] = { CNTSLANG_compile_dir, 'S', XSIZE(struct section_language_data, compile_dir), "compile_dir", XOFFSET(struct section_language_data, compile_dir) },
