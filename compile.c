@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -92,6 +92,7 @@ do_loop(void)
   struct stat stb;
 #endif /* HAVE_TRUNCATE */
   FILE *log_f = 0;
+  struct section_language_data *lang = 0;
 
   if (cr_serialize_init(&serve_state) < 0) return -1;
   interrupt_init();
@@ -192,8 +193,9 @@ do_loop(void)
       goto report_internal_error;
     }
     
-    pathmake(src_name, run_name, serve_state.langs[req->lang_id]->src_sfx, NULL);
-    pathmake(exe_name, run_name, serve_state.langs[req->lang_id]->exe_sfx, NULL);
+    lang = serve_state.langs[req->lang_id];
+    pathmake(src_name, run_name, lang->src_sfx, NULL);
+    pathmake(exe_name, run_name, lang->exe_sfx, NULL);
 
     pathmake(src_path, serve_state.global->compile_work_dir, "/", src_name, NULL);
     pathmake(exe_path, serve_state.global->compile_work_dir, "/", exe_name, NULL);
@@ -203,7 +205,7 @@ do_loop(void)
 
     /* move the source file into the working dir */
     r = generic_copy_file(REMOVE, serve_state.global->compile_src_dir, pkt_name,
-                          serve_state.langs[req->lang_id]->src_sfx,
+                          lang->src_sfx,
                           0, serve_state.global->compile_work_dir, src_name, "");
     if (!r) {
       snprintf(msgbuf, sizeof(msgbuf), "the source file is missing\n");
@@ -224,74 +226,103 @@ do_loop(void)
       ce_flag = 0;
       rpl.status = RUN_OK;
     } else {
-#ifdef __WIN32__
-      info("Starting: %s %s %s", serve_state.langs[req->lang_id]->cmd,
-           src_path, exe_path);
-      tsk = task_New();
-      task_AddArg(tsk, serve_state.langs[req->lang_id]->cmd);
-      task_AddArg(tsk, src_path);
-      task_AddArg(tsk, exe_path);
-      task_SetPathAsArg0(tsk);
-#else
-      info("Starting: %s %s %s", serve_state.langs[req->lang_id]->cmd,
-           src_name, exe_name);
-      tsk = task_New();
-      task_AddArg(tsk, serve_state.langs[req->lang_id]->cmd);
-      task_AddArg(tsk, src_name);
-      task_AddArg(tsk, exe_name);
-      task_SetPathAsArg0(tsk);
-#endif
-
-      if (req->env_num > 0) {
-        for (i = 0; i < req->env_num; i++)
-          task_PutEnv(tsk, req->env_vars[i]);
-      }
-      task_SetWorkingDir(tsk, serve_state.global->compile_work_dir);
-      task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_REWRITE, 0777);
-      task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
-      task_SetRedir(tsk, 2, TSR_DUP, 1);
-      if (serve_state.langs[req->lang_id]->compile_real_time_limit > 0) {
-        //task_SetMaxRealTime(tsk, serve_state.langs[req->lang_id]->compile_real_time_limit);
-        task_SetMaxTime(tsk, serve_state.langs[req->lang_id]->compile_real_time_limit);
-      }
-#if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
-      task_EnableAllSignals(tsk);
-#endif /* HAVE_TASK_ENABLEALLSIGNALS */
       if (cr_serialize_lock(&serve_state) < 0) {
         // FIXME: propose reasonable recovery?
         return -1;
       }
-      task_Start(tsk);
-      task_Wait(tsk);
-      if (cr_serialize_unlock(&serve_state) < 0) {
-        // FIXME: propose reasonable recovery?
-        return -1;
+
+      if (req->style_checker) {
+        /* run style checker */
+        info("Starting: %s %s", req->style_checker, src_path);
+        tsk = task_New();
+        task_AddArg(tsk, req->style_checker);
+        task_AddArg(tsk, src_path);
+        task_SetPathAsArg0(tsk);
+        task_SetWorkingDir(tsk, serve_state.global->compile_work_dir);
+        task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_REWRITE, 0777);
+        task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
+        task_SetRedir(tsk, 2, TSR_DUP, 1);
+        if (lang->compile_real_time_limit > 0) {
+          //task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
+          task_SetMaxTime(tsk, lang->compile_real_time_limit);
+        }
+#if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
+        task_EnableAllSignals(tsk);
+#endif /* HAVE_TASK_ENABLEALLSIGNALS */
+        task_Start(tsk);
+        task_Wait(tsk);
+        if (task_IsTimeout(tsk)) {
+          err("Style checker process timed out");
+          tail_message = "\n\nStyle checker process timed out";
+          ce_flag = 1;
+          rpl.status = RUN_STYLE_ERR;
+        } else if (task_IsAbnormal(tsk)) {
+          info("Style checker failed");
+          ce_flag = 1;
+          rpl.status = RUN_STYLE_ERR;
+        } else {
+          info("Style checker sucessful");
+          ce_flag = 0;
+          rpl.status = RUN_OK;
+        }
+        task_Delete(tsk); tsk = 0;
       }
 
-      /*
-      if (task_IsTimeout(tsk)) {
-        err("Compilation process timed out");
-        snprintf(msgbuf, sizeof(msgbuf), "compilation process timed out\n");
-        goto report_internal_error;
-      }
-      */
+      if (!ce_flag) {
+        info("Starting: %s %s %s", lang->cmd, src_name, exe_name);
+        tsk = task_New();
+        task_AddArg(tsk, lang->cmd);
+        task_AddArg(tsk, src_name);
+        task_AddArg(tsk, exe_name);
+        task_SetPathAsArg0(tsk);
 
-      if (task_IsTimeout(tsk)) {
-        /* FIXME: this does not work in case of gcc/g++, since the
-         * time is consumed by the children of gcc/g++ compiler driver...
-         */
-        err("Compilation process timed out");
-        tail_message = "\n\nCompilation process timed out";
-        ce_flag = 1;
-        rpl.status = RUN_COMPILE_ERR;
-      } else if (task_IsAbnormal(tsk)) {
-        info("Compilation failed");
-        ce_flag = 1;
-        rpl.status = RUN_COMPILE_ERR;
-      } else {
-        info("Compilation sucessful");
-        ce_flag = 0;
-        rpl.status = RUN_OK;
+        if (req->env_num > 0) {
+          for (i = 0; i < req->env_num; i++)
+            task_PutEnv(tsk, req->env_vars[i]);
+        }
+        task_SetWorkingDir(tsk, serve_state.global->compile_work_dir);
+        task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_REWRITE, 0777);
+        task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
+        task_SetRedir(tsk, 2, TSR_DUP, 1);
+        if (lang->compile_real_time_limit > 0) {
+          //task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
+          task_SetMaxTime(tsk, lang->compile_real_time_limit);
+        }
+#if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
+        task_EnableAllSignals(tsk);
+#endif /* HAVE_TASK_ENABLEALLSIGNALS */
+        task_Start(tsk);
+        task_Wait(tsk);
+        if (cr_serialize_unlock(&serve_state) < 0) {
+          // FIXME: propose reasonable recovery?
+          return -1;
+        }
+
+        /*
+          if (task_IsTimeout(tsk)) {
+          err("Compilation process timed out");
+          snprintf(msgbuf, sizeof(msgbuf), "compilation process timed out\n");
+          goto report_internal_error;
+          }
+        */
+
+        if (task_IsTimeout(tsk)) {
+          /* FIXME: this does not work in case of gcc/g++, since the
+           * time is consumed by the children of gcc/g++ compiler driver...
+           */
+          err("Compilation process timed out");
+          tail_message = "\n\nCompilation process timed out";
+          ce_flag = 1;
+          rpl.status = RUN_COMPILE_ERR;
+        } else if (task_IsAbnormal(tsk)) {
+          info("Compilation failed");
+          ce_flag = 1;
+          rpl.status = RUN_COMPILE_ERR;
+        } else {
+          info("Compilation sucessful");
+          ce_flag = 0;
+          rpl.status = RUN_OK;
+        }
       }
     }
 
