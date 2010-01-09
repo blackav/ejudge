@@ -219,6 +219,7 @@ do_loop(void)
     }
 
     tail_message = 0;
+    ce_flag = 0;
 
     if (req->output_only) {
       // copy src_path -> exe_path
