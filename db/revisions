@@ -4583,3 +4583,7 @@ runlog.c 5610 0 4245871
 runlog_static.c 5610 0 615305
 serve_2.c 5610 0 8050559
 filter_scan.lex 5610 0 754825
+new-server.h 5612 0 2184976
+new_server_html.c 5612 0 38620307
+new_server_html_2.c 5612 0 14542477
+new_server_tables.c 5612 0 1158314
