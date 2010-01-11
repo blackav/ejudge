@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -52,6 +52,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <time.h>
+
+#ifndef __MINGW32__
+#include <sys/vfs.h>
+#endif
 
 #if defined __GNUC__ && defined __MINGW32__
 #include <malloc.h>
@@ -797,6 +801,43 @@ invoke_valuer(
   return retval;
 }
 
+static long
+get_expected_free_space(const unsigned char *path)
+{
+#ifdef __MINGW32__
+  return -1;
+#else
+  struct statfs sb;
+  if (statfs(path, &sb) < 0) return -1;
+  return sb.f_bfree;
+#endif
+}
+
+static void
+check_free_space(const unsigned char *path, long expected_space)
+{
+#ifndef __MINGW32__
+  struct statfs sb;
+  int wait_count = 0;
+
+  if (expected_space <= 0) return;
+
+  while (1) {
+    if (statfs(path, &sb) < 0) {
+      err("statfs failed: %s", os_ErrorMsg());
+      return;
+    }
+    if (sb.f_bfree * 2 >= expected_space) return;
+    if (++wait_count == 10) {
+      err("check_free_space: waiting for free space aborted after ten attempts!");
+      return;
+    }
+    info("not enough free space in the working directory, waiting");
+    os_Sleep(500);
+  }
+#endif
+}
+
 static int
 run_tests(struct section_tester_data *tst,
           struct run_request_packet *req_pkt,
@@ -867,6 +908,8 @@ run_tests(struct section_tester_data *tst,
 #ifdef HAVE_TERMIOS_H
   struct termios term_attrs;
 #endif
+
+  long expected_free_space = 0;
 
   ASSERT(tst->problem > 0);
   ASSERT(tst->problem <= serve_state.max_prob);
@@ -940,6 +983,9 @@ run_tests(struct section_tester_data *tst,
     if (task_IsAbnormal(tsk)) goto _internal_execution_error;
     task_Delete(tsk); tsk = 0;
   }
+
+  /* calculate the expected free space in check_dir */
+  expected_free_space = get_expected_free_space(tst->check_dir);
 
   pathmake3(exe_path, tst->check_dir, "/", new_name, NULL);
   if (prb->use_tgz) {
@@ -1019,6 +1065,7 @@ run_tests(struct section_tester_data *tst,
 
     make_writable(tst->check_dir);
     clear_directory(tst->check_dir);
+    check_free_space(tst->check_dir, expected_free_space);
 
     /* copy the executable */
     generic_copy_file(0, serve_state.global->run_work_dir, new_name, "",
