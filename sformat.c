@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2001-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,9 +32,7 @@
 #include <limits.h>
 #include <string.h>
 
-#if defined __GNUC__ && defined __MINGW32__
-#include <malloc.h>
-#endif
+#include "win32_compat.h"
 
 #define ARMOR(s)  html_armor_buf(&ab, (s))
 
@@ -931,9 +929,9 @@ sformat_message(
       // FIXME: ugly hack
       if (width > 100) width = 100;
       if (width >= 0 && put_zeros) {
-        os_snprintf(tbuf, sizeof(tbuf), "%0*llx", width, ullong_format_value);
+        os_snprintf(tbuf, sizeof(tbuf), "%0*" EJ_PRINTF_LLSPEC "x", width, ullong_format_value);
       } else {
-        os_snprintf(tbuf, sizeof(tbuf), "%llx", ullong_format_value);
+        os_snprintf(tbuf, sizeof(tbuf), "%" EJ_PRINTF_LLSPEC "x", ullong_format_value);
       }
       papp = tbuf;
     }

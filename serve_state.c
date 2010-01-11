@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -48,6 +48,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+
+#include "win32_compat.h"
 
 serve_state_t
 serve_state_init(void)
@@ -374,15 +376,15 @@ serve_state_load_contest(
       goto failure;
     }
     if (iface->sizes_array_size != serve_struct_sizes_array_size) {
-      err("%s: contest %d plugin sizes array size mismatch: %zu instead of %zu",
-          f, contest_id, iface->sizes_array_size,
-          serve_struct_sizes_array_size);
+      err("%s: contest %d plugin sizes array size mismatch: %" EJ_PRINTF_ZSPEC "u instead of %" EJ_PRINTF_ZSPEC "u",
+          f, contest_id, EJ_PRINTF_ZCAST(iface->sizes_array_size),
+          EJ_PRINTF_ZCAST(serve_struct_sizes_array_size));
       goto failure;
     }
     for (i = 0; i < serve_struct_sizes_array_num; ++i) {
       if (sza[i] && sza[i] != serve_struct_sizes_array[i]) {
-        err("%s: contest %d plugin sizes array element %d mismatch: %zu instead of %zu",
-            f, contest_id, i, sza[i], serve_struct_sizes_array[i]);
+        err("%s: contest %d plugin sizes array element %d mismatch: %" EJ_PRINTF_ZSPEC "u instead of %" EJ_PRINTF_ZSPEC "u",
+            f, contest_id, i, EJ_PRINTF_ZCAST(sza[i]), EJ_PRINTF_ZCAST(serve_struct_sizes_array[i]));
         goto failure;
       }
     }

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,9 +36,7 @@
 #include <limits.h>
 #include <time.h>
 
-#if defined __GNUC__ && defined __MINGW32__
-#include <malloc.h>
-#endif
+#include "win32_compat.h"
 
 #ifndef EJUDGE_CHARSET
 #define EJUDGE_CHARSET EJ_INTERNAL_CHARSET
@@ -503,7 +501,7 @@ parse_cookies(char const *path, struct xml_tree *cookies,
           ej_cookie_t val;
           int n;
 
-          if (!a->text || sscanf(a->text, "%llx %n", &val, &n) != 1
+          if (!a->text || sscanf(a->text, "%" EJ_PRINTF_LLSPEC "x %n", &val, &n) != 1
               || !val) {
             xml_err_attr_invalid(a);
             return -1;
@@ -1513,7 +1511,7 @@ unparse_cookies(const struct xml_tree *p, FILE *f)
   for (p = p->first_down; p; p = p->right) {
     ASSERT(p->tag == USERLIST_T_COOKIE);
     c = (struct userlist_cookie*) p;
-    fprintf(f, "      <%s %s=\"%s\" %s=\"%llx\" %s=\"%s\" %s=\"%s\"",
+    fprintf(f, "      <%s %s=\"%s\" %s=\"%" EJ_PRINTF_LLSPEC "x\" %s=\"%s\" %s=\"%s\"",
             elem_map[USERLIST_T_COOKIE],
             attr_map[USERLIST_A_IP], xml_unparse_ip(c->ip),
             attr_map[USERLIST_A_VALUE], c->cookie,

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,9 +35,7 @@
 #include <ctype.h>
 #include <errno.h>
 
-#if defined __GNUC__ && defined __MINGW32__
-#include <malloc.h>
-#endif
+#include "win32_compat.h"
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -363,12 +361,16 @@ userlist_get_member_field_str(
   case USERLIST_NM_STATUS:
     p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
     s = userlist_member_status_str(*p_int);
+#if CONF_HAS_LIBINTL - 0 == 1
     if (use_locale) s = gettext(s);
+#endif
     return snprintf(buf, len, "%s", s);
   case USERLIST_NM_GENDER:
     p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
     s = userlist_gender_str(*p_int);
+#if CONF_HAS_LIBINTL - 0 == 1
     if (use_locale) s = gettext(s);
+#endif
     return snprintf(buf, len, "%s", s);
   case USERLIST_NM_FIRSTNAME:
     p_str = (const unsigned char**) userlist_get_member_field_ptr(m, field_id);
@@ -1322,12 +1324,12 @@ userlist_build_login_hash(struct userlist_list *p)
   rdtscll(tsc2);
   tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
 
-  info("login hashtable: size = %zu, shift = %zu, thresh = %zu, current = %zu",
-       p->login_hash_size, p->login_hash_step, p->login_thresh,
-       p->login_cur_fill);
+  info("login hashtable: size = %" EJ_PRINTF_ZSPEC "u, shift = %" EJ_PRINTF_ZSPEC "u, thresh = %" EJ_PRINTF_ZSPEC "u, current = %" EJ_PRINTF_ZSPEC "u",
+       EJ_PRINTF_ZCAST(p->login_hash_size), EJ_PRINTF_ZCAST(p->login_hash_step),
+       EJ_PRINTF_ZCAST(p->login_thresh), EJ_PRINTF_ZCAST(p->login_cur_fill));
   info("login hashtable: collisions = %d, hash collisions = %d",
        coll_count, coll1_count);
-  info("login hashtable: time = %llu (us)", tsc2);
+  info("login hashtable: time = %" EJ_PRINTF_LLSPEC "u (us)", tsc2);
   return 0;
 
  cleanup:
@@ -1376,7 +1378,7 @@ userlist_build_cookie_hash(struct userlist_list *p)
   /* choose hashtable size */
   for (i = 0; primes[i] && primes[i] < cookie_count * 3; i++);
   if (!primes[i]) {
-    err("size of hash table %zu is too large", cookie_count * 3);
+    err("size of hash table %" EJ_PRINTF_ZSPEC "u is too large", EJ_PRINTF_ZCAST(cookie_count * 3));
     goto cleanup;
   }
   p->cookie_hash_size = primes[i];
@@ -1394,7 +1396,7 @@ userlist_build_cookie_hash(struct userlist_list *p)
       j = ck->cookie % p->cookie_hash_size;
       while (p->cookie_hash_table[j]) {
         if (ck->cookie == p->cookie_hash_table[j]->cookie) {
-          err("duplicated cookie value %016llx (uids=%d,%d)",
+          err("duplicated cookie value %016" EJ_PRINTF_LLSPEC "x (uids=%d,%d)",
               ck->cookie, u->id, p->cookie_hash_table[j]->user_id);
           goto cleanup;
         }
@@ -1409,11 +1411,11 @@ userlist_build_cookie_hash(struct userlist_list *p)
   rdtscll(tsc2);
   tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
 
-  info("cookie hashtable: size = %zu, step = %zu, thresh = %zu, current = %zu",
-       p->cookie_hash_size, p->cookie_hash_step, p->cookie_thresh,
-       p->cookie_cur_fill);
-  info("cookie hashtable: collisions = %zu", collision_count);
-  info("cookie hashtable: time = %llu (us)", tsc2);
+  info("cookie hashtable: size = %" EJ_PRINTF_ZSPEC "u, step = %" EJ_PRINTF_ZSPEC "u, thresh = %" EJ_PRINTF_ZSPEC "u, current = %" EJ_PRINTF_ZSPEC "u",
+       EJ_PRINTF_ZCAST(p->cookie_hash_size), EJ_PRINTF_ZCAST(p->cookie_hash_step),
+       EJ_PRINTF_ZCAST(p->cookie_thresh), EJ_PRINTF_ZCAST(p->cookie_cur_fill));
+  info("cookie hashtable: collisions = %" EJ_PRINTF_ZSPEC "u", EJ_PRINTF_ZCAST(collision_count));
+  info("cookie hashtable: time = %" EJ_PRINTF_LLSPEC "u (us)", tsc2);
 
   return 0;
 
@@ -1450,7 +1452,7 @@ userlist_cookie_hash_add(struct userlist_list *p,
   while (p->cookie_hash_table[i]) {
     if (p->cookie_hash_table[i] == ck) return 0;
     if (p->cookie_hash_table[i]->cookie == ck->cookie) {
-      err("duplicated cookie value %016llx (uids=%d,%d)",
+      err("duplicated cookie value %016" EJ_PRINTF_LLSPEC "x (uids=%d,%d)",
           ck->cookie, ck->user_id, p->cookie_hash_table[i]->user_id);
       return -1;
     }
