@@ -267,6 +267,7 @@ CFILES=\
  new-server.c\
  new-server-cmd.c\
  new-server-control.c\
+ nwrun.c\
  run.c\
  serve.c\
  serve-control.c\
