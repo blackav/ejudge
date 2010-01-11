@@ -45,9 +45,7 @@
 #include <ctype.h>
 #include <errno.h>
 
-#if defined __GNUC__ && defined __MINGW32__
-#include <malloc.h>
-#endif
+#include "win32_compat.h"
 
 static int
 do_problem_parse_type(const unsigned char *str, void *ptr, size_t size);
@@ -3389,18 +3387,18 @@ set_defaults(serve_state_t state, int mode)
       }
       if (tp->max_stack_size == -1L && atp && atp->max_stack_size != -1L) {
         tp->max_stack_size = atp->max_stack_size;
-        vinfo("tester.%d.max_stack_size inherited from tester.%s (%zu)",
-              i, sish, tp->max_stack_size);        
+        vinfo("tester.%d.max_stack_size inherited from tester.%s (%" EJ_PRINTF_ZSPEC "u)",
+              i, sish, EJ_PRINTF_ZCAST(tp->max_stack_size));
       }
       if (tp->max_data_size == -1L && atp && atp->max_data_size != -1L) {
         tp->max_data_size = atp->max_data_size;
-        vinfo("tester.%d.max_data_size inherited from tester.%s (%zu)",
-              i, sish, tp->max_data_size);        
+        vinfo("tester.%d.max_data_size inherited from tester.%s (%" EJ_PRINTF_ZSPEC "u)",
+              i, sish, EJ_PRINTF_ZCAST(tp->max_data_size));
       }
       if (tp->max_vm_size == -1L && atp && atp->max_vm_size != -1L) {
         tp->max_vm_size = atp->max_vm_size;
-        vinfo("tester.%d.max_vm_size inherited from tester.%s (%zu)",
-              i, sish, tp->max_vm_size);        
+        vinfo("tester.%d.max_vm_size inherited from tester.%s (%" EJ_PRINTF_ZSPEC "u)",
+              i, sish, EJ_PRINTF_ZCAST(tp->max_vm_size));
       }
       if (tp->memory_limit_type[0] != 1) {
         tp->memory_limit_type_val = prepare_parse_memory_limit_type(tp->memory_limit_type);

@@ -31,9 +31,7 @@
 #include <sys/types.h>
 #include <regex.h>
 
-#if defined __GNUC__ && defined __MINGW32__
-#include <malloc.h>
-#endif
+#include "win32_compat.h"
 
 struct filter_tree_regexp
 {
@@ -652,7 +650,7 @@ filter_tree_dur_str(unsigned char *buf, size_t size, time_t val)
 int
 filter_tree_size_str(unsigned char *buf, size_t size, size_t val)
 {
-  return snprintf(buf, size, "%zu", val);
+  return snprintf(buf, size, "%" EJ_PRINTF_ZSPEC "u", EJ_PRINTF_ZCAST(val));
 }
 
 int

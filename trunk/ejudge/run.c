@@ -57,9 +57,7 @@
 #include <sys/vfs.h>
 #endif
 
-#if defined __GNUC__ && defined __MINGW32__
-#include <malloc.h>
-#endif
+#include "win32_compat.h"
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
@@ -130,10 +128,10 @@ static unsigned char*
 size_t_to_size(unsigned char *buf, size_t buf_size, size_t num)
 {
   if (!num) snprintf(buf, buf_size, "0");
-  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%zuG", num / SIZE_G);
-  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%zuM", num / SIZE_M);
-  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%zuK", num / SIZE_K);
-  else snprintf(buf, buf_size, "%zu", num);
+  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%" EJ_PRINTF_ZSPEC "uG", EJ_PRINTF_ZCAST(num / SIZE_G));
+  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%" EJ_PRINTF_ZSPEC "uM", EJ_PRINTF_ZCAST(num / SIZE_M));
+  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%" EJ_PRINTF_ZSPEC "uK", EJ_PRINTF_ZCAST(num / SIZE_K));
+  else snprintf(buf, buf_size, "%" EJ_PRINTF_ZSPEC "u", EJ_PRINTF_ZCAST(num));
   return buf;
 }
 
@@ -160,8 +158,8 @@ html_print_by_line(FILE *f, unsigned char const *s, size_t size)
   const unsigned char * const * trans_table;
 
   if (serve_state.global->max_file_length > 0 && size > serve_state.global->max_file_length) {
-    fprintf(f, "(%s, %s = %zu)\n",
-            "file is too long", "size", size);
+    fprintf(f, "(%s, %s = %" EJ_PRINTF_ZSPEC "u)\n",
+            "file is too long", "size", EJ_PRINTF_ZCAST(size));
     return;
   }
 
@@ -175,8 +173,8 @@ html_print_by_line(FILE *f, unsigned char const *s, size_t size)
   while (*s) {
     while (*s && *s != '\r' && *s != '\n') s++;
     if (serve_state.global->max_line_length > 0 && s - p > serve_state.global->max_line_length) {
-      fprintf(f, "(%s, %s = %td)\n",
-              "line is too long", "size", s - p);
+      fprintf(f, "(%s, %s = %" EJ_PRINTF_TSPEC "d)\n",
+              "line is too long", "size", EJ_PRINTF_TCAST(s - p));
     } else {
       if (utf8_mode) {
         while (p != s) {

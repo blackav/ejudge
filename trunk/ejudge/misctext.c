@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,9 +28,7 @@
 #include <time.h>
 #include <ctype.h>
 
-#if defined __GNUC__ && defined __MINGW32__
-#include <malloc.h>
-#endif
+#include "win32_compat.h"
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -489,12 +487,12 @@ text_number_lines(const unsigned char *intxt, size_t insize,
   size_t i, j = 1;
   unsigned char *s = outtxt;
 
-  snprintf(lbuf1, sizeof(lbuf1), "[%zu]", j++);
+  snprintf(lbuf1, sizeof(lbuf1), "[%" EJ_PRINTF_ZSPEC "u]", EJ_PRINTF_ZCAST(j++));
   s += sprintf(s, "%-8s", lbuf1);
   for (i = 0; i < insize; i++) {
     *s++ = intxt[i];
     if (intxt[i] == '\n' && i + 1 != insize) {
-      snprintf(lbuf1, sizeof(lbuf1), "[%zu]", j++);
+      snprintf(lbuf1, sizeof(lbuf1), "[%" EJ_PRINTF_ZSPEC "u]", EJ_PRINTF_ZCAST(j++));
       s += sprintf(s, "%-8s", lbuf1);
     }
   }
@@ -521,7 +519,8 @@ text_table_number_lines(
 
   fprintf(out_f, "<tr%s><td valign=\"top\"%s>", tr_attr, td_attr);
   for (line = 0; line < lines; ++line)
-    fprintf(out_f, "<span onclick=\"markLine(%zu)\"><tt>[%zu]</tt></span><br/>\n", line + 1, line + 1);
+    fprintf(out_f, "<span onclick=\"markLine(%" EJ_PRINTF_ZSPEC "u)\"><tt>[%" EJ_PRINTF_ZSPEC "u]</tt></span><br/>\n",
+            EJ_PRINTF_ZCAST(line + 1), EJ_PRINTF_ZCAST(line + 1));
   fprintf(out_f, "</td><td valign=\"top\"%s>", td_attr);
 
   for (cur = 0; cur < insize; ++cur) {
@@ -1377,10 +1376,10 @@ size_t_to_size_str(
         size_t num)
 {
   if (!num) snprintf(buf, buf_size, "0");
-  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%zuG", num / SIZE_G);
-  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%zuM", num / SIZE_M);
-  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%zuK", num / SIZE_K);
-  else snprintf(buf, buf_size, "%zu", num);
+  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%" EJ_PRINTF_ZSPEC "uG", EJ_PRINTF_ZCAST(num / SIZE_G));
+  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%" EJ_PRINTF_ZSPEC "uM", EJ_PRINTF_ZCAST(num / SIZE_M));
+  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%" EJ_PRINTF_ZSPEC "uK", EJ_PRINTF_ZCAST(num / SIZE_K));
+  else snprintf(buf, buf_size, "%" EJ_PRINTF_ZSPEC "u", EJ_PRINTF_ZCAST(num));
   return buf;
 }
 

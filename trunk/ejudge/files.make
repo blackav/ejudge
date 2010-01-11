@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2002-2009 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -408,6 +408,7 @@ HFILES=\
  vcs.h\
  version.h\
  watched_file.h\
+ win32_compat.h\
  unix/unix_fileutl.h\
  userlist_clnt/private.h\
  new_server_clnt.h\

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -138,6 +138,7 @@ l10n_html_locale_select_2(
         const unsigned char *onchange,
         int locale_id)
 {
+#if CONF_HAS_LIBINTL - 0 == 1
   const unsigned char *ss = 0;
   int i;
 
@@ -155,6 +156,7 @@ l10n_html_locale_select_2(
             i, ss, gettext(locales[i]));
   }
   fprintf(out_f, "</select>\n");
+#endif
 }
 
 static struct locale_names 

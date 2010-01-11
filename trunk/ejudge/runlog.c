@@ -42,9 +42,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#if defined __GNUC__ && defined __MINGW32__
-#include <malloc.h>
-#endif
+#include "win32_compat.h"
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -1415,15 +1413,15 @@ runlog_check(
   ASSERT(phead);
 
   if (phead->start_time < 0) {
-    check_msg(1, ferr,"Start time %lld is before the epoch",phead->start_time);
+    check_msg(1, ferr,"Start time %" EJ_PRINTF_LLSPEC "d is before the epoch",phead->start_time);
     return -1;
   }
   if (phead->stop_time < 0) {
-    check_msg(1,ferr, "Stop time %lld is before the epoch", phead->stop_time);
+    check_msg(1,ferr, "Stop time %" EJ_PRINTF_LLSPEC "d is before the epoch", phead->stop_time);
     return -1;
   }
   if (phead->duration < -1) {
-    check_msg(1,ferr, "Contest duration %lld is negative", phead->duration);
+    check_msg(1,ferr, "Contest duration %" EJ_PRINTF_LLSPEC "d is negative", phead->duration);
     return -1;
   }
   if (!phead->start_time && phead->stop_time) {
@@ -1432,7 +1430,7 @@ runlog_check(
   }
   if (phead->start_time && phead->stop_time
       && phead->start_time > phead->stop_time) {
-    check_msg(1,ferr, "Contest stop time %lld is less than start time %lld",
+    check_msg(1,ferr, "Contest stop time %" EJ_PRINTF_LLSPEC "d is less than start time %" EJ_PRINTF_LLSPEC "d",
               phead->stop_time, phead->start_time);
     return -1;
   }
@@ -1498,7 +1496,7 @@ runlog_check(
       continue;
     }
     if (e->time < 0) {
-      check_msg(1, ferr, "Run %d timestamp %lld is negative", i, e->time);
+      check_msg(1, ferr, "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is negative", i, e->time);
       nerr++;
       continue;
     }
@@ -1508,7 +1506,7 @@ runlog_check(
       continue;
     }
     if (e->time < prev_time) {
-      check_msg(1, ferr, "Run %d timestamp %lld is less than previous %ld",
+      check_msg(1, ferr, "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is less than previous %ld",
                 i, e->time, prev_time);
       nerr++;
       continue;
@@ -1544,7 +1542,7 @@ runlog_check(
 
     /* a regular or transient run */
     if (e->size > RUNLOG_MAX_SIZE) {
-      check_msg(1, ferr, "Run %d has huge size %zu", i, (size_t) e->size);
+      check_msg(1, ferr, "Run %d has huge size %" EJ_PRINTF_ZSPEC "u", i, EJ_PRINTF_ZCAST((size_t) e->size));
       nerr++;
       continue;
     }
@@ -1694,14 +1692,14 @@ runlog_check(
           v_stop_time = v->start_time + phead->duration;
         if (e->time < v->start_time) {
           check_msg(1, ferr,
-                    "Run %d timestamp %lld is less that virtual start %d",
+                    "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is less that virtual start %d",
                     i, e->time, v->start_time);
           nerr++;
           continue;
         }
         if (v_stop_time && e->time > v_stop_time) {
           check_msg(1, ferr,
-                    "Run %d timestamp %lld is greater than virtual stop %ld",
+                    "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is greater than virtual stop %ld",
                     i, e->time, v_stop_time);
           nerr++;
           continue;
@@ -1712,14 +1710,14 @@ runlog_check(
         ASSERT(v->status == 0 || v->status == V_REAL_USER);
         if (e->time < phead->start_time) {
           check_msg(1,ferr,
-                    "Run %d timestamp %lld is less than contest start %lld",
+                    "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is less than contest start %" EJ_PRINTF_LLSPEC "d",
                     i, e->time, phead->start_time);
           nerr++;
           continue;
         }
         if (stop_time && e->time > stop_time) {
           check_msg(1, ferr,
-                    "Run %d timestamp %lld is greater than contest stop %ld",
+                    "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is greater than contest stop %ld",
                     i, e->time, stop_time);
           nerr++;
           continue;
