@@ -54,7 +54,7 @@ include files.make
 include win32/files_win32.make
 
 ifeq (${ARCH}, win32)
-CDEBUGFLAGS=-O2 -s -Wall $(WPTRSIGN)
+CDEBUGFLAGS=-g -Wall $(WPTRSIGN)
 CEXTRAFLAGS=
 LDEXTRAFLAGS=
 EXTRALIBS=
@@ -186,7 +186,7 @@ pristine : distclean
 	rm -f configure
 
 version.c: revinfo $(HFILES) $(CFILES) $(OTHERFILES)
-	./revinfo -S -C -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
+	REVINFO_NO_COMMIT=1 ./revinfo -S -C -p -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
 version.o: version.c
 
 revinfo: prjutils/revinfo.o
