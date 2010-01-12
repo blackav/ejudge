@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -353,7 +353,7 @@ visual_setup(unsigned char **keys, unsigned char **vals)
   if (j == 1) visual_save_config(header);
 
   ncurses_shutdown();
-  if (tmp_work_dir[0]) remove_directory_recursively(tmp_work_dir);
+  if (tmp_work_dir[0]) remove_directory_recursively(tmp_work_dir, 0);
   return 0;
 }
 
@@ -745,7 +745,7 @@ main(int argc, char **argv)
   lang_configure_batch(script_dir, script_in_dirs, config_dir, tmp_work_dir,
                        keys, vals, stderr);
   save_config_files(stderr, 0);
-  if (tmp_work_dir[0]) remove_directory_recursively(tmp_work_dir);
+  if (tmp_work_dir[0]) remove_directory_recursively(tmp_work_dir, 0);
 
   return 0;
 }

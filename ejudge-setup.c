@@ -4261,7 +4261,7 @@ main(int argc, char **argv)
   }
 
   ncurses_shutdown();
-  if (tmp_work_dir[0]) remove_directory_recursively(tmp_work_dir);
+  if (tmp_work_dir[0]) remove_directory_recursively(tmp_work_dir, 0);
   return 0;
 }
 

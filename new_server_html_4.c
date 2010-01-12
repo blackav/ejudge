@@ -889,9 +889,10 @@ cmd_submit_run(
   sha_buffer(run_text, run_size, shaval);
 
   if (phr->role == USER_ROLE_CONTESTANT) {
-    if ((run_id = run_find_duplicate(cs->runlog_state, phr->user_id, prob->id,
-                                     lang_id, variant, run_size,
-                                     shaval)) >= 0)
+    if (global->ignore_duplicated_runs > 0
+        && (run_id = run_find_duplicate(cs->runlog_state, phr->user_id,
+                                        prob->id, lang_id, variant, run_size,
+                                        shaval)) >= 0)
       FAIL(NEW_SRV_ERR_DUPLICATE_SUBMIT);
 
     if (prob->disable_submit_after_ok
