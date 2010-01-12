@@ -3,7 +3,7 @@
 #ifndef __FILEUTL_H__
 #define __FILEUTL_H__
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@ int generic_copy_file(int sflags,
                       char const *sdir, char const *sname, char const *ssfx,
                       int dflags,
                       char const *ddir, char const *dname, char const *dsfx);
+int fast_copy_file(const unsigned char *oldname, const unsigned char *newname);
 ssize_t generic_file_size(const unsigned char *dir,
                           const unsigned char *name,
                           const unsigned char *sfx);
@@ -55,8 +56,10 @@ enum { SPOOL_IN, SPOOL_OUT };
 int   check_writable_spool(char const *, int);
 
 int   relaxed_remove(char const *, char const *);
-int   remove_directory_recursively(const unsigned char *path);
+int   remove_directory_recursively(const unsigned char *path, int preserve_root);
 
 int make_symlink(unsigned char const *dest, unsigned char const *path);
+
+int generic_truncate(const char *path, ssize_t size);
 
 #endif /* __FILEUTL_H__ */
