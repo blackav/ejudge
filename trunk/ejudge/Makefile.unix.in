@@ -100,6 +100,9 @@ SERVE_OBJECTS=$(SERVE_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a
 RUN_CFILES=run.c version.c
 RUN_OBJECTS=$(RUN_CFILES:.c=.o) libcommon.a libplatform.a
 
+NWRUN_CFILES=nwrun.c version.c
+NWRUN_OBJECTS=$(NWRUN_CFILES:.c=.o) libcommon.a libplatform.a
+
 SC_CFILES = serve-control.c version.c
 SC_OBJECTS = $(SC_CFILES:.c=.o) libuserlist_clnt.a libsuper_clnt.a libcommon.a libplatform.a
 
@@ -170,7 +173,7 @@ NSC_CFILES=new-server-control.c version.c
 NSC_OBJECTS=$(NSC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a libplatform.a
 
 BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd
-SERVERBINTARGETS = ej-compile ej-compile-control ej-run ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db
+SERVERBINTARGETS = ej-compile ej-compile-control ej-run ej-nwrun ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db
 CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
 TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS}
 STYLEFILES = style/logo.gif style/priv.css style/unpriv.css style/priv.js style/unpriv.js style/filter_expr.html
@@ -243,6 +246,9 @@ ej-compile-control : $(CC_OBJECTS)
 
 ej-run${EXESFX} : $(RUN_OBJECTS)
 	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
+
+ej-nwrun${EXESFX} : $(NWRUN_OBJECTS)
+	$(LD) $(LDFLAGS) $(NWRUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 ej-serve : $(SERVE_OBJECTS)
 	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB}

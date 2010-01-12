@@ -3457,7 +3457,7 @@ ns_download_runs(
 
  cleanup:;
   if (need_remove) {
-    remove_directory_recursively(dir2);
+    remove_directory_recursively(dir2, 0);
   }
   xfree(file_bytes);
   xfree(file_name_str);
