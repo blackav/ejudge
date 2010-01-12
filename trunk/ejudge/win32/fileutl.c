@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -348,6 +348,76 @@ clear_directory(char const *path)
 
   write_log(0, LOG_INFO, "Directory %s cleared", path);
   return 0;
+}
+
+int
+remove_directory_recursively(const unsigned char *path, int preserve_root)
+{
+  strarray_t entries;
+  int ret = 0;
+  path_t patt;
+  HANDLE hnd = INVALID_HANDLE_VALUE;
+  WIN32_FIND_DATA data;
+  int r = TRUE;
+  int i;
+  DWORD file_attrib;
+  path_t subpath;
+
+  memset(&entries, 0, sizeof(entries));
+  snprintf(patt, sizeof(patt), "%s//*.*", path);
+
+  hnd = FindFirstFile(patt, &data);
+  if (hnd == INVALID_HANDLE_VALUE) {
+    if (GetLastError() != ERROR_NO_MORE_FILES) {
+      err("FindFirstFile: %s: %s", path, os_ErrorMsg());
+      ret = -1;
+      goto cleanup;
+    }
+  }
+
+  if (hnd != INVALID_HANDLE_VALUE) {
+    while (r) {
+      if (strcmp(data.cFileName, ".") && strcmp(data.cFileName, "..")) {
+        xexpand(&entries);
+        entries.v[entries.u++] = xstrdup(data.cFileName);
+      }
+
+      r = FindNextFile(hnd, &data);
+    }
+    if (GetLastError() != ERROR_NO_MORE_FILES) {
+      err("FindNextFile: %s: %s", path, os_ErrorMsg());
+      ret = -1;
+      goto cleanup;
+    }
+
+    CloseHandle(hnd); hnd = INVALID_HANDLE_VALUE;
+  }
+
+  for (i = 0; i < entries.u; ++i) {
+    snprintf(subpath, sizeof(subpath), "%s/%s", path, entries.v[i]);
+    file_attrib = GetFileAttributes(subpath);
+    if (file_attrib == INVALID_FILE_ATTRIBUTES) {
+      err("GetFileAttributes: %s: %s", subpath, os_ErrorMsg());
+    } else if ((file_attrib & FILE_ATTRIBUTE_DIRECTORY)) {
+      // FIXME: handle the error code?
+      remove_directory_recursively(subpath, 0);
+    } else {
+      if (!DeleteFile(subpath)) {
+        err("DeleteFile: %s: %s", subpath, os_ErrorMsg());
+      }
+    }
+  }
+
+  if (!preserve_root) {
+    if (!RemoveDirectory(path)) {
+      err("RemoveDirectory: %s: %s", path, os_ErrorMsg());
+    }
+  }
+
+ cleanup:
+  if (hnd != INVALID_HANDLE_VALUE) CloseHandle(hnd);
+  xstrarrayfree(&entries);
+  return ret;
 }
 
 int
@@ -839,6 +909,40 @@ generic_file_size(const unsigned char *dir, const unsigned char *name,
   }
 
   return retval;
+}
+
+int
+fast_copy_file(const unsigned char *oldname, const unsigned char *newname)
+{
+  if (!CopyFile(oldname, newname, FALSE)) {
+    err("CopyFile: %s -> %s failed: %s", oldname, newname, os_ErrorMsg());
+    return -1;
+  }
+  return 0;
+}
+
+int
+generic_truncate(const char *path, ssize_t size)
+{
+  HANDLE hnd = INVALID_HANDLE_VALUE;
+
+  hnd = CreateFile(path, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+  if (hnd == INVALID_HANDLE_VALUE) {
+    err("generic_truncate: CreateFile: %s: %s", path, os_ErrorMsg());
+    return -1;
+  }
+  if (SetFilePointer(hnd, size, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER) {
+    CloseHandle(hnd);
+    err("generic_truncate: SetFilePointer: %s: %s", path, os_ErrorMsg());
+    return -1;
+  }
+  if (!SetEndOfFile(hnd)) {
+    CloseHandle(hnd);
+    err("generic_truncate: SetEndOfFile: %s: %s", path, os_ErrorMsg());
+    return -1;
+  }
+  CloseHandle(hnd);
+  return 0;
 }
 
 /*
