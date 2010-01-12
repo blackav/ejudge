@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -87,7 +87,7 @@ clear_directory(char const *path)
     pathmake(fdel, path, "/", p->name, NULL);
     if (lstat(fdel, &sb) < 0) continue;
     if (S_ISDIR(sb.st_mode)) {
-      if ((r = remove_directory_recursively(fdel)) < 0) {
+      if ((r = remove_directory_recursively(fdel, 0)) < 0) {
         saved_errno = -r;
       }
     } else {
@@ -1405,7 +1405,9 @@ free_file_hierarchy(struct dirtree_node *node)
 
 /* remove the specified directory and all its contents */
 int
-remove_directory_recursively(const unsigned char *path)
+remove_directory_recursively(
+        const unsigned char *path,
+        int preserve_root)
 {
   struct stat sb;
   struct dirtree_node *root = 0, *pt;
@@ -1481,10 +1483,14 @@ remove_directory_recursively(const unsigned char *path)
 
   do_remove_recursively(rootpath, root);
   free_file_hierarchy(root);
-  if (rmdir(rootpath) < 0) {
-    err("rm-rf: rmdir(\"%s\") failed: %s", rootpath, os_ErrorMsg());
-    return -1;
+
+  if (!preserve_root) {
+    if (rmdir(rootpath) < 0) {
+      err("rm-rf: rmdir(\"%s\") failed: %s", rootpath, os_ErrorMsg());
+      return -1;
+    }
   }
+
   return 0;
 }
 
@@ -1660,6 +1666,18 @@ make_symlink(unsigned char const *dest, unsigned char const *path)
     return -1;
   }
   return 0;
+}
+
+int
+fast_copy_file(const unsigned char *oldname, const unsigned char *newname)
+{
+  return do_copy_file(oldname, 0, newname, 0);
+}
+
+int
+generic_truncate(const char *path, ssize_t size)
+{
+  return truncate(path, size);
 }
 
 /*
