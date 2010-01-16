@@ -3,7 +3,7 @@
 #ifndef __SUPER_SERVE_H__
 #define __SUPER_SERVE_H__
 
-/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -184,6 +184,9 @@ struct sid_state
   struct generic_section_config *cs_cfg;
   struct section_language_data **cs_langs;
   unsigned char **cs_lang_names;
+
+  int extra_cs_cfgs_total;
+  struct generic_section_config **extra_cs_cfgs;
 
   const struct section_language_data *cur_lang;
   const struct section_problem_data *cur_prob;
