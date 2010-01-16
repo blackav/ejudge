@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -285,8 +285,18 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     snprintf(tmp1, sizeof(tmp1), "%s/var", global->root_dir);
     path_make_relative(tmp2, sizeof(tmp2), compile_spool_dir,
                        tmp1, contests_home_dir);
-    fprintf(f, "compile_dir = \"%s\"\n\n", c_armor(&sbuf, tmp2));
+    fprintf(f, "compile_dir = \"%s\"\n", c_armor(&sbuf, tmp2));
   }
+  // for extra_compile_dirs we do not add `var/compile' suffix
+  // also, extra_compile_dirs are relative to the contests_home_dir
+  if (global->extra_compile_dirs) {
+    for (int i = 0; global->extra_compile_dirs[i]; ++i) {
+      path_make_relative(tmp2, sizeof(tmp2), global->extra_compile_dirs[i],
+                         contests_home_dir, contests_home_dir);
+      fprintf(f, "extra_compile_dirs = \"%s\"\n", c_armor(&sbuf, tmp2));
+    }
+  }
+  fprintf(f, "\n");
 
   if (global->team_enable_src_view != DFLT_G_TEAM_ENABLE_SRC_VIEW)
     unparse_bool(f, "team_enable_src_view", global->team_enable_src_view);
@@ -905,6 +915,9 @@ prepare_unparse_lang(FILE *f, const struct section_language_data *lang,
   fprintf(f, "id = %d\n", lang->id);
   if (lang->compile_id && lang->compile_id != lang->id)
     fprintf(f, "compile_id = %d\n", lang->compile_id);
+  if (lang->compile_dir_index > 0) {
+    fprintf(f, "compile_dir_index = %d\n", lang->compile_dir_index);
+  }
   fprintf(f, "short_name = \"%s\"\n", c_armor(&sbuf, lang->short_name));
   if (long_name && *long_name)
     fprintf(f, "long_name = \"%s\"\n", c_armor(&sbuf, long_name));

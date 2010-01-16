@@ -3115,7 +3115,7 @@ generate_ejudge_xml(FILE *f)
             config_default_clardb_plugin);
   }
   if (config_default_rundb_plugin[0]) {
-    fprintf(f, "  <default_clardb_plugin>%s</default_clardb_plugin>\n",
+    fprintf(f, "  <default_rundb_plugin>%s</default_rundb_plugin>\n",
             config_default_rundb_plugin);
   }
 
