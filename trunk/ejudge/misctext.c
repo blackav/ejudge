@@ -1394,6 +1394,184 @@ has_control_characters(const unsigned char *str)
 }
 
 /*
+static const unsigned char c_armor_needed_table[256] =
+{
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+};
+*/
+
+static const unsigned char armored_c_len_table[256] =
+{
+  2, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 4, 4, 
+  4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 
+  1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+};
+
+static unsigned char const * const armored_c_translate_table[256] =
+{
+  "\\0", "\\x01", "\\x02", "\\x03", "\\x04", "\\x05", "\\x06", "\\a", "\\b", "\\t", "\\n", "\\v", "\\f", "\\r", "\\x0e", "\\x0f", 
+  "\\x10", "\\x11", "\\x12", "\\x13", "\\x14", "\\x15", "\\x16", "\\x17", "\\x18", "\\x19", "\\x1a", "\\x1b", "\\x1c", "\\x1d", "\\x1e", "\\x1f", 
+  0, 0, "\\\"", 0, 0, 0, 0, "\\\'", 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "\\\\", 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "\\x7f", 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+};
+
+size_t
+c_armored_memlen(char const *str, size_t size)
+{
+  unsigned char const *p = (unsigned char const*) str;
+  size_t l = 0;
+
+  for (size_t i = 0; i < size; ++i, ++p) {
+    l += armored_c_len_table[*p];
+  }
+  return l;
+}
+
+size_t
+c_armored_strlen(char const *str)
+{
+  const unsigned char *p = (const unsigned char *) str;
+  size_t l = 0;
+
+  while (*p) {
+    l += armored_c_len_table[*p++];
+  }
+  return l;
+}
+
+int
+c_armor_needed(const unsigned char *str, size_t *psz)
+{
+  const unsigned char *p = str;
+  size_t s_sz = 0, d_sz = 0;
+
+  if (!str) return 0;
+  while (*p) {
+    s_sz++;
+    d_sz += armored_c_len_table[*p];
+    p++;
+  }
+  if (s_sz == d_sz) return 0;
+  *psz = d_sz;
+  return 1;
+}
+
+int
+c_armor_needed_bin(const unsigned char *str, size_t sz, size_t *psz)
+{
+  const unsigned char *p = str;
+  size_t s_sz = sz, d_sz = 0;
+
+  if (!str || !sz) return 0;
+
+  while (s_sz) {
+    d_sz += armored_c_len_table[*p];
+    p++; s_sz--;
+  }
+  if (d_sz == sz && !*p) return 0;
+  *psz = d_sz;
+  return 1;
+}
+
+/*
+static int
+c_armor_text(char const *str, int size, char *out)
+{
+  unsigned char const *p = (unsigned char const *) str;
+  char *s = out;
+  unsigned char const *t;
+  int i = size;
+
+  for (; i > 0; p++, i--) {
+    if (!(t = armored_c_translate_table[*p])) {
+      *s++ = *p;
+    } else {
+      while ((*s++ = *t++));
+      s--;
+    }
+  }
+  *s = 0;
+  return s - out;
+}
+*/
+
+static int
+c_armor_string(char const *str, char *out)
+{
+  unsigned char const *p = (unsigned char const *) str;
+  unsigned char const *t;
+  char *s = out;
+
+  for (;*p; ++p) {
+    if (!(t = armored_c_translate_table[*p])) {
+      *s++ = *p;
+    } else {
+      while ((*s++ = *t++));
+      s--;
+    }
+  }
+
+  *s = 0;
+  return s - out;
+}
+
+const unsigned char *
+c_armor_buf(struct html_armor_buffer *pb, const unsigned char *s)
+{
+  size_t newsz = 0;
+
+  if (!c_armor_needed(s, &newsz)) return s;
+  if (newsz >= pb->size) {
+    xfree(pb->buf);
+    if (!pb->size) pb->size = 64;
+    while (newsz >= pb->size) pb->size *= 2;
+    pb->buf = (unsigned char*) xmalloc(pb->size);
+  }
+  c_armor_string(s, pb->buf);
+  return pb->buf;
+}
+
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
