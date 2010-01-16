@@ -1970,14 +1970,13 @@ c_armor_2(
   int plen;
   const unsigned char *s;
 
-  // FIXME: do armoring
   if (!os_IsAbsolutePath(str) || !pfx || !pfx[0]
-      || !os_IsAbsolutePath(pfx)) return str;
+      || !os_IsAbsolutePath(pfx)) return c_armor_buf(pa, str);
   plen = strlen(pfx);
-  if (strncmp(str, pfx, plen) != 0) return str;
+  if (strncmp(str, pfx, plen) != 0) return c_armor_buf(pa, str);
   s = str + plen;
   while (*s == '/') s++;
-  return s;
+  return c_armor_buf(pa, s);
 }
 static const unsigned char *
 xml_armor_2(
