@@ -181,6 +181,7 @@ static const struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(compile_dir, "s"),
   GLOBAL_PARAM(compile_work_dir, "s"),
+  GLOBAL_PARAM(extra_compile_dirs, "x"),
 
   GLOBAL_PARAM(run_dir, "s"),
   GLOBAL_PARAM(run_work_dir, "s"),
@@ -463,6 +464,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(disable_testing, "d"),
 
   LANGUAGE_PARAM(compile_dir, "s"),
+  LANGUAGE_PARAM(compile_dir_index, "d"),
   LANGUAGE_PARAM(compile_real_time_limit, "d"),
   LANGUAGE_PARAM(compiler_env, "x"),
 
@@ -711,6 +713,7 @@ prepare_global_free_func(struct generic_section_config *gp)
 
   sarray_free(p->a2ps_args);
   sarray_free(p->lpr_args);
+  sarray_free(p->extra_compile_dirs);
   xfree(p->stand_header_txt);
   xfree(p->stand_footer_txt);
   xfree(p->stand2_header_txt);
@@ -2730,7 +2733,25 @@ set_defaults(serve_state_t state, int mode)
     }
     
     if (mode == PREPARE_SERVE) {
-      if (!lang->compile_dir[0]) {
+      if (lang->compile_dir_index > 0) {
+        int extras_len = sarray_len(g->extra_compile_dirs);
+        if (lang->compile_dir_index > extras_len) {
+          err("language.%d: invalid value of compile_dir_index", i);
+          return -1;
+        }
+        snprintf(lang->compile_dir, sizeof(lang->compile_dir),
+                 "%s", g->extra_compile_dirs[lang->compile_dir_index - 1]);
+        pathmake(lang->compile_queue_dir, lang->compile_dir, "/",
+                 DFLT_G_COMPILE_QUEUE_DIR, 0);
+        pathmake(lang->compile_src_dir, lang->compile_dir, "/",
+                 DFLT_G_COMPILE_SRC_DIR, 0);
+        snprintf(lang->compile_out_dir, sizeof(lang->compile_out_dir),
+                 "%s/%06d", lang->compile_dir, g->contest_id);
+        pathmake(lang->compile_status_dir, lang->compile_out_dir, "/",
+                 DFLT_G_COMPILE_STATUS_DIR, 0);
+        pathmake(lang->compile_report_dir, lang->compile_out_dir, "/",
+                 DFLT_G_COMPILE_REPORT_DIR, 0);
+      } else if (!lang->compile_dir[0]) {
         // use the global compile queue settings
         pathcpy(lang->compile_dir, g->compile_dir);
         pathcpy(lang->compile_queue_dir, g->compile_queue_dir);
