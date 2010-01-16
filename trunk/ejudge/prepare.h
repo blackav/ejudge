@@ -97,7 +97,7 @@ struct user_adjustment_info
 };
 struct user_adjustment_map;
 
-/* sizeof(struct section_global_data) == 346708 */
+/* sizeof(struct section_global_data) == 345884 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -659,7 +659,7 @@ struct section_global_data
   ejintbool_t disable_passed_tests META_ATTRIB((meta_private));
 };
 
-/* sizeof(struct section_problem_data) == 56464 */
+/* sizeof(struct section_problem_data) == 60488 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -920,7 +920,7 @@ struct section_problem_data
   } xml META_ATTRIB((meta_hidden));
 };
 
-/* sizeof(struct section_language_data) == 29540 */
+/* sizeof(struct section_language_data) == 33656 */
 struct section_language_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
