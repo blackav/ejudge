@@ -3,7 +3,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -176,5 +176,16 @@ text_table_number_lines(
 
 int
 has_control_characters(const unsigned char *str);
+
+size_t
+c_armored_memlen(char const *str, size_t size);
+size_t
+c_armored_strlen(char const *str);
+int
+c_armor_needed(const unsigned char *str, size_t *psz);
+int
+c_armor_needed_bin(const unsigned char *str, size_t sz, size_t *psz);
+const unsigned char *
+c_armor_buf(struct html_armor_buffer *pb, const unsigned char *s);
 
 #endif /* __MISCTEXT_H__ */

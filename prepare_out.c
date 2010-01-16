@@ -24,6 +24,7 @@
 #include "prepare_serve.h"
 #include "errlog.h"
 #include "ejudge_cfg.h"
+#include "misctext.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -32,89 +33,9 @@
 #include <stdio.h>
 #include <string.h>
 
-struct str_buf
-{
-  unsigned char *s;
-  size_t a;
-};
-
-static const unsigned char *
-c_armor(struct str_buf *pb, const unsigned char *s)
-{
-  const unsigned char *ps;
-  unsigned char *pq;
-  size_t outlen, inlen;
-  int c;
-
-  if (!s) s = "";
-  inlen = strlen(s);
-  for (outlen = 0, ps = s; *ps; ps++) {
-    switch (*ps) {
-    case '\'':
-    case '\"':
-    case '\\':
-    case '\a':
-    case '\b':
-    case '\f':
-    case '\n':
-    case '\r':
-    case '\t':
-    case '\v':
-      outlen += 2;
-      break;
-    default:
-      if (*ps >= ' ') {
-        outlen++;
-      } else {
-        outlen += 4;
-      }
-      break;
-    }
-  }
-
-  if (outlen == inlen) return s;
-  if (outlen >= pb->a) {
-    if (!pb->a) pb->a = 64;
-    while (outlen >= pb->a) pb->a *= 2;
-    XREALLOC(pb->s, pb->a);
-  }
-  for (pq = pb->s, ps = s; *ps; ps++) {
-    switch (*ps) {
-    case '\'':
-    case '\"':
-    case '\\':
-      c = *ps;
-      goto handle_escape;
-    case '\a': c = 'a'; goto handle_escape;
-    case '\b': c = 'b'; goto handle_escape;
-    case '\f': c = 'f'; goto handle_escape;
-    case '\n': c = 'n'; goto handle_escape;
-    case '\r': c = 'r'; goto handle_escape;
-    case '\t': c = 't'; goto handle_escape;
-    case '\v': c = 'v'; goto handle_escape;
-    handle_escape:
-      *pq++ = '\\';
-      *pq++ = c;
-      break;
-    default:
-      if (*ps >= ' ') {
-        *pq++ = *ps;
-      } else {
-        *pq++ = '\\';
-        *pq++ = (*ps >> 6) + '0';
-        *pq++ = ((*ps >> 3) & 07) + '0';
-        *pq++ = (*ps & 07) + '0';
-      }
-      break;
-    }
-  }
-  *pq = 0;
-  return pb->s;
-}
-
 static const unsigned char *
 c_armor_2(
-        struct str_buf *pb,
+        struct html_armor_buffer *pb,
         const unsigned char *str, 
         const unsigned char *pfx)
 {
@@ -122,13 +43,15 @@ c_armor_2(
   const unsigned char *s;
 
   if (!os_IsAbsolutePath(str) || !pfx || !os_IsAbsolutePath(pfx))
-    return c_armor(pb, str);
+    return c_armor_buf(pb, str);
   plen = strlen(pfx);
-  if (strncmp(str, pfx, plen) != 0) return c_armor(pb, str);
+  if (strncmp(str, pfx, plen) != 0) return c_armor_buf(pb, str);
   s = str + plen;
   while (*s == '/') s++;
-  return c_armor(pb, s);
+  return c_armor_buf(pb, s);
 }
+
+#define CARMOR(s) c_armor_buf(&ab, (s))
 
 static void
 unparse_bool(FILE *f, const unsigned char *name, int value)
@@ -162,10 +85,14 @@ size_t_to_size(unsigned char *buf, size_t buf_size, size_t num)
 }
 
 static void
-do_str(FILE *f, struct str_buf *pb, const unsigned char *name, const unsigned char *val)
+do_str(
+        FILE *f,
+        struct html_armor_buffer *pb,
+        const unsigned char *name,
+        const unsigned char *val)
 {
   if (!val || !*val || val[0] == 1) return;
-  fprintf(f, "%s = \"%s\"\n", name, c_armor(pb, val));
+  fprintf(f, "%s = \"%s\"\n", name, c_armor_buf(pb, val));
 }
 
 /*
@@ -179,13 +106,17 @@ do_str_mb_empty(FILE *f, struct str_buf *pb, const unsigned char *name,
 */
 
 static void
-do_xstr(FILE *f, struct str_buf *pb, const unsigned char *name, char **val)
+do_xstr(
+        FILE *f,
+        struct html_armor_buffer *pb,
+        const unsigned char *name,
+        char **val)
 {
   int i;
 
   if (!val) return;
   for (i = 0; val[i]; i++) {
-    fprintf(f, "%s = \"%s\"\n", name, c_armor(pb, val[i]));
+    fprintf(f, "%s = \"%s\"\n", name, c_armor_buf(pb, val[i]));
   }
 }
 
@@ -194,7 +125,7 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
                        const unsigned char *compile_dir,
                        int need_variant_map)
 {
-  struct str_buf sbuf = { 0, 0};
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   path_t compile_spool_dir, tmp1, tmp2, contests_home_dir;
   int skip_elem, len;
   static const unsigned char * const contest_types[] =
@@ -241,13 +172,12 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     } else if (!strncmp(contests_home_dir, global->root_dir, len)
                && global->root_dir[len] == '/') {
       while (global->root_dir[len] == '/') len++;
-      fprintf(f, "root_dir = \"%s\"\n",
-              c_armor(&sbuf, global->root_dir + len));
+      fprintf(f, "root_dir = \"%s\"\n", CARMOR(global->root_dir + len));
       skip_elem = 1;
     }
   }
   if (!skip_elem)
-    fprintf(f, "root_dir = \"%s\"\n", c_armor(&sbuf, global->root_dir));
+    fprintf(f, "root_dir = \"%s\"\n", CARMOR(global->root_dir));
 
   skip_elem = 0;
   if (global->root_dir[0] && global->conf_dir[0]) {
@@ -256,7 +186,7 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
         || !strcmp(global->conf_dir, DFLT_G_CONF_DIR)) skip_elem = 1;
   }
   if (!skip_elem && global->conf_dir[0])
-    fprintf(f, "conf_dir = \"%s\"\n", c_armor(&sbuf, global->conf_dir));
+    fprintf(f, "conf_dir = \"%s\"\n", CARMOR(global->conf_dir));
   fprintf(f, "\n");
 
   fprintf(f, "contest_time = %d\n", global->contest_time);
@@ -273,8 +203,7 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   if (global->board_unfog_time != DFLT_G_BOARD_UNFOG_TIME)
     fprintf(f, "board_unfog_time = %d\n", global->board_unfog_time);
   if (global->standings_locale[0])
-    fprintf(f, "standings_locale = \"%s\"\n",
-            c_armor(&sbuf, global->standings_locale));
+    fprintf(f, "standings_locale = \"%s\"\n", CARMOR(global->standings_locale));
   fprintf(f, "\n");
 
   // if the `compile_dir' and the `var_dir' has the common prefix,
@@ -285,7 +214,7 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     snprintf(tmp1, sizeof(tmp1), "%s/var", global->root_dir);
     path_make_relative(tmp2, sizeof(tmp2), compile_spool_dir,
                        tmp1, contests_home_dir);
-    fprintf(f, "compile_dir = \"%s\"\n", c_armor(&sbuf, tmp2));
+    fprintf(f, "compile_dir = \"%s\"\n", CARMOR(tmp2));
   }
   // for extra_compile_dirs we do not add `var/compile' suffix
   // also, extra_compile_dirs are relative to the contests_home_dir
@@ -293,7 +222,7 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     for (int i = 0; global->extra_compile_dirs[i]; ++i) {
       path_make_relative(tmp2, sizeof(tmp2), global->extra_compile_dirs[i],
                          contests_home_dir, contests_home_dir);
-      fprintf(f, "extra_compile_dirs = \"%s\"\n", c_armor(&sbuf, tmp2));
+      fprintf(f, "extra_compile_dirs = \"%s\"\n", CARMOR(tmp2));
     }
   }
   fprintf(f, "\n");
@@ -357,24 +286,23 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   fprintf(f, "\n");
 
   if (global->test_dir[0] && strcmp(global->test_dir, DFLT_G_TEST_DIR))
-    fprintf(f, "test_dir = \"%s\"\n", c_armor(&sbuf, global->test_dir));
+    fprintf(f, "test_dir = \"%s\"\n", CARMOR(global->test_dir));
   if (global->corr_dir[0] && strcmp(global->corr_dir, DFLT_G_CORR_DIR))
-    fprintf(f, "corr_dir = \"%s\"\n", c_armor(&sbuf, global->corr_dir));
+    fprintf(f, "corr_dir = \"%s\"\n", CARMOR(global->corr_dir));
   if (global->info_dir[0] && strcmp(global->info_dir, DFLT_G_INFO_DIR))
-    fprintf(f, "info_dir = \"%s\"\n", c_armor(&sbuf, global->info_dir));
+    fprintf(f, "info_dir = \"%s\"\n", CARMOR(global->info_dir));
   if (global->tgz_dir[0] && strcmp(global->tgz_dir, DFLT_G_TGZ_DIR))
-    fprintf(f, "tgz_dir = \"%s\"\n", c_armor(&sbuf, global->tgz_dir));
+    fprintf(f, "tgz_dir = \"%s\"\n", CARMOR(global->tgz_dir));
   if (global->checker_dir[0] && strcmp(global->checker_dir, DFLT_G_CHECKER_DIR))
-    fprintf(f, "checker_dir = \"%s\"\n", c_armor(&sbuf, global->checker_dir));
+    fprintf(f, "checker_dir = \"%s\"\n", CARMOR(global->checker_dir));
   if (global->statement_dir[0] && strcmp(global->statement_dir, DFLT_G_STATEMENT_DIR))
-    fprintf(f, "statement_dir = \"%s\"\n", c_armor(&sbuf, global->statement_dir));
+    fprintf(f, "statement_dir = \"%s\"\n", CARMOR(global->statement_dir));
   if (global->plugin_dir[0] && strcmp(global->plugin_dir, DFLT_G_PLUGIN_DIR))
-    fprintf(f, "plugin_dir = \"%s\"\n", c_armor(&sbuf, global->plugin_dir));
+    fprintf(f, "plugin_dir = \"%s\"\n", CARMOR(global->plugin_dir));
   if (global->contest_start_cmd[0])
-    fprintf(f, "contest_start_cmd = \"%s\"\n",
-            c_armor(&sbuf, global->contest_start_cmd));
+    fprintf(f, "contest_start_cmd = \"%s\"\n", CARMOR(global->contest_start_cmd));
   if (global->description_file[0])
-    fprintf(f, "description_file = \"%s\"\n", c_armor(&sbuf, global->description_file));
+    fprintf(f, "description_file = \"%s\"\n", CARMOR(global->description_file));
   fprintf(f, "\n");
 
   if (global->max_run_size != DFLT_G_MAX_RUN_SIZE)
@@ -398,26 +326,20 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   fprintf(f, "\n");
 
   if (global->team_info_url[0])
-    fprintf(f, "team_info_url = \"%s\"\n",
-            c_armor(&sbuf, global->team_info_url));
+    fprintf(f, "team_info_url = \"%s\"\n", CARMOR(global->team_info_url));
   if (global->prob_info_url[0])
-    fprintf(f, "prob_info_url = \"%s\"\n",
-            c_armor(&sbuf, global->prob_info_url));
+    fprintf(f, "prob_info_url = \"%s\"\n", CARMOR(global->prob_info_url));
   if (global->standings_file_name[0] &&
       strcmp(global->standings_file_name, DFLT_G_STANDINGS_FILE_NAME))
-    fprintf(f, "standings_file_name = \"%s\"\n",
-            c_armor(&sbuf, global->standings_file_name));
+    fprintf(f, "standings_file_name = \"%s\"\n", CARMOR(global->standings_file_name));
   if (global->users_on_page > 0)
     fprintf(f, "users_on_page = %d\n", global->users_on_page);
   if (global->stand_header_file[0])
-    fprintf(f, "stand_header_file = \"%s\"\n",
-            c_armor(&sbuf, global->stand_header_file));
+    fprintf(f, "stand_header_file = \"%s\"\n", CARMOR(global->stand_header_file));
   if (global->stand_footer_file[0])
-    fprintf(f, "stand_footer_file = \"%s\"\n",
-            c_armor(&sbuf, global->stand_footer_file));
+    fprintf(f, "stand_footer_file = \"%s\"\n", CARMOR(global->stand_footer_file));
   if (global->stand_symlink_dir[0])
-    fprintf(f, "stand_symlink_dir = \"%s\"\n",
-            c_armor(&sbuf, global->stand_symlink_dir));
+    fprintf(f, "stand_symlink_dir = \"%s\"\n", CARMOR(global->stand_symlink_dir));
   if (global->stand_ignore_after > 0) {
     fprintf(f, "stand_ignore_after = \"%s\"\n",
             xml_unparse_date(global->stand_ignore_after));
@@ -425,30 +347,22 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   if (global->ignore_success_time != DFLT_G_IGNORE_SUCCESS_TIME)
     unparse_bool(f, "ignore_success_time", global->ignore_success_time);
   if (global->stand2_file_name[0]) {
-    fprintf(f, "stand2_file_name = \"%s\"\n",
-            c_armor(&sbuf, global->stand2_file_name));
+    fprintf(f, "stand2_file_name = \"%s\"\n", CARMOR(global->stand2_file_name));
     if (global->stand2_header_file[0])
-      fprintf(f, "stand2_header_file = \"%s\"\n",
-              c_armor(&sbuf, global->stand2_header_file));
+      fprintf(f, "stand2_header_file = \"%s\"\n", CARMOR(global->stand2_header_file));
     if (global->stand2_footer_file[0])
-      fprintf(f, "stand2_footer_file = \"%s\"\n",
-              c_armor(&sbuf, global->stand2_footer_file));
+      fprintf(f, "stand2_footer_file = \"%s\"\n", CARMOR(global->stand2_footer_file));
     if (global->stand2_symlink_dir[0])
-      fprintf(f, "stand2_symlink_dir = \"%s\"\n",
-              c_armor(&sbuf, global->stand2_symlink_dir));
+      fprintf(f, "stand2_symlink_dir = \"%s\"\n", CARMOR(global->stand2_symlink_dir));
   }
   if (global->plog_file_name[0]) {
-    fprintf(f, "plog_file_name = \"%s\"\n",
-            c_armor(&sbuf, global->plog_file_name));
+    fprintf(f, "plog_file_name = \"%s\"\n", CARMOR(global->plog_file_name));
     if (global->plog_header_file[0])
-      fprintf(f, "plog_header_file = \"%s\"\n",
-              c_armor(&sbuf, global->plog_header_file));
+      fprintf(f, "plog_header_file = \"%s\"\n", CARMOR(global->plog_header_file));
     if (global->plog_footer_file[0])
-      fprintf(f, "plog_footer_file = \"%s\"\n",
-              c_armor(&sbuf, global->plog_footer_file));
+      fprintf(f, "plog_footer_file = \"%s\"\n", CARMOR(global->plog_footer_file));
     if (global->plog_symlink_dir[0])
-      fprintf(f, "plog_symlink_dir = \"%s\"\n",
-              c_armor(&sbuf, global->plog_symlink_dir));
+      fprintf(f, "plog_symlink_dir = \"%s\"\n", CARMOR(global->plog_symlink_dir));
     if (global->plog_update_time != DFLT_G_PLOG_UPDATE_TIME)
       fprintf(f, "plog_update_time = %d\n", global->plog_update_time);
   }
@@ -461,38 +375,27 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   if (global->stand_fancy_style > 0)
     unparse_bool(f, "stand_fancy_style", global->stand_fancy_style);
   if (global->stand_success_attr[0])
-    fprintf(f, "stand_success_attr = \"%s\"\n",
-            c_armor(&sbuf, global->stand_success_attr));
+    fprintf(f, "stand_success_attr = \"%s\"\n", CARMOR(global->stand_success_attr));
   if (global->stand_table_attr[0])
-    fprintf(f, "stand_table_attr = \"%s\"\n",
-            c_armor(&sbuf, global->stand_table_attr));
+    fprintf(f, "stand_table_attr = \"%s\"\n", CARMOR(global->stand_table_attr));
   if (global->stand_place_attr[0])
-    fprintf(f, "stand_place_attr = \"%s\"\n",
-            c_armor(&sbuf, global->stand_place_attr));
+    fprintf(f, "stand_place_attr = \"%s\"\n", CARMOR(global->stand_place_attr));
   if (global->stand_team_attr[0])
-    fprintf(f, "stand_team_attr = \"%s\"\n",
-            c_armor(&sbuf, global->stand_team_attr));
+    fprintf(f, "stand_team_attr = \"%s\"\n", CARMOR(global->stand_team_attr));
   if (global->stand_prob_attr[0])
-    fprintf(f, "stand_prob_attr = \"%s\"\n",
-            c_armor(&sbuf, global->stand_prob_attr));
+    fprintf(f, "stand_prob_attr = \"%s\"\n", CARMOR(global->stand_prob_attr));
   if (global->stand_solved_attr[0])
-    fprintf(f, "stand_solved_attr = \"%s\"\n",
-            c_armor(&sbuf, global->stand_solved_attr));
+    fprintf(f, "stand_solved_attr = \"%s\"\n", CARMOR(global->stand_solved_attr));
   if (global->stand_score_attr[0])
-    fprintf(f, "stand_score_attr = \"%s\"\n",
-            c_armor(&sbuf, global->stand_score_attr));
+    fprintf(f, "stand_score_attr = \"%s\"\n", CARMOR(global->stand_score_attr));
   if (global->stand_penalty_attr[0])
-    fprintf(f, "stand_penalty_attr = \"%s\"\n",
-            c_armor(&sbuf, global->stand_penalty_attr));
+    fprintf(f, "stand_penalty_attr = \"%s\"\n", CARMOR(global->stand_penalty_attr));
   if (global->stand_fail_attr[0])
-    fprintf(f, "stand_fail_attr = \"%s\"\n",
-            c_armor(&sbuf, global->stand_fail_attr));
+    fprintf(f, "stand_fail_attr = \"%s\"\n", CARMOR(global->stand_fail_attr));
   if (global->stand_trans_attr[0])
-    fprintf(f, "stand_trans_attr = \"%s\"\n",
-            c_armor(&sbuf, global->stand_trans_attr));
+    fprintf(f, "stand_trans_attr = \"%s\"\n", CARMOR(global->stand_trans_attr));
   if (global->stand_disq_attr[0])
-    fprintf(f, "stand_disq_attr = \"%s\"\n",
-            c_armor(&sbuf, global->stand_disq_attr));
+    fprintf(f, "stand_disq_attr = \"%s\"\n", CARMOR(global->stand_disq_attr));
   if (global->stand_use_login != DFLT_G_STAND_USE_LOGIN)
     unparse_bool(f, "stand_use_login", global->stand_use_login);
   if (global->stand_show_ok_time != DFLT_G_STAND_SHOW_OK_TIME)
@@ -506,49 +409,40 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   if (global->stand_enable_penalty)
     unparse_bool(f, "stand_enable_penalty", global->stand_enable_penalty);
   if (global->stand_show_ok_time && global->stand_time_attr[0])
-    fprintf(f, "stand_time_attr = \"%s\"\n",
-            c_armor(&sbuf, global->stand_time_attr));
+    fprintf(f, "stand_time_attr = \"%s\"\n", CARMOR(global->stand_time_attr));
   if (global->is_virtual) {
     if (global->stand_self_row_attr[0])
-      fprintf(f, "stand_self_row_attr = \"%s\"\n",
-              c_armor(&sbuf, global->stand_self_row_attr));
+      fprintf(f, "stand_self_row_attr = \"%s\"\n", CARMOR(global->stand_self_row_attr));
     if (global->stand_r_row_attr[0])
-      fprintf(f, "stand_r_row_attr = \"%s\"\n",
-              c_armor(&sbuf, global->stand_r_row_attr));
+      fprintf(f, "stand_r_row_attr = \"%s\"\n", CARMOR(global->stand_r_row_attr));
     if (global->stand_v_row_attr[0])
-      fprintf(f, "stand_v_row_attr = \"%s\"\n",
-              c_armor(&sbuf, global->stand_v_row_attr));
+      fprintf(f, "stand_v_row_attr = \"%s\"\n", CARMOR(global->stand_v_row_attr));
     if (global->stand_u_row_attr[0])
-      fprintf(f, "stand_u_row_attr = \"%s\"\n",
-              c_armor(&sbuf, global->stand_u_row_attr));
+      fprintf(f, "stand_u_row_attr = \"%s\"\n", CARMOR(global->stand_u_row_attr));
   }
   if (global->stand_extra_format[0]) {
-    fprintf(f, "stand_extra_format = \"%s\"\n",
-            c_armor(&sbuf, global->stand_extra_format));
+    fprintf(f, "stand_extra_format = \"%s\"\n", CARMOR(global->stand_extra_format));
     if (global->stand_extra_legend[0])
-      fprintf(f, "stand_extra_legend = \"%s\"\n",
-              c_armor(&sbuf, global->stand_extra_legend));
+      fprintf(f, "stand_extra_legend = \"%s\"\n", CARMOR(global->stand_extra_legend));
     if (global->stand_extra_attr[0])
-      fprintf(f, "stand_extra_attr = \"%s\"\n",
-              c_armor(&sbuf, global->stand_extra_attr));
+      fprintf(f, "stand_extra_attr = \"%s\"\n", CARMOR(global->stand_extra_attr));
   }
   if (global->stand_show_warn_number != DFLT_G_STAND_SHOW_WARN_NUMBER)
     unparse_bool(f, "stand_show_warn_number", global->stand_show_warn_number);
   if (global->stand_show_warn_number) {
     if (global->stand_warn_number_attr[0])
-      fprintf(f, "stand_warn_number_attr = \"%s\"\n",
-              c_armor(&sbuf, global->stand_warn_number_attr));
+      fprintf(f, "stand_warn_number_attr = \"%s\"\n", CARMOR(global->stand_warn_number_attr));
   }
   //GLOBAL_PARAM(stand_row_attr, "x"),
-  do_xstr(f, &sbuf, "stand_row_attr", global->stand_row_attr);
+  do_xstr(f, &ab, "stand_row_attr", global->stand_row_attr);
   //GLOBAL_PARAM(stand_page_table_attr, "s"),
-  do_str(f, &sbuf, "stand_page_table_attr", global->stand_page_table_attr);
+  do_str(f, &ab, "stand_page_table_attr", global->stand_page_table_attr);
   //GLOBAL_PARAM(stand_page_cur_attr, "s"),
-  do_str(f, &sbuf, "stand_page_cur_attr", global->stand_page_cur_attr);
+  do_str(f, &ab, "stand_page_cur_attr", global->stand_page_cur_attr);
   //GLOBAL_PARAM(stand_page_row_attr, "x"),
-  do_xstr(f, &sbuf, "stand_page_row_attr", global->stand_page_row_attr);
+  do_xstr(f, &ab, "stand_page_row_attr", global->stand_page_row_attr);
   //GLOBAL_PARAM(stand_page_col_attr, "x"),  
-  do_xstr(f, &sbuf, "stand_page_col_attr", global->stand_page_col_attr);
+  do_xstr(f, &ab, "stand_page_col_attr", global->stand_page_col_attr);
   fprintf(f, "\n");
 
   if (global->sleep_time != DFLT_G_SLEEP_TIME)
@@ -593,37 +487,31 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   //???
   unparse_bool(f, "enable_l10n", global->enable_l10n);
   if (global->charset[0] && strcmp(global->charset, DFLT_G_CHARSET))
-    fprintf(f, "charset = \"%s\"\n", c_armor(&sbuf, global->charset));
+    fprintf(f, "charset = \"%s\"\n", CARMOR(global->charset));
   if (global->standings_charset[0])
-    fprintf(f, "standings_charset = \"%s\"\n",
-            c_armor(&sbuf, global->standings_charset));
+    fprintf(f, "standings_charset = \"%s\"\n", CARMOR(global->standings_charset));
   if (global->stand2_charset[0])
-    fprintf(f, "stand2_charset = \"%s\"\n",
-            c_armor(&sbuf, global->stand2_charset));
+    fprintf(f, "stand2_charset = \"%s\"\n", CARMOR(global->stand2_charset));
   if (global->plog_charset[0])
-    fprintf(f, "plog_charset = \"%s\"\n",
-            c_armor(&sbuf, global->plog_charset));
+    fprintf(f, "plog_charset = \"%s\"\n", CARMOR(global->plog_charset));
 
   if (global->team_download_time != DFLT_G_TEAM_DOWNLOAD_TIME)
     fprintf(f, "team_download_time = %d\n", global->team_download_time);
   if (global->cpu_bogomips > 0)
     fprintf(f, "cpu_bogomips = %d\n", global->cpu_bogomips);
   if (global->variant_map_file[0] && need_variant_map)
-    fprintf(f, "variant_map_file = \"%s\"\n", c_armor(&sbuf, global->variant_map_file));
+    fprintf(f, "variant_map_file = \"%s\"\n", CARMOR(global->variant_map_file));
   if (global->clardb_plugin[0] && strcmp(global->clardb_plugin, "file"))
-    fprintf(f, "clardb_plugin = \"%s\"\n",
-            c_armor(&sbuf, global->clardb_plugin));
+    fprintf(f, "clardb_plugin = \"%s\"\n", CARMOR(global->clardb_plugin));
   if (global->rundb_plugin[0] && strcmp(global->rundb_plugin, "file"))
-    fprintf(f, "rundb_plugin = \"%s\"\n",
-            c_armor(&sbuf, global->rundb_plugin));
+    fprintf(f, "rundb_plugin = \"%s\"\n", CARMOR(global->rundb_plugin));
   if (global->xuser_plugin[0] && strcmp(global->xuser_plugin, "file"))
-    fprintf(f, "xuser_plugin = \"%s\"\n",
-            c_armor(&sbuf, global->xuser_plugin));
+    fprintf(f, "xuser_plugin = \"%s\"\n", CARMOR(global->xuser_plugin));
   fprintf(f, "\n");
 
   if (global->unhandled_vars) fprintf(f, "%s\n", global->unhandled_vars);
-    
-  xfree(sbuf.s); sbuf.s = 0; sbuf.a = 0;
+
+  html_armor_free(&ab);
 }
 
   /*
@@ -703,90 +591,90 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
 void
 prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *global)
 {
-  struct str_buf sbuf = { 0, 0};
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   //GLOBAL_PARAM(tests_to_accept, "d"),
   if (global->tests_to_accept >= 0
       && global->tests_to_accept != DFLT_G_TESTS_TO_ACCEPT)
     fprintf(f, "tests_to_accept = %d\n", global->tests_to_accept);
   //GLOBAL_PARAM(script_dir, "s"),
-  do_str(f, &sbuf, "script_dir", global->script_dir);
+  do_str(f, &ab, "script_dir", global->script_dir);
   //GLOBAL_PARAM(test_sfx, "s"),
-  do_str(f, &sbuf, "test_sfx", global->test_sfx);
+  do_str(f, &ab, "test_sfx", global->test_sfx);
   //GLOBAL_PARAM(corr_sfx, "s"),
-  do_str(f, &sbuf, "corr_sfx", global->corr_sfx);
+  do_str(f, &ab, "corr_sfx", global->corr_sfx);
   //GLOBAL_PARAM(info_sfx, "s"),
   if (global->info_sfx[0] && strcmp(global->info_sfx, DFLT_G_INFO_SFX))
-      do_str(f, &sbuf, "info_sfx", global->info_sfx);
+      do_str(f, &ab, "info_sfx", global->info_sfx);
   //GLOBAL_PARAM(tgz_sfx, "s"),
   if (global->tgz_sfx[0] && strcmp(global->tgz_sfx, DFLT_G_TGZ_SFX))
-    do_str(f, &sbuf, "tgz_sfx", global->tgz_sfx);
+    do_str(f, &ab, "tgz_sfx", global->tgz_sfx);
   //GLOBAL_PARAM(ejudge_checkers_dir, "s"),
-  do_str(f, &sbuf, "ejudge_checkers_dir", global->ejudge_checkers_dir);
+  do_str(f, &ab, "ejudge_checkers_dir", global->ejudge_checkers_dir);
   //GLOBAL_PARAM(test_pat, "s"),
-  do_str(f, &sbuf, "test_pat", global->test_pat);
+  do_str(f, &ab, "test_pat", global->test_pat);
   //GLOBAL_PARAM(corr_pat, "s"),
-  do_str(f, &sbuf, "corr_pat", global->corr_pat);
+  do_str(f, &ab, "corr_pat", global->corr_pat);
   //GLOBAL_PARAM(info_pat, "s"),
-  do_str(f, &sbuf, "info_pat", global->info_pat);
+  do_str(f, &ab, "info_pat", global->info_pat);
   //GLOBAL_PARAM(tgz_pat, "s"),
-  do_str(f, &sbuf, "tgz_pat", global->tgz_pat);
+  do_str(f, &ab, "tgz_pat", global->tgz_pat);
 
   //GLOBAL_PARAM(socket_path, "s"),
-  do_str(f, &sbuf, "socket_path", global->socket_path);
+  do_str(f, &ab, "socket_path", global->socket_path);
   //GLOBAL_PARAM(contests_dir, "s"),
-  do_str(f, &sbuf, "contests_dir", global->contests_dir);
+  do_str(f, &ab, "contests_dir", global->contests_dir);
   //GLOBAL_PARAM(run_log_file, "s"),
-  do_str(f, &sbuf, "run_log_file", global->run_log_file);
+  do_str(f, &ab, "run_log_file", global->run_log_file);
   //GLOBAL_PARAM(clar_log_file, "s"),
-  do_str(f, &sbuf, "clar_log_file", global->clar_log_file);
+  do_str(f, &ab, "clar_log_file", global->clar_log_file);
   //GLOBAL_PARAM(archive_dir, "s"),
-  do_str(f, &sbuf, "archive_dir", global->archive_dir);
+  do_str(f, &ab, "archive_dir", global->archive_dir);
   //GLOBAL_PARAM(clar_archive_dir, "s"),
-  do_str(f, &sbuf, "clar_archive_dir", global->clar_archive_dir);
+  do_str(f, &ab, "clar_archive_dir", global->clar_archive_dir);
   //GLOBAL_PARAM(run_archive_dir, "s"),
-  do_str(f, &sbuf, "run_archive_dir", global->run_archive_dir);
+  do_str(f, &ab, "run_archive_dir", global->run_archive_dir);
   //GLOBAL_PARAM(report_archive_dir, "s"),
-  do_str(f, &sbuf, "report_archive_dir", global->report_archive_dir);
+  do_str(f, &ab, "report_archive_dir", global->report_archive_dir);
   //GLOBAL_PARAM(team_report_archive_dir, "s"),
-  do_str(f, &sbuf, "team_report_archive_dir", global->team_report_archive_dir);
+  do_str(f, &ab, "team_report_archive_dir", global->team_report_archive_dir);
   //GLOBAL_PARAM(team_extra_dir, "s"),
-  do_str(f, &sbuf, "team_extra_dir", global->team_extra_dir);
+  do_str(f, &ab, "team_extra_dir", global->team_extra_dir);
   //GLOBAL_PARAM(l10n_dir, "s"),
-  do_str(f, &sbuf, "l10n_dir", global->l10n_dir);
+  do_str(f, &ab, "l10n_dir", global->l10n_dir);
 
   //GLOBAL_PARAM(status_dir, "s"),
-  do_str(f, &sbuf, "status_dir", global->status_dir);
+  do_str(f, &ab, "status_dir", global->status_dir);
   //GLOBAL_PARAM(work_dir, "s"),
-  do_str(f, &sbuf, "work_dir", global->work_dir);
+  do_str(f, &ab, "work_dir", global->work_dir);
   //GLOBAL_PARAM(print_work_dir, "s"),
-  do_str(f, &sbuf, "print_work_dir", global->print_work_dir);
+  do_str(f, &ab, "print_work_dir", global->print_work_dir);
   //GLOBAL_PARAM(diff_work_dir, "s"),
-  do_str(f, &sbuf, "diff_work_dir", global->diff_work_dir);
+  do_str(f, &ab, "diff_work_dir", global->diff_work_dir);
   //GLOBAL_PARAM(compile_work_dir, "s"),
-  do_str(f, &sbuf, "compile_work_dir", global->compile_work_dir);
+  do_str(f, &ab, "compile_work_dir", global->compile_work_dir);
   //GLOBAL_PARAM(run_work_dir, "s"),
-  do_str(f, &sbuf, "run_work_dir", global->run_work_dir);
+  do_str(f, &ab, "run_work_dir", global->run_work_dir);
 
   //GLOBAL_PARAM(a2ps_path, "s"),
-  do_str(f, &sbuf, "a2ps_path", global->a2ps_path);
+  do_str(f, &ab, "a2ps_path", global->a2ps_path);
   //GLOBAL_PARAM(a2ps_args, "x"),
-  do_xstr(f, &sbuf, "a2ps_args", global->a2ps_args);
+  do_xstr(f, &ab, "a2ps_args", global->a2ps_args);
   //GLOBAL_PARAM(lpr_path, "s"),
-  do_str(f, &sbuf, "lpr_path", global->lpr_path);
+  do_str(f, &ab, "lpr_path", global->lpr_path);
   //GLOBAL_PARAM(lpr_args, "x"),
-  do_xstr(f, &sbuf, "lpr_args", global->lpr_args);
+  do_xstr(f, &ab, "lpr_args", global->lpr_args);
   //GLOBAL_PARAM(diff_path, "s"),
-  do_str(f, &sbuf, "diff_path", global->diff_path);
+  do_str(f, &ab, "diff_path", global->diff_path);
   //GLOBAL_PARAM(contest_plugin_file, "s"),
-  do_str(f, &sbuf, "contest_plugin_file", global->contest_plugin_file);
+  do_str(f, &ab, "contest_plugin_file", global->contest_plugin_file);
 
   //GLOBAL_PARAM(run_dir, "s"),
-  do_str(f, &sbuf, "run_dir", global->run_dir);
+  do_str(f, &ab, "run_dir", global->run_dir);
   //GLOBAL_PARAM(run_check_dir, "s"),
-  do_str(f, &sbuf, "run_check_dir", global->run_check_dir);
+  do_str(f, &ab, "run_check_dir", global->run_check_dir);
   //GLOBAL_PARAM(htdocs_dir, "s"),
-  do_str(f, &sbuf, "htdocs_dir", global->htdocs_dir);
+  do_str(f, &ab, "htdocs_dir", global->htdocs_dir);
 
   //GLOBAL_PARAM(extended_sound, "d"),
   if (global->extended_sound)
@@ -795,21 +683,21 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
   if (global->disable_sound)
     unparse_bool(f, "disable_sound", global->disable_sound);
   //GLOBAL_PARAM(sound_player, "s"),
-  do_str(f, &sbuf, "sound_player", global->sound_player);
+  do_str(f, &ab, "sound_player", global->sound_player);
   //GLOBAL_PARAM(accept_sound, "s"),
-  do_str(f, &sbuf, "accept_sound", global->accept_sound);
+  do_str(f, &ab, "accept_sound", global->accept_sound);
   //GLOBAL_PARAM(runtime_sound, "s"),
-  do_str(f, &sbuf, "runtime_sound", global->runtime_sound);
+  do_str(f, &ab, "runtime_sound", global->runtime_sound);
   //GLOBAL_PARAM(timelimit_sound, "s"),
-  do_str(f, &sbuf, "timelimit_sound", global->timelimit_sound);
+  do_str(f, &ab, "timelimit_sound", global->timelimit_sound);
   //GLOBAL_PARAM(wrong_sound, "s"),
-  do_str(f, &sbuf, "wrong_sound", global->wrong_sound);
+  do_str(f, &ab, "wrong_sound", global->wrong_sound);
   //GLOBAL_PARAM(presentation_sound, "s"),
-  do_str(f, &sbuf, "presentation_sound", global->presentation_sound);
+  do_str(f, &ab, "presentation_sound", global->presentation_sound);
   //GLOBAL_PARAM(internal_sound, "s"),
-  do_str(f, &sbuf, "internal_sound", global->internal_sound);
+  do_str(f, &ab, "internal_sound", global->internal_sound);
   //GLOBAL_PARAM(start_sound, "s"),
-  do_str(f, &sbuf, "start_sound", global->start_sound);
+  do_str(f, &ab, "start_sound", global->start_sound);
 
   //GLOBAL_PARAM(auto_short_problem_name, "d"),
   if (global->auto_short_problem_name)
@@ -837,7 +725,7 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
   if (global->priority_adjustment)
     fprintf(f, "priority_adjustment = %d\n", global->priority_adjustment);
   //GLOBAL_PARAM(user_priority_adjustments, "x"),
-  do_xstr(f, &sbuf, "user_priority_adjustments", global->user_priority_adjustments);
+  do_xstr(f, &ab, "user_priority_adjustments", global->user_priority_adjustments);
   //GLOBAL_PARAM(skip_full_testing, "d"),
   if (global->skip_full_testing)
     fprintf(f, "skip_full_testing = %d\n", global->skip_full_testing);
@@ -849,33 +737,33 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
   if (global->contestant_status_num > 0)
     fprintf(f, "contestant_status_num = %d\n", global->contestant_status_num);
   //GLOBAL_PARAM(contestant_status_legend, "x"),
-  do_xstr(f, &sbuf, "contestant_status_legend", global->contestant_status_legend);
+  do_xstr(f, &ab, "contestant_status_legend", global->contestant_status_legend);
   //GLOBAL_PARAM(contestant_status_row_attr, "x"),
-  do_xstr(f, &sbuf, "contestant_status_row_attr", global->contestant_status_row_attr);
+  do_xstr(f, &ab, "contestant_status_row_attr", global->contestant_status_row_attr);
   //GLOBAL_PARAM(stand_show_contestant_status, "d"),
   if (global->stand_show_contestant_status)
     unparse_bool(f,"stand_show_contestant_status",global->stand_show_contestant_status);
   //GLOBAL_PARAM(stand_contestant_status_attr, "s"),
-  do_str(f,&sbuf,"stand_contestant_status_attr",global->stand_contestant_status_attr);
+  do_str(f,&ab,"stand_contestant_status_attr",global->stand_contestant_status_attr);
 
   //GLOBAL_PARAM(problem_tab_size, "d"),
   if (global->problem_tab_size > 0)
     fprintf(f, "problem_tab_size = %d\n", global->problem_tab_size);
 
   //GLOBAL_PARAM(user_exam_protocol_header_file, "s"),
-  do_str(f, &sbuf, "user_exam_protocol_header_file", global->user_exam_protocol_header_file);
+  do_str(f, &ab, "user_exam_protocol_header_file", global->user_exam_protocol_header_file);
   //GLOBAL_PARAM(user_exam_protocol_footer_file, "s"),
-  do_str(f, &sbuf, "user_exam_protocol_footer_file", global->user_exam_protocol_footer_file);
+  do_str(f, &ab, "user_exam_protocol_footer_file", global->user_exam_protocol_footer_file);
   //GLOBAL_PARAM(prob_exam_protocol_header_file, "s"),
-  do_str(f, &sbuf, "prob_exam_protocol_header_file", global->prob_exam_protocol_header_file);
+  do_str(f, &ab, "prob_exam_protocol_header_file", global->prob_exam_protocol_header_file);
   //GLOBAL_PARAM(prob_exam_protocol_footer_file, "s"),
-  do_str(f, &sbuf, "prob_exam_protocol_footer_file", global->prob_exam_protocol_footer_file);
+  do_str(f, &ab, "prob_exam_protocol_footer_file", global->prob_exam_protocol_footer_file);
   //GLOBAL_PARAM(full_exam_protocol_header_file, "s"),
-  do_str(f, &sbuf, "full_exam_protocol_header_file", global->full_exam_protocol_header_file);
+  do_str(f, &ab, "full_exam_protocol_header_file", global->full_exam_protocol_header_file);
   //GLOBAL_PARAM(full_exam_protocol_footer_file, "s"),
-  do_str(f, &sbuf, "full_exam_protocol_footer_file", global->full_exam_protocol_footer_file);
+  do_str(f, &ab, "full_exam_protocol_footer_file", global->full_exam_protocol_footer_file);
 
-  xfree(sbuf.s); sbuf.s = 0; sbuf.a = 0;
+  html_armor_free(&ab);
 }
 
 /*
@@ -904,11 +792,13 @@ prepare_check_forbidden_global(FILE *f, const struct section_global_data *global
 }
 
 void
-prepare_unparse_lang(FILE *f, const struct section_language_data *lang,
-                     const unsigned char *long_name,
-                     const unsigned char *options)
+prepare_unparse_lang(
+        FILE *f,
+        const struct section_language_data *lang,
+        const unsigned char *long_name,
+        const unsigned char *options)
 {
-  struct str_buf sbuf = { 0, 0};
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int i, flag = 0;
 
   fprintf(f, "[language]\n");
@@ -918,21 +808,21 @@ prepare_unparse_lang(FILE *f, const struct section_language_data *lang,
   if (lang->compile_dir_index > 0) {
     fprintf(f, "compile_dir_index = %d\n", lang->compile_dir_index);
   }
-  fprintf(f, "short_name = \"%s\"\n", c_armor(&sbuf, lang->short_name));
+  fprintf(f, "short_name = \"%s\"\n", CARMOR(lang->short_name));
   if (long_name && *long_name)
-    fprintf(f, "long_name = \"%s\"\n", c_armor(&sbuf, long_name));
+    fprintf(f, "long_name = \"%s\"\n", CARMOR(long_name));
   else if (lang->long_name[0])
-    fprintf(f, "long_name = \"%s\"\n", c_armor(&sbuf, lang->long_name));
+    fprintf(f, "long_name = \"%s\"\n", CARMOR(lang->long_name));
   if (lang->arch[0])
-    fprintf(f, "arch = \"%s\"\n", c_armor(&sbuf, lang->arch));
-  fprintf(f, "src_sfx = \"%s\"\n", c_armor(&sbuf, lang->src_sfx));
+    fprintf(f, "arch = \"%s\"\n", CARMOR(lang->arch));
+  fprintf(f, "src_sfx = \"%s\"\n", CARMOR(lang->src_sfx));
   if (lang->exe_sfx[0])
-    fprintf(f, "exe_sfx = \"%s\"\n", c_armor(&sbuf, lang->exe_sfx));
+    fprintf(f, "exe_sfx = \"%s\"\n", CARMOR(lang->exe_sfx));
   /*
   if (lang->key[0])
-    fprintf(f, "key = \"%s\"\n", c_armor(&sbuf, lang->key));
+    fprintf(f, "key = \"%s\"\n", CARMOR(lang->key));
   if (lang->cmd[0])
-    fprintf(f, "cmd = \"%s\"\n", c_armor(&sbuf, lang->cmd));
+    fprintf(f, "cmd = \"%s\"\n", CARMOR(lang->cmd));
   */
   if (lang->disabled)
     unparse_bool(f, "disabled", lang->disabled);
@@ -945,14 +835,14 @@ prepare_unparse_lang(FILE *f, const struct section_language_data *lang,
   if (lang->disable_testing)
     unparse_bool(f, "disable_testing", lang->disable_testing);
   if (lang->content_type[0]) {
-    fprintf(f, "content_type = \"%s\"\n", c_armor(&sbuf, lang->content_type));
+    fprintf(f, "content_type = \"%s\"\n", CARMOR(lang->content_type));
   }
 
   if (lang->compiler_env) {
     for (i = 0; lang->compiler_env[i]; i++) {
       if (!strncmp(lang->compiler_env[i], "EJUDGE_FLAGS=", 13)
           && options && *options) {
-        fprintf(f, "compiler_env = \"EJUDGE_FLAGS=%s\"\n", c_armor(&sbuf, options));
+        fprintf(f, "compiler_env = \"EJUDGE_FLAGS=%s\"\n", CARMOR(options));
         flag = 1;
       } else {
         fprintf(f, "compiler_env = \"%s\"\n", lang->compiler_env[i]);
@@ -960,14 +850,13 @@ prepare_unparse_lang(FILE *f, const struct section_language_data *lang,
     }
   }
   if (!flag && options && *options) {
-    fprintf(f, "compiler_env = \"EJUDGE_FLAGS=%s\"\n",
-            c_armor(&sbuf, options));
+    fprintf(f, "compiler_env = \"EJUDGE_FLAGS=%s\"\n", CARMOR(options));
   }
   fprintf(f, "\n");
 
   if (lang->unhandled_vars) fprintf(f, "%s\n", lang->unhandled_vars);
 
-  xfree(sbuf.s); sbuf.s = 0; sbuf.a = 0;
+  html_armor_free(&ab);
 }
 
 /*
@@ -980,7 +869,7 @@ prepare_unparse_lang(FILE *f, const struct section_language_data *lang,
 void
 prepare_unparse_unhandled_lang(FILE *f, const struct section_language_data *lang)
 {
-  struct str_buf sbuf = { 0, 0};
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   //LANGUAGE_PARAM(priority_adjustment, "d"),
   if (lang->priority_adjustment)
@@ -989,9 +878,9 @@ prepare_unparse_unhandled_lang(FILE *f, const struct section_language_data *lang
   if (lang->compile_real_time_limit >= 0)
     fprintf(f, "compile_real_time_limit = %d\n", lang->compile_real_time_limit);
   //LANGUAGE_PARAM(key, "s"),
-  do_str(f, &sbuf, "key", lang->key);
+  do_str(f, &ab, "key", lang->key);
 
-  xfree(sbuf.s); sbuf.s = 0; sbuf.a = 0;
+  html_armor_free(&ab);
 }
 
 /*
@@ -1015,11 +904,13 @@ prepare_check_forbidden_lang(FILE *f, const struct section_language_data *lang)
 }
 
 void
-prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
-                     const struct section_global_data *global,
-                     int score_system)
+prepare_unparse_prob(
+        FILE *f,
+        const struct section_problem_data *prob,
+        const struct section_global_data *global,
+        int score_system)
 {
-  struct str_buf sbuf = { 0, 0};
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char size_buf[256];
 
   fprintf(f, "[problem]\n");
@@ -1034,11 +925,11 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     unparse_bool(f, "abstract", prob->abstract);
   if (!prob->abstract) {
     if (prob->super[0])
-      fprintf(f, "super = \"%s\"\n", c_armor(&sbuf, prob->super));
+      fprintf(f, "super = \"%s\"\n", CARMOR(prob->super));
   }
-  fprintf(f, "short_name = \"%s\"\n", c_armor(&sbuf, prob->short_name));
+  fprintf(f, "short_name = \"%s\"\n", CARMOR(prob->short_name));
   if (!prob->abstract) {
-    fprintf(f, "long_name = \"%s\"\n", c_armor(&sbuf, prob->long_name));
+    fprintf(f, "long_name = \"%s\"\n", CARMOR(prob->long_name));
   }
 
   if ((prob->abstract && prob->type > 0)
@@ -1065,12 +956,12 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
       || (!prob->abstract && prob->use_stdin >= 0))
     unparse_bool(f, "use_stdin", prob->use_stdin);
   if (prob->input_file[0])
-    fprintf(f, "input_file = \"%s\"\n", c_armor(&sbuf, prob->input_file));
+    fprintf(f, "input_file = \"%s\"\n", CARMOR(prob->input_file));
   if ((prob->abstract && prob->use_stdout == 1)
       || (!prob->abstract && prob->use_stdout >= 0))
     unparse_bool(f, "use_stdout", prob->use_stdout);
   if (prob->output_file[0])
-    fprintf(f, "output_file = \"%s\"\n", c_armor(&sbuf, prob->output_file));
+    fprintf(f, "output_file = \"%s\"\n", CARMOR(prob->output_file));
   if ((prob->abstract && prob->binary_input == 1)
       || (!prob->abstract && prob->binary_input >= 0))
     unparse_bool(f, "binary_input", prob->binary_input);
@@ -1084,81 +975,80 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
       || (!prob->abstract && prob->score_latest >= 0))
     unparse_bool(f, "score_latest", prob->score_latest);
   if (prob->xml_file[0])
-    fprintf(f, "xml_file = \"%s\"\n", c_armor(&sbuf, prob->xml_file));
+    fprintf(f, "xml_file = \"%s\"\n", CARMOR(prob->xml_file));
   if (prob->alternatives_file[0])
-    fprintf(f, "alternatives_file = \"%s\"\n",
-            c_armor(&sbuf, prob->alternatives_file));
+    fprintf(f, "alternatives_file = \"%s\"\n", CARMOR(prob->alternatives_file));
   if (prob->plugin_file[0])
-    fprintf(f, "plugin_file = \"%s\"\n",c_armor(&sbuf,prob->plugin_file));
+    fprintf(f, "plugin_file = \"%s\"\n", CARMOR(prob->plugin_file));
   if (prob->test_dir[0])
-    fprintf(f, "test_dir = \"%s\"\n", c_armor(&sbuf, prob->test_dir));
+    fprintf(f, "test_dir = \"%s\"\n", CARMOR(prob->test_dir));
   if (prob->test_sfx[0] != 1) {
     if ((prob->abstract && strcmp(prob->test_sfx, global->test_sfx))
         || !prob->abstract)
-      fprintf(f, "test_sfx = \"%s\"\n", c_armor(&sbuf, prob->test_sfx));
+      fprintf(f, "test_sfx = \"%s\"\n", CARMOR(prob->test_sfx));
   }
   if (prob->test_pat[0] != 1) {
     if ((prob->abstract && strcmp(prob->test_pat, global->test_pat))
         || !prob->abstract)
-      fprintf(f, "test_pat = \"%s\"\n", c_armor(&sbuf, prob->test_pat));
+      fprintf(f, "test_pat = \"%s\"\n", CARMOR(prob->test_pat));
   }
   if ((prob->abstract && prob->use_corr == 1)
       || (!prob->abstract && prob->use_corr >= 0))
     unparse_bool(f, "use_corr", prob->use_corr);
   if (prob->corr_dir[0])
-    fprintf(f, "corr_dir = \"%s\"\n", c_armor(&sbuf, prob->corr_dir));
+    fprintf(f, "corr_dir = \"%s\"\n", CARMOR(prob->corr_dir));
   if (prob->corr_sfx[0] != 1) {
     if ((prob->abstract && strcmp(prob->corr_sfx, global->corr_sfx))
         || !prob->abstract)
-      fprintf(f, "corr_sfx = \"%s\"\n", c_armor(&sbuf, prob->corr_sfx));
+      fprintf(f, "corr_sfx = \"%s\"\n", CARMOR(prob->corr_sfx));
   }
   if (prob->corr_pat[0] != 1) {
     if ((prob->abstract && strcmp(prob->corr_pat, global->corr_pat))
         || !prob->abstract)
-      fprintf(f, "corr_pat = \"%s\"\n", c_armor(&sbuf, prob->corr_pat));
+      fprintf(f, "corr_pat = \"%s\"\n", CARMOR(prob->corr_pat));
   }
   if ((prob->abstract && prob->use_info == 1)
       || (!prob->abstract && prob->use_info >= 0))
     unparse_bool(f, "use_info", prob->use_info);
   if (prob->info_dir[0])
-    fprintf(f, "info_dir = \"%s\"\n", c_armor(&sbuf, prob->info_dir));
+    fprintf(f, "info_dir = \"%s\"\n", CARMOR(prob->info_dir));
   if (prob->info_sfx[0] != 1) {
     if ((prob->abstract
          && ((global->info_sfx[0] && strcmp(prob->info_sfx, global->info_sfx))
              || (!global->info_sfx[0] && strcmp(prob->info_sfx, DFLT_G_INFO_SFX))))
         || !prob->abstract)
-      fprintf(f, "info_sfx = \"%s\"\n", c_armor(&sbuf, prob->info_sfx));
+      fprintf(f, "info_sfx = \"%s\"\n", CARMOR(prob->info_sfx));
   }
   if (prob->info_pat[0] != 1) {
     if ((prob->abstract && strcmp(prob->info_pat, global->info_pat))
         || !prob->abstract)
-      fprintf(f, "info_pat = \"%s\"\n", c_armor(&sbuf, prob->info_pat));
+      fprintf(f, "info_pat = \"%s\"\n", CARMOR(prob->info_pat));
   }
   if ((prob->abstract && prob->use_tgz == 1)
       || (!prob->abstract && prob->use_tgz >= 0))
     unparse_bool(f, "use_tgz", prob->use_tgz);
   if (prob->tgz_dir[0])
-    fprintf(f, "tgz_dir = \"%s\"\n", c_armor(&sbuf, prob->tgz_dir));
+    fprintf(f, "tgz_dir = \"%s\"\n", CARMOR(prob->tgz_dir));
   if (prob->tgz_sfx[0] != 1) {
     if ((prob->abstract
          && ((global->tgz_sfx[0] && strcmp(prob->tgz_sfx, global->tgz_sfx))
              || (!global->tgz_sfx[0] && strcmp(prob->tgz_sfx, DFLT_G_TGZ_SFX))))
         || !prob->abstract)
-      fprintf(f, "tgz_sfx = \"%s\"\n", c_armor(&sbuf, prob->tgz_sfx));
+      fprintf(f, "tgz_sfx = \"%s\"\n", CARMOR(prob->tgz_sfx));
   }
   if (prob->tgz_pat[0] != 1) {
     if ((prob->abstract && strcmp(prob->tgz_pat, global->tgz_pat))
         || !prob->abstract)
-      fprintf(f, "tgz_pat = \"%s\"\n", c_armor(&sbuf, prob->tgz_pat));
+      fprintf(f, "tgz_pat = \"%s\"\n", CARMOR(prob->tgz_pat));
   }
   /*
   if (prob->use_tgz != -1) unparse_bool(f, "use_tgz", prob->use_tgz);
   if (prob->tgz_dir[0])
-    fprintf(f, "tgz_dir = \"%s\"\n", c_armor(&sbuf, prob->tgz_dir));
+    fprintf(f, "tgz_dir = \"%s\"\n", CARMOR(prob->tgz_dir));
   if (prob->tgz_sfx[0] != 1)
-    fprintf(f, "tgz_sfx = \"%s\"\n", c_armor(&sbuf, prob->tgz_sfx));
+    fprintf(f, "tgz_sfx = \"%s\"\n", CARMOR(prob->tgz_sfx));
   if (prob->tgz_pat[0] != 1)
-    fprintf(f, "tgz_pat = \"%s\"\n", c_armor(&sbuf, prob->tgz_pat));
+    fprintf(f, "tgz_pat = \"%s\"\n", CARMOR(prob->tgz_pat));
   */
 
   if ((prob->abstract && prob->time_limit > 0)
@@ -1211,9 +1101,9 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
         fprintf(f, "disqualified_penalty = %d\n", prob->disqualified_penalty);
     }
     if (prob->test_score_list[0])
-      fprintf(f, "test_score_list = \"%s\"\n", c_armor(&sbuf, prob->test_score_list));
+      fprintf(f, "test_score_list = \"%s\"\n", CARMOR(prob->test_score_list));
     if (prob->score_bonus[0])
-      fprintf(f, "score_bonus = \"%s\"\n", c_armor(&sbuf, prob->score_bonus));
+      fprintf(f, "score_bonus = \"%s\"\n", CARMOR(prob->score_bonus));
   }
   if (score_system == SCORE_MOSCOW || score_system == SCORE_ACM) {
     if (prob->acm_run_penalty >= 0) {
@@ -1229,7 +1119,7 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
         fprintf(f, "full_score = %d\n", prob->full_score);
     }
     if (prob->score_tests[0])
-      fprintf(f, "score_tests = \"%s\"\n", c_armor(&sbuf, prob->score_tests));
+      fprintf(f, "score_tests = \"%s\"\n", CARMOR(prob->score_tests));
   }
   if (score_system == SCORE_OLYMPIAD) {
     if (prob->tests_to_accept >= 0) {
@@ -1251,23 +1141,23 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     }
   }
   if (prob->standard_checker[0])
-    fprintf(f, "standard_checker = \"%s\"\n", c_armor(&sbuf, prob->standard_checker));
+    fprintf(f, "standard_checker = \"%s\"\n", CARMOR(prob->standard_checker));
   if (prob->check_cmd[0])
-    fprintf(f, "check_cmd = \"%s\"\n", c_armor(&sbuf, prob->check_cmd));
-  do_xstr(f, &sbuf, "checker_env", prob->checker_env);
+    fprintf(f, "check_cmd = \"%s\"\n", CARMOR(prob->check_cmd));
+  do_xstr(f, &ab, "checker_env", prob->checker_env);
   if (prob->valuer_cmd[0])
-    fprintf(f, "valuer_cmd = \"%s\"\n", c_armor(&sbuf, prob->valuer_cmd));
-  do_xstr(f, &sbuf, "valuer_env", prob->valuer_env);
+    fprintf(f, "valuer_cmd = \"%s\"\n", CARMOR(prob->valuer_cmd));
+  do_xstr(f, &ab, "valuer_env", prob->valuer_env);
   if (prob->interactor_cmd[0])
-    fprintf(f,"interactor_cmd = \"%s\"\n",c_armor(&sbuf, prob->interactor_cmd));
-  do_xstr(f, &sbuf, "interactor_env", prob->interactor_env);
-  do_xstr(f, &sbuf, "lang_time_adj", prob->lang_time_adj);
-  do_xstr(f, &sbuf, "lang_time_adj_millis", prob->lang_time_adj_millis);
-  do_xstr(f, &sbuf, "test_sets", prob->test_sets);
-  do_xstr(f, &sbuf, "disable_language", prob->disable_language);
-  do_xstr(f, &sbuf, "enable_language", prob->enable_language);
-  do_xstr(f, &sbuf, "require", prob->require);
-  do_xstr(f, &sbuf, "score_view", prob->score_view);
+    fprintf(f,"interactor_cmd = \"%s\"\n",CARMOR(prob->interactor_cmd));
+  do_xstr(f, &ab, "interactor_env", prob->interactor_env);
+  do_xstr(f, &ab, "lang_time_adj", prob->lang_time_adj);
+  do_xstr(f, &ab, "lang_time_adj_millis", prob->lang_time_adj_millis);
+  do_xstr(f, &ab, "test_sets", prob->test_sets);
+  do_xstr(f, &ab, "disable_language", prob->disable_language);
+  do_xstr(f, &ab, "enable_language", prob->enable_language);
+  do_xstr(f, &ab, "require", prob->require);
+  do_xstr(f, &ab, "score_view", prob->score_view);
 
   if (!prob->abstract && prob->variant_num > 0) {
     fprintf(f, "variant_num = %d\n", prob->variant_num);
@@ -1327,16 +1217,16 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   if (!prob->abstract && prob->deadline > 0)
     fprintf(f, "deadline = \"%s\"\n", xml_unparse_date(prob->deadline));
   if (prob->stand_attr[0])
-    fprintf(f, "stand_attr = \"%s\"\n", c_armor(&sbuf, prob->stand_attr));
+    fprintf(f, "stand_attr = \"%s\"\n", CARMOR(prob->stand_attr));
   if (prob->source_header[0])
-    fprintf(f, "source_header = \"%s\"\n", c_armor(&sbuf, prob->source_header));
+    fprintf(f, "source_header = \"%s\"\n", CARMOR(prob->source_header));
   if (prob->source_footer[0])
-    fprintf(f, "source_footer = \"%s\"\n", c_armor(&sbuf, prob->source_footer));
+    fprintf(f, "source_footer = \"%s\"\n", CARMOR(prob->source_footer));
 
   fprintf(f, "\n");
   if (prob->unhandled_vars) fprintf(f, "%s\n", prob->unhandled_vars);
 
-  xfree(sbuf.s); sbuf.s = 0; sbuf.a = 0;
+  html_armor_free(&ab);
 }
 
 /*
@@ -1356,10 +1246,12 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   PROBLEM_PARAM(group_name, "s"),
 */
 void
-prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
-                               const struct section_global_data *global)
+prepare_unparse_unhandled_prob(
+        FILE *f,
+        const struct section_problem_data *prob,
+        const struct section_global_data *global)
 {
-  struct str_buf sbuf = { 0, 0};
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   /*
   //PROBLEM_PARAM(use_tgz, "d"),
@@ -1370,19 +1262,19 @@ prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
   */
   /*
   //PROBLEM_PARAM(tgz_dir, "s"),
-  do_str(f, &sbuf, "tgz_dir", prob->tgz_dir);
+  do_str(f, &ab, "tgz_dir", prob->tgz_dir);
   //PROBLEM_PARAM(tgz_sfx, "s"),
   if (prob->tgz_sfx[0] != 1) {
     if ((prob->abstract
          && ((global->tgz_sfx[0] && strcmp(prob->tgz_sfx, global->tgz_sfx))
              || (!global->tgz_sfx[0] && strcmp(prob->tgz_sfx, DFLT_G_TGZ_SFX))))
         || !prob->abstract)
-      do_str_mb_empty(f, &sbuf, "tgz_sfx", prob->tgz_sfx);
+      do_str_mb_empty(f, &ab, "tgz_sfx", prob->tgz_sfx);
   }
   //PROBLEM_PARAM(tgz_pat, "s"),
   if (prob->tgz_pat[0] != 1) {
     if (strcmp(prob->tgz_pat, global->tgz_pat) || !prob->abstract)
-      do_str_mb_empty(f, &sbuf, "tgz_pat", prob->tgz_pat);
+      do_str_mb_empty(f, &ab, "tgz_pat", prob->tgz_pat);
   }
   */
   //PROBLEM_PARAM(skip_testing, "d"),
@@ -1398,24 +1290,24 @@ prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
       fprintf(f, "priority_adjustment = %d\n", prob->priority_adjustment);
   }
   //PROBLEM_PARAM(group_name, "s"),
-  do_str(f, &sbuf, "group_name", prob->group_name);
+  do_str(f, &ab, "group_name", prob->group_name);
   //PROBLEM_PARAM(spelling, "s"),
-  do_str(f, &sbuf, "spelling", prob->spelling);
+  do_str(f, &ab, "spelling", prob->spelling);
   //PROBLEM_PARAM(score_multiplier, "d"),
   if (prob->score_multiplier)
     fprintf(f, "score_multiplier = %d\n", prob->score_multiplier);
   if (prob->prev_runs_to_show > 0)
     fprintf(f, "prev_runs_to_show = %d\n", prob->prev_runs_to_show);
   //PROBLEM_PARAM(date_penalty, "x"),
-  do_xstr(f, &sbuf, "date_penalty", prob->date_penalty);
+  do_xstr(f, &ab, "date_penalty", prob->date_penalty);
   //PROBLEM_PARAM(personal_deadline, "x"),
-  do_xstr(f, &sbuf, "personal_deadline", prob->personal_deadline);
+  do_xstr(f, &ab, "personal_deadline", prob->personal_deadline);
   //PROBLEM_PARAM(statement_file, "s"),
-  do_str(f, &sbuf, "statement_file", prob->statement_file);
+  do_str(f, &ab, "statement_file", prob->statement_file);
   //PROBLEM_PARAM(alternative, "x"),
-  do_xstr(f, &sbuf, "alternative", prob->alternative);
+  do_xstr(f, &ab, "alternative", prob->alternative);
 
-  xfree(sbuf.s); sbuf.s = 0; sbuf.a = 0;
+  html_armor_free(&ab);
 }
 
 /*
@@ -1503,7 +1395,7 @@ generate_abstract_tester(
         const unsigned char *contests_home_dir)
 {
   //unsigned char nbuf[256], nbuf2[256];
-  struct str_buf sbuf = { 0, 0};
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int i;
   struct section_tester_data *atst = 0;
 
@@ -1673,17 +1565,17 @@ generate_abstract_tester(
 
   if (atst && atst->check_dir[0]) {
     fprintf(f, "check_dir = \"%s\"\n",
-            c_armor_2(&sbuf, atst->check_dir, contests_home_dir));
+            c_armor_2(&ab, atst->check_dir, contests_home_dir));
   } else if (arch == ARCH_DOS) {
     fprintf(f, "check_dir = \"%s\"\n",
-            c_armor_2(&sbuf, "/home/judges/dosemu/run", contests_home_dir));
+            c_armor_2(&ab, "/home/judges/dosemu/run", contests_home_dir));
   } else if(testing_work_dir) {
     fprintf(f, "check_dir = \"%s\"\n",
-            c_armor_2(&sbuf, testing_work_dir, contests_home_dir));
+            c_armor_2(&ab, testing_work_dir, contests_home_dir));
   }
   fprintf(f, "\n");
 
-  xfree(sbuf.s); sbuf.s = 0; sbuf.a = 0;
+  html_armor_free(&ab);
 }
 
 static void
@@ -1694,11 +1586,11 @@ generate_concrete_tester(FILE *f, int arch,
                          int use_files)
 {
   //unsigned char nbuf[256], nbuf2[256];
-  struct str_buf sbuf = { 0, 0};
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   fprintf(f, "[tester]\n"
           "problem_name = \"%s\"\n"
-          "super = %s\n", c_armor(&sbuf, prob->short_name),
+          "super = %s\n", CARMOR(prob->short_name),
           arch_abstract_names[arch]);
   if (supported_archs[arch][0])
     fprintf(f, "arch = %s\n", supported_archs[arch]);
@@ -1756,7 +1648,8 @@ generate_concrete_tester(FILE *f, int arch,
     abort();
   }
   fprintf(f, "\n");
-  xfree(sbuf.s); sbuf.s = 0; sbuf.a = 0;
+
+  html_armor_free(&ab);
 }
 
 int
@@ -1788,7 +1681,7 @@ prepare_unparse_testers(
   int def_use_files;
   int def_tester_total = 0;
   int *arch_codes = 0;
-  struct str_buf sbuf = { 0, 0};
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int arch_flags[ARCH_LAST];
 
   // how many languages
@@ -1978,7 +1871,7 @@ prepare_unparse_testers(
   //xfree(stack_count);
   xfree(need_sep_tester);
   xfree(arch_codes);
-  xfree(sbuf.s);
+  html_armor_free(&ab);
   return retcode;
 }
 
