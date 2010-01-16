@@ -358,6 +358,9 @@ struct section_global_data
   /** the compile source files spool directory */
   path_t compile_src_dir;
 
+  /** additional compile directories */
+  char **extra_compile_dirs;
+
   /* these are used by serve */  
   /* var/compile prefix is implicit and cannot be changed! */
   /** base directory for compile results */
@@ -959,6 +962,8 @@ struct section_language_data
   /** do not test this language at all */
   ejintbool_t disable_testing;
 
+  /** index of the compile directory in the list of compile servers */
+  int compile_dir_index;
   /** common subdirectory */
   path_t compile_dir;
   /** directory for serve->compile packets */
