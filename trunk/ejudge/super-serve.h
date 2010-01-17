@@ -178,6 +178,7 @@ struct sid_state
   ejintbool_t enable_plog;
   ejintbool_t enable_extra_col;
   ejintbool_t disable_compilation_server;
+  ejintbool_t enable_win32_languages;
 
   int cs_langs_loaded;
   int cs_lang_total;

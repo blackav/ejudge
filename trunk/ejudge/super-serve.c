@@ -1756,6 +1756,7 @@ super_serve_clear_edited_contest(struct sid_state *p)
   p->enable_plog = 0;
   p->enable_extra_col = 0;
   p->disable_compilation_server = 0;
+  p->enable_win32_languages = 0;
 
   for (i = 0; i < p->lang_a; i++)
     xfree(p->lang_opts[i]);
@@ -1811,6 +1812,7 @@ super_serve_move_edited_contest(struct sid_state *dst, struct sid_state *src)
     SSSS_show_global_4, SSSS_show_global_5, SSSS_show_global_6,
     SSSS_show_global_7, SSSS_enable_stand2, SSSS_enable_plog,
     SSSS_enable_extra_col, SSSS_disable_compilation_server,
+    SSSS_enable_win32_languages,
     0,
   };
   for (int i = 0; ejintbool_fields[i]; ++i) {
@@ -3148,6 +3150,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_GLOB_CHANGE_ENABLE_REPORT_UPLOAD:
   case SSERV_CMD_GLOB_CHANGE_ENABLE_RUNLOG_MERGE:
   case SSERV_CMD_GLOB_CHANGE_USE_COMPILATION_SERVER:
+  case SSERV_CMD_GLOB_CHANGE_ENABLE_WIN32_LANGUAGES:
   case SSERV_CMD_GLOB_CHANGE_SECURE_RUN:
   case SSERV_CMD_GLOB_CHANGE_DETECT_VIOLATIONS:
   case SSERV_CMD_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR:
@@ -4064,6 +4067,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_ENABLE_REPORT_UPLOAD] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_ENABLE_RUNLOG_MERGE] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_USE_COMPILATION_SERVER] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_ENABLE_WIN32_LANGUAGES] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_SECURE_RUN] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_DETECT_VIOLATIONS] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR] = { cmd_set_value },

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1668,4 +1668,25 @@ sarray_parse_2(const unsigned char *str, char ***p_a)
 
   *p_a = a;
   return nvars;
+}
+
+char **
+sarray_append(char **a1, const unsigned char *str)
+{
+  char **res = 0;
+  int len, i;
+
+  if (!str) return a1;
+  if (!a1) {
+    XCALLOC(res, 2);
+    res[0] = xstrdup(str);
+    return res;
+  }
+
+  len = sarray_len(a1);
+  XCALLOC(res, len + 2);
+  for (i = 0; i < len; ++i)
+    res[i] = a1[i];
+  res[i] = xstrdup(str);
+  return res;
 }
