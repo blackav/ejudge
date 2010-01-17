@@ -3081,7 +3081,7 @@ main(int argc, char *argv[])
   if (!strcasecmp(EJUDGE_CHARSET, "UTF-8")) utf8_mode = 1;
 
   if (prepare(&serve_state, argv[i], p_flags, PREPARE_RUN,
-              cpp_opts, managed_mode_flag) < 0)
+              cpp_opts, managed_mode_flag, 0, 0) < 0)
     return 1;
   if (filter_testers(key) < 0) return 1;
   if (create_dirs(&serve_state, PREPARE_RUN) < 0) return 1;

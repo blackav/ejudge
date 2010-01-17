@@ -453,12 +453,24 @@ main(int argc, char *argv[])
   unsigned char *ejudge_xml_path = 0;
   unsigned char *compile_cfg_path = 0;
   path_t compile_cfg_buf = { 0 };
+  path_t contests_home_dir = { 0 };
 
 #if HAVE_OPEN_MEMSTREAM - 0
   FILE *lang_log_f = 0;
   char *lang_log_t = 0;
   size_t lang_log_z = 0;
 #endif /* HAVE_OPEN_MEMSTREAM */
+
+  path_t tmp_path;
+  int tmp_len;
+  path_t compile_home_dir = { 0 };
+
+  enum { SUBST_SIZE = 16 };
+  const unsigned char *subst_src[SUBST_SIZE];
+  const unsigned char *subst_dst[SUBST_SIZE];
+  int subst_idx = 0;
+  const unsigned char **subst_src_ptr = 0;
+  const unsigned char **subst_dst_ptr = 0;
 
   start_set_self_args(argc, argv);
   XCALLOC(argv_restart, argc + 1);
@@ -494,6 +506,10 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "-d")) {
       daemon_mode = 1;
       i++;
+    } else if (!strcmp(argv[i], "-r")) {
+      if (++i >= argc) goto print_usage;
+      snprintf(contests_home_dir, sizeof(contests_home_dir),
+               "%s", argv[i++]);
     } else if (!strcmp(argv[i], "-x")) {
       if (++i >= argc) goto print_usage;
       ejudge_xml_path = argv[i++];
@@ -525,6 +541,16 @@ main(int argc, char *argv[])
             argv[0]);
     return 1;
   }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  if (contests_home_dir[0]) {
+    tmp_len = strlen(EJUDGE_CONTESTS_HOME_DIR);
+    if (!strncmp(ejudge_xml_path, EJUDGE_CONTESTS_HOME_DIR, tmp_len)) {
+      snprintf(tmp_path, sizeof(tmp_path), "%s%s",
+               contests_home_dir, ejudge_xml_path + tmp_len);
+      ejudge_xml_path = xstrdup(tmp_path);
+    }
+  }
+#endif
   ejudge_config = ejudge_cfg_parse(ejudge_xml_path);
   if (!ejudge_config) {
     fprintf(stderr, "%s: ejudge.xml is invalid\n", argv[0]);
@@ -532,14 +558,21 @@ main(int argc, char *argv[])
   }
 
 #ifdef __WIN32__
+  if (!compile_cfg_path && contests_home_dir[0]) {
+    snprintf(compile_cfg_buf, sizeof(compile_cfg_buf),
+             "%s/win32_compile/conf/compile.cfg",
+             contests_home_dir);
+    compile_cfg_path = xstrdup(compile_cfg_buf);
+  }
+
   if (!compile_cfg_path && ejudge_config->compile_home_dir) {
     snprintf(compile_cfg_buf, sizeof(compile_cfg_buf),
-             "%s/conf/win32_compile.cfg", ejudge_config->compile_home_dir);
+             "%s/conf/compile.cfg", ejudge_config->compile_home_dir);
     compile_cfg_path = compile_cfg_buf;
   }
   if (!compile_cfg_path && ejudge_config->contests_home_dir) {
     snprintf(compile_cfg_buf, sizeof(compile_cfg_buf),
-             "%s/compile/conf/win32_compile.cfg",
+             "%s/win32_compile/conf/win32_compile.cfg",
              ejudge_config->contests_home_dir);
     compile_cfg_path = compile_cfg_buf;
   }
@@ -550,9 +583,8 @@ main(int argc, char *argv[])
     compile_cfg_path = compile_cfg_buf;
   }
 #endif /* EJUDGE_CONTESTS_HOME_DIR */
-
   if (!compile_cfg_path) {
-    fprintf(stderr, "%s: win32_compile.cfg is not specified\n", argv[0]);
+    fprintf(stderr, "%s: compile.cfg is not specified\n", argv[0]);
     return 1;
   }
 #else
@@ -581,8 +613,33 @@ main(int argc, char *argv[])
 
   if (start_prepare(user, group, workdir) < 0) return 1;
 
+  memset(subst_src, 0, sizeof(subst_src));
+  memset(subst_dst, 0, sizeof(subst_dst));
+  subst_idx = 0;
+
+#ifdef __WIN32__
+  if (contests_home_dir[0]) {
+    subst_src[subst_idx] = ejudge_config->compile_home_dir;
+    snprintf(compile_home_dir, sizeof(compile_home_dir),
+             "%s/win32_compile", contests_home_dir);
+    subst_dst[subst_idx] = compile_home_dir;
+    subst_idx++;
+
+    subst_src[subst_idx] = EJUDGE_CONTESTS_HOME_DIR;
+    subst_dst[subst_idx] = contests_home_dir;
+    subst_idx++;
+  }
+
+  fprintf(stderr, "Win32 substitutions:\n");
+  for (int j = 0; subst_src[j]; ++j) {
+    fprintf(stderr, "%s -> %s\n", subst_src[j], subst_dst[j]);
+  }
+  subst_src_ptr = subst_src;
+  subst_dst_ptr = subst_dst;
+#endif
+
   if (prepare(&serve_state, compile_cfg_path, prepare_flags, PREPARE_COMPILE,
-              cpp_opts, 0) < 0)
+              cpp_opts, 0, subst_src_ptr, subst_dst_ptr) < 0)
     return 1;
 #if HAVE_OPEN_MEMSTREAM - 0
   if (!(lang_log_f = open_memstream(&lang_log_t, &lang_log_z))) return 1;

@@ -339,7 +339,7 @@ serve_state_load_contest(
   state->load_time = state->current_time;
 
   info("loading contest %d configuration file", contest_id);
-  if (prepare(state, state->config_path, 0, PREPARE_SERVE, "", 1) < 0)
+  if (prepare(state, state->config_path, 0, PREPARE_SERVE, "", 1, 0, 0) < 0)
     goto failure;
   if (prepare_serve_defaults(state, p_cnts) < 0) goto failure;
   if (create_dirs(state, PREPARE_SERVE) < 0) goto failure;

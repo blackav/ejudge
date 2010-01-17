@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -267,10 +267,13 @@ path_normalize(unsigned char *path, size_t size)
   for (; i > j; i--) {
     xfree(split[i]); split[i] = 0;
   }
+  len = 0;
+  if (split[0][0] != '/') len += strlen(split[0]);
   for (len = 0, i = 1; split[i]; i++)
     len += strlen(split[i]) + 1;
   if (len >= size) goto cleanup;
   t = path;
+  if (split[0][0] != '/') t += sprintf(t, "%s", split[0]);
   for (i = 1; split[i]; i++)
     t += sprintf(t, "/%s", split[i]);
 

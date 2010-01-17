@@ -101,4 +101,9 @@ int    sarray_parse(const unsigned char *, char ***);
 int    sarray_parse_2(const unsigned char *, char ***);
 char **sarray_append(char **a1, const unsigned char *str);
 
+void
+param_subst(unsigned char *buf, size_t size,
+            const unsigned char **subst_src,
+            const unsigned char **subst_dst);
+
 #endif /* __PARSECFG_H__ */
