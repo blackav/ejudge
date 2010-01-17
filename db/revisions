@@ -4664,3 +4664,7 @@ compile-control.c 5656 0 650546
 fix-db.c 5656 0 1761577
 serve.c 5656 0 494464
 serve_2.c 5656 0 8058978
+fileutl.h 5659 0 208045
+compile.c 5659 0 1715715
+win32/fileutl.c 5658 0 1735184
+prepare.c 5659 0 17028701
