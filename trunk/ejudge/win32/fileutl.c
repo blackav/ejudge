@@ -945,6 +945,14 @@ generic_truncate(const char *path, ssize_t size)
   return 0;
 }
 
+const unsigned char *
+get_tmp_dir(unsigned char *buf, size_t size)
+{
+  GetTempPath(size, buf);
+  os_normalize_path(buf);
+  return buf;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
