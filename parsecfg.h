@@ -3,7 +3,7 @@
 #ifndef __PARSECFG_H__
 #define __PARSECFG_H__
 
-/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -99,5 +99,6 @@ char  *sarray_unparse(char **);
 char  *sarray_unparse_2(char **a);
 int    sarray_parse(const unsigned char *, char ***);
 int    sarray_parse_2(const unsigned char *, char ***);
+char **sarray_append(char **a1, const unsigned char *str);
 
 #endif /* __PARSECFG_H__ */

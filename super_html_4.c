@@ -1094,6 +1094,7 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_board_fog_time, 'u', 1, 1, 1, 1, 0, "Standings freeze time (HH:MM)", "Standings freeze time (before contest finish)", "Global.contest_time 0 >" },
   { NS_GLOBAL, CNTSGLOB_board_unfog_time, 'u', 1, 1, 1, 1, 0, "Standings unfreeze time (HH:MM)", "Standings unfreeze time (after contest finish)", "Global.contest_time 0 > Global.board_fog_time 0 > &&" },
   { NS_SID_STATE, SSSS_disable_compilation_server, 133, 1, 0, 0, 0, 0, "Use the main compilation server", 0, 0 },
+  { NS_SID_STATE, SSSS_enable_win32_languages, 143, 1, 0, 0, 0, 0, "Enable Win32 languages", 0, 0 },
   { NS_GLOBAL, CNTSGLOB_secure_run, 'Y', 1, 0, 0, 0, 0, "Run programs securely", "Run programs securely (needs kernel patch)", 0 },
   { NS_GLOBAL, CNTSGLOB_enable_memory_limit_error, 'Y', 1, 0, 0, 0, 0, "Enable support for MemoryLimit error", "Enable support for MemoryLimit error (needs kernel patch)", 0 },
   { NS_GLOBAL, CNTSGLOB_detect_violations, 'Y', 1, 0, 0, 0, 0, "Detect security violations", "Detect security violations (needs kernel patch)", 0 },
@@ -2044,6 +2045,19 @@ write_editing_rows(
           fprintf(out_f, "Unknown - %s</option>", ARMOR(checker));
         }
         fprintf(out_f, "</select>\n");
+      }
+      break;
+    case 143:
+      {
+        int value = phr->ss->enable_win32_languages;
+        if (!ce->is_editable) {
+          fprintf(out_f, "%s", value?"Yes":"No");
+          break;
+        }
+        ss_html_int_select(out_f, 0, 0, 0,
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_OP_EDIT_SID_STATE_FIELD, ce->field_id, SSERV_OP_EDIT_CONTEST_PAGE_2),
+                           value,
+                           2, (const char *[]) { "No", "Yes" });
       }
       break;
     default:
@@ -5056,6 +5070,7 @@ static const unsigned char editable_sid_state_fields[SSSS_LAST_FIELD] =
   [SSSS_enable_stand2] = 1,
   [SSSS_enable_plog] = 1,
   [SSSS_enable_extra_col] = 1,
+  [SSSS_enable_win32_languages] = 1,
 };
 
 static int

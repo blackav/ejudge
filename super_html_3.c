@@ -586,6 +586,15 @@ super_html_edit_global_parameters(FILE *f,
   html_submit_button(f, SSERV_CMD_GLOB_CHANGE_USE_COMPILATION_SERVER, "Change");
   fprintf(f, "</td></tr></form>\n");
 
+  //enable support for windows languages
+  html_start_form(f, 1, self_url, hidden_vars);
+  fprintf(f, "<tr%s><td>Enable Win32 languages:</td><td>",
+          form_row_attrs[row ^= 1]);
+  html_boolean_select(f, sstate->enable_win32_languages, "param", 0, 0);
+  fprintf(f, "</td><td>");
+  html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ENABLE_WIN32_LANGUAGES, "Change");
+  fprintf(f, "</td></tr></form>\n");
+
   //GLOBAL_PARAM(secure_run, "d"),
   print_boolean_select_row(f, "Run programs securely:",
                            global->secure_run,
@@ -2845,6 +2854,22 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     sstate->disable_compilation_server = !val;
     return 0;
 
+  case SSERV_CMD_GLOB_CHANGE_ENABLE_WIN32_LANGUAGES:
+    if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n] || val < 0 || val > 1)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sstate->enable_win32_languages = val;
+    if (val) {
+      // check, that win32_compile is already added
+      if (global->extra_compile_dirs) {
+        for (int i = 0; global->extra_compile_dirs[i]; ++i) {
+          if (!strcmp(global->extra_compile_dirs[i], "win32_compile"))
+            return 0;
+        }
+      }
+      global->extra_compile_dirs = sarray_append(global->extra_compile_dirs, "win32_compile");
+    }
+    return 0;    
+
   case SSERV_CMD_GLOB_CHANGE_SECURE_RUN:
     p_int = &global->secure_run;
     goto handle_boolean;
@@ -3074,6 +3099,10 @@ super_load_cs_languages(
 
   if (sstate->extra_cs_cfgs_total > 0) {
     for (int i = 0; i < sstate->extra_cs_cfgs_total; ++i) {
+      // check for win32_compile
+      if (!strcmp(extra_compile_dirs[i], "win32_compile")) {
+        sstate->enable_win32_languages = 1;
+      }
       extra_cs_conf_path[0] = 0;
       if (os_IsAbsolutePath(extra_compile_dirs[i])) {
         snprintf(extra_cs_conf_path, sizeof(extra_cs_conf_path),
