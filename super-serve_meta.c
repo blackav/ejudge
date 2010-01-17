@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/12/12 12:07:01
+// Generated 2010/01/17 10:10:03
 
 #include "super-serve_meta.h"
 #include "super-serve.h"
@@ -94,11 +94,14 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_enable_plog] = { SSSS_enable_plog, 'B', XSIZE(struct sid_state, enable_plog), "enable_plog", XOFFSET(struct sid_state, enable_plog) },
   [SSSS_enable_extra_col] = { SSSS_enable_extra_col, 'B', XSIZE(struct sid_state, enable_extra_col), "enable_extra_col", XOFFSET(struct sid_state, enable_extra_col) },
   [SSSS_disable_compilation_server] = { SSSS_disable_compilation_server, 'B', XSIZE(struct sid_state, disable_compilation_server), "disable_compilation_server", XOFFSET(struct sid_state, disable_compilation_server) },
+  [SSSS_enable_win32_languages] = { SSSS_enable_win32_languages, 'B', XSIZE(struct sid_state, enable_win32_languages), "enable_win32_languages", XOFFSET(struct sid_state, enable_win32_languages) },
   [SSSS_cs_langs_loaded] = { SSSS_cs_langs_loaded, 'i', XSIZE(struct sid_state, cs_langs_loaded), "cs_langs_loaded", XOFFSET(struct sid_state, cs_langs_loaded) },
   [SSSS_cs_lang_total] = { SSSS_cs_lang_total, 'i', XSIZE(struct sid_state, cs_lang_total), "cs_lang_total", XOFFSET(struct sid_state, cs_lang_total) },
   [SSSS_cs_cfg] = { SSSS_cs_cfg, '?', XSIZE(struct sid_state, cs_cfg), "cs_cfg", XOFFSET(struct sid_state, cs_cfg) },
   [SSSS_cs_langs] = { SSSS_cs_langs, '?', XSIZE(struct sid_state, cs_langs), "cs_langs", XOFFSET(struct sid_state, cs_langs) },
   [SSSS_cs_lang_names] = { SSSS_cs_lang_names, 'x', XSIZE(struct sid_state, cs_lang_names), "cs_lang_names", XOFFSET(struct sid_state, cs_lang_names) },
+  [SSSS_extra_cs_cfgs_total] = { SSSS_extra_cs_cfgs_total, 'i', XSIZE(struct sid_state, extra_cs_cfgs_total), "extra_cs_cfgs_total", XOFFSET(struct sid_state, extra_cs_cfgs_total) },
+  [SSSS_extra_cs_cfgs] = { SSSS_extra_cs_cfgs, '?', XSIZE(struct sid_state, extra_cs_cfgs), "extra_cs_cfgs", XOFFSET(struct sid_state, extra_cs_cfgs) },
   [SSSS_cur_lang] = { SSSS_cur_lang, '?', XSIZE(struct sid_state, cur_lang), "cur_lang", XOFFSET(struct sid_state, cur_lang) },
   [SSSS_cur_prob] = { SSSS_cur_prob, '?', XSIZE(struct sid_state, cur_prob), "cur_prob", XOFFSET(struct sid_state, cur_prob) },
   [SSSS_prob_show_adv] = { SSSS_prob_show_adv, 'B', XSIZE(struct sid_state, prob_show_adv), "prob_show_adv", XOFFSET(struct sid_state, prob_show_adv) },

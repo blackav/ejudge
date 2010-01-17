@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/01/09 17:32:03
+// Generated 2010/01/17 09:28:32
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -127,6 +127,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_compile_dir] = { CNTSGLOB_compile_dir, 'S', XSIZE(struct section_global_data, compile_dir), "compile_dir", XOFFSET(struct section_global_data, compile_dir) },
   [CNTSGLOB_compile_queue_dir] = { CNTSGLOB_compile_queue_dir, 'S', XSIZE(struct section_global_data, compile_queue_dir), "compile_queue_dir", XOFFSET(struct section_global_data, compile_queue_dir) },
   [CNTSGLOB_compile_src_dir] = { CNTSGLOB_compile_src_dir, 'S', XSIZE(struct section_global_data, compile_src_dir), "compile_src_dir", XOFFSET(struct section_global_data, compile_src_dir) },
+  [CNTSGLOB_extra_compile_dirs] = { CNTSGLOB_extra_compile_dirs, 'x', XSIZE(struct section_global_data, extra_compile_dirs), "extra_compile_dirs", XOFFSET(struct section_global_data, extra_compile_dirs) },
   [CNTSGLOB_compile_out_dir] = { CNTSGLOB_compile_out_dir, 'S', XSIZE(struct section_global_data, compile_out_dir), "compile_out_dir", XOFFSET(struct section_global_data, compile_out_dir) },
   [CNTSGLOB_compile_status_dir] = { CNTSGLOB_compile_status_dir, 'S', XSIZE(struct section_global_data, compile_status_dir), "compile_status_dir", XOFFSET(struct section_global_data, compile_status_dir) },
   [CNTSGLOB_compile_report_dir] = { CNTSGLOB_compile_report_dir, 'S', XSIZE(struct section_global_data, compile_report_dir), "compile_report_dir", XOFFSET(struct section_global_data, compile_report_dir) },
@@ -510,6 +511,7 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_style_checker_cmd] = { CNTSLANG_style_checker_cmd, 'S', XSIZE(struct section_language_data, style_checker_cmd), "style_checker_cmd", XOFFSET(struct section_language_data, style_checker_cmd) },
   [CNTSLANG_disable_auto_testing] = { CNTSLANG_disable_auto_testing, 'B', XSIZE(struct section_language_data, disable_auto_testing), "disable_auto_testing", XOFFSET(struct section_language_data, disable_auto_testing) },
   [CNTSLANG_disable_testing] = { CNTSLANG_disable_testing, 'B', XSIZE(struct section_language_data, disable_testing), "disable_testing", XOFFSET(struct section_language_data, disable_testing) },
+  [CNTSLANG_compile_dir_index] = { CNTSLANG_compile_dir_index, 'i', XSIZE(struct section_language_data, compile_dir_index), "compile_dir_index", XOFFSET(struct section_language_data, compile_dir_index) },
   [CNTSLANG_compile_dir] = { CNTSLANG_compile_dir, 'S', XSIZE(struct section_language_data, compile_dir), "compile_dir", XOFFSET(struct section_language_data, compile_dir) },
   [CNTSLANG_compile_queue_dir] = { CNTSLANG_compile_queue_dir, 'S', XSIZE(struct section_language_data, compile_queue_dir), "compile_queue_dir", XOFFSET(struct section_language_data, compile_queue_dir) },
   [CNTSLANG_compile_src_dir] = { CNTSLANG_compile_src_dir, 'S', XSIZE(struct section_language_data, compile_src_dir), "compile_src_dir", XOFFSET(struct section_language_data, compile_src_dir) },
@@ -611,6 +613,7 @@ static struct meta_info_item meta_info_section_tester_data_data[] =
   [CNTSTESTER_prepare_cmd] = { CNTSTESTER_prepare_cmd, 'S', XSIZE(struct section_tester_data, prepare_cmd), "prepare_cmd", XOFFSET(struct section_tester_data, prepare_cmd) },
   [CNTSTESTER_start_cmd] = { CNTSTESTER_start_cmd, 'S', XSIZE(struct section_tester_data, start_cmd), "start_cmd", XOFFSET(struct section_tester_data, start_cmd) },
   [CNTSTESTER_check_cmd] = { CNTSTESTER_check_cmd, 'S', XSIZE(struct section_tester_data, check_cmd), "check_cmd", XOFFSET(struct section_tester_data, check_cmd) },
+  [CNTSTESTER_nwrun_spool_dir] = { CNTSTESTER_nwrun_spool_dir, 'S', XSIZE(struct section_tester_data, nwrun_spool_dir), "nwrun_spool_dir", XOFFSET(struct section_tester_data, nwrun_spool_dir) },
   [CNTSTESTER_start_env] = { CNTSTESTER_start_env, 'X', XSIZE(struct section_tester_data, start_env), "start_env", XOFFSET(struct section_tester_data, start_env) },
   [CNTSTESTER_checker_env] = { CNTSTESTER_checker_env, 'X', XSIZE(struct section_tester_data, checker_env), "checker_env", XOFFSET(struct section_tester_data, checker_env) },
   [CNTSTESTER_standard_checker_used] = { CNTSTESTER_standard_checker_used, 'i', XSIZE(struct section_tester_data, standard_checker_used), NULL, XOFFSET(struct section_tester_data, standard_checker_used) },

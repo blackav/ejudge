@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/01/09 17:32:03
+// Generated 2010/01/17 09:28:32
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -122,6 +122,7 @@ enum
   CNTSGLOB_compile_dir,
   CNTSGLOB_compile_queue_dir,
   CNTSGLOB_compile_src_dir,
+  CNTSGLOB_extra_compile_dirs,
   CNTSGLOB_compile_out_dir,
   CNTSGLOB_compile_status_dir,
   CNTSGLOB_compile_report_dir,
@@ -439,6 +440,7 @@ enum
   CNTSLANG_style_checker_cmd,
   CNTSLANG_disable_auto_testing,
   CNTSLANG_disable_testing,
+  CNTSLANG_compile_dir_index,
   CNTSLANG_compile_dir,
   CNTSLANG_compile_queue_dir,
   CNTSLANG_compile_src_dir,
@@ -507,6 +509,7 @@ enum
   CNTSTESTER_prepare_cmd,
   CNTSTESTER_start_cmd,
   CNTSTESTER_check_cmd,
+  CNTSTESTER_nwrun_spool_dir,
   CNTSTESTER_start_env,
   CNTSTESTER_checker_env,
   CNTSTESTER_standard_checker_used,
