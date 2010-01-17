@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -217,7 +217,7 @@ main(int argc, char *argv[])
     config_path = xstrdup(config_path_buf);
   }
 
-  if (prepare(&serve_state, config_path, 0, PREPARE_COMPILE, cpp_opts, 0) < 0)
+  if (prepare(&serve_state, config_path, 0, PREPARE_COMPILE,cpp_opts,0,0,0) < 0)
     return 1;
 
   if (!strcmp(command, "stop")) {

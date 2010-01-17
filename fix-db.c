@@ -556,7 +556,7 @@ process_contest(int contest_id)
   state->config_path = xstrdup(config_path);
   state->current_time = time(0);
   state->load_time = state->current_time;
-  if (prepare(state, state->config_path, 0, PREPARE_SERVE, "", 1) < 0)
+  if (prepare(state, state->config_path, 0, PREPARE_SERVE, "", 1, 0, 0) < 0)
     goto failure;
   global = state->global;
   if (!global) {

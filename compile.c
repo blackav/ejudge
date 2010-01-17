@@ -463,7 +463,10 @@ main(int argc, char *argv[])
 
   path_t tmp_path;
   int tmp_len;
+
+#if defined __WIN32__
   path_t compile_home_dir = { 0 };
+#endif
 
   enum { SUBST_SIZE = 16 };
   const unsigned char *subst_src[SUBST_SIZE];

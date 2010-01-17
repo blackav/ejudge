@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -148,7 +148,7 @@ main(int argc, char *argv[])
   serve_state.current_time = time(0);
 
   if (prepare(&serve_state, argv[i], p_flags, PREPARE_SERVE, cpp_opts,
-              (cmdline_socket_fd >= 0)) < 0) return 1;
+              (cmdline_socket_fd >= 0), 0, 0) < 0) return 1;
   if (prepare_serve_defaults(&serve_state, &cur_contest) < 0) return 1;
 
   l10n_prepare(serve_state.global->enable_l10n, serve_state.global->l10n_dir);
