@@ -1051,17 +1051,17 @@ serve_compile_request(
                                         global->run_archive_dir, run_id, 0,0);
     if (arch_flags < 0) goto failed;
     if (generic_copy_file(arch_flags, 0, run_arch, "",
-                          0, global->compile_src_dir, pkt_name, sfx) < 0)
+                          0, lang->compile_src_dir, pkt_name, sfx) < 0)
       goto failed;
   } else {
     // write from memory
     if (generic_write_file(str, len, 0,
-                           global->compile_src_dir, pkt_name, sfx) < 0)
+                           lang->compile_src_dir, pkt_name, sfx) < 0)
       goto failed;
   }
 
   if (generic_write_file(pkt_buf, pkt_len, SAFE,
-                         global->compile_queue_dir, pkt_name, "") < 0) {
+                         lang->compile_queue_dir, pkt_name, "") < 0) {
     goto failed;
   }
 
