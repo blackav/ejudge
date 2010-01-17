@@ -149,6 +149,7 @@ COMMON_CFILES=\
  new_server_tables.c\
  ncurses_utils.c\
  nsdb_plugin_files.c\
+ nwrun_packet.c\
  opcaps.c\
  opcaps_2.c\
  parsecfg.c\
@@ -367,6 +368,7 @@ HFILES=\
  ncurses_utils.h\
  new-server.h\
  nsdb_plugin.h\
+ nwrun_packet.h\
  opcaps.h\
  parsecfg.h\
  pathutl.h\
