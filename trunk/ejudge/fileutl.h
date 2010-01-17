@@ -62,4 +62,6 @@ int make_symlink(unsigned char const *dest, unsigned char const *path);
 
 int generic_truncate(const char *path, ssize_t size);
 
+const unsigned char * get_tmp_dir(unsigned char *buf, size_t size);
+
 #endif /* __FILEUTL_H__ */

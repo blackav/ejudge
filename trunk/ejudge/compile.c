@@ -466,6 +466,7 @@ main(int argc, char *argv[])
 
 #if defined __WIN32__
   path_t compile_home_dir = { 0 };
+  path_t tmp_dir = { 0 };
 #endif
 
   enum { SUBST_SIZE = 16 };
@@ -630,6 +631,10 @@ main(int argc, char *argv[])
 
     subst_src[subst_idx] = EJUDGE_CONTESTS_HOME_DIR;
     subst_dst[subst_idx] = contests_home_dir;
+    subst_idx++;
+
+    subst_src[subst_idx] = "/TMPDIR";
+    subst_dst[subst_idx] = get_tmp_dir(tmp_dir, sizeof(tmp_dir));
     subst_idx++;
   }
 

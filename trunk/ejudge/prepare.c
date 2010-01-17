@@ -2438,6 +2438,8 @@ set_defaults(
     }
 #endif
     GLOBAL_INIT_FIELD(compile_work_dir, DFLT_G_COMPILE_WORK_DIR, work_dir);
+    param_subst(g->compile_work_dir, sizeof(g->compile_work_dir),
+                subst_src, subst_dst);
   }
 
   if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
@@ -3839,10 +3841,6 @@ create_dirs(serve_state_t state, int mode)
 {
   int i;
   struct section_global_data *g = state->global;
-
-#ifdef __WIN32__
-  path_t bufstr;
-#endif /* __WIN32__ */
 
   if (mode == PREPARE_SERVE) {
     if (g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
