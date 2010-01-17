@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2008/12/12 12:07:01
+// Generated 2010/01/17 10:10:03
 
 #ifndef __SUPER_SERVE_META_H__
 #define __SUPER_SERVE_META_H__
@@ -89,11 +89,14 @@ enum
   SSSS_enable_plog,
   SSSS_enable_extra_col,
   SSSS_disable_compilation_server,
+  SSSS_enable_win32_languages,
   SSSS_cs_langs_loaded,
   SSSS_cs_lang_total,
   SSSS_cs_cfg,
   SSSS_cs_langs,
   SSSS_cs_lang_names,
+  SSSS_extra_cs_cfgs_total,
+  SSSS_extra_cs_cfgs,
   SSSS_cur_lang,
   SSSS_cur_prob,
   SSSS_prob_show_adv,
