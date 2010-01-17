@@ -953,6 +953,12 @@ get_tmp_dir(unsigned char *buf, size_t size)
   return buf;
 }
 
+int
+make_hardlink(const unsigned char *oldname, const unsigned char *newname)
+{
+  return fast_copy_file(oldname, newname);
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
