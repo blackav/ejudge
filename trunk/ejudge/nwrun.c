@@ -23,6 +23,7 @@
 #include "fileutl.h"
 #include "errlog.h"
 #include "runlog.h"
+#include "nwrun_packet.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -34,8 +35,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-
-#define EJ_PATH_MAX 4096
 
 #define DEFAULT_MAX_OUTPUT_FILE_SIZE (64 * 1024 * 1024)
 #define DEFAULT_MAX_ERROR_FILE_SIZE  (16 * 1024 * 1024)
@@ -206,158 +205,6 @@ create_dir(void)
   }
 }
 
-struct packet_global_data
-{
-  struct generic_section_config g;
-
-  int contest_id;
-  int prob_id;
-  int test_num;
-  int judge_id;
-  int use_contest_id_in_reply;
-  int enable_unix2dos;
-  int disable_stdin;
-  int ignore_stdout;
-  int ignore_stderr;
-  int redirect_stdin;
-  int redirect_stdout;
-  int redirect_stderr;
-  int time_limit_millis;
-  int real_time_limit_millis;
-  int max_stack_size;
-  int max_data_size;
-  int max_vm_size;
-  int max_output_file_size;
-  int max_error_file_size;
-  int enable_memory_limit_error;
-  int enable_security_violation_error;
-  int enable_secure_run;
-
-  unsigned char prob_short_name[32];
-  unsigned char program_name[EJ_PATH_MAX];
-  /** name of the file with test data */
-  unsigned char test_file_name[EJ_PATH_MAX];
-  /** name of the input file for the program being tested */
-  unsigned char input_file_name[EJ_PATH_MAX];
-  /** name of the output file for the program being tested */
-  unsigned char output_file_name[EJ_PATH_MAX];
-  /** name of the file with the program result in the packet directory */
-  unsigned char result_file_name[EJ_PATH_MAX];
-  unsigned char error_file_name[EJ_PATH_MAX];
-  unsigned char log_file_name[EJ_PATH_MAX];
-};
-
-#define PACKET_OFFSET(x)   XOFFSET(struct packet_global_data, x)
-#define PACKET_SIZE(x)     XFSIZE(struct packet_global_data, x)
-#define PACKET_PARAM(x, t) { #x, t, PACKET_OFFSET(x), PACKET_SIZE(x) }
-static const struct config_parse_info packet_global_params[] =
-{
-  PACKET_PARAM(contest_id, "d"),
-  PACKET_PARAM(prob_id, "d"),
-  PACKET_PARAM(test_num, "d"),
-  PACKET_PARAM(judge_id, "d"),
-  PACKET_PARAM(use_contest_id_in_reply, "d"),
-  PACKET_PARAM(enable_unix2dos, "d"),
-  PACKET_PARAM(disable_stdin, "d"),
-  PACKET_PARAM(ignore_stdout, "d"),
-  PACKET_PARAM(ignore_stderr, "d"),
-  PACKET_PARAM(redirect_stdin, "d"),
-  PACKET_PARAM(redirect_stdout, "d"),
-  PACKET_PARAM(redirect_stderr, "d"),
-  PACKET_PARAM(time_limit_millis, "d"),
-  PACKET_PARAM(real_time_limit_millis, "d"),
-  PACKET_PARAM(max_stack_size, "d"),
-  PACKET_PARAM(max_data_size, "d"),
-  PACKET_PARAM(max_vm_size, "d"),
-  PACKET_PARAM(max_output_file_size, "d"),
-  PACKET_PARAM(max_error_file_size, "d"),
-  PACKET_PARAM(enable_memory_limit_error, "d"),
-  PACKET_PARAM(enable_security_violation_error, "d"),
-  PACKET_PARAM(enable_secure_run, "d"),
-
-  PACKET_PARAM(prob_short_name, "s"),
-  PACKET_PARAM(program_name, "s"),
-  PACKET_PARAM(test_file_name, "s"),
-  PACKET_PARAM(input_file_name, "s"),
-  PACKET_PARAM(output_file_name, "s"),
-  PACKET_PARAM(result_file_name, "s"),
-  PACKET_PARAM(error_file_name, "s"),
-  PACKET_PARAM(log_file_name, "s"),
-
-  { 0, 0, 0, 0 }
-};
-static const struct config_section_info packet_params[] =
-{
-  { "global", sizeof(struct packet_global_data), packet_global_params, 0, 0, 0 },
-  { NULL, 0, NULL }
-};
-
-struct result_global_data
-{
-  struct generic_section_config g;
-
-  int contest_id;
-  int prob_id;
-  int test_num;
-  int judge_id;
-  int status;
-
-  int output_file_existed;
-  int output_file_orig_size;
-  int output_file_too_big;
-
-  int error_file_existed;
-  int error_file_orig_size;
-  int error_file_truncated;
-  int error_file_size;
-
-  int cpu_time_millis;
-  int real_time_millis;
-
-  int is_signaled;
-  int signal_num;
-  int exit_code;
-
-  unsigned char hostname[64];
-  unsigned char comment[1024];
-};
-
-static void
-write_result_file(FILE *fout, const struct result_global_data *result)
-{
-  fprintf(fout, "# -*- coding: utf-8 -*-\n\n");
-
-  fprintf(fout, "contest_id = %d\n", result->contest_id);
-  fprintf(fout, "prob_id = %d\n", result->prob_id);
-  fprintf(fout, "test_num = %d\n", result->test_num);
-  fprintf(fout, "judge_id = %d\n", result->judge_id);
-  fprintf(fout, "status = %d\n", result->status);
-
-  fprintf(fout, "output_file_existed = %d\n", result->output_file_existed);
-  fprintf(fout, "output_file_orig_size = %d\n", result->output_file_orig_size);
-  fprintf(fout, "output_file_too_big = %d\n", result->output_file_too_big);
-
-  fprintf(fout, "error_file_existed = %d\n", result->error_file_existed);
-  fprintf(fout, "error_file_orig_size = %d\n", result->error_file_orig_size);
-  fprintf(fout, "error_file_truncated = %d\n", result->error_file_truncated);
-  fprintf(fout, "error_file_size = %d\n", result->error_file_size);
-
-  fprintf(fout, "cpu_time_millis = %d\n", result->cpu_time_millis);
-  fprintf(fout, "real_time_millis = %d\n", result->real_time_millis);
-
-  fprintf(fout, "is_signaled = %d\n", result->is_signaled);
-  fprintf(fout, "signal_num = %d\n", result->signal_num);
-  fprintf(fout, "exit_code = %d\n", result->exit_code);
-
-  // FIXME: this is wrong!
-  if (result->comment[0]) {
-    fprintf(fout, "comment = \"%s\"\n", result->comment);
-  }
-  if (result->hostname[0]) {
-    fprintf(fout, "hostname = \"%s\"\n", result->hostname);
-  }
-}
-
 static int
 get_num_prefix(int num)
 {
@@ -373,12 +220,12 @@ get_num_prefix(int num)
 
 static int
 run_program(
-        const struct packet_global_data *packet,
+        const struct nwrun_in_packet *packet,
         const unsigned char *program_path,
         const unsigned char *input_path,
         const unsigned char *output_path,
         const unsigned char *error_path,
-        struct result_global_data *result)
+        struct nwrun_out_packet *result)
 {
   tpTask tsk = 0;
 
@@ -478,9 +325,9 @@ run_program(
 static void
 handle_packet(
         const unsigned char *dir_path,
-        const struct packet_global_data *packet,
+        const struct nwrun_in_packet *packet,
         const unsigned char *result_path,
-        struct result_global_data *result)
+        struct nwrun_out_packet *result)
 {
   unsigned char dst_program_path[EJ_PATH_MAX];
   unsigned char src_program_path[EJ_PATH_MAX];
@@ -619,38 +466,20 @@ read_packet(const unsigned char *dir_path)
   unsigned char packet_conf_file[EJ_PATH_MAX];
   FILE *f = 0;
   struct generic_section_config *packet_config = 0;
-  struct packet_global_data *packet = 0;
-  struct generic_section_config *p = 0;
+  struct nwrun_in_packet *packet = 0;
   unsigned char result_name[EJ_PATH_MAX];
   unsigned char result_in_dir[EJ_PATH_MAX];
   unsigned char result_dir_dir[EJ_PATH_MAX];
   unsigned char contest_dir[EJ_PATH_MAX];
-  struct result_global_data result;
+  struct nwrun_out_packet result;
   unsigned char result_packet_path[EJ_PATH_MAX];
   int clean_result_dir = 0;
 
   memset(&result, 0, sizeof(result));
 
-  snprintf(packet_conf_file, sizeof(packet_conf_file), "%s/packet.cfg", dir_path);
-  if (!(f = fopen(packet_conf_file, "rb"))) {
-    err("cannot open file %s: %s", packet_conf_file, os_ErrorMsg());
-    goto cleanup;
-  }
-  if (!(packet_config = parse_param(packet_conf_file, f, packet_params, 1, 0, 0, 0))) {
-    goto cleanup;
-  }
-  fclose(f); f = 0;
-
-  for (p = packet_config; p; p = p->next) {
-    if (!p->name[0] || !strcmp(p->name, "global")) {
-      packet = (struct packet_global_data *) p;
-    }
-  }
-
-  if (!packet) {
-    err("no global section in %s", packet_conf_file);
-    goto cleanup;
-  }
+  snprintf(packet_conf_file,sizeof(packet_conf_file),"%s/packet.cfg",dir_path);
+  packet_config = nwrun_in_packet_parse(packet_conf_file, &packet);
+  if (!packet_config) goto cleanup;
 
   /* setup packet defaults */
   if (packet->contest_id <= 0) {
@@ -749,7 +578,7 @@ read_packet(const unsigned char *dir_path)
     err("cannot open file %s: %s", result_packet_path, os_ErrorMsg());
     goto cleanup;
   }
-  write_result_file(f, &result);
+  nwrun_out_packet_print(f, &result);
   fclose(f); f = 0;
 
   if (rename(result_in_dir, result_dir_dir) < 0) {
@@ -762,7 +591,7 @@ read_packet(const unsigned char *dir_path)
   if (clean_result_dir) {
     remove_directory_recursively(result_in_dir, 0);
   }
-  param_free(packet_config, packet_params);
+  nwrun_in_packet_free(packet_config);
   if (f) fclose(f);
 }
 

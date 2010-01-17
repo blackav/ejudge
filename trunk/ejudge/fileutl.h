@@ -59,6 +59,7 @@ int   relaxed_remove(char const *, char const *);
 int   remove_directory_recursively(const unsigned char *path, int preserve_root);
 
 int make_symlink(unsigned char const *dest, unsigned char const *path);
+int make_hardlink(const unsigned char *src, const unsigned char *dst);
 
 int generic_truncate(const char *path, ssize_t size);
 

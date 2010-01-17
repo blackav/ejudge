@@ -30,6 +30,8 @@
 #include "filehash.h"
 #include "serve_state.h"
 #include "startstop.h"
+#include "ejudge_cfg.h"
+#include "nwrun_packet.h"
 
 #include "fileutl.h"
 #include "errlog.h"
@@ -837,6 +839,212 @@ check_free_space(const unsigned char *path, long expected_space)
 }
 
 static int
+get_num_prefix(int num)
+{
+  if (num < 0) return '-';
+  if (num < 10) return '0';
+  if (num < 100) return '1';
+  if (num < 1000) return '2';
+  if (num < 10000) return '3';
+  if (num < 100000) return '4';
+  if (num < 1000000) return '5';
+  return '6';
+}
+
+static int
+invoke_nwrun(
+        struct section_tester_data *tst,
+        struct run_request_packet *req_pkt,
+        struct section_problem_data *prb,
+        int test_num,
+        const unsigned char *exe_src_dir,
+        const unsigned char *exe_basename,
+        const unsigned char *test_src_path,
+        const unsigned char *test_basename,
+        long time_limit_millis,
+        struct testinfo *result
+)
+{
+  path_t full_spool_dir;
+  path_t pkt_name;
+  path_t full_in_path;
+  path_t full_dir_path;
+  path_t queue_path;
+  path_t tmp_in_path;
+  path_t exe_src_path;
+  path_t result_path;
+  path_t result_pkt_name;
+  path_t out_entry_packet;
+  path_t dir_entry_packet;
+  FILE *f = 0;
+  int r;
+  struct generic_section_config *out_config = 0;
+  struct nwrun_out_packet *packet = 0;
+
+  if (!tst->nwrun_spool_dir[0]) abort();
+
+  if (os_IsAbsolutePath(tst->nwrun_spool_dir)) {
+    snprintf(full_spool_dir, sizeof(full_spool_dir), "%s",
+             tst->nwrun_spool_dir);
+  } else {
+    if (ejudge_config && ejudge_config->contests_home_dir) {
+      snprintf(full_spool_dir, sizeof(full_spool_dir), "%s/%s",
+               ejudge_config->contests_home_dir, tst->nwrun_spool_dir);
+    } else {
+#if defined EJUDGE_CONTESTS_HOME_DIR
+      snprintf(full_spool_dir, sizeof(full_spool_dir), "%s/%s",
+               EJUDGE_CONTESTS_HOME_DIR, tst->nwrun_spool_dir);
+#else
+      err("cannot initialize full_spool_dir");
+      // handle error?
+      abort();
+#endif
+    }
+  }
+
+  snprintf(queue_path, sizeof(queue_path), "%s/queue",
+           full_spool_dir);
+  if (make_all_dir(queue_path, 0777) < 0) {
+    // handle error?
+    abort();
+  }
+
+  snprintf(pkt_name, sizeof(pkt_name), "%c%d%c%d%c%d%c%d",
+           get_num_prefix(req_pkt->contest_id), req_pkt->contest_id,
+           get_num_prefix(req_pkt->problem_id), req_pkt->problem_id,
+           get_num_prefix(test_num), test_num,
+           get_num_prefix(req_pkt->judge_id), req_pkt->judge_id);
+  snprintf(full_in_path, sizeof(full_in_path),
+           "%s/in/%s_%s", queue_path, os_NodeName(), pkt_name);
+  if (make_dir(full_in_path, 0777) < 0) {
+    // handle error?
+    abort();
+  }
+
+  // copy (or link) the executable
+  snprintf(exe_src_path, sizeof(exe_src_path), "%s/%s",
+           exe_src_dir, exe_basename);
+  snprintf(tmp_in_path, sizeof(tmp_in_path), "%s/%s",
+           full_in_path, exe_basename);
+  if (make_hardlink(exe_src_path, tmp_in_path) < 0) {
+    // handle error?
+    abort();
+  }
+
+  // copy (or link) the test file
+  snprintf(tmp_in_path, sizeof(tmp_in_path), "%s/%s",
+           full_in_path, test_basename);
+  if (make_hardlink(test_src_path, tmp_in_path) < 0) {
+    // handle error?
+    abort();
+  }
+
+  // make the description file
+  snprintf(tmp_in_path, sizeof(tmp_in_path), "%s/packet.cfg", full_in_path);
+  f = fopen(tmp_in_path, "w");
+  if (!f) {
+    // handle error?
+    abort();
+  }
+
+  fprintf(f, "contest_id = %d\n", req_pkt->contest_id);
+  fprintf(f, "prob_id = %d\n", req_pkt->problem_id);
+  fprintf(f, "test_num = %d\n", test_num);
+  fprintf(f, "judge_id = %d\n", req_pkt->judge_id);
+  fprintf(f, "use_contest_id_in_reply = %d\n", 1);
+  fprintf(f, "enable_unix2dos = %d\n", 1);
+  fprintf(f, "redirect_stdin = %d\n", 1);
+  fprintf(f, "redirect_stdout = %d\n", 1);
+  fprintf(f, "redirect_stderr = %d\n", 1);
+  fprintf(f, "time_limit_millis = %ld\n", time_limit_millis);
+  if (prb->real_time_limit > 0) {
+    fprintf(f, "real_time_limit_millis = %d\n", prb->real_time_limit * 1000);
+  }
+  if (prb->max_stack_size > 0) {
+    fprintf(f, "max_stack_size = %d\n", prb->max_stack_size);
+  }
+  if (prb->max_data_size > 0) {
+    fprintf(f, "max_data_size = %d\n", prb->max_data_size);
+  }
+  if (prb->max_vm_size > 0) {
+    fprintf(f, "max_vm_size = %d\n", prb->max_vm_size);
+  }
+  fprintf(f, "max_output_file_size = 60M\n");
+  fprintf(f, "max_error_file_size = 16M\n");
+  if (req_pkt->secure_run) {
+    fprintf(f, "enable_secure_run = 1\n");
+  }
+  if (req_pkt->memory_limit) {
+    fprintf(f, "enable_memory_limit_error = 1\n");
+  }
+  if (req_pkt->security_violation) {
+    fprintf(f, "enable_security_violation_error = 1\n");
+  }
+  fprintf(f, "prob_short_name = \"%s\"\n", prb->short_name);
+  fprintf(f, "program_name = \"%s\"\n", exe_basename);
+  fprintf(f, "test_file_name = \"%s\"\n", test_basename);
+  fprintf(f, "input_file_name = \"%s\"\n", prb->input_file);
+  fprintf(f, "output_file_name = \"%s\"\n", prb->output_file);
+  fprintf(f, "result_file_name = \"%s\"\n", prb->output_file);
+  fprintf(f, "error_file_name = \"%s\"\n", tst->error_file);
+  fprintf(f, "log_file_name = \"%s\"\n", tst->error_file);
+
+  fflush(f);
+  if (ferror(f)) {
+    // handle error?
+    abort();
+  }
+  fclose(f); f = 0;
+
+  snprintf(full_dir_path, sizeof(full_dir_path),
+           "%s/dir/%s", queue_path, pkt_name);
+  if (rename(full_in_path, full_dir_path) < 0) {
+    // handle error?
+    abort();
+  }
+
+  // wait for the result package
+  snprintf(result_path, sizeof(result_path), "%s/result", full_spool_dir);
+  while (1) {
+    r = scan_dir(result_path, result_pkt_name, sizeof(result_pkt_name));
+    if (r < 0) {
+      /* FIXME: handle error? */
+      abort();
+    }
+
+    if (r > 0) break;
+
+    // more appropriate interval?
+    os_Sleep(100);
+  }
+
+  snprintf(dir_entry_packet, sizeof(dir_entry_packet), "%s/dir/%s",
+           result_path, result_pkt_name);
+  snprintf(out_entry_packet, sizeof(out_entry_packet), "%s/out/%s_%s",
+           result_path, os_NodeName(), result_pkt_name);
+  if (rename(dir_entry_packet, out_entry_packet) < 0) {
+    // handle error?
+    abort();
+  }
+
+  // parse the resulting packet
+  snprintf(tmp_in_path, sizeof(tmp_in_path), "%s/packet.cfg",
+           out_entry_packet);
+  out_config = nwrun_out_packet_parse(tmp_in_path, &packet);
+  if (!out_config) {
+    // handle error?
+    abort();
+  }
+
+  out_config = nwrun_out_packet_free(out_config);
+
+
+
+
+  return RUN_CHECK_FAILED;
+}
+
+static int
 run_tests(struct section_tester_data *tst,
           struct run_request_packet *req_pkt,
           struct run_reply_packet *reply_pkt,
@@ -1040,6 +1248,36 @@ run_tests(struct section_tester_data *tst,
     tests[cur_test].error_size = -1;
     tests[cur_test].correct_size = -1;
     tests[cur_test].chk_out_size = -1;
+
+    time_limit_value = 0;
+    if (prb->time_limit_millis > 0)
+      time_limit_value += prb->time_limit_millis;
+    else if (prb->time_limit > 0)
+      time_limit_value += prb->time_limit * 1000;
+    if (time_limit_value > 0) {
+      // adjustment works only for limited time
+      if (tst->time_limit_adj_millis > 0)
+        time_limit_value += tst->time_limit_adj_millis;
+      else if (tst->time_limit_adjustment > 0)
+        time_limit_value += tst->time_limit_adjustment * 1000;
+      if (req_pkt->time_limit_adj_millis > 0)
+        time_limit_value += req_pkt->time_limit_adj_millis;
+      else if (req_pkt->time_limit_adj > 0)
+        time_limit_value += req_pkt->time_limit_adj * 1000;
+    }
+
+    if (tst->nwrun_spool_dir[0]) {
+      status = invoke_nwrun(tst, req_pkt, prb, cur_test,
+                            serve_state.global->run_work_dir, new_name,
+                            test_src, test_base, time_limit_value,
+                            &tests[cur_test]);
+      if (status) {
+        failed_test = cur_test;
+        total_failed_tests++;
+        goto done_this_test;
+      }
+      goto run_checker;
+    }
 
     /* Load test information file */
     if (prb->use_info) {
@@ -1245,23 +1483,6 @@ run_tests(struct section_tester_data *tst,
 
       if (tst->clear_env) task_ClearEnv(tsk);
       setup_environment(tsk, tst->start_env, ejudge_prefix_dir_env);
-
-      time_limit_value = 0;
-      if (prb->time_limit_millis > 0)
-        time_limit_value += prb->time_limit_millis;
-      else if (prb->time_limit > 0)
-        time_limit_value += prb->time_limit * 1000;
-      if (time_limit_value > 0) {
-        // adjustment works only for limited time
-        if (tst->time_limit_adj_millis > 0)
-          time_limit_value += tst->time_limit_adj_millis;
-        else if (tst->time_limit_adjustment > 0)
-          time_limit_value += tst->time_limit_adjustment * 1000;
-        if (req_pkt->time_limit_adj_millis > 0)
-          time_limit_value += req_pkt->time_limit_adj_millis;
-        else if (req_pkt->time_limit_adj > 0)
-          time_limit_value += req_pkt->time_limit_adj * 1000;
-      }
 
       if (time_limit_value > 0) {
         if ((time_limit_value % 1000)) {
@@ -1732,6 +1953,8 @@ run_tests(struct section_tester_data *tst,
         }
       }
     }
+
+  run_checker:;
 
     if (prb->variant_num > 0 && !tst->standard_checker_used) {
       var_check_cmd = (unsigned char*) alloca(sizeof(path_t));
