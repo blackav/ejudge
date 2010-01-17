@@ -1085,7 +1085,7 @@ struct section_tester_data
 };
 
 int prepare(serve_state_t, char const *, int flags, int mode, char const *opts,
-            int managed_flag);
+            int managed_flag, const unsigned char **, const unsigned char **);
 int create_dirs(serve_state_t, int mode);
 int prepare_serve_defaults(serve_state_t, const struct contest_desc **);
 

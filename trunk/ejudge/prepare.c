@@ -3994,8 +3994,15 @@ parse_version_string(int *pmajor, int *pminor, int *ppatch, int *pbuild)
 }
 
 int
-prepare(serve_state_t state, char const *config_file, int flags,
-        int mode, char const *opts, int managed_flag)
+prepare(
+        serve_state_t state,
+        char const *config_file,
+        int flags,
+        int mode,
+        char const *opts,
+        int managed_flag,
+        const unsigned char **subst_src,
+        const unsigned char **subst_dst)
 {
   cfg_cond_var_t *cond_vars;
   int ncond_var;
