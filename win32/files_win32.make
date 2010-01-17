@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2009 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2009-2010 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -32,6 +32,7 @@ WIN32_COMMON_CFILES=\
  lang_config.c\
  meta_generic.c\
  misctext.c\
+ nwrun_packet.c\
  opcaps.c\
  parsecfg.c\
  pathutl.c\
