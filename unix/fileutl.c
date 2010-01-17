@@ -1680,6 +1680,18 @@ generic_truncate(const char *path, ssize_t size)
   return truncate(path, size);
 }
 
+int
+make_hardlink(const unsigned char *oldname, const unsigned char *newname)
+{
+  if (link(oldname, newname) >= 0) return 0;
+  if (errno == EEXIST || errno == EXDEV || errno == EPERM) {
+    return do_copy_file(oldname, 0, newname, 0);
+  }
+  err("make_hardlink: link(%s,%s) failed: %s",
+      oldname, newname, os_ErrorMsg());
+  return -1;
+}
+
 /*
  * Local variables:
  *  compile-command: "make -C .."
