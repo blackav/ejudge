@@ -3041,9 +3041,11 @@ int
 super_load_cs_languages(
         const struct ejudge_cfg *config,
         struct sid_state *sstate,
+        char **extra_compile_dirs,
         int check_version_flag)
 {
   path_t cs_conf_dir;
+  path_t extra_cs_conf_path;
   struct generic_section_config *cfg = 0, *p;
   struct section_language_data *lp;
   int max_lang = -1;
@@ -3062,6 +3064,38 @@ super_load_cs_languages(
   if (!(cfg = prepare_parse_config_file(cs_conf_dir, 0))) return -1;
   sstate->cs_cfg = cfg;
 
+  if (extra_compile_dirs) {
+    int extra_cs_total = sarray_len(extra_compile_dirs);
+    if (extra_cs_total > 0) {
+      sstate->extra_cs_cfgs_total = extra_cs_total;
+      XCALLOC(sstate->extra_cs_cfgs, sstate->extra_cs_cfgs_total);
+    }
+  }
+
+  if (sstate->extra_cs_cfgs_total > 0) {
+    for (int i = 0; i < sstate->extra_cs_cfgs_total; ++i) {
+      extra_cs_conf_path[0] = 0;
+      if (os_IsAbsolutePath(extra_compile_dirs[i])) {
+        snprintf(extra_cs_conf_path, sizeof(extra_cs_conf_path),
+                 "%s/conf/compile.cfg", extra_compile_dirs[i]);
+      } else if (config && config->contests_home_dir) {
+        snprintf(extra_cs_conf_path, sizeof(extra_cs_conf_path),
+                 "%s/%s/conf/compile.cfg", config->contests_home_dir,
+                 extra_compile_dirs[i]);
+      } else {
+#if defined EJUDGE_CONTESTS_HOME_DIR
+        snprintf(extra_cs_conf_path, sizeof(extra_cs_conf_path),
+                 "%s/%s/conf/compile.cfg", EJUDGE_CONTESTS_HOME_DIR,
+                 extra_compile_dirs[i]);
+#endif
+      }
+      if (extra_cs_conf_path[0]) {
+        sstate->extra_cs_cfgs[i] = prepare_parse_config_file(extra_cs_conf_path, 0);
+      }
+    }
+  }
+
+  cfg = sstate->cs_cfg;
   for (p = cfg; p; p = p->next) {
     if (strcmp(p->name, "language") != 0) continue;
     lp = (typeof(lp)) p;
@@ -3078,11 +3112,23 @@ super_load_cs_languages(
     goto failed;
   }
 
+  if (sstate->extra_cs_cfgs_total > 0) {
+    for (int i = 0; i < sstate->extra_cs_cfgs_total; ++i) {
+      cfg = sstate->extra_cs_cfgs[i];
+      for (p = cfg; p; p = p->next) {
+        if (strcmp(p->name, "language") != 0) continue;
+        lp = (typeof(lp)) p;
+        if (lp->id > 0 && lp->id > max_lang) max_lang = lp->id;
+      }
+    }
+  }
+
   sstate->cs_lang_total = max_lang + 1;
   XCALLOC(sstate->cs_langs, sstate->cs_lang_total);
   XCALLOC(sstate->cs_loc_map, sstate->cs_lang_total);
   XCALLOC(sstate->cs_lang_names, sstate->cs_lang_total);
 
+  cfg = sstate->cs_cfg;
   for (p = cfg; p; p = p->next) {
     if (strcmp(p->name, "language") != 0) continue;
     lp = (typeof(lp)) p;
@@ -3091,6 +3137,20 @@ super_load_cs_languages(
       goto failed;
     }
     sstate->cs_langs[lp->id] = lp;
+  }
+
+  if (sstate->extra_cs_cfgs_total > 0) {
+    for (int i = 0; i < sstate->extra_cs_cfgs_total; ++i) {
+      cfg = sstate->extra_cs_cfgs[i];
+      for (p = cfg; p; p = p->next) {
+        if (strcmp(p->name, "language") != 0) continue;
+        lp = (typeof(lp)) p;
+        if (lp->id > 0 && !sstate->cs_langs[lp->id]) {
+          sstate->cs_langs[lp->id] = lp;
+          lp->compile_dir_index = i + 1;
+        }
+      }
+    }
   }
 
   /*
@@ -3124,6 +3184,10 @@ super_load_cs_languages(
     // detect actual language versions
     for (cur_lang = 1; cur_lang < sstate->cs_lang_total; cur_lang++) {
       if (!(lp = sstate->cs_langs[cur_lang])) continue;
+      if (lp->compile_dir_index > 0) {
+        sstate->cs_lang_names[cur_lang] = xstrdup(lp->long_name);
+        continue;
+      }
       snprintf(cmdpath, sizeof(cmdpath), "%s/%s-version", script_dir,
                lp->cmd);
       /*
@@ -3149,17 +3213,18 @@ super_load_cs_languages(
 }
 
 int
-super_html_edit_languages(FILE *f,
-                          int priv_level,
-                          int user_id,
-                          const unsigned char *login,
-                          ej_cookie_t session_id,
-                          ej_ip_t ip_address,
-                          const struct ejudge_cfg *config,
-                          struct sid_state *sstate,
-                          const unsigned char *self_url,
-                          const unsigned char *hidden_vars,
-                          const unsigned char *extra_args)
+super_html_edit_languages(
+        FILE *f,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        ej_ip_t ip_address,
+        const struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   int i;
   unsigned char *s;
@@ -3188,7 +3253,7 @@ super_html_edit_languages(FILE *f,
   }
 
   if (!sstate->cs_langs_loaded) {
-    super_load_cs_languages(config, sstate, 1);
+    super_load_cs_languages(config, sstate, global->extra_compile_dirs, 1);
   }
 
   if (!sstate->cs_langs) {
@@ -3403,7 +3468,6 @@ super_html_edit_languages(FILE *f,
   super_html_contest_footer_menu(f, session_id, sstate,
                                  self_url, hidden_vars, extra_args);
 
-
   return 0;
 }
 
@@ -3541,6 +3605,7 @@ super_html_lang_activate(
   lang->binary = cs_lang->binary;
   lang->insecure = cs_lang->insecure;
   strcpy(lang->content_type, cs_lang->content_type);
+  lang->compile_dir_index = cs_lang->compile_dir_index;
 }
 
 void
@@ -7191,7 +7256,7 @@ super_html_read_serve(FILE *flog,
   }
 
   // load the compilation server state and establish correspondence
-  if (super_load_cs_languages(config, sstate, 0) < 0) {
+  if (super_load_cs_languages(config, sstate, global->extra_compile_dirs, 0) < 0) {
     fprintf(flog, "Failed to load compilation server configuration\n");
     return -1;
   }
@@ -7382,19 +7447,24 @@ super_html_read_serve(FILE *flog,
     total++;
   }
 
+  /* Relax, try to work without testers... */
+  /*
   if (!total) {
     fprintf(flog, "No abstract testers defined\n");
     return -1;
   }
+  */
 
   sstate->atester_total = total;
-  XCALLOC(sstate->atesters, sstate->atester_total);
-  for (pg = sstate->cfg, i = 0; pg; pg = pg->next) {
-    if (strcmp(pg->name, "tester")) continue;
-    tst = (struct section_tester_data*) pg;
-    if (!tst->abstract) continue;
-    sstate->atesters[i++] = tst;
-    // FIXME: check for unhandled fields
+  if (total > 0) {
+    XCALLOC(sstate->atesters, sstate->atester_total);
+    for (pg = sstate->cfg, i = 0; pg; pg = pg->next) {
+      if (strcmp(pg->name, "tester")) continue;
+      tst = (struct section_tester_data*) pg;
+      if (!tst->abstract) continue;
+      sstate->atesters[i++] = tst;
+      // FIXME: check for unhandled fields
+    }
   }
 
   // collect concrete testers, attempting to recover vm limit, stack limit
@@ -7414,7 +7484,9 @@ super_html_read_serve(FILE *flog,
   }
 
   sstate->tester_total = total;
-  XCALLOC(sstate->testers, sstate->tester_total);
+  if (total > 0) {
+    XCALLOC(sstate->testers, sstate->tester_total);
+  }
   for (pg = sstate->cfg; pg; pg = pg->next) {
     if (strcmp(pg->name, "tester") != 0) continue;
     tst = (struct section_tester_data*) pg;

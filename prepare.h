@@ -984,7 +984,7 @@ struct section_language_data
   int disabled_by_config META_ATTRIB((meta_private));
 };
 
-/* sizeof(struct section_tester_data) == 50212 */
+/* sizeof(struct section_tester_data) == 54324 */
 struct section_tester_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -1068,6 +1068,8 @@ struct section_tester_data
   path_t start_cmd;
   /** checker */
   path_t check_cmd;
+  /** nwrun spool directory */
+  path_t nwrun_spool_dir;
 
   /** environment variables for start_cmd */
   ejenvlist_t start_env;

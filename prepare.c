@@ -512,6 +512,7 @@ static const struct config_parse_info section_tester_params[] =
   TESTER_PARAM(prepare_cmd, "s"),
   TESTER_PARAM(check_cmd, "s"),
   TESTER_PARAM(start_cmd, "s"),
+  TESTER_PARAM(nwrun_spool_dir, "s"),
 
   TESTER_PARAM(start_env, "x"),
   TESTER_PARAM(checker_env, "x"),
@@ -1030,6 +1031,7 @@ static const struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(prepare_cmd, path, path),
   TESTER_INH(memory_limit_type, path2, path),
   TESTER_INH(secure_exec_type, path2, path),
+  TESTER_INH(nwrun_spool_dir, path, path),
 
   { 0, 0, 0, 0 }
 };
@@ -2739,8 +2741,22 @@ set_defaults(serve_state_t state, int mode)
           err("language.%d: invalid value of compile_dir_index", i);
           return -1;
         }
-        snprintf(lang->compile_dir, sizeof(lang->compile_dir),
-                 "%s", g->extra_compile_dirs[lang->compile_dir_index - 1]);
+        const unsigned char *ecd = g->extra_compile_dirs[lang->compile_dir_index - 1];
+        if (os_IsAbsolutePath(ecd)) {
+          snprintf(lang->compile_dir, sizeof(lang->compile_dir),
+                   "%s/var/compile", ecd);
+        } else if (ejudge_config && ejudge_config->contests_home_dir) {
+          snprintf(lang->compile_dir, sizeof(lang->compile_dir),
+                   "%s/%s/var/compile", ejudge_config->contests_home_dir, ecd);
+        } else {
+#if defined EJUDGE_CONTESTS_HOME_DIR
+          snprintf(lang->compile_dir, sizeof(lang->compile_dir),
+                   "%s/%s/var/compile", EJUDGE_CONTESTS_HOME_DIR, ecd);
+#else
+          err("language.d: invalid extra_compile_dirs");
+          return -1;
+#endif
+        }
         pathmake(lang->compile_queue_dir, lang->compile_dir, "/",
                  DFLT_G_COMPILE_QUEUE_DIR, 0);
         pathmake(lang->compile_src_dir, lang->compile_dir, "/",
@@ -3582,6 +3598,29 @@ set_defaults(serve_state_t state, int mode)
           pathmake2(tp->prepare_cmd, g->script_dir, "/", "lang", "/",
                     tp->prepare_cmd, NULL);
         }
+
+        if (!tp->nwrun_spool_dir[0] && atp && atp->nwrun_spool_dir[0]) {
+          sformat_message(tp->nwrun_spool_dir, PATH_MAX, 0,atp->nwrun_spool_dir,
+                          g, state->probs[tp->problem], NULL,
+                          tp, NULL, 0, 0, 0);
+        }
+        if (tp->nwrun_spool_dir[0]) {
+          path_t tmp;
+          tmp[0] = 0;
+          if (!os_IsAbsolutePath(tp->nwrun_spool_dir)) {
+            if (ejudge_config && ejudge_config->contests_home_dir) {
+              snprintf(tmp, sizeof(tmp), "%s/%s",
+                       ejudge_config->contests_home_dir, tp->nwrun_spool_dir);
+              strcpy(tp->nwrun_spool_dir, tmp);
+            } else {
+#if defined EJUDGE_CONTESTS_HOME_DIR
+              snprintf(tmp, sizeof(tmp), "%s/%s",
+                       EJUDGE_CONTESTS_HOME_DIR, tp->nwrun_spool_dir);
+              strcpy(tp->nwrun_spool_dir, tmp);
+#endif
+            }
+          }
+        }
       }
     }
   }
@@ -4363,6 +4402,28 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   if (out->prepare_cmd[0]) {
     pathmake2(out->prepare_cmd, state->global->script_dir, "/", "lang", "/",
               out->prepare_cmd, NULL);
+  }
+
+  /* copy nwrun_spool_dir */
+  strcpy(out->nwrun_spool_dir, tp->nwrun_spool_dir);
+  if (!out->nwrun_spool_dir[0] && atp && atp->nwrun_spool_dir[0]) {
+    sformat_message(out->nwrun_spool_dir, sizeof(out->nwrun_spool_dir), 0,
+                    atp->prepare_cmd, state->global, prb, NULL, out,
+                    NULL, 0, 0, 0);
+  }
+  if (!os_IsAbsolutePath(out->nwrun_spool_dir)) {
+    path_t tmp;
+    if (ejudge_config && ejudge_config->contests_home_dir) {
+      snprintf(tmp, sizeof(tmp), "%s/%s", ejudge_config->contests_home_dir,
+               out->nwrun_spool_dir);
+      strcpy(out->nwrun_spool_dir, tmp);
+    } else {
+#if defined EJUDGE_CONTESTS_HOME_DIR
+      snprintf(tmp, sizeof(tmp), "%s/%s", EJUDGE_CONTESTS_HOME_DIR,
+               out->nwrun_spool_dir);
+      strcpy(out->nwrun_spool_dir, tmp);
+#endif
+    }
   }
 
   // for debug

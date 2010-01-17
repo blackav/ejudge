@@ -3,7 +3,7 @@
 #ifndef __SUPER_HTML_H__
 #define __SUPER_HTML_H__
 
-/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -445,6 +445,7 @@ int
 super_load_cs_languages(
         const struct ejudge_cfg *config,
         struct sid_state *sstate,
+        char **extra_compile_dirs,
         int check_version_flag);
 void
 super_html_lang_activate(

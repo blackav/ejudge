@@ -1763,6 +1763,14 @@ super_serve_clear_edited_contest(struct sid_state *p)
     xfree(p->cs_lang_names[i]);
   p->cs_langs_loaded = p->cs_lang_total = 0;
   prepare_free_config(p->cs_cfg); p->cs_cfg = 0;
+  if (p->extra_cs_cfgs) {
+    for (int i = 0; p->extra_cs_cfgs[i]; ++i) {
+      prepare_free_config(p->extra_cs_cfgs[i]);
+      p->extra_cs_cfgs[i] = 0;
+    }
+  }
+  p->extra_cs_cfgs = 0;
+  p->extra_cs_cfgs_total = 0;
   xfree(p->cs_langs); p->cs_langs = 0;
   xfree(p->cs_lang_names); p->cs_lang_names = 0;
   xfree(p->lang_opts); p->lang_opts = 0;
@@ -1858,6 +1866,8 @@ super_serve_move_edited_contest(struct sid_state *dst, struct sid_state *src)
   dst->cs_langs_loaded = src->cs_langs_loaded; src->cs_langs_loaded = 0;
   dst->cs_lang_total = src->cs_lang_total; src->cs_lang_total = 0;
   dst->cs_cfg = src->cs_cfg; src->cs_cfg = 0;
+  dst->extra_cs_cfgs_total = src->extra_cs_cfgs_total = 0; src->extra_cs_cfgs_total = 0;
+  dst->extra_cs_cfgs = src->extra_cs_cfgs; src->extra_cs_cfgs = 0;
   dst->cs_langs = src->cs_langs; src->cs_langs = 0;
   dst->cs_lang_names = src->cs_lang_names; src->cs_lang_names = 0;
 }

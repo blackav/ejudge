@@ -1334,6 +1334,7 @@ enum
   ARCH_JAVA14,
   ARCH_PERL,
   ARCH_MSIL,
+  ARCH_WIN32,
 
   ARCH_LAST,
 };
@@ -1347,6 +1348,7 @@ static const unsigned char * const supported_archs[] =
   "java14",
   "perl",
   "msil",
+  "win32",
   0,
 };
 static const unsigned char * const arch_abstract_names [] =
@@ -1358,6 +1360,7 @@ static const unsigned char * const arch_abstract_names [] =
   "Linux-java14",
   "Perl",
   "Linux-msil",
+  "Win32",
   0,
 };
 
@@ -1559,6 +1562,15 @@ generate_abstract_tester(
             arch_abstract_names[arch], supported_archs[arch]);
     break;
 
+  case ARCH_WIN32:
+    fprintf(f, "[tester]\n"
+            "name = %s\n"
+            "arch = \"%s\"\n"
+            "abstract\n"
+            "nwrun_spool_dir = \"win32_nwrun\"\n",
+            arch_abstract_names[arch], supported_archs[arch]);
+    break;
+
   default:
     abort();
   }
@@ -1642,6 +1654,9 @@ generate_concrete_tester(FILE *f, int arch,
     break;
 
   case ARCH_MSIL:
+    break;
+
+  case ARCH_WIN32:
     break;
 
   default:
