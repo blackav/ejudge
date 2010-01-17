@@ -1690,3 +1690,36 @@ sarray_append(char **a1, const unsigned char *str)
   res[i] = xstrdup(str);
   return res;
 }
+
+static int
+is_prefix(const unsigned char *patt, const unsigned char *str)
+{
+  const unsigned char *p = patt;
+  const unsigned char *s = str;
+
+  while (*p && *p == *s) {
+    ++p; ++s;
+  }
+  if (!*p) return (int) (p - patt);
+  return -1;
+}
+
+void
+param_subst(
+        unsigned char *buf,
+        size_t size,
+        const unsigned char **subst_src,
+        const unsigned char **subst_dst)
+{
+  int i, len;
+  unsigned char tmp_buf[4096];
+
+  if (!subst_src || !subst_dst) return;
+  for (i = 0; subst_src[i]; ++i) {
+    if ((len = is_prefix(subst_src[i], buf)) >= 0) {
+      snprintf(tmp_buf, sizeof(tmp_buf), "%s%s", subst_dst[i], buf + len);
+      snprintf(buf, size, "%s", tmp_buf);
+      return;
+    }
+  }
+}

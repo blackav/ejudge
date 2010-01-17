@@ -2087,7 +2087,11 @@ prepare_insert_variant_num(
 }
 
 static int
-set_defaults(serve_state_t state, int mode)
+set_defaults(
+        serve_state_t state,
+        int mode,
+        const unsigned char **subst_src,
+        const unsigned char **subst_dst)
 {
   struct generic_section_config *p;
   struct section_problem_data *aprob;
@@ -2296,6 +2300,8 @@ set_defaults(serve_state_t state, int mode)
     return -1;
   }
 
+  param_subst(g->root_dir, sizeof(g->root_dir), subst_src, subst_dst);
+
   if (!g->clardb_plugin[0] && ejudge_config
       && ejudge_config->default_clardb_plugin
       && ejudge_config->default_clardb_plugin[0]) {
@@ -2490,6 +2496,11 @@ set_defaults(serve_state_t state, int mode)
   }
 
   if (mode == PREPARE_COMPILE) {
+    if (g->lang_config_dir[0]) {
+      param_subst(g->lang_config_dir, sizeof(g->lang_config_dir),
+                  subst_src, subst_dst);
+    }
+
     if (g->compile_real_time_limit == -1) {
       g->compile_real_time_limit = DFLT_G_COMPILE_REAL_TIME_LIMIT;
       vinfo("global.compile_real_time_limit set to %d",
@@ -2828,6 +2839,7 @@ set_defaults(serve_state_t state, int mode)
                   "/", "scripts", "/", lang->cmd, NULL);
       }
 #endif /* EJUDGE_CONTESTS_HOME_DIR */
+      param_subst(lang->cmd, sizeof(lang->cmd), subst_src, subst_dst);
       vinfo("language.%d.cmd is %s", i, lang->cmd);      
       if (lang->compile_real_time_limit == -1) {
         lang->compile_real_time_limit = g->compile_real_time_limit;
@@ -3888,7 +3900,7 @@ create_dirs(serve_state_t state, int mode)
     if (g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
     if (make_dir(g->var_dir, 0) < 0) return -1;
 
-#ifdef __WIN32__
+#if 0
     /* Win program incorrectly parses dir names. Add leading slashes manually*/
     sprintf(bufstr, "/%s", g->compile_dir);
     strcpy(g->compile_dir, bufstr);
@@ -4053,7 +4065,7 @@ prepare(
     err("no testers specified");
     return -1;
   }
-  if (set_defaults(state, mode) < 0) return -1;
+  if (set_defaults(state, mode, subst_src, subst_dst) < 0) return -1;
   return 0;
 }
 
