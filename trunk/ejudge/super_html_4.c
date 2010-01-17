@@ -2137,7 +2137,7 @@ write_languages_page(
   }
 
   if (!phr->ss->cs_langs_loaded) {
-    super_load_cs_languages(phr->config, phr->ss, 1);
+    super_load_cs_languages(phr->config, phr->ss, global->extra_compile_dirs, 1);
   }
 
   if (!phr->ss->cs_langs) {
