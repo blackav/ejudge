@@ -1692,6 +1692,25 @@ make_hardlink(const unsigned char *oldname, const unsigned char *newname)
   return -1;
 }
 
+const unsigned char *
+get_tmp_dir(unsigned char *buf, size_t size)
+{
+  const unsigned char *s = getenv("TMPDIR");
+  if (s && *s) {
+    snprintf(buf, size, "%s", s);
+    return buf;
+  }
+#if defined P_tmpdir
+  s = P_tmpdir;
+  if (s && *s) {
+    snprintf(buf, size, "%s", s);
+    return buf;
+  }
+#endif
+  snprintf(buf, size, "%s", "/tmp");
+  return buf;
+}
+
 /*
  * Local variables:
  *  compile-command: "make -C .."
