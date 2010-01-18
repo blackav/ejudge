@@ -152,6 +152,13 @@ parse_config(void)
 {
   FILE *f = 0;
   struct generic_section_config *p = 0;
+  const unsigned char *subst_src[10];
+  const unsigned char *subst_dst[10];
+  int subst_idx = 0;
+  unsigned char tmp_dir[EJ_PATH_MAX];
+
+  memset(subst_src, 0, sizeof(subst_src));
+  memset(subst_dst, 0, sizeof(subst_dst));
 
   if (!config_file) die("configuration file is not specified");
   f = fopen(config_file, "r");
@@ -177,6 +184,11 @@ parse_config(void)
   if (!global->work_dir[0]) {
     die("work_dir is undefined in %s", config_file);
   }
+
+  subst_src[subst_idx] = "/TMPDIR";
+  subst_dst[subst_idx] = get_tmp_dir(tmp_dir, sizeof(tmp_dir));
+  subst_idx++;
+  param_subst(global->work_dir, sizeof(global->work_dir), subst_src, subst_dst);
 
   snprintf(global->queue_dir, sizeof(global->queue_dir), "%s/queue", global->spool_dir);
   snprintf(global->result_dir, sizeof(global->result_dir), "%s/result", global->spool_dir);
