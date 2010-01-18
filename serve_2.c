@@ -985,6 +985,8 @@ serve_compile_request(
 
   if (accepting_mode == -1) accepting_mode = state->accepting_mode;
 
+  if (!state->compile_request_id) state->compile_request_id++;
+
   memset(&cp, 0, sizeof(cp));
   cp.judge_id = state->compile_request_id++;
   cp.contest_id = global->contest_id;
@@ -1169,7 +1171,10 @@ serve_run_request(
   if (prob_id < EJ_SERVE_STATE_TOTAL_PROBS)
     prio += state->prob_prio[prob_id];
   
-  if (judge_id < 0) judge_id = state->compile_request_id++;
+  if (judge_id < 0) {
+    if (!state->compile_request_id) state->compile_request_id++;
+    judge_id = state->compile_request_id++;
+  }
   if (accepting_mode < 0) {
     if (state->global->score_system == SCORE_OLYMPIAD
         && state->global->is_virtual > 0) {

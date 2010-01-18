@@ -1053,7 +1053,8 @@ invoke_nwrun(
   }
 
   // wait for the result package
-  snprintf(result_path, sizeof(result_path), "%s/result", full_spool_dir);
+  snprintf(result_path, sizeof(result_path), "%s/result/%06d",
+           full_spool_dir, req_pkt->contest_id);
   while (1) {
     r = scan_dir(result_path, result_pkt_name, sizeof(result_pkt_name));
     if (r < 0) {
@@ -1441,6 +1442,9 @@ run_tests(struct section_tester_data *tst,
         time_limit_value += req_pkt->time_limit_adj * 1000;
     }
 
+    pathmake(check_out_path, serve_state.global->run_work_dir, "/", "checkout", NULL);
+    pathmake(score_out_path, serve_state.global->run_work_dir, "/", "scoreout", NULL);
+
     if (tst->nwrun_spool_dir[0]) {
       status = invoke_nwrun(serve_state.global, tst, req_pkt, prb, far,
                             cur_test, 0, serve_state.global->run_work_dir,
@@ -1521,8 +1525,6 @@ run_tests(struct section_tester_data *tst,
     pathmake(input_path, tst->check_dir, "/", prb->input_file, NULL);
     pathmake(output_path, tst->check_dir, "/", prb->output_file, NULL);
     pathmake(error_path, tst->check_dir, "/", tst->error_file, NULL);
-    pathmake(check_out_path, serve_state.global->run_work_dir, "/", "checkout", NULL);
-    pathmake(score_out_path, serve_state.global->run_work_dir, "/", "scoreout", NULL);
 
     if (var_interactor_cmd) {
       pathmake(output_path, serve_state.global->run_work_dir, "/",

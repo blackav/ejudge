@@ -85,10 +85,10 @@ nwrun_in_packet_parse(const unsigned char *path, struct nwrun_in_packet **pkt)
     err("cannot open file %s: %s", path, os_ErrorMsg());
     goto cleanup;
   }
-  if (!(config = parse_param(path, f, nwrun_in_config, 1, 0, 0, 0))) {
+  fclose(f); f = 0;
+  if (!(config = parse_param(path, 0, nwrun_in_config, 1, 0, 0, 0))) {
     goto cleanup;
   }
-  fclose(f); f = 0;
 
   for (p = config; p; p = p->next) {
     if (!p->name[0] || !strcmp(p->name, "global")) {
@@ -140,8 +140,8 @@ static const struct config_parse_info nwrun_out_params[] =
   NWRUN_OUT_PARAM(is_signaled, "d"),
   NWRUN_OUT_PARAM(signal_num, "d"),
   NWRUN_OUT_PARAM(exit_code, "d"),
-  NWRUN_OUT_PARAM(hostname, "d"),
-  NWRUN_OUT_PARAM(comment, "d"),
+  NWRUN_OUT_PARAM(hostname, "s"),
+  NWRUN_OUT_PARAM(comment, "s"),
 
   { 0, 0, 0, 0 }
 };
@@ -162,10 +162,10 @@ nwrun_out_packet_parse(const unsigned char *path, struct nwrun_out_packet **pkt)
     err("cannot open file %s: %s", path, os_ErrorMsg());
     goto cleanup;
   }
-  if (!(config = parse_param(path, f, nwrun_out_config, 1, 0, 0, 0))) {
+  fclose(f); f = 0;
+  if (!(config = parse_param(path, 0, nwrun_out_config, 1, 0, 0, 0))) {
     goto cleanup;
   }
-  fclose(f); f = 0;
 
   for (p = config; p; p = p->next) {
     if (!p->name[0] || !strcmp(p->name, "global")) {
