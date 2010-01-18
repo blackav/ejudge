@@ -4425,7 +4425,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   strcpy(out->nwrun_spool_dir, tp->nwrun_spool_dir);
   if (!out->nwrun_spool_dir[0] && atp && atp->nwrun_spool_dir[0]) {
     sformat_message(out->nwrun_spool_dir, sizeof(out->nwrun_spool_dir), 0,
-                    atp->prepare_cmd, state->global, prb, NULL, out,
+                    atp->nwrun_spool_dir, state->global, prb, NULL, out,
                     NULL, 0, 0, 0);
   }
   if (!os_IsAbsolutePath(out->nwrun_spool_dir)) {
