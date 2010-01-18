@@ -532,10 +532,10 @@ read_error_code(char const *path)
 }
 
 static void
-append_msg_to_log(const unsigned char *path, char *format, ...)
+append_msg_to_log(const unsigned char *path, const char *format, ...)
   __attribute__((format(printf, 2, 3)));
 static void
-append_msg_to_log(const unsigned char *path, char *format, ...)
+append_msg_to_log(const unsigned char *path, const char *format, ...)
 {
   va_list args;
   unsigned char buf[1024];
@@ -558,6 +558,36 @@ append_msg_to_log(const unsigned char *path, char *format, ...)
   if (fclose(f) < 0) {
     err("append_msg_to_log: write error to %s", path);
     return;
+  }
+}
+
+static void
+chk_printf(struct testinfo *result, const char *format, ...)
+  __attribute__((format(printf, 2, 3)));
+static void
+chk_printf(struct testinfo *result, const char *format, ...)
+{
+  va_list args;
+  unsigned char buf[1024];
+
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+
+  if (!result->chk_out) {
+    result->chk_out = xstrdup(buf);
+    result->chk_out_size = strlen(result->chk_out);
+  } else {
+    int len1 = strlen(result->chk_out);
+    int len2 = strlen(buf);
+    int len3 = len1 + len2;
+    unsigned char *str = (unsigned char*) xmalloc(len3 + 1);
+    memcpy(str, result->chk_out, len1);
+    memcpy(str + len1, buf, len2);
+    str[len3] = 0;
+    xfree(result->chk_out);
+    result->chk_out = str;
+    result->chk_out_size = len3;
   }
 }
 
@@ -851,12 +881,18 @@ get_num_prefix(int num)
   return '6';
 }
 
+static const unsigned char b32_digits[]=
+"0123456789ABCDEFGHIJKLMNOPQRSTUV";
+
 static int
 invoke_nwrun(
+        struct section_global_data *global,
         struct section_tester_data *tst,
         struct run_request_packet *req_pkt,
         struct section_problem_data *prb,
+        full_archive_t far,
         int test_num,
+        int priority,
         const unsigned char *exe_src_dir,
         const unsigned char *exe_basename,
         const unsigned char *test_src_path,
@@ -876,12 +912,24 @@ invoke_nwrun(
   path_t result_pkt_name;
   path_t out_entry_packet;
   path_t dir_entry_packet;
+  path_t check_output_path;
+  path_t packet_output_path;
+  path_t packet_error_path;
+  path_t arch_entry_name;
   FILE *f = 0;
   int r;
-  struct generic_section_config *out_config = 0;
-  struct nwrun_out_packet *packet = 0;
+  struct generic_section_config *generic_out_packet = 0;
+  struct nwrun_out_packet *out_packet = 0;
+  long file_size;
+  int remove_out_packet_flag = 0;
 
   if (!tst->nwrun_spool_dir[0]) abort();
+
+  priority += 16;
+  if (priority < 0) priority = 0;
+  if (priority > 31) priority = 31;
+
+  result->status = RUN_CHECK_FAILED;
 
   if (os_IsAbsolutePath(tst->nwrun_spool_dir)) {
     snprintf(full_spool_dir, sizeof(full_spool_dir), "%s",
@@ -896,8 +944,8 @@ invoke_nwrun(
                EJUDGE_CONTESTS_HOME_DIR, tst->nwrun_spool_dir);
 #else
       err("cannot initialize full_spool_dir");
-      // handle error?
-      abort();
+      chk_printf(result, "full_spool_dir is invalid\n");
+      goto fail;
 #endif
     }
   }
@@ -905,11 +953,12 @@ invoke_nwrun(
   snprintf(queue_path, sizeof(queue_path), "%s/queue",
            full_spool_dir);
   if (make_all_dir(queue_path, 0777) < 0) {
-    // handle error?
-    abort();
+    chk_printf(result, "make_all_dir(%s) failed\n", queue_path);
+    goto fail;
   }
 
-  snprintf(pkt_name, sizeof(pkt_name), "%c%d%c%d%c%d%c%d",
+  snprintf(pkt_name, sizeof(pkt_name), "%c%c%d%c%d%c%d%c%d",
+           b32_digits[priority],
            get_num_prefix(req_pkt->contest_id), req_pkt->contest_id,
            get_num_prefix(req_pkt->problem_id), req_pkt->problem_id,
            get_num_prefix(test_num), test_num,
@@ -917,8 +966,8 @@ invoke_nwrun(
   snprintf(full_in_path, sizeof(full_in_path),
            "%s/in/%s_%s", queue_path, os_NodeName(), pkt_name);
   if (make_dir(full_in_path, 0777) < 0) {
-    // handle error?
-    abort();
+    chk_printf(result, "make_dir(%s) failed\n", full_in_path);
+    goto fail;
   }
 
   // copy (or link) the executable
@@ -927,24 +976,24 @@ invoke_nwrun(
   snprintf(tmp_in_path, sizeof(tmp_in_path), "%s/%s",
            full_in_path, exe_basename);
   if (make_hardlink(exe_src_path, tmp_in_path) < 0) {
-    // handle error?
-    abort();
+    chk_printf(result, "copy(%s, %s) failed\n", exe_src_path, tmp_in_path);
+    goto fail;
   }
 
   // copy (or link) the test file
   snprintf(tmp_in_path, sizeof(tmp_in_path), "%s/%s",
            full_in_path, test_basename);
   if (make_hardlink(test_src_path, tmp_in_path) < 0) {
-    // handle error?
-    abort();
+    chk_printf(result, "copy(%s, %s) failed\n", test_src_path, tmp_in_path);
+    goto fail;
   }
 
   // make the description file
   snprintf(tmp_in_path, sizeof(tmp_in_path), "%s/packet.cfg", full_in_path);
   f = fopen(tmp_in_path, "w");
   if (!f) {
-    // handle error?
-    abort();
+    chk_printf(result, "fopen(%s) failed\n", tmp_in_path);
+    goto fail;
   }
 
   fprintf(f, "contest_id = %d\n", req_pkt->contest_id);
@@ -991,16 +1040,16 @@ invoke_nwrun(
 
   fflush(f);
   if (ferror(f)) {
-    // handle error?
-    abort();
+    chk_printf(result, "output error to %s\n", tmp_in_path);
+    goto fail;
   }
   fclose(f); f = 0;
 
   snprintf(full_dir_path, sizeof(full_dir_path),
            "%s/dir/%s", queue_path, pkt_name);
   if (rename(full_in_path, full_dir_path) < 0) {
-    // handle error?
-    abort();
+    chk_printf(result, "rename(%s, %s) failed\n", full_in_path, full_dir_path);
+    goto fail;
   }
 
   // wait for the result package
@@ -1008,8 +1057,8 @@ invoke_nwrun(
   while (1) {
     r = scan_dir(result_path, result_pkt_name, sizeof(result_pkt_name));
     if (r < 0) {
-      /* FIXME: handle error? */
-      abort();
+      chk_printf(result, "scan_dir(%s) failed\n", result_path);
+      goto fail;
     }
 
     if (r > 0) break;
@@ -1023,25 +1072,150 @@ invoke_nwrun(
   snprintf(out_entry_packet, sizeof(out_entry_packet), "%s/out/%s_%s",
            result_path, os_NodeName(), result_pkt_name);
   if (rename(dir_entry_packet, out_entry_packet) < 0) {
-    // handle error?
-    abort();
+    chk_printf(result, "rename(%s, %s) failed", dir_entry_packet,
+               out_entry_packet);
+    goto fail;
   }
 
   // parse the resulting packet
+  remove_out_packet_flag = 1;
   snprintf(tmp_in_path, sizeof(tmp_in_path), "%s/packet.cfg",
            out_entry_packet);
-  out_config = nwrun_out_packet_parse(tmp_in_path, &packet);
-  if (!out_config) {
-    // handle error?
-    abort();
+  generic_out_packet = nwrun_out_packet_parse(tmp_in_path, &out_packet);
+  if (!generic_out_packet) {
+    chk_printf(result, "out_packet parse failed for %s\n", tmp_in_path);
+    goto fail;
   }
 
-  out_config = nwrun_out_packet_free(out_config);
+  // match output and input data
+  if (out_packet->contest_id != req_pkt->contest_id) {
+    chk_printf(result, "contest_id mismatch: %d, %d\n",
+               out_packet->contest_id, req_pkt->contest_id);
+    goto fail;
+  }
+  if (out_packet->prob_id != req_pkt->problem_id) {
+    chk_printf(result, "prob_id mismatch: %d, %d\n",
+               out_packet->prob_id, req_pkt->problem_id);
+    goto fail;
+  }
+  if (out_packet->test_num != test_num) {
+    chk_printf(result, "test_num mismatch: %d, %d\n",
+               out_packet->test_num, test_num);
+    goto fail;
+  }
+  if (out_packet->judge_id != req_pkt->judge_id) {
+    chk_printf(result, "judge_id mismatch: %d, %d\n",
+               out_packet->judge_id, req_pkt->judge_id);
+    goto fail;
+  }
 
+  result->status = out_packet->status;
+  if (result->status != RUN_OK
+      && result->status != RUN_RUN_TIME_ERR
+      && result->status != RUN_TIME_LIMIT_ERR
+      && result->status != RUN_CHECK_FAILED
+      && result->status != RUN_MEM_LIMIT_ERR
+      && result->status != RUN_SECURITY_ERR) {
+    chk_printf(result, "invalid status %d\n", result->status);
+    goto fail;
+  }
 
+  if (result->status != RUN_OK && out_packet->comment[0]) {
+    chk_printf(result, "nwrun: %s\n", out_packet->comment);
+  }
 
+  if (out_packet->is_signaled) {
+    result->code = 256;
+    result->termsig = out_packet->signal_num & 0x7f;
+  } else {
+    result->code = out_packet->exit_code & 0x7f;
+  }
 
-  return RUN_CHECK_FAILED;
+  result->times = out_packet->cpu_time_millis;
+  result->real_time = out_packet->real_time_millis;
+
+  /* handle the input test data */
+  if (req_pkt->full_archive) {
+    filehash_get(test_src_path, result->input_digest);
+    result->has_input_digest = 1;
+  } else if (prb->binary_input <= 0) {
+    file_size = generic_file_size(0, test_src_path, 0);
+    if (file_size >= 0) {
+      result->input_size = file_size;
+      if (global->max_file_length > 0 && file_size <= global->max_file_length) {
+        if (generic_read_file(&result->input, 0, 0, 0, 0, test_src_path, "")<0){
+          chk_printf(result, "generic_read_file(%s) failed\n", test_src_path);
+          goto fail;
+        }
+      }
+    }
+  }
+
+  /* handle the program output */
+  if (out_packet->output_file_existed > 0
+      && out_packet->output_file_too_big <= 0) {
+    snprintf(packet_output_path, sizeof(packet_output_path),
+             "%s/%s", out_entry_packet, prb->output_file);
+    if (result->status == RUN_OK) {
+      // copy file into the working directory for further checking
+      snprintf(check_output_path, sizeof(check_output_path),
+               "%s/%s", tst->check_dir, prb->output_file);
+      if (fast_copy_file(packet_output_path, check_output_path) < 0) {
+        chk_printf(result, "copy_file(%s, %s) failed\n",
+                   packet_output_path, check_output_path);
+        goto fail;
+      }
+    }
+
+    result->output_size = out_packet->output_file_orig_size;
+    if (!req_pkt->full_archive
+        && prb->binary_input <= 0
+        && global->max_file_length > 0
+        && result->output_size <= global->max_file_length) {
+      if (generic_read_file(&result->output,0,0,0,0,packet_output_path,"")<0) {
+        chk_printf(result, "generic_read_file(%s) failed\n",
+                   packet_output_path);
+        goto fail;
+      }
+    }
+
+    if (far) {
+      snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.o", test_num);
+      full_archive_append_file(far, arch_entry_name, 0, packet_output_path);
+    }
+  } else if (out_packet->output_file_existed > 0) {
+    chk_printf(result, "output file is too big\n");
+  }
+
+  /* handle the program error file */
+  if (out_packet->error_file_existed > 0) {
+    snprintf(packet_error_path, sizeof(packet_error_path),
+             "%s/%s", out_entry_packet, tst->error_file);
+    result->error_size = out_packet->error_file_size;
+    if (!req_pkt->full_archive
+        && global->max_file_length > 0
+        && result->error_size <= global->max_file_length) {
+      if (generic_read_file(&result->error,0,0,0,0,packet_error_path,"") < 0) {
+        chk_printf(result, "generic_read_file(%s) failed\n",
+                   packet_error_path);
+        goto fail;
+      }
+    }
+    if (far) {
+      snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.e", test_num);
+      full_archive_append_file(far, arch_entry_name, 0, packet_error_path);
+    }
+  }
+
+ cleanup:
+  remove_directory_recursively(out_entry_packet, 0);
+  if (f) fclose(f);
+  generic_out_packet = nwrun_out_packet_free(generic_out_packet);
+  return result->status;
+
+ fail:
+  result->status = RUN_CHECK_FAILED;
+  goto cleanup;
 }
 
 static int
@@ -1243,6 +1417,7 @@ run_tests(struct section_tester_data *tst,
     pfd2[1] = -1;
     tsk_int = 0;
 
+    memset(&tests[cur_test], 0, sizeof(tests[0]));
     tests[cur_test].input_size = -1;
     tests[cur_test].output_size = -1;
     tests[cur_test].error_size = -1;
@@ -1267,9 +1442,9 @@ run_tests(struct section_tester_data *tst,
     }
 
     if (tst->nwrun_spool_dir[0]) {
-      status = invoke_nwrun(tst, req_pkt, prb, cur_test,
-                            serve_state.global->run_work_dir, new_name,
-                            test_src, test_base, time_limit_value,
+      status = invoke_nwrun(serve_state.global, tst, req_pkt, prb, far,
+                            cur_test, 0, serve_state.global->run_work_dir,
+                            new_name, test_src, test_base, time_limit_value,
                             &tests[cur_test]);
       if (status) {
         failed_test = cur_test;
