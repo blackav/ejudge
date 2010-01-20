@@ -341,10 +341,10 @@ clear_directory(char const *path)
   errc = GetLastError();
   if (errc != ERROR_NO_MORE_FILES) {
     write_log(0, LOG_INFO, "FindNextFile failed");
-    CloseHandle(hnd);
+    FindClose(hnd);
     return -1;
   }
-  CloseHandle(hnd);
+  FindClose(hnd);
 
   write_log(0, LOG_INFO, "Directory %s cleared", path);
   return 0;
@@ -358,13 +358,13 @@ do_remove_directory(const unsigned char *path)
 
   while (!(res = RemoveDirectory(path))
          && GetLastError() == ERROR_SHARING_VIOLATION
-         && ++attempts < 10) {
+         && ++attempts < 5) {
     err("RemoveDirectory(%s): SHARING_VIOLATION, still trying...", path);
     os_Sleep(100);
   }
-  if (attempts >= 10) {
+  if (attempts >= 5) {
     err("RemoveDirectory(%s): still SHARING_VIOLATION, fail", path);
-  } else {
+  } else if (!res) {
     err("RemoveDirectory: %s: %s", path, os_ErrorMsg());
   }
 }
@@ -409,7 +409,7 @@ remove_directory_recursively(const unsigned char *path, int preserve_root)
       goto cleanup;
     }
 
-    CloseHandle(hnd); hnd = INVALID_HANDLE_VALUE;
+    FindClose(hnd); hnd = INVALID_HANDLE_VALUE;
   }
 
   for (i = 0; i < entries.u; ++i) {
@@ -432,7 +432,7 @@ remove_directory_recursively(const unsigned char *path, int preserve_root)
   }
 
  cleanup:
-  if (hnd != INVALID_HANDLE_VALUE) CloseHandle(hnd);
+  if (hnd != INVALID_HANDLE_VALUE) FindClose(hnd);
   xstrarrayfree(&entries);
   return ret;
 }
