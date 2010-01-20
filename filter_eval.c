@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -123,6 +123,7 @@ do_eval(struct filter_env *env,
   struct filter_tree r1, r2;
   int lang_id, prob_id, user_id, flags;
   const struct userlist_user *u;
+  const struct userlist_member *m;
   const unsigned char *s;
 
   memset(res, 0, sizeof(res));
@@ -193,6 +194,7 @@ do_eval(struct filter_env *env,
   case TOK_UID:
   case TOK_LOGIN:
   case TOK_NAME:
+  case TOK_GROUP:
   case TOK_LANG:
   case TOK_RESULT:
   case TOK_SCORE:
@@ -277,6 +279,19 @@ do_eval(struct filter_env *env,
         res->v.s = envdup(env, "");
       } else {
         res->v.s = envdup(env, teamdb_get_name(env->teamdb_state, user_id));
+      }
+      break;
+    case TOK_GROUP:
+      res->kind = TOK_STRING_L;
+      res->type = FILTER_TYPE_STRING;
+      user_id = env->rentries[r1.v.i].user_id;
+      if (user_id > 0
+          && (u = teamdb_get_userlist(env->teamdb_state, user_id))
+          && u->cnts0
+          && (m = userlist_members_get_first(u->cnts0->members))) {
+        res->v.s = envdup(env, m->group);
+      } else {
+        res->v.s = envdup(env, "");
       }
       break;
     case TOK_LANG:
@@ -517,6 +532,19 @@ do_eval(struct filter_env *env,
       res->v.s = envdup(env, "");
     } else {
       res->v.s = envdup(env, teamdb_get_name(env->teamdb_state, env->cur->user_id));
+    }
+    break;
+  case TOK_CURGROUP:
+    res->kind = TOK_STRING_L;
+    res->type = FILTER_TYPE_STRING;
+    user_id = env->cur->user_id;
+    if (user_id > 0
+        && (u = teamdb_get_userlist(env->teamdb_state, user_id))
+        && u->cnts0
+        && (m = userlist_members_get_first(u->cnts0->members))) {
+      res->v.s = envdup(env, m->group);
+    } else {
+      res->v.s = envdup(env, "");
     }
     break;
   case TOK_CURLANG:

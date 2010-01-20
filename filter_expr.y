@@ -1,7 +1,7 @@
-/* -*- mode: fundamental; coding: koi8-r -*- */
+/* -*- mode: fundamental -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -112,6 +112,8 @@ static void *filter_expr_user_data;
 %token TOK_CURLOGIN  "curlogin"
 %token TOK_NAME      "name"
 %token TOK_CURNAME   "curname"
+%token TOK_GROUP     "group"
+%token TOK_CURGROUP  "curgroup"
 %token TOK_LANG      "lang"
 %token TOK_CURLANG   "curlang"
 %token TOK_RESULT    "result"
@@ -284,6 +286,9 @@ exprA :
 | "name" { $1->kind = TOK_CURNAME; $$ = $1; }
 | "name" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curname" { $$ = $1; }
+| "group" { $1->kind = TOK_CURGROUP; $$ = $1; }
+| "group" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "curgroup" { $$ = $1; }
 | "lang" { $1->kind = TOK_CURLANG; $$ = $1; }
 | "lang" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curlang" { $$ = $1; }
