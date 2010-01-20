@@ -199,6 +199,17 @@ parse_config(void)
   printf("%s\n", global->cache_dir);
 }
 
+static const unsigned char b32_digits[]=
+"0123456789ABCDEFGHIJKLMNOPQRSTUV";
+static int
+get_priority_code(int priority)
+{
+  priority += 16;
+  if (priority < 0) priority = 0;
+  if (priority > 31) priority = 31;
+  return b32_digits[priority];
+}
+
 static void
 create_dir(void)
 {
@@ -547,7 +558,8 @@ read_packet(const unsigned char *dir_path)
   }
 
   /* create the output directory */
-  snprintf(result_name, sizeof(result_name), "%c%d%c%d%c%d%c%d",
+  snprintf(result_name, sizeof(result_name), "%c%c%d%c%d%c%d%c%d",
+           get_priority_code(0),
            get_num_prefix(packet->contest_id), packet->contest_id,
            get_num_prefix(packet->prob_id), packet->prob_id,
            get_num_prefix(packet->test_num), packet->test_num,
@@ -615,6 +627,7 @@ do_loop(void)
   unsigned char new_path[EJ_PATH_MAX];
   unsigned char out_path[EJ_PATH_MAX];
   int r;
+  int serial = 0;
 
   while (1) {
     r = scan_dir(global->queue_dir, new_entry_name, sizeof(new_entry_name));
@@ -632,18 +645,30 @@ do_loop(void)
     snprintf(new_path, sizeof(new_path), "%s/dir/%s", global->queue_dir, new_entry_name);
     snprintf(out_path, sizeof(out_path), "%s/out/%s", global->queue_dir, out_entry_name);
 
-    if (rename(new_path, out_path) < 0) {
+    while (rename(new_path, out_path) < 0) {
       if (errno == ENOENT) {
         err("file %s is stolen?", new_path);
+        out_path[0] = 0;
         os_Sleep(global->sleep_time);
+        break;
+      }
+
+      if (errno == ENOTEMPTY || errno == EEXIST) {
+        err("directory %s already exists", out_path);
+        snprintf(out_entry_name, sizeof(out_entry_name), "%s_%d_%s",
+                 os_NodeName(), ++serial, new_entry_name);
+        snprintf(out_path, sizeof(out_path), "%s/out/%s", global->queue_dir,
+                 out_entry_name);
         continue;
       }
 
       die("rename: %s -> %s failed: %s", new_path, out_path, strerror(errno));
     }
 
-    read_packet(out_path);
-    remove_directory_recursively(out_path, 0);
+    if (out_path[0]) {
+      read_packet(out_path);
+      remove_directory_recursively(out_path, 0);
+    }
   }
 }
 
