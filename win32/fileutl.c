@@ -350,6 +350,25 @@ clear_directory(char const *path)
   return 0;
 }
 
+static void
+do_remove_directory(const unsigned char *path)
+{
+  int attempts = 0;
+  int res;
+
+  while (!(res = RemoveDirectory(path))
+         && GetLastError() == ERROR_SHARING_VIOLATION
+         && ++attempts < 10) {
+    err("RemoveDirectory(%s): SHARING_VIOLATION, still trying...", path);
+    os_Sleep(100);
+  }
+  if (attempts >= 10) {
+    err("RemoveDirectory(%s): still SHARING_VIOLATION, fail", path);
+  } else {
+    err("RemoveDirectory: %s: %s", path, os_ErrorMsg());
+  }
+}
+
 int
 remove_directory_recursively(const unsigned char *path, int preserve_root)
 {
@@ -409,9 +428,7 @@ remove_directory_recursively(const unsigned char *path, int preserve_root)
   }
 
   if (!preserve_root) {
-    if (!RemoveDirectory(path)) {
-      err("RemoveDirectory: %s: %s", path, os_ErrorMsg());
-    }
+    do_remove_directory(path);
   }
 
  cleanup:
