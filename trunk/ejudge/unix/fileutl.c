@@ -1683,6 +1683,9 @@ generic_truncate(const char *path, ssize_t size)
 int
 make_hardlink(const unsigned char *oldname, const unsigned char *newname)
 {
+  return do_copy_file(oldname, 0, newname, 0);
+
+#if 0
   if (link(oldname, newname) >= 0) return 0;
   if (errno == EEXIST || errno == EXDEV || errno == EPERM) {
     return do_copy_file(oldname, 0, newname, 0);
@@ -1690,6 +1693,7 @@ make_hardlink(const unsigned char *oldname, const unsigned char *newname)
   err("make_hardlink: link(%s,%s) failed: %s",
       oldname, newname, os_ErrorMsg());
   return -1;
+#endif
 }
 
 const unsigned char *
