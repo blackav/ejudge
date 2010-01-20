@@ -4428,18 +4428,20 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
                     atp->nwrun_spool_dir, state->global, prb, NULL, out,
                     NULL, 0, 0, 0);
   }
-  if (!os_IsAbsolutePath(out->nwrun_spool_dir)) {
-    path_t tmp;
-    if (ejudge_config && ejudge_config->contests_home_dir) {
-      snprintf(tmp, sizeof(tmp), "%s/%s", ejudge_config->contests_home_dir,
-               out->nwrun_spool_dir);
-      strcpy(out->nwrun_spool_dir, tmp);
-    } else {
+  if (out->nwrun_spool_dir[0]) {
+    if (!os_IsAbsolutePath(out->nwrun_spool_dir)) {
+      path_t tmp;
+      if (ejudge_config && ejudge_config->contests_home_dir) {
+        snprintf(tmp, sizeof(tmp), "%s/%s", ejudge_config->contests_home_dir,
+                 out->nwrun_spool_dir);
+        strcpy(out->nwrun_spool_dir, tmp);
+      } else {
 #if defined EJUDGE_CONTESTS_HOME_DIR
-      snprintf(tmp, sizeof(tmp), "%s/%s", EJUDGE_CONTESTS_HOME_DIR,
-               out->nwrun_spool_dir);
-      strcpy(out->nwrun_spool_dir, tmp);
+        snprintf(tmp, sizeof(tmp), "%s/%s", EJUDGE_CONTESTS_HOME_DIR,
+                 out->nwrun_spool_dir);
+        strcpy(out->nwrun_spool_dir, tmp);
 #endif
+      }
     }
   }
 
