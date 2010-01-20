@@ -183,6 +183,9 @@ do_loop(void)
     snprintf(run_name, sizeof(run_name), "%06d", rpl.run_id);
     pathmake(log_out, report_dir, "/", run_name, NULL);
 
+    make_all_dir(status_dir, 0777);
+    make_dir(report_dir, 0777);
+
     if (!r) {
       /*
        * there is something wrong, but we have contest_id, judge_id
@@ -576,7 +579,7 @@ main(int argc, char *argv[])
   }
   if (!compile_cfg_path && ejudge_config->contests_home_dir) {
     snprintf(compile_cfg_buf, sizeof(compile_cfg_buf),
-             "%s/win32_compile/conf/win32_compile.cfg",
+             "%s/win32_compile/conf/compile.cfg",
              ejudge_config->contests_home_dir);
     compile_cfg_path = compile_cfg_buf;
   }
@@ -630,6 +633,14 @@ main(int argc, char *argv[])
     subst_idx++;
 
     subst_src[subst_idx] = EJUDGE_CONTESTS_HOME_DIR;
+    subst_dst[subst_idx] = contests_home_dir;
+    subst_idx++;
+
+    subst_src[subst_idx] = "/COMPILE_HOME_DIR";
+    subst_dst[subst_idx] = compile_home_dir;
+    subst_idx++;
+
+    subst_src[subst_idx] = "/CONTESTS_HOME_DIR";
     subst_dst[subst_idx] = contests_home_dir;
     subst_idx++;
 

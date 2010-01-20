@@ -898,8 +898,7 @@ invoke_nwrun(
         const unsigned char *test_src_path,
         const unsigned char *test_basename,
         long time_limit_millis,
-        struct testinfo *result
-)
+        struct testinfo *result)
 {
   path_t full_spool_dir;
   path_t pkt_name;
@@ -1047,12 +1046,19 @@ invoke_nwrun(
   }
   fclose(f); f = 0;
 
+  // wait for the result package
+  snprintf(result_path, sizeof(result_path), "%s/result/%06d",
+           full_spool_dir, req_pkt->contest_id);
+  make_all_dir(result_path, 0777);
+
   snprintf(full_dir_path, sizeof(full_dir_path),
            "%s/dir/%s", queue_path, pkt_name);
   if (rename(full_in_path, full_dir_path) < 0) {
     chk_printf(result, "rename(%s, %s) failed\n", full_in_path, full_dir_path);
     goto fail;
   }
+
+ restart_waiting:;
 
   // wait for the result package
   // timeout is 2 * real_time_limit
@@ -1061,8 +1067,6 @@ invoke_nwrun(
   if (timeout <= 0) timeout = 2 * time_limit_millis;
   wait_time = 0;
 
-  snprintf(result_path, sizeof(result_path), "%s/result/%06d",
-           full_spool_dir, req_pkt->contest_id);
   while (1) {
     r = scan_dir(result_path, result_pkt_name, sizeof(result_pkt_name));
     if (r < 0) {
@@ -1111,22 +1115,22 @@ invoke_nwrun(
   if (out_packet->contest_id != req_pkt->contest_id) {
     chk_printf(result, "contest_id mismatch: %d, %d\n",
                out_packet->contest_id, req_pkt->contest_id);
-    goto fail;
+    goto restart_waiting;
   }
   if (out_packet->prob_id != req_pkt->problem_id) {
     chk_printf(result, "prob_id mismatch: %d, %d\n",
                out_packet->prob_id, req_pkt->problem_id);
-    goto fail;
+    goto restart_waiting;
   }
   if (out_packet->test_num != test_num) {
     chk_printf(result, "test_num mismatch: %d, %d\n",
                out_packet->test_num, test_num);
-    goto fail;
+    goto restart_waiting;
   }
   if (out_packet->judge_id != req_pkt->judge_id) {
     chk_printf(result, "judge_id mismatch: %d, %d\n",
                out_packet->judge_id, req_pkt->judge_id);
-    goto fail;
+    goto restart_waiting;
   }
 
   result->status = out_packet->status;
