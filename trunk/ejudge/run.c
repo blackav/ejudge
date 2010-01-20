@@ -922,6 +922,8 @@ invoke_nwrun(
   struct nwrun_out_packet *out_packet = 0;
   long file_size;
   int remove_out_packet_flag = 0;
+  int timeout;
+  int wait_time;
 
   if (!tst->nwrun_spool_dir[0]) abort();
 
@@ -1053,6 +1055,12 @@ invoke_nwrun(
   }
 
   // wait for the result package
+  // timeout is 2 * real_time_limit
+  timeout = 0;
+  if (prb->real_time_limit > 0) timeout = 2 * prb->real_time_limit;
+  if (timeout <= 0) timeout = 2 * time_limit_millis;
+  wait_time = 0;
+
   snprintf(result_path, sizeof(result_path), "%s/result/%06d",
            full_spool_dir, req_pkt->contest_id);
   while (1) {
@@ -1064,8 +1072,19 @@ invoke_nwrun(
 
     if (r > 0) break;
 
-    // more appropriate interval?
+    if (wait_time >= timeout) {
+      chk_printf(result, "invoke_nwrun: timeout!\n");
+      goto fail;
+    }
+
+    cr_serialize_unlock(&serve_state);
+    interrupt_enable();
     os_Sleep(100);
+    interrupt_disable();
+    cr_serialize_lock(&serve_state);
+
+    // more appropriate interval?
+    wait_time += 100;
   }
 
   snprintf(dir_entry_packet, sizeof(dir_entry_packet), "%s/dir/%s",
