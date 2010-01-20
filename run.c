@@ -909,7 +909,7 @@ invoke_nwrun(
   path_t exe_src_path;
   path_t result_path;
   path_t result_pkt_name;
-  path_t out_entry_packet;
+  path_t out_entry_packet = { 0 };
   path_t dir_entry_packet;
   path_t check_output_path;
   path_t packet_output_path;
@@ -1063,7 +1063,7 @@ invoke_nwrun(
   // wait for the result package
   // timeout is 2 * real_time_limit
   timeout = 0;
-  if (prb->real_time_limit > 0) timeout = 2 * prb->real_time_limit;
+  if (prb->real_time_limit > 0) timeout = 2 * prb->real_time_limit * 1000;
   if (timeout <= 0) timeout = 2 * time_limit_millis;
   wait_time = 0;
 
@@ -1096,6 +1096,8 @@ invoke_nwrun(
   snprintf(out_entry_packet, sizeof(out_entry_packet), "%s/out/%s_%s",
            result_path, os_NodeName(), result_pkt_name);
   if (rename(dir_entry_packet, out_entry_packet) < 0) {
+    err("rename(%s, %s) failed: %s", dir_entry_packet, out_entry_packet,
+        os_ErrorMsg());
     chk_printf(result, "rename(%s, %s) failed", dir_entry_packet,
                out_entry_packet);
     goto fail;
@@ -1232,7 +1234,9 @@ invoke_nwrun(
   }
 
  cleanup:
-  remove_directory_recursively(out_entry_packet, 0);
+  if (out_entry_packet[0]) {
+    remove_directory_recursively(out_entry_packet, 0);
+  }
   if (f) fclose(f);
   generic_out_packet = nwrun_out_packet_free(generic_out_packet);
   return result->status;
