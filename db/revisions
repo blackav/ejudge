@@ -4993,3 +4993,7 @@ filter_expr.y 5694 0 2457877
 filter_scan.lex 5694 0 762471
 run.c 5696 0 8860644
 unix/fileutl.c 5698 0 3104285
+compile.c 5701 0 1739280
+nwrun.c 5701 0 1732828
+run.c 5701 0 8873008
+win32/fileutl.c 5700 0 1778980
