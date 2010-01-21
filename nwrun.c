@@ -558,9 +558,10 @@ read_packet(const unsigned char *dir_path)
   }
 
   /* create the output directory */
-  snprintf(result_name, sizeof(result_name), "%c%c%d%c%d%c%d%c%d",
-           get_priority_code(0),
+  snprintf(result_name, sizeof(result_name), "%c%c%d%c%d%c%d%c%d%c%d",
+           get_priority_code(packet->priority),
            get_num_prefix(packet->contest_id), packet->contest_id,
+           get_num_prefix(packet->run_id - 1), packet->run_id - 1,
            get_num_prefix(packet->prob_id), packet->prob_id,
            get_num_prefix(packet->test_num), packet->test_num,
            get_num_prefix(packet->judge_id), packet->judge_id);

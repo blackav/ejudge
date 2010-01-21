@@ -1148,6 +1148,7 @@ invoke_nwrun(
 
   result->status = out_packet->status;
   if (result->status != RUN_OK
+      && result->status != RUN_PRESENTATION_ERR
       && result->status != RUN_RUN_TIME_ERR
       && result->status != RUN_TIME_LIMIT_ERR
       && result->status != RUN_CHECK_FAILED
