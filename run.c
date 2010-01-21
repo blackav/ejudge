@@ -1063,8 +1063,8 @@ invoke_nwrun(
   // wait for the result package
   // timeout is 2 * real_time_limit
   timeout = 0;
-  if (prb->real_time_limit > 0) timeout = 2 * prb->real_time_limit * 1000;
-  if (timeout <= 0) timeout = 2 * time_limit_millis;
+  if (prb->real_time_limit > 0) timeout = 3 * prb->real_time_limit * 1000;
+  if (timeout <= 0) timeout = 3 * time_limit_millis;
   wait_time = 0;
 
   while (1) {
