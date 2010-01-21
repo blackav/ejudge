@@ -958,9 +958,10 @@ invoke_nwrun(
     goto fail;
   }
 
-  snprintf(pkt_name, sizeof(pkt_name), "%c%c%d%c%d%c%d%c%d",
+  snprintf(pkt_name, sizeof(pkt_name), "%c%c%d%c%d%c%d%c%d%c%d",
            b32_digits[priority],
            get_num_prefix(req_pkt->contest_id), req_pkt->contest_id,
+           get_num_prefix(req_pkt->run_id), req_pkt->run_id,
            get_num_prefix(req_pkt->problem_id), req_pkt->problem_id,
            get_num_prefix(test_num), test_num,
            get_num_prefix(req_pkt->judge_id), req_pkt->judge_id);
@@ -997,14 +998,24 @@ invoke_nwrun(
     goto fail;
   }
 
+  fprintf(f, "priority = %d\n", priority + 1);
   fprintf(f, "contest_id = %d\n", req_pkt->contest_id);
+  fprintf(f, "run_id = %d\n", req_pkt->run_id + 1);
   fprintf(f, "prob_id = %d\n", req_pkt->problem_id);
   fprintf(f, "test_num = %d\n", test_num);
   fprintf(f, "judge_id = %d\n", req_pkt->judge_id);
   fprintf(f, "use_contest_id_in_reply = %d\n", 1);
   fprintf(f, "enable_unix2dos = %d\n", 1);
-  fprintf(f, "redirect_stdin = %d\n", 1);
-  fprintf(f, "redirect_stdout = %d\n", 1);
+  if (prb->use_stdin) {
+    fprintf(f, "redirect_stdin = %d\n", 1);
+  } else {
+    fprintf(f, "disable_stdin = %d\n", 1);
+  }
+  if (prb->use_stdout) {
+    fprintf(f, "redirect_stdout = %d\n", 1);
+  } else {
+    fprintf(f, "ignore_stdout = %d\n", 1);
+  }
   fprintf(f, "redirect_stderr = %d\n", 1);
   fprintf(f, "time_limit_millis = %ld\n", time_limit_millis);
   if (prb->real_time_limit > 0) {
