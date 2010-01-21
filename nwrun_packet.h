@@ -27,7 +27,9 @@ struct nwrun_in_packet
 {
   struct generic_section_config g;
 
+  int priority;
   int contest_id;
+  int run_id;
   int prob_id;
   int test_num;
   int judge_id;
@@ -69,6 +71,7 @@ struct nwrun_out_packet
   struct generic_section_config g;
 
   int contest_id;
+  int run_id;
   int prob_id;
   int test_num;
   int judge_id;

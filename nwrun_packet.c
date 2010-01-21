@@ -34,7 +34,9 @@
 #define NWRUN_IN_PARAM(x, t) { #x, t, NWRUN_IN_OFFSET(x), NWRUN_IN_SIZE(x) }
 static const struct config_parse_info nwrun_in_params[] =
 {
+  NWRUN_IN_PARAM(priority, "d"),
   NWRUN_IN_PARAM(contest_id, "d"),
+  NWRUN_IN_PARAM(run_id, "d"),
   NWRUN_IN_PARAM(prob_id, "d"),
   NWRUN_IN_PARAM(test_num, "d"),
   NWRUN_IN_PARAM(judge_id, "d"),
@@ -124,6 +126,7 @@ nwrun_in_packet_free(struct generic_section_config *config)
 static const struct config_parse_info nwrun_out_params[] =
 {
   NWRUN_OUT_PARAM(contest_id, "d"),
+  NWRUN_OUT_PARAM(run_id, "d"),
   NWRUN_OUT_PARAM(prob_id, "d"),
   NWRUN_OUT_PARAM(test_num, "d"),
   NWRUN_OUT_PARAM(judge_id, "d"),
@@ -201,6 +204,7 @@ nwrun_out_packet_print(FILE *fout, const struct nwrun_out_packet *result)
   fprintf(fout, "# -*- coding: utf-8 -*-\n\n");
 
   fprintf(fout, "contest_id = %d\n", result->contest_id);
+  fprintf(fout, "run_id = %d\n", result->run_id);
   fprintf(fout, "prob_id = %d\n", result->prob_id);
   fprintf(fout, "test_num = %d\n", result->test_num);
   fprintf(fout, "judge_id = %d\n", result->judge_id);
