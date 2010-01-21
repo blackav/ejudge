@@ -453,7 +453,8 @@ handle_packet(
       snprintf(result->comment, sizeof(result->comment),
                "no output file");
     }
-    if (cur_status == RUN_OK) result->status = RUN_PRESENTATION_ERR;
+    if (cur_status == RUN_OK) cur_status = RUN_PRESENTATION_ERR;
+    result->status = cur_status;
     goto cleanup;
   }
 
@@ -463,7 +464,8 @@ handle_packet(
     result->output_file_too_big = 1;
     snprintf(result->comment, sizeof(result->comment),
              "output file is too big (%ld)", ((long) output_file_size));
-    if (cur_status == RUN_OK) result->status = RUN_PRESENTATION_ERR;
+    if (cur_status == RUN_OK) cur_status = RUN_PRESENTATION_ERR;
+    result->status = cur_status;
     goto cleanup;
   }
 
@@ -559,7 +561,7 @@ read_packet(const unsigned char *dir_path)
 
   /* create the output directory */
   snprintf(result_name, sizeof(result_name), "%c%c%d%c%d%c%d%c%d%c%d",
-           get_priority_code(packet->priority),
+           get_priority_code(packet->priority - 17),
            get_num_prefix(packet->contest_id), packet->contest_id,
            get_num_prefix(packet->run_id - 1), packet->run_id - 1,
            get_num_prefix(packet->prob_id), packet->prob_id,
