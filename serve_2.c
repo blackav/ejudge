@@ -1221,6 +1221,7 @@ serve_run_request(
   run_pkt->secure_run = state->global->secure_run;
   run_pkt->notify_flag = notify_flag;
   if (run_pkt->secure_run && prob->disable_security) run_pkt->secure_run = 0;
+  if (run_pkt->secure_run && lang->disable_security) run_pkt->secure_run = 0;
   run_pkt->security_violation = state->global->detect_violations;
   get_current_time(&run_pkt->ts4, &run_pkt->ts4_us);
   if (comp_pkt) {
