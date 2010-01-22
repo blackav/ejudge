@@ -3415,6 +3415,14 @@ super_html_edit_languages(
                              form_row_attrs[row ^= 1],
                              self_url, extra_args, lang_hidden_vars);
 
+    //LANGUAGE_PARAM(disable_security, "d"),
+    print_boolean_select_row(f, "Disable security restrictions",
+                             lang->disable_security,
+                             SSERV_CMD_LANG_CHANGE_DISABLE_SECURITY,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url, extra_args, lang_hidden_vars);
+
     //LANGUAGE_PARAM(disable_testing, "d"),
     print_boolean_select_row(f, "Disable any testing of submissions",
                              lang->disable_testing,
@@ -3745,6 +3753,11 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
     if (!pl_new) return 0;
     pl_new->style_checker_cmd[0] = 0;
     break;
+
+  case SSERV_CMD_LANG_CHANGE_DISABLE_SECURITY:
+    if (!pl_new) return 0;
+    p_int = &pl_new->disable_security;
+    goto handle_boolean;
 
   case SSERV_CMD_LANG_CHANGE_DISABLE_AUTO_TESTING:
     if (!pl_new) return 0;
