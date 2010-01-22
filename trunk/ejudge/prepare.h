@@ -938,6 +938,8 @@ struct section_language_data
   int priority_adjustment;
   /** language is insecure */
   ejintbool_t insecure;
+  /** disable security restrictions for this language */
+  ejintbool_t disable_security;
   /** language short name */
   unsigned char short_name[32];
   /** language long name */
