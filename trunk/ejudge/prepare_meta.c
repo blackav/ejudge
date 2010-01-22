@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/01/19 22:56:04
+// Generated 2010/01/22 12:52:19
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -500,6 +500,7 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_binary] = { CNTSLANG_binary, 'B', XSIZE(struct section_language_data, binary), "binary", XOFFSET(struct section_language_data, binary) },
   [CNTSLANG_priority_adjustment] = { CNTSLANG_priority_adjustment, 'i', XSIZE(struct section_language_data, priority_adjustment), "priority_adjustment", XOFFSET(struct section_language_data, priority_adjustment) },
   [CNTSLANG_insecure] = { CNTSLANG_insecure, 'B', XSIZE(struct section_language_data, insecure), "insecure", XOFFSET(struct section_language_data, insecure) },
+  [CNTSLANG_disable_security] = { CNTSLANG_disable_security, 'B', XSIZE(struct section_language_data, disable_security), "disable_security", XOFFSET(struct section_language_data, disable_security) },
   [CNTSLANG_short_name] = { CNTSLANG_short_name, 'S', XSIZE(struct section_language_data, short_name), "short_name", XOFFSET(struct section_language_data, short_name) },
   [CNTSLANG_long_name] = { CNTSLANG_long_name, 'S', XSIZE(struct section_language_data, long_name), "long_name", XOFFSET(struct section_language_data, long_name) },
   [CNTSLANG_key] = { CNTSLANG_key, 'S', XSIZE(struct section_language_data, key), "key", XOFFSET(struct section_language_data, key) },
