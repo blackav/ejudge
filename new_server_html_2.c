@@ -3072,10 +3072,12 @@ ns_write_judging_priorities(
 }
 
 int
-ns_new_run_form(FILE *fout, FILE *log_f,
-                struct http_request_info *phr,
-                const struct contest_desc *cnts,
-                struct contest_extra *extra)
+ns_new_run_form(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
@@ -3087,7 +3089,7 @@ ns_new_run_form(FILE *fout, FILE *log_f,
           ns_aref(bb, sizeof(bb), phr, 0, 0),
           _("To main page"));
 
-  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+  html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
   fprintf(fout, "<table>\n");
 
   fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
@@ -3110,7 +3112,7 @@ ns_new_run_form(FILE *fout, FILE *log_f,
           html_input_text(bb, sizeof(bb), "variant", 10, 0));
 
   fprintf(fout, "<tr><td>%s:</td>", _("Language"));
-  fprintf(fout, "<td><select name=\"language\"><option value=\"\"></option>\n");
+  fprintf(fout,"<td><select name=\"language\"><option value=\"\"></option>\n");
   for (i = 1; i <= cs->max_lang; i++)
     if (cs->langs[i]) {
       fprintf(fout, "<option value=\"%d\">%s - %s</option>\n",
