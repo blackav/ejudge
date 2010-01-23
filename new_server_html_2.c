@@ -5836,6 +5836,16 @@ ns_write_testing_queue(
   memset(&vec, 0, sizeof(vec));
   scan_run_queue(global->run_queue_dir, cnts->id, &vec);
 
+  snprintf(cl, sizeof(cl), " class=\"%s\"", "b0");
+  fprintf(fout, "<table%s><tr>", cl);
+  fprintf(fout, "<td%s>%s%s</a></td>",
+          cl, ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
+          _("Main page"));
+  fprintf(fout, "<td%s>%s%s</a></td>", cl,
+          ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_TESTING_QUEUE,0),
+          _("Refresh"));
+  fprintf(fout, "</tr></table>\n");  
+
   if (table_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
   }
@@ -5900,6 +5910,9 @@ ns_write_testing_queue(
 
   snprintf(cl, sizeof(cl), " class=\"%s\"", "b0");
   fprintf(fout, "<table%s><tr>", cl);
+  fprintf(fout, "<td%s>%s%s</a></td>",
+          cl, ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
+          _("Main page"));
   fprintf(fout, "<td%s><a href=\"%s\">Delete all</a></td>", cl,
           ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_TESTING_DELETE_ALL,0));
   fprintf(fout, "<td%s><a href=\"%s\">Up priority all</a></td>", cl,
