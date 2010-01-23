@@ -3,7 +3,7 @@
 #ifndef __SERVE_STATE_H__
 #define __SERVE_STATE_H__
 
-/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -444,6 +444,20 @@ int
 serve_get_user_result_score(
         serve_state_t state,
         int user_id);
+
+int
+serve_testing_queue_delete(serve_state_t state, const unsigned char *packet);
+int
+serve_testing_queue_up(serve_state_t state, const unsigned char *packet);
+int
+serve_testing_queue_down(serve_state_t state, const unsigned char *packet);
+
+int
+serve_testing_queue_delete_all(serve_state_t state);
+int
+serve_testing_queue_up_all(serve_state_t state);
+int
+serve_testing_queue_down_all(serve_state_t state);
 
 extern const size_t serve_struct_sizes_array[];
 extern const size_t serve_struct_sizes_array_size;
