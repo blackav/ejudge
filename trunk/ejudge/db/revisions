@@ -5014,3 +5014,13 @@ prepare.c 5715 0 17036190
 prepare_out.c 5715 0 6529337
 super_html_3.c 5715 0 24842442
 serve_2.c 5717 0 8077942
+serve_state.h 5719 0 1185413
+new-server.h 5720 0 2217173
+serve_state.h 5720 0 1209608
+run.c 5720 0 8928469
+userlist-server.c 5720 0 22747431
+copyright.c 5720 0 202312
+new_server_html.c 5720 0 38937681
+new_server_html_2.c 5720 0 15006050
+new_server_tables.c 5720 0 1190649
+serve_2.c 5720 0 8692041
