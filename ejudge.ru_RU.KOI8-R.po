@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-01-09 11:24+0300\n"
-"PO-Revision-Date: 2010-01-20 11:29+0300\n"
+"POT-Creation-Date: 2010-01-23 14:10+0300\n"
+"PO-Revision-Date: 2010-01-23 16:15+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -450,6 +450,9 @@ msgstr "Принято на проверку"
 msgid "Access denied"
 msgstr "В доступе отказано"
 
+msgid "Actions"
+msgstr "Действия"
+
 msgid "Activate new user account"
 msgstr "Активировать новую учётную запись"
 
@@ -573,6 +576,9 @@ msgstr "Приём апелляций прекращён"
 
 msgid "Apr"
 msgstr "Апр"
+
+msgid "Architecture"
+msgstr "Архитектура"
 
 msgid "Archive creation with tar failed"
 msgstr "При создании архива программой tar произошла ошибка"
@@ -963,6 +969,9 @@ msgstr "Создать учётную запись"
 
 msgid "Create another account"
 msgstr "Создать ещё одну учётную запись"
+
+msgid "Create time"
+msgstr "Время создания"
 
 msgid "Create user account"
 msgstr "Создать новую учётную запись"
@@ -2319,6 +2328,9 @@ msgstr "Пакет имеет слишком большой размер"
 msgid "Packet is too small"
 msgstr "Пакет имеет слишком маленький размер"
 
+msgid "Packet name"
+msgstr "Имя пакета"
+
 msgid "Page"
 msgstr "Страница"
 
@@ -2490,6 +2502,9 @@ msgstr "Превышена квота печати (%d страниц)"
 
 msgid "Printing user protocol"
 msgstr "Печать экзаменационного протокола участника"
+
+msgid "Priority"
+msgstr "Приоритет"
 
 msgid "Priority adjustment"
 msgstr "Поправка приоритета"
@@ -3204,6 +3219,9 @@ msgstr "Проверка решений участников приостановлена"
 msgid "Testing of team's submits is suspended"
 msgstr "Проверка решений участников приостановлена"
 
+msgid "Testing queue"
+msgstr "Очередь тестирования"
+
 #, c-format
 msgid "Tests is empty in row %d\n"
 msgstr "Тесты не заданы в строке %d\n"
@@ -3611,6 +3629,9 @@ msgstr "Сданный ответ"
 
 msgid "View team report"
 msgstr "Просмотреть пользовательский протокол"
+
+msgid "View testing queue"
+msgstr "Просмотр очереди тестирования"
 
 msgid "View the problem statement and send a submission"
 msgstr "Посмотреть условие задачи и отправить решение"
