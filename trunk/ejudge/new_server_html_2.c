@@ -46,6 +46,7 @@
 #include "userlist_clnt.h"
 #include "charsets.h"
 #include "compat.h"
+#include "run_packet.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -57,6 +58,7 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include <ctype.h>
+#include <dirent.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -5707,6 +5709,206 @@ ns_examiners_page(
 
   xfree(roles);
   xfree(exam_flag);
+  html_armor_free(&ab);
+  return 0;
+}
+
+struct testing_queue_entry
+{
+  unsigned char *entry_name;
+  int priority;
+  time_t mtime;
+  struct run_request_packet *packet;
+};
+
+struct testing_queue_vec
+{
+  int a;
+  int u;
+  struct testing_queue_entry *v;
+};
+
+static int
+scan_run_sort_func(const void *v1, const void *v2)
+{
+  const struct testing_queue_entry *p1 = (const struct testing_queue_entry*) v1;
+  const struct testing_queue_entry *p2 = (const struct testing_queue_entry*) v2;
+
+  return strcmp(p1->entry_name, p2->entry_name);
+}
+
+static void
+scan_run_queue(
+        const unsigned char *dpath,
+        int contest_id,
+        struct testing_queue_vec *vec)
+{
+  DIR *d = 0;
+  struct dirent *dd;
+  struct stat sb;
+  path_t qpath;
+  path_t path;
+  char *pkt_buf = 0;
+  size_t pkt_size = 0;
+  struct run_request_packet *packet = 0;
+  int priority = 0;
+
+  memset(vec, 0, sizeof(*vec));
+
+  snprintf(qpath, sizeof(qpath), "%s/dir", dpath);
+  if (!(d = opendir(qpath))) {
+    return;
+  }
+
+  while ((dd = readdir(d))) {
+    if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
+    snprintf(path, sizeof(path), "%s/%s", qpath, dd->d_name);
+    if (lstat(path, &sb) < 0) continue;
+    if (!S_ISREG(sb.st_mode)) continue;
+
+    if (generic_read_file(&pkt_buf, 0, &pkt_size, 0, 0, path, 0) < 0)
+      continue;
+
+    if (run_request_packet_read(pkt_size, pkt_buf, &packet) < 0 || !packet) {
+      packet = 0;
+      xfree(pkt_buf); pkt_buf = 0;
+      pkt_size = 0;
+      continue;
+    }
+
+    xfree(pkt_buf); pkt_buf = 0;
+    pkt_size = 0;
+
+    if (packet->contest_id != contest_id) {
+      packet = run_request_packet_free(packet);
+      continue;
+    }
+
+    priority = 0;
+    if (dd->d_name[0] >= '0' && dd->d_name[0] <= '9') {
+      priority = -16 + (dd->d_name[0] - '0');
+    } else if (dd->d_name[0] >= 'A' && dd->d_name[0] <= 'V') {
+      priority = -6 + (dd->d_name[0] - 'A');
+    }
+
+    if (!vec->a) {
+      vec->a = 32;
+      XCALLOC(vec->v, vec->a);
+    } else {
+      int new_sz = vec->a * 2;
+      struct testing_queue_entry *new_v = 0;
+      XCALLOC(new_v, new_sz);
+      memcpy(new_v, vec->v, vec->a * sizeof(new_v[0]));
+      xfree(vec->v);
+      vec->v = new_v;
+      vec->a = new_sz;
+    }
+
+    vec->v[vec->u].entry_name = xstrdup(dd->d_name);
+    vec->v[vec->u].priority = priority;
+    vec->v[vec->u].mtime = sb.st_mtime;
+    vec->v[vec->u].packet = packet; packet = 0;
+    vec->u++;
+  }
+
+  if (d) closedir(d);
+
+  qsort(vec->v, vec->u, sizeof(vec->v[0]), scan_run_sort_func);
+}
+        
+int
+ns_write_testing_queue(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const unsigned char *table_class = "b1";
+  unsigned char cl[64] = { 0 };
+  struct testing_queue_vec vec;
+  int i, prob_id, user_id;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char hbuf[1024];
+
+  memset(&vec, 0, sizeof(vec));
+  scan_run_queue(global->run_queue_dir, cnts->id, &vec);
+
+  if (table_class) {
+    snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
+  }
+
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+  fprintf(fout, "<table%s>\n", cl);
+  fprintf(fout, 
+          "<tr>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "<th%s>%s</th>"
+          "</tr>\n",
+          cl, "NN",
+          cl, _("Packet name"),
+          cl, _("Priority"),
+          cl, "RunId",
+          cl, _("Problem"),
+          cl, _("User"),
+          cl, _("Architecture"),
+          cl, "JudgeId",
+          cl, _("Create time"),
+          cl, _("Actions"));
+  for (i = 0; i < vec.u; ++i) {
+    fprintf(fout, "<tr>");
+    fprintf(fout, "<td%s>%d</td>", cl, i + 1);
+    fprintf(fout, "<td%s>%s</td>", cl, vec.v[i].entry_name);
+    fprintf(fout, "<td%s>%d</td>", cl, vec.v[i].priority);
+    fprintf(fout, "<td%s>%d</td>", cl, vec.v[i].packet->run_id);
+    prob_id = vec.v[i].packet->problem_id;
+    if (prob_id > 0 && prob_id <= cs->max_prob && cs->probs[prob_id]) {
+      fprintf(fout, "<td%s>%s</td>", cl, cs->probs[prob_id]->short_name);
+    } else {
+      fprintf(fout, "<td%s>Problem %d</td>", cl, prob_id);
+    }
+    user_id = vec.v[i].packet->user_id;
+    fprintf(fout, "<td%s>%s</td>", cl,
+            ARMOR(teamdb_get_name_2(cs->teamdb_state, user_id)));
+    fprintf(fout, "<td%s>%s</td>", cl, vec.v[i].packet->arch);
+    fprintf(fout, "<td%s>%d</td>", cl, vec.v[i].packet->judge_id);
+    fprintf(fout, "<td%s>%s</td>", cl, xml_unparse_date(vec.v[i].mtime));
+    fprintf(fout, "<td%s>", cl);
+    fprintf(fout, "&nbsp;&nbsp;<a href=\"%s\">X</a>",
+            ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_TESTING_DELETE,
+                   "packet=%s", vec.v[i].entry_name));
+    fprintf(fout, "&nbsp;&nbsp;<a href=\"%s\">Up</a>",
+            ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_TESTING_UP,
+                   "packet=%s", vec.v[i].entry_name));
+    fprintf(fout, "&nbsp;&nbsp;<a href=\"%s\">Down</a>",
+            ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_TESTING_DOWN,
+                   "packet=%s", vec.v[i].entry_name));
+    fprintf(fout, "</td>");
+    fprintf(fout, "</tr>\n");
+  }
+  fprintf(fout, "</table></form>\n");
+
+  snprintf(cl, sizeof(cl), " class=\"%s\"", "b0");
+  fprintf(fout, "<table%s><tr>", cl);
+  fprintf(fout, "<td%s><a href=\"%s\">Delete all</a></td>", cl,
+          ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_TESTING_DELETE_ALL,0));
+  fprintf(fout, "<td%s><a href=\"%s\">Up priority all</a></td>", cl,
+          ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_TESTING_UP_ALL, 0));
+  fprintf(fout, "<td%s><a href=\"%s\">Down priority all</a></td>", cl,
+          ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_TESTING_DOWN_ALL, 0));
+  fprintf(fout, "</tr></table>\n");
+
+
   html_armor_free(&ab);
   return 0;
 }

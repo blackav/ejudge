@@ -446,18 +446,24 @@ serve_get_user_result_score(
         int user_id);
 
 int
-serve_testing_queue_delete(serve_state_t state, const unsigned char *packet);
+serve_testing_queue_delete(const struct contest_desc *cnts, 
+                           serve_state_t state, const unsigned char *packet);
 int
-serve_testing_queue_up(serve_state_t state, const unsigned char *packet);
+serve_testing_queue_up(const struct contest_desc *cnts, 
+                       serve_state_t state, const unsigned char *packet);
 int
-serve_testing_queue_down(serve_state_t state, const unsigned char *packet);
+serve_testing_queue_down(const struct contest_desc *cnts, 
+                         serve_state_t state, const unsigned char *packet);
 
 int
-serve_testing_queue_delete_all(serve_state_t state);
+serve_testing_queue_delete_all(const struct contest_desc *cnts, 
+                               serve_state_t state);
 int
-serve_testing_queue_up_all(serve_state_t state);
+serve_testing_queue_up_all(const struct contest_desc *cnts, 
+                           serve_state_t state);
 int
-serve_testing_queue_down_all(serve_state_t state);
+serve_testing_queue_down_all(const struct contest_desc *cnts, 
+                             serve_state_t state);
 
 extern const size_t serve_struct_sizes_array[];
 extern const size_t serve_struct_sizes_array_size;

@@ -363,6 +363,13 @@ enum
   NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE,
   NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK,
   NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR,
+  NEW_SRV_ACTION_VIEW_TESTING_QUEUE,
+  NEW_SRV_ACTION_TESTING_DELETE,
+  NEW_SRV_ACTION_TESTING_UP,
+  NEW_SRV_ACTION_TESTING_DOWN,
+  NEW_SRV_ACTION_TESTING_DELETE_ALL,
+  NEW_SRV_ACTION_TESTING_UP_ALL,
+  NEW_SRV_ACTION_TESTING_DOWN_ALL,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -854,6 +861,14 @@ ns_write_user_ips(
 
 int
 ns_write_ip_users(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra);
+
+int
+ns_write_testing_queue(
         FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
