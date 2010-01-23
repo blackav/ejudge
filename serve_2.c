@@ -51,6 +51,8 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <sys/time.h>
+#include <sys/stat.h>
+#include <dirent.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -3073,6 +3075,282 @@ serve_ignore_by_mask(serve_state_t state,
       serve_audit_log(state, r, user_id, ip, ssl_flag, "Command: %s\n", cmd);
     }
   }
+}
+
+static int
+testing_queue_unlock_entry(
+        const unsigned char *run_queue_dir,
+        const unsigned char *out_path,
+        const unsigned char *packet_name);
+
+static int
+testing_queue_lock_entry(
+        int contest_id,
+        const unsigned char *run_queue_dir,
+        const unsigned char *packet_name,
+        unsigned char *out_name,
+        size_t out_size,
+        unsigned char *out_path,
+        size_t out_path_size,
+        struct run_request_packet **packet)
+{
+  path_t dir_path;
+  struct stat sb;
+  char *pkt_buf = 0;
+  size_t pkt_size = 0;
+
+  snprintf(out_name, out_size, "%s_%d_%s",
+           os_NodeName(), getpid(), packet_name);
+  snprintf(dir_path, sizeof(dir_path), "%s/dir/%s",
+           run_queue_dir, packet_name);
+  snprintf(out_path, out_path_size, "%s/out/%s",
+           run_queue_dir, out_name);
+
+  if (rename(dir_path, out_path) < 0) {
+    err("testing_queue_lock_entry: rename for %s failed: %s",
+        packet_name, os_ErrorMsg());
+    return -1;
+  }
+  if (stat(out_path, &sb) < 0) {
+    err("testing_queue_lock_entry: stat for %s failed: %s",
+        packet_name, os_ErrorMsg());
+    return -1;
+  }
+  if (!S_ISREG(sb.st_mode)) {
+    err("testing_queue_lock_entry: invalid file type of %s", out_path);
+    return -1;
+  }
+  if (sb.st_nlink != 1) {
+    err("testing_queue_lock_entry: file %s has been linked several times",
+        out_path);
+    unlink(out_path);
+    return -1;
+  }
+
+  if (generic_read_file(&pkt_buf, 0, &pkt_size, 0, 0, out_path, 0) < 0) {
+    // no attempt to recover...
+    return -1;
+  }
+
+  if (run_request_packet_read(pkt_size, pkt_buf, packet) < 0 || !*packet) {
+    *packet = 0;
+    xfree(pkt_buf); pkt_buf = 0;
+    // no attempt to recover either...
+    return -1;
+  }
+
+  xfree(pkt_buf); pkt_buf = 0;
+  pkt_size = 0;
+
+  if ((*packet)->contest_id != contest_id) {
+    // contest_id mismatch
+    testing_queue_unlock_entry(run_queue_dir, out_path, packet_name);
+    *packet = run_request_packet_free(*packet);
+    return -1;
+  }
+
+  return 0;
+}
+
+static int
+testing_queue_unlock_entry(
+        const unsigned char *run_queue_dir,
+        const unsigned char *out_path,
+        const unsigned char *packet_name)
+{
+  path_t dir_path;
+
+  snprintf(dir_path, sizeof(dir_path), "%s/dir/%s",
+           run_queue_dir, packet_name);
+  if (rename(out_path, dir_path) < 0) {
+    err("testing_queue_unlock_entry: rename %s -> %s failed: %s",
+        out_path, dir_path, os_ErrorMsg());
+    return -1;
+  }
+
+  return 0;
+}
+
+static int
+get_priority_value(int priority_code)
+{
+  int priority = 0;
+  if (priority_code >= '0' && priority_code <= '9') {
+    priority = -16 + (priority_code - '0');
+  } else if (priority_code >= 'A' && priority_code <= 'V') {
+    priority = -6 + (priority_code - 'A');
+  }
+  return priority;
+}
+
+static int
+get_priority_code(int priority)
+{
+  priority += 16;
+  if (priority < 0) priority = 0;
+  if (priority > 31) priority = 31;
+  return b32_digits[priority];
+}
+
+int
+serve_testing_queue_delete(
+        const struct contest_desc *cnts,
+        const serve_state_t state,
+        const unsigned char *packet_name)
+{
+  const unsigned char *run_queue_dir = state->global->run_queue_dir;
+  path_t out_path;
+  path_t out_name;
+  struct run_request_packet *packet = 0;
+  path_t exe_path;
+
+  if (testing_queue_lock_entry(cnts->id, run_queue_dir, packet_name,
+                               out_name, sizeof(out_name),
+                               out_path, sizeof(out_path), &packet) < 0)
+    return -1;
+
+  snprintf(exe_path, sizeof(exe_path), "%s/%s%s",
+           state->global->run_exe_dir, packet_name, packet->exe_sfx);
+  unlink(out_path);
+  unlink(exe_path);
+  run_change_status(state->runlog_state, packet->run_id, RUN_PENDING, 0, -1, 0);
+
+  packet = run_request_packet_free(packet);
+  return 0;
+}
+
+int
+serve_testing_queue_change_priority(
+        const struct contest_desc *cnts,
+        const serve_state_t state,
+        const unsigned char *packet_name,
+        int adjustment)
+{
+  const unsigned char *run_queue_dir = state->global->run_queue_dir;
+  const unsigned char *run_exe_dir = state->global->run_exe_dir;
+  path_t out_path;
+  path_t out_name;
+  struct run_request_packet *packet = 0;
+  path_t new_packet_name;
+  path_t exe_path;
+  path_t new_exe_path;
+
+  if (testing_queue_lock_entry(cnts->id, run_queue_dir, packet_name,
+                               out_name, sizeof(out_name),
+                               out_path, sizeof(out_path), &packet) < 0)
+    return -1;
+
+  snprintf(new_packet_name, sizeof(new_packet_name), "%s", packet_name);
+  new_packet_name[0] = get_priority_code(get_priority_value(new_packet_name[0]) + adjustment);
+  if (!strcmp(packet_name, new_packet_name)) {
+    packet = run_request_packet_free(packet);
+    return 0;
+  }
+
+  snprintf(exe_path, sizeof(exe_path), "%s/%s%s",
+           run_exe_dir, packet_name, packet->exe_sfx);
+  snprintf(new_exe_path, sizeof(new_exe_path), "%s/%s%s",
+           run_exe_dir, new_packet_name, packet->exe_sfx);
+  if (rename(exe_path, new_exe_path) < 0) {
+    err("serve_testing_queue_up: rename %s -> %s failed: %s",
+        exe_path, new_exe_path, os_ErrorMsg());
+    testing_queue_unlock_entry(run_queue_dir, out_path, packet_name);
+    packet = run_request_packet_free(packet);
+    return -1;
+  }
+
+  testing_queue_unlock_entry(run_queue_dir, out_path, new_packet_name);
+  packet = run_request_packet_free(packet);
+  return 0;
+}
+
+int
+serve_testing_queue_up(
+        const struct contest_desc *cnts,
+        const serve_state_t state,
+        const unsigned char *packet_name)
+{
+  return serve_testing_queue_change_priority(cnts, state, packet_name, -1);
+}
+
+int
+serve_testing_queue_down(
+        const struct contest_desc *cnts,
+        const serve_state_t state,
+        const unsigned char *packet_name)
+{
+  return serve_testing_queue_change_priority(cnts, state, packet_name, 1);
+}
+
+static void
+collect_run_packets(const serve_state_t state, strarray_t *vec)
+{
+  path_t dir_path;
+  DIR *d = 0;
+  struct dirent *dd;
+
+  memset(vec, 0, sizeof(*vec));
+  snprintf(dir_path, sizeof(dir_path), "%s/dir", state->global->run_queue_dir);
+  if (!(d = opendir(dir_path))) return;
+
+  while ((dd = readdir(d))) {
+    if (!strcmp(dd->d_name, ".") && !strcmp(dd->d_name, "..")) continue;
+    xexpand(vec);
+    vec->v[vec->u++] = xstrdup(dd->d_name);
+  }
+
+  closedir(d); d = 0;
+}
+
+int
+serve_testing_queue_delete_all(
+        const struct contest_desc *cnts,
+        const serve_state_t state)
+{
+  strarray_t vec;
+  int i;
+
+  collect_run_packets(state, &vec);
+  for (i = 0; i < vec.u; ++i) {
+    serve_testing_queue_delete(cnts, state, vec.v[i]);
+  }
+
+  xstrarrayfree(&vec);
+  return 0;
+}
+
+int
+serve_testing_queue_change_priority_all(
+        const struct contest_desc *cnts,
+        const serve_state_t state,
+        int adjustment)
+{
+  strarray_t vec;
+  int i;
+
+  collect_run_packets(state, &vec);
+  for (i = 0; i < vec.u; ++i) {
+    serve_testing_queue_change_priority(cnts, state, vec.v[i], adjustment);
+  }
+
+  xstrarrayfree(&vec);
+  return 0;
+}
+
+int
+serve_testing_queue_up_all(
+        const struct contest_desc *cnts,
+        const serve_state_t state)
+{
+  return serve_testing_queue_change_priority_all(cnts, state, -1);
+}
+
+int
+serve_testing_queue_down_all(
+        const struct contest_desc *cnts,
+        const serve_state_t state)
+{
+  return serve_testing_queue_change_priority_all(cnts, state, 1);
 }
 
 /*

@@ -6423,6 +6423,103 @@ priv_priority_form(
 }
 
 static int
+priv_view_testing_queue(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+
+  if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
+            phr->name_arm, phr->contest_id, extra->contest_arm,
+            _("Testing queue"));
+  ns_write_testing_queue(fout, log_f, phr, cnts, extra);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  return retval;
+}
+
+static int
+priv_testing_queue_operation(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+  const unsigned char *packet_name = 0, *s;
+  const serve_state_t cs = extra->serve_state;
+
+  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (ns_cgi_param(phr, "packet", &packet_name) <= 0 || !packet_name)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  for (s = packet_name; *s; ++s) {
+    if (!isalnum(*s)) {
+      FAIL(NEW_SRV_ERR_INV_PARAM);
+    }
+  }
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_TESTING_DELETE:
+    serve_testing_queue_delete(cnts, cs, packet_name);
+    break;
+  case NEW_SRV_ACTION_TESTING_UP:
+    serve_testing_queue_up(cnts, cs, packet_name);
+    break;
+  case NEW_SRV_ACTION_TESTING_DOWN:
+    serve_testing_queue_down(cnts, cs, packet_name);
+    break;
+  default:
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+
+ cleanup:
+  return retval;
+}
+
+static int
+priv_whole_testing_queue_operation(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+  const serve_state_t cs = extra->serve_state;
+
+  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_TESTING_DELETE_ALL:
+    serve_testing_queue_delete_all(cnts, cs);
+    break;
+  case NEW_SRV_ACTION_TESTING_UP_ALL:
+    serve_testing_queue_up_all(cnts, cs);
+    break;
+  case NEW_SRV_ACTION_TESTING_DOWN_ALL:
+    serve_testing_queue_down_all(cnts, cs);
+    break;
+  default:
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+
+ cleanup:
+  return retval;
+}
+
+static int
 priv_print_user_exam_protocol(
         FILE *fout,
         FILE *log_f,
@@ -6986,6 +7083,12 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = priv_simple_change_status,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = priv_simple_change_status,
   [NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR] = priv_set_run_style_error_status,
+  [NEW_SRV_ACTION_TESTING_DELETE] = priv_testing_queue_operation,
+  [NEW_SRV_ACTION_TESTING_UP] = priv_testing_queue_operation,
+  [NEW_SRV_ACTION_TESTING_DOWN] = priv_testing_queue_operation,
+  [NEW_SRV_ACTION_TESTING_DELETE_ALL] = priv_whole_testing_queue_operation,
+  [NEW_SRV_ACTION_TESTING_UP_ALL] = priv_whole_testing_queue_operation,
+  [NEW_SRV_ACTION_TESTING_DOWN_ALL] = priv_whole_testing_queue_operation,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -7045,6 +7148,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIO_FORM] = priv_priority_form,
   [NEW_SRV_ACTION_VIEW_USER_IPS] = priv_view_user_ips,
   [NEW_SRV_ACTION_VIEW_IP_USERS] = priv_view_ip_users,
+  [NEW_SRV_ACTION_VIEW_TESTING_QUEUE] = priv_view_testing_queue,
 };
 
 static void
@@ -7685,6 +7789,9 @@ priv_main_page(FILE *fout,
   fprintf(fout, "<li>%s%s</a></li>\n",
           ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USER_IPS, 0),
           _("View IP addresses for users"));
+  fprintf(fout, "<li>%s%s</a></li>\n",
+          ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_TESTING_QUEUE,0),
+          _("View testing queue"));
   if (cnts->problems_url) {
     fprintf(fout, "<li><a href=\"%s\" target=_blank>%s</a>\n",
             cnts->problems_url, _("Problems"));
@@ -8417,6 +8524,13 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR] = priv_generic_operation,
+  [NEW_SRV_ACTION_VIEW_TESTING_QUEUE] = priv_generic_page,
+  [NEW_SRV_ACTION_TESTING_DELETE] = priv_generic_operation,
+  [NEW_SRV_ACTION_TESTING_UP] = priv_generic_operation,
+  [NEW_SRV_ACTION_TESTING_DOWN] = priv_generic_operation,
+  [NEW_SRV_ACTION_TESTING_DELETE_ALL] = priv_generic_operation,
+  [NEW_SRV_ACTION_TESTING_UP_ALL] = priv_generic_operation,
+  [NEW_SRV_ACTION_TESTING_DOWN_ALL] = priv_generic_operation,
 };
 
 static void
@@ -13857,6 +13971,13 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = "PRIV_SUBMIT_RUN_JUST_IGNORE",
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = "PRIV_SUBMIT_RUN_JUST_OK",
   [NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR] = "PRIV_SET_RUN_STYLE_ERR",
+  [NEW_SRV_ACTION_VIEW_TESTING_QUEUE] = "VIEW_TESTING_QUEUE",
+  [NEW_SRV_ACTION_TESTING_DELETE] = "TESTING_DELETE",
+  [NEW_SRV_ACTION_TESTING_UP] = "TESTING_UP",
+  [NEW_SRV_ACTION_TESTING_DOWN] = "TESTING_DOWN",
+  [NEW_SRV_ACTION_TESTING_DELETE_ALL] = "TESTING_DELETE_ALL",
+  [NEW_SRV_ACTION_TESTING_UP_ALL] = "TESTING_UP_ALL",
+  [NEW_SRV_ACTION_TESTING_DOWN_ALL] = "TESTING_DOWN_ALL",
 };
 
 void

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -503,10 +503,23 @@ new_update_userlist_table(int cnts_id)
 static void
 update_userlist_table(int cnts_id)
 {
+  int i;
+  const struct contest_desc *cnts;
+
   if (cnts_id <= 0) return;
 
   old_update_userlist_table(cnts_id);
   new_update_userlist_table(cnts_id);
+
+  for (i = 1; i < new_contest_extras_size; ++i) {
+    if (cnts_id == i || !new_contest_extras[i]) continue;
+    cnts = 0;
+    if (contests_get(i, &cnts) < 0 || !cnts) continue;
+    if (cnts->user_contest_num == cnts_id) {
+      old_update_userlist_table(i);
+      new_update_userlist_table(i);
+    }
+  }
 }
 
 static void
