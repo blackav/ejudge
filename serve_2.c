@@ -3203,6 +3203,7 @@ serve_testing_queue_delete(
   path_t out_name;
   struct run_request_packet *packet = 0;
   path_t exe_path;
+  struct run_entry re;
 
   if (testing_queue_lock_entry(cnts->id, run_queue_dir, packet_name,
                                out_name, sizeof(out_name),
@@ -3213,7 +3214,12 @@ serve_testing_queue_delete(
            state->global->run_exe_dir, packet_name, packet->exe_sfx);
   unlink(out_path);
   unlink(exe_path);
-  run_change_status(state->runlog_state, packet->run_id, RUN_PENDING, 0, -1, 0);
+
+  if (run_get_entry(state->runlog_state, packet->run_id, &re) >= 0
+      && re.status == RUN_RUNNING
+      && re.judge_id == packet->judge_id) {
+    run_change_status(state->runlog_state, packet->run_id, RUN_PENDING, 0,-1,0);
+  }
 
   packet = run_request_packet_free(packet);
   return 0;
@@ -3262,24 +3268,6 @@ serve_testing_queue_change_priority(
   testing_queue_unlock_entry(run_queue_dir, out_path, new_packet_name);
   packet = run_request_packet_free(packet);
   return 0;
-}
-
-int
-serve_testing_queue_up(
-        const struct contest_desc *cnts,
-        const serve_state_t state,
-        const unsigned char *packet_name)
-{
-  return serve_testing_queue_change_priority(cnts, state, packet_name, -1);
-}
-
-int
-serve_testing_queue_down(
-        const struct contest_desc *cnts,
-        const serve_state_t state,
-        const unsigned char *packet_name)
-{
-  return serve_testing_queue_change_priority(cnts, state, packet_name, 1);
 }
 
 static void
@@ -3335,22 +3323,6 @@ serve_testing_queue_change_priority_all(
 
   xstrarrayfree(&vec);
   return 0;
-}
-
-int
-serve_testing_queue_up_all(
-        const struct contest_desc *cnts,
-        const serve_state_t state)
-{
-  return serve_testing_queue_change_priority_all(cnts, state, -1);
-}
-
-int
-serve_testing_queue_down_all(
-        const struct contest_desc *cnts,
-        const serve_state_t state)
-{
-  return serve_testing_queue_change_priority_all(cnts, state, 1);
 }
 
 /*

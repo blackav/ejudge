@@ -449,21 +449,21 @@ int
 serve_testing_queue_delete(const struct contest_desc *cnts, 
                            serve_state_t state, const unsigned char *packet);
 int
-serve_testing_queue_up(const struct contest_desc *cnts, 
-                       serve_state_t state, const unsigned char *packet);
-int
-serve_testing_queue_down(const struct contest_desc *cnts, 
-                         serve_state_t state, const unsigned char *packet);
+serve_testing_queue_change_priority(
+        const struct contest_desc *cnts,
+        const serve_state_t state,
+        const unsigned char *packet_name,
+        int adjustment);
 
 int
 serve_testing_queue_delete_all(const struct contest_desc *cnts, 
                                serve_state_t state);
+
 int
-serve_testing_queue_up_all(const struct contest_desc *cnts, 
-                           serve_state_t state);
-int
-serve_testing_queue_down_all(const struct contest_desc *cnts, 
-                             serve_state_t state);
+serve_testing_queue_change_priority_all(
+        const struct contest_desc *cnts,
+        const serve_state_t state,
+        int adjustment);
 
 extern const size_t serve_struct_sizes_array[];
 extern const size_t serve_struct_sizes_array_size;
