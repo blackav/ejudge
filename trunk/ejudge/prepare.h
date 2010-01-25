@@ -659,7 +659,7 @@ struct section_global_data
   ejintbool_t disable_passed_tests META_ATTRIB((meta_private));
 };
 
-/* sizeof(struct section_problem_data) == 60488 */
+/* sizeof(struct section_problem_data) == 60496 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -683,6 +683,10 @@ struct section_problem_data
   ejintbool_t use_stdin;
   /** 1, if solution uses stdout for output */
   ejintbool_t use_stdout;
+  /** 1, if combined stdin/files input is enabled */
+  ejintbool_t combined_stdin;
+  /** 1, if combined stdout/files output is enabled */
+  ejintbool_t combined_stdout;
   /** input data for problem is binary */
   ejintbool_t binary_input;
   /** do not treat non-zero exit code as run-time error */
@@ -920,7 +924,7 @@ struct section_problem_data
   } xml META_ATTRIB((meta_hidden));
 };
 
-/* sizeof(struct section_language_data) == 33656 */
+/* sizeof(struct section_language_data) == 33660 */
 struct section_language_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
