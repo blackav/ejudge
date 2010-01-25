@@ -337,6 +337,8 @@ run_program(
   if (task_Status(tsk) == TSK_SIGNALED) {
     result->is_signaled = 1;
     result->signal_num = task_TermSignal(tsk);
+    snprintf(result->exit_comment, sizeof(result->exit_comment),
+             "%s", os_GetSignalString(result->signal_num));
     task_Delete(tsk);
     return RUN_RUN_TIME_ERR;
   }

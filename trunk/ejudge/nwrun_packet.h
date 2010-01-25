@@ -97,6 +97,7 @@ struct nwrun_out_packet
 
   unsigned char hostname[64];
   unsigned char comment[1024];
+  unsigned char exit_comment[1024];
 };
 
 struct generic_section_config *

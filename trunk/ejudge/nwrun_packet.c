@@ -147,6 +147,7 @@ static const struct config_parse_info nwrun_out_params[] =
   NWRUN_OUT_PARAM(exit_code, "d"),
   NWRUN_OUT_PARAM(hostname, "s"),
   NWRUN_OUT_PARAM(comment, "s"),
+  NWRUN_OUT_PARAM(exit_comment, "s"),
 
   { 0, 0, 0, 0 }
 };
@@ -234,5 +235,8 @@ nwrun_out_packet_print(FILE *fout, const struct nwrun_out_packet *result)
   }
   if (result->hostname[0]) {
     fprintf(fout, "hostname = \"%s\"\n", result->hostname);
+  }
+  if (result->exit_comment[0]) {
+    fprintf(fout, "exit_comment = \"%s\"\n", result->exit_comment);
   }
 }
