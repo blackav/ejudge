@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -158,6 +158,7 @@ start_find_process(const unsigned char *name, int *p_uid)
       if (p_uid) *p_uid = getuid();
       goto cleanup;
     }
+    if (llen < dlen + 1) continue;
     if (xpath[llen - dlen - 1] == '/' && !strcmp(xpath + llen - dlen, dpath)) {
       retval = pid;
       // FIXME: get the actual uid
