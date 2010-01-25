@@ -332,6 +332,8 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(check_presentation, "d"),  
   PROBLEM_PARAM(use_stdin, "d"),
   PROBLEM_PARAM(use_stdout, "d"),
+  PROBLEM_PARAM(combined_stdin, "d"),
+  PROBLEM_PARAM(combined_stdout, "d"),
   PROBLEM_PARAM(binary_input, "d"),
   PROBLEM_PARAM(ignore_exit_code, "d"),
   PROBLEM_PARAM(olympiad_mode, "d"),
@@ -773,6 +775,8 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->check_presentation = -1;
   p->use_stdin = -1;
   p->use_stdout = -1;
+  p->combined_stdin = -1;
+  p->combined_stdout = -1;
   p->binary_input = -1;
   p->ignore_exit_code = -1;
   p->olympiad_mode = -1;
@@ -2969,6 +2973,8 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_check_presentation, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_use_stdin, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_use_stdout, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_combined_stdin, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_combined_stdout, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_binary_input, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_ignore_exit_code, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_olympiad_mode, prob, aprob, g);
@@ -4590,6 +4596,8 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
   if (prob->check_presentation < 0) prob->check_presentation = 0;
   if (prob->use_stdin < 0) prob->use_stdin = 0;
   if (prob->use_stdout < 0) prob->use_stdout = 0;
+  if (prob->combined_stdin < 0) prob->combined_stdin = 0;
+  if (prob->combined_stdout < 0) prob->combined_stdout = 0;
   if (prob->binary_input < 0) prob->binary_input = DFLT_P_BINARY_INPUT;
   if (prob->ignore_exit_code < 0) prob->ignore_exit_code = 0;
   if (prob->olympiad_mode < 0) prob->olympiad_mode = 0;
@@ -5041,6 +5049,18 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
   case CNTSPROB_use_stdout:
     if (out->use_stdout == -1 && abstr) out->use_stdout = abstr->use_stdout;
     if (out->use_stdout == -1) out->use_stdout = 0;
+    break;
+
+  case CNTSPROB_combined_stdin:
+    if (out->combined_stdin == -1 && abstr)
+      out->combined_stdin = abstr->combined_stdin;
+    if (out->combined_stdin == -1) out->combined_stdin = 0;
+    break;
+
+  case CNTSPROB_combined_stdout:
+    if (out->combined_stdout == -1 && abstr)
+      out->combined_stdout = abstr->combined_stdout;
+    if (out->combined_stdout == -1) out->combined_stdout = 0;
     break;
 
   case CNTSPROB_binary_input:
@@ -5627,6 +5647,7 @@ static const int prob_settable_list[] =
   CNTSPROB_internal_name, 
   CNTSPROB_scoring_checker, CNTSPROB_manual_checking, CNTSPROB_examinator_num,
   CNTSPROB_check_presentation, CNTSPROB_use_stdin, CNTSPROB_use_stdout,
+  CNTSPROB_combined_stdin, CNTSPROB_combined_stdout,
   CNTSPROB_binary_input, CNTSPROB_ignore_exit_code, CNTSPROB_olympiad_mode,
   CNTSPROB_score_latest, CNTSPROB_time_limit, CNTSPROB_time_limit_millis,
   CNTSPROB_real_time_limit, CNTSPROB_use_ac_not_ok,
@@ -5677,6 +5698,8 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_check_presentation] = 1,  
   [CNTSPROB_use_stdin] = 1,
   [CNTSPROB_use_stdout] = 1,
+  [CNTSPROB_combined_stdin] = 1,
+  [CNTSPROB_combined_stdout] = 1,
   [CNTSPROB_binary_input] = 1,
   [CNTSPROB_ignore_exit_code] = 1,
   [CNTSPROB_olympiad_mode] = 1,
@@ -5784,7 +5807,9 @@ static const int prob_inheritable_list[] =
 {
   CNTSPROB_scoring_checker, CNTSPROB_manual_checking,  
   CNTSPROB_examinator_num, CNTSPROB_check_presentation,
-  CNTSPROB_use_stdin, CNTSPROB_use_stdout, CNTSPROB_binary_input,
+  CNTSPROB_use_stdin, CNTSPROB_use_stdout,
+  CNTSPROB_combined_stdin, CNTSPROB_combined_stdout,
+  CNTSPROB_binary_input,
   CNTSPROB_ignore_exit_code, CNTSPROB_olympiad_mode, CNTSPROB_score_latest,
   CNTSPROB_time_limit, CNTSPROB_time_limit_millis, CNTSPROB_real_time_limit,
   CNTSPROB_use_ac_not_ok, CNTSPROB_team_enable_rep_view,
@@ -5833,6 +5858,8 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_check_presentation] = 1,
   [CNTSPROB_use_stdin] = 1,
   [CNTSPROB_use_stdout] = 1,
+  [CNTSPROB_combined_stdin] = 1,
+  [CNTSPROB_combined_stdout] = 1,
   [CNTSPROB_binary_input] = 1,
   [CNTSPROB_ignore_exit_code] = 1,
   [CNTSPROB_olympiad_mode] = 1,
@@ -5943,6 +5970,8 @@ static const struct section_problem_data prob_undef_values =
   .scoring_checker = -1,
   .use_stdin = -1,
   .use_stdout = -1,
+  .combined_stdin = -1,
+  .combined_stdout = -1,
   .binary_input = -1,
   .ignore_exit_code = -1,
   .olympiad_mode = -1,
@@ -6057,6 +6086,8 @@ static const struct section_problem_data prob_default_values =
   .scoring_checker = 0,
   .use_stdin = 0,
   .use_stdout = 0,
+  .combined_stdin = 0,
+  .combined_stdout = 0,
   .binary_input = 0,
   .ignore_exit_code = 0,
   .olympiad_mode = 0,

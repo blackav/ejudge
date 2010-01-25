@@ -4265,6 +4265,22 @@ super_html_print_problem(FILE *f,
                                
   }
 
+  //PROBLEM_PARAM(combined_stdin, "d"),
+  extra_msg = 0;
+  if (!prob->abstract) {
+    prepare_set_prob_value(CNTSPROB_combined_stdin,
+                           &tmp_prob, sup_prob, sstate->global);
+    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob.combined_stdin?"Yes":"No");
+    extra_msg = msg_buf;
+  }
+  if (!problem_type_flag) {
+    print_boolean_3_select_row(f, "Use standard input", prob->combined_stdin,
+                               SSERV_CMD_PROB_CHANGE_COMBINED_STDIN,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+  }
+
   //PROBLEM_PARAM(use_stdout, "d"),
   extra_msg = 0;
   if (!prob->abstract) {
@@ -4303,6 +4319,22 @@ super_html_print_problem(FILE *f,
                                session_id, form_row_attrs[row ^= 1],
                                self_url, extra_args, prob_hidden_vars);
                                
+  }
+
+  //PROBLEM_PARAM(combined_stdout, "d"),
+  extra_msg = 0;
+  if (!prob->abstract) {
+    prepare_set_prob_value(CNTSPROB_combined_stdout,
+                           &tmp_prob, sup_prob, sstate->global);
+    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob.combined_stdout?"Yes":"No");
+    extra_msg = msg_buf;
+  }
+  if (!problem_type_flag) {
+    print_boolean_3_select_row(f, "Use standard output", prob->combined_stdout,
+                               SSERV_CMD_PROB_CHANGE_COMBINED_STDOUT,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
   }
 
   if (show_adv) {
@@ -6024,6 +6056,8 @@ super_html_add_abstract_problem(
   prob->scoring_checker = 0;
   prob->use_stdin = 1;
   prob->use_stdout = 1;
+  prob->combined_stdin = 0;
+  prob->combined_stdout = 0;
   prob->binary_input = DFLT_P_BINARY_INPUT;
   prob->ignore_exit_code = 0;
   prob->olympiad_mode = 0;
@@ -6265,6 +6299,14 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_USE_STDOUT:
     p_int = &prob->use_stdout;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_COMBINED_STDIN:
+    p_int = &prob->combined_stdin;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_COMBINED_STDOUT:
+    p_int = &prob->combined_stdout;
     goto handle_boolean_1;
 
   case SSERV_CMD_PROB_CHANGE_BINARY_INPUT:
