@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/01/22 20:24:31
+// Generated 2010/01/25 20:06:26
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -289,6 +289,8 @@ enum
   CNTSPROB_scoring_checker,
   CNTSPROB_use_stdin,
   CNTSPROB_use_stdout,
+  CNTSPROB_combined_stdin,
+  CNTSPROB_combined_stdout,
   CNTSPROB_binary_input,
   CNTSPROB_ignore_exit_code,
   CNTSPROB_olympiad_mode,

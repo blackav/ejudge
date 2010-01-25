@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/01/22 20:24:31
+// Generated 2010/01/25 20:06:26
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -327,6 +327,8 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_scoring_checker] = { CNTSPROB_scoring_checker, 'B', XSIZE(struct section_problem_data, scoring_checker), "scoring_checker", XOFFSET(struct section_problem_data, scoring_checker) },
   [CNTSPROB_use_stdin] = { CNTSPROB_use_stdin, 'B', XSIZE(struct section_problem_data, use_stdin), "use_stdin", XOFFSET(struct section_problem_data, use_stdin) },
   [CNTSPROB_use_stdout] = { CNTSPROB_use_stdout, 'B', XSIZE(struct section_problem_data, use_stdout), "use_stdout", XOFFSET(struct section_problem_data, use_stdout) },
+  [CNTSPROB_combined_stdin] = { CNTSPROB_combined_stdin, 'B', XSIZE(struct section_problem_data, combined_stdin), "combined_stdin", XOFFSET(struct section_problem_data, combined_stdin) },
+  [CNTSPROB_combined_stdout] = { CNTSPROB_combined_stdout, 'B', XSIZE(struct section_problem_data, combined_stdout), "combined_stdout", XOFFSET(struct section_problem_data, combined_stdout) },
   [CNTSPROB_binary_input] = { CNTSPROB_binary_input, 'B', XSIZE(struct section_problem_data, binary_input), "binary_input", XOFFSET(struct section_problem_data, binary_input) },
   [CNTSPROB_ignore_exit_code] = { CNTSPROB_ignore_exit_code, 'B', XSIZE(struct section_problem_data, ignore_exit_code), "ignore_exit_code", XOFFSET(struct section_problem_data, ignore_exit_code) },
   [CNTSPROB_olympiad_mode] = { CNTSPROB_olympiad_mode, 'B', XSIZE(struct section_problem_data, olympiad_mode), "olympiad_mode", XOFFSET(struct section_problem_data, olympiad_mode) },
