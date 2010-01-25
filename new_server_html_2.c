@@ -5733,8 +5733,8 @@ struct testing_queue_vec
 static int
 scan_run_sort_func(const void *v1, const void *v2)
 {
-  const struct testing_queue_entry *p1 = (const struct testing_queue_entry*) v1;
-  const struct testing_queue_entry *p2 = (const struct testing_queue_entry*) v2;
+  const struct testing_queue_entry *p1 = (const struct testing_queue_entry*)v1;
+  const struct testing_queue_entry *p2 = (const struct testing_queue_entry*)v2;
 
   return strcmp(p1->entry_name, p2->entry_name);
 }
@@ -5918,13 +5918,19 @@ ns_write_testing_queue(
           cl, ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
           _("Main page"));
   fprintf(fout, "<td%s><a href=\"%s\">Delete all</a></td>", cl,
-          ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_TESTING_DELETE_ALL,0));
+          ns_url(hbuf,sizeof(hbuf), phr, NEW_SRV_ACTION_TESTING_DELETE_ALL,0));
   fprintf(fout, "<td%s><a href=\"%s\">Up priority all</a></td>", cl,
           ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_TESTING_UP_ALL, 0));
   fprintf(fout, "<td%s><a href=\"%s\">Down priority all</a></td>", cl,
           ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_TESTING_DOWN_ALL, 0));
   fprintf(fout, "</tr></table>\n");
 
+  for (i = 0; i < vec.u; ++i) {
+    xfree(vec.v[i].entry_name);
+    run_request_packet_free(vec.v[i].packet);
+  }
+  xfree(vec.v); vec.v = 0;
+  vec.a = vec.u = 0;
 
   html_armor_free(&ab);
   return 0;
