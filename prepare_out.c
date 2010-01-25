@@ -959,11 +959,17 @@ prepare_unparse_prob(
     unparse_bool(f, "use_stdin", prob->use_stdin);
   if (prob->input_file[0])
     fprintf(f, "input_file = \"%s\"\n", CARMOR(prob->input_file));
+  if ((prob->abstract && prob->combined_stdin == 1)
+      || (!prob->abstract && prob->combined_stdin >= 0))
+    unparse_bool(f, "combined_stdin", prob->combined_stdin);
   if ((prob->abstract && prob->use_stdout == 1)
       || (!prob->abstract && prob->use_stdout >= 0))
     unparse_bool(f, "use_stdout", prob->use_stdout);
   if (prob->output_file[0])
     fprintf(f, "output_file = \"%s\"\n", CARMOR(prob->output_file));
+  if ((prob->abstract && prob->combined_stdout == 1)
+      || (!prob->abstract && prob->combined_stdout >= 0))
+    unparse_bool(f, "combined_stdout", prob->combined_stdout);
   if ((prob->abstract && prob->binary_input == 1)
       || (!prob->abstract && prob->binary_input >= 0))
     unparse_bool(f, "binary_input", prob->binary_input);
@@ -1778,6 +1784,8 @@ prepare_unparse_testers(
                            &tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_use_stdin, &tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_use_stdout, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_combined_stdin, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_combined_stdout, &tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_binary_input, &tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_ignore_exit_code,
                            &tmp_prob, abstr, global);
