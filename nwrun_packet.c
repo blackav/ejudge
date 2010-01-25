@@ -142,6 +142,7 @@ static const struct config_parse_info nwrun_out_params[] =
   NWRUN_OUT_PARAM(error_file_size, "d"),
   NWRUN_OUT_PARAM(cpu_time_millis, "d"),
   NWRUN_OUT_PARAM(real_time_millis, "d"),
+  NWRUN_OUT_PARAM(max_memory_used, "d"),
   NWRUN_OUT_PARAM(is_signaled, "d"),
   NWRUN_OUT_PARAM(signal_num, "d"),
   NWRUN_OUT_PARAM(exit_code, "d"),
@@ -224,6 +225,10 @@ nwrun_out_packet_print(FILE *fout, const struct nwrun_out_packet *result)
 
   fprintf(fout, "cpu_time_millis = %d\n", result->cpu_time_millis);
   fprintf(fout, "real_time_millis = %d\n", result->real_time_millis);
+
+  if (result->max_memory_used > 0) {
+    fprintf(fout, "max_memory_used = %d\n", result->max_memory_used);
+  }
 
   fprintf(fout, "is_signaled = %d\n", result->is_signaled);
   fprintf(fout, "signal_num = %d\n", result->signal_num);

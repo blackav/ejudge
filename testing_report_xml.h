@@ -34,6 +34,7 @@ struct testing_report_test
   int has_input_digest;
   int has_correct_digest;
   int has_info_digest;
+  int max_memory_used;
 
   unsigned char input_digest[32];
   unsigned char correct_digest[32];
@@ -61,6 +62,8 @@ typedef struct testing_report_xml
   int archive_available;
   int correct_available;
   int info_available;
+  int real_time_available;
+  int max_memory_used_available;
   int run_tests;
   int variant;
   int accepting_mode;
