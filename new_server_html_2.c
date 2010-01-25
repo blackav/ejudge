@@ -5793,17 +5793,19 @@ scan_run_queue(
       priority = -6 + (dd->d_name[0] - 'A');
     }
 
-    if (!vec->a) {
-      vec->a = 32;
-      XCALLOC(vec->v, vec->a);
-    } else {
-      int new_sz = vec->a * 2;
-      struct testing_queue_entry *new_v = 0;
-      XCALLOC(new_v, new_sz);
-      memcpy(new_v, vec->v, vec->a * sizeof(new_v[0]));
-      xfree(vec->v);
-      vec->v = new_v;
-      vec->a = new_sz;
+    if (vec->u == vec->a) {
+      if (!vec->a) {
+        vec->a = 32;
+        XCALLOC(vec->v, vec->a);
+      } else {
+        int new_sz = vec->a * 2;
+        struct testing_queue_entry *new_v = 0;
+        XCALLOC(new_v, new_sz);
+        memcpy(new_v, vec->v, vec->a * sizeof(new_v[0]));
+        xfree(vec->v);
+        vec->v = new_v;
+        vec->a = new_sz;
+      }
     }
 
     vec->v[vec->u].entry_name = xstrdup(dd->d_name);
