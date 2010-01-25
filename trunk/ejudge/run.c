@@ -96,6 +96,7 @@ struct testinfo
   int            max_score;     /* maximal score for this test */
   long           times;         /* execution time */
   long           real_time;     /* execution real time */
+  int            max_memory_used;
   char          *input;         /* the input */
   long           input_size;
   int            has_input_digest;
@@ -321,6 +322,8 @@ generate_xml_report(
         int info_available_flag,
         int report_time_limit_ms,
         int report_real_time_limit_ms,
+        int has_real_time,
+        int has_max_memory_used,
         const unsigned char *additional_comment,
         const unsigned char *valuer_comment,
         const unsigned char *valuer_judge_comment,
@@ -345,6 +348,12 @@ generate_xml_report(
           req_pkt->run_id, req_pkt->judge_id, buf1,
           unparse_scoring_system(buf2, sizeof(buf2), req_pkt->scoring_system),
           (req_pkt->full_archive)?"yes":"no", total_tests - 1);
+  if (has_real_time) {
+    fprintf(f, " real-time-available=\"yes\"");
+  }
+  if (has_max_memory_used) {
+    fprintf(f, " max-memory-used-available=\"yes\"");
+  }
   if (correct_available_flag) {
     fprintf(f, " correct-available=\"yes\"");
   }
@@ -414,8 +423,11 @@ generate_xml_report(
       }
     }
     fprintf(f, " time=\"%lu\"", tests[i].times);
-    if (tests[i].real_time > 0) {
+    if (tests[i].real_time >= 0 && has_real_time) {
       fprintf(f, " real-time=\"%ld\"", tests[i].real_time);
+    }
+    if (tests[i].max_memory_used > 0) {
+      fprintf(f, " max-memory-used=\"%d\"", tests[i].max_memory_used);
     }
     if (req_pkt->scoring_system == SCORE_OLYMPIAD && !req_pkt->accepting_mode) {
       fprintf(f, " nominal-score=\"%d\" score=\"%d\"",
@@ -1189,6 +1201,9 @@ invoke_nwrun(
   if (out_packet->exit_comment[0]) {
     result->exit_comment = xstrdup(out_packet->exit_comment);
   }
+  if (out_packet->max_memory_used > 0) {
+    result->max_memory_used = out_packet->max_memory_used;
+  }
 
   /* handle the input test data */
   if (req_pkt->full_archive) {
@@ -1339,6 +1354,8 @@ run_tests(struct section_tester_data *tst,
   char *valuer_errors = 0;
   int report_time_limit_ms = -1;
   int report_real_time_limit_ms = -1;
+  int has_real_time = 0;
+  int has_max_memory_used = 0;
 
   int pfd1[2], pfd2[2];
   tpTask tsk_int = 0;
@@ -1507,6 +1524,10 @@ run_tests(struct section_tester_data *tst,
                             cur_test, 0, serve_state.global->run_work_dir,
                             new_name, test_src, test_base, time_limit_value,
                             &tests[cur_test]);
+
+      if (tests[cur_test].max_memory_used > 0) {
+        has_max_memory_used = 1;
+      }
       if (status) {
         failed_test = cur_test;
         total_failed_tests++;
@@ -1978,6 +1999,7 @@ run_tests(struct section_tester_data *tst,
     if (tsk) {
       tests[cur_test].times = task_GetRunningTime(tsk);
 #if defined HAVE_TASK_GETREALTIME
+      has_real_time = 1;
       tests[cur_test].real_time = task_GetRealTime(tsk);
 #endif
     }
@@ -2595,6 +2617,7 @@ run_tests(struct section_tester_data *tst,
                       score, prb->full_score,
                       (prb->use_corr && prb->corr_dir[0]), prb->use_info,
                       report_time_limit_ms, report_real_time_limit_ms,
+                      has_real_time, has_max_memory_used,
                       additional_comment, valuer_comment,
                       valuer_judge_comment, valuer_errors);
 

@@ -35,14 +35,14 @@
 #endif /* EJUDGE_CHARSET */
 
 /*
-<testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"] [time_limit_ms="T" real_time_limit_ms="T">
+<testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"] [time_limit_ms="T" real_time_limit_ms="T" [real-time-available="B"] [max-memory-used-available="T"]>
   <comment>T</comment>
   <valuer_comment>T</valuer_comment>
   <valuer_judge_comment>T</valuer_judge_comment>
   <valuer_errors>T</valuer_errors>
   <host>T</host>
   <tests>
-    <test num="N" status="O" [exit-code="N"] [term-signal="N"] time="N" real-time="N" [nominal-score="N" score="N"] [comment="S"] [team-comment="S"] [checker-comment="S"] [exit-comment="S"] output-available="B" stderr-available="B" checker-output-available="B" args-too-long="B" [input-digest="X"] [correct-digest="X"]>
+    <test num="N" status="O" [exit-code="N"] [term-signal="N"] time="N" real-time="N" [max-memory-used="N"] [nominal-score="N" score="N"] [comment="S"] [team-comment="S"] [checker-comment="S"] [exit-comment="S"] output-available="B" stderr-available="B" checker-output-available="B" args-too-long="B" [input-digest="X"] [correct-digest="X"]>
        [<args>T</args>]
        [<input>T</input>]
        [<output>T</output>]
@@ -109,6 +109,9 @@ enum
   TR_A_TIME_LIMIT_MS,
   TR_A_REAL_TIME_LIMIT_MS,
   TR_A_EXIT_COMMENT,
+  TR_A_MAX_MEMORY_USED,
+  TR_A_REAL_TIME_AVAILABLE,
+  TR_A_MAX_MEMORY_USED_AVAILABLE,
 
   TR_A_LAST_ATTR,
 };
@@ -167,6 +170,9 @@ static const char * const attr_map[] =
   [TR_A_TIME_LIMIT_MS] = "time-limit-ms",
   [TR_A_REAL_TIME_LIMIT_MS] = "real-time-limit-ms",
   [TR_A_EXIT_COMMENT] = "exit-comment",
+  [TR_A_MAX_MEMORY_USED] = "max-memory-used",
+  [TR_A_REAL_TIME_AVAILABLE] = "real-time-available",
+  [TR_A_MAX_MEMORY_USED_AVAILABLE] = "max-memory-used-available",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -262,6 +268,14 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
         goto failure;
       }
       p->real_time = x;
+      break;
+    case TR_A_MAX_MEMORY_USED:
+      if (xml_attr_int(a, &x) < 0) goto failure;
+      if (x < 0) {
+        xml_err_attr_invalid(a);
+        goto failure;
+      }
+      p->max_memory_used = x;
       break;
     case TR_A_EXIT_CODE:
       if (xml_attr_int(a, &x) < 0) goto failure;
@@ -510,6 +524,16 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
     case TR_A_INFO_AVAILABLE:
       if (xml_attr_bool(a, &x) < 0) return -1;
       r->info_available = x;
+      break;
+
+    case TR_A_REAL_TIME_AVAILABLE:
+      if (xml_attr_bool(a, &x) < 0) return -1;
+      r->real_time_available = x;
+      break;
+
+    case TR_A_MAX_MEMORY_USED_AVAILABLE:
+      if (xml_attr_bool(a, &x) < 0) return -1;
+      r->max_memory_used_available = x;
       break;
 
       /*

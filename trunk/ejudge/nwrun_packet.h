@@ -91,6 +91,8 @@ struct nwrun_out_packet
   int cpu_time_millis;
   int real_time_millis;
 
+  int max_memory_used;
+
   int is_signaled;
   int signal_num;
   int exit_code;
