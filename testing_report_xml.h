@@ -3,7 +3,7 @@
 #ifndef __TESTING_REPORT_XML_H__
 #define __TESTING_REPORT_XML_H__
 
-/* Copyright (C) 2005-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@ struct testing_report_test
   unsigned char *comment;
   unsigned char *team_comment;
   unsigned char *checker_comment;
+  unsigned char *exit_comment;
 
   unsigned char *args;
   unsigned char *input;

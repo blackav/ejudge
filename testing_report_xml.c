@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@
   <valuer_errors>T</valuer_errors>
   <host>T</host>
   <tests>
-    <test num="N" status="O" [exit-code="N"] [term-signal="N"] time="N" real-time="N" [nominal-score="N" score="N"] [comment="S"] [team-comment="S"] [checker-comment="S"] output-available="B" stderr-available="B" checker-output-available="B" args-too-long="B" [input-digest="X"] [correct-digest="X"]>
+    <test num="N" status="O" [exit-code="N"] [term-signal="N"] time="N" real-time="N" [nominal-score="N" score="N"] [comment="S"] [team-comment="S"] [checker-comment="S"] [exit-comment="S"] output-available="B" stderr-available="B" checker-output-available="B" args-too-long="B" [input-digest="X"] [correct-digest="X"]>
        [<args>T</args>]
        [<input>T</input>]
        [<output>T</output>]
@@ -108,6 +108,7 @@ enum
   TR_A_INFO_DIGEST,
   TR_A_TIME_LIMIT_MS,
   TR_A_REAL_TIME_LIMIT_MS,
+  TR_A_EXIT_COMMENT,
 
   TR_A_LAST_ATTR,
 };
@@ -165,6 +166,7 @@ static const char * const attr_map[] =
   [TR_A_INFO_DIGEST] = "info-digest",
   [TR_A_TIME_LIMIT_MS] = "time-limit-ms",
   [TR_A_REAL_TIME_LIMIT_MS] = "real-time-limit-ms",
+  [TR_A_EXIT_COMMENT] = "exit-comment",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -307,6 +309,11 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
 
     case TR_A_CHECKER_COMMENT:
       p->checker_comment = a->text;
+      a->text = 0;
+      break;
+
+    case TR_A_EXIT_COMMENT:
+      p->exit_comment = a->text;
       a->text = 0;
       break;
 
@@ -729,6 +736,7 @@ testing_report_test_free(struct testing_report_test *p)
   xfree(p->comment); p->comment = 0;
   xfree(p->team_comment); p->comment = 0;
   xfree(p->checker_comment); p->checker_comment = 0;
+  xfree(p->exit_comment); p->exit_comment = 0;
 
   xfree(p->args); p->args = 0;
   xfree(p->input); p->input = 0;

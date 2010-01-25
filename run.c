@@ -115,6 +115,7 @@ struct testinfo
   unsigned char *args;          /* command-line arguments */
   unsigned char *comment;       /* judge's comment */
   unsigned char *team_comment;  /* team's comment */
+  unsigned char *exit_comment;  /* comment on exit status */
   int            checker_score;
 };
 
@@ -428,6 +429,9 @@ generate_xml_report(
     }
     if (tests[i].team_comment && tests[i].team_comment[0]) {
       fprintf(f, " team-comment=\"%s\"", ARMOR(tests[i].team_comment));
+    }
+    if (tests[i].exit_comment && tests[i].exit_comment[0]) {
+      fprintf(f, " exit-comment=\"%s\"", ARMOR(tests[i].exit_comment));
     }
     if ((tests[i].status == RUN_WRONG_ANSWER_ERR 
          || tests[i].status == RUN_PRESENTATION_ERR || tests[i].status == RUN_OK)
@@ -1182,6 +1186,9 @@ invoke_nwrun(
 
   result->times = out_packet->cpu_time_millis;
   result->real_time = out_packet->real_time_millis;
+  if (out_packet->exit_comment[0]) {
+    result->exit_comment = xstrdup(out_packet->exit_comment);
+  }
 
   /* handle the input test data */
   if (req_pkt->full_archive) {
@@ -2619,6 +2626,7 @@ run_tests(struct section_tester_data *tst,
     xfree(tests[cur_test].args);
     xfree(tests[cur_test].comment);
     xfree(tests[cur_test].team_comment);
+    xfree(tests[cur_test].exit_comment);
     memset(&tests[cur_test], 0, sizeof(tests[cur_test]));
   }
   return 0;
