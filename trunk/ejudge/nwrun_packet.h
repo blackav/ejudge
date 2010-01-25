@@ -41,6 +41,8 @@ struct nwrun_in_packet
   int redirect_stdin;
   int redirect_stdout;
   int redirect_stderr;
+  int combined_stdin;
+  int combined_stdout;
   int time_limit_millis;
   int real_time_limit_millis;
   int max_stack_size;
