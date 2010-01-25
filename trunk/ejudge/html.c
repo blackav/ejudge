@@ -4364,7 +4364,9 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
     if (need_info) {
       fprintf(f, "<td%s>", cl);
       if (t->status == RUN_RUN_TIME_ERR && global->report_error_code) {
-        if (t->term_signal >= 0) {
+        if (t->exit_comment) {
+          fprintf(f, "%s", t->exit_comment);
+        } else if (t->term_signal >= 0) {
           fprintf(f, "%s %d (%s)", _("Signal"), t->term_signal,
                   os_GetSignalString(t->term_signal));
         } else {
@@ -4473,7 +4475,9 @@ write_xml_team_output_only_acc_report(FILE *f, const unsigned char *txt,
       break;
 
     case RUN_RUN_TIME_ERR:
-      if (t->term_signal >= 0) {
+      if (t->exit_comment) {
+        fprintf(f, "%s", t->exit_comment);
+      } else if (t->term_signal >= 0) {
         fprintf(f, "%s %d (%s)", _("Signal"), t->term_signal,
                 os_GetSignalString(t->term_signal));
       } else {
@@ -4641,7 +4645,9 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
       break;
 
     case RUN_RUN_TIME_ERR:
-      if (t->term_signal >= 0) {
+      if (t->exit_comment) {
+        fprintf(f, "%s", t->exit_comment);
+      } else if (t->term_signal >= 0) {
         fprintf(f, "%s %d (%s)", _("Signal"), t->term_signal,
                 os_GetSignalString(t->term_signal));
       } else {

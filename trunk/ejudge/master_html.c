@@ -397,7 +397,9 @@ write_xml_testing_report(
       break;
 
     case RUN_RUN_TIME_ERR:
-      if (t->term_signal >= 0) {
+      if (t->exit_comment) {
+        fprintf(f, "%s", t->exit_comment);
+      } else if (t->term_signal >= 0) {
         fprintf(f, "%s %d (%s)", _("Signal"), t->term_signal,
                 os_GetSignalString(t->term_signal));
       } else {
