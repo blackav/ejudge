@@ -114,11 +114,14 @@ scan_dir(char const *partial_path, char *found_item, size_t fi_size)
   pathcpy(full_path, dir_path);
   pathcat(full_path, "\\*.*");
 
-  sh = FindFirstFile(full_path, &result);
-  // there must be files . and ..
-  if (sh == INVALID_HANDLE_VALUE) {
-    write_log(0, LOG_ERR, "directory %s does not exist?", dir_path);
-    return -1;
+  while ((sh = FindFirstFile(full_path, &result)) == INVALID_HANDLE_VALUE) {
+    if (GetLastError() != ERROR_BAD_NETPATH) {
+      write_log(0, LOG_ERR, "directory %s does not exist?", dir_path);
+      return -1;
+    }
+
+    write_log(0, LOG_ERR, "scan_dir: drive disconnected?");
+    os_Sleep(60000);
   }
 
   while ((b = FindNextFile(sh, &result))) {
