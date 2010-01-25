@@ -279,8 +279,7 @@ run_program(
   }
 
   if (packet->time_limit_millis > 0) {
-    //task_SetMaxTimeMillis(tsk, packet->time_limit_millis);
-    task_SetMaxTime(tsk, (packet->time_limit_millis + 999) / 1000);
+    task_SetMaxTimeMillis(tsk, packet->time_limit_millis);
   }
   if (packet->real_time_limit_millis > 0) {
     task_SetMaxRealTime(tsk, (packet->real_time_limit_millis + 999) / 1000);
@@ -294,6 +293,7 @@ run_program(
   if (packet->max_vm_size > 0) {
     task_SetVMSize(tsk, packet->max_vm_size);
   }
+  task_SetMaxProcCount(tsk, 1);
   if (packet->enable_secure_run > 0) {
     task_EnableSecureExec(tsk);
   }
@@ -406,6 +406,9 @@ handle_packet(
   cur_status = run_program(packet, dst_program_path,
                            dst_input_path, run_output_path,
                            run_error_path, result);
+
+  info("Testing finished: CPU time = %d, real time = %d",
+       result->cpu_time_millis, result->real_time_millis);
 
   /* copy the stderr output */
   result->error_file_existed = 0;
@@ -559,6 +562,9 @@ read_packet(const unsigned char *dir_path)
     goto cleanup;
   }
 
+  packet->disable_stdin = 1;
+  packet->ignore_stdout = 1;
+
   /* create the output directory */
   snprintf(result_name, sizeof(result_name), "%c%c%d%c%d%c%d%c%d%c%d",
            get_priority_code(packet->priority - 17),
@@ -591,6 +597,7 @@ read_packet(const unsigned char *dir_path)
   // set default values
   snprintf(result.hostname, sizeof(result.hostname), "%s", os_NodeName());
   result.contest_id = packet->contest_id;
+  result.run_id = packet->run_id;
   result.prob_id = packet->prob_id;
   result.test_num = packet->test_num;
   result.judge_id = packet->judge_id;

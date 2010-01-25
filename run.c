@@ -1006,15 +1006,21 @@ invoke_nwrun(
   fprintf(f, "judge_id = %d\n", req_pkt->judge_id);
   fprintf(f, "use_contest_id_in_reply = %d\n", 1);
   fprintf(f, "enable_unix2dos = %d\n", 1);
-  if (prb->use_stdin) {
+  if (prb->use_stdin > 0 || prb->combined_stdin > 0) {
     fprintf(f, "redirect_stdin = %d\n", 1);
   } else {
     fprintf(f, "disable_stdin = %d\n", 1);
   }
-  if (prb->use_stdout) {
+  if (prb->combined_stdin > 0) {
+    fprintf(f, "combined_stdin = %d\n", 1);
+  }
+  if (prb->use_stdout > 0 || prb->combined_stdout > 0) {
     fprintf(f, "redirect_stdout = %d\n", 1);
   } else {
     fprintf(f, "ignore_stdout = %d\n", 1);
+  }
+  if (prb->combined_stdout > 0) {
+    fprintf(f, "combined_stdout = %d\n", 1);
   }
   fprintf(f, "redirect_stderr = %d\n", 1);
   fprintf(f, "time_limit_millis = %ld\n", time_limit_millis);

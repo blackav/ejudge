@@ -3,7 +3,7 @@
 #ifndef __PATHUTL_H__
 #define __PATHUTL_H__
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 #define PATH_EOL     "\n"
 #define PATH_EXE_SFX ""
 #else
-#define PATH_SEP     "\\"
+#define PATH_SEP     "/"
 #define PATH_EOL     "\r\n"
 #define PATH_EXE_SFX ".exe"
 #endif

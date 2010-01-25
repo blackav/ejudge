@@ -242,8 +242,7 @@ do_loop(void)
         task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
         task_SetRedir(tsk, 2, TSR_DUP, 1);
         if (lang->compile_real_time_limit > 0) {
-          //task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
-          task_SetMaxTime(tsk, lang->compile_real_time_limit);
+          task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
         }
 #if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
         task_EnableAllSignals(tsk);
@@ -284,8 +283,7 @@ do_loop(void)
         task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
         task_SetRedir(tsk, 2, TSR_DUP, 1);
         if (lang->compile_real_time_limit > 0) {
-          //task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
-          task_SetMaxTime(tsk, lang->compile_real_time_limit);
+          task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
         }
 #if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
         task_EnableAllSignals(tsk);
@@ -457,6 +455,7 @@ main(int argc, char *argv[])
   unsigned char *compile_cfg_path = 0;
   path_t compile_cfg_buf = { 0 };
   path_t contests_home_dir = { 0 };
+  path_t compile_home_dir = { 0 };
 
 #if HAVE_OPEN_MEMSTREAM - 0
   FILE *lang_log_f = 0;
@@ -468,8 +467,8 @@ main(int argc, char *argv[])
   int tmp_len;
 
 #if defined __WIN32__
-  path_t compile_home_dir = { 0 };
   path_t tmp_dir = { 0 };
+  path_t std_compile_home_dir = { 0 };
 #endif
 
   enum { SUBST_SIZE = 16 };
@@ -515,8 +514,10 @@ main(int argc, char *argv[])
       i++;
     } else if (!strcmp(argv[i], "-r")) {
       if (++i >= argc) goto print_usage;
-      snprintf(contests_home_dir, sizeof(contests_home_dir),
-               "%s", argv[i++]);
+      snprintf(contests_home_dir, sizeof(contests_home_dir), "%s", argv[i++]);
+    } else if (!strcmp(argv[i], "-c")) {
+      if (++i >= argc) goto print_usage;
+      snprintf(compile_home_dir, sizeof(compile_home_dir), "%s", argv[i++]);
     } else if (!strcmp(argv[i], "-x")) {
       if (++i >= argc) goto print_usage;
       ejudge_xml_path = argv[i++];
@@ -558,13 +559,26 @@ main(int argc, char *argv[])
     }
   }
 #endif
+
+#ifndef __WIN32__
   ejudge_config = ejudge_cfg_parse(ejudge_xml_path);
   if (!ejudge_config) {
     fprintf(stderr, "%s: ejudge.xml is invalid\n", argv[0]);
     return 1;
   }
+#endif
 
 #ifdef __WIN32__
+  if (!compile_home_dir[0] && contests_home_dir[0]) {
+    snprintf(compile_home_dir, sizeof(compile_home_dir),
+             "%s/win32_compile", contests_home_dir);
+  }
+
+  if (!compile_cfg_path && compile_home_dir[0]) {
+    snprintf(compile_cfg_buf, sizeof(compile_cfg_buf),
+             "%s/conf/compile.cfg", compile_home_dir);
+    compile_cfg_path = xstrdup(compile_cfg_buf);
+  }
   if (!compile_cfg_path && contests_home_dir[0]) {
     snprintf(compile_cfg_buf, sizeof(compile_cfg_buf),
              "%s/win32_compile/conf/compile.cfg",
@@ -572,12 +586,12 @@ main(int argc, char *argv[])
     compile_cfg_path = xstrdup(compile_cfg_buf);
   }
 
-  if (!compile_cfg_path && ejudge_config->compile_home_dir) {
+  if (!compile_cfg_path && ejudge_config && ejudge_config->compile_home_dir) {
     snprintf(compile_cfg_buf, sizeof(compile_cfg_buf),
              "%s/conf/compile.cfg", ejudge_config->compile_home_dir);
     compile_cfg_path = compile_cfg_buf;
   }
-  if (!compile_cfg_path && ejudge_config->contests_home_dir) {
+  if (!compile_cfg_path && ejudge_config && ejudge_config->contests_home_dir) {
     snprintf(compile_cfg_buf, sizeof(compile_cfg_buf),
              "%s/win32_compile/conf/compile.cfg",
              ejudge_config->contests_home_dir);
@@ -595,12 +609,12 @@ main(int argc, char *argv[])
     return 1;
   }
 #else
-  if (!compile_cfg_path && ejudge_config->compile_home_dir) {
+  if (!compile_cfg_path && ejudge_config && ejudge_config->compile_home_dir) {
     snprintf(compile_cfg_buf, sizeof(compile_cfg_buf),
              "%s/conf/compile.cfg", ejudge_config->compile_home_dir);
     compile_cfg_path = compile_cfg_buf;
   }
-  if (!compile_cfg_path && ejudge_config->contests_home_dir) {
+  if (!compile_cfg_path && ejudge_config && ejudge_config->contests_home_dir) {
     snprintf(compile_cfg_buf, sizeof(compile_cfg_buf),
              "%s/compile/conf/compile.cfg", ejudge_config->contests_home_dir);
     compile_cfg_path = compile_cfg_buf;
@@ -625,29 +639,39 @@ main(int argc, char *argv[])
   subst_idx = 0;
 
 #ifdef __WIN32__
-  if (contests_home_dir[0]) {
-    subst_src[subst_idx] = ejudge_config->compile_home_dir;
-    snprintf(compile_home_dir, sizeof(compile_home_dir),
-             "%s/win32_compile", contests_home_dir);
-    subst_dst[subst_idx] = compile_home_dir;
-    subst_idx++;
+  if (compile_home_dir[0]) {
+    if (ejudge_config) {
+      subst_src[subst_idx] = ejudge_config->compile_home_dir;
+      subst_dst[subst_idx] = compile_home_dir;
+      subst_idx++;
+    } else {
+      snprintf(std_compile_home_dir, sizeof(std_compile_home_dir),
+               "%s/compile", EJUDGE_CONTESTS_HOME_DIR);
+      subst_src[subst_idx] = std_compile_home_dir;
+      subst_dst[subst_idx] = compile_home_dir;
 
+      subst_idx++;
+    }
+  }
+  if (contests_home_dir[0]) {
     subst_src[subst_idx] = EJUDGE_CONTESTS_HOME_DIR;
     subst_dst[subst_idx] = contests_home_dir;
     subst_idx++;
-
+  }
+  if (compile_home_dir[0]) {
     subst_src[subst_idx] = "/COMPILE_HOME_DIR";
     subst_dst[subst_idx] = compile_home_dir;
     subst_idx++;
-
+  }
+  if (contests_home_dir[0]) {
     subst_src[subst_idx] = "/CONTESTS_HOME_DIR";
     subst_dst[subst_idx] = contests_home_dir;
     subst_idx++;
-
-    subst_src[subst_idx] = "/TMPDIR";
-    subst_dst[subst_idx] = get_tmp_dir(tmp_dir, sizeof(tmp_dir));
-    subst_idx++;
   }
+
+  subst_src[subst_idx] = "/TMPDIR";
+  subst_dst[subst_idx] = get_tmp_dir(tmp_dir, sizeof(tmp_dir));
+  subst_idx++;
 
   fprintf(stderr, "Win32 substitutions:\n");
   for (int j = 0; subst_src[j]; ++j) {
@@ -726,6 +750,8 @@ main(int argc, char *argv[])
   printf("  -g G   - start as group G (only as root)\n");
   printf("  -C D   - change directory to D\n");
   printf("  -x X   - specify a path to ejudge.xml file\n");
+  printf("  -r S   - substitute ${CONTESTS_HOME_DIR} for S in the config\n");
+  printf("  -c C   - substitute ${COMPILE_HOME_DIR} for C in the config\n");
   return code;
 }
 
