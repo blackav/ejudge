@@ -1130,7 +1130,7 @@ invoke_nwrun(
                out_packet->contest_id, req_pkt->contest_id);
     goto restart_waiting;
   }
-  if (out_packet->run_id != req_pkt->run_id) {
+  if (out_packet->run_id - 1 != req_pkt->run_id) {
     chk_printf(result, "run_id mismatch: %d, %d\n",
                out_packet->run_id, req_pkt->run_id);
     goto restart_waiting;
