@@ -48,6 +48,8 @@ static const struct config_parse_info nwrun_in_params[] =
   NWRUN_IN_PARAM(redirect_stdin, "d"),
   NWRUN_IN_PARAM(redirect_stdout, "d"),
   NWRUN_IN_PARAM(redirect_stderr, "d"),
+  NWRUN_IN_PARAM(combined_stdin, "d"),
+  NWRUN_IN_PARAM(combined_stdout, "d"),
   NWRUN_IN_PARAM(time_limit_millis, "d"),
   NWRUN_IN_PARAM(real_time_limit_millis, "d"),
   NWRUN_IN_PARAM(max_stack_size, "d"),
