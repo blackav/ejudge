@@ -465,11 +465,11 @@ make_all_dir(char const *path, int access)
   path_t outpath;
 
   pathcpy(inpath, path);
-  pathcat(inpath, "\\in");
+  pathcat(inpath, "/in");
   pathcpy(dirpath, path);
-  pathcat(dirpath, "\\dir");
+  pathcat(dirpath, "/dir");
   pathcpy(outpath, path);
-  pathcat(outpath, "\\out");
+  pathcat(outpath, "/out");
 
   if (make_dir(path, 0) < 0) return -1;
   if (make_dir(inpath, access) < 0) return -1;
