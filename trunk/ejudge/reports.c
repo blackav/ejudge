@@ -2847,7 +2847,7 @@ write_xml_tex_testing_report(
       fprintf(fout, " & %d.%03d", t->real_time / 1000, t->real_time % 1000);
     }
     if (r->max_memory_used_available) {
-      fprintf(fout, " & %d", t->max_memory_used_available);
+      fprintf(fout, " & %d", t->max_memory_used);
     }
 
     // extra information
