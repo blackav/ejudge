@@ -388,7 +388,7 @@ write_xml_testing_report(
       }
     }
     if (r->max_memory_used_available) {
-      fprintf(f, "<td%s>%d</td>", t->max_memory_used);
+      fprintf(f, "<td%s>%d</td>", cl1, t->max_memory_used);
     }
 
     // extra information
