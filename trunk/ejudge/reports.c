@@ -2826,9 +2826,15 @@ write_xml_tex_testing_report(
   fprintf(fout, "\n\n\\noindent\\begin{tabular}{|l|p{4cm}|p{1.5cm}|p{1.5cm}|p{5cm}|p{1.5cm}");
   if (need_comment) fprintf(fout, "|p{4cm}");
   fprintf(fout, "|}\n\\hline\n"
-          "N & %s & %s & %s & %s & %s",
-          _("Result"), _("Time (sec)"), _("Real time (sec)"),
-          _("Extra info"), _("Score"));
+          "N & %s & %s",
+          _("Result"), _("Time (sec)"));
+  if (r->real_time_available) {
+    fprintf(fout, " & %s", _("Real time (sec)"));
+  }
+  if (r->max_memory_used_available) {
+    fprintf(fout, " & %s", _("Max memory used"));
+  }
+  fprintf(fout, " & %s & %s", _("Extra info"), _("Score"));
   if (need_comment) fprintf(fout, " & %s", _("Comment"));
   fprintf(fout, "\\\\\n\\hline\n");
 
@@ -2837,10 +2843,11 @@ write_xml_tex_testing_report(
     fprintf(fout, "%d", t->num);
     fprintf(fout, " & %s", run_status_str(t->status, 0, 0, 0, 0));
     fprintf(fout, " & %d.%03d", t->time / 1000, t->time % 1000);
-    if (t->real_time > 0) {
+    if (r->real_time_available) {
       fprintf(fout, " & %d.%03d", t->real_time / 1000, t->real_time % 1000);
-    } else {
-      fprintf(fout, " &");
+    }
+    if (r->max_memory_used_available) {
+      fprintf(fout, " & %d", t->max_memory_used_available);
     }
 
     // extra information

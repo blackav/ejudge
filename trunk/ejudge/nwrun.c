@@ -316,6 +316,7 @@ run_program(
   task_Wait(tsk);
 
   result->cpu_time_millis = task_GetRunningTime(tsk);
+  result->real_time_available = 1;
   result->real_time_millis = task_GetRealTime(tsk);
   result->max_memory_used = task_GetMemoryUsed(tsk);
 

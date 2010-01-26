@@ -90,6 +90,7 @@ struct nwrun_out_packet
 
   int cpu_time_millis;
   int real_time_millis;
+  int real_time_available;
 
   int max_memory_used;
 

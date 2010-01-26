@@ -340,10 +340,16 @@ write_xml_testing_report(
 
   fprintf(f,
           "<table%s>"
-          "<tr><th%s>N</th><th%s>%s</th><th%s>%s</th><th%s>%s</th>"
-          "<th%s>%s</th>", cl1, cl1, cl1,
-          _("Result"), cl1, _("Time (sec)"), cl1, _("Real time (sec)"),
-          cl1, _("Extra info"));
+          "<tr><th%s>N</th><th%s>%s</th><th%s>%s</th>",
+          cl1, cl1, cl1,
+          _("Result"), cl1, _("Time (sec)"));
+  if (r->real_time_available) {
+    fprintf(f, "<th%s>%s</th>", cl1, _("Real time (sec)"));
+  }
+  if (r->max_memory_used_available) {
+    fprintf(f, "<th%s>%s</th>", cl1, _("Max memory used"));
+  }
+  fprintf(f, "<th%s>%s</th>", cl1, _("Extra info"));
   if (is_kirov) {
     fprintf(f, "<th%s>%s</th>", cl1, _("Score"));
   }
@@ -371,15 +377,18 @@ write_xml_testing_report(
       } else {
         fprintf(f, "<td%s>N/A</td>", cl1);
       }
-      fprintf(f, "<td%s>N/A</td>", cl1);
-    } else {
-      fprintf(f, "<td%s>%d.%03d</td>", cl1, t->time / 1000, t->time % 1000);
-      if (t->real_time > 0) {
-        fprintf(f, "<td%s>%d.%03d</td>", cl1,
-                t->real_time / 1000, t->real_time % 1000);
-      } else {
+      if (r->real_time_available) {
         fprintf(f, "<td%s>N/A</td>", cl1);
       }
+    } else {
+      fprintf(f, "<td%s>%d.%03d</td>", cl1, t->time / 1000, t->time % 1000);
+      if (r->real_time_available) {
+        fprintf(f, "<td%s>%d.%03d</td>", cl1,
+                t->real_time / 1000, t->real_time % 1000);
+      }
+    }
+    if (r->max_memory_used_available) {
+      fprintf(f, "<td%s>%d</td>", t->max_memory_used_available);
     }
 
     // extra information

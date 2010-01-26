@@ -909,6 +909,7 @@ invoke_nwrun(
         full_archive_t far,
         int test_num,
         int priority,
+        int *p_has_real_time,
         const unsigned char *exe_src_dir,
         const unsigned char *exe_basename,
         const unsigned char *test_src_path,
@@ -1197,7 +1198,10 @@ invoke_nwrun(
   }
 
   result->times = out_packet->cpu_time_millis;
-  result->real_time = out_packet->real_time_millis;
+  if (out_packet->real_time_available) {
+    *p_has_real_time = 1;
+    result->real_time = out_packet->real_time_millis;
+  }
   if (out_packet->exit_comment[0]) {
     result->exit_comment = xstrdup(out_packet->exit_comment);
   }
@@ -1521,7 +1525,8 @@ run_tests(struct section_tester_data *tst,
 
     if (tst->nwrun_spool_dir[0]) {
       status = invoke_nwrun(serve_state.global, tst, req_pkt, prb, far,
-                            cur_test, 0, serve_state.global->run_work_dir,
+                            cur_test, 0, &has_real_time,
+                            serve_state.global->run_work_dir,
                             new_name, test_src, test_base, time_limit_value,
                             &tests[cur_test]);
 
