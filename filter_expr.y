@@ -116,6 +116,8 @@ static void *filter_expr_user_data;
 %token TOK_CURGROUP  "curgroup"
 %token TOK_LANG      "lang"
 %token TOK_CURLANG   "curlang"
+%token TOK_ARCH      "arch"
+%token TOK_CURARCH   "curarch"
 %token TOK_RESULT    "result"
 %token TOK_CURRESULT "curresult"
 %token TOK_SCORE     "score"
@@ -292,6 +294,9 @@ exprA :
 | "lang" { $1->kind = TOK_CURLANG; $$ = $1; }
 | "lang" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curlang" { $$ = $1; }
+| "arch" { $1->kind = TOK_CURARCH; $$ = $1; }
+| "arch" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "curarch" { $$ = $1; }
 | "prob" { $1->kind = TOK_CURPROB; $$ = $1; }
 | "prob" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curprob" { $$ = $1; }
