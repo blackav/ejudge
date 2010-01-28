@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -488,19 +488,11 @@ teamdb_get_cypher(teamdb_state_t state, int user_id)
   return ui->exam_cypher;
 }
 
-int
-teamdb_get_flags(teamdb_state_t state, int id)
+static int
+teamdb_convert_flags(int old_flags)
 {
-  int new_flags = 0, old_flags = 0;
+  int new_flags = 0;
 
-  if (teamdb_refresh(state) < 0) return TEAM_BANNED;
-  if (!teamdb_lookup_client(state, id)) {
-    err("teamdb_get_flags: bad team id %d (contest_id %d)", id,
-        state->contest_id);
-    return TEAM_BANNED;
-  }
-  ASSERT(state->u_contests[id]);
-  old_flags = state->u_contests[id]->flags;
   if ((old_flags & USERLIST_UC_INVISIBLE)) {
     new_flags |= TEAM_INVISIBLE;
   }
@@ -516,7 +508,21 @@ teamdb_get_flags(teamdb_state_t state, int id)
   if ((old_flags & USERLIST_UC_DISQUALIFIED)) {
     new_flags |= TEAM_DISQUALIFIED;
   }
+
   return new_flags;
+}
+
+int
+teamdb_get_flags(teamdb_state_t state, int id)
+{
+  if (teamdb_refresh(state) < 0) return TEAM_BANNED;
+  if (!teamdb_lookup_client(state, id)) {
+    err("teamdb_get_flags: bad team id %d (contest_id %d)", id,
+        state->contest_id);
+    return TEAM_BANNED;
+  }
+  ASSERT(state->u_contests[id]);
+  return teamdb_convert_flags(state->u_contests[id]->flags);
 }
 
 const struct userlist_user *
@@ -734,6 +740,56 @@ teamdb_destroy(teamdb_state_t state)
   memset(state, 0, sizeof(*state));
   xfree(state);
   return 0;
+}
+
+void
+teamdb_get_user_map(
+        teamdb_state_t state,
+        int u_max,             // maximal user id
+        unsigned char *u_runs, // map of users forced to skip
+        int *p_u_tot,          // [out] number of users
+        int *u_rev,            // user_id -> user_serial
+        int *u_ind)            // user_serial -> user_id
+{
+  int i, u_tot = 0, f;
+
+  *p_u_tot = u_tot;
+  if (!state->users || state->users->user_map_size <= 0) {
+    return;
+  }
+
+  if (u_max > state->users->user_map_size) {
+    u_max = state->users->user_map_size;
+  }
+
+  memset(u_rev, -1, u_max * sizeof(u_rev[0]));
+
+  if (u_runs) {
+    for (i = 1; i < u_max; ++i) {
+      if (!state->users->user_map[i]) continue;
+      f = state->u_contests[i]->flags;
+      if ((f & (USERLIST_UC_INVISIBLE 
+                | USERLIST_UC_BANNED
+                | USERLIST_UC_DISQUALIFIED)))
+        continue;
+      if (!u_runs[i]) continue;
+      u_rev[i] = u_tot;
+      u_ind[u_tot++] = i;
+    }
+  } else {
+    for (i = 1; i < u_max; ++i) {
+      if (!state->users->user_map[i]) continue;
+      f = state->u_contests[i]->flags;
+      if ((f & (USERLIST_UC_INVISIBLE 
+                | USERLIST_UC_BANNED
+                | USERLIST_UC_DISQUALIFIED)))
+        continue;
+      u_rev[i] = u_tot;
+      u_ind[u_tot++] = i;
+    }
+  }
+
+  *p_u_tot = u_tot;
 }
 
 /*
