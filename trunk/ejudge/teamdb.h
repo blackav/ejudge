@@ -3,7 +3,7 @@
 #ifndef __TEAMDB_H__
 #define __TEAMDB_H__
 
-/* Copyright (C) 2000-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -100,5 +100,14 @@ int teamdb_get_uid_by_pid(teamdb_state_t,
 void teamdb_register_update_hook(teamdb_state_t, void (*)(void *), void *);
 void teamdb_unregister_update_hook(teamdb_state_t, void (*)(void *));
 int teamdb_get_user_status_map(teamdb_state_t, int *p_size, int **p_map);
+
+void
+teamdb_get_user_map(
+        teamdb_state_t state,
+        int t_max,             // maximal user id
+        unsigned char *t_runs, // map of users forced to skip
+        int *p_t_tot,          // [out] number of users
+        int *t_rev,            // user_id -> user_serial
+        int *t_ind);           // user_serial -> user_id
 
 #endif /* __TEAMDB_H__ */

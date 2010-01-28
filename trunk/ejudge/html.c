@@ -1244,26 +1244,33 @@ do_write_kirov_standings(
    */
   XALLOCAZ(t_ind, t_max);
   XALLOCAZ(t_rev, t_max);
-  for (i = 1, t_tot = 0; i < t_max; i++) {
-    t_rev[i] = -1;
-    if (!teamdb_lookup(state->teamdb_state, i)) continue;
-    if ((teamdb_get_flags(state->teamdb_state, 
-                          i) & (TEAM_INVISIBLE | TEAM_BANNED | TEAM_DISQUALIFIED))) continue;
-    if (!t_runs[i]) continue;
+  if (global->stand_collate_name) {
+    memset(t_rev, -1, t_max * sizeof(t_rev[0]));
+    for (i = 1, t_tot = 0; i < t_max; i++) {
+      t_rev[i] = -1;
+      if (!teamdb_lookup(state->teamdb_state, i)) continue;
+      if ((teamdb_get_flags(state->teamdb_state, 
+                            i) & (TEAM_INVISIBLE | TEAM_BANNED
+                                  | TEAM_DISQUALIFIED))) continue;
+      if (!t_runs[i]) continue;
 
-    if (global->stand_collate_name) {
-      // collate on team names
-      for (j = 0; j < t_tot; j++)
-        if (!strcmp(teamdb_get_name_2(state->teamdb_state, t_ind[j]),
-                    teamdb_get_name_2(state->teamdb_state, i))) {
-          t_rev[i] = j;
-          break;
-        }
-      if (j < t_tot) continue;
+      if (global->stand_collate_name) {
+        // collate on team names
+        for (j = 0; j < t_tot; j++)
+          if (!strcmp(teamdb_get_name_2(state->teamdb_state, t_ind[j]),
+                      teamdb_get_name_2(state->teamdb_state, i))) {
+            t_rev[i] = j;
+            break;
+          }
+        if (j < t_tot) continue;
+      }
+
+      t_rev[i] = t_tot;
+      t_ind[t_tot++] = i;
     }
-
-    t_rev[i] = t_tot;
-    t_ind[t_tot++] = i;
+  } else {
+    // use a fast function, if no `stand_collate_name'
+    teamdb_get_user_map(state->teamdb_state, t_max,t_runs,&t_tot, t_rev, t_ind);
   }
 
   /* make problem index */
@@ -2558,7 +2565,8 @@ do_write_moscow_standings(
   /* make users index */
   XALLOCA(u_ind, u_max);
   XALLOCA(u_rev, u_max);
-  memset(u_rev, -1, u_max * sizeof(u_rev[0]));
+  teamdb_get_user_map(state->teamdb_state, u_max, u_runs, &u_tot, u_rev, u_ind);
+  /*
   for (i = 1, u_tot = 0; i < u_max; i++)
     if (teamdb_lookup(state->teamdb_state, i) > 0
         && !(teamdb_get_flags(state->teamdb_state,
@@ -2568,6 +2576,7 @@ do_write_moscow_standings(
       u_ind[u_tot] = i;
       u_tot++;
     }
+  */
 
   /* sorted index to u_ind */
   XALLOCA(u_sort, u_tot);
@@ -3454,6 +3463,8 @@ do_write_standings(
   /* make team index */
   XALLOCAZ(t_ind, t_max);
   XALLOCAZ(t_rev, t_max);
+  teamdb_get_user_map(state->teamdb_state, t_max, t_runs, &t_tot, t_rev, t_ind);
+  /*
   for (i = 1, t_tot = 0; i < t_max; i++) {
     t_rev[i] = -1;
     if (!teamdb_lookup(state->teamdb_state, i)) continue;
@@ -3463,6 +3474,7 @@ do_write_standings(
     t_rev[i] = t_tot;
     t_ind[t_tot++] = i;
   }
+  */
   XALLOCAZ(t_prob, t_tot);
   XALLOCAZ(t_pen,t_tot);
   XALLOCA(t_n1, t_tot);
