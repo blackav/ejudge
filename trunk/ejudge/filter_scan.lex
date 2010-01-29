@@ -196,7 +196,7 @@ lett    [A-Za-z_]
 "PD" { TR(RUN_PENDING); }
 "ML" { TR(RUN_MEM_LIMIT_ERR); }
 "SE" { TR(RUN_SECURITY_ERR); }
-"TE" { TR(RUN_STYLE_ERR); }
+"SV" { TR(RUN_STYLE_ERR); }
 "RU" { TR(RUN_RUNNING); }
 "CD" { TR(RUN_COMPILED); }
 "CG" { TR(RUN_COMPILING); }
