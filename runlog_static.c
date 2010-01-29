@@ -180,7 +180,7 @@ static const struct str_to_status_data str_to_status_table[] =
   { "PD", RUN_PENDING },
   { "ML", RUN_MEM_LIMIT_ERR },
   { "SE", RUN_SECURITY_ERR },
-  { "TE", RUN_STYLE_ERR },
+  { "SV", RUN_STYLE_ERR },
   { "RU", RUN_RUNNING },
   { "CD", RUN_COMPILED },
   { "CG", RUN_COMPILING },
