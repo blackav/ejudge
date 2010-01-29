@@ -839,6 +839,9 @@ prepare_unparse_lang(
   if (lang->content_type[0]) {
     fprintf(f, "content_type = \"%s\"\n", CARMOR(lang->content_type));
   }
+  if (lang->style_checker_cmd[0]) {
+    fprintf(f, "style_checker_cmd = \"%s\"\n",CARMOR(lang->style_checker_cmd));
+  }
 
   if (lang->compiler_env) {
     for (i = 0; lang->compiler_env[i]; i++) {
