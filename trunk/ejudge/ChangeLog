@@ -1,3 +1,572 @@
+2010-01-28 (r5755) Alexander Chernov  <cher@ejudge.ru>
+
+	* teamdb.h: copyright notice is updated;
+	(teamdb_get_user_map) new function prototype.
+
+	* html.c:
+	(do_write_kirov_standings) `teamdb_get_user_map' is used to optimize
+	  speed;
+	(do_write_moscow_standings) `teamdb_get_user_map' is used to optimize
+	  speed;
+	(do_write_standings) the same as above.
+
+	* teamdb.c: copyright notice is updated;
+	(teamdb_convert_flags) new function;
+	(teamdb_get_flags) `teamdb_convert_flags' is called;
+	(teamdb_get_user_map) new function.
+
+2010-01-26 (r5750) Alexander Chernov  <cher@ejudge.ru>
+
+	* filter_eval.c, filter_expr.y, filter_scan.lex:
+	`arch' primitive is supported.
+
+2010-01-26 (r5748) Alexander Chernov  <cher@ejudge.ru>
+
+	* nwrun_packet.h:
+	(struct nwrun_out_packet) `real_time_available' field is added.
+
+	* master_html.c:
+	(write_xml_testing_report) real time is reported only if available;
+	  max memory used is reported is available.
+
+	* nwrun.c:
+	(run_program) `real_time_available' is set.
+
+	* nwrun_packet.c:
+	`real_time_available' output packet parameter is added.
+
+	* reports.c:
+	(write_xml_tex_testing_report) real time is reported only if available;
+	  max memory used is reported is available.
+
+	* run.c:
+	(invoke_nwrun) `p_has_real_time' parameter is added;
+	(run_tests) `has_real_time' parameter is passed to `invoke_nwrun'.
+
+2010-01-25 (r5746) Alexander Chernov  <cher@ejudge.ru>
+
+	* testing_report_xml.h:
+	(struct testing_report_test) `max_memory_used' field is added;
+	(struct testing_report_xml) `real_time_available',
+	  `max_memory_used_available' fields are added.
+
+	* nwrun.c:
+	(run_program) `max_memory_used' is handled.
+
+	* nwrun_packet.h:
+	(struct nwrun_out_packet) `max_memory_used' field is added.
+
+	* nwrun_packet.c:
+	`max_memory_used' output packet parameter is supported.
+
+	* run.c:
+	(struct testinfo) `max_memory_used' field is added;
+	(generate_xml_report) "real-time-available",
+	  "max-memory-used-available", "max-memory-used" attributes
+	  are generated;
+	(invoke_nwrun) `max_memory_used' is handled;
+	(run_tests) `max_memory_used' is handled.
+
+	* testing_report_xml.c:
+	"max-memory-used", "real-time-available", "max-memory-used-available"
+	attributes are supported.
+
+2010-01-25 (r5744) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.c:
+	(write_xml_team_testing_report) `exit_comment' field is handled;
+	(write_xml_team_output_only_acc_report) the same;
+	(write_xml_team_accepting_report) the same.
+
+	* master_html.c:
+	(write_xml_testing_report) `exit_comment' field is handled.
+
+	* reports.c:
+	(write_xml_tex_testing_report) `exit_comment' field is handled.
+
+2010-01-25 (r5743) Alexander Chernov  <cher@ejudge.ru>
+
+	* nwrun_packet.h:
+	(struct nwrun_out_packet) `exit_comment' field is added.
+
+	* testing_report_xml.h: copyright notice is updated;
+	(struct testing_report_test) `exit_comment' field is added.
+
+	* nwrun.c:
+	(run_program) `exit_comment' is supported.
+
+	* nwrun_packet.c:
+	`exit_comment' parameter is added.
+
+	* run.c:
+	(struct testinfo) `exit_comment' field is added;
+	(generate_xml_report) `exit_comment' field is handled;
+	(invoke_nwrun) `exit_comment' field is handled.
+
+	* testing_report_xml.c: copyright notice is updated;
+	new attribute "exit-comment" is handled.
+
+2010-01-25 (r5742) Alexander Chernov  <cher@ejudge.ru>
+
+	* pathutl.h: copyright notice is updated;
+	"/" is used instead of "\\".
+
+	* compile.c:
+	(do_loop) `task_SetMaxRealTime' is used instead of `task_SetMaxTime';
+	(main) "-c" option is supported.
+
+	* nwrun.c:
+	various fixes...
+
+	* run.c:
+	(invoke_nwrun) `combined_stdin' and `combined_stdout' problem
+	  configuration variables are handled.
+
+2010-01-25 (r5739) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	editing of `combined_stdin', `combined_stdout' problem configuration
+	parameters is supported.
+
+	* prepare.c, prepare_out.c:
+	`combined_stdin', `combined_stdout' problem configuration parameters
+	are handed.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super-serve.c:
+	editing of `combined_stdin', `combined_stdout' problem configuration
+	parameters is supported.
+
+2010-01-25 (r5738) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) fields `combined_stdin',
+	  `combined_stdout' are added.
+
+2010-01-25 (r5737) Alexander Chernov  <cher@ejudge.ru>
+
+	* nwrun_packet.h:
+	(struct nwrun_in_packet) new fields `combined_stdin',
+	  `combined_stdout' are added.
+
+	* nwrun_packet.c:
+	input packet parameters `combined_stdin', `combined_stdout'
+	are added.
+
+2010-01-23 (r5726) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_2.c:
+	(ns_new_run_form) form type is changed to 2.
+
+2010-01-23 (r5720) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	testing queue management actions are added;
+	(ns_write_testing_queue) new function.
+
+	* copyright.c: copyright notice is updated.
+
+	* new_server_html.c:
+	(priv_view_testing_queue) new function;
+	(priv_testing_queue_operation) new function;
+	(priv_whole_testing_queue_operation) new function;
+	(priv_main_page) "View testing queue" link is added.
+
+	* new_server_html_2.c:
+	"run_packet.h" is included;
+	<dirent.h> is included;
+	(scan_run_sort_func) new function;
+	(scan_run_queue) new function;
+	(ns_write_testing_queue) new function.
+
+	* new_server_tables.c:
+	testing queue management actions are handled.
+
+	* run.c:
+	(invoke_nwrun) run_id field is checked on the output packet.
+
+	* serve_2.c:
+	<sys/stat.h> is included;
+	<dirent.h> is included;
+	(testing_queue_lock_entry) new function;
+	(testing_queue_unlock_entry) new function;
+	(get_priority_value) new function;
+	(get_priority_code) new function;
+	(serve_testing_queue_delete) new function;
+	(serve_testing_queue_change_priority) new function;
+	(serve_testing_queue_up) new function;
+	(serve_testing_queue_down) new function;
+	(collect_run_packets) new function;
+	(serve_testing_queue_delete_all) new function;
+	(serve_testing_queue_change_priority_all) new function;
+	(serve_testing_queue_up_all) new function;
+	(serve_testing_queue_down_all) new function.
+
+	* userlist-server.c: copyright notice is updated;
+	(update_userlist_table) all dependent contests are notified.
+
+2010-01-23 (r5719) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_state.h: copyright notice is updated;
+	(serve_testing_queue_delete) new function prototype;
+	(serve_testing_queue_up) new function prototype;
+	(serve_testing_queue_down) new function prototype;
+	(serve_testing_queue_delete_all) new function prototype;
+	(serve_testing_queue_up_all) new function prototype;
+	(serve_testing_queue_down_all) new function prototype.
+
+2010-01-22 (r5717) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_2.c:
+	(serve_run_request) language parameter `disable_security' is handled.
+
+2010-01-22 (r5715) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	editing of language `disable_security' variable is supported.
+
+	* prepare.c:
+	`disable_security' language configuration variable is supported.
+
+	* prepare_out.c:
+	(prepare_unparse_lang) `disable_security' is handled.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of language `disable_security' variable is supported.
+
+2010-01-22 (r5714) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_language_data) `disable_security' field is added.
+
+2010-01-20 (r5701) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile.c:
+	substitutions /COMPILE_HOME_DIR and /CONTESTS_HOME_DIR are added;
+	all necessary directories are created.
+
+	* nwrun.c:
+	(get_priority_code) new function;
+	(read_packet) priority is added to the result packet;
+	(do_loop) try harder to move out an incoming packet.
+
+	* run.c:
+	(invoke_nwrun) try harder to wait for the nwrun.
+
+2010-01-20 (r5696) Alexander Chernov  <cher@ejudge.ru>
+
+	* run.c:
+	(invoke_nwrun) deadlocks are avoided.
+
+2010-01-20 (r5694) Alexander Chernov  <cher@ejudge.ru>
+
+	* filter_eval.c: copyright notice is updated;
+	(do_eval) `group' expression is supported.
+
+	* filter_expr.y: copyright notice is updated;
+	`group' expression is supported.
+
+	* filter_scan.lex:
+	"group" token is supported.
+
+2010-01-18 (r5670) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_2.c:
+	`compile_request_id' is never 0.
+
+2010-01-17 (r5664) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	nwrun_packet.[ch] is added.
+
+	* fileutl.h:
+	(make_hardlink) new function prototype.
+
+2010-01-17 (r5661) Alexander Chernov  <cher@ejudge.ru>
+
+	* nwrun_packet.c, nwrun_packet.h:
+	initial revision
+
+2010-01-17 (r5659) Alexander Chernov  <cher@ejudge.ru>
+
+	* fileutl.h:
+	(get_tmp_dir) new function prototype.
+
+	* compile.c:
+	(main) "/TMPDIR" substitution is added.
+
+	* prepare.c:
+	(set_defaults) `compile_work_dir' is substituted.
+
+2010-01-17 (r5656) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile.c:
+	(main) `compile_home_dir' is undefined on Win32.
+
+	* compile-control.c: copyright notice is updated;
+	(main) call of `prepare' is updated.
+
+	* fix-db.c:
+	(process_contest) call of `prepare' is updated.
+
+	* serve.c: copyright notice is updated;
+	(main) call of `prepare' is updated.
+
+	* serve_2.c:
+	(serve_compile_request) lang parameters are used instead of global.
+
+2010-01-17 (r5655) Alexander Chernov  <cher@ejudge.ru>
+
+	* parsecfg.h:
+	(param_subst) new function prototype.
+
+	* compile.c:
+	Win32 support is being implemented.
+
+	* parsecfg.c:
+	(is_prefix) new function is added;
+	(param_subst) new function is added.
+
+	* pathutl.c: copyright notice is updated;
+	(path_normalize) win32 paths are handled.
+
+	* prepare.c:
+	(set_defaults) `subst_src', `subst_dst' parameters are accepted;
+	  substitutions are applied for `root_dir', `lang_config_dir',
+	  `lang->cmd';
+	(prepare) call of `set_defaults' is updated.
+
+	* run.c:
+	(main) call of `prepare' is updated.
+
+	* serve_state.c:
+	(serve_state_load_contest) call of `prepare' is updated.
+
+2010-01-17 (r5650) Alexander Chernov  <cher@ejudge.ru>
+
+	* parsecfg.h: copyright notice is updated;
+	(sarray_append) new function prototype.
+
+	* super_proto.h:
+	editing of `enable_win32_languages' is supported.
+
+	* super-serve.h:
+	(struct sid_state) `enable_win32_languages' field is added.
+
+	* parsecfg.h: copyright notice is updated;
+	(sarray_append) new function.
+
+	* serve-control.c, super-serve.c:
+	(super_serve_clear_edited_contest) `enable_win32_languages' is handled.
+
+	* super_html_3.c, super_html_4.c:
+	`enable_win32_languages' is handled.
+
+2010-01-17 (r5649) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_tester_data) `nwrun_spool_dir' field is added.
+
+	* super_html.h: copyright notice is updated;
+	(super_load_cs_languages) `extra_compile_dirs' parameter is added.
+
+	* prepare.c:
+	`nwrun_spool_dir' tester configuration variable is added;
+	handling of `extra_compile_dirs' is changed.
+
+	* prepare_out.c:
+	win32 architecture is supported.
+
+	* super_html_3.c:
+	(super_load_cs_languages) `extra_compile_dirs' parameter is added
+	  and handled;
+	(super_html_edit_languages) call of `super_load_cs_languages' updated;
+	(super_html_lang_activate) `compile_dir_index' is copied;
+	(super_html_read_serve) call of `super_load_cs_languages' updated;
+	  file is successfully parsed without any testers.
+
+	* super_html_4.c:
+	(write_languages_page) call of `super_load_cs_languages' updated.
+
+	* super-serve.c:
+	(super_serve_clear_edited_contest) `extra_cs_cfgs' field is freed;
+	(super_serve_move_edited_contest) `extra_cs_cfgs' is handled.
+
+2010-01-16 (r5648) Alexander Chernov  <cher@ejudge.ru>
+
+	* super-serve.h: copyright notice is updated;
+	(struct sid_state) `extra_cs_cfgs', `extra_cs_cfgs_total' fields are added.
+
+2010-01-16 (r5647) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge-setup.c:
+	(c_armor_2) the string is properly armored.
+
+2010-01-16 (r5646) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.h: copyright notice is updated;
+	(c_armored_memlen) new function prototype;
+	(c_armored_strlen) new function prototype;
+	(c_armor_needed) new function prototype;
+	(c_armor_needed_bin) new function prototype;
+	(c_armor_buf) new function prototype.
+
+	* prepare_out.c:
+	C output armoring is moved to misctext.
+
+	* misctext.c:
+	(c_armored_memlen) new function;
+	(c_armored_strlen) new function;
+	(c_armor_needed) new function;
+	(c_armor_needed_bin) new function;
+	(c_armor_string) new function;
+	(c_armor_buf) new function.
+
+2010-01-16 (r5645) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge-setup.c:
+	(generate_ejudge_xml) fix.
+
+	* prepare_out.c: copyright notice is updated;
+	(prepare_unparse_global) `extra_compile_dirs' is supported;
+	(prepare_unparse_lang) `compile_dir_index' is supported.
+
+2010-01-16 (r5643) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) new field `extra_compile_dirs';
+	(struct section_language_data) new field `compile_dir_index'.
+
+	* prepare.c:
+	`extra_compile_dirs' global configuration var is added;
+	`compile_dir_index' language configuration var is added;
+	(prepare_global_free_func) `extra_compile_dirs' is handled;
+	(set_defaults) `compile_dir_index' is handled.
+
+2010-01-12 (r5640) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	rule for `ej-nwrun' is added.
+
+	* ejudge-configure-compilers.c: copyright notice is updated;
+	remove_directory_recursively use is updated.
+
+	* ejudge-setup.c: copyright notice is updated;
+	remove_directory_recursively use is updated.
+
+	* new_server_html_2.c:
+	remove_directory_recursively use is updated.
+
+	* new_server_html_4.c:
+	(cmd_submit_run) `ignore_duplicated_runs' is honored.
+
+2010-01-12 (r5638) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.win32.in:
+	version handling is updated.
+
+	* fileutl.h: copyright notice is updated;
+	(fast_copy_file) new function prototype;
+	(remove_directory_recursively) `preserve_root' parameter is added;
+	(generic_truncate) new function prototype.
+
+	* nwrun.c:
+	mostly completed.
+
+2010-01-11 (r5634) Alexander Chernov  <cher@ejudge.ru>
+
+	* tsc.c, l10n.c, userlist.c, userlist_xml.c, sformat.c, files.make, prepare.c, misctext.c, Makefile.win32.in, filter_tree.c, run.c, serve_state.c, runlog.c:
+	win32 MinGW fixes.
+
+2010-01-11 (r5633) Alexander Chernov  <cher@ejudge.ru>
+
+	* win32_compat.h:
+	initial revision
+
+2010-01-11 (r5631) Alexander Chernov  <cher@ejudge.ru>
+
+	* run.c: copyright notice is updated;
+	<sys/vfs.h> is not included for MinGW;
+	(get_expected_free_space) a new functions, which returns
+	  the free space amount in the working directory;
+	(check_free_space) a new function which waits until
+	  enough free space is available in the working directory.
+
+2010-01-09 (r5621) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h: copyright notice is updated;
+	editing of `style_checker_cmd' language variable is supported.
+
+	* prepare.c:
+	`style_checker_cmd' language configuration variable is handled.
+
+	* serve_2.c:
+	(serve_compile_request) `style_checker_cmd' is passed to
+	  the compile server.
+
+	* super_html_3.c:
+	editing of `style_checker_cmd' language variable is supported.
+
+	* serve-control.c, super_html_4.c, super-serve.c: copyright notice is updated;
+	editing of `style_checker_cmd' language variable is supported.
+
+2010-01-09 (r5618) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h: copyright notice is updated;
+	(struct section_language_data) `style_checker_cmd' field is added.
+
+2010-01-09 (r5616) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile.c: copyright notice is updated;
+	(do_loop) `style_checker' is supported.
+
+2010-01-09 (r5614) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile_packet.h: copyright notice is updated;
+	(struct compile_request_packet) `style_checker' field is added.
+
+	* compile_packet_priv.h: copyright notice is updated;
+	EJ_COMPILE_PACKET_VERSION is used for the current packet version;
+	(struct compile_request_bin_packet) `style_checker_len' field is added.
+
+	* compile_packet_1.c: copyright notice is updated;
+	<limits.h> is included;
+	(compile_request_packet_read) EJ_COMPILE_PACKET_VERSION is used for
+	  the current version of the compile packet;
+	  `style_checker' field is supported.
+
+	* compile_packet_2.c: copyright notice is updated;
+	<limits.h> is included;
+	(compile_request_packet_write) EJ_COMPILE_PACKET_VERSION is used for
+	  the current version of the compile packet;
+	  `style_checker' field is supported.
+
+	* compile_packet_3.c: copyright notice is updated;
+	(compile_request_packet_free) `style_checker' field is freed.
+
+2010-01-09 (r5612) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h: copyright notice is updated;
+	NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR is added.
+
+	* new_server_html.c:
+	(priv_set_run_style_error_status) new function to handle
+	  PRIV_SET_RUN_STYLE_ERR command;
+	PRIV_SET_RUN_STYLE_ERR command is handled.
+
+	* new_server_html_2.c:
+	button for PRIV_SET_RUN_STYLE_ERR is added.
+
+	* new_server_tables.c: copyright notice is updated;
+	button for PRIV_SET_RUN_STYLE_ERR is added.
+
+2010-01-08 (r5610) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog.h: copyright notice is updated;
+	new run status RUN_STYLE_ERR is added.
+
+	* compile_packet_4.c, compile_packet_5.c, filter_scan.lex, filter_tree.c, html.c, master_html.c, new_server_html.c, new_server_html_2.c, new_server_html_4.c, reports.c, runlog.c, runlog_static.c, serve_2.c: copyright notice is updated;
+	new run status RUN_STYLE_ERR is supported.
+
 2010-01-06 (r5605) Alexander Chernov  <cher@ejudge.ru>
 
 	* Makefile.unix.in: copyright notice is updated;
