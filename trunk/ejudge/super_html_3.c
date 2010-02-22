@@ -4274,7 +4274,7 @@ super_html_print_problem(FILE *f,
     extra_msg = msg_buf;
   }
   if (!problem_type_flag) {
-    print_boolean_3_select_row(f, "Use standard input", prob->combined_stdin,
+    print_boolean_3_select_row(f, "Combined standard/file input", prob->combined_stdin,
                                SSERV_CMD_PROB_CHANGE_COMBINED_STDIN,
                                extra_msg,
                                session_id, form_row_attrs[row ^= 1],
@@ -4330,7 +4330,7 @@ super_html_print_problem(FILE *f,
     extra_msg = msg_buf;
   }
   if (!problem_type_flag) {
-    print_boolean_3_select_row(f, "Use standard output", prob->combined_stdout,
+    print_boolean_3_select_row(f, "Combined standard/file output", prob->combined_stdout,
                                SSERV_CMD_PROB_CHANGE_COMBINED_STDOUT,
                                extra_msg,
                                session_id, form_row_attrs[row ^= 1],
