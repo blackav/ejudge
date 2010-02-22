@@ -242,6 +242,46 @@ get_num_prefix(int num)
 }
 
 static int
+concatenate_files(const unsigned char *dst_path, const unsigned char *src_path)
+{
+  int retcode = -1;
+  FILE *fout = 0;
+  FILE *fin = 0;
+  int c;
+
+  if (!(fout = fopen(dst_path, "ab"))) {
+    err("failed to open %s for appending: %s", dst_path, os_ErrorMsg());
+    goto failed;
+  }
+  if (!(fin = fopen(src_path, "rb"))) {
+    err("failed to open %s for reading: %s", src_path, os_ErrorMsg());
+    goto failed;
+  }
+
+  while ((c = getc(fin)) != EOF)
+    putc(c, fout);
+
+  if (ferror(fin)) {
+    err("read error from %s", src_path);
+    goto failed;
+  }
+  if (ferror(fout)) {
+    err("write error to %s", dst_path);
+    goto failed;
+  }
+
+  fclose(fin); fin = 0;
+  fclose(fout); fout = 0;
+
+  retcode = 0;
+
+ failed:
+  if (fin) fclose(fin);
+  if (fout) fclose(fout);
+  return retcode;
+}
+
+static int
 run_program(
         const struct nwrun_in_packet *packet,
         const unsigned char *program_path,
@@ -264,12 +304,12 @@ run_program(
   task_SetWorkingDir(tsk, global->work_dir);
   if (packet->disable_stdin > 0) {
     task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
-  } else if (packet->redirect_stdin > 0) {
+  } else if (packet->redirect_stdin > 0 || packet->combined_stdin > 0) {
     task_SetRedir(tsk, 0, TSR_FILE, input_path, TSK_READ);
   }
   if (packet->ignore_stdout > 0) {
     task_SetRedir(tsk, 1, TSR_FILE, "/dev/null", TSK_WRITE, TSK_FULL_RW);
-  } else if (packet->redirect_stdout > 0) {
+  } else if (packet->redirect_stdout > 0 || packet->combined_stdout > 0) {
     task_SetRedir(tsk, 1, TSR_FILE, output_path, TSK_REWRITE, TSK_FULL_RW);
   }
   if (packet->ignore_stderr > 0) {
@@ -361,6 +401,7 @@ handle_packet(
   unsigned char dst_input_path[EJ_PATH_MAX];
   unsigned char src_input_path[EJ_PATH_MAX];
   unsigned char run_output_path[EJ_PATH_MAX];
+  unsigned char full_output_path[EJ_PATH_MAX];
   unsigned char run_error_path[EJ_PATH_MAX];
   unsigned char log_file_path[EJ_PATH_MAX];
   unsigned char result_file_path[EJ_PATH_MAX];
@@ -402,14 +443,46 @@ handle_packet(
     }
   }
 
+  if (packet->combined_stdin > 0) {
+    snprintf(dst_input_path, sizeof(dst_input_path), "%s/%s.stdin",
+             global->work_dir, packet->input_file_name);
+    if (packet->enable_unix2dos > 0) {
+      if (generic_copy_file(CONVERT, "", src_input_path, "",
+                            CONVERT, "", dst_input_path, "") < 0) {
+        snprintf(result->comment, sizeof(result->comment),
+                 "unix2dos copy failed: %s -> %s", src_input_path,
+                 dst_input_path);
+        goto cleanup;
+      }
+    } else {
+      if (fast_copy_file(src_input_path, dst_input_path) < 0) {
+        snprintf(result->comment, sizeof(result->comment),
+                 "copy failed: %s -> %s", src_input_path, dst_input_path);
+        goto cleanup;
+      }
+    }
+  }
+
   snprintf(run_output_path, sizeof(run_output_path), "%s/%s",
            global->work_dir, packet->output_file_name);
+  if (packet->combined_stdout > 0) {
+    snprintf(run_output_path, sizeof(run_output_path), "%s/%s.stdout",
+             global->work_dir, packet->output_file_name);
+  }
+
   snprintf(run_error_path, sizeof(run_error_path), "%s/%s",
            global->work_dir, packet->error_file_name);
 
   cur_status = run_program(packet, dst_program_path,
                            dst_input_path, run_output_path,
                            run_error_path, result);
+
+  if (packet->combined_stdout > 0) {
+    snprintf(full_output_path, sizeof(full_output_path), "%s/%s",
+             global->work_dir, packet->output_file_name);
+    concatenate_files(full_output_path, run_output_path);
+    snprintf(run_output_path, sizeof(run_output_path), "%s", full_output_path);
+  }
 
   info("Testing finished: CPU time = %d, real time = %d",
        result->cpu_time_millis, result->real_time_millis);
@@ -565,9 +638,6 @@ read_packet(const unsigned char *dir_path)
     err("time_limit_millis is invalid (%d)", packet->time_limit_millis);
     goto cleanup;
   }
-
-  packet->disable_stdin = 1;
-  packet->ignore_stdout = 1;
 
   /* create the output directory */
   snprintf(result_name, sizeof(result_name), "%c%c%d%c%d%c%d%c%d%c%d",
