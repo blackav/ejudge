@@ -134,6 +134,10 @@ static void *filter_expr_user_data;
 %token TOK_CURHIDDEN "curhidden"
 %token TOK_READONLY  "readonly"
 %token TOK_CURREADONLY "curreadonly"
+%token TOK_MARKED "marked"
+%token TOK_CURMARKED "curmarked"
+%token TOK_SAVED "saved"
+%token TOK_CURSAVED "cursaved"
 %token TOK_VARIANT   "variant"
 %token TOK_CURVARIANT "curvariant"
 %token TOK_RAWVARIANT "rawvariant"
@@ -150,6 +154,8 @@ static void *filter_expr_user_data;
 %token TOK_CURUSERDISQUALIFIED "curuserdisqualified"
 %token TOK_LATEST    "latest"
 %token TOK_CURLATEST "curlatest"
+%token TOK_LATESTMARKED "latestmarked"
+%token TOK_CURLATESTMARKED "curlatestmarked"
 %token TOK_AFTEROK   "afterok"
 %token TOK_CURAFTEROK "curafterok"
 %token TOK_EXAMINABLE "examinable"
@@ -318,6 +324,12 @@ exprA :
 | "readonly" { $1->kind = TOK_CURREADONLY; $$ = $1; }
 | "readonly" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curreadonly" { $$ = $1; }
+| "marked" { $1->kind = TOK_CURMARKED; $$ = $1; }
+| "marked" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "curmarked" { $$ = $1; }
+| "saved" { $1->kind = TOK_CURSAVED; $$ = $1; }
+| "saved" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "cursaved" { $$ = $1; }
 | "variant" { $1->kind = TOK_CURVARIANT; $$ = $1; }
 | "variant" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curvariant" { $$ = $1; }
@@ -342,6 +354,9 @@ exprA :
 | "latest" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "latest" { $1->kind = TOK_CURLATEST; $$ = $1; }
 | "curlatest" { $$ = $1; }
+| "latestmarked" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "latestmarked" { $1->kind = TOK_CURLATESTMARKED; $$ = $1; }
+| "curlatestmarked" { $$ = $1; }
 | "afterok" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "afterok" { $1->kind = TOK_CURAFTEROK; $$ = $1; }
 | "curafterok" { $$ = $1; }
