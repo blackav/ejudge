@@ -101,6 +101,15 @@ int run_start_contest(runlog_state_t, time_t);
 time_t run_get_start_time(runlog_state_t);
 int run_change_status(runlog_state_t state, int runid, int newstatus,
                       int newtest, int newscore, int judge_id);
+int
+run_change_status_2(
+        runlog_state_t state,
+        int runid,
+        int newstatus,
+        int newtest,
+        int newscore,
+        int judge_id,
+        int is_marked);
 int run_get_status(runlog_state_t state, int runid);
 int run_is_imported(runlog_state_t state, int runid);
 void run_get_times(runlog_state_t, time_t *, time_t *, time_t *, time_t *,
