@@ -3529,6 +3529,8 @@ priv_clear_run(FILE *fout, FILE *log_f,
  * NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN
  * NEW_SRV_ACTION_CHANGE_RUN_IS_EXAMINABLE
  * NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY
+ * NEW_SRV_ACTION_CHANGE_RUN_IS_MARKED
+ * NEW_SRV_ACTION_CHANGE_RUN_IS_SAVED
  * NEW_SRV_ACTION_CHANGE_RUN_TEST
  * NEW_SRV_ACTION_CHANGE_RUN_SCORE
  * NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ
@@ -3580,6 +3582,8 @@ priv_edit_run(FILE *fout, FILE *log_f,
   case NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN:
   case NEW_SRV_ACTION_CHANGE_RUN_IS_EXAMINABLE:
   case NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY:
+  case NEW_SRV_ACTION_CHANGE_RUN_IS_MARKED:
+  case NEW_SRV_ACTION_CHANGE_RUN_IS_SAVED:
     if (sscanf(s, "%d%n", &param_bool, &n) != 1 || s[n]
         || param_bool < 0 || param_bool > 1) {
       ns_html_err_inv_param(fout, phr, 1, "invalid boolean param");
@@ -3688,6 +3692,14 @@ priv_edit_run(FILE *fout, FILE *log_f,
   case NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY:
     ne.is_readonly = param_bool;
     ne_mask = RE_IS_READONLY;
+    break;
+  case NEW_SRV_ACTION_CHANGE_RUN_IS_MARKED:
+    ne.is_marked = param_bool;
+    ne_mask = RE_IS_MARKED;
+    break;
+  case NEW_SRV_ACTION_CHANGE_RUN_IS_SAVED:
+    ne.is_saved = param_bool;
+    ne_mask = RE_IS_SAVED;
     break;
   }
 
@@ -7054,6 +7066,8 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN] = priv_edit_run,
   [NEW_SRV_ACTION_CHANGE_RUN_IS_EXAMINABLE] = priv_edit_run,
   [NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY] = priv_edit_run,
+  [NEW_SRV_ACTION_CHANGE_RUN_IS_MARKED] = priv_edit_run,
+  [NEW_SRV_ACTION_CHANGE_RUN_IS_SAVED] = priv_edit_run,
   [NEW_SRV_ACTION_CHANGE_RUN_TEST] = priv_edit_run,
   [NEW_SRV_ACTION_CHANGE_RUN_SCORE] = priv_edit_run,
   [NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ] = priv_edit_run,
@@ -8462,6 +8476,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN] = priv_generic_operation,
   [NEW_SRV_ACTION_CHANGE_RUN_IS_EXAMINABLE] = priv_generic_operation,
   [NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY] = priv_generic_operation,
+  [NEW_SRV_ACTION_CHANGE_RUN_IS_MARKED] = priv_generic_operation,
+  [NEW_SRV_ACTION_CHANGE_RUN_IS_SAVED] = priv_generic_operation,
   [NEW_SRV_ACTION_CHANGE_RUN_TEST] = priv_generic_operation,
   [NEW_SRV_ACTION_CHANGE_RUN_SCORE] = priv_generic_operation,
   [NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ] = priv_generic_operation,
@@ -13826,6 +13842,8 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN] = "CHANGE_RUN_IS_HIDDEN",
   [NEW_SRV_ACTION_CHANGE_RUN_IS_EXAMINABLE] = "CHANGE_RUN_IS_EXAMINABLE",
   [NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY] = "CHANGE_RUN_IS_READONLY",
+  [NEW_SRV_ACTION_CHANGE_RUN_IS_MARKED] = "CHANGE_RUN_IS_MARKED",
+  [NEW_SRV_ACTION_CHANGE_RUN_IS_SAVED] = "CHANGE_RUN_IS_SAVED",
   [NEW_SRV_ACTION_CHANGE_RUN_STATUS] = "CHANGE_RUN_STATUS",
   [NEW_SRV_ACTION_CHANGE_RUN_TEST] = "CHANGE_RUN_TEST",
   [NEW_SRV_ACTION_CHANGE_RUN_SCORE] = "CHANGE_RUN_SCORE",
