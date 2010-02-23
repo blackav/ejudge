@@ -120,6 +120,8 @@ ns_write_priv_all_runs(
   unsigned char *prob_str;
   const unsigned char *imported_str;
   const unsigned char *examinable_str;
+  const unsigned char *marked_str;
+  const unsigned char *saved_str;
   const unsigned char *rejudge_dis_str;
   unsigned long *displayed_mask = 0;
   int displayed_size = 0;
@@ -473,6 +475,14 @@ ns_write_priv_all_runs(
       if (pe->is_examinable) {
         examinable_str = "!";
       }
+      marked_str = "";
+      if (pe->is_marked) {
+        marked_str = "@";
+      }
+      saved_str = "";
+      if (pe->is_saved) {
+        saved_str = "+";
+      }
       start_time = env.rhead.start_time;
       if (global->is_virtual) {
         start_time = run_get_virtual_start_time(cs->runlog_state, pe->user_id);
@@ -487,7 +497,8 @@ ns_write_priv_all_runs(
         html_start_form(f, 1, phr->self_url, phr->hidden_vars);
       }
       */
-      fprintf(f, "<td%s>%d%s%s</td>", cl, rid, imported_str, examinable_str);
+      fprintf(f, "<td%s>%d%s%s%s%s</td>", cl, rid, imported_str, examinable_str,
+              marked_str, saved_str);
       fprintf(f, "<td%s>%s</td>", cl, durstr);
       fprintf(f, "<td%s>%u</td>", cl, pe->size);
       fprintf(f, "<td%s>%s</td>", cl, xml_unparse_ip(pe->a.ip));
@@ -1325,6 +1336,38 @@ ns_write_priv_source(const serve_state_t state,
     fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
             html_select_yesno(bt, sizeof(bt), "param", info.is_examinable),
             BUTTON(NEW_SRV_ACTION_CHANGE_RUN_IS_EXAMINABLE));
+  } else {
+    fprintf(f, "%s</tr>\n", nbsp);
+  }
+
+  // is_marked
+  if (editable) {
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "run_id", "%d", run_id);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%s</td>",
+          _("Marked?"),
+          html_unparse_bool(bb, sizeof(bb), info.is_marked));
+  if (editable) {
+    fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
+            html_select_yesno(bt, sizeof(bt), "param", info.is_marked),
+            BUTTON(NEW_SRV_ACTION_CHANGE_RUN_IS_MARKED));
+  } else {
+    fprintf(f, "%s</tr>\n", nbsp);
+  }
+
+  // is_saved
+  if (editable) {
+    html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "run_id", "%d", run_id);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%s</td>",
+          _("Saved?"),
+          html_unparse_bool(bb, sizeof(bb), info.is_saved));
+  if (editable) {
+    fprintf(f, "<td>%s</td><td>%s</td></tr></form>\n",
+            html_select_yesno(bt, sizeof(bt), "param", info.is_saved),
+            BUTTON(NEW_SRV_ACTION_CHANGE_RUN_IS_SAVED));
   } else {
     fprintf(f, "%s</tr>\n", nbsp);
   }
