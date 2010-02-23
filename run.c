@@ -324,6 +324,7 @@ generate_xml_report(
         int report_real_time_limit_ms,
         int has_real_time,
         int has_max_memory_used,
+        int marked_flag,
         const unsigned char *additional_comment,
         const unsigned char *valuer_comment,
         const unsigned char *valuer_judge_comment,
@@ -388,6 +389,9 @@ generate_xml_report(
   }
   if (report_real_time_limit_ms > 0) {
     fprintf(f, " real-time-limit-ms=\"%d\"", report_real_time_limit_ms);
+  }
+  if (marked_flag >= 0) {
+    fprintf(f, " marked-flag=\"%d\"", marked_flag);
   }
   fprintf(f, " >\n");
 
@@ -655,6 +659,84 @@ read_checker_score(const unsigned char *path,
   return 0;
 }
 
+static int
+read_valuer_score(
+        const unsigned char *path,
+        const unsigned char *log_path,
+        const unsigned char *what,
+        int max_score,
+        int valuer_sets_marked,
+        int *p_score,
+        int *p_marked)
+{
+  char *score_buf = 0, *p;
+  size_t score_buf_size = 0;
+  int x, y, n, r;
+
+  if (p_marked) *p_marked = -1;
+
+  r = generic_read_file(&score_buf, 0, &score_buf_size, 0,
+                        0, path, "");
+  if (r < 0) {
+    append_msg_to_log(log_path, "Cannot read the %s score output", what);
+    return -1;
+  }
+  if (strlen(score_buf) != score_buf_size) {
+    append_msg_to_log(log_path, "The %s score output is binary", what);
+    xfree(score_buf);
+    return -1;
+  }
+
+  while (score_buf_size > 0 && isspace(score_buf[score_buf_size - 1]))
+    score_buf[--score_buf_size] = 0;
+  if (!score_buf_size) {
+    append_msg_to_log(log_path, "The %s score output is empty", what);
+    xfree(score_buf);
+    return -1;
+  }
+
+  p = score_buf;
+  if (sscanf(p, "%d%n", &x, &n) != 1) {
+    append_msg_to_log(log_path, "The %s score output (%s) is invalid",
+                      what, score_buf);
+    xfree(score_buf);
+    return -1;
+  }
+  if (x < 0 || x > max_score) {
+    append_msg_to_log(log_path, "The %s score (%d) is invalid", what, x);
+    xfree(score_buf);
+    return -1;
+  }
+  p += n;
+
+  if (valuer_sets_marked > 0) {
+    if (sscanf(p, "%d%n", &y, &n) != 1) {
+      append_msg_to_log(log_path, "The %s marked_flag output (%s) is invalid",
+                        what, score_buf);
+      xfree(score_buf);
+      return -1;
+    }
+    if (y < 0 || y > 1) {
+      append_msg_to_log(log_path, "The %s marked_flag (%d) is invalid", what,y);
+      xfree(score_buf);
+      return -1;
+    }
+    p += n;
+  }
+
+  if (*p) {
+    append_msg_to_log(log_path, "The %s output is invalid", what);
+    xfree(score_buf);
+    return -1;
+  }
+
+  *p_score = x;
+  if (valuer_sets_marked > 0 && p_marked) *p_marked = y;
+
+  xfree(score_buf);
+  return 0;
+}
+
 static void
 setup_environment(
         tpTask tsk,
@@ -688,6 +770,7 @@ invoke_valuer(
         int cur_variant,
         int max_score,
         int *p_score,
+        int *p_marked,
         char **p_err_txt,
         char **p_cmt_txt,
         char **p_jcmt_txt)
@@ -784,7 +867,8 @@ invoke_valuer(
 
   task_Delete(tsk); tsk = 0;
 
-  if (read_checker_score(score_res, score_err, "valuer", max_score, p_score) < 0) {
+  if (read_valuer_score(score_res, score_err, "valuer", max_score,
+                        prb->valuer_sets_marked, p_score, p_marked) < 0) {
     goto cleanup;
   }
   generic_read_file(&cmt_txt, 0, &cmt_len, 0, 0, score_cmt, "");
@@ -1334,6 +1418,7 @@ run_tests(struct section_tester_data *tst,
   int    failed_test = 0;
   int    total_failed_tests = 0;
   int    ec = -100;            /* FIXME: magic */
+  int    marked_flag = -1;
   struct section_problem_data *prb;
   char *sound;
   unsigned char *var_test_dir;
@@ -2610,11 +2695,12 @@ run_tests(struct section_tester_data *tst,
   if (prb->valuer_cmd[0] && !req_pkt->accepting_mode
       && !reply_pkt->status != RUN_CHECK_FAILED) {
     if (invoke_valuer(serve_state.global, prb, cur_variant, prb->full_score,
-                      &score, &valuer_errors, &valuer_comment,
+                      &score, &marked_flag, &valuer_errors, &valuer_comment,
                       &valuer_judge_comment) < 0) {
       reply_pkt->status = RUN_CHECK_FAILED;
     } else {
       reply_pkt->score = score;
+      reply_pkt->marked_flag = marked_flag;
     }
   }
 
@@ -2622,7 +2708,7 @@ run_tests(struct section_tester_data *tst,
                       score, prb->full_score,
                       (prb->use_corr && prb->corr_dir[0]), prb->use_info,
                       report_time_limit_ms, report_real_time_limit_ms,
-                      has_real_time, has_max_memory_used,
+                      has_real_time, has_max_memory_used, marked_flag,
                       additional_comment, valuer_comment,
                       valuer_judge_comment, valuer_errors);
 

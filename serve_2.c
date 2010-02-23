@@ -1873,9 +1873,11 @@ serve_read_run_packet(serve_state_t state,
   }
   if (reply_pkt->status == RUN_CHECK_FAILED)
     serve_send_check_failed_email(cnts, reply_pkt->run_id);
-  if (run_change_status(state->runlog_state, reply_pkt->run_id,
-                        reply_pkt->status, reply_pkt->failed_test,
-                        reply_pkt->score, 0) < 0) goto failed;
+  if (reply_pkt->marked_flag < 0) reply_pkt->marked_flag = 0;
+  if (run_change_status_2(state->runlog_state, reply_pkt->run_id,
+                          reply_pkt->status, reply_pkt->failed_test,
+                          reply_pkt->score, 0, reply_pkt->marked_flag) < 0)
+    goto failed;
   serve_update_standings_file(state, cnts, 0);
   if (state->global->notify_status_change > 0 && !re.is_hidden
       && reply_pkt->notify_flag) {

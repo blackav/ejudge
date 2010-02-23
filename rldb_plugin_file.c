@@ -170,6 +170,15 @@ set_entry_func(
         int flags);
 static int
 squeeze_func(struct rldb_plugin_cnts *cdata);
+static int
+change_status_2_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int new_status,
+        int new_test,
+        int new_score,
+        int judge_id,
+        int is_marked);
 
 struct rldb_plugin_iface rldb_plugin_file =
 {
@@ -210,6 +219,9 @@ struct rldb_plugin_iface rldb_plugin_file =
   set_pages_func,
   set_entry_func,
   squeeze_func,
+  NULL, // put_entry
+  NULL, // put_header
+  change_status_2_func,
 };
 
 static struct common_plugin_data *
@@ -1464,6 +1476,29 @@ squeeze_func(struct rldb_plugin_cnts *cdata)
     ptr += w;
   }
   return retval;
+}
+
+static int
+change_status_2_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int new_status,
+        int new_test,
+        int new_score,
+        int judge_id,
+        int is_marked)
+{
+  struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
+  struct runlog_state *rls = cs->rl_state;
+
+  ASSERT(run_id >= 0 && run_id < rls->run_u);
+
+  rls->runs[run_id].status = new_status;
+  rls->runs[run_id].test = new_test;
+  rls->runs[run_id].score = new_score;
+  rls->runs[run_id].judge_id = judge_id;
+  rls->runs[run_id].is_marked = is_marked;
+  return do_flush_entry(cs, run_id);
 }
 
 /*
