@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -165,3 +165,13 @@ static int
 put_header_func(
         struct rldb_plugin_cnts *cdata,
         const struct run_header *rh);
+
+static int
+change_status_2_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int new_status,
+        int new_test,
+        int new_score,
+        int new_judge_id,
+        int new_is_marked);
