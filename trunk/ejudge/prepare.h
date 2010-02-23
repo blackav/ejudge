@@ -659,7 +659,7 @@ struct section_global_data
   ejintbool_t disable_passed_tests META_ATTRIB((meta_private));
 };
 
-/* sizeof(struct section_problem_data) == 60496 */
+/* sizeof(struct section_problem_data) == 60500 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -833,6 +833,8 @@ struct section_problem_data
   path_t source_header;
   /** file to insert at the end of source file */
   path_t source_footer;
+  /** if the valuer also sets the marked flag */
+  ejintbool_t valuer_sets_marked;
 
   /** printf pattern for the test files */
   unsigned char test_pat[32];
