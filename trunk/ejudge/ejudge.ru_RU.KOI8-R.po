@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-01-26 10:36+0300\n"
+"POT-Creation-Date: 2010-02-23 09:26+0300\n"
 "PO-Revision-Date: 2010-01-26 10:36+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -1994,6 +1994,9 @@ msgstr "Поставить на ожидание"
 msgid "Mark REJECTED"
 msgstr "Отказать в участии"
 
+msgid "Marked?"
+msgstr "Отмечена?"
+
 msgid "Max memory used"
 msgstr "Макс. использованная память"
 
@@ -2849,6 +2852,9 @@ msgstr "Обрабатываемые посылки"
 
 msgid "Save"
 msgstr "Сохранить"
+
+msgid "Saved?"
+msgstr "Сохранена?"
 
 msgid "Scheduled end time"
 msgstr "Запланированное время окончания"

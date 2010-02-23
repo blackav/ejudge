@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/01/25 20:06:26
+// Generated 2010/02/23 11:49:20
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -402,6 +402,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_stand_attr] = { CNTSPROB_stand_attr, 'S', XSIZE(struct section_problem_data, stand_attr), "stand_attr", XOFFSET(struct section_problem_data, stand_attr) },
   [CNTSPROB_source_header] = { CNTSPROB_source_header, 'S', XSIZE(struct section_problem_data, source_header), "source_header", XOFFSET(struct section_problem_data, source_header) },
   [CNTSPROB_source_footer] = { CNTSPROB_source_footer, 'S', XSIZE(struct section_problem_data, source_footer), "source_footer", XOFFSET(struct section_problem_data, source_footer) },
+  [CNTSPROB_valuer_sets_marked] = { CNTSPROB_valuer_sets_marked, 'B', XSIZE(struct section_problem_data, valuer_sets_marked), "valuer_sets_marked", XOFFSET(struct section_problem_data, valuer_sets_marked) },
   [CNTSPROB_test_pat] = { CNTSPROB_test_pat, 'S', XSIZE(struct section_problem_data, test_pat), "test_pat", XOFFSET(struct section_problem_data, test_pat) },
   [CNTSPROB_corr_pat] = { CNTSPROB_corr_pat, 'S', XSIZE(struct section_problem_data, corr_pat), "corr_pat", XOFFSET(struct section_problem_data, corr_pat) },
   [CNTSPROB_info_pat] = { CNTSPROB_info_pat, 'S', XSIZE(struct section_problem_data, info_pat), "info_pat", XOFFSET(struct section_problem_data, info_pat) },
