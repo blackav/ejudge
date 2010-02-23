@@ -72,6 +72,20 @@ is_latest(struct filter_env *env, int rid)
 
 /* FIXME: dumb :( */
 static int
+is_latestmarked(struct filter_env *env, int rid)
+{
+  int r;
+
+  if (rid < 0 || rid >= env->rtotal) return 0;
+  if (!env->rentries[rid].is_marked) return 0;
+  for (r = rid + 1; r < env->rtotal; r++) {
+    if (env->rentries[r].is_marked) return 0;
+  }
+  return 1;
+}
+
+/* FIXME: dumb :( */
+static int
 is_afterok(struct filter_env *env, int rid)
 {
   int r;
@@ -203,6 +217,8 @@ do_eval(struct filter_env *env,
   case TOK_IMPORTED:
   case TOK_HIDDEN:
   case TOK_READONLY:
+  case TOK_MARKED:
+  case TOK_SAVED:
   case TOK_VARIANT:
   case TOK_RAWVARIANT:
   case TOK_USERINVISIBLE:
@@ -211,6 +227,7 @@ do_eval(struct filter_env *env,
   case TOK_USERINCOMPLETE:
   case TOK_USERDISQUALIFIED:
   case TOK_LATEST:
+  case TOK_LATESTMARKED:
   case TOK_AFTEROK:
   case TOK_EXAMINABLE:
   case TOK_CYPHER:
@@ -345,6 +362,16 @@ do_eval(struct filter_env *env,
       res->type = FILTER_TYPE_BOOL;
       res->v.b = env->rentries[r1.v.i].is_readonly;
       break;
+    case TOK_MARKED:
+      res->kind = TOK_BOOL_L;
+      res->type = FILTER_TYPE_BOOL;
+      res->v.b = env->rentries[r1.v.i].is_marked;
+      break;
+    case TOK_SAVED:
+      res->kind = TOK_BOOL_L;
+      res->type = FILTER_TYPE_BOOL;
+      res->v.b = env->rentries[r1.v.i].is_saved;
+      break;
     case TOK_VARIANT:
       res->kind = TOK_INT_L;
       res->type = FILTER_TYPE_INT;
@@ -435,6 +462,11 @@ do_eval(struct filter_env *env,
       res->kind = TOK_BOOL_L;
       res->type = FILTER_TYPE_BOOL;
       res->v.b = is_latest(env, r1.v.i);
+      break;
+    case TOK_LATESTMARKED:
+      res->kind = TOK_BOOL_L;
+      res->type = FILTER_TYPE_BOOL;
+      res->v.b = is_latestmarked(env, r1.v.i);
       break;
     case TOK_AFTEROK:
       res->kind = TOK_BOOL_L;
@@ -606,6 +638,16 @@ do_eval(struct filter_env *env,
     res->type = FILTER_TYPE_BOOL;
     res->v.b = env->cur->is_readonly;
     break;
+  case TOK_CURMARKED:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    res->v.b = env->cur->is_marked;
+    break;
+  case TOK_CURSAVED:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    res->v.b = env->cur->is_saved;
+    break;
   case TOK_CURVARIANT:
     res->kind = TOK_INT_L;
     res->type = FILTER_TYPE_INT;
@@ -694,6 +736,11 @@ do_eval(struct filter_env *env,
     res->kind = TOK_BOOL_L;
     res->type = FILTER_TYPE_BOOL;
     res->v.b = is_latest(env, env->cur->run_id);
+    break;
+  case TOK_CURLATESTMARKED:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    res->v.b = is_latestmarked(env, env->cur->run_id);
     break;
   case TOK_CURAFTEROK:
     res->kind = TOK_BOOL_L;
