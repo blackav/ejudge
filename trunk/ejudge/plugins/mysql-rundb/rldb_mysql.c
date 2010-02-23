@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -192,9 +192,27 @@ do_open(struct rldb_mysql_state *state)
   if (!md->row[0] || mi->parse_int(md, md->row[0], &run_version) < 0)
     db_error_inv_value_fail(md, "config_val");
   mi->free_res(md);
-  if (run_version != 1) {
+  if (run_version == 1) {
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN is_marked TINYINT NOT NULL DEFAULT 0 AFTER last_change_nsec",
+                          md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN is_saved TINYINT NOT NULL DEFAULT 0 AFTER is_marked",
+                          md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN saved_status INT NOT NULL DEFAULT 0 AFTER is_saved",
+                          md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN saved_score INT NOT NULL DEFAULT 0 AFTER saved_status",
+                          md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN saved_test INT NOT NULL DEFAULT 0 AFTER saved_score",
+                          md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '2' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
+      return -1;
+  } else if (run_version != 2) {
     err("run_version == %d is not supported", run_version);
-    goto fail;
+    return -1;
   }
   return 0;
 
@@ -417,6 +435,11 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->exam_score[0] = ri.exam_score0;
     re->exam_score[1] = ri.exam_score1;
     re->exam_score[2] = ri.exam_score2;
+    re->is_marked = ri.is_marked;
+    re->is_saved = ri.is_saved;
+    re->saved_status = ri.saved_status;
+    re->saved_score = ri.saved_score;
+    re->saved_test = ri.saved_test;
   }
   return 1;
 
@@ -870,6 +893,26 @@ generate_update_entry_clause(
     fprintf(f, "%sexam_score1 = %d", sep, re->exam_score[1]);
     fprintf(f, "%sexam_score2 = %d", sep, re->exam_score[2]);
   }
+  if ((flags & RE_IS_MARKED)) {
+    fprintf(f, "%sis_marked = %d", sep, re->is_marked);
+    sep = comma;
+  }
+  if ((flags & RE_IS_SAVED)) {
+    fprintf(f, "%sis_saved = %d", sep, re->is_saved);
+    sep = comma;
+  }
+  if ((flags & RE_SAVED_STATUS)) {
+    fprintf(f, "%ssaved_status = %d", sep, re->saved_status);
+    sep = comma;
+  }
+  if ((flags & RE_SAVED_SCORE)) {
+    fprintf(f, "%ssaved_score = %d", sep, re->saved_score);
+    sep = comma;
+  }
+  if ((flags & RE_SAVED_TEST)) {
+    fprintf(f, "%ssaved_test = %d", sep, re->saved_test);
+    sep = comma;
+  }
 
   gettimeofday(&curtime, 0);
   fprintf(f, "%slast_change_time = ", sep);
@@ -950,6 +993,21 @@ update_entry(
   }
   if ((flags & RE_EXAM_SCORE)) {
     memcpy(dst->exam_score, src->exam_score, sizeof(dst->exam_score));
+  }
+  if ((flags & RE_IS_MARKED)) {
+    dst->is_marked = src->is_marked;
+  }
+  if ((flags & RE_IS_SAVED)) {
+    dst->is_saved = src->is_saved;
+  }
+  if ((flags & RE_SAVED_STATUS)) {
+    dst->saved_status = src->saved_status;
+  }
+  if ((flags & RE_SAVED_SCORE)) {
+    dst->saved_score = src->saved_score;
+  }
+  if ((flags & RE_SAVED_TEST)) {
+    dst->saved_test = src->saved_test;
   }
 }
 
@@ -1424,6 +1482,11 @@ put_entry_func(
   ri.exam_score2 = re->exam_score[2];
   ri.last_change_time = curtime.tv_sec;
   ri.last_change_nsec = curtime.tv_usec * 1000;
+  ri.is_marked = re->is_marked;
+  ri.is_saved = re->is_saved;
+  ri.saved_status = re->saved_status;
+  ri.saved_score = re->saved_score;
+  ri.saved_test = re->saved_test;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", state->md->table_prefix);
