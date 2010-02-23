@@ -1213,6 +1213,9 @@ prepare_unparse_prob(
   if (prob->disable_ctrl_chars >= 0
       && ((prob->abstract && prob->disable_ctrl_chars) || !prob->abstract))
       unparse_bool(f, "disable_ctrl_chars", prob->disable_ctrl_chars);
+  if (prob->valuer_sets_marked >= 0
+      && ((prob->abstract && prob->valuer_sets_marked) || !prob->abstract))
+      unparse_bool(f, "valuer_sets_marked", prob->valuer_sets_marked);
   if (prob->enable_text_form >= 0
       && ((prob->abstract && prob->enable_text_form) || !prob->abstract))
       unparse_bool(f, "enable_text_form", prob->enable_text_form);
