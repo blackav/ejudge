@@ -73,6 +73,7 @@ typedef struct testing_report_xml
   int max_score;
   int time_limit_ms;
   int real_time_limit_ms;
+  int marked_flag;
   unsigned char *comment;       /* additional testing comment */
   unsigned char *valuer_comment;
   unsigned char *valuer_judge_comment;

@@ -3,7 +3,7 @@
 #ifndef __RUN_PACKET_H__
 #define __RUN_PACKET_H__
 
-/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -65,6 +65,7 @@ struct run_reply_packet
   int failed_test;
   int score;
   int notify_flag;
+  int marked_flag;
   /* time when the compile request was queued by serve */
   int ts1;
   int ts1_us;
