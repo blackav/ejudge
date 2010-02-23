@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -50,6 +50,11 @@ static const char create_runs_query[] =
 "        exam_score2 INT NOT NULL, "
 "        last_change_time TIMESTAMP DEFAULT 0, "
 "        last_change_nsec INT UNSIGNED NOT NULL, "
+"        is_marked TINYINT NOT NULL DEFAULT 0, "
+"        is_saved TINYINT NOT NULL DEFAULT 0, "
+"        saved_status INT NOT NULL DEFAULT 0, "
+"        saved_score INT NOT NULL DEFAULT 0, "
+"        saved_test INT NOT NULL DEFAULT 0, "
 "        PRIMARY KEY (run_id, contest_id)"
 "        );";
 
@@ -88,9 +93,14 @@ struct run_entry_internal
   int exam_score2;              /* 30 */
   time_t last_change_time;
   int last_change_nsec;
+  int is_marked;
+  int is_saved;
+  int saved_status;             /* 35 */
+  int saved_score;
+  int saved_test;
 };
 
-enum { RUNS_ROW_WIDTH = 33 };
+enum { RUNS_ROW_WIDTH = 38 };
 
 #define RUNS_OFFSET(f) XOFFSET(struct run_entry_internal, f)
 static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
@@ -128,6 +138,11 @@ static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
   { 0, 'd', "exam_score2", RUNS_OFFSET(exam_score2), 0 },
   { 0, 't', "last_change_time", RUNS_OFFSET(last_change_time), 0 },
   { 0, 'd', "last_change_nsec", RUNS_OFFSET(last_change_nsec), 0 },
+  { 0, 'b', "is_marked", RUNS_OFFSET(is_marked), 0 },
+  { 0, 'b', "is_saved", RUNS_OFFSET(is_saved), 0 },
+  { 0, 'd', "saved_status", RUNS_OFFSET(saved_status), 0 },
+  { 0, 'd', "saved_score", RUNS_OFFSET(saved_score), 0 },
+  { 0, 'd', "saved_test", RUNS_OFFSET(saved_test), 0 },
 };
 
 enum
