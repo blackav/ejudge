@@ -5441,7 +5441,7 @@ super_html_print_problem(FILE *f,
                                  self_url, extra_args, prob_hidden_vars);
   }
 
-  if (show_adv && sstate->global && sstate->global->problem_navigation) {
+  if (show_adv && sstate->global) {
     //PROBLEM_PARAM(disable_ctrl_chars, "d"),
       extra_msg = "Undefined";
       if (!prob->abstract) {
@@ -5586,6 +5586,24 @@ super_html_print_problem(FILE *f,
                                extra_msg,
                                session_id, form_row_attrs[row ^= 1],
                                self_url, extra_args, prob_hidden_vars);
+
+  if (show_adv) {
+    //PROBLEM_PARAM(valuer_sets_marked, "d"),
+      extra_msg = "Undefined";
+      if (!prob->abstract) {
+        prepare_set_prob_value(CNTSPROB_valuer_sets_marked,
+                               &tmp_prob, sup_prob, sstate->global);
+        snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+                 tmp_prob.valuer_sets_marked?"Yes":"No");
+        extra_msg = msg_buf;
+      }
+      print_boolean_3_select_row(f,"Valuer sets _marked_ flag:",
+                                 prob->valuer_sets_marked,
+                                 SSERV_CMD_PROB_CHANGE_VALUER_SETS_MARKED,
+                                 extra_msg,
+                                 session_id, form_row_attrs[row ^= 1],
+                                 self_url, extra_args, prob_hidden_vars);
+  }
 
   //PROBLEM_PARAM(valuer_env, "x"),
   if (!prob->abstract) {
@@ -6474,6 +6492,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_DISABLE_CTRL_CHARS:
     p_int = &prob->disable_ctrl_chars;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_VALUER_SETS_MARKED:
+    p_int = &prob->valuer_sets_marked;
     goto handle_boolean_1;
 
   case SSERV_CMD_PROB_CHANGE_ENABLE_TEXT_FORM:
