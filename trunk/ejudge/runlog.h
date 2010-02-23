@@ -39,7 +39,7 @@ enum
   RUN_DISQUALIFIED     = 10,
   RUN_PENDING          = 11,
   RUN_MEM_LIMIT_ERR    = 12,
-  RUN_SECURITY_ERR     = 13,    /* not used currently */
+  RUN_SECURITY_ERR     = 13,
   RUN_STYLE_ERR        = 14,
   RUN_MAX_STATUS       = 14,
 
@@ -182,6 +182,11 @@ enum
     RE_MIME_TYPE     = 0x00080000,
     RE_EXAMINERS     = 0x00100000,
     RE_EXAM_SCORE    = 0x00200000,
+    RE_IS_MARKED     = 0x00400000,
+    RE_IS_SAVED      = 0x00800000,
+    RE_SAVED_STATUS  = 0x01000000,
+    RE_SAVED_SCORE   = 0x02000000,
+    RE_SAVED_TEST    = 0x04000000,
     RE_ALL           = 0x003FFFFF,
   };
 
@@ -216,11 +221,14 @@ struct run_entry
   unsigned char  ssl_flag;      /* 1 */
   rint16_t       mime_type;     /* 2 */
   unsigned char  is_examinable; /* 1 */
-  unsigned char  _pad3[1];      /* 1 */
+  unsigned char  is_marked;     /* 1 */
   int            examiners[3];  /* 12 */
   int            exam_score[3]; /* 12 */
-  /* total is 120 bytes */
-  unsigned char  _pad2[8];
+  rint32_t       saved_score;   /* 4 */
+  rint16_t       saved_test;    /* 2 */
+  unsigned char  saved_status;  /* 1 */
+  unsigned char  is_saved;      /* 1 */
+  /* total is 128 bytes */
 };
 
 struct run_file

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1171,6 +1171,21 @@ add_entry_func(
   }
   if ((flags & RE_EXAM_SCORE)) {
     memcpy(de->exam_score, re->exam_score, sizeof(de->exam_score));
+  }
+  if ((flags & RE_IS_MARKED)) {
+    de->is_marked = re->is_marked;
+  }
+  if ((flags & RE_IS_SAVED)) {
+    de->is_saved = re->is_saved;
+  }
+  if ((flags & RE_SAVED_STATUS)) {
+    de->saved_status = re->saved_status;
+  }
+  if ((flags & RE_SAVED_SCORE)) {
+    de->saved_score = re->saved_score;
+  }
+  if ((flags & RE_SAVED_TEST)) {
+    de->saved_test = re->saved_test;
   }
 
   return do_flush_entry(cs, run_id);
