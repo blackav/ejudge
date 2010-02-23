@@ -3,7 +3,7 @@
 #ifndef __RUN_PACKET_PRIV_H__
 #define __RUN_PACKET_PRIV_H__
 
-/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,8 +35,9 @@ enum
   FLAGS_SECURE_RUN           = 0x200,
   FLAGS_SECURITY_VIOLATION   = 0x400,
   FLAGS_NOTIFY               = 0x800,
+  FLAGS_MARKED               = 0x1000,
 
-  FLAGS_ALL_MASK             = 0xfff, /* scoring system incl. */
+  FLAGS_ALL_MASK             = 0x1fff, /* scoring system incl. */
 };
 
 /* serve->run binary packet structure */

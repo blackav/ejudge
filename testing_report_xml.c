@@ -35,7 +35,7 @@
 #endif /* EJUDGE_CHARSET */
 
 /*
-<testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"] [time_limit_ms="T" real_time_limit_ms="T" [real-time-available="B"] [max-memory-used-available="T"]>
+<testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"] [time_limit_ms="T" real_time_limit_ms="T" [real-time-available="B"] [max-memory-used-available="T"] [marked-flag="B"]>
   <comment>T</comment>
   <valuer_comment>T</valuer_comment>
   <valuer_judge_comment>T</valuer_judge_comment>
@@ -112,6 +112,7 @@ enum
   TR_A_MAX_MEMORY_USED,
   TR_A_REAL_TIME_AVAILABLE,
   TR_A_MAX_MEMORY_USED_AVAILABLE,
+  TR_A_MARKED_FLAG,
 
   TR_A_LAST_ATTR,
 };
@@ -128,9 +129,9 @@ static const char * const elem_map[] =
   [TR_T_STDERR] = "stderr",
   [TR_T_CHECKER] = "checker",
   [TR_T_COMMENT] = "comment",
-  [TR_T_VALUER_COMMENT] = "valuer_comment",
-  [TR_T_VALUER_JUDGE_COMMENT] = "valuer_judge_comment",
-  [TR_T_VALUER_ERRORS] = "valuer_errors",
+  [TR_T_VALUER_COMMENT] = "valuer-comment",
+  [TR_T_VALUER_JUDGE_COMMENT] = "valuer-judge-comment",
+  [TR_T_VALUER_ERRORS] = "valuer-errors",
   [TR_T_HOST] = "host",
 
   [TR_T_LAST_TAG] = 0,
@@ -173,6 +174,7 @@ static const char * const attr_map[] =
   [TR_A_MAX_MEMORY_USED] = "max-memory-used",
   [TR_A_REAL_TIME_AVAILABLE] = "real-time-available",
   [TR_A_MAX_MEMORY_USED_AVAILABLE] = "max-memory-used-available",
+  [TR_A_MARKED_FLAG] = "marked-flag",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -474,6 +476,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
   r->max_score = -1;
   r->time_limit_ms = -1;
   r->real_time_limit_ms = -1;
+  r->marked_flag = -1;
 
   for (a = t->first; a; a = a->next) {
     switch (a->tag) {
@@ -613,6 +616,11 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
     case TR_A_REAL_TIME_LIMIT_MS:
       if (xml_attr_int(a, &x) < 0) return -1;
       r->real_time_limit_ms = x;
+      break;
+
+    case TR_A_MARKED_FLAG:
+      if (xml_attr_bool(a, &x) < 0) return -1;
+      r->marked_flag = x;
       break;
 
     default:
