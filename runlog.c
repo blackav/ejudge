@@ -994,6 +994,26 @@ run_set_entry(
     te.is_examinable = in->is_examinable;
     f = 1;
   }
+  if ((mask & RE_IS_MARKED) && te.is_marked != in->is_marked) {
+    te.is_marked = in->is_marked;
+    f = 1;
+  }
+  if ((mask & RE_IS_SAVED) && te.is_saved != in->is_saved) {
+    te.is_saved = in->is_saved;
+    f = 1;
+  }
+  if ((mask & RE_SAVED_STATUS) && te.saved_status != in->saved_status) {
+    te.saved_status = in->saved_status;
+    f = 1;
+  }
+  if ((mask & RE_SAVED_SCORE) && te.saved_score != in->saved_score) {
+    te.saved_score = in->saved_score;
+    f = 1;
+  }
+  if ((mask & RE_SAVED_TEST) && te.saved_test != in->saved_test) {
+    te.saved_test = in->saved_test;
+    f = 1;
+  }
 
   /* check consistency of a new record */
   if (te.status == RUN_VIRTUAL_START || te.status == RUN_VIRTUAL_STOP
