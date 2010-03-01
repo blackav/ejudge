@@ -3079,6 +3079,41 @@ serve_ignore_by_mask(serve_state_t state,
   }
 }
 
+void
+serve_mark_by_mask(
+        serve_state_t state,
+        int user_id,
+        ej_ip_t ip,
+        int ssl_flag,
+        int mask_size,
+        unsigned long *mask,
+        int mark_value)
+{
+  int total_runs, r;
+  struct run_entry re;
+
+  ASSERT(mask_size > 0);
+  mark_value = !!mark_value;
+
+  total_runs = run_get_total(state->runlog_state);
+  if (total_runs > mask_size * BITS_PER_LONG) {
+    total_runs = mask_size * BITS_PER_LONG;
+  }
+
+  for (r = total_runs - 1; r >= 0; r--) {
+    if (!(mask[r / BITS_PER_LONG] & (1L << (r % BITS_PER_LONG)))
+        || run_is_readonly(state->runlog_state, r))
+      continue;
+    if (run_get_entry(state->runlog_state, r, &re) < 0) continue;
+    if (!run_is_valid_status(re.status)) continue;
+    if (re.status > RUN_MAX_STATUS) continue;
+    if (re.is_marked == mark_value) continue;
+
+    re.is_marked = mark_value;
+    run_set_entry(state->runlog_state, r, RE_IS_MARKED, &re);
+  }
+}
+
 static int
 testing_queue_unlock_entry(
         const unsigned char *run_queue_dir,

@@ -79,7 +79,9 @@ is_latestmarked(struct filter_env *env, int rid)
   if (rid < 0 || rid >= env->rtotal) return 0;
   if (!env->rentries[rid].is_marked) return 0;
   for (r = rid + 1; r < env->rtotal; r++) {
-    if (env->rentries[r].is_marked) return 0;
+    if (env->rentries[rid].user_id == env->rentries[r].user_id
+        && env->rentries[rid].prob_id == env->rentries[r].prob_id
+        && env->rentries[r].is_marked) return 0;
   }
   return 1;
 }
