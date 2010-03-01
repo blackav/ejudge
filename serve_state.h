@@ -350,6 +350,16 @@ serve_rejudge_by_mask(const struct contest_desc *, serve_state_t state,
                       int force_flag, int priority_adjustment);
 
 void
+serve_mark_by_mask(
+        serve_state_t state,
+        int user_id,
+        ej_ip_t ip,
+        int ssl_flag,
+        int mask_size,
+        unsigned long *mask,
+        int mark_value);
+
+void
 serve_rejudge_problem(const struct contest_desc *cnst, serve_state_t state,
                       int user_id, ej_ip_t ip, int ssl_flag,
                       int prob_id);

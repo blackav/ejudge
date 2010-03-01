@@ -3962,6 +3962,14 @@ priv_clear_displayed(FILE *fout,
     serve_ignore_by_mask(cs, phr->user_id, phr->ip, phr->ssl_flag,
                          mask_size, mask, RUN_DISQUALIFIED);
     break;
+  case NEW_SRV_ACTION_MARK_DISPLAYED_2:
+    serve_mark_by_mask(cs, phr->user_id, phr->ip, phr->ssl_flag,
+                       mask_size, mask, 1);
+    break;
+  case NEW_SRV_ACTION_UNMARK_DISPLAYED_2:
+    serve_mark_by_mask(cs, phr->user_id, phr->ip, phr->ssl_flag,
+                       mask_size, mask, 0);
+    break;
   default:
     abort();
   }
@@ -7163,6 +7171,8 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_USER_IPS] = priv_view_user_ips,
   [NEW_SRV_ACTION_VIEW_IP_USERS] = priv_view_ip_users,
   [NEW_SRV_ACTION_VIEW_TESTING_QUEUE] = priv_view_testing_queue,
+  [NEW_SRV_ACTION_MARK_DISPLAYED_2] = priv_clear_displayed,
+  [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = priv_clear_displayed,
 };
 
 static void
@@ -8547,6 +8557,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TESTING_DELETE_ALL] = priv_generic_operation,
   [NEW_SRV_ACTION_TESTING_UP_ALL] = priv_generic_operation,
   [NEW_SRV_ACTION_TESTING_DOWN_ALL] = priv_generic_operation,
+  [NEW_SRV_ACTION_MARK_DISPLAYED_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = priv_generic_operation,
 };
 
 static void
@@ -13996,6 +14008,8 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TESTING_DELETE_ALL] = "TESTING_DELETE_ALL",
   [NEW_SRV_ACTION_TESTING_UP_ALL] = "TESTING_UP_ALL",
   [NEW_SRV_ACTION_TESTING_DOWN_ALL] = "TESTING_DOWN_ALL",
+  [NEW_SRV_ACTION_MARK_DISPLAYED_2] = "MARK_DISPLAYED_2",
+  [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = "UNMARK_DISPLAYED_2",
 };
 
 void

@@ -177,6 +177,8 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = __("Just ignore the run"),
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = __("Just OK the run"),
   [NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR] = __("Set STYLE_ERR run status"),
+  [NEW_SRV_ACTION_MARK_DISPLAYED_2] = __("Mark displayed runs"),
+  [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = __("Unmark displayed runs"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =
