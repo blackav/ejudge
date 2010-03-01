@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-02-23 09:26+0300\n"
-"PO-Revision-Date: 2010-01-26 10:36+0300\n"
+"POT-Creation-Date: 2010-02-28 11:06+0300\n"
+"PO-Revision-Date: 2010-03-01 22:41+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1994,6 +1994,9 @@ msgstr "Поставить на ожидание"
 msgid "Mark REJECTED"
 msgstr "Отказать в участии"
 
+msgid "Mark displayed runs"
+msgstr "Пометить отображённые посылки"
+
 msgid "Marked?"
 msgstr "Отмечена?"
 
@@ -3448,6 +3451,9 @@ msgstr "Не ограничена"
 
 msgid "Unlock"
 msgstr "Открыть"
+
+msgid "Unmark displayed runs"
+msgstr "Разотметить отображённые посылки"
 
 msgid "Update public standings"
 msgstr "Обновить публичную таблицу положения участников"
