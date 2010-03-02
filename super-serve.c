@@ -3624,6 +3624,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_INVISIBLE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_MEMBER_DELETE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_DEADLINE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_SCHED_TIME] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_USERS_HEADER] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_USERS_FOOTER] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_REGISTER_HEADER] = { cmd_set_value },
