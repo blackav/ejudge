@@ -5068,7 +5068,7 @@ ns_get_user_problems_summary(
       }
     } else if (global->score_system == SCORE_KIROV) {
       // KIROV contest
-      if (solved_flag[re.prob_id]) continue;
+      if (solved_flag[re.prob_id] && cur_prob->score_latest <= 0) continue;
 
       switch (re.status) {
       case RUN_OK:
@@ -5078,7 +5078,7 @@ ns_get_user_problems_summary(
                                      disqualified[re.prob_id],
                                      prev_successes[re.prob_id], 0, 0);
 
-        if (cur_score >= best_score[re.prob_id]) {
+        if (cur_score >= best_score[re.prob_id] || cur_prob->score_latest > 0) {
           best_score[re.prob_id] = cur_score;
           best_run[re.prob_id] = run_id;
         }
@@ -5087,9 +5087,11 @@ ns_get_user_problems_summary(
       case RUN_COMPILE_ERR:
       case RUN_STYLE_ERR:
         if (!cur_prob->ignore_compile_errors) {
+          solved_flag[re.prob_id] = 0;
           attempts[re.prob_id]++;
           cur_score = 0;
-          if (cur_score >= best_score[re.prob_id]) {
+          if (cur_score >= best_score[re.prob_id]
+              || cur_prob->score_latest > 0) {
             best_score[re.prob_id] = cur_score;
             best_run[re.prob_id] = run_id;
           }
@@ -5106,13 +5108,14 @@ ns_get_user_problems_summary(
         break;
 
       case RUN_PARTIAL:
+        solved_flag[re.prob_id] = 0;
         cur_score = calc_kirov_score(0, 0, &re, cur_prob,
                                      attempts[re.prob_id],
                                      disqualified[re.prob_id],
                                      prev_successes[re.prob_id], 0, 0);
 
         attempts[re.prob_id]++;
-        if (cur_score >= best_score[re.prob_id]) {
+        if (cur_score >= best_score[re.prob_id] || cur_prob->score_latest > 0) {
           best_score[re.prob_id] = cur_score;
           best_run[re.prob_id] = run_id;
         }
