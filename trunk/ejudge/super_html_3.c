@@ -901,6 +901,16 @@ super_html_edit_global_parameters(FILE *f,
   fprintf(f, "</td></tr></form>");
 
   if (sstate->show_global_2) {
+    //GLOBAL_PARAM(advanced_layout, "d"),
+    html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Advanced problem files layout:</td><td>", form_row_attrs[row ^= 1]);
+    html_boolean_select(f, global->advanced_layout, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT, "Change");
+    fprintf(f, "</td></tr></form>\n");
+  }
+
+  if (sstate->show_global_2) {
     //GLOBAL_PARAM(test_dir, "s"),
     print_string_editing_row(f, "Directory for tests (relative to contest configuration dir):", global->test_dir,
                              SSERV_CMD_GLOB_CHANGE_TEST_DIR,
@@ -2315,6 +2325,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_ENABLE_FULL_ARCHIVE:
     p_int = &global->enable_full_archive;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT:
+    p_int = &global->advanced_layout;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_ALWAYS_SHOW_PROBLEMS:
