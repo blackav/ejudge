@@ -113,6 +113,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(notify_clar_reply, "d"),
   GLOBAL_PARAM(notify_status_change, "d"),
   GLOBAL_PARAM(memoize_user_results, "d"),
+  GLOBAL_PARAM(advanced_layout, "d"),
 
   GLOBAL_PARAM(stand_ignore_after, "t"),
   GLOBAL_PARAM(appeal_deadline, "t"),
@@ -706,6 +707,7 @@ global_init_func(struct generic_section_config *gp)
   p->enable_continue = -1;
   p->html_report = -1;
   p->xml_report = -1;
+  p->advanced_layout = -1;
 }
 
 static void free_user_adjustment_info(struct user_adjustment_info*);
@@ -2239,6 +2241,8 @@ set_defaults(
   if (g->detect_violations == -1) g->detect_violations = 0;
   if (g->enable_memory_limit_error == -1)
     g->enable_memory_limit_error = DFLT_G_ENABLE_MEMORY_LIMIT_ERROR;
+  if (g->advanced_layout < 0)
+    g->advanced_layout = 1;
 
 #if defined EJUDGE_HTTPD_HTDOCS_DIR
   if (!g->htdocs_dir[0]) {
@@ -4584,6 +4588,8 @@ prepare_set_global_defaults(struct section_global_data *g)
     g->stand_show_ok_time = DFLT_G_STAND_SHOW_OK_TIME;
   if (g->stand_use_login < 0)
     g->stand_use_login = DFLT_G_STAND_USE_LOGIN;
+  if (g->advanced_layout < 0)
+    g->advanced_layout = 0;
 }
 
 void
@@ -4769,6 +4775,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->stand_use_login = DFLT_G_STAND_USE_LOGIN;
   global->stand_show_ok_time = DFLT_G_STAND_SHOW_OK_TIME;
   global->stand_show_warn_number = DFLT_G_STAND_SHOW_WARN_NUMBER;
+  global->use_ac_not_ok = 0;
 
   strcpy(global->charset, DFLT_G_CHARSET);
 
