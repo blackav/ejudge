@@ -484,6 +484,9 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "detect_violations", global->detect_violations);
   if (global->enable_memory_limit_error != DFLT_G_ENABLE_MEMORY_LIMIT_ERROR)
     unparse_bool(f, "enable_memory_limit_error", global->enable_memory_limit_error);
+  if (global->advanced_layout > 0)
+    unparse_bool(f, "advanced_layout", global->advanced_layout);
+
   //???
   unparse_bool(f, "enable_l10n", global->enable_l10n);
   if (global->charset[0] && strcmp(global->charset, DFLT_G_CHARSET))
