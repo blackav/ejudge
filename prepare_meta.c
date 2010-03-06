@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/02/23 11:49:20
+// Generated 2010/03/06 16:46:02
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -33,6 +33,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_secure_run] = { CNTSGLOB_secure_run, 'B', XSIZE(struct section_global_data, secure_run), "secure_run", XOFFSET(struct section_global_data, secure_run) },
   [CNTSGLOB_detect_violations] = { CNTSGLOB_detect_violations, 'B', XSIZE(struct section_global_data, detect_violations), "detect_violations", XOFFSET(struct section_global_data, detect_violations) },
   [CNTSGLOB_enable_memory_limit_error] = { CNTSGLOB_enable_memory_limit_error, 'B', XSIZE(struct section_global_data, enable_memory_limit_error), "enable_memory_limit_error", XOFFSET(struct section_global_data, enable_memory_limit_error) },
+  [CNTSGLOB_advanced_layout] = { CNTSGLOB_advanced_layout, 'B', XSIZE(struct section_global_data, advanced_layout), "advanced_layout", XOFFSET(struct section_global_data, advanced_layout) },
   [CNTSGLOB_stand_ignore_after] = { CNTSGLOB_stand_ignore_after, 't', XSIZE(struct section_global_data, stand_ignore_after), "stand_ignore_after", XOFFSET(struct section_global_data, stand_ignore_after) },
   [CNTSGLOB_contest_finish_time] = { CNTSGLOB_contest_finish_time, 't', XSIZE(struct section_global_data, contest_finish_time), "contest_finish_time", XOFFSET(struct section_global_data, contest_finish_time) },
   [CNTSGLOB_appeal_deadline] = { CNTSGLOB_appeal_deadline, 't', XSIZE(struct section_global_data, appeal_deadline), "appeal_deadline", XOFFSET(struct section_global_data, appeal_deadline) },
