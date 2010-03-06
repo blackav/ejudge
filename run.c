@@ -391,7 +391,7 @@ generate_xml_report(
     fprintf(f, " real-time-limit-ms=\"%d\"", report_real_time_limit_ms);
   }
   if (marked_flag >= 0) {
-    fprintf(f, " marked-flag=\"%d\"", marked_flag);
+    fprintf(f, " marked-flag=\"%s\"", marked_flag?"yes":"no");
   }
   fprintf(f, " >\n");
 
@@ -399,15 +399,15 @@ generate_xml_report(
     fprintf(f, "  <comment>%s</comment>\n", ARMOR(additional_comment));
   }
   if (valuer_comment) {
-    fprintf(f, "  <valuer_comment>%s</valuer_comment>\n",
+    fprintf(f, "  <valuer-comment>%s</valuer-comment>\n",
             ARMOR(valuer_comment));
   }
   if (valuer_judge_comment) {
-    fprintf(f, "  <valuer_judge_comment>%s</valuer_judge_comment>\n",
+    fprintf(f, "  <valuer-judge-comment>%s</valuer-judge-comment>\n",
             ARMOR(valuer_judge_comment));
   }
   if (valuer_errors) {
-    fprintf(f, "  <valuer_errors>%s</valuer_errors>\n",
+    fprintf(f, "  <valuer-errors>%s</valuer-errors>\n",
             ARMOR(valuer_errors));
   }
   if ((msg = os_NodeName())) {
