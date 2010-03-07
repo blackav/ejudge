@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/03/06 16:46:02
+// Generated 2010/03/07 23:14:08
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -60,6 +60,7 @@ enum
   CNTSGLOB_notify_clar_reply,
   CNTSGLOB_notify_status_change,
   CNTSGLOB_memoize_user_results,
+  CNTSGLOB_disable_auto_refresh,
   CNTSGLOB_name,
   CNTSGLOB_root_dir,
   CNTSGLOB_serve_socket,
@@ -366,6 +367,7 @@ enum
   CNTSPROB_source_header,
   CNTSPROB_source_footer,
   CNTSPROB_valuer_sets_marked,
+  CNTSPROB_ignore_unmarked,
   CNTSPROB_test_pat,
   CNTSPROB_corr_pat,
   CNTSPROB_info_pat,
