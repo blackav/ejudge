@@ -212,6 +212,8 @@ struct section_global_data
   ejintbool_t notify_status_change;
   /** memoize the user results for use in filter expressions */
   ejintbool_t memoize_user_results;
+  /** disable standings auto-refresh */
+  ejintbool_t disable_auto_refresh;
 
   /** @deprecated the name of the contest */
   unsigned char name[256];
@@ -837,6 +839,8 @@ struct section_problem_data
   path_t source_footer;
   /** if the valuer also sets the marked flag */
   ejintbool_t valuer_sets_marked;
+  /** ignore unmarked submits in scoring */
+  ejintbool_t ignore_unmarked;
 
   /** printf pattern for the test files */
   unsigned char test_pat[32];
