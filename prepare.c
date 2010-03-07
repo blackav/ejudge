@@ -114,6 +114,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(notify_status_change, "d"),
   GLOBAL_PARAM(memoize_user_results, "d"),
   GLOBAL_PARAM(advanced_layout, "d"),
+  GLOBAL_PARAM(disable_auto_refresh, "d"),
 
   GLOBAL_PARAM(stand_ignore_after, "t"),
   GLOBAL_PARAM(appeal_deadline, "t"),
@@ -377,6 +378,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(advance_to_next, "d"),
   PROBLEM_PARAM(disable_ctrl_chars, "d"),
   PROBLEM_PARAM(valuer_sets_marked, "d"),
+  PROBLEM_PARAM(ignore_unmarked, "d"),
   PROBLEM_PARAM(enable_text_form, "d"),
   PROBLEM_PARAM(stand_ignore_score, "d"),
   PROBLEM_PARAM(stand_last_column, "d"),
@@ -708,6 +710,7 @@ global_init_func(struct generic_section_config *gp)
   p->html_report = -1;
   p->xml_report = -1;
   p->advanced_layout = -1;
+  p->disable_auto_refresh = -1;
 }
 
 static void free_user_adjustment_info(struct user_adjustment_info*);
@@ -823,6 +826,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->advance_to_next = -1;
   p->disable_ctrl_chars = -1;
   p->valuer_sets_marked = -1;
+  p->ignore_unmarked = -1;
   p->enable_text_form = -1;
   p->stand_ignore_score = -1;
   p->stand_last_column = -1;
@@ -2242,7 +2246,9 @@ set_defaults(
   if (g->enable_memory_limit_error == -1)
     g->enable_memory_limit_error = DFLT_G_ENABLE_MEMORY_LIMIT_ERROR;
   if (g->advanced_layout < 0)
-    g->advanced_layout = 1;
+    g->advanced_layout = 0;
+  if (g->disable_auto_refresh < 0)
+    g->disable_auto_refresh = 0;
 
 #if defined EJUDGE_HTTPD_HTDOCS_DIR
   if (!g->htdocs_dir[0]) {
@@ -2971,6 +2977,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_advance_to_next, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_ctrl_chars, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_valuer_sets_marked, prob, aprob, g);    
+    prepare_set_prob_value(CNTSPROB_ignore_unmarked, prob, aprob, g);    
     prepare_set_prob_value(CNTSPROB_enable_text_form, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_stand_ignore_score, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_stand_last_column, prob, aprob, g);
@@ -4590,6 +4597,8 @@ prepare_set_global_defaults(struct section_global_data *g)
     g->stand_use_login = DFLT_G_STAND_USE_LOGIN;
   if (g->advanced_layout < 0)
     g->advanced_layout = 0;
+  if (g->disable_auto_refresh < 0)
+    g->disable_auto_refresh = 0;
 }
 
 void
@@ -4630,6 +4639,7 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
   if (prob->advance_to_next < 0) prob->advance_to_next = 0;
   if (prob->disable_ctrl_chars < 0) prob->disable_ctrl_chars = 0;
   if (prob->valuer_sets_marked < 0) prob->valuer_sets_marked = 0;
+  if (prob->ignore_unmarked < 0) prob->ignore_unmarked = 0;
   if (prob->enable_text_form < 0) prob->enable_text_form = 0;
   if (prob->stand_ignore_score < 0) prob->stand_ignore_score = 0;
   if (prob->stand_last_column < 0) prob->stand_last_column = 0;
@@ -5309,6 +5319,13 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->valuer_sets_marked = 0;
     break;
 
+  case CNTSPROB_ignore_unmarked:
+    if (out->ignore_unmarked == -1 && abstr)
+      out->ignore_unmarked = abstr->ignore_unmarked;
+    if (out->ignore_unmarked == -1)
+      out->ignore_unmarked = 0;
+    break;
+
   case CNTSPROB_enable_text_form:
     if (out->enable_text_form == -1 && abstr)
       out->enable_text_form = abstr->enable_text_form;
@@ -5683,7 +5700,8 @@ static const int prob_settable_list[] =
   CNTSPROB_skip_testing, CNTSPROB_variable_full_score, CNTSPROB_hidden,
   CNTSPROB_priority_adjustment, CNTSPROB_spelling, CNTSPROB_stand_hide_time,
   CNTSPROB_advance_to_next, CNTSPROB_disable_ctrl_chars,
-  CNTSPROB_valuer_sets_marked, CNTSPROB_enable_text_form,
+  CNTSPROB_valuer_sets_marked, CNTSPROB_ignore_unmarked,
+  CNTSPROB_enable_text_form,
   CNTSPROB_stand_ignore_score, CNTSPROB_stand_last_column,
   CNTSPROB_score_multiplier, CNTSPROB_prev_runs_to_show,
   CNTSPROB_max_vm_size, CNTSPROB_max_stack_size, CNTSPROB_max_data_size,
@@ -5761,6 +5779,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_advance_to_next] = 1,
   [CNTSPROB_disable_ctrl_chars] = 1,
   [CNTSPROB_valuer_sets_marked] = 1,
+  [CNTSPROB_ignore_unmarked] = 1,
   [CNTSPROB_enable_text_form] = 1,
   [CNTSPROB_stand_ignore_score] = 1,
   [CNTSPROB_stand_last_column] = 1,
@@ -5848,6 +5867,7 @@ static const int prob_inheritable_list[] =
   CNTSPROB_hidden, CNTSPROB_priority_adjustment, CNTSPROB_spelling,
   CNTSPROB_stand_hide_time, CNTSPROB_advance_to_next,
   CNTSPROB_disable_ctrl_chars, CNTSPROB_valuer_sets_marked,
+  CNTSPROB_ignore_unmarked,
   CNTSPROB_enable_text_form, CNTSPROB_stand_ignore_score,
   CNTSPROB_stand_last_column, CNTSPROB_score_multiplier,
   CNTSPROB_prev_runs_to_show, CNTSPROB_max_vm_size,
@@ -5923,6 +5943,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_advance_to_next] = 1,
   [CNTSPROB_disable_ctrl_chars] = 1,
   [CNTSPROB_valuer_sets_marked] = 1,
+  [CNTSPROB_ignore_unmarked] = 1,
   [CNTSPROB_enable_text_form] = 1,
   [CNTSPROB_stand_ignore_score] = 1,
   [CNTSPROB_stand_last_column] = 1,
@@ -6036,6 +6057,7 @@ static const struct section_problem_data prob_undef_values =
   .advance_to_next = -1,
   .disable_ctrl_chars = -1,
   .valuer_sets_marked = -1,
+  .ignore_unmarked = -1,
   .enable_text_form = -1,
   .stand_ignore_score = -1,
   .stand_last_column = -1,
@@ -6153,6 +6175,7 @@ static const struct section_problem_data prob_default_values =
   .advance_to_next = 0,
   .disable_ctrl_chars = 0,
   .valuer_sets_marked = 0,
+  .ignore_unmarked = 0,
   .enable_text_form = 0,
   .stand_ignore_score = 0,
   .stand_last_column = 0,

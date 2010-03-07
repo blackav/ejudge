@@ -1123,6 +1123,9 @@ serve_run_request(
   size_t run_pkt_out_size = 0;
   struct userlist_user_info *ui = 0;
 
+  path_t run_exe_dir;
+  path_t run_queue_dir;
+
   if (prob_id <= 0 || prob_id > state->max_prob 
       || !(prob = state->probs[prob_id])) {
     fprintf(errf, "invalid problem %d", prob_id);
@@ -1148,6 +1151,18 @@ serve_run_request(
     fprintf(errf, "no appropriate checker for <%s>, <%s>\n",
             prob->short_name, arch);
     return -1;
+  }
+
+  if (state->testers[cn]->run_dir[0]) {
+    snprintf(run_exe_dir, sizeof(run_exe_dir),
+             "%s/exe", state->testers[cn]->run_dir);
+    snprintf(run_queue_dir, sizeof(run_queue_dir),
+             "%s/queue", state->testers[cn]->run_dir);
+  } else {
+    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", 
+             state->global->run_dir);
+    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue",
+             state->global->run_dir);
   }
 
   if (prob->variant_num <= 0 && variant > 0) {

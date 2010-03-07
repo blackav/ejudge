@@ -83,7 +83,7 @@
 
 static int managed_mode_flag = 0;
 static time_t last_activity_time;
-struct serve_state serve_state;
+static struct serve_state serve_state;
 static int restart_flag = 0;
 static int utf8_mode = 0;
 
@@ -120,7 +120,7 @@ struct testinfo
   int            checker_score;
 };
 
-int total_tests;
+static int total_tests;
 static int tests_a = 0;
 static struct testinfo *tests = 0;
 
@@ -3162,7 +3162,7 @@ process_default_testers(void)
   return total;
 }
 
-int
+static int
 check_config(void)
 {
   int     i, n1 = 0, n2, j, n, k;

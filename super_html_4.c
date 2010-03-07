@@ -1127,6 +1127,7 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_enable_auto_print_protocol, 'Y', 1, 0, 0, 0, 0, "Enable automatic printing of olympiad protocols", 0, "SidState.show_global_1 Global.score_system SCORE_OLYMPIAD == &&" },
   { NS_GLOBAL, CNTSGLOB_notify_clar_reply, 'Y', 1, 0, 0, 0, 0, "Enable e-mail clar notifications", 0, "SidState.show_global_1 Global.disable_clars ! &&" },
   { NS_GLOBAL, CNTSGLOB_notify_status_change, 'Y', 1, 0, 0, 0, 0, "Enable e-mail status change notifications", 0, "SidState.show_global_1" },
+  { NS_GLOBAL, CNTSGLOB_disable_auto_refresh, 'Y', 1, 0, 0, 0, 0, "Disable auto-refreshing", 0, "SidState.show_global_1" },
 
   { NS_SID_STATE, SSSS_show_global_2, '-', 1, 0, 0, 0, 0, "Files and directories", 0, 0 },
   { NS_GLOBAL, CNTSGLOB_advanced_layout, 'Y', 1, 0, 0, 0, 0, "Advanced layout of problem files", 0, "SidState.show_global_2" },
@@ -1353,6 +1354,7 @@ static const struct cnts_edit_info cnts_problem_info[] =
   { NS_PROBLEM, CNTSPROB_advance_to_next, 'Y', 1, 0, 0, 0, 0, "Advance to the next problem", 0, "SidState.prob_show_adv Global.problem_navigation &&" },
   { NS_PROBLEM, CNTSPROB_disable_ctrl_chars, 'Y', 1, 0, 0, 0, 0, "Disable control characters in the source", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_valuer_sets_marked, 'Y', 1, 0, 0, 0, 0, "Valuer sets _marked_ flag", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_ignore_unmarked, 'Y', 1, 0, 0, 0, 0, "Ignore unmarked runs in scoring", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_enable_text_form, 'Y', 1, 0, 0, 0, 0, "Enable text input form", 0, "SidState.prob_show_adv Global.problem_navigation && Problem.type 1 == &&" },
   { NS_PROBLEM, CNTSPROB_stand_attr, 'S', 1, 1, 1, 1, 0, "Standings attributes", 0, 0 },
   { NS_PROBLEM, CNTSPROB_standard_checker, 142, 1, 0, 0, 0, 0, "Standard checker", 0, 0 },
@@ -5953,6 +5955,7 @@ static const unsigned char prob_reloadable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_advance_to_next] = 0,
   [CNTSPROB_disable_ctrl_chars] = 0,
   [CNTSPROB_valuer_sets_marked] = 0,
+  [CNTSPROB_ignore_unmarked] = 0,
   [CNTSPROB_enable_text_form] = 0,
   [CNTSPROB_stand_ignore_score] = 0,
   [CNTSPROB_stand_last_column] = 0,
