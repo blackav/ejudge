@@ -888,6 +888,14 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td><td>");
     html_submit_button(f, SSERV_CMD_GLOB_CHANGE_NOTIFY_STATUS_CHANGE, "Change");
     fprintf(f, "</td></tr></form>\n");
+
+    //GLOBAL_PARAM(disable_auto_refresh, "d"),
+    html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Disable auto-refreshing:</td><td>", form_row_attrs[row ^= 1]);
+    html_boolean_select(f, global->disable_auto_refresh, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_AUTO_REFRESH, "Change");
+    fprintf(f, "</td></tr></form>\n");
   }
 
   html_start_form(f, 1, self_url, hidden_vars);
@@ -2329,6 +2337,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT:
     p_int = &global->advanced_layout;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_DISABLE_AUTO_REFRESH:
+    p_int = &global->disable_auto_refresh;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_ALWAYS_SHOW_PROBLEMS:
@@ -5619,6 +5631,24 @@ super_html_print_problem(FILE *f,
                                  self_url, extra_args, prob_hidden_vars);
   }
 
+  if (show_adv) {
+    //PROBLEM_PARAM(ignore_unmarked, "d"),
+      extra_msg = "Undefined";
+      if (!prob->abstract) {
+        prepare_set_prob_value(CNTSPROB_ignore_unmarked,
+                               &tmp_prob, sup_prob, sstate->global);
+        snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+                 tmp_prob.ignore_unmarked?"Yes":"No");
+        extra_msg = msg_buf;
+      }
+      print_boolean_3_select_row(f,"Ignore unmarked runs in scoring:",
+                                 prob->ignore_unmarked,
+                                 SSERV_CMD_PROB_CHANGE_IGNORE_UNMARKED,
+                                 extra_msg,
+                                 session_id, form_row_attrs[row ^= 1],
+                                 self_url, extra_args, prob_hidden_vars);
+  }
+
   //PROBLEM_PARAM(valuer_env, "x"),
   if (!prob->abstract) {
     if (!prob->valuer_env || !prob->valuer_env[0]) {
@@ -6510,6 +6540,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_VALUER_SETS_MARKED:
     p_int = &prob->valuer_sets_marked;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_IGNORE_UNMARKED:
+    p_int = &prob->ignore_unmarked;
     goto handle_boolean_1;
 
   case SSERV_CMD_PROB_CHANGE_ENABLE_TEXT_FORM:

@@ -13135,13 +13135,15 @@ do_json_user_state(FILE *fout, const serve_state_t cs, int user_id)
     if (remaining < 0) remaining = 0;
     fprintf(fout, ", \"r\": %ld", remaining);
   }
-  if (run_has_transient_user_runs(cs->runlog_state, user_id) ||
-      (global->score_system == SCORE_OLYMPIAD
-       && global->is_virtual
-       && stop_time > 0
-       && global->disable_virtual_auto_judge <= 0
-       && !is_judged_virtual_olympiad(cs, user_id))) {
-    fprintf(fout, ", \"x\": 1");
+  if (global->disable_auto_refresh <= 0) {
+    if (run_has_transient_user_runs(cs->runlog_state, user_id) ||
+        (global->score_system == SCORE_OLYMPIAD
+         && global->is_virtual
+         && stop_time > 0
+         && global->disable_virtual_auto_judge <= 0
+         && !is_judged_virtual_olympiad(cs, user_id))) {
+      fprintf(fout, ", \"x\": 1");
+    }
   }
   fprintf(fout, " }");
 }

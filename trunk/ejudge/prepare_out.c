@@ -486,6 +486,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "enable_memory_limit_error", global->enable_memory_limit_error);
   if (global->advanced_layout > 0)
     unparse_bool(f, "advanced_layout", global->advanced_layout);
+  if (global->disable_auto_refresh > 0)
+    unparse_bool(f, "disable_auto_refresh", global->disable_auto_refresh);
 
   //???
   unparse_bool(f, "enable_l10n", global->enable_l10n);
@@ -1219,6 +1221,9 @@ prepare_unparse_prob(
   if (prob->valuer_sets_marked >= 0
       && ((prob->abstract && prob->valuer_sets_marked) || !prob->abstract))
       unparse_bool(f, "valuer_sets_marked", prob->valuer_sets_marked);
+  if (prob->ignore_unmarked >= 0
+      && ((prob->abstract && prob->ignore_unmarked) || !prob->abstract))
+      unparse_bool(f, "ignore_unmarked", prob->ignore_unmarked);
   if (prob->enable_text_form >= 0
       && ((prob->abstract && prob->enable_text_form) || !prob->abstract))
       unparse_bool(f, "enable_text_form", prob->enable_text_form);

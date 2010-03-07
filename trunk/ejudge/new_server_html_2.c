@@ -4886,6 +4886,7 @@ ns_get_user_problems_summary(
   struct run_entry re;
   struct section_problem_data *cur_prob = 0;
   unsigned char *user_flag = 0;
+  unsigned char *marked_flag = 0;
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, user_id);
@@ -5069,6 +5070,9 @@ ns_get_user_problems_summary(
     } else if (global->score_system == SCORE_KIROV) {
       // KIROV contest
       if (solved_flag[re.prob_id] && cur_prob->score_latest <= 0) continue;
+      if (marked_flag[re.prob_id] && cur_prob->ignore_unmarked > 0
+          && !re.is_marked) continue;
+      if (!marked_flag[re.prob_id]) marked_flag[re.prob_id] = re.is_marked;
 
       switch (re.status) {
       case RUN_OK:
@@ -5242,6 +5246,7 @@ ns_get_user_problems_summary(
   }
 
   xfree(user_flag);
+  xfree(marked_flag);
 }
 
 void

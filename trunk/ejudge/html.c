@@ -1125,6 +1125,7 @@ do_write_kirov_standings(
   int *trans_num = 0;
   int *penalty = 0;
   int *cf_num = 0;
+  int *marked_flag = 0;
 
   int  *tot_score = 0, *tot_full = 0, *succ_att = 0, *tot_att = 0, *tot_penalty = 0;
   int  *t_sort = 0, *t_sort2 = 0, *t_n1 = 0, *t_n2 = 0;
@@ -1329,6 +1330,7 @@ do_write_kirov_standings(
     XCALLOC(trans_num, up_ind);
     XCALLOC(penalty, up_ind);
     XCALLOC(cf_num, up_ind);
+    XCALLOC(marked_flag, up_ind);
   }
   XALLOCAZ(tot_score, t_tot);
   XALLOCAZ(tot_full, t_tot);
@@ -1489,35 +1491,46 @@ do_write_kirov_standings(
     } else {
       if (run_score == -1) run_score = 0;
       if (pe->status == RUN_OK) {
-        if (!full_sol[up_ind]) sol_att[up_ind]++;
-        score = calc_kirov_score(0, 0, pe, prob, att_num[up_ind],
-                                 disq_num[up_ind],
-                                 full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
-                                 0, 0);
-        if (prob->score_latest > 0 || score > prob_score[up_ind]) {
-          prob_score[up_ind] = score;
-          if (!prob->stand_hide_time) sol_time[up_ind] = pe->time;
+        if (!marked_flag[up_ind] || prob->ignore_unmarked <= 0
+            || pe->is_marked) {
+          marked_flag[up_ind] = pe->is_marked;
+          if (!full_sol[up_ind]) sol_att[up_ind]++;
+          score = calc_kirov_score(0, 0, pe, prob, att_num[up_ind],
+                                   disq_num[up_ind],
+                                   full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
+                                   0, 0);
+          if (prob->score_latest > 0 || score > prob_score[up_ind]) {
+            prob_score[up_ind] = score;
+            if (!prob->stand_hide_time) sol_time[up_ind] = pe->time;
+          }
+          if (!sol_time[up_ind] && !prob->stand_hide_time)
+            sol_time[up_ind] = pe->time;
+          if (!full_sol[up_ind]) {
+            succ_att[pind]++;
+            tot_att[pind]++;
+          }
+          att_num[up_ind]++;
+          full_sol[up_ind] = 1;
+          last_submit_run = k;
+          last_success_run = k;
         }
-        if (!sol_time[up_ind] && !prob->stand_hide_time)
-          sol_time[up_ind] = pe->time;
-        if (!full_sol[up_ind]) {
-          succ_att[pind]++;
-          tot_att[pind]++;
-        }
-        att_num[up_ind]++;
-        full_sol[up_ind] = 1;
-        last_submit_run = k;
-        last_success_run = k;
       } else if (pe->status == RUN_PARTIAL) {
-        if (!full_sol[up_ind]) sol_att[up_ind]++;
-        score = calc_kirov_score(0, 0, pe, prob, att_num[up_ind],
-                                 disq_num[up_ind], RUN_TOO_MANY, 0, 0);
-        if (prob->score_latest > 0 || score > prob_score[up_ind]) {
-          prob_score[up_ind] = score;
+        if (!marked_flag[up_ind] || prob->ignore_unmarked <= 0
+            || pe->is_marked) {
+          marked_flag[up_ind] = pe->is_marked;
+          if (!full_sol[up_ind]) sol_att[up_ind]++;
+          score = calc_kirov_score(0, 0, pe, prob, att_num[up_ind],
+                                   disq_num[up_ind], RUN_TOO_MANY, 0, 0);
+          if (prob->score_latest > 0 || score > prob_score[up_ind]) {
+            prob_score[up_ind] = score;
+          }
+          if (prob->score_latest > 0) {
+            full_sol[up_ind] = 0;
+          }
+          att_num[up_ind]++;
+          if (!full_sol[up_ind]) tot_att[pind]++;
+          last_submit_run = k;
         }
-        att_num[up_ind]++;
-        if (!full_sol[up_ind]) tot_att[pind]++;
-        last_submit_run = k;
       } else if (pe->status == RUN_WRONG_ANSWER_ERR && prob->type != 0) {
         if (!full_sol[up_ind]) sol_att[up_ind]++;
         score = calc_kirov_score(0, 0, pe, prob, att_num[up_ind],
@@ -2312,6 +2325,7 @@ do_write_kirov_standings(
   xfree(trans_num);
   xfree(cf_num);
   xfree(penalty);
+  xfree(marked_flag);
   html_armor_free(&ab);
 }
 
