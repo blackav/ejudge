@@ -4898,6 +4898,7 @@ ns_get_user_problems_summary(
 
   memset(best_run, -1, sizeof(best_run[0]) * (cs->max_prob + 1));
   XCALLOC(user_flag, (cs->max_prob + 1) * total_teams);
+  XALLOCAZ(marked_flag, cs->max_prob + 1);
 
   for (run_id = 0; run_id < total_runs; run_id++) {
     if (run_get_entry(cs->runlog_state, run_id, &re) < 0) continue;
@@ -5246,7 +5247,6 @@ ns_get_user_problems_summary(
   }
 
   xfree(user_flag);
-  xfree(marked_flag);
 }
 
 void
