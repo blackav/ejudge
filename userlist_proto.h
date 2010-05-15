@@ -4,7 +4,7 @@
 #ifndef __USERLIST_PROTO_H__
 #define __USERLIST_PROTO_H__
 
-/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -99,6 +99,11 @@ enum
     ULS_MOVE_MEMBER,
     ULS_IMPORT_CSV_USERS,
     ULS_FETCH_COOKIE,
+    ULS_LIST_ALL_GROUPS,
+    ULS_CREATE_GROUP,
+    ULS_DELETE_GROUP,
+    ULS_EDIT_GROUP_FIELD,
+    ULS_DELETE_GROUP_FIELD,
 
     ULS_LAST_CMD
   };
@@ -159,6 +164,7 @@ enum
     ULS_ERR_UNSPECIFIED_ERROR,
     ULS_ERR_DB_ERROR,
     ULS_ERR_SIMPLE_REGISTERED,
+    ULS_ERR_GROUP_NAME_USED,
 
     ULS_ERR_LAST
   };

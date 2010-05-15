@@ -4,7 +4,7 @@
 #ifndef __ULDB_PLUGIN_H__
 #define __ULDB_PLUGIN_H__
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -202,6 +202,20 @@ struct uldb_plugin_iface
   int (*try_new_login)(void *, unsigned char *, size_t, const char *, int, int);
   // set the simple_registration flag
   int (*set_simple_reg)(void *, int, int, time_t);
+  // get the group iterator
+  ptr_iterator_t (*get_group_iterator)(void *);
+  // get the group by the group name
+  const struct userlist_group*(*get_group_by_name)(void *,const unsigned char*);
+  // pick up a new group name by a template
+  int (*try_new_group_name)(void *, unsigned char *, size_t, const char *, int, int);
+  // create a new group
+  int (*create_group)(void *, const unsigned char *);
+  // remove a group
+  int (*remove_group)(void *, int);
+  // edit a group field
+  int (*edit_group_field)(void *, int, int, const unsigned char *value);
+  // clear a group field
+  int (*clear_group_field)(void *, int, int);
 };
 
 /* default plugin: compiled into userlist-server */

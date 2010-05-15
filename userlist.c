@@ -1922,6 +1922,42 @@ userlist_member_map_userlist_to_contest_field(int uf)
   return n;
 }
 
+const void *
+userlist_group_get_ptr(const struct userlist_group *grp, int field)
+{
+  ASSERT(grp);
+  ASSERT(field >= USERLIST_GRP_GROUP_ID && field < USERLIST_GRP_LAST);
+
+  switch (field) {
+  case USERLIST_GRP_GROUP_ID:
+    return &grp->group_id;
+  case USERLIST_GRP_GROUP_NAME:
+    return &grp->group_name;
+  case USERLIST_GRP_DESCRIPTION:
+    return &grp->description;
+  default:
+    abort();
+  }
+}
+
+void *
+userlist_group_get_ptr_nc(struct userlist_group *grp, int field)
+{
+  ASSERT(grp);
+  ASSERT(field >= USERLIST_GRP_GROUP_ID && field < USERLIST_GRP_LAST);
+
+  switch (field) {
+  case USERLIST_GRP_GROUP_ID:
+    return &grp->group_id;
+  case USERLIST_GRP_GROUP_NAME:
+    return &grp->group_name;
+  case USERLIST_GRP_DESCRIPTION:
+    return &grp->description;
+  default:
+    abort();
+  }
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
