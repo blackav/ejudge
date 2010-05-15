@@ -4,7 +4,7 @@
 #ifndef __USERLIST_CLNT_H__
 #define __USERLIST_CLNT_H__
 
-/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -228,12 +228,14 @@ userlist_clnt_change_registration(struct userlist_clnt *clnt,
                                   unsigned int new_flags);
 
 int
-userlist_clnt_edit_field(struct userlist_clnt *clnt,
-                         int user_id,
-                         int contest_id,
-                         int serial,
-                         int field,
-                         unsigned char const *value);
+userlist_clnt_edit_field(
+        struct userlist_clnt *clnt,
+        int cmd,
+        int user_id,
+        int contest_id,
+        int serial,
+        int field,
+        unsigned char const *value);
 
 int
 userlist_clnt_edit_field_seq(
@@ -249,11 +251,13 @@ userlist_clnt_edit_field_seq(
         const unsigned char **edited_strs);
 
 int
-userlist_clnt_delete_field(struct userlist_clnt *clnt,
-                           int user_id,
-                           int contest_id,
-                           int serial,
-                           int field);
+userlist_clnt_delete_field(
+        struct userlist_clnt *clnt,
+        int cmd,
+        int user_id,
+        int contest_id,
+        int serial,
+        int field);
 int
 userlist_clnt_delete_cookie(struct userlist_clnt *clnt,
                             int user_id,
@@ -262,6 +266,7 @@ userlist_clnt_delete_cookie(struct userlist_clnt *clnt,
 
 int userlist_clnt_create_user(
         struct userlist_clnt *clnt,
+        int cmd,
         const unsigned char *login,
         int *p_user_id);
 int userlist_clnt_create_member(struct userlist_clnt *clnt, int user_id,

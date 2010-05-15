@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -60,6 +60,7 @@ static unsigned char const * const error_map[] =
   _("unspecified error"),
   _("database error"),
   _("user is simple_registered"),
+  _("group with this name already exists"),
 
   0
 };

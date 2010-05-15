@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1875,7 +1875,8 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
           r = okcancel("Clear field %s?",
                        user_descs[info[cur_i].field].name);
           if (r != 1) goto menu_continue;
-          r = userlist_clnt_delete_field(server_conn, u->id, contest_id, 0,
+          r = userlist_clnt_delete_field(server_conn, ULS_DELETE_FIELD,
+                                         u->id, contest_id, 0,
                                          info[cur_i].field);
           if (r < 0) {
             vis_err("Delete failed: %s", userlist_strerror(-r));
@@ -1959,7 +1960,8 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
                        info[cur_i].pers + 1,
                        member_descs[info[cur_i].field].name);
           if (r != 1) goto menu_continue;
-          r = userlist_clnt_delete_field(server_conn, u->id, contest_id,
+          r = userlist_clnt_delete_field(server_conn, ULS_DELETE_FIELD,
+                                         u->id, contest_id,
                                          m->serial, info[cur_i].field);
           if (r < 0) {
             vis_err("Delete failed: %s", userlist_strerror(-r));
@@ -2107,7 +2109,8 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
             vis_err("Invalid field value");
             goto menu_continue;
           }
-          r = userlist_clnt_edit_field(server_conn, u->id, contest_id, 0,
+          r = userlist_clnt_edit_field(server_conn, ULS_EDIT_FIELD,
+                                       u->id, contest_id, 0,
                                        info[cur_i].field, edit_buf);
           if (r < 0) {
             vis_err("Server error: %s", userlist_strerror(-r));
@@ -2144,7 +2147,8 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
           vis_err("Invalid field value");
           goto menu_continue;
         }
-        r = userlist_clnt_edit_field(server_conn, u->id, contest_id, 0,
+        r = userlist_clnt_edit_field(server_conn, ULS_EDIT_FIELD,
+                                     u->id, contest_id, 0,
                                      info[cur_i].field, edit_buf);
         if (r < 0) {
           vis_err("Server error: %s", userlist_strerror(-r));
@@ -2190,7 +2194,8 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
             vis_err("Invalid field value");
             goto menu_continue;
           }
-          r = userlist_clnt_edit_field(server_conn, u->id, contest_id,
+          r = userlist_clnt_edit_field(server_conn, ULS_EDIT_FIELD,
+                                       u->id, contest_id,
                                        m->serial, info[cur_i].field, edit_buf);
           if (r < 0) {
             vis_err("Server error: %s", userlist_strerror(-r));
@@ -2216,7 +2221,8 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
             vis_err("Invalid field value");
             goto menu_continue;
           }
-          r = userlist_clnt_edit_field(server_conn, u->id, contest_id,
+          r = userlist_clnt_edit_field(server_conn, ULS_EDIT_FIELD,
+                                       u->id, contest_id,
                                        m->serial, info[cur_i].field, edit_buf);
           if (r < 0) {
             vis_err("Server error: %s", userlist_strerror(-r));
@@ -2245,7 +2251,8 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
             vis_err("Invalid field value");
             goto menu_continue;
           }
-          r = userlist_clnt_edit_field(server_conn, u->id, contest_id,
+          r = userlist_clnt_edit_field(server_conn, ULS_EDIT_FIELD,
+                                       u->id, contest_id,
                                        m->serial, info[cur_i].field, edit_buf);
           if (r < 0) {
             vis_err("Server error: %s", userlist_strerror(-r));
@@ -3292,12 +3299,14 @@ display_registered_users(unsigned char const *upper,
         i = item_index(current_item(menu));
         switch (field_op) {
         case 1:                 /* clear field */
-          r = userlist_clnt_delete_field(server_conn, uu[i]->id, contest_id,
+          r = userlist_clnt_delete_field(server_conn, ULS_DELETE_FIELD,
+                                         uu[i]->id, contest_id,
                                          0, field_code);
           break;
         case 2:                 /* set field */
           snprintf(edit_buf, sizeof(edit_buf), "%d", 1);
-          r = userlist_clnt_edit_field(server_conn, uu[i]->id, contest_id,
+          r = userlist_clnt_edit_field(server_conn, ULS_EDIT_FIELD,
+                                       uu[i]->id, contest_id,
                                        0, field_code, edit_buf);
           break;
         case 3:
@@ -3314,12 +3323,14 @@ display_registered_users(unsigned char const *upper,
           if (!sel_users.mask[i]) continue;
           switch (field_op) {
           case 1:               /* clear field */
-            r = userlist_clnt_delete_field(server_conn, uu[i]->id, contest_id,
+            r = userlist_clnt_delete_field(server_conn, ULS_DELETE_FIELD,
+                                           uu[i]->id, contest_id,
                                            0, field_code);
             break;
           case 2:               /* set field */
             snprintf(edit_buf, sizeof(edit_buf), "%d", 1);
-            r = userlist_clnt_edit_field(server_conn, uu[i]->id, contest_id,
+            r = userlist_clnt_edit_field(server_conn, ULS_EDIT_FIELD,
+                                         uu[i]->id, contest_id,
                                          0, field_code, edit_buf);
           case 3:
             r = userlist_clnt_register_contest(server_conn, ULS_FIX_PASSWORD,
@@ -3725,7 +3736,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   if (!nusers) {
     j = okcancel("No users in database. Add new user?");
     if (j != 1) return -1;
-    j = userlist_clnt_create_user(server_conn, 0, 0);
+    j = userlist_clnt_create_user(server_conn, ULS_CREATE_USER, 0, 0);
     if (j < 0) {
       vis_err("Add failed: %s", userlist_strerror(-j));
       return -1;
@@ -3897,7 +3908,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
     if (c == 'a' && !only_choose) {
       j = okcancel("Add new user?");
       if (j != 1) goto menu_continue;
-      j = userlist_clnt_create_user(server_conn, 0, 0);
+      j = userlist_clnt_create_user(server_conn, ULS_CREATE_USER, 0, 0);
       if (j < 0) {
         vis_err("Add failed: %s", userlist_strerror(-j));
         goto menu_continue;
@@ -4002,33 +4013,34 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
 
       for (i = first_num; i <= last_num; i++) {
         user_id = -1;
-        j = userlist_clnt_create_user(server_conn, 0, &user_id);
+        j = userlist_clnt_create_user(server_conn, ULS_CREATE_USER, 0,&user_id);
         if (j < 0) {
           vis_err("Adding failed: %s", userlist_strerror(-j));
           goto menu_continue;
         }
         snprintf(valbuf, sizeof(valbuf), templ_buf, i);
-        j = userlist_clnt_edit_field(server_conn, user_id, 0, 0,
+        j = userlist_clnt_edit_field(server_conn, ULS_EDIT_FIELD, user_id, 0, 0,
                                      USERLIST_NN_LOGIN, valbuf);
         if (j < 0) {
           vis_err("Setting login failed: %s", userlist_strerror(-j));
           goto menu_continue;
         }
-        j = userlist_clnt_edit_field(server_conn, user_id, contest_num, 0,
+        j = userlist_clnt_edit_field(server_conn, ULS_EDIT_FIELD,
+                                     user_id, contest_num, 0,
                                      USERLIST_NC_NAME, valbuf);
         if (j < 0) {
           vis_err("Setting name failed: %s", userlist_strerror(-j));
           goto menu_continue;
         }
         snprintf(valbuf, sizeof(valbuf), "N/A");
-        j = userlist_clnt_edit_field(server_conn, user_id, 0, 0,
+        j = userlist_clnt_edit_field(server_conn, ULS_EDIT_FIELD, user_id, 0, 0,
                                      USERLIST_NN_EMAIL, valbuf);
         if (j < 0) {
           vis_err("Setting e-mail failed: %s", userlist_strerror(-j));
           goto menu_continue;
         }
         snprintf(valbuf, sizeof(valbuf), passwd_buf, i);
-        j = userlist_clnt_edit_field(server_conn, user_id, 0, 0,
+        j = userlist_clnt_edit_field(server_conn, ULS_EDIT_FIELD, user_id, 0, 0,
                                      USERLIST_NN_PASSWD, valbuf);
         if (j < 0) {
           vis_err("Setting reg. password failed: %s", userlist_strerror(-j));
@@ -4224,15 +4236,363 @@ display_user_menu(unsigned char *upper, int start_item, int only_choose)
   return val;
 }
 
+static int
+do_display_group_members_menu(
+        const unsigned char *upper,
+        int group_id,
+        int *p_user_id,
+        int only_choose)
+{
+  int retval = -1;
+  int user_id = 0;
+
+  if (p_user_id) user_id = *p_user_id;
+
+ cleanup:
+  if (p_user_id) *p_user_id = user_id;
+  return retval;
+}
+
+static int
+display_group_members_menu(
+        const unsigned char *upper,
+        int group_id,
+        int user_id,
+        int only_choose)
+{
+  int val = -2;
+
+  while ((val = do_display_group_members_menu(upper, group_id, &user_id,
+                                              only_choose)) == -2) {
+  }
+  return val;
+}
+
+/*
+  return values: -2 means restart the function
+  -1 - no group selected
+ */
+static int
+do_display_group_menu(
+        const unsigned char *upper,
+        int *p_group_id,
+        int only_choose)
+{
+  int group_id = 0;
+  int retval = -1;
+  unsigned char current_level[512];
+  int r, i, j, group_count = 0;
+  unsigned char *xml_text = 0;
+  struct userlist_list *users = 0;
+  struct userlist_group **uu = 0;
+  unsigned char **descs = 0;
+  const unsigned char *description;
+  unsigned char buf[1024];
+  ITEM **items = 0;
+  MENU *menu = 0;
+  WINDOW *in_win = 0, *out_win = 0;
+  PANEL *out_pan = 0, *in_pan = 0;
+  int cur_pos, first_row, height, need_clear = 0;
+  int w1, y1, w2, y2, c, cmd, done = 0;
+
+  if (p_group_id) group_id = *p_group_id;
+  snprintf(current_level, sizeof(current_level), "%s->%s", upper, "Group list");
+
+  r = userlist_clnt_list_all_users(server_conn, ULS_LIST_ALL_GROUPS,
+                                   0, &xml_text);
+  if (r < 0) {
+    vis_err("Cannot get the list of groups: %s", userlist_strerror(-r));
+    goto cleanup;
+  }
+  users = userlist_parse_str(xml_text);
+  if (!users) {
+    vis_err("XML parse error");
+    goto cleanup;
+  }
+  xfree(xml_text); xml_text = 0;
+
+  group_count = 0;
+  for (i = 1; i < users->group_map_size; ++i) {
+    group_count += (users->group_map[i] != NULL);
+  }
+  if (!group_count) {
+    j = okcancel("No groups in the database. Add a new group?");
+    if (j != 1) goto cleanup;
+    j = userlist_clnt_create_user(server_conn, ULS_CREATE_GROUP, 0, 0);
+    if (j < 0) {
+      vis_err("Group creation failed: %s", userlist_strerror(-j));
+      goto cleanup;
+    }
+    group_id = 0;
+    retval = -2;
+    goto cleanup;
+  }
+
+  XCALLOC(uu, group_count);
+  for (i = 1, j = 0; i < users->group_map_size; ++i) {
+    if (users->group_map[i]) {
+      uu[j++] = users->group_map[i];
+    }
+  }
+  ASSERT(j == group_count);
+
+  XCALLOC(descs, group_count);
+  for (i = 0; i < group_count; ++i) {
+    description = uu[i]->description;
+    if (!description) description = "";
+
+    w1 = 15; y1 = 0;
+    if (utf8_mode) w1 = utf8_cnt(uu[i]->group_name, w1, &y1);
+    w2 = 50; y2 = 0;
+    if (utf8_mode) w2 = utf8_cnt(description, w2, &y2);
+    snprintf(buf, sizeof(buf), " %6d %-*.*s %-*.*s",
+             uu[i]->group_id, w1 + y1, w1, uu[i]->group_name,
+             w2 + y2, w2, description);
+    descs[i] = xstrdup(buf);
+  }
+
+  XCALLOC(items, group_count + 1);
+  for (i = 0; i < group_count; ++i) {
+    items[i] = new_item(descs[i], 0);
+  }
+  height = LINES - 4;
+  need_clear = 1;
+  menu = new_menu(items);
+  set_menu_back(menu, COLOR_PAIR(1));
+  set_menu_fore(menu, COLOR_PAIR(3));
+  out_win = newwin(height + 2, COLS, 1, 0);
+  in_win = newwin(height, COLS - 2, 2, 1);
+  wattrset(out_win, COLOR_PAIR(1));
+  wbkgdset(out_win, COLOR_PAIR(1));
+  wattrset(in_win, COLOR_PAIR(1));
+  wbkgdset(in_win, COLOR_PAIR(1));
+  wclear(in_win);
+  wclear(out_win);
+  box(out_win, 0, 0);
+  out_pan = new_panel(out_win);
+  in_pan = new_panel(in_win);
+  set_menu_win(menu, in_win);
+  set_menu_format(menu, height, 0);
+
+  for (cur_pos = 0; cur_pos < group_count; ++cur_pos)
+    if (uu[cur_pos]->group_id == group_id)
+      break;
+  if (cur_pos >= group_count)
+    cur_pos = 0;
+  first_row = cur_pos - height / 2;
+  if (first_row + height > group_count) first_row = group_count - height;
+  if (first_row < 0) first_row = 0;
+  set_top_row(menu, first_row);
+  set_current_item(menu, items[cur_pos]);
+
+  do {
+    mvwprintw(stdscr, 0, 0, "%s", current_level);
+    wclrtoeol(stdscr);
+    print_help("Quit :-Sel Toggle 0-clear");
+    show_panel(out_pan);
+    show_panel(in_pan);
+    post_menu(menu);
+    update_panels();
+    doupdate();
+
+    while (1) {
+      c = ncurses_getkey(utf8_mode, 0);
+      if (c == KEY_BACKSPACE || c == KEY_DC || c == 127 || c == 8 || c == 'd') {
+        c = 'd';
+        break;
+      }
+      if (c == 'q' || c == ('G' & 31) || c == '\033') {
+        c = 'q';
+        break;
+      }
+      if (c == '\n' || c == '\r') {
+        c = '\n';
+        break;
+      }
+
+      if (c == 'a' || c == 'n' || c == 'c' || c == 'z') {
+        break;
+      }
+
+      cmd = -1;
+      switch (c) {
+      case KEY_UP:
+      case KEY_LEFT:
+        cmd = REQ_UP_ITEM;
+        break;
+      case KEY_DOWN:
+      case KEY_RIGHT:
+        cmd = REQ_DOWN_ITEM;
+        break;
+      case KEY_HOME:
+        cmd = REQ_FIRST_ITEM;
+        break;
+      case KEY_END:
+        cmd = REQ_LAST_ITEM;
+        break;
+      case KEY_NPAGE:
+        i = item_index(current_item(menu));
+        if (i + height >= group_count) cmd = REQ_LAST_ITEM;
+        else cmd = REQ_SCR_DPAGE;
+        break;
+      case KEY_PPAGE:
+        i = item_index(current_item(menu));
+        if (i - height < 0) cmd = REQ_FIRST_ITEM;
+        else cmd = REQ_SCR_UPAGE;
+        break;
+      }
+      if (cmd != -1) {
+        menu_driver(menu, cmd);
+        update_panels();
+        doupdate();
+      }
+    }
+
+    if (c == 'd' && !only_choose) {
+      i = item_index(current_item(menu));
+      j = okcancel("REMOVE GROUP %d (%s)?", uu[i]->group_id, uu[i]->group_name);
+      if (j == 1) {
+        j = userlist_clnt_delete_info(server_conn, ULS_DELETE_GROUP,
+                                      uu[i]->group_id, 0, 0);
+        if (j < 0) {
+          vis_err("Delete failed: %s", userlist_strerror(-j));
+        } else {
+          done = 1;
+          retval = -2;
+          group_id = 0;
+        }
+      }
+    } else if (c == 'a' && !only_choose) {
+      j = okcancel("Create a new group?");
+      if (j == 1) {
+        j = userlist_clnt_create_user(server_conn, ULS_CREATE_GROUP, 0, &i);
+        if (j < 0) {
+          vis_err("Create failed: %s", userlist_strerror(-j));
+        } else {
+          done = 1;
+          retval = -2;
+          group_id = i;
+        }
+      }
+    } else if (c == 'q') {
+      retval = -1;
+      done = 1;
+    } else if (c == '\n' && only_choose) {
+    } else if (c == 'n') {
+      // edit name
+      i = item_index(current_item(menu));
+      buf[0] = 0;
+      if (uu[i]->group_name) {
+        snprintf(buf, sizeof(buf), "%s", uu[i]->group_name);
+      }
+      j = ncurses_edit_string(LINES / 2, COLS, "Change the group name",
+                              buf, sizeof(buf) - 1, utf8_mode);
+      if (j >= 0) {
+        j = userlist_clnt_edit_field(server_conn, ULS_EDIT_GROUP_FIELD,
+                                     uu[i]->group_id, 0,
+                                     0, USERLIST_GRP_GROUP_NAME, buf);
+        if (j < 0) {
+          vis_err("Operation failed: %s", userlist_strerror(-j));
+        } else {
+          done = 1;
+          retval = -2;
+          group_id = i;
+        }
+      }
+    } else if (c == 'c') {
+      // edit description
+      i = item_index(current_item(menu));
+      buf[0] = 0;
+      if (uu[i]->description) {
+        snprintf(buf, sizeof(buf), "%s", uu[i]->description);
+      }
+      j = ncurses_edit_string(LINES / 2, COLS, "Change the group description",
+                              buf, sizeof(buf) - 1, utf8_mode);
+      if (j >= 0) {
+        j = userlist_clnt_edit_field(server_conn, ULS_EDIT_GROUP_FIELD,
+                                     uu[i]->group_id, 0,
+                                     0, USERLIST_GRP_DESCRIPTION, buf);
+        if (j < 0) {
+          vis_err("Operation failed: %s", userlist_strerror(-j));
+        } else {
+          done = 1;
+          retval = -2;
+          group_id = i;
+        }
+      }
+    } else if (c == 'z') {
+      // delete description
+      i = item_index(current_item(menu));
+      j = userlist_clnt_delete_field(server_conn, ULS_DELETE_GROUP_FIELD,
+                                     uu[i]->group_id, 0, 0, 
+                                     USERLIST_GRP_DESCRIPTION);
+      if (j < 0) {
+        vis_err("Operation failed: %s", userlist_strerror(-j));
+      } else {
+        done = 1;
+        retval = -2;
+        group_id = i;
+      }
+    }
+
+    unpost_menu(menu);
+    hide_panel(out_pan);
+    hide_panel(in_pan);
+    update_panels();
+    doupdate();
+  } while (!done);
+
+ cleanup: ;
+  if (in_pan) del_panel(in_pan);
+  if (out_pan) del_panel(out_pan);
+  if (in_win) delwin(in_win);
+  if (out_win) delwin(out_win);
+  if (need_clear) {
+    wmove(stdscr, 0, 0);
+    wclrtoeol(stdscr);
+  }
+  if (menu) free_menu(menu);
+  if (items) {
+    for (i = 0; i < group_count; ++i) {
+      free_item(items[i]);
+    }
+    xfree(items);
+  }
+  if (descs) {
+    for (i = 0; i < group_count; ++i)
+      xfree(descs[i]);
+    xfree(descs);
+  }
+  xfree(uu);
+  xfree(xml_text);
+  userlist_free(&users->b);
+  if (p_group_id) *p_group_id = group_id;
+  return retval;
+}
+
+static int
+display_group_menu(
+        const unsigned char *upper,
+        int start_item,
+        int only_choose)
+{
+  int val = -2;
+
+  while (val == -2) {
+    val = do_display_group_menu(upper, &start_item, only_choose);
+  }
+  return val;
+}
+
 static void
 display_main_menu(void)
 {
-  ITEM *items[5];
+  ITEM *items[6];
   MENU *menu;
   WINDOW *window, *in_win;
   PANEL *panel, *in_pan;
   int req_rows, req_cols;
-  int c, cmd, start_col, r = 0;
+  int c, cmd, start_col, r = 0, cur_group = 0;
   unsigned char current_level[512];
 
   snprintf(current_level, sizeof(current_level), "%s", "Main menu");
@@ -4240,7 +4600,8 @@ display_main_menu(void)
   memset(items, 0, sizeof(items));
   items[0] = new_item("View contests", 0);
   items[1] = new_item("View users", 0);
-  items[2] = new_item("Quit", 0);
+  items[2] = new_item("View groups", 0);
+  items[3] = new_item("Quit", 0);
   menu = new_menu(items);
   scale_menu(menu, &req_rows, &req_cols);
   set_menu_back(menu, COLOR_PAIR(1));
@@ -4259,7 +4620,7 @@ display_main_menu(void)
   while (1) {
     mvwprintw(stdscr, 0, 0, "%s", current_level);
     wclrtoeol(stdscr);
-    print_help("Enter-view C-contests U-users Q-quit");
+    print_help("Enter-view C-contests U-users G-groups Q-quit");
     show_panel(panel);
     show_panel(in_pan);
     post_menu(menu);
@@ -4275,7 +4636,7 @@ display_main_menu(void)
       case '\n': case '\r': case ' ':
         c = '\n';
         goto menu_done;
-      case 'c': case 'u':
+      case 'c': case 'u': case 'g':
         goto menu_done;
       }
       cmd = -1;
@@ -4322,6 +4683,8 @@ display_main_menu(void)
       } else if (cur == items[1]) {
         c = 'u';
       } else if (cur == items[2]) {
+        c = 'g';
+      } else if (cur == items[3]) {
         c = 'q';
       }
     }
@@ -4330,6 +4693,8 @@ display_main_menu(void)
       display_contests_menu(current_level, 0);
     } else if (c == 'u') {
       r = display_user_menu(current_level, r, 0);
+    } else if (c == 'g') {
+      cur_group = display_group_menu(current_level, cur_group, 0);
     }
 
     // perform other actions

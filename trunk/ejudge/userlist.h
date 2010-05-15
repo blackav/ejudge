@@ -4,7 +4,7 @@
 #ifndef __USERLIST_H__
 #define __USERLIST_H__
 
-/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -148,6 +148,8 @@ enum
     USERLIST_T_FIELD7,
     USERLIST_T_FIELD8,
     USERLIST_T_FIELD9,
+    USERLIST_T_USERGROUPS,
+    USERLIST_T_USERGROUP,
 
     USERLIST_LAST_TAG,
   };
@@ -195,6 +197,9 @@ enum
     USERLIST_A_INFO_CREATE,
     USERLIST_A_RECOVERY,
     USERLIST_A_TEAM_LOGIN,
+    USERLIST_A_GROUP_ID,
+    USERLIST_A_GROUP_NAME,
+    USERLIST_A_DESCRIPTION,
 
     USERLIST_LAST_ATTN,
   };
@@ -324,6 +329,16 @@ enum
 
     USERLIST_NM_LAST,
   };
+
+/* enum for group editing */
+enum
+{
+  USERLIST_GRP_GROUP_ID = 1,
+  USERLIST_GRP_GROUP_NAME = 2,
+  USERLIST_GRP_DESCRIPTION = 3,
+
+  USERLIST_GRP_LAST,
+};
 
 typedef unsigned long userlist_login_hash_t;
 
@@ -510,6 +525,15 @@ struct userlist_user
   struct userlist_user_info *cnts0;
 };
 
+struct userlist_group
+{
+  struct xml_tree b;
+
+  int group_id;
+  unsigned char *group_name;
+  unsigned char *description;
+};
+
 struct userlist_list
 {
   struct xml_tree b;
@@ -532,6 +556,18 @@ struct userlist_list
   size_t cookie_thresh;
   size_t cookie_cur_fill;
   struct userlist_cookie **cookie_hash_table;
+
+  /* user group information */
+  struct xml_tree *groups_node;
+  int group_map_size;
+  struct userlist_group **group_map;
+
+  /* group hash information */
+  size_t group_hash_size;
+  size_t group_hash_step;
+  size_t group_thresh;
+  size_t group_cur_fill;
+  struct userlist_group **group_hash_table;
 };
 
 // unparse modes
@@ -710,5 +746,19 @@ userlist_members_get_nth(
 void userlist_members_reserve(struct userlist_members *mm, int n);
 
 struct userlist_user_info *userlist_get_cnts0(struct userlist_user *u);
+
+void userlist_write_groups_xml_header(FILE *f);
+void userlist_write_groups_xml_footer(FILE *f);
+void
+userlist_unparse_usergroup(
+        FILE *fout,
+        const struct userlist_group *grp,
+        const unsigned char *prefix,
+        const unsigned char *suffix);
+
+const void *
+userlist_group_get_ptr(const struct userlist_group *grp, int field);
+void *
+userlist_group_get_ptr_nc(struct userlist_group *grp, int field);
 
 #endif /* __USERLIST_H__ */
