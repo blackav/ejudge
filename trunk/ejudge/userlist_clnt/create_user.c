@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 int
 userlist_clnt_create_user(
         struct userlist_clnt *clnt,
+        int cmd,
         const unsigned char *login,
         int *p_user_id)
 {
@@ -35,7 +36,7 @@ userlist_clnt_create_user(
   out_size = sizeof(*out) + login_len;
   out = alloca(out_size);
   memset(out, 0, out_size);
-  out->request_id = ULS_CREATE_USER;
+  out->request_id = cmd;
   out->value_len = login_len;
   strcpy(out->data, login);
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;

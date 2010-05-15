@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,11 +18,13 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_delete_field(struct userlist_clnt *clnt,
-                           int user_id,
-                           int contest_id,
-                           int serial,
-                           int field)
+userlist_clnt_delete_field(
+        struct userlist_clnt *clnt,
+        int cmd,
+        int user_id,
+        int contest_id,
+        int serial,
+        int field)
 {
   struct userlist_pk_edit_field *out = 0;
   struct userlist_packet *in = 0;
@@ -32,7 +34,7 @@ userlist_clnt_delete_field(struct userlist_clnt *clnt,
   out_size = sizeof(*out);
   out = alloca(out_size);
   memset(out, 0, out_size);
-  out->request_id = ULS_DELETE_FIELD;
+  out->request_id = cmd;
   out->user_id = user_id;
   out->contest_id = contest_id;
   out->serial = serial;

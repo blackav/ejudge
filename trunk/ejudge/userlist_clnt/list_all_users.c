@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,10 +18,11 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_list_all_users(struct userlist_clnt *clnt,
-                             int cmd,
-                             int contest_id,
-                             unsigned char **p_info)
+userlist_clnt_list_all_users(
+        struct userlist_clnt *clnt,
+        int cmd,
+        int contest_id,
+        unsigned char **p_info)
 {
   struct userlist_pk_map_contest *out = 0;
   struct userlist_pk_xml_data *in = 0;
@@ -31,7 +32,8 @@ userlist_clnt_list_all_users(struct userlist_clnt *clnt,
   out_size = sizeof(*out);
   out = alloca(out_size);
   memset(out, 0, out_size);
-  if (cmd != ULS_LIST_ALL_USERS && cmd != ULS_LIST_STANDINGS_USERS) {
+  if (cmd != ULS_LIST_ALL_USERS && cmd != ULS_LIST_STANDINGS_USERS
+      && cmd != ULS_LIST_ALL_GROUPS) {
     return -ULS_ERR_PROTOCOL;
   }
   out->request_id = cmd;
