@@ -4236,6 +4236,7 @@ display_user_menu(unsigned char *upper, int start_item, int only_choose)
   return val;
 }
 
+#if 0
 static int
 do_display_group_members_menu(
         const unsigned char *upper,
@@ -4267,6 +4268,7 @@ display_group_members_menu(
   }
   return val;
 }
+#endif
 
 /*
   return values: -2 means restart the function

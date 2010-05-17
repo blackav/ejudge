@@ -150,6 +150,8 @@ enum
     USERLIST_T_FIELD9,
     USERLIST_T_USERGROUPS,
     USERLIST_T_USERGROUP,
+    USERLIST_T_USERGROUPMEMBERS,
+    USERLIST_T_USERGROUPMEMBER,
 
     USERLIST_LAST_TAG,
   };
@@ -534,6 +536,14 @@ struct userlist_group
   unsigned char *description;
 };
 
+struct userlist_groupmember
+{
+  struct xml_tree b;
+
+  int group_id;
+  int user_id;
+};
+
 struct userlist_list
 {
   struct xml_tree b;
@@ -568,6 +578,9 @@ struct userlist_list
   size_t group_thresh;
   size_t group_cur_fill;
   struct userlist_group **group_hash_table;
+
+  /* group members information */
+  struct xml_tree *groupmembers_node;
 };
 
 // unparse modes
