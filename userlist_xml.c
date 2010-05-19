@@ -120,6 +120,8 @@ static char const * const elem_map[] =
   "field9",
   "usergroups",
   "usergroup",
+  "usergroupmembers",
+  "usergroupmember",
 
   0
 };
@@ -170,6 +172,7 @@ static char const * const attr_map[] =
   "group_id",
   "group_name",
   "description",
+  "user_id",
 
   0
 };
@@ -183,6 +186,7 @@ static size_t const elem_sizes[USERLIST_LAST_TAG] =
   [USERLIST_T_MEMBERS] = sizeof(struct userlist_members),
   [USERLIST_T_CNTSINFO] = sizeof(struct userlist_user_info),
   [USERLIST_T_USERGROUP] = sizeof(struct userlist_group),
+  [USERLIST_T_USERGROUPMEMBER] = sizeof(struct userlist_groupmember),
 };
 
 struct xml_tree *
@@ -1287,6 +1291,15 @@ do_parse_usergroups(
 }
 
 static int
+do_parse_usergroupmembers(
+        const unsigned char *path,
+        struct userlist_list *lst,
+        struct xml_tree *groupmembers)
+{
+  return 0;
+}
+
+static int
 do_parse_userlist(char const *path, struct userlist_list *lst)
 {
   struct xml_attr *a;
@@ -1321,6 +1334,9 @@ do_parse_userlist(char const *path, struct userlist_list *lst)
   for (t = lst->b.first_down; t; t = t->right) {
     if (t->tag == USERLIST_T_USERGROUPS) {
       if (do_parse_usergroups(path, lst, t) < 0)
+        return -1;
+    } else if (t->tag == USERLIST_T_USERGROUPMEMBERS) {
+      if (do_parse_usergroupmembers(path, lst, t) < 0)
         return -1;
     } else if (t->tag == USERLIST_T_USER) {
       if (do_parse_user(path, (struct userlist_user*) t) < 0) return -1;
@@ -1832,6 +1848,45 @@ unparse_usergroups(
   fprintf(fout, "  </%s>\n", elem_map[USERLIST_T_USERGROUPS]);
 }
 
+void
+userlist_unparse_usergroup(
+        FILE *fout,
+        const struct userlist_groupmember *gm,
+        const unsigned char *prefix,
+        const unsigned char *suffix)
+{
+  fprintf(fout, "%s<%s %s=\"%d\" %s=\"%d\" />%s", prefix,
+          elem_map[USERLIST_T_USERGROUPMEMBER],
+          attr_map[USERLIST_A_GROUP_ID], gm->group_id,
+          attr_map[USERLIST_A_USER_ID], gm->user_id,
+          suffix);
+}
+
+static void
+unparse_usergroupmembers(
+        FILE *fout,
+        const struct userlist_list *lst)
+{
+  const struct xml_tree *p;
+  const struct userlist_groupmember *gm;
+
+  if (!lst->groupmembers_node) return;
+  if (!lst->groupmembers_node->first_down) return;
+
+  fprintf(fout, "  <%s>\n", elem_map[USERLIST_T_USERGROUPMEMBERS]);
+  for (p = lst->groupmembers_node->first_down; p; p = p->right) {
+    gm = (const struct userlist_groupmember) p;
+    if (gm->user_id <= 0 || gm->user_id >= lst->user_map_size
+        || !lst->user_map[gm->user_id])
+      continue;
+    if (gm->group_id <= 0 || gm->group_id >= lst->group_map_size
+        || !lst->group_map[gm->group_id])
+      continue;
+    userlist_unparse_usergroupmember(fout, gm, "      ", "\n");
+  }
+  fprintf(fout, "  </%s>\n", elem_map[USERLIST_T_USERGROUPMEMBERS]);
+}
+
 /* called from `userlist_unparse_short' */
 void
 userlist_unparse_user_short(const struct userlist_user *p, FILE *f,
@@ -2138,6 +2193,7 @@ userlist_unparse(struct userlist_list *p, FILE *f)
     userlist_real_unparse_user(p->user_map[i], f, 0, -1, USERLIST_SHOW_REG_PASSWD | USERLIST_SHOW_CNTS_PASSWD);
 
   unparse_usergroups(f, p);
+  unparse_usergroupmembers(f, p);
   fprintf(f, "</%s>\n", elem_map[USERLIST_T_USERLIST]);
 }
 
