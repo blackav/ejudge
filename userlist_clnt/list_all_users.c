@@ -32,10 +32,6 @@ userlist_clnt_list_all_users(
   out_size = sizeof(*out);
   out = alloca(out_size);
   memset(out, 0, out_size);
-  if (cmd != ULS_LIST_ALL_USERS && cmd != ULS_LIST_STANDINGS_USERS
-      && cmd != ULS_LIST_ALL_GROUPS) {
-    return -ULS_ERR_PROTOCOL;
-  }
   out->request_id = cmd;
   out->contest_id = contest_id;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
