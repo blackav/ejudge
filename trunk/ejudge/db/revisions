@@ -5160,3 +5160,13 @@ userlist_clnt/edit_field.c 5796 0 145688
 userlist_clnt/list_all_users.c 5796 0 157864
 userlist.h 5798 0 1673694
 edit-userlist.c 5798 0 10719755
+userlist.h 5800 0 1710319
+userlist_xml.c 5800 0 5277626
+uldb_plugin.h 5802 0 858846
+userlist.h 5802 0 1741634
+edit-userlist.c 5802 0 11418275
+userlist-server.c 5802 0 23688237
+uldb_plugin_xml.c 5802 0 8685682
+userlist_proto.c 5802 0 465859
+userlist_xml.c 5802 0 5330796
+userlist_clnt/list_all_users.c 5801 0 148080
