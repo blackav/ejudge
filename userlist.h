@@ -526,6 +526,10 @@ struct userlist_user
    * user requests
    */
   struct userlist_user_info *cnts0;
+
+  /* list of groups */
+  struct xml_tree *group_first;
+  struct xml_tree *group_last;
 };
 
 struct userlist_group
@@ -535,6 +539,10 @@ struct userlist_group
   int group_id;
   unsigned char *group_name;
   unsigned char *description;
+
+  /* list of users */
+  struct xml_tree *user_first;
+  struct xml_tree *user_last;
 };
 
 struct userlist_groupmember
@@ -543,6 +551,19 @@ struct userlist_groupmember
 
   int group_id;
   int user_id;
+
+  /* list of users belonging to the same group */
+  struct xml_tree *user_prev;
+  struct xml_tree *user_next;
+
+  /* list of groups containing the same user */
+  struct xml_tree *group_prev;
+  struct xml_tree *group_next;
+
+  /* the group */
+  struct userlist_group *group;
+  /* the user */
+  struct userlist_user *user;
 };
 
 struct userlist_list
@@ -761,12 +782,20 @@ void userlist_members_reserve(struct userlist_members *mm, int n);
 
 struct userlist_user_info *userlist_get_cnts0(struct userlist_user *u);
 
-void userlist_write_groups_xml_header(FILE *f);
-void userlist_write_groups_xml_footer(FILE *f);
+void userlist_write_groups_header(FILE *f);
+void userlist_write_groups_footer(FILE *f);
+void userlist_write_groupmembers_header(FILE *f);
+void userlist_write_groupmembers_footer(FILE *f);
 void
 userlist_unparse_usergroup(
         FILE *fout,
         const struct userlist_group *grp,
+        const unsigned char *prefix,
+        const unsigned char *suffix);
+void
+userlist_unparse_usergroupmember(
+        FILE *fout,
+        const struct userlist_groupmember *gm,
         const unsigned char *prefix,
         const unsigned char *suffix);
 

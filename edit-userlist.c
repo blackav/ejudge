@@ -2561,6 +2561,7 @@ struct selected_users_info
 };
 static struct selected_users_info sel_users;
 static struct selected_users_info sel_cnts;
+//static struct selected_users_info sel_groups;
 
 static int
 generate_reg_user_item(unsigned char *buf, size_t size, int i,
@@ -4236,7 +4237,6 @@ display_user_menu(unsigned char *upper, int start_item, int only_choose)
   return val;
 }
 
-#if 0
 static int
 do_display_group_members_menu(
         const unsigned char *upper,
@@ -4246,10 +4246,325 @@ do_display_group_members_menu(
 {
   int retval = -1;
   int user_id = 0;
+  int r, i, j;
+  unsigned char current_level[512];
+  unsigned char *xml_text = 0;
+  struct userlist_list *users = 0;
+  struct userlist_group *grp = 0;
+  int member_count = 0;
+  struct xml_tree *t;
+  struct userlist_groupmember *gm;
+  struct userlist_groupmember **uu = 0;
+  unsigned char **descs = 0;
+  int w1, y1;
+  unsigned char buf[512];
+  int need_clear = 0, height = 0, cur_pos, first_row, c, cmd, done = 0;
+  ITEM **items = 0;
+  MENU *menu = 0;
+  WINDOW *in_win = 0, *out_win = 0;
+  PANEL *out_pan = 0, *in_pan = 0;
 
   if (p_user_id) user_id = *p_user_id;
+  snprintf(current_level, sizeof(current_level), "%s->Group %d members", upper,
+           group_id);
+  r = userlist_clnt_list_all_users(server_conn, ULS_LIST_GROUP_USERS,
+                                   group_id, &xml_text);
+  if (r < 0) {
+    vis_err("Cannot get group members: %s", userlist_strerror(-r));
+    goto cleanup;
+  }
+  fprintf(stderr, ">>%s<<\n", xml_text);
+  users = userlist_parse_str(xml_text);
+  if (!users) {
+    vis_err("XML parse error");
+    goto cleanup;
+  }
+  xfree(xml_text); xml_text = 0;
+
+  if (group_id <= 0 || group_id >= users->group_map_size
+      || !(grp = users->group_map[group_id])) {
+    vis_err("Invalid group");
+    goto cleanup;
+  }
+
+  member_count = 0;
+  if (users->groupmembers_node) {
+    for (t = users->groupmembers_node->first_down; t; t = t->right) {
+      ASSERT(t->tag == USERLIST_T_USERGROUPMEMBER);
+      gm = (struct userlist_groupmember*) t;
+      if (gm->group_id != group_id) continue;
+      if (gm->user_id <= 0 || gm->user_id >= users->user_map_size
+          || !users->user_map[gm->user_id])
+        continue;
+      gm->user = users->user_map[gm->user_id];
+      ++member_count;
+    }
+  }
+  if (!member_count) {
+    j = okcancel("No members in the group. Add a new member?");
+    if (j != 1) goto cleanup;
+    i = display_user_menu(current_level, 0, 1);
+    if (i <= 0) goto cleanup;
+    j = okcancel("Add user %d?", i);
+    if (j != 1) goto cleanup;
+    j = userlist_clnt_register_contest(server_conn, ULS_CREATE_GROUP_MEMBER,
+                                       i, group_id, 0, 0);
+    if (j < 0) {
+      vis_err("Member creation failed: %s", userlist_strerror(-r));
+      goto cleanup;
+    }
+    user_id = 0;
+    retval = -2;
+    goto cleanup;
+  }
+
+  XCALLOC(uu, member_count);
+  for (t = users->groupmembers_node->first_down, i = 0; t; t = t->right) {
+    gm = (struct userlist_groupmember*) t;
+    if (gm->user) {
+      uu[i++] = gm;
+    }
+  }
+  ASSERT(i == member_count);
+
+  XCALLOC(descs, member_count);
+  for (i = 0; i < member_count; ++i) {
+    w1 = 50; y1 = 0;
+    if (utf8_mode) w1 = utf8_cnt(uu[i]->user->login, w1, &y1);
+    snprintf(buf, sizeof(buf), " %6d %-*.*s",
+             uu[i]->user->id, w1 + y1, w1, uu[i]->user->login);
+    descs[i] = xstrdup(buf);
+  }
+
+  XCALLOC(items, member_count + 1);
+  for (i = 0; i < member_count; ++i) {
+    items[i] = new_item(descs[i], 0);
+  }
+  height = LINES - 4;
+  need_clear = 1;
+  menu = new_menu(items);
+  set_menu_back(menu, COLOR_PAIR(1));
+  set_menu_fore(menu, COLOR_PAIR(3));
+  out_win = newwin(height + 2, COLS, 1, 0);
+  in_win = newwin(height, COLS - 2, 2, 1);
+  wattrset(out_win, COLOR_PAIR(1));
+  wbkgdset(out_win, COLOR_PAIR(1));
+  wattrset(in_win, COLOR_PAIR(1));
+  wbkgdset(in_win, COLOR_PAIR(1));
+  wclear(in_win);
+  wclear(out_win);
+  box(out_win, 0, 0);
+  out_pan = new_panel(out_win);
+  in_pan = new_panel(in_win);
+  set_menu_win(menu, in_win);
+  set_menu_format(menu, height, 0);
+
+  for (cur_pos = 0; cur_pos < member_count; ++cur_pos)
+    if (uu[cur_pos]->user_id == user_id)
+      break;
+  if (cur_pos >= member_count)
+    cur_pos = 0;
+  first_row = cur_pos - height / 2;
+  if (first_row + height > member_count) first_row = member_count - height;
+  if (first_row < 0) first_row = 0;
+  set_top_row(menu, first_row);
+  set_current_item(menu, items[cur_pos]);
+
+  do {
+    mvwprintw(stdscr, 0, 0, "%s", current_level);
+    wclrtoeol(stdscr);
+    print_help("Quit Add Delete :-Sel Toggle 0-clear");
+    show_panel(out_pan);
+    show_panel(in_pan);
+    post_menu(menu);
+    update_panels();
+    doupdate();
+
+    while (1) {
+      c = ncurses_getkey(utf8_mode, 0);
+      if (c == KEY_BACKSPACE || c == KEY_DC || c == 127 || c == 8 || c == 'd') {
+        c = 'd';
+        break;
+      }
+      if (c == 'q' || c == ('G' & 31) || c == '\033') {
+        c = 'q';
+        break;
+      }
+      if (c == '\n' || c == '\r') {
+        c = '\n';
+        break;
+      }
+      if (c == 'a') {
+        break;
+      }
+
+      cmd = -1;
+      switch (c) {
+      case KEY_UP:
+      case KEY_LEFT:
+        cmd = REQ_UP_ITEM;
+        break;
+      case KEY_DOWN:
+      case KEY_RIGHT:
+        cmd = REQ_DOWN_ITEM;
+        break;
+      case KEY_HOME:
+        cmd = REQ_FIRST_ITEM;
+        break;
+      case KEY_END:
+        cmd = REQ_LAST_ITEM;
+        break;
+      case KEY_NPAGE:
+        i = item_index(current_item(menu));
+        if (i + height >= member_count) cmd = REQ_LAST_ITEM;
+        else cmd = REQ_SCR_DPAGE;
+        break;
+      case KEY_PPAGE:
+        i = item_index(current_item(menu));
+        if (i - height < 0) cmd = REQ_FIRST_ITEM;
+        else cmd = REQ_SCR_UPAGE;
+        break;
+      }
+      if (cmd != -1) {
+        menu_driver(menu, cmd);
+        update_panels();
+        doupdate();
+      }
+    }
+
+    if (c == 'd' && !only_choose) {
+      i = item_index(current_item(menu));
+      j = okcancel("REMOVE GROUP MEMBER %d (%s)?", uu[i]->user_id,
+                   uu[i]->user->login);
+      if (j == 1) {
+        j = userlist_clnt_register_contest(server_conn, ULS_DELETE_GROUP_MEMBER,
+                                           uu[i]->user_id, group_id, 0, 0);
+        if (j < 0) {
+          vis_err("Delete failed: %s", userlist_strerror(-j));
+        } else {
+          done = 1;
+          retval = -2;
+          user_id = 0;
+        }
+      }
+    } else if (c == 'a' && !only_choose) {
+      i = display_user_menu(current_level, 0, 1);
+      if (i > 0) {
+        j = userlist_clnt_register_contest(server_conn, ULS_CREATE_GROUP_MEMBER,
+                                           i, group_id, 0, 0);
+        if (j < 0) {
+          vis_err("Member creation failed: %s", userlist_strerror(-r));
+        } else {
+          done = 1;
+          retval = -2;
+          user_id = 0;
+        }
+      }
+    } else if (c == 'q') {
+      retval = -1;
+      done = 1;
+    }
+
+  /*
+    else if (c == 'n') {
+      // edit name
+      i = item_index(current_item(menu));
+      buf[0] = 0;
+      if (uu[i]->group_name) {
+        snprintf(buf, sizeof(buf), "%s", uu[i]->group_name);
+      }
+      j = ncurses_edit_string(LINES / 2, COLS, "Change the group name",
+                              buf, sizeof(buf) - 1, utf8_mode);
+      if (j >= 0) {
+        j = userlist_clnt_edit_field(server_conn, ULS_EDIT_GROUP_FIELD,
+                                     uu[i]->group_id, 0,
+                                     0, USERLIST_GRP_GROUP_NAME, buf);
+        if (j < 0) {
+          vis_err("Operation failed: %s", userlist_strerror(-j));
+        } else {
+          done = 1;
+          retval = -2;
+          group_id = uu[i]->group_id;
+        }
+      }
+    } else if (c == 'c') {
+      // edit description
+      i = item_index(current_item(menu));
+      buf[0] = 0;
+      if (uu[i]->description) {
+        snprintf(buf, sizeof(buf), "%s", uu[i]->description);
+      }
+      j = ncurses_edit_string(LINES / 2, COLS, "Change the group description",
+                              buf, sizeof(buf) - 1, utf8_mode);
+      if (j >= 0) {
+        j = userlist_clnt_edit_field(server_conn, ULS_EDIT_GROUP_FIELD,
+                                     uu[i]->group_id, 0,
+                                     0, USERLIST_GRP_DESCRIPTION, buf);
+        if (j < 0) {
+          vis_err("Operation failed: %s", userlist_strerror(-j));
+        } else {
+          done = 1;
+          retval = -2;
+          group_id = uu[i]->group_id;
+        }
+      }
+    } else if (c == 'z') {
+      // delete description
+      i = item_index(current_item(menu));
+      j = userlist_clnt_delete_field(server_conn, ULS_DELETE_GROUP_FIELD,
+                                     uu[i]->group_id, 0, 0, 
+                                     USERLIST_GRP_DESCRIPTION);
+      if (j < 0) {
+        vis_err("Operation failed: %s", userlist_strerror(-j));
+      } else {
+        done = 1;
+        retval = -2;
+        group_id = uu[i]->group_id;
+      }
+    } else if (c == 'm') {
+      // view members
+      i = item_index(current_item(menu));
+      display_group_members_menu(current_level, uu[i]->group_id, 0, 0);
+      done = 1;
+      retval = -2;
+      group_id = uu[i]->group_id;
+    }
+
+   */
+    unpost_menu(menu);
+    hide_panel(out_pan);
+    hide_panel(in_pan);
+    update_panels();
+    doupdate();
+  } while (!done);
 
  cleanup:
+  if (in_pan) del_panel(in_pan);
+  if (out_pan) del_panel(out_pan);
+  if (in_win) delwin(in_win);
+  if (out_win) delwin(out_win);
+  if (need_clear) {
+    wmove(stdscr, 0, 0);
+    wclrtoeol(stdscr);
+  }
+  if (menu) free_menu(menu);
+  if (items) {
+    for (i = 0; i < member_count; ++i) {
+      free_item(items[i]);
+    }
+    xfree(items);
+  }
+  if (member_count > 0) {
+    for (i = 0; i < member_count; ++i) {
+      xfree(descs[i]);
+    }
+  }
+  xfree(descs);
+  xfree(uu);
+  if (users) {
+    userlist_free(&users->b);
+  }
+  xfree(xml_text);
   if (p_user_id) *p_user_id = user_id;
   return retval;
 }
@@ -4268,7 +4583,6 @@ display_group_members_menu(
   }
   return val;
 }
-#endif
 
 /*
   return values: -2 means restart the function
@@ -4390,7 +4704,7 @@ do_display_group_menu(
   do {
     mvwprintw(stdscr, 0, 0, "%s", current_level);
     wclrtoeol(stdscr);
-    print_help("Quit :-Sel Toggle 0-clear");
+    print_help("Quit Add Delete Name desCription Members :-Sel Toggle 0-clear");
     show_panel(out_pan);
     show_panel(in_pan);
     post_menu(menu);
@@ -4412,7 +4726,7 @@ do_display_group_menu(
         break;
       }
 
-      if (c == 'a' || c == 'n' || c == 'c' || c == 'z') {
+      if (c == 'a' || c == 'n' || c == 'c' || c == 'z' || c == 'm') {
         break;
       }
 
@@ -4498,7 +4812,7 @@ do_display_group_menu(
         } else {
           done = 1;
           retval = -2;
-          group_id = i;
+          group_id = uu[i]->group_id;
         }
       }
     } else if (c == 'c') {
@@ -4519,7 +4833,7 @@ do_display_group_menu(
         } else {
           done = 1;
           retval = -2;
-          group_id = i;
+          group_id = uu[i]->group_id;
         }
       }
     } else if (c == 'z') {
@@ -4533,8 +4847,15 @@ do_display_group_menu(
       } else {
         done = 1;
         retval = -2;
-        group_id = i;
+        group_id = uu[i]->group_id;
       }
+    } else if (c == 'm') {
+      // view members
+      i = item_index(current_item(menu));
+      display_group_members_menu(current_level, uu[i]->group_id, 0, 0);
+      done = 1;
+      retval = -2;
+      group_id = uu[i]->group_id;
     }
 
     unpost_menu(menu);

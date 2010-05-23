@@ -61,6 +61,7 @@ static unsigned char const * const error_map[] =
   _("database error"),
   _("user is simple_registered"),
   _("group with this name already exists"),
+  _("invalid group id"),
 
   0
 };

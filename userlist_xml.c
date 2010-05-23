@@ -1296,7 +1296,95 @@ do_parse_usergroupmembers(
         struct userlist_list *lst,
         struct xml_tree *groupmembers)
 {
+  struct xml_tree *t;
+  struct userlist_groupmember *gm;
+  struct xml_attr *a;
+
+  if (!groupmembers) return 0;
+  lst->groupmembers_node = groupmembers;
+
+  if (groupmembers->first) return xml_err_attrs(groupmembers);
+  for (t = groupmembers->first_down; t; t = t->right) {
+    int group_id = -1;
+    int user_id = -1;
+
+    if (t->tag != USERLIST_T_USERGROUPMEMBER) {
+      return xml_err_elem_not_allowed(t);
+    }
+    if (t->first_down) {
+      return xml_err_nested_elems(t);
+    }
+    for (a = t->first; a; a = a->next) {
+      switch (a->tag) {
+      case USERLIST_A_GROUP_ID:
+        if (xml_attr_int(a, &group_id) < 0) return -1;
+        break;
+      case USERLIST_A_USER_ID:
+        if (xml_attr_int(a, &user_id) < 0) return -1;
+        break;
+      default:
+        return xml_err_attr_not_allowed(t, a);
+      }
+    }
+
+    gm = (struct userlist_groupmember*) t;
+    if (group_id == -1) {
+      return xml_err_attr_undefined(t, USERLIST_A_GROUP_ID);
+    }
+    if (group_id <= 0 || group_id > 1000000) {
+      return xml_err_elem_invalid(t);
+    }
+    if (user_id == -1) {
+      return xml_err_attr_undefined(t, USERLIST_A_USER_ID);
+    }
+    if (user_id <= 0) {
+      return xml_err_elem_invalid(t);
+    }
+    gm->group_id = group_id;
+    gm->user_id = user_id;
+  }
+
   return 0;
+}
+
+static void
+collect_usergroups(struct userlist_list *lst)
+{
+  struct xml_tree *t;
+  struct userlist_groupmember *gm;
+  struct userlist_group *g;
+  struct userlist_user *u;
+
+  if (!lst->groupmembers_node) return;
+  for (t = lst->groupmembers_node->first_down; t; t = t->right) {
+    gm = (struct userlist_groupmember*) t;
+
+    if (gm->group_id <= 0 || gm->group_id >= lst->group_map_size
+        || !(g = lst->group_map[gm->group_id]))
+      continue;
+    if (gm->user_id <= 0 || gm->user_id >= lst->user_map_size
+        || !(u = lst->user_map[gm->user_id]))
+      continue;
+
+    /* append to the list of users belonging to the same group */
+    gm->user_next = 0;
+    gm->user_prev = g->user_last;
+    g->user_last = t;
+    if (g->user_first) {
+      ((struct userlist_groupmember*) gm->user_prev)->user_next = t;
+    } else {
+      g->user_first = t;
+    }
+    /* append to the list of groups containing the same user */
+    gm->group_next = 0;
+    gm->group_prev = u->group_last;
+    u->group_last = t;
+    if (u->group_first) {
+      ((struct userlist_groupmember*) gm->group_prev)->group_next = t;
+    } else {
+      u->group_first = t;
+    }
+  }
 }
 
 static int
@@ -1366,6 +1454,7 @@ do_parse_userlist(char const *path, struct userlist_list *lst)
       lst->user_map[u->id] = u;
     }
   }
+  collect_usergroups(lst);
 
   return 0;
 }
@@ -1849,7 +1938,7 @@ unparse_usergroups(
 }
 
 void
-userlist_unparse_usergroup(
+userlist_unparse_usergroupmember(
         FILE *fout,
         const struct userlist_groupmember *gm,
         const unsigned char *prefix,
@@ -1875,7 +1964,7 @@ unparse_usergroupmembers(
 
   fprintf(fout, "  <%s>\n", elem_map[USERLIST_T_USERGROUPMEMBERS]);
   for (p = lst->groupmembers_node->first_down; p; p = p->right) {
-    gm = (const struct userlist_groupmember) p;
+    gm = (const struct userlist_groupmember*) p;
     if (gm->user_id <= 0 || gm->user_id >= lst->user_map_size
         || !lst->user_map[gm->user_id])
       continue;
@@ -2150,19 +2239,29 @@ userlist_write_contests_xml_footer(FILE *f)
   fprintf(f, "</%s>\n", elem_map[USERLIST_T_CONTESTS]);
 }
 
+
 void
-userlist_write_groups_xml_header(FILE *f)
+userlist_write_groups_header(FILE *f)
 {
-  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n", EJUDGE_CHARSET);
-  fprintf(f, "<%s>\n", elem_map[USERLIST_T_USERLIST]);
   fprintf(f, "  <%s>\n", elem_map[USERLIST_T_USERGROUPS]);
 }
 
 void
-userlist_write_groups_xml_footer(FILE *f)
+userlist_write_groups_footer(FILE *f)
 {
   fprintf(f, "  </%s>\n", elem_map[USERLIST_T_USERGROUPS]);
-  fprintf(f, "</%s>\n", elem_map[USERLIST_T_USERLIST]);
+}
+
+void
+userlist_write_groupmembers_header(FILE *f)
+{
+  fprintf(f, "  <%s>\n", elem_map[USERLIST_T_USERGROUPMEMBERS]);
+}
+
+void
+userlist_write_groupmembers_footer(FILE *f)
+{
+  fprintf(f, "  </%s>\n", elem_map[USERLIST_T_USERGROUPMEMBERS]);
 }
 
 /*

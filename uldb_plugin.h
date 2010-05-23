@@ -216,6 +216,16 @@ struct uldb_plugin_iface
   int (*edit_group_field)(void *, int, int, const unsigned char *value);
   // clear a group field
   int (*clear_group_field)(void *, int, int);
+  // get the group by the group id
+  const struct userlist_group *(*get_group)(void *, int);
+  // get the group users iterator
+  ptr_iterator_t (*get_group_user_iterator)(void *, int);
+  // get the group groupmember iterator
+  ptr_iterator_t (*get_group_member_iterator)(void *, int);
+  // create a group member
+  int (*create_group_member)(void *, int group_id, int user_id);
+  // remove a group member
+  int (*remove_group_member)(void *, int group_id, int user_id);
 };
 
 /* default plugin: compiled into userlist-server */
