@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -389,6 +389,51 @@ set_simple_reg_func(
         int user_id,
         int value,
         time_t cur_time);
+static ptr_iterator_t
+get_group_iterator_func(void *data);
+static const struct userlist_group*
+get_group_by_name_func(
+        void *data,
+        const unsigned char *group_name);
+static int
+try_new_group_name_func(
+        void *data,
+        unsigned char *buf,
+        size_t bufsize,
+        const char *format,
+        int serial,
+        int step);
+static int
+create_group_func(
+        void *data,
+        const unsigned char *group_name);
+static int
+remove_group_func(
+        void *data,
+        int group_id);
+static int
+edit_group_field_func(
+        void *data,
+        int group_id,
+        int field,
+        const unsigned char *value);
+static int
+clear_group_field_func(
+        void *data,
+        int group_id,
+        int field);
+static const struct userlist_group*
+get_group_func(
+        void *data,
+        int group_id);
+static ptr_iterator_t
+get_group_user_iterator_func(void *data, int group_id);
+static ptr_iterator_t
+get_group_member_iterator_func(void *data, int group_id);
+static int
+create_group_member_func(void *data, int group_id, int user_id);
+static int
+remove_group_member_func(void *data, int group_id, int user_id);
 
 /*
  * Local variables:

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -204,6 +204,30 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   try_new_login_func,
   // set the simple_registration flag
   set_simple_reg_func,
+  // get the group iterator
+  get_group_iterator_func,
+  // get the group by the group name
+  get_group_by_name_func,
+  // pick up a new group name by a template
+  try_new_group_name_func,
+  // create a new group
+  create_group_func,
+  // remove a group
+  remove_group_func,
+  // edit a group field
+  edit_group_field_func,
+  // clear a group field
+  clear_group_field_func,
+  // get the group by the group id
+  get_group_func,
+  // get the group users iterator
+  get_group_user_iterator_func,
+  // get the group groupmember iterator
+  get_group_member_iterator_func,
+  // create a group member
+  create_group_member_func,
+  // remove a group member
+  remove_group_member_func,
 };
 
 // the size of the cookies pool, must be power of 2
@@ -4079,6 +4103,111 @@ set_simple_reg_func(
   remove_login_from_pool(state, user_id);
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
+  return -1;
+}
+
+static ptr_iterator_t
+get_group_iterator_func(void *data)
+{
+  // FIXME: complete
+  return 0;
+}
+
+static const struct userlist_group*
+get_group_by_name_func(
+        void *data,
+        const unsigned char *group_name)
+{
+  // FIXME: complete
+  return 0;
+}
+
+static int
+try_new_group_name_func(
+        void *data,
+        unsigned char *buf,
+        size_t bufsize,
+        const char *format,
+        int serial,
+        int step)
+{
+  // FIXME: complete
+  return -1;
+}
+
+static int
+create_group_func(
+        void *data,
+        const unsigned char *group_name)
+{
+  // FIXME: complete
+  return -1;
+}
+
+static int
+remove_group_func(
+        void *data,
+        int group_id)
+{
+  // FIXME: complete
+  return -1;
+}
+
+static int
+edit_group_field_func(
+        void *data,
+        int group_id,
+        int field,
+        const unsigned char *value)
+{
+  // FIXME: complete
+  return -1;
+}
+
+static int
+clear_group_field_func(
+        void *data,
+        int group_id,
+        int field)
+{
+  // FIXME: complete
+  return -1;
+}
+
+static const struct userlist_group*
+get_group_func(
+        void *data,
+        int group_id)
+{
+  // FIXME: complete
+  return 0;
+}
+
+static ptr_iterator_t
+get_group_user_iterator_func(void *data, int group_id)
+{
+  // FIXME: complete
+  return 0;
+}
+
+static ptr_iterator_t
+get_group_member_iterator_func(void *data, int group_id)
+{
+  // FIXME: complete
+  return 0;
+}
+
+static int
+create_group_member_func(void *data, int group_id, int user_id)
+{
+  // FIXME: complete
+  return -1;
+}
+
+static int
+remove_group_member_func(void *data, int group_id, int user_id)
+{
+  // FIXME: complete
   return -1;
 }
 
