@@ -5170,3 +5170,4 @@ uldb_plugin_xml.c 5802 0 8685682
 userlist_proto.c 5802 0 465859
 userlist_xml.c 5802 0 5330796
 userlist_clnt/list_all_users.c 5801 0 148080
+edit-userlist.c 5804 0 11945043
