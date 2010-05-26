@@ -162,7 +162,7 @@ do_create(struct rldb_mysql_state *state)
   if (mi->simple_fquery(md, create_runs_query, md->table_prefix) < 0)
     db_error_fail(md);
   if (mi->simple_fquery(md,
-                        "INSERT INTO %sconfig VALUES ('run_version', '1') ;",
+                        "INSERT INTO %sconfig VALUES ('run_version', '2') ;",
                         md->table_prefix) < 0)
     db_error_fail(md);
   return 0;
