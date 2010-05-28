@@ -142,4 +142,25 @@ CREATE TABLE %smembers
        FOREIGN KEY (user_id) REFERENCES logins (user_id)
        );
 
-INSERT INTO %sconfig VALUES ('version', '1');
+CREATE TABLE %sgroups
+(
+    group_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    group_name VARCHAR(128) NOT NULL UNIQUE KEY,
+    description VARCHAR(512) DEFAULT NULL,
+    created_by INT NOT NULL,
+    create_time DATETIME NOT NULL,
+    last_change_time DATETIME DEFAULT NULL,
+    FOREIGN KEY (created_by) REFERENCES logins(user_id)
+);
+
+CREATE TABLE %sgroupmembers
+(
+    group_id INT NOT NULL,
+    user_id INT NOT NULL,
+    rights VARCHAR(512) DEFAULT NULL,
+    PRIMARY KEY (group_id, user_id),
+    FOREIGN KEY g(group_id) REFERENCES groups(group_id),
+    FOREIGN KEY u(user_id) REFERENCES logins(user_id)
+);
+
+INSERT INTO %sconfig VALUES ('version', '2');
