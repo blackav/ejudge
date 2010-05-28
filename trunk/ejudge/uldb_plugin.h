@@ -209,7 +209,7 @@ struct uldb_plugin_iface
   // pick up a new group name by a template
   int (*try_new_group_name)(void *, unsigned char *, size_t, const char *, int, int);
   // create a new group
-  int (*create_group)(void *, const unsigned char *);
+  int (*create_group)(void *, const unsigned char *, int created_by);
   // remove a group
   int (*remove_group)(void *, int);
   // edit a group field

@@ -8635,7 +8635,7 @@ cmd_create_group(
     group_name = buf;
   }
 
-  group_id = plugin_call(create_group, group_name);
+  group_id = plugin_call(create_group, group_name, p->user_id);
   if (group_id <= 0) {
     err("%s -> cannot create group", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
