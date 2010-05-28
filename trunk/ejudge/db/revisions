@@ -5171,3 +5171,10 @@ userlist_proto.c 5802 0 465859
 userlist_xml.c 5802 0 5330796
 userlist_clnt/list_all_users.c 5801 0 148080
 edit-userlist.c 5804 0 11945043
+plugins/mysql-userlist/uldb_mysql.c 5806 0 9870502
+list_ops.h 5810 0 217912
+uldb_plugin.h 5810 0 860332
+userlist.h 5810 0 1752456
+userlist-server.c 5810 0 23689284
+uldb_plugin_xml.c 5810 0 8689117
+plugins/mysql-userlist/uldb_mysql.c 5811 0 10963874
