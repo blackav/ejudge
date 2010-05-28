@@ -540,6 +540,11 @@ struct userlist_group
   unsigned char *group_name;
   unsigned char *description;
 
+  // these fields are only supported by MySQL DB plugin
+  int created_by;
+  time_t create_time;
+  time_t last_change_time;
+
   /* list of users */
   struct xml_tree *user_first;
   struct xml_tree *user_last;
