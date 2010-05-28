@@ -406,7 +406,8 @@ try_new_group_name_func(
 static int
 create_group_func(
         void *data,
-        const unsigned char *group_name);
+        const unsigned char *group_name,
+        int created_by);
 static int
 remove_group_func(
         void *data,
