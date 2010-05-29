@@ -308,6 +308,19 @@ static struct common_mysql_parse_spec usergroup_spec[USERGROUP_WIDTH] =
   { 1, 't', "last_change_time", USERGROUP_OFFSET(last_change_time), 0 },
 };
 
+enum { USERGROUPMEMBER_WIDTH = 3 };
+#define USERGROUPMEMBER_OFFSET(f) XOFFSET(struct userlist_groupmember, f)
+
+static struct common_mysql_parse_spec usergroupmember_spec[] =
+{
+  //[0] group_id INT NOT NULL,
+  { 0, 'd', "group_id", USERGROUPMEMBER_OFFSET(group_id), 0 },
+  //[1] user_id INT NOT NULL,
+  { 0, 'd', "user_id", USERGROUPMEMBER_OFFSET(user_id), 0 },
+  //[2] rights VARCHAR(512) DEFAULT NULL,
+  { 1, 's', "rights", USERGROUPMEMBER_OFFSET(rights), 0 },
+};
+
 /*
  * Local variables:
  *  compile-command: "make -C ../.."

@@ -17,6 +17,20 @@
 
 #define FAIL(s, ...) do { snprintf(errbuf, sizeof(errbuf), s, ## __VA_ARGS__); goto fail; } while (0)
 
+static int
+parse_groupmember(
+        struct uldb_mysql_state *state,
+        int field_count,
+        char **row,
+        unsigned long *lengths,
+        struct userlist_groupmember *gm)
+{
+  if (state->mi->parse_spec(state->md, field_count, row, lengths,
+                            USERGROUPMEMBER_WIDTH, usergroupmember_spec, gm)<0)
+    return -1;
+  return 0;
+}
+
 #undef FAIL
 
 /*
