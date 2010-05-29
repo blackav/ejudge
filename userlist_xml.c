@@ -303,6 +303,12 @@ elem_free(struct xml_tree *t)
       xfree(p->description);
     }
     break;
+  case USERLIST_T_USERGROUPMEMBER:
+    {
+      struct userlist_groupmember *p = (struct userlist_groupmember*) t;
+      xfree(p->rights);
+    }
+    break;
   }
 }
 

@@ -556,6 +556,7 @@ struct userlist_groupmember
 
   int group_id;
   int user_id;
+  unsigned char *rights;
 
   /* list of users belonging to the same group */
   struct xml_tree *user_prev;
