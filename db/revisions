@@ -5178,3 +5178,6 @@ userlist.h 5810 0 1752456
 userlist-server.c 5810 0 23689284
 uldb_plugin_xml.c 5810 0 8689117
 plugins/mysql-userlist/uldb_mysql.c 5811 0 10963874
+userlist.h 5814 0 1754633
+userlist_xml.c 5814 0 5343053
+plugins/mysql-userlist/uldb_mysql.c 5813 0 11373527
