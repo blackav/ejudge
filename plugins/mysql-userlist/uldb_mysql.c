@@ -881,6 +881,7 @@ insert_func(void *data, const struct userlist_user *user, int *p_member_serial)
 #include "user_infos.inc.c"
 #include "members.inc.c"
 #include "groups.inc.c"
+#include "groupmembers.inc.c"
 
 static int
 close_func(void *data)
@@ -4206,6 +4207,7 @@ get_group_iterator_func(void *data)
           state->md->table_prefix);
   fclose(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   iter->group_count = state->md->row_count;
   if (iter->group_count <= 0) {
     state->mi->free_res(state->md);
@@ -4555,32 +4557,54 @@ fail:
 struct group_user_iterator
 {
   struct ptr_iterator b;
+
+  int user_count;
+  int cur_user;
+  struct userlist_user **users;
 };
 
 static int
 group_user_iterator_has_next_func(ptr_iterator_t data)
 {
-  // FIXME: complete
-  return 0;
+  struct group_user_iterator *iter = (struct group_user_iterator*) data;
+
+  if (!iter || iter->cur_user >= iter->user_count) return 0;
+  return 1;
 }
 
 static const void *
 group_user_iterator_get_func(ptr_iterator_t data)
 {
-  // FIXME: complete
-  return 0;
+  struct group_user_iterator *iter = (struct group_user_iterator*) data;
+
+  if (!iter || iter->cur_user >= iter->user_count) return 0;
+  return iter->users[iter->cur_user];
 }
 
 static void
 group_user_iterator_next_func(ptr_iterator_t data)
 {
-  // FIXME: complete
+  struct group_user_iterator *iter = (struct group_user_iterator*) data;
+
+  if (!iter || iter->cur_user >= iter->user_count) return;
+  ++iter->cur_user;
 }
 
 static void
 group_user_iterator_destroy_func(ptr_iterator_t data)
 {
-  // FIXME: complete
+  struct group_user_iterator *iter = (struct group_user_iterator*) data;
+  int i;
+
+  if (!data) return;
+  if (iter->user_count > 0) {
+    for (i = 0; i < iter->user_count; ++i) {
+      userlist_free((struct xml_tree*) iter->users[i]);
+    }
+  }
+  xfree(iter->users);
+  memset(iter, 0, sizeof(*iter));
+  xfree(iter);
 }
 
 static struct ptr_iterator group_user_iterator_funcs =
@@ -4594,44 +4618,102 @@ static struct ptr_iterator group_user_iterator_funcs =
 static ptr_iterator_t
 get_group_user_iterator_func(void *data, int group_id)
 {
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct group_user_iterator *iter = 0;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+  int i;
 
   XCALLOC(iter, 1);
   iter->b = group_user_iterator_funcs;
 
-  // FIXME: complete
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f,
+          "SELECT %slogins.* FROM %sgroupmembers, %slogins WHERE %slogins.user_id = %sgroupmembers.user_id AND %sgroupmembers.group_id = %d ORDER BY user_id",
+          state->md->table_prefix,
+          state->md->table_prefix, state->md->table_prefix,
+          state->md->table_prefix, state->md->table_prefix,
+          state->md->table_prefix, group_id);
+  fclose(cmd_f); cmd_f = 0;
+  if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  iter->user_count = state->md->row_count;
+  if (iter->user_count <= 0) {
+    state->mi->free_res(state->md);
+    return (ptr_iterator_t) iter;
+  }
+  XCALLOC(iter->users, iter->user_count);
+  for (i = 0; i < iter->user_count; ++i) {
+    if (!(state->md->row = mysql_fetch_row(state->md->res)))
+      db_error_no_data_fail(state->md);
+    state->md->lengths = mysql_fetch_lengths(state->md->res);
+    iter->users[i] = (struct userlist_user*) userlist_node_alloc(USERLIST_T_USER);
+    if (parse_login(state, state->md->row_count, state->md->row,
+                    state->md->lengths, iter->users[i]) < 0)
+      goto fail;
+  }
+
+  return (ptr_iterator_t) iter;
+
+fail:
+  group_user_iterator_destroy_func((ptr_iterator_t) iter);
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
   return 0;
 }
 
 struct group_member_iterator
 {
   struct ptr_iterator b;
+
+  int member_count;
+  int cur_member;
+  struct userlist_groupmember **members;
 };
 
 static int
 group_member_iterator_has_next_func(ptr_iterator_t data)
 {
-  // FIXME: complete
-  return 0;
+  struct group_member_iterator *iter = (struct group_member_iterator*) data;
+
+  if (!iter || iter->cur_member >= iter->member_count) return 0;
+  return 1;
 }
 
 static const void *
 group_member_iterator_get_func(ptr_iterator_t data)
 {
-  // FIXME: complete
-  return 0;
+  struct group_member_iterator *iter = (struct group_member_iterator*) data;
+
+  if (!iter || iter->cur_member >= iter->member_count) return 0;
+  return iter->members[iter->cur_member];
 }
 
 static void
 group_member_iterator_next_func(ptr_iterator_t data)
 {
-  // FIXME: complete
+  struct group_member_iterator *iter = (struct group_member_iterator*) data;
+
+  if (!iter || iter->cur_member >= iter->member_count) return;
+  ++iter->cur_member;
 }
 
 static void
 group_member_iterator_destroy_func(ptr_iterator_t data)
 {
-  // FIXME: complete
+  struct group_member_iterator *iter = (struct group_member_iterator*) data;
+  int i;
+
+  if (!data) return;
+  if (iter->member_count > 0) {
+    for (i = 0; i < iter->member_count; ++i) {
+      userlist_free((struct xml_tree*) iter->members[i]);
+    }
+  }
+  xfree(iter->members);
+  memset(iter, 0, sizeof(*iter));
+  xfree(iter);
 }
 
 static struct ptr_iterator group_member_iterator_funcs =
@@ -4645,27 +4727,70 @@ static struct ptr_iterator group_member_iterator_funcs =
 static ptr_iterator_t
 get_group_member_iterator_func(void *data, int group_id)
 {
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct group_member_iterator *iter = 0;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+  int i;
+
+  if (group_id <= 0) return 0;
 
   XCALLOC(iter, 1);
   iter->b = group_member_iterator_funcs;
 
-  // FIXME: complete
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f,
+          "SELECT * FROM %sgroupmembers WHERE group_id = %d ORDER BY user_id",
+          state->md->table_prefix, group_id);
+  fclose(cmd_f); cmd_f = 0;
+  if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+
+  iter->member_count = state->md->row_count;
+  if (iter->member_count <= 0) {
+    state->mi->free_res(state->md);
+    return (ptr_iterator_t) iter;
+  }
+  XCALLOC(iter->members, iter->member_count);
+  for (i = 0; i < iter->member_count; ++i) {
+    if (!(state->md->row = mysql_fetch_row(state->md->res)))
+      db_error_no_data_fail(state->md);
+    state->md->lengths = mysql_fetch_lengths(state->md->res);
+    iter->members[i] = (struct userlist_groupmember*) userlist_node_alloc(USERLIST_T_USERGROUPMEMBER);
+    if (parse_groupmember(state, state->md->row_count, state->md->row,
+                          state->md->lengths, iter->members[i]) < 0) goto fail;
+  }
+
+  return (ptr_iterator_t) iter;
+
+fail:
+  group_member_iterator_destroy_func((ptr_iterator_t) iter);
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
   return 0;
 }
 
 static int
 create_group_member_func(void *data, int group_id, int user_id)
 {
-  // FIXME: complete
-  return -1;
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+
+  if (group_id <= 0 || user_id <= 0) return -1;
+
+  return state->mi->simple_fquery(state->md, "INSERT INTO %sgroupmembers(group_id, user_id) VALUES(%d, %d)", state->md->table_prefix, group_id, user_id);
 }
 
 static int
 remove_group_member_func(void *data, int group_id, int user_id)
 {
-  // FIXME: complete
-  return -1;
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+
+  if (group_id <= 0 || user_id <= 0) return -1;
+
+  state->mi->simple_fquery(state->md, "DELETE FROM %sgroupmembers WHERE group_id = %d AND user_id = %d",
+                           state->md->table_prefix, group_id, user_id);
+  return 0;
 }
 
 /*
