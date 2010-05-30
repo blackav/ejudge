@@ -97,7 +97,7 @@ struct user_adjustment_info
 };
 struct user_adjustment_map;
 
-/* sizeof(struct section_global_data) == 345888 */
+/* sizeof(struct section_global_data) == 350004 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -252,6 +252,8 @@ struct section_global_data
   /* ====== CONFIGURATION FILES/DIRECTORIES SETUP ====== */
   /** configuration dir */
   path_t conf_dir;
+  /** directory with problem files (for advanced_layout) */
+  path_t problems_dir;
   /** default location of the compile and run scripts */
   path_t script_dir;
   /** directory with the tests */
@@ -662,6 +664,23 @@ struct section_global_data
   /** INTERNAL: all problems are output-only */
   ejintbool_t disable_passed_tests META_ATTRIB((meta_private));
 };
+
+/* paths depending on advanced_layout */
+/*
+  +path_t test_dir;
+  +path_t corr_dir;
+  +path_t info_dir;
+  +path_t tgz_dir;
+  path_t statement_file;
+  path_t alternatives_file;
+  +path_t plugin_file;
+  +path_t xml_file;
+  +path_t source_header;
+  +path_t source_footer;
+  +path_t check_cmd;
+  +path_t valuer_cmd;
+  +path_t interactor_cmd;
+ */
 
 /* sizeof(struct section_problem_data) == 60500 */
 struct section_problem_data
@@ -1245,5 +1264,14 @@ cntsprob_is_settable_field(int f_id);
 
 int
 cntsprob_is_inheritable_field(int f_id);
+
+const unsigned char*
+get_advanced_layout_path(
+        unsigned char *buf,
+        size_t bufsize,
+        const struct section_global_data *global,
+        const struct section_problem_data *prob,
+        const unsigned char *entry,
+        int variant);
 
 #endif /* __PREPARE_H__ */
