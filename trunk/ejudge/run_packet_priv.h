@@ -36,8 +36,9 @@ enum
   FLAGS_SECURITY_VIOLATION   = 0x400,
   FLAGS_NOTIFY               = 0x800,
   FLAGS_MARKED               = 0x1000,
+  FLAGS_ADVANCED_LAYOUT      = 0x2000,
 
-  FLAGS_ALL_MASK             = 0x1fff, /* scoring system incl. */
+  FLAGS_ALL_MASK             = 0x3fff, /* scoring system incl. */
 };
 
 /* serve->run binary packet structure */

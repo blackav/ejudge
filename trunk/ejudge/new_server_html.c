@@ -731,6 +731,7 @@ load_problem_plugin(serve_state_t cs, int prob_id)
   int len, i;
   const unsigned char *f = __FUNCTION__;
   const size_t *sza;
+  path_t plugin_path;
 
   if (prob_id <= 0 || prob_id > cs->max_prob) return;
   if (!(prob = cs->probs[prob_id])) return;
@@ -739,13 +740,20 @@ load_problem_plugin(serve_state_t cs, int prob_id)
   if (!prob->plugin_file[0]) return;
   if (extra->plugin || extra->plugin_error) return;
 
+  if (cs->global->advanced_layout > 0) {
+    get_advanced_layout_path(plugin_path, sizeof(plugin_path), cs->global,
+                             prob, prob->plugin_file, -1);
+  } else {
+    snprintf(plugin_path, sizeof(plugin_path), "%s", prob->plugin_file);
+  }
+
   snprintf(plugin_name, sizeof(plugin_name), "problem_%s", prob->short_name);
   len = strlen(plugin_name);
   for (i = 0; i < len; i++)
     if (plugin_name[i] == '-')
       plugin_name[i] = '_';
 
-  iface = (struct problem_plugin_iface*) plugin_load(prob->plugin_file,
+  iface = (struct problem_plugin_iface*) plugin_load(plugin_path,
                                                      "problem",
                                                      plugin_name);
   if (!iface) {

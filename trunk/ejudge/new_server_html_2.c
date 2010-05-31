@@ -47,6 +47,7 @@
 #include "charsets.h"
 #include "compat.h"
 #include "run_packet.h"
+#include "prepare_dflt.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -2026,16 +2027,21 @@ ns_write_priv_clar(const serve_state_t cs,
 
 
 static void
-write_from_contest_dir(FILE *log_f, FILE *fout,
-                       int flag1,
-                       int flag2,
-                       int test_num,
-                       int variant,
-                       const unsigned char *dir,
-                       const unsigned char *suffix,
-                       const unsigned char *pattern,
-                       int has_digest,
-                       const unsigned char *digest_ptr)
+write_from_contest_dir(
+        FILE *log_f,
+        FILE *fout,
+        int flag1,
+        int flag2,
+        int test_num,
+        int variant,
+        const struct section_global_data *global,
+        const struct section_problem_data *prb,
+        const unsigned char *entry,
+        const unsigned char *dir,
+        const unsigned char *suffix,
+        const unsigned char *pattern,
+        int has_digest,
+        const unsigned char *digest_ptr)
 {
   path_t path1;
   path_t path2;
@@ -2055,10 +2061,14 @@ write_from_contest_dir(FILE *log_f, FILE *fout,
     snprintf(path2, sizeof(path2), "%03d%s", test_num, suffix);
   }
 
-  if (variant > 0) {
-    snprintf(path1, sizeof(path1), "%s-%d/%s", dir, variant, path2);
+  if (global->advanced_layout > 0) {
+    get_advanced_layout_path(path1, sizeof(path1), global, prb, entry, variant);
   } else {
-    snprintf(path1, sizeof(path1), "%s/%s", dir, path2);
+    if (variant > 0) {
+      snprintf(path1, sizeof(path1), "%s-%d/%s", dir, variant, path2);
+    } else {
+      snprintf(path1, sizeof(path1), "%s/%s", dir, path2);
+    }
   }
 
   if (has_digest && digest_ptr) {
@@ -2224,18 +2234,21 @@ ns_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
   switch (action) {
   case NEW_SRV_ACTION_VIEW_TEST_INPUT:
     write_from_contest_dir(log_f, fout, 1, 1, test_num, r->variant,
+                           cs->global, prb, DFLT_P_TEST_DIR,
                            prb->test_dir, prb->test_sfx, prb->test_pat,
                            t->has_input_digest, t->input_digest);
     goto done;
   case NEW_SRV_ACTION_VIEW_TEST_ANSWER:
     write_from_contest_dir(log_f, fout, prb->use_corr, r->correct_available,
                            test_num, r->variant,
+                           cs->global, prb, DFLT_P_CORR_DIR,
                            prb->corr_dir, prb->corr_sfx, prb->corr_pat,
                            t->has_correct_digest, t->correct_digest);
     goto done;
   case NEW_SRV_ACTION_VIEW_TEST_INFO:
     write_from_contest_dir(log_f, fout, prb->use_info, r->info_available,
                            test_num, r->variant,
+                           cs->global, prb, DFLT_P_INFO_DIR,
                            prb->info_dir, prb->info_sfx, prb->info_pat,
                            t->has_info_digest, t->info_digest);
     goto done;

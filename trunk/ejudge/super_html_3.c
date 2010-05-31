@@ -6138,7 +6138,11 @@ super_html_add_abstract_problem(
   prob->use_tgz = 0;
   snprintf(prob->tgz_dir, sizeof(prob->tgz_dir), "%s", "%Ps");
   snprintf(prob->tgz_sfx, sizeof(prob->tgz_sfx), "%s", ".tgz");
-  snprintf(prob->check_cmd, sizeof(prob->check_cmd), "%s", "check_%Ps");
+  if (sstate->global && sstate->global->advanced_layout > 0) {
+    snprintf(prob->check_cmd, sizeof(prob->check_cmd), "%s", DFLT_P_CHECK_CMD);
+  } else {
+    snprintf(prob->check_cmd, sizeof(prob->check_cmd), "%s", "check_%Ps");
+  }
   prob->max_vm_size = 64 * SIZE_M;
   prob->variant_num = 0;
   return 0;
@@ -8546,11 +8550,20 @@ super_html_check_tests(FILE *f,
     checker_path[0] = 0;
     if (!tmp_prob.standard_checker[0]) {
       prepare_set_prob_value(CNTSPROB_check_cmd, &tmp_prob, abstr, 0);
-      mkpath(checker_path, g_checker_path, tmp_prob.check_cmd, "");
+      if (global->advanced_layout > 0) {
+        get_advanced_layout_path(checker_path, sizeof(checker_path),
+                                 global, &tmp_prob, NULL, -1);
+      } else {
+        mkpath(checker_path, g_checker_path, tmp_prob.check_cmd, "");
+      }
     }
 
     // check tests
     if (prob->variant_num <= 0) {
+      if (global->advanced_layout > 0) {
+        get_advanced_layout_path(test_path, sizeof(test_path), global,
+                                 &tmp_prob, DFLT_P_TEST_DIR, -1);
+      }
       if (stat(test_path, &stbuf) < 0) {
         fprintf(flog, "Error: test directory %s does not exist\n", test_path);
         goto check_failed;
@@ -8560,6 +8573,10 @@ super_html_check_tests(FILE *f,
         goto check_failed;
       }
       if (tmp_prob.use_corr) {
+        if (global->advanced_layout > 0) {
+          get_advanced_layout_path(corr_path, sizeof(corr_path), global,
+                                   &tmp_prob, DFLT_P_CORR_DIR, -1);
+        }
         if (stat(corr_path, &stbuf) < 0) {
           fprintf(flog, "Error: test directory %s does not exist\n", corr_path);
           goto check_failed;
@@ -8570,6 +8587,10 @@ super_html_check_tests(FILE *f,
         }
       }
       if (tmp_prob.use_info) {
+        if (global->advanced_layout > 0) {
+          get_advanced_layout_path(info_path, sizeof(info_path), global,
+                                   &tmp_prob, DFLT_P_INFO_DIR, -1);
+        }
         if (stat(info_path, &stbuf) < 0) {
           fprintf(flog, "Error: test directory %s does not exist\n", info_path);
           goto check_failed;
@@ -8630,7 +8651,13 @@ super_html_check_tests(FILE *f,
       }
     } else {
       for (variant = 1; variant <= prob->variant_num; variant++) {
-        snprintf(v_test_path, sizeof(v_test_path), "%s-%d", test_path, variant);
+        if (global->advanced_layout > 0) {
+          get_advanced_layout_path(v_test_path, sizeof(v_test_path), global,
+                                   &tmp_prob, DFLT_P_TEST_DIR, variant);
+        } else {
+          snprintf(v_test_path, sizeof(v_test_path), "%s-%d", test_path,
+                   variant);
+        }
         if (stat(v_test_path, &stbuf) < 0) {
           fprintf(flog, "Error: test directory %s does not exist\n", v_test_path);
           goto check_failed;
@@ -8640,7 +8667,13 @@ super_html_check_tests(FILE *f,
           goto check_failed;
         }
         if (tmp_prob.use_corr) {
-          snprintf(v_corr_path, sizeof(v_corr_path), "%s-%d", corr_path, variant);
+          if (global->advanced_layout > 0) {
+            get_advanced_layout_path(v_corr_path, sizeof(v_corr_path), global,
+                                     &tmp_prob, DFLT_P_INFO_DIR, variant);
+          } else {
+            snprintf(v_corr_path, sizeof(v_corr_path), "%s-%d", corr_path,
+                     variant);
+          }
           if (stat(v_corr_path, &stbuf) < 0) {
             fprintf(flog, "Error: test directory %s does not exist\n", v_corr_path);
             goto check_failed;
@@ -8651,7 +8684,13 @@ super_html_check_tests(FILE *f,
           }
         }
         if (tmp_prob.use_info) {
-          snprintf(v_info_path, sizeof(v_info_path), "%s-%d", info_path, variant);
+          if (global->advanced_layout > 0) {
+            get_advanced_layout_path(v_info_path, sizeof(v_info_path), global,
+                                     &tmp_prob, DFLT_P_INFO_DIR, variant);
+          } else {
+            snprintf(v_info_path, sizeof(v_info_path), "%s-%d", info_path,
+                     variant);
+          }
           if (stat(v_info_path, &stbuf) < 0) {
             fprintf(flog, "Error: test directory %s does not exist\n", v_info_path);
             goto check_failed;
@@ -8726,8 +8765,13 @@ super_html_check_tests(FILE *f,
           goto check_failed;
       } else {
         for (variant = 1; variant <= prob->variant_num; variant++) {
-          snprintf(v_checker_path, sizeof(v_checker_path), "%s-%d",
-                   checker_path, variant);
+          if (global->advanced_layout > 0) {
+            get_advanced_layout_path(v_checker_path, sizeof(v_checker_path),
+                                     global, &tmp_prob, NULL, variant);
+          } else {
+            snprintf(v_checker_path, sizeof(v_checker_path), "%s-%d",
+                     checker_path, variant);
+          }
           if (recompile_checker(config, flog, v_checker_path) < 0)
             goto check_failed;
         }

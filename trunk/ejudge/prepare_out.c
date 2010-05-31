@@ -1978,7 +1978,12 @@ prob_instr(FILE *f, const unsigned char *root_dir,
     fprintf(f, "Problem plugin: %s\n", prob->plugin_file);
   }
   if (!prob->standard_checker[0]) {
-    mkpath(checker_path, conf_path, global->checker_dir, DFLT_G_CHECKER_DIR);
+    if (global->advanced_layout > 0) {
+      get_advanced_layout_path(checker_path, sizeof(checker_path),
+                               global, &tmp_prob, NULL, -1);
+    } else {
+      mkpath(checker_path, conf_path, global->checker_dir, DFLT_G_CHECKER_DIR);
+    }
     prepare_set_prob_value(CNTSPROB_check_cmd, &tmp_prob, abstr, global);
     if (os_IsAbsolutePath(tmp_prob.check_cmd)) {
       fprintf(f, "Checker command: %s\n", tmp_prob.check_cmd);
@@ -1988,7 +1993,12 @@ prob_instr(FILE *f, const unsigned char *root_dir,
     }
   }
   if (prob->valuer_cmd) {
-    mkpath(valuer_path, conf_path, global->checker_dir, DFLT_G_CHECKER_DIR);
+    if (global->advanced_layout > 0) {
+      get_advanced_layout_path(valuer_path, sizeof(valuer_path),
+                               global, &tmp_prob, NULL, -1);
+    } else {
+      mkpath(valuer_path, conf_path, global->checker_dir, DFLT_G_CHECKER_DIR);
+    }
     prepare_set_prob_value(CNTSPROB_valuer_cmd, &tmp_prob, abstr, global);
     if (os_IsAbsolutePath(tmp_prob.valuer_cmd)) {
       fprintf(f, "Valuer command: %s\n", tmp_prob.valuer_cmd);
@@ -1998,7 +2008,12 @@ prob_instr(FILE *f, const unsigned char *root_dir,
     }
   }
   if (prob->interactor_cmd) {
-    mkpath(interactor_path, conf_path, global->checker_dir, DFLT_G_CHECKER_DIR);
+    if (global->advanced_layout > 0) {
+      get_advanced_layout_path(interactor_path, sizeof(interactor_path),
+                               global, &tmp_prob, NULL, -1);
+    } else {
+      mkpath(interactor_path, conf_path, global->checker_dir, DFLT_G_CHECKER_DIR);
+    }
     prepare_set_prob_value(CNTSPROB_interactor_cmd, &tmp_prob, abstr, global);
     if (os_IsAbsolutePath(tmp_prob.interactor_cmd)) {
       fprintf(f, "Interactor command: %s\n", tmp_prob.interactor_cmd);
@@ -2008,9 +2023,14 @@ prob_instr(FILE *f, const unsigned char *root_dir,
     }
   }
 
-  mkpath(g_path, conf_path, global->test_dir, DFLT_G_TEST_DIR);
-  prepare_set_prob_value(CNTSPROB_test_dir, &tmp_prob, abstr, 0);
-  mkpath(l_path, g_path, tmp_prob.test_dir, "");
+  if (global->advanced_layout > 0) {
+    get_advanced_layout_path(l_path, sizeof(l_path), global, &tmp_prob,
+                             DFLT_P_TEST_DIR, -1);
+  } else {
+    mkpath(g_path, conf_path, global->test_dir, DFLT_G_TEST_DIR);
+    prepare_set_prob_value(CNTSPROB_test_dir, &tmp_prob, abstr, 0);
+    mkpath(l_path, g_path, tmp_prob.test_dir, "");
+  }
   fprintf(f, "Directory with tests: %s\n", l_path);
   prepare_set_prob_value(CNTSPROB_test_sfx, &tmp_prob, abstr, global);
   prepare_set_prob_value(CNTSPROB_test_pat, &tmp_prob, abstr, global);
@@ -2018,9 +2038,14 @@ prob_instr(FILE *f, const unsigned char *root_dir,
 
   prepare_set_prob_value(CNTSPROB_use_corr, &tmp_prob, abstr, global);
   if (tmp_prob.use_corr) {
-    mkpath(g_path, conf_path, global->corr_dir, DFLT_G_CORR_DIR);
-    prepare_set_prob_value(CNTSPROB_corr_dir, &tmp_prob, abstr, 0);
-    mkpath(l_path, g_path, tmp_prob.corr_dir, "");
+    if (global->advanced_layout > 0) {
+      get_advanced_layout_path(l_path, sizeof(l_path), global, &tmp_prob,
+                               DFLT_P_CORR_DIR, -1);
+    } else {
+      mkpath(g_path, conf_path, global->corr_dir, DFLT_G_CORR_DIR);
+      prepare_set_prob_value(CNTSPROB_corr_dir, &tmp_prob, abstr, 0);
+      mkpath(l_path, g_path, tmp_prob.corr_dir, "");
+    }
     fprintf(f, "Directory with correct answers: %s\n", l_path);
     prepare_set_prob_value(CNTSPROB_corr_sfx, &tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_corr_pat, &tmp_prob, abstr, global);
@@ -2029,9 +2054,14 @@ prob_instr(FILE *f, const unsigned char *root_dir,
 
   prepare_set_prob_value(CNTSPROB_use_info, &tmp_prob, abstr, global);
   if (tmp_prob.use_info) {
-    mkpath(g_path, conf_path, global->info_dir, DFLT_G_INFO_DIR);
-    prepare_set_prob_value(CNTSPROB_info_dir, &tmp_prob, abstr, 0);
-    mkpath(l_path, g_path, tmp_prob.info_dir, "");
+    if (global->advanced_layout > 0) {
+      get_advanced_layout_path(l_path, sizeof(l_path), global, &tmp_prob,
+                               DFLT_P_INFO_DIR, -1);
+    } else {
+      mkpath(g_path, conf_path, global->info_dir, DFLT_G_INFO_DIR);
+      prepare_set_prob_value(CNTSPROB_info_dir, &tmp_prob, abstr, 0);
+      mkpath(l_path, g_path, tmp_prob.info_dir, "");
+    }
     fprintf(f, "Directory with test info files: %s\n", l_path);
     prepare_set_prob_value(CNTSPROB_info_sfx, &tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_info_pat, &tmp_prob, abstr, global);
@@ -2040,9 +2070,14 @@ prob_instr(FILE *f, const unsigned char *root_dir,
 
   prepare_set_prob_value(CNTSPROB_use_tgz, &tmp_prob, abstr, global);
   if (tmp_prob.use_tgz) {
-    mkpath(g_path, conf_path, global->tgz_dir, DFLT_G_TGZ_DIR);
-    prepare_set_prob_value(CNTSPROB_tgz_dir, &tmp_prob, abstr, 0);
-    mkpath(l_path, g_path, tmp_prob.tgz_dir, "");
+    if (global->advanced_layout > 0) {
+      get_advanced_layout_path(l_path, sizeof(l_path), global, &tmp_prob,
+                               DFLT_P_TGZ_DIR, -1);
+    } else {
+      mkpath(g_path, conf_path, global->tgz_dir, DFLT_G_TGZ_DIR);
+      prepare_set_prob_value(CNTSPROB_tgz_dir, &tmp_prob, abstr, 0);
+      mkpath(l_path, g_path, tmp_prob.tgz_dir, "");
+    }
     fprintf(f, "Directory with test tgz files: %s\n", l_path);
     prepare_set_prob_value(CNTSPROB_tgz_sfx, &tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_tgz_pat, &tmp_prob, abstr, global);
