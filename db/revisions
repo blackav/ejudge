@@ -5181,3 +5181,16 @@ plugins/mysql-userlist/uldb_mysql.c 5811 0 10963874
 userlist.h 5814 0 1754633
 userlist_xml.c 5814 0 5343053
 plugins/mysql-userlist/uldb_mysql.c 5813 0 11373527
+prepare.h 5816 0 3869332
+prepare_dflt.h 5817 0 468952
+run_packet.h 5817 0 327757
+run_packet_priv.h 5817 0 224548
+run.c 5817 0 9634415
+new_server_html.c 5817 0 39082314
+new_server_html_2.c 5817 0 15245744
+prepare.c 5817 0 17441398
+prepare_out.c 5817 0 6726310
+run_packet_1.c 5817 0 476221
+run_packet_2.c 5817 0 485115
+serve_2.c 5817 0 8792462
+super_html_3.c 5817 0 25312049

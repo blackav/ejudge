@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/03/09 11:37:55
+// Generated 2010/05/31 07:50:34
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -82,6 +82,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_stand2_charset] = { CNTSGLOB_stand2_charset, 'S', XSIZE(struct section_global_data, stand2_charset), "stand2_charset", XOFFSET(struct section_global_data, stand2_charset) },
   [CNTSGLOB_plog_charset] = { CNTSGLOB_plog_charset, 'S', XSIZE(struct section_global_data, plog_charset), "plog_charset", XOFFSET(struct section_global_data, plog_charset) },
   [CNTSGLOB_conf_dir] = { CNTSGLOB_conf_dir, 'S', XSIZE(struct section_global_data, conf_dir), "conf_dir", XOFFSET(struct section_global_data, conf_dir) },
+  [CNTSGLOB_problems_dir] = { CNTSGLOB_problems_dir, 'S', XSIZE(struct section_global_data, problems_dir), "problems_dir", XOFFSET(struct section_global_data, problems_dir) },
   [CNTSGLOB_script_dir] = { CNTSGLOB_script_dir, 'S', XSIZE(struct section_global_data, script_dir), "script_dir", XOFFSET(struct section_global_data, script_dir) },
   [CNTSGLOB_test_dir] = { CNTSGLOB_test_dir, 'S', XSIZE(struct section_global_data, test_dir), "test_dir", XOFFSET(struct section_global_data, test_dir) },
   [CNTSGLOB_corr_dir] = { CNTSGLOB_corr_dir, 'S', XSIZE(struct section_global_data, corr_dir), "corr_dir", XOFFSET(struct section_global_data, corr_dir) },

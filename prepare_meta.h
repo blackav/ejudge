@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/03/09 11:37:55
+// Generated 2010/05/31 07:50:34
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -77,6 +77,7 @@ enum
   CNTSGLOB_stand2_charset,
   CNTSGLOB_plog_charset,
   CNTSGLOB_conf_dir,
+  CNTSGLOB_problems_dir,
   CNTSGLOB_script_dir,
   CNTSGLOB_test_dir,
   CNTSGLOB_corr_dir,
