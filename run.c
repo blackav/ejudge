@@ -32,6 +32,7 @@
 #include "startstop.h"
 #include "ejudge_cfg.h"
 #include "nwrun_packet.h"
+#include "prepare_dflt.h"
 
 #include "fileutl.h"
 #include "errlog.h"
@@ -819,11 +820,16 @@ invoke_valuer(
   }
   f = 0;
 
-  if (prb->variant_num > 0) {
-    snprintf(valuer_cmd, sizeof(valuer_cmd), "%s-%d", prb->valuer_cmd,
-             cur_variant);
+  if (global->advanced_layout > 0) {
+    get_advanced_layout_path(valuer_cmd, sizeof(valuer_cmd), global, 
+                             prb, prb->valuer_cmd, cur_variant);
   } else {
-    snprintf(valuer_cmd, sizeof(valuer_cmd), "%s", prb->valuer_cmd);
+    if (prb->variant_num > 0) {
+      snprintf(valuer_cmd, sizeof(valuer_cmd), "%s-%d", prb->valuer_cmd,
+               cur_variant);
+    } else {
+      snprintf(valuer_cmd, sizeof(valuer_cmd), "%s", prb->valuer_cmd);
+    }
   }
 
   //fprintf(stderr, "valuer: %s\n", valuer_cmd);
@@ -986,7 +992,7 @@ static const unsigned char b32_digits[]=
 
 static int
 invoke_nwrun(
-        struct section_global_data *global,
+        const struct section_global_data *global,
         struct section_tester_data *tst,
         struct run_request_packet *req_pkt,
         struct section_problem_data *prb,
@@ -1420,9 +1426,9 @@ run_tests(struct section_tester_data *tst,
   int    ec = -100;            /* FIXME: magic */
   int    marked_flag = -1;
   struct section_problem_data *prb;
-  char *sound;
-  unsigned char *var_test_dir;
-  unsigned char *var_corr_dir;
+  const char *sound;
+  unsigned char *var_test_dir = 0;
+  unsigned char *var_corr_dir = 0;
   unsigned char *var_info_dir = 0;
   unsigned char *var_tgz_dir = 0;
   unsigned char *var_check_cmd;
@@ -1454,6 +1460,7 @@ run_tests(struct section_tester_data *tst,
 #endif
 
   long expected_free_space = 0;
+  const struct section_global_data *global = serve_state.global;
 
   ASSERT(tst->problem > 0);
   ASSERT(tst->problem <= serve_state.max_prob);
@@ -1467,40 +1474,98 @@ run_tests(struct section_tester_data *tst,
 
   if (cur_variant > 0) {
     var_test_dir = (unsigned char*) alloca(sizeof(path_t));
-    var_corr_dir = (unsigned char*) alloca(sizeof(path_t));
-    snprintf(var_test_dir, sizeof(path_t), "%s-%d", prb->test_dir,cur_variant);
-    snprintf(var_corr_dir, sizeof(path_t), "%s-%d", prb->corr_dir,cur_variant);
+    if (prb->use_corr) {
+      var_corr_dir = (unsigned char*) alloca(sizeof(path_t));
+    }
     if (prb->use_info) {
       var_info_dir = (unsigned char*) alloca(sizeof(path_t));
-      snprintf(var_info_dir,sizeof(path_t),"%s-%d",prb->info_dir,cur_variant);
     }
     if (prb->use_tgz) {
       var_tgz_dir = (unsigned char*) alloca(sizeof(path_t));
-      snprintf(var_tgz_dir, sizeof(path_t), "%s-%d", prb->tgz_dir,cur_variant);
+    }
+    if (req_pkt->advanced_layout) {
+      get_advanced_layout_path(var_test_dir, sizeof(path_t), global,
+                               prb, DFLT_P_TEST_DIR, cur_variant);
+      if (prb->use_corr > 0) {
+        get_advanced_layout_path(var_corr_dir, sizeof(path_t), global,
+                                 prb, DFLT_P_CORR_DIR, cur_variant);
+      }
+      if (prb->use_info > 0) {
+        get_advanced_layout_path(var_info_dir, sizeof(path_t), global,
+                                 prb, DFLT_P_INFO_DIR, cur_variant);
+      }
+      if (prb->use_tgz > 0) {
+        get_advanced_layout_path(var_tgz_dir, sizeof(path_t), global,
+                                 prb, DFLT_P_TGZ_DIR, cur_variant);
+      }
+    } else {
+      snprintf(var_test_dir, sizeof(path_t),"%s-%d",prb->test_dir,cur_variant);
+      if (prb->use_corr) {
+        snprintf(var_corr_dir, sizeof(path_t),"%s-%d",prb->corr_dir,cur_variant);
+      }
+      if (prb->use_info) {
+        snprintf(var_info_dir,sizeof(path_t),"%s-%d",prb->info_dir,cur_variant);
+      }
+      if (prb->use_tgz) {
+        snprintf(var_tgz_dir, sizeof(path_t), "%s-%d", prb->tgz_dir,cur_variant);
+      }
     }
     if (prb->interactor_cmd[0]) {
       var_interactor_cmd = (unsigned char*) alloca(sizeof(path_t));
-      snprintf(var_interactor_cmd, sizeof(path_t), "%s-%d",
-               prb->interactor_cmd, cur_variant);
+      if (global->advanced_layout > 0) {
+        get_advanced_layout_path(var_interactor_cmd, sizeof(path_t),
+                                 global, prb, prb->interactor_cmd, cur_variant);
+      } else {
+        snprintf(var_interactor_cmd, sizeof(path_t), "%s-%d",
+                 prb->interactor_cmd, cur_variant);
+      }
     }
   } else {
-    var_test_dir = prb->test_dir;
-    var_corr_dir = prb->corr_dir;
-    if (prb->use_info) {
-      var_info_dir = prb->info_dir;
-    }
-    if (prb->use_tgz) {
-      var_tgz_dir = prb->tgz_dir;
-    }
-    if (prb->interactor_cmd[0]) {
-      var_interactor_cmd = prb->interactor_cmd;
+    if (req_pkt->advanced_layout) {
+      var_test_dir = (unsigned char*) alloca(sizeof(path_t));
+      get_advanced_layout_path(var_test_dir, sizeof(path_t),
+                               global, prb, DFLT_P_TEST_DIR, -1);
+      if (prb->use_corr) {
+        var_corr_dir = (unsigned char*) alloca(sizeof(path_t));
+        get_advanced_layout_path(var_corr_dir, sizeof(path_t),
+                                 global, prb, DFLT_P_CORR_DIR, -1);
+      }
+      if (prb->use_info) {
+        var_info_dir = (unsigned char*) alloca(sizeof(path_t));
+        get_advanced_layout_path(var_info_dir, sizeof(path_t),
+                                 global, prb, DFLT_P_INFO_DIR, -1);
+      }
+      if (prb->use_tgz) {
+        var_tgz_dir = (unsigned char*) alloca(sizeof(path_t));
+        get_advanced_layout_path(var_tgz_dir, sizeof(path_t),
+                                 global, prb, DFLT_P_TGZ_DIR, -1);
+      }
+      if (prb->interactor_cmd[0]) {
+        var_interactor_cmd = (unsigned char*) alloca(sizeof(path_t));
+        get_advanced_layout_path(var_interactor_cmd, sizeof(path_t),
+                                 global, prb, prb->interactor_cmd, -1);
+      }
+    } else {
+      var_test_dir = prb->test_dir;
+      if (prb->use_corr) {
+        var_corr_dir = prb->corr_dir;
+      }
+      if (prb->use_info) {
+        var_info_dir = prb->info_dir;
+      }
+      if (prb->use_tgz) {
+        var_tgz_dir = prb->tgz_dir;
+      }
+      if (prb->interactor_cmd[0]) {
+        var_interactor_cmd = prb->interactor_cmd;
+      }
     }
   }
 
-  pathmake(report_path, serve_state.global->run_work_dir, "/", "report", NULL);
+  pathmake(report_path, global->run_work_dir, "/", "report", NULL);
   full_report_path[0] = 0;
   if (req_pkt->full_archive) {
-    pathmake(full_report_path, serve_state.global->run_work_dir, "/", "full_output", NULL);
+    pathmake(full_report_path, global->run_work_dir, "/", "full_output", NULL);
     far = full_archive_open_write(full_report_path);
   }
 
@@ -1515,7 +1580,7 @@ run_tests(struct section_tester_data *tst,
     task_AddArg(tsk, tst->prepare_cmd);
     task_AddArg(tsk, new_name);
     task_SetPathAsArg0(tsk);
-    task_SetWorkingDir(tsk, serve_state.global->run_work_dir);
+    task_SetWorkingDir(tsk, global->run_work_dir);
     task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ, 0);
     task_SetRedir(tsk, 1, TSR_FILE, report_path, TSK_REWRITE, TSK_FULL_RW);
     task_SetRedir(tsk, 2, TSR_DUP, 1);
@@ -1605,13 +1670,13 @@ run_tests(struct section_tester_data *tst,
         time_limit_value += req_pkt->time_limit_adj * 1000;
     }
 
-    pathmake(check_out_path, serve_state.global->run_work_dir, "/", "checkout", NULL);
-    pathmake(score_out_path, serve_state.global->run_work_dir, "/", "scoreout", NULL);
+    pathmake(check_out_path, global->run_work_dir, "/", "checkout", NULL);
+    pathmake(score_out_path, global->run_work_dir, "/", "scoreout", NULL);
 
     if (tst->nwrun_spool_dir[0]) {
-      status = invoke_nwrun(serve_state.global, tst, req_pkt, prb, far,
+      status = invoke_nwrun(global, tst, req_pkt, prb, far,
                             cur_test, 0, &has_real_time,
-                            serve_state.global->run_work_dir,
+                            global->run_work_dir,
                             new_name, test_src, test_base, time_limit_value,
                             &tests[cur_test]);
 
@@ -1651,7 +1716,7 @@ run_tests(struct section_tester_data *tst,
     check_free_space(tst->check_dir, expected_free_space);
 
     /* copy the executable */
-    generic_copy_file(0, serve_state.global->run_work_dir, new_name, "",
+    generic_copy_file(0, global->run_work_dir, new_name, "",
                       0, tst->check_dir, new_name, "");
     make_executable(exe_path);
 
@@ -1695,7 +1760,7 @@ run_tests(struct section_tester_data *tst,
     pathmake(error_path, tst->check_dir, "/", tst->error_file, NULL);
 
     if (var_interactor_cmd) {
-      pathmake(output_path, serve_state.global->run_work_dir, "/",
+      pathmake(output_path, global->run_work_dir, "/",
                prb->output_file, NULL);
     }
 
@@ -1723,7 +1788,11 @@ run_tests(struct section_tester_data *tst,
         task_AddArg(tsk_int, test_src);
         task_AddArg(tsk_int, output_path);
         if (prb->use_corr && prb->corr_dir[0]) {
-          pathmake3(corr_path, var_corr_dir, "/", corr_base, NULL);
+          if (global->advanced_layout > 0) {
+            snprintf(corr_path, sizeof(corr_path), "%s", var_corr_dir);
+          } else {
+            pathmake3(corr_path, var_corr_dir, "/", corr_base, NULL);
+          }
           task_AddArg(tsk_int, corr_path);
         }
         task_SetPathAsArg0(tsk_int);
@@ -2103,8 +2172,8 @@ run_tests(struct section_tester_data *tst,
         file_size = generic_file_size(0, test_src, 0);
       if (file_size >= 0) {
         tests[cur_test].input_size = file_size;
-        if (serve_state.global->max_file_length > 0
-            && file_size <= serve_state.global->max_file_length) {
+        if (global->max_file_length > 0
+            && file_size <= global->max_file_length) {
           generic_read_file(&tests[cur_test].input, 0, 0, 0,
                             0, test_src, "");
         }
@@ -2115,8 +2184,8 @@ run_tests(struct section_tester_data *tst,
       file_size = generic_file_size(0, output_path, 0);
     if (file_size >= 0) {
       tests[cur_test].output_size = file_size;
-      if (serve_state.global->max_file_length > 0 && !req_pkt->full_archive
-          && file_size <= serve_state.global->max_file_length) {
+      if (global->max_file_length > 0 && !req_pkt->full_archive
+          && file_size <= global->max_file_length) {
         generic_read_file(&tests[cur_test].output, 0, 0, 0,
                           0, output_path, "");
       }
@@ -2130,8 +2199,8 @@ run_tests(struct section_tester_data *tst,
     file_size = generic_file_size(0, error_path, 0);
     if (file_size >= 0) {
       tests[cur_test].error_size = file_size;
-      if (serve_state.global->max_file_length > 0 && !req_pkt->full_archive
-          && file_size <= serve_state.global->max_file_length) {
+      if (global->max_file_length > 0 && !req_pkt->full_archive
+          && file_size <= global->max_file_length) {
         generic_read_file(&tests[cur_test].error, 0, 0, 0,
                           0, error_path, "");
       }
@@ -2324,7 +2393,11 @@ run_tests(struct section_tester_data *tst,
       task_AddArg(tsk, prb->output_file);
     }
     if (prb->use_corr && prb->corr_dir[0]) {
-      pathmake3(corr_path, var_corr_dir, "/", corr_base, NULL);
+      if (global->advanced_layout > 0) {
+        snprintf(corr_path, sizeof(corr_path), "%s", var_corr_dir);
+      } else {
+        pathmake3(corr_path, var_corr_dir, "/", corr_base, NULL);
+      }
       task_AddArg(tsk, corr_path);
       if (req_pkt->full_archive) {
         filehash_get(corr_path, tests[cur_test].correct_digest);
@@ -2335,8 +2408,8 @@ run_tests(struct section_tester_data *tst,
           file_size = generic_file_size(0, corr_path, 0);
         if (file_size >= 0) {
           tests[cur_test].correct_size = file_size;
-          if (serve_state.global->max_file_length > 0
-              && file_size <= serve_state.global->max_file_length) {
+          if (global->max_file_length > 0
+              && file_size <= global->max_file_length) {
             generic_read_file(&tests[cur_test].correct, 0, 0, 0,
                               0, corr_path, "");
           }
@@ -2606,7 +2679,7 @@ run_tests(struct section_tester_data *tst,
     reply_pkt->score = score;
     get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
 
-    if (serve_state.global->sound_player[0] && serve_state.global->extended_sound && !req_pkt->disable_sound) {
+    if (global->sound_player[0] && global->extended_sound && !req_pkt->disable_sound) {
       unsigned char b1[64], b2[64], b3[64];
 
       snprintf(b1, sizeof(b1), "%d", retcode);
@@ -2614,7 +2687,7 @@ run_tests(struct section_tester_data *tst,
       snprintf(b3, sizeof(b3), "%d", score);
 
       tsk = task_New();
-      task_AddArg(tsk, serve_state.global->sound_player);
+      task_AddArg(tsk, global->sound_player);
       task_AddArg(tsk, b1);
       task_AddArg(tsk, b2);
       task_AddArg(tsk, user_spelling);
@@ -2647,14 +2720,14 @@ run_tests(struct section_tester_data *tst,
     }
     get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
 
-    if (serve_state.global->sound_player[0] && serve_state.global->extended_sound && !req_pkt->disable_sound) {
+    if (global->sound_player[0] && global->extended_sound && !req_pkt->disable_sound) {
       unsigned char b1[64], b2[64];
 
       snprintf(b1, sizeof(b1), "%d", status);
       snprintf(b2, sizeof(b2), "%d", failed_test);
 
       tsk = task_New();
-      task_AddArg(tsk, serve_state.global->sound_player);
+      task_AddArg(tsk, global->sound_player);
       task_AddArg(tsk, b1);
       task_AddArg(tsk, b2);
       task_AddArg(tsk, user_spelling);
@@ -2664,22 +2737,22 @@ run_tests(struct section_tester_data *tst,
       task_Wait(tsk);
       task_Delete(tsk);
       tsk = 0;
-    } else if (serve_state.global->sound_player[0] && !req_pkt->disable_sound) {
+    } else if (global->sound_player[0] && !req_pkt->disable_sound) {
       // play funny sound
       sound = 0;
       switch (status) {
-      case RUN_TIME_LIMIT_ERR:   sound = serve_state.global->timelimit_sound;    break;
-      case RUN_RUN_TIME_ERR:     sound = serve_state.global->runtime_sound;      break;
-      case RUN_CHECK_FAILED:     sound = serve_state.global->internal_sound;     break;
-      case RUN_PRESENTATION_ERR: sound = serve_state.global->presentation_sound; break;
-      case RUN_WRONG_ANSWER_ERR: sound = serve_state.global->wrong_sound;        break;
-      case RUN_OK:               sound = serve_state.global->accept_sound;       break;
+      case RUN_TIME_LIMIT_ERR:   sound = global->timelimit_sound;    break;
+      case RUN_RUN_TIME_ERR:     sound = global->runtime_sound;      break;
+      case RUN_CHECK_FAILED:     sound = global->internal_sound;     break;
+      case RUN_PRESENTATION_ERR: sound = global->presentation_sound; break;
+      case RUN_WRONG_ANSWER_ERR: sound = global->wrong_sound;        break;
+      case RUN_OK:               sound = global->accept_sound;       break;
       }
       if (sound && !*sound) sound = 0;
 
       if (sound) {
         tsk = task_New();
-        task_AddArg(tsk, serve_state.global->sound_player);
+        task_AddArg(tsk, global->sound_player);
         task_AddArg(tsk, sound);
         task_SetPathAsArg0(tsk);
         task_Start(tsk);
@@ -2694,7 +2767,7 @@ run_tests(struct section_tester_data *tst,
 
   if (prb->valuer_cmd[0] && !req_pkt->accepting_mode
       && !reply_pkt->status != RUN_CHECK_FAILED) {
-    if (invoke_valuer(serve_state.global, prb, cur_variant, prb->full_score,
+    if (invoke_valuer(global, prb, cur_variant, prb->full_score,
                       &score, &marked_flag, &valuer_errors, &valuer_comment,
                       &valuer_judge_comment) < 0) {
       reply_pkt->status = RUN_CHECK_FAILED;
@@ -3175,14 +3248,15 @@ check_config(void)
   unsigned char *var_tgz_dir;
   unsigned char *var_check_cmd = 0;
   problem_xml_t px;
+  const struct section_global_data *global = serve_state.global;
 
   /* check spooler dirs */
-  if (check_writable_spool(serve_state.global->run_queue_dir, SPOOL_OUT) < 0) return -1;
-  if (check_writable_dir(serve_state.global->run_exe_dir) < 0) return -1;
+  if (check_writable_spool(global->run_queue_dir, SPOOL_OUT) < 0) return -1;
+  if (check_writable_dir(global->run_exe_dir) < 0) return -1;
 
   /* check working dirs */
-  if (make_writable(serve_state.global->run_work_dir) < 0) return -1;
-  if (check_writable_dir(serve_state.global->run_work_dir) < 0) return -1;
+  if (make_writable(global->run_work_dir) < 0) return -1;
+  if (check_writable_dir(global->run_work_dir) < 0) return -1;
 
   for (i = 1; i <= serve_state.max_prob; i++) {
     prb = serve_state.probs[i];
@@ -3222,8 +3296,15 @@ check_config(void)
             err("directory with answers is not defined");
             return -1;
           }
-          if (check_readable_dir(prb->corr_dir) < 0) return -1;
-          if ((n2 = count_files(prb->corr_dir,prb->corr_sfx,prb->corr_pat)) < 0)
+          if (global->advanced_layout > 0) {
+            var_corr_dir = (unsigned char*) alloca(sizeof(path_t));
+            get_advanced_layout_path(var_corr_dir, sizeof(path_t), global,
+                                     prb, DFLT_P_CORR_DIR, -1);
+          } else {
+            var_corr_dir = prb->corr_dir;
+          }
+          if (check_readable_dir(var_corr_dir) < 0) return -1;
+          if ((n2 = count_files(var_corr_dir,prb->corr_sfx,prb->corr_pat)) < 0)
             return -1;
           n1 = n2;
           info("found %d answers for problem %s", n2, prb->short_name);
@@ -3237,8 +3318,15 @@ check_config(void)
             err("directory with test information is not defined");
             return -1;
           }
-          if (check_readable_dir(prb->info_dir) < 0) return -1;
-          if ((n2 = count_files(prb->info_dir,prb->info_sfx,prb->info_pat)) < 0)
+          if (global->advanced_layout > 0) {
+            var_info_dir = (unsigned char*) alloca(sizeof(path_t));
+            get_advanced_layout_path(var_info_dir, sizeof(path_t), global,
+                                     prb, DFLT_P_INFO_DIR, -1);
+          } else {
+            var_info_dir = prb->info_dir;
+          }
+          if (check_readable_dir(var_info_dir) < 0) return -1;
+          if ((n2 = count_files(var_info_dir,prb->info_sfx,prb->info_pat)) < 0)
             return -1;
           info("found %d info files for problem %s", n2, prb->short_name);
           if (n2 != 1) {
@@ -3251,8 +3339,15 @@ check_config(void)
             err("directory with tgz information is not defined");
             return -1;
           }
-          if (check_readable_dir(prb->tgz_dir) < 0) return -1;
-          if ((n2 = count_files(prb->tgz_dir, prb->tgz_sfx, 0)) < 0) return -1;
+          if (global->advanced_layout > 0) {
+            var_tgz_dir = (unsigned char*) alloca(sizeof(path_t));
+            get_advanced_layout_path(var_tgz_dir, sizeof(path_t), global,
+                                     prb, DFLT_P_TGZ_DIR, -1);
+          } else {
+            var_tgz_dir = prb->tgz_dir;
+          }
+          if (check_readable_dir(var_tgz_dir) < 0) return -1;
+          if ((n2 = count_files(var_tgz_dir, prb->tgz_sfx, 0)) < 0) return -1;
           info("found %d tgz files for problem %s", n2, prb->short_name);
           if (n2 != 1) {
             err("output-only problem must define only one tgz file");
@@ -3266,10 +3361,21 @@ check_config(void)
         var_tgz_dir = (unsigned char *) alloca(sizeof(path_t));
 
         for (k = 1; k <= prb->variant_num; k++) {
-          snprintf(var_test_dir, sizeof(path_t), "%s-%d", prb->test_dir, k);
-          snprintf(var_corr_dir, sizeof(path_t), "%s-%d", prb->corr_dir, k);
-          snprintf(var_info_dir, sizeof(path_t), "%s-%d", prb->info_dir, k);
-          snprintf(var_tgz_dir, sizeof(path_t), "%s-%d", prb->tgz_dir, k);
+          if (global->advanced_layout > 0) {
+            get_advanced_layout_path(var_test_dir, sizeof(path_t), global,
+                                     prb, DFLT_P_TEST_DIR, k);
+            get_advanced_layout_path(var_corr_dir, sizeof(path_t), global,
+                                     prb, DFLT_P_CORR_DIR, k);
+            get_advanced_layout_path(var_info_dir, sizeof(path_t), global,
+                                     prb, DFLT_P_INFO_DIR, k);
+            get_advanced_layout_path(var_tgz_dir, sizeof(path_t), global,
+                                     prb, DFLT_P_TGZ_DIR, k);
+          } else {
+            snprintf(var_test_dir, sizeof(path_t), "%s-%d", prb->test_dir, k);
+            snprintf(var_corr_dir, sizeof(path_t), "%s-%d", prb->corr_dir, k);
+            snprintf(var_info_dir, sizeof(path_t), "%s-%d", prb->info_dir, k);
+            snprintf(var_tgz_dir, sizeof(path_t), "%s-%d", prb->tgz_dir, k);
+          }
           if (prb->use_corr) {
             if (!prb->corr_dir[0]) {
               err("directory with answers is not defined");
@@ -3314,11 +3420,18 @@ check_config(void)
     } else {
       /* check existence of tests */
       if (prb->variant_num <= 0) {
-        if (check_readable_dir(prb->test_dir) < 0) return -1;
-        if ((n1 = count_files(prb->test_dir, prb->test_sfx, prb->test_pat)) < 0)
+        if (global->advanced_layout > 0) {
+          var_test_dir = (unsigned char *) alloca(sizeof(path_t));
+          get_advanced_layout_path(var_test_dir, sizeof(path_t), global,
+                                   prb, DFLT_P_TEST_DIR, -1);
+        } else {
+          var_test_dir = prb->test_dir;
+        }
+        if (check_readable_dir(var_test_dir) < 0) return -1;
+        if ((n1 = count_files(var_test_dir, prb->test_sfx, prb->test_pat)) < 0)
           return -1;
         if (!n1) {
-          err("'%s' does not contain any tests", prb->test_dir);
+          err("'%s' does not contain any tests", var_test_dir);
           return -1;
         }
         /*
@@ -3338,8 +3451,15 @@ check_config(void)
             err("directory with answers is not defined");
             return -1;
           }
-          if (check_readable_dir(prb->corr_dir) < 0) return -1;
-          if ((n2 = count_files(prb->corr_dir,prb->corr_sfx,prb->corr_pat)) < 0)
+          if (global->advanced_layout > 0) {
+            var_corr_dir = (unsigned char *) alloca(sizeof(path_t));
+            get_advanced_layout_path(var_corr_dir, sizeof(path_t), global,
+                                     prb, DFLT_P_CORR_DIR, -1);
+          } else {
+            var_corr_dir = prb->corr_dir;
+          }
+          if (check_readable_dir(var_corr_dir) < 0) return -1;
+          if ((n2 = count_files(var_corr_dir,prb->corr_sfx,prb->corr_pat)) < 0)
             return -1;
           info("found %d answers for problem %s", n2, prb->short_name);
           if (n1 != n2) {
@@ -3352,8 +3472,15 @@ check_config(void)
             err("directory with test information is not defined");
             return -1;
           }
-          if (check_readable_dir(prb->info_dir) < 0) return -1;
-          if ((n2 = count_files(prb->info_dir,prb->info_sfx,prb->info_pat)) < 0)
+          if (global->advanced_layout > 0) {
+            var_info_dir = (unsigned char *) alloca(sizeof(path_t));
+            get_advanced_layout_path(var_info_dir, sizeof(path_t), global,
+                                     prb, DFLT_P_INFO_DIR, -1);
+          } else {
+            var_info_dir = prb->info_dir;
+          }
+          if (check_readable_dir(var_info_dir) < 0) return -1;
+          if ((n2 = count_files(var_info_dir,prb->info_sfx,prb->info_pat)) < 0)
             return -1;
           info("found %d info files for problem %s", n2, prb->short_name);
           if (n1 != n2) {
@@ -3366,8 +3493,15 @@ check_config(void)
             err("directory with tgz information is not defined");
             return -1;
           }
-          if (check_readable_dir(prb->tgz_dir) < 0) return -1;
-          if ((n2 = count_files(prb->tgz_dir, prb->tgz_sfx, 0)) < 0) return -1;
+          if (global->advanced_layout > 0) {
+            var_tgz_dir = (unsigned char *) alloca(sizeof(path_t));
+            get_advanced_layout_path(var_tgz_dir, sizeof(path_t), global,
+                                     prb, DFLT_P_TGZ_DIR, -1);
+          } else {
+            var_tgz_dir = prb->tgz_dir;
+          }
+          if (check_readable_dir(var_tgz_dir) < 0) return -1;
+          if ((n2 = count_files(var_tgz_dir, prb->tgz_sfx, 0)) < 0) return -1;
           info("found %d tgz files for problem %s", n2, prb->short_name);
           if (n1 != n2) {
             err("number of test does not match number of tgz files");
@@ -3382,10 +3516,21 @@ check_config(void)
         var_tgz_dir = (unsigned char *) alloca(sizeof(path_t));
 
         for (k = 1; k <= prb->variant_num; k++) {
-          snprintf(var_test_dir, sizeof(path_t), "%s-%d", prb->test_dir, k);
-          snprintf(var_corr_dir, sizeof(path_t), "%s-%d", prb->corr_dir, k);
-          snprintf(var_info_dir, sizeof(path_t), "%s-%d", prb->info_dir, k);
-          snprintf(var_tgz_dir, sizeof(path_t), "%s-%d", prb->tgz_dir, k);
+          if (global->advanced_layout > 0) {
+            get_advanced_layout_path(var_test_dir, sizeof(path_t), global,
+                                     prb, DFLT_P_TEST_DIR, k);
+            get_advanced_layout_path(var_corr_dir, sizeof(path_t), global,
+                                     prb, DFLT_P_CORR_DIR, k);
+            get_advanced_layout_path(var_info_dir, sizeof(path_t), global,
+                                     prb, DFLT_P_INFO_DIR, k);
+            get_advanced_layout_path(var_tgz_dir, sizeof(path_t), global,
+                                     prb, DFLT_P_TGZ_DIR, k);
+          } else {
+            snprintf(var_test_dir, sizeof(path_t), "%s-%d", prb->test_dir, k);
+            snprintf(var_corr_dir, sizeof(path_t), "%s-%d", prb->corr_dir, k);
+            snprintf(var_info_dir, sizeof(path_t), "%s-%d", prb->info_dir, k);
+            snprintf(var_tgz_dir, sizeof(path_t), "%s-%d", prb->tgz_dir, k);
+          }
           if (check_readable_dir(var_test_dir) < 0) return -1;
           if ((j = count_files(var_test_dir, prb->test_sfx, prb->test_pat)) < 0)
             return -1;
@@ -3474,7 +3619,7 @@ check_config(void)
     }
 
     ASSERT(prb->test_score >= 0);
-    if (serve_state.global->score_system == SCORE_MOSCOW) {
+    if (global->score_system == SCORE_MOSCOW) {
       if (prb->full_score <= 0) {
         err("problem %s: problem full_score is not set", prb->short_name);
         return -1;
@@ -3495,7 +3640,7 @@ check_config(void)
           return -1;
         }
       }
-    } else if (prb->test_score >= 0 && serve_state.global->score_system != SCORE_ACM) {
+    } else if (prb->test_score >= 0 && global->score_system != SCORE_ACM) {
       int score_summ = 0;
 
       prb->ntests = n1;
@@ -3607,8 +3752,8 @@ check_config(void)
 
 #if CONF_HAS_LIBINTL - 0 == 1
   // bind message catalogs, if specified
-  if (serve_state.global->enable_l10n && serve_state.global->l10n_dir[0]) {
-    bindtextdomain("ejudge", serve_state.global->l10n_dir);
+  if (global->enable_l10n && global->l10n_dir[0]) {
+    bindtextdomain("ejudge", global->l10n_dir);
     textdomain("ejudge");
   }
 #endif

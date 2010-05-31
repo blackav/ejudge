@@ -3,7 +3,7 @@
 #ifndef __PREPARE_DFLT_H__
 #define __PREPARE_DFLT_H__
 
-/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -82,6 +82,8 @@
 #define DFLT_G_RUN_FULL_ARCHIVE_DIR "output"
 #define DFLT_G_RUN_WORK_DIR       "runwork"
 #define DFLT_G_RUN_CHECK_DIR      "runcheck"
+#define DFLT_G_PROBLEMS_DIR       "problems"
+#define DFLT_G_ADV_TESTS_DIR      "tests"
 
 #if defined EJUDGE_CHARSET
 #define DFLT_G_CHARSET            EJUDGE_CHARSET
@@ -150,6 +152,13 @@
 #define DFLT_P_VARIABLE_FULL_SCORE 0
 #define DFLT_P_HIDDEN             0
 #define DFLT_P_BINARY_INPUT       0
+
+/* for `advanced_layout' */
+#define DFLT_P_TEST_DIR           "tests"
+#define DFLT_P_CORR_DIR           "tests"
+#define DFLT_P_INFO_DIR           "tests"
+#define DFLT_P_TGZ_DIR            "tests"
+#define DFLT_P_CHECK_CMD          "check"
 
 #define DFLT_T_WORK_DIR           "work"
 #define DFLT_T_TMP_DIR            "tmp"

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -85,6 +85,7 @@ run_request_packet_write(
   if (in_data->secure_run) flags |= FLAGS_SECURE_RUN;
   if (in_data->security_violation) flags |= FLAGS_SECURITY_VIOLATION;
   if (in_data->notify_flag) flags |= FLAGS_NOTIFY;
+  if (in_data->advanced_layout) flags |= FLAGS_ADVANCED_LAYOUT;
   out_data->flags = cvt_host_to_bin_32(flags);
 
   /* copy timestamps without care */

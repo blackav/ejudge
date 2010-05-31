@@ -963,11 +963,15 @@ serve_compile_request(
   if (prob->source_header[0]) {
     sformat_message(tmp_path, sizeof(tmp_path), 0, prob->source_header,
                     global, prob, lang, 0, 0, 0, 0, 0);
-    if (os_IsAbsolutePath(tmp_path))
+    if (os_IsAbsolutePath(tmp_path)) {
       snprintf(tmp_path_2, sizeof(tmp_path_2), "%s", tmp_path);
-    else
+    } else if (state->global->advanced_layout > 0) {
+      get_advanced_layout_path(tmp_path_2, sizeof(tmp_path_2),
+                               state->global, prob, tmp_path, -1);
+    } else {
       snprintf(tmp_path_2, sizeof(tmp_path_2), "%s/%s",
                global->statement_dir, tmp_path);
+    }
     if (generic_read_file(&src_header_text, 0, &src_header_size, 0, 0,
                           tmp_path_2, "") < 0)
       goto failed;
@@ -975,11 +979,15 @@ serve_compile_request(
   if (prob->source_footer[0]) {
     sformat_message(tmp_path, sizeof(tmp_path), 0, prob->source_footer,
                     global, prob, lang, 0, 0, 0, 0, 0);
-    if (os_IsAbsolutePath(tmp_path))
+    if (os_IsAbsolutePath(tmp_path)) {
       snprintf(tmp_path_2, sizeof(tmp_path_2), "%s", tmp_path);
-    else
+    } else if (state->global->advanced_layout > 0) {
+      get_advanced_layout_path(tmp_path_2, sizeof(tmp_path_2),
+                               state->global, prob, tmp_path, -1);
+    } else {
       snprintf(tmp_path_2, sizeof(tmp_path_2), "%s/%s",
                global->statement_dir, tmp_path);
+    }
     if (generic_read_file(&src_footer_text, 0, &src_footer_size, 0, 0,
                           tmp_path_2, "") < 0)
       goto failed;
@@ -1237,6 +1245,7 @@ serve_run_request(
   run_pkt->memory_limit = state->global->enable_memory_limit_error;
   run_pkt->secure_run = state->global->secure_run;
   run_pkt->notify_flag = notify_flag;
+  run_pkt->advanced_layout = state->global->advanced_layout;
   if (run_pkt->secure_run && prob->disable_security) run_pkt->secure_run = 0;
   if (run_pkt->secure_run && lang && lang->disable_security) run_pkt->secure_run = 0;
   run_pkt->security_violation = state->global->detect_violations;

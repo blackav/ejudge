@@ -126,6 +126,7 @@ static const struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(root_dir, "s"),
   GLOBAL_PARAM(conf_dir, "s"),
+  GLOBAL_PARAM(problems_dir, "s"),
   GLOBAL_PARAM(script_dir, "s"),
   GLOBAL_PARAM(test_dir, "s"),
   GLOBAL_PARAM(corr_dir, "s"),
@@ -2121,6 +2122,7 @@ set_defaults(
   int r;
   path_t fpath;
   path_t start_path;
+  path_t xml_path;
 
   /* find global section */
   for (p = state->config; p; p = p->next)
@@ -2340,6 +2342,12 @@ set_defaults(
     snprintf(g->var_dir, sizeof(g->var_dir), "var");
   }
   pathmake2(g->var_dir, g->root_dir, "/", g->var_dir, NULL);
+
+  /* problems integrated directory (for advanced_layout) */
+  if (!g->problems_dir[0]) {
+    snprintf(g->problems_dir,sizeof(g->problems_dir),"%s",DFLT_G_PROBLEMS_DIR);
+  }
+  pathmake2(g->problems_dir, g->root_dir, "/", g->problems_dir, NULL);
 
   /* CONFIGURATION FILES DEFAULTS */
 #define GLOBAL_INIT_FIELD(f,d,c) do { if (!g->f[0]) { vinfo("global." #f " set to %s", d); snprintf(g->f, sizeof(g->f), "%s", d); } pathmake2(g->f,g->c, "/", g->f, NULL); } while (0)
@@ -2932,17 +2940,29 @@ set_defaults(
       sformat_message(prob->xml_file, sizeof(prob->xml_file), 0,
                       aprob->xml_file, 0, prob, 0, 0, 0, 0, 0, 0);
     }
-    if (prob->xml_file[0]) {
+    if (prob->xml_file[0] && g->advanced_layout <= 0) {
       path_add_dir(prob->xml_file, g->statement_dir);
     }
     if (prob->xml_file[0] && prob->variant_num > 0) {
       XCALLOC(prob->xml.a, prob->variant_num);
       for (j = 1; j <= prob->variant_num; j++) {
-        prepare_insert_variant_num(fpath, sizeof(fpath), prob->xml_file, j);
-        if (!(prob->xml.a[j - 1] = problem_xml_parse(fpath))) return -1;
+        if (g->advanced_layout > 0) {
+          get_advanced_layout_path(xml_path, sizeof(xml_path), g,
+                                   prob, prob->xml_file, j);
+          if (!(prob->xml.a[j - 1] = problem_xml_parse(xml_path))) return -1;
+        } else {
+          prepare_insert_variant_num(fpath, sizeof(fpath), prob->xml_file, j);
+          if (!(prob->xml.a[j - 1] = problem_xml_parse(fpath))) return -1;
+        }
       }
     } else if (prob->xml_file[0]) {
-      if (!(prob->xml.p = problem_xml_parse(prob->xml_file))) return -1;
+      if (g->advanced_layout > 0) {
+        get_advanced_layout_path(xml_path, sizeof(xml_path), g,
+                                 prob, prob->xml_file, -1);
+        if (!(prob->xml.p = problem_xml_parse(xml_path))) return -1;
+      } else {
+        if (!(prob->xml.p = problem_xml_parse(prob->xml_file))) return -1;
+      }
     }
 
     prepare_set_prob_value(CNTSPROB_type, prob, aprob, g);
@@ -3137,7 +3157,7 @@ set_defaults(
         sformat_message(prob->plugin_file, PATH_MAX, 0, aprob->plugin_file,
                         NULL, prob, NULL, NULL, NULL, 0, 0, 0);
       }
-      if (prob->plugin_file[0]) {
+      if (prob->plugin_file[0] && g->advanced_layout <= 0) {
         path_add_dir(prob->plugin_file, g->plugin_dir);
       }
 
@@ -3204,8 +3224,7 @@ set_defaults(
       }
       if (!prob->tgz_dir[0] && prob->use_tgz) {
         pathcpy(prob->tgz_dir, prob->short_name);
-        vinfo("problem.%s.tgz_dir is set to '%s'", ish,
-              prob->tgz_dir);
+        vinfo("problem.%s.tgz_dir is set to '%s'", ish, prob->tgz_dir);
       }
       if (prob->use_tgz) {
         path_add_dir(prob->tgz_dir, g->tgz_dir);
@@ -5593,7 +5612,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       sformat_message(out->valuer_cmd, PATH_MAX, 0, abstr->valuer_cmd,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
-    if (global && out->valuer_cmd[0]) {
+    if (global && out->valuer_cmd[0] && global->advanced_layout <= 0) {
       pathmake2(out->valuer_cmd, global->checker_dir, "/", out->valuer_cmd, NULL);
     }
     break;
@@ -5603,7 +5622,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       sformat_message(out->interactor_cmd, PATH_MAX, 0, abstr->interactor_cmd,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
-    if (global && out->interactor_cmd[0]) {
+    if (global && out->interactor_cmd[0] && global->advanced_layout <= 0) {
       pathmake2(out->interactor_cmd, global->checker_dir, "/",
                 out->interactor_cmd, NULL);
     }
@@ -5635,7 +5654,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       sformat_message(out->plugin_file, PATH_MAX, 0, abstr->plugin_file,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
-    if (global && out->plugin_file[0]) {
+    if (global && out->plugin_file[0] && global->advanced_layout <= 0) {
       path_add_dir(out->plugin_file, global->statement_dir);
     }
     break;
@@ -5664,7 +5683,7 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       sformat_message(out->xml_file, sizeof(out->xml_file), 0,
                       abstr->xml_file, 0, out, 0, 0, 0, 0, 0, 0);
     }
-    if (global && out->xml_file[0]) {
+    if (global && out->xml_file[0] && global->advanced_layout <= 0) {
       path_add_dir(out->xml_file, global->statement_dir);
     }
     break;
@@ -6630,6 +6649,48 @@ cntsprob_is_inheritable_field(int f_id)
 {
   if (f_id <= 0 || f_id >= CNTSPROB_LAST_FIELD) return 0;
   return prob_inheritable_set[f_id];
+}
+
+const unsigned char*
+get_advanced_layout_path(
+        unsigned char *buf,
+        size_t bufsize,
+        const struct section_global_data *global,
+        const struct section_problem_data *prob,
+        const unsigned char *entry,
+        int variant)
+{
+  path_t path1;
+  const unsigned char *prob_name;
+
+  if (global->problems_dir[0] && os_IsAbsolutePath(global->problems_dir)) {
+    snprintf(path1, sizeof(path1), "%s", global->problems_dir);
+  } else if (global->problems_dir[0]) {
+    snprintf(path1,sizeof(path1),"%s/%s",global->root_dir,global->problems_dir);
+  } else {
+    snprintf(path1,sizeof(path1),"%s/%s",global->root_dir,DFLT_G_PROBLEMS_DIR);
+  }
+
+  prob_name = prob->short_name;
+  if (prob->internal_name[0]) {
+    prob_name = prob->internal_name;
+  }
+
+  if (!entry) {
+    if (variant < 0 || prob->variant_num <= 0) {
+      snprintf(buf, bufsize, "%s/%s", path1, prob_name);
+    } else {
+      snprintf(buf, bufsize, "%s/%s-%d", path1, prob_name, variant);
+    }
+  } else {
+    if (variant < 0 || prob->variant_num <= 0) {
+      snprintf(buf, bufsize, "%s/%s/%s", path1, prob_name, entry);
+    } else {
+      snprintf(buf, bufsize, "%s/%s-%d/%s", path1, prob_name, variant, entry);
+    }
+  }
+
+  return buf;
 }
 
 /*
