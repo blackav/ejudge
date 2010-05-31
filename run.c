@@ -1789,7 +1789,8 @@ run_tests(struct section_tester_data *tst,
         task_AddArg(tsk_int, output_path);
         if (prb->use_corr && prb->corr_dir[0]) {
           if (global->advanced_layout > 0) {
-            snprintf(corr_path, sizeof(corr_path), "%s", var_corr_dir);
+            snprintf(corr_path, sizeof(corr_path), "%s/%s", var_corr_dir,
+                     corr_base);
           } else {
             pathmake3(corr_path, var_corr_dir, "/", corr_base, NULL);
           }
@@ -2394,7 +2395,8 @@ run_tests(struct section_tester_data *tst,
     }
     if (prb->use_corr && prb->corr_dir[0]) {
       if (global->advanced_layout > 0) {
-        snprintf(corr_path, sizeof(corr_path), "%s", var_corr_dir);
+        snprintf(corr_path, sizeof(corr_path), "%s/%s", var_corr_dir,
+                 corr_base);
       } else {
         pathmake3(corr_path, var_corr_dir, "/", corr_base, NULL);
       }
