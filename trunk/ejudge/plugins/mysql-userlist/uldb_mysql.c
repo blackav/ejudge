@@ -4206,7 +4206,8 @@ get_group_iterator_func(void *data)
   fprintf(cmd_f, "SELECT * FROM %sgroups WHERE 1 ORDER BY group_id",
           state->md->table_prefix);
   fclose(cmd_f); cmd_f = 0;
-  if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
+  if (state->mi->query(state->md, cmd_t, cmd_z, USERGROUP_WIDTH) < 0)
+    goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   iter->group_count = state->md->row_count;
   if (iter->group_count <= 0) {
@@ -4636,7 +4637,7 @@ get_group_user_iterator_func(void *data, int group_id)
           state->md->table_prefix, state->md->table_prefix,
           state->md->table_prefix, group_id);
   fclose(cmd_f); cmd_f = 0;
-  if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
+  if (state->mi->query(state->md, cmd_t, cmd_z, LOGIN_WIDTH) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   iter->user_count = state->md->row_count;
   if (iter->user_count <= 0) {
