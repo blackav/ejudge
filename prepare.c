@@ -3608,8 +3608,18 @@ set_defaults(
           err("tester.%d.check_cmd must be set", i);
           return -1;
         }
-        pathmake2(state->testers[i]->check_cmd, g->checker_dir, "/",
-                  state->testers[i]->check_cmd, NULL);
+        if (g->advanced_layout > 0
+            && !os_IsAbsolutePath(state->testers[i]->check_cmd)) {
+          get_advanced_layout_path(fpath, sizeof(fpath), g,
+                                   state->probs[tp->problem],
+                                   state->testers[i]->check_cmd, -1);
+          snprintf(state->testers[i]->check_cmd,
+                   sizeof(state->testers[i]->check_cmd), "%s",
+                   fpath);
+        } else {
+          pathmake2(state->testers[i]->check_cmd, g->checker_dir, "/",
+                    state->testers[i]->check_cmd, NULL);
+        }
         if (!tp->start_cmd[0] && atp && atp->start_cmd[0]) {
           sformat_message(tp->start_cmd, PATH_MAX, 0, atp->start_cmd,
                           g, state->probs[tp->problem], NULL,
@@ -4406,8 +4416,15 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
           out->arch);
       return -1;
     }
-    pathmake2(out->check_cmd, state->global->checker_dir, "/",
-              out->check_cmd, NULL);
+    if (state->global->advanced_layout > 0
+        && !os_IsAbsolutePath(out->check_cmd)) {
+      get_advanced_layout_path(start_path, sizeof(start_path),
+                               state->global, prb, out->check_cmd, -1);
+      snprintf(out->check_cmd, sizeof(out->check_cmd), "%s", start_path);
+    } else {
+      pathmake2(out->check_cmd, state->global->checker_dir, "/",
+                out->check_cmd, NULL);
+    }
   }
 
   /* copy valuer_cmd */

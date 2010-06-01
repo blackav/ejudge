@@ -8552,7 +8552,7 @@ super_html_check_tests(FILE *f,
       prepare_set_prob_value(CNTSPROB_check_cmd, &tmp_prob, abstr, 0);
       if (global->advanced_layout > 0) {
         get_advanced_layout_path(checker_path, sizeof(checker_path),
-                                 global, &tmp_prob, NULL, -1);
+                                 global, &tmp_prob, tmp_prob.check_cmd, -1);
       } else {
         mkpath(checker_path, g_checker_path, tmp_prob.check_cmd, "");
       }
