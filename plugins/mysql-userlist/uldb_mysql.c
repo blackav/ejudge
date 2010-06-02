@@ -4203,7 +4203,7 @@ get_group_iterator_func(void *data)
   iter->b = group_iterator_funcs;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "SELECT * FROM %sgroups WHERE 1 ORDER BY group_id",
+  fprintf(cmd_f, "SELECT * FROM %sgroups WHERE 1 ORDER BY group_id ;",
           state->md->table_prefix);
   fclose(cmd_f); cmd_f = 0;
   if (state->mi->query(state->md, cmd_t, cmd_z, USERGROUP_WIDTH) < 0)
@@ -4220,13 +4220,15 @@ get_group_iterator_func(void *data)
       db_error_no_data_fail(state->md);
     state->md->lengths = mysql_fetch_lengths(state->md->res);
     iter->groups[i] = (struct userlist_group*) userlist_node_alloc(USERLIST_T_USERGROUP);
-    if (parse_group(state, state->md->row_count, state->md->row,
+    if (parse_group(state, state->md->field_count, state->md->row,
                     state->md->lengths, iter->groups[i]) < 0) goto fail;
   }
 
+  state->mi->free_res(state->md);
   return (ptr_iterator_t) iter;
 
 fail:
+  state->mi->free_res(state->md);
   group_iterator_destroy_func((ptr_iterator_t) iter);
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
@@ -4260,23 +4262,26 @@ get_group_by_name_func(
   fprintf(cmd_f, "SELECT * FROM %sgroups WHERE group_name = ",
           state->md->table_prefix);
   state->mi->write_escaped_string(state->md, cmd_f, 0, group_name);
+  fprintf(cmd_f, " ;");
   fclose(cmd_f); cmd_f = 0;
   if (state->mi->query_one_row(state->md, cmd_t, cmd_z, USERGROUP_WIDTH) < 0)
     goto fail;
   xfree(cmd_t); cmd_t = 0;
 
   grp = (struct userlist_group*) userlist_node_alloc(USERLIST_T_USERGROUP);
-  if (parse_group(state, state->md->row_count, state->md->row,
+  if (parse_group(state, state->md->field_count, state->md->row,
                   state->md->lengths, grp) < 0) goto fail;
 
   if (state->groups.count >= GROUPS_POOL_SIZE) {
     group_cache_remove(state, (struct userlist_group*) state->groups.last);
   }
   group_cache_add(state, grp);
+  state->mi->free_res(state->md);
 
   return grp;
 
 fail:
+  state->mi->free_res(state->md);
   userlist_free((struct xml_tree*) grp);
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
@@ -4370,15 +4375,17 @@ create_group_func(
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %sgroups(group_name, created_by, create_time) VALUES(", state->md->table_prefix);
   state->mi->write_escaped_string(state->md, cmd_f, 0, group_name);
-  fprintf(cmd_f, ", %d, NOW())", created_by);
+  fprintf(cmd_f, ", %d, NOW()) ;", created_by);
   close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   group_id = mysql_insert_id(state->md->conn);
   if (group_id <= 0) goto fail;
+  state->mi->free_res(state->md);
   return group_id;
 
 fail:
+  state->mi->free_res(state->md);
   xfree(cmd_t);
   return -1;
 }
@@ -4393,9 +4400,11 @@ remove_group_func(
   state->mi->simple_fquery(state->md,
                            "DELETE FROM %sgroupmembers WHERE group_id = %d;",
                            state->md->table_prefix, group_id);
+  state->mi->free_res(state->md);
   state->mi->simple_fquery(state->md,
                            "DELETE FROM %sgroups WHERE group_id = %d;",
                            state->md->table_prefix, group_id);
+  state->mi->free_res(state->md);
   group_cache_drop(state);
   return 0;
 }
@@ -4451,7 +4460,7 @@ edit_group_field_func(
   } else {
     state->mi->write_escaped_string(state->md, cmd_f, 0, value);
   }
-  fprintf(cmd_f, ", last_change_time = NOW() WHERE group_id = %d", group_id);
+  fprintf(cmd_f, ", last_change_time = NOW() WHERE group_id = %d ;", group_id);
   fclose(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
@@ -4498,7 +4507,7 @@ clear_group_field_func(
   default:
     abort();
   }
-  fprintf(cmd_f, ", last_change_time = NOW() WHERE group_id = %d", group_id);
+  fprintf(cmd_f, ", last_change_time = NOW() WHERE group_id = %d ;", group_id);
   fclose(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
@@ -4530,7 +4539,7 @@ get_group_func(
   }
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "SELECT * FROM %sgroups WHERE group_id = %d",
+  fprintf(cmd_f, "SELECT * FROM %sgroups WHERE group_id = %d ;",
           state->md->table_prefix, group_id);
   fclose(cmd_f); cmd_f = 0;
   if (state->mi->query_one_row(state->md, cmd_t, cmd_z, USERGROUP_WIDTH) < 0)
@@ -4538,17 +4547,19 @@ get_group_func(
   xfree(cmd_t); cmd_t = 0;
 
   grp = (struct userlist_group*) userlist_node_alloc(USERLIST_T_USERGROUP);
-  if (parse_group(state, state->md->row_count, state->md->row,
+  if (parse_group(state, state->md->field_count, state->md->row,
                   state->md->lengths, grp) < 0) goto fail;
 
   if (state->groups.count >= GROUPS_POOL_SIZE) {
     group_cache_remove(state, (struct userlist_group*) state->groups.last);
   }
   group_cache_add(state, grp);
+  state->mi->free_res(state->md);
 
   return grp;
 
 fail:
+  state->mi->free_res(state->md);
   userlist_free((struct xml_tree*) grp);
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
@@ -4631,7 +4642,7 @@ get_group_user_iterator_func(void *data, int group_id)
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f,
-          "SELECT %slogins.* FROM %sgroupmembers, %slogins WHERE %slogins.user_id = %sgroupmembers.user_id AND %sgroupmembers.group_id = %d ORDER BY user_id",
+          "SELECT %slogins.* FROM %sgroupmembers, %slogins WHERE %slogins.user_id = %sgroupmembers.user_id AND %sgroupmembers.group_id = %d ORDER BY user_id;",
           state->md->table_prefix,
           state->md->table_prefix, state->md->table_prefix,
           state->md->table_prefix, state->md->table_prefix,
@@ -4650,14 +4661,16 @@ get_group_user_iterator_func(void *data, int group_id)
       db_error_no_data_fail(state->md);
     state->md->lengths = mysql_fetch_lengths(state->md->res);
     iter->users[i] = (struct userlist_user*) userlist_node_alloc(USERLIST_T_USER);
-    if (parse_login(state, state->md->row_count, state->md->row,
+    if (parse_login(state, state->md->field_count, state->md->row,
                     state->md->lengths, iter->users[i]) < 0)
       goto fail;
   }
+  state->mi->free_res(state->md);
 
   return (ptr_iterator_t) iter;
 
 fail:
+  state->mi->free_res(state->md);
   group_user_iterator_destroy_func((ptr_iterator_t) iter);
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
@@ -4742,10 +4755,11 @@ get_group_member_iterator_func(void *data, int group_id)
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f,
-          "SELECT * FROM %sgroupmembers WHERE group_id = %d ORDER BY user_id",
+          "SELECT * FROM %sgroupmembers WHERE group_id = %d ORDER BY user_id;",
           state->md->table_prefix, group_id);
   fclose(cmd_f); cmd_f = 0;
-  if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
+  if (state->mi->query(state->md, cmd_t, cmd_z, USERGROUPMEMBER_WIDTH) < 0)
+    goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
 
   iter->member_count = state->md->row_count;
@@ -4759,13 +4773,15 @@ get_group_member_iterator_func(void *data, int group_id)
       db_error_no_data_fail(state->md);
     state->md->lengths = mysql_fetch_lengths(state->md->res);
     iter->members[i] = (struct userlist_groupmember*) userlist_node_alloc(USERLIST_T_USERGROUPMEMBER);
-    if (parse_groupmember(state, state->md->row_count, state->md->row,
+    if (parse_groupmember(state, state->md->field_count, state->md->row,
                           state->md->lengths, iter->members[i]) < 0) goto fail;
   }
+  state->mi->free_res(state->md);
 
   return (ptr_iterator_t) iter;
 
 fail:
+  state->mi->free_res(state->md);
   group_member_iterator_destroy_func((ptr_iterator_t) iter);
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
@@ -4779,7 +4795,7 @@ create_group_member_func(void *data, int group_id, int user_id)
 
   if (group_id <= 0 || user_id <= 0) return -1;
 
-  return state->mi->simple_fquery(state->md, "INSERT INTO %sgroupmembers(group_id, user_id) VALUES(%d, %d)", state->md->table_prefix, group_id, user_id);
+  return state->mi->simple_fquery(state->md, "INSERT INTO %sgroupmembers(group_id, user_id) VALUES(%d, %d) ;", state->md->table_prefix, group_id, user_id);
 }
 
 static int
@@ -4789,7 +4805,7 @@ remove_group_member_func(void *data, int group_id, int user_id)
 
   if (group_id <= 0 || user_id <= 0) return -1;
 
-  state->mi->simple_fquery(state->md, "DELETE FROM %sgroupmembers WHERE group_id = %d AND user_id = %d",
+  state->mi->simple_fquery(state->md, "DELETE FROM %sgroupmembers WHERE group_id = %d AND user_id = %d ;",
                            state->md->table_prefix, group_id, user_id);
   return 0;
 }
