@@ -2625,9 +2625,11 @@ static unsigned char csv_path[1024];
 static unsigned char csv_sep[1024];
 
 static int
-display_registered_users(unsigned char const *upper,
-                         int contest_id,
-                         int init_val)
+do_display_registered_users(
+        unsigned char const *upper,
+        int contest_id,
+        int *p_cur_val,
+        int only_choose)
 {
   unsigned char current_level[512];
   int r, nuser, i, j, k;
@@ -2753,13 +2755,13 @@ display_registered_users(unsigned char const *upper,
   set_menu_win(menu, in_win);
   set_menu_format(menu, LINES - 4, 0);
 
-  if (init_val >= nuser) init_val = nuser - 1;
-  if (init_val < 0) init_val = 0;
-  first_row = init_val - (LINES - 4) / 2;
+  if (*p_cur_val >= nuser) *p_cur_val = nuser - 1;
+  if (*p_cur_val < 0) *p_cur_val = 0;
+  first_row = *p_cur_val - (LINES - 4) / 2;
   if (first_row + LINES - 4 > nuser) first_row = nuser - (LINES - 4);
   if (first_row < 0) first_row = 0;
   set_top_row(menu, first_row);
-  set_current_item(menu, items[init_val]);
+  set_current_item(menu, items[*p_cur_val]);
 
   while (1) {
     mvwprintw(stdscr, 0, 0, "%s", current_level);
@@ -2839,16 +2841,14 @@ display_registered_users(unsigned char const *upper,
       // clear all selection
       memset(sel_users.mask, 0, sel_users.allocated);
       sel_users.total_selected = 0;
-      c = 'q';
-      retcode = 0;
+      retcode = -2;
     } else if (c == 't') {
       // toggle all selection
       sel_users.total_selected = 0;
       for (j = 0; j < nuser; j++)
         sel_users.total_selected += (sel_users.mask[j] ^= 1);
-      c = 'q';
-      retcode = 0;
-    } else if (c == 'c') {
+      retcode = -2;
+    } else if (c == 'c' && !only_choose) {
       if ((k = display_contests_menu(current_level, 1)) <= 0) continue;
 
       if (!sel_users.total_selected && !sel_cnts.total_selected) {
@@ -2919,7 +2919,7 @@ display_registered_users(unsigned char const *upper,
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
       }
-    } else if (c == 'r') {
+    } else if (c == 'r' && !only_choose) {
       i = item_index(current_item(menu));
       cur_line = i - top_row(menu) + 2;
       new_status = display_reg_status_menu(cur_line, uc[i]->status);
@@ -2957,7 +2957,7 @@ display_registered_users(unsigned char const *upper,
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
       }
-    } else if (c == 'd') {
+    } else if (c == 'd' && !only_choose) {
       if (!sel_users.total_selected) {
         // operation on a single user
         i = item_index(current_item(menu));
@@ -2986,9 +2986,8 @@ display_registered_users(unsigned char const *upper,
       }
       memset(sel_users.mask, 0, sel_users.allocated);
       sel_users.total_selected = 0;
-      c = 'q';
-      retcode = 0;
-    } else if (c == 'b') {
+      retcode = -2;
+    } else if (c == 'b' && !only_choose) {
       if (!sel_users.total_selected) {
         // operation on a single user
         i = item_index(current_item(menu));
@@ -3024,7 +3023,7 @@ display_registered_users(unsigned char const *upper,
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
       }
-    } else if (c == 'i') {
+    } else if (c == 'i' && !only_choose) {
       if (!sel_users.total_selected) {
         // operation on a single user
         i = item_index(current_item(menu));
@@ -3060,7 +3059,7 @@ display_registered_users(unsigned char const *upper,
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
       }
-    } else if (c == 'l') {
+    } else if (c == 'l' && !only_choose) {
       if (!sel_users.total_selected) {
         // operation on a single user
         i = item_index(current_item(menu));
@@ -3096,7 +3095,7 @@ display_registered_users(unsigned char const *upper,
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
       }
-    } else if (c == 'n') {
+    } else if (c == 'n' && !only_choose) {
       if (!sel_users.total_selected) {
         // operation on a single user
         i = item_index(current_item(menu));
@@ -3132,7 +3131,7 @@ display_registered_users(unsigned char const *upper,
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
       }
-    } else if (c == 'u') {
+    } else if (c == 'u' && !only_choose) {
       if (!sel_users.total_selected) {
         // operation on a single user
         i = item_index(current_item(menu));
@@ -3168,13 +3167,17 @@ display_registered_users(unsigned char const *upper,
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
       }
+    } else if (c == '\n' && only_choose) {
+      i = item_index(current_item(menu));
+      *p_cur_val = i;
+      retcode = uu[i]->id;
+      c = 'q';
     } else if (c == '\n') {
       i = item_index(current_item(menu));
-      r = 0;
       display_user(current_level, uu[i]->id, contest_id);
-      c = 'q';
-      retcode = i;
-    } else if (c == 'a') {
+      *p_cur_val = i;
+      retcode = -2;
+    } else if (c == 'a' && !only_choose) {
       i = display_user_menu(current_level, 0, 1);
       if (i > 0) {
         r = okcancel("Register user %d?", i);
@@ -3187,8 +3190,7 @@ display_registered_users(unsigned char const *upper,
           } else {
             memset(sel_users.mask, 0, sel_users.allocated);
             sel_users.total_selected = 0;
-            c = 'q';
-            retcode = 0;
+            retcode = -2;
           }
         }
       }
@@ -3196,8 +3198,7 @@ display_registered_users(unsigned char const *upper,
       /* change sort criteria */
       i = display_participant_sort_menu(registered_users_sort_flag);
       if (i >= 0 && i != registered_users_sort_flag) {
-        c = 'q';
-        retcode = 0;
+        retcode = -2;
         registered_users_sort_flag = i;
       }
     } else if (c == 'j') {
@@ -3223,17 +3224,17 @@ display_registered_users(unsigned char const *upper,
                 break;
             }
           }
-          retcode = j;
-          c = 'q';
+          retcode = -2;
+          *p_cur_val = j;
         }
       }
     } else if (c == 'e') {
       i = user_search(uu, nuser, item_index(current_item(menu)));
       if (i >= 0) {
-        retcode = i;
-        c = 'q';
+        retcode = -2;
+        *p_cur_val = i;
       }
-    } else if (c == 'o') {
+    } else if (c == 'o' && !only_choose) {
       // copy user_info
       if ((k = display_contests_menu(current_level, 1)) <= 0) continue;
 
@@ -3303,7 +3304,7 @@ display_registered_users(unsigned char const *upper,
         sel_users.total_selected = 0;
       }
       */
-    } else if (c == 'f') {
+    } else if (c == 'f' && !only_choose) {
       int field_op, field_code = 0;
       field_op = generic_menu(10, -1, -1, -1, 0, 4, -1, -1,
                               field_op_names, field_op_keys,
@@ -3368,10 +3369,9 @@ display_registered_users(unsigned char const *upper,
         }
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
-        c = 'q';
-        retcode = 0;
+        retcode = -2;
       }
-    } else if (c == 'v') {
+    } else if (c == 'v' && !only_choose) {
       FILE *csv_f = 0, *csv_in = 0;
       char *csv_txt = 0;
       size_t csv_z = 0;
@@ -3422,8 +3422,7 @@ display_registered_users(unsigned char const *upper,
       ncurses_view_text("Import log", csv_reply);
       xfree(csv_txt);
       xfree(csv_reply);
-      c = 'q';
-      retcode = 0;
+      retcode = -2;
     }
 
     unpost_menu(menu);
@@ -3432,7 +3431,7 @@ display_registered_users(unsigned char const *upper,
     update_panels();
     doupdate();
 
-    if (c == 'q') break;
+    if (c == 'q' || retcode == -2) break;
   }
 
   // cleanup
@@ -3451,6 +3450,21 @@ display_registered_users(unsigned char const *upper,
     free_item(items[i]);
   }
   return retcode;
+}
+
+static int
+display_registered_users(
+        unsigned char const *upper,
+        int contest_id,
+        int init_val,
+        int only_choose)
+{
+  int val = -2;
+
+  while (val == -2) {
+    val = do_display_registered_users(upper, contest_id, &init_val, only_choose);
+  }
+  return val;
 }
 
 static int
@@ -3685,10 +3699,7 @@ display_contests_menu(unsigned char *upper, int only_choose)
     }
     if (c == '\n') {
       sel_num = item_index(current_item(menu));
-      r = 0;
-      while (r >= 0) {
-        r = display_registered_users(current_level, cntsi[sel_num], r);
-      }
+      r = display_registered_users(current_level, cntsi[sel_num], r, 0);
     }
   }
 
@@ -4600,7 +4611,7 @@ do_display_group_members_menu(
       if (contest_id > 0) {
         j = okcancel("Add users from contest %d?", contest_id);
         if (j == 1) {
-          i = display_registered_users(current_level, contest_id, 0);
+          i = display_registered_users(current_level, contest_id, 0, 1);
           if (i > 0 && sel_users.total_selected > 0) {
             j = okcancel("Add %d users?", sel_users.total_selected);
             if (j == 1) {
