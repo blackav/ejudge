@@ -4344,7 +4344,7 @@ write_xml_team_testing_report(
   if (prob) open_tests = prob->open_tests_val;
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
-    while (open_tests && *open_tests > 0 && *open_tests < i) {
+    while (open_tests && *open_tests > 0 && *open_tests <= i) {
       ++open_tests;
     }
     if (t->team_comment) {
@@ -4353,7 +4353,7 @@ write_xml_team_testing_report(
     if (global->report_error_code && t->status == RUN_RUN_TIME_ERR) {
       need_info = 1;
     }
-    if (open_tests && *open_tests == i && t->status == RUN_RUN_TIME_ERR) {
+    if (open_tests && *open_tests == i + 1 && t->status == RUN_RUN_TIME_ERR) {
       need_info = 1;
     }
   }
@@ -4379,7 +4379,7 @@ write_xml_team_testing_report(
   if (prob) open_tests = prob->open_tests_val;
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
-    while (open_tests && *open_tests > 0 && *open_tests < i) {
+    while (open_tests && *open_tests > 0 && *open_tests <= i) {
       ++open_tests;
     }
     fprintf(f, "<tr>");
@@ -4409,7 +4409,8 @@ write_xml_team_testing_report(
     if (need_info) {
       fprintf(f, "<td%s>", cl);
       if (t->status == RUN_RUN_TIME_ERR
-          && (global->report_error_code || (open_tests && *open_tests == i))) {
+          && (global->report_error_code
+              || (open_tests && *open_tests == i + 1))) {
         if (t->exit_comment) {
           fprintf(f, "%s", t->exit_comment);
         } else if (t->term_signal >= 0) {
@@ -4448,10 +4449,10 @@ write_xml_team_testing_report(
       if (!t->args && !t->args_too_long && !t->input
           && !t->output && !t->error && !t->correct && !t->checker)
         continue;
-      while (*open_tests > 0 && *open_tests < i) {
+      while (*open_tests > 0 && *open_tests <= i) {
         ++open_tests;
       }
-      if (*open_tests != i) continue;
+      if (*open_tests != i + 1) continue;
       fprintf(f, _("<b>====== Test #%d =======</b>\n"), t->num);
       if (t->args || t->args_too_long) {
         fprintf(f, "<a name=\"%dL\"></a>", t->num);
