@@ -10870,7 +10870,8 @@ unpriv_view_report(FILE *fout,
       write_xml_testing_report(fout, 1, rep_start, phr->session_id,
                                phr->self_url, "", new_actions_vector,"b1","b0");
     } else {
-      write_xml_team_testing_report(cs, fout, prob->type != PROB_TYPE_STANDARD,
+      write_xml_team_testing_report(cs, prob, fout,
+                                    prob->type != PROB_TYPE_STANDARD,
                                     rep_start, "b1");
     }
     break;

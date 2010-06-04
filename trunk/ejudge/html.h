@@ -3,7 +3,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -130,8 +130,9 @@ int write_xml_testing_report(FILE *f, int user_mode, unsigned char const *txt,
                              const int *actions_vector,
                              const unsigned char *class1,
                              const unsigned char *class2);
-int write_xml_team_testing_report(serve_state_t, FILE *f,
-                                  int output_only,
+int write_xml_team_testing_report(serve_state_t,
+                                  const struct section_problem_data *prob,
+                                  FILE *f, int output_only,
                                   const unsigned char *txt,
                                   const unsigned char *table_class);
 

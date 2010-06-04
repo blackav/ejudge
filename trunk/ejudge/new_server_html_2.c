@@ -1728,6 +1728,7 @@ ns_write_priv_report(const serve_state_t cs,
   struct run_entry re;
   const struct section_global_data *global = cs->global;
   const unsigned char *report_dir = global->report_archive_dir;
+  const struct section_problem_data *prob = 0;
 
   static const int new_actions_vector[] =
   {
@@ -1759,6 +1760,11 @@ ns_write_priv_report(const serve_state_t cs,
   }
   if (!run_is_report_available(re.status)) {
     ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
+    goto done;
+  }
+  if (re.prob_id <= 0 || re.prob_id > cs->max_prob
+      || !(prob = cs->probs[re.prob_id])) {
+    ns_error(log_f, NEW_SRV_ERR_INV_PROB_ID);
     goto done;
   }
 
@@ -1820,7 +1826,7 @@ ns_write_priv_report(const serve_state_t cs,
     break;
   case CONTENT_TYPE_XML:
     if (team_report_flag) {
-      write_xml_team_testing_report(cs, f, 0, start_ptr, "b1");
+      write_xml_team_testing_report(cs, prob, f, 0, start_ptr, "b1");
     } else {
       write_xml_testing_report(f, 0, start_ptr, phr->session_id,phr->self_url,
                                "", new_actions_vector, "b1", 0);
