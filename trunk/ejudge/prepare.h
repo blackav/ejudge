@@ -682,7 +682,7 @@ struct section_global_data
   +path_t interactor_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 60500 */
+/* sizeof(struct section_problem_data) == 60764 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -927,6 +927,10 @@ struct section_problem_data
   int score_bonus_total META_ATTRIB((meta_private));
   /** parsed: score_bonus values */
   int *score_bonus_val META_ATTRIB((meta_private));
+
+  /** number of tests, open for unprivileged users */
+  unsigned char open_tests[256];
+  int *open_tests_val META_ATTRIB((meta_private));
 
   /** max virtual size limit  */
   size_t max_vm_size;
