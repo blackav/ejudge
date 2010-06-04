@@ -2484,8 +2484,9 @@ ns_olympiad_final_user_report(
         goto cleanup;
       }
       if (strlen(src_txt) != src_len) {
-        fprintf(log_f, "Source file %s is binary\n", src_path);
-        goto cleanup;
+        fprintf(fout, "%s<i>%s</i></td></tr></table>\n", td1,
+                _("Binary file is not shown"));
+        break;
       }
       while (src_len > 0 && isspace(src_txt[src_len - 1])) src_len--;
       src_txt[src_len] = 0;
