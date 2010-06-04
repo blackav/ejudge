@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/05/31 08:18:00
+// Generated 2010/06/04 13:10:28
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -403,6 +403,8 @@ enum
   CNTSPROB_score_bonus,
   CNTSPROB_score_bonus_total,
   CNTSPROB_score_bonus_val,
+  CNTSPROB_open_tests,
+  CNTSPROB_open_tests_val,
   CNTSPROB_max_vm_size,
   CNTSPROB_max_data_size,
   CNTSPROB_max_stack_size,
