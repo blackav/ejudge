@@ -2197,8 +2197,7 @@ ns_olympiad_final_user_report(
         fprintf(log_f, "Invalid problem %d in run %d\n", re.prob_id, run_id);
         goto cleanup;
       }
-      if (prob->type == PROB_TYPE_OUTPUT_ONLY
-          || prob->type == PROB_TYPE_SELECT_MANY
+      if (prob->type == PROB_TYPE_SELECT_MANY
           || prob->type == PROB_TYPE_CUSTOM) {
         fprintf(log_f,"Problem type `%s' for problem %s is not yet supported\n",
                 problem_unparse_type(prob->type), prob->short_name);
