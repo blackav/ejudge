@@ -2166,6 +2166,9 @@ ns_olympiad_final_user_report(
   const unsigned char *td1 = "<td class=\"b1\">";
   const unsigned char *th1 = "<th class=\"b1\">";
 
+  enum { SELECT_ONE_COLUMNS = 1 };
+  enum { SHORT_ANSWER_COLUMNS = 1 };
+
   if (global->score_system != SCORE_OLYMPIAD) return -1;
 
   if (teamdb_export_team(cs->teamdb_state, user_id, &tdb) < 0) {
@@ -2516,7 +2519,7 @@ ns_olympiad_final_user_report(
               th1, _("Problem"), th1, _("Answer"));
       for (i = f_id, k = 0; i < l_id; i++, k++) {
         if (!(prob = cs->probs[i])) continue;
-        if (!(k % 2)) fprintf(fout, "<tr>");
+        if (!(k % SHORT_ANSWER_COLUMNS)) fprintf(fout, "<tr>");
         if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
           fprintf(fout, "%s%s</td>", td1, ARMOR(prob->short_name));
         } else {
@@ -2525,7 +2528,8 @@ ns_olympiad_final_user_report(
         }
         if ((run_id = run_ids[i]) < 0) {
           fprintf(fout, "%s<i>%s</i></td>", td1, _("No answer"));
-          if ((k % 2) == 1) fprintf(fout, "</tr>\n");
+          if ((k % SHORT_ANSWER_COLUMNS) == SHORT_ANSWER_COLUMNS - 1)
+            fprintf(fout, "</tr>\n");
           continue;
         }
         if (run_get_entry(cs->runlog_state, run_ids[i], &re) < 0) abort();
@@ -2573,10 +2577,15 @@ ns_olympiad_final_user_report(
         */
         xfree(src_txt); src_txt = 0;
         src_len = 0;
-        if ((k % 2) == 1) fprintf(fout, "</tr>\n");
+        if ((k % SHORT_ANSWER_COLUMNS) == SHORT_ANSWER_COLUMNS - 1)
+          fprintf(fout, "</tr>\n");
       }
-      if (k % 2 == 1) fprintf(fout, "%s&nbsp;</td>%s&nbsp;</td></tr>",
-                              td1, td1);
+      if (k > 0) {
+        for (i = k; i < SHORT_ANSWER_COLUMNS; ++i) {
+          fprintf(fout, "%s&nbsp;</td>%s&nbsp;</td>", td1, td1);
+        }
+        fprintf(fout, "</tr>\n");
+      }
       fprintf(fout, "</table>\n");
       /*
       fprintf(fout, "\\noindent{}%s\n\n",
@@ -2592,7 +2601,7 @@ ns_olympiad_final_user_report(
               th1, _("Problem"), th1, _("Answer code"));
       for (i = f_id, k = 0; i < l_id; i++, k++) {
         if (!(prob = cs->probs[i])) continue;
-        if (!(k % 3)) fprintf(fout, "<tr>");
+        if (!(k % SELECT_ONE_COLUMNS)) fprintf(fout, "<tr>");
         if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
           fprintf(fout, "%s%s</td>", td1, ARMOR(prob->short_name));
         } else {
@@ -2601,7 +2610,8 @@ ns_olympiad_final_user_report(
         }
         if ((run_id = run_ids[i]) < 0) {
           fprintf(fout, "%s<i>%s</i></td>", td1, _("No answer"));
-          if ((k % 3) == 2) fprintf(fout, "</tr>\n");
+          if ((k % SELECT_ONE_COLUMNS) == SELECT_ONE_COLUMNS - 1)
+            fprintf(fout, "</tr>\n");
           continue;
         }
         if (run_get_entry(cs->runlog_state, run_ids[i], &re) < 0) abort();
@@ -2688,12 +2698,15 @@ ns_olympiad_final_user_report(
         }
         //fprintf(fout, "%d & %s\\\\\n", answer, ans_txt);
         fprintf(fout, "%s%d</td>", td1, answer);
-        if ((k % 3) == 2) fprintf(fout, "</tr>\n");
+        if ((k % SELECT_ONE_COLUMNS) == SELECT_ONE_COLUMNS - 1)
+          fprintf(fout, "</tr>\n");
       }
-      if ((k % 3) == 1)
-        fprintf(fout, "%s&nbsp;</td>%s&nbsp;</td>%s&nbsp;</td>%s&nbsp;</td></tr>\n", td1, td1, td1, td1);
-      if ((k % 3) == 2)
-        fprintf(fout, "%s&nbsp;</td>%s&nbsp;</td></tr>\n", td1, td1);
+      if (k > 0) {
+        for (i = k; i < SELECT_ONE_COLUMNS; ++i) {
+          fprintf(fout, "%s&nbsp;</td>%s&nbsp;</td>", td1, td1);
+        }
+        fprintf(fout, "</tr>\n");
+      }
       fprintf(fout, "</table>\n");
       break;
 
