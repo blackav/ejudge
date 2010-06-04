@@ -1121,6 +1121,9 @@ prepare_unparse_prob(
     if (prob->score_bonus[0])
       fprintf(f, "score_bonus = \"%s\"\n", CARMOR(prob->score_bonus));
   }
+  if (prob->open_tests[0]) {
+    fprintf(f, "open_tests = \"%s\"\n", CARMOR(prob->open_tests));
+  }
   if (score_system == SCORE_MOSCOW || score_system == SCORE_ACM) {
     if (prob->acm_run_penalty >= 0) {
       if ((prob->abstract && prob->acm_run_penalty != DFLT_P_ACM_RUN_PENALTY)

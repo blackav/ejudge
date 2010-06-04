@@ -2443,6 +2443,7 @@ ns_olympiad_final_user_report(
       break;
 
     case PROB_TYPE_TEXT_ANSWER:
+    case PROB_TYPE_OUTPUT_ONLY:
       fprintf(fout, "<br/><table class=\"b1\"><tr>%s%s</th>%s%s</th></tr>\n",
               th1, _("Problem"), th1, _("Comment"));
       i = f_id;
@@ -2697,7 +2698,6 @@ ns_olympiad_final_user_report(
       break;
 
     default:
-      //case PROB_TYPE_OUTPUT_ONLY:
       //case PROB_TYPE_SELECT_MANY:
       //case PROB_TYPE_CUSTOM:
       abort();

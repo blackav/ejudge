@@ -5354,6 +5354,32 @@ super_html_print_problem(FILE *f,
                                session_id, form_row_attrs[row ^= 1],
                                self_url, extra_args, prob_hidden_vars);
 
+  //PROBLEM_PARAM(open_tests, "s"),
+  extra_msg = 0;
+  if (show_adv && !prob->abstract) {
+    if (prob->abstract && (show_adv || prob->open_tests[0])) extra_msg = "";
+    if (!prob->abstract) {
+      prepare_set_prob_value(CNTSPROB_open_tests,
+                             &tmp_prob, sup_prob, sstate->global);
+      if (show_adv || tmp_prob.open_tests[0]) {
+        s = html_armor_string_dup(tmp_prob.open_tests);
+        snprintf(msg_buf, sizeof(msg_buf), "<i>(%s\"%s\")</i>",
+                 prob->open_tests[0]?"Default - ":"", s);
+        xfree(s);
+        extra_msg = msg_buf;
+      }
+    }
+  }
+  if (extra_msg)
+    print_string_editing_row_3(f, "Tests open for participants:",
+                               prob->open_tests,
+                               SSERV_CMD_PROB_CHANGE_OPEN_TESTS,
+                               SSERV_CMD_PROB_CLEAR_OPEN_TESTS,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+
+
   if (sstate->global && sstate->global->score_system == SCORE_OLYMPIAD) {
     //PROBLEM_PARAM(tests_to_accept, "d"),
     extra_msg = "";
@@ -6706,6 +6732,15 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CLEAR_SCORE_BONUS:
     PROB_CLEAR_STRING(score_bonus);
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_OPEN_TESTS:
+    // FIXME: check string for correctness
+    PROB_ASSIGN_STRING(open_tests);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_OPEN_TESTS:
+    PROB_CLEAR_STRING(open_tests);
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_CHECK_CMD:

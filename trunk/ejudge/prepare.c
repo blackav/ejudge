@@ -433,6 +433,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(tgz_pat, "s"),
   PROBLEM_PARAM(personal_deadline, "x"),
   PROBLEM_PARAM(score_bonus, "s"),
+  PROBLEM_PARAM(open_tests, "s"),
   PROBLEM_PARAM(statement_file, "s"),
   PROBLEM_PARAM(alternatives_file, "s"),
   PROBLEM_PARAM(plugin_file, "s"),
@@ -866,6 +867,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->personal_deadline);
   sarray_free(p->alternative);
   xfree(p->score_bonus_val);
+  xfree(p->open_tests_val);
   free_testsets(p->ts_total, p->ts_infos);
   free_deadline_penalties(p->dp_total, p->dp_infos);
   free_personal_deadlines(p->pd_total, p->pd_infos);
@@ -2012,6 +2014,118 @@ parse_score_bonus(const unsigned char *str, int *p_total, int **p_values)
   return -1;
 }
 
+static int
+int_sort_func(const void *p1, const void *p2)
+{
+  int v1 = *(const int*) p1;
+  int v2 = *(const int*) p2;
+
+  if (v1 < v2) return -1;
+  if (v1 > v2) return 1;
+  return 0;
+}
+
+int
+prepare_parse_open_tests(FILE *flog, const unsigned char *str, int **p_vals)
+{
+  int *vals = 0;
+  int *x = 0;
+  int x_a = 0;
+  int x_u = 0;
+  const unsigned char *p = str;
+  int n;
+  int v1, v2, i, j;
+
+  if (*p_vals) *p_vals = 0;
+  if (!str || !*str) return 0;
+
+  while (1) {
+    while (isspace(*p)) ++p;
+    if (!*p) break;
+    if (!isdigit(*p)) {
+      if (flog) {
+        fprintf(flog, "parse_open_tests: number expected\n");
+      }
+      goto fail;
+    }
+    v1 = -1; n = -1;
+    if (sscanf(p, "%d%n", &v1, &n) != 1 || v1 <= 0 || v1 > 100000) {
+      if (flog) {
+        fprintf(flog, "parse_open_tests: invalid test number\n");
+      }
+      goto fail;
+    }
+    v2 = v1;
+    p += n;
+    while (isspace(*p)) ++p;
+    if (*p == '-') {
+      ++p;
+      while (isspace(*p)) ++p;
+      if (sscanf(p, "%d%n", &v2, &n) != 1 || v2 <= 0 || v2 > 100000) {
+        if (flog) {
+          fprintf(flog, "parse_open_tests: invalid test number\n");
+        }
+        goto fail;
+      }
+      if (v2 < v1) {
+        if (flog) {
+          fprintf(flog, "parse_open_tests: second test in range is < than the first");
+        }
+        goto fail;
+      }
+      while (isspace(*p)) ++p;
+    }
+    if (*p == ',') {
+      ++p;
+    }
+
+    if (x_u + v2 - v1 + 1 > x_a) {
+      int new_a = x_a;
+      int *new_x = 0;
+      if (!new_a) new_a = 8;
+      while (new_a < x_u + v2 - v1 + 1) new_a *= 2;
+      XCALLOC(new_x, new_a);
+      if (x_u > 0) {
+        memcpy(new_x, x, x_u * sizeof(new_x[0]));
+      }
+      xfree(x);
+      x = new_x;
+      x_a = new_a;
+    }
+    for (; v1 <= v2; ++v1)
+      x[x_u++] = v1;
+  }
+
+  if (x_u > 0) {
+    // remove duplicates
+    qsort(x, x_u, sizeof(x[0]), int_sort_func);
+    for (i = 0, j = 1; j < x_u; ++j) {
+      if (x[i] != x[j]) {
+        x[++i] = x[j];
+      }
+    }
+    x_u = i + 1;
+  }
+
+  if (x_u > 0) {
+    XCALLOC(vals, x_u + 1);
+    memcpy(vals, x, x_u * sizeof(vals[0]));
+  }
+  xfree(x); x = 0; x_a = x_u = 0;
+
+  if (p_vals) {
+    *p_vals = vals;
+  } else {
+    xfree(vals); vals = 0;
+  }
+  return 0;
+
+fail:
+  xfree(x);
+  xfree(vals);
+  return -1;
+}
+
 const unsigned char * const memory_limit_type_str[] =
 {
   [MEMLIMIT_TYPE_DEFAULT] = "default",
@@ -3129,6 +3243,11 @@ set_defaults(
       if (prob->score_bonus[0]) {
         if (parse_score_bonus(prob->score_bonus, &prob->score_bonus_total,
                               &prob->score_bonus_val) < 0) return -1;
+      }
+      if (prob->open_tests[0]) {
+        if (prepare_parse_open_tests(stderr, prob->open_tests,
+                                     &prob->open_tests_val) < 0)
+          return -1;
       }
     }
 
