@@ -2513,10 +2513,12 @@ ns_olympiad_final_user_report(
       break;
 
     case PROB_TYPE_SHORT_ANSWER:
-      fprintf(fout, "<br/><table class=\"b1\">\n"
-              "<tr>%s%s</th>%s%s</th>%s%s</th>%s%s</th></tr>\n",
-              th1, _("Problem"), th1, _("Answer"),
-              th1, _("Problem"), th1, _("Answer"));
+      fprintf(fout, "<br/><table class=\"b1\">\n<tr>");
+      for (i = 0; i < SHORT_ANSWER_COLUMNS; ++i) {
+        fprintf(fout, "%s%s</th>%s%s</th>",
+                th1, _("Problem"), th1, _("Answer"));
+      }
+      fprintf(fout, "</tr>\n");
       for (i = f_id, k = 0; i < l_id; i++, k++) {
         if (!(prob = cs->probs[i])) continue;
         if (!(k % SHORT_ANSWER_COLUMNS)) fprintf(fout, "<tr>");
@@ -2594,11 +2596,12 @@ ns_olympiad_final_user_report(
       break;
 
     case PROB_TYPE_SELECT_ONE:
-      fprintf(fout, "<br/><table class=\"b1\">\n"
-              "<tr>%s%s</th>%s%s</th>%s%s</th>%s%s</th>%s%s</th>%s%s</th></tr>\n",
-              th1, _("Problem"), th1, _("Answer code"),
-              th1, _("Problem"), th1, _("Answer code"),
-              th1, _("Problem"), th1, _("Answer code"));
+      fprintf(fout, "<br/><table class=\"b1\">\n<tr>");
+      for (i = 0; i < SELECT_ONE_COLUMNS; ++i) {
+        fprintf(fout, "%s%s</th>%s%s</th>",
+                th1, _("Problem"), th1, _("Answer code"));
+      }
+      fprintf(fout, "</tr>\n");
       for (i = f_id, k = 0; i < l_id; i++, k++) {
         if (!(prob = cs->probs[i])) continue;
         if (!(k % SELECT_ONE_COLUMNS)) fprintf(fout, "<tr>");
