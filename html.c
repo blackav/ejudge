@@ -4247,10 +4247,13 @@ write_public_log(
 }
 
 int
-write_xml_team_testing_report(const serve_state_t state, FILE *f,
-                              int output_only,
-                              const unsigned char *txt,
-                              const unsigned char *table_class)
+write_xml_team_testing_report(
+        const serve_state_t state,
+        const struct section_problem_data *prob,
+        FILE *f,
+        int output_only,
+        const unsigned char *txt,
+        const unsigned char *table_class)
 {
   const struct section_global_data *global = state->global;
   testing_report_xml_t r = 0;
@@ -4258,6 +4261,8 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
   unsigned char *font_color = 0, *s;
   int need_comment = 0, need_info = 0, is_kirov = 0, i;
   unsigned char cl[128] = { 0 };
+  const int *open_tests = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if (table_class && *table_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
@@ -4335,12 +4340,20 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
     xfree(s);
   }
 
+  open_tests = 0;
+  if (prob) open_tests = prob->open_tests_val;
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
+    while (open_tests && *open_tests > 0 && *open_tests < i) {
+      ++open_tests;
+    }
     if (t->team_comment) {
       need_comment = 1;
     }
     if (global->report_error_code && t->status == RUN_RUN_TIME_ERR) {
+      need_info = 1;
+    }
+    if (open_tests && *open_tests == i && t->status == RUN_RUN_TIME_ERR) {
       need_info = 1;
     }
   }
@@ -4361,8 +4374,14 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
   }
 
   fprintf(f, "</tr>\n");
+
+  open_tests = 0;
+  if (prob) open_tests = prob->open_tests_val;
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
+    while (open_tests && *open_tests > 0 && *open_tests < i) {
+      ++open_tests;
+    }
     fprintf(f, "<tr>");
     fprintf(f, "<td%s>%d</td>", cl, t->num);
     if (t->status == RUN_OK || t->status == RUN_ACCEPTED) {
@@ -4389,7 +4408,8 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
     */
     if (need_info) {
       fprintf(f, "<td%s>", cl);
-      if (t->status == RUN_RUN_TIME_ERR && global->report_error_code) {
+      if (t->status == RUN_RUN_TIME_ERR
+          && (global->report_error_code || (open_tests && *open_tests == i))) {
         if (t->exit_comment) {
           fprintf(f, "%s", t->exit_comment);
         } else if (t->term_signal >= 0) {
@@ -4418,6 +4438,60 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
     fprintf(f, "</tr>\n");
   }
   fprintf(f, "</table>\n");
+
+  open_tests = 0;
+  if (prob) open_tests = prob->open_tests_val;
+  if (open_tests && *open_tests > 0) {
+    fprintf(f, "<pre>");
+    for (i = 0; i < r->run_tests; i++) {
+      if (!(t = r->tests[i])) continue;
+      if (!t->args && !t->args_too_long && !t->input
+          && !t->output && !t->error && !t->correct && !t->checker)
+        continue;
+      while (*open_tests > 0 && *open_tests < i) {
+        ++open_tests;
+      }
+      if (*open_tests != i) continue;
+      fprintf(f, _("<b>====== Test #%d =======</b>\n"), t->num);
+      if (t->args || t->args_too_long) {
+        fprintf(f, "<a name=\"%dL\"></a>", t->num);
+        fprintf(f, _("<u>--- Command line arguments ---</u>\n"));
+        if (t->args_too_long) {
+          fprintf(f, _("<i>Command line is too long</i>\n"));
+        } else {
+          fprintf(f, "%s", ARMOR(t->args));
+        }
+      }
+      if (t->input) {
+        fprintf(f, "<a name=\"%dI\"></a>", t->num);
+        fprintf(f, _("<u>--- Input ---</u>\n"));
+        fprintf(f, "%s", ARMOR(t->input));
+      }
+      if (t->output) {
+        fprintf(f, "<a name=\"%dO\"></a>", t->num);
+        fprintf(f, _("<u>--- Output ---</u>\n"));
+        fprintf(f, "%s", ARMOR(t->output));
+      }
+      if (t->correct) {
+        fprintf(f, "<a name=\"%dA\"></a>", t->num);
+        fprintf(f, _("<u>--- Correct ---</u>\n"));
+        fprintf(f, "%s", ARMOR(t->correct));
+      }
+      if (t->correct) {
+        fprintf(f, "<a name=\"%dE\"></a>", t->num);
+        fprintf(f, _("<u>--- Stderr ---</u>\n"));
+        fprintf(f, "%s", ARMOR(t->error));
+      }
+      if (t->checker) {
+        fprintf(f, "<a name=\"%dC\"></a>", t->num);
+        fprintf(f, _("<u>--- Checker output ---</u>\n"));
+        fprintf(f, "%s", ARMOR(t->checker));
+      }
+    }
+    fprintf(f, "</pre>");
+  }
+
+  html_armor_free(&ab);
   testing_report_free(r);
   return 0;
 }
