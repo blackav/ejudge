@@ -8368,13 +8368,74 @@ recompile_checker(
   } else if (retcode > 0) {
     fprintf(f, "Error: compiler exit code %d\n", retcode);
     return -1;
-  } if (stat(checker_path, &stbuf1)) {
+  }
+  if (stat(checker_path, &stbuf1)) {
     fprintf(f, "Error: checker is not created by the compiler\n");
     return -1;
   } else {
     fprintf(f, "Info: checker %s is recompiled\n", filename);
   }
   return 0;
+}
+
+static int
+invoke_make(
+        FILE *flog,
+        const struct ejudge_cfg *config,
+        const struct section_global_data *global,
+        const struct section_problem_data *prob,
+        int variant)
+{
+  path_t makefile_path;
+  path_t problem_dir;
+  struct stat stbuf;
+  int r;
+  unsigned char cmd[8196];
+
+  get_advanced_layout_path(problem_dir, sizeof(problem_dir), global,
+                           prob, NULL, variant);
+  if (access(problem_dir, R_OK | X_OK) < 0) {
+    fprintf(flog, "Error: problem directory %s does not exist or is not accessible\n", problem_dir);
+    return -1;
+  }
+  snprintf(makefile_path, sizeof(makefile_path), "%s/Makefile", problem_dir);
+  if (stat(makefile_path, &stbuf) < 0) {
+    fprintf(flog, "Info: Makefile in %s does not exist\n", problem_dir);
+    return 0;
+  }
+
+  snprintf(cmd, sizeof(cmd), "make EJUDGE_PREFIX_DIR=\"%s\" EJUDGE_CONTESTS_HOME_DIR=\"%s\" EJUDGE_LOCAL_DIR=\"%s\" all", EJUDGE_PREFIX_DIR, EJUDGE_CONTESTS_HOME_DIR, EJUDGE_LOCAL_DIR);
+  r = invoke_compile_process(flog, problem_dir, cmd);
+  if (r < 0) {
+    fprintf(flog, "Error: failed to start make\n");
+    return -1;
+  } else if (r > 0) {
+    fprintf(flog, "Error: make failed with exit code %d\n", r);
+    return -1;
+  }
+  // check for checker
+  if (!prob->standard_checker[0]) {
+    get_advanced_layout_path(cmd, sizeof(cmd), global, prob,
+                             prob->check_cmd, variant);
+    if (access(cmd, X_OK) < 0) {
+      fprintf(flog, "Error: checker executable %s is not created\n", cmd);
+      return -1;
+    }
+  }
+  // check for valuer
+  if (prob->valuer_cmd[0]) {
+    get_advanced_layout_path(cmd, sizeof(cmd), global, prob,
+                             prob->valuer_cmd, variant);
+    if (access(cmd, X_OK) < 0) {
+      fprintf(flog, "Error: valuer executable %s is not created\n", cmd);
+      return -1;
+    }
+  }
+  // check for interactor
+  if (prob->interactor_cmd[0]) {
+  }
+
+  return 1;
 }
 
 static int
@@ -8491,6 +8552,7 @@ super_html_check_tests(FILE *f,
   int total_tests = 0, v_total_tests = 0;
   unsigned char hbuf[1024];
   int file_group, file_mode, dir_group, dir_mode;
+  int already_compiled = 0;
 
   if (sstate->serve_parse_errors) {
     fprintf(f, "<h2>The tests cannot be checked</h2>\n");
@@ -8794,7 +8856,22 @@ super_html_check_tests(FILE *f,
       }
     }
 
-    if (!tmp_prob.standard_checker[0]) {
+    /* check for Makefile and invoke make if necessary */
+    if (global->advanced_layout > 0) {
+      if (prob->variant_num <= 0) {
+        if ((j = invoke_make(flog, config, global, &tmp_prob, -1)) < 0)
+          goto check_failed;
+        if (j > 0) already_compiled = 1;
+      } else {
+        for (variant = 1; variant <= prob->variant_num; ++variant) {
+          if ((j = invoke_make(flog, config, global, &tmp_prob, variant)) < 0)
+            goto check_failed;
+          if (j > 0) already_compiled = 1;
+        }
+      }
+    }
+
+    if (!tmp_prob.standard_checker[0] && !already_compiled) {
       if (prob->variant_num <= 0) {
         if (recompile_checker(config, flog, checker_path) < 0)
           goto check_failed;
