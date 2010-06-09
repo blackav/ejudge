@@ -106,3 +106,6 @@ CHKCFILES =\
  cmp_file_nospace.c\
  cmp_sexpr.c\
  cmp_yesno.c
+
+STYLECFILES =\
+ style_archive.c

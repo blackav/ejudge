@@ -78,12 +78,13 @@ include files.make
 OFILES=$(CFILES:.c=.o) testinfo.o
 PICOFILES = $(CFILES:%.c=pic/%.o) pic/testinfo.o
 CHKXFILES = $(CHKCFILES:.c=)
+STYLEXFILES = $(STYLECFILES:.c=)
 
 ifndef STATIC
-TARGETS = pic libchecker.a libchecker.so ${CHKXFILES}
+TARGETS = pic libchecker.a libchecker.so ${CHKXFILES} ${STYLEXFILES}
 TARGETSHAREDLIBS = libchecker.so
 else
-TARGETS = libchecker.a ${CHKXFILES}
+TARGETS = libchecker.a ${CHKXFILES} ${STYLEXFILES}
 TARGETSHAREDLIBS =
 endif
 TARGETLIBS = libchecker.a
@@ -91,7 +92,7 @@ TARGETLIBS = libchecker.a
 all : ${TARGETS}
 
 clean :
-	-rm -fr *.o *.a *.so *~ *.bak testinfo.h testinfo.c pic ${CHKXFILES}
+	-rm -fr *.o *.a *.so *~ *.bak testinfo.h testinfo.c pic ${CHKXFILES} ${STYLEXFILES}
 pic :
 	mkdir pic
 
@@ -110,7 +111,7 @@ install : all
 	for i in symbols.pas testlib.pas; do install -m 644 fpc/$$i "${DESTDIR}${datadir}/ejudge/testlib/fpc"; done
 	install -m 644 delphi/testlib.pas "${DESTDIR}${datadir}/ejudge/testlib/delphi"
 	mkdir -p "${DESTDIR}${libexecdir}/ejudge/checkers"
-	for i in ${CHKXFILES}; do install -m 755 $$i "${DESTDIR}${libexecdir}/ejudge/checkers"; done
+	for i in ${CHKXFILES} ${STYLEXFILES}; do install -m 755 $$i "${DESTDIR}${libexecdir}/ejudge/checkers"; done
 	-cd "${DESTDIR}${datadir}/ejudge/testlib/fpc"; FPC=`"${DESTDIR}${libexecdir}/ejudge"/fpc-version -p`; [ x"$$FPC" != x ] && "$$FPC" testlib.pas
 	-cd "${DESTDIR}${datadir}/ejudge/testlib/delphi"; DCC=`"${DESTDIR}${libexecdir}/ejudge"/dcc-version -p`; [ x"$$DCC" != x ] && "$$DCC" testlib.pas
 
@@ -216,6 +217,9 @@ else
 cmp_% : cmp_%.c checker.h checker_internal.h libchecker.so
 	${CC} ${CFLAGS} ${LDFLAGS} ${RPATHOPT} -L. $< -o $@ -lchecker -lm
 endif
+
+style_% : style_%.c
+	${CC} ${CFLAGS} ${LDFLAGS} -L.. $< ${REUSE_LIB_OPT} -o $@ -lcommon -lplatform -lreuse -lm
 
 pic/%.o : %.c
 	${CC} ${CFLAGS} -fPIC -DPIC -c $< -o $@
