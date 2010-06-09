@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -117,6 +117,63 @@ mime_type_parse(const unsigned char *str)
   for (i = 0; i < MIME_TYPE_LAST; i++)
     if (!strcasecmp(mime_types[i].mime_type, str))
       return i;
+  return -1;
+}
+
+int
+mime_type_guess_file(const unsigned char *path, int check_text)
+{
+  unsigned char cmdline[1024];
+  FILE *ff = 0;
+  unsigned char fbuf[1024];
+  size_t flen;
+  int i, c;
+  int binary_flag = 1;
+
+  snprintf(cmdline, sizeof(cmdline), "/usr/bin/file -b \"%s\"", path);
+  if (!(ff = popen(cmdline, "r"))) {
+    err("mime_type_guess: popen() failed: %s", os_ErrorMsg());
+    goto failed;
+  }
+  if (!fgets_unlocked(fbuf, sizeof(fbuf), ff)) {
+    err("mime_type_guess: unexpected EOF from pipe");
+    goto failed;
+  }
+  if (getc_unlocked(ff) != EOF) {
+    err("mime_type_guess: garbage in pipe");
+    while (getc_unlocked(ff) != EOF);
+    goto failed;
+  }
+  pclose(ff); ff = 0;
+  if ((flen = strlen(fbuf)) > sizeof(fbuf) - 10) {
+    err("mime_type_guess: string is too long");
+    goto failed;
+  }
+  while (flen > 0 && isspace(fbuf[flen - 1])) fbuf[--flen] = 0;
+  if (flen > 0) {
+    for (i = 0; i < MIME_TYPE_LAST; i++)
+      if (mime_types[i].file_output[0]
+          && strstr(fbuf, mime_types[i].file_output))
+        return i;
+  }
+
+  if (check_text > 0) {
+    if (!(ff = fopen(path, "r"))) {
+      return MIME_TYPE_BINARY;
+    }
+    while ((c = getc_unlocked(ff)) != EOF) {
+      if (c == 0 || c == 26 || c == 27) {
+        binary_flag = 1;
+        break;
+      }
+    }
+    fclose(ff); ff = 0;
+    if (!binary_flag) return MIME_TYPE_TEXT;
+  }
+  return MIME_TYPE_BINARY;
+
+failed:
+  if (ff) pclose(ff);
   return -1;
 }
 
