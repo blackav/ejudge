@@ -3,7 +3,7 @@
 #ifndef __MIME_TYPE_H__
 #define __MIME_TYPE_H__
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -61,5 +61,8 @@ int mime_type_parse_suffix(const unsigned char *str);
 int mime_type_guess(const unsigned char *tmpdir,
                     const unsigned char *bytes,
                     size_t size);
+
+int
+mime_type_guess_file(const unsigned char *path, int check_text);
 
 #endif /* __MIME_TYPE_H__ */
