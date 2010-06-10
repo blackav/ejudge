@@ -251,21 +251,27 @@ do_loop(void)
 #if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
         task_EnableAllSignals(tsk);
 #endif /* HAVE_TASK_ENABLEALLSIGNALS */
-        task_Start(tsk);
-        task_Wait(tsk);
-        if (task_IsTimeout(tsk)) {
-          err("Style checker process timed out");
-          tail_message = "\n\nStyle checker process timed out";
-          ce_flag = 1;
-          rpl.status = RUN_STYLE_ERR;
-        } else if (task_IsAbnormal(tsk)) {
-          info("Style checker failed");
+        if (task_Start(tsk) < 0) {
+          err("Failed to start style checker process");
+          tail_message = "\n\nFailed to start style checker";
           ce_flag = 1;
           rpl.status = RUN_STYLE_ERR;
         } else {
-          info("Style checker sucessful");
-          ce_flag = 0;
-          rpl.status = RUN_OK;
+          task_Wait(tsk);
+          if (task_IsTimeout(tsk)) {
+            err("Style checker process timed out");
+            tail_message = "\n\nStyle checker process timed out";
+            ce_flag = 1;
+            rpl.status = RUN_STYLE_ERR;
+          } else if (task_IsAbnormal(tsk)) {
+            info("Style checker failed");
+            ce_flag = 1;
+            rpl.status = RUN_STYLE_ERR;
+          } else {
+            info("Style checker sucessful");
+            ce_flag = 0;
+            rpl.status = RUN_OK;
+          }
         }
         task_Delete(tsk); tsk = 0;
       }
