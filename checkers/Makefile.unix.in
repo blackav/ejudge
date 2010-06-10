@@ -219,7 +219,7 @@ cmp_% : cmp_%.c checker.h checker_internal.h libchecker.so
 endif
 
 style_% : style_%.c
-	${CC} ${CFLAGS} ${LDFLAGS} -L.. $< ${REUSE_LIB_OPT} -o $@ -lcommon -lplatform -lreuse -lm
+	${CC} ${CFLAGS} ${LDFLAGS} -L.. $< ${REUSE_LIB_OPT} -o $@ -lcommon -lplatform -lreuse -lz -lm
 
 pic/%.o : %.c
 	${CC} ${CFLAGS} -fPIC -DPIC -c $< -o $@
