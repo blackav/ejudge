@@ -29,13 +29,16 @@ struct compile_request_packet
   int lang_id;
   int locale_id;
   int output_only;
+  int style_check_only;
   int ts1;
   int ts1_us;
   unsigned char *style_checker;
   int run_block_len;
   void *run_block;
   int env_num;
+  int sc_env_num;
   unsigned char **env_vars;
+  unsigned char **sc_env_vars;
 };
 
 struct compile_reply_packet
