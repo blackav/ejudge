@@ -955,7 +955,7 @@ struct section_problem_data
   } xml META_ATTRIB((meta_hidden));
 };
 
-/* sizeof(struct section_language_data) == 33660 */
+/* sizeof(struct section_language_data) == 33664 */
 struct section_language_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -993,6 +993,8 @@ struct section_language_data
   path_t cmd;
   /** style checker */
   path_t style_checker_cmd;
+  /** environment to pass to the style checker */
+  ejenvlist_t style_checker_env;
 
   /** do not test this language automatically */
   ejintbool_t disable_auto_testing;
