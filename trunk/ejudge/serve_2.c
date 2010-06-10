@@ -939,6 +939,9 @@ serve_compile_request(
         int output_only,
         unsigned char const *sfx,
         char **compiler_env,
+        int style_check_only,
+        const unsigned char *style_checker_cmd,
+        char **style_checker_env,
         int accepting_mode,
         int priority_adjustment,
         int notify_flag,
@@ -1009,9 +1012,12 @@ serve_compile_request(
   cp.run_block = &rx;
   cp.env_num = -1;
   cp.env_vars = (unsigned char**) compiler_env;
-  if (lang->style_checker_cmd[0]) {
-    cp.style_checker = (unsigned char*) lang->style_checker_cmd;
+  cp.style_check_only = !!style_check_only;
+  if (style_checker_cmd && style_checker_cmd[0]) {
+    cp.style_checker = (unsigned char*) style_checker_cmd;
   }
+  cp.sc_env_num = -1;
+  cp.sc_env_vars = (unsigned char**) style_checker_env;
 
   memset(&rx, 0, sizeof(rx));
   rx.accepting_mode = accepting_mode;
@@ -2285,6 +2291,8 @@ serve_rejudge_run(
                         (prob->type > 0),
                         state->langs[re.lang_id]->src_sfx,
                         state->langs[re.lang_id]->compiler_env,
+                        0, state->langs[re.lang_id]->style_checker_cmd,
+                        state->langs[re.lang_id]->style_checker_env,
                         accepting_mode, priority_adjustment, 1, prob, lang);
 
   serve_audit_log(state, run_id, user_id, ip, ssl_flag, "Command: Rejudge\n");
