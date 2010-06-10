@@ -79,6 +79,8 @@ compile_request_packet_read(
   FAIL_IF(pout->locale_id < 0 || pout->locale_id > EJ_MAX_LOCALE_ID);
   pout->output_only = cvt_bin_to_host_32(pin->output_only);
   FAIL_IF(pout->output_only < 0 || pout->output_only > 1);
+  pout->style_check_only = cvt_bin_to_host_32(pin->style_check_only);
+  FAIL_IF(pout->style_check_only < 0 || pout->style_check_only > 1);
   pout->ts1 = cvt_bin_to_host_32(pin->ts1);
   pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);
   FAIL_IF(pout->ts1_us < 0 || pout->ts1_us > USEC_MAX);
@@ -132,6 +134,29 @@ compile_request_packet_read(
   }
 
   // align the address at the 16-byte boundary
+  pkt_bin_align_addr(pin_ptr, in_data);
+
+  pout->sc_env_num = cvt_bin_to_host_32(pin->sc_env_num);
+  FAIL_IF(pout->sc_env_num < 0 || pout->sc_env_num > EJ_MAX_COMPILE_ENV_NUM);
+  FAIL_IF(pin_ptr + pout->sc_env_num * sizeof(rint32_t) > end_ptr);
+  if (pout->sc_env_num > 0) {
+    XCALLOC(pout->sc_env_vars, pout->sc_env_num + 1);
+    str_lens = (rint32_t*) alloca(pout->sc_env_num * sizeof(rint32_t));
+    memcpy(str_lens, pin_ptr, pout->sc_env_num * sizeof(rint32_t));
+    for (i = 0; i < pout->sc_env_num; i++) {
+      str_lens[i] = cvt_bin_to_host_32(str_lens[i]);
+      FAIL_IF(str_lens[i] < 0 || str_lens[i] > EJ_MAX_COMPILE_ENV_LEN);
+      pout->sc_env_vars[i] = xmalloc(str_lens[i] + 1);
+    }
+    pin_ptr += pkt_bin_align(pout->sc_env_num * sizeof(rint32_t));
+    for (i = 0; i < pout->sc_env_num; i++) {
+      FAIL_IF(pin_ptr + str_lens[i] > end_ptr);
+      memcpy(pout->sc_env_vars[i], pin_ptr, str_lens[i]);
+      pout->sc_env_vars[i][str_lens[i]] = 0;
+      pin_ptr += str_lens[i];
+    }
+  }
+
   pkt_bin_align_addr(pin_ptr, in_data);
   FAIL_IF(pin_ptr != end_ptr);
 

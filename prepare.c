@@ -468,6 +468,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(cmd, "s"),
   LANGUAGE_PARAM(content_type, "s"),
   LANGUAGE_PARAM(style_checker_cmd, "s"),
+  LANGUAGE_PARAM(style_checker_env, "x"),
 
   LANGUAGE_PARAM(disable_auto_testing, "d"),
   LANGUAGE_PARAM(disable_testing, "d"),
@@ -767,6 +768,7 @@ prepare_language_free_func(struct generic_section_config *gp)
   struct section_language_data *p = (struct section_language_data*) gp;
 
   p->compiler_env = sarray_free(p->compiler_env);
+  p->style_checker_env = sarray_free(p->style_checker_env);
   xfree(p->unhandled_vars);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -2997,6 +2999,18 @@ set_defaults(
                                               section_language_params,
                                               section_tester_params);
         if (!lang->compiler_env[j]) return -1;
+      }
+    }
+    if (lang->style_checker_env) {
+      for (j = 0; lang->style_checker_env[j]; ++j) {
+        lang->style_checker_env[j] = varsubst_heap(state,
+                                                   lang->style_checker_env[j],
+                                                   1,
+                                                   section_global_params,
+                                                   section_problem_params,
+                                                   section_language_params,
+                                                   section_tester_params);
+        if (!lang->style_checker_env[j]) return -1;
       }
     }
   }

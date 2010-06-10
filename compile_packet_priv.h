@@ -19,7 +19,7 @@
 
 #include <reuse/integral.h>
 
-#define EJ_COMPILE_PACKET_VERSION 2
+#define EJ_COMPILE_PACKET_VERSION 3
 
 /* various private data structures and constants for compile packets */
 
@@ -35,16 +35,20 @@ struct compile_request_bin_packet
   rint32_t lang_id;             /* the language [1..max_lang] */
   rint32_t locale_id;           /* the locale identifier */
   rint32_t output_only;         /* the problem is output only */
+  rint32_t style_check_only;    /* only perform style check */
   rint32_t ts1;                 /* the time, when comp. request was queued */
   rint32_t ts1_us;              /* the microsecond component */
   rint32_t style_checker_len;   /* the length of the style checker command */
   rint32_t run_block_len;       /* the length of the run block */
   rint32_t env_num;             /* the number of env. variables */
-  unsigned char pad[12];        /* padding to 64 boundary */
+  rint32_t sc_env_num;          /* the number of style checker env. vars */
+  unsigned char pad[4];        /* padding to 64 boundary */
   /* style checker command (aligned to 16 byte boundary) */
   /* run_block (aligned to 16 byte boundary) */
   /* env variable length array (aligned to 16-byte address boundary) */
   /* env variable strings (aligned to 16-byte boundary) */
+  /* style checker environment length array */
+  /* style checker environment strings */
 };
 
 /* compile->serve binary packet structure */

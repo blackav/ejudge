@@ -241,6 +241,10 @@ do_loop(void)
         task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_REWRITE, 0777);
         task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
         task_SetRedir(tsk, 2, TSR_DUP, 1);
+        if (req->sc_env_num > 0) {
+          for (i = 0; i < req->sc_env_num; i++)
+            task_PutEnv(tsk, req->sc_env_vars[i]);
+        }
         if (lang->compile_real_time_limit > 0) {
           task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
         }
