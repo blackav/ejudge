@@ -61,6 +61,8 @@
 #define INTERNAL_CHARSET "utf-8"
 #endif
 
+#define ARMOR(s)  html_armor_buf(&ab, (s))
+
 static const unsigned char head_row_attr[] =
   " bgcolor=\"#a0a0a0\"";
 static const unsigned char prob_row_attr[] =
@@ -3289,15 +3291,15 @@ super_html_edit_languages(
   unsigned char *cmt, *lang_name, *td_attr, *env;
   path_t lang_hidden_vars;
   int row = 1;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if (sstate->serve_parse_errors) {
-    s = html_armor_string_dup(sstate->serve_parse_errors);
     super_html_contest_page_menu(f, session_id, sstate, 3, self_url, hidden_vars,
                                  extra_args);
     fprintf(f, "<h2><tt>serve.cfg</tt> cannot be edited</h2>\n");
-    fprintf(f, "<font color=\"red\"><pre>%s</pre></font>\n", s);
-    xfree(s);
-    return 0;
+    fprintf(f, "<font color=\"red\"><pre>%s</pre></font>\n",
+            ARMOR(sstate->serve_parse_errors));
+    goto cleanup;
   }
 
   if (sstate->disable_compilation_server) {
@@ -3358,9 +3360,8 @@ super_html_edit_languages(
     html_start_form(f, 1, self_url, hidden_vars);
     snprintf(buf, sizeof(buf), "%d", i);
     html_hidden_var(f, "lang_id", buf);
-    s = html_armor_string_dup(lang_name);
-    fprintf(f, "<tr><td colspan = \"2\"%s><b>%s</b>%s</td><td>",td_attr,s,cmt);
-    xfree(s);
+    fprintf(f, "<tr><td colspan = \"2\"%s><b>%s</b>%s</td><td>",
+            td_attr, ARMOR(lang_name), cmt);
     if (lang) {
       if (!sstate->lang_flags[lang->id]) {
         html_submit_button(f, SSERV_CMD_LANG_SHOW_DETAILS, "View details");
@@ -3388,11 +3389,8 @@ super_html_edit_languages(
             form_row_attrs[row ^= 1],
             lang->compile_id);
     //LANGUAGE_PARAM(short_name, "s"),
-    s = html_armor_string_dup(lang->short_name);
     fprintf(f, "<tr%s><td>Language short name:</td><td>%s</td><td>&nbsp;</td></tr>\n",
-            form_row_attrs[row ^= 1],
-            s);
-    xfree(s);
+            form_row_attrs[row ^= 1], ARMOR(lang->short_name));
     //LANGUAGE_PARAM(arch, "s"),
     s = html_armor_string_dup(lang->arch);
     fprintf(f, "<tr%s><td>Language architecture:</td><td>%s%s</td><td>&nbsp;</td></tr>\n",
@@ -3400,11 +3398,9 @@ super_html_edit_languages(
             s, *s?"":"<i>(Default)</i>");
     xfree(s);
     //LANGUAGE_PARAM(src_sfx, "s"),
-    s = html_armor_string_dup(lang->src_sfx);
     fprintf(f, "<tr%s><td>Suffix of the source files:</td><td>%s</td><td>&nbsp;</td></tr>\n",
             form_row_attrs[row ^= 1],
-            s);
-    xfree(s);
+            ARMOR(lang->src_sfx));
     //LANGUAGE_PARAM(exe_sfx, "s"),
     s = html_armor_string_dup(lang->exe_sfx);
     fprintf(f, "<tr%s><td>Suffix of the executable files:</td><td>%s%s</td><td>&nbsp;</td></tr>\n",
@@ -3527,11 +3523,9 @@ super_html_edit_languages(
     xfree(env); env = 0;
 
     if (lang->unhandled_vars) {
-      s = html_armor_string_dup(lang->unhandled_vars);
       fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Uneditable parameters</td></tr>\n<tr><td colspan=\"3\"><pre>%s</pre></td></tr>\n",
               form_row_attrs[row ^= 1],
-              s);
-      xfree(s);
+              ARMOR(lang->unhandled_vars));
     }
   }
 
@@ -3546,6 +3540,8 @@ super_html_edit_languages(
   super_html_contest_footer_menu(f, session_id, sstate,
                                  self_url, hidden_vars, extra_args);
 
+cleanup:
+  html_armor_free(&ab);
   return 0;
 }
 
@@ -4030,13 +4026,14 @@ super_html_print_problem(FILE *f,
   unsigned char *s, *ss, *checker_env;
   unsigned char prob_hidden_vars[4096];
   unsigned char *extra_msg = 0;
-  struct section_problem_data tmp_prob;
+  struct section_problem_data *tmp_prob = 0;
   unsigned char msg_buf[1024];
   int flags, show_adv = 0, show_details = 0;;
   unsigned char num_buf[1024];
   struct section_global_data *global = sstate->global;
   unsigned char hbuf[1024];
   int row = 1, problem_type_flag = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if (is_abstract) {
     prob = sstate->aprobs[num];
@@ -4052,7 +4049,7 @@ super_html_print_problem(FILE *f,
   snprintf(prob_hidden_vars, sizeof(prob_hidden_vars),
            "%s<input type=\"hidden\" name=\"prob_id\" value=\"%d\"/>",
            hidden_vars, is_abstract?-num:num);
-  prepare_copy_problem(&tmp_prob, prob);
+  tmp_prob = prepare_copy_problem(prob);
 
   html_start_form(f, 1, self_url, prob_hidden_vars);
   if (is_abstract) {
@@ -4069,10 +4066,8 @@ super_html_print_problem(FILE *f,
       }
     }
   }
-  s = html_armor_string_dup(name_buf);
   fprintf(f, "<tr%s><td colspan=\"2\" align=\"center\">%s</td><td>",
-          prob_row_attr, s);
-  xfree(s);
+          prob_row_attr, ARMOR(name_buf));
   if (!show_details) {
     html_submit_button(f, SSERV_CMD_PROB_SHOW_DETAILS, "Show details");
   } else {
@@ -4124,19 +4119,16 @@ super_html_print_problem(FILE *f,
     fprintf(f, "<select name=\"param\">"
             "<option value=\"0\"></option>");
     for (i = 0; i < sstate->aprob_u; i++) {
-      s = html_armor_string_dup(sstate->aprobs[i]->short_name);
       fprintf(f, "<option value=\"%d\"%s>%s</option>",
-              i + 1, (i + 1 == sel_num)?" selected=\"1\"":"", s);
-      xfree(s);
+              i + 1, (i + 1 == sel_num)?" selected=\"1\"":"",
+              ARMOR(sstate->aprobs[i]->short_name));
     }
     fprintf(f, "</select></td><td>");
     html_submit_button(f, SSERV_CMD_PROB_CHANGE_SUPER, "Change");
     fprintf(f, "</td></tr></form>\n");
   } else {
-    s = html_armor_string_dup(prob->short_name);
     fprintf(f, "<tr%s><td>Problem Name:</td><td>%s</td><td>&nbsp;</td></tr>\n",
-            form_row_attrs[row ^= 1], s);
-    xfree(s);
+            form_row_attrs[row ^= 1], ARMOR(prob->short_name));
   }
 
   //PROBLEM_PARAM(type, "s")
@@ -4145,11 +4137,11 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   problem_type_flag = prob->type;
   if (!prob->abstract) {
-    prepare_set_prob_value(CNTSPROB_type, &tmp_prob, sup_prob, sstate->global);
+    prepare_set_prob_value(CNTSPROB_type, tmp_prob, sup_prob, sstate->global);
     snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-             problem_unparse_type(tmp_prob.type));
+             problem_unparse_type(tmp_prob->type));
     extra_msg = msg_buf;
-    problem_type_flag = tmp_prob.type;
+    problem_type_flag = tmp_prob->type;
   } else {
     if (prob->type < 0) prob->type = 0;
   }
@@ -4209,13 +4201,13 @@ super_html_print_problem(FILE *f,
 
   //PROBLEM_PARAM(manual_checking, "d")
   if ((prob->abstract && prob->type)
-      || (!prob->abstract && tmp_prob.type > 0)) {
+      || (!prob->abstract && tmp_prob->type > 0)) {
     extra_msg = 0;
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_manual_checking,
-                             &tmp_prob, sup_prob, sstate->global);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob.manual_checking?"Yes":"No");
+               tmp_prob->manual_checking?"Yes":"No");
       extra_msg = msg_buf;
     }
     print_boolean_3_select_row(f, "Problem is checked manually",
@@ -4228,14 +4220,14 @@ super_html_print_problem(FILE *f,
 
   //PROBLEM_PARAM(examinator_num, "d")
   if ((prob->abstract && prob->type)
-      || (!prob->abstract && tmp_prob.type > 0)) {
+      || (!prob->abstract && tmp_prob->type > 0)) {
     extra_msg = "";
 
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_examinator_num,
-                             &tmp_prob, sup_prob, sstate->global);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-               tmp_prob.examinator_num);
+               tmp_prob->examinator_num);
       extra_msg = msg_buf;
     } else {
       if (prob->examinator_num < 0) prob->examinator_num = 0;
@@ -4261,13 +4253,14 @@ super_html_print_problem(FILE *f,
 
   //PROBLEM_PARAM(check_presentation, "d")
   if ((prob->abstract && prob->type > 0 && prob->manual_checking > 0)
-      || (!prob->abstract && tmp_prob.type > 0 && tmp_prob.manual_checking > 0)) {
+      || (!prob->abstract && tmp_prob->type > 0
+          && tmp_prob->manual_checking > 0)) {
     extra_msg = 0;
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_check_presentation,
-                             &tmp_prob, sup_prob, sstate->global);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob.check_presentation?"Yes":"No");
+               tmp_prob->check_presentation?"Yes":"No");
       extra_msg = msg_buf;
     }
     print_boolean_3_select_row(f, "Check output presentation anyway?",
@@ -4282,8 +4275,8 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   if (!prob->abstract) {
     prepare_set_prob_value(CNTSPROB_use_stdin,
-                           &tmp_prob, sup_prob, sstate->global);
-    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob.use_stdin?"Yes":"No");
+                           tmp_prob, sup_prob, sstate->global);
+    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob->use_stdin?"Yes":"No");
     extra_msg = msg_buf;
   }
   if (!problem_type_flag) {
@@ -4297,14 +4290,13 @@ super_html_print_problem(FILE *f,
   //PROBLEM_PARAM(input_file, "s"),
   extra_msg = 0;
   if (prob->abstract && !prob->use_stdin) extra_msg = "";
-  if (!prob->abstract && !tmp_prob.use_stdin) {
+  if (!prob->abstract && !tmp_prob->use_stdin) {
     extra_msg = "";
     prepare_set_prob_value(CNTSPROB_input_file,
-                           &tmp_prob, sup_prob, sstate->global);
+                           tmp_prob, sup_prob, sstate->global);
     if (!prob->input_file[0]) {
-      s = html_armor_string_dup(tmp_prob.input_file);
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
-      xfree(s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->input_file));
       extra_msg = msg_buf;
     }
   }
@@ -4322,8 +4314,8 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   if (!prob->abstract) {
     prepare_set_prob_value(CNTSPROB_combined_stdin,
-                           &tmp_prob, sup_prob, sstate->global);
-    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob.combined_stdin?"Yes":"No");
+                           tmp_prob, sup_prob, sstate->global);
+    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob->combined_stdin?"Yes":"No");
     extra_msg = msg_buf;
   }
   if (!problem_type_flag) {
@@ -4338,8 +4330,8 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   if (!prob->abstract) {
     prepare_set_prob_value(CNTSPROB_use_stdout,
-                           &tmp_prob, sup_prob, sstate->global);
-    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob.use_stdout?"Yes":"No");
+                           tmp_prob, sup_prob, sstate->global);
+    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob->use_stdout?"Yes":"No");
     extra_msg = msg_buf;
   }
   if (!problem_type_flag) {
@@ -4353,14 +4345,13 @@ super_html_print_problem(FILE *f,
   //PROBLEM_PARAM(output_file, "s"),
   extra_msg = 0;
   if (prob->abstract && !prob->use_stdout) extra_msg = "";
-  if (!prob->abstract && !tmp_prob.use_stdout) {
+  if (!prob->abstract && !tmp_prob->use_stdout) {
     extra_msg = "";
     prepare_set_prob_value(CNTSPROB_output_file,
-                           &tmp_prob, sup_prob, sstate->global);
+                           tmp_prob, sup_prob, sstate->global);
     if (!prob->output_file[0]) {
-      s = html_armor_string_dup(tmp_prob.output_file);
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
-      xfree(s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->output_file));
       extra_msg = msg_buf;
     }
   }
@@ -4378,8 +4369,8 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   if (!prob->abstract) {
     prepare_set_prob_value(CNTSPROB_combined_stdout,
-                           &tmp_prob, sup_prob, sstate->global);
-    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob.combined_stdout?"Yes":"No");
+                           tmp_prob, sup_prob, sstate->global);
+    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob->combined_stdout?"Yes":"No");
     extra_msg = msg_buf;
   }
   if (!problem_type_flag) {
@@ -4395,9 +4386,9 @@ super_html_print_problem(FILE *f,
     extra_msg = 0;
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_binary_input,
-                             &tmp_prob, sup_prob, sstate->global);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob.binary_input?"Yes":"No");
+               tmp_prob->binary_input?"Yes":"No");
       extra_msg = msg_buf;
     }
     print_boolean_3_select_row(f, "Input data is binary", prob->binary_input,
@@ -4412,13 +4403,13 @@ super_html_print_problem(FILE *f,
   if (prob->abstract && !prob->xml_file[0]) extra_msg="<i>(Undefined)</i>";
   if (!prob->abstract) {
     prepare_set_prob_value(CNTSPROB_xml_file,
-                           &tmp_prob, sup_prob, sstate->global);
-    s = html_armor_string_dup(tmp_prob.xml_file);
+                           tmp_prob, sup_prob, sstate->global);
     if (!prob->xml_file[0])
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->xml_file));
     else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>", s);
-    xfree(s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
+               ARMOR(tmp_prob->xml_file));
     extra_msg = msg_buf;
   }
   print_string_editing_row_2(f, "XML File with problem statement:",
@@ -4431,20 +4422,20 @@ super_html_print_problem(FILE *f,
 
   //PROBLEM_PARAM(alternatives_file, "s"),
   if (prob->abstract) i = prob->type;
-  else i = tmp_prob.type;
+  else i = tmp_prob->type;
   if (i == PROB_TYPE_SELECT_MANY || i == PROB_TYPE_SELECT_ONE) {
     extra_msg = 0;
     if (prob->abstract && !prob->alternatives_file[0])
       extra_msg="<i>(Undefined)</i>";
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_alternatives_file,
-                             &tmp_prob, sup_prob, sstate->global);
-      s = html_armor_string_dup(tmp_prob.alternatives_file);
+                             tmp_prob, sup_prob, sstate->global);
       if (!prob->alternatives_file[0])
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
+        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+                 ARMOR(tmp_prob->alternatives_file));
       else
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>", s);
-      xfree(s);
+        snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
+                 ARMOR(tmp_prob->alternatives_file));
       extra_msg = msg_buf;
     }
     print_string_editing_row_2(f, "File with answer alternatives:",
@@ -4461,13 +4452,13 @@ super_html_print_problem(FILE *f,
   if (prob->abstract && !prob->plugin_file[0])extra_msg="<i>(Undefined)</i>";
   if (!prob->abstract) {
     prepare_set_prob_value(CNTSPROB_plugin_file,
-                           &tmp_prob, sup_prob, sstate->global);
-    s = html_armor_string_dup(tmp_prob.plugin_file);
+                           tmp_prob, sup_prob, sstate->global);
     if (!prob->plugin_file[0])
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->plugin_file));
     else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>", s);
-    xfree(s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
+               ARMOR(tmp_prob->plugin_file));
     extra_msg = msg_buf;
   }
   print_string_editing_row_2(f, "Problem handling plugin file:",
@@ -4483,13 +4474,13 @@ super_html_print_problem(FILE *f,
   if (prob->abstract && !prob->test_dir[0]) extra_msg = "<i>(Undefined)</i>";
   if (!prob->abstract) {
     prepare_set_prob_value(CNTSPROB_test_dir,
-                           &tmp_prob, sup_prob, sstate->global);
-    s = html_armor_string_dup(tmp_prob.test_dir);
+                           tmp_prob, sup_prob, sstate->global);
     if (!prob->test_dir[0])
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->test_dir));
     else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>", s);
-    xfree(s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
+               ARMOR(tmp_prob->test_dir));
     extra_msg = msg_buf;
   }
   print_string_editing_row_2(f, "Directory with tests:", prob->test_dir,
@@ -4501,21 +4492,21 @@ super_html_print_problem(FILE *f,
 
   if (!prob->abstract) {
     prepare_set_prob_value(CNTSPROB_test_sfx,
-                           &tmp_prob, sup_prob, sstate->global);
+                           tmp_prob, sup_prob, sstate->global);
     prepare_set_prob_value(CNTSPROB_test_pat,
-                           &tmp_prob, sup_prob, sstate->global);
+                           tmp_prob, sup_prob, sstate->global);
   }
 
   //PROBLEM_PARAM(test_sfx, "s"),
   extra_msg = 0;
   if (prob->abstract && (!prob->test_pat[0] || prob->test_pat[0] == 1)) extra_msg = "";
-  if (!prob->abstract && !tmp_prob.test_pat[0]) {
-    s = html_armor_string_dup(tmp_prob.test_sfx);
+  if (!prob->abstract && !tmp_prob->test_pat[0]) {
     if (prob->test_sfx[0] == 1)
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->test_sfx));
     else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>", s);
-    xfree(s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
+               ARMOR(tmp_prob->test_sfx));
     extra_msg = msg_buf;
   }
   if (extra_msg)
@@ -4529,14 +4520,14 @@ super_html_print_problem(FILE *f,
   //PROBLEM_PARAM(test_pat, "s"),
   extra_msg = 0;
   if (show_adv && prob->abstract) extra_msg = "";
-  if (!prob->abstract && (show_adv || tmp_prob.test_pat[0])) {
+  if (!prob->abstract && (show_adv || tmp_prob->test_pat[0])) {
     extra_msg = "";
-    s = html_armor_string_dup(tmp_prob.test_pat);
     if (prob->test_pat[0] == 1)
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->test_pat));
     else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>", s);
-    xfree(s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
+               ARMOR(tmp_prob->test_pat));
     extra_msg = msg_buf;
   }
   if (extra_msg)
@@ -4553,8 +4544,8 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   if (!prob->abstract) {
     prepare_set_prob_value(CNTSPROB_use_corr,
-                           &tmp_prob, sup_prob, sstate->global);
-    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob.use_corr?"Yes":"No");
+                           tmp_prob, sup_prob, sstate->global);
+    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob->use_corr?"Yes":"No");
     extra_msg = msg_buf;
   }
   print_boolean_3_select_row(f, "Use \"correct answer\" files for check:",
@@ -4570,15 +4561,15 @@ super_html_print_problem(FILE *f,
     extra_msg = "";
     if (prob->abstract && !prob->corr_dir[0]) extra_msg = "<i>(Undefined)</i>";
   }
-  if (!prob->abstract && tmp_prob.use_corr) {
+  if (!prob->abstract && tmp_prob->use_corr) {
     prepare_set_prob_value(CNTSPROB_corr_dir,
-                           &tmp_prob, sup_prob, sstate->global);
-    s = html_armor_string_dup(tmp_prob.corr_dir);
+                           tmp_prob, sup_prob, sstate->global);
     if (!prob->corr_dir[0])
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->corr_dir));
     else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>", s);
-    xfree(s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
+               ARMOR(tmp_prob->corr_dir));
     extra_msg = msg_buf;
   }
   if (extra_msg) {
@@ -4593,22 +4584,22 @@ super_html_print_problem(FILE *f,
 
   if (!prob->abstract) {
     prepare_set_prob_value(CNTSPROB_corr_sfx,
-                           &tmp_prob, sup_prob, sstate->global);
+                           tmp_prob, sup_prob, sstate->global);
     prepare_set_prob_value(CNTSPROB_corr_pat,
-                           &tmp_prob, sup_prob, sstate->global);
+                           tmp_prob, sup_prob, sstate->global);
   }
 
   //PROBLEM_PARAM(corr_sfx, "s"),
   extra_msg = 0;
   if (prob->abstract && prob->use_corr == 1
       && (!prob->corr_pat[0] || prob->corr_pat[0] == 1)) extra_msg = "";
-  if (!prob->abstract && tmp_prob.use_corr && !tmp_prob.corr_pat[0]) {
-    s = html_armor_string_dup(tmp_prob.corr_sfx);
+  if (!prob->abstract && tmp_prob->use_corr && !tmp_prob->corr_pat[0]) {
     if (prob->corr_sfx[0] == 1)
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->corr_sfx));
     else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>", s);
-    xfree(s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
+               ARMOR(tmp_prob->corr_sfx));
     extra_msg = msg_buf;
   }
   if (extra_msg)
@@ -4622,15 +4613,15 @@ super_html_print_problem(FILE *f,
   //PROBLEM_PARAM(corr_pat, "s"),
   extra_msg = 0;
   if (show_adv && prob->abstract && prob->use_corr == 1) extra_msg = "";
-  if (!prob->abstract && tmp_prob.use_corr
-      && (show_adv || tmp_prob.corr_pat[0])) {
+  if (!prob->abstract && tmp_prob->use_corr
+      && (show_adv || tmp_prob->corr_pat[0])) {
     extra_msg = "";
-    s = html_armor_string_dup(tmp_prob.corr_pat);
     if (prob->corr_pat[0] == 1)
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->corr_pat));
     else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>", s);
-    xfree(s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
+               ARMOR(tmp_prob->corr_pat));
     extra_msg = msg_buf;
   }
   if (extra_msg)
@@ -4647,8 +4638,8 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   if (!prob->abstract) {
     prepare_set_prob_value(CNTSPROB_use_info,
-                           &tmp_prob, sup_prob, sstate->global);
-    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob.use_info?"Yes":"No");
+                           tmp_prob, sup_prob, sstate->global);
+    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob->use_info?"Yes":"No");
     extra_msg = msg_buf;
   }
   print_boolean_3_select_row(f, "Use test info files for check:",
@@ -4664,15 +4655,15 @@ super_html_print_problem(FILE *f,
     extra_msg = "";
     if (prob->abstract && !prob->info_dir[0]) extra_msg = "<i>(Undefined)</i>";
   }
-  if (!prob->abstract && tmp_prob.use_info) {
+  if (!prob->abstract && tmp_prob->use_info) {
     prepare_set_prob_value(CNTSPROB_info_dir,
-                           &tmp_prob, sup_prob, sstate->global);
-    s = html_armor_string_dup(tmp_prob.info_dir);
+                           tmp_prob, sup_prob, sstate->global);
     if (!prob->info_dir[0])
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->info_dir));
     else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>", s);
-    xfree(s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
+               ARMOR(tmp_prob->info_dir));
     extra_msg = msg_buf;
   }
   if (extra_msg) {
@@ -4687,22 +4678,22 @@ super_html_print_problem(FILE *f,
 
   if (!prob->abstract) {
     prepare_set_prob_value(CNTSPROB_info_sfx,
-                           &tmp_prob, sup_prob, sstate->global);
+                           tmp_prob, sup_prob, sstate->global);
     prepare_set_prob_value(CNTSPROB_info_pat,
-                           &tmp_prob, sup_prob, sstate->global);
+                           tmp_prob, sup_prob, sstate->global);
   }
 
   //PROBLEM_PARAM(info_sfx, "s"),
   extra_msg = 0;
   if (prob->abstract && prob->use_info == 1
       && (!prob->info_pat[0] || prob->info_pat[0] == 1)) extra_msg = "";
-  if (!prob->abstract && tmp_prob.use_info && !tmp_prob.info_pat[0]) {
-    s = html_armor_string_dup(tmp_prob.info_sfx);
+  if (!prob->abstract && tmp_prob->use_info && !tmp_prob->info_pat[0]) {
     if (prob->info_sfx[0] == 1)
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->info_sfx));
     else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>", s);
-    xfree(s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
+               ARMOR(tmp_prob->info_sfx));
     extra_msg = msg_buf;
   }
   if (extra_msg)
@@ -4716,15 +4707,15 @@ super_html_print_problem(FILE *f,
   //PROBLEM_PARAM(info_pat, "s"),
   extra_msg = 0;
   if (show_adv && prob->abstract && prob->use_info == 1) extra_msg = "";
-  if (!prob->abstract && tmp_prob.use_info
-      && (show_adv || tmp_prob.info_pat[0])) {
+  if (!prob->abstract && tmp_prob->use_info
+      && (show_adv || tmp_prob->info_pat[0])) {
     extra_msg = "";
-    s = html_armor_string_dup(tmp_prob.info_pat);
     if (prob->info_pat[0] == 1)
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->info_pat));
     else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>", s);
-    xfree(s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
+               ARMOR(tmp_prob->info_pat));
     extra_msg = msg_buf;
   }
   if (extra_msg)
@@ -4745,12 +4736,12 @@ super_html_print_problem(FILE *f,
   } else {
     if (prob->time_limit == -1) {
       prepare_set_prob_value(CNTSPROB_time_limit,
-                             &tmp_prob, sup_prob, sstate->global);
-      if (!tmp_prob.time_limit)
+                             tmp_prob, sup_prob, sstate->global);
+      if (!tmp_prob->time_limit)
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - Unlimited)</i>");
       else
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                 tmp_prob.time_limit);
+                 tmp_prob->time_limit);
       extra_msg = msg_buf;
     } else if (!prob->time_limit) extra_msg = "<i>(Unlimited)</i>";
   }
@@ -4770,12 +4761,12 @@ super_html_print_problem(FILE *f,
   } else {
     if (prob->time_limit_millis == -1) {
       prepare_set_prob_value(CNTSPROB_time_limit_millis,
-                             &tmp_prob, sup_prob, sstate->global);
-      if (!tmp_prob.time_limit_millis)
+                             tmp_prob, sup_prob, sstate->global);
+      if (!tmp_prob->time_limit_millis)
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - Unlimited)</i>");
       else
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                 tmp_prob.time_limit_millis);
+                 tmp_prob->time_limit_millis);
       extra_msg = msg_buf;
     } else if (!prob->time_limit_millis) extra_msg = "<i>(Unlimited)</i>";
   }
@@ -4795,12 +4786,12 @@ super_html_print_problem(FILE *f,
   } else {
     if (prob->real_time_limit == -1) {
       prepare_set_prob_value(CNTSPROB_real_time_limit,
-                             &tmp_prob, sup_prob, sstate->global);
-      if (!tmp_prob.real_time_limit)
+                             tmp_prob, sup_prob, sstate->global);
+      if (!tmp_prob->real_time_limit)
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - Unlimited)</i>");
       else
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                 tmp_prob.real_time_limit);
+                 tmp_prob->real_time_limit);
       extra_msg = msg_buf;
     } else if (!prob->real_time_limit) extra_msg = "<i>(Unlimited)</i>";
   }
@@ -4824,19 +4815,19 @@ super_html_print_problem(FILE *f,
   } else {
     if (prob->max_vm_size == -1L) {
       prepare_set_prob_value(CNTSPROB_max_vm_size,
-                             &tmp_prob, sup_prob, sstate->global);
-      if (tmp_prob.max_vm_size == -1L || !tmp_prob.max_vm_size)
+                             tmp_prob, sup_prob, sstate->global);
+      if (tmp_prob->max_vm_size == -1L || !tmp_prob->max_vm_size)
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
       else
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %s)</i>",
-                 size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob.max_vm_size));
+                 size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_vm_size));
       extra_msg = msg_buf;
     } else if (!prob->max_vm_size) extra_msg = "<i>(OS Limit)</i>";
   }
   if (prob->max_vm_size == -1L) {
     snprintf(num_buf, sizeof(num_buf), "-1");
   } else {
-    size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob.max_vm_size);
+    size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_vm_size);
   }
   if (!problem_type_flag) {
     html_start_form(f, 1, self_url, prob_hidden_vars);
@@ -4861,19 +4852,19 @@ super_html_print_problem(FILE *f,
     } else {
       if (prob->max_stack_size == -1L) {
         prepare_set_prob_value(CNTSPROB_max_stack_size,
-                               &tmp_prob, sup_prob, sstate->global);
-        if (tmp_prob.max_stack_size == -1L || !tmp_prob.max_stack_size)
+                               tmp_prob, sup_prob, sstate->global);
+        if (tmp_prob->max_stack_size == -1L || !tmp_prob->max_stack_size)
           snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
         else
           snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %s)</i>",
-                   num_to_size_str(num_buf, sizeof(num_buf), tmp_prob.max_stack_size));
+                   num_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_stack_size));
         extra_msg = msg_buf;
       } else if (!prob->max_stack_size) extra_msg = "<i>(OS Limit)</i>";
     }
     if (prob->max_stack_size == -1L) {
       snprintf(num_buf, sizeof(num_buf), "-1");
     } else {
-      num_to_size_str(num_buf, sizeof(num_buf), tmp_prob.max_stack_size);
+      num_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_stack_size);
     }
     html_start_form(f, 1, self_url, prob_hidden_vars);
     fprintf(f, "<tr%s><td>%s</td><td>",
@@ -4893,12 +4884,12 @@ super_html_print_problem(FILE *f,
     } else {
       if (prob->checker_real_time_limit == -1) {
         prepare_set_prob_value(CNTSPROB_checker_real_time_limit,
-                               &tmp_prob, sup_prob, sstate->global);
-        if (!tmp_prob.checker_real_time_limit)
+                               tmp_prob, sup_prob, sstate->global);
+        if (!tmp_prob->checker_real_time_limit)
           snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - Unlimited)</i>");
         else
           snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                   tmp_prob.checker_real_time_limit);
+                   tmp_prob->checker_real_time_limit);
         extra_msg = msg_buf;
       } else if (!prob->checker_real_time_limit) extra_msg = "<i>(Unlimited)</i>";
     }
@@ -4912,12 +4903,12 @@ super_html_print_problem(FILE *f,
   if (show_adv) {
     //PROBLEM_PARAM(use_ac_not_ok, "d"),
     extra_msg = "Undefined";
-    tmp_prob.use_ac_not_ok = prob->use_ac_not_ok;
+    tmp_prob->use_ac_not_ok = prob->use_ac_not_ok;
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_use_ac_not_ok,
-                             &tmp_prob, sup_prob, sstate->global);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob.use_ac_not_ok?"Yes":"No");
+               tmp_prob->use_ac_not_ok?"Yes":"No");
       extra_msg = msg_buf;
     }
     print_boolean_3_select_row(f, "Use AC status instead of OK:",
@@ -4929,12 +4920,12 @@ super_html_print_problem(FILE *f,
 
     //PROBLEM_PARAM(team_enable_rep_view, "d"),
     extra_msg = "Undefined";
-    tmp_prob.team_enable_rep_view = prob->team_enable_rep_view;
+    tmp_prob->team_enable_rep_view = prob->team_enable_rep_view;
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_team_enable_rep_view,
-                             &tmp_prob, sup_prob, sstate->global);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob.team_enable_rep_view?"Yes":"No");
+               tmp_prob->team_enable_rep_view?"Yes":"No");
       extra_msg = msg_buf;
     }
     print_boolean_3_select_row(f, "Contestant may view testing protocol:",
@@ -4944,14 +4935,14 @@ super_html_print_problem(FILE *f,
                                session_id, form_row_attrs[row ^= 1],
                                self_url, extra_args, prob_hidden_vars);
 
-    if (tmp_prob.team_enable_rep_view != 1) {
+    if (tmp_prob->team_enable_rep_view != 1) {
       //PROBLEM_PARAM(team_enable_ce_view, "d"),
       extra_msg = "Undefined";
       if (!prob->abstract) {
         prepare_set_prob_value(CNTSPROB_team_enable_ce_view,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob.team_enable_ce_view?"Yes":"No");
+                 tmp_prob->team_enable_ce_view?"Yes":"No");
         extra_msg = msg_buf;
       }
       print_boolean_3_select_row(f, "Contestant may view compilation errors:",
@@ -4962,14 +4953,14 @@ super_html_print_problem(FILE *f,
                                  self_url, extra_args, prob_hidden_vars);
     }
 
-    if (tmp_prob.team_enable_rep_view != 0) {
+    if (tmp_prob->team_enable_rep_view != 0) {
       //PROBLEM_PARAM(team_show_judge_report, "d"),
       extra_msg = "Undefined";
       if (!prob->abstract) {
         prepare_set_prob_value(CNTSPROB_team_show_judge_report,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob.team_show_judge_report?"Yes":"No");
+                 tmp_prob->team_show_judge_report?"Yes":"No");
         extra_msg = msg_buf;
       }
       print_boolean_3_select_row(f,"Contestant may view FULL (judge's) testing protocol:",
@@ -4982,12 +4973,12 @@ super_html_print_problem(FILE *f,
 
     //PROBLEM_PARAM(ignore_compile_errors, "d"),
     extra_msg = "Undefined";
-    tmp_prob.ignore_compile_errors = prob->ignore_compile_errors;
+    tmp_prob->ignore_compile_errors = prob->ignore_compile_errors;
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_ignore_compile_errors,
-                             &tmp_prob, sup_prob, sstate->global);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob.ignore_compile_errors?"Yes":"No");
+               tmp_prob->ignore_compile_errors?"Yes":"No");
       extra_msg = msg_buf;
     }
     print_boolean_3_select_row(f, "Ignore compilation errors:",
@@ -4999,12 +4990,12 @@ super_html_print_problem(FILE *f,
 
     //PROBLEM_PARAM(disable_user_submit, "d"),
     extra_msg = "Undefined";
-    tmp_prob.disable_user_submit = prob->disable_user_submit;
+    tmp_prob->disable_user_submit = prob->disable_user_submit;
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_disable_user_submit,
-                             &tmp_prob, sup_prob, sstate->global);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob.disable_user_submit?"Yes":"No");
+               tmp_prob->disable_user_submit?"Yes":"No");
       extra_msg = msg_buf;
     }
     print_boolean_3_select_row(f, "Disable user submissions:",
@@ -5017,12 +5008,12 @@ super_html_print_problem(FILE *f,
     if (global && global->problem_navigation > 0) {
       //PROBLEM_PARAM(disable_tab, "d"),
       extra_msg = "Undefined";
-      tmp_prob.disable_tab = prob->disable_tab;
+      tmp_prob->disable_tab = prob->disable_tab;
       if (!prob->abstract) {
         prepare_set_prob_value(CNTSPROB_disable_tab,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob.disable_tab?"Yes":"No");
+                 tmp_prob->disable_tab?"Yes":"No");
         extra_msg = msg_buf;
       }
       print_boolean_3_select_row(f, "Disable problem tab:",
@@ -5035,12 +5026,12 @@ super_html_print_problem(FILE *f,
 
     //PROBLEM_PARAM(restricted_statement, "d"),
     extra_msg = "Undefined";
-    tmp_prob.restricted_statement = prob->restricted_statement;
+    tmp_prob->restricted_statement = prob->restricted_statement;
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_restricted_statement,
-                             &tmp_prob, sup_prob, sstate->global);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob.restricted_statement?"Yes":"No");
+               tmp_prob->restricted_statement?"Yes":"No");
       extra_msg = msg_buf;
     }
     print_boolean_3_select_row(f, "Restricted problem statement:",
@@ -5052,12 +5043,12 @@ super_html_print_problem(FILE *f,
 
     //PROBLEM_PARAM(disable_submit_after_ok, "d"),
     extra_msg = "Undefined";
-    tmp_prob.disable_submit_after_ok = prob->disable_submit_after_ok;
+    tmp_prob->disable_submit_after_ok = prob->disable_submit_after_ok;
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_disable_submit_after_ok,
-                             &tmp_prob, sup_prob, sstate->global);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob.disable_submit_after_ok?"Yes":"No");
+               tmp_prob->disable_submit_after_ok?"Yes":"No");
       extra_msg = msg_buf;
     }
     print_boolean_3_select_row(f, "Disable submissions after OK:",
@@ -5069,12 +5060,12 @@ super_html_print_problem(FILE *f,
 
     //PROBLEM_PARAM(disable_security, "d"),
     extra_msg = "Undefined";
-    tmp_prob.disable_security = prob->disable_security;
+    tmp_prob->disable_security = prob->disable_security;
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_disable_security,
-                             &tmp_prob, sup_prob, sstate->global);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob.disable_security?"Yes":"No");
+               tmp_prob->disable_security?"Yes":"No");
       extra_msg = msg_buf;
     }
     print_boolean_3_select_row(f, "Disable security restrictions:",
@@ -5086,12 +5077,12 @@ super_html_print_problem(FILE *f,
 
     //PROBLEM_PARAM(disable_testing, "d"),
     extra_msg = "Undefined";
-    tmp_prob.disable_testing = prob->disable_testing;
+    tmp_prob->disable_testing = prob->disable_testing;
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_disable_testing,
-                             &tmp_prob, sup_prob, sstate->global);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob.disable_testing?"Yes":"No");
+               tmp_prob->disable_testing?"Yes":"No");
       extra_msg = msg_buf;
     }
     print_boolean_3_select_row(f, "Disable any testing of submissions:",
@@ -5101,15 +5092,15 @@ super_html_print_problem(FILE *f,
                                session_id, form_row_attrs[row ^= 1],
                                self_url, extra_args, prob_hidden_vars);
 
-    if (tmp_prob.disable_testing != 1) {
+    if (tmp_prob->disable_testing != 1) {
       //PROBLEM_PARAM(disable_auto_testing, "d"),
       extra_msg = "Undefined";
-      tmp_prob.disable_auto_testing = prob->disable_auto_testing;
+      tmp_prob->disable_auto_testing = prob->disable_auto_testing;
       if (!prob->abstract) {
         prepare_set_prob_value(CNTSPROB_disable_auto_testing,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob.disable_auto_testing?"Yes":"No");
+                 tmp_prob->disable_auto_testing?"Yes":"No");
         extra_msg = msg_buf;
       }
       print_boolean_3_select_row(f, "Disable automatic testing of submissions:",
@@ -5120,15 +5111,15 @@ super_html_print_problem(FILE *f,
                                  self_url, extra_args, prob_hidden_vars);
     }
 
-    if (!problem_type_flag && tmp_prob.disable_testing == 1) {
+    if (!problem_type_flag && tmp_prob->disable_testing == 1) {
       //PROBLEM_PARAM(enable_compilation, "d"),
       extra_msg = "Undefined";
-      tmp_prob.enable_compilation = prob->enable_compilation;
+      tmp_prob->enable_compilation = prob->enable_compilation;
       if (!prob->abstract) {
         prepare_set_prob_value(CNTSPROB_enable_compilation,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob.enable_compilation?"Yes":"No");
+                 tmp_prob->enable_compilation?"Yes":"No");
         extra_msg = msg_buf;
       }
       print_boolean_3_select_row(f, "Still compile runs to mark as ACCEPTED:",
@@ -5145,9 +5136,9 @@ super_html_print_problem(FILE *f,
     extra_msg = 0;
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_ignore_exit_code,
-                             &tmp_prob, sup_prob, sstate->global);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob.ignore_exit_code?"Yes":"No");
+               tmp_prob->ignore_exit_code?"Yes":"No");
       extra_msg = msg_buf;
     }
     print_boolean_3_select_row(f, "Ignore exit code?", prob->ignore_exit_code,
@@ -5163,9 +5154,9 @@ super_html_print_problem(FILE *f,
     extra_msg = 0;
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_olympiad_mode,
-                             &tmp_prob, sup_prob, sstate->global);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob.olympiad_mode?"Yes":"No");
+               tmp_prob->olympiad_mode?"Yes":"No");
       extra_msg = msg_buf;
     }
     print_boolean_3_select_row(f, "Use Olympiad mode?", prob->olympiad_mode,
@@ -5181,9 +5172,9 @@ super_html_print_problem(FILE *f,
     extra_msg = 0;
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_score_latest,
-                             &tmp_prob, sup_prob, sstate->global);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob.score_latest?"Yes":"No");
+               tmp_prob->score_latest?"Yes":"No");
       extra_msg = msg_buf;
     }
     print_boolean_3_select_row(f, "Score the latest submit?", prob->score_latest,
@@ -5201,9 +5192,9 @@ super_html_print_problem(FILE *f,
         extra_msg = "<i>(Undefined)</i>";
       } else {
         prepare_set_prob_value(CNTSPROB_full_score,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                 tmp_prob.full_score);
+                 tmp_prob->full_score);
         extra_msg = msg_buf;
       }
     }
@@ -5222,9 +5213,9 @@ super_html_print_problem(FILE *f,
       extra_msg = "Undefined";
       if (!prob->abstract) {
         prepare_set_prob_value(CNTSPROB_variable_full_score,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob.variable_full_score?"Yes":"No");
+                 tmp_prob->variable_full_score?"Yes":"No");
         extra_msg = msg_buf;
       }
       print_boolean_3_select_row(f, "Allow variable score for full solution:",
@@ -5242,9 +5233,9 @@ super_html_print_problem(FILE *f,
         extra_msg = "<i>(Undefined)</i>";
       } else {
         prepare_set_prob_value(CNTSPROB_test_score,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                 tmp_prob.test_score);
+                 tmp_prob->test_score);
         extra_msg = msg_buf;
       }
     }
@@ -5262,9 +5253,9 @@ super_html_print_problem(FILE *f,
           extra_msg = "<i>(Undefined)</i>";
         } else {
           prepare_set_prob_value(CNTSPROB_run_penalty,
-                                 &tmp_prob, sup_prob, sstate->global);
+                                 tmp_prob, sup_prob, sstate->global);
           snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                   tmp_prob.run_penalty);
+                   tmp_prob->run_penalty);
           extra_msg = msg_buf;
         }
       }
@@ -5282,9 +5273,9 @@ super_html_print_problem(FILE *f,
         extra_msg = "<i>(Undefined)</i>";
       } else {
         prepare_set_prob_value(CNTSPROB_disqualified_penalty,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                 tmp_prob.disqualified_penalty);
+                 tmp_prob->disqualified_penalty);
         extra_msg = msg_buf;
       }
     }
@@ -5313,9 +5304,9 @@ super_html_print_problem(FILE *f,
         extra_msg = "<i>(Undefined)</i>";
       } else {
         prepare_set_prob_value(CNTSPROB_acm_run_penalty,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                 tmp_prob.acm_run_penalty);
+                 tmp_prob->acm_run_penalty);
         extra_msg = msg_buf;
       }
     }
@@ -5363,12 +5354,11 @@ super_html_print_problem(FILE *f,
     if (prob->abstract && (show_adv || prob->score_bonus[0])) extra_msg = "";
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_score_bonus,
-                             &tmp_prob, sup_prob, sstate->global);
-      if (show_adv || tmp_prob.score_bonus[0]) {
-        s = html_armor_string_dup(tmp_prob.score_bonus);
+                             tmp_prob, sup_prob, sstate->global);
+      if (show_adv || tmp_prob->score_bonus[0]) {
         snprintf(msg_buf, sizeof(msg_buf), "<i>(%s\"%s\")</i>",
-                 prob->score_bonus[0]?"Default - ":"", s);
-        xfree(s);
+                 prob->score_bonus[0]?"Default - ":"",
+                 ARMOR(tmp_prob->score_bonus));
         extra_msg = msg_buf;
       }
     }
@@ -5387,12 +5377,11 @@ super_html_print_problem(FILE *f,
     if (prob->abstract && (show_adv || prob->open_tests[0])) extra_msg = "";
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_open_tests,
-                             &tmp_prob, sup_prob, sstate->global);
-      if (show_adv || tmp_prob.open_tests[0]) {
-        s = html_armor_string_dup(tmp_prob.open_tests);
+                             tmp_prob, sup_prob, sstate->global);
+      if (show_adv || tmp_prob->open_tests[0]) {
         snprintf(msg_buf, sizeof(msg_buf), "<i>(%s\"%s\")</i>",
-                 prob->open_tests[0]?"Default - ":"", s);
-        xfree(s);
+                 prob->open_tests[0]?"Default - ":"",
+                 ARMOR(tmp_prob->open_tests));
         extra_msg = msg_buf;
       }
     }
@@ -5415,9 +5404,9 @@ super_html_print_problem(FILE *f,
         extra_msg = "<i>(Undefined)</i>";
       } else {
         prepare_set_prob_value(CNTSPROB_tests_to_accept,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                 tmp_prob.tests_to_accept);
+                 tmp_prob->tests_to_accept);
         extra_msg = msg_buf;
       }
     }
@@ -5434,9 +5423,9 @@ super_html_print_problem(FILE *f,
       extra_msg = "Undefined";
       if (!prob->abstract) {
         prepare_set_prob_value(CNTSPROB_accept_partial,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob.accept_partial?"Yes":"No");
+                 tmp_prob->accept_partial?"Yes":"No");
         extra_msg = msg_buf;
       }
       if (!problem_type_flag) {
@@ -5455,11 +5444,11 @@ super_html_print_problem(FILE *f,
           extra_msg = "<i>(Undefined)</i>";
         } else {
           prepare_set_prob_value(CNTSPROB_min_tests_to_accept,
-                                 &tmp_prob, sup_prob, sstate->global);
-          if (tmp_prob.min_tests_to_accept < 0)
-            tmp_prob.min_tests_to_accept = tmp_prob.tests_to_accept;
+                                 tmp_prob, sup_prob, sstate->global);
+          if (tmp_prob->min_tests_to_accept < 0)
+            tmp_prob->min_tests_to_accept = tmp_prob->tests_to_accept;
           snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                   tmp_prob.min_tests_to_accept);
+                   tmp_prob->min_tests_to_accept);
           extra_msg = msg_buf;
         }
       }
@@ -5478,9 +5467,9 @@ super_html_print_problem(FILE *f,
       extra_msg = "Undefined";
       if (!prob->abstract) {
         prepare_set_prob_value(CNTSPROB_hidden,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob.hidden?"Yes":"No");
+                 tmp_prob->hidden?"Yes":"No");
         extra_msg = msg_buf;
       }
       print_boolean_3_select_row(f, "Do not show this problem in standings:",
@@ -5507,9 +5496,9 @@ super_html_print_problem(FILE *f,
       extra_msg = "Undefined";
       if (!prob->abstract) {
         prepare_set_prob_value(CNTSPROB_advance_to_next,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob.advance_to_next?"Yes":"No");
+                 tmp_prob->advance_to_next?"Yes":"No");
         extra_msg = msg_buf;
       }
       print_boolean_3_select_row(f,"Automatically advance to the next problem:",
@@ -5525,9 +5514,9 @@ super_html_print_problem(FILE *f,
       extra_msg = "Undefined";
       if (!prob->abstract) {
         prepare_set_prob_value(CNTSPROB_disable_ctrl_chars,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob.disable_ctrl_chars?"Yes":"No");
+                 tmp_prob->disable_ctrl_chars?"Yes":"No");
         extra_msg = msg_buf;
       }
       print_boolean_3_select_row(f,"Disable any control characters in the source code:",
@@ -5544,9 +5533,9 @@ super_html_print_problem(FILE *f,
       extra_msg = "Undefined";
       if (!prob->abstract) {
         prepare_set_prob_value(CNTSPROB_enable_text_form,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob.enable_text_form?"Yes":"No");
+                 tmp_prob->enable_text_form?"Yes":"No");
         extra_msg = msg_buf;
       }
       print_boolean_3_select_row(f,"Enable text input form anyway:",
@@ -5561,14 +5550,13 @@ super_html_print_problem(FILE *f,
     //PROBLEM_PARAM(stand_attr, "s"),
     extra_msg = 0;
     if (prob->abstract && !prob->use_stdout) extra_msg = "";
-    if (!prob->abstract && !tmp_prob.use_stdout) {
+    if (!prob->abstract && !tmp_prob->use_stdout) {
       extra_msg = "";
       prepare_set_prob_value(CNTSPROB_stand_attr,
-                             &tmp_prob, sup_prob, sstate->global);
+                             tmp_prob, sup_prob, sstate->global);
       if (!prob->stand_attr[0]) {
-        s = html_armor_string_dup(tmp_prob.stand_attr);
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
-        xfree(s);
+        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+                 ARMOR(tmp_prob->stand_attr));
         extra_msg = msg_buf;
       }
     }
@@ -5592,11 +5580,9 @@ super_html_print_problem(FILE *f,
   if (!prob->abstract && !prob->standard_checker[0]) {
     extra_msg = "";
     prepare_set_prob_value(CNTSPROB_check_cmd,
-                           &tmp_prob, sup_prob, sstate->global);
-    s = html_armor_string_dup(tmp_prob.check_cmd);
+                           tmp_prob, sup_prob, sstate->global);
     snprintf(msg_buf, sizeof(msg_buf), "<i>(%s\"%s\")</i>",
-             prob->check_cmd[0]?"Default - ":"", s);
-    xfree(s);
+             prob->check_cmd[0]?"Default - ":"", ARMOR(tmp_prob->check_cmd));
     extra_msg = msg_buf;
   }
   if (extra_msg)
@@ -5630,9 +5616,9 @@ super_html_print_problem(FILE *f,
     extra_msg = 0;
     if (!prob->abstract) {
       prepare_set_prob_value(CNTSPROB_scoring_checker,
-                             &tmp_prob, sup_prob, sstate->global);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob.scoring_checker?"Yes":"No");
+               tmp_prob->scoring_checker?"Yes":"No");
       extra_msg = msg_buf;
     }
     print_boolean_3_select_row(f, "Checker calculates score",
@@ -5650,11 +5636,9 @@ super_html_print_problem(FILE *f,
     if (!prob->abstract && !prob->standard_checker[0]) {
       extra_msg = "";
       prepare_set_prob_value(CNTSPROB_valuer_cmd,
-                             &tmp_prob, sup_prob, sstate->global);
-      s = html_armor_string_dup(tmp_prob.valuer_cmd);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "<i>(%s\"%s\")</i>",
-               prob->valuer_cmd[0]?"Default - ":"", s);
-      xfree(s);
+               prob->valuer_cmd[0]?"Default - ":"",ARMOR(tmp_prob->valuer_cmd));
       extra_msg = msg_buf;
     }
   }
@@ -5671,9 +5655,9 @@ super_html_print_problem(FILE *f,
       extra_msg = "Undefined";
       if (!prob->abstract) {
         prepare_set_prob_value(CNTSPROB_valuer_sets_marked,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob.valuer_sets_marked?"Yes":"No");
+                 tmp_prob->valuer_sets_marked?"Yes":"No");
         extra_msg = msg_buf;
       }
       print_boolean_3_select_row(f,"Valuer sets _marked_ flag:",
@@ -5689,9 +5673,9 @@ super_html_print_problem(FILE *f,
       extra_msg = "Undefined";
       if (!prob->abstract) {
         prepare_set_prob_value(CNTSPROB_ignore_unmarked,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob.ignore_unmarked?"Yes":"No");
+                 tmp_prob->ignore_unmarked?"Yes":"No");
         extra_msg = msg_buf;
       }
       print_boolean_3_select_row(f,"Ignore unmarked runs in scoring:",
@@ -5727,11 +5711,10 @@ super_html_print_problem(FILE *f,
     if (!prob->abstract && !prob->standard_checker[0]) {
       extra_msg = "";
       prepare_set_prob_value(CNTSPROB_interactor_cmd,
-                             &tmp_prob, sup_prob, sstate->global);
-      s = html_armor_string_dup(tmp_prob.interactor_cmd);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "<i>(%s\"%s\")</i>",
-               prob->interactor_cmd[0]?"Default - ":"", s);
-      xfree(s);
+               prob->interactor_cmd[0]?"Default - ":"",
+               ARMOR(tmp_prob->interactor_cmd));
       extra_msg = msg_buf;
     }
   }
@@ -5768,11 +5751,10 @@ super_html_print_problem(FILE *f,
     if (!prob->abstract && !prob->standard_checker[0]) {
       extra_msg = "";
       prepare_set_prob_value(CNTSPROB_style_checker_cmd,
-                             &tmp_prob, sup_prob, sstate->global);
-      s = html_armor_string_dup(tmp_prob.style_checker_cmd);
+                             tmp_prob, sup_prob, sstate->global);
       snprintf(msg_buf, sizeof(msg_buf), "<i>(%s\"%s\")</i>",
-               prob->style_checker_cmd[0]?"Default - ":"", s);
-      xfree(s);
+               prob->style_checker_cmd[0]?"Default - ":"",
+               ARMOR(tmp_prob->style_checker_cmd));
       extra_msg = msg_buf;
     }
   }
@@ -5793,9 +5775,51 @@ super_html_print_problem(FILE *f,
       extra_msg = "";
       checker_env = sarray_unparse(prob->style_checker_env);
     }
-    print_string_editing_row_3(f, "Interactor environment:", checker_env,
+    print_string_editing_row_3(f, "Style checker environment:", checker_env,
                                SSERV_CMD_PROB_CHANGE_STYLE_CHECKER_ENV,
                                SSERV_CMD_PROB_CLEAR_STYLE_CHECKER_ENV,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+    xfree(checker_env); checker_env = 0;
+  }
+
+  //PROBLEM_PARAM(test_checker_cmd, "s"),
+  extra_msg = 0;
+  if (show_adv) {
+    if (prob->abstract) extra_msg = "";
+    if (!prob->abstract && !prob->standard_checker[0]) {
+      extra_msg = "";
+      prepare_set_prob_value(CNTSPROB_test_checker_cmd,
+                             tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(%s\"%s\")</i>",
+               prob->test_checker_cmd?"Default - ":"",
+               ARMOR(tmp_prob->test_checker_cmd));
+      extra_msg = msg_buf;
+      xfree(tmp_prob->test_checker_cmd); tmp_prob->test_checker_cmd = 0;
+    }
+  }
+  if (extra_msg)
+    print_string_editing_row_3(f, "Test checker name:",
+                               prob->test_checker_cmd,
+                               SSERV_CMD_PROB_CHANGE_TEST_CHECKER_CMD,
+                               SSERV_CMD_PROB_CLEAR_TEST_CHECKER_CMD,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+
+  //PROBLEM_PARAM(test_checker_env, "x"),
+  if (!prob->abstract) {
+    if (!prob->test_checker_env || !prob->test_checker_env[0]) {
+      extra_msg = "(not set)";
+      checker_env = xstrdup("");
+    } else {
+      extra_msg = "";
+      checker_env = sarray_unparse(prob->test_checker_env);
+    }
+    print_string_editing_row_3(f, "Test checker environment:", checker_env,
+                               SSERV_CMD_PROB_CHANGE_TEST_CHECKER_ENV,
+                               SSERV_CMD_PROB_CLEAR_TEST_CHECKER_ENV,
                                extra_msg,
                                session_id, form_row_attrs[row ^= 1],
                                self_url, extra_args, prob_hidden_vars);
@@ -5825,9 +5849,9 @@ super_html_print_problem(FILE *f,
       extra_msg = "Undefined";
       if (!prob->abstract) {
         prepare_set_prob_value(CNTSPROB_stand_ignore_score,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob.stand_ignore_score?"Yes":"No");
+                 tmp_prob->stand_ignore_score?"Yes":"No");
         extra_msg = msg_buf;
       }
       print_boolean_3_select_row(f,"Ignore problem score in standings:",
@@ -5843,9 +5867,9 @@ super_html_print_problem(FILE *f,
       extra_msg = "Undefined";
       if (!prob->abstract) {
         prepare_set_prob_value(CNTSPROB_stand_last_column,
-                               &tmp_prob, sup_prob, sstate->global);
+                               tmp_prob, sup_prob, sstate->global);
         snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob.stand_last_column?"Yes":"No");
+                 tmp_prob->stand_last_column?"Yes":"No");
         extra_msg = msg_buf;
       }
       print_boolean_3_select_row(f,"Show the problem after all results:",
@@ -5997,11 +6021,10 @@ super_html_print_problem(FILE *f,
     //PROBLEM_PARAM(source_header, "s"),
     extra_msg = "";
     prepare_set_prob_value(CNTSPROB_source_header,
-                           &tmp_prob, sup_prob, sstate->global);
+                           tmp_prob, sup_prob, sstate->global);
     if (!prob->source_header[0]) {
-      s = html_armor_string_dup(tmp_prob.source_header);
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
-      xfree(s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->source_header));
       extra_msg = msg_buf;
     }
     print_string_editing_row_2(f, "Source header file:", prob->source_header,
@@ -6014,11 +6037,10 @@ super_html_print_problem(FILE *f,
     //PROBLEM_PARAM(source_footer, "s"),
     extra_msg = "";
     prepare_set_prob_value(CNTSPROB_source_footer,
-                           &tmp_prob, sup_prob, sstate->global);
+                           tmp_prob, sup_prob, sstate->global);
     if (!prob->source_footer[0]) {
-      s = html_armor_string_dup(tmp_prob.source_footer);
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
-      xfree(s);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->source_footer));
       extra_msg = msg_buf;
     }
     print_string_editing_row_2(f, "Source footer file:", prob->source_footer,
@@ -6030,11 +6052,15 @@ super_html_print_problem(FILE *f,
   }
 
   if (prob->unhandled_vars) {
-    s = html_armor_string_dup(prob->unhandled_vars);
     fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Uneditable parameters</td></tr>\n<tr><td colspan=\"3\"><pre>%s</pre></td></tr>\n",
-            form_row_attrs[row ^= 1], s);
-    xfree(s);
+            form_row_attrs[row ^= 1], ARMOR(prob->unhandled_vars));
   }
+
+  if (tmp_prob) {
+    prepare_problem_free_func(&tmp_prob->g);
+    tmp_prob = 0;
+  }
+  html_armor_free(&ab);
 }
 
 int
@@ -6889,6 +6915,28 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CLEAR_STYLE_CHECKER_ENV:
     sarray_free(prob->style_checker_env);
     prob->style_checker_env = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_TEST_CHECKER_CMD:
+    xfree(prob->test_checker_cmd);
+    prob->test_checker_cmd = xstrdup(param2);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_TEST_CHECKER_CMD:
+    xfree(prob->test_checker_cmd);
+    prob->test_checker_cmd = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_TEST_CHECKER_ENV:
+    if (sarray_parse(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(prob->test_checker_env);
+    prob->test_checker_env = tmp_env;
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_TEST_CHECKER_ENV:
+    sarray_free(prob->test_checker_env);
+    prob->test_checker_env = 0;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ:
@@ -8531,6 +8579,10 @@ invoke_make(
   if (prob->style_checker_cmd[0]) {
     // FIXME: complete
   }
+  // check for test checker
+  if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
+    // FIXME: complete
+  }
 
   return 1;
 }
@@ -8640,7 +8692,7 @@ super_html_check_tests(FILE *f,
   struct contest_desc *cnts;
   struct section_global_data *global;
   struct section_problem_data *prob, *abstr;
-  struct section_problem_data tmp_prob;
+  struct section_problem_data *tmp_prob = 0;
   int i, j, k, variant;
   char *flog_txt = 0;
   size_t flog_len = 0;
@@ -8704,71 +8756,72 @@ super_html_check_tests(FILE *f,
       }
     }
 
-    prepare_copy_problem(&tmp_prob, prob);
-    prepare_set_prob_value(CNTSPROB_type, &tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_xml_file,&tmp_prob,abstr, global);
+    tmp_prob = prepare_copy_problem(prob);
+    prepare_set_prob_value(CNTSPROB_type, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_xml_file, tmp_prob, abstr, global);
 
-    if (tmp_prob.type == PROB_TYPE_SELECT_ONE && tmp_prob.xml_file[0]) {
+    if (tmp_prob->type == PROB_TYPE_SELECT_ONE && tmp_prob->xml_file[0]) {
       fprintf(flog, "Select-one XML-specified problem, skipping\n");
       continue;
     }
 
-    prepare_set_prob_value(CNTSPROB_scoring_checker, &tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_manual_checking, &tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_examinator_num, &tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_check_presentation, &tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_binary_input, &tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_ignore_exit_code, &tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_valuer_cmd, &tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_interactor_cmd, &tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_style_checker_cmd,&tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_test_dir, &tmp_prob, abstr, 0);
-    prepare_set_prob_value(CNTSPROB_use_corr, &tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_test_sfx, &tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_test_pat, &tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_test_score, &tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_full_score, &tmp_prob, abstr, global);
-    mkpath(test_path, g_test_path, tmp_prob.test_dir, "");
-    if (tmp_prob.use_corr) {
-      prepare_set_prob_value(CNTSPROB_corr_dir, &tmp_prob, abstr, 0);
-      prepare_set_prob_value(CNTSPROB_corr_sfx, &tmp_prob, abstr, global);
-      prepare_set_prob_value(CNTSPROB_corr_pat, &tmp_prob, abstr, global);
-      mkpath(corr_path, g_corr_path, tmp_prob.corr_dir, "");
+    prepare_set_prob_value(CNTSPROB_scoring_checker, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_manual_checking, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_examinator_num, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_check_presentation, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_binary_input, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_ignore_exit_code, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_valuer_cmd, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_interactor_cmd, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_style_checker_cmd, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_test_checker_cmd, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_test_dir, tmp_prob, abstr, 0);
+    prepare_set_prob_value(CNTSPROB_use_corr, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_test_sfx, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_test_pat, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_test_score, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_full_score, tmp_prob, abstr, global);
+    mkpath(test_path, g_test_path, tmp_prob->test_dir, "");
+    if (tmp_prob->use_corr) {
+      prepare_set_prob_value(CNTSPROB_corr_dir, tmp_prob, abstr, 0);
+      prepare_set_prob_value(CNTSPROB_corr_sfx, tmp_prob, abstr, global);
+      prepare_set_prob_value(CNTSPROB_corr_pat, tmp_prob, abstr, global);
+      mkpath(corr_path, g_corr_path, tmp_prob->corr_dir, "");
     }
-    prepare_set_prob_value(CNTSPROB_use_info, &tmp_prob, abstr, global);
-    if (tmp_prob.use_info) {
-      prepare_set_prob_value(CNTSPROB_info_dir, &tmp_prob, abstr, 0);
-      prepare_set_prob_value(CNTSPROB_info_sfx, &tmp_prob, abstr, global);
-      prepare_set_prob_value(CNTSPROB_info_pat, &tmp_prob, abstr, global);
-      mkpath(info_path, g_info_path, tmp_prob.info_dir, "");
+    prepare_set_prob_value(CNTSPROB_use_info, tmp_prob, abstr, global);
+    if (tmp_prob->use_info) {
+      prepare_set_prob_value(CNTSPROB_info_dir, tmp_prob, abstr, 0);
+      prepare_set_prob_value(CNTSPROB_info_sfx, tmp_prob, abstr, global);
+      prepare_set_prob_value(CNTSPROB_info_pat, tmp_prob, abstr, global);
+      mkpath(info_path, g_info_path, tmp_prob->info_dir, "");
     }
     checker_path[0] = 0;
-    if (!tmp_prob.standard_checker[0]) {
-      prepare_set_prob_value(CNTSPROB_check_cmd, &tmp_prob, abstr, 0);
+    if (!tmp_prob->standard_checker[0]) {
+      prepare_set_prob_value(CNTSPROB_check_cmd, tmp_prob, abstr, 0);
       if (global->advanced_layout > 0) {
         get_advanced_layout_path(checker_path, sizeof(checker_path),
-                                 global, &tmp_prob, tmp_prob.check_cmd, -1);
+                                 global, tmp_prob, tmp_prob->check_cmd, -1);
       } else {
-        mkpath(checker_path, g_checker_path, tmp_prob.check_cmd, "");
+        mkpath(checker_path, g_checker_path, tmp_prob->check_cmd, "");
       }
     }
 
     /* check for Makefile and invoke make if necessary */
     if (global->advanced_layout > 0) {
       if (prob->variant_num <= 0) {
-        if ((j = invoke_make(flog, config, global, &tmp_prob, -1)) < 0)
+        if ((j = invoke_make(flog, config, global, tmp_prob, -1)) < 0)
           goto check_failed;
         if (j > 0) already_compiled = 1;
       } else {
         for (variant = 1; variant <= prob->variant_num; ++variant) {
-          if ((j = invoke_make(flog, config, global, &tmp_prob, variant)) < 0)
+          if ((j = invoke_make(flog, config, global, tmp_prob, variant)) < 0)
             goto check_failed;
           if (j > 0) already_compiled = 1;
         }
       }
     }
 
-    if (!tmp_prob.standard_checker[0] && !already_compiled) {
+    if (!tmp_prob->standard_checker[0] && !already_compiled) {
       if (prob->variant_num <= 0) {
         if (recompile_checker(config, flog, checker_path) < 0)
           goto check_failed;
@@ -8776,7 +8829,7 @@ super_html_check_tests(FILE *f,
         for (variant = 1; variant <= prob->variant_num; variant++) {
           if (global->advanced_layout > 0) {
             get_advanced_layout_path(v_checker_path, sizeof(v_checker_path),
-                                     global, &tmp_prob, NULL, variant);
+                                     global, tmp_prob, NULL, variant);
           } else {
             snprintf(v_checker_path, sizeof(v_checker_path), "%s-%d",
                      checker_path, variant);
@@ -8791,7 +8844,7 @@ super_html_check_tests(FILE *f,
     if (prob->variant_num <= 0) {
       if (global->advanced_layout > 0) {
         get_advanced_layout_path(test_path, sizeof(test_path), global,
-                                 &tmp_prob, DFLT_P_TEST_DIR, -1);
+                                 tmp_prob, DFLT_P_TEST_DIR, -1);
       }
       if (stat(test_path, &stbuf) < 0) {
         fprintf(flog, "Error: test directory %s does not exist\n", test_path);
@@ -8801,10 +8854,10 @@ super_html_check_tests(FILE *f,
         fprintf(flog, "Error: test directory %s is not a directory\n", test_path);
         goto check_failed;
       }
-      if (tmp_prob.use_corr) {
+      if (tmp_prob->use_corr) {
         if (global->advanced_layout > 0) {
           get_advanced_layout_path(corr_path, sizeof(corr_path), global,
-                                   &tmp_prob, DFLT_P_CORR_DIR, -1);
+                                   tmp_prob, DFLT_P_CORR_DIR, -1);
         }
         if (stat(corr_path, &stbuf) < 0) {
           fprintf(flog, "Error: test directory %s does not exist\n", corr_path);
@@ -8815,10 +8868,10 @@ super_html_check_tests(FILE *f,
           goto check_failed;
         }
       }
-      if (tmp_prob.use_info) {
+      if (tmp_prob->use_info) {
         if (global->advanced_layout > 0) {
           get_advanced_layout_path(info_path, sizeof(info_path), global,
-                                   &tmp_prob, DFLT_P_INFO_DIR, -1);
+                                   tmp_prob, DFLT_P_INFO_DIR, -1);
         }
         if (stat(info_path, &stbuf) < 0) {
           fprintf(flog, "Error: test directory %s does not exist\n", info_path);
@@ -8833,8 +8886,8 @@ super_html_check_tests(FILE *f,
       total_tests = 1;
       while (1) {
         k = check_test_file(flog, total_tests, test_path,
-                            tmp_prob.test_pat, tmp_prob.test_sfx, 1, tmp_prob.binary_input,
-                            file_group, file_mode);
+                            tmp_prob->test_pat, tmp_prob->test_sfx, 1,
+                            tmp_prob->binary_input, file_group, file_mode);
         if (k < 0) goto check_failed;
         if (!k) break;
         total_tests++;
@@ -8844,7 +8897,7 @@ super_html_check_tests(FILE *f,
         fprintf(flog, "Error: no tests defined for the problem\n");
         goto check_failed;
       }
-      if (tmp_prob.type > 0 && total_tests != 1) {
+      if (tmp_prob->type > 0 && total_tests != 1) {
         fprintf(flog, "Error: output-only problem must have only one test\n");
         goto check_failed;
       }
@@ -8852,27 +8905,28 @@ super_html_check_tests(FILE *f,
               total_tests);
       
       for (j = 1; j <= total_tests; j++) {
-        if (tmp_prob.use_corr
-            && check_test_file(flog, j, corr_path, tmp_prob.corr_pat,
-                               tmp_prob.corr_sfx, 0, tmp_prob.binary_input,
+        if (tmp_prob->use_corr
+            && check_test_file(flog, j, corr_path, tmp_prob->corr_pat,
+                               tmp_prob->corr_sfx, 0, tmp_prob->binary_input,
                                file_group, file_mode) <= 0)
           goto check_failed;
-        if (tmp_prob.use_info
-            && check_test_file(flog, j, info_path, tmp_prob.info_pat,
-                               tmp_prob.info_sfx, 0, 0, file_group, file_mode) <= 0)
+        if (tmp_prob->use_info
+            && check_test_file(flog, j, info_path, tmp_prob->info_pat,
+                               tmp_prob->info_sfx, 0, 0, file_group,
+                               file_mode) <= 0)
           goto check_failed;
       }
-      if (tmp_prob.use_corr
-          && check_test_file(flog, j, corr_path, tmp_prob.corr_pat,
-                             tmp_prob.corr_sfx, 1, tmp_prob.binary_input,
+      if (tmp_prob->use_corr
+          && check_test_file(flog, j, corr_path, tmp_prob->corr_pat,
+                             tmp_prob->corr_sfx, 1, tmp_prob->binary_input,
                              file_group, file_mode) != 0) {
         fprintf(flog, "Error: there is answer file for test %d, but no data file\n",
                 j);
         goto check_failed;
       }
-      if (tmp_prob.use_info
-          && check_test_file(flog, j, info_path, tmp_prob.info_pat,
-                             tmp_prob.info_sfx, 1, 0,
+      if (tmp_prob->use_info
+          && check_test_file(flog, j, info_path, tmp_prob->info_pat,
+                             tmp_prob->info_sfx, 1, 0,
                              file_group, file_mode) != 0) {
         fprintf(flog, "Error: there is test info file for test %d, but no data file\n",
                 j);
@@ -8882,7 +8936,7 @@ super_html_check_tests(FILE *f,
       for (variant = 1; variant <= prob->variant_num; variant++) {
         if (global->advanced_layout > 0) {
           get_advanced_layout_path(v_test_path, sizeof(v_test_path), global,
-                                   &tmp_prob, DFLT_P_TEST_DIR, variant);
+                                   tmp_prob, DFLT_P_TEST_DIR, variant);
         } else {
           snprintf(v_test_path, sizeof(v_test_path), "%s-%d", test_path,
                    variant);
@@ -8895,10 +8949,10 @@ super_html_check_tests(FILE *f,
           fprintf(flog, "Error: test directory %s is not a directory\n", v_test_path);
           goto check_failed;
         }
-        if (tmp_prob.use_corr) {
+        if (tmp_prob->use_corr) {
           if (global->advanced_layout > 0) {
             get_advanced_layout_path(v_corr_path, sizeof(v_corr_path), global,
-                                     &tmp_prob, DFLT_P_INFO_DIR, variant);
+                                     tmp_prob, DFLT_P_INFO_DIR, variant);
           } else {
             snprintf(v_corr_path, sizeof(v_corr_path), "%s-%d", corr_path,
                      variant);
@@ -8912,10 +8966,10 @@ super_html_check_tests(FILE *f,
             goto check_failed;
           }
         }
-        if (tmp_prob.use_info) {
+        if (tmp_prob->use_info) {
           if (global->advanced_layout > 0) {
             get_advanced_layout_path(v_info_path, sizeof(v_info_path), global,
-                                     &tmp_prob, DFLT_P_INFO_DIR, variant);
+                                     tmp_prob, DFLT_P_INFO_DIR, variant);
           } else {
             snprintf(v_info_path, sizeof(v_info_path), "%s-%d", info_path,
                      variant);
@@ -8933,8 +8987,8 @@ super_html_check_tests(FILE *f,
         total_tests = 1;
         while (1) {
           k = check_test_file(flog, total_tests, v_test_path,
-                              tmp_prob.test_pat, tmp_prob.test_sfx, 1, tmp_prob.binary_input,
-                              file_group, file_mode);
+                              tmp_prob->test_pat, tmp_prob->test_sfx, 1,
+                              tmp_prob->binary_input, file_group, file_mode);
           if (k < 0) goto check_failed;
           if (!k) break;
           total_tests++;
@@ -8944,7 +8998,7 @@ super_html_check_tests(FILE *f,
           fprintf(flog, "Error: no tests defined for the problem\n");
           goto check_failed;
         }
-        if (tmp_prob.type > 0 && total_tests != 1) {
+        if (tmp_prob->type > 0 && total_tests != 1) {
           fprintf(flog, "Error: output-only problem must have only one test\n");
           goto check_failed;
         }
@@ -8960,27 +9014,29 @@ super_html_check_tests(FILE *f,
         }
       
         for (j = 1; j <= total_tests; j++) {
-          if (tmp_prob.use_corr
-              && check_test_file(flog, j, v_corr_path, tmp_prob.corr_pat,
-                                 tmp_prob.corr_sfx, 0, tmp_prob.binary_input,
+          if (tmp_prob->use_corr
+              && check_test_file(flog, j, v_corr_path, tmp_prob->corr_pat,
+                                 tmp_prob->corr_sfx, 0, tmp_prob->binary_input,
                                  file_group, file_mode) <= 0)
             goto check_failed;
-          if (tmp_prob.use_info
-              && check_test_file(flog, j, v_info_path, tmp_prob.info_pat,
-                                 tmp_prob.info_sfx, 0, 0, file_group, file_mode) <= 0)
+          if (tmp_prob->use_info
+              && check_test_file(flog, j, v_info_path, tmp_prob->info_pat,
+                                 tmp_prob->info_sfx, 0, 0, file_group,
+                                 file_mode) <= 0)
             goto check_failed;
         }
-        if (tmp_prob.use_corr
-            && check_test_file(flog, j, v_corr_path, tmp_prob.corr_pat,
-                               tmp_prob.corr_sfx, 1, tmp_prob.binary_input,
+        if (tmp_prob->use_corr
+            && check_test_file(flog, j, v_corr_path, tmp_prob->corr_pat,
+                               tmp_prob->corr_sfx, 1, tmp_prob->binary_input,
                                file_group, file_mode) != 0) {
           fprintf(flog, "Error: there is answer file for test %d, but no data file, variant %d\n",
                   j, variant);
           goto check_failed;
         }
-        if (tmp_prob.use_info
-            && check_test_file(flog, j, v_info_path, tmp_prob.info_pat,
-                               tmp_prob.info_sfx, 1, 0, file_group, file_mode) != 0) {
+        if (tmp_prob->use_info
+            && check_test_file(flog, j, v_info_path, tmp_prob->info_pat,
+                               tmp_prob->info_sfx, 1, 0, file_group,
+                               file_mode) != 0) {
           fprintf(flog, "Error: there is test info file for test %d, but no data file, variant %d\n",
                   j, variant);
           goto check_failed;
@@ -8990,8 +9046,8 @@ super_html_check_tests(FILE *f,
 
     if (global->score_system != SCORE_ACM
         && global->score_system != SCORE_MOSCOW) {
-      if (check_test_score(flog, total_tests, tmp_prob.test_score,
-                           tmp_prob.full_score, tmp_prob.test_score_list) < 0)
+      if (check_test_score(flog, total_tests, tmp_prob->test_score,
+                           tmp_prob->full_score, tmp_prob->test_score_list) < 0)
         goto check_failed;
     }
   }
@@ -9012,9 +9068,16 @@ super_html_check_tests(FILE *f,
                         SSERV_CMD_CONTEST_PAGE));
   fprintf(f, "</tr></table>\n");
 
+  if (tmp_prob) {
+    prepare_problem_free_func(&tmp_prob->g);
+  }
+
   return 0;
 
  check_failed:
+  if (tmp_prob) {
+    prepare_problem_free_func(&tmp_prob->g);
+  }
   fclose(flog);
 
   s = html_armor_string_dup(flog_txt);
@@ -9271,7 +9334,6 @@ super_html_update_variant_map(FILE *flog, int contest_id,
   return -1;
 }
 
-#define ARMOR(s)  html_armor_buf(&ab, s)
 int
 super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
                          const unsigned char *login,

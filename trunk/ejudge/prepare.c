@@ -423,12 +423,14 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(valuer_env, "x"),
   PROBLEM_PARAM(interactor_env, "x"),
   PROBLEM_PARAM(style_checker_env, "x"),
+  PROBLEM_PARAM(test_checker_env, "x"),
   PROBLEM_PARAM(lang_time_adj, "x"),
   PROBLEM_PARAM(lang_time_adj_millis, "x"),
   PROBLEM_PARAM(check_cmd, "s"),
   PROBLEM_PARAM(valuer_cmd, "s"),
   PROBLEM_PARAM(interactor_cmd, "s"),
   PROBLEM_PARAM(style_checker_cmd, "s"),
+  PROBLEM_PARAM(test_checker_cmd, "S"),
   PROBLEM_PARAM(test_pat, "s"),
   PROBLEM_PARAM(corr_pat, "s"),
   PROBLEM_PARAM(info_pat, "s"),
@@ -858,6 +860,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
 
   xfree(p->tscores);
   xfree(p->x_score_tests);
+  xfree(p->test_checker_cmd);
   sarray_free(p->test_sets);
   sarray_free(p->date_penalty);
   sarray_free(p->disable_language);
@@ -867,6 +870,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->valuer_env);
   sarray_free(p->interactor_env);
   sarray_free(p->style_checker_env);
+  sarray_free(p->test_checker_env);
   sarray_free(p->lang_time_adj);
   sarray_free(p->lang_time_adj_millis);
   sarray_free(p->personal_deadline);
@@ -3162,6 +3166,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_valuer_cmd, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_interactor_cmd, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_style_checker_cmd, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_test_checker_cmd, prob, aprob, g);
 
     prepare_set_prob_value(CNTSPROB_max_vm_size, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_max_stack_size, prob, aprob, g);
@@ -3269,6 +3274,22 @@ set_defaults(
                                                      section_language_params,
                                                      section_tester_params);
           if (!prob->style_checker_env[j]) return -1;
+        }
+      }
+
+      if (si != -1 && aprob->test_checker_env) {
+        prob->test_checker_env = sarray_merge_pf(aprob->test_checker_env,
+                                                 prob->test_checker_env);
+      }
+      if (prob->test_checker_env) {
+        for (j = 0; prob->test_checker_env[j]; j++) {
+          prob->test_checker_env[j] = varsubst_heap(state,
+                                                    prob->test_checker_env[j],
+                                                    1, section_global_params,
+                                                    section_problem_params,
+                                                    section_language_params,
+                                                    section_tester_params);
+          if (!prob->test_checker_env[j]) return -1;
         }
       }
 
@@ -5185,11 +5206,11 @@ prepare_free_config(struct generic_section_config *cfg)
   return param_free(cfg, params);
 }
 
-void
-prepare_copy_problem(struct section_problem_data *out,
-                     const struct section_problem_data *in)
+struct section_problem_data *
+prepare_copy_problem(const struct section_problem_data *in)
 {
-  if (out == in) return;
+  struct section_problem_data *out = prepare_alloc_problem();
+
   memmove(out, in, sizeof(*out));
   out->ntests = 0;
   out->tscores = 0;
@@ -5214,13 +5235,21 @@ prepare_copy_problem(struct section_problem_data *out,
   out->score_view = 0;
   out->score_view_score = 0;
   out->score_view_text = 0;
+  if (in->test_checker_cmd) {
+    out->test_checker_cmd = xstrdup(in->test_checker_cmd);
+  }
+  return out;
 }
 
 void
-prepare_set_prob_value(int field, struct section_problem_data *out,
-                       const struct section_problem_data *abstr,
-                       const struct section_global_data *global)
+prepare_set_prob_value(
+        int field,
+        struct section_problem_data *out,
+        const struct section_problem_data *abstr,
+        const struct section_global_data *global)
 {
+  path_t tmp_buf;
+
   switch (field) {
   case CNTSPROB_type:
     if (out->type == -1 && abstr) out->type = abstr->type;
@@ -5810,6 +5839,22 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
+  case CNTSPROB_test_checker_cmd:
+    if (!out->test_checker_cmd && abstr && abstr->test_checker_cmd) {
+      sformat_message(tmp_buf, sizeof(tmp_buf), 0, abstr->test_checker_cmd,
+                      NULL, out, NULL, NULL, NULL, 0, 0, 0);
+      out->test_checker_cmd = xstrdup(tmp_buf);
+    }
+    if (out->test_checker_cmd && out->test_checker_cmd[0]
+        && global && global->advanced_layout <= 0
+        && !os_IsAbsolutePath(out->test_checker_cmd)) {
+      snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", global->checker_dir,
+               out->test_checker_cmd);
+      xfree(out->test_checker_cmd);
+      out->test_checker_cmd = xstrdup(tmp_buf);
+    }
+    break;
+
   case CNTSPROB_statement_file:
     if (!out->statement_file[0] && abstr && abstr->statement_file[0]) {
       sformat_message(out->statement_file, PATH_MAX, 0, abstr->statement_file,
@@ -5917,9 +5962,10 @@ static const int prob_settable_list[] =
   CNTSPROB_variant_num, CNTSPROB_date_penalty, CNTSPROB_disable_language,
   CNTSPROB_enable_language, CNTSPROB_require, CNTSPROB_standard_checker,
   CNTSPROB_checker_env, CNTSPROB_valuer_env, CNTSPROB_interactor_env,
-  CNTSPROB_style_checker_env, CNTSPROB_lang_time_adj,
+  CNTSPROB_style_checker_env, CNTSPROB_test_checker_env, CNTSPROB_lang_time_adj,
   CNTSPROB_lang_time_adj_millis, CNTSPROB_check_cmd, CNTSPROB_valuer_cmd,
   CNTSPROB_interactor_cmd, CNTSPROB_style_checker_cmd,
+  CNTSPROB_test_checker_cmd,
   CNTSPROB_test_pat, CNTSPROB_corr_pat, CNTSPROB_info_pat, CNTSPROB_tgz_pat,
   CNTSPROB_personal_deadline, CNTSPROB_score_bonus, CNTSPROB_statement_file,
   CNTSPROB_alternatives_file, CNTSPROB_plugin_file, CNTSPROB_xml_file,
@@ -6026,12 +6072,14 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_valuer_env] = 1,
   [CNTSPROB_interactor_env] = 1,
   [CNTSPROB_style_checker_env] = 1,
+  [CNTSPROB_test_checker_env] = 1,
   [CNTSPROB_lang_time_adj] = 1,
   [CNTSPROB_lang_time_adj_millis] = 1,
   [CNTSPROB_check_cmd] = 1,
   [CNTSPROB_valuer_cmd] = 1,
   [CNTSPROB_interactor_cmd] = 1,
   [CNTSPROB_style_checker_cmd] = 1,
+  [CNTSPROB_test_checker_cmd] = 1,
   [CNTSPROB_test_pat] = 1,
   [CNTSPROB_corr_pat] = 1,
   [CNTSPROB_info_pat] = 1,
@@ -6088,9 +6136,11 @@ static const int prob_inheritable_list[] =
   CNTSPROB_start_date, CNTSPROB_variant_num, CNTSPROB_date_penalty,
   CNTSPROB_disable_language, CNTSPROB_enable_language, CNTSPROB_require,
   CNTSPROB_standard_checker, CNTSPROB_checker_env, CNTSPROB_valuer_env,
-  CNTSPROB_interactor_env, CNTSPROB_style_checker_env, CNTSPROB_lang_time_adj,
+  CNTSPROB_interactor_env, CNTSPROB_style_checker_env,
+  CNTSPROB_test_checker_env, CNTSPROB_lang_time_adj,
   CNTSPROB_lang_time_adj_millis, CNTSPROB_check_cmd, CNTSPROB_valuer_cmd,
   CNTSPROB_interactor_cmd, CNTSPROB_style_checker_cmd,
+  CNTSPROB_test_checker_cmd,
   CNTSPROB_test_pat, CNTSPROB_corr_pat,
   CNTSPROB_info_pat, CNTSPROB_tgz_pat, CNTSPROB_personal_deadline,
   CNTSPROB_score_bonus, CNTSPROB_statement_file, CNTSPROB_alternatives_file,
@@ -6187,12 +6237,14 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_valuer_env] = 1,
   [CNTSPROB_interactor_env] = 1,
   [CNTSPROB_style_checker_env] = 1,
+  [CNTSPROB_test_checker_env] = 1,
   [CNTSPROB_lang_time_adj] = 1,
   [CNTSPROB_lang_time_adj_millis] = 1,
   [CNTSPROB_check_cmd] = 1,
   [CNTSPROB_valuer_cmd] = 1,
   [CNTSPROB_interactor_cmd] = 1,
   [CNTSPROB_style_checker_cmd] = 1,
+  [CNTSPROB_test_checker_cmd] = 1,
   [CNTSPROB_test_pat] = 1,
   [CNTSPROB_corr_pat] = 1,
   [CNTSPROB_info_pat] = 1,
@@ -6319,10 +6371,12 @@ static const struct section_problem_data prob_undef_values =
   .valuer_env = 0,
   .interactor_env = 0,
   .style_checker_env = 0,
+  .test_checker_env = 0,
   .check_cmd = { 1, 0 },
   .valuer_cmd = { 1, 0 },
   .interactor_cmd = { 1, 0 },
   .style_checker_cmd = { 1, 0 },
+  .test_checker_cmd = 0,
   .lang_time_adj = 0,
   .lang_time_adj_millis = 0,
   .alternative = 0,
@@ -6436,6 +6490,7 @@ static const struct section_problem_data prob_default_values =
   .valuer_cmd = "",
   .interactor_cmd = "",
   .style_checker_cmd = "",
+  .test_checker_cmd = 0,
   .score_bonus = "",
   .max_vm_size = 0,
   .max_data_size = 0,
@@ -6478,6 +6533,7 @@ static const unsigned char prob_format_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_valuer_cmd] = 1,
   [CNTSPROB_interactor_cmd] = 1,
   [CNTSPROB_style_checker_cmd] = 1,
+  [CNTSPROB_test_checker_cmd] = 1,
   [CNTSPROB_statement_file] = 1,
   [CNTSPROB_alternatives_file] = 1,
   [CNTSPROB_plugin_file] = 1,
@@ -6507,6 +6563,12 @@ cntsprob_is_undefined(
       ejintbool_t b_ptr = *(const ejintbool_t *) f_ptr;
       ejintbool_t b_undef = *(const ejintbool_t*) f_undef;
       return b_ptr == b_undef;
+    }
+    break;
+  case 's':
+    {
+      const unsigned char *s_ptr = *(const unsigned char**) f_ptr;
+      return s_ptr == 0;
     }
     break;
   case 'S':
@@ -6630,6 +6692,23 @@ cntsprob_copy_and_set_default(
             *d_bool = *(const ejintbool_t*) g_ptr;
           if (is_inh && *d_bool == u_bool)
             *d_bool = *(const ejintbool_t*) i_ptr;
+        }
+      }
+      break;
+    case 's':
+      {
+        unsigned char **pd_str = (unsigned char **) d_ptr;
+        if (*(unsigned char **) s_ptr != 0) {
+          *pd_str = xstrdup(*(unsigned char **) s_ptr);
+        }
+        if (!*pd_str && is_inh && *(unsigned char **) a_ptr) {
+          *pd_str = xstrdup(*(unsigned char **) a_ptr);
+        }
+        if (*pd_str && prob_format_set[f_id]) {
+          sformat_message(tmp_buf, sizeof(tmp_buf), 0, *pd_str,
+                          gp, dp, NULL, NULL, NULL, NULL, NULL, NULL);
+          xfree(*pd_str);
+          *pd_str = xstrdup(tmp_buf);
         }
       }
       break;
@@ -6810,6 +6889,10 @@ cntsprob_clear_field(
     break;
   case 'B':
     *(ejintbool_t*) d_ptr = *(const ejintbool_t*) s_ptr;
+    break;
+  case 's':
+    xfree(*(unsigned char**) d_ptr);
+    *(unsigned char**) d_ptr = 0;
     break;
   case 'S':
     memset(d_ptr, 0, f_size);
