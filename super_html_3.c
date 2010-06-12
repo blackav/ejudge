@@ -4081,7 +4081,7 @@ super_html_print_problem(FILE *f,
   html_submit_button(f, SSERV_CMD_PROB_DELETE, "Delete!");
   fprintf(f, "</td></tr></form>\n");
 
-  if (!show_details) return;
+  if (!show_details) goto cleanup;
 
   if (!prob->abstract) {
     fprintf(f, "<tr%s><td>Problem ID:</td><td>%d</td><td>&nbsp;</td></tr>\n",
@@ -6056,6 +6056,7 @@ super_html_print_problem(FILE *f,
             form_row_attrs[row ^= 1], ARMOR(prob->unhandled_vars));
   }
 
+cleanup:
   if (tmp_prob) {
     prepare_problem_free_func(&tmp_prob->g);
     tmp_prob = 0;
@@ -8250,74 +8251,111 @@ check_test_file(
 }
 
 static int
-invoke_compile_process(FILE *flog, const unsigned char *cur_dir,
-                       const unsigned char *cmd)
+invoke_test_checker(
+        FILE *flog,
+        int n,
+        const unsigned char *test_checker_cmd,
+        char **test_checker_env,
+        const unsigned char *tst_dir,
+        const unsigned char *tst_pat,
+        const unsigned char *tst_sfx,
+        const unsigned char *ans_dir,
+        const unsigned char *ans_pat,
+        const unsigned char *ans_sfx)
 {
-  int pfd[2];
-  int pid;
-  unsigned char inbuf[1024];
-  int rsz, status;
-  const unsigned char *coredumped = "";
+  path_t tst_name;
+  path_t ans_name;
+  path_t tst_path;
+  path_t ans_path;
+  int retval = 0;
+  char *args[4];
+  unsigned char *out_text = 0;
+  unsigned char *err_text = 0;
+
+  if (!test_checker_cmd || !test_checker_cmd[0]) return 0;
+
+  if (tst_pat && *tst_pat) {
+    snprintf(tst_name, sizeof(tst_name), tst_pat, n);
+  } else {
+    snprintf(tst_name, sizeof(tst_name), "%03d%s", n, tst_sfx);
+  }
+  snprintf(tst_path, sizeof(tst_path), "%s/%s", tst_dir, tst_name);
+
+  if (ans_pat && *ans_pat) {
+    snprintf(ans_name, sizeof(ans_name), ans_pat, n);
+  } else {
+    snprintf(ans_name, sizeof(ans_name), "%03d%s", n, ans_sfx);
+  }
+  snprintf(ans_path, sizeof(ans_path), "%s/%s", ans_dir, ans_name);
+
+  args[0] = (char*) test_checker_cmd;
+  args[1] = tst_path;
+  args[2] = ans_path;
+  args[3] = NULL;
+
+  retval = ejudge_invoke_process(args, test_checker_env, tst_dir, NULL,
+                                 1, &out_text, &err_text);
+  if ((err_text && *err_text) || (out_text && *out_text) || retval != 0) {
+    fprintf(flog, "%s %s %s\n", test_checker_cmd, tst_path, ans_path);
+  }
+  if (err_text) {
+    fprintf(flog, "%s", err_text);
+    xfree(err_text); err_text = 0;
+  }
+  if (out_text) {
+    fprintf(flog, "%s", out_text);
+    xfree(out_text); out_text = 0;
+  }
+  if (retval >= 256) {
+    fprintf(flog, "test checker process is terminated by signal %d %s\n",
+            retval - 256, os_GetSignalString(retval - 256));
+    retval = -1;
+  } else if (retval > 0) {
+    fprintf(flog, "test checker process exited with code %d\n", retval);
+    retval = -1;
+  }
+
+  return retval;
+}
+
+static int
+invoke_compile_process(
+        FILE *flog,
+        const unsigned char *cur_dir,
+        const unsigned char *cmd)
+{
+  int retval = 0;
+  unsigned char *out_text = 0, *err_text = 0;
+  char *args[4];
 
   fprintf(flog, "Starting compilation: %s\n", cmd);
 
-  if (pipe(pfd) < 0) {
-    fprintf(flog, "pipe() failed: %s\n", os_ErrorMsg());
-    return -1;
+  args[0] = "/bin/sh";
+  args[1] = "-c";
+  args[2] = (char*) cmd;
+  args[3] = 0;
+
+  retval = ejudge_invoke_process(args, NULL, cur_dir, NULL, 1,
+                                 &out_text, &err_text);
+  if (err_text) {
+    fprintf(flog, "%s", err_text);
+    xfree(err_text); err_text = 0;
+  }
+  if (out_text) {
+    fprintf(flog, "%s", out_text);
+    xfree(out_text); out_text = 0;
+  }
+  
+  if (!retval) {
+    fprintf(flog, "process is completed successfully\n");
+  } else if (retval >= 256) {
+    fprintf(flog, "process is terminated by signal %d %s\n",
+            retval - 256, os_GetSignalString(retval - 256));
+  } else if (retval > 0) {
+    fprintf(flog, "process exited with code %d\n", retval);
   }
 
-  if ((pid = fork()) < 0) {
-    fprintf(flog, "fork() failed: %s\n", os_ErrorMsg());
-    return -1;
-  }
-  if (!pid) {
-    // child
-    if (cur_dir) {
-      if (chdir(cur_dir) < 0)
-        _exit(100);
-    }
-    close(pfd[0]);
-    if (pfd[1] != 1) dup2(pfd[1], 1);
-    if (pfd[1] != 2) dup2(pfd[1], 2);
-    if (pfd[1] != 1 && pfd[1] != 2) close(pfd[1]);
-    execl("/bin/sh", "/bin/sh", "-c", cmd, NULL);
-    _exit(100);
-  }
-
-  // parent
-  close(pfd[1]);
-  while ((rsz = read(pfd[0], inbuf, sizeof(inbuf))) > 0) {
-    fwrite(inbuf, 1, rsz, flog);
-  }
-  if (rsz < 0) {
-    fprintf(flog, "read() failed: %s\n", os_ErrorMsg());
-    close(pfd[0]);
-    return -1;
-  }
-  close(pfd[0]);
-  fprintf(flog, "\n");
-
-  while (waitpid(pid, &status, 0) < 0) {
-    if (errno != EINTR) {
-      fprintf(flog, "waitpid() failed: %s\n", os_ErrorMsg());
-      return -1;
-    }
-  }
-
-  if (WIFEXITED(status)) {
-    if (!WEXITSTATUS(status))
-      fprintf(flog, "process is completed successfully\n");
-    else
-      fprintf(flog, "process exited with code %d\n", WEXITSTATUS(status));
-  } else if (WIFSIGNALED(status)) {
-    if (WCOREDUMP(status)) coredumped = " (core dumped)";
-    fprintf(flog, "process is terminated by signal %d %s%s\n",
-            WTERMSIG(status), os_GetSignalString(WTERMSIG(status)), coredumped);
-  } else {
-    fprintf(flog, "waitpid() returned unexpected status\n");
-    return -1;
-  }
-  return 0;
+  return retval;
 }
 
 enum
@@ -8581,7 +8619,12 @@ invoke_make(
   }
   // check for test checker
   if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
-    // FIXME: complete
+    get_advanced_layout_path(cmd, sizeof(cmd), global, prob,
+                             prob->test_checker_cmd, variant);
+    if (access(cmd, X_OK) < 0) {
+      fprintf(flog, "Error: test checker executable %s is not created\n", cmd);
+      return -1;
+    }
   }
 
   return 1;
@@ -8680,7 +8723,6 @@ super_html_check_tests(FILE *f,
                        const unsigned char *hidden_vars,
                        const unsigned char *extra_args)
 {
-  unsigned char *s;
   path_t conf_path;
   path_t g_test_path;
   path_t g_corr_path;
@@ -8702,18 +8744,19 @@ super_html_check_tests(FILE *f,
   unsigned char hbuf[1024];
   int file_group, file_mode, dir_group, dir_mode;
   int already_compiled = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  path_t test_checker_cmd;
 
   if (sstate->serve_parse_errors) {
     fprintf(f, "<h2>The tests cannot be checked</h2>\n");
-    s = html_armor_string_dup(sstate->serve_parse_errors);
-    fprintf(f, "<p><pre><font color=\"red\">%s</font></pre></p>\n", s);
-    xfree(s);
-    return 0;
+    fprintf(f, "<p><pre><font color=\"red\">%s</font></pre></p>\n",
+            ARMOR(sstate->serve_parse_errors));
+    goto cleanup;
   }
 
   if (!sstate->edited_cnts || !sstate->global) {
     fprintf(f, "<h2>The tests cannot be checked: No contest</h2>\n");
-    return 0;
+    goto cleanup;
   }
 
   flog = open_memstream(&flog_txt, &flog_len);
@@ -8756,6 +8799,9 @@ super_html_check_tests(FILE *f,
       }
     }
 
+    if (tmp_prob) {
+      prepare_problem_free_func(&tmp_prob->g); tmp_prob = 0;
+    }
     tmp_prob = prepare_copy_problem(prob);
     prepare_set_prob_value(CNTSPROB_type, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_xml_file, tmp_prob, abstr, global);
@@ -8775,6 +8821,7 @@ super_html_check_tests(FILE *f,
     prepare_set_prob_value(CNTSPROB_interactor_cmd, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_style_checker_cmd, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_test_checker_cmd, tmp_prob, abstr, global);
+    //prepare_set_prob_value(CNTSPROB_test_checker_env, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_test_dir, tmp_prob, abstr, 0);
     prepare_set_prob_value(CNTSPROB_use_corr, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_test_sfx, tmp_prob, abstr, global);
@@ -8883,6 +8930,25 @@ super_html_check_tests(FILE *f,
         }
       }
 
+      test_checker_cmd[0] = 0;
+      if (tmp_prob->test_checker_cmd && tmp_prob->test_checker_cmd[0]) {
+        if (global->advanced_layout > 0) {
+          get_advanced_layout_path(test_checker_cmd, sizeof(test_checker_cmd),
+                                   global, tmp_prob,
+                                   tmp_prob->test_checker_cmd, -1);
+        } else if (os_IsAbsolutePath(tmp_prob->test_checker_cmd)) {
+          snprintf(test_checker_cmd, sizeof(test_checker_cmd), "%s",
+                   tmp_prob->test_checker_cmd);
+        } else {
+          snprintf(test_checker_cmd, sizeof(test_checker_cmd), "%s/%s",
+                   global->checker_dir, tmp_prob->test_checker_cmd);
+        }
+        if (access(test_checker_cmd, X_OK) < 0) {
+          fprintf(flog, "Error: test checker %s does not exist or non-executable", test_checker_cmd);
+          goto check_failed;
+        }
+      }
+
       total_tests = 1;
       while (1) {
         k = check_test_file(flog, total_tests, test_path,
@@ -8915,21 +8981,28 @@ super_html_check_tests(FILE *f,
                                tmp_prob->info_sfx, 0, 0, file_group,
                                file_mode) <= 0)
           goto check_failed;
+
+        if (invoke_test_checker(flog, j, test_checker_cmd,
+                                tmp_prob->test_checker_env,
+                                test_path, tmp_prob->test_pat,
+                                tmp_prob->test_sfx,
+                                corr_path, tmp_prob->corr_pat,
+                                tmp_prob->corr_sfx) < 0)
+          goto check_failed;
       }
+
       if (tmp_prob->use_corr
           && check_test_file(flog, j, corr_path, tmp_prob->corr_pat,
                              tmp_prob->corr_sfx, 1, tmp_prob->binary_input,
                              file_group, file_mode) != 0) {
-        fprintf(flog, "Error: there is answer file for test %d, but no data file\n",
-                j);
+        fprintf(flog, "Error: there is answer file for test %d, but no data file\n", j);
         goto check_failed;
       }
       if (tmp_prob->use_info
           && check_test_file(flog, j, info_path, tmp_prob->info_pat,
                              tmp_prob->info_sfx, 1, 0,
                              file_group, file_mode) != 0) {
-        fprintf(flog, "Error: there is test info file for test %d, but no data file\n",
-                j);
+        fprintf(flog, "Error: there is test info file for test %d, but no data file\n", j);
         goto check_failed;
       }
     } else {
@@ -8984,6 +9057,25 @@ super_html_check_tests(FILE *f,
           }
         }
 
+        test_checker_cmd[0] = 0;
+        if (tmp_prob->test_checker_cmd && tmp_prob->test_checker_cmd[0]) {
+          if (global->advanced_layout > 0) {
+            get_advanced_layout_path(test_checker_cmd, sizeof(test_checker_cmd),
+                                     global, tmp_prob,
+                                     tmp_prob->test_checker_cmd, variant);
+          } else if (os_IsAbsolutePath(tmp_prob->test_checker_cmd)) {
+            snprintf(test_checker_cmd, sizeof(test_checker_cmd), "%s-%d",
+                     tmp_prob->test_checker_cmd, variant);
+          } else {
+            snprintf(test_checker_cmd, sizeof(test_checker_cmd), "%s/%s-%d",
+                     global->checker_dir, tmp_prob->test_checker_cmd, variant);
+          }
+          if (access(test_checker_cmd, X_OK) < 0) {
+            fprintf(flog, "Error: test checker %s does not exist or non-executable", test_checker_cmd);
+            goto check_failed;
+          }
+        }
+
         total_tests = 1;
         while (1) {
           k = check_test_file(flog, total_tests, v_test_path,
@@ -9024,21 +9116,28 @@ super_html_check_tests(FILE *f,
                                  tmp_prob->info_sfx, 0, 0, file_group,
                                  file_mode) <= 0)
             goto check_failed;
+
+          if (invoke_test_checker(flog, j, test_checker_cmd,
+                                  tmp_prob->test_checker_env,
+                                  v_test_path, tmp_prob->test_pat,
+                                  tmp_prob->test_sfx,
+                                  v_corr_path, tmp_prob->corr_pat,
+                                  tmp_prob->corr_sfx) < 0)
+            goto check_failed;
         }
+
         if (tmp_prob->use_corr
             && check_test_file(flog, j, v_corr_path, tmp_prob->corr_pat,
                                tmp_prob->corr_sfx, 1, tmp_prob->binary_input,
                                file_group, file_mode) != 0) {
-          fprintf(flog, "Error: there is answer file for test %d, but no data file, variant %d\n",
-                  j, variant);
+          fprintf(flog, "Error: there is answer file for test %d, but no data file, variant %d\n", j, variant);
           goto check_failed;
         }
         if (tmp_prob->use_info
             && check_test_file(flog, j, v_info_path, tmp_prob->info_pat,
                                tmp_prob->info_sfx, 1, 0, file_group,
                                file_mode) != 0) {
-          fprintf(flog, "Error: there is test info file for test %d, but no data file, variant %d\n",
-                  j, variant);
+          fprintf(flog, "Error: there is test info file for test %d, but no data file, variant %d\n", j, variant);
           goto check_failed;
         }
       }
@@ -9053,11 +9152,9 @@ super_html_check_tests(FILE *f,
   }
 
   close_memstream(flog); flog = 0;
-  s = html_armor_string_dup(flog_txt);
   fprintf(f, "<h2>Contest is set up OK</h2>\n");
-  fprintf(f, "<p><pre><font>%s</font></pre></p>\n", s);
-  xfree(s);
-  xfree(flog_txt);
+  fprintf(f, "<p><pre><font>%s</font></pre></p>\n", ARMOR(flog_txt));
+  xfree(flog_txt); flog_txt = 0;
 
   fprintf(f, "<table border=\"0\"><tr>");
   fprintf(f, "<td>%sTo the top</a></td>",
@@ -9068,23 +9165,25 @@ super_html_check_tests(FILE *f,
                         SSERV_CMD_CONTEST_PAGE));
   fprintf(f, "</tr></table>\n");
 
+cleanup:
   if (tmp_prob) {
     prepare_problem_free_func(&tmp_prob->g);
   }
+  html_armor_free(&ab);
 
   return 0;
 
- check_failed:
+check_failed:
   if (tmp_prob) {
     prepare_problem_free_func(&tmp_prob->g);
   }
   fclose(flog);
 
-  s = html_armor_string_dup(flog_txt);
   fprintf(f, "<h2>Contest settings contain error:</h2>\n");
-  fprintf(f, "<p><pre><font color=\"red\">%s</font></pre></p>\n", s);
-  xfree(s);
+  fprintf(f, "<p><pre><font color=\"red\">%s</font></pre></p>\n",
+          ARMOR(flog_txt));
   xfree(flog_txt);
+  html_armor_free(&ab);
   return 0;
 }
 
