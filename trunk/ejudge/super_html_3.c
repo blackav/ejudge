@@ -8493,9 +8493,9 @@ invoke_make(
   }
 
 #if defined EJUDGE_LOCAL_DIR
-  snprintf(cmd, sizeof(cmd), "make EJUDGE_PREFIX_DIR=\"%s\" EJUDGE_CONTESTS_HOME_DIR=\"%s\" EJUDGE_LOCAL_DIR=\"%s\" all", EJUDGE_PREFIX_DIR, EJUDGE_CONTESTS_HOME_DIR, EJUDGE_LOCAL_DIR);
+  snprintf(cmd, sizeof(cmd), "make EJUDGE_PREFIX_DIR=\"%s\" EJUDGE_CONTESTS_HOME_DIR=\"%s\" EJUDGE_LOCAL_DIR=\"%s\" ejudge_make_problem", EJUDGE_PREFIX_DIR, EJUDGE_CONTESTS_HOME_DIR, EJUDGE_LOCAL_DIR);
 #else
-  snprintf(cmd, sizeof(cmd), "make EJUDGE_PREFIX_DIR=\"%s\" EJUDGE_CONTESTS_HOME_DIR=\"%s\" all", EJUDGE_PREFIX_DIR, EJUDGE_CONTESTS_HOME_DIR);
+  snprintf(cmd, sizeof(cmd), "make EJUDGE_PREFIX_DIR=\"%s\" EJUDGE_CONTESTS_HOME_DIR=\"%s\" ejudge_make_problem", EJUDGE_PREFIX_DIR, EJUDGE_CONTESTS_HOME_DIR);
 #endif
   r = invoke_compile_process(flog, problem_dir, cmd);
   if (r < 0) {
@@ -8753,6 +8753,40 @@ super_html_check_tests(FILE *f,
       }
     }
 
+    /* check for Makefile and invoke make if necessary */
+    if (global->advanced_layout > 0) {
+      if (prob->variant_num <= 0) {
+        if ((j = invoke_make(flog, config, global, &tmp_prob, -1)) < 0)
+          goto check_failed;
+        if (j > 0) already_compiled = 1;
+      } else {
+        for (variant = 1; variant <= prob->variant_num; ++variant) {
+          if ((j = invoke_make(flog, config, global, &tmp_prob, variant)) < 0)
+            goto check_failed;
+          if (j > 0) already_compiled = 1;
+        }
+      }
+    }
+
+    if (!tmp_prob.standard_checker[0] && !already_compiled) {
+      if (prob->variant_num <= 0) {
+        if (recompile_checker(config, flog, checker_path) < 0)
+          goto check_failed;
+      } else {
+        for (variant = 1; variant <= prob->variant_num; variant++) {
+          if (global->advanced_layout > 0) {
+            get_advanced_layout_path(v_checker_path, sizeof(v_checker_path),
+                                     global, &tmp_prob, NULL, variant);
+          } else {
+            snprintf(v_checker_path, sizeof(v_checker_path), "%s-%d",
+                     checker_path, variant);
+          }
+          if (recompile_checker(config, flog, v_checker_path) < 0)
+            goto check_failed;
+        }
+      }
+    }
+
     // check tests
     if (prob->variant_num <= 0) {
       if (global->advanced_layout > 0) {
@@ -8950,40 +8984,6 @@ super_html_check_tests(FILE *f,
           fprintf(flog, "Error: there is test info file for test %d, but no data file, variant %d\n",
                   j, variant);
           goto check_failed;
-        }
-      }
-    }
-
-    /* check for Makefile and invoke make if necessary */
-    if (global->advanced_layout > 0) {
-      if (prob->variant_num <= 0) {
-        if ((j = invoke_make(flog, config, global, &tmp_prob, -1)) < 0)
-          goto check_failed;
-        if (j > 0) already_compiled = 1;
-      } else {
-        for (variant = 1; variant <= prob->variant_num; ++variant) {
-          if ((j = invoke_make(flog, config, global, &tmp_prob, variant)) < 0)
-            goto check_failed;
-          if (j > 0) already_compiled = 1;
-        }
-      }
-    }
-
-    if (!tmp_prob.standard_checker[0] && !already_compiled) {
-      if (prob->variant_num <= 0) {
-        if (recompile_checker(config, flog, checker_path) < 0)
-          goto check_failed;
-      } else {
-        for (variant = 1; variant <= prob->variant_num; variant++) {
-          if (global->advanced_layout > 0) {
-            get_advanced_layout_path(v_checker_path, sizeof(v_checker_path),
-                                     global, &tmp_prob, NULL, variant);
-          } else {
-            snprintf(v_checker_path, sizeof(v_checker_path), "%s-%d",
-                     checker_path, variant);
-          }
-          if (recompile_checker(config, flog, v_checker_path) < 0)
-            goto check_failed;
         }
       }
     }
