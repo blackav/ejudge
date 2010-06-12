@@ -743,8 +743,7 @@ get_insert_run_id(
             (rls->run_u - run_id - 1) * sizeof(rls->runs[0]));
     for (i = run_id + 1; i < rls->run_u; ++i)
       rls->runs[i].run_id = i;
-    // FIXME: does it work???
-    if (mi->simple_fquery(md, "UPDATE %sruns SET run_id = run_id + 1 WHERE contest_id = %d AND run_id >= %d ;", md->table_prefix, cs->contest_id, run_id) < 0)
+    if (mi->simple_fquery(md, "UPDATE %sruns SET run_id = run_id + 1 WHERE contest_id = %d AND run_id >= %d ORDER BY run_id DESC;", md->table_prefix, cs->contest_id, run_id) < 0)
       goto fail;
   }
   re = &rls->runs[run_id];
