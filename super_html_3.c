@@ -8404,7 +8404,11 @@ invoke_make(
     return 0;
   }
 
+#if defined EJUDGE_LOCAL_DIR
   snprintf(cmd, sizeof(cmd), "make EJUDGE_PREFIX_DIR=\"%s\" EJUDGE_CONTESTS_HOME_DIR=\"%s\" EJUDGE_LOCAL_DIR=\"%s\" all", EJUDGE_PREFIX_DIR, EJUDGE_CONTESTS_HOME_DIR, EJUDGE_LOCAL_DIR);
+#else
+  snprintf(cmd, sizeof(cmd), "make EJUDGE_PREFIX_DIR=\"%s\" EJUDGE_CONTESTS_HOME_DIR=\"%s\" all", EJUDGE_PREFIX_DIR, EJUDGE_CONTESTS_HOME_DIR);
+#endif
   r = invoke_compile_process(flog, problem_dir, cmd);
   if (r < 0) {
     fprintf(flog, "Error: failed to start make\n");
