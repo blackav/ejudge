@@ -39,6 +39,7 @@
 #include "misctext.h"
 #include "charsets.h"
 #include "compat.h"
+#include "varsubst.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -962,15 +963,16 @@ serve_compile_request(
   unsigned char *src_out_text = 0;
   size_t src_out_size = 0;
   int prio = 0;
+  char **sc_env_mem = 0;
 
   if (prob->source_header[0]) {
     sformat_message(tmp_path, sizeof(tmp_path), 0, prob->source_header,
                     global, prob, lang, 0, 0, 0, 0, 0);
     if (os_IsAbsolutePath(tmp_path)) {
       snprintf(tmp_path_2, sizeof(tmp_path_2), "%s", tmp_path);
-    } else if (state->global->advanced_layout > 0) {
+    } else if (global->advanced_layout > 0) {
       get_advanced_layout_path(tmp_path_2, sizeof(tmp_path_2),
-                               state->global, prob, tmp_path, -1);
+                               global, prob, tmp_path, -1);
     } else {
       snprintf(tmp_path_2, sizeof(tmp_path_2), "%s/%s",
                global->statement_dir, tmp_path);
@@ -984,9 +986,9 @@ serve_compile_request(
                     global, prob, lang, 0, 0, 0, 0, 0);
     if (os_IsAbsolutePath(tmp_path)) {
       snprintf(tmp_path_2, sizeof(tmp_path_2), "%s", tmp_path);
-    } else if (state->global->advanced_layout > 0) {
+    } else if (global->advanced_layout > 0) {
       get_advanced_layout_path(tmp_path_2, sizeof(tmp_path_2),
-                               state->global, prob, tmp_path, -1);
+                               global, prob, tmp_path, -1);
     } else {
       snprintf(tmp_path_2, sizeof(tmp_path_2), "%s/%s",
                global->statement_dir, tmp_path);
@@ -999,6 +1001,34 @@ serve_compile_request(
   if (accepting_mode == -1) accepting_mode = state->accepting_mode;
 
   if (!state->compile_request_id) state->compile_request_id++;
+
+  if (style_checker_cmd && style_checker_cmd[0]) {
+    sformat_message(tmp_path, sizeof(tmp_path), 0, style_checker_cmd,
+                    global, prob, lang, 0, 0, 0, 0, 0);
+    config_var_substitute_buf(tmp_path, sizeof(tmp_path));
+    if (os_IsAbsolutePath(tmp_path)) {
+      style_checker_cmd = tmp_path;
+    } else if (global->advanced_layout > 0) {
+      get_advanced_layout_path(tmp_path_2, sizeof(tmp_path_2),
+                               global, prob, tmp_path, -1);
+      style_checker_cmd = tmp_path_2;
+    } else {
+      snprintf(tmp_path_2, sizeof(tmp_path_2), "%s/%s",
+               global->checker_dir, tmp_path);
+      style_checker_cmd = tmp_path_2;
+    }
+  }
+
+  if (!style_checker_cmd || !style_checker_cmd[0]) {
+    style_checker_cmd = lang->style_checker_cmd;
+  }
+  if (style_checker_env && style_checker_env[0]
+      && lang->style_checker_env && lang->style_checker_env[0]) {
+    sc_env_mem = sarray_merge_pp(lang->style_checker_env, style_checker_env);
+    style_checker_env = sc_env_mem;
+  } else if (lang->style_checker_env && lang->style_checker_env[0]) {
+    style_checker_env = lang->style_checker_env;
+  }
 
   memset(&cp, 0, sizeof(cp));
   cp.judge_id = state->compile_request_id++;
@@ -1088,6 +1118,7 @@ serve_compile_request(
     goto failed;
   }
 
+  sarray_free(sc_env_mem);
   xfree(pkt_buf);
   xfree(src_header_text);
   xfree(src_footer_text);
@@ -1096,6 +1127,7 @@ serve_compile_request(
   return 0;
 
  failed:
+  sarray_free(sc_env_mem);
   xfree(pkt_buf);
   xfree(src_header_text);
   xfree(src_footer_text);
@@ -2287,12 +2319,12 @@ serve_rejudge_run(
   }
 
   serve_compile_request(state, 0, -1, run_id, re.user_id,
-                        state->langs[re.lang_id]->compile_id, re.locale_id,
+                        lang->compile_id, re.locale_id,
                         (prob->type > 0),
-                        state->langs[re.lang_id]->src_sfx,
-                        state->langs[re.lang_id]->compiler_env,
-                        0, state->langs[re.lang_id]->style_checker_cmd,
-                        state->langs[re.lang_id]->style_checker_env,
+                        lang->src_sfx,
+                        lang->compiler_env,
+                        0, prob->style_checker_cmd,
+                        prob->style_checker_env,
                         accepting_mode, priority_adjustment, 1, prob, lang);
 
   serve_audit_log(state, run_id, user_id, ip, ssl_flag, "Command: Rejudge\n");

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,11 +15,14 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "varsubst.h"
 #include "errlog.h"
 #include "serve_state.h"
 
 #include <reuse/xalloc.h>
+#include <reuse/logger.h>
 
 #include <string.h>
 
@@ -125,6 +128,100 @@ varsubst_heap(const serve_state_t state,
   }
   if (free_flag) xfree(in_str);
   return out_str;
+}
+
+static const unsigned char * const configure_names[] = 
+{
+  "@lang_config_dir@",
+  "@prefix@",
+  "@exec_prefix@",
+  "@libexecdir@",
+  "@local_dir@",
+  "@contests_home_dir@",
+  0
+};
+static const unsigned char * const configure_values[] =
+{
+#if defined EJUDGE_LANG_CONFIG_DIR
+  EJUDGE_LANG_CONFIG_DIR,
+#else
+  "",
+#endif
+#if defined EJUDGE_PREFIX_DIR
+  EJUDGE_PREFIX_DIR,
+#else
+  "",
+#endif
+#if defined EJUDGE_PREFIX_DIR
+  EJUDGE_PREFIX_DIR,
+#else
+  "",
+#endif
+#if defined EJUDGE_LIBEXEC_DIR
+  EJUDGE_LIBEXEC_DIR,
+#else
+    "",
+#endif
+#if defined EJUDGE_LOCAL_DIR
+  EJUDGE_LOCAL_DIR,
+#else
+  "",
+#endif
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  EJUDGE_CONTESTS_HOME_DIR,
+#else
+  "",
+#endif
+  0
+};
+
+static unsigned char *
+do_substitute(
+        unsigned char *txt,
+        const unsigned char * const *names,
+        const unsigned char * const *values)
+{
+  int i, nlen, vlen, tlen;
+  unsigned char *pp;
+  unsigned char *txt2 = 0;
+
+  if (!txt || !*txt) return txt;
+
+  while (1) {
+    pp = 0;
+    for (i = 0; names[i]; i++)
+      if ((pp = strstr(txt, names[i])))
+        break;
+    if (!pp) break;
+
+    ASSERT(values[i]);
+    nlen = strlen(names[i]);
+    vlen = strlen(values[i]);
+    tlen = strlen(txt);
+
+    ASSERT(nlen > 0);
+    txt2 = (unsigned char*) xmalloc(tlen - nlen + vlen + 1);
+    sprintf(txt2, "%.*s%s%s", (int) (pp - txt), txt, values[i], pp + nlen);
+    xfree(txt); txt = txt2; txt2 = 0;
+  }
+
+  return txt;
+}
+
+unsigned char *
+config_var_substitute_heap(unsigned char *txt)
+{
+  return do_substitute(txt, configure_names, configure_values);
+}
+
+unsigned char *
+config_var_substitute_buf(unsigned char *buf, size_t bufsize)
+{
+  /* optimize it? */
+  unsigned char *s = config_var_substitute_heap(xstrdup(buf));
+  snprintf(buf, bufsize, "%s", s);
+  xfree(s);
+  return buf;
 }
 
 /*

@@ -2801,8 +2801,8 @@ priv_submit_run(FILE *fout,
                                 lang->compile_id, phr->locale_id, 0,
                                 lang->src_sfx,
                                 lang->compiler_env,
-                                0, lang->style_checker_cmd,
-                                lang->style_checker_env,
+                                0, prob->style_checker_cmd,
+                                prob->style_checker_env,
                                 -1, 0, 0, prob, lang) < 0) {
         ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
         goto cleanup;
@@ -9964,8 +9964,8 @@ unpriv_submit_run(FILE *fout,
                                 lang->compile_id, phr->locale_id, 0,
                                 lang->src_sfx,
                                 lang->compiler_env,
-                                0, lang->style_checker_cmd,
-                                lang->style_checker_env,
+                                0, prob->style_checker_cmd,
+                                prob->style_checker_env,
                                 -1, 0, 1, prob, lang) < 0) {
         ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
         goto done;

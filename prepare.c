@@ -5870,6 +5870,9 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
+  case CNTSPROB_open_tests:
+    break;
+
   default:
     abort();
   }
