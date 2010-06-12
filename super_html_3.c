@@ -3286,7 +3286,7 @@ super_html_edit_languages(
   struct section_global_data *global = sstate->global;
   struct section_language_data *lang = 0, *cs_lang;
   unsigned char buf[1024], buf2[1024];
-  unsigned char *cmt, *lang_name, *td_attr;
+  unsigned char *cmt, *lang_name, *td_attr, *env;
   path_t lang_hidden_vars;
   int row = 1;
 
@@ -3511,6 +3511,21 @@ super_html_edit_languages(
   FIXME: LANGUAGE_PARAM(compiler_env, "x"),
  */
 
+    //LANGUAGE_PARAM(style_checker_env, "x"),
+    if (!lang->style_checker_env || !lang->style_checker_env[0]) {
+      env = xstrdup("");
+    } else {
+      env = sarray_unparse(lang->style_checker_env);
+    }
+    print_string_editing_row(f, "Style checker environment:", env,
+                             SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_ENV,
+                             SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_ENV,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url, extra_args, lang_hidden_vars);
+    xfree(env); env = 0;
+
     if (lang->unhandled_vars) {
       s = html_armor_string_dup(lang->unhandled_vars);
       fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Uneditable parameters</td></tr>\n<tr><td colspan=\"3\"><pre>%s</pre></td></tr>\n",
@@ -3702,6 +3717,7 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
   struct section_language_data *pl_old, *pl_new;
   int val, n;
   int *p_int;
+  char **tmp_env = 0;
 
   if (!sstate->cs_langs) {
     return -SSERV_ERR_CONTEST_NOT_EDITED;
@@ -3778,6 +3794,17 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
   case SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_CMD:
     if (!pl_new) return 0;
     pl_new->style_checker_cmd[0] = 0;
+    break;
+
+  case SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_ENV:
+    if (sarray_parse(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(pl_new->style_checker_env);
+    pl_new->style_checker_env = tmp_env; tmp_env = 0;
+    break;
+
+  case SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_ENV:
+    pl_new->style_checker_env = sarray_free(pl_new->style_checker_env);
     break;
 
   case SSERV_CMD_LANG_CHANGE_DISABLE_SECURITY:
