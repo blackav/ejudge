@@ -862,12 +862,7 @@ prepare_unparse_lang(
   if (!flag && options && *options) {
     fprintf(f, "compiler_env = \"EJUDGE_FLAGS=%s\"\n", CARMOR(options));
   }
-  if (lang->style_checker_env) {
-    for (i = 0; lang->style_checker_env[i]; ++i) {
-      fprintf(f, "style_checker_env = \"%s\"\n",
-              CARMOR(lang->style_checker_env[i]));
-    }
-  }
+  do_xstr(f, &ab, "style_checker_env", lang->style_checker_env);
   fprintf(f, "\n");
 
   if (lang->unhandled_vars) fprintf(f, "%s\n", lang->unhandled_vars);

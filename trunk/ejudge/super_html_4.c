@@ -1270,6 +1270,7 @@ static const struct cnts_edit_info cnts_language_info[] =
   { NS_LANGUAGE, CNTSLANG_binary, 'Y', 1, 0, 0, 0, 0, "Source files are binary", 0, 0 },
   // content_type
   { NS_LANGUAGE, CNTSLANG_style_checker_cmd, 'S', 1, 1, 1, 1, 0, "Style checker command", "Style checker command", 0 },
+  { NS_LANGUAGE, CNTSLANG_style_checker_env, 'X', 1, 1, 1, 1, 0, "Style checker environment", "Style checker environment", 0 },
   { NS_SID_STATE, SSSS_lang_opts, 138, 1, 1, 1, 1, 0, "Compilation options", 0, 0 },
   { NS_LANGUAGE, CNTSLANG_compiler_env, 'X', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_LANG_FIELD_DETAIL_PAGE, "Additional environment variables", 0, 0 },
   { 0, 0, '-', 0, 0, 0, 0, 0, "Other parameters", 0, 0 },
@@ -5442,6 +5443,7 @@ const unsigned char lang_editable_fields[CNTSLANG_LAST_FIELD] =
   [CNTSLANG_disable_auto_testing] = 1,
   [CNTSLANG_binary] = 1,
   [CNTSLANG_style_checker_cmd] = 1,
+  [CNTSLANG_style_checker_env] = 1,
   [CNTSLANG_compiler_env] = 1,
   [CNTSLANG_unhandled_vars] = 1,
 };
@@ -5584,6 +5586,7 @@ cmd_op_clear_serve_lang_field(
 const unsigned char lang_editable_details[CNTSLANG_LAST_FIELD] =
 {
   [CNTSLANG_compiler_env] = 1,
+  [CNTSLANG_style_checker_env] = 1,
   [CNTSLANG_unhandled_vars] = 1,
 };
 
@@ -5709,6 +5712,7 @@ cmd_op_edit_serve_lang_field_detail(
 
   switch (f_id) {
   case CNTSLANG_compiler_env:
+  case CNTSLANG_style_checker_env:
     split_to_lines(filt_txt, &lns, 2);
     sarray_free(*(char***) f_ptr);
     *(char***) f_ptr = lns;

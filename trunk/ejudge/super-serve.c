@@ -2831,6 +2831,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_LANG_CLEAR_OPTS:
   case SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_CMD:
   case SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_CMD:
+  case SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_ENV:
+  case SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_ENV:
     r = super_html_lang_cmd(sstate, pkt->b.id, pkt->param1, param2_ptr,
                             pkt->param3, pkt->param4);
     break;
@@ -3761,6 +3763,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_LANG_CLEAR_OPTS] = { cmd_set_value },
   [SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_CMD] = { cmd_set_value },
   [SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_CMD] = { cmd_set_value },
+  [SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_ENV] = { cmd_set_value },
+  [SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_ENV] = { cmd_set_value },
 
   [SSERV_CMD_EDIT_CURRENT_PROB] = { cmd_main_page },
   [SSERV_CMD_PROB_ADD] = { cmd_set_value },
