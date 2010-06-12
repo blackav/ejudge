@@ -3,7 +3,7 @@
 #ifndef __VARSUBST_H__
 #define __VARSUBST_H__
 
-/* Copyright (C) 2004, 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,5 +26,10 @@ unsigned char *varsubst_heap(const serve_state_t, unsigned char *in_str,
                              const struct config_parse_info *problem_vars,
                              const struct config_parse_info *language_vars,
                              const struct config_parse_info *tester_vars);
+
+unsigned char *
+config_var_substitute_heap(unsigned char *txt);
+unsigned char *
+config_var_substitute_buf(unsigned char *buf, size_t bufsize);
 
 #endif /* __VARSUBST_H__ */

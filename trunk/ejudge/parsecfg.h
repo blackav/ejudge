@@ -93,6 +93,7 @@ struct generic_section_config *param_alloc_section(const unsigned char *name,
 
 int    sarray_len(char **);
 char **sarray_merge_pf(char **, char **);
+char **sarray_merge_pp(char **, char **);
 char **sarray_free(char **);
 char **sarray_merge_arr(int, char ***);
 char  *sarray_unparse(char **);

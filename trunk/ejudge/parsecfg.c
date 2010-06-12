@@ -1393,6 +1393,25 @@ char **sarray_merge_pf(char **a1, char **a2)
   return pptr;
 }
 
+char **
+sarray_merge_pp(char **a1, char **a2)
+{
+  int newlen = 0, i = 0, j;
+  char **aa = 0;
+
+  newlen = sarray_len(a1) + sarray_len(a2);
+  XCALLOC(aa, newlen + 1);
+  if (a1) {
+    for (j = 0; a1[j]; ++j)
+      aa[i++] = xstrdup(a1[j]);
+  }
+  if (a2) {
+    for (j = 0; a2[j]; ++j)
+      aa[i++] = xstrdup(a2[j]);
+  }
+  return aa;
+}
+
 char **sarray_merge_arr(int n, char ***pa)
 {
   int newlen = 0, i, j, k;

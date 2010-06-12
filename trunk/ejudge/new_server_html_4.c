@@ -966,8 +966,8 @@ cmd_submit_run(
                                 lang->compile_id, phr->locale_id, 0,
                                 lang->src_sfx,
                                 lang->compiler_env,
-                                0, lang->style_checker_cmd,
-                                lang->style_checker_env,
+                                0, prob->style_checker_cmd,
+                                prob->style_checker_env,
                                 -1, 0, 0, prob, lang) < 0)
         FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,

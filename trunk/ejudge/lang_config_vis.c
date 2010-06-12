@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@
 #include "ncurses_utils.h"
 #include "pathutl.h"
 #include "compat.h"
+#include "varsubst.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -303,40 +304,6 @@ lang_config_get_sorted(
   *p_langs = langs;
 }
 
-static unsigned char *
-do_substitute(
-        unsigned char *txt,
-        const unsigned char * const *names,
-        const unsigned char * const *values)
-{
-  int i, nlen, vlen, tlen;
-  unsigned char *pp;
-  unsigned char *txt2 = 0;
-
-  if (!txt || !*txt) return txt;
-
-  while (1) {
-    pp = 0;
-    for (i = 0; names[i]; i++)
-      if ((pp = strstr(txt, names[i])))
-        break;
-    if (!pp) break;
-
-    ASSERT(values[i]);
-    nlen = strlen(names[i]);
-    vlen = strlen(values[i]);
-    tlen = strlen(txt);
-
-    ASSERT(nlen > 0);
-    txt2 = (unsigned char*) xmalloc(tlen - nlen + vlen + 1);
-    sprintf(txt2, "%.*s%s%s", (int) (pp - txt), txt, values[i], pp + nlen);
-    xfree(txt); txt = txt2; txt2 = 0;
-  }
-
-  return txt;
-}
-              
-
 static void
 update_language_script(
         const unsigned char *script_in,
@@ -351,50 +318,6 @@ update_language_script(
   size_t in_z = 0, out_z = 0;
   FILE *f = 0;
   char buf[1024];
-  static const unsigned char * const names[] = 
-  {
-    "@lang_config_dir@",
-    "@prefix@",
-    "@exec_prefix@",
-    "@libexecdir@",
-    "@local_dir@",
-    "@contests_home_dir@",
-    0
-  };
-  static const unsigned char * const values[] =
-  {
-#if defined EJUDGE_LANG_CONFIG_DIR
-    EJUDGE_LANG_CONFIG_DIR,
-#else
-    "",
-#endif
-#if defined EJUDGE_PREFIX_DIR
-    EJUDGE_PREFIX_DIR,
-#else
-    "",
-#endif
-#if defined EJUDGE_PREFIX_DIR
-    EJUDGE_PREFIX_DIR,
-#else
-    "",
-#endif
-#if defined EJUDGE_LIBEXEC_DIR
-    EJUDGE_LIBEXEC_DIR,
-#else
-    "",
-#endif
-#if defined EJUDGE_LOCAL_DIR
-    EJUDGE_LOCAL_DIR,
-#else
-    "",
-#endif
-#if defined EJUDGE_CONTESTS_HOME_DIR
-    EJUDGE_CONTESTS_HOME_DIR,
-#else
-    "",
-#endif
-    0
-  };
 
   // read the source file
   if (!(f = fopen(script_in, "r"))) {
@@ -408,7 +331,7 @@ update_language_script(
   fclose(f); f = 0;
 
   // substitute stuff
-  in_t = do_substitute(in_t, names, values);
+  in_t = config_var_substitute_heap(in_t);
 
   // read the destination file (if such exists)
   if ((f = fopen(script_out, "r"))) {
