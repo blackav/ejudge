@@ -16,6 +16,7 @@
  */
 
 #include "../mime_type.h"
+#include "../ej_process.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -87,20 +88,6 @@ error(const char *format, ...)
   va_end(args);
 
   fprintf(stderr, "error: %s\n", buf);
-  return -1;
-}
-
-static int
-fferror(FILE *ferr, const char *format, ...)
-{
-  va_list args;
-  char buf[1024];
-
-  va_start(args, format);
-  vsnprintf(buf, sizeof(buf), format, args);
-  va_end(args);
-
-  fprintf(ferr, "error: %s\n", buf);
   return -1;
 }
 
@@ -248,196 +235,6 @@ parse_file_type(const unsigned char *str, int *p_type)
   return 0;
 }
 
-static int
-invoke_process(
-        char **args,
-        const unsigned char *workdir,
-        const unsigned char *stdin_text,
-        unsigned char **stdout_text,
-        unsigned char **stderr_text)
-{
-  char *err_t = 0, *out_t = 0;
-  size_t err_z = 0, out_z = 0;
-  FILE *err_f = 0, *out_f = 0;
-  int pid, out_p[2] = {-1, -1}, err_p[2] = {-1, -1}, in_p[2] = {-1, -1};
-  int maxfd, n, status, retcode = 0;
-  const unsigned char *stdin_ptr;
-  size_t stdin_len;
-  unsigned char buf[4096];
-  fd_set wset, rset;
-
-  if (!stdin_text) stdin_text = "";
-  stdin_ptr = stdin_text;
-  stdin_len = strlen(stdin_text);
-
-  if (pipe(in_p) < 0) {
-    err_f = open_memstream(&err_t, &err_z);
-    fferror(err_f, "pipe failed: %s", strerror(errno));
-    goto fail;
-  }
-  if (pipe(out_p) < 0) {
-    err_f = open_memstream(&err_t, &err_z);
-    fferror(err_f, "pipe failed: %s", strerror(errno));
-    goto fail;
-  }
-  if (pipe(err_p) < 0) {
-    err_f = open_memstream(&err_t, &err_z);
-    fferror(err_f, "pipe failed: %s", strerror(errno));
-    goto fail;
-  }
-
-  if ((pid = fork()) < 0) {
-    err_f = open_memstream(&err_t, &err_z);
-    fferror(err_f, "fork failed: %s", strerror(errno));
-    goto fail;
-  } else if (!pid) {
-    fflush(stderr);
-    dup2(in_p[0], 0); close(in_p[0]); close(in_p[1]);
-    dup2(out_p[1], 1); close(out_p[0]); close(out_p[1]);
-    dup2(err_p[1], 2); close(err_p[0]); close(err_p[1]);
-
-    if (workdir) {
-      if (chdir(workdir) < 0) {
-        error("cannot change directory to %s: %s", workdir, strerror(errno));
-        fflush(stderr);
-        _exit(1);
-      }
-    }
-    execve(args[0], args, environ);
-    error("exec failed: %s", strerror(errno));
-    fflush(stderr);
-    _exit(1);
-  }
-
-  /* parent */
-  close(in_p[0]); in_p[0] = -1;
-  close(out_p[1]); out_p[1] = -1;
-  close(err_p[1]); err_p[1] = -1;
-  err_f = open_memstream(&err_t, &err_z);
-  out_f = open_memstream(&out_t, &out_z);
-
-  while (1) {
-    maxfd = -1;
-    FD_ZERO(&wset);
-    FD_ZERO(&rset);
-    if (in_p[1] >= 0) {
-      FD_SET(in_p[1], &wset);
-      if (in_p[1] > maxfd) maxfd = in_p[1];
-    }
-    if (out_p[0] >= 0) {
-      FD_SET(out_p[0], &rset);
-      if (out_p[0] > maxfd) maxfd = out_p[0];
-    }
-    if (err_p[0] >= 0) {
-      FD_SET(err_p[0], &rset);
-      if (err_p[0] > maxfd) maxfd = err_p[0];
-    }
-    if (maxfd < 0) {
-      break;
-    }
-
-    n = select(maxfd + 1, &rset, &wset, NULL, NULL);
-    if (n < 0) {
-      fprintf(err_f, "Error: select failed: %s\n", strerror(errno));
-      if (in_p[1] >= 0) close(in_p[1]);
-      in_p[1] = -1;
-      if (out_p[0] >= 0) close(out_p[0]);
-      out_p[0] = -1;
-      if (err_p[0] >= 0) close(err_p[0]);
-      err_p[0] = -1;
-      break;
-    }
-
-    if (in_p[1] >= 0 && FD_ISSET(in_p[1], &wset)) {
-      if (stdin_len > 0) {
-        n = write(in_p[1], stdin_ptr, stdin_len);
-        if (n < 0) {
-          fprintf(err_f, "Error: write to process failed: %s\n",
-                  strerror(errno));
-          close(in_p[1]); in_p[1] = -1;
-        } else if (!n) {
-          fprintf(err_f, "Error: write to process returned 0\n");
-          close(in_p[1]); in_p[1] = -1;
-        } else {
-          stdin_ptr += n;
-          stdin_len -= n;
-        }
-      } else {
-        close(in_p[1]); in_p[1] = -1;
-      }
-    }
-    if (out_p[0] >= 0 && FD_ISSET(out_p[0], &rset)) {
-      n = read(out_p[0], buf, sizeof(buf));
-      if (n < 0) {
-        fprintf(err_f, "Error: read from process failed: %s\n",
-                strerror(errno));
-        close(out_p[0]); out_p[0] = -1;
-      } else if (!n) {
-        close(out_p[0]); out_p[0] = -1;
-      } else {
-        fwrite(buf, 1, n, out_f);
-      }
-    }
-    if (err_p[0] >= 0 && FD_ISSET(err_p[0], &rset)) {
-      n = read(err_p[0], buf, sizeof(buf));
-      if (n < 0) {
-        fprintf(err_f, "Error: read from process failed %s\n",
-                strerror(errno));
-        close(err_p[0]); err_p[0] = -1;
-      } else if (!n) {
-        close(err_p[0]); err_p[0] = -1;
-      } else {
-        fwrite(buf, 1, n, err_f);
-      }
-    }
-  }
-
-  n = waitpid(pid, &status, 0);
-  if (n < 0) {
-    fprintf(err_f, "Error: waiting failed: %s\n", strerror(errno));
-    goto fail;
-  }
-
-  fclose(out_f); out_f = 0;
-  fclose(err_f); err_f = 0;
-  if (stdout_text) {
-    *stdout_text = out_t; out_t = 0;
-  } else {
-    free(out_t); out_t = 0;
-  }
-  if (stderr_text) {
-    *stderr_text = err_t; err_t = 0;
-  } else {
-    free(err_t); err_t = 0;
-  }
-
-  if (WIFEXITED(status)) {
-    status = WEXITSTATUS(status);
-  } else if (WIFSIGNALED(status)) {
-    status = 256 + WTERMSIG(status);
-  }
-
-  return retcode;
-
-fail:
-  if (in_p[0] >= 0) close(in_p[0]);
-  if (in_p[1] >= 0) close(in_p[1]);
-  if (out_p[0] >= 0) close(out_p[0]);
-  if (out_p[1] >= 0) close(out_p[1]);
-  if (err_p[0] >= 0) close(err_p[0]);
-  if (err_p[1] >= 0) close(err_p[1]);
-  if (err_f) fclose(err_f);
-  if (out_f) fclose(out_f);
-  if (stderr_text) {
-    *stderr_text = err_t; err_t = 0;
-  } else {
-    free(err_t);
-  }
-  free(out_t);
-  if (stdout_text) *stdout_text = 0;
-  return -1;
-}
-
 static void
 append_entry(
         struct archive_file *arch,
@@ -500,7 +297,7 @@ get_tar_listing(const unsigned char *path, struct archive_file *arch)
   cmds[3] = "--quoting-style=c";
   cmds[4] = 0;
 
-  r = invoke_process(cmds, NULL, NULL, &out, &err);
+  r = ejudge_invoke_process(cmds, NULL, NULL, NULL, 0, &out, &err);
   if (r != 0) {
     error("archiver exit code: %d", r);
     fprintf(stderr, "%s\n", err);
@@ -594,7 +391,7 @@ unpack_tar(const unsigned char *path, const unsigned char *dir)
   cmds[4] = (char*) dir;
   cmds[5] = 0;
 
-  r = invoke_process(cmds, NULL, NULL, &out, &err);
+  r = ejudge_invoke_process(cmds, NULL, NULL, NULL, 0, &out, &err);
   if (r != 0) {
     error("archiver exit code: %d", r);
     fprintf(stderr, "%s", err);
