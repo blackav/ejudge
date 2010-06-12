@@ -809,10 +809,10 @@ eval_check_expr(
         //if (*(int*) f_ptr) val1 = 1;
         val1 = *(int*) f_ptr;
         break;
-      case 'S':
+      case 's':
         if (*(unsigned char **) f_ptr) val1 = 1;
         break;
-      case 's':
+      case 'S':
         {
           const unsigned char *s = (const unsigned char*) f_ptr;
           if (*s && *s != 1) val1 = 1;
@@ -974,24 +974,24 @@ static const struct cnts_edit_info cnts_edit_info[] =
 {
   { 0, 0, '-', 0, 0, 0, 0, 0, "Basic Contest Settings", 0, 0 },
   { NS_CONTEST, CNTS_id, 'd', 0, 0, 0, 0, 0, "Contest ID", "Contest ID", 0 },
-  { NS_CONTEST, CNTS_name, 'S', 1, 1, 1, 1, 0, "Contest Name", "Contest Name", 0 },
-  { NS_CONTEST, CNTS_name_en, 'S', 1, 1, 1, 1, 0, "Contest Name (English)", "Contest Name (English)", 0 },
-  { NS_CONTEST, CNTS_main_url, 'S', 1, 1, 1, 1, 0, "Main URL", "Contest Main URL", 0 },
-  { NS_CONTEST, CNTS_keywords, 'S', 1, 1, 1, 1, 0, "Keywords", "Keywords describing the contest", 0 },
+  { NS_CONTEST, CNTS_name, 's', 1, 1, 1, 1, 0, "Contest Name", "Contest Name", 0 },
+  { NS_CONTEST, CNTS_name_en, 's', 1, 1, 1, 1, 0, "Contest Name (English)", "Contest Name (English)", 0 },
+  { NS_CONTEST, CNTS_main_url, 's', 1, 1, 1, 1, 0, "Main URL", "Contest Main URL", 0 },
+  { NS_CONTEST, CNTS_keywords, 's', 1, 1, 1, 1, 0, "Keywords", "Keywords describing the contest", 0 },
   { NS_CONTEST, CNTS_default_locale, 128, 1, 1, 0, 1, 0, "Default locale", 0, 0 },
   { NS_CONTEST, CNTS_personal, 'y', 1, 0, 0, 0, 0, "Contest is personal", "Contest is personal", 0 },
   { NS_CONTEST, CNTS_disable_team_password, 'y', 1, 0, 0, 0, 0, "Disable separate contest password", "Use the registration password for participation in the contest", 0 },
   { 0, 0, '-', 0, 0, 0, 0, 0, "Registration Settings", 0, 0 },
   { NS_CONTEST, CNTS_autoregister, 129, 1, 0, 0, 0, 0, "Registration mode", "Contest registration mode", 0 },
   { NS_CONTEST, CNTS_reg_deadline, 't', 1, 1, 0, 1, 0, "Registration deadline", "Registration deadline", 0 },
-  { NS_CONTEST, CNTS_register_email, 'S', 1, 1, 1, 1, 0, "Registration email sender", "From: field for registration email", 0 },
-  { NS_CONTEST, CNTS_register_url, 'S', 1, 1, 1, 1, 0, "URL to complete registration", "URL to complete registration", 0 },
+  { NS_CONTEST, CNTS_register_email, 's', 1, 1, 1, 1, 0, "Registration email sender", "From: field for registration email", 0 },
+  { NS_CONTEST, CNTS_register_url, 's', 1, 1, 1, 1, 0, "URL to complete registration", "URL to complete registration", 0 },
   { NS_CONTEST, CNTS_register_email_file, 'e', 1, 1, 1, 1, SSERV_OP_CONTEST_XML_FIELD_EDIT_PAGE, "Registration letter template file", "Registration letter template file", 0 },
   { 0, 0, '-', 0, 0, 0, 0, 0, "Participation Settings", 0, 0 },
   { NS_CONTEST, CNTS_sched_time, 't', 1, 1, 0, 1, 0, "Scheduled start time", "Scheduled start time", 0 },
-  { NS_CONTEST, CNTS_team_url, 'S', 1, 1, 1, 1, 0, "URL for the client CGI program", "URL for the client CGI program", 0 },
-  { NS_CONTEST, CNTS_standings_url, 'S', 1, 1, 1, 1, 0, "URL for the current standings", "URL for the current standings", 0 },
-  { NS_CONTEST, CNTS_problems_url, 'S', 1, 1, 1, 1, 0, "URL for the problemset", "URL for the problemset", 0 },
+  { NS_CONTEST, CNTS_team_url, 's', 1, 1, 1, 1, 0, "URL for the client CGI program", "URL for the client CGI program", 0 },
+  { NS_CONTEST, CNTS_standings_url, 's', 1, 1, 1, 1, 0, "URL for the current standings", "URL for the current standings", 0 },
+  { NS_CONTEST, CNTS_problems_url, 's', 1, 1, 1, 1, 0, "URL for the problemset", "URL for the problemset", 0 },
   { 0, 0, '-', 0, 0, 0, 0, 0, "Contest Management", 0, 0 },
   { NS_CONTEST, CNTS_managed, 'y', 1, 0, 0, 0, 0, "Enable the contest service", "Enable the contest service", 0 },
   { NS_CONTEST, CNTS_run_managed, 'y', 1, 0, 0, 0, 0, "Enable the run service", "Enable the run service", 0 },
@@ -1029,35 +1029,35 @@ static const struct cnts_edit_info cnts_edit_info[] =
   { NS_CONTEST, CNTS_reg_welcome_file, 'e', 1, 1, 1, 1, SSERV_OP_CONTEST_XML_FIELD_EDIT_PAGE, "HTML registration welcome message file", "HTML registration welcome message file", "SidState.show_html_headers" },
 
   { NS_SID_STATE, SSSS_show_html_attrs, '-', 1, 0, 0, 0, 0, "HTML Styles", 0, 0 },
-  { NS_CONTEST, CNTS_users_head_style, 'S', 1, 1, 1, 1, 0, "HTML attributes for <tt>users</tt> headers", "Attributes for users headers", "SidState.show_html_attrs" },
-  { NS_CONTEST, CNTS_users_par_style, 'S', 1, 1, 1, 1, 0, "HTML attributes for <tt>users</tt> paragraphs", "Attributes for users paragraphs", "SidState.show_html_attrs" },
-  { NS_CONTEST, CNTS_users_table_style, 'S', 1, 1, 1, 1, 0, "HTML attributes for <tt>users</tt> tables", "Attributes for users tables", "SidState.show_html_attrs" },
-  { NS_CONTEST, CNTS_users_verb_style, 'S', 1, 1, 1, 1, 0, "HTML attributes for <tt>users</tt> verbatim texts", "Attributes for users verbatim texts", "SidState.show_html_attrs" },
-  { NS_CONTEST, CNTS_users_table_format, 'S', 1, 1, 1, 1, 0, "Format specification for the table of the users", "Format specification for the table of the users", "SidState.show_html_attrs" },
-  { NS_CONTEST, CNTS_users_table_legend, 'S', 1, 1, 1, 1, 0, "Legend for the table of the users", "Legend for the table of the users", "SidState.show_html_attrs Contest.users_table_format &&" },
-  { NS_CONTEST, CNTS_users_table_format_en, 'S', 1, 1, 1, 1, 0, "Format specification for the table of the users (en)", "Format specification for the table of the users (English)", "SidState.show_html_attrs" },
-  { NS_CONTEST, CNTS_users_table_legend_en, 'S', 1, 1, 1, 1, 0, "Legend for the table of the users(en)", "Legend for the table of the users (English)", "SidState.show_html_attrs Contest.users_table_format_en &&" },
+  { NS_CONTEST, CNTS_users_head_style, 's', 1, 1, 1, 1, 0, "HTML attributes for <tt>users</tt> headers", "Attributes for users headers", "SidState.show_html_attrs" },
+  { NS_CONTEST, CNTS_users_par_style, 's', 1, 1, 1, 1, 0, "HTML attributes for <tt>users</tt> paragraphs", "Attributes for users paragraphs", "SidState.show_html_attrs" },
+  { NS_CONTEST, CNTS_users_table_style, 's', 1, 1, 1, 1, 0, "HTML attributes for <tt>users</tt> tables", "Attributes for users tables", "SidState.show_html_attrs" },
+  { NS_CONTEST, CNTS_users_verb_style, 's', 1, 1, 1, 1, 0, "HTML attributes for <tt>users</tt> verbatim texts", "Attributes for users verbatim texts", "SidState.show_html_attrs" },
+  { NS_CONTEST, CNTS_users_table_format, 's', 1, 1, 1, 1, 0, "Format specification for the table of the users", "Format specification for the table of the users", "SidState.show_html_attrs" },
+  { NS_CONTEST, CNTS_users_table_legend, 's', 1, 1, 1, 1, 0, "Legend for the table of the users", "Legend for the table of the users", "SidState.show_html_attrs Contest.users_table_format &&" },
+  { NS_CONTEST, CNTS_users_table_format_en, 's', 1, 1, 1, 1, 0, "Format specification for the table of the users (en)", "Format specification for the table of the users (English)", "SidState.show_html_attrs" },
+  { NS_CONTEST, CNTS_users_table_legend_en, 's', 1, 1, 1, 1, 0, "Legend for the table of the users(en)", "Legend for the table of the users (English)", "SidState.show_html_attrs Contest.users_table_format_en &&" },
   /*
-  { NS_CONTEST, CNTS_register_head_style, 'S', 1, 1, 1, 1, 0, "HTML attributes for <tt>register</tt> headers", "HTML attributes for register headers", "SidState.show_html_attrs" },
-  { NS_CONTEST, CNTS_register_par_style, 'S', 1, 1, 1, 1, 0, "HTML attributes for <tt>register</tt> paragraphs", "HTML attributes for register paragraphs", "SidState.show_html_attrs" },
-  { NS_CONTEST, CNTS_register_table_style, 'S', 1, 1, 1, 1, 0, "HTML attributes for <tt>register</tt> tables", "HTML attributes for register tables", "SidState.show_html_attrs" },
-  { NS_CONTEST, CNTS_user_name_comment, 'S', 1, 1, 1, 1, 0, "Additional comment for the user name field", "Additional comment for the user name field", "SidState.show_html_attrs Contest.disable_name ! &&" },
-  { NS_CONTEST, CNTS_team_head_style, 'S', 1, 1, 1, 1, 0, "HTML attributes for <tt>client</tt> headers", "HTML attributes for client headers", "SidState.show_html_attrs" },
-  { NS_CONTEST, CNTS_team_par_style, 'S', 1, 1, 1, 1, 0, "HTML attributes for <tt>client</tt> paragraphs", "HTML attributes for client paragraphs", "SidState.show_html_attrs" },
+  { NS_CONTEST, CNTS_register_head_style, 's', 1, 1, 1, 1, 0, "HTML attributes for <tt>register</tt> headers", "HTML attributes for register headers", "SidState.show_html_attrs" },
+  { NS_CONTEST, CNTS_register_par_style, 's', 1, 1, 1, 1, 0, "HTML attributes for <tt>register</tt> paragraphs", "HTML attributes for register paragraphs", "SidState.show_html_attrs" },
+  { NS_CONTEST, CNTS_register_table_style, 's', 1, 1, 1, 1, 0, "HTML attributes for <tt>register</tt> tables", "HTML attributes for register tables", "SidState.show_html_attrs" },
+  { NS_CONTEST, CNTS_user_name_comment, 's', 1, 1, 1, 1, 0, "Additional comment for the user name field", "Additional comment for the user name field", "SidState.show_html_attrs Contest.disable_name ! &&" },
+  { NS_CONTEST, CNTS_team_head_style, 's', 1, 1, 1, 1, 0, "HTML attributes for <tt>client</tt> headers", "HTML attributes for client headers", "SidState.show_html_attrs" },
+  { NS_CONTEST, CNTS_team_par_style, 's', 1, 1, 1, 1, 0, "HTML attributes for <tt>client</tt> paragraphs", "HTML attributes for client paragraphs", "SidState.show_html_attrs" },
   */
 
   { NS_SID_STATE, SSSS_show_notifications, '-', 1, 0, 0, 0, 0, "E-mail Notifications", 0, 0 },
-  { NS_CONTEST, CNTS_cf_notify_email, 'S', 1, 1, 1, 1, 0, "e-mail for &quot;Check failed&quot; messages", "e-mail for &quot;Check failed&quot; messages", "SidState.show_notifications" },
-  { NS_CONTEST, CNTS_clar_notify_email, 'S', 1, 1, 1, 1, 0, "e-mail for clar notifications", "e-mail for clar notifications", "SidState.show_notifications" },
-  { NS_CONTEST, CNTS_daily_stat_email, 'S', 1, 1, 1, 1, 0, "e-mail for daily statistics", "e-mail for daily statistics", "SidState.show_notifications" },
+  { NS_CONTEST, CNTS_cf_notify_email, 's', 1, 1, 1, 1, 0, "e-mail for &quot;Check failed&quot; messages", "e-mail for &quot;Check failed&quot; messages", "SidState.show_notifications" },
+  { NS_CONTEST, CNTS_clar_notify_email, 's', 1, 1, 1, 1, 0, "e-mail for clar notifications", "e-mail for clar notifications", "SidState.show_notifications" },
+  { NS_CONTEST, CNTS_daily_stat_email, 's', 1, 1, 1, 1, 0, "e-mail for daily statistics", "e-mail for daily statistics", "SidState.show_notifications" },
 
   { NS_SID_STATE, SSSS_advanced_view, '-', 1, 0, 0, 0, 0, "Advanced Contest Settings", 0, 0 },
-  { NS_CONTEST, CNTS_user_contest, 'S',  1, 1, 1, 1, 0, "Contest number to share users from", "Contest number to share users from", "SidState.advanced_view" },
+  { NS_CONTEST, CNTS_user_contest, 's',  1, 1, 1, 1, 0, "Contest number to share users from", "Contest number to share users from", "SidState.advanced_view" },
   { NS_CONTEST, CNTS_simple_registration, 'y', 1, 0, 0, 0, 0, "Enable simple registration", "Do not validate e-mail during registration (not recommended)", "SidState.advanced_view" },
   { NS_CONTEST, CNTS_send_passwd_email, 'y', 1, 0, 0, 0, 0, "Send e-mail with password anyway", "Send e-mail with password", "SidState.advanced_view Contest.simple_registration &&" },
   { NS_CONTEST, CNTS_assign_logins, 'y', 1, 0, 0, 0, 0, "Auto assign logins", "Generate logins for users automatically", "SidState.advanced_view" },
-  { NS_CONTEST, CNTS_login_template, 'S', 1, 1, 1, 1, 0, "Template for new logins", "Template for new logins", "SidState.advanced_view Contest.assign_logins &&" },
-  { NS_CONTEST, CNTS_login_template_options, 'S', 1, 1, 1, 1, 0, "Options for new logins", "Options for new logins", "SidState.advanced_view Contest.assign_logins &&" },
+  { NS_CONTEST, CNTS_login_template, 's', 1, 1, 1, 1, 0, "Template for new logins", "Template for new logins", "SidState.advanced_view Contest.assign_logins &&" },
+  { NS_CONTEST, CNTS_login_template_options, 's', 1, 1, 1, 1, 0, "Options for new logins", "Options for new logins", "SidState.advanced_view Contest.assign_logins &&" },
   { NS_CONTEST, CNTS_force_registration, 'y', 1, 0, 0, 0, 0, "Automatic contest registration", "Register to the contest automatically (no Confirm registration button", "SidState.advanced_view" },
   { NS_CONTEST, CNTS_disable_name, 'y', 1, 0, 0, 0, 0, "Disable &quot;Name&quot; user field", "Disable &quot;Name&quot; user field, only login is used", "SidState.advanced_view" },
   { NS_CONTEST, CNTS_enable_password_recovery, 'y', 1, 0, 0, 0, 0, "Enable password restoration", "Enable password restoration", "SidState.advanced_view" },
@@ -1067,14 +1067,14 @@ static const struct cnts_edit_info cnts_edit_info[] =
   { NS_CONTEST, CNTS_disable_locale_change, 'y', 1, 0, 0, 0, 0, "Disable locale changing", "Disable interface language changing by users", "SidState.advanced_view" },
   { NS_CONTEST, CNTS_clean_users, 'y', 1, 0, 0, 0, 0, "Allow pruning users", "Allow removal of users without submits from the database", "SidState.advanced_view" },
   { NS_CONTEST, CNTS_disable_member_delete, 'y', 1, 0, 0, 0, 0, "Disallow removal of team members", "Disallow removal of team members", "SidState.advanced_view" },
-  { NS_CONTEST, CNTS_allowed_languages, 'S', 1, 1, 1, 1, 0, "Allowed programming languages", "Allowed programming languages", "SidState.advanced_view" },
-  { NS_CONTEST, CNTS_allowed_regions, 'S', 1, 1, 1, 1, 0, "Allowed regions", "Allowed regions", "SidState.advanced_view" },
+  { NS_CONTEST, CNTS_allowed_languages, 's', 1, 1, 1, 1, 0, "Allowed programming languages", "Allowed programming languages", "SidState.advanced_view" },
+  { NS_CONTEST, CNTS_allowed_regions, 's', 1, 1, 1, 1, 0, "Allowed regions", "Allowed regions", "SidState.advanced_view" },
 
   { NS_SID_STATE, SSSS_show_paths, '-', 1, 0, 0, 0, 0, "Advanced Filesystem Settings", 0, 0 },
-  { NS_CONTEST, CNTS_dir_mode, 'S', 1, 1, 1, 1, 0, "The directories permission", "Octal number", "SidState.show_paths" },
-  { NS_CONTEST, CNTS_dir_group, 'S', 1, 1, 1, 1, 0, "The directories group", "Octal number", "SidState.show_paths" },
-  { NS_CONTEST, CNTS_file_mode, 'S', 1, 1, 1, 1, 0, "The files permission", "Octal number", "SidState.show_paths" },
-  { NS_CONTEST, CNTS_file_group, 'S', 1, 1, 1, 1, 0, "The files group", "Octal number", "SidState.show_paths" },
+  { NS_CONTEST, CNTS_dir_mode, 's', 1, 1, 1, 1, 0, "The directories permission", "Octal number", "SidState.show_paths" },
+  { NS_CONTEST, CNTS_dir_group, 's', 1, 1, 1, 1, 0, "The directories group", "Octal number", "SidState.show_paths" },
+  { NS_CONTEST, CNTS_file_mode, 's', 1, 1, 1, 1, 0, "The files permission", "Octal number", "SidState.show_paths" },
+  { NS_CONTEST, CNTS_file_group, 's', 1, 1, 1, 1, 0, "The files group", "Octal number", "SidState.show_paths" },
 
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
@@ -1131,15 +1131,15 @@ static const struct cnts_edit_info cnts_global_info[] =
 
   { NS_SID_STATE, SSSS_show_global_2, '-', 1, 0, 0, 0, 0, "Files and directories", 0, 0 },
   { NS_GLOBAL, CNTSGLOB_advanced_layout, 'Y', 1, 0, 0, 0, 0, "Advanced layout of problem files", 0, "SidState.show_global_2" },
-  { NS_GLOBAL, CNTSGLOB_test_dir, 's', 1, 1, 1, 1, 0, "Directory for tests", "Directory for tests (relative to the contest configuration directory)", "SidState.show_global_2" },
-  { NS_GLOBAL, CNTSGLOB_corr_dir, 's', 1, 1, 1, 1, 0, "Directory for correct answers", "Directory for correct answers (relative to the contest configuration directory)", "SidState.show_global_2" },
-  { NS_GLOBAL, CNTSGLOB_info_dir, 's', 1, 1, 1, 1, 0, "Directory for test information files", "Directory for test information files (relative to the contest configuration directory)", "SidState.show_global_2" },
-  { NS_GLOBAL, CNTSGLOB_tgz_dir, 's', 1, 1, 1, 1, 0, "Directory for test working dir archives", "Directory for test working dir archives (relative to the contest configuration directory)", "SidState.show_global_2" },
-  { NS_GLOBAL, CNTSGLOB_checker_dir, 's', 1, 1, 1, 1, 0, "Directory for checkers", "Directory for checkers (relative to the contest configuration directory)", "SidState.show_global_2" },
-  { NS_GLOBAL, CNTSGLOB_statement_dir, 's', 1, 1, 1, 1, 0, "Directory for problem statements", "Directory for problem statements (relative to the contest configuration directory)", "SidState.show_global_2" },
-  { NS_GLOBAL, CNTSGLOB_plugin_dir, 's', 1, 1, 1, 1, 0, "Directory for the problem plugins", "Directory for problem plugins (relative to the contest configuration directory)", "SidState.show_global_2" },
-  { NS_GLOBAL, CNTSGLOB_contest_start_cmd, 's', 1, 1, 1, 1, 0, "The contest start script", 0, "SidState.show_global_2" },
-  { NS_GLOBAL, CNTSGLOB_description_file, 's', 1, 1, 1, 1, 0, "The contest description file", 0, "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_test_dir, 'S', 1, 1, 1, 1, 0, "Directory for tests", "Directory for tests (relative to the contest configuration directory)", "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_corr_dir, 'S', 1, 1, 1, 1, 0, "Directory for correct answers", "Directory for correct answers (relative to the contest configuration directory)", "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_info_dir, 'S', 1, 1, 1, 1, 0, "Directory for test information files", "Directory for test information files (relative to the contest configuration directory)", "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_tgz_dir, 'S', 1, 1, 1, 1, 0, "Directory for test working dir archives", "Directory for test working dir archives (relative to the contest configuration directory)", "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_checker_dir, 'S', 1, 1, 1, 1, 0, "Directory for checkers", "Directory for checkers (relative to the contest configuration directory)", "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_statement_dir, 'S', 1, 1, 1, 1, 0, "Directory for problem statements", "Directory for problem statements (relative to the contest configuration directory)", "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_plugin_dir, 'S', 1, 1, 1, 1, 0, "Directory for the problem plugins", "Directory for problem plugins (relative to the contest configuration directory)", "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_contest_start_cmd, 'S', 1, 1, 1, 1, 0, "The contest start script", 0, "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_description_file, 'S', 1, 1, 1, 1, 0, "The contest description file", 0, "SidState.show_global_2" },
 
   { NS_SID_STATE, SSSS_show_global_3, '-', 1, 0, 0, 0, 0, "Contestants' quotas", 0, 0 },
   { NS_GLOBAL, CNTSGLOB_max_run_size, 'z', 1, 0, 1, 1, 0, "Maximum size of one submit", 0, "SidState.show_global_3" },
@@ -1151,39 +1151,39 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_team_page_quota, 'd', 1, 0, 1, 1, 0, "Maximum number of prited pages", 0, "SidState.show_global_3 Global.enable_printing &&" },
 
   { NS_SID_STATE, SSSS_show_global_4, '-', 1, 0, 0, 0, 0, "Standing files and URLs", 0, 0 },
-  { NS_GLOBAL, CNTSGLOB_team_info_url, 's', 1, 1, 1, 1, 0, "URL for contestant information", 0, "SidState.show_global_4" },
-  { NS_GLOBAL, CNTSGLOB_prob_info_url, 's', 1, 1, 1, 1, 0, "URL for problem statement", 0, "SidState.show_global_4" },
-  { NS_GLOBAL, CNTSGLOB_standings_file_name, 's', 1, 1, 1, 1, 0, "Primary standings file name", 0, "SidState.show_global_4" },
+  { NS_GLOBAL, CNTSGLOB_team_info_url, 'S', 1, 1, 1, 1, 0, "URL for contestant information", 0, "SidState.show_global_4" },
+  { NS_GLOBAL, CNTSGLOB_prob_info_url, 'S', 1, 1, 1, 1, 0, "URL for problem statement", 0, "SidState.show_global_4" },
+  { NS_GLOBAL, CNTSGLOB_standings_file_name, 'S', 1, 1, 1, 1, 0, "Primary standings file name", 0, "SidState.show_global_4" },
   { NS_GLOBAL, CNTSGLOB_users_on_page, 'd', 1, 1, 1, 1, 0, "Number of users on a standings page", 0, "SidState.show_global_4" },
-  { NS_GLOBAL, CNTSGLOB_stand_header_file, 's', 1, 1, 1, 1, 0, "HTML header file for primary standings", 0, "SidState.show_global_4" },
-  { NS_GLOBAL, CNTSGLOB_stand_footer_file, 's', 1, 1, 1, 1, 0, "HTML footer file for primary standings", 0, "SidState.show_global_4" },
-  { NS_GLOBAL, CNTSGLOB_stand_symlink_dir, 's', 1, 1, 1, 1, 0, "Symlink directory for primary standings", 0, "SidState.show_global_4" },
+  { NS_GLOBAL, CNTSGLOB_stand_header_file, 'S', 1, 1, 1, 1, 0, "HTML header file for primary standings", 0, "SidState.show_global_4" },
+  { NS_GLOBAL, CNTSGLOB_stand_footer_file, 'S', 1, 1, 1, 1, 0, "HTML footer file for primary standings", 0, "SidState.show_global_4" },
+  { NS_GLOBAL, CNTSGLOB_stand_symlink_dir, 'S', 1, 1, 1, 1, 0, "Symlink directory for primary standings", 0, "SidState.show_global_4" },
   { NS_GLOBAL, CNTSGLOB_stand_ignore_after, 't', 1, 1, 0, 1, 0, "Ignore submissions after", 0, "SidState.show_global_4" },
   { NS_SID_STATE, SSSS_enable_stand2, 135, 1, 0, 0, 0, 0, "Enable secondary standings table", 0, "SidState.show_global_4" },
-  { NS_GLOBAL, CNTSGLOB_stand2_file_name, 's', 1, 1, 1, 1, 0, "Secondary standings file name", 0, "SidState.show_global_4 SidState.enable_stand2 &&" },
-  { NS_GLOBAL, CNTSGLOB_stand2_header_file, 's', 1, 1, 1, 1, 0, "HTML header file for secondary standings", 0, "SidState.show_global_4 SidState.enable_stand2 &&" },
-  { NS_GLOBAL, CNTSGLOB_stand2_footer_file, 's', 1, 1, 1, 1, 0, "HTML footer file for secondary standings", 0, "SidState.show_global_4 SidState.enable_stand2 &&" },
-  { NS_GLOBAL, CNTSGLOB_stand2_symlink_dir, 's', 1, 1, 1, 1, 0, "Symlink directory for secondary standings", 0, "SidState.show_global_4 SidState.enable_stand2 &&" },
+  { NS_GLOBAL, CNTSGLOB_stand2_file_name, 'S', 1, 1, 1, 1, 0, "Secondary standings file name", 0, "SidState.show_global_4 SidState.enable_stand2 &&" },
+  { NS_GLOBAL, CNTSGLOB_stand2_header_file, 'S', 1, 1, 1, 1, 0, "HTML header file for secondary standings", 0, "SidState.show_global_4 SidState.enable_stand2 &&" },
+  { NS_GLOBAL, CNTSGLOB_stand2_footer_file, 'S', 1, 1, 1, 1, 0, "HTML footer file for secondary standings", 0, "SidState.show_global_4 SidState.enable_stand2 &&" },
+  { NS_GLOBAL, CNTSGLOB_stand2_symlink_dir, 'S', 1, 1, 1, 1, 0, "Symlink directory for secondary standings", 0, "SidState.show_global_4 SidState.enable_stand2 &&" },
   { NS_SID_STATE, SSSS_enable_plog, 135, 1, 0, 0, 0, 0, "Enable public submission log", 0, "SidState.show_global_4" },
-  { NS_GLOBAL, CNTSGLOB_plog_file_name, 's', 1, 1, 1, 1, 0, "Public submission log file name", 0, "SidState.show_global_4 SidState.enable_plog &&" },
-  { NS_GLOBAL, CNTSGLOB_plog_header_file, 's', 1, 1, 1, 1, 0, "HTML header file for public submission log", 0, "SidState.show_global_4 SidState.enable_plog &&" },
-  { NS_GLOBAL, CNTSGLOB_plog_footer_file, 's', 1, 1, 1, 1, 0, "HTML footer file for public submission log", 0, "SidState.show_global_4 SidState.enable_plog &&" },
-  { NS_GLOBAL, CNTSGLOB_plog_symlink_dir, 's', 1, 1, 1, 1, 0, "Symlink directory for public submission log", 0, "SidState.show_global_4 SidState.enable_plog &&" },
+  { NS_GLOBAL, CNTSGLOB_plog_file_name, 'S', 1, 1, 1, 1, 0, "Public submission log file name", 0, "SidState.show_global_4 SidState.enable_plog &&" },
+  { NS_GLOBAL, CNTSGLOB_plog_header_file, 'S', 1, 1, 1, 1, 0, "HTML header file for public submission log", 0, "SidState.show_global_4 SidState.enable_plog &&" },
+  { NS_GLOBAL, CNTSGLOB_plog_footer_file, 'S', 1, 1, 1, 1, 0, "HTML footer file for public submission log", 0, "SidState.show_global_4 SidState.enable_plog &&" },
+  { NS_GLOBAL, CNTSGLOB_plog_symlink_dir, 'S', 1, 1, 1, 1, 0, "Symlink directory for public submission log", 0, "SidState.show_global_4 SidState.enable_plog &&" },
   { NS_GLOBAL, CNTSGLOB_plog_update_time, 'd', 1, 1, 1, 1, 0, "Public submission log update interval", 0, "SidState.show_global_4 SidState.enable_plog &&" },
   { NS_GLOBAL, CNTSGLOB_external_xml_update_time, 'd', 1, 1, 1, 1, 0, "External XML log update interval", 0, "SidState.show_global_4" },
   { NS_GLOBAL, CNTSGLOB_internal_xml_update_time, 'd', 1, 1, 1, 1, 0, "Internal XML log update interval", 0, "SidState.show_global_4" },
 
   { NS_SID_STATE, SSSS_show_global_5, '-', 1, 0, 0, 0, 0, "Standings table attributes", 0, 0 },
   { NS_GLOBAL, CNTSGLOB_stand_fancy_style, 'Y', 1, 0, 0, 0, 0, "Use fancy decorations", 0, "SidState.show_global_5" },
-  { NS_GLOBAL, CNTSGLOB_stand_success_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for \"Last success\"", 0, "SidState.show_global_5" },
-  { NS_GLOBAL, CNTSGLOB_stand_table_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for standings table", 0, "SidState.show_global_5" },
+  { NS_GLOBAL, CNTSGLOB_stand_success_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for \"Last success\"", 0, "SidState.show_global_5" },
+  { NS_GLOBAL, CNTSGLOB_stand_table_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for standings table", 0, "SidState.show_global_5" },
   { NS_GLOBAL, CNTSGLOB_stand_row_attr, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_GLOBAL_FIELD_DETAIL_PAGE, "Standings row attributes", 0, "SidState.show_global_5" },
-  { NS_GLOBAL, CNTSGLOB_stand_place_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for the \"Place\" column", 0, "SidState.show_global_5" },
-  { NS_GLOBAL, CNTSGLOB_stand_team_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for the \"User name\" column", 0, "SidState.show_global_5" },
-  { NS_GLOBAL, CNTSGLOB_stand_prob_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for the \"Problem\" columns", 0, "SidState.show_global_5" },
-  { NS_GLOBAL, CNTSGLOB_stand_solved_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for the \"Solved\" column", 0, "SidState.show_global_5" },
-  { NS_GLOBAL, CNTSGLOB_stand_score_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for the \"Score\" column", 0, "SidState.show_global_5 Global.score_system SCORE_KIROV == Global.score_system SCORE_OLYMPIAD == || &&" },
-  { NS_GLOBAL, CNTSGLOB_stand_penalty_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for the \"Penalty\" column", 0, "SidState.show_global_5 Global.score_system SCORE_ACM == Global.score_system SCORE_MOSCOW == || &&" },
+  { NS_GLOBAL, CNTSGLOB_stand_place_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for the \"Place\" column", 0, "SidState.show_global_5" },
+  { NS_GLOBAL, CNTSGLOB_stand_team_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for the \"User name\" column", 0, "SidState.show_global_5" },
+  { NS_GLOBAL, CNTSGLOB_stand_prob_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for the \"Problem\" columns", 0, "SidState.show_global_5" },
+  { NS_GLOBAL, CNTSGLOB_stand_solved_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for the \"Solved\" column", 0, "SidState.show_global_5" },
+  { NS_GLOBAL, CNTSGLOB_stand_score_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for the \"Score\" column", 0, "SidState.show_global_5 Global.score_system SCORE_KIROV == Global.score_system SCORE_OLYMPIAD == || &&" },
+  { NS_GLOBAL, CNTSGLOB_stand_penalty_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for the \"Penalty\" column", 0, "SidState.show_global_5 Global.score_system SCORE_ACM == Global.score_system SCORE_MOSCOW == || &&" },
   { NS_GLOBAL, CNTSGLOB_stand_use_login, 'Y', 1, 0, 0, 0, 0, "Use user login instead of user name", 0, "SidState.show_global_5" },
   { NS_GLOBAL, CNTSGLOB_stand_show_ok_time, 'Y', 1, 0, 0, 0, 0, "Show success time in standings", 0, "SidState.show_global_5" },
   { NS_GLOBAL, CNTSGLOB_stand_show_att_num, 'Y', 1, 0, 0, 0, 0, "Show number of attempts in the standings", 0, "SidState.show_global_5 Global.score_system SCORE_KIROV == Global.score_system SCORE_OLYMPIAD == || &&" },
@@ -1191,22 +1191,22 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_stand_collate_name, 'Y', 1, 0, 0, 0, 0, "Collate the standings by the user name", 0, "SidState.show_global_5 Global.score_system SCORE_KIROV == Global.score_system SCORE_OLYMPIAD == || &&" },
   { NS_GLOBAL, CNTSGLOB_stand_enable_penalty, 'Y', 1, 0, 0, 0, 0, "Enable time penalties", 0, "SidState.show_global_5 Global.score_system SCORE_KIROV == Global.score_system SCORE_OLYMPIAD == || &&" },
   { NS_GLOBAL, CNTSGLOB_ignore_success_time, 'Y', 1, 0, 0, 0, 0, "Ignore success time in penalty calculations", 0, "SidState.show_global_5 Global.score_system SCORE_ACM == Global.score_system SCORE_MOSCOW == || &&" },
-  { NS_GLOBAL, CNTSGLOB_stand_time_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for the success time", 0, "SidState.show_global_5 Global.stand_show_ok_time &&" },
-  { NS_GLOBAL, CNTSGLOB_stand_fail_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for \"Check failed\" cells", 0, "SidState.show_global_5" },
-  { NS_GLOBAL, CNTSGLOB_stand_trans_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for transient cells", 0, "SidState.show_global_5" },
-  { NS_GLOBAL, CNTSGLOB_stand_disq_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for disqualified cells", 0, "SidState.show_global_5" },
-  { NS_GLOBAL, CNTSGLOB_stand_self_row_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for the participant's row", 0, "SidState.show_global_5 Global.is_virtual &&" },
-  { NS_GLOBAL, CNTSGLOB_stand_v_row_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for virtual participant's rows", 0, "SidState.show_global_5 Global.is_virtual &&" },
-  { NS_GLOBAL, CNTSGLOB_stand_r_row_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for real participant's rows", 0, "SidState.show_global_5 Global.is_virtual &&" },
-  { NS_GLOBAL, CNTSGLOB_stand_u_row_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for unknown participant's rows", 0, "SidState.show_global_5 Global.is_virtual &&" },
+  { NS_GLOBAL, CNTSGLOB_stand_time_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for the success time", 0, "SidState.show_global_5 Global.stand_show_ok_time &&" },
+  { NS_GLOBAL, CNTSGLOB_stand_fail_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for \"Check failed\" cells", 0, "SidState.show_global_5" },
+  { NS_GLOBAL, CNTSGLOB_stand_trans_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for transient cells", 0, "SidState.show_global_5" },
+  { NS_GLOBAL, CNTSGLOB_stand_disq_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for disqualified cells", 0, "SidState.show_global_5" },
+  { NS_GLOBAL, CNTSGLOB_stand_self_row_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for the participant's row", 0, "SidState.show_global_5 Global.is_virtual &&" },
+  { NS_GLOBAL, CNTSGLOB_stand_v_row_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for virtual participant's rows", 0, "SidState.show_global_5 Global.is_virtual &&" },
+  { NS_GLOBAL, CNTSGLOB_stand_r_row_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for real participant's rows", 0, "SidState.show_global_5 Global.is_virtual &&" },
+  { NS_GLOBAL, CNTSGLOB_stand_u_row_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for unknown participant's rows", 0, "SidState.show_global_5 Global.is_virtual &&" },
   { NS_SID_STATE, SSSS_enable_extra_col, 135, 1, 0, 0, 0, 0, "Enable the \"Extra information\" column", 0, "SidState.show_global_5" },
-  { NS_GLOBAL, CNTSGLOB_stand_extra_format, 's', 1, 1, 1, 1, 0, "Format string for the \"Extra information\" column", 0, "SidState.show_global_5 SidState.enable_extra_col &&" },
-  { NS_GLOBAL, CNTSGLOB_stand_extra_legend, 's', 1, 1, 1, 1, 0, "Legend for the \"Extra information\" column", 0, "SidState.show_global_5 SidState.enable_extra_col &&" },
-  { NS_GLOBAL, CNTSGLOB_stand_extra_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for the \"Extra information\" column", 0, "SidState.show_global_5 SidState.enable_extra_col &&" },
+  { NS_GLOBAL, CNTSGLOB_stand_extra_format, 'S', 1, 1, 1, 1, 0, "Format string for the \"Extra information\" column", 0, "SidState.show_global_5 SidState.enable_extra_col &&" },
+  { NS_GLOBAL, CNTSGLOB_stand_extra_legend, 'S', 1, 1, 1, 1, 0, "Legend for the \"Extra information\" column", 0, "SidState.show_global_5 SidState.enable_extra_col &&" },
+  { NS_GLOBAL, CNTSGLOB_stand_extra_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for the \"Extra information\" column", 0, "SidState.show_global_5 SidState.enable_extra_col &&" },
   { NS_GLOBAL, CNTSGLOB_stand_show_warn_number, 'Y', 1, 0, 0, 0, 0, "Enable the \"Warning\" column", 0, "SidState.show_global_5" },
-  { NS_GLOBAL, CNTSGLOB_stand_warn_number_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for the \"Warnings\" column", 0, "SidState.show_global_5 Global.stand_show_warn_number &&" },
-  { NS_GLOBAL, CNTSGLOB_stand_page_table_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for the page table", 0, "SidState.show_global_5 Global.users_on_page 0 > &&" },
-  { NS_GLOBAL, CNTSGLOB_stand_page_cur_attr, 's', 1, 1, 1, 1, 0, "HTML attributes for current page message", 0, "SidState.show_global_5 Global.users_on_page 0 > &&" },
+  { NS_GLOBAL, CNTSGLOB_stand_warn_number_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for the \"Warnings\" column", 0, "SidState.show_global_5 Global.stand_show_warn_number &&" },
+  { NS_GLOBAL, CNTSGLOB_stand_page_table_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for the page table", 0, "SidState.show_global_5 Global.users_on_page 0 > &&" },
+  { NS_GLOBAL, CNTSGLOB_stand_page_cur_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for current page message", 0, "SidState.show_global_5 Global.users_on_page 0 > &&" },
   { NS_GLOBAL, CNTSGLOB_stand_page_row_attr, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_GLOBAL_FIELD_DETAIL_PAGE, "Page table row attributes", 0, "SidState.show_global_5 Global.users_on_page 0 > &&" },
   { NS_GLOBAL, CNTSGLOB_stand_page_col_attr, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_GLOBAL_FIELD_DETAIL_PAGE, "Page table column attributes", 0, "SidState.show_global_5 Global.users_on_page 0 > &&" },
 
@@ -1229,15 +1229,15 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_enable_report_upload, 'Y', 1, 0, 0, 0, 0, "Enable testing protocol upload", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_enable_runlog_merge, 'Y', 1, 0, 0, 0, 0, "Enable run database merging", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_enable_l10n, 'Y', 1, 0, 0, 0, 0, "Enable message translation", 0, "SidState.show_global_6" },
-  { NS_GLOBAL, CNTSGLOB_charset, 's', 1, 1, 1, 1, 0, "Character set", 0, "SidState.show_global_6" },
-  { NS_GLOBAL, CNTSGLOB_standings_charset, 's', 1, 1, 1, 1, 0, "Standings character set", 0, "SidState.show_global_6" },
-  { NS_GLOBAL, CNTSGLOB_stand2_charset, 's', 1, 1, 1, 1, 0, "Secondary standings character set", 0, "SidState.show_global_6 SidState.enable_stand2 &&" },
-  { NS_GLOBAL, CNTSGLOB_plog_charset, 's', 1, 1, 1, 1, 0, "Submission log character set", 0, "SidState.show_global_6 SidState.enable_stand2 &&" },
+  { NS_GLOBAL, CNTSGLOB_charset, 'S', 1, 1, 1, 1, 0, "Character set", 0, "SidState.show_global_6" },
+  { NS_GLOBAL, CNTSGLOB_standings_charset, 'S', 1, 1, 1, 1, 0, "Standings character set", 0, "SidState.show_global_6" },
+  { NS_GLOBAL, CNTSGLOB_stand2_charset, 'S', 1, 1, 1, 1, 0, "Secondary standings character set", 0, "SidState.show_global_6 SidState.enable_stand2 &&" },
+  { NS_GLOBAL, CNTSGLOB_plog_charset, 'S', 1, 1, 1, 1, 0, "Submission log character set", 0, "SidState.show_global_6 SidState.enable_stand2 &&" },
   { NS_GLOBAL, CNTSGLOB_team_download_time, 'U', 1, 1, 0, 0, 0, "Contestant's archive download interval", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_cpu_bogomips, 'd', 1, 1, 1, 1, 0, "CPU speed (BogoMIPS)", 0, "SidState.show_global_6" },
-  { NS_GLOBAL, CNTSGLOB_clardb_plugin, 's', 1, 1, 1, 1, 0, "ClarDB storage engine", 0, "SidState.show_global_6" },
-  { NS_GLOBAL, CNTSGLOB_rundb_plugin, 's', 1, 1, 1, 1, 0, "RunDB storage engine", 0, "SidState.show_global_6" },
-  { NS_GLOBAL, CNTSGLOB_xuser_plugin, 's', 1, 1, 1, 1, 0, "XuserDB storage engine", 0, "SidState.show_global_6" },
+  { NS_GLOBAL, CNTSGLOB_clardb_plugin, 'S', 1, 1, 1, 1, 0, "ClarDB storage engine", 0, "SidState.show_global_6" },
+  { NS_GLOBAL, CNTSGLOB_rundb_plugin, 'S', 1, 1, 1, 1, 0, "RunDB storage engine", 0, "SidState.show_global_6" },
+  { NS_GLOBAL, CNTSGLOB_xuser_plugin, 'S', 1, 1, 1, 1, 0, "XuserDB storage engine", 0, "SidState.show_global_6" },
 
   { NS_SID_STATE, SSSS_show_global_7, '-', 1, 0, 0, 0, 0, "Other parameters", 0, 0 },
   { NS_GLOBAL, CNTSGLOB_unhandled_vars, 137, 0, 0, 0, 0, SSERV_OP_EDIT_SERVE_GLOBAL_FIELD_DETAIL_PAGE, 0, 0, "SidState.show_global_7" },
@@ -1256,12 +1256,12 @@ static const struct cnts_edit_info cnts_language_info[] =
 {
   { NS_LANGUAGE, CNTSLANG_id, 'd', 0, 0, 0, 0, 0, "Language ID", "Language ID", 0 },
   { NS_LANGUAGE, CNTSLANG_compile_id, 'd', 0, 0, 0, 0, 0, "Compile ID", "Compile ID", 0 },
-  { NS_LANGUAGE, CNTSLANG_short_name, 's', 0, 0, 0, 0, 0, "Short name", "Short name", 0 },
-  { NS_LANGUAGE, CNTSLANG_arch, 's', 0, 0, 0, 0, 0, "Architecture", "Architecture", 0 },
-  { NS_LANGUAGE, CNTSLANG_src_sfx, 's', 0, 0, 0, 0, 0, "Source suffix", "Source suffix", 0 },
-  { NS_LANGUAGE, CNTSLANG_exe_sfx, 's', 0, 0, 0, 0, 0, "Executable suffix", "Executable suffix", 0 },
+  { NS_LANGUAGE, CNTSLANG_short_name, 'S', 0, 0, 0, 0, 0, "Short name", "Short name", 0 },
+  { NS_LANGUAGE, CNTSLANG_arch, 'S', 0, 0, 0, 0, 0, "Architecture", "Architecture", 0 },
+  { NS_LANGUAGE, CNTSLANG_src_sfx, 'S', 0, 0, 0, 0, 0, "Source suffix", "Source suffix", 0 },
+  { NS_LANGUAGE, CNTSLANG_exe_sfx, 'S', 0, 0, 0, 0, 0, "Executable suffix", "Executable suffix", 0 },
 
-  { NS_LANGUAGE, CNTSLANG_long_name, 's', 1, 1, 1, 1, 0, "Long name", "Long name", 0 },
+  { NS_LANGUAGE, CNTSLANG_long_name, 'S', 1, 1, 1, 1, 0, "Long name", "Long name", 0 },
   { NS_LANGUAGE, CNTSLANG_disabled, 'Y', 1, 0, 0, 0, 0, "Disable language", "Disable this language for participants", 0 },
   { NS_LANGUAGE, CNTSLANG_insecure, 'Y', 1, 0, 0, 0, 0, "Language is insecure", "This language is insecure", 0 },
   { NS_LANGUAGE, CNTSLANG_disable_security, 'Y', 1, 0, 0, 0, 0, "Disable security restrictions", "Disable security restrictions", 0 },
@@ -1269,7 +1269,7 @@ static const struct cnts_edit_info cnts_language_info[] =
   { NS_LANGUAGE, CNTSLANG_disable_auto_testing, 'Y', 1, 0, 0, 0, 0, "Disable automatic testing of submissions", 0, "Language.disable_testing !" },
   { NS_LANGUAGE, CNTSLANG_binary, 'Y', 1, 0, 0, 0, 0, "Source files are binary", 0, 0 },
   // content_type
-  { NS_LANGUAGE, CNTSLANG_style_checker_cmd, 's', 1, 1, 1, 1, 0, "Style checker command", "Style checker command", 0 },
+  { NS_LANGUAGE, CNTSLANG_style_checker_cmd, 'S', 1, 1, 1, 1, 0, "Style checker command", "Style checker command", 0 },
   { NS_LANGUAGE, CNTSLANG_style_checker_env, 'X', 1, 1, 1, 1, 0, "Style checker environment", "Style checker environment", 0 },
   { NS_SID_STATE, SSSS_lang_opts, 138, 1, 1, 1, 1, 0, "Compilation options", 0, 0 },
   { NS_LANGUAGE, CNTSLANG_compiler_env, 'X', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_LANG_FIELD_DETAIL_PAGE, "Additional environment variables", 0, 0 },
@@ -1281,40 +1281,40 @@ static const struct cnts_edit_info cnts_language_info[] =
 
 static const struct cnts_edit_info cnts_problem_info[] =
 {
-  { NS_PROBLEM, CNTSPROB_short_name, 's', 1, 1, 1, 1, 0, "Short name", 0, 0 },
-  { NS_PROBLEM, CNTSPROB_long_name, 's', 1, 1, 1, 1, 0, "Long name", 0, "Problem.abstract !" },
+  { NS_PROBLEM, CNTSPROB_short_name, 'S', 1, 1, 1, 1, 0, "Short name", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_long_name, 'S', 1, 1, 1, 1, 0, "Long name", 0, "Problem.abstract !" },
   { NS_PROBLEM, CNTSPROB_super, 139, 0, 0, 0, 0, 0, "Base abstract problem", 0, "Problem.abstract !" },
-  { NS_PROBLEM, CNTSPROB_stand_name, 's', 1, 1, 1, 1, 0, "Standings column title", 0, "Problem.abstract ! SidState.prob_show_adv &&" },
+  { NS_PROBLEM, CNTSPROB_stand_name, 'S', 1, 1, 1, 1, 0, "Standings column title", 0, "Problem.abstract ! SidState.prob_show_adv &&" },
   { NS_PROBLEM, CNTSPROB_stand_column, 140, 0, 0, 0, 0, 0, "Collate this problem with another one", 0, "Problem.abstract ! SidState.prob_show_adv &&" },
-  { NS_PROBLEM, CNTSPROB_internal_name, 's', 1, 1, 1, 1, 0, "Internal name", 0, "Problem.abstract ! SidState.prob_show_adv &&" },
+  { NS_PROBLEM, CNTSPROB_internal_name, 'S', 1, 1, 1, 1, 0, "Internal name", 0, "Problem.abstract ! SidState.prob_show_adv &&" },
   { NS_PROBLEM, CNTSPROB_type, 141, 1, 0, 0, 0, 0, "Problem type", 0, 0 },
   { NS_PROBLEM, CNTSPROB_manual_checking, 'Y', 1, 0, 0, 0, 0, "Check problem manually", 0, 0 },
   { NS_PROBLEM, CNTSPROB_examinator_num, 'd', 1, 1, 1, 1, 0, "Number of examinators", 0, "Problem.manual_checking 0 >" },
   { NS_PROBLEM, CNTSPROB_check_presentation, 'Y', 1, 0, 0, 0, 0, "Check the format of answers", 0, "Problem.manual_checking 0 >" },
   { NS_PROBLEM, CNTSPROB_use_stdin, 'Y', 1, 0, 0, 0, 0, "Read the data from the stdin", 0, "Problem.manual_checking !" },
-  { NS_PROBLEM, CNTSPROB_input_file, 's', 1, 1, 1, 1, 0, "Name of the input file", 0, "Problem.manual_checking !" },
+  { NS_PROBLEM, CNTSPROB_input_file, 'S', 1, 1, 1, 1, 0, "Name of the input file", 0, "Problem.manual_checking !" },
   { NS_PROBLEM, CNTSPROB_combined_stdin, 'Y', 1, 0, 0, 0, 0, "Combine the standard and file input", 0, "Problem.manual_checking !" },
   { NS_PROBLEM, CNTSPROB_use_stdout, 'Y', 1, 0, 0, 0, 0, "Write output to the stdin", 0, "Problem.manual_checking !" },
-  { NS_PROBLEM, CNTSPROB_output_file, 's', 1, 1, 1, 1, 0, "Name of the output file", 0, "Problem.manual_checking !" },
+  { NS_PROBLEM, CNTSPROB_output_file, 'S', 1, 1, 1, 1, 0, "Name of the output file", 0, "Problem.manual_checking !" },
   { NS_PROBLEM, CNTSPROB_combined_stdout, 'Y', 1, 0, 0, 0, 0, "Combine the standard and file output", 0, "Problem.manual_checking !" },
   { NS_PROBLEM, CNTSPROB_binary_input, 'Y', 1, 0, 0, 0, 0, "Input data in binary", 0, "Problem.manual_checking ! SidState.prob_show_adv &&" },
-  { NS_PROBLEM, CNTSPROB_xml_file, 's', 1, 1, 1, 1, 0, "Name of XML file with problem statement", 0, 0 },
-  { NS_PROBLEM, CNTSPROB_plugin_file, 's', 1, 1, 1, 1, 0, "Problem plugin file", 0, "SidState.prob_show_adv" },
-  { NS_PROBLEM, CNTSPROB_test_dir, 's', 1, 1, 1, 1, 0, "Directory with tests", 0, 0 },
-  { NS_PROBLEM, CNTSPROB_test_sfx, 's', 1, 1, 1, 1, 0, "Suffix of test files", 0, 0 },
-  { NS_PROBLEM, CNTSPROB_test_pat, 's', 1, 1, 1, 1, 0, "Pattern of test files", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_xml_file, 'S', 1, 1, 1, 1, 0, "Name of XML file with problem statement", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_plugin_file, 'S', 1, 1, 1, 1, 0, "Problem plugin file", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_test_dir, 'S', 1, 1, 1, 1, 0, "Directory with tests", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_test_sfx, 'S', 1, 1, 1, 1, 0, "Suffix of test files", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_test_pat, 'S', 1, 1, 1, 1, 0, "Pattern of test files", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_use_corr, 'Y', 1, 0, 0, 0, 0, "Use answer files", 0, 0 },
-  { NS_PROBLEM, CNTSPROB_corr_dir, 's', 1, 1, 1, 1, 0, "Directory with answers", 0, "Problem.use_corr 0 >" },
-  { NS_PROBLEM, CNTSPROB_corr_sfx, 's', 1, 1, 1, 1, 0, "Suffix of answer files", 0, "Problem.use_corr 0 >" },
-  { NS_PROBLEM, CNTSPROB_corr_pat, 's', 1, 1, 1, 1, 0, "Pattern of answer files", 0, "Problem.use_corr 0 > SidState.prob_show_adv &&" },
+  { NS_PROBLEM, CNTSPROB_corr_dir, 'S', 1, 1, 1, 1, 0, "Directory with answers", 0, "Problem.use_corr 0 >" },
+  { NS_PROBLEM, CNTSPROB_corr_sfx, 'S', 1, 1, 1, 1, 0, "Suffix of answer files", 0, "Problem.use_corr 0 >" },
+  { NS_PROBLEM, CNTSPROB_corr_pat, 'S', 1, 1, 1, 1, 0, "Pattern of answer files", 0, "Problem.use_corr 0 > SidState.prob_show_adv &&" },
   { NS_PROBLEM, CNTSPROB_use_info, 'Y', 1, 0, 0, 0, 0, "Use test info files", 0, 0, },
-  { NS_PROBLEM, CNTSPROB_info_dir, 's', 1, 1, 1, 1, 0, "Directory with test info files", 0, "Problem.use_info 0 >" },
-  { NS_PROBLEM, CNTSPROB_info_sfx, 's', 1, 1, 1, 1, 0, "Suffix of test info files", 0, "Problem.use_info 0 >" },
-  { NS_PROBLEM, CNTSPROB_info_pat, 's', 1, 1, 1, 1, 0, "Pattern of test info files", 0, "Problem.use_info 0 > SidState.prob_show_adv &&" },
+  { NS_PROBLEM, CNTSPROB_info_dir, 'S', 1, 1, 1, 1, 0, "Directory with test info files", 0, "Problem.use_info 0 >" },
+  { NS_PROBLEM, CNTSPROB_info_sfx, 'S', 1, 1, 1, 1, 0, "Suffix of test info files", 0, "Problem.use_info 0 >" },
+  { NS_PROBLEM, CNTSPROB_info_pat, 'S', 1, 1, 1, 1, 0, "Pattern of test info files", 0, "Problem.use_info 0 > SidState.prob_show_adv &&" },
   { NS_PROBLEM, CNTSPROB_use_tgz, 'Y', 1, 0, 0, 0, 0, "Use tgz files", 0, "Problem.manual_checking !" },
-  { NS_PROBLEM, CNTSPROB_tgz_dir, 's', 1, 1, 1, 1, 0, "Directory with tgz files", 0, "Problem.use_tgz 0 >" },
-  { NS_PROBLEM, CNTSPROB_tgz_sfx, 's', 1, 1, 1, 1, 0, "Suffix of tgz files", 0, "Problem.manual_checking ! Problem.use_tgz 0 > &&" },
-  { NS_PROBLEM, CNTSPROB_tgz_pat, 's', 1, 1, 1, 1, 0, "Pattern of tgz files", 0, "Problem.manual_checking ! Problem.use_tgz 0 > SidState.prob_show_adv && &&" },
+  { NS_PROBLEM, CNTSPROB_tgz_dir, 'S', 1, 1, 1, 1, 0, "Directory with tgz files", 0, "Problem.use_tgz 0 >" },
+  { NS_PROBLEM, CNTSPROB_tgz_sfx, 'S', 1, 1, 1, 1, 0, "Suffix of tgz files", 0, "Problem.manual_checking ! Problem.use_tgz 0 > &&" },
+  { NS_PROBLEM, CNTSPROB_tgz_pat, 'S', 1, 1, 1, 1, 0, "Pattern of tgz files", 0, "Problem.manual_checking ! Problem.use_tgz 0 > SidState.prob_show_adv && &&" },
   { NS_PROBLEM, CNTSPROB_time_limit, 'd', 1, 1, 1, 1, 0, "CPU time limit (s)", 0, "Problem.manual_checking ! Problem.time_limit_millis 0 <= &&" },
   { NS_PROBLEM, CNTSPROB_time_limit_millis, 'd', 1, 1, 1, 1, 0, "CPU time limit (ms)", 0, "Problem.manual_checking ! SidState.prob_show_adv Problem.time_limit_millis 0 > || &&" },
   { NS_PROBLEM, CNTSPROB_real_time_limit, 'd', 1, 1, 1, 1, 0, "Real time limit (s)", 0, "Problem.manual_checking !" },
@@ -1342,12 +1342,12 @@ static const struct cnts_edit_info cnts_problem_info[] =
   { NS_PROBLEM, CNTSPROB_test_score, 'd', 1, 1, 1, 1, 0, "Score for one passed test", 0, "Global.score_system SCORE_KIROV == Global.score_system SCORE_OLYMPIAD == ||" },
   { NS_PROBLEM, CNTSPROB_run_penalty, 'd', 1, 1, 1, 1, 0, "Penalty for a failed submit", 0, "Global.score_system SCORE_KIROV ==" },
   { NS_PROBLEM, CNTSPROB_disqualified_penalty, 'd', 1, 1, 1, 1, 0, "Penalty for a disqualified submit", 0, "Global.score_system SCORE_KIROV ==" },
-  { NS_PROBLEM, CNTSPROB_test_score_list, 's', 1, 1, 1, 1, 0, "Test scores for tests", 0, "Global.score_system SCORE_KIROV == Global.score_system SCORE_OLYMPIAD == ||" },
+  { NS_PROBLEM, CNTSPROB_test_score_list, 'S', 1, 1, 1, 1, 0, "Test scores for tests", 0, "Global.score_system SCORE_KIROV == Global.score_system SCORE_OLYMPIAD == ||" },
   { NS_PROBLEM, CNTSPROB_acm_run_penalty, 'd', 1, 1, 1, 1, 0, "Penalty for a submit", 0, "SidState.prob_show_adv Global.score_system SCORE_ACM == Global.score_system SCORE_MOSCOW == || &&" },
-  { NS_PROBLEM, CNTSPROB_score_tests, 's', 1, 1, 1, 1, 0, "Tests for problem scoring", 0, "Global.score_system SCORE_MOSCOW ==" },
+  { NS_PROBLEM, CNTSPROB_score_tests, 'S', 1, 1, 1, 1, 0, "Tests for problem scoring", 0, "Global.score_system SCORE_MOSCOW ==" },
   { NS_PROBLEM, CNTSPROB_test_sets, 'x', 1, 1, 1, 1, 0, "Specially scored test sets", 0, "SidState.prob_show_adv Global.score_system SCORE_KIROV == Global.score_system SCORE_OLYMPIAD == || &&" },
-  { NS_PROBLEM, CNTSPROB_score_bonus, 's', 1, 1, 1, 1, 0, "Additional score bonus", 0, "Global.score_system SCORE_KIROV ==" },
-  { NS_PROBLEM, CNTSPROB_open_tests, 's', 1, 1, 1, 1, 0, "Tests open for participants", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_score_bonus, 'S', 1, 1, 1, 1, 0, "Additional score bonus", 0, "Global.score_system SCORE_KIROV ==" },
+  { NS_PROBLEM, CNTSPROB_open_tests, 'S', 1, 1, 1, 1, 0, "Tests open for participants", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_tests_to_accept, 'd', 1, 1, 1, 1, 0, "Number of accept tests", 0, "Global.score_system SCORE_OLYMPIAD ==" },
   { NS_PROBLEM, CNTSPROB_accept_partial, 'Y', 1, 0, 0, 0, 0, "Accept submits, which do not pass accept tests", 0, "SidState.prob_show_adv Global.score_system SCORE_OLYMPIAD == &&" },
   { NS_PROBLEM, CNTSPROB_min_tests_to_accept, 'd', 1, 1, 1, 1, 0, "Minimum number of tests to accept", 0, "SidState.prob_show_adv Global.score_system SCORE_OLYMPIAD == &&" },
@@ -1358,17 +1358,17 @@ static const struct cnts_edit_info cnts_problem_info[] =
   { NS_PROBLEM, CNTSPROB_valuer_sets_marked, 'Y', 1, 0, 0, 0, 0, "Valuer sets _marked_ flag", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_ignore_unmarked, 'Y', 1, 0, 0, 0, 0, "Ignore unmarked runs in scoring", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_enable_text_form, 'Y', 1, 0, 0, 0, 0, "Enable text input form", 0, "SidState.prob_show_adv Global.problem_navigation && Problem.type 1 == &&" },
-  { NS_PROBLEM, CNTSPROB_stand_attr, 's', 1, 1, 1, 1, 0, "Standings attributes", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_stand_attr, 'S', 1, 1, 1, 1, 0, "Standings attributes", 0, 0 },
   { NS_PROBLEM, CNTSPROB_standard_checker, 142, 1, 0, 0, 0, 0, "Standard checker", 0, 0 },
-  { NS_PROBLEM, CNTSPROB_check_cmd, 's', 1, 1, 1, 1, 0, "Checker", 0, 0 /*"Problem.standard_checker"*/ },
+  { NS_PROBLEM, CNTSPROB_check_cmd, 'S', 1, 1, 1, 1, 0, "Checker", 0, 0 /*"Problem.standard_checker"*/ },
   { NS_PROBLEM, CNTSPROB_checker_env, 'X', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Checker environment", 0, 0 },
   { NS_PROBLEM, CNTSPROB_scoring_checker, 'Y', 1, 0, 0, 0, 0, "Checker calculates score", 0, 0 },
-  { NS_PROBLEM, CNTSPROB_valuer_cmd, 's', 1, 1, 1, 1, 0, "Valuer", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_valuer_cmd, 'S', 1, 1, 1, 1, 0, "Valuer", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_valuer_sets_marked, 'Y', 1, 0, 0, 0, 0, "Valuer sets _marked_ flag", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_valuer_env, 'X', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Valuer environment", 0, "SidState.prob_show_adv" },
-  { NS_PROBLEM, CNTSPROB_interactor_cmd, 's', 1, 1, 1, 1, 0, "Interactor", 0, "SidState.prob_show_adv"  },
+  { NS_PROBLEM, CNTSPROB_interactor_cmd, 'S', 1, 1, 1, 1, 0, "Interactor", 0, "SidState.prob_show_adv"  },
   { NS_PROBLEM, CNTSPROB_interactor_env, 'X', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Interactor environment", 0, "SidState.prob_show_adv" },
-  { NS_PROBLEM, CNTSPROB_style_checker_cmd, 's', 1, 1, 1, 1, 0, "Style checker", 0, "SidState.prob_show_adv"  },
+  { NS_PROBLEM, CNTSPROB_style_checker_cmd, 'S', 1, 1, 1, 1, 0, "Style checker", 0, "SidState.prob_show_adv"  },
   { NS_PROBLEM, CNTSPROB_style_checker_env, 'X', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Style checker environment", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_score_view, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Special view for score", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_stand_ignore_score, 'Y', 1, 0, 0, 0, 0, "Ignore problem score", 0, "SidState.prob_show_adv" },
@@ -1381,8 +1381,8 @@ static const struct cnts_edit_info cnts_problem_info[] =
   { NS_PROBLEM, CNTSPROB_variant_num, 'd', 1, 1, 1, 1, 0, "Number of variants", 0, 0 },
   { NS_PROBLEM, CNTSPROB_start_date, 't', 1, 1, 0, 0, 0, "Accept start date", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_deadline, 't', 1, 1, 0, 0, 0, "Accept deadline", 0, "SidState.prob_show_adv" },
-  { NS_PROBLEM, CNTSPROB_source_header, 's', 1, 1, 1, 1, 0, "Source header file", 0, "SidState.prob_show_adv" },
-  { NS_PROBLEM, CNTSPROB_source_footer, 's', 1, 1, 1, 1, 0, "Source footer file", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_source_header, 'S', 1, 1, 1, 1, 0, "Source header file", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_source_footer, 'S', 1, 1, 1, 1, 0, "Source footer file", 0, "SidState.prob_show_adv" },
   { 0, 0, '-', 0, 0, 0, 0, 0, "Other parameters", 0, 0 },
   { NS_PROBLEM, CNTSPROB_unhandled_vars, 137, 0, 0, 0, 0, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, 0, 0, 0 },
 
@@ -1714,14 +1714,14 @@ write_editing_rows(
         if (!*s_ptr) is_empty = 1;
       }
       break;
-    case 'S': case 'e':
+    case 's': case 'e':
       if (!is_undef) {
         unsigned char **s_ptr = (unsigned char**) v_ptr;
         if (*s_ptr) fprintf(out_f, "%s", *s_ptr);
         if (!*s_ptr) is_empty = 1;
       }
       break;
-    case 's':
+    case 'S':
       if (!is_undef) {
         unsigned char *s = (unsigned char *) v_ptr;
         fprintf(out_f, "%s", s);
@@ -2659,7 +2659,7 @@ cmd_clear_contest_xml_field(
       b_ptr = 0;
     }
     break;
-  case 'S':
+  case 's':
     {
       unsigned char **s_ptr = (unsigned char **) f_ptr;
       xfree(*s_ptr);
@@ -2937,7 +2937,7 @@ cmd_edit_contest_xml_field(
       }
     }
     break;
-  case 'S':
+  case 's':
     {
       unsigned char **p_str = (unsigned char**) f_ptr;
       int newval = -1, n = 0;
@@ -4891,7 +4891,7 @@ cmd_op_edit_serve_global_field(
     retval = handle_time_t_editing(phr, valstr, (time_t*) f_ptr);
     break;
 
-  case 's':
+  case 'S':
     {
       size_t size = cntsglob_get_size(f_id);
       snprintf((unsigned char*) f_ptr, size, "%s", valstr);
@@ -5051,12 +5051,12 @@ cmd_op_clear_serve_global_field(
     *(ejintsize_t*) f_ptr = global_int_default_val[f_id];
     break;
 
-  case 'S':
+  case 's':
     xfree(*(char**) f_ptr);
     *(char**) f_ptr = 0;
     break;
 
-  case 's':
+  case 'S':
     *(char*) f_ptr = 0;
     if (global_str_default_val[f_id]) {
       snprintf((char*) f_ptr, f_size, "%s", global_str_default_val[f_id]);
@@ -5211,7 +5211,7 @@ cmd_op_edit_serve_global_field_detail_page(
 
   text_f = open_memstream(&text_t, &text_z);
   switch (f_type) {
-  case 'S':
+  case 's':
     {
       const unsigned char *s = *(const unsigned char**) f_ptr;
       if (s) fprintf(text_f, "%s", s);
@@ -5491,7 +5491,7 @@ cmd_op_set_serve_lang_field(
       if (f_id == CNTSLANG_disable_auto_testing) retval = 1;
     }
     break;
-  case 'S':
+  case 's':
     {
       unsigned char **p_str = (unsigned char **) f_ptr;
 
@@ -5502,7 +5502,7 @@ cmd_op_set_serve_lang_field(
       retval = 1;
     }
     break;
-  case 's':
+  case 'S':
     {
       unsigned char *str = (unsigned char *) f_ptr;
 
@@ -5565,11 +5565,11 @@ cmd_op_clear_serve_lang_field(
   case 'B':
     *(ejintbool_t*) f_ptr = 0;
     break;
-  case 'S':
+  case 's':
     xfree(*(char**) f_ptr);
     *(char**) f_ptr = 0;
     break;
-  case 's':
+  case 'S':
     memset(f_ptr, 0, f_size);
     break;
   case 'X':
@@ -5626,7 +5626,7 @@ cmd_op_edit_serve_lang_field_detail_page(
 
   text_f = open_memstream(&text_t, &text_z);
   switch (f_type) {
-  case 'S':
+  case 's':
     {
       const unsigned char *s = *(const unsigned char**) f_ptr;
       if (s) fprintf(text_f, "%s", s);
@@ -6111,7 +6111,7 @@ cmd_op_set_serve_prob_field(
     FAIL(S_ERR_INV_VALUE);
   is_inh = cntsprob_is_inheritable_field(f_id);
 
-  // 'i', 'B', 's', 'x', 't', 'X', 'Z', 'z'
+  // 'i', 'B', 'S', 'x', 't', 'X', 'Z', 'z'
   switch (f_type) {
   case 'i':
     errno = 0;
@@ -6138,7 +6138,7 @@ cmd_op_set_serve_prob_field(
       retval = 1;
     }
     break;
-  case 's':
+  case 'S':
     if (ss_cgi_param_utf8_str(phr, "value", &vb, &valstr) <= 0 || !valstr)
       FAIL(S_ERR_INV_VALUE);
     switch (f_id) {
@@ -6316,7 +6316,7 @@ cmd_op_edit_serve_prob_field_detail_page(
 
   text_f = open_memstream(&text_t, &text_z);
   switch (f_type) {
-  case 'S':
+  case 's':
     {
       const unsigned char *s = *(const unsigned char**) f_ptr;
       if (s) fprintf(text_f, "%s", s);
