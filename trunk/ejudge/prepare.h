@@ -1166,8 +1166,8 @@ struct section_tester_data *prepare_alloc_tester(void);
 
 void prepare_problem_init_func(struct generic_section_config *gp);
 
-void prepare_copy_problem(struct section_problem_data *out,
-                          const struct section_problem_data *in);
+struct section_problem_data *
+prepare_copy_problem(const struct section_problem_data *in);
 
 void prepare_set_prob_value(int field, struct section_problem_data *out,
                             const struct section_problem_data *abstr,
