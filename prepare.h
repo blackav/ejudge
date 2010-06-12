@@ -680,9 +680,11 @@ struct section_global_data
   +path_t check_cmd;
   +path_t valuer_cmd;
   +path_t interactor_cmd;
+  +path_t style_checker_cmd;
+  +path_t test_checker_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 64880 */
+/* sizeof(struct section_problem_data) == 64888 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -905,6 +907,8 @@ struct section_problem_data
   ejenvlist_t interactor_env;
   /** environment variables for the style checker */
   ejenvlist_t style_checker_env;
+  /** environment variables for the test checker */
+  ejenvlist_t test_checker_env;
   /** checker program */
   path_t check_cmd;
   /** valuer program */
@@ -913,6 +917,8 @@ struct section_problem_data
   path_t interactor_cmd;
   /** style checker program */
   path_t style_checker_cmd;
+  /** test checker program */
+  unsigned char *test_checker_cmd;
   /** time limit adjustments depending on language */
   char **lang_time_adj;
   /** time limit milliseconds adjustments depending on language (priority over lang_time_adj) */
