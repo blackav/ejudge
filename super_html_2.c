@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1418,6 +1418,8 @@ super_html_commit_contest(FILE *f,
                                                 serve_header, serve_footer,
                                                 serve_audit_rec)) < 0)
       goto failed;
+    xfree(serve_header); serve_header = 0;
+    xfree(serve_footer); serve_footer = 0;
 
     if (sf > 0) {
       // invoke diff on the new and old config files
@@ -1596,6 +1598,8 @@ super_html_commit_contest(FILE *f,
   return 0;
 
  failed:
+  xfree(serve_header);
+  xfree(serve_footer);
   xfree(xml_header);
   xfree(xml_footer);
   if (flog) close_memstream(flog);

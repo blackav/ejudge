@@ -1370,6 +1370,8 @@ static const struct cnts_edit_info cnts_problem_info[] =
   { NS_PROBLEM, CNTSPROB_interactor_env, 'X', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Interactor environment", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_style_checker_cmd, 'S', 1, 1, 1, 1, 0, "Style checker", 0, "SidState.prob_show_adv"  },
   { NS_PROBLEM, CNTSPROB_style_checker_env, 'X', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Style checker environment", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_test_checker_cmd, 's', 1, 1, 1, 1, 0, "Test checker", 0, "SidState.prob_show_adv"  },
+  { NS_PROBLEM, CNTSPROB_test_checker_env, 'X', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Test checker environment", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_score_view, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Special view for score", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_stand_ignore_score, 'Y', 1, 0, 0, 0, 0, "Ignore problem score", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_stand_last_column, 'Y', 1, 0, 0, 0, 0, "Show as the last column", 0, "SidState.prob_show_adv" },
@@ -6003,12 +6005,14 @@ static const unsigned char prob_reloadable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_valuer_env] = 0,
   [CNTSPROB_interactor_env] = 0,
   [CNTSPROB_style_checker_env] = 0,
+  [CNTSPROB_test_checker_env] = 0,
   [CNTSPROB_lang_time_adj] = 0,
   [CNTSPROB_lang_time_adj_millis] = 0,
   [CNTSPROB_check_cmd] = 0,
   [CNTSPROB_valuer_cmd] = 0,
   [CNTSPROB_interactor_cmd] = 0,
   [CNTSPROB_style_checker_cmd] = 0,
+  [CNTSPROB_test_checker_cmd] = 0,
   [CNTSPROB_test_pat] = 1,
   [CNTSPROB_corr_pat] = 1,
   [CNTSPROB_info_pat] = 1,
@@ -6265,6 +6269,7 @@ const unsigned char prob_editable_details[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_valuer_env] = 1,
   [CNTSPROB_interactor_env] = 1,
   [CNTSPROB_style_checker_env] = 1,
+  [CNTSPROB_test_checker_env] = 1,
   [CNTSPROB_score_view] = 1,
   [CNTSPROB_lang_time_adj] = 1,
   [CNTSPROB_lang_time_adj_millis] = 1,
@@ -6416,6 +6421,7 @@ cmd_op_edit_serve_prob_field_detail(
   case CNTSPROB_valuer_env:
   case CNTSPROB_interactor_env:
   case CNTSPROB_style_checker_env:
+  case CNTSPROB_test_checker_env:
   case CNTSPROB_score_view:
   case CNTSPROB_lang_time_adj:
   case CNTSPROB_lang_time_adj_millis:

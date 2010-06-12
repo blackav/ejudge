@@ -1769,6 +1769,7 @@ super_serve_clear_edited_contest(struct sid_state *p)
       prepare_free_config(p->extra_cs_cfgs[i]);
       p->extra_cs_cfgs[i] = 0;
     }
+    xfree(p->extra_cs_cfgs);
   }
   p->extra_cs_cfgs = 0;
   p->extra_cs_cfgs_total = 0;
@@ -2958,6 +2959,10 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CLEAR_STYLE_CHECKER_CMD:
   case SSERV_CMD_PROB_CHANGE_STYLE_CHECKER_ENV:
   case SSERV_CMD_PROB_CLEAR_STYLE_CHECKER_ENV:
+  case SSERV_CMD_PROB_CHANGE_TEST_CHECKER_CMD:
+  case SSERV_CMD_PROB_CLEAR_TEST_CHECKER_CMD:
+  case SSERV_CMD_PROB_CHANGE_TEST_CHECKER_ENV:
+  case SSERV_CMD_PROB_CLEAR_TEST_CHECKER_ENV:
   case SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ:
   case SSERV_CMD_PROB_CLEAR_LANG_TIME_ADJ:
   case SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ_MILLIS:
@@ -3889,6 +3894,10 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CLEAR_STYLE_CHECKER_CMD] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_STYLE_CHECKER_ENV] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_STYLE_CHECKER_ENV] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_TEST_CHECKER_CMD] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_TEST_CHECKER_CMD] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_TEST_CHECKER_ENV] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_TEST_CHECKER_ENV] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_LANG_TIME_ADJ] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ_MILLIS] = { cmd_set_value },
