@@ -422,11 +422,13 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(checker_env, "x"),
   PROBLEM_PARAM(valuer_env, "x"),
   PROBLEM_PARAM(interactor_env, "x"),
+  PROBLEM_PARAM(style_checker_env, "x"),
   PROBLEM_PARAM(lang_time_adj, "x"),
   PROBLEM_PARAM(lang_time_adj_millis, "x"),
   PROBLEM_PARAM(check_cmd, "s"),
   PROBLEM_PARAM(valuer_cmd, "s"),
   PROBLEM_PARAM(interactor_cmd, "s"),
+  PROBLEM_PARAM(style_checker_cmd, "s"),
   PROBLEM_PARAM(test_pat, "s"),
   PROBLEM_PARAM(corr_pat, "s"),
   PROBLEM_PARAM(info_pat, "s"),
@@ -864,6 +866,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->checker_env);
   sarray_free(p->valuer_env);
   sarray_free(p->interactor_env);
+  sarray_free(p->style_checker_env);
   sarray_free(p->lang_time_adj);
   sarray_free(p->lang_time_adj_millis);
   sarray_free(p->personal_deadline);
@@ -3158,6 +3161,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_check_cmd, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_valuer_cmd, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_interactor_cmd, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_style_checker_cmd, prob, aprob, g);
 
     prepare_set_prob_value(CNTSPROB_max_vm_size, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_max_stack_size, prob, aprob, g);
@@ -3249,6 +3253,22 @@ set_defaults(
                                                   section_language_params,
                                                   section_tester_params);
           if (!prob->interactor_env[j]) return -1;
+        }
+      }
+
+      if (si != -1 && aprob->style_checker_env) {
+        prob->style_checker_env = sarray_merge_pf(aprob->style_checker_env,
+                                                  prob->style_checker_env);
+      }
+      if (prob->style_checker_env) {
+        for (j = 0; prob->style_checker_env[j]; j++) {
+          prob->style_checker_env[j] = varsubst_heap(state,
+                                                     prob->style_checker_env[j],
+                                                     1, section_global_params,
+                                                     section_problem_params,
+                                                     section_language_params,
+                                                     section_tester_params);
+          if (!prob->style_checker_env[j]) return -1;
         }
       }
 
@@ -5778,6 +5798,18 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     break;
 
+  case CNTSPROB_style_checker_cmd:
+    if (!out->style_checker_cmd[0] && abstr && abstr->style_checker_cmd[0]) {
+      sformat_message(out->style_checker_cmd, PATH_MAX, 0,
+                      abstr->style_checker_cmd,
+                      NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    }
+    if (global && out->style_checker_cmd[0] && global->advanced_layout <= 0) {
+      pathmake2(out->style_checker_cmd, global->checker_dir, "/",
+                out->style_checker_cmd, NULL);
+    }
+    break;
+
   case CNTSPROB_statement_file:
     if (!out->statement_file[0] && abstr && abstr->statement_file[0]) {
       sformat_message(out->statement_file, PATH_MAX, 0, abstr->statement_file,
@@ -5882,8 +5914,9 @@ static const int prob_settable_list[] =
   CNTSPROB_variant_num, CNTSPROB_date_penalty, CNTSPROB_disable_language,
   CNTSPROB_enable_language, CNTSPROB_require, CNTSPROB_standard_checker,
   CNTSPROB_checker_env, CNTSPROB_valuer_env, CNTSPROB_interactor_env,
-  CNTSPROB_lang_time_adj, CNTSPROB_lang_time_adj_millis, CNTSPROB_check_cmd,
-  CNTSPROB_valuer_cmd, CNTSPROB_interactor_cmd,
+  CNTSPROB_style_checker_env, CNTSPROB_lang_time_adj,
+  CNTSPROB_lang_time_adj_millis, CNTSPROB_check_cmd, CNTSPROB_valuer_cmd,
+  CNTSPROB_interactor_cmd, CNTSPROB_style_checker_cmd,
   CNTSPROB_test_pat, CNTSPROB_corr_pat, CNTSPROB_info_pat, CNTSPROB_tgz_pat,
   CNTSPROB_personal_deadline, CNTSPROB_score_bonus, CNTSPROB_statement_file,
   CNTSPROB_alternatives_file, CNTSPROB_plugin_file, CNTSPROB_xml_file,
@@ -5988,11 +6021,13 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_checker_env] = 1,
   [CNTSPROB_valuer_env] = 1,
   [CNTSPROB_interactor_env] = 1,
+  [CNTSPROB_style_checker_env] = 1,
   [CNTSPROB_lang_time_adj] = 1,
   [CNTSPROB_lang_time_adj_millis] = 1,
   [CNTSPROB_check_cmd] = 1,
   [CNTSPROB_valuer_cmd] = 1,
   [CNTSPROB_interactor_cmd] = 1,
+  [CNTSPROB_style_checker_cmd] = 1,
   [CNTSPROB_test_pat] = 1,
   [CNTSPROB_corr_pat] = 1,
   [CNTSPROB_info_pat] = 1,
@@ -6048,9 +6083,10 @@ static const int prob_inheritable_list[] =
   CNTSPROB_start_date, CNTSPROB_variant_num, CNTSPROB_date_penalty,
   CNTSPROB_disable_language, CNTSPROB_enable_language, CNTSPROB_require,
   CNTSPROB_standard_checker, CNTSPROB_checker_env, CNTSPROB_valuer_env,
-  CNTSPROB_interactor_env, CNTSPROB_lang_time_adj,
+  CNTSPROB_interactor_env, CNTSPROB_style_checker_env, CNTSPROB_lang_time_adj,
   CNTSPROB_lang_time_adj_millis, CNTSPROB_check_cmd, CNTSPROB_valuer_cmd,
-  CNTSPROB_interactor_cmd, CNTSPROB_test_pat, CNTSPROB_corr_pat,
+  CNTSPROB_interactor_cmd, CNTSPROB_style_checker_cmd,
+  CNTSPROB_test_pat, CNTSPROB_corr_pat,
   CNTSPROB_info_pat, CNTSPROB_tgz_pat, CNTSPROB_personal_deadline,
   CNTSPROB_score_bonus, CNTSPROB_statement_file, CNTSPROB_alternatives_file,
   CNTSPROB_plugin_file, CNTSPROB_xml_file, CNTSPROB_type,
@@ -6145,11 +6181,13 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_checker_env] = 1,
   [CNTSPROB_valuer_env] = 1,
   [CNTSPROB_interactor_env] = 1,
+  [CNTSPROB_style_checker_env] = 1,
   [CNTSPROB_lang_time_adj] = 1,
   [CNTSPROB_lang_time_adj_millis] = 1,
   [CNTSPROB_check_cmd] = 1,
   [CNTSPROB_valuer_cmd] = 1,
   [CNTSPROB_interactor_cmd] = 1,
+  [CNTSPROB_style_checker_cmd] = 1,
   [CNTSPROB_test_pat] = 1,
   [CNTSPROB_corr_pat] = 1,
   [CNTSPROB_info_pat] = 1,
@@ -6275,9 +6313,11 @@ static const struct section_problem_data prob_undef_values =
   .checker_env = 0,
   .valuer_env = 0,
   .interactor_env = 0,
+  .style_checker_env = 0,
   .check_cmd = { 1, 0 },
   .valuer_cmd = { 1, 0 },
   .interactor_cmd = { 1, 0 },
+  .style_checker_cmd = { 1, 0 },
   .lang_time_adj = 0,
   .lang_time_adj_millis = 0,
   .alternative = 0,
@@ -6390,6 +6430,7 @@ static const struct section_problem_data prob_default_values =
   .check_cmd = "",
   .valuer_cmd = "",
   .interactor_cmd = "",
+  .style_checker_cmd = "",
   .score_bonus = "",
   .max_vm_size = 0,
   .max_data_size = 0,
@@ -6431,6 +6472,7 @@ static const unsigned char prob_format_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_check_cmd] = 1,
   [CNTSPROB_valuer_cmd] = 1,
   [CNTSPROB_interactor_cmd] = 1,
+  [CNTSPROB_style_checker_cmd] = 1,
   [CNTSPROB_statement_file] = 1,
   [CNTSPROB_alternatives_file] = 1,
   [CNTSPROB_plugin_file] = 1,

@@ -1171,6 +1171,9 @@ prepare_unparse_prob(
   if (prob->interactor_cmd[0])
     fprintf(f,"interactor_cmd = \"%s\"\n",CARMOR(prob->interactor_cmd));
   do_xstr(f, &ab, "interactor_env", prob->interactor_env);
+  if (prob->style_checker_cmd[0])
+    fprintf(f,"style_checker_cmd = \"%s\"\n",CARMOR(prob->style_checker_cmd));
+  do_xstr(f, &ab, "style_checker_env", prob->style_checker_env);
   do_xstr(f, &ab, "lang_time_adj", prob->lang_time_adj);
   do_xstr(f, &ab, "lang_time_adj_millis", prob->lang_time_adj_millis);
   do_xstr(f, &ab, "test_sets", prob->test_sets);

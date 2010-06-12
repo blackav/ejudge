@@ -3119,7 +3119,7 @@ super_load_cs_languages(
     int extra_cs_total = sarray_len(extra_compile_dirs);
     if (extra_cs_total > 0) {
       sstate->extra_cs_cfgs_total = extra_cs_total;
-      XCALLOC(sstate->extra_cs_cfgs, sstate->extra_cs_cfgs_total);
+      XCALLOC(sstate->extra_cs_cfgs, sstate->extra_cs_cfgs_total + 1);
     }
   }
 
@@ -5761,6 +5761,47 @@ super_html_print_problem(FILE *f,
     xfree(checker_env);
   }
 
+  //PROBLEM_PARAM(style_checker_cmd, "s"),
+  extra_msg = 0;
+  if (show_adv) {
+    if (prob->abstract) extra_msg = "";
+    if (!prob->abstract && !prob->standard_checker[0]) {
+      extra_msg = "";
+      prepare_set_prob_value(CNTSPROB_style_checker_cmd,
+                             &tmp_prob, sup_prob, sstate->global);
+      s = html_armor_string_dup(tmp_prob.style_checker_cmd);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(%s\"%s\")</i>",
+               prob->style_checker_cmd[0]?"Default - ":"", s);
+      xfree(s);
+      extra_msg = msg_buf;
+    }
+  }
+  if (extra_msg)
+    print_string_editing_row_3(f, "Style checker name:",prob->style_checker_cmd,
+                               SSERV_CMD_PROB_CHANGE_STYLE_CHECKER_CMD,
+                               SSERV_CMD_PROB_CLEAR_STYLE_CHECKER_CMD,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+
+  //PROBLEM_PARAM(style_checker_env, "x"),
+  if (!prob->abstract) {
+    if (!prob->style_checker_env || !prob->style_checker_env[0]) {
+      extra_msg = "(not set)";
+      checker_env = xstrdup("");
+    } else {
+      extra_msg = "";
+      checker_env = sarray_unparse(prob->style_checker_env);
+    }
+    print_string_editing_row_3(f, "Interactor environment:", checker_env,
+                               SSERV_CMD_PROB_CHANGE_STYLE_CHECKER_ENV,
+                               SSERV_CMD_PROB_CLEAR_STYLE_CHECKER_ENV,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+    xfree(checker_env); checker_env = 0;
+  }
+
   // PROBLEM_PARAM(score_view, "x")
   if (!prob->abstract && show_adv) {
     if (!prob->score_view || !prob->score_view[0]) {
@@ -6828,6 +6869,26 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CLEAR_INTERACTOR_ENV:
     sarray_free(prob->interactor_env);
     prob->interactor_env = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_STYLE_CHECKER_CMD:
+    PROB_ASSIGN_STRING(style_checker_cmd);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_STYLE_CHECKER_CMD:
+    PROB_CLEAR_STRING(style_checker_cmd);
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_STYLE_CHECKER_ENV:
+    if (sarray_parse(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(prob->style_checker_env);
+    prob->style_checker_env = tmp_env;
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_STYLE_CHECKER_ENV:
+    sarray_free(prob->style_checker_env);
+    prob->style_checker_env = 0;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ:
@@ -8464,6 +8525,11 @@ invoke_make(
   }
   // check for interactor
   if (prob->interactor_cmd[0]) {
+    // FIXME: complete
+  }
+  // check for style checker
+  if (prob->style_checker_cmd[0]) {
+    // FIXME: complete
   }
 
   return 1;
@@ -8655,6 +8721,7 @@ super_html_check_tests(FILE *f,
     prepare_set_prob_value(CNTSPROB_ignore_exit_code, &tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_valuer_cmd, &tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_interactor_cmd, &tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_style_checker_cmd,&tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_test_dir, &tmp_prob, abstr, 0);
     prepare_set_prob_value(CNTSPROB_use_corr, &tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_test_sfx, &tmp_prob, abstr, global);
