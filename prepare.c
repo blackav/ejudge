@@ -5925,6 +5925,7 @@ static const int prob_settable_list[] =
   CNTSPROB_alternatives_file, CNTSPROB_plugin_file, CNTSPROB_xml_file,
   CNTSPROB_alternative, CNTSPROB_stand_attr, CNTSPROB_source_header,
   CNTSPROB_source_footer, CNTSPROB_score_view,
+  CNTSPROB_open_tests,
 
   0
 };
@@ -6047,6 +6048,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_source_header] = 1,
   [CNTSPROB_source_footer] = 1,
   [CNTSPROB_score_view] = 1,
+  [CNTSPROB_open_tests] = 1,
 };
 
 static const int prob_inheritable_list[] =

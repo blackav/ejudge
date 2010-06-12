@@ -1095,6 +1095,16 @@ copy_param(void *cfg, const struct config_parse_info *params,
     if (parsecfg_state.charset_id > 0) {
       charset_decode_buf(parsecfg_state.charset_id, ptr, param_size);
     }
+  } else if (!strcmp(params[i].type, "S")) {
+    // string allocated on heap
+    char **pptr;
+
+    pptr = (char**) ((char*) cfg + params[i].offset);
+    if (parsecfg_state.charset_id > 0) {
+      *pptr = charset_decode_to_heap(parsecfg_state.charset_id, varvalue);
+    } else {
+      *pptr = xstrdup(varvalue);
+    }
   } else if (!strcmp(params[i].type, "x")) {
     char ***ppptr = 0;
     char **pptr = 0;
