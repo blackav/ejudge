@@ -63,6 +63,18 @@ static int initialize_mode = 0;
 static int daemon_mode;
 
 static int
+check_style(
+        const struct section_global_data *global,
+        const struct compile_request_packet *req,
+        const struct compile_reply_packet *rpl,
+        const unsigned char *pkt_name,
+        const unsigned char *report_dir,
+        const unsigned char *status_dir)
+{
+  return 0;
+}
+
+static int
 do_loop(void)
 {
   path_t src_name;
@@ -93,6 +105,7 @@ do_loop(void)
 #endif /* HAVE_TRUNCATE */
   FILE *log_f = 0;
   struct section_language_data *lang = 0;
+  const struct section_global_data *global = serve_state.global;
 
   if (cr_serialize_init(&serve_state) < 0) return -1;
   interrupt_init();
@@ -102,8 +115,7 @@ do_loop(void)
     // terminate if signaled
     if (interrupt_get_status() || interrupt_restart_requested()) break;
 
-    r = scan_dir(serve_state.global->compile_queue_dir,
-                 pkt_name, sizeof(pkt_name));
+    r = scan_dir(global->compile_queue_dir, pkt_name, sizeof(pkt_name));
 
     if (r < 0) {
       switch (-r) {
@@ -123,16 +135,15 @@ do_loop(void)
 
     if (!r) {
       interrupt_enable();
-      os_Sleep(serve_state.global->sleep_time);
+      os_Sleep(global->sleep_time);
       interrupt_disable();
       continue;
     }
 
     pkt_ptr = 0;
     pkt_len = 0;
-    r = generic_read_file(&pkt_ptr, 0, &pkt_len,
-                          SAFE | REMOVE, serve_state.global->compile_queue_dir,
-                          pkt_name, "");
+    r = generic_read_file(&pkt_ptr, 0, &pkt_len, SAFE | REMOVE,
+                          global->compile_queue_dir, pkt_name, "");
     if (r == 0) continue;
     if (r < 0 || !pkt_ptr) {
       // it looks like there's no reasonable recovery strategy
@@ -140,7 +151,7 @@ do_loop(void)
       continue;
     }
 
-    r = compile_request_packet_read(&serve_state, pkt_len, pkt_ptr, &req);
+    r = compile_request_packet_read(pkt_len, pkt_ptr, &req);
     xfree(pkt_ptr); pkt_ptr = 0;
     if (r < 0) {
       /*
@@ -177,9 +188,9 @@ do_loop(void)
 
     /* prepare paths useful to report messages to the serve */
     snprintf(report_dir, sizeof(report_dir),
-             "%s/%06d/report", serve_state.global->compile_dir, rpl.contest_id);
+             "%s/%06d/report", global->compile_dir, rpl.contest_id);
     snprintf(status_dir, sizeof(status_dir),
-             "%s/%06d/status", serve_state.global->compile_dir, rpl.contest_id);
+             "%s/%06d/status", global->compile_dir, rpl.contest_id);
     snprintf(run_name, sizeof(run_name), "%06d", rpl.run_id);
     pathmake(log_out, report_dir, "/", run_name, NULL);
 
@@ -195,21 +206,29 @@ do_loop(void)
       snprintf(msgbuf, sizeof(msgbuf), "invalid compile packet\n");
       goto report_internal_error;
     }
-    
-    lang = serve_state.langs[req->lang_id];
+
+    if (req->output_only && req->style_checker && req->style_checker[0]) {
+      check_style(global, req, &rpl, pkt_name, report_dir, status_dir);
+    }
+
+    if (req->lang_id <= 0 || req->lang_id > serve_state.max_lang
+        || !(lang = serve_state.langs[req->lang_id])) {
+      snprintf(msgbuf, sizeof(msgbuf), "invalid lang_id %d\n", req->lang_id);
+      goto report_internal_error;
+    }
     pathmake(src_name, run_name, lang->src_sfx, NULL);
     pathmake(exe_name, run_name, lang->exe_sfx, NULL);
 
-    pathmake(src_path, serve_state.global->compile_work_dir, "/", src_name, NULL);
-    pathmake(exe_path, serve_state.global->compile_work_dir, "/", exe_name, NULL);
-    pathmake(log_path, serve_state.global->compile_work_dir, "/", "log", NULL);
+    pathmake(src_path, global->compile_work_dir, "/", src_name, NULL);
+    pathmake(exe_path, global->compile_work_dir, "/", exe_name, NULL);
+    pathmake(log_path, global->compile_work_dir, "/", "log", NULL);
     /* the resulting executable file */
     pathmake(exe_out, report_dir, "/", exe_name, NULL);
 
     /* move the source file into the working dir */
-    r = generic_copy_file(REMOVE, serve_state.global->compile_src_dir, pkt_name,
+    r = generic_copy_file(REMOVE, global->compile_src_dir, pkt_name,
                           lang->src_sfx,
-                          0, serve_state.global->compile_work_dir, src_name, "");
+                          0, global->compile_work_dir, src_name, "");
     if (!r) {
       snprintf(msgbuf, sizeof(msgbuf), "the source file is missing\n");
       err("the source file is missing");
@@ -237,7 +256,7 @@ do_loop(void)
         task_AddArg(tsk, req->style_checker);
         task_AddArg(tsk, src_path);
         task_SetPathAsArg0(tsk);
-        task_SetWorkingDir(tsk, serve_state.global->compile_work_dir);
+        task_SetWorkingDir(tsk, global->compile_work_dir);
         task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_REWRITE, 0777);
         task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
         task_SetRedir(tsk, 2, TSR_DUP, 1);
@@ -288,7 +307,7 @@ do_loop(void)
           for (i = 0; i < req->env_num; i++)
             task_PutEnv(tsk, req->env_vars[i]);
         }
-        task_SetWorkingDir(tsk, serve_state.global->compile_work_dir);
+        task_SetWorkingDir(tsk, global->compile_work_dir);
         task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_REWRITE, 0777);
         task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
         task_SetRedir(tsk, 2, TSR_DUP, 1);
@@ -388,7 +407,7 @@ do_loop(void)
 
   cleanup_and_continue:;
     task_Delete(tsk); tsk = 0;
-    clear_directory(serve_state.global->compile_work_dir);
+    clear_directory(global->compile_work_dir);
     xfree(rpl_pkt); rpl_pkt = 0;
     req = compile_request_packet_free(req);
   } /* while (1) */

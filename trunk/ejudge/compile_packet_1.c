@@ -25,7 +25,6 @@
 #include "errlog.h"
 #include "prepare.h"
 #include "runlog.h"
-#include "serve_state.h"
 
 #include <reuse/integral.h>
 #include <reuse/logger.h>
@@ -43,7 +42,6 @@
 
 int
 compile_request_packet_read(
-        const serve_state_t state,
         size_t in_size, const void *in_data,
         struct compile_request_packet **p_out_data)
 {
@@ -73,7 +71,7 @@ compile_request_packet_read(
   FAIL_IF(pout->run_id < 0 || pout->run_id > EJ_MAX_RUN_ID);
   pout->lang_id = cvt_bin_to_host_32(pin->lang_id);
   if (pout->contest_id > 0) {
-    FAIL_IF(pout->lang_id < 0 || pout->lang_id > state->max_lang || !state->langs[pout->lang_id]);
+    FAIL_IF(pout->lang_id < 0);
   }
   pout->locale_id = cvt_bin_to_host_32(pin->locale_id);
   FAIL_IF(pout->locale_id < 0 || pout->locale_id > EJ_MAX_LOCALE_ID);
