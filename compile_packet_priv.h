@@ -19,7 +19,7 @@
 
 #include <reuse/integral.h>
 
-#define EJ_COMPILE_PACKET_VERSION 3
+#define EJ_COMPILE_PACKET_VERSION 4
 
 /* various private data structures and constants for compile packets */
 
@@ -39,10 +39,11 @@ struct compile_request_bin_packet
   rint32_t ts1;                 /* the time, when comp. request was queued */
   rint32_t ts1_us;              /* the microsecond component */
   rint32_t style_checker_len;   /* the length of the style checker command */
+  rint32_t src_sfx_len;         /* the length of the source file suffix */
   rint32_t run_block_len;       /* the length of the run block */
   rint32_t env_num;             /* the number of env. variables */
   rint32_t sc_env_num;          /* the number of style checker env. vars */
-  unsigned char pad[4];        /* padding to 64 boundary */
+  //unsigned char pad[4];        /* padding to 64 boundary */
   /* style checker command (aligned to 16 byte boundary) */
   /* run_block (aligned to 16 byte boundary) */
   /* env variable length array (aligned to 16-byte address boundary) */

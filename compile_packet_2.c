@@ -47,9 +47,13 @@ compile_request_packet_write(
   struct compile_request_bin_packet *out_data = 0;
   unsigned char *out_ptr;
   int style_checker_len = 0;
+  int src_sfx_len = 0;
 
   if (in_data->style_checker) {
     style_checker_len = strlen(in_data->style_checker);
+  }
+  if (in_data->src_sfx) {
+    src_sfx_len = strlen(in_data->src_sfx);
   }
 
   FAIL_IF(in_data->judge_id < 0 || in_data->judge_id > EJ_MAX_JUDGE_ID);
@@ -61,6 +65,7 @@ compile_request_packet_write(
   FAIL_IF(in_data->style_check_only < 0 || in_data->style_check_only > 1);
   FAIL_IF(in_data->ts1_us < 0 || in_data->ts1_us > USEC_MAX);
   FAIL_IF(style_checker_len < 0 || style_checker_len > PATH_MAX);
+  FAIL_IF(src_sfx_len < 0 || src_sfx_len > PATH_MAX);
   FAIL_IF(in_data->run_block_len < 0 || in_data->run_block_len > EJ_MAX_COMPILE_RUN_BLOCK_LEN);
   env_num = in_data->env_num;
   if (env_num == -1) {
@@ -100,6 +105,9 @@ compile_request_packet_write(
   if (style_checker_len > 0) {
     out_size += pkt_bin_align(style_checker_len);
   }
+  if (src_sfx_len > 0) {
+    out_size += pkt_bin_align(src_sfx_len);
+  }
   out_size += pkt_bin_align(in_data->run_block_len);
   out_size += pkt_bin_align(env_num * sizeof(rint32_t));
   for (i = 0; i < env_num; i++) {
@@ -128,12 +136,18 @@ compile_request_packet_write(
   out_data->ts1 = cvt_host_to_bin_32(in_data->ts1);
   out_data->ts1_us = cvt_host_to_bin_32(in_data->ts1_us);
   out_data->style_checker_len = cvt_host_to_bin_32(style_checker_len);
+  out_data->src_sfx_len = cvt_host_to_bin_32(src_sfx_len);
   out_data->run_block_len = cvt_host_to_bin_32(in_data->run_block_len);
   out_data->env_num = cvt_host_to_bin_32(env_num);
   out_data->sc_env_num = cvt_host_to_bin_32(sc_env_num);
   if (style_checker_len > 0) {
     memcpy(out_ptr, in_data->style_checker, style_checker_len);
     out_ptr += style_checker_len;
+    pkt_bin_align_addr(out_ptr, out_data);
+  }
+  if (src_sfx_len > 0) {
+    memcpy(out_ptr, in_data->src_sfx, src_sfx_len);
+    out_ptr += src_sfx_len;
     pkt_bin_align_addr(out_ptr, out_data);
   }
   if (in_data->run_block_len) {

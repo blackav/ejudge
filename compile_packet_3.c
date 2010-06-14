@@ -36,6 +36,7 @@ compile_request_packet_free(struct compile_request_packet *in_data)
   if (!in_data) return 0;
   if (in_data->run_block_len > 0) xfree(in_data->run_block);
   xfree(in_data->style_checker);
+  xfree(in_data->src_sfx);
   if (in_data->env_num > 0 && in_data->env_vars) {
     for (i = 0; i < in_data->env_num; i++) {
       xfree(in_data->env_vars[i]);

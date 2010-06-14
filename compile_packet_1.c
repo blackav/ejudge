@@ -51,6 +51,7 @@ compile_request_packet_read(
   int pkt_size, pkt_version, errcode = 0, i;
   rint32_t *str_lens;
   int style_checker_len = 0;
+  int src_sfx_len = 0;
 
   FAIL_IF(in_size < sizeof(struct compile_request_bin_packet));
   pkt_size = cvt_bin_to_host_32(pin->packet_len);
@@ -98,6 +99,17 @@ compile_request_packet_read(
     memcpy(pout->style_checker, pin_ptr, style_checker_len);
     pout->style_checker[style_checker_len] = 0;
     pin_ptr += pkt_bin_align(style_checker_len);
+  }
+
+  pout->src_sfx = 0;
+  src_sfx_len = cvt_bin_to_host_32(pin->src_sfx_len);
+  FAIL_IF(src_sfx_len < 0 || src_sfx_len > PATH_MAX);
+  FAIL_IF(pin_ptr + src_sfx_len > end_ptr);
+  if (src_sfx_len > 0) {
+    pout->src_sfx = (unsigned char*) xmalloc(src_sfx_len + 1);
+    memcpy(pout->src_sfx, pin_ptr, src_sfx_len);
+    pout->src_sfx[src_sfx_len] = 0;
+    pin_ptr += pkt_bin_align(src_sfx_len);
   }
 
   pout->run_block_len = cvt_bin_to_host_32(pin->run_block_len);

@@ -31,6 +31,7 @@ struct compile_request_packet
   int ts1;
   int ts1_us;
   unsigned char *style_checker;
+  unsigned char *src_sfx;
   int run_block_len;
   void *run_block;
   int env_num;
