@@ -986,10 +986,26 @@ cmd_submit_run(
                       "  This problem is checked manually.\n",
                       run_id);
     } else {
-      if (serve_run_request(cs, stderr, run_text, run_size, run_id,
-                            phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
-                            0, 0) < 0)
-        FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
+      if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+        if (serve_compile_request(cs, run_text, run_size, run_id,
+                                  phr->user_id, 0 /* lang_id */,
+                                  0 /* locale_id */, 1 /* output_only*/,
+                                  mime_type_get_suffix(mime_type),
+                                  NULL /* compiler_env */,
+                                  1 /* style_check_only */,
+                                  prob->style_checker_cmd,
+                                  prob->style_checker_env,
+                                  0 /* accepting_mode */,
+                                  0 /* priority_adjustment */,
+                                  0 /* notify flag */,
+                                  prob, NULL /* lang */) < 0)
+          FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
+      } else {
+        if (serve_run_request(cs, stderr, run_text, run_size, run_id,
+                              phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
+                              0, 0) < 0)
+          FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
+      }
 
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"
@@ -1007,10 +1023,26 @@ cmd_submit_run(
                       "  Testing disabled for this problem\n",
                       run_id);
     } else {
-      if (serve_run_request(cs, stderr, run_text, run_size, run_id,
-                            phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
-                            0, 0) < 0)
-        FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
+      if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+        if (serve_compile_request(cs, run_text, run_size, run_id,
+                                  phr->user_id, 0 /* lang_id */,
+                                  0 /* locale_id */, 1 /* output_only*/,
+                                  mime_type_get_suffix(mime_type),
+                                  NULL /* compiler_env */,
+                                  1 /* style_check_only */,
+                                  prob->style_checker_cmd,
+                                  prob->style_checker_env,
+                                  0 /* accepting_mode */,
+                                  0 /* priority_adjustment */,
+                                  0 /* notify flag */,
+                                  prob, NULL /* lang */) < 0)
+          FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
+      } else {
+        if (serve_run_request(cs, stderr, run_text, run_size, run_id,
+                              phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
+                              0, 0) < 0)
+          FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
+      }
 
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"

@@ -1054,6 +1054,10 @@ ns_write_priv_source(const serve_state_t state,
   const unsigned char *run_charset = 0;
   int charset_id = 0;
   const unsigned char *cl = 0;
+  int txt_flags = 0;
+  path_t txt_path = { 0 };
+  char *txt_text = 0;
+  size_t txt_size = 0;
 
   if (ns_cgi_param(phr, "run_charset", &ss) > 0 && ss && *ss)
     run_charset = ss;
@@ -1636,6 +1640,17 @@ ns_write_priv_source(const serve_state_t state,
                      "run_id=%d&no_disp=1", run_id));
     } else {
       fprintf(f, "<p>The submission is binary and thus is not shown.</p>\n");
+      /* try to load text description of the archive */
+      txt_flags = archive_make_read_path(state, txt_path, sizeof(txt_path),
+                                         global->report_archive_dir,
+                                         run_id, 0, 0);
+      if (txt_flags >= 0) {
+        if (generic_read_file(&txt_text, 0, &txt_size, txt_flags, 0,
+                              txt_path, 0) >= 0) {
+          fprintf(f, "<pre>%s</pre>\n", ARMOR(txt_text));
+          xfree(txt_text); txt_text = 0; txt_size = 0;
+        }
+      }
     }
   } else if (lang && lang->binary) {
     fprintf(f, "<p>The submission is binary and thus is not shown.</p>\n");
