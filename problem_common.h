@@ -4,7 +4,7 @@
 #ifndef __PROBLEM_COMMON_H__
 #define __PROBLEM_COMMON_H__
 
-/* Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@ enum
   PROB_TYPE_SELECT_ONE,         /* select one answer from the list */
   PROB_TYPE_SELECT_MANY,        /* select many answers from the list */
   PROB_TYPE_CUSTOM,             /* custom form (part of prob. stmt) */
+  PROB_TYPE_TESTS,              /* test suite submit */
 
   PROB_TYPE_LAST,
 };

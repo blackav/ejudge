@@ -4363,6 +4363,7 @@ get_source(
   case PROB_TYPE_OUTPUT_ONLY:
   case PROB_TYPE_TEXT_ANSWER:
   case PROB_TYPE_CUSTOM:
+  case PROB_TYPE_TESTS:
     goto cleanup;
   case PROB_TYPE_SHORT_ANSWER:
   case PROB_TYPE_SELECT_ONE:
