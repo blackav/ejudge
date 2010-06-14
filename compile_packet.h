@@ -17,8 +17,6 @@
  * GNU General Public License for more details.
  */
 
-#include "serve_state.h"
-
 #include <stdlib.h>
 
 struct compile_request_packet
@@ -61,8 +59,7 @@ struct compile_reply_packet
 };
 
 int
-compile_request_packet_read(const serve_state_t,
-                            size_t in_size, const void *in_data,
+compile_request_packet_read(size_t in_size, const void *in_data,
                             struct compile_request_packet **p_out_data);
 
 int
