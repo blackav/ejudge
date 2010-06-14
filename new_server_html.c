@@ -2823,11 +2823,26 @@ priv_submit_run(FILE *fout,
                       "  This problem is checked manually.\n",
                       run_id);
     } else {
-      if (serve_run_request(cs, log_f, run_text, run_size, run_id,
-                            phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
-                            0, 0) < 0) {
-        ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-        goto cleanup;
+      if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+        serve_compile_request(cs, run_text, run_size, run_id,
+                              phr->user_id, 0 /* lang_id */,
+                              0 /* locale_id */, 1 /* output_only*/,
+                              mime_type_get_suffix(mime_type),
+                              NULL /* compiler_env */,
+                              1 /* style_check_only */,
+                              prob->style_checker_cmd,
+                              prob->style_checker_env,
+                              0 /* accepting_mode */,
+                              0 /* priority_adjustment */,
+                              0 /* notify flag */,
+                              prob, NULL /* lang */);
+      } else {
+        if (serve_run_request(cs, log_f, run_text, run_size, run_id,
+                              phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
+                              0, 0) < 0) {
+          ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
+          goto cleanup;
+        }
       }
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"
@@ -2847,11 +2862,26 @@ priv_submit_run(FILE *fout,
                       run_id);
     } else {
       /* FIXME: check for XML problem */
-      if (serve_run_request(cs, log_f, run_text, run_size, run_id,
-                            phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
-                            0, 0) < 0) {
-        ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-        goto cleanup;
+      if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+        serve_compile_request(cs, run_text, run_size, run_id,
+                              phr->user_id, 0 /* lang_id */,
+                              0 /* locale_id */, 1 /* output_only*/,
+                              mime_type_get_suffix(mime_type),
+                              NULL /* compiler_env */,
+                              1 /* style_check_only */,
+                              prob->style_checker_cmd,
+                              prob->style_checker_env,
+                              0 /* accepting_mode */,
+                              0 /* priority_adjustment */,
+                              0 /* notify flag */,
+                              prob, NULL /* lang */);
+      } else {      
+        if (serve_run_request(cs, log_f, run_text, run_size, run_id,
+                              phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
+                              0, 0) < 0) {
+          ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
+          goto cleanup;
+        }
       }
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"
@@ -9986,11 +10016,26 @@ unpriv_submit_run(FILE *fout,
                       "  This problem is checked manually.\n",
                       run_id);
     } else {
-      if (serve_run_request(cs, log_f, run_text, run_size, run_id,
-                            phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
-                            0, 0) < 0) {
-        ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-        goto done;
+      if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+        serve_compile_request(cs, run_text, run_size, run_id,
+                              phr->user_id, 0 /* lang_id */,
+                              0 /* locale_id */, 1 /* output_only*/,
+                              mime_type_get_suffix(mime_type),
+                              NULL /* compiler_env */,
+                              1 /* style_check_only */,
+                              prob->style_checker_cmd,
+                              prob->style_checker_env,
+                              0 /* accepting_mode */,
+                              0 /* priority_adjustment */,
+                              0 /* notify flag */,
+                              prob, NULL /* lang */);
+      } else {
+        if (serve_run_request(cs, log_f, run_text, run_size, run_id,
+                              phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
+                              0, 0) < 0) {
+          ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
+          goto done;
+        }
       }
 
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
@@ -10029,11 +10074,26 @@ unpriv_submit_run(FILE *fout,
         goto done;
       }
 
-      if (serve_run_request(cs, log_f, run_text, run_size, run_id,
-                            phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
-                            0, 0) < 0) {
-        ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-        goto done;
+      if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+        serve_compile_request(cs, run_text, run_size, run_id,
+                              phr->user_id, 0 /* lang_id */,
+                              0 /* locale_id */, 1 /* output_only*/,
+                              mime_type_get_suffix(mime_type),
+                              NULL /* compiler_env */,
+                              1 /* style_check_only */,
+                              prob->style_checker_cmd,
+                              prob->style_checker_env,
+                              0 /* accepting_mode */,
+                              0 /* priority_adjustment */,
+                              0 /* notify flag */,
+                              prob, NULL /* lang */);
+      } else {
+        if (serve_run_request(cs, log_f, run_text, run_size, run_id,
+                              phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
+                              0, 0) < 0) {
+          ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
+          goto done;
+        }
       }
 
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
