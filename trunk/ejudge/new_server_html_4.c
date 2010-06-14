@@ -753,6 +753,7 @@ cmd_submit_run(
       FAIL(NEW_SRV_ERR_BINARY_FILE);
     break;
   case PROB_TYPE_OUTPUT_ONLY:
+  case PROB_TYPE_TESTS:
     if (!prob->binary_input && strlen(run_text) != run_size) 
       FAIL(NEW_SRV_ERR_BINARY_FILE);
     break;

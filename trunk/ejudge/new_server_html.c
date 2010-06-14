@@ -2570,6 +2570,7 @@ priv_submit_run(FILE *fout,
     }
     break;
   case PROB_TYPE_OUTPUT_ONLY:
+  case PROB_TYPE_TESTS:
     if (prob->enable_text_form > 0) {
       int r1 = ns_cgi_param_bin(phr, "file", &run_text, &run_size);
       int r2 = ns_cgi_param_bin(phr, "text_form", &text_form_text,
@@ -2655,6 +2656,7 @@ priv_submit_run(FILE *fout,
     break;
 
   case PROB_TYPE_OUTPUT_ONLY:
+  case PROB_TYPE_TESTS:
     if (!prob->binary_input && strlen(run_text) != run_size)
       goto binary_submission;
     if (prob->enable_text_form > 0 && text_form_text
@@ -4195,6 +4197,7 @@ priv_new_run(FILE *fout,
   }
   switch (prob->type) {
   case PROB_TYPE_STANDARD:      // "file"
+  case PROB_TYPE_TESTS:
   case PROB_TYPE_OUTPUT_ONLY:
   case PROB_TYPE_TEXT_ANSWER:
   case PROB_TYPE_SHORT_ANSWER:
@@ -4216,6 +4219,7 @@ priv_new_run(FILE *fout,
     break;
 
   case PROB_TYPE_OUTPUT_ONLY:
+  case PROB_TYPE_TESTS:
     if (!prob->binary_input && strlen(run_text) != run_size)
       FAIL(NEW_SRV_ERR_BINARY_FILE);
     break;
@@ -7597,6 +7601,7 @@ priv_submit_page(
    } else {
     switch (prob->type) {
     case PROB_TYPE_OUTPUT_ONLY:
+    case PROB_TYPE_TESTS:
       if (prob->enable_text_form > 0) {
         fprintf(fout, "<tr><td colspan=\"2\"%s><textarea name=\"text_form\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n", cl);
       }
@@ -8271,6 +8276,7 @@ priv_main_page(FILE *fout,
       switch (prob->type) {
       case PROB_TYPE_STANDARD:
       case PROB_TYPE_OUTPUT_ONLY:
+      case PROB_TYPE_TESTS:
         fprintf(fout, "<tr><td>%s</td><td><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
         break;
       case PROB_TYPE_SHORT_ANSWER:
@@ -9632,6 +9638,7 @@ unpriv_submit_run(FILE *fout,
     }
     break;
   case PROB_TYPE_OUTPUT_ONLY:
+  case PROB_TYPE_TESTS:
     if (prob->enable_text_form > 0) {
       int r1 = ns_cgi_param_bin(phr, "file", &run_text, &run_size);
       int r2 =ns_cgi_param_bin(phr,"text_form",&text_form_text,&text_form_size);
@@ -9724,6 +9731,7 @@ unpriv_submit_run(FILE *fout,
     break;
 
   case PROB_TYPE_OUTPUT_ONLY:
+  case PROB_TYPE_TESTS:
     if (!prob->binary_input && strlen(run_text) != run_size) {
       ns_error(log_f, NEW_SRV_ERR_BINARY_FILE);
       goto done;
@@ -12715,6 +12723,7 @@ unpriv_main_page(FILE *fout,
           fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
           break;
         case PROB_TYPE_OUTPUT_ONLY:
+        case PROB_TYPE_TESTS:
           if (prob->enable_text_form > 0) {
             fprintf(fout, "<tr><td colspan=\"2\" class=\"b0\"><textarea name=\"text_form\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
           }
