@@ -25,6 +25,8 @@
 #include "errlog.h"
 #include "ejudge_cfg.h"
 #include "misctext.h"
+#include "sformat.h"
+#include "varsubst.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -1819,10 +1821,7 @@ prepare_unparse_testers(
     //vm_sizes[i] = tmp_prob->max_vm_size;
     //stack_sizes[i] = tmp_prob->max_stack_size;
     file_ios[i] = !tmp_prob->type && (!tmp_prob->use_stdin || !tmp_prob->use_stdout);
-    if (tmp_prob) {
-      prepare_problem_free_func(&tmp_prob->g);
-      tmp_prob = 0;
-    }
+    tmp_prob = prepare_problem_free(tmp_prob);
   }
 
   // collect memory and stack limits for the default tester
@@ -1909,9 +1908,7 @@ prepare_unparse_testers(
   }
 
  cleanup:
-  if (tmp_prob) {
-    prepare_problem_free_func(&tmp_prob->g);
-  }
+  tmp_prob = prepare_problem_free(tmp_prob);
   for (i = 0; i < total_archs; i++)
     xfree(archs[i]);
   xfree(archs);
@@ -1940,13 +1937,16 @@ mkpath(unsigned char *out, const unsigned char *d, const unsigned char *n,
     snprintf(out, sizeof(path_t), "%s", n);
   }
 }
+
+#define ARMOR(s)  html_armor_buf(&ab, (s))
+
 static void
 print_files(FILE *f, const unsigned char *desc, const unsigned char *sfx,
             const unsigned char *pat)
 {
   int i;
 
-  fprintf(f, "%s: ", desc);
+  fprintf(f, "<p><b>%s</b>: ", desc);
   if (pat && *pat) {
     for (i = 1; i < 5; i++) {
       fprintf(f, pat, i);
@@ -1957,40 +1957,244 @@ print_files(FILE *f, const unsigned char *desc, const unsigned char *sfx,
       fprintf(f, "%03d%s, ", i, sfx);
     }
   }
-  fprintf(f, "etc...\n");
+  fprintf(f, "etc...</p>\n");
 }
 
 static void
-prob_instr(FILE *f, const unsigned char *root_dir,
-           const unsigned char *conf_dir,
-           const struct section_global_data *global,
-           const struct section_problem_data *prob,
-           const struct section_problem_data *abstr)
+report_directory(
+        FILE *f,
+        const unsigned char *path,
+        int variant)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int r;
+
+  fprintf(f, "<tr>");
+  if (variant > 0) {
+    fprintf(f, "<td>%d<td>", variant);
+  }
+  fprintf(f, "<td><tt>%s</tt></td>", ARMOR(path));
+  r = os_IsFile(path);
+  if (r < 0) {
+    fprintf(f, "<td><font color=\"red\">Does not exist!</font></td>");
+  } else if (r != OSPK_DIR) {
+    fprintf(f, "<td><font color=\"red\">Not a directory!</font></td>");
+  } else {
+    fprintf(f, "<td><font color=\"green\">OK</font></td>");
+  }
+  fprintf(f, "</tr>");
+ 
+  html_armor_free(&ab);
+}
+
+static void
+report_file(
+        FILE *f,
+        const unsigned char *path,
+        int is_executable,
+        int variant)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int r;
+
+  fprintf(f, "<tr>");
+  if (variant > 0) {
+    fprintf(f, "<td>%d<td>", variant);
+  }
+  fprintf(f, "<td><tt>%s</tt></td>", ARMOR(path));
+  r = os_IsFile(path);
+  if (r < 0) {
+    fprintf(f, "<td><font color=\"red\">Does not exist!</font></td>");
+  } else if (r != OSPK_REG) {
+    fprintf(f, "<td><font color=\"red\">Not a file!</font></td>");
+  } else {
+    fprintf(f, "<td><font color=\"green\">OK</font></td>");
+  }
+  fprintf(f, "</tr>");
+ 
+  html_armor_free(&ab);
+}
+
+static void
+handle_file(
+        FILE *f,
+        const struct section_global_data *global,
+        struct section_problem_data *prob,
+        const unsigned char *file,
+        int is_executable)
+{
+  path_t path = { 0 };
+  int variant;
+
+  fprintf(f, "<table border=\"1\">\n");
+  if (prob->variant_num > 0) {
+    for (variant = 0; variant <= prob->variant_num; ++variant) {
+      if (global->advanced_layout > 0) {
+        get_advanced_layout_path(path, sizeof(path), global, prob, file,
+                                 variant);
+      } else {
+        prepare_insert_variant_num(path, sizeof(path), file, variant);
+      }
+      report_file(f, path, is_executable, variant);
+    }
+  } else {
+    if (global->advanced_layout > 0) {
+      get_advanced_layout_path(path, sizeof(path), global, prob, file, -1);
+      report_file(f, path, is_executable, -1);
+    } else {
+      report_file(f, file, is_executable, -1);
+    }
+  }
+  fprintf(f, "</table>\n");
+}
+
+static void
+handle_directory(
+        FILE *f,
+        const struct section_global_data *global,
+        struct section_problem_data *prob,
+        const unsigned char *conf_path,
+        const unsigned char *gdir, /* global dir for standard layout */
+        const unsigned char *gdefdir, /* default global dir for std. layout */
+        const unsigned char *dir1, /* for standard layout */
+        const unsigned char *dir2) /* for advanced layout */
+{
+  path_t path1 = { 0 };
+  path_t path2 = { 0 };
+  path_t path;
+  int variant;
+
+  if (global->advanced_layout <= 0) {
+    mkpath(path1, conf_path, gdir, gdefdir);
+    mkpath(path2, path1, dir1, "");
+  }
+
+  fprintf(f, "<table border=\"1\">\n");
+  if (prob->variant_num > 0) {
+    for (variant = 1; variant <= prob->variant_num; ++variant) {
+      if (global->advanced_layout > 0) {
+        get_advanced_layout_path(path, sizeof(path), global, prob, dir2,
+                                 variant);
+      } else {
+        snprintf(path, sizeof(path), "%s-%d", path2, variant);
+      }
+      report_directory(f, path, -1);
+    }
+  } else {
+    if (global->advanced_layout > 0) {
+      get_advanced_layout_path(path2, sizeof(path2), global, prob, dir2, -1);
+    }
+    report_directory(f, path2, -1);
+  }
+  fprintf(f, "</table>\n");
+}
+
+static void
+prob_instr(
+        FILE *f,
+        const unsigned char *root_dir,
+        const unsigned char *conf_dir,
+        const struct section_global_data *global,
+        const struct section_problem_data *prob,
+        const struct section_problem_data *abstr)
 {
   struct section_problem_data *tmp_prob = 0;
-  path_t checker_path;
-  path_t valuer_path;
-  path_t interactor_path;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   path_t conf_path;
-  path_t g_path;
-  path_t l_path;
+  path_t prob_path;
+  path_t sc_path;
+  int variant;
+
+  fprintf(f, "<h3>Problem %s: %s</h3>\n", prob->short_name,
+          ARMOR(prob->long_name));
+  if (prob->variant_num > 0) {
+    fprintf(f, "<p>This is a variant problem with <b>%d variants</b> (1-%d).</p>\n",
+            prob->variant_num, prob->variant_num);
+  }
 
   tmp_prob = prepare_copy_problem(prob);
   mkpath(conf_path, root_dir, conf_dir, "conf");
 
-  fprintf(f, "Problem %s: %s\n", prob->short_name, prob->long_name);
+  if (global->advanced_layout > 0) {
+    fprintf(f, "<p><b>Problem directory:</b></p>\n");
+    fprintf(f, "<table border=\"1\">\n");
+    if (prob->variant_num > 0) {
+      for (variant = 1; variant <= prob->variant_num; ++variant) {
+        get_advanced_layout_path(prob_path, sizeof(prob_path),
+                                 global, tmp_prob, NULL, variant);
+        report_directory(f, prob_path, variant);
+      }
+    } else {
+      get_advanced_layout_path(prob_path, sizeof(prob_path),
+                               global, tmp_prob, NULL, -1);
+      report_directory(f, prob_path, -1);
+    }
+    fprintf(f, "</table>\n");
+
+    fprintf(f, "<p><b>Makefile (optional):</b></p>\n");
+    handle_file(f, global, tmp_prob, "Makefile", 0);
+  }
+
   prepare_set_prob_value(CNTSPROB_xml_file, tmp_prob, abstr,0);
-  if (prob->xml_file[0]) {
-    fprintf(f, "Problem XML statement: %s\n", prob->xml_file);
+  if (tmp_prob->xml_file[0]) {
+    fprintf(f, "<p><b>Problem statement file:</b></p>\n");
+    handle_file(f, global, tmp_prob, tmp_prob->xml_file, 0);
   }
-  prepare_set_prob_value(CNTSPROB_alternatives_file, tmp_prob, abstr,0);
-  if (prob->alternatives_file[0]) {
-    fprintf(f, "Problem possible answers: %s\n", prob->alternatives_file);
-  }
+
   prepare_set_prob_value(CNTSPROB_plugin_file, tmp_prob, abstr,0);
-  if (prob->plugin_file[0]) {
-    fprintf(f, "Problem plugin: %s\n", prob->plugin_file);
+  if (tmp_prob->plugin_file[0]) {
+    fprintf(f, "<p><b>Problem plugin file:</b></p>\n");
+    handle_file(f, global, tmp_prob, tmp_prob->plugin_file, 0);
   }
+
+  if (!tmp_prob->standard_checker[0]) {
+    prepare_set_prob_value(CNTSPROB_check_cmd, tmp_prob, abstr, global);
+    fprintf(f, "<p><b>Output file checker:</b></p>\n");
+    handle_file(f, global, tmp_prob, tmp_prob->check_cmd, 1);
+  }
+
+  prepare_set_prob_value(CNTSPROB_test_checker_cmd, tmp_prob, abstr, global);
+  if (tmp_prob->test_checker_cmd && tmp_prob->test_checker_cmd[0]) {
+    fprintf(f, "<p><b>Tests checker:</b></p>\n");
+    handle_file(f, global, tmp_prob, tmp_prob->test_checker_cmd, 1);
+  }
+
+  prepare_set_prob_value(CNTSPROB_valuer_cmd, tmp_prob, abstr, global);
+  if (tmp_prob->valuer_cmd && tmp_prob->valuer_cmd[0]) {
+    fprintf(f, "<p><b>Score evaluator:</b></p>\n");
+    handle_file(f, global, tmp_prob, tmp_prob->valuer_cmd, 1);
+  }
+  
+  prepare_set_prob_value(CNTSPROB_interactor_cmd, tmp_prob, abstr, global);
+  if (tmp_prob->interactor_cmd && tmp_prob->interactor_cmd[0]) {
+    fprintf(f, "<p><b>Interactor:</b></p>\n");
+    handle_file(f, global, tmp_prob, tmp_prob->interactor_cmd, 1);
+  }
+
+  prepare_set_prob_value(CNTSPROB_style_checker_cmd, tmp_prob, abstr, global);
+  if (tmp_prob->style_checker_cmd && tmp_prob->style_checker_cmd[0]) {
+    fprintf(f, "<p><b>Style checker:</b></p>\n");
+
+    sformat_message(prob_path, sizeof(prob_path), 0,
+                    tmp_prob->style_checker_cmd, global, tmp_prob,
+                    0, 0, 0, 0, 0, 0);
+    config_var_substitute_buf(prob_path, sizeof(prob_path));
+    if (os_IsAbsolutePath(prob_path)) {
+      snprintf(sc_path, sizeof(sc_path), "%s", prob_path);
+    } else if (global->advanced_layout > 0) {
+      get_advanced_layout_path(sc_path, sizeof(sc_path),
+                               global, prob, prob_path, -1);
+    } else {
+      snprintf(sc_path, sizeof(sc_path), "%s/%s", global->checker_dir,
+               prob_path);
+    }
+
+    fprintf(f, "<table border=\"1\">\n");
+    report_file(f, prob_path, 0, -1);
+    fprintf(f, "</table>\n");
+  }
+
+  /*
   if (!prob->standard_checker[0]) {
     if (global->advanced_layout > 0) {
       get_advanced_layout_path(checker_path, sizeof(checker_path),
@@ -2006,114 +2210,76 @@ prob_instr(FILE *f, const unsigned char *root_dir,
       fprintf(f, "Checker file name: %s\n", tmp_prob->check_cmd);
     }
   }
-  if (prob->valuer_cmd) {
-    if (global->advanced_layout > 0) {
-      get_advanced_layout_path(valuer_path, sizeof(valuer_path),
-                               global, tmp_prob, NULL, -1);
-    } else {
-      mkpath(valuer_path, conf_path, global->checker_dir, DFLT_G_CHECKER_DIR);
-    }
-    prepare_set_prob_value(CNTSPROB_valuer_cmd, tmp_prob, abstr, global);
-    if (os_IsAbsolutePath(tmp_prob->valuer_cmd)) {
-      fprintf(f, "Valuer command: %s\n", tmp_prob->valuer_cmd);
-    } else {
-      fprintf(f, "Valuer directory: %s\n", valuer_path);
-      fprintf(f, "Valuer file name: %s\n", tmp_prob->valuer_cmd);
-    }
-  }
-  if (prob->interactor_cmd) {
-    if (global->advanced_layout > 0) {
-      get_advanced_layout_path(interactor_path, sizeof(interactor_path),
-                               global, tmp_prob, NULL, -1);
-    } else {
-      mkpath(interactor_path, conf_path, global->checker_dir, DFLT_G_CHECKER_DIR);
-    }
-    prepare_set_prob_value(CNTSPROB_interactor_cmd, tmp_prob, abstr, global);
-    if (os_IsAbsolutePath(tmp_prob->interactor_cmd)) {
-      fprintf(f, "Interactor command: %s\n", tmp_prob->interactor_cmd);
-    } else {
-      fprintf(f, "Interactor directory: %s\n", interactor_path);
-      fprintf(f, "Interactor file name: %s\n", tmp_prob->interactor_cmd);
-    }
-  }
+  */
 
-  if (global->advanced_layout > 0) {
-    get_advanced_layout_path(l_path, sizeof(l_path), global, tmp_prob,
-                             DFLT_P_TEST_DIR, -1);
-  } else {
-    mkpath(g_path, conf_path, global->test_dir, DFLT_G_TEST_DIR);
-    prepare_set_prob_value(CNTSPROB_test_dir, tmp_prob, abstr, 0);
-    mkpath(l_path, g_path, tmp_prob->test_dir, "");
-  }
-  fprintf(f, "Directory with tests: %s\n", l_path);
+  fprintf(f, "<p><b>Tests directory:</b></p>\n");
+  prepare_set_prob_value(CNTSPROB_test_dir, tmp_prob, abstr, 0);
+  handle_directory(f, global, tmp_prob, conf_path,
+                   global->test_dir, DFLT_G_TEST_DIR,
+                   tmp_prob->test_dir, DFLT_P_TEST_DIR);
+  
   prepare_set_prob_value(CNTSPROB_test_sfx, tmp_prob, abstr, global);
   prepare_set_prob_value(CNTSPROB_test_pat, tmp_prob, abstr, global);
   print_files(f, "Test file names", tmp_prob->test_sfx, tmp_prob->test_pat);
 
   prepare_set_prob_value(CNTSPROB_use_corr, tmp_prob, abstr, global);
   if (tmp_prob->use_corr) {
-    if (global->advanced_layout > 0) {
-      get_advanced_layout_path(l_path, sizeof(l_path), global, tmp_prob,
-                               DFLT_P_CORR_DIR, -1);
-    } else {
-      mkpath(g_path, conf_path, global->corr_dir, DFLT_G_CORR_DIR);
-      prepare_set_prob_value(CNTSPROB_corr_dir, tmp_prob, abstr, 0);
-      mkpath(l_path, g_path, tmp_prob->corr_dir, "");
-    }
-    fprintf(f, "Directory with correct answers: %s\n", l_path);
+    fprintf(f, "<p><b>Correct answer directory:</b></p>\n");
+    prepare_set_prob_value(CNTSPROB_corr_dir, tmp_prob, abstr, 0);
+    handle_directory(f, global, tmp_prob, conf_path,
+                     global->corr_dir, DFLT_G_CORR_DIR,
+                     tmp_prob->corr_dir, DFLT_P_CORR_DIR);
+
     prepare_set_prob_value(CNTSPROB_corr_sfx, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_corr_pat, tmp_prob, abstr, global);
-    print_files(f, "Correct answer file names", tmp_prob->corr_sfx,
-                tmp_prob->corr_pat);
+    print_files(f, "Correct answer file names",
+                tmp_prob->corr_sfx, tmp_prob->corr_pat);
   }
 
   prepare_set_prob_value(CNTSPROB_use_info, tmp_prob, abstr, global);
   if (tmp_prob->use_info) {
-    if (global->advanced_layout > 0) {
-      get_advanced_layout_path(l_path, sizeof(l_path), global, tmp_prob,
-                               DFLT_P_INFO_DIR, -1);
-    } else {
-      mkpath(g_path, conf_path, global->info_dir, DFLT_G_INFO_DIR);
-      prepare_set_prob_value(CNTSPROB_info_dir, tmp_prob, abstr, 0);
-      mkpath(l_path, g_path, tmp_prob->info_dir, "");
-    }
-    fprintf(f, "Directory with test info files: %s\n", l_path);
+    fprintf(f, "<p><b>Info files directory:</b></p>\n");
+    prepare_set_prob_value(CNTSPROB_info_dir, tmp_prob, abstr, 0);
+    handle_directory(f, global, tmp_prob, conf_path,
+                     global->info_dir, DFLT_G_INFO_DIR,
+                     tmp_prob->info_dir, DFLT_P_INFO_DIR);
+
     prepare_set_prob_value(CNTSPROB_info_sfx, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_info_pat, tmp_prob, abstr, global);
-    print_files(f, "Test info file names", tmp_prob->info_sfx,
-                tmp_prob->info_pat);
+    print_files(f, "Info file names",
+                tmp_prob->info_sfx, tmp_prob->info_pat);
   }
 
   prepare_set_prob_value(CNTSPROB_use_tgz, tmp_prob, abstr, global);
   if (tmp_prob->use_tgz) {
-    if (global->advanced_layout > 0) {
-      get_advanced_layout_path(l_path, sizeof(l_path), global, tmp_prob,
-                               DFLT_P_TGZ_DIR, -1);
-    } else {
-      mkpath(g_path, conf_path, global->tgz_dir, DFLT_G_TGZ_DIR);
-      prepare_set_prob_value(CNTSPROB_tgz_dir, tmp_prob, abstr, 0);
-      mkpath(l_path, g_path, tmp_prob->tgz_dir, "");
-    }
-    fprintf(f, "Directory with test tgz files: %s\n", l_path);
+    fprintf(f, "<p><b>TGZ files directory:</b></p>\n");
+    prepare_set_prob_value(CNTSPROB_tgz_dir, tmp_prob, abstr, 0);
+    handle_directory(f, global, tmp_prob, conf_path,
+                     global->tgz_dir, DFLT_G_TGZ_DIR,
+                     tmp_prob->tgz_dir, DFLT_P_TGZ_DIR);
+
     prepare_set_prob_value(CNTSPROB_tgz_sfx, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_tgz_pat, tmp_prob, abstr, global);
-    print_files(f, "Test tgz file names", tmp_prob->tgz_sfx, tmp_prob->tgz_pat);
+    print_files(f, "TGZ file names",
+                tmp_prob->tgz_sfx, tmp_prob->tgz_pat);
   }
 
   fprintf(f, "\n");
 
-  if (tmp_prob) {
-    prepare_problem_free_func(&tmp_prob->g);
-  }
+  tmp_prob = prepare_problem_free(tmp_prob);
+  html_armor_free(&ab);
 }
 
 void
-prepare_further_instructions(FILE *f,
-                             const unsigned char *root_dir,
-                             const unsigned char *conf_dir,
-                             const struct section_global_data *global,
-                             int aprob_a, struct section_problem_data **aprobs,
-                             int prob_a, struct section_problem_data **probs)
+prepare_further_instructions(
+        FILE *f,
+        const unsigned char *root_dir,
+        const unsigned char *conf_dir,
+        const struct section_global_data *global,
+        int aprob_a,
+        struct section_problem_data **aprobs,
+        int prob_a,
+        struct section_problem_data **probs)
 {
   int i, j;
   const struct section_problem_data *abstr;
@@ -2132,12 +2298,10 @@ prepare_further_instructions(FILE *f,
     prob_instr(f, root_dir, conf_dir, global, probs[i], abstr);
   }
 
-  fprintf(f, "\n"
-          "Make sure, that checker executables are placed in the specified directory\n"
-          "and has the specified names!\n\n"
-          "Copy test files, correct answer files (if needed), test info files (if needed)\n"
-          "to the specified directories and name them as specified!\n\n"
-          "Make sure, that all input files are in UNIX text format!\n");
+  fprintf(f, "<p>Make sure, that checker, valuer, and other executables are placed in the specified directory and have the specified names!</p>"
+          "<p>Copy test files, correct answer files (if needed), test info files (if needed), etc to the specified directories and name them as specified!</p>"
+          "<p>Make sure, that all input text files are in UNIX text format!</p>"
+          "<p>When done with the files, perform &quot;Check contests settings&quot; operation.</p>");
 }
 
 void
