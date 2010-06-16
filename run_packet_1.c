@@ -53,7 +53,7 @@ run_request_packet_read(
   packet_len = cvt_bin_to_host_32(pin->packet_len);
   FAIL_IF(packet_len != in_size);
   version = cvt_bin_to_host_32(pin->version);
-  FAIL_IF(version != 1);
+  FAIL_IF(version != RUN_REQUEST_PACKET_VERSION);
 
   XCALLOC(pout, 1);
 
@@ -74,6 +74,8 @@ run_request_packet_read(
   FAIL_IF(pout->time_limit_adj < 0 || pout->time_limit_adj > EJ_MAX_TIME_LIMIT_ADJ);
   pout->time_limit_adj_millis = cvt_bin_to_host_32(pin->time_limit_adj_millis);
   FAIL_IF(pout->time_limit_adj_millis < 0 || pout->time_limit_adj_millis > EJ_MAX_TIME_LIMIT_ADJ_MILLIS);
+
+  pout->mime_type = cvt_bin_to_host_32(pin->mime_type);
 
   flags = cvt_bin_to_host_32(pin->flags);
   FAIL_IF(flags != (flags & FLAGS_ALL_MASK));

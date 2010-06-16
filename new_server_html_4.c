@@ -1004,7 +1004,7 @@ cmd_submit_run(
       } else {
         if (serve_run_request(cs, stderr, run_text, run_size, run_id,
                               phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
-                              0, 0) < 0)
+                              mime_type, 0, 0) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
 
@@ -1041,7 +1041,7 @@ cmd_submit_run(
       } else {
         if (serve_run_request(cs, stderr, run_text, run_size, run_id,
                               phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
-                              0, 0) < 0)
+                              mime_type, 0, 0) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
 

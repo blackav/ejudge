@@ -25,6 +25,8 @@
 #define FLAGS_PUT_SCORING_SYSTEM(s) ((s & 0xf))
 #define FLAGS_GET_SCORING_SYSTEM(f) ((f & 0xf))
 
+#define RUN_REQUEST_PACKET_VERSION 2
+
 enum
 {
   FLAGS_ACCEPTING_MODE       = 0x010,
@@ -53,6 +55,7 @@ struct run_request_bin_packet
   rint32_t  user_id;
   rint32_t  time_limit_adj;
   rint32_t  time_limit_adj_millis;
+  rint32_t  mime_type;
   ruint32_t flags;              /* incl. scoring system */
   rint32_t  ts1;
   rint32_t  ts1_us;
@@ -68,7 +71,7 @@ struct run_request_bin_packet
   ruint8_t  exe_sfx_len;
   ruint8_t  arch_len;
   ruint8_t  variant;
-  unsigned char pad[55];        /* padding to 128 bytes */
+  unsigned char pad[51];        /* padding to 128 bytes */
   /* exe_sfx */
   /* arch */
   /* user spelling */

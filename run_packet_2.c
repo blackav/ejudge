@@ -61,7 +61,7 @@ run_request_packet_write(
   out_ptr = (unsigned char*) out_data + sizeof(*out_data);
 
   out_data->packet_len = cvt_host_to_bin_32(out_size);
-  out_data->version = cvt_host_to_bin_32(1);
+  out_data->version = cvt_host_to_bin_32(RUN_REQUEST_PACKET_VERSION);
   FAIL_IF(in_data->contest_id <= 0 || in_data->contest_id > EJ_MAX_CONTEST_ID);
   out_data->contest_id = cvt_host_to_bin_32(in_data->contest_id);
   FAIL_IF(in_data->run_id < 0 || in_data->run_id > EJ_MAX_RUN_ID);
@@ -74,6 +74,7 @@ run_request_packet_write(
   out_data->time_limit_adj = cvt_host_to_bin_32(in_data->time_limit_adj);
   FAIL_IF(in_data->time_limit_adj_millis < 0 || in_data->time_limit_adj_millis > EJ_MAX_TIME_LIMIT_ADJ_MILLIS);
   out_data->time_limit_adj_millis = cvt_host_to_bin_32(in_data->time_limit_adj_millis);
+  out_data->mime_type = cvt_host_to_bin_32(in_data->mime_type);
 
   FAIL_IF(in_data->scoring_system < 0||in_data->scoring_system >= SCORE_TOTAL);
   flags |= FLAGS_PUT_SCORING_SYSTEM(in_data->scoring_system);

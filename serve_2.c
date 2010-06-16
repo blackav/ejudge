@@ -1164,6 +1164,7 @@ serve_run_request(
         int judge_id,
         int accepting_mode,
         int notify_flag,
+        int mime_type,
         const unsigned char *compile_report_dir,
         const struct compile_reply_packet *comp_pkt)
 {
@@ -1297,6 +1298,7 @@ serve_run_request(
   run_pkt->secure_run = state->global->secure_run;
   run_pkt->notify_flag = notify_flag;
   run_pkt->advanced_layout = state->global->advanced_layout;
+  run_pkt->mime_type = mime_type;
   if (run_pkt->secure_run && prob->disable_security) run_pkt->secure_run = 0;
   if (run_pkt->secure_run && lang && lang->disable_security) run_pkt->secure_run = 0;
   run_pkt->security_violation = state->global->detect_violations;
@@ -1749,8 +1751,8 @@ serve_read_compile_packet(
                         re.user_id, re.prob_id, re.lang_id, 0,
                         comp_extra->priority_adjustment,
                         comp_pkt->judge_id, comp_extra->accepting_mode,
-                        comp_extra->notify_flag, compile_report_dir,
-                        comp_pkt) < 0) {
+                        comp_extra->notify_flag, re.mime_type,
+                        compile_report_dir, comp_pkt) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
   }
@@ -2372,7 +2374,7 @@ serve_rejudge_run(
 
     serve_run_request(state, stderr, run_text, run_size, run_id,
                       re.user_id, re.prob_id, 0, 0, priority_adjustment,
-                      -1, accepting_mode, 1, 0, 0);
+                      -1, accepting_mode, 1, re.mime_type, 0, 0);
     xfree(run_text);
 
     serve_audit_log(state, run_id, user_id, ip, ssl_flag, "Command: Rejudge\n");
