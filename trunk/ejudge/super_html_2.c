@@ -1089,9 +1089,12 @@ super_html_commit_contest(FILE *f,
       for (i = 1; i < sstate->lang_a; i++)
         if (sstate->langs[i]) j++;
     }
+    /*
     if (!j)
       return super_html_report_error(f, session_id, self_url, extra_args,
                                      "No languages activated");
+    */
+
     j = 0;
     if (sstate->probs) {
       for (i = 1; i < sstate->prob_a; i++)
