@@ -2841,7 +2841,7 @@ priv_submit_run(FILE *fout,
       } else {
         if (serve_run_request(cs, log_f, run_text, run_size, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
-                              0, 0) < 0) {
+                              mime_type, 0, 0) < 0) {
           ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
           goto cleanup;
         }
@@ -2880,7 +2880,7 @@ priv_submit_run(FILE *fout,
       } else {      
         if (serve_run_request(cs, log_f, run_text, run_size, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
-                              0, 0) < 0) {
+                              mime_type, 0, 0) < 0) {
           ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
           goto cleanup;
         }
@@ -10040,7 +10040,7 @@ unpriv_submit_run(FILE *fout,
       } else {
         if (serve_run_request(cs, log_f, run_text, run_size, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
-                              0, 0) < 0) {
+                              mime_type, 0, 0) < 0) {
           ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
           goto done;
         }
@@ -10098,7 +10098,7 @@ unpriv_submit_run(FILE *fout,
       } else {
         if (serve_run_request(cs, log_f, run_text, run_size, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
-                              0, 0) < 0) {
+                              mime_type, 0, 0) < 0) {
           ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
           goto done;
         }

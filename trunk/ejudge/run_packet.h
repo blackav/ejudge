@@ -39,6 +39,7 @@ struct run_request_packet
   int security_violation;       /* enable security violation detection */
   int notify_flag;              /* notify user when testing is completed */
   int advanced_layout;          /* advanced files layout */
+  int mime_type;                /* mime type of the content */
   /* time when the compile request was queued by serve */
   int ts1;
   int ts1_us;
