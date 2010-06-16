@@ -6057,10 +6057,7 @@ super_html_print_problem(FILE *f,
   }
 
 cleanup:
-  if (tmp_prob) {
-    prepare_problem_free_func(&tmp_prob->g);
-    tmp_prob = 0;
-  }
+  tmp_prob = prepare_problem_free(tmp_prob);
   html_armor_free(&ab);
 }
 
@@ -8799,9 +8796,7 @@ super_html_check_tests(FILE *f,
       }
     }
 
-    if (tmp_prob) {
-      prepare_problem_free_func(&tmp_prob->g); tmp_prob = 0;
-    }
+    tmp_prob = prepare_problem_free(tmp_prob);
     tmp_prob = prepare_copy_problem(prob);
     prepare_set_prob_value(CNTSPROB_type, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_xml_file, tmp_prob, abstr, global);
@@ -9166,17 +9161,13 @@ super_html_check_tests(FILE *f,
   fprintf(f, "</tr></table>\n");
 
 cleanup:
-  if (tmp_prob) {
-    prepare_problem_free_func(&tmp_prob->g);
-  }
+  tmp_prob = prepare_problem_free(tmp_prob);
   html_armor_free(&ab);
 
   return 0;
 
 check_failed:
-  if (tmp_prob) {
-    prepare_problem_free_func(&tmp_prob->g);
-  }
+  tmp_prob = prepare_problem_free(tmp_prob);
   fclose(flog);
 
   fprintf(f, "<h2>Contest settings contain error:</h2>\n");

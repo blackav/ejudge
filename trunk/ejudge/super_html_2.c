@@ -1584,10 +1584,10 @@ super_html_commit_contest(FILE *f,
                                  global, sstate->aprob_u, sstate->aprobs,
                                  sstate->prob_a, sstate->probs);
     close_memstream(flog); flog = 0;
-    s = html_armor_string_dup(flog_txt);
-    fprintf(f, "<h2>Further instructions</h2><p><pre>%s</pre>\n", s);
-    xfree(s);
-    xfree(flog_txt);
+    //s = html_armor_string_dup(flog_txt);
+    fprintf(f, "<h2>Further instructions</h2>%s\n", flog_txt);
+    //xfree(s);
+    xfree(flog_txt); flog_txt = 0; flog_size = 0;
   }
 
   fprintf(f, "<table border=\"0\"><tr>");

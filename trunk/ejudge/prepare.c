@@ -539,6 +539,11 @@ static void tester_init_func(struct generic_section_config *);
 static void global_init_func(struct generic_section_config *);
 static void language_init_func(struct generic_section_config *);
 
+static void prepare_global_free_func(struct generic_section_config *g);
+static void prepare_language_free_func(struct generic_section_config *g);
+static void prepare_problem_free_func(struct generic_section_config *g);
+static void prepare_tester_free_func(struct generic_section_config *g);
+
 static const struct config_section_info params[] =
 {
   { "global", sizeof(struct section_global_data), section_global_params,
@@ -896,6 +901,14 @@ prepare_problem_free_func(struct generic_section_config *gp)
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
+}
+
+struct section_problem_data *
+prepare_problem_free(struct section_problem_data *prob)
+{
+  if (!prob) return 0;
+  prepare_problem_free_func(&prob->g);
+  return 0;
 }
 
 static void
