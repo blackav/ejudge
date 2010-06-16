@@ -1153,11 +1153,16 @@ struct generic_section_config * prepare_parse_config_file(const unsigned char *p
                                                           int *p_cond_count);
 void prepare_set_global_defaults(struct section_global_data *global);
 
-void prepare_global_free_func(struct generic_section_config *gp);
-void prepare_language_free_func(struct generic_section_config *gp);
-void prepare_problem_free_func(struct generic_section_config *gp);
-void prepare_tester_free_func(struct generic_section_config *gp);
 struct generic_section_config *prepare_free_config(struct generic_section_config *cfg);
+
+struct section_global_data *
+prepare_global_free(struct section_global_data *global);
+struct section_language_data *
+prepare_language_free(struct section_language_data *lang);
+struct section_problem_data *
+prepare_problem_free(struct section_problem_data *prob);
+struct section_tester_data *
+prepare_tester_free(struct section_tester_data *tester);
 
 struct section_global_data *prepare_alloc_global(void);
 struct section_language_data *prepare_alloc_language(void);
