@@ -42,6 +42,7 @@ WIN32_COMMON_CFILES=\
  problem_xml.c\
  protocol.c\
  random.c\
+ run_inverse.c\
  runlog.c\
  run_packet_1.c\
  run_packet_3.c\
