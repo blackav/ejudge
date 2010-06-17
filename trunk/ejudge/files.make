@@ -166,6 +166,7 @@ COMMON_CFILES=\
  random.c\
  reports.c\
  rldb_plugin_file.c\
+ run_inverse.c\
  runlog.c\
  runlog_import.c\
  runlog_static.c\
@@ -381,6 +382,7 @@ HFILES=\
  protocol.h\
  random.h\
  rldb_plugin.h\
+ run.h\
  runlog.h\
  runlog_state.h\
  run_packet.h\
