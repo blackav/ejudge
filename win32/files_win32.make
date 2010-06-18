@@ -31,6 +31,7 @@ WIN32_COMMON_CFILES=\
  l10n.c\
  lang_config.c\
  meta_generic.c\
+ mime_type.c\
  misctext.c\
  nwrun_packet.c\
  opcaps.c\
