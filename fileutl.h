@@ -73,7 +73,7 @@ scan_executable_files(
 
 int
 write_tmp_file(
-        const unsigned char *path,
+        unsigned char *path,
         size_t path_size,
         const unsigned char *bytes,
         size_t bytes_count);
