@@ -1784,6 +1784,51 @@ fail:
   return -1;
 }
 
+int
+write_tmp_file(
+        const unsigned char *path,
+        size_t path_size,
+        const unsigned char *bytes,
+        size_t bytes_count)
+{
+  const unsigned char *tmpdir = 0;
+  int fd, r;
+  size_t w;
+  const unsigned char *p;
+
+  if (!tmpdir) tmpdir = getenv("TMPDIR");
+#if defined P_tmpdir
+  if (!tmpdir) tmpdir = P_tmpdir;
+#endif
+  if (!tmpdir) tmpdir = "/tmp";
+
+  snprintf(path, path_size, "%s/ejf_XXXXXX", tmpdir);
+  if ((fd = mkstemp(path)) < 0) {
+    err("write_tmp_file: mkstemp() failed: %s", os_ErrorMsg());
+    return -1;
+  }
+
+  p = bytes; w = size;
+  while (w > 0) {
+    if ((r = write(fd, p, w)) <= 0) {
+      err("write_tmp_file: write() error: %s", os_ErrorMsg());
+      goto failed;
+    }
+    w -= r; p += r;
+  }
+  if (close(fd) < 0) {
+    err("write_tmp_file: close() failed: %s", os_ErrorMsg());
+    goto failed;
+  }
+  fd = -1;
+  return 0;
+
+failed:
+  if (fd >= 0) close(fd);
+  if (path[0]) unlink(path);
+  return -1;
+}
+
 /*
  * Local variables:
  *  compile-command: "make -C .."
