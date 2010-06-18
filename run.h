@@ -17,6 +17,25 @@
  * GNU General Public License for more details.
  */
 
+#include <stdlib.h>
+
+struct serve_state;
+struct run_request_packet;
+struct run_reply_packet;
+struct section_global_data;
+struct section_problem_data;
+
+void
+run_inverse_testing(
+        struct serve_state *state,
+        struct run_request_packet *req_pkt,
+        struct run_reply_packet *reply_pkt,
+        struct section_problem_data *prob,
+        const unsigned char *pkt_name,
+        unsigned char *report_path,
+        size_t report_path_size,
+        int utf8_mode);
+
 #endif /* __RUN_H__ */
 
 /*

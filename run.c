@@ -33,10 +33,10 @@
 #include "ejudge_cfg.h"
 #include "nwrun_packet.h"
 #include "prepare_dflt.h"
-
 #include "fileutl.h"
 #include "errlog.h"
 #include "misctext.h"
+#include "run.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/logger.h>
@@ -2964,6 +2964,14 @@ do_loop(void)
                req_pkt->problem_id);
       goto report_check_failed_and_continue;
     }
+
+    if (cur_prob->type == PROB_TYPE_TESTS) {
+      run_inverse_testing(&serve_state, req_pkt, &reply_pkt, cur_prob,
+                          pkt_name, report_path, sizeof(report_path),
+                          utf8_mode);
+      // FIXME: what to do next?
+    }
+
     if (!(tester_id = find_tester(&serve_state, req_pkt->problem_id,
                                   req_pkt->arch))) {
       snprintf(errmsg, sizeof(errmsg),

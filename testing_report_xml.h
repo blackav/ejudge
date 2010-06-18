@@ -79,6 +79,7 @@ typedef struct testing_report_xml
   unsigned char *valuer_judge_comment;
   unsigned char *valuer_errors;
   unsigned char *host;
+  unsigned char *errors;
 
   struct testing_report_test **tests;
 } *testing_report_xml_t;
