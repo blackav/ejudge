@@ -985,6 +985,18 @@ scan_executable_files(
         int *p_count,
         unsigned char ***p_files)
 {
+  abort();
+  return -1;
+}
+
+int
+write_tmp_file(
+        const unsigned char *path,
+        size_t path_size,
+        const unsigned char *bytes,
+        size_t bytes_count)
+{
+  abort();
   return -1;
 }
 
