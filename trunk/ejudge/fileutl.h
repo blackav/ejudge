@@ -65,4 +65,10 @@ int generic_truncate(const char *path, ssize_t size);
 
 const unsigned char * get_tmp_dir(unsigned char *buf, size_t size);
 
+int
+scan_executable_files(
+        const unsigned char *dir,
+        int *p_count,
+        unsigned char ***p_files);
+
 #endif /* __FILEUTL_H__ */

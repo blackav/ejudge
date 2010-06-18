@@ -41,6 +41,7 @@
   <valuer_judge_comment>T</valuer_judge_comment>
   <valuer_errors>T</valuer_errors>
   <host>T</host>
+  <errors>T</errors>
   <tests>
     <test num="N" status="O" [exit-code="N"] [term-signal="N"] time="N" real-time="N" [max-memory-used="N"] [nominal-score="N" score="N"] [comment="S"] [team-comment="S"] [checker-comment="S"] [exit-comment="S"] output-available="B" stderr-available="B" checker-output-available="B" args-too-long="B" [input-digest="X"] [correct-digest="X"]>
        [<args>T</args>]
@@ -71,6 +72,7 @@ enum
   TR_T_VALUER_JUDGE_COMMENT,
   TR_T_VALUER_ERRORS,
   TR_T_HOST,
+  TR_T_ERRORS,
 
   TR_T_LAST_TAG,
 };
@@ -133,6 +135,7 @@ static const char * const elem_map[] =
   [TR_T_VALUER_JUDGE_COMMENT] = "valuer-judge-comment",
   [TR_T_VALUER_ERRORS] = "valuer-errors",
   [TR_T_HOST] = "host",
+  [TR_T_ERRORS] = "errors",
 
   [TR_T_LAST_TAG] = 0,
 };
@@ -721,6 +724,9 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
     case TR_T_HOST:
       if (xml_leaf_elem(t2, &r->host, 1, 1) < 0) return -1;
       break;
+    case TR_T_ERRORS:
+      if (xml_leaf_elem(t2, &r->errors, 1, 1) < 0) return -1;
+      break;
     case TR_T_TESTS:
       if (was_tests) {
         xml_err(t2, "duplicated element <tests>");
@@ -800,6 +806,7 @@ testing_report_free(testing_report_xml_t r)
   xfree(r->valuer_judge_comment); r->valuer_judge_comment = 0;
   xfree(r->valuer_errors); r->valuer_errors = 0;
   xfree(r->host); r->host = 0;
+  xfree(r->errors); r->errors = 0;
 
   xfree(r);
   return 0;
