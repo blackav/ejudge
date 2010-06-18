@@ -28,14 +28,24 @@
 #include "prepare_dflt.h"
 #include "misctext.h"
 #include "curtime.h"
+#include "runlog.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
+#include <reuse/exec.h>
+#include <reuse/logger.h>
 
 #include <ctype.h>
 
 #define GOOD_DIR_NAME "good"
 #define FAIL_DIR_NAME "fail"
+
+struct run_info
+{
+  int status;
+  long cpu_time_ms;
+  long real_time_ms;
+};
 
 /*
 static void
@@ -74,8 +84,41 @@ make_patterns(
 }
 
 static int
-invoke_tar(const unsigned char *arch_path, const unsigned char *work_dir)
+invoke_tar(
+        FILE *log_f,
+        const unsigned char *log_path,
+        const unsigned char *arch_path,
+        const unsigned char *work_dir)
 {
+  tpTask tsk = 0;
+
+  tsk = task_New();
+  task_AddArg(tsk, "/bin/tar");
+  task_AddArg(tsk, "xf");
+  task_AddArg(tsk, arch_path);
+  task_AddArg(tsk, "-C");
+  task_AddArg(tsk, work_dir);
+  task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ, 0);
+  task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_APPEND, TSK_FULL_RW);
+  task_SetRedir(tsk, 2, TSR_FILE, log_path, TSK_APPEND, TSK_FULL_RW);
+  if (work_dir) task_SetWorkingDir(tsk, work_dir);
+  task_SetPathAsArg0(tsk);
+  task_EnableAllSignals(tsk);
+
+  fflush(log_f);
+  if (task_Start(tsk) < 0) {
+    fprintf(log_f, "invoke_tar: failed to start /bin/tar\n");
+    task_Delete(tsk);
+    return -1;
+  }
+  task_Wait(tsk);
+  if (task_IsAbnormal(tsk)) {
+    fprintf(log_f, "invoke_tar: /bin/tar failed\n");
+    task_Delete(tsk);
+    return -1;
+  }
+  task_Delete(tsk); tsk = 0;
+
   return 0;
 }
 
@@ -168,6 +211,21 @@ normalize_file(
       goto fail;
     }
     out_path[0] = 0;
+    fprintf(log_f, "File %s is modified (%d bytes changed): ", name,
+            (int) out_count);
+    if ((out_mask & TEXT_FIX_CR)) {
+      fprintf(log_f, "(CR removed) ");
+    }
+    if ((out_mask & TEXT_FIX_TR_SP)) {
+      fprintf(log_f, "(trailing whitespace removed) ");
+    }
+    if ((out_mask & TEXT_FIX_FINAL_NL)) {
+      fprintf(log_f, "(final NL appended) ");
+    }
+    if ((out_mask & TEXT_FIX_TR_NL)) {
+      fprintf(log_f, "(trailing empty lines removed) ");
+    }
+    fprintf(log_f, "\n");
   }
   xfree(in_text); in_text = 0;
   return 0;
@@ -213,23 +271,456 @@ fail:
 }
 
 static int
-invoke_test_checkers(
+invoke_test_checker(
+        FILE *log_f,
+        const unsigned char *log_path,
+        const unsigned char *test_checker_cmd,
         const struct section_problem_data *prob,
-        int test_count,
-        const unsigned char *tests_dir)
+        int num,
+        const unsigned char *work_dir,
+        const unsigned char *input_file,
+        const unsigned char *output_file)
 {
+  tpTask tsk = 0;
+  int i, r;
+
+  tsk = task_New();
+  task_AddArg(tsk, test_checker_cmd);
+  task_AddArg(tsk, input_file);
+  task_AddArg(tsk, output_file);
+  task_SetPathAsArg0(tsk);
+  task_EnableAllSignals(tsk);
+  if (work_dir) task_SetWorkingDir(tsk, work_dir);
+  task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ, 0);
+  task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_APPEND, TSK_FULL_RW);
+  task_SetRedir(tsk, 2, TSR_FILE, log_path, TSK_APPEND, TSK_FULL_RW);
+  if (prob->test_checker_env) {
+    for (i = 0; prob->test_checker_env[i]; ++i)
+      task_PutEnv(tsk, prob->test_checker_env[i]);
+  }
+  if (prob->checker_real_time_limit > 0) {
+    task_SetMaxRealTime(tsk, prob->checker_real_time_limit);
+  }
+
+  fflush(log_f);
+
+  if (task_Start(tsk) < 0) {
+    fprintf(log_f, "Error: failed to start %s\n", test_checker_cmd);
+    task_Delete(tsk);
+    return RUN_CHECK_FAILED;
+  }
+
+  task_Wait(tsk);
+  if (task_IsTimeout(tsk)) {
+    fprintf(log_f, "Error: test checker %s time-out on test %d\n",
+            test_checker_cmd, num);
+    task_Delete(tsk);
+    return RUN_CHECK_FAILED;
+  }
+  r = task_Status(tsk);
+  if (r != TSK_EXITED && r != TSK_SIGNALED) {
+    fprintf(log_f, "Error: test checker %s invalid status on test %d\n",
+            test_checker_cmd, num);
+    task_Delete(tsk);
+    return RUN_CHECK_FAILED;
+  }
+  if (r == TSK_SIGNALED) {
+    fprintf(log_f,
+            "Error: test checker %s is terminated by signal %d on test %d\n",
+            test_checker_cmd, task_TermSignal(tsk), num);
+    task_Delete(tsk);
+    return RUN_CHECK_FAILED;
+  }
+  r = task_ExitCode(tsk);
+  if (r != RUN_OK && r != RUN_COMPILE_ERR && r != RUN_PRESENTATION_ERR
+      && r != RUN_WRONG_ANSWER_ERR && r != RUN_CHECK_FAILED) {
+    fprintf(log_f, "Error: test checker %s exit code %d invalid on test %d\n",
+            test_checker_cmd, r, num);
+    task_Delete(tsk);
+    return RUN_CHECK_FAILED;
+  }
+  if (r == RUN_CHECK_FAILED) {
+    fprintf(log_f, "Error: test checker %s reported CHECK_FAILED on test %d\n",
+            test_checker_cmd, num);
+    task_Delete(tsk);
+    return RUN_CHECK_FAILED;
+  }
+  if (r == RUN_COMPILE_ERR || r == RUN_PRESENTATION_ERR) {
+    fprintf(log_f, "Test checker reports PRESENTATION ERROR on test %d\n",
+            num);
+    task_Delete(tsk);
+    return RUN_PRESENTATION_ERR;
+  }
+  if (r == RUN_WRONG_ANSWER_ERR) {
+    fprintf(log_f, "Test checker report WRONG ANSWER ERROR on test %d\n",
+            num);
+    task_Delete(tsk);
+    return RUN_PRESENTATION_ERR;
+  }
+  task_Delete(tsk);
+  return RUN_OK;
+}
+
+static int
+invoke_test_checker_on_tests(
+        FILE *log_f,
+        const unsigned char *log_path,
+        const struct section_global_data *global,
+        const struct section_problem_data *prob,
+        int variant,
+        int test_count,
+        const unsigned char *tests_dir,
+        const unsigned char *test_pat,
+        const unsigned char *corr_pat)
+{
+  path_t test_path;
+  path_t corr_path;
+  path_t test_name;
+  path_t corr_name;
+  path_t test_checker_cmd;
+  int retval = RUN_OK, r, num;
+
+  if (!prob->test_checker_cmd || !prob->test_checker_cmd[0])
+    return 0;
+
+  if (prob->variant_num > 0 && variant > 0) {
+    if (global->advanced_layout > 0) {
+      get_advanced_layout_path(test_checker_cmd, sizeof(test_checker_cmd),
+                               global, prob, prob->test_checker_cmd, variant);
+    } else if (os_IsAbsolutePath(prob->test_checker_cmd)) {
+      snprintf(test_checker_cmd, sizeof(test_checker_cmd), "%s-%d",
+               prob->test_checker_cmd, variant);
+    } else {
+      snprintf(test_checker_cmd, sizeof(test_checker_cmd), "%s/%s-%d",
+               global->checker_dir, prob->test_checker_cmd, variant);
+    }
+  } else {
+    if (global->advanced_layout > 0) {
+      get_advanced_layout_path(test_checker_cmd, sizeof(test_checker_cmd),
+                               global, prob, prob->test_checker_cmd, -1);
+    } else if (os_IsAbsolutePath(prob->test_checker_cmd)) {
+      snprintf(test_checker_cmd, sizeof(test_checker_cmd), "%s",
+               prob->test_checker_cmd);
+    } else {
+      snprintf(test_checker_cmd, sizeof(test_checker_cmd), "%s/%s",
+               global->checker_dir, prob->test_checker_cmd);
+    }
+  }
+
+  if ((r = os_IsFile(test_checker_cmd)) < 0) {
+    fprintf(log_f, "Error: test checker %s does not exist\n",
+            test_checker_cmd);
+    return RUN_CHECK_FAILED;
+  }
+  if (r != OSPK_REG) {
+    fprintf(log_f, "Error: test checker %s is not a regular file\n",
+            test_checker_cmd);
+    return RUN_CHECK_FAILED;
+  }
+  if (os_CheckAccess(test_checker_cmd, REUSE_X_OK) < 0) {
+    fprintf(log_f, "Error: test checker %s is not an executable file\n",
+            test_checker_cmd);
+    return RUN_CHECK_FAILED;
+  }
+
+  for (num = 1; num <= test_count; ++num) {
+    snprintf(test_name, sizeof(test_name), test_pat, num);
+    snprintf(corr_name, sizeof(corr_name), corr_pat, num);
+    snprintf(test_path, sizeof(test_path), "%s/%s", tests_dir, test_name);
+    snprintf(corr_path, sizeof(corr_path), "%s/%s", tests_dir, corr_name);
+
+    r = invoke_test_checker(log_f, log_path, test_checker_cmd, prob,
+                            num, tests_dir, test_path, corr_path);
+    ASSERT(r == RUN_OK || r == RUN_PRESENTATION_ERR || r == RUN_CHECK_FAILED);
+    if (r == RUN_CHECK_FAILED) {
+      retval = r;
+    } else if (r == RUN_PRESENTATION_ERR && retval == RUN_OK) {
+      retval = r;
+    }
+  }
+
+  return retval;
+}
+
+static int
+touch_file(const unsigned char *path)
+{
+  FILE *f = fopen(path, "w");
+  if (!f) return -1;
+  if (fclose(f) < 0) return -1;
   return 0;
 }
 
 static int
-invoke_sample_program(
+invoke_test_program(
+        FILE *log_f,
+        const unsigned char *log_path,
         const struct section_global_data *global,
         const struct section_problem_data *prob,
+        int num,
+        const unsigned char *check_dir,
         const unsigned char *exe_path,
+        const unsigned char *exe_name,
+        const unsigned char *input_file,
+        struct run_info *info)
+{
+  path_t check_exe;
+  path_t input_path;
+  path_t output_path;
+  tpTask tsk = 0;
+  long time_limit_ms = 0;
+  int clear_check_dir = 0;
+  int retval = RUN_CHECK_FAILED;
+  int r;
+
+  snprintf(check_exe, sizeof(check_exe), "%s/%s", check_dir, exe_name);
+  snprintf(input_path, sizeof(input_path), "%s/%s", check_dir,
+           prob->input_file);
+  snprintf(output_path, sizeof(output_path), "%s/%s", check_dir,
+           prob->output_file);
+
+  if (prob->time_limit_millis > 0) {
+    time_limit_ms = prob->time_limit_millis;
+  } else if (prob->time_limit > 0) {
+    time_limit_ms = prob->time_limit * 1000;
+  }
+
+  clear_check_dir = 1;
+  if (generic_copy_file(0, 0, exe_path, 0, 0, check_dir, exe_name, 0) < 0) {
+    fprintf(log_f, "Error: failed to copy %s to %s\n",
+            exe_path, check_exe);
+    goto cleanup;
+  }
+  if (make_executable(check_exe) < 0) {
+    fprintf(log_f, "Error: failed to set executable bit on %s\n",
+            check_exe);
+    goto cleanup;
+  }
+  if (generic_copy_file(0, 0, input_file, 0, 0, check_dir,
+                        prob->input_file, 0) < 0) {
+    fprintf(log_f, "Error: failed to copy %s to %s\n", input_file, input_path);
+    goto cleanup;
+  }
+  if (touch_file(output_path) < 0) {
+    fprintf(log_f, "Error: failed to create %s\n", output_path);
+    goto cleanup;
+  }
+
+  tsk = task_New();
+  task_AddArg(tsk, check_exe);
+  task_SetPathAsArg0(tsk);
+  task_SetWorkingDir(tsk, check_dir);
+  if (prob->combined_stdin > 0 || prob->use_stdin > 0) {
+    task_SetRedir(tsk, 0, TSR_FILE, input_path, TSK_READ, 0);
+  } else {
+    task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ, 0);
+  }
+  if (prob->combined_stdout > 0 || prob->use_stdout > 0) {
+    task_SetRedir(tsk, 1, TSR_FILE, output_path, TSK_REWRITE, TSK_FULL_RW);
+  } else {
+    task_SetRedir(tsk, 1, TSR_FILE, "/dev/null", TSK_WRITE, TSK_FULL_RW);
+  }
+  task_SetRedir(tsk, 2, TSR_FILE, "/dev/null", TSK_WRITE, TSK_FULL_RW);
+  task_EnableAllSignals(tsk);
+  if (time_limit_ms > 0 && time_limit_ms % 1000 == 0) {
+    task_SetMaxTime(tsk, time_limit_ms / 1000);
+  } else if (time_limit_ms > 0) {
+    task_SetMaxTimeMillis(tsk, time_limit_ms);
+  }
+  if (prob->real_time_limit > 0) {
+    task_SetMaxRealTime(tsk, prob->real_time_limit);
+  }
+  if (prob->max_stack_size && prob->max_stack_size != -1L) {
+    task_SetStackSize(tsk, prob->max_stack_size);
+  }
+  if (prob->max_data_size && prob->max_data_size != -1L) {
+    task_SetDataSize(tsk, prob->max_data_size);
+  }
+  if (prob->max_vm_size && prob->max_vm_size != -1L) {
+    task_SetVMSize(tsk, prob->max_vm_size);
+  }
+  /* no security restrictions and memory limits */
+  if (task_Start(tsk) < 0) {
+    fprintf(log_f, "Error: failed to start %s on test %d\n",
+            check_exe, num);
+    goto cleanup;
+  }
+
+  task_Wait(tsk);
+  info->cpu_time_ms = task_GetRunningTime(tsk);
+  info->real_time_ms = task_GetRealTime(tsk);
+
+  if (task_IsTimeout(tsk)) {
+    fprintf(log_f, "Program %s time-limit exceeded on test %d\n",
+            exe_name, num);
+    retval = RUN_TIME_LIMIT_ERR;
+    goto cleanup;
+  }
+  r = task_Status(tsk);
+  if (r != TSK_EXITED && r != TSK_SIGNALED) {
+    fprintf(log_f, "Error: program %s invalid status %d on test %d\n",
+            exe_name, r, num);
+    goto cleanup;
+  }
+  if (r == TSK_SIGNALED) {
+    fprintf(log_f, "Program %s terminated with signal %d on test %d\n",
+            exe_name, task_TermSignal(tsk), num);
+    retval = RUN_RUN_TIME_ERR;
+    goto cleanup;
+  }
+  r = task_ExitCode(tsk);
+  if (r != 0) {
+    fprintf(log_f, "Program %s exited with code %d on test %d\n",
+            exe_name, r, num);
+    retval = RUN_RUN_TIME_ERR;
+    goto cleanup;
+  }
+  clear_check_dir = 0;
+  retval = RUN_OK;
+
+cleanup:
+  if (tsk) task_Delete(tsk);
+  if (clear_check_dir) clear_directory(check_dir);
+  info->status = retval;
+  return retval;
+} 
+
+static int
+invoke_checker(
+        FILE *log_f,
+        const unsigned char *log_path,
+        const struct section_problem_data *prob,
+        const unsigned char *check_dir,
+        const unsigned char *check_cmd,
+        const unsigned char *exe_name,
+        int num,
+        const unsigned char *input_path,
+        const unsigned char *output_path,
+        const unsigned char *correct_path,
+        struct run_info *info)
+{
+  tpTask tsk = 0;
+  int r, i;
+  int retval = RUN_CHECK_FAILED;
+
+  tsk = task_New();
+  task_AddArg(tsk, check_cmd);
+  task_SetPathAsArg0(tsk);
+  task_SetWorkingDir(tsk, check_dir);
+  task_AddArg(tsk, input_path);
+  task_AddArg(tsk, output_path);
+  task_AddArg(tsk, correct_path);
+  if (prob->checker_real_time_limit > 0) {
+    task_SetMaxRealTime(tsk, prob->checker_real_time_limit);
+  }
+  if (prob->checker_env) {
+    for (i = 0; prob->checker_env[i]; ++i)
+      task_PutEnv(tsk, prob->checker_env[i]);
+  }
+  task_EnableAllSignals(tsk);
+  task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ, 0);
+  task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_WRITE, TSK_FULL_RW);
+  task_SetRedir(tsk, 2, TSR_FILE, log_path, TSK_WRITE, TSK_FULL_RW);
+
+  fflush(log_f);
+
+  if (task_Start(tsk) < 0) {
+    fprintf(log_f, "Error: failed to start checker %s for %s on test %d\n",
+            check_cmd, exe_name, num);
+    goto cleanup;
+  }
+  task_Wait(tsk);
+  r = task_Status(tsk);
+  if (r != TSK_EXITED && r != TSK_SIGNALED) {
+    fprintf(log_f, "Error: invalid status of %s for %s on test %d\n",
+            check_cmd, exe_name, num);
+    goto cleanup;
+  }
+  if (task_IsTimeout(tsk)) {
+    fprintf(log_f, "Error: checker %s for %s timeout on test %d\n",
+            check_cmd, exe_name, num);
+    goto cleanup;
+  }
+  if (r == TSK_SIGNALED) {
+    fprintf(log_f,
+            "Error: checker %s for %s terminated by signal %d on test %d\n",
+            check_cmd, exe_name, task_TermSignal(tsk), num);
+    goto cleanup;
+  }
+  r = task_ExitCode(tsk);
+  if (r != RUN_OK && r != RUN_CHECK_FAILED && r != RUN_WRONG_ANSWER_ERR
+      && r != RUN_PRESENTATION_ERR) {
+    fprintf(log_f, "Error: checker %s for %s invalid exit code %d on test %d\n",
+            check_cmd, exe_name, r, num);
+    goto cleanup;
+  }
+  if (r == RUN_CHECK_FAILED) {
+    fprintf(log_f, "Error: checker %s for %s status CHECK_FAILED on test %d\n",
+            check_cmd, exe_name, num);
+    goto cleanup;
+  }
+  retval = r;
+
+cleanup:
+  if (tsk) task_Delete(tsk);
+  info->status = retval;
+  return retval;
+}
+
+static int
+invoke_sample_program(
+        FILE *log_f,
+        const unsigned char *log_path,
+        const struct section_global_data *global,
+        const struct section_problem_data *prob,
+        const unsigned char *check_dir,
+        const unsigned char *exe_path,
+        const unsigned char *exe_name,
+        const unsigned char *check_cmd,
         int test_count,
         const unsigned char *tests_dir,
-        int expect_fail)
+        const unsigned char *test_pat,
+        const unsigned char *corr_pat,
+        struct run_info *infos)
 {
+  int num, r;
+  path_t test_name;
+  path_t corr_name;
+  path_t test_path;
+  path_t corr_path;
+  path_t out_path;
+
+  /* no sense to continue if operation on the check_dir failed */
+  if (make_writable(check_dir) < 0) {
+    fprintf(log_f, "Error: cannot make writable directory %s\n", check_dir);
+    return RUN_CHECK_FAILED;
+  }
+  if (clear_directory(check_dir) < 0) {
+    fprintf(log_f, "Error: failed to clean directory %s\n", check_dir);
+    return RUN_CHECK_FAILED;
+  }
+
+  snprintf(out_path, sizeof(out_path), "%s/%s", check_dir, prob->output_file);
+
+  for (num = 1; num <= test_count; ++num) {
+    snprintf(test_name, sizeof(test_name), test_pat, num);
+    snprintf(corr_name, sizeof(corr_name), corr_pat, num);
+    snprintf(test_path, sizeof(test_path), "%s/%s", tests_dir, test_name);
+    snprintf(corr_path, sizeof(corr_path), "%s/%s", tests_dir, corr_name);
+
+    r = invoke_test_program(log_f, log_path, global, prob, num, check_dir,
+                            exe_path, exe_name, test_path, &infos[num - 1]);
+    if (r == RUN_OK) {
+      invoke_checker(log_f, log_path, prob, check_dir, check_cmd,
+                     exe_name, num, test_path, out_path, corr_path,
+                     &infos[num - 1]);
+    }
+
+    if (clear_directory(check_dir) < 0) {
+      fprintf(log_f, "Error: failed to clean directory %s\n", check_dir);
+    }
+  }
+
   return 0;
 }
 
@@ -245,7 +736,7 @@ run_inverse_testing(
         int utf8_mode)
 {
   struct section_global_data *global = state->global;
-  int r, i;
+  int r, i, j;
   path_t arch_dir;
   path_t arch_path;
   path_t tests_dir;
@@ -262,13 +753,17 @@ run_inverse_testing(
   size_t log_size = 0;
   path_t test_pat = { 0 };
   path_t corr_pat = { 0 };
+  struct run_info **run_infos = 0;
+  int run_info_count = 0;
+  path_t check_cmd = { 0 };
+  path_t check_dir = { 0 };
 
   make_patterns(prob, test_pat, sizeof(test_pat), corr_pat, sizeof(corr_pat));
 
   snprintf(log_path, sizeof(log_path), "%s/%s.txt",
            pkt_name, global->run_work_dir);
   if (!(log_f = fopen(log_path, "w"))) {
-    // FIXME: fail miserable
+    // FIXME: fail miserably
     abort();
   }
 
@@ -320,7 +815,7 @@ Remaining fields:
   }
 
   // invoke tar
-  if (invoke_tar(arch_path, arch_dir) < 0) {
+  if (invoke_tar(log_f, log_path, arch_path, arch_dir) < 0) {
     // FIXME: handle error
   }
 
@@ -347,7 +842,10 @@ Remaining fields:
   }
 
   // invoke test checkers on each test
-  if (invoke_test_checkers(prob, test_count, tests_dir) < 0) {
+  if (invoke_test_checker_on_tests(log_f, log_path, global,
+                                   prob, req_pkt->variant,
+                                   test_count, tests_dir,
+                                   test_pat, corr_pat) < 0) {
     // FIXME: report error
   }
 
@@ -378,14 +876,83 @@ Remaining fields:
   if (scan_executable_files(fail_dir, &fail_count, &fail_files) < 0) {
     // FIXME: report error
   }
+  if (good_count <= 0 && fail_count <= 0) {
+    // FIXME: report error
+  }
+
+  // get checker path
+  if (prob->standard_checker[0]) {
+    snprintf(check_cmd, sizeof(check_cmd), "%s/%s",
+             global->ejudge_checkers_dir, prob->standard_checker);
+  } else if (global->advanced_layout > 0) {
+    if (prob->variant_num > 0 && req_pkt->variant > 0) {
+      get_advanced_layout_path(check_cmd, sizeof(check_cmd),
+                               global, prob, prob->check_cmd, req_pkt->variant);
+    } else {
+      get_advanced_layout_path(check_cmd, sizeof(check_cmd),
+                               global, prob, prob->check_cmd, -1);
+    }
+  } else if (os_IsAbsolutePath(prob->check_cmd)) {
+    if (prob->variant_num > 0 && req_pkt->variant > 0) {
+      snprintf(check_cmd, sizeof(check_cmd), "%s-%d", prob->check_cmd,
+               req_pkt->variant);
+    } else {
+      snprintf(check_cmd, sizeof(check_cmd), "%s", prob->check_cmd);
+    }
+  } else {
+    if (prob->variant_num > 0 && req_pkt->variant > 0) {
+      snprintf(check_cmd, sizeof(check_cmd), "%s/%s-%d",
+               global->checker_dir, prob->check_cmd, req_pkt->variant);
+    } else {
+      snprintf(check_cmd, sizeof(check_cmd), "%s/%s",
+               global->checker_dir, prob->check_cmd);
+    }
+  }
+  r = os_IsFile(check_cmd);
+  if (r < 0) {
+    // FIXME: report error
+  }
+  if (r != OSPK_REG) {
+    // FIXME: report error
+  }
+  if (os_CheckAccess(check_cmd, REUSE_X_OK) < 0) {
+    // FIXME: report error
+  }
+
+  snprintf(check_dir, sizeof(check_dir), "%s", global->run_check_dir);
+#if defined EJUDGE_LOCAL_DIR
+  pathmake2(check_dir, EJUDGE_LOCAL_DIR, "/", check_dir, NULL);
+#endif
+  pathmake2(check_dir, EJUDGE_CONTESTS_HOME_DIR, "/", check_dir, NULL);
+  if (make_dir(check_dir, 0) < 0) {
+    // FIXME: report error
+  }
+
+
+  ASSERT(good_count >= 0 && fail_count >= 0);
+  run_info_count = good_count + fail_count;
+  XCALLOC(run_infos, run_info_count);
+  for (i = 0; i < run_info_count; ++i) {
+    XCALLOC(run_infos[i], test_count);
+    for (j = 0; j < test_count; ++j) {
+      run_infos[i][j].status = RUN_CHECK_FAILED;
+      run_infos[i][j].cpu_time_ms = -1;
+      run_infos[i][j].real_time_ms = -1;
+    }
+  }
 
   for (i = 0; i < good_count; ++i) {
     snprintf(exe_path, sizeof(exe_path), "%s/%s", good_dir, good_files[i]);
-    r = invoke_sample_program(global, prob, exe_path, test_count, tests_dir,0);
+    r = invoke_sample_program(log_f, log_path, global, prob, check_dir,
+                              exe_path, good_files[i], check_cmd, test_count,
+                              tests_dir, test_pat, corr_pat, run_infos[i]);
   }
   for (i = 0; i < fail_count; ++i) {
     snprintf(exe_path, sizeof(exe_path), "%s/%s", fail_dir, fail_files[i]);
-    r = invoke_sample_program(global, prob, exe_path, test_count, tests_dir,1);
+    r = invoke_sample_program(log_f, log_path, global, prob, check_dir,
+                              exe_path, fail_files[i], check_cmd, test_count,
+                              tests_dir, test_pat, corr_pat,
+                              run_infos[i + good_count]);
   }
 
   /* process the log file */
@@ -417,6 +984,12 @@ Remaining fields:
     fclose(log_f); log_f = 0;
   }
   xfree(log_text);
+  if (run_infos) {
+    for (i = 0; i < run_info_count; ++i)
+      xfree(run_infos[i]);
+    xfree(run_infos);
+    run_infos = 0; run_info_count = 0;
+  }
   if (good_files) {
     for (i = 0; i < good_count; ++i)
       xfree(good_files[i]);

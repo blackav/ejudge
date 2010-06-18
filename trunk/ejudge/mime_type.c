@@ -20,6 +20,7 @@
 #include "mime_type.h"
 #include "pathutl.h"
 #include "errlog.h"
+#include "fileutl.h"
 
 #include <reuse/osdeps.h>
 
@@ -30,6 +31,7 @@
 
 #if HAVE_FGETS_UNLOCKED - 0 == 0
 #define fgets_unlocked(a,b,c) fgets(a,b,c)
+#define getc_unlocked(a) getc(a)
 #endif
 
 struct mime_type_info
@@ -183,38 +185,15 @@ mime_type_guess(const unsigned char *tmpdir,
                 size_t size)
 {
   path_t tmppath;
-  int fd = -1, i;
-  size_t w;
-  ssize_t r;
-  const unsigned char *p;
+  int i;
   FILE *ff = 0;
   unsigned char fbuf[1024];
   path_t cmdline;
   size_t flen;
 
-  if (!tmpdir) tmpdir = getenv("TMPDIR");
-#if defined P_tmpdir
-  if (!tmpdir) tmpdir = P_tmpdir;
-#endif
-  if (!tmpdir) tmpdir = "/tmp";
-  snprintf(tmppath, sizeof(tmppath), "%s/ejf_XXXXXX", tmpdir);
-  if ((fd = mkstemp(tmppath)) < 0) {
-    err("mime_type_guess: mkstemp() failed: %s", os_ErrorMsg());
-    return -1;
-  }
-  p = bytes; w = size;
-  while (w > 0) {
-    if ((r = write(fd, p, w)) <= 0) {
-      err("mime_type_guess: write() error: %s", os_ErrorMsg());
-      goto failed;
-    }
-    w -= r; p += r;
-  }
-  if (close(fd) < 0) {
-    err("mime_type_guess: close() failed: %s", os_ErrorMsg());
+  tmppath[0] = 0;
+  if (write_tmp_file(tmppath, sizeof(tmppath), bytes, size) < 0)
     goto failed;
-  }
-  fd = -1;
 
   snprintf(cmdline, sizeof(cmdline), "/usr/bin/file -b \"%s\"", tmppath);
   if (!(ff = popen(cmdline, "r"))) {
@@ -249,9 +228,8 @@ mime_type_guess(const unsigned char *tmpdir,
   return MIME_TYPE_TEXT;
 
  failed:
-  if (fd >= 0) close(fd);
   if (ff) pclose(ff);
-  unlink(tmppath);
+  if (tmppath[0]) unlink(tmppath);
   return -1;
 }
 
