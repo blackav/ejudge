@@ -1715,6 +1715,75 @@ get_tmp_dir(unsigned char *buf, size_t size)
   return buf;
 }
 
+static int
+name_sort_func(const void *p1, const void *p2)
+{
+  const unsigned char *s1 = *(const unsigned char **) p1;
+  const unsigned char *s2 = *(const unsigned char **) p2;
+  return strcmp(s1, s2);
+}
+
+int
+scan_executable_files(
+        const unsigned char *dir,
+        int *p_count,
+        unsigned char ***p_files)
+{
+  int count = 0;
+  int alloc = 0;
+  unsigned char **files = 0;
+  int i;
+  DIR *d;
+  struct dirent *dd;
+  path_t path;
+  struct stat stb;
+
+  if (p_count) *p_count = 0;
+  if (p_files) *p_files = 0;
+
+  if ((d = opendir(dir))) {
+    err("scan_executable_file: no directory %s", dir);
+    goto fail;
+  }
+  while ((dd = readdir(d))) {
+    if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
+    snprintf(path, sizeof(path), "%s/%s", dir, dd->d_name);
+    if (stat(path, &stb) < 0) continue;
+    if (!S_ISDIR(stb.st_mode)) continue;
+    if (access(path, X_OK) < 0) continue;
+
+    if (count >= alloc) {
+      int new_alloc = alloc * 2;
+      unsigned char **new_files = 0;
+      if (!new_alloc) new_alloc = 32;
+      XCALLOC(new_files, new_alloc);
+      if (count > 0) {
+        memcpy(new_files, files, count * sizeof(new_files[0]));
+      }
+      xfree(files);
+      files = new_files;
+      alloc = new_alloc;
+    }
+    files[count++] = xstrdup(dd->d_name);
+  }
+  closedir(d);
+
+  if (count > 0) {
+    qsort(files, count, sizeof(files[0]), name_sort_func);
+  }
+
+  if (p_count) *p_count = count;
+  if (p_files) *p_files = files;
+  return 0;
+
+fail:
+  if (d) closedir(d);
+  for (i = 0; i < count; ++i)
+    xfree(files[i]);
+  xfree(files);
+  return -1;
+}
+
 /*
  * Local variables:
  *  compile-command: "make -C .."
