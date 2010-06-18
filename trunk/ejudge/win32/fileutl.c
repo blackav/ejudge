@@ -979,6 +979,15 @@ make_hardlink(const unsigned char *oldname, const unsigned char *newname)
   return fast_copy_file(oldname, newname);
 }
 
+int
+scan_executable_files(
+        const unsigned char *dir,
+        int *p_count,
+        unsigned char ***p_files)
+{
+  return -1;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
