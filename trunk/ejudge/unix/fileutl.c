@@ -1786,7 +1786,7 @@ fail:
 
 int
 write_tmp_file(
-        const unsigned char *path,
+        unsigned char *path,
         size_t path_size,
         const unsigned char *bytes,
         size_t bytes_count)
@@ -1808,7 +1808,7 @@ write_tmp_file(
     return -1;
   }
 
-  p = bytes; w = size;
+  p = bytes; w = bytes_count;
   while (w > 0) {
     if ((r = write(fd, p, w)) <= 0) {
       err("write_tmp_file: write() error: %s", os_ErrorMsg());
