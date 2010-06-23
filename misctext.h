@@ -232,4 +232,13 @@ text_normalize_dup(
         size_t *p_count,
         int *p_done_mask);
 
+void
+html_print_by_line(
+        FILE *f,
+        int utf8_mode,
+        int max_file_length,
+        int max_line_length,
+        unsigned char const *s,
+        size_t size);
+
 #endif /* __MISCTEXT_H__ */

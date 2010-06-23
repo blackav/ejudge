@@ -1729,6 +1729,107 @@ text_normalize_dup(
   return text_normalize_buf(out_text, in_size, op_mask, p_count, p_done_mask);
 }
 
+void
+html_print_by_line(
+        FILE *f,
+        int utf8_mode,
+        int max_file_length,
+        int max_line_length,
+        unsigned char const *s,
+        size_t size)
+{
+  const unsigned char *p = s;
+  const unsigned char * const * trans_table;
+
+  if (max_file_length > 0 && size > max_file_length) {
+    fprintf(f, "(%s, %s = %" EJ_PRINTF_ZSPEC "u)\n",
+            "file is too long", "size", EJ_PRINTF_ZCAST(size));
+    return;
+  }
+
+  if (!s) {
+    fprintf(f, "(%s)\n", "file is missing");
+    return;
+  }
+
+  trans_table = html_get_armor_table();
+
+  while (*s) {
+    while (*s && *s != '\r' && *s != '\n') s++;
+    if (max_line_length > 0 && s - p > max_line_length) {
+      fprintf(f, "(%s, %s = %" EJ_PRINTF_TSPEC "d)\n",
+              "line is too long", "size", EJ_PRINTF_TCAST(s - p));
+    } else {
+      if (utf8_mode) {
+        while (p != s) {
+          if (*p <= 0x7f) {
+            if (trans_table[*p]) {
+              fputs(trans_table[*p++], f);
+            } else {
+              putc(*p++, f);
+            }
+          } else if (*p <= 0xbf) {
+            // middle of multibyte sequence
+            putc('?', f);
+            p++;
+          } else if (*p <= 0xc1) {
+            // reserved
+            putc('?', f);
+            p++;
+          } else if (*p <= 0xdf) {
+            // two bytes: 0x80-0x7ff
+            if (p + 1 < s && p[1] >= 0x80 && p[1] <= 0xbf && (((s[0] & 0x1f) << 6) | (s[1] & 0x3f)) >= 0x80) {
+              putc(*p++, f);
+              putc(*p++, f);
+            } else {
+              putc('?', f);
+              p++;
+            }
+          } else if (*p <= 0xef) {
+            // three bytes: 0x800-0xffff
+            if (p + 2 < s && p[1] >= 0x80 && p[1] <= 0xbf && p[2] >= 0x80 && p[2] <= 0xbf && (((s[0] & 0x0f) << 12) | ((s[1] & 0x3f) << 6) | (s[2] & 0x3f)) >= 0x800) {
+              putc(*p++, f);
+              putc(*p++, f);
+              putc(*p++, f);
+            } else {
+              putc('?', f);
+              p++;
+            }
+          } else if (*p <= 0xf7) {
+            // four bytes: 0x10000-0x10ffff
+            if (p + 3 < s && p[1] >= 0x80 && p[1] <= 0xbf && p[2] >= 0x80 && p[2] <= 0xbf && p[3] >= 0x80 && p[3] <= 0xbf && (((s[0] & 0x07) << 18) | ((s[1] & 0x3f) << 12) | ((s[2] & 0x3f) << 6) | (s[3] & 0x3f)) >= 0x10000) {
+              putc(*p++, f);
+              putc(*p++, f);
+              putc(*p++, f);
+              putc(*p++, f);
+            } else {
+              putc('?', f);
+              p++;
+            }
+          } else {
+            // reserved
+            putc('?', f);
+            p++;
+          }
+        }
+      } else {
+        while (p != s)
+          if (trans_table[*p]) {
+            fputs(trans_table[*p], f);
+            p++;
+          } else {
+            putc(*p++, f);
+          }
+      }
+    }
+    while (*s == '\r' || *s == '\n')
+      putc(*s++, f);
+    p = s;
+  }
+  putc('\n', f);
+}
+
+
 /*
  * Local variables:
  *  compile-command: "make"
