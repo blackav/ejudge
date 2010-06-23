@@ -29,6 +29,7 @@
 #include "misctext.h"
 #include "curtime.h"
 #include "runlog.h"
+#include "testing_report_xml.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -462,7 +463,7 @@ invoke_test_program(
         const unsigned char *exe_path,
         const unsigned char *exe_name,
         const unsigned char *input_file,
-        struct run_info *info)
+        struct testing_report_cell *tt_cell)
 {
   path_t check_exe;
   path_t input_path;
@@ -547,8 +548,8 @@ invoke_test_program(
   }
 
   task_Wait(tsk);
-  info->cpu_time_ms = task_GetRunningTime(tsk);
-  info->real_time_ms = task_GetRealTime(tsk);
+  tt_cell->time = task_GetRunningTime(tsk);
+  tt_cell->real_time = task_GetRealTime(tsk);
 
   if (task_IsTimeout(tsk)) {
     fprintf(log_f, "Program %s time-limit exceeded on test %d\n",
@@ -581,7 +582,7 @@ invoke_test_program(
 cleanup:
   if (tsk) task_Delete(tsk);
   if (clear_check_dir) clear_directory(check_dir);
-  info->status = retval;
+  tt_cell->status = retval;
   return retval;
 } 
 
@@ -597,7 +598,7 @@ invoke_checker(
         const unsigned char *input_path,
         const unsigned char *output_path,
         const unsigned char *correct_path,
-        struct run_info *info)
+        struct testing_report_cell *tt_cell)
 {
   tpTask tsk = 0;
   int r, i;
@@ -663,7 +664,7 @@ invoke_checker(
 
 cleanup:
   if (tsk) task_Delete(tsk);
-  info->status = retval;
+  tt_cell->status = retval;
   return retval;
 }
 
@@ -681,9 +682,10 @@ invoke_sample_program(
         const unsigned char *tests_dir,
         const unsigned char *test_pat,
         const unsigned char *corr_pat,
-        struct run_info *infos)
+        struct testing_report_row *tt_row,
+        struct testing_report_cell **tt_cell_row)
 {
-  int num, r;
+  int num, r, i;
   path_t test_name;
   path_t corr_name;
   path_t test_path;
@@ -693,10 +695,12 @@ invoke_sample_program(
   /* no sense to continue if operation on the check_dir failed */
   if (make_writable(check_dir) < 0) {
     fprintf(log_f, "Error: cannot make writable directory %s\n", check_dir);
+    tt_row->status = RUN_CHECK_FAILED;
     return RUN_CHECK_FAILED;
   }
   if (clear_directory(check_dir) < 0) {
     fprintf(log_f, "Error: failed to clean directory %s\n", check_dir);
+    tt_row->status = RUN_CHECK_FAILED;
     return RUN_CHECK_FAILED;
   }
 
@@ -709,11 +713,12 @@ invoke_sample_program(
     snprintf(corr_path, sizeof(corr_path), "%s/%s", tests_dir, corr_name);
 
     r = invoke_test_program(log_f, log_path, global, prob, num, check_dir,
-                            exe_path, exe_name, test_path, &infos[num - 1]);
+                            exe_path, exe_name, test_path,
+                            tt_cell_row[num - 1]);
     if (r == RUN_OK) {
       invoke_checker(log_f, log_path, prob, check_dir, check_cmd,
                      exe_name, num, test_path, out_path, corr_path,
-                     &infos[num - 1]);
+                     tt_cell_row[num - 1]);
     }
 
     if (clear_directory(check_dir) < 0) {
@@ -721,7 +726,92 @@ invoke_sample_program(
     }
   }
 
+  tt_row->status = RUN_OK;
+  for (i = 0; i < test_count; ++i) {
+    if (tt_cell_row[i]->status == RUN_CHECK_FAILED) {
+      tt_row->status = RUN_CHECK_FAILED;
+      break;
+    }
+    if (tt_cell_row[i]->status != RUN_OK) {
+      tt_row->status = RUN_PARTIAL;
+    }
+  }
+
   return 0;
+}
+
+static void
+analyze_results(
+        FILE *log_f,
+        const unsigned char *log_path,
+        const struct section_global_data *global,
+        const struct section_problem_data *prob,
+        struct run_request_packet *req_pkt,
+        struct run_reply_packet *reply_pkt,
+        testing_report_xml_t report_xml)
+{
+  int i, j, score = 0;
+
+  if (!report_xml->tt_rows) {
+    fprintf(stderr, "Error: tt_rows == NULL\n");
+    goto check_failed;
+  }
+  if (!report_xml->tt_cells) {
+    fprintf(stderr, "Error: tt_cells == NULL\n");
+    goto check_failed;
+  }
+
+  for (i = 0; i < report_xml->tt_row_count; ++i) {
+    if (!report_xml->tt_rows[i]) {
+      fprintf(stderr, "Error: tt_rows[%d] == NULL\n", i);
+      goto check_failed;
+    }
+    if (!report_xml->tt_cells[i]) {
+      fprintf(stderr, "Error: tt_cells[%d] == NULL\n", i);
+      goto check_failed;
+    }
+    if (report_xml->tt_rows[i]->status == RUN_CHECK_FAILED) {
+      goto check_failed;
+    }
+    for (j = 0; j < report_xml->tt_column_count; ++j) {
+      if (!report_xml->tt_cells[i][j]) {
+        fprintf(stderr, "Error: tt_cells[%d][%d] == NULL\n", i, j);
+        goto check_failed;
+      }
+      if (report_xml->tt_cells[i][j]->status == RUN_CHECK_FAILED) {
+        goto check_failed;
+      }
+    }
+  }
+
+  for (i = 0; i < report_xml->tt_row_count; ++i) {
+    if (report_xml->tt_rows[i]->must_fail <= 0) {
+      // this sample program must be OK
+      if (report_xml->tt_rows[i]->status != RUN_OK)
+        goto wrong_answer;
+    } else {
+      // this sample program must fail
+      if (report_xml->tt_rows[i]->status == RUN_OK)
+        goto wrong_answer;
+    }
+  }
+
+  score = report_xml->max_score;
+  report_xml->status = RUN_OK;
+  reply_pkt->status = RUN_OK;
+  report_xml->score = score;
+  reply_pkt->score = score;
+  return;
+
+wrong_answer:
+  report_xml->status = RUN_WRONG_ANSWER_ERR;
+  reply_pkt->status = RUN_WRONG_ANSWER_ERR;
+  return;
+
+check_failed:
+  report_xml->status = RUN_CHECK_FAILED;
+  reply_pkt->status = RUN_CHECK_FAILED;
+  return;
 }
 
 void
@@ -748,15 +838,18 @@ run_inverse_testing(
   unsigned char **good_files = 0, **fail_files = 0;
   path_t exe_path;
   path_t log_path;
-  FILE *log_f = 0;
+  FILE *log_f = 0, *rep_f = 0;
   unsigned char *log_text = 0;
   size_t log_size = 0;
   path_t test_pat = { 0 };
   path_t corr_pat = { 0 };
-  struct run_info **run_infos = 0;
-  int run_info_count = 0;
+  struct testing_report_cell ***tt_cells = 0, *tt_cell = 0;
+  struct testing_report_row **tt_rows = 0, *tt_row = 0;
+  int tt_row_count = 0;
   path_t check_cmd = { 0 };
   path_t check_dir = { 0 };
+  testing_report_xml_t report_xml = 0;
+  long time_limit_ms = 0;
 
   make_patterns(prob, test_pat, sizeof(test_pat), corr_pat, sizeof(corr_pat));
 
@@ -773,6 +866,10 @@ run_inverse_testing(
   reply_pkt->contest_id = req_pkt->contest_id;
   reply_pkt->run_id = req_pkt->run_id;
   reply_pkt->notify_flag = req_pkt->notify_flag;
+  reply_pkt->failed_test = 0;
+  reply_pkt->marked_flag = 0;
+  reply_pkt->status = RUN_CHECK_FAILED;
+  reply_pkt->score = 0;
   reply_pkt->ts1 = req_pkt->ts1;
   reply_pkt->ts1_us = req_pkt->ts1_us;
   reply_pkt->ts2 = req_pkt->ts2;
@@ -783,26 +880,64 @@ run_inverse_testing(
   reply_pkt->ts4_us = req_pkt->ts4_us;
   get_current_time(&reply_pkt->ts5, &reply_pkt->ts5_us);
 
+  /* create the testing report */
+  report_xml = testing_report_alloc(reply_pkt->run_id, reply_pkt->judge_id);
+  report_xml->status = RUN_CHECK_FAILED;
+  report_xml->scoring_system = req_pkt->scoring_system;
+  report_xml->archive_available = 0;
+  report_xml->correct_available = 1;
+  report_xml->info_available = 0;
+  report_xml->real_time_available = 1;
+  report_xml->max_memory_used_available = 0;
+  report_xml->run_tests = 0;
+  report_xml->variant = req_pkt->variant;
+  report_xml->accepting_mode = 0;
+  report_xml->failed_test = -1;
+  report_xml->tests_passed = 0;
+  report_xml->score = 0;
+  report_xml->max_score = prob->full_score;
+  report_xml->marked_flag = 0;
+  report_xml->tests_mode = 1;
+
+  if (prob->time_limit_millis > 0) {
+    time_limit_ms = prob->time_limit_millis;
+  } else if (prob->time_limit > 0) {
+    time_limit_ms = prob->time_limit * 1000;
+  }
+  if (time_limit_ms > 0) {
+    report_xml->time_limit_ms = time_limit_ms;
+  }
+  if (prob->real_time_limit > 0) {
+    report_xml->real_time_limit_ms = prob->real_time_limit * 1000;
+  }
+  if ((log_text = os_NodeName())) {
+    report_xml->host = xstrdup(log_text);
+  }
+  log_text = 0;
+
   /*
-Remaining fields:
+Remaining field to fill:
   int status;      -- OK, WRONG_ANSWER, CHECK_FAILED
-  int failed_test; -- always 0?
-  int score;       -- 0 or full score?
-  int marked_flag; -- always 0
+  int score;       -- 0 or full score
   */
 
   snprintf(report_path, report_path_size, "%s/%s.xml",
            global->run_work_dir, pkt_name);
   
   if (req_pkt->mime_type != MIME_TYPE_APPL_GZIP) {
-    // FIXME: handle error
+    fprintf(log_f, "Error: archive of type %d (%s) is not supported\n",
+            req_pkt->mime_type, mime_type_get_type(req_pkt->mime_type));
+    goto cleanup;
   }
 
   r = generic_copy_file(REMOVE, global->run_exe_dir, pkt_name,req_pkt->exe_sfx,
                         0, global->run_work_dir, pkt_name,
                         mime_type_get_suffix(req_pkt->mime_type));
   if (r <= 0) {
-    // FIXME: handle error
+    fprintf(log_f, "Error: failed to read archive file %s/%s%s\n",
+            global->run_work_dir, pkt_name,
+            mime_type_get_suffix(req_pkt->mime_type));
+    goto cleanup;
   }
 
   snprintf(arch_path, sizeof(arch_path), "%s%s%s",
@@ -811,42 +946,54 @@ Remaining fields:
 
   snprintf(arch_dir,sizeof(arch_dir), "%s/%s", global->run_work_dir, pkt_name);
   if (make_dir(arch_dir, 0) < 0) {
-    // FIXME: handle error
+    fprintf(log_f, "Error: failed to create directory %s/%s\n",
+            global->run_work_dir, pkt_name);
+    goto cleanup;
   }
 
   // invoke tar
   if (invoke_tar(log_f, log_path, arch_path, arch_dir) < 0) {
-    // FIXME: handle error
+    fprintf(log_f, "Error: tar extraction failed on file %s\n", arch_path);
+    goto cleanup;
   }
 
   snprintf(tests_dir, sizeof(tests_dir), "%s/%s", arch_dir, "tests");
   r = os_IsFile(tests_dir);
   if (r < 0) {
-    // FIXME: report error
+    fprintf(log_f, "Error: directory %s does not exist\n", tests_dir);
+    goto cleanup;
   } else if (r != OSPK_DIR) {
-    // FIXME: report error
+    fprintf(log_f, "Error: %s is not a directory\n", tests_dir);
+    goto cleanup;
   }
 
   // count tests
   test_count = count_tests(log_f, prob, tests_dir, test_pat, corr_pat);
   if (test_count < 0) {
-    // FIXME: report error
+    fprintf(log_f, "Error: failed to count tests in %s\n", tests_dir);
+    goto cleanup;
   }
   if (!test_count) {
+    fprintf(log_f, "Error: no tests in the archive\n");
+    goto cleanup;
   }
 
   // normalize test contents
   if (normalize_tests(log_f, prob, test_count, tests_dir, test_pat,
                       corr_pat) < 0) {
-    // FIXME: report error
+    fprintf(log_f, "Error: failed to normalize tests\n");
+    goto cleanup;
   }
 
   // invoke test checkers on each test
-  if (invoke_test_checker_on_tests(log_f, log_path, global,
+  r = invoke_test_checker_on_tests(log_f, log_path, global,
                                    prob, req_pkt->variant,
                                    test_count, tests_dir,
-                                   test_pat, corr_pat) < 0) {
-    // FIXME: report error
+                                   test_pat, corr_pat);
+  if (r != RUN_OK) {
+    reply_pkt->status = r;
+    report_xml->status = r;
+    goto cleanup;
   }
 
   // now we're ready to run our programs on the given tests
@@ -871,13 +1018,16 @@ Remaining fields:
   snprintf(fail_dir, sizeof(fail_dir), "%s/%s", sample_dir, FAIL_DIR_NAME);
 
   if (scan_executable_files(good_dir, &good_count, &good_files) < 0) {
-    // FIXME: report error
+    fprintf(log_f, "Error: scan of %s failed\n", good_dir);
+    goto cleanup;
   }
   if (scan_executable_files(fail_dir, &fail_count, &fail_files) < 0) {
-    // FIXME: report error
+    fprintf(log_f, "Error: scan of %s failed\n", good_dir);
+    goto cleanup;
   }
   if (good_count <= 0 && fail_count <= 0) {
-    // FIXME: report error
+    fprintf(log_f, "Error: no sample programs are found\n");
+    goto cleanup;
   }
 
   // get checker path
@@ -910,13 +1060,16 @@ Remaining fields:
   }
   r = os_IsFile(check_cmd);
   if (r < 0) {
-    // FIXME: report error
+    fprintf(log_f, "Error: checker %s does not exist\n", check_cmd);
+    goto cleanup;
   }
   if (r != OSPK_REG) {
-    // FIXME: report error
+    fprintf(log_f, "Error: checker %s is not a regular file\n", check_cmd);
+    goto cleanup;
   }
   if (os_CheckAccess(check_cmd, REUSE_X_OK) < 0) {
-    // FIXME: report error
+    fprintf(log_f, "Error: checker %s is not an executable file\n", check_cmd);
+    goto cleanup;
   }
 
   snprintf(check_dir, sizeof(check_dir), "%s", global->run_check_dir);
@@ -925,36 +1078,66 @@ Remaining fields:
 #endif
   pathmake2(check_dir, EJUDGE_CONTESTS_HOME_DIR, "/", check_dir, NULL);
   if (make_dir(check_dir, 0) < 0) {
-    // FIXME: report error
+    fprintf(log_f, "Error: failed to create directory %s\n", check_dir);
+    goto cleanup;
   }
-
 
   ASSERT(good_count >= 0 && fail_count >= 0);
-  run_info_count = good_count + fail_count;
-  XCALLOC(run_infos, run_info_count);
-  for (i = 0; i < run_info_count; ++i) {
-    XCALLOC(run_infos[i], test_count);
-    for (j = 0; j < test_count; ++j) {
-      run_infos[i][j].status = RUN_CHECK_FAILED;
-      run_infos[i][j].cpu_time_ms = -1;
-      run_infos[i][j].real_time_ms = -1;
+  tt_row_count = good_count + fail_count;
+  report_xml->tt_row_count = tt_row_count;
+  report_xml->tt_column_count = test_count;
+
+  XCALLOC(tt_rows, tt_row_count);
+  for (i = 0; i < tt_row_count; ++i) {
+    XCALLOC(tt_row, 1);
+    tt_rows[i] = tt_row;
+    tt_row->id = i;
+    tt_row->status = RUN_CHECK_FAILED;
+    if (i >= good_count) {
+      tt_row->name = xstrdup(fail_files[i - good_count]);
+      tt_row->must_fail = 1;
+    } else {
+      tt_row->name = xstrdup(good_files[i]);
+      tt_row->must_fail = 0;
     }
   }
+  report_xml->tt_rows = tt_rows; tt_rows = 0;
+
+  XCALLOC(tt_cells, tt_row_count);
+  for (i = 0; i < tt_row_count; ++i) {
+    XCALLOC(tt_cells[i], test_count);
+    for (j = 0; j < test_count; ++j) {
+      XCALLOC(tt_cell, 1);
+      tt_cells[i][j] = tt_cell;
+      tt_cell->row = i;
+      tt_cell->column = j;
+      tt_cell->status = RUN_CHECK_FAILED;
+      tt_cell->time = -1;
+      tt_cell->real_time = -1;
+    }
+  }
+  report_xml->tt_cells = tt_cells; tt_cells = 0;
 
   for (i = 0; i < good_count; ++i) {
     snprintf(exe_path, sizeof(exe_path), "%s/%s", good_dir, good_files[i]);
     r = invoke_sample_program(log_f, log_path, global, prob, check_dir,
                               exe_path, good_files[i], check_cmd, test_count,
-                              tests_dir, test_pat, corr_pat, run_infos[i]);
+                              tests_dir, test_pat, corr_pat,
+                              report_xml->tt_rows[i], report_xml->tt_cells[i]);
   }
   for (i = 0; i < fail_count; ++i) {
     snprintf(exe_path, sizeof(exe_path), "%s/%s", fail_dir, fail_files[i]);
     r = invoke_sample_program(log_f, log_path, global, prob, check_dir,
                               exe_path, fail_files[i], check_cmd, test_count,
                               tests_dir, test_pat, corr_pat,
-                              run_infos[i + good_count]);
+                              report_xml->tt_rows[i + good_count],
+                              report_xml->tt_cells[i + good_count]);
   }
 
+  analyze_results(log_f, log_path, global, prob, req_pkt, reply_pkt,
+                  report_xml);
+
+cleanup:
   /* process the log file */
   fclose(log_f); log_f = 0;
   if (text_read_file(log_path, 1, &log_text, &log_size) < 0) {
@@ -972,24 +1155,49 @@ Remaining fields:
   if (utf8_mode && log_text) {
     utf8_fix_string(log_text, NULL);
   }
+  if (log_text) {
+    report_xml->errors = log_text; log_text = 0;
+  }
 
   /* fill the remaining fields of the reply packet */
   get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
   reply_pkt->ts7 = reply_pkt->ts6;
   reply_pkt->ts7_us = reply_pkt->ts6_us;
 
-  /* FIXME: save the XML report log */
+  if ((rep_f = fopen(report_path, "w"))) {
+    testing_report_unparse_xml(rep_f, utf8_mode,
+                               global->max_file_length, global->max_line_length,
+                               report_xml);
+    fclose(rep_f); rep_f = 0;
+  }
+
+  report_xml = testing_report_free(report_xml);
 
   if (log_f) {
     fclose(log_f); log_f = 0;
   }
-  xfree(log_text);
-  if (run_infos) {
-    for (i = 0; i < run_info_count; ++i)
-      xfree(run_infos[i]);
-    xfree(run_infos);
-    run_infos = 0; run_info_count = 0;
+  if (tt_cells) {
+    for (i = 0; i < tt_row_count; ++i) {
+      if (tt_cells[i]) {
+        for (j = 0; j < test_count; ++j) {
+          xfree(tt_cells[i][j]);
+        }
+        xfree(tt_cells[i]);
+      }
+    }
+    xfree(tt_cells);
+    tt_cells = 0;
   }
+  if (tt_rows) {
+    for (i = 0; i < tt_row_count; ++i) {
+      if (tt_rows[i]) {
+        xfree(tt_rows[i]->name);
+        xfree(tt_rows);
+      }
+    }
+    xfree(tt_rows); tt_rows = 0;
+  }
+  tt_row_count = 0;
   if (good_files) {
     for (i = 0; i < good_count; ++i)
       xfree(good_files[i]);

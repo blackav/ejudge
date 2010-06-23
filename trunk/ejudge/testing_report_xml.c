@@ -24,6 +24,7 @@
 #include "protocol.h"
 #include "runlog.h"
 #include "digest_io.h"
+#include "misctext.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -35,7 +36,7 @@
 #endif /* EJUDGE_CHARSET */
 
 /*
-<testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"] [time_limit_ms="T" real_time_limit_ms="T" [real-time-available="B"] [max-memory-used-available="T"] [marked-flag="B"]>
+<testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"] [time_limit_ms="T" real_time_limit_ms="T" [real-time-available="B"] [max-memory-used-available="T"] [marked-flag="B"] [tests-mode="B"] [tt-row-count="N"] [tt-column-count="N"]>
   <comment>T</comment>
   <valuer_comment>T</valuer_comment>
   <valuer_judge_comment>T</valuer_judge_comment>
@@ -52,6 +53,12 @@
        [<checker>T</checker>]
     </test>
   </tests>
+  <ttrows>
+    <ttrow id="N" name="S" must-fail="B" />
+  </ttrows>
+  <ttcells>
+    <ttcell row="N" column="N" status="O" time="N" real-time="N" />
+  </ttcells>
 </testing-report>
  */
 
@@ -73,6 +80,10 @@ enum
   TR_T_VALUER_ERRORS,
   TR_T_HOST,
   TR_T_ERRORS,
+  TR_T_TTROWS,
+  TR_T_TTROW,
+  TR_T_TTCELLS,
+  TR_T_TTCELL,
 
   TR_T_LAST_TAG,
 };
@@ -115,6 +126,14 @@ enum
   TR_A_REAL_TIME_AVAILABLE,
   TR_A_MAX_MEMORY_USED_AVAILABLE,
   TR_A_MARKED_FLAG,
+  TR_A_TESTS_MODE,
+  TR_A_TT_ROW_COUNT,
+  TR_A_TT_COLUMN_COUNT,
+  TR_A_ID,
+  TR_A_NAME,
+  TR_A_MUST_FAIL,
+  TR_A_ROW,
+  TR_A_COLUMN,
 
   TR_A_LAST_ATTR,
 };
@@ -136,6 +155,10 @@ static const char * const elem_map[] =
   [TR_T_VALUER_ERRORS] = "valuer-errors",
   [TR_T_HOST] = "host",
   [TR_T_ERRORS] = "errors",
+  [TR_T_TTROWS] = "ttrows",
+  [TR_T_TTROW] = "ttrow",
+  [TR_T_TTCELLS] = "ttcells",
+  [TR_T_TTCELL] = "ttcell",
 
   [TR_T_LAST_TAG] = 0,
 };
@@ -178,6 +201,14 @@ static const char * const attr_map[] =
   [TR_A_REAL_TIME_AVAILABLE] = "real-time-available",
   [TR_A_MAX_MEMORY_USED_AVAILABLE] = "max-memory-used-available",
   [TR_A_MARKED_FLAG] = "marked-flag",
+  [TR_A_TESTS_MODE] = "tests-mode",
+  [TR_A_TT_ROW_COUNT] = "tt-row-count",
+  [TR_A_TT_COLUMN_COUNT] = "tt-column-count",
+  [TR_A_ID] = "id",
+  [TR_A_NAME] = "name",
+  [TR_A_MUST_FAIL] = "must-fail",
+  [TR_A_ROW] = "row",
+  [TR_A_COLUMN] = "column",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -451,13 +482,166 @@ parse_tests(struct xml_tree *t, testing_report_xml_t r)
 }
 
 static int
+parse_ttrow(struct xml_tree *t, testing_report_xml_t r)
+{
+  struct xml_attr *a;
+  int x, id = -1, status = RUN_CHECK_FAILED, must_fail = 0;
+  unsigned char *name = 0;
+
+  if (t->tag != TR_T_TTROW) {
+    return xml_err_elem_not_allowed(t);
+  }
+  if (xml_empty_text(t) < 0) return -1;
+  if (t->first_down) {
+    return xml_err_nested_elems(t);
+  }
+  for (a = t->first; a; a = a->next) {
+    switch (a->tag) {
+    case TR_A_ID:
+      if (xml_attr_int(a, &x) < 0) return -1;
+      if (x < 0 || x >= r->tt_row_count) return xml_err_attr_invalid(a);
+      id = x;
+      break;
+    case TR_A_NAME:
+      name = a->text;
+      a->text = 0;
+      break;
+    case TR_A_MUST_FAIL:
+      if (xml_attr_bool(a, &x) < 0) return -1;
+      must_fail = x;
+      break;
+    case TR_A_STATUS:
+      if (!a->text || run_str_short_to_status(a->text, &x) < 0)
+        return xml_err_attr_invalid(a);
+      status = x;
+      break;
+    default:
+      return xml_err_attr_not_allowed(t, a);
+    }
+  }
+
+  if (id < 0) return xml_err_attr_undefined(t, TR_A_ID);
+  if (!name) return xml_err_attr_undefined(t, TR_A_NAME);
+
+  r->tt_rows[id]->id = id;
+  r->tt_rows[id]->name = name;
+  r->tt_rows[id]->status = status;
+  r->tt_rows[id]->must_fail = must_fail;
+
+  return 0;
+}
+
+static int
+parse_ttrows(struct xml_tree *t, testing_report_xml_t r)
+{
+  struct xml_tree *p;
+
+  if (t->tag != TR_T_TTROWS) {
+    xml_err_elem_not_allowed(t);
+    return -1;
+  }
+  if (t->first) {
+    xml_err_attrs(t);
+    return -1;
+  }
+  if (xml_empty_text(t) < 0) return -1;
+
+  for (p = t->first_down; p; p = p->right) {
+    if (parse_ttrow(p, r) < 0) return -1;
+  }
+
+  return 0;
+}
+
+static int
+parse_ttcell(struct xml_tree *t, testing_report_xml_t r)
+{
+  struct xml_attr *a;
+  int row = -1, column = -1;
+  int status = RUN_CHECK_FAILED;
+  int time = -1, real_time = -1, x;
+  struct testing_report_cell *ttc = 0;
+
+  if (t->tag != TR_T_TTCELL) {
+    return xml_err_elem_not_allowed(t);
+  }
+  if (xml_empty_text(t) < 0) return -1;
+  if (t->first_down) {
+    return xml_err_nested_elems(t);
+  }
+  for (a = t->first; a; a = a->next) {
+    switch (a->tag) {
+    case TR_A_ROW:
+      if (xml_attr_int(a, &x) < 0) return -1;
+      if (x < 0 || x >= r->tt_row_count) return xml_err_attr_invalid(a);
+      row = x;
+      break;
+    case TR_A_COLUMN:
+      if (xml_attr_int(a, &x) < 0) return -1;
+      if (x < 0 || x >= r->tt_column_count) return xml_err_attr_invalid(a);
+      column = x;
+      break;
+    case TR_A_STATUS:
+      if (!a->text || run_str_short_to_status(a->text, &x) < 0)
+        return xml_err_attr_invalid(a);
+      status = x;
+      break;
+    case TR_A_TIME:
+      if (xml_attr_int(a, &x) < 0) return -1;
+      if (x < -1) return xml_err_attr_invalid(a);
+      time = x;
+      break;
+    case TR_A_REAL_TIME:
+      if (xml_attr_int(a, &x) < 0) return -1;
+      if (x < -1) return xml_err_attr_invalid(a);
+      real_time = x;
+      break;
+    default:
+      return xml_err_attr_not_allowed(t, a);
+    }
+  }
+
+  ttc = r->tt_cells[row][column];
+  ttc->row = row;
+  ttc->column = column;
+  ttc->status = status;
+  ttc->time = time;
+  ttc->real_time = real_time;
+
+  return 0;
+}
+
+static int
+parse_ttcells(struct xml_tree *t, testing_report_xml_t r)
+{
+  struct xml_tree *p;
+
+  if (t->tag != TR_T_TTCELLS) {
+    xml_err_elem_not_allowed(t);
+    return -1;
+  }
+  if (t->first) {
+    xml_err_attrs(t);
+    return -1;
+  }
+  if (xml_empty_text(t) < 0) return -1;
+
+  for (p = t->first_down; p; p = p->right) {
+    if (parse_ttcell(p, r) < 0) return -1;
+  }
+
+  return 0;
+}
+
+static int
 parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
 {
   struct xml_attr *a;
-  int x, was_tests = 0;
+  int x, was_tests = 0, was_ttrows = 0, was_ttcells = 0;
   struct xml_attr *a_failed_test = 0, *a_tests_passed = 0, *a_score = 0;
   struct xml_attr *a_max_score = 0;
   struct xml_tree *t2;
+  int i, j;
 
   if (t->tag != TR_T_TESTING_REPORT) {
     xml_err_top_level(t, TR_T_TESTING_REPORT);
@@ -626,8 +810,46 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       r->marked_flag = x;
       break;
 
+    case TR_A_TESTS_MODE:
+      if (xml_attr_bool(a, &x) < 0) return -1;
+      r->tests_mode = x;
+      break;
+
+    case TR_A_TT_ROW_COUNT:
+      if (xml_attr_int(a, &x) < 0) return -1;
+      if (x < 0) {
+        xml_err_attr_invalid(a);
+        return -1;
+      }
+      r->tt_row_count = x;
+      break;
+
+    case TR_A_TT_COLUMN_COUNT:
+      if (xml_attr_int(a, &x) < 0) return -1;
+      if (x < 0) {
+        xml_err_attr_invalid(a);
+        return -1;
+      }
+      r->tt_column_count = x;
+      break;
+
     default:
       xml_err_attr_not_allowed(t, a);
+      return -1;
+    }
+  }
+
+  if (r->tt_row_count < 0 || r->tt_column_count < 0) {
+    /* FIXME: report an error */
+    return -1;
+  }
+  if (r->tests_mode > 0) {
+    if (!r->tt_row_count || !r->tt_column_count) {
+      /* FIXME: report an error */
+    }
+  } else {
+    if (r->tt_row_count > 0 || r->tt_column_count > 0) {
+      /* FIXME: report an error */
       return -1;
     }
   }
@@ -707,6 +929,29 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
     XCALLOC(r->tests, r->run_tests);
   }
 
+  if (r->tests_mode > 0) {
+    XCALLOC(r->tt_rows, r->tt_row_count);
+    XCALLOC(r->tt_cells, r->tt_row_count);
+    for (i = 0; i < r->tt_row_count; ++i) {
+      struct testing_report_row *ttr = 0;
+      XCALLOC(ttr, 1);
+      r->tt_rows[i] = ttr;
+      ttr->id = i;
+      ttr->status = RUN_CHECK_FAILED;
+      XCALLOC(r->tt_cells[i], r->tt_column_count);
+      for (j = 0; j < r->tt_column_count; ++j) {
+        struct testing_report_cell *ttc = 0;
+        XCALLOC(ttc, 1);
+        r->tt_cells[i][j] = ttc;
+        ttc->row = i;
+        ttc->column = j;
+        ttc->status = RUN_CHECK_FAILED;
+        ttc->time = -1;
+        ttc->real_time = -1;
+      }
+    }
+  }
+
   for (t2 = t->first_down; t2; t2 = t2->right) {
     switch (t2->tag) {
     case TR_T_COMMENT:
@@ -734,6 +979,22 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       }
       was_tests = 1;
       if (parse_tests(t2, r) < 0) return -1;
+      break;
+    case TR_T_TTROWS:
+      if (was_ttrows) {
+        xml_err(t2, "duplicated element <ttrows>");
+        return -1;
+      }
+      was_ttrows = 1;
+      if (parse_ttrows(t2, r) < 0) return -1;
+      break;
+    case TR_T_TTCELLS:
+      if (was_ttcells) {
+        xml_err(t2, "duplicated element <ttcells>");
+        return -1;
+      }
+      was_ttcells = 1;
+      if (parse_ttcells(t2, r) < 0) return -1;
       break;
     default:
       xml_err_elem_not_allowed(t2);
@@ -790,7 +1051,7 @@ testing_report_test_free(struct testing_report_test *p)
 testing_report_xml_t
 testing_report_free(testing_report_xml_t r)
 {
-  int i;
+  int i, j;
 
   if (!r) return 0;
 
@@ -808,8 +1069,312 @@ testing_report_free(testing_report_xml_t r)
   xfree(r->host); r->host = 0;
   xfree(r->errors); r->errors = 0;
 
+  if (r->tt_rows) {
+    for (i = 0; i < r->tt_row_count; ++i) {
+      if (r->tt_rows[i]) {
+        xfree(r->tt_rows[i]->name);
+        xfree(r->tt_rows[i]);
+      }
+    }
+    xfree(r->tt_rows); r->tt_rows = 0;
+  }
+
+  if (r->tt_cells) {
+    for (i = 0; i < r->tt_row_count; ++i) {
+      if (r->tt_cells[i]) {
+        for (j = 0; j < r->tt_column_count; ++j) {
+          if (r->tt_cells[i][j]) {
+            // free the cell
+            xfree(r->tt_cells[i][j]);
+          }
+        }
+        xfree(r->tt_cells[i]);
+      }
+    }
+    xfree(r->tt_cells); r->tt_cells = 0;
+  }
+
   xfree(r);
   return 0;
+}
+
+testing_report_xml_t
+testing_report_alloc(int run_id, int judge_id)
+{
+  testing_report_xml_t r = 0;
+  XCALLOC(r, 1);
+  r->run_id = run_id;
+  r->judge_id = judge_id;
+  r->status = RUN_CHECK_FAILED;
+  r->scoring_system = -1;
+  r->marked_flag = -1;
+  return r;
+}
+
+static const char * const scoring_system_strs[] =
+{
+  [SCORE_ACM] "ACM",
+  [SCORE_KIROV] "KIROV",
+  [SCORE_OLYMPIAD] "OLYMPIAD",
+  [SCORE_MOSCOW] "MOSCOW",
+};
+static const unsigned char *
+unparse_scoring_system(unsigned char *buf, size_t size, int val)
+{
+  if (val >= SCORE_ACM && val < SCORE_TOTAL) return scoring_system_strs[val];
+  snprintf(buf, size, "scoring_%d", val);
+  return buf;
+}
+
+#define ARMOR(s)  html_armor_buf(&ab, s)
+
+static void
+unparse_bool_attr(FILE *out, int attr_index, int value)
+{
+  if (value > 0) {
+    fprintf(out, " %s=\"%s\"", attr_map[attr_index], xml_unparse_bool(value));
+  }
+}
+static void
+unparse_bool_attr2(FILE *out, int attr_index, int value)
+{
+  if (value >= 0) {
+    fprintf(out, " %s=\"%s\"", attr_map[attr_index], xml_unparse_bool(value));
+  }
+}
+static void
+unparse_string_elem(
+        FILE *out,
+        struct html_armor_buffer *pab,
+        int elem_index,
+        const unsigned char *value)
+{
+  if (value) {
+    fprintf(out, "  <%s>%s</%s>\n", elem_map[elem_index],
+            html_armor_buf(pab, value), elem_map[elem_index]);
+  }
+}
+static void
+unparse_string_attr(
+        FILE *out,
+        struct html_armor_buffer *pab,
+        int attr_index,
+        const unsigned char *value)
+{
+  if (value && value[0]) {
+    fprintf(out, "  %s=\"%s\"", attr_map[attr_index],
+            html_armor_buf(pab, value));
+  }
+}
+
+static void
+unparse_file_contents(
+        FILE *out,
+        int utf8_mode,
+        int max_file_length,
+        int max_line_length,
+        int elem_index,
+        const unsigned char *str,
+        int size)
+{
+  if (size >= 0) {
+    fprintf(out, "      <%s>", elem_map[elem_index]);
+    html_print_by_line(out, utf8_mode, max_file_length, max_line_length,
+                       str, size);
+    fprintf(out, "</%s>\n", elem_map[elem_index]);
+  }
+}
+
+
+void
+testing_report_unparse_xml(
+        FILE *out,
+        int utf8_mode,
+        int max_file_length,
+        int max_line_length,
+        testing_report_xml_t r)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char buf1[128], buf2[128];
+  struct testing_report_test *t;
+  int i, j;
+  struct testing_report_row *ttr;
+  struct testing_report_cell *ttc;
+
+  run_status_to_str_short(buf1, sizeof(buf1), r->status);
+  unparse_scoring_system(buf2, sizeof(buf2), r->scoring_system);
+
+  fprintf(out, "<%s %s=\"%d\" %s=\"%d\" %s=\"%s\" %s=\"%s\" %s=\"%d\"",
+          elem_map[TR_T_TESTING_REPORT],
+          attr_map[TR_A_RUN_ID], r->run_id,
+          attr_map[TR_A_JUDGE_ID], r->judge_id,
+          attr_map[TR_A_STATUS], buf1,
+          attr_map[TR_A_SCORING], buf2,
+          attr_map[TR_A_RUN_TESTS], r->run_tests);
+
+  unparse_bool_attr(out, TR_A_ARCHIVE_AVAILABLE, r->archive_available);
+  unparse_bool_attr(out, TR_A_REAL_TIME_AVAILABLE, r->real_time_available);
+  unparse_bool_attr(out, TR_A_MAX_MEMORY_USED_AVAILABLE,
+                    r->max_memory_used_available);
+  unparse_bool_attr(out, TR_A_CORRECT_AVAILABLE, r->correct_available);
+  unparse_bool_attr(out, TR_A_INFO_AVAILABLE, r->info_available);
+  if (r->variant > 0) {
+    fprintf(out, " %s=\"%d\"", attr_map[TR_A_VARIANT], r->variant);
+  }
+  unparse_bool_attr(out, TR_A_ACCEPTING_MODE, r->accepting_mode);
+  if (r->scoring_system == SCORE_OLYMPIAD && r->accepting_mode > 0
+      && r->status != RUN_ACCEPTED) {
+    fprintf(out, " %s=\"%d\"", attr_map[TR_A_FAILED_TEST], r->failed_test);
+  } else if (r->scoring_system == SCORE_ACM && r->status != RUN_OK) {
+    fprintf(out, " %s=\"%d\"", attr_map[TR_A_FAILED_TEST], r->failed_test);
+  } else if (r->scoring_system == SCORE_OLYMPIAD && r->accepting_mode <= 0) {
+    fprintf(out, " %s=\"%d\" %s=\"%d\" %s=\"%d\"",
+            attr_map[TR_A_TESTS_PASSED], r->tests_passed,
+            attr_map[TR_A_SCORE], r->score,
+            attr_map[TR_A_MAX_SCORE], r->max_score);
+  } else if (r->scoring_system == SCORE_KIROV) {
+    fprintf(out, " %s=\"%d\" %s=\"%d\" %s=\"%d\"",
+            attr_map[TR_A_TESTS_PASSED], r->tests_passed,
+            attr_map[TR_A_SCORE], r->score,
+            attr_map[TR_A_MAX_SCORE], r->max_score);
+  } else if (r->scoring_system == SCORE_MOSCOW) {
+    if (r->status != RUN_OK) {
+      fprintf(out, " %s=\"%d\"", attr_map[TR_A_FAILED_TEST], r->failed_test);
+    }
+    fprintf(out, " %s=\"%d\" %s=\"%d\"",
+            attr_map[TR_A_SCORE], r->score,
+            attr_map[TR_A_MAX_SCORE], r->max_score);
+  }
+
+  if (r->time_limit_ms > 0) {
+    fprintf(out, " %s=\"%d\"", attr_map[TR_A_TIME_LIMIT_MS], r->time_limit_ms);
+  }
+  if (r->real_time_limit_ms > 0) {
+    fprintf(out, " %s=\"%d\"",
+            attr_map[TR_A_REAL_TIME_LIMIT_MS], r->real_time_limit_ms);
+  }
+  unparse_bool_attr2(out, TR_A_MARKED_FLAG, r->marked_flag);
+  unparse_bool_attr(out, TR_A_TESTS_MODE, r->tests_mode);
+  if (r->tests_mode > 0) {
+    ASSERT(r->tt_row_count > 0);
+    ASSERT(r->tt_column_count > 0);
+    fprintf(out, " %s=\"%d\"", attr_map[TR_A_TT_ROW_COUNT], r->tt_row_count);
+    fprintf(out, " %s=\"%d\"", attr_map[TR_A_TT_COLUMN_COUNT],
+            r->tt_column_count);
+  }
+  fprintf(out, " >\n");
+
+  unparse_string_elem(out, &ab, TR_T_COMMENT, r->comment);
+  unparse_string_elem(out, &ab, TR_T_VALUER_COMMENT, r->valuer_comment);
+  unparse_string_elem(out, &ab, TR_T_VALUER_JUDGE_COMMENT,
+                      r->valuer_judge_comment);
+  unparse_string_elem(out, &ab, TR_T_VALUER_ERRORS, r->valuer_errors);
+  unparse_string_elem(out, &ab, TR_T_HOST, r->host);
+
+  if (r->run_tests > 0 && r->tests) {
+    fprintf(out, "  <%s>\n", elem_map[TR_T_TESTS]);
+    for (i = 0; i < r->run_tests; ++i) {
+      if (!(t = r->tests[i])) continue;
+
+      run_status_to_str_short(buf1, sizeof(buf1), t->status);
+      fprintf(out, "    <%s %s=\"%d\" %s=\"%s\"",
+              elem_map[TR_T_TEST], attr_map[TR_A_NUM], i + 1,
+              attr_map[TR_A_STATUS], buf1);
+      if (t->term_signal > 0) {
+        fprintf(out, " %s=\"%d\"", attr_map[TR_A_TERM_SIGNAL], t->term_signal);
+      }
+      if (t->exit_code > 0) {
+        fprintf(out, " %s=\"%d\"", attr_map[TR_A_EXIT_CODE], t->exit_code);
+      }
+      if (t->time >= 0) {
+        fprintf(out, " %s=\"%d\"", attr_map[TR_A_TIME], t->time);
+      }
+      if (r->real_time_available > 0 && t->real_time >= 0) {
+        fprintf(out, " %s=\"%d\"", attr_map[TR_A_REAL_TIME], t->real_time);
+      }
+      if (r->max_memory_used_available > 0 && t->max_memory_used > 0) {
+        fprintf(out, " %s=\"%d\"", attr_map[TR_A_MAX_MEMORY_USED],
+                t->max_memory_used);
+      }
+      if (r->scoring_system == SCORE_OLYMPIAD && r->accepting_mode <= 0) {
+        fprintf(out, " %s=\"%d\" %s=\"%d\"",
+                attr_map[TR_A_NOMINAL_SCORE], t->nominal_score,
+                attr_map[TR_A_SCORE], r->score);
+      } else if (r->scoring_system == SCORE_KIROV) {
+        fprintf(out, " %s=\"%d\" %s=\"%d\"",
+                attr_map[TR_A_NOMINAL_SCORE], t->nominal_score,
+                attr_map[TR_A_SCORE], r->score);
+      }
+      unparse_string_attr(out, &ab, TR_A_COMMENT, t->comment);
+      unparse_string_attr(out, &ab, TR_A_TEAM_COMMENT, t->team_comment);
+      unparse_string_attr(out, &ab, TR_A_EXIT_COMMENT, t->exit_comment);
+      unparse_string_attr(out, &ab, TR_A_CHECKER_COMMENT, t->checker_comment);
+      unparse_string_attr(out, &ab, TR_A_INPUT_DIGEST, t->input_digest);
+      unparse_string_attr(out, &ab, TR_A_CORRECT_DIGEST, t->correct_digest);
+      unparse_string_attr(out, &ab, TR_A_INFO_DIGEST, t->info_digest);
+      unparse_bool_attr(out, TR_A_OUTPUT_AVAILABLE, t->output_available);
+      unparse_bool_attr(out, TR_A_STDERR_AVAILABLE, t->stderr_available);
+      unparse_bool_attr(out, TR_A_CHECKER_OUTPUT_AVAILABLE,
+                        t->checker_output_available);
+      unparse_bool_attr(out, TR_A_ARGS_TOO_LONG, t->args_too_long);
+      fprintf(out, " >\n");
+
+      unparse_string_elem(out, &ab, TR_T_ARGS, t->args);
+
+      unparse_file_contents(out, utf8_mode, max_file_length, max_line_length,
+                            TR_T_INPUT, t->input, t->input_size);
+      unparse_file_contents(out, utf8_mode, max_file_length, max_line_length,
+                            TR_T_OUTPUT, t->output, t->output_size);
+      unparse_file_contents(out, utf8_mode, max_file_length, max_line_length,
+                            TR_T_CORRECT, t->correct, t->correct_size);
+      unparse_file_contents(out, utf8_mode, max_file_length, max_line_length,
+                            TR_T_STDERR, t->error, t->error_size);
+      unparse_file_contents(out, utf8_mode, max_file_length, max_line_length,
+                            TR_T_CHECKER, t->checker, t->checker_size);
+      fprintf(out, "    </%s>\n", elem_map[TR_T_TEST]);
+    }
+    fprintf(out, "  </%s>\n", elem_map[TR_T_TESTS]);
+  }
+
+  if (r->tt_row_count > 0 && r->tt_rows) {
+    fprintf(out, "  <%s>\n", elem_map[TR_T_TTROWS]);
+    for (i = 0; i < r->tt_row_count; ++i) {
+      run_status_to_str_short(buf1, sizeof(buf1), r->tt_rows[i]->status);
+      if (!(ttr = r->tt_rows[i])) continue;
+      fprintf(out, "    <%s %s=\"%d\" %s=\"%s\" %s=\"%s\" %s=\"%s\"/>",
+              elem_map[TR_T_TTROW], attr_map[TR_A_ID], ttr->id,
+              attr_map[TR_A_NAME], ARMOR(ttr->name),
+              attr_map[TR_A_MUST_FAIL], xml_unparse_bool(ttr->must_fail),
+              attr_map[TR_A_STATUS], buf1);
+    }
+    fprintf(out, "  </%s>\n", elem_map[TR_T_TTROWS]);
+  }
+
+  if (r->tt_row_count > 0 && r->tt_column_count > 0 && r->tt_cells) {
+    fprintf(out, "  <%s>\n", elem_map[TR_T_TTCELLS]);
+    for (i = 0; i < r->tt_row_count; ++i) {
+      if (!r->tt_cells[i]) continue;
+      for (j = 0; j < r->tt_column_count; ++j) {
+        if (!(ttc = r->tt_cells[i][j])) continue;
+        run_status_to_str_short(buf1, sizeof(buf1), ttc->status);
+        fprintf(out, "    <%s %s=\"%d\" %s=\"%d\" %s=\"%s\"",
+                elem_map[TR_T_TTCELL], attr_map[TR_A_ROW], i,
+                attr_map[TR_A_COLUMN], j,
+                attr_map[TR_A_STATUS], buf1);
+        if (ttc->time >= 0) {
+          fprintf(out, " %s=\"%d\"", attr_map[TR_A_TIME], ttc->time);
+        }
+        if (ttc->real_time >= 0) {
+          fprintf(out, " %s=\"%d\"", attr_map[TR_A_REAL_TIME], ttc->real_time);
+        }
+        fprintf (out, " />\n");
+      }
+    }
+    fprintf(out, "  </%s>\n", elem_map[TR_T_TTCELLS]);
+  }
+
+  fprintf(out, "</%s>\n", elem_map[TR_T_TESTING_REPORT]);
+  html_armor_free(&ab);
 }
 
 /*

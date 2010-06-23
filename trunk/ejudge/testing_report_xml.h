@@ -17,6 +17,8 @@
  * GNU General Public License for more details.
  */
 
+#include <stdio.h>
+
 struct testing_report_test
 {
   int num;
@@ -46,11 +48,43 @@ struct testing_report_test
   unsigned char *exit_comment;
 
   unsigned char *args;
+
+  /* input data for the program */
   unsigned char *input;
+  int input_size;
+
+  /* output data */
   unsigned char *output;
+  int output_size;
+
+  /* correct answer */
   unsigned char *correct;
+  int correct_size;
+
+  /* stderr */
   unsigned char *error;
+  int error_size;
+
+  /* checker output */
   unsigned char *checker;
+  int checker_size;
+};
+
+struct testing_report_row
+{
+  int id;
+  unsigned char *name;
+  int must_fail;
+  int status;
+};
+
+struct testing_report_cell
+{
+  int row;
+  int column;
+  int status;
+  int time;
+  int real_time;
 };
 
 typedef struct testing_report_xml
@@ -74,6 +108,7 @@ typedef struct testing_report_xml
   int time_limit_ms;
   int real_time_limit_ms;
   int marked_flag;
+  int tests_mode;
   unsigned char *comment;       /* additional testing comment */
   unsigned char *valuer_comment;
   unsigned char *valuer_judge_comment;
@@ -82,9 +117,22 @@ typedef struct testing_report_xml
   unsigned char *errors;
 
   struct testing_report_test **tests;
+
+  int tt_row_count;
+  int tt_column_count;
+  struct testing_report_row **tt_rows;
+  struct testing_report_cell ***tt_cells;
 } *testing_report_xml_t;
 
+testing_report_xml_t testing_report_alloc(int run_id, int judge_id);
 testing_report_xml_t testing_report_parse_xml(const unsigned char *path);
 testing_report_xml_t testing_report_free(testing_report_xml_t r);
+void
+testing_report_unparse_xml(
+        FILE *out,
+        int utf8_mode,
+        int max_file_length,
+        int max_line_length,
+        testing_report_xml_t r);
 
 #endif /* __TESTING_REPORT_XML_H__ */
