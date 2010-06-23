@@ -5329,3 +5329,9 @@ run_inverse.c 5901 0 2436307
 fileutl.h 5902 0 234874
 unix/fileutl.c 5902 0 3297743
 win32/fileutl.c 5902 0 1810003
+misctext.h 5904 0 644813
+testing_report_xml.h 5904 0 271983
+run.c 5904 0 9518740
+misctext.c 5904 0 3008235
+run_inverse.c 5904 0 2977914
+testing_report_xml.c 5904 0 2871846
