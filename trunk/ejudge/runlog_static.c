@@ -18,6 +18,7 @@
 #include "config.h"
 
 #include "runlog.h"
+#include "problem_common.h"
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -43,14 +44,17 @@ run_status_str(
   case RUN_RUN_TIME_ERR:     s = _("Run-time error");      break;
   case RUN_TIME_LIMIT_ERR:   s = _("Time-limit exceeded"); break;
   case RUN_PRESENTATION_ERR:
-    if (prob_type) s = _("Wrong output format");
+    if (prob_type && prob_type != PROB_TYPE_TESTS) s = _("Wrong output format");
     else s = _("Presentation error");
     break;
   case RUN_WRONG_ANSWER_ERR: s = _("Wrong answer");        break;
   case RUN_CHECK_FAILED:     s = _("Check failed");        break;
   case RUN_PARTIAL:
-    if (prob_type && !var_score) s = _("Wrong answer");
-    else s = _("Partial solution");
+    if (prob_type && !var_score && prob_type != PROB_TYPE_TESTS) {
+      s = _("Wrong answer");
+    } else {
+      s = _("Partial solution");
+    }
     break;
   case RUN_ACCEPTED:         s = _("Accepted for testing"); break;
   case RUN_IGNORED:          s = _("Ignored");             break;

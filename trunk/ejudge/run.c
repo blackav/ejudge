@@ -2883,6 +2883,10 @@ do_loop(void)
       goto report_check_failed_and_continue;
     }
 
+    snprintf(run_base, sizeof(run_base), "%06d", req_pkt->run_id);
+    report_path[0] = 0;
+    full_report_path[0] = 0;
+
     if (cur_prob->type == PROB_TYPE_TESTS) {
       cr_serialize_lock(&serve_state);
       run_inverse_testing(&serve_state, req_pkt, &reply_pkt, cur_prob,
@@ -2925,7 +2929,6 @@ do_loop(void)
 
       snprintf(exe_pkt_name, sizeof(exe_pkt_name), "%s%s", pkt_name,
                req_pkt->exe_sfx);
-      snprintf(run_base, sizeof(run_base), "%06d", req_pkt->run_id);
       snprintf(exe_name, sizeof(exe_name), "%s%s", run_base, req_pkt->exe_sfx);
 
       r = generic_copy_file(REMOVE, global->run_exe_dir, exe_pkt_name, "",
@@ -2936,9 +2939,6 @@ do_loop(void)
                  global->run_exe_dir, exe_pkt_name);
         goto report_check_failed_and_continue;
       }
-
-      report_path[0] = 0;
-      full_report_path[0] = 0;
 
       /* start filling run_reply_packet */
       memset(&reply_pkt, 0, sizeof(reply_pkt));
@@ -3220,7 +3220,7 @@ check_config(void)
       continue;
     }
 
-    if (prb->type > 0) {
+    if (prb->type > 0 && prb->type != PROB_TYPE_TESTS) {
       // output-only problems have no input file
       if (prb->variant_num <= 0) {
         if (prb->use_corr) {
@@ -3349,7 +3349,7 @@ check_config(void)
         }
         n1 = n2 = 1;
       }
-    } else {
+    } else if (!prb->type) {
       /* check existence of tests */
       if (prb->variant_num <= 0) {
         if (global->advanced_layout > 0) {
