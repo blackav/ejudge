@@ -8882,6 +8882,8 @@ super_html_check_tests(FILE *f,
       }
     }
 
+    if (prob->type == PROB_TYPE_TESTS) goto skip_tests;
+
     // check tests
     if (prob->variant_num <= 0) {
       if (global->advanced_layout > 0) {
@@ -9145,6 +9147,8 @@ super_html_check_tests(FILE *f,
         goto check_failed;
     }
   }
+
+skip_tests:
 
   close_memstream(flog); flog = 0;
   fprintf(f, "<h2>Contest is set up OK</h2>\n");

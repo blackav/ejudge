@@ -72,10 +72,12 @@ struct testing_report_test
 
 struct testing_report_row
 {
-  int id;
+  int row;
   unsigned char *name;
   int must_fail;
   int status;
+  int nominal_score;
+  int score;
 };
 
 struct testing_report_cell

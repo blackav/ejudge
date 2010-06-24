@@ -854,14 +854,18 @@ run_inverse_testing(
   make_patterns(prob, test_pat, sizeof(test_pat), corr_pat, sizeof(corr_pat));
 
   snprintf(log_path, sizeof(log_path), "%s/%s.txt",
-           pkt_name, global->run_work_dir);
+           global->run_work_dir, pkt_name);
   if (!(log_f = fopen(log_path, "w"))) {
     // FIXME: fail miserably
     abort();
   }
+  fclose(log_f); log_f = 0;
+  if (!(log_f = fopen(log_path, "a"))) {
+    abort();
+  }
 
   /* fill the reply packet with initial values */
-  memset(&reply_pkt, 0, sizeof(reply_pkt));
+  memset(reply_pkt, 0, sizeof(*reply_pkt));
   reply_pkt->judge_id = req_pkt->judge_id;
   reply_pkt->contest_id = req_pkt->contest_id;
   reply_pkt->run_id = req_pkt->run_id;
@@ -940,7 +944,7 @@ Remaining field to fill:
     goto cleanup;
   }
 
-  snprintf(arch_path, sizeof(arch_path), "%s%s%s",
+  snprintf(arch_path, sizeof(arch_path), "%s/%s%s",
            global->run_work_dir, pkt_name,
            mime_type_get_suffix(req_pkt->mime_type));
 
@@ -953,7 +957,8 @@ Remaining field to fill:
 
   // invoke tar
   if (invoke_tar(log_f, log_path, arch_path, arch_dir) < 0) {
-    fprintf(log_f, "Error: tar extraction failed on file %s\n", arch_path);
+    fprintf(log_f, "Error: tar extraction failed on file %s in dir %s\n",
+            arch_path, arch_dir);
     goto cleanup;
   }
 
@@ -1091,7 +1096,7 @@ Remaining field to fill:
   for (i = 0; i < tt_row_count; ++i) {
     XCALLOC(tt_row, 1);
     tt_rows[i] = tt_row;
-    tt_row->id = i;
+    tt_row->row = i;
     tt_row->status = RUN_CHECK_FAILED;
     if (i >= good_count) {
       tt_row->name = xstrdup(fail_files[i - good_count]);
@@ -1100,6 +1105,8 @@ Remaining field to fill:
       tt_row->name = xstrdup(good_files[i]);
       tt_row->must_fail = 0;
     }
+    tt_row->nominal_score = -1;
+    tt_row->score = -1;
   }
   report_xml->tt_rows = tt_rows; tt_rows = 0;
 
@@ -1211,7 +1218,7 @@ cleanup:
     fail_files = 0; fail_count = 0;
   }
 
-  clear_directory(global->run_work_dir);
+  //clear_directory(global->run_work_dir);
   return;
 }
 

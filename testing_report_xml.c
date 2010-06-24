@@ -129,7 +129,6 @@ enum
   TR_A_TESTS_MODE,
   TR_A_TT_ROW_COUNT,
   TR_A_TT_COLUMN_COUNT,
-  TR_A_ID,
   TR_A_NAME,
   TR_A_MUST_FAIL,
   TR_A_ROW,
@@ -204,7 +203,6 @@ static const char * const attr_map[] =
   [TR_A_TESTS_MODE] = "tests-mode",
   [TR_A_TT_ROW_COUNT] = "tt-row-count",
   [TR_A_TT_COLUMN_COUNT] = "tt-column-count",
-  [TR_A_ID] = "id",
   [TR_A_NAME] = "name",
   [TR_A_MUST_FAIL] = "must-fail",
   [TR_A_ROW] = "row",
@@ -485,7 +483,8 @@ static int
 parse_ttrow(struct xml_tree *t, testing_report_xml_t r)
 {
   struct xml_attr *a;
-  int x, id = -1, status = RUN_CHECK_FAILED, must_fail = 0;
+  int x, row = -1, status = RUN_CHECK_FAILED, must_fail = 0;
+  int nominal_score = -1, score = -1;
   unsigned char *name = 0;
 
   if (t->tag != TR_T_TTROW) {
@@ -497,10 +496,10 @@ parse_ttrow(struct xml_tree *t, testing_report_xml_t r)
   }
   for (a = t->first; a; a = a->next) {
     switch (a->tag) {
-    case TR_A_ID:
+    case TR_A_ROW:
       if (xml_attr_int(a, &x) < 0) return -1;
       if (x < 0 || x >= r->tt_row_count) return xml_err_attr_invalid(a);
-      id = x;
+      row = x;
       break;
     case TR_A_NAME:
       name = a->text;
@@ -515,18 +514,30 @@ parse_ttrow(struct xml_tree *t, testing_report_xml_t r)
         return xml_err_attr_invalid(a);
       status = x;
       break;
+    case TR_A_NOMINAL_SCORE:
+      if (xml_attr_int(a, &x) < 0) return xml_err_attr_invalid(a);
+      if (x < 0 || x > EJ_MAX_SCORE) return xml_err_attr_invalid(a);
+      nominal_score = x;
+      break;
+    case TR_A_SCORE:
+      if (xml_attr_int(a, &x) < 0) return xml_err_attr_invalid(a);
+      if (x < 0 || x > EJ_MAX_SCORE) return xml_err_attr_invalid(a);
+      score = x;
+      break;
     default:
       return xml_err_attr_not_allowed(t, a);
     }
   }
 
-  if (id < 0) return xml_err_attr_undefined(t, TR_A_ID);
+  if (row < 0) return xml_err_attr_undefined(t, TR_A_ROW);
   if (!name) return xml_err_attr_undefined(t, TR_A_NAME);
 
-  r->tt_rows[id]->id = id;
-  r->tt_rows[id]->name = name;
-  r->tt_rows[id]->status = status;
-  r->tt_rows[id]->must_fail = must_fail;
+  r->tt_rows[row]->row = row;
+  r->tt_rows[row]->name = name;
+  r->tt_rows[row]->status = status;
+  r->tt_rows[row]->must_fail = must_fail;
+  r->tt_rows[row]->nominal_score = nominal_score;
+  r->tt_rows[row]->score = score;
 
   return 0;
 }
@@ -936,8 +947,10 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       struct testing_report_row *ttr = 0;
       XCALLOC(ttr, 1);
       r->tt_rows[i] = ttr;
-      ttr->id = i;
+      ttr->row = i;
       ttr->status = RUN_CHECK_FAILED;
+      ttr->nominal_score = -1;
+      ttr->score = -1;
       XCALLOC(r->tt_cells[i], r->tt_column_count);
       for (j = 0; j < r->tt_column_count; ++j) {
         struct testing_report_cell *ttc = 0;
@@ -1200,16 +1213,17 @@ testing_report_unparse_xml(
   int i, j;
   struct testing_report_row *ttr;
   struct testing_report_cell *ttc;
+  const unsigned char *scoring = 0;
 
   run_status_to_str_short(buf1, sizeof(buf1), r->status);
-  unparse_scoring_system(buf2, sizeof(buf2), r->scoring_system);
+  scoring = unparse_scoring_system(buf2, sizeof(buf2), r->scoring_system);
 
   fprintf(out, "<%s %s=\"%d\" %s=\"%d\" %s=\"%s\" %s=\"%s\" %s=\"%d\"",
           elem_map[TR_T_TESTING_REPORT],
           attr_map[TR_A_RUN_ID], r->run_id,
           attr_map[TR_A_JUDGE_ID], r->judge_id,
           attr_map[TR_A_STATUS], buf1,
-          attr_map[TR_A_SCORING], buf2,
+          attr_map[TR_A_SCORING], scoring,
           attr_map[TR_A_RUN_TESTS], r->run_tests);
 
   unparse_bool_attr(out, TR_A_ARCHIVE_AVAILABLE, r->archive_available);
@@ -1255,9 +1269,7 @@ testing_report_unparse_xml(
   }
   unparse_bool_attr2(out, TR_A_MARKED_FLAG, r->marked_flag);
   unparse_bool_attr(out, TR_A_TESTS_MODE, r->tests_mode);
-  if (r->tests_mode > 0) {
-    ASSERT(r->tt_row_count > 0);
-    ASSERT(r->tt_column_count > 0);
+  if (r->tests_mode > 0 && r->tt_row_count > 0  && r->tt_column_count > 0) {
     fprintf(out, " %s=\"%d\"", attr_map[TR_A_TT_ROW_COUNT], r->tt_row_count);
     fprintf(out, " %s=\"%d\"", attr_map[TR_A_TT_COLUMN_COUNT],
             r->tt_column_count);
@@ -1270,6 +1282,7 @@ testing_report_unparse_xml(
                       r->valuer_judge_comment);
   unparse_string_elem(out, &ab, TR_T_VALUER_ERRORS, r->valuer_errors);
   unparse_string_elem(out, &ab, TR_T_HOST, r->host);
+  unparse_string_elem(out, &ab, TR_T_ERRORS, r->errors);
 
   if (r->run_tests > 0 && r->tests) {
     fprintf(out, "  <%s>\n", elem_map[TR_T_TESTS]);
@@ -1341,8 +1354,8 @@ testing_report_unparse_xml(
     for (i = 0; i < r->tt_row_count; ++i) {
       run_status_to_str_short(buf1, sizeof(buf1), r->tt_rows[i]->status);
       if (!(ttr = r->tt_rows[i])) continue;
-      fprintf(out, "    <%s %s=\"%d\" %s=\"%s\" %s=\"%s\" %s=\"%s\"/>",
-              elem_map[TR_T_TTROW], attr_map[TR_A_ID], ttr->id,
+      fprintf(out, "    <%s %s=\"%d\" %s=\"%s\" %s=\"%s\" %s=\"%s\"/>\n",
+              elem_map[TR_T_TTROW], attr_map[TR_A_ROW], ttr->row,
               attr_map[TR_A_NAME], ARMOR(ttr->name),
               attr_map[TR_A_MUST_FAIL], xml_unparse_bool(ttr->must_fail),
               attr_map[TR_A_STATUS], buf1);
