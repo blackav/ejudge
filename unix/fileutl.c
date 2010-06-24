@@ -1741,7 +1741,7 @@ scan_executable_files(
   if (p_count) *p_count = 0;
   if (p_files) *p_files = 0;
 
-  if ((d = opendir(dir))) {
+  if (!(d = opendir(dir))) {
     err("scan_executable_file: no directory %s", dir);
     goto fail;
   }
@@ -1749,7 +1749,7 @@ scan_executable_files(
     if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
     snprintf(path, sizeof(path), "%s/%s", dir, dd->d_name);
     if (stat(path, &stb) < 0) continue;
-    if (!S_ISDIR(stb.st_mode)) continue;
+    if (!S_ISREG(stb.st_mode)) continue;
     if (access(path, X_OK) < 0) continue;
 
     if (count >= alloc) {
@@ -1768,7 +1768,7 @@ scan_executable_files(
   }
   closedir(d);
 
-  if (count > 0) {
+  if (count > 1) {
     qsort(files, count, sizeof(files[0]), name_sort_func);
   }
 
