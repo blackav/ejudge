@@ -1354,11 +1354,19 @@ testing_report_unparse_xml(
     for (i = 0; i < r->tt_row_count; ++i) {
       run_status_to_str_short(buf1, sizeof(buf1), r->tt_rows[i]->status);
       if (!(ttr = r->tt_rows[i])) continue;
-      fprintf(out, "    <%s %s=\"%d\" %s=\"%s\" %s=\"%s\" %s=\"%s\"/>\n",
+      fprintf(out, "    <%s %s=\"%d\" %s=\"%s\" %s=\"%s\" %s=\"%s\"",
               elem_map[TR_T_TTROW], attr_map[TR_A_ROW], ttr->row,
               attr_map[TR_A_NAME], ARMOR(ttr->name),
               attr_map[TR_A_MUST_FAIL], xml_unparse_bool(ttr->must_fail),
               attr_map[TR_A_STATUS], buf1);
+      if (ttr->nominal_score >= 0) {
+        fprintf(out, " %s=\"%d\"", attr_map[TR_A_NOMINAL_SCORE],
+                ttr->nominal_score);
+      }
+      if (ttr->score >= 0) {
+        fprintf(out, " %s=\"%d\"", attr_map[TR_A_SCORE], ttr->score);
+      }
+      fprintf(out, "/>\n");
     }
     fprintf(out, "  </%s>\n", elem_map[TR_T_TTROWS]);
   }
