@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,31 +16,12 @@
  */
 
 #include "checker_internal.h"
-#include <errno.h>
 
 int
-checker_read_in_int(const char *name,
-                    int eof_error_flag,
-                    int *p_val)
+checker_read_in_int(
+        const char *name,
+        int eof_error_flag,
+        int *p_val)
 {
-  int x;
-  char sb[128], *db = 0, *vb = 0, *ep = 0;
-  size_t ds = 0;
-
-  if (!name) name = "";
-  vb = checker_read_buf_2(0, name, eof_error_flag, sb, sizeof(sb), &db, &ds);
-  if (!vb) return -1;
-  errno = 0;
-  x = strtol(vb, &ep, 10);
-  if (*ep) fatal_CF("cannot parse int32 value for %s from input", name);
-  if (errno) fatal_CF("int32 value %s from input is out of range", name);
-  *p_val = x;
-  return 1;
+  return checker_read_int(0, name, eof_error_flag, p_val);
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

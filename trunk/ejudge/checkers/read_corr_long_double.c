@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,29 +18,10 @@
 #include "checker_internal.h"
 
 int
-checker_read_corr_long_double(const char *name,
-                              int eof_error_flag,
-                              long double *p_val)
+checker_read_corr_long_double(
+        const char *name,
+        int eof_error_flag,
+        long double *p_val)
 {
-  long double x = 0.0;
-  int n;
-
-  if (!name) name = "";
-  if ((n = fscanf(f_corr, "%Lf", &x)) != 1) {
-    if (ferror(f_corr)) fatal_CF("Input error from input file");
-    if (n == EOF) {
-      if (!eof_error_flag) return -1;
-      fatal_CF("Unexpected EOF while reading `%s'", name);
-    }
-    fatal_CF("Cannot parse long double value `%s'", name);
-  }
-  *p_val = x;
-  return 1;
+  return checker_read_long_double(2, name, eof_error_flag, p_val);
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

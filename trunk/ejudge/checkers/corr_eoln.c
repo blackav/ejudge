@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,17 +25,23 @@ checker_corr_eoln(int lineno)
   c = getc(f_corr);
   while (c != EOF && c != '\n' && isspace(c)) c = getc(f_corr);
   if (c != EOF && c != '\n') {
+    if (c < ' ') {
+      if (lineno > 0) {
+        fatal_CF("%s: %d: invalid control character with code %d",
+                 f_arr_names[2], lineno, c);
+      } else {
+        fatal_CF("%s: invalid control character with code %d",
+                 f_arr_names[2], c);
+      }
+    }
     if (lineno > 0) {
-      fatal_CF("correct: end-of-line expected at line %d", lineno);
+      fatal_CF("%s: %d: end-of-line expected",
+               f_arr_names[2], lineno);
     } else {
-      fatal_CF("correct: end-of-line expected");
+      fatal_CF("%s: end-of-line expected", f_arr_names[2]);
     }
   }
+  if (ferror(f_corr)) {
+    fatal_CF("%s: input error", f_arr_names[2]);
+  }
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

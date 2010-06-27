@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,16 +23,18 @@ checker_skip_eoln(int ind, int eof_error_flag)
   int c;
 
   c = getc(f_arr[ind]);
-  while (c != EOF && c != '\n') c = getc(f_arr[ind]);
+  while (c != EOF && c != '\n') {
+    if (!isspace(c) && c < ' ') {
+      fatal_read(ind, "invalid control character with code %d", c);
+    }
+    c = getc(f_arr[ind]);
+  }
   if (c == EOF && ferror(f_arr[ind])) {
-    fatal_CF("Input error while seeking EOLN");
+    fatal_CF("input error while seeking EOLN");
   }
   if (c == EOF) {
     if (!eof_error_flag) return -1;
-    if (ind == 1)
-      fatal_PE("Unexpected EOF while seeking EOLN");
-    else
-      fatal_CF("Unexpected EOF while seeking EOLN");
+    fatal_read(ind, "unexpected EOF while seeking EOLN");
   }
   return 0;
 }

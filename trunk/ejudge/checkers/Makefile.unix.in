@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2003-2007 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -101,7 +101,7 @@ distclean : clean
 
 install : all
 	mkdir -p "${DESTDIR}${includedir}/ejudge"
-	for i in checker.h checker_internal.h testinfo.h; do install -m 644 $$i "${DESTDIR}${includedir}/ejudge"; done
+	for i in checker.h checker_internal.h checkutils.h testinfo.h; do install -m 644 $$i "${DESTDIR}${includedir}/ejudge"; done
 	mkdir -p "${DESTDIR}${libdir}"
 	install -m 644 libchecker.a "${DESTDIR}${libdir}"
 	if [ x"${STATIC}" = x ]; then install -m 755 libchecker.so "${DESTDIR}${libdir}"; else rm -f "${DESTDIR}${libdir}/libchecker.so"; fi

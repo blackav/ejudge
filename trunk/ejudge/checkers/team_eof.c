@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,11 +20,20 @@
 void
 checker_out_eof(void)
 {
-  fscanf(f_out, " ");
-  if (ferror(f_out))
-    fatal_CF("Input error from output file");
-  if (getc(f_out) != EOF)
-    fatal_PE("Garbage in output file");
+  int c;
+
+  while ((c = getc(f_out)) != EOF && isspace(c));
+  if (c != EOF) {
+    if (c < ' ') {
+      fatal_PE("%s: invalid control character with code %d",
+               f_arr_names[1], c);
+    } else {
+      fatal_PE("%s: garbage where EOF expected", f_arr_names[1]);
+    }
+  }
+  if (ferror(f_out)) {
+    fatal_CF("%s: input error", f_arr_names[1]);
+  }
 }
 
 void
@@ -32,10 +41,3 @@ checker_team_eof(void)
 {
   return checker_out_eof();
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */
