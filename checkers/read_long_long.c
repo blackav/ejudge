@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,13 +16,15 @@
  */
 
 #include "checker_internal.h"
+
 #include <errno.h>
 
 int
-checker_read_long_long(int ind,
-                       const char *name,
-                       int eof_error_flag,
-                       long long *p_val)
+checker_read_long_long(
+        int ind,
+        const char *name,
+        int eof_error_flag,
+        long long *p_val)
 {
   long long x;
   char sb[128], *db = 0, *vb = 0, *ep = 0;
@@ -31,17 +33,13 @@ checker_read_long_long(int ind,
   if (!name) name = "";
   vb = checker_read_buf_2(ind, name, eof_error_flag, sb, sizeof(sb), &db, &ds);
   if (!vb) return -1;
+  if (!*vb) {
+    fatal_read(ind, "%s: no int64 value", name);
+  }
   errno = 0;
   x = strtoll(vb, &ep, 10);
-  if (*ep) fatal_read(ind, "cannot parse int64 value for %s", name);
-  if (errno) fatal_read(ind, "int64 value %s is out of range", name);
+  if (*ep) fatal_read(ind, "%s: cannot parse int64 value", name);
+  if (errno) fatal_read(ind, "%s: int64 value is out of range", name);
   *p_val = x;
   return 1;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

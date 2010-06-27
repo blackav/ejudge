@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,13 +16,15 @@
  */
 
 #include "checker_internal.h"
+
 #include <errno.h>
 
 int
-checker_read_unsigned_int(int ind,
-                          const char *name,
-                          int eof_error_flag,
-                          unsigned int *p_val)
+checker_read_unsigned_int(
+        int ind,
+        const char *name,
+        int eof_error_flag,
+        unsigned int *p_val)
 {
   unsigned int x;
   char sb[128], *db = 0, *vb = 0, *ep = 0;
@@ -31,18 +33,21 @@ checker_read_unsigned_int(int ind,
   if (!name) name = "";
   vb = checker_read_buf_2(ind, name, eof_error_flag, sb, sizeof(sb), &db, &ds);
   if (!vb) return -1;
-  if (vb[0] == '-') fatal_read(ind, "minus sign before uint32 value");
+  if (!*vb) {
+    fatal_read(ind, "%s: no uint32 value", name);
+  }
+
+  if (vb[0] == '-') {
+    fatal_read(ind, "%s: `-' before uint32 value", name);
+  }
   errno = 0;
   x = strtoul(vb, &ep, 10);
-  if (*ep) fatal_read(ind, "cannot parse uint32 value for %s", name);
-  if (errno) fatal_read(ind, "uint32 value %s is out of range", name);
+  if (*ep) {
+    fatal_read(ind, "%s: cannot parse uint32 value", name);
+  }
+  if (errno) {
+    fatal_read(ind, "%s: uint32 value is out of range", name);
+  }
   *p_val = x;
   return 1;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

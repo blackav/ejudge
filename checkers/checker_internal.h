@@ -3,7 +3,7 @@
 
 /* $Id$ */
 
-/* Copyright (C) 2003-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -119,6 +119,9 @@ typedef __int64 libchecker_i64_t;
 typedef unsigned __int64 libchecker_u64_t;
 #endif
 
+typedef void (*checker_error_func_t)(char const *format, ...)
+         LIBCHECKER_ATTRIB((noreturn, format(printf, 1, 2)));
+
 void fatal(int code, char const *format, ...)
          LIBCHECKER_ATTRIB((noreturn, format(printf, 2, 3)));
 void fatal_CF(char const *format, ...)
@@ -149,6 +152,10 @@ int  checker_read_buf(int, const char *, int,
         LIBCHECKER_ATTRIB((deprecated));
 char *checker_read_buf_2(int ind, const char *name, int eof_error_flag,
                          char *sbuf, size_t ssz, char **pdbuf, size_t *pdsz);
+
+void checker_in_open(const char *path);
+void checker_out_open(const char *path);
+void checker_corr_open(const char *path);
 
 void checker_read_file(int, char **, size_t *);
 void checker_read_file_f(FILE *, char **, size_t *);
@@ -259,6 +266,87 @@ int  checker_read_team_double(const char *, int, double *)
 int  checker_read_team_long_double(const char *, int, long double *)
   __attribute__((deprecated));
 #endif
+
+/* new generation functions */
+
+void
+checker_eof(
+        FILE *f,
+        checker_error_func_t error_func,
+        const char *name);
+
+void
+checker_eoln(
+        FILE *f,
+        checker_error_func_t error_func,
+        const char *name,
+        int lineno);
+
+int
+checker_skip_eoln_ex(
+        FILE *f,
+        checker_error_func_t error_func,
+        const char *name,
+        int eof_error_flag);
+
+char *
+checker_read_buf_ex(
+        FILE *f,
+        checker_error_func_t error_func,
+        const char *name,
+        int eof_error_flag,
+        char *sbuf,             /* static buffer pointer */
+        size_t ssz,             /* static buffer size */
+        char **pdbuf,           /* dynamic pointer */
+        size_t *pdsz);          /* dynamic size */
+
+int
+checker_read_int_ex(
+        FILE *f,
+        checker_error_func_t error_func,
+        const char *name,
+        int eof_error_flag,
+        int *p_val);
+
+int
+checker_read_unsigned_int_ex(
+        FILE *f,
+        checker_error_func_t error_func,
+        const char *name,
+        int eof_error_flag,
+        unsigned int *p_val);
+
+int
+checker_read_long_long_ex(
+        FILE *f,
+        checker_error_func_t error_func,
+        const char *name,
+        int eof_error_flag,
+        long long *p_val);
+
+int
+checker_read_unsigned_long_long_ex(
+        FILE *f,
+        checker_error_func_t error_func,
+        const char *name,
+        int eof_error_flag,
+        unsigned long long *p_val);
+
+int
+checker_read_double_ex(
+        FILE *f,
+        checker_error_func_t error_func,
+        const char *name,
+        int eof_error_flag,
+        double *p_val);
+
+int
+checker_read_long_double_ex(
+        FILE *f,
+        checker_error_func_t error_func,
+        const char *name,
+        int eof_error_flag,
+        long double *p_val);
 
 #ifdef __cplusplus
 }

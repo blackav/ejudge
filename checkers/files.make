@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru>
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,6 +14,9 @@
 # Lesser General Public License for more details.
 
 CFILES=\
+ in_open.c\
+ out_open.c\
+ corr_open.c\
  in_close.c\
  team_close.c\
  corr_close.c\
@@ -24,6 +27,7 @@ CFILES=\
  eq_long_double.c\
  eq_long_double_abs.c\
  eq_sexpr.c\
+ eof.c\
  in_eof.c\
  team_eof.c\
  corr_eof.c\
@@ -34,19 +38,27 @@ CFILES=\
  normalize_spaces_in_file.c\
  normalize_line.c\
  skip_eoln.c\
+ skip_eoln_ex.c\
  read_buf.c\
  read_buf_2.c\
+ read_buf_ex.c\
  read_file_by_line.c\
  read_file_by_line_f.c\
  read_file.c\
  read_file_f.c\
  read_line.c\
  read_int.c\
+ read_int_ex.c\
  read_unsigned_int.c\
+ read_unsigned_int_ex.c\
  read_long_long.c\
+ read_long_long_ex.c\
  read_unsigned_long_long.c\
+ read_unsigned_long_long_ex.c\
  read_double.c\
+ read_double_ex.c\
  read_long_double.c\
+ read_long_double_ex.c\
  read_in_int.c\
  read_in_unsigned_int.c\
  read_in_long_long.c\

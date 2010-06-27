@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,11 +25,23 @@ checker_out_eoln(int lineno)
   c = getc(f_out);
   while (c != EOF && c != '\n' && isspace(c)) c = getc(f_out);
   if (c != EOF && c != '\n') {
-    if (lineno > 0) {
-      fatal_PE("output: end-of-line expected at line %d", lineno);
-    } else {
-      fatal_PE("output: end-of-line expected");
+    if (c < ' ') {
+      if (lineno > 0) {
+        fatal_PE("%s: %d: invalid control character with code %d",
+                 f_arr_names[1], lineno, c);
+      } else {
+        fatal_PE("%s: invalid control character with code %d",
+                 f_arr_names[1], c);
+      }
     }
+    if (lineno > 0) {
+      fatal_PE("%s: %d: end-of-line expected", f_arr_names[1], lineno);
+    } else {
+      fatal_PE("%s: end-of-line expected", f_arr_names[1]);
+    }
+  }
+  if (ferror(f_in)) {
+    fatal_CF("%s: input error", f_arr_names[1]);
   }
 }
 
@@ -38,10 +50,3 @@ checker_team_eoln(int lineno)
 {
   return checker_out_eoln(lineno);
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */
