@@ -751,35 +751,36 @@ analyze_results(
         testing_report_xml_t report_xml)
 {
   int i, j, score = 0;
+  int status = RUN_CHECK_FAILED;
 
   if (!report_xml->tt_rows) {
-    fprintf(stderr, "Error: tt_rows == NULL\n");
-    goto check_failed;
+    fprintf(log_f, "Error: tt_rows == NULL\n");
+    goto done;
   }
   if (!report_xml->tt_cells) {
-    fprintf(stderr, "Error: tt_cells == NULL\n");
-    goto check_failed;
+    fprintf(log_f, "Error: tt_cells == NULL\n");
+    goto done;
   }
 
   for (i = 0; i < report_xml->tt_row_count; ++i) {
     if (!report_xml->tt_rows[i]) {
-      fprintf(stderr, "Error: tt_rows[%d] == NULL\n", i);
-      goto check_failed;
+      fprintf(log_f, "Error: tt_rows[%d] == NULL\n", i);
+      goto done;
     }
     if (!report_xml->tt_cells[i]) {
-      fprintf(stderr, "Error: tt_cells[%d] == NULL\n", i);
-      goto check_failed;
+      fprintf(log_f, "Error: tt_cells[%d] == NULL\n", i);
+      goto done;
     }
     if (report_xml->tt_rows[i]->status == RUN_CHECK_FAILED) {
-      goto check_failed;
+      goto done;
     }
     for (j = 0; j < report_xml->tt_column_count; ++j) {
       if (!report_xml->tt_cells[i][j]) {
-        fprintf(stderr, "Error: tt_cells[%d][%d] == NULL\n", i, j);
-        goto check_failed;
+        fprintf(log_f, "Error: tt_cells[%d][%d] == NULL\n", i, j);
+        goto done;
       }
       if (report_xml->tt_cells[i][j]->status == RUN_CHECK_FAILED) {
-        goto check_failed;
+        goto done;
       }
     }
   }
@@ -788,29 +789,24 @@ analyze_results(
     if (report_xml->tt_rows[i]->must_fail <= 0) {
       // this sample program must be OK
       if (report_xml->tt_rows[i]->status != RUN_OK)
-        goto wrong_answer;
+        status = RUN_WRONG_ANSWER_ERR;
+        goto done;
     } else {
       // this sample program must fail
       if (report_xml->tt_rows[i]->status == RUN_OK)
-        goto wrong_answer;
+        status = RUN_WRONG_ANSWER_ERR;
+        goto done;
     }
   }
 
   score = report_xml->max_score;
-  report_xml->status = RUN_OK;
-  reply_pkt->status = RUN_OK;
   report_xml->score = score;
   reply_pkt->score = score;
-  return;
+  status = RUN_OK;
 
-wrong_answer:
-  report_xml->status = RUN_WRONG_ANSWER_ERR;
-  reply_pkt->status = RUN_WRONG_ANSWER_ERR;
-  return;
-
-check_failed:
-  report_xml->status = RUN_CHECK_FAILED;
-  reply_pkt->status = RUN_CHECK_FAILED;
+done:
+  report_xml->status = status;
+  reply_pkt->status = status;
   return;
 }
 
