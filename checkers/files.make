@@ -44,9 +44,11 @@ CFILES=\
  read_buf_ex.c\
  read_file_by_line.c\
  read_file_by_line_f.c\
+ read_file_by_line_ex.c\
  read_file.c\
  read_file_f.c\
  read_line.c\
+ read_line_ex.c\
  read_int.c\
  read_int_ex.c\
  read_unsigned_int.c\

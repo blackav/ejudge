@@ -289,6 +289,22 @@ checker_skip_eoln_ex(
         const char *name,
         int eof_error_flag);
 
+void
+checker_read_file_by_line_ex(
+        FILE *f,
+        checker_error_func_t error_func,
+        const char *name,
+        char ***out_lines,
+        size_t *out_lines_num);
+
+int
+checker_read_line_ex(
+        FILE *f,
+        checker_error_func_t error_func,
+        const char *name,
+        int eof_error_flag,
+        char **out_str);
+
 char *
 checker_read_buf_ex(
         FILE *f,
