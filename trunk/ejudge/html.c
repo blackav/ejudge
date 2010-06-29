@@ -4246,6 +4246,120 @@ write_public_log(
   return;
 }
 
+#define BGCOLOR_CHECK_FAILED " bgcolor=\"#FF80FF\""
+#define BGCOLOR_FAIL         " bgcolor=\"#FF8080\""
+#define BGCOLOR_PASS         " bgcolor=\"#80FF80\""
+
+int
+write_xml_team_tests_report(
+        const serve_state_t state,
+        const struct section_problem_data *prob,
+        FILE *f,
+        const unsigned char *txt,
+        const unsigned char *table_class)
+{
+  testing_report_xml_t r = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char *cl = 0;
+  const unsigned char *font_color = 0;
+  const unsigned char *comment = 0;
+  const unsigned char *bgcolor = 0;
+  const unsigned char *fail_str = 0;
+  int i;
+  struct testing_report_row *trr = 0;
+
+  if (!(r = testing_report_parse_xml(txt))) {
+    fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
+    fprintf(f, "<pre>%s</pre>\n", ARMOR(txt));
+    goto done;
+  }
+
+  if (!r->tests_mode) {
+    fprintf(f, "<p><big>Invalid XML file!</big></p>\n");
+    fprintf(f, "<pre>%s</pre>\n", ARMOR(txt));
+    goto done;
+  }
+
+  if (table_class && *table_class) {
+    cl = (unsigned char *) alloca(strlen(table_class) + 16);
+    sprintf(cl, " class=\"%s\"", table_class);
+  }
+
+  if (r->status == RUN_CHECK_FAILED) {
+    font_color = " color=\"magenta\"";
+  } else if (r->status == RUN_OK || r->status == RUN_ACCEPTED) {
+    font_color = " color=\"green\"";
+  } else {
+    font_color = " color=\"red\"";
+  }
+  fprintf(f, "<h2><font%s>%s</font></h2>\n",
+          font_color, run_status_str(r->status, 0, 0, 0, 0));
+
+  if (r->status == RUN_CHECK_FAILED) {
+    goto done;
+  }
+
+  if (r->errors && (r->tt_row_count <= 0 || r->tt_column_count <= 0)) {
+    fprintf(f, "<h3>%s</h3>\n", _("Testing messages"));
+    fprintf(f, "<pre>%s</pre>\n", ARMOR(r->errors));
+  }
+
+  if (r->tt_row_count <= 0 || r->tt_column_count <= 0) {
+    goto done;
+  }
+
+  fprintf(f, "<p>%s: %d.</p>\n",
+          _("Total number of sample programs in the test suite"),
+          r->tt_row_count);
+  fprintf(f, "<p>%s: %d.</p>\n",
+          _("Total number of submitted tests"),
+          r->tt_column_count);
+
+  fprintf(f, "<table%s>\n", cl);
+  fprintf(f, "<tr>");
+  fprintf(f, "<td%s>NN</td>", cl);
+  fprintf(f, "<td%s>Pass/fail</td>", cl);
+  fprintf(f, "<td%s>%s</td>", cl, _("Comment"));
+  fprintf(f, "</tr>\n");
+
+  for (i = 0; i < r->tt_row_count; ++i) {
+    fprintf(f, "<tr>");
+    trr = r->tt_rows[i];
+    comment = "&nbsp;";
+    if (trr->status == RUN_CHECK_FAILED) {
+      bgcolor = BGCOLOR_CHECK_FAILED;
+    } else if (trr->status == RUN_OK) {
+      if (trr->must_fail) {
+        bgcolor = BGCOLOR_FAIL;
+        comment = _("This test program is incorrect, but passed all tests");
+      } else {
+        bgcolor = BGCOLOR_PASS;
+      }
+    } else {
+      if (trr->must_fail) {
+        bgcolor = BGCOLOR_PASS;
+      } else {
+        bgcolor = BGCOLOR_FAIL;
+        comment = _("This test program is correct, but failed on some tests");
+      }
+    }
+    fail_str = "pass";
+    if (trr->must_fail) fail_str = "fail";
+    fprintf(f, "<td%s%s>%d</td>", cl, bgcolor, i + 1);
+    fprintf(f, "<td%s%s>%s</td>", cl, bgcolor, fail_str);
+    fprintf(f, "<td%s%s>%s</td>", cl, bgcolor, comment);
+    fprintf(f, "</tr>\n");
+  }
+
+  fprintf(f, "</table>\n");
+
+
+done:
+  testing_report_free(r);
+  html_armor_free(&ab);
+  return 0;
+}
+
 int
 write_xml_team_testing_report(
         const serve_state_t state,

@@ -888,10 +888,12 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
   if ((r->scoring_system == SCORE_ACM && r->status != RUN_OK)
       || (r->scoring_system == SCORE_OLYMPIAD && r->accepting_mode
           && r->status != RUN_ACCEPTED)) {
+    /*
     if (r->failed_test < 0) {
       xml_err_attr_undefined(t, TR_A_FAILED_TEST);
       return -1;
     }
+    */
     if (r->tests_passed >= 0) {
       xml_err_attr_not_allowed(t, a_tests_passed);
       return -1;
@@ -941,26 +943,28 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
   }
 
   if (r->tests_mode > 0) {
-    XCALLOC(r->tt_rows, r->tt_row_count);
-    XCALLOC(r->tt_cells, r->tt_row_count);
-    for (i = 0; i < r->tt_row_count; ++i) {
-      struct testing_report_row *ttr = 0;
-      XCALLOC(ttr, 1);
-      r->tt_rows[i] = ttr;
-      ttr->row = i;
-      ttr->status = RUN_CHECK_FAILED;
-      ttr->nominal_score = -1;
-      ttr->score = -1;
-      XCALLOC(r->tt_cells[i], r->tt_column_count);
-      for (j = 0; j < r->tt_column_count; ++j) {
-        struct testing_report_cell *ttc = 0;
-        XCALLOC(ttc, 1);
-        r->tt_cells[i][j] = ttc;
-        ttc->row = i;
-        ttc->column = j;
-        ttc->status = RUN_CHECK_FAILED;
-        ttc->time = -1;
-        ttc->real_time = -1;
+    if (r->tt_row_count > 0 && r->tt_column_count > 0) {
+      XCALLOC(r->tt_rows, r->tt_row_count);
+      XCALLOC(r->tt_cells, r->tt_row_count);
+      for (i = 0; i < r->tt_row_count; ++i) {
+        struct testing_report_row *ttr = 0;
+        XCALLOC(ttr, 1);
+        r->tt_rows[i] = ttr;
+        ttr->row = i;
+        ttr->status = RUN_CHECK_FAILED;
+        ttr->nominal_score = -1;
+        ttr->score = -1;
+        XCALLOC(r->tt_cells[i], r->tt_column_count);
+        for (j = 0; j < r->tt_column_count; ++j) {
+          struct testing_report_cell *ttc = 0;
+          XCALLOC(ttc, 1);
+          r->tt_cells[i][j] = ttc;
+          ttc->row = i;
+          ttc->column = j;
+          ttc->status = RUN_CHECK_FAILED;
+          ttc->time = -1;
+          ttc->real_time = -1;
+        }
       }
     }
   }
@@ -1238,9 +1242,13 @@ testing_report_unparse_xml(
   unparse_bool_attr(out, TR_A_ACCEPTING_MODE, r->accepting_mode);
   if (r->scoring_system == SCORE_OLYMPIAD && r->accepting_mode > 0
       && r->status != RUN_ACCEPTED) {
-    fprintf(out, " %s=\"%d\"", attr_map[TR_A_FAILED_TEST], r->failed_test);
+    if (r->failed_test > 0) {
+      fprintf(out, " %s=\"%d\"", attr_map[TR_A_FAILED_TEST], r->failed_test);
+    }
   } else if (r->scoring_system == SCORE_ACM && r->status != RUN_OK) {
-    fprintf(out, " %s=\"%d\"", attr_map[TR_A_FAILED_TEST], r->failed_test);
+    if (r->failed_test > 0) {
+      fprintf(out, " %s=\"%d\"", attr_map[TR_A_FAILED_TEST], r->failed_test);
+    }
   } else if (r->scoring_system == SCORE_OLYMPIAD && r->accepting_mode <= 0) {
     fprintf(out, " %s=\"%d\" %s=\"%d\" %s=\"%d\"",
             attr_map[TR_A_TESTS_PASSED], r->tests_passed,
@@ -1253,7 +1261,9 @@ testing_report_unparse_xml(
             attr_map[TR_A_MAX_SCORE], r->max_score);
   } else if (r->scoring_system == SCORE_MOSCOW) {
     if (r->status != RUN_OK) {
-      fprintf(out, " %s=\"%d\"", attr_map[TR_A_FAILED_TEST], r->failed_test);
+      if (r->failed_test > 0) {
+        fprintf(out, " %s=\"%d\"", attr_map[TR_A_FAILED_TEST], r->failed_test);
+      }
     }
     fprintf(out, " %s=\"%d\" %s=\"%d\"",
             attr_map[TR_A_SCORE], r->score,

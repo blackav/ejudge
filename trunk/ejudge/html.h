@@ -130,11 +130,31 @@ int write_xml_testing_report(FILE *f, int user_mode, unsigned char const *txt,
                              const int *actions_vector,
                              const unsigned char *class1,
                              const unsigned char *class2);
+int
+write_xml_tests_report(
+        FILE *f,
+        int user_mode,
+        unsigned char const *txt,
+        ej_cookie_t sid,
+        unsigned char const *self_url,
+        unsigned char const *extra_args,
+        const unsigned char *class1,
+        const unsigned char *class2);
+
 int write_xml_team_testing_report(serve_state_t,
                                   const struct section_problem_data *prob,
                                   FILE *f, int output_only,
                                   const unsigned char *txt,
                                   const unsigned char *table_class);
+
+int
+write_xml_team_tests_report(
+        const serve_state_t state,
+        const struct section_problem_data *prob,
+        FILE *f,
+        const unsigned char *txt,
+        const unsigned char *table_class);
+
 
 void generate_daily_statistics(const serve_state_t, FILE *f,
                                time_t from_time, time_t to_time, int utf8_mode);

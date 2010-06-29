@@ -191,6 +191,165 @@ write_change_status_dialog(const serve_state_t state,
 
 #define BITS_PER_LONG (8*sizeof(unsigned long)) 
 
+#define BGCOLOR_CHECK_FAILED " bgcolor=\"#FF80FF\""
+#define BGCOLOR_FAIL         " bgcolor=\"#FF8080\""
+#define BGCOLOR_PASS         " bgcolor=\"#80FF80\""
+
+int
+write_xml_tests_report(
+        FILE *f,
+        int user_mode,
+        unsigned char const *txt,
+        ej_cookie_t sid,
+        unsigned char const *self_url,
+        unsigned char const *extra_args,
+        const unsigned char *class1,
+        const unsigned char *class2)
+{
+  unsigned char *cl1 = " border=\"1\"";
+  unsigned char *cl2 = "";
+  testing_report_xml_t r = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *font_color = "";
+  const unsigned char *bgcolor = "";
+  const unsigned char *fail_str = "";
+  int i, j;
+  struct testing_report_row *trr = 0;
+  struct testing_report_cell *trc = 0;
+  unsigned char buf[64];
+
+  if (class1 && *class1) {
+    cl1 = (unsigned char *) alloca(strlen(class1) + 16);
+    sprintf(cl1, " class=\"%s\"", class1);
+  }
+  if (class2 && *class2) {
+    cl2 = (unsigned char*) alloca(strlen(class2) + 16);
+    sprintf(cl2, " class=\"%s\"", class2);
+  }
+
+  if (!(r = testing_report_parse_xml(txt))) {
+    fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
+    fprintf(f, "<pre>%s</pre>\n", ARMOR(txt));
+    goto done;
+  }
+
+  if (!r->tests_mode) {
+    fprintf(f, "<p><big>Invalid XML file!</big></p>\n");
+    fprintf(f, "<pre>%s</pre>\n", ARMOR(txt));
+    goto done;
+  }
+
+  if (r->status == RUN_CHECK_FAILED) {
+    font_color = " color=\"magenta\"";
+  } else if (r->status == RUN_OK || r->status == RUN_ACCEPTED) {
+    font_color = " color=\"green\"";
+  } else {
+    font_color = " color=\"red\"";
+  }
+  fprintf(f, "<h2><font%s>%s</font></h2>\n",
+          font_color, run_status_str(r->status, 0, 0, 0, 0));
+
+  if (user_mode && r->status == RUN_CHECK_FAILED) {
+    goto done;
+  }
+
+  if (r->comment) {
+    fprintf(f, "<h3>%s</h3>\n", _("Testing comments"));
+    fprintf(f, "<pre>%s</pre>\n", ARMOR(r->comment));
+  }
+
+  if (r->errors) {
+    fprintf(f, "<h3>%s</h3>\n", _("Testing messages"));
+    fprintf(f, "<pre>%s</pre>\n", ARMOR(r->errors));
+  }
+
+  if (r->valuer_comment || r->valuer_judge_comment || r->valuer_errors) {
+    fprintf(f, "<h3>%s</h3>\n", _("Valuer information"));
+    if (r->valuer_comment) {
+      fprintf(f, "<b><u>%s</u></b><br/><pre>%s</pre>\n",
+              _("Valuer comments"), ARMOR(r->valuer_comment));
+    }
+    if (r->valuer_judge_comment) {
+      fprintf(f, "<b><u>%s</u></b><br/><pre>%s</pre>\n",
+              _("Valuer judge comments"), ARMOR(r->valuer_judge_comment));
+    }
+    if (r->valuer_errors) {
+      fprintf(f, "<b><u>%s</u></b><br/><pre><font color=\"red\">%s</font></pre>\n",
+              _("Valuer errors"), ARMOR(r->valuer_errors));
+    }
+  }
+
+  if (r->host && !user_mode) {
+    fprintf(f, "<p><big>Tested on host: %s</big></p>\n", r->host);
+  }
+
+  if (r->tt_row_count <= 0 || r->tt_column_count <= 0) {
+    fprintf(f, "<p>%s</p>\n",
+            _("Further testing information is not available"));
+    goto done;
+  }
+
+  fprintf(f, "<p>%s: %d.</p>\n",
+          _("Total number of sample programs in the test suite"),
+          r->tt_row_count);
+  fprintf(f, "<p>%s: %d.</p>\n",
+          _("Total number of submitted tests"),
+          r->tt_column_count);
+
+  fprintf(f, "<table%s>\n", cl1);
+  fprintf(f, "<tr>");
+  fprintf(f, "<td%s>&nbsp;</td>", cl1);
+  fprintf(f, "<td%s>&nbsp;</td>", cl1);
+  fprintf(f, "<td%s>&nbsp;</td>", cl1);
+  for (j = 0; j < r->tt_column_count; ++j) {
+    fprintf(f, "<td%s>%d</td>", cl1, j + 1);
+  }
+  fprintf(f, "</tr>\n");
+  for (i = 0; i < r->tt_row_count; ++i) {
+    fprintf(f, "<tr>");
+    trr = r->tt_rows[i];
+    if (trr->status == RUN_CHECK_FAILED) {
+      bgcolor = BGCOLOR_CHECK_FAILED;
+    } else if (trr->status == RUN_OK) {
+      if (trr->must_fail) {
+        bgcolor = BGCOLOR_FAIL;
+      } else {
+        bgcolor = BGCOLOR_PASS;
+      }
+    } else {
+      if (trr->must_fail) {
+        bgcolor = BGCOLOR_PASS;
+      } else {
+        bgcolor = BGCOLOR_FAIL;
+      }
+    }
+    fail_str = "pass";
+    if (trr->must_fail) fail_str = "fail";
+    fprintf(f, "<td%s%s>%d</td>", cl1, bgcolor, i + 1);
+    fprintf(f, "<td%s%s><tt>%s</tt></td>", cl1, bgcolor, ARMOR(trr->name));
+    fprintf(f, "<td%s%s>%s</td>", cl1, bgcolor, fail_str);
+    for (j = 0; j < r->tt_column_count; ++j) {
+      trc = r->tt_cells[i][j];
+      if (trc->status == RUN_CHECK_FAILED) {
+        bgcolor = BGCOLOR_CHECK_FAILED;
+      } else if (trc->status == RUN_OK) {
+        bgcolor = BGCOLOR_PASS;
+      } else {
+        bgcolor = BGCOLOR_FAIL;
+      }
+      run_status_to_str_short(buf, sizeof(buf), trc->status);
+      fprintf(f, "<td%s%s><tt>%s</tt></td>", cl1, bgcolor, buf);
+    }
+    fprintf(f, "</tr>\n");
+  }
+  fprintf(f, "</table>\n");
+
+done:
+  testing_report_free(r);
+  html_armor_free(&ab);
+  return 0;
+}
+
 int
 write_xml_testing_report(
         FILE *f,
@@ -272,16 +431,16 @@ write_xml_testing_report(
   if (r->valuer_comment || r->valuer_judge_comment || r->valuer_errors) {
     fprintf(f, "<h3>%s</h3>\n", _("Valuer information"));
     if (r->valuer_comment) {
-    fprintf(f, "<b><u>%s</u></b><br/><pre>%s</pre>\n",
-            _("Valuer comments"), ARMOR(r->valuer_comment));
+      fprintf(f, "<b><u>%s</u></b><br/><pre>%s</pre>\n",
+              _("Valuer comments"), ARMOR(r->valuer_comment));
     }
     if (r->valuer_judge_comment) {
-    fprintf(f, "<b><u>%s</u></b><br/><pre>%s</pre>\n",
-            _("Valuer judge comments"), ARMOR(r->valuer_judge_comment));
+      fprintf(f, "<b><u>%s</u></b><br/><pre>%s</pre>\n",
+              _("Valuer judge comments"), ARMOR(r->valuer_judge_comment));
     }
     if (r->valuer_errors) {
-    fprintf(f, "<b><u>%s</u></b><br/><pre><font color=\"red\">%s</font></pre>\n",
-            _("Valuer errors"), ARMOR(r->valuer_errors));
+      fprintf(f, "<b><u>%s</u></b><br/><pre><font color=\"red\">%s</font></pre>\n",
+              _("Valuer errors"), ARMOR(r->valuer_errors));
     }
   }
 
