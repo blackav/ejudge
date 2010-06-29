@@ -37,6 +37,8 @@
 #include <reuse/logger.h>
 
 #include <ctype.h>
+#include <errno.h>
+#include <stdarg.h>
 
 #define GOOD_DIR_NAME "good"
 #define FAIL_DIR_NAME "fail"
@@ -48,14 +50,41 @@ struct run_info
   long real_time_ms;
 };
 
-/*
-static void
-generate_xml_report(
-        const unsigned char *report_path,
-        const struct run_request_packet *req_pkt)
+static void plog(FILE *f, const char *pfx, const char *format, ...)
+  __attribute__((format(printf, 3, 4)));
+static void plog(FILE *f, const char *pfx, const char *format, ...)
 {
+  char buf[1024];
+  va_list args;
+
+  if (!f) return;
+
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+
+  if (pfx) {
+    fprintf(f, "%s: %s\n", pfx, buf);
+  } else {
+    fprintf(f, "%s\n", buf);
+  }
 }
-*/
+
+static void perr(FILE *f, const char *format, ...)
+  __attribute__((format(printf, 2, 3)));
+static void perr(FILE *f, const char *format, ...)
+{
+  char buf[1024];
+  va_list args;
+
+  if (!f) return;
+
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+
+  fprintf(f, "Error: %s\n", buf);
+}
 
 static void
 make_patterns(
@@ -108,13 +137,13 @@ invoke_tar(
 
   fflush(log_f);
   if (task_Start(tsk) < 0) {
-    fprintf(log_f, "invoke_tar: failed to start /bin/tar\n");
+    plog(log_f, "invoke_tar", "failed to start /bin/tar");
     task_Delete(tsk);
     return -1;
   }
   task_Wait(tsk);
   if (task_IsAbnormal(tsk)) {
-    fprintf(log_f, "invoke_tar: /bin/tar failed\n");
+    plog(log_f, "invoke_tar", "/bin/tar failed");
     task_Delete(tsk);
     return -1;
   }
@@ -152,19 +181,19 @@ count_tests(
       return serial - 1;
     }
     if (r1 < 0 && r2 >= 0) {
-      fprintf(log_f, "Test file %s does not exist, but answer file %s does exist\n", test_name, corr_name);
+      plog(log_f, 0, "Test file %s does not exist, but answer file %s does exist", test_name, corr_name);
       return -1;
     }
     if (r1 >= 0 && r2 < 0) {
-      fprintf(log_f, "Test file %s does exist, but answer file %s does not exist\n", test_name, corr_name);
+      plog(log_f, 0, "Test file %s does exist, but answer file %s does not exist", test_name, corr_name);
       return -1;
     }
     if (r1 != OSPK_REG) {
-      fprintf(log_f, "Test file %s is not a regular file\n", test_name);
+      plog(log_f, 0, "Test file %s is not a regular file", test_name);
       return -1;
     }
     if (r2 != OSPK_REG) {
-      fprintf(log_f, "Answer file %s is not a regular file\n", corr_name);
+      plog(log_f, 0, "Answer file %s is not a regular file", corr_name);
       return -1;
     }
   }
@@ -183,11 +212,11 @@ normalize_file(
   FILE *out_f = 0;
 
   if (text_read_file(path, 2, &in_text, &in_size) < 0) {
-    fprintf(log_f, "Failed to read %s\n", name);
+    perr(log_f, "Failed to read %s", name);
     goto fail;
   }
   if (text_is_binary(in_text, in_size)) {
-    fprintf(log_f, "File %s is not a text file\n", name);
+    perr(log_f, "File %s is not a text file", name);
     goto fail;
   }
   out_size = text_normalize_buf(in_text, in_size,
@@ -197,18 +226,18 @@ normalize_file(
   if (out_count) {
     snprintf(out_path, sizeof(out_path), "%s.tmp", path);
     if (!(out_f = fopen(out_path, "w"))) {
-      fprintf(log_f, "Cannot open %s for writing\n", out_path);
+      perr(log_f, "Cannot open %s for writing", out_path);
       goto fail;
     }
     fprintf(out_f, "%s", in_text);
     if (fflush(out_f) < 0) {
-      fprintf(log_f, "Write error to %s\n", out_path);
+      perr(log_f, "Write error to %s", out_path);
       goto fail;
     }
     fclose(log_f); log_f = 0;
 
     if (rename(out_path, path) < 0) {
-      fprintf(log_f, "Rename %s -> %s failed\n", out_path, path);
+      perr(log_f, "Rename %s -> %s failed", out_path, path);
       goto fail;
     }
     out_path[0] = 0;
@@ -306,55 +335,51 @@ invoke_test_checker(
   fflush(log_f);
 
   if (task_Start(tsk) < 0) {
-    fprintf(log_f, "Error: failed to start %s\n", test_checker_cmd);
+    perr(log_f, "failed to start %s", test_checker_cmd);
     task_Delete(tsk);
     return RUN_CHECK_FAILED;
   }
 
   task_Wait(tsk);
   if (task_IsTimeout(tsk)) {
-    fprintf(log_f, "Error: test checker %s time-out on test %d\n",
-            test_checker_cmd, num);
+    perr(log_f, "test checker %s time-out on test %d", test_checker_cmd, num);
     task_Delete(tsk);
     return RUN_CHECK_FAILED;
   }
   r = task_Status(tsk);
   if (r != TSK_EXITED && r != TSK_SIGNALED) {
-    fprintf(log_f, "Error: test checker %s invalid status on test %d\n",
-            test_checker_cmd, num);
+    perr(log_f, "test checker %s invalid status on test %d",
+         test_checker_cmd, num);
     task_Delete(tsk);
     return RUN_CHECK_FAILED;
   }
   if (r == TSK_SIGNALED) {
-    fprintf(log_f,
-            "Error: test checker %s is terminated by signal %d on test %d\n",
-            test_checker_cmd, task_TermSignal(tsk), num);
+    perr(log_f, "test checker %s is terminated by signal %d on test %d",
+         test_checker_cmd, task_TermSignal(tsk), num);
     task_Delete(tsk);
     return RUN_CHECK_FAILED;
   }
   r = task_ExitCode(tsk);
   if (r != RUN_OK && r != RUN_COMPILE_ERR && r != RUN_PRESENTATION_ERR
       && r != RUN_WRONG_ANSWER_ERR && r != RUN_CHECK_FAILED) {
-    fprintf(log_f, "Error: test checker %s exit code %d invalid on test %d\n",
-            test_checker_cmd, r, num);
+    perr(log_f, "test checker %s exit code %d invalid on test %d",
+         test_checker_cmd, r, num);
     task_Delete(tsk);
     return RUN_CHECK_FAILED;
   }
   if (r == RUN_CHECK_FAILED) {
-    fprintf(log_f, "Error: test checker %s reported CHECK_FAILED on test %d\n",
-            test_checker_cmd, num);
+    perr(log_f, "test checker %s reported CHECK_FAILED on test %d",
+         test_checker_cmd, num);
     task_Delete(tsk);
     return RUN_CHECK_FAILED;
   }
   if (r == RUN_COMPILE_ERR || r == RUN_PRESENTATION_ERR) {
-    fprintf(log_f, "Test checker reports PRESENTATION ERROR on test %d\n",
-            num);
+    plog(log_f, 0, "Test checker reports PRESENTATION ERROR on test %d", num);
     task_Delete(tsk);
     return RUN_PRESENTATION_ERR;
   }
   if (r == RUN_WRONG_ANSWER_ERR) {
-    fprintf(log_f, "Test checker report WRONG ANSWER ERROR on test %d\n",
-            num);
+    plog(log_f, 0, "Test checker report WRONG ANSWER ERROR on test %d", num);
     task_Delete(tsk);
     return RUN_PRESENTATION_ERR;
   }
@@ -409,18 +434,15 @@ invoke_test_checker_on_tests(
   }
 
   if ((r = os_IsFile(test_checker_cmd)) < 0) {
-    fprintf(log_f, "Error: test checker %s does not exist\n",
-            test_checker_cmd);
+    perr(log_f, "test checker %s does not exist", test_checker_cmd);
     return RUN_CHECK_FAILED;
   }
   if (r != OSPK_REG) {
-    fprintf(log_f, "Error: test checker %s is not a regular file\n",
-            test_checker_cmd);
+    perr(log_f, "test checker %s is not a regular file", test_checker_cmd);
     return RUN_CHECK_FAILED;
   }
   if (os_CheckAccess(test_checker_cmd, REUSE_X_OK) < 0) {
-    fprintf(log_f, "Error: test checker %s is not an executable file\n",
-            test_checker_cmd);
+    perr(log_f, "test checker %s is not an executable file", test_checker_cmd);
     return RUN_CHECK_FAILED;
   }
 
@@ -488,22 +510,20 @@ invoke_test_program(
 
   clear_check_dir = 1;
   if (generic_copy_file(0, 0, exe_path, 0, 0, check_dir, exe_name, 0) < 0) {
-    fprintf(log_f, "Error: failed to copy %s to %s\n",
-            exe_path, check_exe);
+    perr(log_f, "failed to copy %s to %s", exe_path, check_exe);
     goto cleanup;
   }
   if (make_executable(check_exe) < 0) {
-    fprintf(log_f, "Error: failed to set executable bit on %s\n",
-            check_exe);
+    perr(log_f, "failed to set executable bit on %s", check_exe);
     goto cleanup;
   }
   if (generic_copy_file(0, 0, input_file, 0, 0, check_dir,
                         prob->input_file, 0) < 0) {
-    fprintf(log_f, "Error: failed to copy %s to %s\n", input_file, input_path);
+    perr(log_f, "failed to copy %s to %s", input_file, input_path);
     goto cleanup;
   }
   if (touch_file(output_path) < 0) {
-    fprintf(log_f, "Error: failed to create %s\n", output_path);
+    perr(log_f, "failed to create %s", output_path);
     goto cleanup;
   }
 
@@ -542,8 +562,7 @@ invoke_test_program(
   }
   /* no security restrictions and memory limits */
   if (task_Start(tsk) < 0) {
-    fprintf(log_f, "Error: failed to start %s on test %d\n",
-            check_exe, num);
+    perr(log_f, "failed to start %s on test %d", check_exe, num);
     goto cleanup;
   }
 
@@ -552,27 +571,25 @@ invoke_test_program(
   tt_cell->real_time = task_GetRealTime(tsk);
 
   if (task_IsTimeout(tsk)) {
-    fprintf(log_f, "Program %s time-limit exceeded on test %d\n",
-            exe_name, num);
+    plog(log_f, 0, "Program %s time-limit exceeded on test %d", exe_name, num);
     retval = RUN_TIME_LIMIT_ERR;
     goto cleanup;
   }
   r = task_Status(tsk);
   if (r != TSK_EXITED && r != TSK_SIGNALED) {
-    fprintf(log_f, "Error: program %s invalid status %d on test %d\n",
-            exe_name, r, num);
+    perr(log_f, "program %s invalid status %d on test %d", exe_name, r, num);
     goto cleanup;
   }
   if (r == TSK_SIGNALED) {
-    fprintf(log_f, "Program %s terminated with signal %d on test %d\n",
-            exe_name, task_TermSignal(tsk), num);
+    plog(log_f, 0, "Program %s terminated with signal %d on test %d",
+         exe_name, task_TermSignal(tsk), num);
     retval = RUN_RUN_TIME_ERR;
     goto cleanup;
   }
   r = task_ExitCode(tsk);
   if (r != 0) {
-    fprintf(log_f, "Program %s exited with code %d on test %d\n",
-            exe_name, r, num);
+    plog(log_f, 0, "Program %s exited with code %d on test %d",
+         exe_name, r, num);
     retval = RUN_RUN_TIME_ERR;
     goto cleanup;
   }
@@ -626,38 +643,37 @@ invoke_checker(
   fflush(log_f);
 
   if (task_Start(tsk) < 0) {
-    fprintf(log_f, "Error: failed to start checker %s for %s on test %d\n",
-            check_cmd, exe_name, num);
+    perr(log_f, "failed to start checker %s for %s on test %d",
+         check_cmd, exe_name, num);
     goto cleanup;
   }
   task_Wait(tsk);
   r = task_Status(tsk);
   if (r != TSK_EXITED && r != TSK_SIGNALED) {
-    fprintf(log_f, "Error: invalid status of %s for %s on test %d\n",
-            check_cmd, exe_name, num);
+    perr(log_f, "invalid status of %s for %s on test %d",
+         check_cmd, exe_name, num);
     goto cleanup;
   }
   if (task_IsTimeout(tsk)) {
-    fprintf(log_f, "Error: checker %s for %s timeout on test %d\n",
-            check_cmd, exe_name, num);
+    perr(log_f, "checker %s for %s timeout on test %d",
+         check_cmd, exe_name, num);
     goto cleanup;
   }
   if (r == TSK_SIGNALED) {
-    fprintf(log_f,
-            "Error: checker %s for %s terminated by signal %d on test %d\n",
-            check_cmd, exe_name, task_TermSignal(tsk), num);
+    perr(log_f, "checker %s for %s terminated by signal %d on test %d",
+         check_cmd, exe_name, task_TermSignal(tsk), num);
     goto cleanup;
   }
   r = task_ExitCode(tsk);
   if (r != RUN_OK && r != RUN_CHECK_FAILED && r != RUN_WRONG_ANSWER_ERR
       && r != RUN_PRESENTATION_ERR) {
-    fprintf(log_f, "Error: checker %s for %s invalid exit code %d on test %d\n",
-            check_cmd, exe_name, r, num);
+    perr(log_f, "checker %s for %s invalid exit code %d on test %d",
+         check_cmd, exe_name, r, num);
     goto cleanup;
   }
   if (r == RUN_CHECK_FAILED) {
-    fprintf(log_f, "Error: checker %s for %s status CHECK_FAILED on test %d\n",
-            check_cmd, exe_name, num);
+    perr(log_f, "checker %s for %s status CHECK_FAILED on test %d",
+         check_cmd, exe_name, num);
     goto cleanup;
   }
   retval = r;
@@ -694,12 +710,12 @@ invoke_sample_program(
 
   /* no sense to continue if operation on the check_dir failed */
   if (make_writable(check_dir) < 0) {
-    fprintf(log_f, "Error: cannot make writable directory %s\n", check_dir);
+    perr(log_f, "cannot make writable directory %s", check_dir);
     tt_row->status = RUN_CHECK_FAILED;
     return RUN_CHECK_FAILED;
   }
   if (clear_directory(check_dir) < 0) {
-    fprintf(log_f, "Error: failed to clean directory %s\n", check_dir);
+    perr(log_f, "failed to clean directory %s", check_dir);
     tt_row->status = RUN_CHECK_FAILED;
     return RUN_CHECK_FAILED;
   }
@@ -722,7 +738,7 @@ invoke_sample_program(
     }
 
     if (clear_directory(check_dir) < 0) {
-      fprintf(log_f, "Error: failed to clean directory %s\n", check_dir);
+      perr(log_f, "failed to clean directory %s", check_dir);
     }
   }
 
@@ -740,6 +756,103 @@ invoke_sample_program(
   return 0;
 }
 
+/* FIXME: move to a separate file? */
+static int
+parse_test_score_list(
+        FILE *log_f,
+        const unsigned char *pfx,
+        const struct section_problem_data *prob,
+        int test_count,
+        int *test_scores)
+{
+  int i, j, v;
+  char *eptr;
+  const unsigned char *list_txt;
+
+  if (prob->test_score < 0) {
+    plog(log_f, pfx, "test_score %d < 0", prob->test_score);
+    return -1;
+  }
+  if (prob->full_score < 0) {
+    plog(log_f, pfx, "full_score %d < 0", prob->full_score);
+    return -1;
+  }
+
+  for (i = 0; i < test_count; ++i)
+    test_scores[i] = prob->test_score;
+
+  if (!prob->test_score_list || !prob->test_score_list[0]) return 0;
+  list_txt = prob->test_score_list;
+
+  j = 0; i = 0;
+  while (1) {
+    while (list_txt[j] && isspace(list_txt[j])) ++j;
+    if (!list_txt[j]) {
+      return 0;
+    }
+    if (list_txt[j] == '[') {
+      ++j;
+      while (list_txt[j] && isspace(list_txt[j])) ++j;
+      if (!list_txt[j]) {
+        plog(log_f, pfx, "index expected after '['");
+        return -1;
+      }
+      errno = 0;
+      v = strtol(list_txt + j, &eptr, 10);
+      if (*eptr && !isspace(*eptr) && *eptr != ']') {
+        plog(log_f, pfx, "garbage after index in \"%s\"", list_txt + j);
+        return -1;
+      }
+      if (errno) {
+        plog(log_f, pfx, "index is too big in \"%s\"", list_txt + j);
+        return -1;
+      }
+      if (v < 1 || v > test_count) {
+        plog(log_f, pfx, "index is out of range \"%s\"", list_txt + j);
+        return -1;
+      }
+      i = v - 1;
+      list_txt = (const unsigned char*) eptr;
+      while (list_txt[j] && isspace(list_txt[j])) ++j;
+      if (list_txt[j] != ']') {
+        plog(log_f, pfx, "']' expected after index");
+        return -1;
+      }
+      ++j;
+      while (list_txt[j] && isspace(list_txt[j])) ++j;
+    }
+
+    errno = 0;
+    v = strtol(list_txt + j, &eptr, 10);
+    if (*eptr && !isspace(*eptr)) {
+      plog(log_f, pfx, "garbage after score in \"%s\"", list_txt + j);
+      return -1;
+    }
+    if (errno) {
+      plog(log_f, pfx, "score is too big in \"%s\"", list_txt + j);
+      return -1;
+    }
+    if (v < 0) {
+      plog(log_f, pfx, "score < 0 in \"%s\"", list_txt + j);
+      return -1;
+    }
+    if (v > prob->full_score) {
+      plog(log_f, pfx, "score > full_score in \"%s\"", list_txt + j);
+      return -1;
+    }
+    list_txt = (const unsigned char*) eptr;
+    test_scores[i++] = v;
+  }
+
+  for (i = 0, j = 0; i < test_count; ++i)
+    j += test_scores[i];
+
+  if (j > prob->full_score) {
+    plog(log_f, pfx, "summ of test scores > full_score");
+    return -1;
+  }
+}
+
 static void
 analyze_results(
         FILE *log_f,
@@ -752,23 +865,26 @@ analyze_results(
 {
   int i, j, score = 0;
   int status = RUN_CHECK_FAILED;
+  int failed_test = 0;
+  int *test_scores = 0;
+  int passed_count = 0;
 
   if (!report_xml->tt_rows) {
-    fprintf(log_f, "Error: tt_rows == NULL\n");
+    perr(log_f, "tt_rows == NULL");
     goto done;
   }
   if (!report_xml->tt_cells) {
-    fprintf(log_f, "Error: tt_cells == NULL\n");
+    perr(log_f, "tt_cells == NULL");
     goto done;
   }
 
   for (i = 0; i < report_xml->tt_row_count; ++i) {
     if (!report_xml->tt_rows[i]) {
-      fprintf(log_f, "Error: tt_rows[%d] == NULL\n", i);
+      perr(log_f, "tt_rows[%d] == NULL", i);
       goto done;
     }
     if (!report_xml->tt_cells[i]) {
-      fprintf(log_f, "Error: tt_cells[%d] == NULL\n", i);
+      perr(log_f, "tt_cells[%d] == NULL", i);
       goto done;
     }
     if (report_xml->tt_rows[i]->status == RUN_CHECK_FAILED) {
@@ -776,7 +892,7 @@ analyze_results(
     }
     for (j = 0; j < report_xml->tt_column_count; ++j) {
       if (!report_xml->tt_cells[i][j]) {
-        fprintf(log_f, "Error: tt_cells[%d][%d] == NULL\n", i, j);
+        perr(log_f, "tt_cells[%d][%d] == NULL", i, j);
         goto done;
       }
       if (report_xml->tt_cells[i][j]->status == RUN_CHECK_FAILED) {
@@ -785,28 +901,110 @@ analyze_results(
     }
   }
 
-  for (i = 0; i < report_xml->tt_row_count; ++i) {
-    if (report_xml->tt_rows[i]->must_fail <= 0) {
-      // this sample program must be OK
-      if (report_xml->tt_rows[i]->status != RUN_OK)
-        status = RUN_WRONG_ANSWER_ERR;
-        goto done;
-    } else {
-      // this sample program must fail
-      if (report_xml->tt_rows[i]->status == RUN_OK)
-        status = RUN_WRONG_ANSWER_ERR;
-        goto done;
+  if (req_pkt->scoring_system == SCORE_OLYMPIAD && req_pkt->accepting_mode) {
+    perr(log_f, "OLYMPIAD accepting mode is not supported");
+    goto done;
+  } else if (req_pkt->scoring_system == SCORE_KIROV
+             || req_pkt->scoring_system == SCORE_OLYMPIAD) {
+    XCALLOC(test_scores, report_xml->tt_row_count);
+    if (parse_test_score_list(log_f, NULL, prob, report_xml->tt_row_count,
+                              test_scores) < 0) {
+      goto done;
     }
+
+    /* FIXME: support test_sets and valuer_cmd */
+    status = RUN_OK;
+    for (i = 0; i < report_xml->tt_row_count; ++i) {
+      if (report_xml->tt_rows[i]->must_fail <= 0) {
+        // this sample program must be OK
+        if (report_xml->tt_rows[i]->status != RUN_OK) {
+          status = RUN_PARTIAL;
+        } else {
+          passed_count++;
+          score += test_scores[i];
+        }
+      } else {
+        // this sample program must fail
+        if (report_xml->tt_rows[i]->status == RUN_OK) {
+          status = RUN_PARTIAL;
+        } else {
+          passed_count++;
+          score += test_scores[i];
+        }
+      }
+    }
+    if (status == RUN_OK && prob->variable_full_score <= 0) {
+      score = prob->full_score;
+    }
+    failed_test = passed_count + 1;
+  } else if (req_pkt->scoring_system == SCORE_MOSCOW) {
+    if (prob->full_score <= 0) {
+      perr(log_f, "full_score must be > 0 in MOSCOW mode");
+      goto done;
+    }
+    test_scores = prepare_parse_score_tests(prob->score_tests,prob->full_score);
+    if (!test_scores) {
+      perr(log_f, "invalid score_tests");
+      goto done;
+    }
+    test_scores[prob->full_score - 1] = report_xml->tt_row_count + 1;
+    for (i = 0; i < report_xml->tt_row_count; ++i) {
+      if (report_xml->tt_rows[i]->must_fail <= 0) {
+        // this sample program must be OK
+        if (report_xml->tt_rows[i]->status != RUN_OK) {
+          status = RUN_WRONG_ANSWER_ERR;
+          failed_test = i + 1;
+          break;
+        }
+      } else {
+        // this sample program must fail
+        if (report_xml->tt_rows[i]->status == RUN_OK) {
+          status = RUN_WRONG_ANSWER_ERR;
+          failed_test = i + 1;
+          break;
+        }
+      }
+    }
+    if (failed_test <= 0) {
+      status = RUN_OK;
+      score = prob->full_score;
+    } else {
+      for (i = 0; failed_test > test_scores[i]; i++);
+      score = i;
+    }
+  } else if (req_pkt->scoring_system == SCORE_ACM) {
+    // just check that all the tests are passed
+    for (i = 0; i < report_xml->tt_row_count; ++i) {
+      if (report_xml->tt_rows[i]->must_fail <= 0) {
+        // this sample program must be OK
+        if (report_xml->tt_rows[i]->status != RUN_OK) {
+          status = RUN_WRONG_ANSWER_ERR;
+          failed_test = i + 1;
+          goto done;
+        }
+      } else {
+        // this sample program must fail
+        if (report_xml->tt_rows[i]->status == RUN_OK) {
+          status = RUN_WRONG_ANSWER_ERR;
+          failed_test = i + 1;
+          goto done;
+        }
+      }
+    }
+    status = RUN_OK;
+  } else {
+    abort();
   }
 
-  score = report_xml->max_score;
+done:
+  report_xml->failed_test = failed_test;
+  reply_pkt->failed_test = failed_test;
   report_xml->score = score;
   reply_pkt->score = score;
-  status = RUN_OK;
-
-done:
   report_xml->status = status;
   reply_pkt->status = status;
+
+  xfree(test_scores);
   return;
 }
 
@@ -925,8 +1123,8 @@ Remaining field to fill:
            global->run_work_dir, pkt_name);
   
   if (req_pkt->mime_type != MIME_TYPE_APPL_GZIP) {
-    fprintf(log_f, "Error: archive of type %d (%s) is not supported\n",
-            req_pkt->mime_type, mime_type_get_type(req_pkt->mime_type));
+    perr(log_f, "archive of type %d (%s) is not supported",
+         req_pkt->mime_type, mime_type_get_type(req_pkt->mime_type));
     goto cleanup;
   }
 
@@ -934,9 +1132,9 @@ Remaining field to fill:
                         0, global->run_work_dir, pkt_name,
                         mime_type_get_suffix(req_pkt->mime_type));
   if (r <= 0) {
-    fprintf(log_f, "Error: failed to read archive file %s/%s%s\n",
-            global->run_work_dir, pkt_name,
-            mime_type_get_suffix(req_pkt->mime_type));
+    perr(log_f, "failed to read archive file %s/%s%s",
+         global->run_work_dir, pkt_name,
+         mime_type_get_suffix(req_pkt->mime_type));
     goto cleanup;
   }
 
@@ -946,43 +1144,43 @@ Remaining field to fill:
 
   snprintf(arch_dir,sizeof(arch_dir), "%s/%s", global->run_work_dir, pkt_name);
   if (make_dir(arch_dir, 0) < 0) {
-    fprintf(log_f, "Error: failed to create directory %s/%s\n",
-            global->run_work_dir, pkt_name);
+    perr(log_f, "failed to create directory %s/%s",
+         global->run_work_dir, pkt_name);
     goto cleanup;
   }
 
   // invoke tar
   if (invoke_tar(log_f, log_path, arch_path, arch_dir) < 0) {
-    fprintf(log_f, "Error: tar extraction failed on file %s in dir %s\n",
-            arch_path, arch_dir);
+    perr(log_f, "tar extraction failed on file %s in dir %s",
+         arch_path, arch_dir);
     goto cleanup;
   }
 
   snprintf(tests_dir, sizeof(tests_dir), "%s/%s", arch_dir, "tests");
   r = os_IsFile(tests_dir);
   if (r < 0) {
-    fprintf(log_f, "Error: directory %s does not exist\n", tests_dir);
+    perr(log_f, "directory %s does not exist", tests_dir);
     goto cleanup;
   } else if (r != OSPK_DIR) {
-    fprintf(log_f, "Error: %s is not a directory\n", tests_dir);
+    perr(log_f, "%s is not a directory", tests_dir);
     goto cleanup;
   }
 
   // count tests
   test_count = count_tests(log_f, prob, tests_dir, test_pat, corr_pat);
   if (test_count < 0) {
-    fprintf(log_f, "Error: failed to count tests in %s\n", tests_dir);
+    perr(log_f, "failed to count tests in %s", tests_dir);
     goto cleanup;
   }
   if (!test_count) {
-    fprintf(log_f, "Error: no tests in the archive\n");
+    perr(log_f, "no tests in the archive");
     goto cleanup;
   }
 
   // normalize test contents
   if (normalize_tests(log_f, prob, test_count, tests_dir, test_pat,
                       corr_pat) < 0) {
-    fprintf(log_f, "Error: failed to normalize tests\n");
+    perr(log_f, "failed to normalize tests");
     goto cleanup;
   }
 
@@ -1019,15 +1217,15 @@ Remaining field to fill:
   snprintf(fail_dir, sizeof(fail_dir), "%s/%s", sample_dir, FAIL_DIR_NAME);
 
   if (scan_executable_files(good_dir, &good_count, &good_files) < 0) {
-    fprintf(log_f, "Error: scan of %s failed\n", good_dir);
+    perr(log_f, "scan of %s failed", good_dir);
     goto cleanup;
   }
   if (scan_executable_files(fail_dir, &fail_count, &fail_files) < 0) {
-    fprintf(log_f, "Error: scan of %s failed\n", good_dir);
+    perr(log_f, "scan of %s failed", good_dir);
     goto cleanup;
   }
   if (good_count <= 0 && fail_count <= 0) {
-    fprintf(log_f, "Error: no sample programs are found\n");
+    perr(log_f, "no sample programs are found");
     goto cleanup;
   }
 
@@ -1061,15 +1259,15 @@ Remaining field to fill:
   }
   r = os_IsFile(check_cmd);
   if (r < 0) {
-    fprintf(log_f, "Error: checker %s does not exist\n", check_cmd);
+    perr(log_f, "checker %s does not exist", check_cmd);
     goto cleanup;
   }
   if (r != OSPK_REG) {
-    fprintf(log_f, "Error: checker %s is not a regular file\n", check_cmd);
+    perr(log_f, "checker %s is not a regular file", check_cmd);
     goto cleanup;
   }
   if (os_CheckAccess(check_cmd, REUSE_X_OK) < 0) {
-    fprintf(log_f, "Error: checker %s is not an executable file\n", check_cmd);
+    perr(log_f, "checker %s is not an executable file", check_cmd);
     goto cleanup;
   }
 
@@ -1079,7 +1277,7 @@ Remaining field to fill:
 #endif
   pathmake2(check_dir, EJUDGE_CONTESTS_HOME_DIR, "/", check_dir, NULL);
   if (make_dir(check_dir, 0) < 0) {
-    fprintf(log_f, "Error: failed to create directory %s\n", check_dir);
+    perr(log_f, "failed to create directory %s", check_dir);
     goto cleanup;
   }
 
