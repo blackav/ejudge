@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-06-05 01:58+0400\n"
-"PO-Revision-Date: 2010-06-05 02:00+0400\n"
+"POT-Creation-Date: 2010-06-29 21:07+0400\n"
+"PO-Revision-Date: 2010-06-29 21:10+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1343,6 +1343,9 @@ msgstr "Полностью перепроверить отображённые посылки!"
 
 msgid "Fully rejudge runs"
 msgstr "Полностью перепроверить посылки"
+
+msgid "Further testing information is not available"
+msgstr "Дальнейшая информация о тестировании отсутствует"
 
 msgid "Gender"
 msgstr "Пол"
@@ -3225,8 +3228,14 @@ msgstr "Входные данные"
 msgid "Test number"
 msgstr "Номер теста"
 
+msgid "Testing comments"
+msgstr "Комментарии по тестированию"
+
 msgid "Testing is in progress..."
 msgstr "Идёт проверка ответов..."
+
+msgid "Testing messages"
+msgstr "Сообщения при тестировании"
 
 msgid "Testing of participants' submits is suspended"
 msgstr "Проверка решений участников приостановлена"
@@ -3342,6 +3351,12 @@ msgstr "Эта программа уже напечатана"
 msgid "This submit is duplicate of the run %d"
 msgstr "Эта посылка является копией посылки %d"
 
+msgid "This test program is correct, but failed on some tests"
+msgstr "Эта тестовая программа корректна, но не проходит некоторые тесты"
+
+msgid "This test program is incorrect, but passed all tests"
+msgstr "Эта тестовая программа некорректна, но проходит все тесты"
+
 msgid "Time"
 msgstr "Время"
 
@@ -3392,6 +3407,12 @@ msgstr "Всего"
 
 msgid "Total messages"
 msgstr "Всего сообщений"
+
+msgid "Total number of sample programs in the test suite"
+msgstr "Общее количество тестовых программ"
+
+msgid "Total number of submitted tests"
+msgstr "Общее количество предложенных тестов"
 
 msgid "Total priority"
 msgstr "Суммарный приоритет"
