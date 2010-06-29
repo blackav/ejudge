@@ -10935,18 +10935,28 @@ unpriv_view_report(FILE *fout,
     fprintf(fout, "%s", rep_start);
     break;
   case CONTENT_TYPE_XML:
-    if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
-      write_xml_team_accepting_report(fout, rep_start, run_id, &re, prob,
-                                      new_actions_vector,
-                                      phr->session_id, cnts->exam_mode,
-                                      phr->self_url, "", "b1");
-    } else if (prob->team_show_judge_report) {
-      write_xml_testing_report(fout, 1, rep_start, phr->session_id,
-                               phr->self_url, "", new_actions_vector,"b1","b0");
+    if (prob->type == PROB_TYPE_TESTS) {
+      if (prob->team_show_judge_report) {
+        write_xml_tests_report(fout, 1, rep_start, phr->session_id,
+                                 phr->self_url, "", "b1", "b0"); 
+      } else {
+        write_xml_team_tests_report(cs, prob, fout, rep_start, "b1");
+      }
     } else {
-      write_xml_team_testing_report(cs, prob, fout,
-                                    prob->type != PROB_TYPE_STANDARD,
-                                    rep_start, "b1");
+      if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
+        write_xml_team_accepting_report(fout, rep_start, run_id, &re, prob,
+                                        new_actions_vector,
+                                        phr->session_id, cnts->exam_mode,
+                                        phr->self_url, "", "b1");
+      } else if (prob->team_show_judge_report) {
+        write_xml_testing_report(fout, 1, rep_start, phr->session_id,
+                                 phr->self_url, "", new_actions_vector, "b1",
+                                 "b0");
+      } else {
+        write_xml_team_testing_report(cs, prob, fout,
+                                      prob->type != PROB_TYPE_STANDARD,
+                                      rep_start, "b1");
+      }
     }
     break;
   default:
