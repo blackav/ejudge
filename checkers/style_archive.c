@@ -103,7 +103,21 @@ parse_long_long(const unsigned char *str, long long *p_val)
 
   errno = 0;
   v = strtoll(str, &eptr, 10);
-  if (errno || *eptr) return -1;
+  if (errno) return -1;
+  if (*eptr == 'k' || *eptr == 'K') {
+    if ((v & 0xFFE0000000000000ULL) != 0) return -1;
+    v <<= 10;
+    ++eptr;
+  } else if (*eptr == 'm' || *eptr == 'M') {
+    if ((v & 0xFFFFF80000000000ULL) != 0) return -1;
+    v <<= 20;
+    ++eptr;
+  } else if (*eptr == 'g' || *eptr == 'G') {
+    if ((v & 0xFFFFFFFE00000000ULL) != 0) return -1;
+    v <<= 30;
+    ++eptr;
+  }
+  if (*eptr) return -1;
   *p_val = v;
   return 0;
 }
