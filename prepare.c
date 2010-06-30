@@ -338,6 +338,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(combined_stdin, "d"),
   PROBLEM_PARAM(combined_stdout, "d"),
   PROBLEM_PARAM(binary_input, "d"),
+  PROBLEM_PARAM(binary, "d"),
   PROBLEM_PARAM(ignore_exit_code, "d"),
   PROBLEM_PARAM(olympiad_mode, "d"),
   PROBLEM_PARAM(score_latest, "d"),
@@ -797,6 +798,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->combined_stdin = -1;
   p->combined_stdout = -1;
   p->binary_input = -1;
+  p->binary = -1;
   p->ignore_exit_code = -1;
   p->olympiad_mode = -1;
   p->score_latest = -1;
@@ -3158,6 +3160,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_combined_stdin, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_combined_stdout, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_binary_input, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_binary, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_ignore_exit_code, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_olympiad_mode, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_score_latest, prob, aprob, g);
@@ -4840,6 +4843,7 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
   if (prob->combined_stdin < 0) prob->combined_stdin = 0;
   if (prob->combined_stdout < 0) prob->combined_stdout = 0;
   if (prob->binary_input < 0) prob->binary_input = DFLT_P_BINARY_INPUT;
+  if (prob->binary < 0) prob->binary = 0;
   if (prob->ignore_exit_code < 0) prob->ignore_exit_code = 0;
   if (prob->olympiad_mode < 0) prob->olympiad_mode = 0;
   if (prob->score_latest < 0) prob->score_latest = 0;
@@ -5318,6 +5322,11 @@ prepare_set_prob_value(
   case CNTSPROB_binary_input:
     if (out->binary_input == -1 && abstr) out->binary_input = abstr->binary_input;
     if (out->binary_input == -1) out->binary_input = DFLT_P_BINARY_INPUT;
+    break;
+
+  case CNTSPROB_binary:
+    if (out->binary == -1 && abstr) out->binary = abstr->binary;
+    if (out->binary == -1) out->binary = 0;
     break;
 
   case CNTSPROB_ignore_exit_code:
@@ -5945,7 +5954,8 @@ static const int prob_settable_list[] =
   CNTSPROB_scoring_checker, CNTSPROB_manual_checking, CNTSPROB_examinator_num,
   CNTSPROB_check_presentation, CNTSPROB_use_stdin, CNTSPROB_use_stdout,
   CNTSPROB_combined_stdin, CNTSPROB_combined_stdout,
-  CNTSPROB_binary_input, CNTSPROB_ignore_exit_code, CNTSPROB_olympiad_mode,
+  CNTSPROB_binary_input, CNTSPROB_binary, CNTSPROB_ignore_exit_code,
+  CNTSPROB_olympiad_mode,
   CNTSPROB_score_latest, CNTSPROB_time_limit, CNTSPROB_time_limit_millis,
   CNTSPROB_real_time_limit, CNTSPROB_use_ac_not_ok,
   CNTSPROB_team_enable_rep_view, CNTSPROB_team_enable_ce_view,
@@ -6003,6 +6013,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_combined_stdin] = 1,
   [CNTSPROB_combined_stdout] = 1,
   [CNTSPROB_binary_input] = 1,
+  [CNTSPROB_binary] = 1,
   [CNTSPROB_ignore_exit_code] = 1,
   [CNTSPROB_olympiad_mode] = 1,
   [CNTSPROB_score_latest] = 1,
@@ -6118,7 +6129,7 @@ static const int prob_inheritable_list[] =
   CNTSPROB_examinator_num, CNTSPROB_check_presentation,
   CNTSPROB_use_stdin, CNTSPROB_use_stdout,
   CNTSPROB_combined_stdin, CNTSPROB_combined_stdout,
-  CNTSPROB_binary_input,
+  CNTSPROB_binary_input, CNTSPROB_binary,
   CNTSPROB_ignore_exit_code, CNTSPROB_olympiad_mode, CNTSPROB_score_latest,
   CNTSPROB_time_limit, CNTSPROB_time_limit_millis, CNTSPROB_real_time_limit,
   CNTSPROB_use_ac_not_ok, CNTSPROB_team_enable_rep_view,
@@ -6175,6 +6186,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_combined_stdin] = 1,
   [CNTSPROB_combined_stdout] = 1,
   [CNTSPROB_binary_input] = 1,
+  [CNTSPROB_binary] = 1,
   [CNTSPROB_ignore_exit_code] = 1,
   [CNTSPROB_olympiad_mode] = 1,
   [CNTSPROB_score_latest] = 1,
@@ -6293,6 +6305,7 @@ static const struct section_problem_data prob_undef_values =
   .combined_stdin = -1,
   .combined_stdout = -1,
   .binary_input = -1,
+  .binary = -1,
   .ignore_exit_code = -1,
   .olympiad_mode = -1,
   .score_latest = -1,
@@ -6415,6 +6428,7 @@ static const struct section_problem_data prob_default_values =
   .combined_stdin = 0,
   .combined_stdout = 0,
   .binary_input = 0,
+  .binary = 0,
   .ignore_exit_code = 0,
   .olympiad_mode = 0,
   .score_latest = 0,

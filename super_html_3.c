@@ -4398,6 +4398,23 @@ super_html_print_problem(FILE *f,
                                self_url, extra_args, prob_hidden_vars);
   }
 
+  if (show_adv) {
+    //PROBLEM_PARAM(binary, "d"),
+    extra_msg = 0;
+    if (!prob->abstract) {
+      prepare_set_prob_value(CNTSPROB_binary,
+                             tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+               tmp_prob->binary?"Yes":"No");
+      extra_msg = msg_buf;
+    }
+    print_boolean_3_select_row(f, "Submit is binary", prob->binary,
+                               SSERV_CMD_PROB_CHANGE_BINARY,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+  }
+
   //PROBLEM_PARAM(xml_file, "s"),
   extra_msg = 0;
   if (prob->abstract && !prob->xml_file[0]) extra_msg="<i>(Undefined)</i>";
@@ -6239,6 +6256,7 @@ super_html_add_abstract_problem(
   prob->combined_stdin = 0;
   prob->combined_stdout = 0;
   prob->binary_input = DFLT_P_BINARY_INPUT;
+  prob->binary = 0;
   prob->ignore_exit_code = 0;
   prob->olympiad_mode = 0;
   prob->score_latest = 0;
@@ -6495,6 +6513,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_BINARY_INPUT:
     p_int = &prob->binary_input;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_BINARY:
+    p_int = &prob->binary;
     goto handle_boolean_1;
 
   case SSERV_CMD_PROB_CHANGE_IGNORE_EXIT_CODE:
@@ -8811,6 +8833,7 @@ super_html_check_tests(FILE *f,
     prepare_set_prob_value(CNTSPROB_examinator_num, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_check_presentation, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_binary_input, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_binary, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_ignore_exit_code, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_valuer_cmd, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_interactor_cmd, tmp_prob, abstr, global);
