@@ -2870,6 +2870,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CHANGE_COMBINED_STDIN:
   case SSERV_CMD_PROB_CHANGE_COMBINED_STDOUT:
   case SSERV_CMD_PROB_CHANGE_BINARY_INPUT:
+  case SSERV_CMD_PROB_CHANGE_BINARY:
   case SSERV_CMD_PROB_CHANGE_IGNORE_EXIT_CODE:
   case SSERV_CMD_PROB_CHANGE_OLYMPIAD_MODE:
   case SSERV_CMD_PROB_CHANGE_SCORE_LATEST:
@@ -3805,6 +3806,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_COMBINED_STDIN] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_COMBINED_STDOUT] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_BINARY_INPUT] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_BINARY] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_IGNORE_EXIT_CODE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_OLYMPIAD_MODE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_SCORE_LATEST] = { cmd_set_value },
