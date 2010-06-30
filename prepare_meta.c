@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/06/18 21:47:40
+// Generated 2010/07/01 00:33:55
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -333,6 +333,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_combined_stdin] = { CNTSPROB_combined_stdin, 'B', XSIZE(struct section_problem_data, combined_stdin), "combined_stdin", XOFFSET(struct section_problem_data, combined_stdin) },
   [CNTSPROB_combined_stdout] = { CNTSPROB_combined_stdout, 'B', XSIZE(struct section_problem_data, combined_stdout), "combined_stdout", XOFFSET(struct section_problem_data, combined_stdout) },
   [CNTSPROB_binary_input] = { CNTSPROB_binary_input, 'B', XSIZE(struct section_problem_data, binary_input), "binary_input", XOFFSET(struct section_problem_data, binary_input) },
+  [CNTSPROB_binary] = { CNTSPROB_binary, 'B', XSIZE(struct section_problem_data, binary), "binary", XOFFSET(struct section_problem_data, binary) },
   [CNTSPROB_ignore_exit_code] = { CNTSPROB_ignore_exit_code, 'B', XSIZE(struct section_problem_data, ignore_exit_code), "ignore_exit_code", XOFFSET(struct section_problem_data, ignore_exit_code) },
   [CNTSPROB_olympiad_mode] = { CNTSPROB_olympiad_mode, 'B', XSIZE(struct section_problem_data, olympiad_mode), "olympiad_mode", XOFFSET(struct section_problem_data, olympiad_mode) },
   [CNTSPROB_score_latest] = { CNTSPROB_score_latest, 'B', XSIZE(struct section_problem_data, score_latest), "score_latest", XOFFSET(struct section_problem_data, score_latest) },
