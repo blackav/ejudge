@@ -684,7 +684,7 @@ struct section_global_data
   +path_t test_checker_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 64888 */
+/* sizeof(struct section_problem_data) == 64892 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -714,6 +714,8 @@ struct section_problem_data
   ejintbool_t combined_stdout;
   /** input data for problem is binary */
   ejintbool_t binary_input;
+  /** submit is binary */
+  ejintbool_t binary;
   /** do not treat non-zero exit code as run-time error */
   ejintbool_t ignore_exit_code;
   /** for KIROV contests: handle problem in the olympiad mode*/
