@@ -134,6 +134,8 @@ fromxdigit(int c)
 static int
 parse_c_string(const unsigned char *in, unsigned char *out)
 {
+  unsigned char *out_start = out;
+
   while (isspace(*in)) ++in;
   if (*in != '\"') return -1;
   ++in;
@@ -210,7 +212,7 @@ parse_c_string(const unsigned char *in, unsigned char *out)
   if (*in) return -1;
 
   *out = 0;
-  return 0;
+  return (int) (out - out_start);
 }
 
 static int
@@ -293,7 +295,7 @@ get_tar_listing(const unsigned char *path, struct archive_file *arch)
   char *cmds[5];
   int r, n;
   unsigned char *out = 0, *err = 0;
-  int len, len1;
+  int len, len1, len2;
   FILE *fin = 0;
   unsigned char *buf1 = 0;
   unsigned char *arg1 = 0;
@@ -356,8 +358,16 @@ get_tar_listing(const unsigned char *path, struct archive_file *arch)
       goto fail;
     }
 
-    if (parse_c_string(buf1 + n, arg6) < 0) {
+    if ((len2 = parse_c_string(buf1 + n, arg6)) < 0) {
       error("invalid file name %s", buf1 + n);
+      goto fail;
+    }
+    if (!len2) {
+      error("empty file name");
+      goto fail;
+    }
+    if (len2 != strlen(arg6)) {
+      error("file name contains \\0");
       goto fail;
     }
 
@@ -440,22 +450,14 @@ read_text_file(
     goto fail;
   }
   while ((c = getc(fin)) != EOF) {
-    switch (c) {
-    case  0: case  1: case  2: case  3: case  4: case  5: case  6: case  7:
-    case  8:                   case 11: case 12:          case 14: case 15:
-    case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
-    case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
-    case 0177:
+    if ((c < ' ' && !isspace(c)) || c == 0177) {
       error("file %s is not a text file because of \\%o in line %d",
             base, c, lineno);
-      break;
-    case '\n':
+    } else if (c == '\n') {
       putc(c, ftxt);
       lineno++;
-      break;
-    default:
+    } else {
       putc(c, ftxt);
-      break;
     }
   }
   fclose(ftxt); ftxt = 0;
@@ -503,6 +505,63 @@ check_sizes(
     error("the total size of files in the archive exceeds %lld",
           max_archive_size);
     return -1;
+  }
+
+  return 0;
+}
+
+static int
+is_valid_char(int c)
+{
+  if (c <= ' ' || c == 0177) return 0;
+  /* filter out potentially dangerous characters */
+  switch (c) {
+  case '!':                     /* shell history */
+  case '\"':                    /* shell escape */
+  case '#':                     /* shell comment start */
+  case '$':                     /* shell variable expansion */
+  case '%':                     /* DOS cmd variable expansion */
+  case '&':                     /* shell background process */
+  case '\'':                    /* shell escape */
+  case '(':                     /* shell subprocess */
+  case ')':                     /* shell subprocess */
+  case '*':                     /* shell pattern */
+  case ':':                     /* DOS drive separator */
+  case ';':                     /* shell command separator */
+  case '<':                     /* shell redirection */
+  case '>':                     /* shell redirection */
+  case '?':                     /* shell pattern */
+  case '\\':                    /* shell escape */
+  case '`':                     /* shell subprocess */
+  case '{':                     /* shell subprocess */
+  case '|':                     /* shell pipe */
+  case '}':                     /* shell subprocess */
+  case '~':                     /* shell home dir */
+    return 0;
+  }
+  return 1;
+}
+
+static int
+check_names(struct archive_file *arch)
+{
+  int i;
+  const unsigned char *str;
+
+  for (i = 0; i < arch->u; ++i) {
+    str = arch->v[i].name;
+    if (!str || !*str) {
+      error("empty file name");
+      return -1;
+    }
+    while (*str && is_valid_char(*str)) {
+      ++str;
+    }
+    if (*str) {
+      error("invalid character with code %d in file name %s",
+            *str, arch->v[i].name);
+      return -1;
+    }
   }
 
   return 0;
@@ -819,6 +878,9 @@ main(int argc, char **argv)
   if ((env = getenv("EJ_WORK_DIR"))) {
     work_dir = env;
   }
+  if ((env = getenv("EJ_TESTS_MODE"))) {
+    tests_mode = 1;
+  }
 
   while (i < argc) {
     if (!strcmp(argv[i], "--")) {
@@ -931,6 +993,7 @@ main(int argc, char **argv)
     if (get_tar_listing(archive_path, &arch) < 0) return 1;
     if (check_sizes(&arch, max_file_count, max_file_size, max_archive_size)<0)
       return 1;
+    if (check_names(&arch) < 0) return 1;
     if (check_tar_tests(&arch, max_test_count, tests_dir, if_patt, of_patt) < 0)
       return 1;
     unpack_func = unpack_tar;
