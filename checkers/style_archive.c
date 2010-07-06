@@ -32,6 +32,7 @@
 #include <limits.h>
 #include <time.h>
 #include <sys/time.h>
+#include <dirent.h>
 
 extern char **environ;
 
@@ -290,6 +291,57 @@ find_entry(struct archive_file *arch, const unsigned char *name)
 }
 
 static int
+is_valid_char(int c)
+{
+  if (c <= ' ' || c == 0177) return 0;
+  /* filter out potentially dangerous characters */
+  switch (c) {
+  case '!':                     /* shell history */
+  case '\"':                    /* shell escape */
+  case '#':                     /* shell comment start */
+  case '$':                     /* shell variable expansion */
+  case '%':                     /* DOS cmd variable expansion */
+  case '&':                     /* shell background process */
+  case '\'':                    /* shell escape */
+  case '(':                     /* shell subprocess */
+  case ')':                     /* shell subprocess */
+  case '*':                     /* shell pattern */
+  case ':':                     /* DOS drive separator */
+  case ';':                     /* shell command separator */
+  case '<':                     /* shell redirection */
+  case '>':                     /* shell redirection */
+  case '?':                     /* shell pattern */
+  case '\\':                    /* shell escape */
+  case '`':                     /* shell subprocess */
+  case '{':                     /* shell subprocess */
+  case '|':                     /* shell pipe */
+  case '}':                     /* shell subprocess */
+  case '~':                     /* shell home dir */
+    return 0;
+  }
+  return 1;
+}
+
+static int
+check_file_name(const unsigned char *name)
+{
+  const unsigned char *str = name;
+
+  if (!str || !*str) {
+    error("empty file name");
+    return -1;
+  }
+  while (*str && is_valid_char(*str)) {
+    ++str;
+  }
+  if (*str) {
+    error("invalid character with code %d in file name %s", *str, name);
+    return -1;
+  }
+  return 0;
+}
+
+static int
 get_tar_listing(const unsigned char *path, struct archive_file *arch)
 {
   char *cmds[5];
@@ -402,6 +454,280 @@ fail:
 }
 
 static int
+check_zip_date(const unsigned char *dbuf, const unsigned char *tbuf)
+{
+  int year, month, mday, hour, min, sec;
+  struct tm btm;
+  time_t tt;
+
+  if (strlen(dbuf) != 10) {
+    error("date '%s' is invalid, its length is expected to be 10", dbuf);
+    return -1;
+  }
+  if (!isdigit(dbuf[0]) || !isdigit(dbuf[1]) || !isdigit(dbuf[2])
+      || !isdigit(dbuf[3]) 
+      || dbuf[4] != '-' || !isdigit(dbuf[5]) || !isdigit(dbuf[6])
+      || dbuf[7] != '-' || !isdigit(dbuf[8]) || !isdigit(dbuf[9])) {
+    error("date '%s' is invalid, expected to be in YYYY-MM-DD format", dbuf);
+    return -1;
+  }
+  if (sscanf(dbuf, "%d-%d-%d", &year, &month, &mday) != 3) {
+    error("date '%s' is invalid, expected to be in YYYY-MM-DD format", dbuf);
+    return -1;
+  }
+  if (year < 1950 || year > 2100
+      || month < 1 || month > 12
+      || mday < 1 || mday > 31) {
+    error("date '%s' is invalid", dbuf);
+    return -1;
+  }
+
+  if (strlen(tbuf) != 8) {
+    error("time '%s' is invalid, its length is expected to be 8", tbuf);
+    return -1;
+  }
+  if (!isdigit(tbuf[0]) || !isdigit(tbuf[1])
+      || tbuf[2] != ':' || !isdigit(tbuf[3]) || !isdigit(tbuf[4])
+      || tbuf[5] != ':' || !isdigit(tbuf[6]) || !isdigit(tbuf[7])) {
+    error("time '%s' is invalid, expected to be in HH:MM:SS format", tbuf);
+    return -1;
+  }
+  if (sscanf(tbuf, "%d:%d:%d", &hour, &min, &sec) != 3) {
+    error("time '%s' is invalid, expected to be in HH:MM:SS format", tbuf);
+    return -1;
+  }
+  if (hour < 0 || hour > 23 || min < 0 || min > 60 || sec < 0 || sec > 61) {
+    error("time '%s' is invalid");
+    return -1;
+  }
+
+  memset(&btm, 0, sizeof(btm));
+  btm.tm_isdst = -1;
+  btm.tm_year = year - 1900;
+  btm.tm_mon = month - 1;
+  btm.tm_mday = mday;
+  btm.tm_hour = hour;
+  btm.tm_min = min;
+  btm.tm_sec = sec;
+  if ((tt = mktime(&btm)) == (time_t) -1) {
+    error("date '%s %s' is invalid", dbuf, tbuf);
+    return -1;
+  }
+
+  return 0;
+}
+
+static int
+parse_zip_file_type(const unsigned char *mbuf, int *p_type)
+{
+  if (strlen(mbuf) != 5) {
+    error("file type '%s' is invalid, its length must be 5", mbuf);
+    return -1;
+  }
+  if (mbuf[0] == 'D') {
+    *p_type = S_IFDIR | 0775;
+  } else if (mbuf[0] == '.') {
+    *p_type = S_IFREG | 0644;
+  } else {
+    error("file type '%s' is invalid", mbuf);
+    return -1;
+  }
+
+  return 0;
+}
+
+static int
+get_zip_listing(const unsigned char *path, struct archive_file *arch)
+{
+  char *cmds[4];
+  int r, retval = -1, state = 0, n;
+  unsigned char *out = 0, *err = 0;
+  int out_len, linelen;
+  unsigned char *linebuf = 0;
+  FILE *fin = 0;
+  unsigned char *dbuf = 0; // buffer for the date
+  unsigned char *tbuf = 0; // buffer for the time
+  unsigned char *mbuf = 0; // buffer for the file modes
+  unsigned char *zbuf = 0; // buffer for the size
+  unsigned char *cbuf = 0; // buffer for the compressed size
+  unsigned char *fbuf = 0;
+  unsigned char *name_ptr;
+  int file_count = 0, dir_count = 0;
+  int file_type = 0;
+  long long file_size, comp_size, tmp;
+  long long file_total = 0, comp_total = 0;
+
+  cmds[0] = "/usr/bin/7z";
+  cmds[1] = "l";
+  cmds[2] = (char*) path;
+  cmds[3] = 0;
+
+  r = ejudge_invoke_process(cmds, NULL, NULL, NULL, 0, &out, &err);
+  if (r != 0) {
+    error("archiver exit code: %d", r);
+    fprintf(stderr, "%s\n", err);
+    goto cleanup;
+  }
+  free(err); err = 0;
+
+  if (!out) {
+    retval = 0;
+    goto cleanup;
+  }
+  out_len = strlen(out);
+  linebuf = malloc(out_len + 10);
+  dbuf = malloc(out_len + 10);
+  tbuf = malloc(out_len + 10);
+  mbuf = malloc(out_len + 10);
+  zbuf = malloc(out_len + 10);
+  cbuf = malloc(out_len + 10);
+  fbuf = malloc(out_len + 10);
+
+  fin = fmemopen(out, out_len, "r");
+  while (fgets(linebuf, out_len + 10, fin)) {
+    linelen = strlen(linebuf);
+    while (linelen > 0 && isspace(linebuf[linelen - 1])) {
+      --linelen;
+    }
+    linebuf[linelen] = 0;
+
+    if (state == 0) {
+      if (!strncmp(linebuf, "------------------- ", 20)) state = 1;
+      continue;
+    }
+    if (state == 2) {
+      // parse the summary line
+      if (sscanf(linebuf, "%s%s%s%s%s%s%n",
+                 zbuf, cbuf, dbuf, tbuf, mbuf, fbuf, &n) != 6) {
+        error("invalid summary line");
+        return -1;
+      }
+      if (linebuf[n]) {
+        error("garbage in the summary line");
+        return -1;
+      }
+      if (strcmp(tbuf, "files,") != 0) {
+        error("expected 'files,', got '%s'", tbuf);
+        return -1;
+      }
+      if (strcmp(fbuf, "folders") != 0) {
+        error("expected 'folders', got '%s'", fbuf);
+        return -1;
+      }
+      if (parse_long_long(zbuf, &tmp) < 0) {
+        error("invalid total size");
+        return -1;
+      }
+      if (tmp != file_total) {
+        error("total size mismatch");
+        return -1;
+      }
+      if (parse_long_long(cbuf, &tmp) < 0) {
+        error("invalid total compressed size");
+        return -1;
+      }
+      if (tmp != comp_total) {
+        error("compressed size mismatch");
+        return -1;
+      }
+      if (parse_long_long(dbuf, &tmp) < 0) {
+        error("invalid file count");
+        return -1;
+      }
+      if (tmp != file_count) {
+        error("file count mismatch");
+        return -1;
+      }
+      if (parse_long_long(mbuf, &tmp) < 0) {
+        error("invalid directory count");
+        return -1;
+      }
+      if (tmp != dir_count) {
+        error("directory count mismatch");
+        return -1;
+      }
+      state = 3;
+      continue;
+    }
+    if (state == 3) {
+      error("garbage after the end of listing");
+      goto cleanup;
+    }
+    // state == 1 is the main parsing state
+    if (!strncmp(linebuf, "------------------- ", 20)) {
+      state = 2;
+      continue;
+    }
+
+    if (sscanf(linebuf, "%s%s%s%s%s%n", dbuf, tbuf, mbuf,zbuf,cbuf,&n) != 5) {
+      error("listing line %s is invalid", linebuf);
+      goto cleanup;
+    }
+    if (n >= 53) {
+      error("file information takes >= 53 characters");
+      goto cleanup;
+    }
+    name_ptr = linebuf + 53;
+
+    if (check_zip_date(dbuf, tbuf) < 0) {
+      goto cleanup;
+    }
+    if (parse_zip_file_type(mbuf, &file_type) < 0) {
+      goto cleanup;
+    }
+
+    if (parse_long_long(zbuf, &file_size) < 0) {
+      error("invalid file size '%s'", zbuf);
+      goto cleanup;
+    }
+    if (file_size < 0 || file_size > INT_MAX) {
+      error("invalid file size: %lld", file_size);
+      goto cleanup;
+    }
+    if (parse_long_long(cbuf, &comp_size) < 0) {
+      error("invalid compressed size '%s'", cbuf);
+      goto cleanup;
+    }
+    if (comp_size < 0 || comp_size > INT_MAX) {
+      error("invalid compressed size '%s'", comp_size);
+      goto cleanup;
+    }
+    if (check_file_name(name_ptr) < 0) {
+      goto cleanup;
+    }
+
+    file_total += file_size;
+    comp_total += comp_size;
+    if (S_ISDIR(file_type)) {
+      dir_count++;
+    } else {
+      file_count++;
+    }
+    append_entry(arch, file_size, file_type, name_ptr);
+  }
+  fclose(fin); fin = 0;
+
+  if (state != 3) {
+    error("unexpected listing end");
+    return -1;
+  }
+  retval = 0;
+
+cleanup:
+  if (fin) fclose(fin);
+  free(out);
+  free(err);
+  free(linebuf);
+  free(dbuf);
+  free(tbuf);
+  free(mbuf);
+  free(zbuf);
+  free(cbuf);
+  free(fbuf);
+  return retval;
+}
+
+static int
 unpack_tar(const unsigned char *path, const unsigned char *dir)
 {
   int r;
@@ -416,6 +742,30 @@ unpack_tar(const unsigned char *path, const unsigned char *dir)
   cmds[5] = 0;
 
   r = ejudge_invoke_process(cmds, NULL, NULL, NULL, 0, &out, &err);
+  if (r != 0) {
+    error("archiver exit code: %d", r);
+    fprintf(stderr, "%s", err);
+    r = -1;
+  }
+
+  free(out);
+  free(err);
+  return r;
+}
+
+static int
+unpack_zip(const unsigned char *path, const unsigned char *dir)
+{
+  int r;
+  unsigned char *out = 0, *err = 0;
+  char *cmds[4];
+
+  cmds[0] = "/usr/bin/7z";
+  cmds[1] = "x";
+  cmds[2] = (char*) path;
+  cmds[3] = 0;
+
+  r = ejudge_invoke_process(cmds, NULL, dir, NULL, 0, &out, &err);
   if (r != 0) {
     error("archiver exit code: %d", r);
     fprintf(stderr, "%s", err);
@@ -511,57 +861,13 @@ check_sizes(
 }
 
 static int
-is_valid_char(int c)
-{
-  if (c <= ' ' || c == 0177) return 0;
-  /* filter out potentially dangerous characters */
-  switch (c) {
-  case '!':                     /* shell history */
-  case '\"':                    /* shell escape */
-  case '#':                     /* shell comment start */
-  case '$':                     /* shell variable expansion */
-  case '%':                     /* DOS cmd variable expansion */
-  case '&':                     /* shell background process */
-  case '\'':                    /* shell escape */
-  case '(':                     /* shell subprocess */
-  case ')':                     /* shell subprocess */
-  case '*':                     /* shell pattern */
-  case ':':                     /* DOS drive separator */
-  case ';':                     /* shell command separator */
-  case '<':                     /* shell redirection */
-  case '>':                     /* shell redirection */
-  case '?':                     /* shell pattern */
-  case '\\':                    /* shell escape */
-  case '`':                     /* shell subprocess */
-  case '{':                     /* shell subprocess */
-  case '|':                     /* shell pipe */
-  case '}':                     /* shell subprocess */
-  case '~':                     /* shell home dir */
-    return 0;
-  }
-  return 1;
-}
-
-static int
 check_names(struct archive_file *arch)
 {
   int i;
-  const unsigned char *str;
 
   for (i = 0; i < arch->u; ++i) {
-    str = arch->v[i].name;
-    if (!str || !*str) {
-      error("empty file name");
+    if (check_file_name(arch->v[i].name) < 0)
       return -1;
-    }
-    while (*str && is_valid_char(*str)) {
-      ++str;
-    }
-    if (*str) {
-      error("invalid character with code %d in file name %s",
-            *str, arch->v[i].name);
-      return -1;
-    }
   }
 
   return 0;
@@ -583,8 +889,11 @@ check_tar_tests(
   // find "tests/" entry
   snprintf(n1, sizeof(n1), "%s/", dir_prefix);
   if ((i = find_entry(arch, n1)) < 0) {
-    error("no %s entry in the archive", n1);
-    return -1;
+    snprintf(n1, sizeof(n1), "%s", dir_prefix);
+    if ((i = find_entry(arch, n1)) < 0) {
+      error("no %s entry in the archive", n1);
+      return -1;
+    }
   }
   if (!S_ISDIR(arch->v[i].type)) {
     error("%s entry is not a directory", n1);
@@ -754,6 +1063,8 @@ make_report(
   unsigned char ofbase[PATH_MAX];
   unsigned char ifpath[PATH_MAX];
   unsigned char ofpath[PATH_MAX];
+  DIR *d = 0;
+  struct dirent *dd;
 
   if (create_arch_dir(wd, sizeof(wd), work_dir, prefix) < 0)
     goto fail;
@@ -761,6 +1072,19 @@ make_report(
 
   if (unpack_func(path, wd) < 0)
     goto fail;
+
+  /* check, that all files in the working dir have good names */
+  if (!(d = opendir(wd))) {
+    error("cannot open directory %s", wd);
+    goto fail;
+  }
+  while ((dd = readdir(d))) {
+    if (check_file_name(dd->d_name) < 0) {
+      error("name '%s' is invalid", dd->d_name);
+      goto fail;
+    }
+  }
+  closedir(d); d = 0;
 
   snprintf(td, sizeof(td), "%s/%s", wd, tests_dir);
   if (stat(td, &stb) < 0) {
@@ -775,6 +1099,19 @@ make_report(
     error("directory %s has invalid permissions", td);
     goto fail;
   }
+
+  /* check, that all files in the tests dir have good names */
+  if (!(d = opendir(td))) {
+    error("cannot open directory %s", td);
+    goto fail;
+  }
+  while ((dd = readdir(d))) {
+    if (check_file_name(dd->d_name) < 0) {
+      error("name '%s' is invalid", dd->d_name);
+      goto fail;
+    }
+  }
+  closedir(d); d = 0;
 
   snprintf(fp, sizeof(fp), "%s/README", td);
   if (read_text_file(fp, "README", &txt, &len) < 0)
@@ -806,6 +1143,7 @@ make_report(
   return 0;
 
 fail:
+  if (d) closedir(d);
   if (wd_created) {
     remove_directory_recursively(wd, 0);
   }
@@ -956,7 +1294,7 @@ main(int argc, char **argv)
       work_dir = argv[i + 1];
       i += 2;
     } else {
-      die("invalid option `%s'", argv[i]);
+      die("invalid option '%s'", argv[i]);
     }
   }
   if (i >= argc) {
@@ -991,21 +1329,23 @@ main(int argc, char **argv)
   case MIME_TYPE_APPL_TAR:
   case MIME_TYPE_APPL_BZIP2:
     if (get_tar_listing(archive_path, &arch) < 0) return 1;
-    if (check_sizes(&arch, max_file_count, max_file_size, max_archive_size)<0)
-      return 1;
-    if (check_names(&arch) < 0) return 1;
-    if (check_tar_tests(&arch, max_test_count, tests_dir, if_patt, of_patt) < 0)
-      return 1;
     unpack_func = unpack_tar;
     break;
 
   case MIME_TYPE_APPL_ZIP:
-    die("this archive type is not supported");
+    if (get_zip_listing(archive_path, &arch) < 0) return 1;
+    unpack_func = unpack_zip;
     break;
 
   default:
     die("file is not an archive file");
   }
+
+  if (check_sizes(&arch, max_file_count, max_file_size, max_archive_size) < 0)
+    return 1;
+  if (check_names(&arch) < 0) return 1;
+  if (check_tar_tests(&arch, max_test_count, tests_dir, if_patt, of_patt) < 0)
+    return 1;
 
   if (make_report(&arch, archive_path, work_dir, "stylearch", tests_dir,
                   if_patt, of_patt, unpack_func) < 0)
