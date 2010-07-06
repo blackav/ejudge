@@ -153,6 +153,44 @@ invoke_tar(
 }
 
 static int
+invoke_zip(
+        FILE *log_f,
+        const unsigned char *log_path,
+        const unsigned char *arch_path,
+        const unsigned char *work_dir)
+{
+  tpTask tsk = 0;
+
+  tsk = task_New();
+  task_AddArg(tsk, "/usr/bin/7z");
+  task_AddArg(tsk, "x");
+  task_AddArg(tsk, arch_path);
+  task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ, 0);
+  task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_APPEND, TSK_FULL_RW);
+  task_SetRedir(tsk, 2, TSR_FILE, log_path, TSK_APPEND, TSK_FULL_RW);
+  if (work_dir) task_SetWorkingDir(tsk, work_dir);
+  task_SetPathAsArg0(tsk);
+  task_EnableAllSignals(tsk);
+  task_SetWorkingDir(tsk, work_dir);
+
+  fflush(log_f);
+  if (task_Start(tsk) < 0) {
+    plog(log_f, "invoke_zip", "failed to start /usr/bin/7z");
+    task_Delete(tsk);
+    return -1;
+  }
+  task_Wait(tsk);
+  if (task_IsAbnormal(tsk)) {
+    plog(log_f, "invoke_zip", "/usr/bin/7z failed");
+    task_Delete(tsk);
+    return -1;
+  }
+  task_Delete(tsk); tsk = 0;
+
+  return 0;
+}
+
+static int
 count_tests(
         FILE *log_f,
         const struct section_problem_data *prob,
@@ -1044,6 +1082,11 @@ run_inverse_testing(
   path_t check_dir = { 0 };
   testing_report_xml_t report_xml = 0;
   long time_limit_ms = 0;
+  int (*unpack_func)(
+        FILE *log_f,
+        const unsigned char *log_path,
+        const unsigned char *arch_path,
+        const unsigned char *work_dir) = 0;
 
   make_patterns(prob, test_pat, sizeof(test_pat), corr_pat, sizeof(corr_pat));
 
@@ -1113,21 +1156,27 @@ run_inverse_testing(
   }
   log_text = 0;
 
-  /*
-Remaining field to fill:
-  int status;      -- OK, WRONG_ANSWER, CHECK_FAILED
-  int score;       -- 0 or full score
-  */
-
   snprintf(report_path, report_path_size, "%s/%s.xml",
            global->run_work_dir, pkt_name);
-  
-  if (req_pkt->mime_type != MIME_TYPE_APPL_GZIP) {
+
+  switch (req_pkt->mime_type) {
+  case MIME_TYPE_APPL_GZIP:
+  case MIME_TYPE_APPL_BZIP2:
+  case MIME_TYPE_APPL_COMPRESS:
+  case MIME_TYPE_APPL_TAR:
+    unpack_func = invoke_tar;
+    break;
+
+  case MIME_TYPE_APPL_ZIP:
+    unpack_func = invoke_zip;
+    break;
+
+  default:
     perr(log_f, "archive of type %d (%s) is not supported",
          req_pkt->mime_type, mime_type_get_type(req_pkt->mime_type));
     goto cleanup;
   }
-
+  
   r = generic_copy_file(REMOVE, global->run_exe_dir, pkt_name,req_pkt->exe_sfx,
                         0, global->run_work_dir, pkt_name,
                         mime_type_get_suffix(req_pkt->mime_type));
@@ -1150,8 +1199,8 @@ Remaining field to fill:
   }
 
   // invoke tar
-  if (invoke_tar(log_f, log_path, arch_path, arch_dir) < 0) {
-    perr(log_f, "tar extraction failed on file %s in dir %s",
+  if (unpack_func(log_f, log_path, arch_path, arch_dir) < 0) {
+    perr(log_f, "archive extraction failed on file %s in dir %s",
          arch_path, arch_dir);
     goto cleanup;
   }
