@@ -343,6 +343,7 @@ Contest files and directories:
   GLOBAL_PARAM(plugin_dir, "s"),
   GLOBAL_PARAM(description_file, "s"),
   GLOBAL_PARAM(contest_start_cmd, "s"),
+  GLOBAL_PARAM(contest_stop_cmd, "s"),
 
 Participant's quotas:
   GLOBAL_PARAM(max_run_size, "d"),
@@ -1003,6 +1004,17 @@ super_html_edit_global_parameters(FILE *f,
                              SSERV_CMD_GLOB_CHANGE_CONTEST_START_CMD,
                              SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD,
                              SSERV_CMD_GLOB_EDIT_CONTEST_START_CMD,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+
+    //GLOBAL_PARAM(contest_stop_cmd, "s"),
+    print_string_editing_row(f, "Contest stop script:", global->contest_stop_cmd,
+                             SSERV_CMD_GLOB_CHANGE_CONTEST_STOP_CMD,
+                             SSERV_CMD_GLOB_CLEAR_CONTEST_STOP_CMD,
+                             SSERV_CMD_GLOB_EDIT_CONTEST_STOP_CMD,
                              session_id,
                              form_row_attrs[row ^= 1],
                              self_url,
@@ -2443,6 +2455,16 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD:
     GLOB_CLEAR_STRING(contest_start_cmd);
 
+  case SSERV_CMD_GLOB_CHANGE_CONTEST_STOP_CMD:
+    xfree(global->contest_stop_cmd);
+    global->contest_stop_cmd = xstrdup(param2);
+    break;
+
+  case SSERV_CMD_GLOB_CLEAR_CONTEST_STOP_CMD:
+    xfree(global->contest_stop_cmd);
+    global->contest_stop_cmd = 0;
+    break;
+
   case SSERV_CMD_GLOB_CHANGE_MAX_RUN_SIZE:
     p_int = &global->max_run_size;
     goto handle_size;
@@ -2969,6 +2991,14 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     xfree(*pp_str);
     *pp_str = 0;
     return 0;
+
+  case SSERV_CMD_GLOB_SAVE_CONTEST_STOP_CMD:
+    pp_str = &sstate->contest_stop_cmd_text;
+    goto handle_string_3;
+
+  case SSERV_CMD_GLOB_CLEAR_CONTEST_STOP_CMD_TEXT:
+    pp_str = &sstate->contest_stop_cmd_text;
+    goto clear_string_2;
 
   case SSERV_CMD_GLOB_SAVE_STAND_HEADER:
     pp_str = &sstate->stand_header_text;
@@ -8041,6 +8071,7 @@ super_html_read_serve(FILE *flog,
       snprintf(aprob->check_cmd, sizeof(aprob->check_cmd), "%s", check_cmd);
 
   sstate->contest_start_cmd_text = do_load_file(conf_dir, global->contest_start_cmd);
+  sstate->contest_stop_cmd_text = do_load_file(conf_dir, global->contest_stop_cmd);
   sstate->stand_header_text = do_load_file(conf_dir, global->stand_header_file);
   sstate->stand_footer_text = do_load_file(conf_dir, global->stand_footer_file);
   sstate->stand2_header_text = do_load_file(conf_dir, global->stand2_header_file);

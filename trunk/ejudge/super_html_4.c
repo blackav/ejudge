@@ -1139,6 +1139,7 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_statement_dir, 'S', 1, 1, 1, 1, 0, "Directory for problem statements", "Directory for problem statements (relative to the contest configuration directory)", "SidState.show_global_2" },
   { NS_GLOBAL, CNTSGLOB_plugin_dir, 'S', 1, 1, 1, 1, 0, "Directory for the problem plugins", "Directory for problem plugins (relative to the contest configuration directory)", "SidState.show_global_2" },
   { NS_GLOBAL, CNTSGLOB_contest_start_cmd, 'S', 1, 1, 1, 1, 0, "The contest start script", 0, "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_contest_stop_cmd, 'S', 1, 1, 1, 1, 0, "The contest stop script", 0, "SidState.show_global_2" },
   { NS_GLOBAL, CNTSGLOB_description_file, 'S', 1, 1, 1, 1, 0, "The contest description file", 0, "SidState.show_global_2" },
 
   { NS_SID_STATE, SSSS_show_global_3, '-', 1, 0, 0, 0, 0, "Contestants' quotas", 0, 0 },
