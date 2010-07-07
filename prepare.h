@@ -97,7 +97,7 @@ struct user_adjustment_info
 };
 struct user_adjustment_map;
 
-/* sizeof(struct section_global_data) == 350004 */
+/* sizeof(struct section_global_data) == 350008 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -282,6 +282,8 @@ struct section_global_data
   path_t ejudge_checkers_dir;
   /** command to run when the contest starts */
   path_t contest_start_cmd;
+  /** command to run when the contest stops */
+  unsigned char *contest_stop_cmd;
   /** path to the HTML file with the contest description */
   path_t description_file;
   /** path to the contest plugin */

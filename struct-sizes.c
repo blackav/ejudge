@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@
 #include "runlog.h"
 #include "clarlog.h"
 #include "prepare.h"
+#include "super-serve.h"
 
 #include <stdio.h>
 
@@ -35,5 +36,6 @@ int main(void)
   printf("section_problem_data:  %zu\n", sizeof(struct section_problem_data));
   printf("section_language_data: %zu\n", sizeof(struct section_language_data));
   printf("section_tester_data:   %zu\n", sizeof(struct section_tester_data));
+  printf("sid_state:             %zu\n", sizeof(struct sid_state));
   return 0;
 }
