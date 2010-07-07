@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/07/01 01:04:00
+// Generated 2010/07/07 13:00:39
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -97,6 +97,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_tgz_sfx] = { CNTSGLOB_tgz_sfx, 'S', XSIZE(struct section_global_data, tgz_sfx), "tgz_sfx", XOFFSET(struct section_global_data, tgz_sfx) },
   [CNTSGLOB_ejudge_checkers_dir] = { CNTSGLOB_ejudge_checkers_dir, 'S', XSIZE(struct section_global_data, ejudge_checkers_dir), "ejudge_checkers_dir", XOFFSET(struct section_global_data, ejudge_checkers_dir) },
   [CNTSGLOB_contest_start_cmd] = { CNTSGLOB_contest_start_cmd, 'S', XSIZE(struct section_global_data, contest_start_cmd), "contest_start_cmd", XOFFSET(struct section_global_data, contest_start_cmd) },
+  [CNTSGLOB_contest_stop_cmd] = { CNTSGLOB_contest_stop_cmd, 's', XSIZE(struct section_global_data, contest_stop_cmd), "contest_stop_cmd", XOFFSET(struct section_global_data, contest_stop_cmd) },
   [CNTSGLOB_description_file] = { CNTSGLOB_description_file, 'S', XSIZE(struct section_global_data, description_file), "description_file", XOFFSET(struct section_global_data, description_file) },
   [CNTSGLOB_contest_plugin_file] = { CNTSGLOB_contest_plugin_file, 'S', XSIZE(struct section_global_data, contest_plugin_file), "contest_plugin_file", XOFFSET(struct section_global_data, contest_plugin_file) },
   [CNTSGLOB_test_pat] = { CNTSGLOB_test_pat, 'S', XSIZE(struct section_global_data, test_pat), "test_pat", XOFFSET(struct section_global_data, test_pat) },

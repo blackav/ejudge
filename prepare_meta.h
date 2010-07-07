@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/07/01 01:04:00
+// Generated 2010/07/07 13:00:39
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -92,6 +92,7 @@ enum
   CNTSGLOB_tgz_sfx,
   CNTSGLOB_ejudge_checkers_dir,
   CNTSGLOB_contest_start_cmd,
+  CNTSGLOB_contest_stop_cmd,
   CNTSGLOB_description_file,
   CNTSGLOB_contest_plugin_file,
   CNTSGLOB_test_pat,
