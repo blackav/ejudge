@@ -1,12 +1,35 @@
 dnl $Id$
-dnl Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru>
+dnl Copyright (C) 2004-2010 Alexander Chernov <cher@ejudge.ru>
 
-AC_INIT(ejudge,2.2)
+AC_INIT(ejudge,2.3)
 AC_PREREQ(2.59)
 AC_REVISION($Revision$)
 
 AC_PREFIX_DEFAULT([$HOME/inst-ejudge])
 AC_PROG_INSTALL
+AC_PROG_AWK
+AC_PROG_GREP
+AC_PROG_SED
+AC_PROG_LN_S
+AC_PROG_MKDIR_P
+AC_PROG_YACC
+AC_PROG_LEX
+
+if ! which --help > /dev/null 2>/dev/null
+then
+  echo "'which' program is not found, please install it." >&2
+  echo "The package is probably called 'which'." >&2
+  exit 1
+fi
+
+for tool in gawk grep sed make rm cp ln ar cat chmod mkdir tar gzip bzip2
+do
+  if ! which "$tool" >/dev/null 2>/dev/null
+  then
+    echo "'$tool' program is not found. Please, install it." >&2
+    exit 1
+  fi
+done
 
 AC_GNU_SOURCE
 AC_PROG_CC
@@ -889,6 +912,11 @@ else
   ac_cv_nls=1
 fi 
 
+if [[ x"${ac_cv_nls}" = x1 ]]
+then
+  AC_CHECK_PROG([ICONV],[iconv],[iconv],[false])
+  [[ x"${ICONV}" = xfalse ]] && ac_cv_nls=""
+fi
 if [[ x"${ac_cv_nls}" = x1 ]]
 then
   AC_CHECK_PROG([XGETTEXT],[xgettext],[xgettext],[false])
