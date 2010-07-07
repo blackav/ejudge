@@ -323,6 +323,7 @@ cmd_operation(
     if (stop_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_FINISHED;
     if (start_time <= 0) return -NEW_SRV_ERR_CONTEST_NOT_STARTED;
     run_stop_contest(cs->runlog_state, cs->current_time);
+    serve_invoke_stop_script(cs);
     serve_update_status_file(cs, 1);
     break;
   case NEW_SRV_ACTION_CONTINUE_CONTEST:
@@ -334,6 +335,7 @@ cmd_operation(
       return -NEW_SRV_ERR_INSUFFICIENT_DURATION;
     run_set_finish_time(cs->runlog_state, 0);
     run_stop_contest(cs->runlog_state, 0);
+    serve_invoke_stop_script(cs);
     serve_update_status_file(cs, 1);
     break;
   case NEW_SRV_ACTION_SUSPEND:

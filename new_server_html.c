@@ -1021,11 +1021,13 @@ ns_check_contest_events(serve_state_t cs, const struct contest_desc *cnts)
       /* the contest is over: contest_finish_time is expired! */
       info("CONTEST IS OVER");
       run_stop_contest(cs->runlog_state, finish_time);
+      serve_invoke_stop_script(cs);
     } else if (start_time > 0 && stop_time <= 0 && duration > 0
                && cs->current_time >= start_time + duration){
       /* the contest is over: duration is expired! */
       info("CONTEST IS OVER");
       run_stop_contest(cs->runlog_state, start_time + duration);
+      serve_invoke_stop_script(cs);
     } else if (sched_time > 0 && start_time <= 0
                && cs->current_time >= sched_time) {
       /* it's time to start! */
@@ -2172,6 +2174,7 @@ priv_contest_operation(FILE *fout,
       goto cleanup;
     }
     run_stop_contest(cs->runlog_state, cs->current_time);
+    serve_invoke_stop_script(cs);
     serve_update_status_file(cs, 1);
     break;
 
@@ -2194,6 +2197,7 @@ priv_contest_operation(FILE *fout,
     }
     run_set_finish_time(cs->runlog_state, 0);
     run_stop_contest(cs->runlog_state, 0);
+    serve_invoke_stop_script(cs);
     serve_update_status_file(cs, 1);
     break;
 
@@ -6070,6 +6074,7 @@ priv_upsolving_operation(
   case NEW_SRV_ACTION_UPSOLVING_CONFIG_3: // stop upsolving
     if (!cs->upsolving_mode) break;
     run_stop_contest(cs->runlog_state, cs->current_time);
+    serve_invoke_stop_script(cs);
     cs->upsolving_mode = 0;
     cs->freeze_standings = 0;
     cs->view_source = 0;

@@ -145,6 +145,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(info_pat, "s"),
   GLOBAL_PARAM(tgz_pat, "s"),
   GLOBAL_PARAM(contest_start_cmd, "s"),
+  GLOBAL_PARAM(contest_stop_cmd, "S"),
   GLOBAL_PARAM(description_file, "s"),
   GLOBAL_PARAM(contest_plugin_file, "s"),
 
@@ -759,6 +760,7 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->prob_exam_protocol_footer_txt);
   xfree(p->full_exam_protocol_header_txt);
   xfree(p->full_exam_protocol_footer_txt);
+  xfree(p->contest_stop_cmd);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -2261,6 +2263,7 @@ set_defaults(
   path_t fpath;
   path_t start_path;
   path_t xml_path;
+  path_t tmp_buf;
 
   /* find global section */
   for (p = state->config; p; p = p->next)
@@ -2699,6 +2702,17 @@ set_defaults(
             g->contest_start_cmd);
         return -1;
       }
+    }
+
+    if (g->contest_stop_cmd && g->contest_stop_cmd[0]) {
+      pathmake2(tmp_buf, g->conf_dir, "/", g->contest_stop_cmd, NULL);
+      if (check_executable(tmp_buf) < 0) {
+        err("contest stop command %s is not executable or does not exist",
+            tmp_buf);
+        return -1;
+      }
+      xfree(g->contest_stop_cmd);
+      g->contest_stop_cmd = xstrdup(tmp_buf);
     }
 
     if (g->stand_header_file[0]) {
@@ -5041,6 +5055,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   GLOBAL_PARAM(info_pat, "s"),
   GLOBAL_PARAM(tgz_pat, "s"),
   GLOBAL_PARAM(contest_start_cmd, "s"),
+  GLOBAL_PARAM(contest_stop_cmd, "S"),
   */
 
   /*

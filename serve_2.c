@@ -2421,6 +2421,24 @@ serve_invoke_start_script(serve_state_t state)
 }
 
 void
+serve_invoke_stop_script(serve_state_t state)
+{
+  tpTask tsk = 0;
+
+  if (!state->global->contest_stop_cmd) return;
+  if (!state->global->contest_stop_cmd[0]) return;
+  if (!(tsk = task_New())) return;
+  task_AddArg(tsk, state->global->contest_stop_cmd);
+  task_SetPathAsArg0(tsk);
+  if (task_Start(tsk) < 0) {
+    task_Delete(tsk);
+    return;
+  }
+  task_Wait(tsk);
+  task_Delete(tsk);
+}
+
+void
 serve_send_run_quit(const serve_state_t state)
 {
   void *pkt_buf = 0;

@@ -303,6 +303,9 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     fprintf(f, "plugin_dir = \"%s\"\n", CARMOR(global->plugin_dir));
   if (global->contest_start_cmd[0])
     fprintf(f, "contest_start_cmd = \"%s\"\n", CARMOR(global->contest_start_cmd));
+  if (global->contest_stop_cmd && global->contest_stop_cmd[0])
+    fprintf(f, "contest_stop_cmd = \"%s\"\n",
+            CARMOR(global->contest_stop_cmd));
   if (global->description_file[0])
     fprintf(f, "description_file = \"%s\"\n", CARMOR(global->description_file));
   fprintf(f, "\n");

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3756,6 +3756,22 @@ super_html_edit_template_file(FILE *f,
     commit_action = SSERV_CMD_GLOB_SAVE_CONTEST_START_CMD;
     reread_action = SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD_TEXT;
     clear_action = SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD_TEXT;
+    back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
+    help_txt = super_html_template_help_3;
+    break;
+
+  case SSERV_CMD_GLOB_EDIT_CONTEST_STOP_CMD:
+    if (!global) {
+      failure_text = "no current contest";
+      goto failure;
+    }
+    file_path1 = global->contest_stop_cmd;
+    if (!file_path1) file_path1 = "";
+    param_expl = "Contest start script";
+    p_str = &sstate->contest_stop_cmd_text;
+    commit_action = SSERV_CMD_GLOB_SAVE_CONTEST_STOP_CMD;
+    reread_action = SSERV_CMD_GLOB_CLEAR_CONTEST_STOP_CMD_TEXT;
+    clear_action = SSERV_CMD_GLOB_CLEAR_CONTEST_STOP_CMD_TEXT;
     back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
     help_txt = super_html_template_help_3;
     break;
