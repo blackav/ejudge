@@ -1163,6 +1163,44 @@ check_pk_register_contest(
 }
 
 static int
+check_pk_set_password(
+        struct client_state *p,
+        int pkt_len,
+        const struct userlist_pk_set_password *data)
+{
+  const char *old_pwd, *new_pwd;
+  int old_len, new_len, exp_len;
+
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet too small: %d instead of %d",
+             pkt_len, (int) sizeof(*data));
+    return -1;
+  }
+
+  old_pwd = data->data;
+  old_len = strlen(old_pwd);
+  if (old_len != data->old_len) {
+    CONN_BAD("old_len mismatch: %d instead of %d", data->old_len, old_len);
+    return -1;
+  }
+
+  new_pwd = old_pwd + old_len + 1;
+  new_len = strlen(new_pwd);
+  if (new_len != data->new_len) {
+    CONN_BAD("new_len mismatch: %d instead of %d", data->new_len, new_len);
+    return -1;
+  }
+
+  exp_len = sizeof(*data) + old_len + new_len;
+  if (pkt_len != exp_len) {
+    CONN_BAD("pkt_len mismatch: %d instead of %d", pkt_len, exp_len);
+    return -1;
+  }
+
+  return 0;
+}
+
+static int
 full_get_contest(
         struct client_state *p,
         const unsigned char *pfx,
@@ -4342,38 +4380,24 @@ cmd_set_user_info(struct client_state *p,
   userlist_free(&new_u->b);
 }
 
+/*
+This function is not used. Pending removal.
+ */
 static void
-cmd_set_passwd(struct client_state *p, int pkt_len,
-               struct userlist_pk_set_password *data)
+cmd_set_passwd(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_set_password *data)
 {
-  int old_len, new_len, exp_len, contest_id = 0;
+  int contest_id = 0;
   unsigned char *old_pwd, *new_pwd;
   const struct userlist_user *u;
   struct passwd_internal oldint, newint;
   unsigned char logbuf[1024];
   const struct contest_desc *cnts = 0;
 
-  if (pkt_len < sizeof(*data)) {
-    CONN_BAD("packet is too small: %d", pkt_len);
-    return;
-  }
   old_pwd = data->data;
-  old_len = strlen(old_pwd);
-  if (old_len != data->old_len) {
-    CONN_BAD("old password length mismatch: %d, %d", old_len, data->old_len);
-    return;
-  }
-  new_pwd = old_pwd + old_len + 1;
-  new_len = strlen(new_pwd);
-  if (new_len != data->new_len) {
-    CONN_BAD("new password length mismatch: %d, %d", new_len, data->new_len);
-    return;
-  }
-  exp_len = sizeof(*data) + old_len + new_len;
-  if (pkt_len != exp_len) {
-    CONN_BAD("packet length mismatch: %d, %d", exp_len, pkt_len);
-    return;
-  }
+  new_pwd = old_pwd + data->old_len + 1;
 
   snprintf(logbuf, sizeof(logbuf), "SET_PASSWD: %d", data->user_id);
 
@@ -4405,7 +4429,7 @@ cmd_set_passwd(struct client_state *p, int pkt_len,
     return;
   }
 
-  if (!new_len) {
+  if (data->new_len <= 0) {
     err("%s -> new password is empty", logbuf);
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
@@ -4439,10 +4463,11 @@ cmd_set_passwd(struct client_state *p, int pkt_len,
 }
 
 static void
-cmd_team_set_passwd(struct client_state *p, int pkt_len,
-                    struct userlist_pk_set_password *data)
+cmd_team_set_passwd(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_set_password *data)
 {
-  int old_len, new_len, exp_len;
   unsigned char *old_pwd, *new_pwd;
   const struct userlist_user *u;
   struct passwd_internal oldint, newint;
@@ -4452,28 +4477,8 @@ cmd_team_set_passwd(struct client_state *p, int pkt_len,
   const struct userlist_user_info *ui;
   const struct userlist_contest *c;
 
-  // check packet
-  if (pkt_len < sizeof(*data)) {
-    CONN_BAD("packet is too small: %d", pkt_len);
-    return;
-  }
   old_pwd = data->data;
-  old_len = strlen(old_pwd);
-  if (old_len != data->old_len) {
-    CONN_BAD("old password length mismatch: %d, %d", old_len, data->old_len);
-    return;
-  }
-  new_pwd = old_pwd + old_len + 1;
-  new_len = strlen(new_pwd);
-  if (new_len != data->new_len) {
-    CONN_BAD("new password length mismatch: %d, %d", new_len, data->new_len);
-    return;
-  }
-  exp_len = sizeof(*data) + old_len + new_len;
-  if (pkt_len !=  exp_len) {
-    CONN_BAD("packet length mismatch: %d, %d", exp_len, pkt_len);
-    return;
-  }
+  new_pwd = old_pwd + data->old_len + 1;
 
   snprintf(logbuf, sizeof(logbuf),
            "SET_TEAM_PASSWD: %d, %d", data->user_id, data->contest_id);
@@ -4505,7 +4510,7 @@ cmd_team_set_passwd(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  if (!new_len) {
+  if (data->new_len <= 0) {
     err("%s -> new password is empty", logbuf);
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
@@ -7549,10 +7554,11 @@ cmd_observer_cmd(
 }
 
 static void
-cmd_priv_set_passwd(struct client_state *p, int pkt_len,
-                    struct userlist_pk_set_password *data)
+cmd_priv_set_passwd(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_set_password *data)
 {
-  size_t old_len, new_len, exp_len;
   const unsigned char *old_pwd, *new_pwd;
   unsigned char logbuf[1024];
   struct passwd_internal oldint, newint;
@@ -7560,29 +7566,10 @@ cmd_priv_set_passwd(struct client_state *p, int pkt_len,
   const struct contest_desc *cnts = 0;
   const struct userlist_user_info *ui = 0;
   const struct userlist_contest *c = 0;
-  int r, reply_code = ULS_OK, cloned_flag = 0;
+  int reply_code = ULS_OK, cloned_flag = 0, contest_id = 0;
 
-  if (pkt_len < sizeof(*data)) {
-    CONN_BAD("packet is too small: %d", pkt_len);
-    return;
-  }
   old_pwd = data->data;
-  old_len = strlen(old_pwd);
-  if (old_len != data->old_len) {
-    CONN_BAD("old password length mismatch: %zu, %d", old_len, data->old_len);
-    return;
-  }
-  new_pwd = old_pwd + old_len + 1;
-  new_len = strlen(new_pwd);
-  if (new_len != data->new_len) {
-    CONN_BAD("new password length mismatch: %zu, %d", new_len, data->new_len);
-    return;
-  }
-  exp_len = sizeof(*data) + old_len + new_len;
-  if (pkt_len != exp_len) {
-    CONN_BAD("packet length mismatch: %zu, %d", exp_len, pkt_len);
-    return;
-  }
+  new_pwd = old_pwd + data->old_len + 1;
 
   if (!data->user_id) data->user_id = p->user_id;
   snprintf(logbuf, sizeof(logbuf), "PRIV_SET_PASSWD: %d, %d, %d",
@@ -7590,7 +7577,7 @@ cmd_priv_set_passwd(struct client_state *p, int pkt_len,
 
   if (is_admin(p, logbuf) < 0) return;
 
-  if (!old_len) {
+  if (data->old_len <= 0) {
     err("%s -> old password is empty", logbuf);
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
@@ -7600,7 +7587,7 @@ cmd_priv_set_passwd(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
-  if (!new_len) {
+  if (data->new_len <= 0) {
     err("%s -> new password is empty", logbuf);
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
@@ -7640,12 +7627,9 @@ cmd_priv_set_passwd(struct client_state *p, int pkt_len,
     break;
 
   case ULS_PRIV_SET_TEAM_PASSWD:
-    if (data->contest_id > 0) {
-      if ((r = contests_get(data->contest_id, &cnts)) < 0) {
-        err("%s -> invalid contest: %s", logbuf, contests_strerror(-r));
-        send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-        return;
-      }
+    contest_id = data->contest_id;
+    if (contest_id > 0) {
+      if (full_get_contest(p, logbuf, &contest_id, &cnts) < 0) return;
       if (cnts->disable_team_password) {
         err("%s -> team password is disabled", logbuf);
         send_reply(p, -ULS_ERR_NO_PERMS);
@@ -7653,7 +7637,7 @@ cmd_priv_set_passwd(struct client_state *p, int pkt_len,
       }
     }
 
-    if (default_get_user_info_3(data->user_id,data->contest_id,&u,&ui,&c) < 0
+    if (default_get_user_info_3(data->user_id, contest_id, &u, &ui, &c) < 0
         || !u) {
       err("%s -> invalid user", logbuf);
       send_reply(p, -ULS_ERR_BAD_UID);
@@ -7685,7 +7669,7 @@ cmd_priv_set_passwd(struct client_state *p, int pkt_len,
       return;
     }
 
-    default_set_team_passwd(data->user_id, data->contest_id, USERLIST_PWD_SHA1,
+    default_set_team_passwd(data->user_id, contest_id, USERLIST_PWD_SHA1,
                             newint.pwds[USERLIST_PWD_SHA1], cur_time,
                             &cloned_flag);
     if (cloned_flag) reply_code = ULS_CLONED;
@@ -8959,7 +8943,7 @@ static int (*check_table[])() =
   [ULS_DO_LOGOUT] =             0,
   [ULS_GET_USER_INFO] =         0,
   [ULS_SET_USER_INFO] =         0,
-  [ULS_SET_PASSWD] =            0,
+  [ULS_SET_PASSWD] =            check_pk_set_password,
   [ULS_GET_USER_CONTESTS] =     0,
   [ULS_REGISTER_CONTEST] =      check_pk_register_contest,
   [ULS_DELETE_MEMBER] =         0,
@@ -8971,7 +8955,7 @@ static int (*check_table[])() =
   [ULS_TEAM_LOGIN] =            0,
   [ULS_TEAM_CHECK_COOKIE] =     0,
   [ULS_GET_CONTEST_NAME] =      check_pk_map_contest,
-  [ULS_TEAM_SET_PASSWD] =       0,
+  [ULS_TEAM_SET_PASSWD] =       check_pk_set_password,
   [ULS_LIST_ALL_USERS] =        check_pk_map_contest,
   [ULS_EDIT_REGISTRATION] =     0,
   [ULS_EDIT_FIELD] =            check_pk_edit_field,
@@ -9010,8 +8994,8 @@ static int (*check_table[])() =
   [ULS_ADD_NOTIFY] =            check_pk_map_contest,
   [ULS_DEL_NOTIFY] =            check_pk_map_contest,
   [ULS_SET_COOKIE_LOCALE] =     check_pk_edit_field,
-  [ULS_PRIV_SET_REG_PASSWD] =   0,
-  [ULS_PRIV_SET_TEAM_PASSWD] =  0,
+  [ULS_PRIV_SET_REG_PASSWD] =   check_pk_set_password,
+  [ULS_PRIV_SET_TEAM_PASSWD] =  check_pk_set_password,
   [ULS_GENERATE_TEAM_PASSWORDS_2]=check_pk_map_contest,
   [ULS_GENERATE_PASSWORDS_2] =  check_pk_map_contest,
   [ULS_GET_DATABASE] =          0,
