@@ -97,7 +97,7 @@ struct user_adjustment_info
 };
 struct user_adjustment_map;
 
-/* sizeof(struct section_global_data) == 350008 */
+/* sizeof(struct section_global_data) == 350012 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -658,6 +658,9 @@ struct section_global_data
   /** HTML attribute for `warnings' column of the standings */
   unsigned char stand_warn_number_attr[256];
 
+  /** the user groups to load */
+  char **load_user_group;
+
   /** INTERNAL: text with unhandled variables */
   unsigned char *unhandled_vars;
 
@@ -686,7 +689,7 @@ struct section_global_data
   +path_t test_checker_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 64892 */
+/* sizeof(struct section_problem_data) == 64900 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -899,6 +902,11 @@ struct section_problem_data
   char **date_penalty;
   int dp_total META_ATTRIB((meta_private));
   struct penalty_info *dp_infos META_ATTRIB((meta_private));
+
+  /** group-specific start date for this problem */
+  char **group_start_date;
+  /** group-specific deadline for this problem */
+  char **group_deadline;
 
   char **disable_language;
   char **enable_language;
