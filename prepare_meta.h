@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/07/07 23:07:52
+// Generated 2010/07/09 15:29:01
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -261,6 +261,7 @@ enum
   CNTSGLOB_stand_show_warn_number,
   CNTSGLOB_stand_contestant_status_attr,
   CNTSGLOB_stand_warn_number_attr,
+  CNTSGLOB_load_user_group,
   CNTSGLOB_unhandled_vars,
   CNTSGLOB_disable_prob_long_name,
   CNTSGLOB_disable_passed_tests,
@@ -387,6 +388,8 @@ enum
   CNTSPROB_date_penalty,
   CNTSPROB_dp_total,
   CNTSPROB_dp_infos,
+  CNTSPROB_group_start_date,
+  CNTSPROB_group_deadline,
   CNTSPROB_disable_language,
   CNTSPROB_enable_language,
   CNTSPROB_require,

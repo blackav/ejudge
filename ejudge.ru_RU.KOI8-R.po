@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-06-29 21:07+0400\n"
-"PO-Revision-Date: 2010-06-29 21:10+0400\n"
+"POT-Creation-Date: 2010-07-10 10:06+0400\n"
+"PO-Revision-Date: 2010-07-10 10:08+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -2590,6 +2590,12 @@ msgstr "Ошибка протокола"
 msgid "READ-ONLY"
 msgstr "ТОЛЬКО ПРОСМОТР"
 
+msgid "REFRESH"
+msgstr "ОБНОВИТЬ"
+
+msgid "REFRESH PAGE MANUALLY!"
+msgstr "ОБНОВЛЯЙТЕ СТРАНИЦУ ВРУЧНУЮ!"
+
 msgid "REGISTERED"
 msgstr "ЗАРЕГИСТРИРОВАН"
 
@@ -2858,6 +2864,9 @@ msgstr "Выполняется..."
 
 msgid "Runs being processed"
 msgstr "Обрабатываемые посылки"
+
+msgid "STATUS UPDATE FAILED!"
+msgstr "ОШИБКА ОБНОВЛЕНИЯ СТАТУСА!"
 
 msgid "Save"
 msgstr "Сохранить"
@@ -3206,6 +3215,12 @@ msgstr "Переключить язык"
 
 msgid "System error"
 msgstr "Системная ошибка"
+
+msgid "TESTING COMPLETED"
+msgstr "ТЕСТИРОВАНИЕ ЗАВЕРШЕНО"
+
+msgid "TESTING IN PROGRESS..."
+msgstr "ИДЕТ ТЕСТИРОВАНИЕ..."
 
 msgid "Team ID"
 msgstr "ID Команды"
@@ -4214,3 +4229,4 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
+

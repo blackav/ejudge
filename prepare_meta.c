@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/07/07 23:07:52
+// Generated 2010/07/09 15:29:01
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -266,6 +266,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_stand_show_warn_number] = { CNTSGLOB_stand_show_warn_number, 'B', XSIZE(struct section_global_data, stand_show_warn_number), "stand_show_warn_number", XOFFSET(struct section_global_data, stand_show_warn_number) },
   [CNTSGLOB_stand_contestant_status_attr] = { CNTSGLOB_stand_contestant_status_attr, 'S', XSIZE(struct section_global_data, stand_contestant_status_attr), "stand_contestant_status_attr", XOFFSET(struct section_global_data, stand_contestant_status_attr) },
   [CNTSGLOB_stand_warn_number_attr] = { CNTSGLOB_stand_warn_number_attr, 'S', XSIZE(struct section_global_data, stand_warn_number_attr), "stand_warn_number_attr", XOFFSET(struct section_global_data, stand_warn_number_attr) },
+  [CNTSGLOB_load_user_group] = { CNTSGLOB_load_user_group, 'x', XSIZE(struct section_global_data, load_user_group), "load_user_group", XOFFSET(struct section_global_data, load_user_group) },
   [CNTSGLOB_unhandled_vars] = { CNTSGLOB_unhandled_vars, 's', XSIZE(struct section_global_data, unhandled_vars), "unhandled_vars", XOFFSET(struct section_global_data, unhandled_vars) },
   [CNTSGLOB_disable_prob_long_name] = { CNTSGLOB_disable_prob_long_name, 'B', XSIZE(struct section_global_data, disable_prob_long_name), NULL, XOFFSET(struct section_global_data, disable_prob_long_name) },
   [CNTSGLOB_disable_passed_tests] = { CNTSGLOB_disable_passed_tests, 'B', XSIZE(struct section_global_data, disable_passed_tests), NULL, XOFFSET(struct section_global_data, disable_passed_tests) },
@@ -425,6 +426,8 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_date_penalty] = { CNTSPROB_date_penalty, 'x', XSIZE(struct section_problem_data, date_penalty), "date_penalty", XOFFSET(struct section_problem_data, date_penalty) },
   [CNTSPROB_dp_total] = { CNTSPROB_dp_total, 'i', XSIZE(struct section_problem_data, dp_total), NULL, XOFFSET(struct section_problem_data, dp_total) },
   [CNTSPROB_dp_infos] = { CNTSPROB_dp_infos, '?', XSIZE(struct section_problem_data, dp_infos), NULL, XOFFSET(struct section_problem_data, dp_infos) },
+  [CNTSPROB_group_start_date] = { CNTSPROB_group_start_date, 'x', XSIZE(struct section_problem_data, group_start_date), "group_start_date", XOFFSET(struct section_problem_data, group_start_date) },
+  [CNTSPROB_group_deadline] = { CNTSPROB_group_deadline, 'x', XSIZE(struct section_problem_data, group_deadline), "group_deadline", XOFFSET(struct section_problem_data, group_deadline) },
   [CNTSPROB_disable_language] = { CNTSPROB_disable_language, 'x', XSIZE(struct section_problem_data, disable_language), "disable_language", XOFFSET(struct section_problem_data, disable_language) },
   [CNTSPROB_enable_language] = { CNTSPROB_enable_language, 'x', XSIZE(struct section_problem_data, enable_language), "enable_language", XOFFSET(struct section_problem_data, enable_language) },
   [CNTSPROB_require] = { CNTSPROB_require, 'x', XSIZE(struct section_problem_data, require), "require", XOFFSET(struct section_problem_data, require) },
