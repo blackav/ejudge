@@ -98,7 +98,8 @@ unpriv_page_header(FILE *fout,
                    struct contest_extra *extra,
                    time_t start_time, time_t stop_time);
 static void
-do_json_user_state(FILE *fout, const serve_state_t cs, int user_id);
+do_json_user_state(FILE *fout, const serve_state_t cs, int user_id,
+                   int need_reload_check);
 static int
 get_register_url(
         unsigned char *buf,
@@ -8803,7 +8804,7 @@ unpriv_load_html_style(struct http_request_info *phr,
 #if defined CONF_ENABLE_AJAX && CONF_ENABLE_AJAX
   if (extra->serve_state && phr->user_id > 0) {
     state_json_f = open_memstream(&state_json_txt, &state_json_len);
-    do_json_user_state(state_json_f, extra->serve_state, phr->user_id);
+    do_json_user_state(state_json_f, extra->serve_state, phr->user_id, 0);
     close_memstream(state_json_f); state_json_f = 0;
   } else {
     state_json_txt = xstrdup("");
@@ -8820,9 +8821,15 @@ unpriv_load_html_style(struct http_request_info *phr,
            "  var script_name=\"%s\";\n"
            "  dojo.require(\"dojo.parser\");\n"
            "  var jsonState = %s;\n"
+           "  var updateFailedMessage = \"%s\";\n"
+           "  var testingInProgressMessage = \"%s\";\n"
+           "  var testingCompleted = \"%s\";\n"
+           "  var waitingTooLong = \"%s\";\n"
            "</script>\n", phr->session_id, NEW_SRV_ACTION_JSON_USER_STATE,
            NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY,
-           phr->self_url, phr->script_name, state_json_txt);
+           phr->self_url, phr->script_name, state_json_txt,
+           _("STATUS UPDATE FAILED!"), _("TESTING IN PROGRESS..."),
+           _("TESTING COMPLETED"), _("REFRESH PAGE MANUALLY!"));
   xfree(state_json_txt); state_json_txt = 0;
   phr->script_part = xstrdup(bb);
   snprintf(bb, sizeof(bb), " onload=\"startClock()\"");
@@ -11518,6 +11525,7 @@ unpriv_page_header(FILE *fout,
   unsigned char stand_url_buf[1024];
   struct teamdb_export tdb;
   struct sformat_extra_data fe;
+  const unsigned char *visibility;
 
   template_ptr = extra->menu_2_txt;
   if (!template_ptr || !*template_ptr)
@@ -11696,7 +11704,7 @@ unpriv_page_header(FILE *fout,
       } else {
         status_style = "server_status_on";
       }
-      fprintf(fout, "<div class=\"%s\">\n", status_style);
+      fprintf(fout, "<div class=\"%s\" id=\"statusLine\">\n", status_style);
       fprintf(fout, "<div id=\"currentTime\">%s</div>",
               brief_time(time_buf, sizeof(time_buf), cs->current_time));
       if (unread_clars > 0) {
@@ -11775,7 +11783,12 @@ unpriv_page_header(FILE *fout,
                 _("Remaining"), time_buf);
       }
 
-      fprintf(fout, "</div>\n");
+      visibility = "hidden";
+      if (global->disable_auto_refresh > 0) {
+        visibility = "visible";
+      }
+
+      fprintf(fout, "<div id=\"reloadButton\" style=\"visibility: %s\">/ <a class=\"menu\" onclick=\"reloadPage()\"><b>[ %s ]</b></a></div><div id=\"statusString\" style=\"visibility: hidden\"></div></div>\n", visibility, _("REFRESH"));
       break;
 
     default:
@@ -13204,11 +13217,16 @@ unpriv_logout(FILE *fout,
 }
 
 static void
-do_json_user_state(FILE *fout, const serve_state_t cs, int user_id)
+do_json_user_state(
+        FILE *fout,
+        const serve_state_t cs,
+        int user_id,
+        int need_reload_check)
 {
   const struct section_global_data *global = cs->global;
   struct tm *ptm;
   time_t start_time = 0, stop_time = 0, duration = 0, remaining;
+  int has_transient;
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, user_id);
@@ -13236,13 +13254,17 @@ do_json_user_state(FILE *fout, const serve_state_t cs, int user_id)
     fprintf(fout, ", \"r\": %ld", remaining);
   }
   if (global->disable_auto_refresh <= 0) {
-    if (run_has_transient_user_runs(cs->runlog_state, user_id) ||
+    has_transient = run_has_transient_user_runs(cs->runlog_state, user_id);
+    if (has_transient ||
         (global->score_system == SCORE_OLYMPIAD
          && global->is_virtual
          && stop_time > 0
          && global->disable_virtual_auto_judge <= 0
          && !is_judged_virtual_olympiad(cs, user_id))) {
       fprintf(fout, ", \"x\": 1");
+    }
+    if (need_reload_check && !has_transient) {
+      fprintf(fout, ", \"z\": 1");
     }
   }
   fprintf(fout, " }");
@@ -13256,10 +13278,13 @@ unpriv_json_user_state(
         struct contest_extra *extra)
 {
   const serve_state_t cs = extra->serve_state;
+  int need_reload_check = 0;
+
+  ns_cgi_param_int_opt(phr, "x", &need_reload_check, 0);
 
   fprintf(fout, "Content-type: text/plain; charset=%s\n"
           "Cache-Control: no-cache\n\n", EJUDGE_CHARSET);
-  do_json_user_state(fout, cs, phr->user_id);
+  do_json_user_state(fout, cs, phr->user_id, need_reload_check);
 }
 
 static void
