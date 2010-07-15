@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-07-10 10:06+0400\n"
-"PO-Revision-Date: 2010-07-10 10:08+0400\n"
+"POT-Creation-Date: 2010-07-15 11:29+0400\n"
+"PO-Revision-Date: 2010-07-15 13:49+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -4020,6 +4020,9 @@ msgstr "неверный путь к сокету"
 msgid "invalid test number"
 msgstr "неверный номер теста"
 
+msgid "invalid user group"
+msgstr "неверная группа пользователей"
+
 msgid "invalid user_id"
 msgstr "неверный идентификатор пользователя"
 
@@ -4229,4 +4232,3 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
-
