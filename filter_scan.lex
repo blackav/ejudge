@@ -174,6 +174,7 @@ lett    [A-Za-z_]
 "judge_id" { TT(TOK_JUDGE_ID, FILTER_TYPE_INT); }
 "curjudge_id" { TT(TOK_CURJUDGE_ID, FILTER_TYPE_INT); }
 "total_score" { TT(TOK_TOTAL_SCORE, FILTER_TYPE_INT); }
+"inusergroup" { TT(TOK_INUSERGROUP, FILTER_TYPE_BOOL); }
 
 "int" { TT(TOK_INT, FILTER_TYPE_INT); }
 "string" { TT(TOK_STRING, FILTER_TYPE_STRING); }

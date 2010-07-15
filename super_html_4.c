@@ -1239,6 +1239,7 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_clardb_plugin, 'S', 1, 1, 1, 1, 0, "ClarDB storage engine", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_rundb_plugin, 'S', 1, 1, 1, 1, 0, "RunDB storage engine", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_xuser_plugin, 'S', 1, 1, 1, 1, 0, "XuserDB storage engine", 0, "SidState.show_global_6" },
+  { NS_GLOBAL, CNTSGLOB_load_user_group, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_GLOBAL_FIELD_DETAIL_PAGE, "User groups to load", 0, "SidState.show_global_6" },
 
   { NS_SID_STATE, SSSS_show_global_7, '-', 1, 0, 0, 0, 0, "Other parameters", 0, 0 },
   { NS_GLOBAL, CNTSGLOB_unhandled_vars, 137, 0, 0, 0, 0, SSERV_OP_EDIT_SERVE_GLOBAL_FIELD_DETAIL_PAGE, 0, 0, "SidState.show_global_7" },

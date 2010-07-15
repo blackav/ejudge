@@ -4,7 +4,7 @@
 #ifndef __FILTER_TREE_H__
 #define __FILTER_TREE_H__
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -57,6 +57,7 @@ enum
     FILTER_ERR_RANGE,           /* int->result_t conversion failed */
     FILTER_ERR_INV_ARG,         /* invalid argument for operation */
     FILTER_ERR_INV_TYPES,       /* invalid argument types */
+    FILTER_ERR_INV_USERGROUP,   /* invalid user group */
 
     FILTER_ERR_LAST
   };

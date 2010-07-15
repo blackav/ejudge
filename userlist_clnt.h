@@ -388,4 +388,11 @@ userlist_clnt_import_csv_users(
         const unsigned char *csv_text,
         unsigned char **p_log);
 
+int
+userlist_clnt_get_xml_by_text(
+        struct userlist_clnt *clnt,
+        int cmd,
+        const unsigned char *request_text,
+        unsigned char **reply_text);
+
 #endif /* __USERLIST_CLNT_H__ */

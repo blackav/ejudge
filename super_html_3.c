@@ -2114,6 +2114,20 @@ super_html_edit_global_parameters(FILE *f,
     html_submit_button(f, SSERV_CMD_GLOB_DETECT_CPU_BOGOMIPS, "Detect");
     fprintf(f, "</td></tr></form>\n");
 
+    //GLOBAL_PARAM(load_user_group, "x"),
+    if (!global->load_user_group || !global->load_user_group[0]) {
+      xstr = xstrdup("");
+    } else {
+      xstr = sarray_unparse_2(global->load_user_group);
+    }
+    print_string_editing_row(f, "User groups to load:", xstr,
+                             SSERV_CMD_GLOB_CHANGE_LOAD_USER_GROUP,
+                             SSERV_CMD_GLOB_CLEAR_LOAD_USER_GROUP,
+                             0,
+                             session_id, form_row_attrs[row ^= 1],
+                             self_url, extra_args, hidden_vars);
+    xfree(xstr);
+
     //GLOBAL_PARAM(clardb_plugin, "s"),
     print_string_editing_row(f, "ClarDB storage engine:",
                              global->clardb_plugin,
@@ -3094,6 +3108,18 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_GLOB_CLEAR_STAND_PAGE_COL_ATTR:
     sarray_free(global->stand_page_col_attr);
     global->stand_page_col_attr = 0;
+    return 0;
+
+  case SSERV_CMD_GLOB_CHANGE_LOAD_USER_GROUP:
+    if (sarray_parse_2(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(global->load_user_group);
+    global->load_user_group = tmp_env;
+    return 0;
+
+  case SSERV_CMD_GLOB_CLEAR_LOAD_USER_GROUP:
+    sarray_free(global->load_user_group);
+    global->load_user_group = 0;
     return 0;
 
   case SSERV_CMD_GLOB_CHANGE_CLARDB_PLUGIN:

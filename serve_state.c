@@ -71,6 +71,8 @@ serve_state_destroy(serve_state_t state,
 {
   int i, j;
   struct user_filter_info *ufp, *ufp2;
+  struct serve_user_group *srv_grp;
+  struct serve_group_member *srv_gm;
 
   if (!state) return 0;
 
@@ -132,6 +134,27 @@ serve_state_destroy(serve_state_t state,
   if (state->contest_plugin) {
     plugin_unload((struct ejudge_plugin_iface*) state->contest_plugin);
   }
+
+  if (state->user_group_count > 0) {
+    for (i = 0; i < state->user_group_count; ++i) {
+      srv_grp = &state->user_groups[i];
+      xfree(srv_grp->group_name);
+      xfree(srv_grp->description);
+      xfree(srv_grp->members);
+    }
+  }
+  xfree(state->user_groups);
+  xfree(state->user_group_map);
+
+  if (state->group_member_count) {
+    for (i = 0; i < state->group_member_count; ++i) {
+      srv_gm = &state->group_members[i];
+      xfree(srv_gm->group_bitmap);
+      srv_gm->group_bitmap = 0;
+    }
+  }
+  xfree(state->group_members);
+  xfree(state->group_member_map);
 
   prepare_free_config(state->config);
 
@@ -208,6 +231,190 @@ serve_set_upsolving_mode(serve_state_t state)
     if (state->full_protocol)
       prob->team_show_judge_report = 1;
   }
+}
+
+int
+serve_load_user_groups(
+        int contest_id,
+        serve_state_t state,
+        struct userlist_clnt *ul_conn)
+{
+  const struct section_global_data *global = state->global;
+  int i, j, total_len = 0, len, r;
+  unsigned char *grp_list = 0, *grp_p;
+  unsigned char *xml_text = 0;
+  struct userlist_list *grp_info = 0;
+  struct xml_tree *xml_ptr;
+  const struct userlist_group *grp;
+  const struct userlist_groupmember *gm;
+  struct serve_user_group *srv_grp;
+  struct serve_group_member *srv_gm;
+  int user_group_count, user_group_map_size;
+  int member_map_size = 0, group_member_count = 0;
+  int bs_size;
+
+  if (!global) return 0;
+  if (!global->load_user_group) return 0;
+  if (!ul_conn) {
+    info("load_contest: contest %d groups are not loaded", contest_id);
+    return 0;
+  }
+  for (i = 0; global->load_user_group[i]; ++i) {
+    total_len += strlen(global->load_user_group[i]) + 1;
+  }
+  if (total_len >= 65536) {
+    err("load_contest: contest %d: total group length too high (%d)",
+        contest_id, total_len);
+    return -1;
+  }
+  grp_list = (unsigned char *) alloca(total_len + 10);
+  grp_p = grp_list;
+  for (i = 0; global->load_user_group[i]; ++i) {
+    if (i > 0) {
+      *grp_p++ = ' ';
+    }
+    len = strlen(global->load_user_group[i]);
+    memcpy(grp_p, global->load_user_group[i], len);
+    grp_p += len;
+  }
+  *grp_p = 0;
+
+  r = userlist_clnt_get_xml_by_text(ul_conn, ULS_GET_GROUPS, grp_list,
+                                    &xml_text);
+  if (r < 0) {
+    err("load_contest: contest %d: failed to load groups: %s",
+        contest_id, userlist_strerror(-r));
+    goto failed;
+  }
+  if (!xml_text) {
+    err("load_contest: contest %d: group XML is NULL", contest_id);
+    goto failed;
+  }
+  grp_info = userlist_parse_str(xml_text);
+  if (!grp_info) {
+    err("load_contest: contest %d: XML parse error", contest_id);
+    goto failed;
+  }
+  xfree(xml_text); xml_text = 0;
+
+  if (grp_info->group_map_size <= 0 || !grp_info->group_map) {
+    err("load_contest: contest %d: no groups loaded", contest_id);
+    goto failed;
+  }
+
+  user_group_map_size = grp_info->group_map_size;
+  while (user_group_map_size > 0
+         && !grp_info->group_map[user_group_map_size - 1])
+    user_group_map_size--;
+
+  // find the max group_id and the group counter
+  user_group_count = 0;
+  for (i = 0; i < user_group_map_size; ++i) {
+    if (grp_info->group_map[i]) {
+      ++user_group_count;
+    }
+  }
+
+  if (user_group_count <= 0) {
+    err("load_contest: contest %d: no groups loaded", contest_id);
+    goto failed;
+  }
+
+  state->user_group_count = user_group_count;
+  state->user_group_map_size = user_group_map_size;
+  XCALLOC(state->user_groups, state->user_group_count);
+  XCALLOC(state->user_group_map, state->user_group_map_size);
+  memset(state->user_group_map, -1,
+         sizeof(state->user_group_map[0]) * state->user_group_map_size);
+  for (i = 0, j = 0; i < state->user_group_map_size; ++i) {
+    if (grp_info->group_map[i]) {
+      grp = grp_info->group_map[i];
+      srv_grp = &state->user_groups[j];
+      srv_grp->group_id = grp->group_id;
+      srv_grp->group_name = xstrdup(grp->group_name);
+      srv_grp->description = xstrdup(grp->description);
+      state->user_group_map[i] = j;
+      ++j;
+    }
+  }
+
+  // calculate the member_map_size
+  if (!grp_info->groupmembers_node) goto done;
+  for (xml_ptr = grp_info->groupmembers_node->first_down; xml_ptr;
+       xml_ptr = xml_ptr->right) {
+    ASSERT(xml_ptr->tag == USERLIST_T_USERGROUPMEMBER);
+    gm = (struct userlist_groupmember*) xml_ptr;
+    ASSERT(gm->group_id > 0 && gm->group_id < state->user_group_map_size);
+    ASSERT(state->user_group_map[gm->group_id] >= 0);
+    ASSERT(gm->user_id > 0);
+    if (gm->user_id + 1 > member_map_size) {
+      member_map_size = gm->user_id + 1;
+    }
+    j = state->user_group_map[gm->group_id];
+    ++state->user_groups[j].member_count;
+  }
+  if (member_map_size <= 0) {
+    goto done;
+  }
+
+  state->group_member_map_size = member_map_size;
+  XCALLOC(state->group_member_map, member_map_size);
+  memset(state->group_member_map, -1,
+         member_map_size * sizeof(state->group_member_map[0]));
+
+  for (i = 0; i < state->user_group_count; ++i) {
+    srv_grp = &state->user_groups[i];
+    if (srv_grp->member_count > 0) {
+      XCALLOC(srv_grp->members, srv_grp->member_count);
+    }
+  }
+
+  for (xml_ptr = grp_info->groupmembers_node->first_down; xml_ptr;
+       xml_ptr = xml_ptr->right) {
+    gm = (struct userlist_groupmember*) xml_ptr;
+    ASSERT(gm->user_id < member_map_size);
+    if (state->group_member_map[gm->user_id] < 0) {
+      state->group_member_map[gm->user_id] = group_member_count++;
+    }
+  }
+  if (group_member_count <= 0) goto done;
+
+  state->group_member_count = group_member_count;
+  XCALLOC(state->group_members, group_member_count);
+  bs_size = (user_group_count + 31) / 32;
+  ASSERT(bs_size > 0);
+  for (i = 0; i < group_member_count; ++i) {
+    XCALLOC(state->group_members[i].group_bitmap, bs_size);
+  }
+
+  for (i = 0, xml_ptr = grp_info->groupmembers_node->first_down; xml_ptr;
+       xml_ptr = xml_ptr->right) {
+    gm = (struct userlist_groupmember*) xml_ptr;
+    ASSERT(state->group_member_map[gm->user_id] >= 0);
+    srv_gm = &state->group_members[state->group_member_map[gm->user_id]];
+    srv_gm->user_id = gm->user_id;
+    j = state->user_group_map[gm->group_id];
+    ASSERT(j >= 0 && j < state->user_group_count);
+    srv_gm->group_bitmap[j >> 5] |= (1U << (j & 0x1f));
+    srv_grp = &state->user_groups[j];
+    srv_grp->members[srv_grp->serial++] = gm->user_id;
+  }
+
+  // just for debug
+  fprintf(stderr, "user_group_count:      %d\n", state->user_group_count);
+  fprintf(stderr, "user_group_map_size:   %d\n", state->user_group_map_size);
+  fprintf(stderr, "group_member_count:    %d\n", state->group_member_count);
+  fprintf(stderr, "group_member_map_size: %d\n", state->group_member_map_size);
+
+done:
+  if (grp_info) userlist_free(&grp_info->b);
+  xfree(xml_text);
+  return 0;
+
+failed:
+  if (grp_info) userlist_free(&grp_info->b);
+  xfree(xml_text);
+  return -1;
 }
 
 const size_t serve_struct_sizes_array[] =
@@ -360,6 +567,10 @@ serve_state_load_contest(
   if (ul_conn) {
     // ignore error code
     userlist_clnt_notify(ul_conn, ULS_ADD_NOTIFY, contest_id);
+  }
+
+  if (serve_load_user_groups(contest_id, state, ul_conn) < 0) {
+    goto failure;
   }
 
   // load reporting plugin

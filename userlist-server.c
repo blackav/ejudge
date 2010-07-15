@@ -1201,6 +1201,33 @@ check_pk_set_password(
 }
 
 static int
+check_pk_set_user_info(
+        struct client_state *p,
+        int pkt_len,
+        const struct userlist_pk_set_user_info *data)
+{
+  int xml_len, exp_len;
+
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet too small: %d instead of %d",
+             pkt_len, (int) sizeof(*data));
+    return -1;
+  }
+  xml_len = strlen(data->data);
+  if (xml_len != data->info_len) {
+    CONN_BAD("info_len mismatch: %d instead of %d", data->info_len, xml_len);
+    return -1;
+  }
+  exp_len = sizeof(*data) + xml_len;
+  if (pkt_len != exp_len) {
+    CONN_BAD("pkt_len mismatch: %d instead of %d", pkt_len, exp_len);
+    return -1;
+  }
+
+  return 0;
+}
+
+static int
 full_get_contest(
         struct client_state *p,
         const unsigned char *pfx,
@@ -2036,7 +2063,7 @@ cmd_recover_password_1(struct client_state *p,
     xfree(msg_text); msg_text = 0;
   }
 
-  send_reply(p,ULS_OK);
+  send_reply(p, ULS_OK);
   info("%s -> ok", logbuf);
 }
 
@@ -4016,7 +4043,7 @@ cmd_get_user_info(struct client_state *p,
   default_unlock_user(u);
 
   ASSERT(xml_size == strlen(xml_ptr));
-  out_size = sizeof(*out) + xml_size + 1;
+  out_size = sizeof(*out) + xml_size;
   out = alloca(out_size);
   ASSERT(out);
   memset(out, 0, out_size);
@@ -4088,7 +4115,7 @@ cmd_priv_get_user_info(struct client_state *p,
   default_unlock_user(u);
 
   ASSERT(xml_size == strlen(xml_ptr));
-  out_size = sizeof(*out) + xml_size + 1;
+  out_size = sizeof(*out) + xml_size;
   out = alloca(out_size);
   ASSERT(out);
   memset(out, 0, out_size);
@@ -4139,7 +4166,7 @@ cmd_list_all_users(
   if (iter) iter->destroy(iter);
   close_memstream(f); f = 0;
   ASSERT(xml_size == strlen(xml_ptr));
-  out_size = sizeof(*out) + xml_size + 1;
+  out_size = sizeof(*out) + xml_size;
   out = alloca(out_size);
   ASSERT(out);
   memset(out, 0, out_size);
@@ -4217,7 +4244,7 @@ cmd_list_standings_users(
   iter->destroy(iter);
   close_memstream(f); f = 0;
   ASSERT(xml_size == strlen(xml_ptr));
-  out_size = sizeof(*out) + xml_size + 1;
+  out_size = sizeof(*out) + xml_size;
   out = alloca(out_size);
   ASSERT(out);
   memset(out, 0, out_size);
@@ -4286,7 +4313,7 @@ cmd_get_user_contests(struct client_state *p,
   close_memstream(f); f = 0;
 
   ASSERT(xml_size == strlen(xml_ptr));
-  out_size = sizeof(*out) + xml_size + 1;
+  out_size = sizeof(*out) + xml_size;
   out = alloca(out_size);
   memset(out, 0, out_size);
   out->reply_id = ULS_XML_DATA;
@@ -4304,21 +4331,10 @@ cmd_set_user_info(struct client_state *p,
                   int pkt_len,
                   struct userlist_pk_set_user_info *data)
 {
-  size_t xml_len;
   const struct contest_desc *cnts = 0;
   unsigned char logbuf[1024];
   struct userlist_user *new_u = 0;
   int reply_code = ULS_OK, cloned_flag = 0;
-
-  xml_len = strlen(data->data);
-  if (xml_len != data->info_len) {
-    CONN_BAD("XML length does not match");
-    return;
-  }
-  if (pkt_len != sizeof(*data) + xml_len) {
-    CONN_BAD("packet length mismatch");
-    return;
-  }
 
   snprintf(logbuf, sizeof(logbuf),
            "SET_USER_INFO: %d, %d", data->user_id, data->info_len);
@@ -5925,7 +5941,7 @@ cmd_generate_register_passwords(
   }
   if (!(f = open_memstream(&log_ptr, &log_size))) {
     err("%s -> open_memstream failed", logbuf);
-    send_reply(p, ULS_ERR_OUT_OF_MEM);
+    send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
   }
   do_generate_passwd(data->contest_id, f);
@@ -6138,7 +6154,7 @@ cmd_generate_team_passwords(
   }
   if (!(f = open_memstream(&log_ptr, &log_size))) {
     err("%s -> open_memstream failed", logbuf);
-    send_reply(p, ULS_ERR_OUT_OF_MEM);
+    send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
   }
   do_generate_team_passwd(data->contest_id, f);
@@ -8563,7 +8579,7 @@ cmd_list_all_groups(
   userlist_write_xml_footer(fout);
   fclose(fout); fout = 0;
 
-  out_size = sizeof(*out) + xml_size + 1;
+  out_size = sizeof(*out) + xml_size;
   out = alloca(out_size);
   memset(out, 0, out_size);
   out->reply_id = ULS_XML_DATA;
@@ -8727,7 +8743,7 @@ cmd_list_group_users(
   grp = plugin_call(get_group, data->contest_id);
   if (!grp) {
     err("%s -> invalid group %d", logbuf, data->contest_id);
-    send_reply(p, ULS_ERR_BAD_GROUP_ID);
+    send_reply(p, -ULS_ERR_BAD_GROUP_ID);
     return;
   }
 
@@ -8759,7 +8775,7 @@ cmd_list_group_users(
   userlist_write_xml_footer(fout);
   fclose(fout); fout = 0;
 
-  out_size = sizeof(*out) + xml_size + 1;
+  out_size = sizeof(*out) + xml_size;
   out = alloca(out_size);
   memset(out, 0, out_size);
   out->reply_id = ULS_XML_DATA;
@@ -8794,7 +8810,7 @@ cmd_create_group_member(
   grp = plugin_call(get_group, data->contest_id);
   if (!grp) {
     err("%s -> invalid group %d", logbuf, data->contest_id);
-    send_reply(p, ULS_ERR_BAD_GROUP_ID);
+    send_reply(p, -ULS_ERR_BAD_GROUP_ID);
     return;
   }
 
@@ -8832,7 +8848,7 @@ cmd_delete_group_member(
   grp = plugin_call(get_group, data->contest_id);
   if (!grp) {
     err("%s -> invalid group %d", logbuf, data->contest_id);
-    send_reply(p, ULS_ERR_BAD_GROUP_ID);
+    send_reply(p, -ULS_ERR_BAD_GROUP_ID);
     return;
   }
 
@@ -8844,6 +8860,102 @@ cmd_delete_group_member(
   
   send_reply(p, ULS_OK);
   info("%s -> OK", logbuf);
+}
+
+static void
+cmd_get_groups(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_set_user_info *data)
+{
+  unsigned char logbuf[1024];
+  struct userlist_pk_xml_data *out = 0;
+  size_t out_size, xml_size = 0;
+  char *xml_text = 0;
+  FILE *xml_file = 0;
+  unsigned char *group_name = 0;
+  int offset = 0, n, group_count = 0, i;
+  int *groups = 0;
+  const struct userlist_group *grp;
+  ptr_iterator_t iter = 0;
+  const struct userlist_groupmember *gm;
+
+  snprintf(logbuf, sizeof(logbuf), "GET_GROUPS: %d, %s",
+           p->user_id, data->data);
+
+  /* space-separated list of group names */
+  if (data->info_len <= 0 || data->info_len > 64 * 1024) {
+    err("%s -> invalid size %d", logbuf, data->info_len);
+    send_reply(p, -ULS_ERR_INVALID_SIZE);
+    goto cleanup;
+  }
+  group_name = alloca(data->info_len + 32);
+  while (sscanf(data->data + offset, "%s%n", group_name, &n) == 1) {
+    offset += n;
+    ++group_count;
+  }
+  if (group_count <= 0 || group_count > 256) {
+    err("%s -> invalid group count %d", logbuf, group_count);
+    send_reply(p, -ULS_ERR_INVALID_SIZE);
+    goto cleanup;
+  }
+  XALLOCAZ(groups, group_count);
+  i = 0;
+  offset = 0;
+  while (sscanf(data->data + offset, "%s%n", group_name, &n) == 1) {
+    grp = plugin_call(get_group_by_name, group_name);
+    if (!grp) {
+      err("%s -> invalid group %s", logbuf, group_name);
+      send_reply(p, -ULS_ERR_BAD_GROUP_ID);
+      goto cleanup;
+    }
+    groups[i] = grp->group_id;
+
+    offset += n;
+    ++i;
+  }
+  ASSERT(i == group_count);
+
+  xml_file = open_memstream(&xml_text, &xml_size);
+  userlist_write_xml_header(xml_file);
+  userlist_write_groups_header(xml_file);
+  for (i = 0; i < group_count; ++i) {
+    grp = plugin_call(get_group, groups[i]);
+    if (grp) {
+      userlist_unparse_usergroup(xml_file, grp, "      ", "\n");
+    }
+  }
+  userlist_write_groups_footer(xml_file);
+  userlist_write_groupmembers_header(xml_file);
+  for (i = 0; i < group_count; ++i) {
+    iter = plugin_call(get_group_member_iterator, groups[i]);
+    if (iter) {
+      for (; iter->has_next(iter); iter->next(iter)) {
+        if ((gm = (const struct userlist_groupmember*) iter->get(iter))) {
+          userlist_unparse_usergroupmember(xml_file, gm, "      ", "\n");
+        }
+      }
+      iter->destroy(iter); iter = 0;
+    }
+  }
+  userlist_write_groupmembers_footer(xml_file);
+  userlist_write_xml_footer(xml_file);
+  fclose(xml_file); xml_file = 0;
+
+  out_size = sizeof(*out) + xml_size;
+  out = (struct userlist_pk_xml_data*) xmalloc(out_size);
+  memset(out, 0, out_size);
+  out->reply_id = ULS_XML_DATA;
+  out->info_len = xml_size;
+  memcpy(out->data, xml_text, xml_size + 1);
+  xfree(xml_text); xml_text = 0;
+  enqueue_reply_to_client(p, out_size, out);
+  info("%s -> OK, size = %zu", logbuf, xml_size);
+
+cleanup:
+  if (iter) iter->destroy(iter);
+  if (xml_file) fclose(xml_file);
+  xfree(xml_text);
 }
 
 static void (*cmd_table[])() =
@@ -8931,6 +9043,7 @@ static void (*cmd_table[])() =
   [ULS_LIST_GROUP_USERS] =      cmd_list_group_users,
   [ULS_CREATE_GROUP_MEMBER] =   cmd_create_group_member,
   [ULS_DELETE_GROUP_MEMBER] =   cmd_delete_group_member,
+  [ULS_GET_GROUPS] =            cmd_get_groups,
 
   [ULS_LAST_CMD] 0
 };
@@ -8942,7 +9055,7 @@ static int (*check_table[])() =
   [ULS_CHECK_COOKIE] =          0,
   [ULS_DO_LOGOUT] =             0,
   [ULS_GET_USER_INFO] =         0,
-  [ULS_SET_USER_INFO] =         0,
+  [ULS_SET_USER_INFO] =         check_pk_set_user_info,
   [ULS_SET_PASSWD] =            check_pk_set_password,
   [ULS_GET_USER_CONTESTS] =     0,
   [ULS_REGISTER_CONTEST] =      check_pk_register_contest,
@@ -9020,6 +9133,7 @@ static int (*check_table[])() =
   [ULS_LIST_GROUP_USERS] =      check_pk_map_contest,
   [ULS_CREATE_GROUP_MEMBER] =   check_pk_register_contest,
   [ULS_DELETE_GROUP_MEMBER] =   check_pk_register_contest,
+  [ULS_GET_GROUPS] =            check_pk_set_user_info,
 
   [ULS_LAST_CMD] 0
 };

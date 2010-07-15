@@ -317,6 +317,8 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(full_exam_protocol_header_file, "s"),
   GLOBAL_PARAM(full_exam_protocol_footer_file, "s"),
 
+  GLOBAL_PARAM(load_user_group, "x"),
+
   { 0, 0, 0, 0 }
 };
 

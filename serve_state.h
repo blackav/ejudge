@@ -121,6 +121,23 @@ struct serve_user_results
   int total_score;
 };
 
+/** user group information */
+struct serve_user_group
+{
+  int group_id;
+  unsigned char *group_name;
+  unsigned char *description;
+  int serial;
+  int member_count;
+  int *members;
+};
+
+struct serve_group_member
+{
+  int user_id;
+  unsigned int *group_bitmap;
+};
+
 #define EJ_SERVE_STATE_TOTAL_PROBS 28
 
 struct serve_state
@@ -161,6 +178,17 @@ struct serve_state
   struct section_tester_data **abstr_testers;
   int max_abstr_prob;
   int max_abstr_tester;
+
+  /* user groups */
+  int user_group_count;         /* the total number of the loaded groups */
+  int user_group_map_size;      /* the size of the map */
+  struct serve_user_group *user_groups;
+  int *user_group_map;
+
+  int group_member_count;
+  int group_member_map_size;
+  struct serve_group_member *group_members;
+  int *group_member_map;
 
   time_t load_time;
   time_t current_time;

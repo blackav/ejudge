@@ -43,6 +43,7 @@ typedef struct filter_tree *tree_t;
 
 static tree_t check_int(tree_t p);
 static tree_t check_bool(tree_t p);
+static tree_t check_string(tree_t p);
 
 static tree_t do_int_cast(tree_t q, tree_t p);
 static tree_t do_string_cast(tree_t, tree_t);
@@ -170,6 +171,8 @@ static void *filter_expr_user_data;
 %token TOK_CURJUDGE_ID "curjudge_id"
 %token TOK_TOTAL_SCORE "total_score"
 %token TOK_CURTOTAL_SCORE "curtotal_score"
+%token TOK_INUSERGROUP "inusergroup"
+%token TOK_INUSERGROUPINT
 %token TOK_INT       "int"
 %token TOK_STRING    "string"
 %token TOK_BOOL      "bool"
@@ -376,6 +379,7 @@ exprA :
 | "cypher" { $1->kind = TOK_CURCYPHER; $$ = $1; }
 | "cypher" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curcypher" { $$ = $1; }
+| "inusergroup" '(' expr0 ')' { $1->v.t[0] = check_string($3); $$ = $1; }
 | "int" '(' expr0 ')' { $$ = do_int_cast($1, $3); }
 | "string" '(' expr0 ')' { $$ = do_string_cast($1, $3); }
 | "bool" '(' expr0 ')' { $$ = do_bool_cast($1, $3); }
@@ -406,7 +410,7 @@ check_int(tree_t p)
 {
   ASSERT(p);
   if (p->type != FILTER_TYPE_INT) {
-    (*filter_expr_parse_err)(filter_expr_user_data, "`int' expression expected");
+    (*filter_expr_parse_err)(filter_expr_user_data, "'int' expression expected");
     yynerrs++;
     return MKINT(0);
   }
@@ -417,9 +421,20 @@ check_bool(tree_t p)
 {
   ASSERT(p);
   if (p->type != FILTER_TYPE_BOOL) {
-    (*filter_expr_parse_err)(filter_expr_user_data, "`bool' expression expected");
+    (*filter_expr_parse_err)(filter_expr_user_data, "'bool' expression expected");
     yynerrs++;
     return MKBOOL(0);
+  }
+  return p;
+}
+static tree_t
+check_string(tree_t p)
+{
+  ASSERT(p);
+  if (p->type != FILTER_TYPE_STRING) {
+    (*filter_expr_parse_err)(filter_expr_user_data, "'string' expression expected");
+    yynerrs++;
+    return MKSTRING("");
   }
   return p;
 }

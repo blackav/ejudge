@@ -353,6 +353,7 @@ static unsigned char const * const errmsg[] =
   _("range error"),
   _("invalid argument"),
   _("invalid argument type"),
+  _("invalid user group"),
 };
 #undef _
 unsigned char const *
