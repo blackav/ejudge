@@ -3225,6 +3225,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_GLOB_CLEAR_RUNDB_PLUGIN:
   case SSERV_CMD_GLOB_CHANGE_XUSER_PLUGIN:
   case SSERV_CMD_GLOB_CLEAR_XUSER_PLUGIN:
+  case SSERV_CMD_GLOB_CHANGE_LOAD_USER_GROUP:
+  case SSERV_CMD_GLOB_CLEAR_LOAD_USER_GROUP:
     r = super_html_global_param(sstate, pkt->b.id, config,
                                 pkt->param1, param2_ptr, pkt->param3, pkt->param4);
     break;
@@ -4132,6 +4134,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CLEAR_STAND_PAGE_ROW_ATTR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_STAND_PAGE_COL_ATTR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_STAND_PAGE_COL_ATTR] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_LOAD_USER_GROUP] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CLEAR_LOAD_USER_GROUP] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_CLARDB_PLUGIN] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_CLARDB_PLUGIN] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_RUNDB_PLUGIN] = { cmd_set_value },

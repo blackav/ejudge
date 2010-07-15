@@ -131,6 +131,35 @@ is_missing_source(
 }
 
 static int
+find_user_group(struct filter_env *env, const unsigned char *group_name)
+{
+  int i;
+
+  if (!group_name || !*group_name) return FILTER_ERR_INV_USERGROUP;
+  for (i = 0; i < env->serve_state->user_group_count; ++i) {
+    if (!strcmp(env->serve_state->user_groups[i].group_name, group_name))
+      return i;
+  }
+  return FILTER_ERR_INV_USERGROUP;
+} 
+
+static int
+check_user_group(struct filter_env *env, int user_id, int group_ind)
+{
+  serve_state_t cs = env->serve_state;
+  int user_ind;
+  unsigned int *b;
+
+  if (user_id <= 0 || user_id >= cs->group_member_map_size) return 0;
+  user_ind = cs->group_member_map[user_id];
+  if (user_ind < 0 || user_ind >= cs->group_member_count) return 0;
+  if (group_ind < 0 || group_ind >= cs->user_group_count) return 0;
+  if (!(b = cs->group_members[user_ind].group_bitmap)) return 0;
+  if ((b[group_ind >> 5] & (1U << (group_ind & 0x1F)))) return 1;
+  return 0;
+}
+
+static int
 do_eval(struct filter_env *env,
         struct filter_tree *t,
         struct filter_tree *res)
@@ -844,6 +873,25 @@ do_eval(struct filter_env *env,
       }
     }
     break;
+
+  case TOK_INUSERGROUP:
+    if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
+    ASSERT(r1.kind == TOK_STRING_L);
+    if ((c = find_user_group(env, r1.v.s)) < 0) return c;
+    t->kind = TOK_INUSERGROUPINT;
+    t->v.t[0] = filter_tree_new_int(env->mem, c);
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    res->v.b = check_user_group(env, env->cur->user_id, c);
+    break;
+
+  case TOK_INUSERGROUPINT:
+    if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
+    ASSERT(r1.kind == TOK_INT_L); 
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    res->v.b = check_user_group(env, env->cur->user_id, r1.v.i);
+    break;   
 
   default:
     SWERR(("unhandled kind: %d", t->kind));

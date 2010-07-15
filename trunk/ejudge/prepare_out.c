@@ -517,6 +517,7 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     fprintf(f, "rundb_plugin = \"%s\"\n", CARMOR(global->rundb_plugin));
   if (global->xuser_plugin[0] && strcmp(global->xuser_plugin, "file"))
     fprintf(f, "xuser_plugin = \"%s\"\n", CARMOR(global->xuser_plugin));
+  do_xstr(f, &ab, "load_user_group", global->load_user_group);
   fprintf(f, "\n");
 
   if (global->unhandled_vars) fprintf(f, "%s\n", global->unhandled_vars);
