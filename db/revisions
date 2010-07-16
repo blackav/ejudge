@@ -5400,3 +5400,15 @@ super_html_4.c 5948 0 18836375
 userlist_clnt/get_xml_by_text.c 5947 0 174992
 filter_expr.y 5948 0 2551417
 filter_scan.lex 5948 0 798517
+html.h 5950 0 554639
+new-server.h 5950 0 2253861
+serve_state.h 5950 0 1314929
+teamdb.h 5950 0 305653
+teamdb_priv.h 5950 0 148792
+html.c 5950 0 13577259
+new_server_html.c 5950 0 39506190
+new_server_html_2.c 5950 0 15873877
+new_server_tables.c 5950 0 1238376
+serve_state.c 5950 0 2137913
+teamdb.c 5950 0 1529138
+teamdb_2.c 5950 0 300457
