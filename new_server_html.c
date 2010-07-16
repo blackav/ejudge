@@ -5523,7 +5523,7 @@ priv_standings(FILE *fout,
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, _("Current standings"));
-  ns_write_priv_standings(cs, cnts, fout, cs->accepting_mode);
+  ns_write_priv_standings(cs, phr, cnts, fout, cs->accepting_mode);
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
   
@@ -6591,6 +6591,37 @@ priv_whole_testing_queue_operation(
 }
 
 static int
+priv_stand_filter_operation(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+  const serve_state_t cs = extra->serve_state;
+
+  /*
+  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  */
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_SET_STAND_FILTER:
+    ns_set_stand_filter(cs, phr);
+    break;
+  case NEW_SRV_ACTION_RESET_STAND_FILTER:
+    ns_reset_stand_filter(cs, phr);
+    break;
+  default:
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+
+ cleanup:
+  return retval;
+}
+
+static int
 priv_print_user_exam_protocol(
         FILE *fout,
         FILE *log_f,
@@ -7162,6 +7193,8 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TESTING_DELETE_ALL] = priv_whole_testing_queue_operation,
   [NEW_SRV_ACTION_TESTING_UP_ALL] = priv_whole_testing_queue_operation,
   [NEW_SRV_ACTION_TESTING_DOWN_ALL] = priv_whole_testing_queue_operation,
+  [NEW_SRV_ACTION_SET_STAND_FILTER] = priv_stand_filter_operation,
+  [NEW_SRV_ACTION_RESET_STAND_FILTER] = priv_stand_filter_operation,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -8612,6 +8645,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TESTING_DOWN_ALL] = priv_generic_operation,
   [NEW_SRV_ACTION_MARK_DISPLAYED_2] = priv_generic_operation,
   [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_SET_STAND_FILTER] = priv_generic_operation,
+  [NEW_SRV_ACTION_RESET_STAND_FILTER] = priv_generic_operation,
 };
 
 static void
@@ -11219,20 +11254,22 @@ unpriv_view_standings(FILE *fout,
     fprintf(fout, _("<p>Information is not available.</p>"));
   } else if (global->is_virtual) {
     do_write_standings(cs, cnts, fout, 1, 1, phr->user_id, 0, 0, 0, 0, 1,
-                       cur_time);
+                       cur_time, NULL);
   } else if (global->score_system == SCORE_ACM) {
     do_write_standings(cs, cnts, fout, 1, 1, phr->user_id, 0, 0, 0, 0, 1,
-                       cur_time);
+                       cur_time, NULL);
   } else if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode) {
     fprintf(fout, _("<p>Information is not available.</p>"));
   } else if (global->score_system == SCORE_OLYMPIAD) {
     //fprintf(fout, _("<p>Information is not available.</p>"));
-    do_write_kirov_standings(cs, cnts, fout, 0, 1, 1, 0, 0, 0, 0, 1, cur_time, 0);
+    do_write_kirov_standings(cs, cnts, fout, 0, 1, 1, 0, 0, 0, 0, 1, cur_time,
+                             0, NULL);
   } else if (global->score_system == SCORE_KIROV) {
-    do_write_kirov_standings(cs, cnts, fout, 0, 1, 1, 0, 0, 0, 0, 1, cur_time, 0);
+    do_write_kirov_standings(cs, cnts, fout, 0, 1, 1, 0, 0, 0, 0, 1, cur_time,
+                             0, NULL);
   } else if (global->score_system == SCORE_MOSCOW) {
     do_write_moscow_standings(cs, cnts, fout, 0, 1, 1, phr->user_id,
-                              0, 0, 0, 0, 1, cur_time, 0);
+                              0, 0, 0, 0, 1, cur_time, 0, NULL);
   }
 
  done:
@@ -14137,6 +14174,8 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TESTING_DOWN_ALL] = "TESTING_DOWN_ALL",
   [NEW_SRV_ACTION_MARK_DISPLAYED_2] = "MARK_DISPLAYED_2",
   [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = "UNMARK_DISPLAYED_2",
+  [NEW_SRV_ACTION_SET_STAND_FILTER] = "SET_STAND_FILTER",
+  [NEW_SRV_ACTION_RESET_STAND_FILTER] = "RESET_STAND_FILTER",
 };
 
 void

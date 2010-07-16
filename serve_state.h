@@ -56,6 +56,16 @@ struct user_filter_info
   struct filter_tree *prev_tree;
   struct filter_tree_mem *tree_mem;
   unsigned char *error_msgs;
+
+  /* standings filter */
+  unsigned char *stand_user_expr;
+  struct filter_tree *stand_user_tree;
+  unsigned char *stand_prob_expr;
+  struct filter_tree *stand_prob_tree;
+  unsigned char *stand_run_expr;
+  struct filter_tree *stand_run_tree;
+  struct filter_tree_mem *stand_mem;
+  unsigned char *stand_error_msgs;
 };
 
 struct user_state_info
@@ -263,6 +273,8 @@ serve_state_t serve_state_init(void);
 serve_state_t serve_state_destroy(serve_state_t state,
                                   const struct contest_desc *cnts,
                                   struct userlist_clnt *ul_conn);
+void
+serve_state_destroy_stand_expr(struct user_filter_info *u);
 
 void serve_state_set_config_path(serve_state_t state, const unsigned char *);
 

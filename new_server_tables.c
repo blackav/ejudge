@@ -179,6 +179,8 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR] = __("Set STYLE_ERR run status"),
   [NEW_SRV_ACTION_MARK_DISPLAYED_2] = __("Mark displayed runs"),
   [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = __("Unmark displayed runs"),
+  [NEW_SRV_ACTION_SET_STAND_FILTER] = __("Set filter"),
+  [NEW_SRV_ACTION_RESET_STAND_FILTER] = __("Reset filter"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =
@@ -231,6 +233,8 @@ const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TESTING_DELETE_ALL] = NEW_SRV_ACTION_VIEW_TESTING_QUEUE,
   [NEW_SRV_ACTION_TESTING_UP_ALL] = NEW_SRV_ACTION_VIEW_TESTING_QUEUE,
   [NEW_SRV_ACTION_TESTING_DOWN_ALL] = NEW_SRV_ACTION_VIEW_TESTING_QUEUE,
+  [NEW_SRV_ACTION_SET_STAND_FILTER] = NEW_SRV_ACTION_STANDINGS,
+  [NEW_SRV_ACTION_RESET_STAND_FILTER] = NEW_SRV_ACTION_STANDINGS,
 };
 
 /* previous state (return in case of error) */

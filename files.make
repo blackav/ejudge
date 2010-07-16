@@ -194,6 +194,7 @@ COMMON_CFILES=\
  super_proto.c\
  sha.c\
  teamdb.c\
+ teamdb_2.c\
  team_extra.c\
  team_extra_xml.c\
  testinfo.c\
@@ -401,6 +402,7 @@ HFILES=\
  super-serve.h\
  sha.h\
  teamdb.h\
+ teamdb_priv.h\
  team_extra.h\
  testinfo.h\
  testing_report_xml.h\
