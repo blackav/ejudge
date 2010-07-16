@@ -61,45 +61,56 @@ void write_standings_header(const serve_state_t state,
                             unsigned char const * header_str,
                             unsigned char const * user_name);
 
-void do_write_kirov_standings(const serve_state_t,
-                              const struct contest_desc *cnts,
-                              FILE *f,
-                              const unsigned char *stand_dir,
-                              int client_flag, int only_table_flag,
-                              const unsigned char *header_str,
-                              unsigned char const *footer_str,
-                              int raw_flag,
-                              int accepting_mode,
-                              int force_fancy_style,
-                              time_t cur_time,
-                              int charset_id);
+struct user_filter_info;
 
-void do_write_standings(const serve_state_t,
-                        const struct contest_desc *cnts,
-                        FILE *f,
-                        int client_flag,
-                        int only_table_flag,
-                        int user_id,
-                        const unsigned char *header_str,
-                        unsigned char const *footer_str,
-                        int raw_flag,
-                        const unsigned char *user_name,
-                        int force_fancy_style,
-                        time_t cur_time);
+void
+do_write_kirov_standings(
+        const serve_state_t,
+        const struct contest_desc *cnts,
+        FILE *f,
+        const unsigned char *stand_dir,
+        int client_flag, int only_table_flag,
+        const unsigned char *header_str,
+        unsigned char const *footer_str,
+        int raw_flag,
+        int accepting_mode,
+        int force_fancy_style,
+        time_t cur_time,
+        int charset_id,
+        struct user_filter_info *u);
 
-void do_write_moscow_standings(const serve_state_t,
-                               const struct contest_desc *cnts,
-                               FILE *f,
-                               const unsigned char *stand_dir,
-                               int client_flag, int only_table_flag,
-                               int user_id,
-                               const unsigned char *header_str,
-                               const unsigned char *footer_str,
-                               int raw_flag,
-                               const unsigned char *user_name,
-                               int force_fancy_style,
-                               time_t cur_time,
-                               int charset_id);
+void
+do_write_standings(
+        const serve_state_t,
+        const struct contest_desc *cnts,
+        FILE *f,
+        int client_flag,
+        int only_table_flag,
+        int user_id,
+        const unsigned char *header_str,
+        unsigned char const *footer_str,
+        int raw_flag,
+        const unsigned char *user_name,
+        int force_fancy_style,
+        time_t cur_time,
+        struct user_filter_info *u);
+
+void
+do_write_moscow_standings(
+        const serve_state_t,
+        const struct contest_desc *cnts,
+        FILE *f,
+        const unsigned char *stand_dir,
+        int client_flag, int only_table_flag,
+        int user_id,
+        const unsigned char *header_str,
+        const unsigned char *footer_str,
+        int raw_flag,
+        const unsigned char *user_name,
+        int force_fancy_style,
+        time_t cur_time,
+        int charset_id,
+        struct user_filter_info *u);
 
 void html_reset_filter(serve_state_t, int user_id, ej_cookie_t session_id);
 void html_reset_clar_filter(serve_state_t, int user_id, ej_cookie_t session_id);

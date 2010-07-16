@@ -3249,20 +3249,221 @@ ns_new_run_form(
   return 0;
 }
 
-void
-ns_write_priv_standings(const serve_state_t state,
-                        const struct contest_desc *cnts,
-                        FILE *f, int accepting_mode)
+static void
+stand_parse_error_func(void *data, unsigned char const *format, ...)
 {
+  va_list args;
+  unsigned char buf[1024];
+  int l;
+  struct serve_state *state = (struct serve_state*) data;
+
+  va_start(args, format);
+  l = vsnprintf(buf, sizeof(buf) - 24, format, args);
+  va_end(args);
+  strcpy(buf + l, "\n");
+  state->cur_user->stand_error_msgs = xstrmerge1(state->cur_user->stand_error_msgs, buf);
+  filter_expr_nerrs++;
+}
+
+#define READ_PARAM(name) do { \
+  if (ns_cgi_param(phr, #name, &s) <= 0 || !s) return; \
+  len = strlen(s); \
+  if (len > 128 * 1024) return; \
+  name = (unsigned char*) alloca(len + 1); \
+  strcpy(name, s); \
+  while (isspace(*name)) name++; \
+  len = strlen(name); \
+  while (len > 0 && isspace(name[len - 1])) len--; \
+  name[len] = 0; \
+  } while (0)
+
+#define IS_EQUAL(name) ((((!u->name || !*u->name) && !*name) || (u->name && !strcmp(u->name, name))))
+
+void
+ns_set_stand_filter(
+        const serve_state_t state,
+        struct http_request_info *phr)
+{
+  const unsigned char *s = 0;
+  int len, r;
+  unsigned char *stand_user_expr = 0;
+  unsigned char *stand_prob_expr = 0;
+  unsigned char *stand_run_expr = 0;
+  struct user_filter_info *u = 0;
+
+  u = user_filter_info_allocate(state, phr->user_id, phr->session_id);
+  if (!u) return;
+
+  READ_PARAM(stand_user_expr);
+  READ_PARAM(stand_prob_expr);
+  READ_PARAM(stand_run_expr);
+
+  if (!*stand_user_expr && !*stand_prob_expr && !*stand_run_expr) {
+    // all cleared
+    serve_state_destroy_stand_expr(u);
+    return;
+  }
+
+  if (IS_EQUAL(stand_user_expr) && IS_EQUAL(stand_prob_expr)
+      && IS_EQUAL(stand_run_expr)) {
+    // nothing to do
+    return;
+  }
+
+  if (!IS_EQUAL(stand_user_expr)) {
+    if (!*stand_user_expr) {
+      u->stand_user_expr = 0;
+      u->stand_user_tree = 0;
+    } else {
+      u->stand_user_expr = xstrdup(stand_user_expr);
+      if (!u->stand_mem) {
+        u->stand_mem = filter_tree_new();
+      }
+      u->stand_user_tree = 0;
+      filter_expr_set_string(stand_user_expr, u->stand_mem,
+                             stand_parse_error_func, state);
+      filter_expr_init_parser(u->stand_mem, stand_parse_error_func, state);
+      filter_expr_nerrs = 0;
+      r = filter_expr_parse();
+      if (r + filter_expr_nerrs != 0 || !filter_expr_lval) {
+        stand_parse_error_func(state, "user filter expression parsing failed");
+      } else if (filter_expr_lval->type != FILTER_TYPE_BOOL) {
+        stand_parse_error_func(state, "user boolean expression expected");
+      } else {
+        u->stand_user_tree = filter_expr_lval;
+      }
+    }
+  }
+
+  if (!IS_EQUAL(stand_prob_expr)) {
+    if (!*stand_prob_expr) {
+      u->stand_prob_expr = 0;
+      u->stand_prob_tree = 0;
+    } else {
+      u->stand_prob_expr = xstrdup(stand_prob_expr);
+      if (!u->stand_mem) {
+        u->stand_mem = filter_tree_new();
+      }
+      u->stand_prob_tree = 0;
+      filter_expr_set_string(stand_prob_expr, u->stand_mem,
+                             stand_parse_error_func, state);
+      filter_expr_init_parser(u->stand_mem, stand_parse_error_func, state);
+      filter_expr_nerrs = 0;
+      r = filter_expr_parse();
+      if (r + filter_expr_nerrs != 0 || !filter_expr_lval) {
+        stand_parse_error_func(state, "problem filter expression parsing failed");
+      } else if (filter_expr_lval->type != FILTER_TYPE_BOOL) {
+        stand_parse_error_func(state, "problem boolean expression expected");
+      } else {
+        u->stand_prob_tree = filter_expr_lval;
+      }
+    }
+  }
+
+  if (!IS_EQUAL(stand_run_expr)) {
+    if (!*stand_run_expr) {
+      u->stand_run_expr = 0;
+      u->stand_run_tree = 0;
+    } else {
+      u->stand_run_expr = xstrdup(stand_run_expr);
+      if (!u->stand_mem) {
+        u->stand_mem = filter_tree_new();
+      }
+      u->stand_run_tree = 0;
+      filter_expr_set_string(stand_run_expr, u->stand_mem,
+                             stand_parse_error_func, state);
+      filter_expr_init_parser(u->stand_mem, stand_parse_error_func, state);
+      filter_expr_nerrs = 0;
+      r = filter_expr_parse();
+      if (r + filter_expr_nerrs != 0 || !filter_expr_lval) {
+        stand_parse_error_func(state, "run filter expression parsing failed");
+      } else if (filter_expr_lval->type != FILTER_TYPE_BOOL) {
+        stand_parse_error_func(state, "run boolean expression expected");
+      } else {
+        u->stand_run_tree = filter_expr_lval;
+      }
+    }
+  }
+
+  if (!u->stand_user_tree && !u->stand_prob_tree && !u->stand_run_tree) {
+    u->stand_mem = filter_tree_delete(u->stand_mem);
+  }
+}
+
+void
+ns_reset_stand_filter(
+        const serve_state_t state,
+        struct http_request_info *phr)
+{
+  struct user_filter_info *u = 0;
+
+  u = user_filter_info_allocate(state, phr->user_id, phr->session_id);
+  if (!u) return;
+
+  serve_state_destroy_stand_expr(u);
+}
+
+void
+ns_write_priv_standings(
+        const serve_state_t state,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        FILE *f,
+        int accepting_mode)
+{
+  struct user_filter_info *u = 0;
+  unsigned char *stand_user_expr = 0;
+  unsigned char *stand_prob_expr = 0;
+  unsigned char *stand_run_expr = 0;
+  unsigned char bb[1024];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
   //write_standings_header(state, cnts, f, 1, 0, 0, 0);
+  u = user_filter_info_allocate(state, phr->user_id, phr->session_id);
+
+  stand_user_expr = u->stand_user_expr;
+  if (!stand_user_expr) stand_user_expr = "";
+  stand_prob_expr = u->stand_prob_expr;
+  if (!stand_prob_expr) stand_prob_expr = "";
+  stand_run_expr = u->stand_run_expr;
+  if (!stand_run_expr) stand_run_expr = "";
+
+  html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+  fprintf(f, "<table border=\"0\">");
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("User filter expression"),
+          html_input_text(bb, sizeof(bb), "stand_user_expr", 64,
+                          "%s", ARMOR(stand_user_expr)));
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Problem filter expression"),
+          html_input_text(bb, sizeof(bb), "stand_prob_expr", 64,
+                          "%s", ARMOR(stand_prob_expr)));
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Run filter expression"),
+          html_input_text(bb, sizeof(bb), "stand_run_expr", 64,
+                          "%s", ARMOR(stand_run_expr)));
+  fprintf(f, "<tr><td>&nbsp;</td><td>");
+  fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_SET_STAND_FILTER));
+  fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_RESET_STAND_FILTER));
+  fprintf(f, "</td></tr>");
+  fprintf(f, "<tr><td>&nbsp;</td><td><a href=\"%sfilter_expr.html\" target=\"_blank\">%s</a></td></tr>",
+          CONF_STYLE_PREFIX, _("Help"));
+  fprintf(f, "</table>");
+  fprintf(f, "</form><br/>\n");
+
+  if (u->stand_error_msgs) {
+    fprintf(f, "<h2>Filter expression errors</h2>\n");
+    fprintf(f, "<p><pre><font color=\"red\">%s</font></pre></p>\n",
+            ARMOR(u->stand_error_msgs));
+  }
 
   if (state->global->score_system == SCORE_KIROV
       || state->global->score_system == SCORE_OLYMPIAD)
-    do_write_kirov_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0 /*accepting_mode*/, 1, 0, 0);
+    do_write_kirov_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0 /*accepting_mode*/, 1, 0, 0, u);
   else if (state->global->score_system == SCORE_MOSCOW)
-    do_write_moscow_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0);
+    do_write_moscow_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+                              u);
   else
-    do_write_standings(state, cnts, f, 1, 0, 0, 0, 0, 0, 0, 1, 0);
+    do_write_standings(state, cnts, f, 1, 0, 0, 0, 0, 0, 0, 1, 0, u);
+
+  html_armor_free(&ab);
 }
 
 void

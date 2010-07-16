@@ -16,6 +16,7 @@
  */
 
 #include "teamdb.h"
+#include "teamdb_priv.h"
 
 #include "pathutl.h"
 #include "errlog.h"
@@ -41,52 +42,6 @@
 #include <sys/shm.h>
 #include <fcntl.h>
 #include <signal.h>
-
-/* non-saved local extra information about teams */
-struct teamdb_extra
-{
-  time_t last_archive_time;
-};
-
-/* update hooks */
-struct update_hook
-{
-  struct update_hook *next;
-  void (*func)(void *);
-  void *user_ptr;
-};
-
-struct old_db_state
-{
-  unsigned char *server_path;
-  time_t server_last_open_time;
-  struct userlist_clnt *server_conn;
-  struct userlist_table *server_users;
-  struct userlist_table local_users;
-  int shm_id;
-  key_t shm_key;
-};
-
-struct teamdb_state
-{
-  struct teamdb_db_callbacks *callbacks;
-  int need_update;
-  int pseudo_vintage;
-
-  struct old_db_state old;
-
-  struct userlist_list *users;
-  int total_participants;
-  struct userlist_user **participants;
-  struct userlist_contest **u_contests;
-  int contest_id;
-
-  int extra_out_of_sync;
-  int extra_num;
-  struct teamdb_extra **extra_info;
-
-  struct update_hook *first_update_hook;
-};
 
 teamdb_state_t
 teamdb_init(void)
@@ -741,61 +696,3 @@ teamdb_destroy(teamdb_state_t state)
   xfree(state);
   return 0;
 }
-
-void
-teamdb_get_user_map(
-        teamdb_state_t state,
-        int u_max,             // maximal user id
-        unsigned char *u_runs, // map of users forced to skip
-        int *p_u_tot,          // [out] number of users
-        int *u_rev,            // user_id -> user_serial
-        int *u_ind)            // user_serial -> user_id
-{
-  int i, u_tot = 0, f;
-
-  *p_u_tot = u_tot;
-  if (!state->users || state->users->user_map_size <= 0) {
-    return;
-  }
-
-  if (u_max > state->users->user_map_size) {
-    u_max = state->users->user_map_size;
-  }
-
-  memset(u_rev, -1, u_max * sizeof(u_rev[0]));
-
-  if (u_runs) {
-    for (i = 1; i < u_max; ++i) {
-      if (!state->users->user_map[i]) continue;
-      f = state->u_contests[i]->flags;
-      if ((f & (USERLIST_UC_INVISIBLE 
-                | USERLIST_UC_BANNED
-                | USERLIST_UC_DISQUALIFIED)))
-        continue;
-      if (!u_runs[i]) continue;
-      u_rev[i] = u_tot;
-      u_ind[u_tot++] = i;
-    }
-  } else {
-    for (i = 1; i < u_max; ++i) {
-      if (!state->users->user_map[i]) continue;
-      f = state->u_contests[i]->flags;
-      if ((f & (USERLIST_UC_INVISIBLE 
-                | USERLIST_UC_BANNED
-                | USERLIST_UC_DISQUALIFIED)))
-        continue;
-      u_rev[i] = u_tot;
-      u_ind[u_tot++] = i;
-    }
-  }
-
-  *p_u_tot = u_tot;
-}
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */
-

@@ -374,6 +374,8 @@ enum
   NEW_SRV_ACTION_TESTING_DOWN_ALL,
   NEW_SRV_ACTION_MARK_DISPLAYED_2,
   NEW_SRV_ACTION_UNMARK_DISPLAYED_2,
+  NEW_SRV_ACTION_SET_STAND_FILTER,
+  NEW_SRV_ACTION_RESET_STAND_FILTER,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -656,9 +658,12 @@ ns_new_run_form(FILE *fout, FILE *log_f,
                 struct contest_extra *extra);
 
 void
-ns_write_priv_standings(const serve_state_t state,
-                        const struct contest_desc *cnts,
-                        FILE *f, int accepting_mode);
+ns_write_priv_standings(
+        const serve_state_t state,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        FILE *f,
+        int accepting_mode);
 
 extern const unsigned char * const ns_submit_button_labels[];
 extern const int ns_priv_next_state[];
@@ -878,6 +883,16 @@ ns_write_testing_queue(
         struct http_request_info *phr,
         const struct contest_desc *cnts,
         struct contest_extra *extra);
+
+void
+ns_set_stand_filter(
+        const serve_state_t state,
+        struct http_request_info *phr);
+
+void
+ns_reset_stand_filter(
+        const serve_state_t state,
+        struct http_request_info *phr);
 
 extern int utf8_mode;
 extern time_t server_start_time;
