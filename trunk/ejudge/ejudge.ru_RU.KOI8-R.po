@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-07-15 11:29+0400\n"
-"PO-Revision-Date: 2010-07-15 13:49+0400\n"
+"POT-Creation-Date: 2010-07-16 10:19+0400\n"
+"PO-Revision-Date: 2010-07-16 10:44+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -2547,6 +2547,9 @@ msgstr "Столбец Problem не определен\n"
 msgid "Problem deadline"
 msgstr "Срок окончания сдачи"
 
+msgid "Problem filter expression"
+msgstr "Условие отбора задач"
+
 #, c-format
 msgid "Problem is empty in row %d\n"
 msgstr "В строке %d не определено имя задачи\n"
@@ -2844,6 +2847,9 @@ msgstr "Роль"
 msgid "Run ID"
 msgstr "Номер решения"
 
+msgid "Run filter expression"
+msgstr "Условие отбора посылок"
+
 msgid "Run is read-only"
 msgstr "Эта посылка не может быть изменена"
 
@@ -3019,6 +3025,9 @@ msgstr "Установить статус Нарушение_стиля_оформления (STYLE_ERR)"
 
 msgid "Set accepting mode"
 msgstr "Включить режим приёма решений"
+
+msgid "Set filter"
+msgstr "Установить фильтр"
 
 msgid "Set finished flag"
 msgstr "Установить флаг законченности проверки"
@@ -3564,6 +3573,9 @@ msgstr "Имя участника"
 
 msgid "User database server is down"
 msgstr "Сервер базы пользователей недоступен"
+
+msgid "User filter expression"
+msgstr "Условие отбора участников"
 
 msgid "User info"
 msgstr "Информация о пользователе"
