@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/07/10 10:49:51
+// Generated 2010/07/19 09:24:21
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -428,6 +428,8 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_dp_infos] = { CNTSPROB_dp_infos, '?', XSIZE(struct section_problem_data, dp_infos), NULL, XOFFSET(struct section_problem_data, dp_infos) },
   [CNTSPROB_group_start_date] = { CNTSPROB_group_start_date, 'x', XSIZE(struct section_problem_data, group_start_date), "group_start_date", XOFFSET(struct section_problem_data, group_start_date) },
   [CNTSPROB_group_deadline] = { CNTSPROB_group_deadline, 'x', XSIZE(struct section_problem_data, group_deadline), "group_deadline", XOFFSET(struct section_problem_data, group_deadline) },
+  [CNTSPROB_gsd] = { CNTSPROB_gsd, '?', XSIZE(struct section_problem_data, gsd), NULL, XOFFSET(struct section_problem_data, gsd) },
+  [CNTSPROB_gdl] = { CNTSPROB_gdl, '?', XSIZE(struct section_problem_data, gdl), NULL, XOFFSET(struct section_problem_data, gdl) },
   [CNTSPROB_disable_language] = { CNTSPROB_disable_language, 'x', XSIZE(struct section_problem_data, disable_language), "disable_language", XOFFSET(struct section_problem_data, disable_language) },
   [CNTSPROB_enable_language] = { CNTSPROB_enable_language, 'x', XSIZE(struct section_problem_data, enable_language), "enable_language", XOFFSET(struct section_problem_data, enable_language) },
   [CNTSPROB_require] = { CNTSPROB_require, 'x', XSIZE(struct section_problem_data, require), "require", XOFFSET(struct section_problem_data, require) },
