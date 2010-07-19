@@ -79,6 +79,20 @@ struct penalty_info
   int penalty;
 };
 
+struct group_date_info
+{
+  unsigned char *group_name;
+  int group_ind;
+  time_t date;
+  int penalty;
+};
+
+struct group_dates
+{
+  int count;
+  struct group_date_info *info;
+};
+
 struct variant_map;
 
 struct pers_dead_info
@@ -689,7 +703,7 @@ struct section_global_data
   +path_t test_checker_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 64900 */
+/* sizeof(struct section_problem_data) == 64916 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -907,6 +921,9 @@ struct section_problem_data
   char **group_start_date;
   /** group-specific deadline for this problem */
   char **group_deadline;
+
+  struct group_dates gsd META_ATTRIB((meta_private));
+  struct group_dates gdl META_ATTRIB((meta_private));
 
   char **disable_language;
   char **enable_language;
