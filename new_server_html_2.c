@@ -5521,7 +5521,6 @@ ns_write_user_problems_summary(
   unsigned char url_buf[1024];
   unsigned char status_str[128];
   unsigned char score_buf[128];
-  time_t current_time = time(0);
   int act_status;
   unsigned char *cl = "";
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
@@ -5570,7 +5569,7 @@ ns_write_user_problems_summary(
 
   for (prob_id = 1; prob_id <= cs->max_prob; prob_id++) {
     if (!(cur_prob = cs->probs[prob_id])) continue;
-    if (cur_prob->start_date && current_time < cur_prob->start_date)
+    if (!serve_is_problem_started(cs, user_id, cur_prob))
       continue;
     if (cur_prob->hidden > 0) continue;
     s = "";

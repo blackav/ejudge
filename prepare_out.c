@@ -1281,6 +1281,8 @@ prepare_unparse_prob(
   PROBLEM_PARAM(prev_runs_to_show, "d"),
   PROBLEM_PARAM(ignore_penalty, "d"),
   PROBLEM_PARAM(date_penalty, "x"),
+  PROBLEM_PARAM(group_start_date, "x"),
+  PROBLEM_PARAM(group_deadline, "x"),
   PROBLEM_PARAM(tgz_pat, "s"),
   PROBLEM_PARAM(personal_deadline, "x"),
   PROBLEM_PARAM(skip_testing, "d"),
@@ -1342,6 +1344,10 @@ prepare_unparse_unhandled_prob(
     fprintf(f, "prev_runs_to_show = %d\n", prob->prev_runs_to_show);
   //PROBLEM_PARAM(date_penalty, "x"),
   do_xstr(f, &ab, "date_penalty", prob->date_penalty);
+  //PROBLEM_PARAM(group_start_date, "x"),
+  do_xstr(f, &ab, "group_start_date", prob->group_start_date);
+  //PROBLEM_PARAM(group_deadline, "x"),
+  do_xstr(f, &ab, "group_deadline", prob->group_deadline);
   //PROBLEM_PARAM(personal_deadline, "x"),
   do_xstr(f, &ab, "personal_deadline", prob->personal_deadline);
   //PROBLEM_PARAM(statement_file, "s"),

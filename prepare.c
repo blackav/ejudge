@@ -419,6 +419,8 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(start_date, "t"),
   PROBLEM_PARAM(variant_num, "d"),
   PROBLEM_PARAM(date_penalty, "x"),
+  PROBLEM_PARAM(group_start_date, "x"),
+  PROBLEM_PARAM(group_deadline, "x"),
   PROBLEM_PARAM(disable_language, "x"),
   PROBLEM_PARAM(enable_language, "x"),
   PROBLEM_PARAM(require, "x"),
@@ -763,6 +765,7 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->full_exam_protocol_header_txt);
   xfree(p->full_exam_protocol_footer_txt);
   xfree(p->contest_stop_cmd);
+  sarray_free(p->load_user_group);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -862,6 +865,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
 static void free_testsets(int t, struct testset_info *p);
 static void free_deadline_penalties(int t, struct penalty_info *p);
 static void free_personal_deadlines(int t, struct pers_dead_info *p);
+void prepare_free_group_dates(struct group_dates *gd);
 
 void
 prepare_problem_free_func(struct generic_section_config *gp)
@@ -869,11 +873,15 @@ prepare_problem_free_func(struct generic_section_config *gp)
   struct section_problem_data *p = (struct section_problem_data*) gp;
   int i;
 
+  prepare_free_group_dates(&p->gsd);
+  prepare_free_group_dates(&p->gdl);
   xfree(p->tscores);
   xfree(p->x_score_tests);
   xfree(p->test_checker_cmd);
   sarray_free(p->test_sets);
   sarray_free(p->date_penalty);
+  sarray_free(p->group_start_date);
+  sarray_free(p->group_deadline);
   sarray_free(p->disable_language);
   sarray_free(p->enable_language);
   sarray_free(p->require);
@@ -1477,6 +1485,19 @@ parse_score_view(struct section_problem_data *prob)
     prob->score_view_text[i] = eptr;
   }
   return 0;
+}
+
+void
+prepare_free_group_dates(struct group_dates *gd)
+{
+  int i;
+
+  for (i = 0; i < gd->count; ++i) {
+    xfree(gd->info[i].group_name);
+    gd->info[i].group_name = 0;
+  }
+  xfree(gd->info);
+  memset(gd, 0, sizeof(*gd));
 }
 
 void
@@ -5253,6 +5274,8 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->ts_total = 0;
   out->ts_infos = 0;
   out->date_penalty = 0;
+  out->group_start_date = 0;
+  out->group_deadline = 0;
   out->dp_total = 0;
   out->dp_infos = 0;
   out->disable_language = 0;
@@ -5999,7 +6022,8 @@ static const int prob_settable_list[] =
   CNTSPROB_tgz_dir, CNTSPROB_tgz_sfx, CNTSPROB_input_file,
   CNTSPROB_output_file, CNTSPROB_test_score_list, CNTSPROB_score_tests,
   CNTSPROB_test_sets, CNTSPROB_deadline, CNTSPROB_start_date,
-  CNTSPROB_variant_num, CNTSPROB_date_penalty, CNTSPROB_disable_language,
+  CNTSPROB_variant_num, CNTSPROB_date_penalty, CNTSPROB_group_start_date,
+  CNTSPROB_group_deadline, CNTSPROB_disable_language,
   CNTSPROB_enable_language, CNTSPROB_require, CNTSPROB_standard_checker,
   CNTSPROB_checker_env, CNTSPROB_valuer_env, CNTSPROB_interactor_env,
   CNTSPROB_style_checker_env, CNTSPROB_test_checker_env, CNTSPROB_lang_time_adj,
@@ -6105,6 +6129,8 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_start_date] = 1,
   [CNTSPROB_variant_num] = 1,
   [CNTSPROB_date_penalty] = 1,
+  [CNTSPROB_group_start_date] = 1,
+  [CNTSPROB_group_deadline] = 1,
   [CNTSPROB_disable_language] = 1,
   [CNTSPROB_enable_language] = 1,
   [CNTSPROB_require] = 1,
@@ -6175,6 +6201,7 @@ static const int prob_inheritable_list[] =
   CNTSPROB_input_file, CNTSPROB_output_file, CNTSPROB_test_score_list,
   CNTSPROB_score_tests, CNTSPROB_test_sets, CNTSPROB_deadline,
   CNTSPROB_start_date, CNTSPROB_variant_num, CNTSPROB_date_penalty,
+  CNTSPROB_group_start_date, CNTSPROB_group_deadline,
   CNTSPROB_disable_language, CNTSPROB_enable_language, CNTSPROB_require,
   CNTSPROB_standard_checker, CNTSPROB_checker_env, CNTSPROB_valuer_env,
   CNTSPROB_interactor_env, CNTSPROB_style_checker_env,
@@ -6271,6 +6298,8 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_start_date] = 1,
   [CNTSPROB_variant_num] = 1,
   [CNTSPROB_date_penalty] = 1,
+  [CNTSPROB_group_start_date] = 1,
+  [CNTSPROB_group_deadline] = 1,
   [CNTSPROB_disable_language] = 1,
   [CNTSPROB_enable_language] = 1,
   [CNTSPROB_require] = 1,
@@ -6407,6 +6436,8 @@ static const struct section_problem_data prob_undef_values =
   .start_date = -1,
   .variant_num = -1,
   .date_penalty = 0,
+  .group_start_date = 0,
+  .group_deadline = 0,
   .disable_language = 0,
   .enable_language = 0,
   .require = 0,

@@ -3517,9 +3517,140 @@ serve_testing_queue_change_priority_all(
   return 0;
 }
 
+/**
+ * returns 0, if 'start_date' has not yet come, 1 otherwise
+ */
+int
+serve_is_problem_started(
+        const serve_state_t state,
+        int user_id,
+        const struct section_problem_data *prob)
+{
+  int i, user_ind, group_ind;
+  const unsigned int *bm;
+
+  if (prob->start_date <= 0 && !prob->gsd.count) {
+    return 1;
+  } else if (prob->start_date > 0 && !prob->gsd.count) {
+    return (state->current_time >= prob->start_date);
+  } else {
+    user_ind = -1;
+    if (user_id > 0 && user_id < state->group_member_map_size) {
+      user_ind = state->group_member_map[user_id];
+    }
+    if (user_ind >= 0) {
+      bm = state->group_members[user_ind].group_bitmap;
+      for (i = 0; i < prob->gsd.count; ++i) {
+        if ((group_ind = prob->gsd.info[i].group_ind) < 0) break;
+        if ((bm[group_ind >> 5] & (1U << (group_ind & 0x1f))))
+          break;
+      }
+    } else {
+      for (i = 0; i < prob->gsd.count; ++i) {
+        if (prob->gsd.info[i].group_ind < 0) break;
+      }
+    }
+    if (i < prob->gsd.count) {
+      return (state->current_time >= prob->gsd.info[i].date);
+    }
+    if (prob->start_date <= 0) return 1;
+    return (state->current_time >= prob->start_date);
+  }
+
+  return 1;
+}
+
+int
+serve_is_problem_started_2(
+        const serve_state_t state,
+        int user_id,
+        int prob_id)
+{
+  const struct section_problem_data *prob;
+
+  if (prob_id <= 0 || prob_id > state->max_prob) return 0;
+  if (!(prob = state->probs[prob_id])) return 0;
+  return serve_is_problem_started(state, user_id, prob);
+}
+
+/**
+ * returns 0, if 'deadline' has not yet come, 1 otherwise
+ */
+int
+serve_is_problem_deadlined(
+        const serve_state_t state,
+        int user_id,
+        const unsigned char *user_login,
+        const struct section_problem_data *prob,
+        time_t *p_deadline)
+{
+  int i, user_ind, group_ind;
+  const unsigned int *bm;
+  struct pers_dead_info *pdinfo;
+
+  if (p_deadline) *p_deadline = 0;
+
+  /* personal deadlines */
+  if (prob->pd_total > 0) {
+    for (i = 0, pdinfo = prob->pd_infos; i < prob->pd_total; i++, pdinfo++) {
+      if (!strcmp(user_login, pdinfo->login) && pdinfo->deadline > 0) {
+        if (p_deadline) *p_deadline = pdinfo->deadline;
+        return (state->current_time >= pdinfo->deadline);
+      }
+    }
+  }
+
+  /* group deadlines */
+  if (prob->gdl.count > 0) {
+    user_ind = -1;
+    if (user_id > 0 && user_id < state->group_member_map_size) {
+      user_ind = state->group_member_map[user_id];
+    }
+    if (user_ind >= 0) {
+      bm = state->group_members[user_ind].group_bitmap;
+      for (i = 0; i < prob->gdl.count; ++i) {
+        if ((group_ind = prob->gdl.info[i].group_ind) < 0) break;
+        if ((bm[group_ind >> 5] & (1U << (group_ind & 0x1f))))
+          break;
+      }
+    } else {
+      for (i = 0; i < prob->gdl.count; ++i) {
+        if (prob->gdl.info[i].group_ind < 0) break;
+      }
+    }
+    if (i < prob->gdl.count) {
+      if (p_deadline) *p_deadline = prob->gdl.info[i].date;
+      return (state->current_time >= prob->gdl.info[i].date);
+    }
+  }
+
+  if (prob->deadline > 0) {
+      if (p_deadline) *p_deadline = prob->deadline;
+      return (state->current_time >= prob->deadline);
+  }
+
+  return 0;
+}
+
+int
+serve_is_problem_deadlined_2(
+        const serve_state_t state,
+        int user_id,
+        const unsigned char *user_login,
+        int prob_id,
+        time_t *p_deadline)
+{
+  const struct section_problem_data *prob;
+
+  if (prob_id <= 0 || prob_id > state->max_prob) return 0;
+  if (!(prob = state->probs[prob_id])) return 0;
+
+  return serve_is_problem_deadlined(state, user_id, user_login, prob,
+                                    p_deadline);
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

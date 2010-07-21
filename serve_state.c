@@ -38,6 +38,7 @@
 #include "prepare.h"
 #include "prepare_serve.h"
 #include "userlist.h"
+#include "xml_utils.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/osdeps.h>
@@ -48,6 +49,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "win32_compat.h"
 
@@ -416,11 +418,13 @@ serve_load_user_groups(
     srv_grp->members[srv_grp->serial++] = gm->user_id;
   }
 
+  /*
   // just for debug
   fprintf(stderr, "user_group_count:      %d\n", state->user_group_count);
   fprintf(stderr, "user_group_map_size:   %d\n", state->user_group_map_size);
   fprintf(stderr, "group_member_count:    %d\n", state->group_member_count);
   fprintf(stderr, "group_member_map_size: %d\n", state->group_member_map_size);
+  */
 
 done:
   if (grp_info) userlist_free(&grp_info->b);
@@ -431,6 +435,119 @@ failed:
   if (grp_info) userlist_free(&grp_info->b);
   xfree(xml_text);
   return -1;
+}
+
+static int
+parse_group_dates(
+        int contest_id,
+        serve_state_t state,
+        struct section_problem_data *prob,
+        const unsigned char *var_name,
+        struct group_dates *gd,
+        char **strs)
+{
+  int len, i, j;
+  const unsigned char *pcur, *pend;
+  const unsigned char *group_name;
+
+  memset(gd, 0, sizeof(*gd));
+  if (!strs || !strs[0]) return 0;
+  len = sarray_len(strs);
+  XCALLOC(gd->info, len + 1);
+  for (i = 0; i < len + 1; ++i)
+    gd->info[i].group_ind = -2;
+
+  /* "@GROUP_NAME DATE" */
+  for (i = 0; i < len; ++i) {
+    pcur = (const unsigned char*) strs[i];
+    while (isspace(*pcur)) ++pcur;
+    if (!*pcur) {
+      err("contest %d: problem %s: %s: line %d: empty specification",
+          contest_id, prob->short_name, var_name, i + 1);
+      return -1;
+    }
+    if (*pcur == '*') {
+      pend = pcur + 1;
+    } else {
+      if (*pcur != '@') {
+        err("contest %d: problem %s: %s: line %d: '@' expected",
+            contest_id, prob->short_name, var_name, i + 1);
+        return -1;
+      }
+      ++pcur;
+      while (isspace(*pcur)) ++pcur;
+      if (!*pcur) {
+        err("contest %d: problem %s: %s: line %d: group_name expected",
+            contest_id, prob->short_name, var_name, i + 1);
+        return -1;
+      }
+      pend = pcur;
+      while (*pend && !isspace(*pend)) ++pend;
+    }
+
+    group_name = gd->info[i].group_name = xmemdup(pcur, pend - pcur);
+    pcur = pend;
+
+    while (isspace(*pcur)) ++pcur;
+    if (!*pcur) {
+      err("contest %d: problem %s: %s: line %d: date expected",
+          contest_id, prob->short_name, var_name, i + 1);
+      return -1;
+    }
+
+    if (xml_parse_date(NULL, 0, 0, pcur, &gd->info[i].date) < 0) {
+      err("contest %d: problem %s: %s: line %d: invalid date",
+          contest_id, prob->short_name, var_name, i + 1);
+      return -1;
+    }
+
+    if (!strcmp(group_name, "*")) {
+      gd->info[i].group_ind = -1;
+    } else {
+      for (j = 0; j < state->user_group_count; ++j) {
+        if (!strcmp(state->user_groups[j].group_name, group_name)) {
+          break;
+        }
+      }
+      if (j >= state->user_group_count) {
+        err("contest %d: problem %s: %s: line %d: invalid group %s",
+            contest_id, prob->short_name, var_name, i + 1, group_name);
+        return -1;
+      }
+      gd->info[i].group_ind = j;
+    }
+  }
+  gd->count = len;
+
+  /*
+  // barrier entry
+  if (len > 0 && gd->info[len - 1].group_ind >= 0) {
+    gd->info[len].group_name = xstrdup("*");
+    gd->info[len].group_ind = -1;
+    gd->info[len].date = 0;
+    ++gd->count;
+  }
+  */
+
+  return 0;
+}
+
+int
+serve_parse_group_dates(int contest_id, serve_state_t state)
+{
+  int i;
+  struct section_problem_data *prob;
+
+  for (i = 1; i <= state->max_prob; ++i) {
+    if (!(prob = state->probs[i])) continue;
+    if (parse_group_dates(contest_id, state, prob, "group_start_date",
+                          &prob->gsd, prob->group_start_date) < 0)
+      return -1;
+    if (parse_group_dates(contest_id, state, prob, "group_deadline",
+                          &prob->gdl, prob->group_deadline) < 0)
+      return -1;
+  }
+  return 0;
 }
 
 const size_t serve_struct_sizes_array[] =
@@ -586,6 +703,9 @@ serve_state_load_contest(
   }
 
   if (serve_load_user_groups(contest_id, state, ul_conn) < 0) {
+    goto failure;
+  }
+  if (serve_parse_group_dates(contest_id, state) < 0) {
     goto failure;
   }
 

@@ -651,8 +651,7 @@ cmd_submit_run(
   size_t run_size_2 = 0;
   FILE *ans_f = 0;
   unsigned char ans_map[65536];
-  time_t start_time = 0, stop_time = 0, user_deadline = 0;
-  const unsigned char *login = 0;
+  time_t start_time = 0, stop_time = 0;
   char **lang_list;
   int mime_type = 0;
   const unsigned char *mime_type_str = 0;
@@ -829,21 +828,11 @@ cmd_submit_run(
       FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
     if (serve_check_user_quota(cs, phr->user_id, run_size) < 0)
       FAIL(NEW_SRV_ERR_RUN_QUOTA_EXCEEDED);
-    if (prob->start_date >= 0 && cs->current_time < prob->start_date)
+    if (!serve_is_problem_started(cs, phr->user_id, prob))
       FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
-    if (prob->pd_total > 0) {
-      login = teamdb_get_login(cs->teamdb_state, phr->user_id);
-      for (i = 0; i < prob->pd_total; i++) {
-        if (!strcmp(login, prob->pd_infos[i].login)) {
-          user_deadline = prob->pd_infos[i].deadline;
-          break;
-        }
-      }
-    }
-    // common problem deadline
-    if (user_deadline <= 0) user_deadline = prob->deadline;
-    if (user_deadline > 0 && cs->current_time >= user_deadline)
+    if (serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, 0)) {
       FAIL(NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
+    }
   }
 
   /* check for disabled languages */
