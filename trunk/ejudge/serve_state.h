@@ -524,4 +524,29 @@ extern const size_t serve_struct_sizes_array[];
 extern const size_t serve_struct_sizes_array_size;
 extern const size_t serve_struct_sizes_array_num;
 
+int
+serve_is_problem_started(
+        const serve_state_t state,
+        int user_id,
+        const struct section_problem_data *prob);
+int
+serve_is_problem_deadlined(
+        const serve_state_t state,
+        int user_id,
+        const unsigned char *user_login,
+        const struct section_problem_data *prob,
+        time_t *p_deadline);
+int
+serve_is_problem_started_2(
+        const serve_state_t state,
+        int user_id,
+        int prob_id);
+int
+serve_is_problem_deadlined_2(
+        const serve_state_t state,
+        int user_id,
+        const unsigned char *user_login,
+        int prob_id,
+        time_t *p_deadline);
+
 #endif /* __SERVE_STATE_H__ */

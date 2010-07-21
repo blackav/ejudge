@@ -9638,7 +9638,7 @@ unpriv_submit_run(FILE *fout,
   size_t run_size = 0, ans_size, text_form_size = 0;
   unsigned char *ans_buf, *ans_map, *ans_tmp;
   time_t start_time, stop_time, user_deadline = 0;
-  const unsigned char *login, *mime_type_str = 0;
+  const unsigned char *mime_type_str = 0;
   char **lang_list;
   int mime_type = 0;
   ruint32_t shaval[5];
@@ -9854,23 +9854,12 @@ unpriv_submit_run(FILE *fout,
     goto done;
   }
   // problem submit start time
-  if (prob->start_date >= 0 && cs->current_time < prob->start_date) {
+  if (!serve_is_problem_started(cs, phr->user_id, prob)) {
     ns_error(log_f, NEW_SRV_ERR_PROB_UNAVAILABLE);
     goto done;
   }
-  // personal deadline
-  if (prob->pd_total > 0) {
-    login = teamdb_get_login(cs->teamdb_state, phr->user_id);
-    for (i = 0; i < prob->pd_total; i++) {
-      if (!strcmp(login, prob->pd_infos[i].login)) {
-        user_deadline = prob->pd_infos[i].deadline;
-        break;
-      }
-    }
-  }
-  // common problem deadline
-  if (user_deadline <= 0) user_deadline = prob->deadline;
-  if (user_deadline > 0 && cs->current_time >= user_deadline) {
+  if (serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob,
+                                 &user_deadline)) {
     ns_error(log_f, NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
     goto done;
   }
@@ -10168,7 +10157,7 @@ unpriv_submit_run(FILE *fout,
       if (prob->advance_to_next > 0) {
         for (i++; i <= cs->max_prob; i++) {
           if (!(prob2 = cs->probs[i])) continue;
-          if (prob2->start_date > 0 && prob2->start_date > cs->current_time)
+          if (!serve_is_problem_started(cs, phr->user_id, prob2))
             continue;
           // FIXME: standard applicability checks
           break;
@@ -10622,7 +10611,7 @@ unpriv_command(FILE *fout,
         && global->problem_navigation) {
       for (i = 1; i <= cs->max_prob; i++) {
         if (!(prob = cs->probs[i])) continue;
-        if (prob->start_date > 0 && prob->start_date > cs->current_time)
+        if (!serve_is_problem_started(cs, phr->user_id, prob))
           continue;
         // FIXME: standard applicability checks
         break;
@@ -11289,35 +11278,6 @@ unpriv_view_standings(FILE *fout,
   l10n_setlocale(0);
 }
 
-static int
-is_problem_deadlined(serve_state_t cs,
-                     int problem_id,
-                     const unsigned char *user_login,
-                     time_t *p_deadline)
-{
-  time_t user_deadline = 0;
-  int pdi;
-  struct pers_dead_info *pdinfo;
-
-  if (problem_id <= 0 || problem_id > cs->max_prob) return 1;
-  if (!cs->probs[problem_id]) return 1;
-
-  user_deadline = 0;
-  for (pdi = 0, pdinfo = cs->probs[problem_id]->pd_infos;
-       pdi < cs->probs[problem_id]->pd_total;
-       pdi++, pdinfo++) {
-    if (!strcmp(user_login, pdinfo->login)) {
-      user_deadline = pdinfo->deadline;
-      break;
-    }
-  }
-  if (!user_deadline) user_deadline = cs->probs[problem_id]->deadline;
-  if (p_deadline) *p_deadline = user_deadline;
-
-  if (!user_deadline) return 0;
-  return (cs->current_time >= user_deadline);
-}
-
 static void
 html_problem_selection(serve_state_t cs,
                        FILE *fout,
@@ -11328,10 +11288,9 @@ html_problem_selection(serve_state_t cs,
                        int light_mode,
                        time_t start_time)
 {
-  int i, pdi, dpi, j, k;
+  int i, dpi, j, k;
   time_t user_deadline = 0;
   int user_penalty = 0, variant = 0;
-  struct pers_dead_info *pdinfo;
   unsigned char deadline_str[64];
   unsigned char penalty_str[64];
   unsigned char problem_str[128];
@@ -11346,7 +11305,7 @@ html_problem_selection(serve_state_t cs,
     if (!(prob = cs->probs[i])) continue;
     if (!light_mode && prob->disable_submit_after_ok>0 && solved_flag[i])
       continue;
-    if (prob->start_date > 0 && cs->current_time < prob->start_date)
+    if (!serve_is_problem_started(cs, phr->user_id, prob))
       continue;
     if (start_time <= 0) continue;
     //if (prob->disable_user_submit) continue;
@@ -11357,18 +11316,9 @@ html_problem_selection(serve_state_t cs,
       // try to find personal rules
       user_deadline = 0;
       user_penalty = 0;
-      for (pdi = 0, pdinfo = prob->pd_infos;
-           pdi < prob->pd_total;
-           pdi++, pdinfo++) {
-        if (!strcmp(phr->login, pdinfo->login)) {
-          user_deadline = pdinfo->deadline;
-          break;
-        }
-      }
-      // if no user-specific deadline, try the problem deadline
-      if (!user_deadline) user_deadline = prob->deadline;
-      // if deadline is over, go to the next problem
-      if (user_deadline && cs->current_time >= user_deadline) continue;
+      if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
+                                     prob, &user_deadline))
+        continue;
 
       // check `require' variable
       if (prob->require) {
@@ -11425,10 +11375,9 @@ html_problem_selection_2(serve_state_t cs,
                          const unsigned char *var_name,
                          time_t start_time)
 {
-  int i, pdi, dpi;
+  int i, dpi;
   time_t user_deadline = 0;
   int variant = 0;
-  struct pers_dead_info *pdinfo;
   unsigned char deadline_str[64];
   unsigned char problem_str[128];
   const unsigned char *problem_ptr = 0;
@@ -11441,24 +11390,13 @@ html_problem_selection_2(serve_state_t cs,
 
   for (i = 1; i <= cs->max_prob; i++) {
     if (!(prob = cs->probs[i])) continue;
-    if (prob->start_date > 0 && cs->current_time < prob->start_date)
+    if (!serve_is_problem_started(cs, phr->user_id, prob))
       continue;
     if (start_time <= 0) continue;
 
-    deadline_str[0] = 0;
-    user_deadline = 0;
-    for (pdi = 0, pdinfo = prob->pd_infos;
-         pdi < prob->pd_total;
-         pdi++, pdinfo++) {
-      if (!strcmp(phr->login, pdinfo->login)) {
-        user_deadline = pdinfo->deadline;
-        break;
-      }
-    }
-    // if no user-specific deadline, try the problem deadline
-    if (!user_deadline) user_deadline = prob->deadline;
-    // if deadline is over, go to the next problem
-    if (user_deadline && cs->current_time >= user_deadline) continue;
+    if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
+                                   prob, &user_deadline))
+      continue;
 
     // find date penalty
     for (dpi = 0; dpi < prob->dp_total; dpi++)
@@ -11941,9 +11879,8 @@ get_problem_status(serve_state_t cs, int user_id,
                    unsigned char *pstat)
 {
   const struct section_problem_data *prob;
-  int prob_id, pdi, is_deadlined, k, j;
+  int prob_id, is_deadlined, k, j;
   time_t user_deadline;
-  const struct pers_dead_info *pdinfo;
 
   // nothing before contest start
   if (start_time <= 0) return;
@@ -11952,7 +11889,7 @@ get_problem_status(serve_state_t cs, int user_id,
     if (!(prob = cs->probs[prob_id])) continue;
 
     // the problem is completely disabled before its start_date
-    if (prob->start_date > 0 && prob->start_date > cs->current_time)
+    if (!serve_is_problem_started(cs, user_id, prob))
       continue;
 
     // the problem is completely disabled before requirements are met
@@ -11974,22 +11911,8 @@ get_problem_status(serve_state_t cs, int user_id,
     }
 
     // check problem deadline
-    is_deadlined = 0;
-    if (stop_time > 0 && cs->current_time >= stop_time) {
-      is_deadlined = 1;
-    } else {
-      user_deadline = 0;
-      for (pdi = 0, pdinfo = prob->pd_infos; pdi < prob->pd_total;
-           pdi++, pdinfo++) {
-        if (!strcmp(user_login, pdinfo->login)) {
-          user_deadline = pdinfo->deadline;
-          break;
-        }
-      }
-      if (user_deadline <= 0) user_deadline = prob->deadline;
-      if (user_deadline > 0 && cs->current_time >= user_deadline)
-        is_deadlined = 1;
-    }
+    is_deadlined = serve_is_problem_deadlined(cs, user_id, user_login,
+                                              prob, &user_deadline);
 
     if (prob->restricted_statement <= 0 || !is_deadlined)
       pstat[prob_id] |= PROB_STATUS_VIEWABLE;
@@ -12245,6 +12168,7 @@ unpriv_main_page(FILE *fout,
   unsigned char *pending_flag = 0;
   unsigned char *trans_flag = 0;
   unsigned char *prob_status = 0;
+  time_t *prob_deadline = 0;
   int *best_run = 0;
   int *attempts = 0;
   int *disqualified = 0;
@@ -12301,6 +12225,7 @@ unpriv_main_page(FILE *fout,
   XALLOCAZ(prev_successes, cs->max_prob + 1);
   XALLOCAZ(all_attempts, cs->max_prob + 1);
   XALLOCAZ(prob_status, cs->max_prob + 1);
+  XALLOCAZ(prob_deadline, cs->max_prob + 1);
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
@@ -12540,8 +12465,9 @@ unpriv_main_page(FILE *fout,
       variant = 0;
       if (prob_id <= 0 || prob_id > cs->max_prob) continue;
       if (!(prob = cs->probs[prob_id])) continue;
-      if (is_problem_deadlined(cs, prob_id, phr->login, 0)) continue;
-      if (prob->start_date > 0 && cs->current_time < prob->start_date)
+      if (!serve_is_problem_started(cs, phr->user_id, prob)) continue;
+      if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
+                                     prob, &prob_deadline[prob_id]))
         continue;
       if (prob->variant_num > 0
           && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
@@ -12581,10 +12507,11 @@ unpriv_main_page(FILE *fout,
       && !cs->clients_suspended) {
     if (prob_id > cs->max_prob) prob_id = 0;
     if (prob_id > 0 && !(prob = cs->probs[prob_id])) prob_id = 0;
-    if (prob_id > 0 && is_problem_deadlined(cs, prob_id, phr->login, 0))
+    if (prob_id > 0 && !serve_is_problem_started(cs, phr->user_id, prob))
       prob_id = 0;
-    if (prob_id > 0 && prob->start_date > 0
-        && cs->current_time < prob->start_date)
+    if (prob_id > 0 && serve_is_problem_deadlined(cs, phr->user_id, phr->login,
+                                                  prob,
+                                                  &prob_deadline[prob_id]))
       prob_id = 0;
     //if (prob_id > 0 && prob->disable_user_submit > 0) prob_id = 0;
     if (prob_id > 0 && prob->variant_num > 0
@@ -12611,9 +12538,10 @@ unpriv_main_page(FILE *fout,
 
       dbuf[0] = 0;
       if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)
-          && prob->deadline > 0) {
+          && prob_deadline[prob_id] > 0) {
         snprintf(dbuf, sizeof(dbuf), "<h3>%s: %s</h3>",
-                 _("Problem deadline"), xml_unparse_date(prob->deadline));
+                 _("Problem deadline"),
+                 xml_unparse_date(prob_deadline[prob_id]));
       }
 
       bb[0] = 0;
@@ -12823,8 +12751,8 @@ unpriv_main_page(FILE *fout,
                 next_prob_id++;
                 for (; next_prob_id <= cs->max_prob; next_prob_id++) {
                   if (!(prob2 = cs->probs[next_prob_id])) continue;
-                  if (prob2->start_date > 0
-                      && prob2->start_date > cs->current_time) continue;
+                  if (!serve_is_problem_started(cs, phr->user_id, prob2))
+                    continue;
                   break;
                 }
                 if (next_prob_id > cs->max_prob) next_prob_id = prob->id;
@@ -12846,8 +12774,8 @@ unpriv_main_page(FILE *fout,
                 next_prob_id++;
                 for (; next_prob_id <= cs->max_prob; next_prob_id++) {
                   if (!(prob2 = cs->probs[next_prob_id])) continue;
-                  if (prob2->start_date > 0
-                      && prob2->start_date > cs->current_time) continue;
+                  if (!serve_is_problem_started(cs, phr->user_id, prob2))
+                    continue;
                   break;
                 }
                 if (next_prob_id > cs->max_prob) next_prob_id = prob->id;
@@ -13338,7 +13266,7 @@ unpriv_xml_update_answer(
   const unsigned char *s;
   int prob_id = 0, n, ans, i, variant = 0, j, run_id;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  const unsigned char *run_text = 0, *login = 0;
+  const unsigned char *run_text = 0;
   unsigned char *tmp_txt = 0;
   size_t run_size = 0, tmp_size = 0;
   char *eptr;
@@ -13393,22 +13321,13 @@ unpriv_xml_update_answer(
   if (serve_check_user_quota(cs, phr->user_id, run_size) < 0)
     FAIL(NEW_SRV_ERR_RUN_QUOTA_EXCEEDED);
   // problem submit start time
-  if (prob->start_date >= 0 && cs->current_time < prob->start_date)
+  if (!serve_is_problem_started(cs, phr->user_id, prob))
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
-  // personal deadline
-  if (prob->pd_total > 0) {
-    login = teamdb_get_login(cs->teamdb_state, phr->user_id);
-    for (i = 0; i < prob->pd_total; i++) {
-      if (!strcmp(login, prob->pd_infos[i].login)) {
-        user_deadline = prob->pd_infos[i].deadline;
-        break;
-      }
-    }
-  }
-  // common problem deadline
-  if (user_deadline <= 0) user_deadline = prob->deadline;
-  if (user_deadline > 0 && cs->current_time >= user_deadline)
+
+  if (serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob,
+                                 &user_deadline)) {
     FAIL(NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
+  }
 
   if (prob->variant_num > 0) {
     if ((variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
@@ -13502,9 +13421,8 @@ unpriv_get_file(
   const serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob = 0;
-  int retval = 0, prob_id, n, variant = 0, i, mime_type = 0;
+  int retval = 0, prob_id, n, variant = 0, mime_type = 0;
   const unsigned char *s = 0;
-  const unsigned char *login = 0;
   time_t user_deadline = 0, start_time, stop_time;
   path_t fpath, sfx;
   char *file_bytes = 0;
@@ -13532,21 +13450,11 @@ unpriv_get_file(
   if (stop_time > 0 && cs->current_time >= stop_time
       && prob->restricted_statement > 0)
     FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
-  if (prob->start_date > 0 && prob->start_date > cs->current_time)
+  if (!serve_is_problem_started(cs, phr->user_id, prob))
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
-      
-  // personal deadline
-  if (prob->pd_total > 0) {
-    login = teamdb_get_login(cs->teamdb_state, phr->user_id);
-    for (i = 0; i < prob->pd_total; i++) {
-      if (!strcmp(login, prob->pd_infos[i].login)) {
-        user_deadline = prob->pd_infos[i].deadline;
-        break;
-      }
-    }
-  }
-  if (user_deadline <= 0) user_deadline = prob->deadline;
-  if (user_deadline > 0 && cs->current_time >= user_deadline
+
+  if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
+                                 prob, &user_deadline)
       && prob->restricted_statement > 0)
     FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
 
