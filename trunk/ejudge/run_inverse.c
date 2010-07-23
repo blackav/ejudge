@@ -676,8 +676,8 @@ invoke_checker(
   }
   task_EnableAllSignals(tsk);
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ, 0);
-  task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_WRITE, TSK_FULL_RW);
-  task_SetRedir(tsk, 2, TSR_FILE, log_path, TSK_WRITE, TSK_FULL_RW);
+  task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_APPEND, TSK_FULL_RW);
+  task_SetRedir(tsk, 2, TSR_FILE, log_path, TSK_APPEND, TSK_FULL_RW);
 
   fflush(log_f);
 
@@ -1227,17 +1227,12 @@ run_inverse_testing(
     goto cleanup;
   }
 
-  perr(log_f, "before test normalization");
-  fflush(log_f);
-
   // normalize test contents
   if (normalize_tests(log_f, prob, test_count, tests_dir, test_pat,
                       corr_pat) < 0) {
     perr(log_f, "failed to normalize tests");
     goto cleanup;
   }
-
-  perr(log_f, "after test normalization");
 
   // invoke test checkers on each test
   r = invoke_test_checker_on_tests(log_f, log_path, global,
