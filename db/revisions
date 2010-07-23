@@ -5424,3 +5424,5 @@ serve_state.c 5955 0 2379717
 super_html_3.c 5955 0 26600534
 super_html_4.c 5955 0 18841942
 prepare.c 5957 0 18307791
+misctext.c 5959 0 3009584
+run_inverse.c 5959 0 3475865
