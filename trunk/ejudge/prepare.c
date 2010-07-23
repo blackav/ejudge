@@ -5267,6 +5267,8 @@ prepare_copy_problem(const struct section_problem_data *in)
   struct section_problem_data *out = prepare_alloc_problem();
 
   memmove(out, in, sizeof(*out));
+
+  // clear the pointers
   out->ntests = 0;
   out->tscores = 0;
   out->x_score_tests = 0;
@@ -5274,27 +5276,38 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->ts_total = 0;
   out->ts_infos = 0;
   out->date_penalty = 0;
-  out->group_start_date = 0;
-  out->group_deadline = 0;
   out->dp_total = 0;
   out->dp_infos = 0;
+  out->group_start_date = 0;
+  out->group_deadline = 0;
+  memset(&out->gsd, 0, sizeof(out->gsd));
+  memset(&out->gdl, 0, sizeof(out->gdl));
   out->disable_language = 0;
   out->enable_language = 0;
   out->require = 0;
   out->checker_env = 0;
+  out->valuer_env = 0;
+  out->interactor_env = 0;
+  out->style_checker_env = 0;
+  out->test_checker_env = 0;
+  if (in->test_checker_cmd) {
+    out->test_checker_cmd = xstrdup(in->test_checker_cmd);
+  }
   out->lang_time_adj = 0;
   out->lang_time_adj_millis = 0;
+  out->alternative = 0;
   out->personal_deadline = 0;
   out->pd_total = 0;
   out->pd_infos = 0;
   out->score_bonus_total = 0;
   out->score_bonus_val = 0;
+  out->open_tests_val = 0;
+  out->unhandled_vars = 0;
   out->score_view = 0;
   out->score_view_score = 0;
   out->score_view_text = 0;
-  if (in->test_checker_cmd) {
-    out->test_checker_cmd = xstrdup(in->test_checker_cmd);
-  }
+  out->xml.p = 0;
+
   return out;
 }
 
