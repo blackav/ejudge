@@ -1597,7 +1597,7 @@ text_read_file(
       memcpy(buf, read_buf, read_len);
       buf_len = read_len;
     } else {
-      buf = (unsigned char*) xrealloc(buf, buf_len + read_len);
+      buf = (unsigned char*) xrealloc(buf, buf_len + reserve + read_len);
       memcpy(buf + buf_len, read_buf, read_len);
       buf_len += read_len;
       buf[buf_len] = 0;
@@ -1632,10 +1632,10 @@ text_is_binary(const unsigned char *text, size_t size)
   size_t i;
 
   for (i = 0; i < size; ++i) {
-    if (!text_is_valid_char(text[i])) return 0;
-    if (text[i] == '\r' && text[i + 1] != '\n') return 0;
+    if (!text_is_valid_char(text[i])) return 1;
+    if (text[i] == '\r' && text[i + 1] != '\n') return 1;
   }
-  return 1;
+  return 0;
 }
 
 size_t
@@ -1673,6 +1673,7 @@ text_normalize_buf(
         }
       }
       out_text[j++] = '\n';
+      ++i;
     } else {
       out_text[j++] = in_text[i++];
     }

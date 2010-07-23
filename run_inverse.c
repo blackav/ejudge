@@ -272,7 +272,7 @@ normalize_file(
       perr(log_f, "Write error to %s", out_path);
       goto fail;
     }
-    fclose(log_f); log_f = 0;
+    fclose(out_f); out_f = 0;
 
     if (rename(out_path, path) < 0) {
       perr(log_f, "Rename %s -> %s failed", out_path, path);
@@ -294,6 +294,7 @@ normalize_file(
       fprintf(log_f, "(trailing empty lines removed) ");
     }
     fprintf(log_f, "\n");
+    fflush(log_f);
   }
   xfree(in_text); in_text = 0;
   return 0;
@@ -1226,12 +1227,17 @@ run_inverse_testing(
     goto cleanup;
   }
 
+  perr(log_f, "before test normalization");
+  fflush(log_f);
+
   // normalize test contents
   if (normalize_tests(log_f, prob, test_count, tests_dir, test_pat,
                       corr_pat) < 0) {
     perr(log_f, "failed to normalize tests");
     goto cleanup;
   }
+
+  perr(log_f, "after test normalization");
 
   // invoke test checkers on each test
   r = invoke_test_checker_on_tests(log_f, log_path, global,
