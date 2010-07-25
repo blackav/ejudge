@@ -79,6 +79,8 @@ static const struct mime_type_info mime_types[MIME_TYPE_LAST] =
   { "application/zip", ".zip", "Zip archive data" },
   [MIME_TYPE_APPL_BZIP2] =
   { "application/x-bzip2", ".bz2", "bzip2 compressed data" },
+  [MIME_TYPE_APPL_7ZIP] =
+  { "application/x-7zip", ".7z", "7-zip archive data" },
   [MIME_TYPE_IMAGE_BMP] =
   { "image/bmp", ".bmp", "PC bitmap data" },
   [MIME_TYPE_IMAGE_GIF] =
