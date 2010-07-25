@@ -767,10 +767,16 @@ invoke_sample_program(
     snprintf(test_path, sizeof(test_path), "%s/%s", tests_dir, test_name);
     snprintf(corr_path, sizeof(corr_path), "%s/%s", tests_dir, corr_name);
 
+    fprintf(log_f, "Starting %s on test %d\n", exe_name, num);
+    fflush(log_f);
+
     r = invoke_test_program(log_f, log_path, global, prob, num, check_dir,
                             exe_path, exe_name, test_path,
                             tt_cell_row[num - 1]);
     if (r == RUN_OK) {
+      fprintf(log_f, "Starting checker %s\n", check_cmd);
+      fflush(log_f);
+
       invoke_checker(log_f, log_path, prob, check_dir, check_cmd,
                      exe_name, num, test_path, out_path, corr_path,
                      tt_cell_row[num - 1]);
