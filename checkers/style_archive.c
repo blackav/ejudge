@@ -879,7 +879,9 @@ check_tar_tests(
         int max_test_count,
         const unsigned char *dir_prefix,
         const char *input_file_pattern,
-        const char *output_file_pattern)
+        const char *output_file_pattern,
+        int no_readme_mode,
+        int ignore_dot_files)
 {
   int i, j, num;
   int retcode = 0;
@@ -907,19 +909,22 @@ check_tar_tests(
 
   // find "tests/README" entry
   snprintf(n1, sizeof(n1), "%s/README", dir_prefix);
-  if ((i = find_entry(arch, n1)) < 0) {
+  i = find_entry(arch, n1);
+  if (!no_readme_mode && i < 0) {
     error("no %s entry in the archive", n1);
     return -1;
   }
-  if (!S_ISREG(arch->v[i].type)) {
-    error("%s is not a regular file", n1);
-    return -1;
+  if (i >= 0) {
+    if (!S_ISREG(arch->v[i].type)) {
+      error("%s is not a regular file", n1);
+      return -1;
+    }
+    if ((arch->v[i].type & 0400) != 0400) {
+      error("invalid permissions on %s entry", n1);
+      return -1;
+    }
+    arch->v[i].is_processed = 1;
   }
-  if ((arch->v[i].type & 0400) != 0400) {
-    error("invalid permissions on %s entry", n1);
-    return -1;
-  }
-  arch->v[i].is_processed = 1;
 
   num = 1;
   while (1) {
@@ -976,8 +981,16 @@ check_tar_tests(
   // check for garbage
   for (i = 0; i < arch->u; ++i) {
     if (!arch->v[i].is_processed) {
-      error("garbage file %s in the archive", arch->v[i].name);
-      retcode = -1;
+      if (ignore_dot_files && arch->v[i].name[0] == '.') {
+        if (!S_ISREG(arch->v[i].type)) {
+          error("ignored file %s is not a regular file", arch->v[i].type);
+          retcode = -1;
+        }
+        arch->v[i].is_processed = 1;
+      } else {
+        error("garbage file %s in the archive", arch->v[i].name);
+        retcode = -1;
+      }
     }
   }
 
@@ -1049,7 +1062,8 @@ make_report(
         const unsigned char *tests_dir,
         const unsigned char *input_file_pattern,
         const unsigned char *output_file_pattern,
-        int (*unpack_func)(const unsigned char *path,const unsigned char *dir))
+        int (*unpack_func)(const unsigned char *path,const unsigned char *dir),
+        int ignore_dot_files)
 {
   unsigned char wd[PATH_MAX];
   int wd_created = 0;
@@ -1114,10 +1128,10 @@ make_report(
   closedir(d); d = 0;
 
   snprintf(fp, sizeof(fp), "%s/README", td);
-  if (read_text_file(fp, "README", &txt, &len) < 0)
-    goto fail;
-  printf("=== README ===\n%s\n", txt);
-  free(txt); txt = 0; len = 0;
+  if (read_text_file(fp, "README", &txt, &len) >= 0) {
+    printf("=== README ===\n%s\n", txt);
+    free(txt); txt = 0; len = 0;
+  }
 
   num = 0;
   while (1) {
@@ -1137,6 +1151,19 @@ make_report(
       goto fail;
     printf("=== %s ===\n%s\n", ofbase, txt);
     free(txt); txt = 0; len = 0;
+  }
+
+  if (ignore_dot_files) {
+    if ((d = opendir(td))) {
+      while ((dd = readdir(d))) {
+        if (!strcmp(dd->d_name, ".")) continue;
+        if (!strcmp(dd->d_name, "..")) continue;
+        if (dd->d_name[0] == '.') {
+          printf("Ignored file: %s\n", dd->d_name);
+        }
+      }
+      closedir(d); d = 0;
+    }
   }
   
   remove_directory_recursively(wd, 0);
@@ -1169,6 +1196,8 @@ main(int argc, char **argv)
   const unsigned char *work_dir = 0;
   int (*unpack_func)(const unsigned char *path,const unsigned char *dir) = 0;
   const unsigned char *env;
+  int no_readme_mode = 0;
+  int ignore_dot_files = 0;
 
   signal(SIGPIPE, SIG_IGN);
   memset(&arch, 0, sizeof(arch));
@@ -1219,6 +1248,12 @@ main(int argc, char **argv)
   if ((env = getenv("EJ_TESTS_MODE"))) {
     tests_mode = 1;
   }
+  if ((env = getenv("EJ_NO_README"))) {
+    no_readme_mode = 1;
+  }
+  if ((env = getenv("EJ_IGNORE_DOT_FILES"))) {
+    ignore_dot_files = 1;
+  }
 
   while (i < argc) {
     if (!strcmp(argv[i], "--")) {
@@ -1258,6 +1293,14 @@ main(int argc, char **argv)
     } else if (!strcmp(argv[i], "-t")) {
       // test archive check mode
       tests_mode = 1;
+      ++i;
+    } else if (!strcmp(argv[i], "-r")) {
+      // no README mode
+      no_readme_mode = 1;
+      ++i;
+    } else if (!strcmp(argv[i], "-.")) {
+      // ignore dot-files
+      ignore_dot_files = 1;
       ++i;
     } else if (!strcmp(argv[i], "-c")) {
       // max number of tests
@@ -1344,11 +1387,12 @@ main(int argc, char **argv)
   if (check_sizes(&arch, max_file_count, max_file_size, max_archive_size) < 0)
     return 1;
   if (check_names(&arch) < 0) return 1;
-  if (check_tar_tests(&arch, max_test_count, tests_dir, if_patt, of_patt) < 0)
+  if (check_tar_tests(&arch, max_test_count, tests_dir, if_patt, of_patt,
+                      no_readme_mode, ignore_dot_files) < 0)
     return 1;
 
   if (make_report(&arch, archive_path, work_dir, "stylearch", tests_dir,
-                  if_patt, of_patt, unpack_func) < 0)
+                  if_patt, of_patt, unpack_func, ignore_dot_files) < 0)
     return 1;
 
   return 0;
