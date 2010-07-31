@@ -368,7 +368,7 @@ initialize(int argc, char *argv[])
   snprintf(exp_base, sizeof(exp_base), "%s", "serve-control");
 #endif
   if (strcmp(exp_base, base_name) != 0) {
-    client_not_configured(0, "bad program name", 0);
+    client_not_configured(0, "bad program name", 0, 0);
   }
 
 #if defined CGI_DATA_PATH
@@ -388,11 +388,11 @@ initialize(int argc, char *argv[])
     config = parse_config(0, default_config);
   }
   if (!config) {
-    client_not_configured(0, "config file not parsed", 0);
+    client_not_configured(0, "config file not parsed", 0, 0);
   }
 
   if (contests_set_directory(config->contests_dir) < 0) {
-    client_not_configured(0, "contests directory is invalid", 0);
+    client_not_configured(0, "contests directory is invalid", 0, 0);
   }
   logger_set_level(-1, LOG_WARNING);
 

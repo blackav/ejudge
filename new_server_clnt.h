@@ -4,7 +4,7 @@
 #ifndef __NEW_SERVER_CLNT_H__
 #define __NEW_SERVER_CLNT_H__
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
 #include "ej_types.h"
 
 #include <string.h>
+#include <stdio.h>
 
 struct new_server_conn;
 typedef struct new_server_conn *new_server_conn_t;
@@ -32,7 +33,9 @@ int new_server_clnt_pass_fd(new_server_conn_t, int, const int *);
 int new_server_clnt_close(new_server_conn_t);
 
 int new_server_clnt_http_request(
-        new_server_conn_t, int out_fd,
+        new_server_conn_t conn,
+        FILE *log_f,
+        int out_fd,
         unsigned char *args[],
         unsigned char *envs[],
         int param_num,

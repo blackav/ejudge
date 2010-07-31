@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -135,7 +135,7 @@ check_access_rules(char **rules, ej_ip_t ip, int ssl_flag)
   return 0;
 
  failed:
-  client_not_configured(client_charset, "invalid access rules", 0);
+  client_not_configured(client_charset, "invalid access rules", 0, 0);
   return -1;
 }
 
@@ -179,13 +179,13 @@ initialize(int argc, char *argv[])
   } else {
     config = parse_param(cfg_path, 0, params, 1, 0, 0, 0);
   }
-  if (!config) client_not_configured(0, "config file not parsed", 0);
+  if (!config) client_not_configured(0, "config file not parsed", 0, 0);
 
   for (p = config; p; p = p->next) {
     if (!p->name[0] || !strcmp(p->name, "global"))
       break;
   }
-  if (!p) client_not_configured(0, "no global section", 0);
+  if (!p) client_not_configured(0, "no global section", 0, 0);
   global = (struct client_section_global_data *) p;
 
 #if defined EJUDGE_NEW_SERVER_SOCKET
@@ -224,6 +224,10 @@ main(int argc, char *argv[])
   unsigned char **param_names, **params;
   size_t *param_sizes;
 
+  FILE *log_f = 0;
+  char *log_t = 0;
+  size_t log_z = 0;
+
   logger_set_level(-1, LOG_WARNING);
   initialize(argc, argv);
 
@@ -235,7 +239,7 @@ main(int argc, char *argv[])
 
   if (r < 0) {
     err("new-client: cannot connect to the server: %d", -r);
-    client_not_configured(client_charset, "cannot connect to the server", 0);
+    client_not_configured(client_charset, "cannot connect to the server", 0,0);
   }
 
   param_num = cgi_get_param_num();
@@ -246,13 +250,19 @@ main(int argc, char *argv[])
     cgi_get_nth_param_bin(i, &param_names[i], &param_sizes[i], &params[i]);
   }
 
-  r = new_server_clnt_http_request(conn, 1, (unsigned char**) argv,
+  log_f = open_memstream(&log_t, &log_z);
+
+  r = new_server_clnt_http_request(conn, log_f, 1, (unsigned char**) argv,
                                    (unsigned char **) environ,
                                    param_num, param_names,
                                    param_sizes, params, 0, 0);
+  if (log_f) {
+    fclose(log_f);
+    log_f = 0;
+  }
   if (r < 0) {
     err("new-client: http_request failed: %d", -r);
-    client_not_configured(client_charset, "request failed", 0);
+    client_not_configured(client_charset, "request failed", 0, log_t);
   }
 
   return 0;
