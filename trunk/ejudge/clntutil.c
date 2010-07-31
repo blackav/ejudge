@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -250,11 +250,18 @@ client_access_denied(char const *charset, int locale_id)
 }
 
 void
-client_not_configured(char const *charset, char const *str, int locale_id)
+client_not_configured(
+        char const *charset,
+        char const *str,
+        int locale_id,
+        const char *messages)
 {
   write_log(0, LOG_ERR, (char*) str);
   client_put_header(stdout, 0, 0, charset, 1, locale_id, _("Service is not available"));
   printf("<p>%s</p>", _("Service is not available. Please, come later."));
+  if (messages) {
+    printf("<pre>%s</pre>\n", messages);
+  }
   client_put_footer(stdout, 0);
   exit(0);
 }

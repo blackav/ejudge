@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -920,7 +920,7 @@ main(int argc, char *argv[])
     p1 = &reply_buf;
     p2 = &reply_size;
   }
-  r = new_server_clnt_http_request(conn, fd, (unsigned char**) argv,
+  r = new_server_clnt_http_request(conn, NULL, fd, (unsigned char**) argv,
                                    cgi_environ,
                                    cgi_param_u, cgi_param_names,
                                    cgi_param_sizes, cgi_param_values,

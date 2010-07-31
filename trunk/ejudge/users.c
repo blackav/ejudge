@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2001-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -431,7 +431,7 @@ initialize(int argc, char const *argv[])
 #endif /* CGI_PROG_SUFFIX */
   strcpy(program_name, basename);
   if (strncmp(basename, "users", 5) != 0) {
-    client_not_configured(0, "bad program name", 0);
+    client_not_configured(0, "bad program name", 0, 0);
     // never get here
   }
   namelen = 5;                  /* "users" */
@@ -520,7 +520,7 @@ initialize(int argc, char const *argv[])
     default_config_str = default_config;
   }
   if (!(config = parse_config(cfgname, default_config_str))) {
-    client_not_configured(0, "config file not parsed", 0);
+    client_not_configured(0, "config file not parsed", 0, 0);
   }
 
   /*

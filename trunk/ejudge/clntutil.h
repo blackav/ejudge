@@ -3,7 +3,7 @@
 #ifndef __CLNTUTIL_H__
 #define __CLNTUTIL_H__
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -55,7 +55,11 @@ int   client_lookup_ip(char const *, char const *);
 int   client_check_source_ip(int, char const *, char const *);
 char *client_time_to_str(char *, time_t);
 void  client_access_denied(char const *, int locale_id) __attribute__((noreturn));
-void  client_not_configured(char const*,char const*, int locale_id) __attribute__((noreturn));
+void  client_not_configured(
+        char const*,
+        char const*,
+        int locale_id,
+        const char *messages) __attribute__((noreturn));
 int   client_check_server_status(char const *, char const *, int, int);
 int   client_print_server_status(int, char const *, char const *);
 
