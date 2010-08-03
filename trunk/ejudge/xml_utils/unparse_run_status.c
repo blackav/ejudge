@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,6 +36,7 @@ static const unsigned char tree_result_strs[RUN_LAST + 1][4] =
   [RUN_PENDING] =          "PD",
   [RUN_MEM_LIMIT_ERR] =    "ML",
   [RUN_SECURITY_ERR] =     "SE",
+  [RUN_STYLE_ERR] =        "SV",
   [RUN_VIRTUAL_START] =    "VS",
   [RUN_VIRTUAL_STOP] =     "VT",
   [RUN_EMPTY] =            "EM",
@@ -53,10 +54,3 @@ run_status_to_str_short(unsigned char *buf, size_t size, int val)
   }
   return snprintf(buf, sizeof(buf), "result_%d", val);
 }
-
-/**
- * Local variables:
- *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */
