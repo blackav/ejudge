@@ -1360,7 +1360,7 @@ static const struct cnts_edit_info cnts_problem_info[] =
   { NS_PROBLEM, CNTSPROB_disable_ctrl_chars, 'Y', 1, 0, 0, 0, 0, "Disable control characters in the source", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_valuer_sets_marked, 'Y', 1, 0, 0, 0, 0, "Valuer sets _marked_ flag", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_ignore_unmarked, 'Y', 1, 0, 0, 0, 0, "Ignore unmarked runs in scoring", 0, "SidState.prob_show_adv" },
-  { NS_PROBLEM, CNTSPROB_enable_text_form, 'Y', 1, 0, 0, 0, 0, "Enable text input form", 0, "SidState.prob_show_adv Global.problem_navigation && Problem.type 1 == &&" },
+  { NS_PROBLEM, CNTSPROB_enable_text_form, 'Y', 1, 0, 0, 0, 0, "Enable text input form", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_stand_attr, 'S', 1, 1, 1, 1, 0, "Standings attributes", 0, 0 },
   { NS_PROBLEM, CNTSPROB_standard_checker, 142, 1, 0, 0, 0, 0, "Standard checker", 0, 0 },
   { NS_PROBLEM, CNTSPROB_check_cmd, 'S', 1, 1, 1, 1, 0, "Checker", 0, 0 /*"Problem.standard_checker"*/ },

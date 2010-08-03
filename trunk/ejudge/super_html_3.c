@@ -5602,8 +5602,7 @@ super_html_print_problem(FILE *f,
                                  self_url, extra_args, prob_hidden_vars);
   }
 
-  if (show_adv && sstate->global && sstate->global->problem_navigation
-      && prob->type == PROB_TYPE_OUTPUT_ONLY) {
+  if (show_adv) {
     //PROBLEM_PARAM(enable_text_form, "d"),
       extra_msg = "Undefined";
       if (!prob->abstract) {

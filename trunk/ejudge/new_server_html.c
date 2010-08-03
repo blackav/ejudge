@@ -2568,12 +2568,15 @@ priv_submit_run(FILE *fout,
 
   /* get the submission text */
   switch (prob->type) {
+    /*
   case PROB_TYPE_STANDARD:      // "file"
     if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)) {
       errmsg = "\"file\" parameter is not set";
       goto invalid_param;
     }
     break;
+    */
+  case PROB_TYPE_STANDARD:
   case PROB_TYPE_OUTPUT_ONLY:
   case PROB_TYPE_TESTS:
     if (prob->enable_text_form > 0) {
@@ -2657,9 +2660,22 @@ priv_submit_run(FILE *fout,
   switch (prob->type) {
   case PROB_TYPE_STANDARD:
     if (!lang->binary && strlen(run_text) != run_size) goto binary_submission;
-    if (prob->disable_ctrl_chars > 0 && has_control_characters(run_text)) goto invalid_characters;
+    if (prob->enable_text_form > 0 && text_form_text
+        && strlen(text_form_text) != text_form_size)
+      goto binary_submission;
+    if (prob->enable_text_form) {
+      if (!run_size) {
+        run_text = text_form_text; text_form_text = 0;
+        run_size = text_form_size; text_form_size = 0;
+        skip_mime_type_test = 1;
+      } else {
+        text_form_text = 0;
+        text_form_size = 0;
+      }
+    }
+    if (prob->disable_ctrl_chars > 0 && has_control_characters(run_text))
+      goto invalid_characters;
     break;
-
   case PROB_TYPE_OUTPUT_ONLY:
   case PROB_TYPE_TESTS:
     if (!prob->binary_input && !prob->binary && strlen(run_text) != run_size)
@@ -7635,10 +7651,11 @@ priv_submit_page(
   }
 
   /* solution/answer form */
-  if (!prob || !prob->type) {
+  if (!prob /*|| !prob->type*/) {
     fprintf(fout, "<tr><td%s>%s</td><td%s><input type=\"file\" name=\"file\"/></td></tr>\n", cl, _("File"), cl);
    } else {
     switch (prob->type) {
+    case PROB_TYPE_STANDARD:
     case PROB_TYPE_OUTPUT_ONLY:
     case PROB_TYPE_TESTS:
       if (prob->enable_text_form > 0) {
@@ -9678,12 +9695,15 @@ unpriv_submit_run(FILE *fout,
   }
 
   switch (prob->type) {
+    /*
   case PROB_TYPE_STANDARD:      // "file"
     if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)) {
       ns_error(log_f, NEW_SRV_ERR_FILE_UNSPECIFIED);
       goto done;
     }
     break;
+    */
+  case PROB_TYPE_STANDARD:
   case PROB_TYPE_OUTPUT_ONLY:
   case PROB_TYPE_TESTS:
     if (prob->enable_text_form > 0) {
@@ -9767,7 +9787,25 @@ unpriv_submit_run(FILE *fout,
       ns_error(log_f, NEW_SRV_ERR_BINARY_FILE);
       goto done;
     }
-    if (!run_size) {
+    if (prob->enable_text_form > 0 && text_form_text
+        && strlen(text_form_text) != text_form_size) {
+      ns_error(log_f, NEW_SRV_ERR_BINARY_FILE);
+      goto done;
+    }
+    if (prob->enable_text_form) {
+      if (!run_size && !text_form_size) {
+        ns_error(log_f, NEW_SRV_ERR_SUBMIT_EMPTY);
+        goto done;
+      }
+      if (!run_size) {
+        run_text = text_form_text;
+        run_size = text_form_size;
+        skip_mime_type_test = 1;
+      } else {
+        text_form_text = 0;
+        text_form_size = 0;
+      }
+    } else if (!run_size) {
       ns_error(log_f, NEW_SRV_ERR_SUBMIT_EMPTY);
       goto done;
     }
@@ -9776,7 +9814,6 @@ unpriv_submit_run(FILE *fout,
       goto done;
     }
     break;
-
   case PROB_TYPE_OUTPUT_ONLY:
   case PROB_TYPE_TESTS:
     if (!prob->binary_input && !prob->binary && strlen(run_text) != run_size) {
@@ -12712,9 +12749,12 @@ unpriv_main_page(FILE *fout,
           }
         }
         switch (prob->type) {
+          /*
         case PROB_TYPE_STANDARD:
           fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"file\" name=\"file\"/></td></tr>", _("File"));
           break;
+          */
+        case PROB_TYPE_STANDARD:
         case PROB_TYPE_OUTPUT_ONLY:
         case PROB_TYPE_TESTS:
           if (prob->enable_text_form > 0) {
