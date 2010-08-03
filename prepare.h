@@ -111,7 +111,7 @@ struct user_adjustment_info
 };
 struct user_adjustment_map;
 
-/* sizeof(struct section_global_data) == 350016 */
+/* sizeof(struct section_global_data) == 350012 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -159,8 +159,6 @@ struct section_global_data
   ejintbool_t enable_memory_limit_error;
   /** enable advanced problem layout */
   ejintbool_t advanced_layout;
-  /** enable submitting solutions by copy/paste into a textarea */
-  ejintbool_t enable_textarea_submit;
 
   /** do not show submits after this time in the standings */
   time_t stand_ignore_after;
