@@ -1206,7 +1206,7 @@ main(int argc, char **argv)
   if ((env = getenv("EJ_MAX_ARCHIVE_SIZE"))) {
     if (parse_long_long(env, &max_archive_size) < 0)
       die("invalid value of EJ_MAX_ARCHIVE_SIZE parameter");
-    if (max_file_size <= 0) {
+    if (max_archive_size <= 0) {
       die("invalid value of EJ_MAX_ARCHIVE_SIZE parameter");
     }
   }
