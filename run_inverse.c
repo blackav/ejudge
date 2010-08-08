@@ -1216,10 +1216,10 @@ run_inverse_testing(
   r = os_IsFile(tests_dir);
   if (r < 0) {
     perr(log_f, "directory %s does not exist", tests_dir);
-    goto cleanup;
+    goto presentation_error;
   } else if (r != OSPK_DIR) {
     perr(log_f, "%s is not a directory", tests_dir);
-    goto cleanup;
+    goto presentation_error;
   }
 
   // count tests
@@ -1230,14 +1230,14 @@ run_inverse_testing(
   }
   if (!test_count) {
     perr(log_f, "no tests in the archive");
-    goto cleanup;
+    goto presentation_error;
   }
 
   // normalize test contents
   if (normalize_tests(log_f, prob, test_count, tests_dir, test_pat,
                       corr_pat) < 0) {
     perr(log_f, "failed to normalize tests");
-    goto cleanup;
+    goto presentation_error;
   }
 
   // invoke test checkers on each test
@@ -1472,6 +1472,11 @@ cleanup:
 
   //clear_directory(global->run_work_dir);
   return;
+
+presentation_error:
+  report_xml->status = RUN_PRESENTATION_ERR;
+  reply_pkt->status = RUN_PRESENTATION_ERR;
+  goto cleanup;
 }
 
 /*
