@@ -803,6 +803,7 @@ read_text_file(
     if ((c < ' ' && !isspace(c)) || c == 0177) {
       error("file %s is not a text file because of \\%o in line %d",
             base, c, lineno);
+      goto fail;
     } else if (c == '\n') {
       putc(c, ftxt);
       lineno++;
